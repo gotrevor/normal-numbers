@@ -10909,3 +10909,39 @@ Independent re-verification of the HALT mandate (a)-(c), no crux advance (as ins
 Next lap (crux, per DIRECTION "Next attack"): rethread `KPointNoExcWith → KPointNoExcAtWith A`
 bottom-up and upgrade `ttNonPretentious_of_uniformResonantMass` to the faithful hypothesis
 (gap: characters `q > 1`, twists up to `X²`).
+
+## 2026-09-25 lap 108 — the narrow non-principal debt decoupled from `X`
+
+Crux advance (archimedean side of the faithful C3 chain, `C3MrtArchFaithful.lean`):
+
+* `NonPrincipalLocalBound B` — the non-principal narrow debt **with no `X` on the right**:
+  `‖twistedPrimeSum X χ t‖ ≤ log log (3 + q(2+|t|)) + B` for `χ ≠ 1`.  This is exactly
+  `|log L(1+it, χ)| ≪ log log (q(2+|t|))`, a textbook bound uniform in the length of the sum.
+* `nonPrincipalTwistSmall_of_localBound` — it **suffices**, with saving `κ = 1/2` (far more than
+  the chain needs).  Proof: `q, |t| ≤ (log X)^{1/125}` ⟹ `3 + q(2+|t|) ≤ 6 (log X)²`, then the
+  tangent-line bound `log w ≤ w/8 + log 8 − 1` (`log_le_div_eight`) collapses the outer
+  logarithm to `(log log X)/2 + O(1)`.  Nothing beyond `1/125 ≤ 1` is used.
+* `narrowTwistSmall_mono` / `narrowTwistSmallTriv_mono` / `nonPrincipalTwistSmall_mono` — all
+  three narrow `Prop`s are monotone (down in `κ`, up in `C`), which is what lets the `q = 1`
+  theorem's saving `ttExponent z` be combined with the local bound's `1/2` by `min`.
+* `depthRoot_zero_emod` + `exists_uniform_narrow_const` — **the twist-uniformity of the implied
+  constant is now a THEOREM, not a hypothesis**: `depthRoot b h' 0 = ee(h'/b)` is `1`-periodic,
+  so it takes ≤ `b` values and the pointwise constants have a maximum (`Finset.sup'`).
+  `FaithfulArchLower` requires `C` outside `h'`; this discharges that requirement.
+* `faithfulArchLower_of_urm_of_localBound` — `FaithfulArchLower b` from **three** named
+  statements: `UniformResonantMass` (pre-existing, covers `q = 1`), `NonPrincipalLocalBound`,
+  `WideTwistSmall`.  Saving `kappaDepth b / 2`, uniform in `h'`.
+* `conjC3_of_geom_input_reduced` — `ConjC3` from the faithful `K`-point input (at every positive
+  implied constant) plus those three.  **New finding:** `conjC3_of_geom_input_lower`'s single
+  `C` for all bases is unachievable — the narrow constant comes from `UniformResonantMass` at
+  `δ ≍ π/b` and must degrade with `b` — but this costs nothing, since `ConjC3` factors through
+  `conjC3_of_weylLambertTwist` base by base.
+
+**Headline now rests on strictly less** (trigger C3-T5 satisfied): the archimedean debt went from
+one opaque `FaithfulArchLower` to `UniformResonantMass` + an `X`-free L-function bound + the wide
+range, and the `h'`-uniformity obligation is discharged.
+
+**Next attack.** `WideTwistSmall` is the remaining genuinely new analytic debt (zero-free region
+for `L(s,χ)`; the module doc records that the resonance count provably cannot supply it).  Before
+that, check whether mathlib's Dirichlet L-function non-vanishing on `Re s = 1` can discharge
+`NonPrincipalLocalBound` directly — that would clear the narrow range outright.

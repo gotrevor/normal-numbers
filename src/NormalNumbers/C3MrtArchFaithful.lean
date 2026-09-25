@@ -664,6 +664,274 @@ theorem ttExponent_depthRoot_ge {b : ℕ} (hb : 2 ≤ b) {h' : ℤ} (hnd : ¬ ((
   linarith
 
 
+/-! ### Decoupling the non-principal narrow debt from `X`
+
+`NonPrincipalTwistSmall κ C` mentions `X` on both sides, which hides what it actually needs.
+The textbook bound behind it — `∑_{p ≤ Y} χ̄(p)p^{-it}/p = log L(1+it, χ) + O(1)`, with
+`|log L(1+it,χ)| ≤ log log(q(2+|t|)) + O(1)` from the non-vanishing of `L` on the 1-line — is
+uniform in the *length* `Y`: the right-hand side involves only the conductor `q` and the twist
+`t`.  `NonPrincipalLocalBound` is that statement, with **no `X` on the right**, and the reduction
+below shows it is enough, with the generous saving `κ = 1/2`.
+
+Why `1/2` is free: `q, |t| ≤ (log X)^{1/125}` forces `3 + q(2+|t|) ≤ 6 (log X)²`, so the local
+bound is `≤ log(log 6 + 2 log log X) + B`, and `log w ≤ w/8 + log 8 − 1` turns the outer
+logarithm into `(log log X)/2 + O(1)`.  Nothing about the exponent `1/125` is used beyond
+`1/125 ≤ 1`: any polynomial range of conductors and twists would do.  This is the honest
+statement of the debt — a bound on a Dirichlet L-function, not on anything `X`-dependent. -/
+
+/-- **The non-principal narrow debt, localised.**  A bound on the twisted prime sum for
+non-principal `χ` whose right-hand side depends only on the conductor `q` and the twist `t` —
+not on the length of the sum.  This is `|log L(1+it, χ)| ≪ log log(q(2+|t|))`. -/
+def NonPrincipalLocalBound (B : ℝ) : Prop :=
+  ∀ (q : ℕ) (χ : DirichletCharacter ℂ q), χ ≠ 1 → ∀ X t : ℝ, 3 ≤ X →
+    ‖twistedPrimeSum X χ t‖ ≤ Real.log (Real.log (3 + (q : ℝ) * (2 + |t|))) + B
+
+theorem one_lt_log_of_three_le {X : ℝ} (hX : 3 ≤ X) : 1 < Real.log X := by
+  rw [Real.lt_log_iff_exp_lt (by linarith)]
+  nlinarith [Real.exp_one_lt_d9]
+
+theorem log_six_le_two : Real.log 6 ≤ 2 := by
+  rw [Real.log_le_iff_le_exp (by norm_num)]
+  have h2 : Real.exp 2 = Real.exp 1 * Real.exp 1 := by
+    rw [← Real.exp_add]; norm_num
+  nlinarith [Real.exp_one_gt_d9, h2]
+
+theorem log_eight_sub_one_le : Real.log 8 - 1 ≤ 11 / 10 := by
+  have h : Real.log 8 = 3 * Real.log 2 := by
+    rw [show (8 : ℝ) = 2 ^ 3 by norm_num, Real.log_pow]; push_cast; ring
+  nlinarith [Real.log_two_lt_d9]
+
+/-- `log w ≤ w/8 + log 8 − 1` — the tangent-line bound at `w = 8`, which is what converts the
+outer logarithm of `log 6 + 2 log log X` into a `(log log X)/2`. -/
+theorem log_le_div_eight {w : ℝ} (hw : 0 < w) : Real.log w ≤ w / 8 + Real.log 8 - 1 := by
+  have h := Real.log_le_sub_one_of_pos (show (0:ℝ) < w / 8 by positivity)
+  rw [Real.log_div hw.ne' (by norm_num)] at h
+  linarith
+
+/-- **The reduction.**  The localised L-function bound gives the narrow non-principal range with
+saving `κ = 1/2`, i.e. far more than the `κ` the chain needs.  So the only thing the
+non-principal narrow range still owes is a bound with **no `X` in it**. -/
+theorem nonPrincipalTwistSmall_of_localBound {B : ℝ} (h : NonPrincipalLocalBound B) :
+    NonPrincipalTwistSmall (1 / 2) (B + 2) := by
+  intro X hX q χ hne hqX t ht
+  set u : ℝ := Real.log X with hu
+  have hu1 : 1 < u := one_lt_log_of_three_le hX
+  have hv0 : 0 < Real.log u := Real.log_pos hu1
+  -- the `1/125` powers are at most `u`
+  have hpow : u ^ ((1 : ℝ) / 125) ≤ u := by
+    have := Real.rpow_le_rpow_of_exponent_le hu1.le (show (1:ℝ)/125 ≤ 1 by norm_num)
+    rwa [Real.rpow_one] at this
+  have hq : (q : ℝ) ≤ u := le_trans hqX hpow
+  have htu : |t| ≤ u := le_trans ht hpow
+  have hq0 : (0 : ℝ) ≤ (q : ℝ) := Nat.cast_nonneg q
+  have ht0 : (0 : ℝ) ≤ |t| := abs_nonneg t
+  set A : ℝ := 3 + (q : ℝ) * (2 + |t|) with hA
+  have hA3 : (3 : ℝ) ≤ A := by simp only [hA]; nlinarith
+  have hAle : A ≤ 6 * u ^ 2 := by
+    simp only [hA]
+    nlinarith [mul_le_mul_of_nonneg_right hq (by linarith : (0:ℝ) ≤ 2 + |t|),
+      mul_le_mul_of_nonneg_left htu (by linarith : (0:ℝ) ≤ u)]
+  -- outer: `log (log A) ≤ (log u)/2 + 2`
+  have hlogA : Real.log A ≤ Real.log 6 + 2 * Real.log u := by
+    have h1 : Real.log A ≤ Real.log (6 * u ^ 2) :=
+      Real.log_le_log (by linarith) hAle
+    rwa [Real.log_mul (by norm_num) (by positivity), Real.log_pow] at h1
+    <;> push_cast <;> ring_nf
+  have hlogA0 : 0 < Real.log A := Real.log_pos (by linarith)
+  have hinner : 0 < Real.log 6 + 2 * Real.log u := lt_of_lt_of_le hlogA0 hlogA
+  have houter : Real.log (Real.log A) ≤ Real.log (Real.log 6 + 2 * Real.log u) :=
+    Real.log_le_log hlogA0 hlogA
+  have htan := log_le_div_eight hinner
+  have hfin : Real.log (Real.log A) ≤ (1 / 2) * Real.log u + 2 := by
+    nlinarith [log_six_le_two, log_eight_sub_one_le, hv0]
+  have hmain := h q χ hne X t hX
+  simp only [← hA] at hmain
+  nlinarith
+
+/-- The narrow range in full, from the `q = 1` theorem and the **localised** non-principal
+bound: no `X`-dependent hypothesis is left in the narrow range. -/
+theorem narrowTwistSmall_of_triv_of_localBound {z : ℂ} {B : ℝ} (hz : ‖z‖ = 1)
+    (hB : 0 ≤ B) (htriv : NarrowTwistSmallTriv z (1 / 2) (B + 2))
+    (hloc : NonPrincipalLocalBound B) :
+    NarrowTwistSmall z (1 / 4)
+      (B + 2 + Erdos67b.PrimeEstimates.mertensBound + 1 + |Real.log ((1:ℝ) / 4)|) := by
+  have h := narrowTwistSmall_of_triv_of_nonPrincipal hz (by norm_num : (0:ℝ) < 1/2)
+    (by norm_num : (1:ℝ)/2 ≤ 1) (by linarith) htriv
+    (nonPrincipalTwistSmall_of_localBound hloc)
+  have e : (1 : ℝ) / 2 / 2 = 1 / 4 := by norm_num
+  rw [e] at h
+  exact h
+
+/-! ### Monotonicity, and the narrow range on ONE analytic debt
+
+The three narrow-range `Prop`s all read `… ≤ (1 − κ)·log log X + C`, so each is monotone **down**
+in the saving `κ` and **up** in the constant `C` (using `log log X > 0` for `X ≥ 3`).  That is
+what lets the `q = 1` theorem's saving `ttExponent z` be combined with the localised bound's
+saving `1/2`: take the minimum. -/
+
+theorem narrowTwistSmallTriv_mono {z : ℂ} {κ κ' C C' : ℝ} (hκ : κ' ≤ κ) (hC : C ≤ C')
+    (h : NarrowTwistSmallTriv z κ C) : NarrowTwistSmallTriv z κ' C' := by
+  intro X hX t ht
+  have h0 : 0 < Real.log (Real.log X) := logloglog_pos hX
+  nlinarith [h X hX t ht]
+
+theorem nonPrincipalTwistSmall_mono {κ κ' C C' : ℝ} (hκ : κ' ≤ κ) (hC : C ≤ C')
+    (h : NonPrincipalTwistSmall κ C) : NonPrincipalTwistSmall κ' C' := by
+  intro X hX q χ hne hqX t ht
+  have h0 : 0 < Real.log (Real.log X) := logloglog_pos hX
+  nlinarith [h X hX q χ hne hqX t ht]
+
+/-- **The narrow range rests on exactly two things.**  `UniformResonantMass` (the route's
+pre-existing analytic input, which handles `q = 1`) and `NonPrincipalLocalBound` (a bound on
+`log L(1+it, χ)` with no `X` in it).  The saving is `min(ttExponent z, 1/2)/2`, positive for any
+unimodular `z ≠ 1`. -/
+theorem narrowTwistSmall_of_urm_of_localBound (hURM : UniformResonantMass)
+    {z : ℂ} (hz : ‖z‖ = 1) (hz1 : z ≠ 1) {B : ℝ} (hB : 0 ≤ B)
+    (hloc : NonPrincipalLocalBound B) :
+    ∃ C : ℝ, NarrowTwistSmall z (min (ttExponent z) (1 / 2) / 2) C := by
+  obtain ⟨C₀, htriv0⟩ := narrowTwistSmallTriv_of_uniformResonantMass hURM hz hz1
+  set κ : ℝ := min (ttExponent z) (1 / 2) with hκdef
+  have hκ0 : 0 < κ := lt_min (ttExponent_pos hz hz1) (by norm_num)
+  have hκ1 : κ ≤ 1 := le_trans (min_le_right _ _) (by norm_num)
+  set C : ℝ := max C₀ (B + 2) with hCdef
+  have htriv : NarrowTwistSmallTriv z κ C :=
+    narrowTwistSmallTriv_mono (min_le_left _ _) (le_max_left _ _) htriv0
+  have hnp : NonPrincipalTwistSmall κ C :=
+    nonPrincipalTwistSmall_mono (min_le_right _ _) (le_max_right _ _)
+      (nonPrincipalTwistSmall_of_localBound hloc)
+  have hC0 : 0 ≤ C := le_trans (by linarith) (le_max_right C₀ (B + 2))
+  exact ⟨_, narrowTwistSmall_of_triv_of_nonPrincipal hz hκ0 hκ1 hC0 htriv hnp⟩
+
+theorem narrowTwistSmall_mono {z : ℂ} {κ κ' C C' : ℝ} (hκ : κ' ≤ κ) (hC : C ≤ C')
+    (h : NarrowTwistSmall z κ C) : NarrowTwistSmall z κ' C' := by
+  intro X hX q χ hq t ht
+  have h0 : 0 < Real.log (Real.log X) := logloglog_pos hX
+  nlinarith [h X hX q χ hq t ht]
+
+/-- `depthRoot b h' 0` depends on `h'` only through `h' % b`: `ee` is `1`-periodic. -/
+theorem depthRoot_zero_emod {b : ℕ} (hb : 0 < b) (h' : ℤ) :
+    depthRoot b h' 0 = depthRoot b (h' % (b : ℤ)) 0 := by
+  have hb0 : ((b : ℝ)) ≠ 0 := Nat.cast_ne_zero.mpr hb.ne'
+  have hsplit : (h' : ℝ) / (b : ℝ)
+      = ((h' % (b : ℤ) : ℤ) : ℝ) / (b : ℝ) + ((h' / (b : ℤ) : ℤ) : ℝ) := by
+    have hid : (b : ℤ) * (h' / (b : ℤ)) + h' % (b : ℤ) = h' := Int.mul_ediv_add_emod h' (b : ℤ)
+    have hR : (b : ℝ) * ((h' / (b : ℤ) : ℤ) : ℝ) + ((h' % (b : ℤ) : ℤ) : ℝ) = (h' : ℝ) := by
+      exact_mod_cast congrArg (fun z : ℤ => (z : ℝ)) hid
+    field_simp
+    linarith
+  rw [depthRoot, depthRoot,
+    show ((h' : ℝ) / (b : ℝ) ^ (0 + 1)) = (h' : ℝ) / (b : ℝ) by norm_num,
+    show (((h' % (b : ℤ) : ℤ) : ℝ) / (b : ℝ) ^ (0 + 1))
+      = ((h' % (b : ℤ) : ℤ) : ℝ) / (b : ℝ) by norm_num,
+    show ((((h' : ℝ) / (b : ℝ) : ℝ)) : ℂ)
+      = ((((h' % (b : ℤ) : ℤ) : ℝ) / (b : ℝ) : ℝ) : ℂ) + ((((h' / (b : ℤ) : ℤ) : ℝ) : ℝ) : ℂ) by
+      rw [hsplit]; push_cast; ring,
+    ee_add, ee_intCast_eq_one, mul_one]
+
+/-- **The narrow bound is uniform in the twist `h'`.**  `FaithfulArchLower` needs ONE constant
+`C` across all primitive `h'` (TT's implied constant is absolute).  That is free from
+periodicity: `depthRoot b h' 0` takes at most `b` values, so a pointwise family of constants has
+a maximum. -/
+theorem exists_uniform_narrow_const {b : ℕ} (hb : 2 ≤ b) {κ : ℝ}
+    (hpt : ∀ h' : ℤ, ¬ ((b : ℤ) ∣ h') → ∃ C : ℝ, NarrowTwistSmall (depthRoot b h' 0) κ C) :
+    ∃ C : ℝ, ∀ h' : ℤ, ¬ ((b : ℤ) ∣ h') → NarrowTwistSmall (depthRoot b h' 0) κ C := by
+  classical
+  have hb0 : 0 < b := by omega
+  set P : ℕ → Prop := fun r => ∃ C : ℝ, NarrowTwistSmall (depthRoot b (r : ℤ) 0) κ C with hP
+  set F : ℕ → ℝ := fun r => if hr : P r then hr.choose else 0 with hF
+  have hne : (Finset.range b).Nonempty := ⟨0, Finset.mem_range.mpr hb0⟩
+  refine ⟨(Finset.range b).sup' hne F, fun h' hnd => ?_⟩
+  set r : ℕ := (h' % (b : ℤ)).toNat with hr
+  have hmodnn : 0 ≤ h' % (b : ℤ) := Int.emod_nonneg h' (by exact_mod_cast hb0.ne')
+  have hrz : ((r : ℕ) : ℤ) = h' % (b : ℤ) := Int.toNat_of_nonneg hmodnn
+  have hrlt : r < b := by
+    have := Int.emod_lt_of_pos h' (show (0 : ℤ) < (b : ℤ) by exact_mod_cast hb0)
+    omega
+  have heq : depthRoot b h' 0 = depthRoot b (r : ℤ) 0 := by
+    rw [depthRoot_zero_emod hb0 h', hrz]
+  have hPr : P r := by
+    obtain ⟨C, hC⟩ := hpt h' hnd
+    exact ⟨C, by rwa [heq] at hC⟩
+  have hFr : NarrowTwistSmall (depthRoot b (r : ℤ) 0) κ (F r) := by
+    simp only [hF, dif_pos hPr]
+    exact hPr.choose_spec
+  have hle : F r ≤ (Finset.range b).sup' hne F :=
+    Finset.le_sup' F (Finset.mem_range.mpr hrlt)
+  rw [heq]
+  exact narrowTwistSmall_mono le_rfl hle hFr
+
+/-- **`FaithfulArchLower` on the reduced debt set.**  The faithful archimedean supply for base
+`b` now rests on exactly three things: `UniformResonantMass` (the route's pre-existing analytic
+input, which covers `q = 1`), `NonPrincipalLocalBound` (an `X`-free bound on `log L(1+it, χ)`)
+and `WideTwistSmall` (the wide twist range).  The twist-uniformity of the constant is a theorem
+(`exists_uniform_narrow_const`), not a hypothesis. -/
+theorem faithfulArchLower_of_urm_of_localBound {b : ℕ} (hb : 2 ≤ b)
+    (hURM : UniformResonantMass) {B : ℝ} (hB : 0 ≤ B)
+    (hloc : NonPrincipalLocalBound B)
+    (hwide : ∀ κ C : ℝ, 0 < κ → WideTwistSmall κ C) :
+    ∃ C : ℝ, FaithfulArchLower b (C + Erdos67b.PrimeEstimates.mertensBound) := by
+  have hkp := kappaDepth_pos hb
+  have hmin0 : 0 ≤ min (Real.pi / (b : ℝ)) ((1 : ℝ) / 256) :=
+    le_min (by positivity) (by norm_num)
+  have hminle : min (Real.pi / (b : ℝ)) ((1 : ℝ) / 256) ≤ 1 / 256 := min_le_right _ _
+  have hkhalf : kappaDepth b ≤ 1 / 2 := by
+    rw [kappaDepth]; nlinarith
+  set κ : ℝ := kappaDepth b / 2 with hκdef
+  have hκ0 : 0 < κ := by simp only [hκdef]; linarith
+  have hκ1 : κ ≤ 1 := by simp only [hκdef]; linarith
+  have hpt : ∀ h' : ℤ, ¬ ((b : ℤ) ∣ h') →
+      ∃ C : ℝ, NarrowTwistSmall (depthRoot b h' 0) κ C := by
+    intro h' hnd
+    have hz : ‖depthRoot b h' 0‖ = 1 := norm_ee_real _
+    have hz1 : depthRoot b h' 0 ≠ 1 := by
+      intro hone
+      have hge := resEps_depthRoot_ge hb hnd
+      rw [hone] at hge
+      simp only [resEps, Complex.arg_one, abs_zero] at hge
+      have : 0 < Real.pi / (b : ℝ) := by positivity
+      linarith
+    obtain ⟨C, hC⟩ := narrowTwistSmall_of_urm_of_localBound hURM hz hz1 hB hloc
+    refine ⟨C, narrowTwistSmall_mono ?_ le_rfl hC⟩
+    have h1 : kappaDepth b ≤ ttExponent (depthRoot b h' 0) := ttExponent_depthRoot_ge hb hnd
+    have : kappaDepth b ≤ min (ttExponent (depthRoot b h' 0)) (1 / 2) := le_min h1 hkhalf
+    simp only [hκdef]; linarith
+  obtain ⟨C0, hC0⟩ := exists_uniform_narrow_const hb hpt
+  exact ⟨C0, faithfulArchLower_of_twist_small hκ0 hκ1 hC0 (hwide κ C0 hκ0)⟩
+
+#print axioms depthRoot_zero_emod
+#print axioms exists_uniform_narrow_const
+#print axioms faithfulArchLower_of_urm_of_localBound
+
+/-! ### The headline on the reduced debt set
+
+`conjC3_of_geom_input_lower` asks for ONE constant `C` across all bases `b ≥ 3`, and the reduced
+narrow-range supply cannot give that: its constant comes from `UniformResonantMass` at window
+half-width `δ ≤ resEps (depthRoot b h' 0)`, which is `≍ π/b`, so it necessarily degrades with
+`b`.  **That is not a defect of the reduction** — `ConjC3` is a statement about each base
+separately (`conjC3_of_weylLambertTwist`), so the correlation input may be assumed with a
+base-dependent implied constant.  The theorem below is the honest shape: `ConjC3` from the
+`K`-point input *at every positive implied constant* plus the three analytic debts. -/
+
+/-- **`ConjC3` from the faithful correlation input and the REDUCED archimedean debt set.**
+The archimedean side is now exactly three named statements — `UniformResonantMass` (already the
+route's input, covering `q = 1`), `NonPrincipalLocalBound` (an `X`-free bound on
+`log L(1+it, χ)` for non-principal `χ`) and `WideTwistSmall` (the wide twist range) — with the
+twist-uniformity of the implied constant proved, not assumed. -/
+theorem conjC3_of_geom_input_reduced {c₀ θ B : ℝ} (hc₀ : 0 < c₀) (hθ0 : 0 < θ) (hθ : θ < 1)
+    (m : ℕ)
+    (hin : ∀ A : ℝ, 0 < A → ∀ b : ℕ, 3 ≤ b → ∀ K,
+      KPointNoExcAtWith A (cKgeom c₀ θ b) (CstKdeg m) K)
+    (hURM : UniformResonantMass) (hB : 0 ≤ B) (hloc : NonPrincipalLocalBound B)
+    (hwide : ∀ κ C : ℝ, 0 < κ → WideTwistSmall κ C) :
+    ConjC3 := by
+  refine conjC3_of_weylLambertTwist fun b hb => ?_
+  obtain ⟨C, hC⟩ := faithfulArchLower_of_urm_of_localBound (by omega : 2 ≤ b) hURM hB hloc hwide
+  exact weylLambertTwist_of_geom_input_at hb hc₀ hθ0 hθ m
+    (hin _ (Real.exp_pos _) b hb) (archSupply_of_faithfulArchLower hC)
+
+#print axioms conjC3_of_geom_input_reduced
+
+
 #print axioms ttPretentiousSumChar_eq
 #print axioms ttPretentiousSumChar_ge
 #print axioms archSupply_of_faithfulArchLower
