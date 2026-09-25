@@ -890,7 +890,7 @@ series at `1+δ+w+iv`; the classical pole-local bound `|ζ'/ζ(s)| ≪ 1/|s-1|` 
 `ζ(1+it) ≠ 0`, already in mathlib, plus compactness) gives exactly these two clauses with
 `T = max(|v|, δ)`. -/
 def SliceBoundSmall (K : ℝ) : Prop :=
-  ∀ (X Y : ℕ) (v : ℝ), 256 ≤ X → sliceCut X ≤ Y → 0 < |v| → |v| ≤ 1 →
+  ∀ (X Y : ℕ) (v : ℝ), 1048576 ≤ X → sliceCut X ≤ Y → 0 < |v| → |v| ≤ 1 →
     (∀ w ∈ Set.Icc (0 : ℝ) (max |v| (Real.log (X : ℝ))⁻¹),
         ‖logWeightedSlice v X Y w‖ ≤ (max |v| (Real.log (X : ℝ))⁻¹)⁻¹ + K) ∧
     (∀ w ∈ Set.Icc (max |v| (Real.log (X : ℝ))⁻¹) 1,
@@ -901,7 +901,7 @@ proved: the damping (laps 97–98), the interchange (lap 100), the decay (lap 10
 integration (lap 102). -/
 theorem dampedSeriesBoundSmall_of_sliceBound {K : ℝ} (hK : 0 ≤ K) (h : SliceBoundSmall K) :
     DampedSeriesBoundSmall (1 + K + tailCost + cutCost) := by
-  refine ⟨256, by norm_num, ?_⟩
+  refine ⟨1048576, by norm_num, ?_⟩
   intro X Y v hX3 hXY hv0 hv1
   have hX : 2 ≤ X := by omega
   have hXR : (3 : ℝ) ≤ (X : ℝ) := by exact_mod_cast (by omega : 3 ≤ X)
@@ -940,7 +940,7 @@ theorem dampedSeriesBoundSmall_of_sliceBound {K : ℝ} (hK : 0 ≤ K) (h : Slice
 /-- **The `ζ'/ζ` input, moderate band, in slice form.**  The de la Vallée Poussin bound
 `|ζ'/ζ(σ+iv)| ≤ C log|v|` on `σ > 1` gives these two clauses with `T = max(1/log(|v|+16), δ)`. -/
 def SliceBoundModerate (K : ℝ) : Prop :=
-  ∀ (X Y : ℕ) (v : ℝ), 256 ≤ X → sliceCut X ≤ Y → 1 < |v| →
+  ∀ (X Y : ℕ) (v : ℝ), 1048576 ≤ X → sliceCut X ≤ Y → 1 < |v| →
     (∀ w ∈ Set.Icc (0 : ℝ) (max (Real.log (|v| + 16))⁻¹ (Real.log (X : ℝ))⁻¹),
         ‖logWeightedSlice v X Y w‖
           ≤ (max (Real.log (|v| + 16))⁻¹ (Real.log (X : ℝ))⁻¹)⁻¹ + K) ∧
@@ -950,7 +950,7 @@ def SliceBoundModerate (K : ℝ) : Prop :=
 /-- **(c′-II-a) REDUCED TO THE SLICE BOUND.** -/
 theorem dampedSeriesBoundModerate_of_sliceBound {K : ℝ} (hK : 0 ≤ K) (h : SliceBoundModerate K) :
     DampedSeriesBoundModerate (1 + K + tailCost + cutCost) := by
-  refine ⟨256, by norm_num, ?_⟩
+  refine ⟨1048576, by norm_num, ?_⟩
   intro X Y v hX3 hXY hv1
   have hX : 2 ≤ X := by omega
   have hXR : (3 : ℝ) ≤ (X : ℝ) := by exact_mod_cast (by omega : 3 ≤ X)
@@ -1145,6 +1145,229 @@ theorem logTail_blocks {Y : ℕ} {a : ℝ} (hY : 2 ≤ Y) (ha : 0 ≤ a) :
       have hIH := ih M le_rfl
       rw [hrange]
       linarith
+
+/-- A shifted geometric sum, with room to spare: `∑_{k<K} q^{k+1} ≤ 2q` for `q ≤ 1/2`. -/
+theorem sum_geom_shift_le {q : ℝ} (hq0 : 0 ≤ q) (hq : q ≤ 1 / 2) (K : ℕ) :
+    ∑ k ∈ Finset.range K, q ^ (k + 1) ≤ 2 * q - 2 * q ^ (K + 1) := by
+  induction K with
+  | zero => simp
+  | succ K ih =>
+    rw [Finset.sum_range_succ]
+    have hpow : (0 : ℝ) ≤ q ^ (K + 1) := by positivity
+    have hstep : 2 * q ^ (K + 2) ≤ q ^ (K + 1) := by
+      have : q ^ (K + 2) = q ^ (K + 1) * q := by ring
+      rw [this]
+      nlinarith
+    linarith
+
+/-- The block weights sum geometrically: `∑_{k<K} X^{-2^k/2} ≤ 2 X^{-1/2}`. -/
+theorem sum_rpow_neg_two_pow_half_le {X : ℝ} (hX : 4 ≤ X) (K : ℕ) :
+    ∑ k ∈ Finset.range K, X ^ (-((2 : ℝ) ^ k / 2)) ≤ 2 * X ^ (-(1 / 2 : ℝ)) := by
+  have hX0 : (0 : ℝ) < X := by linarith
+  have hX1 : (1 : ℝ) ≤ X := by linarith
+  set q : ℝ := X ^ (-(1 / 2 : ℝ)) with hqdef
+  have hq0 : (0 : ℝ) < q := Real.rpow_pos_of_pos hX0 _
+  have hq : q ≤ 1 / 2 := by
+    have h4 : (4 : ℝ) ^ (-(1 / 2 : ℝ)) = 1 / 2 := by
+      rw [show (-(1 / 2 : ℝ)) = -(1 / 2 : ℝ) from rfl, Real.rpow_neg (by norm_num)]
+      rw [show (4 : ℝ) = 2 ^ (2 : ℕ) by norm_num]
+      rw [← Real.rpow_natCast (2 : ℝ) 2, ← Real.rpow_mul (by norm_num)]
+      norm_num
+    calc q ≤ (4 : ℝ) ^ (-(1 / 2 : ℝ)) :=
+          Real.rpow_le_rpow_of_nonpos (by norm_num) hX (by norm_num)
+      _ = 1 / 2 := h4
+  have hterm : ∀ k ∈ Finset.range K, X ^ (-((2 : ℝ) ^ k / 2)) ≤ q ^ (k + 1) := by
+    intro k _
+    have hqk : q ^ (k + 1) = X ^ (-((k : ℝ) + 1) / 2) := by
+      rw [hqdef, ← Real.rpow_natCast (X ^ (-(1 / 2 : ℝ))) (k + 1), ← Real.rpow_mul hX0.le]
+      congr 1
+      push_cast
+      ring
+    rw [hqk]
+    refine Real.rpow_le_rpow_of_exponent_le hX1 ?_
+    have h2k : ((k : ℝ) + 1) ≤ (2 : ℝ) ^ k := by
+      have hk : k + 1 ≤ 2 ^ k := Nat.lt_two_pow_self
+      exact_mod_cast hk
+    have : -((2 : ℝ) ^ k / 2) ≤ -(((k : ℝ) + 1) / 2) := by linarith
+    calc -((2 : ℝ) ^ k / 2) ≤ -(((k : ℝ) + 1) / 2) := this
+      _ = -((k : ℝ) + 1) / 2 := by ring
+  refine le_trans (Finset.sum_le_sum hterm) ?_
+  have := sum_geom_shift_le hq0.le hq K
+  have hpos : (0 : ℝ) ≤ q ^ (K + 1) := by positivity
+  linarith
+
+/-- **The `k`-th block weight, collapsed.**  With `a ≥ 1/log X` and `log Y ≥ (log X)²` the
+log-weight is beaten by the damping: put `t = a·2^k·log Y ≥ 2^k log X`; then `2^k log Y = t/a ≤
+t log X` and `t e^{-t} ≤ 2 e^{-t/2}`, so the block contributes `≤ (2 log X + 2C)·X^{-2^k/2}`. -/
+theorem logTail_term_le {X Y : ℕ} {a : ℝ} (hX : 2 ≤ X) (hY : 2 ≤ Y)
+    (hlogY : (Real.log (X : ℝ)) ^ 2 ≤ Real.log (Y : ℝ)) (ha : (Real.log (X : ℝ))⁻¹ ≤ a) (k : ℕ) :
+    (Y : ℝ) ^ (-(a * 2 ^ k)) * (2 ^ k * Real.log (Y : ℝ) + 2 * (Real.log 4 + 4))
+      ≤ (2 * Real.log (X : ℝ) + 2 * (Real.log 4 + 4)) * (X : ℝ) ^ (-((2 : ℝ) ^ k / 2)) := by
+  have hXR : (2 : ℝ) ≤ (X : ℝ) := by exact_mod_cast hX
+  have hYR : (2 : ℝ) ≤ (Y : ℝ) := by exact_mod_cast hY
+  have hlogX : 0 < Real.log (X : ℝ) := Real.log_pos (by linarith)
+  have hlogY0 : 0 < Real.log (Y : ℝ) := Real.log_pos (by linarith)
+  have ha0 : 0 < a := lt_of_lt_of_le (by positivity) ha
+  have hpow : (0 : ℝ) < (2 : ℝ) ^ k := by positivity
+  set t : ℝ := a * 2 ^ k * Real.log (Y : ℝ) with ht
+  have ht0 : 0 < t := by rw [ht]; positivity
+  -- `t ≥ 2^k log X`
+  have haY : Real.log (X : ℝ) ≤ a * Real.log (Y : ℝ) := by
+    have h1 : (Real.log (X : ℝ))⁻¹ * Real.log (Y : ℝ) ≤ a * Real.log (Y : ℝ) :=
+      mul_le_mul_of_nonneg_right ha hlogY0.le
+    have h2 : Real.log (X : ℝ) ≤ (Real.log (X : ℝ))⁻¹ * Real.log (Y : ℝ) := by
+      rw [inv_mul_eq_div, le_div_iff₀ hlogX]
+      nlinarith [hlogY]
+    linarith
+  have htlow : (2 : ℝ) ^ k * Real.log (X : ℝ) ≤ t := by
+    rw [ht]
+    calc (2 : ℝ) ^ k * Real.log (X : ℝ) ≤ (2 : ℝ) ^ k * (a * Real.log (Y : ℝ)) :=
+          mul_le_mul_of_nonneg_left haY hpow.le
+      _ = a * 2 ^ k * Real.log (Y : ℝ) := by ring
+  -- the damping factor is `e^{-t}`
+  have hYrpow : (Y : ℝ) ^ (-(a * 2 ^ k)) = Real.exp (-t) := by
+    rw [Real.rpow_def_of_pos (by linarith), ht]; ring_nf
+  -- `2^k log Y ≤ t · log X`
+  have hmass : (2 : ℝ) ^ k * Real.log (Y : ℝ) ≤ t * Real.log (X : ℝ) := by
+    have hinv : a⁻¹ ≤ Real.log (X : ℝ) := by
+      rw [inv_le_comm₀ ha0 hlogX]; exact ha
+    have hta : t * a⁻¹ = 2 ^ k * Real.log (Y : ℝ) := by
+      rw [ht]; field_simp
+    have : t * a⁻¹ ≤ t * Real.log (X : ℝ) := mul_le_mul_of_nonneg_left hinv ht0.le
+    linarith [hta ▸ this]
+  -- `t e^{-t} ≤ 2 e^{-t/2}` and `e^{-t} ≤ e^{-t/2} ≤ X^{-2^k/2}`
+  have hhalf : Real.exp (-t) ≤ Real.exp (-(t / 2)) := Real.exp_le_exp.mpr (by linarith)
+  have hcap : Real.exp (-(t / 2)) ≤ (X : ℝ) ^ (-((2 : ℝ) ^ k / 2)) := by
+    rw [Real.rpow_def_of_pos (by linarith)]
+    exact Real.exp_le_exp.mpr (by nlinarith [htlow])
+  have hte : t * Real.exp (-t) ≤ 2 * Real.exp (-(t / 2)) := by
+    have h1 : t / 2 + 1 ≤ Real.exp (t / 2) := Real.add_one_le_exp _
+    have h2 : Real.exp (-t) = Real.exp (-(t / 2)) * Real.exp (-(t / 2)) := by
+      rw [← Real.exp_add]; ring_nf
+    have h3 : Real.exp (-(t / 2)) * Real.exp (t / 2) = 1 := by
+      rw [← Real.exp_add]; simp
+    have hpos : 0 < Real.exp (-(t / 2)) := Real.exp_pos _
+    rw [h2]
+    nlinarith [hpos, h1, h3]
+  have hCnn : (0 : ℝ) ≤ 2 * (Real.log 4 + 4) := by
+    have : (0 : ℝ) < Real.log 4 := Real.log_pos (by norm_num)
+    linarith
+  calc (Y : ℝ) ^ (-(a * 2 ^ k)) * (2 ^ k * Real.log (Y : ℝ) + 2 * (Real.log 4 + 4))
+      = Real.exp (-t) * (2 ^ k * Real.log (Y : ℝ)) + Real.exp (-t) * (2 * (Real.log 4 + 4)) := by
+        rw [hYrpow]; ring
+    _ ≤ Real.exp (-t) * (t * Real.log (X : ℝ)) + Real.exp (-t) * (2 * (Real.log 4 + 4)) := by
+        have := mul_le_mul_of_nonneg_left hmass (Real.exp_pos (-t)).le
+        linarith
+    _ = Real.log (X : ℝ) * (t * Real.exp (-t)) + (2 * (Real.log 4 + 4)) * Real.exp (-t) := by ring
+    _ ≤ Real.log (X : ℝ) * (2 * Real.exp (-(t / 2)))
+          + (2 * (Real.log 4 + 4)) * Real.exp (-(t / 2)) := by
+        have h1 := mul_le_mul_of_nonneg_left hte hlogX.le
+        have h2 := mul_le_mul_of_nonneg_left hhalf hCnn
+        linarith
+    _ = (2 * Real.log (X : ℝ) + 2 * (Real.log 4 + 4)) * Real.exp (-(t / 2)) := by ring
+    _ ≤ (2 * Real.log (X : ℝ) + 2 * (Real.log 4 + 4)) * (X : ℝ) ^ (-((2 : ℝ) ^ k / 2)) := by
+        refine mul_le_mul_of_nonneg_left hcap ?_
+        linarith
+
+/-- `log 4 ≤ 1.4`. -/
+theorem log_four_le : Real.log 4 ≤ 1.4 := by
+  have h : Real.log 4 = 2 * Real.log 2 := by
+    rw [show (4 : ℝ) = 2 ^ (2 : ℕ) by norm_num, Real.log_pow]; norm_num
+  have := Real.log_two_lt_d9
+  rw [h]; linarith
+
+/-- **The numeric collapse.**  `(2 log X + 2C)·2·X^{-1/2} ≤ 1` for `X ≥ 2²⁰`.  Proved through
+`s = X^{1/4} ≥ 32` and `log X = 4 log s ≤ 4(s−1)`, which turns the claim into `16s + 4C − 16 ≤ s²`. -/
+theorem tailNumeric_le {X : ℝ} (hX : (1048576 : ℝ) ≤ X) :
+    (2 * Real.log X + 2 * (Real.log 4 + 4)) * (2 * X ^ (-(1 / 2 : ℝ))) ≤ 1 := by
+  have hX0 : (0 : ℝ) < X := by linarith
+  set s : ℝ := X ^ (1 / 4 : ℝ) with hs
+  have hs0 : 0 < s := Real.rpow_pos_of_pos hX0 _
+  have hs32 : (32 : ℝ) ≤ s := by
+    have hbase : ((1048576 : ℝ)) ^ (1 / 4 : ℝ) = 32 := by
+      have h1 : (1048576 : ℝ) = (32 : ℝ) ^ (4 : ℕ) := by norm_num
+      rw [h1, show (1 / 4 : ℝ) = ((4 : ℕ) : ℝ)⁻¹ by norm_num]
+      exact Real.pow_rpow_inv_natCast (by norm_num) (by norm_num)
+    calc (32 : ℝ) = ((1048576 : ℝ)) ^ (1 / 4 : ℝ) := hbase.symm
+      _ ≤ s := Real.rpow_le_rpow (by norm_num) hX (by norm_num)
+  have hsq : s ^ 2 = X ^ (1 / 2 : ℝ) := by
+    rw [hs, ← Real.rpow_natCast (X ^ (1 / 4 : ℝ)) 2, ← Real.rpow_mul hX0.le]
+    norm_num
+  have hneg : X ^ (-(1 / 2 : ℝ)) = (s ^ 2)⁻¹ := by
+    rw [hsq, Real.rpow_neg hX0.le]
+  have hlogs : Real.log s = 1 / 4 * Real.log X := by rw [hs, Real.log_rpow hX0]
+  have hlog : Real.log X ≤ 4 * (s - 1) := by
+    have h1 : Real.log s ≤ s - 1 := Real.log_le_sub_one_of_pos hs0
+    rw [hlogs] at h1
+    linarith
+  have hC : 2 * (Real.log 4 + 4) ≤ 10.8 := by linarith [log_four_le]
+  have hsq0 : (0 : ℝ) < s ^ 2 := by positivity
+  rw [hneg]
+  have key : (2 * Real.log X + 2 * (Real.log 4 + 4)) * 2 ≤ s ^ 2 := by nlinarith [hs32, hlog, hC]
+  have hrw : (2 * Real.log X + 2 * (Real.log 4 + 4)) * (2 * (s ^ 2)⁻¹)
+      = ((2 * Real.log X + 2 * (Real.log 4 + 4)) * 2) / s ^ 2 := by field_simp
+  rw [hrw, div_le_one hsq0]
+  exact key
+
+/-- **THE LOG-WEIGHTED TAIL IS AT MOST `1`.**  Beyond the cut `sliceCut X = exp((log X)²)`, and for
+every shift `a ≥ δ = 1/log X` (i.e. every `w ≥ 0` in the slice), the log-weighted damped mass of the
+primes past the cut is at most `1`, uniformly in the far endpoint `Z`.
+
+This is what makes the slice inputs honest: the truncated von Mangoldt series at `sliceCut X` is
+within `O(1)` of the full one, hence of `−ζ'/ζ(1+δ+w+iv)` (after the prime-power correction), while
+at the consumers' own cutoff `Y = X` it is not (the tail there is `≍ 1/(δ+w)`).  `2²⁰` is where the
+numeric collapse `(4 log X + 4C)/√X ≤ 1` first holds. -/
+theorem logTail_le {X Y Z : ℕ} (hX : 1048576 ≤ X) (hY : sliceCut X ≤ Y) {a : ℝ}
+    (ha : (Real.log (X : ℝ))⁻¹ ≤ a) :
+    ∑ p ∈ primesInInterval Y Z, Real.log (p : ℝ) * (p : ℝ) ^ (-(1 : ℝ) - a) ≤ 1 := by
+  classical
+  have hXR : (1048576 : ℝ) ≤ (X : ℝ) := by exact_mod_cast hX
+  have hX2 : 2 ≤ X := by omega
+  have hlogX : 0 < Real.log (X : ℝ) := Real.log_pos (by linarith)
+  have hlogX1 : 1 ≤ Real.log (X : ℝ) := by
+    have h : Real.log (Real.exp 1) ≤ Real.log (X : ℝ) :=
+      Real.log_le_log (Real.exp_pos 1) (by linarith [Real.exp_one_lt_d9])
+    rwa [Real.log_exp] at h
+  have ha0 : 0 < a := lt_of_lt_of_le (by positivity) ha
+  -- the cut delivers `log Y ≥ (log X)²`
+  have hcut : Real.exp ((Real.log (X : ℝ)) ^ 2) ≤ (Y : ℝ) := by
+    have h1 : Real.exp ((Real.log (X : ℝ)) ^ 2) ≤ (sliceCut X : ℝ) := by
+      rw [sliceCut]; exact Nat.le_ceil _
+    have h2 : ((sliceCut X : ℕ) : ℝ) ≤ (Y : ℝ) := by exact_mod_cast hY
+    linarith
+  have hYpos : (0 : ℝ) < (Y : ℝ) := lt_of_lt_of_le (Real.exp_pos _) hcut
+  have hlogY : (Real.log (X : ℝ)) ^ 2 ≤ Real.log (Y : ℝ) := by
+    have := Real.log_le_log (Real.exp_pos _) hcut
+    rwa [Real.log_exp] at this
+  have hY2 : 2 ≤ Y := by
+    have h1 : (1 : ℝ) ≤ (Real.log (X : ℝ)) ^ 2 := by nlinarith
+    have h2 := Real.add_one_le_exp ((Real.log (X : ℝ)) ^ 2)
+    have : (2 : ℝ) ≤ (Y : ℝ) := by linarith
+    exact_mod_cast this
+  -- block decomposition
+  have hZlt : Z ≤ Y ^ (2 ^ Z) := le_of_lt <| by
+    calc Z < 2 ^ Z := Nat.lt_two_pow_self
+      _ ≤ 2 ^ (2 ^ Z) := Nat.pow_le_pow_right (by omega) (Nat.le_of_lt Nat.lt_two_pow_self)
+      _ ≤ Y ^ (2 ^ Z) := Nat.pow_le_pow_left hY2 _
+  have hblocks := logTail_blocks (Y := Y) (a := a) hY2 ha0.le Z Z hZlt
+  have hterms : ∑ k ∈ Finset.range Z,
+      (Y : ℝ) ^ (-(a * 2 ^ k)) * (2 ^ k * Real.log (Y : ℝ) + 2 * (Real.log 4 + 4))
+      ≤ ∑ k ∈ Finset.range Z,
+          (2 * Real.log (X : ℝ) + 2 * (Real.log 4 + 4)) * (X : ℝ) ^ (-((2 : ℝ) ^ k / 2)) :=
+    Finset.sum_le_sum (fun k _ => logTail_term_le hX2 hY2 hlogY ha k)
+  have hgeom : ∑ k ∈ Finset.range Z, (X : ℝ) ^ (-((2 : ℝ) ^ k / 2))
+      ≤ 2 * (X : ℝ) ^ (-(1 / 2 : ℝ)) :=
+    sum_rpow_neg_two_pow_half_le (by linarith) Z
+  have hCnn : (0 : ℝ) ≤ 2 * Real.log (X : ℝ) + 2 * (Real.log 4 + 4) := by
+    have : (0 : ℝ) < Real.log 4 := Real.log_pos (by norm_num)
+    linarith
+  have hfinal : ∑ k ∈ Finset.range Z,
+      (2 * Real.log (X : ℝ) + 2 * (Real.log 4 + 4)) * (X : ℝ) ^ (-((2 : ℝ) ^ k / 2))
+      ≤ (2 * Real.log (X : ℝ) + 2 * (Real.log 4 + 4)) * (2 * (X : ℝ) ^ (-(1 / 2 : ℝ))) := by
+    rw [← Finset.mul_sum]
+    exact mul_le_mul_of_nonneg_left hgeom hCnn
+  have hnum := tailNumeric_le (X := (X : ℝ)) hXR
+  linarith
 
 end
 

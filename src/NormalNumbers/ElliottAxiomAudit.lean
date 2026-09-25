@@ -222,3 +222,10 @@ edits; see the fidelity note in `STATUS.md`.
 #print axioms NormalNumbers.ElliottDamped.sum_log_div_primesInInterval_le
 #print axioms NormalNumbers.ElliottDamped.logBlock_le
 #print axioms NormalNumbers.ElliottDamped.logTail_blocks
+
+/-! ### The tail bound, closed (lap 105) -/
+#print axioms NormalNumbers.ElliottDamped.sum_geom_shift_le
+#print axioms NormalNumbers.ElliottDamped.sum_rpow_neg_two_pow_half_le
+#print axioms NormalNumbers.ElliottDamped.logTail_term_le
+#print axioms NormalNumbers.ElliottDamped.tailNumeric_le
+#print axioms NormalNumbers.ElliottDamped.logTail_le

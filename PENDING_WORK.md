@@ -14,7 +14,23 @@ lower half), `sum_log_div_primesInInterval_le` (block mass `≤ log(N/M)+2(log4+
 (one square block of the log-weighted tail), `logTail_blocks` (the iteration:
 `∑_{p∈(Y,Z]} log p·p^{-1-a} ≤ ∑_k Y^{-a2^k}(2^k log Y + 2C)`, exact geometric shape).
 
-**NEXT — `logTail_le`, the numeric collapse.**  With `L = log Y ≥ (log X)²` and `a ≥ 1/log X`, put
+### ✅ Lap 105 — `logTail_le` IS PROVED
+
+`∑_{p ∈ (Y,Z]} log p·p^{-1-a} ≤ 1` for every `Y ≥ sliceCut X`, every `a ≥ 1/log X` and every far
+endpoint `Z`, once `X ≥ 2²⁰`.  Sorry-free, in the audit surface, via `logTail_term_le`
+(`t = a2^k log Y ≥ 2^k log X`, `t e^{-t} ≤ 2e^{-t/2}`), `sum_rpow_neg_two_pow_half_le`
+(`∑_k X^{-2^k/2} ≤ 2X^{-1/2}`, through `2^k ≥ k+1` and a shifted geometric sum) and
+`tailNumeric_le` (`s = X^{1/4} ≥ 32`, `log X ≤ 4(s−1)`, so the claim is `16s + 4C − 16 ≤ s²`).
+Both slice Props now carry `2²⁰ ≤ X` — the honest threshold the proof delivers.
+
+**NEXT — the prime-power correction, then the pole bound.**  With the tail closed, the remaining gap
+between `logWeightedSlice` and `−ζ'/ζ(1+δ+w+iv)` is the prime powers:
+`∑_{p,j≥2} log p·p^{-jσ} ≤ 2∑_p log p·p^{-2σ} ≤ 2∑_{n≥2} log n·n^{-2} = O(1)` for `σ ≥ 1`
+(same `p`-series technique as lap 101, and no cancellation needed).  Then `SliceBoundSmall` is the
+genuine pole-local statement `|ζ'/ζ(s)| ≤ 1/|s−1| + O(1)` on `σ > 1`, `|Im s| ≤ 1`, whose inputs are
+`ζ(1+it) ≠ 0` (mathlib) plus compactness of `{|t| ∈ [c,1]}`.
+
+**Superseded plan (kept for the record) — the numeric collapse.**  With `L = log Y ≥ (log X)²` and `a ≥ 1/log X`, put
 `u = aL ≥ log X`.  Then `Y^{-a2^k} ≤ X^{-2^k}` and, splitting `x e^{-ax} = (x e^{-ax/2})e^{-ax/2}`
 with `x = 2^k L` (so `x e^{-ax/2} ≤ 2/(ea) ≤ 2 log X/e`),
 `term_k ≤ (2 log X/e)·X^{-2^{k-1}} + 2C·X^{-2^k}`, hence
