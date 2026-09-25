@@ -63,6 +63,8 @@ edits; see the fidelity note in `STATUS.md`.
 #print axioms NormalNumbers.ElliottCaseAThin.sum_window_le_transfer_ge
 #print axioms NormalNumbers.ElliottCaseAThin.le_integerAffine_of_mem_window
 #print axioms NormalNumbers.ElliottCaseAThin.norm_elliottLogCorrelation_le_caseA_thin
+#print axioms NormalNumbers.ElliottCaseAThin.div_le_four_mul
+#print axioms NormalNumbers.ElliottCaseAThin.natLog_mul_log_two_le
 
 -- leaf 2, the assembly (gap-free itself; the three halves below carry sorryAx)
 #print axioms NormalNumbers.ElliottLeafTwo.nonasymptotic_of_affineCM

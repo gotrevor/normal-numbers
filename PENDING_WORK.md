@@ -187,6 +187,35 @@ Implementation note worth keeping: writing the step as `shifted d / d^{1/4}` rat
 `d^{-1/4} · shifted d` keeps **every** rpow exponent positive, which removes all the
 `Real.rpow_neg` friction; `gcongr` then closes the monotonicity in one call.
 
+## Lap 63 (2026-09-25) — the two numeric bridges for the Case-A threshold
+
+Added to `src/NormalNumbers/ElliottCaseAThin.lean`, **zero sorry, trust triple**:
+
+* `lt_mul_div_add_one` — `X < W(⌊X/W⌋+1)`.
+* **`div_le_four_mul`** — once `⌊X/W⌋ ≥ 2|b₁| + 2`, the dyadic range satisfies
+  `Y / L ≤ 4W` where `Y = a₁X+|b₁|`, `L = a₁(⌊X/W⌋+1) − |b₁|`.  So the block count
+  `⌊log₂(Y/L)⌋+1 ≤ log₂ W + 3` — the right order for the target `ε log W`.
+* `natLog_mul_log_two_le` — `Nat.log 2 m · log 2 ≤ log m`, off `Nat.pow_log_le_self`; the bridge
+  from the dyadic block count to the real logarithm.
+
+Two notes worth keeping.  (a) `div_le_four_mul` is proved **over `ℤ`** and cast back, because the
+nat truncated subtraction in `L` makes `4W(M−b) = 4WM − 4Wb` a side condition; over `ℤ` the whole
+thing is `linarith` from three explicit steps.  (b) The hypothesis `⌊X/W⌋ ≥ 2|b₁|+2` is exactly
+what makes the shift negligible: the margin needed is `b(1+4W) ≤ 3Wa₁(q+1)`, and `q+1 ≥ 2b+3` gives
+`6Wb+9W` on the right, leaving `b ≤ 2Wb+9W` — true, but `q ≥ b+1` alone is **not** enough.
+
+### The remaining shape of `exists_caseA_thin_threshold`
+
+With the bridges in hand it is a dichotomy on `⌊X/W⌋`:
+* `⌊X/W⌋ ≥ 2|b₁|+2` — use `norm_elliottLogCorrelation_le_caseA_thin` with
+  `L = a₁(⌊X/W⌋+1) − |b₁|` and `div_le_four_mul`;
+* `⌊X/W⌋ < 2|b₁|+2` — then `X < W(2|b₁|+3)`, so `log X ≤ log W + log(2|b₁|+3)`, i.e. we are in the
+  **thick** regime (take `θ = 1/2`, valid once `W ≥ 2|b₁|+3`), and the already-proved
+  `ElliottCaseA.exists_caseA_threshold` applies.
+Note `primeDefect` is monotone in its scale (its summands `1/p − ‖g p‖/p` are `≥ 0` for `1`-bounded
+`g`), so the hypothesis stated at `L` implies the one the thick lemma wants at `Y`.  That
+monotonicity is the joint that makes the two branches share one hypothesis.
+
 ### Where leaf 2 stands
 
 Two sorries remain, both in `src/NormalNumbers/ElliottLeafTwo.lean`:

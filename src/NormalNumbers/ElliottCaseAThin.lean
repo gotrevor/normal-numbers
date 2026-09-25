@@ -234,6 +234,82 @@ theorem norm_elliottLogCorrelation_le_caseA_thin {g₁ g₂ : ℤ → ℂ}
         have hmul := mul_le_mul_of_nonneg_left this hCnn
         linarith
 
+/-! ## Numeric bridges for the Case-A threshold
+
+Two elementary estimates, both needed to turn the dyadic block count into `ε log W`.
+-/
+
+/-- `X < W (⌊X/W⌋ + 1)`. -/
+theorem lt_mul_div_add_one {X W : ℕ} (hW : 0 < W) : X < W * (X / W + 1) := by
+  have h1 : W * (X / W) + X % W = X := Nat.div_add_mod X W
+  have h2 : X % W < W := Nat.mod_lt _ hW
+  calc X = W * (X / W) + X % W := h1.symm
+    _ < W * (X / W) + W := by omega
+    _ = W * (X / W + 1) := by ring
+
+/-- **The thin-window ratio bound.**  Once `⌊X/W⌋ ≥ 2|b₁| + 2`, the dyadic range `Y/L` is at most
+`4W` — so the block count `⌊log₂(Y/L)⌋ + 1` is `log₂ W + O(1)`, which is the right order.
+
+The hypothesis is exactly what makes the shift `|b₁|` negligible against `a₁ X / W`. -/
+theorem div_le_four_mul {a₁ W X b : ℕ} (ha₁ : 1 ≤ a₁) (hW : 1 ≤ W)
+    (hq : 2 * b + 2 ≤ X / W) :
+    (a₁ * X + b) / (a₁ * (X / W + 1) - b) ≤ 4 * W := by
+  set q : ℕ := X / W with hqdef
+  have hXlt : X < W * (q + 1) := lt_mul_div_add_one hW
+  have hq3 : 2 * b + 3 ≤ q + 1 := by omega
+  have hbM' : b + 1 ≤ a₁ * (q + 1) := by
+    calc b + 1 ≤ q + 1 := by omega
+      _ = 1 * (q + 1) := by ring
+      _ ≤ a₁ * (q + 1) := Nat.mul_le_mul_right _ ha₁
+  have hbM : b ≤ a₁ * (q + 1) := by omega
+  have hLpos : 0 < a₁ * (q + 1) - b := by omega
+  -- the key inequality, proved over `ℤ` to avoid truncated subtraction
+  have hZ : ((a₁ * X + b : ℕ) : ℤ) ≤ 4 * (W : ℤ) * (((a₁ : ℤ) * ((q : ℤ) + 1)) - (b : ℤ)) := by
+    have hA : (1 : ℤ) ≤ (a₁ : ℤ) := by exact_mod_cast ha₁
+    have hWz : (1 : ℤ) ≤ (W : ℤ) := by exact_mod_cast hW
+    have hbz : (0 : ℤ) ≤ (b : ℤ) := by positivity
+    have hXz : (X : ℤ) + 1 ≤ (W : ℤ) * ((q : ℤ) + 1) := by
+      have : (X : ℤ) < (W : ℤ) * ((q : ℤ) + 1) := by exact_mod_cast hXlt
+      omega
+    have hq3z : 2 * (b : ℤ) + 3 ≤ (q : ℤ) + 1 := by exact_mod_cast hq3
+    have step1 : (a₁ : ℤ) * X + (a₁ : ℤ) ≤ (a₁ : ℤ) * ((W : ℤ) * ((q : ℤ) + 1)) := by
+      have := mul_le_mul_of_nonneg_left hXz (by linarith : (0 : ℤ) ≤ (a₁ : ℤ))
+      linarith [this]
+    have step2 : 3 * (W : ℤ) * (2 * (b : ℤ) + 3) ≤
+        3 * (W : ℤ) * ((a₁ : ℤ) * ((q : ℤ) + 1)) := by
+      have h1 : (2 * (b : ℤ) + 3) ≤ (a₁ : ℤ) * ((q : ℤ) + 1) := by nlinarith
+      nlinarith
+    have step3 : (b : ℤ) + 4 * (W : ℤ) * (b : ℤ) ≤
+        6 * (W : ℤ) * (b : ℤ) + 9 * (W : ℤ) + (a₁ : ℤ) := by nlinarith
+    push_cast
+    linarith [step1, step2, step3]
+  have hkey : a₁ * X + b ≤ 4 * W * (a₁ * (q + 1) - b) := by
+    have hcast : ((a₁ * (q + 1) - b : ℕ) : ℤ) = ((a₁ : ℤ) * ((q : ℤ) + 1)) - (b : ℤ) := by
+      rw [Nat.cast_sub hbM]
+      push_cast
+      ring
+    have : ((a₁ * X + b : ℕ) : ℤ) ≤ ((4 * W * (a₁ * (q + 1) - b) : ℕ) : ℤ) := by
+      push_cast [hcast]
+      push_cast at hZ
+      linarith
+    exact_mod_cast this
+  calc (a₁ * X + b) / (a₁ * (q + 1) - b)
+      ≤ (4 * W * (a₁ * (q + 1) - b)) / (a₁ * (q + 1) - b) :=
+        Nat.div_le_div_right hkey
+    _ = 4 * W := Nat.mul_div_cancel _ hLpos
+
+/-- `Nat.log 2 m · log 2 ≤ log m`: the bridge from the dyadic block count to the real logarithm. -/
+theorem natLog_mul_log_two_le {m : ℕ} (hm : 1 ≤ m) :
+    ((Nat.log 2 m : ℕ) : ℝ) * Real.log 2 ≤ Real.log (m : ℝ) := by
+  have hpow : 2 ^ Nat.log 2 m ≤ m := Nat.pow_log_le_self 2 (by omega)
+  have hmr : (0 : ℝ) < (m : ℝ) := by exact_mod_cast hm
+  have h1 : ((2 ^ Nat.log 2 m : ℕ) : ℝ) ≤ (m : ℝ) := by exact_mod_cast hpow
+  have h2 : Real.log ((2 ^ Nat.log 2 m : ℕ) : ℝ) ≤ Real.log (m : ℝ) :=
+    Real.log_le_log (by positivity) h1
+  refine le_trans (le_of_eq ?_) h2
+  push_cast
+  rw [Real.log_pow]
+
 end
 
 end NormalNumbers.ElliottCaseAThin
