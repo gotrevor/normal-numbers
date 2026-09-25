@@ -9538,3 +9538,50 @@ averaging `∑_{N<n≤2N}`, `L^{-c}` saving with `1 ≤ L ≤ log X`, progressio
 `W ≤ L^c`, exceptional set `E ⊂ [√X,X]` of log-density `≪ L^{-c}`) — and the `D = 2`
 **natural-density** rung derived from it, which is what discharges `LogToNaturalCorrelation`
 at `K = 2`.
+
+## Lap 62 (2026-09-25) — TT Thm 3.1(ii) stated faithfully; and the exceptional set is DECISIVE
+
+`src/NormalNumbers/C3MrtTTThm31.lean`, sorry-free, `[propext, Classical.choice, Quot.sound]`.
+
+* `TwoPointNaturalCorrelation` — Tao–Teräväinen arXiv 2512.01739 **Theorem 3.1(ii)** verbatim:
+  1-bounded multiplicative `g₁,g₂`; `2 ≤ X`, `1 ≤ L ≤ log X`; `δ_N = 0`; the non-pretentiousness
+  hypothesis (3.3) as `TTNonPretentious` (built on `ttPretentiousSum`, TT's
+  `M(g; X², log^{1/125} X)`); conclusion an exceptional set `E ⊆ [√X, X]`, measurable, with the
+  logarithmic density bound written as a genuine integral `∫_E t⁻¹ ≤ Cst·L^{-c}·log X`, and
+  `(W/N)·∑_{N<n≤2N, n≡b (W)} g₁(n+h₁)g₂(n+h₂) ≪ L^{-c}` for `N ∈ [√X,X] \ E`,
+  `W, h₁, h₂ ≤ L^c`, `h₁ ≠ h₂`.
+* `c3_two_point_natural_of_TT` — the instantiation the route wants: `g_i = z_i^ω` (admissible by
+  `isCoprimeMultiplicativeNat_zOmegaNat`), `h₁ = 1`, `h₂ = 2`, `W = M₀`, `b = r`.  Output: a
+  **natural**-density `L^{-c}` bound on the C3 two-point correlation over a dyadic window along
+  the class of `r` mod `M₀` — in the original variable, weight `1`.
+
+### The route-decisive finding (🚦 C3-T2 verdict)
+
+**TT Thm 3.1 does NOT discharge `LogToNaturalCorrelation 2` as that predicate is stated.**
+`LogToNaturalCorrelation K` demands `Tendsto … atTop (𝓝 0)`: a bound at **every** scale.
+Thm 3.1 gives it only off `E`, and a set of logarithmic density `o(1)` can contain a whole
+block `[A, A^{1+δ}]` — log-mass `δ log A`, a positive proportion of `log X` at `A = X^{1/2}`.
+Concretely, `E = ⋃_k [2^{k³}, 2^{k³+k}]` has logarithmic density `→ 0` while containing blocks
+of ratio `2^k → ∞`; a sequence supported there tends to `0` off `E` and not at all.  This
+matches TT in print (`:2997`): removing the exceptional set is out of reach.
+
+**Consequence for the ledger — an improvement, not a defeat.**  The `D = 2` row must be split:
+
+* `LogToNaturalCorrelationExc 2` (scale-exceptional natural-density two-point rung) — a
+  **published theorem**, now formalised as `TwoPointNaturalCorrelation` and wired to the C3
+  summand.  🟡.
+* `LogToNaturalCorrelation 2` (every scale) — 🔴, and now *named as open in the literature*
+  rather than merely unproved here.
+
+### Next attack
+
+1. Formalise the counterexample above as a Lean theorem (`exceptional_scales_not_tendsto`):
+   a sequence `a : ℕ → ℝ`, `0 ≤ a ≤ 1`, with an exceptional exponent set of density `0`, such
+   that `a → 0` off it but `¬ Tendsto a atTop (𝓝 0)`.  This turns the prose above into a
+   machine-checked obstruction and is the correct way to record a refutation.
+2. Then ask the *right* question: does the downstream consumer
+   (`depthAvg_tendsto_of_transfer` → `weylLambertTwist_holds`) actually need every scale, or
+   does a log-density-one set of scales suffice?  `weylLambertTwist_holds` is a Weyl-sum
+   statement along `N → ∞`; if the reduction can be re-run over a density-one scale sequence,
+   the `D = 2` layer becomes unconditional on a published theorem.  That is the highest-value
+   open question on this route and it has never been asked.
