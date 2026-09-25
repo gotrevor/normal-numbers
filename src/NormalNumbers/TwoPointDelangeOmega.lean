@@ -391,11 +391,12 @@ ray `[0,1]·ξ`, with `‖ξ‖ = 1` and `Re ξ < 0`, then
 
 The first term is `≍ (log N)^{Re ξ} → 0`; the second carries the gain `1/L = O(1/log log N)`, so
 `B = O(1)` — a *boundedness* statement — already forces `S(N; ξ) → 0`. -/
-theorem norm_delangeSv_le {N : ℕ} (hN : 1 ≤ N) {ξ : ℂ} (hξ : ‖ξ‖ = 1) (hre : ξ.re < 0)
+theorem norm_delangeSv_le {N : ℕ} (hN : 1 ≤ N) {ξ : ℂ} (hre : ξ.re < 0)
     (hL : 0 < delangeL N) {B : ℝ} (hBnn : 0 ≤ B)
     (hB : ∀ r ∈ Set.Icc (0:ℝ) 1, ‖delangeE N ((r : ℂ) * ξ)‖ ≤ B) :
-    ‖delangeSv N ξ‖ ≤ Real.exp (delangeL N * ξ.re) + B / (delangeL N * (-ξ.re)) := by
+    ‖delangeSv N ξ‖ ≤ Real.exp (delangeL N * ξ.re) + B * ‖ξ‖ / (delangeL N * (-ξ.re)) := by
   classical
+  have hξ : ‖ξ‖ = ‖ξ‖ := rfl
   set L : ℝ := delangeL N with hLdef
   set a : ℝ := L * (-ξ.re) with hadef
   have hapos : 0 < a := by rw [hadef]; nlinarith [hL, hre]
@@ -421,21 +422,24 @@ theorem norm_delangeSv_le {N : ℕ} (hN : 1 ≤ N) {ξ : ℂ} (hξ : ‖ξ‖ = 
   have hint : IntervalIntegrable H' MeasureTheory.volume 0 1 := hcontH'.intervalIntegrable 0 1
   have hftc := intervalIntegral.integral_eq_sub_of_hasDerivAt hderiv hint
   -- bound the integral
-  have hptw : ∀ r ∈ Set.Icc (0:ℝ) 1, ‖H' r‖ ≤ B * Real.exp (a * r) := by
+  have hptw : ∀ r ∈ Set.Icc (0:ℝ) 1, ‖H' r‖ ≤ (B * ‖ξ‖) * Real.exp (a * r) := by
     intro r hr
     rw [hH'def]
     simp only
-    rw [norm_mul, norm_mul, hnormexp r, hξ, mul_one]
-    have := hB r hr
-    have hpos : (0:ℝ) < Real.exp (a * r) := Real.exp_pos _
-    nlinarith [this, hpos]
+    rw [norm_mul, norm_mul, hnormexp r]
+    have hE := hB r hr
+    calc Real.exp (a * r) * ‖ξ‖ * ‖delangeE N ((r : ℂ) * ξ)‖
+        ≤ Real.exp (a * r) * ‖ξ‖ * B :=
+          mul_le_mul_of_nonneg_left hE (by positivity)
+      _ = (B * ‖ξ‖) * Real.exp (a * r) := by ring
   have hintnorm : IntervalIntegrable (fun r => ‖H' r‖) MeasureTheory.volume 0 1 :=
     (hcontH'.norm).intervalIntegrable 0 1
-  have hintb : IntervalIntegrable (fun r : ℝ => B * Real.exp (a * r)) MeasureTheory.volume 0 1 := by
+  have hintb : IntervalIntegrable (fun r : ℝ => (B * ‖ξ‖) * Real.exp (a * r))
+      MeasureTheory.volume 0 1 := by
     apply Continuous.intervalIntegrable; fun_prop
   have hle1 : ‖∫ r in (0:ℝ)..1, H' r‖ ≤ ∫ r in (0:ℝ)..1, ‖H' r‖ :=
     intervalIntegral.norm_integral_le_integral_norm (by norm_num)
-  have hle2 : (∫ r in (0:ℝ)..1, ‖H' r‖) ≤ ∫ r in (0:ℝ)..1, B * Real.exp (a * r) :=
+  have hle2 : (∫ r in (0:ℝ)..1, ‖H' r‖) ≤ ∫ r in (0:ℝ)..1, (B * ‖ξ‖) * Real.exp (a * r) :=
     intervalIntegral.integral_mono_on (by norm_num) hintnorm hintb hptw
   rw [integral_const_mul_exp_mul (ne_of_gt hapos)] at hle2
   -- `H 1 = H 0 + ∫`, and `H 0 = 1`
@@ -443,7 +447,7 @@ theorem norm_delangeSv_le {N : ℕ} (hN : 1 ≤ N) {ξ : ℂ} (hξ : ‖ξ‖ = 
     rw [hHdef]
     simp only [Complex.ofReal_zero, mul_zero, neg_zero, Complex.exp_zero, one_mul, zero_mul]
     exact delangeSv_zero hN
-  have hH1 : ‖H 1‖ ≤ 1 + (B / a) * (Real.exp a - 1) := by
+  have hH1 : ‖H 1‖ ≤ 1 + ((B * ‖ξ‖) / a) * (Real.exp a - 1) := by
     have : H 1 = H 0 + ∫ r in (0:ℝ)..1, H' r := by rw [hftc]; ring
     rw [this, hH0]
     refine le_trans (norm_add_le _ _) ?_
@@ -462,18 +466,18 @@ theorem norm_delangeSv_le {N : ℕ} (hN : 1 ≤ N) {ξ : ℂ} (hξ : ‖ξ‖ = 
     ring
   have hexpa : Real.exp (-a) = Real.exp (L * ξ.re) := by
     congr 1; rw [hadef]; ring
-  have hkey : Real.exp (-a) * (1 + (B / a) * (Real.exp a - 1))
-      = Real.exp (-a) + (B / a) * (1 - Real.exp (-a)) := by
-    have : Real.exp (-a) * Real.exp a = 1 := by
+  have hkey : Real.exp (-a) * (1 + ((B * ‖ξ‖) / a) * (Real.exp a - 1))
+      = Real.exp (-a) + ((B * ‖ξ‖) / a) * (1 - Real.exp (-a)) := by
+    have h : Real.exp (-a) * Real.exp a = 1 := by
       rw [← Real.exp_add]; simp
-    field_simp
-    nlinarith [this]
-  have hfin : Real.exp (-a) * ‖H 1‖ ≤ Real.exp (-a) + B / a := by
-    have h1 : Real.exp (-a) * ‖H 1‖ ≤ Real.exp (-a) * (1 + (B / a) * (Real.exp a - 1)) :=
+    linear_combination ((B * ‖ξ‖) / a) * h
+  have hfin : Real.exp (-a) * ‖H 1‖ ≤ Real.exp (-a) + (B * ‖ξ‖) / a := by
+    have h1 : Real.exp (-a) * ‖H 1‖
+        ≤ Real.exp (-a) * (1 + ((B * ‖ξ‖) / a) * (Real.exp a - 1)) :=
       mul_le_mul_of_nonneg_left hH1 (Real.exp_pos _).le
     rw [hkey] at h1
-    have h2 : (B / a) * (1 - Real.exp (-a)) ≤ B / a := by
-      have hBa : 0 ≤ B / a := by positivity
+    have h2 : ((B * ‖ξ‖) / a) * (1 - Real.exp (-a)) ≤ (B * ‖ξ‖) / a := by
+      have hBa : 0 ≤ (B * ‖ξ‖) / a := by positivity
       nlinarith [Real.exp_pos (-a), hBa]
     linarith
   rw [hnormS, ← hexpa]
@@ -570,5 +574,55 @@ theorem norm_delangeE_le_split {N K : ℕ} (hKN : K ≤ N) (v : ℂ) {Φ : ℝ}
       linarith [hR p (N / p), hS N]
     exact mul_le_mul_of_nonneg_left hd hinv
   linarith [hbig]
+
+/-! ### The reduction, end to end
+
+`L = Σ_{p≤N} 1/p → ∞` (Mertens' second theorem, via mathlib's divergence of the prime
+reciprocals), so both terms of `norm_delangeSv_le` vanish and the whole of `DelangeKernelMean`
+reduces to the single boundedness hypothesis on `delangeE`. -/
+
+/-- `Σ_{p ≤ N} 1/p → ∞`. -/
+theorem tendsto_delangeL_atTop : Tendsto delangeL atTop atTop := by
+  classical
+  have hf : ∀ n : ℕ, 0 ≤ Set.indicator {p : ℕ | p.Prime} (fun n : ℕ => (1 : ℝ) / n) n := by
+    intro n
+    simp only [Set.indicator_apply, Set.mem_setOf_eq]
+    split <;> positivity
+  have hg := (not_summable_iff_tendsto_nat_atTop_of_nonneg hf).mp not_summable_one_div_on_primes
+  have hcomp := hg.comp (Filter.tendsto_add_atTop_nat 1)
+  refine hcomp.congr fun N => ?_
+  simp only [Function.comp_apply, Set.indicator_apply, Set.mem_setOf_eq]
+  rw [← Finset.sum_filter, delangeL, primesLe]
+
+/-- **THE REDUCTION.**  If the scale-comparison error is bounded along the ray `[0,1]·v`,
+uniformly in `N`, then `S(N; v) → 0` for every `v` with `Re v < 0`. -/
+theorem tendsto_delangeSv_of_errorBounded {v : ℂ} (hre : v.re < 0) {B : ℝ} (hBnn : 0 ≤ B)
+    (hB : ∀ N : ℕ, ∀ r ∈ Set.Icc (0:ℝ) 1, ‖delangeE N ((r : ℂ) * v)‖ ≤ B) :
+    Tendsto (fun N => delangeSv N v) atTop (𝓝 0) := by
+  have hLtt := tendsto_delangeL_atTop
+  -- the two pieces of the bound tend to `0`
+  have h1 : Tendsto (fun N : ℕ => Real.exp (delangeL N * v.re)) atTop (𝓝 0) := by
+    refine Real.tendsto_exp_atBot.comp ?_
+    exact hLtt.atTop_mul_const_of_neg' hre
+  have h2 : Tendsto (fun N : ℕ => B * ‖v‖ / (delangeL N * (-v.re))) atTop (𝓝 0) := by
+    refine Filter.Tendsto.const_div_atTop ?_ _
+    exact hLtt.atTop_mul_const (by linarith : (0:ℝ) < -v.re)
+  have hsum : Tendsto (fun N : ℕ =>
+      Real.exp (delangeL N * v.re) + B * ‖v‖ / (delangeL N * (-v.re))) atTop (𝓝 0) := by
+    simpa using h1.add h2
+  refine squeeze_zero_norm' ?_ hsum
+  filter_upwards [hLtt.eventually_gt_atTop 0, Filter.eventually_ge_atTop 1] with N hLpos hN
+  exact norm_delangeSv_le hN hre hLpos hBnn (fun r hr => hB N r hr)
+
+/-- **`DelangeKernelMean` from the boundedness of `delangeE`.**  For `Re z < 1` this is now the
+*only* remaining obligation of the whole Delange axiom. -/
+theorem delangeKernelMean_of_errorBounded {z : ℂ} (hre : z.re < 1) {B : ℝ} (hBnn : 0 ≤ B)
+    (hB : ∀ N : ℕ, ∀ r ∈ Set.Icc (0:ℝ) 1, ‖delangeE N ((r : ℂ) * (z - 1))‖ ≤ B) :
+    DelangeKernelMean z := by
+  rw [delangeKernelMean_iff]
+  have hre' : (z - 1).re < 0 := by simp only [Complex.sub_re, Complex.one_re]; linarith
+  have := tendsto_delangeSv_of_errorBounded hre' hBnn hB
+  refine this.congr fun N => ?_
+  exact delangeSv_eq z N
 
 end NormalNumbers.CastingOut
