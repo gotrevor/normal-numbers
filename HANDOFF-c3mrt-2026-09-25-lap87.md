@@ -1,11 +1,20 @@
 # HANDOFF c3-mrt 2026-09-25 lap87 — REVIEW lap: the budget is vacuous, the target is the DIAGONAL
 
 **Read first:** `DIRECTION.md` → CURRENT DIRECTIVE (OUTRANKS this file).  Then
-`PENDING_WORK.md` → "Review — lap 87".  Branch `wip/c3-mrt`, tree clean.
-Tip: `NormalNumbers.C3MrtUnifK`.
+`PENDING_WORK.md` → "Review — lap 87".  Branch `wip/c3-mrt`, HEAD `19559a3`, tree clean.
+Tip: `NormalNumbers.C3MrtUnifK` (new this lap; `src/NormalNumbers.lean` does NOT import the
+`C3Mrt*` chain, so build it explicitly).
 
     lake build                            # 9257 jobs, green
     lake build NormalNumbers.C3MrtUnifK   # 9005 jobs, green
+
+**One-line state.**  The crux `weylLambertTwist_holds` is now reduced, sorry-free and
+trust-triple clean, to ONE scalar limit about the `K`-point input's constants; the whole
+`C3Mrt*` chain (46 files) still has zero `axiom` declarations and zero `sorry`s.
+
+**Commits this lap.**  `32c4a29` (review + the budget-is-vacuous theorem), `fbc3b4e`
+(`windowPhi`), `9023e35` (`depthAvg_le_of_window`), `1259f0d` (`depthAvg_le_with`),
+`89ec580` (**the diagonal**), `19559a3` (schedule hypothesis made checkable).
 
 Chain: `… → C3MrtKPointNoExc → C3MrtQuantKPoint → C3MrtUnifK` (+ `C3MrtBudget`).
 
@@ -118,6 +127,18 @@ The two degenerate cases: `hh = 0` (then `depthAvg` is the bare twist average
 `(1/N)∑ e(jn/Q) → 0` since `0 < j < Q`), and `b ∣ hh`, `hh ≠ 0` (then `ζ_0 = 1` but
 `ζ_v ≠ 1` for `v = v_b(hh)`, so the correlation is the same shape re-indexed from `i = v`,
 a translation of `n`).  Name and close these when assembling `WeylLambertTwist`.
+
+## The chain, end to end (all trust-triple clean)
+
+    KPointNoExcWith cK CstK K            -- the named open input, constants EXPLICIT in K
+      + ttNonPretentious_zOmegaNat       -- archimedean, UNCONDITIONAL since lap 83
+      → dyadic_window_bound_with         -- constants and scale threshold explicit
+      → windowPhi + windowPhi_hwin       -- the antitone per-scale profile
+      → depthAvg_le_with                 -- the explicit majorant
+      → depthAvg_diag_tendsto_of_unif    -- THE DIAGONAL, one hypothesis left
+      → rate_tendsto_of_exponent         -- that hypothesis IS one scalar limit
+      → weylLambertTwist_of_depthDiagonal
+      → WeylLambertTwist b → ConjC3
 
 ## Still refuted — DO NOT RETRY
 
