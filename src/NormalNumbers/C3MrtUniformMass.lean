@@ -241,7 +241,182 @@ theorem sharp_window_mass_le {z : ℂ} (hz : ‖z‖ = 1) {t δ A : ℝ} (hδ0 :
       _ ≤ 7000000 * Real.exp (-(a/16)) * Real.exp (-(A/16)) := by nlinarith [hnn]
   linarith [hmain, herr]
 
+
+/-- **The mass of all the high resonant primes.**  Summed over the window index.
+
+The main terms `64δ/(γ_m − δ)` are harmonic in `m` (`sum_inv_gap_le`); the Brun–Titchmarsh
+errors decay geometrically in `m`, because the `m`-th window sits at height `≳ π|m|/|t|`
+(`sum_exp_neg_le` at `c = π/(32|t|)`, exactly as its docstring advertises). -/
+theorem resonant_big_mass_le {z : ℂ} (hz : ‖z‖ = 1) {t δ A : ℝ} (hδ0 : 0 < δ)
+    (hδ : δ ≤ resEps z) (ht : t ≠ 0) (hA : 16 ≤ A) {Y : ℕ} {G : Finset ℕ}
+    (hG : ∀ p ∈ G, p.Prime ∧ (p : ℝ) ≤ Y ∧ |(primePhase z t p).arg| < δ ∧ A ≤ Real.log p) :
+    ∑ p ∈ G, (p : ℝ)⁻¹
+      ≤ 128 + 128 * δ * ((2 / π) * (1 + Real.log (⌈(|t| * Real.log Y + δ + π) / (2 * π)⌉₊)))
+        + 14000000 * (1 + 32 * |t| / π) * Real.exp (-(A / 16)) := by
+  classical
+  have hpi : (0 : ℝ) < π := Real.pi_pos
+  have htpos : (0 : ℝ) < |t| := abs_pos.2 ht
+  have hδpi : δ ≤ π / 2 := by
+    refine le_trans hδ ?_
+    rw [resEps]
+    have := Complex.abs_arg_le_pi z
+    linarith
+  set T : ℝ := |t| * Real.log Y with hT
+  set K : ℕ := ⌈(T + δ + π) / (2 * π)⌉₊ with hK
+  have hmaps : ∀ p ∈ G, windowIndexW z t δ p ∈ Finset.Icc (-(K : ℤ)) (K : ℤ) := by
+    intro p hp
+    obtain ⟨hpp, hpY, hres, _⟩ := hG p hp
+    have hp2 : 2 ≤ p := hpp.two_le
+    have hlog : |t| * Real.log p ≤ T := by
+      rw [hT]
+      refine mul_le_mul_of_nonneg_left ?_ htpos.le
+      refine Real.log_le_log ?_ hpY
+      have := hpp.pos
+      exact_mod_cast this
+    have := abs_windowIndexW_le hz hp2 hδ hres hlog
+    rw [← hK] at this
+    exact Finset.mem_Icc.2 ⟨by linarith [abs_le.1 this |>.1], (abs_le.1 this).2⟩
+  rw [← Finset.sum_fiberwise_of_maps_to hmaps (fun p : ℕ => (p : ℝ)⁻¹)]
+  set fmain : ℝ → ℝ := fun x => if 1 ≤ x then 64 * δ / (2 * π * x - π - δ) else 64 with hfm
+  set ferr : ℝ → ℝ :=
+    fun x => 7000000 * Real.exp (-(π / (32 * |t|) * x)) * Real.exp (-(A / 16)) with hfe
+  have hfmnn : ∀ x, 0 ≤ fmain x := by
+    intro x
+    rw [hfm]
+    by_cases h : 1 ≤ x
+    · simp only [if_pos h]
+      rcases le_or_gt (2 * π * x - π - δ) 0 with hd | hd
+      · have : 64 * δ / (2 * π * x - π - δ) ≤ 0 := div_nonpos_of_nonneg_of_nonpos (by positivity) hd
+        -- impossible: the denominator is positive for x ≥ 1
+        exfalso
+        nlinarith
+      · positivity
+    · simp only [if_neg h]; norm_num
+  have hfenn : ∀ x, 0 ≤ ferr x := by intro x; rw [hfe]; positivity
+  -- the per-window bound, put in the symmetric shape
+  have hstep : ∀ m ∈ Finset.Icc (-(K : ℤ)) (K : ℤ),
+      ∑ p ∈ G.filter (fun p : ℕ => windowIndexW z t δ p = m), (p : ℝ)⁻¹
+        ≤ fmain |(m : ℝ)| + ferr |(m : ℝ)| := by
+    intro m _
+    have hsharp := sharp_window_mass_le (z := z) (t := t) (δ := δ) (A := A) hz hδ0 hδ ht hA
+      (m := m) (G := G.filter (fun p : ℕ => windowIndexW z t δ p = m))
+      (fun p hp => by
+        obtain ⟨hpG, hpm⟩ := Finset.mem_filter.1 hp
+        obtain ⟨h1, _, h3, h4⟩ := hG p hpG
+        exact ⟨h1, h4, h3, hpm⟩)
+    refine le_trans hsharp (add_le_add ?_ ?_)
+    · -- the main term is `64δ/(γ_m − δ)`
+      have hγ : 2 * δ ≤ resGamma z m := le_trans (by linarith) (two_resEps_le_abs_shift z m)
+      have hden : (0 : ℝ) < resGamma z m - δ := by linarith
+      have heq : 32 * winLen t δ / winHeight z t δ m = 64 * δ / (resGamma z m - δ) := by
+        rw [winLen, winHeight]
+        field_simp
+        ring
+      rw [heq, hfm]
+      by_cases h1 : (1 : ℝ) ≤ |(m : ℝ)|
+      · simp only [if_pos h1]
+        have hm1 : (1 : ℝ) ≤ |(m : ℝ)| := h1
+        have hlow : 2 * π * |(m : ℝ)| - π ≤ resGamma z m := by
+          have h2 : |z.arg| ≤ π := Complex.abs_arg_le_pi z
+          have h3 := abs_sub_abs_le_abs_sub (2 * π * (m : ℝ)) z.arg
+          rw [abs_sub_comm] at h3
+          have h4 : |2 * π * (m : ℝ)| = 2 * π * |(m : ℝ)| := by
+            rw [abs_mul, abs_of_pos (by linarith : (0:ℝ) < 2 * π)]
+          rw [resGamma]
+          linarith [h4 ▸ h3]
+        have hd2 : (0 : ℝ) < 2 * π * |(m : ℝ)| - π - δ := by nlinarith
+        refine div_le_div_of_nonneg_left (by positivity) hd2 ?_
+        linarith
+      · simp only [if_neg h1]
+        rw [div_le_iff₀ hden]
+        linarith
+    · -- the error term decays in `|m|`
+      rw [hfe]
+      have hmul : (7000000 : ℝ) * Real.exp (-(winHeight z t δ m / 16)) * Real.exp (-(A / 16))
+          ≤ 7000000 * Real.exp (-(π / (32 * |t|) * |(m : ℝ)|)) * Real.exp (-(A / 16)) := by
+        refine mul_le_mul_of_nonneg_right ?_ (Real.exp_pos _).le
+        refine mul_le_mul_of_nonneg_left (Real.exp_le_exp.2 ?_) (by norm_num)
+        have hγ : 2 * δ ≤ resGamma z m := le_trans (by linarith) (two_resEps_le_abs_shift z m)
+        have hlow : 2 * π * |(m : ℝ)| - π ≤ resGamma z m := by
+          have h2 : |z.arg| ≤ π := Complex.abs_arg_le_pi z
+          have h3 := abs_sub_abs_le_abs_sub (2 * π * (m : ℝ)) z.arg
+          rw [abs_sub_comm] at h3
+          have h4 : |2 * π * (m : ℝ)| = 2 * π * |(m : ℝ)| := by
+            rw [abs_mul, abs_of_pos (by linarith : (0:ℝ) < 2 * π)]
+          rw [resGamma]
+          linarith [h4 ▸ h3]
+        have hge : π / 2 * |(m : ℝ)| ≤ resGamma z m - δ := by
+          rcases eq_or_ne m 0 with h1 | h1
+          · subst h1
+            simp only [Int.cast_zero, abs_zero, mul_zero]
+            linarith
+          · have hm1 : (1 : ℝ) ≤ |(m : ℝ)| := by
+              have : (1 : ℤ) ≤ |m| := Int.one_le_abs (by omega)
+              have h2 : ((1 : ℤ) : ℝ) ≤ ((|m| : ℤ) : ℝ) := by exact_mod_cast this
+              rwa [Int.cast_abs, Int.cast_one] at h2
+            nlinarith
+        have hw : π / 2 * |(m : ℝ)| / |t| ≤ winHeight z t δ m := by
+          rw [winHeight, div_le_div_iff_of_pos_right htpos]
+          exact hge
+        have : π / (32 * |t|) * |(m : ℝ)| ≤ winHeight z t δ m / 16 := by
+          rw [le_div_iff₀ (by norm_num : (0:ℝ) < 16)]
+          have : π / (32 * |t|) * |(m : ℝ)| * 16 = π / 2 * |(m : ℝ)| / |t| := by
+            field_simp; ring
+          rw [this]; exact hw
+        linarith
+      exact hmul
+  refine le_trans (Finset.sum_le_sum hstep) ?_
+  have hsym := sum_Icc_symm_le (K := K) (fun x => fmain x + ferr x)
+    (fun x => add_nonneg (hfmnn x) (hfenn x))
+  refine le_trans hsym ?_
+  rw [Finset.sum_add_distrib]
+  -- the main sum
+  have hmainsum : ∑ j ∈ Finset.range (K + 1), fmain (j : ℝ)
+      ≤ 64 + 64 * δ * ((2 / π) * (1 + Real.log K)) := by
+    rw [Finset.sum_range_succ' (fun j : ℕ => fmain (j : ℝ)) K]
+    have h0 : fmain ((0 : ℕ) : ℝ) = 64 := by
+      rw [hfm]; norm_num
+    have hre : ∑ i ∈ Finset.range K, fmain (((i + 1 : ℕ) : ℝ))
+        = ∑ m ∈ Finset.Icc 1 K, fmain ((m : ℕ) : ℝ) := by
+      have hIcc : Finset.Icc 1 K = Finset.Ico 1 (K + 1) := by
+        ext x; simp [Nat.lt_succ_iff]
+      rw [hIcc, Finset.sum_Ico_eq_sum_range]
+      simp [add_comm]
+    rw [h0, hre]
+    have hbody : ∀ m ∈ Finset.Icc 1 K,
+        fmain ((m : ℕ) : ℝ) = 64 * δ * (2 * π * (m : ℝ) - π - δ)⁻¹ := by
+      intro m hm
+      have hm1 : (1 : ℝ) ≤ (m : ℝ) := by
+        have := (Finset.mem_Icc.1 hm).1
+        exact_mod_cast this
+      rw [hfm]
+      simp only [if_pos hm1]
+      rw [div_eq_mul_inv]
+    rw [Finset.sum_congr rfl hbody, ← Finset.mul_sum]
+    have := sum_inv_gap_le (δ := δ) hδ0.le hδpi K
+    nlinarith [this, hδ0]
+  -- the error sum
+  have herrsum : ∑ j ∈ Finset.range (K + 1), ferr (j : ℝ)
+      ≤ 7000000 * (1 + 32 * |t| / π) * Real.exp (-(A / 16)) := by
+    have hbody : ∀ j ∈ Finset.range (K + 1),
+        ferr ((j : ℕ) : ℝ)
+          = (7000000 * Real.exp (-(A / 16))) * Real.exp (-(π / (32 * |t|) * (j : ℝ))) := by
+      intro j _; rw [hfe]; ring
+    rw [Finset.sum_congr rfl hbody, ← Finset.mul_sum]
+    have hc : (0 : ℝ) < π / (32 * |t|) := by positivity
+    have hgeo := sum_exp_neg_le hc (K + 1)
+    have hinv : 1 / (π / (32 * |t|)) = 32 * |t| / π := by field_simp
+    rw [hinv] at hgeo
+    have hnn : (0 : ℝ) ≤ 7000000 * Real.exp (-(A / 16)) := by positivity
+    calc (7000000 * Real.exp (-(A / 16))) * ∑ j ∈ Finset.range (K + 1),
+            Real.exp (-(π / (32 * |t|) * (j : ℝ)))
+        ≤ (7000000 * Real.exp (-(A / 16))) * (1 + 32 * |t| / π) :=
+          mul_le_mul_of_nonneg_left hgeo hnn
+      _ = 7000000 * (1 + 32 * |t| / π) * Real.exp (-(A / 16)) := by ring
+  nlinarith [hmainsum, herrsum, Real.exp_pos (-(A/16))]
+
 #print axioms NormalNumbers.CastingOut.sharp_window_mass_le
+#print axioms NormalNumbers.CastingOut.resonant_big_mass_le
 
 end CastingOut
 
