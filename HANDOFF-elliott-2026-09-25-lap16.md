@@ -112,14 +112,29 @@ Also in `src/NormalNumbers/ElliottDilatedPairing.lean` (still zero sorry):
   normalisation `(T·α)⁻¹`.
 * Supporting: `phase_pair_single_frequency` (the `h`-form of the collapse).
 
-## NEXT (lap 19)
+## Lap 19 (same session): the large-frequency bound survives the dilation
 
-1. The large-frequency bound: port `norm_pairTwistedPrimeGraphMean_le_largeFrequencies` to the
-   dilated mean.  The pointwise split at the threshold `θ` needs Parseval on both blocks; the only
-   new point is that `b` is transformed at `t + u D` while `c` is at `t`, so Cauchy–Schwarz must be
-   applied to the two *different* frequencies (AM–GM on `‖b̂(t+uD)‖² + ‖ĉ̄(t)‖²` still works, and
-   the `u`-sum runs over `α` = a constant many aliases, each a permutation of `range T`).
-2. Then re-base `finiteSequenceBlock` at `a*(n+1)` and identify the dilated edge with
+Still `src/NormalNumbers/ElliottDilatedPairing.lean`, zero sorry.
+
+* `phase_add_modulus`, `blockFourier_add_modulus` — the block transform is `T`-periodic in the
+  frequency.
+* `sum_range_shift_of_periodic` — a `T`-periodic `g : ℤ → ℝ` has the same sum over `range T` after
+  any integer shift (mathlib has no such lemma; proved by induction on the shift).
+* `sum_norm_sq_blockFourier_shift` — hence **aliased Parseval**: each alias `t ↦ t + u D` permutes
+  the frequency range, so `∑_{t<T} ‖b̂(t+uD)‖² = ∑_{t<T} ‖b̂(t)‖² ≤ T·H`.
+* **`norm_dilatedPairTwistedMean_le_largeFrequencies`** —
+  `‖dilatedPairTwistedMean‖ ≤ θ·H + (H·M/(T·α)) · ∑_{(t,u) large} ‖b̂(t+uD)‖`,
+  the verbatim analogue of `norm_pairTwistedPrimeGraphMean_le_largeFrequencies`, with the same
+  leading term `θ·H`.  The threshold split is unchanged (AM–GM across the two *different*
+  frequencies `t+uD` and `t`), and Parseval costs exactly the factor `α`, which the normalisation
+  `(T·α)⁻¹` cancels.
+
+So both halves of the Fourier layer are now dilated: the exact identity and the large-frequency
+bound, with **no loss in the shape of the estimate**.
+
+## NEXT (lap 20)
+
+1. re-base `finiteSequenceBlock` at `a*(n+1)` and identify the dilated edge with
    `ElliottAffineGraph.affineTwistedObservable` (the re-basing shift `q*c₁ ≤ P|c₁|` is absorbed by
    the existing translation error `2j/(L·M)`).
 

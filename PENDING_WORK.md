@@ -21,7 +21,11 @@ SINGLE frequency in the prime `q`, so the fourth-moment / entropy stack is untou
 (`dilatedPairTwistedMean_eq_fourier`), and `dilatedTwistedMultiplier_eq` shows its multiplier is
 LITERALLY the proved `twistedPrimeGraphMultiplier T 1 s w` at frequency `t*h - u*D*c1`, so the whole
 fourth-moment / additive-energy layer transfers verbatim.
-Next: the large-frequency bound for the dilated mean; then re-base `finiteSequenceBlock` at `a*(n+1)` and identify the dilated edge with
+**Lap 19: the large-frequency bound survives the dilation**
+(`norm_dilatedPairTwistedMean_le_largeFrequencies`): same shape `theta*H + (H*M/(T*a)) * sum_{large}
+|bhat(t+uD)|` as the proved `norm_pairTwistedPrimeGraphMean_le_largeFrequencies`.  Needed aliased
+Parseval (`sum_norm_sq_blockFourier_shift`, via a hand-rolled periodic-shift sum lemma).
+Next: re-base `finiteSequenceBlock` at `a*(n+1)` and identify the dilated edge with
 `ElliottAffineGraph.affineTwistedObservable`.
 
 Superseded description of that lemma: the `a`-dilated bilinear pairing

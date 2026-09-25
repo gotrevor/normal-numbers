@@ -312,6 +312,199 @@ theorem phase_mul_phase_eq_single_frequency {T α D : ℕ} (hTD : T = α * D) (h
   push_cast
   ring
 
+/-! ## Periodicity of the block transform, and the aliased Parseval bound
+
+The `α` aliases `t ↦ t + u*D` permute the frequency range, so Parseval survives the dilation with
+the loss exactly `α` (a constant).  Mathlib has no shift lemma for periodic sums over
+`Finset.range`, so it is proved here by induction on the shift.
+-/
+
+/-- `phase` is periodic in the frequency with period the modulus. -/
+theorem phase_add_modulus {T : ℕ} (hT : T ≠ 0) (t x : ℤ) :
+    phase T (t + T) x = phase T t x := by
+  have hTc : ((T : ℂ)) ≠ 0 := Nat.cast_ne_zero.mpr hT
+  rw [phase, phase]
+  have hsplit : (2 * (Real.pi : ℂ) * Complex.I * (((t + T : ℤ)) : ℂ) * (x : ℂ) / (T : ℂ)) =
+      (2 * (Real.pi : ℂ) * Complex.I * (t : ℂ) * (x : ℂ) / (T : ℂ)) +
+        (x : ℂ) * (2 * (Real.pi : ℂ) * Complex.I) := by
+    push_cast
+    field_simp
+  rw [hsplit, Complex.exp_add, Complex.exp_int_mul_two_pi_mul_I, mul_one]
+
+/-- The block transform is periodic in the frequency with period `T`. -/
+theorem blockFourier_add_modulus {H T : ℕ} (hT : T ≠ 0) (b : Fin H → ℂ) (t : ℤ) :
+    blockFourier T b (t + T) = blockFourier T b t :=
+  Finset.sum_congr rfl fun j _ ↦ by rw [phase_add_modulus hT]
+
+/-- A `T`-periodic function has the same sum over `range T` after any integer shift. -/
+theorem sum_range_shift_of_periodic {T : ℕ} (g : ℤ → ℝ) (hg : ∀ t : ℤ, g (t + T) = g t) :
+    ∀ k : ℕ, (∑ t ∈ Finset.range T, g ((t : ℤ) + (k : ℤ))) = ∑ t ∈ Finset.range T, g (t : ℤ) := by
+  intro k
+  induction k with
+  | zero => simp
+  | succ k ih =>
+      refine Eq.trans ?_ ih
+      have e1 := Finset.sum_range_succ' (fun i : ℕ ↦ g ((i : ℤ) + (k : ℤ))) T
+      have e2 := Finset.sum_range_succ (fun i : ℕ ↦ g ((i : ℤ) + (k : ℤ))) T
+      have e3 : g (((T : ℕ) : ℤ) + (k : ℤ)) = g ((0 : ℤ) + (k : ℤ)) := by
+        rw [show (((T : ℕ) : ℤ) + (k : ℤ)) = (k : ℤ) + (T : ℕ) by push_cast; ring, hg]
+        simp
+      have e5 := e1.symm.trans e2
+      rw [e3] at e5
+      simp only [Nat.cast_zero, zero_add] at e5
+      have e6 := add_right_cancel e5
+      rw [← e6]
+      refine Finset.sum_congr rfl fun i _ ↦ ?_
+      congr 1
+      push_cast
+      ring
+
+/-- Parseval for the aliased first block. -/
+theorem sum_norm_sq_blockFourier_shift {H T : ℕ} (hT : T ≠ 0) (b : Fin H → ℂ) (k : ℕ) :
+    (∑ t ∈ Finset.range T, ‖blockFourier T b ((t : ℤ) + (k : ℤ))‖ ^ 2) =
+      ∑ t ∈ Finset.range T, ‖blockFourier T b (t : ℤ)‖ ^ 2 :=
+  sum_range_shift_of_periodic (fun τ ↦ ‖blockFourier T b τ‖ ^ 2)
+    (fun τ ↦ by rw [blockFourier_add_modulus hT]) k
+
+/-! ## The large-frequency bound for the dilated mean -/
+
+/-- The pairs of frequencies at which the dilated multiplier is large. -/
+def dilatedLargeFrequencies (T D h c₁ α : ℕ) (s : Finset ℕ) (w : ℕ → ℂ) (θ : ℝ) :
+    Finset (ℕ × ℕ) :=
+  ((Finset.range T) ×ˢ (Finset.range α)).filter fun x ↦
+    θ ≤ ‖dilatedTwistedMultiplier T D h c₁ s w (x.1 : ℤ) (x.2 : ℤ)‖
+
+/-- **The large-frequency bound survives the dilation.**  Port of
+`NormalNumbers.ElliottTwistedGraph.norm_pairTwistedPrimeGraphMean_le_largeFrequencies`.
+
+Two changes, both harmless: the frequency runs over the `α` aliases as well, and the first block is
+transformed at `t + u*D` while the second is at `t`.  The threshold split is unchanged (AM–GM on
+the two squares, which are at *different* frequencies), and Parseval survives because each alias
+permutes `range T` (`Alias.sum_norm_sq_blockFourier_shift`), costing exactly the factor `α`. -/
+theorem norm_dilatedPairTwistedMean_le_largeFrequencies {H T α D : ℕ} [NeZero T] [NeZero α]
+    (hTD : T = α * D) (w : ℕ → ℂ) (b c : Fin H → ℂ) (c₁ h : ℕ) (s : Finset ℕ)
+    (hHT : H ≤ T) (hT : ∀ p ∈ s, H + p * h ≤ T)
+    (hb : ∀ j, ‖b j‖ ≤ 1) (hc : ∀ j, ‖c j‖ ≤ 1)
+    {θ M : ℝ} (hθ : 0 ≤ θ)
+    (hmult : ∀ x ∈ (Finset.range T) ×ˢ (Finset.range α),
+      ‖dilatedTwistedMultiplier T D h c₁ s w (x.1 : ℤ) (x.2 : ℤ)‖ ≤ M) :
+    ‖dilatedPairTwistedMean w b c α c₁ h s‖ ≤ θ * H + ((H : ℝ) * M / ((T : ℝ) * α)) *
+      ∑ x ∈ dilatedLargeFrequencies T D h c₁ α s w θ,
+        ‖blockFourier T b ((x.1 : ℤ) + (x.2 : ℤ) * D)‖ := by
+  classical
+  have hTne : T ≠ 0 := NeZero.ne T
+  have hαne : α ≠ 0 := NeZero.ne α
+  have hTr : (0 : ℝ) < T := Nat.cast_pos.mpr (Nat.pos_of_ne_zero hTne)
+  have hαr : (0 : ℝ) < α := Nat.cast_pos.mpr (Nat.pos_of_ne_zero hαne)
+  set c' : Fin H → ℂ := fun j ↦ conj (c j) with hc'
+  have hc'b : ∀ j, ‖c' j‖ ≤ 1 := by
+    intro j; rw [hc', RCLike.norm_conj]; exact hc j
+  set P : Finset (ℕ × ℕ) := (Finset.range T) ×ˢ (Finset.range α) with hPdef
+  -- the pointwise split at the threshold `θ`
+  have hpoint : ∀ x ∈ P,
+      ‖dilatedBlockPairing T D b c (x.1 : ℤ) (x.2 : ℤ)‖ *
+          ‖dilatedTwistedMultiplier T D h c₁ s w (x.1 : ℤ) (x.2 : ℤ)‖ ≤
+        θ * ((‖blockFourier T b ((x.1 : ℤ) + (x.2 : ℤ) * D)‖ ^ 2 +
+              ‖blockFourier T c' (x.1 : ℤ)‖ ^ 2) / 2) +
+          if θ ≤ ‖dilatedTwistedMultiplier T D h c₁ s w (x.1 : ℤ) (x.2 : ℤ)‖ then
+            (H : ℝ) * M * ‖blockFourier T b ((x.1 : ℤ) + (x.2 : ℤ) * D)‖ else 0 := by
+    intro x hx
+    have hcH : ‖blockFourier T c' (x.1 : ℤ)‖ ≤ H := by
+      simpa using norm_blockFourier_le T c' (x.1 : ℤ) hc'b
+    have hnorm : ‖dilatedBlockPairing T D b c (x.1 : ℤ) (x.2 : ℤ)‖ =
+        ‖blockFourier T b ((x.1 : ℤ) + (x.2 : ℤ) * D)‖ * ‖blockFourier T c' (x.1 : ℤ)‖ :=
+      norm_dilatedBlockPairing T D b c _ _
+    by_cases htlarge : θ ≤ ‖dilatedTwistedMultiplier T D h c₁ s w (x.1 : ℤ) (x.2 : ℤ)‖
+    · rw [if_pos htlarge, hnorm]
+      have hkey : ‖blockFourier T b ((x.1 : ℤ) + (x.2 : ℤ) * D)‖ *
+          ‖blockFourier T c' (x.1 : ℤ)‖ *
+          ‖dilatedTwistedMultiplier T D h c₁ s w (x.1 : ℤ) (x.2 : ℤ)‖ ≤
+            (H : ℝ) * M * ‖blockFourier T b ((x.1 : ℤ) + (x.2 : ℤ) * D)‖ := by
+        have h1 : ‖blockFourier T b ((x.1 : ℤ) + (x.2 : ℤ) * D)‖ *
+            ‖blockFourier T c' (x.1 : ℤ)‖ ≤
+            ‖blockFourier T b ((x.1 : ℤ) + (x.2 : ℤ) * D)‖ * (H : ℝ) :=
+          mul_le_mul_of_nonneg_left hcH (norm_nonneg _)
+        calc
+          _ ≤ ‖blockFourier T b ((x.1 : ℤ) + (x.2 : ℤ) * D)‖ * (H : ℝ) *
+              ‖dilatedTwistedMultiplier T D h c₁ s w (x.1 : ℤ) (x.2 : ℤ)‖ :=
+            mul_le_mul_of_nonneg_right h1 (norm_nonneg _)
+          _ ≤ ‖blockFourier T b ((x.1 : ℤ) + (x.2 : ℤ) * D)‖ * (H : ℝ) * M :=
+            mul_le_mul_of_nonneg_left (hmult x hx) (by positivity)
+          _ = _ := by ring
+      nlinarith [sq_nonneg ‖blockFourier T b ((x.1 : ℤ) + (x.2 : ℤ) * D)‖,
+        sq_nonneg ‖blockFourier T c' (x.1 : ℤ)‖, mul_nonneg hθ
+          (add_nonneg (sq_nonneg ‖blockFourier T b ((x.1 : ℤ) + (x.2 : ℤ) * D)‖)
+            (sq_nonneg ‖blockFourier T c' (x.1 : ℤ)‖))]
+    · rw [if_neg htlarge, add_zero, hnorm]
+      have hlt := le_of_not_ge htlarge
+      have hamgm : ‖blockFourier T b ((x.1 : ℤ) + (x.2 : ℤ) * D)‖ *
+          ‖blockFourier T c' (x.1 : ℤ)‖ ≤
+          (‖blockFourier T b ((x.1 : ℤ) + (x.2 : ℤ) * D)‖ ^ 2 +
+            ‖blockFourier T c' (x.1 : ℤ)‖ ^ 2) / 2 := by
+        nlinarith [sq_nonneg (‖blockFourier T b ((x.1 : ℤ) + (x.2 : ℤ) * D)‖ -
+          ‖blockFourier T c' (x.1 : ℤ)‖)]
+      have hprodnn : 0 ≤ ‖blockFourier T b ((x.1 : ℤ) + (x.2 : ℤ) * D)‖ *
+          ‖blockFourier T c' (x.1 : ℤ)‖ := mul_nonneg (norm_nonneg _) (norm_nonneg _)
+      calc
+        _ ≤ ‖blockFourier T b ((x.1 : ℤ) + (x.2 : ℤ) * D)‖ *
+            ‖blockFourier T c' (x.1 : ℤ)‖ * θ := mul_le_mul_of_nonneg_left hlt hprodnn
+        _ = θ * (‖blockFourier T b ((x.1 : ℤ) + (x.2 : ℤ) * D)‖ *
+            ‖blockFourier T c' (x.1 : ℤ)‖) := by ring
+        _ ≤ _ := mul_le_mul_of_nonneg_left hamgm hθ
+  have hsum := Finset.sum_le_sum hpoint
+  rw [Finset.sum_add_distrib, ← Finset.mul_sum, ← Finset.sum_filter, ← Finset.mul_sum] at hsum
+  -- aliased Parseval on both blocks
+  have hpb : (∑ x ∈ P, ‖blockFourier T b ((x.1 : ℤ) + (x.2 : ℤ) * D)‖ ^ 2) ≤ (α : ℝ) * (T * H) := by
+    rw [hPdef, Finset.sum_product]
+    rw [Finset.sum_comm]
+    have hrow : ∀ u ∈ Finset.range α,
+        (∑ t ∈ Finset.range T, ‖blockFourier T b ((t : ℤ) + (u : ℤ) * D)‖ ^ 2) ≤ (T : ℝ) * H := by
+      intro u _
+      have key := sum_norm_sq_blockFourier_shift (T := T) (H := H) hTne b (u * D)
+      calc (∑ t ∈ Finset.range T, ‖blockFourier T b ((t : ℤ) + (u : ℤ) * D)‖ ^ 2)
+          = ∑ t ∈ Finset.range T, ‖blockFourier T b ((t : ℤ) + ((u * D : ℕ) : ℤ))‖ ^ 2 :=
+            Finset.sum_congr rfl fun t _ ↦ by
+              norm_cast
+        _ = ∑ t ∈ Finset.range T, ‖blockFourier T b (t : ℤ)‖ ^ 2 := key
+        _ ≤ (T : ℝ) * H := sum_blockFourier_norm_sq_le b hHT hb
+    calc
+      _ ≤ ∑ _u ∈ Finset.range α, (T : ℝ) * H := Finset.sum_le_sum hrow
+      _ = (α : ℝ) * (T * H) := by simp [mul_comm]
+  have hpc : (∑ x ∈ P, ‖blockFourier T c' (x.1 : ℤ)‖ ^ 2) ≤ (α : ℝ) * (T * H) := by
+    rw [hPdef, Finset.sum_product]
+    have : ∀ t ∈ Finset.range T,
+        (∑ _u ∈ Finset.range α, ‖blockFourier T c' (t : ℤ)‖ ^ 2) =
+          (α : ℝ) * ‖blockFourier T c' (t : ℤ)‖ ^ 2 := by
+      intro t _; simp [mul_comm]
+    rw [Finset.sum_congr rfl this, ← Finset.mul_sum]
+    have := sum_blockFourier_norm_sq_le c' hHT hc'b
+    nlinarith [hαr.le, this]
+  have hparseval : (∑ x ∈ P,
+      (‖blockFourier T b ((x.1 : ℤ) + (x.2 : ℤ) * D)‖ ^ 2 +
+        ‖blockFourier T c' (x.1 : ℤ)‖ ^ 2) / 2) ≤ (T : ℝ) * α * H := by
+    rw [← Finset.sum_div, Finset.sum_add_distrib]
+    nlinarith [hpb, hpc]
+  have htotal := hsum.trans (add_le_add (mul_le_mul_of_nonneg_left hparseval hθ) le_rfl)
+  calc
+    ‖dilatedPairTwistedMean w b c α c₁ h s‖ ≤ ((T : ℝ) * α)⁻¹ * ∑ x ∈ P,
+        ‖dilatedBlockPairing T D b c (x.1 : ℤ) (x.2 : ℤ)‖ *
+          ‖dilatedTwistedMultiplier T D h c₁ s w (x.1 : ℤ) (x.2 : ℤ)‖ := by
+      rw [dilatedPairTwistedMean_eq_fourier hTD w b c c₁ h s hT, norm_mul, norm_inv, norm_mul,
+        Complex.norm_natCast, Complex.norm_natCast]
+      refine mul_le_mul_of_nonneg_left ?_ (by positivity)
+      rw [hPdef, Finset.sum_product]
+      refine (norm_sum_le _ _).trans (Finset.sum_le_sum fun t _ ↦ ?_)
+      refine (norm_sum_le _ _).trans (Finset.sum_le_sum fun u _ ↦ ?_)
+      rw [norm_mul]
+    _ ≤ ((T : ℝ) * α)⁻¹ * (θ * ((T : ℝ) * α * H) + H * M *
+        ∑ x ∈ dilatedLargeFrequencies T D h c₁ α s w θ,
+          ‖blockFourier T b ((x.1 : ℤ) + (x.2 : ℤ) * D)‖) := by
+      refine mul_le_mul_of_nonneg_left ?_ (by positivity)
+      rw [dilatedLargeFrequencies, hPdef]
+      exact htotal
+    _ = _ := by field_simp
+
+
 end
 
 end NormalNumbers.ElliottDilatedPairing
