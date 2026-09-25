@@ -10467,3 +10467,40 @@ all" (TT: triple correlations "not within current technology").
 
 NEXT: the `Statement.lean` audit surface + ledger writeup (trigger C3-T6 — five narrowings in
 laps 90–95, so the reduction is at or near FINAL).
+
+## lap 96 (2026-09-25) — the open input is now ONE EXPLICIT INEQUALITY
+
+`src/NormalNumbers/C3MrtDyadicInput.lean` (new; `lake build NormalNumbers.C3MrtDyadicInput`
+green at 9011 jobs, `lake build` green at 9257; all new declarations
+`[propext, Classical.choice, Quot.sound]`).
+
+Sixth narrowing, and the one that removes the last analytic quantification.  `KPointNoExcDepth`
+still carried TT Thm 3.1 machinery the consumer was choosing itself: the scale `X`, the cutoff
+`L`, the range `√X ≤ N ≤ X`, and the hypothesis `∃ i, TTNonPretentious (zOmegaNat (z i)) X L`.
+`dyadic_window_bound_at` always picks `X = N²`, `L = (2 log N)^κ`, and discharges the archimedean
+hypothesis itself at `i = 0` (`ttNonPretentious_zOmegaNat`, unconditional).  So all of it peels:
+
+    DepthDyadicBound b h' κ cK CstK K :=
+      ∀ N ≥ 2, max 2 (K+1) ≤ (2 log N)^{κ·cK K} → ∀ M r, 0 < M → M ≤ (2 log N)^{κ·cK K} →
+        ‖∑_{N<n≤2N, n≡r (M)} ∏_{i<K} e(h'/b^{i+1})^{ω(n+i+1)}‖
+            ≤ CstK K · (2 log N)^{-κ·cK K} · N / M
+
+Headline `conjC3_of_dyadic_input`, with `κ = ttExponent (depthRoot b h' 0)` — not a free
+parameter but the archimedean saving of the LEADING root, exactly the quantity lap 92 proved
+cannot be shared across factors.  `depthDyadicBound_of_depth` IS `dyadic_window_bound_at`, and
+`conjC3_of_geom_input_evt'` recovers lap 95, so nothing is given up.
+
+The full reduction, laps 90→96:
+
+    ConjC3 ⇐ ∀ b ≥ 3, ∀ h' with ¬(b:ℤ)∣h', ∀ᶠ K in atTop,
+               DepthDyadicBound b h' (ttExponent (depthRoot b h' 0)) (cKgeom c₀ θ b) (CstKdeg m) K
+
+for every 0 < θ < 1.  No multiplicative function, character, pretentiousness notion, auxiliary
+scale, threshold, schedule or budget layer remains in the hypothesis — one explicit
+exponential-sum bound, indexed by (b, h', K).
+
+Still 🔴 and still strictly stronger than print (large-`K` regime; TT: triple correlations "not
+within current technology").
+
+NEXT: `Statement.lean` audit surface + ledger writeup (trigger C3-T6; six narrowings in laps
+90–96, so the reduction is FINAL unless the audit pass finds slack).
