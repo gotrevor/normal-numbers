@@ -232,6 +232,7 @@ structure LayerSys where
   harm : ∀ n, 2 ≤ arm n
   hfit : ∀ n, off n + arm n + 1 < Q n
   hbig : ∀ n, Q n ≤ 2 * off n
+  harminj : ∀ i j, arm i = arm j → i = j
   hdisj : ∀ m n, m < n → ∀ δ ∈ ({0, 1, arm m, arm m + 1} : Finset ℕ),
             ∀ δ' ∈ ({0, 1, arm n, arm n + 1} : Finset ℕ),
             (off n + δ') % Q m ≠ (off m + δ) % Q m
@@ -774,3 +775,132 @@ theorem winGf_coeff_defect_res (q : ℕ) (hq0 : 0 < q) (gs : List (ℕ × ℕ))
     obtain ⟨p', a'⟩ := pa
     obtain ⟨ha', hq'⟩ := hok (p', a') hpa
     exact segSet_unsep_gen q L (p + 1) b p' a' ha' hq' hr (fun hc => hb.2 hc.1)
+
+namespace LayerSys
+
+variable (Ls : LayerSys)
+
+/-! ## The exact stage law at an arm
+
+Layer `m`'s gadgets are the ONLY `arm m`-armed gadgets of stage `n` (`harminj`), so the defective
+residues of the length-`arm m` window are exactly the `Ls.Q n / Ls.Q m` residues
+`k * Ls.Q m + Ls.off m + 1`.  Each contributes exactly `3 / 4` of the Binomial value, so the stage
+law is `(1 - 1 / (4 * Ls.Q m)) / 2 ^ arm m` — INDEPENDENT of the stage index `n`. -/
+
+/-- The defective residues of the length-`arm m` window in a width-`Ls.Q n` block. -/
+def defRes (m n : ℕ) : Finset ℕ :=
+  (range (Ls.Q n / Ls.Q m)).image (fun k => k * Ls.Q m + Ls.off m + 1)
+
+theorem defRes_subset {m n : ℕ} (hmn : m ≤ n) : Ls.defRes m n ⊆ range (Ls.Q n) := by
+  intro r hr
+  rw [defRes, Finset.mem_image] at hr
+  obtain ⟨k, hk, rfl⟩ := hr
+  rw [Finset.mem_range] at hk ⊢
+  have hmem : (k * Ls.Q m + Ls.off m, Ls.arm m) ∈ Ls.layerGads n :=
+    Ls.mem_layerGads.mpr ⟨m, hmn, k, hk, rfl⟩
+  have := (Ls.layerGads_ok n _ hmem).2
+  simp only at this
+  have := Ls.harm m
+  omega
+
+theorem card_defRes {m n : ℕ} : (Ls.defRes m n).card = Ls.Q n / Ls.Q m := by
+  rw [defRes, Finset.card_image_of_injOn, Finset.card_range]
+  intro k _ k' _ he
+  have hQm := Ls.Qpos m
+  simp only at he
+  exact Nat.eq_of_mul_eq_mul_right hQm (by omega)
+
+/-- A defective residue carries an `arm m`-armed gadget at `r - 1`. -/
+theorem mem_defRes_gad {m n r : ℕ} (hmn : m ≤ n) (hr : r ∈ Ls.defRes m n) :
+    ∃ p, r = p + 1 ∧ (p, Ls.arm m) ∈ Ls.layerGads n := by
+  rw [defRes, Finset.mem_image] at hr
+  obtain ⟨k, hk, rfl⟩ := hr
+  exact ⟨k * Ls.Q m + Ls.off m, rfl,
+    Ls.mem_layerGads.mpr ⟨m, hmn, k, Finset.mem_range.mp hk, rfl⟩⟩
+
+/-- Off the defective residues, no `arm m`-armed gadget starts at `r - 1`. -/
+theorem notMem_defRes_clean {m n r : ℕ} (hr : r ∉ Ls.defRes m n) :
+    ∀ pa ∈ Ls.layerGads n, ¬ (r = pa.1 + 1 ∧ pa.2 = Ls.arm m) := by
+  intro pa hpa ⟨hr1, hr2⟩
+  rw [Ls.mem_layerGads] at hpa
+  obtain ⟨i, hi, k, hk, rfl⟩ := hpa
+  simp only at hr1 hr2
+  have him : i = m := Ls.harminj i m hr2
+  subst him
+  exact hr (by rw [defRes, Finset.mem_image]; exact ⟨k, Finset.mem_range.mpr hk, by omega⟩)
+
+/-- **The exact stage law at an arm.**  Independent of the stage index `n`. -/
+theorem blockFreq_at_arm {m n : ℕ} (hmn : m ≤ n) :
+    blockFreq (multiG (Ls.Q n) (Ls.layerGads n)) (Ls.Q n) (2 ^ Ls.Q n)
+        (Ls.Q n + Ls.arm m) (Ls.arm m) 0
+      = (1 - 1 / (4 * Ls.Q m)) / 2 ^ Ls.arm m := by
+  classical
+  set q := Ls.Q n with hqdef
+  set L := Ls.arm m with hLdef
+  set gs := Ls.layerGads n with hgsdef
+  have hq0 : 0 < q := Ls.Qpos n
+  have hok := Ls.layerGads_ok n
+  have hgs := Ls.layerGads_sep n
+  have hnd := Ls.layerGads_nodup n
+  set S := q + L with hSdef
+  have hSpos : 0 < S := by omega
+  have hfib : ∀ r < q, ∀ t < L, (r + t) / q < S := by
+    intro r hr t ht
+    have := Nat.div_le_self (r + t) q
+    omega
+  set B : ℕ := 2 ^ q with hBdef
+  set V : ℝ := ((B : ℕ) : ℝ) ^ S / 2 ^ L with hVdef
+  have hVpos : (0 : ℝ) < V := by
+    rw [hVdef, hBdef]
+    have : (0 : ℝ) < ((2 ^ q : ℕ) : ℝ) ^ S := by positivity
+    positivity
+  -- the coefficient at each residue
+  have hdef : ∀ r ∈ Ls.defRes m n, (winGf (multiG q gs) q B S L r).coeff 0 = 3 / 4 * V := by
+    intro r hr
+    obtain ⟨p, rfl, hmem⟩ := Ls.mem_defRes_gad hmn hr
+    have hpq : p + 1 < q := by
+      have := Finset.mem_range.mp (Ls.defRes_subset hmn hr)
+      omega
+    exact winGf_coeff_defect_res q hq0 gs hok hgs hnd S L p hmem hSpos hpq (hfib _ hpq)
+  have hcln : ∀ r ∈ range q \ Ls.defRes m n, (winGf (multiG q gs) q B S L r).coeff 0 = V := by
+    intro r hr
+    rw [Finset.mem_sdiff, Finset.mem_range] at hr
+    exact winGf_coeff_plain_res q hq0 gs hok hgs hnd S L r hr.1 (hfib r hr.1)
+      (Ls.notMem_defRes_clean hr.2)
+  -- sum over the residues
+  have hsub := Ls.defRes_subset hmn
+  have hcard := Ls.card_defRes (m := m) (n := n)
+  have hsum : ∑ r ∈ range q, (winGf (multiG q gs) q B S L r).coeff 0
+      = ((Ls.defRes m n).card : ℝ) * (3 / 4 * V) + ((q - (Ls.defRes m n).card : ℕ) : ℝ) * V := by
+    rw [← Finset.sum_sdiff hsub, Finset.sum_congr rfl hdef, Finset.sum_congr rfl hcln,
+      Finset.sum_const, Finset.sum_const, nsmul_eq_mul, nsmul_eq_mul, Finset.card_sdiff_of_subset hsub,
+      Finset.card_range]
+    ring
+  -- the arithmetic
+  obtain ⟨t, ht⟩ : Ls.Q m ∣ Ls.Q n := Ls.dvd_of_le hmn
+  have hQm := Ls.Qpos m
+  have htpos : 0 < t := by
+    rcases Nat.eq_zero_or_pos t with rfl | h
+    · have h0 : Ls.Q n = 0 := by rw [ht]; ring
+      have := Ls.Qpos n
+      omega
+    · exact h
+  have hcv : (Ls.defRes m n).card = t := by rw [hcard, ht, Nat.mul_div_cancel_left _ hQm]
+  have hqt : q = Ls.Q m * t := by rw [hqdef, ht]
+  have hcle : (Ls.defRes m n).card ≤ q := by
+    rw [hcv, hqt]
+    exact Nat.le_mul_of_pos_left t hQm
+  have htq : t ≤ q := by rw [← hcv]; exact hcle
+  have hcast : ((q - t : ℕ) : ℝ) = (q : ℝ) - (t : ℝ) := by
+    push_cast [htq]
+    ring
+  have hQmR : (0 : ℝ) < (Ls.Q m : ℝ) := by exact_mod_cast hQm
+  have htR : (0 : ℝ) < (t : ℝ) := by exact_mod_cast htpos
+  have hqR2 : (q : ℝ) = (Ls.Q m : ℝ) * t := by exact_mod_cast hqt
+  have hBS : (0 : ℝ) < ((B : ℕ) : ℝ) ^ S := by
+    have : (0 : ℝ) < ((B : ℕ) : ℝ) := by rw [hBdef]; positivity
+    positivity
+  have h2L : (0 : ℝ) < (2 : ℝ) ^ L := by positivity
+  rw [blockFreq_eq_coeff, hsum, hcv, hcast, hVdef, hqR2]
+  field_simp
+  ring
