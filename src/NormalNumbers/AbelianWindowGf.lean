@@ -37,23 +37,23 @@ length `m`. -/
 noncomputable def wordGf (B m : ℕ) (f : ℕ → ℕ → ℕ) : ℝ[X] :=
   ∑ k ∈ range (B ^ m), X ^ (∑ i ∈ range m, f i ((wordOf B m k).getD i 0))
 
-/-- **Words factor.**  The word generating function is the product of the per-position digit
-generating functions. -/
-theorem wordGf_eq (B : ℕ) (hB : 0 < B) (f : ℕ → ℕ → ℕ) (m : ℕ) :
-    wordGf B m f = ∏ i ∈ range m, (∑ d ∈ range B, (X : ℝ[X]) ^ f i d) := by
+/-- **Words factor (ring form).**  A sum over all base-`B` words of length `m` of a product of
+per-position functions of that position's digit is the product of the per-position digit sums.
+This is the workhorse behind every exact block-law computation: coupled positions are handled by
+splitting the sum into product sets first, and each piece is then a product over positions. -/
+theorem sum_prod_wordOf {R : Type*} [CommRing R] (B : ℕ) (hB : 0 < B) (F : ℕ → ℕ → R) (m : ℕ) :
+    ∑ k ∈ range (B ^ m), ∏ i ∈ range m, F i ((wordOf B m k).getD i 0)
+      = ∏ i ∈ range m, ∑ d ∈ range B, F i d := by
   classical
   induction m with
-  | zero => simp [wordGf]
+  | zero => simp
   | succ m ih =>
-      have hR : (∏ i ∈ range m, (∑ d ∈ range B, (X : ℝ[X]) ^ f i d))
-            * (∑ d ∈ range B, (X : ℝ[X]) ^ f m d)
+      have hR : (∏ i ∈ range m, ∑ d ∈ range B, F i d) * (∑ d ∈ range B, F m d)
           = ∑ p ∈ (range (B ^ m)) ×ˢ (range B),
-              X ^ ((∑ i ∈ range m, f i ((wordOf B m p.1).getD i 0)) + f m p.2) := by
-        rw [← ih, wordGf, Finset.sum_mul, Finset.sum_product]
-        refine Finset.sum_congr rfl (fun k _ => ?_)
-        rw [Finset.mul_sum]
-        exact Finset.sum_congr rfl (fun d _ => by rw [pow_add])
-      rw [Finset.prod_range_succ, hR, wordGf]
+              (∏ i ∈ range m, F i ((wordOf B m p.1).getD i 0)) * F m p.2 := by
+        rw [← ih, Finset.sum_mul, Finset.sum_product]
+        exact Finset.sum_congr rfl (fun k _ => by rw [Finset.mul_sum])
+      rw [Finset.prod_range_succ, hR]
       have hpow : B ^ (m + 1) = B ^ m * B := by ring
       rw [hpow]
       refine Finset.sum_nbij' (i := fun k => (k / B, k % B)) (j := fun p => p.1 * B + p.2)
@@ -62,7 +62,7 @@ theorem wordGf_eq (B : ℕ) (hB : 0 < B) (f : ℕ → ℕ → ℕ) (m : ℕ) :
         rw [Finset.mem_range] at hk
         exact Finset.mem_product.mpr
           ⟨Finset.mem_range.mpr (Nat.div_lt_of_lt_mul (by rw [Nat.mul_comm]; exact hk)),
-          Finset.mem_range.mpr (Nat.mod_lt _ hB)⟩
+            Finset.mem_range.mpr (Nat.mod_lt _ hB)⟩
       · intro p hp
         obtain ⟨h1, h2⟩ := Finset.mem_product.mp hp
         rw [Finset.mem_range] at h1 h2 ⊢
@@ -75,8 +75,7 @@ theorem wordGf_eq (B : ℕ) (hB : 0 < B) (f : ℕ → ℕ → ℕ) (m : ℕ) :
         obtain ⟨-, h2⟩ := Finset.mem_product.mp hp
         rw [Finset.mem_range] at h2
         have h3 : (p.1 * B + p.2) / B = p.1 := by
-          rw [Nat.add_comm, Nat.mul_comm, Nat.add_mul_div_left _ _ hB,
-            Nat.div_eq_of_lt h2]
+          rw [Nat.add_comm, Nat.mul_comm, Nat.add_mul_div_left _ _ hB, Nat.div_eq_of_lt h2]
           omega
         have h4 : (p.1 * B + p.2) % B = p.2 := by
           rw [Nat.add_comm, Nat.mul_comm, Nat.add_mul_mod_self_left]
@@ -90,13 +89,22 @@ theorem wordGf_eq (B : ℕ) (hB : 0 < B) (f : ℕ → ℕ → ℕ) (m : ℕ) :
           conv_lhs => rw [← hk8]
           exact wordOf_append B m (k / B) (k % B) hB hd
         have hlen : (wordOf B m (k / B)).length = m := length_wordOf _ _ _
-        have hA : ∀ i ∈ range m, f i ((wordOf B m (k / B) ++ [k % B]).getD i 0)
-            = f i ((wordOf B m (k / B)).getD i 0) := fun i hi => by
+        have hA : ∀ i ∈ range m, F i ((wordOf B m (k / B) ++ [k % B]).getD i 0)
+            = F i ((wordOf B m (k / B)).getD i 0) := fun i hi => by
           rw [List.getD_append _ _ _ _ (by rw [hlen]; exact Finset.mem_range.mp hi)]
         have hlast : (wordOf B m (k / B) ++ [k % B]).getD m 0 = k % B := by
           rw [List.getD_append_right _ _ _ _ (by rw [hlen]), hlen, Nat.sub_self]
           simp
-        rw [hw, Finset.sum_range_succ, Finset.sum_congr rfl hA, hlast]
+        rw [hw, Finset.prod_range_succ, Finset.prod_congr rfl hA, hlast]
+
+/-- **Words factor.**  The word generating function is the product of the per-position digit
+generating functions. -/
+theorem wordGf_eq (B : ℕ) (hB : 0 < B) (f : ℕ → ℕ → ℕ) (m : ℕ) :
+    wordGf B m f = ∏ i ∈ range m, (∑ d ∈ range B, (X : ℝ[X]) ^ f i d) := by
+  have key := sum_prod_wordOf (R := ℝ[X]) B hB (fun i d => X ^ f i d) m
+  rw [wordGf, ← key]
+  refine Finset.sum_congr rfl (fun k _ => ?_)
+  rw [Finset.prod_pow_eq_pow_sum]
 
 /-! ## Windows factor over blocks -/
 

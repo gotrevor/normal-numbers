@@ -1,5 +1,17 @@
 # PENDING WORK
 
+## 2026-09-25 — C4 (branch `wip/c4-infinite`): the crux, and where it stands
+
+**Crux:** `c4_realizable_of_mem_one` (`src/NormalNumbers/AbelianWindowSets.lean:506`), the one
+open `sorry` in the C4 chain.  **Advance (laps 10–11):** the *rectangle design* —
+`DESIGN-2026-09-25-c4-rectangle.md` — settles every `S` with finite complement on paper and in
+exact rational arithmetic (`probes/c4_rectangle_design.py`), and the general Lean engine is landed
+sorry-free in `src/NormalNumbers/AbelianWindowGf.lean` (`sum_prod_wordOf`,
+`blockFreq_eq_binomial_of_seg`, `isAbelianAt_blockSeq_of_binomSeg`).  **Next attack:** the five
+numbered steps in `HANDOFF-c4-2026-09-25-lap11.md` (`sum_forced` first).  **Still open beyond
+that:** realizing an infinite mixture of designs by one sequence (multi-scale concatenation or a
+renewal block length); no cancellation obstruction exists.
+
 ## 2026-09-23 — **Theorem C′ is PROVED**; the multicutoff campaign is complete
 
 `isNormal_subsetLambert_of_sqrtFreshMassZero` is sorry-free and
