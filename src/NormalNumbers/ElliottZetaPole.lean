@@ -138,6 +138,78 @@ theorem exists_pole_local_bound :
         linarith
     _ ≤ 1 / ‖s - 1‖ + (K₀ + 1) := by linarith
 
+/-! ### The far band: compactness plus `ζ(1+it) ≠ 0` -/
+
+/-- **THE FAR BAND.**  On the compact region `1 ≤ Re s ≤ 2`, `|Im s| ≤ 1`, `‖s−1‖ ≥ r` the
+logarithmic derivative is bounded outright: `ζ` is analytic there (`s ≠ 1`) and non-vanishing
+(`riemannZeta_ne_zero_of_one_le_re` — *this* is where the non-vanishing on the `1`-line enters, and
+only away from `t = 0`). -/
+theorem exists_far_band_bound {r : ℝ} (hr : 0 < r) :
+    ∃ K > 0, ∀ s : ℂ, 1 ≤ s.re → s.re ≤ 2 → |s.im| ≤ 1 → r ≤ ‖s - 1‖ →
+      ‖logDeriv riemannZeta s‖ ≤ K := by
+  set S : Set ℂ := {s | 1 ≤ s.re} ∩ ({s | s.re ≤ 2} ∩ ({s | |s.im| ≤ 1} ∩ {s | r ≤ ‖s - 1‖}))
+    with hS
+  have hclosed : IsClosed S := by
+    rw [hS]
+    refine (isClosed_le continuous_const Complex.continuous_re).inter ?_
+    refine (isClosed_le Complex.continuous_re continuous_const).inter ?_
+    refine (isClosed_le (Complex.continuous_im.abs) continuous_const).inter ?_
+    exact isClosed_le continuous_const ((continuous_id.sub continuous_const).norm)
+  have hbdd : Bornology.IsBounded S := by
+    refine (Metric.isBounded_closedBall (x := (0 : ℂ)) (r := 4)).subset ?_
+    intro s hs
+    obtain ⟨h1, h2, h3, -⟩ := hs
+    simp only [Set.mem_setOf_eq] at h1 h2 h3
+    have hre : |s.re| ≤ 2 := by rw [abs_le]; exact ⟨by linarith, by linarith⟩
+    have hnorm : ‖s‖ ≤ |s.re| + |s.im| := Complex.norm_le_abs_re_add_abs_im s
+    rw [Metric.mem_closedBall, dist_zero_right]
+    linarith
+  have hcompact : IsCompact S := Metric.isCompact_of_isClosed_isBounded hclosed hbdd
+  have hne1 : ∀ s ∈ S, s ≠ 1 := by
+    intro s hs h
+    obtain ⟨-, -, -, h4⟩ := hs
+    simp only [Set.mem_setOf_eq, h, sub_self, norm_zero] at h4
+    linarith
+  have hcont : ContinuousOn (logDeriv riemannZeta) S := by
+    intro s hs
+    have hs1 : s ≠ 1 := hne1 s hs
+    have h1 : 1 ≤ s.re := hs.1
+    have hz : riemannZeta s ≠ 0 := riemannZeta_ne_zero_of_one_le_re h1
+    have hanal : AnalyticAt ℂ riemannZeta s :=
+      analyticOn_riemannZeta s (by simpa using hs1)
+    exact ContinuousAt.continuousWithinAt
+      (hanal.deriv.continuousAt.div hanal.continuousAt hz)
+  obtain ⟨K₀, hK₀⟩ := hcompact.exists_bound_of_continuousOn hcont
+  refine ⟨|K₀| + 1, by positivity, ?_⟩
+  intro s h1 h2 h3 h4
+  have hmem : s ∈ S := ⟨h1, h2, h3, h4⟩
+  have := hK₀ s hmem
+  have := le_abs_self K₀
+  linarith
+
+/-- **(c′-I)'s ANALYTIC SIDE, COMPLETE ON THE SUB-UNIT BAND.**  `‖ζ'/ζ(s)‖ ≤ 1/‖s−1‖ + K` for every
+`s ≠ 1` with `1 ≤ Re s ≤ 2` and `|Im s| ≤ 1`, together with `ζ(s) ≠ 0`.  The pole supplies the
+`1/‖s−1‖` near `1` (lap 107, no zeros needed); compactness plus non-vanishing on the `1`-line
+supplies the constant elsewhere. -/
+theorem exists_subunit_logDeriv_bound :
+    ∃ K > 0, ∀ s : ℂ, s ≠ 1 → 1 ≤ s.re → s.re ≤ 2 → |s.im| ≤ 1 →
+      riemannZeta s ≠ 0 ∧ ‖logDeriv riemannZeta s‖ ≤ 1 / ‖s - 1‖ + K := by
+  obtain ⟨r, hr, K₁, hK₁, hpole⟩ := exists_pole_local_bound
+  obtain ⟨K₂, hK₂, hfar⟩ := exists_far_band_bound hr
+  refine ⟨max K₁ K₂, lt_of_lt_of_le hK₁ (le_max_left _ _), ?_⟩
+  intro s hs h1 h2 h3
+  have hz : riemannZeta s ≠ 0 := riemannZeta_ne_zero_of_one_le_re h1
+  refine ⟨hz, ?_⟩
+  rcases le_or_gt ‖s - 1‖ r with hle | hgt
+  · have := (hpole s hs hle).2
+    have : ‖logDeriv riemannZeta s‖ ≤ 1 / ‖s - 1‖ + K₁ := this
+    have hmax : K₁ ≤ max K₁ K₂ := le_max_left _ _
+    linarith
+  · have hbound := hfar s h1 h2 h3 hgt.le
+    have hnn : 0 ≤ 1 / ‖s - 1‖ := by positivity
+    have hmax : K₂ ≤ max K₁ K₂ := le_max_right _ _
+    linarith
+
 end
 
 end NormalNumbers.ElliottZetaPole

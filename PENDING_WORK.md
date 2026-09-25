@@ -56,8 +56,17 @@ comes entirely from the harmonic band, which lap 106 closed with coefficient `1`
 may be relaxed to `C·T⁻¹ + K`; `ElliottLogIntegral.integral_le_const_mul_one_add_log` is the variant
 to route it through.
 
-**NEXT (two independent pieces, either order).**
-1. *The far band* `r ≤ ‖s−1‖`, `1 ≤ Re s ≤ 2`, `|Im s| ≤ 1`: compact, `ζ` analytic (`s ≠ 1`) and
+### ✅ Lap 108 — THE WHOLE SUB-UNIT `ζ'/ζ` BOUND IS PROVED
+
+`exists_subunit_logDeriv_bound` : `∃ K > 0, ∀ s ≠ 1 with 1 ≤ Re s ≤ 2, |Im s| ≤ 1`,
+`ζ(s) ≠ 0 ∧ ‖ζ'/ζ(s)‖ ≤ 1/‖s−1‖ + K`.  The far band (`exists_far_band_bound`) is compactness:
+the region is closed (`isClosed_le` four times) and bounded (`‖s‖ ≤ |re| + |im| ≤ 3`), `ζ` is
+analytic there (`analyticOn_riemannZeta`, `s ≠ 1`) and non-vanishing
+(`riemannZeta_ne_zero_of_one_le_re`) — the *only* place the `1`-line non-vanishing is used, and only
+away from `t = 0`.
+
+**(c′-I) is therefore reduced to ARITHMETIC ALONE.**  Remaining:
+1. *(done, lap 108)* ~~The far band~~ `r ≤ ‖s−1‖`, `1 ≤ Re s ≤ 2`, `|Im s| ≤ 1`: compact, `ζ` analytic (`s ≠ 1`) and
    `ζ ≠ 0` (`riemannZeta_ne_zero_of_one_le_re`), so `ζ'/ζ` is bounded by the same
    `exists_bound_of_continuousOn` argument.  Together with lap 107 this gives the **whole** sub-unit
    cap bound `‖ζ'/ζ(s)‖ ≤ 1/‖s−1‖ + K` on `1 < Re s ≤ 2`, `|Im s| ≤ 1` — i.e. (c′-I) reduced to
