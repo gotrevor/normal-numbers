@@ -10404,3 +10404,39 @@ Revised assembly:
    `sum_exp_neg_le` at `c = 1/8`; the `(1 + |t|/2π)` factor is killed by `A₁ ≈ 8 log(C(1+|t|))`.
 4. `log p < A₁`: `small_prime_mass_le` at `B = exp A₁`, cost `log A₁ + O(1) ≈ log log|t|`,
    absorbed by `log_log_le_mul_log`.
+
+## lap 94 (2026-09-25) — the open input cut to ONE EXPLICIT SEQUENCE
+
+`src/NormalNumbers/C3MrtDepthInput.lean` (new, green, `[propext, Classical.choice, Quot.sound]`).
+
+Advance on the crux: the single open statement the headline rests on is narrowed a fourth time.
+
+    lap 90  KPointNoExcWith  cK CstK K   — every coprime-mult. bounded family, every inj. shift
+    lap 93  KPointNoExcRoots cK CstK K   — ω-powers of arbitrary unimodular z, shifts i+1
+    lap 94  KPointNoExcDepth b h' cK CstK K  — z i = e(h'/b^{i+1}), ¬(b:ℤ)∣h'
+
+`KPointNoExcAt z cK CstK K` peels the `∀ z` off `KPointNoExcRoots` (`kPointNoExcRoots_iff_at`
+is `Iff.rfl`), every proof of the lap-93 chain is verbatim with `h z hz` ⟶ `h`, and
+`KPointNoExcDepth b h' := KPointNoExcAt (depthRoot b h')`.  Chain rethreaded:
+`dyadic_window_bound_at`, `windowPhi_hwin_at`, `depthAvg_le_depth`,
+`depthAvg_gen_tendsto_of_unif_depth`, `depthAvg_gen_tendsto_of_geom_slow_depth`,
+`depthDiagonalSlow_of_geom_depth`, `weylLambertTwist_of_geom_input_depth`,
+`conjC3_of_geom_input_depth`.  Nothing is given up: `kPointNoExcDepth_of_roots` and
+`conjC3_of_geom_input_roots'` recover the lap-93 form.
+
+FREE, for the lap-93 reason and not the lap-92 one: the consumer discharges nothing new.  The
+`¬(b:ℤ)∣h'` side condition is exactly what `exists_pow_mul_not_dvd` already hands the chain, and
+the archimedean certificate is still `ttNonPretentious_zOmegaNat` at `i = 0` (κ = ttExponent of
+the LEADING root only — lap 92's refutation stands, and is why the input is asked at `∃ i`).
+
+Ledger reading now: `ConjC3` holds if, for every base `b ≥ 3`, every primitive level `h'`, and
+every `K`, the ONE correlation sum
+
+    (W/N) ∑_{N<n≤2N, n≡r (W)} ∏_{i<K} e(h'/b^{i+1})^{ω(n+i+1)}
+
+is `≤ CstKdeg m K · L^{-cKgeom c₀ θ b K}` under TT's hypotheses minus the exceptional set.  Still
+🔴 at every `K` (K = 2 included) — strictly stronger than published, disclosed.
+
+NEXT: (1) `∀ᶠ K` instead of `∀ K` — `KN N = max 1 (depthSlow b N - v) → ∞`, so add
+`hKNtop.eventually hin` to the `filter_upwards` in `depthAvg_gen_tendsto_of_unif_depth` and
+thread up.  (2) then the `Statement.lean` audit surface + ledger writeup (trigger C3-T6).
