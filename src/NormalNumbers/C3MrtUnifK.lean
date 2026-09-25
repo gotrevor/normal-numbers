@@ -1615,6 +1615,71 @@ theorem depthAvg_gen_tendsto_of_degrading_sched {b Q : ℕ} (hb : 2 ≤ b) (hQ :
       (PairDecouple.tendsto_natLog_atTop 2 le_rfl))
     tendsto_cut_atTop hAle (hgrow_of_schedule_le hb m KN hKle)
 
+/-- `depthLL b N → ∞`. -/
+theorem tendsto_depthLL {b : ℕ} (hb : 2 ≤ b) :
+    Tendsto (fun N : ℕ => PairDecouple.depthLL b N) atTop atTop := by
+  have hu : Tendsto (fun N : ℕ => Nat.log 2 (Nat.log 2 N)) atTop atTop :=
+    (PairDecouple.tendsto_natLog_atTop 2 le_rfl).comp
+      (PairDecouple.tendsto_natLog_atTop 2 le_rfl)
+  have hsq : Tendsto (fun N : ℕ => (Nat.log 2 (Nat.log 2 N) + 1) ^ 2) atTop atTop := by
+    refine tendsto_atTop_atTop.2 fun M => ?_
+    obtain ⟨N₀, hN₀⟩ := tendsto_atTop_atTop.1 hu M
+    exact ⟨N₀, fun N hN => le_trans (hN₀ N hN) (by nlinarith [Nat.zero_le (Nat.log 2 (Nat.log 2 N))])⟩
+  have := (PairDecouple.tendsto_natLog_atTop b hb).comp hsq
+  refine tendsto_atTop_atTop.2 fun M => ?_
+  obtain ⟨N₀, hN₀⟩ := tendsto_atTop_atTop.1 this M
+  exact ⟨N₀, fun N hN => le_trans (hN₀ N hN) (by simp only [Function.comp_apply, PairDecouple.depthLL]; omega)⟩
+
+/-- **Any nonzero twist level is `b^v` times a primitive one.** -/
+theorem exists_pow_mul_not_dvd {b : ℕ} (hb : 2 ≤ b) (hh : ℤ) (hne : hh ≠ 0) :
+    ∃ (v : ℕ) (h' : ℤ), hh = (b : ℤ) ^ v * h' ∧ ¬ ((b : ℤ) ∣ h') := by
+  suffices H : ∀ n : ℕ, ∀ hh : ℤ, hh.natAbs = n → hh ≠ 0 →
+      ∃ (v : ℕ) (h' : ℤ), hh = (b : ℤ) ^ v * h' ∧ ¬ ((b : ℤ) ∣ h') from
+    H hh.natAbs hh rfl hne
+  intro n
+  induction n using Nat.strong_induction_on with
+  | _ n ih =>
+    intro hh hn hne
+    by_cases hd : (b : ℤ) ∣ hh
+    · obtain ⟨c, hc⟩ := hd
+      have hc0 : c ≠ 0 := by
+        rintro rfl
+        rw [mul_zero] at hc
+        exact hne hc
+      have hb' : 2 ≤ ((b : ℤ)).natAbs := by simpa using hb
+      have hcpos : 0 < c.natAbs := Int.natAbs_pos.2 hc0
+      have hlt : c.natAbs < n := by
+        subst hn
+        rw [hc, Int.natAbs_mul]
+        calc c.natAbs < 2 * c.natAbs := by omega
+          _ ≤ ((b : ℤ)).natAbs * c.natAbs := Nat.mul_le_mul_right _ hb'
+      obtain ⟨v, h', hv, hnd⟩ := ih c.natAbs hlt c rfl hc0
+      refine ⟨v + 1, h', ?_, hnd⟩
+      rw [hc, hv, pow_succ]
+      ring
+    · exact ⟨0, hh, by simp, hd⟩
+
+/-- **The diagonal at a `b`-divisible twist level, from the primitive one.**  The shift costs
+`2v/N`, which dies; the level drops by the constant `v`, which the general-level machinery
+(`depthAvg_gen_tendsto_of_degrading_sched`) absorbs. -/
+theorem depthAvg_dvd_tendsto_of_primitive {b : ℕ} (hb : 2 ≤ b) (P Q j : ℕ) (h' : ℤ) (v : ℕ)
+    (hprim : Tendsto (fun N : ℕ =>
+      depthAvg b P Q j h' (PairDecouple.depthLL b N - v) N) atTop (𝓝 0)) :
+    Tendsto (fun N : ℕ =>
+      depthAvg b P Q j ((b : ℤ) ^ v * h') (PairDecouple.depthLL b N) N) atTop (𝓝 0) := by
+  have hb0 : 0 < b := by omega
+  have hshift : Tendsto (fun N : ℕ => 2 * (v : ℝ) / N) atTop (𝓝 0) := by
+    have := tendsto_one_div_atTop_nhds_zero_nat.const_mul (2 * (v : ℝ))
+    rw [mul_zero] at this
+    exact this.congr fun N => by ring
+  have hmaj : Tendsto (fun N : ℕ =>
+      ‖depthAvg b P Q j h' (PairDecouple.depthLL b N - v) N‖ + 2 * (v : ℝ) / N)
+      atTop (𝓝 0) := by
+    simpa using hprim.norm.add hshift
+  refine squeeze_zero_norm' ?_ hmaj
+  filter_upwards [(tendsto_depthLL hb).eventually_ge_atTop v] with N hN
+  exact norm_depthAvg_dvd_le hb0 P Q j h' hN N
+
 #print axioms NormalNumbers.CastingOut.quantDepthElliottGen_forces_diagonal
 #print axioms NormalNumbers.CastingOut.weylLambertTwist_of_depthDiagonal
 #print axioms NormalNumbers.CastingOut.kPointNoExc_of_with
@@ -1644,6 +1709,8 @@ theorem depthAvg_gen_tendsto_of_degrading_sched {b Q : ℕ} (hb : 2 ≤ b) (hQ :
 #print axioms NormalNumbers.CastingOut.ee_tailDepth_dvd
 #print axioms NormalNumbers.CastingOut.norm_depthAvg_dvd_le
 #print axioms NormalNumbers.CastingOut.hgrow_of_schedule_le
+#print axioms NormalNumbers.CastingOut.exists_pow_mul_not_dvd
+#print axioms NormalNumbers.CastingOut.depthAvg_dvd_tendsto_of_primitive
 #print axioms NormalNumbers.CastingOut.depthAvg_gen_tendsto_of_unif
 #print axioms NormalNumbers.CastingOut.depthAvg_gen_tendsto_of_degrading_sched
 
