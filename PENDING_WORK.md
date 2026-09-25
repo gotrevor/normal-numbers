@@ -1,3 +1,54 @@
+## Lap 93 (2026-09-25) — the open input is RESTRICTED to the family the chain actually uses
+
+**New file `src/NormalNumbers/C3MrtRootsInput.lean` (12 declarations, all trust-triple clean).**
+Executes PENDING_WORK lap-92 levers ② and ③ in one stroke.
+
+`KPointNoExcWith cK CstK K` quantifies over EVERY coprime-multiplicative bounded family
+`g : Fin K → ℕ → ℂ` and EVERY injective shift vector `hsh : Fin K → ℕ`.  The C3 chain uses
+neither generality: its factors are always `g i = zOmegaNat (z i)` with `‖z i‖ = 1` (in fact
+`z i = depthRoot b h' i`), and its shifts are always `hsh i = i + 1`.  So
+
+    KPointNoExcRoots cK CstK K :=
+      ∀ z : ℕ → ℂ, (∀ i, ‖z i‖ = 1) → ∀ X L, 2 ≤ X → 1 ≤ L → L ≤ log X →
+        (∃ i : Fin K, TTNonPretentious (zOmegaNat (z i)) X L) →
+          ∀ N, √X ≤ N → N ≤ X → ∀ W r, 0 < W → W ≤ L^{cK K} → K+1 ≤ L^{cK K} →
+            ‖(W/N) • ∑_{n ∈ (N,2N], n ≡ r (W)} ∏_{i<K} z i ^ ω(n+i+1)‖ ≤ CstK K · L^{-cK K}
+
+with `kPointNoExcRoots_of_with : KPointNoExcWith → KPointNoExcRoots` so nothing is lost, and the
+whole chain rethreaded onto it:
+
+    conjC3_of_geom_input_roots :
+      (∀ b ≥ 3, ∀ K, KPointNoExcRoots (cKgeom c₀ θ b) (CstKdeg m) K) → ConjC3     (0 < θ < 1)
+
+`dyadic_window_bound_roots`, `windowPhi_hwin_roots`, `depthAvg_le_roots`,
+`depthAvg_gen_tendsto_of_unif_roots`, `depthAvg_gen_tendsto_of_geom_slow_roots`,
+`depthDiagonalSlow_of_geom_roots`, `weylLambertTwist_of_geom_slow_roots`,
+`weylLambertTwist_of_geom_input_roots`.  Only `dyadic_window_bound_roots` differs in its proof,
+and only in the one line that applies the input — the shift-bound and injectivity side goals are
+now discharged inside `kPointNoExcRoots_of_with` instead.
+
+**Why this narrowing is free where the lap-92 `∀ i` one was not.**  Lap 92 failed because the
+consumer could not DISCHARGE the weaker hypothesis at a shared cutoff `L`
+(`ttExponent (depthRoot b h' i) → 0`).  Restricting the *family* and the *shifts* asks the
+consumer to discharge nothing new: it was already only instantiating at `zOmegaNat ∘ z` with
+`hsh i = i+1`.  The gain is entirely on the ledger — the open statement is no longer "the
+`K`-point Elliott bound for arbitrary bounded multiplicative functions" but "…for the
+one-parameter family `n ↦ z^{ω(n)}`, `|z| = 1`, at consecutive shifts `n+1, …, n+K`".
+
+**Next attack (lap 94+).**
+1. **`∀ᶠ K`.**  `KN N = max 1 (depthSlow b N - v) → ∞`, so every fixed `K` is used at only
+   finitely many `N` and `depthAvg` at finitely many scales cannot move a `Tendsto`.  Weaken
+   `hin : ∀ K, …` to `∀ᶠ K in atTop, …` in `depthAvg_gen_tendsto_of_unif_roots` (its `hin _` sits
+   inside a `filter_upwards`, so the change is to add `hKNtop.eventually hin` to that
+   `filter_upwards` list), then up the chain.  Cheap; low mathematical value but honest.
+2. **Restrict `z` further.**  `KPointNoExcRoots` still quantifies over all unimodular `z : ℕ → ℂ`;
+   the chain only feeds `z i = depthRoot b h' i = e(h'/b^{i+1})` — a *geometric* family of roots
+   with `z i → 1`.  Defining `KPointNoExcDepth b h'` (the same bound for that one family) would
+   cut the open statement down to a single explicit sequence.  Check first whether the rest of
+   the chain really never varies `z` (it does not — `depthAvg_le_roots` fixes
+   `z := fun i => depthRoot b hh i`), so this should be another free restriction.
+3. Then the `Statement.lean` audit surface + ledger writeup (C3-T6).
+
 ## Lap 92 (2026-09-25) — the `∀ i` narrowing is REFUTED; the `∃ i` is load-bearing
 
 **Directive items 1 and 4 LANDED, items 2–3 REFUTED by a compiler-checked probe.**  New file
