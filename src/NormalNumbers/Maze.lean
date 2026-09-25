@@ -14,6 +14,7 @@ import NormalNumbers.G4WiringSparse
 import NormalNumbers.StonehamSixFailure
 import NormalNumbers.CastingOut
 import NormalNumbers.C3MrtTTDefect
+import NormalNumbers.C3MrtBlockDefect
 import NormalNumbers.Walsh
 import NormalNumbers.WalshBase
 
@@ -276,6 +277,31 @@ conclusion only at integer scales, so `E = ℕ ∩ [√X, X]` is free and the wh
 (`full_exceptional_set_not_admissible`). -/
 alias hall_lebesgue_exceptional_scales :=
   NormalNumbers.CastingOut.twoPointNaturalCorrelation_trivially_true
+
+/-- **HALL: a constant-fraction saving on every dyadic block** (`falseAsStated`, 2026-09-25).
+Lap 112 reduced the wide archimedean debt to `WideBlockSaving κ`: a saving `1 − κ` on *every*
+dyadic block of the twisted prime sum.  FALSE for every `κ > 0`, and structurally so — the top
+block of the truncation at `X²` can be a **singleton**, whose weighted sum has norm exactly its
+own mass.  Witness `X = 16/5`, `⌈X²⌉₊ = 11`, `j = 3`, block `{11}`.  Repaired as
+`CastingOut.WideBlockSavingBand`, which asks for the saving only on complete blocks in a band
+(`band_block_complete`, `witness_block_above_band`). -/
+alias hall_wide_block_saving_false := NormalNumbers.CastingOut.not_wideBlockSaving
+
+/-- **HALL: the reciprocal-free initial-segment form** (`falseAsStated`, 2026-09-25).
+Lap 113's Abel transfer asked for the saving on *every initial segment* `p < m` of every block
+(`WideBlockPartial κ`).  FALSE for every `κ > 0`: at `X = 3`, `j = 1`, `m = 3` the segment is the
+singleton `{2}` and its character sum has norm exactly `1`.  Abel is sound; what it consumes is
+not. -/
+alias hall_wide_block_partial_false := NormalNumbers.CastingOut.not_wideBlockPartial
+
+/-- **HALL: the "purely geometric" pairing endpoint** (`falseAsStated`, 2026-09-25).
+Lap 114 reduced the debt to `BlockPhasePairing d`: on every initial segment of every block, the
+`χ`-surviving primes admit an injective self-map with separated twist phases.  FALSE for every
+`d < 1`: an injective self-map of a **singleton** is the identity, and a unit vector is never
+separated from itself (`Re(u · conj u) = ‖u‖² = 1`).  So `conjC3_of_geom_input_pairing` — the
+lap-114 headline — is vacuous; the pairing *bound* `norm_sum_le_of_pairing` remains true and
+reusable. -/
+alias hall_block_phase_pairing_false := NormalNumbers.CastingOut.not_blockPhasePairing
 
 /-- **HALL: uniform casting-out law (C1 draft)** (`falseAsStated`, 2026-09-23).
 The first draft of C1 asked that window digit sums of `G4` be uniform mod `b − 1`.  No normal
