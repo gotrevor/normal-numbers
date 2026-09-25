@@ -18,31 +18,55 @@ The live consumer is `ElliottTwistRepair.twoPointElliottLog_of_repaired_inputs`,
 
 with `T X = (log X)^{-1+ε}` the honest threshold.
 
-### Attack path for (e) — DO THIS FIRST (it is the soft one)
+### ✅ (e) — THE ANALYTIC CONTENT IS DISCHARGED (lap 93).  `ElliottSmallShift.lean`
 
-`AlmostRealTwist K χ t X := ∃ R, 0 ≤ R ∧ R ≤ M(X) ∧ ‖twistCorr χ t X − R‖ ≤ K`.
+**Correction to the lap-92 plan above: no Abel summation, no `Si`/`Ci`, no new analysis.**  The
+survey found `Erdos67b.PrimeEstimates.abs_primeReciprocals_sub_log_log_le` — two-sided Mertens with
+an *absolute* constant — and that turns (e) into **scale reduction** on machinery already proved:
 
-Stage it; each stage is a separate lap-sized target and each can land independently.
+> For `|t|` in the problem band the Archimedean twist is not a bounded perturbation of `1` across
+> `[2,X]`, but it *is* across `[2,Y]` with `log Y = 1/|t|`, and two-sided Mertens says the shorter
+> window still carries all but `ε·M(X) + O(1)` of the prime mass.  Run the **old proved argument**
+> at scale `Y`, transport to `X` at the cost of the discarded mass.
 
-1. **e-NP (non-principal `χ`, `R = 0`).**  Need `‖∑_{p≤X} χ̄(p)p^{-it}/p‖ ≤ K_q` uniformly for
-   `|t| ≤ T X`.  Content: `log L(1+it, χ̄)` bounded, i.e. `L(1,χ) ≠ 0` plus continuity.  Survey
-   first: mathlib has Dirichlet's theorem on primes in APs, so `L(1,χ) ≠ 0` is available
-   (`DirichletCharacter.LFunction*`); and `BoundedGaps.BombieriVinogradov.Analytic.SiegelWalfisz`
-   carries the L-function machinery.  **Check whether a `∑_{p≤X} χ(p)/p = O(1)` statement already
-   exists somewhere in `BoundedGaps` / `Erdos67b` before deriving it.**
-2. **e-P-Im (principal `χ`, imaginary part).**  `|∑_{p≤X} sin(t log p)/p| ≤ K`.  Main term is
-   `Si(t log X) − Si(t log 2)`, *bounded absolutely*; the error is `O(1 + |t| log log X)` and
-   `|t| ≤ (log X)^{-1+ε}` makes `|t| log log X → 0`.  Needs Abel summation of `∑_{p≤u}1/p` against
-   `sin(t log u)`.
-3. **e-P-Re (principal `χ`, real part).**  `Re C = log(1/|t|) + O(1)`, and `0 ≤ log(1/|t|) ≤ M(X)`
-   up to `O(1)` — actually only the *containment in `[0, M(X)]` up to `K`* is needed, and
-   `Re C ≤ ‖C‖ ≤ M(X)` is free; the work is `Re C ≥ −K`.
-4. **The shared prerequisite: TWO-SIDED MERTENS.**  `∑_{p≤u}1/p = log log u + B + O(1/log u)`.
-   Only the lower half is currently used (`Erdos67b.characterTwistPrimeMass_mertens_lower`, via
-   `PrimeEstimates.mertensBound`).  **Hunt for the upper half / the `O(1/log u)` error form** in
-   `Erdos67b.PrimeEstimates`, `BoundedGaps.Maynard.PrimeMertens`,
-   `PrimeNumberTheoremAnd`, and `Util.MertensThird` (which proved `mertens_third_theorem`, a likely
-   source: Mertens III is `∏(1−1/p)^{-1} = e^γ log x(1+o(1))`, whose log is exactly what is wanted).
+The price: the conclusion is "within a small **proportion** `ρ` of `M(X)` of a real", not within
+`O(1)`.  That is all the consumer ever needed — the rotation by `ζ ≠ 1` buys a *fixed proportion*
+`1 − Re ζ`.  Landed, sorry-free, trust triple:
+
+* `AlmostRealTwistProp ρ` + `re_phase_mul_twistCorr_le_prop` + `TwistAlmostRealPropDichotomy` +
+  `uniformlyNonPretentious_zetaOmega_of_almostRealProp` (**quantifier order**: `ρ` is chosen after
+  `u`, so the dichotomy is asked at every `ρ > 0`);
+* `norm_twistCorr_sub_le` : `‖C(X) − C(Y)‖ ≤ M(X) − M(Y)`;
+* `ReductionScale ρ t X Y` and **`almostRealProp_or_far_of_reductionScale`** — the theorem.  Its
+  only input is `CharacterClusterRigidity`, which lap 91 already proved from `PrimeDensityAP`.
+
+**Net effect on the input list**: (e) is replaced by (d1) `PrimeDensityAP`, which is *softer*
+(Mertens in progressions; no zero-free region).  So `PrimeDensityAP` is back ON the critical path —
+this supersedes lap 92's "rigidity is off the path" note, and is a strict improvement: one cited
+input becomes a proved theorem plus a softer cited input.
+
+### ▶ NEXT: the reduction scale exists (the one remaining piece of (e))
+
+Prove `∃ Y, ReductionScale ρ t X Y` for all `|t| ≤ T X`, `X` large.  Elementary but fiddly; the
+design is fixed, write it as stated:
+
+* **Case (i)** `|t| · log X ≤ 1`: take `Y = X`.  All four clauses are immediate.
+* **Case (ii)** `|t| · log X > 1`: take `Y := ⌊exp(exp((1 − ρ/2)·L))⌋₊` where `L := log log X`
+  (equivalently `log Y ≈ (log X)^{1−ρ/2}`), and **define the threshold by the window**,
+  `T X := 1 / Real.log Y` — then the clause `|t| log Y ≤ 1` is true *by definition of `T`* and no
+  rpow inequality is needed for it.
+  * `Y ≤ X` ⟸ `(1−ρ/2)L ≤ L` ⟸ `L ≥ 0` (so `X ≥ 16`).
+  * `Y ≥ 2` and the floor: `⌊z⌋₊ ≥ z/2` for `z ≥ 2`, so `log Y ≥ exp((1−ρ/2)L) − log 2`, and once
+    `exp((1−ρ/2)L) ≥ 2 log 2` this gives `log log Y ≥ (1−ρ/2)L − log 2`.
+  * mass: `M(X) − M(Y) ≤ (L − log log Y) + 2B ≤ (ρ/2)L + log 2 + 2B`, and
+    `ρ·M(X) ≥ ρ(L − B)`, so the clause holds once `L ≥ 2(log 2 + 2B + ρB)/ρ`.
+
+**Boundary check (trigger EA-1), done:** with this `T`, `T X ≈ (log X)^{-1+ρ/2}`, so at `|v|` just
+above `T X` the true size of `archCorr` is `log(1/|v|) ≈ (1−ρ/2)M(X)` — i.e. (c′) holds there with
+`η ≈ ρ/2` and is **true at the boundary**.  The thresholds are consistent, which is exactly what
+lap 92's refutation showed the old pair was not.
+**Consequence for the assembly**: `η` must be allowed to depend on `ρ` (hence on `u`).  State the
+final hypothesis as `∀ ρ > 0, ∃ η > 0, ∀ A, ArchimedeanCorrelationBoundAbove A η (T ρ)`.
 
 ### Attack path for (c′) — the long pole
 

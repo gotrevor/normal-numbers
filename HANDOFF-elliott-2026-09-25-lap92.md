@@ -74,3 +74,36 @@ recorded in `PENDING_WORK.md` — it would give (c′) unconditionally on `1 ≪
 
 `lake build NormalNumbers.ElliottAxiomAudit` now also prints the refutation and all five repair
 theorems.  All trust triple.
+
+---
+
+# lap 93 addendum — input (e)'s analytic content DISCHARGED (`ElliottSmallShift.lean`)
+
+The lap-92 plan for (e) (Abel summation against a two-sided Mertens, bounded `Si`) is **superseded
+and was unnecessary**.  The mandated survey turned up
+`Erdos67b.PrimeEstimates.abs_primeReciprocals_sub_log_log_le` — two-sided Mertens with an
+*absolute* constant — and that converts (e) into **scale reduction** over already-proved machinery.
+
+For `|t|` in the problem band the Archimedean twist is not a bounded perturbation of `1` across
+`[2,X]`, but it is across `[2,Y]` with `log Y = 1/|t|`, and two-sided Mertens says `[2,Y]` still
+carries all but `ε·M(X) + O(1)` of the prime mass.  So run the old proved argument
+(`exists_unimodular_twistDefect_le` → `exists_charDefect_le` → rigidity →
+`exists_norm_twistCorr_sub_primeMass_le`) at scale `Y`, and transport to `X` at the cost of the
+discarded mass.  The conclusion weakens from "within `O(1)` of a real" to "within a **proportion**
+`ρ` of `M(X)` of a real" — which is all the consumer ever needed, since rotating by `ζ ≠ 1` buys a
+fixed proportion `1 − Re ζ`.
+
+Landed, sorry-free, trust triple: `AlmostRealTwistProp`, `re_phase_mul_twistCorr_le_prop`,
+`TwistAlmostRealPropDichotomy`, `uniformlyNonPretentious_zetaOmega_of_almostRealProp` (`ρ` chosen
+*after* `u` — quantifier order is load-bearing), `norm_twistCorr_sub_le`, `ReductionScale`, and
+**`almostRealProp_or_far_of_reductionScale`**.
+
+**This changes the input list**: (e) is replaced by (d1) `PrimeDensityAP`, which is softer.  Lap
+92's "rigidity is off the critical path" is therefore superseded — rigidity is back on it, as a
+*proved* theorem, and one cited input became a proved theorem plus a softer cited input.
+
+**Next**: `∃ Y, ReductionScale ρ t X Y` for `|t| ≤ T X` — the design is written out in
+`PENDING_WORK.md`, including the trick that makes it easy (define the threshold *by* the window,
+`T X := 1 / log Y`, so the `|t| log Y ≤ 1` clause holds by definition).  The EA-1 boundary check on
+the resulting `T` is done and passes: `T X ≈ (log X)^{-1+ρ/2}`, where `archCorr`'s true size is
+`(1−ρ/2)M(X)`, so (c′) is true at the boundary — unlike the refuted pair.

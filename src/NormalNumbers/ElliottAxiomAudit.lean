@@ -4,6 +4,7 @@ import NormalNumbers.ElliottTwistBootstrap
 import NormalNumbers.ElliottCharRigidity
 import NormalNumbers.ElliottArchimedeanRefuted
 import NormalNumbers.ElliottTwistRepair
+import NormalNumbers.ElliottSmallShift
 import NormalNumbers.ElliottGeneral
 import NormalNumbers.ElliottHall
 import NormalNumbers.ElliottPretentiousTransfer
@@ -170,3 +171,9 @@ edits; see the fidelity note in `STATUS.md`.
 #print axioms NormalNumbers.ElliottTwistRepair.uniformlyNonPretentious_zetaOmega_of_almostReal
 #print axioms NormalNumbers.ElliottTwistRepair.twistAlmostRealDichotomy_of_inputs
 #print axioms NormalNumbers.ElliottTwistRepair.twoPointElliottLog_of_repaired_inputs
+
+/-! ### Input (e) discharged by scale reduction (lap 93) -/
+#print axioms NormalNumbers.ElliottSmallShift.abs_primeMass_sub_logLog_le
+#print axioms NormalNumbers.ElliottSmallShift.norm_twistCorr_sub_le
+#print axioms NormalNumbers.ElliottSmallShift.uniformlyNonPretentious_zetaOmega_of_almostRealProp
+#print axioms NormalNumbers.ElliottSmallShift.almostRealProp_or_far_of_reductionScale
