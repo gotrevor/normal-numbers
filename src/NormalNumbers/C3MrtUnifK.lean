@@ -293,12 +293,111 @@ theorem dyadic_window_bound_with {K : ℕ} (hK : 0 < K) {cK CstK : ℕ → ℝ}
   rw [le_div_iff₀ hMpos]
   nlinarith [hspec, norm_nonneg S, hNpos.le, hMpos.le]
 
+/-! ### The explicit per-scale window profile -/
+
+/-- **The per-scale window profile.**  Below the threshold scale `A` the trivial bound `1` is
+used — `‖∑_{Ioc a (2a)}‖ ≤ a` holds for every 1-bounded summand — and at or above `A` the
+analytic bound of `dyadic_window_bound_with`, capped at `1`.
+
+The cap and the threshold are what make the profile `≤ 1` and **antitone everywhere**, which is
+exactly what `class_sum_le_of_window` / `progression_avg_le_of_window` demand.  `A` is a free
+parameter: the caller picks it so that `dyadic_window_bound_with`'s hypotheses hold from `A` on,
+and along the diagonal `A` is allowed to move with `K`. -/
+noncomputable def windowPhi (cK CstK : ℕ → ℝ) (κ : ℝ) (K M A : ℕ) (a : ℕ) : ℝ :=
+  if a < A then 1 else min 1 (CstK K * (2 * Real.log a) ^ (-(κ * cK K)) / (M : ℝ))
+
+theorem windowPhi_le_one (cK CstK : ℕ → ℝ) (κ : ℝ) (K M A a : ℕ) :
+    windowPhi cK CstK κ K M A a ≤ 1 := by
+  unfold windowPhi
+  split
+  · exact le_refl 1
+  · exact min_le_left _ _
+
+theorem windowPhi_nonneg {cK CstK : ℕ → ℝ} {κ : ℝ} {K M A : ℕ} (hA : 2 ≤ A)
+    (hC : 0 ≤ CstK K) (a : ℕ) : 0 ≤ windowPhi cK CstK κ K M A a := by
+  unfold windowPhi
+  split
+  · norm_num
+  · rename_i hnot
+    have ha : A ≤ a := Nat.not_lt.1 hnot
+    have ha2 : (2 : ℝ) ≤ (a : ℝ) := by exact_mod_cast le_trans hA ha
+    have hlog : 0 < Real.log a := Real.log_pos (by linarith)
+    have hb : (0 : ℝ) < 2 * Real.log a := by linarith
+    have hrp : (0 : ℝ) < (2 * Real.log a) ^ (-(κ * cK K)) := Real.rpow_pos_of_pos hb _
+    exact le_min (by norm_num)
+      (div_nonneg (mul_nonneg hC hrp.le) (Nat.cast_nonneg _))
+
+/-- **The profile is antitone.**  Below `A` it is constantly `1`; above, the base `2 log a`
+increases and the exponent `-(κ·cK K)` is `≤ 0`. -/
+theorem windowPhi_antitone {cK CstK : ℕ → ℝ} {κ : ℝ} {K M A : ℕ} (hA : 2 ≤ A)
+    (hC : 0 ≤ CstK K) (hz : 0 ≤ κ * cK K) {a b : ℕ} (hab : a ≤ b) :
+    windowPhi cK CstK κ K M A b ≤ windowPhi cK CstK κ K M A a := by
+  unfold windowPhi
+  by_cases ha : a < A
+  · rw [if_pos ha]
+    split
+    · exact le_refl 1
+    · exact min_le_left _ _
+  · have hbA : ¬ b < A := by omega
+    rw [if_neg ha, if_neg hbA]
+    refine min_le_min (le_refl 1) ?_
+    have haA : A ≤ a := Nat.not_lt.1 ha
+    have ha2 : (2 : ℝ) ≤ (a : ℝ) := by exact_mod_cast le_trans hA haA
+    have hab' : (a : ℝ) ≤ (b : ℝ) := by exact_mod_cast hab
+    have hloga : 0 < Real.log a := Real.log_pos (by linarith)
+    have hlogab : Real.log a ≤ Real.log b := Real.log_le_log (by linarith) hab'
+    have hbase : (0 : ℝ) < 2 * Real.log a := by linarith
+    have hstep : (2 * Real.log b) ^ (-(κ * cK K)) ≤ (2 * Real.log a) ^ (-(κ * cK K)) :=
+      Real.rpow_le_rpow_of_nonpos hbase (by linarith) (by linarith)
+    have := mul_le_mul_of_nonneg_left hstep hC
+    exact div_le_div_of_nonneg_right this (Nat.cast_nonneg _)
+
+open scoped Classical in
+/-- **The profile supplies the `hB` hypothesis.**  Below `A` by the trivial count of the dyadic
+window; at or above `A` by the analytic bound, capped. -/
+theorem windowPhi_window_bound {cK CstK : ℕ → ℝ} {κ : ℝ} {K M A : ℕ} {f : ℕ → ℂ}
+    (hf : ∀ n, ‖f n‖ ≤ 1) {r : ℕ}
+    (hwin : ∀ a : ℕ, A ≤ a →
+      ‖∑ n ∈ (Finset.Ioc a (2 * a)).filter (fun n => n % M = r % M), f n‖
+        ≤ CstK K * (2 * Real.log a) ^ (-(κ * cK K)) * (a : ℝ) / (M : ℝ))
+    (a : ℕ) :
+    ‖∑ n ∈ (Finset.Ioc a (2 * a)).filter (fun n => n % M = r % M), f n‖
+      ≤ windowPhi cK CstK κ K M A a * (a : ℝ) := by
+  classical
+  have ha0 : (0 : ℝ) ≤ (a : ℝ) := Nat.cast_nonneg _
+  have htriv : ‖∑ n ∈ (Finset.Ioc a (2 * a)).filter (fun n => n % M = r % M), f n‖
+      ≤ (a : ℝ) := by
+    refine le_trans (norm_sum_le _ _) ?_
+    have h1 : ∑ n ∈ (Finset.Ioc a (2 * a)).filter (fun n => n % M = r % M), ‖f n‖
+        ≤ ∑ _n ∈ (Finset.Ioc a (2 * a)).filter (fun n => n % M = r % M), (1 : ℝ) :=
+      Finset.sum_le_sum fun n _ => hf n
+    refine le_trans h1 ?_
+    rw [Finset.sum_const, nsmul_eq_mul, mul_one]
+    have hc := Finset.card_filter_le (Finset.Ioc a (2 * a)) (fun n => n % M = r % M)
+    rw [Nat.card_Ioc, show 2 * a - a = a by omega] at hc
+    exact_mod_cast hc
+  unfold windowPhi
+  split
+  · simpa using htriv
+  · rename_i hnot
+    have haA : A ≤ a := Nat.not_lt.1 hnot
+    rcases le_total (1 : ℝ) (CstK K * (2 * Real.log a) ^ (-(κ * cK K)) / (M : ℝ)) with hcase | hcase
+    · rw [min_eq_left hcase]
+      simpa using htriv
+    · rw [min_eq_right hcase]
+      have := hwin a haA
+      calc ‖∑ n ∈ (Finset.Ioc a (2 * a)).filter (fun n => n % M = r % M), f n‖
+          ≤ CstK K * (2 * Real.log a) ^ (-(κ * cK K)) * (a : ℝ) / (M : ℝ) := this
+        _ = CstK K * (2 * Real.log a) ^ (-(κ * cK K)) / (M : ℝ) * (a : ℝ) := by ring
+
 #print axioms NormalNumbers.CastingOut.quantDepthElliottGen_forces_diagonal
 #print axioms NormalNumbers.CastingOut.weylLambertTwist_of_depthDiagonal
 #print axioms NormalNumbers.CastingOut.kPointNoExc_of_with
 #print axioms NormalNumbers.CastingOut.norm_progression_sum_le_class_sum
 #print axioms NormalNumbers.CastingOut.progression_avg_le_of_window
 #print axioms NormalNumbers.CastingOut.dyadic_window_bound_with
+#print axioms NormalNumbers.CastingOut.windowPhi_antitone
+#print axioms NormalNumbers.CastingOut.windowPhi_window_bound
 
 end CastingOut
 

@@ -35,7 +35,7 @@ Thm 3.1(ii) with the exceptional set of scales deleted, which TT say is out of r
 *log*-measure by `Cst (log A)^{1-κc} ≫ 1`.  Same wall as log-Chowla ⇏ Chowla; TT's own Thm 1.3
 escapes it because *irrationality* needs only infinitely many good scales.
 
-## Landed this lap (`C3MrtUnifK.lean`, 6 declarations, all trust-triple clean)
+## Landed this lap (`C3MrtUnifK.lean`, 12 declarations, all trust-triple clean)
 
 * `quantDepthElliottGen_forces_diagonal`, `DepthDiagonal`, `weylLambertTwist_of_depthDiagonal`,
   `depthDiagonal_of_quantDepthElliottGen`.
@@ -47,13 +47,15 @@ escapes it because *irrationality* needs only infinitely many good scales.
 * `dyadic_window_bound_with` — `dyadic_window_bound_K` with the constants AND the scale
   threshold explicit (`hthr : max 2 (K+1) ≤ (2 log N)^(κ·cK K)`), so it can be evaluated along
   a schedule.
+* `windowPhi cK CstK κ K M A` — the explicit per-scale profile
+  `a ↦ if a < A then 1 else min 1 (CstK K · (2 log a)^(-(κ·cK K)) / M)`, with
+  `windowPhi_le_one`, `windowPhi_nonneg`, `windowPhi_antitone` and `windowPhi_window_bound`
+  (the `hB` hypothesis of `class_sum_le_of_window` / `progression_avg_le_of_window`, trivial
+  count below `A`, analytic bound above).  `A` is free so it can move with `K`.
 
 ## NEXT (in order)
 
-1. **`windowPhi`** — the explicit per-scale window profile
-   `Φ_K(a) = min 1 (CstK K · (2 log (max a 2))^(-(κ·cK K)) / M)`: prove `0 ≤ Φ`, `Φ ≤ 1`,
-   antitone, and that `dyadic_window_bound_with` supplies `hB` for it (the `a < N₀(K)` scales
-   are covered by the trivial `Φ = 1`, since `‖∑_{Ioc a 2a}‖ ≤ a`).
+1. ~~`windowPhi`~~ — DONE this lap.
 2. **`depthAvg_le_with`** — feed `windowPhi` into `progression_avg_le_of_window`, sum over the
    `M₀ = Q·primorial P` classes (`norm_depthAvg_le_omega_progressions`) and choose
    `k₀ ≍ log log Y`, giving an explicit `B cK CstK K N` with
