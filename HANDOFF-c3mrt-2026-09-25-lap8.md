@@ -1,4 +1,4 @@
-# HANDOFF c3-mrt 2026-09-25 — laps 7–13
+# HANDOFF c3-mrt 2026-09-25 — laps 7–14
 
 Branch `wip/c3-mrt`.  `lake build` green at both commits; every new result axiom-clean
 `[propext, Classical.choice, Quot.sound]`, no `sorry`.  Pure addition (2 new modules).
@@ -148,6 +148,25 @@ two twists `ζ₀, ζ₁` are independent and our two forms have leading coeffic
 Even the main term `d = e = 1` of the tuple sum is a *two-function* correlation, so it does not
 reduce to the unit-circle case.  **The log-averaged `D = 2` rung is therefore equivalent to the
 named open input**, not to something weaker.
+
+## Lap 14 — the window mismatch: an initial segment IS a stack of Elliott windows
+
+* **`elliottLogWindow_pow`** — holding the window ratio fixed at `W = A` and taking `X = A^i`,
+  `Erdos67b.elliottLogWindow (A^i) A = Ioc (A^{i−1}) (A^i)` exactly.
+* `sum_Ioc_pow_decomp` — those windows tile `(1, A^m]`, so an initial segment is the point
+  `j = 1` plus `m` consecutive Elliott windows.
+* **`norm_sum_Ioc_pow_le`** — if every window contributes `≤ B`, the initial segment
+  `1 ≤ j ≤ A^m` contributes `≤ ‖f 1‖ + m·B`.
+
+Why this is the right shape: Elliott at fixed `A` gives `B = ε log A` per window, so the stack
+gives `ε·m·log A = ε·log(A^m)` — a bound **proportional to the log-mass of the segment**, which
+is what a log-averaged statement must produce.  The `log A` per window does not accumulate into
+anything worse; `m log A` is the log of the *length*, not `m` copies of the answer.  The single
+uncovered point `j = 1` carries harmonic weight `1`, an additive `O(1)`.
+
+With this, every mismatch between our sum and `Erdos67b.elliottLogCorrelation` is closed:
+shape (lap 10), multiplicativity + non-degeneracy (lap 11), weight class (lap 12), weight
+variable (lap 13), window (lap 14).
 
 ## NEXT — resume here
 

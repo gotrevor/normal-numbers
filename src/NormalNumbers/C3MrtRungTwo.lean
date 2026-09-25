@@ -144,6 +144,76 @@ theorem weight_transfer {L a : ℕ} (hL : 0 < L) (haL : a < L) (J : ℕ) (G : �
           exact div_le_div_of_nonneg_right haL' (by positivity)
       _ = 2 / (L : ℝ) := by field_simp
 
+/-! ### The window mismatch: an initial segment is a stack of Elliott windows
+
+`Erdos67b.elliottLogCorrelation` lives on the window `X/W < j ≤ X`, while laps 8–12 produce an
+initial segment `1 ≤ j ≤ J`.  With the window ratio held FIXED at `W = A` and `X = A^m`, the
+window is exactly `(A^{m−1}, A^m]`, and these tile `(1, A^M]`.  So an initial segment of length
+`A^M` is a stack of `M` Elliott windows plus the single point `j = 1`.
+
+Each window contributes `≤ ε log W = ε log A` (that is what Elliott gives at fixed `A`), so the
+stack contributes `≤ ε M log A = ε log(A^M)` — the bound is *proportional to the log-mass of the
+initial segment*, which is exactly the shape needed.  The `log A` per window does not accumulate
+into anything worse: `M log A` is the log of the length, not `M` times the answer.
+-/
+
+/-- With ratio `W = A` and endpoint `X = A^m` (`m ≥ 1`), the Elliott window is `(A^{m−1}, A^m]`. -/
+theorem elliottLogWindow_pow {A m : ℕ} (hA : 0 < A) (hm : 1 ≤ m) :
+    Erdos67b.elliottLogWindow (A ^ m) A = Ioc (A ^ (m - 1)) (A ^ m) := by
+  ext n
+  rw [Erdos67b.mem_elliottLogWindow, Finset.mem_Ioc]
+  have hpow : A * A ^ (m - 1) = A ^ m := by
+    rw [← pow_succ']
+    congr 1
+    omega
+  constructor
+  · rintro ⟨hn0, hnX, hXn⟩
+    refine ⟨?_, hnX⟩
+    rw [← hpow] at hXn
+    exact lt_of_mul_lt_mul_left hXn (Nat.zero_le A)
+  · rintro ⟨hlow, hnX⟩
+    have hpos : 0 < n := lt_of_le_of_lt (Nat.zero_le _) hlow
+    refine ⟨hpos, hnX, ?_⟩
+    rw [← hpow]
+    exact Nat.mul_lt_mul_of_pos_left hlow hA
+
+/-- An initial segment decomposes as the point `1` plus a stack of consecutive windows. -/
+theorem sum_Ioc_pow_decomp {M : Type*} [AddCommMonoid M] (f : ℕ → M) (A : ℕ) (hA : 1 ≤ A)
+    (m : ℕ) :
+    ∑ j ∈ Ioc 0 (A ^ m), f j
+      = ∑ j ∈ Ioc 0 1, f j + ∑ i ∈ Icc 1 m, ∑ j ∈ Ioc (A ^ (i - 1)) (A ^ i), f j := by
+  have hIoc01 : Ioc 0 1 = ({1} : Finset ℕ) := by decide
+  induction m with
+  | zero => simp [hIoc01]
+  | succ m ih =>
+    have hpow : A ^ m ≤ A ^ (m + 1) := Nat.pow_le_pow_right hA (by omega)
+    have h1 : A ^ 0 ≤ A ^ m := Nat.pow_le_pow_right hA (Nat.zero_le m)
+    rw [Finset.sum_Icc_succ_top (by omega), ← add_assoc, ← ih]
+    have hsplit : ∑ j ∈ Ioc 0 (A ^ m), f j + ∑ j ∈ Ioc (A ^ m) (A ^ (m + 1)), f j
+        = ∑ j ∈ Ioc 0 (A ^ (m + 1)), f j :=
+      Finset.sum_Ioc_consecutive f (Nat.zero_le _) hpow
+    rw [← hsplit, Nat.add_sub_cancel]
+
+/-- **The stacking bound.**  If every Elliott window contributes at most `B`, then the initial
+segment `1 ≤ j ≤ A^m` contributes at most `‖f 1‖ + m · B`.  (`f 1` is the one point no window
+covers, and its harmonic weight is `1`.) -/
+theorem norm_sum_Ioc_pow_le {A : ℕ} (hA : 1 ≤ A) (f : ℕ → ℂ) (m : ℕ) (B : ℝ)
+    (hwin : ∀ i ∈ Icc 1 m, ‖∑ j ∈ Ioc (A ^ (i - 1)) (A ^ i), f j‖ ≤ B) :
+    ‖∑ j ∈ Ioc 0 (A ^ m), f j‖ ≤ ‖f 1‖ + m * B := by
+  rw [sum_Ioc_pow_decomp f A hA m]
+  have hIoc01 : Ioc 0 1 = ({1} : Finset ℕ) := by decide
+  have h1 : ‖∑ j ∈ Ioc 0 1, f j‖ = ‖f 1‖ := by rw [hIoc01]; simp
+  have hrest : ‖∑ i ∈ Icc 1 m, ∑ j ∈ Ioc (A ^ (i - 1)) (A ^ i), f j‖ ≤ (m : ℝ) * B := by
+    refine le_trans (norm_sum_le _ _) ?_
+    calc ∑ i ∈ Icc 1 m, ‖∑ j ∈ Ioc (A ^ (i - 1)) (A ^ i), f j‖
+        ≤ ∑ _i ∈ Icc 1 m, B := Finset.sum_le_sum hwin
+      _ = (m : ℝ) * B := by
+          rw [Finset.sum_const, Nat.card_Icc, nsmul_eq_mul]
+          norm_num
+  have := norm_add_le (∑ j ∈ Ioc 0 1, f j) (∑ i ∈ Icc 1 m, ∑ j ∈ Ioc (A ^ (i - 1)) (A ^ i), f j)
+  rw [h1] at this
+  linarith
+
 end CastingOut
 
 end NormalNumbers
@@ -151,3 +221,5 @@ end NormalNumbers
 -- axiom audit
 #print axioms NormalNumbers.CastingOut.sum_inv_sq_le
 #print axioms NormalNumbers.CastingOut.weight_transfer
+#print axioms NormalNumbers.CastingOut.elliottLogWindow_pow
+#print axioms NormalNumbers.CastingOut.norm_sum_Ioc_pow_le
