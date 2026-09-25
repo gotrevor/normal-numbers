@@ -521,6 +521,7 @@ import NormalNumbers.TwoPointShiftLocal
 import NormalNumbers.TwoPointDepthInvariance
 import NormalNumbers.TwoPointDelangeLF
 import NormalNumbers.TwoPointMertensLower
+import NormalNumbers.TwoPointDelangeOmega
 import NormalNumbers.PairDecoupleProve
 import NormalNumbers.PairDecoupleRefute
 import NormalNumbers.PairDecoupleLower
