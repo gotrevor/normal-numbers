@@ -243,3 +243,69 @@ and there is none (they differ on the non-squarefree numbers, density `1 − 6/�
    reduced, axiom-clean, to a quantitative Elliott correlation with `O(log log log N)` points,
    a generous `b^{κD}` constant budget, certified-legitimate hypotheses, and the base rung
    proved.  That IS the "equivalence with a named open problem" success criterion.
+
+---
+
+# lap 5 addendum — the non-pretentiousness certificate, generalised; and the diagonal escape closed
+
+`src/NormalNumbers/C3MrtElliottForm.lean` (axiom-clean, no `sorry`).
+
+## Structural check: `P` is fixed before `N` — no diagonal escape
+
+If `P` could grow with `N` the crux would collapse (`ω_{>P}(m) = 0` for `m ≤ N < P`, and the sum
+is then `∑ e(jn/Q)/N → 0` by periodicity alone).  It cannot: `rotationRouteC_of_weyl`
+(`SwingC3ContGlue.lean:276`) obtains `P` from `exists_rotationCover_core hb α len …`, i.e. `P`
+is determined by the target word `(α, len)` and is then held fixed while `N → ∞`.  So the mean of
+`ω_{>P}` over `n < N` really is `≍ log log N` and the depth truncation really is needed.  **This
+escape route is now definitively closed** (do not re-examine).
+
+## New, general
+
+* `re_lt_one_of_norm_le_one` — generalises lap 4's unimodular version to `‖z‖ ≤ 1`.
+* `tendsto_constDist_atTop` — `∑_{P<p<x} c/p → ∞` for every `c > 0` (lap 4's proof, extracted).
+* `twistDist b h P κ x = ∑_{P<p<x} (1 − Re(ζ_0 κ(p)))/p` — the pretentious distance to a twist.
+* **`tendsto_twistDist_atTop`** — the uniform-gap criterion: a fixed gap `c > 0` between
+  `Re(ζ_0 κ(p))` and `1` along primes `> P` gives non-pretentiousness.
+* **`tendsto_twistDist_atTop_of_finite_values`** — non-pretentiousness against EVERY
+  finite-valued twist whose value set misses `ζ_0⁻¹`.  Covers every Dirichlet character `χ` with
+  `ζ_0⁻¹ ∉ image χ`.
+* **`tendsto_twistDist_principal`** — non-pretentiousness against the principal character mod
+  **any** `q` (not just `q = 1`, which is all lap 4 gave).
+
+## What the certificate still lacks, and why it is not cheap
+
+Two twist families remain, both true and standard, neither reachable from mathlib as it stands:
+
+1. `t = 0`, `χ` nonprincipal with `ζ_0⁻¹ ∈ image χ`.  Reduces (by grouping primes by the value
+   `χ(p) ∈ μ_d` and using `∑_p 1/p = ∞`) to: **`∑_{p : χ(p)=1} 1/p = ∞`**, i.e. Dirichlet with
+   `1/p` weights.  Mathlib's `PrimesInAP` only reaches the `Λ`-weighted
+   `not_summable_residueClass_prime_div` (`∑ Λ(p)/p`), and `Λ(p)/p = log p · (1/p)` is the WRONG
+   direction — divergence of the `Λ`-weighted sum does not give divergence of `∑1/p`.  Getting
+   `∑1/p` needs `L(1,χ) ≠ 0` plus a Mertens-type partial summation: a multi-lap formalisation.
+2. `t ≠ 0`: `∑_{p≤x} χ(p)p^{it}/p = log L(1+it,χ) + O(1)` is bounded, so
+   `twistDist ≥ ∑1/p − O_t(1) → ∞`.  Needs `L(1+it,χ) ≠ 0` (mathlib has
+   `LFunction_ne_zero_of_one_le_re`) plus the same Euler-product/Mertens bridge.
+
+Both are "a constant cannot pretend to be `χ(p)p^{it}`" — the softest possible instance of
+non-pretentiousness, with no conspiracy available.  That is exactly why the `D = 1` rung was
+provable outright (`depthAvg_one_tendsto`, via the repo's `DelangeSlot`, which does its own
+analytic work and does not go through the pretentious-distance formulation).
+
+## NEXT (lap 6)
+
+The wall is `D = 2`.  Every soft route is now refuted and recorded (smooth/rough sieve split;
+self-similar recursion; growing `P`; Tao's `unitCircleLogElliott`, which needs complete
+multiplicativity).  Remaining ideas, in order:
+1. **Turán–Kubilius halving** (a real but modest gain): centring `ω_i` at its mean `μ` makes the
+   residual tail phase have SD `≍ √(log log N)/b^D` rather than mean `≍ log log N/b^D`, so the
+   required depth drops by a factor 2, to `D_N ≍ ½ log_b log log N`.  Does not remove the wall.
+   Needs a variance bound for `ω` — check `PairDecouple`/entropy modules for one.
+2. **`ω → Ω` bridge**: if `ζ^{Ω}` could replace `ζ^{ω}` the dependency's log-Elliott would
+   apply (`ζ^Ω` IS completely multiplicative).  They differ on non-squarefree `n` (density
+   `1 − 6/π² ≈ 0.39`), so no pointwise bridge — but the *correlation* difference may be
+   controllable, since `ζ^{ω(n)} = ζ^{Ω(n)}` unless a prime square divides `n`, and the
+   squarefull part is a convolution one can sum over. **This is the most promising untried
+   lead**: `ζ^{ω} = ζ^{Ω} * g` for an explicit `g` supported on squarefull numbers, so a
+   `D`-point correlation of `ζ^ω`'s expands as a finite-weight sum of `D`-point correlations of
+   `ζ^Ω`'s along dilated shifts — and THOSE are in scope for `unitCircleLogElliott`/
+   `NonasymptoticLogElliott` (log density).  Worth a careful attempt.
