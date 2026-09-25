@@ -151,4 +151,117 @@ theorem delangeS_grade (z : ℂ) (N : ℕ) :
   tauto
 
 
+/-! ### The parametrised sum and the identity in derivative form
+
+To run the energy argument one needs `S` as a *function of the parameter* `v`, differentiable in
+`v`, with `∂_v S` identified.  `delangeSv N` is exactly `delangeS (1+v) N` viewed that way; it is a
+polynomial in `v`, so differentiability is free, and the `ω`-identity above becomes the clean
+
+    ∂_v S(N; v) = Σ_{p ≤ N} (1/p) · S^{(p)}(N/p; v),
+
+valid at *every* `v` including `v = 0` (both sides are `Σ_{p≤N} 1/p` there).  Stated in this form
+there is no division by `v`, so no case split. -/
+
+/-- `S(N; v) = Σ_{n ≤ N} μ²(n) v^{ω(n)}/n`, as a function of the parameter. -/
+noncomputable def delangeSv (N : ℕ) (v : ℂ) : ℂ :=
+  ∑ n ∈ Finset.Ioc 0 N, (if Squarefree n then v ^ omegaNat n else 0) / (n : ℂ)
+
+/-- The coprimality-restricted companion of `delangeSv`. -/
+noncomputable def delangeSvRestr (p M : ℕ) (v : ℂ) : ℂ :=
+  ∑ m ∈ (Finset.Ioc 0 M).filter (fun m => ¬ p ∣ m),
+    (if Squarefree m then v ^ omegaNat m else 0) / (m : ℂ)
+
+lemma delangeSv_eq (z : ℂ) (N : ℕ) : delangeSv N (z - 1) = delangeS z N := by
+  refine Finset.sum_congr rfl fun n _ => ?_
+  rw [delangeKernel]
+
+lemma delangeSvRestr_eq (z : ℂ) (p M : ℕ) : delangeSvRestr p M (z - 1) = delangeSrestr z p M := by
+  refine Finset.sum_congr rfl fun m _ => ?_
+  rw [delangeKernel]
+
+/-- The formal `v`-derivative of `delangeSv`. -/
+noncomputable def delangeSvDeriv (N : ℕ) (v : ℂ) : ℂ :=
+  ∑ n ∈ Finset.Ioc 0 N,
+    (if Squarefree n then (omegaNat n : ℂ) * v ^ (omegaNat n - 1) else 0) / (n : ℂ)
+
+/-- `p ∤ m` makes `p·m` squarefree exactly when `m` is, and adds one prime factor. -/
+lemma squarefree_mul_prime_iff {p m : ℕ} (hp : p.Prime) (hm : m ≠ 0) (hdvd : ¬ p ∣ m) :
+    (Squarefree (p * m) ↔ Squarefree m) ∧ omegaNat (p * m) = omegaNat m + 1 := by
+  have hcop : Nat.Coprime p m := (Nat.Prime.coprime_iff_not_dvd hp).mpr hdvd
+  constructor
+  · rw [Nat.squarefree_mul hcop]
+    exact ⟨fun h => h.2, fun h => ⟨hp.squarefree, h⟩⟩
+  · rw [omegaNat_mul_coprime hp.pos.ne' hm hcop]
+    have : omegaNat p = 1 := by simp [omegaNat, Nat.Prime.primeFactors hp]
+    omega
+
+/-- Non-squarefree `p·m` when `p ∣ m`. -/
+lemma not_squarefree_mul_self {p m : ℕ} (hp : p.Prime) (hdvd : p ∣ m) : ¬ Squarefree (p * m) := by
+  obtain ⟨c, rfl⟩ := hdvd
+  intro hsq
+  have : p * p ∣ p * (p * c) := ⟨c, by ring⟩
+  exact hp.not_isUnit (hsq p this)
+
+/-- **The `ω`-identity in derivative form**, with no division by `v`. -/
+theorem delangeSvDeriv_eq (N : ℕ) (v : ℂ) :
+    delangeSvDeriv N v = ∑ p ∈ primesLe N, (1 / (p : ℂ)) * delangeSvRestr p (N / p) v := by
+  classical
+  have hstep : ∀ n ∈ Finset.Ioc 0 N,
+      (if Squarefree n then (omegaNat n : ℂ) * v ^ (omegaNat n - 1) else 0) / (n : ℂ)
+        = ∑ p ∈ primesLe N,
+            (if p ∣ n then (if Squarefree n then v ^ (omegaNat n - 1) else 0) / (n : ℂ) else 0) := by
+    intro n hn
+    simp only [Finset.mem_Ioc] at hn
+    rw [← Finset.sum_filter, filter_dvd_primesLe hn.1 hn.2, Finset.sum_const, nsmul_eq_mul,
+      omegaNat]
+    by_cases hsq : Squarefree n
+    · simp only [hsq, if_true, omegaNat]
+      ring
+    · simp [hsq]
+  rw [delangeSvDeriv, Finset.sum_congr rfl hstep, Finset.sum_comm]
+  refine Finset.sum_congr rfl fun p hp => ?_
+  have hpp := prime_of_mem_primesLe hp
+  rw [← Finset.sum_filter,
+    sum_multiples_reindex p N hpp.pos
+      (fun n => (if Squarefree n then v ^ (omegaNat n - 1) else 0) / (n : ℂ))]
+  have hinner : ∀ m ∈ Finset.Ioc 0 (N / p),
+      (if Squarefree (p * m) then v ^ (omegaNat (p * m) - 1) else 0) / ((p * m : ℕ) : ℂ)
+        = (1 / (p : ℂ))
+            * (if ¬ p ∣ m then (if Squarefree m then v ^ omegaNat m else 0) / (m : ℂ) else 0) := by
+    intro m hm
+    simp only [Finset.mem_Ioc] at hm
+    have hm0 : m ≠ 0 := by omega
+    have hpc : ((p : ℂ)) ≠ 0 := Nat.cast_ne_zero.mpr hpp.pos.ne'
+    have hmc : ((m : ℂ)) ≠ 0 := Nat.cast_ne_zero.mpr hm0
+    by_cases hdvd : p ∣ m
+    · rw [if_neg (not_squarefree_mul_self hpp hdvd)]
+      simp [hdvd]
+    · obtain ⟨hiff, homega⟩ := squarefree_mul_prime_iff hpp hm0 hdvd
+      simp only [hdvd, not_false_eq_true, if_true]
+      by_cases hsq : Squarefree m
+      · rw [if_pos (hiff.mpr hsq), if_pos hsq, homega]
+        push_cast
+        field_simp
+      · rw [if_neg (fun h => hsq (hiff.mp h)), if_neg hsq]
+        simp
+  rw [Finset.sum_congr rfl hinner, ← Finset.mul_sum, ← Finset.sum_filter, delangeSvRestr]
+
+/-- **`S(N; ·)` is differentiable in the parameter, with the identity as its derivative.**
+This is the exact ODE in `v` driving the energy argument: the multiplier
+`Σ_{p ≤ N} 1/p = log log N + O(1)` is real and positive. -/
+theorem hasDerivAt_delangeSv (N : ℕ) (v : ℂ) :
+    HasDerivAt (delangeSv N) (∑ p ∈ primesLe N, (1 / (p : ℂ)) * delangeSvRestr p (N / p) v) v := by
+  classical
+  rw [← delangeSvDeriv_eq, delangeSvDeriv]
+  show HasDerivAt (fun w : ℂ =>
+      ∑ n ∈ Finset.Ioc 0 N, (if Squarefree n then w ^ omegaNat n else 0) / (n : ℂ)) _ v
+  refine HasDerivAt.fun_sum (A := fun (n : ℕ) (w : ℂ) =>
+      (if Squarefree n then w ^ omegaNat n else 0) / (n : ℂ)) fun n _ => ?_
+  by_cases hsq : Squarefree n
+  · simp only [hsq, if_true]
+    exact ((hasDerivAt_pow (omegaNat n) v).div_const (n : ℂ))
+  · simp only [hsq, if_false]
+    simpa using hasDerivAt_const v (0 : ℂ)
+
+
 end NormalNumbers.CastingOut
