@@ -180,4 +180,138 @@ theorem sum_log_div_mul_pred_le (N : ℕ) :
   have : (0 : ℝ) ≤ 1 / Real.sqrt (N : ℝ) := by positivity
   linarith
 
+/-! ### The assembly: Mertens' first theorem, lower half
+
+`log(N!)` counted two ways.  mathlib supplies Legendre's bound directly
+(`Nat.factorization_factorial_le_div_pred : (N!).factorization p ≤ N/(p−1)`), so the geometric
+step is free and `sum_div_pow_le` above is only a standalone record of it. -/
+
+/-- `log(N!) = Σ_{n=1}^{N} log n`. -/
+lemma log_factorial_eq_sum (N : ℕ) :
+    Real.log ((Nat.factorial N : ℕ) : ℝ) = ∑ n ∈ Finset.Icc 1 N, Real.log n := by
+  have hIcc : ∑ n ∈ Finset.Icc 1 N, Real.log n = ∑ i ∈ Finset.range N, Real.log ((i : ℝ) + 1) := by
+    induction N with
+    | zero => simp
+    | succ N ih =>
+        rw [Finset.sum_Icc_succ_top (by omega), Finset.sum_range_succ, ih]
+        have : ((N + 1 : ℕ) : ℝ) = (N : ℝ) + 1 := by push_cast; ring
+        rw [this]
+  rw [hIcc, Nat.factorial_eq_prod_range_add_one]
+  push_cast
+  rw [Real.log_prod]
+  intro i hi
+  positivity
+
+/-- `log(N!) = Σ_{p ≤ N} v_p(N!)·log p`. -/
+lemma log_factorial_eq_prime_sum (N : ℕ) :
+    Real.log ((Nat.factorial N : ℕ) : ℝ)
+      = ∑ p ∈ primesLe N, (((Nat.factorial N).factorization p : ℕ) : ℝ) * Real.log p := by
+  classical
+  have hne : (Nat.factorial N) ≠ 0 := Nat.factorial_ne_zero N
+  have hfac : (Nat.factorial N : ℕ) = ∏ p ∈ (Nat.factorial N).primeFactors, p ^ ((Nat.factorial N).factorization p) :=
+    (Nat.factorization_prod_pow_eq_self hne).symm
+  have hsub : (Nat.factorial N).primeFactors ⊆ primesLe N := by
+    intro p hp
+    have hpp := Nat.prime_of_mem_primeFactors hp
+    have hdvd := Nat.dvd_of_mem_primeFactors hp
+    have hple : p ≤ N := (Nat.Prime.dvd_factorial hpp).mp hdvd
+    simp only [primesLe, Finset.mem_filter, Finset.mem_range]
+    exact ⟨by omega, hpp⟩
+  have hprod : ((Nat.factorial N : ℕ) : ℝ) = ∏ p ∈ (Nat.factorial N).primeFactors, ((p : ℝ) ^ ((Nat.factorial N).factorization p)) := by
+    conv_lhs => rw [hfac]
+    push_cast
+    rfl
+  rw [hprod, Real.log_prod]
+  · have h1 : ∑ p ∈ (Nat.factorial N).primeFactors,
+        Real.log ((p : ℝ) ^ ((Nat.factorial N).factorization p))
+        = ∑ p ∈ (Nat.factorial N).primeFactors,
+            (((Nat.factorial N).factorization p : ℕ) : ℝ) * Real.log p :=
+      Finset.sum_congr rfl fun p _ => by rw [Real.log_pow]
+    rw [h1]
+    refine Finset.sum_subset hsub ?_
+    intro p hp hnot
+    have hz : (Nat.factorial N).factorization p = 0 := by
+      by_contra hc
+      exact hnot (Nat.support_factorization (n := Nat.factorial N) ▸ Finsupp.mem_support_iff.mpr hc)
+    rw [hz]
+    simp
+  · intro p hp
+    have hpp := Nat.prime_of_mem_primeFactors hp
+    have : (0 : ℝ) < (p : ℝ) := by exact_mod_cast hpp.pos
+    positivity
+
+/-- **MERTENS' FIRST THEOREM, LOWER HALF.**  `Σ_{p ≤ N} (log p)/p ≥ log N − 9`, with an explicit
+absolute constant and an entirely elementary proof. -/
+theorem mertens_lower (N : ℕ) (hN : 1 ≤ N) :
+    Real.log N - 9 ≤ ∑ p ∈ primesLe N, Real.log p / (p : ℝ) := by
+  classical
+  have hNR : (0 : ℝ) < (N : ℝ) := by exact_mod_cast hN
+  -- the upper count
+  have hupper : Real.log ((Nat.factorial N : ℕ) : ℝ)
+      ≤ (N : ℝ) * ∑ p ∈ primesLe N, Real.log p / ((p : ℝ) - 1) := by
+    rw [log_factorial_eq_prime_sum N, Finset.mul_sum]
+    refine Finset.sum_le_sum fun p hp => ?_
+    have hpp := prime_of_mem_primesLe hp
+    have hp2 : (2 : ℝ) ≤ (p : ℝ) := by exact_mod_cast hpp.two_le
+    have hlog : (0 : ℝ) ≤ Real.log p := Real.log_nonneg (by linarith)
+    have hnat := Nat.factorization_factorial_le_div_pred hpp N
+    have hcast : (((Nat.factorial N).factorization p : ℕ) : ℝ) ≤ (N : ℝ) / ((p : ℝ) - 1) := by
+      have h1 : (((Nat.factorial N).factorization p : ℕ) : ℝ) ≤ ((N / (p - 1) : ℕ) : ℝ) := by
+        exact_mod_cast hnat
+      have h2 : ((N / (p - 1) : ℕ) : ℝ) ≤ (N : ℝ) / ((p : ℝ) - 1) := by
+        have hpm : ((p - 1 : ℕ) : ℝ) = (p : ℝ) - 1 := by
+          have : 1 ≤ p := hpp.one_lt.le
+          push_cast [Nat.cast_sub this]
+          ring
+        rw [← hpm]
+        exact cast_div_le N (p - 1)
+      linarith
+    calc (((Nat.factorial N).factorization p : ℕ) : ℝ) * Real.log p
+        ≤ ((N : ℝ) / ((p : ℝ) - 1)) * Real.log p := mul_le_mul_of_nonneg_right hcast hlog
+      _ = (N : ℝ) * (Real.log p / ((p : ℝ) - 1)) := by ring
+  -- split `1/(p−1) = 1/p + 1/(p(p−1))`
+  have hsplit : ∑ p ∈ primesLe N, Real.log p / ((p : ℝ) - 1)
+      = (∑ p ∈ primesLe N, Real.log p / (p : ℝ))
+        + ∑ p ∈ primesLe N, Real.log p / ((p : ℝ) * ((p : ℝ) - 1)) := by
+    rw [← Finset.sum_add_distrib]
+    refine Finset.sum_congr rfl fun p hp => ?_
+    have hpp := prime_of_mem_primesLe hp
+    have hp2 : (2 : ℝ) ≤ (p : ℝ) := by exact_mod_cast hpp.two_le
+    have h1 : (p : ℝ) ≠ 0 := by linarith
+    have h2 : (p : ℝ) - 1 ≠ 0 := by linarith
+    field_simp
+    ring
+  -- the correction is `≤ 8`
+  have hcorr : ∑ p ∈ primesLe N, Real.log p / ((p : ℝ) * ((p : ℝ) - 1)) ≤ 8 := by
+    refine le_trans ?_ (sum_log_div_mul_pred_le N)
+    refine Finset.sum_le_sum_of_subset_of_nonneg ?_ (fun n hn _ => ?_)
+    · intro p hp
+      have hpp := prime_of_mem_primesLe hp
+      have hple : p ≤ N := by
+        rw [primesLe, Finset.mem_filter, Finset.mem_range] at hp
+        omega
+      simp only [Finset.mem_Icc]
+      exact ⟨hpp.two_le, hple⟩
+    · simp only [Finset.mem_Icc] at hn
+      have hn2 : (2 : ℝ) ≤ (n : ℝ) := by exact_mod_cast hn.1
+      have : (0 : ℝ) ≤ Real.log n := Real.log_nonneg (by linarith)
+      have hd : (0 : ℝ) < (n : ℝ) * ((n : ℝ) - 1) := by nlinarith
+      positivity
+  -- the lower count
+  have hlower : (N : ℝ) * Real.log N - (N : ℝ) ≤ Real.log ((Nat.factorial N : ℕ) : ℝ) := by
+    rw [log_factorial_eq_sum N]
+    exact log_factorial_ge N
+  rw [hsplit] at hupper
+  have hfinal : (N : ℝ) * Real.log N - (N : ℝ)
+      ≤ (N : ℝ) * ((∑ p ∈ primesLe N, Real.log p / (p : ℝ)) + 8) := by
+    refine le_trans hlower (le_trans hupper ?_)
+    have : (∑ p ∈ primesLe N, Real.log p / (p : ℝ))
+        + ∑ p ∈ primesLe N, Real.log p / ((p : ℝ) * ((p : ℝ) - 1))
+        ≤ (∑ p ∈ primesLe N, Real.log p / (p : ℝ)) + 8 := by linarith [hcorr]
+    exact mul_le_mul_of_nonneg_left this hNR.le
+  have hdiv : Real.log N - 1 ≤ (∑ p ∈ primesLe N, Real.log p / (p : ℝ)) + 8 := by
+    have := (div_le_div_iff_of_pos_right hNR).mpr hfinal
+    nlinarith [hfinal, hNR]
+  linarith [hdiv]
+
 end NormalNumbers.CastingOut
