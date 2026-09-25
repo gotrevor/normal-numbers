@@ -5,10 +5,11 @@ constant) is a sorry-free, axiom-clean CONDITIONAL THEOREM.  As of lap 115 it re
 open inputs: (i) a `K`-point correlation input with a geometric saving profile, faithful to TT's
 implied-constant placement (`KPointNoExcAtWith A (cKgeom c₀ θ b) (CstKdeg m) K`, every `0 < θ < 1`),
 and (ii) an ARCHIMEDEAN SUPPLY, now `UniformResonantMass` + `CharPrimeSumLogQ D` +
-`WideBlockSavingBand J Jtop κ` + `BlockBandCost J Jtop ε C`.  Discharging (ii) back to ONE input is
-the whole remaining job on the repo's side.**
+`WideBlockSavingBand J bandTop κ` — its cost `BlockBandCost` DISCHARGED (lap 116), and its
+threshold proved NECESSARY (lap 117).  Discharging (ii) back to ONE input is the whole remaining job
+on the repo's side.**
 · **Build**: 🟢 green (9443 jobs; `C3Mrt` tip `NormalNumbers.C3MrtBlockDefect`)
-· **Updated**: lap 115 · 2026-09-25 · HEAD `556ae98` · branch `wip/c3-mrt`
+· **Updated**: lap 117 · 2026-09-25 · HEAD `cfdf4c8` · branch `wip/c3-mrt`
 
 ## Where it stands
 
@@ -111,13 +112,8 @@ is COMPLETE; its overview is kept below.
 ## Outstanding
 
 ### Short-term (mirrors PENDING_WORK top)
-1. **`blockBandCost_holds`** — discharge `BlockBandCost` for the intended band.  Top: blocks above
-   `Jtop X = log₂⌈X²⌉₊ − 1` hold only primes `p > n/2` (`n = ⌈X²⌉₊+1`), so total mass `≤ 2`.
-   Bottom: `small_prime_mass_le` on the primes `< 2^{J X}` gives `log(J X·log 2) + mertensBound`.
-2. **Pin the bottom threshold in the kernel** — `¬ WideBlockSavingBand (fun _ => J₀) Jtop κ` for
-   `J₀ ≤ 3`, by EXACT two-prime phase alignment (`t = 2π/log(p'/p)`; blocks `j = 1,2,3` are `{2,3}`,
-   `{5,7}`, `{11,13}`).  No equidistribution input needed, and it is the honest reason the
-   threshold must grow with `X`.
+1. ~~`blockBandCost_holds`~~ — **DONE lap 116** (`blockBandCost_bound`, `_of_log_bound`, `_const`).
+2. ~~Pin the bottom threshold~~ — **DONE lap 117** (`not_wideBlockSavingBand_const_le_three`).
 3. **`CharPrimeSumLogQ D` at `t = 0`** from `L(1,χ) ≫ q^{-1/2}` (elementary `f = 1 ∗ χ ≥ 0`;
    mathlib has only the qualitative non-vanishing), or a cited classical bound in the ledger.
 4. **`UniformResonantMass`** — the route's pre-existing analytic input, untouched by the repairs.
@@ -186,8 +182,8 @@ The GUARD RULE in `DIRECTION.md` exists to stop this recurring.
 ## Pointers (C3/MRT)
 `DIRECTION.md` → DEFECT LEDGER + CURRENT DIRECTIVE (**read first**; outranks everything) ·
 `ROUTE-ESCALATION-2026-09-25-c3mrt.md` · `PENDING_WORK.md` → "Lap 115" ·
-newest baton `HANDOFF-2026-09-25-4-block-route-refuted.md`
-(prev `HANDOFF-2026-09-25-3-arch-debt-geometric.md`, `…-tt-interface-restated.md`) ·
+newest baton `HANDOFF-2026-09-25-5-block-route-refuted-and-rebuilt.md`
+(prev `…-4-block-route-refuted.md`, `…-3-arch-debt-geometric.md`, `…-tt-interface-restated.md`) ·
 `KICKOFF-2026-09-24-c3-mrt.md` ·
 `src/NormalNumbers/C3MrtBlockDefect.lean` (refutations + repair) ·
 `src/NormalNumbers/C3MrtTTDefect.lean` (the lap-102 defects + restatements) ·
