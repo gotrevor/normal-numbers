@@ -202,6 +202,161 @@ theorem abelianAt_one_of_abelianAt (s : ℕ → ℕ) (hs : ∀ m, s m < 2) (L : 
     (h : IsAbelianAt s L) : IsAbelianAt s 1 :=
   abelianAt_one_of_abelianAt' s hs L hL h
 
+/-! ## Window frequencies of a periodic sequence
+
+For a sequence of period `D`, the length-`L` window one-count depends only on the starting
+position mod `D`, so the frequency of weight `j` converges to the exact rational
+`#{r < D : onesCount s L r = j} / D`.  This is the bridge from finite combinatorics on cyclic
+words to `IsAbelianAt`, and it is what makes periodic witnesses usable. -/
+
+section Periodic
+
+variable (p : ℕ → Prop) [DecidablePred p]
+
+/-- Indicator of `p`, as a real-valued function. -/
+noncomputable def ind (n : ℕ) : ℝ := if p n then 1 else 0
+
+theorem ind_nonneg (n : ℕ) : 0 ≤ ind p n := by unfold ind; split <;> norm_num
+
+theorem ind_le_one (n : ℕ) : ind p n ≤ 1 := by unfold ind; split <;> norm_num
+
+theorem sum_ind_eq_card (M : ℕ) :
+    ∑ n ∈ range M, ind p n = (((range M).filter p).card : ℝ) := by
+  rw [Finset.card_filter]
+  push_cast
+  simp [ind]
+
+theorem sum_ind_le (M : ℕ) : ∑ n ∈ range M, ind p n ≤ M := by
+  calc ∑ n ∈ range M, ind p n ≤ ∑ _n ∈ range M, (1 : ℝ) :=
+        Finset.sum_le_sum (fun n _ => ind_le_one p n)
+    _ = M := by simp
+
+theorem sum_ind_nonneg (M : ℕ) : 0 ≤ ∑ n ∈ range M, ind p n :=
+  Finset.sum_nonneg (fun n _ => ind_nonneg p n)
+
+variable {p}
+
+/-- A `D`-periodic predicate is invariant under shifts by multiples of `D`. -/
+theorem ind_shift_mul (D : ℕ) (hp : ∀ n, p (n + D) ↔ p n) (q n : ℕ) :
+    ind p (q * D + n) = ind p n := by
+  induction q with
+  | zero => simp
+  | succ q ih =>
+      have : (q + 1) * D + n = (q * D + n) + D := by ring
+      rw [this]
+      unfold ind
+      simp only [hp (q * D + n)]
+      exact ih
+
+/-- The indicator sum over `q` full periods. -/
+theorem sum_ind_period (D : ℕ) (hp : ∀ n, p (n + D) ↔ p n) (q : ℕ) :
+    ∑ n ∈ range (q * D), ind p n = q * ∑ n ∈ range D, ind p n := by
+  induction q with
+  | zero => simp
+  | succ q ih =>
+      have hrw : (q + 1) * D = q * D + D := by ring
+      rw [hrw, Finset.sum_range_add, ih]
+      have : ∀ n ∈ range D, ind p (q * D + n) = ind p n :=
+        fun n _ => ind_shift_mul D hp q n
+      rw [Finset.sum_congr rfl this]
+      push_cast; ring
+
+/-- The empirical frequency of a `D`-periodic predicate converges to its exact period average. -/
+theorem tendsto_ind_freq (D : ℕ) (hD : 0 < D) (hp : ∀ n, p (n + D) ↔ p n) :
+    Tendsto (fun N : ℕ => (((range N).filter p).card : ℝ) / N) atTop
+      (𝓝 ((((range D).filter p).card : ℝ) / D)) := by
+  set C : ℝ := ∑ n ∈ range D, ind p n with hC
+  have hCle : C ≤ D := sum_ind_le p D
+  have hCnn : 0 ≤ C := sum_ind_nonneg p D
+  have hDR : (0 : ℝ) < D := by exact_mod_cast hD
+  -- pointwise bound
+  have hbound : ∀ N : ℕ, 0 < N →
+      |(∑ n ∈ range N, ind p n) / N - C / D| ≤ 2 * D / N := by
+    intro N hN
+    have hNR : (0 : ℝ) < N := by exact_mod_cast hN
+    obtain ⟨q, t, htD, hNq⟩ : ∃ q t, t < D ∧ N = q * D + t :=
+      ⟨N / D, N % D, Nat.mod_lt _ hD, (Nat.div_add_mod' N D).symm⟩
+    have hsum : ∑ n ∈ range N, ind p n = q * C + ∑ n ∈ range t, ind p (q * D + n) := by
+      rw [hNq, Finset.sum_range_add, sum_ind_period D hp q]
+    have htail : 0 ≤ ∑ n ∈ range t, ind p (q * D + n) := by
+      exact Finset.sum_nonneg (fun n _ => ind_nonneg p _)
+    have htail2 : ∑ n ∈ range t, ind p (q * D + n) ≤ t := by
+      calc ∑ n ∈ range t, ind p (q * D + n) ≤ ∑ _n ∈ range t, (1 : ℝ) :=
+            Finset.sum_le_sum (fun n _ => ind_le_one p _)
+        _ = t := by simp
+    have hNRq : (N : ℝ) = q * D + t := by rw [hNq]; push_cast; ring
+    have htR : (t : ℝ) ≤ D := by exact_mod_cast htD.le
+    have hkey : (∑ n ∈ range N, ind p n) - (N : ℝ) * (C / D)
+        = (∑ n ∈ range t, ind p (q * D + n)) - t * (C / D) := by
+      rw [hsum, hNRq]
+      field_simp
+      ring
+    have habs : |(∑ n ∈ range N, ind p n) - (N : ℝ) * (C / D)| ≤ 2 * D := by
+      rw [hkey]
+      have h1 : |(∑ n ∈ range t, ind p (q * D + n))| ≤ D := by
+        rw [abs_of_nonneg htail]; linarith
+      have h2 : |(t : ℝ) * (C / D)| ≤ D := by
+        rw [abs_of_nonneg (by positivity)]
+        have : (C / D) ≤ 1 := by rw [div_le_one hDR]; exact hCle
+        nlinarith [Nat.cast_nonneg (α := ℝ) t]
+      calc |(∑ n ∈ range t, ind p (q * D + n)) - t * (C / D)|
+          ≤ |(∑ n ∈ range t, ind p (q * D + n))| + |(t : ℝ) * (C / D)| := by
+            have := abs_add_le (∑ n ∈ range t, ind p (q * D + n)) (-((t : ℝ) * (C / D)))
+            rw [← sub_eq_add_neg, abs_neg] at this
+            exact this
+        _ ≤ 2 * D := by linarith
+    have hsplit : (∑ n ∈ range N, ind p n) / N - C / D
+        = ((∑ n ∈ range N, ind p n) - N * (C / D)) / N := by field_simp
+    rw [hsplit, abs_div, abs_of_pos hNR]
+    gcongr
+  have herr : Tendsto (fun N : ℕ => 2 * (D : ℝ) / N) atTop (𝓝 0) :=
+    tendsto_const_nhds.div_atTop tendsto_natCast_atTop_atTop
+  have hmain : Tendsto (fun N : ℕ => (∑ n ∈ range N, ind p n) / N) atTop (𝓝 (C / D)) := by
+    rw [← sub_zero (C / D)]
+    have := squeeze_zero_norm'
+      (eventually_atTop.mpr ⟨1, fun N (hN : 1 ≤ N) => by
+        show ‖(∑ n ∈ range N, ind p n) / N - C / D‖ ≤ 2 * (D : ℝ) / N
+        rw [Real.norm_eq_abs]; exact hbound N (by omega)⟩) herr
+    simpa using this.add (tendsto_const_nhds (x := C / D))
+  have hCcard : C = (((range D).filter p).card : ℝ) := sum_ind_eq_card p D
+  rw [← hCcard]
+  exact hmain.congr (fun N => by rw [sum_ind_eq_card])
+
+end Periodic
+
+/-- A `D`-periodic sequence has `D`-periodic window one-counts. -/
+theorem onesCount_periodic (s : ℕ → ℕ) (D : ℕ) (hper : ∀ n, s (n + D) = s n) (L n : ℕ) :
+    onesCount s L (n + D) = onesCount s L n := by
+  unfold onesCount windowSet
+  congr 1
+  refine Finset.filter_congr (fun i _ => ?_)
+  have : n + D + i = n + i + D := by ring
+  rw [this, hper]
+
+/-- **The periodic window law.**  The length-`L` weight-`j` frequency of a `D`-periodic sequence
+converges to the exact rational `#{r < D : onesCount s L r = j} / D`. -/
+theorem tendsto_onesFreq_periodic (s : ℕ → ℕ) (D : ℕ) (hD : 0 < D) (hper : ∀ n, s (n + D) = s n)
+    (L j : ℕ) :
+    Tendsto (onesFreq s L j) atTop
+      (𝓝 ((((range D).filter (fun r => onesCount s L r = j)).card : ℝ) / D)) := by
+  have hp : ∀ n, (onesCount s L (n + D) = j) ↔ (onesCount s L n = j) := by
+    intro n; rw [onesCount_periodic s D hper L n]
+  exact tendsto_ind_freq D hD hp
+
+/-- Abelian-ness at `L` for a periodic sequence is the exact finite condition on its cyclic
+window counts. -/
+theorem isAbelianAt_periodic_iff (s : ℕ → ℕ) (D : ℕ) (hD : 0 < D) (hper : ∀ n, s (n + D) = s n)
+    (L : ℕ) :
+    IsAbelianAt s L ↔ ∀ j ≤ L,
+      (((range D).filter (fun r => onesCount s L r = j)).card : ℝ) / D
+        = (L.choose j : ℝ) / 2 ^ L := by
+  constructor
+  · intro h j hj
+    exact tendsto_nhds_unique (tendsto_onesFreq_periodic s D hD hper L j) (h j hj)
+  · intro h j hj
+    rw [← h j hj]
+    exact tendsto_onesFreq_periodic s D hD hper L j
+
 /-! ## Realizability: the empty set -/
 
 /-- The all-zeros sequence has every window one-count equal to `0`. -/

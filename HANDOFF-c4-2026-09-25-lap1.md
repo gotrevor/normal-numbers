@@ -53,3 +53,33 @@ lengths it owns and perturbing decided lengths by a summable amount.  Next lap: 
 the single-scale block process exactly and see whether a second free parameter (a within-block
 4-point term) can zero it simultaneously with `F 2`; that settles whether one scale can serve a
 finite `S` at all.
+
+## Lap 2 addendum (same session)
+**Route found and probed: PERIODIC witnesses.**  `probes/c4_periodic_words.py` (stdlib, with a
+de Bruijn known-answer check) enumerates all cyclic binary words of length `D` and reports
+`G(v) = {L ≥ 1 : abelian at L}`.  Because a period-`D` sequence has only `D` distinct windows,
+`G(v) ⊆ [1, D−1]` automatically — a periodic sequence fails abelian at every large `L` for free.
+Results: `D = 16` realizes `∅, {1}, {1,2}, {1,3}, {1,4}, {1,2,3}, {1,3,4}, {1,2,3,4}`; the one
+admissible subset of `[1,4]` it misses, `{1,2,4}`, IS realized at `D = 64` (hill-climb, word
+recorded in the probe run).  **Every admissible finite set probed is realizable, and no
+obstruction to `{1,2,4}` appears in the correlation coordinates** (`L=2` gives `ρ1 = 0`, `L=4`
+gives `ρ3 = −2ρ2`, and `L=3` fails as soon as `ρ2 ≠ 0`).  Confidence C4 is TRUE: high for finite
+`S`, moderate for infinite `S`.
+
+**Lean landed this lap** (all green, `AbelianWindowSets.lean`):
+- `ind`, `sum_ind_eq_card`, `ind_shift_mul`, `sum_ind_period`,
+  `tendsto_ind_freq` — a general lemma: the empirical frequency of a `D`-periodic decidable
+  predicate converges to its exact period average, with the explicit `2D/N` rate.
+- `onesCount_periodic`, `tendsto_onesFreq_periodic`,
+  **`isAbelianAt_periodic_iff`** — for a `D`-periodic `s`, `IsAbelianAt s L` is EXACTLY the finite
+  arithmetic condition `#{r < D : onesCount s L r = j} / D = C(L,j) / 2^L` for all `j ≤ L`.
+  This turns the analytic headline into finite combinatorics on cyclic words and is reused by
+  both the finite-`S` and the infinite-`S` routes.
+
+**Next attack.**  (a) Finite `S`: give a *construction* (not a search) of a cyclic word of length
+`D` realizing a prescribed admissible `S ⊆ [1,k]`; the de Bruijn word of order `k` realizes
+`{1,…,k}` (every `k`-word once ⇒ every `L`-word exactly `2^{k−L}` times), so the question is how
+to delete prescribed lengths — likely by a product/XOR of a de Bruijn word with a length-`m`
+pattern. (b) Infinite `S` needs aperiodicity: concatenate `w_k^{R_k}` with `R_k` growing fast,
+where `w_k` is exact at all `L ≤ k`; boundary error is `O(1/R_k)` so every `L`-frequency
+converges.  `isAbelianAt_periodic_iff` is the stage-`k` input to that.
