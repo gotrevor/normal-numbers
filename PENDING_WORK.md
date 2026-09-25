@@ -11017,3 +11017,39 @@ this lap the hard core of the entire C3 archimedean debt is a SINGLE explicit co
 for almost all `p`.  That is `L(1, χ) ≠ 0` with a *rate*; mathlib has the qualitative
 `LFunction_apply_one_ne_zero`, and the elementary Dirichlet-style argument via
 `∑_{n} (1 * χ)(n)/n ≥ 0` (Mertens' trick) may give an effective constant — worth one probe.
+
+## 2026-09-25 lap 111 — the narrow conductor debt de-escalated from Siegel to classical
+
+`NonPrincipalLocalBound` (lap 108) asked for a `log log(q(2+|t|))` bound — the sharp
+`log L(1+it,χ)` estimate, needing non-vanishing on the 1-line *with a rate*.  That is far more
+than the chain consumes.  In TT's range `q, |t| ≤ (log X)^{1/125}`, so
+
+    log(q + 2) + log(2 + |t|) ≤ 2 log 3 + (2/125) · log log X,
+
+a *fraction* `2/125` of `log log X`.  Hence:
+
+* `CharPrimeSumLogQ D` — the weakened debt: a **`log`-sized** bound
+  `‖twistedPrimeSum X χ t‖ ≤ D(log(q+2) + log(2+|t|) + 1)` for `χ ≠ 1` in the narrow range.
+  An exponential weaker than a `log log` bound.
+* `log_two_add_le`, `nonPrincipalTwistSmall_of_logQBound` — it suffices, with saving
+  `κ = 1 − 2D/125`, close to `1`.
+* `faithfulArchLower_of_urm_of_logQ` — `FaithfulArchLower b` from `UniformResonantMass` +
+  `CharPrimeSumLogQ` + `WideTwistSmall`.
+
+**Ledger consequence (the point of the lap).**  At `t = 0` the `log`-sized bound is classical and
+**Siegel-free**: `|∑_{p≤Y} χ(p)/p| ≤ log(1/L(1,χ)) + O(1) ≤ (1/2) log q + O(1)` from the
+elementary `L(1,χ) ≫ q^{-1/2}` — no Siegel–Walfisz, no exceptional-modulus exclusion.  TT's
+exponent `1/125` on `Q` is precisely what makes the crude bound enough.  So lap 110's reading
+(the `d = 2` / real-character corner is "the Siegel-zero case") is **corrected**: the conductor
+dependence is not the obstruction.  What remains genuinely open is the *twist* dependence at
+large `|t|` (`WideTwistSmall`), where cancellation in `p^{-it}` is required and no `log q`-type
+bound helps.
+
+**Next attack.**  Concentrate on `WideTwistSmall`, now the sole genuinely-open archimedean
+statement: `‖∑_{p≤X²} χ̄(p)p^{-it}/p‖ ≤ (1−κ) log log X + C` for `(log X)^{1/125} < |t| ≤ X²`.
+Probe: for `|t| ≥ 2` the bound `≤ log log (q(2+|t|)) + O(1)` is USELESS (it is `≍ log X`), but the
+target only needs `(1−κ) log log X`, i.e. a *fraction* of the trivial Mertens bound.  So ask for
+the weakest useful form: is there a `κ > 0` and an elementary argument giving a constant-fraction
+saving for large twists, e.g. by splitting `p ≤ exp((log log X)^2)` (where `p^{-it}` oscillates
+across dyadic blocks) from the tail?  Formalize whichever split reduces `WideTwistSmall` to a
+statement about a *single* dyadic block.

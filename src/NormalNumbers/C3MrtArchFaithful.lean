@@ -1317,6 +1317,130 @@ theorem conjC3_of_geom_input_zfree {c₀ θ κ C κ' C' : ℝ} (hc₀ : 0 < c₀
 #print axioms conjC3_of_geom_input_zfree
 
 
+/-! ### The narrow debt drops from Siegel strength to the classical `L(1,χ) ≫ q^{-1/2}`
+
+`NonPrincipalLocalBound` asked for a `log log (q(2+|t|))` bound — the sharp `log L(1+it,χ)`
+estimate, which needs the non-vanishing of `L` on the 1-line with a rate.  That is far more than
+the chain consumes.  In TT's range the conductor and twist satisfy
+`q, |t| ≤ (log X)^{1/125}`, so
+
+    log(q + 2) + log(2 + |t|) ≤ 2 log 3 + (2/125) · log log X,
+
+which is a *fraction* `2/125` of `log log X`.  So a bound of size `log q + log(2+|t|)` — a whole
+exponential weaker than `log log (q(2+|t|))` — already gives the saving, with
+`κ = 1 − 2D/125` close to `1`.
+
+**Why this matters for the ledger.**  At `t = 0` the `log`-sized bound is classical and
+Siegel-free: `|∑_{p≤Y} χ(p)/p| ≤ log(1/L(1,χ)) + O(1) ≤ (1/2) log q + O(1)` using the elementary
+`L(1,χ) ≫ q^{-1/2}`, no Siegel–Walfisz and no exceptional-character exclusion.  The `1/125` in
+TT's `Q` is exactly what makes the crude bound sufficient.  The genuinely open part of the
+archimedean debt is therefore the *twist* dependence at large `|t|`, not the conductor. -/
+
+/-- **The weakened narrow debt**: a `log`-sized bound on the twisted prime sum, rather than the
+`log log` bound of `NonPrincipalLocalBound`.  At `t = 0` this is the classical
+`L(1,χ) ≫ q^{-1/2}`. -/
+def CharPrimeSumLogQ (D : ℝ) : Prop :=
+  ∀ (q : ℕ) (χ : DirichletCharacter ℂ q), χ ≠ 1 → ∀ X t : ℝ, 3 ≤ X →
+    |t| ≤ Real.log X ^ ((1 : ℝ) / 125) →
+      ‖twistedPrimeSum X χ t‖ ≤ D * (Real.log ((q : ℝ) + 2) + Real.log (2 + |t|) + 1)
+
+/-- `log(2 + r) ≤ log 3 + (1/125) log u` when `0 ≤ r ≤ u^{1/125}` and `1 < u`. -/
+theorem log_two_add_le {r u : ℝ} (hr : 0 ≤ r) (hu : 1 < u) (hru : r ≤ u ^ ((1 : ℝ) / 125)) :
+    Real.log (2 + r) ≤ Real.log 3 + (1 / 125) * Real.log u := by
+  have hu0 : (0 : ℝ) < u := by linarith
+  have hp1 : (1 : ℝ) ≤ u ^ ((1 : ℝ) / 125) := Real.one_le_rpow hu.le (by norm_num)
+  have hle : 2 + r ≤ 3 * u ^ ((1 : ℝ) / 125) := by nlinarith
+  have h1 : Real.log (2 + r) ≤ Real.log (3 * u ^ ((1 : ℝ) / 125)) :=
+    Real.log_le_log (by linarith) hle
+  rwa [Real.log_mul (by norm_num) (by positivity), Real.log_rpow hu0] at h1
+
+/-- **The reduction.**  A `log`-sized bound suffices, with saving `κ = 1 − 2D/125`. -/
+theorem nonPrincipalTwistSmall_of_logQBound {D : ℝ} (hD : 0 < D) (hD125 : 2 * D < 125)
+    (h : CharPrimeSumLogQ D) :
+    NonPrincipalTwistSmall (1 - 2 * D / 125) (D * (2 * Real.log 3 + 1)) := by
+  intro X hX q χ hne hqX t ht
+  have hu1 : 1 < Real.log X := one_lt_log_of_three_le hX
+  have hq0 : (0 : ℝ) ≤ (q : ℝ) := Nat.cast_nonneg q
+  have h1 : Real.log ((q : ℝ) + 2) ≤ Real.log 3 + (1 / 125) * Real.log (Real.log X) := by
+    have := log_two_add_le hq0 hu1 hqX
+    rwa [add_comm (2 : ℝ) ((q : ℝ))] at this
+  have h2 : Real.log (2 + |t|) ≤ Real.log 3 + (1 / 125) * Real.log (Real.log X) :=
+    log_two_add_le (abs_nonneg t) hu1 ht
+  have hmain := h q χ hne X t hX ht
+  have hstep : D * (Real.log ((q : ℝ) + 2) + Real.log (2 + |t|) + 1)
+      ≤ (2 * D / 125) * Real.log (Real.log X) + D * (2 * Real.log 3 + 1) := by
+    have hll : 0 < Real.log (Real.log X) := logloglog_pos hX
+    have hsum : Real.log ((q : ℝ) + 2) + Real.log (2 + |t|) + 1
+        ≤ (2 / 125) * Real.log (Real.log X) + (2 * Real.log 3 + 1) := by linarith
+    have hmul : D * (Real.log ((q : ℝ) + 2) + Real.log (2 + |t|) + 1)
+        ≤ D * ((2 / 125) * Real.log (Real.log X) + (2 * Real.log 3 + 1)) :=
+      mul_le_mul_of_nonneg_left hsum hD.le
+    have hexp : D * ((2 / 125) * Real.log (Real.log X) + (2 * Real.log 3 + 1))
+        = (2 * D / 125) * Real.log (Real.log X) + D * (2 * Real.log 3 + 1) := by ring
+    rw [hexp] at hmul
+    linarith
+  linarith
+
+/-- **`FaithfulArchLower` on the WEAKENED narrow debt.**  `UniformResonantMass` (principal narrow
+corner) + `CharPrimeSumLogQ` (non-principal narrow range, `log`-sized, classical at `t = 0`) +
+`WideTwistSmall` (the wide twist range, the genuinely open part). -/
+theorem faithfulArchLower_of_urm_of_logQ {b : ℕ} (hb : 2 ≤ b) (hURM : UniformResonantMass)
+    {D : ℝ} (hD : 0 < D) (hD125 : 2 * D < 125) (hlog : CharPrimeSumLogQ D)
+    (hwide : ∀ κ C : ℝ, 0 < κ → 0 ≤ C → WideTwistSmall κ C) :
+    ∃ C : ℝ, FaithfulArchLower b (C + Erdos67b.PrimeEstimates.mertensBound) := by
+  have hkp := kappaDepth_pos hb
+  have hmin0 : 0 ≤ min (Real.pi / (b : ℝ)) ((1 : ℝ) / 256) :=
+    le_min (by positivity) (by norm_num)
+  have hminle : min (Real.pi / (b : ℝ)) ((1 : ℝ) / 256) ≤ 1 / 256 := min_le_right _ _
+  have hk1 : kappaDepth b ≤ 1 := by rw [kappaDepth]; nlinarith
+  set κ₀ : ℝ := 1 - 2 * D / 125 with hκ₀def
+  have hκ₀ : 0 < κ₀ := by simp only [hκ₀def]; linarith
+  set C₀ : ℝ := D * (2 * Real.log 3 + 1) with hC₀def
+  have hC₀ : 0 ≤ C₀ := by
+    have h3 : (0 : ℝ) ≤ Real.log 3 := Real.log_nonneg (by norm_num)
+    simp only [hC₀def]; positivity
+  have hnp : NonPrincipalTwistSmall κ₀ C₀ := nonPrincipalTwistSmall_of_logQBound hD hD125 hlog
+  set κ : ℝ := min (min (kappaDepth b) κ₀) 1 / 2 with hκdef
+  have hm0 : 0 < min (min (kappaDepth b) κ₀) 1 := lt_min (lt_min hkp hκ₀) (by norm_num)
+  have hκ0 : 0 < κ := by simp only [hκdef]; linarith
+  have hκ1 : κ ≤ 1 := by
+    have : min (min (kappaDepth b) κ₀) 1 ≤ 1 := min_le_right _ _
+    simp only [hκdef]; linarith
+  have hpt : ∀ h' : ℤ, ¬ ((b : ℤ) ∣ h') →
+      ∃ C : ℝ, NarrowTwistSmall (depthRoot b h' 0) κ C := by
+    intro h' hnd
+    have hz : ‖depthRoot b h' 0‖ = 1 := norm_ee_real _
+    have hz1 : depthRoot b h' 0 ≠ 1 := by
+      intro hone
+      have hge := resEps_depthRoot_ge hb hnd
+      rw [hone] at hge
+      simp only [resEps, Complex.arg_one, abs_zero] at hge
+      have : 0 < Real.pi / (b : ℝ) := by positivity
+      linarith
+    obtain ⟨Ct, htriv0⟩ := narrowTwistSmallTriv_of_uniformResonantMass hURM hz hz1
+    set κ' : ℝ := min (min (kappaDepth b) κ₀) 1 with hκ'
+    have hκ'0 : 0 < κ' := hm0
+    have hκ'1 : κ' ≤ 1 := min_le_right _ _
+    set C : ℝ := max Ct C₀ with hC
+    have hC0 : 0 ≤ C := le_trans hC₀ (le_max_right Ct C₀)
+    have htriv : NarrowTwistSmallTriv (depthRoot b h' 0) κ' C := by
+      refine narrowTwistSmallTriv_mono ?_ (le_max_left _ _) htriv0
+      exact le_trans (le_trans (min_le_left _ _) (min_le_left _ _))
+        (ttExponent_depthRoot_ge hb hnd)
+    have hnp' : NonPrincipalTwistSmall κ' C :=
+      nonPrincipalTwistSmall_mono (le_trans (min_le_left _ _) (min_le_right _ _))
+        (le_max_right _ _) hnp
+    exact ⟨_, narrowTwistSmall_of_triv_of_nonPrincipal hz hκ'0 hκ'1 hC0 htriv hnp'⟩
+  obtain ⟨C1, hC1⟩ := exists_uniform_narrow_const hb hpt
+  refine ⟨max C1 C₀, faithfulArchLower_of_twist_small hκ0 hκ1
+    (fun h' hnd => narrowTwistSmall_mono le_rfl (le_max_left _ _) (hC1 h' hnd)) ?_⟩
+  have hC1' : (0 : ℝ) ≤ max C1 C₀ := le_trans hC₀ (le_max_right _ _)
+  exact hwide κ (max C1 C₀) hκ0 hC1'
+
+#print axioms nonPrincipalTwistSmall_of_logQBound
+#print axioms faithfulArchLower_of_urm_of_logQ
+
+
 #print axioms ttPretentiousSumChar_eq
 #print axioms ttPretentiousSumChar_ge
 #print axioms archSupply_of_faithfulArchLower
