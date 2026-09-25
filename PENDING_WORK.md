@@ -148,6 +148,37 @@ product `∏_p (1 + ∑_{k≥2} 2/p^{3k/4})` still converges because `3·2/4 = 3
 would **fail** (`∑_p 1/(√p(√p−1)) ≍ ∑_p 1/p` diverges), so the shift must be strictly less than
 `1/2`; `1/4` is a safe choice.
 
+## Lap 61 (2026-09-25) — the Rankin ingredients PROVED
+
+New module `src/NormalNumbers/ElliottRankin.lean`, **zero sorry, trust triple**, in the audit
+surface.  The two genuinely new pieces the uniform tail needs:
+
+* `local_factor_geom_le` — the local Euler factor at an **arbitrary** geometric ratio `r`:
+  for nonneg multiplicative `f` with `f p = 0` and `f (p^k) ≤ 2 r^k`, the factor is
+  `≤ 1 + 2 r²/(1−r)`.  Lap 56's `local_factor_squarefull_le` is the case `r = 1/p`; the
+  generalisation is what admits the Rankin ratio `r = p^{-3/4}`.  `geom_sum_Ico_two_le` was already
+  stated for general `r`, so this cost almost nothing — worth noting as a case where the earlier
+  lap's generality paid off.
+* `inv_mul_sqrt_le_telescope` / `sum_Icc_inv_mul_sqrt_le` / `sum_primesBelow_inv_mul_sqrt_le` —
+  **`∑_{p ≤ Y} p^{-3/2} ≤ 2`**, by pure telescoping against `2/√(n−1) − 2/√n`.  No integral
+  comparison and no `rpow`: with `s = √(n−1)`, `t = √n` the step inequality is
+  `s t (t+s) ≤ 2t³`, which follows from `s ≤ t` alone (`nlinarith`).  The unshifted analogue in
+  `ElliottEulerBound` is `sum_primesBelow_inv_mul_pred_le_one`.
+
+Recording the exponent arithmetic, since it is the whole reason the shift is legal: the shifted
+local factor sums `∑_{k≥2} p^{-3k/4}`, whose leading term is `p^{-3/2}`, and `3/2 > 1`.  At
+`δ = 1/2` the leading term would be `p^{-1}` and the prime sum would diverge.
+
+### NEXT — assemble `exists_squarefull_tail`
+
+Remaining wiring, all of it now over proved lemmas:
+(i) `f n = ‖u n‖ / n^{3/4}` as a multiplicative `ArithmeticFunction ℝ` (needs `Real.mul_rpow`);
+(ii) `f (p^k) ≤ 2 (p^{-3/4})^k` from `norm_squarefullPart_prime_pow_le_two`;
+(iii) `2 r²/(1−r) ≤ 5 p^{-3/2}` for `r = p^{-3/4}`, `p ≥ 2` (uses `1 − 2^{-3/4} ≥ 2/5`);
+(iv) `prod_le_exp_prime_sum` with `w p = 5 p^{-3/2}` ⟹ total `≤ e^{11}`;
+(v) the Rankin step `1/d ≤ (D+1)^{-1/4} d^{-3/4}` for `d ≥ D+1`, then pick `D` with
+    `e^{11} (D+1)^{-1/4} ≤ ε`.
+
 ### NEXT — `exists_squarefull_tail` by the Rankin shift
 
 Needs: a shifted variant of `ElliottSquarefull.local_factor_squarefull_le` at exponent `3/4`, and a

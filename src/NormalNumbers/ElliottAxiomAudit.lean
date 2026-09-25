@@ -4,6 +4,7 @@ import NormalNumbers.ElliottPretentiousTransfer
 import NormalNumbers.ElliottProgression
 import NormalNumbers.ElliottCaseAThin
 import NormalNumbers.ElliottLeafTwo
+import NormalNumbers.ElliottRankin
 
 /-!
 # Axiom audit surface for the Elliott campaign
@@ -65,6 +66,11 @@ edits; see the fidelity note in `STATUS.md`.
 
 -- leaf 2, the assembly (gap-free itself; the three halves below carry sorryAx)
 #print axioms NormalNumbers.ElliottLeafTwo.nonasymptotic_of_affineCM
+
+-- the Rankin shift: ingredients for the uniformly small squarefull tail
+#print axioms NormalNumbers.ElliottRankin.local_factor_geom_le
+#print axioms NormalNumbers.ElliottRankin.sum_Icc_inv_mul_sqrt_le
+#print axioms NormalNumbers.ElliottRankin.sum_primesBelow_inv_mul_sqrt_le
 
 -- the dependency's proved special case
 #print axioms Erdos67b.unitCircleLogElliott
