@@ -1769,6 +1769,434 @@ theorem weylLambertTwist_of_degrading {b : ℕ} (hb : 3 ≤ b) {c₀ : ℝ} (hc�
     WeylLambertTwist b :=
   weylLambertTwist_of_depthDiagonal hb (depthDiagonal_of_degrading (by omega) hc₀ m hin hthr)
 
+/-! ### The GEOMETRIC profile — an exponentially degrading saving still closes the diagonal
+
+TT Thm 3.1 is a TWO-point theorem with one absolute constant `c`; a `K`-point generalisation
+obtained by iterating or by a `K`-fold decoupling would plausibly lose a constant factor per
+point, i.e. a saving `cK K = c₀ b^{-θK}` rather than a polynomial one.  The schedule tolerates
+exactly `θ < 1/2`:
+
+    b^{D_N} ≤ b (u_N+1)²   ⇒   b^{-θ D_N} ≥ b^{-θ} (u_N+1)^{-2θ} ,
+
+so the saving is `≍ u^{1-2θ}` against a constant cost `(log u)^m`.  `θ < 1/2` (that is,
+`γ = b^{-θ} > b^{-1/2}`) is therefore the true route boundary — and `γ = 1/2` FAILS at `b = 3`,
+where `θ = log 2 / log 3 ≈ 0.63`. -/
+
+/-- The exponential beats any power of a linear function, with an arbitrary positive rate. -/
+theorem tendsto_exp_div_polyPow {α : ℝ} (hα : 0 < α) (p : ℕ) :
+    Tendsto (fun t : ℝ => Real.exp (α * t) / (2 + 3 * t) ^ p) atTop atTop := by
+  have hs : Tendsto (fun t : ℝ => α * t) atTop atTop := tendsto_id.const_mul_atTop hα
+  have hbase := (Real.tendsto_exp_div_pow_atTop p).comp hs
+  have hmin : Tendsto (fun t : ℝ => (α / 5) ^ p * (Real.exp (α * t) / (α * t) ^ p))
+      atTop atTop := by
+    refine Tendsto.const_mul_atTop (by positivity) ?_
+    exact hbase
+  refine tendsto_atTop_mono' atTop ?_ hmin
+  filter_upwards [Filter.eventually_ge_atTop (1 : ℝ)] with t ht
+  have ht0 : (0 : ℝ) < t := by linarith
+  have hden : (2 + 3 * t) ^ p ≤ (5 * t) ^ p := pow_le_pow_left₀ (by linarith) (by linarith) p
+  have hαt : (0 : ℝ) < α * t := by positivity
+  have hid : (α / 5) ^ p * (Real.exp (α * t) / (α * t) ^ p)
+      = Real.exp (α * t) / (5 * t) ^ p := by
+    rw [div_pow, mul_pow, mul_pow]
+    field_simp
+  rw [hid]
+  exact div_le_div_of_nonneg_left (Real.exp_pos _).le (by positivity) hden
+
+/-- A power of a linear function minus an exponential goes to `-∞`. -/
+theorem tendsto_polyPow_sub_exp {α c₁ : ℝ} (hα : 0 < α) (hc₁ : 0 < c₁) (p : ℕ) :
+    Tendsto (fun t : ℝ => (2 + 3 * t) ^ p - c₁ * (Real.exp (α * t) - 3)) atTop atBot := by
+  have hR := tendsto_exp_div_polyPow hα p
+  have hexp : Tendsto (fun t : ℝ => Real.exp (α * t)) atTop atTop :=
+    Real.tendsto_exp_atTop.comp (tendsto_id.const_mul_atTop hα)
+  have hmaj : Tendsto (fun t : ℝ => -(c₁ / 2) * Real.exp (α * t) + 3 * c₁) atTop atBot := by
+    have h1 : Tendsto (fun t : ℝ => (c₁ / 2) * Real.exp (α * t)) atTop atTop :=
+      hexp.const_mul_atTop (by positivity)
+    have h2 := tendsto_neg_atTop_atBot.comp h1
+    have h3 := Filter.tendsto_atBot_add_const_right atTop (3 * c₁) h2
+    exact h3.congr fun t => by simp [Function.comp_apply]
+  refine tendsto_atBot_mono' atTop ?_ hmaj
+  filter_upwards [hR.eventually_ge_atTop (2 / c₁), Filter.eventually_ge_atTop (1 : ℝ)]
+    with t ht ht1
+  have hpos : (0 : ℝ) < (2 + 3 * t) ^ p := by positivity
+  have hkey : (2 : ℝ) / c₁ ≤ Real.exp (α * t) / (2 + 3 * t) ^ p := ht
+  have h2 : 2 * (2 + 3 * t) ^ p ≤ c₁ * Real.exp (α * t) := by
+    rw [div_le_div_iff₀ hc₁ hpos] at hkey
+    linarith
+  nlinarith [h2, Real.exp_pos (α * t)]
+
+/-- The geometrically degrading saving exponent, `c₀ b^{-θK}`. -/
+noncomputable def cKgeom (c₀ θ : ℝ) (b K : ℕ) : ℝ := c₀ * (b : ℝ) ^ (-(θ * K))
+
+theorem cKgeom_pos {c₀ θ : ℝ} (hc₀ : 0 < c₀) {b : ℕ} (hb : 0 < b) (K : ℕ) :
+    0 < cKgeom c₀ θ b K := by
+  have hbR : (0 : ℝ) < (b : ℝ) := by exact_mod_cast hb
+  unfold cKgeom
+  positivity
+
+/-- **The geometric profile drives the exponent to `-∞` iff the rate beats `b^{-1/2}`.**  Stated
+with the tolerated range `θ < 1/2` as a hypothesis; the schedule facts used are
+`pow_depthLL_le` and `log_two_log_cut_ge`. -/
+theorem exponent_tendsto_atBot_of_geom {b : ℕ} (hb : 2 ≤ b) {c₀ θ : ℝ} (hc₀ : 0 < c₀)
+    (hθ0 : 0 < θ) (hθ : θ < 1 / 2) {κ : ℝ} (hκ : 0 < κ) (m : ℕ) :
+    Tendsto (fun N : ℕ =>
+        Real.log (CstKdeg m (PairDecouple.depthLL b N))
+          - κ * cKgeom c₀ θ b (PairDecouple.depthLL b N)
+            * Real.log (2 * Real.log ((N / 2 ^ (Nat.log 2 (Nat.log 2 N)) : ℕ) : ℝ)))
+      atTop atBot := by
+  have hbR : (1 : ℝ) < (b : ℝ) := by
+    have : (2 : ℝ) ≤ (b : ℝ) := by exact_mod_cast hb
+    linarith
+  have hb0 : (0 : ℝ) < (b : ℝ) := by linarith
+  set α : ℝ := 1 - 2 * θ with hαdef
+  have hα : 0 < α := by rw [hαdef]; linarith
+  set c₁ : ℝ := κ * c₀ * (b : ℝ) ^ (-θ) * Real.log 2 with hc₁def
+  have hlog2 : (0 : ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+  have hc₁ : 0 < c₁ := by rw [hc₁def]; positivity
+  have hu : Tendsto (fun N : ℕ => Nat.log 2 (Nat.log 2 N)) atTop atTop :=
+    (PairDecouple.tendsto_natLog_atTop 2 le_rfl).comp
+      (PairDecouple.tendsto_natLog_atTop 2 le_rfl)
+  have ht : Tendsto (fun N : ℕ => Real.log ((Nat.log 2 (Nat.log 2 N) : ℝ) + 1)) atTop atTop :=
+    Real.tendsto_log_atTop.comp (tendsto_natCast_atTop_atTop.comp hu |>.atTop_add
+      tendsto_const_nhds)
+  have hmaj := (tendsto_polyPow_sub_exp hα hc₁ m).comp ht
+  refine tendsto_atBot_mono' atTop ?_ hmaj
+  filter_upwards [Filter.eventually_ge_atTop 1024, hu.eventually_ge_atTop 3] with N hN hu3
+  set u : ℕ := Nat.log 2 (Nat.log 2 N) with hudef
+  set t : ℝ := Real.log ((u : ℝ) + 1) with htdef
+  set D : ℕ := PairDecouple.depthLL b N with hDdef
+  set L : ℝ := Real.log (2 * Real.log ((N / 2 ^ u : ℕ) : ℝ)) with hLdef
+  have hu1 : (3 : ℝ) ≤ (u : ℝ) := by exact_mod_cast hu3
+  have hupos : (0 : ℝ) < (u : ℝ) + 1 := by linarith
+  have hexpt : Real.exp t = (u : ℝ) + 1 := Real.exp_log hupos
+  -- the constant side
+  have hCst : Real.log (CstKdeg m D) = ((D : ℝ) + 1) ^ m := by
+    unfold CstKdeg; rw [Real.log_exp]
+  have hDle : ((D : ℝ) + 1) ≤ 2 + 3 * t := by
+    have h1 := depthLL_succ_le_log hb N
+    have h2 : llProxy N = (u : ℝ) + 1 := by rw [llProxy]
+    rw [h2] at h1
+    exact h1
+  have hCstle : Real.log (CstKdeg m D) ≤ (2 + 3 * t) ^ m := by
+    rw [hCst]
+    exact pow_le_pow_left₀ (by positivity) hDle m
+  -- the saving side
+  have hpowD : (b : ℝ) ^ D ≤ (b : ℝ) * ((u : ℝ) + 1) ^ 2 := by
+    have h1 := pow_depthLL_le hb N
+    have h2 : llProxy N = (u : ℝ) + 1 := by rw [llProxy]
+    rw [h2] at h1
+    exact h1
+  have hsq2 : ((u : ℝ) + 1) ^ (2 : ℕ) = ((u : ℝ) + 1) ^ (2 : ℝ) := by
+    rw [show (2 : ℝ) = ((2 : ℕ) : ℝ) by norm_num, Real.rpow_natCast]
+  have hgeom : (b : ℝ) ^ (-θ) * ((u : ℝ) + 1) ^ (-(2 * θ)) ≤ (b : ℝ) ^ (-(θ * D)) := by
+    have he1 : -(2 * θ) = 2 * (-θ) := by ring
+    have hlhs : (b : ℝ) ^ (-θ) * ((u : ℝ) + 1) ^ (-(2 * θ))
+        = ((b : ℝ) * ((u : ℝ) + 1) ^ (2 : ℝ)) ^ (-θ) := by
+      rw [Real.mul_rpow hb0.le (Real.rpow_nonneg hupos.le _), ← Real.rpow_mul hupos.le, he1]
+    have he2 : -(θ * (D : ℝ)) = (D : ℝ) * (-θ) := by ring
+    have hrhs : (b : ℝ) ^ (-(θ * (D : ℝ))) = ((b : ℝ) ^ ((D : ℕ) : ℝ)) ^ (-θ) := by
+      rw [← Real.rpow_mul hb0.le, he2]
+    have hpowD' : (b : ℝ) ^ ((D : ℕ) : ℝ) ≤ (b : ℝ) * ((u : ℝ) + 1) ^ (2 : ℝ) := by
+      rw [Real.rpow_natCast, ← hsq2]
+      exact hpowD
+    rw [hlhs, hrhs]
+    exact Real.rpow_le_rpow_of_nonpos (Real.rpow_pos_of_pos hb0 _) hpowD' (by linarith)
+  have hL : ((u : ℝ) - 2) * Real.log 2 ≤ L := by
+    rw [hLdef, hudef]
+    exact log_two_log_cut_ge N hN
+  have hLpos : 0 ≤ L := by nlinarith [hL, hlog2, hu1]
+  -- combine: saving ≥ c₁ (exp(αt) - 3)
+  have hrpow_a : ((u : ℝ) + 1) ^ α = Real.exp (α * t) := by
+    rw [Real.rpow_def_of_pos hupos]
+    congr 1
+    rw [htdef]
+    ring
+  have hrpow_b : ((u : ℝ) + 1) ^ (-(2 * θ)) ≤ 1 :=
+    Real.rpow_le_one_of_one_le_of_nonpos (by linarith) (by linarith)
+  have hrpow_c : (0 : ℝ) < ((u : ℝ) + 1) ^ (-(2 * θ)) := Real.rpow_pos_of_pos hupos _
+  have hsplit : ((u : ℝ) + 1) ^ (-(2 * θ)) * ((u : ℝ) - 2)
+      = ((u : ℝ) + 1) ^ α - 3 * ((u : ℝ) + 1) ^ (-(2 * θ)) := by
+    have h1 : ((u : ℝ) + 1) ^ (-(2 * θ)) * ((u : ℝ) + 1) = ((u : ℝ) + 1) ^ α := by
+      rw [← Real.rpow_add_one (ne_of_gt hupos) (-(2 * θ))]
+      congr 1
+      rw [hαdef]; ring
+    have h2 : ((u : ℝ) - 2) = ((u : ℝ) + 1) - 3 := by ring
+    rw [h2, mul_sub, h1]
+    ring
+  have hgeL : Real.exp (α * t) - 3 ≤ ((u : ℝ) + 1) ^ (-(2 * θ)) * ((u : ℝ) - 2) := by
+    rw [hsplit, hrpow_a]
+    nlinarith [hrpow_b, hrpow_c]
+  have hsav : c₁ * (Real.exp (α * t) - 3) ≤ κ * cKgeom c₀ θ b D * L := by
+    have hA : c₁ * (Real.exp (α * t) - 3)
+        ≤ c₁ * (((u : ℝ) + 1) ^ (-(2 * θ)) * ((u : ℝ) - 2)) :=
+      mul_le_mul_of_nonneg_left hgeL hc₁.le
+    have hB : c₁ * (((u : ℝ) + 1) ^ (-(2 * θ)) * ((u : ℝ) - 2))
+        ≤ κ * c₀ * ((b : ℝ) ^ (-θ) * ((u : ℝ) + 1) ^ (-(2 * θ))) * L := by
+      have hL' : ((u : ℝ) - 2) * Real.log 2 ≤ L := hL
+      have hfac : (0 : ℝ) < κ * c₀ * ((b : ℝ) ^ (-θ) * ((u : ℝ) + 1) ^ (-(2 * θ))) := by
+        have : (0 : ℝ) < (b : ℝ) ^ (-θ) := Real.rpow_pos_of_pos hb0 _
+        positivity
+      have hid : c₁ * (((u : ℝ) + 1) ^ (-(2 * θ)) * ((u : ℝ) - 2))
+          = κ * c₀ * ((b : ℝ) ^ (-θ) * ((u : ℝ) + 1) ^ (-(2 * θ)))
+            * (((u : ℝ) - 2) * Real.log 2) := by
+        rw [hc₁def]; ring
+      rw [hid]
+      exact mul_le_mul_of_nonneg_left hL' hfac.le
+    have hC : κ * c₀ * ((b : ℝ) ^ (-θ) * ((u : ℝ) + 1) ^ (-(2 * θ))) * L
+        ≤ κ * cKgeom c₀ θ b D * L := by
+      have hfac : κ * c₀ * ((b : ℝ) ^ (-θ) * ((u : ℝ) + 1) ^ (-(2 * θ)))
+          ≤ κ * cKgeom c₀ θ b D := by
+        rw [cKgeom]
+        have h1 : (b : ℝ) ^ (-θ) * ((u : ℝ) + 1) ^ (-(2 * θ)) ≤ (b : ℝ) ^ (-(θ * D)) := hgeom
+        have h2 : (0 : ℝ) < κ * c₀ := by positivity
+        calc κ * c₀ * ((b : ℝ) ^ (-θ) * ((u : ℝ) + 1) ^ (-(2 * θ)))
+            ≤ κ * c₀ * (b : ℝ) ^ (-(θ * D)) := by nlinarith [h1, h2]
+          _ = κ * (c₀ * (b : ℝ) ^ (-(θ * (D : ℕ)))) := by ring
+      exact mul_le_mul_of_nonneg_right hfac hLpos
+    linarith
+  have hfinal : ((fun t : ℝ => (2 + 3 * t) ^ m - c₁ * (Real.exp (α * t) - 3))
+      ∘ fun N : ℕ => Real.log ((Nat.log 2 (Nat.log 2 N) : ℝ) + 1)) N
+      = (2 + 3 * t) ^ m - c₁ * (Real.exp (α * t) - 3) := rfl
+  rw [hfinal]
+  linarith [hCstle, hsav]
+
+theorem exponent_tendsto_atBot_of_geom_le {b : ℕ} (hb : 2 ≤ b) {c₀ θ : ℝ} (hc₀ : 0 < c₀)
+    (hθ0 : 0 < θ) (hθ : θ < 1 / 2) {κ : ℝ} (hκ : 0 < κ) (m : ℕ)
+    (KN : ℕ → ℕ) (hKle : ∀ᶠ N : ℕ in atTop, KN N ≤ PairDecouple.depthLL b N) :
+    Tendsto (fun N : ℕ =>
+        Real.log (CstKdeg m (KN N))
+          - κ * cKgeom c₀ θ b (KN N)
+            * Real.log (2 * Real.log ((N / 2 ^ (Nat.log 2 (Nat.log 2 N)) : ℕ) : ℝ)))
+      atTop atBot := by
+  have hbR : (1 : ℝ) < (b : ℝ) := by
+    have : (2 : ℝ) ≤ (b : ℝ) := by exact_mod_cast hb
+    linarith
+  have hb0 : (0 : ℝ) < (b : ℝ) := by linarith
+  set α : ℝ := 1 - 2 * θ with hαdef
+  have hα : 0 < α := by rw [hαdef]; linarith
+  set c₁ : ℝ := κ * c₀ * (b : ℝ) ^ (-θ) * Real.log 2 with hc₁def
+  have hlog2 : (0 : ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+  have hc₁ : 0 < c₁ := by rw [hc₁def]; positivity
+  have hu : Tendsto (fun N : ℕ => Nat.log 2 (Nat.log 2 N)) atTop atTop :=
+    (PairDecouple.tendsto_natLog_atTop 2 le_rfl).comp
+      (PairDecouple.tendsto_natLog_atTop 2 le_rfl)
+  have ht : Tendsto (fun N : ℕ => Real.log ((Nat.log 2 (Nat.log 2 N) : ℝ) + 1)) atTop atTop :=
+    Real.tendsto_log_atTop.comp (tendsto_natCast_atTop_atTop.comp hu |>.atTop_add
+      tendsto_const_nhds)
+  have hmaj := (tendsto_polyPow_sub_exp hα hc₁ m).comp ht
+  refine tendsto_atBot_mono' atTop ?_ hmaj
+  filter_upwards [Filter.eventually_ge_atTop 1024, hu.eventually_ge_atTop 3, hKle]
+    with N hN hu3 hKN
+  set u : ℕ := Nat.log 2 (Nat.log 2 N) with hudef
+  set t : ℝ := Real.log ((u : ℝ) + 1) with htdef
+  set D : ℕ := KN N with hDdef
+  have hDLL : D ≤ PairDecouple.depthLL b N := hKN
+  set L : ℝ := Real.log (2 * Real.log ((N / 2 ^ u : ℕ) : ℝ)) with hLdef
+  have hu1 : (3 : ℝ) ≤ (u : ℝ) := by exact_mod_cast hu3
+  have hupos : (0 : ℝ) < (u : ℝ) + 1 := by linarith
+  have hexpt : Real.exp t = (u : ℝ) + 1 := Real.exp_log hupos
+  -- the constant side
+  have hCst : Real.log (CstKdeg m D) = ((D : ℝ) + 1) ^ m := by
+    unfold CstKdeg; rw [Real.log_exp]
+  have hDle : ((D : ℝ) + 1) ≤ 2 + 3 * t := by
+    have h1 := depthLL_succ_le_log hb N
+    have h2 : llProxy N = (u : ℝ) + 1 := by rw [llProxy]
+    rw [h2] at h1
+    have h3 : ((D : ℝ)) ≤ ((PairDecouple.depthLL b N : ℝ)) := by exact_mod_cast hDLL
+    linarith
+  have hCstle : Real.log (CstKdeg m D) ≤ (2 + 3 * t) ^ m := by
+    rw [hCst]
+    exact pow_le_pow_left₀ (by positivity) hDle m
+  -- the saving side
+  have hpowD : (b : ℝ) ^ D ≤ (b : ℝ) * ((u : ℝ) + 1) ^ 2 := by
+    have h1 := pow_depthLL_le hb N
+    have h2 : llProxy N = (u : ℝ) + 1 := by rw [llProxy]
+    rw [h2] at h1
+    have h3 : (b : ℝ) ^ D ≤ (b : ℝ) ^ PairDecouple.depthLL b N :=
+      pow_le_pow_right₀ (by linarith) hDLL
+    linarith
+  have hsq2 : ((u : ℝ) + 1) ^ (2 : ℕ) = ((u : ℝ) + 1) ^ (2 : ℝ) := by
+    rw [show (2 : ℝ) = ((2 : ℕ) : ℝ) by norm_num, Real.rpow_natCast]
+  have hgeom : (b : ℝ) ^ (-θ) * ((u : ℝ) + 1) ^ (-(2 * θ)) ≤ (b : ℝ) ^ (-(θ * D)) := by
+    have he1 : -(2 * θ) = 2 * (-θ) := by ring
+    have hlhs : (b : ℝ) ^ (-θ) * ((u : ℝ) + 1) ^ (-(2 * θ))
+        = ((b : ℝ) * ((u : ℝ) + 1) ^ (2 : ℝ)) ^ (-θ) := by
+      rw [Real.mul_rpow hb0.le (Real.rpow_nonneg hupos.le _), ← Real.rpow_mul hupos.le, he1]
+    have he2 : -(θ * (D : ℝ)) = (D : ℝ) * (-θ) := by ring
+    have hrhs : (b : ℝ) ^ (-(θ * (D : ℝ))) = ((b : ℝ) ^ ((D : ℕ) : ℝ)) ^ (-θ) := by
+      rw [← Real.rpow_mul hb0.le, he2]
+    have hpowD' : (b : ℝ) ^ ((D : ℕ) : ℝ) ≤ (b : ℝ) * ((u : ℝ) + 1) ^ (2 : ℝ) := by
+      rw [Real.rpow_natCast, ← hsq2]
+      exact hpowD
+    rw [hlhs, hrhs]
+    exact Real.rpow_le_rpow_of_nonpos (Real.rpow_pos_of_pos hb0 _) hpowD' (by linarith)
+  have hL : ((u : ℝ) - 2) * Real.log 2 ≤ L := by
+    rw [hLdef, hudef]
+    exact log_two_log_cut_ge N hN
+  have hLpos : 0 ≤ L := by nlinarith [hL, hlog2, hu1]
+  -- combine: saving ≥ c₁ (exp(αt) - 3)
+  have hrpow_a : ((u : ℝ) + 1) ^ α = Real.exp (α * t) := by
+    rw [Real.rpow_def_of_pos hupos]
+    congr 1
+    rw [htdef]
+    ring
+  have hrpow_b : ((u : ℝ) + 1) ^ (-(2 * θ)) ≤ 1 :=
+    Real.rpow_le_one_of_one_le_of_nonpos (by linarith) (by linarith)
+  have hrpow_c : (0 : ℝ) < ((u : ℝ) + 1) ^ (-(2 * θ)) := Real.rpow_pos_of_pos hupos _
+  have hsplit : ((u : ℝ) + 1) ^ (-(2 * θ)) * ((u : ℝ) - 2)
+      = ((u : ℝ) + 1) ^ α - 3 * ((u : ℝ) + 1) ^ (-(2 * θ)) := by
+    have h1 : ((u : ℝ) + 1) ^ (-(2 * θ)) * ((u : ℝ) + 1) = ((u : ℝ) + 1) ^ α := by
+      rw [← Real.rpow_add_one (ne_of_gt hupos) (-(2 * θ))]
+      congr 1
+      rw [hαdef]; ring
+    have h2 : ((u : ℝ) - 2) = ((u : ℝ) + 1) - 3 := by ring
+    rw [h2, mul_sub, h1]
+    ring
+  have hgeL : Real.exp (α * t) - 3 ≤ ((u : ℝ) + 1) ^ (-(2 * θ)) * ((u : ℝ) - 2) := by
+    rw [hsplit, hrpow_a]
+    nlinarith [hrpow_b, hrpow_c]
+  have hsav : c₁ * (Real.exp (α * t) - 3) ≤ κ * cKgeom c₀ θ b D * L := by
+    have hA : c₁ * (Real.exp (α * t) - 3)
+        ≤ c₁ * (((u : ℝ) + 1) ^ (-(2 * θ)) * ((u : ℝ) - 2)) :=
+      mul_le_mul_of_nonneg_left hgeL hc₁.le
+    have hB : c₁ * (((u : ℝ) + 1) ^ (-(2 * θ)) * ((u : ℝ) - 2))
+        ≤ κ * c₀ * ((b : ℝ) ^ (-θ) * ((u : ℝ) + 1) ^ (-(2 * θ))) * L := by
+      have hL' : ((u : ℝ) - 2) * Real.log 2 ≤ L := hL
+      have hfac : (0 : ℝ) < κ * c₀ * ((b : ℝ) ^ (-θ) * ((u : ℝ) + 1) ^ (-(2 * θ))) := by
+        have : (0 : ℝ) < (b : ℝ) ^ (-θ) := Real.rpow_pos_of_pos hb0 _
+        positivity
+      have hid : c₁ * (((u : ℝ) + 1) ^ (-(2 * θ)) * ((u : ℝ) - 2))
+          = κ * c₀ * ((b : ℝ) ^ (-θ) * ((u : ℝ) + 1) ^ (-(2 * θ)))
+            * (((u : ℝ) - 2) * Real.log 2) := by
+        rw [hc₁def]; ring
+      rw [hid]
+      exact mul_le_mul_of_nonneg_left hL' hfac.le
+    have hC : κ * c₀ * ((b : ℝ) ^ (-θ) * ((u : ℝ) + 1) ^ (-(2 * θ))) * L
+        ≤ κ * cKgeom c₀ θ b D * L := by
+      have hfac : κ * c₀ * ((b : ℝ) ^ (-θ) * ((u : ℝ) + 1) ^ (-(2 * θ)))
+          ≤ κ * cKgeom c₀ θ b D := by
+        rw [cKgeom]
+        have h1 : (b : ℝ) ^ (-θ) * ((u : ℝ) + 1) ^ (-(2 * θ)) ≤ (b : ℝ) ^ (-(θ * D)) := hgeom
+        have h2 : (0 : ℝ) < κ * c₀ := by positivity
+        calc κ * c₀ * ((b : ℝ) ^ (-θ) * ((u : ℝ) + 1) ^ (-(2 * θ)))
+            ≤ κ * c₀ * (b : ℝ) ^ (-(θ * D)) := by nlinarith [h1, h2]
+          _ = κ * (c₀ * (b : ℝ) ^ (-(θ * (D : ℕ)))) := by ring
+      exact mul_le_mul_of_nonneg_right hfac hLpos
+    linarith
+  have hfinal : ((fun t : ℝ => (2 + 3 * t) ^ m - c₁ * (Real.exp (α * t) - 3))
+      ∘ fun N : ℕ => Real.log ((Nat.log 2 (Nat.log 2 N) : ℝ) + 1)) N
+      = (2 + 3 * t) ^ m - c₁ * (Real.exp (α * t) - 3) := rfl
+  rw [hfinal]
+  linarith [hCstle, hsav]
+
+
+/-- The threshold data, with the saving profile as a parameter (the `cKdeg`-specific
+`KPointThresholdOK` is the case `cK = cKdeg c₀ m`). -/
+def KPointThresholdOKWith (b Q P : ℕ) (cK : ℕ → ℝ) : Prop :=
+  ∀ κ : ℝ, 0 < κ → κ ≤ 1 → ∃ Athr : ℕ → ℕ, (∀ K, 2 ≤ Athr K) ∧
+    (∀ K : ℕ, max (max 2 ((K : ℝ) + 1)) ((Q * primorial P : ℕ) : ℝ)
+        ≤ (2 * Real.log (Athr K)) ^ (κ * cK K)) ∧
+    (∀ᶠ N : ℕ in atTop, ∀ K : ℕ, K ≤ PairDecouple.depthLL b N →
+        Athr K ≤ N / 2 ^ (Nat.log 2 (Nat.log 2 N)))
+
+/-- **The diagonal from a GEOMETRICALLY degrading input, at any level below the schedule.** -/
+theorem depthAvg_gen_tendsto_of_geom {b Q : ℕ} (hb : 2 ≤ b) (hQ : 0 < Q) (P j : ℕ) (hh : ℤ)
+    {c₀ θ : ℝ} (hc₀ : 0 < c₀) (hθ0 : 0 < θ) (hθ : θ < 1 / 2) (m : ℕ)
+    (KN : ℕ → ℕ) (hKN : ∀ N, 0 < KN N)
+    (hKle : ∀ᶠ N : ℕ in atTop, KN N ≤ PairDecouple.depthLL b N)
+    (hin : ∀ K, KPointNoExcWith (cKgeom c₀ θ b) (CstKdeg m) K)
+    {κ : ℝ} (hκ : 0 < κ) (hκ1 : κ ≤ 1)
+    (hnp : ∀ X L : ℝ, 3 ≤ X → 1 ≤ L → L ≤ Real.log X ^ κ →
+      TTNonPretentious (zOmegaNat (depthRoot b hh 0)) X L)
+    (Athr : ℕ → ℕ) (hA2 : ∀ K, 2 ≤ Athr K)
+    (hAthr : ∀ K : ℕ, max (max 2 ((K : ℝ) + 1)) ((Q * primorial P : ℕ) : ℝ)
+        ≤ (2 * Real.log (Athr K)) ^ (κ * cKgeom c₀ θ b K))
+    (hAle : ∀ᶠ N : ℕ in atTop, Athr (KN N) ≤ N / 2 ^ (Nat.log 2 (Nat.log 2 N))) :
+    Tendsto (fun N : ℕ => depthAvg b P Q j hh (KN N) N) atTop (𝓝 0) := by
+  have hb0 : 0 < b := by omega
+  have hk₀ : Tendsto (fun N : ℕ => Nat.log 2 (Nat.log 2 N)) atTop atTop :=
+    (PairDecouple.tendsto_natLog_atTop 2 le_rfl).comp
+      (PairDecouple.tendsto_natLog_atTop 2 le_rfl)
+  have hbase : ∀ᶠ N : ℕ in atTop,
+      0 < 2 * Real.log ((N / 2 ^ (Nat.log 2 (Nat.log 2 N)) : ℕ) : ℝ) := by
+    filter_upwards [tendsto_cut_atTop.eventually_ge_atTop 2] with N hN
+    have h2 : (2 : ℝ) ≤ ((N / 2 ^ (Nat.log 2 (Nat.log 2 N)) : ℕ) : ℝ) := by exact_mod_cast hN
+    have hlog : 0 < Real.log ((N / 2 ^ (Nat.log 2 (Nat.log 2 N)) : ℕ) : ℝ) :=
+      Real.log_pos (by linarith)
+    linarith
+  have hrate := rate_tendsto_of_exponent (cK := cKgeom c₀ θ b) (CstK := CstKdeg m)
+    (fun K => CstKdeg_pos m K) (κ := κ) (M₀ := Q * primorial P) KN
+    (fun N => N / 2 ^ (Nat.log 2 (Nat.log 2 N))) hbase
+    (exponent_tendsto_atBot_of_geom_le hb hc₀ hθ0 hθ hκ m KN hKle)
+  have hΦ := windowPhi_diag_tendsto (cK := cKgeom c₀ θ b) (CstK := CstKdeg m) (κ := κ)
+    (M₀ := Q * primorial P) KN (fun N => Athr (KN N))
+    (fun N => N / 2 ^ (Nat.log 2 (Nat.log 2 N)))
+    (fun N => hA2 _) (fun K => (CstKdeg_pos m K).le) hAle hrate
+  have hhalf : Tendsto (fun N : ℕ => (1 / 2 : ℝ) ^ (Nat.log 2 (Nat.log 2 N))) atTop (𝓝 0) :=
+    (tendsto_pow_atTop_nhds_zero_of_lt_one (by norm_num) (by norm_num)).comp hk₀
+  refine depthAvg_gen_tendsto_of_unif hQ P j hh (fun K => cKgeom_pos hc₀ hb0 K)
+    (fun K => CstKdeg_pos m K) KN hKN hin hκ hκ1 hnp Athr hA2 hAthr
+    (fun N => Nat.log 2 (Nat.log 2 N)) ?_
+  simpa using hΦ.add hhalf
+
+/-- **`DepthDiagonal b` FROM THE GEOMETRICALLY DEGRADING INPUT.**  The realistic profile: the
+saving decays like `b^{-θK}` with `θ < 1/2` and the constant blows up like `exp(K^m)`.  All twist
+levels, exactly as in `depthDiagonal_of_degrading`. -/
+theorem depthDiagonal_of_geom {b : ℕ} (hb : 2 ≤ b) {c₀ θ : ℝ} (hc₀ : 0 < c₀)
+    (hθ0 : 0 < θ) (hθ : θ < 1 / 2) (m : ℕ)
+    (hin : ∀ K, KPointNoExcWith (cKgeom c₀ θ b) (CstKdeg m) K)
+    (hthr : ∀ P Q : ℕ, 0 < Q → KPointThresholdOKWith b Q P (cKgeom c₀ θ b)) :
+    DepthDiagonal b := by
+  intro P Q j hh hQ hj0 hjQ
+  have hb0 : 0 < b := by omega
+  rcases eq_or_ne hh 0 with rfl | hne
+  · exact depthAvg_zero_tendsto b P Q j hj0 hjQ
+  obtain ⟨v, h', hfac, hnd⟩ := exists_pow_mul_not_dvd hb hh hne
+  subst hfac
+  set z : ℂ := depthRoot b h' 0 with hzdef
+  have hznorm : ‖z‖ = 1 := norm_ee_real _
+  have hz1 : z ≠ 1 := depthRoot_ne_one_of_not_dvd hb0 hnd
+  set κ : ℝ := ttExponent z with hκdef
+  have hκ : 0 < κ := ttExponent_pos hznorm hz1
+  have hκ1 : κ ≤ 1 := ttExponent_le_one hznorm
+  have hnp : ∀ X L : ℝ, 3 ≤ X → 1 ≤ L → L ≤ Real.log X ^ κ →
+      TTNonPretentious (zOmegaNat (depthRoot b h' 0)) X L :=
+    ttNonPretentious_zOmegaNat hznorm hz1 le_rfl
+  obtain ⟨Athr, hA2, hAthr, hAcut⟩ := hthr P Q hQ κ hκ hκ1
+  set KN : ℕ → ℕ := fun N => max 1 (PairDecouple.depthLL b N - v) with hKNdef
+  have hKN : ∀ N, 0 < KN N := fun N => lt_of_lt_of_le Nat.zero_lt_one (le_max_left _ _)
+  have hvN := (tendsto_depthLL hb).eventually_ge_atTop (v + 1)
+  have hKle : ∀ᶠ N : ℕ in atTop, KN N ≤ PairDecouple.depthLL b N := by
+    filter_upwards [hvN] with N hN
+    rw [hKNdef]; simp only; omega
+  have hKeq : ∀ᶠ N : ℕ in atTop, KN N = PairDecouple.depthLL b N - v := by
+    filter_upwards [hvN] with N hN
+    rw [hKNdef]; simp only; omega
+  have hAle : ∀ᶠ N : ℕ in atTop,
+      Athr (KN N) ≤ N / 2 ^ (Nat.log 2 (Nat.log 2 N)) := by
+    filter_upwards [hAcut, hKle] with N hcut hle
+    exact hcut _ hle
+  have hgen := depthAvg_gen_tendsto_of_geom hb hQ P j h' hc₀ hθ0 hθ m KN hKN hKle hin
+    hκ hκ1 hnp Athr hA2 hAthr hAle
+  have hprim : Tendsto (fun N : ℕ =>
+      depthAvg b P Q j h' (PairDecouple.depthLL b N - v) N) atTop (𝓝 0) := by
+    refine hgen.congr' ?_
+    filter_upwards [hKeq] with N hN
+    rw [hN]
+  exact depthAvg_dvd_tendsto_of_primitive hb P Q j h' v hprim
+
+/-- **THE C3 CRUX FROM THE GEOMETRICALLY DEGRADING `K`-POINT INPUT.**  This is the realistic
+endpoint of the reduction: `WeylLambertTwist b` — hence `ConjC3` — from a `K`-point correlation
+estimate whose saving decays like `b^{-θK}`, `θ < 1/2`, and whose constant grows like `exp(K^m)`.
+`θ < 1/2` is sharp for this schedule: `b^{D_N} ≍ (log log N)²`, so `b^{-θD_N} ≍ (log log N)^{-2θ}`
+must still beat the `(log log N)^{-1}` that the boundary terms cost. -/
+theorem weylLambertTwist_of_geom {b : ℕ} (hb : 3 ≤ b) {c₀ θ : ℝ} (hc₀ : 0 < c₀)
+    (hθ0 : 0 < θ) (hθ : θ < 1 / 2) (m : ℕ)
+    (hin : ∀ K, KPointNoExcWith (cKgeom c₀ θ b) (CstKdeg m) K)
+    (hthr : ∀ P Q : ℕ, 0 < Q → KPointThresholdOKWith b Q P (cKgeom c₀ θ b)) :
+    WeylLambertTwist b :=
+  weylLambertTwist_of_depthDiagonal hb (depthDiagonal_of_geom (by omega) hc₀ hθ0 hθ m hin hthr)
+
 #print axioms NormalNumbers.CastingOut.quantDepthElliottGen_forces_diagonal
 #print axioms NormalNumbers.CastingOut.weylLambertTwist_of_depthDiagonal
 #print axioms NormalNumbers.CastingOut.kPointNoExc_of_with
@@ -1803,6 +2231,9 @@ theorem weylLambertTwist_of_degrading {b : ℕ} (hb : 3 ≤ b) {c₀ : ℝ} (hc�
 #print axioms NormalNumbers.CastingOut.depthRoot_ne_one_of_not_dvd
 #print axioms NormalNumbers.CastingOut.depthDiagonal_of_degrading
 #print axioms NormalNumbers.CastingOut.weylLambertTwist_of_degrading
+#print axioms NormalNumbers.CastingOut.exponent_tendsto_atBot_of_geom
+#print axioms NormalNumbers.CastingOut.depthDiagonal_of_geom
+#print axioms NormalNumbers.CastingOut.weylLambertTwist_of_geom
 #print axioms NormalNumbers.CastingOut.depthAvg_gen_tendsto_of_unif
 #print axioms NormalNumbers.CastingOut.depthAvg_gen_tendsto_of_degrading_sched
 
