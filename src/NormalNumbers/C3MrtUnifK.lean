@@ -577,6 +577,137 @@ theorem depthAvg_le_with {b Q : ℕ} (hQ : 0 < Q) (P j : ℕ) (hh : ℤ) {K : �
         hM0 hA2 hAthr r ha') a)
     hN k₀
 
+/-! ### The diagonal -/
+
+theorem depthLL_pos (b N : ℕ) : 0 < PairDecouple.depthLL b N := by
+  rw [PairDecouple.depthLL]; exact Nat.succ_pos _
+
+/-- `(log₂ Y + 1)/Y → 0` — the halving stack's own head cost is negligible. -/
+theorem tendsto_natLog_succ_div :
+    Tendsto (fun Y : ℕ => ((Nat.log 2 Y + 1 : ℕ) : ℝ) / (Y : ℝ)) atTop (𝓝 0) := by
+  have hlog2 : (0 : ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+  have hlogdiv : Tendsto (fun Y : ℕ => (Real.log Y / Real.log 2 + 1) / (Y : ℝ))
+      atTop (𝓝 0) := by
+    have h1 : Tendsto (fun x : ℝ => Real.log x / x) atTop (𝓝 0) :=
+      Real.isLittleO_log_id_atTop.tendsto_div_nhds_zero
+    have h2 : Tendsto (fun Y : ℕ => Real.log Y / (Y : ℝ)) atTop (𝓝 0) :=
+      h1.comp tendsto_natCast_atTop_atTop
+    have h3 : Tendsto (fun Y : ℕ => (1 : ℝ) / (Y : ℝ)) atTop (𝓝 0) :=
+      tendsto_one_div_atTop_nhds_zero_nat
+    have h4 := (h2.div_const (Real.log 2)).add h3
+    simp only [zero_div, zero_add] at h4
+    refine h4.congr fun Y => ?_
+    field_simp
+  refine squeeze_zero' (Filter.Eventually.of_forall fun Y => by positivity)
+    (Filter.eventually_atTop.2 ⟨1, fun Y hY => ?_⟩) hlogdiv
+  have hY1 : (1 : ℝ) ≤ (Y : ℝ) := by exact_mod_cast hY
+  have hYpos : (0 : ℝ) < (Y : ℝ) := by linarith
+  refine div_le_div_of_nonneg_right ?_ hYpos.le
+  have hpow : (2 : ℕ) ^ Nat.log 2 Y ≤ Y := Nat.pow_log_le_self 2 (by omega)
+  have hpowR : ((2 : ℝ)) ^ (Nat.log 2 Y) ≤ (Y : ℝ) := by exact_mod_cast hpow
+  have hle : (Nat.log 2 Y : ℝ) * Real.log 2 ≤ Real.log Y := by
+    have := Real.log_le_log (by positivity) hpowR
+    rwa [Real.log_pow] at this
+  push_cast
+  rw [div_add' _ _ _ (ne_of_gt hlog2), le_div_iff₀ hlog2]
+  nlinarith [hle, hlog2]
+
+/-- `(log₂(N+c) + 1)/N → 0` for any fixed shift `c`. -/
+theorem tendsto_natLog_shift_div (c : ℕ) :
+    Tendsto (fun N : ℕ => ((Nat.log 2 (N + c) + 1 : ℕ) : ℝ) / (N : ℝ)) atTop (𝓝 0) := by
+  have hshift : Tendsto (fun N : ℕ => N + c) atTop atTop :=
+    tendsto_atTop_mono (fun N => Nat.le_add_right N c) tendsto_id
+  have hcomp : Tendsto (fun N : ℕ => ((Nat.log 2 (N + c) + 1 : ℕ) : ℝ) / ((N + c : ℕ) : ℝ))
+      atTop (𝓝 0) := tendsto_natLog_succ_div.comp hshift
+  have hmul := hcomp.const_mul (2 : ℝ)
+  rw [mul_zero] at hmul
+  refine squeeze_zero' (Filter.Eventually.of_forall fun N => by positivity)
+    (Filter.eventually_atTop.2 ⟨c + 1, fun N hN => ?_⟩) hmul
+  have hN0 : (0 : ℝ) < (N : ℝ) := by
+    have : 0 < N := by omega
+    exact_mod_cast this
+  have hNc : ((N + c : ℕ) : ℝ) ≤ 2 * (N : ℝ) := by
+    have : (N + c : ℕ) ≤ 2 * N := by omega
+    exact_mod_cast this
+  have hNcpos : (0 : ℝ) < ((N + c : ℕ) : ℝ) := by
+    have : 0 < N + c := by omega
+    exact_mod_cast this
+  have hnum : (0 : ℝ) ≤ ((Nat.log 2 (N + c) + 1 : ℕ) : ℝ) := by positivity
+  rw [div_le_iff₀ hN0]
+  have hkey : ((Nat.log 2 (N + c) + 1 : ℕ) : ℝ) / ((N + c : ℕ) : ℝ) * (2 * (N : ℝ))
+      ≥ ((Nat.log 2 (N + c) + 1 : ℕ) : ℝ) / ((N + c : ℕ) : ℝ) * ((N + c : ℕ) : ℝ) :=
+    mul_le_mul_of_nonneg_left hNc (by positivity)
+  rw [div_mul_cancel₀ _ (ne_of_gt hNcpos)] at hkey
+  linarith
+
+open scoped Classical in
+/-- **THE DIAGONAL, from a `K`-uniform input.**  `depthAvg_le_with` instantiated at
+`K = depthLL b N`.  Everything but one hypothesis is bookkeeping that dies under `1/N`:
+the `M₀²` head, the `log₂` head, and the `(N+M₀)/N → 1` rescaling.  The single surviving
+hypothesis is `hsched`, the *schedule compatibility* of the profile —
+
+    windowPhi cK CstK κ (depthLL b N) M₀ (Athr (depthLL b N)) (N / 2^{k₀ N}) + 2^{-k₀ N} → 0 ,
+
+which is precisely the uniformity the per-`K` existential could not express (lap 87 F2). -/
+theorem depthAvg_diag_tendsto_of_unif {b Q : ℕ} (hQ : 0 < Q) (P j : ℕ) (hh : ℤ)
+    {cK CstK : ℕ → ℝ} (hc : ∀ K, 0 < cK K) (hC : ∀ K, 0 < CstK K)
+    (hin : ∀ K, KPointNoExcWith cK CstK K)
+    {κ : ℝ} (hκ : 0 < κ) (hκ1 : κ ≤ 1)
+    (hnp : ∀ X L : ℝ, 3 ≤ X → 1 ≤ L → L ≤ Real.log X ^ κ →
+      TTNonPretentious (zOmegaNat (depthRoot b hh 0)) X L)
+    (Athr : ℕ → ℕ) (hA2 : ∀ K, 2 ≤ Athr K)
+    (hAthr : ∀ K : ℕ, max (max 2 ((K : ℝ) + 1)) ((Q * primorial P : ℕ) : ℝ)
+        ≤ (2 * Real.log (Athr K)) ^ (κ * cK K))
+    (k₀ : ℕ → ℕ)
+    (hsched : Tendsto (fun N : ℕ =>
+        windowPhi cK CstK κ (PairDecouple.depthLL b N) (Q * primorial P)
+            (Athr (PairDecouple.depthLL b N)) (N / 2 ^ k₀ N)
+          + (1 / 2 : ℝ) ^ k₀ N) atTop (𝓝 0)) :
+    Tendsto (fun N : ℕ => depthAvg b P Q j hh (PairDecouple.depthLL b N) N) atTop (𝓝 0) := by
+  classical
+  have hM0 : 0 < Q * primorial P := Nat.mul_pos hQ (primorial_pos P)
+  set M₀ : ℕ := Q * primorial P with hM₀def
+  set Ψ : ℕ → ℝ := fun N =>
+    windowPhi cK CstK κ (PairDecouple.depthLL b N) M₀ (Athr (PairDecouple.depthLL b N))
+        (N / 2 ^ k₀ N)
+      + (1 / 2 : ℝ) ^ k₀ N with hΨdef
+  -- the three pieces of the majorant
+  have hT1 : Tendsto (fun N : ℕ => (M₀ : ℝ) * (((M₀ : ℝ) + 2)) / (N : ℝ)) atTop (𝓝 0) := by
+    have := tendsto_one_div_atTop_nhds_zero_nat.const_mul ((M₀ : ℝ) * ((M₀ : ℝ) + 2))
+    rw [mul_zero] at this
+    exact this.congr fun N => by ring
+  have hT2 : Tendsto
+      (fun N : ℕ => (M₀ : ℝ) * (((Nat.log 2 (N + M₀) + 1 : ℕ) : ℝ) / (N : ℝ)))
+      atTop (𝓝 0) := by
+    have := (tendsto_natLog_shift_div M₀).const_mul ((M₀ : ℝ))
+    rwa [mul_zero] at this
+  have hone : Tendsto (fun N : ℕ => 1 + (M₀ : ℝ) / (N : ℝ)) atTop (𝓝 1) := by
+    have := tendsto_one_div_atTop_nhds_zero_nat.const_mul ((M₀ : ℝ))
+    rw [mul_zero] at this
+    have h2 : Tendsto (fun N : ℕ => (M₀ : ℝ) / (N : ℝ)) atTop (𝓝 0) :=
+      this.congr fun N => by ring
+    simpa using (tendsto_const_nhds (x := (1 : ℝ)) (f := (atTop : Filter ℕ))).add h2
+  have hT3 : Tendsto (fun N : ℕ => (M₀ : ℝ) * Ψ N * (1 + (M₀ : ℝ) / (N : ℝ)))
+      atTop (𝓝 0) := by
+    have hΨ0 : Tendsto Ψ atTop (𝓝 0) := hsched
+    have := ((hΨ0.const_mul ((M₀ : ℝ))).mul hone)
+    simpa using this
+  have hmaj : Tendsto (fun N : ℕ =>
+      (M₀ : ℝ) * (((M₀ : ℝ) + 2)) / (N : ℝ)
+        + (M₀ : ℝ) * (((Nat.log 2 (N + M₀) + 1 : ℕ) : ℝ) / (N : ℝ))
+        + (M₀ : ℝ) * Ψ N * (1 + (M₀ : ℝ) / (N : ℝ))) atTop (𝓝 0) := by
+    simpa using (hT1.add hT2).add hT3
+  refine squeeze_zero_norm' ?_ hmaj
+  filter_upwards [Filter.eventually_ge_atTop (M₀ + 1)] with N hN
+  have hNpos : (0 : ℝ) < (N : ℝ) := by
+    have : 0 < N := by omega
+    exact_mod_cast this
+  have hstep := depthAvg_le_with hQ P j hh (depthLL_pos b N) (hc _) (hC _) (hin _)
+    hκ hκ1 hnp (hA2 _) (hAthr _) (show M₀ < N by omega) (k₀ N)
+  refine le_trans hstep (le_of_eq ?_)
+  field_simp
+  ring
+
 #print axioms NormalNumbers.CastingOut.quantDepthElliottGen_forces_diagonal
 #print axioms NormalNumbers.CastingOut.weylLambertTwist_of_depthDiagonal
 #print axioms NormalNumbers.CastingOut.kPointNoExc_of_with
@@ -589,6 +720,8 @@ theorem depthAvg_le_with {b Q : ℕ} (hQ : 0 < Q) (P j : ℕ) (hh : ℤ) {K : �
 #print axioms NormalNumbers.CastingOut.depthAvg_le_of_window
 #print axioms NormalNumbers.CastingOut.windowPhi_hwin
 #print axioms NormalNumbers.CastingOut.depthAvg_le_with
+#print axioms NormalNumbers.CastingOut.tendsto_natLog_shift_div
+#print axioms NormalNumbers.CastingOut.depthAvg_diag_tendsto_of_unif
 
 end CastingOut
 

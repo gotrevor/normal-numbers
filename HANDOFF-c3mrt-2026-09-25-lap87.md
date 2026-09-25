@@ -35,7 +35,7 @@ Thm 3.1(ii) with the exceptional set of scales deleted, which TT say is out of r
 *log*-measure by `Cst (log A)^{1-κc} ≫ 1`.  Same wall as log-Chowla ⇏ Chowla; TT's own Thm 1.3
 escapes it because *irrationality* needs only infinitely many good scales.
 
-## Landed this lap (`C3MrtUnifK.lean`, 19 declarations, all trust-triple clean)
+## Landed this lap (`C3MrtUnifK.lean`, 23 declarations, all trust-triple clean)
 
 * `quantDepthElliottGen_forces_diagonal`, `DepthDiagonal`, `weylLambertTwist_of_depthDiagonal`,
   `depthDiagonal_of_quantDepthElliottGen`.
@@ -67,22 +67,43 @@ escapes it because *irrationality* needs only infinitely many good scales.
 * **`depthAvg_le_with`** — everything of laps 84–87 in one statement: named input ⇒ explicit
   majorant.  Only THREE quantities move with `K`: `cK K`, `CstK K`, and the threshold scale
   `A = A(K)`.  That is exactly the data the diagonal needs.
+* `depthLL_pos`, `tendsto_natLog_succ_div`, `tendsto_natLog_shift_div`.
+* **`depthAvg_diag_tendsto_of_unif` — THE DIAGONAL IS A THEOREM.**  `depthAvg_le_with`
+  instantiated at `K = depthLL b N`.  Every term but one dies under `1/N` (the `M₀²` head, the
+  `log₂` head, the `(N+M₀)/N → 1` rescaling), leaving exactly ONE hypothesis:
+
+      windowPhi cK CstK κ (depthLL b N) M₀ (Athr (depthLL b N)) (N / 2^{k₀ N}) + 2^{-k₀ N} → 0
+
+  — the *schedule compatibility* of the profile, i.e. precisely the uniformity the per-`K`
+  existential could not express (F2).  Composed with `weylLambertTwist_of_depthDiagonal` this
+  closes the crux from a `K`-uniform input.
 
 ## NEXT (in order)
 
 1. ~~`windowPhi`~~ — DONE this lap.
 2. ~~`depthAvg_le_with`~~ — DONE this lap.
-3. **`depthElliottLL_of_unif`** — THE REMAINING BRICK.  Instantiate `depthAvg_le_with` at
-   `K = depthLL b N`, with `k₀ = k₀(N)` (take `k₀ N = Nat.log 2 (Nat.log 2 N)`, so
-   `2^{-k₀} ≍ 1/log₂ N`) and `A = A(K)` supplied as a function
-   `Athr : ℕ → ℕ` with the two hypotheses `2 ≤ Athr K` and
-   `max (max 2 (K+1)) M₀ ≤ (2 log (Athr K))^(κ·cK K)`.  The schedule hypothesis is then
-   exactly `Tendsto (fun N => windowPhi cK CstK κ (depthLL b N) M₀ (Athr (depthLL b N))
-   (N / 2^(k₀ N))) atTop (𝓝 0)` plus `Athr (depthLL b N) ≤ N / 2^(k₀ N)` eventually.
-   Then `weylLambertTwist_of_depthDiagonal`.  Arithmetic already
+3. ~~`depthElliottLL_of_unif`~~ — DONE this lap (`depthAvg_diag_tendsto_of_unif`).
+4. **THE CONCRETE PROFILE — next lap's target.**  Make `hsched` *checkable* rather than
+   decorative: with `k₀ N = Nat.log 2 (Nat.log 2 N)` (so `2^{-k₀ N} ≍ 1/log₂ N → 0` and
+   `a = N/2^{k₀ N}`, `log a ≍ log N`), show that `cK K = c₀/(K+1)^m`, `CstK K = exp((K+1)^m)`
+   satisfies it, using `D_N = depthLL b N ≍ log_b log log N`:
+   `CstK D_N · (2 log a)^{-κ·cK D_N} = exp(O((lll N)^m) − κc₀·(ll N)/(lll N)^m) → 0`.
+   Needs: `Athr M₀ K` explicit and `Athr (depthLL b N) ≤ N/2^{k₀ N}` eventually.
+   Arithmetic already
    checked (PENDING_WORK F2): `cK K = c₀γ^K` needs `γ > b^{-1/2}` (γ = 1/2 FAILS at b = 3,
    θ = 2log2/log3 ≈ 1.26 > 1); `cK K = c₀/K^m` is comfortable; `CstK K ≤ exp(K^m)` always
    affordable since `CstK (depthLL b N) = exp(O((log log log N)^m))`.
+
+## Known remaining wiring (pre-existing, not introduced this lap)
+
+`depthAvg_diag_tendsto_of_unif` needs `κ > 0`, which via `ttExponent_pos` needs
+`depthRoot b hh 0 ≠ 1`, i.e. `b ∤ hh`.  Every consumer in the chain
+(`depthAvg_two_tendsto_of_noExc`, `depthAvg_K_tendsto_of_noExc`, `rung_one`) already carries
+`hζ` as a hypothesis, so this is not new — but `DepthDiagonal b` quantifies over ALL `hh : ℤ`.
+The two degenerate cases: `hh = 0` (then `depthAvg` is the bare twist average
+`(1/N)∑ e(jn/Q) → 0` since `0 < j < Q`), and `b ∣ hh`, `hh ≠ 0` (then `ζ_0 = 1` but
+`ζ_v ≠ 1` for `v = v_b(hh)`, so the correlation is the same shape re-indexed from `i = v`,
+a translation of `n`).  Name and close these when assembling `WeylLambertTwist`.
 
 ## Still refuted — DO NOT RETRY
 
