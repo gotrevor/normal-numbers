@@ -199,16 +199,34 @@ genSum w (dilatedEdgeReindexed (affineBlock f₁ a n H) (affineBlock f₂ a n H)
   correlation-transfer rung needs: lap 26 already controls the log-mean of exactly these
   observables.
 
-## NEXT (lap 35 onwards)
+## Lap 35 — `ElliottDilatedCorrelation.lean` (new, zero sorry, trust triple)
 
-1. **The dilated correlation-transfer rung**: the analogue of
-   `ElliottTwistedGraphCorrelation.norm_logProb_pairTwistedGraph_sub_correlation_le`.  Take
-   `logProbExpectation` of `genSum_dilatedEdgeReindexed_affineBlock`, apply lap 26's
-   `norm_logProb_affineTwistedObservable_shift_sub_correlation_le` to each `(p, j)` term, and
-   collect: the correlation coefficient is `∑_p [p∈s] #{j : a j + r_p + p h < H} / p`, the dilated
-   analogue of `Erdos67b.primeGraphCorrelationWeight` (≈ `H/a` terms per prime instead of `H`).
-   Then `norm_logProb_..._sub_correlation_le` with the decoupling error, the entropy-selected
-   scale, and the contradiction.
+The dilated correlation-transfer rung, i.e. the dilated analogue of
+`ElliottTwistedGraph.norm_logProb_pairTwistedGraph_sub_correlation_le`:
+
+* `dilatedCorrelationWeight H a c₁ h s = ∑_p [p ∈ s] #{j < H : a j + (p c₁ mod a) + p h < H} / p`
+  — the dilated `Erdos67b.primeGraphCorrelationWeight`.  About `H/(a p)` instead of `H/p`, because
+  only every `a`-th block position lies in the progression the dilated edge samples; `a` is a
+  constant, absorbed as everywhere else in this campaign.
+* `norm_logProb_dilatedGraph_sub_correlation_le` — **the dilated graph average is the affine
+  correlation times that weight**, with error
+  `π(H)·H·(2/M + 2H/(LM) + 2·Dmax/(LM))`, the dependency's plus the one backward-shift term.
+  Hypotheses: `⌊p c₁/a⌋ ≤ Dmax ≤ L` for every `p ≤ H` (free: `Dmax ≤ P|c₁| ≪ L`).
+
+Lap 34's identity is applied under the expectation and lap 26's per-edge estimate termwise, so
+this rung consumed exactly the two things the previous laps built and nothing new.
+
+## NEXT (lap 36 onwards)
+
+1. **Trade the CRT sum for the mean** (dilated `norm_logProb_pairTwistedMean_sub_correlation_le`):
+   combine lap 35 with `exists_logProb_gen_decoupling` (lap 30) — the discrepancy
+   `genSum(… n − crtShift) − genMeanCRT` is exactly what that theorem bounds, with
+   `Δ m = crtShift`, and `genMeanCRT = dilatedPairTwistedMean` by lap 33.
+2. **A lower bound on `dilatedCorrelationWeight`** — the dilated
+   `exists_dyadic_primeGraphCorrelationWeight_lower`.  Function-free counting: for `p` dyadic in
+   `(P, 2P]` with `2 p h < H` the count is `≥ H/(2a)`, so the weight is `≫ (H/a)·∑_{p∈s} 1/p`.
+3. Then the entropy-selected scale, `exists_logProb_dyadic_dilatedMean_lower`, and the
+   contradiction against lap 25's upper bound.
 2. Then the correlation-transfer rung with lap 26's
    `norm_logProb_affineTwistedObservable_shift_sub_correlation_le`, and the contradiction.
 2. Combine with lap 26's `norm_logProb_affineTwistedObservable_shift_sub_correlation_le` for the
