@@ -5,6 +5,8 @@ import NormalNumbers.ElliottRankin
 import NormalNumbers.ElliottTruncAssemble
 import NormalNumbers.ElliottCaseB
 
+open NormalNumbers.ElliottMultStatement
+
 /-!
 # Leaf 2: the assembly
 
@@ -76,7 +78,7 @@ same shape as the already-proved `ElliottCaseA.exists_caseA_threshold`; the only
 the nat-division estimate `Y/L ≤ cW`. -/
 theorem exists_caseA_thin_threshold {a₁ : ℕ} (ha₁ : 0 < a₁) (b₁ : ℤ) {ε : ℝ} (hε : 0 < ε) :
     ∃ (D₀ : ℝ) (W₀ : ℕ), 2 ≤ W₀ ∧
-      ∀ (g₁ g₂ : ℤ → ℂ), IsMultiplicativeOnPositiveInt g₁ →
+      ∀ (g₁ g₂ : ℤ → ℂ), IsCoprimeMultOnPosInt g₁ →
         (∀ n : ℤ, ‖g₁ n‖ ≤ 1) → (∀ n : ℤ, ‖g₂ n‖ ≤ 1) →
         ∀ (a₂ : ℕ) (b₂ : ℤ) (X W : ℕ), W₀ ≤ W → W ≤ X →
           D₀ ≤ primeDefect (normDivArith g₁) (caseAScale a₁ b₁ X W) →
@@ -274,8 +276,8 @@ theorem exists_caseB_threshold (h : AffineCMLogElliott)
       ∀ A X W : ℕ, A₀ ≤ A → A ≤ W → W ≤ X →
         X ≤ (thinScale a₁ b₁ X W) ^ (2 ^ k) →
         ∀ g₁ g₂ : ℤ → ℂ,
-          IsMultiplicativeOnPositiveInt g₁ →
-          IsMultiplicativeOnPositiveInt g₂ →
+          IsCoprimeMultOnPosInt g₁ →
+          IsCoprimeMultOnPosInt g₂ →
           (∀ n : ℤ, ‖g₁ n‖ ≤ 1) →
           (∀ n : ℤ, ‖g₂ n‖ ≤ 1) →
           (∀ q : ℕ, 0 < q → q ≤ A →
@@ -299,8 +301,8 @@ of `W` costs only `≤ 1 + 2log2 + (log W)/2^j ≤ (ε/2) log W` of harmonic mas
 `X ≤ L''^(2^(j+2))`, making the discrepancy an absolute constant in `ε`.
 
 `j := max 1 ⌈8/ε⌉₊` works because `2^j ≥ j+1 ≥ 8/ε`. -/
-theorem nonasymptotic_of_affineCM (h : AffineCMLogElliott) :
-    Erdos67b.NonasymptoticLogElliott := by
+theorem nonasymptotic_mult_of_affineCM (h : AffineCMLogElliott) :
+    NonasymptoticLogElliottMult := by
   classical
   intro a₁ a₂ b₁ b₂ ha₁ ha₂ hdet ε hε
   set j : ℕ := max 1 ⌈8 / ε⌉₊ with hjdef
@@ -411,6 +413,12 @@ theorem nonasymptotic_of_affineCM (h : AffineCMLogElliott) :
         + ∑ m ∈ Finset.Icc (X / W + 1) (X / W''), (m : ℝ)⁻¹ := htrunc
     _ ≤ (ε / 2) * Real.log (W : ℝ) + (ε / 2) * Real.log (W : ℝ) := by linarith
     _ = ε * Real.log (W : ℝ) := by ring
+
+/-- **Leaf 2 for completely multiplicative `gᵢ`** — the dependency's `Prop`, a corollary of the
+genuinely multiplicative form. -/
+theorem nonasymptotic_of_affineCM (h : AffineCMLogElliott) :
+    Erdos67b.NonasymptoticLogElliott :=
+  (nonasymptotic_mult_of_affineCM h).toCompletelyMultiplicative
 
 end
 

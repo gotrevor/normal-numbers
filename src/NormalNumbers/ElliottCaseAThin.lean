@@ -1,5 +1,7 @@
 import NormalNumbers.ElliottHall
 
+open NormalNumbers.ElliottMultStatement
+
 /-!
 # Case A, the thin window
 
@@ -207,7 +209,7 @@ theorem le_integerAffine_of_mem_window {a₁ : ℕ} (ha₁ : 0 < a₁) (b₁ : �
 Unlike `ElliottCaseA.exists_caseA_threshold` this carries **no regime hypothesis** on `W` versus
 `X`, so it covers every window. -/
 theorem norm_elliottLogCorrelation_le_caseA_thin {g₁ g₂ : ℤ → ℂ}
-    (hm₁ : IsMultiplicativeOnPositiveInt g₁)
+    (hm₁ : IsCoprimeMultOnPosInt g₁)
     (h₁ : ∀ n : ℤ, ‖g₁ n‖ ≤ 1) (h₂ : ∀ n : ℤ, ‖g₂ n‖ ≤ 1)
     {a₁ : ℕ} (ha₁ : 0 < a₁) (b₁ : ℤ) (a₂ : ℕ) (b₂ : ℤ) {X W : ℕ} (hW : 0 < W)
     {L : ℕ} (hL : 1 ≤ L) (hLle : L ≤ a₁ * (X / W + 1) - b₁.natAbs) :

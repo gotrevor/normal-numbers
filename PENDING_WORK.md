@@ -10363,3 +10363,32 @@ headline is the **completely multiplicative** case, because `IsMultiplicativeOnP
 coprimality hypothesis.  Nothing in the leaf-2 route consumes complete multiplicativity of `gᵢ`
 (the cover's `cmExt u` supplies it downstream), so the expected shape is a hypothesis weakening
 in place, not a new proof.
+
+## Lap 84 (2026-09-25) — FIDELITY GAP CLOSED: the genuinely multiplicative headline
+
+`DIRECTION.md`'s post-lap-83 objective, done in full.  **Trigger EM-1 did NOT fire**: the lap-83
+audit expectation was exactly right — complete multiplicativity of `g₁, g₂` is consumed **nowhere**
+in the leaf-2 chain.
+
+* New `src/NormalNumbers/ElliottMultStatement.lean`: `IsCoprimeMultOnPosInt` (`g 1 = 1` and
+  `g(mn) = g m · g n` for *coprime* positive `m, n`), the `src/`-owned Prop
+  `NonasymptoticLogElliottMult`, the free downcast `of_isMultiplicative`, and
+  `NonasymptoticLogElliottMult.toCompletelyMultiplicative`.
+* Hypotheses weakened **in place** along the chain — `ElliottCaseA`, `ElliottHall`,
+  `ElliottCaseAThin`, `ElliottZeroExt`, `ElliottCaseB`, `ElliottLeafTwo`.  Only three proof sites
+  needed a coprimality argument threaded through:
+  `ElliottCaseA.isMultiplicative_normDivArith` (`intro m n _` → `intro m n hcop`),
+  `ElliottHall.normFun_mul` (already had `hmn : m.Coprime n` in scope), and
+  `ElliottZeroExt.coprime_mul_restrictToNat`.  Nothing else moved.
+  `ElliottZeroExt.completelyMultiplicative_restrictToNat` keeps the dependency's predicate; it has
+  no consumers (that is itself the audit's confirmation).
+* `ElliottLeafTwo.nonasymptotic_mult_of_affineCM : AffineCMLogElliott → NonasymptoticLogElliottMult`
+  is now the real assembly; `nonasymptotic_of_affineCM` is its one-line CM corollary, so
+  `nonasymptoticLogElliott` is unchanged as a statement and still compiles.
+* `ElliottGeneral.nonasymptoticLogElliottMult` — trust triple, in the audit surface.
+
+Why it was this cheap: Case A only ever feeds `g₁` through `normDivArith`, whose
+`Nat.ArithmeticFunction.IsMultiplicative` is coprime-indexed by definition; Case B routes `gᵢ`
+through the *cover* `u`, and every complete-multiplicativity use downstream is on `cmExt u`, which
+is completely multiplicative by construction (`Finsupp.prod_add_index'`, no coprimality needed).
+The `gᵢ` themselves are only ever evaluated via `coprime_mul_restrictToNat`.

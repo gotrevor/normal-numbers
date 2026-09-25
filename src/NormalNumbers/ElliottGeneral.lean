@@ -31,9 +31,17 @@ The headline is now assembled from the ladder in `NormalNumbers.ElliottLadder`:
 
 namespace NormalNumbers.ElliottGeneral
 
+/-- **THE BET (ratified), in its honest form.**  Tao 2016, Theorem 1.3, in plby's finitary
+formulation, for merely (i.e. coprime-)multiplicative `g₁, g₂` — what the paper actually claims.
+The dependency's `Erdos67b.IsMultiplicativeOnPositiveInt` has no coprimality hypothesis, so it is
+*complete* multiplicativity; this statement closes that fidelity gap. -/
+theorem nonasymptoticLogElliottMult :
+    ElliottMultStatement.NonasymptoticLogElliottMult :=
+  ElliottLeafTwo.nonasymptotic_mult_of_affineCM
+    (ElliottLadder.affineCM_of_dilatedCM ElliottDilatedRung.dilatedCMLogElliott)
+
 /-- **THE BET (ratified).**  Tao 2016, Theorem 1.3, in plby's finitary formulation. -/
 theorem nonasymptoticLogElliott : Erdos67b.NonasymptoticLogElliott :=
-  ElliottLeafTwo.nonasymptotic_of_affineCM
-    (ElliottLadder.affineCM_of_dilatedCM ElliottDilatedRung.dilatedCMLogElliott)
+  nonasymptoticLogElliottMult.toCompletelyMultiplicative
 
 end NormalNumbers.ElliottGeneral

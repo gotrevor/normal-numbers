@@ -6,6 +6,8 @@ import NormalNumbers.ElliottPretentiousTransfer
 import NormalNumbers.ElliottMertensIterate
 import NormalNumbers.ElliottRankin
 
+open NormalNumbers.ElliottMultStatement
+
 /-!
 # Case B of leaf 2: the ε-budget assembly
 
@@ -169,8 +171,8 @@ theorem exists_caseB_threshold (h : AffineCMLogElliott)
       ∀ A X W : ℕ, A₀ ≤ A → A ≤ W → W ≤ X →
         X ≤ (thinScale a₁ b₁ X W) ^ (2 ^ k) →
         ∀ g₁ g₂ : ℤ → ℂ,
-          IsMultiplicativeOnPositiveInt g₁ →
-          IsMultiplicativeOnPositiveInt g₂ →
+          IsCoprimeMultOnPosInt g₁ →
+          IsCoprimeMultOnPosInt g₂ →
           (∀ n : ℤ, ‖g₁ n‖ ≤ 1) →
           (∀ n : ℤ, ‖g₂ n‖ ≤ 1) →
           (∀ q : ℕ, 0 < q → q ≤ A →

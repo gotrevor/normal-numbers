@@ -1,4 +1,7 @@
 import NormalNumbers.ElliottEulerBound
+import NormalNumbers.ElliottMultStatement
+
+open NormalNumbers.ElliottMultStatement
 
 /-!
 # Case A of leaf 2: a large pretentious defect makes the correlation trivially small
@@ -53,12 +56,12 @@ theorem normDivArith_le (g : ℤ → ℂ) (hg : ∀ n : ℤ, ‖g n‖ ≤ 1) {n
   gcongr
   exact hg _
 
-theorem isMultiplicative_normDivArith {g : ℤ → ℂ} (hg : IsMultiplicativeOnPositiveInt g) :
+theorem isMultiplicative_normDivArith {g : ℤ → ℂ} (hg : IsCoprimeMultOnPosInt g) :
     (normDivArith g).IsMultiplicative := by
   constructor
   · rw [normDivArith_apply g Nat.one_pos]
     norm_num [hg.1]
-  · intro m n _
+  · intro m n hcop
     rcases Nat.eq_zero_or_pos m with hm | hm
     · simp [normDivArith, hm]
     rcases Nat.eq_zero_or_pos n with hn | hn
@@ -66,7 +69,7 @@ theorem isMultiplicative_normDivArith {g : ℤ → ℂ} (hg : IsMultiplicativeOn
     have hmn : 0 < m * n := Nat.mul_pos hm hn
     rw [normDivArith_apply g hmn, normDivArith_apply g hm, normDivArith_apply g hn]
     have hcast : (((m * n : ℕ)) : ℤ) = ((m : ℕ) : ℤ) * ((n : ℕ) : ℤ) := by push_cast; ring
-    have := hg.2 m n hm hn
+    have := hg.2 m n hm hn hcop
     rw [show ((m * n : ℕ) : ℤ) = ((m * n : ℕ) : ℤ) from rfl]
     rw [this, norm_mul]
     push_cast
@@ -232,7 +235,7 @@ No oscillation is used: the correlation is bounded by the logarithmic mean of `�
 Euler product controls.  A large defect — Case A's hypothesis — therefore makes the whole
 correlation small compared with `log X`, hence with `log W` in the thick-window regime. -/
 theorem norm_elliottLogCorrelation_le_caseA {g₁ g₂ : ℤ → ℂ}
-    (hm₁ : IsMultiplicativeOnPositiveInt g₁)
+    (hm₁ : IsCoprimeMultOnPosInt g₁)
     (h₁ : ∀ n : ℤ, ‖g₁ n‖ ≤ 1) (h₂ : ∀ n : ℤ, ‖g₂ n‖ ≤ 1)
     {a₁ : ℕ} (ha₁ : 0 < a₁) (b₁ : ℤ) (a₂ : ℕ) (b₂ : ℤ) (X W : ℕ)
     (hY : 2 ≤ a₁ * X + b₁.natAbs) :
@@ -268,7 +271,7 @@ inequality and is still open. -/
 theorem exists_caseA_threshold {a₁ : ℕ} (ha₁ : 0 < a₁) (b₁ : ℤ) {θ ε : ℝ}
     (hθ : 0 < θ) (hε : 0 < ε) :
     ∃ (D₀ : ℝ) (W₀ : ℕ), 2 ≤ W₀ ∧
-      ∀ (g₁ g₂ : ℤ → ℂ), IsMultiplicativeOnPositiveInt g₁ →
+      ∀ (g₁ g₂ : ℤ → ℂ), IsCoprimeMultOnPosInt g₁ →
         (∀ n : ℤ, ‖g₁ n‖ ≤ 1) → (∀ n : ℤ, ‖g₂ n‖ ≤ 1) →
         ∀ (a₂ : ℕ) (b₂ : ℤ) (X W : ℕ), W₀ ≤ W → W ≤ X →
           θ * Real.log (X : ℝ) ≤ Real.log (W : ℝ) →

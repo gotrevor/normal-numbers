@@ -27,6 +27,7 @@ edits; see the fidelity note in `STATUS.md`.
 -/
 
 -- the headline
+#print axioms NormalNumbers.ElliottGeneral.nonasymptoticLogElliottMult
 #print axioms NormalNumbers.ElliottGeneral.nonasymptoticLogElliott
 
 -- the ladder

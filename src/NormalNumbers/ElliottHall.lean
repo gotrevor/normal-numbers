@@ -1,6 +1,8 @@
 import NormalNumbers.ElliottCaseA
 import ErdosProblems.Erdos448.HalberstamComplete448
 
+open NormalNumbers.ElliottMultStatement
+
 /-!
 # Hall's inequality for `‖g‖`, and the density mean-value bound
 
@@ -52,17 +54,17 @@ theorem normFun_le_one {g : ℤ → ℂ} (hg : ∀ n : ℤ, ‖g n‖ ≤ 1) (n 
   · simp [normFun, h]
   · rw [normFun_apply g h]; exact hg _
 
-theorem normFun_mul {g : ℤ → ℂ} (hg : IsMultiplicativeOnPositiveInt g) {m n : ℕ}
+theorem normFun_mul {g : ℤ → ℂ} (hg : IsCoprimeMultOnPosInt g) {m n : ℕ}
     (hmn : m.Coprime n) : normFun g (m * n) = normFun g m * normFun g n := by
   rcases Nat.eq_zero_or_pos m with hm | hm
   · simp [normFun, hm]
   rcases Nat.eq_zero_or_pos n with hn | hn
   · simp [normFun, hn]
   rw [normFun_apply g (Nat.mul_pos hm hn), normFun_apply g hm, normFun_apply g hn]
-  rw [show ((m * n : ℕ) : ℤ) = ((m * n : ℕ) : ℤ) from rfl, hg.2 m n hm hn, norm_mul]
+  rw [show ((m * n : ℕ) : ℤ) = ((m * n : ℕ) : ℤ) from rfl, hg.2 m n hm hn hmn, norm_mul]
 
 /-- The `p`-local factor of the Hall Euler product converges and is `≤ 1 + ‖g p‖/p + 1/(p(p-1))`. -/
-theorem tsum_local_le {g : ℤ → ℂ} (hm : IsMultiplicativeOnPositiveInt g)
+theorem tsum_local_le {g : ℤ → ℂ} (hm : IsCoprimeMultOnPosInt g)
     (hg : ∀ n : ℤ, ‖g n‖ ≤ 1) {p : ℕ} (hp : p.Prime) :
     ∑' j : ℕ, normFun g (p ^ j) / ((p ^ j : ℕ) : ℝ) ≤
       1 + normFun g p / (p : ℝ) + 1 / ((p : ℝ) * ((p : ℝ) - 1)) := by
@@ -143,7 +145,7 @@ the positive integers,
 This is the density bound the *thin-window* regime of Case A needs: unlike the crude
 `ElliottEulerBound.sum_Icc_le_log_mul_exp_neg_defect`, it has no `log N` left over, so dyadic
 partial summation over the window costs only `log W`. -/
-theorem sum_Icc_normFun_le {g : ℤ → ℂ} (hm : IsMultiplicativeOnPositiveInt g)
+theorem sum_Icc_normFun_le {g : ℤ → ℂ} (hm : IsCoprimeMultOnPosInt g)
     (hg : ∀ n : ℤ, ‖g n‖ ≤ 1) {N : ℕ} (hN : 2 ≤ N) :
     ∑ n ∈ Finset.Icc 1 N, normFun g n ≤
       hallConst * Real.exp (1 + Erdos67b.PrimeEstimates.mertensBound) * (N : ℝ) *
@@ -216,7 +218,7 @@ theorem primeDefect_mono {g : ℤ → ℂ} (hg : ∀ n : ℤ, ‖g n‖ ≤ 1) {
     exact hg _
 
 /-- One dyadic block contributes at most `2 · hallConst · e^{1+B} · e^{-Σ_L}`. -/
-theorem sum_dyadic_block_le {g : ℤ → ℂ} (hm : IsMultiplicativeOnPositiveInt g)
+theorem sum_dyadic_block_le {g : ℤ → ℂ} (hm : IsCoprimeMultOnPosInt g)
     (hg : ∀ n : ℤ, ‖g n‖ ≤ 1) {L : ℕ} (hL : 1 ≤ L) (j : ℕ) :
     ∑ m ∈ Finset.Icc (L * 2 ^ j) (L * 2 ^ (j + 1) - 1), normDivArith g m ≤
       2 * hallConst * Real.exp (1 + Erdos67b.PrimeEstimates.mertensBound) *
@@ -282,7 +284,7 @@ theorem sum_dyadic_block_le {g : ℤ → ℂ} (hm : IsMultiplicativeOnPositiveIn
 
 This is what the crude Euler bound cannot give, and it is exactly the thin-window statement:
 with `L ≈ Y/W` the block count is `≈ log₂ W`. -/
-theorem sum_Icc_dyadic_le {g : ℤ → ℂ} (hm : IsMultiplicativeOnPositiveInt g)
+theorem sum_Icc_dyadic_le {g : ℤ → ℂ} (hm : IsCoprimeMultOnPosInt g)
     (hg : ∀ n : ℤ, ‖g n‖ ≤ 1) {L Y : ℕ} (hL : 1 ≤ L) :
     ∑ m ∈ Finset.Icc L Y, normDivArith g m ≤
       ((Nat.log 2 (Y / L) + 1 : ℕ) : ℝ) *

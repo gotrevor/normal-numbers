@@ -1,4 +1,7 @@
 import NormalNumbers.ElliottLadder
+import NormalNumbers.ElliottMultStatement
+
+open NormalNumbers.ElliottMultStatement
 
 /-!
 # From an integer-indexed `g` to the zero-extension of its natural restriction
@@ -17,7 +20,7 @@ and each contributes at most `2·harmonicWeight n ≤ 2`.  The difference is the
 ## Main results
 
 * `norm_sub_posExt_le` — the `2(|b₁|+|b₂|)` comparison.
-* `completelyMultiplicative_restrictToNat` — `IsMultiplicativeOnPositiveInt g` (which has *no*
+* `completelyMultiplicative_restrictToNat` — `IsCoprimeMultOnPosInt g` (which has *no*
   coprimality hypothesis, hence is complete multiplicativity) descends to `restrictToNat g`.
 -/
 
@@ -30,7 +33,7 @@ open Erdos67b
 
 noncomputable section
 
-/-- `IsMultiplicativeOnPositiveInt` is complete multiplicativity, and it restricts. -/
+/-- `IsCoprimeMultOnPosInt` is complete multiplicativity, and it restricts. -/
 theorem completelyMultiplicative_restrictToNat {g : ℤ → ℂ} (hm : IsMultiplicativeOnPositiveInt g) :
     IsCompletelyMultiplicativeOnPositive (restrictToNat g) := by
   refine ⟨?_, ?_⟩
@@ -39,7 +42,7 @@ theorem completelyMultiplicative_restrictToNat {g : ℤ → ℂ} (hm : IsMultipl
     simpa [restrictToNat] using hm.2 m n hm' hn'
 
 /-- The restriction is `1`-bounded, and multiplicative on coprime pairs (a fortiori). -/
-theorem coprime_mul_restrictToNat {g : ℤ → ℂ} (hm : IsMultiplicativeOnPositiveInt g)
+theorem coprime_mul_restrictToNat {g : ℤ → ℂ} (hm : IsCoprimeMultOnPosInt g)
     (x y : ℕ) (hxy : Nat.Coprime x y) :
     restrictToNat g (x * y) = restrictToNat g x * restrictToNat g y := by
   have hone : restrictToNat g 1 = 1 := by simpa [restrictToNat] using hm.1
@@ -51,7 +54,7 @@ theorem coprime_mul_restrictToNat {g : ℤ → ℂ} (hm : IsMultiplicativeOnPosi
     · rw [Nat.coprime_zero_right] at hxy
       subst hxy
       rw [Nat.one_mul, hone, one_mul]
-    · simpa [restrictToNat] using hm.2 x y hx hy
+    · simpa [restrictToNat] using hm.2 x y hx hy hxy
 
 /-- **The comparison.**  Replacing `gᵢ` by the zero-extension of its natural restriction changes the
 correlation by at most the absolute constant `2(|b₁|+|b₂|)`. -/
