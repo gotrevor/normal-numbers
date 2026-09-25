@@ -523,6 +523,7 @@ import NormalNumbers.TwoPointDelangeLF
 import NormalNumbers.TwoPointMertensLower
 import NormalNumbers.TwoPointDelangeOmega
 import NormalNumbers.TwoPointDelangeScale
+import NormalNumbers.TwoPointDelangeWire
 import NormalNumbers.PairDecoupleProve
 import NormalNumbers.PairDecoupleRefute
 import NormalNumbers.PairDecoupleLower

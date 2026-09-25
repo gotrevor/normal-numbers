@@ -53,7 +53,32 @@ because `u < 1`.  **Sharp exponent, no Mertens' 2nd** — the repo's `primeRecip
 Sanity-checked against Delange's own asymptotic: the route yields `‖S(N)‖ ≲ (log N)^{ϑ−1}` with
 `ϑ` just above `max(Re z, u')`, i.e. `(log N)^{Re z − 1 + o(1)}` — the right exponent.
 
-**NEXT (the payoff): wire the discharge into the `ConjC1` consumers.**  `conjC1_of_delange_*`
+**DONE 2026-09-25 lap 56 (the payoff): `TwoPointDelangeWire.lean`.**  `norm_phase_sub_one_eq`
+(`‖e(t)−1‖ = 2|sin πt|`, so the regime is exactly `‖t‖_{ℝ/ℤ} < 1/6`), `phase_div_ne_one`,
+`delangeMean_of_lt_one_sixth`, **`delangeMean_one_div : 7 ≤ b → DelangeMean (1/b)`** (a
+hypothesis-free instance of Delange's theorem in kernel), `delangeMean_div_of_abs_lt`, and the
+narrowing **`delangeMean_all_of_large`** with its two consumers
+`conjC1_of_delangeLarge_multiElliott` / `…_pairDecorr`: the cited Delange input is now assumed ONLY
+on `‖phase (m/b) − 1‖ ≥ 1`.
+
+**DIAGNOSIS of why the range cannot simply be widened (recorded so no lap re-derives it).**  At
+`t = 1/2`, `z = −1` and the kernel is `h_{−1}(n) = (−2)^{ω(n)}μ²(n)`, whose `ℓ¹` mass is
+`Σ_{d≤N} μ²(d)τ(d) ≍ N log N` — so `u = 2` and `A(N) ≍ (log N)²`.  Worse, the statement itself is
+deep there: `Σ_n (−1)^{ω(n)} n^{-s} = ζ(s)·Π_p(1 − 2p^{-s})`, which is `≈ 1/ζ(s)`, i.e. Möbius/PNT
+strength.  Halász's theorem implies `Σ_{n≤x}μ(n) = o(x)`, hence PNT, so ANY route covering
+`‖t‖ ≥ 1/6` is at least PNT-strength.  Two further attempts and why they fail:
+* **Kubilius-model / product route.**  `E_{n<N} e(t·ω_{≤P}(n)) = Π_{p≤P}(1+(z−1)/p) + O(Q/N) → 0`
+  is available for free (`prod_delangeLocal_tendsto_zero` is already a theorem, and
+  `TwoPointGrowingCut.lean` runs exactly this at a growing cut).  But the large-prime remainder has
+  `E_{n≤N} ω_{>P}(n) = Σ_{P<p≤N}1/p ≍ log log log N → ∞` — the SAME obstruction already recorded at
+  leaf (D).  Not a triangle-inequality statement.
+* **Anchor bootstrapping.**  `z^ω = (y^ω) * G` with `G(p) = z−y`, `G(p^k) = (−1)^{k−1}(y−1)^{k−1}(z−y)`,
+  so `Σ|G(n)|/n ≍ (log N)^{|z−y|}`; transferring a proved base point `y` to `z` with `|z−y| < 1`
+  fails on the tail `Σ_{d>√N}|G(d)|/d ≍ (log N)^{|z−y|}`, which does not decay.
+The honest remaining route is (i) a Dirichlet-hyperbola replacement for `delangeMean_of_kernel`'s
+crude `⌊N/n⌋` defect bound, then (ii) Halász over `PNTPort.ZetaBounds`.
+
+**(superseded) NEXT (the payoff): wire the discharge into the `ConjC1` consumers.**  `conjC1_of_delange_*`
 takes `DelangeMean (m/b)` as a hypothesis; for `‖m/b‖_{ℝ/ℤ} < 1/6` that hypothesis is now a
 theorem, so those reductions lose it.  Needed: `‖phase t − 1‖ = 2|sin πt|` (or a sufficient
 numeric criterion) to turn `‖m/b‖ < 1/6` into `‖phase (m/b) − 1‖ < 1`.
