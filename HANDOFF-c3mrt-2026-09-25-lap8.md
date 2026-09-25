@@ -1,4 +1,4 @@
-# HANDOFF c3-mrt 2026-09-25 — laps 7–16
+# HANDOFF c3-mrt 2026-09-25 — laps 7–17
 
 Branch `wip/c3-mrt`.  `lake build` green at both commits; every new result axiom-clean
 `[propext, Classical.choice, Quot.sound]`, no `sorry`.  Pure addition (2 new modules).
@@ -204,6 +204,32 @@ Fixed, and the fix is cheap:
 This is the same pattern as the `j = 1` point (lap 14) and the weight-transfer constants
 (lap 13): everything below the threshold is an `N`-independent constant, absorbed because the
 quantifier order is `ε → Y → A → i₀ → N → ∞`.
+
+## Lap 17 — `C3MrtNonPretentious.lean`: the unramified (`t = 0`) certificate, all characters
+
+**`pretentiousDistSq_ge_class_sum`**: for every `q` and every `χ mod q`,
+
+    pretentiousDistSq (ζ^Ω) χ X  ≥  (1 − Re ζ) · ∑_{p ≤ X, p ≡ 1 (q)} 1/p .
+
+The mechanism, and it is sharp: `ζ^Ω` is *constant* on primes (`Ω(p) = 1`), while a Dirichlet
+character has `χ(1) = 1`.  So on the primes `p ≡ 1 (mod q)` — positive Dirichlet density — the
+twist is `1` and our function is `ζ`, and each such prime pays the full `(1 − Re ζ)/p`.  With
+Mertens in the class `1 (mod q)` (the repo's `mertensRate_residueClass`) this is
+`(1 − Re ζ)(c_q log log X − C_q)`.
+
+* `one_sub_re_pos` — the constant is positive **iff `ζ ≠ 1`**, and that hypothesis is necessary,
+  not cosmetic: at `ζ = 1` the function `ζ^Ω` *is* the principal character, its distance to
+  itself is `0`, and Elliott correctly gives nothing (the correlation does not oscillate).
+* `pretentiousTerm_nonneg`, `dirichletArchimedeanTwist_zero` — the supporting facts.
+
+This confirms the lap-16 picture quantitatively: the distance grows like `log log X`, so the
+hypothesis at level `A` holds from a threshold `X ≥ A^{i₀(A)}` and never before — exactly what
+`initial_segment_bound_of_elliott` was rebuilt to consume.
+
+**Remaining analytic obligation (named).**  The archimedean twist `t ≠ 0`: there the competitor
+`p^{it}` is not constant on residue classes and this argument fails.  The true statement is
+Granville–Soundararajan's Lipschitz/Halász estimate.  This is now the SECOND named open input,
+alongside `NonasymptoticLogElliott` itself.
 
 ## NEXT — resume here
 
