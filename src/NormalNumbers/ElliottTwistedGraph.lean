@@ -146,6 +146,221 @@ theorem fourth_moment_twistedPrimeGraphMultiplier_le_energy
       exact Nat.mul_le_mul_right h (hs p hp)) hT
   simpa only [card_additiveQuadruples_image_mul s hh] using hbound
 
+
+/-! ## The two-block (pair) graph
+
+`Erdos67b.primeGraphEdge b p h j = b j * conj (b (j + p·h))` hardcodes the shape `b ⊗ conj b`, which
+is the `f₂ = conj f₁` specialisation.  The two-function case needs `b j * c (j + p·h)` where `b`, `c`
+are the blocks of `f₁`, `f₂`.  This section builds that edge, its bilinear Fourier pairing, and the
+large-frequency upper bound.
+
+The bound records a structural fact worth naming: the Fourier **first moment** that the MRT input
+has to supply falls on the `b` block *only* — because one spends the trivial bound
+`‖blockFourier T c t‖ ≤ H` on the second block.  That is exactly why Tao's Theorem 1.3 assumes
+non-pretentiousness of `g₁` alone.
+-/
+
+/-- The two-block graph edge with a raw shift. -/
+def pairShiftEdge {H : ℕ} (b c : Fin H → ℂ) (a : ℕ) (j : Fin H) : ℂ :=
+  if hj : j.1 + a < H then b j * c ⟨j.1 + a, hj⟩ else 0
+
+/-- The proved development's edge is the `c = conj b` specialisation. -/
+theorem pairShiftEdge_conj {H : ℕ} (b : Fin H → ℂ) (p h : ℕ) (j : Fin H) :
+    pairShiftEdge b (fun i ↦ conj (b i)) (p * h) j = primeGraphEdge b p h j := rfl
+
+theorem norm_pairShiftEdge_le {H : ℕ} {b c : Fin H → ℂ} {B : ℝ} (hB : 0 ≤ B)
+    (hb : ∀ j, ‖b j‖ ≤ B) (hc : ∀ j, ‖c j‖ ≤ B) (a : ℕ) (j : Fin H) :
+    ‖pairShiftEdge b c a j‖ ≤ B ^ 2 := by
+  unfold pairShiftEdge
+  split_ifs with hj
+  · rw [norm_mul, pow_two]
+    exact mul_le_mul (hb j) (hc _) (norm_nonneg _) hB
+  · simpa only [norm_zero] using sq_nonneg B
+
+/-- The bilinear Fourier pairing of two blocks.  For `c = conj b` this is `‖blockFourier T b t‖ ^ 2`
+(see `pairBlockPairing_conj`). -/
+def pairBlockPairing {H : ℕ} (T : ℕ) (b c : Fin H → ℂ) (t : ℤ) : ℂ :=
+  blockFourier T b t * conj (blockFourier T (fun j ↦ conj (c j)) t)
+
+theorem norm_pairBlockPairing {H : ℕ} (T : ℕ) (b c : Fin H → ℂ) (t : ℤ) :
+    ‖pairBlockPairing T b c t‖ =
+      ‖blockFourier T b t‖ * ‖blockFourier T (fun j ↦ conj (c j)) t‖ := by
+  rw [pairBlockPairing, norm_mul, RCLike.norm_conj]
+
+theorem pairBlockPairing_mul_phase {H : ℕ} (T : ℕ) (b c : Fin H → ℂ) (t : ℤ) (a : ℕ) :
+    pairBlockPairing T b c t * phase T t a =
+      ∑ j : Fin H, ∑ k : Fin H, (b j * c k) * phase T t ((j.1 : ℤ) + a - k.1) := by
+  simp only [pairBlockPairing, blockFourier, map_sum, map_mul, Complex.conj_conj,
+    Finset.sum_mul, Finset.mul_sum]
+  rw [Finset.sum_comm]
+  refine Finset.sum_congr rfl fun j _ ↦ Finset.sum_congr rfl fun k _ ↦ ?_
+  rw [conj_phase]
+  calc
+    (b j * phase T t j.1) * (c k * phase T t (-(k.1 : ℤ))) * phase T t a =
+        (b j * c k) * (phase T t j.1 * phase T t a * phase T t (-(k.1 : ℤ))) := by ring
+    _ = _ := by
+      rw [← phase_add_right, ← phase_add_right]
+      congr 2
+
+/-- Orthogonality for the bilinear pairing: the analogue of
+`Erdos67b.sum_blockFourier_norm_sq_mul_phase` for two distinct blocks. -/
+theorem sum_pairBlockPairing_mul_phase {H T : ℕ} [NeZero T] (b c : Fin H → ℂ)
+    (a : ℕ) (hT : H + a ≤ T) :
+    (∑ t ∈ Finset.range T, pairBlockPairing T b c (t : ℤ) * phase T (t : ℤ) a) =
+      (T : ℂ) * ∑ j : Fin H, pairShiftEdge b c a j := by
+  classical
+  simp_rw [pairBlockPairing_mul_phase]
+  rw [Finset.sum_comm, Finset.mul_sum]
+  refine Finset.sum_congr rfl fun j _ ↦ ?_
+  rw [Finset.sum_comm]
+  have hinner : ∀ k : Fin H,
+      (∑ t ∈ Finset.range T, (b j * c k) * phase T (t : ℤ) ((j.1 : ℤ) + a - k.1)) =
+        (b j * c k) * (if j.1 + a = k.1 then (T : ℂ) else 0) := by
+    intro k
+    rw [← Finset.mul_sum, sum_phase_block_shift a hT j k]
+  simp_rw [hinner]
+  by_cases hj : j.1 + a < H
+  · have hmem : (⟨j.1 + a, hj⟩ : Fin H) ∈ (Finset.univ : Finset (Fin H)) := Finset.mem_univ _
+    rw [Finset.sum_eq_single_of_mem _ hmem]
+    · have hrfl : j.1 + a = (⟨j.1 + a, hj⟩ : Fin H).1 := rfl
+      rw [pairShiftEdge, dif_pos hj, if_pos hrfl]
+      ring
+    · intro k _ hk
+      have hne : ¬ (j.1 + a = k.1) := fun hEq ↦ hk (Fin.ext hEq.symm)
+      simp [hne]
+  · have hzero : ∀ k : Fin H, ¬ (j.1 + a = k.1) := fun k hEq ↦ hj (hEq ▸ k.2)
+    rw [pairShiftEdge, dif_neg hj]
+    simp [hzero]
+
+/-! ## The pair-twisted mean -/
+
+/-- The prime graph mean for two blocks, with the per-prime unimodular twist. -/
+def pairTwistedPrimeGraphMean {H : ℕ} (w : ℕ → ℂ) (b c : Fin H → ℂ) (h : ℕ) (s : Finset ℕ) : ℂ :=
+  ∑ p ∈ s, w p * (p : ℂ)⁻¹ * ∑ j : Fin H, pairShiftEdge b c (p * h) j
+
+@[simp]
+theorem pairTwistedPrimeGraphMean_conj {H : ℕ} (w : ℕ → ℂ) (b : Fin H → ℂ)
+    (h : ℕ) (s : Finset ℕ) :
+    pairTwistedPrimeGraphMean w b (fun i ↦ conj (b i)) h s = twistedPrimeGraphMean w b h s := by
+  simp only [pairTwistedPrimeGraphMean, twistedPrimeGraphMean, pairShiftEdge_conj]
+
+/-- **The exact Fourier pairing identity for the pair-twisted mean.**  Both generalisations live in
+separate factors: the second block only in `pairBlockPairing`, the twist only in
+`twistedPrimeGraphMultiplier`. -/
+theorem pairTwistedPrimeGraphMean_eq_fourier {H T : ℕ} [NeZero T]
+    (w : ℕ → ℂ) (b c : Fin H → ℂ) (h : ℕ) (s : Finset ℕ)
+    (hT : ∀ p ∈ s, H + p * h ≤ T) :
+    pairTwistedPrimeGraphMean w b c h s = (T : ℂ)⁻¹ * ∑ t ∈ Finset.range T,
+      pairBlockPairing T b c (t : ℤ) * twistedPrimeGraphMultiplier T h s w (t : ℤ) := by
+  have hT0 : (T : ℂ) ≠ 0 := Nat.cast_ne_zero.mpr (NeZero.ne T)
+  have hsum : (∑ t ∈ Finset.range T,
+      pairBlockPairing T b c (t : ℤ) * twistedPrimeGraphMultiplier T h s w (t : ℤ)) =
+        (T : ℂ) * pairTwistedPrimeGraphMean w b c h s := by
+    simp only [twistedPrimeGraphMultiplier, Finset.mul_sum]
+    rw [Finset.sum_comm, pairTwistedPrimeGraphMean, Finset.mul_sum]
+    refine Finset.sum_congr rfl fun p hp ↦ ?_
+    calc
+      _ = w p * (p : ℂ)⁻¹ * ∑ t ∈ Finset.range T,
+          pairBlockPairing T b c (t : ℤ) * phase T (t : ℤ) (p * h : ℕ) := by
+        rw [Finset.mul_sum]
+        exact Finset.sum_congr rfl fun t _ ↦ by ring
+      _ = _ := by rw [sum_pairBlockPairing_mul_phase b c (p * h) (hT p hp)]; ring
+  rw [hsum, ← mul_assoc, inv_mul_cancel₀ hT0, one_mul]
+
+/-- The frequencies at which the twisted multiplier is large. -/
+def pairTwistedLargeFrequencies (T h : ℕ) (s : Finset ℕ) (w : ℕ → ℂ) (θ : ℝ) : Finset ℕ :=
+  (Finset.range T).filter fun t ↦ θ ≤ ‖twistedPrimeGraphMultiplier T h s w (t : ℤ)‖
+
+/-- **The pair-twisted large-frequency bound, and the asymmetry of Tao's hypothesis.**
+
+The analogue of `Erdos67b.norm_primeGraphMean_le_largeFrequencies` for two blocks and a per-prime
+twist.  Note what the right-hand side involves: the large-frequency Fourier first moment of the
+**first** block `b` only.  The second block enters solely through the trivial bound
+`‖blockFourier T (conj ∘ c) t‖ ≤ H`, together with Parseval.  Formalised, this is the reason Tao's
+Theorem 1.3 needs non-pretentiousness of `g₁` and nothing at all about `g₂`: the MRT input is spent
+on the first block, and the second block is merely `1`-bounded. -/
+theorem norm_pairTwistedPrimeGraphMean_le_largeFrequencies {H T : ℕ} [NeZero T]
+    (w : ℕ → ℂ) (b c : Fin H → ℂ) (h : ℕ) (s : Finset ℕ)
+    (hHT : H ≤ T) (hT : ∀ p ∈ s, H + p * h ≤ T)
+    (hb : ∀ j, ‖b j‖ ≤ 1) (hc : ∀ j, ‖c j‖ ≤ 1)
+    {θ M : ℝ} (hθ : 0 ≤ θ)
+    (hmult : ∀ t ∈ Finset.range T, ‖twistedPrimeGraphMultiplier T h s w (t : ℤ)‖ ≤ M) :
+    ‖pairTwistedPrimeGraphMean w b c h s‖ ≤ θ * H + ((H : ℝ) * M / T) *
+      ∑ t ∈ pairTwistedLargeFrequencies T h s w θ, ‖blockFourier T b (t : ℤ)‖ := by
+  classical
+  have hTr : (0 : ℝ) < T := Nat.cast_pos.mpr (Nat.pos_of_ne_zero (NeZero.ne T))
+  set c' : Fin H → ℂ := fun j ↦ conj (c j) with hc'
+  have hc'b : ∀ j, ‖c' j‖ ≤ 1 := by
+    intro j; rw [hc', RCLike.norm_conj]; exact hc j
+  -- pointwise split at the threshold `θ`
+  have hpoint (t : ℕ) (ht : t ∈ Finset.range T) :
+      ‖pairBlockPairing T b c (t : ℤ)‖ * ‖twistedPrimeGraphMultiplier T h s w (t : ℤ)‖ ≤
+        θ * ((‖blockFourier T b (t : ℤ)‖ ^ 2 + ‖blockFourier T c' (t : ℤ)‖ ^ 2) / 2) +
+          if θ ≤ ‖twistedPrimeGraphMultiplier T h s w (t : ℤ)‖ then
+            H * M * ‖blockFourier T b (t : ℤ)‖ else 0 := by
+    have hcH : ‖blockFourier T c' (t : ℤ)‖ ≤ H := by
+      simpa using norm_blockFourier_le T c' (t : ℤ) hc'b
+    have hnorm : ‖pairBlockPairing T b c (t : ℤ)‖ =
+        ‖blockFourier T b (t : ℤ)‖ * ‖blockFourier T c' (t : ℤ)‖ := norm_pairBlockPairing T b c _
+    by_cases htlarge : θ ≤ ‖twistedPrimeGraphMultiplier T h s w (t : ℤ)‖
+    · rw [if_pos htlarge, hnorm]
+      have hkey : ‖blockFourier T b (t : ℤ)‖ * ‖blockFourier T c' (t : ℤ)‖ *
+          ‖twistedPrimeGraphMultiplier T h s w (t : ℤ)‖ ≤
+            (H : ℝ) * M * ‖blockFourier T b (t : ℤ)‖ := by
+        have h1 : ‖blockFourier T b (t : ℤ)‖ * ‖blockFourier T c' (t : ℤ)‖ ≤
+            ‖blockFourier T b (t : ℤ)‖ * (H : ℝ) :=
+          mul_le_mul_of_nonneg_left hcH (norm_nonneg _)
+        calc
+          _ ≤ ‖blockFourier T b (t : ℤ)‖ * (H : ℝ) *
+              ‖twistedPrimeGraphMultiplier T h s w (t : ℤ)‖ :=
+            mul_le_mul_of_nonneg_right h1 (norm_nonneg _)
+          _ ≤ ‖blockFourier T b (t : ℤ)‖ * (H : ℝ) * M :=
+            mul_le_mul_of_nonneg_left (hmult t ht) (by positivity)
+          _ = _ := by ring
+      nlinarith [sq_nonneg ‖blockFourier T b (t : ℤ)‖,
+        sq_nonneg ‖blockFourier T c' (t : ℤ)‖, mul_nonneg hθ
+          (add_nonneg (sq_nonneg ‖blockFourier T b (t : ℤ)‖)
+            (sq_nonneg ‖blockFourier T c' (t : ℤ)‖))]
+    · rw [if_neg htlarge, add_zero, hnorm]
+      have hlt := le_of_not_ge htlarge
+      have hamgm : ‖blockFourier T b (t : ℤ)‖ * ‖blockFourier T c' (t : ℤ)‖ ≤
+          (‖blockFourier T b (t : ℤ)‖ ^ 2 + ‖blockFourier T c' (t : ℤ)‖ ^ 2) / 2 := by
+        nlinarith [sq_nonneg (‖blockFourier T b (t : ℤ)‖ - ‖blockFourier T c' (t : ℤ)‖)]
+      have hprodnn : 0 ≤ ‖blockFourier T b (t : ℤ)‖ * ‖blockFourier T c' (t : ℤ)‖ :=
+        mul_nonneg (norm_nonneg _) (norm_nonneg _)
+      calc
+        _ ≤ ‖blockFourier T b (t : ℤ)‖ * ‖blockFourier T c' (t : ℤ)‖ * θ :=
+          mul_le_mul_of_nonneg_left hlt hprodnn
+        _ = θ * (‖blockFourier T b (t : ℤ)‖ * ‖blockFourier T c' (t : ℤ)‖) := by ring
+        _ ≤ _ := mul_le_mul_of_nonneg_left hamgm hθ
+  have hsum := Finset.sum_le_sum hpoint
+  rw [Finset.sum_add_distrib, ← Finset.mul_sum, ← Finset.sum_filter, ← Finset.mul_sum] at hsum
+  -- Parseval on both blocks
+  have hpb := sum_blockFourier_norm_sq_le b hHT hb
+  have hpc := sum_blockFourier_norm_sq_le c' hHT hc'b
+  have hparseval : (∑ t ∈ Finset.range T,
+      (‖blockFourier T b (t : ℤ)‖ ^ 2 + ‖blockFourier T c' (t : ℤ)‖ ^ 2) / 2) ≤ (T : ℝ) * H := by
+    rw [← Finset.sum_div, Finset.sum_add_distrib]
+    linarith
+  have htotal := hsum.trans (add_le_add (mul_le_mul_of_nonneg_left hparseval hθ) le_rfl)
+  calc
+    ‖pairTwistedPrimeGraphMean w b c h s‖ ≤ (T : ℝ)⁻¹ * ∑ t ∈ Finset.range T,
+        ‖pairBlockPairing T b c (t : ℤ)‖ *
+          ‖twistedPrimeGraphMultiplier T h s w (t : ℤ)‖ := by
+      rw [pairTwistedPrimeGraphMean_eq_fourier w b c h s hT, norm_mul, norm_inv,
+        Complex.norm_natCast]
+      refine mul_le_mul_of_nonneg_left ?_ (by positivity)
+      refine (norm_sum_le _ _).trans (Finset.sum_le_sum fun t _ ↦ ?_)
+      rw [norm_mul]
+    _ ≤ (T : ℝ)⁻¹ * (θ * ((T : ℝ) * H) + H * M *
+        ∑ t ∈ pairTwistedLargeFrequencies T h s w θ, ‖blockFourier T b (t : ℤ)‖) :=
+      mul_le_mul_of_nonneg_left htotal (by positivity)
+    _ = _ := by
+      rw [pairTwistedLargeFrequencies]
+      field_simp
+
+/-! ## The two remaining obligations of the twisted graph -/
+
 end
 
 end NormalNumbers.ElliottTwistedGraph

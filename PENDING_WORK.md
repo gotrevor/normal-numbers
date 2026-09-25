@@ -9265,3 +9265,41 @@ with *no loss in the constant*:
    This is a separate, purely definitional generalisation; the CRT/entropy concentration side
    (`primeGraphSum`, `primeGraphObservable`, Hoeffding) only uses `‖edge‖ ≤ 1`, which
    `norm_pairObservable_le_one` supplies.
+
+### Elliott crux, lap 4 (2026-09-25): the two-block graph, and WHY only `g₁` needs pretentiousness
+
+Added to `src/NormalNumbers/ElliottTwistedGraph.lean`, sorry-free and axiom-clean.  This closes the
+*whole Fourier side* of the crux's upper bound for both generalisations at once.
+
+* `pairShiftEdge b c a j` — the two-block edge `b j * c (j+a)`, replacing
+  `Erdos67b.primeGraphEdge`'s hardcoded `b ⊗ conj b`.  `pairShiftEdge_conj` : the proved
+  development's edge is the `c = conj b` case, by `rfl`.  `norm_pairShiftEdge_le`.
+* `pairBlockPairing T b c t = blockFourier T b t * conj (blockFourier T (conj ∘ c) t)` and
+  `sum_pairBlockPairing_mul_phase` — the **bilinear** orthogonality identity, the analogue of
+  `Erdos67b.sum_blockFourier_norm_sq_mul_phase` for two distinct blocks.  Proved from the generic
+  primitive `Erdos67b.sum_phase_block_shift`, which is block-independent and so reusable verbatim.
+* `pairTwistedPrimeGraphMean_eq_fourier` — exact Fourier pairing for the pair-twisted mean.  The two
+  generalisations sit in *separate factors*: the second block only in `pairBlockPairing`, the twist
+  only in `twistedPrimeGraphMultiplier`.  `pairTwistedPrimeGraphMean_conj` recovers the twisted
+  single-block mean.
+* `norm_pairTwistedPrimeGraphMean_le_largeFrequencies` — the analogue of
+  `Erdos67b.norm_primeGraphMean_le_largeFrequencies`.  **Structural payoff:** the right-hand side
+  involves the large-frequency Fourier first moment of the **first** block only; the second block
+  enters solely through the trivial bound `‖blockFourier T (conj ∘ c) t‖ ≤ H` plus Parseval on both
+  blocks (AM–GM on the small-multiplier range).  So the asymmetry of Tao's Theorem 1.3 — non-
+  pretentiousness on `g₁` and *nothing* about `g₂` — is now a formalised consequence of where the
+  proof spends its trivial bound, not an unexplained hypothesis.
+
+**Next attack (lap 5).**  The Fourier/upper-bound side of the crux is done.  Remaining, in order:
+1. *Upper bound assembly.*  Restate `Erdos67b.exists_primeGraphMean_small_of_fourier_first_moment`
+   for `pairTwistedPrimeGraphMean`, feeding it
+   `norm_pairTwistedPrimeGraphMean_le_largeFrequencies` +
+   `fourth_moment_twistedPrimeGraphMultiplier_le_energy` (which bounds
+   `#pairTwistedLargeFrequencies` by Chebyshev, exactly as
+   `Erdos67b.primeGraphLargeFrequencies` is bounded now).
+2. *Lower bound.*  `exists_logProb_dyadic_primeGraphMean_lower` for the pair-twisted mean.  Here the
+   twist does its job: with the weight `conj (f₁(p) f₂(p))` every edge contributes the *same*
+   correlation by `ElliottLadder.pairObservable_dilation_twisted`, so the correlation-weight lower
+   bound `Erdos67b.exists_dyadic_primeGraphCorrelationWeight_lower` applies unchanged.
+3. *CRT/entropy concentration.*  `primeGraphSum` / `primeGraphObservable` / Hoeffding: only uses
+   `‖edge‖ ≤ 1`, supplied by `norm_pairShiftEdge_le` and `ElliottLadder.norm_pairObservable_le_one`.
