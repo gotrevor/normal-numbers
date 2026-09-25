@@ -1,145 +1,152 @@
 # STATUS — normal-numbers 📊
 
 **Active campaign: C3/MRT — `ConjC3` (richness of `∑_n ω(n)/bⁿ`, Tao–Teräväinen's Erdős-#69
-constant) is reduced, axiom-clean, to correlation inputs; lap 60 found that the `K^{K²}` budget
-and the quasi-polynomial decay class are ARTEFACTS of the dependency's complete-multiplicativity
-hypothesis, and re-anchored the route on merely-multiplicative Elliott / TT Thm 3.1.**
-· **Build**: 🟢 green (9257 root jobs; 8990 on the `C3Mrt` tip `NormalNumbers.C3MrtProgChase`)
-· **Updated**: lap 60 · 2026-09-25 · HEAD `1c39edb` · branch `wip/c3-mrt`
+constant) is reduced, sorry-free and axiom-clean, to ONE `K`-point correlation input; lap 87
+found that the remaining gap is the DIAGONAL `‖depthAvg b P Q j h (depthLL b N) N‖ → 0`, which
+no budget can manufacture — the input must be made explicitly uniform in `K`.**
+· **Build**: 🟢 green (9004 jobs on the `C3Mrt` tip `NormalNumbers.C3MrtQuantKPoint`)
+· **Updated**: lap 87 · 2026-09-25 · HEAD `990197c` · branch `wip/c3-mrt`
 
 ## Where it stands
 
 The ratified crux is `CastingOut.weylLambertTwist_holds` (`src/NormalNumbers/SwingC3Leaf.lean`),
-the one campaign `sorry` carrying `ConjC3`.  Laps 1–6 reduced it, sorry-free and axiom-clean, to
-`QuantDepthElliott` and proved the `D = 1` rung in natural density (Selberg–Delange).  Laps 7–33
-closed the whole `D = 2` log-averaged rung on two named inputs; laps 35–59 built the complete
-`K`-fold assembly (`rung_multi_correlation`, `progression_log_rung_class`) and stripped both the
-additive twist `e(jn/Q)` and the small primes `ω_{≤P}` as ONE periodic-weight obstruction.
+the one campaign `sorry` carrying `ConjC3`.  Laps 1–59 built the completely-multiplicative
+route (kept, sorry-free); lap 60 escalated and re-anchored on **Tao–Teräväinen arXiv 2512.01739
+Theorem 3.1**; laps 61–86 built the whole new chain — `C3MrtTTThm31 → C3MrtMultChase →
+C3MrtNoExc → C3MrtTTPretentious → C3MrtWindowMass → C3MrtUniformMass → C3MrtKPointNoExc →
+C3MrtQuantKPoint` — sorry-free and with **zero `axiom` declarations**.  The archimedean half is
+now unconditional: `uniformResonantMass_holds` and `ttNonPretentious_zOmegaNat` (lap 83) supply
+TT's hypothesis (3.3) for `z^ω` with no hypothesis at all.  So the tower rests on exactly one
+named analytic input per point count, `KPointNaturalCorrelationNoExc K`, plus the bookkeeping
+`ProgressionLogRung K`.
 
-**Lap 60 (deep reflection) issued a ROUTE ESCALATION.**  `Erdos67b.IsMultiplicativeOnPositiveInt`
-— the hypothesis of the dependency's `NonasymptoticLogElliott`, which the whole `D ≥ 2` stack is
-built against — carries **no coprimality clause**, i.e. it is *complete* multiplicativity.
-`ζ^ω` fails it, which is why lap 4 built the `z^ω = z^Ω ⋆ g` powerful-divisor bridge; and
-`prod_le_lcm_mul_pow`'s `K^{K²}`, the lap-40 budget repair, and the headline decay class
-"beat every power of `log log N` by a quasi-polynomial margin in `log log log N`" are **all**
-downstream of that one artificial hypothesis.  Elliott's conjecture and Tao's Theorem 1.3 ask
-only for *multiplicative*.  The route is therefore re-anchored on merely-multiplicative Elliott
-and, beyond it, on **Tao–Teräväinen arXiv 2512.01739 Theorem 3.1** — natural (not logarithmic)
-averaging, an `L^{-c}` saving with `L ≤ log X`, progressions `W ≤ L^c` built in, at the price of
-an exceptional set of scales.  See `ROUTE-ESCALATION-2026-09-25-c3mrt.md`.
+**Lap 87 (review) corrected the next move.**  `QuantDepthElliottGen`'s free budget `C : ℕ → ℝ`
+is vacuous: instantiating `‖depthAvg b P Q j h D N‖ ≤ C D · η N` at `D = depthLL b N` gives
+`C(depthLL b N)·η(N) ≥ ‖depthAvg b P Q j h (depthLL b N) N‖`, so every budget already forces the
+diagonal limit.  Consequently the `sup_D` assembly planned in HANDOFF lap 86 cannot work, and
+neither can any family of fixed-`K` limits (lap 85), because `KPointNaturalCorrelationNoExc K`
+hides its constants behind a per-`K` `∃ c Cst` with no control on their degradation in `K`.
+The mandated brick is now the uniform-in-`K` layer (`C3MrtUnifK.lean`); see DIRECTION.
 
 Honest destination: `ConjC3` will not be proved here.  The Weyl formulation is intrinsically an
 *unbounded*-point correlation, and TT state in print that even **three**-point correlations are
-"not within current technology".  The ratified success criterion — the EQUIVALENCE, with the best
-available published anchor and an honest ledger — is the endpoint, and it is in reach.
+"not within current technology", and that removing their exceptional set of scales is out of
+reach for similar reasons.  The ratified success criterion — the EQUIVALENCE, on the strongest
+available published anchor, with an honest ledger — is the endpoint, and it is in reach.
 
 The prior campaign (Pair A multicutoff, Theorem C′ `isNormal_subsetLambert_of_sqrtFreshMassZero`)
 is COMPLETE and trust-triple clean; its ledger is kept below.
 
 ## What's happened (newest first)
 
-- **2026-09-25 (C3/MRT lap 60, DEEP-REFLECTION lap).**  ROUTE VERDICT **ESCALATE**.  Three
-  findings, all checked against primary sources rather than handoffs.  (R1, compiler) the
+- **2026-09-25 (C3/MRT lap 87, REVIEW lap).**  Direction KEPT, next move CORRECTED.  (F1) The
+  budget layer is provably vacuous — `C(D_N)·η(N) ≥ ‖depthAvg (D_N) N‖` for every `C`, so
+  `budget_absorb` / `pow_self_sq_le_exp_cube` / the planned `sup_D` assembly cannot bridge
+  fixed-`K` limits to the diagonal.  (F2) The genuine obligation is the diagonal
+  `‖depthAvg b P Q j h (depthLL b N) N‖ → 0`, and it needs the `K`-point input's constants made
+  EXPLICIT in `K`; a per-`K` `∃ c Cst` is provably insufficient.  (F3) Ledger fidelity:
+  `KPointNaturalCorrelationNoExc K` is 🔴 at every `K`, `K = 2` included — TT Thm 3.1(ii) with
+  the exceptional set deleted is *not* the published theorem.  C3-T2/T3 retired, C3-T4/T5
+  registered.
+- **2026-09-25 (C3/MRT laps 81–86).**  `uniformResonantMass_holds` PROVED — the archimedean
+  certificate's one named analytic input is discharged, so `ttNonPretentious_zOmegaNat` is
+  unconditional.  The `D = 2` assembly made point-count-free (`class_sum_tendsto_of_window`,
+  `progression_avg_tendsto_of_window`), then lifted to every point count
+  (`KPointNaturalCorrelationNoExc K`, `dyadic_window_bound_K`, `depthAvg_K_tendsto_of_noExc`,
+  with `twoPointNoExc_of_kPointNoExc` checking nothing was smuggled in).  Quantitative layer
+  begun: `top_down_weighted_le`, `class_sum_le_of_window`.
+- **2026-09-25 (C3/MRT laps 61–80).**  The new anchor built: `TwoPointNaturalCorrelation` (TT
+  Thm 3.1(ii), faithful, exceptional set and all), `IsCoprimeMultiplicativeNat`,
+  `TTNonPretentious`, `c3_two_point_natural_of_TT`; then the exceptional-set-free variant and
+  the whole halving-stack transfer to natural density.  `exceptional_set_can_pin_a_scale`:
+  E-removal cannot be derived from the faithful statement — REFUTED, do not retry.
+- **2026-09-25 (C3/MRT lap 60, DEEP-REFLECTION lap).**  ROUTE VERDICT **ESCALATE**.  (R1) the
   dependency's Elliott `Prop` demands *complete* multiplicativity, so the powerful-divisor bridge
-  and everything it costs are a hypothesis artefact.  (R2, source) TT Thm 3.1 beats it on four
-  axes at once — merely multiplicative, natural averaging, `L^{-c}` saving, progressions built in
-  — and the repo's archimedean certificate transfers verbatim because the pretentious distance
-  sees `g` only at primes, where `ζ^ω` and `ζ^Ω` agree.  (R3, refuted) a two-point-only proof of
-  the leaf along TT §5's lines: their variance shrinkage `O(2^{-K}/p)` is bought with the
-  *rationality* hypothesis and has no unconditional substitute; van der Corput doubles the point
-  count without shrinking the per-prime variance, and a direct moment expansion dies at the
-  level-of-distribution barrier.  Also confirmed: `primeLambertAtBase b = ∑' n, ω(n)/bⁿ` is
-  *verbatim* TT Theorem 1.3's constant.  Finishability tell (b) had fired (28 % → 22 % → 22 % →
-  20 % across three wraps, no route change).  Triggers C3-T1…T3 registered.
-- **2026-09-25 (C3/MRT laps 52–59).**  The `K`-fold assembly CLOSED and the `D ≥ 2` route reduced
-  to one named open problem.  `rung_multi_correlation` (the `K`-fold assembly), the twist costing
-  only a factor `Q` (`norm_depthAvg_le_progressions`), the small primes costing only a period
-  (`norm_depthAvg_le_omega_progressions` — same obstruction as the twist),
-  `depthAvg_tendsto_of_transfer` (the first natural-density multi-point statement), and
-  `progression_log_rung_class` (obligation A, class-indexed).  7 modules, 33 declarations, all
-  trust-triple clean.
-- **2026-09-25 (C3/MRT lap 40, review lap).**  Found and fixed a defect in the reduction's own
-  `Prop`: `QuantDepthElliott`'s `b^{κD}` budget cannot pay for lap 37's `K^{K²}`.  New
-  `C3MrtBudget.lean`: `QuantDepthElliottGen`, `budget_absorb`, `budget_absorb_of_tIdx`,
-  `weylLambertTwist_of_kfold_bound`.  *Lap 60 reclassifies this as correct work on an artefact.*
-- **2026-09-25 (C3/MRT laps 33–39).**  `rung_two_correlation` PROVED; `KPointLogElliott` named
-  and shown equivalent at `K = 2` to the dependency's `Prop`; `ProductLogElliott` identified as
-  Tao–Teräväinen; the `K`-fold bridge expansion, tuple mass, determinant and CRT.  6 modules.
-- **2026-09-25 (C3/MRT laps 18–32).**  The archimedean non-pretentiousness certificate closed
-  (`range_one_certificate`, `range_two_certificate`, `nonPretentious_zOm`), then the whole
-  two-shift stack up to `two_shift_bound_of_rung`.
-- **2026-09-25 (C3/MRT lap 18, review lap).**  Direction redirected to the C3/MRT moonshot; the
-  archimedean obligation's shape SETTLED (`C3MrtArchimedean.lean`, `window_mass_le`).
-- **2026-09-25 (C3/MRT laps 7–17).**  The `D = 2` rung reduced structurally to two named open
-  inputs; every other mismatch proved away.  5 modules.
-- **2026-09-25 (C3/MRT laps 1–6).**  `ConjC3 ⇐ QuantDepthElliott`, axiom-clean; rung `D = 1`
-  proved; vertical (digit-depth) truncation replaces the impossible prime cutoff.  6 modules.
+  and everything it costs are a hypothesis artefact.  (R2) TT Thm 3.1 beats it on four axes at
+  once, and the repo's archimedean certificate transfers verbatim because the pretentious
+  distance sees `g` only at primes, where `ζ^ω` and `ζ^Ω` agree.  (R3, refuted) a two-point-only
+  proof of the leaf along TT §5's lines.  Triggers C3-T1…T3 registered.
+- **2026-09-25 (C3/MRT laps 52–59).**  The `K`-fold assembly CLOSED on the old anchor and the
+  `D ≥ 2` route reduced to one named open problem: `rung_multi_correlation`, the twist costing
+  only a factor `Q`, the small primes costing only a period, `depthAvg_tendsto_of_transfer`,
+  `progression_log_rung_class`.  33 declarations, all trust-triple clean.
+- **2026-09-25 (C3/MRT lap 40, review lap).**  `QuantDepthElliottGen`, `budget_absorb`.
+  *Lap 60 reclassified this as correct work on an artefact; lap 87 retires it as vacuous.*
+- **2026-09-25 (C3/MRT laps 33–39).**  `rung_two_correlation` PROVED; `KPointLogElliott` named;
+  the `K`-fold bridge expansion, tuple mass, determinant and CRT.
+- **2026-09-25 (C3/MRT laps 18–32).**  The archimedean non-pretentiousness certificate closed,
+  then the whole two-shift stack up to `two_shift_bound_of_rung`.
+- **2026-09-25 (C3/MRT laps 1–17).**  `ConjC3 ⇐ QuantDepthElliott`, axiom-clean; rung `D = 1`
+  proved (Selberg–Delange); the `D = 2` rung reduced to two named inputs.
 - **2026-09-23 (laps G5c-k/l/m) — THEOREM C′ PROVED**, trust-triple clean (see the ledger below).
 
 ## Outstanding
 
 ### Short-term (mirrors PENDING_WORK top)
-1. **`C3MrtMultElliott.lean`** — `IsCoprimeMultiplicativeInt`, `KPointLogElliottMult K`,
-   `kPointLogElliott_of_mult` (nothing weakened), `zOmegaInt` + its coprime multiplicativity.
-2. **The decisive probe** `class_sum_eq_kPointLogCorrelation`: the class-restricted `K`-point sum
-   along `n ≡ r (mod M₀)` IS `kPointLogCorrelation` of `zOmegaInt` along `a i = M₀`,
-   `b i = r+i+1` (determinant `M₀(j−i) ≠ 0`).  No divisors, no truncation, no `K^{K²}`.
-3. `progression_log_rung_class_mult` — lap 59's conclusion on the new anchor, no budget.
-4. `TwoPointNaturalCorrelation` (TT Thm 3.1(ii), faithful) and the `D = 2` **natural-density**
-   rung from it.
+1. **`quantDepthElliottGen_forces_diagonal`** — the lap-87 finding in Lean; retires the budget
+   layer honestly and pins the real target.
+2. **`KPointNoExcWith (cK CstK : ℕ → ℝ) K`** + `kPointNoExc_of_with` — the `K`-point input with
+   its constants explicit in `K`.  Nothing weakened.
+3. **`progression_avg_le_of_window`** — the quantitative twin of
+   `progression_avg_tendsto_of_window` (head + two boundary points + `Y = MJ+r`).
+4. **`dyadic_window_bound_with` / `depthAvg_le_with`** — an explicit majorant
+   `B cK CstK K N` for `‖depthAvg b P Q j h K N‖`, with the `N₀(K)` threshold explicit.
+5. **`depthElliottLL_of_unif`** — the diagonal, hence `WeylLambertTwist b`, from ONE schedule-
+   compatibility hypothesis, plus a concrete sufficient decay profile.
 
 ### Long-term
-The `K ≥ 3` correlation input.  TT state a triple-correlation version of their Theorem 3.1
-"does not appear to be within current technology", and that removing the exceptional set of
-scales is out of reach "for similar reasons".  These are the campaign's two generational items;
-everything else in the ledger should be reduced to them.
+The `K ≥ 3` correlation input, and the removal of TT's exceptional set of scales.  TT state both
+are out of current reach.  These are the campaign's two generational items; everything else in
+the ledger should be reduced to them.
 Off-campaign and designated open: `PrimeLambertOscillation.phaseOscillation`,
 `MahlerDriftOne.exists_prime_nonresidue`, `SwingC3Rotation`, `SwingC1Log`, `ElliottGeneral`,
 `PairDecoupleProve`.  Also open from the previous campaign: the Theorem-C′ audit surface and the
 Astra §10 consumer.
 
 ### To completion
-`weylLambertTwist_holds` needs a correlation bound with *unbounded* point count; the lap-3
-argument shows a qualitative fixed-`k` Elliott provably cannot suffice, and lap 60 re-derived the
-same conclusion independently (truncating at depth `K` leaves residual s.d. `≍ b^{-K}√(log log N)`).
-The deliverable is the EQUIVALENCE plus the strongest published anchor, not a proof.
+`weylLambertTwist_holds` needs a correlation bound with *unbounded* point count, uniform enough
+to be evaluated along `K = depthLL b N ≍ log_b log log N`.  Lap 3 showed a qualitative fixed-`k`
+Elliott provably cannot suffice; lap 60 re-derived it independently (truncating at depth `K`
+leaves residual s.d. `≍ b^{-K}√(log log N)`); lap 87 made the same point *inside the reduction*
+(the budget cannot manufacture uniformity).  The deliverable is the EQUIVALENCE plus the
+strongest published anchor, not a proof.
 
-## Axiom ledger — C3/MRT (real `#print axioms`, 2026-09-25 lap 60, 9257 jobs)
+## Axiom ledger — C3/MRT (real `#print axioms`, 2026-09-25 lap 87, 9004 jobs on the tip)
 
 | headline theorem | paper claim (uncond/cond) | `#print axioms` shows | verdict |
 |---|---|---|---|
-| `CastingOut.conjC3_via_weylLambert` | `ConjC3` — UNCOND | trust triple + `sorryAx` | 🔴 via `weylLambertTwist_holds`, the ratified open crux (the repo's own conjecture, disclosed) |
-| `CastingOut.weylLambertTwist_of_quantDepthElliott` | reduction `QuantDepthElliott → crux` | trust triple | 🟢 clean |
-| `CastingOut.weylLambertTwist_of_quantDepthElliottGen` | the repaired reduction | trust triple | 🟢 clean |
-| `CastingOut.weylLambertTwist_of_kfold_bound` | the `K`-fold endpoint | trust triple | 🟢 clean |
-| `CastingOut.budget_absorb_of_tIdx` | the decay class the bridge route needs | trust triple | 🟢 clean (but the class it pins is an ARTEFACT — see lap 60) |
+| `CastingOut.conjC3_via_weylLambert` | `ConjC3` — the repo's own CONJECTURE | trust triple + `sorryAx` | 🔴 via `weylLambertTwist_holds`, the ratified open crux (disclosed, not strayed) |
+| `CastingOut.weylLambertTwist_of_depthElliottLL` | crux ⇐ the diagonal depth limit | trust triple | 🟢 clean — **this is the real reduction** |
+| `CastingOut.weylLambertTwist_of_quantDepthElliottGen` | crux ⇐ budgeted form | trust triple | 🟢 clean, but the `Prop` is **vacuously stronger** than the diagonal (lap 87 F1) |
+| `CastingOut.uniformResonantMass_holds` | the archimedean named input | trust triple | 🟢 clean — DISCHARGED lap 83 |
+| `CastingOut.ttNonPretentious_zOmegaNat` | TT (3.3) for `z^ω`, unconditional | trust triple | 🟢 clean |
+| `CastingOut.depthAvg_K_tendsto_of_noExc` | depth-`K` natural rung, every `K` | trust triple | 🟢 clean (both inputs explicit hypotheses) |
+| `CastingOut.twoPointNoExc_of_kPointNoExc` | `K = 2` gives back the old input | trust triple | 🟢 clean — nothing smuggled in |
+| `CastingOut.class_sum_le_of_window` | the quantitative Toeplitz step | trust triple | 🟢 clean |
+| `CastingOut.c3_two_point_natural_of_TT` | TT Thm 3.1(ii) instantiated at `z^ω` | trust triple | 🟢 clean |
+| `CastingOut.exceptional_set_can_pin_a_scale` | E-removal is NOT derivable | trust triple | 🟢 clean (a refutation) |
 | `CastingOut.depthAvg_one_tendsto` | rung `D = 1`, natural density (Selberg–Delange) | trust triple | 🟢 clean |
-| `CastingOut.rung_two_correlation` | the `D = 2` rung on two named inputs | trust triple | 🟢 clean (both inputs explicit hypotheses) |
-| `CastingOut.rung_multi_correlation` | the `K`-fold assembly | trust triple | 🟢 clean |
-| `CastingOut.progression_log_rung_class` | obligation A, class-indexed log rung | trust triple | 🟢 clean |
-| `CastingOut.depthAvg_tendsto_of_transfer` | natural-density `D`-point rung at fixed `D` | trust triple | 🟢 clean |
-| `CastingOut.norm_depthAvg_le_omega_progressions` | twist + small primes = one periodic weight | trust triple | 🟢 clean |
-| `CastingOut.nonPretentious_prod_depthRoot` | TT's hypothesis discharged at every depth | trust triple | 🟢 clean |
-| `CastingOut.pretentiousDistSq_ge_class_sum` | non-pretentiousness of `ζ^Ω` at `t = 0` | trust triple | 🟢 clean |
-| `CastingOut.window_mass_le` | bounded mass of a resonance window | trust triple | 🟢 clean |
+| `CastingOut.rung_multi_correlation` | the `K`-fold assembly (old anchor, kept) | trust triple | 🟢 clean |
 
-**Math-axiom count for the C3/MRT campaign: 0** — no `axiom` declarations anywhere.  The debt is
-carried by *hypotheses*, which is the honest form.  Graded:
+**Math-axiom count for the C3/MRT campaign: 0** — no `axiom` declarations anywhere, and the
+whole `C3Mrt*` chain (45 files, 13 180 lines) is sorry-free.  The debt is carried by
+*hypotheses*, which is the honest form.  Graded:
 
 | carried hypothesis | grade | status |
 |---|---|---|
-| `Erdos67b.NonasymptoticLogElliott` (two-point log-Elliott, *completely* multiplicative) | 🟡 | proven in the literature (Tao 2016) but the Lean `Prop` is a **weakening** of Tao Thm 1.3 (extra complete-multiplicativity hypothesis).  Lap 60: **being replaced** by the merely-multiplicative form. |
-| Tao–Teräväinen Thm 3.1 (two-point, natural, `L^{-c}`, progressions) | 🟡 | **published** (arXiv 2512.01739); the new anchor; not yet stated in Lean.  Current frontier; next prerequisite = `TwoPointNaturalCorrelation` + `class_sum_eq_kPointLogCorrelation`. |
-| the Vinogradov–Korobov saving for `∑_{p≤X} χ(p)p^{it}/p` | 🟡 | proven in the literature; the dependency isolates the same input. |
-| `KPointLogElliott K` for `K ≥ 3` | 🟠 | TT, same paper: a triple-correlation version of Thm 3.1 "does not appear to be within current technology".  Named, generational, chipped opportunistically — NOT a destination. |
-| removal of TT's exceptional set of scales | 🟠 | TT: out of reach "for similar reasons". |
-| `QuantDepthElliott` / `QuantDepthElliottGen` | 🔴 | the reduction's own `Prop`: quantitative Elliott at `≍ log log log N` points.  Open.  It sits only on `conjC3_via_weylLambert`, which the repo states as a CONJECTURE — disclosed, not strayed. |
+| `KPointNaturalCorrelationNoExc 2` | 🔴 | TT Thm 3.1(ii) **with the exceptional set of scales deleted**.  TT say in print this is out of reach.  NOT "the published theorem" — the faithful one is `TwoPointNaturalCorrelation`, which is stated in `C3MrtTTThm31.lean` and does *not* give a pointwise limit (`exceptional_set_can_pin_a_scale`). |
+| `KPointNaturalCorrelationNoExc K`, `K ≥ 3` | 🔴 | TT: a triple-correlation version "does not appear to be within current technology".  Generational; named and chipped opportunistically. |
+| uniformity in `K` of the above (lap 87 F2) | 🔴 | the newly-isolated gap: the diagonal needs `cK`, `CstK` explicit, not a per-`K` `∃`.  Next prerequisite = `KPointNoExcWith` + `depthElliottLL_of_unif`. |
+| `ProgressionLogRung K` | 🟡 | bookkeeping only (`rung_multi_correlation` is the case `M = 1, r = 0`); several files' worth, so it is named rather than inlined.  Current frontier for the *cheap* half of the debt. |
+| Tao–Teräväinen Thm 3.1 itself (faithful, with `E`) | 🟡 | **published** (arXiv 2512.01739), stated in Lean as `TwoPointNaturalCorrelation`; formalising its proof is project-scale. |
+| the Vinogradov–Korobov saving for `∑_{p≤X} χ(p)p^{it}/p` | 🟡 | proven in the literature; no longer load-bearing after lap 83. |
+| `Erdos67b.NonasymptoticLogElliott` (completely multiplicative) | 🟡 | still carried by the OLD `K`-fold stack, which stays in `src/` sorry-free as the completely-multiplicative route.  Off the spine since lap 60. |
 
 ## Pointers (C3/MRT)
-`ROUTE-ESCALATION-2026-09-25-c3mrt.md` (**read first**) · `DIRECTION.md` (CURRENT DIRECTIVE —
-outranks everything) · `PENDING_WORK.md` → "Reflection — 2026-09-25" ·
-`KICKOFF-2026-09-24-c3-mrt.md` · `HANDOFF-c3mrt-2026-09-25-lap60.md` (newest) ·
-`HANDOFF-c3mrt-2026-09-25-session-wrap-laps52-59.md` ·
+`DIRECTION.md` → CURRENT DIRECTIVE (**read first**; outranks everything) ·
+`ROUTE-ESCALATION-2026-09-25-c3mrt.md` · `PENDING_WORK.md` → "Review — lap 87" ·
+newest baton `HANDOFF-c3mrt-2026-09-25-lap87.md` (prev `…-lap86.md`) ·
+`KICKOFF-2026-09-24-c3-mrt.md` ·
 `papers/tao-teravainen-2025-quantitative-correlations.txt` · `papers/literature-review.md` ·
 `CONJECTURES-2026-09-23-casting-out-and-rungs.md`
 

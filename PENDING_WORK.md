@@ -1,5 +1,99 @@
 # PENDING WORK
 
+## Review — lap 87 (2026-09-25): the budget layer is VACUOUS; the obligation is the DIAGONAL
+
+Binding orders: `DIRECTION.md` → CURRENT DIRECTIVE.  State at entry: branch `wip/c3-mrt`,
+HEAD `990197c`, `lake build NormalNumbers.C3MrtQuantKPoint` green (9004 jobs), the whole
+`C3Mrt*` chain (45 files) sorry-free with **zero** `axiom` declarations.
+
+### F1 — every budget already forces the diagonal (route-decisive)
+
+`QuantDepthElliottGen b` (`C3MrtBudget.lean:57`) asks for `C η` with
+`‖depthAvg b P Q j h D N‖ ≤ C D · η N` for ALL `D`, plus `C(depthLL b N)·η(N) → 0`.
+Instantiate the bound at `D = depthLL b N`:
+
+    C(depthLL b N)·η(N)  ≥  ‖depthAvg b P Q j h (depthLL b N) N‖ .
+
+So the hypothesis is *at least as strong as* the diagonal limit
+`Tendsto (fun N => depthAvg b P Q j h (depthLL b N) N) atTop (𝓝 0)`, which is exactly what
+`weylLambertTwist_of_depthElliottLL` (`C3MrtSchedule.lean:98`) consumes.  Freeing the budget
+`C` therefore buys **nothing**: `budget_absorb`, `budget_absorb_of_tIdx`,
+`pow_self_sq_le_exp_cube` and the `sup_D` assembly planned in HANDOFF lap 86 NEXT ③ are all
+bookkeeping around a `Prop` that is no weaker than the target.  → Lean it as
+`quantDepthElliottGen_forces_diagonal`, and target `DepthElliottLL` directly from now on.
+
+### F2 — fixed-`K` limits cannot reach the diagonal; the input needs explicit `K`-uniformity
+
+Lap 85 gives, for each `K`, `depthAvg_K_tendsto_of_noExc : Tendsto (fun N => depthAvg … K N)`.
+A family of sequences each tending to `0` has **no** diagonal limit along a growing index
+without uniformity, and `KPointNaturalCorrelationNoExc K` (`C3MrtKPointNoExc.lean:37`) hides
+its constants behind a per-`K` `∃ c Cst` with no control on their degradation.  So lap 85 is
+the *end* of that layer, not a step toward the diagonal.
+
+The arithmetic of what uniformity is actually needed (worked out this lap, to be Lean'd):
+`dyadic_window_bound_K` yields the per-scale `Φ_K(a) ≍ Cst_K (2 log a)^{-κ c_K}/M`; the
+halving stack (`class_sum_le_of_window`, cut at `k₀ ≍ log log Y`) yields
+`‖class sum‖/Y ≲ Cst_K (log Y)^{-κ c_K} + 1/log Y`; so
+
+    B(K, N)  ≍  Cst_K (log N)^{-κ c_K} + 1/log N .
+
+The diagonal needs `B(depthLL b N, N) → 0`, i.e. `Cst_{D_N}(log N)^{-κ c_{D_N}} → 0` along
+`D_N ≍ log_b log log N` (use `pow_depthLL_le : b^{D_N} ≤ b·llProxy N²`).  Sufficient profiles:
+* `c_K = c₀·γ^K` with `γ > b^{-1/2}` — then `c_{D_N} ≳ (log log N)^{-θ}`, `θ = 2log(1/γ)/log b
+  < 1`, and `(log N)^{-κ c_{D_N}} = exp(-κc₀(log log N)^{1-θ}) → 0`.  (Note `γ = 1/2` is NOT
+  enough at `b = 3`: `θ = 2log2/log3 ≈ 1.26 > 1`.  The exponent budget is genuinely tight.)
+* `c_K = c₀/K^m` — comfortable: `(log N)^{-κc₀/(log_b log log N)^m} → 0` for every `m`.
+* `Cst_K ≤ exp(K^m)` is always affordable: `Cst_{D_N} = exp(O((log log log N)^m))`.
+Also needs the `N₀(K)` threshold of `dyadic_window_bound_K` made explicit — it currently
+arises from `(2 log N)^{κ c} ≥ max 2 (K+1)`, which along `K = D_N` holds once
+`exp(κ c_{D_N} log log N) ≥ D_N + 1`, true for both profiles above.
+
+### F3 — ledger fidelity: the `K = 2` input is 🔴, not "published"
+
+`KPointNaturalCorrelationNoExc 2` = `TwoPointNaturalCorrelationNoExc` is TT Thm 3.1(ii) with
+the exceptional set of scales **deleted**.  TT say in print this is out of reach, and
+`exceptional_set_can_pin_a_scale` (`C3MrtNoExc.lean:58`, lap 80) proves it is not derivable
+from the faithful statement `TwoPointNaturalCorrelation` (`C3MrtTTThm31.lean:107`).  Any doc
+calling the `D = 2` rung "published" is wrong.  Ledger updated in `STATUS.md`.
+
+Why E cannot be dodged at the top level either (checked this lap, do not re-derive):
+`ConjC3` wants *positive lower density* of every word, i.e. `count(N) ≥ cN` for ALL `N`;
+`count` is monotone, so good scales would have to be **bounded-ratio dense**.  But `E ⊂ [√X,X]`
+with `∫_E dt/t ≤ Cst L^{-c} log X` and `L ≍ (log X)^κ` can swallow a whole dyadic block as soon
+as `Cst(log X)^{1-κc} ≥ log 2`, i.e. always, for large `X`.  Varying `X ∈ [N, N²]` does not
+help: Fubini only bounds the doubly-bad set's *log*-measure by `Cst(log A)^{1-κc} ≫ 1`.  This
+is the same wall as *log-Chowla ⇏ Chowla*; TT's own Thm 1.3 (irrationality) escapes it because
+irrationality needs only *infinitely many* good scales.
+
+### Trigger status
+
+C3-T1 (ζ^ω fails a TT hypothesis): NOT fired — lap 83 discharged the hypothesis outright.
+C3-T2 (`D = 2` rung within 6 laps): SERVED — the rung is a theorem (lap 82/84), though on the
+🔴 NoExc input.  Retired.
+C3-T3 (`K ≥ 3` undisclosed): NOT fired — lap 85's `K`-point layer discloses it in the module
+docstring as the generational item.  Retired, superseded by C3-T5.
+New: **C3-T4** (`depthElliottLL_of_unif` within 8 laps) and **C3-T5** (every lap's advance must
+be statable as "the diagonal now rests on strictly less").
+
+### Attack order (this is what the grind laps execute)
+
+1. `quantDepthElliottGen_forces_diagonal`  ← cheap, retires the budget layer.
+2. `KPointNoExcWith (cK CstK : ℕ → ℝ) (K : ℕ)` + `kPointNoExc_of_with`.
+3. `progression_avg_le_of_window` — quantitative twin of `progression_avg_tendsto_of_window`.
+4. `dyadic_window_bound_with`, then `depthAvg_le_with` (explicit `B cK CstK K N`, explicit `N₀`).
+5. `depthElliottLL_of_unif` + a concrete sufficient profile ⇒ `weylLambertTwist_of_unif`.
+
+## Still refuted — DO NOT RETRY (cumulative)
+
+* Removing `E` from TT Thm 3.1 at the `Prop` level (`exceptional_set_can_pin_a_scale`, lap 80),
+  including by varying `X` at a prescribed scale, and including via bounded-ratio density of
+  good scales at the `ConjC3` end (lap 87, F3).
+* A two-point-only proof of the leaf (lap 60, finding R3).
+* Sharpening `prod_le_lcm_mul_pow` / the `K^{K²}` exchange constant (laps 40, 60) — and now
+  the whole budget layer it lives in (lap 87, F1).
+* `TwistedPrimeSumSaving`.
+* Lap 80's list (below, in the older sections).
+
 ## Reflection — 2026-09-25 (deep-reflection lap 60) — ROUTE VERDICT: **ESCALATE**, re-anchor on Tao–Teräväinen Thm 3.1
 
 Full re-cost in `ROUTE-ESCALATION-2026-09-25-c3mrt.md`.  Binding orders in `DIRECTION.md` →

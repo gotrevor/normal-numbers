@@ -2,57 +2,60 @@
 
 ## CURRENT DIRECTIVE (altitude-lap property; OUTRANKS the HANDOFF)
 
-**Objective (2026-09-25 DEEP-REFLECTION lap 60 — ROUTE VERDICT: ESCALATE, re-anchor).**  The
-destination is unchanged: drive `weylLambertTwist_holds` (`src/NormalNumbers/SwingC3Leaf.lean`)
-by narrowing the named analytic inputs its reduction rests on.  The **input anchor changes**.
-Stop building against `Erdos67b.NonasymptoticLogElliott`; build against the literature's own
-hypothesis class — **merely multiplicative** 1-bounded functions — and ultimately against
-**Tao–Teräväinen arXiv 2512.01739 Theorem 3.1**.  Full re-cost:
-`ROUTE-ESCALATION-2026-09-25-c3mrt.md`.  Detail: `PENDING_WORK.md` → "Reflection — 2026-09-25".
+**Objective (2026-09-25 REVIEW lap 87 — direction KEPT, next move CORRECTED).**  Destination
+unchanged: turn the `sorry` at `weylLambertTwist_holds` (`src/NormalNumbers/SwingC3Leaf.lean`)
+into a *conditional theorem* on ONE named, honestly-labelled correlation input.  What changes
+is the shape of the last brick.
 
-**Why.**  `Erdos67b.IsMultiplicativeOnPositiveInt` (dependency, `Erdos67b/LogElliott.lean:329`)
-has **no coprimality clause** — it is *complete* multiplicativity.  `ζ^ω` fails it, so lap 4
-built the `z^ω = z^Ω ⋆ g` powerful-divisor bridge, and `K^{K²}`, the lap-40 budget repair and the
-"beat every power of `log log N` by a quasi-polynomial margin" decay class are all downstream of
-that one artificial hypothesis.  Elliott's conjecture — and Tao's Theorem 1.3, which the
-dependency is formalising — ask only for *multiplicative*.  Separately, TT Thm 3.1 is natural-
-density, gives an `L^{-c}` saving with `L ≤ log X`, and carries the progression `1_{n≡b (W)}`,
-`W ≤ L^c`, built in; the archimedean certificate transfers verbatim because the pretentious
-distance sees `g` only at primes, where `ζ^ω` and `ζ^Ω` agree.  Three consecutive session wraps
-recorded a *declining* finishability estimate (28 % → 22 % → 22 % → 20 %) with no route change:
-diagnostic tell (b) fired.
+**The finding that forces the correction.**  `QuantDepthElliottGen b` asks for `C : ℕ → ℝ`,
+`η : ℕ → ℝ` with `‖depthAvg b P Q j h D N‖ ≤ C D · η N` for ALL `D`, plus
+`C(depthLL b N)·η(N) → 0`.  Instantiating the first at `D = depthLL b N` and squeezing gives
 
-**Mandated next move — the bridge-free correlation form, in `C3MrtMultElliott.lean` (new file,
-pure addition).**
-1. `IsCoprimeMultiplicativeInt` — `g 1 = 1`, `g(mn) = g m · g n` for **coprime** positive `m,n`.
-2. `KPointLogElliottMult K` — `KPointLogElliott` verbatim with (1) in place of the dependency's
-   hypothesis; and `kPointLogElliott_of_mult : KPointLogElliottMult K → KPointLogElliott K`, so
-   nothing is weakened and every existing ledger row survives.
-3. `zOmegaInt`, `isCoprimeMultiplicativeInt_zOmegaInt`, `norm_zOmegaInt_le_one`, and the transfer
-   of the non-pretentiousness certificate (values at primes only).
-4. **The decisive probe** `class_sum_eq_kPointLogCorrelation`: the class-restricted `K`-point sum
-   along `n ≡ r (mod M₀)` **is** `kPointLogCorrelation` of `zOmegaInt` along the affine forms
-   `a i = M₀`, `b i = r+i+1` — pairwise determinant `M₀(j−i) ≠ 0`.  No divisors, no truncation,
-   no `K^{K²}`.
-5. Then `progression_log_rung_class_mult` (lap 59's conclusion on the new anchor, no budget), and
-   only then `TwoPointNaturalCorrelation` = TT Thm 3.1(ii) stated faithfully, with the `D = 2`
-   **natural-density** rung derived from it.
+    C(depthLL b N)·η(N)  ≥  ‖depthAvg b P Q j h (depthLL b N) N‖ ,
 
-**Forbidden drift.**  Do NOT weaken, rename or delete `weylLambertTwist_holds`, `conjC3`,
-`QuantDepthElliott`, `KPointLogElliott` or anything in the existing `C3Mrt*` chain — this is pure
-addition; the powerful-divisor stack stays in `src/`, sorry-free, as the completely-multiplicative
-route.  Do NOT spend laps on brick 4b, on the quantitative `η`-restatement, or on sharpening
-`prod_le_lcm_mul_pow`: all three perfect the *old* anchor.  Do NOT attack
-`TwistedPrimeSumSaving`.  Do NOT re-chase a two-point-only proof of the leaf — assessed and
-refuted this lap (`PENDING_WORK.md`, finding **R3**).  New code in `C3Mrt*.lean` only; never
-import a `lean-proofs-latest` consumer into the `NormalNumbers` root.  Build BOTH `lake build`
-and `lake build NormalNumbers.<C3Mrt tip>`.
+so **any** budget `C` — `b^{κD}`, `A_D e^{D²}`, anything — already forces the DIAGONAL limit
+`‖depthAvg b P Q j h (depthLL b N) N‖ → 0`.  The budget layer (`budget_absorb`,
+`pow_self_sq_le_exp_cube`, the `sup_D` assembly of HANDOFF lap 86 NEXT ③) therefore buys
+nothing: it cannot manufacture uniformity it is not given.  And a family of fixed-`K` limits
+(`depthAvg_K_tendsto_of_noExc`, lap 85) provably cannot supply a diagonal limit, because
+`KPointNaturalCorrelationNoExc K` hides its constants behind a per-`K` `∃ c Cst` with **no
+control on how they degrade in `K`**.  The real obligation is, and always was, the diagonal.
+
+**Mandated next move — the UNIFORM-in-`K` layer, `C3MrtUnifK.lean` (new file, pure addition).**
+1. `quantDepthElliottGen_forces_diagonal` — the finding above, in Lean.  Cheap, route-decisive,
+   and it retires the budget layer honestly.
+2. `KPointNoExcWith (cK CstK : ℕ → ℝ) (K : ℕ)` — `KPointNaturalCorrelationNoExc K` with the two
+   constants as explicit functions of `K`; plus `kPointNoExc_of_with`, so nothing is weakened
+   and every lap-85 consumer survives.
+3. `progression_avg_le_of_window` — the quantitative twin of `progression_avg_tendsto_of_window`
+   (head + two boundary points + `Y = MJ+r`).  HANDOFF lap 86 NEXT ① — still correct, still next.
+4. `dyadic_window_bound_with` / `depthAvg_le_with` — an EXPLICIT `B cK CstK K N` majorant for
+   `‖depthAvg b P Q j h K N‖`, with the `N₀(K)` threshold explicit too.
+5. `depthElliottLL_of_unif` — the diagonal, hence `WeylLambertTwist b`, from ONE schedule-
+   compatibility hypothesis `Tendsto (fun N => B cK CstK (depthLL b N) N) atTop (𝓝 0)`, and a
+   concrete sufficient profile (e.g. `cK K = c₀·γ^K` with `γ > b^{-1/2}`, `CstK K ≤ exp(K^m)`)
+   so the hypothesis is checkable rather than decorative.
+
+**Forbidden drift.**  Do NOT build further fixed-`K` `Tendsto` statements — lap 85 saturated
+that layer and it cannot reach the diagonal.  Do NOT spend laps polishing `QuantDepthElliottGen`
+/ `budget_absorb` / `pow_self_sq_le_exp_cube`: ① retires them.  Do NOT weaken, rename or delete
+`weylLambertTwist_holds`, `conjC3`, `KPointNaturalCorrelationNoExc`, `ProgressionLogRung` or
+anything in the existing `C3Mrt*` chain — pure addition.  Do NOT re-attempt removing TT's
+exceptional set (`exceptional_set_can_pin_a_scale`, refuted lap 80) or `TwistedPrimeSumSaving`.
+New code in `C3Mrt*.lean` only.  Build BOTH `lake build` and `lake build NormalNumbers.<tip>`.
+
+**Ledger honesty (binding).**  `KPointNaturalCorrelationNoExc K` is 🔴 at EVERY `K`, including
+`K = 2`: it is TT Thm 3.1(ii) with the exceptional set of scales deleted, which TT say in print
+is out of reach.  The faithful input is `TwoPointNaturalCorrelation` (`C3MrtTTThm31.lean`).
+Any document that calls the `K = 2` rung "published" is wrong; say "strictly stronger than
+published, disclosed".
 
 **Registered route triggers.**  🚦 **C3-T1** — if `ζ^ω` provably fails a hypothesis TT Thm 3.1
-needs, ESCALATE (the re-anchoring is void).  🚦 **C3-T2** — if the `D = 2` natural-density rung is
-not a theorem on the new anchor within **6** grind laps of 2026-09-25, ESCALATE.  🚦 **C3-T3** —
-if a lap needs `K ≥ 3` correlations for a step not explicitly disclosed as the generational item,
-that is drift back to the old route: stop and re-read the escalation file.
+needs, ESCALATE.  🚦 **C3-T4** (replaces C3-T2/T3, which have served) — if `depthElliottLL_of_unif`
+is not a theorem within **8** grind laps of 2026-09-25, ESCALATE: that would mean the diagonal
+does not close even from an explicitly-uniform input, i.e. the reduction has no endpoint.
+🚦 **C3-T5** — if a lap's advance cannot be stated as "the diagonal now rests on strictly less",
+it is leaf-work: stop and re-read this section.
 
 **Directive history.**
 - 2026-09-22 (lap 7 review): graded joint state route.
@@ -65,7 +68,12 @@ that is drift back to the old route: stop and re-read the escalation file.
 - 2026-09-25 (DEEP-REFLECTION lap 60): **ROUTE VERDICT ESCALATE.**  `K^{K²}` and the
   quasi-polynomial decay class are artefacts of the dependency's *complete*-multiplicativity
   hypothesis.  Re-anchor on merely-multiplicative Elliott and on TT arXiv 2512.01739 Thm 3.1;
-  triggers C3-T1…T3 registered.
+  triggers C3-T1…T3 registered.  COMPLETED laps 61–86 (the whole `C3MrtTTThm31 → … →
+  C3MrtQuantKPoint` chain, sorry-free, `uniformResonantMass_holds` discharged).
+- 2026-09-25 (REVIEW lap 87): direction KEPT, **next move CORRECTED**.  The budget layer is
+  provably vacuous (`C(D_N)·η(N) ≥ ‖depthAvg (D_N) N‖`); fixed-`K` limits cannot reach the
+  diagonal; build the UNIFORM-in-`K` layer instead.  C3-T2/T3 retired, C3-T4/T5 registered.
+
 
 2026-09-22 correction: `PrefixDecay 4` is false (the k=1 window is identically
 one).  See `G4PrefixDecayAudit.lean` for the proved counterexample and the
