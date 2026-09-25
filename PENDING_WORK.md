@@ -9807,3 +9807,46 @@ index bookkeeping:
 using `class_sum_split` (lap 66) for the head, `range Y = {0} ⊔ Ioc 0 (Y−1)` for the single
 extra point, `Y/J ≤ M + r`, and composing `class_sum_tendsto_of_noExc` with `J ↦ M J + r − 1`
 (which tends to `atTop`).  No analysis remains.
+
+## Lap 71 (2026-09-25) — **THE CRUX IS CLOSED.**  `logToNatural_two_of_noExc` is a theorem
+
+`src/NormalNumbers/C3MrtNoExc.lean` is **sorry-free**.  `logToNatural_two_of_noExc` depends on
+`[propext, Classical.choice, Quot.sound]` and states:
+
+> On `TwoPointNaturalCorrelationNoExc` — Tao–Teräväinen arXiv 2512.01739 Theorem 3.1(ii) with
+> its exceptional set of scales removed — together with the non-pretentiousness of `z₀^ω` in
+> TT's own sense, for every `M > 0` and `r`,
+>
+>     (∑_{m<J} ∏_{i<2} z_i^{ω(M m + r + i + 1)}) / J  →  0.
+
+That is the `K = 2` **natural-density** transfer: the last open obligation of the `D = 2` layer
+of `ConjC3`, and precisely what the log-averaged chain provably cannot deliver.
+
+### The deliverable, stated plainly
+
+The `D = 2` layer of the C3/MRT route is now **equivalent to a named open problem**: removing
+the exceptional set of scales from TT Theorem 3.1.  Both directions are machine-checked:
+
+* `logToNatural_two_of_noExc` — no exceptional set ⟹ the transfer holds.
+* `exceptional_scales_not_tendsto` (63) + `exceptional_set_can_pin_a_scale` (64) — with the
+  exceptional set, no argument that uses only the statement can reach a pointwise limit.
+
+And TT say in print (`:2997`) that removing it is not within current technology.
+
+### Route ledger after this lap
+
+* 🟢 everything from `weylLambertTwist_holds`'s reduction down to the `K`-point correlation.
+* 🟢 `progression_log_rung_class_mult` (61) — the log layer, on merely-multiplicative Elliott.
+* 🟡 `TwoPointNaturalCorrelation` (62) — a published theorem, stated faithfully, wired to the
+  C3 summand (`c3_two_point_natural_of_TT`).
+* 🔴 `TwoPointNaturalCorrelationNoExc` — the single named open problem the `D = 2` layer needs.
+* 🔴 generational: `K ≥ 3` correlations (TT: "does not appear to be within current technology").
+
+### Next
+
+1. `TTNonPretentious (zOmegaNat z) X L` for `‖z‖ = 1`, `z ≠ 1` — bridge laps 18–21's archimedean
+   certificate (in `Erdos67b.pretentiousDistSqToTwist`) to TT's `M(g; X², log^{1/125} X)`.  This
+   is the last *hypothesis* of `logToNatural_two_of_noExc` not yet discharged from the repo's own
+   inputs, and it is a genuine (but bounded) piece of work: matching two pretentious metrics.
+2. `LogToNaturalCorrelationNZ 2` + the one-line rewiring of `depthAvg_tendsto_of_transfer`, so
+   the new theorem plugs into the existing chain rather than sitting beside it.

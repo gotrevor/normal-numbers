@@ -620,15 +620,158 @@ theorem class_sum_tendsto_of_noExc (h : TwoPointNaturalCorrelationNoExc)
   rw [hfilter, ← add_div]
   exact div_le_div_of_nonneg_right (hstack Y) hYpos.le
 
-/-- **THE PAYOFF.**  Removing the exceptional set from TT Theorem 3.1(ii) discharges
-`LogToNaturalCorrelation 2` — the last open obligation of the `D = 2` layer.  With this, the
-`D = 2` row of the ledger is *equivalent to a named open problem in the literature*, and
-nothing else is missing at `K = 2`. -/
+open scoped Classical in
+/-- **THE PAYOFF.**  Removing the exceptional set from Tao–Teräväinen Theorem 3.1(ii)
+discharges the `K = 2` natural-density transfer — the last open obligation of the `D = 2`
+layer of `ConjC3`.
+
+The hypothesis `z 0 ≠ 1` is not stated: what is actually needed is the non-pretentiousness of
+`z 0 ^ ω` in TT's sense, supplied as `hnp`.  (`LogToNaturalCorrelation K` as written carries no
+such hypothesis and is false without one — take `z ≡ 1` — so it is only ever usable through its
+log-averaged premise; the consumer `depthAvg_tendsto_of_transfer` has `z 0 ≠ 1` in hand.) -/
 theorem logToNatural_two_of_noExc (h : TwoPointNaturalCorrelationNoExc)
-    (hnp : ∀ (z : ℂ), ‖z‖ = 1 → z ≠ 1 → ∀ X L : ℝ, 2 ≤ X → 1 ≤ L → L ≤ Real.log X →
-      TTNonPretentious (zOmegaNat z) X L) :
-    LogToNaturalCorrelation 2 := by
-  sorry
+    (z : ℕ → ℂ) (hz : ∀ i, ‖z i‖ = 1)
+    (hnp : ∀ X L : ℝ, 2 ≤ X → 1 ≤ L → L ≤ Real.log X →
+      TTNonPretentious (zOmegaNat (z 0)) X L)
+    {M : ℕ} (hM : 0 < M) (r : ℕ) :
+    Tendsto (fun J : ℕ =>
+        (∑ m ∈ range J, ∏ i : Fin 2, z i ^ omegaNat (M * m + r + (i : ℕ) + 1)) / (J : ℂ))
+      atTop (𝓝 0) := by
+  classical
+  set g : ℕ → ℂ := fun n => z 0 ^ omegaNat (n + 1) * z 1 ^ omegaNat (n + 2) with hgdef
+  have hgnorm : ∀ n, ‖g n‖ = 1 := by
+    intro n; simp only [hgdef, norm_mul, norm_pow, hz, one_pow, mul_one]
+  have hprod : ∀ m : ℕ, (∏ i : Fin 2, z i ^ omegaNat (M * m + r + (i : ℕ) + 1)) = g (M * m + r) := by
+    intro m
+    rw [Fin.prod_univ_two, hgdef]
+    norm_num
+  have hCS := class_sum_tendsto_of_noExc h (hz 0) (hz 1) hnp hM r
+  -- the head, and the two boundary points
+  have hbound : ∀ J : ℕ, 1 ≤ J →
+      ‖∑ m ∈ range J, g (M * m + r)‖
+        ≤ ((r : ℝ) + 2)
+          + ‖∑ n ∈ (Finset.Ioc 0 (M * J + r)).filter (fun n => n % M = r % M),
+              z 0 ^ omegaNat (n + 1) * z 1 ^ omegaNat (n + 2)‖ := by
+    intro J hJ
+    set Y : ℕ := M * J + r with hY
+    have hsplit := class_sum_split hM r J g
+    have hhead : ‖∑ n ∈ (range r).filter (fun n => n % M = r % M), g n‖ ≤ (r : ℝ) := by
+      refine le_trans (norm_sum_le _ _) ?_
+      have h1 : ∑ n ∈ (range r).filter (fun n => n % M = r % M), ‖g n‖
+          ≤ ∑ _n ∈ (range r).filter (fun n => n % M = r % M), (1 : ℝ) :=
+        Finset.sum_le_sum fun n _ => le_of_eq (hgnorm n)
+      refine le_trans h1 ?_
+      rw [Finset.sum_const, nsmul_eq_mul, mul_one]
+      have := Finset.card_filter_le (range r) (fun n => n % M = r % M)
+      rw [Finset.card_range] at this
+      exact_mod_cast this
+    -- `range Y` vs `Ioc 0 Y` differ by the two endpoints `0` and `Y`
+    have hrange : ∑ n ∈ (range Y).filter (fun n => n % M = r % M), g n
+        = (∑ n ∈ (Finset.Ioc 0 Y).filter (fun n => n % M = r % M), g n)
+          + ((if (0 : ℕ) % M = r % M then g 0 else 0)
+             - (if Y % M = r % M then g Y else 0)) := by
+      rw [Finset.sum_filter, Finset.sum_filter]
+      have hMJ : 0 < M * J := Nat.mul_pos hM hJ
+      have hY0 : 0 < Y := by omega
+      have h1 : ∑ n ∈ range Y, (if n % M = r % M then g n else 0)
+          = (if (0 : ℕ) % M = r % M then g 0 else 0)
+            + ∑ n ∈ Finset.Ico 1 Y, (if n % M = r % M then g n else 0) := by
+        rw [Finset.range_eq_Ico, Finset.sum_eq_sum_Ico_succ_bot hY0]
+      have h2 : ∑ n ∈ Finset.Ioc 0 Y, (if n % M = r % M then g n else 0)
+          = (∑ n ∈ Finset.Ico 1 Y, (if n % M = r % M then g n else 0))
+            + (if Y % M = r % M then g Y else 0) := by
+        rw [show Finset.Ioc 0 Y = Finset.Ico 1 Y ∪ {Y} by
+          ext n; simp only [Finset.mem_Ioc, Finset.mem_union, Finset.mem_Ico,
+            Finset.mem_singleton]; omega]
+        rw [Finset.sum_union (by
+          refine Finset.disjoint_left.2 fun n hn hn' => ?_
+          rw [Finset.mem_Ico] at hn
+          rw [Finset.mem_singleton] at hn'
+          omega)]
+        simp
+      rw [h1, h2]
+      ring
+    have heq : ∑ m ∈ range J, g (M * m + r)
+        = (∑ n ∈ (Finset.Ioc 0 Y).filter (fun n => n % M = r % M), g n)
+          + ((if (0 : ℕ) % M = r % M then g 0 else 0)
+             - (if Y % M = r % M then g Y else 0))
+          - ∑ n ∈ (range r).filter (fun n => n % M = r % M), g n := by
+      rw [← hrange, hY, hsplit]
+      ring
+    rw [heq]
+    have hb1 : ‖(if (0 : ℕ) % M = r % M then g 0 else 0)‖ ≤ 1 := by
+      split
+      · exact le_of_eq (hgnorm 0)
+      · simp
+    have hb2 : ‖(if Y % M = r % M then g Y else 0)‖ ≤ 1 := by
+      split
+      · exact le_of_eq (hgnorm Y)
+      · simp
+    have := norm_sub_le
+      ((∑ n ∈ (Finset.Ioc 0 Y).filter (fun n => n % M = r % M), g n)
+        + ((if (0 : ℕ) % M = r % M then g 0 else 0) - (if Y % M = r % M then g Y else 0)))
+      (∑ n ∈ (range r).filter (fun n => n % M = r % M), g n)
+    have h3 := norm_add_le
+      (∑ n ∈ (Finset.Ioc 0 Y).filter (fun n => n % M = r % M), g n)
+      ((if (0 : ℕ) % M = r % M then g 0 else 0) - (if Y % M = r % M then g Y else 0))
+    have h4 := norm_sub_le
+      ((if (0 : ℕ) % M = r % M then g 0 else 0)) ((if Y % M = r % M then g Y else 0))
+    have hgeq : (∑ n ∈ (Finset.Ioc 0 Y).filter (fun n => n % M = r % M), g n)
+        = ∑ n ∈ (Finset.Ioc 0 Y).filter (fun n => n % M = r % M),
+            z 0 ^ omegaNat (n + 1) * z 1 ^ omegaNat (n + 2) := rfl
+    rw [hgeq] at h3 ⊢
+    linarith [hhead, hb1, hb2, this, h3, h4]
+  -- the majorant
+  have hcomp : Tendsto (fun J : ℕ =>
+      ‖∑ n ∈ (Finset.Ioc 0 (M * J + r)).filter (fun n => n % M = r % M),
+          z 0 ^ omegaNat (n + 1) * z 1 ^ omegaNat (n + 2)‖ / ((M * J + r : ℕ) : ℝ))
+      atTop (𝓝 0) := by
+    refine hCS.comp (tendsto_atTop.2 fun b => Filter.eventually_atTop.2 ⟨b + r, fun J hJ => ?_⟩)
+    calc b ≤ J := by omega
+      _ ≤ M * J := Nat.le_mul_of_pos_left J hM
+      _ ≤ M * J + r := by omega
+  have hmaj : Tendsto (fun J : ℕ => ((r : ℝ) + 2) / (J : ℝ)
+      + (‖∑ n ∈ (Finset.Ioc 0 (M * J + r)).filter (fun n => n % M = r % M),
+            z 0 ^ omegaNat (n + 1) * z 1 ^ omegaNat (n + 2)‖ / ((M * J + r : ℕ) : ℝ))
+        * ((M : ℝ) + r)) atTop (𝓝 0) := by
+    have h1 : Tendsto (fun J : ℕ => ((r : ℝ) + 2) / (J : ℝ)) atTop (𝓝 0) := by
+      simpa [div_eq_mul_inv] using tendsto_one_div_atTop_nhds_zero_nat.const_mul ((r : ℝ) + 2)
+    have h2 := hcomp.mul_const ((M : ℝ) + r)
+    simpa using h1.add h2
+  rw [tendsto_zero_iff_norm_tendsto_zero]
+  refine squeeze_zero' (Filter.Eventually.of_forall fun J => norm_nonneg _)
+    (Filter.eventually_atTop.2 ⟨1, fun J hJ => ?_⟩) hmaj
+  have hJR : (0 : ℝ) < (J : ℝ) := by exact_mod_cast hJ
+  have hYpos : (0 : ℝ) < ((M * J + r : ℕ) : ℝ) := by
+    have : 0 < M * J + r := by positivity
+    exact_mod_cast this
+  rw [norm_div, Complex.norm_natCast]
+  have hnum : ‖∑ m ∈ range J, ∏ i : Fin 2, z i ^ omegaNat (M * m + r + (i : ℕ) + 1)‖
+      = ‖∑ m ∈ range J, g (M * m + r)‖ :=
+    congrArg norm (Finset.sum_congr rfl fun m _ => hprod m)
+  rw [hnum]
+  set S : ℝ := ‖∑ n ∈ (Finset.Ioc 0 (M * J + r)).filter (fun n => n % M = r % M),
+      z 0 ^ omegaNat (n + 1) * z 1 ^ omegaNat (n + 2)‖ with hS
+  have hS0 : 0 ≤ S := norm_nonneg _
+  have hratio : ((M * J + r : ℕ) : ℝ) / (J : ℝ) ≤ (M : ℝ) + r := by
+    rw [div_le_iff₀ hJR]
+    push_cast
+    nlinarith [hJR, (by exact_mod_cast hJ : (1:ℝ) ≤ (J:ℝ)), Nat.cast_nonneg (α := ℝ) r]
+  have hkey : S / (J : ℝ) ≤ (S / ((M * J + r : ℕ) : ℝ)) * ((M : ℝ) + r) := by
+    have h1 : (1 : ℝ) / (J : ℝ) ≤ ((M : ℝ) + r) / ((M * J + r : ℕ) : ℝ) := by
+      rw [div_le_div_iff₀ hJR hYpos]
+      rw [div_le_iff₀ hJR] at hratio
+      linarith
+    calc S / (J : ℝ) = S * (1 / (J : ℝ)) := by ring
+      _ ≤ S * (((M : ℝ) + r) / ((M * J + r : ℕ) : ℝ)) := mul_le_mul_of_nonneg_left h1 hS0
+      _ = (S / ((M * J + r : ℕ) : ℝ)) * ((M : ℝ) + r) := by ring
+  have hthis := hbound J hJ
+  rw [← hS] at hthis
+  have hfin : ‖∑ m ∈ range J, g (M * m + r)‖ / (J : ℝ)
+      ≤ ((r : ℝ) + 2) / (J : ℝ) + S / (J : ℝ) := by
+    rw [← add_div]
+    exact div_le_div_of_nonneg_right hthis hJR.le
+  linarith [hfin, hkey]
 
 #print axioms exceptional_set_can_pin_a_scale
 #print axioms twoPointNatural_of_noExc
@@ -642,6 +785,7 @@ theorem logToNatural_two_of_noExc (h : TwoPointNaturalCorrelationNoExc)
 #print axioms geom_half_Ico_le
 #print axioms top_down_weighted_tendsto
 #print axioms class_sum_tendsto_of_noExc
+#print axioms logToNatural_two_of_noExc
 
 end CastingOut
 
