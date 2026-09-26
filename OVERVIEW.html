@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Project overview</title>
+  <style>
+
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+
+ul.task-list[class]{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+font-size: inherit;
+width: 0.8em;
+margin: 0 0.8em 0.2em -1.6em;
+vertical-align: middle;
+}
+.display.math{display: block; text-align: center; margin: 0.5rem auto;}
+</style>
+  <style type="text/css">:root { color-scheme: light; --ink: #172a35; --muted: #53616c; --rule: #cbd3d9; --accent: #215b79; }
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; background: white; }
+body { max-width: 1160px; margin: 0 auto; padding: 46px 38px 64px; color: var(--ink); background: white; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; font-size: 17px; line-height: 1.62; }
+header { border-top: 4px solid var(--ink); padding-top: 20px; }
+h1 { font-size: clamp(2rem, 4vw, 3rem); line-height: 1.13; letter-spacing: -.035em; margin: 0 0 26px; }
+body > p, body > ul, body > ol, body > h3 { max-width: 900px; }
+body > p:first-of-type { font-size: .87rem; color: var(--muted); margin-bottom: 30px; }
+h2 { margin: 44px 0 16px; padding-top: 17px; border-top: 1px solid var(--rule); font-size: 1.55rem; line-height: 1.25; letter-spacing: -.02em; break-after: avoid; }
+h3 { font-size: 1.17rem; line-height: 1.35; margin: 27px 0 10px; break-after: avoid; }
+p { margin: 12px 0; }
+a { color: var(--accent); text-underline-offset: 3px; }
+a:hover { text-decoration-thickness: 2px; }
+strong { font-weight: 650; }
+ul, ol { padding-left: 26px; }
+li { padding-left: 5px; margin: 7px 0; }
+figure { margin: 24px 0 18px; padding: 15px 8px; border: 1px solid var(--rule); border-radius: 8px; overflow-x: auto; }
+figure img { display: block; width: 100%; height: auto; min-width: 680px; }
+figcaption { display: none; }
+table { width: 100%; border-collapse: collapse; margin: 21px 0; font-size: .94rem; line-height: 1.5; }
+th { font-size: .8rem; text-transform: uppercase; letter-spacing: .045em; border-top: 2px solid var(--ink); border-bottom: 1px solid var(--ink); }
+th, td { text-align: left; vertical-align: top; padding: 13px 15px 13px 0; }
+td { border-bottom: 1px solid var(--rule); }
+td:first-child { width: 27%; }
+code { font-size: .87em; overflow-wrap: anywhere; }
+body > h2:last-of-type ~ p { font-size: .86rem; color: var(--muted); }
+@media (max-width: 700px) { body { padding: 25px 20px 45px; font-size: 16px; } h2 { margin-top: 34px; } table { font-size: .83rem; } th, td { padding-right: 10px; } figure { margin-inline: -9px; } }
+@media print { body { max-width: none; padding: 0; font-size: 10pt; color: black; } h1 { font-size: 25pt; } h2 { margin-top: 22pt; } h3 { font-size: 12pt; } figure { break-inside: avoid; border: 0; padding: 0; } figure img { min-width: 0; max-height: 650px; } table { font-size: 9pt; } tr { break-inside: avoid; } a { color: black; } }
+</style>
+</head>
+<body>
+<h1 id="normal-numbers-where-the-proof-stands">Normal Numbers: where the
+proof stands</h1>
+<p><strong>Project map · 26 September 2026</strong><br />
+<a href="OVERVIEW.html">Visual edition</a> · <a href="docs/REVIEW-2026-09-25-research-trajectory.md">Detailed research
+review</a></p>
+<h2 id="the-destination">The destination</h2>
+<p><strong>Prove that an explicit, naturally arising number has
+genuinely random-looking digit frequencies.</strong> The central
+candidate here is the prime Lambert constant:</p>
+<p><strong>G₄ = ∑ over primes p of 1/(4ᵖ − 1).</strong></p>
+<p>We know that <strong>every finite base-four word occurs</strong> in
+G₄. We do not know that each length-L word occurs with frequency exactly
+4⁻ᴸ. That second statement is normality, and remains the main open
+destination.</p>
+<p>The programme has produced substantial complete results around this
+goal. The remaining distance to G₄ normality includes new arithmetic,
+not just assembly of the results already proved.</p>
+<h2 id="the-map">The map</h2>
+<figure>
+<img role="img" aria-label="Normal Numbers map: completed sparse-prime and digit-spectrum theorems, the missing ordinary growing-carry estimate for G4, and the separate Elliott, C3, and C2 branches." src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9Im5vIj8+CjwhRE9DVFlQRSBzdmcgUFVCTElDICItLy9XM0MvL0RURCBTVkcgMS4xLy9FTiIKICJodHRwOi8vd3d3LnczLm9yZy9HcmFwaGljcy9TVkcvMS4xL0RURC9zdmcxMS5kdGQiPgo8IS0tIEdlbmVyYXRlZCBieSBncmFwaHZpeiB2ZXJzaW9uIDE1LjAuMCAoMjAyNjA1MjMuMTg0MikKIC0tPgo8IS0tIFRpdGxlOiBOb3JtYWxOdW1iZXJzIFBhZ2VzOiAxIC0tPgo8c3ZnIHdpZHRoPSI4MDhwdCIgaGVpZ2h0PSI3MjJwdCIKIHZpZXdCb3g9IjAuMDAgMC4wMCA4MDguMDAgNzIyLjAwIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIj4KPGcgaWQ9ImdyYXBoMCIgY2xhc3M9ImdyYXBoIiB0cmFuc2Zvcm09InNjYWxlKDEgMSkgcm90YXRlKDApIHRyYW5zbGF0ZSgyMS42IDcwMC42NSkiPgo8dGl0bGU+Tm9ybWFsTnVtYmVyczwvdGl0bGU+Cjxwb2x5Z29uIGZpbGw9IndoaXRlIiBzdHJva2U9Im5vbmUiIHBvaW50cz0iLTIxLjYsMjEuNiAtMjEuNiwtNzAwLjY1IDc4Ni42OSwtNzAwLjY1IDc4Ni42OSwyMS42IC0yMS42LDIxLjYiLz4KPGcgaWQ9ImNsdXN0MSIgY2xhc3M9ImNsdXN0ZXIiPgo8dGl0bGU+Y2x1c3Rlcl93b3JrPC90aXRsZT4KPHBvbHlnb24gZmlsbD0id2hpdGUiIHN0cm9rZT0iI2NjZDNkOSIgcG9pbnRzPSIyMy4wOSwtMTQ5LjkxIDIzLjA5LC00MDEuOTggNzExLjA5LC00MDEuOTggNzExLjA5LC0xNDkuOTEgMjMuMDksLTE0OS45MSIvPgo8dGV4dCB4bWw6c3BhY2U9InByZXNlcnZlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiB4PSIzNjcuMDkiIHk9Ii0zODMuNzMiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2Esc2Fucy1TZXJpZiIgZm9udC1zaXplPSIxNS4wMCI+Q1VSUkVOVCBCUkFOQ0hFUyDCtyBESUZGRVJFTlQgRU5EUE9JTlRTPC90ZXh0Pgo8L2c+CjxnIGlkPSJjbHVzdDQiIGNsYXNzPSJjbHVzdGVyIj4KPHRpdGxlPmNsdXN0ZXJfZG9uZTwvdGl0bGU+Cjxwb2x5Z29uIGZpbGw9IndoaXRlIiBzdHJva2U9IiNjY2QzZDkiIHBvaW50cz0iMzUuMDksLTggMzUuMDksLTEzMi45MSA3NTcuMDksLTEzMi45MSA3NTcuMDksLTggMzUuMDksLTgiLz4KPHRleHQgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgeD0iMzk2LjA5IiB5PSItMTE0LjY2IiBmb250LWZhbWlseT0iSGVsdmV0aWNhLHNhbnMtU2VyaWYiIGZvbnQtc2l6ZT0iMTUuMDAiPkNPTVBMRVRFRCBSRVNVTFRTIMK3IFRIRUlSIE9XTiBFTkRQT0lOVFM8L3RleHQ+CjwvZz4KPCEtLSBnb2FsIC0tPgo8ZyBpZD0ibm9kZTEiIGNsYXNzPSJub2RlIj4KPHRpdGxlPmdvYWw8L3RpdGxlPgo8cGF0aCBmaWxsPSJub25lIiBzdHJva2U9IiMxNTJjM2EiIHN0cm9rZS13aWR0aD0iMi41IiBkPSJNMjk4LjE3LC02NzkuMDVDMjk4LjE3LC02NzkuMDUgMTIsLTY3OS4wNSAxMiwtNjc5LjA1IDYsLTY3OS4wNSAwLC02NzMuMDUgMCwtNjY3LjA1IDAsLTY2Ny4wNSAwLC02MTQuNjQgMCwtNjE0LjY0IDAsLTYwOC42NCA2LC02MDIuNjQgMTIsLTYwMi42NCAxMiwtNjAyLjY0IDI5OC4xNywtNjAyLjY0IDI5OC4xNywtNjAyLjY0IDMwNC4xNywtNjAyLjY0IDMxMC4xNywtNjA4LjY0IDMxMC4xNywtNjE0LjY0IDMxMC4xNywtNjE0LjY0IDMxMC4xNywtNjY3LjA1IDMxMC4xNywtNjY3LjA1IDMxMC4xNywtNjczLjA1IDMwNC4xNywtNjc5LjA1IDI5OC4xNywtNjc5LjA1Ii8+Cjx0ZXh0IHhtbDpzcGFjZT0icHJlc2VydmUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIHg9IjE1NS4wOSIgeT0iLTY1MS44NyIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxzYW5zLVNlcmlmIiBmb250LXNpemU9IjE4LjAwIj5NQUlOIERFU1RJTkFUSU9OIMK3IE9QRU48L3RleHQ+Cjx0ZXh0IHhtbDpzcGFjZT0icHJlc2VydmUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIHg9IjE1NS4wOSIgeT0iLTYzMy4xMiIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxzYW5zLVNlcmlmIiBmb250LXNpemU9IjE4LjAwIj5H4oKEIGlzIG5vcm1hbCBpbiBiYXNlIGZvdXI8L3RleHQ+Cjx0ZXh0IHhtbDpzcGFjZT0icHJlc2VydmUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIHg9IjE1NS4wOSIgeT0iLTYxNC4zNyIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxzYW5zLVNlcmlmIiBmb250LXNpemU9IjE4LjAwIj5FdmVyeSB3b3JkIGhhcyB0aGUgZXhhY3QgZnJlcXVlbmN5PC90ZXh0Pgo8L2c+CjwhLS0gY2FycnkgLS0+CjxnIGlkPSJub2RlMiIgY2xhc3M9Im5vZGUiPgo8dGl0bGU+Y2Fycnk8L3RpdGxlPgo8cGF0aCBmaWxsPSJub25lIiBzdHJva2U9IiM5OTU1MTMiIHN0cm9rZS13aWR0aD0iMS41IiBzdHJva2UtZGFzaGFycmF5PSI1LDIiIGQ9Ik0yNTcuNjcsLTU0MC42NEMyNTcuNjcsLTU0MC42NCA1Mi41LC01NDAuNjQgNTIuNSwtNTQwLjY0IDQ2LjUsLTU0MC42NCA0MC41LC01MzQuNjQgNDAuNSwtNTI4LjY0IDQwLjUsLTUyOC42NCA0MC41LC00ODcuNDggNDAuNSwtNDg3LjQ4IDQwLjUsLTQ4MS40OCA0Ni41LC00NzUuNDggNTIuNSwtNDc1LjQ4IDUyLjUsLTQ3NS40OCAyNTcuNjcsLTQ3NS40OCAyNTcuNjcsLTQ3NS40OCAyNjMuNjcsLTQ3NS40OCAyNjkuNjcsLTQ4MS40OCAyNjkuNjcsLTQ4Ny40OCAyNjkuNjcsLTQ4Ny40OCAyNjkuNjcsLTUyOC42NCAyNjkuNjcsLTUyOC42NCAyNjkuNjcsLTUzNC42NCAyNjMuNjcsLTU0MC42NCAyNTcuNjcsLTU0MC42NCIvPgo8dGV4dCB4bWw6c3BhY2U9InByZXNlcnZlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiB4PSIxNTUuMDkiIHk9Ii01MTcuMjYiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2Esc2Fucy1TZXJpZiIgZm9udC1zaXplPSIxNC4wMCI+T1BFTiDCtyBkZWNpc2l2ZSBhcml0aG1ldGljIGlucHV0PC90ZXh0Pgo8dGV4dCB4bWw6c3BhY2U9InByZXNlcnZlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiB4PSIxNTUuMDkiIHk9Ii01MDIuMjYiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2Esc2Fucy1TZXJpZiIgZm9udC1zaXplPSIxNC4wMCI+T3JkaW5hcnkmIzQ1O2F2ZXJhZ2UgY2FuY2VsbGF0aW9uPC90ZXh0Pgo8dGV4dCB4bWw6c3BhY2U9InByZXNlcnZlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiB4PSIxNTUuMDkiIHk9Ii00ODcuMjYiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2Esc2Fucy1TZXJpZiIgZm9udC1zaXplPSIxNC4wMCI+dGhyb3VnaCB0aGUgYWN0dWFsIGdyb3dpbmcgY2FycmllczwvdGV4dD4KPC9nPgo8IS0tIGNhcnJ5JiM0NTsmZ3Q7Z29hbCAtLT4KPGcgaWQ9ImVkZ2UxIiBjbGFzcz0iZWRnZSI+Cjx0aXRsZT5jYXJyeSYjNDU7Jmd0O2dvYWw8L3RpdGxlPgo8cGF0aCBmaWxsPSJub25lIiBzdHJva2U9IiM1OTYzNmUiIGQ9Ik0xNTUuMDksLTU0MS4zOUMxNTUuMDksLTU1Ny4xMiAxNTUuMDksLTU3Ni4zMiAxNTUuMDksLTU5My41NyIvPgo8cG9seWdvbiBmaWxsPSIjNTk2MzZlIiBzdHJva2U9IiM1OTYzNmUiIHBvaW50cz0iMTUyLjY0LC01OTMuMzQgMTU1LjA5LC02MDAuMzQgMTU3LjU0LC01OTMuMzQgMTUyLjY0LC01OTMuMzQiLz4KPHRleHQgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgeD0iMjEwLjk2IiB5PSItNTY3LjE5IiBmb250LWZhbWlseT0iSGVsdmV0aWNhLHNhbnMtU2VyaWYiIGZvbnQtc2l6ZT0iMTEuMDAiPnByb3ZlZCBGb3VyaWVyIGNyaXRlcmlvbjwvdGV4dD4KPC9nPgo8IS0tIG9tZWdhIC0tPgo8ZyBpZD0ibm9kZTMiIGNsYXNzPSJub2RlIj4KPHRpdGxlPm9tZWdhPC90aXRsZT4KPHBhdGggZmlsbD0ibm9uZSIgc3Ryb2tlPSIjOTk1NTEzIiBzdHJva2Utd2lkdGg9IjEuNSIgc3Ryb2tlLWRhc2hhcnJheT0iNSwyIiBkPSJNMjU3LjMsLTM2MC4yM0MyNTcuMywtMzYwLjIzIDUyLjg4LC0zNjAuMjMgNTIuODgsLTM2MC4yMyA0Ni44OCwtMzYwLjIzIDQwLjg4LC0zNTQuMjMgNDAuODgsLTM0OC4yMyA0MC44OCwtMzQ4LjIzIDQwLjg4LC0zMDcuMDcgNDAuODgsLTMwNy4wNyA0MC44OCwtMzAxLjA3IDQ2Ljg4LC0yOTUuMDcgNTIuODgsLTI5NS4wNyA1Mi44OCwtMjk1LjA3IDI1Ny4zLC0yOTUuMDcgMjU3LjMsLTI5NS4wNyAyNjMuMywtMjk1LjA3IDI2OS4zLC0zMDEuMDcgMjY5LjMsLTMwNy4wNyAyNjkuMywtMzA3LjA3IDI2OS4zLC0zNDguMjMgMjY5LjMsLTM0OC4yMyAyNjkuMywtMzU0LjIzIDI2My4zLC0zNjAuMjMgMjU3LjMsLTM2MC4yMyIvPgo8dGV4dCB4bWw6c3BhY2U9InByZXNlcnZlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiB4PSIxNTUuMDkiIHk9Ii0zMzYuODUiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2Esc2Fucy1TZXJpZiIgZm9udC1zaXplPSIxNC4wMCI+T1BFTiDCtyBsb2dhcml0aG1pYyBhcHBsaWNhdGlvbjwvdGV4dD4KPHRleHQgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgeD0iMTU1LjA5IiB5PSItMzIxLjg1IiBmb250LWZhbWlseT0iSGVsdmV0aWNhLHNhbnMtU2VyaWYiIGZvbnQtc2l6ZT0iMTQuMDAiPlR3byYjNDU7cG9pbnQgcHJpbWUmIzQ1O2ZhY3RvciBjb3JyZWxhdGlvbjwvdGV4dD4KPHRleHQgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgeD0iMTU1LjA5IiB5PSItMzA2Ljg1IiBmb250LWZhbWlseT0iSGVsdmV0aWNhLHNhbnMtU2VyaWYiIGZvbnQtc2l6ZT0iMTQuMDAiPk5lZWRzIGEgc3VibGluZWFyIHpldGEgYm91bmQ8L3RleHQ+CjwvZz4KPCEtLSBvbWVnYSYjNDU7Jmd0O2NhcnJ5IC0tPgo8ZyBpZD0iZWRnZTUiIGNsYXNzPSJlZGdlIj4KPHRpdGxlPm9tZWdhJiM0NTsmZ3Q7Y2Fycnk8L3RpdGxlPgo8cGF0aCBmaWxsPSJub25lIiBzdHJva2U9IiM5OTU1MTMiIHN0cm9rZS1kYXNoYXJyYXk9IjUsMiIgZD0iTTE1NS4wOSwtMzYwLjk2QzE1NS4wOSwtMzkwLjY0IDE1NS4wOSwtNDM0Ljc1IDE1NS4wOSwtNDY2LjczIi8+Cjxwb2x5Z29uIGZpbGw9IiM5OTU1MTMiIHN0cm9rZT0iIzk5NTUxMyIgcG9pbnRzPSIxNTIuNjQsLTQ2Ni40OCAxNTUuMDksLTQ3My40OCAxNTcuNTQsLTQ2Ni40OCAxNTIuNjQsLTQ2Ni40OCIvPgo8dGV4dCB4bWw6c3BhY2U9InByZXNlcnZlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiB4PSIyMzUuNzEiIHk9Ii00NDAuMDMiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2Esc2Fucy1TZXJpZiIgZm9udC1zaXplPSIxMS4wMCI+VFdPIE1JU1NJTkcgU1RFUFM8L3RleHQ+Cjx0ZXh0IHhtbDpzcGFjZT0icHJlc2VydmUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIHg9IjIzNS43MSIgeT0iLTQyOC4wMyIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxzYW5zLVNlcmlmIiBmb250LXNpemU9IjExLjAwIj5sb2dhcml0aG1pYyDihpIgb3JkaW5hcnkgYXZlcmFnZXM8L3RleHQ+Cjx0ZXh0IHhtbDpzcGFjZT0icHJlc2VydmUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIHg9IjIzNS43MSIgeT0iLTQxMy43OCIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxzYW5zLVNlcmlmIiBmb250LXNpemU9IjExLjAwIj50d28gcG9pbnRzIOKGkiBncm93aW5nIGNhcnJ5IGRlcHRoPC90ZXh0Pgo8L2c+CjwhLS0gZWxsIC0tPgo8ZyBpZD0ibm9kZTQiIGNsYXNzPSJub2RlIj4KPHRpdGxlPmVsbDwvdGl0bGU+CjxwYXRoIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzE3Njg1MiIgc3Ryb2tlLXdpZHRoPSIyIiBkPSJNMjIwLjQyLC0yMzMuMDdDMjIwLjQyLC0yMzMuMDcgNjEuNzUsLTIzMy4wNyA2MS43NSwtMjMzLjA3IDU1Ljc1LC0yMzMuMDcgNDkuNzUsLTIyNy4wNyA0OS43NSwtMjIxLjA3IDQ5Ljc1LC0yMjEuMDcgNDkuNzUsLTE3OS45MSA0OS43NSwtMTc5LjkxIDQ5Ljc1LC0xNzMuOTEgNTUuNzUsLTE2Ny45MSA2MS43NSwtMTY3LjkxIDYxLjc1LC0xNjcuOTEgMjIwLjQyLC0xNjcuOTEgMjIwLjQyLC0xNjcuOTEgMjI2LjQyLC0xNjcuOTEgMjMyLjQyLC0xNzMuOTEgMjMyLjQyLC0xNzkuOTEgMjMyLjQyLC0xNzkuOTEgMjMyLjQyLC0yMjEuMDcgMjMyLjQyLC0yMjEuMDcgMjMyLjQyLC0yMjcuMDcgMjI2LjQyLC0yMzMuMDcgMjIwLjQyLC0yMzMuMDciLz4KPHRleHQgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgeD0iMTQxLjA5IiB5PSItMjA5LjY5IiBmb250LWZhbWlseT0iSGVsdmV0aWNhLHNhbnMtU2VyaWYiIGZvbnQtc2l6ZT0iMTQuMDAiPlBST1ZFRCDCtyBhbmFseXRpYyB0b29sPC90ZXh0Pgo8dGV4dCB4bWw6c3BhY2U9InByZXNlcnZlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiB4PSIxNDEuMDkiIHk9Ii0xOTQuNjkiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2Esc2Fucy1TZXJpZiIgZm9udC1zaXplPSIxNC4wMCI+R2VuZXJhbCB0d28mIzQ1O3BvaW50PC90ZXh0Pgo8dGV4dCB4bWw6c3BhY2U9InByZXNlcnZlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiB4PSIxNDEuMDkiIHk9Ii0xNzkuNjkiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2Esc2Fucy1TZXJpZiIgZm9udC1zaXplPSIxNC4wMCI+bG9nYXJpdGhtaWMgRWxsaW90dCB0aGVvcmVtPC90ZXh0Pgo8L2c+CjwhLS0gZWxsJiM0NTsmZ3Q7b21lZ2EgLS0+CjxnIGlkPSJlZGdlMiIgY2xhc3M9ImVkZ2UiPgo8dGl0bGU+ZWxsJiM0NTsmZ3Q7b21lZ2E8L3RpdGxlPgo8cGF0aCBmaWxsPSJub25lIiBzdHJva2U9IiM1OTYzNmUiIGQ9Ik0xNDQuNzMsLTIzNC4wNUMxNDYuNTIsLTI1MC4xMSAxNDguNzEsLTI2OS42MiAxNTAuNiwtMjg2LjU5Ii8+Cjxwb2x5Z29uIGZpbGw9IiM1OTYzNmUiIHN0cm9rZT0iIzU5NjM2ZSIgcG9pbnRzPSIxNDguMTMsLTI4Ni41IDE1MS4zNCwtMjkzLjE4IDE1MywtMjg1Ljk2IDE0OC4xMywtMjg2LjUiLz4KPHRleHQgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgeD0iMjA5LjYzIiB5PSItMjU5LjYyIiBmb250LWZhbWlseT0iSGVsdmV0aWNhLHNhbnMtU2VyaWYiIGZvbnQtc2l6ZT0iMTEuMDAiPmFwcGxpY2F0aW9uIGlucHV0IHN0aWxsIG9wZW48L3RleHQ+CjwvZz4KPCEtLSByaWNoIC0tPgo8ZyBpZD0ibm9kZTUiIGNsYXNzPSJub2RlIj4KPHRpdGxlPnJpY2g8L3RpdGxlPgo8cGF0aCBmaWxsPSJub25lIiBzdHJva2U9IiM5OTU1MTMiIHN0cm9rZS13aWR0aD0iMS41IiBzdHJva2UtZGFzaGFycmF5PSI1LDIiIGQ9Ik00NzAuMTcsLTM2MC4yM0M0NzAuMTcsLTM2MC4yMyAzMDQsLTM2MC4yMyAzMDQsLTM2MC4yMyAyOTgsLTM2MC4yMyAyOTIsLTM1NC4yMyAyOTIsLTM0OC4yMyAyOTIsLTM0OC4yMyAyOTIsLTMwNy4wNyAyOTIsLTMwNy4wNyAyOTIsLTMwMS4wNyAyOTgsLTI5NS4wNyAzMDQsLTI5NS4wNyAzMDQsLTI5NS4wNyA0NzAuMTcsLTI5NS4wNyA0NzAuMTcsLTI5NS4wNyA0NzYuMTcsLTI5NS4wNyA0ODIuMTcsLTMwMS4wNyA0ODIuMTcsLTMwNy4wNyA0ODIuMTcsLTMwNy4wNyA0ODIuMTcsLTM0OC4yMyA0ODIuMTcsLTM0OC4yMyA0ODIuMTcsLTM1NC4yMyA0NzYuMTcsLTM2MC4yMyA0NzAuMTcsLTM2MC4yMyIvPgo8dGV4dCB4bWw6c3BhY2U9InByZXNlcnZlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiB4PSIzODcuMDkiIHk9Ii0zMzYuODUiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2Esc2Fucy1TZXJpZiIgZm9udC1zaXplPSIxNC4wMCI+T1BFTiDCtyBDMyByaWNobmVzczwvdGV4dD4KPHRleHQgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgeD0iMzg3LjA5IiB5PSItMzIxLjg1IiBmb250LWZhbWlseT0iSGVsdmV0aWNhLHNhbnMtU2VyaWYiIGZvbnQtc2l6ZT0iMTQuMDAiPkV2ZXJ5IEdfYiB3b3JkLCBiIOKJpSAzLCBoYXM8L3RleHQ+Cjx0ZXh0IHhtbDpzcGFjZT0icHJlc2VydmUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIHg9IjM4Ny4wOSIgeT0iLTMwNi44NSIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxzYW5zLVNlcmlmIiBmb250LXNpemU9IjE0LjAwIj5wb3NpdGl2ZSBsb3dlciBmcmVxdWVuY3k8L3RleHQ+CjwvZz4KPCEtLSBrcCAtLT4KPGcgaWQ9Im5vZGU2IiBjbGFzcz0ibm9kZSI+Cjx0aXRsZT5rcDwvdGl0bGU+CjxwYXRoIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzk5NTUxMyIgc3Ryb2tlLXdpZHRoPSIxLjUiIHN0cm9rZS1kYXNoYXJyYXk9IjUsMiIgZD0iTTQ1OC41NSwtMjMzLjA3QzQ1OC41NSwtMjMzLjA3IDI2Ny42MywtMjMzLjA3IDI2Ny42MywtMjMzLjA3IDI2MS42MywtMjMzLjA3IDI1NS42MywtMjI3LjA3IDI1NS42MywtMjIxLjA3IDI1NS42MywtMjIxLjA3IDI1NS42MywtMTc5LjkxIDI1NS42MywtMTc5LjkxIDI1NS42MywtMTczLjkxIDI2MS42MywtMTY3LjkxIDI2Ny42MywtMTY3LjkxIDI2Ny42MywtMTY3LjkxIDQ1OC41NSwtMTY3LjkxIDQ1OC41NSwtMTY3LjkxIDQ2NC41NSwtMTY3LjkxIDQ3MC41NSwtMTczLjkxIDQ3MC41NSwtMTc5LjkxIDQ3MC41NSwtMTc5LjkxIDQ3MC41NSwtMjIxLjA3IDQ3MC41NSwtMjIxLjA3IDQ3MC41NSwtMjI3LjA3IDQ2NC41NSwtMjMzLjA3IDQ1OC41NSwtMjMzLjA3Ii8+Cjx0ZXh0IHhtbDpzcGFjZT0icHJlc2VydmUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIHg9IjM2My4wOSIgeT0iLTIwOS42OSIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxzYW5zLVNlcmlmIiBmb250LXNpemU9IjE0LjAwIj5PUEVOIMK3IGJleW9uZCBwdWJsaXNoZWQgaW5wdXQ8L3RleHQ+Cjx0ZXh0IHhtbDpzcGFjZT0icHJlc2VydmUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIHg9IjM2My4wOSIgeT0iLTE5NC42OSIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxzYW5zLVNlcmlmIiBmb250LXNpemU9IjE0LjAwIj5BbGwmIzQ1O3NjYWxlIEsmIzQ1O3BvaW50IGNhbmNlbGxhdGlvbjwvdGV4dD4KPHRleHQgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgeD0iMzYzLjA5IiB5PSItMTc5LjY5IiBmb250LWZhbWlseT0iSGVsdmV0aWNhLHNhbnMtU2VyaWYiIGZvbnQtc2l6ZT0iMTQuMDAiPisgY2hhcmFjdGVyJiM0NTt0d2lzdCBzdXBwbHk8L3RleHQ+CjwvZz4KPCEtLSBrcCYjNDU7Jmd0O3JpY2ggLS0+CjxnIGlkPSJlZGdlMyIgY2xhc3M9ImVkZ2UiPgo8dGl0bGU+a3AmIzQ1OyZndDtyaWNoPC90aXRsZT4KPHBhdGggZmlsbD0ibm9uZSIgc3Ryb2tlPSIjNTk2MzZlIiBkPSJNMzY5LjI3LC0yMzMuNzJDMzcyLjM0LC0yNDkuNzggMzc2LjEsLTI2OS4zNiAzNzkuMzcsLTI4Ni4zOSIvPgo8cG9seWdvbiBmaWxsPSIjNTk2MzZlIiBzdHJva2U9IiM1OTYzNmUiIHBvaW50cz0iMzc2LjkyLC0yODYuNjMgMzgwLjY0LC0yOTMuMDQgMzgxLjczLC0yODUuNyAzNzYuOTIsLTI4Ni42MyIvPgo8dGV4dCB4bWw6c3BhY2U9InByZXNlcnZlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiB4PSI0MjQuOTMiIHk9Ii0yNTkuNjIiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2Esc2Fucy1TZXJpZiIgZm9udC1zaXplPSIxMS4wMCI+Y29uZGl0aW9uYWwgcmVkdWN0aW9uPC90ZXh0Pgo8L2c+CjwhLS0gZWIgLS0+CjxnIGlkPSJub2RlNyIgY2xhc3M9Im5vZGUiPgo8dGl0bGU+ZWI8L3RpdGxlPgo8cGF0aCBmaWxsPSJub25lIiBzdHJva2U9IiM5OTU1MTMiIHN0cm9rZS13aWR0aD0iMS41IiBzdHJva2UtZGFzaGFycmF5PSI1LDIiIGQ9Ik02ODEuMDUsLTM2MC4yM0M2ODEuMDUsLTM2MC4yMyA1MTcuMTIsLTM2MC4yMyA1MTcuMTIsLTM2MC4yMyA1MTEuMTMsLTM2MC4yMyA1MDUuMTMsLTM1NC4yMyA1MDUuMTMsLTM0OC4yMyA1MDUuMTMsLTM0OC4yMyA1MDUuMTMsLTMwNy4wNyA1MDUuMTMsLTMwNy4wNyA1MDUuMTMsLTMwMS4wNyA1MTEuMTMsLTI5NS4wNyA1MTcuMTIsLTI5NS4wNyA1MTcuMTIsLTI5NS4wNyA2ODEuMDUsLTI5NS4wNyA2ODEuMDUsLTI5NS4wNyA2ODcuMDUsLTI5NS4wNyA2OTMuMDUsLTMwMS4wNyA2OTMuMDUsLTMwNy4wNyA2OTMuMDUsLTMwNy4wNyA2OTMuMDUsLTM0OC4yMyA2OTMuMDUsLTM0OC4yMyA2OTMuMDUsLTM1NC4yMyA2ODcuMDUsLTM2MC4yMyA2ODEuMDUsLTM2MC4yMyIvPgo8dGV4dCB4bWw6c3BhY2U9InByZXNlcnZlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiB4PSI1OTkuMDkiIHk9Ii0zMzYuODUiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2Esc2Fucy1TZXJpZiIgZm9udC1zaXplPSIxNC4wMCI+T1BFTiDCtyBDMiBkaXNqdW5jdGl2aXR5PC90ZXh0Pgo8dGV4dCB4bWw6c3BhY2U9InByZXNlcnZlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiB4PSI1OTkuMDkiIHk9Ii0zMjEuODUiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2Esc2Fucy1TZXJpZiIgZm9udC1zaXplPSIxNC4wMCI+RXZlcnkgd29yZCBvY2N1cnMgaW48L3RleHQ+Cjx0ZXh0IHhtbDpzcGFjZT0icHJlc2VydmUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIHg9IjU5OS4wOSIgeT0iLTMwNi44NSIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxzYW5zLVNlcmlmIiBmb250LXNpemU9IjE0LjAwIj5FcmTFkXPigJNCb3J3ZWluLCBiYXNlIGIg4omlIDM8L3RleHQ+CjwvZz4KPCEtLSBjcnQgLS0+CjxnIGlkPSJub2RlOCIgY2xhc3M9Im5vZGUiPgo8dGl0bGU+Y3J0PC90aXRsZT4KPHBhdGggZmlsbD0ibm9uZSIgc3Ryb2tlPSIjNWM0ODkwIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1kYXNoYXJyYXk9IjEsNSIgZD0iTTY4MS4wNSwtMjMzLjA3QzY4MS4wNSwtMjMzLjA3IDUwNS4xMiwtMjMzLjA3IDUwNS4xMiwtMjMzLjA3IDQ5OS4xMiwtMjMzLjA3IDQ5My4xMiwtMjI3LjA3IDQ5My4xMiwtMjIxLjA3IDQ5My4xMiwtMjIxLjA3IDQ5My4xMiwtMTc5LjkxIDQ5My4xMiwtMTc5LjkxIDQ5My4xMiwtMTczLjkxIDQ5OS4xMiwtMTY3LjkxIDUwNS4xMiwtMTY3LjkxIDUwNS4xMiwtMTY3LjkxIDY4MS4wNSwtMTY3LjkxIDY4MS4wNSwtMTY3LjkxIDY4Ny4wNSwtMTY3LjkxIDY5My4wNSwtMTczLjkxIDY5My4wNSwtMTc5LjkxIDY5My4wNSwtMTc5LjkxIDY5My4wNSwtMjIxLjA3IDY5My4wNSwtMjIxLjA3IDY5My4wNSwtMjI3LjA3IDY4Ny4wNSwtMjMzLjA3IDY4MS4wNSwtMjMzLjA3Ii8+Cjx0ZXh0IHhtbDpzcGFjZT0icHJlc2VydmUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIHg9IjU5My4wOSIgeT0iLTIwOS42OSIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxzYW5zLVNlcmlmIiBmb250LXNpemU9IjE0LjAwIj5QUk9QT1NFRCDCtyBDMiByZWRlc2lnbjwvdGV4dD4KPHRleHQgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgeD0iNTkzLjA5IiB5PSItMTk0LjY5IiBmb250LWZhbWlseT0iSGVsdmV0aWNhLHNhbnMtU2VyaWYiIGZvbnQtc2l6ZT0iMTQuMDAiPkNob29zZSBDUlQgcHJpbWVzIHRvIGF2b2lkPC90ZXh0Pgo8dGV4dCB4bWw6c3BhY2U9InByZXNlcnZlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiB4PSI1OTMuMDkiIHk9Ii0xNzkuNjkiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2Esc2Fucy1TZXJpZiIgZm9udC1zaXplPSIxNC4wMCI+ZXhjZXB0aW9uYWwgbW9kdWxpPC90ZXh0Pgo8L2c+CjwhLS0gY3J0JiM0NTsmZ3Q7ZWIgLS0+CjxnIGlkPSJlZGdlNCIgY2xhc3M9ImVkZ2UiPgo8dGl0bGU+Y3J0JiM0NTsmZ3Q7ZWI8L3RpdGxlPgo8cGF0aCBmaWxsPSJub25lIiBzdHJva2U9IiM1YzQ4OTAiIHN0cm9rZS1kYXNoYXJyYXk9IjUsMiIgZD0iTTU5NC42NSwtMjM0LjA1QzU5NS40MiwtMjUwLjExIDU5Ni4zNSwtMjY5LjYyIDU5Ny4xNiwtMjg2LjU5Ii8+Cjxwb2x5Z29uIGZpbGw9IiM1YzQ4OTAiIHN0cm9rZT0iIzVjNDg5MCIgcG9pbnRzPSI1OTQuNywtMjg2LjMgNTk3LjQ4LC0yOTMuMTggNTk5LjU5LC0yODYuMDcgNTk0LjcsLTI4Ni4zIi8+Cjx0ZXh0IHhtbDpzcGFjZT0icHJlc2VydmUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIHg9IjY2Ny44OSIgeT0iLTI1OS42MiIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxzYW5zLVNlcmlmIiBmb250LXNpemU9IjExLjAwIj5wcmVzZXJ2ZSB0aGUgZGlnaXQgY29uc3RydWN0aW9uPC90ZXh0Pgo8L2c+CjwhLS0gZGlzaiAtLT4KPGcgaWQ9Im5vZGU5IiBjbGFzcz0ibm9kZSI+Cjx0aXRsZT5kaXNqPC90aXRsZT4KPHBhdGggZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMTc2ODUyIiBzdHJva2Utd2lkdGg9IjIiIGQ9Ik0xOTUuMTcsLTkxLjE2QzE5NS4xNywtOTEuMTYgNjUsLTkxLjE2IDY1LC05MS4xNiA1OSwtOTEuMTYgNTMsLTg1LjE2IDUzLC03OS4xNiA1MywtNzkuMTYgNTMsLTM4IDUzLC0zOCA1MywtMzIgNTksLTI2IDY1LC0yNiA2NSwtMjYgMTk1LjE3LC0yNiAxOTUuMTcsLTI2IDIwMS4xNywtMjYgMjA3LjE3LC0zMiAyMDcuMTcsLTM4IDIwNy4xNywtMzggMjA3LjE3LC03OS4xNiAyMDcuMTcsLTc5LjE2IDIwNy4xNywtODUuMTYgMjAxLjE3LC05MS4xNiAxOTUuMTcsLTkxLjE2Ii8+Cjx0ZXh0IHhtbDpzcGFjZT0icHJlc2VydmUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIHg9IjEzMC4wOSIgeT0iLTY3Ljc4IiBmb250LWZhbWlseT0iSGVsdmV0aWNhLHNhbnMtU2VyaWYiIGZvbnQtc2l6ZT0iMTQuMDAiPlBST1ZFRDwvdGV4dD4KPHRleHQgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgeD0iMTMwLjA5IiB5PSItNTIuNzgiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2Esc2Fucy1TZXJpZiIgZm9udC1zaXplPSIxNC4wMCI+RXZlcnkgYmFzZSYjNDU7Zm91ciB3b3JkPC90ZXh0Pgo8dGV4dCB4bWw6c3BhY2U9InByZXNlcnZlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiB4PSIxMzAuMDkiIHk9Ii0zNy43OCIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxzYW5zLVNlcmlmIiBmb250LXNpemU9IjE0LjAwIj5hbHJlYWR5IG9jY3VycyBpbiBH4oKEPC90ZXh0Pgo8L2c+CjwhLS0gc3BhcnNlIC0tPgo8ZyBpZD0ibm9kZTEwIiBjbGFzcz0ibm9kZSI+Cjx0aXRsZT5zcGFyc2U8L3RpdGxlPgo8cGF0aCBmaWxsPSJub25lIiBzdHJva2U9IiMxNzY4NTIiIHN0cm9rZS13aWR0aD0iMiIgZD0iTTQ2MS41NSwtOTEuMTZDNDYxLjU1LC05MS4xNiAyNjQuNjMsLTkxLjE2IDI2NC42MywtOTEuMTYgMjU4LjYzLC05MS4xNiAyNTIuNjMsLTg1LjE2IDI1Mi42MywtNzkuMTYgMjUyLjYzLC03OS4xNiAyNTIuNjMsLTM4IDI1Mi42MywtMzggMjUyLjYzLC0zMiAyNTguNjMsLTI2IDI2NC42MywtMjYgMjY0LjYzLC0yNiA0NjEuNTUsLTI2IDQ2MS41NSwtMjYgNDY3LjU1LC0yNiA0NzMuNTUsLTMyIDQ3My41NSwtMzggNDczLjU1LC0zOCA0NzMuNTUsLTc5LjE2IDQ3My41NSwtNzkuMTYgNDczLjU1LC04NS4xNiA0NjcuNTUsLTkxLjE2IDQ2MS41NSwtOTEuMTYiLz4KPHRleHQgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgeD0iMzYzLjA5IiB5PSItNjcuNzgiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2Esc2Fucy1TZXJpZiIgZm9udC1zaXplPSIxNC4wMCI+UFJPVkVEIMK3IEPigLI8L3RleHQ+Cjx0ZXh0IHhtbDpzcGFjZT0icHJlc2VydmUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIHg9IjM2My4wOSIgeT0iLTUyLjc4IiBmb250LWZhbWlseT0iSGVsdmV0aWNhLHNhbnMtU2VyaWYiIGZvbnQtc2l6ZT0iMTQuMDAiPlNwYXJzZSYjNDU7cHJpbWUgTGFtYmVydCBub3JtYWxpdHk8L3RleHQ+Cjx0ZXh0IHhtbDpzcGFjZT0icHJlc2VydmUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIHg9IjM2My4wOSIgeT0iLTM3Ljc4IiBmb250LWZhbWlseT0iSGVsdmV0aWNhLHNhbnMtU2VyaWYiIGZvbnQtc2l6ZT0iMTQuMDAiPkZ1bGwgcHJpbWVzIGZhaWwgaXRzIGh5cG90aGVzaXM8L3RleHQ+CjwvZz4KPCEtLSBkaXNqJiM0NTsmZ3Q7c3BhcnNlIC0tPgo8IS0tIHNwYXJzZSYjNDU7Jmd0O2twIC0tPgo8IS0tIHNwZWN0cnVtIC0tPgo8ZyBpZD0ibm9kZTExIiBjbGFzcz0ibm9kZSI+Cjx0aXRsZT5zcGVjdHJ1bTwvdGl0bGU+CjxwYXRoIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzE3Njg1MiIgc3Ryb2tlLXdpZHRoPSIyIiBkPSJNNzI3LjE3LC05MS4xNkM3MjcuMTcsLTkxLjE2IDUzMSwtOTEuMTYgNTMxLC05MS4xNiA1MjUsLTkxLjE2IDUxOSwtODUuMTYgNTE5LC03OS4xNiA1MTksLTc5LjE2IDUxOSwtMzggNTE5LC0zOCA1MTksLTMyIDUyNSwtMjYgNTMxLC0yNiA1MzEsLTI2IDcyNy4xNywtMjYgNzI3LjE3LC0yNiA3MzMuMTcsLTI2IDczOS4xNywtMzIgNzM5LjE3LC0zOCA3MzkuMTcsLTM4IDczOS4xNywtNzkuMTYgNzM5LjE3LC03OS4xNiA3MzkuMTcsLTg1LjE2IDczMy4xNywtOTEuMTYgNzI3LjE3LC05MS4xNiIvPgo8dGV4dCB4bWw6c3BhY2U9InByZXNlcnZlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiB4PSI2MjkuMDkiIHk9Ii02Ny43OCIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxzYW5zLVNlcmlmIiBmb250LXNpemU9IjE0LjAwIj5QUk9WRUQgwrcgQzQ8L3RleHQ+Cjx0ZXh0IHhtbDpzcGFjZT0icHJlc2VydmUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIHg9IjYyOS4wOSIgeT0iLTUyLjc4IiBmb250LWZhbWlseT0iSGVsdmV0aWNhLHNhbnMtU2VyaWYiIGZvbnQtc2l6ZT0iMTQuMDAiPkNvbXBsZXRlIGFiZWxpYW4gbGVuZ3RoIHNwZWN0cmE8L3RleHQ+Cjx0ZXh0IHhtbDpzcGFjZT0icHJlc2VydmUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIHg9IjYyOS4wOSIgeT0iLTM3Ljc4IiBmb250LWZhbWlseT0iSGVsdmV0aWNhLHNhbnMtU2VyaWYiIGZvbnQtc2l6ZT0iMTQuMDAiPkNvdW50cyBvbmVzOyBmb3JnZXRzIG9yZGVyPC90ZXh0Pgo8L2c+CjwhLS0gc3BhcnNlJiM0NTsmZ3Q7c3BlY3RydW0gLS0+CjwvZz4KPC9zdmc+Cg==" alt="Normal Numbers map: completed sparse-prime and digit-spectrum theorems, the missing ordinary growing-carry estimate for G4, and the separate Elliott, C3, and C2 branches." />
+<figcaption aria-hidden="true">Normal Numbers map: completed
+sparse-prime and digit-spectrum theorems, the missing ordinary
+growing-carry estimate for G4, and the separate Elliott, C3, and C2
+branches.</figcaption>
+</figure>
+<p><strong>Reading the map:</strong> solid arrows are proved reductions,
+with the labeled open inputs still required. Dashed arrows are missing
+research steps. Separate branches do not imply one another. The
+completed sparse-prime theorem does not apply to the full prime set.</p>
+<h2 id="what-we-have-actually-established">What we have actually
+established</h2>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Result</th>
+<th>What it says</th>
+<th>Its boundary</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>G₄ is disjunctive</strong></td>
+<td>Every finite base-four digit word appears.</td>
+<td>Occurrence does not determine frequency.</td>
+</tr>
+<tr>
+<td><strong>C′: a family of prime Lambert constants is
+normal</strong></td>
+<td>Keep a prime set P with divergent reciprocal sum but vanishing
+reciprocal mass between √N and N. Its Lambert constant is base-four
+normal.</td>
+<td>All primes fail the vanishing-mass condition. This is a finished
+theorem about a different family.</td>
+</tr>
+<tr>
+<td><strong>C4: complete classification of abelian length
+spectra</strong></td>
+<td>For binary digits, every set of positive lengths that is empty or
+contains 1 can be exactly the set of lengths with the correct binomial
+count of ones.</td>
+<td>This statistic forgets digit order. It does not establish normality
+of G₄.</td>
+</tr>
+<tr>
+<td><strong>General two-point logarithmic Elliott</strong></td>
+<td>A general theorem controlling logarithmically averaged two-point
+correlations of multiplicative functions is proved.</td>
+<td>Applying it to the relevant prime-factor function still needs an
+estimate; its averages are logarithmic.</td>
+</tr>
+</tbody>
+</table>
+<p>Earlier completed work includes an explicit constructed number that
+is simultaneously absolutely normal, continued-fraction normal, and
+Khinchin typical. The move toward naturally specified arithmetic
+constants introduced the new difficulties shown here.</p>
+<h2 id="where-we-are-pressing">Where we are pressing</h2>
+<h3 id="main-frontier-the-actual-carries-of-g₄">Main frontier: the
+actual carries of G₄</h3>
+<p>Writing G₄ as <strong>∑ ω(n)/4ⁿ</strong>, where ω(n) counts distinct
+prime factors, exposes the difficulty: the coefficient at one position
+can carry into earlier digits. Normality requires cancellation for the
+<strong>actual growing carry window</strong>, averaged over ordinary
+initial intervals.</p>
+<p>Fixed-size prime-factor statistics, Poisson models, and even
+consistent distributions under shifts are insufficient. Counterexamples
+to those generic routes are already recorded. A successful input must
+use more of the specific arithmetic of ω. The sufficient Fourier
+criterion is proved; the needed arithmetic cancellation is open.</p>
+<h3 id="elliott-a-concrete-analytic-input-followed-by-a-genuine-strength-gap">Elliott:
+a concrete analytic input, followed by a genuine strength gap</h3>
+<p>The latest work reduces the logarithmic two-point application to a
+<strong>sublinear power-of-log bound for the logarithmic derivative of
+the Riemann zeta function</strong>, in the specified height range. The
+existing bound has exponent 9; the consumer needs an exponent below
+1.</p>
+<p>Closing that input would deliver the logarithmic application. It
+would not automatically give ordinary averages, nor control arbitrarily
+growing carry depth. Those gaps are drawn explicitly in the map.</p>
+<h3 id="c3-every-word-with-positive-lower-frequency">C3: every word with
+positive lower frequency</h3>
+<p>This is a meaningful intermediate target, called
+<strong>richness</strong>, for every prime Lambert constant G_b with b ≥
+3. The September 25 audit found incorrect or vacuous inputs; the live
+branch has since repaired their statements. Its central missing
+ingredient is now faithfully stated: <strong>K-point cancellation at
+every sufficiently large scale</strong>, without exceptional scales and
+with quantitative control as K grows, together with the required uniform
+analytic estimates.</p>
+<p>The published two-point result with exceptional scales does not
+supply that input. The <code>UniformResonantMass</code> proposition
+itself is already proved; an unfinished alternate proof is not a new
+mathematical barrier.</p>
+<h3 id="c2-every-word-in-an-erdősborwein-constant">C2: every word in an
+Erdős–Borwein constant</h3>
+<p>For <strong>E_b = ∑ₙ≥₁ 1/(bⁿ − 1), b ≥ 3</strong>, the target is
+disjunctivity. Much of the digit-forcing and divisor control is in
+place; the prime-survivor argument is open.</p>
+<p>The review proposes choosing the search height first, then selecting
+the primes in the Chinese-remainder construction to avoid the finite
+exceptional moduli in an applicable prime-distribution theorem. This
+redesign is <strong>proposed, not implemented</strong>. Its first test
+is whether that selection preserves every congruence and size
+requirement of the digit construction.</p>
+<h2 id="what-would-count-as-a-change-in-position">What would count as a
+change in position?</h2>
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr>
+<th>Next result</th>
+<th>What changes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Expose C′ and C4 as readable standalone proofs</td>
+<td>Makes two completed mathematical achievements independently
+assessable.</td>
+</tr>
+<tr>
+<td>Supply Elliott’s sublinear analytic bound</td>
+<td>Completes a concrete logarithmic application.</td>
+</tr>
+<tr>
+<td>Prove the faithful C3 inputs</td>
+<td>Every word gains positive lower frequency, still short of
+normality.</td>
+</tr>
+<tr>
+<td>Make C2’s prime-survivor construction work</td>
+<td>Completes disjunctivity for the stated Erdős–Borwein family.</td>
+</tr>
+<tr>
+<td>Prove ordinary cancellation through G₄’s growing carries</td>
+<td>Reaches G₄ normality via the existing criterion.</td>
+</tr>
+</tbody>
+</table>
+<p>The growing-prime localized-logarithm proposal is another independent
+normality prospect, still at paper-audit stage. It is not a route
+already connecting these branches to G₄.</p>
+<h2 id="evidence-and-upkeep">Evidence and upkeep</h2>
+<p>Snapshot: main <code>wip/g5-prime-subset</code> at
+<code>97215f6</code>; worktrees <code>nn-elliott:d420003</code>,
+<code>nn-c3mrt:7cedd1b</code>, <code>nn-c2:df29025</code>,
+<code>nn-c4:5acf4dd</code>. These are snapshots, not promises that the
+branches stay still.</p>
+<p>Main-tree sources: <a href="src/NormalNumbers/PrimeModelGradedStatement.lean">C′ audit
+statement</a>, <a href="src/NormalNumbers/G4WindowK.lean">carry
+criterion</a>, <a href="src/NormalNumbers/CastingOut.lean">precise
+rungs</a>, and <a href="src/NormalNumbers/Maze.lean">retired routes</a>.
+Worktree sources: <a href="../nn-c4/src/NormalNumbers/AbelianWindowBuild.lean">C4
+theorem</a>, <a href="../nn-elliott/HANDOFF-elliott-2026-09-25-lap121.md">Elliott
+frontier</a>, <a href="../nn-c3mrt/DIRECTION.md">C3 direction</a>, and
+<a href="../nn-c2/src/NormalNumbers/SwingC2.lean">C2 construction</a>.
+Worktree links are local to this checkout layout. The September 25
+review predates C3’s repair and the latest Elliott reduction.</p>
+<p>This is the maintained reader’s map. Update it when a frontier is
+proved, refuted, or replaced; keep proof details in their existing
+source and research notes. Diagram source: <a href="docs/overview.dot">docs/overview.dot</a>. Rebuild the visual
+edition with <code>make -f docs/overview.mk</code>.</p>
+</body>
+</html>

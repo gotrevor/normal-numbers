@@ -1,0 +1,35 @@
+digraph NormalNumbers {
+  graph [rankdir=BT, bgcolor="white", pad=0.3, nodesep=0.32, ranksep=0.7, fontname="Helvetica", fontsize=15, compound=true];
+  node [shape=box, style="rounded", fontname="Helvetica", fontsize=14, margin="0.18,0.14", color="#59636e", penwidth=1.5];
+  edge [fontname="Helvetica", fontsize=11, color="#59636e", arrowsize=0.7];
+
+  goal [label="MAIN DESTINATION · OPEN\nG₄ is normal in base four\nEvery word has the exact frequency", fontsize=18, penwidth=2.5, color="#152c3a"];
+  carry [label="OPEN · decisive arithmetic input\nOrdinary-average cancellation\nthrough the actual growing carries", color="#995513", style="rounded,dashed"];
+  carry -> goal [label="proved Fourier criterion"];
+
+  subgraph cluster_work {
+    label="CURRENT BRANCHES · DIFFERENT ENDPOINTS"; color="#ccd3d9"; margin=18; labelloc=b;
+    omega [label="OPEN · logarithmic application\nTwo-point prime-factor correlation\nNeeds a sublinear zeta bound", color="#995513", style="rounded,dashed"];
+    ell [label="PROVED · analytic tool\nGeneral two-point\nlogarithmic Elliott theorem", color="#176852", penwidth=2];
+    rich [label="OPEN · C3 richness\nEvery G_b word, b ≥ 3, has\npositive lower frequency", color="#995513", style="rounded,dashed"];
+    kp [label="OPEN · beyond published input\nAll-scale K-point cancellation\n+ character-twist supply", color="#995513", style="rounded,dashed"];
+    eb [label="OPEN · C2 disjunctivity\nEvery word occurs in\nErdős–Borwein, base b ≥ 3", color="#995513", style="rounded,dashed"];
+    crt [label="PROPOSED · C2 redesign\nChoose CRT primes to avoid\nexceptional moduli", color="#5c4890", style="rounded,dotted", penwidth=2];
+    ell -> omega [label="application input still open"];
+    kp -> rich [label="conditional reduction"];
+    crt -> eb [style=dashed, label="preserve the digit construction", color="#5c4890"];
+    {rank=same; omega; rich; eb;}
+    {rank=same; ell; kp; crt;}
+  }
+  omega -> carry [style=dashed, label="TWO MISSING STEPS\nlogarithmic → ordinary averages\ntwo points → growing carry depth", color="#995513"];
+
+  subgraph cluster_done {
+    label="COMPLETED RESULTS · THEIR OWN ENDPOINTS"; color="#ccd3d9"; margin=18; labelloc=b;
+    disj [label="PROVED\nEvery base-four word\nalready occurs in G₄", color="#176852", penwidth=2];
+    sparse [label="PROVED · C′\nSparse-prime Lambert normality\nFull primes fail its hypothesis", color="#176852", penwidth=2];
+    spectrum [label="PROVED · C4\nComplete abelian length spectra\nCounts ones; forgets order", color="#176852", penwidth=2];
+    {rank=same; disj; sparse; spectrum;}
+    disj -> sparse -> spectrum [style=invis];
+  }
+  sparse -> kp [style=invis, minlen=1];
+}

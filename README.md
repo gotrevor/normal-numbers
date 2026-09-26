@@ -1,5 +1,7 @@
 # normal-numbers
 
+> **Current project map (26 September 2026):** [overview and diagram](OVERVIEW.md) · [browser edition](OVERVIEW.html).  What is proved, where the gaps are, and where we are pressing.
+
 A Lean 4 / [Mathlib](https://github.com/leanprover-community/mathlib4) programme
 on **normal numbers**: numbers whose base-`b` digit expansion contains every
 length-`k` block with asymptotic frequency `b⁻ᵏ`.
