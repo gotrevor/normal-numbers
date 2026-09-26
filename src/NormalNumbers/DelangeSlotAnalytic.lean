@@ -201,7 +201,7 @@ theorem exists_L2 (z : ℂ) (hz : ‖z‖ = 1) (P : ℕ) :
         linarith
     _ = (16 + 4 * ∑ n ∈ Icc 2 P, Real.log n / (n : ℝ)) * N := by ring
 
-/-- **L4.**  `ψ (N/k) = N/k + Δ(N/k)` summed against `h`; consumes `PNTPort.MediumPNT` through
+/-- **L4.**  `ψ (N/k) = N/k + Δ(N/k)` summed against `h`; consumes `PrimeNumberTheoremAnd.MediumPNT` through
 `∑_{k ≤ N} |Δ(N/k)| = O(N)`. -/
 theorem exists_L4 (z : ℂ) (hz : ‖z‖ = 1) (P : ℕ) :
     ∃ C : ℝ, ∀ N : ℕ,

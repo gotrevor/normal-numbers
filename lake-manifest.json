@@ -15,6 +15,18 @@
    "configFile": "lakefile.toml"
   },
   {
+   "url": "https://github.com/hanwenzhu/LeanArchitect.git",
+   "type": "git",
+   "subDir": null,
+   "scope": "",
+   "rev": "0f5bc0209ae02a7fb0cfe7d113d4094542cee221",
+   "name": "LeanArchitect",
+   "manifestFile": "lake-manifest.json",
+   "inputRev": "0f5bc0209ae0",
+   "inherited": false,
+   "configFile": "lakefile.lean"
+  },
+  {
    "url": "https://github.com/leanprover-community/LeanSearchClient",
    "type": "git",
    "subDir": null,
@@ -24,6 +36,30 @@
    "manifestFile": "lake-manifest.json",
    "inputRev": "main",
    "inherited": true,
+   "configFile": "lakefile.toml"
+  },
+  {
+   "url": "https://github.com/b-mehta/PrimeCert",
+   "type": "git",
+   "subDir": null,
+   "scope": "",
+   "rev": "916ee9c35a57af128d5089a69172415051e700ca",
+   "name": "PrimeCert",
+   "manifestFile": "lake-manifest.json",
+   "inputRev": "916ee9c35a57af128d5089a69172415051e700ca",
+   "inherited": false,
+   "configFile": "lakefile.toml"
+  },
+  {
+   "url": "https://github.com/AlexKontorovich/PrimeNumberTheoremAnd.git",
+   "type": "git",
+   "subDir": null,
+   "scope": "",
+   "rev": "55270df807213fc3584523d09e0311d7dc073ff5",
+   "name": "PrimeNumberTheoremAnd",
+   "manifestFile": "lake-manifest.json",
+   "inputRev": "55270df807213fc3584523d09e0311d7dc073ff5",
+   "inherited": false,
    "configFile": "lakefile.toml"
   },
   {
@@ -63,6 +99,18 @@
    "configFile": "lakefile.toml"
   },
   {
+   "url": "https://github.com/PatrickMassot/checkdecls.git",
+   "type": "git",
+   "subDir": null,
+   "scope": "",
+   "rev": "3d425859e73fcfbef85b9638c2a91708ef4a22d4",
+   "name": "checkdecls",
+   "manifestFile": "lake-manifest.json",
+   "inputRev": "3d425859e73f",
+   "inherited": false,
+   "configFile": "lakefile.lean"
+  },
+  {
    "url": "https://github.com/leanprover-community/import-graph",
    "type": "git",
    "subDir": null,
@@ -72,6 +120,18 @@
    "manifestFile": "lake-manifest.json",
    "inputRev": "main",
    "inherited": true,
+   "configFile": "lakefile.toml"
+  },
+  {
+   "url": "https://github.com/alerad/leancert.git",
+   "type": "git",
+   "subDir": null,
+   "scope": "",
+   "rev": "621a43d7cf21f87872392a01e874f2f1dbddc926",
+   "name": "leancert",
+   "manifestFile": "lake-manifest.json",
+   "inputRev": "621a43d7cf21f87872392a01e874f2f1dbddc926",
+   "inherited": false,
    "configFile": "lakefile.toml"
   },
   {
