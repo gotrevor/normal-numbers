@@ -264,4 +264,73 @@ lemma poly_eight_le_two_pow (C m : ℕ) {k : ℕ} (hk : 2 * (6562 * C + m + 45) 
     _ ≤ y * y := hmain
     _ ≤ 2 ^ k := hysq
 
+/-! ### The crude far-range bound and summability -/
+
+/-- `τ(n) ≤ n` (crude, but all the far range needs). -/
+lemma tau_le_self (n : ℕ) : NormalNumbers.SwingC2.tau n ≤ n := by
+  rcases Nat.eq_zero_or_pos n with rfl | hn
+  · simp [NormalNumbers.SwingC2.tau]
+  · have : n.divisors ⊆ Icc 1 n := by
+      intro d hd
+      rw [Nat.mem_divisors] at hd
+      exact Finset.mem_Icc.2 ⟨Nat.pos_of_dvd_of_pos hd.1 hn, Nat.le_of_dvd hn hd.1⟩
+    calc NormalNumbers.SwingC2.tau n = n.divisors.card := rfl
+      _ ≤ (Icc 1 n).card := Finset.card_le_card this
+      _ = n := by simp
+
+/-- `t ↦ (a + t) · 2^(-t)` is summable for every real `a`. -/
+lemma summable_affine_geometric (a : ℝ) :
+    Summable (fun t : ℕ => (a + t) / 2 ^ t) := by
+  have hr : ‖(1 / 2 : ℝ)‖ < 1 := by rw [Real.norm_eq_abs]; rw [abs_of_pos] <;> norm_num
+  have h1 : Summable (fun t : ℕ => a * (1 / 2 : ℝ) ^ t) :=
+    (summable_geometric_of_norm_lt_one hr).mul_left a
+  have h2 : Summable (fun t : ℕ => (t : ℝ) * (1 / 2 : ℝ) ^ t) := by
+    simpa using summable_pow_mul_geometric_of_norm_lt_one (R := ℝ) 1 hr
+  have := h1.add h2
+  refine this.congr ?_
+  intro t
+  rw [div_pow, one_pow]
+  field_simp
+
+/-- The tail `∑' t, τ(N₀ + t)/2^t` converges. -/
+lemma summable_tau_div (N₀ : ℕ) :
+    Summable (fun t : ℕ => (NormalNumbers.SwingC2.tau (N₀ + t) : ℝ) / 2 ^ t) := by
+  refine Summable.of_nonneg_of_le (fun t => by positivity) (fun t => ?_)
+    (summable_affine_geometric (N₀ : ℝ))
+  have h1 : (NormalNumbers.SwingC2.tau (N₀ + t) : ℝ) ≤ (N₀ : ℝ) + t := by
+    have := tau_le_self (N₀ + t)
+    have : ((NormalNumbers.SwingC2.tau (N₀ + t) : ℕ) : ℝ) ≤ ((N₀ + t : ℕ) : ℝ) :=
+      Nat.cast_le.2 this
+    push_cast at this
+    exact this
+  exact div_le_div_of_nonneg_right h1 (by positivity)
+
+/-- **The crude far-range tail bound**: `∑' t, τ(N₀ + t)/2^t ≤ 2 N₀ + 2`. -/
+lemma tsum_tau_div_le (N₀ : ℕ) :
+    ∑' t : ℕ, (NormalNumbers.SwingC2.tau (N₀ + t) : ℝ) / 2 ^ t ≤ 2 * N₀ + 2 := by
+  have hr : ‖(1 / 2 : ℝ)‖ < 1 := by rw [Real.norm_eq_abs, abs_of_pos] <;> norm_num
+  have hval : ∑' t : ℕ, ((N₀ : ℝ) + t) / 2 ^ t = 2 * N₀ + 2 := by
+    have h1 : Summable (fun t : ℕ => (N₀ : ℝ) * (1 / 2 : ℝ) ^ t) :=
+      (summable_geometric_of_norm_lt_one hr).mul_left _
+    have h2 : Summable (fun t : ℕ => (t : ℝ) * (1 / 2 : ℝ) ^ t) := by
+      simpa using summable_pow_mul_geometric_of_norm_lt_one (R := ℝ) 1 hr
+    have hcong : (fun t : ℕ => ((N₀ : ℝ) + t) / 2 ^ t)
+        = fun t : ℕ => (N₀ : ℝ) * (1 / 2 : ℝ) ^ t + (t : ℝ) * (1 / 2 : ℝ) ^ t := by
+      funext t
+      rw [div_pow, one_pow]
+      field_simp
+    rw [hcong, h1.tsum_add h2, tsum_mul_left, tsum_geometric_two,
+      tsum_coe_mul_geometric_of_norm_lt_one hr]
+    norm_num
+    ring
+  calc ∑' t : ℕ, (NormalNumbers.SwingC2.tau (N₀ + t) : ℝ) / 2 ^ t
+      ≤ ∑' t : ℕ, ((N₀ : ℝ) + t) / 2 ^ t := by
+        refine Summable.tsum_le_tsum (fun t => ?_) (summable_tau_div N₀)
+          (summable_affine_geometric (N₀ : ℝ))
+        have h1 : ((NormalNumbers.SwingC2.tau (N₀ + t) : ℕ) : ℝ) ≤ ((N₀ + t : ℕ) : ℝ) :=
+          Nat.cast_le.2 (tau_le_self _)
+        push_cast at h1
+        exact div_le_div_of_nonneg_right h1 (by positivity)
+    _ = 2 * N₀ + 2 := hval
+
 end NormalNumbers.JointLambert
