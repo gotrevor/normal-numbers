@@ -869,6 +869,224 @@ theorem stateStepIter_doeblin_two_sided [Nonempty S] {B q β : ℝ} {Φ : S → 
       nlinarith [hε.le]
     linarith
 
+/-! ## Monotonicity of the range, and the shifted iterate -/
+
+/-- The operator is an average, so it never widens the range. -/
+lemma stateStepOp_mem_range_bounds [Nonempty S] {B : ℝ} {Φ : S → ℝ → ℝ} (hΦ : InCone B Φ)
+    (δ : S → ℕ → S) (d : S) {τ : ℝ} (hτ : τ ∈ Set.Icc (0 : ℝ) 1) :
+    famInf Φ ≤ stateStepOp δ Φ d τ ∧ stateStepOp δ Φ d τ ≤ famSup Φ := by
+  have hsum := summable_stateStep hΦ δ d hτ
+  constructor
+  · calc famInf Φ = ∑' k : ℕ, stepWeight τ k * famInf Φ := by
+          rw [tsum_mul_right, tsum_stepWeight hτ.1, one_mul]
+      _ ≤ stateStepOp δ Φ d τ :=
+          ((summable_stepWeight hτ.1).mul_right _).tsum_le_tsum
+            (fun k => mul_le_mul_of_nonneg_left
+              (famInf_le hΦ _ (stepPt_mem_Icc hτ.1 k)) (stepWeight_nonneg hτ.1 k)) hsum
+  · calc stateStepOp δ Φ d τ ≤ ∑' k : ℕ, stepWeight τ k * famSup Φ :=
+          hsum.tsum_le_tsum (fun k => mul_le_mul_of_nonneg_left
+            (le_famSup hΦ _ (stepPt_mem_Icc hτ.1 k)) (stepWeight_nonneg hτ.1 k))
+            ((summable_stepWeight hτ.1).mul_right _)
+      _ = famSup Φ := by rw [tsum_mul_right, tsum_stepWeight hτ.1, one_mul]
+
+/-- `F_{n+m}(·,s) = Lᵐ F_n(·,s)` on `[0,1]`. -/
+theorem stateHorizonIntegral_add (δ : S → ℕ → S) {A : Set ℝ} (hA : MeasurableSet A)
+    (s : S) (n : ℕ) :
+    ∀ (m : ℕ) (d : S), ∀ {τ : ℝ}, τ ∈ Set.Icc (0 : ℝ) 1 →
+      stateHorizonIntegral δ A (n + m) d s τ
+        = stateStepIter δ m (fun d' τ' => stateHorizonIntegral δ A n d' s τ') d τ := by
+  intro m
+  induction m with
+  | zero => intro d τ _; rfl
+  | succ m ih =>
+      intro d τ hτ
+      have hstep : n + (m + 1) = (n + m) + 1 := by omega
+      rw [hstep, stateHorizonIntegral_succ δ hA (n + m) d s hτ, stateStepIter,
+        stateStepOp, stateStepOp]
+      exact tsum_congr fun k => by rw [ih _ (stepPt_mem_Icc hτ.1 k)]
+
+/-- On `[0,1]` the log metric has diameter `log 2`. -/
+lemma abs_log_sub_le_log_two {x y : ℝ} (hx : x ∈ Set.Icc (0 : ℝ) 1)
+    (hy : y ∈ Set.Icc (0 : ℝ) 1) : |Real.log (1 + x) - Real.log (1 + y)| ≤ Real.log 2 := by
+  have hb : ∀ z ∈ Set.Icc (0 : ℝ) 1, 0 ≤ Real.log (1 + z) ∧ Real.log (1 + z) ≤ Real.log 2 := by
+    intro z hz
+    exact ⟨Real.log_nonneg (by linarith [hz.1]),
+      Real.log_le_log (by linarith [hz.1]) (by linarith [hz.2])⟩
+  obtain ⟨hx0, hx2⟩ := hb x hx
+  obtain ⟨hy0, hy2⟩ := hb y hy
+  rw [abs_le]
+  constructor <;> linarith
+
+/-! ## One step of the joint recursion -/
+
+lemma stateStepIter_add (δ : S → ℕ → S) (b : ℕ) :
+    ∀ (a : ℕ) (Φ : S → ℝ → ℝ),
+      stateStepIter δ (a + b) Φ = stateStepIter δ a (stateStepIter δ b Φ) := by
+  intro a
+  induction a with
+  | zero => intro Φ; rw [Nat.zero_add]; rfl
+  | succ a ih => intro Φ; rw [show a + 1 + b = (a + b) + 1 by omega, stateStepIter,
+      ih Φ, stateStepIter]
+
+/-- One step of the pair `(log-Lipschitz constant, oscillation)`. -/
+lemma stateStepOp_step_bounds [Nonempty S] {B Λ Ω : ℝ} {Ψ : S → ℝ → ℝ}
+    (hΨ : InCone B Ψ) (δ : S → ℕ → S) (hΛ : 0 ≤ Λ) (hΩ : 0 ≤ Ω)
+    (hlip : ∀ e : S, ∀ x ∈ Set.Icc (0 : ℝ) 1, ∀ y ∈ Set.Icc (0 : ℝ) 1,
+      |Ψ e x - Ψ e y| ≤ Λ * |Real.log (1 + x) - Real.log (1 + y)|)
+    (hosc : famSup Ψ - famInf Ψ ≤ Ω) :
+    (∀ e : S, ∀ x ∈ Set.Icc (0 : ℝ) 1, ∀ y ∈ Set.Icc (0 : ℝ) 1,
+      |stateStepOp δ Ψ e x - stateStepOp δ Ψ e y|
+        ≤ ((2 / 5) * Λ + (3 / 10) * Ω) * |Real.log (1 + x) - Real.log (1 + y)|)
+    ∧ famSup (stateStepOp δ Ψ) - famInf (stateStepOp δ Ψ) ≤ Ω := by
+  constructor
+  · intro e x hx y hy
+    have hc : ∀ f : S, ∀ z ∈ Set.Icc (0 : ℝ) 1,
+        |Ψ f z - (famSup Ψ + famInf Ψ) / 2| ≤ Ω / 2 := by
+      intro f z hz
+      have h1 := famInf_le hΨ f hz
+      have h2 := le_famSup hΨ f hz
+      rw [abs_le]
+      constructor <;> linarith
+    have := stateStepOp_logLipschitz hΛ (by linarith : (0:ℝ) ≤ Ω / 2) hΨ δ e hlip hc hx hy
+    calc |stateStepOp δ Ψ e x - stateStepOp δ Ψ e y|
+        ≤ ((2 / 5) * Λ + (3 / 5) * (Ω / 2)) * |Real.log (1 + x) - Real.log (1 + y)| := this
+      _ = ((2 / 5) * Λ + (3 / 10) * Ω) * |Real.log (1 + x) - Real.log (1 + y)| := by ring
+  · have hub : famSup (stateStepOp δ Ψ) ≤ famSup Ψ := by
+      refine csSup_le (famRange_nonempty _) ?_
+      rintro v ⟨d, x, hx, rfl⟩
+      exact (stateStepOp_mem_range_bounds hΨ δ d hx).2
+    have hlb : famInf Ψ ≤ famInf (stateStepOp δ Ψ) := by
+      refine le_csInf (famRange_nonempty _) ?_
+      rintro v ⟨d, x, hx, rfl⟩
+      exact (stateStepOp_mem_range_bounds hΨ δ d hx).1
+    linarith
+
+/-! ## The geometric decay of the oscillation -/
+
+/-- `j` single steps: the log-Lipschitz constant decays like `(2/5)ʲ` with an `Ω/2` floor, and
+the oscillation never grows. -/
+lemma stateStepIter_lip_bound [Nonempty S] {B Λ Ω : ℝ} {Ψ : S → ℝ → ℝ}
+    (hΨ : InCone B Ψ) (δ : S → ℕ → S) (hΛ : 0 ≤ Λ) (hΩ : 0 ≤ Ω)
+    (hlip : ∀ e : S, ∀ x ∈ Set.Icc (0 : ℝ) 1, ∀ y ∈ Set.Icc (0 : ℝ) 1,
+      |Ψ e x - Ψ e y| ≤ Λ * |Real.log (1 + x) - Real.log (1 + y)|)
+    (hosc : famSup Ψ - famInf Ψ ≤ Ω) :
+    ∀ j : ℕ,
+      (∀ e : S, ∀ x ∈ Set.Icc (0 : ℝ) 1, ∀ y ∈ Set.Icc (0 : ℝ) 1,
+        |stateStepIter δ j Ψ e x - stateStepIter δ j Ψ e y|
+          ≤ ((2 / 5 : ℝ) ^ j * Λ + (1 / 2) * Ω) * |Real.log (1 + x) - Real.log (1 + y)|) ∧
+      famSup (stateStepIter δ j Ψ) - famInf (stateStepIter δ j Ψ) ≤ Ω := by
+  intro j
+  induction j with
+  | zero =>
+      refine ⟨fun e x hx y hy => ?_, by simpa [stateStepIter] using hosc⟩
+      refine (hlip e x hx y hy).trans ?_
+      refine mul_le_mul_of_nonneg_right (by simp; linarith) (abs_nonneg _)
+  | succ j ih =>
+      obtain ⟨hl, ho⟩ := ih
+      have hcone : InCone B (stateStepIter δ j Ψ) := stateStepIter_inCone hΨ δ j
+      have hΛj : 0 ≤ (2 / 5 : ℝ) ^ j * Λ + (1 / 2) * Ω := by positivity
+      have h := stateStepOp_step_bounds hcone δ hΛj hΩ hl ho
+      refine ⟨fun e x hx y hy => ?_, ?_⟩
+      · rw [stateStepIter]
+        refine (h.1 e x hx y hy).trans ?_
+        refine mul_le_mul_of_nonneg_right (le_of_eq ?_) (abs_nonneg _)
+        rw [pow_succ]; ring
+      · rw [stateStepIter]; exact h.2
+
+set_option maxHeartbeats 800000 in
+/-- **The joint contraction.**  `M ≥ 2` single steps contract the log-Lipschitz constant by
+`(2/5)^M ≤ 4/25`, one Doeblin block of length `M` contracts the oscillation by `1 − 2β`, and the
+Lyapunov function `V = osc + 2β·Lip` contracts by `1 − β` per block, because
+
+`log 2 + (2/5)^M ≤ 0.6932 + 0.16 = 0.8532 ≤ 1 − β` whenever `β ≤ 1/8`.
+
+Hence `osc(L^{Mm} Φ) ≤ (1−β)ᵐ (Ω₀ + 2β Λ₀)`. -/
+theorem stateStepIter_osc_geom [Nonempty S] {B β Λ₀ Ω₀ : ℝ} {Φ : S → ℝ → ℝ}
+    (hΦ : InCone B Φ) (δ : S → ℕ → S) (hβ : 0 < β) (hβ' : β ≤ 1 / 8)
+    (M : ℕ) (hM : 2 ≤ M)
+    (hreach : ∀ d t : S, ∃ w : List ℕ, w.length = M ∧ (∀ a ∈ w, 1 ≤ a) ∧
+      runState δ d w = t ∧ β ≤ wordWeight w)
+    (hΛ₀ : 0 ≤ Λ₀) (hΩ₀ : 0 ≤ Ω₀)
+    (hlip0 : ∀ e : S, ∀ x ∈ Set.Icc (0 : ℝ) 1, ∀ y ∈ Set.Icc (0 : ℝ) 1,
+      |Φ e x - Φ e y| ≤ Λ₀ * |Real.log (1 + x) - Real.log (1 + y)|)
+    (hosc0 : famSup Φ - famInf Φ ≤ Ω₀) (m : ℕ) :
+    famSup (stateStepIter δ (M * m) Φ) - famInf (stateStepIter δ (M * m) Φ)
+      ≤ (1 - β) ^ m * (Ω₀ + 2 * β * Λ₀) := by
+  have hlog2 : Real.log 2 ≤ 0.6932 := le_of_lt (lt_of_lt_of_le Real.log_two_lt_d9 (by norm_num))
+  have hlog2p : 0 ≤ Real.log 2 := Real.log_nonneg (by norm_num)
+  have hpowM : (2 / 5 : ℝ) ^ M ≤ 4 / 25 := by
+    calc (2 / 5 : ℝ) ^ M ≤ (2 / 5 : ℝ) ^ 2 :=
+          pow_le_pow_of_le_one (by norm_num) (by norm_num) hM
+      _ = 4 / 25 := by norm_num
+  have hpowMnn : (0 : ℝ) ≤ (2 / 5 : ℝ) ^ M := by positivity
+  have key : ∀ m : ℕ, ∃ Λ Ω : ℝ, 0 ≤ Λ ∧ 0 ≤ Ω ∧
+      (∀ e : S, ∀ x ∈ Set.Icc (0 : ℝ) 1, ∀ y ∈ Set.Icc (0 : ℝ) 1,
+        |stateStepIter δ (M * m) Φ e x - stateStepIter δ (M * m) Φ e y|
+          ≤ Λ * |Real.log (1 + x) - Real.log (1 + y)|) ∧
+      (famSup (stateStepIter δ (M * m) Φ) - famInf (stateStepIter δ (M * m) Φ) ≤ Ω) ∧
+      Ω + 2 * β * Λ ≤ (1 - β) ^ m * (Ω₀ + 2 * β * Λ₀) := by
+    intro m
+    induction m with
+    | zero =>
+        refine ⟨Λ₀, Ω₀, hΛ₀, hΩ₀, ?_, ?_, by simp⟩
+        · rw [show M * 0 = 0 by omega]; exact hlip0
+        · rw [show M * 0 = 0 by omega]; exact hosc0
+    | succ m ih =>
+        obtain ⟨Λ, Ω, hΛ, hΩ, hlip, hosc, hV⟩ := ih
+        set Ψ : S → ℝ → ℝ := stateStepIter δ (M * m) Φ with hΨdef
+        have hΨ : InCone B Ψ := stateStepIter_inCone hΦ δ (M * m)
+        have hsplit : stateStepIter δ (M * (m + 1)) Φ = stateStepIter δ M Ψ := by
+          rw [hΨdef, ← stateStepIter_add δ (M * m) M Φ, Nat.mul_succ, Nat.add_comm]
+        -- the Lipschitz side
+        have hmulti := stateStepIter_lip_bound hΨ δ hΛ hΩ hlip hosc M
+        set ΛM : ℝ := (2 / 5 : ℝ) ^ M * Λ + (1 / 2) * Ω with hΛM
+        have hΛMp : 0 ≤ ΛM := by rw [hΛM]; positivity
+        -- the Doeblin side
+        set q : ℝ := Λ * Real.log 2 with hq
+        have hqnn : 0 ≤ q := by rw [hq]; positivity
+        have hoscq : ∀ e : S, ∀ x ∈ Set.Icc (0 : ℝ) 1, ∀ y ∈ Set.Icc (0 : ℝ) 1,
+            |Ψ e x - Ψ e y| ≤ q := by
+          intro e x hx y hy
+          refine (hlip e x hx y hy).trans ?_
+          rw [hq]
+          exact mul_le_mul_of_nonneg_left (abs_log_sub_le_log_two hx hy) hΛ
+        have hdoeb := fun (d : S) {τ : ℝ} (hτ : τ ∈ Set.Icc (0 : ℝ) 1) =>
+          stateStepIter_doeblin_two_sided hΨ δ M hβ hqnn hreach hoscq d hτ
+        have hub : famSup (stateStepIter δ (M * (m + 1)) Φ)
+            ≤ famSup Ψ - β * (famSup Ψ - famInf Ψ - q) := by
+          rw [hsplit]
+          refine csSup_le (famRange_nonempty _) ?_
+          rintro v ⟨d, x, hx, rfl⟩
+          exact (hdoeb d hx).2
+        have hlb : famInf Ψ + β * (famSup Ψ - famInf Ψ - q)
+            ≤ famInf (stateStepIter δ (M * (m + 1)) Φ) := by
+          rw [hsplit]
+          refine le_csInf (famRange_nonempty _) ?_
+          rintro v ⟨d, x, hx, rfl⟩
+          exact (hdoeb d hx).1
+        set Ω' : ℝ := (1 - 2 * β) * Ω + 2 * β * q with hΩ'
+        have hΩ'p : 0 ≤ Ω' := by rw [hΩ']; nlinarith
+        have hoscnew : famSup (stateStepIter δ (M * (m + 1)) Φ)
+            - famInf (stateStepIter δ (M * (m + 1)) Φ) ≤ Ω' := by
+          have ho := famInf_le_famSup hΨ
+          rw [hΩ']
+          nlinarith [hosc, hβ.le, hβ']
+        refine ⟨ΛM, Ω', hΛMp, hΩ'p, ?_, hoscnew, ?_⟩
+        · rw [hsplit]; exact hmulti.1
+        · have hstep : Ω' + 2 * β * ΛM ≤ (1 - β) * (Ω + 2 * β * Λ) := by
+            rw [hΩ', hΛM, hq]
+            nlinarith [hΩ, hΛ, hβ.le, hβ', hlog2, hlog2p, hpowM, hpowMnn,
+              mul_nonneg hβ.le hΛ, mul_nonneg hβ.le hΩ,
+              mul_nonneg (mul_nonneg hβ.le hβ.le) hΛ,
+              mul_nonneg hΛ (sub_nonneg.mpr hpowM)]
+          calc Ω' + 2 * β * ΛM ≤ (1 - β) * (Ω + 2 * β * Λ) := hstep
+            _ ≤ (1 - β) * ((1 - β) ^ m * (Ω₀ + 2 * β * Λ₀)) :=
+                mul_le_mul_of_nonneg_left hV (by linarith)
+            _ = (1 - β) ^ (m + 1) * (Ω₀ + 2 * β * Λ₀) := by ring
+  obtain ⟨Λ, Ω, hΛ, hΩ, -, hosc, hV⟩ := key m
+  have : 0 ≤ 2 * β * Λ := by positivity
+  linarith
+
 /-! ## The crux -/
 
 /-- **The crux of Vandehey 2017 Theorem 1.1**, as one named statement: the refined horizon

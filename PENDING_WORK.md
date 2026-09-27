@@ -10080,3 +10080,39 @@ with `a,b,c,d ≥ 0` and `(1−a)(1−d) > bc`, `a+d < 2` ⟹ `x_n + κ y_n ≤ 
 suitable `κ > 0, θ < 1` (choose `κ` in the interval `((a−1)/(−c)`-style gap) — a two-line
 argument once `κ` is named explicitly, e.g. `κ = 1` works when `a + c ≤ θ` and `b + d ≤ θ`.
 (iii) `stateHorizonIntegral_pin`.
+
+### 2026-09-27 (same lap, part 6): the joint contraction is PROVED — geometric decay of the oscillation
+
+`VandeheyStatePin.stateStepIter_osc_geom` (sorry-free):
+
+> For `M ≥ 2`, `0 < β ≤ 1/8`, and every pair of states joined by a genuine word of length `M`
+> with weight `≥ β`:  `osc(L^{Mm} Φ) ≤ (1−β)ᵐ·(Ω₀ + 2β·Λ₀)`,
+> where `Λ₀` bounds the log-Lipschitz constant of `Φ` and `Ω₀` its oscillation.
+
+The Lyapunov function is `V = osc + 2β·Lip`, and the contraction is a **one-line numeric
+miracle**: per block
+`V' = (1−β)·osc + 2βΛ·(log 2 + (2/5)^M) ≤ (1−β)·V` because `log 2 + (2/5)² ≤ 0.6932 + 0.16 =
+0.8532 ≤ 1 − β` for `β ≤ 1/8`.  Both inputs are exactly the two contraction rows proved earlier
+this lap (`stateStepOp_logLipschitz`, factor `2/5`; `stateStepIter_doeblin_two_sided`, factor
+`1 − 2β`), and the `2/5` is what leaves the margin — the scalar file's loose `3/4` would not
+have closed.
+
+Also new and sorry-free: `stateStepIter_add`, `stateStepOp_step_bounds` (one step of the pair),
+`stateStepIter_lip_bound` (`j` steps: `Lip ≤ (2/5)ʲΛ + Ω/2`, oscillation never grows),
+`stateStepOp_mem_range_bounds` (the operator is an average so it never widens the range),
+`stateHorizonIntegral_add` (`F_{n+m} = Lᵐ F_n`), `abs_log_sub_le_log_two`.
+
+**`stateHorizonIntegral_pin` is now pure assembly.**  The remaining steps, none of them
+mathematical:
+1. Instantiate at `Φ = F_0(·,s)`: `Λ₀ = 2 log 2 · γ(A)` from `CFPsiPin.horizonIntegral_zero_logLip`
+   (note `F_0(d,s) = [d=s]·G_0`, so the same constant works), `Ω₀ ≤ γ(A)`-scale from
+   `stateHorizonIntegral_le_two` / `horizonIntegral_zero`.
+2. Extract `β` from `Doeblin.exists_classWord_three`: `β := min` over the finite set `S × S` of
+   `wordWeight w_{d,t}`, positive by `wordWeight_pos`; shrink to `≤ 1/8` if needed (a smaller `β`
+   is still a valid minorization).
+3. The centre: `|S|⁻¹·G_n(τ)` lies between `famInf` and `famSup` of `F_n(·,s)` because the two
+   double-stochasticity identities (`sum_stateHorizonIntegral`,
+   `sum_over_initial_stateHorizonIntegral`) make it the average over `d`.  So
+   `|F_n(d,s)(τ) − |S|⁻¹ G_n(τ)| ≤ osc(F_n)`, and
+   `|G_n(τ) − γ(A)| ≤ (79/100)ⁿ γ(A)` is `CFPsiPin.horizonIntegral_pin_geom`.
+4. Convert `(1−β)^{⌊n/M⌋}` to `θⁿ` with `θ = (1−β)^{1/M}`, absorbing the remainder into `C`.
