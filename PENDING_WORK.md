@@ -9416,3 +9416,52 @@ envelope gives `γ(no occurrence of z in the k-th block of |z| digits | earlier 
 `|z|` is large enough that `Cρ^{|z|} < γ(I_z)` — which needs `γ(I_z) > 0` (true for genuine
 `z`, `CFCylinder`) and can be arranged by replacing `z` with a power `z^m` (still
 synchronizing, since a synchronizing word's extensions are synchronizing).
+
+### Same lap, sixth commit: the LAST analytic leaf closed — `γ(z-free) → 0`
+
+`src/NormalNumbers/VandeheyZFree.lean` (wired), green, **axiom-clean**
+(`[propext, Classical.choice, Quot.sound]`):
+
+* `zFreeSet z k` — the points of `(0,1)` avoiding `z` at the aligned block positions
+  `0, s, …, (k−1)s`, `s = |z| + 1` (one spare digit, so the ψ-mixing gap is `1`).
+* `gaussMeasure_zFreeSet_succ_le` — **the renewal step**:
+  `γ(A_{k+1}) ≤ (1 − (21/100)·γ(I_z))·γ(A_k)`.
+* `gaussMeasure_zFreeSet_le_pow`, `tendsto_gaussMeasure_zFreeSet` — geometric decay, hence
+  `γ(A_k) → 0` for every genuine `z`.
+
+**Why this went through where the textbook route stalls.**  The usual obstruction is that
+the renewal needs `γ(E ∩ T^{-s}A)` for `E` a *union* of cylinders, i.e. a countable cylinder
+decomposition with its null-set bookkeeping.  Sidestepped entirely: the repo's
+`CFPsiPin.gaussMeasure_cylinder_psi_mixing` takes an **arbitrary measurable** future set, so
+put the single cylinder `I_z` in front and the accumulated avoidance set in the future, and
+recover `γ(A_k)` on the other side by Gauss invariance (`CFPin.gaussMeasure_preimage_iterate`).
+The split `(0,1) ∩ T^{-s}A = (I_z ∩ T^{-s}A) ⊔ A_{k+1}` is then just two-set additivity.
+Positivity of `γ(I_z)` comes from `CFScheduleA.gaussMeasure_cfCylinder_toReal_pos`.
+`gaussMeasure_Ioo_inter` (γ ignores intersecting with `(0,1)`) is the small new glue.
+
+### State of the Vandehey 1.1 chain after this lap
+
+| obligation | status |
+|---|---|
+| identification half (`vandehey_matrix_action_of_uniformFreq`) | **PROVED**, axiom-clean |
+| pathwise merging from a synchronizing word | **PROVED** (`stateAt_eq_runState_window`) |
+| joint count = finite sum of window counts | **PROVED** (`card_joint_good_eq_sum`) |
+| residue sandwich | **PROVED** (`jointCount_le`, `badSet_card_le`) |
+| tightness / digit tail | **PROVED** (`tendsto_digitTail_freq`) |
+| `γ(z-free) → 0` | **PROVED** (`tendsto_gaussMeasure_zFreeSet`) |
+| `exists_jointFreq_limit` (glue the above into one limit) | open — pure bookkeeping now |
+| `Synchronizing` for Vandehey's `M_D` transducer | open — §2/§4, the real remaining debt |
+| §2 identity (9), §5–§6 trigger counting | open |
+
+### Next attack
+
+1. **Glue `exists_jointFreq_limit`.**  Everything it needs is now in the file.  Remaining
+   bookkeeping: (a) relate `#{j<m : z not a factor of cfWindow x j L}` to the aligned-block
+   avoidance event, so `tendsto_windowFreq` + `tendsto_gaussMeasure_zFreeSet` apply — note
+   `z <:+: cfWindow x j L` is implied by `z` spelling at *any* aligned block inside the
+   window, so the `z`-free window count is bounded by the count of positions in the
+   `zFreeSet`-style event, itself a (countable) union of bounded cylinders handled exactly
+   like `badSet_card_le`; (b) the Cauchy-in-`L` squeeze, with `K = K(L)` chosen after `L`.
+2. Then the transducer: `Synchronizing` for `M_D`.  Concrete target suggested by the
+   2026-08-25 probe: a long run of one large digit should drive any det-`±D` normal form to a
+   canonical state.
