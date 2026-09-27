@@ -25,7 +25,7 @@ is below any prescribed `ε`.  That is the content of `exists_joint_small_tail` 
 `joint_small_tail_base_majorant` then transfers the single binary bound to **every** base
 `b ≥ 2` at once, which is why one common `n` serves all coordinates.
 
-No new analytic input is admitted: `AGP` and `PrimeIntervalSupply` are exactly the two
+No new analytic input enters here: `AGP` and `PrimeIntervalSupply` are exactly the two
 `Prop`s of `JointLambertPrimeSelection`, passed as hypotheses, and everything else is
 elementary (divisor pairing at `√`, counting along coprime progressions, harmonic sums,
 geometric decay).

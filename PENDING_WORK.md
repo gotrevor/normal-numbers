@@ -1,3 +1,22 @@
+## Joint Lambert (2026-09-27, lap C) — tail control DONE, next: common-offset digit identity
+
+`exists_joint_small_tail` + `base_tail_le_half_binary_tail` +
+`exists_joint_small_tail_all_bases` are PROVED sorry-free and axiom-clean
+(`[propext, Classical.choice, Quot.sound]`) in the new `src/NormalNumbers/JointLambertTail.lean`
+and `src/NormalNumbers/JointLambertTailBounds.lean`.  The §3 divisor-average estimate
+`sum_tau_progression_le` (`∑_{m<M} τ(u+mA) ≤ 2M(1+log H)+2H` for `(u,A)=1`, `u+mA ≤ H²`) is
+proved from scratch, as is the growth tool `poly_eight_le_two_pow` that makes every
+"for `k` large" step proved rather than assumed.
+
+**Exact next dependency (not started): the common-offset digit identity.**  Wire the
+divisor data `c^(j+1) ∣ τ(n+j)` (`j < k`, `j ≠ r`) and `τ(n+r) = 2a` through `evenEncoding`
+(proved, `7f05cb2`) to the digit cylinders of every base at once, with `c = lcm(bases)`
+entering via `divisor_count_dvd_of_dvd`.  `exists_joint_small_tail_all_bases` is the
+interface: it hands the assembly a single `n` whose base-`b` tail is `< ε/2` for every
+`b ≥ 2`, which is precisely what lets one offset pin the digit of `E_b` in all coordinates
+simultaneously.  Arbitrarily late occurrences are already free (`K` and `N` are both
+arbitrary in `exists_joint_small_tail`).  `JointLambertDisjunctivity` is NOT yet claimable.
+
 ## Joint Lambert (2026-09-27, lap B) — prime selection CLOSED
 
 `NormalNumbers.JointLambert.exists_joint_prime_candidates` is proved, sorry-free, axioms
