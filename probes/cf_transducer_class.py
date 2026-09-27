@@ -67,3 +67,45 @@ def run(name, M0, K):
 if __name__ == "__main__":
     run("x -> 2x", (2,0,0,1), 8)
     run("x -> 3x", (3,0,0,1), 6)
+
+
+# ---------------------------------------------------------------------------
+# The class action IS the continued-fraction map mod D.
+#
+# A row lattice of index D is either L_b = {(u,v) : v = b u mod D} (b in Z/D) or
+# L_inf = {(u,v) : u = 0 mod D}.  Right multiplication by B_a = [[0,1],[1,a]]
+# sends (u,v) |-> (v, u + a v), hence
+#     L_b  |-> L_{a + b^{-1}}   (b invertible),   L_0 |-> L_inf,   L_inf |-> L_a.
+# So the class cocycle is s |-> a + 1/s on P^1(F_p): the Gauss map mod p.
+def slope_of_class(c, D):
+    a, b, d = c
+    if a == 1 and d == D: return b % D
+    if a == D and d == 1: return None          # infinity
+    return "?"
+
+def cf_mod_step(s, a, D):
+    if s is None: return a % D
+    if s % D == 0: return None
+    return (a + pow(s, -1, D)) % D
+
+def check_model(name, M0, K, D):
+    digits = list(range(1, K+1))
+    states = explore(M0, digits)
+    ok = bad = 0
+    for M in states:
+        s = slope_of_class(hnf_class(M), D)
+        for a in digits:
+            got = slope_of_class(hnf_class(delta(M, a)), D)
+            want = cf_mod_step(s, a, D)
+            if got == want: ok += 1
+            else:
+                bad += 1
+                if bad <= 5: print("   MISMATCH", M, "slope", s, "digit", a, got, want)
+    print("=== %s  D=%d: slope model agrees on %d transitions, %d mismatches"
+          % (name, D, ok, bad))
+
+if __name__ == "__main__":
+    check_model("x -> 2x", (2,0,0,1), 8, 2)
+    check_model("x -> 3x", (3,0,0,1), 6, 3)
+    check_model("x -> 5x", (5,0,0,1), 6, 5)
+    check_model("x -> x/5", (1,0,0,5), 6, 5)

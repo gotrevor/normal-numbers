@@ -29,6 +29,7 @@ import NormalNumbers.CFPsiPin
 import NormalNumbers.LiteraturePhilipp
 import NormalNumbers.VandeheyAutomaton
 import NormalNumbers.VandeheyCocycle
+import NormalNumbers.VandeheyClass
 import NormalNumbers.VandeheyZFree
 import NormalNumbers.VandeheyTransfer
 import NormalNumbers.LiteratureVandehey
