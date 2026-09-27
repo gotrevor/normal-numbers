@@ -1087,8 +1087,110 @@ theorem stateStepIter_osc_geom [Nonempty S] {B β Λ₀ Ω₀ : ℝ} {Φ : S →
   have : 0 ≤ 2 * β * Λ := by positivity
   linarith
 
+/-! ## Assembly helpers -/
+
+/-- `F_0(d,s) = [d = s]·G_0`. -/
+lemma stateHorizonIntegral_zero (δ : S → ℕ → S) (A : Set ℝ) (d s : S) (τ : ℝ) :
+    stateHorizonIntegral δ A 0 d s τ = if d = s then horizonIntegral A 0 τ else 0 := by
+  by_cases h : d = s
+  · have hset : stateHorizonSet δ A 0 d s = horizonSet A 0 := by
+      simp [stateHorizonSet, cfWord, runState_nil, h]
+    rw [stateHorizonIntegral, hset, if_pos h, horizonIntegral]
+  · have hset : stateHorizonSet δ A 0 d s = (∅ : Set ℝ) := by
+      simp [stateHorizonSet, cfWord, runState_nil, h]
+    rw [stateHorizonIntegral, hset, if_neg h, Measure.restrict_empty, integral_zero_measure]
+
+/-- `G₀ ≤ 4 log 2 · γ(A)`: on `[0,1]²` one has `h_t ≤ 2 ≤ 4/(1+y)`. -/
+lemma horizonIntegral_zero_le {A : Set ℝ} (hA : MeasurableSet A)
+    (hA1 : A ⊆ Set.Ioo (0 : ℝ) 1) {t : ℝ} (ht : t ∈ Set.Icc (0 : ℝ) 1) :
+    horizonIntegral A 0 t ≤ 4 * Real.log 2 * (gaussMeasure A).toReal := by
+  have hB0 : horizonSet A 0 = A := by
+    rw [horizonSet, Function.iterate_zero, Set.preimage_id,
+      Set.inter_eq_self_of_subset_right hA1]
+  have hint : IntegrableOn (tailDensity t) A volume :=
+    (integrableOn_tailDensity ht.1).mono_set hA1
+  have hg : IntegrableOn (fun y => 2 * (2 * Real.log 2) * gaussDensityReal y) A volume :=
+    (integrableOn_gaussDensityReal hA1).const_mul _
+  rw [horizonIntegral, hB0]
+  calc ∫ y in A, tailDensity t y
+      ≤ ∫ y in A, 2 * (2 * Real.log 2) * gaussDensityReal y := by
+        refine setIntegral_mono_on hint hg hA fun y hy => ?_
+        obtain ⟨hy0, hy1⟩ := hA1 hy
+        have hxy : (0 : ℝ) ≤ t * y := mul_nonneg ht.1 hy0.le
+        have hden : (1 : ℝ) ≤ (1 + t * y) ^ 2 := by nlinarith
+        have h2 : tailDensity t y ≤ 2 / (1 + y) := by
+          rw [tailDensity, div_le_div_iff₀ (by nlinarith) (by linarith)]
+          nlinarith [ht.2]
+        have h3 : (2 : ℝ) / (1 + y) = 2 * Real.log 2 * gaussDensityReal y :=
+          inv_one_add_eq_log_mul_gaussDensityReal y
+        rw [h3] at h2
+        have hgd : 0 ≤ gaussDensityReal y := by
+          rw [gaussDensityReal]; positivity
+        nlinarith [Real.log_nonneg (by norm_num : (1:ℝ) ≤ 2)]
+    _ = 4 * Real.log 2 * (gaussMeasure A).toReal := by
+        rw [integral_const_mul, ← gaussMeasure_toReal_eq hA hA1]; ring
+
+/-- The oscillation never grows along the iteration. -/
+lemma stateStepIter_osc_le [Nonempty S] {B Ω : ℝ} {Ψ : S → ℝ → ℝ} (hΨ : InCone B Ψ)
+    (δ : S → ℕ → S) (hosc : famSup Ψ - famInf Ψ ≤ Ω) :
+    ∀ j : ℕ, famSup (stateStepIter δ j Ψ) - famInf (stateStepIter δ j Ψ) ≤ Ω := by
+  intro j
+  induction j with
+  | zero => simpa [stateStepIter] using hosc
+  | succ j ih =>
+      have hcone : InCone B (stateStepIter δ j Ψ) := stateStepIter_inCone hΨ δ j
+      have hub : famSup (stateStepIter δ (j + 1) Ψ) ≤ famSup (stateStepIter δ j Ψ) := by
+        rw [stateStepIter]
+        refine csSup_le (famRange_nonempty _) ?_
+        rintro v ⟨d, x, hx, rfl⟩
+        exact (stateStepOp_mem_range_bounds hcone δ d hx).2
+      have hlb : famInf (stateStepIter δ j Ψ) ≤ famInf (stateStepIter δ (j + 1) Ψ) := by
+        rw [stateStepIter]
+        refine le_csInf (famRange_nonempty _) ?_
+        rintro v ⟨d, x, hx, rfl⟩
+        exact (stateStepOp_mem_range_bounds hcone δ d hx).1
+      linarith
+
+/-- Blockwise geometric decay converted to a genuine `θⁿ`, with `θ = (1−β)^{1/M}`. -/
+lemma geom_block_bound {β : ℝ} (hβ0 : 0 < β) (hβ1 : β < 1) {M : ℕ} (hM : 0 < M) (n : ℕ) :
+    (1 - β) ^ (n / M) ≤ (1 - β)⁻¹ * ((1 - β) ^ ((M : ℝ)⁻¹)) ^ n := by
+  have hb0 : (0 : ℝ) < 1 - β := by linarith
+  have hb1 : (1 : ℝ) - β ≤ 1 := by linarith
+  have hMR : (0 : ℝ) < (M : ℝ) := by exact_mod_cast hM
+  have hrpow : ((1 - β) ^ ((M : ℝ)⁻¹)) ^ n = (1 - β) ^ ((n : ℝ) / M) := by
+    rw [← Real.rpow_natCast ((1 - β) ^ ((M : ℝ)⁻¹)) n, ← Real.rpow_mul hb0.le]
+    congr 1
+    field_simp
+  have hexp : (n : ℝ) / M - 1 ≤ ((n / M : ℕ) : ℝ) := by
+    have h2 : n < (n / M + 1) * M := by
+      have hd : M * (n / M) + n % M = n := Nat.div_add_mod n M
+      have hm : n % M < M := Nat.mod_lt _ hM
+      nlinarith [hd, hm]
+    have h3 : (n : ℝ) < (((n / M : ℕ) : ℝ) + 1) * M := by
+      have := (Nat.cast_lt (α := ℝ)).mpr h2
+      push_cast at this
+      linarith
+    rw [sub_le_iff_le_add, div_le_iff₀ hMR]
+    nlinarith
+  have hstep : (1 - β) ^ ((n / M : ℕ) : ℝ) ≤ (1 - β) ^ ((n : ℝ) / M - 1) :=
+    Real.rpow_le_rpow_of_exponent_ge hb0 hb1 hexp
+  have hval : (1 - β) ^ ((n : ℝ) / M - 1) = (1 - β)⁻¹ * (1 - β) ^ ((n : ℝ) / M) := by
+    rw [Real.rpow_sub hb0, Real.rpow_one]
+    field_simp
+  rw [hrpow, ← hval, ← Real.rpow_natCast (1 - β) (n / M)]
+  exact hstep
+
+/-- Two families agreeing on `S × [0,1]` have the same range. -/
+lemma famRange_congr [Nonempty S] {Φ Ψ : S → ℝ → ℝ}
+    (h : ∀ e : S, ∀ x ∈ Set.Icc (0 : ℝ) 1, Φ e x = Ψ e x) : famRange Φ = famRange Ψ := by
+  ext v
+  constructor
+  · rintro ⟨d, x, hx, rfl⟩; exact ⟨d, x, hx, (h d x hx).symm⟩
+  · rintro ⟨d, x, hx, rfl⟩; exact ⟨d, x, hx, h d x hx⟩
+
 /-! ## The crux -/
 
+set_option maxHeartbeats 1000000 in
 /-- **The crux of Vandehey 2017 Theorem 1.1**, as one named statement: the refined horizon
 integral equidistributes over the state space, geometrically and uniformly in the tail
 parameter and in the initial state.
@@ -1099,15 +1201,23 @@ parameter and in the initial state.
 bijectivity of every digit step (`VandeheyRenewal.classStep_bijective`, which forces the
 invariant law to be *uniform* — `sum_classKernel_col`).
 
-**Disclosed `sorry`** — the active crux, decomposed below into
-`stateHorizonIntegral_pin_step` (one Doeblin contraction of the projective diameter) and the
-iteration.  Route: the operator `stateStepOp` preserves the cone of families that are
-nonnegative and log-Lipschitz in `τ` with a small constant; `CFPsiPin.stepOp_logLipschitz`
-contracts the `τ`-direction geometrically, and the Doeblin word contracts the state direction
-by a factor `1 − Nα` every `M` steps. -/
-theorem stateHorizonIntegral_pin (δ : S → ℕ → S) {A : Set ℝ} (hA : MeasurableSet A)
-    (hA1 : A ⊆ Set.Ioo (0 : ℝ) 1)
-    (M : ℕ) (hM : 0 < M)
+**Proof.**  A Lyapunov argument on the pair `(oscillation, log-Lipschitz constant)` over
+`S × [0,1]`:
+
+* `stateStepOp_logLipschitz` contracts the tail-parameter direction by `2/5` per step, at the
+  cost of `(3/5)·r` where `r` is half the oscillation;
+* `stateStepIter_doeblin_two_sided` contracts the state direction by `1 − 2β` per `M`-block, at
+  the cost of `2β·q` where `q ≤ log 2 ·` (log-Lipschitz constant);
+* `stateStepIter_osc_geom` combines them: `V = osc + 2β·Lip` obeys `V' ≤ (1−β)V` because
+  `log 2 + (2/5)^M ≤ 0.6932 + 0.16 ≤ 1 − β` for `β ≤ 1/8` and `M ≥ 2`.
+
+The limiting constant needs no computation: `sum_stateHorizonIntegral` and
+`sum_over_initial_stateHorizonIntegral` make the family doubly stochastic, so
+`(card S)⁻¹·G_n(τ)` is the average of the values `F_n(d,s)(τ)` over `d` and therefore lies
+between their inf and sup; `CFPsiPin.horizonIntegral_pin_geom` sends `G_n(τ)` to `γ(A)`. -/
+theorem stateHorizonIntegral_pin [Nonempty S] (δ : S → ℕ → S) {A : Set ℝ}
+    (hA : MeasurableSet A) (hA1 : A ⊆ Set.Ioo (0 : ℝ) 1)
+    (M : ℕ) (hM : 2 ≤ M)
     (hreach : ∀ d s : S, ∃ w : List ℕ, w.length = M ∧ (∀ a ∈ w, 1 ≤ a) ∧
       runState δ d w = s)
     (hbij : ∀ a : ℕ, Function.Bijective (fun d : S => δ d a)) :
@@ -1115,7 +1225,157 @@ theorem stateHorizonIntegral_pin (δ : S → ℕ → S) {A : Set ℝ} (hA : Meas
       |stateHorizonIntegral δ A n d s τ
           - (Fintype.card S : ℝ)⁻¹ * (gaussMeasure A).toReal|
         ≤ C * θ ^ n * (gaussMeasure A).toReal := by
-  sorry
+  classical
+  set γA : ℝ := (gaussMeasure A).toReal with hγA
+  have hγ0 : 0 ≤ γA := ENNReal.toReal_nonneg
+  have hlog2 : Real.log 2 ≤ 0.6932 := le_of_lt (lt_of_lt_of_le Real.log_two_lt_d9 (by norm_num))
+  have hlog2p : 0 ≤ Real.log 2 := Real.log_nonneg (by norm_num)
+  have hM0 : 0 < M := by omega
+  -- ### the uniform Doeblin weight `β`
+  choose w hwlen hwpos hwrun using hreach
+  obtain ⟨p, -, hpmin⟩ := Finset.exists_min_image (Finset.univ : Finset (S × S))
+    (fun q => wordWeight (w q.1 q.2))
+    ⟨(Classical.arbitrary S, Classical.arbitrary S), Finset.mem_univ _⟩
+  set β : ℝ := min (wordWeight (w p.1 p.2)) (1 / 8) with hβdef
+  have hβpos : 0 < β := lt_min wordWeight_pos (by norm_num)
+  have hβ8 : β ≤ 1 / 8 := min_le_right _ _
+  have hβ1 : β < 1 := by linarith
+  have hreach' : ∀ d t : S, ∃ v : List ℕ, v.length = M ∧ (∀ a ∈ v, 1 ≤ a) ∧
+      runState δ d v = t ∧ β ≤ wordWeight v := fun d t =>
+    ⟨w d t, hwlen d t, hwpos d t, hwrun d t,
+      le_trans (min_le_left _ _) (hpmin (d, t) (Finset.mem_univ _))⟩
+  -- ### the rate
+  set θ₁ : ℝ := (1 - β) ^ ((M : ℝ)⁻¹) with hθ₁
+  have hθ₁pos : 0 < θ₁ := Real.rpow_pos_of_pos (by linarith) _
+  have hθ₁lt : θ₁ < 1 :=
+    Real.rpow_lt_one (by linarith) (by linarith) (by positivity)
+  set θ : ℝ := max θ₁ (79 / 100) with hθ
+  have hθpos : 0 < θ := lt_of_lt_of_le hθ₁pos (le_max_left _ _)
+  have hθlt : θ < 1 := max_lt hθ₁lt (by norm_num)
+  refine ⟨4 * (1 - β)⁻¹ + 1, θ, by positivity, hθpos.le, hθlt, ?_⟩
+  intro n d s τ hτ
+  -- ### the initial family `F₀(·,s)`
+  set Φ : S → ℝ → ℝ := fun d' τ' => stateHorizonIntegral δ A 0 d' s τ' with hΦdef
+  have hΦcone : InCone 2 Φ := fun e x hx =>
+    ⟨stateHorizonIntegral_nonneg δ hA 0 e s hx.1, stateHorizonIntegral_le_two δ hA 0 e s hx⟩
+  set Λ₀ : ℝ := 2 * Real.log 2 * γA with hΛ₀d
+  set Ω₀ : ℝ := 4 * Real.log 2 * γA with hΩ₀d
+  have hΛ₀ : 0 ≤ Λ₀ := by rw [hΛ₀d]; positivity
+  have hΩ₀ : 0 ≤ Ω₀ := by rw [hΩ₀d]; positivity
+  have hlip0 : ∀ e : S, ∀ x ∈ Set.Icc (0 : ℝ) 1, ∀ y ∈ Set.Icc (0 : ℝ) 1,
+      |Φ e x - Φ e y| ≤ Λ₀ * |Real.log (1 + x) - Real.log (1 + y)| := by
+    intro e x hx y hy
+    rw [hΦdef]
+    simp only [stateHorizonIntegral_zero]
+    by_cases h : e = s
+    · rw [if_pos h, if_pos h]
+      exact horizonIntegral_zero_logLip hA hA1 hx hy
+    · rw [if_neg h, if_neg h, sub_self, abs_zero]
+      positivity
+  have hosc0 : famSup Φ - famInf Φ ≤ Ω₀ := by
+    have hsup : famSup Φ ≤ Ω₀ := by
+      refine csSup_le (famRange_nonempty _) ?_
+      rintro v ⟨e, x, hx, rfl⟩
+      rw [hΦdef]
+      simp only [stateHorizonIntegral_zero]
+      by_cases h : e = s
+      · rw [if_pos h]; exact horizonIntegral_zero_le hA hA1 hx
+      · rw [if_neg h]; exact hΩ₀
+    linarith [famInf_nonneg hΦcone]
+  -- ### the geometric decay of the oscillation
+  have hgeom := stateStepIter_osc_geom hΦcone δ hβpos hβ8 M hM hreach' hΛ₀ hΩ₀ hlip0 hosc0
+    (n / M)
+  set Ψ : S → ℝ → ℝ := stateStepIter δ (M * (n / M)) Φ with hΨdef
+  have hΨcone : InCone 2 Ψ := stateStepIter_inCone hΦcone δ _
+  have hr : (n - M * (n / M)) + M * (n / M) = n := by
+    have h1 : M * (n / M) ≤ n := Nat.mul_div_le n M
+    omega
+  have hiter : stateStepIter δ n Φ = stateStepIter δ (n - M * (n / M)) Ψ := by
+    rw [hΨdef, ← stateStepIter_add δ (M * (n / M)) (n - M * (n / M)) Φ, hr]
+  have hoscn : famSup (stateStepIter δ n Φ) - famInf (stateStepIter δ n Φ)
+      ≤ (1 - β) ^ (n / M) * (Ω₀ + 2 * β * Λ₀) := by
+    rw [hiter]
+    exact stateStepIter_osc_le hΨcone δ hgeom _
+  -- ### transfer to `F_n(·,s)`
+  set Fn : S → ℝ → ℝ := fun d' τ' => stateHorizonIntegral δ A n d' s τ' with hFn
+  have hFneq : ∀ e : S, ∀ x ∈ Set.Icc (0 : ℝ) 1, Fn e x = stateStepIter δ n Φ e x := by
+    intro e x hx
+    rw [hFn, hΦdef]
+    exact stateHorizonIntegral_iter δ hA s n e hx
+  have hFrange : famRange Fn = famRange (stateStepIter δ n Φ) := famRange_congr hFneq
+  have hoscFn : famSup Fn - famInf Fn ≤ (1 - β) ^ (n / M) * (Ω₀ + 2 * β * Λ₀) := by
+    rw [famSup, famInf, hFrange, ← famSup, ← famInf]
+    exact hoscn
+  have hFncone : InCone 2 Fn := fun e x hx =>
+    ⟨stateHorizonIntegral_nonneg δ hA n e s hx.1, stateHorizonIntegral_le_two δ hA n e s hx⟩
+  -- ### the centre is the average over the initial state
+  have hcard : 0 < Fintype.card S := Fintype.card_pos
+  have hcardR : (0 : ℝ) < (Fintype.card S : ℝ) := by exact_mod_cast hcard
+  set cen : ℝ := (Fintype.card S : ℝ)⁻¹ * horizonIntegral A n τ with hcen
+  have hsum : ∑ d' : S, Fn d' τ = horizonIntegral A n τ :=
+    sum_over_initial_stateHorizonIntegral δ hA hbij n s hτ
+  have hcen_lb : famInf Fn ≤ cen := by
+    have h1 : (Fintype.card S : ℝ) * famInf Fn ≤ horizonIntegral A n τ := by
+      rw [← hsum]
+      calc (Fintype.card S : ℝ) * famInf Fn = ∑ _d' : S, famInf Fn := by
+            rw [Finset.sum_const, Finset.card_univ]; ring
+        _ ≤ ∑ d' : S, Fn d' τ :=
+            Finset.sum_le_sum fun d' _ => famInf_le hFncone d' hτ
+    rw [hcen, le_inv_mul_iff₀ hcardR]
+    linarith
+  have hcen_ub : cen ≤ famSup Fn := by
+    have h1 : horizonIntegral A n τ ≤ (Fintype.card S : ℝ) * famSup Fn := by
+      rw [← hsum]
+      calc ∑ d' : S, Fn d' τ ≤ ∑ _d' : S, famSup Fn :=
+            Finset.sum_le_sum fun d' _ => le_famSup hFncone d' hτ
+        _ = (Fintype.card S : ℝ) * famSup Fn := by
+            rw [Finset.sum_const, Finset.card_univ]; ring
+    rw [hcen, inv_mul_le_iff₀ hcardR]
+    linarith
+  have hdev : |Fn d τ - cen| ≤ famSup Fn - famInf Fn := by
+    have h1 := famInf_le hFncone d hτ
+    have h2 := le_famSup hFncone d hτ
+    rw [abs_le]
+    constructor <;> linarith
+  -- ### the centre against `γ(A)`
+  have hpin := horizonIntegral_pin_geom hA hA1 n hτ
+  have hcen2 : |cen - (Fintype.card S : ℝ)⁻¹ * γA| ≤ (79 / 100 : ℝ) ^ n * γA := by
+    have hle1 : (1 : ℝ) ≤ (Fintype.card S : ℝ) := by exact_mod_cast hcard
+    have hinv : (Fintype.card S : ℝ)⁻¹ ≤ 1 := by
+      rw [inv_le_one_iff₀]; right; exact hle1
+    have hinvpos : (0 : ℝ) < (Fintype.card S : ℝ)⁻¹ := by positivity
+    rw [hcen, ← mul_sub, abs_mul, abs_of_pos hinvpos]
+    calc (Fintype.card S : ℝ)⁻¹ * |horizonIntegral A n τ - γA|
+        ≤ 1 * ((79 / 100 : ℝ) ^ n * γA) := by
+          refine mul_le_mul hinv hpin (abs_nonneg _) (by norm_num)
+      _ = (79 / 100 : ℝ) ^ n * γA := by ring
+  -- ### combine
+  have hV : Ω₀ + 2 * β * Λ₀ ≤ 4 * γA := by
+    rw [hΩ₀d, hΛ₀d]
+    nlinarith [hγ0, hβpos.le, hβ8, hlog2, hlog2p, mul_nonneg hβpos.le hγ0,
+      mul_nonneg (mul_nonneg hβpos.le hlog2p) hγ0]
+  have hblock : (1 - β) ^ (n / M) ≤ (1 - β)⁻¹ * θ ^ n := by
+    refine (geom_block_bound hβpos hβ1 hM0 n).trans ?_
+    refine mul_le_mul_of_nonneg_left ?_ (by positivity)
+    exact pow_le_pow_left₀ hθ₁pos.le (le_max_left _ _) n
+  have h79 : (79 / 100 : ℝ) ^ n ≤ θ ^ n :=
+    pow_le_pow_left₀ (by norm_num) (le_max_right _ _) n
+  have hθn : (0 : ℝ) ≤ θ ^ n := by positivity
+  have hfinal : famSup Fn - famInf Fn ≤ 4 * ((1 - β)⁻¹ * θ ^ n) * γA := by
+    refine hoscFn.trans ?_
+    calc (1 - β) ^ (n / M) * (Ω₀ + 2 * β * Λ₀)
+        ≤ ((1 - β)⁻¹ * θ ^ n) * (4 * γA) := by
+          refine mul_le_mul hblock hV (by positivity) (by positivity)
+      _ = 4 * ((1 - β)⁻¹ * θ ^ n) * γA := by ring
+  calc |stateHorizonIntegral δ A n d s τ - (Fintype.card S : ℝ)⁻¹ * γA|
+      = |(Fn d τ - cen) + (cen - (Fintype.card S : ℝ)⁻¹ * γA)| := by
+        rw [hFn]; ring_nf
+    _ ≤ |Fn d τ - cen| + |cen - (Fintype.card S : ℝ)⁻¹ * γA| := abs_add_le _ _
+    _ ≤ 4 * ((1 - β)⁻¹ * θ ^ n) * γA + (79 / 100 : ℝ) ^ n * γA := by
+        exact add_le_add (hdev.trans hfinal) hcen2
+    _ ≤ 4 * ((1 - β)⁻¹ * θ ^ n) * γA + θ ^ n * γA := by
+        gcongr
+    _ = (4 * (1 - β)⁻¹ + 1) * θ ^ n * γA := by ring
 
 end VandeheyState
 

@@ -10116,3 +10116,32 @@ mathematical:
    `|F_n(d,s)(τ) − |S|⁻¹ G_n(τ)| ≤ osc(F_n)`, and
    `|G_n(τ) − γ(A)| ≤ (79/100)ⁿ γ(A)` is `CFPsiPin.horizonIntegral_pin_geom`.
 4. Convert `(1−β)^{⌊n/M⌋}` to `θⁿ` with `θ = (1−β)^{1/M}`, absorbing the remainder into `C`.
+
+### 2026-09-27 (same lap, part 7): **`stateHorizonIntegral_pin` IS PROVED** — the crux is closed
+
+`VandeheyStatePin.stateHorizonIntegral_pin` is now sorry-free with trust triple
+`[propext, Classical.choice, Quot.sound]`:
+
+> For an automaton whose every digit step is a bijection and whose every pair of states is joined
+> by a genuine digit word of length `M ≥ 2`, there are `C ≥ 0` and `θ < 1` with
+> `|F_n(d,s)(τ) − (card S)⁻¹·γ(A)| ≤ C·θⁿ·γ(A)` for all `n, d, s` and all `τ ∈ [0,1]`.
+
+The assembly: `β := min over S × S of wordWeight(w_{d,t})`, capped at `1/8`; `Λ₀ = 2log2·γ(A)`
+from `CFPsiPin.horizonIntegral_zero_logLip`; `Ω₀ = 4log2·γ(A)` from the new
+`horizonIntegral_zero_le`; the decay `stateStepIter_osc_geom` at block `M`, extended from
+`M·⌊n/M⌋` to `n` by `stateStepIter_osc_le` and converted to `θⁿ` with `θ = max((1−β)^{1/M}, 79/100)`
+by `geom_block_bound`; the centre `(card S)⁻¹·G_n(τ)` identified as the average over the initial
+state (`sum_over_initial_stateHorizonIntegral`) and pinned to `γ(A)` by
+`CFPsiPin.horizonIntegral_pin_geom`.
+
+**NEXT (the remaining road to `vandeheyUniformFreq_holds`).**
+1. Instantiate `stateHorizonIntegral_pin` at the class automaton: `S = ClassSpace D`,
+   `δ = classStep D`, `M = 3` from `Doeblin.exists_classWord_three`, `hbij` from
+   `VandeheyRenewal.classStep_bijective`.  (`ClassSpace D` is a `Fintype` with `DecidableEq` and
+   is `Nonempty`; check those instances are in scope.)
+2. From the pin derive `VandeheyCocycle.ClassEquidistribution (classStep D) t q` — this is the
+   step `PENDING_WORK` has called "the crux" since the route was set; the pin is its quantitative
+   form, and the passage goes through `vanDerCorput_bound` / `cesaro_shift_bound`.
+3. `tendsto_jointCount_of_classEquidistribution` then gives the transfer half.
+4. The fiber (merging inside a class), §2 transducer + identity (9), §5–§6 trigger counting.
+5. Repoint the `Maze.lean` row citing Vandehey 1.1 from `.cited`.
