@@ -30,6 +30,7 @@ import NormalNumbers.LiteraturePhilipp
 import NormalNumbers.VandeheyAutomaton
 import NormalNumbers.VandeheyCocycle
 import NormalNumbers.VandeheyClass
+import NormalNumbers.VandeheyMixing
 import NormalNumbers.VandeheyZFree
 import NormalNumbers.VandeheyTransfer
 import NormalNumbers.LiteratureVandehey

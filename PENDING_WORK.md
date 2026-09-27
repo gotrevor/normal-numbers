@@ -9720,3 +9720,42 @@ be argued on `X`, never on `G`.  `exists_return_two_and_three` does exactly that
 2. Then `ClassEquidistribution` via `vanDerCorput_bound`, and
    `tendsto_jointCount_of_classEquidistribution` closes the transfer half.
 3. Then the fiber (merging *inside* a class), §2 identity (9), §5–§6 trigger counting.
+
+### Same lap, fourteenth commit: ψ-mixing against a whole FAMILY of cylinders
+
+`src/NormalNumbers/VandeheyMixing.lean` (wired, sorry-free, axiom-clean).  This is the brick
+that removes the obstruction this file recorded twice: the event "the class after `n` digits is
+`d`" is a **union** of length-`n` cylinders, never a single one, and
+`gaussMeasure_cylinder_psi_mixing` only takes a single cylinder in front.
+
+The obstruction dissolves because the repo's bound is **multiplicative** (ψ-mixing, error
+`ρ^g·γ(A)·γ(I_v)`) and not additive (α-mixing, error `ρ^g`): summed over a disjoint family of
+same-length cylinders a multiplicative error reproduces itself with the family's *total* mass in
+place of the single cylinder's.  So
+
+> `|γ(E ∩ T^{-(n+g)}A) − γ(E)·γ(A)| ≤ (79/100)^g · γ(A) · γ(E)`
+
+for `E` **any** finite union of length-`n` cylinders and any measurable `A ⊆ (0,1)`.
+
+* `familySet`, `measurableSet_familySet` — the union of a finite family's cylinders.
+* `gaussMeasure_familySet`, `gaussMeasure_familySet_inter` — additivity, from
+  `cfCylinder_disjoint`; the second says the *intersected* cylinders still add, which is what
+  makes the error sum work.
+* `gaussMeasure_familySet_psi_mixing` — the upgraded bound.
+
+Finite families suffice downstream because the digit truncation is already in place
+(`VandeheyAut.boundedWords`, `card_unbounded_window_le`, `digitTail_le`), and finiteness keeps
+the additivity elementary — no countable-additivity bookkeeping.
+
+### Next attack
+
+1. **The class renewal.**  With the family brick, `ν_m(d,d') := γ{σ_{W_m}(d) = d'}` satisfies a
+   genuine renewal identity: split `σ_{W_m} = σ_u ∘ σ_{W_{m−ℓ}}`, put the length-`(m−ℓ)`
+   family (the class-`e` event) in the past and the cylinder `I_u` in the future, and
+   `gaussMeasure_familySet_psi_mixing` decouples them up to `(79/100)^g`.  Transitivity +
+   aperiodicity on `X` (`VandeheyClass.exists_word_reach`, `exists_return_two_and_three`) then
+   drive `ν_m → 1/|X|` geometrically.
+2. That gives the Markov convergence statement, hence `ClassEquidistribution` via
+   `vanDerCorput_bound`, hence the transfer half via
+   `tendsto_jointCount_of_classEquidistribution`.
+3. Then the fiber (merging inside a class), §2 identity (9), §5–§6 trigger counting.
