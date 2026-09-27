@@ -373,6 +373,97 @@ lemma exists_selection_scale (K r c a D0 X0 L0 : ℕ) :
     omega
   exact ⟨k, by omega, by omega, hk16, by omega, by omega, f1, f2, f3⟩
 
+/-! ### Size bookkeeping and the candidate injection -/
+
+/-- `Q = q^(a-1) ≤ (2L)^(a-1)`. -/
+lemma jointQ_le {a q L : ℕ} (hq : q < 2 * L) : jointQ a q ≤ (2 * L) ^ (a - 1) :=
+  Nat.pow_le_pow_left (by omega) _
+
+/-- `B = q ∏ P_j^c ≤ (2L)^(1 + c · ∑_{j<k, j≠r}(j+1))`, the explicit size bound of §4. -/
+lemma jointB_le {c k r q L : ℕ} {p : ℕ → ℕ → ℕ} (hq : q < 2 * L)
+    (hp : ∀ j t, j ∈ killedIdx k r → t < j + 1 → p j t < 2 * L) :
+    jointB c k r q p ≤ (2 * L) ^ (1 + c * killPoolSize k r) := by
+  have hslot : ∀ j ∈ killedIdx k r, slotProd p j ≤ (2 * L) ^ (j + 1) := by
+    intro j hj
+    simp only [slotProd]
+    calc ∏ t ∈ range (j + 1), p j t ≤ ∏ _t ∈ range (j + 1), (2 * L) := by
+          refine Finset.prod_le_prod' ?_
+          intro t ht
+          exact le_of_lt (hp j t hj (Finset.mem_range.mp ht))
+      _ = (2 * L) ^ (j + 1) := by rw [Finset.prod_const, Finset.card_range]
+  have hcore : killCore c k r p ≤ (2 * L) ^ (c * killPoolSize k r) := by
+    simp only [killCore]
+    calc ∏ j ∈ killedIdx k r, slotProd p j ^ c
+        ≤ ∏ j ∈ killedIdx k r, ((2 * L) ^ (j + 1)) ^ c := by
+          refine Finset.prod_le_prod' ?_
+          intro j hj
+          exact Nat.pow_le_pow_left (hslot j hj) c
+      _ = ∏ j ∈ killedIdx k r, (2 * L) ^ (c * (j + 1)) := by
+          refine Finset.prod_congr rfl fun j _ => ?_
+          rw [← pow_mul, Nat.mul_comm (j + 1) c]
+      _ = (2 * L) ^ (∑ j ∈ killedIdx k r, c * (j + 1)) := by
+          rw [Finset.prod_pow_eq_pow_sum]
+      _ = (2 * L) ^ (c * killPoolSize k r) := by
+          rw [killPoolSize, Finset.mul_sum]
+  calc jointB c k r q p = q * killCore c k r p := rfl
+    _ ≤ (2 * L) * (2 * L) ^ (c * killPoolSize k r) := Nat.mul_le_mul (by omega) hcore
+    _ = (2 * L) ^ (1 + c * killPoolSize k r) := by rw [pow_add, pow_one]
+
+/-- `R > L`: the CRT residue at the (always killed, because `r ≥ 1`) slot `j = 0` forces
+`R % P₀^c = P₀^(c-1) ≥ P₀ > L`. -/
+lemma lt_crt_solution {c k r L R : ℕ} {p : ℕ → ℕ → ℕ} (hc : 2 ≤ c) (hr : 1 ≤ r) (hrk : r < k)
+    (hp0 : 2 ≤ p 0 0) (hpL : L < p 0 0)
+    (hres : ∀ j, j < k → j ≠ r → R + j ≡ slotProd p j ^ (c - 1) [MOD slotProd p j ^ c]) :
+    L < R := by
+  have h0 : slotProd p 0 = p 0 0 := by simp [slotProd]
+  have h := hres 0 (by omega) (by omega)
+  rw [Nat.add_zero, h0] at h
+  have hlt : p 0 0 ^ (c - 1) < p 0 0 ^ c := Nat.pow_lt_pow_right (by omega) (by omega)
+  have hmod : R % (p 0 0 ^ c) = p 0 0 ^ (c - 1) := by
+    rw [Nat.ModEq] at h
+    rw [h, Nat.mod_eq_of_lt hlt]
+  have hle : p 0 0 ^ (c - 1) ≤ R := by
+    rw [← hmod]; exact Nat.mod_le _ _
+  have hge : p 0 0 ≤ p 0 0 ^ (c - 1) := by
+    calc p 0 0 = p 0 0 ^ 1 := (pow_one _).symm
+      _ ≤ p 0 0 ^ (c - 1) := Nat.pow_le_pow_right (by omega) (by omega)
+  omega
+
+/-- The **candidate injection**: every prime `z ≤ X` in the class `u mod B` is `u + mB` for
+the single index `m = z / B < X/B + 1`.  Hence the AGP count is a lower bound for the number
+of candidate indices. -/
+lemma card_agp_le_card_candidates {B u X : ℕ} (hB : 1 ≤ B) (huB : u < B) :
+    ((range (X + 1)).filter (fun z => z.Prime ∧ z % B = u % B)).card ≤
+      ((range (X / B + 1)).filter
+        (fun m => (u + m * B).Prime ∧ u + m * B ≤ X)).card := by
+  classical
+  have key : ∀ z ∈ (range (X + 1)).filter (fun z => z.Prime ∧ z % B = u % B),
+      u + (z / B) * B = z := by
+    intro z hz
+    obtain ⟨-, -, hmod⟩ := by
+      simpa only [Finset.mem_filter, Finset.mem_range, and_assoc] using hz
+    have : z % B = u := by rw [hmod, Nat.mod_eq_of_lt huB]
+    have hd : B * (z / B) + z % B = z := Nat.div_add_mod z B
+    have hcm : (z / B) * B = B * (z / B) := Nat.mul_comm _ _
+    omega
+  refine Finset.card_le_card_of_injOn (fun z => z / B) ?_ ?_
+  · intro z hz
+    have hzX : z ≤ X := by
+      have := (Finset.mem_filter.mp hz).1
+      simpa using Nat.lt_succ_iff.mp (Finset.mem_range.mp this)
+    obtain ⟨hp, -⟩ := (Finset.mem_filter.mp hz).2
+    refine Finset.mem_filter.mpr ⟨Finset.mem_range.mpr ?_, ?_, ?_⟩
+    · show z / B < X / B + 1
+      have : z / B ≤ X / B := Nat.div_le_div_right hzX
+      omega
+    · rw [key z hz]; exact hp
+    · rw [key z hz]; exact hzX
+  · intro z hz z' hz' heq
+    have h1 := key z (by simpa using hz)
+    have h2 := key z' (by simpa using hz')
+    simp only at heq
+    rw [← h1, ← h2, heq]
+
 /-- The target of this file, with its analytic inputs as hypotheses.  See the module
 docstring.  TEMPORARY `sorry`: the statement is fixed first so that partial scaffolding
 cannot be mistaken for success. -/
