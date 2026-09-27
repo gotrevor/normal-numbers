@@ -813,7 +813,191 @@ the module docstring for the shift-average + Cauchy–Schwarz attack that
 theorem isNormal_add_int_div_coprime (b B : ℕ) (hb : 2 ≤ b) (hB : 0 < B)
     (hcop : Nat.Coprime B b) (x : ℝ) (M : ℤ) (hx : IsNormal b x) :
     IsNormal b ((x + (M : ℝ)) / B) := by
-  sorry
+
+  classical
+  have hbk : (0 : ℝ) < (b : ℝ) := by
+    have : (0 : ℕ) < b := by omega
+    exact_mod_cast this
+  have hB' : (0 : ℝ) < (B : ℝ) := by exact_mod_cast hB
+  -- reduce to `x ∈ [0,1)`
+  have hx'mem : Int.fract x ∈ Set.Ico (0 : ℝ) 1 := ⟨Int.fract_nonneg x, Int.fract_lt_one x⟩
+  have hx'n : IsNormal b (Int.fract x) := by
+    show IsNormalSequence b (digitOf b (Int.fract (Int.fract x)))
+    rw [Int.fract_fract]
+    exact hx
+  have hsplit : (x + (M : ℝ)) / B = (Int.fract x + (((M + ⌊x⌋ : ℤ)) : ℝ)) / B := by
+    rw [Int.fract]
+    push_cast
+    ring
+  rw [hsplit, isNormal_iff_equidistributed_orbit b hb]
+  set x' : ℝ := Int.fract x with hx'def
+  set M' : ℤ := M + ⌊x⌋ with hM'def
+  refine equidistributed_of_badic b hb _ ?_
+  intro k hk1 m hm
+  have hbkp : (0 : ℝ) < (b : ℝ) ^ k := by positivity
+  have hbkN : 0 < b ^ k := Nat.pow_pos (by omega)
+  -- the (state, block) index
+  set idx : ℕ → ℕ := fun n => divState b B x' M' n * b ^ k + blockVal b x' n k with hidx
+  have hstate : ∀ n, divState b B x' M' n < B := fun n => divState_lt b B hB x' M' n
+  have hblock : ∀ n, blockVal b x' n k < b ^ k := by
+    intro n
+    have hd : ∀ d ∈ ((List.range k).map fun i => digitOf b (Int.fract x') (n + i)), d < b := by
+      intro d hd
+      simp only [List.mem_map, List.mem_range] at hd
+      obtain ⟨i, _, rfl⟩ := hd
+      exact digitOf_lt b hb _ _
+    have h := blockNatVal_lt b ((List.range k).map fun i => digitOf b (Int.fract x') (n + i)) hd
+    simpa [blockVal] using h
+  have hdm : ∀ i : ℕ, i / b ^ k * b ^ k + i % b ^ k = i := by
+    intro i
+    rw [Nat.mul_comm]
+    exact Nat.div_add_mod i (b ^ k)
+  have hidxcomm : ∀ n, idx n = b ^ k * divState b B x' M' n + blockVal b x' n k := by
+    intro n
+    rw [hidx]
+    simp only
+    ring
+  have hidxdiv : ∀ n, idx n / b ^ k = divState b B x' M' n := by
+    intro n
+    rw [hidxcomm n, Nat.mul_add_div hbkN, Nat.div_eq_of_lt (hblock n), Nat.add_zero]
+  have hidxmod : ∀ n, idx n % b ^ k = blockVal b x' n k := by
+    intro n
+    rw [hidxcomm n, Nat.mul_add_mod, Nat.mod_eq_of_lt (hblock n)]
+  -- pointwise: the cell condition is an interval condition on the index
+  have hchar : ∀ n : ℕ,
+      (orbit b ((x' + (M' : ℝ)) / B) n ∈
+          Set.Ico ((m : ℝ) / (b : ℝ) ^ k) (((m : ℝ) + 1) / (b : ℝ) ^ k))
+        ↔ (m * B ≤ idx n ∧ idx n < (m + 1) * B) := by
+    intro n
+    rw [orbit_add_div b B hB x' hx'mem M' n]
+    have hV : ((blockVal b x' n k : ℕ) : ℤ) = ⌊orbit b x' n * (b : ℝ) ^ k⌋ :=
+      (floor_orbit_mul_pow b hb x' hx'mem n k).symm
+    have hstep1 : ((m : ℝ) / (b : ℝ) ^ k
+          ≤ ((divState b B x' M' n : ℝ) + orbit b x' n) / B)
+        ↔ ((m : ℝ) * B ≤ (divState b B x' M' n : ℝ) * (b : ℝ) ^ k
+            + orbit b x' n * (b : ℝ) ^ k) := by
+      rw [div_le_div_iff₀ hbkp hB', add_mul]
+    have hstep2 : (((divState b B x' M' n : ℝ) + orbit b x' n) / B
+          < ((m : ℝ) + 1) / (b : ℝ) ^ k)
+        ↔ ((divState b B x' M' n : ℝ) * (b : ℝ) ^ k + orbit b x' n * (b : ℝ) ^ k
+            < ((m : ℝ) + 1) * B) := by
+      rw [div_lt_div_iff₀ hB' hbkp, add_mul]
+    rw [Set.mem_Ico, hstep1, hstep2]
+    constructor
+    · intro h
+      obtain ⟨h1, h2⟩ := h
+      refine ⟨?_, ?_⟩
+      · have hz : ((m : ℤ) * B - (divState b B x' M' n : ℤ) * (b : ℤ) ^ k)
+            ≤ ((blockVal b x' n k : ℕ) : ℤ) := by
+          rw [hV, Int.le_floor]
+          push_cast
+          linarith [h1]
+        zify
+        rw [hidx]
+        push_cast
+        linarith [hz]
+      · have hz : ⌊orbit b x' n * (b : ℝ) ^ k⌋
+            < ((m : ℤ) + 1) * B - (divState b B x' M' n : ℤ) * (b : ℤ) ^ k := by
+          rw [Int.floor_lt]
+          push_cast
+          linarith [h2]
+        rw [← hV] at hz
+        zify
+        rw [hidx]
+        push_cast
+        linarith [hz]
+    · intro h
+      obtain ⟨h1, h2⟩ := h
+      have h1' : ((m : ℤ) * B - (divState b B x' M' n : ℤ) * (b : ℤ) ^ k)
+          ≤ ((blockVal b x' n k : ℕ) : ℤ) := by
+        zify at h1
+        rw [hidx] at h1
+        push_cast at h1
+        linarith
+      have h2' : ((blockVal b x' n k : ℕ) : ℤ)
+          < ((m : ℤ) + 1) * B - (divState b B x' M' n : ℤ) * (b : ℤ) ^ k := by
+        zify at h2
+        rw [hidx] at h2
+        push_cast at h2
+        linarith
+      rw [hV, Int.le_floor] at h1'
+      rw [hV, Int.floor_lt] at h2'
+      push_cast at h1' h2'
+      constructor
+      · linarith [h1']
+      · linarith [h2']
+  have hcells : ∀ N : ℕ,
+      (visitCount (orbit b ((x' + (M' : ℝ)) / B)) ((m : ℝ) / (b : ℝ) ^ k)
+        (((m : ℝ) + 1) / (b : ℝ) ^ k) N : ℝ)
+      = ∑ i ∈ Finset.Ico (m * B) ((m + 1) * B),
+          ((((Finset.range N).filter fun n =>
+            divState b B x' M' n = i / b ^ k ∧ blockVal b x' n k = i % b ^ k).card : ℕ) : ℝ) := by
+    intro N
+    have hL : (visitCount (orbit b ((x' + (M' : ℝ)) / B)) ((m : ℝ) / (b : ℝ) ^ k)
+        (((m : ℝ) + 1) / (b : ℝ) ^ k) N : ℝ)
+        = ∑ n ∈ Finset.range N, (if orbit b ((x' + (M' : ℝ)) / B) n ∈
+            Set.Ico ((m : ℝ) / (b : ℝ) ^ k) (((m : ℝ) + 1) / (b : ℝ) ^ k)
+          then (1 : ℝ) else 0) := by
+      rw [visitCount, Finset.card_filter, Nat.cast_sum]
+      refine Finset.sum_congr rfl fun n _ => ?_
+      by_cases h : orbit b ((x' + (M' : ℝ)) / B) n ∈
+          Set.Ico ((m : ℝ) / (b : ℝ) ^ k) (((m : ℝ) + 1) / (b : ℝ) ^ k) <;> simp [h]
+    have hR : ∀ i : ℕ, ((((Finset.range N).filter fun n =>
+          divState b B x' M' n = i / b ^ k ∧ blockVal b x' n k = i % b ^ k).card : ℕ) : ℝ)
+        = ∑ n ∈ Finset.range N,
+            (if divState b B x' M' n = i / b ^ k ∧ blockVal b x' n k = i % b ^ k
+              then (1 : ℝ) else 0) := by
+      intro i
+      rw [Finset.card_filter, Nat.cast_sum]
+      refine Finset.sum_congr rfl fun n _ => ?_
+      by_cases h : divState b B x' M' n = i / b ^ k ∧ blockVal b x' n k = i % b ^ k <;>
+        simp [h]
+    rw [hL, Finset.sum_congr rfl (fun i (_ : i ∈ Finset.Ico (m * B) ((m + 1) * B)) => hR i),
+      Finset.sum_comm]
+    refine Finset.sum_congr rfl fun n _ => ?_
+    by_cases hin : m * B ≤ idx n ∧ idx n < (m + 1) * B
+    · rw [if_pos ((hchar n).2 hin)]
+      rw [Finset.sum_eq_single_of_mem (idx n) (Finset.mem_Ico.2 hin) ?_]
+      · rw [if_pos ⟨(hidxdiv n).symm, (hidxmod n).symm⟩]
+      · intro i _ hne
+        refine if_neg ?_
+        intro hc
+        exact hne (by rw [hidx]; simp only; rw [hc.1, hc.2, hdm i])
+    · rw [if_neg (fun hcon => hin ((hchar n).1 hcon))]
+      refine (Finset.sum_eq_zero fun i hi => ?_).symm
+      refine if_neg ?_
+      intro hc
+      have : i = idx n := by
+        rw [hidx]; simp only; rw [hc.1, hc.2, hdm i]
+      rw [this] at hi
+      exact hin (Finset.mem_Ico.1 hi)
+  -- each grid cell has density 1/(B b^k)
+  have hlim : ∀ i ∈ Finset.Ico (m * B) ((m + 1) * B),
+      Tendsto (fun N => ((((Finset.range N).filter fun n =>
+          divState b B x' M' n = i / b ^ k ∧ blockVal b x' n k = i % b ^ k).card : ℕ) : ℝ) / N)
+        atTop (𝓝 ((B : ℝ)⁻¹ * ((b : ℝ) ^ k)⁻¹)) := by
+    intro i hi
+    obtain ⟨hi1, hi2⟩ := Finset.mem_Ico.1 hi
+    have hik : i < B * b ^ k := by
+      have hmb : m + 1 ≤ b ^ k := hm
+      calc i < (m + 1) * B := hi2
+      _ ≤ b ^ k * B := Nat.mul_le_mul_right B hmb
+      _ = B * b ^ k := by ring
+    have hjB : i / b ^ k < B := Nat.div_lt_of_lt_mul (by rw [mul_comm] at hik; exact hik)
+    exact tendsto_jointDensity b B hb hB hcop x' hx'mem hx'n M' k hk1 (i / b ^ k) hjB
+      (i % b ^ k) (Nat.mod_lt _ hbkN)
+  have hsum := tendsto_finsetSum _ hlim
+  have hval : (∑ _i ∈ Finset.Ico (m * B) ((m + 1) * B), (B : ℝ)⁻¹ * ((b : ℝ) ^ k)⁻¹)
+      = 1 / (b : ℝ) ^ k := by
+    rw [Finset.sum_const, Nat.card_Ico, nsmul_eq_mul]
+    have hcard : ((m + 1) * B - m * B : ℕ) = B := by
+      have : (m + 1) * B = m * B + B := by ring
+      omega
+    rw [hcard]
+    field_simp
+  rw [hval] at hsum
+  refine hsum.congr fun N => ?_
+  rw [hcells N, Finset.sum_div]
 
 end WallRational
 
