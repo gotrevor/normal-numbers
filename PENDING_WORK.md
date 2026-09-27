@@ -9965,3 +9965,40 @@ PERIODIC with period `D`.**  Abel-resum in blocks of `D` instead of `1`: the jum
 of a factor `O(D)` in the contraction constant.  If that factor pushes the rate above `1`, first
 iterate `L` a fixed number of times (the composite still has the same periodicity) or keep the
 `τ`-oscillation only in the *integrated* form the Doeblin step actually consumes.
+
+### 2026-09-27 (same lap, part 3): the family log-Lipschitz obstruction is BROKEN
+
+The attack named in part 2 (generalize `CFPsiPin.stepOp_logLipschitz` to a `k`-indexed family by
+Abel-resumming in blocks of `D`) turned out to be unnecessary — there is a **sharper and simpler
+substitute**, now proved sorry-free in `src/NormalNumbers/VandeheyWeightTV.lean`:
+
+> `WeightTV.tsum_abs_stepWeight_sub_le` —
+> `Σ_k |w_τ(k) − w_{τ'}(k)| ≤ (3/5)·|log(1+τ) − log(1+τ')|` for `τ, τ' ∈ [0,1]`.
+
+Because `Σ_k w_τ(k) = 1` for every `τ`, the `B`-series `Σ_k (w_τ(k) − w_{τ'}(k))·ψ_k(·)` is
+invariant under subtracting a constant from `ψ`, hence bounded by `½·osc(ψ)·Σ_k|Δ_k|` — no Abel
+resummation, and no periodicity of `k ↦ δ d (k+1)` needed.  The `A`-series of the existing proof
+is already term-by-term in `k` and generalizes verbatim.
+
+Mechanism of the new lemma (all in the file's docstring):
+* `stepWeight_sub_eq` — the exact factorization `Δ_k = (a−b)(k²+k−ab)/((k+a)(k+1+a)(k+b)(k+1+b))`
+  with `a = 1+τ`, `b = 1+τ'`.  Sign of `Δ_k` = sign of `k²+k−ab`.
+* `stepWeight_mono_two_le` — hence `Δ_k ≥ 0` for **every** `k ≥ 2` (`k²+k ≥ 6 > 4 ≥ ab`).
+* `Σ_k Δ_k = 0`, so the tail `Σ_{k≥2}` equals `−Δ₀−Δ₁` and `Σ_k|Δ_k| ≤ 2|Δ₀| + 2|Δ₁|`: the whole
+  ℓ¹ norm sits on the two lowest branches.
+* `abs_stepWeight_zero_sub_le` (`≤ ¼·d`) and `abs_stepWeight_one_sub_le` (`≤ (1/30)·d`), both from
+  `Real.le_log_one_add_of_nonneg` (`log t ≥ 2(t−1)/(t+1)`) plus an algebraic inequality —
+  `(a−1)(b−1) ≥ 0` for the first, a two-case `nlinarith` for the second.
+* Total `17/30 ≈ 0.567`, stated as `3/5`.
+
+**The constant is what makes the joint contraction close.**  The 2×2 system for
+`(osc, Lip) ↦ (osc', Lip')` of the refined operator is
+`Lip(LΦ) ≤ ¾·Lip(Φ) + ½·(3/5)·osc(Φ)` and, over a block of Doeblin steps,
+`osc ↦ (1−|X|β)·osc + β·|X|·log2·Lip`, whose accumulated cross-coefficient is `≤ log 2`.  The
+spectral radius is `< 1` exactly when `½·(3/5)·log 2 < ¼`, i.e. `3/5 < 1/(2 log 2) ≈ 0.7213`. ✓
+
+**Next attack.**  Prove the family log-Lipschitz step
+`stateStepOp_logLipschitz : Lip_log(LΦ(d,·)) ≤ ¾·sup_d Lip_log(Φ(d,·)) + (3/10)·osc(Φ)`
+by re-running the `A`-series of `stepOp_logLipschitz_aux` term-by-term (it never mixes indices)
+and replacing its `B`-series by `tsum_abs_stepWeight_sub_le`.  Then the 2×2 linear recursion,
+then `stateHorizonIntegral_pin`.

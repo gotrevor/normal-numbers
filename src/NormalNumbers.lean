@@ -34,6 +34,7 @@ import NormalNumbers.VandeheyMixing
 import NormalNumbers.VandeheyRenewal
 import NormalNumbers.VandeheyRenyi
 import NormalNumbers.VandeheyStatePin
+import NormalNumbers.VandeheyWeightTV
 import NormalNumbers.VandeheyZFree
 import NormalNumbers.VandeheyTransfer
 import NormalNumbers.LiteratureVandehey
