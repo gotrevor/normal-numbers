@@ -1,6 +1,13 @@
 # Handoff: Wall 1949 (rational affine maps preserve normality) — reduction complete
 
-**Branch**: `wip/wall-rational` · **Scope**: `sorry-free:src/NormalNumbers/WallRational.lean`
+**Date**: 2026-09-27 · **Branch**: `wip/wall-rational` · **HEAD**: `c118cc6`
+**Scope**: `sorry-free:src/NormalNumbers/WallRational.lean` (operator side quest;
+the ratified statement `NormalNumbers.isNormal_rat_mul_add` was neither weakened nor
+renamed).  Working tree clean, nothing pushed.  `lake build` green, 9272 jobs.
+
+Commits this run: `9cea381` (decomposition + crux isolated), `5ef393d` (whole
+reduction proved), `21fa350` (`tendsto_blockAverage`), `6259961` (long-division
+automaton layer), `c118cc6` (grid assembly).
 
 ## Status
 
