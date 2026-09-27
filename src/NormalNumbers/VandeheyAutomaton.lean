@@ -457,6 +457,52 @@ theorem jointCount_le [DecidableEq S] (s₀ t : S) (z v : List ℕ)
     _ = L + (goodSet δ s₀ t z v x K L (n - L)).card + (badSet z x K L (n - L)).card :=
         (Nat.add_assoc _ _ _).symm
 
+/-- A window that is not digit-bounded contains an out-of-range digit, so unbounded windows
+are charged to the digit tail, with multiplicity at most `L`. -/
+theorem card_unbounded_window_le (x : ℝ) (K L m : ℕ) :
+    ((Finset.range m).filter fun j => cfWindow x j L ∉ boundedWords K L).card
+      ≤ L * ((Finset.range (m + L)).filter
+              fun i => ¬ (1 ≤ cfDigit x i ∧ cfDigit x i ≤ K)).card := by
+  classical
+  set D : Finset ℕ := (Finset.range (m + L)).filter
+    fun i => ¬ (1 ≤ cfDigit x i ∧ cfDigit x i ≤ K) with hD
+  have hsub : ((Finset.range m).filter fun j => cfWindow x j L ∉ boundedWords K L)
+      ⊆ (Finset.range L).biUnion fun k => (Finset.range m).filter
+          fun j => ¬ (1 ≤ cfDigit x (j + k) ∧ cfDigit x (j + k) ≤ K) := by
+    intro j hj
+    simp only [Finset.mem_filter, Finset.mem_range] at hj
+    obtain ⟨hjm, hnb⟩ := hj
+    rw [mem_boundedWords] at hnb
+    have hex : ∃ a ∈ cfWindow x j L, ¬ (1 ≤ a ∧ a ≤ K) := by
+      by_contra hc
+      push_neg at hc
+      exact hnb ⟨cfWindow_length x j L, fun a ha => hc a ha⟩
+    obtain ⟨a, ha, hbad⟩ := hex
+    simp only [cfWindow, List.mem_map, List.mem_range] at ha
+    obtain ⟨k, hkL, hk⟩ := ha
+    refine Finset.mem_biUnion.mpr ⟨k, Finset.mem_range.mpr hkL, ?_⟩
+    refine Finset.mem_filter.mpr ⟨Finset.mem_range.mpr hjm, ?_⟩
+    show ¬ (1 ≤ cfDigit x (j + k) ∧ cfDigit x (j + k) ≤ K)
+    rw [hk]; exact hbad
+  refine le_trans (Finset.card_le_card hsub) ?_
+  refine le_trans (Finset.card_biUnion_le) ?_
+  have hterm : ∀ k ∈ Finset.range L, ((Finset.range m).filter
+      fun j => ¬ (1 ≤ cfDigit x (j + k) ∧ cfDigit x (j + k) ≤ K)).card ≤ D.card := by
+    intro k hk
+    refine Finset.card_le_card_of_injOn (fun j => j + k) ?_
+      (fun a _ b _ h => by simpa using h)
+    intro j hj
+    obtain ⟨hjm', hjbad⟩ := Finset.mem_filter.mp hj
+    have hjm := Finset.mem_range.mp hjm'
+    have hkL := Finset.mem_range.mp hk
+    refine Finset.mem_filter.mpr ⟨Finset.mem_range.mpr ?_, hjbad⟩
+    show j + k < m + L
+    omega
+  calc ∑ k ∈ Finset.range L, ((Finset.range m).filter
+          fun j => ¬ (1 ≤ cfDigit x (j + k) ∧ cfDigit x (j + k) ≤ K)).card
+      ≤ ∑ _k ∈ Finset.range L, D.card := Finset.sum_le_sum hterm
+    _ = L * D.card := by rw [Finset.sum_const, Finset.card_range, smul_eq_mul]
+
 /-- The bad set splits into "a digit in the window exceeds `K`" and "`z` is absent". -/
 theorem badSet_card_le (z : List ℕ) (x : ℝ) (K L m : ℕ) :
     (badSet z x K L m).card
@@ -467,44 +513,7 @@ theorem badSet_card_le (z : List ℕ) (x : ℝ) (K L m : ℕ) :
   set D : Finset ℕ := (Finset.range (m + L)).filter
     fun i => ¬ (1 ≤ cfDigit x i ∧ cfDigit x i ≤ K) with hD
   -- unbounded windows
-  have hunb : ((Finset.range m).filter
-      fun j => cfWindow x j L ∉ boundedWords K L).card ≤ L * D.card := by
-    have hsub : ((Finset.range m).filter fun j => cfWindow x j L ∉ boundedWords K L)
-        ⊆ (Finset.range L).biUnion fun k => (Finset.range m).filter
-            fun j => ¬ (1 ≤ cfDigit x (j + k) ∧ cfDigit x (j + k) ≤ K) := by
-      intro j hj
-      simp only [Finset.mem_filter, Finset.mem_range] at hj
-      obtain ⟨hjm, hnb⟩ := hj
-      rw [mem_boundedWords] at hnb
-      have hex : ∃ a ∈ cfWindow x j L, ¬ (1 ≤ a ∧ a ≤ K) := by
-        by_contra hc
-        push_neg at hc
-        exact hnb ⟨cfWindow_length x j L, fun a ha => hc a ha⟩
-      obtain ⟨a, ha, hbad⟩ := hex
-      simp only [cfWindow, List.mem_map, List.mem_range] at ha
-      obtain ⟨k, hkL, hk⟩ := ha
-      refine Finset.mem_biUnion.mpr ⟨k, Finset.mem_range.mpr hkL, ?_⟩
-      refine Finset.mem_filter.mpr ⟨Finset.mem_range.mpr hjm, ?_⟩
-      show ¬ (1 ≤ cfDigit x (j + k) ∧ cfDigit x (j + k) ≤ K)
-      rw [hk]; exact hbad
-    refine le_trans (Finset.card_le_card hsub) ?_
-    refine le_trans (Finset.card_biUnion_le) ?_
-    have hterm : ∀ k ∈ Finset.range L, ((Finset.range m).filter
-        fun j => ¬ (1 ≤ cfDigit x (j + k) ∧ cfDigit x (j + k) ≤ K)).card ≤ D.card := by
-      intro k hk
-      refine Finset.card_le_card_of_injOn (fun j => j + k) ?_
-        (fun a _ b _ h => by simpa using h)
-      intro j hj
-      obtain ⟨hjm', hjbad⟩ := Finset.mem_filter.mp hj
-      have hjm := Finset.mem_range.mp hjm'
-      have hkL := Finset.mem_range.mp hk
-      refine Finset.mem_filter.mpr ⟨Finset.mem_range.mpr ?_, hjbad⟩
-      show j + k < m + L
-      omega
-    calc ∑ k ∈ Finset.range L, ((Finset.range m).filter
-            fun j => ¬ (1 ≤ cfDigit x (j + k) ∧ cfDigit x (j + k) ≤ K)).card
-        ≤ ∑ _k ∈ Finset.range L, D.card := Finset.sum_le_sum hterm
-      _ = L * D.card := by rw [Finset.sum_const, Finset.card_range, smul_eq_mul]
+  have hunb := card_unbounded_window_le x K L m
   refine le_trans (Finset.card_le_card ?_) (le_trans (Finset.card_union_le _ _)
     (Nat.add_le_add hunb (le_refl _)))
   intro j hj

@@ -9497,3 +9497,34 @@ frequency, so `|S_L − S_{L'}| ≤ ε(L) + ε(L')`.
 
 ### Then: the transducer (`Synchronizing` for `M_D`)
 Remains the one genuinely open mathematical debt of Theorem 1.1 on this route.
+
+### Same lap, eighth commit: assembly helpers + the digit tail is `O(1/K)`, uniformly
+
+`src/NormalNumbers/VandeheyTransfer.lean` (wired), sorry-free; plus
+`VandeheyAut.card_unbounded_window_le` extracted out of `badSet_card_le` so it is reusable.
+
+* `tendsto_sub_div`, `tendsto_add_div` — a frequency limit survives a bounded shift of the
+  index (`f(n−L)/n` and `f(m+L)/m` have the same limit as `f(n)/n`).  Needed because the
+  sandwich is stated at `n − L` but the frequency is divided by `n`.
+* `Ioo_subset_iUnion_digit_cylinder` — `(1/(K+1), 1) ⊆ ⋃_{k=1}^{K} I_{[k]}` (for `x` there,
+  `x⁻¹ ∈ (1, K+1)`, so `⌊x⁻¹⌋₊ ∈ [1,K]`); no irrationality needed.
+* `digitTail_le` — **`1 − Σ_{k=1}^{K} γ(I_{[k]}) ≤ log(1 + 1/(K+1))/log 2`**, and
+  `tendsto_digitTail_bound` sends that to `0`.
+
+So `tendsto_digitTail_freq`'s limit is now *quantitatively* `O(1/K)` with an explicit
+bound — the tightness modulus, uniform over all CF-normal points.  This avoids needing
+`Σ_{k≥1} γ(I_{[k]}) = 1` as a separate lemma: the interval cover gives the bound directly
+from `gaussMeasure_Ioo`.
+
+### Remaining: the squeeze (`exists_jointFreq_limit`)
+
+With `A_n := #goodSet(n−L)/n → mainSum(L,K)` and
+`C_n := (L + #goodSet(n−L) + 2L·Dcnt(n,K) + Zcnt(n−L))/n
+   → mainSum(L,K) + 2L·(1 − Σ_{k≤K}γ(I_{[k]})) + Σ_{q ∈ zfreeWords} γ(I_q)`,
+the sandwich `A_n ≤ jointCount(n)/n ≤ C_n` gives
+`liminf ≥ mainSum` and `limsup ≤ mainSum + err(L,K)` with
+`err(L,K) ≤ 2L·log(1+1/(K+1))/log 2 + γ(zFreeSet z ⌊L/(|z|+1)⌋)`.
+Choosing `K` after `L` makes `err(L,K(L)) → 0`, so `limsup = liminf` (the limit exists) and
+the value is within `err` of the `x`-free quantity `mainSum(L,K(L))` for every `L` — hence
+`x`-independent.  **No Cauchy argument on `mainSum` is needed**: the two-sided squeeze against
+an `x`-free quantity does both jobs at once.
