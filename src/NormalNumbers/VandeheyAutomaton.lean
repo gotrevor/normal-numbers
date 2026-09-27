@@ -114,6 +114,35 @@ lemma cfWindow_add (x : ℝ) (m ℓ₁ ℓ₂ : ℕ) :
 noncomputable def stateAt (δ : S → ℕ → S) (s₀ : S) (x : ℝ) (i : ℕ) : S :=
   runState δ s₀ (cfWord x i)
 
+/-- The state after `i + k` digits is the automaton run over the length-`k` window at `i`,
+started from the state at `i`.  No synchronization needed — this is the plain cocycle
+identity, and it is what lets a *non*-synchronizing automaton still be handled. -/
+theorem stateAt_add (δ : S → ℕ → S) (s₀ : S) (x : ℝ) (i k : ℕ) :
+    stateAt δ s₀ x (i + k) = runState δ (stateAt δ s₀ x i) (cfWindow x i k) := by
+  rw [stateAt, stateAt, cfWord_add, runState_append]
+
+/-- Truncating a window on the right. -/
+lemma cfWindow_take (x : ℝ) (i m k : ℕ) (h : k ≤ m) :
+    (cfWindow x i m).take k = cfWindow x i k := by
+  obtain ⟨l, hl⟩ := Nat.exists_eq_add_of_le h
+  subst hl
+  rw [cfWindow_add]
+  exact List.take_left' (cfWindow_length x i k)
+
+/-- Truncating a window on the left. -/
+lemma cfWindow_drop (x : ℝ) (i m k : ℕ) (h : k ≤ m) :
+    (cfWindow x i m).drop k = cfWindow x (i + k) (m - k) := by
+  obtain ⟨l, hl⟩ := Nat.exists_eq_add_of_le h
+  subst hl
+  rw [cfWindow_add, List.drop_left' (cfWindow_length x i k)]
+  congr 1
+  omega
+
+/-- A sub-window of a window is a window. -/
+lemma cfWindow_drop_take (x : ℝ) (i m k l : ℕ) (h : k + l ≤ m) :
+    ((cfWindow x i m).drop k).take l = cfWindow x (i + k) l := by
+  rw [cfWindow_drop x i m k (by omega), cfWindow_take x (i + k) (m - k) l (by omega)]
+
 /-- **The deterministic core.**  If a synchronizing word `z` occurs inside the window of
 `L` digits ending at position `m + L`, then the state there is a function of that window
 alone: it does not depend on the initial state, nor on anything before position `m`. -/

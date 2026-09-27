@@ -194,6 +194,265 @@ lemma cocycleOf_congr {g h : ℕ → G} {x : ℝ} {i : ℕ}
   intro j hj
   exact hgh j (List.mem_range.mp hj)
 
+/-! ## The reduction: a joint-frequency deviation is dominated by a WINDOW average
+
+This is where the corrected route replaces the synchronizing one.  The old route needed the
+state at `i` to be a function of the window at `i` — false, by the row-lattice obstruction.
+What *is* true is the plain cocycle identity `stateAt (i+k) = runState (stateAt i) (window)`.
+So the local `K`-average of the joint deviation is a function of the (bounded, finitely many)
+window at `i` **and the hidden state at `i`** — and taking the worst case over the finitely
+many hidden states leaves a function of the window alone.  Combined with
+`cesaro_shift_bound`, the whole joint frequency is then controlled by a window average, which
+`VandeheyAut.tendsto_window_mem_freq` evaluates against `γ`.
+
+Crucially the reference value `L` is a free parameter here: the analytic leaf below gets to
+*choose* it, and because the leaf speaks only about `γ`, the `L` it produces is automatically
+independent of `x` — which is exactly the `VandeheyUniformFreq` contract.
+-/
+
+variable {X : Type*} [Fintype X] [DecidableEq X] [Nonempty X]
+
+/-- The deviation of the joint (window, state) event at position `i` from a reference
+value `L`. -/
+noncomputable def jointDev (δ : X → ℕ → X) (s₀ t : X) (q : List ℕ) (L : ℝ) (x : ℝ) (i : ℕ) :
+    ℝ :=
+  (if q = VandeheyAut.cfWindow x i q.length then (1 : ℝ) else 0) *
+    ((if VandeheyAut.stateAt δ s₀ x i = t then (1 : ℝ) else 0) - L)
+
+/-- The local `K`-average of `jointDev`, read off a window `W` and a hidden state `d`. -/
+noncomputable def localAvg (δ : X → ℕ → X) (t : X) (q : List ℕ) (L : ℝ) (K : ℕ)
+    (d : X) (W : List ℕ) : ℝ :=
+  (K : ℝ)⁻¹ * ∑ k ∈ range K,
+    (if q = (W.drop k).take q.length then (1 : ℝ) else 0) *
+      ((if VandeheyAut.runState δ d (W.take k) = t then (1 : ℝ) else 0) - L)
+
+/-- The worst case of `localAvg` over the hidden state: **a function of the window alone**.
+The state set is finite, so this costs nothing, and it is what removes the unbounded memory
+that the row-lattice obstruction forces on the transducer. -/
+noncomputable def windowBound (δ : X → ℕ → X) (t : X) (q : List ℕ) (L : ℝ) (K : ℕ)
+    (W : List ℕ) : ℝ :=
+  Finset.univ.sup' Finset.univ_nonempty fun d => |localAvg δ t q L K d W|
+
+lemma abs_jointDev_le (δ : X → ℕ → X) (s₀ t : X) (q : List ℕ) (L : ℝ) (x : ℝ) (i : ℕ) :
+    |jointDev δ s₀ t q L x i| ≤ 1 + |L| := by
+  rw [jointDev, abs_mul]
+  have h1 : |(if q = VandeheyAut.cfWindow x i q.length then (1 : ℝ) else 0)| ≤ 1 := by
+    split <;> simp
+  have h2 : |(if VandeheyAut.stateAt δ s₀ x i = t then (1 : ℝ) else 0) - L| ≤ 1 + |L| := by
+    refine le_trans (abs_sub _ _) (add_le_add ?_ (le_refl _))
+    split <;> simp
+  calc |(if q = VandeheyAut.cfWindow x i q.length then (1 : ℝ) else 0)|
+        * |(if VandeheyAut.stateAt δ s₀ x i = t then (1 : ℝ) else 0) - L|
+      ≤ 1 * (1 + |L|) :=
+        mul_le_mul h1 h2 (abs_nonneg _) zero_le_one
+    _ = 1 + |L| := one_mul _
+
+/-- **The local average is read off the window.**  `jointDev` at `i + k`, averaged over
+`k < K`, equals `localAvg` at the hidden state `stateAt … i` and the length-`(K + |q|)`
+window at `i`. -/
+theorem localAvg_eq (δ : X → ℕ → X) (s₀ t : X) (q : List ℕ) (L : ℝ) (x : ℝ) (i K : ℕ) :
+    (K : ℝ)⁻¹ * ∑ k ∈ range K, jointDev δ s₀ t q L x (i + k)
+      = localAvg δ t q L K (VandeheyAut.stateAt δ s₀ x i)
+          (VandeheyAut.cfWindow x i (K + q.length)) := by
+  rw [localAvg]
+  congr 1
+  refine Finset.sum_congr rfl fun k hk => ?_
+  have hkK : k < K := Finset.mem_range.mp hk
+  have hwin : VandeheyAut.cfWindow x (i + k) q.length
+      = ((VandeheyAut.cfWindow x i (K + q.length)).drop k).take q.length :=
+    (VandeheyAut.cfWindow_drop_take x i (K + q.length) k q.length (by omega)).symm
+  have hst : VandeheyAut.stateAt δ s₀ x (i + k)
+      = VandeheyAut.runState δ (VandeheyAut.stateAt δ s₀ x i)
+          ((VandeheyAut.cfWindow x i (K + q.length)).take k) := by
+    rw [VandeheyAut.stateAt_add,
+      VandeheyAut.cfWindow_take x i (K + q.length) k (by omega)]
+  rw [jointDev, hwin, hst]
+
+/-- **The reduction.**  The joint (window, state) count deviates from `L·n` by at most a sum
+of *window* bounds plus an `O(K)` boundary term.  The right-hand side no longer mentions the
+initial state `s₀` at all, and mentions `x` only through its digit windows — which is exactly
+the leverage CF-normality provides. -/
+theorem abs_sum_jointDev_le (δ : X → ℕ → X) (s₀ t : X) (q : List ℕ) (L : ℝ) (x : ℝ)
+    (n : ℕ) {K : ℕ} (hK : 0 < K) :
+    |∑ i ∈ range n, jointDev δ s₀ t q L x i|
+      ≤ (∑ i ∈ range n,
+            windowBound δ t q L K (VandeheyAut.cfWindow x i (K + q.length)))
+        + 2 * (1 + |L|) * K := by
+  have hb := cesaro_shift_bound (a := fun i => jointDev δ s₀ t q L x i)
+    (C := 1 + |L|) (abs_jointDev_le δ s₀ t q L x) n hK
+  simp only [Real.norm_eq_abs, smul_eq_mul] at hb
+  refine le_trans hb (add_le_add (Finset.sum_le_sum fun i _ => ?_) (le_refl _))
+  rw [localAvg_eq, windowBound]
+  exact Finset.le_sup' (fun d => |localAvg δ t q L K d
+    (VandeheyAut.cfWindow x i (K + q.length))|) (Finset.mem_univ _)
+
+/-- `windowBound` is bounded by `1 + |L|`, uniformly. -/
+lemma windowBound_le (δ : X → ℕ → X) (t : X) (q : List ℕ) (L : ℝ) {K : ℕ} (hK : 0 < K)
+    (W : List ℕ) : windowBound δ t q L K W ≤ 1 + |L| := by
+  have hKR : (0 : ℝ) < K := by exact_mod_cast hK
+  rw [windowBound]
+  refine Finset.sup'_le _ _ fun d _ => ?_
+  rw [localAvg, abs_mul, abs_of_pos (by positivity : (0:ℝ) < (K : ℝ)⁻¹)]
+  have hterm : ∀ k ∈ range K,
+      |(if q = (W.drop k).take q.length then (1 : ℝ) else 0) *
+        ((if VandeheyAut.runState δ d (W.take k) = t then (1 : ℝ) else 0) - L)| ≤ 1 + |L| := by
+    intro k _
+    rw [abs_mul]
+    have h1 : |(if q = (W.drop k).take q.length then (1 : ℝ) else 0)| ≤ 1 := by
+      split <;> simp
+    have h2 : |(if VandeheyAut.runState δ d (W.take k) = t then (1 : ℝ) else 0) - L|
+        ≤ 1 + |L| := by
+      refine le_trans (abs_sub _ _) (add_le_add ?_ (le_refl _))
+      split <;> simp
+    calc _ ≤ 1 * (1 + |L|) := mul_le_mul h1 h2 (abs_nonneg _) zero_le_one
+      _ = 1 + |L| := one_mul _
+  have hsum : |∑ k ∈ range K,
+      (if q = (W.drop k).take q.length then (1 : ℝ) else 0) *
+        ((if VandeheyAut.runState δ d (W.take k) = t then (1 : ℝ) else 0) - L)|
+      ≤ K * (1 + |L|) := by
+    refine le_trans (Finset.abs_sum_le_sum_abs _ _) ?_
+    refine le_trans (Finset.sum_le_card_nsmul _ _ (1 + |L|) hterm) ?_
+    rw [Finset.card_range, nsmul_eq_mul]
+  calc (K : ℝ)⁻¹ * |∑ k ∈ range K, _| ≤ (K : ℝ)⁻¹ * (K * (1 + |L|)) :=
+        mul_le_mul_of_nonneg_left hsum (by positivity)
+    _ = 1 + |L| := by field_simp
+
+/-! ## The corrected transfer principle
+
+`ClassEquidistribution` is the crux of Vandehey 2017 Theorem 1.1, isolated as one named
+`Prop`.  It says: there is a reference weight `L` — mentioning neither the initial state nor
+`x` — whose `windowBound` averages are eventually uniformly small over **all** CF-normal
+points.  For the det-`±D` transducer `L` should be `1/|ℙ¹(ℤ/D)|` on a transitive class
+component, and the content is the cancellation in the class cocycle
+(`PROBE-2026-09-27-transducer-not-synchronizing.md`, step 4).
+
+Everything else is now unconditional: `tendsto_jointCount_of_classEquidistribution` delivers
+exactly the `x`-independent joint frequency that `VandeheyUniformFreq` asks for, and it
+replaces `VandeheyAut.exists_jointFreq_limit`, whose `Synchronizing` hypothesis the probe
+showed is unsatisfiable. -/
+def ClassEquidistribution (δ : X → ℕ → X) (t : X) (q : List ℕ) : Prop :=
+  ∃ L : ℝ, ∀ ε > 0, ∃ K : ℕ, 0 < K ∧ ∀ x : ℝ, IsCFNormal x → ∀ n : ℕ,
+    (∑ i ∈ range n, windowBound δ t q L K (VandeheyAut.cfWindow x i (K + q.length)))
+      ≤ ε * n
+
+/-- `jointDev` summed is the joint count minus `L` times the window count. -/
+theorem sum_jointDev_eq (δ : X → ℕ → X) (s₀ t : X) (q : List ℕ) (L : ℝ) (x : ℝ) (n : ℕ) :
+    ∑ i ∈ range n, jointDev δ s₀ t q L x i
+      = (VandeheyAut.jointCount δ s₀ t q x n : ℝ)
+        - L * ((range n).filter fun i => q = VandeheyAut.cfWindow x i q.length).card := by
+  classical
+  have hpt : ∀ i, jointDev δ s₀ t q L x i
+      = (if q = VandeheyAut.cfWindow x i q.length ∧ VandeheyAut.stateAt δ s₀ x i = t
+            then (1 : ℝ) else 0)
+        - L * (if q = VandeheyAut.cfWindow x i q.length then (1 : ℝ) else 0) := by
+    intro i
+    rw [jointDev]
+    by_cases h1 : q = VandeheyAut.cfWindow x i q.length
+    · by_cases h2 : VandeheyAut.stateAt δ s₀ x i = t
+      · rw [if_pos h1, if_pos h2, if_pos (And.intro h1 h2)]; ring
+      · have hnot : ¬(q = VandeheyAut.cfWindow x i q.length
+            ∧ VandeheyAut.stateAt δ s₀ x i = t) := fun h => h2 h.2
+        rw [if_pos h1, if_neg h2, if_neg hnot]; ring
+    · have hnot : ¬(q = VandeheyAut.cfWindow x i q.length
+          ∧ VandeheyAut.stateAt δ s₀ x i = t) := fun h => h1 h.1
+      rw [if_neg h1, if_neg hnot]; ring
+  rw [Finset.sum_congr rfl fun i _ => hpt i, Finset.sum_sub_distrib, ← Finset.mul_sum,
+    Finset.sum_boole, Finset.sum_boole, VandeheyAut.jointCount_eq_card, VandeheyAut.jointSet]
+
+/-- **The corrected transfer principle.**  Granted `ClassEquidistribution`, the joint
+(window, state) frequency along any CF-normal `x` converges to `L · γ(I_q)` — a value that
+mentions neither `x` nor the initial state.  This is the replacement for
+`VandeheyAut.exists_jointFreq_limit`. -/
+theorem tendsto_jointCount_of_classEquidistribution {δ : X → ℕ → X} {t : X} {q : List ℕ}
+    (hce : ClassEquidistribution δ t q) (hq : q ≠ []) (hqpos : ∀ a ∈ q, 1 ≤ a) :
+    ∃ L : ℝ, ∀ (s₀ : X) (x : ℝ), IsCFNormal x →
+      Tendsto (fun n => (VandeheyAut.jointCount δ s₀ t q x n : ℝ) / n) atTop
+        (nhds (L * (gaussMeasure (cfCylinder q)).toReal)) := by
+  obtain ⟨L, hL⟩ := hce
+  refine ⟨L, fun s₀ x hx => ?_⟩
+  set γq : ℝ := (gaussMeasure (cfCylinder q)).toReal with hγq
+  -- the window frequency
+  have hwin : Tendsto (fun n => (((range n).filter
+      fun i => q = VandeheyAut.cfWindow x i q.length).card : ℝ) / n) atTop (nhds γq) :=
+    VandeheyAut.tendsto_windowFreq hx q hq hqpos
+  -- the deviation is eventually `≤ ε` for every `ε`
+  rw [Metric.tendsto_atTop]
+  intro ε hε
+  obtain ⟨K, hK, hKle⟩ := hL (ε / 3) (by positivity)
+  have hKR : (0 : ℝ) < K := by exact_mod_cast hK
+  -- the boundary term and the window-frequency error are eventually small
+  have hbdry : Tendsto (fun n : ℕ => 2 * (1 + |L|) * K / n) atTop (nhds 0) := by
+    simpa using tendsto_const_div_atTop_nhds_zero_nat (2 * (1 + |L|) * K)
+  rw [Metric.tendsto_atTop] at hwin hbdry
+  obtain ⟨N₁, hN₁⟩ := hwin (ε / (3 * (1 + |L|))) (by positivity)
+  obtain ⟨N₂, hN₂⟩ := hbdry (ε / 3) (by positivity)
+  refine ⟨max (max N₁ N₂) 1, fun n hn => ?_⟩
+  have hn₁ : N₁ ≤ n := le_trans (le_trans (le_max_left _ _) (le_max_left _ _)) hn
+  have hn₂ : N₂ ≤ n := le_trans (le_trans (le_max_right _ _) (le_max_left _ _)) hn
+  have hnpos : 0 < n := lt_of_lt_of_le Nat.zero_lt_one (le_trans (le_max_right _ _) hn)
+  have hnR : (0 : ℝ) < n := by exact_mod_cast hnpos
+  set Bn : ℝ := (((range n).filter
+    fun i => q = VandeheyAut.cfWindow x i q.length).card : ℝ) with hBn
+  set An : ℝ := (VandeheyAut.jointCount δ s₀ t q x n : ℝ) with hAn
+  -- step 1: `|An - L * Bn| ≤ (ε/3) n + 2(1+|L|)K`
+  have hstep1 : |An - L * Bn| ≤ (ε / 3) * n + 2 * (1 + |L|) * K := by
+    have h := abs_sum_jointDev_le δ s₀ t q L x n hK
+    rw [sum_jointDev_eq] at h
+    exact le_trans h (add_le_add (hKle x hx n) (le_refl _))
+  -- step 2: divide by `n`
+  have hstep2 : |An / n - L * (Bn / n)| ≤ ε / 3 + 2 * (1 + |L|) * K / n := by
+    have : An / n - L * (Bn / n) = (An - L * Bn) / n := by field_simp
+    rw [this, abs_div, abs_of_pos hnR]
+    rw [div_le_iff₀ hnR]
+    calc |An - L * Bn| ≤ (ε / 3) * n + 2 * (1 + |L|) * K := hstep1
+      _ = (ε / 3 + 2 * (1 + |L|) * K / n) * n := by field_simp
+  -- step 3: replace `Bn / n` by `γq`
+  have hL1 : (0 : ℝ) < 1 + |L| := by positivity
+  have hstep3 : |L * (Bn / n) - L * γq| ≤ ε / 3 := by
+    rw [← mul_sub, abs_mul]
+    have hb := hN₁ n hn₁
+    rw [Real.dist_eq] at hb
+    calc |L| * |Bn / n - γq| ≤ (1 + |L|) * (ε / (3 * (1 + |L|))) := by
+          refine mul_le_mul (by linarith [abs_nonneg L]) (le_of_lt hb) (abs_nonneg _)
+            (le_of_lt hL1)
+      _ = ε / 3 := by field_simp
+  have hstep4 : 2 * (1 + |L|) * K / n < ε / 3 := by
+    have := hN₂ n hn₂
+    rw [Real.dist_eq, sub_zero] at this
+    calc 2 * (1 + |L|) * K / n ≤ |2 * (1 + |L|) * K / n| := le_abs_self _
+      _ < ε / 3 := this
+  rw [Real.dist_eq]
+  calc |An / n - L * γq|
+      ≤ |An / n - L * (Bn / n)| + |L * (Bn / n) - L * γq| := abs_sub_le _ _ _
+    _ ≤ (ε / 3 + 2 * (1 + |L|) * K / n) + ε / 3 := add_le_add hstep2 hstep3
+    _ < (ε / 3 + ε / 3) + ε / 3 := by linarith
+    _ = ε := by ring
+
+/-! ## Non-vacuity anchor
+
+`ClassEquidistribution` must not be a condition nobody can meet.  The one-state automaton
+meets it with `L = 1`, and the transfer principle then reproduces plain CF-normality on
+windows — so the statement is calibrated correctly (the hypothesis is satisfiable and the
+conclusion is the expected one, not something degenerate). -/
+
+theorem classEquidistribution_unit (q : List ℕ) :
+    ClassEquidistribution (fun (_ : Unit) (_ : ℕ) => ()) () q := by
+  refine ⟨1, fun ε hε => ⟨1, Nat.one_pos, fun x _ n => ?_⟩⟩
+  have hzero : ∀ W : List ℕ,
+      windowBound (fun (_ : Unit) (_ : ℕ) => ()) () q 1 1 W = 0 := by
+    intro W
+    simp [windowBound, localAvg]
+  rw [Finset.sum_congr rfl fun i _ => hzero _, Finset.sum_const, smul_zero]
+  positivity
+
+/-- The anchor's conclusion: the transfer principle applied to the one-state automaton is
+exactly CF-normality's window statement. -/
+theorem tendsto_jointCount_unit {q : List ℕ} (hq : q ≠ []) (hqpos : ∀ a ∈ q, 1 ≤ a) :
+    ∃ L : ℝ, ∀ (s₀ : Unit) (x : ℝ), IsCFNormal x →
+      Tendsto (fun n => (VandeheyAut.jointCount (fun (_ : Unit) (_ : ℕ) => ()) s₀ () q x n : ℝ)
+        / n) atTop (nhds (L * (gaussMeasure (cfCylinder q)).toReal)) :=
+  tendsto_jointCount_of_classEquidistribution (classEquidistribution_unit q) hq hqpos
+
 end VandeheyCocycle
 
 end NormalNumbers
