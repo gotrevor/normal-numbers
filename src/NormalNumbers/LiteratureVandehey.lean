@@ -45,6 +45,16 @@ Net effect: the corrected hot-spot criterion is needed only for the *existence* 
 never for the *identification* half, and the version of record's defective step is
 nowhere reproduced.
 
+**And the existence half no longer wants it either.**  `VandeheyAutomaton.lean` builds a
+different engine for §3: if the transducer has a *synchronizing* genuine word, the state
+at time `i` is a function of the last `L` digits alone (pathwise merging,
+`stateAt_eq_of_window_sync`), so the joint (window, state) frequency is a finite sum of
+plain cylinder frequencies plus a residue of frequency `γ(z-free length-L words) → 0`.
+That needs only CF-normality of `x` and the repo's mixing stack — no hot-spot criterion,
+no tightness, no ergodicity, no Ryll-Nardzewski/Vitali-Hahn-Saks.  The remaining debt on
+that route is the existence of a synchronizing word for Vandehey's `M_D` transducer
+(his §2 + §4 material).
+
 Available machinery: `Literature.philipp_psi_mixing_holds` (ψ-mixing, `CFPsiPin.lean`),
 Rényi-type bounds, the CF cylinder / digit-law stack, `HotSpot.lean` (base-`b` only),
 `CFAeNormal.ae_isCFNormal`.

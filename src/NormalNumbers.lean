@@ -27,6 +27,7 @@ import NormalNumbers.CFPin
 import NormalNumbers.CFGammaMixing
 import NormalNumbers.CFPsiPin
 import NormalNumbers.LiteraturePhilipp
+import NormalNumbers.VandeheyAutomaton
 import NormalNumbers.LiteratureVandehey
 import NormalNumbers.CFMixing
 import NormalNumbers.CFBlockFreq

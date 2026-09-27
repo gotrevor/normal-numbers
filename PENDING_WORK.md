@@ -9279,3 +9279,47 @@ else.  Nothing defective is reproduced anywhere in what is now proved.
    `≤` needs the finitely-many-`k` sum to be a LOWER bound on the visits to digits `≤ K`,
    which is exactly finite additivity of the limit — elementary.
 3. Only then §2 (transducer, integer-matrix normal forms `M_D`), §4–§6.
+
+### Same lap, second commit: the §3 replacement — automaton transfer
+
+`src/NormalNumbers/VandeheyAutomaton.lean` (wired), green.  **Refutes the need for the
+corrected hot-spot criterion on the critical path.**  The reason Vandehey needs
+Pyatetskii-Shapiro at all is that he obtains state/orbit merging only *distributionally*
+(Lemma 3.4, via Saloff-Coste–Zúñiga).  But if the transducer admits a **synchronizing
+word** `z` — reading `z` lands in the same state whatever state you were in — merging is
+**pathwise**, and the whole soft-analysis layer evaporates.  Proved sorry-free this lap:
+
+* `runState`, `Synchronizing`, `syncTarget`, `cfWord`, `cfWindow`, `stateAt` (+ the
+  append/split algebra: `runState_append`, `cfWord_add`, `cfWindow_add`).
+* `stateAt_eq_of_window_sync` — if `z` occurs in the window of `L` digits ending at
+  `m + L`, the state there is `runState δ (syncTarget δ s₁ z) r`: a function of that
+  window alone, independent of the initial state and of everything before position `m`.
+* `stateAt_indep_of_init`, `stateAt_eq_of_window_eq` — the pathwise merging corollaries
+  (two points agreeing on such a stretch are in the same state at its end).
+
+Open leaf, with the full proof plan in its docstring: `exists_jointFreq_limit` — the joint
+(window, state) frequency along a CF-normal `x` converges to an `x`-independent limit.
+
+### Revised attack order (supersedes the previous list)
+
+1. `exists_jointFreq_limit`.  Sub-obligations to name next:
+   * `jointCount_eq_sum_windowCount_add_residue`: for lookback `L`,
+     `jointCount = Σ_{q ∈ Q_t(L)} windowCount (q ++ v) + err`, `Q_t(L) = {q : |q| = L,
+     z is a factor of q, runState δ (syncTarget δ s₁ z) (post-z tail of q) = t}` (finite,
+     `≤ (K)^L` but really just `Finset` over a `Fintype`-free enumeration — index `Q_t` as
+     a `Finset (List ℕ)` via `List.sublistsLen`-style enumeration of bounded-digit words,
+     or carry it as a `Set` with a `Set.Finite` proof), and
+     `err ≤ #{i < n : z not a factor of cfWindow x (i−L) L} + L`.
+   * `windowCount_freq`: `#{i < n : cfWindow x i w.length = w}/n → γ(I_w)` for CF-normal
+     `x` — this is `IsCFNormal` restated through `cfWindow` instead of `countOccurrences`;
+     check `CFWordBridge.lean` for the existing translation.
+   * `zfree_freq_tendsto_zero`: `limsup_n #{i<n : z not a factor of the last L digits}/n
+     ≤ γ(Z_L)` and `γ(Z_L) → 0`.  The second half is where `philipp_psi_mixing_holds` /
+     `CFPsiPin`'s `1 ± Cρᵏ` envelope enters: `γ(Z_{k·|z|}) ≤ (1 − γ(I_z) + Cρ^{|z|})^k`.
+2. `Synchronizing` for Vandehey's `M_D` transducer — the surviving real debt of §2/§4.
+   Note the 2026-08-25 probe (`PROBE-2026-08-25-1235-route-a-transducer.md`) measured
+   `2x` merging pathwise at step 3 over ℤ (and `φ` never merging over `ℤ[φ]`), which is
+   direct evidence that a synchronizing word exists in the INTEGER case — exactly the case
+   Theorem 1.1 needs.  Look for it concretely: a long run of a single large digit should
+   drive any det-`±D` normal form into a canonical state.
+3. §2 transducer construction + identity (9); §5–§6 trigger counting.
