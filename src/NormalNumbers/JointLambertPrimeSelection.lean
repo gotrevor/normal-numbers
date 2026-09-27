@@ -4,6 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import NormalNumbers.JointLambertArithmetic
 
+set_option maxHeartbeats 1000000
+
 /-!
 # Prime selection for the joint Lambert progression (paper §3 + §4 head)
 
@@ -481,7 +483,7 @@ inequality `3k(1 + k² + D₀) ≤ 2^k`, the open interval `(2^k, 2^(k+1))` cont
 still allocate `q` and the whole killed-slot family. -/
 lemma pool_card_ge {k r D0 N : ℕ} (hk : 1 ≤ k)
     (hpool : 3 * k * (1 + k ^ 2 + D0) ≤ 2 ^ k)
-    (hcard : ((2 : ℕ) ^ k : ℝ) / (3 * Real.log ((2 : ℕ) ^ k)) ≤ (N : ℝ)) :
+    (hcard : ((2 ^ k : ℕ) : ℝ) / (3 * Real.log ((2 ^ k : ℕ) : ℝ)) ≤ (N : ℝ)) :
     1 + killPoolSize k r + D0 ≤ N := by
   have hl0 : 0 < Real.log 2 := Real.log_pos (by norm_num)
   have hl1 : Real.log 2 ≤ 1 := by
@@ -560,9 +562,58 @@ lemma count_lower_bound {B X k N : ℕ} (hk : 1 ≤ k) (hB : 1 ≤ B) (hBX : B �
     _ ≤ (X : ℝ) / (2 * (B : ℝ) * Real.log X) := hmain
     _ ≤ (N : ℝ) := step1
 
-/-- The target of this file, with its analytic inputs as hypotheses.  See the module
-docstring.  TEMPORARY `sorry`: the statement is fixed first so that partial scaffolding
-cannot be mistaken for success. -/
+/-! ### The dyadic schedule: `L = 2^k`, `U = 2^(k⁴)`, `X = U⁴` -/
+
+/-- `log X = 4k⁴ log 2` for `X = 2^(4k⁴)`. -/
+private lemma log_X_eq (k : ℕ) :
+    Real.log ((2 ^ (4 * k ^ 4) : ℕ) : ℝ) = 4 * (k : ℝ) ^ 4 * Real.log 2 := by
+  push_cast
+  rw [Real.log_pow]
+  push_cast
+  ring
+
+/-- `log X ≥ 2`, so every exceptional modulus (which exceeds `log X`) is `≥ 2`, in particular
+`≠ 1` and `≠ 0`. -/
+private lemma two_le_log_X {k : ℕ} (hk : 1 ≤ k) :
+    2 ≤ Real.log ((2 ^ (4 * k ^ 4) : ℕ) : ℝ) := by
+  rw [log_X_eq]
+  have hl := Real.log_two_gt_d9
+  have h1 : (1 : ℝ) ≤ (k : ℝ) ^ 4 := by
+    have h : (1 : ℝ) ≤ (k : ℝ) := by exact_mod_cast hk
+    exact one_le_pow₀ h
+  nlinarith
+
+/-- `X^(1/4) = U` exactly, for `X = U⁴ = 2^(4k⁴)` and `U = 2^(k⁴)`.  This is why the schedule
+uses `X = U⁴`: the AGP hypothesis `B ≤ X^(1/4)` becomes the clean `B ≤ U`. -/
+private lemma rpow_quarter_X (k : ℕ) :
+    ((2 ^ (4 * k ^ 4) : ℕ) : ℝ) ^ ((1 : ℝ) / 4) = ((2 ^ (k ^ 4) : ℕ) : ℝ) := by
+  have hy : (0 : ℝ) ≤ (2 : ℝ) ^ (k ^ 4) := by positivity
+  have h1 : ((2 ^ (4 * k ^ 4) : ℕ) : ℝ) = ((2 : ℝ) ^ (k ^ 4)) ^ (4 : ℕ) := by
+    push_cast
+    rw [← pow_mul]
+    ring_nf
+  rw [h1, ← Real.rpow_natCast ((2 : ℝ) ^ (k ^ 4)) 4, ← Real.rpow_mul hy]
+  push_cast
+  norm_num
+
+/-- **The target.**  Prime selection feeding `exists_joint_progression`, with a quantitative
+prime-candidate count.  Both analytic inputs are hypotheses.
+
+For any fixed `c ≥ 2`, `a ≥ 2`, `r ≥ 1` and any requested cutoff `K`, there are `k ≥ K` with
+`r < k` and, with the dyadic schedule `L = 2^k`, `U = 2^(k⁴)`, `X = U⁴ = 2^(4k⁴)`:
+
+* primes `q` and `p j t` (`j < k`, `j ≠ r`, `t < j+1`) all lying in the open interval
+  `(L, 2L)`, pairwise distinct, and avoiding every AGP exceptional modulus in `B`;
+* the **complete** `exists_joint_progression` conclusion for them — `0 < R < A`,
+  `1 ≤ u < B`, `R + r = Qu`, `A = QB`, `u ≡ 1 [MOD q]`, `(u,B) = 1`, the exact CRT residues,
+  `c^(j+1) ∣ τ(R + mA + j)` at every killed slot for every `m`, the survivor value
+  `τ(R + mA + r) = 2a` whenever `u + mB` is prime, and `(R + j, A) = 1` on the free tail;
+* the size bookkeeping `Q ≤ (2L)^(a-1)`, `B ≤ (2L)^(1 + c·killPoolSize k r)`, `B ≤ U`,
+  `Q ≤ U`, and `R > L`;
+* at least `M / (16 k⁴)` candidate indices `m < M`, where `M = X/B + 1`, with `u + mB`
+  prime and `u + mB ≤ X` — a genuine real inequality.
+
+`K` is arbitrary, so later tail and digit margins may demand `k` as large as they like. -/
 theorem exists_joint_prime_candidates (hagp : AGP) (hpis : PrimeIntervalSupply)
     {c a r : ℕ} (hc : 2 ≤ c) (ha : 2 ≤ a) (hr : 1 ≤ r) (K : ℕ) :
     ∃ (k q : ℕ) (p : ℕ → ℕ → ℕ) (R u : ℕ),
@@ -591,6 +642,98 @@ theorem exists_joint_prime_candidates (hagp : AGP) (hpis : PrimeIntervalSupply)
         (((range (2 ^ (4 * k ^ 4) / jointB c k r q p + 1)).filter
           (fun m => (u + m * jointB c k r q p).Prime ∧
             u + m * jointB c k r q p ≤ 2 ^ (4 * k ^ 4))).card : ℝ) := by
-  sorry
+  classical
+  obtain ⟨X0, D0, hAGP⟩ := hagp
+  obtain ⟨L0, hPIS⟩ := hpis
+  obtain ⟨k, hkK, hkr, hk16, hL0, hX0, hpool, hschedB, hschedQ⟩ :=
+    exists_selection_scale K r c a D0 X0 L0
+  have hk1 : 1 ≤ k := by omega
+  have hL2 : 2 ≤ 2 ^ k := by
+    calc (2 : ℕ) = 2 ^ 1 := rfl
+      _ ≤ 2 ^ k := Nat.pow_le_pow_right (by norm_num) hk1
+  have hkL : k ≤ 2 ^ k := Nat.lt_two_pow_self.le
+  -- ### the exceptional set, fixed before any modulus
+  obtain ⟨Dset, hDcard, hDlog, hAGPcount⟩ := hAGP _ hX0
+  have hD2 : ∀ D ∈ Dset, 2 ≤ D := by
+    intro D hD
+    have h1 := hDlog D hD
+    have h2 := two_le_log_X (k := k) hk1
+    have : (2 : ℝ) < (D : ℝ) := lt_of_le_of_lt h2 h1
+    have : (2 : ℕ) < D := by exact_mod_cast this
+    omega
+  -- ### the prime pool in the open dyadic interval
+  have hpisL := hPIS (2 ^ k) hL0 hL2
+  have hScard : 1 + killPoolSize k r + Dset.card ≤
+      (((Ioo (2 ^ k) (2 * 2 ^ k)).filter Nat.Prime).card) := by
+    have := pool_card_ge (r := r) (D0 := D0) hk1 hpool hpisL
+    omega
+  obtain ⟨q, p, hqS, hpS, hpqne, hpinj, havoid⟩ :=
+    exists_prime_allocation c k r ((Ioo (2 ^ k) (2 * 2 ^ k)).filter Nat.Prime) Dset
+      (fun π hπ => (Finset.mem_filter.mp hπ).2) hScard
+  have hqdata : q.Prime ∧ 2 ^ k < q ∧ q < 2 * 2 ^ k := by
+    obtain ⟨hmem, hpr⟩ := Finset.mem_filter.mp hqS
+    obtain ⟨h1, h2⟩ := Finset.mem_Ioo.mp hmem
+    exact ⟨hpr, h1, h2⟩
+  have hpdata : ∀ j t, j ∈ killedIdx k r → t < j + 1 →
+      (p j t).Prime ∧ 2 ^ k < p j t ∧ p j t < 2 * 2 ^ k := by
+    intro j t hj ht
+    obtain ⟨hmem, hpr⟩ := Finset.mem_filter.mp (hpS j t hj ht)
+    obtain ⟨h1, h2⟩ := Finset.mem_Ioo.mp hmem
+    exact ⟨hpr, h1, h2⟩
+  -- ### instantiate the §4 arithmetic theorem
+  have hqr : r < jointQ a q := by
+    have h1 : q ^ 1 ≤ q ^ (a - 1) := Nat.pow_le_pow_right hqdata.1.pos (by omega)
+    rw [pow_one] at h1
+    simp only [jointQ]
+    omega
+  obtain ⟨R, u, hR0, hRA, hu1, huB, hRr, hAQB, humod, hcopuB, hres_r, hres_j, hkill,
+      hsurv, htail⟩ :=
+    exists_joint_progression (L := 2 ^ k) (p := p) hc ha hr hkr hkL hqdata.1 hqdata.2.1 hqr
+      (fun j t hjk hjr ht => (hpdata j t (mem_killedIdx.mpr ⟨hjr, hjk⟩) ht).1)
+      (fun j t hjk hjr ht => (hpdata j t (mem_killedIdx.mpr ⟨hjr, hjk⟩) ht).2.1)
+      (fun j t hjk hjr ht => hpqne j t (mem_killedIdx.mpr ⟨hjr, hjk⟩) ht)
+      (fun j t j' t' hjk hjr ht hj'k hj'r ht' he =>
+        hpinj j t j' t' (mem_killedIdx.mpr ⟨hjr, hjk⟩) ht (mem_killedIdx.mpr ⟨hj'r, hj'k⟩) ht' he)
+  -- ### size bookkeeping
+  have htwo : 2 * 2 ^ k = 2 ^ (k + 1) := by rw [pow_succ]; ring
+  have hQle : jointQ a q ≤ (2 * 2 ^ k) ^ (a - 1) := jointQ_le hqdata.2.2
+  have hBle : jointB c k r q p ≤ (2 * 2 ^ k) ^ (1 + c * killPoolSize k r) :=
+    jointB_le hqdata.2.2 fun j t hj ht => (hpdata j t hj ht).2.2
+  have hQU : jointQ a q ≤ 2 ^ (k ^ 4) := by
+    refine hQle.trans ?_
+    rw [htwo, ← pow_mul]
+    exact Nat.pow_le_pow_right (by norm_num) hschedQ
+  have hBU : jointB c k r q p ≤ 2 ^ (k ^ 4) := by
+    refine hBle.trans ?_
+    rw [htwo, ← pow_mul]
+    refine Nat.pow_le_pow_right (by norm_num) (le_trans ?_ hschedB)
+    exact Nat.mul_le_mul le_rfl
+      (Nat.add_le_add_left (Nat.mul_le_mul le_rfl (killPoolSize_le_sq k r)) 1)
+  have hRL : 2 ^ k < R := by
+    have h0 : (0 : ℕ) ∈ killedIdx k r := mem_killedIdx.mpr ⟨by omega, by omega⟩
+    have hd := hpdata 0 0 h0 (by omega)
+    exact lt_crt_solution hc hr hkr hd.1.two_le hd.2.1 hres_j
+  -- ### the AGP count
+  have hB1 : 1 ≤ jointB c k r q p := by omega
+  have hBX : jointB c k r q p ≤ 2 ^ (4 * k ^ 4) := by
+    refine hBU.trans (Nat.pow_le_pow_right (by norm_num) ?_)
+    nlinarith [Nat.one_le_iff_ne_zero.mpr (show k ^ 4 ≠ 0 by positivity)]
+  have hBrpow : (jointB c k r q p : ℝ) ≤ ((2 ^ (4 * k ^ 4) : ℕ) : ℝ) ^ ((1 : ℝ) / 4) := by
+    rw [rpow_quarter_X]
+    exact_mod_cast hBU
+  have hnoD : ∀ D ∈ Dset, ¬ D ∣ jointB c k r q p := fun D hD =>
+    havoid D hD (by have := hD2 D hD; omega)
+  have hcount := hAGPcount (jointB c k r q p) u hB1 hBrpow hcopuB hnoD
+  have hinj := card_agp_le_card_candidates (B := jointB c k r q p) (u := u)
+    (X := 2 ^ (4 * k ^ 4)) hB1 huB
+  have hfinal := count_lower_bound (B := jointB c k r q p) (X := 2 ^ (4 * k ^ 4)) (k := k)
+    (N := ((range (2 ^ (4 * k ^ 4) + 1)).filter
+      (fun z => z.Prime ∧ z % jointB c k r q p = u % jointB c k r q p)).card)
+    hk1 hB1 hBX rfl hcount
+  refine ⟨k, q, p, R, u, hkK, hkr, hqdata.2.1, hqdata.2.2, hqdata.1, ?_, hR0, hRA, hu1, huB,
+    hRr, hAQB, humod, hcopuB, hres_r, hres_j, hkill, hsurv, htail, hQle, hBle, hBU, hQU, hRL,
+    le_trans hfinal (by exact_mod_cast hinj)⟩
+  intro j t hjk hjr ht
+  exact hpdata j t (mem_killedIdx.mpr ⟨hjr, hjk⟩) ht
 
 end NormalNumbers.JointLambert
