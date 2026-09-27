@@ -9927,3 +9927,41 @@ product `S × [0,1]`:
    `ε > 0` independent of `d, τ`.
 3. Standard Doeblin: `osc(L^M Φ) ≤ (1 − |S|ε) osc(Φ)`, iterate, and identify the limit constant
    by the double stochasticity above.
+
+### 2026-09-27 (same lap, part 2): the Doeblin minorization for the OPERATOR is proved
+
+`VandeheyStatePin.lean` now also carries the operator-level machinery:
+
+* `InCone B Φ` — families `Φ : S → ℝ → ℝ` with `0 ≤ Φ ≤ B` on `S × [0,1]`; `summable_stateStep`,
+  `stateStepOp_inCone`, `stateStepIter_inCone`: the cone is invariant, because `stateStepOp` is
+  an average (`tsum_stepWeight = 1`).
+* `stepWeight_ge` — `w_τ(k) ≥ 1/((k+2)(k+3))` uniformly on `τ ∈ [0,1]`.
+* `stateStepIter` and `stateHorizonIntegral_iter` — `F_n(·,s) = Lⁿ F_0(·,s)` on `[0,1]`.
+* **`stateStepIter_ge_word`** — the Doeblin minorization: for a genuine word `w` and `c ≤ Φ` on
+  the state `runState δ d w`, `wordWeight w · c ≤ L^{|w|}Φ(d,τ)` for every `τ ∈ [0,1]`, where
+  `wordWeight w = ∏_{a ∈ w} 1/((a+1)(a+2)) > 0`.  No expansion of `L^{|w|}` over words is used:
+  `stateStepOp` is a tsum of nonnegative terms, so it dominates the term indexed by the first
+  letter of `w`, and the induction runs along `w`.
+
+Combined with `Doeblin.exists_classWord_three` (every class pair joined by a genuine word of
+length exactly 3) this gives, for the class automaton, a uniform `β > 0` with
+`L³Φ(d,τ) ≥ β · inf_τ Φ(t,τ)` for EVERY `d, t`.
+
+**What is still owed for `stateHorizonIntegral_pin`.**  The Doeblin step alone contracts the
+`S`-direction but not the `τ`-direction: the elementary two-sided Doeblin estimate gives
+`osc(L³Φ) ≤ (1 − |S|β)·osc_global(Φ) + β·Σ_t osc_τ(Φ(t,·))`, which is vacuous unless the
+**`τ`-oscillation within a fixed state** also decays.  That is the one remaining ingredient, and
+the repo already proves its scalar analogue: `CFPsiPin.stepOp_logLipschitz` (factor `3/4` per
+step) and `CFPsiPin.horizonIntegral_logLip`.
+
+**Next attack (route-decisive).**  Generalize `stepOp_logLipschitz` from a single `φ` to a
+`k`-indexed family `ψ k`, i.e. to `∑' k, w_τ(k)·ψ k (τ_k)`, which is what `stateStepOp` is with
+`ψ k = Φ(δ d (k+1), ·)`.  The `A`-series of the existing proof is term-by-term and goes through
+verbatim.  The `B`-series is Abel-resummed and is the only real question: it needs
+`ψ_k − ψ_{k+1}` small.  **The structural fact that makes this work for the class automaton:
+`classStep D` depends on the digit only through `a mod D`, so `k ↦ Φ(δ d (k+1), ·)` is
+PERIODIC with period `D`.**  Abel-resum in blocks of `D` instead of `1`: the jump terms become
+`ψ_k(τ_k) − ψ_k(τ_{k+D})` (same `ψ_k`!), controlled by the log-Lipschitz constant, at the price
+of a factor `O(D)` in the contraction constant.  If that factor pushes the rate above `1`, first
+iterate `L` a fixed number of times (the composite still has the same periodicity) or keep the
+`τ`-oscillation only in the *integrated* form the Doeblin step actually consumes.

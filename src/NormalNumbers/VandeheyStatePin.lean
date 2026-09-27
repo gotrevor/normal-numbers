@@ -357,6 +357,148 @@ theorem sum_over_initial_stateHorizonIntegral (δ : S → ℕ → S) {A : Set �
         _ = horizonIntegral A (n + 1) τ := by
             rw [horizonIntegral_succ A hA n hτ, stepOp]
 
+/-! ## The operator on families, and its Doeblin minorization
+
+The remaining content of `stateHorizonIntegral_pin` is an ergodicity statement for the operator
+`stateStepOp` acting on families `Φ : S → ℝ → ℝ` over the product `S × [0,1]`.  This section
+builds the invariant cone, the iteration, and the **Doeblin minorization**: a genuine digit word
+`w` driving `d` to `t` forces `Lᵂ Φ (d, τ) ≥ wordWeight w · inf_τ Φ(t, τ)` with `wordWeight w > 0`
+depending only on `w`.  No expansion of `L^{|w|}` over words is needed: each application of `L`
+is a *nonnegative* `tsum`, so it dominates its `(a-1)`-st term, and the induction runs along `w`.
+-/
+
+/-- The cone of families bounded by `B` on `S × [0,1]`. -/
+def InCone (B : ℝ) (Φ : S → ℝ → ℝ) : Prop :=
+  ∀ d : S, ∀ τ ∈ Set.Icc (0 : ℝ) 1, 0 ≤ Φ d τ ∧ Φ d τ ≤ B
+
+/-- A `τ`-uniform lower bound for the branch weight: `w_τ(k) ≥ 1/((k+2)(k+3))` on `[0,1]`. -/
+lemma stepWeight_ge {τ : ℝ} (hτ : τ ∈ Set.Icc (0 : ℝ) 1) (k : ℕ) :
+    1 / (((k : ℝ) + 2) * ((k : ℝ) + 3)) ≤ stepWeight τ k := by
+  obtain ⟨h0, h1⟩ := hτ
+  have hk : (0 : ℝ) ≤ (k : ℝ) := Nat.cast_nonneg k
+  rw [stepWeight, div_le_div_iff₀ (by positivity) (by positivity)]
+  have hprod : ((k : ℝ) + 1 + τ) * ((k : ℝ) + 2 + τ) ≤ ((k : ℝ) + 2) * ((k : ℝ) + 3) :=
+    mul_le_mul (by linarith) (by linarith) (by positivity) (by positivity)
+  have hP : (0 : ℝ) ≤ ((k : ℝ) + 2) * ((k : ℝ) + 3) := by positivity
+  nlinarith [mul_nonneg h0 hP]
+
+lemma summable_stateStep {B : ℝ} {Φ : S → ℝ → ℝ} (hΦ : InCone B Φ) (δ : S → ℕ → S)
+    (d : S) {τ : ℝ} (hτ : τ ∈ Set.Icc (0 : ℝ) 1) :
+    Summable (fun k : ℕ => stepWeight τ k * Φ (δ d (k + 1)) (stepPt τ k)) := by
+  refine Summable.of_nonneg_of_le (fun k => ?_) (fun k => ?_)
+    ((summable_stepWeight hτ.1).mul_right B)
+  · exact mul_nonneg (stepWeight_nonneg hτ.1 k)
+      (hΦ _ _ (stepPt_mem_Icc hτ.1 k)).1
+  · exact mul_le_mul_of_nonneg_left (hΦ _ _ (stepPt_mem_Icc hτ.1 k)).2
+      (stepWeight_nonneg hτ.1 k)
+
+/-- `stateStepOp` preserves the cone: it is an average. -/
+lemma stateStepOp_inCone {B : ℝ} {Φ : S → ℝ → ℝ} (hΦ : InCone B Φ) (δ : S → ℕ → S) :
+    InCone B (stateStepOp δ Φ) := by
+  intro d τ hτ
+  have hsum := summable_stateStep hΦ δ d hτ
+  constructor
+  · exact tsum_nonneg fun k => mul_nonneg (stepWeight_nonneg hτ.1 k)
+      (hΦ _ _ (stepPt_mem_Icc hτ.1 k)).1
+  · calc stateStepOp δ Φ d τ ≤ ∑' k : ℕ, stepWeight τ k * B :=
+          hsum.tsum_le_tsum (fun k => mul_le_mul_of_nonneg_left
+            (hΦ _ _ (stepPt_mem_Icc hτ.1 k)).2 (stepWeight_nonneg hτ.1 k))
+            ((summable_stepWeight hτ.1).mul_right B)
+      _ = B := by rw [tsum_mul_right, tsum_stepWeight hτ.1, one_mul]
+
+/-- The `n`-fold operator.  `stateStepIter δ (n+1) Φ = stateStepOp δ (stateStepIter δ n Φ)`, so
+the OUTERMOST application reads the FIRST digit — matching `stateHorizonIntegral_succ`. -/
+noncomputable def stateStepIter (δ : S → ℕ → S) : ℕ → (S → ℝ → ℝ) → (S → ℝ → ℝ)
+  | 0, Φ => Φ
+  | n + 1, Φ => stateStepOp δ (stateStepIter δ n Φ)
+
+lemma stateStepIter_inCone {B : ℝ} {Φ : S → ℝ → ℝ} (hΦ : InCone B Φ) (δ : S → ℕ → S) :
+    ∀ n, InCone B (stateStepIter δ n Φ)
+  | 0 => hΦ
+  | n + 1 => stateStepOp_inCone (stateStepIter_inCone hΦ δ n) δ
+
+/-- The refined horizon integral is the iterate of the operator applied to `F_0`. -/
+theorem stateHorizonIntegral_iter (δ : S → ℕ → S) {A : Set ℝ} (hA : MeasurableSet A)
+    (s : S) (n : ℕ) :
+    ∀ (d : S) {τ : ℝ}, τ ∈ Set.Icc (0 : ℝ) 1 →
+      stateHorizonIntegral δ A n d s τ
+        = stateStepIter δ n (fun d' τ' => stateHorizonIntegral δ A 0 d' s τ') d τ := by
+  induction n with
+  | zero => intro d τ _; rfl
+  | succ n ih =>
+      intro d τ hτ
+      rw [stateHorizonIntegral_succ δ hA n d s hτ, stateStepIter, stateStepOp, stateStepOp]
+      exact tsum_congr fun k => by rw [ih _ (stepPt_mem_Icc hτ.1 k)]
+
+/-- The `τ`-uniform weight of a genuine digit word: `∏_{a ∈ w} 1/((a+1)(a+2))`. -/
+noncomputable def wordWeight (w : List ℕ) : ℝ :=
+  (w.map (fun a : ℕ => 1 / (((a : ℝ) + 1) * ((a : ℝ) + 2)))).prod
+
+lemma wordWeight_pos {w : List ℕ} : 0 < wordWeight w := by
+  rw [wordWeight]
+  apply List.prod_pos
+  intro y hy
+  obtain ⟨a, -, rfl⟩ := List.mem_map.mp hy
+  have : (0 : ℝ) ≤ (a : ℝ) := Nat.cast_nonneg a
+  positivity
+
+/-- **The Doeblin minorization for the operator.**  If `w` is a genuine digit word driving `d`
+to `runState δ d w`, and `Φ ≥ c` on that target state for all `τ ∈ [0,1]`, then `|w|` steps of
+the operator started at `d` already see at least `wordWeight w · c`.
+
+The proof needs no word expansion: `stateStepOp` is a `tsum` of nonnegative terms, so it
+dominates the single term indexed by the first letter of `w`. -/
+theorem stateStepIter_ge_word {B c : ℝ} {Φ : S → ℝ → ℝ} (hΦ : InCone B Φ) (δ : S → ℕ → S)
+    (hc : 0 ≤ c) :
+    ∀ (w : List ℕ), (∀ a ∈ w, 1 ≤ a) →
+      ∀ (d : S), (∀ τ' ∈ Set.Icc (0 : ℝ) 1, c ≤ Φ (runState δ d w) τ') →
+      ∀ {τ : ℝ}, τ ∈ Set.Icc (0 : ℝ) 1 →
+        wordWeight w * c ≤ stateStepIter δ w.length Φ d τ := by
+  intro w
+  induction w with
+  | nil =>
+      intro _ d hcd τ hτ
+      simpa [wordWeight, stateStepIter] using hcd τ hτ
+  | cons a v ih =>
+      intro hpos d hcd τ hτ
+      have ha : 1 ≤ a := hpos a (List.mem_cons_self ..)
+      have hak : a - 1 + 1 = a := Nat.succ_pred_eq_of_pos ha
+      have hvpos : ∀ b ∈ v, 1 ≤ b := fun b hb => hpos b (List.mem_cons_of_mem a hb)
+      have hcone := stateStepIter_inCone hΦ δ v.length
+      -- the single term indexed by the first letter
+      have hsum := summable_stateStep hcone δ d hτ
+      have hterm : stepWeight τ (a - 1) * stateStepIter δ v.length Φ (δ d a) (stepPt τ (a - 1))
+          ≤ stateStepOp δ (stateStepIter δ v.length Φ) d τ := by
+        have := hsum.le_tsum (a - 1) (fun j _ => mul_nonneg (stepWeight_nonneg hτ.1 j)
+          (hcone _ _ (stepPt_mem_Icc hτ.1 j)).1)
+        rw [hak] at this
+        exact this
+      have hIH : wordWeight v * c
+          ≤ stateStepIter δ v.length Φ (δ d a) (stepPt τ (a - 1)) := by
+        refine ih hvpos (δ d a) (fun τ' hτ' => ?_) (stepPt_mem_Icc hτ.1 (a - 1))
+        have : runState δ (δ d a) v = runState δ d (a :: v) := rfl
+        rw [this]; exact hcd τ' hτ'
+      have hw : wordWeight (a :: v) = 1 / (((a : ℝ) + 1) * ((a : ℝ) + 2)) * wordWeight v := by
+        simp [wordWeight]
+      have hlow : 1 / (((a : ℝ) + 1) * ((a : ℝ) + 2)) ≤ stepWeight τ (a - 1) := by
+        have h := stepWeight_ge hτ (a - 1)
+        have hcast : ((a - 1 : ℕ) : ℝ) + 2 = (a : ℝ) + 1 ∧ ((a - 1 : ℕ) : ℝ) + 3 = (a : ℝ) + 2 := by
+          have : ((a - 1 : ℕ) : ℝ) = (a : ℝ) - 1 := by
+            have hc1 : ((a - 1 : ℕ) : ℝ) + 1 = (a : ℝ) := by
+              rw [show ((a - 1 : ℕ) : ℝ) + 1 = ((a - 1 + 1 : ℕ) : ℝ) by push_cast; ring, hak]
+            linarith
+          constructor <;> rw [this] <;> ring
+        rw [hcast.1, hcast.2] at h
+        exact h
+      calc wordWeight (a :: v) * c
+          = 1 / (((a : ℝ) + 1) * ((a : ℝ) + 2)) * (wordWeight v * c) := by rw [hw]; ring
+        _ ≤ stepWeight τ (a - 1) * (stateStepIter δ v.length Φ (δ d a) (stepPt τ (a - 1))) := by
+            apply mul_le_mul hlow hIH (mul_nonneg wordWeight_pos.le hc)
+              (stepWeight_nonneg hτ.1 _)
+        _ ≤ stateStepOp δ (stateStepIter δ v.length Φ) d τ := hterm
+        _ = stateStepIter δ (a :: v).length Φ d τ := by
+            simp [stateStepIter, List.length_cons]
+
 /-! ## The crux -/
 
 /-- **The crux of Vandehey 2017 Theorem 1.1**, as one named statement: the refined horizon
