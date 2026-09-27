@@ -9363,3 +9363,30 @@ sends to `γ(I_{q++v})`, plus a residue.
 2. **`γ(z-free length-L words) → 0`**: the mixing step.  `philipp_psi_mixing_holds` gives
    `γ(I_z occurs in a length-|z| block, repeatedly) ≥ 1 − (1 − γ(I_z) + Cρ^{|z|})^{⌊L/|z|⌋}`.
 3. Then a Cauchy-in-`L` squeeze produces `L = lim_L Σ_{q} γ(I_{q++v})`, visibly `x`-free.
+
+### Same lap, fourth commit: the residue is fully bounded (combinatorics done)
+
+`VandeheyAutomaton.lean`, all sorry-free.  `jointSet`/`jointCount`/`mem_jointSet` split out,
+plus `goodSet`, `badSet` and the sandwich:
+
+* `goodSet_card_le_jointCount` — every good position contributes (injection `j ↦ j + L`).
+* `jointCount_le` — `jointCount n ≤ L + #goodSet(n−L) + #badSet(n−L)`, by splitting the
+  joint set at `i < L` and injecting `i ↦ i − L`.
+* `badSet_card_le` — `#badSet ≤ L · #{i < m+L : cfDigit x i ∉ [1,K]}
+     + #{j < m : z is not a factor of cfWindow x j L}`, via a `Finset.biUnion` over the
+  `L` window offsets.
+
+Combined with `card_joint_good_eq_sum`, the joint frequency is now **squeezed between a
+finite sum of window frequencies and that sum plus two explicit error terms**, with all the
+combinatorics discharged.  Only two analytic limits remain:
+
+1. `freq{i : cfDigit x i > K} → 1 − Σ_{k=1}^{K} γ(I_{[k]})` for CF-normal `x` (single-digit
+   case of `tendsto_windowFreq`, plus `Σ_{k≥1} γ(I_{[k]}) = 1` from `CFDigitLaw`); this is
+   `O(1/K)` by Gauss–Kuzmin, so choose `K` after `L`.
+2. `freq{j : z not a factor of cfWindow x j L} → γ(z-free length-L words)` (again
+   `tendsto_windowFreq`, summed over the bounded `z`-free words, with the unbounded part
+   absorbed by (1)), and `γ(z-free length-L words) → 0` in `L` — the one place
+   `philipp_psi_mixing_holds` / `CFPsiPin` is needed.
+
+Then `exists_jointFreq_limit` closes by a Cauchy-in-`L` squeeze, with limit
+`lim_L Σ_{q} γ(I_{q ++ v})` — visibly independent of `x` and of `s₀`.

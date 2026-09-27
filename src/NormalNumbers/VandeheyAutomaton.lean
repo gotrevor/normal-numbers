@@ -286,10 +286,158 @@ theorem card_joint_good_eq_sum {δ : S → ℕ → S} [DecidableEq S] {z : List 
 
 /-- The joint count: indices `i < n` at which the digit window of length `v.length`
 starting at `i` spells `v` **and** the automaton is in state `t` after `i` digits. -/
+noncomputable def jointSet (δ : S → ℕ → S) [DecidableEq S] (s₀ : S) (t : S)
+    (v : List ℕ) (x : ℝ) (n : ℕ) : Finset ℕ :=
+  (Finset.range n).filter fun i => v = cfWindow x i v.length ∧ stateAt δ s₀ x i = t
+
+lemma mem_jointSet {δ : S → ℕ → S} [DecidableEq S] {s₀ t : S} {v : List ℕ} {x : ℝ}
+    {n i : ℕ} : i ∈ jointSet δ s₀ t v x n ↔
+      i < n ∧ v = cfWindow x i v.length ∧ stateAt δ s₀ x i = t := by
+  simp only [jointSet, Finset.mem_filter, Finset.mem_range]
+
 noncomputable def jointCount (δ : S → ℕ → S) [DecidableEq S] (s₀ : S) (t : S)
-    (v : List ℕ) (x : ℝ) (n : ℕ) : ℕ :=
-  ((Finset.range n).filter
-    (fun i => v = cfWindow x i v.length ∧ stateAt δ s₀ x i = t)).card
+    (v : List ℕ) (x : ℝ) (n : ℕ) : ℕ := (jointSet δ s₀ t v x n).card
+
+lemma jointCount_eq_card (δ : S → ℕ → S) [DecidableEq S] (s₀ t : S) (v : List ℕ)
+    (x : ℝ) (n : ℕ) : jointCount δ s₀ t v x n = (jointSet δ s₀ t v x n).card := rfl
+
+/-! ## The residue: separating good positions from bad ones -/
+
+variable (δ : S → ℕ → S)
+
+/-- Positions whose lookback window is digit-bounded and contains `z`, and which carry the
+joint (window, state) event. -/
+noncomputable def goodSet [DecidableEq S] (s₀ t : S) (z v : List ℕ) (x : ℝ)
+    (K L m : ℕ) : Finset ℕ :=
+  (Finset.range m).filter fun j =>
+    cfWindow x j L ∈ boundedWords K L ∧ z <:+: cfWindow x j L ∧
+    v = cfWindow x (j + L) v.length ∧ stateAt δ s₀ x (j + L) = t
+
+/-- Positions whose lookback window fails to be digit-bounded or fails to contain `z` —
+the only places the finite-sum formula can miss. -/
+noncomputable def badSet (z : List ℕ) (x : ℝ) (K L m : ℕ) : Finset ℕ :=
+  (Finset.range m).filter fun j =>
+    ¬ (cfWindow x j L ∈ boundedWords K L ∧ z <:+: cfWindow x j L)
+
+/-- **Lower half of the sandwich**: every good position contributes to the joint count. -/
+theorem goodSet_card_le_jointCount [DecidableEq S] (s₀ t : S) (z v : List ℕ)
+    (x : ℝ) (K L n : ℕ) :
+    (goodSet δ s₀ t z v x K L (n - L)).card ≤ jointCount δ s₀ t v x n := by
+  classical
+  rw [jointCount_eq_card]
+  refine Finset.card_le_card_of_injOn (fun j => j + L) ?_ ?_
+  · intro j hj
+    obtain ⟨hjm', hrest⟩ := Finset.mem_filter.mp hj
+    have hjm := Finset.mem_range.mp hjm'
+    show (j + L) ∈ jointSet δ s₀ t v x n
+    exact mem_jointSet.mpr ⟨by omega, hrest.2.2.1, hrest.2.2.2⟩
+  · intro a _ b _ h; simpa using h
+
+/-- **Upper half of the sandwich**: the joint count exceeds the good count by at most the
+bad count plus the `L` initial positions. -/
+theorem jointCount_le [DecidableEq S] (s₀ t : S) (z v : List ℕ)
+    (x : ℝ) (K L n : ℕ) :
+    jointCount δ s₀ t v x n
+      ≤ L + (goodSet δ s₀ t z v x K L (n - L)).card + (badSet z x K L (n - L)).card := by
+  classical
+  set J : Finset ℕ := jointSet δ s₀ t v x n with hJ
+  have hcard : (J.filter fun i => i < L).card + (J.filter fun i => ¬ i < L).card
+      = J.card := Finset.card_filter_add_card_filter_not (fun i => i < L)
+  have h1 : (J.filter fun i => i < L).card ≤ L := by
+    refine le_trans (Finset.card_le_card ?_) (by simp : (Finset.range L).card ≤ L)
+    intro i hi
+    simp only [Finset.mem_filter] at hi
+    exact Finset.mem_range.mpr hi.2
+  have h2 : (J.filter fun i => ¬ i < L).card
+      ≤ (goodSet δ s₀ t z v x K L (n - L) ∪ badSet z x K L (n - L)).card := by
+    refine Finset.card_le_card_of_injOn (fun i => i - L) ?_ ?_
+    · intro i hi
+      obtain ⟨hiJ, hiL⟩ := Finset.mem_filter.mp hi
+      obtain ⟨hin, hv, hs⟩ := mem_jointSet.mp hiJ
+      have hiL' : L ≤ i := by omega
+      have heq : i - L + L = i := by omega
+      by_cases hb : cfWindow x (i - L) L ∈ boundedWords K L ∧ z <:+: cfWindow x (i - L) L
+      · refine Finset.mem_union_left _ ?_
+        simp only [goodSet, Finset.mem_filter, Finset.mem_range]
+        exact ⟨by omega, hb.1, hb.2, by rw [heq]; exact hv, by rw [heq]; exact hs⟩
+      · refine Finset.mem_union_right _ ?_
+        simp only [badSet, Finset.mem_filter, Finset.mem_range]
+        exact ⟨by omega, hb⟩
+    · intro a ha b hb h
+      have h' : a - L = b - L := h
+      obtain ⟨-, haL⟩ := Finset.mem_filter.mp ha
+      obtain ⟨-, hbL⟩ := Finset.mem_filter.mp hb
+      simp only [not_lt] at haL hbL
+      omega
+  have h3 := Finset.card_union_le (goodSet δ s₀ t z v x K L (n - L))
+    (badSet z x K L (n - L))
+  calc jointCount δ s₀ t v x n = J.card := by rw [hJ, jointCount_eq_card]
+    _ = (J.filter fun i => i < L).card + (J.filter fun i => ¬ i < L).card := hcard.symm
+    _ ≤ L + (goodSet δ s₀ t z v x K L (n - L) ∪ badSet z x K L (n - L)).card := by
+        exact Nat.add_le_add h1 h2
+    _ ≤ L + ((goodSet δ s₀ t z v x K L (n - L)).card
+            + (badSet z x K L (n - L)).card) := Nat.add_le_add_left h3 _
+    _ = L + (goodSet δ s₀ t z v x K L (n - L)).card + (badSet z x K L (n - L)).card :=
+        (Nat.add_assoc _ _ _).symm
+
+/-- The bad set splits into "a digit in the window exceeds `K`" and "`z` is absent". -/
+theorem badSet_card_le (z : List ℕ) (x : ℝ) (K L m : ℕ) :
+    (badSet z x K L m).card
+      ≤ L * ((Finset.range (m + L)).filter
+              fun i => ¬ (1 ≤ cfDigit x i ∧ cfDigit x i ≤ K)).card
+        + ((Finset.range m).filter fun j => ¬ z <:+: cfWindow x j L).card := by
+  classical
+  set D : Finset ℕ := (Finset.range (m + L)).filter
+    fun i => ¬ (1 ≤ cfDigit x i ∧ cfDigit x i ≤ K) with hD
+  -- unbounded windows
+  have hunb : ((Finset.range m).filter
+      fun j => cfWindow x j L ∉ boundedWords K L).card ≤ L * D.card := by
+    have hsub : ((Finset.range m).filter fun j => cfWindow x j L ∉ boundedWords K L)
+        ⊆ (Finset.range L).biUnion fun k => (Finset.range m).filter
+            fun j => ¬ (1 ≤ cfDigit x (j + k) ∧ cfDigit x (j + k) ≤ K) := by
+      intro j hj
+      simp only [Finset.mem_filter, Finset.mem_range] at hj
+      obtain ⟨hjm, hnb⟩ := hj
+      rw [mem_boundedWords] at hnb
+      have hex : ∃ a ∈ cfWindow x j L, ¬ (1 ≤ a ∧ a ≤ K) := by
+        by_contra hc
+        push_neg at hc
+        exact hnb ⟨cfWindow_length x j L, fun a ha => hc a ha⟩
+      obtain ⟨a, ha, hbad⟩ := hex
+      simp only [cfWindow, List.mem_map, List.mem_range] at ha
+      obtain ⟨k, hkL, hk⟩ := ha
+      refine Finset.mem_biUnion.mpr ⟨k, Finset.mem_range.mpr hkL, ?_⟩
+      refine Finset.mem_filter.mpr ⟨Finset.mem_range.mpr hjm, ?_⟩
+      show ¬ (1 ≤ cfDigit x (j + k) ∧ cfDigit x (j + k) ≤ K)
+      rw [hk]; exact hbad
+    refine le_trans (Finset.card_le_card hsub) ?_
+    refine le_trans (Finset.card_biUnion_le) ?_
+    have hterm : ∀ k ∈ Finset.range L, ((Finset.range m).filter
+        fun j => ¬ (1 ≤ cfDigit x (j + k) ∧ cfDigit x (j + k) ≤ K)).card ≤ D.card := by
+      intro k hk
+      refine Finset.card_le_card_of_injOn (fun j => j + k) ?_
+        (fun a _ b _ h => by simpa using h)
+      intro j hj
+      obtain ⟨hjm', hjbad⟩ := Finset.mem_filter.mp hj
+      have hjm := Finset.mem_range.mp hjm'
+      have hkL := Finset.mem_range.mp hk
+      refine Finset.mem_filter.mpr ⟨Finset.mem_range.mpr ?_, hjbad⟩
+      show j + k < m + L
+      omega
+    calc ∑ k ∈ Finset.range L, ((Finset.range m).filter
+            fun j => ¬ (1 ≤ cfDigit x (j + k) ∧ cfDigit x (j + k) ≤ K)).card
+        ≤ ∑ _k ∈ Finset.range L, D.card := Finset.sum_le_sum hterm
+      _ = L * D.card := by rw [Finset.sum_const, Finset.card_range, smul_eq_mul]
+  refine le_trans (Finset.card_le_card ?_) (le_trans (Finset.card_union_le _ _)
+    (Nat.add_le_add hunb (le_refl _)))
+  intro j hj
+  simp only [badSet, Finset.mem_filter, Finset.mem_range] at hj
+  obtain ⟨hjm, hnb⟩ := hj
+  by_cases h : cfWindow x j L ∈ boundedWords K L
+  · exact Finset.mem_union_right _
+      (Finset.mem_filter.mpr ⟨Finset.mem_range.mpr hjm, fun hz => hnb ⟨h, hz⟩⟩)
+  · exact Finset.mem_union_left _
+      (Finset.mem_filter.mpr ⟨Finset.mem_range.mpr hjm, h⟩)
 
 /-- **The automaton transfer principle** (the replacement for Vandehey's Theorem 3.1).
 For a finite-state automaton with a synchronizing genuine word, the joint
