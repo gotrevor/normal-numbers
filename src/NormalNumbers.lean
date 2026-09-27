@@ -496,3 +496,4 @@ import NormalNumbers.PairDecoupleBand
 import NormalNumbers.JointLambertEncoding
 
 import NormalNumbers.JointLambertStatement
+import NormalNumbers.JointLambertEncodingProof

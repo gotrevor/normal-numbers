@@ -1797,3 +1797,14 @@ digit-reading dynamical systems:
 Route-level abort/escalate triggers: (a) γ-mixing rate collapses below summable
 → escalate (would break W4/W5); NOT fired (geometric proven). (b) W5/W6 needs a
 deep import the charter forbids (CLT/KPW/Birkhoff) → escalate; not yet reached.
+
+## Operator override 2026-09-27 (bounded run)
+
+Active objective for this run: `KICKOFF-2026-09-26-joint-lambert.md`, **first bounded
+target only** — prove `NormalNumbers.JointLambert.evenEncoding :
+NormalNumbers.JointLambert.EvenEncoding` in
+`src/NormalNumbers/JointLambertEncodingProof.lean`.  This supersedes older DIRECTION
+and HANDOFF priorities for the duration of the run.  The three frozen `Prop`
+definitions in `JointLambertStatement.lean` stay verbatim against commit `78e6048`.
+Bases 2 and 4 included; no coprimality or multiplicative-independence hypothesis.
+Do not claim the full Lambert arithmetic theorem.
