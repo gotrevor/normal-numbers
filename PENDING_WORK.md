@@ -1,3 +1,22 @@
+## Joint Lambert (2026-09-27, lap B) — prime selection CLOSED
+
+`NormalNumbers.JointLambert.exists_joint_prime_candidates` is proved, sorry-free, axioms
+`[propext, Classical.choice, Quot.sound]`, in `src/NormalNumbers/JointLambertPrimeSelection.lean`.
+Details and the exact next dependency: `HANDOFF-joint-lambert.md`.
+
+**Next attack on the headline crux**, in order:
+1. The **shared binary tail majorant** — formalize the elementary divisor-average estimate
+   of paper §3, `∑_{m<M} τ(u+mA) ≤ 2M(1 + ½ log Y) + 2√Y` for `(u,A)=1` and
+   `1 ≤ u ≤ u+(M-1)A ≤ Y` (pair divisors about `√Y`; for each `h ≤ √Y` the progression has
+   no divisible term when `(h,A) > 1` and at most `M/h + 1` otherwise).  Purely elementary,
+   no analytic input.  Combined with the `≥ M/(16k⁴)` prime-candidate count already proved,
+   pigeonhole then yields one index whose tail is good in every coordinate at once.
+2. The **common-offset digit identity**: wire `c^(j+1) ∣ τ(n_m+j)` and `τ(n_m+r) = 2a`
+   through the proved `evenEncoding` to the digit cylinders of all bases simultaneously,
+   with `c = lcm(bases)` entering via `divisor_count_dvd_of_dvd`.
+3. Arbitrarily late occurrences — immediate once 1–2 land, since `K` is arbitrary in
+   `exists_joint_prime_candidates`.
+
 # PENDING WORK
 
 ## 2026-09-23 — **Theorem C′ is PROVED**; the multicutoff campaign is complete
