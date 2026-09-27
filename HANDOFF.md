@@ -1,5 +1,43 @@
 # HANDOFF — pointer only
 
+## ⛔ STUCK-BAIL 2026-09-27 (strike 1 of 2) — read this first
+
+**WHAT is blocked:** nothing mathematical.  The scoped objective of this run is **met**:
+`NormalNumbers.JointLambert.exists_joint_prime_candidates` in
+`src/NormalNumbers/JointLambertPrimeSelection.lean` is proved, sorry-free, `lake build`
+green, `#print axioms` = `[propext, Classical.choice, Quot.sound]`.  What is blocked is the
+**repo-wide sorry gate**, which keeps declining `box done`.
+
+**WHY it is outside a lap's power (operator-gated):** every remaining `sorry` in `src/`
+predates this run and is designated-open / explicitly forbidden —
+`SwingC2.lean` (4, audit surface), `SwingC1Log.lean` (2), `SwingC3Rotation.lean` (1),
+`PairDecoupleProve.lean` (1, *deliberately* a `sorry` because it is a **conjecture**, not a
+formalization gap), plus `MahlerDriftOne` / `PrimeLambertOscillation` named designated-open
+in `DIRECTION.md`.  The operator override at the top of `DIRECTION.md` says **"Work only on
+prime selection and necessary helpers, no side quests"** and **"Stop when
+`exists_joint_prime_candidates` is proved"**.  So no lap of this run may legally touch any
+of them: the gate is unsatisfiable here by construction, not merely hard.
+
+**Fast verification for the confirming lap** (three commands, no proof work):
+```
+grep -n 'sorry' src/NormalNumbers/JointLambertPrimeSelection.lean   # only docstring prose
+lake build                                                          # green
+echo '#print axioms NormalNumbers.JointLambert.exists_joint_prime_candidates'
+```
+
+**EXACTLY what is needed from the operator:** either accept the scoped completion and close
+the run, or authorize a new scope.  The next on-path target is already written up: the
+elementary paper-§3 divisor-average estimate
+`∑_{m<M} τ(u+mA) ≤ 2M(1 + ½ log Y) + 2√Y` for `(u,A) = 1` — the **shared binary tail
+majorant**, needing no analytic input, which combines with the `≥ M/(16k⁴)` prime-candidate
+count proved this lap to give one commonly-good index by pigeonhole.
+
+Full detail, including how the target is proved: `HANDOFF-joint-lambert.md`; next attack:
+`PENDING_WORK.md`.
+
+---
+
+
 This file is a **thin pointer**, never a second durable overview.
 
 * **Durable overview + axiom ledger** → `STATUS.md`
