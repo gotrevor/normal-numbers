@@ -1,5 +1,53 @@
 # DIRECTION — normal-numbers 🧭
 
+## OPERATOR OBJECTIVE 2026-09-27 lap C (SUPERSEDES every objective below, including lap B's
+## stop instruction and all older CURRENT DIRECTIVE priorities)
+
+Bounded run, up to two Opus/low laps.  Trevor explicitly authorized the **tail-control stage**.
+Sources: `HANDOFF-joint-lambert.md`, `KICKOFF-2026-09-26-joint-lambert.md`,
+`papers/2026-09-26-joint-lambert-disjunctivity.md`.
+
+**Target: new `src/NormalNumbers/JointLambertTail.lean`, theorem
+`NormalNumbers.JointLambert.exists_joint_small_tail`**, with the exact contract: given
+`hagp : AGP`, `hpis : PrimeIntervalSupply`, `c ≥ 2`, `a ≥ 2`, `r ≥ 1`, any real `ε > 0` and
+any natural cutoffs `K`, `N`, there exist `k n : ℕ` with `K ≤ k`, `r < k`, `1 ≤ n`, `N ≤ n`,
+`c^(j+1) ∣ τ(n+j)` for every `j < k` with `j ≠ r`, `τ(n+r) = 2a`, and
+`∑' t, τ(n+k+t)/2^(k+t) < ε`.  `τ` is actual divisor cardinality (`SwingC2.tau`).  State it
+with a temporary `sorry` first and freeze it; prove it via `exists_joint_prime_candidates`.
+**One common `n` for every later base**, not one per coordinate.  No new analytic input and no
+tail hypothesis may enter the target.  Summability is proved explicitly so `tsum` cannot mask
+divergence.  Add the corollary: for any integer `b ≥ 2`,
+`0 ≤ ∑' t, τ(n+k+t)/b^(k+t+1) ≤ binaryTail/2`, so the same `n` works in all bases.
+
+Main new elementary work: **divisor averaging along coprime progressions** — for `u > 0`,
+`A > 0`, `(u,A) = 1`, `H ≥ 1`, all `u + mA ≤ H²` for `m < M`:
+`∑_{m<M} τ(u+mA) ≤ 2M(1 + log H) + 2H` (an equivalent proved bound with sufficient constants
+is fine).  Pair divisors at `H`, count `h ∣ u+mA` by `M/h + 1` (zero when `(h,A) > 1`), sum
+harmonic terms.  Split the tail at `L = 2^k`: the near range `k ≤ j < L` uses the coprimality
+already supplied by `exists_joint_prime_candidates`; the far range uses a crude pointwise
+divisor bound plus geometric decay.  Dyadic schedule `U = 2^(k⁴)`, `X = U⁴`, `H = U³`,
+`Z = U⁶`; `B, Q ≤ U`, `M = X/B + 1 ≥ H`, `n_m + j ≤ Z` for `j < L`.  Every eventual inequality
+is **proved** by taking `K` large; `ε` is fixed before the prime-selection height.  Combine the
+total binary tail with the proved candidate count `≥ M/(16k⁴)` to find a candidate with tail
+`< ε`.  The arbitrary `N` comes from `R > L` and a large `K`.
+
+Byte-for-byte freezes: `JointLambertStatement.lean` vs `78e6048`, `JointLambertEncodingProof`
+vs `7f05cb2`, `JointLambertArithmetic` vs `566586a`, `JointLambertPrimeSelection` vs `7dc2522`.
+Helper lemmas go in new modules beside them.  `AGP` / `PrimeIntervalSupply` stay exactly as
+defined and are passed as hypotheses.  Do not touch unrelated campaigns and do not try to clear
+the repo-wide designated-open holes.  Scalar source credited at
+`CaptainSude/erdos-borwein-disjunctivity` rev `bd98789a177470cc4b3e33e6769e859f6144c906`; no
+license found, so our proof is implemented independently rather than copied.  New modules go in
+the root build; runnable probes stay as persistent tests; check theorem dependencies.  Commit
+coherent green checkpoints and update `HANDOFF-joint-lambert.md`.
+
+**Stop on completion of `exists_joint_small_tail` and the base-majorant corollary.**  Final
+common-offset digit assembly is the *next* stage — this is **not** permission to claim
+`JointLambertDisjunctivity`.  If the scoped target is complete but an in-box global completion
+gate refuses, write the completion handoff and exit normally so the HOST scoped predicate can
+recognise it.
+
+
 ## OPERATOR OBJECTIVE 2026-09-27 lap B (SUPERSEDES every objective below, including the
 ## "target = paper §4 ONLY" block and all completed-stage stop instructions)
 
