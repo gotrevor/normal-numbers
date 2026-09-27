@@ -1,0 +1,1768 @@
+                                              THE LOGARITHMICALLY AVERAGED CHOWLA
+                                              AND ELLIOTT CONJECTURES FOR TWO-POINT
+                                                           CORRELATIONS
+
+                                                                           TERENCE TAO
+
+
+
+
+arXiv:1509.05422v4 [math.NT] 29 Jul 2016
+                                                  Abstract. Let λ denote the Liouville function. The Chowla con-
+                                                  jecture, in the two-point correlation case, asserts that
+                                                                   ÿ
+                                                                      λpa1 n ` b1 qλpa2 n ` b2 q “ opxq
+                                                                   nďx
+                                                  as x Ñ 8, for any ﬁxed natural numbers a1 , a2 and non-negative
+                                                  integer b1 , b2 with a1 b2 ´ a2 b1 ‰ 0. In this paper we establish the
+                                                  logarithmically averaged version
+                                                                 ÿ      λpa1 n ` b1 qλpa2 n ` b2 q
+                                                                                                   “ oplog ωpxqq
+                                                                                     n
+                                                           x{ωpxqănďx
+
+                                                  of the Chowla conjecture as x Ñ 8, where 1 ď ωpxq ď x is an
+                                                  arbitrary function of x that goes to inﬁnity as x Ñ 8, thus break-
+                                                  ing the “parity barrier” for this problem. Our main tools are the
+                                                  multiplicativity of the Liouville function at small primes, a recent
+                                                  result of Matomäki, Radziwill, and the author on the averages of
+                                                  modulated multiplicative functions in short intervals, concentra-
+                                                  tion of measure inequalities, the Hardy-Littlewood circle method
+                                                  combined with a restriction theorem for the primes, and a novel
+                                                  “entropy decrement argument”. Most of these ingredients are also
+                                                  available (in principle, at least) for the higher order correlations,
+                                                  with the main missing ingredient being the need to control short
+                                                  sums of multiplicative functions modulated by local nilsequences.
+                                                     Our arguments also extend to more general bounded multiplica-
+                                                  tive functions than the Liouville function λ, leading to a logarith-
+                                                  mically averaged version of the Elliott conjecture in the two-point
+                                                  case. In a subsequent paper we will use this version of the Elliott
+                                                  conjecture to aﬃrmatively settle the Erdős discrepancy problem.
+
+
+
+
+                                                                         1. Introduction
+                                              Let λ denote the Liouville function, thus λ is the completely multi-
+                                           plicative function such that λppq “ ´1 for all primes p. We have the
+                                           following well known conjecture of Chowla [3]:
+                                           Conjecture 1.1 (Chowla conjecture). Let k ě 1, let a1 , . . . , ak be
+                                           natural numbers and let b1 , . . . , bk be distinct nonnegative integers such
+                                           that ai bj ´ aj bi ‰ 0 for 1 ď i ă j ď k. Then
+                                                               ÿ
+                                                                  λpa1 n ` b1 q . . . λpak n ` bk q “ opxq
+                                                             nďx
+                                                                                    1
+2                               TERENCE TAO
+
+as x Ñ 8.
+  Thus for instance the k “ 2 case of the Chowla conjecture implies
+that
+                       ÿ
+                          λpnqλpn ` 1q “ opxq                 (1.1)
+                         nďx
+
+as x Ñ 8. This can be compared with the twin prime conjecture,
+which is equivalent to the assertion that
+                         ÿ
+                            θpnqθpn ` 2q Ñ 8             (1.2)
+                          nďx
+
+as x Ñ 8, where θpnq :“ log p when n is equal to a prime p, and
+θpnq :“ 0 otherwise.
+   The k “ 1 case of the Chowla conjecture is equivalent to the prime
+number theorem. The higher k cases are open, although there are a
+number of partial results available if one allows for some averaging in
+the b1 , . . . , bk parameters; see [23], [8] for some recent results in this
+direction. The bound (1.1) is equivalent to the assertion that the pairs
+pλpnq, λpn`1qq attain each of the four sign patterns p`1, `1q p`1, ´1q,
+p´1, `1q, p´1, ´1q p 41 ` op1qqx times. In [16] it was shown that the
+                                                      1
+p`1, `1q and p´1, ´1q patterns occur at least p 60      ` op1qqx times, and
+                                                      ´7´ε
+the p`1, ´1q and p´1, `1q patterns occur " x log           x times for ε ą 0.
+In the recent paper [21] it was shown that in fact all four sign patterns
+occur " x times, so in particular
+                         ˇ                  ˇ
+                         ˇÿ                 ˇ
+                              λpnqλpn ` 1qˇ ď p1 ´ δqx
+                         ˇ                  ˇ
+                         ˇ
+                         ˇnďx               ˇ
+
+for some absolute constant δ ą 0 and suﬃciently large x. An analogous
+claim for sign patterns pλpnq, λpn ` 1q, λpn ` 2qq of length three was
+shown in [24], building upon the previous result in [17] that showed
+that all sign patterns of length three occur inﬁnitely often.
+   The ﬁrst main result of this paper is to obtain a diﬀerent averaged
+form of the Chowla conjecture in the ﬁrst nontrivial case k “ 2, in
+which one averages in x rather than in b1 , . . . , bk . More precisely, we
+show
+Theorem 1.2 (Logarithmically averaged Chowla conjecture). Let a1 , a2
+be natural numbers, and let b1 , b2 be integers such that a1 b2 ´ a2 b1 ‰ 0.
+Let 1 ď ωpxq ď x be a quantity depending on x that goes to infinity as
+x Ñ 8. Then one has
+                ÿ      λpa1 n ` b1 qλpa2 n ` b2 q
+                                                  “ oplog ωpxqq        (1.3)
+            x{ωpxqănďx
+                                   n
+
+as n Ñ 8.
+                   CHOWLA AND ELLIOTT CONJECTURES                               3
+
+  Thus for instance this theorem implies (after setting ωpxq :“ x, a1 “
+a2 “ b2 “ 1 and b1 “ 0) that
+                      ÿ λpnqλpn ` 1q
+                                       “ oplog xq                  (1.4)
+                     nďx
+                               n
+as x Ñ 8; this can be deduced from (1.1) by a routine summation
+by parts argument, but is a strictly weaker estimate. From this and
+the elementary estimate nďx λpnq
+                              ř
+                                      n
+                                          “ oplog xq we see that for any sign
+                                2
+pattern pǫ1 , ǫ2 q P t´1, `1u , the set tn : pλpnq, λpn ` 1qq “ pǫ1 , ǫ2 qu
+occurs with logarithmic density 1{4, that is to say
+                     1              ÿ              1  1
+                                                     “ ` op1q
+                   log x nďx:pλpnq,λpn`1qq“pǫ ,ǫ q n  4
+                                           1   2
+
+as x Ñ 8.
+   More generally, one can deduce Theorem 1.2 from the k “ 2 case
+of Conjecture 1.1 by summation by parts; we leave the details to the
+interested reader. Conversely, the k “ 2 case of Conjecture 1.1 is equiv-
+alent to the limiting case of Theorem 1.2 in which ω is ﬁxed rather than
+going to inﬁnity. The logarithmic averaging is unfortunately needed in
+our method in order to obtain an approximate aﬃne invariance in the
+n variable; we do not know how to modify our argument to remove
+this averaging. However, the logarithmic averaging can be tolerated
+in some applications (for instance to the Erdös discrepancy problem,
+discussed below).
+   Estimates such as (1.1), (1.2), (1.3), (1.4) are well known to be sub-
+ject to the parity problem obstruction (see e.g. [11, Chapter 16]), and
+thus cannot be resolved purely by existing sieve-theoretic (or circle
+method) techniques that rely solely on “linear” estimates for the Li-
+ouville function. We avoid the parity obstacle here by using a new
+“bilinear” estimate1 for the Liouville function, which relates to bounds
+such as (1.3) through the multiplicativity property λppnq “ ´λpnq of
+the Liouville function at small primes p, and which is proved using the
+(weak) expansion properties of a certain random graph, closely related
+to one recently introduced in [24]. To describe this strategy in some-
+what informal terms, let us specialise to the case of establishing (1.4)
+for simplicity. Suppose for contradiction that the left-hand side of (1.4)
+was large and (say) positive. Using the multiplicativity λppnq “ ´λpnq,
+we conclude that
+                           ÿ λpnqλpn ` pq1p|n
+
+                           nďx
+                                      n
+is also large and positive for all primes p that are not too large; note
+here how the logarithmic averaging allows us to leave the constraint
+  1Bilinear estimates have been used to get around the parity obstacle in previous
+works, most notably in the Friedlander-Iwaniec result [10] on primes of the form
+a2 ` b 4 .
+4                             TERENCE TAO
+
+n ď x unchanged. Summing in p, we conclude that
+                      ř
+                    ÿ pPP λpnqλpn ` pq1p|n
+
+                       nďx
+                                       n
+is large and positive for any given set P of medium-sized primes. By a
+standard averaging argument, this implies that
+                      H
+                  1 ÿÿ
+                            λpn ` jqλpn ` p ` jq1p|n`j                (1.5)
+                  H j“1 pPP
+
+is large for many choices of n, where H is a medium-sized param-
+eter at our disposal to choose, and we take P to be some set of
+primes that are somewhat smaller than H. To obtain the required
+contradiction, one thus wants to demonstrate signiﬁcant cancellation
+in the expression (1.5). As in [24], we view n as a random variable, in
+which case (1.5) is essentially a bilinear sum of the random sequence
+pλpn ` 1q, . . . , λpn ` Hqq along a random graph Gn,H on t1, . . . , Hu, in
+which two vertices j, j ` p are connected if they diﬀer by a prime p in
+P that divides n ` j. A key diﬃculty in controlling this sum is that for
+randomly chosen n, the sequence pλpn`1q, . . . , λpn`Hqq and the graph
+Gn,H need not be independent. To get around this obstacle we intro-
+duce a new argument which we call the “entropy decrement argument”
+(in analogy with the “density increment argument” and “energy incre-
+ment argument” that appear in the literature surrounding Szemerédi’s
+theorem on arithmetic progressions (see e.g. [29]), and also reminis-
+cent of the “entropy compression argument” of Moser and Tardos [26]).
+This argument, which is a simple consequence of the Shannon entropy
+inequalities, can be viewed as a quantitative version of the standard
+subadditivity argument that establishes the existence of Kolmogorov-
+Sinai entropy in topological dynamical systems; it allows one to select
+a scale parameter H (in some suitable range rH´ , H` s) for which the
+sequence pλpn ` 1q, . . . , λpn ` Hqq and the graph Gn,H exhibit some
+weak independence properties (or more precisely, the mutual informa-
+tion between the two random variables is small). With this additional
+property, one can use standard concentration of measure results such as
+the Hoeﬀding inequality [18] to approximate (1.5) by the signiﬁcantly
+simpler expression
+                          H
+                     1 ÿ ÿ λpn ` jqλpn ` p ` jq
+                                                .
+                     H j“1 pPP      p
+
+This latter expression can then be controlled in turn by an application
+of the Hardy-Littlewood circle method and an estimate for short sums
+of a modulated Liouville function established recently by Matomäki,
+Radziwill and the author in [23], which is based in turn on the results
+of Matomäki and Radziwill in [21].
+                    CHOWLA AND ELLIOTT CONJECTURES                                   5
+
+   The arguments in this paper extend to other bounded multiplicative
+functions than the Liouville function, though as they rely in an essen-
+tial fashion on multiplicativity at small primes, they unfortunately do
+not appear to have any bearing as yet on twin prime-type sums such
+as (1.2). More precisely, we have the following logarithmically aver-
+aged and nonasymptotic version of the Elliott conjecture [4] (in the
+“corrected” form introduced in [23]):
+
+Theorem 1.3 (Logarithmically averaged nonasymptotic Elliott con-
+jecture). Let a1 , a2 be natural numbers, and let b1 , b2 be integers such
+that a1 b2 ´ a2 b1 ‰ 0. Let ε ą 0, and suppose that A is sufficiently large
+depending on ε, a1 , a2 , b1 , b2 . Let x ě ω ě A, and let g1 , g2 : N Ñ C
+be multiplicative functions with |g1 pnq|, |g2 pnq| ď 1 for all n, with g1
+“non-pretentious” in the sense that
+                          ÿ 1 ´ Re g1 ppqχppqp´it
+                                                        ěA                       (1.6)
+                         pďx
+                                          p
+
+for all Dirichlet characters χ of period at most A, and all real numbers
+t with |t| ď Ax. Then
+               ˇ                                  ˇ
+               ˇ                                  ˇ
+               ˇ ÿ g1 pa1 n ` b1 qg2 pa2 n ` b2 q ˇ
+               ˇ                                  ˇ ď ε log ω.      (1.7)
+               ˇ
+               ˇx{ωănďx            n              ˇ
+                                                  ˇ
+
+Remark 1.4. Our arguments are in principle eﬀective, and would yield
+an explicit value of A as a function of ε, a1 , a2 , b1 , b2 if one went through
+all the arguments carefully, however we did not do so here as we expect2
+the bounds to be rather poor.
+
+  Theorem 1.3 clearly implies the following asymptotic version:
+
+Corollary 1.5 (Logarithmically averaged Elliott conjecture). Let a1 , a2
+be natural numbers, and let b1 , b2 be integers such that a1 b2 ´ a2 b1 ‰ 0.
+Let g1 , g2 : N Ñ C be multiplicative functions bounded in magnitude by
+one, with g1 “non-pretentious” in the sense that
+                               ÿ 1 ´ Re g1 ppqχppqp´it
+                       inf                                 Ñ8                    (1.8)
+                      |t|ďAx
+                               pďx
+                                              p
+
+
+  2For instance, a back of the envelope calculation suggests that the decay rate
+in the right-hand side of (1.4) provided by optimising all the parameters in the
+                                                   log x
+arguments in this paper is something like Op plog log log xqc q for some small absolute
+constant c ą 0; similarly, the dependence of A on 1{ε provided by the arguments in
+this paper appears to be roughly triple-exponential in nature, at least in the model
+case where g1 , g2 are completely multiplicative and take values on the unit circle.
+6                              TERENCE TAO
+
+as x Ñ 8 for all Dirichlet characters χ and all A ě 1. Then for any
+1 ď ωpxq ď x which goes to infinity as x Ñ 8, one has
+              ÿ      g1 pa1 n ` b1 qg2 pa2 n ` b2 q
+                                                    “ oplog ωpxqq (1.9)
+          x{ωpxqănďx
+                                   n
+as x Ñ 8.
+Remark 1.6. If one replaced the conclusion (1.9) with the stronger,
+non-logarithmically-averaged estimate
+                 ÿ
+                     g1 pa1 n ` b1 qg2 pa2 n ` b2 q “ opxq,  (1.10)
+                   nďx
+
+(say with b1 , b2 ě 0 to avoid the linear forms a1 n ` b1 , a2 n ` b2 leaving
+the domain of g1 , g2) then this is the k “ 2 version of the corrected
+Elliott conjecture introduced in [23]. The original Elliott conjecture in
+[4] replaced the condition (1.8) with the weaker condition
+                      ÿ 1 ´ Re g1 ppqχppqp´it
+                                               “ `8
+                       p
+                                   p
+for all real numbers t P R, but it was shown in [23] that this hypothesis
+was insuﬃcient to establish (1.10) (and it is not diﬃcult to adapt the
+counterexample to also show that (1.9) fails under this hypothesis). On
+the other hand, it was shown in [23] that the corrected Elliott conjecture
+held if one averaged in the b1 , . . . , bk parameters (rather than in the x
+parameter as is done here).
+   Using Vinogradov-Korobov error term zero-free region for L-functions
+(see [25, §9.5]), it is not diﬃcult to establish (1.8) when g is the Liou-
+ville function; see [22, Lemma 2] for a closely related calculation. Thus
+Corollary 1.5 implies Theorem 1.2. Some condition of the form (1.8)
+must be needed in order to derive the conclusion (1.9), as one can see
+by considering examples such as g1 pnq :“ χpnqnit and g2 pnq :“ g1 pnq,
+where χ is a Dirichlet character of bounded conductor, t is a real num-
+ber of size t “ opxq, and w is set equal to (for instance) px{|t|q1{2 .
+More precise asymptotics of sums such as those in (1.9) in the “preten-
+tious” case when g1 and g2 both behave like twisted Dirichlet characters
+n ÞÑ χpnqnit were computed in the recent preprint of Klurman [20].
+   Corollary 1.5 also implies the asymptotic
+                        ÿ g1 pnqg2 pn ` 1q
+                                           “ oplog xq
+                        nďx
+                                 n
+as x Ñ 8 when g1 , g2 are multiplicative functions bounded by 1, and at
+least one of g1 , g2 is equal to the Möbius function µ. Thus for instance
+one has
+  ÿ µpnqµpn ` 1q ÿ µ2 pnqµpn ` 1q ÿ µpnqµ2 pn ` 1q
+                       ,                  ,                  “ oplog xq.
+  nďx
+            n            nďx
+                                  n         nďx
+                                                     n
+                  CHOWLA AND ELLIOTT CONJECTURES                             7
+
+The latter two estimates can be easily deduced from the prime num-
+ber theorem in arithmetic progressions, but the ﬁrst estimate is new.
+Combining this with the computations in [24, §2] (using logarithmic
+density in place of asymptotic probability), we conclude
+Corollary 1.7 (Sign patterns of the Möbius function). Let
+                       źˆ        2
+                                   ˙
+                  c :“     1 ´ 2 “ 0.3226 . . .
+                       p
+                                p
+and let pǫ1 , ǫ2 q P t´1, 0, `1u2. Then the set tn : pµpnq, µpn ` 1qq “
+pǫ1 , ǫ2 qu has logarithmic density
+                 2
+        ‚ 1 ´ ζp2q ` c “ 0.1067 . . . when pǫ1 , ǫ2 q “ p0, 0q;
+             ´        ¯
+           1   1
+        ‚ 2 ζp2q ´ c “ 0.1426 . . . when pǫ1 , ǫ2 q “ p`1, 0q, p´1, 0q, p0, `1q, p0, ´1q;
+           and
+        ‚ 4c “ 0.0806 . . . when pǫ1 , ǫ2 q “ p`1, `1q, p`1, ´1q, p´1, `1q, p´1, ´1q.
+  Again, the ﬁrst two cases here could already be treated using the
+prime number theorem in arithmetic progressions, but the last case is
+new. One can also use similar arguments to give an alternate proof
+of [24, Theorem 1.9] (that is to say, that all nine of the above sign
+patterns for the Möbius function occur with positive lower density);
+we leave the details to the interested reader.
+  In a subsequent paper [30], we will combine Theorem 1.3 with some
+arguments arising from the Polymath5 project [27] to obtain an aﬃr-
+mative answer to the Erdős discrepancy problem [5]:
+Theorem 1.8. Let f : N Ñ t´1, `1u be a function. Then
+                          ˇ       ˇ
+                          ˇÿ      ˇ
+                      sup ˇ f pjdqˇ “ `8.
+                          ˇ       ˇ
+                     d,nPN jďn
+                          ˇ       ˇ
+1.1. Notation. We adopt the usual asymptotic notation of X ! Y ,
+Y " X, or X “ OpY q to denote the assertion that |X| ď CY for some
+constant C. If we need C to depend on an additional parameter we will
+denote this by subscripts, e.g. X “ Oε pY q denotes the bound |X| ď
+Cε Y for some Cε depending on Y . Similarly, we use X “ oAÑ8 pY q
+to denote the bound |X| ď cpAqY where cpAq depends only on A and
+goes to zero as A Ñ 8.
+   If E is a statement, we use 1E to denote the indicator, thus 1E “ 1
+when E is true and 1E “ 0 when E is false.
+   Given a ﬁnite set S, we use |S| to denote its cardinality.
+   For any real number α, we write epαq :“ e2πiα ; this quantity lies in
+the unit circle S 1 :“ tz P C : |z| “ 1u. By abuse of notation, we can
+also deﬁne epαq when α lies in the additive unit circle R{Z.
+   All sums and products will be over the natural numbers N “ t1, 2, . . . u
+unless otherwise speciﬁed, with the exception of sums and products
+over p which is always understood to be prime.
+8                                 TERENCE TAO
+
+  We use d|n to denote the assertion that d divides n, and n pdq to
+denote the residue class of n modulo d. We use pa, bq to denote the
+greatest common divisor of a and b.
+  We will frequently use probabilistic notation such as the expectation
+EX of a random variable X or a probability PpEq of an event E; later
+we will also need the Shannon entropy HpXq of a discrete random vari-
+able, as well as related quantities such as conditional entropy HpX|Yq
+or mutual information IpX, Yq, the deﬁnitions of which we review in
+Section 3. We will use boldface symbols such as X, Y or n to refer to
+random variables.
+
+1.2. Acknowledgments. The author is supported by NSF grant DMS-
+0649473 and by a Simons Investigator Award. The author also thanks
+Andrew Granville, Ben Green, Kaisa Matomäki, Maksym Radziwill,
+and Will Sawin for helpful discussions, corrections, and comments, and
+the anonymous referees for a careful reading of the paper and many
+useful suggestions and corrections.
+
+                       2. Preliminary reductions
+   In this section we make a number of basic reductions, in particular
+reducing matters to a probabilistic problem involving a random graph,
+somewhat similar to one considered in [24]. Readers who are interested
+just in the case of the Liouville function (Theorem 1.2) can skip the
+initial reductions and move directly3 to Theorem 2.3 below.
+   As mentioned in the introduction, Theorem 1.2 is a special case of
+Corollary 1.5, which is in turn a corollary of Theorem 1.3. Thus it will
+suﬃce to establish Theorem 1.3.
+   We ﬁrst reduce to the case when g1 takes values on the unit circle
+S 1:
+Proposition 2.1. In order to establish Theorem 1.3, it suffices to do
+so in the special case where |g1 pnq| “ 1 for all n.
+Proof. Suppose that g1 takes values in the unit disk. Then we may
+factorise g1 “ g11 g12 where g11 , g12 are multiplicative, with g11 :“ |g1 | taking
+values in r0, 1s and g12 taking values in the unit circle S 1 .
+   Let A0 be a large quantity (depending on a1 , a2 , b1 , b2 , ε) to be chosen
+later; we assume that A is suﬃciently large depending on a1 , a2 , b1 , b2 , ε, A0.
+Suppose ﬁrst that
+                              ÿ 1 ´ g 1 ppq
+                                           1
+                                               ě A0 .
+                             pďx
+                                         p
+
+    3For the application to the Erdős discrepancy problem in [30], one only needs
+the special case when g2 “ g1 and g1 is completely multiplicative and takes values
+in S 1 . In that case one can also move directly to Theorem 2.3, skipping the initial
+reductions.
+                  CHOWLA AND ELLIOTT CONJECTURES                             9
+
+By Mertens’ theorem and the largeness of A0 and x, this implies that
+                       ÿ 1 ´ g 1 ppq    A0
+                                 1
+                                     ě
+                       pďy
+                               p         2
+
+for every x1{A0 ď y ď x (say). Applying the Halasz inequality (see e.g.
+[32] or [12, Corollary 1]) we conclude that
+                      1 ÿ 1
+                            g pnq ! A0 expp´A0 {2q
+                      y nďy 1
+
+for all x1{A0 ď y ď x (assuming x ě A and A is suﬃciently large
+depending on A0 ). From this and the nonnegativity and boundedness
+of g11 pnq it is easy to see that
+                     ÿ     g11 pa1 n ` b1 q
+                                            “ oA0 Ñ8 plog ωq
+                   x{ωďnďx
+                                   n
+
+since x ě ω ě A and A is large compared to A0 , and A0 is large com-
+pared to a1 , b1 . Since g1 pa1 n ` b1 qg2 pa2 n ` b2 q is bounded in magnitude
+by g11 pa1 n1 `b1 q, the claim (1.7) now follows from the triangle inequality
+(taking A0 large enough).
+   It remains to treat the case when
+                              ÿ 1 ´ g 1 ppq
+                                          1
+                                                ă A0 .
+                              pďx
+                                        p
+
+We now use the probabilistic method to model g11 by a multiplicative
+function of unit magnitude. Since g11 ppj q takes values in the convex
+hull of t´1, `1u for every prime power pj , we can construct a random
+multiplicative function g11 taking values in t´1, `1u, such that the val-
+ues g11 ppj q at prime powers are jointly independent and have mean
+Eg11 ppj q “ g11 ppj q. By multiplicativity and joint independence, we thus
+have Eg11 pnq “ g11 pnq for arbitrary n. By linearity of expectation we
+have
+                               ÿ 1 ´ g1 ppq
+                                          1
+                             E                ă A0 .
+                               pďx
+                                        p
+so by Markov’s inequality we see with probability 1 ´ Op1{A0 q that
+                            ÿ 1 ´ g1 ppq
+                                         1
+                                             ă A20 .
+                            pďx
+                                     p
+
+Let us restrict to this event, and set g1 :“ g11 g12 , thus g1 is a random
+multiplicative function taking values in S 1 whose mean is g1 . By the
+triangle inequality we have
+              g1 ppq “ g1 ppq ` Op1 ´ g11 ppqq ` Op1 ´ g11 ppqq
+10                             TERENCE TAO
+
+and hence by (1.6) and the triangle inequality again we have
+                     ÿ 1 ´ Re g1 ppqχppqp´it
+                                                ě A{2
+                     pďx
+                                   p
+
+for all Dirichlet characters χ of period at most A and all t with |t| ď Ax,
+if A is large enough. Using the hypothesis that Theorem 1.3 holds when
+g1 has unit magnitude, we conclude (again taking A large enough) that
+                ˇ                                  ˇ
+                ˇ                                  ˇ
+                ˇ ÿ g1 pa1 n ` b1 qg2 pa2 n ` b2 q ˇ ε
+                ˇ                                  ˇ ď log ω           (2.1)
+                ˇ                    n             ˇ 2
+                ˇx{ωănďx                           ˇ
+
+with probability 1 ´ Op1{A0 q. In the exceptional event that this fails,
+we can still bound the left-hand side of (2.1) by Oplog ωq. Taking
+expectations, we obtain (1.7) as desired (for A0 large enough).       
+   A similar argument allows one to also reduce to the case where
+|g2 pnq| “ 1 for all n (indeed, the argument is slightly simpler as (1.6)
+is unaﬀected by changes in g2 ).
+   Next, we upgrade the functions g1 , g2 from being multiplicative to
+being completely multiplicative.
+Proposition 2.2. In order to establish Theorem 1.3, it suffices to do
+so in the special case where |g1 pnq| “ |g2 pnq| “ 1 for all n, and g1 is
+completely multiplicative.
+Proof. By the previous reductions we may already assume that |g1 pnq| “
+|g2 pnq| “ 1 for all n. If g1 is not completely multiplicative, we can intro-
+duce the completely multiplicative function g̃1 with g̃1 ppq “ g1 ppq for
+all p. Clearly, g̃1 takes values in S 1 . From Möbius inversion (twisted
+by g̃1 ) we can factor g1 as a Dirichlet convolution g1 “ g̃1 ˚ h for a
+multiplicative function h with hppq “ 0 and |hppj q| ď 2 for all j ě 2;
+indeed we have hppj q “ gppj q ´ gppqgppj´1q for all j ě 1. The left-hand
+side of (1.7) can then be rewritten as
+             ˇ                                                            ˇ
+                                                a  n`b
+                                              p         qg   pa    `    q
+             ˇÿ                                                           ˇ
+             ˇ
+             ˇ hpdq
+                               ÿ         g̃ 1
+                                                 1
+                                                    d
+                                                      1
+                                                           2   2 n   b2   ˇ
+                                                                          ˇ.
+             ˇ
+             ˇd        x{ωănďx:d|a1 n`b1
+                                                         n                ˇ
+                                                                          ˇ
+As in the previous proposition, we choose a quantity A0 that is suﬃ-
+ciently large depending on a1 , a2 , b1 , b2 , ε, and assume A is suﬃciently
+large depending on A0 , a1 , a2 , b1 , b2 , ε. We consider ﬁrst the contribu-
+tion to the above sum of a single value of d with d ď A0 . We crudely
+bound |hpdq| by (say) A0 . The constraint d|a1 n ` b1 constrains n to
+some set of residue classes modulo d; the number of such classes is triv-
+ially bounded by d and hence by A0 . Making an appropriate change
+of variables and using the hypothesis that Theorem 1.3 holds for com-
+pletely multiplicative g1 (replacing ε by ε{2A30 , and assuming A large
+                     CHOWLA AND ELLIOTT CONJECTURES                                     11
+
+enough), we thus have
+         ˇ                                                   ˇ
+         ˇ                         a1 n`b1                   ˇ
+         ˇ
+         ˇ
+                ÿ           g̃ 1 p     d
+                                           qg 2 pa2 n ` b2 q ˇ ď ε log ω
+                                                             ˇ
+         ˇ                                  n                ˇ 2A2
+         ˇx{ωănďx:d|a1 n`b1                                  ˇ    0
+
+for each d ď A0 . Thus the total contribution of those d with d ď A0 is
+at most 2ε log ω.
+   Now we turn to the contribution where d ą A0 . Here, we can use
+                                                         a n`b1
+                                                     g̃ p 1     qg pa n`b q
+the triangle inequality to bound x{ωănďx:d|a1 n`b1 1 d n 2 2 2 by
+                                    ř
+
+Op logd ω q, so the net contribution of this case is Oplog ω dąA0 |hpdq|
+                                                               ř
+                                                                          d
+                                                                            q.
+However, from taking Euler products one sees that
+                              ÿ |hpdq|
+                                       “ Op1q
+                               d
+                                  d2{3
+(say), and thus
+                               ÿ |hpdq|              ´1{3
+                                            “ OpA0          q.
+                              dąA0
+                                       d
+Taking A0 large enough, we obtain the claim.                                            
+   A similar argument allows one to also reduce to the case where g2
+is completely multiplicative. As g1 , g2 are now multiplicative and take
+values in S 1 , we have
+g1 pa1 n ` b1 qg2 pa2 n ` b2 q “ g1 pa2 qg2 pa1 qg1 pa1 a2 n ` a2 b1 qg2 pa1 a2 n ` a1 b2 q
+so by replacing a1 , a2 , b1 , b2 with a1 a2 , a1 a2 , b1 a2 , b2 a1 respectively, we
+may assume that a1 “ a2 “ a, b1 “ b, and b2 “ b ` h for some natural
+number a, integer b, and nonzero integer h.
+   Finally, we observe that we can strengthen the condition ω ď x
+slightly to ω ď logx x , since for logx x ă ω ď x, the contribution of those
+n for which n ď log x can be seen to be negligible. (Indeed, we could
+reduce to the case where ω grew slower than any ﬁxed function of x
+going to inﬁnity, but the restriction ω ď logx x will suﬃce for us, as it
+prevents the n parameter from being extremely small.)
+   Putting all these reductions together, we see that Theorem 1.3 will
+be a consequence of the following theorem.
+Theorem 2.3 (Logarithmically averaged nonasymptotic Elliott con-
+jecture). Let a be a natural number, and let b, h be integers with h ‰ 0.
+Let ε ą 0, and suppose that A is sufficiently large depending on ε, a, b, h.
+Let x ě logx x ě ω ě A, and let g1 , g2 : N Ñ S 1 be completely multiplica-
+tive functions such that (1.6) holds for all Dirichlet characters χ of
+period at most A, and all real numbers t with |t| ď Ax. Then
+               ˇ                                   ˇ
+               ˇ                                   ˇ
+               ˇ ÿ g1 pan ` bqg2 pan ` b ` hq ˇ
+               ˇ                                   ˇ ď ε log ω.
+               ˇ
+               ˇx{ωănďx             n              ˇ
+                                                   ˇ
+12                                 TERENCE TAO
+
+   Let a, b, h, ε be as in the above theorem4. Suppose for sake of contra-
+diction that Theorem 2.3 fails for this set of parameters. By shrinking
+ε, we may assume that ε is suﬃciently small depending on a, b, h. Thus
+for instance any quantity of the form Oa,b,h pεq can be assumed to be
+much smaller than 1, any quantity of the form Oa,b,h pε2 q can be as-
+sumed to be much smaller than ε, and so forth. We will also need a
+number of large quantities, chosen in the following order5:
+      ‚ We choose a natural number H´ that is suﬃciently large de-
+        pending on a, b, h, ε.
+      ‚ Then, we choose a natural number H` that is suﬃciently large
+        depending on H´ , a, b, h, ε.
+      ‚ Finally, we choose a quantity A ą 0 that is suﬃciently large
+        depending on H` , H´ , a, b, h, ε.
+The quantity A is of course the one we will use in Theorem 2.3. The
+intermediate parameters H´ , H` will be the lower and upper ranges for
+a certain medium-sized scale H P rH´ , H` s which we will later select
+using a pigeonholing argument which we call the “entropy decrement
+argument”.
+   We will implicitly take repeated advantage of the above relative size
+assumptions between the parameters A, H` , H´ , a, b, h, ε in the sequel
+to simplify the estimates; in particular, we will repeatedly absorb lower
+order error terms into higher order error terms when the latter would
+dominate the former under the above assumptions. Thus for instance
+OH` ,H´ ,a,b,h,ε p1q ˆ oAÑ8 p1q can be simpliﬁed to just oAÑ8 p1q by the as-
+sumption that A is suﬃciently large depending on all previous parame-
+ters, and oAÑ8 p1q ` oH´Ñ8 p1q can similarly be simpliﬁed to oH´ Ñ8 p1q.
+The reader may wish to keep the hierarchy
+                       1                               x
+           a, b, h !     ! H´ ! p ! H ! H` ! A ď ω ď       ďx
+                       ε                             log x
+and also
+                       x ě n ě x{ω ě log x ě log A " H`
+in mind in the arguments that follow.
+   As we are assuming that Theorem 2.3 fails for the indicated choice
+of parameters, there exist real numbers
+                                     xěωěA                                     (2.2)
+     4The reader may initially wish to restrict to the model case a “ 1, b “ 0, h “ 1
+(and also g1 “ g2 “ λ) in what follows to simplify the notation and arguments
+slightly.
+    5For the purposes of optimising the quantitative bounds, it seems that one should
+take H´ “ exppε´C1 q, H` “ exppexppexppε´C2 qqq, and A “ exppexppexppε´C3 qqq
+for some large absolute constants C1 ă C2 ă C3 , at least in the regime where a, b, h
+are bounded and ε is small, and after adjusting some of the estimates below to fully
+optimise the bounds.
+                 CHOWLA AND ELLIOTT CONJECTURES                          13
+
+and completely multiplicative functions g1 , g2 : N Ñ S 1 such that
+                      ÿ 1 ´ Re g1 ppqχppqp´it
+                                                  ěA                  (2.3)
+                     pďx
+                                    p
+for all Dirichlet characters χ of period at most A, and all real numbers
+t with |t| ď Ax, but such that
+               ˇ                                 ˇ
+               ˇ                                 ˇ
+               ˇ ÿ g1 pan ` bqg2 pan ` b ` hq ˇ
+               ˇ                                 ˇ ą ε log ω.       (2.4)
+               ˇ
+               ˇx{ωănďx             n            ˇ
+                                                 ˇ
+  To use the hypothesis (2.3), we apply the results in [23] to control
+short sums of g1 modulated by Fourier characters.
+Proposition 2.4. Let the notation and assumptions be as above. For
+all H´ ď H ď H` , one has
+                      ˇ                ˇ
+                        H              ˇ log log H
+             ÿ     1 ˇˇ ÿ
+      sup             ˇ g1 pn ` jqepjαqˇ !         log ω.     (2.5)
+                                       ˇ
+       α
+          x{ωănďx
+                  Hn ˇj“1              ˇ   log H
+
+In particular, one has
+                       ˇ                ˇ
+                         H
+             ÿ      1 ˇˇ ÿ              ˇ
+       sup             ˇ g1 pn ` jqepjαqˇ “ oH´ Ñ8 plog ωq.           (2.6)
+                                        ˇ
+        α
+           x{ωănďx
+                   Hn ˇj“1              ˇ
+
+  We remark that Proposition 2.4 is the only way in which we will take
+advantage of the hypothesis (2.3), which may now be discarded in the
+arguments that follow.
+Proof. Let α P R. Applying [23, Lemma 2.2, Theorem 2.3] (with W :“
+log5 H), we see that
+                      ˇ                     ˇ
+                          H                 ˇ log log H
+             1 ÿ ˇˇ 1 ÿ
+                             g1 pn ` jqepαjqˇ !
+                                            ˇ
+             X Xďnď2X H j“1                     log H
+                      ˇ
+                      ˇ                     ˇ
+         x
+for all 2ω ď X ď 2x; for the purposes of verifying the hypotheses in
+                        x
+[23], we note that X ě 2ω ě log2 x ě log2 A , and hence W “ log5 H will
+be much less than A or plog Xq1{125 . Averaging this estimate from X
+between x{2ω and 2x, we obtain (2.5) and hence (2.6).               
+  It will be convenient to interpret these estimates in probabilistic
+language (particularly when we start using the concept of Shannon
+entropy in the next section). We introduce a (discrete) random variable
+n in the interval tn P N : x{ω ă n ď xu by setting
+                                           1{n
+                      Ppn “ nq “ ř                  1
+                                        nPN:x{ωănďx n
+
+whenever n lies in this interval.
+14                            TERENCE TAO
+
+     From (2.2) and our hypothesis ω ď x{ log x, we see that
+                        ÿ      1
+                                 “ p1 ` oAÑ8 p1qq log ω.
+                   nPN:x{ωănďx
+                               n
+We conclude from (2.4) that
+                     |Eg1 pan ` bqg2 pan ` b ` hq| " ε               (2.7)
+while from (2.6) we conclude that
+                      ˇ                ˇ
+                      ˇÿH              ˇ
+                sup E ˇ g1 pn ` jqepαjqˇ “ oH´ Ñ8 pHq                (2.8)
+                      ˇ                ˇ
+                 α    ˇj“1
+                                       ˇ
+uniformly for all H´ ď H ď H` .
+  The logarithmic averaging in the n variable gives an approximate
+aﬃne invariance to these probabilities and expectations (cf. [24, Lemma
+2.3]), which is of fundamental importance to our approach:
+Lemma 2.5 (Approximate aﬃne invariance). Let q be a natural num-
+ber bounded by H` , and let r be a fixed integer with |r| ď H` . Then
+for any event P pnq depending on n, one has
+                                  1
+         PpP pnq and n “ r pqqq “ PpP pqn ` rqq ` oAÑ8 p1q.
+                                  q
+More generally, for any complex-valued random variable Xpnq depend-
+ing on n and bounded in magnitude by Op1q, one has
+                               1
+            EpXpnq1n“r pqq q “ EpXpqn ` rqq ` oAÑ8 p1q.
+                               q
+   Note in particular that this lemma implies the approximate transla-
+tion invariance PpP pn ` rqq “ PpP pnqq ` oAÑ8 p1q and EpXpn ` rqq “
+EpXpnqq ` oAÑ8 p1q for any r “ OpH` q. If we did not perform a log-
+arithmic averaging, then we would still have approximate translation
+invariance, but we would not necessarily have the more general approx-
+imate affine invariance, which causes the remainder of our arguments
+to break down.
+Proof. It suﬃces to prove the latter claim. The left-hand side can be
+written as
+                  1 ` oAÑ8 p1q       ÿ         Xpnq
+                                                    .
+                      log ω    x{ωănďx:n“r pqq
+                                                n
+Making the change of variables n “ qn1 ` r, noting that n1 is equal to
+1 1
+q n1
+     ` oAÑ8 p n11 q uniformly in n1 , we can write the previous expression
+as
+                                      1 Xpqn1 ` rq
+                                    ˆ                      ˆ ˙˙
+        1 ` oAÑ8 p1q        ÿ                                1
+                                             1
+                                                   ` oAÑ8     1
+                                                                  .
+            log ω       x{ωăqn `rďx
+                              1
+                                      q    n                 n
+The net contribution of the oAÑ8 p n11 q term can be seen to be oAÑ8 p1q
+(recall that A is assumed large compared to H` and hence with q).
+                   CHOWLA AND ELLIOTT CONJECTURES                             15
+
+The constraint x{ω ă qn1 ` r ď x can be replaced with x{ω ă n1 ď x
+                                   AÑ8 p1q
+while incurring an error of Op 1`olog ω
+                                           Oplog qqq “ oAÑ8 p1q. The claim
+follows.                                                                 
+   We now give a simple application of the above lemma. By Fourier
+expansion (or by positivity) we may insert the constraint 1a|n in the
+left-hand side of (2.8) (recalling that H´ is assumed suﬃciently large
+depending on a), and thus by Lemma 2.5 we also have
+                      ˇ                  ˇ
+                      ˇHÿ                ˇ
+               sup E ˇ g1 pan ` jqepαjqˇ “ oH´ Ñ8 pHq.           (2.9)
+                      ˇ                  ˇ
+                 α    ˇj“1
+                                         ˇ
+This estimate will be useful later in the argument.
+  From Lemma 2.5 and (2.7) we have
+                       |E1n“b paq g1 pnqg2 pn ` hq| " ε.                  (2.10)
+Crucially, we can exploit the multiplicativity of g1 , g2 at medium-sized
+primes to average this lower bound by further application of Lemma
+2.5:
+Proposition 2.6. Assume that the bound (2.10) holds. Let H´ ď H ď
+                                                           2
+H` . Let PH denote the set of primes between ε2 H and ε2 H. For each
+prime p, let cp P S 1 denote the coefficient cp :“ g1 ppqg2 ppq. Then one
+has
+ˇ                                                                      ˇ
+ˇ ÿ                                                                    ˇ
+                                                                       ˇ"ε H .
+ˇ            ÿ                                                         ˇ
+ˇE                    c p 1 an`j“pb papq g 1 pan ` jqg 2 pan ` j ` phq
+ˇ
+ˇ pPPH j:j,j`phPr1,Hs
+                                                                       ˇ
+                                                                       ˇ  log H
+                                                                           (2.11)
+   We remark that in the Liouville case g1 “ g2 “ λ (and also in the
+case g2 “ g1 required in the Erdős discrepancy problem application in
+[30]), we have cp “ 1 for all p. This leads to some minor simpliﬁcation
+in the arguments (in particular, we only need to apply Proposition
+2.4 for “major arc” values of α, allowing one to replace [23, Lemma
+2.2, Theorem 2.3] by the simpler [23, Theorem A.1]), however it turns
+out that existing results in the literature (in particular, the restriction
+theorem for the primes in [13]) allow us to handle the extension to more
+general cp without much additional diﬃculty.
+   A key point here is that Proposition 2.6 applies for all scales H in
+the range rH´ , H` s. This is because we will not be able to compute
+the left-hand side of (2.11) for any speciﬁed H; however, the “entropy
+decrement argument” we will use in the next section will locate (basi-
+cally thanks to the pigeonhole principle) a single scale H in the range
+rH´ , H` s for which the left-hand side of (2.11) can be evaluated, at
+which point we can apply the above proposition. The inability to spec-
+ify the scale H in advance is a key reason why we were unable to remove
+the logarithmic averaging from our ﬁnal result in Theorem 1.3.
+16                                 TERENCE TAO
+
+Proof. Write
+                     X :“ E1n“b paq g1 pnqg2 pn ` hq,
+thus (2.10) tells us that |X| " ε. From complete multiplicativity and
+the deﬁnition of cp we see that
+         1n“b paq g1 pnqg2 pn ` hq “ cp 1pn“pb papq g1 ppnqg2 ppn ` phq
+and thus
+                   Ecp 1pn“pb papq g1 ppnqg2 ppn ` phq “ X          (2.12)
+for any p P PH . We now claim that
+                                                    1
+     Ecp 1n`j“pb papq g1 pn ` jqg2 pn ` j ` phq “ X ` oAÑ8 p1q      (2.13)
+                                                    p
+for any 1 ď j ď H and any p P PH . To see this, we split 1n`j“pb papq as
+1n“´j ppq 1n`j“pb paq and apply Lemma 2.5 to write the left-hand side of
+(2.13) as
+              1
+                Ecp 1pn“pb paq g1 ppnqg2 ppn ` phq ` oAÑ8 p1q;
+              p
+since 1pn“pb paq “ 1pn“pb papq , the claim now follows from (2.12).
+   Summing (2.13) over j “ 1, . . . , H, we have
+       H
+       ÿ                                           1
+ Ecp       1n`j“pb papq g1 pn ` jqg2 pn ` j ` phq “ HX ` oAÑ8 p1q. (2.14)
+       j“1
+                                                   p
+Now let us introduce the quantities
+                   H
+                   ÿ
+     Qpsq :“ Ecp         1n`j“pb papq g1 pn ` jqg2 pn ` j ` phq1n“s paq   (2.15)
+                   j“1
+
+for s P Z{aZ. From (2.14) we have
+                     ÿ          1
+                          Qpsq “ HX ` oAÑ8 p1q.                           (2.16)
+                   sPZ{aZ
+                                p
+
+  Now let us compare Qpsq with Qps ` 1q. Using Lemma 2.5 to replace
+n with n ` 1, we see that
+                   H
+                   ÿ
+Qps ` 1q “ Ecp           1n`1`j“pb papq g1 pn ` 1 ` jqg2 pn ` 1 ` j ` phq1n`1“s`1 paq ` oAÑ8 p1q
+                   j“1
+                   H`1
+                   ÿ
+           “ Ecp         1n`j“pb papq g1 pn ` jqg2 pn ` j ` phq1n“s paq ` oAÑ8 p1q.
+                   j“2
+                                 řH`1
+Note that the diﬀerence between j“2     1n`j“pb papq g1 pn`jqg2pn`j`phq
+     řH
+and j“1 1n`j“pb papq g1 pn ` jqg2 pn ` j ` phq is zero with probability
+1´Op1{pq, and is Op1q in the remaining event. Absorbing the oAÑ8 p1q
+error in the Op1{pq error, we conclude that
+                            Qps ` 1q “ Qpsq ` Op1{pq
+                       CHOWLA AND ELLIOTT CONJECTURES                             17
+
+for all s P Z{aZ. Thus Q ﬂuctuates by at most Opa{pq, and in particular
+                            1 ÿ
+                    Qp0q “           Qpsq ` Opa{pq.
+                            a sPZ{aZ
+
+Combining this with (2.16), we conclude that
+        H                                                                  ˆ ˙
+        ÿ                                                 HX                a
+ Ecp     1n`j“pb papq g1 pn ` jqg2 pn ` j ` phq1n“0 paq “    `O                .
+     j“1
+                                                          ap                p
+Summing over PH , we conclude that
+    H                                                           ˆ                ˙ ÿ
+    ÿ   ÿ                                                           HX                     1
+E              cp 1n`j“pb papq g1 pn`jqg2 pn`j`phq1n“0 paq “           ` Opaq
+    j“1 pPPH
+                                                                     a             pPPH
+                                                                                           p
+and hence by the prime number theorem and the lower bound |X| " ε,
+one has
+ ˇ                                                            ˇ
+     H ÿ
+ ˇ ÿ                                                          ˇ        H
+   E       c  1           g  pn ` jqg   pn ` j ` phq1 n“0 paq ˇ " ε         .
+ ˇ                                                            ˇ
+             p n`j“pb papq 1          2
+                                                                    a log H
+ ˇ
+ ˇ j“1 pPP                                                    ˇ
+               H
+
+Applying Lemma 2.5, we obtain
+   ˇ                                                      ˇ
+       H ÿ
+   ˇ ÿ                                                    ˇ     H
+     E       c  1            g  pan ` jqg   pan ` j ` phq ˇ"ε       .
+   ˇ                                                      ˇ
+               p an`j“pb papq 1           2
+                                                              log H
+   ˇ
+   ˇ j“1 pPP                                              ˇ
+                   H
+
+If j`ph lies outside of the interval r1, Hs, then j lies in either r1, |h|ε2 Hs
+or rp1 ´ |h|ε2 qH, Hs. The contribution of these values of j can be easily
+                                2
+estimated to be Op pPPH |h|εp H q “ Oh pε2 logHH q, so from the smallness
+                     ř
+of ε we may discard these intervals and conclude the claim.                  
+   We will shortly need to deploy the theory of Shannon entropy, at
+which point we encounter the inconvenient fact that g could potentially
+take an inﬁnite number of values and thus have unbounded Shannon
+entropy. To get around this, we perform a standard discretisation.
+Namely, deﬁne gi,ε2 pnq for i “ 1, 2 to be gi pnq rounded to the nearest
+element of the lattice ε2 Zris, where Zris denotes the Gaussian integers.
+(We break ties arbitrarily.) This function is no longer multiplicative,
+but it takes at most Oε p1q values, it is bounded in magnitude by Op1q,
+and we have gi,ε2 “ gi ` Opε2 q for i “ 1, 2. Thus from the above
+proposition and the triangle inequality, we have
+ˇ                                                                            ˇ
+ˇ                                                                            ˇ
+ˇ ÿ               ÿ                                                          ˇ       H
+ˇE      c p                1 an`j“pb papq g 1,ε 2 pan ` jqg2,ε2 pan ` j ` phqˇ " ε
+ˇ
+ˇ pPP       j:j,j`phPr1,Hs
+                                                                             ˇ     log H
+        H
+                                                                             ˇ
+          error incurred by replacing gi with gi,ε2 can be computed to
+since the ř
+be Oa pε pPPH Hp q “ Oa pε2 logHH q. We rewrite this inequality as
+        2
+
+
+                                                    H
+                            |EF pXH , YH q| " ε                              (2.17)
+                                                  log H
+18                                TERENCE TAO
+
+where XH is the discrete random variable
+                       XH :“ pgi,ε2 pan ` jqqi“1,2;j“1,...,H
+(taking values in pε2 Zrisq2H ), YH is the random variable
+                                     YH :“ n pPH q
+(taking values in Z{PH Z) where PH :“ pPPH p, and F : pε2 Zrisq2H ˆ
+                                               ś
+
+Z{PH Z Ñ C is the function
+                                        ÿ         ÿ
+F ppxi,j qi“1,2;j“1,...,H , y pPH qq :“    cp       1ay`j“pb papq x1,j x2,j`ph .
+                                     pPPH    j:j,j`phPr1,Hs
+                                                                        (2.18)
+(Note that the residue class ay papq is well deﬁned for p P Z{PH Z and
+p P PH , noting that PH is coprime to a.)
+   It is thus of interest to try to calculate the typical value of F pXH , YH q.
+One can interpret F pXH , YH q as a “bilinear” expression of the com-
+ponents of XH along a certain random graph determined by YH . A
+key diﬃculty is that the random variables XH and YH are not inde-
+pendent, and could potentially be coupled together in an adversarial
+fashion. In this worst case, this would require one to establish a suit-
+able “expander” property for the random graph associated to YH that
+would ensure cancellation in the sum regardless of what values that XH
+will take. It may well be that such an expansion property6 holds (with
+high probability, of course). However, we can avoid having to establish
+such a strong expansion property by taking advantage of an “entropy
+decrement argument” to give some weak independence between XH
+and YH for at least one choice of H between H´ and H` . Once one
+obtains such a weak independence, it turns out that one only needs to
+show that for a typical choice of XH , that F pXH , YH q is small for most
+choices of YH , where we allow a (nearly) exponentially small failure
+set for the YH . This turns out to be much easier to establish than
+the expander graph property, being obtainable from standard concen-
+tration of measure inequalities (such as Hoeﬀding’s inequality), and an
+application of the Hardy-Littlewood circle method.
+Remark 2.7. The entropy decrement argument we give below can be
+viewed as a quantitative variant of the construction of the Kolmogorov-
+Sinai entropy of a topological dynamical system (see e.g. [2]), but we
+will not explicitly use the language of topological dynamics here. See
+however [1] for a discussion of the Chowla conjecture and its relation to
+a conjecture of Sarnak [28] from a topological dynamics point of view.
+It may well be that the arguments here could also beneﬁt from a more
+explicit use of topological dynamics machinery.
+     6Actually, to be able to plausibly expect expansion, one should enlarge P
+                                                                           H to
+be something like the primes between H δ and ε2 H for some small δ, so that the
+average degree of the random graph associated to YH is signiﬁcantly larger than
+one.
+                    CHOWLA AND ELLIOTT CONJECTURES                               19
+
+               3. The entropy decrement argument
+  We continue the proof of Theorem 1.3. We begin by brieﬂy reviewing
+the basic Shannon inequalities from information theory.
+  Recall that if X is a discrete random variable (taking at most count-
+ably many values), the Shannon entropy HpXq is deﬁned7 by the for-
+mula
+                            ÿ                   1
+                  HpXq :“      PpX “ xq log
+                             x
+                                            PpX “ xq
+where x takes values in the essential range of X (that is to say, those
+x for which PpX “ xq is nonzero). A standard computation then gives
+the identity
+             HpX, Yq “ HpX|Yq ` HpYq “ HpXq ` HpY|Xq                          (3.1)
+for the joint entropy HpX, Yq of the random variable pX, Yq, where
+the conditional entropy HpX|Yq is deﬁned by the formulae
+                           ÿ
+                 HpX|Yq :“    PpY “ yqHpX|Y “ yq              (3.2)
+                                   y
+
+(with y ranging over the essential range of Y) and
+                       ÿ                             1
+       HpX|Y “ yq :“      PpX “ x|Y “ yq log
+                       x
+                                               PpX “ x|Y “ yq
+with PpE|F q :“ PpE ^ F q{PpF q being the conditional probability of E
+relative to F , and the sum is over the essential range of X conditioned
+to Y “ y. From the concavity of the function x ÞÑ x log x1 and Jensen’s
+inequality we have
+                           HpX|Yq ď HpXq                            (3.3)
+so we conclude the subadditivity of entropy
+                          HpX, Yq ď HpXq ` HpYq.                              (3.4)
+If we deﬁne the mutual information
+IpX, Yq :“ HpXq`HpYq´HpX, Yq “ HpXq´HpX|Yq “ HpYq´HpY|Xq
+                                                                  (3.5)
+between two discrete random variables X, Y, we thus see that IpX, Yq “
+IpY, Xq ě 0.
+Remark 3.1. One can view IpX, Yq as a measure of the extent to
+which the random variables X, Y are not independent. For instance,
+one can show that IpX, Yq “ 0 if and only if X and Y are jointly
+independent. In a similar vein, one can view the conditional entropy
+  7In the information theory literature, the logarithm to base 2 is often used to
+deﬁne entropy, rather than the natural logarithm, in which case HpXq can be in-
+terpreted as the number of bits needed to describe X on the average. One could
+use this choice of base in the arguments below if desired, but ultimately the choice
+of base is a normalisation which has no impact on the ﬁnal bounds.
+20                             TERENCE TAO
+
+HpX|Yq as a measure of the amount of new information carried by X,
+given that one already knows the value of Y.
+  Conditioning the random variables X, Y to an auxiliary discrete ran-
+dom variable Z, we conclude the relative subadditivity of entropy
+                   HpX, Y|Zq ď HpX|Zq ` HpY|Zq.                        (3.6)
+Finally, a further application of Jensen’s inequality gives the bound
+                              HpXq ď log N                             (3.7)
+whenever X takes on at most N values.
+  Recall the discrete random variables XH , YH deﬁned previously.
+From (3.7), (3.4), and the fact that each component of XH takes on
+only Oε p1q values, we have the upper bound
+                            0 ď HpXH q !ε H.                           (3.8)
+Note that YH is within oAÑ8 p1q (in any reasonable metric) of being
+uniformly distributed on Z{PH Z, thus
+                      HpYH q “ log PH ´ oAÑ8 p1q.                      (3.9)
+In particular, from the prime number theorem we have the crude bound
+                               HpYH q ! H                             (3.10)
+for all H´ ď H ď H` .
+   Let us temporarily deﬁne the variant
+           XH1 ,H1 `H2 :“ Hppgi,ε2 pn ` jqqi“1,2;j“H1 `1,...,H1 `H2
+of XH , where H1 , H2 are natural numbers. From the approximate
+translation invariance provided by Lemma 2.5, we see that
+                  HpXH1 ,H1 `H2 q “ HpXH2 q ` oAÑ8 p1q
+for any H1 , H2 ď H` ; applying (3.4), and noting that XH1 `H2 is the
+concatenation of XH1 and XH1 ,H1 `H2 , we obtain the approximate sub-
+additivity property
+             HpXH1 `H2 q ď HpXH1 q ` HpXH2 q ` oAÑ8 p1q               (3.11)
+for any natural numbers H1 , H2 ď H` .
+   We can improve this inequality if XH shares some mutual informa-
+tion with YH , as YH does not generate any entropy upon transla-
+tion. Indeed, from Lemma 2.5 again, we see for any natural numbers
+H, H1 , H2 between H´ and H` that
+      HpXH1 ,H1 `H2 |n ` H1 pPH qq “ HpXH2 |n pPH qq ` oAÑ8 p1q.
+But n` H1 pPH q conveys exactly the same information as n pPH q (they
+generate exactly the same ﬁnite σ-algebra of events), so
+        HpXH1 ,H1 `H2 |n ` H1 pPH qq “ HpXH1 ,H1 `H2 |n pPH qq.
+                 CHOWLA AND ELLIOTT CONJECTURES                       21
+
+Inserting these identities into (3.6) and recalling that YH “ n pPH q,
+we obtain the relative approximate subadditivity property
+      HpXH1 `H2 |YH q ď HpXH1 |YH q ` HpXH2 |YH q ` oAÑ8 p1q
+for any H, H1 , H2 between H´ and H` . Iterating this, we conclude in
+particular that
+               HpXkH |YH q ď kHpXH |YH q ` oAÑ8 p1q
+for any natural numbers k, H with H´ ď H ď kH ď H` (note that
+the number of iterations here is at most H` , so that the oAÑ8 p1q error
+stays under control). From this and (3.1), (3.5) we see that
+       HpXkH q “ HpXkH |YH q ` HpYH q ´ HpYH |XkH q
+                ď HpXkH |YH q ` HpYH q
+                ď kHpXH |YH q ` HpYH q ` oAÑ8 p1q
+                “ kHpXH q ´ kIpXH , YH q ` HpYH q ` oAÑ8 p1q
+which on dividing by kH and using (3.10) gives
+                                                       ˆ ˙
+             HpXkH q   HpXH q IpXH , YH q               1
+                     ď       ´            `O               ,     (3.12)
+               kH        H       H                      k
+whenever H´ ď H ď kH ď H` (note that we can absorb the oAÑ8 p1q
+error in the Op1{kq term since k ď H` ). This can be compared with
+the inequality
+                    HpXkH q     HpXH q
+                             ď         ` oAÑ8 p1q
+                       kH         H
+under the same hypotheses on H, k, coming from iterating (3.11). Thus
+we see that the presence of mutual information between XH and YH
+causes a decrement in the entropy rate of XH as one increases H.
+   We can iterate this inequality and use an “entropy decrement ar-
+gument” to get a non-trivial upper bound on the mutual information
+IpXH , YH q for some large H:
+Lemma 3.2 (Entropy decrement argument). There exists a natural
+number H between H´ and H` , which is a multiple of a, and such that
+                                           H
+                   IpXH , YH q ď                       .
+                                   log H log log log H
+  As we shall see later, the key point here is that this bound is not
+only better than the trivial bound of OpHq coming from (3.10), but is
+(barely!) smaller than H{ log H in the limit as H Ñ 8; in particular,
+the mutual information between XH and YH is smaller than the num-
+ber |PH | of primes one is using to deﬁne F pXH , YH q. One may think of
+this lemma as providing a weak independence between XH and YH for
+certain large H. For the purposes of optimising the bounds, it appears
+to be slightly more eﬃcient to prove a variant of this lemma in which
+22                                TERENCE TAO
+
+the right-hand side is of the form ε10 logHH (say); we leave the details to
+the interested reader.
+Proof. Suppose for sake of contradiction that one has
+                                                H
+                       IpXH , YH q ą
+                                        log H log log log H
+for all H´ ď H ď H` that are multiples of a. Let C0 be a suﬃciently
+large natural number depending on H´ , and let J be a suﬃciently large
+natural number depending on C0 , H´ , ε. We may assume that H` is
+suﬃciently large depending on H´ , C0 , J. The idea is to now repeatedly
+                                                Hq
+use (3.12) to decrement the entropy ratio HpX H
+                                                   as H increases, until
+one arrives at the absurd situation of a random variable with negative
+entropy.
+    Let us recursively deﬁne the natural numbers H´ ď H1 ď H2 ď
+¨ ¨ ¨ ď HJ by setting H1 :“ aH´ and
+                      Hj`1 :“ Hj tC0 log Hj log log log Hj u
+for all 1 ď j ă J. Note that if H` is suﬃciently large depending on
+H´ , C0 , J, then all the Hj will lie between H´ and H` and are multiples
+of a. For C0 large enough, we see from (3.12) with H, k replaced by Hj
+and tC0 log Hj log log log Hj u respectively, followed by (3.7), that
+                HpXHj`1 q   HpXHj q              1
+                          ď         ´
+                  Hj`1        Hj      2 log Hj log log log Hj
+for all 1 ď j ă J. (The oAÑ8 p1q error may be absorbed as we are
+assuming A to be large.) On the other hand, an easy induction8 shows
+that there exists B ě 1010 (depending on C0 , H´ ) such that
+                               Hj ď exppBj log jq
+for all 2 ď j ď J. Thus we have
+              HpXHj`1 q   HpXHj q                1
+                        ď         ´
+                Hj`1        Hj      2Bj log j log logpBj log jq
+for all 2 ď j ď J, which on telescoping using (3.8) gives the bound
+                      J
+                      ÿ                1
+                                                      !ε 1.
+                      j“2
+                          2Bj log j log logpBj log jq
+
+But the sum on the left-hand side diverges (very slowly!) in the limit
+J Ñ 8, and so we obtain a contradiction by choosing J (and then H` )
+large enough.                                                       
+     8Alternatively, one can proceed by noting that for any given T ě H
+                                                                         ´ , there are
+" logloglogT T values of Hj between T and T 2 if J is large enough, which is suﬃcient
+                              řJ
+to get some divergence in j“1 2 log Hj log1 log log Hj as J Ñ 8.
+                CHOWLA AND ELLIOTT CONJECTURES                             23
+
+   From the above lemma we can ﬁnd an H between H´ and H` that
+is a multiple of a, such that
+                                          ˆ       ˙
+                                              H
+                     IpXH , YH q “ oH´ Ñ8           .   (3.13)
+                                            log H
+Fix this value of H. From (3.5) and (3.13) we have
+                                                       ˆ           ˙
+   ÿ                                                         H
+        PpXH “ xq pHpYH q ´ HpYH |XH “ xqq “ oH´ Ñ8                    .
+    x
+                                                           log H
+
+By (3.7), (3.9), the summands are bounded below by ´oAÑ8 p1q. Thus,
+if we call a value x good if one has
+                                              ˆ       ˙
+                                                  H
+             HpYH q ´ HpYH |XH “ xq “ oH´ Ñ8            ,     (3.14)
+                                                log H
+we see from Markov’s inequality that the random variable XH will
+attain a good value with probability 1 ´ oH´ Ñ8 p1q.
+   Informally, if x is good, then YH remains somewhat uniformly dis-
+tributed across Z{PH Z even after one conditions XH to equal x, in the
+sense that this conditioned random variable cannot concentrate too
+much mass into a small region. More precisely, we have
+Lemma 3.3 (Weak uniform distribution). Let x be a good value. Let
+Ex be a subset of Z{PH Z (which can depend on x) of cardinality
+                               ˆ          ˙
+                                   7 H
+                    |Ex | ď exp ´ε          PH .
+                                    log H
+Then one has
+
+                 PpYH P Ex |XH “ xq “ oH´ Ñ8 p1q.
+
+  The quantity ε7 here could be replaced by any other function of ε,
+but we use this particular choice to match with Lemma 3.5 below.
+
+Proof. Applying (3.1) (conditioned to the event XH “ x) we have
+
+HpYH |XH “ x, 1Ex pYH qq “ HpYH |XH “ xq ` Hp1Ex pYH q|YH , XH “ xq
+                            ´ Hp1Ex pYH q|XH “ xq
+                          ě HpYH |XH “ xq ´ Hp1Ex pYH q|XH “ xq.
+
+By (3.2) (again conditioned to the event XH “ x), the left-hand side
+may be expanded as
+
+          PpYH P Ex |XH “ xqHpYH |XH “ x, YH P Ex q
+            ` PpYH R Ex |XH “ xqHpYH |XH “ x, YH R Ex q
+24                            TERENCE TAO
+
+and thus by (3.14)
+       PpYH P Ex |XH “ xqHpYH |XH “ x, YH P Ex q
+         ` PpYH R Ex |XH “ xqHpYH |XH “ x, YH R Ex q
+                                                   ˆ       ˙
+                                                       H
+           ě HpYH q ´ Hp1Ex pYH q|XH “ xq ´ oH´ Ñ8           .
+                                                     log H
+By (3.7), Hp1Ex pYH q|XH “ xq is bounded by log 2 and so this term
+can be absorbed in the oH´ Ñ8 pH{ log Hq error. From (3.3) we have
+                  HpYH |XH “ x, YH R Ex q ď HpYH q
+and hence
+                                                                        ˆ           ˙
+                                                                              H
+PpYH P Ex |XH “ xq pHpYH q ´ HpYH |XH “ x, YH P Ex qq ď oH´ Ñ8                          .
+                                                                            log H
+But from (3.7) one has
+                                                          H
+        HpYH |XH “ x, YH P Ex q ď log |Ex | ď log PH ´ ε7
+                                                        log H
+and the claim then follows from (3.9) (recalling that H´ is large de-
+pending on ε).                                                     
+Remark 3.4. Lemma 3.3 may also be derived from the data processing
+inequality
+                         1                       1
+              DKL p1Ex pYH q||1Ex pYH qq ď DKL pYH ||YH q
+         1
+where YH   is the random variable YH conditioned to the event XH “
+                                 ř                    PpX“xq
+x, and where DKL pX||Yq :“ x PpX “ xq log PpY“xq              denotes the
+Kullback-Leibler divergence; we leave the details of this alternate deriva-
+tion to the interested reader. (Thanks to Yihong Wu for this observa-
+tion.)
+  We can use this weak uniform distribution to show that F pXH , YH q
+concentrates as a function of YH . We ﬁrst observe
+Lemma 3.5 (Hoeﬀding inequality). Let x lie in the range of XH . Let
+Ex denote the set of all y P Z{PH Z such that
+             ˇ                                   ˇ
+             ˇ                                   ˇ
+             ˇ             1     ÿ
+                                              1
+                                                 ˇ        H
+             ˇF px, yq ´               F px, y qˇˇ ě ε2       .
+             ˇ
+             ˇ            PH y1 PZ{P Z           ˇ      log H
+                                   H
+
+Then                             ˆ          ˙
+                                     7 H
+                      |Ex | ď exp ´ε          PH .
+                                      log H
+Proof. We interpret this inequality probabilistically. Let y be drawn
+uniformly at random from Z{PH Z, then our task is to show that
+        ˆ                                 ˙       ˆ           ˙
+                                   2 H                 7 H
+      P |F px, yq ´ EF px, yq| ě ε          ď exp ´ε            .
+                                    log H               log H
+                  CHOWLA AND ELLIOTT CONJECTURES                               25
+
+We can write
+                                                ÿ
+                            F px, yq “              Fp px, yq
+                                            pPPH
+
+where
+                                ÿ
+         Fp px, yq :“ cp                    1ay`j“pb papq x1,j x2,j`ph .   (3.15)
+                           j:j,j`phPr1,Hs
+
+Note that the only randomness in the quantity Fp px, yq comes from
+the reduction y ppq of y modulo p. Since y is uniformly distributed
+in Z{PH Z, we see from the Chinese remainder theorem that the y ppq
+are uniformly distributed in Z{pZ and are jointly independent in p. As
+each Fp px, yq is a deterministic function of y ppq, we conclude that the
+Fp px, yq are also jointly independent in p. On the other hand, since all
+                              2
+p P PH lie in the interval ε2 H ď p ď ε2 H, we have the deterministic
+bound |Fp px, yq| ď C{ε2 for some absolute constant C. Applying the
+Hoeﬀding inequality [18], we conclude that
+                                                  ˜        2 H      2
+                                                                      ¸
+                                                       2pε        q
+      ˆ                                  ˙
+                                     H                      log H
+    P |F px, yq ´ EF px, yq| ě ε2          ! exp ´                      .
+                                   log H              p2C{ε2 q2 |PH |
+
+From the prime number theorem we have |PH | ! ε2 logHH , and the claim
+follows (as ε is small and H is large).                              
+
+  Combining this lemma with Lemma 3.3, we conclude that for any
+good x, one has
+     ¨ˇ                                  ˇ            ˛
+        ˇ                                ˇ
+        ˇ             1   ÿ              ˇ        H ‚
+   P ˝ˇˇF px, YH q ´            F px, yqˇˇ ě ε2         “ oH´ Ñ8 p1q.
+        ˇ            PH yPZ{P Z          ˇ      log H
+                                    H
+
+
+By Fubini’s theorem, and the fact that XH is good with probability
+1 ´ oH´ Ñ8 p1q, one thus has
+                                                  ˆ         ˙
+                          1   ÿ
+                                                     2 H
+         F pXH , YH q “             F pXH , yq ` O ε
+                         PH yPZ{P Z                   log H
+                                        H
+
+
+with probability 1 ´ oH´ Ñ8 p1q. On the other hand, from the triangle
+inequality, (2.18), and the prime number theorem we have
+                                                  H
+                                F px, yq !            .
+                                                log H
+We can thus take expectations and conclude that
+                                                   ˆ         ˙
+                           1   ÿ
+                                                      2 H
+        EF pXH , YH q “ E            F pXH , yq ` O ε          ,
+                          PH yPZ{P Z                   log H
+                                            H
+26                               TERENCE TAO
+
+and hence by (2.17) we have
+                 ˇ                          ˇ
+                 ˇ                          ˇ
+                 ˇ 1
+                                            ˇ"ε H .
+                         ÿ                  ˇ
+                 ˇE             F pX H , yq                                (3.16)
+                 ˇ PH
+                 ˇ     yPZ{PH Z
+                                            ˇ
+                                            ˇ  log H
+
+The advantage here is that we have decoupled the x and y variables,
+and the y average is now easy to compute. Indeed, from the Chinese
+remainder theorem and (3.15) we see that
+         1   ÿ                 cp      ÿ
+                   Fp px, yq “                  1j“pb paq x1,j x2,j`ph
+        PH yPZ{P Z             p j:j,j`phPr1,Hs
+                   H
+
+for any x and any p P P, and on summing in P and inserting into
+(3.16), we conclude that
+ˇ                                                                     ˇ
+ˇ                                                                     ˇ
+ˇ ÿ cp         ÿ                                                      ˇ       H
+ˇE                      1 j“pb paq g 1,ε 2 pan ` jqg2,ε2 pan ` j ` phqˇ " ε       .
+ˇ pPPH p j:j,j`phPr1,Hs
+ˇ                                                                     ˇ
+                                                                      ˇ     log H
+
+Since gi “ gi,ε2 ` Opε2 q and gi , gi,ε2 “ Op1q for i “ 1, 2, we we can
+      ř gi,ε Hby gi on2 the
+replace                       left-hand side at the cost of an error of
+            2
+    2                    H
+Opε pPPH p q “ Opε log H q. We thus have
+  ˇ                                                               ˇ
+  ˇ ÿ                                                             ˇ
+  ˇ      cp      ÿ
+                                                                  ˇ"ε H .
+                                                                  ˇ
+  ˇE                     1 j“pb paq g 1 pan ` jqg 2 pan ` j ` phq
+  ˇ pPP p j:j,j`phPr1,Hs
+  ˇ                                                               ˇ  log H
+        H
+                                                                  ˇ
+                                                               (3.17)
+   On the other hand, by using the Hardy-Littlewood circle method,
+we can obtain the following deterministic estimate for the expression
+inside the expectation.
+Lemma 3.6 (Circle method estimate). Let a, H be as above (in par-
+ticular, H is a multiple of a). For any α P R{Z, let SH pαq denote the
+exponential sum
+                                    ÿ cp
+                         SH pαq :“       epαpq                  (3.18)
+                                   pPP
+                                       p
+                                           H
+
+and let ΞH denote the elements ξ P Z{HZ for which
+                                             ε2
+                  ˇ ˆ                   ˙ˇ
+                  ˇ
+                  ˇ SH ´ pb `  hqη   hξ  ˇ
+                                   ´     ˇ ě
+                  ˇ          a       H ˇ log H
+for some η P Z{aZ. For j “ 1, . . . , H, let x1,j , x2,j be complex numbers
+bounded in magnitude by one. Then
+        ÿ cp         ÿ
+                              1j“pb paq x1,j x2,j`ph
+       pPPH
+             p j:j,j`phPr1,Hs
+                       ˜
+                                 ÿ 1 ˇˇ H
+                                         ˇ                  ˇ¸        (3.19)
+                  H        2
+                                           ÿ                ˇ
+          !a,h            ε `            ˇ x1,j ep´jξ{Hqˇ .
+                                                            ˇ
+               log H            ξPΞ
+                                     H   ˇj“1               ˇ
+                                    H
+                 CHOWLA AND ELLIOTT CONJECTURES                          27
+
+Proof. We extend x1,j , x2,j periodically with period H. Ifřwe remove the
+constraint that j ` ph P r1, Hs, we incur an error of Op pPPH p1 |ph|q “
+Op|h|ε2 logHH q which is acceptable. Thus, viewing j now as an element
+of Z{HZ, we may replace the left-hand side of (3.19) by
+                      ÿ cp ÿ
+                                    1j“pb paq x1,j x2,j`ph.        (3.20)
+                     pPP
+                           p jPZ{HZ
+                         H
+
+  We perform a Fourier expansion
+                           ÿ
+                    xi,j “       Gi pξqepjξ{Hq
+                                  ξPZ{HZ
+
+for i “ 1, 2, where
+                                  1 ÿ
+                      Gi pξq :“            xi,j ep´jξ{Hq.
+                                  H jPZ{HZ
+
+We can thus expand (3.20) as
+                                                    jξ pj ` phqξ 1
+      ÿ                   ÿ cp ÿ                  ˆ                ˙
+                      1
+           G1 pξqG2p´ξ q              1j“pb paq e     ´              .
+ ξ,ξ PZ{HZ
+    1                    pPP
+                             p jPZ{HZ
+                                                    H      H
+                               H
+
+
+The inner sum vanishes unless ξ 1 “ ξ ` Ha η for some η P Z{aZ, in which
+case one has
+                        jξ pj ` phqξ 1
+                      ˆ                ˙        ˆ                  ˙
+     ÿ                                      H      ppb ` hqη phξ
+          1j“pb paq e     ´              “ e ´               ´
+   jPZ{HZ
+                        H      H            a          a        H
+
+(recall that H was chosen to be a multiple of a), and thus by (3.18) we
+can write (3.20) as
+                                            ˆ                  ˙
+       H ÿ ÿ                         H           pb ` hqη hξ
+                       G1 pξqG2 p´ξ ´ ηqSH ´             ´       .
+       a ηPZ{aZ ξPZ{HZ               a               a      H
+
+   From the Cauchy-Schwarz inequality followed by the Plancherel iden-
+tity, one has
+                   ÿ                     H
+                        |G1 pξq||G2 p´ξ ´ ηq| ! 1,
+                 ξPZ{HZ
+                                          a
+so those ξ R ΞH give an acceptable contribution. For the remaining
+ξ, we bound G2 p´ξ ´ Ha ηq crudely by Op1q and SH p´ pb`hqη  a
+                                                                ´ hξ
+                                                                  H
+                                                                     q by
+     1
+Op log H q and use the triangle inequality to obtain the claim.        
+  Combining this lemma with (3.17), we conclude that
+                     ˇ                       ˇ
+              ÿ 1 ˇˇ H ÿ                     ˇ
+                  E ˇ g1 pan ` jqep´jξ{Hqˇ "a,h ε.
+                                             ˇ
+             ξPΞ
+                   H ˇj“1
+                                             ˇ
+                  H
+
+By (2.9) we thus have
+                             ε !a,h oH´ Ñ8 p|ΞH |q.
+28                                    TERENCE TAO
+
+   To conclude the desired contradiction, it thus suﬃces (by taking H´
+large enough) to show
+Lemma 3.7 (Restriction theorem for the primes). We have |ΞH | !a,h,ε
+1.
+Proof. We invoke [13, Proposition 4.2] (with p “ 4, F pnq :“ n, and N
+replaced by aH), which gives the bound
+¨                                       ˛1{4 ˜                        ¸1{2
+                H                                    H
+     ÿ       1 ÿ                                1   ÿ
+˝         |        an βR pnqep´bn{aHq|4 ‚ !             |an |2 βR pnq
+  bPZ{aHZ
+            aH n“1
+                                               aH   n“1
+
+
+for any sequence an , where R :“ paHq1{10 and βR is a certain non-
+negative weight constructed in [13, Proposition 3.1], whose only rele-
+vant properties here are that βR pnq " log H when n is a prime in PH .
+Setting an set equal to pβcRpppq when n is a prime in PH , and an “ 0
+otherwise, we conclude that9
+                     ÿ ˇ ˆ k ˙ˇˇ4
+                           ˇ
+                                      ˇ !ε,a     1
+                           ˇSH                                  (3.21)
+                   kPZ{aHZ
+                           ˇ      aH  ˇ       log4 H
+                                                                           2
+                                               k
+and thus by Markov’s inequality we have |SH p aH q| ě logε H for at most
+Oε,ap1q values of k P Z{aHZ. The claim follows.                       
+Remark 3.8. In the special case g1 “ g2 “ λ (or more generally when
+g2 is the complex conjugate of g1 , we have cp “ 1, and the exponential
+sum SH pαq can then be handled by the Vinogradov estimates for ex-
+ponential sums over primes (see e.g. [19, §13.5]). In that case, one can
+compute ΞH fairly explicitly; it basically consists of those frequencies
+ξ which are “major arc” in the sense that ξ{H is close to a rational
+a{q of bounded denominator q. As remarked previously, this allows for
+a slight simpliﬁcation in the arguments in that the exponential sum
+estimates in [23, Lemma 2.2, Theorem 2.3] can be replaced with the
+simpler estimate in [23, Theorem A.1]; also, the quantitative bounds
+in Theorem 1.2 should improve if one uses this approach. However,
+for more general choices of g1 , g2 , the coeﬃcients cp are essentially ar-
+bitrary unit phases, and the frequency set ΞH need not be contained
+within major arcs.
+
+     9As an alternative proof of this estimate, one can use standard
+Fourier-analytic manipulations to rewrite the left-hand side of (3.21) as
+                                      c c c c
+aH p1 ,p2 ,p3 ,p4 PPH :p1 `p2 “p3 `p4 pp1 1 pp22 pp33p4p4 , which by the triangle inequality is
+    ř
+
+bounded in magnitude by Oa p H13 p1 ,p2 ,p3 ,p4 PPH :p1 `p2 “p3 `p4 1q. The sum may be
+                                          ř
+
+upper bounded using a standard upper bound sieve for the primes (e.g. the Selberg
+sieve) to be Oε pH 3 { log4 Hq, giving (3.21).
+                 CHOWLA AND ELLIOTT CONJECTURES                        29
+
+                        4. Further remarks
+  It is natural to ask if the arguments can be extended to higher point
+correlations than the k “ 2 case, for instance to bound sums such as
+the three-point correlation
+                         ÿ λpnqλpn ` 1qλpn ` 2q
+                                                   .              (4.1)
+                     x{ωănďx
+                                       n
+
+Most of the above arguments carry through to this case. However,
+the “bilinear” left-hand side of (3.20) will be replaced by a “trilinear”
+expression such as
+                     ˇ                                 ˇ
+                     ˇ                                 ˇ
+                     ˇÿ 1 ÿ                            ˇ
+                     ˇ             x1,j x2,j`p x3,j`2p
+                                                       ˇ.
+                     ˇ    p
+                     ˇpPPH jPZ{HZ
+                                                       ˇ
+                                                       ˇ
+These sorts of sums have been studied in the ergodic theory literature
+[9], [33]. Roughly speaking, the analysis there shows that these sums
+are small unless one has a large Fourier coeﬃcient G1 pξq for some ξ P
+Z{HZ. However, in contrast to the previous argument in which ξ was
+restricted to a small set ΞH (which, crucially, was independent of n),
+one now has no control whatsoever on the location of ξ. As such, one
+would now need to control maximal averaged exponential sums such as
+                            ˇ                     ˇ
+                 1 2X       ˇ1
+                   ż              ÿ               ˇ
+                        sup ˇ          λpnqepαnqˇ dx,            (4.2)
+                            ˇ                     ˇ
+                 X X α ˇ H xďnďx`H                ˇ
+which (as pointed out in [23]) are not currently covered by the existing
+literature (note carefully that the supremum in α is inside the integral
+over x). However, this appears to be the only signiﬁcant obstacle to
+extending the results of this paper to the k “ 3 case, and so it would
+certainly be of interest to obtain non-trivial estimates on (4.2). Note
+however that if one replaces λpnq with nit , then the expression (4.2)
+exhibits essentially no cancellation for t almost as large as X 2 (as op-
+posed to the condition t “ OpXq that naturally appears in the k “ 2
+analysis). Similarly for the variant
+                        ÿ nit pn ` 1q´2it pn ` 2qit
+
+                     x{ωănďx
+                                       n
+
+of (4.1). This suggests that in order to establish cancellation in (4.1)
+and (4.2), one must somehow go beyond the techniques in [21], [23], as
+these techniques do not exclude the problematic multiplicative func-
+tions n ÞÑ nit for t between x and x2 .
+   For even higher values of k, one has to now control quartilinear
+and higher expressions in place of (3.20). Using the literature from
+higher order Fourier analysis (in particular the inverse theorem in [15],
+together with transference arguments from [9], [14], or [33]), one is
+30                                TERENCE TAO
+
+now faced with the task of controlling sums even more complicated
+than (4.2), in which the linear phases n ÞÑ epαnq are now replaced
+by more general nilsequences of higher step (which one then has to
+take the supremum over, before performing the integral); this task can
+be viewed as a local version of the machinery in [7], [8], and will be
+carried out in detail in [31]. Of course, since satisfactory control on
+(4.2) is not yet available (even if one inserts logarithmic averaging),
+it is not feasible at present to control higher step analogues of (4.2)
+either. However, one can hope that if a technique is found to give good
+bounds on (4.2), it could also extend (in principle at least) to higher
+step sums.
+   It is of course of interest to remove the logarithmic averaging from
+Theorem 1.2 or Theorem 1.3. It appears diﬃcult to do this while utilis-
+ing the entropy decrement argument, because this argument involves a
+scale H which cannot be speciﬁed in advance, but is produced through
+a variant of the pigeonhole principle. However, it may be possible to
+estimate expressions such as (1.5) for a speciﬁed H without resorting
+to the entropy decrement argument, by establishing some sort of ex-
+pander graph property for the random graph Gn,H (or some closely
+related graph) from the introduction, and then there would be some
+chance of removing the logarithmic averaging. Unfortunately we were
+unable to establish such an expansion property, as the edges in the
+graph Gn,H do not seem to be either random enough or structured
+enough for standard methods of establishing expansion to work.
+
+
+                                  References
+  [1] H. El Abdalaoui, J. Kulaga-Przymus, M. Lemańczyk, T. de la Rue, The
+      Chowla and the Sarnak conjectures from ergodic theory point of view, preprint.
+      arXiv:1410.1673.
+  [2] P. Billingsley, Ergodic theory and information. Reprint of the 1965 original.
+      Robert E. Krieger Publishing Co., Huntington, N.Y., 1978.
+  [3] S. Chowla, The Riemann hypothesis and Hilbert’s tenth problem, Gordon
+      and Breach, New York, 1965.
+  [4] P. D. T. A. Elliott, On the correlation of multiplicative functions, Notas Soc.
+      Mat. Chile, Notas de la Sociedad de Matemática de Chile, 11 (1992), 1–11.
+  [5] P. Erdős, Some unsolved problems, Michigan Math. J. 4 (1957), 299–300.
+  [6] N. Frantzikinatkis, An averaged Chowla and Elliott conjecture along indepen-
+      dent polynomials, preprint. 1606.08420
+  [7] N. Frantzikinatkis, B. Host, Higher order Fourier analysis of multiplicative
+      functions and applications, preprint. arXiv:1403.0945.
+  [8] N. Frantzikinakis, B. Host, Asymptotics for multilinear averages of multi-
+      plicative functions, preprint. arXiv:1502.02646.
+  [9] N. Frantzikinakis, B. Host, B. Kra, Multiple recurrence and convergence for
+      sequences related to the prime numbers, J. Reine Angew. Math. 611 (2007),
+      131–144.
+ [10] J. Friedlander, H. Iwaniec, The polynomial X 2 ` Y 4 captures its primes, Ann.
+      of Math. (2) 148 (1998), no. 3, 945–1040.
+                  CHOWLA AND ELLIOTT CONJECTURES                                31
+
+[11] J. Friedlander, H. Iwaniec, Opera de cribro. American Mathematical Society
+     Colloquium Publications, 57. American Mathematical Society, Providence,
+     RI, 2010.
+[12] A. Granville, K. Soundararajan, Decay of mean values of multiplicative func-
+     tions, Canad. J. Math. 55 (2003), no. 6, 1191–1230.
+[13] B. Green, T. Tao, Restriction theory of the Selberg sieve, with applications,
+     J. Théor. Nombres Bordeaux 18 (2006), no. 1, 147–182.
+[14] B. Green, T. Tao, Linear equations in primes, Ann. of Math. (2) 171 (2010),
+     no. 3, 1753–1850.
+[15] B. Green, T. Tao, T. Ziegler, An inverse theorem for the Gowers U s`1 rN s-
+     norm, Ann. of Math. (2) 176 (2012), no. 2, 1231–1372.
+[16] G. Harman, J. Pintz, D. Wolke, A note on the Möbius and Liouville functions,
+     Studia Sci. Math. Hungar. 20 (1985), no. 1-4, 295–299.
+[17] A. Hildebrand, On consecutive values of the Liouville function, Enseign.
+     Math. (2) 32 (1986), no. 3-4, 219–226.
+[18] W. Hoeﬀding, Probability inequalities for sums of bounded random variables,
+     J. Amer. Stat. Assoc. 58 (1963), 13–30.
+[19] H. Iwaniec, E. Kowalski, Analytic number theory. American Mathematical
+     Society Colloquium Publications, 53. American Mathematical Society, Prov-
+     idence, RI, 2004.
+[20] O. Klurman, Correlations of multiplicative functions and applications,
+     preprint. arXiv:1603.084533
+[21] K. Matomäki, M. Radziwill, Multiplicative functions in short intervals, Ann.
+     of Math. (2) 183 (2016), no. 3, 1015–1056
+[22] K. Matomäki, M. Radziwill, A note on the Liouville function in short inter-
+     vals, preprint. arXiv:1502.02374
+[23] K. Matomäki, M. Radziwill, T. Tao, An averaged form of Chowla’s conjecture,
+     Algebra Number Theory 9 (2015), 2167–2196
+[24] K. Matomäki, M. Radziwill, T. Tao, Sign patterns of the Möbius and Liouville
+     functions, Forum Math. Sigma 4 (2016), e14, 44 pp.
+[25] H. Montgomery, Ten lectures on the interface between analytic number the-
+     ory and harmonic analysis, volume 84 of CBMS Regional Conference Series in
+     Mathematics. Published for the Conference Board of the Mathematical Sci-
+     ences, Washington, DC; by the American Mathematical Society, Providence,
+     RI, 1994
+[26] R. Moser, G. Tardos, A constructive proof of the general Lovász local lemma,
+     J. ACM 57 (2010), no. 2, Art. 11, 15 pp.
+[27] D.H.J. Polymath, michaelnielsen.org/polymath1/index.php?title=
+     The Erd%C5%91s discrepancy problem
+[28] P. Sarnak, Three lectures on the Mobius Function randomness and dynamics,
+     2010. publications.ias.edu/sarnak/paper/506.
+[29] T. Tao, The ergodic and combinatorial approaches to Szemerédi’s theorem,
+     Additive combinatorics, 145193, CRM Proc. Lecture Notes, 43, Amer. Math.
+     Soc., Providence, RI, 2007.
+[30] T. Tao, The Erdős discrepancy problem, Discrete Analysis 2016:1, 29 pp.
+[31] T. Tao, Equivalence of the logarithmically averaged Chowla and Sarnak con-
+     jectures, preprint. arXiv:1605.04628
+[32] G. Tenenbaum, Introduction to analytic and probabilistic number theory,
+     Translated from the second French edition (1995) by C. B. Thomas. Cam-
+     bridge Studies in Advanced Mathematics, 46. Cambridge University Press,
+     Cambridge, 1995.
+32                               TERENCE TAO
+
+ [33] T. Wooley, T. Ziegler, Multiple recurrence and convergence along the primes,
+      Amer. J. Math. 134 (2012), no. 6, 1705–1732.
+
+  Department of Mathematics, UCLA, 405 Hilgard Ave, Los Angeles
+CA 90095, USA
+  E-mail address: tao@math.ucla.edu
+
