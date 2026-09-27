@@ -660,6 +660,147 @@ theorem tendsto_blockAverage (b : ℕ) (hb : 2 ≤ b) (x : ℝ) (hx : IsNormal b
   rw [hsum N, Finset.sum_div]
   exact Finset.sum_congr rfl fun v _ => (mul_div_assoc _ _ _).symm
 
+/-! ### The long-division automaton -/
+
+/-- The state of the long-division automaton computing `(x + M)/B` in base `b`:
+`r n = (b^n M + ⌊b^n x⌋) mod B`.  It is the only thing besides the digits of `x` that the
+digits of `(x + M)/B` depend on. -/
+noncomputable def divState (b B : ℕ) (x : ℝ) (M : ℤ) (n : ℕ) : ℕ :=
+  ((M * (b : ℤ) ^ n + ⌊x * (b : ℝ) ^ n⌋) % (B : ℤ)).toNat
+
+theorem divState_lt (b B : ℕ) (hB : 0 < B) (x : ℝ) (M : ℤ) (n : ℕ) :
+    divState b B x M n < B := by
+  have hB' : (0 : ℤ) < (B : ℤ) := by exact_mod_cast hB
+  have h1 : (M * (b : ℤ) ^ n + ⌊x * (b : ℝ) ^ n⌋) % (B : ℤ) < (B : ℤ) :=
+    Int.emod_lt_of_pos _ hB'
+  have h2 : (0 : ℤ) ≤ (M * (b : ℤ) ^ n + ⌊x * (b : ℝ) ^ n⌋) % (B : ℤ) :=
+    Int.emod_nonneg _ (ne_of_gt hB')
+  rw [divState]
+  omega
+
+theorem divState_modEq (b B : ℕ) (hB : 0 < B) (x : ℝ) (M : ℤ) (n : ℕ) :
+    ((divState b B x M n : ℤ)) ≡ M * (b : ℤ) ^ n + ⌊x * (b : ℝ) ^ n⌋ [ZMOD (B : ℤ)] := by
+  have hB' : (0 : ℤ) < (B : ℤ) := by exact_mod_cast hB
+  have h2 : (0 : ℤ) ≤ (M * (b : ℤ) ^ n + ⌊x * (b : ℝ) ^ n⌋) % (B : ℤ) :=
+    Int.emod_nonneg _ (ne_of_gt hB')
+  show ((divState b B x M n : ℤ)) % (B : ℤ) = _ % (B : ℤ)
+  rw [divState, Int.toNat_of_nonneg h2]
+  exact Int.emod_emod_of_dvd _ dvd_rfl
+
+/-- The fractional part of `x` seen by `blockVal` is `x` itself on `[0,1)`. -/
+theorem blockVal_eq_of_mem (b : ℕ) (x : ℝ) (hx : x ∈ Set.Ico (0 : ℝ) 1) (n l : ℕ) :
+    blockVal b x n l = blockNatVal b ((List.range l).map fun i => digitOf b x (n + i)) := by
+  rw [blockVal, Int.fract_eq_self.2 hx]
+
+/-- The block value is the integer part of the shifted orbit point:
+`⌊b^l · (b^n x mod 1)⌋ = blockVal b x n l`. -/
+theorem floor_orbit_mul_pow (b : ℕ) (hb : 2 ≤ b) (x : ℝ) (hx : x ∈ Set.Ico (0 : ℝ) 1)
+    (n l : ℕ) : ⌊orbit b x n * (b : ℝ) ^ l⌋ = (blockVal b x n l : ℤ) := by
+  have hmem : orbit b x n ∈ Set.Ico (0 : ℝ) 1 :=
+    ⟨Int.fract_nonneg _, Int.fract_lt_one _⟩
+  rw [floor_eq_digitVal b hb _ hmem l, blockVal_eq_of_mem b x hx n l, blockNatVal_eq_sum]
+  push_cast
+  refine Finset.sum_congr (by simp) fun i hi => ?_
+  have hil : i < l := by simpa using hi
+  have hget : ((List.range l).map fun i => digitOf b x (n + i)).getD i 0
+      = digitOf b x (n + i) := by
+    have hlen : i < ((List.range l).map fun i => digitOf b x (n + i)).length := by
+      simpa using hil
+    rw [List.getD_eq_getElem _ _ hlen]
+    simp
+  rw [hget, digitOf_orbit b hb x hx.1 n i]
+  have hlen : ((List.range l).map fun i => digitOf b x (n + i)).length = l := by simp
+  rw [hlen]
+
+/-- **Automaton step.**  `r (n + j) ≡ b^j · r n + (value of the digit block `x[n, n+j)`)`. -/
+theorem divState_shift (b B : ℕ) (hb : 2 ≤ b) (hB : 0 < B) (x : ℝ)
+    (hx : x ∈ Set.Ico (0 : ℝ) 1) (M : ℤ) (n j : ℕ) :
+    ((divState b B x M (n + j) : ℤ))
+      ≡ (b : ℤ) ^ j * (divState b B x M n : ℤ) + (blockVal b x n j : ℤ) [ZMOD (B : ℤ)] := by
+  have horb : orbit b x n = x * (b : ℝ) ^ n - (⌊x * (b : ℝ) ^ n⌋ : ℝ) := by
+    rw [orbit, Int.fract]
+  have hfl : ⌊x * (b : ℝ) ^ (n + j)⌋
+      = (b : ℤ) ^ j * ⌊x * (b : ℝ) ^ n⌋ + (blockVal b x n j : ℤ) := by
+    have h1 : x * (b : ℝ) ^ (n + j)
+        = orbit b x n * (b : ℝ) ^ j + ((((b : ℤ) ^ j * ⌊x * (b : ℝ) ^ n⌋ : ℤ)) : ℝ) := by
+      rw [horb]
+      push_cast
+      ring
+    rw [h1, Int.floor_add_intCast, floor_orbit_mul_pow b hb x hx n j]
+    ring
+  have hA : M * (b : ℤ) ^ (n + j) + ⌊x * (b : ℝ) ^ (n + j)⌋
+      = (b : ℤ) ^ j * (M * (b : ℤ) ^ n + ⌊x * (b : ℝ) ^ n⌋) + (blockVal b x n j : ℤ) := by
+    rw [hfl]; ring
+  calc ((divState b B x M (n + j) : ℤ))
+      ≡ M * (b : ℤ) ^ (n + j) + ⌊x * (b : ℝ) ^ (n + j)⌋ [ZMOD (B : ℤ)] :=
+        divState_modEq b B hB x M (n + j)
+    _ = (b : ℤ) ^ j * (M * (b : ℤ) ^ n + ⌊x * (b : ℝ) ^ n⌋) + (blockVal b x n j : ℤ) := hA
+    _ ≡ (b : ℤ) ^ j * (divState b B x M n : ℤ) + (blockVal b x n j : ℤ) [ZMOD (B : ℤ)] :=
+        Int.ModEq.add_right _ (Int.ModEq.mul_left _ (divState_modEq b B hB x M n).symm)
+
+/-- **State decomposition of the orbit.**  The orbit of `(x + M)/B` is the state plus the
+orbit of `x`, rescaled by `B`. -/
+theorem orbit_add_div (b B : ℕ) (hB : 0 < B) (x : ℝ) (hx : x ∈ Set.Ico (0 : ℝ) 1) (M : ℤ)
+    (n : ℕ) :
+    orbit b ((x + (M : ℝ)) / B) n = ((divState b B x M n : ℝ) + orbit b x n) / B := by
+  have hB' : (0 : ℝ) < (B : ℝ) := by exact_mod_cast hB
+  have hBne : ((B : ℝ)) ≠ 0 := ne_of_gt hB'
+  set A : ℤ := M * (b : ℤ) ^ n + ⌊x * (b : ℝ) ^ n⌋ with hAdef
+  have hB'' : (0 : ℤ) < (B : ℤ) := by exact_mod_cast hB
+  have hnn : (0 : ℤ) ≤ A % (B : ℤ) := Int.emod_nonneg _ (ne_of_gt hB'')
+  have hdiv : A = (B : ℤ) * (A / (B : ℤ)) + (divState b B x M n : ℤ) := by
+    rw [divState, ← hAdef, Int.toNat_of_nonneg hnn, Int.emod_def]
+    ring
+  have hAR : ((A : ℤ) : ℝ)
+      = (B : ℝ) * (((A / (B : ℤ) : ℤ)) : ℝ) + (divState b B x M n : ℝ) := by
+    exact_mod_cast congrArg (fun z : ℤ => ((z : ℝ))) hdiv
+  have horb : orbit b x n = x * (b : ℝ) ^ n - (⌊x * (b : ℝ) ^ n⌋ : ℝ) := by
+    rw [orbit, Int.fract]
+  have hAR2 : ((A : ℤ) : ℝ) = (M : ℝ) * (b : ℝ) ^ n + (⌊x * (b : ℝ) ^ n⌋ : ℝ) := by
+    rw [hAdef]; push_cast; ring
+  have hkey : (x + (M : ℝ)) / (B : ℝ) * (b : ℝ) ^ n
+      = ((divState b B x M n : ℝ) + orbit b x n) / (B : ℝ)
+        + (((A / (B : ℤ) : ℤ)) : ℝ) := by
+    have key0 : (x + (M : ℝ)) * (b : ℝ) ^ n
+        = ((divState b B x M n : ℝ) + orbit b x n)
+          + (B : ℝ) * (((A / (B : ℤ) : ℤ)) : ℝ) := by
+      have hexp : (x + (M : ℝ)) * (b : ℝ) ^ n = x * (b : ℝ) ^ n + (M : ℝ) * (b : ℝ) ^ n := by
+        ring
+      rw [hexp]
+      linarith [hAR, hAR2, horb]
+    rw [div_mul_eq_mul_div, key0, add_div, mul_comm ((B : ℝ)) _, mul_div_assoc,
+      div_self hBne, mul_one]
+  have hlt : divState b B x M n < B := divState_lt b B hB x M n
+  have hltR : ((divState b B x M n : ℕ) : ℝ) + 1 ≤ (B : ℝ) := by
+    have : (divState b B x M n : ℕ) + 1 ≤ B := hlt
+    exact_mod_cast this
+  have hmem : ((divState b B x M n : ℝ) + orbit b x n) / (B : ℝ) ∈ Set.Ico (0 : ℝ) 1 := by
+    have h0 : (0 : ℝ) ≤ orbit b x n := Int.fract_nonneg _
+    have h1 : orbit b x n < 1 := Int.fract_lt_one _
+    constructor
+    · positivity
+    · rw [div_lt_one hB']
+      linarith
+  show Int.fract ((x + (M : ℝ)) / (B : ℝ) * (b : ℝ) ^ n) = _
+  rw [hkey, Int.fract_add_intCast, Int.fract_eq_self.2 hmem]
+
+/-- **CRUX LEAF (open): joint density of the automaton state and the digit block.**
+
+Every remaining difficulty of Wall's theorem sits here.  The state `divState b B x M n`
+depends on the *entire* digit prefix of `x`, so this is not a fixed-depth block count;
+it says that the state is asymptotically uniform on `ℤ/B` and asymptotically independent
+of the digits ahead of `n`.  See the module docstring for the shift-average +
+Cauchy–Schwarz attack that `tendsto_blockAverage` and `divState_shift` are meant to
+power (the shift is by multiples of `T = orderOf b` in `(ZMod B)ˣ`, which is what makes
+`b^T ≡ 1` collapse `divState_shift` to `r (n+Tk) ≡ r n + W`). -/
+theorem tendsto_jointDensity (b B : ℕ) (hb : 2 ≤ b) (hB : 0 < B) (hcop : Nat.Coprime B b)
+    (x : ℝ) (hx : x ∈ Set.Ico (0 : ℝ) 1) (hxn : IsNormal b x) (M : ℤ)
+    (l : ℕ) (hl : 0 < l) (j : ℕ) (hj : j < B) (v : ℕ) (hv : v < b ^ l) :
+    Tendsto (fun N => (((Finset.range N).filter fun n =>
+        divState b B x M n = j ∧ blockVal b x n l = v).card : ℝ) / N)
+      atTop (𝓝 ((B : ℝ)⁻¹ * ((b : ℝ) ^ l)⁻¹)) := by
+  sorry
+
 /-- **CRUX (open).** Normality survives `x ↦ (x + M)/B` when `gcd(B, b) = 1`.
 
 This is the one irreducible step of Wall's theorem: `orbit b ((x+M)/B) n` is
