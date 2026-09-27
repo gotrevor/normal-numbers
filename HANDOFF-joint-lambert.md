@@ -1,152 +1,126 @@
-# HANDOFF — joint Lambert: PRIME SELECTION proved
+# HANDOFF — joint Lambert: SHARED BINARY TAIL proved
 
-Date: 2026-09-27.  Operator objective recorded at the top of `DIRECTION.md`
-(bounded run after `566586a`; target = prime selection with a quantitative count).
+Date: 2026-09-27 (lap C).  Operator objective at the top of `DIRECTION.md`
+(tail-control stage, authorized after `7dc2522`).
 
 ## Result
 
-`NormalNumbers.JointLambert.exists_joint_prime_candidates`, in the new
-`src/NormalNumbers/JointLambertPrimeSelection.lean`, is **proved, sorry-free**.
+Both scoped targets are **proved, sorry-free**:
+
+* `NormalNumbers.JointLambert.exists_joint_small_tail` — new
+  `src/NormalNumbers/JointLambertTail.lean`, the frozen contract verbatim.
+* `NormalNumbers.JointLambert.base_tail_le_half_binary_tail` — the base majorant, in the
+  new `src/NormalNumbers/JointLambertTailBounds.lean`.
+* plus `exists_joint_small_tail_all_bases`, the combined form the digit assembly will
+  consume: one `n`, base-`b` tail `< ε/2` for **every** integer `b ≥ 2` at once.
 
 ```
-#print axioms NormalNumbers.JointLambert.exists_joint_prime_candidates
-  -- [propext, Classical.choice, Quot.sound]
-#print axioms NormalNumbers.JointLambert.exists_prime_allocation
-#print axioms NormalNumbers.JointLambert.exists_prime_allocation_nonvacuous
-#print axioms NormalNumbers.JointLambert.exists_selection_scale
-#print axioms NormalNumbers.JointLambert.pool_card_ge
-#print axioms NormalNumbers.JointLambert.count_lower_bound
+#print axioms NormalNumbers.JointLambert.exists_joint_small_tail
+#print axioms NormalNumbers.JointLambert.base_tail_le_half_binary_tail
+#print axioms NormalNumbers.JointLambert.exists_joint_small_tail_all_bases
+#print axioms NormalNumbers.JointLambert.sum_tau_progression_le
   -- all [propext, Classical.choice, Quot.sound]
 ```
 
-`lake build` green.  Module in the root build (`src/NormalNumbers.lean:501`).  The
-three frozen files are byte-identical to their pins: `JointLambertStatement.lean`
-vs `78e6048`, `JointLambertEncodingProof.lean` vs `7f05cb2`,
-`JointLambertArithmetic.lean` vs `566586a` (`git diff` empty in all three).
+`lake build` green; both modules in the root build (`src/NormalNumbers.lean`).  The four
+frozen files are byte-identical to their pins (`git diff` empty): `JointLambertStatement`
+vs `78e6048`, `JointLambertEncodingProof` vs `7f05cb2`, `JointLambertArithmetic` vs
+`566586a`, `JointLambertPrimeSelection` vs `7dc2522`.  `AGP` and `PrimeIntervalSupply` are
+unchanged and are still *hypotheses* — no new analytic input, no tail hypothesis.
 
-## The two analytic inputs — named `Prop`s, passed as hypotheses
+## The contract, as proved
 
-Neither is a global axiom; neither is `PrimeDensityAP` (the old vacuous one is not
-imported or used anywhere in this file).
+Given `hagp : AGP`, `hpis : PrimeIntervalSupply`, `c ≥ 2`, `a ≥ 2`, `r ≥ 1`, any real
+`ε > 0` and any natural cutoffs `K`, `N`, there exist `k n : ℕ` with
 
-* `AGP` — `∃ X0 D0, ∀ X ≥ X0, ∃ Dset, #Dset ≤ D0 ∧ (∀ D ∈ Dset, log X < D) ∧ ∀ B u,
-  1 ≤ B → (B:ℝ) ≤ X^(1/4) → (u,B)=1 → (∀ D ∈ Dset, ¬ D ∣ B) →
-  X/(2 φ(B) log X) ≤ #{z ≤ X | z.Prime ∧ z ≡ u [B]}`.  The exceptional set is bound to
-  `X` alone, hence chosen **before** `B`, `u` and the allocation, exactly as §3 demands.
-* `PrimeIntervalSupply` — `∃ L0, ∀ L ≥ max(L0,2), (L:ℝ)/(3 log L) ≤ #{primes in Ioo L (2L)}`
-  — the **open** interval, and the constant `3` is not improved.
+* `K ≤ k`, `r < k`, `1 ≤ n`, `N ≤ n`;
+* `c^(j+1) ∣ τ(n+j)` for every `j < k` with `j ≠ r`;
+* `τ(n+r) = 2a` exactly;
+* `∑' t, τ(n+k+t)/2^(k+t) < ε`.
 
-## Contract of the target (as proved)
-
-For fixed `c ≥ 2`, `a ≥ 2`, `r ≥ 1` and any cutoff `K`: there are `k ≥ K` with `r < k`
-and, with the dyadic schedule `L = 2^k`, `U = 2^(k⁴)`, `X = U⁴ = 2^(4k⁴)`,
-
-* `q` prime in the open `(L, 2L)`, and for each killed slot `j < k`, `j ≠ r` a family
-  `p j t` (`t < j+1`) of primes in `(L, 2L)`;
-* the **complete** `exists_joint_progression` conclusion for that data, retained clause
-  by clause: `0 < R < A`, `1 ≤ u < B`, `R + r = Qu`, `A = QB`, `u ≡ 1 [MOD q]`,
-  `(u,B) = 1`, `R + r ≡ Q [MOD q^a]`, `R + j ≡ P_j^(c-1) [MOD P_j^c]`,
-  `c^(j+1) ∣ τ(R + mA + j)` at every killed slot for **every** `m`,
-  `τ(R + mA + r) = 2a` whenever `u + mB` is prime, and `(R + j, A) = 1` for `k ≤ j < L`;
-* `Q ≤ (2L)^(a-1)`, `B ≤ (2L)^(1 + c·killPoolSize k r)`, `B ≤ U`, `Q ≤ U`, `R > L`;
-* `(M : ℝ)/(16 k⁴) ≤ #{m < M | (u + mB).Prime ∧ u + mB ≤ X}` with `M = X/B + 1`.
+`τ` is `SwingC2.tau`, honest divisor cardinality.  Summability is proved
+(`summable_binary_tail`, `summable_tau_div`, `summable_base_tail`) so no `tsum` can mask a
+divergent series.  And for every `b ≥ 2`,
+`0 ≤ ∑' t, τ(n+k+t)/b^(k+t+1) ≤ (binary tail)/2`.
 
 ## How it is proved
 
-1. **`exists_prime_allocation`** (the finite avoidance and allocation theorem).  A pool
-   `S` of primes with `≥ 1 + killPoolSize k r + #Dset` members yields `q` and the whole
-   killed-slot family distinctly in `S` with `∀ D ∈ Dset, D ≠ 1 → ¬ D ∣ jointB c k r q p`.
-   The enabling structural lemma is **`prime_dvd_jointB`**: *every* prime divisor of
-   `jointB` is a selected prime.  So removing, for each `D`, the least pool prime factor
-   `f D` of `D` (`Finset.min'` of `D.primeFactors ∩ S`) is enough, by one contradiction:
-   if `D ∣ jointB` then `D.minFac` is selected, hence in `S`, hence `f D` is defined and
-   is itself a prime factor of `D` in `S`, hence also selected, hence in
-   `T ⊆ S \ Removed` — contradicting `f D ∈ Removed`.  `D = 0` dies on `jointB_pos`; a `D`
-   with no pool prime factor needs no removal at all.  At most `#Dset` primes are lost
-   (`Finset.card_image_le`).
-   Allocation itself flattens `(j,t)` by `killOffset k r j + t`, an injection into
-   `[0, killPoolSize k r)` (`killOffset_add_le`, `killOffset_add_lt`, `killOffset_inj`),
-   then uses `Finset.exists_subset_card_eq` + `Finset.orderEmbOfFin` to get an injective
-   enumeration of a `1 + killPoolSize k r` element subset of the reduced pool.
-   Control: `exists_prime_allocation_nonvacuous` (pool `{3,5,7,11}`, `Dset = {6}`,
-   `k = 2`, `r = 1`, `c = 2`) — exercises the removal branch, not the vacuous one.
-2. **Parameter availability, proved.**  `pow_four_le_two_pow`: `k⁴ ≤ 2^k` for `k ≥ 16`
-   (tight at `16`), by induction with the monomial ladder `16 k^n ≤ k^(n+1)`.
-   `exists_selection_scale` then produces `k = K + r + 16 + X0 + L0 + 4c + a + D0`
-   satisfying `k ≥ K`, `r < k`, `16 ≤ k`, `L0 ≤ 2^k`, `X0 ≤ 2^(4k⁴)`,
-   `3k(1 + k² + D0) ≤ 2^k` (pool supply), `(k+1)(1 + ck²) ≤ k⁴` (`B ≤ U`) and
-   `(k+1)(a-1) ≤ k⁴` (`Q ≤ U`).  Nothing is assumed.
-3. **`pool_card_ge`** converts `PrimeIntervalSupply` at `L = 2^k` into the *natural
-   number* pool bound `1 + killPoolSize k r + D0 ≤ #S`, using `log(2^k) = k log 2`,
-   `log 2 ≤ 1`, and `killPoolSize ≤ k²`.
-4. **Size bookkeeping.**  `jointQ_le`, `jointB_le` (slotwise `P_j ≤ (2L)^(j+1)`, then
-   `Finset.prod_pow_eq_pow_sum` over `killedIdx`), and `2L = 2^(k+1)` turn the two
-   schedule inequalities into `B ≤ U`, `Q ≤ U`.  `lt_crt_solution` gets `R > L` from the
-   slot-`0` CRT residue (slot `0` is always killed because `r ≥ 1`):
-   `R % P₀^c = P₀^(c-1) ≥ P₀ > L`.
-5. **`rpow_quarter_X`**: `X^(1/4) = U` *exactly*, which is the whole reason the schedule
-   takes `X = U⁴` — AGP's `B ≤ X^(1/4)` becomes the clean `B ≤ U`.
-6. **The count.**  `card_agp_le_card_candidates`: `z ↦ z / B` injects AGP's set of primes
-   `z ≤ X` with `z ≡ u [B]` into `{m < X/B+1 | (u+mB).Prime ∧ u+mB ≤ X}`, because `u < B`
-   pins `z = u + (z/B)·B`.  `count_lower_bound` then turns `X/(2 φ(B) log X)` into
-   `(X/B+1)/(16k⁴)`: drop `φ(B) ≤ B`, use `log X = 4k⁴ log 2`, and apply
-   `count_real_core` — `(t+1)/(16K) ≤ t/(8Kl)` whenever `t = X/B ≥ 1`, `0 < l ≤ 1`.  Note
-   only `log 2 ≤ 1` is needed, so no numeric `log 2` bound is imported; the slack
-   `l(t+1) ≤ 2t` is what absorbs the `+1` in `M`.
-   (`Real.log_two_gt_d9` *is* used, once, and only to show every exceptional modulus is
-   `≥ 2`: `log X = 4k⁴ log 2 ≥ 2` for `k ≥ 1`.)
+### 1.  `JointLambertTailBounds.lean` — the elementary §3 layer
+
+* `tau_le_two_mul_card_dvd_le`: divisor pairing at `H`.  For `0 < n ≤ H²`,
+  `n.divisors ⊆ S ∪ S.image (n / ·)` with `S = {h ∈ [1,H] : h ∣ n}` (a divisor `d > H`
+  has cofactor `n/d ≤ H`, else `n > H²`), so `τ(n) ≤ 2·#S`.
+* `card_prog_dvd_le`: for `(h, A) = 1`, `h ∣ u+mA` and `h ∣ u+m'A` give `h ∣ (m−m')A`
+  hence `h ∣ m−m'` (`Nat.Coprime.dvd_of_dvd_mul_right`), so the solutions lie in one
+  residue class mod `h`; `m ↦ m/h` injects them into `range (M/h+1)`.
+* `card_prog_dvd_eq_zero`: for `(u, A) = 1` and `(h, A) > 1`, `minFac (gcd h A)` would
+  divide both `u` and `A`, so there are *no* solutions.  This is exactly where the
+  coprimality of the progression is spent.
+* **`sum_tau_progression_le`** — the §3 estimate
+  `∑_{m<M} τ(u+mA) ≤ 2M(1+log H) + 2H` for `u > 0`, `(u,A)=1`, `H ≥ 1`,
+  `u+mA ≤ H²` (`m<M`).  Double counting (`Finset.card_filter` + `Finset.sum_comm`) swaps
+  `m` and `h`; then `M/h+1` per `h`; then `∑_{h≤H} 1/h = harmonic H ≤ 1 + log H`
+  (`sum_inv_Icc_eq_harmonic` + mathlib `harmonic_le_one_add_log`).
+* `tau_le_self`, `summable_affine_geometric`, `summable_tau_div`,
+  **`tsum_tau_div_le`**: `∑' t, τ(N₀+t)/2^t ≤ 2N₀ + 2` — the crude far-range tool
+  (`tsum_geometric_two` + `tsum_coe_mul_geometric_of_norm_lt_one`).
+* `pow_eight_le_two_pow` (`k^8 ≤ 2^k` for `k ≥ 44`, by induction with
+  `44(k+1) ≤ 45k` and `45^8 ≤ 2·44^8`) and **`poly_eight_le_two_pow`**:
+  `m + C k^8 + C ≤ 2^k` once `k ≥ 2(6562C + m + 45)`, proved by splitting
+  `2^k ≥ (2^{k/2})²` and using `k^8 ≤ (3·(k/2))^8 = 6561 (k/2)^8 ≤ 6561·2^{k/2}`.
+  **This is what makes every "for `k` large" step proved rather than assumed.**
+* `window_le_pow_six`, `base_tail_le_half_binary_tail`, and three non-vacuity anchors
+  (`tau_small_values`, `sum_tau_progression_le_nonvacuous`,
+  `tau_le_two_mul_card_dvd_le_nonvacuous`, all `decide +kernel`) kept as persistent tests.
+
+### 2.  `JointLambertTail.lean` — the assembly
+
+1. **`ε` first.**  `exists_pow_lt_of_lt_one` gives `m₀` with `(1/2)^m₀ < ε/2`.  The cutoff
+   handed to `exists_joint_prime_candidates` is
+   `K' = max(max K N, max (2(6562·6+(m₀+2)+45)) (2(6562·Cn+45)))` with `Cn = 320·2^m₀`.
+   So `ε` is fixed *before* the prime-selection height, and the two thresholds are
+   exactly the hypotheses of `poly_eight_le_two_pow`.
+2. **Schedule bookkeeping.**  `U = 2^(k⁴)`, `X = U⁴`, `H = U³`, `Z = U⁶`, `L = 2^k`,
+   `M = X/B + 1`.  `hHM : H ≤ M` (from `H·B ≤ U³·U = X`, `Nat.le_div_iff_mul_le`) — this
+   is the whole reason for `X = U⁴`, `H = U³`.  `hnZ : R + mA + i ≤ Z = H²` for `i ≤ L`,
+   from `A = QB`, `Q, B ≤ U`, `m ≤ X/B`, and `window_le_pow_six` (`U ≥ 4`).
+3. **Near range `k ≤ j < L`.**  The coprimality clause `(R+j, A) = 1` supplied by
+   `exists_joint_prime_candidates` feeds `sum_tau_progression_le` row by row with
+   `u = R + (k+t)`.  Summing the rows against `2^{-(k+t)}` (geometric partial sum `≤ 2`)
+   gives `∑_{m<M} near(m) ≤ S·(2/2^k)` with `S ≤ M(6k⁴+4)` — using `log H ≤ 3k⁴`
+   (`log 2 ≤ 1`) and `H ≤ M`.
+4. **Pigeonhole.**  `Finset.exists_le_of_sum_le` over the candidate set `C`
+   (`#C ≥ M/(16k⁴) > 0`, the count proved last lap) gives a candidate `m` with
+   `near(m) ≤ 320 k⁸ / 2^k ≤ (1/2)^m₀`, since `Cn·k⁸ ≤ 2^k`.
+5. **Far range.**  `Summable.sum_add_tsum_nat_add D` (`D = 2^k − k`) splits the `tsum`
+   exactly at `L`; the tail reindexes to `(1/2^L)·∑' i, τ((n+L)+i)/2^i ≤ 4Z/2^L`, and
+   `2 + 6k⁴ + m₀ ≤ 2^k` makes that `≤ (1/2)^m₀`.
+6. Total `< ε/2 + ε/2`.  `N ≤ n` comes from `N ≤ K' ≤ k ≤ 2^k < R ≤ n`.
 
 ## Exact next dependency
 
-Prime selection is discharged.  The remaining obligations of the joint Lambert headline
-`JointLambertDisjunctivity` are, in order:
+Tail control is discharged.  What remains for
+`JointLambertDisjunctivity` — and it is **not** claimed here:
 
-1. **The shared binary tail majorant.**  One tail estimate serving every coordinate: with
-   `n_m = R + mA`, bound the contribution of the non-prescribed digits so that the
-   divisor-count data at slots `j ≠ r` and the survivor value `τ(n_m + r) = 2a` actually
-   *pin the digits* of each `E_{b_i}` at the common offset.  The elementary
-   divisor-average estimate of §3 (`∑_{m<M} τ(u+mA) ≤ 2M(1 + ½ log Y) + 2√Y` for
-   `(u,A) = 1`) is the tool, and it is **not yet formalized**; it is the natural next
-   Lean target, and it is purely elementary.  Together with the count proved here
-   (`≥ M/(16k⁴)` prime candidates) it gives a surviving index by pigeonhole.
-2. **The common-offset digit identity**, wiring the divisor counts `c^(j+1) ∣ τ(n_m+j)`
-   and `τ(n_m+r) = 2a` through `evenEncoding` (already proved, `7f05cb2`) to the digit
-   cylinders of every base simultaneously, with `c = lcm(bases)` entering via
-   `divisor_count_dvd_of_dvd`.
-3. **Arbitrarily late occurrences** — immediate from `K` being arbitrary here, once 1–2
-   are in place.
+1. **The common-offset digit identity.**  Wire `c^(j+1) ∣ τ(n+j)` (`j ≠ r`, `j < k`) and
+   `τ(n+r) = 2a` through `evenEncoding` (proved, `7f05cb2`) to the digit cylinders of
+   *every* base simultaneously, with `c = lcm(bases)` entering through
+   `divisor_count_dvd_of_dvd`.  The tail majorant just proved is the ingredient that makes
+   the unprescribed slots harmless: `exists_joint_small_tail_all_bases` hands the assembly
+   one `n` with a base-`b` tail below `ε/2` for every `b ≥ 2` at once, so the same offset
+   pins the digit of `E_b` in all coordinates.  This is the next Lean target.
+2. **Arbitrarily late occurrences** — already immediate: `K` and `N` are both arbitrary in
+   `exists_joint_small_tail`.
 
-Do **not** claim the full joint Lambert theorem: 1 and 2 remain.
+Do **not** claim the full joint Lambert theorem: item 1 remains.
 
-## For the verification lap: why this run is finished
+## Why this run is finished
 
-**The scoped objective is met.**  `--done-when 'sorry-free:src/NormalNumbers/JointLambertPrimeSelection.lean'`
-and the operator override at the top of `DIRECTION.md` ("Stop when
-`exists_joint_prime_candidates` is proved") are both satisfied:
-`grep -c sorry src/NormalNumbers/JointLambertPrimeSelection.lean` is 0 (the only match is
-prose in a docstring), `lake build` is green, and
-`#print axioms NormalNumbers.JointLambert.exists_joint_prime_candidates` gives
-`[propext, Classical.choice, Quot.sound]`.
-
-**Why the repo-wide sorry gate cannot be cleared by this run.**  The remaining `sorry`s in
-`src/` are all pre-existing, designated-open, and explicitly out of scope:
-
-| file | status |
-|---|---|
-| `SwingC2.lean` (4) | long-standing audit surface |
-| `SwingC1Log.lean` (2) | long-standing |
-| `SwingC3Rotation.lean` (1) | long-standing |
-| `PairDecoupleProve.lean` (1) | deliberately a `sorry`, not an `axiom` — it is a *conjecture* |
-| `MahlerDriftOne.lean`, `PrimeLambertOscillation` | named designated-open in `DIRECTION.md` |
-
-The operator override says **"Work only on prime selection and necessary helpers, no side
-quests"** and the older CURRENT DIRECTIVE names `MahlerDriftOne` /
-`PrimeLambertOscillation` as designated open.  `PairDecoupleProve`'s hole is a conjecture,
-not a formalization gap.  So no lap of this run may touch any of them, and the repo-wide
-gate is unsatisfiable here by construction — not merely hard.
-
-**The exact ask for the operator.**  Either accept the scoped completion and close the run,
-or authorize a new scope.  The next on-path target is already specified above and in
-`PENDING_WORK.md`: the elementary §3 divisor-average estimate
-`∑_{m<M} τ(u+mA) ≤ 2M(1 + ½ log Y) + 2√Y` for `(u,A)=1`, which is the shared binary tail
-majorant and needs no analytic input.
+The scoped objective is met: `exists_joint_small_tail` **and** the base-majorant corollary
+are proved and axiom-clean, `grep -c sorry` is 0 in both new modules, and the four frozen
+files are untouched.  The remaining `sorry`s in `src/` are the same pre-existing,
+designated-open holes listed in the previous handoff (`SwingC2`, `SwingC1Log`,
+`SwingC3Rotation`, `PairDecoupleProve` — a conjecture, not a gap — `MahlerDriftOne`,
+`PrimeLambertOscillation`), all explicitly out of scope by the operator objective.  So the
+repo-wide sorry gate is unsatisfiable here by construction; the host scoped predicate is
+the one that should recognise completion.

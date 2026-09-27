@@ -346,4 +346,94 @@ lemma tsum_tau_div_le (N₀ : ℕ) :
         exact div_le_div_of_nonneg_right h1 (by positivity)
     _ = 2 * N₀ + 2 := hval
 
+/-- The binary tail of a divisor-count sequence converges. -/
+lemma summable_binary_tail (n k : ℕ) :
+    Summable (fun t : ℕ => (NormalNumbers.SwingC2.tau (n + k + t) : ℝ) / 2 ^ (k + t)) := by
+  refine ((summable_tau_div (n + k)).mul_right ((1 : ℝ) / 2 ^ k)).congr ?_
+  intro t
+  rw [pow_add]
+  ring
+
+/-- The base-`b` tail of a divisor-count sequence converges, for every `b ≥ 2`. -/
+lemma summable_base_tail (n k : ℕ) {b : ℕ} (hb : 2 ≤ b) :
+    Summable (fun t : ℕ =>
+      (NormalNumbers.SwingC2.tau (n + k + t) : ℝ) / (b : ℝ) ^ (k + t + 1)) := by
+  have hb0 : (0 : ℝ) < (b : ℝ) := by
+    have : (0 : ℕ) < b := by omega
+    exact_mod_cast this
+  refine Summable.of_nonneg_of_le (fun t => by positivity) (fun t => ?_)
+    (summable_binary_tail n k)
+  have hbge : (2 : ℝ) ^ (k + t) ≤ (b : ℝ) ^ (k + t + 1) := by
+    have h2b : (2 : ℝ) ≤ (b : ℝ) := by exact_mod_cast hb
+    calc (2 : ℝ) ^ (k + t) ≤ (b : ℝ) ^ (k + t) := by
+          exact pow_le_pow_left₀ (by norm_num) h2b _
+      _ ≤ (b : ℝ) ^ (k + t + 1) := by
+          exact pow_le_pow_right₀ (by linarith) (by omega)
+  exact div_le_div_of_nonneg_left (by positivity) (by positivity) hbge
+
+/-- **The base majorant.**  For every integer base `b ≥ 2`, the base-`b` tail
+`∑' t, τ(n+k+t)/b^(k+t+1)` is nonnegative and at most **half** the binary tail
+`∑' t, τ(n+k+t)/2^(k+t)`.  So a single `n` with a small binary tail has a small tail in
+*every* base at once — this is why the joint construction needs only one common offset. -/
+theorem base_tail_le_half_binary_tail (n k : ℕ) {b : ℕ} (hb : 2 ≤ b) :
+    0 ≤ ∑' t : ℕ, (NormalNumbers.SwingC2.tau (n + k + t) : ℝ) / (b : ℝ) ^ (k + t + 1) ∧
+      ∑' t : ℕ, (NormalNumbers.SwingC2.tau (n + k + t) : ℝ) / (b : ℝ) ^ (k + t + 1) ≤
+        (∑' t : ℕ, (NormalNumbers.SwingC2.tau (n + k + t) : ℝ) / 2 ^ (k + t)) / 2 := by
+  have hb0 : (0 : ℝ) < (b : ℝ) := by
+    have : (0 : ℕ) < b := by omega
+    exact_mod_cast this
+  refine ⟨tsum_nonneg fun t => by positivity, ?_⟩
+  have hhalf : Summable
+      (fun t : ℕ => ((NormalNumbers.SwingC2.tau (n + k + t) : ℝ) / 2 ^ (k + t)) / 2) :=
+    (summable_binary_tail n k).div_const 2
+  have hterm : ∀ t : ℕ,
+      (NormalNumbers.SwingC2.tau (n + k + t) : ℝ) / (b : ℝ) ^ (k + t + 1) ≤
+        ((NormalNumbers.SwingC2.tau (n + k + t) : ℝ) / 2 ^ (k + t)) / 2 := by
+    intro t
+    have h2b : (2 : ℝ) ≤ (b : ℝ) := by exact_mod_cast hb
+    have hbge : 2 * (2 : ℝ) ^ (k + t) ≤ (b : ℝ) ^ (k + t + 1) := by
+      calc 2 * (2 : ℝ) ^ (k + t) = (2 : ℝ) ^ (k + t + 1) := by rw [pow_succ]; ring
+        _ ≤ (b : ℝ) ^ (k + t + 1) := pow_le_pow_left₀ (by norm_num) h2b _
+    have hrw : ((NormalNumbers.SwingC2.tau (n + k + t) : ℝ) / 2 ^ (k + t)) / 2
+        = (NormalNumbers.SwingC2.tau (n + k + t) : ℝ) / (2 * 2 ^ (k + t)) := by
+      rw [div_div]; ring_nf
+    rw [hrw]
+    exact div_le_div_of_nonneg_left (by positivity) (by positivity) hbge
+  calc ∑' t : ℕ, (NormalNumbers.SwingC2.tau (n + k + t) : ℝ) / (b : ℝ) ^ (k + t + 1)
+      ≤ ∑' t : ℕ, ((NormalNumbers.SwingC2.tau (n + k + t) : ℝ) / 2 ^ (k + t)) / 2 :=
+        Summable.tsum_le_tsum hterm (summable_base_tail n k hb) hhalf
+    _ = (∑' t : ℕ, (NormalNumbers.SwingC2.tau (n + k + t) : ℝ) / 2 ^ (k + t)) / 2 :=
+        tsum_div_const
+
+/-! ### Non-vacuity anchors (persistent runnable tests) -/
+
+/-- The divisor counts used by the anchor below, checked by the kernel. -/
+theorem tau_small_values :
+    NormalNumbers.SwingC2.tau 1 = 1 ∧ NormalNumbers.SwingC2.tau 5 = 2 ∧
+      NormalNumbers.SwingC2.tau 9 = 3 := by
+  refine ⟨?_, ?_, ?_⟩ <;> decide +kernel
+
+/-- **Non-vacuity anchor for the §3 estimate**: it really applies to honest data
+(`u = 1`, `A = 4`, `H = 10`, `M = 3`, values `1, 5, 9 ≤ 100`), and the left-hand side is
+the genuine divisor sum `1 + 2 + 3 = 6`, not `0`. -/
+theorem sum_tau_progression_le_nonvacuous :
+    (∑ m ∈ range 3, (NormalNumbers.SwingC2.tau (1 + m * 4) : ℝ)) = 6 ∧
+      (∑ m ∈ range 3, (NormalNumbers.SwingC2.tau (1 + m * 4) : ℝ)) ≤
+        2 * (3 : ℕ) * (1 + Real.log ((10 : ℕ) : ℝ)) + 2 * ((10 : ℕ) : ℝ) := by
+  obtain ⟨h1, h5, h9⟩ := tau_small_values
+  refine ⟨?_, ?_⟩
+  · rw [Finset.sum_range_succ, Finset.sum_range_succ, Finset.sum_range_one]
+    norm_num [h1, h5, h9]
+  · exact sum_tau_progression_le (u := 1) (A := 4) (H := 10) (M := 3)
+      (by norm_num) (Nat.coprime_one_left 4) (by norm_num) (by decide)
+
+/-- The divisor-pairing bound is exercised, and is not the trivial `τ(n) ≤ n`:
+`τ(96) = 12 ≤ 2 · #{h ≤ 10 : h ∣ 96} = 2 · 6`. -/
+theorem tau_le_two_mul_card_dvd_le_nonvacuous :
+    NormalNumbers.SwingC2.tau 96 = 12 ∧
+      ((Icc 1 10).filter (fun h => h ∣ 96)).card = 6 ∧
+      NormalNumbers.SwingC2.tau 96 ≤ 2 * ((Icc 1 10).filter (fun h => h ∣ 96)).card := by
+  refine ⟨by decide +kernel, by decide +kernel,
+    tau_le_two_mul_card_dvd_le (by norm_num) (by norm_num)⟩
+
 end NormalNumbers.JointLambert

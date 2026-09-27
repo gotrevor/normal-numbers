@@ -369,4 +369,26 @@ theorem exists_joint_small_tail (hagp : AGP) (hpis : PrimeIntervalSupply)
     rw [hgoal, ← hsplit, ← hFf]
     linarith [hnear, hfar, hm₀]
 
+/-- **The same `n` works in every base.**  Combining `exists_joint_small_tail` with the
+base majorant `base_tail_le_half_binary_tail`: there is one common offset `n` whose
+prescribed divisor data holds at every slot `j < k` and whose *base-`b`* tail is below
+`ε/2` simultaneously for **all** integer bases `b ≥ 2`.  This is the form the
+common-offset digit assembly consumes. -/
+theorem exists_joint_small_tail_all_bases (hagp : AGP) (hpis : PrimeIntervalSupply)
+    {c a r : ℕ} (hc : 2 ≤ c) (ha : 2 ≤ a) (hr : 1 ≤ r)
+    {ε : ℝ} (hε : 0 < ε) (K N : ℕ) :
+    ∃ k n : ℕ, K ≤ k ∧ r < k ∧ 1 ≤ n ∧ N ≤ n ∧
+      (∀ j, j < k → j ≠ r → c ^ (j + 1) ∣ NormalNumbers.SwingC2.tau (n + j)) ∧
+      NormalNumbers.SwingC2.tau (n + r) = 2 * a ∧
+      ∑' t : ℕ, (NormalNumbers.SwingC2.tau (n + k + t) : ℝ) / (2 : ℝ) ^ (k + t) < ε ∧
+      ∀ b : ℕ, 2 ≤ b →
+        0 ≤ ∑' t : ℕ, (NormalNumbers.SwingC2.tau (n + k + t) : ℝ) / (b : ℝ) ^ (k + t + 1) ∧
+        ∑' t : ℕ,
+          (NormalNumbers.SwingC2.tau (n + k + t) : ℝ) / (b : ℝ) ^ (k + t + 1) < ε / 2 := by
+  obtain ⟨k, n, hkK, hkr, hn1, hnN, hkill, hsurv, htail⟩ :=
+    exists_joint_small_tail hagp hpis hc ha hr hε K N
+  refine ⟨k, n, hkK, hkr, hn1, hnN, hkill, hsurv, htail, fun b hb => ?_⟩
+  obtain ⟨h0, hle⟩ := base_tail_le_half_binary_tail n k hb
+  exact ⟨h0, lt_of_le_of_lt hle (by linarith)⟩
+
 end NormalNumbers.JointLambert
