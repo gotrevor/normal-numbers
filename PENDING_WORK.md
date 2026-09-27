@@ -10002,3 +10002,42 @@ spectral radius is `< 1` exactly when `½·(3/5)·log 2 < ¼`, i.e. `3/5 < 1/(2 
 by re-running the `A`-series of `stepOp_logLipschitz_aux` term-by-term (it never mixes indices)
 and replacing its `B`-series by `tsum_abs_stepWeight_sub_le`.  Then the 2×2 linear recursion,
 then `stateHorizonIntegral_pin`.
+
+### 2026-09-27 (same lap, part 4): the family log-Lipschitz contraction is PROVED
+
+`VandeheyStatePin.stateStepOp_logLipschitz` (sorry-free):
+
+> If every `Φ(e,·)` is `L`-log-Lipschitz on `[0,1]` and the whole family lies within `r` of one
+> constant `c`, then `|LΦ(d,t) − LΦ(d,t')| ≤ ((2/5)L + (3/5)r)·d(t,t')`.
+
+Ingredients, both new:
+* `WeightTV.tsum_abs_Afamily_le` — the `A`-series `Σ_k w_t(k)(ψ_k(z_k) − ψ_k(z'_k))` for a
+  `k`-indexed FAMILY, bounded by `(2/5)·L·d`.  The estimate of
+  `CFPsiPin.stepOp_logLipschitz_aux` is term-by-term in `k` (term `k` compares the SAME function
+  at the two branch images), so it survives the passage to a family verbatim: `1/4 + 2/27 +
+  1/18 = 0.3796… ≤ 2/5`.  (`abs_log_stepPt_sub_le` and `summable_sq_bound'` were de-privatised
+  in `CFPsiPin` for reuse; no proof there was touched.)
+* `WeightTV.tsum_abs_stepWeight_sub_le` (part 3) for the `B`-series.
+
+**The 2×2 system now has both rows proved:**
+
+| | contraction | cross term |
+|---|---|---|
+| log-Lipschitz `L` | `2/5` per step (`stateStepOp_logLipschitz`) | `3/5 · r`, `r = osc/2` |
+| oscillation | `1 − |X|β` per Doeblin block (`stateStepIter_ge_word`) | `β|X|·log 2 · L` |
+
+Accumulated over a block the cross-coefficient on the oscillation row is `≤ log 2`, so the
+spectral radius is `< 1` as soon as `(1 − 2/5)·1 > (3/5)·log 2`, i.e. `0.6 > 0.416`. ✓  With the
+sharper `2/5` (rather than the `3/4` of the scalar file) there is ample margin.
+
+**Next attack (the last structural step before `stateHorizonIntegral_pin`).**
+1. `stateStepOp_osc_contract` — the two-sided Doeblin estimate: from `stateStepIter_ge_word`
+   applied to `Φ − inf Φ` and to `sup Φ − Φ`, with `Doeblin.exists_classWord_three` supplying a
+   word of length exactly `3` for every pair, derive
+   `osc(L³Φ) ≤ (1 − |X|β)·osc(Φ) + β·Σ_t osc_τ(Φ(t,·))` and bound
+   `osc_τ(Φ(t,·)) ≤ log 2 · Lip(Φ(t,·))`.
+2. Iterate the pair `(osc_n, L_n)` and conclude geometric decay of `osc_n`; the limit constant is
+   already forced to be `|S|⁻¹γ(A)` by `sum_stateHorizonIntegral` +
+   `sum_over_initial_stateHorizonIntegral`.
+3. `stateHorizonIntegral_pin`, then `ClassEquidistribution` via `vanDerCorput_bound`, then
+   `tendsto_jointCount_of_classEquidistribution`.

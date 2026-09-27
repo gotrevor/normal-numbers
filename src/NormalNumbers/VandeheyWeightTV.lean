@@ -238,6 +238,182 @@ theorem tsum_abs_stepWeight_sub_le {t t' : ℝ} (ht : t ∈ Set.Icc (0 : ℝ) 1)
     refine le_trans (le_of_eq ?_) this
     exact tsum_congr fun k => abs_sub_comm _ _
 
+/-! ## The A-series for a `k`-indexed FAMILY
+
+`CFPsiPin.stepOp_logLipschitz_aux` splits `stepOp φ t − stepOp φ t'` into an `A`-series
+`Σ_k w_t(k)(φ(z_k) − φ(z'_k))` and a `B`-series.  The `A`-series never mixes indices: term `k`
+compares the SAME function at the two branch images `z_k, z'_k`.  So its estimate survives
+verbatim when `φ` is replaced by a family `ψ k`, as long as the log-Lipschitz constant is
+uniform in `k`.  That is this section. -/
+
+/-- The `A`-term bound, uniform in the family index. -/
+lemma abs_Aterm_le {ψ : ℕ → ℝ → ℝ} {L : ℝ} (hL : 0 ≤ L)
+    (hψ : ∀ k : ℕ, ∀ x ∈ Set.Icc (0 : ℝ) 1, ∀ y ∈ Set.Icc (0 : ℝ) 1,
+      |ψ k x - ψ k y| ≤ L * |Real.log (1 + x) - Real.log (1 + y)|)
+    {t t' : ℝ} (ht0' : 0 ≤ t') (htt' : t' ≤ t) (ht1 : t ≤ 1) (k : ℕ) :
+    |stepWeight t k * (ψ k (stepPt t k) - ψ k (stepPt t' k))|
+      ≤ L * (Real.log (1 + t) - Real.log (1 + t')) * ((1 + t) ^ 2 /
+        ((((k : ℝ) + 1 + t) * ((k : ℝ) + 2 + t)) *
+          (((k : ℝ) + 2 + t) * ((k : ℝ) + 1 + t')))) := by
+  have ht0 : (0 : ℝ) ≤ t := ht0'.trans htt'
+  set δ : ℝ := Real.log (1 + t) - Real.log (1 + t') with hδdef
+  have hδ0 : 0 ≤ δ := by
+    have := Real.log_le_log (by linarith : (0:ℝ) < 1 + t') (by linarith : (1:ℝ) + t' ≤ 1 + t)
+    rw [hδdef]; linarith
+  have hk : (0 : ℝ) ≤ (k : ℝ) := Nat.cast_nonneg k
+  have d1 : (0:ℝ) < (k : ℝ) + 1 + t := by linarith
+  have d2 : (0:ℝ) < (k : ℝ) + 2 + t := by linarith
+  have d3 : (0:ℝ) < (k : ℝ) + 1 + t' := by linarith
+  rw [abs_mul, abs_of_nonneg (stepWeight_nonneg ht0 k)]
+  have h1 : |ψ k (stepPt t k) - ψ k (stepPt t' k)| ≤
+      L * ((1 + t) * δ / (((k : ℝ) + 2 + t) * ((k : ℝ) + 1 + t'))) := by
+    refine (hψ k _ (stepPt_mem_Icc ht0 k) _ (stepPt_mem_Icc ht0' k)).trans ?_
+    refine mul_le_mul_of_nonneg_left ?_ hL
+    refine (abs_log_stepPt_sub_le ht0' htt' k).trans ?_
+    rw [div_le_div_iff₀ (by positivity) (by positivity)]
+    have hgapT : t - t' ≤ (1 + t) * δ := by
+      have hx : (0 : ℝ) < (1 + t') / (1 + t) := by positivity
+      have h := Real.log_le_sub_one_of_pos hx
+      rw [Real.log_div (by positivity) (by positivity)] at h
+      have hr : (1 + t') / (1 + t) - 1 = -((t - t') / (1 + t)) := by field_simp; ring
+      rw [hr] at h
+      have h2 : (t - t') / (1 + t) ≤ δ := by rw [hδdef]; linarith [h]
+      rw [div_le_iff₀ (by linarith : (0:ℝ) < 1 + t)] at h2
+      exact h2.trans_eq (mul_comm δ (1 + t))
+    nlinarith [mul_pos d2 d3]
+  calc stepWeight t k * |ψ k (stepPt t k) - ψ k (stepPt t' k)|
+      ≤ stepWeight t k * (L * ((1 + t) * δ / (((k : ℝ) + 2 + t) * ((k : ℝ) + 1 + t')))) :=
+        mul_le_mul_of_nonneg_left h1 (stepWeight_nonneg ht0 k)
+    _ = L * δ * ((1 + t) ^ 2 / ((((k : ℝ) + 1 + t) * ((k : ℝ) + 2 + t)) *
+          (((k : ℝ) + 2 + t) * ((k : ℝ) + 1 + t')))) := by
+        rw [stepWeight]; field_simp; try ring
+
+set_option maxHeartbeats 2000000 in
+/-- **The `A`-series total, for a family.**  `Σ_k |w_t(k)(ψ_k(z_k) − ψ_k(z'_k))| ≤ (2/5)·L·d`.
+The numeric content is `1/4 + 2/27 + 1/18 = 0.3796… ≤ 2/5`, exactly as in
+`CFPsiPin.stepOp_logLipschitz_aux`. -/
+theorem tsum_abs_Afamily_le {ψ : ℕ → ℝ → ℝ} {L : ℝ} (hL : 0 ≤ L)
+    (hψ : ∀ k : ℕ, ∀ x ∈ Set.Icc (0 : ℝ) 1, ∀ y ∈ Set.Icc (0 : ℝ) 1,
+      |ψ k x - ψ k y| ≤ L * |Real.log (1 + x) - Real.log (1 + y)|)
+    {t t' : ℝ} (ht0' : 0 ≤ t') (htt' : t' ≤ t) (ht1 : t ≤ 1) :
+    ∑' k : ℕ, |stepWeight t k * (ψ k (stepPt t k) - ψ k (stepPt t' k))|
+      ≤ (2 / 5) * L * (Real.log (1 + t) - Real.log (1 + t')) := by
+  have ht0 : (0 : ℝ) ≤ t := ht0'.trans htt'
+  set δ : ℝ := Real.log (1 + t) - Real.log (1 + t') with hδdef
+  have hδ0 : 0 ≤ δ := by
+    have := Real.log_le_log (by linarith : (0:ℝ) < 1 + t') (by linarith : (1:ℝ) + t' ≤ 1 + t)
+    rw [hδdef]; linarith
+  have hLδ : 0 ≤ L * δ := mul_nonneg hL hδ0
+  set A : ℕ → ℝ := fun k => stepWeight t k * (ψ k (stepPt t k) - ψ k (stepPt t' k)) with hAdef
+  have hA_term : ∀ k : ℕ, |A k| ≤ L * δ * ((1 + t) ^ 2 /
+      ((((k : ℝ) + 1 + t) * ((k : ℝ) + 2 + t)) *
+        (((k : ℝ) + 2 + t) * ((k : ℝ) + 1 + t')))) :=
+    fun k => abs_Aterm_le hL hψ ht0' htt' ht1 k
+  -- ### summability, via a crude `C/(k+1)²` majorant
+  have habsA : Summable (fun k => |A k|) := by
+    refine (summable_sq_bound' (C := 4 * (L * δ)) (fun k => ?_)).abs
+    refine (hA_term k).trans ?_
+    have hk : (0 : ℝ) ≤ (k : ℝ) := Nat.cast_nonneg k
+    have hden : (0:ℝ) < (((k : ℝ) + 1 + t) * ((k : ℝ) + 2 + t)) *
+        (((k : ℝ) + 2 + t) * ((k : ℝ) + 1 + t')) := by positivity
+    have hB : ((k : ℝ) + 1) ^ 2 ≤ (((k : ℝ) + 1 + t) * ((k : ℝ) + 2 + t)) *
+        (((k : ℝ) + 2 + t) * ((k : ℝ) + 1 + t')) := by
+      have e : ((k : ℝ) + 1) * ((k : ℝ) + 1) ≤ ((k : ℝ) + 1 + t) * ((k : ℝ) + 2 + t) :=
+        mul_le_mul (by linarith) (by linarith) (by linarith) (by linarith)
+      have e' : (1 : ℝ) ≤ ((k : ℝ) + 2 + t) * ((k : ℝ) + 1 + t') :=
+        one_le_two.trans (by nlinarith)
+      nlinarith [mul_le_mul e e' (by norm_num) (by positivity)]
+    have h4 : (1 + t) ^ 2 ≤ 4 := by nlinarith
+    calc L * δ * ((1 + t) ^ 2 / ((((k : ℝ) + 1 + t) * ((k : ℝ) + 2 + t)) *
+          (((k : ℝ) + 2 + t) * ((k : ℝ) + 1 + t'))))
+        ≤ L * δ * (4 / ((k : ℝ) + 1) ^ 2) := by
+          refine mul_le_mul_of_nonneg_left ?_ hLδ
+          rw [div_le_div_iff₀ hden (by positivity)]
+          nlinarith
+      _ = 4 * (L * δ) / ((k : ℝ) + 1) ^ 2 := by ring
+  have habsA1 : Summable (fun k => |A (k + 1)|) := (summable_nat_add_iff 1).mpr habsA
+  have habsA2 : Summable (fun k => |A (k + 2)|) := (summable_nat_add_iff 2).mpr habsA
+  -- ### the three pieces
+  have hA0 : |A 0| ≤ L * δ * (1 / 4) := by
+    refine (hA_term 0).trans ?_
+    refine mul_le_mul_of_nonneg_left ?_ hLδ
+    simp only [Nat.cast_zero, zero_add]
+    rw [div_le_iff₀ (by positivity)]
+    nlinarith [mul_nonneg ht0' (sq_nonneg (2 + t)), sq_nonneg t, mul_nonneg ht0 ht0]
+  have hA1 : |A 1| ≤ L * δ * (2 / 27) := by
+    refine (hA_term 1).trans ?_
+    refine mul_le_mul_of_nonneg_left ?_ hLδ
+    simp only [Nat.cast_one]
+    rw [div_le_iff₀ (by positivity)]
+    nlinarith [mul_nonneg ht0' (by nlinarith : (0:ℝ) ≤ 2 * (2 + t) * (3 + t) ^ 2),
+      ht0, sq_nonneg t, mul_nonneg ht0 (sq_nonneg t)]
+  have hAtail : ∀ k : ℕ, |A (k + 2)| ≤
+      (2 / 3) * (L * δ) * (1 / (((k : ℝ) + 2) * ((k : ℝ) + 2 + 1) * ((k : ℝ) + 2 + 2))) := by
+    intro k
+    refine (hA_term (k + 2)).trans ?_
+    have hk : (0 : ℝ) ≤ (k : ℝ) := Nat.cast_nonneg k
+    have hcast : (((k + 2 : ℕ) : ℝ)) = (k : ℝ) + 2 := by push_cast; ring
+    rw [hcast]
+    have hX : (1 + t) ^ 2 / (((((k : ℝ) + 2) + 1 + t) * (((k : ℝ) + 2) + 2 + t)) *
+        ((((k : ℝ) + 2) + 2 + t) * (((k : ℝ) + 2) + 1 + t')))
+        ≤ 2 / (3 * ((k : ℝ) + 2) * ((k : ℝ) + 3) * ((k : ℝ) + 4)) := by
+      have hden : (0:ℝ) < ((((k : ℝ) + 2) + 1 + t) * (((k : ℝ) + 2) + 2 + t)) *
+          ((((k : ℝ) + 2) + 2 + t) * (((k : ℝ) + 2) + 1 + t')) :=
+        mul_pos (mul_pos (by linarith) (by linarith))
+          (mul_pos (by linarith) (by linarith))
+      rw [div_le_div_iff₀ hden (by positivity)]
+      have hA4 : (1 + t) ^ 2 ≤ 4 := by nlinarith
+      have hB4 : (((k : ℝ) + 3) * ((k : ℝ) + 4)) * (((k : ℝ) + 4) * ((k : ℝ) + 3))
+          ≤ ((((k : ℝ) + 2) + 1 + t) * (((k : ℝ) + 2) + 2 + t)) *
+            ((((k : ℝ) + 2) + 2 + t) * (((k : ℝ) + 2) + 1 + t')) := by
+        apply mul_le_mul
+        · apply mul_le_mul (by linarith) (by linarith) (by linarith) (by linarith)
+        · apply mul_le_mul (by linarith) (by linarith) (by linarith) (by linarith)
+        · positivity
+        · nlinarith
+      have hC4 : 4 * (3 * ((k : ℝ) + 2) * ((k : ℝ) + 3) * ((k : ℝ) + 4))
+          ≤ 2 * ((((k : ℝ) + 3) * ((k : ℝ) + 4)) * (((k : ℝ) + 4) * ((k : ℝ) + 3))) := by
+        nlinarith [mul_nonneg hk hk, mul_nonneg (mul_nonneg hk hk) hk,
+          mul_nonneg (mul_nonneg (mul_nonneg hk hk) hk) hk]
+      calc (1 + t) ^ 2 * (3 * ((k : ℝ) + 2) * ((k : ℝ) + 3) * ((k : ℝ) + 4))
+          ≤ 4 * (3 * ((k : ℝ) + 2) * ((k : ℝ) + 3) * ((k : ℝ) + 4)) := by
+            nlinarith [mul_le_mul_of_nonneg_right hA4
+              (show (0:ℝ) ≤ 3 * ((k : ℝ) + 2) * ((k : ℝ) + 3) * ((k : ℝ) + 4) by positivity)]
+        _ ≤ 2 * ((((k : ℝ) + 3) * ((k : ℝ) + 4)) * (((k : ℝ) + 4) * ((k : ℝ) + 3))) := hC4
+        _ ≤ 2 * (((((k : ℝ) + 2) + 1 + t) * (((k : ℝ) + 2) + 2 + t)) *
+              ((((k : ℝ) + 2) + 2 + t) * (((k : ℝ) + 2) + 1 + t'))) := by nlinarith [hB4]
+    calc L * δ * ((1 + t) ^ 2 / (((((k : ℝ) + 2) + 1 + t) * (((k : ℝ) + 2) + 2 + t)) *
+          ((((k : ℝ) + 2) + 2 + t) * (((k : ℝ) + 2) + 1 + t'))))
+        ≤ L * δ * (2 / (3 * ((k : ℝ) + 2) * ((k : ℝ) + 3) * ((k : ℝ) + 4))) :=
+          mul_le_mul_of_nonneg_left hX hLδ
+      _ = (2 / 3) * (L * δ) *
+            (1 / (((k : ℝ) + 2) * ((k : ℝ) + 2 + 1) * ((k : ℝ) + 2 + 2))) := by
+          have h2 : (0:ℝ) < (k : ℝ) + 2 := by linarith
+          have h3 : (0:ℝ) < (k : ℝ) + 3 := by linarith
+          have h4 : (0:ℝ) < (k : ℝ) + 4 := by linarith
+          field_simp
+          ring
+  have hAmajor : Summable (fun k : ℕ =>
+      (2 / 3) * (L * δ) * (1 / (((k : ℝ) + 2) * ((k : ℝ) + 2 + 1) * ((k : ℝ) + 2 + 2)))) :=
+    ((hasSum_inv_triple (by norm_num : (1 : ℝ) ≤ 2)).summable.mul_left _)
+  have hAtail_sum : ∑' k, |A (k + 2)| ≤ L * δ * (1 / 18) := by
+    calc ∑' k, |A (k + 2)|
+        ≤ ∑' k : ℕ, (2 / 3) * (L * δ) *
+            (1 / (((k : ℝ) + 2) * ((k : ℝ) + 2 + 1) * ((k : ℝ) + 2 + 2))) :=
+          habsA2.tsum_le_tsum hAtail hAmajor
+      _ = (2 / 3) * (L * δ) * ((1 / 2) / (2 * (2 + 1))) := by
+          rw [((hasSum_inv_triple (by norm_num : (1 : ℝ) ≤ 2)).mul_left
+            ((2 / 3) * (L * δ))).tsum_eq]
+      _ = L * δ * (1 / 18) := by ring
+  have hsplit : ∑' k, |A k| = |A 0| + (|A 1| + ∑' k, |A (k + 2)|) := by
+    rw [habsA.tsum_eq_zero_add]
+    congr 1
+    have := habsA1.tsum_eq_zero_add
+    simpa using this
+  calc ∑' k, |A k| = |A 0| + (|A 1| + ∑' k, |A (k + 2)|) := hsplit
+    _ ≤ L * δ * (1 / 4) + (L * δ * (2 / 27) + L * δ * (1 / 18)) := by gcongr
+    _ ≤ (2 / 5) * L * δ := by nlinarith
+
 end WeightTV
 
 end NormalNumbers

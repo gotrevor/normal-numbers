@@ -5,6 +5,7 @@ Authors: Trevor Morris
 -/
 import NormalNumbers.VandeheyRenyi
 import NormalNumbers.CFPsiPin
+import NormalNumbers.VandeheyWeightTV
 
 /-!
 # The state-refined transfer operator — the crux of Vandehey 2017 Theorem 1.1
@@ -498,6 +499,146 @@ theorem stateStepIter_ge_word {B c : ℝ} {Φ : S → ℝ → ℝ} (hΦ : InCone
         _ ≤ stateStepOp δ (stateStepIter δ v.length Φ) d τ := hterm
         _ = stateStepIter δ (a :: v).length Φ d τ := by
             simp [stateStepIter, List.length_cons]
+
+/-! ## The log-Lipschitz half of the contraction, for a FAMILY -/
+
+/-- Ordered half of `stateStepOp_logLipschitz`. -/
+theorem stateStepOp_logLipschitz_aux {Φ : S → ℝ → ℝ} {L c r B : ℝ}
+    (hL : 0 ≤ L) (hr : 0 ≤ r) (hΦ : InCone B Φ) (δ : S → ℕ → S) (d : S)
+    (hlip : ∀ e : S, ∀ x ∈ Set.Icc (0 : ℝ) 1, ∀ y ∈ Set.Icc (0 : ℝ) 1,
+      |Φ e x - Φ e y| ≤ L * |Real.log (1 + x) - Real.log (1 + y)|)
+    (hc : ∀ e : S, ∀ x ∈ Set.Icc (0 : ℝ) 1, |Φ e x - c| ≤ r)
+    {t t' : ℝ} (ht0' : 0 ≤ t') (htt' : t' ≤ t) (ht1 : t ≤ 1) :
+    |stateStepOp δ Φ d t - stateStepOp δ Φ d t'|
+      ≤ ((2 / 5) * L + (3 / 5) * r) * (Real.log (1 + t) - Real.log (1 + t')) := by
+  have ht0 : (0 : ℝ) ≤ t := ht0'.trans htt'
+  have ht1' : t' ≤ 1 := htt'.trans ht1
+  have htI : t ∈ Set.Icc (0 : ℝ) 1 := ⟨ht0, ht1⟩
+  have htI' : t' ∈ Set.Icc (0 : ℝ) 1 := ⟨ht0', ht1'⟩
+  set ψ : ℕ → ℝ → ℝ := fun k => Φ (δ d (k + 1)) with hψdef
+  have hψlip : ∀ k : ℕ, ∀ x ∈ Set.Icc (0 : ℝ) 1, ∀ y ∈ Set.Icc (0 : ℝ) 1,
+      |ψ k x - ψ k y| ≤ L * |Real.log (1 + x) - Real.log (1 + y)| :=
+    fun k x hx y hy => hlip _ x hx y hy
+  set δlog : ℝ := Real.log (1 + t) - Real.log (1 + t') with hδlog
+  have hδ0 : 0 ≤ δlog := by
+    have := Real.log_le_log (by linarith : (0:ℝ) < 1 + t') (by linarith : (1:ℝ) + t' ≤ 1 + t)
+    rw [hδlog]; linarith
+  set Aq : ℕ → ℝ := fun k => stepWeight t k * (ψ k (stepPt t k) - ψ k (stepPt t' k)) with hAq
+  set Bq : ℕ → ℝ := fun k => (stepWeight t k - stepWeight t' k) * (ψ k (stepPt t' k) - c)
+    with hBq
+  -- summabilities
+  have hS1 : Summable (fun k => stepWeight t k * ψ k (stepPt t k)) :=
+    summable_stateStep hΦ δ d htI
+  have hS2 : Summable (fun k => stepWeight t' k * ψ k (stepPt t' k)) :=
+    summable_stateStep hΦ δ d htI'
+  have hbnd : ∀ k : ℕ, |ψ k (stepPt t' k) - c| ≤ r :=
+    fun k => hc _ _ (stepPt_mem_Icc ht0' k)
+  have hSmix : Summable (fun k => stepWeight t k * ψ k (stepPt t' k)) := by
+    refine Summable.of_abs (Summable.of_nonneg_of_le (fun k => abs_nonneg _) (fun k => ?_)
+      ((summable_stepWeight ht0).mul_right (B + |c| + r)))
+    rw [abs_mul, abs_of_nonneg (stepWeight_nonneg ht0 k)]
+    refine mul_le_mul_of_nonneg_left ?_ (stepWeight_nonneg ht0 k)
+    have h1 := (hΦ (δ d (k + 1)) _ (stepPt_mem_Icc ht0' k))
+    have : |ψ k (stepPt t' k)| = ψ k (stepPt t' k) := abs_of_nonneg h1.1
+    rw [this]
+    have := h1.2
+    have habs : (0 : ℝ) ≤ |c| := abs_nonneg c
+    linarith
+  have hSA : Summable Aq := by
+    have : Aq = fun k => stepWeight t k * ψ k (stepPt t k)
+        - stepWeight t k * ψ k (stepPt t' k) := by funext k; rw [hAq]; ring
+    rw [this]; exact hS1.sub hSmix
+  have hSΔ : Summable (fun k => |stepWeight t k - stepWeight t' k|) :=
+    ((summable_stepWeight ht0).sub (summable_stepWeight ht0')).abs
+  have hSBabs : Summable (fun k => |Bq k|) := by
+    refine Summable.of_nonneg_of_le (fun k => abs_nonneg _) (fun k => ?_) (hSΔ.mul_right r)
+    rw [hBq, abs_mul]
+    exact mul_le_mul_of_nonneg_left (hbnd k) (abs_nonneg _)
+  have hSB : Summable Bq := hSBabs.of_abs
+  -- the split
+  have hsplit : stateStepOp δ Φ d t - stateStepOp δ Φ d t'
+      = (∑' k, Aq k) + ∑' k, Bq k := by
+    have hcz : Summable (fun k => (stepWeight t k - stepWeight t' k) * c) :=
+      ((summable_stepWeight ht0).sub (summable_stepWeight ht0')).mul_right c
+    have hczero : ∑' k, (stepWeight t k - stepWeight t' k) * c = 0 := by
+      rw [tsum_mul_right, (summable_stepWeight ht0).tsum_sub (summable_stepWeight ht0'),
+        tsum_stepWeight ht0, tsum_stepWeight ht0', sub_self, zero_mul]
+    have hBalt : (∑' k, Bq k)
+        = (∑' k, stepWeight t k * ψ k (stepPt t' k))
+          - (∑' k, stepWeight t' k * ψ k (stepPt t' k)) := by
+      have hBex : Bq = fun k => (stepWeight t k * ψ k (stepPt t' k)
+          - stepWeight t' k * ψ k (stepPt t' k)) - (stepWeight t k - stepWeight t' k) * c := by
+        funext k; rw [hBq]; ring
+      rw [hBex, Summable.tsum_sub (hSmix.sub hS2) hcz, hczero, sub_zero,
+        hSmix.tsum_sub hS2]
+    have hAalt : (∑' k, Aq k)
+        = (∑' k, stepWeight t k * ψ k (stepPt t k))
+          - ∑' k, stepWeight t k * ψ k (stepPt t' k) := by
+      have hAex : Aq = fun k => stepWeight t k * ψ k (stepPt t k)
+          - stepWeight t k * ψ k (stepPt t' k) := by funext k; rw [hAq]; ring
+      rw [hAex, hS1.tsum_sub hSmix]
+    rw [hAalt, hBalt, stateStepOp, stateStepOp]
+    ring
+  -- the two estimates
+  have hAbound : |∑' k, Aq k| ≤ (2 / 5) * L * δlog := by
+    have hstep : |∑' k, Aq k| ≤ ∑' k, |Aq k| := by
+      have := norm_tsum_le_tsum_norm (f := Aq)
+        (by simpa [Real.norm_eq_abs] using hSA.abs)
+      simpa only [Real.norm_eq_abs] using this
+    exact hstep.trans (WeightTV.tsum_abs_Afamily_le hL hψlip ht0' htt' ht1)
+  have hBbound : |∑' k, Bq k| ≤ (3 / 5) * r * δlog := by
+    have h1 : |∑' k, Bq k| ≤ ∑' k, |Bq k| := by
+      have := norm_tsum_le_tsum_norm (f := Bq)
+        (by simpa [Real.norm_eq_abs] using hSBabs)
+      simpa only [Real.norm_eq_abs] using this
+    refine h1.trans ?_
+    have h2 : ∑' k, |Bq k| ≤ (∑' k, |stepWeight t k - stepWeight t' k|) * r := by
+      rw [← tsum_mul_right]
+      refine hSBabs.tsum_le_tsum (fun k => ?_) (hSΔ.mul_right r)
+      rw [hBq, abs_mul]
+      exact mul_le_mul_of_nonneg_left (hbnd k) (abs_nonneg _)
+    refine h2.trans ?_
+    have h3 := WeightTV.tsum_abs_stepWeight_sub_le htI htI'
+    have h4 : |Real.log (1 + t) - Real.log (1 + t')| = δlog := abs_of_nonneg hδ0
+    rw [h4] at h3
+    nlinarith [hr, hδ0]
+  rw [hsplit]
+  calc |(∑' k, Aq k) + ∑' k, Bq k| ≤ |∑' k, Aq k| + |∑' k, Bq k| := abs_add_le _ _
+    _ ≤ (2 / 5) * L * δlog + (3 / 5) * r * δlog := add_le_add hAbound hBbound
+    _ = ((2 / 5) * L + (3 / 5) * r) * δlog := by ring
+
+/-- **The family log-Lipschitz contraction.**  If every `Φ(e, ·)` is `L`-log-Lipschitz on
+`[0,1]` and the whole family lies within `r` of a single constant `c`, then
+`stateStepOp δ Φ (d, ·)` is `((2/5)L + (3/5)r)`-log-Lipschitz.
+
+This is the family analogue of `CFPsiPin.stepOp_logLipschitz`, with the Abel-resummed `B`-series
+replaced by `WeightTV.tsum_abs_stepWeight_sub_le` (which needs no Abel resummation because
+`Σ_k w_τ(k) = 1` lets the constant `c` be subtracted freely) and the `A`-series by
+`WeightTV.tsum_abs_Afamily_le` (which is term-by-term in `k` and so survives the passage to a
+family verbatim).
+
+Coupled with the Doeblin step `stateStepIter_ge_word`, this closes the 2×2 linear recursion for
+`(oscillation, log-Lipschitz constant)`: the cross terms satisfy `(3/5)·log 2 < 1`, so the
+spectral radius is `< 1`. -/
+theorem stateStepOp_logLipschitz {Φ : S → ℝ → ℝ} {L c r B : ℝ}
+    (hL : 0 ≤ L) (hr : 0 ≤ r) (hΦ : InCone B Φ) (δ : S → ℕ → S) (d : S)
+    (hlip : ∀ e : S, ∀ x ∈ Set.Icc (0 : ℝ) 1, ∀ y ∈ Set.Icc (0 : ℝ) 1,
+      |Φ e x - Φ e y| ≤ L * |Real.log (1 + x) - Real.log (1 + y)|)
+    (hc : ∀ e : S, ∀ x ∈ Set.Icc (0 : ℝ) 1, |Φ e x - c| ≤ r)
+    {t t' : ℝ} (ht : t ∈ Set.Icc (0 : ℝ) 1) (ht' : t' ∈ Set.Icc (0 : ℝ) 1) :
+    |stateStepOp δ Φ d t - stateStepOp δ Φ d t'|
+      ≤ ((2 / 5) * L + (3 / 5) * r) * |Real.log (1 + t) - Real.log (1 + t')| := by
+  have habs : ∀ a b : ℝ, 0 ≤ a → a ≤ b → |Real.log (1 + b) - Real.log (1 + a)|
+      = Real.log (1 + b) - Real.log (1 + a) := by
+    intro a b ha hab
+    refine abs_of_nonneg ?_
+    have := Real.log_le_log (by linarith : (0:ℝ) < 1 + a) (by linarith : (1:ℝ) + a ≤ 1 + b)
+    linarith
+  rcases le_total t' t with h | h
+  · rw [habs t' t ht'.1 h]
+    exact stateStepOp_logLipschitz_aux hL hr hΦ δ d hlip hc ht'.1 h ht.2
+  · rw [abs_sub_comm (stateStepOp δ Φ d t), abs_sub_comm (Real.log (1 + t)), habs t t' ht.1 h]
+    exact stateStepOp_logLipschitz_aux hL hr hΦ δ d hlip hc ht.1 h ht'.2
 
 /-! ## The crux -/
 
