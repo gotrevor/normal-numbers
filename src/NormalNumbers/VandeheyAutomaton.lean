@@ -301,6 +301,83 @@ noncomputable def jointCount (δ : S → ℕ → S) [DecidableEq S] (s₀ : S) (
 lemma jointCount_eq_card (δ : S → ℕ → S) [DecidableEq S] (s₀ t : S) (v : List ℕ)
     (x : ℝ) (n : ℕ) : jointCount δ s₀ t v x n = (jointSet δ s₀ t v x n).card := rfl
 
+/-! ## The digit tail -/
+
+lemma cfWindow_one (x : ℝ) (i : ℕ) : cfWindow x i 1 = [cfDigit x i] := by
+  simp [cfWindow]
+
+lemma card_digit_eq_card_window (x : ℝ) (k n : ℕ) :
+    ((Finset.range n).filter fun i => cfDigit x i = k).card
+      = ((Finset.range n).filter fun i => [k] = cfWindow x i ([k].length)).card := by
+  congr 1
+  refine Finset.filter_congr fun i _ => ?_
+  simp only [List.length_singleton, cfWindow_one, List.cons.injEq, and_true]
+  exact ⟨fun h => h.symm, fun h => h.symm⟩
+
+/-- Exact partition of the positions by digit: either the digit lies in `[1,K]`, in which
+case it equals exactly one `k ∈ [1,K]`, or it does not. -/
+lemma card_digitTail_add_sum (x : ℝ) (K n : ℕ) :
+    ((Finset.range n).filter fun i => ¬ (1 ≤ cfDigit x i ∧ cfDigit x i ≤ K)).card
+        + ∑ k ∈ Finset.Icc 1 K, ((Finset.range n).filter fun i => cfDigit x i = k).card
+      = n := by
+  classical
+  have hsplit := Finset.card_filter_add_card_filter_not (s := Finset.range n)
+    (fun i => 1 ≤ cfDigit x i ∧ cfDigit x i ≤ K)
+  have hmaps : ∀ i ∈ (Finset.range n).filter
+      (fun i => 1 ≤ cfDigit x i ∧ cfDigit x i ≤ K), cfDigit x i ∈ Finset.Icc 1 K := by
+    intro i hi
+    obtain ⟨-, h1, h2⟩ := Finset.mem_filter.mp hi
+    exact Finset.mem_Icc.mpr ⟨h1, h2⟩
+  have hfib : ((Finset.range n).filter
+      fun i => 1 ≤ cfDigit x i ∧ cfDigit x i ≤ K).card
+      = ∑ k ∈ Finset.Icc 1 K,
+          ((Finset.range n).filter fun i => cfDigit x i = k).card := by
+    rw [Finset.card_eq_sum_card_fiberwise hmaps]
+    refine Finset.sum_congr rfl fun k hk => ?_
+    obtain ⟨hk1, hk2⟩ := Finset.mem_Icc.mp hk
+    congr 1
+    rw [Finset.filter_filter]
+    refine Finset.filter_congr fun i _ => ?_
+    constructor
+    · rintro ⟨-, h⟩; exact h
+    · intro h; exact ⟨⟨by omega, by omega⟩, h⟩
+  rw [← hfib]
+  simp only [Finset.card_range] at hsplit
+  omega
+
+/-- **The digit tail frequency** for a CF-normal point: an exact limit, equal to the Gauss
+measure of the digit tail.  Gauss–Kuzmin makes it `O(1/K)`.  This is the elementary
+replacement for the Airey–Mance tightness hypothesis: it is a *consequence* of
+CF-normality, proved here, not an extra assumption. -/
+theorem tendsto_digitTail_freq {x : ℝ} (hx : IsCFNormal x) (K : ℕ) :
+    Tendsto (fun n => (((Finset.range n).filter
+        fun i => ¬ (1 ≤ cfDigit x i ∧ cfDigit x i ≤ K)).card : ℝ) / n) atTop
+      (nhds (1 - ∑ k ∈ Finset.Icc 1 K, (gaussMeasure (cfCylinder [k])).toReal)) := by
+  classical
+  have hone : ∀ k ∈ Finset.Icc 1 K,
+      Tendsto (fun n => (((Finset.range n).filter
+          fun i => cfDigit x i = k).card : ℝ) / n) atTop
+        (nhds (gaussMeasure (cfCylinder [k])).toReal) := by
+    intro k hk
+    have hk1 : 1 ≤ k := (Finset.mem_Icc.mp hk).1
+    have h := tendsto_windowFreq hx [k] (by simp) (by simpa using hk1)
+    refine h.congr fun n => ?_
+    rw [card_digit_eq_card_window]
+  have hsum : Tendsto (fun n => ∑ k ∈ Finset.Icc 1 K,
+      (((Finset.range n).filter fun i => cfDigit x i = k).card : ℝ) / n) atTop
+      (nhds (∑ k ∈ Finset.Icc 1 K, (gaussMeasure (cfCylinder [k])).toReal)) :=
+    tendsto_finsetSum _ hone
+  have htarget : Tendsto (fun n : ℕ => (1 : ℝ) - ∑ k ∈ Finset.Icc 1 K,
+      (((Finset.range n).filter fun i => cfDigit x i = k).card : ℝ) / n) atTop
+      (nhds (1 - ∑ k ∈ Finset.Icc 1 K, (gaussMeasure (cfCylinder [k])).toReal)) :=
+    tendsto_const_nhds.sub hsum
+  refine htarget.congr' ?_
+  filter_upwards [eventually_gt_atTop 0] with n hn
+  have hnR : (n : ℝ) ≠ 0 := Nat.cast_ne_zero.mpr hn.ne'
+  have hid := card_digitTail_add_sum x K n
+  rw [← Finset.sum_div, sub_eq_iff_eq_add, ← add_div, eq_div_iff hnR, one_mul]
+  exact_mod_cast hid.symm
+
 /-! ## The residue: separating good positions from bad ones -/
 
 variable (δ : S → ℕ → S)

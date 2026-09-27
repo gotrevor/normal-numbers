@@ -9390,3 +9390,29 @@ combinatorics discharged.  Only two analytic limits remain:
 
 Then `exists_jointFreq_limit` closes by a Cauchy-in-`L` squeeze, with limit
 `lim_L Σ_{q} γ(I_{q ++ v})` — visibly independent of `x` and of `s₀`.
+
+### Same lap, fifth commit: the digit-tail limit PROVED (tightness, elementary)
+
+`VandeheyAutomaton.lean`, sorry-free:
+
+* `cfWindow_one`, `card_digit_eq_card_window`, `card_digitTail_add_sum` — the exact partition
+  `#{i<n : a_i ∉ [1,K]} + Σ_{k=1}^{K} #{i<n : a_i = k} = n`
+  (`Finset.card_eq_sum_card_fiberwise` over `i ↦ cfDigit x i`).
+* `tendsto_digitTail_freq` — **for CF-normal `x`,
+  `#{i<n : a_i ∉ [1,K]}/n → 1 − Σ_{k=1}^{K} γ(I_{[k]})`, an exact limit.**
+
+This *is* the tightness of a CF-normal point's empirical measures, in the form the argument
+needs, and it is a **consequence** of CF-normality proved here — not an added hypothesis as
+in Airey–Mance Theorem A/B.  Gauss–Kuzmin (`CFDigitLaw`) makes the limit `O(1/K)`; the
+remaining glue is `Σ_{k≥1} γ(I_{[k]}) = 1`, i.e. `Tendsto (fun K => Σ_{k=1}^{K} γ(I_{[k]}))
+atTop (nhds 1)` — look for it in `CFDigitLaw.lean` (the single-digit Gauss–Kuzmin law) before
+reproving.
+
+### Sole remaining analytic leaf for `exists_jointFreq_limit`
+
+`γ(z-free length-L words) → 0`.  Route: `philipp_psi_mixing_holds` / `CFPsiPin`'s `1 ± Cρᵏ`
+envelope gives `γ(no occurrence of z in the k-th block of |z| digits | earlier blocks)
+≤ 1 − γ(I_z) + Cρ^{|z|}`, so `γ(Z_{k|z|}) ≤ (1 − γ(I_z) + Cρ^{|z|})^k → 0` once
+`|z|` is large enough that `Cρ^{|z|} < γ(I_z)` — which needs `γ(I_z) > 0` (true for genuine
+`z`, `CFCylinder`) and can be arranged by replacing `z` with a power `z^m` (still
+synchronizing, since a synchronizing word's extensions are synchronizing).
