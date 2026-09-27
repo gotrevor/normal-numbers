@@ -264,6 +264,19 @@ lemma poly_eight_le_two_pow (C m : ℕ) {k : ℕ} (hk : 2 * (6562 * C + m + 45) 
     _ ≤ y * y := hmain
     _ ≤ 2 ^ k := hysq
 
+/-- The window bound for the dyadic schedule: with `U ≥ 4`, a progression value bounded by
+`U² + U·U⁴` plus a window offset `≤ U` stays below `U⁶ = H²`. -/
+lemma window_le_pow_six {U : ℕ} (hU : 4 ≤ U) : U * U + U * U ^ 4 + U ≤ U ^ 6 := by
+  have h1 : U * U ≤ U ^ 5 := by
+    calc U * U = U ^ 2 := by ring
+      _ ≤ U ^ 5 := Nat.pow_le_pow_right (by omega) (by norm_num)
+  have h2 : U * U ^ 4 = U ^ 5 := by ring
+  have h3 : U ≤ U ^ 5 := Nat.le_self_pow (by norm_num) U
+  have h4 : 3 * U ^ 5 ≤ U ^ 6 := by
+    calc 3 * U ^ 5 ≤ U * U ^ 5 := Nat.mul_le_mul_right _ (by omega)
+      _ = U ^ 6 := by ring
+  omega
+
 /-! ### The crude far-range bound and summability -/
 
 /-- `τ(n) ≤ n` (crude, but all the far range needs). -/
