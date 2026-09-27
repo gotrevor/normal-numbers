@@ -10041,3 +10041,42 @@ sharper `2/5` (rather than the `3/4` of the scalar file) there is ample margin.
    `sum_over_initial_stateHorizonIntegral`.
 3. `stateHorizonIntegral_pin`, then `ClassEquidistribution` via `vanDerCorput_bound`, then
    `tendsto_jointCount_of_classEquidistribution`.
+
+### 2026-09-27 (same lap, part 5): the two-sided Doeblin oscillation step is PROVED
+
+`VandeheyStatePin.stateStepIter_doeblin_two_sided` (sorry-free).  With `m = famInf Φ`,
+`M' = famSup Φ` over `S × [0,1]`:
+
+> if every pair of states is joined by a genuine word of length exactly `M` and weight `≥ β > 0`,
+> and `Φ(e,·)` varies by at most `q` on `[0,1]` for each `e`, then
+> `m + β(M'−m−q) ≤ L^M Φ(d,τ) ≤ M' − β(M'−m−q)` for every `d, τ`,
+> i.e. `osc(L^M Φ) ≤ (1 − 2β)·osc(Φ) + 2β·q`.
+
+The route that made this cheap: the **one-point** Doeblin argument.  The naive contraction wants
+`L^MΦ(d,τ) ≥ β Σ_t inf_τ Φ(t,τ)`, which would need `L^M` expanded over words (|X| distinct words
+must be extracted from nested `tsum`s).  Instead pick a single state/parameter within `ε` of the
+supremum, drive `d` there by its reach word, and apply `stateStepIter_ge_word` to the nonnegative
+family `Φ − m`; symmetrically with `M' − Φ`.  One word per `(d, target)` suffices, and the
+resulting factor `1 − 2β` is just as good.
+
+Supporting algebra, all new and sorry-free: `stateStepOp_sub_const`, `stateStepOp_const_sub`,
+`stateStepIter_sub_const`, `stateStepIter_const_sub` (the operator is affine and fixes
+constants), and the range API `famRange / famSup / famInf / le_famSup / famInf_le /
+famInf_nonneg / famSup_le_bound / exists_gt_famSup_sub / exists_lt_famInf_add`.
+
+**Everything the crux needs is now proved except the iteration itself.**  The pair
+`(o_n, L_n) = (osc, log-Lipschitz constant)` of `F_n(·,s)` obeys
+
+* `o_{n+M} ≤ (1 − 2β)·o_n + 2β·q_n`, `q_n ≤ log 2 · L_n`  (`stateStepIter_doeblin_two_sided`)
+* `L_{n+1} ≤ (2/5)·L_n + (3/10)·o_n`  (`stateStepOp_logLipschitz`, with `r = o_n/2`)
+
+whose spectral radius is `< 1` since `(1 − 2/5) > (3/5)·log 2`.
+
+**Next attack.**  (i) A `stateHorizonIntegral`-level instantiation: `q_n ≤ log 2 · L_n` from
+`CFPsiPin.abs_tailDensity_sub_le_log`, and `L_0 ≤ 2 log 2 · γ(A)` from
+`CFPsiPin.horizonIntegral_zero_logLip`, `o_0 ≤ γ(A)`-ish from `stateHorizonIntegral_le_two`.
+(ii) The elementary 2×2 linear iteration lemma: `x_{n+1} ≤ a x_n + b y_n`, `y_{n+1} ≤ c x_n + d y_n`
+with `a,b,c,d ≥ 0` and `(1−a)(1−d) > bc`, `a+d < 2` ⟹ `x_n + κ y_n ≤ θⁿ (x_0 + κ y_0)` for a
+suitable `κ > 0, θ < 1` (choose `κ` in the interval `((a−1)/(−c)`-style gap) — a two-line
+argument once `κ` is named explicitly, e.g. `κ = 1` works when `a + c ≤ θ` and `b + d ≤ θ`.
+(iii) `stateHorizonIntegral_pin`.

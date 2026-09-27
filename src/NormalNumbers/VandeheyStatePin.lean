@@ -640,6 +640,235 @@ theorem stateStepOp_logLipschitz {Φ : S → ℝ → ℝ} {L c r B : ℝ}
   · rw [abs_sub_comm (stateStepOp δ Φ d t), abs_sub_comm (Real.log (1 + t)), habs t t' ht.1 h]
     exact stateStepOp_logLipschitz_aux hL hr hΦ δ d hlip hc ht.1 h ht'.2
 
+/-! ## Affine algebra of the operator -/
+
+lemma stateStepOp_sub_const {B B' a : ℝ} {Φ : S → ℝ → ℝ} (hΦ : InCone B Φ)
+    (hΨ : InCone B' (fun d τ => Φ d τ - a)) (δ : S → ℕ → S) (d : S)
+    {τ : ℝ} (hτ : τ ∈ Set.Icc (0 : ℝ) 1) :
+    stateStepOp δ (fun d τ => Φ d τ - a) d τ = stateStepOp δ Φ d τ - a := by
+  have h1 := summable_stateStep hΦ δ d hτ
+  have h2 : Summable (fun k : ℕ => stepWeight τ k * a) :=
+    (summable_stepWeight hτ.1).mul_right a
+  have hsplit : ∀ k : ℕ, stepWeight τ k * ((fun d τ => Φ d τ - a) (δ d (k + 1)) (stepPt τ k))
+      = stepWeight τ k * Φ (δ d (k + 1)) (stepPt τ k) - stepWeight τ k * a := by
+    intro k; ring
+  rw [stateStepOp, tsum_congr hsplit, h1.tsum_sub h2, tsum_mul_right,
+    tsum_stepWeight hτ.1, one_mul, stateStepOp]
+
+lemma stateStepOp_const_sub {B B' a : ℝ} {Φ : S → ℝ → ℝ} (hΦ : InCone B Φ)
+    (hΨ : InCone B' (fun d τ => a - Φ d τ)) (δ : S → ℕ → S) (d : S)
+    {τ : ℝ} (hτ : τ ∈ Set.Icc (0 : ℝ) 1) :
+    stateStepOp δ (fun d τ => a - Φ d τ) d τ = a - stateStepOp δ Φ d τ := by
+  have h1 := summable_stateStep hΦ δ d hτ
+  have h2 : Summable (fun k : ℕ => stepWeight τ k * a) :=
+    (summable_stepWeight hτ.1).mul_right a
+  have hsplit : ∀ k : ℕ, stepWeight τ k * ((fun d τ => a - Φ d τ) (δ d (k + 1)) (stepPt τ k))
+      = stepWeight τ k * a - stepWeight τ k * Φ (δ d (k + 1)) (stepPt τ k) := by
+    intro k; ring
+  rw [stateStepOp, tsum_congr hsplit, h2.tsum_sub h1, tsum_mul_right,
+    tsum_stepWeight hτ.1, one_mul, stateStepOp]
+
+lemma stateStepIter_sub_const {B B' a : ℝ} {Φ : S → ℝ → ℝ} (hΦ : InCone B Φ)
+    (hΨ : InCone B' (fun d τ => Φ d τ - a)) (δ : S → ℕ → S) :
+    ∀ (n : ℕ) (d : S), ∀ {τ : ℝ}, τ ∈ Set.Icc (0 : ℝ) 1 →
+      stateStepIter δ n (fun d τ => Φ d τ - a) d τ = stateStepIter δ n Φ d τ - a := by
+  intro n
+  induction n with
+  | zero => intro d τ _; rfl
+  | succ n ih =>
+      intro d τ hτ
+      have hcΦ := stateStepIter_inCone hΦ δ n
+      have hcΨ := stateStepIter_inCone hΨ δ n
+      have hkey : InCone B' (fun d τ => stateStepIter δ n Φ d τ - a) := by
+        intro e x hx
+        have hx' := ih e hx
+        simp only []
+        rw [← hx']
+        exact hcΨ e x hx
+      have hstep : stateStepIter δ (n + 1) (fun d τ => Φ d τ - a) d τ
+          = stateStepOp δ (fun e y => stateStepIter δ n Φ e y - a) d τ := by
+        rw [stateStepIter, stateStepOp, stateStepOp]
+        exact tsum_congr fun k => by rw [ih _ (stepPt_mem_Icc hτ.1 k)]
+      rw [hstep, stateStepOp_sub_const hcΦ hkey δ d hτ, stateStepIter]
+
+lemma stateStepIter_const_sub {B B' a : ℝ} {Φ : S → ℝ → ℝ} (hΦ : InCone B Φ)
+    (hΨ : InCone B' (fun d τ => a - Φ d τ)) (δ : S → ℕ → S) :
+    ∀ (n : ℕ) (d : S), ∀ {τ : ℝ}, τ ∈ Set.Icc (0 : ℝ) 1 →
+      stateStepIter δ n (fun d τ => a - Φ d τ) d τ = a - stateStepIter δ n Φ d τ := by
+  intro n
+  induction n with
+  | zero => intro d τ _; rfl
+  | succ n ih =>
+      intro d τ hτ
+      have hcΦ := stateStepIter_inCone hΦ δ n
+      have hcΨ := stateStepIter_inCone hΨ δ n
+      have hkey : InCone B' (fun d τ => a - stateStepIter δ n Φ d τ) := by
+        intro e x hx
+        have hx' := ih e hx
+        simp only []
+        rw [← hx']
+        exact hcΨ e x hx
+      have hstep : stateStepIter δ (n + 1) (fun d τ => a - Φ d τ) d τ
+          = stateStepOp δ (fun e y => a - stateStepIter δ n Φ e y) d τ := by
+        rw [stateStepIter, stateStepOp, stateStepOp]
+        exact tsum_congr fun k => by rw [ih _ (stepPt_mem_Icc hτ.1 k)]
+      rw [hstep, stateStepOp_const_sub hcΦ hkey δ d hτ, stateStepIter]
+
+/-! ## The range of a family over `S × [0,1]` -/
+
+section Range
+
+variable [Nonempty S]
+
+/-- The set of values a family takes on `S × [0,1]`. -/
+def famRange (Φ : S → ℝ → ℝ) : Set ℝ :=
+  {v : ℝ | ∃ d : S, ∃ x ∈ Set.Icc (0 : ℝ) 1, Φ d x = v}
+
+lemma famRange_nonempty (Φ : S → ℝ → ℝ) : (famRange Φ).Nonempty :=
+  ⟨Φ (Classical.arbitrary S) 0, Classical.arbitrary S, 0, ⟨le_rfl, by norm_num⟩, rfl⟩
+
+lemma famRange_bddAbove {B : ℝ} {Φ : S → ℝ → ℝ} (hΦ : InCone B Φ) : BddAbove (famRange Φ) := by
+  refine ⟨B, ?_⟩
+  rintro v ⟨d, x, hx, rfl⟩
+  exact (hΦ d x hx).2
+
+lemma famRange_bddBelow {B : ℝ} {Φ : S → ℝ → ℝ} (hΦ : InCone B Φ) : BddBelow (famRange Φ) := by
+  refine ⟨0, ?_⟩
+  rintro v ⟨d, x, hx, rfl⟩
+  exact (hΦ d x hx).1
+
+/-- The supremum of the family over `S × [0,1]`. -/
+noncomputable def famSup (Φ : S → ℝ → ℝ) : ℝ := sSup (famRange Φ)
+
+/-- The infimum of the family over `S × [0,1]`. -/
+noncomputable def famInf (Φ : S → ℝ → ℝ) : ℝ := sInf (famRange Φ)
+
+lemma le_famSup {B : ℝ} {Φ : S → ℝ → ℝ} (hΦ : InCone B Φ) (d : S) {x : ℝ}
+    (hx : x ∈ Set.Icc (0 : ℝ) 1) : Φ d x ≤ famSup Φ :=
+  le_csSup (famRange_bddAbove hΦ) ⟨d, x, hx, rfl⟩
+
+lemma famInf_le {B : ℝ} {Φ : S → ℝ → ℝ} (hΦ : InCone B Φ) (d : S) {x : ℝ}
+    (hx : x ∈ Set.Icc (0 : ℝ) 1) : famInf Φ ≤ Φ d x :=
+  csInf_le (famRange_bddBelow hΦ) ⟨d, x, hx, rfl⟩
+
+lemma famInf_nonneg {B : ℝ} {Φ : S → ℝ → ℝ} (hΦ : InCone B Φ) : 0 ≤ famInf Φ :=
+  le_csInf (famRange_nonempty Φ) (by rintro v ⟨d, x, hx, rfl⟩; exact (hΦ d x hx).1)
+
+lemma famInf_le_famSup {B : ℝ} {Φ : S → ℝ → ℝ} (hΦ : InCone B Φ) : famInf Φ ≤ famSup Φ := by
+  obtain ⟨v, hv⟩ := famRange_nonempty Φ
+  obtain ⟨d, x, hx, rfl⟩ := hv
+  exact (famInf_le hΦ d hx).trans (le_famSup hΦ d hx)
+
+lemma famSup_le_bound {B : ℝ} {Φ : S → ℝ → ℝ} (hΦ : InCone B Φ) : famSup Φ ≤ B :=
+  csSup_le (famRange_nonempty Φ) (by rintro v ⟨d, x, hx, rfl⟩; exact (hΦ d x hx).2)
+
+lemma exists_gt_famSup_sub {B : ℝ} {Φ : S → ℝ → ℝ} (hΦ : InCone B Φ) {ε : ℝ} (hε : 0 < ε) :
+    ∃ d : S, ∃ x ∈ Set.Icc (0 : ℝ) 1, famSup Φ - ε < Φ d x := by
+  obtain ⟨v, hv, hlt⟩ := exists_lt_of_lt_csSup (famRange_nonempty Φ)
+    (by linarith : famSup Φ - ε < famSup Φ)
+  obtain ⟨d, x, hx, rfl⟩ := hv
+  exact ⟨d, x, hx, hlt⟩
+
+lemma exists_lt_famInf_add {B : ℝ} {Φ : S → ℝ → ℝ} (hΦ : InCone B Φ) {ε : ℝ} (hε : 0 < ε) :
+    ∃ d : S, ∃ x ∈ Set.Icc (0 : ℝ) 1, Φ d x < famInf Φ + ε := by
+  obtain ⟨v, hv, hlt⟩ := exists_lt_of_csInf_lt (famRange_nonempty Φ)
+    (by linarith : famInf Φ < famInf Φ + ε)
+  obtain ⟨d, x, hx, rfl⟩ := hv
+  exact ⟨d, x, hx, hlt⟩
+
+end Range
+
+/-! ## The two-sided Doeblin step -/
+
+/-- **The Doeblin contraction of the oscillation.**  Suppose every pair of states is joined by a
+genuine digit word of length exactly `M` whose weight is at least `β > 0`, and the family varies
+by at most `q` in the tail parameter at a fixed state.  Then after `M` steps the family is
+squeezed into `[m + β(M' − q), M' − β(M' − q)]` where `m = famInf Φ`, `M' = famSup Φ`
+(writing `M'−m` for the oscillation) — i.e.
+
+`osc(L^M Φ) ≤ (1 − 2β)·osc(Φ) + 2β·q`.
+
+The classical one-point Doeblin argument: pick a state/parameter where `Φ` is within `ε` of its
+supremum, drive `d` there by the reach word, and apply `stateStepIter_ge_word` to the
+nonnegative family `Φ − m`; symmetrically with `M' − Φ`. Only ONE word per `(d, target)` is
+needed, so no expansion of `L^M` over words is required. -/
+theorem stateStepIter_doeblin_two_sided [Nonempty S] {B q β : ℝ} {Φ : S → ℝ → ℝ}
+    (hΦ : InCone B Φ) (δ : S → ℕ → S) (M : ℕ) (hβ : 0 < β) (hq : 0 ≤ q)
+    (hreach : ∀ d t : S, ∃ w : List ℕ, w.length = M ∧ (∀ a ∈ w, 1 ≤ a) ∧
+      runState δ d w = t ∧ β ≤ wordWeight w)
+    (hosc : ∀ e : S, ∀ x ∈ Set.Icc (0 : ℝ) 1, ∀ y ∈ Set.Icc (0 : ℝ) 1, |Φ e x - Φ e y| ≤ q)
+    (d : S) {τ : ℝ} (hτ : τ ∈ Set.Icc (0 : ℝ) 1) :
+    famInf Φ + β * (famSup Φ - famInf Φ - q) ≤ stateStepIter δ M Φ d τ ∧
+      stateStepIter δ M Φ d τ ≤ famSup Φ - β * (famSup Φ - famInf Φ - q) := by
+  have hm0 : 0 ≤ famInf Φ := famInf_nonneg hΦ
+  have hMB : famSup Φ ≤ B := famSup_le_bound hΦ
+  -- the two shifted families
+  have hΨ1 : InCone B (fun e y => Φ e y - famInf Φ) := by
+    intro e x hx
+    exact ⟨sub_nonneg.mpr (famInf_le hΦ e hx), by linarith [(hΦ e x hx).2]⟩
+  have hΨ2 : InCone B (fun e y => famSup Φ - Φ e y) := by
+    intro e x hx
+    exact ⟨sub_nonneg.mpr (le_famSup hΦ e hx), by linarith [(hΦ e x hx).1]⟩
+  constructor
+  · -- lower bound
+    refine le_of_forall_pos_le_add fun ε hε => ?_
+    obtain ⟨t₀, x₀, hx₀, hgt⟩ := exists_gt_famSup_sub hΦ (ε := ε / (β + 1))
+      (by positivity)
+    obtain ⟨w, hwlen, hwpos, hwrun, hwβ⟩ := hreach d t₀
+    set c : ℝ := max 0 (Φ t₀ x₀ - q - famInf Φ) with hc
+    have hc0 : 0 ≤ c := le_max_left _ _
+    have hcle : ∀ y ∈ Set.Icc (0 : ℝ) 1, c ≤ (fun e y => Φ e y - famInf Φ) (runState δ d w) y := by
+      intro y hy
+      rw [hwrun]
+      refine max_le (sub_nonneg.mpr (famInf_le hΦ t₀ hy)) ?_
+      have := abs_le.mp (hosc t₀ x₀ hx₀ y hy)
+      simp only []
+      linarith [this.1]
+    have hkey := stateStepIter_ge_word hΨ1 δ hc0 w hwpos d hcle hτ
+    rw [hwlen] at hkey
+    have heq := stateStepIter_sub_const hΦ hΨ1 δ M d hτ
+    rw [heq] at hkey
+    have hcge : Φ t₀ x₀ - q - famInf Φ ≤ c := le_max_right _ _
+    have hwc : β * c ≤ wordWeight w * c := mul_le_mul_of_nonneg_right hwβ hc0
+    have hεb : famSup Φ - ε / (β + 1) < Φ t₀ x₀ := hgt
+    have hfin : β * (famSup Φ - famInf Φ - q) - β * (ε / (β + 1)) ≤ wordWeight w * c := by
+      refine le_trans ?_ hwc
+      have : famSup Φ - ε / (β + 1) - q - famInf Φ ≤ c := by linarith
+      nlinarith [hβ]
+    have hsmall : β * (ε / (β + 1)) ≤ ε := by
+      rw [mul_div_assoc']
+      rw [div_le_iff₀ (by linarith)]
+      nlinarith [hε.le]
+    linarith
+  · -- upper bound
+    refine le_of_forall_pos_le_add fun ε hε => ?_
+    obtain ⟨t₁, x₁, hx₁, hlt⟩ := exists_lt_famInf_add hΦ (ε := ε / (β + 1)) (by positivity)
+    obtain ⟨w, hwlen, hwpos, hwrun, hwβ⟩ := hreach d t₁
+    set c : ℝ := max 0 (famSup Φ - (Φ t₁ x₁ + q)) with hc
+    have hc0 : 0 ≤ c := le_max_left _ _
+    have hcle : ∀ y ∈ Set.Icc (0 : ℝ) 1, c ≤ (fun e y => famSup Φ - Φ e y) (runState δ d w) y := by
+      intro y hy
+      rw [hwrun]
+      refine max_le (sub_nonneg.mpr (le_famSup hΦ t₁ hy)) ?_
+      have := abs_le.mp (hosc t₁ x₁ hx₁ y hy)
+      simp only []
+      linarith [this.2]
+    have hkey := stateStepIter_ge_word hΨ2 δ hc0 w hwpos d hcle hτ
+    rw [hwlen] at hkey
+    have heq := stateStepIter_const_sub hΦ hΨ2 δ M d hτ
+    rw [heq] at hkey
+    have hcge : famSup Φ - (Φ t₁ x₁ + q) ≤ c := le_max_right _ _
+    have hwc : β * c ≤ wordWeight w * c := mul_le_mul_of_nonneg_right hwβ hc0
+    have hfin : β * (famSup Φ - famInf Φ - q) - β * (ε / (β + 1)) ≤ wordWeight w * c := by
+      refine le_trans ?_ hwc
+      have : famSup Φ - famInf Φ - ε / (β + 1) - q ≤ c := by linarith
+      nlinarith [hβ]
+    have hsmall : β * (ε / (β + 1)) ≤ ε := by
+      rw [mul_div_assoc']
+      rw [div_le_iff₀ (by linarith)]
+      nlinarith [hε.le]
+    linarith
+
 /-! ## The crux -/
 
 /-- **The crux of Vandehey 2017 Theorem 1.1**, as one named statement: the refined horizon
