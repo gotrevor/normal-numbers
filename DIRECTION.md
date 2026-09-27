@@ -1,5 +1,32 @@
 # DIRECTION — normal-numbers 🧭
 
+## OPERATOR OBJECTIVE 2026-09-27 lap D — FINAL ASSEMBLY (SUPERSEDES every objective below,
+## including lap C's tail-control objective and all completed-stage stop instructions)
+
+Trevor explicitly authorized **final assembly of simultaneous Lambert disjunctivity**.
+Bounded run, up to two Opus/low laps.  Sources: `HANDOFF-joint-lambert.md`,
+`KICKOFF-2026-09-26-joint-lambert.md`, `papers/2026-09-26-joint-lambert-disjunctivity.md`.
+
+**Target: `src/NormalNumbers/JointLambertDisjunctivity.lean`**, in namespace
+`NormalNumbers.JointLambert`:
+
+* `theorem jointLambertDisjunctivity (hagp : AGP) (hpis : PrimeIntervalSupply) : JointLambertDisjunctivity`
+* `theorem jointWords_two_four (hagp : AGP) (hpis : PrimeIntervalSupply) : JointWords ({2,4} : Finset ℕ)`
+
+Only the two source-faithful analytic inputs may be hypotheses.  Prove the digit bridge and
+the assembly from `evenEncoding` and `exists_joint_small_tail_all_bases`: no new analytic
+input, no assumed digit bridge, no base-coprimality or multiplicative-independence
+requirement, no separate position per coordinate, empty base set must work.  Frozen files
+stay byte-identical (`JointLambertStatement` @ `78e6048`, `EncodingProof` @ `7f05cb2`,
+`Arithmetic` @ `566586a`, `PrimeSelection` @ `7dc2522`, `Tail`/`TailBounds` @ `b8a9d11`).
+
+**STATUS 2026-09-27: BOTH TARGETS PROVED, axiom-clean.**  Boundary: qualitative
+simultaneous disjunctivity *conditional* on `AGP` and `PrimeIntervalSupply` — not an
+unconditional Lean theorem, not normality, not the all-`N` quantitative bound.  Novelty is
+not confirmed by formalization.
+
+---
+
 ## OPERATOR OBJECTIVE 2026-09-27 lap C (SUPERSEDES every objective below, including lap B's
 ## stop instruction and all older CURRENT DIRECTIVE priorities)
 

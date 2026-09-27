@@ -1,5 +1,23 @@
 # STATUS — normal-numbers 📊
 
+**27 September — SIMULTANEOUS LAMBERT DISJUNCTIVITY ASSEMBLED (conditional).**
+`NormalNumbers.JointLambert.jointLambertDisjunctivity : AGP → PrimeIntervalSupply →
+JointLambertDisjunctivity` and the required dependent-base control
+`jointWords_two_four : AGP → PrimeIntervalSupply → JointWords {2,4}` are proved,
+sorry-free, `#print axioms` = `[propext, Classical.choice, Quot.sound]`, in
+`src/NormalNumbers/JointLambertDisjunctivity.lean`.  **Mathematical result:** for every
+finite set `S` of bases `≥ 2` (distinctness comes free from `Finset`; multiplicatively
+dependent bases such as `2, 4` included; the empty set covered) and every prescription of a
+nonempty word in each `E_b`, `b ∈ S`, there is a common, arbitrarily late digit offset at
+which every prescribed word is read simultaneously.  The frozen statements
+`JointWords`/`JointLambertDisjunctivity` are unchanged (`78e6048`), so this is the paper
+headline of §6 and not a weakened variant.
+**Remaining boundary:** this is *qualitative* simultaneous disjunctivity **conditional on
+`AGP` and `PrimeIntervalSupply`** — the two source-faithful analytic inputs are still
+explicit Lean hypotheses, so it is not an unconditional Lean theorem.  It is not normality,
+and it is not the all-`N` quantitative occurrence bound of the paper.  Novelty is *not*
+confirmed by formalization.
+
 **26 September research:** [simultaneous Lambert words](papers/2026-09-26-joint-lambert-disjunctivity.md), complete proposed paper proof, awaiting independent review; finite character separation proved in Lean.  [Prepared formalization](KICKOFF-2026-09-26-joint-lambert.md), not launched.
 
 **Pair A multicutoff — Theorem C′, the square-root fresh-mass normality criterion — PROVED.**
