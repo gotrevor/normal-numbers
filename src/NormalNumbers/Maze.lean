@@ -15,6 +15,7 @@ import NormalNumbers.StonehamSixFailure
 import NormalNumbers.CastingOut
 import NormalNumbers.Walsh
 import NormalNumbers.WalshBase
+import NormalNumbers.WallRational
 
 /-!
 # `Maze.lean` — the halls we have walked, encoded
@@ -247,6 +248,13 @@ number satisfies that: each digit value contributes `ζ^d` summing to `1`, not `
 normal law is `1/(b−1) + b^{−L}((b−1)[r=0] − 1)/(b−1)` (in base 3 a digit is even with
 probability 2/3).  C1 was restated as `CastingOut.CastLaw`. -/
 alias hall_uniform_casting_out := NormalNumbers.CastingOut.not_castUniform_of_isNormal
+
+/-- **HALL: Mahler block-occurrence analogue** (`vacuous`, 2026-09-27).
+Wall's 1949 thesis theorem — `q * x + r` is normal in base `b` whenever `x` is and `q ≠ 0`,
+`r` are rational — says that no choice of rational multiplier can make a normal number
+abnormal, so a "pick a multiple" normality statement carries no information.  Formerly a
+`.cited` prose row; now a theorem of this build. -/
+alias hall_mahler_block_occurrence := NormalNumbers.isNormal_rat_mul_add
 
 /-! ## 3. Tier `frozen` — precise statements, undischarged
 
@@ -869,9 +877,9 @@ def register : List Hall := [
    "projects/normal-numbers.md", "2026-08-25"⟩,
   ⟨"Mahler block-occurrence analogue",
    "Look for a normality version of the pick-a-multiple statement",
-   .vacuous, .cited,
+   .vacuous, .kernel,
    "Wall 1949: normality survives rational multiplication, so picking a multiplier says nothing",
-   "projects/normal-numbers.md", "2026-08-25"⟩,
+   "alias hall_mahler_block_occurrence", "2026-09-27"⟩,
   ⟨"finite C2 implies slow growth",
    "Assume the second sieve-constant growth hypothesis follows from finiteness",
    .falseAsStated, .cited,

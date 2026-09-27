@@ -1136,8 +1136,127 @@ theorem tendsto_jointDensity (b B : ℕ) (hb : 2 ≤ b) (hB : 0 < B) (hcop : Nat
     Tendsto (fun N => (((Finset.range N).filter fun n =>
         divState b B x M n = j ∧ blockVal b x n l = v).card : ℝ) / N)
       atTop (𝓝 ((B : ℝ)⁻¹ * ((b : ℝ) ^ l)⁻¹)) := by
-  sorry
-
+  classical
+  have hb0 : 0 < b := by omega
+  have hbR : (0 : ℝ) < b := by positivity
+  have hBR : (0 : ℝ) < B := by exact_mod_cast hB
+  obtain ⟨T, hlT, hbT⟩ := exists_period b B hB hcop l
+  have hT0 : 0 < T := by omega
+  have hlT' : l ≤ T := le_of_lt hlT
+  have hq2 : 2 ≤ b ^ T := by
+    calc 2 ≤ b := hb
+      _ = b ^ 1 := (pow_one b).symm
+      _ ≤ b ^ T := Nat.pow_le_pow_right hb0 hT0
+  have hS : tagSet b T l v ⊆ Finset.range (b ^ T) := tagSet_subset b T l v
+  have hcardS : (tagSet b T l v).card = b ^ (T - l) := card_tagSet b T l v hb hlT' hv
+  set τ : ℝ := ((tagSet b T l v).card : ℝ) / ((b ^ T : ℕ) * B) with hτdef
+  have hτval : τ = (B : ℝ)⁻¹ * ((b : ℝ) ^ l)⁻¹ := by
+    rw [hτdef, hcardS]
+    have hsplit : (b : ℝ) ^ T = (b : ℝ) ^ l * (b : ℝ) ^ (T - l) := by
+      rw [← pow_add]; congr 1; omega
+    push_cast
+    rw [hsplit]
+    have h1 : ((b : ℝ) ^ (T - l)) ≠ 0 := by positivity
+    have h2 : ((b : ℝ) ^ l) ≠ 0 := by positivity
+    field_simp
+  rw [← hτval]
+  have hfun : (fun N => (((Finset.range N).filter fun n =>
+        divState b B x M n = j ∧ blockVal b x n l = v).card : ℝ) / N)
+      = fun N => (∑ n ∈ Finset.range N, jointInd b B x M j v l n) / N := by
+    funext N
+    congr 1
+    simp only [jointInd]
+    rw [Finset.sum_boole]
+  rw [hfun]
+  refine Metric.tendsto_atTop.2 ?_
+  intro ε hε
+  -- choose the number of shifts
+  obtain ⟨K1, hK1⟩ := exists_nat_gt (30 * (3 * (B : ℝ) / ε) ^ 2)
+  set K := K1 + 1 with hKdef
+  have hK : 0 < K := by omega
+  have hKR : (0 : ℝ) < (K : ℝ) := by exact_mod_cast hK
+  have hKgt : 30 * (3 * (B : ℝ) / ε) ^ 2 < (K : ℝ) := by
+    refine lt_of_lt_of_le hK1 ?_
+    have : (K1 : ℝ) ≤ ((K1 + 1 : ℕ) : ℝ) := by exact_mod_cast Nat.le_succ K1
+    rw [hKdef]
+    exact this
+  have hu : (0 : ℝ) < 3 * (B : ℝ) / ε := by positivity
+  have hsqrt : (B : ℝ) * Real.sqrt (30 / K) < ε / 3 := by
+    have hlt : 30 / (K : ℝ) < (1 / (3 * (B : ℝ) / ε)) ^ 2 := by
+      rw [div_pow, one_pow, div_lt_div_iff₀ hKR (by positivity)]
+      linarith [hKgt]
+    have h2 := Real.sqrt_lt_sqrt (by positivity : (0:ℝ) ≤ 30 / (K : ℝ)) hlt
+    rw [Real.sqrt_sq (by positivity : (0:ℝ) ≤ 1 / (3 * (B : ℝ) / ε))] at h2
+    have h3 : (1 : ℝ) / (3 * (B : ℝ) / ε) = ε / (3 * B) := by field_simp
+    rw [h3] at h2
+    calc (B : ℝ) * Real.sqrt (30 / K) < (B : ℝ) * (ε / (3 * B)) :=
+          mul_lt_mul_of_pos_left h2 hBR
+      _ = ε / 3 := by field_simp
+  -- the fixed-depth test function
+  set F : ℕ → ℝ := fun w =>
+    ∑ ρ ∈ Finset.range B, |WallCrux.Psi (b ^ T) B (tagSet b T l v) ρ j K w - τ| with hF
+  have hTK : 0 < T * K := Nat.mul_pos hT0 hK
+  have hFlim := tendsto_blockAverage b hb x hxn (T * K) hTK F
+  set L : ℝ := ((b : ℝ) ^ (T * K))⁻¹ * ∑ w ∈ Finset.range (b ^ (T * K)), F w with hL
+  have hqK : (b ^ T) ^ K = b ^ (T * K) := by rw [← pow_mul]
+  have hqKR : ((b ^ T : ℕ) : ℝ) ^ K = (b : ℝ) ^ (T * K) := by push_cast; rw [← pow_mul]
+  have hLbound : L ≤ (B : ℝ) * Real.sqrt (30 / K) := by
+    have hswap : L = ∑ ρ ∈ Finset.range B, (((b : ℝ) ^ (T * K))⁻¹ *
+        ∑ w ∈ Finset.range (b ^ (T * K)),
+          |WallCrux.Psi (b ^ T) B (tagSet b T l v) ρ j K w - τ|) := by
+      rw [hL, hF, Finset.sum_comm, Finset.mul_sum]
+    rw [hswap]
+    have hterm : ∀ ρ ∈ Finset.range B, (((b : ℝ) ^ (T * K))⁻¹ *
+        ∑ w ∈ Finset.range (b ^ (T * K)),
+          |WallCrux.Psi (b ^ T) B (tagSet b T l v) ρ j K w - τ|)
+        ≤ Real.sqrt (30 / K) := by
+      intro ρ _
+      have h := WallCrux.walk_L1_bound (b ^ T) B hq2 hB hbT (tagSet b T l v) hS ρ j K hj hK
+      rw [← hτdef, hqKR, hqK] at h
+      exact h
+    calc ∑ ρ ∈ Finset.range B, (((b : ℝ) ^ (T * K))⁻¹ *
+          ∑ w ∈ Finset.range (b ^ (T * K)),
+            |WallCrux.Psi (b ^ T) B (tagSet b T l v) ρ j K w - τ|)
+        ≤ ∑ _ρ ∈ Finset.range B, Real.sqrt (30 / K) := Finset.sum_le_sum hterm
+      _ = (B : ℝ) * Real.sqrt (30 / K) := by
+          rw [Finset.sum_const, Finset.card_range, nsmul_eq_mul]
+  obtain ⟨N1, hN1⟩ := Metric.tendsto_atTop.1 hFlim (ε / 3) (by positivity)
+  obtain ⟨N2, hN2⟩ := exists_nat_gt (3 * ((T * K : ℕ) : ℝ) / ε)
+  refine ⟨max (max N1 N2) 1, ?_⟩
+  intro N hN
+  have hN1' : N1 ≤ N := le_trans (le_trans (le_max_left N1 N2) (le_max_left _ 1)) hN
+  have hN2' : N2 ≤ N := le_trans (le_trans (le_max_right N1 N2) (le_max_left _ 1)) hN
+  have hNpos : 0 < N := lt_of_lt_of_le Nat.zero_lt_one (le_trans (le_max_right _ 1) hN)
+  have hNR : (0 : ℝ) < (N : ℝ) := by exact_mod_cast hNpos
+  have hshiftsmall : ((T * K : ℕ) : ℝ) < ε / 3 * N := by
+    have h1 : 3 * ((T * K : ℕ) : ℝ) / ε < (N : ℝ) :=
+      lt_of_lt_of_le hN2 (by exact_mod_cast hN2')
+    rw [div_lt_iff₀ hε] at h1
+    linarith
+  have hFsmall : ∑ n ∈ Finset.range N, F (blockVal b x n (T * K)) < 2 * ε / 3 * N := by
+    have h := hN1 N hN1'
+    rw [Real.dist_eq] at h
+    have hd : (∑ n ∈ Finset.range N, F (blockVal b x n (T * K))) / N - L < ε / 3 :=
+      lt_of_abs_lt h
+    have hLle : L < ε / 3 := lt_of_le_of_lt hLbound hsqrt
+    have h2 : (∑ n ∈ Finset.range N, F (blockVal b x n (T * K))) / N < 2 * ε / 3 := by
+      linarith
+    rw [div_lt_iff₀ hNR] at h2
+    linarith
+  have hcore := jointSum_approx b B hb hB x hx M T l hl hlT' hbT j hj v K hK τ N
+  have hFeq : ∑ n ∈ Finset.range N, ∑ ρ ∈ Finset.range B,
+      |WallCrux.Psi (b ^ T) B (tagSet b T l v) ρ j K (blockVal b x n (T * K)) - τ|
+      = ∑ n ∈ Finset.range N, F (blockVal b x n (T * K)) := by rw [hF]
+  rw [hFeq] at hcore
+  rw [Real.dist_eq]
+  have hdiv : (∑ n ∈ Finset.range N, jointInd b B x M j v l n) / N - τ
+      = ((∑ n ∈ Finset.range N, jointInd b B x M j v l n) - (N : ℝ) * τ) / N := by
+    field_simp
+  rw [hdiv, abs_div, abs_of_pos hNR, div_lt_iff₀ hNR]
+  calc |(∑ n ∈ Finset.range N, jointInd b B x M j v l n) - (N : ℝ) * τ|
+      ≤ ((T * K : ℕ) : ℝ) + ∑ n ∈ Finset.range N, F (blockVal b x n (T * K)) := hcore
+    _ < ε / 3 * N + 2 * ε / 3 * N := by linarith
+    _ = ε * N := by ring
 /-- **CRUX (open).** Normality survives `x ↦ (x + M)/B` when `gcd(B, b) = 1`.
 
 This is the one irreducible step of Wall's theorem: `orbit b ((x+M)/B) n` is
