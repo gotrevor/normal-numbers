@@ -291,6 +291,88 @@ theorem exists_prime_allocation_nonvacuous :
       (by intro π hπ; fin_cases hπ <;> norm_num) hcard
   exact ⟨q, p, h1, h2, h3, h5 6 (by simp) (by norm_num)⟩
 
+/-! ### Asymptotic availability of the parameters (proved, not assumed)
+
+All of these are polynomial-versus-exponential facts in `ℕ`.  They are proved by supplying
+the monomial comparisons explicitly and closing with `omega` over the monomials as atoms,
+which is far more reliable in `ℕ` than `nlinarith`.
+-/
+
+/-- Monomial ladder for `k ≥ 16`, with literal exponents so that `omega` sees the same
+atoms as the goals. -/
+private lemma monomial_ladder {k : ℕ} (h : 16 ≤ k) :
+    16 * k ^ 3 ≤ k ^ 4 ∧ 16 * k ^ 2 ≤ k ^ 3 ∧ 16 * k ≤ k ^ 2 := by
+  refine ⟨?_, ?_, ?_⟩
+  · rw [show k ^ 4 = k * k ^ 3 by ring]; exact Nat.mul_le_mul h le_rfl
+  · rw [show k ^ 3 = k * k ^ 2 by ring]; exact Nat.mul_le_mul h le_rfl
+  · rw [show k ^ 2 = k * k by ring]; exact Nat.mul_le_mul h le_rfl
+
+/-- `k⁴ ≤ 2^k` for `k ≥ 16` (equality at `k = 16`).  This single growth fact drives every
+parameter inequality of the dyadic schedule. -/
+lemma pow_four_le_two_pow : ∀ k : ℕ, 16 ≤ k → k ^ 4 ≤ 2 ^ k := by
+  intro k hk
+  induction k with
+  | zero => omega
+  | succ n ih =>
+    rcases Nat.lt_or_ge n 16 with h | h
+    · have hn : n = 15 := by omega
+      subst hn; norm_num
+    · have hih := ih h
+      obtain ⟨h1, h2, h3⟩ := monomial_ladder h
+      have h5 : (n + 1) ^ 4 = n ^ 4 + 4 * n ^ 3 + 6 * n ^ 2 + 4 * n + 1 := by ring
+      have h6 : 2 ^ (n + 1) = 2 * 2 ^ n := by rw [pow_succ]; ring
+      omega
+
+/-- The three schedule inequalities, from `k ≥ 16`, `4c ≤ k`, `a ≤ k`, `D₀ ≤ k`. -/
+private lemma scale_facts {k c a D0 : ℕ} (hk : 16 ≤ k) (hkc : 4 * c ≤ k) (hka : a ≤ k)
+    (hkD : D0 ≤ k) :
+    3 * k * (1 + k ^ 2 + D0) ≤ 2 ^ k ∧
+    (k + 1) * (1 + c * k ^ 2) ≤ k ^ 4 ∧ (k + 1) * (a - 1) ≤ k ^ 4 := by
+  have hp := pow_four_le_two_pow k hk
+  obtain ⟨m3, m2, m1⟩ := monomial_ladder hk
+  -- `c·k^n` ladders, from `4c ≤ k`
+  have c3 : 4 * (c * k ^ 3) ≤ k ^ 4 := by
+    have : k ^ 4 = k * k ^ 3 := by ring
+    rw [this, show 4 * (c * k ^ 3) = 4 * c * k ^ 3 by ring]
+    exact Nat.mul_le_mul hkc le_rfl
+  have c2 : 4 * (c * k ^ 2) ≤ k ^ 3 := by
+    have : k ^ 3 = k * k ^ 2 := by ring
+    rw [this, show 4 * (c * k ^ 2) = 4 * c * k ^ 2 by ring]
+    exact Nat.mul_le_mul hkc le_rfl
+  refine ⟨?_, ?_, ?_⟩
+  · have hstep : 3 * k * (1 + k ^ 2 + D0) ≤ k ^ 4 := by
+      have hD : 3 * k * (1 + k ^ 2 + D0) ≤ 3 * k * (1 + k ^ 2 + k) :=
+        Nat.mul_le_mul le_rfl (by omega)
+      have hexp : 3 * k * (1 + k ^ 2 + k) = 3 * k + 3 * k ^ 3 + 3 * k ^ 2 := by ring
+      omega
+    omega
+  · have hexp : (k + 1) * (1 + c * k ^ 2) = 1 + c * k ^ 2 + k + c * k ^ 3 := by ring
+    omega
+  · obtain ⟨b, hb⟩ : ∃ b, a = b + 1 ∨ a = 0 := ⟨a - 1, by omega⟩
+    have hbk : (k + 1) * (a - 1) ≤ (k + 1) * k := Nat.mul_le_mul le_rfl (by omega)
+    have hexp : (k + 1) * k = k ^ 2 + k := by ring
+    omega
+
+/-- **Asymptotic parameter availability.**  For any cutoffs there is a `k` satisfying every
+inequality the dyadic schedule `L = 2^k`, `U = 2^(k⁴)`, `X = U⁴` needs: `k ≥ K`, `k > r`,
+`L ≥ L₀`, `X ≥ X₀`, enough primes in `(L, 2L)` for the pool (`3k(1 + k² + D₀) ≤ 2^k`),
+`B ≤ U` (`(k+1)(1 + c·k²) ≤ k⁴`) and `Q ≤ U` (`(k+1)(a-1) ≤ k⁴`).  Nothing here is
+assumed; this is the "prove the parameter availability" clause of the contract. -/
+lemma exists_selection_scale (K r c a D0 X0 L0 : ℕ) :
+    ∃ k : ℕ, K ≤ k ∧ r < k ∧ 16 ≤ k ∧ L0 ≤ 2 ^ k ∧ X0 ≤ 2 ^ (4 * k ^ 4) ∧
+      3 * k * (1 + k ^ 2 + D0) ≤ 2 ^ k ∧
+      (k + 1) * (1 + c * k ^ 2) ≤ k ^ 4 ∧ (k + 1) * (a - 1) ≤ k ^ 4 := by
+  set k : ℕ := K + r + 16 + X0 + L0 + 4 * c + a + D0 with hkdef
+  have hk16 : 16 ≤ k := by omega
+  obtain ⟨f1, f2, f3⟩ := scale_facts hk16 (c := c) (a := a) (D0 := D0)
+    (by omega) (by omega) (by omega)
+  have hlt : k < 2 ^ k := Nat.lt_two_pow_self
+  have hmono : (2 : ℕ) ^ k ≤ 2 ^ (4 * k ^ 4) := by
+    refine Nat.pow_le_pow_right (by norm_num) ?_
+    have : k ≤ k ^ 4 := Nat.le_self_pow (by norm_num) k
+    omega
+  exact ⟨k, by omega, by omega, hk16, by omega, by omega, f1, f2, f3⟩
+
 /-- The target of this file, with its analytic inputs as hypotheses.  See the module
 docstring.  TEMPORARY `sorry`: the statement is fixed first so that partial scaffolding
 cannot be mistaken for success. -/
