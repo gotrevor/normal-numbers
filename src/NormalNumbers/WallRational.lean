@@ -563,7 +563,102 @@ theorem tendsto_blockAverage (b : ℕ) (hb : 2 ≤ b) (x : ℝ) (hx : IsNormal b
     (l : ℕ) (hl : 0 < l) (F : ℕ → ℝ) :
     Tendsto (fun N => (∑ n ∈ Finset.range N, F (blockVal b x n l)) / N) atTop
       (𝓝 (((b : ℝ) ^ l)⁻¹ * ∑ v ∈ Finset.range (b ^ l), F v)) := by
-  sorry
+
+  classical
+  set s : ℕ → ℕ := digitOf b (Int.fract x) with hs
+  have hxs : IsNormalSequence b s := hx
+  have hsb : ∀ i, s i < b := fun i => digitOf_lt b hb _ i
+  have hbv : ∀ n, blockVal b x n l
+      = blockNatVal b ((List.range l).map fun i => s (n + i)) := fun n => rfl
+  have hmlen : ∀ n : ℕ, ((List.range l).map fun i => s (n + i)).length = l := by
+    intro n; simp
+  have hmlt : ∀ n : ℕ, ∀ d ∈ ((List.range l).map fun i => s (n + i)), d < b := by
+    intro n d hd
+    simp only [List.mem_map, List.mem_range] at hd
+    obtain ⟨i, _, rfl⟩ := hd
+    exact hsb _
+  have hblt : ∀ n, blockVal b x n l < b ^ l := by
+    intro n
+    have h := blockNatVal_lt b ((List.range l).map fun i => s (n + i)) (hmlt n)
+    rw [hmlen n] at h
+    rw [hbv n]
+    exact h
+  have hmatch : ∀ (n v : ℕ), v < b ^ l →
+      (MatchesAt s (padWord b l v) n ↔ blockVal b x n l = v) := by
+    intro n v hv
+    have hlp : (padWord b l v).length = l := length_padWord hb hv
+    have hwlt : ∀ d ∈ padWord b l v, d < b := padWord_digits_lt hb l v
+    constructor
+    · intro hm
+      have hlist : ((List.range l).map fun i => s (n + i)) = padWord b l v := by
+        refine List.ext_getElem (by rw [hmlen n, hlp]) ?_
+        intro i h1 h2
+        have e1 : ((List.range l).map fun i => s (n + i))[i] = s (n + i) := by simp
+        have e2 : (padWord b l v).getD i 0 = (padWord b l v)[i] :=
+          List.getD_eq_getElem _ _ h2
+        rw [e1, ← e2]
+        rw [hmlen n] at h1
+        exact hm i (by rw [hlp]; exact h1)
+      rw [hbv n, hlist, blockNatVal_padWord hb l v]
+    · intro hval
+      have hveq : blockNatVal b ((List.range l).map fun i => s (n + i))
+          = blockNatVal b (padWord b l v) := by
+        rw [blockNatVal_padWord hb l v, ← hbv n]
+        exact hval
+      have hlist : ((List.range l).map fun i => s (n + i)) = padWord b l v :=
+        blockNatVal_inj b (by omega) _ _ (by rw [hmlen n, hlp]) (hmlt n) hwlt hveq
+      intro j hj
+      rw [hlp] at hj
+      have e2 : (padWord b l v).getD j 0
+          = ((List.range l).map fun i => s (n + i)).getD j 0 := by rw [hlist]
+      rw [e2]
+      have hj' : j < ((List.range l).map fun i => s (n + i)).length := by
+        rw [hmlen n]; exact hj
+      rw [List.getD_eq_getElem _ _ hj']
+      simp
+  have hlim : ∀ v ∈ Finset.range (b ^ l),
+      Tendsto (fun N => (((Finset.range N).filter fun n => blockVal b x n l = v).card : ℝ) / N)
+        atTop (𝓝 (((b : ℝ) ^ l)⁻¹)) := by
+    intro v hv
+    have hv' : v < b ^ l := Finset.mem_range.1 hv
+    have hlp : (padWord b l v).length = l := length_padWord hb hv'
+    have hwne : padWord b l v ≠ [] := by
+      intro hnil
+      rw [hnil] at hlp
+      simp at hlp
+      omega
+    have hwlt : ∀ d ∈ padWord b l v, d < b := padWord_digits_lt hb l v
+    have hcount := hxs (padWord b l v) hwne hwlt
+    have hle := fun N => card_filter_matchesAt_le s (padWord b l v) hwne N
+    have htrans := tendsto_div_of_bounded_diff (fun N => (hle N).1) (fun N => (hle N).2) hcount
+    rw [hlp] at htrans
+    have hfe : ∀ N : ℕ, (Finset.range N).filter (MatchesAt s (padWord b l v))
+        = (Finset.range N).filter fun n => blockVal b x n l = v := by
+      intro N
+      refine Finset.filter_congr fun n _ => ?_
+      exact hmatch n v hv'
+    refine htrans.congr fun N => ?_
+    rw [hfe N]
+  have hsum : ∀ N : ℕ, (∑ n ∈ Finset.range N, F (blockVal b x n l))
+      = ∑ v ∈ Finset.range (b ^ l),
+          F v * (((Finset.range N).filter fun n => blockVal b x n l = v).card : ℝ) := by
+    intro N
+    have hone : ∀ v ∈ Finset.range (b ^ l),
+        F v * (((Finset.range N).filter fun n => blockVal b x n l = v).card : ℝ)
+        = ∑ n ∈ Finset.range N, (if blockVal b x n l = v then F v else 0) := by
+      intro v _
+      rw [← Finset.sum_filter, Finset.sum_const, nsmul_eq_mul, mul_comm]
+    rw [Finset.sum_congr rfl hone, Finset.sum_comm]
+    refine Finset.sum_congr rfl fun n _ => ?_
+    rw [Finset.sum_ite_eq (Finset.range (b ^ l)) (blockVal b x n l) F,
+      if_pos (Finset.mem_range.2 (hblt n))]
+  have hval : (∑ v ∈ Finset.range (b ^ l), F v * ((b : ℝ) ^ l)⁻¹)
+      = ((b : ℝ) ^ l)⁻¹ * ∑ v ∈ Finset.range (b ^ l), F v := by
+    rw [← Finset.sum_mul, mul_comm]
+  rw [← hval]
+  refine (tendsto_finsetSum _ (fun v hv => (hlim v hv).const_mul (F v))).congr fun N => ?_
+  rw [hsum N, Finset.sum_div]
+  exact Finset.sum_congr rfl fun v _ => (mul_div_assoc _ _ _).symm
 
 /-- **CRUX (open).** Normality survives `x ↦ (x + M)/B` when `gcd(B, b) = 1`.
 
