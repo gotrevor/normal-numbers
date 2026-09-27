@@ -1,3 +1,68 @@
+## Vandehey 1.1 (2026-09-27, lap C) — THE BRIDGE: state-refined ψ-mixing at gap ZERO is PROVED
+
+`src/NormalNumbers/VandeheyStateMixing.lean` (new, wired, sorry-free, `[propext, Classical.choice,
+Quot.sound]`).  The proved crux `stateHorizonIntegral_pin` was INERT — nothing consumed it.  It now
+consumes into a ψ-mixing statement for `γ` against **every genuine cylinder, with no gap**:
+
+* `abs_setIntegral_tailDensity_sub_le` / `continuousOn_setIntegral_tailDensity` — `τ ↦ ∫_B h_τ`
+  is `2|B|`-Lipschitz on `[0,1]` for any `B ⊆ (0,1)`; strips the horizon bookkeeping off
+  `horizonIntegral_zero_lipschitz`.
+* **`abs_gaussMeasure_cylinder_inter_sub_le`** — THE brick.  From *any* uniform pin
+  `|∫_B h_τ − c| ≤ E` (`τ ∈ [0,1]`) it derives, for every genuine word `v`,
+  `|γ(I_v ∩ T^{−|v|}B) − c·γ(I_v)| ≤ E·γ(I_v)`.
+* `abs_gaussMeasure_familySetC_inter_sub_le` — the countable-family form.
+* **`abs_gaussMeasure_biUnion_cylinder_inter_sub_le`** — the form with a **past-dependent future**:
+  each past cylinder `I_w` may be paired with its own future set `B w`, as long as the pin constant
+  and error are common.  This is the load-bearing generalisation.
+* `abs_gaussMeasure_cylinder_horizon_sub_le` — the unrefined companion (from
+  `horizonIntegral_pin_geom`), in the same normalisation.
+* `VandeheyState.abs_gaussMeasure_cylinder_state_sub_le`,
+  `…_familySetC_state_sub_le`, **`…_biUnion_state_sub_le`** — the state-refined corollaries.
+  The last one pairs `I_v` with `stateHorizonSet δ A n (runState δ d v) t`: the future event read
+  from the state the automaton reaches *after that very word*.
+
+**The insight that makes (A) free, recorded so it is not re-derived.**  The adjacency obstruction
+(`ψ`-mixing is vacuous at gap `0`) is not an obstruction for the *transfer-operator* quantity at
+all, because `CFGammaMixing.setIntegral_inter_preimage` is an EXACT identity —
+`∫_{I_v ∩ T^{−|v|}B} h_s = (∫_B h_{tChain s v})·(∫_{I_v}h_s)` — with `tChain s v ∈ [0,1]`
+(`tChain_mem_Icc`).  So a pin that is *uniform in the tail parameter* is automatically a
+*conditional* statement given the whole past, with zero gap and zero loss of rate.  Composing it
+with the mixture `γ = ∫₀¹(h_s·Leb)dλ(s)` costs nothing because the bound is pointwise in `s`.
+Second consequence: since the pin is uniform in the automaton's **initial state**, the future set
+may depend on the past word — hence no partition of a past family by `runState δ d v` is needed.
+
+**Gotcha.** `𝒫` is Mathlib notation for `Set.powerset`; it cannot be used as an identifier.
+`𝒮`, `𝒱` are fine.
+
+### Next attack, in order (this is the remaining bridge; the plan is fully worked out)
+
+`Φ = K⁻¹∑_{k<K} VandeheyCocycle.jointDev δ d t q L · k` on `(0,1)`, `ℓ = |q|`, `m = K+ℓ`.
+
+1. **Plumbing (a.e. set identifications).**  For irrational `y ∈ (0,1)`:
+   (i) `y ∈ cfCylinder w ↔ w = cfWord y |w|`;
+   (ii) `y ∈ familySetC 𝒮 ↔ cfWord y m ∈ 𝒮` (all words of `𝒮` genuine of length `m`);
+   (iii) `cfWord y (m₁+n) = cfWord y m₁ ++ cfWord (T^{m₁}y) n`;
+   (iv) `q = cfWindow y k ℓ ↔ y ∈ horizonSet (cfCylinder q) k`.
+2. **`jointDev_ae_eq`**: `jointDev δ d t q L y k = 1_{A_k}(y) − L·1_{B_k}(y)` for γ-a.e. `y`, with
+   `A_k = stateHorizonSet δ (cfCylinder q) k d t`, `B_k = horizonSet (cfCylinder q) k`.
+3. **The four a.e. identifications** for `k + ℓ ≤ k'`, `m₁ = k+ℓ`, `n = k'−m₁`:
+   `A_k ∩ A_{k'} =ᵐ ⋃_{v∈𝒱_A}(I_v ∩ T^{−m₁}(stateHorizonSet δ I_q n (runState δ d v) t))`,
+   `A_k ∩ B_{k'} =ᵐ familySetC 𝒱_A ∩ T^{−m₁}(horizonSet I_q n)`, and the two with `𝒱_B`;
+   where `𝒱_A = {v : |v|=m₁ genuine, q = v.drop k, runState δ d (v.take k) = t}`,
+   `𝒱_B = {v : |v|=m₁ genuine, q = v.drop k}`, and `A_k =ᵐ familySetC 𝒱_A`, `B_k =ᵐ familySetC 𝒱_B`.
+4. **The two-point bound**: with `L = c`, the four main terms CANCEL exactly, leaving
+   `|∫ jointDev_k · jointDev_{k'} dγ| ≤ 2(C+1)·max(θ,79/100)^{k'−k−ℓ}·γ(I_q)`.
+5. **`∫Φ²dγ ≤ (2ℓ+1+2(C+1)/(1−ρ))/K`** by summing over the `K²` pairs.
+6. **Cauchy–Schwarz + the disjoint-cylinder comparison**: for any FINITE set `F` of genuine
+   length-`m` words, `∑_{W∈F}γ(I_W)·localAvg(d,W)² ≤ ∫Φ²dγ` (each `I_W` carries the constant
+   value `localAvg(d,W)` by `localAvg_eq` at `i = 0`; the `I_W` are disjoint; `Φ² ≥ 0`), hence
+   `∑_{W∈F}γ(I_W)·windowBound(W) ≤ |S|·√(C₁/K)`.
+7. **The orbit transfer** (`tendsto_windowFreq`, `card_unbounded_window_le`,
+   `tendsto_digitTail_freq`, `digitTail_le`): choose `K` from `ε`, then the digit bound `Z`
+   from `K`; gives `ClassEquidistribution δ t q` for EVERY automaton meeting the pin's hypotheses.
+8. **Instantiate at `classStep D`** (`classStep_bijective`, `exists_classWord_three`, `M = 3`);
+   `tendsto_jointCount_of_classEquidistribution` then closes Vandehey §3 unconditionally.
+
 ## Vandehey 1.1 (2026-09-27, review lap) — the ADJACENCY obstruction, and the Rényi brick that removes it
 
 **Landed** (`src/NormalNumbers/VandeheyRenyi.lean`, sorry-free, `[propext, Classical.choice, Quot.sound]`):

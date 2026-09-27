@@ -1,6 +1,6 @@
 # DIRECTION — normal-numbers 🧭
 
-## CURRENT DIRECTIVE — **Vandehey 2017 Theorem 1.1 side quest** (set 2026-09-27 review lap;
+## CURRENT DIRECTIVE — **Vandehey 2017 Theorem 1.1 side quest** (re-set 2026-09-27 review lap C;
 ## altitude-lap property; OUTRANKS the HANDOFF and SUPERSEDES every objective below)
 
 **Objective.**  `Literature.vandehey_matrix_action_holds` sorry-free and trust-triple, i.e. the
@@ -8,38 +8,50 @@ single open leaf `vandeheyUniformFreq_holds : VandeheyUniformFreq` in
 `src/NormalNumbers/LiteratureVandehey.lean`.  Do not weaken or rename the `def` or the theorem.
 `LEAN_DONE_WHEN = sorry-free:src/NormalNumbers/LiteratureVandehey.lean`.
 
-**The crux, named.**  `VandeheyCocycle.ClassEquidistribution (classStep D) t q` — the class
-cocycle (= the Gauss map read mod `D`, = the Γ₀(D)-coset of the CF matrix product) equidistributes
-jointly with digit windows along every CF-normal orbit.  This is the content Vandehey buys from
-the Airey–Mance-refuted Moshchevitin–Shkredov lemma; everything else is already unconditional
-(`tendsto_jointCount_of_classEquidistribution`, `vandehey_matrix_action_of_uniformFreq`).
+**Where we are.**  The analytic crux `VandeheyState.stateHorizonIntegral_pin` is PROVED
+(transfer-operator pin: the joint law of (`Tⁿy`, automaton state) converges geometrically to
+`γ ⊗ uniform`, for any finite automaton with bijective digit steps and `M`-step reachability).
+It is currently INERT: nothing consumes it.
 
-**Mandated next move (route-decisive, in order).**
-1. **The gap-0 Rényi comparison** — `c₀ γ(I_v) γ(A) ≤ γ(I_v ∩ T^{-|v|}A) ≤ C₀ γ(I_v) γ(A)` with
-   `c₀ = log2/4`, `C₀ = 4log2`.  This is the ONE brick every version of the contraction needs:
-   the class block and the digit window it must decouple from are **adjacent**, so
-   `gaussMeasure_cylinder_psi_mixing` (error `ρ^g`, vacuous at `g = 0`) cannot be used, and
-   `horizonIntegral A 0 t = ∫_A h_t` with `h_t ∈ [1/4, 2]` on `[0,1]²` supplies the substitute.
-2. **Doeblin at length exactly 3** for `classStep D` (prime `D`), then
-   `γ(E ∩ T^{-n}(classEvent 3 d d')) ≥ α γ(E)` for `E` any countable union of genuine length-`n`
-   cylinders — the conditional minorization.
-3. **The contraction** `ν_m → 1/|X|`, then `ClassEquidistribution` via `vanDerCorput_bound`.
-4. Then the fiber (merging *inside* a class) and §2/§5/§6 trigger counting.
+**Mandated next move — THE BRIDGE, in this order.  Nothing else until (A) lands.**
+(A) **`gaussMeasure_cylinder_state_psi_mixing`** — state-refined ψ-mixing for ONE cylinder:
+    `|γ(I_v ∩ T^{-|v|}(stateHorizonSet δ A n e t)) − |S|⁻¹γ(A)γ(I_v)| ≤ Cθⁿ γ(A) γ(I_v)`.
+    Proof = the composition `integral_gaussDensityReal_eq_mix` ∘ `setIntegral_inter_preimage`
+    (the cylinder disintegration `∫_{I_v∩T^{-m}B}h_s = (∫_B h_{tChain s v})(∫_{I_v}h_s)`, already
+    proved) ∘ `stateHorizonIntegral_pin` at `τ = tChain s v ∈ [0,1]`.  Model the proof on
+    `CFPsiPin.gaussMeasure_cylinder_psi_mixing` (same shape, same mixture skeleton).
+    This is the route-decisive probe: it is the ONLY place the pin has to mesh with the
+    cylinder disintegration, and if the composition fails the pin's formulation must change.
+(B) The `familySetC` version of (A) (model: `VandeheyMixing.gaussMeasure_familySetC_psi_mixing`),
+    partitioning a word family by `runState δ d v ∈ S` so each sub-family has a FIXED future set.
+(C) The two-point correlation `|∫ φ_k φ_{k'} dγ| ≤ Cρ^{k'−k−|q|}`, then
+    `∫ Φ_d² dγ ≤ C(|q|)/K` with `Φ_d = K⁻¹∑_{k<K}φ_k`.
+(D) Cauchy–Schwarz + the disjoint-cylinder comparison `∑_{W∈F}γ(I_W)·localAvg(d,W)² ≤ ∫Φ_d²dγ`,
+    then the orbit transfer (`tendsto_windowFreq`, `card_unbounded_window_le`,
+    `tendsto_digitTail_freq`, `digitTail_le`) ⇒ **`ClassEquidistribution δ t q` for EVERY
+    automaton satisfying the pin's hypotheses** — state it generically, not just for `classStep`.
+(E) Instantiate at `classStep D` (`classStep_bijective`, `exists_classWord_three`, `M = 3`);
+    `tendsto_jointCount_of_classEquidistribution` then closes Vandehey §3 unconditionally.
+(F) Only then: the fiber (merging inside a class) and §2 Raney transducer / §5–§6 triggers.
 
 **Forbidden drift.**  No work on the parent repo's Theorem C′ / joint-Lambert lines.  Do not
-re-attack `VandeheyAut.exists_jointFreq_limit` (its `Synchronizing` hypothesis is unsatisfiable —
+re-attack `VandeheyAut.exists_jointFreq_limit` (`Synchronizing` hypothesis unsatisfiable —
 `PROBE-2026-09-27-transducer-not-synchronizing.md`).  Do not chase a scalar-character
-cancellation (the class group is `PGL₂(ℤ/D)`; the sign character is too coarse).  Do not reproduce
-Vandehey's Lemma 3.3.
+cancellation.  Do not reproduce Vandehey's Lemma 3.3.  Do NOT start §2/§5/§6 transducer
+combinatorics (large but low-uncertainty) while (A)–(E) are open: that is leaf-work ahead of the
+crux.  Do not re-derive the Abel resummation or loosen the `2/5` / `17/30` constants.
 
-**Why.**  The published proof's hot-spot step is false on non-compact spaces; the repair is exactly
-a quantitative equidistribution statement for the class cocycle, and the only structural obstacle
-found so far (adjacency of the blocks) is removed by a Rényi bound the repo's mixture machinery
-already almost contains.
+**Why.**  The pin is the repaired substitute for the Airey–Mance-refuted Moshchevitin–Shkredov
+step, but a pin nobody consumes proves nothing.  (A)–(E) is the shortest path from the pin to a
+statement the already-proved `tendsto_jointCount_of_classEquidistribution` eats, and it converts
+the pin into an unconditional theorem about every CF-normal orbit.
 
 ### Directive history
 * 2026-09-27 review lap: set to the Vandehey 1.1 side quest; crux = `ClassEquidistribution`;
   mandated next move = the gap-0 Rényi comparison (the adjacency obstruction).
+* 2026-09-27 review lap C: items 1–3 of the previous directive all landed (the pin is proved);
+  re-set to THE BRIDGE — state-refined ψ-mixing (A) is the new route-decisive probe, and
+  transducer combinatorics are explicitly forbidden until the pin is consumed.
 
 ## OPERATOR OBJECTIVE 2026-09-27 lap B (SUPERSEDES every objective below, including the
 ## "target = paper §4 ONLY" block and all completed-stage stop instructions)
