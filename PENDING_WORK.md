@@ -9219,3 +9219,63 @@ abbreviation unwound (`IsNormal`/`IsNormalSequence`/`digitOf`, `subsetLambert`/`
 `HANDOFF-2026-09-23-theoremC-COMPLETE.md`'s "next steps"; the campaign's hygiene is now
 complete.  Remaining next steps there: (2) Astra §10 abstract consumer
 `F_N = ∑_j 4^{−j} S_P(y_j, 2N) → 0`; (3) the two off-campaign designated-open `sorry`s.
+
+## 2026-09-27 — Vandehey 1.1 side quest: the either-or ENDGAME landed, crux isolated
+
+`src/NormalNumbers/LiteratureVandehey.lean` (wired into `src/NormalNumbers.lean`), green,
+9278 jobs.  Three new sorry-free, axiom-clean nodes:
+
+* `volume_image_mobius_null` — a nonsingular real Möbius map pushes Lebesgue-null to
+  Lebesgue-null (1-d Jacobian change of variables `lintegral_image_eq_lintegral_abs_deriv_mul`;
+  the pole contributes a subsingleton).
+* `exists_null_cover_notCFNormal_fract` — `{y : ℝ | ¬ IsCFNormal (Int.fract y)}` sits in a
+  measurable Lebesgue-null set (`CFAeNormal.ae_isCFNormal` + density comparison + the
+  `ℤ`-periodization of `Int.fract`).
+* `exists_cfNormal_with_cfNormal_image` — for any integer `(a b; c d)`, `det ≠ 0`, there is
+  `x ∈ (0,1)` off the pole with `x` CF-normal **and** `Mx` CF-normal.  Pigeonhole: pole ∪
+  bad set ∪ `M⁻¹`(bad set) is null, `(0,1)` is not.
+* `vandehey_matrix_action_of_uniformFreq` — **Theorem 1.1 from the crux, unconditionally.**
+
+### Why this is the route-decisive advance
+
+Vandehey's §6 endgame never computes a frequency; the transducer programme only shows the
+limit EXISTS and is the same for every CF-normal `x`, and the identification
+`ρ_v = γ(I_v)` is then a measure-theoretic pigeonhole.  That pigeonhole is now **proved in
+full**, so the *entire* remaining obligation is the single crux
+
+```
+VandeheyUniformFreq :
+  ∀ a b c d, ad − bc ≠ 0 → ∀ genuine v, ∃ L, ∀ x off the pole with Int.fract x CF-normal,
+    freq_v (CF of Int.fract (Mx)) → L
+```
+
+and — this is the point — the **broken Lemma 3.3 (published) / 3.2 (arXiv) is off the
+identification half entirely**.  It is used only inside §3 (Theorem 3.1), i.e. only to get
+existence.  So the tightness-corrected Pyatetskii-Shapiro criterion + tightness of a
+CF-normal point's empirical measures are owed for `vandeheyUniformFreq_holds` and nowhere
+else.  Nothing defective is reproduced anywhere in what is now proved.
+
+### Next attack (in order)
+
+1. **The corrected hot-spot criterion, CF/Gauss form** (Airey–Mance Thm A/B, the one thing
+   the literature gets wrong).  Statement to formalize:
+   if (i) `∃C, ∀ genuine w, limsup_n (visits of the Gauss orbit of y to cfCylinder w in
+   n steps)/n ≤ C · γ(cfCylinder w)`, and (ii) **tightness**: `∀ ε>0, ∃K,
+   limsup_n #{i<n : cfDigit y i > K}/n ≤ ε`, then `IsCFNormal y`.
+   Proof sketch to follow: any subsequential limit of the frequency vector
+   `(freq_w(y))_w ∈ ∏_w [0,1]` (sequentially compact, countable metrizable product — much
+   lighter in Lean than weak-* on measures) is (a) a finitely additive shift-invariant
+   cylinder function, total mass 1 by (ii), (b) `≤ C γ` by (i), hence `≪ γ`; `γ` ergodic
+   for the Gauss map ⇒ it equals `γ`; all limit points equal ⇒ convergence.
+   Sub-obligations to name in `src/`: `cylinderMassOne_of_tight`, `absCont_of_hotSpot`,
+   `eq_gauss_of_invariant_absCont` (the ergodic-uniqueness step; check what
+   `CFAeNormal`/`CFMixing` already give — the repo proves a.e. CF-normality *Birkhoff-free*,
+   so Gauss ergodicity may NOT be available and may have to be routed around, e.g. by
+   using `cylinder_mixing`'s `1 ± Cρ^k` envelope directly to pin the limit).
+2. **Tightness of a CF-normal point's empirical measures**: from `IsCFNormal y`,
+   `#{i<n : cfDigit y i = k}/n → γ(cfCylinder [k])` for each `k`, and
+   `Σ_{k≤K} γ(cfCylinder [k]) → 1` (Gauss–Kuzmin, `CFDigitLaw`), giving
+   `limsup #{i<n : a_i > K}/n ≤ 1 − Σ_{k≤K} γ(I_k) = O(1/K)`.  Note the direction: the
+   `≤` needs the finitely-many-`k` sum to be a LOWER bound on the visits to digits `≤ K`,
+   which is exactly finite additivity of the limit — elementary.
+3. Only then §2 (transducer, integer-matrix normal forms `M_D`), §4–§6.
