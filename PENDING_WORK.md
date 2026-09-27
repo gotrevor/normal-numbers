@@ -9890,3 +9890,40 @@ machinery is unavailable.  Two structural facts remove the need for it.
 3. Then `ClassEquidistribution` via `vanDerCorput_bound`, and
    `tendsto_jointCount_of_classEquidistribution` closes the transfer half.
 4. Then the fiber (merging inside a class), §2 identity (9), §5–§6 trigger counting.
+
+## 2026-09-27 (lap: the state-refined transfer operator is doubly stochastic)
+
+`src/NormalNumbers/VandeheyStatePin.lean` is wired in and green.  It carries the automaton
+state INSIDE the transfer operator, which is the standard device for the adjacency obstruction
+recorded above (class at time `n` and window at time `n` are adjacent, so no ψ-gap helps).
+
+Proved this lap:
+
+* `stateHorizonIntegral_succ` — the refined recursion `F_{n+1}(d,s) = ∑_a w_τ(a) F_n(δ d a,s)(τ_a)`.
+* `sum_stateHorizonIntegral` — `∑_s F_n(d,s) = G_n` (disintegration).
+* **`sum_over_initial_stateHorizonIntegral` — `∑_d F_n(d,s) = G_n` for EVERY `s`**, whenever
+  every digit step `d ↦ δ d a` is a bijection (which `VandeheyRenewal.classStep_bijective`
+  supplies).  Proof: the refined recursion advances the *initial* state, so precomposing with a
+  bijection and summing over the finite state space is a no-op; hence `∑_d F_n(·,s)` satisfies
+  the UNREFINED recursion with the unrefined initial datum `G_0`, and induction closes it.
+* `stateHorizonIntegral_le_two`, `stateHorizonIntegral_nonneg`, `stateHorizonIntegral_le` — the cone.
+
+**Why this matters.**  The two sum identities together say the refined family is *doubly
+stochastic*: uniform-over-`S` is the unique candidate limit and no stationary vector has to be
+computed.  In particular the constant in `stateHorizonIntegral_pin` is forced to be
+`|S|⁻¹·γ(A)` — it is not an extra unknown.
+
+**Open crux**: `stateHorizonIntegral_pin` (disclosed `sorry`, `VandeheyStatePin.lean`).
+
+**Next attack.**  Doeblin contraction of the oscillation of `Φ ↦ stateStepOp δ Φ` over the
+product `S × [0,1]`:
+1. `stateStepOp` fixes constants (`tsum_stepWeight`) and is positive — so oscillation is
+   non-increasing.
+2. Minorization in `M + 1` steps: expanding `stateStepOp^{M}` over digit words gives a term
+   `(∏ w_·) · Φ(runState δ d w, ·)` for each genuine word `w`; `hreach` supplies, for each
+   target `t`, a word of length exactly `M` with `runState δ d w = t`, and its weight product is
+   bounded below uniformly (the Rényi bound `VandeheyRenyi.gaussMeasure_cylinder_renyi_lower` is
+   the measure-side twin).  Hence `stateStepOp^M Φ (d,τ) ≥ ε · min_t inf_τ Φ(t,τ)` with
+   `ε > 0` independent of `d, τ`.
+3. Standard Doeblin: `osc(L^M Φ) ≤ (1 − |S|ε) osc(Φ)`, iterate, and identify the limit constant
+   by the double stochasticity above.
