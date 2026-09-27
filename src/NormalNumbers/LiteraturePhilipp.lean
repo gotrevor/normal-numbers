@@ -9,7 +9,8 @@ import NormalNumbers.CFPsiPin
 /-!
 # Philipp 1967: the continued-fraction digits are exponentially ψ-mixing
 
-Discharges the cited `Literature.philipp_psi_mixing` (side quest, 2026-09-27).
+Discharges the cited `Literature.philipp_psi_mixing` (side quest, 2026-09-27) —
+**proved**, no `sorry`, axioms `[propext, Classical.choice, Quot.sound]`.
 
 The analytic content is `CFPsiPin.lean`: measuring the regularity of the
 horizon integrals `G_k` in the **log metric** `|log(1+t) − log(1+t')|` (in which

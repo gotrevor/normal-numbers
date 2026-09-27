@@ -181,7 +181,504 @@ lemma horizonIntegral_zero_logLip {A : Set ℝ} (hA : MeasurableSet A)
     _ = 2 * Real.log 2 * (gaussMeasure A).toReal * δ := by
         rw [integral_const_mul, ← gaussMeasure_toReal_eq hA hA1]; ring
 
+/-! ## The log-metric contraction: helpers -/
+
+/-- `|log(1+x) − log(1+y)| ≤ |x − y|` for `x, y ≥ 0`. -/
+lemma abs_log_sub_le_abs_sub {x y : ℝ} (hx : 0 ≤ x) (hy : 0 ≤ y) :
+    |Real.log (1 + x) - Real.log (1 + y)| ≤ |x - y| := by
+  have key : ∀ a b : ℝ, 0 ≤ b → b ≤ a →
+      Real.log (1 + a) - Real.log (1 + b) ≤ a - b := by
+    intro a b hb hba
+    have hb0 : (0 : ℝ) < 1 + b := by linarith
+    have ha0 : (0 : ℝ) < 1 + a := by linarith
+    have h := Real.log_le_sub_one_of_pos (x := (1 + a) / (1 + b)) (by positivity)
+    rw [Real.log_div (ne_of_gt ha0) (ne_of_gt hb0)] at h
+    have hr : (1 + a) / (1 + b) - 1 = (a - b) / (1 + b) := by field_simp; ring
+    rw [hr] at h
+    refine h.trans ?_
+    rw [div_le_iff₀ hb0]
+    nlinarith
+  rcases le_total y x with h | h
+  · rw [abs_of_nonneg (by
+      have := Real.log_le_log (by linarith : (0:ℝ) < 1 + y) (by linarith : (1:ℝ) + y ≤ 1 + x)
+      linarith), abs_of_nonneg (by linarith)]
+    exact key x y hy h
+  · rw [abs_sub_comm, abs_sub_comm x y]
+    rw [abs_of_nonneg (by
+      have := Real.log_le_log (by linarith : (0:ℝ) < 1 + x) (by linarith : (1:ℝ) + x ≤ 1 + y)
+      linarith), abs_of_nonneg (by linarith)]
+    exact key y x hx h
+
+/-- Tail of the weight difference, closed form (local copy of the `CFContraction`
+private `gTail`). -/
+private noncomputable def gT (t t' : ℝ) (k : ℕ) : ℝ :=
+  (1 + t) / ((k : ℝ) + 1 + t) - (1 + t') / ((k : ℝ) + 1 + t')
+
+private lemma gT_zero {t t' : ℝ} (ht : 0 ≤ t) (ht' : 0 ≤ t') : gT t t' 0 = 0 := by
+  rw [gT]
+  push_cast
+  rw [show ((0 : ℝ) + 1 + t) = 1 + t by ring, show ((0 : ℝ) + 1 + t') = 1 + t' by ring,
+    div_self (by positivity), div_self (by positivity), sub_self]
+
+private lemma stepWeight_sub_eq' {t t' : ℝ} (ht : 0 ≤ t) (ht' : 0 ≤ t') (k : ℕ) :
+    stepWeight t k - stepWeight t' k = gT t t' k - gT t t' (k + 1) := by
+  rw [stepWeight_eq_sub ht, stepWeight_eq_sub ht', gT, gT]
+  push_cast
+  ring_nf
+
+private lemma gT_eq {t t' : ℝ} (ht : 0 ≤ t) (ht' : 0 ≤ t') (k : ℕ) :
+    gT t t' k = (t - t') * (k : ℝ) / (((k : ℝ) + 1 + t) * ((k : ℝ) + 1 + t')) := by
+  have hk : (0 : ℝ) ≤ (k : ℝ) := Nat.cast_nonneg k
+  rw [gT, div_sub_div _ _ (ne_of_gt (by positivity)) (ne_of_gt (by positivity))]
+  congr 1
+  ring
+
+private lemma summable_sq_bound' {f : ℕ → ℝ} {C : ℝ}
+    (h : ∀ k, |f k| ≤ C / ((k : ℝ) + 1) ^ 2) : Summable f := by
+  apply Summable.of_abs
+  apply Summable.of_nonneg_of_le (fun k => abs_nonneg _) h
+  have hbase : Summable (fun n : ℕ => 1 / (n : ℝ) ^ 2) :=
+    Real.summable_one_div_nat_pow.mpr (by norm_num)
+  have hshift : Summable (fun k : ℕ => 1 / ((k + 1 : ℕ) : ℝ) ^ 2) :=
+    (summable_nat_add_iff 1).mpr hbase
+  have : Summable (fun k : ℕ => 1 / ((k : ℝ) + 1) ^ 2) := by
+    apply hshift.congr
+    intro k
+    push_cast
+    ring
+  simpa [div_eq_mul_inv, mul_comm] using this.mul_left C
+
+/-- The branch-image log gap, exactly: `log(1+z_k) − log(1+z'_k)` is bounded by
+`(t−t')/((k+2+t)(k+1+t'))`, the **key** gain of the log metric (the crude
+`|t−t'|` bound would only give `1/(k+1)²`). -/
+private lemma abs_log_stepPt_sub_le {t t' : ℝ} (ht0' : 0 ≤ t') (htt' : t' ≤ t) (k : ℕ) :
+    |Real.log (1 + stepPt t k) - Real.log (1 + stepPt t' k)| ≤
+      (t - t') / (((k : ℝ) + 2 + t) * ((k : ℝ) + 1 + t')) := by
+  have ht0 : (0 : ℝ) ≤ t := le_trans ht0' htt'
+  have hk : (0 : ℝ) ≤ (k : ℝ) := Nat.cast_nonneg k
+  have hd : (0 : ℝ) < (k : ℝ) + 1 + t := by linarith
+  have hd' : (0 : ℝ) < (k : ℝ) + 1 + t' := by linarith
+  have hz : stepPt t k ≤ stepPt t' k := by
+    rw [stepPt, stepPt]
+    apply div_le_div_of_nonneg_left (by norm_num) hd'
+    linarith
+  have hz0 : (0 : ℝ) < 1 + stepPt t k := by
+    have := stepPt_mem_Icc ht0 k; linarith [this.1]
+  have hz0' : (0 : ℝ) < 1 + stepPt t' k := by linarith
+  have hlogle : Real.log (1 + stepPt t k) ≤ Real.log (1 + stepPt t' k) :=
+    Real.log_le_log hz0 (by linarith)
+  rw [abs_of_nonpos (by linarith)]
+  have h := Real.log_le_sub_one_of_pos
+    (x := (1 + stepPt t' k) / (1 + stepPt t k)) (by positivity)
+  rw [Real.log_div (ne_of_gt hz0') (ne_of_gt hz0)] at h
+  have hexact : (1 + stepPt t' k) / (1 + stepPt t k) - 1 =
+      (t - t') / (((k : ℝ) + 2 + t) * ((k : ℝ) + 1 + t')) := by
+    have e1 : (1 : ℝ) + stepPt t k = ((k : ℝ) + 2 + t) / ((k : ℝ) + 1 + t) := by
+      rw [stepPt]; field_simp; ring
+    have e2 : (1 : ℝ) + stepPt t' k = ((k : ℝ) + 2 + t') / ((k : ℝ) + 1 + t') := by
+      rw [stepPt]; field_simp; ring
+    rw [e1, e2, div_div_div_comm]
+    rw [div_sub_one (by positivity)]
+    rw [div_eq_div_iff (by positivity) (by positivity)]
+    field_simp
+    ring
+  linarith [hexact ▸ h]
+
 /-! ## The contraction (crux) -/
+
+set_option maxHeartbeats 1600000 in
+/-- Ordered half of the log-metric contraction. -/
+private lemma stepOp_logLipschitz_aux {φ : ℝ → ℝ} {L : ℝ} (hL : 0 ≤ L)
+    (hφ : ∀ x ∈ Set.Icc (0 : ℝ) 1, ∀ y ∈ Set.Icc (0 : ℝ) 1,
+      |φ x - φ y| ≤ L * |Real.log (1 + x) - Real.log (1 + y)|)
+    {t t' : ℝ} (ht0' : 0 ≤ t') (htt' : t' ≤ t) (ht1 : t ≤ 1) :
+    |stepOp φ t - stepOp φ t'| ≤
+      3 / 4 * L * (Real.log (1 + t) - Real.log (1 + t')) := by
+  have ht0 : (0 : ℝ) ≤ t := le_trans ht0' htt'
+  have ht1' : t' ≤ 1 := le_trans htt' ht1
+  set δ : ℝ := Real.log (1 + t) - Real.log (1 + t') with hδdef
+  have hδ0 : 0 ≤ δ := by
+    have := Real.log_le_log (by linarith : (0:ℝ) < 1 + t') (by linarith : (1:ℝ) + t' ≤ 1 + t)
+    rw [hδdef]; linarith
+  have hLδ : 0 ≤ L * δ := mul_nonneg hL hδ0
+  have hgapT : t - t' ≤ (1 + t) * δ := by
+    have hx : (0 : ℝ) < (1 + t') / (1 + t) := by positivity
+    have h := Real.log_le_sub_one_of_pos hx
+    rw [Real.log_div (by positivity) (by positivity)] at h
+    have hr : (1 + t') / (1 + t) - 1 = -((t - t') / (1 + t)) := by field_simp; ring
+    rw [hr] at h
+    have h2 : (t - t') / (1 + t) ≤ δ := by rw [hδdef]; linarith [h]
+    rw [div_le_iff₀ (by linarith : (0:ℝ) < 1 + t)] at h2
+    exact h2.trans_eq (mul_comm δ (1 + t))
+  set ψ : ℝ → ℝ := fun x => φ x - φ 0 with hψdef
+  have hmem0 : (0 : ℝ) ∈ Set.Icc (0 : ℝ) 1 := ⟨le_refl 0, by norm_num⟩
+  have hψ_le : ∀ x ∈ Set.Icc (0 : ℝ) 1, |ψ x| ≤ L * x := by
+    intro x hx
+    have h := hφ x hx 0 hmem0
+    rw [show (1 : ℝ) + 0 = 1 by ring, Real.log_one, sub_zero] at h
+    refine h.trans ?_
+    apply mul_le_mul_of_nonneg_left _ hL
+    rw [abs_of_nonneg (Real.log_nonneg (by linarith [hx.1]))]
+    have := Real.log_le_sub_one_of_pos (x := 1 + x) (by linarith [hx.1])
+    linarith
+  have hψ_bd : ∀ x ∈ Set.Icc (0 : ℝ) 1, |ψ x| ≤ L := fun x hx =>
+    (hψ_le x hx).trans (by nlinarith [hx.2])
+  have hψ_loglip : ∀ x ∈ Set.Icc (0 : ℝ) 1, ∀ y ∈ Set.Icc (0 : ℝ) 1,
+      |ψ x - ψ y| ≤ L * |Real.log (1 + x) - Real.log (1 + y)| := by
+    intro x hx y hy
+    have hxy : ψ x - ψ y = φ x - φ y := by rw [hψdef]; ring
+    rw [hxy]
+    exact hφ x hx y hy
+  have hψ_lip : ∀ x ∈ Set.Icc (0 : ℝ) 1, ∀ y ∈ Set.Icc (0 : ℝ) 1,
+      |ψ x - ψ y| ≤ L * |x - y| := fun x hx y hy =>
+    (hψ_loglip x hx y hy).trans
+      (mul_le_mul_of_nonneg_left (abs_log_sub_le_abs_sub hx.1 hy.1) hL)
+  have hred : ∀ s : ℝ, 0 ≤ s →
+      stepOp φ s = (∑' k, stepWeight s k * ψ (stepPt s k)) + φ 0 := by
+    intro s hs0
+    have hs1' : Summable (fun k => stepWeight s k * ψ (stepPt s k)) :=
+      summable_stepWeight_mul hs0 hψ_bd
+    have hs2' : Summable (fun k => stepWeight s k * φ 0) :=
+      (summable_stepWeight hs0).mul_right (φ 0)
+    have hexp : stepOp φ s = ∑' k, (stepWeight s k * ψ (stepPt s k)
+        + stepWeight s k * φ 0) := by
+      unfold stepOp
+      exact tsum_congr fun k => by rw [hψdef]; ring
+    rw [hexp, hs1'.tsum_add hs2', tsum_mul_right, tsum_stepWeight hs0, one_mul]
+  set A : ℕ → ℝ := fun k => stepWeight t k * (ψ (stepPt t k) - ψ (stepPt t' k)) with hAdef
+  set B : ℕ → ℝ := fun k => (stepWeight t k - stepWeight t' k) * ψ (stepPt t' k) with hBdef
+  have hSF : Summable (fun k => stepWeight t k * ψ (stepPt t k)) :=
+    summable_stepWeight_mul ht0 hψ_bd
+  have hSF' : Summable (fun k => stepWeight t' k * ψ (stepPt t' k)) :=
+    summable_stepWeight_mul ht0' hψ_bd
+  have hSmix : Summable (fun k => stepWeight t k * ψ (stepPt t' k)) := by
+    apply Summable.of_abs
+    apply Summable.of_nonneg_of_le (fun k => abs_nonneg _) (fun k => ?_)
+      ((summable_stepWeight ht0).mul_right L)
+    rw [abs_mul, abs_of_nonneg (stepWeight_nonneg ht0 k)]
+    exact mul_le_mul_of_nonneg_left (hψ_bd _ (stepPt_mem_Icc ht0' k))
+      (stepWeight_nonneg ht0 k)
+  have hSA : Summable A := by
+    have hA' : A = fun k => stepWeight t k * ψ (stepPt t k)
+        - stepWeight t k * ψ (stepPt t' k) := by funext k; rw [hAdef]; ring
+    rw [hA']; exact hSF.sub hSmix
+  have hSB : Summable B := by
+    have hB' : B = fun k => stepWeight t k * ψ (stepPt t' k)
+        - stepWeight t' k * ψ (stepPt t' k) := by funext k; rw [hBdef]; ring
+    rw [hB']; exact hSmix.sub hSF'
+  have hsplit : stepOp φ t - stepOp φ t' = (∑' k, A k) + (∑' k, B k) := by
+    rw [hred t ht0, hred t' ht0']
+    have h1 : (∑' k, stepWeight t k * ψ (stepPt t k)) + φ 0
+        - ((∑' k, stepWeight t' k * ψ (stepPt t' k)) + φ 0)
+        = (∑' k, stepWeight t k * ψ (stepPt t k))
+          - ∑' k, stepWeight t' k * ψ (stepPt t' k) := by ring
+    rw [h1, ← hSF.tsum_sub hSF', ← hSA.tsum_add hSB]
+    exact tsum_congr fun k => by rw [hAdef, hBdef]; ring
+  -- ### A-series
+  have hA_term : ∀ k : ℕ, |A k| ≤ L * δ * ((1 + t) ^ 2 /
+      ((((k : ℝ) + 1 + t) * ((k : ℝ) + 2 + t)) *
+        (((k : ℝ) + 2 + t) * ((k : ℝ) + 1 + t')))) := by
+    intro k
+    have hk : (0 : ℝ) ≤ (k : ℝ) := Nat.cast_nonneg k
+    have d1 : (0:ℝ) < (k : ℝ) + 1 + t := by linarith
+    have d2 : (0:ℝ) < (k : ℝ) + 2 + t := by linarith
+    have d3 : (0:ℝ) < (k : ℝ) + 1 + t' := by linarith
+    rw [hAdef, abs_mul, abs_of_nonneg (stepWeight_nonneg ht0 k)]
+    have h1 : |ψ (stepPt t k) - ψ (stepPt t' k)| ≤
+        L * ((1 + t) * δ / (((k : ℝ) + 2 + t) * ((k : ℝ) + 1 + t'))) := by
+      refine (hψ_loglip _ (stepPt_mem_Icc ht0 k) _ (stepPt_mem_Icc ht0' k)).trans ?_
+      refine mul_le_mul_of_nonneg_left ?_ hL
+      refine (abs_log_stepPt_sub_le ht0' htt' k).trans ?_
+      rw [div_le_div_iff₀ (by positivity) (by positivity)]
+      nlinarith [mul_pos d2 d3]
+    calc stepWeight t k * |ψ (stepPt t k) - ψ (stepPt t' k)|
+        ≤ stepWeight t k * (L * ((1 + t) * δ / (((k : ℝ) + 2 + t) * ((k : ℝ) + 1 + t')))) :=
+          mul_le_mul_of_nonneg_left h1 (stepWeight_nonneg ht0 k)
+      _ = L * δ * ((1 + t) ^ 2 / ((((k : ℝ) + 1 + t) * ((k : ℝ) + 2 + t)) *
+            (((k : ℝ) + 2 + t) * ((k : ℝ) + 1 + t')))) := by
+          rw [stepWeight]; field_simp; try ring
+  have hA0 : |A 0| ≤ L * δ * (1 / 4) := by
+    refine (hA_term 0).trans ?_
+    apply mul_le_mul_of_nonneg_left _ hLδ
+    simp only [Nat.cast_zero, zero_add]
+    rw [div_le_iff₀ (mul_pos (mul_pos (by linarith) (by linarith))
+      (mul_pos (by linarith) (by linarith)))]
+    nlinarith [mul_nonneg (by linarith : (0:ℝ) ≤ 1 + t)
+      (by nlinarith [sq_nonneg t, mul_nonneg ht0' (sq_nonneg (2 + t))] :
+        (0:ℝ) ≤ t ^ 2 + t' * (2 + t) ^ 2)]
+  have hA1 : |A 1| ≤ L * δ * (2 / 27) := by
+    refine (hA_term 1).trans ?_
+    apply mul_le_mul_of_nonneg_left _ hLδ
+    simp only [Nat.cast_one]
+    rw [div_le_iff₀ (mul_pos (mul_pos (by linarith) (by linarith))
+      (mul_pos (by linarith) (by linarith)))]
+    nlinarith [mul_nonneg ht0' (by nlinarith : (0:ℝ) ≤ 2 * (2 + t) * (3 + t) ^ 2),
+      ht0, sq_nonneg t, mul_nonneg ht0 (sq_nonneg t)]
+  have hAtail : ∀ k : ℕ, |A (k + 2)| ≤
+      (2 / 3) * (L * δ) * (1 / (((k : ℝ) + 2) * ((k : ℝ) + 2 + 1) * ((k : ℝ) + 2 + 2))) := by
+    intro k
+    refine (hA_term (k + 2)).trans ?_
+    have hk : (0 : ℝ) ≤ (k : ℝ) := Nat.cast_nonneg k
+    have hcast : (((k + 2 : ℕ) : ℝ)) = (k : ℝ) + 2 := by push_cast; ring
+    rw [hcast]
+    have e1 : (0:ℝ) ≤ (k : ℝ) + 3 := by linarith
+    have hX : (1 + t) ^ 2 / (((((k : ℝ) + 2) + 1 + t) * (((k : ℝ) + 2) + 2 + t)) *
+        ((((k : ℝ) + 2) + 2 + t) * (((k : ℝ) + 2) + 1 + t')))
+        ≤ 2 / (3 * ((k : ℝ) + 2) * ((k : ℝ) + 3) * ((k : ℝ) + 4)) := by
+      have hden : (0:ℝ) < ((((k : ℝ) + 2) + 1 + t) * (((k : ℝ) + 2) + 2 + t)) *
+          ((((k : ℝ) + 2) + 2 + t) * (((k : ℝ) + 2) + 1 + t')) := by
+        exact mul_pos (mul_pos (by linarith) (by linarith))
+          (mul_pos (by linarith) (by linarith))
+      rw [div_le_div_iff₀ hden (by positivity)]
+      have hA4 : (1 + t) ^ 2 ≤ 4 := by nlinarith
+      have hB4 : (((k : ℝ) + 3) * ((k : ℝ) + 4)) * (((k : ℝ) + 4) * ((k : ℝ) + 3))
+          ≤ ((((k : ℝ) + 2) + 1 + t) * (((k : ℝ) + 2) + 2 + t)) *
+            ((((k : ℝ) + 2) + 2 + t) * (((k : ℝ) + 2) + 1 + t')) := by
+        apply mul_le_mul
+        · apply mul_le_mul (by linarith) (by linarith) (by linarith) (by linarith)
+        · apply mul_le_mul (by linarith) (by linarith) (by linarith) (by linarith)
+        · positivity
+        · nlinarith
+      have hC4 : 4 * (3 * ((k : ℝ) + 2) * ((k : ℝ) + 3) * ((k : ℝ) + 4))
+          ≤ 2 * ((((k : ℝ) + 3) * ((k : ℝ) + 4)) * (((k : ℝ) + 4) * ((k : ℝ) + 3))) := by
+        nlinarith [mul_nonneg hk hk, mul_nonneg (mul_nonneg hk hk) hk,
+          mul_nonneg (mul_nonneg (mul_nonneg hk hk) hk) hk]
+      calc (1 + t) ^ 2 * (3 * ((k : ℝ) + 2) * ((k : ℝ) + 3) * ((k : ℝ) + 4))
+          ≤ 4 * (3 * ((k : ℝ) + 2) * ((k : ℝ) + 3) * ((k : ℝ) + 4)) := by
+            nlinarith [mul_le_mul_of_nonneg_right hA4
+              (show (0:ℝ) ≤ 3 * ((k : ℝ) + 2) * ((k : ℝ) + 3) * ((k : ℝ) + 4) by positivity)]
+        _ ≤ 2 * ((((k : ℝ) + 3) * ((k : ℝ) + 4)) * (((k : ℝ) + 4) * ((k : ℝ) + 3))) := hC4
+        _ ≤ 2 * (((((k : ℝ) + 2) + 1 + t) * (((k : ℝ) + 2) + 2 + t)) *
+              ((((k : ℝ) + 2) + 2 + t) * (((k : ℝ) + 2) + 1 + t'))) := by nlinarith [hB4]
+    calc L * δ * ((1 + t) ^ 2 / (((((k : ℝ) + 2) + 1 + t) * (((k : ℝ) + 2) + 2 + t)) *
+          ((((k : ℝ) + 2) + 2 + t) * (((k : ℝ) + 2) + 1 + t'))))
+        ≤ L * δ * (2 / (3 * ((k : ℝ) + 2) * ((k : ℝ) + 3) * ((k : ℝ) + 4))) :=
+          mul_le_mul_of_nonneg_left hX hLδ
+      _ = (2 / 3) * (L * δ) *
+            (1 / (((k : ℝ) + 2) * ((k : ℝ) + 2 + 1) * ((k : ℝ) + 2 + 2))) := by
+          have h2 : (0:ℝ) < (k : ℝ) + 2 := by linarith
+          have h3 : (0:ℝ) < (k : ℝ) + 3 := by linarith
+          have h4 : (0:ℝ) < (k : ℝ) + 4 := by linarith
+          field_simp
+          ring
+  -- assemble ΣA
+  have habsA : Summable (fun k => |A k|) := hSA.abs
+  have habsA1 : Summable (fun k => |A (k + 1)|) := (summable_nat_add_iff 1).mpr habsA
+  have habsA2 : Summable (fun k => |A (k + 2)|) := (summable_nat_add_iff 2).mpr habsA
+  have hAmajor : Summable (fun k : ℕ =>
+      (2 / 3) * (L * δ) * (1 / (((k : ℝ) + 2) * ((k : ℝ) + 2 + 1) * ((k : ℝ) + 2 + 2)))) :=
+    ((hasSum_inv_triple (by norm_num : (1 : ℝ) ≤ 2)).summable.mul_left _)
+  have hAtail_sum : ∑' k, |A (k + 2)| ≤ L * δ * (1 / 18) := by
+    calc ∑' k, |A (k + 2)|
+        ≤ ∑' k : ℕ, (2 / 3) * (L * δ) *
+            (1 / (((k : ℝ) + 2) * ((k : ℝ) + 2 + 1) * ((k : ℝ) + 2 + 2))) :=
+          habsA2.tsum_le_tsum hAtail hAmajor
+      _ = (2 / 3) * (L * δ) * ((1 / 2) / (2 * (2 + 1))) := by
+          rw [((hasSum_inv_triple (by norm_num : (1 : ℝ) ≤ 2)).mul_left
+            ((2 / 3) * (L * δ))).tsum_eq]
+      _ = L * δ * (1 / 18) := by ring
+  have hsumA : |∑' k, A k| ≤ L * δ * (1 / 4 + 2 / 27 + 1 / 18) := by
+    have h1 : |∑' k, A k| ≤ ∑' k, |A k| := by
+      simpa [Real.norm_eq_abs] using norm_tsum_le_tsum_norm (f := A)
+        (by simpa [Real.norm_eq_abs] using habsA)
+    have h2 : ∑' k, |A k| = |A 0| + (|A 1| + ∑' k, |A (k + 2)|) := by
+      rw [habsA.tsum_eq_zero_add]
+      congr 1
+      have := habsA1.tsum_eq_zero_add
+      simpa using this
+    calc |∑' k, A k| ≤ ∑' k, |A k| := h1
+      _ = |A 0| + (|A 1| + ∑' k, |A (k + 2)|) := h2
+      _ ≤ L * δ * (1 / 4) + (L * δ * (2 / 27) + L * δ * (1 / 18)) := by gcongr
+      _ = L * δ * (1 / 4 + 2 / 27 + 1 / 18) := by ring
+  -- ### B-series (Abel)
+  have hgT_le : ∀ k : ℕ, |gT t t' k| ≤ 2 * δ * (k : ℝ) / (((k : ℝ) + 1) * ((k : ℝ) + 1)) := by
+    intro k
+    have hk : (0 : ℝ) ≤ (k : ℝ) := Nat.cast_nonneg k
+    rw [gT_eq ht0 ht0', abs_div, abs_of_nonneg (by nlinarith : (0:ℝ) ≤ (t - t') * (k:ℝ)),
+      abs_of_pos (by nlinarith : (0:ℝ) < ((k : ℝ) + 1 + t) * ((k : ℝ) + 1 + t'))]
+    rw [div_le_div_iff₀ (by nlinarith) (by positivity)]
+    have e1 : t - t' ≤ 2 * δ := by nlinarith
+    have p1 : 0 ≤ (2 * δ - (t - t')) * ((k : ℝ) * (((k : ℝ) + 1) * ((k : ℝ) + 1))) :=
+      mul_nonneg (by linarith) (by positivity)
+    have p2 : 0 ≤ (2 * δ * (k : ℝ)) *
+        (((k : ℝ) + 1 + t) * ((k : ℝ) + 1 + t') - ((k : ℝ) + 1) * ((k : ℝ) + 1)) :=
+      mul_nonneg (by positivity) (by nlinarith)
+    nlinarith [p1, p2]
+  have hgT_succ : ∀ k : ℕ, |gT t t' (k + 1)| ≤
+      2 * δ * ((k : ℝ) + 1) / (((k : ℝ) + 3) * ((k : ℝ) + 2)) := by
+    intro k
+    have hk : (0 : ℝ) ≤ (k : ℝ) := Nat.cast_nonneg k
+    have hcast : (((k + 1 : ℕ) : ℝ)) = (k : ℝ) + 1 := by push_cast; ring
+    rw [gT_eq ht0 ht0', hcast]
+    rw [abs_div, abs_of_nonneg (by nlinarith : (0:ℝ) ≤ (t - t') * ((k:ℝ) + 1)),
+      abs_of_pos (by nlinarith : (0:ℝ) < ((k : ℝ) + 1 + 1 + t) * ((k : ℝ) + 1 + 1 + t'))]
+    rw [div_le_div_iff₀ (by nlinarith) (by positivity)]
+    have hfac : (1 + t) * ((k : ℝ) + 3) ≤ 2 * ((k : ℝ) + 2 + t) := by nlinarith
+    have q1 : 0 ≤ ((1 + t) * δ - (t - t')) *
+        (((k : ℝ) + 1) * (((k : ℝ) + 3) * ((k : ℝ) + 2))) :=
+      mul_nonneg (by linarith) (by positivity)
+    have q2 : 0 ≤ (2 * ((k : ℝ) + 2 + t) - (1 + t) * ((k : ℝ) + 3)) *
+        (δ * ((k : ℝ) + 1) * ((k : ℝ) + 2)) :=
+      mul_nonneg (by linarith) (by positivity)
+    have q3 : 0 ≤ (2 * δ * ((k : ℝ) + 1) * ((k : ℝ) + 2 + t)) * t' :=
+      mul_nonneg (by positivity) ht0'
+    nlinarith [q1, q2, q3]
+  set u : ℕ → ℝ := fun k => gT t t' k * ψ (stepPt t' k) with hudef
+  set v : ℕ → ℝ := fun k => gT t t' (k + 1) * ψ (stepPt t' k) with hvdef
+  have hu_bd : ∀ k, |u k| ≤ (2 * (L * δ)) / ((k : ℝ) + 1) ^ 2 := by
+    intro k
+    rw [hudef]
+    have hk : (0 : ℝ) ≤ (k : ℝ) := Nat.cast_nonneg k
+    rw [abs_mul]
+    have hpt : stepPt t' k ≤ 1 / ((k : ℝ) + 1) := by
+      rw [stepPt]
+      apply div_le_div_of_nonneg_left (by norm_num) (by positivity)
+      linarith
+    calc |gT t t' k| * |ψ (stepPt t' k)|
+        ≤ (2 * δ * (k : ℝ) / (((k : ℝ) + 1) * ((k : ℝ) + 1))) * (L * (1 / ((k : ℝ) + 1))) := by
+          apply mul_le_mul (hgT_le k)
+            ((hψ_le _ (stepPt_mem_Icc ht0' k)).trans
+              (mul_le_mul_of_nonneg_left hpt hL)) (abs_nonneg _) (by positivity)
+      _ = (2 * (L * δ)) * ((k : ℝ) / (((k : ℝ) + 1) ^ 3)) := by
+          have h1 : (0:ℝ) < (k : ℝ) + 1 := by positivity
+          field_simp
+          try ring
+      _ ≤ (2 * (L * δ)) * (1 / (((k : ℝ) + 1) ^ 2)) := by
+          apply mul_le_mul_of_nonneg_left _ (mul_nonneg (by norm_num) hLδ)
+          rw [div_le_div_iff₀ (by positivity) (by positivity)]
+          nlinarith [hk]
+      _ = (2 * (L * δ)) / ((k : ℝ) + 1) ^ 2 := by ring
+  have hv_bd : ∀ k, |v k| ≤ (2 * (L * δ)) / ((k : ℝ) + 1) ^ 2 := by
+    intro k
+    rw [hvdef]
+    have hk : (0 : ℝ) ≤ (k : ℝ) := Nat.cast_nonneg k
+    rw [abs_mul]
+    have hpt : stepPt t' k ≤ 1 / ((k : ℝ) + 1) := by
+      rw [stepPt]
+      apply div_le_div_of_nonneg_left (by norm_num) (by positivity)
+      linarith
+    calc |gT t t' (k + 1)| * |ψ (stepPt t' k)|
+        ≤ (2 * δ * ((k : ℝ) + 1) / (((k : ℝ) + 3) * ((k : ℝ) + 2))) *
+            (L * (1 / ((k : ℝ) + 1))) := by
+          apply mul_le_mul (hgT_succ k)
+            ((hψ_le _ (stepPt_mem_Icc ht0' k)).trans
+              (mul_le_mul_of_nonneg_left hpt hL)) (abs_nonneg _) (by positivity)
+      _ = (2 * (L * δ)) * (1 / ((((k : ℝ) + 3) * ((k : ℝ) + 2)))) := by
+          have h1 : (0:ℝ) < (k : ℝ) + 1 := by positivity
+          have h2 : (0:ℝ) < (k : ℝ) + 2 := by positivity
+          have h3 : (0:ℝ) < (k : ℝ) + 3 := by positivity
+          field_simp
+          try ring
+      _ ≤ (2 * (L * δ)) * (1 / (((k : ℝ) + 1) ^ 2)) := by
+          apply mul_le_mul_of_nonneg_left _ (mul_nonneg (by norm_num) hLδ)
+          rw [div_le_div_iff₀ (by positivity) (by positivity)]
+          nlinarith [hk]
+      _ = (2 * (L * δ)) / ((k : ℝ) + 1) ^ 2 := by ring
+  have hSu : Summable u := summable_sq_bound' hu_bd
+  have hSv : Summable v := summable_sq_bound' hv_bd
+  have hSu1 : Summable (fun k => u (k + 1)) := (summable_nat_add_iff 1).mpr hSu
+  set T : ℕ → ℝ := fun k =>
+    gT t t' (k + 1) * (ψ (stepPt t' (k + 1)) - ψ (stepPt t' k)) with hTdef
+  have hBsum : (∑' k, B k) = ∑' k, T k := by
+    have hBk : ∀ k, B k = u k - v k := by
+      intro k
+      simp only [hBdef, hudef, hvdef]
+      rw [stepWeight_sub_eq' ht0 ht0' k]
+      ring
+    have h1 : (∑' k, B k) = (∑' k, u k) - ∑' k, v k := by
+      rw [show (fun k => B k) = fun k => u k - v k from funext hBk]
+      exact hSu.tsum_sub hSv
+    have h2 : (∑' k, u k) = ∑' k, u (k + 1) := by
+      rw [hSu.tsum_eq_zero_add]
+      have hu0 : u 0 = 0 := by
+        simp only [hudef]
+        rw [gT_zero ht0 ht0', zero_mul]
+      rw [hu0, zero_add]
+    rw [h1, h2, ← hSu1.tsum_sub hSv]
+    exact tsum_congr fun k => by simp only [hTdef, hudef, hvdef]; ring
+  have hT_term : ∀ k : ℕ, |T k| ≤
+      2 * (L * δ) * (1 / (((k : ℝ) + 2) * ((k : ℝ) + 2) * ((k : ℝ) + 3))) := by
+    intro k
+    simp only [hTdef]
+    have hk : (0 : ℝ) ≤ (k : ℝ) := Nat.cast_nonneg k
+    rw [abs_mul]
+    have hgap : |ψ (stepPt t' (k + 1)) - ψ (stepPt t' k)| ≤
+        L * (1 / (((k : ℝ) + 1) * ((k : ℝ) + 2))) := by
+      calc |ψ (stepPt t' (k + 1)) - ψ (stepPt t' k)|
+          ≤ L * |stepPt t' (k + 1) - stepPt t' k| :=
+            hψ_lip _ (stepPt_mem_Icc ht0' (k + 1)) _ (stepPt_mem_Icc ht0' k)
+        _ ≤ L * (1 / (((k : ℝ) + 1) * ((k : ℝ) + 2))) := by
+            apply mul_le_mul_of_nonneg_left ?_ hL
+            rw [abs_sub_comm, stepPt_sub_succ ht0' k, abs_of_pos (by positivity)]
+            apply div_le_div_of_nonneg_left (by norm_num) (by positivity)
+            have h1 : ((k : ℝ) + 1) ≤ (k : ℝ) + 1 + t' := by linarith
+            have h2 : ((k : ℝ) + 2) ≤ (k : ℝ) + 2 + t' := by linarith
+            exact mul_le_mul h1 h2 (by positivity) (by positivity)
+    calc |gT t t' (k + 1)| * |ψ (stepPt t' (k + 1)) - ψ (stepPt t' k)|
+        ≤ (2 * δ * ((k : ℝ) + 1) / (((k : ℝ) + 3) * ((k : ℝ) + 2))) *
+            (L * (1 / (((k : ℝ) + 1) * ((k : ℝ) + 2)))) := by
+          apply mul_le_mul (hgT_succ k) hgap (abs_nonneg _) (by positivity)
+      _ = 2 * (L * δ) * (1 / (((k : ℝ) + 2) * ((k : ℝ) + 2) * ((k : ℝ) + 3))) := by
+          have h1 : (0:ℝ) < (k : ℝ) + 1 := by linarith
+          have h2 : (0:ℝ) < (k : ℝ) + 2 := by linarith
+          have h3 : (0:ℝ) < (k : ℝ) + 3 := by linarith
+          field_simp
+          try ring
+  have hST : Summable T := by
+    apply summable_sq_bound' (C := 2 * (L * δ))
+    intro k
+    refine (hT_term k).trans ?_
+    have hk : (0 : ℝ) ≤ (k : ℝ) := Nat.cast_nonneg k
+    rw [mul_one_div]
+    apply div_le_div_of_nonneg_left (by positivity) (by positivity)
+    nlinarith
+  have habsT : Summable (fun k => |T k|) := hST.abs
+  have habsT1 : Summable (fun k => |T (k + 1)|) := (summable_nat_add_iff 1).mpr habsT
+  have hT0 : |T 0| ≤ L * δ * (1 / 6) := by
+    refine (hT_term 0).trans ?_
+    norm_num
+    linarith [hLδ]
+  have hTtail : ∀ k : ℕ, |T (k + 1)| ≤
+      2 * (L * δ) * (1 / (((k : ℝ) + 2) * ((k : ℝ) + 2 + 1) * ((k : ℝ) + 2 + 2))) := by
+    intro k
+    refine (hT_term (k + 1)).trans ?_
+    have hk : (0 : ℝ) ≤ (k : ℝ) := Nat.cast_nonneg k
+    have hcast : (((k + 1 : ℕ) : ℝ)) = (k : ℝ) + 1 := by push_cast; ring
+    rw [hcast]
+    apply mul_le_mul_of_nonneg_left ?_ (by positivity)
+    apply div_le_div_of_nonneg_left (by norm_num) (by positivity)
+    nlinarith
+  have hTmajor : Summable (fun k : ℕ =>
+      2 * (L * δ) * (1 / (((k : ℝ) + 2) * ((k : ℝ) + 2 + 1) * ((k : ℝ) + 2 + 2)))) :=
+    ((hasSum_inv_triple (by norm_num : (1 : ℝ) ≤ 2)).summable.mul_left _)
+  have hsumB : |∑' k, B k| ≤ L * δ * (1 / 6 + 1 / 6) := by
+    rw [hBsum]
+    have h1 : |∑' k, T k| ≤ ∑' k, |T k| := by
+      simpa [Real.norm_eq_abs] using norm_tsum_le_tsum_norm (f := T)
+        (by simpa [Real.norm_eq_abs] using habsT)
+    have h2 : ∑' k, |T k| = |T 0| + ∑' k, |T (k + 1)| := habsT.tsum_eq_zero_add
+    have h3 : ∑' k, |T (k + 1)| ≤ L * δ * (1 / 6) := by
+      calc ∑' k, |T (k + 1)|
+          ≤ ∑' k : ℕ, 2 * (L * δ) *
+              (1 / (((k : ℝ) + 2) * ((k : ℝ) + 2 + 1) * ((k : ℝ) + 2 + 2))) :=
+            habsT1.tsum_le_tsum hTtail hTmajor
+        _ = 2 * (L * δ) * ((1 / 2) / (2 * (2 + 1))) := by
+            rw [((hasSum_inv_triple (by norm_num : (1 : ℝ) ≤ 2)).mul_left
+              (2 * (L * δ))).tsum_eq]
+        _ = L * δ * (1 / 6) := by ring
+    calc |∑' k, T k| ≤ ∑' k, |T k| := h1
+      _ = |T 0| + ∑' k, |T (k + 1)| := h2
+      _ ≤ L * δ * (1 / 6) + L * δ * (1 / 6) := by gcongr
+      _ = L * δ * (1 / 6 + 1 / 6) := by ring
+  -- ### 1/4 + 2/27 + 1/18 + 1/3 = 77/108 ≤ 3/4
+  rw [hsplit]
+  calc |(∑' k, A k) + ∑' k, B k| ≤ |∑' k, A k| + |∑' k, B k| := abs_add_le _ _
+    _ ≤ L * δ * (1 / 4 + 2 / 27 + 1 / 18) + L * δ * (1 / 6 + 1 / 6) :=
+        add_le_add hsumA hsumB
+    _ = 77 / 108 * (L * δ) := by ring
+    _ ≤ 3 / 4 * L * δ := by nlinarith [hLδ]
+
+
 
 /-- **CRUX (open).**  One-step contraction of `stepOp` in the log metric
 `d(t,t') = |log(1+t) − log(1+t')|`, with factor `3/4`.
@@ -202,7 +699,18 @@ theorem stepOp_logLipschitz {φ : ℝ → ℝ} {L : ℝ} (hL : 0 ≤ L)
     {t t' : ℝ} (ht : t ∈ Set.Icc (0 : ℝ) 1) (ht' : t' ∈ Set.Icc (0 : ℝ) 1) :
     |stepOp φ t - stepOp φ t'| ≤
       3 / 4 * L * |Real.log (1 + t) - Real.log (1 + t')| := by
-  sorry
+  have habs : ∀ a b : ℝ, 0 ≤ a → a ≤ b → b ≤ 1 →
+      |Real.log (1 + b) - Real.log (1 + a)| = Real.log (1 + b) - Real.log (1 + a) := by
+    intro a b ha hab _
+    refine abs_of_nonneg ?_
+    have := Real.log_le_log (by linarith : (0:ℝ) < 1 + a) (by linarith : (1:ℝ) + a ≤ 1 + b)
+    linarith
+  rcases le_total t' t with h | h
+  · rw [habs t' t ht'.1 h ht.2]
+    exact stepOp_logLipschitz_aux hL hφ ht'.1 h ht.2
+  · rw [abs_sub_comm (stepOp φ t), abs_sub_comm (Real.log (1 + t)),
+      habs t t' ht.1 h ht'.2]
+    exact stepOp_logLipschitz_aux hL hφ ht.1 h ht'.2
 
 /-- **Geometric log-Lipschitz decay** of `G_k`, factor `3/4` per step. -/
 theorem horizonIntegral_logLip {A : Set ℝ} (hA : MeasurableSet A)
