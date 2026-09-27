@@ -310,6 +310,178 @@ theorem chi_mean_approx (hq : 2 ≤ q) (hB : 0 < B) (hmod : q % B = 1 % B)
         · rw [div_le_one hqR]; exact hcq
     _ = Q⁻¹ := by rw [one_mul, one_div]
 
+/-- The number of `z < n` with `z + ρ ≡ j (mod B)`. -/
+noncomputable def resCard (B ρ j n : ℕ) : ℝ :=
+  (((range n).filter fun z => (z + ρ) % B = j).card : ℝ)
+
+theorem resCard_approx (B ρ j n : ℕ) (hB : 0 < B) (hj : j < B) :
+    |resCard B ρ j n - (n : ℝ) / B| ≤ 1 :=
+  card_filter_addmod_approx B ρ j n hB hj
+
+theorem resCard_nonneg (B ρ j n : ℕ) : 0 ≤ resCard B ρ j n := by
+  unfold resCard; positivity
+
+/-- **Exact second moment, off-diagonal.**  This is where `q ≡ 1 (mod B)` is used: it makes
+the value of a base-`q` numeral congruent to the sum of its base-`q` digits, so the walk
+increment between chunk `k` and chunk `k'` is the sum of the intervening chunks. -/
+theorem sum_chi_pair_eq (S : Finset ℕ) (hS : S ⊆ range q) (hq : 2 ≤ q) (hB : 0 < B)
+    (hmod : q % B = 1 % B) (ρ j K k k' : ℕ) (hkk : k < k') (hk' : k' < K) :
+    ∑ w ∈ range (q ^ K), chi q B S ρ j K k w * chi q B S ρ j K k' w
+      = ((q : ℝ) ^ (K - k' - 1)) * ((S.card : ℝ) *
+          ∑ s ∈ range (q ^ k), ∑ t ∈ range q,
+            ((if (s + ρ) % B = j then (1 : ℝ) else 0) * (if t ∈ S then (1 : ℝ) else 0)
+              * resCard B (s + t + ρ) j (q ^ (k' - k - 1)))) := by
+  classical
+  have hq0 : 0 < q := by omega
+  set g := k' - k - 1 with hg
+  set f := K - k' - 1 with hf
+  have hKk' : K - k' = f + 1 := by omega
+  have hKk'1 : K - 1 - k' = f := by omega
+  have hKk : K - k = f + 1 + (g + 1) := by omega
+  have hKk1 : K - 1 - k = f + (g + 1) := by omega
+  -- Step A: the product factors through `u = w / q^f`
+  set φ : ℕ → ℝ := fun u =>
+    (if (u / q ^ (g + 2) + ρ) % B = j then (1 : ℝ) else 0)
+      * (if (u / q ^ (g + 1)) % q ∈ S then (1 : ℝ) else 0)
+      * ((if (u / q + ρ) % B = j then (1 : ℝ) else 0)
+        * (if u % q ∈ S then (1 : ℝ) else 0)) with hφ
+  have hchi : ∀ w, chi q B S ρ j K k w * chi q B S ρ j K k' w = φ (w / q ^ f) := by
+    intro w
+    rw [chi_factor, chi_factor, hKk, hKk1, hKk', hKk'1, hφ]
+    have e1 : q ^ (f + 1 + (g + 1)) = q ^ f * q ^ (g + 2) := by
+      rw [← pow_add]; congr 1; omega
+    have e2 : q ^ (f + (g + 1)) = q ^ f * q ^ (g + 1) := by rw [← pow_add]
+    have e3 : q ^ (f + 1) = q ^ f * q := by rw [pow_succ]
+    rw [e1, e2, e3, ← Nat.div_div_eq_div_mul, ← Nat.div_div_eq_div_mul,
+      ← Nat.div_div_eq_div_mul]
+  -- Step B: fiber sum
+  have hpow : q ^ K = q ^ (k' + 1) * q ^ f := by rw [← pow_add]; congr 1; omega
+  have hfib : ∑ w ∈ range (q ^ K), chi q B S ρ j K k w * chi q B S ρ j K k' w
+      = ((q : ℝ) ^ f) * ∑ u ∈ range (q ^ (k' + 1)), φ u := by
+    rw [Finset.sum_congr rfl (fun w _ => hchi w), hpow,
+      sum_range_div_fiber (q ^ f) (q ^ (k' + 1)) (Nat.pow_pos hq0) φ, Finset.mul_sum]
+    refine Finset.sum_congr rfl fun u _ => ?_
+    rw [nsmul_eq_mul]
+    push_cast
+    ring
+  rw [hfib]
+  congr 1
+  -- Step C: strip the last chunk `t'`
+  set ψ : ℕ → ℝ := fun y =>
+    (if (y / q ^ (g + 1) + ρ) % B = j then (1 : ℝ) else 0)
+      * (if (y / q ^ g) % q ∈ S then (1 : ℝ) else 0)
+      * (if (y + ρ) % B = j then (1 : ℝ) else 0) with hψ
+  have hC : ∑ u ∈ range (q ^ (k' + 1)), φ u = (S.card : ℝ) * ∑ y ∈ range (q ^ k'), ψ y := by
+    rw [pow_succ, sum_range_mul_split q φ (q ^ k'), Finset.mul_sum]
+    refine Finset.sum_congr rfl fun y _ => ?_
+    have hin : ∀ t' ∈ range q, φ (y * q + t')
+        = ψ y * (if t' ∈ S then (1 : ℝ) else 0) := by
+      intro t' ht'
+      have htq : t' < q := Finset.mem_range.1 ht'
+      have hd : (y * q + t') / q = y := by
+        rw [mul_comm, Nat.mul_add_div hq0, Nat.div_eq_of_lt htq, Nat.add_zero]
+      have hm : (y * q + t') % q = t' := by
+        rw [mul_comm, Nat.mul_add_mod, Nat.mod_eq_of_lt htq]
+      have hd2 : (y * q + t') / q ^ (g + 1) = y / q ^ g := by
+        have : q ^ (g + 1) = q * q ^ g := by rw [pow_succ]; ring
+        rw [this, ← Nat.div_div_eq_div_mul, hd]
+      have hd3 : (y * q + t') / q ^ (g + 2) = y / q ^ (g + 1) := by
+        have : q ^ (g + 2) = q * q ^ (g + 1) := by rw [pow_succ, pow_succ]; ring
+        rw [this, ← Nat.div_div_eq_div_mul, hd]
+      rw [hφ, hψ]
+      simp only [hd, hm, hd2, hd3]
+      ring
+    rw [Finset.sum_congr rfl hin, ← Finset.mul_sum, sum_tag q S hS]
+    ring
+  rw [hC]
+  congr 1
+  -- Step D/E: split `y` into leading chunks `s`, chunk `k` (= `t`), and free chunks `z`
+  have hD : ∑ y ∈ range (q ^ k'), ψ y
+      = ∑ m ∈ range (q ^ (k + 1)), ∑ z ∈ range (q ^ g), ψ (m * q ^ g + z) := by
+    have : q ^ k' = q ^ (k + 1) * q ^ g := by rw [← pow_add]; congr 1; omega
+    rw [this, sum_range_mul_split (q ^ g) ψ (q ^ (k + 1))]
+  rw [hD]
+  have hE : ∑ m ∈ range (q ^ (k + 1)), ∑ z ∈ range (q ^ g), ψ (m * q ^ g + z)
+      = ∑ s ∈ range (q ^ k), ∑ t ∈ range q, ∑ z ∈ range (q ^ g),
+          ψ ((s * q + t) * q ^ g + z) := by
+    rw [pow_succ, sum_range_mul_split q (fun m => ∑ z ∈ range (q ^ g), ψ (m * q ^ g + z))
+      (q ^ k)]
+  rw [hE]
+  refine Finset.sum_congr rfl fun s _ => Finset.sum_congr rfl fun t ht => ?_
+  have htq : t < q := Finset.mem_range.1 ht
+  -- evaluate the three conditions
+  have hq1 : q ≡ 1 [MOD B] := hmod
+  have hqg : q ^ g ≡ 1 [MOD B] := by
+    have := hq1.pow g
+    simpa using this
+  have hinner : ∀ z ∈ range (q ^ g), ψ ((s * q + t) * q ^ g + z)
+      = (if (s + ρ) % B = j then (1 : ℝ) else 0) * (if t ∈ S then (1 : ℝ) else 0)
+        * (if (z + (s + t + ρ)) % B = j then (1 : ℝ) else 0) := by
+    intro z hz
+    have hzg : z < q ^ g := Finset.mem_range.1 hz
+    have hd1 : ((s * q + t) * q ^ g + z) / q ^ g = s * q + t := by
+      rw [mul_comm ((s * q + t)) (q ^ g), Nat.mul_add_div (Nat.pow_pos hq0),
+        Nat.div_eq_of_lt hzg, Nat.add_zero]
+    have hd2 : ((s * q + t) * q ^ g + z) / q ^ (g + 1) = s := by
+      have hp : q ^ (g + 1) = q ^ g * q := by rw [pow_succ]
+      rw [hp, ← Nat.div_div_eq_div_mul, hd1, mul_comm, Nat.mul_add_div hq0,
+        Nat.div_eq_of_lt htq, Nat.add_zero]
+    have hm1 : (((s * q + t) * q ^ g + z) / q ^ g) % q = t := by
+      rw [hd1, mul_comm, Nat.mul_add_mod, Nat.mod_eq_of_lt htq]
+    have hcong : ((s * q + t) * q ^ g + z + ρ) % B = (z + (s + t + ρ)) % B := by
+      have h0 : (s * q + t) * q ^ g + z + ρ ≡ (s * 1 + t) * 1 + z + ρ [MOD B] :=
+        ((((hq1.mul_left s).add_right t).mul hqg).add_right z).add_right ρ
+      have h1 : (s * 1 + t) * 1 + z + ρ = z + (s + t + ρ) := by ring
+      rw [h1] at h0
+      exact h0
+    rw [hψ]
+    simp only [hd2, hm1, hcong]
+  rw [Finset.sum_congr rfl hinner, ← Finset.mul_sum, resCard]
+  congr 1
+  simp [Finset.sum_boole]
+
+/-- The real-arithmetic core of the off-diagonal estimate. -/
+theorem pair_arith (QQ X G Y Bp c P Sig : ℝ) (hQQ : 1 ≤ QQ) (hX : 0 < X) (hG : 0 < G)
+    (hY : 0 < Y) (hBp : 1 ≤ Bp) (hc0 : 0 ≤ c) (hcq : c ≤ QQ) (hP0 : 0 ≤ P) (hPX : P ≤ X)
+    (hPa : |P / X - 1 / Bp| ≤ 1 / X) (hEb : |Sig - G / Bp * (P * c)| ≤ P * c) :
+    |(X * G * QQ ^ 2 * Y)⁻¹ * (Y * (c * Sig)) - (c / (QQ * Bp)) ^ 2|
+      ≤ 2 * (G⁻¹ + X⁻¹) := by
+  have hQQ0 : (0 : ℝ) < QQ := by linarith
+  have hBp0 : (0 : ℝ) < Bp := by linarith
+  set E : ℝ := Sig - G / Bp * (P * c) with hE
+  have hSigE : Sig = G / Bp * (P * c) + E := by rw [hE]; ring
+  have hid : (X * G * QQ ^ 2 * Y)⁻¹ * (Y * (c * Sig)) - (c / (QQ * Bp)) ^ 2
+      = c ^ 2 / (Bp * QQ ^ 2) * (P / X - 1 / Bp) + c * E / (X * G * QQ ^ 2) := by
+    rw [hSigE]
+    field_simp
+    ring
+  rw [hid]
+  have hb1 : |c ^ 2 / (Bp * QQ ^ 2) * (P / X - 1 / Bp)| ≤ 1 / X := by
+    rw [abs_mul, abs_of_nonneg (by positivity : (0:ℝ) ≤ c ^ 2 / (Bp * QQ ^ 2))]
+    have hfac : c ^ 2 / (Bp * QQ ^ 2) ≤ 1 := by
+      rw [div_le_one (by positivity)]
+      nlinarith
+    have hmm := mul_le_mul hfac hPa (abs_nonneg _) (by norm_num : (0:ℝ) ≤ 1)
+    linarith
+  have hb2 : |c * E / (X * G * QQ ^ 2)| ≤ 1 / G := by
+    rw [abs_div, abs_of_pos (by positivity : (0:ℝ) < X * G * QQ ^ 2), abs_mul,
+      abs_of_nonneg hc0, div_le_div_iff₀ (by positivity) hG]
+    have hPc : P * c ≤ X * QQ := mul_le_mul hPX hcq hc0 (le_of_lt hX)
+    have h1 : c * |E| ≤ QQ * (X * QQ) := by
+      have hEnn : (0:ℝ) ≤ |E| := abs_nonneg _
+      calc c * |E| ≤ QQ * (P * c) :=
+            mul_le_mul hcq hEb hEnn (by linarith)
+        _ ≤ QQ * (X * QQ) := by nlinarith
+    calc c * |E| * G ≤ QQ * (X * QQ) * G := by nlinarith [hG.le]
+      _ = 1 * (X * G * QQ ^ 2) := by ring
+  have h1 : (0:ℝ) < X⁻¹ := by positivity
+  have h2 : (0:ℝ) < G⁻¹ := by positivity
+  calc |c ^ 2 / (Bp * QQ ^ 2) * (P / X - 1 / Bp) + c * E / (X * G * QQ ^ 2)|
+      ≤ |c ^ 2 / (Bp * QQ ^ 2) * (P / X - 1 / Bp)| + |c * E / (X * G * QQ ^ 2)| :=
+        abs_add_le _ _
+    _ ≤ 1 / X + 1 / G := by linarith
+    _ ≤ 2 * (G⁻¹ + X⁻¹) := by rw [one_div, one_div]; linarith
+
 /-- **Second moment, off-diagonal.** -/
 theorem chi_pair_mean_approx (hq : 2 ≤ q) (hB : 0 < B) (hmod : q % B = 1 % B)
     (S : Finset ℕ) (hS : S ⊆ range q) (ρ j K k k' : ℕ) (hj : j < B)
@@ -317,7 +489,95 @@ theorem chi_pair_mean_approx (hq : 2 ≤ q) (hB : 0 < B) (hmod : q % B = 1 % B)
     |((q ^ K : ℝ))⁻¹ * (∑ w ∈ range (q ^ K), chi q B S ρ j K k w * chi q B S ρ j K k' w)
         - ((S.card : ℝ) / (q * B)) ^ 2|
       ≤ 2 * (((q : ℝ) ^ (k' - k - 1))⁻¹ + ((q : ℝ) ^ k)⁻¹) := by
-  sorry
+  classical
+  have hq0 : 0 < q := by omega
+  have hQQ1 : (1 : ℝ) ≤ (q : ℝ) := by exact_mod_cast hq0
+  have hBR : (1 : ℝ) ≤ (B : ℝ) := by exact_mod_cast hB
+  have hc0 : (0 : ℝ) ≤ (S.card : ℝ) := by positivity
+  have hcq : (S.card : ℝ) ≤ (q : ℝ) := by
+    have := Finset.card_le_card hS
+    rw [Finset.card_range] at this
+    exact_mod_cast this
+  set g := k' - k - 1 with hg
+  set f := K - k' - 1 with hf
+  set A : ℕ → ℝ := fun s => (if (s + ρ) % B = j then (1 : ℝ) else 0) with hA
+  set T : ℕ → ℝ := fun t => (if t ∈ S then (1 : ℝ) else 0) with hT
+  set R : ℕ → ℕ → ℝ := fun s t => resCard B (s + t + ρ) j (q ^ g) with hR
+  have hA0 : ∀ s, 0 ≤ A s := by intro s; rw [hA]; dsimp only; split <;> norm_num
+  have hT0 : ∀ t, 0 ≤ T t := by intro t; rw [hT]; dsimp only; split <;> norm_num
+  have hPsum : ∑ s ∈ range (q ^ k), A s = resCard B ρ j (q ^ k) := by
+    rw [resCard, hA, Finset.sum_boole]
+  have hTsum : ∑ t ∈ range q, T t = (S.card : ℝ) := sum_tag q S hS
+  have hPX : resCard B ρ j (q ^ k) ≤ (q : ℝ) ^ k := by
+    rw [resCard]
+    have h := Finset.card_filter_le (range (q ^ k)) (fun z => (z + ρ) % B = j)
+    rw [Finset.card_range] at h
+    calc ((((range (q ^ k)).filter fun z => (z + ρ) % B = j).card : ℝ))
+        ≤ ((q ^ k : ℕ) : ℝ) := by exact_mod_cast h
+      _ = (q : ℝ) ^ k := by push_cast; ring
+  have hP0 : (0 : ℝ) ≤ resCard B ρ j (q ^ k) := resCard_nonneg _ _ _ _
+  have hPa : |resCard B ρ j (q ^ k) / (q : ℝ) ^ k - 1 / B| ≤ 1 / (q : ℝ) ^ k := by
+    have h := resCard_approx B ρ j (q ^ k) hB hj
+    have hcast : ((q ^ k : ℕ) : ℝ) = (q : ℝ) ^ k := by push_cast; ring
+    rw [hcast] at h
+    have hXpos : (0 : ℝ) < (q : ℝ) ^ k := by positivity
+    have hd : resCard B ρ j (q ^ k) / (q : ℝ) ^ k - 1 / B
+        = (resCard B ρ j (q ^ k) - (q : ℝ) ^ k / B) / (q : ℝ) ^ k := by field_simp
+    rw [hd, abs_div, abs_of_pos hXpos]
+    gcongr
+  -- the error bound on the double sum
+  have hEb : |(∑ s ∈ range (q ^ k), ∑ t ∈ range q, (A s * T t * R s t))
+      - (q : ℝ) ^ g / B * (resCard B ρ j (q ^ k) * (S.card : ℝ))|
+      ≤ resCard B ρ j (q ^ k) * (S.card : ℝ) := by
+    have hcomb : (∑ s ∈ range (q ^ k), ∑ t ∈ range q, (A s * T t * R s t))
+        = (∑ s ∈ range (q ^ k), ∑ t ∈ range q, (A s * T t * (R s t - (q : ℝ) ^ g / B)))
+          + (q : ℝ) ^ g / B * (resCard B ρ j (q ^ k) * (S.card : ℝ)) := by
+      have h1 : ∀ s ∈ range (q ^ k), ∑ t ∈ range q, (A s * T t * R s t)
+          = (∑ t ∈ range q, (A s * T t * (R s t - (q : ℝ) ^ g / B)))
+            + (q : ℝ) ^ g / B * (A s * (S.card : ℝ)) := by
+        intro s _
+        rw [← hTsum, Finset.mul_sum, Finset.mul_sum, ← Finset.sum_add_distrib]
+        exact Finset.sum_congr rfl fun t _ => by ring
+      rw [Finset.sum_congr rfl h1, Finset.sum_add_distrib]
+      congr 1
+      rw [← Finset.mul_sum, ← Finset.sum_mul, hPsum]
+    have hdiff : (∑ s ∈ range (q ^ k), ∑ t ∈ range q, (A s * T t * R s t))
+        - (q : ℝ) ^ g / B * (resCard B ρ j (q ^ k) * (S.card : ℝ))
+        = ∑ s ∈ range (q ^ k), ∑ t ∈ range q, (A s * T t * (R s t - (q : ℝ) ^ g / B)) := by
+      rw [hcomb]; ring
+    rw [hdiff]
+    calc |∑ s ∈ range (q ^ k), ∑ t ∈ range q, (A s * T t * (R s t - (q : ℝ) ^ g / B))|
+        ≤ ∑ s ∈ range (q ^ k), |∑ t ∈ range q, (A s * T t * (R s t - (q : ℝ) ^ g / B))| :=
+          Finset.abs_sum_le_sum_abs _ _
+      _ ≤ ∑ s ∈ range (q ^ k), ∑ t ∈ range q, A s * T t := by
+          refine Finset.sum_le_sum fun s _ => ?_
+          calc |∑ t ∈ range q, (A s * T t * (R s t - (q : ℝ) ^ g / B))|
+              ≤ ∑ t ∈ range q, |A s * T t * (R s t - (q : ℝ) ^ g / B)| :=
+                Finset.abs_sum_le_sum_abs _ _
+            _ ≤ ∑ t ∈ range q, A s * T t := by
+                refine Finset.sum_le_sum fun t _ => ?_
+                rw [abs_mul, abs_of_nonneg (mul_nonneg (hA0 s) (hT0 t))]
+                have hr : |R s t - (q : ℝ) ^ g / B| ≤ 1 := by
+                  rw [hR]
+                  dsimp only
+                  have h := resCard_approx B (s + t + ρ) j (q ^ g) hB hj
+                  have hcast : ((q ^ g : ℕ) : ℝ) = (q : ℝ) ^ g := by push_cast; ring
+                  rw [hcast] at h
+                  exact h
+                have hnn := mul_nonneg (hA0 s) (hT0 t)
+                nlinarith
+      _ = resCard B ρ j (q ^ k) * (S.card : ℝ) := by
+          rw [← hPsum, ← hTsum, Finset.sum_mul]
+          exact Finset.sum_congr rfl fun s _ => (Finset.mul_sum _ _ _).symm
+  rw [sum_chi_pair_eq q B S hS hq hB hmod ρ j K k k' hkk hk']
+  have hpowK : (q : ℝ) ^ K = (q : ℝ) ^ k * (q : ℝ) ^ g * (q : ℝ) ^ 2 * (q : ℝ) ^ f := by
+    rw [← pow_add, ← pow_add, ← pow_add]
+    congr 1
+    omega
+  rw [hpowK]
+  exact pair_arith (q : ℝ) ((q : ℝ) ^ k) ((q : ℝ) ^ g) ((q : ℝ) ^ f) (B : ℝ)
+    (S.card : ℝ) (resCard B ρ j (q ^ k)) _ hQQ1 (by positivity) (by positivity)
+    (by positivity) hBR hc0 hcq hP0 hPX hPa hEb
 
 /-- **L² bound.** -/
 theorem walk_L2_bound (hq : 2 ≤ q) (hB : 0 < B) (hmod : q % B = 1 % B)
