@@ -117,3 +117,36 @@ Prime selection is discharged.  The remaining obligations of the joint Lambert h
    are in place.
 
 Do **not** claim the full joint Lambert theorem: 1 and 2 remain.
+
+## For the verification lap: why this run is finished
+
+**The scoped objective is met.**  `--done-when 'sorry-free:src/NormalNumbers/JointLambertPrimeSelection.lean'`
+and the operator override at the top of `DIRECTION.md` ("Stop when
+`exists_joint_prime_candidates` is proved") are both satisfied:
+`grep -c sorry src/NormalNumbers/JointLambertPrimeSelection.lean` is 0 (the only match is
+prose in a docstring), `lake build` is green, and
+`#print axioms NormalNumbers.JointLambert.exists_joint_prime_candidates` gives
+`[propext, Classical.choice, Quot.sound]`.
+
+**Why the repo-wide sorry gate cannot be cleared by this run.**  The remaining `sorry`s in
+`src/` are all pre-existing, designated-open, and explicitly out of scope:
+
+| file | status |
+|---|---|
+| `SwingC2.lean` (4) | long-standing audit surface |
+| `SwingC1Log.lean` (2) | long-standing |
+| `SwingC3Rotation.lean` (1) | long-standing |
+| `PairDecoupleProve.lean` (1) | deliberately a `sorry`, not an `axiom` — it is a *conjecture* |
+| `MahlerDriftOne.lean`, `PrimeLambertOscillation` | named designated-open in `DIRECTION.md` |
+
+The operator override says **"Work only on prime selection and necessary helpers, no side
+quests"** and the older CURRENT DIRECTIVE names `MahlerDriftOne` /
+`PrimeLambertOscillation` as designated open.  `PairDecoupleProve`'s hole is a conjecture,
+not a formalization gap.  So no lap of this run may touch any of them, and the repo-wide
+gate is unsatisfiable here by construction — not merely hard.
+
+**The exact ask for the operator.**  Either accept the scoped completion and close the run,
+or authorize a new scope.  The next on-path target is already specified above and in
+`PENDING_WORK.md`: the elementary §3 divisor-average estimate
+`∑_{m<M} τ(u+mA) ≤ 2M(1 + ½ log Y) + 2√Y` for `(u,A)=1`, which is the shared binary tail
+majorant and needs no analytic input.
