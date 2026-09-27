@@ -5,6 +5,7 @@ Authors: Trevor Morris
 -/
 import NormalNumbers.Wall
 import NormalNumbers.WeylCriterion
+import NormalNumbers.WallCrux
 
 /-!
 # Wall: rational affine maps preserve normality
@@ -894,6 +895,106 @@ theorem exists_period (b B : ℕ) (hB : 0 < B) (hcop : Nat.Coprime B b) (l : ℕ
     have h2 : (b ^ Nat.totient B) ^ (l + 1) ≡ 1 ^ (l + 1) [MOD B] := h1.pow _
     rw [one_pow, ← pow_mul] at h2
     exact h2
+
+/-- The tag set: length-`T` chunks whose leading `l` digits spell `v`. -/
+noncomputable def tagSet (b T l v : ℕ) : Finset ℕ :=
+  (Finset.range (b ^ T)).filter fun t => t / b ^ (T - l) = v
+
+theorem tagSet_subset (b T l v : ℕ) : tagSet b T l v ⊆ Finset.range (b ^ T) :=
+  Finset.filter_subset _ _
+
+theorem card_tagSet (b T l v : ℕ) (hb : 2 ≤ b) (hlT : l ≤ T) (hv : v < b ^ l) :
+    (tagSet b T l v).card = b ^ (T - l) := by
+  have hb0 : 0 < b := by omega
+  have hsplit : b ^ T = b ^ l * b ^ (T - l) := by rw [← pow_add]; congr 1; omega
+  rw [tagSet, hsplit]
+  exact card_leadFilter (b ^ (T - l)) v (b ^ l) (Nat.pow_pos hb0) hv
+
+/-- **The identification.**  Along the arithmetic progression `n, n+T, n+2T, …` the joint
+event `(state = j, next l digits = v)` is exactly the `WallCrux` walk indicator read off the
+single depth-`T*K` digit block at `n`, with the (unbounded-prefix) state `divState … n` as
+the walk's starting point. -/
+theorem chi_eq_jointIndicator (b B : ℕ) (hb : 2 ≤ b) (hB : 0 < B) (x : ℝ)
+    (hx : x ∈ Set.Ico (0 : ℝ) 1) (M : ℤ) (T l : ℕ) (hlT : 0 < l) (hlT' : l ≤ T)
+    (hbT : b ^ T % B = 1 % B) (j : ℕ) (hj : j < B) (v K n k : ℕ) (hk : k < K) :
+    WallCrux.chi (b ^ T) B (tagSet b T l v) (divState b B x M n) j K k
+        (blockVal b x n (T * K))
+      = (if divState b B x M (n + T * k) = j ∧ blockVal b x (n + T * k) l = v
+          then (1 : ℝ) else 0) := by
+  classical
+  have hb0 : 0 < b := by omega
+  have hT0 : 0 < T := by omega
+  have hqpow : ∀ i : ℕ, (b ^ T) ^ i = b ^ (T * i) := fun i => (pow_mul b T i).symm
+  set W := blockVal b x n (T * K) with hW
+  -- (i) the leading chunks give the length-`T*k` prefix
+  have hi : W / (b ^ T) ^ (K - k) = blockVal b x n (T * k) := by
+    rw [hqpow, blockVal_prefix b hb x hx n (T * k) (T * K) (Nat.mul_le_mul_left T (by omega))]
+    congr 2
+    rw [← Nat.mul_sub]
+  -- (ii) the state after `T*k` steps
+  have hstate : divState b B x M (n + T * k)
+      = (divState b B x M n + blockVal b x n (T * k)) % B := by
+    have h0 : ((b : ℤ) ^ T) ≡ 1 [ZMOD (B : ℤ)] := by
+      show ((b : ℤ) ^ T) % (B : ℤ) = (1 : ℤ) % (B : ℤ)
+      have e1 : ((b : ℤ) ^ T) = ((b ^ T : ℕ) : ℤ) := by push_cast; ring
+      have e2 : (1 : ℤ) = ((1 : ℕ) : ℤ) := by norm_num
+      rw [e1, e2, ← Int.natCast_mod, ← Int.natCast_mod, hbT]
+    have hpow1 : ((b : ℤ) ^ (T * k)) ≡ 1 [ZMOD (B : ℤ)] := by
+      have := h0.pow k
+      rw [one_pow, ← pow_mul] at this
+      exact this
+    have hsh := divState_shift b B hb hB x hx M n (T * k)
+    have hcong : ((divState b B x M (n + T * k) : ℤ))
+        ≡ ((divState b B x M n + blockVal b x n (T * k) : ℕ) : ℤ) [ZMOD (B : ℤ)] := by
+      refine hsh.trans ?_
+      push_cast
+      exact Int.ModEq.add_right _ (by simpa using (hpow1.mul_right (divState b B x M n : ℤ)))
+    have hlt : divState b B x M (n + T * k) < B := divState_lt b B hB x M (n + T * k)
+    have hBz : (0 : ℤ) < (B : ℤ) := by exact_mod_cast hB
+    have h1 : (divState b B x M (n + T * k) : ℤ) % (B : ℤ)
+        = ((divState b B x M n + blockVal b x n (T * k) : ℕ) : ℤ) % (B : ℤ) := hcong
+    have h2 : (divState b B x M (n + T * k) : ℤ) % (B : ℤ)
+        = (divState b B x M (n + T * k) : ℤ) :=
+      Int.emod_eq_of_lt (by positivity) (by exact_mod_cast hlt)
+    have h3 : (((divState b B x M n + blockVal b x n (T * k)) % B : ℕ) : ℤ)
+        = ((divState b B x M n + blockVal b x n (T * k) : ℕ) : ℤ) % (B : ℤ) :=
+      Int.natCast_mod _ _
+    have h4 : (divState b B x M (n + T * k) : ℤ)
+        = (((divState b B x M n + blockVal b x n (T * k)) % B : ℕ) : ℤ) := by
+      rw [← h2, h1, h3]
+    exact_mod_cast h4
+  -- (iii) chunk `k` is the length-`T` block at `n + T*k`
+  have hchunk : (W / (b ^ T) ^ (K - 1 - k)) % b ^ T = blockVal b x (n + T * k) T := by
+    rw [hqpow, hW, blockVal_window b hb x hx n (T * k) T (T * K)
+      (by calc T * k + T = T * (k + 1) := by ring
+            _ ≤ T * K := Nat.mul_le_mul_left T (by omega))]
+    congr 2
+    obtain ⟨e, he⟩ : ∃ e, K = k + 1 + e := ⟨K - k - 1, by omega⟩
+    subst he
+    have hr : k + 1 + e - 1 - k = e := by omega
+    rw [hr]
+    have key : T * (k + 1 + e) - T * k - T = T * e := by
+      have h1 : T * (k + 1 + e) = T * k + (T + T * e) := by ring
+      rw [h1, Nat.add_sub_cancel_left, Nat.add_comm T (T * e), Nat.add_sub_cancel]
+    rw [key]
+  -- (iv) the tag condition
+  have hlead : blockVal b x (n + T * k) T / b ^ (T - l) = blockVal b x (n + T * k) l :=
+    (blockVal_prefix b hb x hx (n + T * k) l T hlT').symm
+  have hmemS : ((W / (b ^ T) ^ (K - 1 - k)) % b ^ T ∈ tagSet b T l v)
+      ↔ blockVal b x (n + T * k) l = v := by
+    rw [tagSet, Finset.mem_filter, Finset.mem_range, hchunk, hlead]
+    refine ⟨fun h => h.2, fun h => ⟨?_, h⟩⟩
+    rw [← hchunk]
+    exact Nat.mod_lt _ (Nat.pow_pos hb0)
+  have hcond : (blockVal b x n (T * k) + divState b B x M n) % B = j
+      ↔ divState b B x M (n + T * k) = j := by
+    rw [hstate, Nat.add_comm (divState b B x M n)]
+  have hP : ((W / (b ^ T) ^ (K - k) + divState b B x M n) % B = j
+        ∧ (W / (b ^ T) ^ (K - 1 - k)) % b ^ T ∈ tagSet b T l v)
+      ↔ (divState b B x M (n + T * k) = j ∧ blockVal b x (n + T * k) l = v) := by
+    rw [hi, hmemS, hcond]
+  rw [WallCrux.chi]
+  exact if_congr hP rfl rfl
 
 /-- **CRUX LEAF (open): joint density of the automaton state and the digit block.**
 
