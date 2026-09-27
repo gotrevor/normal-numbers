@@ -501,6 +501,7 @@ import NormalNumbers.JointLambertStatement
 import NormalNumbers.JointLambertEncodingProof
 import NormalNumbers.JointLambertArithmetic
 import NormalNumbers.JointLambertPrimeSelection
+import NormalNumbers.JointLambertTailBounds
 import NormalNumbers.JointLambertTail
 import NormalNumbers.WallCrux
 import NormalNumbers.WallRational
