@@ -1,6 +1,6 @@
 # Handoff: Wall 1949 PROVED — `isNormal_rat_mul_add` sorry-free and axiom-clean
 
-**Date**: 2026-09-27 · **Branch**: `wip/wall-rational`
+**Date**: 2026-09-27 · **Branch**: `wip/wall-rational` · **HEAD**: `acf46b8`
 **Scope**: operator side quest, `sorry-free:src/NormalNumbers/WallRational.lean`.  MET.
 The ratified statement `NormalNumbers.isNormal_rat_mul_add` was neither weakened nor renamed.
 
@@ -77,6 +77,14 @@ tag read off one chunk.
 `(x+M)/B` is a disjoint union of exactly `B` joint (state, block) classes) →
 with `exists_smooth_coprime_split`, `isNormal_add_intCast`, `isNormal_intMul`,
 `isNormal_div_pow` → `isNormal_rat_mul_add`.
+
+## Next steps
+
+Nothing remains in this scope.  The stop sentinel is signalled
+(`~/src/.treadmill/normal-numbers-wall.stop`).  Working tree clean, nothing pushed.
+If the run is resumed instead of halted, `DIRECTION.md`'s standing directive (Theorem C′:
+the three leaves of `src/NormalNumbers/PrimeModelFamilyGraded.lean`, `termE5_tendsto`
+first) is the next objective — it outranks this side quest, which is now finished.
 
 ## Notes for whoever picks this up
 
