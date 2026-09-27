@@ -712,6 +712,83 @@ theorem floor_orbit_mul_pow (b : ℕ) (hb : 2 ≤ b) (x : ℝ) (hx : x ∈ Set.I
   have hlen : ((List.range l).map fun i => digitOf b x (n + i)).length = l := by simp
   rw [hlen]
 
+/-- The orbit shifts by dilation: `orbit b x (n + m) = {orbit b x n * b^m}`. -/
+theorem orbit_shift (b : ℕ) (x : ℝ) (n m : ℕ) :
+    orbit b x (n + m) = Int.fract (orbit b x n * (b : ℝ) ^ m) := by
+  unfold orbit
+  have h : x * (b : ℝ) ^ (n + m) = (((b : ℤ) ^ m : ℤ) : ℝ) * (x * (b : ℝ) ^ n) := by
+    push_cast; ring
+  rw [h, fract_intMul_fract ((b : ℤ) ^ m)]
+  congr 1
+  push_cast
+  ring
+
+/-- A shorter block is the leading digits of a longer one. -/
+theorem blockVal_prefix (b : ℕ) (hb : 2 ≤ b) (x : ℝ) (hx : x ∈ Set.Ico (0 : ℝ) 1)
+    (n j L : ℕ) (hjL : j ≤ L) :
+    blockVal b x n j = blockVal b x n L / b ^ (L - j) := by
+  have hb0 : (0 : ℝ) < b := by positivity
+  have hbne : ((b : ℝ)) ≠ 0 := ne_of_gt hb0
+  have h1 : ⌊orbit b x n * (b : ℝ) ^ L⌋ = (blockVal b x n L : ℤ) :=
+    floor_orbit_mul_pow b hb x hx n L
+  have h2 : ⌊orbit b x n * (b : ℝ) ^ j⌋ = (blockVal b x n j : ℤ) :=
+    floor_orbit_mul_pow b hb x hx n j
+  have hpow : (b : ℝ) ^ L = (b : ℝ) ^ j * (b : ℝ) ^ (L - j) := by
+    rw [← pow_add]; congr 1; omega
+  have hd : orbit b x n * (b : ℝ) ^ j
+      = (orbit b x n * (b : ℝ) ^ L) / (((b ^ (L - j) : ℕ) : ℝ)) := by
+    push_cast
+    rw [hpow]
+    field_simp
+  rw [hd, Int.floor_div_natCast, h1] at h2
+  have h3 : ((blockVal b x n L : ℤ)) / ((b ^ (L - j) : ℕ) : ℤ)
+      = ((blockVal b x n L / b ^ (L - j) : ℕ) : ℤ) := (Int.natCast_div _ _).symm
+  rw [h3] at h2
+  exact_mod_cast h2.symm
+
+/-- A length-`m+l` block splits into its first `m` digits and the next `l`. -/
+theorem blockVal_split (b : ℕ) (hb : 2 ≤ b) (x : ℝ) (hx : x ∈ Set.Ico (0 : ℝ) 1)
+    (n m l : ℕ) :
+    blockVal b x (n + m) l + b ^ l * blockVal b x n m = blockVal b x n (m + l) := by
+  have horb : orbit b x (n + m) = orbit b x n * (b : ℝ) ^ m - ((blockVal b x n m : ℤ) : ℝ) := by
+    rw [orbit_shift, Int.fract, floor_orbit_mul_pow b hb x hx n m]
+  have h1 : ((blockVal b x (n + m) l : ℤ)) = ⌊orbit b x (n + m) * (b : ℝ) ^ l⌋ :=
+    (floor_orbit_mul_pow b hb x hx (n + m) l).symm
+  have h2 : orbit b x (n + m) * (b : ℝ) ^ l
+      = orbit b x n * (b : ℝ) ^ (m + l)
+        - ((((b : ℤ) ^ l * (blockVal b x n m : ℤ)) : ℤ) : ℝ) := by
+    rw [horb]
+    push_cast
+    ring
+  rw [h2, Int.floor_sub_intCast, floor_orbit_mul_pow b hb x hx n (m + l)] at h1
+  have hgoal : ((blockVal b x (n + m) l + b ^ l * blockVal b x n m : ℕ) : ℤ)
+      = ((blockVal b x n (m + l) : ℕ) : ℤ) := by
+    push_cast
+    push_cast at h1
+    linarith
+  exact_mod_cast hgoal
+
+/-- A window of `l` digits at offset `m` inside a length-`L` block is a digit slice. -/
+theorem blockVal_window (b : ℕ) (hb : 2 ≤ b) (x : ℝ) (hx : x ∈ Set.Ico (0 : ℝ) 1)
+    (n m l L : ℕ) (hml : m + l ≤ L) :
+    blockVal b x (n + m) l = (blockVal b x n L / b ^ (L - m - l)) % b ^ l := by
+  have hb0 : 0 < b := by omega
+  set W := blockVal b x n L with hW
+  have e1 : blockVal b x n (m + l) = W / b ^ (L - m - l) := by
+    rw [blockVal_prefix b hb x hx n (m + l) L (by omega)]
+    congr 2
+    omega
+  have e2 : blockVal b x n m = W / b ^ (L - m) := blockVal_prefix b hb x hx n m L (by omega)
+  have e3 : W / b ^ (L - m) = (W / b ^ (L - m - l)) / b ^ l := by
+    rw [Nat.div_div_eq_div_mul, ← pow_add]
+    congr 2
+    omega
+  have hsplit := blockVal_split b hb x hx n m l
+  rw [e1, e2, e3] at hsplit
+  set V := W / b ^ (L - m - l) with hV
+  have hmod := Nat.mod_add_div V (b ^ l)
+  omega
+
 /-- **Automaton step.**  `r (n + j) ≡ b^j · r n + (value of the digit block `x[n, n+j)`)`. -/
 theorem divState_shift (b B : ℕ) (hb : 2 ≤ b) (hB : 0 < B) (x : ℝ)
     (hx : x ∈ Set.Ico (0 : ℝ) 1) (M : ℤ) (n j : ℕ) :
@@ -783,6 +860,40 @@ theorem orbit_add_div (b B : ℕ) (hB : 0 < B) (x : ℝ) (hx : x ∈ Set.Ico (0 
       linarith
   show Int.fract ((x + (M : ℝ)) / (B : ℝ) * (b : ℝ) ^ n) = _
   rw [hkey, Int.fract_add_intCast, Int.fract_eq_self.2 hmem]
+
+/-- The count of length-`T` chunks with a prescribed leading `l`-digit block. -/
+theorem card_leadFilter (d v a : ℕ) (hd : 0 < d) (hv : v < a) :
+    (((Finset.range (a * d)).filter fun t => t / d = v).card) = d := by
+  classical
+  have hset : ((Finset.range (a * d)).filter fun t => t / d = v)
+      = Finset.Ico (v * d) ((v + 1) * d) := by
+    ext t
+    simp only [Finset.mem_filter, Finset.mem_range, Finset.mem_Ico]
+    constructor
+    · rintro ⟨h1, h2⟩
+      refine ⟨(Nat.le_div_iff_mul_le hd).1 (by omega), ?_⟩
+      exact (Nat.div_lt_iff_lt_mul hd).1 (by omega)
+    · rintro ⟨h1, h2⟩
+      have hl : v ≤ t / d := (Nat.le_div_iff_mul_le hd).2 h1
+      have hr : t / d < v + 1 := (Nat.div_lt_iff_lt_mul hd).2 h2
+      refine ⟨?_, by omega⟩
+      calc t < (v + 1) * d := h2
+        _ ≤ a * d := Nat.mul_le_mul_right d (by omega)
+  rw [hset, Nat.card_Ico]
+  have : (v + 1) * d = v * d + d := by ring
+  omega
+
+/-- A period for `b` modulo `B`, as long as we like: Euler's theorem, iterated. -/
+theorem exists_period (b B : ℕ) (hB : 0 < B) (hcop : Nat.Coprime B b) (l : ℕ) :
+    ∃ T, l < T ∧ b ^ T % B = 1 % B := by
+  refine ⟨Nat.totient B * (l + 1), ?_, ?_⟩
+  · have := Nat.totient_pos.2 hB
+    calc l < l + 1 := by omega
+      _ ≤ Nat.totient B * (l + 1) := Nat.le_mul_of_pos_left _ this
+  · have h1 : b ^ Nat.totient B ≡ 1 [MOD B] := Nat.ModEq.pow_totient hcop.symm
+    have h2 : (b ^ Nat.totient B) ^ (l + 1) ≡ 1 ^ (l + 1) [MOD B] := h1.pow _
+    rw [one_pow, ← pow_mul] at h2
+    exact h2
 
 /-- **CRUX LEAF (open): joint density of the automaton state and the digit block.**
 
