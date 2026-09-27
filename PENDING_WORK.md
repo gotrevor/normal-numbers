@@ -9759,3 +9759,46 @@ the additivity elementary — no countable-additivity bookkeeping.
    `vanDerCorput_bound`, hence the transfer half via
    `tendsto_jointCount_of_classEquidistribution`.
 3. Then the fiber (merging inside a class), §2 identity (9), §5–§6 trigger counting.
+
+### Same lap, fifteenth commit: the COUNTABLE family ψ-mixing (the form actually needed)
+
+`gaussMeasure_familySetC_psi_mixing` in `src/NormalNumbers/VandeheyMixing.lean`, sorry-free and
+axiom-clean.  The finite version of the previous commit is not enough: CF digits are unbounded,
+so `{x : σ_{W_n(x)}(d) = e}` is the union of the cylinders of **countably** many length-`n`
+words, not finitely many.  The multiplicative ψ error survives countable summation for exactly
+the reason it survives finite summation, so the digit truncation is **not needed here at all** —
+one fewer moving part than the plan in the previous entry assumed.
+
+* `familySetC`, `measurableSet_familySetC`, `pairwiseDisjoint_cfCylinder`.
+* `gaussMeasure_familySetC`, `gaussMeasure_familySetC_inter` — countable additivity
+  (`measure_biUnion`), for the cylinders and for the intersected cylinders.
+* `gaussMeasure_familySetC_psi_mixing` —
+  `|γ(E ∩ T^{-(n+g)}A) − γ(E)γ(A)| ≤ (79/100)^g · γ(A) · γ(E)` for `E` **any** countable union
+  of length-`n` genuine cylinders.  Summability of both real term families comes from finiteness
+  of the total masses (`ENNReal.summable_toReal`), so the tsum manipulation is legitimate rather
+  than formal.
+
+Mathlib gotchas this lap: `Set.Countable.measurableSet_biUnion` does not exist — use
+`MeasurableSet.biUnion hct`; `tsum_sub` is ENNReal-only, the real one is `Summable.tsum_sub`;
+`tsum_le_tsum` is now `Summable.tsum_le_tsum`; `norm_tsum_le_tsum_norm` needs
+`Summable (‖f ·‖)`, so bridge with `Real.norm_eq_abs` and `Summable.abs`.
+
+### Next attack — the class renewal, now fully unblocked
+
+All inputs are in `src/` and proved:
+* `VandeheyMix.gaussMeasure_familySetC_psi_mixing` — decouple past class event from future block.
+* `VandeheyClass.exists_word_reach` — transitivity in `≤ 3` digits.
+* `VandeheyClass.exists_return_two_and_three` — aperiodicity on `X`.
+
+Plan, and note the **doubly-stochastic shortcut**: since every digit acts *bijectively* on `X`,
+for each fixed `x` the map `σ_{W_m(x)}` is a bijection, so the kernel
+`ν_m(d,d') := γ{x : σ_{W_m(x)}(d) = d'}` has **both** row sums and column sums equal to `1` —
+it is doubly stochastic, hence the uniform distribution is *exactly* stationary, with no
+computation.  So the target is purely a contraction statement, `ν_m → 1/|X|`, and the stationary
+vector never has to be identified.
+
+Doeblin minorization is available at `M = 3` for every prime `D ≥ 2`: every pair `(d,d')` is
+joined by a word of length **exactly** 3 (check the four cases — `some s → some t → some t' →
+some z` with `t, t' ≠ 0`; `some 0 → ∞ → some a → some z`; and the two targeting `∞`), so
+`ν_3(d,d') ≥ min over pairs of γ(I_w) > 0`.  Combine with the ψ error `(79/100)^g` across a gap
+to get geometric convergence for the (non-independent) digit sequence.
