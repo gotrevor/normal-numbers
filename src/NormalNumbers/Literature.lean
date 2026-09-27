@@ -337,7 +337,10 @@ statement; rate later improved, Iosifescu–Kraaikamp Prop 2.3.7.)
 
 provenance: tier S (`papers/scheerer-2017-cf-abs-normal.md` §2, quoting
 W. Philipp, *Some metrical theorems in number theory*, Pacific J. Math. 20
-(1967), Satz 3; primary PDF not held). -/
+(1967), Satz 3; primary PDF not held).  **VERIFIED**:
+`Literature.philipp_psi_mixing_holds` (`LiteraturePhilipp.lean`) proves this
+statement outright with `ρ = 79/100`, via the log-metric Gauss–Kuzmin–Lévy
+contraction of `CFPsiPin.lean`; it is no longer a cited axiom. -/
 def philipp_psi_mixing : Prop :=
   ∃ ρ : ℝ, 0 ≤ ρ ∧ ρ < 0.8 ∧
     ∀ (u v : List ℕ) (n : ℕ), 1 ≤ n →

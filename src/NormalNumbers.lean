@@ -25,6 +25,8 @@ import NormalNumbers.CFRecursion
 import NormalNumbers.CFInvariance
 import NormalNumbers.CFPin
 import NormalNumbers.CFGammaMixing
+import NormalNumbers.CFPsiPin
+import NormalNumbers.LiteraturePhilipp
 import NormalNumbers.CFMixing
 import NormalNumbers.CFBlockFreq
 import NormalNumbers.BaryBlockCount
