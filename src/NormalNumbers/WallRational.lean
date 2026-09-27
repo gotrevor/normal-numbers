@@ -996,6 +996,131 @@ theorem chi_eq_jointIndicator (b B : ℕ) (hb : 2 ≤ b) (hB : 0 < B) (x : ℝ)
   rw [WallCrux.chi]
   exact if_congr hP rfl rfl
 
+/-- Shifting the summation window of a `[0,1]`-valued sequence costs at most the shift. -/
+theorem shift_sum_diff (g : ℕ → ℝ) (hg0 : ∀ n, 0 ≤ g n) (hg1 : ∀ n, g n ≤ 1) (N s : ℕ) :
+    |(∑ n ∈ Finset.range N, g (n + s)) - ∑ n ∈ Finset.range N, g n| ≤ (s : ℝ) := by
+  have h1 : ∑ n ∈ Finset.range s, g n + ∑ n ∈ Finset.range N, g (s + n)
+      = ∑ n ∈ Finset.range (s + N), g n := (Finset.sum_range_add g s N).symm
+  have h2 : ∑ n ∈ Finset.range N, g n + ∑ n ∈ Finset.range s, g (N + n)
+      = ∑ n ∈ Finset.range (N + s), g n := (Finset.sum_range_add g N s).symm
+  have h3 : Finset.range (s + N) = Finset.range (N + s) := by rw [Nat.add_comm]
+  rw [h3] at h1
+  have hcomm : ∑ n ∈ Finset.range N, g (n + s) = ∑ n ∈ Finset.range N, g (s + n) :=
+    Finset.sum_congr rfl fun n _ => by rw [Nat.add_comm]
+  have hb1 : (0 : ℝ) ≤ ∑ n ∈ Finset.range s, g (N + n) :=
+    Finset.sum_nonneg fun n _ => hg0 _
+  have hb2 : ∑ n ∈ Finset.range s, g (N + n) ≤ (s : ℝ) := by
+    calc ∑ n ∈ Finset.range s, g (N + n) ≤ ∑ _n ∈ Finset.range s, (1 : ℝ) :=
+          Finset.sum_le_sum fun n _ => hg1 _
+      _ = (s : ℝ) := by rw [Finset.sum_const, Finset.card_range, nsmul_eq_mul, mul_one]
+  have hb3 : (0 : ℝ) ≤ ∑ n ∈ Finset.range s, g n := Finset.sum_nonneg fun n _ => hg0 _
+  have hb4 : ∑ n ∈ Finset.range s, g n ≤ (s : ℝ) := by
+    calc ∑ n ∈ Finset.range s, g n ≤ ∑ _n ∈ Finset.range s, (1 : ℝ) :=
+          Finset.sum_le_sum fun n _ => hg1 _
+      _ = (s : ℝ) := by rw [Finset.sum_const, Finset.card_range, nsmul_eq_mul, mul_one]
+  rw [hcomm, abs_le]
+  constructor <;> linarith
+
+/-- The joint indicator of the crux, as a real-valued `[0,1]` sequence. -/
+noncomputable def jointInd (b B : ℕ) (x : ℝ) (M : ℤ) (j v l n : ℕ) : ℝ :=
+  if divState b B x M n = j ∧ blockVal b x n l = v then 1 else 0
+
+theorem jointInd_nonneg (b B : ℕ) (x : ℝ) (M : ℤ) (j v l n : ℕ) :
+    0 ≤ jointInd b B x M j v l n := by unfold jointInd; split <;> norm_num
+
+theorem jointInd_le_one (b B : ℕ) (x : ℝ) (M : ℤ) (j v l n : ℕ) :
+    jointInd b B x M j v l n ≤ 1 := by unfold jointInd; split <;> norm_num
+
+/-- The shift average of the joint indicator is the `WallCrux` shift average `Psi`, started
+at the current automaton state and evaluated at the depth-`T*K` digit block. -/
+theorem shiftAvg_eq_Psi (b B : ℕ) (hb : 2 ≤ b) (hB : 0 < B) (x : ℝ)
+    (hx : x ∈ Set.Ico (0 : ℝ) 1) (M : ℤ) (T l : ℕ) (hl : 0 < l) (hlT : l ≤ T)
+    (hbT : b ^ T % B = 1 % B) (j : ℕ) (hj : j < B) (v K n : ℕ) :
+    (K : ℝ)⁻¹ * ∑ k ∈ Finset.range K, jointInd b B x M j v l (n + T * k)
+      = WallCrux.Psi (b ^ T) B (tagSet b T l v) (divState b B x M n) j K
+          (blockVal b x n (T * K)) := by
+  rw [WallCrux.Psi]
+  congr 1
+  refine Finset.sum_congr rfl fun k hk => ?_
+  have hkK : k < K := Finset.mem_range.1 hk
+  rw [chi_eq_jointIndicator b B hb hB x hx M T l hl hlT hbT j hj v K n k hkK, jointInd]
+
+/-- **The analytic core.**  The joint count over `[0,N)` is within
+`T*K + ∑_n (deviation of the shift average)` of `N·τ`, for any `τ`. -/
+theorem jointSum_approx (b B : ℕ) (hb : 2 ≤ b) (hB : 0 < B) (x : ℝ)
+    (hx : x ∈ Set.Ico (0 : ℝ) 1) (M : ℤ) (T l : ℕ) (hl : 0 < l) (hlT : l ≤ T)
+    (hbT : b ^ T % B = 1 % B) (j : ℕ) (hj : j < B) (v K : ℕ) (hK : 0 < K) (τ : ℝ)
+    (N : ℕ) :
+    |(∑ n ∈ Finset.range N, jointInd b B x M j v l n) - (N : ℝ) * τ|
+      ≤ ((T * K : ℕ) : ℝ)
+        + ∑ n ∈ Finset.range N, ∑ ρ ∈ Finset.range B,
+            |WallCrux.Psi (b ^ T) B (tagSet b T l v) ρ j K (blockVal b x n (T * K)) - τ| := by
+  classical
+  have hKR : (0 : ℝ) < (K : ℝ) := by exact_mod_cast hK
+  have hKne : (K : ℝ) ≠ 0 := ne_of_gt hKR
+  set g : ℕ → ℝ := fun n => jointInd b B x M j v l n with hg
+  have hg0 : ∀ n, 0 ≤ g n := fun n => jointInd_nonneg b B x M j v l n
+  have hg1 : ∀ n, g n ≤ 1 := fun n => jointInd_le_one b B x M j v l n
+  set A : ℝ := ∑ n ∈ Finset.range N, (K : ℝ)⁻¹ * ∑ k ∈ Finset.range K, g (n + T * k) with hA
+  -- Step 1: the shift average is close to the plain average
+  have hstep1 : |(∑ n ∈ Finset.range N, g n) - A| ≤ ((T * K : ℕ) : ℝ) := by
+    have hswap : A = (K : ℝ)⁻¹ * ∑ k ∈ Finset.range K, ∑ n ∈ Finset.range N, g (n + T * k) := by
+      rw [hA, ← Finset.mul_sum, Finset.sum_comm]
+    have hconst : (∑ n ∈ Finset.range N, g n)
+        = (K : ℝ)⁻¹ * ∑ _k ∈ Finset.range K, ∑ n ∈ Finset.range N, g n := by
+      rw [Finset.sum_const, Finset.card_range, nsmul_eq_mul, ← mul_assoc,
+        inv_mul_cancel₀ hKne, one_mul]
+    rw [hswap, hconst, ← mul_sub, ← Finset.sum_sub_distrib, abs_mul,
+      abs_of_pos (by positivity : (0:ℝ) < (K:ℝ)⁻¹)]
+    have hterm : ∀ k ∈ Finset.range K,
+        |(∑ n ∈ Finset.range N, g n) - ∑ n ∈ Finset.range N, g (n + T * k)|
+          ≤ ((T * K : ℕ) : ℝ) := by
+      intro k hk
+      have hkK : k < K := Finset.mem_range.1 hk
+      have h := shift_sum_diff g hg0 hg1 N (T * k)
+      rw [abs_sub_comm] at h
+      refine le_trans h ?_
+      have : T * k ≤ T * K := Nat.mul_le_mul_left T (le_of_lt hkK)
+      exact_mod_cast this
+    calc (K : ℝ)⁻¹ * |∑ k ∈ Finset.range K,
+            ((∑ n ∈ Finset.range N, g n) - ∑ n ∈ Finset.range N, g (n + T * k))|
+        ≤ (K : ℝ)⁻¹ * ∑ k ∈ Finset.range K, ((T * K : ℕ) : ℝ) := by
+          have h1 : |∑ k ∈ Finset.range K,
+              ((∑ n ∈ Finset.range N, g n) - ∑ n ∈ Finset.range N, g (n + T * k))|
+              ≤ ∑ k ∈ Finset.range K, ((T * K : ℕ) : ℝ) :=
+            le_trans (Finset.abs_sum_le_sum_abs _ _) (Finset.sum_le_sum hterm)
+          exact mul_le_mul_of_nonneg_left h1 (by positivity)
+      _ = ((T * K : ℕ) : ℝ) := by
+          rw [Finset.sum_const, Finset.card_range, nsmul_eq_mul, ← mul_assoc,
+            inv_mul_cancel₀ hKne, one_mul]
+  -- Step 2: the shift average IS `Psi`
+  have hstep2 : A = ∑ n ∈ Finset.range N,
+      WallCrux.Psi (b ^ T) B (tagSet b T l v) (divState b B x M n) j K
+        (blockVal b x n (T * K)) := by
+    rw [hA]
+    exact Finset.sum_congr rfl fun n _ =>
+      shiftAvg_eq_Psi b B hb hB x hx M T l hl hlT hbT j hj v K n
+  -- Step 3: each `Psi` is within the summed deviation of `τ`
+  have hstep3 : |A - (N : ℝ) * τ|
+      ≤ ∑ n ∈ Finset.range N, ∑ ρ ∈ Finset.range B,
+          |WallCrux.Psi (b ^ T) B (tagSet b T l v) ρ j K (blockVal b x n (T * K)) - τ| := by
+    rw [hstep2]
+    have hNτ : (N : ℝ) * τ = ∑ _n ∈ Finset.range N, τ := by
+      rw [Finset.sum_const, Finset.card_range, nsmul_eq_mul]
+    rw [hNτ, ← Finset.sum_sub_distrib]
+    refine le_trans (Finset.abs_sum_le_sum_abs _ _) (Finset.sum_le_sum fun n _ => ?_)
+    have hrn : divState b B x M n ∈ Finset.range B :=
+      Finset.mem_range.2 (divState_lt b B hB x M n)
+    exact Finset.single_le_sum
+      (f := fun ρ => |WallCrux.Psi (b ^ T) B (tagSet b T l v) ρ j K
+        (blockVal b x n (T * K)) - τ|)
+      (fun ρ _ => abs_nonneg _) hrn
+  calc |(∑ n ∈ Finset.range N, g n) - (N : ℝ) * τ|
+      ≤ |(∑ n ∈ Finset.range N, g n) - A| + |A - (N : ℝ) * τ| := by
+        have := abs_add_le ((∑ n ∈ Finset.range N, g n) - A) (A - (N : ℝ) * τ)
+        simpa using this
+    _ ≤ _ := by linarith
+
 /-- **CRUX LEAF (open): joint density of the automaton state and the digit block.**
 
 Every remaining difficulty of Wall's theorem sits here.  The state `divState b B x M n`
