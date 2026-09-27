@@ -497,3 +497,4 @@ import NormalNumbers.JointLambertEncoding
 
 import NormalNumbers.JointLambertStatement
 import NormalNumbers.JointLambertEncodingProof
+import NormalNumbers.JointLambertArithmetic

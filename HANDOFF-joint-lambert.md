@@ -1,92 +1,125 @@
-# HANDOFF — joint Lambert, first bounded target: DONE
+# HANDOFF — joint Lambert: §4 common arithmetic progression PROVED
 
-Date: 2026-09-27.  Operator override run (`KICKOFF-2026-09-26-joint-lambert.md`,
-first bounded target only), recorded in `DIRECTION.md`.
+Date: 2026-09-27.  Operator objective recorded at the top of `DIRECTION.md`
+(bounded run after `7f05cb2`; target = paper §4 only).
 
 ## Result
 
-`NormalNumbers.JointLambert.evenEncoding : NormalNumbers.JointLambert.EvenEncoding`
-is **proved**, sorry-free, in `src/NormalNumbers/JointLambertEncodingProof.lean`.
+`NormalNumbers.JointLambert.exists_joint_progression`, in the new
+`src/NormalNumbers/JointLambertArithmetic.lean`, is **proved, sorry-free**.
 
 ```
-#print axioms NormalNumbers.JointLambert.evenEncoding
+#print axioms NormalNumbers.JointLambert.exists_joint_progression
+  -- [propext, Classical.choice, Quot.sound]
+#print axioms NormalNumbers.JointLambert.exists_joint_progression_nonvacuous
   -- [propext, Classical.choice, Quot.sound]
 ```
 
-The three frozen `Prop` definitions in `JointLambertStatement.lean` are byte-identical
-to commit `78e6048` (`git diff 78e6048 -- src/NormalNumbers/JointLambertStatement.lean`
-is empty).  The module is in the root build (`src/NormalNumbers.lean:499`).
+`lake build` is green (9272 jobs).  The module is in the root build
+(`src/NormalNumbers.lean:500`).  `evenEncoding` was re-verified unchanged and
+axiom-clean before any edit, and was not touched; `git diff 78e6048` on
+`JointLambertStatement.lean` and `git diff 7f05cb2` on
+`JointLambertEncodingProof.lean` are both empty.
 
-## The mathematical advance
+## What the contract says (frozen)
 
-The paper (§2) routes the encoding through torus Fourier analysis: the uniform
-measure on `({2a/b^s})_{b∈S}`, `0 ≤ a < lcm(S)^s`, annihilates each fixed
-nontrivial character once `s` is large, hence tends weakly to Haar measure.  That
-is correct but expensive to formalize in arbitrary dimension (one needs a
-nonnegative product kernel and an exact-Fourier/Markov argument to convert weak
-convergence into an interior-box hit).
+Data, all supplied by the caller (this is the point — the later
+exceptional-modulus avoidance chooses the primes; nothing is hard-coded to
+consecutive primes):
 
-**This session replaced it by an elementary, constructive proof** — the "equivalent
-elementary proof" the kickoff invites.  Two observations collapse the problem:
+* `c ≥ 2` (to become `lcm(bases)`), `a ≥ 2`, slots `1 ≤ r < k ≤ L`;
+* a prime `q > L` with `jointQ a q = q^(a-1) > r`;
+* for each killed slot `j < k`, `j ≠ r`, primes `p j t > L` (`t < j+1`), all
+  distinct from one another across slots and all `≠ q`.
 
-1. *Free choice at one base.*  With `frac b s a = {2a/b^s}`, the reachable values
-   `{(2n mod b^s)/b^s}` form a grid of spacing `2/b^s`.  So any window inside
-   `[0,1]` longer than `2/b^s` is hit by some offset `α < b^s`, and the witness is
-   explicit — `α = (n + b^s - A % b^s) % b^s` for the grid index
-   `n = ⌊u·b^s/2⌋ + 1`.  No congruence machinery, no character sums.
-   (`exists_offset_mem_window`.)
-2. *Cheap interference.*  That offset satisfies `α < b₀^s`, so it moves a **larger**
-   base `b > b₀` by only `2α/b^s < 2(b₀/b)^s ≤ 2θ^s`, `θ = b₀/(b₀+1) < 1`.
+Derived: `slotProd p j = ∏_{t<j+1} p j t` (`P_j`), `killedIdx k r = (range k).erase r`,
+`killCore c k r p = ∏_j P_j^c`, `jointA = q^a · killCore` (`A`),
+`jointB = q · killCore` (`B`), `jointQ = q^(a-1)` (`Q`).
 
-Therefore: induct on `S.card`, **strip the smallest base**, solve the remaining
-(larger) bases against windows shrunk by `ε/2`, then spend exactly that slack on a
-single correction at the smallest base.  Depth `s` is chosen large enough that
-`2θ^s < ε/2`, which simultaneously makes the grid fine enough and the interference
-negligible.  The `2 ≤ a` requirement is met by padding with `2·∏_{b∈S} b^s`, using
-periodicity (`frac_add_mul`).
+Conclusion: `∃ R u`, with `0 < R < A`, `1 ≤ u < B`,
 
-The only property of the bases used is that they are **distinct** — that is exactly
-what makes `b₀/b < 1`.  No coprimality, no multiplicative independence.  Explicit
-audit anchors `evenEncoding_two_four` and `evenEncoding_two_three_six` are in the
-file; the latter is the fully dependent triple where the base-`6` coordinate is a
-CRT function of the base-`2` and base-`3` coordinates.
+* `R + r = Q·u`, `A = Q·B`, `u ≡ 1 [MOD q]`, `Nat.Coprime u B`;
+* the **exact** CRT residues `R + r ≡ Q [MOD q^a]`, `R + j ≡ P_j^(c-1) [MOD P_j^c]`;
+* `c^(j+1) ∣ τ(R + m·A + j)` at every killed slot, for **every** `m`;
+* `τ(R + m·A + r) = 2·a` whenever `u + m·B` is prime;
+* `Nat.Coprime (R + j) A` for every `k ≤ j < L`.
 
-### Independent check of the mathematics
+`τ` is `SwingC2.tau m = m.divisors.card` — real divisor cardinalities.
+`divisor_count_dvd_of_dvd : b ∣ c → c^(j+1) ∣ τ n → b^(j+1) ∣ τ n` is the
+elementary corollary that prepares `c = lcm(bases)` (the empty-base-set case is
+handled separately, later).
 
-Done two ways.  (a) A faithful Python transcription of the recursion (same `s₀`
-recursion, same per-level `ε/2` shrink, same residue witness) over 400 random
-window systems on `{2,4}`, `{2,3,6}`, `{2,3,4,6,12}`, `{5,7}`, `{2,4,8,16}`,
-`{3,9,27,2,6}`: 0 failures.  (b) A deliberately *sloppy* transcription that used a
-single global `θ` and only one `ε/2` shrink **fails** on `{2,3,4,6,12}` at base `4`.
-That is the sharp edge: the slack budget must halve per recursion level, because
-each of the `|S|` correction steps can consume it.  The Lean proof does this
-correctly (each level's `s₀` comes from the IH at `ε/2`); a future reader tempted
-to "simplify" to one uniform `θ` and one shrink should not.
+No analytic input appears anywhere in the file: no AGP, no `PrimeDensityAP`, no
+prime-interval supply.  The only `SwingC2` imports actually used are the proved
+`tau`, `tau_mul_coprime`, `tau_prime`, `pow_card_dvd_tau`.
 
-No obstruction or counterexample was found.  `probes/swingc2_window.py test` could
-not be run: it wants `pytest` from pypi and this box has no egress.
+## How it is proved
+
+Four new elementary helpers carry everything:
+
+1. `factorization_eq_of_modEq_unit` — generalizes `SwingC2.factorization_eq_of_modEq`
+   from residue `P^e` to `P^e · w` with `P ∤ w`.  This is the step the old scalar
+   proof did not need: a CRT condition modulo `P_j^c` reduces at a single prime
+   `p = p j t` to `n ≡ p^(c-1) · W^(c-1) [MOD p^c]` with `W` the product of the
+   other `j` primes, and the valuation `v_p(n) = c-1` then follows.  Proved by
+   `p^e ∣ n` and `¬ p^(e+1) ∣ n` via `Nat.Prime.pow_dvd_iff_le_factorization`.
+2. `exists_crt_shifted` — pairwise coprime moduli `M j`, arbitrary shifts `s j`:
+   `n + s j ≡ T j [MOD M j]` simultaneously on a class mod `∏ M j`.  Same shape as
+   `SwingC2.exists_pin_progression`, but with the target residues free (the scalar
+   version hard-wired `q^(b-1)`), which is what lets slot `r` carry `q^a` and the
+   killed slots carry `P_j^c` in one system: `M j = if j = r then q^a else P_j^c`,
+   `T j = if j = r then Q else P_j^(c-1)`, `s j = j`; `∏_{j<k} M j = A`.
+3. `prime_not_dvd_both` — a prime `P` cannot divide both `R+x` and `R+y` for
+   distinct `x, y < P`.  This single lemma discharges *all three* coprimality
+   claims: `(u,B)=1` (via `p ∣ u ⟹ p ∣ Qu = R+r`, while `p ∣ R+j`), `q ∤ u`, and
+   the free tail `(R+j, A)=1` for `k ≤ j < L`.  It is where `q > L` and
+   `p j t > L` are used, and nothing else needs them.
+4. `tau_prime_pow_mul_prime : τ(q^e·P) = 2(e+1)` for distinct primes — the
+   survivor value, generalizing `SwingC2.tau_two_pow_mul_prime` off base 2.
+
+Two places needed care and are worth not "simplifying":
+
+* **`u < B` is not automatic.**  `Q ∣ R+r` and `R < A = QB` only give `u ≤ B`.
+  Strictness comes from the residue: if `R+r = A + d` with `d < r`, then
+  `(R+r) % q^a = d` since `q^a ∣ A`, whereas the CRT condition forces
+  `(R+r) % q^a = Q > r > d`.  Hence `u < B`.  (`hqr : r < jointQ a q` is exactly
+  the paper's "`Q > r` eventually", and it is used only here and for `0 < u`.)
+* **`0 < R`** uses the slot `j = 0`, which is killed because `r ≥ 1`: `R = 0`
+  would force `P_0^c ∣ P_0^(c-1)` with `P_0 ≥ 2`.
+
+Non-vacuity is anchored by `exists_joint_progression_nonvacuous`
+(`c = a = 2`, `r = 1`, `k = L = 2`, `q = 3`, single kill prime `5`; then
+`A = 225`, `B = 75`, `Q = 3`, `R = 155`, `u = 52`).  The hypothesis bundle is
+therefore satisfiable and the theorem is not vacuous.
 
 ## Exact next dependency
 
-The encoding interface is now discharged; what it feeds is kickoff item 1:
+§4 is now discharged as an arithmetic statement.  The next Lean obligation is the
+**prime selection** that feeds it, i.e. kickoff item 2, and it is the first place
+an analytic input is unavoidable:
 
-> **Generalize the existing selectable-prime CRT constructor to exponent
-> `lcm(bases) - 1`, so that one survivor has divisor count `2a`.**
+> Produce, from a source-faithful AGP exceptional-modulus hypothesis and a
+> prime-interval supply hypothesis (both **explicit named hypotheses**; the old
+> vacuous `PrimeDensityAP` must not be used), the data
+> `q, p j t` satisfying the hypotheses of `exists_joint_progression` with
+> `q, p j t ∈ (L, 2L)` distinct, avoiding the discarded prime of each exceptional
+> modulus, together with `log B = O_c(k² log L)` and the count of `m < M` with
+> `u + mB` prime.
 
-Concretely, the next Lean obligation is the §4 construction with `c = lcm S`:
-a common arithmetic progression `n_m = R + mA` such that
-`τ(n_m + r) = 2a` at the single survivor slot `r = s - 1` (with the `s`, `a`
-produced by `evenEncoding`), and `c^{j+1} ∣ τ(n_m + j)` at every killed slot
-`j < k`, `j ≠ r`.  Note the shape of the hand-off: `evenEncoding` returns `s` and
-`a`, §4 must consume **both** — `r = s - 1` sets the survivor position and `2a` is
-the divisor count that every coordinate then reads at a different scale.  Raising
-the killed-slot valuation from `1` (scalar binary case) to `c - 1` is the only
-change to the scalar construction, and it costs a fixed factor `c` in `log B`.
+Concretely the missing pieces, in order:
 
-AGP and the prime-interval supply stay **explicit named hypotheses**; do not use
-the old vacuous `PrimeDensityAP`.  §5's single binary majorant `T_m` is shared
-across all coordinates — do not introduce per-coordinate survivor primes or a
-prime-tuples hypothesis.
+1. `O(k²)` distinct primes in `(L, 2L)` avoiding a set of `≤ D_0` forbidden
+   primes, given `L / log L ≫ k²` — a counting statement about the prime supply,
+   stated as a hypothesis, then *used* to build the `p j t` family (note
+   `exists_joint_progression` takes the family as a function `ℕ → ℕ → ℕ` with
+   validity only on the index set, so a `Finset`-indexed injection suffices).
+2. `B ≤ X^{1/4}` and `Q ≤ (2L)^{a-1}` size bookkeeping with
+   `k = ⌈4 log₂ log X⌉`, `L = ⌊(log₂ X)²⌋`.
+3. The AGP count of prime `u + mB ≤ X`, `m < M = ⌊X/B⌋ + 1`, which needs
+   `(u,B) = 1` — already supplied by this theorem.
 
-Not claimed here, and not to be claimed until §§3–6 are formalized:
-`JointLambertDisjunctivity`, or `JointWords` for any `S`.
+After that comes §5 (**one** binary tail majorant `T_m` shared by all
+coordinates — do not introduce per-coordinate survivor primes or a prime-tuples
+hypothesis) and §6 (the common-offset digit identity), and only then may
+`JointWords` / `JointLambertDisjunctivity` be claimed.  Nothing about the full
+Lambert theorem is claimed now.

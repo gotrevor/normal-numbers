@@ -1,5 +1,32 @@
 # DIRECTION — normal-numbers 🧭
 
+## OPERATOR OBJECTIVE 2026-09-27 (SUPERSEDES everything below, and the completed encoding-only stop)
+
+Bounded joint-Lambert run, up to two laps, following `7f05cb2` (`evenEncoding` proved).
+Sources: `HANDOFF-joint-lambert.md`, `KICKOFF-2026-09-26-joint-lambert.md`,
+`papers/2026-09-26-joint-lambert-disjunctivity.md`.
+
+**Target: paper §4 ONLY** — `exists_joint_progression` in
+`src/NormalNumbers/JointLambertArithmetic.lean`.  The contract is stated there and is
+**frozen across laps**: `c ≥ 2`, `a ≥ 2`, `1 ≤ r < k ≤ L`, prime `q > L` with
+`q^(a-1) > r`, supplied distinct primes `p j t > L` (`j < k`, `j ≠ r`, `t < j+1`), all
+`≠ q`; `P_j = slotProd p j`, `Q = q^(a-1)`, `A = q^a ∏ P_j^c`, `B = q ∏ P_j^c`.
+Conclusion: `0 < R < A`, `1 ≤ u < B`, `R + r = Q u`, `A = Q B`, `u ≡ 1 [MOD q]`,
+`(u,B)=1`, the exact CRT residues, `c^(j+1) ∣ τ(R+mA+j)` at killed slots for every `m`,
+`τ(R+mA+r) = 2a` when `u+mB` is prime, `(R+j, A)=1` for `k ≤ j < L`.  Divisor counts are
+`Nat.divisors.card` (`SwingC2.tau`), not an abstract coefficient sequence.  Primes are
+**data**, never hard-coded consecutive primes, so exceptional-modulus avoidance can choose
+them later.  No AGP / analytic hypothesis may appear: this is a finite CRT theorem.
+`divisor_count_dvd_of_dvd` is the `b ∣ c` corollary preparing `c = lcm(bases)`.
+
+`JointWords`, `JointLambertDisjunctivity`, `EvenEncoding` stay verbatim against `78e6048`;
+`evenEncoding` verbatim against `7f05cb2`.  Only new arithmetic helpers and the joint
+Lambert handoff; no unrelated cleanup.  **Do not claim the full Lambert theorem** — prime
+selection and the common tail estimate remain.
+
+**Status: PROVED 2026-09-27** (sorry-free, axioms `[propext, Classical.choice, Quot.sound]`),
+with a non-vacuity anchor `exists_joint_progression_nonvacuous`.
+
 ## CURRENT DIRECTIVE (altitude-lap property; OUTRANKS the HANDOFF)
 
 **Objective.**  `isNormal_subsetLambert_of_sqrtFreshMassZero` (Theorem C′, Fable §9 / Astra §11)
