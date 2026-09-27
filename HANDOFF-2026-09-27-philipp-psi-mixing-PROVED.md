@@ -84,3 +84,20 @@ def's `ρ < 0.8` is Lévy's classical rate, not a typo.
   `horizonIntegral_pin_geom` instead.
 * No `Maze.lean` row cites Philipp (checked), so nothing to repoint there; the
   `Literature.lean` docstring is marked **VERIFIED** with a pointer to the theorem.
+
+## End-of-lap state
+
+* **Branch** `wip/philipp-psi-mixing`, **HEAD** `0f25033`, working tree **clean**
+  (no uncommitted edits).
+* `lake build` green, 9277 jobs (verified by the pre-commit hook at `0f25033`).
+* Side quest objective **met**; nothing is in flight.  New files:
+  `src/NormalNumbers/CFPsiPin.lean`, `src/NormalNumbers/LiteraturePhilipp.lean`,
+  both wired into `src/NormalNumbers.lean` and both `sorry`-free.
+* `src/` sorries elsewhere are pre-existing and untouched (MahlerDriftOne,
+  PrimeLambertOscillation, SwingC1/C1Log/C2/C3*, PairDecouple*,
+  JointLambertPrimeSelection) — none of them are on this side quest's path.
+* Next operator decision, not momentum from this run.  If continued, the two
+  natural follow-ons are recorded above under "Leftovers / opportunities":
+  sharpen `stepOp_logLipschitz` from `3/4` toward its true `≈ 0.51`, or migrate
+  the W4 users of `CFPin.abs_horizonIntegral_sub_gauss` onto the constant-free
+  `horizonIntegral_pin_geom`.
