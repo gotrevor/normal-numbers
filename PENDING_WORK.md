@@ -1,3 +1,52 @@
+## Vandehey 1.1 (2026-09-27, review lap) — the ADJACENCY obstruction, and the Rényi brick that removes it
+
+**Landed** (`src/NormalNumbers/VandeheyRenyi.lean`, sorry-free, `[propext, Classical.choice, Quot.sound]`):
+
+* `gaussMeasure_cylinder_renyi_lower` — **the gap-zero Rényi inequality**
+  `(log 2/4)·γ(I_v)·γ(A) ≤ γ(I_v ∩ T^{-|v|}A)`.
+* `gaussMeasure_familySetC_renyi_lower` — the same against a countable family of same-length
+  cylinders (the shape the class past event has).
+* `Doeblin.exists_classWord_three` — every pair of classes is connected by a genuine word of length
+  **exactly** 3 (prime `D`); the parity trap is navigated (`some 0 → ∞` in 1 and 3 steps, never 2).
+* `Doeblin.exists_doeblin_const` — `β > 0` with `β ≤ γ(classEvent D 3 d d')` for all pairs.
+* `Doeblin.exists_minorization_const` — **the conditional Doeblin minorization**:
+  `α·γ(E) ≤ γ(E ∩ T^{-n}(classEvent D 3 d d'))` for EVERY countable union `E` of genuine length-`n`
+  cylinders, with `α = (log 2/4)·β` independent of `E, n, d, d'`.
+
+**The obstruction, recorded so it is not re-derived.**  ψ-mixing
+(`gaussMeasure_cylinder_psi_mixing`, error `(79/100)^g`) is **vacuous at `g = 0`**, and the class
+block and the past block are *adjacent*: the class after `n` digits reads digits `1…n` and the
+Doeblin word occupies `n+1…n+M`.  Inserting a gap does not help — the gap digits act on the class
+by bijections (`classStep_bijective`), so nothing is forgotten, and the Doeblin word would have to
+depend on the unseen gap.  Only a **constant** (gap-free) comparison can serve, and
+`horizonIntegral A 0 t = ∫_A h_t` with `h_t(y) = (1+t)/(1+ty)² ∈ [1/4,2]` on `[0,1]²` supplies it.
+
+**Next attack — the class-refined horizon integral and its geometric pin.**  The remaining crux is
+NOT "the class law becomes uniform" alone: `ClassEquidistribution` needs the class at time `n` to be
+asymptotically uniform *jointly with the digit window at time `n`*, and those blocks are again
+adjacent.  The right object is therefore the **class-refined horizon integral**
+
+> `G_n^{d→d'}(A)(t) := ∫_{y ∈ (0,1) : T^n y ∈ A, σ_{W_n(y)} d = d'} h_t(y) dy`,
+
+with the target pin
+
+> `|G_n^{d→d'}(A)(t) − (1/N)·γ(A)| ≤ C θ^n · γ(A)`, uniformly in `t ∈ [0,1]`, `d`, `d'`, `N = |ℙ¹(ℤ/D)|`.
+
+This is exactly `horizonIntegral_pin_geom` refined by the class, and the `N = 1` case *is* that
+theorem.  The branch recursion is the same one `CFRecursion`/`CFPin` already run,
+`G_{n+1}^{d→d'}(A)(t) = ∑_{a≥1} (branch weight)·G_n^{classStep D d a → d'}(A)(1/(a+t))`, so
+`stepOp_logLipschitz` / `horizonIntegral_logLip` should carry the `t`-direction contraction while
+today's Doeblin minorization supplies the class-direction contraction (all entries of the 3-step
+class kernel `≥ α`).  Granted the pin, everything follows: the joint (window, class) frequency, then
+`ClassEquidistribution` via `vanDerCorput_bound`, then
+`tendsto_jointCount_of_classEquidistribution`.
+
+Why the pin and not a bare Markov contraction: for a NON-Markov chain a uniform minorization gives
+`ν_{n+3}(d'') ≥ α` but iterating it to total-variation convergence needs the conditional law to
+factorize, which Rényi gives only up to constants.  The pin sidesteps the issue by carrying the tail
+parameter `t` as part of the state — the standard transfer-operator formulation — and it is
+simultaneously the statement that decouples the class from the *future* window.
+
 ## Joint Lambert (2026-09-27, lap B) — prime selection CLOSED
 
 `NormalNumbers.JointLambert.exists_joint_prime_candidates` is proved, sorry-free, axioms

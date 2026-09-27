@@ -1,5 +1,73 @@
 # STATUS — normal-numbers 📊
 
+---
+
+# 🎯 ACTIVE: Vandehey 2017 Theorem 1.1 (side quest, branch `wip/vandehey-matrix-action`)
+
+**Nonsingular integer Möbius maps preserve CF-normality — one open leaf left.** ·
+**Build**: 🟢 green (9285 jobs) · **Updated**: review lap · 2026-09-27 · `d18aeb7`
+
+## Where it stands
+
+`Literature.vandehey_matrix_action_holds` is fully assembled; `#print axioms` is
+`[propext, sorryAx, Classical.choice, Quot.sound]` and the *only* `sorryAx` source is
+`vandeheyUniformFreq_holds`.  The either-or endgame (identification of the limiting frequency
+`ρ_r = γ(I_r)` from `ae_isCFNormal` + Lebesgue-nonsingularity of the Möbius map) is proved
+unconditionally, so the published proof's broken Lemma 3.3 is never reproduced.  The remaining
+crux is `VandeheyCocycle.ClassEquidistribution`: the class cocycle — identified as the Gauss map
+read mod `D`, i.e. the Γ₀(D)-coset of the CF matrix product — equidistributes jointly with digit
+windows along every CF-normal orbit.
+
+## What's happened (newest first)
+
+- **2026-09-27 (review lap).**  Direction KEPT, one obstruction named precisely: the class block
+  and the digit window it must decouple from are **adjacent**, so `gaussMeasure_cylinder_psi_mixing`
+  (multiplicative error `ρ^g`, vacuous at `g = 0`) cannot supply the Doeblin step.  The substitute
+  is a **gap-0 Rényi comparison** `c₀ γ(I_v)γ(A) ≤ γ(I_v ∩ T^{-|v|}A) ≤ C₀ γ(I_v)γ(A)`, available
+  from `horizonIntegral A 0 t = ∫_A h_t` with `h_t = (1+t)/(1+ty)² ∈ [1/4, 2]` on `[0,1]²`.  That
+  is now the mandated next move (`DIRECTION.md` CURRENT DIRECTIVE).
+- **2026-09-27 (grind laps).**  The synchronizing route was *refuted by decision procedure*
+  (the det-`±D` CF transducer has no synchronizing word; mergeability = equality of the row lattice
+  up to scaling), the class cocycle was identified and anchored against 8488 measured transitions,
+  ψ-mixing was upgraded to **countable families** of same-length cylinders, and the class kernel
+  was shown **doubly stochastic** (so uniform is exactly stationary — nothing to compute).
+
+## Outstanding
+
+### Short-term (mandated order)
+1. gap-0 Rényi comparison (single cylinder, then countable family).
+2. Doeblin at length exactly 3 for `classStep D`; the conditional minorization.
+3. The contraction `ν_m → 1/|X|`; `ClassEquidistribution` via `vanDerCorput_bound`.
+
+### Long-term
+4. The fiber: merging *inside* a class (`Synchronizing` becomes class-relative).
+5. Vandehey §2 transducer + identity (9); §5–§6 trigger counting.
+6. Composite `D`: `ClassSpace D = Option (ZMod D)` models ℙ¹(ℤ/D) **only for prime `D`**
+   (`|ℙ¹(ℤ/D)| = D∏(1+1/p) = [SL₂(ℤ):Γ₀(D)]`).  Keep the Markov layer abstract so this is a
+   hypothesis-verification step, not a redesign.
+
+### To completion
+`vandeheyUniformFreq_holds` closed ⟹ `vandehey_matrix_action_holds` trust-triple ⟹ repoint the
+`Maze.lean` row citing Vandehey 1.1 off `.cited`.
+
+## Axiom ledger — Vandehey side quest (real `#print axioms`, 2026-09-27, 9285 jobs)
+
+| headline theorem | paper claim | `#print axioms` shows | status |
+|---|---|---|---|
+| `vandehey_matrix_action_holds` | unconditional (Vandehey 2017 Thm 1.1) | `propext, sorryAx, Classical.choice, Quot.sound` | 1 open `sorry` (`vandeheyUniformFreq_holds`); **0 math axioms** |
+| `vandehey_matrix_action_of_uniformFreq` | — (our factorization) | trust triple | ✅ |
+| `exists_cfNormal_with_cfNormal_image` | — (our pigeonhole) | trust triple | ✅ |
+
+Math-axiom count (🟢+🟡+🟠) for this side quest: **0**.  The single debt is a disclosed `sorry`
+on the crux, not a cited axiom.
+
+## Pointers
+`DIRECTION.md` CURRENT DIRECTIVE · newest baton `HANDOFF-2026-09-27-vandehey-class-cocycle.md` ·
+`PROBE-2026-09-27-transducer-not-synchronizing.md` ·
+`papers/vandehey-2017-open-problem-attack-map.md` §6.1
+
+---
+
 **26 September research:** [simultaneous Lambert words](papers/2026-09-26-joint-lambert-disjunctivity.md), complete proposed paper proof, awaiting independent review; finite character separation proved in Lean.  [Prepared formalization](KICKOFF-2026-09-26-joint-lambert.md), not launched.
 
 **Pair A multicutoff — Theorem C′, the square-root fresh-mass normality criterion — PROVED.**
