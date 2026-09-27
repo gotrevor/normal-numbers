@@ -214,6 +214,13 @@ on) says in its proof: *"This is a simple consequence of Theorem 1 in [17]"* —
 space: countably infinite alphabet, **non-compact**, escape of mass available.  The
 counterexample lifts verbatim, so Lemma 3.2 as stated is false.
 
+📰 **Survives publication (checked 2026-09-27 against the published Compositio 153 (2017)
+274-293, `papers/vandehey-2017-matrix-actions-cf-normality-published.pdf`, gitignored).**
+The published version renumbers it **Lemma 3.3** (p. 282, §3.1), with the statement and proof
+unchanged: *"This is a simple consequence of [MS03, Theorem 1]"*, with no tightness hypothesis.  The
+referee did not catch it, so the gap is in the version of record, not just arXiv v1.  Cite
+"Lemma 3.3 (published) / 3.2 (arXiv v1)".
+
 **Theorem 1.1 is almost certainly fine**, because Lemma 3.2 is only ever applied to
 `(x, M)` with `x` **CF-normal**, and CF-normality forces the empirical measures
 `E(x,n) = (1/n) Σ δ_{Tⁱx}` to be **tight** (digit-`≤K` cylinder frequencies converge to
