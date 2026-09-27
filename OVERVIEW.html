@@ -171,17 +171,21 @@ analytic estimates.</p>
 supply that input. The <code>UniformResonantMass</code> proposition
 itself is already proved; an unfinished alternate proof is not a new
 mathematical barrier.</p>
-<h3 id="c2-every-word-in-an-erdősborwein-constant">C2: every word in an
-Erdős–Borwein constant</h3>
-<p>For <strong>E_b = ∑ₙ≥₁ 1/(bⁿ − 1), b ≥ 3</strong>, the target is
-disjunctivity. Much of the digit-forcing and divisor control is in
-place; the prime-survivor argument is open.</p>
-<p>The review proposes choosing the search height first, then selecting
-the primes in the Chinese-remainder construction to avoid the finite
-exceptional moduli in an applicable prime-distribution theorem. This
-redesign is <strong>proposed, not implemented</strong>. Its first test
-is whether that selection preserves every congruence and size
-requirement of the digit construction.</p>
+<h3 id="erdősborwein-simultaneous-words-across-distinct-bases">Erdős–Borwein:
+simultaneous words across distinct bases</h3>
+<p>Scalar binary disjunctivity already has a <a href="https://github.com/CaptainSude/erdos-borwein-disjunctivity/tree/bd98789a177470cc4b3e33e6769e859f6144c906">peer
+paper and conditional Lean development</a>. The proposed
+selectable-modulus and large-prime-buffer mechanism in the September 25
+review is part of that prior proof. Our scalar C2 implementation remains
+incomplete.</p>
+<p><strong>New research draft, September 26:</strong> any prescribed
+words in finitely many distinct constants <strong>E_b = ∑ₙ≥₁ 1/(bⁿ −
+1)</strong> occur at a <strong>common digit position</strong>,
+infinitely often, even for bases 2 and 4. A finite Fourier encoding lets
+one divisor count prescribe all coordinates. The <a href="papers/2026-09-26-joint-lambert-disjunctivity.md">full proposed
+paper proof</a> adapts the peer’s arithmetic construction. Character
+separation is proved in Lean; the full result still needs independent
+review and formalization. This concerns occurrence, not normality.</p>
 <h2 id="what-would-count-as-a-change-in-position">What would count as a
 change in position?</h2>
 <table>
@@ -211,8 +215,9 @@ assessable.</td>
 normality.</td>
 </tr>
 <tr>
-<td>Make C2’s prime-survivor construction work</td>
-<td>Completes disjunctivity for the stated Erdős–Borwein family.</td>
+<td>Verify the simultaneous Lambert proof</td>
+<td>Prescribes words in distinct arithmetic constants at one common
+position.</td>
 </tr>
 <tr>
 <td>Prove ordinary cancellation through G₄’s growing carries</td>
@@ -238,7 +243,9 @@ theorem</a>, <a href="../nn-elliott/HANDOFF-elliott-2026-09-25-lap121.md">Elliot
 frontier</a>, <a href="../nn-c3mrt/DIRECTION.md">C3 direction</a>, and
 <a href="../nn-c2/src/NormalNumbers/SwingC2.lean">C2 construction</a>.
 Worktree links are local to this checkout layout. The September 25
-review predates C3’s repair and the latest Elliott reduction.</p>
+review predates C3’s repair and the latest Elliott reduction. Its scalar
+C2 novelty assessment is corrected above; the diagram retains that
+unfinished implementation branch.</p>
 <p>This is the maintained reader’s map. Update it when a frontier is
 proved, refuted, or replaced; keep proof details in their existing
 source and research notes. Diagram source: <a href="docs/overview.dot">docs/overview.dot</a>. Rebuild the visual

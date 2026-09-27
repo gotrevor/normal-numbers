@@ -492,3 +492,7 @@ import NormalNumbers.PairDecoupleRefute
 import NormalNumbers.PairDecoupleLower
 import NormalNumbers.PairDecoupleAttacks
 import NormalNumbers.PairDecoupleBand
+
+import NormalNumbers.JointLambertEncoding
+
+import NormalNumbers.JointLambertStatement

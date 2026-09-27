@@ -50,11 +50,11 @@ This is a meaningful intermediate target, called **richness**, for every prime L
 
 The published two-point result with exceptional scales does not supply that input.  The `UniformResonantMass` proposition itself is already proved; an unfinished alternate proof is not a new mathematical barrier.
 
-### C2: every word in an Erdős–Borwein constant
+### Erdős–Borwein: simultaneous words across distinct bases
 
-For **E_b = ∑ₙ≥₁ 1/(bⁿ − 1), b ≥ 3**, the target is disjunctivity.  Much of the digit-forcing and divisor control is in place; the prime-survivor argument is open.
+Scalar binary disjunctivity already has a [peer paper and conditional Lean development](https://github.com/CaptainSude/erdos-borwein-disjunctivity/tree/bd98789a177470cc4b3e33e6769e859f6144c906).  The proposed selectable-modulus and large-prime-buffer mechanism in the September 25 review is part of that prior proof.  Our scalar C2 implementation remains incomplete.
 
-The review proposes choosing the search height first, then selecting the primes in the Chinese-remainder construction to avoid the finite exceptional moduli in an applicable prime-distribution theorem.  This redesign is **proposed, not implemented**.  Its first test is whether that selection preserves every congruence and size requirement of the digit construction.
+**New research draft, September 26:** any prescribed words in finitely many distinct constants **E_b = ∑ₙ≥₁ 1/(bⁿ − 1)** occur at a **common digit position**, infinitely often, even for bases 2 and 4.  A finite Fourier encoding lets one divisor count prescribe all coordinates.  The [full proposed paper proof](papers/2026-09-26-joint-lambert-disjunctivity.md) adapts the peer's arithmetic construction.  Character separation is proved in Lean; the full result still needs independent review and formalization.  This concerns occurrence, not normality.
 
 ## What would count as a change in position?
 
@@ -63,7 +63,7 @@ The review proposes choosing the search height first, then selecting the primes 
 | Expose C′ and C4 as readable standalone proofs | Makes two completed mathematical achievements independently assessable. |
 | Supply Elliott's sublinear analytic bound | Completes a concrete logarithmic application. |
 | Prove the faithful C3 inputs | Every word gains positive lower frequency, still short of normality. |
-| Make C2's prime-survivor construction work | Completes disjunctivity for the stated Erdős–Borwein family. |
+| Verify the simultaneous Lambert proof | Prescribes words in distinct arithmetic constants at one common position. |
 | Prove ordinary cancellation through G₄'s growing carries | Reaches G₄ normality via the existing criterion. |
 
 The growing-prime localized-logarithm proposal is another independent normality prospect, still at paper-audit stage.  It is not a route already connecting these branches to G₄.
@@ -72,6 +72,6 @@ The growing-prime localized-logarithm proposal is another independent normality 
 
 Snapshot: main `wip/g5-prime-subset` at `97215f6`; worktrees `nn-elliott:d420003`, `nn-c3mrt:7cedd1b`, `nn-c2:df29025`, `nn-c4:5acf4dd`.  These are snapshots, not promises that the branches stay still.
 
-Main-tree sources: [C′ audit statement](src/NormalNumbers/PrimeModelGradedStatement.lean), [carry criterion](src/NormalNumbers/G4WindowK.lean), [precise rungs](src/NormalNumbers/CastingOut.lean), and [retired routes](src/NormalNumbers/Maze.lean).  Worktree sources: [C4 theorem](../nn-c4/src/NormalNumbers/AbelianWindowBuild.lean), [Elliott frontier](../nn-elliott/HANDOFF-elliott-2026-09-25-lap121.md), [C3 direction](../nn-c3mrt/DIRECTION.md), and [C2 construction](../nn-c2/src/NormalNumbers/SwingC2.lean).  Worktree links are local to this checkout layout.  The September 25 review predates C3's repair and the latest Elliott reduction.
+Main-tree sources: [C′ audit statement](src/NormalNumbers/PrimeModelGradedStatement.lean), [carry criterion](src/NormalNumbers/G4WindowK.lean), [precise rungs](src/NormalNumbers/CastingOut.lean), and [retired routes](src/NormalNumbers/Maze.lean).  Worktree sources: [C4 theorem](../nn-c4/src/NormalNumbers/AbelianWindowBuild.lean), [Elliott frontier](../nn-elliott/HANDOFF-elliott-2026-09-25-lap121.md), [C3 direction](../nn-c3mrt/DIRECTION.md), and [C2 construction](../nn-c2/src/NormalNumbers/SwingC2.lean).  Worktree links are local to this checkout layout.  The September 25 review predates C3's repair and the latest Elliott reduction.  Its scalar C2 novelty assessment is corrected above; the diagram retains that unfinished implementation branch.
 
 This is the maintained reader's map.  Update it when a frontier is proved, refuted, or replaced; keep proof details in their existing source and research notes.  Diagram source: [docs/overview.dot](docs/overview.dot).  Rebuild the visual edition with `make -f docs/overview.mk`.

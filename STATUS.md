@@ -1,5 +1,7 @@
 # STATUS — normal-numbers 📊
 
+**26 September research:** [simultaneous Lambert words](papers/2026-09-26-joint-lambert-disjunctivity.md), complete proposed paper proof, awaiting independent review; finite character separation proved in Lean.  [Prepared formalization](KICKOFF-2026-09-26-joint-lambert.md), not launched.
+
 **Pair A multicutoff — Theorem C′, the square-root fresh-mass normality criterion — PROVED.**
 · **Build**: 🟢 green (9161 jobs) · **Updated**: 2026-09-23, campaign complete · HEAD `3523f8d`
 · branch `wip/g5-prime-subset`

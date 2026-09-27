@@ -1,5 +1,7 @@
 # NN research review, 18–25 September 2026
 
+**26 September correction:** scalar binary Erdős–Borwein disjunctivity, including the large-prime buffer, is already claimed in [CaptainSude’s paper](https://github.com/CaptainSude/erdos-borwein-disjunctivity/tree/bd98789a177470cc4b3e33e6769e859f6144c906).  Its Lean development takes published prime-distribution inputs as hypotheses.  The fresh target is [simultaneous words at a common position](../papers/2026-09-26-joint-lambert-disjunctivity.md), with a proposed paper proof for any finite set of distinct bases, including 2 and 4.  The scalar C2 novelty assessment below is superseded.
+
 Read-only review for the ten-thread synthesis.  Source branch snapshots: `normal-numbers` `wip/g5-prime-subset` at `48e981e`, `nn-twopoint` `wip/twopoint-avg` at `5ed791a`, `nn-c4` `wip/c4-infinite` at `5acf4dd`.  The C3MRT and Elliott worktrees had active writers, so their own reviewer should use live heads.  Main NN tree and the two latter trees were clean when inspected.  `normal-numbers/STATUS.md` and `DIRECTION.md` still narrate the 23 September Pair A campaign and are stale for 25 September cross-branch work; use the live Lean source and branch handoffs.
 
 ## Ranking summary

@@ -1,5 +1,7 @@
 # Research trajectory: Collatz, Busy Beaver, normal numbers
 
+**26 September correction:** scalar binary Erdős–Borwein disjunctivity, including the large-prime buffer, is already claimed in [CaptainSude’s paper](https://github.com/CaptainSude/erdos-borwein-disjunctivity/tree/bd98789a177470cc4b3e33e6769e859f6144c906).  Its Lean development takes published prime-distribution inputs as hypotheses.  The fresh target is [simultaneous words at a common position](../papers/2026-09-26-joint-lambert-disjunctivity.md), with a proposed paper proof for any finite set of distinct bases, including 2 and 4.  The scalar C2 novelty assessment below is superseded.
+
 25 September 2026.  Review of the past week's work and current outstanding work, including live branches and fresh primary sources.  Ren/Codex synthesis with three delegated source reviews.  No research campaign launched or stopped.
 
 ## Judgment
