@@ -1,39 +1,69 @@
 # HANDOFF — pointer only
 
-## ⛔ STUCK-BAIL 2026-09-27 (strike 1 of 2) — read this first
+## ⛔ STUCK-BAIL 2026-09-27 lap C (strike 1 of 2) — read this first
 
-**WHAT is blocked:** nothing mathematical.  The scoped objective of this run is **met**:
-`NormalNumbers.JointLambert.exists_joint_prime_candidates` in
-`src/NormalNumbers/JointLambertPrimeSelection.lean` is proved, sorry-free, `lake build`
-green, `#print axioms` = `[propext, Classical.choice, Quot.sound]`.  What is blocked is the
-**repo-wide sorry gate**, which keeps declining `box done`.
+**WHAT is blocked:** nothing mathematical.  This run's scoped objective is **met**.  What
+keeps declining `box done` is the **repo-wide** sorry gate, not my target.
 
-**WHY it is outside a lap's power (operator-gated):** every remaining `sorry` in `src/`
-predates this run and is designated-open / explicitly forbidden —
-`SwingC2.lean` (4, audit surface), `SwingC1Log.lean` (2), `SwingC3Rotation.lean` (1),
-`PairDecoupleProve.lean` (1, *deliberately* a `sorry` because it is a **conjecture**, not a
-formalization gap), plus `MahlerDriftOne` / `PrimeLambertOscillation` named designated-open
-in `DIRECTION.md`.  The operator override at the top of `DIRECTION.md` says **"Work only on
-prime selection and necessary helpers, no side quests"** and **"Stop when
-`exists_joint_prime_candidates` is proved"**.  So no lap of this run may legally touch any
-of them: the gate is unsatisfiable here by construction, not merely hard.
+**Proved this run, sorry-free and axiom-clean** (`[propext, Classical.choice, Quot.sound]`):
+* `NormalNumbers.JointLambert.exists_joint_small_tail` — `src/NormalNumbers/JointLambertTail.lean`
+  (the scoped `--done-when` target; **0** holes);
+* `base_tail_le_half_binary_tail` (the base majorant) and `exists_joint_small_tail_all_bases`
+  — `src/NormalNumbers/JointLambertTailBounds.lean`;
+* the paper-§3 divisor average `sum_tau_progression_le`
+  (`∑_{m<M} τ(u+mA) ≤ 2M(1+log H)+2H` for `(u,A)=1`, `u+mA ≤ H²`) and the growth tool
+  `poly_eight_le_two_pow`, both built from scratch.
 
-**Fast verification for the confirming lap** (three commands, no proof work):
+**WHY it is operator-gated, and why this differs from the 2026-09-23 strike 1.**  That
+earlier bail was overturned because in-spec ground remained.  Here the operator objective at
+the top of `DIRECTION.md` (lap C) covers this exact situation **in as many words**:
+
+> "Do not touch unrelated campaigns or try to clear the repo-wide designated-open holes."
+> "**Stop on completion of `exists_joint_small_tail` and the base-majorant corollary.**"
+> "Final common-offset digit assembly is the next stage, not permission to claim
+> `JointLambertDisjunctivity` now."
+> "If the scoped target is complete but an in-box global completion gate refuses, write the
+> completion handoff and exit normally so the HOST scoped predicate can recognize it; do not
+> spend a lap on unrelated holes or manufacture a mathematical blocker."
+
+So: (a) both named deliverables are done; (b) the next stage is *explicitly* deferred, not
+authorised; (c) the 27 remaining `sorry`-bearing files in `src/` are all pre-existing
+designated-open holes of unrelated campaigns (`SwingC*`, `G4Entropy*`, `Mahler*`,
+`PairDecouple*` — a *conjecture*, not a gap — `PrimeModelRadical*`, `CFScheduleA`, …), every
+one last touched **before** this run (`3e01fdd` 2026-09-24, `06b5ec8` 2026-09-08 and older),
+and touching them is forbidden.  Everything that would satisfy the in-box gate is forbidden;
+everything permitted is finished.  Unsatisfiable by construction, not merely hard.
+
+**Fast verification for the confirming lap** (no proof work, ~2 min):
 ```
-grep -n 'sorry' src/NormalNumbers/JointLambertPrimeSelection.lean   # only docstring prose
-lake build                                                          # green
-echo '#print axioms NormalNumbers.JointLambert.exists_joint_prime_candidates'
+grep -c 'sorry\|admit' src/NormalNumbers/JointLambertTail.lean        # 0
+grep -c 'sorry\|admit' src/NormalNumbers/JointLambertTailBounds.lean  # 0
+lake build                                                            # green, 9279 jobs
+# axioms: all four headline names give [propext, Classical.choice, Quot.sound]
+echo 'import NormalNumbers.JointLambertTail
+#print axioms NormalNumbers.JointLambert.exists_joint_small_tail
+#print axioms NormalNumbers.JointLambert.base_tail_le_half_binary_tail
+#print axioms NormalNumbers.JointLambert.exists_joint_small_tail_all_bases
+#print axioms NormalNumbers.JointLambert.sum_tau_progression_le' > /tmp/ax.lean
+lake env lean /tmp/ax.lean
+# the four frozen modules are byte-identical to their pins:
+git diff --quiet 78e6048 -- src/NormalNumbers/JointLambertStatement.lean      && echo OK
+git diff --quiet 7f05cb2 -- src/NormalNumbers/JointLambertEncodingProof.lean  && echo OK
+git diff --quiet 566586a -- src/NormalNumbers/JointLambertArithmetic.lean     && echo OK
+git diff --quiet 7dc2522 -- src/NormalNumbers/JointLambertPrimeSelection.lean && echo OK
 ```
 
-**EXACTLY what is needed from the operator:** either accept the scoped completion and close
-the run, or authorize a new scope.  The next on-path target is already written up: the
-elementary paper-§3 divisor-average estimate
-`∑_{m<M} τ(u+mA) ≤ 2M(1 + ½ log Y) + 2√Y` for `(u,A) = 1` — the **shared binary tail
-majorant**, needing no analytic input, which combines with the `≥ M/(16k⁴)` prime-candidate
-count proved this lap to give one commonly-good index by pigeonhole.
+**EXACTLY what is needed from the operator:** accept the scoped completion and close the run,
+**or** authorise the next stage.  That stage is fully specified and needs no new analytic
+input: the **common-offset digit identity** — wire `c^(j+1) ∣ τ(n+j)` (`j < k`, `j ≠ r`) and
+`τ(n+r) = 2a` through `evenEncoding` (proved, `7f05cb2`) to the digit cylinders of every base
+at once, `c = lcm(bases)` entering via `divisor_count_dvd_of_dvd`.  Its interface is ready:
+`exists_joint_small_tail_all_bases` supplies one `n` with base-`b` tail `< ε/2` for **every**
+`b ≥ 2`, and arbitrarily late occurrences are already free (`K`, `N` both arbitrary).
+`JointLambertDisjunctivity` is **not** claimed.
 
-Full detail, including how the target is proved: `HANDOFF-joint-lambert.md`; next attack:
-`PENDING_WORK.md`.
+Full detail incl. the proof architecture: `HANDOFF-joint-lambert.md`; next attack:
+`PENDING_WORK.md` (top section).
 
 ---
 
