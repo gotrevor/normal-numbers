@@ -1,5 +1,44 @@
 # DIRECTION — normal-numbers 🧭
 
+## OPERATOR OBJECTIVE 2026-09-27 lap B (SUPERSEDES every objective below, including the
+## "target = paper §4 ONLY" block and all completed-stage stop instructions)
+
+Bounded run, at most two laps.  **Target: PRIME SELECTION feeding `exists_joint_progression`,
+with a quantitative prime-candidate count.**
+
+New file `src/NormalNumbers/JointLambertPrimeSelection.lean`; target theorem
+`NormalNumbers.JointLambert.exists_joint_prime_candidates`, created with a temporary `sorry`
+first so the completion gate cannot mistake partial scaffolding for success.
+
+* The two analytic inputs are **named `Prop` definitions passed as hypotheses**, never global
+  axioms and never the old vacuous `PrimeDensityAP`:
+  `AGP` (∃ X0 D0, ∀ X ≥ X0, ∃ Dset with `#Dset ≤ D0`, `log X < D` for all `D ∈ Dset`, such that
+  for ALL `B ≥ 1` with `(B:ℝ) ≤ X^(1/4)`, `(u,B)=1`, no exceptional `D ∣ B`, the count of
+  primes `≤ X` in `u mod B` is `≥ X/(2 φ(B) log X)`; the exception set is chosen BEFORE `B`,
+  `u` and the allocation) and `PrimeIntervalSupply` (∃ L0, ∀ L ≥ max(L0,2),
+  `(L:ℝ)/(3 log L) ≤ #{primes in the OPEN interval (L,2L)}`).  Neither may be strengthened.
+* First prove the **finite avoidance and allocation** theorem: a prime pool with
+  `≥ 1 + ∑_{j<k, j≠r}(j+1) + #Dset` entries permits choosing `q` and every `p j t` distinctly
+  while avoiding every exceptional modulus `D ≠ 1` in all products of powers of those primes.
+  Remove at most one prime per exceptional modulus; handle `D = 0` and moduli with no pool
+  prime divisor correctly.
+* Then instantiate `exists_joint_progression` and prove explicit `Q ≤ (2L)^(a-1)`,
+  `B ≤ (2L)^(1 + c·∑(j+1))`.
+* Final contract: for fixed `c ≥ 2`, `a ≥ 2`, `r ≥ 1` and any cutoff `K`, produce `k ≥ K` with
+  `r < k`, `L = 2^k`, `U = 2^(k^4)`, `X = U^4`, primes `q, p j t ∈ (L,2L)`, the complete
+  `exists_joint_progression` conclusion, `B ≤ U`, `Q ≤ U`, `R > L`, and at least `M/(16 k^4)`
+  candidate indices `m < M` (`M = X/B + 1`) with `u + mB` prime and `u + mB ≤ X`.  The count is
+  a **real inequality**.  Parameter availability is **proved**, not assumed.
+* The dyadic schedule is authorized for the QUALITATIVE theorem; the quantitative all-`N` paper
+  bound is a separate future target.  `K` stays arbitrary so later tail/digit margins can demand
+  large `k`.  Retain the survivor and killed-slot divisibility data visibly.  Add a nonvacuity /
+  finite-avoidance control.
+* Byte-for-byte freezes: `JointLambertStatement.lean` vs `78e6048`, `JointLambertEncodingProof`
+  vs `7f05cb2`, `JointLambertArithmetic` vs `566586a`.  New lemmas go alongside.
+* A false specified contract is recorded as a precise obstruction, never silently weakened.
+* No side quests.  **Do not claim the full joint Lambert theorem**: shared tail control and digit
+  assembly remain.  Stop when `exists_joint_prime_candidates` is proved.
+
 ## OPERATOR OBJECTIVE 2026-09-27 (SUPERSEDES everything below, and the completed encoding-only stop)
 
 Bounded joint-Lambert run, up to two laps, following `7f05cb2` (`evenEncoding` proved).
