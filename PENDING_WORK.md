@@ -9465,3 +9465,35 @@ Positivity of `γ(I_z)` comes from `CFScheduleA.gaussMeasure_cfCylinder_toReal_p
 2. Then the transducer: `Synchronizing` for `M_D`.  Concrete target suggested by the
    2026-08-25 probe: a long run of one large digit should drive any det-`±D` normal form to a
    canonical state.
+
+### Same lap, seventh commit: the `z`-free window mass bounded by the avoidance mass
+
+Two new sorry-free pieces bridging `VandeheyAutomaton` and `VandeheyZFree`:
+
+* `VandeheyAut.card_window_mem_eq_sum`, `VandeheyAut.tendsto_window_mem_freq` — for a finite
+  family `F` of genuine length-`L` words, the frequency of positions whose window lands in
+  `F` tends to `Σ_{q ∈ F} γ(I_q)` (fiberwise partition + `tendsto_finsetSum`).
+* `cfDigit_iterate`, `getD_drop`, `mem_zFreeSet_of_mem_cfCylinder`,
+  `sum_gaussMeasure_zfree_le` — for a finite family of `z`-**free** length-`L` words with
+  `k·(|z|+1) ≤ L`, `Σ_{q ∈ F} γ(I_q) ≤ γ(zFreeSet z k)`.  The containment is proved by
+  induction on `k`: a `z`-free `q` forces `x ∉ I_z` (else `z` is a prefix of `q`) and
+  `T^{|z|+1}x ∈ cfCylinder (q.drop (|z|+1))`, still `z`-free; irrationality keeps the orbit
+  in `(0,1)` (`irrational_orbit`), and the rationals are `γ`-null.
+
+Chaining with `tendsto_gaussMeasure_zFreeSet`, the `z`-free window frequency is now
+**squeezed to `0` as `L → ∞`**, uniformly over CF-normal `x`.
+
+### Remaining for `exists_jointFreq_limit` — pure bookkeeping
+
+All inputs exist.  The assembly:
+`freq(jointCount, L) ∈ [Σ_{q ∈ Q_t(L,K)} γ(I_{q++v}) , same + ε(L,K)]` with
+`ε(L,K) = γ(zFreeSet z ⌊L/(|z|+1)⌋) + (L+1)·(1 − Σ_{k≤K} γ(I_{[k]}))`, both terms `→ 0` on
+`K = K(L) → ∞` fast enough (e.g. pick `K` with `(L+1)(1 − Σ_{k≤K}γ(I_{[k]})) ≤ 1/L`, possible
+since `Σ_{k≥1} γ(I_{[k]}) = 1`).  The limit is then `lim_L Σ_q γ(I_{q++v})`, `x`-free and
+`s₀`-free.  Note the sequence `S_L := Σ_{q ∈ Q_t(L,K(L))} γ(I_{q++v})` is Cauchy *because*
+the two-sided squeeze holds for every `L` against a single convergent-in-`L`-free quantity —
+standard, but write it as: any two `L, L'` bound the same `limsup`/`liminf` of the joint
+frequency, so `|S_L − S_{L'}| ≤ ε(L) + ε(L')`.
+
+### Then: the transducer (`Synchronizing` for `M_D`)
+Remains the one genuinely open mathematical debt of Theorem 1.1 on this route.

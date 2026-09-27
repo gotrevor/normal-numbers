@@ -5,6 +5,7 @@ Authors: Trevor Morris
 -/
 import NormalNumbers.CFPsiPin
 import NormalNumbers.CFScheduleA
+import NormalNumbers.VandeheyAutomaton
 
 /-!
 # The `z`-avoidance mass decays geometrically
@@ -169,5 +170,85 @@ theorem tendsto_gaussMeasure_zFreeSet (z : List ℕ) (hzne : z ≠ [])
   refine tendsto_of_tendsto_of_tendsto_of_le_of_le tendsto_const_nhds hgeo
     (fun k => ENNReal.toReal_nonneg) (fun k => ?_)
   exact gaussMeasure_zFreeSet_le_pow z hzpos k
+
+/-! ## From `z`-free cylinders to the avoidance sets -/
+
+open VandeheyAut
+
+lemma cfDigit_iterate (x : ℝ) (n i : ℕ) :
+    cfDigit (gaussMap^[n] x) i = cfDigit x (n + i) := by
+  simp only [cfDigit, ← Function.iterate_add_apply]
+  rw [Nat.add_comm i n]
+
+lemma getD_drop (q : List ℕ) (n i : ℕ) : (q.drop n).getD i 0 = q.getD (n + i) 0 := by
+  simp only [List.getD_eq_getElem?_getD, List.getElem?_drop]
+
+/-- **A `z`-free cylinder sits inside the `z`-avoidance set.**  If the word `q` does not
+contain `z` as a factor and is long enough for `k` aligned blocks, then every irrational
+point of `cfCylinder q` avoids `z` at all `k` aligned block positions. -/
+lemma mem_zFreeSet_of_mem_cfCylinder : ∀ (k : ℕ) (z q : List ℕ), ¬ z <:+: q →
+    k * (z.length + 1) ≤ q.length → ∀ x ∈ cfCylinder q, Irrational x →
+    x ∈ zFreeSet z k := by
+  intro k
+  induction k with
+  | zero => intro z q _ _ x hx _; exact hx.1
+  | succ k ih =>
+    intro z q hzq hk x hx hirr
+    have hm : z.length + 1 ≤ q.length := le_trans (by nlinarith) hk
+    refine ⟨⟨hx.1, ?_⟩, ?_⟩
+    · -- `x ∉ cfCylinder z`: otherwise `z` is a prefix, hence a factor, of `q`
+      intro hxz
+      refine hzq (List.IsPrefix.isInfix ?_)
+      rw [List.prefix_iff_eq_take]
+      refine List.ext_getElem (by simp; omega) ?_
+      intro i h1 h2
+      have hi : i < z.length := h1
+      have hzd := hxz.2 i hi
+      have hqd := hx.2 i (by omega)
+      have : z.getD i 0 = q.getD i 0 := by rw [← hzd, ← hqd]
+      rw [List.getD_eq_getElem _ _ hi, List.getD_eq_getElem _ _ (by omega)] at this
+      rw [this, List.getElem_take]
+    · -- `T^{|z|+1} x` avoids `z` at the remaining `k` blocks
+      set s : ℕ := z.length + 1 with hs
+      have horb := irrational_orbit x hirr hx.1 s
+      have hdrop : gaussMap^[s] x ∈ cfCylinder (q.drop s) := by
+        refine ⟨horb.2, ?_⟩
+        intro i hi
+        rw [List.length_drop] at hi
+        rw [cfDigit_iterate, hx.2 (s + i) (by omega), getD_drop]
+      refine ih z (q.drop s) (fun h => hzq (h.trans (List.drop_suffix s q).isInfix)) ?_
+        _ hdrop horb.1
+      rw [List.length_drop, ← hs]
+      refine Nat.le_sub_of_add_le ?_
+      calc k * s + s = (k + 1) * s := by ring
+        _ ≤ q.length := hk
+
+/-- **The `z`-free window mass is small.**  For a finite family of `z`-free words of length
+`L`, the total cylinder mass is at most the `k`-block avoidance mass, as soon as
+`k·(|z|+1) ≤ L`. -/
+theorem sum_gaussMeasure_zfree_le (z : List ℕ) (F : Finset (List ℕ)) (L k : ℕ)
+    (hF : ∀ q ∈ F, q.length = L) (hFz : ∀ q ∈ F, ¬ z <:+: q)
+    (hk : k * (z.length + 1) ≤ L) :
+    ∑ q ∈ F, (gaussMeasure (cfCylinder q)).toReal
+      ≤ (gaussMeasure (zFreeSet z k)).toReal := by
+  classical
+  have hdisj : (↑F : Set (List ℕ)).PairwiseDisjoint (fun q => cfCylinder q) :=
+    fun q hq q' hq' hne => cfCylinder_disjoint (by rw [hF q hq, hF q' hq']) hne
+  have hbi := MeasureTheory.measure_biUnion_finset hdisj
+    (fun q (_ : q ∈ F) => measurableSet_cfCylinder q) (μ := gaussMeasure)
+  have hsub : (⋃ q ∈ F, cfCylinder q) \ Set.range ((↑) : ℚ → ℝ) ⊆ zFreeSet z k := by
+    intro x hx
+    obtain ⟨q, hq, hxq⟩ := Set.mem_iUnion₂.mp hx.1
+    exact mem_zFreeSet_of_mem_cfCylinder k z q (hFz q hq)
+      (by rw [hF q hq]; exact hk) x hxq hx.2
+  have hnull : gaussMeasure (Set.range ((↑) : ℚ → ℝ)) = 0 :=
+    gaussMeasure_countable_null (Set.countable_range _)
+  have hle : gaussMeasure (⋃ q ∈ F, cfCylinder q) ≤ gaussMeasure (zFreeSet z k) := by
+    calc gaussMeasure (⋃ q ∈ F, cfCylinder q)
+        = gaussMeasure ((⋃ q ∈ F, cfCylinder q) \ Set.range ((↑) : ℚ → ℝ)) :=
+          (measure_sdiff_null hnull).symm
+      _ ≤ gaussMeasure (zFreeSet z k) := measure_mono hsub
+  rw [← ENNReal.toReal_sum (fun q _ => measure_ne_top _ _), ← hbi]
+  exact ENNReal.toReal_mono (measure_ne_top _ _) hle
 
 end NormalNumbers

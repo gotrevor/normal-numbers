@@ -516,6 +516,51 @@ theorem badSet_card_le (z : List ℕ) (x : ℝ) (K L m : ℕ) :
   · exact Finset.mem_union_left _
       (Finset.mem_filter.mpr ⟨Finset.mem_range.mpr hjm, h⟩)
 
+/-! ## Window counts against a finite family of words -/
+
+/-- Positions whose length-`L` window lands in a finite family `F` of length-`L` words are
+partitioned by that window. -/
+theorem card_window_mem_eq_sum (x : ℝ) (F : Finset (List ℕ)) (L : ℕ)
+    (hF : ∀ q ∈ F, q.length = L) (m : ℕ) :
+    ((Finset.range m).filter fun j => cfWindow x j L ∈ F).card
+      = ∑ q ∈ F, ((Finset.range m).filter fun j => q = cfWindow x j L).card := by
+  classical
+  have hmaps : ∀ j ∈ (Finset.range m).filter (fun j => cfWindow x j L ∈ F),
+      cfWindow x j L ∈ F := fun j hj => (Finset.mem_filter.mp hj).2
+  rw [Finset.card_eq_sum_card_fiberwise hmaps]
+  refine Finset.sum_congr rfl fun q hq => ?_
+  congr 1
+  rw [Finset.filter_filter]
+  refine Finset.filter_congr fun j _ => ?_
+  constructor
+  · rintro ⟨-, h⟩; exact h.symm
+  · intro h; exact ⟨h ▸ hq, h.symm⟩
+
+/-- The frequency of positions whose window lands in a finite family of genuine words is the
+total Gauss mass of the corresponding cylinders. -/
+theorem tendsto_window_mem_freq {x : ℝ} (hx : IsCFNormal x) (F : Finset (List ℕ)) (L : ℕ)
+    (hL : 1 ≤ L) (hF : ∀ q ∈ F, q.length = L) (hFpos : ∀ q ∈ F, ∀ a ∈ q, 1 ≤ a) :
+    Tendsto (fun m => (((Finset.range m).filter
+        fun j => cfWindow x j L ∈ F).card : ℝ) / m) atTop
+      (nhds (∑ q ∈ F, (gaussMeasure (cfCylinder q)).toReal)) := by
+  classical
+  have hterm : ∀ q ∈ F, Tendsto (fun m => (((Finset.range m).filter
+      fun j => q = cfWindow x j L).card : ℝ) / m) atTop
+      (nhds (gaussMeasure (cfCylinder q)).toReal) := by
+    intro q hq
+    have hlen := hF q hq
+    have hne : q ≠ [] := by
+      intro h; rw [h] at hlen; simp at hlen; omega
+    have h := tendsto_windowFreq hx q hne (hFpos q hq)
+    rw [hlen] at h
+    exact h
+  have hsum := tendsto_finsetSum (f := fun q m => (((Finset.range m).filter
+      fun j => q = cfWindow x j L).card : ℝ) / m) F hterm
+  refine hsum.congr fun m => ?_
+  rw [← Finset.sum_div]
+  congr 1
+  rw [card_window_mem_eq_sum x F L hF m, Nat.cast_sum]
+
 /-- **The automaton transfer principle** (the replacement for Vandehey's Theorem 3.1).
 For a finite-state automaton with a synchronizing genuine word, the joint
 (window, state) frequency along a CF-normal `x` converges, to a limit that depends on
