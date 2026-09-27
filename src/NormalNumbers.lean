@@ -498,4 +498,5 @@ import NormalNumbers.JointLambertEncoding
 import NormalNumbers.JointLambertStatement
 import NormalNumbers.JointLambertEncodingProof
 
+import NormalNumbers.WallCrux
 import NormalNumbers.WallRational
