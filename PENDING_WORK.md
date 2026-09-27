@@ -9528,3 +9528,60 @@ Choosing `K` after `L` makes `err(L,K(L)) → 0`, so `limsup = liminf` (the limi
 the value is within `err` of the `x`-free quantity `mainSum(L,K(L))` for every `L` — hence
 `x`-independent.  **No Cauchy argument on `mainSum` is needed**: the two-sided squeeze against
 an `x`-free quantity does both jobs at once.
+
+### Lap 2026-09-27 (side quest, ninth/tenth commits): the route was WRONG — crux relocated
+
+**`Synchronizing` is unsatisfiable for the transducer Theorem 1.1 needs.**  The integer
+state set is finite, so synchronizability is decidable, and
+`probes/cf_transducer_sync.py` decides it: no synchronizing word for `x↦2x`, `x↦x/2`,
+`x↦(x+1)/2`, `x↦3x` (states 80/77/78/223 on digits 1..8), with a majority of state pairs
+provably unmergeable.  `probes/cf_transducer_class.py` isolates the invariant:
+**mergeable ⟺ equal row lattice `ℤ²M` up to scaling**, 0 mismatches over 3160 + 14878 pairs.
+Reason: after common input `w` the states are `P M W` and `Q N W` with `P,Q,W ∈ GL₂(ℤ)`, so
+projective equality forces `N = λ(Q⁻¹P)M` with `Q⁻¹P ∈ GL₂(ℤ)`; `W` is invertible and can
+never change the row lattice.  Full write-up:
+`PROBE-2026-09-27-transducer-not-synchronizing.md`.
+
+Consequences:
+* `VandeheyAut.exists_jointFreq_limit` is **not false**, but its hypothesis is never met.
+  **Do not spend more effort on it** — the previous handoff's "NEXT 1, pure bookkeeping"
+  would have proved a lemma about an empty hypothesis.
+* The crux is now named exactly: the state is an extension of a `ℙ¹(ℤ/D)`-valued **class
+  cocycle** `c_i = c₀ · B_{a₁} ⋯ B_{a_i} mod D` (only `a mod D` matters — visible in the
+  measured tables), acting by bijections, hence never forgetting.  Theorem 1.1 needs that
+  cocycle to equidistribute *jointly with digit windows*.  That is precisely the content
+  Vandehey buys from the refuted Moshchevitin–Shkredov lemma.  Note this is **not**
+  Wall-shaped: Wall's base-`b` carry automaton *is* synchronizing.
+
+**New mechanism, and its engine is now PROVED** — `src/NormalNumbers/VandeheyCocycle.lean`
+(wired, sorry-free, `[propext, Classical.choice, Quot.sound]`):
+
+* `norm_sum_shift_sub_le` — shifting the summation window by `k` costs `≤ 2Ck`.
+* `cesaro_shift_bound` — **the engine**:
+  `‖∑_{i<n} a i‖ ≤ ∑_{i<n} ‖K⁻¹ • ∑_{k<K} a (i+k)‖ + 2CK` for `‖a‖ ≤ C`, in any normed
+  space.  This is how a *non-synchronizing* cocycle is tamed: with
+  `a i = f(win_i) · χ(P_i)` the local `K`-average factors as the unit `χ(P_i)` times a
+  quantity depending only on the length-`(K+|q|)` window at `i`, so the right-hand side is a
+  plain **window** average — exactly what `VandeheyAut.tendsto_window_mem_freq` evaluates.
+* `cocycleOf`, `windowProd`, `cocycleOf_add` (`P_{i+k} = P_i · Q_i^{(k)}`), `windowProd_add`,
+  `windowProd_eq_of_window_eq`, `cocycleOf_congr` — the cocycle layer, over an arbitrary
+  monoid so `PGL₂(ℤ/D)` is a plug-in and `WallCrux.lean`'s automata can reuse it.
+
+### Next attack (in order)
+
+1. **The mean-zero contraction.**  `cesaro_shift_bound` leaves `∑_i ‖R_i‖` with
+   `R_i = K⁻¹ ∑_{k<K} f(win_{i+k}) · ρ(Q_i^{(k)})`.  Taking `ρ` the permutation
+   representation of the class action on `ℙ¹(ℤ/D)` **restricted to the mean-zero subspace**
+   (the invariant vector must be split off first, or `‖R‖` cannot decay), the obligation is
+   `𝔼_γ‖R‖ → 0` as `K → ∞`.  Route: `𝔼‖R‖² = K⁻²∑_{k,k'} 𝔼[…]`, decorrelate well-separated
+   `k, k'` by `philipp_psi_mixing_holds`, and use that `𝔼ρ(Q^{(k)}) → 0` on the mean-zero
+   subspace (aperiodicity of the digit walk on the finite group generated).  This is the
+   only genuinely new analytic content on the corrected route.
+2. **The concrete class group.**  `g : ℕ → PGL₂(ℤ/D)`, `g a = [[0,1],[1,a]]`; prove it
+   factors through `a mod D`, and that the generated group acts transitively on `ℙ¹(ℤ/D)`
+   (needed for aperiodicity/transitivity).
+3. **Fiber merging inside a class** — the surviving half of the old synchronizing story:
+   two states with equal row lattice DO merge (the probe confirms it), so `Synchronizing`
+   should be replaced by a class-relative version and `stateAt_eq_of_window_sync` restated
+   over it.
+4. **§2 transducer + identity (9)** and **§5–§6 trigger counting**, unchanged.
