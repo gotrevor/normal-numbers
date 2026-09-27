@@ -464,6 +464,102 @@ lemma card_agp_le_card_candidates {B u X : ℕ} (hB : 1 ≤ B) (huB : u < B) :
     simp only at heq
     rw [← h1, ← h2, heq]
 
+/-! ### The two real-analytic reductions -/
+
+/-- Core real inequality behind the candidate count: with `l = log 2 ≤ 1` and `t = X/B ≥ 1`,
+`(t+1)/(16 K) ≤ t/(8 K l)`.  Only `l ≤ 1` is used, so no numeric bound on `log 2` is
+needed. -/
+private lemma count_real_core {t l K : ℝ} (ht : 1 ≤ t) (hl0 : 0 < l) (hl : l ≤ 1)
+    (hK : 0 < K) : (t + 1) / (16 * K) ≤ t / (8 * K * l) := by
+  rw [div_le_div_iff₀ (by positivity) (by positivity)]
+  have hcore : l * (t + 1) ≤ 2 * t := by nlinarith
+  nlinarith [mul_le_mul_of_nonneg_left hcore (by positivity : (0:ℝ) ≤ 8 * K)]
+
+/-- **The pool supply reduction.**  From `PrimeIntervalSupply` at `L = 2^k` and the schedule
+inequality `3k(1 + k² + D₀) ≤ 2^k`, the open interval `(2^k, 2^(k+1))` contains at least
+`1 + killPoolSize k r + D₀` primes — enough to lose one prime per exceptional modulus and
+still allocate `q` and the whole killed-slot family. -/
+lemma pool_card_ge {k r D0 N : ℕ} (hk : 1 ≤ k)
+    (hpool : 3 * k * (1 + k ^ 2 + D0) ≤ 2 ^ k)
+    (hcard : ((2 : ℕ) ^ k : ℝ) / (3 * Real.log ((2 : ℕ) ^ k)) ≤ (N : ℝ)) :
+    1 + killPoolSize k r + D0 ≤ N := by
+  have hl0 : 0 < Real.log 2 := Real.log_pos (by norm_num)
+  have hl1 : Real.log 2 ≤ 1 := by
+    have := Real.log_le_sub_one_of_pos (x := (2 : ℝ)) (by norm_num)
+    linarith
+  have hkR : (0 : ℝ) < k := by exact_mod_cast hk
+  have hlog : Real.log ((2 : ℝ) ^ k) = (k : ℝ) * Real.log 2 := by rw [Real.log_pow]
+  push_cast at hcard
+  rw [hlog] at hcard
+  have hden : (0 : ℝ) < 3 * ((k : ℝ) * Real.log 2) := by positivity
+  -- `3 log L ≤ 3k`, so `L/(3k) ≤ L/(3 log L) ≤ N`
+  have h1 : ((2 : ℝ) ^ k) / (3 * (k : ℝ)) ≤ (N : ℝ) := by
+    refine le_trans (div_le_div_of_nonneg_left (by positivity) hden ?_) hcard
+    nlinarith
+  -- the schedule inequality gives `1 + k² + D₀ ≤ L/(3k)`
+  have h2 : ((1 + k ^ 2 + D0 : ℕ) : ℝ) ≤ ((2 : ℝ) ^ k) / (3 * (k : ℝ)) := by
+    rw [le_div_iff₀ (by positivity)]
+    have hcast : ((3 * k * (1 + k ^ 2 + D0) : ℕ) : ℝ) ≤ (((2 : ℕ) ^ k : ℕ) : ℝ) := by
+      exact_mod_cast hpool
+    push_cast at hcast ⊢
+    nlinarith
+  have h4 : 1 + k ^ 2 + D0 ≤ N := by exact_mod_cast le_trans h2 h1
+  have := killPoolSize_le_sq k r
+  omega
+
+/-- **The candidate-count reduction.**  From the AGP lower bound on the number of primes
+`≤ X` in the class `u mod B`, with `X = 2^(4k⁴)`, `1 ≤ B ≤ X`, the count is at least
+`M / (16 k⁴)` where `M = X/B + 1`.  The slack is genuine: `log X = 4k⁴ log 2` and
+`2/log 2 > 2`, which absorbs the `+1` in `M`. -/
+lemma count_lower_bound {B X k N : ℕ} (hk : 1 ≤ k) (hB : 1 ≤ B) (hBX : B ≤ X)
+    (hX : X = 2 ^ (4 * k ^ 4))
+    (hN : (X : ℝ) / (2 * B.totient * Real.log X) ≤ (N : ℝ)) :
+    ((X / B + 1 : ℕ) : ℝ) / (16 * (k : ℝ) ^ 4) ≤ (N : ℝ) := by
+  have hl0 : 0 < Real.log 2 := Real.log_pos (by norm_num)
+  have hl1 : Real.log 2 ≤ 1 := by
+    have := Real.log_le_sub_one_of_pos (x := (2 : ℝ)) (by norm_num)
+    linarith
+  have hkR : (0 : ℝ) < (k : ℝ) ^ 4 := by
+    have : (0 : ℝ) < k := by exact_mod_cast hk
+    positivity
+  have hBR : (0 : ℝ) < B := by exact_mod_cast hB
+  have hXR : (0 : ℝ) < X := by
+    have : 0 < X := by omega
+    exact_mod_cast this
+  have hlogX : Real.log X = 4 * (k : ℝ) ^ 4 * Real.log 2 := by
+    subst hX
+    push_cast
+    rw [Real.log_pow]
+    push_cast
+    ring
+  have hlogXpos : 0 < Real.log X := by rw [hlogX]; positivity
+  have hphi0 : (0 : ℝ) < B.totient := by
+    have : 0 < B.totient := Nat.totient_pos.mpr (by omega)
+    exact_mod_cast this
+  have hphiB : ((B.totient : ℕ) : ℝ) ≤ (B : ℝ) := by exact_mod_cast Nat.totient_le B
+  -- drop `φ(B)` to `B`
+  have step1 : (X : ℝ) / (2 * (B : ℝ) * Real.log X) ≤ (N : ℝ) := by
+    refine le_trans ?_ hN
+    gcongr
+  have ht : 1 ≤ (X : ℝ) / (B : ℝ) := (one_le_div hBR).mpr (by exact_mod_cast hBX)
+  have heq : (X : ℝ) / (2 * (B : ℝ) * Real.log X)
+      = ((X : ℝ) / (B : ℝ)) / (8 * (k : ℝ) ^ 4 * Real.log 2) := by
+    rw [hlogX]
+    field_simp
+    ring
+  have hmain : (((X : ℝ) / (B : ℝ)) + 1) / (16 * (k : ℝ) ^ 4)
+      ≤ (X : ℝ) / (2 * (B : ℝ) * Real.log X) := by
+    rw [heq]
+    exact count_real_core ht hl0 hl1 hkR
+  have hle : ((X / B + 1 : ℕ) : ℝ) ≤ ((X : ℝ) / (B : ℝ)) + 1 := by
+    have := Nat.cast_div_le (α := ℝ) (m := X) (n := B)
+    push_cast
+    linarith
+  calc ((X / B + 1 : ℕ) : ℝ) / (16 * (k : ℝ) ^ 4)
+      ≤ (((X : ℝ) / (B : ℝ)) + 1) / (16 * (k : ℝ) ^ 4) := by gcongr
+    _ ≤ (X : ℝ) / (2 * (B : ℝ) * Real.log X) := hmain
+    _ ≤ (N : ℝ) := step1
+
 /-- The target of this file, with its analytic inputs as hypotheses.  See the module
 docstring.  TEMPORARY `sorry`: the statement is fixed first so that partial scaffolding
 cannot be mistaken for success. -/
