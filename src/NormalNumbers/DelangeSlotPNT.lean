@@ -1,5 +1,5 @@
 import NormalNumbers.DelangeSlotIdentity
-import PNTPort.MediumPNT
+import PrimeNumberTheoremAnd.MediumPNT
 
 /-!
 # L4's engine: the quantitative PNT, summed over the hyperbola
@@ -15,7 +15,7 @@ with an absolute `C`.  Plain PNT (`Δ = o(x)`) does not suffice — the `k ≤ �
 Three ingredients:
 
 * `abs_psi_sub_le` — `|ψ(x) − x| ≤ C₀ x / (log x)²` for large `x`.  The saving in
-  `PNTPort.MediumPNT` is `exp(−c (log x)^{1/10})`, and we convert it to a power of `log` with the
+  `MediumPNT` (PNT+) is `exp(−c (log x)^{1/10})`, and we convert it to a power of `log` with the
   **explicit** inequality `y^{20}/20! ≤ e^y` (no limit argument): with `y = c (log x)^{1/10}` this
   reads `(log x)² e^{−y} ≤ 20!/c^{20}`.
 * `telescope_sum` — the discrete tail `∑_{k ≤ K} 1/(k v_k²) ≤ 2/v_K + 1/(K v_K²)` for any
@@ -87,7 +87,7 @@ lemma log_sq_mul_exp_le {c : ℝ} (hc : 0 < c) {x : ℝ} (hx : 1 ≤ x) :
           field_simp
 
 /-- **Step (a).**  The quantitative prime number theorem in the shape the hyperbola sum needs:
-`|ψ(x) − x| ≤ C₀ x / (log x)²` for all large `x`.  Consumes `PNTPort.MediumPNT`. -/
+`|ψ(x) − x| ≤ C₀ x / (log x)²` for all large `x`.  Consumes `MediumPNT` (PNT+). -/
 theorem exists_abs_psi_sub_le :
     ∃ C₀ : ℝ, 0 < C₀ ∧ ∃ x₀ : ℝ, 2 ≤ x₀ ∧ ∀ x : ℝ, x₀ ≤ x →
       |Chebyshev.psi x - x| ≤ C₀ * x / (Real.log x) ^ 2 := by

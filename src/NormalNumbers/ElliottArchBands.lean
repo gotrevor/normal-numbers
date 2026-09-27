@@ -122,7 +122,7 @@ def ArchCorrModerate (K : ℝ) : Prop :=
 /-- **Input (c′-II-a) at the exponent the in-repo zero-free region actually delivers.**
 
 Identical to `ArchCorrModerate` except for the absolute factor `9`.  The factor is inherited from
-`PNTPort.ZetaZeroFree9`'s region `σ ≥ 1 − A/(log|t|)^9`, and it is **free**: see
+`ZetaZeroFree9` (PNT+)'s region `σ ≥ 1 − A/(log|t|)^9`, and it is **free**: see
 `archCorrLargeShift_of_moderate9_and_nearMax`, which absorbs it by moving the height cut from
 `exp((log X)^{1−ν})` to `exp((log X)^{(1−ν)/9})`.  The far band was already Vinogradov, so widening
 it costs nothing.

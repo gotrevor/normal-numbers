@@ -56,13 +56,13 @@ Nothing else is assumed.  `PrimeDensityAP`, `CharacterClusterRigidity`, `Shifted
 `ArchCorrModerate` and `ArchCorrNearMaxHeight` are all discharged inside this call.
 
 **Where the repo stands against that threshold.**  `zetaLogDerivExponent_nine` proves the case
-`θ = 9`, from `PNTPort.ZetaZeroFree9` — *proved, in this repo, no axioms*.  Vinogradov–Korobov is
+`θ = 9`, from `ZetaZeroFree9` (PNT+) — *proved, in this repo, no axioms*.  Vinogradov–Korobov is
 the case `θ = 2/3`.  So the entire remaining debt of this campaign is the single quantitative gap
 
 > `9`  ⟶  `< 1`
 
 in the zero-free-region exponent, a statement a reader can check against the literature at a glance
-and which any future strengthening of `src/PNTPort/ZetaBounds.lean` discharges automatically.  That
+and which any future strengthening of upstream `PrimeNumberTheoremAnd/ZetaBounds.lean` discharges automatically.  That
 is a strictly better place to stand than a bespoke `Prop` about `archCorr`.
 
 **Still true, and still to be said.**  `TwoPointElliottLog` is the **logarithmic** average;

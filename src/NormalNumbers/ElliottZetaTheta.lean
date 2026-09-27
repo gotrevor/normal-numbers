@@ -4,7 +4,7 @@ import NormalNumbers.ElliottSliceCapModerate
 # The moderate band at a GENERAL zero-free-region exponent
 
 Laps 113–117 built the moderate band with the exponent `9` hard-wired, because that is what the
-in-repo `PNTPort.ZetaZeroFree9` delivers.  Reading those proofs back, the exponent enters in
+in-repo `ZetaZeroFree9` (PNT+) delivers.  Reading those proofs back, the exponent enters in
 **exactly one place** — `log(1/T) = θ·log log(|v|+16)` — and every other ingredient
 (`norm_slice_add_logDeriv_le`, `sum_log_rpow_le`, `norm_logWeightedSlice_le_trivial`,
 `integral_le_const_add_log_add_const`) is exponent-blind.
@@ -18,7 +18,7 @@ the in-repo, already-proved `PNTPort.LogDerivZetaBndUnif99` — a bound `‖ζ'/
 `Re s ≥ 1`.  The repo owns the instance `θ = 9`; Vinogradov–Korobov is the instance `θ = 2/3`.
 Once the chain is parametric, the axiom to cite is "`ZetaLogDerivExponent θ` for some `θ < 1`",
 which is checkable against the literature at a glance and which any future improvement to
-`PNTPort.ZetaBounds` discharges automatically.
+`PrimeNumberTheoremAnd.ZetaBounds` discharges automatically.
 
 **EA-1 boundary audit of `ZetaLogDerivExponent θ`.**
 * `|Im s| = 1` (left edge): LHS is a finite constant on the compact box; RHS is
@@ -397,7 +397,7 @@ theorem archCorrNearMaxHeight_of_exponent {θ : ℝ} (hθ0 : 0 ≤ θ) (h : Zeta
 
 /-! ### The debt, made machine-visible -/
 
-/-- **What the repo owns**: every exponent `θ ≥ 9`, from `PNTPort.ZetaZeroFree9`. -/
+/-- **What the repo owns**: every exponent `θ ≥ 9`, from `ZetaZeroFree9` (PNT+). -/
 theorem zetaLogDerivExponent_of_nine_le {θ : ℝ} (hθ : 9 ≤ θ) : ZetaLogDerivExponent θ :=
   zetaLogDerivExponent_mono hθ zetaLogDerivExponent_nine
 
@@ -413,7 +413,7 @@ and `zetaLogDerivExponent_mono` says the hypothesis only weakens as `θ` grows, 
 between is free — the gap must be closed by a genuinely better zero-free region.
 
 **Where the `9` comes from, and why `< 1` is the honest threshold** (read off
-`src/PNTPort/ZetaBounds.lean` this lap, so no future lap need re-derive it):
+upstream `PrimeNumberTheoremAnd/ZetaBounds.lean` this lap, so no future lap need re-derive it):
 `LogDerivZetaBnd = ZetaInvBnd × ZetaDerivUpperBnd`, i.e. `9 = 7 + 2`, where `7` is the cost of
 `1/‖ζ‖` and `2` that of `‖ζ'‖`.  Meanwhile `ZetaUpperBnd` already gives `‖ζ(σ+it)‖ ≤ C·log|t|` —
 **exponent exactly `1`**.  So the classical material sits precisely *at* the threshold on the `ζ`

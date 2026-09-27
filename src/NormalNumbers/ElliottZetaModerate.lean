@@ -1,5 +1,5 @@
 import NormalNumbers.ElliottZetaPole
-import PNTPort.ZetaBounds
+import PrimeNumberTheoremAnd.ZetaBounds
 
 /-!
 # The moderate-band `ζ'/ζ` bound, sourced from the in-repo de la Vallée Poussin material
@@ -9,7 +9,7 @@ The **moderate** band `|v| > 1` is different: there `s = 1 + δ + w + iv` is far
 the only thing that keeps `‖ζ'/ζ(s)‖` small is a zero-free region.
 
 **EP-1 provenance.**  Searched before stating anything:
-(i) `src/PNTPort/ZetaBounds.lean` — **HIT**: `LogDerivZetaBndUnif99 : LogDerivZetaBndUnifGenProp 9 9`
+(i) upstream `PrimeNumberTheoremAnd/ZetaBounds.lean` — **HIT**: `LogDerivZetaBndUnif99 : LogDerivZetaBndUnifGenProp 9 9`
     gives `‖ζ'/ζ(σ+it)‖ ≤ C·(log|t|)^9` for every `σ ≥ 1 − A/(log|t|)^9` and every `|t| > 3`,
     sorry-free and `[propext, Classical.choice, Quot.sound]`-clean.
 (ii) `src/NormalNumbers/G4*.lean`, `Erdos67b.PrimeEstimates` — nothing of this strength.

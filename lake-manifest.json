@@ -208,10 +208,10 @@
    "type": "git",
    "subDir": "src/latest",
    "scope": "",
-   "rev": "8b7630fef471b6ac8685f1830f8b0288e5b9f4f1",
+   "rev": "01c973952af90515886cfd8fbd67bd21a3534431",
    "name": "\u00ablean-proofs-latest\u00bb",
    "manifestFile": "lake-manifest.json",
-   "inputRev": "8b7630fef471b6ac8685f1830f8b0288e5b9f4f1",
+   "inputRev": "01c973952af90515886cfd8fbd67bd21a3534431",
    "inherited": false,
    "configFile": "lakefile.lean"
   },

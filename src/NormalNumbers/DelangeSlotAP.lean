@@ -1,5 +1,5 @@
 import NormalNumbers.DelangeSlotChar
-import PNTPort.Wiener
+import PrimeNumberTheoremAnd.Wiener
 
 /-!
 # Rung 2, layer 2: `ψ(x,χ) = o(x)` from the prime number theorem in arithmetic progressions
@@ -11,7 +11,7 @@ prime number theorem in arithmetic progressions,
   `ψ(x; q, a) = ∑_{d ≤ x, d ≡ a (q)} Λ d  ~  x / φ(q)`   for `gcd(a,q) = 1`,
 
 which is `psiAP_tendsto` below, now proved: a one-step corollary of PNT+'s `WeakPNT_AP`
-(`PrimeNumberTheoremAnd/Wiener.lean`, vendored as `src/PNTPort/Wiener.lean`), which is the same
+(`PrimeNumberTheoremAnd/Wiener.lean`, required from upstream PNT+), which is the same
 statement with `N+1` for `N`.  Not new: see `docs/lit-search-2026-09-24-pnt-in-aps.md`.
 
 ## Why this is the right leaf (route note, 2026-09-24)
@@ -25,7 +25,7 @@ already carries exactly the analytic input Wiener–Ikehara needs for it:
 `eqOn_LFunctionResidueClassAux`.  So `psiAP_tendsto` is a *port*, not a new theorem: feed
 mathlib's `LFunctionResidueClassAux` to a vendored `WienerIkeharaTheorem''`.  The support files
 that `Wiener.lean` needs (`Fourier`, `Sobolev`, `SmoothExistence`) are already vendored in
-`src/PNTPort/`.
+upstream PNT+.
 
 Note the direction of the reduction: we go *through* residue classes rather than characters,
 precisely to keep the Wiener–Ikehara input nonnegative.  Summing back over the class with the
@@ -68,7 +68,7 @@ pole is mathlib's `vonMangoldt.LFunctionResidueClassAux`, already proved continu
 (`eqOn_LFunctionResidueClassAux`).  The missing piece is a Lean Wiener–Ikehara for
 nonnegative coefficients; `PrimeNumberTheoremAnd/Wiener.lean`'s `WienerIkeharaTheorem''` is
 the intended source, and its support files (`Fourier`, `Sobolev`, `SmoothExistence`) are
-already vendored in `src/PNTPort/`.  See the file header. -/
+required from upstream PNT+ (no vendored copy).  See the file header. -/
 theorem psiAP_tendsto {q a : ℕ} (hq : 0 < q) (ha : Nat.Coprime a q) (haq : a < q) :
     Tendsto (fun X : ℕ => psiAP q a X / X) atTop (𝓝 (1 / (Nat.totient q : ℝ))) := by
   classical

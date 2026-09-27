@@ -22,8 +22,8 @@ compactness plus `riemannZeta_ne_zero_of_one_le_re` supplies the constant elsewh
 
 EP-1 provenance note: the analytic input here is the *pole-local* bound, proved in
 `ElliottZetaPole` from mathlib alone.  The de la Vallée Poussin material needed for the **moderate**
-band is NOT re-derived — it is `PNTPort.ZetaBounds.LogDerivZetaBndUnif99` (in-repo, sorry-free);
-import it as `PNTPort.ZetaBounds`, never as `PrimeNumberTheoremAnd.ZetaBounds`.
+band is NOT re-derived — it is `LogDerivZetaBndUnif99` (in-repo, sorry-free);
+import it as `PrimeNumberTheoremAnd.ZetaBounds` (upstream PNT+, required - not vendored).
 -/
 
 open Finset ArithmeticFunction
@@ -273,7 +273,7 @@ three named classical `Prop`s:
 | input | depth |
 |---|---|
 | `ElliottCharRigidity.PrimeDensityAP A` | Mertens in progressions — reachable from the in-repo `G4MertensAP.mertensRate_residueClass` |
-| `ElliottArchBands.ArchCorrModerate K₁` | de la Vallée Poussin — reachable from the in-repo `PNTPort.ZetaBounds.LogDerivZetaBndUnif99` |
+| `ElliottArchBands.ArchCorrModerate K₁` | de la Vallée Poussin — reachable from the in-repo `LogDerivZetaBndUnif99` |
 | `ElliottArchBands.ArchCorrNearMaxHeight A ν η₂ K₂` | **Vinogradov–Korobov**, near-maximal height only | -/
 theorem twoPointElliottLog_of_two_bands {b p q : ℕ} {t : ℝ} {K₁ K₂ ν η₂ : ℝ}
     (hp : 0 < p) (hq : 0 < q) (hpq : p ≠ q)

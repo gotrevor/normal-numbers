@@ -168,7 +168,7 @@ inputs:
    near-maximal-height band only.  This is the designated cited 🟠 axiom.
 
 Both `ShiftedMertensSmall` (lap 112) and `ArchCorrModerate9` (lap 117) are discharged inside this
-call, from `PNTPort.ZetaBounds` and mathlib alone. -/
+call, from `PrimeNumberTheoremAnd.ZetaBounds` and mathlib alone. -/
 theorem twoPointElliottLog_of_density_and_nearMax {b p q : ℕ} {t : ℝ} {K₂ ν η₂ : ℝ}
     (hp : 0 < p) (hq : 0 < q) (hpq : p ≠ q)
     (hu : (NormalNumbers.CastingOut.phase (t / b)).re < 1)

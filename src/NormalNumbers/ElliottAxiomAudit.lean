@@ -275,7 +275,7 @@ edits; see the fidelity note in `STATUS.md`.
 #print axioms NormalNumbers.ElliottSliceCap.twoPointElliottLog_of_two_bands
 
 -- Lap 113/114: the moderate-band `ζ'/ζ` bound, from the in-repo de la Vallée Poussin material.
--- (Lap 114 removed the `CS.deriv` / `B1` namespace collisions that had made `PNTPort.ZetaBounds`
+-- (Lap 114 removed the `CS.deriv` / `B1` namespace collisions that had made `PrimeNumberTheoremAnd.ZetaBounds`
 -- unimportable here, so these live in the single audit surface again.)
 #print axioms NormalNumbers.ElliottZetaModerate.exists_midband_bound
 #print axioms NormalNumbers.ElliottZetaModerate.exists_highband_bound

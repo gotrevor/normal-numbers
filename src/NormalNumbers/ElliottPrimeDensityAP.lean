@@ -9,7 +9,7 @@ import NormalNumbers.G4MertensAP
 **every** `X`.
 
 **EP-1 provenance** (searched before anything was stated):
-(i) `src/PNTPort/` — nothing about progressions;
+(i) upstream PNT+ — nothing about progressions;
 (ii) `src/NormalNumbers/G4MertensAP.lean` — **HIT**: `mertensRate_residueClass` gives
      `∃ c C, MertensRate (· ≡ a [q]) c C`, i.e. `c·log log N − C ≤ ∑_{p<N, p≡a} 1/p` for `N ≥ 2`,
      assembled from mathlib's `LSeries/PrimesInAP` + Chebyshev + two partial summations;

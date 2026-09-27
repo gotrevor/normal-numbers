@@ -1,6 +1,6 @@
 import NormalNumbers.ElliottArchBands
 import NormalNumbers.ElliottLogIntegral
-import ErdosProblems.Erdos49.PNT.IEANTN.Mertens
+import PrimeNumberTheoremAnd.IEANTN.Mertens
 
 /-!
 # The damping step: from the sharp cutoff to the Dirichlet series (lap 97)
@@ -1665,7 +1665,7 @@ the two reciprocals means each branch is covered by exactly one of them; see
 `ElliottSliceCapModerate.exists_sliceCapModerate9`.
 
 The exponent is `9` rather than `1` because the in-repo zero-free region
-(`PNTPort.ZetaZeroFree9`) is `σ ≥ 1 − A/(log|t|)^9`.  It costs an absolute factor `9` in the
+(`ZetaZeroFree9` (PNT+)) is `σ ≥ 1 − A/(log|t|)^9`.  It costs an absolute factor `9` in the
 `log(1/T)` main term and nothing else. -/
 def sliceT9 (X : ℕ) (v : ℝ) : ℝ :=
   max ((Real.log (|v| + 16)) ^ (9 : ℕ))⁻¹ (Real.log (X : ℝ))⁻¹
@@ -1786,7 +1786,7 @@ theorem sliceBoundModerate9_of_cap {C K : ℝ} (hK : 0 ≤ K) (h : SliceCapModer
 
 /-- **The analytic input, moderate band, at exponent 9.**  The coefficient `9` is exactly
 `log(1/sliceT9) ≤ log ((log(|v|+16))^9) = 9·log log(|v|+16)`; it comes from the exponent in the
-in-repo zero-free region `PNTPort.ZetaZeroFree9`, and nothing else in the chain contributes to it
+in-repo zero-free region `ZetaZeroFree9` (PNT+), and nothing else in the chain contributes to it
 (the harmonic band has coefficient exactly `1`, lap 106). -/
 def DampedSeriesBoundModerate9 (K : ℝ) : Prop :=
   ∃ X₀ : ℕ, 2 ≤ X₀ ∧ ∀ (X Y : ℕ) (v : ℝ), X₀ ≤ X → X ≤ Y → 1 < |v| →

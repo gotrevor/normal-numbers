@@ -21,15 +21,16 @@ name = "Comparator"
 srcDir = ".."
 globs = ["Comparator.+"]
 
-[[lean_lib]]
-name = "PNTPort"
-globs = ["PNTPort.+"]
-
 
 # Alexeev's plby/lean-proofs (src/latest), via a fork bumped to our mathlib v4.33.1
-# (gotrevor/lean-proofs, branch pnt-as-dependency: requires real PNT+, no embedded copy).  Erdős 67b: unit-circle log-Elliott + MRT.
+# (gotrevor/lean-proofs, branch erdos49-pnt-as-dependency: real PNT+, no embedded copies).  Erdős 67b: unit-circle log-Elliott + MRT.
 [[require]]
 name = "lean-proofs-latest"
 git = "https://github.com/gotrevor/lean-proofs.git"
-rev = "8b7630fef471b6ac8685f1830f8b0288e5b9f4f1"
+rev = "01c973952af90515886cfd8fbd67bd21a3534431"
 subDir = "src/latest"
+
+[[require]]
+name = "PrimeNumberTheoremAnd"
+git = "https://github.com/AlexKontorovich/PrimeNumberTheoremAnd.git"
+rev = "55270df807213fc3584523d09e0311d7dc073ff5"
