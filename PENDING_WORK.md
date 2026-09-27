@@ -9802,3 +9802,42 @@ joined by a word of length **exactly** 3 (check the four cases — `some s → s
 some z` with `t, t' ≠ 0`; `some 0 → ∞ → some a → some z`; and the two targeting `∞`), so
 `ν_3(d,d') ≥ min over pairs of γ(I_w) > 0`.  Combine with the ψ error `(79/100)^g` across a gap
 to get geometric convergence for the (non-independent) digit sequence.
+
+### Same lap, sixteenth commit: the class kernel is doubly stochastic
+
+`src/NormalNumbers/VandeheyRenewal.lean` (wired, sorry-free, axiom-clean).  Since the CF digits
+are only ψ-mixing, the class walk is *not* an independent-increment chain and the usual Markov
+machinery is unavailable.  Two structural facts remove the need for it.
+
+* `classStep_injective` / `classStep_bijective` — every digit acts **bijectively** on
+  `ℙ¹(ℤ/D)` (`∞ ↦ a`, `0 ↦ ∞`, `s ↦ a + s⁻¹` injective on `s ≠ 0`; this is `GL₂`
+  invertibility in slope coordinates).  `classSigma`, `classSigma_bijective` lift it to words.
+* `classWords`, `allWords`, `countable_wordSet` — `List ℕ` is a countable *type*, so every word
+  set is countable with no work, and the class events are countable cylinder unions **by
+  definition** (`classEvent := familySetC (classWords …)`).  Consequence worth keeping: the
+  measurability of `cfDigit` is never needed anywhere in this layer, and
+  `gaussMeasure_familySetC_psi_mixing` applies to the class events directly.
+* `exists_unique_source` — **the partition**: a genuine length-`m` word lies in
+  `classWords D m d d'` for exactly one `d`, namely `σ_w⁻¹ d'`.
+* `classEvent_disjoint`, `iUnion_classEvent` — hence the class events over all sources are
+  disjoint and cover the whole length-`m` cylinder family.
+* `sum_classKernel_col` — **double stochasticity**: every column of
+  `ν_m(d,d') = γ(classEvent D m d d')` sums to the total mass of the length-`m` cylinders, so
+  all columns sum to the *same* value.  Therefore **the uniform distribution on `ℙ¹(ℤ/D)` is
+  exactly stationary and never has to be computed**, and the crux is reduced to a pure
+  contraction statement.
+
+### Next attack — the contraction only
+
+1. **Doeblin minorization at `M = 3`**: every pair `(d,d')` is joined by a genuine word of
+   length exactly `3` (cases: `some s → some t → some t' → some z` with `t,t' ≠ 0`;
+   `some 0 → ∞ → some a → some z`; and the two targeting `∞`), so
+   `classKernel D 3 d d' ≥ γ(I_w) > 0` uniformly.  `VandeheyClass.exists_word_reach` gives
+   length `≤ 3`; this needs the *exactly* `3` refinement.
+2. **The contraction step**: `ν_{n+g+3}` in terms of `ν_n` via
+   `gaussMeasure_familySetC_psi_mixing` across a gap `g` (multiplicative error `(79/100)^g`),
+   then the Doeblin coefficient contracts the deviation from uniform by a factor `1 − ε`.
+   Iterating gives `ν_m → 1/|X|` geometrically.
+3. Then `ClassEquidistribution` via `vanDerCorput_bound`, and
+   `tendsto_jointCount_of_classEquidistribution` closes the transfer half.
+4. Then the fiber (merging inside a class), §2 identity (9), §5–§6 trigger counting.
