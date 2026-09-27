@@ -9323,3 +9323,43 @@ Open leaf, with the full proof plan in its docstring: `exists_jointFreq_limit` �
    Theorem 1.1 needs.  Look for it concretely: a long run of a single large digit should
    drive any det-`±D` normal form into a canonical state.
 3. §2 transducer construction + identity (9); §5–§6 trigger counting.
+
+### Same lap, third commit: the joint count is a FINITE SUM of window counts (exact)
+
+Added to `VandeheyAutomaton.lean`, all sorry-free:
+
+* `stateAt_eq_runState_window` — the sharpened core.  If `z` occurs anywhere in the lookback
+  window `q = cfWindow x j L`, then `stateAt δ s₀ x (j+L) = runState δ s₁ q` for **any**
+  reference state `s₁`: running the automaton over the window from an arbitrary state already
+  gives the true state, because the run passes through `z`.  No canonical occurrence needs to
+  be chosen, which is what makes the counting argument clean.
+* `cfWindow_eq_range'`, `occStart_eq_card_window`, `tendsto_windowFreq` — CF-normality
+  restated on windows, via the repo's `OccurrenceCountEquiv.tendsto_occStart_iff` (which
+  absorbs the `O(|w|)` right-edge discrepancy between the two counting conventions).
+* `boundedWords K n` + `mem_boundedWords` — the length-`n` words with digits in `[1,K]`, as a
+  `Finset`.  This truncation is the **elementary stand-in for Airey–Mance tightness**: it is
+  what makes the state-fibre sum finite.
+* `joint_iff_window` — at a position whose lookback window contains `z`, the joint
+  (window, state) condition is equivalent to the plain window condition
+  `q ++ v = cfWindow x j (L + |v|)` together with `runState δ s₁ q = t`.
+* `card_joint_good_eq_sum` — **the exact decomposition**:
+  `#{j < n : window ∈ boundedWords K L, z <:+: window, v at j+L, state = t}
+     = Σ_{q ∈ boundedWords K L, z <:+: q, runState δ s₁ q = t} #{j < n : q ++ v = cfWindow x j (L+|v|)}`.
+  Proved by `Finset.card_eq_sum_card_fiberwise` over `j ↦ cfWindow x j L`.
+
+So the joint frequency is now, *exactly*, a finite sum of quantities `tendsto_windowFreq`
+sends to `γ(I_{q++v})`, plus a residue.
+
+### What remains for `exists_jointFreq_limit`
+
+1. **Residue bound** (the only analytic step left):
+   `jointCount − #good ≤ #{j < n : z not a factor of cfWindow x j L}
+       + #{j < n : cfWindow x j L ∉ boundedWords K L} + L`.
+   First term: `≤ Σ_{q ∈ boundedWords K L, z not a factor} (window count)` + the unbounded
+   part, so it reduces to the second plus `γ(z-free bounded words of length L)`.
+   Second term: `≤ L · #{i < n+L : cfDigit x i > K}`, whose frequency CF-normality sends to
+   `L · (1 − Σ_{k=1}^{K} γ(I_{[k]}))` — Gauss–Kuzmin (`CFDigitLaw`) makes that `O(L/K)`.
+   So: take `K = K(L)` with `L/K → 0`.  Elementary; no tightness theorem needed.
+2. **`γ(z-free length-L words) → 0`**: the mixing step.  `philipp_psi_mixing_holds` gives
+   `γ(I_z occurs in a length-|z| block, repeatedly) ≥ 1 − (1 − γ(I_z) + Cρ^{|z|})^{⌊L/|z|⌋}`.
+3. Then a Cauchy-in-`L` squeeze produces `L = lim_L Σ_{q} γ(I_{q++v})`, visibly `x`-free.

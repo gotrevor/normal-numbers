@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
 import NormalNumbers.Headline
+import NormalNumbers.OccurrenceCountEquiv
 
 /-!
 # The automaton transfer principle — a replacement for Vandehey's §3
@@ -143,6 +144,144 @@ theorem stateAt_eq_of_window_eq {δ : S → ℕ → S} {z : List ℕ}
   rw [stateAt_eq_of_window_sync hz s₀ s₀ x m L hw,
     stateAt_eq_of_window_sync hz s₀' s₀ y m' L (hxy ▸ hw)]
 
+/-- **The state is `runState` of the lookback window itself.**  No canonical choice of
+occurrence is needed: if `z` occurs anywhere in the window, running the automaton over the
+window *from any state at all* already gives the true state, because the run passes through
+`z` and forgets where it started.  This is the exact form the counting argument wants — the
+state is a function of the window, computed by the window. -/
+theorem stateAt_eq_runState_window {δ : S → ℕ → S} {z : List ℕ}
+    (hz : Synchronizing δ z) (s₀ s₁ : S) (x : ℝ) (m L : ℕ)
+    (hfac : z <:+: cfWindow x m L) :
+    stateAt δ s₀ x (m + L) = runState δ s₁ (cfWindow x m L) := by
+  obtain ⟨u, r, hur⟩ := hfac
+  rw [stateAt_eq_of_window_sync hz s₀ s₁ x m L hur.symm, ← hur,
+    runState_sync_append hz s₁ s₁ u r]
+
+/-! ## Windows and the repo's occurrence count -/
+
+lemma cfWindow_eq_range' (x : ℝ) (m ℓ : ℕ) :
+    cfWindow x m ℓ = (List.range' m ℓ).map (cfDigit x) :=
+  (map_range'_eq (cfDigit x) ℓ m).symm
+
+/-- `occStart` counts exactly the positions whose window spells `w`. -/
+lemma occStart_eq_card_window (x : ℝ) (w : List ℕ) (n : ℕ) :
+    occStart w (cfDigit x) n
+      = ((Finset.range n).filter (fun i => w = cfWindow x i w.length)).card := by
+  simp [occStart, cfWindow_eq_range']
+
+/-- **CF-normality, restated on windows**: for CF-normal `x` the frequency of positions
+`i < n` whose length-`|w|` window spells `w` tends to `γ(I_w)`.  (The repo's
+`tendsto_occStart_iff` absorbs the `O(|w|)` right-edge discrepancy between the two
+counting conventions.) -/
+theorem tendsto_windowFreq {x : ℝ} (hx : IsCFNormal x) (w : List ℕ) (hne : w ≠ [])
+    (hpos : ∀ a ∈ w, 1 ≤ a) :
+    Tendsto (fun n => (((Finset.range n).filter
+        (fun i => w = cfWindow x i w.length)).card : ℝ) / n) atTop
+      (nhds (gaussMeasure (cfCylinder w)).toReal) := by
+  have h := (tendsto_occStart_iff w hne (cfDigit x) _).2 (hx w hne hpos)
+  simpa [occStart_eq_card_window] using h
+
+/-! ## Bounded-digit words, and the exact count decomposition -/
+
+/-- The words of length `n` with all digits in `[1, K]`.  Finite, unlike the set of all
+length-`n` CF words: this is where the digit truncation (the elementary stand-in for
+Airey–Mance tightness) enters. -/
+def boundedWords (K : ℕ) : ℕ → Finset (List ℕ)
+  | 0 => {[]}
+  | (n + 1) => (Finset.Icc 1 K).biUnion fun a => (boundedWords K n).image fun q => a :: q
+
+lemma mem_boundedWords {K : ℕ} : ∀ (n : ℕ) (q : List ℕ),
+    q ∈ boundedWords K n ↔ q.length = n ∧ ∀ a ∈ q, 1 ≤ a ∧ a ≤ K := by
+  intro n
+  induction n with
+  | zero =>
+    intro q
+    simp only [boundedWords, Finset.mem_singleton]
+    constructor
+    · rintro rfl; simp
+    · rintro ⟨h, -⟩; exact List.length_eq_zero_iff.mp h
+  | succ n ih =>
+    intro q
+    simp only [boundedWords, Finset.mem_biUnion, Finset.mem_image, Finset.mem_Icc]
+    constructor
+    · rintro ⟨a, ⟨ha1, ha2⟩, q', hq', rfl⟩
+      rw [ih] at hq'
+      refine ⟨by simp [hq'.1], fun b hb => ?_⟩
+      rcases List.mem_cons.mp hb with h | h
+      · exact h ▸ ⟨ha1, ha2⟩
+      · exact hq'.2 b h
+    · rintro ⟨hlen, hall⟩
+      cases q with
+      | nil => simp at hlen
+      | cons a q' =>
+        refine ⟨a, ⟨(hall a (by simp)).1, (hall a (by simp)).2⟩, q', ?_, rfl⟩
+        rw [ih]
+        exact ⟨by simpa using hlen, fun b hb => hall b (by simp [hb])⟩
+
+/-- The joint condition at a position whose lookback window contains `z`, rewritten as a
+plain condition on the window of length `L + |v|`. -/
+theorem joint_iff_window {δ : S → ℕ → S} {z : List ℕ} (hz : Synchronizing δ z)
+    (s₀ s₁ : S) (t : S) (x : ℝ) (v : List ℕ) (L j : ℕ)
+    (hfac : z <:+: cfWindow x j L) :
+    (v = cfWindow x (j + L) v.length ∧ stateAt δ s₀ x (j + L) = t)
+      ↔ (runState δ s₁ (cfWindow x j L) = t ∧
+          cfWindow x j L ++ v = cfWindow x j (L + v.length)) := by
+  rw [stateAt_eq_runState_window hz s₀ s₁ x j L hfac, cfWindow_add]
+  constructor
+  · rintro ⟨hv, hs⟩; exact ⟨hs, by rw [← hv]⟩
+  · rintro ⟨hs, hq⟩
+    exact ⟨List.append_cancel_left hq, hs⟩
+
+/-- **The exact count decomposition.**  Among positions `j < n` whose lookback window has
+all digits in `[1,K]` and contains the synchronizing word `z`, the joint (window, state)
+condition is *equivalent* to a plain window condition, and the positions are partitioned by
+their lookback window.  So the joint count is a **finite** sum of ordinary window counts —
+no measure theory, no hot-spot criterion.  (`s₁` is an arbitrary reference state: the sum
+does not depend on it, by `stateAt_eq_runState_window`.) -/
+theorem card_joint_good_eq_sum {δ : S → ℕ → S} [DecidableEq S] {z : List ℕ}
+    (hz : Synchronizing δ z) (s₀ s₁ : S) (t : S) (x : ℝ) (v : List ℕ) (K L n : ℕ) :
+    ((Finset.range n).filter (fun j =>
+        cfWindow x j L ∈ boundedWords K L ∧ z <:+: cfWindow x j L ∧
+        v = cfWindow x (j + L) v.length ∧ stateAt δ s₀ x (j + L) = t)).card
+      = ∑ q ∈ (boundedWords K L).filter (fun q => z <:+: q ∧ runState δ s₁ q = t),
+          ((Finset.range n).filter (fun j => q ++ v = cfWindow x j (L + v.length))).card := by
+  classical
+  set T : Finset (List ℕ) :=
+    (boundedWords K L).filter (fun q => z <:+: q ∧ runState δ s₁ q = t) with hT
+  set S₀ : Finset ℕ := (Finset.range n).filter (fun j =>
+      cfWindow x j L ∈ boundedWords K L ∧ z <:+: cfWindow x j L ∧
+      v = cfWindow x (j + L) v.length ∧ stateAt δ s₀ x (j + L) = t) with hS₀
+  have hmaps : ∀ j ∈ S₀, cfWindow x j L ∈ T := by
+    intro j hj
+    simp only [hS₀, Finset.mem_filter] at hj
+    obtain ⟨-, hb, hfac, hv, hs⟩ := hj
+    refine Finset.mem_filter.mpr ⟨hb, hfac, ?_⟩
+    rw [← stateAt_eq_runState_window hz s₀ s₁ x j L hfac]
+    exact hs
+  rw [Finset.card_eq_sum_card_fiberwise hmaps]
+  refine Finset.sum_congr rfl fun q hq => ?_
+  congr 1
+  simp only [hT, Finset.mem_filter] at hq
+  obtain ⟨hqb, hqfac, hqs⟩ := hq
+  have hqlen : q.length = L := ((mem_boundedWords L q).mp hqb).1
+  ext j
+  simp only [hS₀, Finset.mem_filter, Finset.mem_range]
+  constructor
+  · rintro ⟨⟨hjn, -, hfac, hv, hs⟩, hqeq⟩
+    refine ⟨hjn, ?_⟩
+    rw [← hqeq]
+    exact ((joint_iff_window hz s₀ s₁ t x v L j hfac).mp ⟨hv, hs⟩).2
+  · rintro ⟨hjn, hqv⟩
+    have hwin : cfWindow x j L = q := by
+      have h := hqv
+      rw [cfWindow_add] at h
+      have := (List.append_inj h (by rw [hqlen, cfWindow_length])).1
+      exact this.symm
+    have hfac : z <:+: cfWindow x j L := hwin ▸ hqfac
+    have hjw := (joint_iff_window hz s₀ s₁ t x v L j hfac).mpr
+      ⟨by rw [hwin]; exact hqs, by rw [hwin]; exact hqv⟩
+    exact ⟨⟨hjn, hwin ▸ hqb, hfac, hjw.1, hjw.2⟩, hwin⟩
+
 /-! ## The joint count, and the transfer statement -/
 
 /-- The joint count: indices `i < n` at which the digit window of length `v.length`
@@ -150,7 +289,7 @@ starting at `i` spells `v` **and** the automaton is in state `t` after `i` digit
 noncomputable def jointCount (δ : S → ℕ → S) [DecidableEq S] (s₀ : S) (t : S)
     (v : List ℕ) (x : ℝ) (n : ℕ) : ℕ :=
   ((Finset.range n).filter
-    (fun i => cfWindow x i v.length = v ∧ stateAt δ s₀ x i = t)).card
+    (fun i => v = cfWindow x i v.length ∧ stateAt δ s₀ x i = t)).card
 
 /-- **The automaton transfer principle** (the replacement for Vandehey's Theorem 3.1).
 For a finite-state automaton with a synchronizing genuine word, the joint
