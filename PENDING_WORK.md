@@ -273,6 +273,481 @@ layers + a sparse-perturbation limit transfer.  Four items, hardest first:
 
 **Confidence C4 is TRUE: high.**  Every ingredient is now either in the kernel or reduced to
 elementary bookkeeping; no step needs a limit theorem beyond the 3ε transfer.
+## Reflection — 2026-09-25 (lap 61, DEEP REFLECTION lap): **the two 🔴s are not as 🔴 as the ledger says — Tao–Teräväinen 2025 is ON DISK and it changes the colour**
+
+Ground truth re-derived this lap from the compiler, not the handoffs: full `lake build` green at
+**9298 jobs**, HEAD `757b830`, tree clean; `#print axioms` re-run on sixteen declarations (see the
+STATUS ledger); a new numerical probe (`probes/c3_euler_product.py`,
+`probes/data-2026-09-25-c3-euler-product.txt`); and — the finding that reorganises everything — a
+read of `papers/tao-teravainen-2025-quantitative-correlations.txt`.
+
+### 0. The headline: a stale literature claim, and what replaces it
+
+`papers/literature-review.md` says of Tao–Teräväinen arXiv 2512.01739: *"whose PDF is still not on
+disk and which is still not a prerequisite."*  **The first half is false — the full text has been
+on disk as `papers/tao-teravainen-2025-quantitative-correlations.txt` (265 KB) and nothing read
+it.**  The second half needs revising too.  What it contains:
+
+* **Theorem 1.3**: `∑_{n≥1} ω(n)/2ⁿ = ∑_p 1/(2^p−1)` is **irrational**, unconditionally (Erdős #69).
+  The paper adds: *"The method can also be modified to establish the irrationality of
+  `∑ ω(n)/bⁿ` for any integer base `b ≥ 2`; in fact the case `b > 2` is somewhat easier."*  That is
+  this repo's `G4_b`.
+* **Theorem 3.1** (the reusable tool, built on Pilatte's 2025 decoupling inequality): for
+  1-bounded multiplicative `g₁, g₂`, `1 ≤ L ≤ log X`, with `g₁` either real+equidistributed or
+  complex+**non-pretentious** (`exp(M(g₁; X², log^{1/125}X)) ≫ L`), there is `E ⊂ [√X, X]` of
+  **logarithmic density `≪ L^{−c}`** such that for all `W ∈ [L^c]` and `b, h₁ ≠ h₂ = O(L^c)`,
+
+      (W/N) ∑_{N<n≤2N} (g₁(n+h₁) − δ_N) g₂(n+h₂) 1_{n ≡ b (mod W)}  ≪  L^{−c}
+
+  for every `N ∈ [√X, X] \ E`.
+* **Remark 3.2, third bullet**, spelled out in the paper: for `a₁,a₂,b₁,b₂ ∈ [1,(log N)^c]` with
+  `a₁b₂ ≠ a₂b₁`,  `(1/N) ∑_{n≤N} λ(a₁n+b₁)λ(a₂n+b₂) ≪ (log N)^{−c}` for all `N` outside such an `E`
+  — *"follows from Theorem 3.1(ii)"*, i.e. for any non-pretentious 1-bounded multiplicative
+  function, not just `λ`.
+* **§5.2** ("Taking an alternating sum to cancel terms", *"inspired by the theory of the Gowers
+  uniformity norms"*): the technique for turning a **growing-depth** linear combination
+  `∑_h ω(n+h)/2^h` into something controlled by **pairwise** correlations, by choosing
+  `p_ε = p₀ + ε₁v₁ + ⋯ + ε_Kv_K` all prime and alternating over `ε ∈ {0,1}^K` so that the first `K`
+  terms cancel identically.
+
+**Why this matters here.**  Both open leaves of this worktree have exactly the shape of
+Theorem 3.1:
+
+| leaf | repo's shape | Theorem 3.1 instance |
+|---|---|---|
+| C1 `PairDecorr` | `(1/N)∑_n z^{ω(pn+1)} \bar z^{ω(qn+1)} → 0` | Remark 3.2 bullet 3 verbatim: `a₁=p, b₁=1, a₂=q, b₂=1`, `a₁b₂ = p ≠ q = a₂b₁`, and `p,q ≤ w ≤ (log N)^c` is exactly the repo's growing cutoff |
+| C3 depth-2 rung | `(1/N)∑_n e(jn/Q) z₁^{ω_{>P}(n+1)} z₂^{ω_{>P}(n+2)} → 0` | (3.4) verbatim: `g_i = z_i^{ω_{>P}}`, `h₁=1, h₂=2`, `W = Q`, and `e(jn/Q)` is a `ℤ/Q`-Fourier combination of the `1_{n≡b(W)}` |
+
+`z^{ω}` and `z^{ω_{>P}}` are 1-bounded multiplicative and non-pretentious for `‖z‖=1, z≠1`
+(`M(z^ω;·) ≈ (1−Re z)·log₂X`, so `exp(M) ≈ (log X)^{1−Re z} ≫ L` for `L` a small power of log) —
+so Theorem 3.1(ii) applies with a power-of-log saving.
+
+**The ONE remaining gap is the exceptional set of scales `E`, not the correlation.**  The repo's
+standing claim — *"natural-density two-point Elliott for `ζ^ω` … is a named open problem (Tao 2016
+gives it in logarithmic average only)"* — was correct in 2016 and is **half-stale in 2026**: at
+natural density, **outside a log-density-`L^{−c}` set of scales, with a power-of-log saving, it is
+a theorem** (Pilatte 2025 → TT2025 Thm 3.1).  Only "for every `N`" remains open.
+
+**Ledger consequence (applied in STATUS).**  `PairDecorr` / `MultiElliott` / `TwoPointWeightedAvg`
+and `WeylTailHypothesis` should no longer be booked as flat 🔴.  The honest entry is
+**"🔴 at every scale; 🟠 outside a log-density-small set of scales — PROVED, Pilatte 2025 +
+TT2025 Thm 3.1, text on disk"**.  That is a colour change on the repo's two biggest obligations
+and it is the single most valuable thing this lap produced.
+
+### 1. Destination — unchanged; the C1 bet is CLOSED by its own criterion
+
+`KICKOFF-2026-09-24-twopoint-bet.md`: *"a refutation or an equivalence with a named open problem is
+a success."*  Met at WRAP 4 (`pairDecorr_iff_unweighted`, `multiElliottWeighted_iff_growing`, both
+re-verified trust-triple this lap).  Lap 60 cleared the last illegitimate 🟡 (`DelangeMean`) by two
+independent kernel proofs.  `ConjC1` rests on one input.  Nothing cheap is left inside C1.
+
+### 2. Route — what fired, and the verdict
+
+The previous CURRENT DIRECTIVE mandated the `DelangeMean` discharge.  **That objective is
+COMPLETE**, so the directive is SPENT and a re-decision is forced.
+
+The lap-60 handoff nominated C3 and priced it at *"15% — because item 1 supplies its first peel
+outright"*, flagging but not checking its own caveat (*"the peel must grow"*).  This lap checked it
+and then checked the literature.  Both halves:
+
+* **The caveat fires.**  `tailLarge P b n = ∑_{i≥1} ω_{>P}(n+i)b^{−i}`, so
+  `e(h·tailLarge) = ∏_{i≥1} z_i^{ω_{>P}(n+i)}`, `z_i = e(h/b^i)`.  Depth 1 **is already a theorem
+  here** — `DelangeSlot.twisted_omegaLarge_mean_tendsto_zero` is literally
+  `(1/N)∑_{m≤N} e(jm/Q) z^{ω_{>P}(m)} → 0` — and it is unconsumed outside its own namespace.  But
+  the depth-`K` truncation error is `≍ b^{−K}·(1/N)∑_n tailLarge(n+K) ≍ b^{−K} log log N`, which
+  forces `K → ∞` (at the very slow rate `K ≳ log_b log log N`).  So no fixed depth closes it.
+* **But depth 2 is NOT open.**  It is Theorem 3.1(3.4) with `h₁=1, h₂=2, W=Q` — a 2026 theorem,
+  outside `E`.  The lap-60 estimate of 15% was optimistic for the wrong reason and the correct
+  number is probably *higher*, not lower, once the route is re-plumbed onto what is actually known.
+
+**ROUTE VERDICT: `CONTINUE` on C3 as the target; `ESCALATE` the framing from "grind the crux" to
+"re-plumb onto the almost-all-scales theorem, then climb the depth ladder".**  Two corrections to
+the lap-60 handoff, both load-bearing:
+
+* its **item 3** ("Alternative C3 route, possibly cheaper: `tailLargeDecouple_holds`") is
+  **withdrawn**.  `tailLargeDecoupleC_of_weyl` (trust-triple, in-tree) already derives leaf B′ from
+  the Weyl hypothesis and the converse is Fourier inversion on `ℤ/Q` plus Weyl's criterion.  Leaf B
+  IS the crux.
+* its **"do NOT retry"** list should gain the `L¹` prime-size truncation family (already refuted
+  in-tree) and lose nothing.
+
+### 3. The exceptional set: which consumer tolerates it (the decisive asymmetry)
+
+This is the question the next laps must settle, and the two conjectures answer it **differently**:
+
+* **`ConjC3` = `IsRich`** (`CastingOut.lean:405`) is
+  `∀ w, ∃ c > 0, ∀ᶠ N, c·N ≤ #{n<N : OccursAt b x w n}` — a **lower** bound on a **monotone**
+  count.  Monotone counts absorb bad scales: if `M/2 ≤ N ≤ M` is good then
+  `C(M) ≥ C(N) ≥ cN ≥ cM/2`.  **So `IsRich` needs only one good scale per dyadic block.**
+* **`ConjC1` = `CastLaw`** is a two-sided density law (a limit), with no monotonicity to exploit.
+
+Honest accounting of what the absorption buys, since `E` has log measure `≪ L^{−c} log X` over
+`[√X, X]` and so can contain a run of up to `≍ L^{−c} log X` consecutive dyadic blocks:
+one good scale per dyadic block is **not** guaranteed by Theorem 3.1 as stated.  Falling back to
+the last good scale costs a factor `X^{o(1)}`, which yields not `IsRich` but
+
+      IsRichSubpoly :  every word occurs at ≥ N^{1−o(1)} positions below N,
+
+a rung **strictly between** the proved `isDisjunctive_base` (infinitely often) and `ConjC3`
+(positive lower density).  **That rung looks reachable and nobody has stated it.**  Whether the
+full `IsRich` survives depends on sharpening `E` (Pilatte's set may be much better than
+`L^{−c}`-log-density in practice) — a source question for a later lap, not a blocker for stating
+and proving the subpolynomial rung.
+
+### 4. The probe: the crux is Selberg–Delange, and its rate is now in closed form
+
+`probes/c3_euler_product.py` (known-answer checked against the existing
+`probes/swingc3_weyl_lambert_twist.py` fixtures; replaces its depth-64 inner loop by the stable
+downward recurrence `t_n = (d_{n+1}+t_{n+1})/b`, buying a 10× larger `N`).  Exact local
+decomposition, verified: with `r_p(n) = p − (n mod p) ∈ [1,p]`,
+
+    tailLarge P b n  =  ∑_{p>P}  b^{−r_p(n)} / (1 − b^{−p}),
+
+so `F(n) = e(h·tailLarge P b n) = ∏_{p>P} g_p(n mod p)` — a product of **independent local
+factors**, one per prime, each a function of `n mod p` alone.  The independent-residues Euler
+product then predicts
+
+    (1/N)∑_{n<N} F(n)  ≍  C·(log N)^{−A},   A = ∑_{i≥1}(1 − cos(2π h b^{−i})).
+
+Measured to `N = 4·10⁶`, seven parameter sets.  The Euler product's own empirical exponent matches
+`A` to four digits (`1.7635` vs `1.7643`; `1.0810` vs `1.0813`), and the ratio `|true mean| /
+|Euler|` is **flat**: `7.24→7.80→7.82→7.71`, `3.28→3.61→3.79→3.85`, `2.25→2.41→2.51→2.55`,
+`7.26→8.16→8.61→8.75`.  A matching exponent with a flat constant is the Selberg–Delange signature.
+Consequences: the crux is **true**; the target is quantitative, not merely `→ 0`; and the class
+twist buys **exactly one further power of `log N`** (measured exponent gap ≈ 1, mechanism: the
+twist sees `n mod Q` only through the primality of `n+i`, a density-`1/log N` event).  Also
+refuted: "twisted = product of the two means", which would predict `O(Q/N)`.  It does not.
+
+Note how well this agrees with the literature read: `(log N)^{−A}` with a power-of-log saving is
+*exactly* the shape of Theorem 3.1's `L^{−c}`.
+
+### 5. What a sharp outsider would say we are missing
+
+**(a) The tree, and now the `papers/` shelf, out-inventory the laps.**  Three instances in two
+laps: lap 60 found `DelangeMean` had been reachable in-tree for weeks; this lap found the C3
+depth-1 rung already proved and unconsumed, and a 265 KB source on disk answering the campaign's
+central literature question, unread.  **Standing rule, now in the directive: before opening an
+attack, grep `src/` for the statement AND `papers/` for the theorem.**
+
+**(b) C2's leaf-1 decomposition does not reduce anything.**  `SwingC2.PrimeDensityAP` asks for
+`∃ Y, N < Y ∧ log₂Y ≤ B ∧ Y / M ≤ B²·#{p ∈ (N,Y] : p ≡ r (M)}` and `Y / M` is **ℕ-division**.
+Whenever `M > N+1`, `Y = N+1` satisfies every clause with the prime set **empty**, while its
+consumer `TauMomentPrimesShiftStruct` needs `0 < P.card`.  So that leaf is not a real reduction.
+(At large `B` the statement is also *provable* here — `M` vs `Y = 2^B` is the Siegel–Walfisz range
+and `PNTPort` is in-tree — so it is not 🔴 either.)  Flagged, not fixed: C2's headline runs through
+`shiftedDivisorIncidence_holds`, not this leaf.
+
+**(c) `IsRichSubpoly` (§3) is a genuinely new, reachable statement** that the repo has never named.
+
+### 6. Faithfulness
+
+`twoPointWeightedAvg_all` re-read against the kickoff prose: unchanged, ratified, `sorryAx`
+disclosed — correct.  `ConjC1`/`ConjC2`/`ConjC3` are *conjectures* in the source, so a 🔴 under
+each is legitimate, not a straying bug.  `conjC3_of_weylHypothesis` and `isRich_of_weylHypothesis`
+are trust-triple, so `WeylTailHypothesis` is genuinely C3's whole content.  `IsRich`'s definition
+re-read at `CastingOut.lean:405` and it is indeed a monotone lower-density statement — the
+asymmetry in §3 is real, not a paraphrase.  One transcription flag raised at 5(b).
+
+### 7. KEEP / STOP / next target
+
+**KEEP.**  "Measure the depth by a theorem in `src/`" — it is what made C1 a success.  Committing
+every green build.  Re-deriving ground truth from `#print axioms`, never from prose.
+
+**STOP.**  (i) Booking C1's and C3's leaves as flat 🔴 — they are 🟠 outside a small set of scales.
+(ii) Treating `tailLargeDecouple_holds` as an alternative route.  (iii) Opening any attack before
+grepping `src/` *and* `papers/`.  (iv) Further work inside the C1 swing.
+
+**THE SINGLE HIGHEST-VALUE NEXT TARGET — the C3 depth ladder, new files `src/NormalNumbers/TwoPointC3*.lean`:**
+
+0. **Rung 0 — the honest restatement.**  Name `WeylTailAlmostAll` (the `L^{−c}`-quantitative,
+   outside-`E` form that TT2025 Thm 3.1 actually supplies) and prove the **absorption lemma**:
+   a monotone count plus one good scale per dyadic block gives positive lower density; with a run
+   of `R` bad blocks it gives `N/2^R`.  Then state `IsRichSubpoly` and derive it.  This is the
+   re-plumb, and it is what converts a 🔴 into a 🟠.
+1. **Rung 1 — cash the unexploited asset.**  `weylTail_depthOne`:
+   `(1/N)∑_{n<N} e(jn/Q)·z^{ω_{>P}(n+1)} → 0` for `z = e(h/b) ≠ 1`, by re-indexing
+   `DelangeSlot.twisted_omegaLarge_mean_tendsto_zero`.  Unconditional, immediate.
+2. **Rung 2 — machine-check the wall.**  `(1/N)∑_{n<N} tailLarge P b n → ∞`: the kernel fact that
+   refutes **every** fixed-depth truncation.
+3. **Rung 3 — the pin.**  `WeylTailHypothesis b ⟺ ShiftElliott` (growing depth
+   `K ≈ log_b log log N`), C3's analogue of `multiElliottWeighted_iff_growing` — and then read
+   TT2025 §5.2's alternating-sum/Gowers trick, which is the literature's way to reduce exactly
+   such a growing-depth combination to **pairwise** correlations.
+
+Why this line and nothing else: it advances the hardest open obligation now reachable; it converts
+already-proved but unconsumed machinery (in-tree AND on the `papers/` shelf) into theorems; it
+machine-checks the wall instead of asserting it; and it ends in the repo's proven success shape.
+Forbidden drift is in `DIRECTION.md`'s CURRENT DIRECTIVE.
+
+## 2026-09-25 (lap 53, review lap) — the 🟡 `DelangeMean` discharge, decomposed into three bricks
+
+**Direction REVISED** (see `DIRECTION.md` → CURRENT DIRECTIVE, which OUTRANKS every handoff).  The
+kickoff's success criterion (C1 pinned to a named open problem by a theorem in `src/`) was met at
+SESSION WRAP 4.  `ConjC1` now rests on exactly two inputs; one is a legitimate 🔴 (the paper states
+C1 conditionally, and all the candidate leaves are proved *equivalent*), the other is Delange's 1969
+**theorem** cited as a hypothesis.  That 🟡 is the whole remaining debt, and the objective.
+
+**State of the discharge.**  `delangeMean_of_kernelMean` (lap 28) reduces `DelangeMean t` on
+`‖phase t − 1‖ < 1` to the single residue `DelangeKernelMean z`, i.e. `S(N) := Σ_{n≤N} h_z(n)/n → 0`.
+Lap 52 proved the **scale equation**
+
+    delange_scale_equation :  ‖z−1‖ ≤ 1  →  ‖S(N)·log N − z·Abel(N)‖ ≤ 19·A(N)
+
+where `Abel(N) = Σ_{1≤m<N} δ_m·S(m)`, `δ_m = log(m+1) − log m`, `A(N) = delangeA z N = Σ_{n≤N}‖h(n)‖/n`.
+Also exact and already proved: `Abel(N+1) − Abel(N) = δ_N·S(N)` (unfold `delangeAbel`,
+`Finset.sum_Ico_succ_top`).  Write `L_N = log N`, `s_N = δ_N/L_N`.
+
+### Brick 1 — the shared telescoping tool (elementary, no primes)
+```
+sum_logStep_div_log_le :  3 ≤ N₀ → N₀ ≤ N →
+    ∑_{m ∈ Ico N₀ N} (log(m+1) − log m)/log m  ≤  log (log N) − log (log N₀) + 1
+```
+Proof: `log L_{m+1} − log L_m = log(1 + s_m)` because `L_{m+1} − L_m = δ_m` **exactly**; and
+`log(1+s) ≥ s/(1+s) ≥ s − s²` (two applications of `Real.log_le_sub_one_of_pos`), so
+`s_m ≤ (log L_{m+1} − log L_m) + s_m²`.  Then `Σ_{m≥3} s_m² ≤ Σ_{m≥3} 1/(m log m)² ≤ Σ 1/m² ≤ 1`.
+Companion: the Gronwall `a_{m+1} ≤ a_m(1 + c·s_m) ⟹ a_N ≤ a_{N₀}·e^{c}·(L_N/L_{N₀})^c` for `c ≥ 0`
+(via `1+x ≤ exp x` and `L^c = exp(c log L)`).
+
+### Brick 2 — `A(N) ≤ C·(log N)^{u'}` with `u' < 1`, WITHOUT Mertens' second theorem
+**The structural insight.**  `A` is itself a kernel sum: with `u = ‖z−1‖` and the REAL parameter
+`z' = ((1+u : ℝ) : ℂ)`, `delangeKernel z' n = (if Squarefree n then (u:ℂ)^{ω n} else 0)`, so
+`‖delangeKernel z n‖ = ‖delangeKernel z' n‖ = delangeKernel z' n` (real, ≥ 0) and hence
+
+    (delangeA z N : ℂ) = delangeS z' N ,   delangeA z' N = delangeA z N ,   ‖z' − 1‖ = u ≤ 1 .
+
+So `delange_scale_equation` applies at `z'` and, everything being real, reads
+
+    | A(N)·L_N − (1+u)·Ā(N) | ≤ 19·A(N),      Ā(N) := Σ_{1≤m<N} δ_m·A(m)  (real, ≥ 0).
+
+Hence `Ā(N+1) = Ā(N) + δ_N A(N) ≤ Ā(N)(1 + (1+u)·δ_N/(L_N − 19))`, and on `L_N ≥ 19(1+1/ε)` that is
+`≤ Ā(N)(1 + (1+u)(1+ε)s_N)`.  Brick 1's Gronwall gives `Ā(N) ≤ C·L_N^{(1+u)(1+ε)}` and the scale
+equation returns `A(N) ≤ C'·L_N^{u'}`, `u' = u + ε(1+u) + …`, which is `< 1` for suitable `ε`
+because `u < 1`.  **Sharp exponent, no Mertens' 2nd** — the repo's `primeRecipSum_le` has constant
+12, which would have shrunk the discharged regime to `‖z−1‖ < 1/12`.
+
+**STATUS 2026-09-25 lap 55: ALL THREE BRICKS LANDED — the 🟡 `DelangeMean` is DISCHARGED on
+`‖phase t − 1‖ < 1`** (`delangeMean_of_norm_lt_one`, trust triple).  Chain:
+`exists_delangeA_le_rpow` (brick 2) → `exists_norm_delangeAbel_le_rpow` (brick 3) →
+`delangeKernelMean_of_norm_lt_one` → `delangeMean_of_kernelMean` → `DelangeMean t`.
+Sanity-checked against Delange's own asymptotic: the route yields `‖S(N)‖ ≲ (log N)^{ϑ−1}` with
+`ϑ` just above `max(Re z, u')`, i.e. `(log N)^{Re z − 1 + o(1)}` — the right exponent.
+
+**DONE 2026-09-25 lap 56 (the payoff): `TwoPointDelangeWire.lean`.**  `norm_phase_sub_one_eq`
+(`‖e(t)−1‖ = 2|sin πt|`, so the regime is exactly `‖t‖_{ℝ/ℤ} < 1/6`), `phase_div_ne_one`,
+`delangeMean_of_lt_one_sixth`, **`delangeMean_one_div : 7 ≤ b → DelangeMean (1/b)`** (a
+hypothesis-free instance of Delange's theorem in kernel), `delangeMean_div_of_abs_lt`, and the
+narrowing **`delangeMean_all_of_large`** with its two consumers
+`conjC1_of_delangeLarge_multiElliott` / `…_pairDecorr`: the cited Delange input is now assumed ONLY
+on `‖phase (m/b) − 1‖ ≥ 1`.
+
+**DIAGNOSIS of why the range cannot simply be widened (recorded so no lap re-derives it).**  At
+`t = 1/2`, `z = −1` and the kernel is `h_{−1}(n) = (−2)^{ω(n)}μ²(n)`, whose `ℓ¹` mass is
+`Σ_{d≤N} μ²(d)τ(d) ≍ N log N` — so `u = 2` and `A(N) ≍ (log N)²`.  Worse, the statement itself is
+deep there: `Σ_n (−1)^{ω(n)} n^{-s} = ζ(s)·Π_p(1 − 2p^{-s})`, which is `≈ 1/ζ(s)`, i.e. Möbius/PNT
+strength.  Halász's theorem implies `Σ_{n≤x}μ(n) = o(x)`, hence PNT, so ANY route covering
+`‖t‖ ≥ 1/6` is at least PNT-strength.  Two further attempts and why they fail:
+* **Kubilius-model / product route.**  `E_{n<N} e(t·ω_{≤P}(n)) = Π_{p≤P}(1+(z−1)/p) + O(Q/N) → 0`
+  is available for free (`prod_delangeLocal_tendsto_zero` is already a theorem, and
+  `TwoPointGrowingCut.lean` runs exactly this at a growing cut).  But the large-prime remainder has
+  `E_{n≤N} ω_{>P}(n) = Σ_{P<p≤N}1/p ≍ log log log N → ∞` — the SAME obstruction already recorded at
+  leaf (D).  Not a triangle-inequality statement.
+* **Anchor bootstrapping.**  `z^ω = (y^ω) * G` with `G(p) = z−y`, `G(p^k) = (−1)^{k−1}(y−1)^{k−1}(z−y)`,
+  so `Σ|G(n)|/n ≍ (log N)^{|z−y|}`; transferring a proved base point `y` to `z` with `|z−y| < 1`
+  fails on the tail `Σ_{d>√N}|G(d)|/d ≍ (log N)^{|z−y|}`, which does not decay.
+The honest remaining route is (i) a Dirichlet-hyperbola replacement for `delangeMean_of_kernel`'s
+crude `⌊N/n⌋` defect bound, then (ii) Halász over `PNTPort.ZetaBounds`.
+
+**(superseded) NEXT (the payoff): wire the discharge into the `ConjC1` consumers.**  `conjC1_of_delange_*`
+takes `DelangeMean (m/b)` as a hypothesis; for `‖m/b‖_{ℝ/ℤ} < 1/6` that hypothesis is now a
+theorem, so those reductions lose it.  Needed: `‖phase t − 1‖ = 2|sin πt|` (or a sufficient
+numeric criterion) to turn `‖m/b‖ < 1/6` into `‖phase (m/b) − 1‖ < 1`.
+
+**BEYOND (the honest limit of the elementary method).**  `u = ‖z−1‖ ≥ 1` breaks BOTH halves:
+`DelangeKernelTail` is false there (`Σ μ²(n)u^{ω(n)} ≍ N` at `u = 1`) and brick 2 gives
+`u' ≥ 1`, so `A(N)` is no longer `o(log N)`.  That is exactly the classical Wirsing/Levin–Fainleib
+↔ Halász boundary.  Two routes past it, in order of cheapness: (i) replace
+`delangeMean_of_kernel`'s crude `⌊N/n⌋` defect bound by a Dirichlet-hyperbola split at `√N`, which
+may not need `Σ‖h‖ = o(N)` at all; (ii) Halász over `PNTPort.ZetaBounds`.
+
+**(superseded) STATUS lap 54: brick 1 and brick 2 are LANDED** (`TwoPointDelangeScale.lean`,
+sorry-free, trust triple).  Brick 2 is `exists_delangeA_le_rpow`:
+`‖z−1‖ < 1 → ∃ C u' N₀, 0 < C ∧ 0 ≤ u' ∧ u' < 1 ∧ 3 ≤ N₀ ∧ ∀ N ≥ N₀, A(N) ≤ C·(log N)^{u'}`,
+with `u' = ‖z−1‖ + (1−‖z−1‖²)/4` and NO Mertens input.  Only brick 3 remains.
+
+### Brick 3 — the discrete integrating factor, WITHOUT `Complex.cpow`
+Fix `θ` with `max(Re z, u') < θ < 1` (note `Re z = 1 − u²/2 < 1` automatically, and `u < 1` ⟹
+`Re z ∈ (1/2,1)`).  Prove by induction on `N ≥ N₀`:  `‖Abel(N)‖ ≤ C·L_N^θ`, from
+
+    Abel(N+1) = Abel(N)·(1 + z·s_N) + s_N·R(N),      R(N) := S(N)L_N − z·Abel(N),  ‖R(N)‖ ≤ 19A(N)
+
+together with
+* `‖1 + z·s‖ ≤ 1 + s·Re z + s²/2`  (`‖1+zs‖² = 1 + 2s·Re z + s²‖z‖²`, then `nlinarith`), and
+* `(1+s)^θ ≥ 1 + θ·s − s²`  (`Real.add_one_le_exp` on `exp(θ log(1+s))`, then `log(1+s) ≥ s − s²`),
+
+so the step needs exactly `19A(N) + (3/2)C L_N^θ s_N ≤ C L_N^θ (θ − Re z)`: the first summand by
+brick 2 with `C ≥ 38C₁/(θ−Re z)`, the second because `s_N ≤ 1/N`.  The scale equation then gives
+
+    ‖S(N)‖ ≤ (‖z‖·C·L_N^θ + 19·C₁·L_N^{u'}) / L_N ≤ (C + 19C₁)·L_N^{θ−1} → 0 ,
+
+i.e. **`DelangeKernelMean z` unconditionally for `0 < ‖z−1‖ ≤ 1`**, hence `DelangeMean t` for
+`‖phase t − 1‖ < 1` (i.e. `‖t‖_{ℝ/ℤ} < 1/6`), which is exactly the regime
+`delangeKernelTail_of_norm_lt_one` covers.
+
+### Do NOT retry (priced in kernel, recorded)
+Absolute majorisation of `E_N` (lap 49); the `‖·‖`-normed `v`-direction Gronwall (lap 35 — it norms
+a multiplier of modulus `u`, the scale route's multiplier is `z`, modulus exactly one); Mertens' 2nd
+as a prerequisite (brick 2 removes it); the C1 arithmetic leaf (pinned as an equivalence);
+`WeightDecouple` as an easier sub-problem; the uniform-in-`(p,q,w)` saving.
+
+
+## 2026-09-24 (lap 24, review lap) — **the diagonal correction**: the C1 leaf needs no uniformity
+
+**Landed** (`src/NormalNumbers/TwoPointGramDiagonal.lean`, all trust-triple):
+`exists_slow_cutoff`, `twoPointGramSum_nonneg`, `gramRatio_tendsto_of_fixedPair`,
+`twoPointPairGramSmall_of_fixedPair`, `truncSum_div_tendsto_of_twoPointWeighted`,
+`conjC1_of_delange_pairwiseTwoPoint`, `conjC1_of_delange_twoPointElliott_weightDecouple`,
+**`conjC1_of_delange_pairDecorr`**.
+
+**The correction.**  `HANDOFF-twopoint-2026-09-24-SESSION-WRAP-2.md` records
+"per-pair decorrelation does not imply the leaf (the budget is too small)".  That is FALSE.  The
+cutoff `w` in `PairGramSmallGrowing` is *existentially* quantified, so the leaf has to hold at only
+ONE cutoff per `N`.  For a fixed `w` the pair sum is a finite sum of `o(N)` terms and `L(w)² ≥ 1/4`
+is a positive constant, so the ratio already tends to `0`; a stair diagonalisation then produces
+`w(N) → ∞` with `w(N)² ≤ N`.  The budget computation `M(w)/L(w)² → ∞`
+(`tendsto_maxRecipSum_div_sq`) bounds the *trivial-bound strategy* from below, not the leaf.
+
+**Consequence for the plan.**  Laps 15–23 (ℓ², Frobenius, Diag, Forced, Sufficient, Deficit,
+Pairing, Rigidity, BlockRotation) were all producing a **uniform-in-`(p,q,w)`** per-pair saving
+`δ ≍ L(w)²/π(w)`.  That is sufficient and far from necessary, and it is *stronger* than the
+fixed-pair `o(1)` the diagonal route consumes.  Those files stay in `src/` (they are sorry-free and
+the pricing is real), but they are **off-path** unless a route through them yields a fixed-pair
+statement.
+
+### Lap 27 addendum — chipping the 🟡 `DelangeMean`: the elementary skeleton
+
+`src/NormalNumbers/TwoPointDelange.lean` (trust-triple, **sorry-free**).  With `z = e(t)` a `b`-th
+root of unity `≠ 1`:
+
+| lemma | content |
+|---|---|
+| `delangeKernel z n` | `h_z = μ * z^ω`: `(z−1)^{ω(n)}` on squarefree `n`, else `0` |
+| **`sum_delangeKernel_divisors`** | `Σ_{n∣m} h_z(n) = z^{ω(m)}` — the powerset expansion `((z−1)+1)^{ω(m)}` |
+| **`sum_zpow_omega_eq`** | hyperbola: `Σ_{m≤N} z^{ω(m)} = Σ_{n≤N} h_z(n)·⌊N/n⌋` (exact) |
+| **`norm_delangeLocal_sq`** | `‖1 + (z−1)r‖² = 1 − 2(1−Re z)(r − r²)` — an EQUALITY |
+| **`prod_delangeLocal_tendsto_zero`** | `‖Π_{p≤P}(1+(z−1)/p)‖ → 0` (Mertens; same engine as leaf (M)) |
+| **`delangeMean_of_kernel`** | `DelangeKernelMean z` + `DelangeKernelTail z` ⇒ `DelangeMean t` |
+
+**The two residues, named as `Prop`s (no `sorry` anywhere):**
+1. `DelangeKernelMean z` : `Σ_{n≤N} h_z(n)/n → 0`.  The *product* version is now a theorem; the gap
+   is a Wirsing/Levin–Fainleib comparison of a truncated multiplicative sum with its Euler product.
+2. `DelangeKernelTail z` : `Σ_{n≤N} μ²(n)‖z−1‖^{ω(n)} = o(N)`.  **TRUE exactly when `‖z−1‖ < 1`**
+   (then `w^{ω(n)} ≤ w^K + [ω(n) ≤ K]` and `#{n≤N : ω(n) ≤ K} = o(N)` by `turanKubilius`);
+   FALSE for `‖z−1‖ ≥ 1`, where Halász / Selberg–Delange over `PNTPort.ZetaBounds`
+   (`ZetaNoZerosOn1Line`, `ZetaZeroFree9`) is required.
+
+**Next brick (highest value):** close `DelangeKernelTail` for `‖z−1‖ < 1` via `turanKubilius`.
+That gives `DelangeMean t` unconditionally for `‖t‖_{ℝ/ℤ} < 1/6` once
+`DelangeKernelMean` is also closed there — a genuine partial discharge of the 🟡 axiom.
+
+### Lap 26 addendum — the small-prime half of leaf (D), UNCONDITIONALLY
+
+`src/NormalNumbers/TwoPointGrowingCut.lean` (trust-triple).  `primeCut R = ⌊log₄ R⌋ / 2`, so
+`primorialLe (primeCut R) ≤ 4^{primeCut R} ≤ √R` (`primorial_le_four_pow`).  Then:
+
+**`truncPair_fullMean_tendsto_zero`** — for every `b ≥ 2`, `t ≠ 0`, distinct primes `p ≠ q`:
+`E_{n<R} e(t(θ^{(primeCut R)}_{pn} − θ^{(primeCut R)}_{qn})) → 0`, **with no hypothesis**.
+Mechanism: period mean `= Π_{r ≤ primeCut R} pairLocalFactor → 0` (Mertens + the separation bound,
+`periodMean_pair_tendsto_zero`), Cesàro/period defect `≤ 2Q/R ≤ 2/Q → 0`.
+
+This is the honest natural-density statement, not a periodic model — the repo previously had the
+model term only at a FIXED cut, where the density mean converges to the nonzero constant
+`Π_{r≤P} pairLocalFactor`.
+
+**What is left, named:** `PairDecoupleGrowing b p q t` — the defect between the full pair mean and
+its `primeCut R` truncation — with `pairDecorr_of_pairDecoupleGrowing` and
+`conjC1_of_delange_pairDecoupleGrowing`.  The model term is no longer an obligation at all.
+
+**Why this cannot be closed by a triangle inequality (recorded, do not retry):** at `P ≍ log R` the
+large-prime remainder has `E_{n<R}|pairRemainder| ≍ log(log R/log P) ≍ log log R → ∞`.  So
+`PairDecoupleGrowing` is irreducibly a *cancellation* statement.  That is the precise shape of the
+parity-type obstruction at leaf (D), and it is why the shift-cut route (`MultiElliott`) buys an
+`o(1)` tail at the price of a `4K`-point correlation.
+
+### Lap 25 addendum — the Kátai-free chain, end to end
+
+`src/NormalNumbers/TwoPointKataiFree.lean` (trust-triple) pushes `conjC1_of_delange_pairDecorr`
+down the repo's existing proof direction, so EVERY headline of the C1 swing loses its
+`KataiOrthogonality` hypothesis:
+
+| new | supersedes | remaining hypotheses |
+|---|---|---|
+| `conjC1_of_delange_decouple` | `conjC1_of_delange_katai_decouple` | Delange + `PairDecouple` (leaf D) |
+| `conjC1_of_delange_largeDecay` | — | Delange + `LargeDecay` |
+| `conjC1_of_delange_shiftCorr` | — | Delange + `ShiftCorrSmall` |
+| `conjC1_of_delange_multiElliott` | `conjC1_of_delange_katai_multiElliott` | Delange + `MultiElliott` |
+
+**`ConjC1` now rests on exactly two inputs**: `DelangeMean` (🟡 proven) and `MultiElliott`
+(🔴 open, and *equivalent* to the leaf by `shiftCorrSmall_iff_multiElliott`).  Nothing else is
+cited.  The two routes bracket the same crux: `MultiElliott` (`4K` forms, unweighted) and
+`TwoPointWeighted` (2 forms, weighted, `pairDecorr_iff_twoPointWeighted`) are both equivalent to it.
+
+**Refuted this lap as an escape hatch:** `WeightDecouple` is NOT an easier sub-problem.  Given
+`TwoPointElliott`, `E[X]·E[Y] → 0` automatically, so `WeightDecouple ⟺ TwoPointWeighted` — the
+whole crux (`weightDecouple_of_twoPointWeighted` + `twoPointWeighted_of_split` already witness
+both directions).  Do not spend a lap hoping the decoupling is cheap.
+
+**Refuted this lap as an escape hatch (2):** the elementary small-prime/large-prime split cannot be
+tuned.  For `z = R^δ` the large part satisfies `ω_{>z}(m) ≤ 1/δ` (bounded, good) but the periodic
+modulus `∏_{ℓ≤z} ℓ ≈ e^z` dwarfs `R`, so the period mean is not the density mean; for `z ≈ θ log R`
+the modulus is `R^{O(θ)}` (good) but `ω_{>z}(m) ≈ log R/log log R` (unbounded).  This is exactly the
+repo's leaf (D) tension, re-derived independently; `periodMean_pair_tendsto_zero`
+(`SwingC1Pair.lean`, sorry-free) is the periodic side and it is already unconditional.
+
+### Open items, highest value first
+
+1. **THE CRUX — the fixed-pair correlation.**  `PairDecorr b t` for ONE pair of distinct primes:
+   `E_{m≤M} e(t(omegaTail_b(pm) − omegaTail_b(qm))) → 0`.  Equivalent (`pairDecorr_iff_twoPointWeighted`)
+   to `TwoPointWeighted b p q t`, i.e. natural-density two-point Elliott for `ζ^ω` along `pm+1`,
+   `qm+1`, twisted by `peelWeight`.  With `conjC1_of_delange_pairDecorr` this is now the ONLY
+   non-Delange input to C1.
+
+2. **Next brick: the finite `K`-peel.**  `omegaTail b n = O(log n)` (from `omegaNat m ≤ log₂ m`), so
+   iterating `phase_shiftPairTail_peel` `K` times leaves a remainder
+   `(t/b^K)·shiftPairTail b p q K K m` of size `O(b^{-K} log(pM))`.  Taking `K = K(M) ≈ log_b log M`
+   makes it `o(1)` **uniformly in `m ≤ M`**, so
+
+       e(t(omegaTail(pm) − omegaTail(qm))) = e(Σ_{j=1}^{K} (t/b^j)(ω(pm+j) − ω(qm+j))) + o(1).
+
+   This is elementary, is the prerequisite for every remaining route, and is NOT yet in `src/`.
+   (`peelWeightAt` in `PairDecoupleOneDigit.lean` is the `K`-fold weight already; what is missing is
+   the quantitative remainder bound with `K` growing.)  **Do this first.**
+
+3. **Then the sieve/variance read, and where it breaks.**  With the finite form in hand: for prime
+   factors in `(J, z]` the events `p ∣ pm+j` are jointly CRT-independent across `j ≤ K < J`, the
+   variance of `Σ_j b^{-j}(ω_{(J,z]}(pm+j) − ω_{(J,z]}(qm+j))` is `≍ log log z → ∞`, and the phase
+   mean of the small-prime part is `(log z / log J)^{-c}` with
+   `c = Σ_j (1 − cos(2π t/b^j)) > 0`.  The obstruction is the LARGE-prime part
+   `ω_{>z}`: it is unbounded for `z = M^{o(1)}` (mean `≍ log(log M/log z)`) and for `z = √M` it is
+   `∈ {0,1}` but then the small part is no longer CRT-tractable.  **Formalising either horn as a
+   theorem is a successful lap**: (a) small-prime part alone `→ 0` with a rate, or (b) the
+   implication "fixed-pair leaf ⟸ a two-point Elliott statement at shift `≤ K`", naming the problem.
+
+4. **The 🟡 debt: `DelangeMean`.**  Selberg–Delange for `ζ^ω`: `E_{n≤N} e(t ω(n)) → 0` at rate
+   `(log N)^{Re e(t) − 1}`.  This is the only *proven* input C1 still cites.  Chippable
+   independently of the crux; `PNTPort/` already has Wiener–Ikehara scaffolding.
+
+5. **Refuted / priced, do not re-open** (all kernel-grounded, laps 13–23): trivial per-pair
+   estimates (insufficient by an unbounded factor); `ℓ¹` averaging over multipliers (no gain);
+   `ℓ²`/fourth moment (needs exact evaluation of a `≥ N²/8` quantity); rotation pairing with a
+   *constant* `z` (forces `σ = id`).  Pointwise-gap rotation (`TwoPointBlockRotation`) is still live
+   but is a *uniform* route, hence now low priority — see the correction above.
+
+6. **`twoPointWeightedAvg_all` (`TwoPointBet.lean`) stays an open, disclosed `sorry`.**  Ratified;
+   never to be deleted, renamed or weakened.  It is implied by item 1 via
+   `avgShape_of_forall_tendsto` (`TwoPointWorry.lean`).
+
+---
+
 
 ## 2026-09-23 — **Theorem C′ is PROVED**; the multicutoff campaign is complete
 
@@ -10351,3 +10826,69 @@ state (`sum_over_initial_stateHorizonIntegral`) and pinned to `γ(A)` by
 3. `tendsto_jointCount_of_classEquidistribution` then gives the transfer half.
 4. The fiber (merging inside a class), §2 transducer + identity (9), §5–§6 trigger counting.
 5. Repoint the `Maze.lean` row citing Vandehey 1.1 from `.cited`.
+## 2026-09-25 (laps 57–59) — the 🟡 `DelangeMean` past the `‖z−1‖ < 1` wall: `t = 1/2` CLOSED
+
+**Result.** `delangeMean_half : DelangeMean (1/2)` unconditionally, and `moebiusMeanZero :
+MoebiusMeanZero` (`M(N) = O(N/log N)`) — both axiom-clean, in `TwoPointDelangeParity.lean` and
+`TwoPointMoebiusPNT.lean`.  See `HANDOFF-twopoint-2026-09-25-lap59.md`.
+
+**The dichotomy to not re-derive.**  `z^ω = z^Ω * k_z` with `k_z` supported on powerful numbers
+(`k_z(p)=0`, `k_z(p^j) = −z(z−1)`), and `z^Ω` reduces to `μ` by a FINITE convolution exactly when
+`z = −1` (`(1−zX)^{-1}(1−X)^w` has integer `w` only there).  So the elementary/finite-convolution
+route closes `t = 1/2` and NOTHING ELSE outside `‖t‖ < 1/6`.
+
+**Reusable tools landed.**  `kernelSum_tendsto_zero` (transfer across a summable convolution
+kernel), `sum_conv_eq` (general hyperbola, any semiring), `summable_divisorCard`,
+`exists_cube_sq_of_powerful` (`n = a³c²` for powerful `n`), `two_pow_omega_le_*`.
+
+**NEXT (open).**  `DelangeMean (m/b)`, `b ≥ 3`, `‖m/b‖ ≥ 1/6`: needs `ζ(s)^z` (Selberg–Delange) or
+Halász, over `PNTPort`'s zero-free region + Mellin/residue toolkit.  Cheapest probe recorded in the
+lap-59 handoff, item 1(c).
+
+## 2026-09-25 (lap 60) — **the `‖z−1‖ < 1` wall is BROKEN: a scale equation for `z^ω` itself**
+
+**The crux** was `DelangeMean (m/b)` for `b ≥ 3`, `‖m/b‖ ≥ 1/6` — the last regime of the 🟡.  Lap 59
+recorded that finite convolution down to `μ` is *provably* exhausted there (integer exponent only
+at `z = −1`) and named Selberg–Delange / Halász as the road.  **That was wrong: there is an
+elementary road, and this lap built it.**
+
+**The structural insight.**  Laps 28–56 ran Levin–Fainleib on the *kernel* `h_z = (z−1)^ω μ²`,
+whose `ℓ¹` mass `A(N) ≍ (log N)^{‖z−1‖}` is the error term — hence the cap `‖z−1‖ < 1`.  Run it on
+`f = z^ω` **itself** and every error is `O(N)`, because `‖f‖ ≡ 1`.  The mechanism is that `ω` sees a
+prime power only through its prime:
+
+    ω(p^k·m) = ω(m) + [p ∤ m]     (`omegaNat_primePow_mul`)
+
+uniformly in `k`, so `f(d·m) = z·f(m)` off the multiples of `minFac d`, for EVERY prime power `d`.
+
+**Landed this lap** (`src/NormalNumbers/TwoPointDelangeLevin.lean`, all axiom-clean, no `sorry`):
+* `sum_conv_gen` — hyperbola summation with the summand depending on both `d` and `n/d`;
+* `sum_fOm_log_eq` — the **exact** Levin–Fainleib identity
+  `∑_{n≤N} f(n) log n = ∑_{d≤N} Λ(d)·(z·M(N/d) − (z−1)·G(minFac d, N/d))`;
+* `sum_vonMangoldt_div_mul_minFac_le` — `∑_{d≤N} Λ(d)/(d·minFac d) ≤ 16`, by prime-power
+  regrouping (`ppPair`/`ppTerm`) onto `sum_log_div_sq_prime_le`.  **No Mertens' 2nd.**
+* `sum_hyperbola_swap` — `∑_d k(d)∑_{e≤N/d}T(e) = ∑_e T(e)∑_{d≤N/e}k(d)`;
+* `norm_defect_le` (A), `exists_norm_psi_replace_le` (B, on `DelangeSlot.exists_sum_abs_deltaN_le`),
+  `norm_log_shift_le` (C), and
+
+      exists_levin_scale_bound :  ∃ C, ∀ z, ‖z‖ = 1 → ∀ N,
+          ‖M(N)·log N − z·N·T(N)‖ ≤ C·N        with C ABSOLUTE.
+
+### NEXT LAP — the closure, two steps, both already rehearsed in this repo
+1. **Abel**: `T(N) = M(N)/N + Ũ(N)`, `Ũ(N) = ∑_{1≤m<N} M(m)/(m(m+1))`, and
+   `Ũ(N+1) − Ũ(N) = M(N)/(N(N+1))`.  With `‖M(N)/N‖ ≤ 1` the scale equation becomes
+
+       M(N)/N = (z·Ũ(N) + E_N)/log N ,  ‖E_N‖ ≤ C+1 ,
+       Ũ(N+1) = Ũ(N)·(1 + z·s_N) + s_N·E_N ,  s_N = 1/((N+1)·log N)  (REAL).
+
+2. **Brick 3 again**: the discrete integrating factor.  `‖1+zs‖ ≤ 1 + s·Re z + s²/2`,
+   `(1+σ)^θ ≥ 1 + θσ − σ²`, and `s_N ≤ σ_N = (log(N+1)−log N)/log N`.  Induction gives
+   `‖Ũ(N)‖ ≤ K(log N)^θ` for ANY `θ ∈ (max(Re z, 0), 1)` — the additive `s_N·E_N` is absorbed
+   because `K(θ−θ₀)(log N)^θ ≥ C+1` eventually (`θ > 0`).  Then
+
+       ‖M(N)‖/N ≤ (K(log N)^θ + C+1)/log N → 0     for EVERY `z ≠ 1` on the circle,
+
+   since `Re z < 1` automatically.  That discharges `DelangeMean t` for **all** `t ∉ ℤ` and kills
+   the 🟡 outright.  Reuse `TwoPointDelangeScale.lean`'s brick-1 tool (`∑ s_m ≤ log L_N − log L_{N₀} + 1`)
+   and its brick-3 induction verbatim; only the source of the additive error changes (constant here,
+   `A(N)` there).

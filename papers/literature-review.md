@@ -5,6 +5,89 @@ the route-oriented read: what the sources COLLECTIVELY say about the open
 strategic questions, not a per-paper summary (those are the sibling `.md`s).
 Keep it current — the next reflection lap inherits THIS read.*
 
+## Casting-out chapter (C1/C2/C3) — route synthesis (2026-09-25 DEEP REFLECTION lap 61) ⚠️ READ FIRST
+
+*This chapter is the current read for the `wip/twopoint-avg` casting-out swings and it **corrects a
+stale claim** in the Campaign-B chapter below.*
+
+### CORRECTION to the 2026-09-16 chapter
+
+That chapter says of **Tao–Teräväinen arXiv 2512.01739**: *"whose PDF is still not on disk and which
+is still not a prerequisite."*  **The first half is FALSE and has been for some time**: the full
+text is on disk at `papers/tao-teravainen-2025-quantitative-correlations.txt` (265 KB, v2 of
+2026-04-25).  Nothing in the repo had read it.  The second half needs qualifying: it is still not a
+prerequisite for the `b ≥ 3` irrationality half (`G4.irrational_primeSum` is proved by an
+independent route), but it **is** now the central source for the C1 and C3 leaves.
+
+### What the source actually contains, and why it is route-decisive here
+
+**Theorem 1.3 (Erdős #69).**  `∑_{n≥1} ω(n)/2ⁿ = ∑_p 1/(2^p − 1)` is irrational, unconditionally.
+The paper states the method extends to `∑ ω(n)/bⁿ` for every integer `b ≥ 2`, *"in fact the case
+`b > 2` is somewhat easier due to the faster convergence of certain coefficients"*.  That series is
+this repo's `G4_b = primeLambertAtBase b`.  It also does `∑ Ω(n)/2ⁿ`.
+
+**Theorem 3.1 (the reusable tool; rests on Pilatte 2025's decoupling inequality).**  For 1-bounded
+multiplicative `g₁, g₂ : ℕ → ℂ`, `X ≥ 2`, `1 ≤ L ≤ log X`, and `δ_N` real, assuming either
+(i) `g₁` real-valued and equidistributed in all residue classes of moduli `O(L)` to accuracy
+`O(NL^{−1})` (plus a technical `g₁(p)=1` on `[exp(log^{1/11}X), exp(log^{1/10}X)]`), or
+(ii) `δ_N = 0` and `g₁` **non-pretentious**, `exp(M(g₁; X², log^{1/125}X)) ≫ L` — there is
+`E ⊂ [√X, X]` with `(1/log X)∫_E dt/t ≪ L^{−c}` such that for all `W ∈ [L^c]` and integers
+`b, h₁, h₂ = O(L^c)` with `h₁ ≠ h₂`,
+
+    (W/N) ∑_{N<n≤2N} (g₁(n+h₁) − δ_N)·g₂(n+h₂)·1_{n ≡ b (mod W)}  ≪  L^{−c}   for all N ∈ [√X,X]\E.
+
+**Remark 3.2, third bullet** (stated in the paper): for `a₁,a₂,b₁,b₂ ∈ [1,(log N)^c] ∩ ℕ` with
+`a₁b₂ ≠ a₂b₁`,  `(1/N)∑_{n≤N} λ(a₁n+b₁)λ(a₂n+b₂) ≪ (log N)^{−c}` for all `N` outside such an `E`
+— *"follows from Theorem 3.1(ii)"*, hence for any non-pretentious 1-bounded multiplicative
+function, not just `λ`.
+
+**§5.2 "Taking an alternating sum to cancel terms"** (*"inspired by the theory of the Gowers
+uniformity norms"*): pick `p_ε = p₀ + ε₁v₁ + ⋯ + ε_Kv_K` all prime over `ε ∈ {0,1}^K`, impose
+`n ≡ ∑_k kε_kv_k (mod p_ε)`, and alternate with `(−1)^{|ε|}`; the shift `r_{ε,h} = p_εh − ∑kε_kv_k`
+is independent of `ε_h` for `1 ≤ h ≤ K`, so the first `K` terms of `∑_h ω(n+r_{ε,h})/b^h` cancel
+**identically**.  This is the literature's technique for reducing a **growing-depth** linear
+combination of `ω(n+h)` to **pairwise** correlations.  The repo has no analogue.
+
+### Route judgement for this worktree, re-grounded against that source
+
+| leaf | repo's shape | what the source gives | honest colour |
+|---|---|---|---|
+| C1 `PairDecorr` / `MultiElliott` / `TwoPointWeightedAvg` | `(1/N)∑_n z^{ω(pn+1)}\bar z^{ω(qn+1)} → 0`, `p,q ≤ w` a growing cutoff | Rmk 3.2 bullet 3 verbatim with `(a₁,b₁,a₂,b₂)=(p,1,q,1)`, `a₁b₂ = p ≠ q = a₂b₁`, `p,q ≤ (log N)^c` | **🔴 at every scale; 🟠 outside `E`.**  `CastLaw` is a two-sided limit — it does NOT absorb `E` |
+| C3 depth-2 rung | `(1/N)∑_n e(jn/Q) z₁^{ω_{>P}(n+1)} z₂^{ω_{>P}(n+2)} → 0` | (3.4) verbatim with `h₁=1,h₂=2,W=Q`; `e(jn/Q)` is a `ℤ/Q`-Fourier combination of the `1_{n≡b(W)}` | **🔴 at every scale; 🟠 outside `E`.**  `IsRich` is a monotone lower-density count — it **DOES** absorb `E` |
+| C3 depth-1 rung | `(1/N)∑_{m≤N} e(jm/Q) z^{ω_{>P}(m)} → 0` | not needed — **already a theorem in this tree**, `DelangeSlot.twisted_omegaLarge_mean_tendsto_zero`, trust-triple | ✅ proved |
+| C3 growing depth | `K ≳ log_b log log N` forced (truncation error `≍ b^{−K} log log N`) | TT2025 §5.2's alternating sum is the template | open; the ladder's rung 3 |
+
+`z^ω` and `z^{ω_{>P}}` are 1-bounded multiplicative and non-pretentious for `‖z‖ = 1, z ≠ 1`:
+`M(z^ω; X², ·) ≈ (1 − Re z)·log₂X`, so `exp(M) ≈ (log X)^{1−Re z} ≫ L` for `L` any small power of
+`log X`.  Theorem 3.1(ii) therefore applies with a genuine power-of-log saving.
+
+**The standing repo claim "natural-density two-point Elliott for `ζ^ω` is a named OPEN problem;
+Tao 2016 gives it in LOG density only" was right in 2016 and is HALF-STALE in 2026.**  At natural
+density, outside a log-density-`L^{−c}` set of *scales*, with a power-of-log saving, it is a
+theorem (Pilatte 2025 → TT2025 Thm 3.1).  Only "for every `N`" is still open.
+
+### Precedent check (what is originated vs inherited)
+
+* The reduction of `ConjC3` to a single twisted Weyl sum (`conjC3_of_weylHypothesis`,
+  trust-triple), and the identity `tailLarge P b n = ∑_{p>P} b^{−r_p(n)}/(1−b^{−p})` with
+  `r_p(n)` a function of `n mod p` alone, are internal.  No precedent found on disk.
+* The Selberg–Delange rate for the untwisted mean, `(log N)^{−A}` with
+  `A = ∑_{i≥1}(1 − cos(2πh b^{−i}))`, was derived and numerically confirmed this lap
+  (`probes/c3_euler_product.py`): the Euler product's own empirical exponent matches `A` to four
+  digits and the ratio to the true mean is flat.  It is the classical Delange/Wirsing shape applied
+  to a non-multiplicative but locally-independent function; not claimed as novel.
+* `IsRichSubpoly` (every word at `≥ N^{1−o(1)}` positions) has no precedent found on disk and is
+  the natural rung the exceptional set `E` leaves standing.  Absence of evidence, recorded as such.
+
+### What is still missing from the corpus
+
+1. **Pilatte 2025** itself (the decoupling inequality, TT2025 [42]) — not on disk.  Only needed if
+   the constant `c` or the shape of `E` has to be traced; TT2025 Thm 3.1 is the usable form.
+2. **Tao 2016** (two-point logarithmic Elliott) and **Tao–Teräväinen** odd-order log-Chowla —
+   not on disk; cited second-hand through TT2025 Remarks 3.2.  Worth an `ON-LINE-REQUEST` only if
+   the logarithmic rung is pursued.
+3. Nothing on disk about equidistribution of `{bⁿ·L_P}` itself, i.e. the C3 crux as a Weyl sum.
+
 ## Campaign B chapter — route synthesis (2026-09-16 DEEP REFLECTION lap)
 
 *Added this lap.  Read this first: it is the current read, and it supersedes the "live campaign"
@@ -21,7 +104,10 @@ reason to prefer a different route for any of the axes?
 **Nothing directly.**  There is no source in `papers/` on weighted prime-Lambert series, on
 `∑_n ω(n)/bⁿ`, or on disjunctivity of additive-function generating series.  The only nearby
 external anchor is **Tao–Teräväinen arXiv 2512.01739 Thm 1.3** (irrationality of `∑_p 1/(2^p−1)`),
-whose PDF is *still not on disk* and which is *still not a prerequisite* — the repo's `b ≥ 3` half
+whose PDF is *still not on disk* and which is *still not a prerequisite*
+⚠️ **[CORRECTED 2026-09-25, lap 61: the text IS on disk, at
+`papers/tao-teravainen-2025-quantitative-correlations.txt`, and its Theorem 3.1 IS now the central
+source for the C1/C3 leaves.  See the casting-out chapter at the top of this file.]** — the repo's `b ≥ 3` half
 (`G4.irrational_primeSum`) is proved by an independent route that deliberately avoids their
 two-point correlation input.  Stated plainly so no lap mistakes "nothing on disk" for
 "nothing exists".
