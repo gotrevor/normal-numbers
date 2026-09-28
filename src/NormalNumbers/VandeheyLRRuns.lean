@@ -181,6 +181,102 @@ theorem lrExpand_run (w : ℝ) (hirr : Irrational w) (hw : w ∈ Set.Ioo (0 : �
       rw [hd]; exact Nat.floor_le hpinv.le
     exact lrExpand_R_run hle hi
 
+/-! ## The run index
+
+Every position of the `L/R` stream lies in exactly one run, because `lrPos` is strictly
+monotone (every CF digit of an irrational is `≥ 1`).  `runIdx` names that run, and then the
+whole stream is described by ONE identity: the letter at `P` is the parity of `runIdx P`.
+Alternations sit exactly at run ends, which is the fact the occurrence translation needs. -/
+
+section RunIdx
+
+variable {w : ℝ} (hirr : Irrational w) (hw : w ∈ Set.Ioo (0 : ℝ) 1)
+
+include hirr hw
+
+lemma lrPos_lt_succ (n : ℕ) : lrPos w n < lrPos w (n + 1) := by
+  have h := one_le_cfDigit w hirr hw n
+  rw [lrPos_succ]
+  omega
+
+lemma lrPos_strictMono : StrictMono (lrPos w) :=
+  strictMono_nat_of_lt_succ (lrPos_lt_succ hirr hw)
+
+lemma le_lrPos (n : ℕ) : n ≤ lrPos w n := by
+  induction n with
+  | zero => simp
+  | succ n ih =>
+    have := lrPos_lt_succ hirr hw n
+    omega
+
+/-- The index of the run containing the position `P`. -/
+noncomputable def runIdx (w : ℝ) (P : ℕ) : ℕ := Nat.findGreatest (fun n => lrPos w n ≤ P) P
+
+omit hirr hw in
+lemma runIdx_le (P : ℕ) : lrPos w (runIdx w P) ≤ P :=
+  Nat.findGreatest_spec (P := fun n => lrPos w n ≤ P) (Nat.zero_le P) (by simp)
+
+lemma lt_runIdx_succ (P : ℕ) : P < lrPos w (runIdx w P + 1) := by
+  by_contra hcon
+  have hle : lrPos w (runIdx w P + 1) ≤ P := by omega
+  have hbound : runIdx w P + 1 ≤ P := le_trans (le_lrPos hirr hw _) hle
+  refine Nat.findGreatest_is_greatest (P := fun n => lrPos w n ≤ P) ?_ hbound hle
+  show Nat.findGreatest (fun n => lrPos w n ≤ P) P < runIdx w P + 1
+  rw [← runIdx]
+  omega
+
+/-- **The stream, in one identity.**  The letter at position `P` is the parity of the run `P`
+lies in. -/
+theorem lrExpand_eq_runIdx_parity (P : ℕ) :
+    lrExpand w P = decide (runIdx w P % 2 = 0) := by
+  have h1 := runIdx_le (w := w) P
+  have h2 := lt_runIdx_succ hirr hw P
+  rw [lrPos_succ] at h2
+  have hP : P - lrPos w (runIdx w P) < cfDigit w (runIdx w P) := by omega
+  have key := lrExpand_run w hirr hw (runIdx w P) (P - lrPos w (runIdx w P)) hP
+  rw [show lrPos w (runIdx w P) + (P - lrPos w (runIdx w P)) = P from by omega] at key
+  exact key
+
+/-- The run index steps by at most one, and steps exactly when a run ends. -/
+lemma runIdx_succ_eq (P : ℕ) :
+    runIdx w (P + 1) = if P + 1 = lrPos w (runIdx w P + 1) then runIdx w P + 1
+      else runIdx w P := by
+  have h1 := runIdx_le (w := w) P
+  have h2 := lt_runIdx_succ hirr hw P
+  have hmono := lrPos_strictMono hirr hw
+  have hrP : runIdx w P ≤ P := le_trans (le_lrPos hirr hw _) h1
+  split_ifs with h
+  · -- the next position starts the next run
+    refine le_antisymm ?_ ?_
+    · by_contra hcon
+      have hlt : runIdx w P + 1 < runIdx w (P + 1) := by omega
+      have := hmono hlt
+      have h3 := runIdx_le (w := w) (P + 1)
+      omega
+    · exact Nat.le_findGreatest (by omega) (by omega)
+  · refine le_antisymm ?_ ?_
+    · by_contra hcon
+      have hlt : runIdx w P < runIdx w (P + 1) := by omega
+      have hge : runIdx w P + 1 ≤ runIdx w (P + 1) := by omega
+      have := hmono.monotone hge
+      have h3 := runIdx_le (w := w) (P + 1)
+      omega
+    · exact Nat.le_findGreatest (le_trans (le_lrPos hirr hw _) (by omega)) (by omega)
+
+/-- **Alternations sit exactly at run ends.**  This is what turns an occurrence of a CF word in
+the image's expansion into an occurrence of a single `L/R` pattern with forced boundary letters:
+the letter change pins the run boundary. -/
+theorem lrExpand_ne_succ_iff (P : ℕ) :
+    lrExpand w P ≠ lrExpand w (P + 1) ↔ P + 1 = lrPos w (runIdx w P + 1) := by
+  rw [lrExpand_eq_runIdx_parity hirr hw P, lrExpand_eq_runIdx_parity hirr hw (P + 1),
+    runIdx_succ_eq hirr hw P]
+  split_ifs with h
+  · simp only [h, ne_eq, decide_eq_decide, iff_true]
+    omega
+  · simpa using h
+
+end RunIdx
+
 end NormalNumbers.VandeheyLR
 
 section
@@ -191,4 +287,7 @@ open NormalNumbers.VandeheyLR
 #print axioms lrExpand_L_run
 #print axioms lrTail_lrPos
 #print axioms lrExpand_run
+#print axioms lrExpand_eq_runIdx_parity
+#print axioms runIdx_succ_eq
+#print axioms lrExpand_ne_succ_iff
 end
