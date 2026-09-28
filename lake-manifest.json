@@ -3,6 +3,54 @@
  "packagesDir": ".lake/packages",
  "packages": [
   {
+   "url": "https://github.com/CBirkbeck/AINTLIB.git",
+   "type": "git",
+   "subDir": null,
+   "scope": "",
+   "rev": "1c1c74664e40071c2c2165bc55ca2616a67ccd6b",
+   "name": "AINTLIB",
+   "manifestFile": "lake-manifest.json",
+   "inputRev": "1c1c74664e40071c2c2165bc55ca2616a67ccd6b",
+   "inherited": false,
+   "configFile": "lakefile.toml"
+  },
+  {
+   "url": "https://github.com/YaelDillies/apap.git",
+   "type": "git",
+   "subDir": null,
+   "scope": "",
+   "rev": "40a6a348fa3629d2faa0be428b1876e5c05fb6da",
+   "name": "APAP",
+   "manifestFile": "lake-manifest.json",
+   "inputRev": "40a6a348fa3629d2faa0be428b1876e5c05fb6da",
+   "inherited": false,
+   "configFile": "lakefile.toml"
+  },
+  {
+   "url": "https://github.com/leanprover-community/add-combi.git",
+   "type": "git",
+   "subDir": null,
+   "scope": "",
+   "rev": "a78c4546df6d6af94776aaa821e565bdb65d5c05",
+   "name": "AddCombi",
+   "manifestFile": "lake-manifest.json",
+   "inputRev": "a78c4546df6d6af94776aaa821e565bdb65d5c05",
+   "inherited": false,
+   "configFile": "lakefile.toml"
+  },
+  {
+   "url": "https://github.com/gotrevor/FormalPantheon.git",
+   "type": "git",
+   "subDir": "BoundedGaps",
+   "scope": "",
+   "rev": "9a973bb8bc254720a2fcb8436bc5984b1cf21e82",
+   "name": "BoundedGaps",
+   "manifestFile": "lake-manifest.json",
+   "inputRev": "9a973bb8bc254720a2fcb8436bc5984b1cf21e82",
+   "inherited": false,
+   "configFile": "lakefile.toml"
+  },
+  {
    "url": "https://github.com/leanprover/lean4-cli",
    "type": "git",
    "subDir": null,
@@ -12,6 +60,27 @@
    "manifestFile": "lake-manifest.json",
    "inputRev": "6130a47896ce867c6a4a55373441e59e565bad0f",
    "inherited": false,
+   "configFile": "lakefile.toml"
+  },
+  {
+   "url": "https://github.com/leanprover/comparator.git",
+   "type": "git",
+   "subDir": null,
+   "scope": "",
+   "rev": "3927ad383f208ae977c340a91c48ac9b497d2097",
+   "name": "Comparator",
+   "manifestFile": "lake-manifest.json",
+   "inputRev": "3927ad383f208ae977c340a91c48ac9b497d2097",
+   "inherited": false,
+   "configFile": "lakefile.toml"
+  },
+  {
+   "type": "path",
+   "scope": "",
+   "name": "ComparatorChallenges",
+   "manifestFile": "lake-manifest.json",
+   "inherited": true,
+   "dir": ".lake/packages/lean-proofs-latest/src/latest/ComparatorChallenges",
    "configFile": "lakefile.toml"
   },
   {
@@ -75,6 +144,18 @@
    "configFile": "lakefile.toml"
   },
   {
+   "url": "https://github.com/gotrevor/FormalPantheon.git",
+   "type": "git",
+   "subDir": "Warning",
+   "scope": "",
+   "rev": "9a973bb8bc254720a2fcb8436bc5984b1cf21e82",
+   "name": "Waring",
+   "manifestFile": "lake-manifest.json",
+   "inputRev": "9a973bb8bc254720a2fcb8436bc5984b1cf21e82",
+   "inherited": false,
+   "configFile": "lakefile.toml"
+  },
+  {
    "url": "https://github.com/leanprover-community/aesop",
    "type": "git",
    "subDir": null,
@@ -120,6 +201,30 @@
    "manifestFile": "lake-manifest.json",
    "inputRev": "main",
    "inherited": true,
+   "configFile": "lakefile.toml"
+  },
+  {
+   "url": "https://github.com/gotrevor/lean-proofs.git",
+   "type": "git",
+   "subDir": "src/latest",
+   "scope": "",
+   "rev": "01c973952af90515886cfd8fbd67bd21a3534431",
+   "name": "\u00ablean-proofs-latest\u00bb",
+   "manifestFile": "lake-manifest.json",
+   "inputRev": "01c973952af90515886cfd8fbd67bd21a3534431",
+   "inherited": false,
+   "configFile": "lakefile.lean"
+  },
+  {
+   "url": "https://github.com/leanprover/lean4export",
+   "type": "git",
+   "subDir": null,
+   "scope": "",
+   "rev": "15f6055e299ad5b89345e533cc2192f4cc00f659",
+   "name": "lean4export",
+   "manifestFile": "lake-manifest.json",
+   "inputRev": "15f6055e299ad5b89345e533cc2192f4cc00f659",
+   "inherited": false,
    "configFile": "lakefile.toml"
   },
   {

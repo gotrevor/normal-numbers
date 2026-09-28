@@ -13,6 +13,8 @@ import NormalNumbers.G4RowMassOptimal
 import NormalNumbers.G4WiringSparse
 import NormalNumbers.StonehamSixFailure
 import NormalNumbers.CastingOut
+import NormalNumbers.C3MrtTTDefect
+import NormalNumbers.C3MrtBlockDefect
 import NormalNumbers.Walsh
 import NormalNumbers.WalshBase
 import NormalNumbers.WallRational
@@ -241,6 +243,79 @@ of `0.1·3ᵐ` forced zeros pushes freq(0) at `N = 1.1·3ᵐ` up to `8/33 > 1/6`
 even **simply** normal in base 6, let alone abelian-normal.  (Bailey–Borwein 2012 proved
 base-6 non-normality first; this is that mechanism, formalized.) -/
 alias hall_stoneham_six_abelian := NormalNumbers.Failures.not_simplyNormal_six_stoneham23
+
+
+/-- **HALL: `TTNonPretentious` as TT's hypothesis (3.3)** (`vacuous`, 2026-09-25).
+The formal non-pretentiousness hypothesis put `∃ A > 0` *inside* the `∀ X L`, so `A = 1/L`
+discharges it for **every** 1-bounded `g`, `g = 1` included: every summand of
+`ttPretentiousSum` is `≥ 0`.  TT's implied constant is absolute.  Restated faithfully as
+`CastingOut.TTNonPretentiousUnif` (constant outside, Dirichlet characters of conductor
+`≤ (log X)^{1/125}` included, twists up to `X²`), which `g = 1` provably fails
+(`not_ttNonPretentiousUnif_one`). -/
+alias hall_tt_nonpretentious_vacuous := NormalNumbers.CastingOut.ttNonPretentious_trivial
+
+/-- **HALL: the `K`-point no-exceptional-set input, as stated** (`falseAsStated`, 2026-09-25).
+`KPointNoExcWith cK CstK 2` is FALSE for any `0 < cK 2`: with both factors the constant `1`
+(free by the row above), `W = 1`, shifts `1, 2`, `X = exp L`, `N = ⌈√X⌉`, the
+progression-restricted mean is exactly `1` while the claimed bound tends to `0`.  Every
+consumer of `KPointNoExcWith` / `Roots` / `Depth` / `AllWith` is therefore vacuous until the
+hypothesis is rethreaded onto `CastingOut.KPointNoExcAtWith`. -/
+alias hall_kpoint_noexc_false := NormalNumbers.CastingOut.not_kPointNoExcWith_const_one
+
+/-- **HALL: "the named open problem" `TwoPointNaturalCorrelationNoExc`** (`falseAsStated`,
+2026-09-25).  The `Prop` the whole `C3MrtNoExc` chain and the `D = 2` natural-density rung were
+stated over is not open: the constant-one witness refutes it, because its non-pretentiousness
+hypothesis is free (`hall_tt_nonpretentious_vacuous`).  Same for
+`KPointNaturalCorrelationNoExc 2` (`not_kPointNaturalCorrelationNoExc`). -/
+alias hall_two_point_noexc_false :=
+  NormalNumbers.CastingOut.not_twoPointNaturalCorrelationNoExc
+
+/-- **HALL: a Lebesgue-measured exceptional set of scales** (`vacuous`, 2026-09-25).
+`TwoPointNaturalCorrelation` charged its exceptional set `E ⊆ ℝ` by `∫_E t⁻¹` while asking the
+conclusion only at integer scales, so `E = ℕ ∩ [√X, X]` is free and the whole `Prop` is
+*provably true* and empty.  The faithful cost is a count of dyadic scales
+(`CastingOut.TwoPointDyadicCorrelation`), under which the all-scales set is inadmissible
+(`full_exceptional_set_not_admissible`). -/
+alias hall_lebesgue_exceptional_scales :=
+  NormalNumbers.CastingOut.twoPointNaturalCorrelation_trivially_true
+
+/-- **HALL: a constant-fraction saving on every dyadic block** (`falseAsStated`, 2026-09-25).
+Lap 112 reduced the wide archimedean debt to `WideBlockSaving κ`: a saving `1 − κ` on *every*
+dyadic block of the twisted prime sum.  FALSE for every `κ > 0`, and structurally so — the top
+block of the truncation at `X²` can be a **singleton**, whose weighted sum has norm exactly its
+own mass.  Witness `X = 16/5`, `⌈X²⌉₊ = 11`, `j = 3`, block `{11}`.  Repaired as
+`CastingOut.WideBlockSavingBand`, which asks for the saving only on complete blocks in a band
+(`band_block_complete`, `witness_block_above_band`). -/
+alias hall_wide_block_saving_false := NormalNumbers.CastingOut.not_wideBlockSaving
+
+/-- **HALL: the reciprocal-free initial-segment form** (`falseAsStated`, 2026-09-25).
+Lap 113's Abel transfer asked for the saving on *every initial segment* `p < m` of every block
+(`WideBlockPartial κ`).  FALSE for every `κ > 0`: at `X = 3`, `j = 1`, `m = 3` the segment is the
+singleton `{2}` and its character sum has norm exactly `1`.  Abel is sound; what it consumes is
+not. -/
+alias hall_wide_block_partial_false := NormalNumbers.CastingOut.not_wideBlockPartial
+
+/-- **HALL: the "purely geometric" pairing endpoint** (`falseAsStated`, 2026-09-25).
+Lap 114 reduced the debt to `BlockPhasePairing d`: on every initial segment of every block, the
+`χ`-surviving primes admit an injective self-map with separated twist phases.  FALSE for every
+`d < 1`: an injective self-map of a **singleton** is the identity, and a unit vector is never
+separated from itself (`Re(u · conj u) = ‖u‖² = 1`).  So `conjC3_of_geom_input_pairing` — the
+lap-114 headline — is vacuous; the pairing *bound* `norm_sum_le_of_pairing` remains true and
+reusable. -/
+alias hall_block_phase_pairing_false := NormalNumbers.CastingOut.not_blockPhasePairing
+
+/-- **HALL: a CONSTANT bottom threshold for the banded block saving** (`falseAsStated`,
+2026-09-25).  The repaired `WideBlockSavingBand J Jtop κ` asks for a constant-fraction saving on the
+dyadic blocks of a band; lap 116 shows the bottom of that band cannot be a constant.  On a
+**two-prime** block `{p,p'}` the twist `t = 2π/log(p'/p)` makes the two phases COINCIDE, so the
+block sum has norm exactly its mass and no `κ > 0` saving holds — and `|t| ≤ X²` is permitted by the
+wide range, so `X` can always be taken large enough.  Blocks `j = 1,2,3` are `{2,3}`, `{5,7}`,
+`{11,13}`, which refutes every `J₀ ≤ 3`.  The honest statement therefore carries a threshold that
+GROWS with `X`, whose cost is paid by `blockBandCost_of_log_bound` (only the `log` of the threshold
+is charged).  For `J₀ ≥ 4` the blocks hold `≥ 3` primes, exact alignment is impossible (`ℚ`-
+independence of `log p`) and near-alignment needs Kronecker — a conjecture, not a claim. -/
+alias hall_const_band_threshold_false :=
+  NormalNumbers.CastingOut.not_wideBlockSavingBand_const_le_three
 
 /-- **HALL: uniform casting-out law (C1 draft)** (`falseAsStated`, 2026-09-23).
 The first draft of C1 asked that window digit sums of `G4` be uniform mod `b − 1`.  No normal
@@ -905,6 +980,26 @@ def register : List Hall := [
    .parked, .frozen,
    "The hexSwap example does not refute it (3*xi is not abelian: probe z about 84 at L = 1), but a dimension count makes a single multiplier implausible; the odd-multiplier version is open",
    "Failures.TimesThreeLifting", "2026-09-23"⟩,
+  ⟨"TT (3.3) as TTNonPretentious",
+   "Assume TT's non-pretentiousness hypothesis with the implied constant existentially quantified after X and L",
+   .vacuous, .kernel,
+   "Every summand of ttPretentiousSum is nonnegative, so A = 1/L discharges it for every 1-bounded g including g = 1; TT's constant is absolute, and the faithful restatement also needs Dirichlet characters and twists up to X squared",
+   "alias hall_tt_nonpretentious_vacuous; restatement CastingOut.TTNonPretentiousUnif", "2026-09-25"⟩,
+  ⟨"K-point no-exceptional-set input as stated",
+   "Take KPointNoExcWith cK CstK K as the single open input of the C3/MRT headline",
+   .falseAsStated, .kernel,
+   "At K = 2 with both factors the constant 1, W = 1, shifts 1 and 2, X = exp L and N = ceil sqrt X the progression mean is exactly 1 while the claimed bound CstK 2 times L to the minus cK 2 tends to 0",
+   "alias hall_kpoint_noexc_false; repaired input CastingOut.KPointNoExcAtWith", "2026-09-25"⟩,
+  ⟨"the named open problem TwoPointNaturalCorrelationNoExc",
+   "Carry the exceptional-set-free form of TT 3.1(ii) as the one named open input of the D = 2 rung",
+   .falseAsStated, .kernel,
+   "Its non-pretentiousness hypothesis is free, so the constant-one witness refutes it outright; the same holds for KPointNaturalCorrelationNoExc at K = 2",
+   "alias hall_two_point_noexc_false", "2026-09-25"⟩,
+  ⟨"Lebesgue-measured exceptional set of scales",
+   "Charge TT's exceptional set of scales by the Lebesgue integral of 1/t over a measurable subset of the reals",
+   .vacuous, .kernel,
+   "The conclusion is only asked at integer scales, so E = the integers in [sqrt X, X] has zero cost and excludes every scale: the Prop is provably true and empty",
+   "alias hall_lebesgue_exceptional_scales; faithful cost CastingOut.TwoPointDyadicCorrelation", "2026-09-25"⟩,
   ⟨"uniform casting-out law (C1 draft)",
    "Assume a normal number's window digit sum is uniform mod b-1",
    .falseAsStated, .kernel,

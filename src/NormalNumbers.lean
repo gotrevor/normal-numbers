@@ -579,3 +579,9 @@ import NormalNumbers.TwoPointC3Budget
 import NormalNumbers.TwoPointC3Alt
 import NormalNumbers.TwoPointC3Trade
 import NormalNumbers.TwoPointC3Link
+import NormalNumbers.C3MrtTTDefect
+import NormalNumbers.C3MrtFaithfulInput
+import NormalNumbers.C3MrtArchFaithful
+import NormalNumbers.C3MrtBlockDefect
+import NormalNumbers.C3MrtCharSumZero
+import NormalNumbers.C3MrtURMLowHigh

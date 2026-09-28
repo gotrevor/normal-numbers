@@ -74,6 +74,7 @@ This file is a **thin pointer**, never a second durable overview.
 * **Binding orders (altitude-lap owned, OUTRANKS every handoff)** → `DIRECTION.md` → CURRENT DIRECTIVE
 * **Latest strategic synthesis** → `REFLECTION-2026-09-16-campaignB.md`
 * **Newest dated baton** → `HANDOFF-c4-2026-09-25-lap18-PROVED.md`
+* **Newest dated baton** → `HANDOFF-2026-09-25-5-block-route-refuted-and-rebuilt.md` (C3/MRT laps 115-117)
 * **Open items / attack path** → `PENDING_WORK.md` (top section)
 * **Frozen plan + estimates** → `ROADMAP.md`
 

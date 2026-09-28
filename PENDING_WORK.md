@@ -745,6 +745,956 @@ repo's leaf (D) tension, re-derived independently; `periodMean_pair_tendsto_zero
 6. **`twoPointWeightedAvg_all` (`TwoPointBet.lean`) stays an open, disclosed `sorry`.**  Ratified;
    never to be deleted, renamed or weakened.  It is implied by item 1 via
    `avgShape_of_forall_tendsto` (`TwoPointWorry.lean`).
+## Lap 117 (2026-09-25) — the bottom threshold must GROW: exact two-prime alignment (directive ②2)
+
+`C3MrtBlockDefect.lean` §7, trust-triple clean.  **Every constant bottom threshold `J₀ ≤ 3` for
+`WideBlockSavingBand` is refuted in the kernel.**
+
+* `blockSum_norm_eq_mass_of_pair` — **the alignment identity**.  If `blockPrimes X j = {p,p'}` and
+  `t·(log p' − log p) = 2π`, then `exp(−it log p') = exp(−it log p)`, so the block sum is
+  `exp(−it log p)·(1/p + 1/p')` and its norm is EXACTLY the block mass.  Zero saving.
+* `log_diff_bounds` — `1 − a/b ≤ log b − log a ≤ b/a − 1`, both directions of `log x ≤ x − 1`.
+  This is all the transcendence control the witnesses need.
+* `pair_twist_admissible` — the aligned twist is in the wide range, from two-sided bounds on the log
+  gap: `(log X)^{1/125} ≤ log X ≤ X − 1 < 2π/dhi ≤ t ≤ 2π/dlo ≤ X²`.
+* `not_wideBlockSavingBand_of_pair` — the general refutation from any two-prime block in the band.
+* Witnesses: `ceil_five_sq`, `ceil_seven_sq`, `bandTop_five = 3`, `bandTop_seven = 4`,
+  `blockPrimes_five_one = {2,3}`, `blockPrimes_seven_three = {11,13}`.
+* `not_wideBlockSavingBand_const_le_three` — `J₀ ≤ 3` refuted (block `{11,13}` at `X = 7`,
+  `t = 2π/log(13/11) ∈ [11π,13π]`, `13π ≤ 49 = X²`).  `not_wideBlockSavingBand_const_le_one` keeps
+  the readable `{2,3}` illustration at `X = 5`.  New `Maze.lean` row `hall_const_band_threshold_false`.
+
+**What this settles.**  The threshold in `WideBlockSavingBand` is not a convenience — it is forced,
+and it must grow with `X`.  Lap 116's `blockBandCost_of_log_bound` charges only `log(J X · log 2)`,
+so a threshold growing like any power of `log X` is affordable.  The two results are exactly
+complementary: ②2 says the threshold must grow, ②1 says growth is cheap.
+
+**Not claimed:** for `J₀ ≥ 4` the blocks hold `≥ 3` primes and exact alignment is impossible (the
+`log p` are `ℚ`-independent by unique factorisation).  Near-alignment of `n` phases within `ε` needs
+`|t| ≈ ε^{-(n-1)}` (Kronecker/Weyl on the torus, the `log p` being `ℚ`-independent), which `|t| ≤ X²`
+permits only for blocks with `j = O(log log X)` — that is the conjectural reason the *right*
+threshold is around `log log X`, and it is a sketch, not a kernel claim.  Formalising it needs
+simultaneous-approximation machinery mathlib does not have in usable form.
+
+**Next (directive ②3):** `CharPrimeSumLogQ D` at `t = 0` from `L(1,χ) ≫ q^{-1/2}`, via the
+elementary `f = 1 ∗ χ ≥ 0` argument; then ②4 `UniformResonantMass`.
+
+## Lap 116 (2026-09-25) — the band cost is DISCHARGED (directive ②1)
+
+`BlockBandCost` is no longer a hypothesis for the intended top `bandTop X = log₂⌈X²⌉₊ − 1`.  All in
+`C3MrtBlockDefect.lean` §6, trust-triple clean.
+
+* `blockPrimes_subset_Ico` — block `j` sits inside `[2^j, 2^{j+1})`.
+* `blockMass_le_one` — **every single block has mass `≤ 1`** (at most `2^j` primes, each reciprocal
+  `≤ 2^{-j}`).  This is what makes the ONE truncated top block affordable.
+* `blockMass_eq_zero_of_lt` — blocks entirely above the truncation are empty.
+* `sum_blockMass_above_le` — **the top of the band costs `≤ 1`**: above `bandTop` only `j = log₂⌈X²⌉₊`
+  can be nonempty, and that one has mass `≤ 1`.
+* `sum_blockMass_range_eq` / `sum_blockMass_range_le` — **the bottom of the band costs
+  `log(J·log 2) + mertensBound`**: the blocks below `J` regroup fiberwise into the primes `< 2^J`,
+  and `small_prime_mass_le` (Mertens) applies.  The `log` is the whole point: a threshold growing
+  like any power of `log X` is affordable, the threshold itself would not be.
+* `sum_filter_or_le` — splitting a filter on a disjunction is free for nonnegative terms.
+* `blockBandCost_bound` — the two halves: cost `≤ log(J X·log 2) + mertensBound + 1`.
+* `blockBandCost_of_log_bound` — **the affordability criterion**: any `J` whose `log` is dominated by
+  `ε·log log X` gives `BlockBandCost J bandTop ε C`.
+* `blockBandCost_const` — a constant threshold is affordable outright (`ε = 0`).
+
+**So the archimedean band route now rests on ONE per-block analytic statement,
+`WideBlockSavingBand J bandTop κ`, with its cost discharged.**
+
+**Next (directive ②2): pin the threshold from below.**  `¬ WideBlockSavingBand (fun _ => J₀) bandTop κ`
+for `J₀ ≤ 3`, by EXACT two-prime phase alignment.  The plan, with the witnesses checked by hand:
+
+| `j` | block | `t = 2π/log(p'/p)` | `X` | `X² ≥ t` | `bandTop X` |
+|---|---|---|---|---|---|
+| 1 | `{2,3}` | `2π/log(3/2) ≈ 15.50` | 5 | `25` ✓ | `log₂25 − 1 = 3` ✓ |
+| 2 | `{5,7}` | `2π/log(7/5) ≈ 18.67` | 5 | `25` ✓ | `3` ✓ |
+| 3 | `{11,13}` | `2π/log(13/11) ≈ 37.6` | 7 | `49` ✓ | `log₂49 − 1 = 4` ✓ |
+
+Admissibility bounds all come from `log x ≤ x − 1` in both directions: `log(3/2) ≤ 1/2` gives
+`t ≥ 4π > log X ≥ (log X)^{1/125}`, and `log(3/2) ≥ 1/3` (i.e. `log(2/3) ≤ −1/3`) gives `t ≤ 6π < 25`.
+The general lemma to prove first is `blockSum_norm_eq_mass_of_pair`: if `blockPrimes X j = {p,p'}` and
+`t(log p' − log p) = 2π` then `exp(−it log p') = exp(−it log p)`, so the block sum is
+`exp(−it log p)·(1/p + 1/p')` and its norm is EXACTLY the mass.  For `J₀ ≥ 4` the blocks have `≥ 3`
+primes and exact alignment is impossible (`ℚ`-independence of `log p`); near-alignment needs
+Kronecker, so that stays a conjecture with a sketch, not a kernel claim.
+
+## Lap 115 (2026-09-25, REVIEW) — laps 112-114 are REFUTED; the block route repaired and guarded
+
+**Finding.**  The archimedean "geometric endpoint" of laps 112-114 assumed a FALSE statement.  All
+three per-block hypotheses are now refuted in the kernel (`src/NormalNumbers/C3MrtBlockDefect.lean`,
+trust-triple clean, three `Maze.lean` rows), so `conjC3_of_geom_input_blocks`, `_blockPartial` and
+`_pairing` are **vacuous**:
+
+* `not_blockPhasePairing` (lap 114, every `d < 1`) — `X = 3, q = 1, t = 2, j = 1, m = 3` makes the
+  "initial segment" the SINGLETON `{2}`.  An injective self-map of a singleton is the identity, and
+  a unit vector is never separated from itself: `Re(u · conj u) = ‖u‖² = 1`.
+* `not_wideBlockPartial` (lap 113, every `κ > 0`) — same witness; the segment sum has norm exactly
+  `1` against a demanded `(1−κ)·1`.  Abel is sound, what it consumes is not.
+* `not_wideBlockSaving` (lap 112, every `κ > 0`) — **structural**, no segment parameter to abuse:
+  the truncated TOP block can be a singleton.  `X = 16/5`, `⌈X²⌉₊ = 11`, `j = 3`, block `{11}`,
+  weighted sum of norm exactly its own mass `1/11`.
+
+**Repair (same file).**  `WideBlockSavingBand J Jtop κ` — the saving asked only of *complete* blocks
+in a BAND `J X ≤ j ≤ Jtop X` — plus `BlockBandCost J Jtop ε C`, the mass discarded outside the
+band, which is a *purely arithmetic* obligation (no characters, no twists).
+`wideTwistSmall_of_blockSavingBand : band κ + cost ε ⟹ WideTwistSmall (κ − ε)`, and
+`conjC3_of_geom_input_band` is the live headline on that side.  Supporting:
+`norm_blockSum_le_mass` (the trivial bound), `sum_blockMass_le`, `dirichletChar_norm_le_one`,
+`dyadicPrimeBlockMass_nonneg`.
+
+**Guards (the new binding rule — see `DIRECTION.md` ① GUARD RULE).**  `wideBlockSavingBand_zero`
+(at `κ = 0` the statement IS the trivial bound, so all its content is `κ > 0`);
+`band_block_complete` (the intended `Jtop X = log₂⌈X²⌉₊ − 1` yields only complete blocks, so the
+lap-112 witness class is excluded by hypothesis); `witness_block_above_band`,
+`witness_block_below_band` (the §1 witnesses provably do not apply).
+
+**Why the bottom threshold cannot be a constant.**  A block at a *fixed* index holds finitely many
+primes; their `log p` are `ℚ`-independent, so a large twist drives all their phases into one arc
+(Kronecker), and the wide range permits `|t| ≤ X²`.  For a TWO-prime block this is exact and needs
+no equidistribution: at `t = 2π/log(p'/p)` the two twists coincide.  Blocks `j = 1,2,3` are
+`{2,3}`, `{5,7}`, `{11,13}` — so `J₀ ≤ 3` is exactly refutable, which is item ②2 of the directive.
+
+**Next attack** (directive order): ① `blockBandCost_holds` — top part: blocks above
+`Jtop X = log₂⌈X²⌉₊ − 1` hold only primes `p > n/2` (`n = ⌈X²⌉₊+1`), so mass `≤ 2`; bottom part:
+`small_prime_mass_le` on the primes `< 2^{J X}` gives `log(J X·log 2) + mertensBound`.  ② the exact
+two-prime alignment refutation of a constant threshold.  ③ `CharPrimeSumLogQ` at `t = 0` from
+`L(1,χ) ≫ q^{-1/2}`.  ④ `UniformResonantMass`.
+
+**Also recorded this lap:** the lap-108-114 ledger was missing from this file (the session-3 handoff
+pointed here for detail that was never written).  Restored below.
+
+## Laps 108-114 (2026-09-25) — the archimedean debt narrowed (112-114 now REFUTED, see lap 115)
+
+| lap | advance | status |
+|---|---|---|
+| 108 | `NonPrincipalLocalBound` — narrow non-principal debt with no `X` on the right.  `depthRoot_zero_emod` + `exists_uniform_narrow_const`: the `h'`-uniformity is a THEOREM (`ee` is 1-periodic ⇒ ≤ `b` values ⇒ `Finset.sup'`). | stands |
+| 109 | `TwistedPrimeSumSmall` unifies the narrow-non-principal and wide debts; `twistedPrimeSum_principal_zero` guards that the excluded corner must be excluded. | stands |
+| 110 | The multiplier `z` eliminated: `1 − Re(w^b) ≤ b²(1 − Re w)` ⇒ `ttPretentiousSumChar_pow_le`.  Debt becomes `OneNonPretentious` + the corner `RootOrderCase`. | stands (alternative route) |
+| 111 | De-escalation: in TT's range `log q ≤ (1/125)·log log X`, so a `log`-sized bound suffices (`CharPrimeSumLogQ`), classical at `t = 0`.  Corrected lap 110's Siegel claim. | stands |
+| 112 | Refuted the `log log(q(2+|t|))` route (scale-degenerate); reduced to `WideBlockSaving`. | the refutation stands; **`WideBlockSaving` is FALSE** (lap 115) |
+| 113 | Abel transfer `norm_sum_smul_le_of_partial_bound` — an initial-segment saving transfers to the `1/p`-weighted sum with the SAME constant. | the transfer stands; **`WideBlockPartial` is FALSE** (lap 115) |
+| 114 | The pairing bound `norm_sum_le_of_pairing` — an injective self-map of a finite set is a permutation, so separation gives `‖∑u‖ ≤ (√(2+2d)/2)#S`. | the bound stands and is reusable; **`BlockPhasePairing` is FALSE** (lap 115) |
+
+## Lap 102 (2026-09-25) — RESTATEMENT run: the TT interface repaired, consumers re-audited
+
+Operator-scoped restatement lap (no crux advance).  New `src/NormalNumbers/C3MrtTTDefect.lean`.
+
+**(a) Defects machine-checked.**  `ttNonPretentious_trivial` (old `TTNonPretentious` holds for
+every 1-bounded `g`, witness `A = 1/L`), `not_kPointNoExcWith_const_one`,
+`not_kPointNaturalCorrelationNoExc`, `not_twoPointNaturalCorrelationNoExc` (the `D = 2` "named
+open problem" is FALSE), `twoPointNaturalCorrelation_trivially_true` (the Lebesgue-charged
+exceptional set is free).  Four new `Maze.lean` kernel rows.
+
+**(b) Faithful restatements + guards.**  `ttPretentiousSumChar` (Dirichlet characters),
+`TTNonPretentiousAt A` / `TTNonPretentiousUnif` (constant OUTSIDE `X, L`; conductors
+`q ≤ (log X)^{1/125}`; twists `|t| ≤ X²`), `TwoPointDyadicCorrelation` (exceptional set a
+`Finset` of dyadic scales, cost a fraction of `#(dyadicScales X)`), `KPointNoExcAtWith A`.
+Bridges `ttNonPretentious_of_At`, `kPointNoExcAtWith_of_with` (nothing weakened).  Guards
+`not_ttNonPretentiousUnif_one`, `not_ttNonPretentiousAt_one`, `const_one_not_faithful`,
+`full_exceptional_set_not_admissible` + `exists_L_cost_lt_one`.
+
+**(c) SURVIVORS table** — `HANDOFF-2026-09-25-tt-interface-restated.md`.  ~50 declarations across
+9 modules are VACUOUS (`conjC3_of_geom_input` included); the window/schedule/threshold algebra
+and `depthRoot` theory survive with content; the one genuine survivor on the analytic side is
+`ttNonPretentious_of_uniformResonantMass`, whose constant is *already* uniform in `X, L`.
+
+**Next attack.** ① Rethread `dyadic_window_bound_with` → … → `conjC3_of_geom_input` onto
+`KPointNoExcAtWith A` (the consumer must now SUPPLY `TTNonPretentiousAt A`, with `A` uniform in
+`b, h', X, L`).  ② Upgrade `ttNonPretentious_of_uniformResonantMass` to the faithful hypothesis:
+the missing content is Dirichlet characters `q > 1` and twists up to `X²`, not the constant.
+③ Re-read TT 3.1(ii)'s conclusion once more for the exact exceptional-set shape before freezing
+`TwoPointDyadicCorrelation` at general `K`.
+
+## Lap 103 (2026-09-25) — the headline REPAIRED: chain parametric in the archimedean hypothesis
+
+The lap-102 refutation left `conjC3_of_geom_input` vacuous.  Rather than copy the chain, the
+archimedean hypothesis is now a **parameter** everywhere:
+
+* `C3MrtUnifK.KPointNoExcFor Pnp cK CstK K` (+ `kPointNoExcFor_of_with`) — `KPointNoExcWith`
+  with the non-pretentiousness predicate abstracted and the scale condition `3 ≤ X` (all the
+  consumer uses; it applies the input at `X = N²`).  `dyadic_window_bound_with`,
+  `windowPhi_hwin`, `depthAvg_le_with` and the whole tendsto stack up to
+  `depthAvg_gen_tendsto_of_geom` / `_of_geom_slow` are now stated over it — *in place*, with the
+  old call sites wrapped, so nothing downstream was duplicated.
+* `C3MrtSlowSched.ArchSupply Pnp b` — the certificate the chain instantiated silently, named:
+  for every primitive `h'` an exponent `κ ∈ (0,1]` with `Pnp (zOmegaNat (depthRoot b h' 0)) X L`
+  for `1 ≤ L ≤ (log X)^κ`.  `archSupply_tt` is the old (content-free) instance.
+* `depthDiagonalSlow_of_geom_for`, `weylLambertTwist_of_geom_slow_for`,
+  `weylLambertTwist_of_geom_input_for`, `conjC3_of_geom_input_for` — the chain over `Pnp`.
+* **`C3MrtFaithfulInput.conjC3_of_geom_input_at`** — the repaired headline:
+
+      (∀ b ≥ 3, ∀ K, KPointNoExcAtWith A (cKgeom c₀ θ b) (CstKdeg m) K) →
+      (∀ b ≥ 3, ArchSupply (TTNonPretentiousAt A) b) → ConjC3        (0 < θ < 1)
+
+  Both hypotheses faithful (constant outside `X, L`; characters of modulus
+  `≤ (log X)^{1/125}`; twists `|t| ≤ X²`), neither refuted by the constant-one family
+  (`const_one_not_faithful`), neither trivially true (`not_ttNonPretentiousUnif_one`).
+
+**Honest ledger change.** The headline now rests on TWO named open statements, not one: the
+`K`-point correlation input AND the archimedean supply.  The second was previously hidden inside
+a vacuous instance.
+
+**Next attack.** ① Discharge `ArchSupply (TTNonPretentiousAt A) b` as far as the resonance
+machinery reaches: `ttNonPretentious_of_uniformResonantMass` already gives a constant uniform in
+`X, L` (`A = exp(−C₁(z))`); the two genuine gaps are Dirichlet characters `q > 1` (needs the
+character-twisted resonant-mass bound) and twists `|t| ≤ X²` rather than `(log X)^{1/125}` —
+note the latter is where TT's own `M(g; X², Q)` cuts the twist at `X²`, so re-read
+`papers/tao-teravainen-2025-quantitative-correlations.txt:557-576` before assuming the wide
+range is needed for (3.3) as opposed to for the *conclusion*.  ② Rethread `C3MrtRootsInput` /
+`C3MrtDepthInput` / `C3MrtEvtInput` / `C3MrtDyadicInput` onto `KPointNoExcFor` the same way
+(mechanical; they are copies of the `_with` chain).  ③ The crux itself (one Weyl sum, laps
+100-101) is unchanged; its interface is now `KPointNoExcAtWith`.
+
+## Lap 104 (2026-09-25) — the faithful archimedean supply, DECOMPOSED (and one route refuted)
+
+New `src/NormalNumbers/C3MrtArchFaithful.lean`, all axiom-clean.
+
+**The exact split.**  `ttPretentiousSumChar_eq`: for `‖z‖ = 1`,
+
+    ttPretentiousSumChar (zOmegaNat z) X χ t = ∑_{p ≤ X²} 1/p − Re(z · twistedPrimeSum X χ t)
+
+with `twistedPrimeSum X χ t = ∑_{p ≤ X²} conj(χ(p)) p^{-it}/p`.  With two-sided Mertens
+(`abs_primeReciprocals_sub_log_log_le`) this gives `ttPretentiousSumChar_ge`:
+`log log X² − mertensBound − Re(z·T) ≤ ttPretentiousSumChar`.  So the ENTIRE faithful archimedean
+obligation is one bound on `Re(z · twistedPrimeSum)`.
+
+**Refuted sub-route (recorded in the file's doc-comment).**  Stating the bound on `‖T‖` instead
+of `Re(z·T)` is FALSE in the narrow range: at `t = 0`, `χ = 1`, `T` is the full mass
+`≈ log log X`.  What makes the pretentious sum large there is the *direction* of `z`, not the
+size of `T` — that is precisely the resonance mechanism.  Hence `NarrowTwistSmall` is stated
+with `Re` and `WideTwistSmall` with the norm (converted by `re_le_norm`).
+
+**Second refuted sub-route.**  The resonance certificate `ttNonPretentious_of_uniformResonantMass`
+CANNOT cover the faithful twist range: its resonant-mass bound carries `log(2+|t|)`, affordable
+only for `|t| ≤ (log X)^{1/125}` (that is where its `ht4` step is used).  At `|t| ≤ X²` that term
+is `≍ log X` and swamps `log log X`.  So the wide range needs cancellation in
+`∑_{p≤Y} conj(χ(p))p^{-it}/p` — a zero-free region for `L(s,χ)` (Vinogradov–Korobov), not a
+resonance count.  This is the genuinely NEW analytic debt created by faithfulness.
+
+**The chain now:** `NarrowTwistSmall` + `WideTwistSmall` → `faithfulArchLower_of_twist_small` →
+`FaithfulArchLower b C` → `archSupply_of_faithfulArchLower` → `ArchSupply (TTNonPretentiousAt
+(exp (−C))) b` → `conjC3_of_geom_input_lower : … → ConjC3`.  `ttNonPretentiousAt_of_lower` is the
+exponentiation step, once and for all.
+
+**Next attack.** ① `narrowTwistSmall_of_uniformResonantMass` at `q = 1`: the algebra above turns
+the existing `ttPretentiousSum_ge` + `UniformResonantMass` into exactly `Re(zT) ≤ cos ε · log log
+X² + (1−cos ε)·resonantMass`, i.e. `NarrowTwistSmall` with `κ ≈ 1 − cos ε − 100ε`.  Do this first;
+it is bookkeeping over lemmas that already exist. ② The character case `q > 1` of the narrow
+range: the resonance windows must be taken per residue class mod `q`, so `resonant_mass_le` needs
+a `φ(q)`-fold version — state it as `UniformResonantMassChar` and check the count. ③ The wide
+range `WideTwistSmall`: look for a mathlib/PNTPort route to `∑_{p≤Y} χ(p)p^{-it}/p = O(1)` for
+`|t| ≥ (log Y)^{1/125}`; `src/PNTPort` has the Wiener–Ikehara/MediumPNT apparatus but no twisted
+zero-free region.
+
+## Lap 105 (2026-09-25) — the narrow range is DISCHARGED at the trivial character
+
+* `C3MrtTTPretentious.ttPretentiousSum_lower_of_uniformResonantMass` — the resonance
+  certificate's *content*, extracted from the (now vacuous) TT (3.3) corollary:
+  `ttExponent z · log log X − C₁ ≤ ttPretentiousSum (zOmegaNat z) X t` for all `3 ≤ X` and
+  `|t| ≤ (log X)^{1/125}`, with `C₁ = C₁(z) ≥ 0` independent of `X, t`.
+  `ttNonPretentious_of_uniformResonantMass` is now a five-line corollary of it.
+* `C3MrtArchFaithful.narrowTwistSmallTriv_of_uniformResonantMass` —
+  `NarrowTwistSmallTriv z (ttExponent z) C` for unimodular `z ≠ 1`, on the route's existing
+  single analytic input.  Via `ttPretentiousSumChar_eq` + two-sided Mertens + `log_ceil_sq_le`
+  (`log⌈X²⌉ ≤ 3 log X`).
+
+**So the narrow range costs nothing new; the open part of it is exactly the CHARACTERS**
+(`narrowTwistSmall_triv_of_narrow` pins that: `NarrowTwistSmall` at `q = 1` is the discharged
+statement).  Remaining debts, both explicit:
+① narrow range, `q > 1`: resonance windows per residue class mod `q` — a `φ(q)`-fold
+`resonant_mass_le`; the count must beat `(1 − ttExponent) log log X`, and `q ≤ (log X)^{1/125}`
+is the only size information available.
+② wide range `|t| > (log X)^{1/125}`: `WideTwistSmall`, needs cancellation in
+`∑_{p≤Y} conj(χ(p))p^{-it}/p` (zero-free region for `L(s,χ)`); the resonance route is refuted
+there (lap 104).
+
+## Lap 106 (2026-09-25) — the narrow range's PRINCIPAL characters reduced to `q = 1`
+
+`C3MrtArchFaithful`, all axiom-clean:
+
+* `sum_inv_primes_dvd_le` — `∑_{p ≤ Y, p ∣ q} 1/p ≤ log log q + mertensBound` (`q ≥ 2`).
+* `norm_twistedPrimeSum_principal_sub` — the principal character mod `q` and the trivial
+  character differ only on `p ∣ q`: `‖T₁ − T_{χ₀}‖ ≤ ∑_{p ∣ q} 1/p`.
+* `twistedPrimeSum_zero_modulus` — the `q = 0` corner: in `ZMod 0 = ℤ` no prime is a unit, so
+  `T = 0`.
+* `narrowTwist_principal_of_triv` — the principal characters cost only `log log q + O(1) ≤
+  log log log X + O(1)`, absorbed by halving the saving (`log u ≤ (κ/2)u − 1 − log(κ/2)`).
+* `NonPrincipalTwistSmall` + `narrowTwistSmall_of_triv_of_nonPrincipal` —
+  `NarrowTwistSmallTriv z κ C` **and** the non-principal debt give the full
+  `NarrowTwistSmall z (κ/2) C'`.
+
+So the narrow range is now: `q = 1` **proved** (lap 105, on `UniformResonantMass`), principal
+`q > 1` **proved** (this lap), non-principal `q > 1` open — and the non-principal case is
+expected to be the *easy* one (`∑_{p≤Y} χ(p)p^{-it}/p = O(log log(q(2+|t|)))` by non-vanishing of
+`L(1+it,χ)`, which at `q, |t| ≤ (log X)^{1/125}` is `O(log log log X)`).
+
+**NEW OBLIGATION SURFACED — uniformity of the constant in the twist `h'`.**  `ArchSupply
+(TTNonPretentiousAt A) b` fixes ONE `A` across all primitive `h'`, so `FaithfulArchLower b C`
+needs `C` uniform in `h'` and a `κ(h') > 0`.  This was invisible while the hypothesis was
+vacuous.  It looks provable and should be the next concrete step:
+`depthRoot b h' 0 = ee(h'/b)` with `b ∤ h'`, so `|arg (depthRoot b h' 0)| ≥ 2π/b`, hence
+`ttEps ≥ min(π/b, 1/256)` — a bound depending on `b` ALONE.  Then `ttExponent` is increasing in
+`ε` on `[0, 1/256]`, giving a uniform `κ(b) > 0`; the constant `C₁` of
+`ttPretentiousSum_lower_of_uniformResonantMass` must likewise be shown uniform over that finite
+angle set (there are at most `b − 1` residues `h' mod b`, so this should be a `Finset.max`
+argument, not an analytic one).
+
+**Next attack.** ① The `κ(b)`/`C(b)` uniformity above (`Finset.max` over `h' mod b`; the
+`UniformResonantMass` constant depends on `z` only through `arg z`).  ② `NonPrincipalTwistSmall`.
+③ `WideTwistSmall` (lap 104's refutation says: needs a zero-free region, not resonance).
+
+## Lap 107 (2026-09-25) — the uniformity in the twist `h'` is PROVED (exponent side)
+
+`C3MrtArchFaithful`, axiom-clean:
+
+* `cos_two_pi_mul_div_le` — `cos(2πk/b) ≤ cos(2π/b)` for `1 ≤ k ≤ b−1` (both halves of the
+  circle, via `cos_two_pi_sub`).
+* `ee_re_real` — `Re (ee r) = cos(2π r)`.
+* **`resEps_depthRoot_ge`** — `|arg (depthRoot b h' 0)| / 2 ≥ π/b` for EVERY `h'` with `b ∤ h'`:
+  the angle is `2πk/b` with `1 ≤ k ≤ b−1`, so it is bounded away from `0` uniformly in `h'`.
+* `kappaDepth b := (1/10)·min(π/b, 1/256)²` and **`ttExponent_depthRoot_ge`** —
+  `kappaDepth b ≤ ttExponent (depthRoot b h' 0)` for every primitive `h'`, using
+  `Real.cos_le_one_sub_mul_cos_sq` (`1 − cos ε ≥ (2/π²)ε²`) and `π² ≤ 12`.
+
+So the *exponent* side of the uniformity obligation raised in lap 106 is discharged: one
+positive `κ(b)` works for all twists.  What remains of that obligation is the *constant* side:
+the `C₁` of `ttPretentiousSum_lower_of_uniformResonantMass` (equivalently the `C(z, ε)` of
+`UniformResonantMass`) must also be bounded uniformly over `z ∈ {ee(k/b) : 1 ≤ k ≤ b−1}` —
+a FINITE set for each `b`, so this is a `Finset.max` argument, not analysis.
+
+**Next attack.** ① The finite-max step: `∃ C(b), ∀ h' with b ∤ h', C₁(depthRoot b h' 0) ≤ C(b)`
+— note `depthRoot b h' 0` depends only on `h' mod b`, so the sup is over `b − 1` values; the
+cleanest Lean route is to index by `k : Fin b` and take `Finset.max'`.  ② Then assemble
+`FaithfulArchLower b C(b)` from `narrowTwistSmallTriv_of_uniformResonantMass` +
+`narrowTwistSmall_of_triv_of_nonPrincipal` + `WideTwistSmall`. ③ Debts left after that:
+`NonPrincipalTwistSmall` and `WideTwistSmall` only.
+
+## Lap 93 (2026-09-25) — the open input is RESTRICTED to the family the chain actually uses
+
+**New file `src/NormalNumbers/C3MrtRootsInput.lean` (12 declarations, all trust-triple clean).**
+Executes PENDING_WORK lap-92 levers ② and ③ in one stroke.
+
+`KPointNoExcWith cK CstK K` quantifies over EVERY coprime-multiplicative bounded family
+`g : Fin K → ℕ → ℂ` and EVERY injective shift vector `hsh : Fin K → ℕ`.  The C3 chain uses
+neither generality: its factors are always `g i = zOmegaNat (z i)` with `‖z i‖ = 1` (in fact
+`z i = depthRoot b h' i`), and its shifts are always `hsh i = i + 1`.  So
+
+    KPointNoExcRoots cK CstK K :=
+      ∀ z : ℕ → ℂ, (∀ i, ‖z i‖ = 1) → ∀ X L, 2 ≤ X → 1 ≤ L → L ≤ log X →
+        (∃ i : Fin K, TTNonPretentious (zOmegaNat (z i)) X L) →
+          ∀ N, √X ≤ N → N ≤ X → ∀ W r, 0 < W → W ≤ L^{cK K} → K+1 ≤ L^{cK K} →
+            ‖(W/N) • ∑_{n ∈ (N,2N], n ≡ r (W)} ∏_{i<K} z i ^ ω(n+i+1)‖ ≤ CstK K · L^{-cK K}
+
+with `kPointNoExcRoots_of_with : KPointNoExcWith → KPointNoExcRoots` so nothing is lost, and the
+whole chain rethreaded onto it:
+
+    conjC3_of_geom_input_roots :
+      (∀ b ≥ 3, ∀ K, KPointNoExcRoots (cKgeom c₀ θ b) (CstKdeg m) K) → ConjC3     (0 < θ < 1)
+
+`dyadic_window_bound_roots`, `windowPhi_hwin_roots`, `depthAvg_le_roots`,
+`depthAvg_gen_tendsto_of_unif_roots`, `depthAvg_gen_tendsto_of_geom_slow_roots`,
+`depthDiagonalSlow_of_geom_roots`, `weylLambertTwist_of_geom_slow_roots`,
+`weylLambertTwist_of_geom_input_roots`.  Only `dyadic_window_bound_roots` differs in its proof,
+and only in the one line that applies the input — the shift-bound and injectivity side goals are
+now discharged inside `kPointNoExcRoots_of_with` instead.
+
+**Why this narrowing is free where the lap-92 `∀ i` one was not.**  Lap 92 failed because the
+consumer could not DISCHARGE the weaker hypothesis at a shared cutoff `L`
+(`ttExponent (depthRoot b h' i) → 0`).  Restricting the *family* and the *shifts* asks the
+consumer to discharge nothing new: it was already only instantiating at `zOmegaNat ∘ z` with
+`hsh i = i+1`.  The gain is entirely on the ledger — the open statement is no longer "the
+`K`-point Elliott bound for arbitrary bounded multiplicative functions" but "…for the
+one-parameter family `n ↦ z^{ω(n)}`, `|z| = 1`, at consecutive shifts `n+1, …, n+K`".
+
+**Next attack (lap 94+).**
+1. **`∀ᶠ K`.**  `KN N = max 1 (depthSlow b N - v) → ∞`, so every fixed `K` is used at only
+   finitely many `N` and `depthAvg` at finitely many scales cannot move a `Tendsto`.  Weaken
+   `hin : ∀ K, …` to `∀ᶠ K in atTop, …` in `depthAvg_gen_tendsto_of_unif_roots` (its `hin _` sits
+   inside a `filter_upwards`, so the change is to add `hKNtop.eventually hin` to that
+   `filter_upwards` list), then up the chain.  Cheap; low mathematical value but honest.
+2. **Restrict `z` further.**  `KPointNoExcRoots` still quantifies over all unimodular `z : ℕ → ℂ`;
+   the chain only feeds `z i = depthRoot b h' i = e(h'/b^{i+1})` — a *geometric* family of roots
+   with `z i → 1`.  Defining `KPointNoExcDepth b h'` (the same bound for that one family) would
+   cut the open statement down to a single explicit sequence.  Check first whether the rest of
+   the chain really never varies `z` (it does not — `depthAvg_le_roots` fixes
+   `z := fun i => depthRoot b hh i`), so this should be another free restriction.
+3. Then the `Statement.lean` audit surface + ledger writeup (C3-T6).
+
+## Lap 92 (2026-09-25) — the `∀ i` narrowing is REFUTED; the `∃ i` is load-bearing
+
+**Directive items 1 and 4 LANDED, items 2–3 REFUTED by a compiler-checked probe.**  New file
+`src/NormalNumbers/C3MrtNoExcAll.lean` (6 declarations, all `[propext, Classical.choice,
+Quot.sound]`).
+
+**① `depthRoot_ne_one_of_not_dvd_all`** — every twist level of a primitive `h'` has a nontrivial
+root, not just the leading one.  So the *bookkeeping* premise of the `∀ i` plan is true.
+
+**④ `kPointNoExcWith_mono`** — the input is monotone: down in `cK`, up in `CstK`.  Both
+hypotheses (`W ≤ L^{cK K}`, `hsh i ≤ L^{cK K}`) tighten exactly when the conclusion
+(`≤ CstK K·L^{-cK K}`) loosens, because `L ≥ 1`.  **Ledger consequence:** asking for
+`KPointNoExcWith (cKgeom c₀ θ b) (CstKdeg m) K` is not a new statement beyond
+`∀ K, KPointNaturalCorrelationNoExc K` — it is exactly the demand that the constants that
+statement already produces existentially degrade no faster than `c₀b^{-θK}`, `exp((K+1)^m)`.
+The headline hypothesis is a *rate*, and that is now a theorem, not prose.
+
+**②③ REFUTED — and the refutation is quantitative, not bookkeeping.**  `KPointNoExcAllWith`
+(defined in the new file, with `kPointNoExcAllWith_of_with` so nothing is lost) weakens
+`∃ i, TTNonPretentious (g i) X L` to `∀ i, …`.  The C3 chain *can* show every factor is
+non-pretentious — but not at a common cutoff `L`.  `ttNonPretentious_zOmegaNat` certifies
+`zOmegaNat z` only for `L ≤ (log X)^{ttExponent z}`, and
+
+    tendsto_ttExponent_depthRoot : ttExponent (depthRoot b h i) → 0   (i → ∞)
+
+because `depthRoot b h i = e(h/b^{i+1}) → 1` (`tendsto_depthRoot_one`) and
+`ttExponent z = (1-cos(ttEps z))(1 - (126/125)(100 ttEps z))` with `ttEps z = min(|arg z|/2, 1/256)`.
+The `K`-point statement has ONE `L` shared by all `K` factors, so the `∀ i` form would force
+`κ ≤ inf_i ttExponent (depthRoot b h' i) = 0`; `no_uniform_ttExponent_depthRoot` shows no positive
+`κ` survives.  Quantitatively `ttExponent (depthRoot b h' i) ≍ b^{-2i}`, so at the diagonal level
+`K = D_N` even the *threshold* clause `L^{c_K} ≥ K+1` would read
+`b^{-(2+θ)K}·log log X ≳ log K`, i.e. `u^{-1-θ}(log u)^{-(2+θ)} ≳ log log u` — false.
+
+**What this tells us about the route (the real content).**  The deep digits of the Lambert
+constant are quantitatively *almost* pretentious: `z_i = e(h/b^{i+1})` sits within `O(b^{-i})` of
+`1`, so `z_i^ω` is nearly the constant function `1`.  Only the LEADING root carries usable
+non-pretentiousness, and that is precisely why the chain fixes `κ = ttExponent (depthRoot b h' 0)`
+once and for all.  The `∃ i` in `KPointNoExcWith` is therefore not slack to be trimmed — it is the
+shape the problem has.
+
+**Next attack (lap 93+).**  With the `∀ i` door closed, the remaining narrowing levers are:
+1. **Weaken `∀ K` to `∀ᶠ K`** (or `∀ K ≥ K₀`).  The chain uses `KN N = max 1 (depthSlow b N - v)`,
+   which tends to `∞`, so every small `K` is used for only finitely many `N`; `depthAvg` at
+   finitely many scales cannot affect a `Tendsto`.  Cheap, and it is a genuine weakening of the
+   assumed family.  Do this FIRST.
+2. **Weaken the coprime-multiplicativity quantifier**: `KPointNoExcWith` quantifies over ALL
+   `g : Fin K → ℕ → ℂ`; the chain only ever feeds `g i = zOmegaNat (z i)` with `‖z i‖ = 1`.
+   Define `KPointNoExcRoots` (the same statement restricted to unimodular-root powers) plus
+   `kPointNoExcRoots_of_with`, and rethread.  This restricts the open `Prop` to the family it is
+   actually used on — a real narrowing, and the rethread is local
+   (`dyadic_window_bound_with` is the only consumer).
+3. **Weaken the shift quantifier**: `hsh` ranges over all injective `Fin K → ℕ`; the chain only
+   uses `hsh i = i+1`.  Same treatment, same single consumer.
+4. Only then: the `Statement.lean` audit surface + ledger writeup (C3-T6).
+
+## Lap 91 (2026-09-25, REVIEW) — the headline rests on ONE statement; now make that statement assume less
+
+**Binding orders: `DIRECTION.md` → CURRENT DIRECTIVE.**  State at entry: branch `wip/c3-mrt`,
+HEAD `b7d9f45`, `lake build` green (9257 jobs), the `C3Mrt*` chain sorry-free with zero `axiom`
+declarations.  The only campaign `sorry` is `SwingC3Leaf.weylLambertTwist_holds` (disclosed).
+
+**Crux advance landed this lap (lap 90).**  `KPointThresholdSlow b Q P (cKgeom c₀ θ b)` is no
+longer a hypothesis — it is a THEOREM for every `0 < θ < 1` (`kPointThresholdSlow_of_geom`), with
+the threshold constructed explicitly as `Athr K = 2^(2^⌈φ K⌉)`, `φ K = b^{θK}log(K+2+M₀)/(κc₀log2)`.
+Lap 89's NEXT ① guessed this FAILS; it does not, and the refutation is now in the kernel, not in a
+numerical table.  Consequently
+
+    conjC3_of_geom_input : (∀ b ≥ 3, ∀ K, KPointNoExcWith (cKgeom c₀ θ b) (CstKdeg m) K) → ConjC3
+
+with NO other hypothesis.  Where `θ < 1` is spent, twice and symmetrically:
+* saving side — `b^{-θD_N}·log log a_N ≍ u^{1-θ}(log u)^{-θ}` must beat `log CstKdeg = O(log u)^m`;
+* threshold side — `log log Athr(D_N) ≍ (u log u)^θ log log u` must fit inside `log log a_N ≍ u log 2`.
+Both are the SAME `u^{1-θ}` margin.  That symmetry is the structural reason `θ = 1` is this
+route's real boundary (lap 89), and it is now visible on both sides of the ledger.
+
+**Next attack (lap 92+) — narrow what `KPointNoExcWith` ASSUMES.**  The input is 🔴 and will stay
+🔴 (TT: triple correlations "not within current technology"); the remaining honest work is to make
+the assumed `Prop` as weak as possible, and to make its shape auditable.
+
+1. `depthRoot_ne_one_of_not_dvd_all {b} (hb : 0 < b) {h'} (hnd : ¬ (b:ℤ) ∣ h') (i : ℕ) :
+   depthRoot b h' i ≠ 1`.  Proof: copy `depthRoot_ne_one_of_not_dvd` with `pow_one` replaced by
+   `b ∣ b^{i+1}`; `ee_eq_one_iff_int` gives `h' = M·b^{i+1}`, contradicting `¬ b ∣ h'`.
+2. `KPointNoExcAllWith cK CstK K` — `KPointNoExcWith` with `(∃ i, TTNonPretentious (g i))`
+   weakened to `(∀ i, TTNonPretentious (g i))`.  Strictly less is assumed; ① shows the C3 consumer
+   can still discharge it, because every factor it feeds in is `zOmegaNat (depthRoot b h' i)` with
+   `depthRoot b h' i ≠ 1`, and `ttNonPretentious_zOmegaNat` is unconditional (lap 83).
+   Add `kPointNoExcAllWith_of_with : KPointNoExcWith cK CstK K → KPointNoExcAllWith cK CstK K`
+   (take `i = 0`) so no existing consumer is disturbed.
+3. Rethread: `dyadic_window_bound_K` currently passes `⟨⟨0, hK⟩, hnp …⟩` at
+   `C3MrtKPointNoExc.lean:133` — that is the ONLY place the `∃ i` is used, so the rethread is
+   local.  Its `_with` twin in `C3MrtUnifK` (`dyadic_window_bound_with`) is the same pattern.
+   Then `depthAvg_gen_tendsto_of_geom_slow` must carry `hnp` for every `i` (its current
+   hypothesis names only `depthRoot b hh 0`), and `depthDiagonalSlow_of_geom` supplies it via ①.
+   Headline: `weylLambertTwist_of_geom_input_all`, `conjC3_of_geom_input_all`.
+4. `kPointNoExcWith_mono {cK cK' CstK CstK'} (hc : ∀ K, cK' K ≤ cK K) (hC : ∀ K, CstK K ≤ CstK' K)
+   (hc0 : ∀ K, 0 < cK' K) : KPointNoExcWith cK CstK K → KPointNoExcWith cK' CstK' K`.  Both the
+   hypotheses (`W ≤ L^{cK K}`, `hsh i ≤ L^{cK K}`) and the conclusion (`≤ CstK K·L^{-cK K}`) move
+   the right way when `cK` shrinks, because `L ≥ 1`.  Consequence to record in the ledger: the
+   geometric profile is NOT an extra assumption beyond `∀ K, KPointNaturalCorrelationNoExc K` —
+   it is precisely the statement that the per-`K` constants that statement already produces
+   existentially degrade no faster than `c_K ≳ c₀ b^{-θK}`, `Cst_K ≲ exp((K+1)^m)`.
+5. Only after 1–4: consider whether `∀ K` can be weakened to `∀ K ≥ 2` (the chain uses
+   `KN N = max 1 (depthSlow b N - v) → ∞`, so all small `K` are used only for finitely many `N`;
+   a `∀ᶠ K` form may be extractable via an eventual-`N` argument).
+
+**Trigger status this lap.**  C3-T1 NOT fired (lap 83 discharged the archimedean hypothesis
+outright).  C3-T4 **SERVED** — the diagonal does close from an explicitly-uniform input, and with
+the threshold discharged; retired.  C3-T5 satisfied by lap 90 (the headline rests on strictly less:
+the threshold hypothesis is gone).  New **C3-T6**: six laps to narrow `KPointNoExcWith` further or
+declare the reduction FINAL and write the audit surface + ledger.
+
+**Repetition check (last 3 laps).**  88 → `θ < 1/2` from a degrading input; 89 → `θ < 1` by slowing
+the schedule; 90 → the threshold discharged.  No repetition: each lap removed a different
+hypothesis, and each is a strictly-less statement about the same headline.  No defect was
+re-derived; lap 90 CORRECTED lap 89's mis-estimate of `log log a_N` rather than re-deriving it.
+
+**Crux-neglect check.**  All three laps hit the headline chain itself, none hit side-leaves.  The
+one thing NOT yet attacked is the open input's own content — and per the source that is generational,
+so the honest attack is the hypothesis-narrowing above, not a proof attempt.
+
+## Lap 88 (2026-09-25) — the crux is a theorem on the K-point input
+
+**Advance on the crux.**  `weylLambertTwist_of_degrading` / `weylLambertTwist_of_geom`: the C3 crux
+now follows from `KPointNoExcWith` with EXPLICIT degrading constants (polynomial `c₀/(K+1)^m` or
+geometric `c₀ b^{-θK}`, `θ < 1/2`) plus threshold data — the schedule comparison `hgrow` is
+DISCHARGED (`hgrow_of_schedule_le`), and both degenerate twist levels are closed
+(`depthAvg_zero_tendsto`, `depthAvg_dvd_tendsto_of_primitive`).  See
+`HANDOFF-c3mrt-2026-09-25-lap88.md`.
+
+**Next attack.**  `θ < 1/2` is an artefact of `b^{depthLL b N} ≍ (u_N+1)²` while the mean-phase
+discard needs only `b^{D_N} ≫ u_N`.  A slower schedule with `b^{D_N} ≍ u log u` should admit
+`θ < 1`.  Then: pin the `K`-dependence of a `K`-fold Pilatte decoupling (TT Thm 3.3, `V^{-0.49J'}`).
+
+# PENDING WORK
+
+## Lap 90 (2026-09-25) — the threshold data is PROVABLE, not assumable (in flight)
+
+**Correction to the lap-89 handoff.**  Its NEXT ① guessed `KPointThresholdOKWith` FAILS for the
+geometric profile.  That guess was wrong: it estimated the available budget `log log a_N` as
+`log u_N` when in fact `u_N = log₂log₂N` gives `2^{u_N} ≍ log₂ N`, so `log log a_N ≍ u_N·log 2`.
+The demand is `log log Athr(D_N) ≳ b^{θD_N} log D_N ≍ (u log u)^θ log log u`, and for `θ < 1`
+that is `o(u)`.  Numerically confirmed (θ=0.9, b=3): ratio to `u` is 74 at `u=10⁴`, 9.4 at `10²⁰`,
+0.003 at `10⁶⁰` — it holds, just slowly.  So the threshold is a THEOREM to prove, and it is the
+last assumed piece besides the `K`-point input itself.
+
+**Landed this lap.**  `KPointThresholdSlow b Q P cK` — the threshold demanded only up to the slow
+schedule's levels (`K ≤ depthSlow b N`), which is all `depthDiagonalSlow_of_geom` ever uses;
+`kPointThresholdSlow_of_with` bridges from the `depthLL` version so nothing is lost;
+`depthDiagonalSlow_of_geom` / `weylLambertTwist_of_geom_slow` / `conjC3_of_geom_slow` rewired to
+the weaker hypothesis, with `weylLambertTwist_of_geom_slow_of_with` recovering the lap-89 form.
+This matters beyond bookkeeping: at `θ > 1/2` the `depthLL` demand `b^{θ·2log_b u} ≍ u^{2θ}` does
+exceed the `u` budget, so the slow threshold is the only satisfiable one in the widened range.
+
+**Next attack — construct `Athr` and prove `kPointThresholdSlow_of_geom`.**  Plan, all pieces
+checked against existing lemmas:
+
+    φ K    := (b:ℝ)^(θ*K) * log(K+2+M₀) / (κ*c₀*log 2)     -- monotone in K
+    Athr K := 2 ^ (2 ^ Nat.ceil (φ K))                      -- so 2·log(Athr K) ≥ 2^⌈φ K⌉
+
+* clause (ii) `max(max 2 (K+1), M₀) ≤ (2 log Athr K)^(κ·cKgeom c₀ θ b K)`: with
+  `e_K = κc₀b^{-θK}`, `(2^{g})^{e_K} = exp(g·e_K·log 2) ≥ exp(log(K+2+M₀))` exactly when
+  `g ≥ φ K`, which `Nat.le_ceil` gives.  Needs `T_K ≤ K+2+M₀` (trivial) and
+  `Real.rpow_le_rpow` to pass from `2^g ≤ 2 log Athr K`.
+* clause (iii): `Athr` monotone (⌈·⌉ of monotone), so it suffices that
+  `Athr (depthSlow b N) ≤ N/2^{u_N}`.  Reduce via `⌈φ(D_N)⌉ ≤ u_N - 1`, then
+  `2^{2^{u-1}} ≤ 2^{(log₂N)/2} ≤ √N ≤ N/2^{u_N}` using `2^{u} ≤ log₂ N` (`two_pow_llLevel_le`)
+  and `le_sq_cut`.
+* `⌈φ(D_N)⌉ ≤ u_N - 1` is the one analytic step.  Feed `pow_depthSlow_le_log`
+  (`b^{D_N} ≤ b(u+1)(2+2t)`) and `depthLL_succ_le_log` (`D_N+1 ≤ 2+3t`), `t = log(u+1)`, then
+  with `(2+2t)^θ ≤ 2+3t` and `log(4+3t+M₀) ≤ (M₀+4)(2+3t)` reduce to
+  `C(2+3t)^2 + 3 ≤ exp((1-θ)t)`, which is `tendsto_exp_div_polyPow (1-θ) 2` — already in
+  `C3MrtUnifK`.  Same `u^{1-θ}` margin as the saving side, which is the right consistency check.
+
+
+
+## Review — lap 87 (2026-09-25): the budget layer is VACUOUS; the obligation is the DIAGONAL
+
+Binding orders: `DIRECTION.md` → CURRENT DIRECTIVE.  State at entry: branch `wip/c3-mrt`,
+HEAD `990197c`, `lake build NormalNumbers.C3MrtQuantKPoint` green (9004 jobs), the whole
+`C3Mrt*` chain (45 files) sorry-free with **zero** `axiom` declarations.
+
+### F1 — every budget already forces the diagonal (route-decisive)
+
+`QuantDepthElliottGen b` (`C3MrtBudget.lean:57`) asks for `C η` with
+`‖depthAvg b P Q j h D N‖ ≤ C D · η N` for ALL `D`, plus `C(depthLL b N)·η(N) → 0`.
+Instantiate the bound at `D = depthLL b N`:
+
+    C(depthLL b N)·η(N)  ≥  ‖depthAvg b P Q j h (depthLL b N) N‖ .
+
+So the hypothesis is *at least as strong as* the diagonal limit
+`Tendsto (fun N => depthAvg b P Q j h (depthLL b N) N) atTop (𝓝 0)`, which is exactly what
+`weylLambertTwist_of_depthElliottLL` (`C3MrtSchedule.lean:98`) consumes.  Freeing the budget
+`C` therefore buys **nothing**: `budget_absorb`, `budget_absorb_of_tIdx`,
+`pow_self_sq_le_exp_cube` and the `sup_D` assembly planned in HANDOFF lap 86 NEXT ③ are all
+bookkeeping around a `Prop` that is no weaker than the target.  → Lean it as
+`quantDepthElliottGen_forces_diagonal`, and target `DepthElliottLL` directly from now on.
+
+### F2 — fixed-`K` limits cannot reach the diagonal; the input needs explicit `K`-uniformity
+
+Lap 85 gives, for each `K`, `depthAvg_K_tendsto_of_noExc : Tendsto (fun N => depthAvg … K N)`.
+A family of sequences each tending to `0` has **no** diagonal limit along a growing index
+without uniformity, and `KPointNaturalCorrelationNoExc K` (`C3MrtKPointNoExc.lean:37`) hides
+its constants behind a per-`K` `∃ c Cst` with no control on their degradation.  So lap 85 is
+the *end* of that layer, not a step toward the diagonal.
+
+The arithmetic of what uniformity is actually needed (worked out this lap, to be Lean'd):
+`dyadic_window_bound_K` yields the per-scale `Φ_K(a) ≍ Cst_K (2 log a)^{-κ c_K}/M`; the
+halving stack (`class_sum_le_of_window`, cut at `k₀ ≍ log log Y`) yields
+`‖class sum‖/Y ≲ Cst_K (log Y)^{-κ c_K} + 1/log Y`; so
+
+    B(K, N)  ≍  Cst_K (log N)^{-κ c_K} + 1/log N .
+
+The diagonal needs `B(depthLL b N, N) → 0`, i.e. `Cst_{D_N}(log N)^{-κ c_{D_N}} → 0` along
+`D_N ≍ log_b log log N` (use `pow_depthLL_le : b^{D_N} ≤ b·llProxy N²`).  Sufficient profiles:
+* `c_K = c₀·γ^K` with `γ > b^{-1/2}` — then `c_{D_N} ≳ (log log N)^{-θ}`, `θ = 2log(1/γ)/log b
+  < 1`, and `(log N)^{-κ c_{D_N}} = exp(-κc₀(log log N)^{1-θ}) → 0`.  (Note `γ = 1/2` is NOT
+  enough at `b = 3`: `θ = 2log2/log3 ≈ 1.26 > 1`.  The exponent budget is genuinely tight.)
+* `c_K = c₀/K^m` — comfortable: `(log N)^{-κc₀/(log_b log log N)^m} → 0` for every `m`.
+* `Cst_K ≤ exp(K^m)` is always affordable: `Cst_{D_N} = exp(O((log log log N)^m))`.
+Also needs the `N₀(K)` threshold of `dyadic_window_bound_K` made explicit — it currently
+arises from `(2 log N)^{κ c} ≥ max 2 (K+1)`, which along `K = D_N` holds once
+`exp(κ c_{D_N} log log N) ≥ D_N + 1`, true for both profiles above.
+
+### F3 — ledger fidelity: the `K = 2` input is 🔴, not "published"
+
+`KPointNaturalCorrelationNoExc 2` = `TwoPointNaturalCorrelationNoExc` is TT Thm 3.1(ii) with
+the exceptional set of scales **deleted**.  TT say in print this is out of reach, and
+`exceptional_set_can_pin_a_scale` (`C3MrtNoExc.lean:58`, lap 80) proves it is not derivable
+from the faithful statement `TwoPointNaturalCorrelation` (`C3MrtTTThm31.lean:107`).  Any doc
+calling the `D = 2` rung "published" is wrong.  Ledger updated in `STATUS.md`.
+
+Why E cannot be dodged at the top level either (checked this lap, do not re-derive):
+`ConjC3` wants *positive lower density* of every word, i.e. `count(N) ≥ cN` for ALL `N`;
+`count` is monotone, so good scales would have to be **bounded-ratio dense**.  But `E ⊂ [√X,X]`
+with `∫_E dt/t ≤ Cst L^{-c} log X` and `L ≍ (log X)^κ` can swallow a whole dyadic block as soon
+as `Cst(log X)^{1-κc} ≥ log 2`, i.e. always, for large `X`.  Varying `X ∈ [N, N²]` does not
+help: Fubini only bounds the doubly-bad set's *log*-measure by `Cst(log A)^{1-κc} ≫ 1`.  This
+is the same wall as *log-Chowla ⇏ Chowla*; TT's own Thm 1.3 (irrationality) escapes it because
+irrationality needs only *infinitely many* good scales.
+
+### Trigger status
+
+C3-T1 (ζ^ω fails a TT hypothesis): NOT fired — lap 83 discharged the hypothesis outright.
+C3-T2 (`D = 2` rung within 6 laps): SERVED — the rung is a theorem (lap 82/84), though on the
+🔴 NoExc input.  Retired.
+C3-T3 (`K ≥ 3` undisclosed): NOT fired — lap 85's `K`-point layer discloses it in the module
+docstring as the generational item.  Retired, superseded by C3-T5.
+New: **C3-T4** (`depthElliottLL_of_unif` within 8 laps) and **C3-T5** (every lap's advance must
+be statable as "the diagonal now rests on strictly less").
+
+### Attack order (this is what the grind laps execute)
+
+1. `quantDepthElliottGen_forces_diagonal`  ← cheap, retires the budget layer.
+2. `KPointNoExcWith (cK CstK : ℕ → ℝ) (K : ℕ)` + `kPointNoExc_of_with`.
+3. `progression_avg_le_of_window` — quantitative twin of `progression_avg_tendsto_of_window`.
+4. `dyadic_window_bound_with`, then `depthAvg_le_with` (explicit `B cK CstK K N`, explicit `N₀`).
+5. `depthElliottLL_of_unif` + a concrete sufficient profile ⇒ `weylLambertTwist_of_unif`.
+
+## Still refuted — DO NOT RETRY (cumulative)
+
+* Removing `E` from TT Thm 3.1 at the `Prop` level (`exceptional_set_can_pin_a_scale`, lap 80),
+  including by varying `X` at a prescribed scale, and including via bounded-ratio density of
+  good scales at the `ConjC3` end (lap 87, F3).
+* A two-point-only proof of the leaf (lap 60, finding R3).
+* Sharpening `prod_le_lcm_mul_pow` / the `K^{K²}` exchange constant (laps 40, 60) — and now
+  the whole budget layer it lives in (lap 87, F1).
+* `TwistedPrimeSumSaving`.
+* Lap 80's list (below, in the older sections).
+
+## Reflection — 2026-09-25 (deep-reflection lap 60) — ROUTE VERDICT: **ESCALATE**, re-anchor on Tao–Teräväinen Thm 3.1
+
+Full re-cost in `ROUTE-ESCALATION-2026-09-25-c3mrt.md`.  Binding orders in `DIRECTION.md` →
+CURRENT DIRECTIVE.  Summary:
+
+### The destination is unchanged and still worth it
+
+`ConjC3` = *every base-`b` word occurs with positive lower density in the expansion of*
+`primeLambertAtBase b = ∑_n ω(n)/bⁿ`, `b ≥ 3`.  That constant is **verbatim** the constant of
+Tao–Teräväinen arXiv 2512.01739 Theorem 1.3 (Erdős #69), which they prove **irrational** for
+`b = 2` and remark holds for every integer base.  So the repo is formalising the next question
+along a live, top-of-the-field line, on a constant whose first unconditional result is 9 months
+old.  The ratified success criterion remains the EQUIVALENCE, not a proof; that is honest and
+unchanged.
+
+The realistic endpoint, stated plainly: **`ConjC3` will not be proved.**  The Weyl formulation is
+intrinsically an *unbounded*-point correlation (re-derived independently this lap: truncating
+`∑_k ω(n+k) b^{-k}` at depth `K` leaves a residual of standard deviation `≍ b^{-K}√(log log N)`,
+so `K → ∞` is forced, and no reformulation avoids it — richness of a *fixed* word length still
+needs the Weyl sum at a fixed frequency `h ≠ 0`, which sees every digit).  TT state in print that
+even **three**-point correlations are "not within current technology".  The valuable endpoint is a
+ledger that is (i) complete, (ii) anchored on the strongest *published* input, and (iii) honest
+about which residue is generational.
+
+### What was wrong with the route (not the destination)
+
+The whole `D ≥ 2` machinery is built against `Erdos67b.NonasymptoticLogElliott`, whose
+multiplicativity hypothesis `IsMultiplicativeOnPositiveInt` has **no coprimality clause** —
+it is *complete* multiplicativity.  `ζ^ω` fails it, so lap 4 built the `z^ω = z^Ω ⋆ g` powerful-
+divisor bridge, and everything expensive in the campaign descends from that one artificial
+hypothesis: the `D`-fold tuple sums, `prod_le_lcm_mul_pow`'s `K^{K²}`, the lap-40 budget repair,
+and the headline "beat every power of `log log N` by a quasi-polynomial margin" decay class.
+Elliott's conjecture, and Tao's Theorem 1.3 that the dependency is formalising, are stated for
+merely **multiplicative** functions.  With the literature's own hypothesis class none of that
+exists.
+
+### KEEP doing
+
+* **The `Prop`-level ledger discipline.**  Zero `axiom` declarations, every debt carried as an
+  explicit hypothesis, every headline trust-triple clean.  This is why the re-anchoring is cheap:
+  the obligations are named objects, so swapping the anchor is a proof-engineering task.
+* **The archimedean certificate** (`C3MrtArchimedean`, `C3MrtNonPretentious`, laps 18–21).  It
+  transfers to the new anchor **verbatim**: the pretentious distance depends on `g` only through
+  its values at primes, and `ζ^ω`, `ζ^Ω` agree at primes.
+* **The periodicity insights of laps 53–54** (`norm_sum_periodic_le`): the twist `e(jn/Q)` and the
+  small primes `ω_{≤P}` are one and the same obstruction, stripped by one decomposition mod
+  `M₀ = Q · primorial P`.  TT Thm 3.1 has the progression `1_{n ≡ b (W)}`, `W ≤ (log X)^c`, built
+  in — `M₀` is fixed before `N`, so it fits with room to spare.
+* Committing every green build; nothing is ever deleted.
+
+### STOP doing
+
+* **Building on `Erdos67b.NonasymptoticLogElliott` as the main line.**  Keep the K-fold stack —
+  it is sorry-free and is the correct route *for completely multiplicative functions* — but it is
+  no longer the campaign's spine.
+* **Quoting the `exp(−C(log log log N)⁴)` decay class as "the distance to the literature".**  It
+  is the distance to the literature *through the powerful-divisor bridge*.  Restate it as such.
+* **Sharpening `prod_le_lcm_mul_pow`.**  Already recorded as not worth laps; now it is not worth
+  anything, because the constant it bounds should not be in the ledger at all.
+
+### R1–R3: three findings to carry forward
+
+**R1 (compiler-grounded).**  `IsMultiplicativeOnPositiveInt` = complete multiplicativity.  Checked
+at `.lake/packages/lean-proofs-latest/src/latest/ErdosProblems/Erdos67b/LogElliott.lean:329`.  The
+repo's own `KPointLogElliott` inherits it (`C3MrtKPoint.lean:63`), which is why
+`kPointLogElliott_two_iff` can be *proved*.  Any lap tempted to say "`KPointLogElliott` only asks
+multiplicativity" should re-read that definition.
+
+**R2 (source-grounded).**  TT Theorem 3.1 is strictly better than the dependency's `Prop` on four
+axes simultaneously — merely multiplicative, natural (dyadic) averaging, `L^{-c}` saving with
+`L ≤ log X`, and progressions `W ≤ L^c` built in — at the price of an exceptional set of scales of
+logarithmic density `≪ L^{-c}`.  For `ζ^ω` one may take `L = (log X)^{c'}`, which lands **inside**
+`budget_absorb`'s hypothesis class `η N ≤ A (log N)^{-a}`.
+
+**R3 (refuted — do not re-chase).**  A two-point-only proof of the leaf along TT §5's lines.
+Their reduction works because the alternating sum over `ε ∈ {0,1}^K` makes each prime-indexed
+`X_p` mean-zero **and** of variance `O(2^{-K}/p)`, so the large-prime tail has total variance
+`O(2^{-K} log log N) = o(1)` and a second moment (hence pairwise correlations) suffices.  That
+shrinkage is bought with the rationality hypothesis (the dilation identity
+`ω(n+ph) = ω(n/p + h) + 1 − 1_{p²|n+ph}` at `2^K` distinct primes `p_ε`); an unconditional Weyl
+bound has no such identity.  Van der Corput does not substitute — differencing makes `X_p`
+mean-zero but doubles the point count and leaves `Var(X_p) ≍ c_h/p`, so the tail variance stays
+`≍ log log N`.  A direct moment expansion of `e(h ∑_{p>Y} w_p)` against the small-prime period
+fails at the level-of-distribution barrier: the per-progression error costs
+`∑_{p>Y} p · E[w_p] ≍ N/log N`.
+
+### The single highest-value next target
+
+**`src/NormalNumbers/C3MrtMultElliott.lean` — the merely-multiplicative anchor and the
+bridge-free `K`-point correlation form.**  In order:
+
+1. `def IsCoprimeMultiplicativeInt (g : ℤ → ℂ)` — `g 1 = 1` and `g(mn) = g m * g n` for
+   coprime positive `m, n`.  This is Elliott's / Tao's actual hypothesis class.
+2. `def KPointLogElliottMult (K : ℕ) : Prop` — `KPointLogElliott` verbatim with
+   `IsCoprimeMultiplicativeInt` in place of `Erdos67b.IsMultiplicativeOnPositiveInt`.
+3. `kPointLogElliott_of_mult : KPointLogElliottMult K → KPointLogElliott K` — nothing is
+   weakened; the new `Prop` is *stronger*, and is the literature's own statement.
+4. `zOmegaInt z : ℤ → ℂ`, `z ^ ω(n)`; `isCoprimeMultiplicativeInt_zOmegaInt`,
+   `norm_zOmegaInt_le_one`, and the transfer of `nonPretentious_zOm` (values at primes only).
+5. **The decisive lemma** `class_sum_eq_kPointLogCorrelation`: the class-restricted `K`-point sum
+   `∑_{n ≡ r (M₀)} w(n) ∏_{i<K} z_i^{ω(n+i+1)}` *is* `kPointLogCorrelation` of `zOmegaInt` along
+   the affine forms `a i = M₀`, `b i = r + i + 1`, whose pairwise determinant is `M₀(j−i) ≠ 0`
+   (`NondegenerateForms` is immediate).  **No divisors, no truncation, no `K^{K²}`.**
+6. Then transcribe `multi_correlation_of_uniform_rung_prog`'s ε-chase against step 5 to obtain
+   `progression_log_rung_class_mult` — the same conclusion as lap 59's
+   `progression_log_rung_class`, on the *merely multiplicative* anchor, with **no** budget.
+7. Only then: `TwoPointNaturalCorrelation`, TT Thm 3.1(ii) stated faithfully (natural dyadic
+   averaging, `L^{-c}`, `W ≤ L^c`, exceptional set of scales), and the `D = 2` natural-density
+   rung from it.
+
+**Progress (same lap, two green commits).**  Steps 1–5 are DONE
+(`src/NormalNumbers/C3MrtMultElliott.lean`, `class_window_bound_of_mult` trust-triple clean), and
+the rung is DONE (`src/NormalNumbers/C3MrtMultRung.lean`,
+**`rung_class_of_named_inputs_mult`**): on `KPointLogElliottMult K` +
+`TwistedPrimeSumSavingAllLevels` alone,
+
+    ∃ A₀ ≥ 2, ∀ A ≥ A₀, ∃ i₀, ∀ m ≥ i₀,
+      ‖∑_{j ∈ Ioc 0 (A^m)} (1/j) ∏_{i<K} z_i^{ω(M₀·j + r+i+1)}‖
+        ≤ (1 + log(A^{i₀})) + m·(ε log A).
+
+That single statement replaces BOTH `rung_multi_of_named_inputs` AND `rung_multi_uniform_prog`:
+with no divisor tuples there is nothing to truncate and no `exists_common_threshold` to run, so
+the single `A` and the single `i₀` come out directly.
+
+**REMAINING — the one brick between the new anchor and lap 59's conclusion.**
+`progression_log_rung_class_mult` needs, from `rung_class_of_named_inputs_mult`:
+
+1. *Reindex.*  `n ≡ r (mod M₀)`, `n < N` ↔ `n = M₀·j + r`, `j < (N−r+M₀−1)/M₀`; then
+   `n + i + 1 = M₀·j + (r+i+1)`, which is exactly the rung's argument.  `class_sum_reindex`
+   (lap 53) does this bookkeeping already.
+2. *The weight bridge* (brick 4b, unchanged in shape and now the ONLY bookkeeping item).  The
+   rung carries `harmonicWeight j = 1/j`; the target carries `harmW n = (M₀ j + r + 1)⁻¹`.
+   `(M₀ j + r + 1)⁻¹ − M₀⁻¹ j⁻¹ = (M₀ − r − 1)/(M₀ j (M₀ j + r + 1))`, absolutely
+   `≤ (M₀ + r)/(M₀ j²)`, and `sum_inv_sq_le` (`C3MrtRungTwo:372`) is in the repo.  `ε ↦ ε M₀`
+   absorbs the factor `M₀⁻¹`.
+3. *Choose `m`.*  `m = Nat.log A ((N − r)/M₀)`, exactly as in
+   `multi_correlation_of_uniform_rung_prog`'s `hrung` step, giving `m log A ≤ log N`.
+
+Why this and not brick 4b: brick 4b perfects the *old* anchor.  Step 5 is the smallest
+compiler-grounded probe that tests whether the re-cost of `ROUTE-ESCALATION-2026-09-25-c3mrt.md`
+is right — if the forms really are nondegenerate and the correlation really is in
+`kPointLogCorrelation`'s shape with no divisor expansion, then eight modules of machinery are
+revealed as a hypothesis artefact, and trigger C3-T2 is on course.  If it fails, C3-T1 fires.
+
+---
+
+## 2026-09-25 (review lap 40) — C3/MRT: the budget is repaired; resume the `K`-fold assembly
+
+**The defect this lap found and fixed.**  Lap 37's `prod_le_lcm_mul_pow` puts a factor `K^{K²}`
+into the `K`-fold rung.  `QuantDepthElliott` (the `Prop` the whole reduction is stated against)
+allows only a `b^{κD}` budget and asks `η` to beat every power of `llProxy ≍ log log N`.
+**That cannot pay for `K^{K²}`**, and the lap-39 handoff's claim that it can is arithmetically
+wrong:
+
+    (log log N)^m = exp(m · log log log N) ,  writing v = log log log N ;
+    D_N ≍ v , so D_N^{D_N²} = exp(Θ(v² log v)) ≫ exp(m v) for every fixed m.
+
+So the `D ≥ 3` assembly was, until this lap, aimed at a `Prop` that could not receive it.
+
+**The fix (`src/NormalNumbers/C3MrtBudget.lean`, sorry-free, trust triple).**
+
+* `QuantDepthElliottGen b` — the budget is a free `C : ℕ → ℝ`; the decay clause becomes the
+  JOINT vanishing `C(depthLL b N)·η(N) → 0`.
+* `weylLambertTwist_of_quantDepthElliottGen` — the widened `Prop` still closes the crux.
+* `quantDepthElliottGen_of_quantDepthElliott` — the old `Prop` implies the new one, so every
+  existing ledger row and consumer survives verbatim; nothing was weakened.
+* `budget_absorb` — **the route-decisive lemma**.  `C D ≤ exp(c(D+1)³)` together with
+  `η N ≤ A(log N)^{-a}`, `a > 0`, gives the joint vanishing.  Mechanism, with
+  `t = ⌊log₂(⌊log₂⌊log₂ N⌋⌋+1)⌋`: `D_N + 1 ≤ 2t+3` (`depthLL_le_triple_log`, uniform in `b ≥ 2`
+  because `Nat.log b ≤ Nat.log 2`) while `log log N ≥ (2^t − 2)·log 2`
+  (`log_log_ge_triple_log`).  Budget POLYNOMIAL in `t`, decay EXPONENTIAL in `t`.
+* `pow_self_sq_le_exp_cube` (`K^{K²} ≤ exp(K³)`) and `kfold_budget_le_exp_cube`
+  (`A₀·K^{K²}·b^{κK} ≤ exp((log A₀ + 1 + κ log b)(K+1)³)`) put lap 37's constant inside the cap.
+* `weylLambertTwist_of_kfold_bound` — **the endpoint the `D ≥ 3` campaign now aims at**:
+  a bound `‖depthAvg b P Q j h D N‖ ≤ A₀·D^{D²}·b^{κD}·η N` with `η N ≤ A(log N)^{-a}` closes
+  the crux outright.
+
+**What decay the route actually needs — the sharp answer (`budget_absorb_of_tIdx`).**
+Write `t_N = ⌊log₂(⌊log₂⌊log₂ N⌋⌋+1)⌋ ≍ log log log N`.  The schedule's depth is LINEAR in `t`
+(`D_N ≤ 2t+2`) and `log log N` is EXPONENTIAL in `t` (`≥ (2^t−2)log 2`).  Against a budget
+`exp(c(D+1)³)` the requirement is therefore exactly
+
+    η N ≤ exp(−t_N⁴)  ,  i.e.  η N ≤ exp(−C(log log log N)⁴) .
+
+That is **strictly stronger than every fixed power of `log log N`** — since
+`(log log N)^{-m} = exp(−m·t_N·log 2 + O(1))` is only LINEAR in `t_N` — but only
+*quasi-polynomially* so.  It is far weaker than the `(log N)^{-a}` that `budget_absorb`
+assumes.  So the honest ledger entry for the `D ≥ 3` route is:
+
+> the `K`-point log-Elliott saving must beat every power of `log log N`, by a
+> quasi-polynomial margin in `log log log N`.
+
+This is the sharpest characterisation the campaign has produced of the gap to the literature:
+quantitative log-Chowla/Elliott results of `(log log X)^{-c}` shape fall **just** short, by
+that quasi-polynomial margin, and nothing weaker than that margin is needed.  The `(log N)^{-a}`
+decay of `budget_absorb` is what the `D = 1` rung actually has (`C3MrtRungOne`,
+Selberg–Delange) and what `probes/swingc3_weyl_lambert_twist.py` measures for the leaf itself
+(`a ≈ 1.3–3.7`, never plateauing) — so the route has room to spare if the rate can be pushed
+that far.
+
+**The constant is `exp(Θ(K²))` intrinsically, not an artefact of lap 37's crude bound.**
+`gcd(d_i,d_j)` divides `j−i` and is itself POWERFUL (both `d_i,d_j` are, so every exponent in
+the gcd is `≥ 2`).  Splitting the tuple sum by the pairwise-gcd pattern replaces lap 37's
+`∏_{i<j}(j−i) ≈ K^{K²/2}` by `∏_{i<j} ∑_{g powerful, g ∣ j−i} 1/g ≤ ∏_p(1+2/p²)^{K²/2}`, i.e.
+`exp(Θ(K²))` — better, but still exponential in `K²`, because a positive proportion of the
+`K²/2` differences `j−i` are divisible by a square.  Improving lap 37's exponent is therefore
+worth at most a constant in the exponent and does NOT change the required decay class.  (Not
+formalised; recorded as the reason not to spend laps sharpening `prod_le_lcm_mul_pow`.)
+
+### Attack order from here
+
+1. ~~`inner_sum_linear_forms` analogue at `K` points.~~  **DONE lap 41** —
+   `src/NormalNumbers/C3MrtMultiLinear.lean` (sorry-free, trust triple).
+   `inner_sum_multi_forms`: for any tuple whose joint progression is nonempty, the inner sum
+   equals `∑_j F(Lj+a)·∏_i z_i^{Ω((L/d_i)j + (a+i+1)/d_i)}` over `{j : Lj+a < N}`, with
+   `a = n₀ mod L`, `L = Finset.univ.lcm d`.  **No coprimality anywhere** — `joint_class_multi`
+   supplies the class, `multi_forms_det` the nondegeneracy.  `inner_sum_multi_empty` covers the
+   tuples with no solution.  Helpers: `univLcm_pos`, `shift_div_eq_linear_multi`,
+   `joint_base_mod`.  `filter_linear_lt_eq_range` applies to the `j`-index set verbatim with
+   `L` for `d·e`.
+2. `multi_truncation_bound` — **its quantitative heart is DONE (lap 42)**;
+   `src/NormalNumbers/C3MrtMultiMass.lean` (sorry-free, trust triple).
+   `joint_multi_harmonic_mass`: for `S ⊆ range M` carrying the consecutive block
+   `d_s ∣ n + m + s + 1` (`s < K`),
+
+       ∑_{n∈S} ‖F n‖ ≤ (m+1)/d_0 + (1 + log M)·K^{K²} / ∏_{s<K} d_s .
+
+   **The trap this avoids (record it).**  Bounding the joint mass by ONE congruence, `≍
+   (1+log N)/d_m`, makes the stage-`m` truncation error carry `∏_{j>m} sqfWPartial z_j Y`,
+   which GROWS like `Y^{(K−m−1)/2}` while `bridgeTail z_m Y` only decays like `Y^{−1/2}`; for
+   `K − m ≥ 3` the product DIVERGES and truncation is worthless.  Using the full joint modulus
+   (`joint_class_range` + `class_harmonic_mass` + lap 37's `prod_le_lcm_mul_pow`) puts the
+   `log`-carrying term against the CONVERGENT `∏_j sqfWMass z_j` instead, and leaves the head
+   `(a+1)⁻¹ ≤ (m+1)/d_0` free of `log N` — an `N`-independent constant the `1/log N`
+   normalisation kills.  This is the `K`-fold form of the lap-24 trap.
+   `joint_class_range` also **pays part of lap 38's indexing debt**: it is the `range K` /
+   `ℕ → ℕ` half of `joint_class_multi`, the convention `prod_le_lcm_mul_pow` and
+   `prod_div_lcm_le` use.
+   **What remains of step 2**: the telescope itself — induct on `K` peeling the LAST shift
+   (as `sum_pow_omega_multi_eq` does), feeding `joint_multi_harmonic_mass` as
+   `offset_truncation_bound_of_mass`'s `hmass` at each stage, giving
+
+       Err ≤ ∑_{m<K} [(m+1)·∏_{j>m} sqfWPartial z_j Y
+                       + (1+log N)·K^{K²}·∏_{j>m} sqfWMass z_j] · bridgeTail z_m Y .
+3. Pay lap 38's indexing debt: standardise on `Fin K` + `Finset.univ.lcm` (the convention
+   `joint_class_multi` / `nondegenerateForms_multi` already use) and restate
+   `prod_le_lcm_mul_pow` / `prod_div_lcm_le` over `Finset.univ` via the `ℕ → ℕ` extension.
+4. Per-tuple rung bound + ε-chase, mirroring laps 29–33, landing in
+   `weylLambertTwist_of_kfold_bound`'s shape.
+5. The uniformity-in-`D` question is now the ONLY remaining structural gap besides
+   log→natural density.  Do not restate `QuantDepthElliott`; it is superseded in practice by
+   `QuantDepthElliottGen` and kept for the ledger.
+
+### Refuted / settled — do not retry
+
+* The lap-39 estimate "`K^{K²}` is `(log log N)^{o(1)}`" — **false**, corrected above.
+* A `(log log N)^{-c}` decay does **not** absorb `K^{K²}` at `D_N ≍ log log log N` (computed
+  above).  Only a power of `log N` does.
+* Everything in the lap-39 session wrap's "Still refuted" list.
+
+---
+
+
+## 2026-09-25 (review lap 18) — C3/MRT: the archimedean non-pretentiousness certificate
+
+**Where the crux stands.**  `weylLambertTwist_holds` (`SwingC3Leaf.lean`) is the one `sorry`
+carrying `ConjC3`.  Laps 1–17 reduced it, axiom-clean, to `QuantDepthElliott`, and reduced the
+log-averaged `D = 2` rung to `Erdos67b.NonasymptoticLogElliott` + non-pretentiousness of `ζ^Ω`
+against every Dirichlet–Archimedean twist (`t = 0` done, lap 17).
+
+**Review finding (2026-09-25): the exact shape of the archimedean obligation.**
+Elliott's hypothesis is `A ≤ pretentiousDistSqToTwist (ζ₀^Ω) χ t X` for `q ≤ A`, `|t| ≤ A·X`,
+with `A` a CONSTANT (not `≫ log log X`).  Writing `S = ∑_{p≤X} χ(p)p^{it}/p` and
+`mass = ∑_{p≤X} 1/p`, the distance is exactly `mass − Re(z·S)`, hence `≥ mass − ‖S‖`:
+
+* **Range 2 (`|t| ≥ T/log X`, `T` a constant chosen from `A`).**  Needs only the CONSTANT
+  saving `‖S‖ ≤ log log X − A`.  This is `log|L(1+1/log X+it, χ)| ≤ log log X − A`, the
+  Vinogradov–Korobov log-derivative bound; the dependency isolates the same input as
+  `Erdos67b.PolynomialHeightPrimeCorrelationBound` ("expected proof: the log-derivative
+  argument in the Vinogradov–Korobov zero-free region").  NAME IT, do not chase it.
+* **Range 1 (`|t| ≤ T/log X`).**  Elementary and OURS.  `|t log p| ≤ T` for `p ≤ X`, so the
+  resonance set `{p : ‖arg z − t log p‖_{2π} < ε}` meets only `O(T)` of the intervals
+  `log p ∈ (arg z + 2πk ± ε)/t`; each has reciprocal mass `≤ log((θ+2πk+ε)/(θ+2πk−ε)) + 2·
+  mertensBound` (bounded, `t` cancels), so the total resonance mass is an `X`-INDEPENDENT
+  constant, while the class-`1 mod q` primes carry `(1/φ(q))log log X − C_q → ∞`.
+
+**Refuted this lap (do not retry).**  Extending the resonance-interval argument past
+`|t| ≈ (log X)^K`: the number of intervals is `|t|·log X/2π`, so the per-interval Mertens error
+`2·mertensBound` alone contributes `≫ log log X`, and the trivial/Brun–Titchmarsh replacement
+needs primes in intervals of length `p/|t|` — short-interval-hard.  Equally refuted: hoping the
+crude `|ζ(1+it)| ≪ log t` suffices at `|t| ≍ X` (it gives `log log t ≍ log log X`, exactly
+cancelling the main term).  A saving factor < 1 in the exponent (i.e. VK) is not optional.
+
+**Attack order.**
+1. ~~`C3MrtArchimedean.lean`: the bridge `dist ≥ mass − ‖S‖`; the resonance split.~~  DONE lap 18.
+2. ~~Range 1 (the `O(T)`-window Mertens count).~~  DONE lap 19 —
+   `range_one_mass_bound`.  **What remains of Range 1**: insert
+   `G4.MertensAP.mertensRate_residueClass` at `a = 1` to turn the class mass into
+   `c·log log X − C`, and state `range_one_certificate` in `∃ X₀, ∀ X ≥ X₀ … A ≤ dist` form.
+   Index-set mismatch to watch: `sumInvPrimesIn` sums `N.primesBelow` (`< N`), `classPrimes`
+   uses `primesUpTo` (`≤ X`); the inclusion is in the useful direction.
+3. `TwistedPrimeSumSaving A` as the single named Range-2 Prop; assemble
+   `nonPretentious_zOm`, then feed `initial_segment_bound_of_elliott`.
+4. Then, and only then, the tuple sum over `d,e ≤ Y` (laps 8–13 supply every other piece).
 
 ---
 
@@ -10892,3 +11842,1275 @@ uniformly in `k`, so `f(d·m) = z·f(m)` off the multiples of `minFac d`, for EV
    the 🟡 outright.  Reuse `TwoPointDelangeScale.lean`'s brick-1 tool (`∑ s_m ≤ log L_N − log L_{N₀} + 1`)
    and its brick-3 induction verbatim; only the source of the additive error changes (constant here,
    `A(N)` there).
+## Lap 61 (2026-09-25) — `progression_log_rung_class_mult`: the new anchor reaches lap 59's conclusion
+
+**Advance on the crux.** The merely-multiplicative route (lap 60's ESCALATE) now delivers the
+SAME conclusion as `progression_log_rung_class` — the log-averaged `K`-point correlation of
+`ζ^ω` over a residue class — resting on `KPointLogElliottMult K` +
+`TwistedPrimeSumSavingAllLevels` alone.  `src/NormalNumbers/C3MrtMultChase.lean`,
+`[propext, Classical.choice, Quot.sound]`.
+
+The "ONE brick" named in the lap-60 handoff is discharged, and it turned out to need **no new
+mathematics at all**: `class_sum_reindex` (lap 53) + `filter_linear_lt_eq_range` +
+`progression_sum_bound_generic` (lap 46, deliberately generic in the modulus) compose directly.
+The `ε`-budget is a single rescale `ε ↦ ε·M₀`, because the transferred weight carries `M₀⁻¹`.
+Old brick 4b as stated was never needed: `weight_transfer` already sits inside
+`progression_sum_bound_generic`.
+
+**What the new route does NOT use** (and the old chase does): `truncB`/`truncA`, the `ε/2` split,
+`K^{K²}`, `sqfWMass`, `multi_full_sum_bound`, `exists_common_threshold` — i.e. the whole of
+`C3MrtOmegaBridge → MultiForms → MultiMass → MultiTupleMass → MultiTrunc → MultiInner →
+ProgForms → ProgTrunc → ProgInner`.  The old chain stays in `src/`, sorry-free, as the
+completely-multiplicative route; nothing was weakened, renamed or deleted, except the hygiene
+rename `omegaNat_mul_coprime → omegaNat_mul_coprime_pos` in `C3MrtMultElliott` (it collided with
+`SwingC1Katai.omegaNat_mul_coprime` once both files sat in one import closure).
+
+**Next attack (trigger C3-T2, 5 laps left).** `TwoPointNaturalCorrelation` — Tao–Teräväinen
+arXiv 2512.01739 Thm 3.1(ii) stated faithfully (1-bounded multiplicative, natural dyadic
+averaging `∑_{N<n≤2N}`, `L^{-c}` saving with `1 ≤ L ≤ log X`, progression `1_{n≡b (W)}` with
+`W ≤ L^c`, exceptional set `E ⊂ [√X,X]` of log-density `≪ L^{-c}`) — and the `D = 2`
+**natural-density** rung derived from it, which is what discharges `LogToNaturalCorrelation`
+at `K = 2`.
+
+## Lap 62 (2026-09-25) — TT Thm 3.1(ii) stated faithfully; and the exceptional set is DECISIVE
+
+`src/NormalNumbers/C3MrtTTThm31.lean`, sorry-free, `[propext, Classical.choice, Quot.sound]`.
+
+* `TwoPointNaturalCorrelation` — Tao–Teräväinen arXiv 2512.01739 **Theorem 3.1(ii)** verbatim:
+  1-bounded multiplicative `g₁,g₂`; `2 ≤ X`, `1 ≤ L ≤ log X`; `δ_N = 0`; the non-pretentiousness
+  hypothesis (3.3) as `TTNonPretentious` (built on `ttPretentiousSum`, TT's
+  `M(g; X², log^{1/125} X)`); conclusion an exceptional set `E ⊆ [√X, X]`, measurable, with the
+  logarithmic density bound written as a genuine integral `∫_E t⁻¹ ≤ Cst·L^{-c}·log X`, and
+  `(W/N)·∑_{N<n≤2N, n≡b (W)} g₁(n+h₁)g₂(n+h₂) ≪ L^{-c}` for `N ∈ [√X,X] \ E`,
+  `W, h₁, h₂ ≤ L^c`, `h₁ ≠ h₂`.
+* `c3_two_point_natural_of_TT` — the instantiation the route wants: `g_i = z_i^ω` (admissible by
+  `isCoprimeMultiplicativeNat_zOmegaNat`), `h₁ = 1`, `h₂ = 2`, `W = M₀`, `b = r`.  Output: a
+  **natural**-density `L^{-c}` bound on the C3 two-point correlation over a dyadic window along
+  the class of `r` mod `M₀` — in the original variable, weight `1`.
+
+### The route-decisive finding (🚦 C3-T2 verdict)
+
+**TT Thm 3.1 does NOT discharge `LogToNaturalCorrelation 2` as that predicate is stated.**
+`LogToNaturalCorrelation K` demands `Tendsto … atTop (𝓝 0)`: a bound at **every** scale.
+Thm 3.1 gives it only off `E`, and a set of logarithmic density `o(1)` can contain a whole
+block `[A, A^{1+δ}]` — log-mass `δ log A`, a positive proportion of `log X` at `A = X^{1/2}`.
+Concretely, `E = ⋃_k [2^{k³}, 2^{k³+k}]` has logarithmic density `→ 0` while containing blocks
+of ratio `2^k → ∞`; a sequence supported there tends to `0` off `E` and not at all.  This
+matches TT in print (`:2997`): removing the exceptional set is out of reach.
+
+**Consequence for the ledger — an improvement, not a defeat.**  The `D = 2` row must be split:
+
+* `LogToNaturalCorrelationExc 2` (scale-exceptional natural-density two-point rung) — a
+  **published theorem**, now formalised as `TwoPointNaturalCorrelation` and wired to the C3
+  summand.  🟡.
+* `LogToNaturalCorrelation 2` (every scale) — 🔴, and now *named as open in the literature*
+  rather than merely unproved here.
+
+### Next attack
+
+1. Formalise the counterexample above as a Lean theorem (`exceptional_scales_not_tendsto`):
+   a sequence `a : ℕ → ℝ`, `0 ≤ a ≤ 1`, with an exceptional exponent set of density `0`, such
+   that `a → 0` off it but `¬ Tendsto a atTop (𝓝 0)`.  This turns the prose above into a
+   machine-checked obstruction and is the correct way to record a refutation.
+2. Then ask the *right* question: does the downstream consumer
+   (`depthAvg_tendsto_of_transfer` → `weylLambertTwist_holds`) actually need every scale, or
+   does a log-density-one set of scales suffice?  `weylLambertTwist_holds` is a Weyl-sum
+   statement along `N → ∞`; if the reduction can be re-run over a density-one scale sequence,
+   the `D = 2` layer becomes unconditional on a published theorem.  That is the highest-value
+   open question on this route and it has never been asked.
+
+## Lap 63 (2026-09-25) — the exceptional set is a THEOREM, not a worry
+
+`src/NormalNumbers/C3MrtExcScales.lean`, sorry-free, `[propext, Classical.choice, Quot.sound]`.
+
+`exceptional_scales_not_tendsto`: there is a set `E ⊆ ℕ` of scale-indices and a `[0,1]`-valued
+sequence `a` with `a = 0` off `E`, `E` of **density zero**, `E` containing **arbitrarily long
+runs**, and `¬ Tendsto a atTop (𝓝 0)`.  Witness `E = ⋃_{j≥1} [j⁴, j⁴+j)`; the counting map
+`k ↦ (⌊k^{1/4}⌋, k − ⌊k^{1/4}⌋⁴)` is injective because `⌊k^{1/4}⌋ = √(√k)` recovers the block
+index (`excScales_index`), giving `|E ∩ [0,K)| ≤ (√(√K)+1)² ≤ 4√K`.
+
+So the lap-62 prose is now machine-checked: **no bound valid only off a density-zero set of
+scales can produce the `Tendsto` that `LogToNaturalCorrelation K` demands**, and the long runs
+kill the "interpolate between two good scales" rescue as well (a run of length `j` in the
+exponent is a multiplicative block of ratio `2^j → ∞`).
+
+**Refuted this lap — the Fubini rescue.**  For a fixed scale `N`, vary `X` over `[N, N²]` and
+hope `N ∉ E(X)` for some admissible `X`.  Swapping the order in `∫_N^{N²}∫_{E(X)} dt/t · dX/X`
+bounds the `X`-measure of bad `X` only *for almost every `t`*, not for the given `t`; the
+exceptional set simply reappears one level up.  TT Thm 3.1 is a black box in `X`, so the
+statement alone offers nothing stronger.
+
+### Next attack — the question this route has never asked
+
+Does the consumer actually need every scale?  `depthAvg_tendsto_of_transfer` feeds
+`weylLambertTwist_holds`, a Weyl-sum statement along `N → ∞`.  Two sub-questions, in order:
+
+1. Is `weylLambertTwist_holds` (or the normality statement above it) stable under replacing
+   "for all `N`" by "for `N` in a set of scales of logarithmic density one"?  For *normality*
+   the answer is expected NO (digit frequencies need every prefix), but the Weyl sum feeding it
+   may be averaged, in which case a density-one scale set is enough.  **Read `SwingC3Leaf.lean`
+   and the reduction above it before assuming either way.**
+2. If NO: the `D = 2` row stays 🔴 and the honest ledger entry is "equivalent to removing the
+   exceptional set from TT Thm 3.1", which TT state is out of reach — i.e. the C3 `D ≥ 2` route
+   is pinned to a *named* open problem, which is the ratified deliverable.
+
+## Lap 64 (2026-09-25) — the `D = 2` layer pinned to a NAMED OPEN PROBLEM; crux decomposed
+
+`src/NormalNumbers/C3MrtNoExc.lean`.  Two proved, four disclosed `sorry`s **in `src/`** — the
+crux decomposition, not a regression.
+
+**Proved.**
+* `exceptional_set_can_pin_a_scale` — the black box cannot be pushed: `{N}` is a legitimate
+  exceptional set at *every* `X` (measurable, inside `[√X,X]`, logarithmic measure `0`).  So no
+  argument using only the *statement* of TT Thm 3.1 — varying `X`, intersecting over `X`,
+  Fubini — can produce a bound at a prescribed scale.  Together with lap 63's
+  `exceptional_scales_not_tendsto` this closes the question from both sides.
+* `TwoPointNaturalCorrelationNoExc` — TT Thm 3.1(ii) with `E = ∅`, i.e. **the named open
+  problem** (TT `:2997`: removing the exceptional set is not within current technology) — and
+  `twoPointNatural_of_noExc`, confirming it really is a strengthening.
+
+**The ledger claim now being built** (`logToNatural_two_of_noExc`):
+`TwoPointNaturalCorrelationNoExc → LogToNaturalCorrelation 2`.  If it lands, the `D = 2` layer
+of `ConjC3` is *implied by* removing the exceptional set from a published theorem and by nothing
+else — an equivalence with a named open problem, which is the ratified deliverable.
+
+**The four named sub-goals** (all `sorry`-disclosed in `src/`, attack in this order):
+1. `dyadic_window_bound_of_noExc` — one dyadic window at `X = N²`, `L = log X = 2 log N`
+   (`N = √X` is exactly the left endpoint, so the instantiation is legal).  Bookkeeping.
+2. `dyadic_decomposition` — the class below `M·J` as a disjoint union of dyadic windows plus a
+   bounded head.  Bookkeeping; the stated form may need adjusting at the endpoints.
+3. **`dyadic_sum_geometric`** — `∑_{i<I} 2^i (log 2^i)^{-c} ≤ D · 2^I (log 2^I)^{-c}`: the
+   geometric weight concentrates the stack on its top window, so the saving survives the sum
+   with only a constant loss.  The ONLY quantitative step; attack this first, it is the one that
+   could fail.
+4. Divide by `J`, let `J → ∞`, and note `L^{-c} → 0` because `L = 2 log N → ∞`.
+
+**Refuted / settled, do not re-chase.**  Deriving `LogToNaturalCorrelation 2` from
+`TwoPointNaturalCorrelation` *with* its exceptional set (laps 62–64: three independent
+arguments — the density-zero counterexample, the long-run counterexample, and the singleton
+pinning).
+
+## Lap 65 (2026-09-25) — sub-goal 3 PROVED: the quantitative step survives
+
+`dyadic_sum_geometric` is closed, `[propext, Classical.choice, Quot.sound]`.  This was the one
+sub-goal of `logToNatural_two_of_noExc` that could genuinely have failed, so the decomposition
+is now de-risked: **the `L^{-c}` saving does survive summation over the dyadic stack.**
+
+The right statement turned out to be a limit, not a constant:
+
+    Tendsto (fun I => (∑_{i<I} 2^i · (2 log 2^i)^{-c}) / 2^I) atTop (𝓝 0)
+
+which is exactly what the chase needs after dividing by `J ≈ 2^I/M`, and which avoids ever
+naming the constant `D`.  It is an instance of a general lemma proved this lap,
+`tendsto_geom_weighted_avg`: for `a ≥ 0` with `a i → 0`, the geometrically weighted averages
+`(∑_{i<I} 2^i a i)/2^I` tend to `0` — a Toeplitz kernel argument (split at `m`, head `≤ C/2^I`,
+tail `≤ (ε/2)·∑2^i ≤ (ε/2)2^I`).  The kernel is reusable anywhere a dyadic stack with a
+per-window saving has to be summed.
+
+**Remaining sorries in `src/` on this crux (3):** `dyadic_window_bound_of_noExc` (one window at
+`X = N²`, `L = 2 log N` — instantiation bookkeeping), `dyadic_decomposition` (the class below
+`M·J` as a stack of windows; the stated endpoint form may need adjusting), and the assembly
+`logToNatural_two_of_noExc`.  Both remaining sub-goals are bookkeeping; attack
+`dyadic_decomposition` next, since the assembly's exact shape depends on it.
+
+## Lap 66 (2026-09-25) — `class_sum_split` proved: sub-goal 2 down, two left
+
+`class_sum_split` replaces the lap-64 stub `dyadic_decomposition` with the statement the
+assembly actually needs, and it is proved (`[propext, Classical.choice, Quot.sound]`):
+
+    ∑_{n < M·J + r, n ≡ r (M)} F n  =  (∑_{n < r, n ≡ r (M)} F n)  +  ∑_{m<J} F(M m + r)
+
+i.e. the progression sum is the class sum below `M·J + r` minus a head that does not depend on
+`J`, so the head dies under the `1/J` normalisation.  The bijection is `n ↦ (n−r)/M` with
+inverse `m ↦ M m + r`; `M ∣ n − r` comes from `Nat.modEq_iff_dvd'`, which is the step `omega`
+cannot do (truncated subtraction under a modulus).
+
+**Remaining on this crux (2 sorries in `src/`):**
+* `dyadic_window_bound_of_noExc` — instantiate `TwoPointNaturalCorrelationNoExc` at `X = N²`,
+  `L = log X = 2 log N`, `W = M`, `b = r`, `h₁ = 1`, `h₂ = 2`.  `N = √X` is exactly the left
+  endpoint of the admissible range, so the instantiation is legal; the work is the
+  `TTNonPretentious` side condition and the `(W/N) •` normalisation.
+* `logToNatural_two_of_noExc` — the assembly.  All three ingredients now exist:
+  `class_sum_split` (lap 66), `sum_Ioc_pow_decomp` at `A = 2` (`C3MrtRungTwo:181`) for the
+  dyadic stack, and `dyadic_sum_geometric` / `tendsto_geom_weighted_avg` (lap 65) for the sum.
+
+Once those two land, `ConjC3`'s `D = 2` layer is implied by removing the exceptional set from
+TT Theorem 3.1 — a named open problem — and by nothing else.
+
+## Lap 67 (2026-09-25) — `dyadic_window_bound_of_noExc` proved: ONE sorry left on the crux
+
+Sub-goal 1 is closed, `[propext, Classical.choice, Quot.sound]`.  The instantiation is legal
+exactly as designed: at `X = N²` one has `√X = N` (the *left endpoint* of TT's admissible
+range) and `log X = 2 log N =: L`, so `L ≤ log X` holds with **equality** — the strongest
+admissible `L`, which is what makes the saving `L^{-c} = (2 log N)^{-c}` as large as the
+theorem permits.  `N₀` exists only to force `L^c ≥ 2`, i.e. to make `h₂ = 2` admissible; that
+is a `tendsto_rpow_atTop` one-liner.  (`Real.log_two_gt_d9` is needed for `1 ≤ 2 log N` at
+`N = 2` — `nlinarith` cannot see `log 2 > 1/2` on its own.)
+
+**The crux is now ONE `sorry`:** `logToNatural_two_of_noExc`, pure assembly, with all four
+ingredients proved and in the file:
+
+1. `class_sum_split` (lap 66) — progression sum = class sum below `M·J + r` − a `J`-independent
+   head.
+2. `sum_Ioc_pow_decomp` at `A = 2` (`C3MrtRungTwo:181`) — the class sum below `2^I` as the point
+   `1` plus the stack of windows `(2^{i−1}, 2^i]`.
+3. `dyadic_window_bound_of_noExc` (lap 67) — each window `≤ Cst·(2 log 2^i)^{-c}·2^i/M`.
+4. `dyadic_sum_geometric` (lap 65) — `(∑_{i<I} 2^i (2 log 2^i)^{-c})/2^I → 0`.
+
+Remaining care: choose `I = ⌈log₂(M J + r)⌉` so `2^I ≥ M J + r`, absorb the finitely many
+windows below `N₀` into a `J`-independent constant, and note `J ≍ 2^I/M` so dividing by `J`
+converts item 4's normalisation `/2^I` into `/J` up to the factor `M`, which is fixed.
+
+## Lap 68 (2026-09-25) — the bottom-up stack is WRONG; the top-down halving stack, proved
+
+**Design correction, found while assembling.**  The lap-64 plan said "dyadic windows
+`(2^{i−1}, 2^i]`".  That is wrong, and would have wasted the next several laps.
+`TwoPointNaturalCorrelation*` bounds a **full** window `(N, 2N]` and never a sub-interval, so
+in a bottom-up decomposition of `[1, Y]` the top window is only partially inside `[1, Y]` and
+has to be bounded trivially — at cost `≍ Y`, which destroys the entire estimate.  There is no
+way to patch this while decomposing from the bottom.
+
+**The fix: halve from the top.**  Put `N_k = Y / 2^k` and use the levels `(N_{k+1}, N_k]`.
+Each level *is* a full window up to at most one point, because
+`2·N_{k+1} ≤ N_k ≤ 2·N_{k+1} + 1` — a `Nat.div_div_eq_div_mul` fact.  The stray point costs `1`
+per level, i.e. `≪ log Y` in total, which is `o(Y)` and therefore free.
+
+Proved this lap (all `[propext, Classical.choice, Quot.sound]`):
+* `sum_Ioc_halving_stack` — `∑_{(0,N]} F = ∑_{(0, N/2^K]} F + ∑_{k<K} ∑_{(N/2^{k+1}, N/2^k]} F`.
+* `double_le_level` — `2·(N/2^{k+1}) ≤ N/2^k`.
+* `level_le_double_succ` — `N/2^k ≤ 2·(N/2^{k+1}) + 1`.
+* `norm_sum_level_le` — a window bound `B` plus one stray point gives `B + 1` on the level.
+
+**Still one `sorry`:** `logToNatural_two_of_noExc`.  Revised recipe, now that the geometry is
+right: with `Y = M·J + r`, take `K ≈ log₂ Y` levels down to a head `Y/2^K = O(1)`; bound level
+`k` by `dyadic_window_bound_of_noExc` at `N = N_{k+1}` (legal once `N_{k+1} ≥ N₀`, and the
+finitely many levels with `N_{k+1} < N₀` have total length `≤ 2N₀`, a `J`-independent constant)
+plus `1`; then `dyadic_sum_geometric` sums the stack after the reindex `i = K − k`.
+
+**Also to note:** `LogToNaturalCorrelation K` carries no `z 0 ≠ 1`, and is *false* without it
+(take `z ≡ 1`), so it is only ever usable through its log hypothesis.  The theorem being built
+therefore takes `z 0 ≠ 1` explicitly — which the consumer `depthAvg_tendsto_of_transfer`
+already has in hand as `hζ`.  A `LogToNaturalCorrelationNZ` predicate plus the one-line
+re-wiring of that consumer is a follow-up item, deliberately deferred until the analytic
+content lands.
+
+## Lap 69 (2026-09-25) — `top_down_weighted_tendsto`: the analytic heart of the assembly, proved
+
+The one genuinely analytic ingredient the top-down stack needs is now in, sorry-free:
+
+    Φ ≥ 0 bounded, Φ a → 0  ⟹  Tendsto (fun Y => (∑_{k<K Y} Φ(Y/2^{k+1})·(Y/2^{k+1}))/Y) (𝓝 0)
+
+**for an arbitrary level count `K : ℕ → ℕ`** — the level count drops out entirely, because
+`Y/2^{k+1} ≤ Y·2^{-(k+1)}` turns the normalised stack into a geometric average of `Φ` along
+scales that all tend to `∞`.  Not having to pin `K` to `log₂ Y` removes what would have been
+the fiddliest part of the instantiation.
+
+Proof: cut at `k₀` with `G·2^{-k₀} < ε/2` (tail), and use `Φ < ε/2` on the first `k₀` levels,
+legitimate once `Y ≥ A·2^{k₀}` since then `Y/2^{k+1} ≥ A` for `k < k₀`.  Supporting lemma
+`geom_half_Ico` / `geom_half_Ico_le`: `∑_{k∈[a,b)} 2^{-(k+1)} = 2^{-a} − 2^{-b} ≤ 2^{-a}`.
+
+**Inventory for the last `sorry` (`logToNatural_two_of_noExc`).**  Every ingredient is proved:
+`class_sum_split` (66) · `sum_Ioc_halving_stack` + `double_le_level` + `level_le_double_succ` +
+`norm_sum_level_le` (68) · `dyadic_window_bound_of_noExc` (67) · `top_down_weighted_tendsto` (69).
+What remains is purely the glue: define
+`Φ a = if N₀ ≤ a ∧ (M:ℝ) ≤ (2 log a)^c then Cst·(2 log a)^{-c}/M else 1`, check `Φ ≥ 0`,
+`Φ ≤ max 1 (Cst·(2 log N₀)^{-c}/M)` and `Φ → 0`, take `K Y = Nat.log 2 Y + 1` so the head
+`(0, Y/2^K]` is empty, and add the `K Y` stray points (`≍ log Y`, so `/Y → 0`).
+
+## Lap 70 (2026-09-25) — `class_sum_tendsto_of_noExc`: the assembly LANDS
+
+The analytic content of the `D = 2` layer is now proved end to end, sorry-free and trust-triple
+clean.  On `TwoPointNaturalCorrelationNoExc` (TT Thm 3.1(ii) without its exceptional set), for
+every modulus `M > 0` and residue `r`,
+
+    ‖∑_{0 < n ≤ Y,  n ≡ r (M)}  z₀^{ω(n+1)} z₁^{ω(n+2)}‖ / Y  →  0
+
+— a **natural**-density statement, not a logarithmic one.  Assembly: the halving stack
+(lap 68) → the per-level window bound `Φ(a)·a` with
+`Φ a = if N₀' ≤ a ∧ M ≤ (2 log a)^c then Cst(2 log a)^{-c}/M else 1` → the top-down Toeplitz
+estimate (lap 69).  `Φ` is nonnegative, bounded by `1 + Cst(2 log 2)^{-c}/M` (antitonicity of
+`x ↦ x^{-c}`, since every admissible `a ≥ 2`), and tends to `0`; the `≍ log₂ Y` stray points
+cost `(log₂ Y + 1)/Y → 0`, via `Real.isLittleO_log_id_atTop`.
+
+**One `sorry` left in the whole crux:** `logToNatural_two_of_noExc`, and it is now only
+index bookkeeping:
+
+    ‖∑_{m<J} F(M m + r)‖ / J  ≤  (r + 1)/J  +  (‖∑_{0<n≤Y} F'‖ / Y) · (M + r),   Y = M J + r − 1
+
+using `class_sum_split` (lap 66) for the head, `range Y = {0} ⊔ Ioc 0 (Y−1)` for the single
+extra point, `Y/J ≤ M + r`, and composing `class_sum_tendsto_of_noExc` with `J ↦ M J + r − 1`
+(which tends to `atTop`).  No analysis remains.
+
+## Lap 71 (2026-09-25) — **THE CRUX IS CLOSED.**  `logToNatural_two_of_noExc` is a theorem
+
+`src/NormalNumbers/C3MrtNoExc.lean` is **sorry-free**.  `logToNatural_two_of_noExc` depends on
+`[propext, Classical.choice, Quot.sound]` and states:
+
+> On `TwoPointNaturalCorrelationNoExc` — Tao–Teräväinen arXiv 2512.01739 Theorem 3.1(ii) with
+> its exceptional set of scales removed — together with the non-pretentiousness of `z₀^ω` in
+> TT's own sense, for every `M > 0` and `r`,
+>
+>     (∑_{m<J} ∏_{i<2} z_i^{ω(M m + r + i + 1)}) / J  →  0.
+
+That is the `K = 2` **natural-density** transfer: the last open obligation of the `D = 2` layer
+of `ConjC3`, and precisely what the log-averaged chain provably cannot deliver.
+
+### The deliverable, stated plainly
+
+The `D = 2` layer of the C3/MRT route is now **equivalent to a named open problem**: removing
+the exceptional set of scales from TT Theorem 3.1.  Both directions are machine-checked:
+
+* `logToNatural_two_of_noExc` — no exceptional set ⟹ the transfer holds.
+* `exceptional_scales_not_tendsto` (63) + `exceptional_set_can_pin_a_scale` (64) — with the
+  exceptional set, no argument that uses only the statement can reach a pointwise limit.
+
+And TT say in print (`:2997`) that removing it is not within current technology.
+
+### Route ledger after this lap
+
+* 🟢 everything from `weylLambertTwist_holds`'s reduction down to the `K`-point correlation.
+* 🟢 `progression_log_rung_class_mult` (61) — the log layer, on merely-multiplicative Elliott.
+* 🟡 `TwoPointNaturalCorrelation` (62) — a published theorem, stated faithfully, wired to the
+  C3 summand (`c3_two_point_natural_of_TT`).
+* 🔴 `TwoPointNaturalCorrelationNoExc` — the single named open problem the `D = 2` layer needs.
+* 🔴 generational: `K ≥ 3` correlations (TT: "does not appear to be within current technology").
+
+### Next
+
+1. `TTNonPretentious (zOmegaNat z) X L` for `‖z‖ = 1`, `z ≠ 1` — bridge laps 18–21's archimedean
+   certificate (in `Erdos67b.pretentiousDistSqToTwist`) to TT's `M(g; X², log^{1/125} X)`.  This
+   is the last *hypothesis* of `logToNatural_two_of_noExc` not yet discharged from the repo's own
+   inputs, and it is a genuine (but bounded) piece of work: matching two pretentious metrics.
+2. `LogToNaturalCorrelationNZ 2` + the one-line rewiring of `depthAvg_tendsto_of_transfer`, so
+   the new theorem plugs into the existing chain rather than sitting beside it.
+
+## Lap 72 (2026-09-25) — TTNonPretentious discharged to one resonance-mass input; D=2 wired in
+
+**Correction (item 1 of the lap-71 NEXT list).**  `TTNonPretentious (zOmegaNat z) X L` for
+`1 ≤ L ≤ log X` is **FALSE**, not merely unproved.  `ttPretentiousSum (z^ω) X t =
+∑_{p ≤ X²}(1 − cos(arg z − t log p))/p`, so at `t = 0` it is `(1−cos θ)(log log X + O(1))` and
+`exp(M) ≍ (log X)^{1−cos θ}`.  For small `arg z` this is `≪ log X`.  The admissible range is
+`L ≤ (log X)^{κ(z)}`, `κ(z) = (1−cos ε)(1 − (126/125)(ε/π))`, `ε = |arg z|/2`.
+
+**Done.**
+* `C3MrtTTPretentious.lean` (new): `ttPretentiousSum_eq_primes`, `ttPretentiousSum_ge`
+  (TT's `M(g;X²,·)` IS the `q = 1` archimedean pretentious distance — the lap-18..21 resonance
+  machinery applies verbatim), `ttExponent`, `ttExponent_pos`, `ttExponent_le_one`,
+  `ttNonPretentious_of_uniformResonantMass`.
+* `C3MrtNoExc`: the three assembly theorems now take `0 < κ ≤ 1` and `L ≤ (log X)^κ`.  The
+  assembly only ever needed `L → ∞`; the consumer-visible exponent is `κ·c`.
+* `C3MrtNatural`: `LogToNaturalCorrelationNZ` (the `z 0 ≠ 1` variant),
+  `depthAvg_tendsto_of_classSums` (shared core), `depthAvg_tendsto_of_transfer_nz`.
+  `depthAvg_tendsto_of_transfer` is unchanged as a statement and now a two-line corollary.
+* `logToNaturalCorrelationNZ_two_of_noExc` and `depthAvg_two_tendsto_of_named`: the `D = 2`
+  depth rung, natural density, from **exactly three** named inputs —
+  `TwoPointNaturalCorrelationNoExc`, `UniformResonantMass`, `ProgressionLogRung 2`.
+
+**The new named input, and why it is the right one.**
+`UniformResonantMass`: for `‖z‖=1, z ≠ 1`, `resonantMass z t Y ≤ (ε/π)(log log Y + log(2+|t|))
++ O_z(1)`, uniformly in `t`.  `resonant_mass_le` (lap 20) proves this with the lossy
+per-window bound `windowMassBound` in place of the sharp `log((γ_m+ε)/(γ_m−ε)) ≈ 2ε/γ_m`, which
+is fine for the `O(T)` windows of the range `|t| ≤ T/log X` but not for TT's
+`|t| ≤ (log X)^{1/125}`, where there are `≈ |t| log X` windows.
+
+**Refuted this lap — DO NOT RETRY.**
+* Summing `reciprocalPrimeInterval_le_log_ratio` per window: the dependency's Mertens error is a
+  FIXED constant `2·mertensBound` with no `1/log u` decay, so `K` windows cost `K·const`.  A
+  decaying-error Mertens, or Brun–Titchmarsh in short multiplicative windows, is required.
+* Grouping windows dyadically in `m` (blocks `m ∈ [2^j, 2^{j+1})` sit in a single ratio-4
+  interval): gives resonant mass `≤ (log 4 + 2·mertensBound)·log K`, which EXCEEDS the total
+  mass `log log Y`.  Useless.
+* `TwistedPrimeSumSaving` / Vinogradov–Korobov is **not** the missing input: it yields a
+  constant saving, and TT's `L → ∞` needs one growing like `κ log log X`.  (Also DIRECTION-
+  forbidden; not attacked.)
+
+**Next attack on the crux.**  Either (a) prove `UniformResonantMass` from Brun–Titchmarsh —
+window `m` has `p ∈ (U, U·e^{2ε/γ_m}]`, so BT gives count `≤ 2y/log y` with
+`y ≈ 2εU/γ_m`, mass `≤ 4ε/(γ_m log U)`; summing over `m ≤ K` reproduces `(ε/π) log K` — or
+(b) restrict the `t`-range: if the assembly can tolerate `L ≤ exp((log X)^{...})`-free small
+`L`, then `|t| ≤ T/log X` suffices and `resonant_mass_le` closes it outright.  (b) is the
+cheaper probe and should be tried first: check whether TT's `(3.3)` can be run with the
+infimum over `|t| ≤ T/log X` only — it cannot, TT need the full range, but the *derived*
+hypothesis in `dyadic_window_bound_of_noExc` might.
+
+## Lap 74 (2026-09-25) — the crux is formalizable: Brun–Titchmarsh is already in the build
+
+**The unlock.**  `PrimeNumberTheoremAnd.BrunTitchmarsh` is present in `.lake/packages`,
+importable from a `C3Mrt*` file, and **sorry-free / axiom-clean**:
+
+    `BrunTitchmarsh.primesBetween_le : 0 < x → 0 < y → 1 < z →
+       primesBetween x (x+y) ≤ 2y/log z + 6z(1+log z)³`
+
+This is the exact shape the resonance argument needs and the dependency's Mertens cannot give
+(error proportional to the window WIDTH, not a flat additive constant).  So
+`UniformResonantMass` is a formalization target, not an axiom.
+
+**Landed.**  `C3MrtWindowMass.lean`: `window_subset_primesBetween`, and
+
+    `short_interval_mass_le` : `2 ≤ P`, `0 < w`, `G ⊆ primes ∩ (P, P(1+w)]`
+        `⟹ ∑_{p∈G} 1/p ≤ 4w/log P + 6(1 + log P)³/√P`
+
+(Brun–Titchmarsh at level `z = √P`, divided by `P`.)  Axiom-clean.
+
+**The remaining plan for `UniformResonantMass`** (window half-width `δ`, `γ_m = |arg z − 2πm|`,
+`a_m = (γ_m−δ)/|t|`, `b_m = (γ_m+δ)/|t|`):
+
+1. Split the resonant primes at `P₁ = max(4, |t|^4)`.
+2. *Small primes* `p ≤ P₁`: mass `≤ log log P₁ + mertensBound ≤ 4 log log(2+|t|) + O(1)`, and
+   `log log s ≤ c log s + O_c(1)` absorbs this into the `(2δ/π) log(2+|t|)` term for any `c>0`.
+   No window structure needed — just `abs_primeReciprocals_sub_log_log_le`.
+3. *Large primes* `p > P₁`: each lies in exactly one window (`windowIndex` is a function), the
+   window sits in `(P, P(1+w)]` with `P = e^{a_m}`, `w = e^{b_m−a_m} − 1 ≤ 2·(2δ/|t|)`, and
+   `log P = a_m ≥ (γ_m − δ)/|t|`.  `short_interval_mass_le` gives mass
+   `≤ 16δ/γ_m + 6(1+a_m)³ e^{−a_m/2}`.
+4. `∑_{1 ≤ |m| ≤ K} 1/γ_m ≤ (1/π)(1 + log K)` via `γ_m ≥ 2π|m| − π` and mathlib's
+   `harmonic_le_one_add_log`; `K ≈ |t| log Y` gives the `(2δ/π)(log log Y + log(2+|t|))`.
+5. The tail `∑_m (1+a_m)³ e^{−a_m/2}` is a geometric-type sum over `a_m ≈ 2πm/|t|`, bounded by
+   `C|t|` — which again absorbs into `(2δ/π) log(2+|t|)`?  **NO** — `C|t|` is far too big.
+   Handle it instead by grouping the windows into dyadic blocks in `log p`: block `j` covers
+   `log p ∈ [2^j, 2^{j+1})`, holds `≤ |t|·2^j/π + 1` windows each with the SAME `P ≥ e^{2^j}`,
+   so the block's tail contributes `≤ (|t| 2^j/π + 1)·6(1+2^{j+1})³ e^{−2^j/2}`, and
+   `∑_j` of that is `≤ C·|t|` — still `|t|`, but `|t|·e^{−2^j/2}` summed from the FIRST block
+   with `2^j ≥ 4 log(2+|t|)` is `≤ 1`, and the earlier blocks are all inside `p ≤ P₁` and so
+   already counted in step 2.  This is why the split point is `P₁ = |t|^4`.
+
+Next lap: step 2 (self-contained, `log log s ≤ c log s + O_c(1)`), then step 4 (harmonic),
+then the window bookkeeping of step 3.
+
+### Lap 75 — constant retune (forced by Brun–Titchmarsh's factor 2) + two bricks
+
+**Constant retune.**  The BT route cannot deliver the ideal coefficient `2δ/π`: BT at level
+`z = √P` costs a factor `4`, the window width bound `w ≤ 2(b−a)` another `2`, and the gap
+estimate `γ_m − δ ≥ (π/2)m` another `4/π`.  The honest coefficient is `≈ 20δ`.
+`UniformResonantMass` is therefore restated with the round constant **`100·δ`**, and
+`ttEps z := min (resEps z) (1/256)` so that `(126/125)·100·δ ≤ 0.394 < 1` and
+`κ = ttExponent z = (1 − cos δ)(1 − (126/125)·100δ) ≥ 0.6(1 − cos δ) > 0` with margin.
+Everything downstream is unchanged.
+
+**Bricks landed** (`C3MrtWindowMass`, both axiom-clean):
+* `log_le_mul_sub` / `log_log_le_mul_log` — `log u ≤ c·u − 1 − log c`, the tangent-line bound
+  with free slope.  This is step 2's absorption of the small-prime mass `log log P₁` into the
+  `log(2+|t|)` budget.
+* `sum_inv_gap_le` — `∑_{m=1}^{K} (2πm − π − δ)⁻¹ ≤ (2/π)(1 + log K)` for `0 ≤ δ ≤ π/2`, via
+  `2πm − π − δ ≥ (π/2)m` and mathlib's `harmonic_le_one_add_log`.  This is step 4.
+
+Remaining for `UniformResonantMass`: the window bookkeeping of step 3 (map each resonant prime
+`p > P₁` to its `windowIndex`, fit the fibre into `(P, P(1+w)]` with `P = exp((γ_m−δ)/|t|)`,
+apply `short_interval_mass_le`), then the dyadic-block treatment of the BT error tail (step 5).
+
+### Lap 76 — step 3: `resonant_window_mass_le`
+
+A set of primes confined to a window of length `2δ/|t|` in `log p`, starting at height
+`a ≥ log 2`, carries reciprocal mass at most `16δ/(|t|·a) + 6(1+a)³·exp(−a/2)`.  Proved from
+`short_interval_mass_le` plus `exp_sub_one_le_two_mul` (`exp x − 1 ≤ 2x` on `[0,1]`, from
+mathlib's `Real.exp_bound` at `n = 1`) — the conversion from an additive window in `log p` to a
+multiplicative window `(P, P(1+w)]` with `w ≤ 2·(2δ/|t|)`.  Hypothesis `2δ ≤ |t|` keeps `w`
+in the linear regime; the complementary range `|t| < 2δ` carries `O(1)` windows and is the
+existing `resonant_mass_le` (Range 1).
+
+At `a = (γ_m − δ)/|t|` the first term is `16δ/(γ_m − δ)`, which `sum_inv_gap_le` sums to
+`(32δ/π)(1 + log K)` over `1 ≤ m ≤ K` — inside the `100δ` budget with room for the `m = 0`
+window and both signs of `m`.
+
+Remaining: the window PARTITION (fibre the resonant primes over `windowIndex`, check each
+fibre satisfies the `hGw` of `resonant_window_mass_le` with `a = (γ_m−δ)/|t|`), the small-prime
+split at `P₁ = |t|^4`, and the dyadic-block sum of the BT error `6(1+a)³e^{−a/2}`.
+
+### Lap 77 — the `δ`-covering
+
+`exists_window_of_resonant_width`, `windowIndexW`, `windowIndexW_spec`, `abs_windowIndexW_le`:
+the `C3MrtArchimedean` covering redone at a free half-width `δ ≤ resEps z` (forced by lap 73).
+The gap `2δ ≤ |arg z − 2πm|` still comes from `two_resEps_le_abs_shift`; only the resonance
+threshold moves.  Each resonant prime now has a well-defined window index, bounded by
+`⌈(T + δ + π)/(2π)⌉` when `|t| log p ≤ T`.
+
+All four pieces of the assembly are now in place:
+  (i)  `resonant_window_mass_le`  — one fibre's mass,
+  (ii) `windowIndexW` + `abs_windowIndexW_le` — the fibration and its index range,
+  (iii) `sum_inv_gap_le` — the harmonic sum of the main terms,
+  (iv) `log_log_le_mul_log` — the small-prime absorption.
+Next lap: `Finset.sum_fiberwise_of_maps_to` over `Icc (−K) K`, checking the `hGw` of (i) with
+`a = (γ_m − δ)/|t|` on each fibre, plus the two side conditions (`a ≥ log 2` — this is exactly
+the small-prime split, since `a < log 2` forces `p ≤ exp((γ_m+δ)/|t|)` small; and the BT error
+tail).
+
+### Lap 78 — the two summation bricks
+
+* `window_err_le` — `6(1+a)³/√(exp a) ≤ 10⁵·exp(−a/8)` for `a ≥ 0`.  The Brun–Titchmarsh error
+  of `resonant_window_mass_le` decays exponentially in the window HEIGHT.  Proved from
+  `exp x ≥ (1 + x/4)⁴` (four `Real.add_one_le_exp`s), no factorials.
+* `sum_Icc_symm_le` — `∑_{m ∈ [−K,K] ⊆ ℤ} f|m| ≤ 2 ∑_{j ≤ K} f j` for `f ≥ 0`, by fibering
+  over `Int.natAbs` (each fibre has ≤ 2 points).  This is the reindexing both the harmonic
+  main-term sum (`sum_inv_gap_le`, stated over `Icc 1 K ⊆ ℕ`) and the error sum need.
+
+**Design note recorded for the assembly.**  The small-prime cutoff is NOT `p ≥ 7`.  With
+`2δ ≤ |t|` one does get `a_m ≥ log 2` as soon as `p ≥ 7`, so `resonant_window_mass_le` applies;
+but its BT error term `≈ 10⁵ e^{−a/8}` summed over the `≈ |t| log Y` windows is `≈ C|t|`, which
+is NOT `O(δ log(2+|t|))`.  The cutoff must be at height `A₁ ≈ 8 log(C(1+|t|))`, i.e.
+`P₁ ≈ (C(1+|t|))⁸`:
+* windows below `A₁`: bound their total by the mass of ALL primes `p ≤ exp(A₁+1)`, which is
+  `log(A₁+1) + mertensBound ≈ log log|t|`, absorbed by `log_log_le_mul_log`;
+* windows above `A₁`: `∑ e^{−a_m/8} ≤ e^{−A₁/16}·∑ e^{−a_m/16}` and the second factor is a
+  geometric sum with ratio `e^{−π/(16|t|)}`, hence `≤ 1 + 32|t|/π`; `A₁ = 16 log(C(1+|t|))`
+  then makes the whole error `≤ 1`.
+
+### Lap 79 — the last two leaves before the assembly
+
+* `sum_exp_neg_le` — `∑_{j<n} exp(−cj) ≤ 1 + 1/c` for `c > 0`, from `exp(−c) ≤ 1/(1+c)` and
+  `geom_sum_eq`.  Applied with `c = π/(32|t|)` (the window spacing in the height variable)
+  it gives the `1 + 32|t|/π` cost of the Brun–Titchmarsh error tail.
+* `small_prime_mass_le` — any set of primes `≤ B` has mass `≤ log log B + mertensBound`.
+
+**Everything `UniformResonantMass` needs is now proved.**  The assembly is:
+
+    resonantMass z t Y δ
+      = ∑_{m ∈ Icc(−K,K)} (mass of the fibre windowIndexW = m)          [sum_fiberwise_of_maps_to,
+                                                                          abs_windowIndexW_le]
+      ≤ (fibres with a_m < A₁ : all primes ≤ exp(A₁+1))                  [small_prime_mass_le]
+        + ∑_{a_m ≥ A₁} (16δ/(|t| a_m) + 6(1+a_m)³/√(exp a_m))            [resonant_window_mass_le]
+      ≤ log(A₁+1) + mertensBound                                          [absorbed: log_log_le_mul_log]
+        + 2·(32δ/π)(1 + log K)                                            [sum_inv_gap_le, sum_Icc_symm_le]
+        + 10⁵ e^{−A₁/16}·2(1 + 32|t|/π)                                   [window_err_le, sum_exp_neg_le,
+                                                                           sum_Icc_symm_le]
+
+with `A₁ := 16 log(10⁵(1 + 32|t|/π) + 2)` making the last line `≤ 2`, and
+`K := ⌈(|t| log Y + δ + π)/(2π)⌉` so `log K ≤ log log Y + log(2+|t|) + O(1)`.
+Regime split: `2δ ≤ |t|` for the above; `|t| < 2δ` is `resonant_mass_le` (Range 1, lap 20),
+where `T = |t| log Y` is not bounded — **CHECK THIS**: for `|t| < 2δ` the windows are spaced
+`2π/|t|` apart in `a`, so only `O(1 + |t| log Y)` of them meet `[2, Y]`; the honest statement is
+that this branch needs the same treatment with `w = exp(2δ/|t|) − 1` no longer `≤ 2·(2δ/|t|)`.
+Simplest fix: for `|t| < 2δ` use `a_m ≥ (2π|m| − π − δ)/|t| ≥ (π/2)|m|/|t| ≥ (π/4)|m|/δ`, so
+only `m = 0` can have `a_m ≤ log Y` once `|t| ≤ 2δ/log Y`; the intermediate range
+`2δ/log Y < |t| < 2δ` still has `≤ 1 + (2/π)|t| log Y ≤ 1 + (4δ/π) log Y` windows — and a
+FLAT per-window bound (`windowMassBound`) there costs `O(δ log Y)`, which is too big.
+So the `|t| < 2δ` branch must ALSO use Brun–Titchmarsh, with `w = exp(2δ/|t|) − 1` bounded by
+`exp(2δ/|t|)` and the main term `4w/a_m` compared against `a_m ≥ (γ_m − δ)/|t|`.  Deferred to
+the assembly lap; it is the one genuinely unresolved corner.
+
+### Lap 80 — ARCHITECTURE CHANGE: unit blocks, not whole windows (supersedes lap 74 step 3/5)
+
+Analysing the `|t| < 2δ` corner flagged in lap 79 shows the per-window architecture is wrong
+in BOTH directions, and one architecture fixes both:
+
+* For `|t| < 2δ` the windows are multiplicatively **wide** (`ℓ = 2δ/|t| > 1`).  Brun–Titchmarsh
+  on the whole window gives `4(e^ℓ − 1)/a`, exponentially worse than the truth `log(1 + ℓ/a)`;
+  the dependency's Mertens gives the truth but with a flat `2·mertensBound` per window, and
+  that range can hold `≈ (δ/π) log Y` windows, costing `O(δ log Y)` — fatal.
+* For `|t|` large the per-window Brun–Titchmarsh error summed over `≈ |t| log Y` windows costs
+  `O(|t|)` unless the cutoff height `A₁` grows with `|t|`.
+
+**The fix: cut every window into unit pieces in `log p`.**  Pieces are then always narrow, so
+Brun–Titchmarsh is sharp on each; and their errors sit at heights spaced `≥ 1` apart, so they
+sum geometrically with **no factor of `|t|`**.  Also note the resonant mass is honestly
+`O_δ(1)`-bounded in the wide case: `2δ/(|t| a_m) ≤ 2δ/(γ_m − δ) ≤ 2` for `m = 0`, since
+`γ_m ≥ 2δ` — the "every prime `≤ Y` is resonant" configuration really does occur (for
+`log Y ≲ 2.2/δ`) and is absorbed by the `δ`-dependent constant `C`.
+
+**Landed:** `interval_mass_le` — primes in `log p ∈ (a, a+ℓ)` with `a ≥ log 2`, `0 < ℓ ≤ 1`
+carry mass `≤ 8ℓ/a + 10⁵·exp(−a/8)`.  This is `resonant_window_mass_le` with the length a free
+parameter, with `window_err_le` already folded in; it is the block brick.
+
+Revised assembly:
+1. Fibre the resonant primes `p` with `log p ≥ A₁` by the pair (window index `m`, block index
+   `k = ⌊log p⌋`).  Each fibre sits in an interval of length `min(1, 2δ/|t|)` at height `≥ k`.
+2. Main terms: `∑ 8·len/k`, a Riemann sum for the log-log measure of the resonant set, bounded
+   via `sum_inv_gap_le` after grouping the blocks of one window.
+3. Errors: `∑_k n_k·10⁵e^{−k/8}` with `n_k ≤ 1 + |t|/(2π)` sub-intervals per block, summed by
+   `sum_exp_neg_le` at `c = 1/8`; the `(1 + |t|/2π)` factor is killed by `A₁ ≈ 8 log(C(1+|t|))`.
+4. `log p < A₁`: `small_prime_mass_le` at `B = exp A₁`, cost `log A₁ + O(1) ≈ log log|t|`,
+   absorbed by `log_log_le_mul_log`.
+
+## lap 94 (2026-09-25) — the open input cut to ONE EXPLICIT SEQUENCE
+
+`src/NormalNumbers/C3MrtDepthInput.lean` (new, green, `[propext, Classical.choice, Quot.sound]`).
+
+Advance on the crux: the single open statement the headline rests on is narrowed a fourth time.
+
+    lap 90  KPointNoExcWith  cK CstK K   — every coprime-mult. bounded family, every inj. shift
+    lap 93  KPointNoExcRoots cK CstK K   — ω-powers of arbitrary unimodular z, shifts i+1
+    lap 94  KPointNoExcDepth b h' cK CstK K  — z i = e(h'/b^{i+1}), ¬(b:ℤ)∣h'
+
+`KPointNoExcAt z cK CstK K` peels the `∀ z` off `KPointNoExcRoots` (`kPointNoExcRoots_iff_at`
+is `Iff.rfl`), every proof of the lap-93 chain is verbatim with `h z hz` ⟶ `h`, and
+`KPointNoExcDepth b h' := KPointNoExcAt (depthRoot b h')`.  Chain rethreaded:
+`dyadic_window_bound_at`, `windowPhi_hwin_at`, `depthAvg_le_depth`,
+`depthAvg_gen_tendsto_of_unif_depth`, `depthAvg_gen_tendsto_of_geom_slow_depth`,
+`depthDiagonalSlow_of_geom_depth`, `weylLambertTwist_of_geom_input_depth`,
+`conjC3_of_geom_input_depth`.  Nothing is given up: `kPointNoExcDepth_of_roots` and
+`conjC3_of_geom_input_roots'` recover the lap-93 form.
+
+FREE, for the lap-93 reason and not the lap-92 one: the consumer discharges nothing new.  The
+`¬(b:ℤ)∣h'` side condition is exactly what `exists_pow_mul_not_dvd` already hands the chain, and
+the archimedean certificate is still `ttNonPretentious_zOmegaNat` at `i = 0` (κ = ttExponent of
+the LEADING root only — lap 92's refutation stands, and is why the input is asked at `∃ i`).
+
+Ledger reading now: `ConjC3` holds if, for every base `b ≥ 3`, every primitive level `h'`, and
+every `K`, the ONE correlation sum
+
+    (W/N) ∑_{N<n≤2N, n≡r (W)} ∏_{i<K} e(h'/b^{i+1})^{ω(n+i+1)}
+
+is `≤ CstKdeg m K · L^{-cKgeom c₀ θ b K}` under TT's hypotheses minus the exceptional set.  Still
+🔴 at every `K` (K = 2 included) — strictly stronger than published, disclosed.
+
+NEXT: (1) `∀ᶠ K` instead of `∀ K` — `KN N = max 1 (depthSlow b N - v) → ∞`, so add
+`hKNtop.eventually hin` to the `filter_upwards` in `depthAvg_gen_tendsto_of_unif_depth` and
+thread up.  (2) then the `Statement.lean` audit surface + ledger writeup (trigger C3-T6).
+
+## lap 95 (2026-09-25) — the input needed only at LARGE `K`
+
+`src/NormalNumbers/C3MrtEvtInput.lean` (new, `lake build NormalNumbers.C3MrtEvtInput` green at
+9010 jobs, `lake build` green at 9257; all new declarations `[propext, Classical.choice, Quot.sound]`).
+
+Fifth narrowing of the one open statement:
+
+    lap 94  ∀ K,            KPointNoExcDepth b h' cK CstK K
+    lap 95  ∀ᶠ K in atTop,  KPointNoExcDepth b h' cK CstK K
+
+`conjC3_of_geom_input_evt` is the headline.  Mechanism: the chain evaluates the input only at
+`K = KN N = max 1 (depthSlow b N - v)`, and `tendsto_KNslow_atTop` shows `KN → ∞`; in
+`depthAvg_gen_tendsto_of_unif_evt` the input is already applied inside a `filter_upwards`, so
+`hKNtop.eventually hin` simply joins that list.  A `Tendsto … (𝓝 0)` conclusion cannot see
+finitely many `N`, so every fixed `K` is dispensable.  `conjC3_of_geom_input_depth'`
+(`Filter.Eventually.of_forall`) confirms nothing is given up.
+
+Ledger consequence: **no small-`K` rung is assumed at all** — in particular `K = 2`, the only
+rung anywhere near the literature (TT Thm 3.1(ii)), is now unused by the headline.  The open
+statement is purely asymptotic in the number of correlation points, on one explicit family.
+This also sharpens the honest disclosure: the gap to print is not "we assume a published rung
+without its exceptional set" but "we assume the large-`K` regime, which print does not reach at
+all" (TT: triple correlations "not within current technology").
+
+NEXT: the `Statement.lean` audit surface + ledger writeup (trigger C3-T6 — five narrowings in
+laps 90–95, so the reduction is at or near FINAL).
+
+## lap 96 (2026-09-25) — the open input is now ONE EXPLICIT INEQUALITY
+
+`src/NormalNumbers/C3MrtDyadicInput.lean` (new; `lake build NormalNumbers.C3MrtDyadicInput`
+green at 9011 jobs, `lake build` green at 9257; all new declarations
+`[propext, Classical.choice, Quot.sound]`).
+
+Sixth narrowing, and the one that removes the last analytic quantification.  `KPointNoExcDepth`
+still carried TT Thm 3.1 machinery the consumer was choosing itself: the scale `X`, the cutoff
+`L`, the range `√X ≤ N ≤ X`, and the hypothesis `∃ i, TTNonPretentious (zOmegaNat (z i)) X L`.
+`dyadic_window_bound_at` always picks `X = N²`, `L = (2 log N)^κ`, and discharges the archimedean
+hypothesis itself at `i = 0` (`ttNonPretentious_zOmegaNat`, unconditional).  So all of it peels:
+
+    DepthDyadicBound b h' κ cK CstK K :=
+      ∀ N ≥ 2, max 2 (K+1) ≤ (2 log N)^{κ·cK K} → ∀ M r, 0 < M → M ≤ (2 log N)^{κ·cK K} →
+        ‖∑_{N<n≤2N, n≡r (M)} ∏_{i<K} e(h'/b^{i+1})^{ω(n+i+1)}‖
+            ≤ CstK K · (2 log N)^{-κ·cK K} · N / M
+
+Headline `conjC3_of_dyadic_input`, with `κ = ttExponent (depthRoot b h' 0)` — not a free
+parameter but the archimedean saving of the LEADING root, exactly the quantity lap 92 proved
+cannot be shared across factors.  `depthDyadicBound_of_depth` IS `dyadic_window_bound_at`, and
+`conjC3_of_geom_input_evt'` recovers lap 95, so nothing is given up.
+
+The full reduction, laps 90→96:
+
+    ConjC3 ⇐ ∀ b ≥ 3, ∀ h' with ¬(b:ℤ)∣h', ∀ᶠ K in atTop,
+               DepthDyadicBound b h' (ttExponent (depthRoot b h' 0)) (cKgeom c₀ θ b) (CstKdeg m) K
+
+for every 0 < θ < 1.  No multiplicative function, character, pretentiousness notion, auxiliary
+scale, threshold, schedule or budget layer remains in the hypothesis — one explicit
+exponential-sum bound, indexed by (b, h', K).
+
+Still 🔴 and still strictly stronger than print (large-`K` regime; TT: triple correlations "not
+within current technology").
+
+NEXT: `Statement.lean` audit surface + ledger writeup (trigger C3-T6; six narrowings in laps
+90–96, so the reduction is FINAL unless the audit pass finds slack).
+
+## lap 97 (2026-09-25) — the AUDIT SURFACE (trigger C3-T6 served)
+
+`src/NormalNumbers/C3MrtStatement.lean` (new; tip green at 9014 jobs, `lake build` green at
+9257; both declarations `[propext, Classical.choice, Quot.sound]`).
+
+`audit_conjC3_of_dyadic_input` restates the lap-96 headline with EVERY abbreviation of the chain
+unwound — no `ConjC3`, `IsRich`, `WeylLambertTwist`, `DepthDyadicBound`, `depthRoot`, `ee`,
+`omegaNat`, `cKgeom`, `CstKdeg` or `Filter.Eventually`.  An auditor reads only
+`Nat.primeFactors`, `Complex.exp`, `Real.log`, `Real.exp`, an rpow, a `tsum`, `⌊·⌋`,
+`Int.fract` and a `Finset.card` density.  It went green first try, which is itself the
+faithfulness check: Lean accepted `exact hK₀ …` against `DepthDyadicBound` and the conclusion
+against `ConjC3` BY DEFEQ, so the unwinding is not a paraphrase.
+
+One honest gap is documented in the file: the audit form quantifies `∀ κ ∈ (0,1]` where the sharp
+theorem needs only `κ = ttExponent (depthRoot b h' 0)`.  That assumes strictly MORE, and is done
+only to keep `ttEps` / `resEps` off the audit surface.  `conjC3_of_dyadic_input` remains the
+sharp statement.
+
+`dyadic_threshold_satisfiable` checks the surface is not vacuous: for every `K` and every `s > 0`
+the threshold `max 2 (K+1) ≤ (2 log N)^s` holds for all large `N`, so the bound is asserted about
+genuinely many sums, not an empty range of `N`.
+
+Ledger text written into the file header: 🔴 OPEN, strictly stronger than print at every `K`
+(`K = 2` included), needed only in the large-`K` regime which print does not reach at all.
+
+STATE: the reduction is FINAL in the sense of C3-T6 — laps 90–97 produced six successive
+narrowings plus the audit surface.  Remaining honest work on the crux is to attack
+`DepthDyadicBound` itself (an explicit exponential-sum bound, now in a form where it can be
+attacked or refuted), not to narrow it further.
+
+## lap 98 (2026-09-25) — WHERE the crux has content, and where it is free
+
+`src/NormalNumbers/C3MrtDyadicContent.lean` (new; tip green at 9012, `lake build` green at 9257;
+all three declarations `[propext, Classical.choice, Quot.sound]`, no new sorry).
+
+First lap ATTACKING `DepthDyadicBound` rather than narrowing it.  Before trying to prove it, map
+which instances are assumptions and which are already theorems.  Write the saving factor
+`dyadicFactor cK CstK κ K N = CstK K · (2 log N)^{-κ·cK K}`.
+
+1. `dyadic_ineq_of_trivial` — **PROVED**: if `M ≤ dyadicFactor` the asserted inequality holds
+   unconditionally, from `‖∑‖ ≤ #(Ioc N (2N)) = N` alone.  So the content of the crux lives
+   entirely in `dyadicFactor < M ≤ (2 log N)^{κ·cK K}`; everything else is free.  (This is the
+   lemma to keep in mind before believing any future "proof" of the crux: it must engage
+   `M > dyadicFactor`.)
+2. `dyadicFactor_ge_one_of_small_scale` — **PROVED**: whenever `(2 log N)^{κ·cK K} ≤ CstK K` the
+   factor is `≥ 1`, so (as `M ≥ 1`) the instance is free.  The threshold hypothesis does NOT
+   exclude this: it only demands `K+1 ≤ (2 log N)^{κ·cK K}`, and `CstKdeg m K = exp((K+1)^m)`
+   dwarfs `K+1`.  So `DepthDyadicBound` at a fixed `K` is trivial on an initial stretch of its
+   admissible `N` and content-bearing only for `log(2 log N) > (K+1)^m b^{θK}/(κ c₀)`.
+3. `dyadicFactor_tendsto_zero_at_diagonal` — **PROVED**: along the diagonal
+   `K = KN N ≤ depthSlow b N`, geometric profile, `θ < 1`, the factor `→ 0`.  So the reduction
+   consumes the crux precisely in its content-bearing range and is NOT extracting `ConjC3` from
+   free instances.
+
+Ledger consequence (honest, and new): the assumption is neither vacuous (lap 97
+`dyadic_threshold_satisfiable`) nor trivially true where used (3), but it IS trivially true on
+part of its stated range (1,2).  A sharper future form could restrict `DepthDyadicBound` to
+`M > dyadicFactor` — a seventh free narrowing, cheap given (1).
+
+NEXT on the crux: (a) restrict the input to `M > dyadicFactor` (free, from `dyadic_ineq_of_trivial`);
+(b) the real attack — the truncation structure.  `∏_{i<K} e(h'/b^{i+1})^{ω(n+i+1)}` has deep
+factors within `O(b^{-i})` of 1, so for `i₀ ≍ δ·log log N` the tail product is `1 + O((log N)^{-δ})`
+on average; the K-point sum reduces to an `i₀`-point sum.  This does NOT collapse to bounded `K`
+(i₀ still grows), which is exactly lap 87's finding, but it may reduce the needed `K`-range to
+`K ≲ log_b log log N` — worth formalizing as the next narrowing, and it is the structural reason
+the route needs uniformity in `K` at all.
+
+## lap 99 (2026-09-25) — the TRUNCATION route, made quantitative and REFUTED
+
+`src/NormalNumbers/C3MrtTruncate.lean` (new; tip green at 9013, `lake build` green at 9257;
+all six declarations `[propext, Classical.choice, Quot.sound]`, no sorry).
+
+The hope after lap 92 ("the deep depth roots are almost pretentious, i.e. within `O(b^{-i})` of
+1") is that the deep factors of `∏_{i<K} e(h'/b^{i+1})^{ω(n+i+1)}` can be DISCARDED, truncating
+the `K`-point problem to an `i₀`-point one with `i₀ ≪ K`.  This lap makes that quantitative and
+the numbers refute it.
+
+PROVED this lap:
+* `norm_ee_sub_one_le` — `‖e(y) − 1‖ ≤ 4π|y|` for all real `y`, unconditionally (the large-`|y|`
+  branch via `‖e(y) − 1‖ ≤ 2`).
+* `depth_prod_eq_ee` — the depth product IS one additive character:
+  `∏_{i<K} e(h/b^{i+1})^{ω(n+i+1)} = e(∑_{i<K} ω(n+i+1)·h/b^{i+1})`.
+* `depth_prod_truncate_norm_le` — per `n`, truncating at `i₀ ≤ K` costs
+  `≤ 4π|h| ∑_{i₀≤i<K} ω(n+i+1)/b^{i+1}`.
+* `norm_sum_le_norm_sum_add`, `truncate_sum_le` — the same over any index set, symbolically.
+* `truncate_sum_explicit_le` — geometric tail collapsed, `ω ≤ log₂`:
+  cost `≤ 8π|h|·#S·log₂W·b^{−(i₀+1)}` when `n + K ≤ W` on `S`.
+* `dyadic_truncate_explicit_le` — the dyadic-window instance: cost
+  `≤ 8π|h|·N·log₂(2N+K)·b^{−(i₀+1)}`.
+
+**REFUTATION (do not retry).**  At the diagonal the target saving is
+`(2 log N)^{-κ c₀ b^{-θK}}`; with `b^K ≍ Λ := log log N` that is `≍ exp(−κc₀Λ^{1−θ})`.  The
+truncation cost above is `≍ N·(log log N)·b^{−i₀}`, which drops below the target only once
+`i₀ ≳ Λ^{1−θ}/log b`.  But the diagonal has `K ≍ log_b Λ`, and `Λ^{1−θ} ≫ log Λ` for EVERY
+`θ < 1`.  So the required truncation depth EXCEEDS `K` itself, exponentially.  The deep factors
+cannot be dropped at any depth below `K`, in either direction (the same estimate bounds
+`‖S_K − S_{i₀}‖` both ways).  Hence:
+ - lap 92's "the deep digits are almost pretentious" does NOT give "the deep digits are
+   negligible" — those are different statements, and only the first is true;
+ - the `K`-point problem does not reduce to a shallower one, which is the quantitative mechanism
+   behind lap 87's finding that fixed-`K` limits cannot reach the diagonal;
+ - genuine uniformity in `K` is not a convenience of this route but forced.
+
+NEXT on the crux: with truncation refuted, the remaining honest attacks on `DepthDyadicBound` are
+(a) the free narrowing to `M > dyadicFactor` (lap 98 item 1), and (b) the `K`-fold Halász/Elliott
+input itself — i.e. accept that the open statement is a genuine large-`K` correlation bound and
+work on the ledger/writeup rather than expecting a reduction to collapse it.
+
+## lap 100 (2026-09-25) — the crux is ONE WEYL SUM, and its sharp (content-bearing) form
+
+`src/NormalNumbers/C3MrtPhaseForm.lean` (new; tip green at 9014, `lake build` green at 9257; all
+four declarations `[propext, Classical.choice, Quot.sound]`, no sorry).
+
+**(a) Reformulation — a second attack surface.**  `depthPhase b K n := ∑_{i<K} ω(n+i+1)/b^{i+1}`
+and `depth_prod_eq_ee_phase` give `∏_{i<K} e(h'/b^{i+1})^{ω(n+i+1)} = e(h'·depthPhase b K n)`.
+Hence `depthDyadicBound_iff_phase`:
+
+    DepthDyadicBound b h' κ cK CstK K  ↔  DepthPhaseBound b h' κ cK CstK K
+
+an **IFF**, not an implication.  So the open statement is NOT intrinsically a `K`-fold Elliott
+correlation: it is exactly the quantitative equidistribution mod 1 of the single real sequence
+`n ↦ h' · depthPhase b K n` along dyadic windows in arithmetic progressions.  The `K`-fold
+correlation shape is one route to it (TT's), and lap 99 showed that route cannot be shortened by
+truncation.  The Weyl form is a genuinely different attack surface: classical exponential-sum
+technology applies to it without any correlation decomposition.  Worth noting what `depthPhase`
+IS — the base-`b` digit tail weight of the prime Lambert constant, i.e. the very object
+`C3MrtShape.ee_tailDepth_eq_prod` introduced from the other direction.  The crux and the
+conjecture are the same equidistribution statement seen at two scales.
+
+**(b) Seventh free narrowing — the sharp form.**  `DepthDyadicBoundNT` adds the hypothesis
+`dyadicFactor cK CstK κ K N < M`, i.e. asks the bound only where lap 98 did not already prove it.
+`depthDyadicBound_of_nt` recovers the full statement by case split on
+`dyadic_ineq_of_trivial`; `conjC3_of_dyadic_input_nt` is the headline.  Every remaining instance
+now asserts cancellation strictly beyond the trivial estimate — the crux carries no free
+instances at all.
+
+Narrowing ledger, laps 90→100: threshold discharged → ω-powers → one explicit sequence →
+primitive levels → large `K` only → one explicit inequality → content-bearing range only, plus
+the Weyl-sum reformulation.  Refuted along the way: the `∀ i` weakening (92) and truncation (99).
+
+NEXT on the crux: attack `DepthPhaseBound` by exponential-sum methods (the point of (a)).  The
+first concrete probe: `depthPhase b K n` is a positive-coefficient linear form in
+`ω(n+1),…,ω(n+K)` with geometrically decaying weights, so its distribution is governed by the
+joint distribution of `ω` at consecutive shifts — the same wall, but now approachable by a
+van-der-Corput / Weyl-differencing argument on the PHASE rather than a correlation bound on the
+product.  Test whether one differencing step reduces the `K`-shift phase to a shorter one; if it
+does, that is the first genuine crack.
+
+## lap 101 (2026-09-25) — the depth phase is a PERTURBED ×b ORBIT (exact identity)
+
+`src/NormalNumbers/C3MrtPhaseDynamics.lean` (new; tip green at 9015, `lake build` green at 9257;
+both declarations `[propext, Classical.choice, Quot.sound]`, no sorry).
+
+Following lap 100's Weyl-sum reformulation, the dynamics of the phase sequence turn out to be
+EXACT, not approximate.  `depthPhase_succ`, valid for every `K` including `K = 0`:
+
+    depthPhase b K (n+1) = b · depthPhase b K n − ω(n+1) + ω(n+K+1)/b^K
+
+`depthPhase` reads the string `ω(n+1),…,ω(n+K)` as a base-`1/b` expansion, so `n ↦ n+1` is the
+base-`b` SHIFT on that string: multiply by `b`, drop the leading digit `ω(n+1)`, feed the new deep
+digit `ω(n+K+1)` in at weight `b^{-K}`.  The dropped digit is an integer times `h'`, hence
+invisible to the character (`ee_depthPhase_succ`):
+
+    e(h'·depthPhase b K (n+1)) = e(b·h'·depthPhase b K n + h'·ω(n+K+1)/b^K)
+
+**Content.**  Mod 1 the phase sequence is an orbit of the EXPANDING map `x ↦ b·x`, perturbed at
+each step by `≤ |h'|·ω(n+K+1)/b^K`.  So the C3 crux is not an arbitrary equidistribution
+question: it asks that a perturbed `×b` orbit equidistribute.  That is exactly the "casting out"
+dynamics this namespace is named for, now reached from the correlation side — and it explains
+structurally why the depth schedule must satisfy `b^K ≍ log log N`: the per-step perturbation is
+`≍ ω/b^K`, and the route lives or dies on that against the target saving.
+
+Caution recorded: the perturbation is NOT negligible in lap 99's refuted sense — summed over a
+window of length `N` it is `≍ N·log log N/b^K`, which at the diagonal is `≍ N`, not `o(N)`.  The
+recursion is a structural identity to EXPLOIT, not an error term to discard.  Any future argument
+that treats it as small is repeating lap 99's refuted move.
+
+NEXT on the crux: exploit the recursion rather than bound it.
+(i) The `×b` self-similarity relates the Weyl sum at scale `N` to one at scale `N` with phase
+    multiplied by `b` — i.e. a relation between `DepthPhaseBound` at `h'` and at `b·h'`, since
+    `e(b·h'·x) = e(h'·x)^b` is the character at the SHIFTED level.  Test whether iterating gives a
+    closed relation on the family `{h' , b h', b² h', …}` — note `b^v h'` is exactly the
+    non-primitive level the chain strips via `exists_pow_mul_not_dvd`, so this may connect the
+    primitivity reduction to the dynamics.
+(ii) Failing that, van der Corput on the phase, using the recursion to compute the differenced
+    phase `depthPhase b K (n+h) − depthPhase b K n` in closed form.
+
+## 2026-09-25 restatement-run verification lap
+
+Independent re-verification of the HALT mandate (a)-(c), no crux advance (as instructed):
+* (a) all four defects machine-checked in `src/NormalNumbers/C3MrtTTDefect.lean`
+  (`ttNonPretentious_trivial`/`_one`, `not_kPointNoExcWith_const_one`,
+  `not_kPointNaturalCorrelationNoExc`, `not_twoPointNaturalCorrelationNoExc`,
+  `twoPointNaturalCorrelation_trivially_true`), aliased in `Maze.lean` as
+  `hall_tt_nonpretentious_vacuous`, `hall_kpoint_noexc_false`, `hall_two_point_noexc_false`,
+  `hall_lebesgue_exceptional_scales`.
+* (b) faithful restatements `TTNonPretentiousAt`/`TTNonPretentiousUnif` (constant OUTSIDE
+  `X, L`; `ttPretentiousSumChar` over Dirichlet characters of conductor `≤ (log X)^{1/125}`;
+  twists `|t| ≤ X²`), `TwoPointDyadicCorrelation` (Finset-counted dyadic exceptional scales),
+  `KPointNoExcAtWith`; guards `not_ttNonPretentiousUnif_one`, `not_ttNonPretentiousAt_one`,
+  `full_exceptional_set_not_admissible` + `exists_L_cost_lt_one`, `const_one_not_faithful`;
+  no-weakening bridges `ttNonPretentious_of_At`, `kPointNoExcAtWith_of_with`.
+* (c) SURVIVORS table in `HANDOFF-2026-09-25-tt-interface-restated.md` §(c).
+* This lap's only change: the `#print axioms` audit block now covers all 14 statements
+  (5 guards/bridges were previously unprinted).  `lake build` green, 9442 jobs; every one
+  depends only on `propext, Classical.choice, Quot.sound`.
+
+Next lap (crux, per DIRECTION "Next attack"): rethread `KPointNoExcWith → KPointNoExcAtWith A`
+bottom-up and upgrade `ttNonPretentious_of_uniformResonantMass` to the faithful hypothesis
+(gap: characters `q > 1`, twists up to `X²`).
+
+## 2026-09-25 lap 108 — the narrow non-principal debt decoupled from `X`
+
+Crux advance (archimedean side of the faithful C3 chain, `C3MrtArchFaithful.lean`):
+
+* `NonPrincipalLocalBound B` — the non-principal narrow debt **with no `X` on the right**:
+  `‖twistedPrimeSum X χ t‖ ≤ log log (3 + q(2+|t|)) + B` for `χ ≠ 1`.  This is exactly
+  `|log L(1+it, χ)| ≪ log log (q(2+|t|))`, a textbook bound uniform in the length of the sum.
+* `nonPrincipalTwistSmall_of_localBound` — it **suffices**, with saving `κ = 1/2` (far more than
+  the chain needs).  Proof: `q, |t| ≤ (log X)^{1/125}` ⟹ `3 + q(2+|t|) ≤ 6 (log X)²`, then the
+  tangent-line bound `log w ≤ w/8 + log 8 − 1` (`log_le_div_eight`) collapses the outer
+  logarithm to `(log log X)/2 + O(1)`.  Nothing beyond `1/125 ≤ 1` is used.
+* `narrowTwistSmall_mono` / `narrowTwistSmallTriv_mono` / `nonPrincipalTwistSmall_mono` — all
+  three narrow `Prop`s are monotone (down in `κ`, up in `C`), which is what lets the `q = 1`
+  theorem's saving `ttExponent z` be combined with the local bound's `1/2` by `min`.
+* `depthRoot_zero_emod` + `exists_uniform_narrow_const` — **the twist-uniformity of the implied
+  constant is now a THEOREM, not a hypothesis**: `depthRoot b h' 0 = ee(h'/b)` is `1`-periodic,
+  so it takes ≤ `b` values and the pointwise constants have a maximum (`Finset.sup'`).
+  `FaithfulArchLower` requires `C` outside `h'`; this discharges that requirement.
+* `faithfulArchLower_of_urm_of_localBound` — `FaithfulArchLower b` from **three** named
+  statements: `UniformResonantMass` (pre-existing, covers `q = 1`), `NonPrincipalLocalBound`,
+  `WideTwistSmall`.  Saving `kappaDepth b / 2`, uniform in `h'`.
+* `conjC3_of_geom_input_reduced` — `ConjC3` from the faithful `K`-point input (at every positive
+  implied constant) plus those three.  **New finding:** `conjC3_of_geom_input_lower`'s single
+  `C` for all bases is unachievable — the narrow constant comes from `UniformResonantMass` at
+  `δ ≍ π/b` and must degrade with `b` — but this costs nothing, since `ConjC3` factors through
+  `conjC3_of_weylLambertTwist` base by base.
+
+**Headline now rests on strictly less** (trigger C3-T5 satisfied): the archimedean debt went from
+one opaque `FaithfulArchLower` to `UniformResonantMass` + an `X`-free L-function bound + the wide
+range, and the `h'`-uniformity obligation is discharged.
+
+**Next attack.** `WideTwistSmall` is the remaining genuinely new analytic debt (zero-free region
+for `L(s,χ)`; the module doc records that the resonance count provably cannot supply it).  Before
+that, check whether mathlib's Dirichlet L-function non-vanishing on `Re s = 1` can discharge
+`NonPrincipalLocalBound` directly — that would clear the narrow range outright.
+
+## 2026-09-25 lap 109 — the archimedean side reduced to UniformResonantMass + ONE bound
+
+* **Refuted (source-grounded):** mathlib cannot discharge `NonPrincipalLocalBound`.
+  `DirichletCharacter.LFunction_ne_zero_of_one_le_re`
+  (`Mathlib/NumberTheory/LSeries/Nonvanishing.lean:398`) is purely qualitative — no rate, no
+  uniformity in `q` or `t`.  Two elementary substitutes were tried and both reduce back to the
+  same wall: (i) restricting to `p ≡ 1 (q)` gives a saving `κ/φ(q)`, which dies as
+  `φ(q) → (log X)^{1/125}`; (ii) the `b`-th-root-of-unity averaging `∑_{j<b} z^j = 0` gives the
+  *average* over `j` of the savings, not the saving at `j = 1`, and chasing the bad case
+  (`χ̄(p)p^{-it} ≈ z̄` for most `p`) lands on `χ^b` pretending to the principal character, i.e. on
+  prime equidistribution in progressions with `q`-uniformity — Siegel–Walfisz.  So the debt is
+  real and is disclosed as one.  Do not re-attempt via mathlib L-functions.
+* `TwistedPrimeSumSmall κ C` — **the two remaining archimedean debts unified into one.**  The
+  narrow non-principal range and the wide range are bounds on the *same* object
+  `‖twistedPrimeSum X χ t‖`; together they say the twisted prime sum has a saving everywhere
+  except the principal-character narrow corner.  `nonPrincipalTwistSmall_of_saving` and
+  `wideTwistSmall_of_saving` recover both.
+* `faithfulArchLower_of_urm_of_saving` — `FaithfulArchLower b` from exactly TWO inputs:
+  `UniformResonantMass` and `TwistedPrimeSumSmall`.
+* `conjC3_of_geom_input_saving` — `ConjC3` from the faithful `K`-point input plus those two.
+  Since `UniformResonantMass` was already the route's analytic input *before* the defect was
+  found, the entire cost of stating TT (3.3) faithfully is now the single bound
+  `TwistedPrimeSumSmall`.
+* `twistedPrimeSum_principal_zero` — guard: at `χ = 1, t = 0` the twisted prime sum IS the full
+  prime reciprocal mass, so the excluded corner cannot be folded in; `TwistedPrimeSumSmall` is
+  not an accidental over-reach.
+
+**Next attack.** `TwistedPrimeSumSmall` is now the single archimedean target.  Two probes worth
+trying, in order: (1) does the `t = 0`, `χ ≠ 1` case follow from a *weak* Mertens-in-AP with
+`q`-uniformity that is easier than Siegel–Walfisz, given that we only need a saving of a *constant
+factor* `κ`, not `o(1)`?  (2) the wide range `|t| > (log X)^{1/125}`: partial summation against
+`ψ(x) − x` needs only a `(log x)^{-A}` error, so check whether a fixed-power error suffices, which
+is a weaker input than the zero-free region the module doc assumed.
+
+## 2026-09-25 lap 110 — the multiplier `z` ELIMINATED from the archimedean debt
+
+The archimedean obligation carried two unknowns: the depth root `z` (a `b`-th root of unity ≠ 1)
+and the pair `(χ, t)`.  The multiplier is now gone, by an elementary identity:
+
+    1 − w^b = (1 − w)(1 + w + ⋯ + w^{b−1})  ⟹  ‖1 − w^b‖ ≤ b‖1 − w‖,
+    ‖1 − u‖² = 2 − 2 Re u on the unit circle  ⟹  1 − Re(w^b) ≤ b²(1 − Re w).
+
+* `normSq_one_sub_of_norm_one`, `norm_one_sub_pow_le`, `one_sub_re_pow_le` — the three steps.
+* `ttPretentiousSumChar_pow_le` — applying it at `w = z χ̄(p) p^{−it}` with `z^b = 1`:
+  `ttPretentiousSumChar 1 X (χ^b) (b t) ≤ b² · ttPretentiousSumChar (zOmegaNat z) X χ t`.
+  Handles `p ∣ q` (both summands are `1/p`) and `p ∤ q` (`DirichletCharacter.unit_norm_eq_one`).
+* `depthRoot_pow_eq_one` — `depthRoot b h' 0` IS a `b`-th root of unity (`ee(h'/b)^b = ee(h')`).
+* `OneNonPretentious κ C` — the resulting debt: **TT (3.3) for the CONSTANT function `1`**, i.e.
+  `1` is non-pretentious to `ψ(n)n^{iτ}` whenever `(ψ, τ) ≠ (1, 0)`.  No base, no root of unity,
+  no twist `h'` — so ONE analytic statement serves every base at once, which the resonance route
+  structurally could not do (its constant degrades like `π/b`).
+* `RootOrderCase b κ C` — the one corner the reduction cannot reach: `χ^b = 1` and `t = 0`, where
+  the right-hand side is `0`.  There `χ` has order `d | b`, so it takes `b`-th-root-of-unity
+  values and the bad set is the coset `{χ = z}`, of relative density `1/d`.
+* `faithfulArchLower_of_oneNonPretentious`, `conjC3_of_geom_input_zfree` — `ConjC3` from the
+  faithful `K`-point input + `OneNonPretentious` + `RootOrderCase`.
+
+**Why this is the right split (and where the true hard core now sits).**  In `RootOrderCase`, a
+Brun–Titchmarsh upper bound on the bad coset gives mass `≤ (2/d) log log Y`, so for `d ≥ 3` there
+is a saving `1 − 2/3 > 0` and BT is uniform in `q` with no exceptional-character caveat.  `d = 2`
+— real `χ`, `z = −1`, hence `b` even and `h' ≡ b/2 (mod b)` — is the Siegel-zero case.  So after
+this lap the hard core of the entire C3 archimedean debt is a SINGLE explicit configuration:
+`b` even, depth root exactly `−1`, `χ` real quadratic, `t = 0`.
+
+**Next attack.**  (1) Formalize the `d ≥ 3` branch of `RootOrderCase` against a named
+`BrunTitchmarshAP` statement (check mathlib first: `Mathlib/NumberTheory/` sieve files).  (2) The
+`d = 2`, `z = −1` corner: `1 − Re(−χ(p)) = 1 + χ(p)`, so the obligation is
+`∑_{p≤Y} (1 + χ(p))/p ≥ κ log log Y` for real non-principal `χ` — i.e. `χ(p) = −1` must not hold
+for almost all `p`.  That is `L(1, χ) ≠ 0` with a *rate*; mathlib has the qualitative
+`LFunction_apply_one_ne_zero`, and the elementary Dirichlet-style argument via
+`∑_{n} (1 * χ)(n)/n ≥ 0` (Mertens' trick) may give an effective constant — worth one probe.
+
+## 2026-09-25 lap 111 — the narrow conductor debt de-escalated from Siegel to classical
+
+`NonPrincipalLocalBound` (lap 108) asked for a `log log(q(2+|t|))` bound — the sharp
+`log L(1+it,χ)` estimate, needing non-vanishing on the 1-line *with a rate*.  That is far more
+than the chain consumes.  In TT's range `q, |t| ≤ (log X)^{1/125}`, so
+
+    log(q + 2) + log(2 + |t|) ≤ 2 log 3 + (2/125) · log log X,
+
+a *fraction* `2/125` of `log log X`.  Hence:
+
+* `CharPrimeSumLogQ D` — the weakened debt: a **`log`-sized** bound
+  `‖twistedPrimeSum X χ t‖ ≤ D(log(q+2) + log(2+|t|) + 1)` for `χ ≠ 1` in the narrow range.
+  An exponential weaker than a `log log` bound.
+* `log_two_add_le`, `nonPrincipalTwistSmall_of_logQBound` — it suffices, with saving
+  `κ = 1 − 2D/125`, close to `1`.
+* `faithfulArchLower_of_urm_of_logQ` — `FaithfulArchLower b` from `UniformResonantMass` +
+  `CharPrimeSumLogQ` + `WideTwistSmall`.
+
+**Ledger consequence (the point of the lap).**  At `t = 0` the `log`-sized bound is classical and
+**Siegel-free**: `|∑_{p≤Y} χ(p)/p| ≤ log(1/L(1,χ)) + O(1) ≤ (1/2) log q + O(1)` from the
+elementary `L(1,χ) ≫ q^{-1/2}` — no Siegel–Walfisz, no exceptional-modulus exclusion.  TT's
+exponent `1/125` on `Q` is precisely what makes the crude bound enough.  So lap 110's reading
+(the `d = 2` / real-character corner is "the Siegel-zero case") is **corrected**: the conductor
+dependence is not the obstruction.  What remains genuinely open is the *twist* dependence at
+large `|t|` (`WideTwistSmall`), where cancellation in `p^{-it}` is required and no `log q`-type
+bound helps.
+
+**Next attack.**  Concentrate on `WideTwistSmall`, now the sole genuinely-open archimedean
+statement: `‖∑_{p≤X²} χ̄(p)p^{-it}/p‖ ≤ (1−κ) log log X + C` for `(log X)^{1/125} < |t| ≤ X²`.
+Probe: for `|t| ≥ 2` the bound `≤ log log (q(2+|t|)) + O(1)` is USELESS (it is `≍ log X`), but the
+target only needs `(1−κ) log log X`, i.e. a *fraction* of the trivial Mertens bound.  So ask for
+the weakest useful form: is there a `κ > 0` and an elementary argument giving a constant-fraction
+saving for large twists, e.g. by splitting `p ≤ exp((log log X)^2)` (where `p^{-it}` oscillates
+across dyadic blocks) from the tail?  Formalize whichever split reduces `WideTwistSmall` to a
+statement about a *single* dyadic block.
+
+## 2026-09-25 lap 112 — the wide range reduced to ONE dyadic block
+
+* **Refuted (route-decisive, recorded in the module doc).**  `WideTwistSmall` cannot be closed by
+  a standard `|log L(1+it,χ)| ≤ log log(q(2+|t|)) + O(1)` upper bound.  For `|t|` anywhere
+  polynomial in `X`, `log log(q(2+|t|)) = log log X + O(1)`, while `∑_{p ≤ X²} 1/p = log log X +
+  O(1)` as well — so that route yields `κ = 0`, not a saving.  The `log log` scale collapses under
+  ANY polynomial twist range, so the positive saving must come from cancellation *inside* the sum.
+  Do not attempt the wide range via an L-function upper bound.
+* `dyadicPrimeBlockSum` / `dyadicPrimeBlockMass` (fibres of `Nat.log 2 p = j`),
+  `twistedPrimeSum_eq_sum_blocks`, `sum_blockMass_eq` — the dyadic decomposition of the twisted
+  prime sum, via `Finset.sum_fiberwise_of_maps_to`.
+* `WideBlockSaving κ` + `wideTwistSmall_of_blockSaving` — **a constant-fraction saving on EACH
+  dyadic block suffices**: the block norms sum to `(1−κ)·∑_{p≤X²} 1/p`, and `small_prime_mass_le`
+  plus `logloglog_ceil_sq_le` turn that into `(1−κ) log log X + O(1)`.  This is the right target
+  because inside a block `log p` varies by at most `log 2`, so `t log p` sweeps an interval of
+  length `≍ |t|` — enormous in the wide range, which is exactly where oscillation is available.
+* `wideTwistSmall_mono`, `twistedPrimeSumSmall_of_parts`, `conjC3_of_geom_input_blocks` —
+  `ConjC3` from the faithful `K`-point input plus THREE archimedean statements:
+  `UniformResonantMass`, `CharPrimeSumLogQ` (log-sized, classical at `t = 0`), `WideBlockSaving`.
+
+**Next attack.**  `WideBlockSaving` at a single block: the block is
+`{p : 2^j ≤ p < 2^{j+1}, p ≤ X²}` and the target is
+`‖∑ conj(χ(p)) p^{-it}/p‖ ≤ (1−κ) ∑ 1/p`.  Since `1/p ≍ 2^{-j}` across the block, this is
+equivalent (up to constants) to `|∑_{p ∈ block} χ̄(p) p^{-it}| ≤ (1−κ)·#block`, i.e. a
+**constant-fraction cancellation in a character sum twisted by `p^{-it}` over one dyadic block of
+primes**.  That is a Vinogradov/Vaughan-type bilinear statement, and unlike the `log log` route it
+is not scale-degenerate.  Formalize the equivalence `block-norm ⟺ block-count` first (elementary:
+`2^{-(j+1)} ≤ 1/p ≤ 2^{-j}` on the block), which converts the debt into a statement with no
+reciprocals in it.
+
+## 2026-09-25 lap 113 — the wide debt is now reciprocal-free (Abel transfer)
+
+* `norm_sum_smul_le_of_partial_bound` — **Abel transfer, no loss of constant.**  If every initial
+  partial sum of `a` saves a factor `1 − κ` against the running count `∑ c`, then the sum weighted
+  by any nonnegative *decreasing* `w` saves the SAME factor against `∑ w·c`.  Proof: two
+  applications of `Finset.sum_range_by_parts`, once against `a` and once against `c`; they produce
+  literally the same weight combination `w(n−1)·S(n) − ∑ (w(i+1) − w(i))·S(i+1)`, which is why
+  `1 − κ` is preserved exactly.
+* `blockPrimes`, `WideBlockPartial κ` — the reciprocal-free debt:
+  `‖∑_{p ∈ block, p < m} χ̄(p) p^{-it}‖ ≤ (1−κ)·#{p ∈ block : p < m}` for every initial segment.
+  No `1/p` weights, no `log log`, no `X` except through the block.
+* `wideBlockSaving_of_partial` — Abel removes the weights: `WideBlockPartial κ ⟹ WideBlockSaving
+  κ` (indexing by the prime `p` itself with `w p = 1/max(p,1)`, so no enumeration of the block is
+  needed; `a` and `c` are supported on the block).
+* `conjC3_of_geom_input_blockPartial` — the final shape: `ConjC3` from the faithful `K`-point input
+  + `UniformResonantMass` + `CharPrimeSumLogQ` + `WideBlockPartial`.
+
+**Where the C3 archimedean debt now stands.**  Three statements, and the only one that is not
+either pre-existing (`UniformResonantMass`) or classical (`CharPrimeSumLogQ`, Siegel-free at
+`t = 0`) is `WideBlockPartial`: a constant-fraction cancellation in `∑ χ̄(p)p^{-it}` over the
+initial segments of a dyadic block of primes.  That is a bilinear/Vinogradov-shaped statement with
+no scale degeneracy — contrast lap 112's finding that the `log log` route is degenerate at every
+polynomial twist range.
+
+**Next attack.**  `WideBlockPartial` at `q = 1` (no character): the debt is
+`|∑_{p ∈ [2^j, 2^{j+1}), p < m} p^{-it}| ≤ (1−κ)·count` for `|t| > (log X)^{1/125}`.  Probe the
+cheapest sufficient mechanism: `p^{-it} = exp(−it log p)` and `log p` ranges over an interval of
+length `log 2` inside the block, so the phases are `−t·log p` spread over an interval of length
+`|t| log 2 ≫ 1`.  A constant-fraction saving needs only that the primes' `log p` are not
+concentrated in a single residue interval of width `≪ 1/|t|` mod `2π/|t|` — i.e. an equidistribution
+statement for `{t log p / 2π}` at scale `1/|t|`.  Formalize the reduction from a
+"no-concentration" hypothesis on `{t log p}` to `WideBlockPartial`, which converts the analytic
+debt into a statement about the *distribution of `log p`*, not about L-functions at all.
+
+## 2026-09-25 lap 114 — the last archimedean debt is now GEOMETRIC, not analytic
+
+* `normSq_add_of_norm_one`, `norm_add_le_of_sep` — `‖x+y‖² = 2 + 2 Re(x conj y)` on the unit
+  circle, so two unit vectors separated by `Re(x conj y) ≤ d` satisfy `‖x+y‖ ≤ √(2+2d) < 2`.
+* `norm_sum_le_of_pairing` — **the pairing bound.**  If `σ` maps `S` into `S` injectively and every
+  `p ∈ S` has `Re(u_p conj u_{σ p}) ≤ d`, then `σ` permutes `S`, so
+  `2 ∑_{p∈S} u_p = ∑_{p∈S}(u_p + u_{σ p})` and hence `‖∑ u_p‖ ≤ (√(2+2d)/2)·#S`.  A saving
+  `κ = 1 − √(2+2d)/2 > 0` for ANY `d < 1`.  No equidistribution, no L-function, no measure theory.
+  The trick that makes it cheap: an injective self-map of a finite set is a permutation, so no
+  enumeration of actual pairs is ever needed.
+* `twistUnit`, `goodSeg`, `norm_twistUnit`, `BlockPhasePairing d`,
+  `wideBlockPartial_of_phasePairing` — the reduction: a separated pairing on every initial segment
+  of every dyadic block gives `WideBlockPartial`, hence `WideBlockSaving` (lap 113), hence
+  `WideTwistSmall` (lap 112).  Primes dividing `q` are handled by `Finset.sum_subset` (the summand
+  vanishes there), so only the `χ`-surviving primes need pairing.
+* `conjC3_of_geom_input_pairing` — `ConjC3` from the faithful `K`-point input +
+  `UniformResonantMass` + `CharPrimeSumLogQ` + `BlockPhasePairing`.
+
+**Where the archimedean side stands after this lap.**  Nothing analytic is left in the wide range.
+`BlockPhasePairing` says only: among the primes of one dyadic block, one can injectively match each
+`p` to a partner whose twist phase `−t log p` differs from `p`'s by a bounded-away-from-zero angle.
+Since `|t| > (log X)^{1/125}` and `log p` sweeps an interval of length `log 2` in a block, the phases
+`t log p` sweep length `≫ 1`, so partners at angular distance `≍ 1` are abundant — the obstruction is
+now *constructing the matching*, which is combinatorics on the multiset `{t log p mod 2π}`, not an
+L-function estimate.
+
+**Next attack.**  Build the matching explicitly.  The cheapest construction: order the block's
+primes `p_1 < … < p_n`; consecutive `log p` gaps are `≍ 1/p ≍ 2^{-j}`, so `t·(log p_{i+1} − log p_i)
+≍ |t| 2^{-j}`.  When `|t| 2^{-j} ≳ 1` neighbouring primes are already separated, and `σ` = "shift by
+one within a maximal run" works (pair `p_i ↔ p_{i+1}` alternately, which is an injective self-map).
+When `|t| 2^{-j} ≪ 1`, instead pair `p_i ↔ p_{i+k}` with `k ≍ 2^j/|t|`, which needs only that the
+block contains `≥ 2k` primes — i.e. a lower bound on `#block`, available from Chebyshev.  Formalize
+the `|t| 2^{-j} ≳ 1` branch first: it needs no prime counting at all.
+
+## 2026-09-25 — DIRECTION ②.3: the `t = 0` conductor debt, narrowed to the tail
+
+`src/NormalNumbers/C3MrtCharSumZero.lean` (new, sorry-free, axiom-clean).
+
+**Advance on the crux.**  The `t = 0` slice of `CharPrimeSumLogQ` is split at the conductor and
+the **head is discharged in the kernel**: `norm_charHeadSum_le` proves
+`‖∑_{p ≤ q} conj(χ(p))/p‖ ≤ log(q+2) + mertensBound` via `small_prime_mass_le`, i.e. the head is
+`O(log log q)` — a whole exponential *below* the `log q` budget, so the head can never be the
+obstruction.  `charPrimeSumLogQZero_of_tail` then gives the whole slice with
+`D = C + 1 + mertensBound` from the single remaining input `CharTailCancellation C`
+(cancellation over `q < p ≤ X²`, equivalent in strength to the Siegel-free `L(1,χ) ≫ q^{-1/2}`;
+mathlib has only the qualitative `LFunction_apply_one_ne_zero`).
+
+**GUARD RULE discharged for `CharTailCancellation`** (all four configurations):
+* content locator — `charTailSum_head_free` (below the conductor the tail range is *empty*, so
+  the content is at `X² ≫ q`);
+* empty — `charTailCancellation_vacuous_below` (survives, any `0 ≤ C`);
+* singleton — `charTailSum_singleton_le` (`≤ 1`; the bound is additive in the mass, not
+  multiplicative in a saving, so no singleton can refute it — the lap-115 failure mode is
+  structurally absent);
+* constant-function — `charTail_conductor_ne_one` (`χ = 1` is exactly what `χ ≠ 1` excludes, and
+  `q = 1` forces `χ = 1`).
+
+**Next attack on this item.**  `CharTailCancellation C` from `L(1,χ) ≫ q^{-1/2}`:
+1. `∑_{q<p≤Y} χ(p)/p = ∑_{p≤Y} χ(p)p^{-σ} + O(1)` at `σ = 1 + 1/log Y` (smoothing; the head
+   subtraction is already `O(log log q)` by `norm_charHeadSum_le`);
+2. `∑_p χ(p)p^{-σ} = 𝓛(σ,χ) + O(1)` where `𝓛 = ∑_{p,k} χ(p^k)/(k p^{kσ})` — **DONE**
+   (`primePower_tail_le_one`, sorry-free, axiom-clean): `∑_{p∈P} ∑_{k∈Ico 2 N} 1/(k p^k) ≤ 1`
+   for every finite prime set `P` and every truncation `N`, via `primePower_inner_le`
+   (`≤ p^{-2}`, geometric in `k`) and `prime_inv_sq_sum_le_one` (`∑_p p^{-2} ≤ 1`, by the
+   telescope `1/(n-1) − 1/n`; no `ζ(2)` needed).  So the step-1→3 passage costs `O(1)`
+   absolutely — uniformly in the prime set, the truncation and `σ ≥ 1`;
+3. `exp 𝓛 = L(σ,χ)` (Euler product; mathlib `DirichletCharacter.LSeries_eulerProduct`-family);
+4. `|Re 𝓛| ≤ |log‖L‖| ≤ (1/2) log q + O(log log q)` from the lower bound plus `‖L(1,χ)‖ ≪ log q`;
+5. `|Im 𝓛| ≪ log q` — the winding number of `arg L(σ,χ)` as `σ: ∞ → 1`.  **This is the one step
+   with no shortcut**; budget is generous (`D` up to `62` is admissible, since downstream only
+   needs `2D < 125`), so a crude Jensen/zero-counting bound suffices.
+
+### Tolerance of the archimedean debt — SETTLED in the kernel (same lap)
+
+A route-decisive question that had not been pinned: *how much* precision does the archimedean
+supply actually need?  `NonPrincipalTwistSmall κ C` asks
+`‖twistedPrimeSum X χ t‖ ≤ (1−κ) log log X + C` and the chain needs only `κ > 0`, which looked as
+though it might admit something far weaker than `≪ log q`.  It does not, and both ends are now
+theorems:
+
+* **`κ = 0` is FREE** — `nonPrincipalTwistSmall_zero` (via `norm_twistedPrimeSum_le_mass` and
+  `norm_twistedPrimeSum_le_loglog`): for *every* `χ` and *every* `t`,
+  `‖twistedPrimeSum X χ t‖ ≤ log log X + log 3 + mertensBound`, by the triangle inequality and
+  Mertens, with zero cancellation.  So all archimedean content is the *strict* improvement over
+  Mertens, never the bound itself.
+* **`κ > 0` is exactly `≪ log q`** — in TT's range `q, |t| ≤ (log X)^{1/125}` one has
+  `log q ≤ (1/125) log log X`, so `nonPrincipalTwistSmall_of_logQBound` converts a
+  `D·(log(q+2)+log(2+|t|)+1)` bound into `κ = 1 − 2D/125`, admissible for every `D < 62.5`.
+
+**Consequence for the route.**  Anything of size `log log X` at the top of the range gives `κ = 0`,
+which is already free and therefore useless; so no statement weaker than `O(log q)` can serve.
+And the constant is generous (`D` up to `62`).  That is precisely why the `t = 0` attack aims at
+the crude Siegel-free `L(1,χ) ≫ q^{-1/2}` and not at anything sharper: a crude rate is all the
+chain can use, and all it needs.  This closes off "find a cheaper archimedean input" as a route.
+
+## 2026-09-25 — DIRECTION ②.4 `UniformResonantMass`: the sketched route FAILS, and the repair
+
+`src/NormalNumbers/C3MrtURMLowHigh.lean` (new; 4 sorry-free lemmas + 1 disclosed sorry).
+
+**A refutation of the route as sketched.**  `C3MrtWindowMass` built the whole Brun–Titchmarsh
+toolkit for `UniformResonantMass` but never assembled it, and its own plan does not close.  Its
+`sum_exp_neg_le` docstring commits to the error tail costing `1 + 32|t|/π`, i.e. `O(|t|)`.  But
+`UniformResonantMass` allows `100δ(log log Y + log(2+|t|)) + C` with `C` chosen **before** `t`, so
+`O(|t|)` overshoots by an exponential.  The sketched assembly fails on its own error term — the
+same failure mode as laps 102/115, caught this time *before* being threaded into the chain.
+
+**The repair: split at a GROWING height.**  `lowHeight t = 8 log(2+|t|)`, in the variable `log p`,
+instead of an absolute constant:
+* **Low range** (`log p ≤ lowHeight t`) — no windows at all, just Mertens:
+  `lowResonantMass_le` gives `≤ log(lowHeight t) + 1 + mertensBound = O(log log(2+|t|))`, a whole
+  exponential below the budget's `100δ·log(2+|t|)`.  `log_lowHeight_le` (from the tangent-line
+  bound `log_le_eps_mul`) discharges the comparison for every fixed `δ > 0`, with the absorbing
+  constant depending only on `δ` — which `UniformResonantMass` permits.
+* **High range** — every window now starts at height `a ≥ 8 log(2+|t|)`, so its Brun–Titchmarsh
+  error carries `exp(−a/8) ≤ (2+|t|)⁻¹`.  Windows are spaced `2π/|t|` apart in `a`, so the tail
+  sums to `≲ (|t|/2π)·8·(2+|t|)⁻¹ ≤ 4/π = O(1)`.  **The `|t|` of the window count is cancelled by
+  the `(2+|t|)⁻¹` the raised starting height supplies** — which is precisely what an absolute
+  starting height cannot do.  This is the insight that makes ②.4 closable.
+
+`resonantMass_eq_low_add_high` + `uniformResonantMass_of_high` assemble the statement in the exact
+shape `UniformResonantMass` asks for.  Status: 4 declarations axiom-clean; the assembly carries
+`sorryAx` through exactly one disclosed leaf.
+
+**Next attack (the one open leaf, `highResonantMass_le`).**  Pure Brun–Titchmarsh bookkeeping —
+no further analytic input; every ingredient is already proved in `C3MrtWindowMass`.  Steps 1, 1b
+and 3a are now **DONE** (sorry-free, axiom-clean):
+1. **DONE** — `highResonantMass_eq_sum_windows`: the high-range resonant primes partition
+   *exactly* into the windows `|m| ≤ resWindowCount t δ Y`
+   (`Finset.sum_fiberwise_of_maps_to`, index range from `abs_windowIndexW_le` at `T = |t| log Y`).
+1b. **DONE** — `highResonantMass_eq_zero`: if `log Y ≤ lowHeight t` the high range is *empty*, so
+   the whole `Y = 2` boundary case (where `log 2 < 8 log 2 ≤ lowHeight t`) is discharged and the
+   remaining work may assume `3 ≤ Y`.
+3a. **DONE** — `resWindowCount_le`: `K ≤ (2+|t|)·log Y` for `3 ≤ Y` and `δ ≤ π/2`, hence
+   `log K ≤ log(2+|t|) + log log Y` **with constant `0`** — the window count costs exactly the
+   budget's two terms and not a shred more.  (`32/π < 11 < 50` then leaves ample room.)
+2. **DONE (short-window case `2δ ≤ |t|`)** — `windowMass_le`: the per-window mass is
+   `≤ 16δ/(|t|·aWin) + 6(1+aWin)³/√(exp aWin)` at the *effective* start
+   `aWin z t δ m = max((γ_m − δ)/|t|, lowHeight t)`.  The split pays for itself twice here:
+   `aWin ≥ lowHeight t ≥ 8 log 2` supplies `resonant_window_mass_le`'s `log 2 ≤ a` hypothesis for
+   free (`aWin_ge_log_two`) *and* supplies the `exp(−a/8) ≤ (2+|t|)⁻¹` the error tail needs.
+   Raising the start costs nothing on the main term: `windowMass_main_le` shows
+   `16δ/(|t|·aWin) ≤ 16δ/(γ_m − δ)`, exactly the shape `sum_inv_gap_le` sums, so the comparison
+   `sum_inv_gap_le` needs survives the raise (`aWin_ge_gap`).
+3. **DONE** — `main_sum_le`: `∑_{|m| ≤ K} 16δ/(γ_m − δ) ≤ 32 + (64δ/π)(1 + log K)`.  The trick
+   that makes `sum_Icc_symm_le` (which needs a nonneg function of `|m|`) apply *with no separate
+   central-window case* is to majorise by `gapMaj δ x = 16δ/max(2πx − π − δ, δ)`: the `max` is
+   nonneg even at `x = 0`, where the naive `2π|m| − π − δ` goes negative, and it is a valid
+   majorant because `γ_m − δ ≥ δ` always (from `two_resEps_le_abs_shift`).  `64/π < 21 < 50`, so
+   with step 3a's constant-`0` `log K` bound the main terms sit well inside the high range's
+   `50δ(log log Y + log(2+|t|))` allotment.
+4. **DONE** — `err_sum_le`: the whole Brun–Titchmarsh error tail is `≤ 2200000`, an **absolute**
+   constant, uniform in `t`, `K` and `z`.  This is the step the old plan got wrong (`O(|t|)`
+   there).  `err_term_le` is the repair in one line: because the effective start is a `max`, it
+   dominates the *average* of its two lower bounds (`aWin_ge_avg`), so
+   `exp(−aWin/8) ≤ exp(−lowHeight t/16)·exp(−(γ_m−δ)/(16|t|)) = (2+|t|)⁻¹·exp(−(γ_m−δ)/(16|t|))`
+   — first factor free of `m`, second summable to `O(1+|t|)` by `exp_neg_gWin_le` (gap grows
+   linearly in `|m|`) plus `sum_Icc_symm_le` and `sum_exp_neg_le` at `c = π/(32|t|)`.  Product
+   `O(1)`.
+   **The split height had to be raised from `8 log(2+|t|)` to `16 log(2+|t|)` for this**: `max ≥
+   average` costs a factor `2`, and at `8` the surviving factor is only `(2+|t|)^{-1/2}`, which
+   does NOT beat the `O(|t|)` window count — the repair would have failed for exactly the reason
+   the original plan did.  `lowHeight` is now `16 · log(2+|t|)`.
+**SHORT-WINDOW CASE FULLY PROVED** — `highResonantMass_le_wide` (axiom-clean): for `2δ ≤ |t|` and
+every `2 ≤ Y`,
+`highResonantMass z t Y δ ≤ 50δ(log log Y + log(2+|t|)) + (2200040 + 22δ)`.  Steps 1–4 assembled,
+with `log_resWindowCount_le` supplying `log K ≤ log(2+|t|) + log log Y` (valid at `K = 0` too) and
+`highResonantMass_eq_zero` clearing the `Y = 2` corner where `log log Y < 0`.  Note `64/π < 22`
+needs more than `Real.pi_gt_three` at the constant `21`, so the constant is `22`.
+
+5. **The one step left** (`highResonantMass_le_narrow`).  `2δ ≤ |t|` (the hypothesis of
+   `resonant_window_mass_le`) needs the complementary case: when
+   `|t| < 2δ` the windows are long, and the two-sided Mertens
+   `Erdos67b.PrimeEstimates.reciprocalPrimeInterval_le_log_log_sub_add` replaces
+   Brun–Titchmarsh, giving `log((γ_m+δ)/(γ_m−δ)) ≤ 2δ/(γ_m−δ)` per window with the SAME harmonic
+   sum — so `sum_inv_gap_le` covers both cases and only the per-window tool changes.
