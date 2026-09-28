@@ -1,5 +1,41 @@
 # DIRECTION — normal-numbers 🧭
 
+## CURRENT DIRECTIVE (altitude-owned; outranks HANDOFF) — set lap 1, 2026-09-28
+
+**Objective.** `vandeheyUniformFreq_holds` (`LiteratureVandehey.lean`), via the single leaf
+`MobiusCFNScale`.  The Smith shortcut of the operator objective is **already discharged**
+(`VandeheySmith.lean`, sorry-free): composite `D`, the diagonal factor, division and all of
+`GL₂(ℤ)` are gone.  So that instruction is spent; what remains is the leaf.
+
+**Mandated next move — the §5–§6 output-frequency engine, ABSTRACT, in `src/`.**
+Three laps have built the *input* side (Raney §2, the bijectivity-free pin, Doeblin at a common
+target).  The *output* side (Vandehey Lemma 4.3 + §5 triggers + §6 assembly) has never been
+touched, and it is the route-decisive piece: if output-word frequencies cannot be read off the
+joint (window, state) frequencies, the whole automaton build is worthless.  Build
+`VandeheyOutputFreq.lean` on the hypothesis our machinery actually delivers — the **factorized**
+joint limit `ρ(q,t) = ν(t)·γ(I_q)` that `tendsto_jointCount_of_classEquidistribution` already
+produces (strictly stronger than Vandehey's `ρ ≪≫ μ̃`, and it makes countable additivity free):
+1. `gaussMeasure (allWordsEvent m) = 1`, and finite subfamilies of `allWords m` of measure `> 1−ε`.
+2. **The upper-bound engine**: for a weighted family supported on `allWords m`,
+   `limsup (1/n)·Σ_{i<n} a(wᵢ)·1[tᵢ=t] ≤ ν t · Σ_w a(w) γ(I_w)`.  The finite-subfamily
+   escape is what replaces the tightness patch the published §3 needs.
+3. The assembly: bucket the trigger family by word length, finite truncation below `m`,
+   `K·1_{U_m}` above, `τ_m = Σ_t ν t·γ(⋂-limit) → 0` as the one honest hypothesis.
+
+**Forbidden drift.** Do NOT spend this run on `raneyNorm`/`RaneyState`/the common-target reach
+(HANDOFF's NEXT 1–3).  They are derisked numerically and are supply, not crux.  Do NOT open the
+`PrimeIntervalSupply` side item until the output engine has a stated theorem in the kernel.
+
+**Why.** Hardest-first.  The output side is the only piece whose feasibility is in real doubt,
+and its shape dictates what the automaton must supply — building the automaton first risks
+supplying the wrong thing.
+
+Directive history:
+- 2026-09-28 lap 1 (review): crux switched from the automaton supply side (HANDOFF NEXT 1–3) to
+  the §5–§6 output-frequency engine; factorized joint limit adopted as the hypothesis shape.
+
+---
+
 ## OPERATOR OBJECTIVE 2026-09-28 (b): the Vandehey crux, plus `PrimeIntervalSupply` (bounded, at most 8 laps)
 
 **Main target:** prove `vandeheyUniformFreq_holds : VandeheyUniformFreq`
