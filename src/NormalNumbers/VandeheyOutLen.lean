@@ -29,7 +29,7 @@ combinatorial matter and is *not* needed for the limit itself.
 
 namespace NormalNumbers.VandeheyOut
 
-open Filter VandeheyAut
+open Filter VandeheyAut VandeheyRenewal
 
 variable {S : Type*} [DecidableEq S] [Fintype S]
 
@@ -89,10 +89,78 @@ lemma outLenLimit_nonneg {ρ : List ℕ → S → ℝ} (hρ : SubWindow ρ) {B :
   Finset.sum_nonneg fun t _ =>
     wLimit_nonneg (C := (B : ℝ)) hρ (blockLen_nonneg out t) (blockLen_le out hB t)
 
+/-! ## `hc`: strict positivity of the output rate -/
+
+/-- The joint counts over all states partition the window count. -/
+lemma sum_jointCount_eq_winCard (x : ℝ) (q : List ℕ) (n : ℕ) :
+    ∑ t : S, jointCount δ s₀ t q x n = winCard q x n := by
+  classical
+  rw [winCard, Finset.card_eq_sum_card_fiberwise
+    (f := fun i => stateAt δ s₀ x i) (t := (Finset.univ : Finset S)) (fun i _ => Finset.mem_univ _)]
+  refine Finset.sum_congr rfl fun t _ => ?_
+  rw [jointCount, jointSet]
+  congr 1
+  ext i
+  simp only [Finset.mem_filter, Finset.mem_range]
+  tauto
+
+/-- **The joint law splits the window law**: summing over the (finite) state set recovers the
+Gauss mass of the window. -/
+lemma sum_rho_eq_gauss {ρ : List ℕ → S → ℝ} (hjs : JointStateFreq δ s₀ ρ) {q : List ℕ}
+    (hq : q ≠ []) (hqpos : ∀ a ∈ q, 1 ≤ a) :
+    ∑ t : S, ρ q t = (gaussMeasure (cfCylinder q)).toReal := by
+  obtain ⟨x, hx⟩ := exists_isCFNormal
+  have h1 : Tendsto (fun n => ∑ t : S, (jointCount δ s₀ t q x n : ℝ) / n) atTop
+      (nhds (∑ t : S, ρ q t)) :=
+    tendsto_finsetSum _ fun t _ => hjs t q hq hqpos x hx
+  have h2 : Tendsto (fun n => (winCard q x n : ℝ) / n) atTop
+      (nhds (gaussMeasure (cfCylinder q)).toReal) := by
+    simpa [winCard] using tendsto_windowFreq hx q hq hqpos
+  refine tendsto_nhds_unique h1 (h2.congr fun n => ?_)
+  rw [← Finset.sum_div]
+  congr 1
+  exact_mod_cast (sum_jointCount_eq_winCard δ s₀ x q n).symm
+
+omit [DecidableEq S] in
+/-- A single word bounds the `x`-independent limit from below (`Q = {w}`). -/
+lemma le_wLimit_single {ρ : List ℕ → S → ℝ} {t : S} {a : List ℕ → ℝ} {C : ℝ} {m : ℕ}
+    (hρ : SubWindow ρ) (ha0 : ∀ w, 0 ≤ a w) (haC : ∀ w, a w ≤ C) {w : List ℕ}
+    (hw : w ∈ allWords m) : a w * ρ w t ≤ wLimit ρ t a m :=
+  le_csSup (wLimit_set_bddAbove (C := C) hρ haC ha0) ⟨{w}, by simpa using hw, by simp⟩
+
+/-- **`hc` for any transducer that never stalls on some digit.**  If one genuine digit `j`
+makes *every* state emit a nonempty block, then the output rate is at least the Gauss mass of
+the cylinder `I_[j]`, hence strictly positive. -/
+theorem outLenLimit_pos {ρ : List ℕ → S → ℝ} (hjs : JointStateFreq δ s₀ ρ) (hρ : SubWindow ρ)
+    {B : ℕ} (hB : ∀ t j, (out t j).length ≤ B) {j : ℕ} (hj : 1 ≤ j)
+    (hne : ∀ t : S, out t j ≠ []) :
+    0 < ∑ t : S, wLimit ρ t (blockLen out t) 1 := by
+  have hqne : ([j] : List ℕ) ≠ [] := by simp
+  have hqpos : ∀ a ∈ ([j] : List ℕ), 1 ≤ a := by
+    intro a ha; simp only [List.mem_singleton] at ha; omega
+  have hmem : ([j] : List ℕ) ∈ allWords 1 := ⟨rfl, hqpos⟩
+  have hstep : ∀ t : S, ρ [j] t ≤ wLimit ρ t (blockLen out t) 1 := by
+    intro t
+    have h1 : blockLen out t [j] * ρ [j] t ≤ wLimit ρ t (blockLen out t) 1 :=
+      le_wLimit_single (C := (B : ℝ)) hρ (blockLen_nonneg out t) (blockLen_le out hB t) hmem
+    have h2 : (1 : ℝ) ≤ blockLen out t [j] := by
+      have : 1 ≤ (out t j).length := List.length_pos_iff.mpr (hne t)
+      simpa [blockLen] using (by exact_mod_cast this : (1 : ℝ) ≤ ((out t j).length : ℝ))
+    refine le_trans ?_ h1
+    exact le_mul_of_one_le_left (hρ [j] t).1 h2
+  have hsum : ∑ t : S, ρ [j] t = (gaussMeasure (cfCylinder [j])).toReal :=
+    sum_rho_eq_gauss δ s₀ hjs hqne hqpos
+  have hpos : 0 < (gaussMeasure (cfCylinder [j])).toReal :=
+    gaussMeasure_cfCylinder_toReal_pos _ hqne hqpos
+  calc (0 : ℝ) < ∑ t : S, ρ [j] t := by rw [hsum]; exact hpos
+    _ ≤ ∑ t : S, wLimit ρ t (blockLen out t) 1 := Finset.sum_le_sum fun t _ => hstep t
+
 end NormalNumbers.VandeheyOut
 
 section
 open NormalNumbers.VandeheyOut
 #print axioms outLen_eq_sum_wCount
 #print axioms tendsto_outLen_div
+#print axioms sum_rho_eq_gauss
+#print axioms outLenLimit_pos
 end
