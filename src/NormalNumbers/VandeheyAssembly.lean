@@ -32,8 +32,9 @@ variable {S : Type*} [DecidableEq S] [Fintype S]
 
 /-- **The whole output side, as one reduction.**  A finite-state transducer `(δ, out)` whose
 
-* joint (window, state) frequencies factorize (`hjs`, supplied by
-  `VandeheyCocycle.tendsto_jointCount_of_classEquidistribution`),
+* joint (window, state) frequencies converge to an `x`-independent law `ρ` (`hjs`, supplied by
+  `VandeheyCocycle.tendsto_jointCount_of_classEquidistribution`), dominated by the window law
+  (`hρ : SubWindow ρ`, free from `jointCount ≤ winCard` — see `jointStateFreq_le_gauss`),
 * output is unbounded (`hcof`) and grows linearly with a common rate (`hlen`, Lemma 6.1),
 * trigger multiplicities are uniformly bounded (`hkK`, `hK`, Lemma 2.2) and supported on genuine
   words (`hgen`),
@@ -43,15 +44,15 @@ variable {S : Type*} [DecidableEq S] [Fintype S]
 satisfies the per-matrix uniform-frequency statement.  No value of the limit is asserted — the
 either-or endgame of `VandeheyLeafReduction` pins it. -/
 theorem mobiusUniformFreq_of_transducer
-    (δ : S → ℕ → S) (out : S → ℕ → List ℕ) (s₀ : S) {ν : S → ℝ} {K : ℕ} {c : ℝ}
+    (δ : S → ℕ → S) (out : S → ℕ → List ℕ) (s₀ : S) {ρ : List ℕ → S → ℝ} {K : ℕ} {c : ℝ}
     {A B C D : ℤ}
-    (hjs : JointStateFreq δ s₀ ν) (hν : ∀ t, 0 ≤ ν t)
+    (hjs : JointStateFreq δ s₀ ρ) (hρ : SubWindow ρ)
     (hcof : ∀ y : ℝ, ∀ j, ∃ n, j < outLen δ out s₀ y n)
     (hkK : ∀ v q t, kOut δ out v q t ≤ K)
     (hK : ∀ (v : List ℕ) (t : S) (y : ℝ) (J : ℕ),
       ∑ j ∈ Finset.Icc 1 J, kOut δ out v (cfWord y j) t ≤ K)
     (hgen : ∀ v q t, kOut δ out v q t ≠ 0 → ∀ e ∈ q, 1 ≤ e)
-    (htail : ∀ v, Tendsto (tailMass (kOut δ out v) ν) atTop (nhds 0))
+    (htail : ∀ v, Tendsto (tailMass (kOut δ out v)) atTop (nhds 0))
     (hc : 0 < c)
     (hlen : ∀ y : ℝ, IsCFNormal y →
       Tendsto (fun n => (outLen δ out s₀ y n : ℝ) / n) atTop (nhds c))
@@ -61,7 +62,7 @@ theorem mobiusUniformFreq_of_transducer
     MobiusUniformFreq A B C D := by
   classical
   intro v hne _hpos
-  obtain ⟨L, hL⟩ := exists_tendsto_trigTotal (k := kOut δ out v) (K := K) δ s₀ hjs hν
+  obtain ⟨L, hL⟩ := exists_tendsto_trigTotal (k := kOut δ out v) (K := K) δ s₀ hjs hρ
     (hkK v) (hK v) (hgen v) (htail v)
   refine ⟨L / c, fun x hden hx => ?_⟩
   set y : ℝ := Int.fract x with hy

@@ -18,10 +18,10 @@ frequency
 
 converges to an `x`-independent limit.  Our engine
 (`VandeheyCocycle.tendsto_jointCount_of_classEquidistribution`) delivers that limit in
-**factorized** form `ν t · γ(I_q)`: the state at time `i` reads the past, the window reads
-the future, and the ψ-mixing of the Gauss map decouples them.  That is strictly stronger
-than Vandehey's Remark 3.6 (`ρ ≪≫ μ̃`, no product structure), and the strength is what makes
-this file elementary: countable additivity of `ρ` reduces to countable additivity of `γ`.
+as a function `ρ q t` with NO product structure (Vandehey's Remark 3.6 shape): lap 4 refuted
+the factorized form `ν t · γ(I_q)` numerically for the concrete Raney transducer.  What replaces
+it is the one-line domination `ρ q t ≤ γ(I_q)` (`SubWindow`), which is automatic because
+`jointCount ≤ winCard` at every `n`; that is all the engine ever used the product for.
 
 ## What §5–§6 actually needs
 
@@ -36,7 +36,7 @@ window-state indicators; §6 controls it by the approximants `F_j^±`.
 The engine here is the upper bound for such an infinite sum:
 
 * `limsup_weighted_le` — for weights `a` supported on the length-`m` genuine words,
-  `limsup (1/n) Σ_{i<n} a(wᵢ)·1[tᵢ = t] ≤ ν t · Σ_w a(w) γ(I_w)`.
+  `limsup (1/n) Σ_{i<n} a(wᵢ)·1[tᵢ = t] ≤ Σ_w a(w) ρ(w, t)`.
 
 The escape from the infinite alphabet is a **finite** subfamily of `allWords m` carrying
 almost all the Gauss mass (`exists_boundedWords_sum_gt`), which is the elementary stand-in
@@ -170,16 +170,28 @@ theorem exists_boundedWords_sum_gt (m : ℕ) {ε : ℝ} (hε : 0 < ε) :
 
 variable {S : Type*} [DecidableEq S]
 
-/-- **The factorized joint-frequency hypothesis.**  For every genuine window `q` and every
-state `t`, the joint (window, state) frequency along a CF-normal `x` converges to
-`ν t · γ(I_q)`.  This is exactly what `VandeheyCocycle.tendsto_jointCount_of_classEquidistribution`
-delivers once `ClassEquidistribution` is supplied, with `ν t` the stationary weight of `t`;
-the *product* form is the strengthening over Vandehey's Remark 3.6, and it is what makes
-countable additivity of the limit free. -/
-def JointStateFreq (δ : S → ℕ → S) (s₀ : S) (ν : S → ℝ) : Prop :=
+/-- **The joint-frequency hypothesis** (Vandehey Remark 3.6, *un*factorized).  For every
+genuine window `q` and every state `t`, the joint (window, state) frequency along a CF-normal
+`x` converges to an `x`-independent limit `ρ q t`.
+
+This used to demand the *product* shape `ν t · γ(I_q)`.  That shape is FALSE for the concrete
+Raney transducer of `x ↦ D·x` (`probes/raney_joint_product.py`: at `D = 3` four of the fourteen
+states move by 20 % across short `q`), because the digit steps of the Raney automaton are not
+injective, so the state at `i` stays correlated with the digits abutting the window.  The
+factorization was only ever adopted to control the escape mass of the infinite CF alphabet, and
+that is recovered for free from `SubWindow` below (`ρ q t ≤ γ(I_q)`, since
+`jointCount ≤ winCard` at every `n`). -/
+def JointStateFreq (δ : S → ℕ → S) (s₀ : S) (ρ : List ℕ → S → ℝ) : Prop :=
   ∀ (t : S) (q : List ℕ), q ≠ [] → (∀ a ∈ q, 1 ≤ a) → ∀ x : ℝ, IsCFNormal x →
-    Tendsto (fun n => (jointCount δ s₀ t q x n : ℝ) / n) atTop
-      (nhds (ν t * (gaussMeasure (cfCylinder q)).toReal))
+    Tendsto (fun n => (jointCount δ s₀ t q x n : ℝ) / n) atTop (nhds (ρ q t))
+
+/-- **A joint law is a sub-window law**: nonnegative, and dominated at every window by the
+Gauss mass of that window's cylinder.  For a limit of joint counts both halves are automatic on
+genuine nonempty words (`jointStateFreq_mem_Icc`); the empty word carries no information and its
+bound is just `ρ [] t ≤ 1` (`cfCylinder [] = (0,1)`).  This single inequality replaces every use
+the engine used to make of the product structure. -/
+def SubWindow (ρ : List ℕ → S → ℝ) : Prop :=
+  ∀ (w : List ℕ) (t : S), 0 ≤ ρ w t ∧ ρ w t ≤ (gaussMeasure (cfCylinder w)).toReal
 
 /-- The number of positions `i < n` at which the length-`|w|` digit window spells `w`. -/
 noncomputable def winCard (w : List ℕ) (x : ℝ) (n : ℕ) : ℕ :=
@@ -292,11 +304,11 @@ length-`m` subfamily has weighted limit mass at most `Sb`, then the weighted cou
 eventually at most `(Sb + ε)·n`, for every `ε > 0`.  The infinite CF alphabet is escaped by
 the digit-truncated finite family of `exists_boundedWords_sum_gt`: the escaping positions
 carry frequency `< ε`, and each contributes at most `C`. -/
-theorem eventually_wCount_le (δ : S → ℕ → S) (s₀ : S) {ν : S → ℝ}
-    (hjs : JointStateFreq δ s₀ ν) (t : S) {a : List ℕ → ℝ} {C Sb : ℝ} {m : ℕ} (hm : 0 < m)
+theorem eventually_wCount_le (δ : S → ℕ → S) (s₀ : S) {ρ : List ℕ → S → ℝ}
+    (hjs : JointStateFreq δ s₀ ρ) (t : S) {a : List ℕ → ℝ} {C Sb : ℝ} {m : ℕ} (hm : 0 < m)
     (ha0 : ∀ w, 0 ≤ a w) (haC : ∀ w, a w ≤ C)
     (hSb : ∀ Q : Finset (List ℕ), (∀ w ∈ Q, w ∈ allWords m) →
-      ∑ w ∈ Q, a w * (ν t * (gaussMeasure (cfCylinder w)).toReal) ≤ Sb)
+      ∑ w ∈ Q, a w * (ρ w t) ≤ Sb)
     {x : ℝ} (hx : IsCFNormal x) {ε : ℝ} (hε : 0 < ε) :
     ∀ᶠ n in atTop, wCount δ s₀ t a m x n ≤ (Sb + ε) * n := by
   classical
@@ -318,14 +330,14 @@ theorem eventually_wCount_le (δ : S → ℕ → S) (s₀ : S) {ν : S → ℝ}
   -- the two frequency limits, for each `w ∈ Q`
   set γ : List ℕ → ℝ := fun w => (gaussMeasure (cfCylinder w)).toReal with hγdef
   have hjc : ∀ w ∈ Q, Tendsto (fun n => (jointCount δ s₀ t w x n : ℝ) / n) atTop
-      (nhds (ν t * γ w)) := fun w hw => hjs t w (hQne w hw) (hQpos w hw) x hx
+      (nhds (ρ w t)) := fun w hw => hjs t w (hQne w hw) (hQpos w hw) x hx
   have hwc : ∀ w ∈ Q, Tendsto (fun n => (winCard w x n : ℝ) / n) atTop (nhds (γ w)) := by
     intro w hw
     simpa [winCard, hγdef] using tendsto_windowFreq hx w (hQne w hw) (hQpos w hw)
   -- the limit of the majorant
   set F : ℕ → ℝ := fun n => (∑ w ∈ Q, a w * ((jointCount δ s₀ t w x n : ℝ) / n))
       + C * (1 - ∑ w ∈ Q, ((winCard w x n : ℝ) / n)) with hFdef
-  set L : ℝ := (∑ w ∈ Q, a w * (ν t * γ w)) + C * (1 - ∑ w ∈ Q, γ w) with hLdef
+  set L : ℝ := (∑ w ∈ Q, a w * (ρ w t)) + C * (1 - ∑ w ∈ Q, γ w) with hLdef
   have hFL : Tendsto F atTop (nhds L) := by
     rw [hFdef, hLdef]
     refine Tendsto.add (tendsto_finsetSum _ fun w hw => ?_) ?_
@@ -343,7 +355,7 @@ theorem eventually_wCount_le (δ : S → ℕ → S) (s₀ : S) {ν : S → ℝ}
       div_le_div_iff₀ (by positivity) (by norm_num : (0 : ℝ) < 2)]
     nlinarith [hε.le, hC0]
   have hLlt : L < Sb + ε := by
-    have h1 : (∑ w ∈ Q, a w * (ν t * γ w)) ≤ Sb := hSb Q hQmem
+    have h1 : (∑ w ∈ Q, a w * (ρ w t)) ≤ Sb := hSb Q hQmem
     have h2 : C * (1 - ∑ w ∈ Q, γ w) ≤ C * ε' :=
       mul_le_mul_of_nonneg_left htail hC0
     rw [hLdef]
@@ -447,12 +459,12 @@ lemma wCount_ge_of_finset (δ : S → ℕ → S) (s₀ t : S) {a : List ℕ → 
 
 /-- **The lower-bound engine** (Vandehey Lemma 4.3, lower half).  Every finite length-`m`
 subfamily's limit mass is eventually attained, up to `ε`. -/
-theorem eventually_le_wCount (δ : S → ℕ → S) (s₀ : S) {ν : S → ℝ}
-    (hjs : JointStateFreq δ s₀ ν) (t : S) {a : List ℕ → ℝ} {m : ℕ} (hm : 0 < m)
+theorem eventually_le_wCount (δ : S → ℕ → S) (s₀ : S) {ρ : List ℕ → S → ℝ}
+    (hjs : JointStateFreq δ s₀ ρ) (t : S) {a : List ℕ → ℝ} {m : ℕ} (hm : 0 < m)
     (ha0 : ∀ w, 0 ≤ a w) (Q : Finset (List ℕ)) (hQmem : ∀ w ∈ Q, w ∈ allWords m)
     {x : ℝ} (hx : IsCFNormal x) {ε : ℝ} (hε : 0 < ε) :
     ∀ᶠ n in atTop,
-      ((∑ w ∈ Q, a w * (ν t * (gaussMeasure (cfCylinder w)).toReal)) - ε) * n
+      ((∑ w ∈ Q, a w * (ρ w t)) - ε) * n
         ≤ wCount δ s₀ t a m x n := by
   classical
   have hQlen : ∀ w ∈ Q, w.length = m := fun w hw => (hQmem w hw).1
@@ -464,9 +476,9 @@ theorem eventually_le_wCount (δ : S → ℕ → S) (s₀ : S) {ν : S → ℝ}
     omega
   have hQpos : ∀ w ∈ Q, ∀ b ∈ w, 1 ≤ b := fun w hw => (hQmem w hw).2
   set γ : List ℕ → ℝ := fun w => (gaussMeasure (cfCylinder w)).toReal with hγdef
-  set Sq : ℝ := ∑ w ∈ Q, a w * (ν t * γ w) with hSqdef
+  set Sq : ℝ := ∑ w ∈ Q, a w * (ρ w t) with hSqdef
   have hjc : ∀ w ∈ Q, Tendsto (fun n => (jointCount δ s₀ t w x n : ℝ) / n) atTop
-      (nhds (ν t * γ w)) := fun w hw => hjs t w (hQne w hw) (hQpos w hw) x hx
+      (nhds (ρ w t)) := fun w hw => hjs t w (hQne w hw) (hQpos w hw) x hx
   have hlim : Tendsto (fun n => ∑ w ∈ Q, a w * ((jointCount δ s₀ t w x n : ℝ) / n)) atTop
       (nhds Sq) := by
     rw [hSqdef]
@@ -489,58 +501,64 @@ theorem eventually_le_wCount (δ : S → ℕ → S) (s₀ : S) {ν : S → ℝ}
 /-- **The `x`-independent limit**, defined with no reference to any `x`: the supremum of the
 weighted limit masses of the finite length-`m` subfamilies.  For a *finite* family this is the
 plain sum; the content is that a countable family has the same Cesàro behaviour. -/
-noncomputable def wLimit (ν : S → ℝ) (t : S) (a : List ℕ → ℝ) (m : ℕ) : ℝ :=
+noncomputable def wLimit (ρ : List ℕ → S → ℝ) (t : S) (a : List ℕ → ℝ) (m : ℕ) : ℝ :=
   sSup {c : ℝ | ∃ Q : Finset (List ℕ), (∀ w ∈ Q, w ∈ allWords m) ∧
-    c = ∑ w ∈ Q, a w * (ν t * (gaussMeasure (cfCylinder w)).toReal)}
+    c = ∑ w ∈ Q, a w * (ρ w t)}
 
 omit [DecidableEq S] in
-lemma wLimit_set_nonempty (ν : S → ℝ) (t : S) (a : List ℕ → ℝ) (m : ℕ) :
+lemma wLimit_set_nonempty (ρ : List ℕ → S → ℝ) (t : S) (a : List ℕ → ℝ) (m : ℕ) :
     {c : ℝ | ∃ Q : Finset (List ℕ), (∀ w ∈ Q, w ∈ allWords m) ∧
-      c = ∑ w ∈ Q, a w * (ν t * (gaussMeasure (cfCylinder w)).toReal)}.Nonempty :=
+      c = ∑ w ∈ Q, a w * (ρ w t)}.Nonempty :=
   ⟨0, ∅, by simp, by simp⟩
 
 omit [DecidableEq S] in
-lemma wLimit_set_bddAbove {ν : S → ℝ} {t : S} {a : List ℕ → ℝ} {C : ℝ} {m : ℕ}
-    (hν : 0 ≤ ν t) (haC : ∀ w, a w ≤ C) (ha0 : ∀ w, 0 ≤ a w) :
+/-- **The escape bound, de-factorized.**  A sub-window law has total mass at most `1` over any
+finite same-length family — the only consequence of the old product shape that the engine used.
+-/
+lemma SubWindow.sum_le_one {ρ : List ℕ → S → ℝ} (hρ : SubWindow ρ) (t : S) {m : ℕ}
+    (Q : Finset (List ℕ)) (hQ : ∀ w ∈ Q, w ∈ allWords m) : ∑ w ∈ Q, ρ w t ≤ 1 :=
+  le_trans (Finset.sum_le_sum fun w _ => (hρ w t).2)
+    (sum_gaussMeasure_le_one_of_length Q fun w hw => (hQ w hw).1)
+
+omit [DecidableEq S] in
+lemma wLimit_set_bddAbove {ρ : List ℕ → S → ℝ} {t : S} {a : List ℕ → ℝ} {C : ℝ} {m : ℕ}
+    (hρ : SubWindow ρ) (haC : ∀ w, a w ≤ C) (ha0 : ∀ w, 0 ≤ a w) :
     BddAbove {c : ℝ | ∃ Q : Finset (List ℕ), (∀ w ∈ Q, w ∈ allWords m) ∧
-      c = ∑ w ∈ Q, a w * (ν t * (gaussMeasure (cfCylinder w)).toReal)} := by
-  refine ⟨C * ν t, ?_⟩
+      c = ∑ w ∈ Q, a w * ρ w t} := by
+  refine ⟨C, ?_⟩
   rintro c ⟨Q, hQ, rfl⟩
   have hC0 : 0 ≤ C := le_trans (ha0 []) (haC [])
-  calc ∑ w ∈ Q, a w * (ν t * (gaussMeasure (cfCylinder w)).toReal)
-      ≤ ∑ w ∈ Q, C * (ν t * (gaussMeasure (cfCylinder w)).toReal) := by
+  calc ∑ w ∈ Q, a w * ρ w t
+      ≤ ∑ w ∈ Q, C * ρ w t := by
         refine Finset.sum_le_sum fun w _ => ?_
-        exact mul_le_mul_of_nonneg_right (haC w) (by positivity)
-    _ = C * ν t * ∑ w ∈ Q, (gaussMeasure (cfCylinder w)).toReal := by
-        rw [Finset.mul_sum]; exact Finset.sum_congr rfl fun w _ => by ring
-    _ ≤ C * ν t * 1 := by
-        refine mul_le_mul_of_nonneg_left
-          (sum_gaussMeasure_le_one_of_length Q fun w hw => (hQ w hw).1) (by positivity)
-    _ = C * ν t := by ring
+        exact mul_le_mul_of_nonneg_right (haC w) (hρ w t).1
+    _ = C * ∑ w ∈ Q, ρ w t := by rw [Finset.mul_sum]
+    _ ≤ C * 1 := mul_le_mul_of_nonneg_left (hρ.sum_le_one t Q hQ) hC0
+    _ = C := by ring
 
 /-- **Vandehey Lemma 4.3, single length, `x`-independent.**  For a bounded nonnegative weight
 supported on the (countably infinite) length-`m` genuine words, the state-restricted weighted
-count has Cesàro limit `wLimit ν t a m` — a value that mentions no `x`.  This is the whole
+count has Cesàro limit `wLimit ρ t a m` — a value that mentions no `x`.  This is the whole
 content of the published Lemma 4.3 in the infinite-family case, and it needs no ergodic theory,
 no Ryll-Nardzewski and no Vitali-Hahn-Saks: the finite digit truncation of
 `exists_boundedWords_sum_gt` does the work. -/
-theorem tendsto_wCount_div (δ : S → ℕ → S) (s₀ : S) {ν : S → ℝ}
-    (hjs : JointStateFreq δ s₀ ν) (t : S) (hν : 0 ≤ ν t) {a : List ℕ → ℝ} {C : ℝ} {m : ℕ}
+theorem tendsto_wCount_div (δ : S → ℕ → S) (s₀ : S) {ρ : List ℕ → S → ℝ}
+    (hjs : JointStateFreq δ s₀ ρ) (t : S) (hρ : SubWindow ρ) {a : List ℕ → ℝ} {C : ℝ} {m : ℕ}
     (hm : 0 < m) (ha0 : ∀ w, 0 ≤ a w) (haC : ∀ w, a w ≤ C)
     {x : ℝ} (hx : IsCFNormal x) :
-    Tendsto (fun n => wCount δ s₀ t a m x n / n) atTop (nhds (wLimit ν t a m)) := by
+    Tendsto (fun n => wCount δ s₀ t a m x n / n) atTop (nhds (wLimit ρ t a m)) := by
   classical
   set T : Set ℝ := {c : ℝ | ∃ Q : Finset (List ℕ), (∀ w ∈ Q, w ∈ allWords m) ∧
-    c = ∑ w ∈ Q, a w * (ν t * (gaussMeasure (cfCylinder w)).toReal)} with hTdef
-  have hne : T.Nonempty := wLimit_set_nonempty ν t a m
-  have hbdd : BddAbove T := wLimit_set_bddAbove (C := C) hν haC ha0
-  set L : ℝ := wLimit ν t a m with hLdef
+    c = ∑ w ∈ Q, a w * (ρ w t)} with hTdef
+  have hne : T.Nonempty := wLimit_set_nonempty ρ t a m
+  have hbdd : BddAbove T := wLimit_set_bddAbove (C := C) hρ haC ha0
+  set L : ℝ := wLimit ρ t a m with hLdef
   have hLsup : L = sSup T := rfl
   rw [Metric.tendsto_nhds]
   intro ε hε
   -- upper half
   have hUB : ∀ Q : Finset (List ℕ), (∀ w ∈ Q, w ∈ allWords m) →
-      ∑ w ∈ Q, a w * (ν t * (gaussMeasure (cfCylinder w)).toReal) ≤ L := by
+      ∑ w ∈ Q, a w * (ρ w t) ≤ L := by
     intro Q hQ
     exact le_csSup hbdd ⟨Q, hQ, rfl⟩
   have hup := eventually_wCount_le δ s₀ hjs t hm ha0 haC hUB hx
@@ -587,8 +605,8 @@ noncomputable def trigCount (k : List ℕ → S → ℕ) (δ : S → ℕ → S) 
   ∑ j ∈ Finset.Icc 1 J, ∑ t : S, wCount δ s₀ t (fun w => (k w t : ℝ)) j x n
 
 /-- The `x`-independent limit of the truncated trigger count. -/
-noncomputable def trigLimit (k : List ℕ → S → ℕ) (ν : S → ℝ) (J : ℕ) : ℝ :=
-  ∑ j ∈ Finset.Icc 1 J, ∑ t : S, wLimit ν t (fun w => (k w t : ℝ)) j
+noncomputable def trigLimit (k : List ℕ → S → ℕ) (ρ : List ℕ → S → ℝ) (J : ℕ) : ℝ :=
+  ∑ j ∈ Finset.Icc 1 J, ∑ t : S, wLimit ρ t (fun w => (k w t : ℝ)) j
 
 /-- **Summing over states collapses the state indicator.**  At each position exactly one
 state matches, so the state-summed weighted counts read the weight at the actual state. -/
@@ -683,17 +701,17 @@ lemma trigCount_le_trigTotal {k : List ℕ → S → ℕ} {K : ℕ}
 
 /-- **The truncated count converges, `x`-independently.**  Each length-`j` state-`t` slice is
 the single-length engine `tendsto_wCount_div`. -/
-theorem tendsto_trigCount_div {k : List ℕ → S → ℕ} {K : ℕ} {ν : S → ℝ} (δ : S → ℕ → S)
-    (s₀ : S) (hjs : JointStateFreq δ s₀ ν) (hν : ∀ t, 0 ≤ ν t) (hkK : ∀ q t, k q t ≤ K)
+theorem tendsto_trigCount_div {k : List ℕ → S → ℕ} {K : ℕ} {ρ : List ℕ → S → ℝ} (δ : S → ℕ → S)
+    (s₀ : S) (hjs : JointStateFreq δ s₀ ρ) (hρ : SubWindow ρ) (hkK : ∀ q t, k q t ≤ K)
     (J : ℕ) {x : ℝ} (hx : IsCFNormal x) :
-    Tendsto (fun n => trigCount k δ s₀ x n J / n) atTop (nhds (trigLimit k ν J)) := by
+    Tendsto (fun n => trigCount k δ s₀ x n J / n) atTop (nhds (trigLimit k ρ J)) := by
   classical
   have hslice : ∀ j ∈ Finset.Icc 1 J, ∀ t : S,
       Tendsto (fun n => wCount δ s₀ t (fun w => (k w t : ℝ)) j x n / n) atTop
-        (nhds (wLimit ν t (fun w => (k w t : ℝ)) j)) := by
+        (nhds (wLimit ρ t (fun w => (k w t : ℝ)) j)) := by
     intro j hj t
     have hj1 : 0 < j := (Finset.mem_Icc.mp hj).1
-    refine tendsto_wCount_div δ s₀ hjs t (hν t) (C := (K : ℝ)) hj1
+    refine tendsto_wCount_div δ s₀ hjs t hρ (C := (K : ℝ)) hj1
       (fun w => by positivity) (fun w => ?_) hx
     exact_mod_cast hkK w t
   have hrw : ∀ n : ℕ, trigCount k δ s₀ x n J / n
@@ -739,8 +757,8 @@ lemma trigInd_le_one (k : List ℕ → S → ℕ) (t : S) (m : ℕ) (w : List �
 /-- **The tail mass**: the Gauss mass of the still-live trigger prefixes, weighted by the
 state masses.  Antitone in `m`, so it always converges; the hypothesis of the assembly is
 only that its limit is `0`. -/
-noncomputable def tailMass (k : List ℕ → S → ℕ) (ν : S → ℝ) (m : ℕ) : ℝ :=
-  ∑ t : S, ν t * (gaussMeasure (familySetC (trigPrefix k t m))).toReal
+noncomputable def tailMass (k : List ℕ → S → ℕ) (m : ℕ) : ℝ :=
+  ∑ t : S, (gaussMeasure (familySetC (trigPrefix k t m))).toReal
 
 /-- Windows nest: the length-`J` window is the length-`J` prefix of any longer window. -/
 lemma cfWindow_take (x : ℝ) (i J j : ℕ) (h : J ≤ j) :
@@ -810,22 +828,22 @@ lemma trigTotal_le_trigCount_add {k : List ℕ → S → ℕ} {K : ℕ}
 
 omit [DecidableEq S] [Fintype S] in
 /-- The indicator's limit mass is at most the tail mass slice. -/
-lemma wLimit_trigInd_le {k : List ℕ → S → ℕ} {ν : S → ℝ} {t : S} (hν : 0 ≤ ν t) (m : ℕ) :
-    wLimit ν t (trigInd k t m) m
-      ≤ ν t * (gaussMeasure (familySetC (trigPrefix k t m))).toReal := by
+lemma wLimit_trigInd_le {k : List ℕ → S → ℕ} {ρ : List ℕ → S → ℝ} {t : S}
+    (hρ : SubWindow ρ) (m : ℕ) :
+    wLimit ρ t (trigInd k t m) m
+      ≤ (gaussMeasure (familySetC (trigPrefix k t m))).toReal := by
   classical
-  refine csSup_le (wLimit_set_nonempty ν t (trigInd k t m) m) ?_
+  refine csSup_le (wLimit_set_nonempty ρ t (trigInd k t m) m) ?_
   rintro c ⟨Q, hQ, rfl⟩
   set P : Finset (List ℕ) := Q.filter (fun w => w ∈ trigPrefix k t m) with hPdef
-  have hsplit : ∑ w ∈ Q, trigInd k t m w * (ν t * (gaussMeasure (cfCylinder w)).toReal)
-      = ν t * ∑ w ∈ P, (gaussMeasure (cfCylinder w)).toReal := by
-    rw [hPdef, Finset.mul_sum, Finset.sum_filter]
+  have hsplit : ∑ w ∈ Q, trigInd k t m w * ρ w t = ∑ w ∈ P, ρ w t := by
+    rw [hPdef, Finset.sum_filter]
     refine Finset.sum_congr rfl fun w _ => ?_
     by_cases h : w ∈ trigPrefix k t m
     · rw [if_pos h, trigInd, Set.indicator_of_mem h]; ring
     · rw [if_neg h, trigInd, Set.indicator_of_notMem h]; ring
   rw [hsplit]
-  refine mul_le_mul_of_nonneg_left ?_ hν
+  refine le_trans (Finset.sum_le_sum fun w _ => (hρ w t).2) ?_
   have hPlen : ∀ w ∈ P, w.length = m := by
     intro w hw
     exact (hQ w (Finset.mem_filter.mp hw).1).1
@@ -858,6 +876,39 @@ lemma exists_isCFNormal : ∃ x : ℝ, IsCFNormal x := by
   rw [hu, gaussMeasure_univ] at hnull
   exact one_ne_zero hnull
 
+/-- The joint count never exceeds the plain window count: forgetting the state can only
+add positions. -/
+lemma jointCount_le_winCard (δ : S → ℕ → S) (s₀ t : S) (q : List ℕ) (x : ℝ) (n : ℕ) :
+    jointCount δ s₀ t q x n ≤ winCard q x n := by
+  classical
+  rw [jointCount_eq_card, winCard]
+  refine Finset.card_le_card fun i hi => ?_
+  rw [mem_jointSet] at hi
+  exact Finset.mem_filter.mpr ⟨Finset.mem_range.mpr hi.1, hi.2.1⟩
+
+/-- **A joint law is automatically dominated by the window law** on genuine nonempty words.
+This is what makes `SubWindow` free, and it is the whole replacement for the (false) product
+shape `ρ q t = ν t · γ(I_q)`: the escape mass of the infinite CF alphabet is controlled by
+`ρ ≤ γ` alone. -/
+lemma jointStateFreq_le_gauss {δ : S → ℕ → S} {s₀ : S} {ρ : List ℕ → S → ℝ}
+    (hjs : JointStateFreq δ s₀ ρ) (t : S) (q : List ℕ) (hq : q ≠ [])
+    (hpos : ∀ a ∈ q, 1 ≤ a) :
+    0 ≤ ρ q t ∧ ρ q t ≤ (gaussMeasure (cfCylinder q)).toReal := by
+  obtain ⟨x, hx⟩ := exists_isCFNormal
+  have h1 := hjs t q hq hpos x hx
+  have h2 : Tendsto (fun n => (winCard q x n : ℝ) / n) atTop
+      (nhds (gaussMeasure (cfCylinder q)).toReal) := by
+    simpa [winCard] using tendsto_windowFreq hx q hq hpos
+  refine ⟨ge_of_tendsto h1 ?_, le_of_tendsto_of_tendsto' h1 h2 fun n => ?_⟩
+  · filter_upwards [eventually_ge_atTop 1] with n hn
+    positivity
+  · have hle : (jointCount δ s₀ t q x n : ℝ) ≤ (winCard q x n : ℝ) := by
+      exact_mod_cast jointCount_le_winCard δ s₀ t q x n
+    rcases Nat.eq_zero_or_pos n with h | h
+    · simp [h]
+    · have hn : (0:ℝ) < n := by exact_mod_cast h
+      exact div_le_div_of_nonneg_right hle hn.le
+
 /-- The one-state automaton reduces the joint count to the plain window count. -/
 lemma jointCount_unit (q : List ℕ) (x : ℝ) (n : ℕ) :
     jointCount (fun (_ : Unit) (_ : ℕ) => ()) () () q x n
@@ -867,20 +918,21 @@ lemma jointCount_unit (q : List ℕ) (x : ℝ) (n : ℕ) :
   exact Finset.filter_congr fun i _ => and_iff_left (Subsingleton.elim _ _)
 
 /-- **Content locator** (guard rule): the one-state automaton satisfies `JointStateFreq` with
-`ν ≡ 1`, on CF-normality of `x` alone.  So the transducer hypothesis has no content until the
+`ρ q t = γ(I_q)`, on CF-normality of `x` alone.  So the transducer hypothesis has no content until the
 state space is nontrivial — this is where the content is *not*. -/
 theorem jointStateFreq_unit :
-    JointStateFreq (fun (_ : Unit) (_ : ℕ) => ()) () (fun _ => 1) := by
+    JointStateFreq (fun (_ : Unit) (_ : ℕ) => ()) ()
+      (fun w _ => (gaussMeasure (cfCylinder w)).toReal) := by
   intro t q hq hqpos x hx
   have ht : t = () := Subsingleton.elim _ _
   subst ht
-  simpa [jointCount_unit, one_mul] using tendsto_windowFreq hx q hq hqpos
+  simpa [jointCount_unit] using tendsto_windowFreq hx q hq hqpos
 
-/-- **Degenerate-case verdict** (guard rule): `ν ≡ 0` is FALSE, already for the one-state
+/-- **Degenerate-case verdict** (guard rule): `ρ ≡ 0` is FALSE, already for the one-state
 automaton, because the joint count is then the window count and `γ(I_{[1]}) > 0`.  So the
-weight `ν` is load-bearing: it cannot be normalized away. -/
+joint law `ρ` is load-bearing: it cannot be normalized away. -/
 theorem not_jointStateFreq_unit_zero :
-    ¬ JointStateFreq (fun (_ : Unit) (_ : ℕ) => ()) () (fun _ => 0) := by
+    ¬ JointStateFreq (fun (_ : Unit) (_ : ℕ) => ()) () (fun _ _ => 0) := by
   intro h
   obtain ⟨x, hx⟩ := exists_isCFNormal
   have h1 := h () [1] (by simp) (by simp) x hx
@@ -888,7 +940,6 @@ theorem not_jointStateFreq_unit_zero :
   have heq := tendsto_nhds_unique h1 h2
   have hpos : 0 < (gaussMeasure (cfCylinder [1])).toReal :=
     VandeheyRenyi.Doeblin.gaussMeasure_cfCylinder_toReal_pos [1] (by simp) (by simp)
-  rw [zero_mul, one_mul] at heq
   exact absurd heq.symm (ne_of_gt hpos)
 
 /-- **Degenerate-case verdict** (guard rule, boundary configuration): `wCount` at `m = 0` is
@@ -916,7 +967,7 @@ theorem wCount_zero_weight (δ : S → ℕ → S) (s₀ t : S) (m : ℕ) (x : �
 
 /-! ## Step 3: the assembly (Vandehey §6)
 
-The truncated counts converge to `trigLimit k ν J`, which is monotone in `J` and bounded by
+The truncated counts converge to `trigLimit k ρ J`, which is monotone in `J` and bounded by
 `K`; so it has a supremum `L`, and the tail bound sandwiches the untruncated count between
 `L - ε` and `L + ε`.  The one honest hypothesis is `htail`: the trigger prefixes lose all their
 Gauss mass, i.e. the triggers decide almost every point (Vandehey Lemma 4.3 condition (2)). -/
@@ -927,30 +978,30 @@ variable [Fintype S]
 
 omit [DecidableEq S] [Fintype S] in
 /-- The `x`-independent limit of a nonnegative weight is nonnegative (take `Q = ∅`). -/
-lemma wLimit_nonneg {ν : S → ℝ} {t : S} {a : List ℕ → ℝ} {C : ℝ} {m : ℕ}
-    (hν : 0 ≤ ν t) (ha0 : ∀ w, 0 ≤ a w) (haC : ∀ w, a w ≤ C) :
-    0 ≤ wLimit ν t a m :=
-  le_csSup (wLimit_set_bddAbove (C := C) hν haC ha0) ⟨∅, by simp, by simp⟩
+lemma wLimit_nonneg {ρ : List ℕ → S → ℝ} {t : S} {a : List ℕ → ℝ} {C : ℝ} {m : ℕ}
+    (hρ : SubWindow ρ) (ha0 : ∀ w, 0 ≤ a w) (haC : ∀ w, a w ≤ C) :
+    0 ≤ wLimit ρ t a m :=
+  le_csSup (wLimit_set_bddAbove (C := C) hρ haC ha0) ⟨∅, by simp, by simp⟩
 
 /-- `trigLimit` is monotone in the length cut: a longer cut adds nonnegative slices. -/
-lemma trigLimit_mono {k : List ℕ → S → ℕ} {K : ℕ} {ν : S → ℝ} (hν : ∀ t, 0 ≤ ν t)
-    (hkK : ∀ q t, k q t ≤ K) : Monotone (trigLimit k ν) := by
+lemma trigLimit_mono {k : List ℕ → S → ℕ} {K : ℕ} {ρ : List ℕ → S → ℝ} (hρ : SubWindow ρ)
+    (hkK : ∀ q t, k q t ≤ K) : Monotone (trigLimit k ρ) := by
   intro J J' h
   simp only [trigLimit]
   refine Finset.sum_le_sum_of_subset_of_nonneg (Finset.Icc_subset_Icc_right h) ?_
   intro j _ _
   refine Finset.sum_nonneg fun t _ => ?_
-  exact wLimit_nonneg (C := (K : ℝ)) (hν t) (fun w => by positivity)
+  exact wLimit_nonneg (C := (K : ℝ)) hρ (fun w => by positivity)
     (fun w => by exact_mod_cast hkK w t)
 
 /-- `trigLimit` is bounded by the uniform multiplicity bound `K`: the truncated count over the
 first `n` positions never exceeds `K · n`, and the limit inherits that. -/
-lemma trigLimit_le {k : List ℕ → S → ℕ} {K : ℕ} {ν : S → ℝ} (δ : S → ℕ → S) (s₀ : S)
-    (hjs : JointStateFreq δ s₀ ν) (hν : ∀ t, 0 ≤ ν t) (hkK : ∀ q t, k q t ≤ K)
+lemma trigLimit_le {k : List ℕ → S → ℕ} {K : ℕ} {ρ : List ℕ → S → ℝ} (δ : S → ℕ → S) (s₀ : S)
+    (hjs : JointStateFreq δ s₀ ρ) (hρ : SubWindow ρ) (hkK : ∀ q t, k q t ≤ K)
     (hK : ∀ (t : S) (y : ℝ) (J : ℕ), ∑ j ∈ Finset.Icc 1 J, k (cfWord y j) t ≤ K)
-    (J : ℕ) : trigLimit k ν J ≤ (K : ℝ) := by
+    (J : ℕ) : trigLimit k ρ J ≤ (K : ℝ) := by
   obtain ⟨x, hx⟩ := exists_isCFNormal
-  refine le_of_tendsto (tendsto_trigCount_div δ s₀ hjs hν hkK J hx) ?_
+  refine le_of_tendsto (tendsto_trigCount_div δ s₀ hjs hρ hkK J hx) ?_
   filter_upwards [eventually_ge_atTop 1] with n hn
   have hnpos : (0 : ℝ) < n := by exact_mod_cast hn
   rw [div_le_iff₀ hnpos]
@@ -967,38 +1018,38 @@ uniform multiplicity bound `K`, genuine trigger words, and vanishing tail mass, 
 trigger count has a Cesàro limit that is the *same* for every CF-normal `x`.  This is the
 output-frequency engine: output-word frequencies are read off the joint (window, state)
 frequencies with no reference to the point. -/
-theorem exists_tendsto_trigTotal {k : List ℕ → S → ℕ} {K : ℕ} {ν : S → ℝ}
-    (δ : S → ℕ → S) (s₀ : S) (hjs : JointStateFreq δ s₀ ν) (hν : ∀ t, 0 ≤ ν t)
+theorem exists_tendsto_trigTotal {k : List ℕ → S → ℕ} {K : ℕ} {ρ : List ℕ → S → ℝ}
+    (δ : S → ℕ → S) (s₀ : S) (hjs : JointStateFreq δ s₀ ρ) (hρ : SubWindow ρ)
     (hkK : ∀ q t, k q t ≤ K)
     (hK : ∀ (t : S) (y : ℝ) (J : ℕ), ∑ j ∈ Finset.Icc 1 J, k (cfWord y j) t ≤ K)
     (hgen : ∀ q t, k q t ≠ 0 → ∀ b ∈ q, 1 ≤ b)
-    (htail : Tendsto (tailMass k ν) atTop (nhds 0)) :
+    (htail : Tendsto (tailMass k) atTop (nhds 0)) :
     ∃ L : ℝ, ∀ x : ℝ, IsCFNormal x →
       Tendsto (fun n => trigTotal k δ s₀ x n / n) atTop (nhds L) := by
   classical
-  have hmono : Monotone (trigLimit k ν) := trigLimit_mono hν hkK
-  have hbdd : BddAbove (Set.range (trigLimit k ν)) := by
+  have hmono : Monotone (trigLimit k ρ) := trigLimit_mono hρ hkK
+  have hbdd : BddAbove (Set.range (trigLimit k ρ)) := by
     refine ⟨(K : ℝ), ?_⟩
     rintro c ⟨J, rfl⟩
-    exact trigLimit_le δ s₀ hjs hν hkK hK J
-  set L : ℝ := ⨆ J, trigLimit k ν J with hLdef
-  have hLtend : Tendsto (trigLimit k ν) atTop (nhds L) := tendsto_atTop_ciSup hmono hbdd
-  have hJle : ∀ J, trigLimit k ν J ≤ L := fun J => le_ciSup hbdd J
+    exact trigLimit_le δ s₀ hjs hρ hkK hK J
+  set L : ℝ := ⨆ J, trigLimit k ρ J with hLdef
+  have hLtend : Tendsto (trigLimit k ρ) atTop (nhds L) := tendsto_atTop_ciSup hmono hbdd
+  have hJle : ∀ J, trigLimit k ρ J ≤ L := fun J => le_ciSup hbdd J
   refine ⟨L, fun x hx => ?_⟩
   rw [Metric.tendsto_nhds]
   intro ε hε
   -- pick a length cut that both saturates `L` and kills the tail
-  have htailK : Tendsto (fun m => (K : ℝ) * tailMass k ν m) atTop (nhds 0) := by
+  have htailK : Tendsto (fun m => (K : ℝ) * tailMass k m) atTop (nhds 0) := by
     have := htail.const_mul (K : ℝ)
     simpa using this
   obtain ⟨J, hJ1, hJnear, hJtail⟩ :
-      ∃ J, 1 ≤ J ∧ L - ε / 3 < trigLimit k ν J ∧ (K : ℝ) * tailMass k ν J < ε / 3 := by
-    have h1 : ∀ᶠ J in atTop, L - ε / 3 < trigLimit k ν J := by
+      ∃ J, 1 ≤ J ∧ L - ε / 3 < trigLimit k ρ J ∧ (K : ℝ) * tailMass k J < ε / 3 := by
+    have h1 : ∀ᶠ J in atTop, L - ε / 3 < trigLimit k ρ J := by
       have := (Metric.tendsto_nhds.mp hLtend) (ε / 3) (by positivity)
       filter_upwards [this] with J hJ
       rw [Real.dist_eq, abs_lt] at hJ
       linarith [hJ.1]
-    have h2 : ∀ᶠ J in atTop, (K : ℝ) * tailMass k ν J < ε / 3 := by
+    have h2 : ∀ᶠ J in atTop, (K : ℝ) * tailMass k J < ε / 3 := by
       have := (Metric.tendsto_nhds.mp htailK) (ε / 3) (by positivity)
       filter_upwards [this] with J hJ
       rw [Real.dist_eq, abs_lt] at hJ
@@ -1007,18 +1058,18 @@ theorem exists_tendsto_trigTotal {k : List ℕ → S → ℕ} {K : ℕ} {ν : S 
     exact ⟨J, hJ.2.2, hJ.1, hJ.2.1⟩
   -- the majorant's limit
   set W : ℕ → ℝ := fun n => ∑ t : S, wCount δ s₀ t (trigInd k t J) J x n / n with hWdef
-  have hWtend : Tendsto W atTop (nhds (∑ t : S, wLimit ν t (trigInd k t J) J)) := by
+  have hWtend : Tendsto W atTop (nhds (∑ t : S, wLimit ρ t (trigInd k t J) J)) := by
     refine tendsto_finsetSum _ fun t _ => ?_
-    exact tendsto_wCount_div δ s₀ hjs t (hν t) (C := (1 : ℝ)) hJ1
+    exact tendsto_wCount_div δ s₀ hjs t hρ (C := (1 : ℝ)) hJ1
       (trigInd_nonneg k t J) (trigInd_le_one k t J) hx
-  have hWle : ∑ t : S, wLimit ν t (trigInd k t J) J ≤ tailMass k ν J := by
+  have hWle : ∑ t : S, wLimit ρ t (trigInd k t J) J ≤ tailMass k J := by
     rw [tailMass]
-    exact Finset.sum_le_sum fun t _ => wLimit_trigInd_le (hν t) J
-  have hCtend := tendsto_trigCount_div δ s₀ hjs hν hkK J hx
+    exact Finset.sum_le_sum fun t _ => wLimit_trigInd_le hρ J
+  have hCtend := tendsto_trigCount_div δ s₀ hjs hρ hkK J hx
   have hGtend : Tendsto (fun n => trigCount k δ s₀ x n J / n + (K : ℝ) * W n) atTop
-      (nhds (trigLimit k ν J + (K : ℝ) * ∑ t : S, wLimit ν t (trigInd k t J) J)) :=
+      (nhds (trigLimit k ρ J + (K : ℝ) * ∑ t : S, wLimit ρ t (trigInd k t J) J)) :=
     hCtend.add (hWtend.const_mul (K : ℝ))
-  have hMub : trigLimit k ν J + (K : ℝ) * ∑ t : S, wLimit ν t (trigInd k t J) J
+  have hMub : trigLimit k ρ J + (K : ℝ) * ∑ t : S, wLimit ρ t (trigInd k t J) J
       < L + ε / 3 := by
     have hK0 : (0 : ℝ) ≤ (K : ℝ) := Nat.cast_nonneg _
     have := mul_le_mul_of_nonneg_left hWle hK0
@@ -1061,7 +1112,7 @@ omit [DecidableEq S] [Fintype S] in
 lemma trigPrefix_zero (t : S) (m : ℕ) : trigPrefix (fun _ _ => 0) t m = ∅ := by
   ext w; simp [trigPrefix]
 
-lemma tailMass_zero (ν : S → ℝ) (m : ℕ) : tailMass (fun _ _ => 0) ν m = 0 := by
+lemma tailMass_zero (m : ℕ) : tailMass (fun (_ : List ℕ) (_ : S) => 0) m = 0 := by
   simp [tailMass, trigPrefix_zero, familySetC]
 
 omit [DecidableEq S] in
@@ -1077,15 +1128,15 @@ lemma trigTotal_zero (δ : S → ℕ → S) (s₀ : S) (x : ℝ) (n : ℕ) :
 /-- **Content locator** (guard rule): the empty trigger family satisfies `hK`, `hgen` and
 `htail`, and the resulting Cesàro limit is `0`.  So the hypothesis bundle is consistent, and all
 the content of `exists_tendsto_trigTotal` lives in the nonempty case. -/
-theorem exists_tendsto_trigTotal_locator {ν : S → ℝ} (δ : S → ℕ → S) (s₀ : S)
-    (hjs : JointStateFreq δ s₀ ν) (hν : ∀ t, 0 ≤ ν t) :
+theorem exists_tendsto_trigTotal_locator {ρ : List ℕ → S → ℝ} (δ : S → ℕ → S) (s₀ : S)
+    (hjs : JointStateFreq δ s₀ ρ) (hρ : SubWindow ρ) :
     (∀ (t : S) (y : ℝ) (J : ℕ), ∑ j ∈ Finset.Icc 1 J, (fun _ _ => 0) (cfWord y j) t ≤ 0) ∧
-      Tendsto (tailMass (fun (_ : List ℕ) (_ : S) => 0) ν) atTop (nhds 0) ∧
+      Tendsto (tailMass (fun (_ : List ℕ) (_ : S) => 0)) atTop (nhds 0) ∧
       ∀ x : ℝ, IsCFNormal x →
         Tendsto (fun n => trigTotal (fun _ _ => 0) δ s₀ x n / n) atTop (nhds 0) := by
   refine ⟨fun t y J => by simp, ?_, fun x _ => ?_⟩
-  · have h : tailMass (fun (_ : List ℕ) (_ : S) => 0) ν = fun _ => (0 : ℝ) :=
-      funext (tailMass_zero ν)
+  · have h : tailMass (fun (_ : List ℕ) (_ : S) => 0) = fun _ => (0 : ℝ) :=
+      funext tailMass_zero
     rw [h]; exact tendsto_const_nhds
   · simp only [trigTotal_zero, zero_div]; exact tendsto_const_nhds
 
