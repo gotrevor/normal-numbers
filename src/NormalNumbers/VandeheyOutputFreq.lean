@@ -914,6 +914,185 @@ theorem wCount_zero_weight (δ : S → ℕ → S) (s₀ t : S) (m : ℕ) (x : �
   rw [wCount]
   exact Finset.sum_eq_zero fun i _ => by simp
 
+/-! ## Step 3: the assembly (Vandehey §6)
+
+The truncated counts converge to `trigLimit k ν J`, which is monotone in `J` and bounded by
+`K`; so it has a supremum `L`, and the tail bound sandwiches the untruncated count between
+`L - ε` and `L + ε`.  The one honest hypothesis is `htail`: the trigger prefixes lose all their
+Gauss mass, i.e. the triggers decide almost every point (Vandehey Lemma 4.3 condition (2)). -/
+
+section Assembly2
+
+variable [Fintype S]
+
+omit [DecidableEq S] [Fintype S] in
+/-- The `x`-independent limit of a nonnegative weight is nonnegative (take `Q = ∅`). -/
+lemma wLimit_nonneg {ν : S → ℝ} {t : S} {a : List ℕ → ℝ} {C : ℝ} {m : ℕ}
+    (hν : 0 ≤ ν t) (ha0 : ∀ w, 0 ≤ a w) (haC : ∀ w, a w ≤ C) :
+    0 ≤ wLimit ν t a m :=
+  le_csSup (wLimit_set_bddAbove (C := C) hν haC ha0) ⟨∅, by simp, by simp⟩
+
+/-- `trigLimit` is monotone in the length cut: a longer cut adds nonnegative slices. -/
+lemma trigLimit_mono {k : List ℕ → S → ℕ} {K : ℕ} {ν : S → ℝ} (hν : ∀ t, 0 ≤ ν t)
+    (hkK : ∀ q t, k q t ≤ K) : Monotone (trigLimit k ν) := by
+  intro J J' h
+  simp only [trigLimit]
+  refine Finset.sum_le_sum_of_subset_of_nonneg (Finset.Icc_subset_Icc_right h) ?_
+  intro j _ _
+  refine Finset.sum_nonneg fun t _ => ?_
+  exact wLimit_nonneg (C := (K : ℝ)) (hν t) (fun w => by positivity)
+    (fun w => by exact_mod_cast hkK w t)
+
+/-- `trigLimit` is bounded by the uniform multiplicity bound `K`: the truncated count over the
+first `n` positions never exceeds `K · n`, and the limit inherits that. -/
+lemma trigLimit_le {k : List ℕ → S → ℕ} {K : ℕ} {ν : S → ℝ} (δ : S → ℕ → S) (s₀ : S)
+    (hjs : JointStateFreq δ s₀ ν) (hν : ∀ t, 0 ≤ ν t) (hkK : ∀ q t, k q t ≤ K)
+    (hK : ∀ (t : S) (y : ℝ) (J : ℕ), ∑ j ∈ Finset.Icc 1 J, k (cfWord y j) t ≤ K)
+    (J : ℕ) : trigLimit k ν J ≤ (K : ℝ) := by
+  obtain ⟨x, hx⟩ := exists_isCFNormal
+  refine le_of_tendsto (tendsto_trigCount_div δ s₀ hjs hν hkK J hx) ?_
+  filter_upwards [eventually_ge_atTop 1] with n hn
+  have hnpos : (0 : ℝ) < n := by exact_mod_cast hn
+  rw [div_le_iff₀ hnpos]
+  calc trigCount k δ s₀ x n J ≤ trigTotal k δ s₀ x n :=
+        trigCount_le_trigTotal hK δ s₀ x n J
+    _ ≤ ∑ _i ∈ Finset.range n, (K : ℝ) := by
+        rw [trigTotal]
+        refine Finset.sum_le_sum fun i _ => ?_
+        exact_mod_cast fireTotal_le hK δ s₀ x i
+    _ = (K : ℝ) * n := by simp [mul_comm]
+
+/-- **The §6 assembly** (Vandehey Theorem 1.1's frequency step).  For a trigger family with a
+uniform multiplicity bound `K`, genuine trigger words, and vanishing tail mass, the untruncated
+trigger count has a Cesàro limit that is the *same* for every CF-normal `x`.  This is the
+output-frequency engine: output-word frequencies are read off the joint (window, state)
+frequencies with no reference to the point. -/
+theorem exists_tendsto_trigTotal {k : List ℕ → S → ℕ} {K : ℕ} {ν : S → ℝ}
+    (δ : S → ℕ → S) (s₀ : S) (hjs : JointStateFreq δ s₀ ν) (hν : ∀ t, 0 ≤ ν t)
+    (hkK : ∀ q t, k q t ≤ K)
+    (hK : ∀ (t : S) (y : ℝ) (J : ℕ), ∑ j ∈ Finset.Icc 1 J, k (cfWord y j) t ≤ K)
+    (hgen : ∀ q t, k q t ≠ 0 → ∀ b ∈ q, 1 ≤ b)
+    (htail : Tendsto (tailMass k ν) atTop (nhds 0)) :
+    ∃ L : ℝ, ∀ x : ℝ, IsCFNormal x →
+      Tendsto (fun n => trigTotal k δ s₀ x n / n) atTop (nhds L) := by
+  classical
+  have hmono : Monotone (trigLimit k ν) := trigLimit_mono hν hkK
+  have hbdd : BddAbove (Set.range (trigLimit k ν)) := by
+    refine ⟨(K : ℝ), ?_⟩
+    rintro c ⟨J, rfl⟩
+    exact trigLimit_le δ s₀ hjs hν hkK hK J
+  set L : ℝ := ⨆ J, trigLimit k ν J with hLdef
+  have hLtend : Tendsto (trigLimit k ν) atTop (nhds L) := tendsto_atTop_ciSup hmono hbdd
+  have hJle : ∀ J, trigLimit k ν J ≤ L := fun J => le_ciSup hbdd J
+  refine ⟨L, fun x hx => ?_⟩
+  rw [Metric.tendsto_nhds]
+  intro ε hε
+  -- pick a length cut that both saturates `L` and kills the tail
+  have htailK : Tendsto (fun m => (K : ℝ) * tailMass k ν m) atTop (nhds 0) := by
+    have := htail.const_mul (K : ℝ)
+    simpa using this
+  obtain ⟨J, hJ1, hJnear, hJtail⟩ :
+      ∃ J, 1 ≤ J ∧ L - ε / 3 < trigLimit k ν J ∧ (K : ℝ) * tailMass k ν J < ε / 3 := by
+    have h1 : ∀ᶠ J in atTop, L - ε / 3 < trigLimit k ν J := by
+      have := (Metric.tendsto_nhds.mp hLtend) (ε / 3) (by positivity)
+      filter_upwards [this] with J hJ
+      rw [Real.dist_eq, abs_lt] at hJ
+      linarith [hJ.1]
+    have h2 : ∀ᶠ J in atTop, (K : ℝ) * tailMass k ν J < ε / 3 := by
+      have := (Metric.tendsto_nhds.mp htailK) (ε / 3) (by positivity)
+      filter_upwards [this] with J hJ
+      rw [Real.dist_eq, abs_lt] at hJ
+      simpa using hJ.2
+    obtain ⟨J, hJ⟩ := (h1.and (h2.and (eventually_ge_atTop 1))).exists
+    exact ⟨J, hJ.2.2, hJ.1, hJ.2.1⟩
+  -- the majorant's limit
+  set W : ℕ → ℝ := fun n => ∑ t : S, wCount δ s₀ t (trigInd k t J) J x n / n with hWdef
+  have hWtend : Tendsto W atTop (nhds (∑ t : S, wLimit ν t (trigInd k t J) J)) := by
+    refine tendsto_finsetSum _ fun t _ => ?_
+    exact tendsto_wCount_div δ s₀ hjs t (hν t) (C := (1 : ℝ)) hJ1
+      (trigInd_nonneg k t J) (trigInd_le_one k t J) hx
+  have hWle : ∑ t : S, wLimit ν t (trigInd k t J) J ≤ tailMass k ν J := by
+    rw [tailMass]
+    exact Finset.sum_le_sum fun t _ => wLimit_trigInd_le (hν t) J
+  have hCtend := tendsto_trigCount_div δ s₀ hjs hν hkK J hx
+  have hGtend : Tendsto (fun n => trigCount k δ s₀ x n J / n + (K : ℝ) * W n) atTop
+      (nhds (trigLimit k ν J + (K : ℝ) * ∑ t : S, wLimit ν t (trigInd k t J) J)) :=
+    hCtend.add (hWtend.const_mul (K : ℝ))
+  have hMub : trigLimit k ν J + (K : ℝ) * ∑ t : S, wLimit ν t (trigInd k t J) J
+      < L + ε / 3 := by
+    have hK0 : (0 : ℝ) ≤ (K : ℝ) := Nat.cast_nonneg _
+    have := mul_le_mul_of_nonneg_left hWle hK0
+    have h2 := hJle J
+    linarith
+  have hGev := (Metric.tendsto_nhds.mp hGtend) (ε / 3) (by positivity)
+  have hCev := (Metric.tendsto_nhds.mp hCtend) (ε / 3) (by positivity)
+  filter_upwards [hGev, hCev, eventually_ge_atTop 1] with n hng hnc hn1
+  have hnpos : (0 : ℝ) < n := by exact_mod_cast hn1
+  rw [Real.dist_eq, abs_lt] at hng hnc
+  -- lower bound
+  have hlow : L - ε < trigTotal k δ s₀ x n / n := by
+    have h1 : trigCount k δ s₀ x n J / n ≤ trigTotal k δ s₀ x n / n :=
+      div_le_div_of_nonneg_right (trigCount_le_trigTotal hK δ s₀ x n J) hnpos.le
+    linarith [hnc.1]
+  -- upper bound
+  have hupp : trigTotal k δ s₀ x n / n < L + ε := by
+    have hsplit : trigTotal k δ s₀ x n / n
+        ≤ trigCount k δ s₀ x n J / n + (K : ℝ) * W n := by
+      have hbase := trigTotal_le_trigCount_add hK hgen δ s₀ x n J
+      have hWn : W n = (∑ t : S, wCount δ s₀ t (trigInd k t J) J x n) / n := by
+        simp only [hWdef, ← Finset.sum_div]
+      have hcomb : trigCount k δ s₀ x n J / n + (K : ℝ) * W n
+          = (trigCount k δ s₀ x n J
+              + (K : ℝ) * ∑ t : S, wCount δ s₀ t (trigInd k t J) J x n) / n := by
+        rw [hWn, ← mul_div_assoc, add_div]
+      rw [hcomb]
+      exact div_le_div_of_nonneg_right hbase hnpos.le
+    linarith [hng.2]
+  rw [Real.dist_eq, abs_lt]
+  exact ⟨by linarith, by linarith⟩
+
+/-! ### Guard rule for the assembly's hypothesis bundle
+
+`hK`, `hgen` and `htail` are not a new `Prop`, but they are a new hypothesis bundle, so they need
+a content locator: the EMPTY trigger family satisfies all three, and its limit is `0` — which
+shows the content of `exists_tendsto_trigTotal` is entirely in the nonempty case. -/
+
+omit [DecidableEq S] [Fintype S] in
+lemma trigPrefix_zero (t : S) (m : ℕ) : trigPrefix (fun _ _ => 0) t m = ∅ := by
+  ext w; simp [trigPrefix]
+
+lemma tailMass_zero (ν : S → ℝ) (m : ℕ) : tailMass (fun _ _ => 0) ν m = 0 := by
+  simp [tailMass, trigPrefix_zero, familySetC]
+
+omit [DecidableEq S] in
+lemma fireTotal_zero (δ : S → ℕ → S) (s₀ : S) (x : ℝ) (i : ℕ) :
+    fireTotal (fun _ _ => 0) δ s₀ x i = 0 := by
+  simp [fireTotal, fireAt]
+
+omit [DecidableEq S] in
+lemma trigTotal_zero (δ : S → ℕ → S) (s₀ : S) (x : ℝ) (n : ℕ) :
+    trigTotal (fun _ _ => 0) δ s₀ x n = 0 := by
+  simp [trigTotal, fireTotal_zero]
+
+/-- **Content locator** (guard rule): the empty trigger family satisfies `hK`, `hgen` and
+`htail`, and the resulting Cesàro limit is `0`.  So the hypothesis bundle is consistent, and all
+the content of `exists_tendsto_trigTotal` lives in the nonempty case. -/
+theorem exists_tendsto_trigTotal_locator {ν : S → ℝ} (δ : S → ℕ → S) (s₀ : S)
+    (hjs : JointStateFreq δ s₀ ν) (hν : ∀ t, 0 ≤ ν t) :
+    (∀ (t : S) (y : ℝ) (J : ℕ), ∑ j ∈ Finset.Icc 1 J, (fun _ _ => 0) (cfWord y j) t ≤ 0) ∧
+      Tendsto (tailMass (fun (_ : List ℕ) (_ : S) => 0) ν) atTop (nhds 0) ∧
+      ∀ x : ℝ, IsCFNormal x →
+        Tendsto (fun n => trigTotal (fun _ _ => 0) δ s₀ x n / n) atTop (nhds 0) := by
+  refine ⟨fun t y J => by simp, ?_, fun x _ => ?_⟩
+  · have h : tailMass (fun (_ : List ℕ) (_ : S) => 0) ν = fun _ => (0 : ℝ) :=
+      funext (tailMass_zero ν)
+    rw [h]; exact tendsto_const_nhds
+  · simp only [trigTotal_zero, zero_div]; exact tendsto_const_nhds
+
+
+end Assembly2
+
+
 end VandeheyOut
 
 end NormalNumbers
@@ -934,4 +1113,7 @@ open NormalNumbers.VandeheyOut
 #print axioms fireTotal_sub_fireAt_le
 #print axioms trigTotal_le_trigCount_add
 #print axioms wLimit_trigInd_le
+#print axioms trigLimit_le
+#print axioms exists_tendsto_trigTotal
+#print axioms exists_tendsto_trigTotal_locator
 end
