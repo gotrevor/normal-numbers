@@ -1,5 +1,32 @@
 # DIRECTION — normal-numbers 🧭
 
+## OPERATOR OBJECTIVE 2026-09-28 (b): the Vandehey crux, plus `PrimeIntervalSupply` (bounded, at most 8 laps)
+
+**Main target:** prove `vandeheyUniformFreq_holds : VandeheyUniformFreq`
+(`LiteratureVandehey.lean`), which completes Vandehey 2017 Thm 1.1: Möbius images of CF-normal
+numbers are CF-normal.
+- Start from `archive/handoff/HANDOFF-2026-09-28-0935.md` (the "next crux" section) and
+  `archive/handoff/HANDOFF-2026-09-28-vandehey-bridge-CLOSED.md`.  The open input is
+  `VandeheyCocycle.ClassEquidistribution` wherever the class automaton does not already supply it.
+- **Lap 1 evaluates the Smith-normal-form shortcut first.**  Every nonsingular integer matrix is
+  `U · diag(d₁,d₂) · V` with `U, V ∈ GL₂(ℤ)`.  For the `GL₂(ℤ)` factors, CF tails agree
+  (Serret), and `x ↦ Dx` for prime `D` is covered by `tendsto_jointCount_classStep`.  So record
+  whether composite `D` and the diagonal reduce to the prime case.  If the shortcut fails,
+  record the precise obstruction in the Maze and follow the bridge-CLOSED handoff's NEXT list.
+- `VandeheyUniformFreq` stays byte-identical.  The guard rule applies to every new `Prop`.
+
+**Side item (one lap at most):** prove `PrimeIntervalSupply` (`JointLambertPrimeSelection.lean`,
+which stays frozen) in a new module, as `primeIntervalSupply_holds`.  The Erdős 446 dyadic prime
+bound in the lean-proofs dependency
+(`ErdosProblems/Erdos446/PrimeDyadic.lean`, `eventually_primeCounting_tenth_bounds`) is likely
+stronger than the statement.  Then add the corollary: `jointLambertDisjunctivity` from `AGP` alone.
+
+Keep `lake build` green at every commit and update `STATUS.md` and the `PENDING_WORK.md` queue.
+**Stop when `vandeheyUniformFreq_holds` is proved, or at the lap cap.**  A precise recorded
+obstruction counts as an advance.
+
+---
+
 **No active objective.**  The last run (2026-09-28, queue items 1-3) completed; its record is
 `archive/handoff/HANDOFF-2026-09-28-0935.md`.  Every campaign branch was merged on 2026-09-27 (`f5034b6`).  The next
 run gets its objective from the operator: a kickoff file, plus a dated section added at the top of
