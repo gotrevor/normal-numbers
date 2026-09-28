@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import NormalNumbers.VandeheyOutputFreq
 import NormalNumbers.VandeheyRescale
+import NormalNumbers.OccurrenceCountEquiv
 
 /-!
 # The abstract output word of a transducer, and its occurrence counts
@@ -195,6 +196,99 @@ theorem tendsto_outCount_div (x : ℝ) (hcof : ∀ j, ∃ n, j < outLen δ out s
   intro n
   rw [outCount_outLen]
 
+/-! ## The §5 bucketing: occurrences split by the block they start in
+
+`occStart` (from `OccurrenceCountEquiv`) counts START positions, reading the stream past the end
+of the window — which is exactly the convention in which an occurrence belongs unambiguously to
+the block it starts in.  So the split by block is an EXACT identity, and Vandehey's "up to
+`O(1)`" is then supplied once and for all by `occStart_le_countOccurrences_add`. -/
+
+/-- The number of occurrences of `v` starting inside the block emitted at input digit `i`. -/
+noncomputable def fireOut (x : ℝ) (hcof : ∀ j, ∃ n, j < outLen δ out s₀ x n)
+    (v : List ℕ) (i : ℕ) : ℕ :=
+  ((Finset.Ico (outLen δ out s₀ x i) (outLen δ out s₀ x (i + 1))).filter
+    (fun p => v = (List.range' p v.length).map (outDigit x hcof))).card
+
+@[simp] lemma outWord_zero (x : ℝ) : outWord δ out s₀ x 0 = [] := by simp [outWord]
+
+@[simp] lemma outLen_zero (x : ℝ) : outLen δ out s₀ x 0 = 0 := by simp [outLen]
+
+/-- **The exact block decomposition.**  Every occurrence in the output of the first `n` input
+digits starts in exactly one of the `n` blocks. -/
+theorem occStart_eq_sum_fireOut (x : ℝ) (hcof : ∀ j, ∃ n, j < outLen δ out s₀ x n)
+    (v : List ℕ) (n : ℕ) :
+    occStart v (outDigit x hcof) (outLen δ out s₀ x n)
+      = ∑ i ∈ Finset.range n, fireOut x hcof v i := by
+  classical
+  induction n with
+  | zero => simp [occStart]
+  | succ n ih =>
+    have hle : outLen δ out s₀ x n ≤ outLen δ out s₀ x (n + 1) :=
+      outLen_mono δ out s₀ x (Nat.le_succ n)
+    have hsplit : Finset.range (outLen δ out s₀ x (n + 1))
+        = Finset.range (outLen δ out s₀ x n)
+          ∪ Finset.Ico (outLen δ out s₀ x n) (outLen δ out s₀ x (n + 1)) := by
+      rw [Finset.range_eq_Ico, Finset.range_eq_Ico,
+        Finset.Ico_union_Ico_eq_Ico (Nat.zero_le _) hle]
+    have hdisj : Disjoint (Finset.range (outLen δ out s₀ x n))
+        (Finset.Ico (outLen δ out s₀ x n) (outLen δ out s₀ x (n + 1))) := by
+      rw [Finset.disjoint_left]
+      intro p hp hp'
+      simp only [Finset.mem_range] at hp
+      simp only [Finset.mem_Ico] at hp'
+      omega
+    rw [occStart, hsplit, Finset.filter_union,
+      Finset.card_union_of_disjoint (hdisj.mono (Finset.filter_subset _ _)
+        (Finset.filter_subset _ _)),
+      Finset.sum_range_succ, ← occStart, ih, fireOut]
+
+/-- **Vandehey §5, abstractly.**  The occurrence count in the output word and the positionwise
+firing count differ by at most `|v|` — a constant, so they have the same Cesàro limit. -/
+theorem abs_countOccurrences_sub_sum_fireOut_le (x : ℝ)
+    (hcof : ∀ j, ∃ n, j < outLen δ out s₀ x n) {v : List ℕ} (hv : v ≠ []) (n : ℕ) :
+    |(countOccurrences v (outWord δ out s₀ x n) : ℝ)
+        - (∑ i ∈ Finset.range n, fireOut x hcof v i : ℕ)| ≤ (v.length : ℝ) := by
+  have hrw : countOccurrences v (outWord δ out s₀ x n)
+      = countOccurrences v ((List.range (outLen δ out s₀ x n)).map (outDigit x hcof)) := by
+    rw [← outWord_eq_map_outDigit x hcof n]
+  have h1 := countOccurrences_le_occStart v hv (outDigit x hcof) (outLen δ out s₀ x n)
+  have h2 := occStart_le_countOccurrences_add v hv (outDigit x hcof) (outLen δ out s₀ x n)
+  rw [occStart_eq_sum_fireOut x hcof v n] at h1 h2
+  rw [hrw]
+  have h1r : (countOccurrences v ((List.range (outLen δ out s₀ x n)).map (outDigit x hcof)) : ℝ)
+      ≤ (∑ i ∈ Finset.range n, fireOut x hcof v i : ℕ) := by exact_mod_cast h1
+  have h2r : ((∑ i ∈ Finset.range n, fireOut x hcof v i : ℕ) : ℝ)
+      ≤ (countOccurrences v ((List.range (outLen δ out s₀ x n)).map (outDigit x hcof)) : ℝ)
+        + (v.length : ℝ) := by exact_mod_cast h2
+  rw [abs_le]
+  constructor <;> linarith
+
+/-- **The §5 bridge in Cesàro form.**  If the positionwise firing count has an `x`-independent
+Cesàro limit — which is precisely what `exists_tendsto_trigTotal` delivers — then so does the
+occurrence count in the output word, with the SAME limit. -/
+theorem tendsto_countOccurrences_outWord_of_fireOut (x : ℝ)
+    (hcof : ∀ j, ∃ n, j < outLen δ out s₀ x n) {v : List ℕ} (hv : v ≠ []) {L : ℝ}
+    (h : Tendsto (fun n => ((∑ i ∈ Finset.range n, fireOut x hcof v i : ℕ) : ℝ) / n)
+      atTop (nhds L)) :
+    Tendsto (fun n => (countOccurrences v (outWord δ out s₀ x n) : ℝ) / n) atTop (nhds L) := by
+  have hkey : Tendsto (fun n : ℕ =>
+      (countOccurrences v (outWord δ out s₀ x n) : ℝ) / n
+        - ((∑ i ∈ Finset.range n, fireOut x hcof v i : ℕ) : ℝ) / n) atTop (nhds 0) := by
+    have hconst : Tendsto (fun n : ℕ => (v.length : ℝ) / n) atTop (nhds 0) :=
+      tendsto_const_div_atTop_nhds_zero_nat (v.length : ℝ)
+    refine squeeze_zero_norm' ?_ hconst
+    filter_upwards [eventually_gt_atTop 0] with n hn
+    have hnr : (0 : ℝ) < n := by exact_mod_cast hn
+    rw [div_sub_div_same, Real.norm_eq_abs, abs_div, abs_of_pos hnr]
+    exact div_le_div_of_nonneg_right
+      (abs_countOccurrences_sub_sum_fireOut_le x hcof hv n) hnr.le
+  have hsum := h.add hkey
+  rw [add_zero] at hsum
+  refine hsum.congr ?_
+  intro n
+  ring
+
+
 end NormalNumbers.VandeheyOut
 
 section
@@ -202,4 +296,6 @@ open NormalNumbers.VandeheyOut
 #print axioms countOccurrences_le_of_prefix
 #print axioms outWord_eq_map_outDigit
 #print axioms tendsto_outCount_div
+#print axioms occStart_eq_sum_fireOut
+#print axioms tendsto_countOccurrences_outWord_of_fireOut
 end
