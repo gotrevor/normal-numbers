@@ -869,6 +869,93 @@ theorem stateStepIter_doeblin_two_sided [Nonempty S] {B q β : ℝ} {Φ : S → 
       nlinarith [hε.le]
     linarith
 
+
+/-! ## Doeblin at a SINGLE common target
+
+`stateStepIter_doeblin_two_sided` asks that *every ordered pair* of states be joined by a
+genuine word of one fixed length — full uniform-length transitivity.  The Raney transducer of
+`VandeheyRaney.lean` does not have that: its state set contains transient states (Vandehey's
+§4 in miniature), so no word reaches them at all.
+
+What it *does* have, for prime `D`, is the classical Doeblin minorization: a single state `z`
+reached from **every** state in exactly `M` steps.  That is the weaker and more standard
+hypothesis, and it still contracts, at rate `1 − β` instead of `1 − 2β`:
+
+`L^M Φ(d,τ) ≥ m + β(Φ(z,·) − q − m)` and `L^M Φ(d,τ) ≤ Msup − β(Msup − Φ(z,·) − q)`,
+
+and subtracting gives `osc(L^M Φ) ≤ (1−β)·osc(Φ) + 2βq`.  The two one-sided bounds are *not*
+symmetric about the centre any more (when `Φ(z,·)` sits near the infimum the lower bound is
+weak and the upper strong), which is why only the oscillation, not the two-sided form,
+survives. -/
+
+/-- **Doeblin contraction from a single common target.** -/
+theorem stateStepIter_osc_doeblin_common [Nonempty S] {B q β : ℝ} {Φ : S → ℝ → ℝ}
+    (hΦ : InCone B Φ) (δ : S → ℕ → S) (M : ℕ) (hβ : 0 < β) (hq : 0 ≤ q)
+    {z : S} (hreach : ∀ d : S, ∃ w : List ℕ, w.length = M ∧ (∀ a ∈ w, 1 ≤ a) ∧
+      runState δ d w = z ∧ β ≤ wordWeight w)
+    (hosc : ∀ e : S, ∀ x ∈ Set.Icc (0 : ℝ) 1, ∀ y ∈ Set.Icc (0 : ℝ) 1, |Φ e x - Φ e y| ≤ q) :
+    famSup (stateStepIter δ M Φ) - famInf (stateStepIter δ M Φ)
+      ≤ (1 - β) * (famSup Φ - famInf Φ) + 2 * β * q := by
+  have h0 : (0 : ℝ) ∈ Set.Icc (0 : ℝ) 1 := ⟨le_refl 0, zero_le_one⟩
+  set sz : ℝ := Φ z 0 with hsz
+  have hΨ1 : InCone B (fun e y => Φ e y - famInf Φ) := by
+    intro e x hx
+    exact ⟨sub_nonneg.mpr (famInf_le hΦ e hx), by linarith [(hΦ e x hx).2, famInf_nonneg hΦ]⟩
+  have hΨ2 : InCone B (fun e y => famSup Φ - Φ e y) := by
+    intro e x hx
+    exact ⟨sub_nonneg.mpr (le_famSup hΦ e hx), by linarith [(hΦ e x hx).1, famSup_le_bound hΦ]⟩
+  -- the pointwise lower bound
+  have hlow : ∀ (d : S), ∀ {τ : ℝ}, τ ∈ Set.Icc (0 : ℝ) 1 →
+      famInf Φ + β * (sz - q - famInf Φ) ≤ stateStepIter δ M Φ d τ := by
+    intro d τ hτ
+    obtain ⟨w, hwlen, hwpos, hwrun, hwβ⟩ := hreach d
+    set c : ℝ := max 0 (sz - q - famInf Φ) with hc
+    have hc0 : 0 ≤ c := le_max_left _ _
+    have hcle : ∀ y ∈ Set.Icc (0 : ℝ) 1,
+        c ≤ (fun e y => Φ e y - famInf Φ) (runState δ d w) y := by
+      intro y hy
+      rw [hwrun]
+      refine max_le (sub_nonneg.mpr (famInf_le hΦ z hy)) ?_
+      have := abs_le.mp (hosc z 0 h0 y hy)
+      simp only []
+      linarith [this.1]
+    have hkey := stateStepIter_ge_word hΨ1 δ hc0 w hwpos d hcle hτ
+    rw [hwlen] at hkey
+    rw [stateStepIter_sub_const hΦ hΨ1 δ M d hτ] at hkey
+    have hcge : sz - q - famInf Φ ≤ c := le_max_right _ _
+    nlinarith [mul_le_mul_of_nonneg_right hwβ hc0, hβ.le]
+  -- the pointwise upper bound
+  have hup : ∀ (d : S), ∀ {τ : ℝ}, τ ∈ Set.Icc (0 : ℝ) 1 →
+      stateStepIter δ M Φ d τ ≤ famSup Φ - β * (famSup Φ - sz - q) := by
+    intro d τ hτ
+    obtain ⟨w, hwlen, hwpos, hwrun, hwβ⟩ := hreach d
+    set c : ℝ := max 0 (famSup Φ - sz - q) with hc
+    have hc0 : 0 ≤ c := le_max_left _ _
+    have hcle : ∀ y ∈ Set.Icc (0 : ℝ) 1,
+        c ≤ (fun e y => famSup Φ - Φ e y) (runState δ d w) y := by
+      intro y hy
+      rw [hwrun]
+      refine max_le (sub_nonneg.mpr (le_famSup hΦ z hy)) ?_
+      have := abs_le.mp (hosc z 0 h0 y hy)
+      simp only []
+      linarith [this.2]
+    have hkey := stateStepIter_ge_word hΨ2 δ hc0 w hwpos d hcle hτ
+    rw [hwlen] at hkey
+    rw [stateStepIter_const_sub hΦ hΨ2 δ M d hτ] at hkey
+    have hcge : famSup Φ - sz - q ≤ c := le_max_right _ _
+    nlinarith [mul_le_mul_of_nonneg_right hwβ hc0, hβ.le]
+  have hcone : InCone B (stateStepIter δ M Φ) := stateStepIter_inCone hΦ δ M
+  have hS : famSup (stateStepIter δ M Φ) ≤ famSup Φ - β * (famSup Φ - sz - q) := by
+    refine csSup_le (famRange_nonempty _) ?_
+    rintro v ⟨d, x, hx, rfl⟩
+    exact hup d hx
+  have hI : famInf Φ + β * (sz - q - famInf Φ) ≤ famInf (stateStepIter δ M Φ) := by
+    refine le_csInf (famRange_nonempty _) ?_
+    rintro v ⟨d, x, hx, rfl⟩
+    exact hlow d hx
+  nlinarith
+
+
 /-! ## Monotonicity of the range, and the shifted iterate -/
 
 /-- The operator is an average, so it never widens the range. -/
@@ -994,6 +1081,88 @@ lemma stateStepIter_lip_bound [Nonempty S] {B Λ Ω : ℝ} {Ψ : S → ℝ → �
       · rw [stateStepIter]; exact h.2
 
 set_option maxHeartbeats 800000 in
+/-- **The Lyapunov contraction from a single common target.**  Same architecture as
+`stateStepIter_osc_geom`, but the Doeblin step now contracts the oscillation only by `1 − β`
+instead of `1 − 2β`, so the Lyapunov weight has to be re-balanced.  With
+`V = Ω + (9/5)β·Λ` the two recursions
+
+  `Ω' ≤ (1−β)Ω + 2βΛ·log 2`,  `Λ' ≤ (2/5)^M Λ + Ω/2`
+
+give `V' ≤ (1 − β/10)·V`, because the `Ω`-coefficient is exactly `(1−β) + (9/10)β = 1 − β/10`
+and the `Λ`-coefficient needs `2 log 2 + (9/5)(2/5)^M ≤ 1.675 ≤ 9/5 − (9/50)β`, comfortable
+for `M ≥ 2` and `β ≤ 1/8`. -/
+theorem stateStepIter_osc_geom_common [Nonempty S] {B β Λ₀ Ω₀ : ℝ} {Φ : S → ℝ → ℝ}
+    (hΦ : InCone B Φ) (δ : S → ℕ → S) (hβ : 0 < β) (hβ' : β ≤ 1 / 8)
+    (M : ℕ) (hM : 2 ≤ M)
+    {z : S} (hreach : ∀ d : S, ∃ w : List ℕ, w.length = M ∧ (∀ a ∈ w, 1 ≤ a) ∧
+      runState δ d w = z ∧ β ≤ wordWeight w)
+    (hΛ₀ : 0 ≤ Λ₀) (hΩ₀ : 0 ≤ Ω₀)
+    (hlip0 : ∀ e : S, ∀ x ∈ Set.Icc (0 : ℝ) 1, ∀ y ∈ Set.Icc (0 : ℝ) 1,
+      |Φ e x - Φ e y| ≤ Λ₀ * |Real.log (1 + x) - Real.log (1 + y)|)
+    (hosc0 : famSup Φ - famInf Φ ≤ Ω₀) (m : ℕ) :
+    famSup (stateStepIter δ (M * m) Φ) - famInf (stateStepIter δ (M * m) Φ)
+      ≤ (1 - β / 10) ^ m * (Ω₀ + (9 / 5) * β * Λ₀) := by
+  have hlog2 : Real.log 2 ≤ 0.6932 := le_of_lt (lt_of_lt_of_le Real.log_two_lt_d9 (by norm_num))
+  have hlog2p : 0 ≤ Real.log 2 := Real.log_nonneg (by norm_num)
+  have hpowM : (2 / 5 : ℝ) ^ M ≤ 4 / 25 := by
+    calc (2 / 5 : ℝ) ^ M ≤ (2 / 5 : ℝ) ^ 2 :=
+          pow_le_pow_of_le_one (by norm_num) (by norm_num) hM
+      _ = 4 / 25 := by norm_num
+  have hpowMnn : (0 : ℝ) ≤ (2 / 5 : ℝ) ^ M := by positivity
+  have key : ∀ m : ℕ, ∃ Λ Ω : ℝ, 0 ≤ Λ ∧ 0 ≤ Ω ∧
+      (∀ e : S, ∀ x ∈ Set.Icc (0 : ℝ) 1, ∀ y ∈ Set.Icc (0 : ℝ) 1,
+        |stateStepIter δ (M * m) Φ e x - stateStepIter δ (M * m) Φ e y|
+          ≤ Λ * |Real.log (1 + x) - Real.log (1 + y)|) ∧
+      (famSup (stateStepIter δ (M * m) Φ) - famInf (stateStepIter δ (M * m) Φ) ≤ Ω) ∧
+      Ω + (9 / 5) * β * Λ ≤ (1 - β / 10) ^ m * (Ω₀ + (9 / 5) * β * Λ₀) := by
+    intro m
+    induction m with
+    | zero =>
+        refine ⟨Λ₀, Ω₀, hΛ₀, hΩ₀, ?_, ?_, by simp⟩
+        · rw [show M * 0 = 0 by omega]; exact hlip0
+        · rw [show M * 0 = 0 by omega]; exact hosc0
+    | succ m ih =>
+        obtain ⟨Λ, Ω, hΛ, hΩ, hlip, hosc, hV⟩ := ih
+        set Ψ : S → ℝ → ℝ := stateStepIter δ (M * m) Φ with hΨdef
+        have hΨ : InCone B Ψ := stateStepIter_inCone hΦ δ (M * m)
+        have hsplit : stateStepIter δ (M * (m + 1)) Φ = stateStepIter δ M Ψ := by
+          rw [hΨdef, ← stateStepIter_add δ (M * m) M Φ, Nat.mul_succ, Nat.add_comm]
+        have hmulti := stateStepIter_lip_bound hΨ δ hΛ hΩ hlip hosc M
+        set ΛM : ℝ := (2 / 5 : ℝ) ^ M * Λ + (1 / 2) * Ω with hΛM
+        have hΛMp : 0 ≤ ΛM := by rw [hΛM]; positivity
+        set q : ℝ := Λ * Real.log 2 with hq
+        have hqnn : 0 ≤ q := by rw [hq]; positivity
+        have hoscq : ∀ e : S, ∀ x ∈ Set.Icc (0 : ℝ) 1, ∀ y ∈ Set.Icc (0 : ℝ) 1,
+            |Ψ e x - Ψ e y| ≤ q := by
+          intro e x hx y hy
+          refine (hlip e x hx y hy).trans ?_
+          rw [hq]
+          exact mul_le_mul_of_nonneg_left (abs_log_sub_le_log_two hx hy) hΛ
+        have hdoeb := stateStepIter_osc_doeblin_common hΨ δ M hβ hqnn hreach hoscq
+        set Ω' : ℝ := (1 - β) * Ω + 2 * β * q with hΩ'
+        have hβ1 : β ≤ 1 := by linarith
+        have hΩ'p : 0 ≤ Ω' := by rw [hΩ']; nlinarith
+        have hoscnew : famSup (stateStepIter δ (M * (m + 1)) Φ)
+            - famInf (stateStepIter δ (M * (m + 1)) Φ) ≤ Ω' := by
+          rw [hsplit, hΩ']
+          refine hdoeb.trans ?_
+          nlinarith [hosc, hβ.le, famInf_le_famSup hΨ]
+        refine ⟨ΛM, Ω', hΛMp, hΩ'p, ?_, hoscnew, ?_⟩
+        · rw [hsplit]; exact hmulti.1
+        · have hstep : Ω' + (9 / 5) * β * ΛM ≤ (1 - β / 10) * (Ω + (9 / 5) * β * Λ) := by
+            rw [hΩ', hΛM, hq]
+            nlinarith [hΩ, hΛ, hβ.le, hβ', hlog2, hlog2p, hpowM, hpowMnn,
+              mul_nonneg hβ.le hΛ, mul_nonneg hβ.le hΩ,
+              mul_nonneg (mul_nonneg hβ.le hβ.le) hΛ,
+              mul_nonneg hΛ (sub_nonneg.mpr hpowM)]
+          calc Ω' + (9 / 5) * β * ΛM ≤ (1 - β / 10) * (Ω + (9 / 5) * β * Λ) := hstep
+            _ ≤ (1 - β / 10) * ((1 - β / 10) ^ m * (Ω₀ + (9 / 5) * β * Λ₀)) :=
+                mul_le_mul_of_nonneg_left hV (by linarith)
+            _ = (1 - β / 10) ^ (m + 1) * (Ω₀ + (9 / 5) * β * Λ₀) := by ring
+  obtain ⟨Λ, Ω, hΛ, hΩ, -, hosc, hV⟩ := key m
+  have : 0 ≤ (9 / 5) * β * Λ := by positivity
+  linarith
+
 /-- **The joint contraction.**  `M ≥ 2` single steps contract the log-Lipschitz constant by
 `(2/5)^M ≤ 4/25`, one Doeblin block of length `M` contracts the oscillation by `1 − 2β`, and the
 Lyapunov function `V = osc + 2β·Lip` contracts by `1 − β` per block, because
@@ -1431,13 +1600,14 @@ lemma famSup_stateStepIter_antitone [Nonempty S] {B : ℝ} {Φ : S → ℝ → �
   rintro v ⟨d, x, hx, rfl⟩
   exact stateStepOp_le_famSup (stateStepIter_inCone hΦ δ n) δ d hx
 
-/-- **The oscillation decays geometrically**, with no bijectivity hypothesis: this is the
-Doeblin/Lyapunov half of `stateHorizonIntegral_pin`, isolated. -/
+/-- **The oscillation decays geometrically**, from a single common target: this is the
+Doeblin/Lyapunov half of `stateHorizonIntegral_pin`, isolated, with `hbij` gone and full
+transitivity weakened to the classical Doeblin minorization at one state `z`. -/
 theorem exists_osc_geom [Nonempty S] (δ : S → ℕ → S) {A : Set ℝ}
     (hA : MeasurableSet A) (hA1 : A ⊆ Set.Ioo (0 : ℝ) 1)
-    (M : ℕ) (hM : 2 ≤ M)
-    (hreach : ∀ d s : S, ∃ w : List ℕ, w.length = M ∧ (∀ a ∈ w, 1 ≤ a) ∧
-      runState δ d w = s)
+    (M : ℕ) (hM : 2 ≤ M) {z : S}
+    (hreach : ∀ d : S, ∃ w : List ℕ, w.length = M ∧ (∀ a ∈ w, 1 ≤ a) ∧
+      runState δ d w = z)
     (s : S) :
     ∃ C θ : ℝ, 0 ≤ C ∧ 0 ≤ θ ∧ θ < 1 ∧ ∀ n : ℕ,
       famSup (stateStepIter δ n fun d' τ' => stateHorizonIntegral δ A 0 d' s τ')
@@ -1450,24 +1620,24 @@ theorem exists_osc_geom [Nonempty S] (δ : S → ℕ → S) {A : Set ℝ}
   have hlog2p : 0 ≤ Real.log 2 := Real.log_nonneg (by norm_num)
   have hM0 : 0 < M := by omega
   choose w hwlen hwpos hwrun using hreach
-  obtain ⟨p, -, hpmin⟩ := Finset.exists_min_image (Finset.univ : Finset (S × S))
-    (fun q => wordWeight (w q.1 q.2))
-    ⟨(Classical.arbitrary S, Classical.arbitrary S), Finset.mem_univ _⟩
-  set β : ℝ := min (wordWeight (w p.1 p.2)) (1 / 8) with hβdef
+  obtain ⟨p, -, hpmin⟩ := Finset.exists_min_image (Finset.univ : Finset S)
+    (fun d => wordWeight (w d)) ⟨Classical.arbitrary S, Finset.mem_univ _⟩
+  set β : ℝ := min (wordWeight (w p)) (1 / 8) with hβdef
   have hβpos : 0 < β := lt_min wordWeight_pos (by norm_num)
   have hβ8 : β ≤ 1 / 8 := min_le_right _ _
-  have hβ1 : β < 1 := by linarith
-  have hreach' : ∀ d t : S, ∃ v : List ℕ, v.length = M ∧ (∀ a ∈ v, 1 ≤ a) ∧
-      runState δ d v = t ∧ β ≤ wordWeight v := fun d t =>
-    ⟨w d t, hwlen d t, hwpos d t, hwrun d t,
-      le_trans (min_le_left _ _) (hpmin (d, t) (Finset.mem_univ _))⟩
-  set θ₁ : ℝ := (1 - β) ^ ((M : ℝ)⁻¹) with hθ₁
+  have hβ1 : β / 10 < 1 := by linarith
+  have hβ10 : 0 < β / 10 := by linarith
+  have hreach' : ∀ d : S, ∃ v : List ℕ, v.length = M ∧ (∀ a ∈ v, 1 ≤ a) ∧
+      runState δ d v = z ∧ β ≤ wordWeight v := fun d =>
+    ⟨w d, hwlen d, hwpos d, hwrun d,
+      le_trans (min_le_left _ _) (hpmin d (Finset.mem_univ _))⟩
+  set θ₁ : ℝ := (1 - β / 10) ^ ((M : ℝ)⁻¹) with hθ₁
   have hθ₁pos : 0 < θ₁ := Real.rpow_pos_of_pos (by linarith) _
   have hθ₁lt : θ₁ < 1 := Real.rpow_lt_one (by linarith) (by linarith) (by positivity)
   set θ : ℝ := max θ₁ (79 / 100) with hθ
   have hθpos : 0 < θ := lt_of_lt_of_le hθ₁pos (le_max_left _ _)
   have hθlt : θ < 1 := max_lt hθ₁lt (by norm_num)
-  refine ⟨4 * (1 - β)⁻¹, θ, by positivity, hθpos.le, hθlt, ?_⟩
+  refine ⟨4 * (1 - β / 10)⁻¹, θ, by positivity, hθpos.le, hθlt, ?_⟩
   intro n
   set Φ : S → ℝ → ℝ := fun d' τ' => stateHorizonIntegral δ A 0 d' s τ' with hΦdef
   have hΦcone : InCone 2 Φ := fun e x hx =>
@@ -1496,8 +1666,8 @@ theorem exists_osc_geom [Nonempty S] (δ : S → ℕ → S) {A : Set ℝ}
       · rw [if_pos h]; exact horizonIntegral_zero_le hA hA1 hx
       · rw [if_neg h]; exact hΩ₀
     linarith [famInf_nonneg hΦcone]
-  have hgeom := stateStepIter_osc_geom hΦcone δ hβpos hβ8 M hM hreach' hΛ₀ hΩ₀ hlip0 hosc0
-    (n / M)
+  have hgeom := stateStepIter_osc_geom_common hΦcone δ hβpos hβ8 M hM hreach' hΛ₀ hΩ₀ hlip0
+    hosc0 (n / M)
   set Ψ : S → ℝ → ℝ := stateStepIter δ (M * (n / M)) Φ with hΨdef
   have hΨcone : InCone 2 Ψ := stateStepIter_inCone hΦcone δ _
   have hr : (n - M * (n / M)) + M * (n / M) = n := by
@@ -1506,22 +1676,22 @@ theorem exists_osc_geom [Nonempty S] (δ : S → ℕ → S) {A : Set ℝ}
   have hiter : stateStepIter δ n Φ = stateStepIter δ (n - M * (n / M)) Ψ := by
     rw [hΨdef, ← stateStepIter_add δ (M * (n / M)) (n - M * (n / M)) Φ, hr]
   have hoscn : famSup (stateStepIter δ n Φ) - famInf (stateStepIter δ n Φ)
-      ≤ (1 - β) ^ (n / M) * (Ω₀ + 2 * β * Λ₀) := by
+      ≤ (1 - β / 10) ^ (n / M) * (Ω₀ + (9 / 5) * β * Λ₀) := by
     rw [hiter]
     exact stateStepIter_osc_le hΨcone δ hgeom _
-  have hV : Ω₀ + 2 * β * Λ₀ ≤ 4 * γA := by
+  have hV : Ω₀ + (9 / 5) * β * Λ₀ ≤ 4 * γA := by
     rw [hΩ₀d, hΛ₀d]
     nlinarith [hγ0, hβpos.le, hβ8, hlog2, hlog2p, mul_nonneg hβpos.le hγ0,
       mul_nonneg (mul_nonneg hβpos.le hlog2p) hγ0]
-  have hblock : (1 - β) ^ (n / M) ≤ (1 - β)⁻¹ * θ ^ n := by
-    refine (geom_block_bound hβpos hβ1 hM0 n).trans ?_
+  have hblock : (1 - β / 10) ^ (n / M) ≤ (1 - β / 10)⁻¹ * θ ^ n := by
+    refine (geom_block_bound hβ10 hβ1 hM0 n).trans ?_
     refine mul_le_mul_of_nonneg_left ?_ (by positivity)
     exact pow_le_pow_left₀ hθ₁pos.le (le_max_left _ _) n
   refine hoscn.trans ?_
-  calc (1 - β) ^ (n / M) * (Ω₀ + 2 * β * Λ₀)
-      ≤ ((1 - β)⁻¹ * θ ^ n) * (4 * γA) := by
+  calc (1 - β / 10) ^ (n / M) * (Ω₀ + (9 / 5) * β * Λ₀)
+      ≤ ((1 - β / 10)⁻¹ * θ ^ n) * (4 * γA) := by
         refine mul_le_mul hblock hV (by positivity) (by positivity)
-    _ = 4 * (1 - β)⁻¹ * θ ^ n * γA := by ring
+    _ = 4 * (1 - β / 10)⁻¹ * θ ^ n * γA := by ring
 
 /-- **The transfer-operator pin, without bijectivity.**  For a fixed target state `s`, the
 refined horizon integrals `Fₙ(d, s)(τ)` converge geometrically to a single value `c·γ(A)`,
@@ -1533,9 +1703,9 @@ This is what lets the *Raney* transducer of `VandeheyRaney.lean`, whose digit st
 injective, be fed to the same pipeline as the class automaton. -/
 theorem stateHorizonIntegral_pin_of_reach [Nonempty S] (δ : S → ℕ → S) {A : Set ℝ}
     (hA : MeasurableSet A) (hA1 : A ⊆ Set.Ioo (0 : ℝ) 1)
-    (M : ℕ) (hM : 2 ≤ M)
-    (hreach : ∀ d s : S, ∃ w : List ℕ, w.length = M ∧ (∀ a ∈ w, 1 ≤ a) ∧
-      runState δ d w = s)
+    (M : ℕ) (hM : 2 ≤ M) {z : S}
+    (hreach : ∀ d : S, ∃ w : List ℕ, w.length = M ∧ (∀ a ∈ w, 1 ≤ a) ∧
+      runState δ d w = z)
     (s : S) :
     ∃ c C θ : ℝ, 0 ≤ c ∧ c ≤ 1 ∧ 0 ≤ C ∧ 0 ≤ θ ∧ θ < 1 ∧
       ∀ (n : ℕ) (d : S) (τ : ℝ), τ ∈ Set.Icc (0 : ℝ) 1 →

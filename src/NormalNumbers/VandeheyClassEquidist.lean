@@ -327,32 +327,42 @@ the `classStep` route through `VandeheyRenewal.classStep_bijective` is unavailab
 /-- **`ClassEquidistribution` from transitivity alone.**  A finite automaton reading CF digits,
 in which every ordered pair of states is joined by a genuine word of one fixed length `M ≥ 2`,
 equidistributes jointly with digit windows along every CF-normal orbit. -/
-theorem classEquidistribution_of_reach [Nonempty S] (δ : S → ℕ → S) (t : S) (q : List ℕ)
-    (M : ℕ) (hM : 2 ≤ M)
-    (hreach : ∀ d s : S, ∃ w : List ℕ, w.length = M ∧ (∀ a ∈ w, 1 ≤ a) ∧
-      runState δ d w = s) :
+theorem classEquidistribution_of_common_reach [Nonempty S] (δ : S → ℕ → S) (t : S)
+    (q : List ℕ) (M : ℕ) (hM : 2 ≤ M) {z : S}
+    (hreach : ∀ d : S, ∃ w : List ℕ, w.length = M ∧ (∀ a ∈ w, 1 ≤ a) ∧
+      runState δ d w = z) :
     VandeheyCocycle.ClassEquidistribution δ t q := by
   obtain ⟨c, C, θ, hc0, hc1, hC, hθ0, hθ1, hpin⟩ :=
     VandeheyState.stateHorizonIntegral_pin_of_reach δ (measurableSet_cfCylinder q)
       (cfCylinder_subset_Ioo q) M hM hreach t
   exact classEquidistribution_of_pin δ t q hC hθ0 hθ1 hc0 hc1 hpin
 
+/-- Full uniform-length transitivity is the special case `z` arbitrary. -/
+theorem classEquidistribution_of_reach [Nonempty S] (δ : S → ℕ → S) (t : S) (q : List ℕ)
+    (M : ℕ) (hM : 2 ≤ M)
+    (hreach : ∀ d s : S, ∃ w : List ℕ, w.length = M ∧ (∀ a ∈ w, 1 ≤ a) ∧
+      runState δ d w = s) :
+    VandeheyCocycle.ClassEquidistribution δ t q :=
+  classEquidistribution_of_common_reach δ t q M hM (z := Classical.arbitrary S)
+    (fun d => hreach d (Classical.arbitrary S))
+
 /-- **The joint (window, state) frequency converges, for any transitive finite automaton.**
 The limit mentions neither the CF-normal point `x` nor the initial state.  This is exactly the
 `VandeheyUniformFreq` contract, one automaton at a time. -/
-theorem tendsto_jointCount_of_reach [Nonempty S] (δ : S → ℕ → S) (t : S)
-    (M : ℕ) (hM : 2 ≤ M)
-    (hreach : ∀ d s : S, ∃ w : List ℕ, w.length = M ∧ (∀ a ∈ w, 1 ≤ a) ∧
-      runState δ d w = s)
+theorem tendsto_jointCount_of_common_reach [Nonempty S] (δ : S → ℕ → S) (t : S)
+    (M : ℕ) (hM : 2 ≤ M) {z : S}
+    (hreach : ∀ d : S, ∃ w : List ℕ, w.length = M ∧ (∀ a ∈ w, 1 ≤ a) ∧
+      runState δ d w = z)
     {q : List ℕ} (hq : q ≠ []) (hqpos : ∀ a ∈ q, 1 ≤ a) :
     ∃ L : ℝ, ∀ (s₀ : S) (x : ℝ), IsCFNormal x →
       Tendsto (fun n => (jointCount δ s₀ t q x n : ℝ) / n) atTop
         (nhds (L * (gaussMeasure (cfCylinder q)).toReal)) :=
   VandeheyCocycle.tendsto_jointCount_of_classEquidistribution
-    (classEquidistribution_of_reach δ t q M hM hreach) hq hqpos
+    (classEquidistribution_of_common_reach δ t q M hM hreach) hq hqpos
 
+#print axioms classEquidistribution_of_common_reach
 #print axioms classEquidistribution_of_reach
-#print axioms tendsto_jointCount_of_reach
+#print axioms tendsto_jointCount_of_common_reach
 
 end VandeheyTwo
 
