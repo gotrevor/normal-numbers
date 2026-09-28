@@ -214,6 +214,12 @@ on) says in its proof: *"This is a simple consequence of Theorem 1 in [17]"* —
 space: countably infinite alphabet, **non-compact**, escape of mass available.  The
 counterexample lifts verbatim, so Lemma 3.2 as stated is false.
 
+**Formalized 2026-09-28.**  `src/NormalNumbers/MoshchevitinShkredovRefuted.lean` states the CF
+specialization as `moshchevitinShkredov_cf` and proves `moshchevitinShkredov_cf_false` in the
+kernel, with the witness `x = [0; 1, 2, 3, …]` built as the limit of the nested cylinders
+`[1, 2, …, s+1]` (`exists_irrational_cfDigit_succ`).  Maze row:
+`hall_moshchevitin_shkredov_cf_false`.
+
 📰 **Survives publication (checked 2026-09-27 against the published Compositio 153 (2017)
 274-293, `papers/vandehey-2017-matrix-actions-cf-normality-published.pdf`, gitignored).**
 The published version renumbers it **Lemma 3.3** (p. 282, §3.1), with the statement and proof

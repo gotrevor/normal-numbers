@@ -18,6 +18,7 @@ import NormalNumbers.C3MrtBlockDefect
 import NormalNumbers.Walsh
 import NormalNumbers.WalshBase
 import NormalNumbers.WallRational
+import NormalNumbers.MoshchevitinShkredovRefuted
 
 /-!
 # `Maze.lean` — the halls we have walked, encoded
@@ -253,6 +254,16 @@ discharges it for **every** 1-bounded `g`, `g = 1` included: every summand of
 `≤ (log X)^{1/125}` included, twists up to `X²`), which `g = 1` provably fails
 (`not_ttNonPretentiousUnif_one`). -/
 alias hall_tt_nonpretentious_vacuous := NormalNumbers.CastingOut.ttNonPretentious_trivial
+
+/-- **HALL: Moshchevitin-Shkredov Theorem 1, in its CF specialization** (`falseAsStated`,
+2026-09-28).  The hot-spot criterion Vandehey 2017 Lemma 3.3 leans on -- "uniformly bounded
+upper block frequencies imply normality" -- is FALSE on the non-compact CF alphabet, as
+Airey-Mance predicted.  Witness: `x = [0; 1, 2, 3, ...]` (built as the limit of the nested
+cylinders `[1,2,...,s+1]`).  Its digits strictly increase, so every genuine block occurs at
+most once, every block frequency tends to `0`, and the hypothesis holds VACUOUSLY with
+`sigma = 0`; but the digit `1` then has frequency `0`, not `gamma(I_1) = log_2(4/3) > 0`.
+Any route through `moshchevitinShkredov_cf` is dead. -/
+alias hall_moshchevitin_shkredov_cf_false := NormalNumbers.moshchevitinShkredov_cf_false
 
 /-- **HALL: the `K`-point no-exceptional-set input, as stated** (`falseAsStated`, 2026-09-25).
 `KPointNoExcWith cK CstK 2` is FALSE for any `0 < cK 2`: with both factors the constant `1`
@@ -1004,7 +1015,12 @@ def register : List Hall := [
    "Assume a normal number's window digit sum is uniform mod b-1",
    .falseAsStated, .kernel,
    "The true law is 1/(b-1) + b^{-L}((b-1)[r=0]-1)/(b-1), which is uniform only in the L to infinity limit",
-   "alias hall_uniform_casting_out", "2026-09-23"⟩
+   "alias hall_uniform_casting_out", "2026-09-23"⟩,
+  ⟨"Moshchevitin-Shkredov hot-spot criterion for continued fractions",
+   "Deduce CF-normality from uniformly bounded upper block frequencies, as Vandehey 2017 Lemma 3.3 does",
+   .falseAsStated, .kernel,
+   "x = [0;1,2,3,...] has strictly increasing digits, so every block occurs at most once: the hypothesis holds vacuously with sigma = 0 while the digit 1 has frequency 0, not log_2(4/3)",
+   "alias hall_moshchevitin_shkredov_cf_false", "2026-09-28"⟩
 ]
 
 /-- Rows whose verdict is machine-checked in this build. -/

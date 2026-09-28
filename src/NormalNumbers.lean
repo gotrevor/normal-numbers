@@ -397,6 +397,7 @@ import NormalNumbers.G4WindowK
 import NormalNumbers.G4WiringSparse
 import NormalNumbers.G4WiringRough
 import NormalNumbers.Maze
+import NormalNumbers.MoshchevitinShkredovRefuted
 import NormalNumbers.Walsh
 import NormalNumbers.AbelianBlockDensity
 import NormalNumbers.AbelianNormal
