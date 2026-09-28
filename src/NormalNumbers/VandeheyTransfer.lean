@@ -8,7 +8,11 @@ import NormalNumbers.VandeheyZFree
 /-!
 # Assembling the automaton transfer principle
 
-Glue for `VandeheyAutomaton.exists_jointFreq_limit`: the squeeze that turns the exact
+Glue built for the (now retired) `VandeheyAutomaton.exists_jointFreq_limit` -- its
+`Synchronizing` hypothesis is unsatisfiable for the det-+-D CF transducer
+(`VandeheyAut.not_synchronizing_of_injective_quotient`), so the live transfer principle is
+`VandeheyCocycle.tendsto_jointCount_of_classEquidistribution`.  The helpers below are
+unconditional and are reused there.  The squeeze that turns the exact
 combinatorics of `VandeheyAutomaton.lean` and the two analytic limits
 (`tendsto_digitTail_freq`, `tendsto_gaussMeasure_zFreeSet`) into one convergent frequency
 with an `x`-independent limit.

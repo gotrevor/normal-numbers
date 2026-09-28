@@ -35,8 +35,23 @@ digits) have frequency `→ γ(no z in L digits)` by CF-normality, and that tend
 vanishing error, a *finite* sum of ordinary cylinder window counts — each of which
 CF-normality pins to `γ` of a cylinder.  Hence the limit exists and is `x`-independent.
 
-Status: the deterministic core (this section) is proved; the frequency assembly is the
-open leaf `exists_jointFreq_limit`.
+## RETIRED 2026-09-28 — the `Synchronizing` hypothesis is unsatisfiable here
+
+`probes/cf_transducer_sync.py` (`archive/probe/PROBE-2026-09-27-transducer-not-synchronizing.md`)
+decided synchronizability for the det-`±D` CF transducer that Theorem 1.1 needs: it is NOT
+synchronizing, for a structural reason no search bound is needed to see.  The reachable state
+set fibres over `ℙ¹(ℤ/D)` by the row-lattice class of the state matrix, the class evolves by
+`c ↦ c · B_a`, and every `B_a` acts **bijectively** on `ℙ¹(ℤ/D)`.  A bijective quotient never
+forgets, so no input word can merge two states of different class — and there are `D + 1`
+classes.
+
+That obstruction is now a theorem here: `not_synchronizing_of_injective_quotient`.  Every
+statement of this section carrying a `Synchronizing` hypothesis is therefore **vacuous for
+the intended automaton**, and the frequency assembly that used to sit at the end of the file
+as the sorried `exists_jointFreq_limit` is removed: its replacement is
+`VandeheyCocycle.tendsto_jointCount_of_classEquidistribution`, which asks instead for
+equidistribution of the `ℙ¹(ℤ/D)` cocycle — the crux the probe identified.  Maze row:
+`hall_vandehey_synchronizing_transducer`.
 -/
 
 namespace NormalNumbers
@@ -599,27 +614,54 @@ theorem tendsto_window_mem_freq {x : ℝ} (hx : IsCFNormal x) (F : Finset (List 
   congr 1
   rw [card_window_mem_eq_sum x F L hF m, Nat.cast_sum]
 
-/-- **The automaton transfer principle** (the replacement for Vandehey's Theorem 3.1).
-For a finite-state automaton with a synchronizing genuine word, the joint
-(window, state) frequency along a CF-normal `x` converges, to a limit that depends on
-neither the initial state nor which CF-normal `x` was used.
+/-! ## The `Synchronizing` obstruction: a bijective quotient never forgets
 
-Proof plan (see the module docstring): fix a lookback `L`.  Split the indices `i` by the
-window `q = cfWindow x (i−L) L`.  For those `q` containing `z` the state is
-`runState δ (syncTarget δ s₁ z) r`, a function of `q` alone, so the joint count is a
-finite sum `Σ_{q ∈ Q_t} #{i : window of length L+|v| at i−L spells q ++ v}` — and each of
-those is a plain window count, whose frequency CF-normality sends to `γ(I_{q ++ v})`.
-The residue is `#{i < n : z does not occur in cfWindow x (i−L) L} + O(L)`, whose
-frequency CF-normality sends to `γ(Z_L)`, `Z_L` = the `z`-free length-`L` cylinders; and
-`γ(Z_L) → 0` in `L` by mixing.  A Cauchy argument in `L` then produces the limit,
-manifestly as `lim_L Σ_{q ∈ Q_t} γ(I_{q ++ v})`, which mentions no `x`. -/
-theorem exists_jointFreq_limit {S : Type*} [Fintype S] [DecidableEq S]
-    (δ : S → ℕ → S) {z : List ℕ} (hzne : z ≠ []) (hzpos : ∀ a ∈ z, 1 ≤ a)
-    (hz : Synchronizing δ z) (t : S) (v : List ℕ) (hvne : v ≠ [])
-    (hvpos : ∀ a ∈ v, 1 ≤ a) :
-    ∃ L : ℝ, ∀ (s₀ : S) (x : ℝ), IsCFNormal x →
-      Tendsto (fun n => (jointCount δ s₀ t v x n : ℝ) / n) atTop (nhds L) := by
-  sorry
+The reason the intended CF transducer admits no synchronizing word, stated for any
+automaton.  See the retirement note in the module docstring. -/
+
+/-- Running the automaton commutes with a quotient that is equivariant for a letter action. -/
+theorem quotient_runState {S C : Type*} {δ : S → ℕ → S} {φ : S → C} {ψ : ℕ → C → C}
+    (hcomm : ∀ s a, φ (δ s a) = ψ a (φ s)) (s : S) (w : List ℕ) :
+    φ (runState δ s w) = w.foldl (fun c a => ψ a c) (φ s) := by
+  induction w generalizing s with
+  | nil => rfl
+  | cons a u ih => rw [runState_cons, List.foldl_cons, ih, hcomm]
+
+/-- An iterated injective letter action stays injective. -/
+theorem injective_foldl_of_injective {C : Type*} {ψ : ℕ → C → C}
+    (hψ : ∀ a, Function.Injective (ψ a)) (w : List ℕ) :
+    Function.Injective (fun c : C => w.foldl (fun c a => ψ a c) c) := by
+  induction w with
+  | nil => exact fun _ _ h => h
+  | cons a u ih =>
+    intro c c' h
+    simp only [List.foldl_cons] at h
+    exact hψ a (ih h)
+
+/-- **The obstruction** (`PROBE-2026-09-27-transducer-not-synchronizing.md`): an automaton
+with a quotient on which every letter acts **injectively** has NO synchronizing word, as
+soon as the quotient separates two states.
+
+For the det-`±D` CF transducer the quotient is the row-lattice class in `ℙ¹(ℤ/D)`, the letter
+action is `c ↦ c · B_a` with `B_a ∈ GL₂(ℤ/D)`, and the `D + 1` classes are pairwise separated.
+So every `Synchronizing`-hypothesis statement above is vacuous for that automaton, which is
+why the frequency assembly moved to `VandeheyCocycle`. -/
+theorem not_synchronizing_of_injective_quotient {S C : Type*} {δ : S → ℕ → S} {φ : S → C}
+    {ψ : ℕ → C → C} (hψ : ∀ a, Function.Injective (ψ a))
+    (hcomm : ∀ s a, φ (δ s a) = ψ a (φ s)) {s s' : S} (hne : φ s ≠ φ s') (z : List ℕ) :
+    ¬ Synchronizing δ z := by
+  intro hz
+  apply hne
+  refine injective_foldl_of_injective hψ z ?_
+  show z.foldl (fun c a => ψ a c) (φ s) = z.foldl (fun c a => ψ a c) (φ s')
+  rw [← quotient_runState hcomm, ← quotient_runState hcomm, hz s s']
+
+/-- Content locator: the obstruction is not vacuous — a two-state automaton whose letters
+all act as the identity on `Bool` has no synchronizing word. -/
+theorem not_synchronizing_id (z : List ℕ) : ¬ Synchronizing (fun b : Bool => fun _ : ℕ => b) z :=
+  not_synchronizing_of_injective_quotient (φ := (id : Bool → Bool))
+    (ψ := fun _ => (id : Bool → Bool)) (fun _ => Function.injective_id) (fun _ _ => rfl)
+    (s := false) (s' := true) (by simp) z
 
 end VandeheyAut
 

@@ -1,6 +1,6 @@
 # DIRECTION — normal-numbers 🧭
 
-## OPERATOR OBJECTIVE 2026-09-28: `PENDING_WORK.md` queue items 1-3 (bounded run, at most 4 laps)
+## OPERATOR OBJECTIVE 2026-09-28: `PENDING_WORK.md` queue items 1-3 — **COMPLETE 2026-09-28**
 
 1. Prove `moshchevitinShkredov_cf_false` in `MoshchevitinShkredovRefuted.lean` (witness
    `[0;1,2,3,…]`), wire the file into `src/NormalNumbers.lean`, and add a Maze row marked
@@ -13,6 +13,12 @@
 
 Keep `lake build` green at every commit.  Update `STATUS.md` and remove each finished item from
 the `PENDING_WORK.md` queue.  **Stop when all three are done.**  Nothing else is in scope.
+
+**All three landed 2026-09-28** — see the dated lap note in `PENDING_WORK.md`.  Items 1 and 3
+each landed as a *theorem*, not just a Maze row: `moshchevitinShkredov_cf_false`, and
+`not_synchronizing_of_injective_quotient` (which turns the transducer probe into a kernel
+obstruction).  Item 2's headline is `conjC3_of_geom_input_band'`.  The queue is renumbered;
+its new item 1 is the Vandehey crux `ClassEquidistribution` / `vandeheyUniformFreq_holds`.
 
 ---
 

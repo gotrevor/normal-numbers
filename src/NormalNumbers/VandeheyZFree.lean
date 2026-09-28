@@ -10,8 +10,10 @@ import NormalNumbers.VandeheyAutomaton
 /-!
 # The `z`-avoidance mass decays geometrically
 
-The last analytic input to the automaton transfer principle
-(`VandeheyAutomaton.exists_jointFreq_limit`, the replacement for Vandehey 2017 §3): the
+An analytic input built for the (now retired) synchronizing-word transfer principle
+`VandeheyAutomaton.exists_jointFreq_limit` -- see the retirement note in
+`VandeheyAutomaton.lean`, and `hall_vandehey_synchronizing_transducer`.  The statement
+itself is unconditional and stays: the
 Gauss mass of the set of points whose CF expansion avoids a fixed genuine word `z` at the
 aligned block positions `0, s, 2s, …` (`s = |z| + 1`) tends to `0`.
 

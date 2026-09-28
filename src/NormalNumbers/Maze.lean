@@ -19,6 +19,7 @@ import NormalNumbers.Walsh
 import NormalNumbers.WalshBase
 import NormalNumbers.WallRational
 import NormalNumbers.MoshchevitinShkredovRefuted
+import NormalNumbers.VandeheyAutomaton
 
 /-!
 # `Maze.lean` — the halls we have walked, encoded
@@ -254,6 +255,23 @@ discharges it for **every** 1-bounded `g`, `g = 1` included: every summand of
 `≤ (log X)^{1/125}` included, twists up to `X²`), which `g = 1` provably fails
 (`not_ttNonPretentiousUnif_one`). -/
 alias hall_tt_nonpretentious_vacuous := NormalNumbers.CastingOut.ttNonPretentious_trivial
+
+/-- **HALL: a synchronizing word for the det-±D CF transducer** (`falseAsStated`, 2026-09-28).
+`VandeheyAut.exists_jointFreq_limit` replaced Vandehey 2017 Theorem 3.1 by a PATHWISE
+merging argument: after a synchronizing word the automaton forgets its initial state, so the
+state is a function of the last `L` digits and the joint (window, state) count becomes a
+finite sum of ordinary cylinder counts.  The mechanism is sound; its hypothesis is
+unsatisfiable.  The transducer's reachable states fibre over `ℙ¹(ℤ/D)` by the row-lattice
+class of the state matrix, the class evolves by `c ↦ c · B_a`, and each `B_a` lies in
+`GL₂(ℤ/D)` and so acts BIJECTIVELY -- a bijective quotient never forgets, and there are
+`D + 1 ≥ 3` classes to separate.  Decided by `probes/cf_transducer_sync.py` (no synchronizing
+word to length 20; 1953 of 3160 state pairs unmergeable at `D = 2`) and then proved in
+general as `not_synchronizing_of_injective_quotient`.  The sorried
+`exists_jointFreq_limit` is removed; the live replacement is
+`VandeheyCocycle.tendsto_jointCount_of_classEquidistribution`, whose hypothesis
+`ClassEquidistribution` is the crux the class cocycle actually poses. -/
+alias hall_vandehey_synchronizing_transducer :=
+  NormalNumbers.VandeheyAut.not_synchronizing_of_injective_quotient
 
 /-- **HALL: the low/high split as a route to `UniformResonantMass`** (`priorArt`, 2026-09-28).
 `C3MrtURMLowHigh.lean` split the resonant primes at `lowHeight t = 16 log(2+|t|)` to tame the
@@ -1037,7 +1055,12 @@ def register : List Hall := [
    "Reach UniformResonantMass by splitting the resonant primes at height 16 log(2+|t|) and paying the narrow high range |t| < 2*delta separately",
    .priorArt, .kernel,
    "The split is sound and its low and wide-high ranges are proved, but C3MrtUniformMass reached the same theorem first by a different assembly, so the narrow half had no consumer and was retired rather than carried as a sorry",
-   "alias hall_urm_low_high_split; the live headline is conjC3_of_geom_input_band'", "2026-09-28"⟩
+   "alias hall_urm_low_high_split; the live headline is conjC3_of_geom_input_band'", "2026-09-28"⟩,
+  ⟨"synchronizing word for the CF det-D transducer",
+   "Replace Vandehey 2017 Theorem 3.1 by pathwise state-merging after a synchronizing word",
+   .falseAsStated, .kernel,
+   "The state fibres over P^1(Z/D) by row-lattice class and every letter acts bijectively on that quotient, so no word merges two classes: the Synchronizing hypothesis is unsatisfiable and every statement carrying it is vacuous for this automaton",
+   "alias hall_vandehey_synchronizing_transducer; probe archive/probe/PROBE-2026-09-27-transducer-not-synchronizing.md", "2026-09-28"⟩
 ]
 
 /-- Rows whose verdict is machine-checked in this build. -/

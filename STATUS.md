@@ -28,32 +28,41 @@ State at the post-merge checkpoint of 2026-09-27 (`f5034b6` onward), on branch
 - **Open:**
   - `vandeheyUniformFreq_holds` (`LiteratureVandehey.lean`, sorry) is the crux: block
     frequencies along a Möbius image have an `x`-independent limit.
-- **Retire:** `exists_jointFreq_limit` (`VandeheyAutomaton.lean`, sorry).  Its `Synchronizing`
-  hypothesis cannot hold for the needed transducer
-  (`archive/probe/PROBE-2026-09-27-transducer-not-synchronizing.md`).  It needs a Maze row, not
-  a proof.
+- **Retired 2026-09-28:** `exists_jointFreq_limit` is gone.  Its `Synchronizing` hypothesis is
+  unsatisfiable for the needed transducer, and that is now a theorem:
+  `VandeheyAut.not_synchronizing_of_injective_quotient` (axiom-free) — a quotient on which
+  every letter acts injectively is never forgotten, and the transducer's row-lattice class in
+  `ℙ¹(ℤ/D)` is such a quotient.  Maze: `hall_vandehey_synchronizing_transducer`.  The live
+  transfer principle is `VandeheyCocycle.tendsto_jointCount_of_classEquidistribution`; its
+  hypothesis `ClassEquidistribution` is the real crux.
 - **Read:** `archive/handoff/HANDOFF-2026-09-28-vandehey-bridge-CLOSED.md` (its NEXT list),
   `papers/vandehey-2017-open-problem-attack-map.md`.
 
-### Moshchevitin-Shkredov refutation (stated)
-- `moshchevitinShkredov_cf_false` (`MoshchevitinShkredovRefuted.lean`, sorry) says that uniformly
-  bounded upper block frequencies do not imply CF-normality.
-- The witness is `[0;1,2,3,…]`.  The proof is elementary.
-- The file is not yet in the root import.
+### Moshchevitin-Shkredov refutation (PROVED 2026-09-28)
+- `moshchevitinShkredov_cf_false` (`MoshchevitinShkredovRefuted.lean`, in the root import,
+  axiom-clean): uniformly bounded upper block frequencies do NOT imply CF-normality.
+- Witness `x = [0;1,2,3,…]`, built as the limit of the nested cylinders `[1,…,s+1]`
+  (`exists_irrational_cfDigit_succ`, reusable).  Strictly increasing digits ⇒ every genuine
+  block occurs at most once ⇒ every frequency is `O(1/p)`, so the hypothesis holds vacuously at
+  `σ = 0`, while CF-normality would force `γ(I_1) = log₂(4/3) > 0`.
+- Maze: `hall_moshchevitin_shkredov_cf_false`.  Any route through Vandehey 2017 Lemma 3.3 is dead.
 
 ### C3/MRT: `ConjC3` (richness of `∑ ω(n)/bⁿ`) as a conditional theorem
-- **Live headline:** `conjC3_of_geom_input_band` (`C3MrtBlockDefect.lean`), sorry-free.  It takes
-  four inputs:
+- **Live headline:** `conjC3_of_geom_input_band'` (`C3MrtBlockDefect.lean`), sorry-free and
+  axiom-clean.  It is `conjC3_of_geom_input_band` with `UniformResonantMass` DISCHARGED
+  (2026-09-28), so it takes three inputs, not four:
   1. `KPointNoExcAtWith …`: the Tao-Teräväinen K-point correlation input, faithful to arXiv
      2512.01739 Thm 3.1.  Out of reach today, and TT say so themselves.
-  2. `UniformResonantMass`: **already a theorem** (`uniformResonantMass_holds`,
-     `C3MrtUniformMass.lean`) but not yet wired into the headline.
+  2. ~~`UniformResonantMass`~~: discharged by `uniformResonantMass_holds`
+     (`C3MrtUniformMass.lean`).  No longer a hypothesis anywhere on the archimedean side.
   3. `CharPrimeSumLogQ D` with `2D < 125`: standard in strength, but needs Dirichlet
      L-function theory that mathlib lacks.  The `t = 0` slice is reduced to
      `CharTailCancellation` (`C3MrtCharSumZero.lean`).
   4. `WideBlockSavingBand`: a bespoke per-block saving, not a literature statement.
-- **Redundant:** `highResonantMass_le_narrow` (`C3MrtURMLowHigh.lean`, sorry) sits on a second
-  route to `UniformResonantMass`, which is already closed.  Retire it.
+- **Retired 2026-09-28:** `highResonantMass_le_narrow` (`C3MrtURMLowHigh.lean`) was the one
+  open obligation on a second, redundant route to `UniformResonantMass`.  With the theorem
+  already in the kernel it had no consumer, so it and its two dependents are removed; the
+  file's sorry-free lemmas stay.  Maze: `hall_urm_low_high_split`.
 - **Vacuous, do not retry:** `conjC3_of_geom_input_blocks`, `_blockPartial`, `_pairing` (lap 115).
 - **Read:** `archive/findings/ROUTE-ESCALATION-2026-09-25-c3mrt.md`,
   `archive/handoff/HANDOFF-2026-09-25-6-urm-lowhigh.md`.
