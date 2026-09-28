@@ -12,9 +12,12 @@ Treadmill laps append dated notes **below the queue**, and a review lap folds th
      escape from the infinite CF alphabet — the elementary stand-in for Airey–Mance tightness).
    - ✅ `wCount_le_of_finset` (pointwise split), `eventually_wCount_le` (the upper-bound engine:
      `wCount ≤ (Sb + ε)·n` eventually, for any bound `Sb` on finite length-`m` subfamily mass).
-   - ⬜ **Next: the truncation LOWER bound.**  `∀ᶠ n, (Sl − ε)·n ≤ wCount` whenever `a ≥ a₀`
-     for a finitely-supported `a₀` of mass `Sl`.  Trivial by monotonicity; do it next.
-   - ⬜ **Then the assembly** (`tendsto_triggerCount`): a trigger family
+   - ✅ `eventually_le_wCount` (truncation LOWER bound) and **`tendsto_wCount_div`**: for a
+     bounded nonnegative weight on the countably infinite length-`m` genuine words, the
+     state-restricted count has Cesàro limit `wLimit ν t a m` — defined as a supremum over
+     finite subfamilies, so it mentions NO `x`.  That is the published Lemma 4.3's infinite
+     case, with no ergodic theory, no Ryll-Nardzewski, no Vitali-Hahn-Saks.
+   - ⬜ **Next: the assembly** (`tendsto_triggerCount`): a trigger family
      `A ⊆ List ℕ × S` with multiplicity `k`, uniform bound `F ≤ K`, bucketed by word length.
      `F − F_{≤m} ≤ K·1_{U_m}`, `U_m ⊆ ⋃_t {i : tᵢ = t, window_m(i) ∈ P_{t,m}}` where `P_{t,m}`
      is the set of length-`m` words agreeing with a trigger of length `> m`.  The ONE honest

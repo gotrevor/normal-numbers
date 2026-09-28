@@ -328,9 +328,9 @@ theorem eventually_wCount_le (δ : S → ℕ → S) (s₀ : S) {ν : S → ℝ}
   set L : ℝ := (∑ w ∈ Q, a w * (ν t * γ w)) + C * (1 - ∑ w ∈ Q, γ w) with hLdef
   have hFL : Tendsto F atTop (nhds L) := by
     rw [hFdef, hLdef]
-    refine Tendsto.add (tendsto_finset_sum _ fun w hw => ?_) ?_
+    refine Tendsto.add (tendsto_finsetSum _ fun w hw => ?_) ?_
     · exact (hjc w hw).const_mul (a w)
-    · exact Tendsto.const_mul _ (tendsto_const_nhds.sub (tendsto_finset_sum _ hwc))
+    · exact Tendsto.const_mul _ (tendsto_const_nhds.sub (tendsto_finsetSum _ hwc))
   -- the limit is below `Sb + ε`
   have hsum1 : ∑ w ∈ Q, γ w ≤ 1 := by
     simpa [hγdef, hQdef] using sum_gaussMeasure_boundedWords_le_one B m
@@ -368,6 +368,199 @@ theorem eventually_wCount_le (δ : S → ℕ → S) (s₀ : S) {ν : S → ℝ}
   rw [hident] at hsplit
   calc wCount δ s₀ t a m x n ≤ (n : ℝ) * F n := hsplit
     _ ≤ (Sb + ε) * n := by rw [mul_comm]; exact mul_le_mul_of_nonneg_right hn.le hnpos.le
+
+/-! ## The lower half: truncation -/
+
+/-- A finite same-length cylinder family has total Gauss mass at most `1`. -/
+lemma sum_gaussMeasure_le_one_of_length {m : ℕ} (Q : Finset (List ℕ))
+    (hQ : ∀ w ∈ Q, w.length = m) :
+    ∑ w ∈ Q, (gaussMeasure (cfCylinder w)).toReal ≤ 1 := by
+  classical
+  have hdisj : (↑Q : Set (List ℕ)).PairwiseDisjoint (fun w => cfCylinder w) :=
+    pairwiseDisjoint_cfCylinder (n := m) fun w hw => hQ w hw
+  have hbi := measure_biUnion_finset (μ := gaussMeasure) hdisj
+    (fun w _ => measurableSet_cfCylinder w)
+  have hle1 : gaussMeasure (⋃ w ∈ Q, cfCylinder w) ≤ 1 :=
+    (measure_mono (Set.subset_univ _)).trans_eq gaussMeasure_univ
+  rw [← ENNReal.toReal_sum (fun w _ => measure_ne_top _ _), ← hbi]
+  calc (gaussMeasure (⋃ w ∈ Q, cfCylinder w)).toReal ≤ (1 : ENNReal).toReal :=
+        ENNReal.toReal_mono (by norm_num) hle1
+    _ = 1 := by simp
+
+/-- **The `Q`-part of the weighted count is exactly the `Q`-weighted joint count.**  The
+fiberwise identity behind both halves of the sandwich. -/
+lemma sum_filter_mem_eq (δ : S → ℕ → S) (s₀ t : S) (a : List ℕ → ℝ) {m : ℕ} (x : ℝ) (n : ℕ)
+    (Q : Finset (List ℕ)) (hQ : ∀ w ∈ Q, w.length = m) :
+    ∑ i ∈ (Finset.range n).filter (fun i => cfWindow x i m ∈ Q),
+        (if stateAt δ s₀ x i = t then a (cfWindow x i m) else 0)
+      = ∑ w ∈ Q, a w * (jointCount δ s₀ t w x n : ℝ) := by
+  classical
+  set g : ℕ → ℝ := fun i => if stateAt δ s₀ x i = t then a (cfWindow x i m) else 0 with hgdef
+  have hjoint : ∀ w ∈ Q,
+      (((Finset.range n).filter fun i => cfWindow x i m = w).filter
+        fun i => stateAt δ s₀ x i = t) = jointSet δ s₀ t w x n := by
+    intro w hw
+    have hlen := hQ w hw
+    ext i
+    simp only [Finset.mem_filter, Finset.mem_range, jointSet, hlen]
+    constructor
+    · rintro ⟨⟨hi, hw'⟩, hs⟩; exact ⟨hi, hw'.symm, hs⟩
+    · rintro ⟨hi, hw', hs⟩; exact ⟨⟨hi, hw'.symm⟩, hs⟩
+  have key : ∀ w ∈ Q, ∑ i ∈ (Finset.range n).filter (fun i => cfWindow x i m = w), g i
+      = a w * (jointCount δ s₀ t w x n : ℝ) := by
+    intro w hw
+    have h1 : ∀ i ∈ (Finset.range n).filter (fun i => cfWindow x i m = w),
+        g i = if stateAt δ s₀ x i = t then a w else 0 := by
+      intro i hi
+      have hiw : cfWindow x i m = w := (Finset.mem_filter.mp hi).2
+      simp only [hgdef, hiw]
+    rw [Finset.sum_congr rfl h1, ← Finset.sum_filter, hjoint w hw, Finset.sum_const,
+      jointCount_eq_card, nsmul_eq_mul, mul_comm]
+  have hmaps : ∀ i ∈ (Finset.range n).filter (fun i => cfWindow x i m ∈ Q),
+      cfWindow x i m ∈ Q := fun i hi => (Finset.mem_filter.mp hi).2
+  have hfw := Finset.sum_fiberwise_of_maps_to hmaps g
+  have hrestrict : ∀ w ∈ Q,
+      (((Finset.range n).filter fun i => cfWindow x i m ∈ Q).filter
+        fun i => cfWindow x i m = w) = (Finset.range n).filter fun i => cfWindow x i m = w := by
+    intro w hw
+    ext i
+    simp only [Finset.mem_filter, Finset.mem_range]
+    constructor
+    · rintro ⟨⟨hi, -⟩, he⟩; exact ⟨hi, he⟩
+    · rintro ⟨hi, he⟩; exact ⟨⟨hi, he ▸ hw⟩, he⟩
+  rw [← hfw]
+  exact Finset.sum_congr rfl fun w hw => by rw [hrestrict w hw, key w hw]
+
+/-- **The pointwise truncation lower bound.**  Dropping every position whose window escapes
+`Q` can only lower a nonnegative weighted count. -/
+lemma wCount_ge_of_finset (δ : S → ℕ → S) (s₀ t : S) {a : List ℕ → ℝ} {m : ℕ}
+    (ha0 : ∀ w, 0 ≤ a w) (x : ℝ) (n : ℕ)
+    (Q : Finset (List ℕ)) (hQ : ∀ w ∈ Q, w.length = m) :
+    ∑ w ∈ Q, a w * (jointCount δ s₀ t w x n : ℝ) ≤ wCount δ s₀ t a m x n := by
+  classical
+  rw [← sum_filter_mem_eq δ s₀ t a x n Q hQ, wCount]
+  refine Finset.sum_le_sum_of_subset_of_nonneg (Finset.filter_subset _ _) ?_
+  intro i _ _
+  split
+  · exact ha0 _
+  · exact le_rfl
+
+/-- **The lower-bound engine** (Vandehey Lemma 4.3, lower half).  Every finite length-`m`
+subfamily's limit mass is eventually attained, up to `ε`. -/
+theorem eventually_le_wCount (δ : S → ℕ → S) (s₀ : S) {ν : S → ℝ}
+    (hjs : JointStateFreq δ s₀ ν) (t : S) {a : List ℕ → ℝ} {m : ℕ} (hm : 0 < m)
+    (ha0 : ∀ w, 0 ≤ a w) (Q : Finset (List ℕ)) (hQmem : ∀ w ∈ Q, w ∈ allWords m)
+    {x : ℝ} (hx : IsCFNormal x) {ε : ℝ} (hε : 0 < ε) :
+    ∀ᶠ n in atTop,
+      ((∑ w ∈ Q, a w * (ν t * (gaussMeasure (cfCylinder w)).toReal)) - ε) * n
+        ≤ wCount δ s₀ t a m x n := by
+  classical
+  have hQlen : ∀ w ∈ Q, w.length = m := fun w hw => (hQmem w hw).1
+  have hQne : ∀ w ∈ Q, w ≠ [] := by
+    intro w hw hnil
+    have := hQlen w hw
+    rw [hnil] at this
+    simp at this
+    omega
+  have hQpos : ∀ w ∈ Q, ∀ b ∈ w, 1 ≤ b := fun w hw => (hQmem w hw).2
+  set γ : List ℕ → ℝ := fun w => (gaussMeasure (cfCylinder w)).toReal with hγdef
+  set Sq : ℝ := ∑ w ∈ Q, a w * (ν t * γ w) with hSqdef
+  have hjc : ∀ w ∈ Q, Tendsto (fun n => (jointCount δ s₀ t w x n : ℝ) / n) atTop
+      (nhds (ν t * γ w)) := fun w hw => hjs t w (hQne w hw) (hQpos w hw) x hx
+  have hlim : Tendsto (fun n => ∑ w ∈ Q, a w * ((jointCount δ s₀ t w x n : ℝ) / n)) atTop
+      (nhds Sq) := by
+    rw [hSqdef]
+    exact tendsto_finsetSum _ fun w hw => (hjc w hw).const_mul (a w)
+  have hev : ∀ᶠ n in atTop,
+      Sq - ε < ∑ w ∈ Q, a w * ((jointCount δ s₀ t w x n : ℝ) / n) :=
+    hlim.eventually (eventually_gt_nhds (by linarith))
+  filter_upwards [hev, eventually_ge_atTop 1] with n hn hn1
+  have hnpos : (0 : ℝ) < n := by exact_mod_cast hn1
+  have hnne : (n : ℝ) ≠ 0 := ne_of_gt hnpos
+  have h1 : (∑ w ∈ Q, a w * ((jointCount δ s₀ t w x n : ℝ) / n))
+      = (∑ w ∈ Q, a w * (jointCount δ s₀ t w x n : ℝ)) / n := by
+    rw [Finset.sum_div]
+    exact Finset.sum_congr rfl fun w _ => by ring
+  rw [h1, lt_div_iff₀ hnpos] at hn
+  exact le_trans hn.le (wCount_ge_of_finset δ s₀ t ha0 x n Q hQlen)
+
+/-! ## Vandehey Lemma 4.3 at a single window length -/
+
+/-- **The `x`-independent limit**, defined with no reference to any `x`: the supremum of the
+weighted limit masses of the finite length-`m` subfamilies.  For a *finite* family this is the
+plain sum; the content is that a countable family has the same Cesàro behaviour. -/
+noncomputable def wLimit (ν : S → ℝ) (t : S) (a : List ℕ → ℝ) (m : ℕ) : ℝ :=
+  sSup {c : ℝ | ∃ Q : Finset (List ℕ), (∀ w ∈ Q, w ∈ allWords m) ∧
+    c = ∑ w ∈ Q, a w * (ν t * (gaussMeasure (cfCylinder w)).toReal)}
+
+omit [DecidableEq S] in
+lemma wLimit_set_nonempty (ν : S → ℝ) (t : S) (a : List ℕ → ℝ) (m : ℕ) :
+    {c : ℝ | ∃ Q : Finset (List ℕ), (∀ w ∈ Q, w ∈ allWords m) ∧
+      c = ∑ w ∈ Q, a w * (ν t * (gaussMeasure (cfCylinder w)).toReal)}.Nonempty :=
+  ⟨0, ∅, by simp, by simp⟩
+
+omit [DecidableEq S] in
+lemma wLimit_set_bddAbove {ν : S → ℝ} {t : S} {a : List ℕ → ℝ} {C : ℝ} {m : ℕ}
+    (hν : 0 ≤ ν t) (haC : ∀ w, a w ≤ C) (ha0 : ∀ w, 0 ≤ a w) :
+    BddAbove {c : ℝ | ∃ Q : Finset (List ℕ), (∀ w ∈ Q, w ∈ allWords m) ∧
+      c = ∑ w ∈ Q, a w * (ν t * (gaussMeasure (cfCylinder w)).toReal)} := by
+  refine ⟨C * ν t, ?_⟩
+  rintro c ⟨Q, hQ, rfl⟩
+  have hC0 : 0 ≤ C := le_trans (ha0 []) (haC [])
+  calc ∑ w ∈ Q, a w * (ν t * (gaussMeasure (cfCylinder w)).toReal)
+      ≤ ∑ w ∈ Q, C * (ν t * (gaussMeasure (cfCylinder w)).toReal) := by
+        refine Finset.sum_le_sum fun w _ => ?_
+        exact mul_le_mul_of_nonneg_right (haC w) (by positivity)
+    _ = C * ν t * ∑ w ∈ Q, (gaussMeasure (cfCylinder w)).toReal := by
+        rw [Finset.mul_sum]; exact Finset.sum_congr rfl fun w _ => by ring
+    _ ≤ C * ν t * 1 := by
+        refine mul_le_mul_of_nonneg_left
+          (sum_gaussMeasure_le_one_of_length Q fun w hw => (hQ w hw).1) (by positivity)
+    _ = C * ν t := by ring
+
+/-- **Vandehey Lemma 4.3, single length, `x`-independent.**  For a bounded nonnegative weight
+supported on the (countably infinite) length-`m` genuine words, the state-restricted weighted
+count has Cesàro limit `wLimit ν t a m` — a value that mentions no `x`.  This is the whole
+content of the published Lemma 4.3 in the infinite-family case, and it needs no ergodic theory,
+no Ryll-Nardzewski and no Vitali-Hahn-Saks: the finite digit truncation of
+`exists_boundedWords_sum_gt` does the work. -/
+theorem tendsto_wCount_div (δ : S → ℕ → S) (s₀ : S) {ν : S → ℝ}
+    (hjs : JointStateFreq δ s₀ ν) (t : S) (hν : 0 ≤ ν t) {a : List ℕ → ℝ} {C : ℝ} {m : ℕ}
+    (hm : 0 < m) (ha0 : ∀ w, 0 ≤ a w) (haC : ∀ w, a w ≤ C)
+    {x : ℝ} (hx : IsCFNormal x) :
+    Tendsto (fun n => wCount δ s₀ t a m x n / n) atTop (nhds (wLimit ν t a m)) := by
+  classical
+  set T : Set ℝ := {c : ℝ | ∃ Q : Finset (List ℕ), (∀ w ∈ Q, w ∈ allWords m) ∧
+    c = ∑ w ∈ Q, a w * (ν t * (gaussMeasure (cfCylinder w)).toReal)} with hTdef
+  have hne : T.Nonempty := wLimit_set_nonempty ν t a m
+  have hbdd : BddAbove T := wLimit_set_bddAbove (C := C) hν haC ha0
+  set L : ℝ := wLimit ν t a m with hLdef
+  have hLsup : L = sSup T := rfl
+  rw [Metric.tendsto_nhds]
+  intro ε hε
+  -- upper half
+  have hUB : ∀ Q : Finset (List ℕ), (∀ w ∈ Q, w ∈ allWords m) →
+      ∑ w ∈ Q, a w * (ν t * (gaussMeasure (cfCylinder w)).toReal) ≤ L := by
+    intro Q hQ
+    exact le_csSup hbdd ⟨Q, hQ, rfl⟩
+  have hup := eventually_wCount_le δ s₀ hjs t hm ha0 haC hUB hx
+    (show (0 : ℝ) < ε / 4 by positivity)
+  -- lower half
+  obtain ⟨c, hcT, hclt⟩ := exists_lt_of_lt_csSup hne
+    (show L - ε / 4 < sSup T by rw [← hLsup]; linarith)
+  obtain ⟨Q, hQ, rfl⟩ := hcT
+  have hlow := eventually_le_wCount δ s₀ hjs t hm ha0 Q hQ hx
+    (show (0 : ℝ) < ε / 4 by positivity)
+  filter_upwards [hup, hlow, eventually_ge_atTop 1] with n hnu hnl hn1
+  have hnpos : (0 : ℝ) < n := by exact_mod_cast hn1
+  have hA : L - ε / 2 ≤ wCount δ s₀ t a m x n / n := by
+    rw [le_div_iff₀ hnpos]
+    exact le_trans (mul_le_mul_of_nonneg_right (by linarith) hnpos.le) hnl
+  have hB : wCount δ s₀ t a m x n / n ≤ L + ε / 2 := by
+    rw [div_le_iff₀ hnpos]
+    exact le_trans hnu (mul_le_mul_of_nonneg_right (by linarith) hnpos.le)
+  rw [Real.dist_eq, abs_lt]
+  constructor <;> linarith
 
 /-! ## The guard rule for `JointStateFreq` -/
 
@@ -450,4 +643,6 @@ open NormalNumbers.VandeheyOut
 #print axioms eventually_wCount_le
 #print axioms jointStateFreq_unit
 #print axioms not_jointStateFreq_unit_zero
+#print axioms eventually_le_wCount
+#print axioms tendsto_wCount_div
 end
