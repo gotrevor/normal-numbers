@@ -663,3 +663,4 @@ import NormalNumbers.ElliottZetaModerate
 import NormalNumbers.ElliottZetaOmegaPretentious
 import NormalNumbers.ElliottZetaPole
 import NormalNumbers.ElliottZetaTheta
+import NormalNumbers.VandeheySmith
