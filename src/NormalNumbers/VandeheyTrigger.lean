@@ -146,6 +146,134 @@ lemma sum_kOut_eq (v : List ℕ) (x : ℝ) (s₀ : S) (i J : ℕ) :
     omega
 
 
+/-! ## The identity `fireTotal (kOut v) = fireOut v`
+
+Everything above is assembled here: the trigger family `kOut v` reproduces, at every position,
+the number of occurrences of `v` starting in that block.  This is the statement that lets
+`VandeheyOutputFreq.exists_tendsto_trigTotal` be read as a statement about output words.
+
+The proof is a reindexing (`card_filter_range_shift`) plus the observation that the constraint
+"the occurrence completes within `J` further input digits" becomes vacuous once `J` is large,
+UNIFORMLY over the finitely many start positions in one block. -/
+
+/-- Shifting the index of a filtered range. -/
+lemma card_filter_range_shift (c m : ℕ) (Q : ℕ → Prop) [DecidablePred Q] :
+    ((Finset.range m).filter (fun p => Q (c + p))).card
+      = ((Finset.Ico c (c + m)).filter Q).card := by
+  classical
+  rw [← Finset.card_image_of_injective ((Finset.range m).filter (fun p => Q (c + p)))
+    (add_right_injective c)]
+  congr 1
+  ext P
+  simp only [Finset.mem_image, Finset.mem_filter, Finset.mem_range, Finset.mem_Ico]
+  constructor
+  · rintro ⟨p, ⟨hp, hQ⟩, rfl⟩
+    exact ⟨⟨Nat.le_add_right _ _, by omega⟩, hQ⟩
+  · rintro ⟨⟨hc, hm⟩, hQ⟩
+    exact ⟨P - c, ⟨by omega, by rwa [show c + (P - c) = P by omega]⟩, by omega⟩
+
+variable (s₀ : S)
+
+/-- The output of the length-`J` window from position `i` is the corresponding slice of the
+output word. -/
+lemma blocksOf_cfWindow (x : ℝ) (i J : ℕ) :
+    blocksOf δ out (stateAt δ s₀ x i) (cfWindow x i J)
+      = (outWord δ out s₀ x (i + J)).drop (outLen δ out s₀ x i) := by
+  conv_rhs => rw [outWord_add δ out s₀ x i J]
+  rw [outLen, List.drop_left]
+
+/-- **`occIn` at the length-`J` window, in output coordinates.** -/
+lemma occIn_cfWindow_eq (x : ℝ) (hcof : ∀ j, ∃ n, j < outLen δ out s₀ x n) (v : List ℕ)
+    (i J : ℕ) (hJ : 1 ≤ J) :
+    occIn δ out v (stateAt δ s₀ x i) (cfWindow x i J)
+      = ((Finset.Ico (outLen δ out s₀ x i) (outLen δ out s₀ x (i + 1))).filter
+          (fun P => P + v.length ≤ outLen δ out s₀ x (i + J) ∧
+            v = (List.range' P v.length).map (outDigit x hcof))).card := by
+  classical
+  have htake : (cfWindow x i J).take 1 = cfWindow x i 1 := by
+    simp only [cfWindow, ← List.map_take, List.take_range, min_eq_left hJ]
+  have hlen1 : (blocksOf δ out (stateAt δ s₀ x i) (cfWindow x i 1)).length
+      = outLen δ out s₀ x (i + 1) - outLen δ out s₀ x i := by
+    simp only [outLen]
+    rw [blocksOf_cfWindow, List.length_drop, outLen]
+  have hmono : outLen δ out s₀ x i ≤ outLen δ out s₀ x (i + 1) :=
+    outLen_mono δ out s₀ x (by omega)
+  have hmonoJ : outLen δ out s₀ x i ≤ outLen δ out s₀ x (i + J) :=
+    outLen_mono δ out s₀ x (by omega)
+  have hB : blocksOf δ out (stateAt δ s₀ x i) (cfWindow x i J)
+      = (outWord δ out s₀ x (i + J)).drop (outLen δ out s₀ x i) :=
+    blocksOf_cfWindow δ out s₀ x i J
+  have hlenB : (blocksOf δ out (stateAt δ s₀ x i) (cfWindow x i J)).length
+      = outLen δ out s₀ x (i + J) - outLen δ out s₀ x i := by
+    simp only [outLen]
+    rw [hB, List.length_drop, outLen]
+  have hword : outWord δ out s₀ x (i + J)
+      = (List.range (outLen δ out s₀ x (i + J))).map (outDigit x hcof) :=
+    outWord_eq_map_outDigit x hcof (i + J)
+  rw [occIn, htake, hlen1]
+  have hstep : ((Finset.range (outLen δ out s₀ x (i + 1) - outLen δ out s₀ x i)).filter
+      (fun p => p + v.length ≤ (blocksOf δ out (stateAt δ s₀ x i) (cfWindow x i J)).length ∧
+        v = ((blocksOf δ out (stateAt δ s₀ x i) (cfWindow x i J)).drop p).take v.length)).card
+      = ((Finset.range (outLen δ out s₀ x (i + 1) - outLen δ out s₀ x i)).filter
+          (fun p => (outLen δ out s₀ x i + p) + v.length ≤ outLen δ out s₀ x (i + J) ∧
+            v = (List.range' (outLen δ out s₀ x i + p) v.length).map (outDigit x hcof))).card := by
+    congr 1
+    refine Finset.filter_congr fun p _ => ?_
+    have hdrop : (blocksOf δ out (stateAt δ s₀ x i) (cfWindow x i J)).drop p
+        = (outWord δ out s₀ x (i + J)).drop (outLen δ out s₀ x i + p) := by
+      rw [hB, List.drop_drop]
+    rw [hdrop, hlenB, hword]
+    constructor
+    · rintro ⟨hfit, hval⟩
+      rw [take_drop_map_range, min_eq_left (by omega)] at hval
+      exact ⟨by omega, hval⟩
+    · rintro ⟨hfit, hval⟩
+      refine ⟨by omega, ?_⟩
+      rw [take_drop_map_range, min_eq_left (by omega)]
+      exact hval
+  rw [hstep, card_filter_range_shift (outLen δ out s₀ x i)
+    (outLen δ out s₀ x (i + 1) - outLen δ out s₀ x i)
+    (fun P => P + v.length ≤ outLen δ out s₀ x (i + J) ∧
+      v = (List.range' P v.length).map (outDigit x hcof)),
+    show outLen δ out s₀ x i + (outLen δ out s₀ x (i + 1) - outLen δ out s₀ x i)
+      = outLen δ out s₀ x (i + 1) from by omega]
+
+/-- **The trigger family reproduces the block occurrence count.**  `fireTotal` of `kOut v` at
+position `i` is exactly `fireOut v i`: the constraint that the occurrence complete within the
+window is vacuous once the window is long enough, and there are only finitely many start
+positions in one block. -/
+theorem fireTotal_kOut_eq_fireOut (x : ℝ) (hcof : ∀ j, ∃ n, j < outLen δ out s₀ x n)
+    (v : List ℕ) (i : ℕ) :
+    fireTotal (kOut δ out v) δ s₀ x i = fireOut x hcof v i := by
+  classical
+  have hfireAt : ∀ J, fireAt (kOut δ out v) δ s₀ x i J
+      = occIn δ out v (stateAt δ s₀ x i) (cfWindow x i J) := fun J => by
+    rw [fireAt, sum_kOut_eq]
+  have hle : ∀ J, fireAt (kOut δ out v) δ s₀ x i J ≤ fireOut x hcof v i := by
+    intro J
+    rcases Nat.eq_zero_or_pos J with rfl | hJ
+    · simp [hfireAt, cfWindow]
+    rw [hfireAt, occIn_cfWindow_eq δ out s₀ x hcof v i J hJ, fireOut]
+    refine Finset.card_le_card fun P hP => ?_
+    simp only [Finset.mem_filter] at hP ⊢
+    exact ⟨hP.1, hP.2.2⟩
+  have hattain : ∃ J, fireOut x hcof v i ≤ fireAt (kOut δ out v) δ s₀ x i J := by
+    obtain ⟨n, hn⟩ := hcof (outLen δ out s₀ x (i + 1) + v.length)
+    refine ⟨max 1 n, ?_⟩
+    have hJ : 1 ≤ max 1 n := le_max_left _ _
+    have hgrow : outLen δ out s₀ x (i + 1) + v.length ≤ outLen δ out s₀ x (i + max 1 n) := by
+      have h1 : outLen δ out s₀ x n ≤ outLen δ out s₀ x (i + max 1 n) :=
+        outLen_mono δ out s₀ x (by omega)
+      omega
+    rw [hfireAt, occIn_cfWindow_eq δ out s₀ x hcof v i _ hJ, fireOut]
+    refine Finset.card_le_card fun P hP => ?_
+    simp only [Finset.mem_filter, Finset.mem_Ico] at hP ⊢
+    exact ⟨hP.1, ⟨by omega, hP.2⟩⟩
+  obtain ⟨J₀, hJ₀⟩ := hattain
+  have hbdd : BddAbove (Set.range fun J => fireAt (kOut δ out v) δ s₀ x i J) :=
+    ⟨fireOut x hcof v i, by rintro c ⟨J, rfl⟩; exact hle J⟩
+  exact le_antisymm (ciSup_le hle) (le_trans hJ₀ (le_ciSup hbdd J₀))
+
 end NormalNumbers.VandeheyOut
 
 section
@@ -155,4 +283,6 @@ open NormalNumbers.VandeheyOut
 #print axioms outWord_add
 #print axioms occIn_mono_concat
 #print axioms sum_kOut_eq
+#print axioms occIn_cfWindow_eq
+#print axioms fireTotal_kOut_eq_fireOut
 end
