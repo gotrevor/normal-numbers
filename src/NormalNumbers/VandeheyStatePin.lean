@@ -1377,6 +1377,248 @@ theorem stateHorizonIntegral_pin [Nonempty S] (δ : S → ℕ → S) {A : Set �
         gcongr
     _ = (4 * (1 - β)⁻¹ + 1) * θ ^ n * γA := by ring
 
+
+/-! ## The pin WITHOUT bijectivity
+
+`stateHorizonIntegral_pin` identifies the limit as `(card S)⁻¹·γ(A)`, and for that it needs
+every digit to act bijectively on `S` (that is what makes the invariant law uniform).  The
+Raney transducer of `VandeheyRaney.lean` — the automaton Theorem 1.1 actually needs — is
+**not** bijective: for `D = 2` the digit `1` already collapses two balanced states onto
+`[[1,0],[0,2]]`.  So the engine has to run without `hbij`.
+
+It can, at the cost of not naming the constant.  The operator `stateStepOp` is an honest
+average (`tsum_stepWeight`), so it maps a family into the closed interval spanned by that
+family's values: `famInf` is monotone along the iteration and `famSup` is antitone.  With the
+Doeblin oscillation decay squeezing the two together geometrically, the nested intervals
+`[famInf Fₙ, famSup Fₙ]` shrink to a single point `ℓ`, and `ℓ ≤ γ(A)` because each `Fₙ` is
+dominated by the unrefined `Gₙ`, which `horizonIntegral_pin_geom` pins at `γ(A)`.  Setting
+`c = ℓ/γ(A) ∈ [0,1]` gives the same conclusion with an unnamed `c` — which is all
+`classEquidistribution_of_pin` ever asked for.
+-/
+
+/-- The step operator never leaves the interval spanned by the family: lower end. -/
+lemma famInf_le_stateStepOp [Nonempty S] {B : ℝ} {Φ : S → ℝ → ℝ} (hΦ : InCone B Φ) (δ : S → ℕ → S)
+    (d : S) {τ : ℝ} (hτ : τ ∈ Set.Icc (0 : ℝ) 1) : famInf Φ ≤ stateStepOp δ Φ d τ := by
+  have hsum := summable_stateStep hΦ δ d hτ
+  calc famInf Φ = ∑' k : ℕ, stepWeight τ k * famInf Φ := by
+        rw [tsum_mul_right, tsum_stepWeight hτ.1, one_mul]
+    _ ≤ stateStepOp δ Φ d τ :=
+        ((summable_stepWeight hτ.1).mul_right _).tsum_le_tsum
+          (fun k => mul_le_mul_of_nonneg_left
+            (famInf_le hΦ _ (stepPt_mem_Icc hτ.1 k)) (stepWeight_nonneg hτ.1 k)) hsum
+
+/-- The step operator never leaves the interval spanned by the family: upper end. -/
+lemma stateStepOp_le_famSup [Nonempty S] {B : ℝ} {Φ : S → ℝ → ℝ} (hΦ : InCone B Φ) (δ : S → ℕ → S)
+    (d : S) {τ : ℝ} (hτ : τ ∈ Set.Icc (0 : ℝ) 1) : stateStepOp δ Φ d τ ≤ famSup Φ := by
+  have hsum := summable_stateStep hΦ δ d hτ
+  calc stateStepOp δ Φ d τ ≤ ∑' k : ℕ, stepWeight τ k * famSup Φ :=
+        hsum.tsum_le_tsum (fun k => mul_le_mul_of_nonneg_left
+          (le_famSup hΦ _ (stepPt_mem_Icc hτ.1 k)) (stepWeight_nonneg hτ.1 k))
+          ((summable_stepWeight hτ.1).mul_right _)
+    _ = famSup Φ := by rw [tsum_mul_right, tsum_stepWeight hτ.1, one_mul]
+
+lemma famInf_le_famInf_stateStepIter [Nonempty S] {B : ℝ} {Φ : S → ℝ → ℝ} (hΦ : InCone B Φ)
+    (δ : S → ℕ → S) : Monotone (fun n => famInf (stateStepIter δ n Φ)) := by
+  refine monotone_nat_of_le_succ fun n => ?_
+  refine le_csInf (famRange_nonempty _) ?_
+  rintro v ⟨d, x, hx, rfl⟩
+  exact famInf_le_stateStepOp (stateStepIter_inCone hΦ δ n) δ d hx
+
+lemma famSup_stateStepIter_antitone [Nonempty S] {B : ℝ} {Φ : S → ℝ → ℝ} (hΦ : InCone B Φ)
+    (δ : S → ℕ → S) : Antitone (fun n => famSup (stateStepIter δ n Φ)) := by
+  refine antitone_nat_of_succ_le fun n => ?_
+  refine csSup_le (famRange_nonempty _) ?_
+  rintro v ⟨d, x, hx, rfl⟩
+  exact stateStepOp_le_famSup (stateStepIter_inCone hΦ δ n) δ d hx
+
+/-- **The oscillation decays geometrically**, with no bijectivity hypothesis: this is the
+Doeblin/Lyapunov half of `stateHorizonIntegral_pin`, isolated. -/
+theorem exists_osc_geom [Nonempty S] (δ : S → ℕ → S) {A : Set ℝ}
+    (hA : MeasurableSet A) (hA1 : A ⊆ Set.Ioo (0 : ℝ) 1)
+    (M : ℕ) (hM : 2 ≤ M)
+    (hreach : ∀ d s : S, ∃ w : List ℕ, w.length = M ∧ (∀ a ∈ w, 1 ≤ a) ∧
+      runState δ d w = s)
+    (s : S) :
+    ∃ C θ : ℝ, 0 ≤ C ∧ 0 ≤ θ ∧ θ < 1 ∧ ∀ n : ℕ,
+      famSup (stateStepIter δ n fun d' τ' => stateHorizonIntegral δ A 0 d' s τ')
+        - famInf (stateStepIter δ n fun d' τ' => stateHorizonIntegral δ A 0 d' s τ')
+        ≤ C * θ ^ n * (gaussMeasure A).toReal := by
+  classical
+  set γA : ℝ := (gaussMeasure A).toReal with hγA
+  have hγ0 : 0 ≤ γA := ENNReal.toReal_nonneg
+  have hlog2 : Real.log 2 ≤ 0.6932 := le_of_lt (lt_of_lt_of_le Real.log_two_lt_d9 (by norm_num))
+  have hlog2p : 0 ≤ Real.log 2 := Real.log_nonneg (by norm_num)
+  have hM0 : 0 < M := by omega
+  choose w hwlen hwpos hwrun using hreach
+  obtain ⟨p, -, hpmin⟩ := Finset.exists_min_image (Finset.univ : Finset (S × S))
+    (fun q => wordWeight (w q.1 q.2))
+    ⟨(Classical.arbitrary S, Classical.arbitrary S), Finset.mem_univ _⟩
+  set β : ℝ := min (wordWeight (w p.1 p.2)) (1 / 8) with hβdef
+  have hβpos : 0 < β := lt_min wordWeight_pos (by norm_num)
+  have hβ8 : β ≤ 1 / 8 := min_le_right _ _
+  have hβ1 : β < 1 := by linarith
+  have hreach' : ∀ d t : S, ∃ v : List ℕ, v.length = M ∧ (∀ a ∈ v, 1 ≤ a) ∧
+      runState δ d v = t ∧ β ≤ wordWeight v := fun d t =>
+    ⟨w d t, hwlen d t, hwpos d t, hwrun d t,
+      le_trans (min_le_left _ _) (hpmin (d, t) (Finset.mem_univ _))⟩
+  set θ₁ : ℝ := (1 - β) ^ ((M : ℝ)⁻¹) with hθ₁
+  have hθ₁pos : 0 < θ₁ := Real.rpow_pos_of_pos (by linarith) _
+  have hθ₁lt : θ₁ < 1 := Real.rpow_lt_one (by linarith) (by linarith) (by positivity)
+  set θ : ℝ := max θ₁ (79 / 100) with hθ
+  have hθpos : 0 < θ := lt_of_lt_of_le hθ₁pos (le_max_left _ _)
+  have hθlt : θ < 1 := max_lt hθ₁lt (by norm_num)
+  refine ⟨4 * (1 - β)⁻¹, θ, by positivity, hθpos.le, hθlt, ?_⟩
+  intro n
+  set Φ : S → ℝ → ℝ := fun d' τ' => stateHorizonIntegral δ A 0 d' s τ' with hΦdef
+  have hΦcone : InCone 2 Φ := fun e x hx =>
+    ⟨stateHorizonIntegral_nonneg δ hA 0 e s hx.1, stateHorizonIntegral_le_two δ hA 0 e s hx⟩
+  set Λ₀ : ℝ := 2 * Real.log 2 * γA with hΛ₀d
+  set Ω₀ : ℝ := 4 * Real.log 2 * γA with hΩ₀d
+  have hΛ₀ : 0 ≤ Λ₀ := by rw [hΛ₀d]; positivity
+  have hΩ₀ : 0 ≤ Ω₀ := by rw [hΩ₀d]; positivity
+  have hlip0 : ∀ e : S, ∀ x ∈ Set.Icc (0 : ℝ) 1, ∀ y ∈ Set.Icc (0 : ℝ) 1,
+      |Φ e x - Φ e y| ≤ Λ₀ * |Real.log (1 + x) - Real.log (1 + y)| := by
+    intro e x hx y hy
+    rw [hΦdef]
+    simp only [stateHorizonIntegral_zero]
+    by_cases h : e = s
+    · rw [if_pos h, if_pos h]
+      exact horizonIntegral_zero_logLip hA hA1 hx hy
+    · rw [if_neg h, if_neg h, sub_self, abs_zero]
+      positivity
+  have hosc0 : famSup Φ - famInf Φ ≤ Ω₀ := by
+    have hsup : famSup Φ ≤ Ω₀ := by
+      refine csSup_le (famRange_nonempty _) ?_
+      rintro v ⟨e, x, hx, rfl⟩
+      rw [hΦdef]
+      simp only [stateHorizonIntegral_zero]
+      by_cases h : e = s
+      · rw [if_pos h]; exact horizonIntegral_zero_le hA hA1 hx
+      · rw [if_neg h]; exact hΩ₀
+    linarith [famInf_nonneg hΦcone]
+  have hgeom := stateStepIter_osc_geom hΦcone δ hβpos hβ8 M hM hreach' hΛ₀ hΩ₀ hlip0 hosc0
+    (n / M)
+  set Ψ : S → ℝ → ℝ := stateStepIter δ (M * (n / M)) Φ with hΨdef
+  have hΨcone : InCone 2 Ψ := stateStepIter_inCone hΦcone δ _
+  have hr : (n - M * (n / M)) + M * (n / M) = n := by
+    have h1 : M * (n / M) ≤ n := Nat.mul_div_le n M
+    omega
+  have hiter : stateStepIter δ n Φ = stateStepIter δ (n - M * (n / M)) Ψ := by
+    rw [hΨdef, ← stateStepIter_add δ (M * (n / M)) (n - M * (n / M)) Φ, hr]
+  have hoscn : famSup (stateStepIter δ n Φ) - famInf (stateStepIter δ n Φ)
+      ≤ (1 - β) ^ (n / M) * (Ω₀ + 2 * β * Λ₀) := by
+    rw [hiter]
+    exact stateStepIter_osc_le hΨcone δ hgeom _
+  have hV : Ω₀ + 2 * β * Λ₀ ≤ 4 * γA := by
+    rw [hΩ₀d, hΛ₀d]
+    nlinarith [hγ0, hβpos.le, hβ8, hlog2, hlog2p, mul_nonneg hβpos.le hγ0,
+      mul_nonneg (mul_nonneg hβpos.le hlog2p) hγ0]
+  have hblock : (1 - β) ^ (n / M) ≤ (1 - β)⁻¹ * θ ^ n := by
+    refine (geom_block_bound hβpos hβ1 hM0 n).trans ?_
+    refine mul_le_mul_of_nonneg_left ?_ (by positivity)
+    exact pow_le_pow_left₀ hθ₁pos.le (le_max_left _ _) n
+  refine hoscn.trans ?_
+  calc (1 - β) ^ (n / M) * (Ω₀ + 2 * β * Λ₀)
+      ≤ ((1 - β)⁻¹ * θ ^ n) * (4 * γA) := by
+        refine mul_le_mul hblock hV (by positivity) (by positivity)
+    _ = 4 * (1 - β)⁻¹ * θ ^ n * γA := by ring
+
+/-- **The transfer-operator pin, without bijectivity.**  For a fixed target state `s`, the
+refined horizon integrals `Fₙ(d, s)(τ)` converge geometrically to a single value `c·γ(A)`,
+uniformly in the initial state `d` and the tail parameter `τ`.  The constant `c ∈ [0,1]` is
+not computed — it is the mass the (possibly non-uniform) invariant law gives `s` — and
+`classEquidistribution_of_pin` never needed it to be.
+
+This is what lets the *Raney* transducer of `VandeheyRaney.lean`, whose digit steps are not
+injective, be fed to the same pipeline as the class automaton. -/
+theorem stateHorizonIntegral_pin_of_reach [Nonempty S] (δ : S → ℕ → S) {A : Set ℝ}
+    (hA : MeasurableSet A) (hA1 : A ⊆ Set.Ioo (0 : ℝ) 1)
+    (M : ℕ) (hM : 2 ≤ M)
+    (hreach : ∀ d s : S, ∃ w : List ℕ, w.length = M ∧ (∀ a ∈ w, 1 ≤ a) ∧
+      runState δ d w = s)
+    (s : S) :
+    ∃ c C θ : ℝ, 0 ≤ c ∧ c ≤ 1 ∧ 0 ≤ C ∧ 0 ≤ θ ∧ θ < 1 ∧
+      ∀ (n : ℕ) (d : S) (τ : ℝ), τ ∈ Set.Icc (0 : ℝ) 1 →
+        |stateHorizonIntegral δ A n d s τ - c * (gaussMeasure A).toReal|
+          ≤ C * θ ^ n * (gaussMeasure A).toReal := by
+  classical
+  set γA : ℝ := (gaussMeasure A).toReal with hγA
+  have hγ0 : 0 ≤ γA := ENNReal.toReal_nonneg
+  obtain ⟨C, θ, hC, hθ0, hθ1, hosc⟩ := exists_osc_geom δ hA hA1 M hM hreach s
+  set Φ : S → ℝ → ℝ := fun d' τ' => stateHorizonIntegral δ A 0 d' s τ' with hΦdef
+  have hΦcone : InCone 2 Φ := fun e x hx =>
+    ⟨stateHorizonIntegral_nonneg δ hA 0 e s hx.1, stateHorizonIntegral_le_two δ hA 0 e s hx⟩
+  set a : ℕ → ℝ := fun n => famInf (stateStepIter δ n Φ) with ha
+  set b : ℕ → ℝ := fun n => famSup (stateStepIter δ n Φ) with hb
+  have hamono : Monotone a := famInf_le_famInf_stateStepIter hΦcone δ
+  have hbanti : Antitone b := famSup_stateStepIter_antitone hΦcone δ
+  have hab : ∀ m n : ℕ, a m ≤ b n := by
+    intro m n
+    rcases le_total m n with h | h
+    · exact le_trans (hamono h) (famInf_le_famSup (stateStepIter_inCone hΦcone δ n))
+    · exact le_trans (famInf_le_famSup (stateStepIter_inCone hΦcone δ m)) (hbanti h)
+  have hbdd : BddAbove (Set.range a) := ⟨b 0, by rintro v ⟨m, rfl⟩; exact hab m 0⟩
+  set L : ℝ := sSup (Set.range a) with hL
+  have haL : ∀ n, a n ≤ L := fun n => le_csSup hbdd ⟨n, rfl⟩
+  have hLb : ∀ n, L ≤ b n := fun n =>
+    csSup_le ⟨a 0, ⟨0, rfl⟩⟩ (by rintro v ⟨m, rfl⟩; exact hab m n)
+  have hL0 : 0 ≤ L := le_trans (famInf_nonneg hΦcone) (haL 0)
+  -- `L ≤ γ(A)`: every refined piece is dominated by the unrefined horizon integral
+  have hbn : ∀ n : ℕ, b n ≤ (1 + (79 / 100 : ℝ) ^ n) * γA := by
+    intro n
+    refine csSup_le (famRange_nonempty _) ?_
+    rintro v ⟨e, x, hx, rfl⟩
+    have heq : stateStepIter δ n Φ e x = stateHorizonIntegral δ A n e s x :=
+      (stateHorizonIntegral_iter δ hA s n e hx).symm
+    have hdom : stateHorizonIntegral δ A n e s x ≤ horizonIntegral A n x :=
+      stateHorizonIntegral_le δ hA n e s hx.1
+    have hgeo : |horizonIntegral A n x - γA| ≤ (79 / 100 : ℝ) ^ n * γA :=
+      horizonIntegral_pin_geom hA hA1 n hx
+    have := (abs_le.mp hgeo).2
+    rw [heq]
+    nlinarith
+  have hLγ : L ≤ γA := by
+    have hlim : Filter.Tendsto (fun n : ℕ => (1 + (79 / 100 : ℝ) ^ n) * γA) Filter.atTop
+        (nhds ((1 + 0) * γA)) :=
+      ((tendsto_pow_atTop_nhds_zero_of_lt_one (by norm_num) (by norm_num)).const_add 1).mul_const γA
+    have := ge_of_tendsto hlim (Filter.Eventually.of_forall
+      (fun n => le_trans (hLb n) (hbn n)))
+    simpa using this
+  -- the constant
+  set c : ℝ := if γA = 0 then 0 else L / γA with hc
+  have hcγ : c * γA = L := by
+    rcases eq_or_ne γA 0 with h | h
+    · rw [hc, if_pos h, h, mul_zero]
+      have : L ≤ 0 := by rw [← h]; exact hLγ
+      linarith
+    · rw [hc, if_neg h, div_mul_cancel₀ _ h]
+  have hc0 : 0 ≤ c := by
+    rcases eq_or_ne γA 0 with h | h
+    · rw [hc, if_pos h]
+    · rw [hc, if_neg h]
+      exact div_nonneg hL0 hγ0
+  have hc1 : c ≤ 1 := by
+    rcases eq_or_ne γA 0 with h | h
+    · rw [hc, if_pos h]; norm_num
+    · rw [hc, if_neg h, div_le_one (lt_of_le_of_ne hγ0 (Ne.symm h))]
+      exact hLγ
+  refine ⟨c, C, θ, hc0, hc1, hC, hθ0, hθ1, ?_⟩
+  intro n d τ hτ
+  have heq : stateHorizonIntegral δ A n d s τ = stateStepIter δ n Φ d τ :=
+    stateHorizonIntegral_iter δ hA s n d hτ
+  have hlo : a n ≤ stateStepIter δ n Φ d τ :=
+    famInf_le (stateStepIter_inCone hΦcone δ n) d hτ
+  have hhi : stateStepIter δ n Φ d τ ≤ b n :=
+    le_famSup (stateStepIter_inCone hΦcone δ n) d hτ
+  have hwidth : b n - a n ≤ C * θ ^ n * γA := hosc n
+  rw [heq, hcγ, abs_le]
+  constructor
+  · linarith [haL n, hLb n]
+  · linarith [haL n, hLb n]
+
+#print axioms stateHorizonIntegral_pin_of_reach
+#print axioms exists_osc_geom
+
 end VandeheyState
 
 end NormalNumbers
