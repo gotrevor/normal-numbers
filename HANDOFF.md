@@ -1,115 +1,122 @@
-# Handoff: the trigger bound and the run↔CF-digit translation are CLOSED; one analytic leaf left
+# Handoff: the crux input is PROVED — and the capstone's hypothesis shape is refuted
 
-**Date**: 2026-09-28 (lap 3) · **Branch**: `wip/g5-prime-subset` · **HEAD**: `ee5365d` ·
-`lake build` 🟢 10325 jobs · working tree clean · nothing pushed.
+**Date**: 2026-09-28 (lap 4, review) · **Branch**: `wip/g5-prime-subset` · **HEAD**: `6ab5066` ·
+`lake build` 🟢 10326 jobs · working tree clean · nothing pushed.
 
 Scope: `sorry-free: src/NormalNumbers/LiteratureVandehey.lean`, i.e. prove
-`vandeheyUniformFreq_holds`.  Read `DIRECTION.md` CURRENT DIRECTIVE first — it outranks this
-file.  Its mandated move (the §5–§6 output engine) was done in lap 2; this lap discharged the
-two hypotheses that lap 2 named as NEXT 1 and NEXT 2.
+`vandeheyUniformFreq_holds`.  **Read `DIRECTION.md` CURRENT DIRECTIVE first — it outranks this
+file**, and it was rewritten this lap.  `PENDING_WORK.md` carries both findings in full.
 
 ## 🎯 Where the proof stands
 
     vandehey_matrix_action_holds                      ← Vandehey 2017 Thm 1.1
       ← vandeheyUniformFreq_of_scaleUniformFreq       ✅ VandeheyLeafReduction
       ← ScaleUniformFreq  (x ↦ p·x, prime p)
-      ← mobiusUniformFreq_of_transducer               ✅ VandeheyAssembly (the capstone)
+      ← mobiusUniformFreq_of_transducer               ⚠ VandeheyAssembly — hypothesis shape WRONG
           for the concrete L/R transducer:
-            hkK, hK ✅ **PROVED this lap** — `VandeheyLRTrigger.lr_trigger_bounds`
-            hout    ✅ at L/R level (lap 2) + ✅ the run↔CF-digit translation (this lap)
-            hjs     ⬜ JointStateFreq — VandeheyCocycle + the common-target reach
-            hlen    ⬜ **the one analytic leaf**: run count grows at least linearly
-            hgen    ⬜ triggers on genuine words (now near-free: `patWord_alternation`)
-            htail   ⬜ Gauss-null trigger tails
+            hkK, hK ✅ (lap 3)   hout ✅ (laps 2–3, incl. the run↔CF-digit bijection)
+            hjs     🟡 **the crux input is now PROVED for the phase-corrected automaton**
+                       (`classEquidistribution_rplusDelta`); what remains is the parity split
+                       back to `lrDelta`, and the de-factorization below
+            hlen    🟡 no longer an analytic leaf — a corollary of `hjs` (see below)
+            hgen, htail ⬜
 
-## ✅ This lap (7 green commits, all `#print axioms`-clean)
+## ✅ This lap (2 green commits, all `#print axioms`-clean)
 
-`3d36857` **Lemma 2.2, run form** (`VandeheyRunBound.lean`).  `numAlt`; `colApp` (a Mat2 on a
-column: `L : (p,q) ↦ (p,p+q)`, `R : (p,q) ↦ (p+q,q)`); `numAlt_le_colApp` — each letter ADDS one
-coordinate to the other, so the coordinate SUM bounds the alternation count, and a vanishing
-coordinate persists under only one letter (so the rest of the word is one run, no alternation).
-Fed by `lrStep_col`'s `j`-free identity: `numAlt (lrOut M j) ≤ M.b + M.d ≤ 2D`, **no dependence
-on the ingested digit and no case split on vanishing denominators** — Vandehey's Cases 1–3 vanish.
+`3147723` **`VandeheyRaneyReach.lean` — uniqueness, the involution, the arithmetic core.**
+* `Mat2.balanced_decomp_unique` — the Raney (L/R word, balanced matrix) factorization of a
+  nonnegative matrix of nonzero determinant is **unique**.  This **pins the
+  `Classical.choose`-defined `lrDelta`/`lrOut` for the first time** (`VandeheyLR.lrStep_pin`):
+  exhibit any factorization and you have identified the transducer step.  Everything else in
+  the file rests on it.
+* `det_lrDelta` : `det (lrDelta M j) = − det M`.  **The period-2 obstruction** (below).
+* `Mat2.swapRows` (`ι M = J·M`): an involution of the state set with `lrDelta ∘ ι = ι ∘ lrDelta`
+  (`lrDelta_swapState`) and `lrOut (ι M) j = (lrOut M j).map not` (`lrOut_swapState`).
+* The arithmetic core: `lrDelta M j = [[0,D],[1,0]] ↔ D ∣ a + b·j ∧ D ∣ c + d·j`
+  (`lrDelta_eq_zMinus` / `dvd_of_lrDelta_eq_zMinus`); `exists_digit_zMinus` solves the pair over
+  `ZMod D` (`D ∣ det M` makes the two congruences equivalent); `eq_zPlus_of_dvd` classifies the
+  one exceptional state as `diag(1,D)`; `lrDelta_zPlus`, `lrDelta_zDiag` are its two steps.
 
-`170aa47` **Occurrences counted by alternations** (`VandeheyAltCount.lean`).  `altCount` on a
-stream; `card_occ_le_altCount` (an alternation at `i₀` in `v` forces one at `P+i₀`, and `P ↦ P+i₀`
-is injective); `card_occ_le_altCount_add` (`+|v|` is the price of running past the block end);
-`trigger_bounds_of_occIn_le` — **`hK` and `hkK` are ONE statement** (`kOut` is an increment of
-`occIn`, and the `hK` sum telescopes along CF prefixes).
+`6ab5066` **The reach, and the crux input.**
+* `RPlus D` (a `Fintype`), `rplusDelta hD P a := ι (lrDelta hD P a)` — the phase-corrected
+  automaton, with `stateAt lrDelta … i = ι^i (stateAt rplusDelta … i)`.
+* **`rplus_common_reach`** — every `P ∈ RPlus D` reaches `diag(1,D)` in **exactly 2** genuine
+  digits, for every prime `D`.
+* **`classEquidistribution_rplusDelta`** — `VandeheyCocycle.ClassEquidistribution (rplusDelta hD) t q`,
+  for every prime `D` and every genuine `q`.  **This is the crux input of Theorem 1.1**, for the
+  machine that actually computes `x ↦ D·x`.  `tendsto_jointCount_rplusDelta` turns it into the
+  `x`-independent joint (window, state) frequency.
 
-`4737aea` `occIn_le_numAlt_add` — abstract: occurrences starting in the first emitted block are
-`≤ numAlt(block) + 2 + |v|`, with NO reference to the block's LENGTH (which is unbounded).
+## ⚠ The two findings that reshaped the route
 
-`4bd6a43` **`lr_trigger_bounds`** (`VandeheyLRTrigger.lean`) — `hK`/`hkK` for the real machine,
-`K = 2D + 2 + |v|`, for every `v` that alternates somewhere.
+**F1 — the Raney automaton is PERIODIC.**  `det (M · B j) = − det M`, so the determinant's sign
+is a deterministic period-2 phase; states of opposite phase are never simultaneously occupied,
+so NO target is reachable from every state at ONE fixed length.  That is exactly the hypothesis
+of `classEquidistribution_of_common_reach`, so the published supply route could never have been
+applied to `lrDelta`.  Equivalently `stateHorizonIntegral_pin_of_reach` is FALSE for a periodic
+chain.  Probe: `probes/raney_reach.py`.  **Repaired** by the phase quotient above.
 
-`f0042d1` **The run dictionary** (`VandeheyLRRuns.lean`).  `lrTail` subtracts one above `1` and
-subtracts one in the RECIPROCAL below `1`, so the L/R expansion is the slow Stern–Brocot CF.
-`lrTail_lrPos`: after `n` runs the point is `Tⁿw` (`n` even) or `(Tⁿw)⁻¹` (`n` odd) — **the runs
-ARE the CF digits**.  `lrExpand_run`, and then `6e30401`: `runIdx`,
-`lrExpand_eq_runIdx_parity` (letter = parity of its run), `runIdx_eq`, `lrExpand_ne_succ_iff`
-(**alternation ⟺ run end**).
+**F2 — the capstone's factorized hypothesis is FALSE.**  `mobiusUniformFreq_of_transducer`
+assumes `JointStateFreq`: `jointCount/n → ν t · γ(I_q)` with ONE `ν`.
+`probes/raney_joint_product.py` (2.1M Gauss-distributed CF digits) shows that at `D = 3` four of
+the fourteen Raney states have `ρ(q,t)/γ(I_q)` moving by up to **20 %** across
+`q ∈ {[1],[2],[3],[4],[1,1],[1,2],[2,1]}` — ≈15σ, while the other ten are flat to 0.3 %.  At
+`D = 2` it DOES factorize, and the reason is visible: there the stationary law is uniform, and a
+uniform law is invariant under every individual digit's action.  The Raney digit steps are not
+injective, so the state stays correlated with the digits abutting the window.
 
-`3df352f` + `7463b86` + `61fef68` **The translation, both directions and as a count**
-(`VandeheyLRPattern.lean`).  `patBody b (a::v) = replicate a b ++ patBody (!b) v` is the identity
-that makes everything a one-run induction; `patWord b v = (!b) :: patBody b v` is the single
-forced pattern.  `patWord_alternation` (alternates at index 0 — the hypothesis
-`lr_trigger_bounds` needs), `map_range'_eq_patWord` (forward), `cfDigit_of_map_range'_eq_patBody`
-(converse: a run can't end early — parity flips — nor late — the border differs), and
-**`card_cf_eq_card_patWord`**: a BIJECTION `n ↦ lrPos w n - 1` between CF occurrences in `[1,N)`
-of parity `b` and pattern occurrences.
+**The fix is cheap, not fatal.**  Carry Vandehey's un-factorized `ρ : List ℕ → S → ℝ`.  The
+escape mass that the factorization was adopted for is recovered for free from
 
-`ee5365d` **⚠ The structural finding, and the upper half of Lemma 6.1** (`VandeheyRunCount.lean`).
-The Gauss measure has INFINITE digit mean, so the emitted LETTER count per input digit diverges
-a.e. and the density of run boundaries is `0`.  **Never rescale the letter index against the
-input index.**  What is linear is the RUN count — which is why Lemma 6.1 is about emitted CF
-digits, and why the bijection (landing on CF INDICES) is the right interface.  Proved:
-`numAlt_append_le`, `numAlt_lrWord_le` — at most `(2D+1)·n` alternations after `n` input digits.
+> `ρ(w,t) ≤ γ(I_w)`  (because `jointCount ≤ winCard` at every `n`),
 
-## 🎬 Next actions, in order
+so `Σ_{w ∉ F} ρ(w,t) ≤ 1 − Σ_{w ∈ F} γ(I_w)`, and `exists_boundedWords_sum_gt` (already proved)
+supplies `F` with `Σ_F γ(I_w) > 1 − ε`.
 
-1. **`hlen` — the lower bound, the one analytic leaf.**  `liminf (runs of lrWord n)/n > 0`.
-   Route (`PENDING_WORK.md` item (a′)): `lrRun_eq` gives `M₀·B_{a₁}⋯B_{aₙ} = lrProd w · M_n` with
-   `M_n` in a FINITE set, and the input product's own Stern–Brocot word has exactly `n` runs (one
-   per input digit).  Right-multiplying by a bounded matrix perturbs the path's cone boundedly,
-   so the run counts differ by a bounded FACTOR.  Making that precise is the work.  Note only
-   `liminf > 0` is needed, not convergence, if the assembly is restated accordingly.
-2. **Factor the assembly.**  `mobiusUniformFreq_of_transducer` demands `out` emit the image's CF
-   digits; the L/R machine emits letters.  Split it into an alphabet-agnostic `OutputWordFreq`
-   (every output word has an `x`-independent Cesàro frequency, `K` allowed to depend on `v`) plus
-   a CF bridge through `card_cf_eq_card_patWord`.  Note `hK` is FALSE at the L/R level for a
-   CONSTANT `v` (`LL` occurs ~`j` times in one block), so a direct instantiation cannot work —
-   the bridge is forced, not a convenience.
-3. **`hgen`** — now near-free: `patWord_alternation` plus `kOut ≠ 0 → …`.
-4. **`hjs`** — `JointStateFreq` for `lrDelta`, from
-   `VandeheyCocycle.tendsto_jointCount_of_classEquidistribution` + the common-target reach
-   (`archive/handoff/HANDOFF-2026-09-28-raney-section2.md` has the row-family identity).
-5. **`htail`** — Gauss-null trigger tails: a long window forces many emitted letters, so the
-   tail mass is a cylinder estimate.
+## 🎬 Next actions, in order (= `DIRECTION.md` CURRENT DIRECTIVE steps 2–4)
+
+1. **De-factorize the output side.**  In `VandeheyOutputFreq.lean`, replace
+   `JointStateFreq δ s₀ ν` by `ρ : List ℕ → S → ℝ` with limit `ρ q t`.  Only ~25 lines mention
+   `ν`; the substitution is `ν t * (gaussMeasure (cfCylinder w)).toReal ↦ ρ w t`.  Three places
+   need real thought, all easy: `wLimit_set_bddAbove` (the bound becomes `C`, via
+   `ρ w t ≤ γ w` and `Σ_Q γ w ≤ 1`), `wLimit_trigInd_le` and `tailMass` (drop the `ν` factor:
+   `tailMass k m := Σ_t γ(familySetC (trigPrefix k t m))`).  Add once, up front:
+   `jointCount ≤ winCard` and hence `0 ≤ ρ q t ≤ γ(I_q)` from `hjs` + `tendsto_windowFreq`.
+   Then restate `mobiusUniformFreq_of_transducer` (`VandeheyAssembly.lean`) and fix
+   `VandeheyTrigger.lean`.  Re-do the guard-rule lemmas at the end of `VandeheyOutputFreq.lean`.
+2. **`hjs` for `lrDelta` itself, by the parity split.**  `jointCount lrDelta s₀ t q x n` lives on
+   ONE parity of `i` (the phase of `t` relative to `s₀`), so it equals
+   `½(jointCount rplusDelta … ± Σ_{i<n} (−1)^i 1[window=q] 1[P_i = t])`.  The unsigned half is
+   `tendsto_jointCount_rplusDelta` (proved).  **The signed half is FREE from the existing
+   two-point machinery**: `VandeheyTwoPoint.abs_integral_devFun_mul_le` bounds an ABSOLUTE
+   value, so inserting `(−1)^k` into `devAvg` changes nothing in `integral_devAvg_sq_le`; only
+   the final `windowBound`/`localAvg` plumbing has to be re-run with the sign.
+3. **`hlen` is then a corollary, not an analytic leaf.**  Vandehey's own §6 proof writes `ℓ(n)`
+   as a Birkhoff sum of a BOUNDED window/state function: augment the state with the last emitted
+   letter (a finite augmentation), so `numAlt` is additive over blocks with a purely local seam
+   term, and `wCount`/`wLimit` evaluates the average.  The lap-3 handoff's cone-perturbation
+   route is superseded — it would only give a bounded factor, never convergence.
+4. `hgen` (near-free, `patWord_alternation`), `htail` (a cylinder estimate).
 
 ## ⚠ Gotchas found this lap
 
-- `congr 1` on `decide X = decide Y` leaves a Prop EQUALITY, which `omega` cannot do — use
-  `decide_eq_decide.mpr (by omega)`.
-- `Finset.card_insert_of_not_mem` is `card_insert_of_notMem` in this Mathlib.
-- `simp only [Finset.mem_filter]` makes no progress on a `Set`-coerced Finset membership; add
-  `Finset.coe_filter, Set.mem_ofPred_eq` (`Set.mem_setOf_eq` is deprecated).
-- `omega` fails through a `def` wrapper (`runIdx` vs `Nat.findGreatest`): `show` + `rw [← runIdx]`.
-- A `(by omega)` side goal whose statement mentions a not-yet-unified metavariable fails — bind
-  it with a named `have` first.
-- `rw [h]` where `h`'s proof is `rfl` fails on `v.sum + 2 = (v.sum+1)+1`; use `show` (defeq).
-- `include hirr hw` also attaches to lemmas that don't use them — `omit hirr hw in` per lemma, and
-  then pass `(w := w)` explicitly at the call sites.
-- `List.range'_append_1 : range' s m ++ range' (s+m) n = range' s (m+n)` — rewriting with `←`
-  splits the WRONG summand; apply it forward with explicit `(s := …) (m := …) (n := …)`.
+- `Mat2` structure equality: use a local `mat2_ext`; `omega` on component goals needs the `one_a
+  … one_d` simp lemmas first, or it leaves `M.a = (1 : Mat2).a` unreduced.
+- `linear_combination` is the right tool for the `Mat2` entry identities; `ring` errors with
+  "made no progress" on the components that `push_cast` already closed.
+- `field_simp` in `ZMod D` leaves `x * (1 + -1) = 0`; follow it with `ring`.
+- A `def` whose body goes through `lrDelta` must be `noncomputable`.
+- `VandeheyCocycle.ClassEquidistribution` needs `[Nonempty X]` **in the statement**, so a
+  `haveI` inside the proof is too late — supply a real instance
+  (`instance [Fact (Nat.Prime D)] : Nonempty (RPlus D)`).
+- `simpa` will not unfold a subtype projection of a `def`; state the `have` with the unfolded
+  type and let defeq do the work.
 
 ## 📁 New files this lap
 
-`VandeheyRunBound.lean` (Lemma 2.2) · `VandeheyAltCount.lean` (alternation counting + the
-`hK`/`hkK` reduction) · `VandeheyLRTrigger.lean` (the bounds on the real machine) ·
-`VandeheyLRRuns.lean` (the run dictionary) · `VandeheyLRPattern.lean` (the pattern and the
-bijection) · `VandeheyRunCount.lean` (Lemma 6.1, upper half).
+`src/NormalNumbers/VandeheyRaneyReach.lean` (~700 lines, sorry-free) ·
+`probes/raney_reach.py`, `probes/raney_quot.py`, `probes/raney_plus.py`,
+`probes/raney_joint_product.py`.
 
 ---
-**→ Next session: NEXT action 1 (`hlen`'s lower bound).  Everything else on the concrete machine
-is either proved or routine.  Tree clean at `ee5365d`.**
+**→ Next session: NEXT action 1 (de-factorize `JointStateFreq` to `ρ`).  Tree clean at `6ab5066`.**
