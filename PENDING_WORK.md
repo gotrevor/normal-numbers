@@ -34,15 +34,35 @@ That is exactly the `wCount` shape, with a BOUNDED weight.  So the run count has
 `x`-independent Cesàro limit as soon as `JointStateFreq` holds for `lrB`, and positivity comes
 from `outLenLimit_pos`'s argument.
 
-**NEXT (lap 7): `JointStateFreq` for the AUGMENTED automaton `lrB`.**  The Bool coordinate is a
-FUNCTION of the previous state and digit whenever `lrOut M j ≠ []`, so the uniform common reach
-lifts: drive every state to `z = diag(1,D)` in 2 digits (`rplus_common_reach`), then ONE more
-fixed digit `j₀` with `lrOut z j₀ ≠ []` makes the Bool a common value too — a uniform common
-reach at length 3 on `RPlus D × Bool`, and `VandeheyTransport`'s phase argument is unchanged
-(the Bool does not interact with the determinant).  Then re-run `VandeheyTransport` verbatim on
-the augmented state set.
+**LAP 6 CLOSED THAT TOO.**  `VandeheyTransportB.lean`: the involution acts on the augmented
+state by `ι'(M,b) = (ι M, !b)` (`lrOut_swapState` + `getLast?_map_not`), so the whole phase
+argument is verbatim; `rplusB_common_reach` is the length-3 reach (2 digits to `diag(1,D)`, one
+more digit whose block `lrOut ⟨diag(1,D)⟩ j = Lᴰʲ` is nonempty, which overwrites the remembered
+letter).  Hence `jointStateFreq_lrB`, `subWindow_rhoLRB`, and
 
-**What is left of the capstone**What is left of the capstone's hypothesis list** (`mobiusUniformFreq_of_transducer`):
+> `tendsto_numAlt_lrWord_div` — **Vandehey's Lemma 6.1 for the TRUE clock**: the emitted RUN
+> count has an `x`-independent Cesàro limit along every CF-normal orbit.
+
+**NEXT: POSITIVITY of the run rate (`hc`), and it is the one piece with real content left.**
+`outLenLimit_pos`'s argument does NOT transfer: it needs a single genuine digit `j` with
+`altOut (M,b) j ≥ 1` for EVERY augmented state, and that is false — `lrOut ⟨diag(1,D)⟩ j = Lᴰʲ`
+has no internal alternation, so from `(diag(1,D), L)` the weight is `0`.  Candidate routes:
+1. A longer window.  `wLimit` is defined at every `m`; take `m = 4` and the weight
+   "alternations emitted over the whole window".  From ANY state, three digits reach the common
+   augmented state `(diag(1,D), ·)` and the fourth emits `Lᴰʲ`; so a window that starts at a
+   state whose remembered letter is `R` must alternate.  Half the states (by determinant phase
+   /letter) are of that kind, and `sum_rho_eq_gauss` gives their total mass.  Needs: the
+   `wCount` engine at `m = 4` (already general) plus a lower bound on the mass of the
+   `R`-remembering states.
+2. A soft route: `numAlt(lrWord n) ≥ 1` cannot stay bounded, since a bounded alternation count
+   forces a single run of length `≍ Σ digits`, i.e. a CF digit of the image growing linearly,
+   which contradicts `IsCFNormal` of the image on a set of positive measure.  This is the
+   Borel–Cantelli-flavoured route; route 1 is preferred (finitary).
+3. Or: sidestep `hc > 0` entirely by rescaling with `tendsto_div_of_tendsto_comp_of_monotone`
+   applied to the run count directly — check whether `VandeheyRescale` needs `c > 0` or only
+   monotone + divergent.  **Check this FIRST; it may make positivity unnecessary.**
+
+**What is left of the capstone**What is left of the capstone**What is left of the capstone's hypothesis list** (`mobiusUniformFreq_of_transducer`):
 1. `hc : 0 < c` — the ONE piece `tendsto_outLen_div` does not give.  `c ≥ 0` is
    `outLenLimit_nonneg`; strict positivity is combinatorial (some state/digit pair of positive
    Gauss mass emits a nonempty block).  Route: pick one genuine one-letter window `w` and a

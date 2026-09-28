@@ -55,6 +55,17 @@ lemma outLen_eq_sum (x : ℝ) (n : ℕ) :
   | succ n ih =>
     rw [outLen, outWord_succ, List.length_append, ← outLen, ih, Finset.sum_range_succ]
 
+/-- **Any Birkhoff sum of a state/digit function is a length-1 `wCount` sum.**  This is the
+shape `tendsto_wCount_div` eats, and it covers both clocks: the letter clock (`outLen`) and the
+run clock (`VandeheyLR.numAlt_lrWord_eq_sum`). -/
+lemma sum_birkhoff_eq_sum_wCount (f : S → ℕ → ℝ) (x : ℝ) (n : ℕ) :
+    ∑ i ∈ Finset.range n, f (stateAt δ s₀ x i) (cfDigit x i)
+      = ∑ t : S, wCount δ s₀ t (fun w => f t w.headI) 1 x n := by
+  simp only [wCount, cfWindow_one, List.headI]
+  rw [Finset.sum_comm]
+  refine Finset.sum_congr rfl fun i _ => ?_
+  simp
+
 /-- **The output length is a Birkhoff sum of a bounded window/state function.** -/
 lemma outLen_eq_sum_wCount (x : ℝ) (n : ℕ) :
     (outLen δ out s₀ x n : ℝ)
