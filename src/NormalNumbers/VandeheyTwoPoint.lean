@@ -571,6 +571,252 @@ theorem abs_integral_devFun_mul_le (δ : S → ℕ → S) (d t : S) (q : List �
         linarith [b1, hc2, hc3, hc4]
     _ = 2 * (C + 1) * ρ ^ n * γq := by ring
 
+/-! ## The variance bound -/
+
+/-- The local `K`-average of `devFun`: the measurable representative of
+`VandeheyCocycle.localAvg`. -/
+noncomputable def devAvg (δ : S → ℕ → S) (d t : S) (q : List ℕ) (L : ℝ) (K : ℕ) (y : ℝ) : ℝ :=
+  (K : ℝ)⁻¹ * ∑ k ∈ Finset.range K, devFun δ d t q L k y
+
+lemma integrable_devFun_mul (δ : S → ℕ → S) (d t : S) (q : List ℕ) {L : ℝ} (hL0 : 0 ≤ L)
+    (hL1 : L ≤ 1) (k k' : ℕ) :
+    Integrable (fun y => devFun δ d t q L k y * devFun δ d t q L k' y) gaussMeasure := by
+  refine Integrable.mono (integrable_const (1 : ℝ))
+    (((measurable_devFun δ d t q L k).mul (measurable_devFun δ d t q L k')).aestronglyMeasurable)
+    (ae_of_all _ fun y => ?_)
+  rw [Real.norm_eq_abs, Real.norm_eq_abs, abs_one, abs_mul]
+  calc |devFun δ d t q L k y| * |devFun δ d t q L k' y| ≤ 1 * 1 :=
+        mul_le_mul (abs_devFun_le δ d t q hL0 hL1 k y) (abs_devFun_le δ d t q hL0 hL1 k' y)
+          (abs_nonneg _) zero_le_one
+    _ = 1 := by ring
+
+/-- The trivial correlation bound: `|devFun| ≤ 1` and `γ` is a probability measure. -/
+lemma abs_integral_devFun_mul_le_one (δ : S → ℕ → S) (d t : S) (q : List ℕ) {L : ℝ}
+    (hL0 : 0 ≤ L) (hL1 : L ≤ 1) (k k' : ℕ) :
+    |∫ y, devFun δ d t q L k y * devFun δ d t q L k' y ∂gaussMeasure| ≤ 1 := by
+  have hint := integrable_devFun_mul δ d t q hL0 hL1 k k'
+  have h1 : |∫ y, devFun δ d t q L k y * devFun δ d t q L k' y ∂gaussMeasure|
+      ≤ ∫ y, |devFun δ d t q L k y * devFun δ d t q L k' y| ∂gaussMeasure := by
+    simpa [Real.norm_eq_abs] using
+      norm_integral_le_integral_norm (μ := gaussMeasure)
+        (fun y => devFun δ d t q L k y * devFun δ d t q L k' y)
+  have h2 : ∫ y, |devFun δ d t q L k y * devFun δ d t q L k' y| ∂gaussMeasure
+      ≤ ∫ _y, (1 : ℝ) ∂gaussMeasure := by
+    refine integral_mono hint.abs (integrable_const (1 : ℝ)) fun y => ?_
+    rw [abs_mul]
+    calc |devFun δ d t q L k y| * |devFun δ d t q L k' y| ≤ 1 * 1 :=
+          mul_le_mul (abs_devFun_le δ d t q hL0 hL1 k y) (abs_devFun_le δ d t q hL0 hL1 k' y)
+            (abs_nonneg _) zero_le_one
+      _ = 1 := by ring
+  have h3 : ∫ _y : ℝ, (1 : ℝ) ∂gaussMeasure = 1 := by
+    rw [integral_const, measureReal_def, measure_univ, ENNReal.toReal_one, smul_eq_mul, mul_one]
+  linarith
+
+/-- The gap between two positions, discounted by `|q|`; zero when the two windows overlap. -/
+def gapExp (ℓ k k' : ℕ) : ℕ := max k k' - min k k' - ℓ
+
+private lemma sum_geom_le {ρ : ℝ} (hρ0 : 0 ≤ ρ) (hρ1 : ρ < 1) (F : Finset ℕ) :
+    ∑ j ∈ F, ρ ^ j ≤ (1 - ρ)⁻¹ := by
+  have hsum : Summable (fun j : ℕ => ρ ^ j) := summable_geometric_of_lt_one hρ0 hρ1
+  have := hsum.sum_le_tsum F (fun j _ => pow_nonneg hρ0 j)
+  rwa [tsum_geometric_of_lt_one hρ0 hρ1] at this
+
+/-- **The unified correlation bound**, valid for every pair of positions: geometric in the gap,
+trivial when the windows overlap. -/
+theorem abs_integral_devFun_mul_le_gap (δ : S → ℕ → S) (d t : S) (q : List ℕ)
+    {c C θ : ℝ} (hC : 0 ≤ C) (hθ0 : 0 ≤ θ) (hc0 : 0 ≤ c) (hc1 : c ≤ 1)
+    (hpin : ∀ (n : ℕ) (e s : S) (τ : ℝ), τ ∈ Set.Icc (0 : ℝ) 1 →
+      |stateHorizonIntegral δ (cfCylinder q) n e s τ
+          - c * (gaussMeasure (cfCylinder q)).toReal|
+        ≤ C * θ ^ n * (gaussMeasure (cfCylinder q)).toReal)
+    (k k' : ℕ) :
+    |∫ y, devFun δ d t q c k y * devFun δ d t q c k' y ∂gaussMeasure|
+      ≤ max 1 (2 * (C + 1)) * max θ (79 / 100) ^ gapExp q.length k k' := by
+  set ρ : ℝ := max θ (79 / 100) with hρdef
+  set M : ℝ := max 1 (2 * (C + 1)) with hMdef
+  have hρ0 : 0 ≤ ρ := le_trans hθ0 (le_max_left _ _)
+  have hM1 : (1 : ℝ) ≤ M := le_max_left _ _
+  have hM2 : 2 * (C + 1) ≤ M := le_max_right _ _
+  have hγq1 : (gaussMeasure (cfCylinder q)).toReal ≤ 1 := gaussMeasure_toReal_le_one _
+  have hγq0 : (0 : ℝ) ≤ (gaussMeasure (cfCylinder q)).toReal := ENNReal.toReal_nonneg
+  have hMain : ∀ a b : ℕ, a + q.length ≤ b →
+      |∫ y, devFun δ d t q c a y * devFun δ d t q c b y ∂gaussMeasure|
+        ≤ M * ρ ^ (b - a - q.length) := by
+    intro a b hab
+    have hb : b = a + q.length + (b - a - q.length) := by omega
+    have h := abs_integral_devFun_mul_le δ d t q hC hθ0 hc0 hc1 hpin a (b - a - q.length)
+    rw [← hb] at h
+    refine le_trans h ?_
+    have hpow : (0 : ℝ) ≤ ρ ^ (b - a - q.length) := pow_nonneg hρ0 _
+    calc 2 * (C + 1) * ρ ^ (b - a - q.length) * (gaussMeasure (cfCylinder q)).toReal
+        ≤ 2 * (C + 1) * ρ ^ (b - a - q.length) * 1 :=
+          mul_le_mul_of_nonneg_left hγq1 (by positivity)
+      _ = 2 * (C + 1) * ρ ^ (b - a - q.length) := by ring
+      _ ≤ M * ρ ^ (b - a - q.length) := mul_le_mul_of_nonneg_right hM2 hpow
+  rcases le_or_gt (k + q.length) k' with hcase | hcase
+  · have hg : gapExp q.length k k' = k' - k - q.length := by
+      rw [gapExp]; omega
+    rw [hg]; exact hMain k k' hcase
+  · rcases le_or_gt (k' + q.length) k with hcase2 | hcase2
+    · have hg : gapExp q.length k k' = k - k' - q.length := by
+        rw [gapExp]; omega
+      rw [hg]
+      have hcomm : ∀ y : ℝ, devFun δ d t q c k y * devFun δ d t q c k' y
+          = devFun δ d t q c k' y * devFun δ d t q c k y := fun y => mul_comm _ _
+      simp only [hcomm]
+      exact hMain k' k hcase2
+    · have hg : gapExp q.length k k' = 0 := by rw [gapExp]; omega
+      rw [hg, pow_zero, mul_one]
+      exact le_trans (abs_integral_devFun_mul_le_one δ d t q hc0 hc1 k k') hM1
+
+/-- The row sum of the correlation majorant is bounded independently of `K`. -/
+theorem sum_gap_majorant_le (ℓ K k : ℕ) {M ρ : ℝ} (hM : 1 ≤ M) (hρ0 : 0 ≤ ρ) (hρ1 : ρ < 1) :
+    ∑ k' ∈ Finset.range K, M * ρ ^ gapExp ℓ k k'
+      ≤ M * (2 * ℓ + 1) + 2 * (M * (1 - ρ)⁻¹) := by
+  classical
+  have hM0 : (0 : ℝ) ≤ M := le_trans zero_le_one hM
+  have hgeoM : ∀ F : Finset ℕ, ∑ j ∈ F, M * ρ ^ j ≤ M * (1 - ρ)⁻¹ := by
+    intro F
+    rw [← Finset.mul_sum]
+    exact mul_le_mul_of_nonneg_left (sum_geom_le hρ0 hρ1 F) hM0
+  set F : Finset ℕ := Finset.range K with hF
+  set P₁ : Finset ℕ := F.filter (fun k' => k + ℓ ≤ k') with hP₁
+  set Q : Finset ℕ := F.filter (fun k' => ¬ (k + ℓ ≤ k')) with hQ
+  set P₂ : Finset ℕ := Q.filter (fun k' => k' + ℓ ≤ k) with hP₂
+  set P₃ : Finset ℕ := Q.filter (fun k' => ¬ (k' + ℓ ≤ k)) with hP₃
+  have hsplit1 : ∑ k' ∈ F, M * ρ ^ gapExp ℓ k k'
+      = (∑ k' ∈ P₁, M * ρ ^ gapExp ℓ k k') + ∑ k' ∈ Q, M * ρ ^ gapExp ℓ k k' :=
+    (Finset.sum_filter_add_sum_filter_not F _ _).symm
+  have hsplit2 : ∑ k' ∈ Q, M * ρ ^ gapExp ℓ k k'
+      = (∑ k' ∈ P₂, M * ρ ^ gapExp ℓ k k') + ∑ k' ∈ P₃, M * ρ ^ gapExp ℓ k k' :=
+    (Finset.sum_filter_add_sum_filter_not Q _ _).symm
+  -- the right tail
+  have hb1 : ∑ k' ∈ P₁, M * ρ ^ gapExp ℓ k k' ≤ M * (1 - ρ)⁻¹ := by
+    have hinj : Set.InjOn (fun k' => k' - k - ℓ) (P₁ : Set ℕ) := by
+      intro a ha b hb hab
+      simp only [hP₁, hF, Finset.coe_filter, Set.mem_ofPred_eq, Finset.mem_range] at ha hb
+      simp only at hab
+      omega
+    have heq : ∑ k' ∈ P₁, M * ρ ^ (k' - k - ℓ)
+        = ∑ j ∈ P₁.image (fun k' => k' - k - ℓ), M * ρ ^ j :=
+      (Finset.sum_image (f := fun j => M * ρ ^ j) hinj).symm
+    have hcongr : ∑ k' ∈ P₁, M * ρ ^ gapExp ℓ k k' = ∑ k' ∈ P₁, M * ρ ^ (k' - k - ℓ) := by
+      refine Finset.sum_congr rfl fun k' hk' => ?_
+      simp only [hP₁, hF, Finset.mem_filter, Finset.mem_range] at hk'
+      congr 2
+      rw [gapExp]; omega
+    rw [hcongr, heq]
+    exact hgeoM _
+  -- the left tail
+  have hb2 : ∑ k' ∈ P₂, M * ρ ^ gapExp ℓ k k' ≤ M * (1 - ρ)⁻¹ := by
+    have hinj : Set.InjOn (fun k' => k - k' - ℓ) (P₂ : Set ℕ) := by
+      intro a ha b hb hab
+      simp only [hP₂, hQ, hF, Finset.coe_filter, Set.mem_ofPred_eq, Finset.mem_filter,
+        Finset.mem_range] at ha hb
+      simp only at hab
+      omega
+    have heq : ∑ k' ∈ P₂, M * ρ ^ (k - k' - ℓ)
+        = ∑ j ∈ P₂.image (fun k' => k - k' - ℓ), M * ρ ^ j :=
+      (Finset.sum_image (f := fun j => M * ρ ^ j) hinj).symm
+    have hcongr : ∑ k' ∈ P₂, M * ρ ^ gapExp ℓ k k' = ∑ k' ∈ P₂, M * ρ ^ (k - k' - ℓ) := by
+      refine Finset.sum_congr rfl fun k' hk' => ?_
+      simp only [hP₂, hQ, hF, Finset.mem_filter, Finset.mem_range] at hk'
+      congr 2
+      rw [gapExp]; omega
+    rw [hcongr, heq]
+    exact hgeoM _
+  -- the overlapping middle
+  have hb3 : ∑ k' ∈ P₃, M * ρ ^ gapExp ℓ k k' ≤ M * (2 * ℓ + 1) := by
+    have hcard : P₃.card ≤ 2 * ℓ + 1 := by
+      have hsub : P₃ ⊆ Finset.Icc (k - ℓ) (k + ℓ) := by
+        intro k' hk'
+        simp only [hP₃, hQ, hF, Finset.mem_filter, Finset.mem_range] at hk'
+        exact Finset.mem_Icc.mpr ⟨by omega, by omega⟩
+      have := Finset.card_le_card hsub
+      rw [Nat.card_Icc] at this
+      omega
+    have hterm : ∀ k' ∈ P₃, M * ρ ^ gapExp ℓ k k' = M := by
+      intro k' hk'
+      simp only [hP₃, hQ, hF, Finset.mem_filter, Finset.mem_range] at hk'
+      have hg : gapExp ℓ k k' = 0 := by rw [gapExp]; omega
+      rw [hg, pow_zero, mul_one]
+    rw [Finset.sum_congr rfl hterm, Finset.sum_const, nsmul_eq_mul]
+    have hcR : (P₃.card : ℝ) ≤ 2 * (ℓ : ℝ) + 1 := by exact_mod_cast hcard
+    calc (P₃.card : ℝ) * M ≤ (2 * (ℓ : ℝ) + 1) * M :=
+          mul_le_mul_of_nonneg_right hcR hM0
+      _ = M * (2 * ℓ + 1) := by ring
+  rw [hsplit1, hsplit2]
+  linarith
+
+/-- **The variance bound.**  The local `K`-average of the joint deviation has `L²(γ)` norm
+`O(1/K)`: the correlations decay geometrically in the gap, so only `O(K)` of the `K²` pairs
+contribute.  This is the quantitative content that a *mean* bound could never give, and it is
+what `ClassEquidistribution` needs. -/
+theorem integral_devAvg_sq_le (δ : S → ℕ → S) (d t : S) (q : List ℕ)
+    {c C θ : ℝ} (hC : 0 ≤ C) (hθ0 : 0 ≤ θ) (hθ1 : θ < 1) (hc0 : 0 ≤ c) (hc1 : c ≤ 1)
+    (hpin : ∀ (n : ℕ) (e s : S) (τ : ℝ), τ ∈ Set.Icc (0 : ℝ) 1 →
+      |stateHorizonIntegral δ (cfCylinder q) n e s τ
+          - c * (gaussMeasure (cfCylinder q)).toReal|
+        ≤ C * θ ^ n * (gaussMeasure (cfCylinder q)).toReal)
+    {K : ℕ} (hK : 0 < K) :
+    ∫ y, devAvg δ d t q c K y ^ 2 ∂gaussMeasure
+      ≤ (max 1 (2 * (C + 1)) * (2 * q.length + 1)
+          + 2 * (max 1 (2 * (C + 1)) * (1 - max θ (79 / 100))⁻¹)) / K := by
+  classical
+  set M : ℝ := max 1 (2 * (C + 1)) with hMdef
+  set ρ : ℝ := max θ (79 / 100) with hρdef
+  have hM1 : (1 : ℝ) ≤ M := le_max_left _ _
+  have hρ0 : 0 ≤ ρ := le_trans hθ0 (le_max_left _ _)
+  have hρ1 : ρ < 1 := max_lt hθ1 (by norm_num)
+  set B₀ : ℝ := M * (2 * q.length + 1) + 2 * (M * (1 - ρ)⁻¹) with hB₀
+  have hKR : (0 : ℝ) < K := by exact_mod_cast hK
+  have hKne : (K : ℝ) ≠ 0 := ne_of_gt hKR
+  set g : ℕ → ℕ → ℝ → ℝ :=
+    fun k k' y => devFun δ d t q c k y * devFun δ d t q c k' y with hg
+  have hint : ∀ k k' : ℕ, Integrable (g k k') gaussMeasure :=
+    fun k k' => integrable_devFun_mul δ d t q hc0 hc1 k k'
+  have hintrow : ∀ k : ℕ, Integrable (fun y => ∑ k' ∈ Finset.range K, g k k' y) gaussMeasure :=
+    fun k => integrable_finsetSum _ fun k' _ => hint k k'
+  have hpt : ∀ y : ℝ, devAvg δ d t q c K y ^ 2
+      = (K : ℝ)⁻¹ ^ 2 * ∑ k ∈ Finset.range K, ∑ k' ∈ Finset.range K, g k k' y := by
+    intro y
+    rw [devAvg, mul_pow, pow_two (∑ k ∈ Finset.range K, devFun δ d t q c k y),
+      Finset.sum_mul_sum]
+  have hsplit : ∫ y, devAvg δ d t q c K y ^ 2 ∂gaussMeasure
+      = (K : ℝ)⁻¹ ^ 2 * ∑ k ∈ Finset.range K, ∑ k' ∈ Finset.range K,
+          ∫ y, g k k' y ∂gaussMeasure := by
+    calc ∫ y, devAvg δ d t q c K y ^ 2 ∂gaussMeasure
+        = ∫ y, ((K : ℝ)⁻¹ ^ 2 * ∑ k ∈ Finset.range K, ∑ k' ∈ Finset.range K, g k k' y)
+            ∂gaussMeasure := by simp only [hpt]
+      _ = (K : ℝ)⁻¹ ^ 2 *
+            ∫ y, (∑ k ∈ Finset.range K, ∑ k' ∈ Finset.range K, g k k' y) ∂gaussMeasure :=
+          integral_const_mul _ _
+      _ = (K : ℝ)⁻¹ ^ 2 * ∑ k ∈ Finset.range K,
+            ∫ y, (∑ k' ∈ Finset.range K, g k k' y) ∂gaussMeasure := by
+          rw [integral_finsetSum _ fun k _ => hintrow k]
+      _ = (K : ℝ)⁻¹ ^ 2 * ∑ k ∈ Finset.range K, ∑ k' ∈ Finset.range K,
+            ∫ y, g k k' y ∂gaussMeasure := by
+          refine congrArg _ (Finset.sum_congr rfl fun k _ => ?_)
+          rw [integral_finsetSum _ fun k' _ => hint k k']
+  have hrow : ∀ k : ℕ, (∑ k' ∈ Finset.range K, ∫ y, g k k' y ∂gaussMeasure) ≤ B₀ := by
+    intro k
+    calc (∑ k' ∈ Finset.range K, ∫ y, g k k' y ∂gaussMeasure)
+        ≤ ∑ k' ∈ Finset.range K, M * ρ ^ gapExp q.length k k' := by
+          refine Finset.sum_le_sum fun k' _ => ?_
+          exact le_trans (le_abs_self _)
+            (abs_integral_devFun_mul_le_gap δ d t q hC hθ0 hc0 hc1 hpin k k')
+      _ ≤ B₀ := sum_gap_majorant_le q.length K k hM1 hρ0 hρ1
+  have htot : (∑ k ∈ Finset.range K, ∑ k' ∈ Finset.range K, ∫ y, g k k' y ∂gaussMeasure)
+      ≤ (K : ℝ) * B₀ := by
+    calc (∑ k ∈ Finset.range K, ∑ k' ∈ Finset.range K, ∫ y, g k k' y ∂gaussMeasure)
+        ≤ ∑ _k ∈ Finset.range K, B₀ := Finset.sum_le_sum fun k _ => hrow k
+      _ = (K : ℝ) * B₀ := by rw [Finset.sum_const, Finset.card_range, nsmul_eq_mul]
+  rw [hsplit]
+  calc (K : ℝ)⁻¹ ^ 2 * ∑ k ∈ Finset.range K, ∑ k' ∈ Finset.range K, ∫ y, g k k' y ∂gaussMeasure
+      ≤ (K : ℝ)⁻¹ ^ 2 * ((K : ℝ) * B₀) :=
+        mul_le_mul_of_nonneg_left htot (by positivity)
+    _ = B₀ / K := by field_simp
+
 end VandeheyTwo
 
 end NormalNumbers
