@@ -5,7 +5,7 @@
 # 🎯 ACTIVE: Vandehey 2017 Theorem 1.1 (side quest, branch `wip/vandehey-matrix-action`)
 
 **Nonsingular integer Möbius maps preserve CF-normality — one open leaf left.** ·
-**Build**: 🟢 green (9285 jobs) · **Updated**: review lap · 2026-09-27 · `d18aeb7`
+**Build**: 🟢 green (9289 jobs) · **Updated**: review lap C · 2026-09-27 · `6e5550b`
 
 ## Where it stands
 
@@ -13,36 +13,49 @@
 `[propext, sorryAx, Classical.choice, Quot.sound]` and the *only* `sorryAx` source is
 `vandeheyUniformFreq_holds`.  The either-or endgame (identification of the limiting frequency
 `ρ_r = γ(I_r)` from `ae_isCFNormal` + Lebesgue-nonsingularity of the Möbius map) is proved
-unconditionally, so the published proof's broken Lemma 3.3 is never reproduced.  The remaining
-crux is `VandeheyCocycle.ClassEquidistribution`: the class cocycle — identified as the Gauss map
-read mod `D`, i.e. the Γ₀(D)-coset of the CF matrix product — equidistributes jointly with digit
-windows along every CF-normal orbit.
+unconditionally, so the published proof's broken Lemma 3.3 is never reproduced.  The analytic
+crux is **proved**: `VandeheyState.stateHorizonIntegral_pin` (the state-refined transfer-operator
+pin) and its consumer `abs_gaussMeasure_cylinder_inter_sub_le` (state-refined ψ-mixing at gap
+zero).  What remains between there and `VandeheyCocycle.ClassEquidistribution` is the two-point
+correlation estimate and the orbit transfer — a fully worked-out plan, steps 1–8 of
+`PENDING_WORK.md`; after that the fiber and Vandehey's §2/§5/§6 transducer combinatorics.
 
 ## What's happened (newest first)
 
-- **2026-09-27 (review lap).**  Direction KEPT, one obstruction named precisely: the class block
-  and the digit window it must decouple from are **adjacent**, so `gaussMeasure_cylinder_psi_mixing`
-  (multiplicative error `ρ^g`, vacuous at `g = 0`) cannot supply the Doeblin step.  The substitute
-  is a **gap-0 Rényi comparison** `c₀ γ(I_v)γ(A) ≤ γ(I_v ∩ T^{-|v|}A) ≤ C₀ γ(I_v)γ(A)`, available
-  from `horizonIntegral A 0 t = ∫_A h_t` with `h_t = (1+t)/(1+ty)² ∈ [1/4, 2]` on `[0,1]²`.  That
-  is now the mandated next move (`DIRECTION.md` CURRENT DIRECTIVE).
-- **2026-09-27 (grind laps).**  The synchronizing route was *refuted by decision procedure*
-  (the det-`±D` CF transducer has no synchronizing word; mergeability = equality of the row lattice
-  up to scaling), the class cocycle was identified and anchored against 8488 measured transitions,
-  ψ-mixing was upgraded to **countable families** of same-length cylinders, and the class kernel
-  was shown **doubly stochastic** (so uniform is exactly stationary — nothing to compute).
+- **2026-09-27 (review lap C).**  Direction REVISED: the previous directive's items 1–3 all landed,
+  so the crux moved from "prove the pin" to "**consume** the pin".  The pin had been sitting inert.
+  New `VandeheyStateMixing.lean` closes that: from *any* uniform pin `|∫_B h_τ − c| ≤ E` on
+  `τ ∈ [0,1]` one gets `|γ(I_v ∩ T^{−|v|}B) − c γ(I_v)| ≤ E γ(I_v)` for every genuine `v` — **gap
+  zero**.  The adjacency obstruction turns out not to bind at all: `setIntegral_inter_preimage` is
+  an EXACT identity, so the CF past enters the future only through `tChain s v ∈ [0,1]`, and a pin
+  uniform in the tail parameter is *already* the conditional statement.  Uniformity in the
+  automaton's initial state additionally lets the future set depend on the past cylinder
+  (`abs_gaussMeasure_biUnion_cylinder_inter_sub_le`) — no partition by `runState δ d v` needed.
+  Transducer combinatorics are now explicitly forbidden until the bridge closes.
+- **2026-09-27 (grind laps).**  `stateHorizonIntegral_pin` PROVED: the state-refined transfer
+  operator is doubly stochastic (so the limit constant `(card S)⁻¹` is forced, never computed),
+  Doeblin-minorized at operator level (`stateStepIter_ge_word`), `2/5`-log-Lipschitz in the tail
+  direction (`stateStepOp_logLipschitz`, via the ℓ¹ weight modulus `17/30`), and the Lyapunov pair
+  `V = osc + 2β·Lip` contracts by `1−β` per `M`-block.  Earlier: the synchronizing route was
+  *refuted by decision procedure*, the class cocycle identified as the Gauss map mod `D`, ψ-mixing
+  upgraded to countable families, the class kernel shown doubly stochastic, and the gap-0 Rényi
+  comparison + length-3 class Doeblin landed in `VandeheyRenyi.lean`.
 
 ## Outstanding
 
-### Short-term (mandated order)
-1. gap-0 Rényi comparison (single cylinder, then countable family).
-2. Doeblin at length exactly 3 for `classStep D`; the conditional minorization.
-3. The contraction `ν_m → 1/|X|`; `ClassEquidistribution` via `vanDerCorput_bound`.
+### Short-term (mandated order — `PENDING_WORK.md` top, steps 1–8)
+1. a.e. plumbing: `cfCylinder`/`familySetC`/`cfWindow` ↔ `cfWord` for irrational points.
+2. `jointDev_ae_eq`: `jointDev … y k = 1_{A_k} − L·1_{B_k}` γ-a.e.
+3. The four a.e. set identifications for `A_k ∩ A_{k'}` etc. (past family × past-dependent future).
+4. The two-point bound (the four main terms cancel exactly when `L = c`).
+5. `∫Φ² dγ ≤ C₁/K`; 6. Cauchy–Schwarz + disjoint-cylinder comparison; 7. the orbit transfer ⇒
+   `ClassEquidistribution` for EVERY automaton meeting the pin's hypotheses; 8. instantiate at
+   `classStep D` ⇒ Vandehey §3, unconditionally.
 
 ### Long-term
-4. The fiber: merging *inside* a class (`Synchronizing` becomes class-relative).
-5. Vandehey §2 transducer + identity (9); §5–§6 trigger counting.
-6. Composite `D`: `ClassSpace D = Option (ZMod D)` models ℙ¹(ℤ/D) **only for prime `D`**
+9. The fiber: merging *inside* a class (`Synchronizing` becomes class-relative).
+10. Vandehey §2 Raney transducer + identity (9); §5–§6 trigger counting.
+11. Composite `D`: `ClassSpace D = Option (ZMod D)` models ℙ¹(ℤ/D) **only for prime `D`**
    (`|ℙ¹(ℤ/D)| = D∏(1+1/p) = [SL₂(ℤ):Γ₀(D)]`).  Keep the Markov layer abstract so this is a
    hypothesis-verification step, not a redesign.
 
@@ -50,19 +63,23 @@ windows along every CF-normal orbit.
 `vandeheyUniformFreq_holds` closed ⟹ `vandehey_matrix_action_holds` trust-triple ⟹ repoint the
 `Maze.lean` row citing Vandehey 1.1 off `.cited`.
 
-## Axiom ledger — Vandehey side quest (real `#print axioms`, 2026-09-27, 9285 jobs)
+## Axiom ledger — Vandehey side quest (real `#print axioms`, 2026-09-27, 9289 jobs)
 
 | headline theorem | paper claim | `#print axioms` shows | status |
 |---|---|---|---|
 | `vandehey_matrix_action_holds` | unconditional (Vandehey 2017 Thm 1.1) | `propext, sorryAx, Classical.choice, Quot.sound` | 1 open `sorry` (`vandeheyUniformFreq_holds`); **0 math axioms** |
 | `vandehey_matrix_action_of_uniformFreq` | — (our factorization) | trust triple | ✅ |
 | `exists_cfNormal_with_cfNormal_image` | — (our pigeonhole) | trust triple | ✅ |
+| `VandeheyState.stateHorizonIntegral_pin` | Vandehey §3 substitute (repairs the Airey–Mance-refuted Moshchevitin–Shkredov step) | trust triple | ✅ **the analytic crux** |
+| `abs_gaussMeasure_cylinder_inter_sub_le` | — (the bridge brick) | trust triple | ✅ |
+| `VandeheyCocycle.tendsto_jointCount_of_classEquidistribution` | Vandehey §3→§4 transfer | trust triple | ✅ |
 
 Math-axiom count (🟢+🟡+🟠) for this side quest: **0**.  The single debt is a disclosed `sorry`
 on the crux, not a cited axiom.
 
 ## Pointers
-`DIRECTION.md` CURRENT DIRECTIVE · newest baton `HANDOFF-2026-09-27-vandehey-class-cocycle.md` ·
+`DIRECTION.md` CURRENT DIRECTIVE · newest baton `HANDOFF-2026-09-27-vandehey-state-pin-PROVED.md` ·
+`PENDING_WORK.md` top section (steps 1–8) ·
 `PROBE-2026-09-27-transducer-not-synchronizing.md` ·
 `papers/vandehey-2017-open-problem-attack-map.md` §6.1
 
