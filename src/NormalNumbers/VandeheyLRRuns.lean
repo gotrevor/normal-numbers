@@ -225,6 +225,19 @@ lemma lt_runIdx_succ (P : ℕ) : P < lrPos w (runIdx w P + 1) := by
   rw [← runIdx]
   omega
 
+/-- The run index is pinned by the bracketing. -/
+lemma runIdx_eq (m P : ℕ) (h1 : lrPos w m ≤ P) (h2 : P < lrPos w (m + 1)) :
+    runIdx w P = m := by
+  have hmono := lrPos_strictMono hirr hw
+  have k1 := runIdx_le (w := w) P
+  have k2 := lt_runIdx_succ hirr hw P
+  by_contra hne
+  rcases lt_or_gt_of_ne hne with h | h
+  · have := hmono.monotone (show runIdx w P + 1 ≤ m from by omega)
+    omega
+  · have := hmono.monotone (show m + 1 ≤ runIdx w P from by omega)
+    omega
+
 /-- **The stream, in one identity.**  The letter at position `P` is the parity of the run `P`
 lies in. -/
 theorem lrExpand_eq_runIdx_parity (P : ℕ) :
@@ -287,6 +300,7 @@ open NormalNumbers.VandeheyLR
 #print axioms lrExpand_L_run
 #print axioms lrTail_lrPos
 #print axioms lrExpand_run
+#print axioms runIdx_eq
 #print axioms lrExpand_eq_runIdx_parity
 #print axioms runIdx_succ_eq
 #print axioms lrExpand_ne_succ_iff

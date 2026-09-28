@@ -680,3 +680,4 @@ import NormalNumbers.VandeheyRunBound
 import NormalNumbers.VandeheyAltCount
 import NormalNumbers.VandeheyLRTrigger
 import NormalNumbers.VandeheyLRRuns
+import NormalNumbers.VandeheyLRPattern
