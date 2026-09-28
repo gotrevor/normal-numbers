@@ -1,6 +1,22 @@
 # DIRECTION — normal-numbers 🧭
 
-**No active objective.**  Every campaign branch was merged on 2026-09-27 (`f5034b6`).  The next
+## OPERATOR OBJECTIVE 2026-09-28: `PENDING_WORK.md` queue items 1-3 (bounded run, at most 4 laps)
+
+1. Prove `moshchevitinShkredov_cf_false` in `MoshchevitinShkredovRefuted.lean` (witness
+   `[0;1,2,3,…]`), wire the file into `src/NormalNumbers.lean`, and add a Maze row marked
+   "false as stated".  `moshchevitinShkredov_cf` stays byte-identical.
+2. Add a C3 headline that consumes `uniformResonantMass_holds` in place of the `hURM` hypothesis
+   of `conjC3_of_geom_input_band`.  Then retire `highResonantMass_le_narrow` /
+   `C3MrtURMLowHigh.lean` as a redundant second route, with a Maze row and no sorry left on it.
+3. Retire `VandeheyAutomaton.exists_jointFreq_limit`, whose `Synchronizing` hypothesis cannot
+   hold (`archive/probe/PROBE-2026-09-27-transducer-not-synchronizing.md`), with a Maze row.
+
+Keep `lake build` green at every commit.  Update `STATUS.md` and remove each finished item from
+the `PENDING_WORK.md` queue.  **Stop when all three are done.**  Nothing else is in scope.
+
+---
+
+**No active objective beyond the one above.**  Every campaign branch was merged on 2026-09-27 (`f5034b6`).  The next
 run gets its objective from the operator: a kickoff file, plus a dated section added at the top of
 this file that names the target theorem and the stop condition.  To choose one, read the open
 fronts in `STATUS.md` and the queue in `PENDING_WORK.md`.
