@@ -1,0 +1,85 @@
+# HANDOFF 2026-09-14 — G4 disjunctivity, lap 7 (`bigAvg` discharged to closed form)
+
+Branch `wip/g4-disjunctivity`, HEAD `0000771` (after this handoff commit, one more).  Working
+tree clean.  Not pushed.  Commits this lap: `ef58e7c` (medium L² + very-large pointwise),
+`5e64c6e` (dyadic Chebyshev harmonic mass, `bigAvg_le'`), `0000771` (`G4FarTail`, `farAvg_le`,
+`gridFrame_propD_of_bounds`).  Build line: `lake build NormalNumbers.G4MediumPrimes NormalNumbers.G4FarTail` — green; the
+pre-commit `lake build` (8888 jobs) is green.  Every headline prints
+`[propext, Classical.choice, Quot.sound]`.
+
+## Proved this lap (`src/NormalNumbers/G4MediumPrimes.lean`)
+
+Tripwire `archive/findings/CHECK-g4-route-deviations.md §4` honoured: `bigAvg` is split at `Y`, the medium
+range is L² with the signed cancellation, only `p > Y` is pointwise.
+
+* `dvd_add_iff_modEq`, `filter_dvd_add_eq`, `filter_dvd_add_and_eq` — `p ∣ n+ρ` is one residue
+  class; two coprime such conditions are one class mod `pp'` (`Nat.chineseRemainder`).
+* `sum_sq_block_eq` — second moment = `∑_{p,p'}∑_{i,i'} c_i c_{i'} · pairCount`.
+* `pairCount_diag_le`, `pairCount_diag_eq_zero`, `abs_pairCount_sub_le` — the three counts.
+* **`sum_sq_block_le`** — the abstract signed L² bound (statement in `PENDING_WORK.md`).
+* `sampleAvg_abs_le_sqrt` — Cauchy–Schwarz on the sample.
+* `medPrimes`, `omegaVL`, **`omegaBig_split`** — `ω_{>R} = ω_{R<p≤Y} + ω_{>Y}`.
+* `rowCoeff`, `blockSum_omegaOn_eq`, `sum_rowCoeff_eq_zero`, `sum_sq_rowCoeff_le`
+  (`≤ 8^{−K}/15`), `sum_abs_rowCoeff_le` (`≤ 2^{−K}/3`).
+* `sep_of_goodPrime`, `apSample_equidistributed` — the grid satisfies the abstract hypotheses.
+* **`sum_sq_blockSum_med_le`**, **`sampleAvg_abs_blockSum_med_le`** (`≤ √medBudget`).
+* `card_filter_gt_mul_log_le`, `omegaVL_le`, **`abs_blockSum_omegaVL_le`**.
+* **`bigAvg_le`** — `bigAvg ≤ √medBudget + (log Mx/log Y)·2^{−K}/3`.
+* `dyadicPrimes`, `card_dyadicPrimes_mul_le` (`k·#(2^k,2^{k+1}] ≤ 2^{k+2}`),
+  `sum_inv_dyadicPrimes_le` (`≤ 4/k`), `sum_Icc_inv_le`, **`sum_inv_primes_Ioc_le`**,
+  `sum_inv_medPrimes_le`.
+* **`bigAvg_le'`** — closed form with `∑_{med}1/p ≤ 4(1+log⌊log₂Y⌋−log⌊log₂R⌋)` and `|med| ≤ Y`.
+
+## Dependency map
+
+`PropA` ✅ · `PropC` ✅ · `PropD` = `gridFrame_propD` from `bigAvg_le'` (✅ closed form, needs
+only the §5 sizes) + `farAvg` (open) · `PropB` open (all inputs proved, assembly is labour)
+· `PropJackson` open · §5 schedule open.  Nothing refuted.
+`isDisjunctive_four_of_frames` remains CONDITIONAL on `SeparatingFrameExists`.
+
+## Lap 7b addendum — `farAvg` DISCHARGED (`G4FarTail.lean`)
+
+`farAvg_le`: `farAvg ≤ 2^K 4^{−J}((farC + 2J + 2)/3 + 2/9)/log 2` with
+`farC = log((X+Dm)/|P|) + log(log(X+Dm)+1)`; via `sum_omegaR_add_le` (AP-mean of `ω` from
+`2^ω ≤ d`, Jensen by hand, `∑ d(m) ≤ N(log N+1)`).  **The remote-cutoff plan below was
+unnecessary** — growth in the shift is logarithmic and `4^{−j}` absorbs it.
+`gridFrame_propD_of_bounds` gives `PropD` from the two closed forms.  §4D is DONE modulo the
+§5 parameter inequalities.  Next: `PropJackson`, then the B assembly, then §5.
+
+## Resume here (superseded by the addendum above for item 1)
+
+1. **`farAvg`** (`G4Remainder.farAvg`): `|farPart n a| ≤ 2^K · ∑_{j>J} ω(n+ρ_{α,j})/4^j`;
+   bound `E_n ω(n+ρ)` on the AP by `log(E d)/log 2` via `2^ω ≤ d` and Jensen-by-hand, and
+   `∑_{m<N} d(m) ≤ N(log N+1)` (`∑_k ⌊N/k⌋`).  Mind that `ρ_{α,j}` grows with `j`: bound
+   `E ω(n+ρ_{α,j}) ≤ O(log(X + ρ_{α,j}))/log 2` and sum `4^{−j} log(jd_α + X)` — converges to
+   `O(4^{−J}(J + log X + log d))`; that `log X = e^L` factor is fine only because `4^{−J}` with
+   `J = ⌈3 log₂ L⌉` … CHECK: `4^{−J} log X = L^{−6} e^{L}` is NOT small.  The brief's far tail
+   uses "the progression mean of ω up to the remote cutoff and a pointwise logarithmic bound
+   beyond it" — the remote cutoff must be `j ≈ log X`-ish, and for `J < j ≤ j_remote` the
+   AP-mean `O(L)` gives `2^K 4^{−J} L = o(η)`; beyond `j_remote`, `ω(m) ≤ log m/log 2` with
+   `m ≤ X + j d`, giving `∑_{j>j_rem} 4^{−j} log(jd+X)` tiny.  So the split is `J < j ≤ j_rem`
+   (AP mean) and `j > j_rem` (pointwise log).  Define `j_rem` in the module, not in §5.
+2. `PropJackson`, B assembly, §5 schedule.
+
+## Final state of this lap (read this first next lap)
+
+**§4D is closed as mathematics.**  `gridFrame_propD_of_bounds` (`G4FarTail.lean`) yields
+`PropD (δbig + δfar)` from two real inequalities:
+
+    √(4(1+log⌊log₂Y⌋−log⌊log₂R⌋)·8^{−K}/15 + 2Y²(2^{−K}/3)²/|P|) + (log Mx/log Y)·2^{−K}/3 ≤ δbig·εη
+    2^K·4^{−(K+N)}·((farC + 2(K+N) + 2)/3 + 2/9)/log 2                                   ≤ δfar·εη
+
+with `farC = log((X+Dm)/|P|) + log(log(X+Dm)+1)`, `Dm ≥ every d_α`, `Mx ≥ every n + ρ_i` on the
+sample, `2 ≤ R ≤ Y`.  These are §5's job.
+
+**Dependency map**: `PropA` ✅ · `PropC` ✅ · `PropD` ✅ (modulo the two §5 inequalities) ·
+`PropB` open (all inputs proved; assembly = Markov + torus marginals + finite unions, steps in
+`archive/handoff/HANDOFF-2026-09-14-g4-lap2.md`) · `PropJackson` open (zero laps) · §5 schedule open.
+Nothing refuted.  `isDisjunctive_four_of_frames` is CONDITIONAL on `SeparatingFrameExists`.
+
+**Next lap, per `DIRECTION.md` ordering**: (1) `PropJackson` — product Jackson kernel on
+`Torus r`, one-coordinate first moment `O(1/D)`, the average metric makes `κ = O(1/(εηD))`
+dimension-free; (2) the B assembly; (3) the §5 module instantiating the two §4D inequalities
+(`R = X^{1/(20M)}`, `Y = X^{1/100}`, `Mx = X + (K+N)·Dm`, `|P| ≥ X/P₀ − 1`, draft (3.2) sizes for
+`P₀`, `Dm`), with `η = 2^{−K/4}`; the paper check in `PENDING_WORK.md` (lap 7) says both close
+because `∑_{R<p≤Y}1/p = O(log M)` — the `R` cutoff is load-bearing for D.

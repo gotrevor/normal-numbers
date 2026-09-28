@@ -31,7 +31,7 @@ the interface, not the missing cancellation.
 
 The lower Brun weights, dimension input for h/p, actual CRT/sifted counts,
 R^2 remainder and lower-only probability transfer are proved.  Current
-state/cardinality lap: KICKOFF-radical-state-count.md.  Re-read its latest
+state/cardinality lap: archive/kickoff/KICKOFF-radical-state-count.md.  Re-read its latest
 handoff before assigning anything already done.
 
 Fable's useful work here is the end-to-end mathematics:
@@ -60,7 +60,7 @@ exact counterexample growth regime, not another unsupported claim.
 ## Lane B: G4, genuinely new cancellation
 
 **Status 2026-09-22 (Ren/Fable, one invention + one adversarial round):** no new mechanism; verdict and negative
-inventory in `OBSTRUCTION-2026-09-22-g4-lane-b-invention-round.md` (probe 14 `probes/rotation_and_resonance.py`).
+inventory in `archive/findings/OBSTRUCTION-2026-09-22-g4-lane-b-invention-round.md` (probe 14 `probes/rotation_and_resonance.py`).
 Resonance arithmetic below verified.  Surviving reduction: tail sites with `16^j >> h^2 loglog M` are deterministic
 (Turan-Kubilius), so the window is `K ~ (1/2) log_4 loglog M` with a unimodular rotation - a rung, not a node,
 not fired.  Gate for any future candidate: `h = 2, k = 2` at natural density on every scale.
@@ -87,8 +87,8 @@ Require any candidate estimate to specify:
 4. treatment of resonant frequencies (4, 3, 12), not just h=1;
 5. a genuinely new analytic input, not renamed rough-part independence.
 
-Read LITERATURE-2026-09-20-prefixdecay-sweep.md and the retired routes in
-DESIGN-2026-09-19-bcr-wiring.md before proposing machinery.  As primary-source
+Read archive/findings/LITERATURE-2026-09-20-prefixdecay-sweep.md and the retired routes in
+archive/findings/DESIGN-2026-09-19-bcr-wiring.md before proposing machinery.  As primary-source
 calibration, Tao-Teravainen 1809.02518 distinguishes almost-all ordinary
 scales from logarithmic averages: https://arxiv.org/html/1809.02518 .
 Do not cite that paper as all-scale/growing-k cancellation.

@@ -43,7 +43,7 @@ Consequences:
   0011, 0100, 1010, 1101 and −ε on 0010, 0101, 1011, 1100 (ε = 1/16 kills the second four).
   Base 3 is free already at L = 2 (dimension 1: cyclic flow 0→1→2→0).
 - Lean: `src/NormalNumbers/AbelianNormal.lean` (headline iff, `rigid_three`, `separation_four`);
-  kickoff `KICKOFF-2026-09-23-abelian-normal.md`.
+  kickoff `archive/kickoff/KICKOFF-2026-09-23-abelian-normal.md`.
 
 ## The paper vs our base-2 facts (read in full 2026-09-23)
 

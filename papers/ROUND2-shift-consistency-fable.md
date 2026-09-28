@@ -215,7 +215,7 @@ Two consequences for how the crux should be read.
 
 ## 5. Retraction
 
-My `OBSTRUCTION-2026-09-22-g4-lane-b-invention-round.md`, section 8 (late addition), named the missing input of
+My `archive/findings/OBSTRUCTION-2026-09-22-g4-lane-b-invention-round.md`, section 8 (late addition), named the missing input of
 the Riesz countermodel as "the exact orbit relation `4 T_k(n) - T_{k-1}(n+1) = omega(n+1)` (shift consistency
 across rows) and multiplicativity".  Lemma 1.1 shows the orbit relation holds for EVERY nonnegative integer
 sequence, and Theorem 3.1 exhibits sequences satisfying it exactly, with all the summaries, and no scheduled

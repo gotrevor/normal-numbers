@@ -1,11 +1,21 @@
-# Literature review — route synthesis for the B5′ witness
+# Literature review — route synthesis, one chapter per campaign
 
-*Created 2026-08-23 (reflection lap) from the on-disk `papers/` corpus. This is
-the route-oriented read: what the sources COLLECTIVELY say about the open
-strategic questions, not a per-paper summary (those are the sibling `.md`s).
-Keep it current — the next reflection lap inherits THIS read.*
+The route-oriented read: what the on-disk `papers/` corpus collectively says about each
+campaign's strategic questions (per-paper notes are the sibling `.md`s).  A reflection lap
+updates its campaign's chapter in place; git holds the superseded reads.
 
-## Casting-out chapter (C1/C2/C3) — route synthesis (2026-09-25 DEEP REFLECTION lap 61) ⚠️ READ FIRST
+| Chapter | Campaign state (2026-09-27) |
+|---|---|
+| Casting-out (C1/C2/C3) | live - C1/C3 crux leaves open, see `STATUS.md` |
+| C3/MRT | live - conditional headline `conjC3_of_geom_input_band` |
+| Elliott | live - one hypothesis left, `ZetaLogDerivExponent θ<1` |
+| Campaign B | closed 2026-09-20 |
+| Entropy expedition | closed 2026-09-15 (`IsNormal 2 fullRealW`) |
+| G4 disjunctivity | closed 2026-09-14 |
+| Mahler | closed; `exists_prime_nonresidue` stays open |
+| B5′ / normality (from "The strategic question" on) | closed |
+
+## Casting-out chapter (C1/C2/C3) — route synthesis (2026-09-25 DEEP REFLECTION lap 61)
 
 *This chapter is the current read for the `wip/twopoint-avg` casting-out swings and it **corrects a
 stale claim** in the Campaign-B chapter below.*
@@ -87,7 +97,7 @@ theorem (Pilatte 2025 → TT2025 Thm 3.1).  Only "for every `N`" is still open.
    not on disk; cited second-hand through TT2025 Remarks 3.2.  Worth an `ON-LINE-REQUEST` only if
    the logarithmic rung is pursued.
 3. Nothing on disk about equidistribution of `{bⁿ·L_P}` itself, i.e. the C3 crux as a Weyl sum.
-## C3/MRT chapter — route synthesis (2026-09-25 DEEP REFLECTION lap 60) ← **CURRENT READ**
+## C3/MRT chapter — route synthesis (2026-09-25 DEEP REFLECTION lap 60)
 
 *This chapter supersedes the B-chapter's "TT 2512.01739 … still not on disk; still not a
 prerequisite" line: the text extract IS on disk
@@ -153,7 +163,7 @@ unable to remove the exceptional set in Theorem 1.7."
   published statement, which is (2), not the dependency's `Prop`.
 * The `K^{K²}` budget and the `exp(−C(log log log N)⁴)` decay class are artefacts of the
   complete-multiplicativity hypothesis in the current anchor (see the table in (2) and
-  `ROUTE-ESCALATION-2026-09-25-c3mrt.md` §2a).  They are not "the distance to the literature".
+  `archive/findings/ROUTE-ESCALATION-2026-09-25-c3mrt.md` §2a).  They are not "the distance to the literature".
 * TT §5's two-point reduction (3) does **not** transfer to an unconditional Weyl bound: the
   variance shrinkage is bought with the rationality hypothesis (the dilation identity
   `ω(n+ph) = ω(n/p+h) + 1 − 1_{p²|n+ph}` applied at `2^K` distinct primes).  Assessed and refuted
@@ -167,7 +177,7 @@ unable to remove the exceptional set in Theorem 1.7."
    qualitative predecessor.  Not on disk; would matter only if the equidistributed branch of
    Thm 3.1 is ever needed (the campaign uses the non-pretentious branch).
 3. Nothing on disk about **unbounded-order** correlations; per (4) nothing is expected.
-## Elliott chapter — route synthesis (2026-09-25 DEEP REFLECTION lap 112, SUPERSEDES lap 54 below)
+## Elliott chapter — route synthesis (2026-09-25 DEEP REFLECTION lap 112)
 
 *Read this first for the LIVE campaign.  The lap-54 section below is kept for the fidelity and
 precedent records, which still hold; its route table is stale (it predates the lap-92 refutation).*
@@ -243,72 +253,6 @@ Poussin obligation of the moderate band **without any citation**.  ⚠ `import
 PrimeNumberTheoremAnd.ZetaBounds` fails (a shadowing `lean_lib` in `lean-proofs-latest`); the
 working import is `import PNTPort.ZetaBounds`.
 
-## Elliott chapter — route synthesis (2026-09-25 DEEP REFLECTION lap 54)
-
-*Added this lap.  Read this first for the LIVE campaign (Tao 2016 Thm 1.3, worktree `nn-elliott`,
-branch `wip/elliott-port`).  The Campaign B chapter below is the previous campaign's read.*
-
-### What the on-disk corpus contains on this
-
-**No Tao 2016 PDF on disk.**  `papers/` has `tao-teravainen-2025-quantitative-correlations.txt`
-and `kmt-2023-multiplicative-correlations.txt` (both adjacent, neither is arXiv:1509.05422) and
-`matomaki-teravainen-2023-products-of-primes-in-ap.txt`.  Stated plainly so no lap mistakes
-"nothing on disk" for "nothing exists": the source of record for the campaign is the **dependency's
-own Lean formalisation** (`.lake/packages/lean-proofs-latest/src/latest/ErdosProblems/Erdos67b/`),
-whose `LogElliott.lean` states the target and whose `ElliottComplete.lean` proves the unit-circle
-case with the full graph/Fourier + MRT + entropy-decrement apparatus.  That is the template, and
-it is machine-checked, which is a stronger anchor than prose.
-
-### Source-vs-Lean fidelity, checked this lap
-
-Tao 2016 Thm 1.3 (from the statement as universally quoted): `a₁,a₂ ∈ ℕ`, `b₁,b₂ ∈ ℤ`,
-`a₁b₂ − a₂b₁ ≠ 0`; `ε > 0`; `A` large in terms of `ε,a₁,a₂,b₁,b₂`; `x ≥ w ≥ A`; `g₁,g₂` **multiplicative**
-with `|g_i| ≤ 1`; `g₁` non-pretentious (`D(g₁,χ·n^{it};x)² ≥ A` for all `χ` of period `≤ A`, all
-`|t| ≤ Ax`).  Conclusion `|∑_{x/w ≤ n ≤ x} g₁(a₁n+b₁)g₂(a₂n+b₂)/n| ≤ ε log w`.
-
-The Lean `Erdos67b.NonasymptoticLogElliott` matches this **except** that its multiplicativity
-predicate `IsMultiplicativeOnPositiveInt` has **no coprimality hypothesis** and is therefore
-*complete* multiplicativity.  The Lean `Prop` is thus the **completely multiplicative case** of
-Thm 1.3 — a genuine restriction, and the dependency's own docstring ("exactly as in Tao's
-Theorem 1.3") overstates it.  Recorded, not repaired: this repo does not edit the dependency.
-
-### Route judgement, re-grounded against the compiler (not the handoffs)
-
-| axis | status | grounding |
-|---|---|---|
-| crux: two independent functions + common dilation | **PROVED** | `ElliottDilatedRung.dilatedCMLogElliott`, trust triple |
-| Tao's full affine generality from a common dilation | **PROVED, free** | `ElliottLadder.affineCM_of_dilatedCM` |
-| dilation-*slice* route | **REFUTED** (lap 16) | `ElliottDilatedSlice.lean`; `a ∣ n − p c₁` does not factor out of the prime sum |
-| Dirichlet-character route to the AP restriction | **REFUTED as circular** (lap 15) | `PENDING_WORK` lap-15 section |
-| leaf 2, Case A (large pretentious defect) | **thick window PROVED**, thin window one lap out | `ElliottCaseA.exists_caseA_threshold`; `ElliottHall.sum_Icc_dyadic_le` |
-| Hall / Halberstam–Richert Thm 01 | **inherited, do not re-derive** | `Erdos448.HalberstamComplete448.halberstam_richert_explicit` in the dependency |
-| leaf 2, Case B via `‖g̃‖ = 1 ⋆ v` unimodularisation | **REFUTED this lap** | uniform-tail failure; counterexample `g₁ = λ·h`, `h(p)=0` on primes `> D` with `∑1/p = C` |
-| leaf 2, Case B via two-point unimodular cover | **live, elementary, hand-verified** | `Z_± = z ± i√(1−‖z‖²)w(z)`; see `PENDING_WORK` → Reflection 2026-09-25 |
-
-### Precedent check (originated vs inherited)
-
-* The *reduction* "1-bounded multiplicative ⟹ unimodular completely multiplicative" is **not** a
-  standard step in the literature: Tao proves Thm 1.3 directly for 1-bounded multiplicative
-  functions, and the whole reduction exists here only because the dependency's proved case is the
-  unimodular completely multiplicative one.  So this leaf is **originated**, which is exactly why
-  its documented form contained a false step and why a reflection lap had to catch it.
-* The two-point unimodular cover (every `|z| ≤ 1` is the midpoint of two unimodular numbers,
-  applied independently per prime power to average a bounded multiplicative function over
-  unimodular multiplicative ones) is elementary and surely folklore; no precedent search made.
-  The *ordering* observation — randomise to a **merely** multiplicative target first, because the
-  completely multiplicative target forces the Poisson kernel and hence infinite support — is the
-  non-obvious part and is what makes the step finite.
-* The pretentious triangle inequality for **1-bounded** (not unimodular) arguments is classical
-  (Granville–Soundararajan); the dependency only has the all-unimodular form, so the 1-bounded
-  version (constant 3 suffices) must be re-proved in `src/`.
-
-### What is missing that would change the route
-
-A copy of arXiv:1509.05422 would let a lap check whether Tao's own §2 handles the non-unimodular
-case by a device cheaper than the cover above (he does not need one — he never reduces to the
-unimodular case — but his handling of `g(pn) = g(p)g(n)` failing at `p ∣ n` is the model for the
-fallback route if trigger ET-1 fires).  Worth an `ON-LINE-REQUEST.md` entry only if ET-1 fires.
-
 ## Campaign B chapter — route synthesis (2026-09-16 DEEP REFLECTION lap)
 
 *Added this lap.  Read this first: it is the current read, and it supersedes the "live campaign"
@@ -340,7 +284,7 @@ two-point correlation input.  Stated plainly so no lap mistakes "nothing on disk
 | `c` unbounded (polylog class) | **proved** | `isDisjunctive_weight_logLogPow`, trust triple |
 | prime subset with a Mertens rate | **proved** | `isDisjunctive_subsetWeight_logLogPow`; Mertens-in-AP is a *theorem* here (`G4MertensAP`), built from mathlib's `LSeries/PrimesInAP` + Chebyshev + Abel summation, not cited |
 | general bounded `a` | **open, and this lap's probe says FEASIBLE** | `scratch/ProbeA.lean`: the §4C seed is unchanged under `q ↦ a_p q`; cost = `⌈log_bb Ca⌉` on the layer budget |
-| `c_p ≍ log p` | **proved obstruction** of this schedule family | `DESIGN-2026-09-16-prime-subset.md` (`cMax ≈ 2^{21K²}` vs an exponential junk budget) |
+| `c_p ≍ log p` | **proved obstruction** of this schedule family | `archive/findings/DESIGN-2026-09-16-prime-subset.md` (`cMax ≈ 2^{21K²}` vs an exponential junk budget) |
 | divergence without a rate | **proved limitation** of this route (not of the theorem) | ibid.: the demand `exp(O(K log K))` must be met before the cap `exp(Θ(K²))` |
 | base 2 | **proved dead for the whole design family** | `G4RowMassOptimal.two_pow_le_sum_abs` ⇒ `one_le_rowMass_two` |
 | normality rather than disjunctivity | **proved dead on this mechanism** | `qForces_normal_iff_density_one`, `not_qForces_normal_at_pow` |
@@ -363,17 +307,6 @@ two-point correlation input.  Stated plainly so no lap mistakes "nothing on disk
 2. Any source on disjunctivity/normality of generating series of **additive functions**.  If one
    exists it is the natural place to check the campaign's stretch statement (general additive `f`).
    Worth an `ON-LINE-REQUEST` *only* if a novelty claim were ever contemplated, which it is not.
-
-## ⚠️ Two campaigns live in this file
-
-The synthesis below (`## The strategic question` onward) is the **B5′ / normality**
-campaign — Becher–Yuhjtman, Scheerer, image-Khinchin.  That campaign is **CLOSED
-and axiom-clean**; keep the section as the record of how its route was chosen.
-The **live** campaign since 2026-09-14 is the **entropy expedition** (its chapter is the section
-immediately below; the G4 disjunctivity chapter that follows it is CLOSED).  Its route synthesis is the
-section immediately below (added 2026-09-14 reflection lap; it was missing, which is why
-nine grind laps judged the route from handoffs instead of from sources).  The
-Mahler-multiplier chapter that follows it is COMPLETE and kept for provenance.
 
 ## Entropy expedition chapter — route synthesis (2026-09-14 DEEP REFLECTION lap 37)
 

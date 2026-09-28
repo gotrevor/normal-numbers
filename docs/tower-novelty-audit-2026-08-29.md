@@ -1,7 +1,7 @@
 # Tower novelty audit: what is actually new? 🔎
 
 **Audit completed 2026-08-30.**  This is the durable literature and proof audit for
-`EVIDENCE-2026-08-29-tower-formalization.md`.  It separates four questions that the
+`archive/findings/EVIDENCE-2026-08-29-tower-formalization.md`.  It separates four questions that the
 original evidence dossier blurred together:
 
 1. does the finite graph computation say what the prose claims?

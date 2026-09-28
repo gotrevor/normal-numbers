@@ -3,7 +3,7 @@
 **Campaign**: discharge the 12 sorries in `src/NormalNumbers/CFCylinder.lean`
 (work package W1 of expedition B5′ — see `HANDOFF.md` for the route and
 `KHINCHIN.md` for the full plan).  Everything else in `src/` is sorry-free
-(Stoneham ✅ landed 2026-08-23; its record lives in `ROADMAP.md` and
+(Stoneham ✅ landed 2026-08-23; its record lives in `archive/findings/ROADMAP.md` and
 `archive/handoff/`).
 
 **Open: NONE — 12/12 discharged, all axiom-clean

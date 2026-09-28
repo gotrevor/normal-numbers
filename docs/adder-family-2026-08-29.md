@@ -3,7 +3,7 @@
 2026-08-29, fifth story.  Sequel to `docs/adder-collapse-hunt-2026-08-29.md`.  Probe:
 `experiments/adder_family_enum.py` (imports the hunt's verified core; every collapse
 below passed the exact integer-graph check - all still one implementation agreeing with
-itself; the Lean pipeline in `BRIEF-adder-disjunction-formalization.md` remains the
+itself; the Lean pipeline in `archive/findings/BRIEF-adder-disjunction-formalization.md` remains the
 definitive referee, and it is family-agnostic: swap certificate data and statement).
 
 ## The reframing first: every collapse is a UNIVERSAL theorem 🌍

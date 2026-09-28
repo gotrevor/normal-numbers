@@ -1,6 +1,6 @@
 # New-math conjecture slate — 2026-08-29 evening session 🔨🕸️
 
-Forged per `HANDOFF-2026-08-29-next-lap-new-math.md` under the conjecture-graph objective
+Forged per `archive/handoff/HANDOFF-2026-08-29-next-lap-new-math.md` under the conjecture-graph objective
 (DIRECTION.md): every candidate weighed by its probability of producing new mathematics about the
 normality/disjunctivity of non-contrived constants.  Probes ran this session; Lean freezes are
 next-lap work.  ⚠️ **Novelty status: unswept except where the 2026-08-29 lit sweep already

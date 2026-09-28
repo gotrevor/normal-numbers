@@ -57,7 +57,7 @@ They credit **Furstenberg**, via a result of **Glasner** (Israel J. Math. 32
 GAFA 2 (1992), Cor. 7.2 for a short finiteness proof of `M(g,k)`.
 
 ✅ **Our Dirichlet + arithmetic-progression route is a different proof**, so the
-novelty note in `BRIEF-literature-statements.md` is safe on the *method* axis —
+novelty note in `archive/findings/BRIEF-literature-statements.md` is safe on the *method* axis —
 just don't claim novelty for the *statement* shape.
 
 ---
@@ -119,7 +119,7 @@ compare against.
 
 ## 3. What to change in the repo
 
-1. **`MahlerMultiplier.lean` / `BRIEF-literature-statements.md`** — keep the
+1. **`MahlerMultiplier.lean` / `archive/findings/BRIEF-literature-statements.md`** — keep the
    upper-bound novelty claim (`g^(k+1)` vs published `2g^(k+1)`), but cite the
    Case-I parenthetical so the delta is stated honestly as "removes the Case-IV
    factor 2."  Method novelty (Dirichlet + AP vs orbit-closure/ε-nets) is real.

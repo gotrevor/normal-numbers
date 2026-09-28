@@ -1,6 +1,8 @@
 # normal-numbers
 
-> **Current project map (26 September 2026):** [overview and diagram](OVERVIEW.md) · [browser edition](OVERVIEW.html).  What is proved, where the gaps are, and where we are pressing.
+> **Current state and open fronts: [STATUS.md](STATUS.md)** (post-merge, 27 September 2026); the queue is [PENDING_WORK.md](PENDING_WORK.md).
+>
+> **Project map (26 September 2026):** [overview and diagram](OVERVIEW.md) · [browser edition](OVERVIEW.html).  What is proved, where the gaps are, and where we are pressing.
 
 A Lean 4 / [Mathlib](https://github.com/leanprover-community/mathlib4) programme
 on **normal numbers**: numbers whose base-`b` digit expansion contains every
@@ -105,7 +107,7 @@ binary, four bits per hex digit.  The swap keeps the one-count law of every sub-
 4-bit block, so window one-counts stay binomial, but the block `0011` occurs with frequency 5/64
 instead of 1/16.  It adapts Campbell's base-10 construction (arXiv:2603.04396), whose pair swap
 has no base-2 analogue at block length 2.  Write-up:
-[`DESIGN-2026-09-23-binary-abelian-nonnormal.md`](DESIGN-2026-09-23-binary-abelian-nonnormal.md).
+[`archive/findings/DESIGN-2026-09-23-binary-abelian-nonnormal.md`](archive/findings/DESIGN-2026-09-23-binary-abelian-nonnormal.md).
 
 ## How this was built
 

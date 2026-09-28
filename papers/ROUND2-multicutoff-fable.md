@@ -404,7 +404,7 @@ separates the two, so the inclusion left open in §0 is now settled in the direc
 consumer (Astra 11.3), not a necessary condition for normality.  Astra's §12 shows the global
 `S_P(N) = o(L₂N)` does **not** suffice for this consumer (width-1 bursts in `t = L₂x`).
 
-**Formalisation target** (authorised by Trevor 2026-09-22; `KICKOFF-2026-09-22-multicutoff-lean.md`):
+**Formalisation target** (authorised by Trevor 2026-09-22; `archive/kickoff/KICKOFF-2026-09-22-multicutoff-lean.md`):
 
     def SqrtFreshMassZero (P : ℕ → Prop) [DecidablePred P] : Prop :=
       Tendsto (fun N : ℕ => recipSumIoc P (Nat.sqrt N) N) atTop (𝓝 0)
@@ -419,4 +419,4 @@ equivalence (`PrimeModelSqrtFreshBlocks.lean`), which shows the §10 prime-burst
 satisfies the headline hypothesis.  Nothing in either paper was refuted; the one tacit step made
 explicit is the bound `j₀ ≤ log₄|h|` on Theorem A's contracting site
 (`PrimeModelSiteIndexBound.lean`), without which the old-mass term sits at the bottom cutoff and
-needs a root chain of length `≍ L₃N`.  Ledger: `HANDOFF-2026-09-23-theoremC-reach-and-crosscheck.md`.
+needs a root chain of length `≍ L₃N`.  Ledger: `archive/handoff/HANDOFF-2026-09-23-theoremC-reach-and-crosscheck.md`.

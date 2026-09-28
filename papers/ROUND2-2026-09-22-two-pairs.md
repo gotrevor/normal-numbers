@@ -127,7 +127,7 @@ inside the already-refuted common-cutoff majorants.
 - `papers/ASTRA-2026-09-22-g4-riesz-countermodel.md`, all sections, especially
   the unfinished extension at the end.  Sections 7-8 postdate its first
   referee reply; audit only the parts you actually use.
-- `OBSTRUCTION-2026-09-22-g4-lane-b-invention-round.md`
+- `archive/findings/OBSTRUCTION-2026-09-22-g4-lane-b-invention-round.md`
 - `src/NormalNumbers/G4PrefixDecayAudit.lean` and the `windowK` definition.
 - The final `agent-mail/g4/` exchanges for any intervening completion.
 

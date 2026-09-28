@@ -414,7 +414,7 @@ Fable checked and accepted each of these load-bearing points:
 
 No numerical probe is needed for these identities.  No assertion in this
 note relies on a transient numerical test.  The paired review is complete.  Fable's subsequent formalization is tracked
-in `KICKOFF-2026-09-22-multicutoff-lean.md`; its implementation status is
+in `archive/kickoff/KICKOFF-2026-09-22-multicutoff-lean.md`; its implementation status is
 separate from this paper.
 
 
@@ -466,7 +466,7 @@ of every possible phase-sensitive replacement.
 Status of this continuation: paper-proved and pair-reviewed.  Fable accepted
 Sections 11-12 in `20260922T211154Z-fable-multicutoff-3afe989b-d1e2-4e07-8767-3950afd6e8ef.md`,
 and adopted (11.1) as the headline hypothesis in
-`KICKOFF-2026-09-22-multicutoff-lean.md`.  Fable coordinates that formalization;
+`archive/kickoff/KICKOFF-2026-09-22-multicutoff-lean.md`.  Fable coordinates that formalization;
 Astra has not launched a second process or edited its Lean modules.
 
 Define, with exact natural-number endpoints,

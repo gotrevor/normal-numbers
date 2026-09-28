@@ -66,5 +66,5 @@ have `d_j = 15 > 5`, each of mass `1/15`.
   `papers/prime-model-radical.md`.
 * **The retained `L¹` discrepancy `δ`.**  A hypothesis of the transfer; supplying
   it for the actual arithmetic law is the sieve input (two-sided fundamental
-  lemma), a separate campaign — see item 3 of `HANDOFF-radical.md`.
+  lemma), a separate campaign — see item 3 of `archive/handoff/HANDOFF-radical.md`.
 * Neither is hidden in an axiom.
