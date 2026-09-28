@@ -671,3 +671,4 @@ import NormalNumbers.VandeheyRaney
 import NormalNumbers.VandeheySmith
 import NormalNumbers.VandeheySerret
 import NormalNumbers.VandeheyLeafReduction
+import NormalNumbers.VandeheyRescale
