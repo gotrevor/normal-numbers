@@ -160,8 +160,8 @@ reference weight is the pin's constant `c`, so it mentions neither `x` nor the i
 exactly the `VandeheyUniformFreq` contract. -/
 theorem classEquidistribution_of_pin [Nonempty S] (δ : S → ℕ → S) (t : S) (q : List ℕ)
     {c C θ : ℝ} (hC : 0 ≤ C) (hθ0 : 0 ≤ θ) (hθ1 : θ < 1) (hc0 : 0 ≤ c) (hc1 : c ≤ 1)
-    (hpin : ∀ (n : ℕ) (e s : S) (τ : ℝ), τ ∈ Set.Icc (0 : ℝ) 1 →
-      |stateHorizonIntegral δ (cfCylinder q) n e s τ
+    (hpin : ∀ (n : ℕ) (e : S) (τ : ℝ), τ ∈ Set.Icc (0 : ℝ) 1 →
+      |stateHorizonIntegral δ (cfCylinder q) n e t τ
           - c * (gaussMeasure (cfCylinder q)).toReal|
         ≤ C * θ ^ n * (gaussMeasure (cfCylinder q)).toReal) :
     VandeheyCocycle.ClassEquidistribution δ t q := by
@@ -296,7 +296,8 @@ theorem classEquidistribution_classStep (D : ℕ) [Fact (Nat.Prime D)]
     rw [inv_le_one_iff₀]
     right
     exact_mod_cast hcard
-  exact classEquidistribution_of_pin (VandeheyClass.classStep D) t q hC hθ0 hθ1 hc0 hc1 hpin
+  exact classEquidistribution_of_pin (VandeheyClass.classStep D) t q hC hθ0 hθ1 hc0 hc1
+    (fun n e τ hτ => hpin n e t τ hτ)
 
 /-- **The joint (window, class) frequency converges, to an `x`-independent value.**  Combining
 `classEquidistribution_classStep` with the already-proved transfer principle: along every
@@ -309,6 +310,49 @@ theorem tendsto_jointCount_classStep (D : ℕ) [Fact (Nat.Prime D)]
         (nhds (L * (gaussMeasure (cfCylinder q)).toReal)) :=
   VandeheyCocycle.tendsto_jointCount_of_classEquidistribution
     (classEquidistribution_classStep D t q) hq hqpos
+
+
+/-! ## The general engine: equidistribution from transitivity alone
+
+With `VandeheyState.stateHorizonIntegral_pin_of_reach` in hand, `ClassEquidistribution` needs
+**only** that the automaton is transitive with a uniform word length.  No bijectivity, hence no
+uniform invariant law, hence no computation of the limiting constant — `classEquidistribution_of_pin`
+was always willing to take an unnamed `c ∈ [0,1]`.
+
+This is the form the Raney transducer of `VandeheyRaney.lean` will be fed to: its digit steps
+are demonstrably *not* injective (`Mat2.vandeheyStep_not_terminating`'s companion probe), so
+the `classStep` route through `VandeheyRenewal.classStep_bijective` is unavailable to it.
+-/
+
+/-- **`ClassEquidistribution` from transitivity alone.**  A finite automaton reading CF digits,
+in which every ordered pair of states is joined by a genuine word of one fixed length `M ≥ 2`,
+equidistributes jointly with digit windows along every CF-normal orbit. -/
+theorem classEquidistribution_of_reach [Nonempty S] (δ : S → ℕ → S) (t : S) (q : List ℕ)
+    (M : ℕ) (hM : 2 ≤ M)
+    (hreach : ∀ d s : S, ∃ w : List ℕ, w.length = M ∧ (∀ a ∈ w, 1 ≤ a) ∧
+      runState δ d w = s) :
+    VandeheyCocycle.ClassEquidistribution δ t q := by
+  obtain ⟨c, C, θ, hc0, hc1, hC, hθ0, hθ1, hpin⟩ :=
+    VandeheyState.stateHorizonIntegral_pin_of_reach δ (measurableSet_cfCylinder q)
+      (cfCylinder_subset_Ioo q) M hM hreach t
+  exact classEquidistribution_of_pin δ t q hC hθ0 hθ1 hc0 hc1 hpin
+
+/-- **The joint (window, state) frequency converges, for any transitive finite automaton.**
+The limit mentions neither the CF-normal point `x` nor the initial state.  This is exactly the
+`VandeheyUniformFreq` contract, one automaton at a time. -/
+theorem tendsto_jointCount_of_reach [Nonempty S] (δ : S → ℕ → S) (t : S)
+    (M : ℕ) (hM : 2 ≤ M)
+    (hreach : ∀ d s : S, ∃ w : List ℕ, w.length = M ∧ (∀ a ∈ w, 1 ≤ a) ∧
+      runState δ d w = s)
+    {q : List ℕ} (hq : q ≠ []) (hqpos : ∀ a ∈ q, 1 ≤ a) :
+    ∃ L : ℝ, ∀ (s₀ : S) (x : ℝ), IsCFNormal x →
+      Tendsto (fun n => (jointCount δ s₀ t q x n : ℝ) / n) atTop
+        (nhds (L * (gaussMeasure (cfCylinder q)).toReal)) :=
+  VandeheyCocycle.tendsto_jointCount_of_classEquidistribution
+    (classEquidistribution_of_reach δ t q M hM hreach) hq hqpos
+
+#print axioms classEquidistribution_of_reach
+#print axioms tendsto_jointCount_of_reach
 
 end VandeheyTwo
 

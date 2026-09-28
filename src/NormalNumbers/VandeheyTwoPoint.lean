@@ -448,8 +448,8 @@ in the gap `n`. -/
 theorem abs_integral_devFun_mul_le (δ : S → ℕ → S) (d t : S) (q : List ℕ)
     {c C θ : ℝ} (hC : 0 ≤ C) (hθ0 : 0 ≤ θ)
     (hc0 : 0 ≤ c) (hc1 : c ≤ 1)
-    (hpin : ∀ (n : ℕ) (e s : S) (τ : ℝ), τ ∈ Set.Icc (0 : ℝ) 1 →
-      |stateHorizonIntegral δ (cfCylinder q) n e s τ
+    (hpin : ∀ (n : ℕ) (e : S) (τ : ℝ), τ ∈ Set.Icc (0 : ℝ) 1 →
+      |stateHorizonIntegral δ (cfCylinder q) n e t τ
           - c * (gaussMeasure (cfCylinder q)).toReal|
         ≤ C * θ ^ n * (gaussMeasure (cfCylinder q)).toReal)
     (k n : ℕ) :
@@ -482,7 +482,7 @@ theorem abs_integral_devFun_mul_le (δ : S → ℕ → S) (d t : S) (q : List �
   have hT1 : |(gaussMeasure (jointEvent δ d t q k ∩ jointEvent δ d t q (m + n))).toReal
       - c * γq * PJ| ≤ C * θ ^ n * γq * PJ := by
     rw [measure_congr (inter_jointEvent_ae_eq δ d t q (pastJoint_len δ d t) (jointEvent_ae_eq δ d t q k) n)]
-    exact abs_gaussMeasure_biUnion_state_sub_le δ hqm hpin n d t (Set.to_countable _)
+    exact abs_gaussMeasure_biUnion_state_sub_le δ hqm t hpin n d (Set.to_countable _)
       (pastJoint_len δ d t) (pastJoint_pos δ d t)
   have hT2 : |(gaussMeasure (jointEvent δ d t q k ∩ winEvent q (m + n))).toReal
       - γq * PJ| ≤ (79 / 100) ^ n * γq * PJ := by
@@ -493,7 +493,7 @@ theorem abs_integral_devFun_mul_le (δ : S → ℕ → S) (d t : S) (q : List �
   have hT3 : |(gaussMeasure (winEvent q k ∩ jointEvent δ d t q (m + n))).toReal
       - c * γq * PW| ≤ C * θ ^ n * γq * PW := by
     rw [measure_congr (inter_jointEvent_ae_eq δ d t q (pastWin_len) (winEvent_ae_eq q k) n)]
-    exact abs_gaussMeasure_biUnion_state_sub_le δ hqm hpin n d t (Set.to_countable _)
+    exact abs_gaussMeasure_biUnion_state_sub_le δ hqm t hpin n d (Set.to_countable _)
       pastWin_len pastWin_pos
   have hT4 : |(gaussMeasure (winEvent q k ∩ winEvent q (m + n))).toReal
       - γq * PW| ≤ (79 / 100) ^ n * γq * PW := by
@@ -625,8 +625,8 @@ private lemma sum_geom_le {ρ : ℝ} (hρ0 : 0 ≤ ρ) (hρ1 : ρ < 1) (F : Fins
 trivial when the windows overlap. -/
 theorem abs_integral_devFun_mul_le_gap (δ : S → ℕ → S) (d t : S) (q : List ℕ)
     {c C θ : ℝ} (hC : 0 ≤ C) (hθ0 : 0 ≤ θ) (hc0 : 0 ≤ c) (hc1 : c ≤ 1)
-    (hpin : ∀ (n : ℕ) (e s : S) (τ : ℝ), τ ∈ Set.Icc (0 : ℝ) 1 →
-      |stateHorizonIntegral δ (cfCylinder q) n e s τ
+    (hpin : ∀ (n : ℕ) (e : S) (τ : ℝ), τ ∈ Set.Icc (0 : ℝ) 1 →
+      |stateHorizonIntegral δ (cfCylinder q) n e t τ
           - c * (gaussMeasure (cfCylinder q)).toReal|
         ≤ C * θ ^ n * (gaussMeasure (cfCylinder q)).toReal)
     (k k' : ℕ) :
@@ -754,8 +754,8 @@ contribute.  This is the quantitative content that a *mean* bound could never gi
 what `ClassEquidistribution` needs. -/
 theorem integral_devAvg_sq_le (δ : S → ℕ → S) (d t : S) (q : List ℕ)
     {c C θ : ℝ} (hC : 0 ≤ C) (hθ0 : 0 ≤ θ) (hθ1 : θ < 1) (hc0 : 0 ≤ c) (hc1 : c ≤ 1)
-    (hpin : ∀ (n : ℕ) (e s : S) (τ : ℝ), τ ∈ Set.Icc (0 : ℝ) 1 →
-      |stateHorizonIntegral δ (cfCylinder q) n e s τ
+    (hpin : ∀ (n : ℕ) (e : S) (τ : ℝ), τ ∈ Set.Icc (0 : ℝ) 1 →
+      |stateHorizonIntegral δ (cfCylinder q) n e t τ
           - c * (gaussMeasure (cfCylinder q)).toReal|
         ≤ C * θ ^ n * (gaussMeasure (cfCylinder q)).toReal)
     {K : ℕ} (hK : 0 < K) :
@@ -1004,8 +1004,8 @@ length `K + |q|`, the `γ`-weighted total of `VandeheyCocycle.windowBound` is
 `O(|S|·√(1/K))` — uniformly in the family.  This is the input the orbit transfer needs. -/
 theorem sum_gaussMeasure_windowBound_le [Nonempty S] (δ : S → ℕ → S) (t : S) (q : List ℕ)
     {c C θ : ℝ} (hC : 0 ≤ C) (hθ0 : 0 ≤ θ) (hθ1 : θ < 1) (hc0 : 0 ≤ c) (hc1 : c ≤ 1)
-    (hpin : ∀ (n : ℕ) (e s : S) (τ : ℝ), τ ∈ Set.Icc (0 : ℝ) 1 →
-      |stateHorizonIntegral δ (cfCylinder q) n e s τ
+    (hpin : ∀ (n : ℕ) (e : S) (τ : ℝ), τ ∈ Set.Icc (0 : ℝ) 1 →
+      |stateHorizonIntegral δ (cfCylinder q) n e t τ
           - c * (gaussMeasure (cfCylinder q)).toReal|
         ≤ C * θ ^ n * (gaussMeasure (cfCylinder q)).toReal)
     {K : ℕ} (hK : 0 < K) (F : Finset (List ℕ))

@@ -332,11 +332,11 @@ The initial state of the automaton after the past word `v` is a free parameter `
 exactly the conditional statement a two-point correlation needs.  Feed it
 `stateHorizonIntegral_pin` with `c = (card S)⁻¹`. -/
 theorem abs_gaussMeasure_cylinder_state_sub_le (δ : S → ℕ → S) {A : Set ℝ}
-    (hA : MeasurableSet A) {c C θ : ℝ}
-    (hpin : ∀ (n : ℕ) (d s : S) (τ : ℝ), τ ∈ Set.Icc (0 : ℝ) 1 →
-      |stateHorizonIntegral δ A n d s τ - c * (gaussMeasure A).toReal|
+    (hA : MeasurableSet A) (t : S) {c C θ : ℝ}
+    (hpin : ∀ (n : ℕ) (d : S) (τ : ℝ), τ ∈ Set.Icc (0 : ℝ) 1 →
+      |stateHorizonIntegral δ A n d t τ - c * (gaussMeasure A).toReal|
         ≤ C * θ ^ n * (gaussMeasure A).toReal)
-    (n : ℕ) (e t : S) (v : List ℕ) (hpos : ∀ a ∈ v, 1 ≤ a) :
+    (n : ℕ) (e : S) (v : List ℕ) (hpos : ∀ a ∈ v, 1 ≤ a) :
     |(gaussMeasure (cfCylinder v ∩ (gaussMap^[v.length]) ⁻¹'
           stateHorizonSet δ A n e t)).toReal
         - c * (gaussMeasure A).toReal * (gaussMeasure (cfCylinder v)).toReal|
@@ -344,33 +344,33 @@ theorem abs_gaussMeasure_cylinder_state_sub_le (δ : S → ℕ → S) {A : Set �
   abs_gaussMeasure_cylinder_inter_sub_le (measurableSet_stateHorizonSet hA δ n e t)
     (stateHorizonSet_subset δ A n e t)
     (c := c * (gaussMeasure A).toReal) (E := C * θ ^ n * (gaussMeasure A).toReal)
-    (fun τ hτ => hpin n e t τ hτ) v hpos
+    (fun τ hτ => hpin n e τ hτ) v hpos
 
 /-- The family form of `abs_gaussMeasure_cylinder_state_sub_le`. -/
 theorem abs_gaussMeasure_familySetC_state_sub_le (δ : S → ℕ → S) {A : Set ℝ}
-    (hA : MeasurableSet A) {c C θ : ℝ}
-    (hpin : ∀ (n : ℕ) (d s : S) (τ : ℝ), τ ∈ Set.Icc (0 : ℝ) 1 →
-      |stateHorizonIntegral δ A n d s τ - c * (gaussMeasure A).toReal|
+    (hA : MeasurableSet A) (t : S) {c C θ : ℝ}
+    (hpin : ∀ (n : ℕ) (d : S) (τ : ℝ), τ ∈ Set.Icc (0 : ℝ) 1 →
+      |stateHorizonIntegral δ A n d t τ - c * (gaussMeasure A).toReal|
         ≤ C * θ ^ n * (gaussMeasure A).toReal)
-    (n : ℕ) (e t : S) {𝒮 : Set (List ℕ)} (hct : 𝒮.Countable) {m : ℕ}
+    (n : ℕ) (e : S) {𝒮 : Set (List ℕ)} (hct : 𝒮.Countable) {m : ℕ}
     (hlen : ∀ w ∈ 𝒮, w.length = m) (hposw : ∀ w ∈ 𝒮, ∀ a ∈ w, 1 ≤ a) :
     |(gaussMeasure (familySetC 𝒮 ∩ (gaussMap^[m]) ⁻¹' stateHorizonSet δ A n e t)).toReal
         - c * (gaussMeasure A).toReal * (gaussMeasure (familySetC 𝒮)).toReal|
       ≤ C * θ ^ n * (gaussMeasure A).toReal * (gaussMeasure (familySetC 𝒮)).toReal := by
   exact abs_gaussMeasure_familySetC_inter_sub_le hct hlen hposw
     (measurableSet_stateHorizonSet hA δ n e t) (stateHorizonSet_subset δ A n e t)
-    (fun τ hτ => hpin n e t τ hτ)
+    (fun τ hτ => hpin n e τ hτ)
 
 /-- The shape the two-point correlation actually uses: a countable past family `𝒱` of genuine
 length-`m` words, each cylinder paired with the future event **read from the state the automaton
 reaches after that very word**.  The pin's uniformity in the initial state makes the `v`-dependence
 free of charge. -/
 theorem abs_gaussMeasure_biUnion_state_sub_le (δ : S → ℕ → S) {A : Set ℝ}
-    (hA : MeasurableSet A) {c C θ : ℝ}
-    (hpin : ∀ (n : ℕ) (e s : S) (τ : ℝ), τ ∈ Set.Icc (0 : ℝ) 1 →
-      |stateHorizonIntegral δ A n e s τ - c * (gaussMeasure A).toReal|
+    (hA : MeasurableSet A) (t : S) {c C θ : ℝ}
+    (hpin : ∀ (n : ℕ) (e : S) (τ : ℝ), τ ∈ Set.Icc (0 : ℝ) 1 →
+      |stateHorizonIntegral δ A n e t τ - c * (gaussMeasure A).toReal|
         ≤ C * θ ^ n * (gaussMeasure A).toReal)
-    (n : ℕ) (d t : S) {𝒱 : Set (List ℕ)} (hct : 𝒱.Countable) {m : ℕ}
+    (n : ℕ) (d : S) {𝒱 : Set (List ℕ)} (hct : 𝒱.Countable) {m : ℕ}
     (hlen : ∀ w ∈ 𝒱, w.length = m) (hposw : ∀ w ∈ 𝒱, ∀ a ∈ w, 1 ≤ a) :
     |(gaussMeasure (⋃ v ∈ 𝒱, cfCylinder v ∩ (gaussMap^[m]) ⁻¹'
           stateHorizonSet δ A n (runState δ d v) t)).toReal
@@ -380,7 +380,7 @@ theorem abs_gaussMeasure_biUnion_state_sub_le (δ : S → ℕ → S) {A : Set �
     (fun v => stateHorizonSet δ A n (runState δ d v) t)
     (fun _ => measurableSet_stateHorizonSet hA δ n _ t)
     (fun _ => stateHorizonSet_subset δ A n _ t)
-    (fun v _ τ hτ => hpin n (runState δ d v) t τ hτ)
+    (fun v _ τ hτ => hpin n (runState δ d v) τ hτ)
 
 end VandeheyState
 
