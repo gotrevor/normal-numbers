@@ -676,3 +676,4 @@ import NormalNumbers.VandeheyOutputWord
 import NormalNumbers.VandeheyTrigger
 import NormalNumbers.VandeheyAssembly
 import NormalNumbers.VandeheyLRTransducer
+import NormalNumbers.VandeheyRunBound
