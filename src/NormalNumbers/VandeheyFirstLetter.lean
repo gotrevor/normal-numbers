@@ -189,6 +189,142 @@ theorem one_le_altOut_add (hD : 0 < D) (s : RState D × Bool) {j₁ j₂ : ℕ}
       omega
     omega
 
+/-! ## `hc`: the run rate is positive -/
+
+open Filter VandeheyAut
+
+lemma stateAt_lrB_succ (hD : 0 < D) (s₀ : RState D × Bool) (x : ℝ) (i : ℕ) :
+    stateAt (lrB hD) s₀ x (i + 1) = lrB hD (stateAt (lrB hD) s₀ x i) (cfDigit x i) := by
+  rw [stateAt, stateAt, cfWord_succ'', runState_append]
+  simp [runState]
+
+lemma cfWindow_two (x : ℝ) (i : ℕ) : cfWindow x i 2 = [cfDigit x i, cfDigit x (i + 1)] := by
+  have h := cfWindow_succ x i 1
+  rw [cfWindow_one] at h
+  simpa using h
+
+/-- **The counting step.**  Every position whose 2-digit window is `[D, D]` forces an
+alternation in its own step or the next, and each step is charged at most twice. -/
+theorem winCard_le_two_mul_numAlt (hD : 0 < D) (s₀ : RPlus D × Bool) (x : ℝ) (n : ℕ) :
+    VandeheyOut.winCard [D, D] x n
+      ≤ 2 * numAlt (s₀.2 :: lrWord hD s₀.1.toRState x (n + 1)) := by
+  classical
+  set f : ℕ → ℕ := fun k =>
+    altOut hD (stateAt (lrB hD) (toRStateB s₀) x k) (cfDigit x k) with hf
+  set W : Finset ℕ := (Finset.range n).filter (fun i => ([D, D] : List ℕ) = cfWindow x i 2)
+    with hW
+  have hkey : ∀ i ∈ W, 1 ≤ f i + f (i + 1) := by
+    intro i hi
+    rw [hW, Finset.mem_filter] at hi
+    have hwin : ([D, D] : List ℕ) = [cfDigit x i, cfDigit x (i + 1)] := by
+      rw [hi.2, cfWindow_two]
+    have hd1 : cfDigit x i = D := by
+      have := congrArg (fun l => l.headI) hwin
+      simpa using this.symm
+    have hd2 : cfDigit x (i + 1) = D := by
+      have := congrArg (fun l => (l.tail).headI) hwin
+      simpa using this.symm
+    set s := stateAt (lrB hD) (toRStateB s₀) x i with hs
+    have h1 : lrOut hD s.1 (cfDigit x i) ≠ [] := by
+      rw [hd1]; exact lrOut_ne_nil_of_le hD s.1 le_rfl
+    have h2 : lrOut hD (lrDelta hD s.1 (cfDigit x i)) (cfDigit x (i + 1)) ≠ [] := by
+      rw [hd2]; exact lrOut_ne_nil_of_le hD _ le_rfl
+    have hstep : stateAt (lrB hD) (toRStateB s₀) x (i + 1) = lrB hD s (cfDigit x i) :=
+      stateAt_lrB_succ hD (toRStateB s₀) x i
+    rw [hf]
+    simp only
+    rw [hstep]
+    exact one_le_altOut_add hD s h1 h2
+  have hcard : W.card ≤ ∑ i ∈ W, (f i + f (i + 1)) := by
+    calc W.card = ∑ _i ∈ W, 1 := by simp
+      _ ≤ ∑ i ∈ W, (f i + f (i + 1)) := Finset.sum_le_sum hkey
+  have hsplit : ∑ i ∈ W, (f i + f (i + 1)) = (∑ i ∈ W, f i) + ∑ i ∈ W, f (i + 1) :=
+    Finset.sum_add_distrib
+  have hA : ∑ i ∈ W, f i ≤ ∑ k ∈ Finset.range (n + 1), f k := by
+    refine Finset.sum_le_sum_of_subset ?_
+    intro i hi
+    rw [hW, Finset.mem_filter, Finset.mem_range] at hi
+    exact Finset.mem_range.mpr (by omega)
+  have hB : ∑ i ∈ W, f (i + 1) ≤ ∑ k ∈ Finset.range (n + 1), f k := by
+    have himg : ∑ i ∈ W, f (i + 1) = ∑ k ∈ W.image (· + 1), f k := by
+      rw [Finset.sum_image]
+      intro a _ b _ h
+      simpa using h
+    rw [himg]
+    refine Finset.sum_le_sum_of_subset ?_
+    intro k hk
+    obtain ⟨i, hi, rfl⟩ := Finset.mem_image.mp hk
+    rw [hW, Finset.mem_filter, Finset.mem_range] at hi
+    exact Finset.mem_range.mpr (by omega)
+  have hsum : ∑ k ∈ Finset.range (n + 1), f k
+      = numAlt (s₀.2 :: lrWord hD s₀.1.toRState x (n + 1)) :=
+    (numAlt_lrWord_eq_sum hD s₀.1.toRState s₀.2 x (n + 1)).symm
+  have : VandeheyOut.winCard [D, D] x n = W.card := by
+    rw [VandeheyOut.winCard, hW]
+    rfl
+  rw [this, ← hsum]
+  calc W.card ≤ ∑ i ∈ W, (f i + f (i + 1)) := hcard
+    _ = (∑ i ∈ W, f i) + ∑ i ∈ W, f (i + 1) := hsplit
+    _ ≤ (∑ k ∈ Finset.range (n + 1), f k) + ∑ k ∈ Finset.range (n + 1), f k :=
+        Nat.add_le_add hA hB
+    _ = 2 * ∑ k ∈ Finset.range (n + 1), f k := by ring
+
+/-- **`hc` for the Raney transducer: the run rate is STRICTLY positive.**  Every position whose
+2-digit window is `[D, D]` forces an alternation within two steps, and those positions have
+positive Gauss frequency. -/
+theorem zero_lt_runRate (D : ℕ) [Fact (Nat.Prime D)] (hD : 0 < D) (s₀ : RPlus D × Bool) :
+    0 < ∑ t : RState D × Bool, VandeheyOut.wLimit (rhoLRB hD s₀) t (altWeight hD t) 1 := by
+  classical
+  set c : ℝ := ∑ t : RState D × Bool, VandeheyOut.wLimit (rhoLRB hD s₀) t (altWeight hD t) 1
+    with hc
+  obtain ⟨x, hx⟩ := exists_isCFNormal
+  set A : ℕ → ℕ := fun n => numAlt (s₀.2 :: lrWord hD s₀.1.toRState x n) with hA
+  have hlim : Tendsto (fun n => (A n : ℝ) / n) atTop (nhds c) :=
+    tendsto_numAlt_lrWord_div D hD s₀ hx
+  -- the shifted sequence has the same limit
+  have hshift : Tendsto (fun n : ℕ => (A (n + 1) : ℝ) / n) atTop (nhds c) := by
+    have h1 : Tendsto (fun n : ℕ => (A (n + 1) : ℝ) / (n + 1 : ℕ)) atTop (nhds c) :=
+      hlim.comp (Filter.tendsto_add_atTop_nat 1)
+    have h2 : Tendsto (fun n : ℕ => ((n : ℝ) + 1) / (n : ℝ)) atTop (nhds 1) := by
+      have h0 : Tendsto (fun n : ℕ => 1 + 1 / (n : ℝ)) atTop (nhds (1 + 0)) :=
+        tendsto_const_nhds.add tendsto_one_div_atTop_nhds_zero_nat
+      rw [add_zero] at h0
+      refine h0.congr' ?_
+      filter_upwards [eventually_gt_atTop 0] with n hn
+      have hn0 : (n : ℝ) ≠ 0 := Nat.cast_ne_zero.mpr hn.ne'
+      field_simp
+    have h3 := h1.mul h2
+    rw [mul_one] at h3
+    refine h3.congr' ?_
+    filter_upwards [eventually_gt_atTop 0] with n hn
+    have hn0 : (n : ℝ) ≠ 0 := Nat.cast_ne_zero.mpr hn.ne'
+    push_cast
+    field_simp
+  -- the window frequency
+  have hwin : Tendsto (fun n => (VandeheyOut.winCard [D, D] x n : ℝ) / n) atTop
+      (nhds (gaussMeasure (cfCylinder [D, D])).toReal) := by
+    have hne : ([D, D] : List ℕ) ≠ [] := by simp
+    have hpos : ∀ a ∈ ([D, D] : List ℕ), 1 ≤ a := by
+      intro a ha
+      simp only [List.mem_cons, List.not_mem_nil, or_false] at ha
+      rcases ha with rfl | rfl <;> omega
+    simpa [VandeheyOut.winCard] using tendsto_windowFreq hx [D, D] hne hpos
+  have hle : (gaussMeasure (cfCylinder [D, D])).toReal ≤ 2 * c := by
+    refine le_of_tendsto_of_tendsto' hwin (hshift.const_mul 2) fun n => ?_
+    rcases Nat.eq_zero_or_pos n with rfl | hn
+    · simp
+    · have hn0 : (0 : ℝ) < n := by exact_mod_cast hn
+      rw [mul_div_assoc']
+      refine div_le_div_of_nonneg_right ?_ hn0.le
+      have := winCard_le_two_mul_numAlt hD s₀ x n
+      exact_mod_cast this
+  have hγ : 0 < (gaussMeasure (cfCylinder [D, D])).toReal := by
+    refine gaussMeasure_cfCylinder_toReal_pos _ (by simp) ?_
+    intro a ha
+    simp only [List.mem_cons, List.not_mem_nil, or_false] at ha
+    rcases ha with rfl | rfl <;> omega
+  linarith
+
 end VandeheyLR
 
 end NormalNumbers
@@ -198,4 +334,6 @@ section
 #print axioms NormalNumbers.VandeheyLR.head_lrOut_eq_true_iff
 #print axioms NormalNumbers.VandeheyLR.lrOut_ne_nil_of_le
 #print axioms NormalNumbers.VandeheyLR.one_le_altOut_add
+#print axioms NormalNumbers.VandeheyLR.winCard_le_two_mul_numAlt
+#print axioms NormalNumbers.VandeheyLR.zero_lt_runRate
 end

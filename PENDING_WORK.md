@@ -43,26 +43,32 @@ letter).  Hence `jointStateFreq_lrB`, `subWindow_rhoLRB`, and
 > `tendsto_numAlt_lrWord_div` — **Vandehey's Lemma 6.1 for the TRUE clock**: the emitted RUN
 > count has an `x`-independent Cesàro limit along every CF-normal orbit.
 
-**NEXT: POSITIVITY of the run rate (`hc`), and it is the one piece with real content left.**
-`outLenLimit_pos`'s argument does NOT transfer: it needs a single genuine digit `j` with
-`altOut (M,b) j ≥ 1` for EVERY augmented state, and that is false — `lrOut ⟨diag(1,D)⟩ j = Lᴰʲ`
-has no internal alternation, so from `(diag(1,D), L)` the weight is `0`.  Candidate routes:
-1. A longer window.  `wLimit` is defined at every `m`; take `m = 4` and the weight
-   "alternations emitted over the whole window".  From ANY state, three digits reach the common
-   augmented state `(diag(1,D), ·)` and the fourth emits `Lᴰʲ`; so a window that starts at a
-   state whose remembered letter is `R` must alternate.  Half the states (by determinant phase
-   /letter) are of that kind, and `sum_rho_eq_gauss` gives their total mass.  Needs: the
-   `wCount` engine at `m = 4` (already general) plus a lower bound on the mass of the
-   `R`-remembering states.
-2. A soft route: `numAlt(lrWord n) ≥ 1` cannot stay bounded, since a bounded alternation count
-   forces a single run of length `≍ Σ digits`, i.e. a CF digit of the image growing linearly,
-   which contradicts `IsCFNormal` of the image on a set of positive measure.  This is the
-   Borel–Cantelli-flavoured route; route 1 is preferred (finitary).
-3. Or: sidestep `hc > 0` entirely by rescaling with `tendsto_div_of_tendsto_comp_of_monotone`
-   applied to the run count directly — check whether `VandeheyRescale` needs `c > 0` or only
-   monotone + divergent.  **Check this FIRST; it may make positivity unnecessary.**
+**POSITIVITY (`hc`) IS ALSO CLOSED (lap 6, `VandeheyFirstLetter.lean`).**  The probe found two
+exceptionless structural facts, and both are now theorems:
+`Mat2.det_pos_iff_branch` (for a balanced matrix `0 < det` iff the branch is `c < a ∧ b < d`)
+and `head_lrOut_eq_true_iff` (**the first letter of a nonempty block is `L` iff `det M > 0`**).
+Since `det` flips at every digit, consecutive nonempty blocks start with OPPOSITE letters, so
+`one_le_altOut_add` : `altOut i + altOut (i+1) ≥ 1` — internally if the first block alternates,
+at the SEAM otherwise (a constant block ends where it starts).  Blocks are nonempty for digits
+`≥ D` (`lrOut_ne_nil_of_le`), so every position with 2-digit window `[D,D]` is charged, each
+step at most twice: `winCard [D,D] x n ≤ 2 · numAlt(… (n+1))` (`winCard_le_two_mul_numAlt`),
+hence `γ(I_[D,D]) ≤ 2c` and `zero_lt_runRate : 0 < c`.
 
-**What is left of the capstone**What is left of the capstone**What is left of the capstone's hypothesis list** (`mobiusUniformFreq_of_transducer`):
+**NEXT: the ASSEMBLY.**  Everything the capstone asks for now exists for the run clock except
+the final wiring, and the wiring is where the remaining design question is:
+`mobiusUniformFreq_of_transducer` is stated for a transducer whose `outLen` is `|outWord|`, i.e.
+the LETTER count.  The run clock is not of that form — `out` would have to emit one ℕ per
+COMPLETED run, and the value of a run is not a function of a finite state (the partial run
+length is unbounded).  So the capstone needs a variant whose rescaling clock is supplied
+SEPARATELY from the output word:
+* keep `out := lrOutN` (letters) for `hkK`/`hK`/`hgen`/`htail`/`hout` — all already proved or
+  near-free there, and the occurrence counting goes through `VandeheyLRPattern`'s
+  `card_cf_eq_card_patWord` (CF occurrences ↔ `patWord` occurrences in the letter stream);
+* replace `hlen` by the RUN clock `tendsto_numAlt_lrWord_div` + `zero_lt_runRate`, and feed
+  `Rescale.tendsto_div_of_tendsto_comp_of_monotone` with the run count as `ℓ`.
+That restatement of the capstone is the next lap's work; nothing analytic is left.
+
+**What is left of the capstone**What is left of the capstone**What is left of the capstone**What is left of the capstone's hypothesis list** (`mobiusUniformFreq_of_transducer`):
 1. `hc : 0 < c` — the ONE piece `tendsto_outLen_div` does not give.  `c ≥ 0` is
    `outLenLimit_nonneg`; strict positivity is combinatorial (some state/digit pair of positive
    Gauss mass emits a nonempty block).  Route: pick one genuine one-letter window `w` and a
