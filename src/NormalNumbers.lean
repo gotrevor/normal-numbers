@@ -665,3 +665,4 @@ import NormalNumbers.ElliottZetaPole
 import NormalNumbers.ElliottZetaTheta
 import NormalNumbers.CFTailFreq
 import NormalNumbers.VandeheySmith
+import NormalNumbers.VandeheySerret
