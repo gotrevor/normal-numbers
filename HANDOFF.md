@@ -1,95 +1,107 @@
-# Handoff: the Vandehey crux is down to ONE leaf, and §2 is under way
+# Handoff: §2 rebuilt on Raney normal form, and the equidistribution engine freed
 
-**Date**: 2026-09-28 · **Branch**: `wip/g5-prime-subset` · **HEAD**: `347bc55` ·
-`lake build` 🟢 10311 jobs · working tree clean · nothing pushed.
+**Date**: 2026-09-28 · **Branch**: `wip/g5-prime-subset` · **HEAD**: `b7446fa` ·
+`lake build` 🟢 10312 jobs · working tree clean · nothing pushed.
 
-## 🎯 What this run did
+Scope this run: `sorry-free: src/NormalNumbers/LiteratureVandehey.lean`, i.e. prove
+`vandeheyUniformFreq_holds`.  The Smith reduction (`VandeheySmith.lean`) had already cut that
+to the single leaf `MobiusCFNScale` — `x ↦ p·x` preserves CF-normality for prime `p`.  This
+run removed **three** structural blockers between that leaf and the machinery, and none of
+them were visible from the previous handoff.
 
-Operator objective 2026-09-28 (b): the Vandehey crux, lap 1 to evaluate the Smith-normal-form
-shortcut first.  **The shortcut works, and it is formalized, not just evaluated** — and the
-`GL₂(ℤ)` half of it is now a proved theorem, so the whole of Theorem 1.1 rests on one leaf.
+## ✅ Landed (five green commits, every headline `#print axioms`-clean)
 
-## ✅ Landed (six green commits, every headline `#print axioms`-clean)
+1. `33b15bb` **Vandehey's Lemma 2.1 proof is wrong; Raney replaces it.**
+   `probes/vandehey_lemma21.py`: the prescribed rule `d = min(⌊α/γ⌋, ⌊β/δ⌋)` does not
+   terminate.  Smallest witness — from the genuine `M_3` state `[[0,3],[1,1]]` with `j = 1`,
+   the paper's own `d₀ = 1` lands on `[[2,1],[1,2]]`, whence the rule two-cycles through
+   `[[1,2],[2,1]]`, neither in `M_3`.  Once the two column ratios separate, one floor is `0`
+   and the `min` emits nothing.  A free search over digit strings rescues **every** stalled
+   start, so the *statement* survives; the proof does not.  Kernel witness
+   `Mat2.vandeheyStep_not_terminating`, Maze row `hall_vandehey_lemma21_min_rule`.
+   `VandeheyRaney.lean`: balanced = nonnegative with neither row dominating the other;
+   `raneyEntry_le` (`|det| ≥ α+δ−1`, so entries lie in `[0,D]`), `finite_isRD`,
+   `exists_balanced_decomp` (descent terminates because stripping `L`/`R` strictly drops the
+   entry sum), `exists_cfString_of_lrProd` (an `L/R` word *is* a CF string
+   `A_{d₀}B_{d₁}⋯B_{d_m}`, `m` even), `isRD_ingest_cfString` (Lemma 2.1, no `d₀ ≥ −1`).
+2. `81eab50` **The pin without bijectivity.**  `stateHorizonIntegral_pin` needed every digit
+   to act bijectively on the states; the Raney step **is not injective** (`D = 2`: digit `1`
+   collapses two balanced states onto `[[1,0],[0,2]]`).  `stateStepOp` is an honest average,
+   so `famInf` is monotone and `famSup` antitone along the iteration; nested intervals of
+   vanishing width give a limit `L ≤ γ(A)`, and `c = L/γ(A) ∈ [0,1]`.
+3. `5eb48aa` **`hpin`'s second state argument weakened in all eight signatures** (every call
+   site instantiates it at the target `t`).  `classEquidistribution_of_reach`,
+   `tendsto_jointCount_of_reach`.
+4. `b56c524` `exists_uniform_reach_of_loop` — diameter `≤ r` plus ONE self-loop gives
+   exact-length-`M` reach for every `M ≥ 2r`.  One loop kills every periodicity.
+5. `b7446fa` **Doeblin at a single common target.**  `stateStepIter_osc_doeblin_common`,
+   `stateStepIter_osc_geom_common`, and `exists_osc_geom` /
+   `stateHorizonIntegral_pin_of_reach` / `classEquidistribution_of_common_reach` /
+   `tendsto_jointCount_of_common_reach` rebuilt on it.
 
-1. `1e73f46` **The Smith reduction** (`VandeheySmith.lean`).
-   `MobiusCFN a b c d` (per-matrix), `MobiusCFN.comp` (closed under matrix product — the only
-   CF content is that a CF-normal number is irrational, which is what keeps `x` off the inner
-   pole: `not_isCFNormal_of_not_irrational`, proved from scratch by the Euclidean descent of
-   the Gauss orbit on rationals).  `exists_column_kill` + `mobiusCFN_of_leaves`: the Hermite
-   descent on `|det|`, `M = M''·diag(p,1)·V`.  `vandeheyUniformFreq_of_matrix_action`: the crux
-   is *equivalent* to Theorem 1.1.  Guard rule: `mobiusCFN_one`, `not_mobiusCFN_const`.
-2. `935cc04` **The tail-shift engine** (`CFTailFreq.lean`).  `tendsto_occStart_of_shift`;
-   `isCFNormal_of_digit_shift`; `isCFNormal_gaussMap` (the forward Gauss direction).
-3. `5494002` **Serret leaf DISCHARGED** (`VandeheySerret.lean`): `mobiusCFNGL2_holds`.
-4. `c4a2607` bookkeeping.
-5. `d7b499b` **Serret's theorem proper**: `serret_cfEquiv` — for `det = ±1` and irrational `x`,
-   the Gauss orbits of `fract (Mx)` and `fract x` MEET.  Plus `CFEquiv` (+`refl`/`symm`/`trans`,
-   `CFEquiv.isCFNormal`), `irrational_mobius`, and `MobiusClosure`/`mobius_gl2_of_closure`
-   (the `PGL₂(ℤ) = ⟨x↦x+n, x↦1/x⟩` descent written once, instantiated twice).
-6. `0aec7a9` **`VandeheyMat2.lean`** — `Mat2` (4-tuple), `det`, product, Möbius action,
-   `act_eq_iff`/`act_mul_den` (cross-multiplied form), `act_mul` (left action), `B`/`E`
-   generators, and **`act_cfMat : (cfMat x n)·Tⁿx = x`**, the CF algorithm as a matrix identity.
-7. `347bc55` **`VandeheyNormalForm.lean`** — Vandehey's six types, `IsMD D M`,
-   `isMD_entry_bounds` (`|entries| ≤ D`), `finite_isMD`.  Guard rule: `isMD_diag`,
-   `not_isMD_zero`.
+## 🧠 The three obstructions found, and why they were fatal
 
-## 🧠 Where the crux stands
+* **Bipartite by determinant.**  Every `B_a` has `det = −1`, so on balanced matrices of
+  determinant `±D` the automaton reaches half its states only at even times.  Fixed-length
+  transitivity is *unsatisfiable*.  Cure: row-swap normalization, `δ N a = J · raneyNorm (N · B a)`,
+  which keeps `det = +D`.
+* **Transient states.**  Even after that, full transitivity fails: `M_D` has states no word
+  reaches (Vandehey's §4).  Cure: the classical Doeblin minorization at ONE common state.
+* **The Lyapunov weight.**  Dropping from `1−2β` to `1−β` breaks the old weight `2β` — its
+  `Ω`-coefficient becomes exactly `1`.  Cure: `V = Ω + (9/5)β·Λ`, rate `1 − β/10`.
 
-`vandeheyUniformFreq_of_scale (hScale : MobiusCFNScale) : VandeheyUniformFreq`.
+## 🎯 The structure that makes the rest provable
 
-**The single open leaf is `MobiusCFNScale`**: `x ↦ p·x` preserves CF-normality for prime `p`.
-Composite determinants, the diagonal factor, division and all of `GL₂(ℤ)` are gone.
+On the **row family** `R_b = [[1,b],[0,D]]`, `0 ≤ b < D`:
 
-The structural insight this run added: **the fibre merges by Serret.**  The probe
-`probes/cf_transducer_class.py` observed that two transducer states merge exactly when their
-row lattices agree up to scaling.  The reason is that a state `N = λ·U·M` with `U ∈ GL₂(ℤ)` is
-computing the CF of a `GL₂(ℤ)`-image of the same tail, so by `serret_cfEquiv` the two tails
-meet.  Class-relative synchronization is therefore a corollary of a kernel theorem, not a
-small-`p` observation.
+* `δ(R_b, a) = R_{(a + b⁻¹) mod D}` for every digit `a ≥ D − 1` and `b ≠ 0` — i.e. the Raney
+  automaton restricted to the row family **is** the class automaton `b ↦ a + b⁻¹` of
+  `VandeheyClass.lean`.  Threshold exact, probed to `D = 23`.
+* `δ(diag(D,1), a) = R_{a mod D}`; `δ(R_0, a) = diag(D,1)` for every `a`.
+* One digit carries every other state into the row family.
+* Hence `z = R_1` has **in-radius 2 from the whole state set**, and a self-loop at `a = D`
+  (index `(D+1) mod D = 1`).  Verified at `D = 2,3,5,6,7,11,13,17`; **composite `D` has no
+  common target at all**, which is consistent with `MobiusCFNScale` quantifying over primes.
 
 ## 🎬 Next actions, in order
 
-1. **Vandehey Lemma 2.1** (`VandeheyNormalForm.lean`), fully specified and the last structural
-   piece of §2:
-   `M · J A_j = A_{d₀} J A_{d₁} ⋯ J A_{d_m} · M'` with `M' ∈ M_D`, `d₀ ≥ −1`, `d_i ∈ ℕ`, and
-   `d₀ = −1 → m ≥ 1`.  The paper's proof (pp. 6–7 of the arXiv PDF, `papers/`) is a Euclidean
-   descent: `M₀ = A_{d₀}^{-1}(M·J A_j)` with `d₀ = min(⌊α₋₁/γ₋₁⌋, ⌊β₋₁/δ₋₁⌋)`, then
-   `M_{i+1} = A_{d_{i+1}}^{-1} J M_i`; no coefficient ever grows, at least one drops by `1` each
-   step, and the first negative coefficient lands you in Type V or VI, which is already in `M_D`.
-   Heavy but elementary case analysis (four cases for `d₀`, then the loop).
-2. **Lemma 2.2** (burst length uniformly bounded in `D`) and identity (9)
-   `Mx = R([a₁…aₙ],M) · (U([a₁…aₙ],M)(Tⁿx))`.
-3. **§5–§6**: trigger strings and the assembly `ℓ(n) = c₁n(1+o(1))`, `#occ_r(n) = c_r n(1+o(1))`.
-   Note the paper says trigger lengths are NOT provably bounded, hence its `f_j^±`
-   approximants — plan for that, don't assume boundedness.
+1. **`raneyNorm : Mat2 → Mat2`** as a total function, by well-founded recursion on
+   `(a+b+c+d).toNat`, guarded so the subtracted row is positive:
+   `if 0 < a+b ∧ a ≤ c ∧ b ≤ d then raneyNorm (stripL N) else if 0 < c+d ∧ c ≤ a ∧ d ≤ b then
+   raneyNorm (stripR N) else N`.  Termination: under either guard both `a+b` and `c+d` are
+   positive, so `toNat` strictly drops.  Then `raneyNorm_balanced` and
+   `exists_lrProd_mul_raneyNorm` (uniqueness of the normal form follows because both guards
+   together force `a = c`, `b = d`, i.e. `det = 0`).
+2. **`RaneyState D`** as a `Fintype` subtype `{M // IsRD D M ∧ M.det = D}` (`finite_isRD` gives
+   the instance), and `δ D : RaneyState D → ℕ → RaneyState D`, `δ N a = J · raneyNorm (N · B a)`.
+3. **The common-target reach**, for prime `D`: the row-family identity above, then
+   `exists_uniform_reach_of_loop`-style padding to a fixed `M ≥ 4`.  Feeds
+   `tendsto_jointCount_of_common_reach` directly.
+4. **§5–§6 assembly**: `ℓ(n) = c₁n(1+o(1))`, `#occ_r(n) = c_r n(1+o(1))`.  The paper warns
+   trigger lengths are NOT provably bounded — plan for the `f_j^±` approximants.
 
 ## ⚠️ Gotchas
 
-- **`probes/cf_transducer_sync.py` is not Vandehey's transducer and is infinite-state.**  Its
-  reachable state count grows linearly with the digit cap (D=2: 61/147/384 at caps 6/15/40).
-  Vandehey's `M_D` is finite because Types V/VI admit a negative entry, which lets the `d₀ = −1`
-  emission absorb the straddling states the probe must keep waiting in.  Don't use the probe as
-  a specification for §2.
-- `MobiusCFN` quantifies over **all** real `x` off the pole, negatives included — that is why
-  `x ↦ −x` (i.e. `t ↦ 1−t`) had to be proved and cannot be dodged.
-- `Int.floor_eq_iff` (ℤ version) takes no positivity argument, unlike the ℕ one.
-- `Int.emod_add_ediv` / `Int.ediv_add_emod` are unavailable under those names; use `Int.emod_def`
-  and `ring`.  `natCast_floor_eq_intCast_floor` is the `(⌊a⌋₊ : R) = ⌊a⌋` bridge.
-- When a `linear_combination` residual comes back as exactly twice the intended identity, the
-  coefficient needs its sign flipped — that happened four times this run.
-- `Mat2` deliberately avoids `Matrix (Fin 2) (Fin 2) ℤ`: only the product and the action are
-  used, and the `Fin`-indexed API costs rewriting everywhere while buying nothing.
+- `Int.natCast_nonneg` takes its argument as `n`, not a type ascription `(α := ℤ)` / `(R := ℤ)`.
+- `famRange_nonempty`/`famInf_le`/`le_famSup` all need `[Nonempty S]`; add it to every new
+  lemma that touches `famInf`/`famSup`.
+- `stateStepOp_mem_range_bounds` already existed; this run added the equivalent
+  `famInf_le_stateStepOp` / `stateStepOp_le_famSup` separately.  Harmless duplication, worth a
+  cleanup lap.
+- `A 0 = 1` for `Mat2.A` is not `rfl` until `Nat.cast_zero` has fired: `simp only [A,
+  Nat.cast_zero]; rfl`.
+- In `exists_cfString_of_lrProd` the emitted digit list may contain interior `0`s (`B 0 = J`);
+  that is fine for the matrix identity but a CF *reading* of the string needs the run-length
+  form.
 
 ## 📁 Key files
 
-- `src/NormalNumbers/VandeheySmith.lean` — the reduction, the two leaf `Prop`s, the descent.
-- `src/NormalNumbers/VandeheySerret.lean` — leaf 1 (proved) and Serret's theorem.
-- `src/NormalNumbers/CFTailFreq.lean` — the shift engine.
-- `src/NormalNumbers/VandeheyMat2.lean` — the matrix layer of the CF algorithm.
-- `src/NormalNumbers/VandeheyNormalForm.lean` — `M_D`, finite; Lemma 2.1 goes here.
-- `src/NormalNumbers/VandeheyClassEquidist.lean` — the §3 replacement, already unconditional.
-- `papers/vandehey-2017-matrix-actions-cf-normality.pdf` — §2 proof is on pp. 6–7.
+- `src/NormalNumbers/VandeheyRaney.lean` — §2 rebuilt, plus the refutation witness.
+- `src/NormalNumbers/VandeheyStatePin.lean` — the pin, now `hbij`-free and common-target.
+- `src/NormalNumbers/VandeheyClassEquidist.lean` — `*_of_common_reach` entry points.
+- `src/NormalNumbers/VandeheyAutomaton.lean` — `exists_uniform_reach_of_loop`.
+- `probes/vandehey_lemma21.py` — the non-termination probe.
 
 ---
-**→ Next session: start at NEXT action 1, Lemma 2.1.  Everything it needs (`Mat2`, `IsMD`,
-the entry bound, `act_mul`) is already in the kernel.**
+**→ Next session: start at NEXT action 1 (`raneyNorm` as a total function).  Everything the
+reach proof needs downstream (`tendsto_jointCount_of_common_reach`) is already in the kernel.**
