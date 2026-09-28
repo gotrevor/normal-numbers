@@ -76,6 +76,48 @@ lemma runState_append (δ : S → ℕ → S) (s : S) (u w : List ℕ) :
     runState δ s (u ++ w) = runState δ (runState δ s u) w := by
   simp [runState, List.foldl_append]
 
+
+/-! ## Uniform-length transitivity from a bounded diameter plus one self-loop
+
+`VandeheyState.stateHorizonIntegral_pin_of_reach` (and the older pin) asks for a word of one
+*fixed* length `M` joining every ordered pair of states — a Doeblin condition, not mere
+connectivity.  Bare strong connectivity is not enough: a bipartite automaton is connected but
+reaches half its states only at even times, and that is exactly what happens to the Raney
+transducer read on balanced matrices of determinant `±D`, where a digit flips the sign of the
+determinant.
+
+The cheap repair is a **single self-loop**.  If some state `z` is fixed by some genuine digit
+and the automaton has diameter `≤ r`, then for every `M ≥ 2r` and every pair `d, s` the word
+
+  `(d → z)  ++  (the loop digit, repeated)  ++  (z → s)`
+
+has length exactly `M`.  One loop kills every periodicity at once. -/
+
+/-- **Uniform-length transitivity** from a diameter bound plus one self-loop. -/
+theorem exists_uniform_reach_of_loop (δ : S → ℕ → S) {z : S} {a₀ : ℕ} (ha₀ : 1 ≤ a₀)
+    (hz : δ z a₀ = z) {r : ℕ}
+    (hconn : ∀ d s : S, ∃ w : List ℕ, w.length ≤ r ∧ (∀ a ∈ w, 1 ≤ a) ∧
+      runState δ d w = s)
+    {M : ℕ} (hM : 2 * r ≤ M) (d s : S) :
+    ∃ w : List ℕ, w.length = M ∧ (∀ a ∈ w, 1 ≤ a) ∧ runState δ d w = s := by
+  obtain ⟨u, hulen, hupos, hurun⟩ := hconn d z
+  obtain ⟨v, hvlen, hvpos, hvrun⟩ := hconn z s
+  have hloop : ∀ k : ℕ, runState δ z (List.replicate k a₀) = z := by
+    intro k
+    induction k with
+    | zero => rfl
+    | succ k ih => rw [List.replicate_succ, runState_cons, hz, ih]
+  refine ⟨u ++ List.replicate (M - u.length - v.length) a₀ ++ v, ?_, ?_, ?_⟩
+  · simp only [List.length_append, List.length_replicate]
+    omega
+  · intro a ha
+    simp only [List.mem_append, List.mem_replicate] at ha
+    rcases ha with (ha | ha) | ha
+    · exact hupos a ha
+    · exact ha.2 ▸ ha₀
+    · exact hvpos a ha
+  · rw [runState_append, runState_append, hurun, hloop, hvrun]
+
 /-- `z` is **synchronizing** for `δ`: reading `z` erases the initial state. -/
 def Synchronizing (δ : S → ℕ → S) (z : List ℕ) : Prop :=
   ∀ s s' : S, runState δ s z = runState δ s' z
