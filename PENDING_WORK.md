@@ -4,35 +4,35 @@ Concrete next moves, cheapest and most clear-cut first.  Front context is in `ST
 lap-by-lap log from before the 2026-09-27 merge is `archive/PENDING_WORK-to-2026-09-27.md`.
 Treadmill laps append dated notes **below the queue**, and a review lap folds them back into it.
 
-## 0′. `hK` — the uniform trigger bound (Vandehey Lemma 2.2), DECOMPOSED 2026-09-28 lap 2
+## 0′. `hK`/`hkK` — **CLOSED** for the `L/R` transducer (2026-09-28 lap 3)
 
-The last analytic-looking obligation of `VandeheyAssembly.mobiusUniformFreq_of_transducer`.
-Source read this lap (`papers/vandehey-2017-…pdf`, Lemma 2.2 at extracted line 2103).
+`lr_trigger_bounds` (`VandeheyLRTrigger.lean`) supplies both trigger hypotheses of
+`mobiusUniformFreq_of_transducer` for the concrete machine, with `K = 2D + 2 + |v|`, for every
+target word `v` that ALTERNATES somewhere (`v[i₀]? ≠ v[i₀+1]?`).  The chain, all axiom-clean:
 
-**What is bounded, and what is not.**  The number of L/R LETTERS emitted per ingested digit is
-genuinely UNBOUNDED — ingesting a large digit `j` emits a run of length ~`j`.  What Lemma 2.2
-bounds is the number of RUNS, i.e. of emitted CF digits.  That is the right bound for us:
-a genuine CF trigger word `v` (all digits ≥ 1) has an L/R pattern containing both letters, so an
-occurrence can only start at a run boundary, and
-  (occurrences of `v` starting in block `i`) ≤ (runs in block `i`) + O(1).
+1. `VandeheyRunBound.numAlt_lrOut_le_two_mul` — Vandehey Lemma 2.2 in run form: one ingested
+   digit emits at most `2D` alternations, with NO dependence on the digit.  Proof: the `j`-free
+   column identity `(M.b, M.d) = lrProd w ·ᵛ (M'.a, M'.c)` plus the observation that each letter
+   ADDS one coordinate to the other, so the coordinate sum bounds the alternation count; a
+   vanishing coordinate persists under only one letter, i.e. the rest of `w` is a single run.
+   **No case split on vanishing denominators** — Vandehey's Cases 1–3 disappear.
+2. `VandeheyAltCount.occIn_le_numAlt_add` — abstract: occurrences of an alternating `v` starting
+   in the first emitted block are `≤ numAlt (block) + 2 + |v|`, with no reference to block LENGTH.
+3. `VandeheyAltCount.trigger_bounds_of_occIn_le` — `hK` and `hkK` ARE one statement (`kOut` is an
+   increment of `occIn`; the `hK` sum telescopes along CF prefixes).
 
-**The hinge, now in the kernel** (`VandeheyLRTransducer.mul_B_fst_col`, `lrStep_col`): the first
-column of `M · B_j` is `M`'s second column, INDEPENDENT of `j`.  With the step identity this
-gives the `j`-free vector identity `(β, δ) = lrProd w · (α', γ')`.
-
-**Next step.**  Two routes to the run bound from there:
-(a) Vandehey's: pass to `β/δ = lrProd w · (α'/γ')`, a rational from a FINITE set (the state set
-    is finite), whose continued fraction has bounded length.  Needs a projective treatment —
-    `γ' = 0` and `δ = 0` are his Cases 1–3 and must be handled separately.
-(b) Ours: feed the ratio to `lrExpandWord_of_act`, which already says `w` is a prefix of that
-    rational's L/R expansion.  A rational's L/R expansion is FINITE, so its length bounds `|w|`
-    for each of the finitely many `M` — and `Fintype (RState D)` makes the max exist.  This
-    avoids the case split if the degenerate ratios are handled by the same positivity lemma
-    (`pos_lin`) that the semantic invariant used.
-Route (b) reuses machinery already proved this run and is the one to try first.
-
-**Do NOT** try to bound `|w|` from the second column: it depends on `j` and gives only
-`|w| ≤ 4D(1+j)`, which is true but useless.
+**Next, in order.**
+(a) The run↔CF-digit translation (HANDOFF NEXT 2).  An occurrence of a CF word `v` in the image's
+    expansion is an occurrence of the single `L/R` word `w_v = X · R^{v₁}L^{v₂}⋯ · Y` with the two
+    boundary letters FORCED by alternation (maximal runs at both ends = a one-letter look-around).
+    `w_v` alternates, so (a) is exactly what supplies the `i₀` that `lr_trigger_bounds` needs.
+(b) Because the assembly's `hout` demands `out` emit the image's CF digits and the `L/R` machine
+    emits letters, `mobiusUniformFreq_of_transducer` must be FACTORED: an `OutputWordFreq`
+    conclusion (every output word has an `x`-independent Cesàro frequency, `K` allowed to depend
+    on `v`) plus a separate CF-digit bridge through (a) and a second `VandeheyRescale` at the
+    density of run boundaries.  Note `hK`/`hkK` are FALSE at the `L/R` level for constant `v`
+    (`v = LL` occurs ~`j` times in a block), which is precisely why the bridge, not a direct
+    instantiation, is the right architecture.
 
 ## Queue
 
