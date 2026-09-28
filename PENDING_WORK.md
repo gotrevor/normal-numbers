@@ -1,3 +1,54 @@
+## Vandehey 1.1 (2026-09-28, lap C cont.) — **THE BRIDGE IS CLOSED: Vandehey §3 is unconditional**
+
+`src/NormalNumbers/VandeheyClassEquidist.lean` (new, wired, sorry-free, trust triple):
+
+* **`classEquidistribution_of_pin`** — for EVERY finite automaton `δ` whose digit steps are
+  bijections and whose states are `M`-step reachable, `VandeheyCocycle.ClassEquidistribution δ t q`
+  holds with reference weight the pin's constant.  (Stated generically; `q` need not even be
+  genuine or nonempty here.)
+* **`classEquidistribution_classStep`** — instantiated at the class automaton (`classStep D`,
+  prime `D`, `M = 3` from `exists_classWord_three`, bijectivity from `classStep_bijective`,
+  `c = 1/|ℙ¹(ℤ/D)|`).
+* **`tendsto_jointCount_classStep`** — with the already-proved transfer principle: along every
+  CF-normal `x` and from every initial class, the joint (window, class) frequency converges to
+  `γ(I_q)/|ℙ¹(ℤ/D)|`.  **This is the content Vandehey buys from the Airey–Mance-refuted
+  Moshchevitin–Shkredov theorem, and it is now unconditional and machine-checked.**  No hot-spot
+  criterion, no tightness hypothesis, no ergodic theorem.
+
+Supporting: `card_bad_shift_le`, **`sum_windowBound_le_split`** (the orbit split: finite weighted
+count over digit-bounded windows + a residue charged to the digit tail, via
+`card_unbounded_window_le`), `tendsto_weighted_window_freq`.
+
+**The ε-management, recorded.**  Order of choice is forced: `ε ↦ K` (from the variance bound
+`|S|√(varConst/K)`), then `K ↦ Z` (the digit bound must beat `(1+|L|)(K+|q|)τ(Z)`, and `m = K+|q|`
+grows with `K`).  The threshold in `n` may depend on `x`; `K` may not — that is exactly why
+`ClassEquidistribution` puts `∃K` outside `∀x`.
+
+### Next attack (the remaining programme, in order)
+
+1. **The fiber.**  The transducer state space is `M_D` (det-`±D` normal forms), not the class
+   space; the class is the obstruction to synchronization (`PROBE-2026-09-27`), and within a class
+   states DO merge (`probes/cf_transducer_class.py`).  So: define the class projection
+   `M_D → ℙ¹(ℤ/D)` and prove *class-relative synchronization*: for `ℓ` large, the transducer state
+   at time `i` is a function of (class at `i`, last `ℓ` digits) outside a set of positions of
+   frequency `→ 0`.  Then every joint (window, transducer-state) count is a finite sum of joint
+   (window, class) counts, which `tendsto_jointCount_classStep` evaluates.
+2. **Vandehey §2: the Raney transducer.**  Finiteness of the det-`±D` normal forms, the
+   factorization `M·A_n = (output CF matrices)·(normal form)`, identity (9).
+3. **§5–§6: trigger counting.**  Occurrences of a word `r` in the output are triggered by finitely
+   many (state, input window) pairs; `ℓ(n) = c₁n(1+o(1))` and `#occ_r(n) = c_r n(1+o(1))`, so the
+   frequency tends to `c_r/c₁`, independent of `x`.  Then `VandeheyUniformFreq` closes and
+   `vandehey_matrix_action_of_uniformFreq` finishes Theorem 1.1.
+4. Composite `D`: `ClassSpace D = Option (ZMod D)` models `ℙ¹(ℤ/D)` only for prime `D`.  Keep the
+   Markov layer abstract (`classEquidistribution_of_pin` already is) so this is
+   hypothesis-verification, not redesign.
+
+**Useful reduction to keep in mind (not yet formalized).**  By Smith normal form every nonsingular
+integer Möbius map is a composition of `GL₂(ℤ)` maps and `x ↦ nx`, `x ↦ x/n`.  The `GL₂(ℤ)` part is
+elementary (Serret: CF expansions of `GL₂(ℤ)`-equivalent numbers share a tail, so digit frequencies
+agree), so the whole theorem reduces to `x ↦ Dx` for prime `D` — which is exactly the case the class
+automaton above is built for.  This could cut §2's bookkeeping substantially.
+
 ## Vandehey 1.1 (2026-09-27, lap C) — THE BRIDGE: state-refined ψ-mixing at gap ZERO is PROVED
 
 `src/NormalNumbers/VandeheyStateMixing.lean` (new, wired, sorry-free, `[propext, Classical.choice,

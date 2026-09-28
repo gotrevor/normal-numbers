@@ -36,6 +36,7 @@ import NormalNumbers.VandeheyRenyi
 import NormalNumbers.VandeheyStatePin
 import NormalNumbers.VandeheyStateMixing
 import NormalNumbers.VandeheyTwoPoint
+import NormalNumbers.VandeheyClassEquidist
 import NormalNumbers.VandeheyWeightTV
 import NormalNumbers.VandeheyZFree
 import NormalNumbers.VandeheyTransfer
