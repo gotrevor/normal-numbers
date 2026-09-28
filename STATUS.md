@@ -1649,3 +1649,5 @@ PENDING_WORK.md · papers/becher-yuhjtman-2019-*.md
 ---
 
 **Side quest merged 2026-09-27: Vandehey 2017 Thm 1.1** (`wip/vandehey-matrix-action`) - §3 unconditional, two `sorry`s left (`LiteratureVandehey.lean`, `VandeheyAutomaton.lean`); its directive lives in that branch's `DIRECTION.md`, not here.
+
+**Merged 2026-09-27: `wip/c4-infinite`** - C4 proved (`c4_realizable`, AbelianWindow*.lean).
