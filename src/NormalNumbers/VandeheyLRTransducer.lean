@@ -321,6 +321,43 @@ theorem lrWord_eq_lrExpandWord (hD : 0 < D) {x : ℝ} (hirr : Irrational x)
   exact (lrExpandWord_of_act _ hactMn).1
 
 
+/-! ## Toward the uniform trigger bound (Vandehey Lemma 2.2)
+
+Vandehey's Lemma 2.2 — the number of CF digits emitted per ingested digit is bounded by a
+constant depending only on `D` — rests on one observation, which we isolate here: **the first
+column of `M · B_j` does not depend on `j`.**  Since `B_j = [[0,1],[1,j]]`, the product is
+`[[β, α+βj],[δ, γ+δj]]`, whose first column is `(β, δ)` — the second column of `M`.
+
+Combined with the step identity `M · B_j = lrProd w · M'`, that gives the `j`-free vector
+identity `(β, δ) = lrProd w · (α', γ')`.  Vandehey's proof passes to the projective ratio
+`β/δ = lrProd w · (α'/γ')` and observes that `β/δ` ranges over a FINITE set of rationals (the
+state set is finite), whose continued fractions have bounded length; ours can instead feed the
+ratio to `lrExpandWord_of_act`, which says `w` is a prefix of that rational's `L/R` expansion.
+
+Note what is and is not bounded: the number of LETTERS is genuinely unbounded (ingesting a large
+digit `j` emits a long run), which is why the vector identity's *second* column, which does
+depend on `j`, cannot help.  What is bounded is the number of RUNS, i.e. of emitted CF digits —
+and the runs are exactly what a genuine CF trigger word can start at.  See `PENDING_WORK.md`. -/
+
+/-- **The `j`-free column.**  Ingesting a digit moves `M`'s second column into first position,
+untouched.  This is the hinge of Vandehey's Lemma 2.2. -/
+lemma mul_B_fst_col (M : Mat2) (j : ℕ) : (M * B j).a = M.b ∧ (M * B j).c = M.d := by
+  constructor <;> simp [mul_def, mul, B]
+
+/-- The step identity read on the `j`-free column: the emitted word carries `M'`'s first column
+onto `M`'s second column, with no reference to the ingested digit. -/
+lemma lrStep_col (hD : 0 < D) (M : RState D) (j : ℕ) :
+    M.val.b = (lrProd (lrOut hD M j)).a * (lrDelta hD M j).val.a
+        + (lrProd (lrOut hD M j)).b * (lrDelta hD M j).val.c ∧
+      M.val.d = (lrProd (lrOut hD M j)).c * (lrDelta hD M j).val.a
+        + (lrProd (lrOut hD M j)).d * (lrDelta hD M j).val.c := by
+  have h := lrStep_spec hD M j
+  obtain ⟨h1, h2⟩ := mul_B_fst_col M.val j
+  constructor
+  · rw [← h1, h]; simp [mul_def, mul]
+  · rw [← h2, h]; simp [mul_def, mul]
+
+
 end NormalNumbers.VandeheyLR
 
 section
@@ -330,4 +367,5 @@ open NormalNumbers.VandeheyLR
 #print axioms act_startState_eq
 #print axioms lrExpandWord_of_act
 #print axioms lrWord_eq_lrExpandWord
+#print axioms lrStep_col
 end
