@@ -674,3 +674,4 @@ import NormalNumbers.VandeheyLeafReduction
 import NormalNumbers.VandeheyRescale
 import NormalNumbers.VandeheyOutputWord
 import NormalNumbers.VandeheyTrigger
+import NormalNumbers.VandeheyAssembly
