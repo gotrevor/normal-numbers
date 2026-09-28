@@ -80,12 +80,38 @@ lemma runWord_getElem? : ∀ (b : Bool) (v : List ℕ) (i r : ℕ), i < v.length
         List.getElem?_append_right (by simp), xorB_succ]
       simpa using runWord_getElem? (!b) v i r hi' hr'
 
+/-- The block together with the border letter that closes it. -/
+def patBody (b : Bool) (v : List ℕ) : List Bool := runWord b v ++ [xorB b v.length]
+
+@[simp] lemma patBody_nil (b : Bool) : patBody b [] = [b] := by simp [patBody]
+
+/-- **The structural identity.**  `patBody` of a cons is a run followed by `patBody` of the
+tail with the letter flipped — so the border letter of the tail IS the first letter of the run
+after it.  This is what makes both directions of the translation one-run inductions. -/
+lemma patBody_cons (b : Bool) (a : ℕ) (v : List ℕ) :
+    patBody b (a :: v) = List.replicate a b ++ patBody (!b) v := by
+  rw [patBody, patBody, runWord_cons, List.append_assoc]
+  congr 2
+  rw [List.length_cons, xorB_succ]
+
+lemma patBody_length (b : Bool) (v : List ℕ) : (patBody b v).length = v.sum + 1 := by
+  simp [patBody, runWord_length]
+
+/-- The first letter of `patBody` is the first run's letter (or, on the empty word, the border). -/
+lemma patBody_getElem?_zero (b : Bool) (v : List ℕ) (hv : ∀ x ∈ v.take 1, 1 ≤ x) :
+    (patBody b v)[0]? = some b := by
+  cases v with
+  | nil => simp
+  | cons a v =>
+    have ha : 1 ≤ a := hv a (by simp)
+    rw [patBody_cons, List.getElem?_append_left (by simp; omega)]
+    exact List.getElem?_replicate_of_lt (by omega)
+
 /-- The pattern: the block, with the two bordering letters that force its runs to be maximal. -/
-def patWord (b : Bool) (v : List ℕ) : List Bool :=
-  (!b) :: (runWord b v ++ [xorB b v.length])
+def patWord (b : Bool) (v : List ℕ) : List Bool := (!b) :: patBody b v
 
 lemma patWord_length (b : Bool) (v : List ℕ) : (patWord b v).length = v.sum + 2 := by
-  simp [patWord, runWord_length]
+  simp [patWord, patBody_length]
 
 /-- **The pattern alternates at index `0`.**  This is precisely the hypothesis of
 `VandeheyLRTrigger.lr_trigger_bounds`: a genuine CF word (first digit `≥ 1`) has a border letter
@@ -97,8 +123,10 @@ lemma patWord_alternation (b : Bool) (a : ℕ) (v : List ℕ) (ha : 1 ≤ a) :
     have := runWord_getElem? b (a :: v) 0 0 (by simp) (by simp; omega)
     simp only [vPos_zero, Nat.add_zero, xorB_zero] at this
     simp only [patWord, List.getElem?_cons_succ]
-    rw [List.getElem?_append_left (by rw [runWord_length]; simp; omega)]
-    simpa using this
+    refine patBody_getElem?_zero b (a :: v) ?_
+    intro x hx
+    simp only [List.take_succ_cons, List.take_zero, List.mem_singleton] at hx
+    omega
   rw [h1, h2]
   simp
 
@@ -228,7 +256,90 @@ theorem map_range'_eq_patWord (v : List ℕ) (n : ℕ) (hn : 1 ≤ n)
       runIdx_eq hirr hw _ _ le_rfl (lrPos_lt_succ hirr hw _), xorB_decide]
   have hblock := map_range'_eq_runWord hirr hw v n hm
   show (List.range' (lrPos w n - 1) ((v.sum + 1) + 1)).map (lrExpand w) = _
-  rw [map_range'_succ_left, hP1, map_range'_snoc, hblock, hhead, hlast, patWord]
+  rw [map_range'_succ_left, hP1, map_range'_snoc, hblock, hhead, hlast, patWord, patBody]
+
+/-! ### The converse
+
+An occurrence of `patBody` at a run start forces the run lengths, hence the CF digits: the
+letters inside a block are constant, so a run cannot end early, and the border letter differs,
+so it cannot end late. -/
+
+omit hirr hw in
+lemma getElem?_map_range' (f : ℕ → Bool) (s m k : ℕ) (hk : k < m) :
+    ((List.range' s m).map f)[k]? = some (f (s + k)) := by
+  rw [List.getElem?_map, List.getElem?_eq_getElem (by simpa using hk)]
+  simp
+
+/-- **The converse translation.**  If the stream reads `patBody` at the start of run `n`, the
+next `|v|` CF digits of `w` are exactly `v`. -/
+theorem cfDigit_of_map_range'_eq_patBody : ∀ (v : List ℕ) (n : ℕ), (∀ x ∈ v, 1 ≤ x) →
+    (List.range' (lrPos w n) (v.sum + 1)).map (lrExpand w) = patBody (decide (n % 2 = 0)) v →
+    ∀ i, i < v.length → cfDigit w (n + i) = v[i]!
+  | [], n, _, _, i, hi => by simp at hi
+  | (a :: v), n, hv, hEq, i, hi => by
+      have ha : 1 ≤ a := hv a (by simp)
+      have hv' : ∀ x ∈ v, 1 ≤ x := fun x hx => hv x (by simp [hx])
+      set b : Bool := decide (n % 2 = 0) with hb
+      have hsum : (a :: v).sum + 1 = a + (v.sum + 1) := by simp [List.sum_cons]; omega
+      have hbody : patBody b (a :: v) = List.replicate a b ++ patBody (!b) v := patBody_cons b a v
+      -- the letters strictly inside the first run
+      have hin : ∀ r, r < a → lrExpand w (lrPos w n + r) = b := by
+        intro r hr
+        have h1 := getElem?_map_range' (lrExpand w) (lrPos w n) ((a :: v).sum + 1) r (by
+          rw [hsum]; omega)
+        rw [hEq, hbody, List.getElem?_append_left (by simp; omega),
+          List.getElem?_replicate_of_lt hr] at h1
+        exact (Option.some_inj.mp h1).symm
+      -- the border letter just after the first run
+      have hborder : lrExpand w (lrPos w n + a) = !b := by
+        have h1 := getElem?_map_range' (lrExpand w) (lrPos w n) ((a :: v).sum + 1) a (by
+          rw [hsum]; omega)
+        rw [hEq, hbody, List.getElem?_append_right (by simp),
+          show (List.replicate a b).length = a from by simp, Nat.sub_self,
+          patBody_getElem?_zero (!b) v (fun x hx => hv' x (List.mem_of_mem_take hx))] at h1
+        exact (Option.some_inj.mp h1).symm
+      -- so the first run has length exactly `a`
+      have hc : cfDigit w n = a := by
+        by_contra hne
+        rcases lt_or_gt_of_ne hne with hlt | hgt
+        · -- the run ends early: the letter at its end already belongs to run `n+1`
+          have hidx : runIdx w (lrPos w n + cfDigit w n) = n + 1 := by
+            refine runIdx_eq hirr hw (n + 1) _ (by rw [lrPos_succ]) ?_
+            have h2 : lrPos w (n + 1) < lrPos w (n + 1 + 1) := lrPos_lt_succ hirr hw (n + 1)
+            rw [lrPos_succ w n] at h2
+            exact h2
+          have h1 := hin (cfDigit w n) hlt
+          rw [lrExpand_eq_runIdx_parity hirr hw, hidx, decide_succ_parity n] at h1
+          simp [hb] at h1
+        · -- the run ends late: the border letter would still be inside run `n`
+          have hidx : runIdx w (lrPos w n + a) = n := by
+            refine runIdx_eq hirr hw n _ (by omega) ?_
+            rw [lrPos_succ]
+            omega
+          rw [lrExpand_eq_runIdx_parity hirr hw, hidx] at hborder
+          simp [hb] at hborder
+      -- recurse on the tail
+      rcases Nat.eq_zero_or_pos i with rfl | hipos
+      · simpa using hc
+      · have hnext : lrPos w (n + 1) = lrPos w n + a := by rw [lrPos_succ, hc]
+        have hsplit : (List.range' (lrPos w (n + 1)) (v.sum + 1)).map (lrExpand w)
+            = patBody (decide ((n + 1) % 2 = 0)) v := by
+          have h1 : (List.range' (lrPos w n) a).map (lrExpand w)
+              ++ (List.range' (lrPos w n + a) (v.sum + 1)).map (lrExpand w)
+              = List.replicate a b ++ patBody (!b) v := by
+            rw [← List.map_append,
+              List.range'_append_1 (s := lrPos w n) (m := a) (n := v.sum + 1), ← hsum, hEq,
+              hbody]
+          have hlen : ((List.range' (lrPos w n) a).map (lrExpand w)).length
+              = (List.replicate a b).length := by simp
+          have h2 := (List.append_inj h1 hlen).2
+          rw [hnext, h2, decide_succ_parity n]
+        have h3 := cfDigit_of_map_range'_eq_patBody v (n + 1) hv' hsplit (i - 1) (by
+          simp at hi; omega)
+        rw [show n + i = n + 1 + (i - 1) from by omega, h3]
+        rcases i with _ | i'
+        · omega
+        · simp
 
 end Translate
 
@@ -243,4 +354,5 @@ open NormalNumbers.VandeheyLR
 #print axioms xorB_decide
 #print axioms map_range'_eq_runWord
 #print axioms map_range'_eq_patWord
+#print axioms cfDigit_of_map_range'_eq_patBody
 end
