@@ -673,3 +673,4 @@ import NormalNumbers.VandeheySerret
 import NormalNumbers.VandeheyLeafReduction
 import NormalNumbers.VandeheyRescale
 import NormalNumbers.VandeheyOutputWord
+import NormalNumbers.VandeheyTrigger
