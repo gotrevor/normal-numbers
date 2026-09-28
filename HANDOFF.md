@@ -1,135 +1,121 @@
-# Handoff: Vandehey's output side opened — Lemma 4.3 proved, §6 sandwich assembled
+# Handoff: the output side is CLOSED; the leaf is one concrete transducer, correctness proved
 
-**Date**: 2026-09-28 (lap 1, review lap) · **Branch**: `wip/g5-prime-subset` ·
-**HEAD**: `8b30f7e` · `lake build` 🟢 10313 jobs · working tree clean · nothing pushed.
+**Date**: 2026-09-28 (lap 2) · **Branch**: `wip/g5-prime-subset` · **HEAD**: `34857a8` ·
+`lake build` 🟢 10319 jobs · working tree clean · nothing pushed.
 
 Scope: `sorry-free: src/NormalNumbers/LiteratureVandehey.lean`, i.e. prove
-`vandeheyUniformFreq_holds`.  **Read `DIRECTION.md` CURRENT DIRECTIVE first — it outranks this
-file.**  It was set this lap and it still stands.
+`vandeheyUniformFreq_holds`.  Read `DIRECTION.md` CURRENT DIRECTIVE first — it outranks this
+file.  Its mandated move (the §5–§6 output-frequency engine, abstract, in `src/`) is **done**.
 
-## ⚠️ The course correction this lap made
+## 🎯 Where the proof now stands — ONE chain, ONE open end
 
-The previous three laps all went into the transducer's **input** side (Raney normal forms §2,
-the bijectivity-free transfer-operator pin, Doeblin minorization at a common target).  The
-**output** side — Vandehey's Lemma 4.3 + §5 triggers + §6 assembly — had never been touched,
-and it is the route-decisive piece: if output-word frequencies cannot be read off the joint
-(window, state) frequencies, the entire automaton build is worthless.  `DIRECTION.md` now
-FORBIDS spending a lap on `raneyNorm` / `RaneyState` / the common-target reach (the old
-HANDOFF's NEXT 1–3) until the output engine is closed.
+    vandehey_matrix_action_holds                      ← the headline (Vandehey 2017 Thm 1.1)
+      ← vandeheyUniformFreq_of_scaleUniformFreq       ✅ VandeheyLeafReduction
+      ← ScaleUniformFreq  (x ↦ p·x, prime p, ONE map)
+      ← mobiusUniformFreq_of_transducer               ✅ VandeheyAssembly  ← THE CAPSTONE
+          needs, for the concrete transducer:
+            hout   ✅ (L/R level) lrWord_eq_lrExpandWord     — run↔CF-digit translation OPEN
+            hjs    ⬜ JointStateFreq                          — VandeheyCocycle supplies it
+            hlen   ⬜ ℓ(n)/n → c > 0                          — Vandehey Lemma 6.1
+            hK/hkK ⬜ uniform trigger bound                    — Vandehey Lemma 2.2
+            hgen   ⬜ triggers on genuine words
+            htail  ⬜ Gauss-null trigger tails                 — Lemma 4.3 (2)
 
-## 🔑 The structural find that makes §5–§6 elementary
+Everything analytic and combinatorial is in the kernel and axiom-clean.  What is left is six
+named hypotheses about a single concrete finite-state machine.
 
-Our own `VandeheyCocycle.tendsto_jointCount_of_classEquidistribution` returns the joint
-(window, state) limit in **factorized** form `ν t · γ(I_q)` — the state reads the past, the
-window reads the future, and ψ-mixing decouples them.  Vandehey has only `ρ ≪≫ μ̃`
-(Remark 3.6, no product structure), so he needs a genuine limiting measure `ρ`, built from
-Ryll-Nardzewski a.e. convergence plus Vitali-Hahn-Saks on top of the hot-spot criterion that
-Airey–Mance later refuted.  With the product form, countable additivity of the limit reduces to
-countable additivity of `γ` alone — and the infinite CF alphabet is escaped by a **finite**
-digit-truncated family of Gauss mass `> 1 − ε`.  That finite escape is also exactly the
-tightness patch the published §3 owes and never pays.
+## ✅ What landed this run (10 green commits, all `#print axioms`-clean)
 
-## ✅ Landed — `src/NormalNumbers/VandeheyOutputFreq.lean` (new, in the root import)
+`1ec1e49` **§6 assembly** — `exists_tendsto_trigTotal`: trigger counts have an `x`-independent
+Cesàro limit.  `trigLimit` monotone and `≤ K`, `L = ⨆ J`, ε/3 sandwich.  Guard rule:
+`exists_tendsto_trigTotal_locator` (empty family, limit 0).
 
-Three green commits, every headline `#print axioms`-clean (trust base only).
+`e6a808f` **`VandeheyLeafReduction`** — the either-or endgame ONE MATRIX AT A TIME.
+`MobiusUniformFreq`, `mobiusCFN_of_uniformFreq`, `ScaleUniformFreq`.  Guard rule:
+`mobiusUniformFreq_one`, `mobiusUniformFreq_const` (the singular `x ↦ 1` satisfies
+`MobiusUniformFreq` but not `MobiusCFN`, so nonsingularity is load-bearing).
 
-1. `cedcf6f` **the upper-bound engine.**
-   - `JointStateFreq δ s₀ ν` — the factorized hypothesis.  Guard rule discharged:
-     `jointStateFreq_unit` (content locator: the one-state automaton, `ν ≡ 1`, on CF-normality
-     alone), `not_jointStateFreq_unit_zero` (`ν ≡ 0` is FALSE, so `ν` is load-bearing),
-     `wCount_zero_length` / `wCount_zero_weight` (the `m = 0` and `a ≡ 0` boundaries).
-   - `gaussMeasure_allWordsEvent m = 1`; `exists_boundedWords_sum_gt` (the finite escape).
-   - `wCount_le_of_finset` — the pointwise split, pure fiberwise counting.
-   - `eventually_wCount_le` — `wCount ≤ (Sb + ε)·n` eventually.
-2. `25d1c5e` **Vandehey Lemma 4.3 at a single window length.**
-   - `sum_gaussMeasure_le_one_of_length`, `sum_filter_mem_eq` (the fiberwise identity shared by
-     both halves), `wCount_ge_of_finset`, `eventually_le_wCount`.
-   - `wLimit ν t a m` = `sSup` over FINITE subfamilies of `allWords m`; `wLimit_set_nonempty`,
-     `wLimit_set_bddAbove` (bound `C · ν t`).
-   - **`tendsto_wCount_div`** — for a bounded nonnegative weight on the countably infinite
-     length-`m` genuine words, `wCount / n → wLimit ν t a m`, a value mentioning no `x`.
-3. `8b30f7e` **the trigger layer and its tail.**
-   - `fireAt` / `fireTotal` (untruncated per-position multiplicity as a supremum, ATTAINED
-     because `K` bounds it: `exists_fireAt_eq_fireTotal`), `trigCount` bucketed by
-     length × state, `trigCount_eq` (= `Σ_i fireAt i J`), `sum_state_wCount`, `trigLimit`,
-     **`tendsto_trigCount_div`** (truncated count converges `x`-independently).
-   - `trigPrefix k t m` / `trigInd` / `tailMass k ν m`; `cfWindow_take` (windows nest);
-     **`fireTotal_sub_fireAt_le`** (the structural step: a position whose truncation misses a
-     trigger has its length-`J` window in `trigPrefix`, by contraposition);
-     `trigTotal_le_trigCount_add`; `wLimit_trigInd_le`.
+`cb0d45e` **`VandeheyRescale`** — `tendsto_div_of_tendsto_comp_of_monotone`: a monotone count
+sampled at `ℓ(n)` with `ℓ n/n → c > 0` and `C(ℓ n)/n → L` has `C m/m → L/c` over ALL `m`.
+Pure analysis; used TWICE (input→L/R, L/R→output CF digits).
+
+`b770708` **`VandeheyOutputWord`** — `outWord`/`outLen`/`outDigit`, `outWord_eq_map_outDigit`,
+`countOccurrences_le_of_prefix`, `tendsto_outCount_div`.
+
+`980a2a0` **§5 bucketing** — `occStart_eq_sum_fireOut` (EXACT: occurrences bucket by the block
+they start in), `abs_countOccurrences_sub_sum_fireOut_le` (the `O(1)`),
+`tendsto_countOccurrences_outWord_of_fireOut`.
+
+`85b809d` **`VandeheyTrigger`** — `blocksOf` + `blocksOf_append` (locality), `occIn`, and
+`kOut := occIn q − occIn q.dropLast` (increment ⇒ minimality is FREE), `sum_kOut_eq`.
+
+`9bfb54c` **`fireTotal_kOut_eq_fireOut`** — the §5 identity, ABSTRACT (any block emitter).
+
+`d1a7770` **`VandeheyAssembly`** — `mobiusUniformFreq_of_transducer`, the capstone.
+
+`bf72368` **`VandeheyLRTransducer`** — `RState D` (Fintype), `lrStep`/`lrOut`/`lrDelta` from
+`isRD_ingest`, `lrRun_eq`: `M₀·B_{a₁}⋯B_{aₙ} = lrProd (lrWord n)·M_n`.
+
+`761b568` **`act_startState_eq`** — `D·x = lrProd (lrWord n) · (M_n · Tⁿx)`.
+
+`34857a8` **`lrWord_eq_lrExpandWord`** — the emitted word IS the L/R expansion's prefix.
+
+## 🔑 The three design findings that made it work
+
+1. **A CF-digit emitter cannot be finite-state.**  `isRD_ingest_cfString` emits
+   `A_{d₀} B_{d₁}⋯B_{d_m}`, and `B_d·A_e = B_{d+e}`, so the last digit is provisional and the
+   pending value is unbounded — it would have to live in the state, killing `Fintype S`.
+   Emitting **L/R letters** fixes it: a letter, once emitted, is final.  The image's CF digits
+   are the RUNS of the L/R word, so "the last run may still grow" is a ONE-LETTER look-ahead.
+   Price: two reindexings, both `VandeheyRescale`.
+2. **Minimality of triggers is free** if `k` is defined as an INCREMENT of a monotone count
+   (`kOut`), not as a "minimal completing word".  Telescoping does the rest.
+3. **`occStart` (already in the repo, from an unrelated audit) makes §5 EXACT.**  It counts start
+   positions reading past the window end, which is precisely the convention in which an
+   occurrence belongs to exactly one block.  Vandehey's four "not nicely" positions are
+   subsumed; the only inequality left (`≤ |v|`) was already proved in `OccurrenceCountEquiv`.
 
 ## 🎬 Next actions, in order
 
-1. **Close the assembly** — `exists_tendsto_trigTotal`.  All the pieces are in the kernel; what
-   remains is arithmetic.  Sketch, verified on paper:
-   - `0 ≤ wLimit ν t a m` (take `Q = ∅` in `le_csSup`), hence `trigLimit k ν` is **monotone**
-     in `J` (larger `Finset.Icc 1 J`).
-   - `trigLimit k ν J ≤ K`: pick a CF-normal `x` (`exists_isCFNormal`); `trigTotal x n ≤ K·n`
-     from `fireTotal_le`, so `trigCount x n J / n ≤ K`, and `tendsto_trigCount_div` passes it
-     to the limit.
-   - So `L := ⨆ J, trigLimit k ν J` exists and `Tendsto (trigLimit k ν) atTop (nhds L)`
-     (`tendsto_atTop_ciSup`).
-   - For `ε > 0` pick `J ≥ 1` with `trigLimit J > L − ε/3` **and** `K · tailMass k ν J < ε/3`
-     (uses the one honest hypothesis `Tendsto (tailMass k ν) atTop (nhds 0)`).
-   - Lower: `trigCount_le_trigTotal` + `tendsto_trigCount_div` ⇒ eventually
-     `trigTotal/n > L − ε/2`.
-   - Upper: `trigTotal_le_trigCount_add` + `tendsto_wCount_div` (with `C = 1`, weight
-     `trigInd`) + `wLimit_trigInd_le` ⇒ the majorant's limit is
-     `trigLimit J + K·Σ_t wLimit ν t (trigInd k t J) J ≤ L + K·tailMass J < L + ε/3`.
-   - Conclusion: `∃ L, ∀ x CF-normal, trigTotal k δ s₀ x n / n → L`.
-   Guard rule: `trigPrefix`/`tailMass` are defs, not new `Prop`s, but the assembly's
-   hypothesis bundle (`hK`, `hgen`, `htail`) needs a content locator — the EMPTY trigger family
-   (`k ≡ 0`) satisfies everything with `L = 0`, and a singleton bounded-length family with
-   `tailMass` eventually `0` gives the finite case, whose limit is the plain sum.
-2. **The per-matrix either-or endgame.**  `LiteratureVandehey.vandehey_matrix_action_of_uniformFreq`
-   is stated for ALL matrices at once; the leaf route needs the single-matrix form so
-   `MobiusCFNScale` can be reached from a per-matrix uniform-frequency statement.  Its proof
-   body is already per-matrix (`intro x a b c d …; obtain ⟨L, hL⟩ := h a b c d …`), so this is
-   a cheap refactor.  Do it when the assembly lands.
-3. **Bridge §5 to the CF digits of `p·x`.**  `trigTotal` counts trigger firings; the output
-   word count is that up to `O(1)` (Vandehey §5, the four "not nicely" positions), and the
-   output *length* `ℓ(n) = c₁n(1+o(1))` is Lemma 6.1 — the SAME engine with the weight
-   `g(s,M)` of §6, so `tendsto_wCount_div` covers it too.  Then rescale `i ≤ ℓ(n)` to
-   `i ≤ m` via `ℓ⁻¹`.
-4. **Only then** the supply side: `raneyNorm` as a total function by well-founded recursion on
-   `(a+b+c+d).toNat`, `RaneyState D` as a `Fintype` subtype, `δ N a = J · raneyNorm (N · B a)`,
-   and the common-target reach for prime `D` from the row-family identity
-   `δ(R_b, a) = R_{(a+b⁻¹) mod D}` (probed to `D = 23`; composite `D` has no common target,
-   consistent with `MobiusCFNScale` quantifying over primes).  Details in
-   `archive/handoff/HANDOFF-2026-09-28-raney-section2.md`.
+1. **`hK`/`hkK` — the uniform trigger bound.**  Nearest of the six.  `raneyEntry_le` puts all
+   Raney-state entries in `[0, D]`, so `entrySum ≤ 4D`, and `exists_balanced_decomp`'s descent
+   measure bounds the emitted L/R word length per step.  Then a trigger multiplicity at one
+   position is at most that block length, uniformly.
+2. **The run↔CF-digit translation.**  An occurrence of a CF word `v` in the image's expansion is
+   an occurrence of the L/R run-pattern of `v` with maximal runs at both ends (the one-letter
+   look-ahead).  Then `outCount` at L/R index rescales to CF index by `VandeheyRescale` again,
+   with `c₂` = the density of run boundaries.
+3. **`hlen`** (Lemma 6.1) — `ℓ(n)/n → c > 0`.  Lower bound: every step emits `≥ 0` and the
+   product must grow; upper: entries bounded by `D`.  Likely wants the ergodic average of the
+   per-step emission length, i.e. `tendsto_wCount_div` at weight `|lrOut|` — the SAME engine.
+4. **`hjs`** — `JointStateFreq` for `lrDelta`, from
+   `VandeheyCocycle.tendsto_jointCount_of_classEquidistribution` + the common-target reach.
+   `archive/handoff/HANDOFF-2026-09-28-raney-section2.md` has the row-family identity
+   `δ(R_b, a) = R_{(a+b⁻¹) mod D}`, probed to `D = 23`.
+5. **`htail`** — Gauss-null trigger tails.  For a FIXED `v` the trigger prefixes shrink because a
+   long window forces many emitted letters; the tail mass is then a cylinder-mass estimate.
 
-## ⚠️ Gotchas found this lap
+## ⚠️ Gotchas found this run
 
-- **`boundedWords` and `mem_boundedWords` are AMBIGUOUS**: `NormalNumbers.boundedWords`
-  (`CFSchedule.lean`, `Finset`, implicit args) vs `VandeheyAut.boundedWords`
-  (`VandeheyAutomaton.lean`, explicit args).  The ambient-namespace one wins over `open
-  VandeheyAut`, so `mem_boundedWords m w` fails with "Function expected".  Use the implicit
-  form `mem_boundedWords.mp`.
-- **`ℝ≥0∞` needs `open ENNReal`** — it is scoped notation, not transitive through imports.
-  Without it Lean parses `ℝ ≥ 0 ∞` and reports `LE Type` / `OfNat Type 0`.  This file spells
-  `ENNReal` out.
-- `div_le_div_iff` is gone in v4.33; it is **`div_le_div_iff₀`**.
-- `tendsto_finset_sum` → **`tendsto_finsetSum`**.
-- `Finset.filter_card_add_filter_neg_card_eq_card` → **`Finset.card_filter_add_card_filter_not`**.
-- `omit [inst] in` must come **before** the docstring, not between docstring and `lemma`
-  (same shape as `set_option … in`).
-- `cfWord_take`, `cfWord_iterate`, `mem_familySetC_iff_cfWord`, `cfWord_length` live in
-  `NormalNumbers` directly (`VandeheyTwoPoint.lean` lines < 127), **not** in `VandeheyTwo`.
-- `Metric.tendsto_atTop` turns the goal into `∃ N, ∀ n ≥ N, …`, which `filter_upwards` cannot
-  use.  Use **`Metric.tendsto_nhds`**, which gives `∀ ε > 0, ∀ᶠ n in l, …`.
+- `div_add_div_same` does not exist — use `← add_div`.
+- `div_le_div_of_nonneg_right` takes `0 ≤ c`, NOT `0 < c` (pass `h.le`).
+- `Finset.Icc_succ_right` does not exist — `ext p; simp [Finset.mem_Icc, Finset.mem_insert]; omega`.
+- `List.tails_nil` does not exist; `(List.mem_tails _ _).mp`, not `List.mem_tails.mp`.
+- `simp only [f_zero]` cannot see through eta on a partially applied function — `funext` first.
+- `Nonneg.mul` resolves to Mathlib's `Nonneg` subtype instance; write `Mat2.Nonneg.mul`.
+- `Mat2` is NOT a `Monoid`: use `mul_assoc'`, `one_mul'`, `mul_one'`.
+- `finite_isRD D : Finite ↑{M | IsRD D M}` is a `Finite`, not a `Set.Finite`; make `RState` an
+  `abbrev` so the subtype coercion and instances fire, then `Fintype.ofFinite`.
+- `card_filter_range_shift`-style rewrites need the predicate passed EXPLICITLY (higher-order
+  unification will not guess `fun p => Q (c + p)`).
 
 ## 📁 Key files
 
-- `src/NormalNumbers/VandeheyOutputFreq.lean` — everything above (the output side).
-- `src/NormalNumbers/VandeheyCocycle.lean` — `JointStateFreq`'s supplier,
-  `tendsto_jointCount_of_classEquidistribution`.
-- `src/NormalNumbers/VandeheyClassEquidist.lean` — `*_of_common_reach` entry points.
-- `src/NormalNumbers/VandeheySmith.lean`, `VandeheySerret.lean` — the leaf reduction.
-- `PENDING_WORK.md` queue item 0 — the crux decomposition, mirrored here.
-- `/tmp/.../scratchpad/vandehey.txt` is gone with the box; re-extract the paper with
-  `python3 ~/src/sum-product/tools/pdf_extract.py papers/vandehey-2017-matrix-actions-cf-normality.pdf`.
-  §4.3 is around line 6290, §5 around 6860, §6 around 7210.
+`VandeheyOutputFreq.lean` (engine) · `VandeheyOutputWord.lean` (§5 bucketing) ·
+`VandeheyTrigger.lean` (trigger family) · `VandeheyRescale.lean` (reindexing) ·
+`VandeheyAssembly.lean` (capstone) · `VandeheyLRTransducer.lean` (the machine) ·
+`VandeheyLeafReduction.lean` (per-matrix endgame) · `VandeheyRaney.lean` (Raney states, Lemma 2.1).
 
 ---
-**→ Next session: NEXT action 1 (close `exists_tendsto_trigTotal`).  Every input it needs is
-already in the kernel; the sketch above is the whole proof.**
+**→ Next session: NEXT action 1 (`hK`, the uniform trigger bound).  It is the nearest of the six
+remaining hypotheses and it is pure finite combinatorics on the Raney cone.**
