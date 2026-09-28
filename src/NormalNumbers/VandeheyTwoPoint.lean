@@ -817,6 +817,235 @@ theorem integral_devAvg_sq_le (δ : S → ℕ → S) (d t : S) (q : List ℕ)
         mul_le_mul_of_nonneg_left htot (by positivity)
     _ = B₀ / K := by field_simp
 
+/-! ## From the variance bound to a word-sum bound -/
+
+lemma measurable_devAvg (δ : S → ℕ → S) (d t : S) (q : List ℕ) (L : ℝ) (K : ℕ) :
+    Measurable (devAvg δ d t q L K) :=
+  measurable_const.mul (Finset.measurable_sum _ fun k _ => measurable_devFun δ d t q L k)
+
+omit [Fintype S] [DecidableEq S] in
+lemma abs_devAvg_le (δ : S → ℕ → S) (d t : S) (q : List ℕ) {L : ℝ} (hL0 : 0 ≤ L) (hL1 : L ≤ 1)
+    {K : ℕ} (hK : 0 < K) (y : ℝ) : |devAvg δ d t q L K y| ≤ 1 := by
+  have hKR : (0 : ℝ) < K := by exact_mod_cast hK
+  rw [devAvg, abs_mul, abs_of_pos (by positivity : (0:ℝ) < (K:ℝ)⁻¹)]
+  have hsum : |∑ k ∈ Finset.range K, devFun δ d t q L k y| ≤ (K : ℝ) := by
+    refine le_trans (Finset.abs_sum_le_sum_abs _ _) ?_
+    calc ∑ k ∈ Finset.range K, |devFun δ d t q L k y|
+        ≤ ∑ _k ∈ Finset.range K, (1 : ℝ) :=
+          Finset.sum_le_sum fun k _ => abs_devFun_le δ d t q hL0 hL1 k y
+      _ = (K : ℝ) := by rw [Finset.sum_const, Finset.card_range, nsmul_eq_mul, mul_one]
+  calc (K : ℝ)⁻¹ * |∑ k ∈ Finset.range K, devFun δ d t q L k y| ≤ (K : ℝ)⁻¹ * (K : ℝ) :=
+        mul_le_mul_of_nonneg_left hsum (by positivity)
+    _ = 1 := by field_simp
+
+lemma integrable_devAvg_sq (δ : S → ℕ → S) (d t : S) (q : List ℕ) {L : ℝ} (hL0 : 0 ≤ L)
+    (hL1 : L ≤ 1) {K : ℕ} (hK : 0 < K) :
+    Integrable (fun y => devAvg δ d t q L K y ^ 2) gaussMeasure := by
+  refine Integrable.mono (integrable_const (1 : ℝ))
+    (((measurable_devAvg δ d t q L K).pow_const 2).aestronglyMeasurable)
+    (ae_of_all _ fun y => ?_)
+  rw [Real.norm_eq_abs, Real.norm_eq_abs, abs_one, abs_pow]
+  calc |devAvg δ d t q L K y| ^ 2 ≤ 1 ^ 2 :=
+        pow_le_pow_left₀ (abs_nonneg _) (abs_devAvg_le δ d t q hL0 hL1 hK y) 2
+    _ = 1 := one_pow 2
+
+/-- **`devAvg` is constant on a cylinder of length `K + |q|`**, with value
+`VandeheyCocycle.localAvg`.  This is `localAvg_eq` at `i = 0`, transported through
+`jointDev_eq_devFun`. -/
+lemma devAvg_eq_localAvg [Nonempty S] (δ : S → ℕ → S) (d t : S) (q : List ℕ) (L : ℝ) (K : ℕ)
+    {W : List ℕ} (hWlen : W.length = K + q.length) {y : ℝ} (hirr : Irrational y)
+    (hy : y ∈ cfCylinder W) :
+    devAvg δ d t q L K y = VandeheyCocycle.localAvg δ t q L K d W := by
+  have hyI : y ∈ Set.Ioo (0 : ℝ) 1 := hy.1
+  have hword : W = cfWord y (K + q.length) := by
+    have := (mem_cfCylinder_iff_cfWord hyI W).mp hy
+    rwa [hWlen] at this
+  have hdev : ∀ k : ℕ, devFun δ d t q L k y = VandeheyCocycle.jointDev δ d t q L y k :=
+    fun k => (jointDev_eq_devFun δ d t q L k hirr hyI).symm
+  have hla := VandeheyCocycle.localAvg_eq δ d t q L y 0 K
+  simp only [Nat.zero_add, cfWindow_from_zero] at hla
+  have hst : stateAt δ d y 0 = d := by rw [stateAt]; simp [cfWord]
+  rw [hst] at hla
+  rw [devAvg, Finset.sum_congr rfl fun k _ => hdev k, hla, hword]
+
+/-- **The disjoint-cylinder comparison.**  For any finite family of genuine words of length
+`K + |q|`, the `γ`-weighted sum of `localAvg²` is dominated by `∫ devAvg² dγ`: `devAvg` carries
+the constant value `localAvg(d,W)` on `I_W`, the cylinders are disjoint, and the integrand is
+nonnegative. -/
+theorem sum_gaussMeasure_localAvg_sq_le [Nonempty S] (δ : S → ℕ → S) (d t : S) (q : List ℕ) {L : ℝ}
+    (hL0 : 0 ≤ L) (hL1 : L ≤ 1) {K : ℕ} (hK : 0 < K) (F : Finset (List ℕ))
+    (hFlen : ∀ W ∈ F, W.length = K + q.length) :
+    ∑ W ∈ F, (gaussMeasure (cfCylinder W)).toReal
+        * VandeheyCocycle.localAvg δ t q L K d W ^ 2
+      ≤ ∫ y, devAvg δ d t q L K y ^ 2 ∂gaussMeasure := by
+  classical
+  set f : ℝ → ℝ := fun y => devAvg δ d t q L K y ^ 2 with hf
+  have hfint : Integrable f gaussMeasure := integrable_devAvg_sq δ d t q hL0 hL1 hK
+  have hf0 : ∀ y, 0 ≤ f y := fun y => sq_nonneg _
+  -- each cylinder contributes exactly its constant value
+  have hcyl : ∀ W ∈ F, ∫ y in cfCylinder W, f y ∂gaussMeasure
+      = (gaussMeasure (cfCylinder W)).toReal
+        * VandeheyCocycle.localAvg δ t q L K d W ^ 2 := by
+    intro W hW
+    have hconst : ∫ y in cfCylinder W, f y ∂gaussMeasure
+        = ∫ _y in cfCylinder W, VandeheyCocycle.localAvg δ t q L K d W ^ 2 ∂gaussMeasure := by
+      refine setIntegral_congr_ae (measurableSet_cfCylinder W) ?_
+      filter_upwards [ae_irrational] with y hirr hyW
+      show devAvg δ d t q L K y ^ 2 = _
+      rw [devAvg_eq_localAvg δ d t q L K (hFlen W hW) hirr hyW]
+    rw [hconst, setIntegral_const, measureReal_def, smul_eq_mul, mul_comm]
+  -- the indicators add up to at most `f`
+  have hind : ∀ y : ℝ, ∑ W ∈ F, (cfCylinder W).indicator f y ≤ f y := by
+    intro y
+    by_cases hex : ∃ W ∈ F, y ∈ cfCylinder W
+    · obtain ⟨W₀, hW₀, hyW₀⟩ := hex
+      have hsingle : ∑ W ∈ F, (cfCylinder W).indicator f y = f y := by
+        rw [Finset.sum_eq_single_of_mem W₀ hW₀ ?_]
+        · exact Set.indicator_of_mem hyW₀ f
+        · intro W hW hne
+          refine Set.indicator_of_notMem (fun hyW => ?_) f
+          exact Set.disjoint_left.mp
+            (cfCylinder_disjoint (by rw [hFlen W hW, hFlen W₀ hW₀]) hne) hyW hyW₀
+      rw [hsingle]
+    · push_neg at hex
+      have hzero : ∀ W ∈ F, (cfCylinder W).indicator f y = 0 :=
+        fun W hW => Set.indicator_of_notMem (hex W hW) f
+      rw [Finset.sum_congr rfl hzero, Finset.sum_const_zero]
+      exact hf0 y
+  calc ∑ W ∈ F, (gaussMeasure (cfCylinder W)).toReal
+          * VandeheyCocycle.localAvg δ t q L K d W ^ 2
+      = ∑ W ∈ F, ∫ y in cfCylinder W, f y ∂gaussMeasure :=
+        (Finset.sum_congr rfl hcyl).symm
+    _ = ∑ W ∈ F, ∫ y, (cfCylinder W).indicator f y ∂gaussMeasure := by
+        refine Finset.sum_congr rfl fun W _ => ?_
+        rw [integral_indicator (measurableSet_cfCylinder W)]
+    _ = ∫ y, (∑ W ∈ F, (cfCylinder W).indicator f y) ∂gaussMeasure :=
+        (integral_finsetSum _ fun W _ =>
+          hfint.indicator (measurableSet_cfCylinder W)).symm
+    _ ≤ ∫ y, f y ∂gaussMeasure :=
+        integral_mono
+          (integrable_finsetSum _ fun W _ => hfint.indicator (measurableSet_cfCylinder W))
+          hfint hind
+
+/-! ## Cauchy–Schwarz, and the `windowBound` measure bound -/
+
+omit [Fintype S] [DecidableEq S] in
+/-- Disjoint same-length cylinders have total mass at most `1`. -/
+lemma sum_gaussMeasure_cylinder_le_one (F : Finset (List ℕ)) {m : ℕ}
+    (hFlen : ∀ W ∈ F, W.length = m) :
+    ∑ W ∈ F, (gaussMeasure (cfCylinder W)).toReal ≤ 1 := by
+  classical
+  have hdisj : (F : Set (List ℕ)).PairwiseDisjoint (fun W => cfCylinder W) :=
+    fun W hW W' hW' hne => cfCylinder_disjoint (by rw [hFlen W hW, hFlen W' hW']) hne
+  have hsum : gaussMeasure (⋃ W ∈ F, cfCylinder W) = ∑ W ∈ F, gaussMeasure (cfCylinder W) :=
+    measure_biUnion_finset hdisj fun W _ => measurableSet_cfCylinder W
+  have hle : ∑ W ∈ F, gaussMeasure (cfCylinder W) ≤ 1 := by
+    rw [← hsum]; exact prob_le_one
+  have h := ENNReal.toReal_mono (by norm_num : (1 : ENNReal) ≠ ⊤) hle
+  rwa [ENNReal.toReal_sum (fun W _ => measure_ne_top _ _), ENNReal.toReal_one] at h
+
+omit [Fintype S] [DecidableEq S] in
+/-- **Cauchy–Schwarz on the word sum.**  `∑ γ(I_W)|a_W| ≤ √(∑ γ(I_W)·a_W²)` when
+`∑ γ(I_W) ≤ 1`. -/
+lemma sum_gaussMeasure_abs_le_sqrt (F : Finset (List ℕ)) {m : ℕ}
+    (hFlen : ∀ W ∈ F, W.length = m) (a : List ℕ → ℝ) :
+    ∑ W ∈ F, (gaussMeasure (cfCylinder W)).toReal * |a W|
+      ≤ Real.sqrt (∑ W ∈ F, (gaussMeasure (cfCylinder W)).toReal * a W ^ 2) := by
+  classical
+  have hp0 : ∀ W : List ℕ, (0 : ℝ) ≤ (gaussMeasure (cfCylinder W)).toReal :=
+    fun W => ENNReal.toReal_nonneg
+  have hV0 : (0 : ℝ) ≤ ∑ W ∈ F, (gaussMeasure (cfCylinder W)).toReal * a W ^ 2 :=
+    Finset.sum_nonneg fun W _ => mul_nonneg (hp0 W) (sq_nonneg _)
+  have hLHS0 : (0 : ℝ) ≤ ∑ W ∈ F, (gaussMeasure (cfCylinder W)).toReal * |a W| :=
+    Finset.sum_nonneg fun W _ => mul_nonneg (hp0 W) (abs_nonneg _)
+  have hcs := Finset.sum_mul_sq_le_sq_mul_sq F
+    (fun W => Real.sqrt ((gaussMeasure (cfCylinder W)).toReal))
+    (fun W => Real.sqrt ((gaussMeasure (cfCylinder W)).toReal) * |a W|)
+  have hprod : ∀ W ∈ F, Real.sqrt ((gaussMeasure (cfCylinder W)).toReal)
+      * (Real.sqrt ((gaussMeasure (cfCylinder W)).toReal) * |a W|)
+      = (gaussMeasure (cfCylinder W)).toReal * |a W| := by
+    intro W _
+    rw [← mul_assoc, Real.mul_self_sqrt (hp0 W)]
+  have hsq1 : ∀ W ∈ F, Real.sqrt ((gaussMeasure (cfCylinder W)).toReal) ^ 2
+      = (gaussMeasure (cfCylinder W)).toReal := fun W _ => Real.sq_sqrt (hp0 W)
+  have hsq2 : ∀ W ∈ F, (Real.sqrt ((gaussMeasure (cfCylinder W)).toReal) * |a W|) ^ 2
+      = (gaussMeasure (cfCylinder W)).toReal * a W ^ 2 := by
+    intro W _
+    rw [mul_pow, Real.sq_sqrt (hp0 W), sq_abs]
+  rw [Finset.sum_congr rfl hprod, Finset.sum_congr rfl hsq1,
+    Finset.sum_congr rfl hsq2] at hcs
+  have hbound : (∑ W ∈ F, (gaussMeasure (cfCylinder W)).toReal * |a W|) ^ 2
+      ≤ ∑ W ∈ F, (gaussMeasure (cfCylinder W)).toReal * a W ^ 2 := by
+    calc (∑ W ∈ F, (gaussMeasure (cfCylinder W)).toReal * |a W|) ^ 2
+        ≤ (∑ W ∈ F, (gaussMeasure (cfCylinder W)).toReal)
+            * ∑ W ∈ F, (gaussMeasure (cfCylinder W)).toReal * a W ^ 2 := hcs
+      _ ≤ 1 * ∑ W ∈ F, (gaussMeasure (cfCylinder W)).toReal * a W ^ 2 :=
+          mul_le_mul_of_nonneg_right (sum_gaussMeasure_cylinder_le_one F hFlen) hV0
+      _ = ∑ W ∈ F, (gaussMeasure (cfCylinder W)).toReal * a W ^ 2 := one_mul _
+  have h := Real.sqrt_le_sqrt hbound
+  rwa [Real.sqrt_sq hLHS0] at h
+
+/-- The variance constant. -/
+noncomputable def varConst (C θ : ℝ) (ℓ : ℕ) : ℝ :=
+  max 1 (2 * (C + 1)) * (2 * ℓ + 1) + 2 * (max 1 (2 * (C + 1)) * (1 - max θ (79 / 100))⁻¹)
+
+lemma varConst_nonneg {C θ : ℝ} (_hC : 0 ≤ C) (_hθ0 : 0 ≤ θ) (hθ1 : θ < 1) (ℓ : ℕ) :
+    0 ≤ varConst C θ ℓ := by
+  have h1 : (1 : ℝ) ≤ max 1 (2 * (C + 1)) := le_max_left _ _
+  have hρ1 : max θ (79 / 100 : ℝ) < 1 := max_lt hθ1 (by norm_num)
+  have h2 : (0 : ℝ) < 1 - max θ (79 / 100 : ℝ) := by linarith
+  have h3 : (0 : ℝ) ≤ (1 - max θ (79 / 100 : ℝ))⁻¹ := by positivity
+  rw [varConst]
+  have : (0 : ℝ) ≤ max 1 (2 * (C + 1)) := by linarith
+  positivity
+
+/-- **The measure-side bound on `windowBound`.**  Over any finite family of genuine words of
+length `K + |q|`, the `γ`-weighted total of `VandeheyCocycle.windowBound` is
+`O(|S|·√(1/K))` — uniformly in the family.  This is the input the orbit transfer needs. -/
+theorem sum_gaussMeasure_windowBound_le [Nonempty S] (δ : S → ℕ → S) (t : S) (q : List ℕ)
+    {c C θ : ℝ} (hC : 0 ≤ C) (hθ0 : 0 ≤ θ) (hθ1 : θ < 1) (hc0 : 0 ≤ c) (hc1 : c ≤ 1)
+    (hpin : ∀ (n : ℕ) (e s : S) (τ : ℝ), τ ∈ Set.Icc (0 : ℝ) 1 →
+      |stateHorizonIntegral δ (cfCylinder q) n e s τ
+          - c * (gaussMeasure (cfCylinder q)).toReal|
+        ≤ C * θ ^ n * (gaussMeasure (cfCylinder q)).toReal)
+    {K : ℕ} (hK : 0 < K) (F : Finset (List ℕ))
+    (hFlen : ∀ W ∈ F, W.length = K + q.length) :
+    ∑ W ∈ F, (gaussMeasure (cfCylinder W)).toReal
+        * VandeheyCocycle.windowBound δ t q c K W
+      ≤ (Fintype.card S : ℝ) * Real.sqrt (varConst C θ q.length / K) := by
+  classical
+  have hKR : (0 : ℝ) < K := by exact_mod_cast hK
+  set p : List ℕ → ℝ := fun W => (gaussMeasure (cfCylinder W)).toReal with hp
+  have hp0 : ∀ W, 0 ≤ p W := fun W => ENNReal.toReal_nonneg
+  set R : ℝ := Real.sqrt (varConst C θ q.length / K) with hR
+  -- per state, the Cauchy–Schwarz bound
+  have hper : ∀ d : S, ∑ W ∈ F, p W * |VandeheyCocycle.localAvg δ t q c K d W| ≤ R := by
+    intro d
+    refine le_trans (sum_gaussMeasure_abs_le_sqrt F hFlen _) ?_
+    rw [hR]
+    refine Real.sqrt_le_sqrt ?_
+    refine le_trans (sum_gaussMeasure_localAvg_sq_le δ d t q hc0 hc1 hK F hFlen) ?_
+    have := integral_devAvg_sq_le δ d t q hC hθ0 hθ1 hc0 hc1 hpin hK
+    rw [varConst]
+    exact this
+  -- `windowBound` is at most the sum of the `|localAvg|`s
+  have hwb : ∀ W : List ℕ, VandeheyCocycle.windowBound δ t q c K W
+      ≤ ∑ d : S, |VandeheyCocycle.localAvg δ t q c K d W| := by
+    intro W
+    rw [VandeheyCocycle.windowBound]
+    refine Finset.sup'_le _ _ fun d _ => ?_
+    exact Finset.single_le_sum (f := fun d => |VandeheyCocycle.localAvg δ t q c K d W|)
+      (fun d _ => abs_nonneg _) (Finset.mem_univ d)
+  calc ∑ W ∈ F, p W * VandeheyCocycle.windowBound δ t q c K W
+      ≤ ∑ W ∈ F, p W * ∑ d : S, |VandeheyCocycle.localAvg δ t q c K d W| :=
+        Finset.sum_le_sum fun W _ => mul_le_mul_of_nonneg_left (hwb W) (hp0 W)
+    _ = ∑ d : S, ∑ W ∈ F, p W * |VandeheyCocycle.localAvg δ t q c K d W| := by
+        rw [Finset.sum_comm]
+        exact Finset.sum_congr rfl fun d _ => by rw [← Finset.mul_sum]
+    _ ≤ ∑ _d : S, R := Finset.sum_le_sum fun d _ => hper d
+    _ = (Fintype.card S : ℝ) * R := by
+        rw [Finset.sum_const, Finset.card_univ, nsmul_eq_mul]
+
 end VandeheyTwo
 
 end NormalNumbers
