@@ -1,6 +1,6 @@
 # Handoff: the output side is CLOSED; the leaf is one concrete transducer, correctness proved
 
-**Date**: 2026-09-28 (lap 2) · **Branch**: `wip/g5-prime-subset` · **HEAD**: `34857a8` ·
+**Date**: 2026-09-28 (lap 2) · **Branch**: `wip/g5-prime-subset` · **HEAD**: `1de32fc` ·
 `lake build` 🟢 10319 jobs · working tree clean · nothing pushed.
 
 Scope: `sorry-free: src/NormalNumbers/LiteratureVandehey.lean`, i.e. prove
@@ -24,7 +24,7 @@ file.  Its mandated move (the §5–§6 output-frequency engine, abstract, in `s
 Everything analytic and combinatorial is in the kernel and axiom-clean.  What is left is six
 named hypotheses about a single concrete finite-state machine.
 
-## ✅ What landed this run (10 green commits, all `#print axioms`-clean)
+## ✅ What landed this run (12 green commits, all `#print axioms`-clean)
 
 `1ec1e49` **§6 assembly** — `exists_tendsto_trigTotal`: trigger counts have an `x`-independent
 Cesàro limit.  `trigLimit` monotone and `≤ K`, `L = ⨆ J`, ε/3 sandwich.  Guard rule:
@@ -60,6 +60,12 @@ they start in), `abs_countOccurrences_sub_sum_fireOut_le` (the `O(1)`),
 
 `34857a8` **`lrWord_eq_lrExpandWord`** — the emitted word IS the L/R expansion's prefix.
 
+`8811526` HANDOFF rewrite (this file); old one archived.
+
+`1de32fc` **`mul_B_fst_col` / `lrStep_col`** — the hinge of Lemma 2.2: the first column of
+`M·B_j` is `M`'s second column, INDEPENDENT of `j`.  Source read; decomposition of `hK` recorded
+as `PENDING_WORK.md` item 0′.
+
 ## 🔑 The three design findings that made it work
 
 1. **A CF-digit emitter cannot be finite-state.**  `isRD_ingest_cfString` emits
@@ -77,10 +83,19 @@ they start in), `abs_countOccurrences_sub_sum_fireOut_le` (the `O(1)`),
 
 ## 🎬 Next actions, in order
 
-1. **`hK`/`hkK` — the uniform trigger bound.**  Nearest of the six.  `raneyEntry_le` puts all
-   Raney-state entries in `[0, D]`, so `entrySum ≤ 4D`, and `exists_balanced_decomp`'s descent
-   measure bounds the emitted L/R word length per step.  Then a trigger multiplicity at one
-   position is at most that block length, uniformly.
+1. **`hK`/`hkK` — the uniform trigger bound** (Vandehey Lemma 2.2).  Nearest of the six, and now
+   DECOMPOSED — read `PENDING_WORK.md` item 0′ before touching it.  Key correction found this
+   lap: the number of emitted LETTERS is genuinely unbounded (a large digit `j` emits a run of
+   length ~`j`), so do NOT try to bound it — and in particular do not try to use the second
+   column of `M·B_j`, which is the `j`-dependent one.  What is bounded is the number of RUNS =
+   emitted CF digits, and that is the right bound, because a genuine CF word's L/R pattern
+   contains both letters, so an occurrence can only start at a run boundary:
+   `(occurrences starting in block i) ≤ (runs in block i) + O(1)`.
+   The hinge is in the kernel (`lrStep_col`): `(β, δ) = lrProd w · (α', γ')`, with no `j`.
+   Preferred route: feed the ratio `β/δ` to `lrExpandWord_of_act` — `w` is then a prefix of that
+   rational's L/R expansion, a rational's expansion is finite, and `Fintype (RState D)` makes the
+   max over the finitely many states exist.  This avoids Vandehey's four-case split on vanishing
+   denominators; watch the degenerate ratios (`γ' = 0`, `δ = 0`), which `pos_lin` should cover.
 2. **The run↔CF-digit translation.**  An occurrence of a CF word `v` in the image's expansion is
    an occurrence of the L/R run-pattern of `v` with maximal runs at both ends (the one-letter
    look-ahead).  Then `outCount` at L/R index rescales to CF index by `VandeheyRescale` again,
@@ -117,5 +132,6 @@ they start in), `abs_countOccurrences_sub_sum_fireOut_le` (the `O(1)`),
 `VandeheyLeafReduction.lean` (per-matrix endgame) · `VandeheyRaney.lean` (Raney states, Lemma 2.1).
 
 ---
-**→ Next session: NEXT action 1 (`hK`, the uniform trigger bound).  It is the nearest of the six
-remaining hypotheses and it is pure finite combinatorics on the Raney cone.**
+**→ Next session: NEXT action 1 (`hK`, the uniform trigger bound), via route (b) of
+`PENDING_WORK.md` item 0′.  The hinge is already proved; what remains is the run count and the
+`Fintype` maximum.  Nothing is uncommitted; the tree is clean.**
