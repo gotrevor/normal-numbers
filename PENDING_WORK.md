@@ -30,10 +30,12 @@ chain: the `n`-step kernel oscillates instead of converging.  Numeric: `probes/r
   because `D ∣ det M` makes the two congruences equivalent (`exists_digit_zMinus`); the one
   exceptional state is `diag(1,D)` (`eq_zPlus_of_dvd`), and it steps to `diag(D,1)` whatever the
   digit (`lrDelta_zPlus`), which then returns on the digit `D` (`lrDelta_zDiag`).
-* **Still to land (next lap):** `RPlus D` as a `Fintype`, `rplusDelta`, and
-  `rplus_common_reach` — every `P ∈ RPlus D` reaches `diag(1,D)` in EXACTLY 2 genuine digits.
-  Numerically verified for every prime `D ≤ 23` (`probes/raney_plus.py`); the proof is the
-  assembly of the bullets above (one step off the exceptional state, one step home).
+* **✅ LANDED (lap 4).**  `RPlus D` (a `Fintype`), `rplusDelta`, and `rplus_common_reach` —
+  every `P ∈ RPlus D` reaches `diag(1,D)` in EXACTLY 2 genuine digits (one step off the
+  exceptional state, one step home).  Hence **`classEquidistribution_rplusDelta`**: the crux
+  input of Theorem 1.1, `VandeheyCocycle.ClassEquidistribution (rplusDelta hD) t q`, is PROVED
+  for every prime `D` and every genuine window `q`, and `tendsto_jointCount_rplusDelta` turns it
+  into the `x`-independent joint frequency.  All axiom-clean (trust triple).
 
 ### F2. `JointStateFreq`'s PRODUCT form is FALSE for the concrete machine
 
@@ -61,7 +63,7 @@ supplies an `F` with `Σ_F γ(I_w) > 1 − ε`.  Every `ν t * γ(I_w)` in `Vand
 becomes `ρ w t`, and `wLimit` becomes a sup over finite subfamilies of `Σ_{w∈F} a w * ρ w t`.
 
 **Next, in order.**
-(i) Finish `rplus_common_reach` (F1's last bullet) — small, purely assembly.
+(i) ~~Finish `rplus_common_reach`~~ — DONE (lap 4).
 (ii) Generalize `JointStateFreq` → `JointStateFreq'` with `ρ`, and port `VandeheyOutputFreq.lean`
      (~1100 lines, mechanical: the only real change is the escape bound above).
 (iii) Restate `mobiusUniformFreq_of_transducer` against `ρ`.

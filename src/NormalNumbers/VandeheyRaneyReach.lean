@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
 import NormalNumbers.VandeheyLRTransducer
+import NormalNumbers.VandeheyClassEquidist
 
 /-!
 # The Raney automaton is PERIODIC, and the phase quotient that repairs it
@@ -352,6 +353,7 @@ def zDiag (D : ℕ) : Mat2 := ⟨(D : ℤ), 0, 0, 1⟩
 @[simp] lemma zDiag_d : (zDiag D).d = 1 := rfl
 
 @[simp] lemma swapRows_zMinus : Mat2.swapRows (zMinus D) = zPlus D := rfl
+@[simp] lemma swapRows_zPlus : Mat2.swapRows (zPlus D) = zMinus D := rfl
 @[simp] lemma swapRows_zSpin : Mat2.swapRows (zSpin D) = zDiag D := rfl
 
 lemma det_zPlus : (zPlus D).det = (D : ℤ) := by simp [Mat2.det]
@@ -546,6 +548,144 @@ theorem exists_digit_zMinus (D : ℕ) [hpr : Fact (Nat.Prime D)] (hD : 0 < D) (M
       · exact absurd h hbz
       · exact h
 
+/-! ## The phase-corrected automaton, and its uniform common reach -/
+
+/-- The positive-determinant half of the Raney state set: the phase-corrected state space.
+`stateAt lrDelta … i = ι^i (stateAt rplusDelta … i)`, so nothing is lost. -/
+def RPlus (D : ℕ) := {M : Mat2 // IsRD D M ∧ M.det = (D : ℤ)}
+
+instance (D : ℕ) : DecidableEq (RPlus D) := Subtype.instDecidableEq
+
+instance (D : ℕ) : Finite (RPlus D) := by
+  have h : {M : Mat2 | IsRD D M ∧ M.det = (D : ℤ)}.Finite :=
+    (finite_isRD D).subset (fun M hM => hM.1)
+  exact h.to_subtype
+
+noncomputable instance (D : ℕ) : Fintype (RPlus D) := Fintype.ofFinite _
+
+/-- The underlying Raney state. -/
+def RPlus.toRState {D : ℕ} (P : RPlus D) : RState D := ⟨P.val, P.2.1⟩
+
+@[simp] lemma RPlus.toRState_val {D : ℕ} (P : RPlus D) : (P.toRState).val = P.val := rfl
+
+/-- **The phase-corrected transition**: ingest a digit, then undo the determinant flip by
+swapping rows.  A genuine finite automaton, and — unlike `lrDelta` — an aperiodic one. -/
+noncomputable def rplusDelta {D : ℕ} (hD : 0 < D) (P : RPlus D) (a : ℕ) : RPlus D :=
+  ⟨Mat2.swapRows (lrDelta hD P.toRState a).val,
+   Mat2.isRD_swapRows (lrDelta hD P.toRState a).2, by
+     rw [Mat2.det_swapRows, det_lrDelta hD P.toRState a, RPlus.toRState_val, P.2.2]; ring⟩
+
+/-- The common target `diag(1, D)`. -/
+def zPlusState (D : ℕ) (hD : 0 < D) : RPlus D := ⟨zPlus D, isRD_zPlus hD, det_zPlus⟩
+
+instance (D : ℕ) [hpr : Fact (Nat.Prime D)] : Nonempty (RPlus D) :=
+  ⟨zPlusState D hpr.out.pos⟩
+/-- `diag(D, 1)`, the one intermediate the exceptional state passes through. -/
+def zDiagState (D : ℕ) (hD : 0 < D) : RPlus D := ⟨zDiag D, isRD_zDiag hD, det_zDiag⟩
+
+lemma rplusDelta_zPlusState (hD : 0 < D) (j : ℕ) :
+    rplusDelta hD (zPlusState D hD) j = zDiagState D hD := by
+  apply Subtype.ext
+  show Mat2.swapRows (lrDelta hD (zPlusState D hD).toRState j).val = zDiag D
+  have h : (zPlusState D hD).toRState = ⟨zPlus D, isRD_zPlus hD⟩ := rfl
+  rw [h, lrDelta_zPlus hD j]
+  rfl
+
+lemma rplusDelta_zDiagState (hD : 0 < D) :
+    rplusDelta hD (zDiagState D hD) D = zPlusState D hD := by
+  apply Subtype.ext
+  show Mat2.swapRows (lrDelta hD (zDiagState D hD).toRState D).val = zPlus D
+  have h : (zDiagState D hD).toRState = ⟨zDiag D, isRD_zDiag hD⟩ := rfl
+  rw [h, lrDelta_zDiag hD]
+  rfl
+
+/-- **Step one of the reach**: no state is stuck on the target.  If every digit sent `P` to
+`diag(1,D)`, two digits would force `D ∣ b` and `D ∣ d`, hence `P = diag(1,D)` — but
+`diag(1,D)` itself steps to `diag(D,1)`. -/
+lemma exists_step_ne_zPlus (D : ℕ) [Fact (Nat.Prime D)] (hD : 0 < D) (P : RPlus D) :
+    ∃ j : ℕ, 1 ≤ j ∧ rplusDelta hD P j ≠ zPlusState D hD := by
+  have hD2 : 2 ≤ D := (Fact.out : Nat.Prime D).two_le
+  by_contra hcon
+  push_neg at hcon
+  have hdel : ∀ j : ℕ, 1 ≤ j → (lrDelta hD P.toRState j).val = zMinus D := by
+    intro j hj
+    have h : Mat2.swapRows (lrDelta hD P.toRState j).val = zPlus D :=
+      congrArg Subtype.val (hcon j hj)
+    have h2 := congrArg Mat2.swapRows h
+    rwa [Mat2.swapRows_swapRows, swapRows_zPlus] at h2
+  have d1 : (D : ℤ) ∣ P.val.a + P.val.b * ((1 : ℕ) : ℤ)
+      ∧ (D : ℤ) ∣ P.val.c + P.val.d * ((1 : ℕ) : ℤ) :=
+    dvd_of_lrDelta_eq_zMinus hD P.toRState 1 (hdel 1 le_rfl)
+  have d2 : (D : ℤ) ∣ P.val.a + P.val.b * ((2 : ℕ) : ℤ)
+      ∧ (D : ℤ) ∣ P.val.c + P.val.d * ((2 : ℕ) : ℤ) :=
+    dvd_of_lrDelta_eq_zMinus hD P.toRState 2 (hdel 2 (by norm_num))
+  have hb : (D : ℤ) ∣ P.val.b := by
+    have h := dvd_sub d2.1 d1.1
+    have he : (P.val.a + P.val.b * ((2 : ℕ) : ℤ)) - (P.val.a + P.val.b * ((1 : ℕ) : ℤ))
+        = P.val.b := by push_cast; ring
+    rwa [he] at h
+  have hd : (D : ℤ) ∣ P.val.d := by
+    have h := dvd_sub d2.2 d1.2
+    have he : (P.val.c + P.val.d * ((2 : ℕ) : ℤ)) - (P.val.c + P.val.d * ((1 : ℕ) : ℤ))
+        = P.val.d := by push_cast; ring
+    rwa [he] at h
+  have hP : P.val = zPlus D := eq_zPlus_of_dvd hD2 P.toRState P.2.2 hb hd
+  have hPeq : P = zPlusState D hD := Subtype.ext hP
+  have hstep := hcon 1 le_rfl
+  rw [hPeq, rplusDelta_zPlusState hD 1] at hstep
+  have hzz : zDiag D = zPlus D := congrArg Subtype.val hstep
+  have h1 : (D : ℤ) = 1 := by
+    have := congrArg Mat2.a hzz
+    simpa using this
+  have h2 : (2 : ℤ) ≤ (D : ℤ) := by exact_mod_cast hD2
+  omega
+
+/-- **The uniform common reach, at length exactly 2.**  Every phase-corrected Raney state
+reaches `diag(1, D)` in two genuine digits.  This is precisely the hypothesis of
+`VandeheyTwo.classEquidistribution_of_common_reach`, and the phase quotient is what makes a
+*uniform* length possible at all (`det_lrDelta` forbids it on `RState D`). -/
+theorem rplus_common_reach (D : ℕ) [Fact (Nat.Prime D)] (hD : 0 < D) (P : RPlus D) :
+    ∃ w : List ℕ, w.length = 2 ∧ (∀ a ∈ w, 1 ≤ a) ∧
+      VandeheyAut.runState (rplusDelta hD) P w = zPlusState D hD := by
+  have hD2 : 2 ≤ D := (Fact.out : Nat.Prime D).two_le
+  obtain ⟨j₁, hj₁, hne⟩ := exists_step_ne_zPlus D hD P
+  set P₁ := rplusDelta hD P j₁ with hP₁
+  have hgood : ¬((D : ℤ) ∣ P₁.val.b ∧ (D : ℤ) ∣ P₁.val.d) := by
+    rintro ⟨hb, hd⟩
+    exact hne (Subtype.ext (eq_zPlus_of_dvd hD2 P₁.toRState P₁.2.2 hb hd))
+  obtain ⟨j₂, hj₂, hstep⟩ := exists_digit_zMinus D hD P₁.toRState P₁.2.2 hgood
+  refine ⟨[j₁, j₂], rfl, ?_, ?_⟩
+  · intro a ha
+    simp only [List.mem_cons, List.not_mem_nil, or_false] at ha
+    rcases ha with rfl | rfl
+    · exact hj₁
+    · exact hj₂
+  · show rplusDelta hD P₁ j₂ = zPlusState D hD
+    apply Subtype.ext
+    show Mat2.swapRows (lrDelta hD P₁.toRState j₂).val = zPlus D
+    rw [hstep]
+    rfl
+
+/-! ## The payoff -/
+
+/-- **`ClassEquidistribution` for the machine that computes `x ↦ D·x`.**  The crux input of
+Vandehey 2017 Theorem 1.1, for every prime `D` and every genuine window `q`. -/
+theorem classEquidistribution_rplusDelta (D : ℕ) [Fact (Nat.Prime D)] (hD : 0 < D)
+    (t : RPlus D) (q : List ℕ) :
+    VandeheyCocycle.ClassEquidistribution (rplusDelta hD) t q :=
+  VandeheyTwo.classEquidistribution_of_common_reach (rplusDelta hD) t q 2 le_rfl
+    (z := zPlusState D hD) (rplus_common_reach D hD)
+
+/-- **The joint (window, state) frequency converges, `x`-independently**, along every CF-normal
+orbit and from every initial state, for the phase-corrected Raney automaton. -/
+theorem tendsto_jointCount_rplusDelta (D : ℕ) [Fact (Nat.Prime D)] (hD : 0 < D)
+    (t : RPlus D) {q : List ℕ} (hq : q ≠ []) (hqpos : ∀ a ∈ q, 1 ≤ a) :
+    ∃ L : ℝ, ∀ (s₀ : RPlus D) (x : ℝ), IsCFNormal x →
+      Filter.Tendsto (fun n => (VandeheyAut.jointCount (rplusDelta hD) s₀ t q x n : ℝ) / n)
+        Filter.atTop (nhds (L * (gaussMeasure (cfCylinder q)).toReal)) :=
+  VandeheyCocycle.tendsto_jointCount_of_classEquidistribution
+    (classEquidistribution_rplusDelta D hD t q) hq hqpos
+
 end VandeheyLR
 
 end NormalNumbers
@@ -557,3 +697,6 @@ end NormalNumbers
 #print axioms NormalNumbers.VandeheyLR.det_lrDelta
 #print axioms NormalNumbers.VandeheyLR.exists_digit_zMinus
 #print axioms NormalNumbers.VandeheyLR.eq_zPlus_of_dvd
+#print axioms NormalNumbers.VandeheyLR.rplus_common_reach
+#print axioms NormalNumbers.VandeheyLR.classEquidistribution_rplusDelta
+#print axioms NormalNumbers.VandeheyLR.tendsto_jointCount_rplusDelta
