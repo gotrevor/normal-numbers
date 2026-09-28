@@ -3,6 +3,7 @@ Copyright (c) 2026 Trevor Morris. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import NormalNumbers.CFScheduleARefuted
+import NormalNumbers.VandeheyRaney
 import NormalNumbers.G4EntropyBarrier
 import NormalNumbers.G4EntropySubsample
 import NormalNumbers.G4EntropyMixture
@@ -272,6 +273,22 @@ general as `not_synchronizing_of_injective_quotient`.  The sorried
 `ClassEquidistribution` is the crux the class cocycle actually poses. -/
 alias hall_vandehey_synchronizing_transducer :=
   NormalNumbers.VandeheyAut.not_synchronizing_of_injective_quotient
+
+
+/-- **HALL: the `min`-rule descent of Vandehey 2017 Lemma 2.1** (`refuted`, 2026-09-28).
+Lemma 2.1's proof (pp. 6-7) normalizes an ingested digit by the Euclidean rule
+`d = min(floor(alpha/gamma), floor(beta/delta))`, claiming "no coefficient grows and at least
+one drops by 1".  It does not: when the two column ratios have already separated, one of the
+two floors is `0`, the `min` emits nothing and the step degenerates to `J`.  Witness (the
+smallest, found by `probes/vandehey_lemma21.py`): from the genuine state `[[0,3],[1,1]]` of
+`M_3` with `j = 1`, the paper's own `d_0 = 1` lands on `[[2,1],[1,2]]`, and the rule then
+two-cycles `[[2,1],[1,2]] -> [[1,2],[2,1]] -> [[2,1],[1,2]]` with neither matrix in `M_3`.
+The *statement* of Lemma 2.1 survives (a free search over digit strings rescues every stalled
+start), so this refutes the proof, not the lemma.  The live replacement is Raney's balanced
+normal form, `Mat2.exists_balanced_decomp` / `Mat2.isRD_ingest_cfString`, whose descent
+terminates because stripping `L` or `R` strictly drops the entry sum. -/
+alias hall_vandehey_lemma21_min_rule :=
+  NormalNumbers.Mat2.vandeheyStep_not_terminating
 
 /-- **HALL: the low/high split as a route to `UniformResonantMass`** (`priorArt`, 2026-09-28).
 `C3MrtURMLowHigh.lean` split the resonant primes at `lowHeight t = 16 log(2+|t|)` to tame the
@@ -1056,6 +1073,11 @@ def register : List Hall := [
    .priorArt, .kernel,
    "The split is sound and its low and wide-high ranges are proved, but C3MrtUniformMass reached the same theorem first by a different assembly, so the narrow half had no consumer and was retired rather than carried as a sorry",
    "alias hall_urm_low_high_split; the live headline is conjC3_of_geom_input_band'", "2026-09-28"⟩,
+  ⟨"min-rule descent of Vandehey 2017 Lemma 2.1",
+   "Normalize an ingested CF digit by the paper's rule d = min(floor(alpha/gamma), floor(beta/delta)) and descend into M_D",
+   .refuted, .kernel,
+   "When the two column ratios have separated, one floor is 0 and the min emits nothing: from [[0,3],[1,1]] in M_3 with j=1 the rule two-cycles [[2,1],[1,2]] <-> [[1,2],[2,1]], neither in M_3; the statement survives but the proof cannot be transcribed",
+   "alias hall_vandehey_lemma21_min_rule; probe probes/vandehey_lemma21.py; replacement Mat2.exists_balanced_decomp", "2026-09-28"⟩,
   ⟨"synchronizing word for the CF det-D transducer",
    "Replace Vandehey 2017 Theorem 3.1 by pathwise state-merging after a synchronizing word",
    .falseAsStated, .kernel,
