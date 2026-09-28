@@ -28,7 +28,7 @@ for provenance only.  It has no authority over a new run.
    (`JUDGE.md`).
 5. **A false contract is recorded as an obstruction, never silently weakened.**
 6. **Every new module goes in the root import** (`src/NormalNumbers.lean`), so `lake build`
-   covers it.  The Elliott chain is the documented exception (see `STATUS.md`).
+   covers it.
 
 ## Standing charter (destination)
 
