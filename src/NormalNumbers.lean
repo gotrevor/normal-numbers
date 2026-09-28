@@ -670,3 +670,4 @@ import NormalNumbers.VandeheyNormalForm
 import NormalNumbers.VandeheyRaney
 import NormalNumbers.VandeheySmith
 import NormalNumbers.VandeheySerret
+import NormalNumbers.VandeheyLeafReduction
