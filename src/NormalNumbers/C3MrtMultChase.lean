@@ -20,7 +20,7 @@ Three pieces of bookkeeping, all already in the repo:
 * `class_sum_reindex` (lap 53) — `n ≡ r (mod M₀)`, `n < N` ↔ `n = M₀ j + r'`, `r' = r % M₀`;
 * `filter_linear_lt_eq_range` — the resulting index set is `range (J+1)`, `J = (N−1−r')/M₀`;
 * `progression_sum_bound_generic` (lap 46) — peel `j = 0`, transfer the weight
-  `(M₀ j + r' + 1)⁻¹ → M₀⁻¹ j⁻¹` at cost `2/M₀` (`weight_transfer`, via `sum_inv_sq_le`),
+  `(M₀ j + r' + 1)⁻¹ → M₀⁻¹ j⁻¹` at cost `2/M₀` (`weight_transfer`, via `sum_inv_sq_Icc_le_two_sub`),
   and close the window gap `(A^{⌊log_A J⌋}, J]` at cost `1 + log A`.
 
 The `ε`-budget is a single rescale `ε ↦ ε·M₀`: the transferred weight carries the factor `M₀⁻¹`,

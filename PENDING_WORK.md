@@ -1697,6 +1697,1229 @@ cancelling the main term).  A saving factor < 1 in the exponent (i.e. VK) is not
 4. Then, and only then, the tuple sum over `d,e ≤ Y` (laps 8–13 supply every other piece).
 
 ---
+## 🧘 Reflection — 2026-09-25 (DEEP REFLECTION lap 112)
+
+**ROUTE VERDICT: CONTINUE.**  No registered trigger has fired.  EA-1 (boundary-truth audit) is
+being actively honoured — laps 95, 96 and 103 each ran it, and lap 103 caught its *own* fidelity
+bug unprompted.  Neither false-summit tell is present: laps 93–111 closed a named, sorry-free
+theorem *every* lap (`sum_log_div_primesUpTo_ge`, `logTail_le`, `sum_log_rpow_le`,
+`exists_pole_local_bound`, `exists_subunit_logDeriv_bound`, `sum_pairs_le`, `slice_eq_sum_term`,
+`sum_complement_le`, …), and the finishability estimate has been *refined*, not degraded — lap 92's
+in-kernel refutation and laps 95/96's narrowing of the wall to near-maximal height are convergence.
+
+### Ground truth re-derived this lap (not read off a handoff)
+
+* `lake build` 9257 jobs green; `lake build NormalNumbers.ElliottAxiomAudit` 9684 jobs green.
+* All **153** audited Elliott theorems print `[propext, Classical.choice, Quot.sound]`.  A scan of
+  all 446 `#print axioms` lines the audit build emits finds **zero `sorryAx`**.
+* `src/` Elliott scope: zero `sorry` (the two grep hits in `ElliottDamped`/`ElliottTwistedGraphCRT`
+  are docstrings).  43 `sorry` remain in `src/`, all in designated-open off-scope modules
+  (`SwingC*`, `PairDecouple*`, `MahlerDriftOne`, `PrimeLambertOscillation`, `CFSchedule*`, …).
+* Fidelity, re-read against the source: `ElliottMultStatement.NonasymptoticLogElliottMult` matches
+  Tao 2016 Thm 1.3 clause for clause — `a₁b₂−a₂b₁≠0`, `∃A₀` depending on `ε,aᵢ,bᵢ`, `A₀≤A≤W≤X`,
+  `|gᵢ|≤1`, `g₁` non-pretentious over **`q ≤ A` and `|t| ≤ A·X`**, conclusion `≤ ε·log W`.  No
+  transcription drift.
+
+### The three findings that change what the next laps do
+
+**FINDING 1 (the big one) — the campaign has been CITING theorems this repo already owns.**
+`src/PNTPort/ZetaBounds.lean` is a 3142-line vendored `PrimeNumberTheoremAnd/ZetaBounds`, **zero
+`sorry`**, builds green in 3597 jobs, and contains `ZetaZeroFree9` (σ ≥ 1 − A/(log|t|)⁹, |t|>3),
+`LogDerivZetaBnd`, `LogDerivZetaBndUnif99` (`‖ζ'/ζ(σ+it)‖ ≤ C(log|t|)⁹` for all `σ ≥ 1−A/(log|t|)⁹`),
+`ZetaUpperBnd`, `ZetaInvBnd`, `ZetaNoZerosOn1Line`, `triv_bound_zeta`.  Verified in-kernel this lap:
+`LogDerivZetaBndUnif99`, `ZetaZeroFree9`, `triv_bound_zeta` all `[propext, Classical.choice,
+Quot.sound]`.  That is a **de la Vallée Poussin-strength zero-free region, in-repo and free** —
+exactly what laps 95/96 wrote "`PrimeNumberTheoremAnd.{ZetaBounds, StrongPNT}` is where to source
+it" about, and then never sourced.
+
+*Why it was missed*: `import PrimeNumberTheoremAnd.ZetaBounds` **fails** — `lean-proofs-latest`
+declares its own partial `lean_lib PrimeNumberTheoremAnd` (Consequences/Defs/Fourier/Mathlib/
+MediumPNT/SmoothExistence/Sobolev/Wiener, **no ZetaBounds**) which shadows the real package that
+sits in `.lake/packages/PrimeNumberTheoremAnd/`.  One failed import evidently got read as "not
+available".  **The working import is `import PNTPort.ZetaBounds`.**
+
+Similarly `src/NormalNumbers/G4MertensAP.lean` proves `mertensRate_residueClass` — Mertens for a
+unit residue class, built from mathlib's `LSeries/PrimesInAP` + Chebyshev + Abel summation — which
+is the whole content of the open `Prop` `ElliottCharRigidity.PrimeDensityAP`.
+
+**FINDING 2 — a STATUS/DIRECTION correction: `PrimeDensityAP` is NOT proved and is NOT off-path.**
+Lap 92's directive says "`CharacterClusterRigidity` / `PrimeDensityAP` … are proved and stay, but
+do not spend laps on them".  Both halves are wrong.  `PrimeDensityAP` is a bare
+`def … : Prop` with no theorem discharging it, and the live consumers
+`ElliottArchBands.twoPointElliottLog_of_bands` / `…_of_three_bands` and
+`ElliottSmallShift`:539 all take `hdens : ∀ A, PrimeDensityAP A` as a hypothesis.  So the open
+input list of `twoPointElliottLog_of_three_bands` is **four**, not three.
+
+**FINDING 3 — the exponent 9 is free at the consumer.**  `SliceCapModerate` as stated asks for
+`‖ζ'/ζ(σ+iv)‖ ≲ log|v|` (sharp dVP); `LogDerivZetaBndUnif99` gives `(log|v|)⁹`.  Restate the
+moderate band at `T = (log(|v|+16))^{-9}` instead of `(log(|v|+16))^{-1}`.  The cap band then costs
+`T·C(log|v|)⁹ = O(1)` and the harmonic band (lap 106, coefficient exactly 1) yields
+`log(1/T) = 9·log log(|v|+16)`.  So `ArchCorrModerate` acquires a constant `C = 9`, and
+`archCorrLargeShift_of_moderate_and_nearMax` absorbs it by moving the height cut from
+`exp((log X)^{1−ν})` to `exp((log X)^{(1−ν)/9})`.  The Vinogradov band widens; it was already
+Vinogradov, so **nothing is lost**.
+
+### The wall, re-derived independently (so the next lap does not re-litigate it)
+
+Writing `C(v,X) = ∑_{p≤X} p^{-iv}/p = log ζ(1+1/log X+iv) + O(1)` and `L = log log X`: the consumer
+needs a **proportional** saving `‖C‖ ≤ (1−η)L + O(1)` over `|v| ≤ A²X`.  The trivial `|ζ(σ+it)| ≪
+log|t|` gives `‖C‖ ≤ log log|v| + O(1)`, which saves a proportion **only while `log log|v| < L`**,
+i.e. only below `exp((log X)^{1−ν})`.  At `|v| ≍ X` it saves nothing, and beating it needs
+`|ζ(1+it)| ≪ (log t)^{2/3}` — Vinogradov.  Two escapes checked and refuted again this lap: the
+free abscissa `σ = 1+λ/log X` buys `log λ` on the main term and *costs* `log λ + γ` on the
+truncation (`∫₀^λ(1−e^{-y})dy/y`), exactly cancelling; and the 3-4-1 inequality gives only a LOWER
+bound on `|ζ(σ+it)|`, the wrong direction for `ζ^ω` (it is the right direction for `λ`, and there
+too it is exactly borderline: `3·log ζ(σ) = 3L` against `log|ζ(σ+2it)| ≤ L`).  **The wall is real.**
+
+### KEEP doing
+
+* One named, sorry-free, audited theorem per lap.  That cadence is working.
+* The EA-1 boundary audit on every new `Prop`, in the `Prop`'s own docstring.
+* Recording refuted sub-routes in the module docstring (`ElliottArchBands` §"negative results" is
+  the model — it saved this lap from re-deriving van der Corput).
+
+### STOP doing
+
+* **Stop calling an analytic fact "classical, cited" without grepping `src/PNTPort/`,
+  `src/NormalNumbers/G4*.lean` and `Erdos67b.PrimeEstimates` first.**  That is now trigger EP-1.
+* Stop describing the Elliott consumer as if it closes the repo's normality route.
+  `TwoPointElliottLog` is the **logarithmic** average; `CastingOut.TwoPointElliott` (what
+  `PairDecoupleTwoPoint` consumes) is the **natural** average; the passage is a separate known-open
+  Chowla-strength problem.  Nothing currently in `src/` consumes `TwoPointElliottLog`.
+
+### The single highest-value next target, with reasoning
+
+**T1 — `ElliottDamped.SliceCapSmall`, i.e. (c′-I).**  Not because it is easiest, but because it is
+the *smallest compiler-grounded probe of the decisive uncertainty*: whether the bridge
+`logWeightedSlice v X Y w = −ζ'/ζ(sliceAbscissa X w v) + O(1)` actually closes in Lean.  T2
+(`ArchCorrModerate` from `LogDerivZetaBndUnif99`) reuses that same bridge, so if the bridge fails
+BOTH remaining reachable inputs fail and the route must be redesigned.  The recipe is fully scoped
+(`HANDOFF-elliott-2026-09-25-lap111.md` §"NEXT LAP", 4 steps, all four supporting lemmas already
+proved).  Then T2, then T3 (`PrimeDensityAP`).  After those three, the ledger reads: **one cited
+🟠 axiom (`ArchCorrNearMaxHeight` = Vinogradov's mean value theorem) and a fully built remainder.**
+
+
+## 🔨 2026-09-25 laps 103–104 — the slice inputs made honest, and the tail bricks
+
+**Fidelity repair (lap 103).**  Lap 102's `SliceBound{Small,Moderate}` claimed the pole bound for
+the *truncated* sum `∑_{p≤Y} log p·p^{-1-δ-w-iv}` at **every** `Y`; `ζ'/ζ` gives no such thing (at
+`Y = X`, `w = 0` the discarded tail is `≍ 1/δ`, the size of the main term).  Repaired by
+`norm_dampedPrefix_transfer`: the damping exponent is tuned to `X`, so `dampedTail_le` (uniform in
+`Y`) makes the cutoff **free** — the Props are now asked at `sliceCut X = exp((log X)²)` and at
+`256 ≤ X`, while consumers still call them at `Y = X`.  Cost: one additive `cutCost`.
+
+**Lap 104 bricks (all sorry-free, in the audit surface).**  `sum_log_div_primesUpTo_ge` (Mertens I
+lower half), `sum_log_div_primesInInterval_le` (block mass `≤ log(N/M)+2(log4+4)`), `logBlock_le`
+(one square block of the log-weighted tail), `logTail_blocks` (the iteration:
+`∑_{p∈(Y,Z]} log p·p^{-1-a} ≤ ∑_k Y^{-a2^k}(2^k log Y + 2C)`, exact geometric shape).
+
+### ✅ Lap 105 — `logTail_le` IS PROVED
+
+`∑_{p ∈ (Y,Z]} log p·p^{-1-a} ≤ 1` for every `Y ≥ sliceCut X`, every `a ≥ 1/log X` and every far
+endpoint `Z`, once `X ≥ 2²⁰`.  Sorry-free, in the audit surface, via `logTail_term_le`
+(`t = a2^k log Y ≥ 2^k log X`, `t e^{-t} ≤ 2e^{-t/2}`), `sum_rpow_neg_two_pow_half_le`
+(`∑_k X^{-2^k/2} ≤ 2X^{-1/2}`, through `2^k ≥ k+1` and a shifted geometric sum) and
+`tailNumeric_le` (`s = X^{1/4} ≥ 32`, `log X ≤ 4(s−1)`, so the claim is `16s + 4C − 16 ≤ s²`).
+Both slice Props now carry `2²⁰ ≤ X` — the honest threshold the proof delivers.
+
+### ✅ Lap 106 — THE HARMONIC CLAUSE OF BOTH INPUTS IS A THEOREM (sharp constant 1)
+
+The `w ≥ T` clause never needed cancellation.  `sum_log_rpow_le`:
+`∑_{p≤Y} log p·p^{-1-a} ≤ 1/a + (log 4 + 4)` with the coefficient of `1/a` **exactly 1**, from
+Mertens I via `p^{-a} = a∫_{log p}^∞ e^{-as} ds` (finite-sum interchange, `integral_finsetSum`; the
+integrand bound is `∑_{p<e^s} log p/p ≤ s + C`, i.e. Mertens I again; the two elementary integrals
+`∫_0^∞ e^{-as}ds = 1/a` and `∫_0^∞ s e^{-as}ds = 1/a²` are `integral_exp_mul_Ioi` and
+`integral_rpow_mul_exp_neg_mul_rpow` with `Γ(2)=1`).  Since `a = δ+w ≥ w`, this is the harmonic
+clause outright: `norm_logWeightedSlice_le_trivial` + `sliceBoundSmall_of_cap` /
+`sliceBoundModerate_of_cap`.
+
+**So the remaining analytic input is exactly the CAP clause** (`SliceCapSmall` / `SliceCapModerate`,
+`w ≤ T`), and that is where cancellation is unavoidable: the trivial bound gives `1/δ = log X` while
+the clause asks for `1/|v|` (resp. `log|v|`).  Boundary check: at `w = T = |v|` the two clauses agree
+to a constant, so nothing is lost at the junction.
+
+### ✅ Lap 107 — THE POLE-LOCAL `ζ'/ζ` BOUND IS PROVED (`ElliottZetaPole.lean`)
+
+`exists_pole_local_bound`: `∃ r > 0, ∃ K > 0, ∀ s ≠ 1 with ‖s−1‖ ≤ r`,
+`ζ(s) ≠ 0` **and** `‖ζ'/ζ(s)‖ ≤ 1/‖s−1‖ + K` — coefficient of the pole exactly `1`, and **no
+zero-free region is used**: near `s = 1` the pole of `ζ` *is* the bound.  Route:
+`zetaG := update (s ↦ (s−1)ζ(s)) 1 1` is analytic at `1` with `G(1) = 1` by Riemann's removable
+singularity theorem (`Complex.analyticAt_of_differentiable_on_punctured_nhds_of_continuousAt` +
+`riemannZeta_residue_one`); `logDeriv ζ = logDeriv G − 1/(s−1)` (`logDeriv_div`, plus a
+`𝓝`-congruence off `1`); `logDeriv G` is continuous on a small closed ball where `G ≠ 0`, hence
+bounded by compactness.
+
+**Why the coefficient no longer has to be `1`.**  In the cap band the clause is integrated over a
+range of length `T`, so a bound `C·T⁻¹ + K` costs only `C` in the integral — the `log(1/T)` main term
+comes entirely from the harmonic band, which lap 106 closed with coefficient `1`.  So the cap clause
+may be relaxed to `C·T⁻¹ + K`; `ElliottLogIntegral.integral_le_const_mul_one_add_log` is the variant
+to route it through.
+
+### ✅ Lap 108 — THE WHOLE SUB-UNIT `ζ'/ζ` BOUND IS PROVED
+
+`exists_subunit_logDeriv_bound` : `∃ K > 0, ∀ s ≠ 1 with 1 ≤ Re s ≤ 2, |Im s| ≤ 1`,
+`ζ(s) ≠ 0 ∧ ‖ζ'/ζ(s)‖ ≤ 1/‖s−1‖ + K`.  The far band (`exists_far_band_bound`) is compactness:
+the region is closed (`isClosed_le` four times) and bounded (`‖s‖ ≤ |re| + |im| ≤ 3`), `ζ` is
+analytic there (`analyticOn_riemannZeta`, `s ≠ 1`) and non-vanishing
+(`riemannZeta_ne_zero_of_one_le_re`) — the *only* place the `1`-line non-vanishing is used, and only
+away from `t = 0`.
+
+**(c′-I) is therefore reduced to ARITHMETIC ALONE.**  Remaining:
+1. *(done, lap 108)* ~~The far band~~ `r ≤ ‖s−1‖`, `1 ≤ Re s ≤ 2`, `|Im s| ≤ 1`: compact, `ζ` analytic (`s ≠ 1`) and
+   `ζ ≠ 0` (`riemannZeta_ne_zero_of_one_le_re`), so `ζ'/ζ` is bounded by the same
+   `exists_bound_of_continuousOn` argument.  Together with lap 107 this gives the **whole** sub-unit
+   cap bound `‖ζ'/ζ(s)‖ ≤ 1/‖s−1‖ + K` on `1 < Re s ≤ 2`, `|Im s| ≤ 1` — i.e. (c′-I) reduced to
+   arithmetic only.
+2. ✅ *(lap 109)* The prime-power half of the bridge: `ElliottPrimePower.sum_pairs_le` —
+   **any** finite set of pairs `(m,j)` with `m,j ≥ 2` has `∑ log m·m^{-σj} ≤ ppCost = 16∑n^{-3/2}`,
+   uniformly in `σ ≥ 1`.  The trick that avoids grouping by `p` (and hence any `Λ`-fibre
+   bookkeeping): majorize the term by a **product** `a_m·b_j` with `a_m = log m·m^{-2}`,
+   `b_j = 4·2^{-j}`, then `F ⊆ (image fst) ×ˢ (image snd)` and `Finset.sum_product` factorizes it.
+   So the eventual `n = p^j ↦ (p,j)` may be any injection.
+3. ✅ *(lap 110)* `ElliottBridge.lean`: `slice_eq_sum_term` — the slice **is** the partial sum
+   `∑_{p≤Y} LSeries.term ↗Λ s p` at `s = sliceAbscissa X w v = (1+δ+w) + iv`, exactly, no error
+   term.  The content is `conj(archimedeanTwist v p) = p^{-iv}` matched against the `p^{-iv}` inside
+   `p^{-s}` (`Complex.cpow_add`, `Complex.ofReal_cpow`, `Complex.natCast_log`).
+4. ✅ *(lap 111)* `sum_complement_le`: every finite `G` disjoint from `primesUpTo Y` has
+   `∑_{n∈G} Λ n·n^{-σ} ≤ 1 + ppCost` for `σ ≥ 1 + δ`.  Split at `Nat.Prime`: the primes land in
+   `primesInInterval Y (G.sup id)` (⟹ `logTail_le`); the rest drop to `IsPrimePow`
+   (`Finset.sum_filter_of_ne`, `vonMangoldt_eq_zero_iff`) and map injectively by
+   `n ↦ (n.minFac, n.factorization n.minFac)` (`primePow_decomp`, using `Nat.pow_minFac` and
+   `Nat.factorization_pow`) to the pair form `sum_pairs_le` consumes (`term_primePow`).
+   *Lean trap*: `n = p^j` with `p, j` defined **from** `n`, so `rw [← hpow]` rewrites the `n` inside
+   `p` too — prove the pair-shape term identity as a standalone lemma in `p, j` and rewrite
+   `hpow : p^j = n` **into** it instead.
+5. *The remaining step*: `L ↗Λ s = −ζ'/ζ(s)` (`LSeries_vonMangoldt_eq_deriv_riemannZeta_div`, needs
+   `1 < Re s` ✓) and the complement bound
+   `∑'_{n ∉ primesUpTo Y} Λ n·n^{-σ} ≤ 1 + ppCost` via `Finset.sum_add_tsum_compl` +
+   `tsum_le_of_sum_le`: every finite `G` in the complement splits into primes `> Y` (⟹ `logTail_le`,
+   after `G ⊆ primesInInterval Y (max G)`) and non-prime prime powers (⟹ `sum_pairs_le`, under
+   `n ↦ (n.minFac, n.factorization n.minFac)`, injective since `n = p^j`; `Λ n = log (minFac n)` is
+   `vonMangoldt_apply`).  Then `SliceCapSmall` follows from `exists_subunit_logDeriv_bound`
+   (`‖s−1‖ ≥ max(|v|, δ+w) ≥ T` in the cap band) — and **(c′-I) is fully proved**. `slice = −ζ'/ζ(1+δ+w+iv) + O(1)`, i.e. `LSeries_vonMangoldt_eq_deriv_riemannZeta_div`
+   plus `logTail_le` (lap 105) for `∑_{p>Y}` and the prime-power correction
+   `∑_{p,j≥2} log p·p^{-jσ} ≤ 2∑_{n≥2} log n·n^{-2}` for the `j ≥ 2` terms.
+
+**Superseded plan (kept for the record) — the prime-power correction, then the pole bound.**  With the tail closed, the remaining gap
+between `logWeightedSlice` and `−ζ'/ζ(1+δ+w+iv)` is the prime powers:
+`∑_{p,j≥2} log p·p^{-jσ} ≤ 2∑_p log p·p^{-2σ} ≤ 2∑_{n≥2} log n·n^{-2} = O(1)` for `σ ≥ 1`
+(same `p`-series technique as lap 101, and no cancellation needed).  Then `SliceBoundSmall` is the
+genuine pole-local statement `|ζ'/ζ(s)| ≤ 1/|s−1| + O(1)` on `σ > 1`, `|Im s| ≤ 1`, whose inputs are
+`ζ(1+it) ≠ 0` (mathlib) plus compactness of `{|t| ∈ [c,1]}`.
+
+**Superseded plan (kept for the record) — the numeric collapse.**  With `L = log Y ≥ (log X)²` and `a ≥ 1/log X`, put
+`u = aL ≥ log X`.  Then `Y^{-a2^k} ≤ X^{-2^k}` and, splitting `x e^{-ax} = (x e^{-ax/2})e^{-ax/2}`
+with `x = 2^k L` (so `x e^{-ax/2} ≤ 2/(ea) ≤ 2 log X/e`),
+`term_k ≤ (2 log X/e)·X^{-2^{k-1}} + 2C·X^{-2^k}`, hence
+`tail ≤ (4 log X/e)X^{-1/2} + 4C/X ≤ 1` for `X ≥ 256` (`≈0.6` there) — which is exactly why the
+Props were bumped to `256 ≤ X` this lap.  After that: the prime-power correction
+`∑_{p,k≥2} log p·p^{-kσ} ≤ 2∑_p log p·p^{-2σ}`, and then the slice is `-ζ'/ζ(1+δ+w+iv) + O(1)` and
+`SliceBoundSmall` becomes the genuine pole-local statement (`ζ(1+it) ≠ 0` + compactness).
+
+## ⛔ 2026-09-25 (review lap 92) — INPUT (c) IS FALSE.  New attack path.
+
+**Read `ROUTE-ESCALATION-2026-09-25-archimedean.md` and `DIRECTION.md` CURRENT DIRECTIVE first.**
+
+`ElliottTwistBootstrap.ArchimedeanCorrelationBound A η` is **refuted in-kernel**
+(`ElliottArchimedeanRefuted.not_archimedeanCorrelationBound`, trust triple): its frequency range
+`1 < |v| log X` includes `v = 2/log X`, where all phases `v log p` stay in `[0,2]` and
+`Re ∑_{p≤X}p^{-iv}/p ≥ M(X) − 2 − 2C`.  So
+`ElliottCharRigidity.twoPointElliottLog_of_archimedean_and_density` is VACUOUS.  **Do not build on
+it; do not re-state input (c).**
+
+The live consumer is `ElliottTwistRepair.twoPointElliottLog_of_repaired_inputs`, on
+
+* **(c′)** `ArchimedeanCorrelationBoundAbove A η T` — `T X < |v| ≤ A²X → ‖archCorr v X‖ ≤ (1−η)M(X)`
+* **(e)** `SmallShiftAlmostReal A K T` — `|t| ≤ T X → AlmostRealTwist K χ t X`
+
+with `T X = (log X)^{-1+ε}` the honest threshold.
+
+### ✅ (e) — THE ANALYTIC CONTENT IS DISCHARGED (lap 93).  `ElliottSmallShift.lean`
+
+**Correction to the lap-92 plan above: no Abel summation, no `Si`/`Ci`, no new analysis.**  The
+survey found `Erdos67b.PrimeEstimates.abs_primeReciprocals_sub_log_log_le` — two-sided Mertens with
+an *absolute* constant — and that turns (e) into **scale reduction** on machinery already proved:
+
+> For `|t|` in the problem band the Archimedean twist is not a bounded perturbation of `1` across
+> `[2,X]`, but it *is* across `[2,Y]` with `log Y = 1/|t|`, and two-sided Mertens says the shorter
+> window still carries all but `ε·M(X) + O(1)` of the prime mass.  Run the **old proved argument**
+> at scale `Y`, transport to `X` at the cost of the discarded mass.
+
+The price: the conclusion is "within a small **proportion** `ρ` of `M(X)` of a real", not within
+`O(1)`.  That is all the consumer ever needed — the rotation by `ζ ≠ 1` buys a *fixed proportion*
+`1 − Re ζ`.  Landed, sorry-free, trust triple:
+
+* `AlmostRealTwistProp ρ` + `re_phase_mul_twistCorr_le_prop` + `TwistAlmostRealPropDichotomy` +
+  `uniformlyNonPretentious_zetaOmega_of_almostRealProp` (**quantifier order**: `ρ` is chosen after
+  `u`, so the dichotomy is asked at every `ρ > 0`);
+* `norm_twistCorr_sub_le` : `‖C(X) − C(Y)‖ ≤ M(X) − M(Y)`;
+* `ReductionScale ρ t X Y` and **`almostRealProp_or_far_of_reductionScale`** — the theorem.  Its
+  only input is `CharacterClusterRigidity`, which lap 91 already proved from `PrimeDensityAP`.
+
+**Net effect on the input list**: (e) is replaced by (d1) `PrimeDensityAP`, which is *softer*
+(Mertens in progressions; no zero-free region).  So `PrimeDensityAP` is back ON the critical path —
+this supersedes lap 92's "rigidity is off the path" note, and is a strict improvement: one cited
+input becomes a proved theorem plus a softer cited input.
+
+### ✅ The reduction scale EXISTS — (e) is fully proved (lap 94)
+
+`exists_reductionScale` is landed, sorry-free, trust triple.  The trick that made it cheap:
+**define the threshold by the window**, `smallShiftThreshold ρ X := 1 / log (shortWindow ρ X)` with
+`shortWindow ρ X := ⌊exp (exp ((1 − ρ/2)·log log X))⌋₊` — then the `|t| · log Y ≤ 1` clause is true
+by construction and no `rpow` inequality is ever needed.  The only real estimates are
+`⌊z⌋₊ > z − 1` and two-sided Mertens.
+
+### ✅ THE WHOLE SMALL-SHIFT BAND IS ASSEMBLED (lap 94)
+
+`twoPointElliottLog_of_archimedean_and_primeDensity` — C1's two-point leaf in logarithmic average,
+on exactly two classical inputs:
+
+| input | statement | depth |
+|---|---|---|
+| **(c′)** `∀ A r, 0 < r → ∃ η > 0, ArchimedeanCorrelationBoundAbove A η (smallShiftThreshold r)` | `T X < \|v\| ≤ A²X → ‖archCorr v X‖ ≤ (1−η)M(X)` | the only zero-free-region site |
+| **(d1)** `PrimeDensityAP A` | `c·M(X) − B ≤ ∑_{p≤X, p≡a (q)} 1/p` on unit classes | Mertens in progressions; **no zero-free region** |
+
+**Boundary check (EA-1) passes**: `smallShiftThreshold ρ X ≈ (log X)^{-1+ρ/2}`, where the true size
+of `archCorr` is `≈ (1−ρ/2)M(X)`, so (c′) holds at its own boundary with `η ≈ ρ/2`.  That is
+precisely what the refuted lap-91 pair failed.  Note the quantifier shape this forces and which the
+statement has: `η` may depend on `r` (hence on `u`), so (c′) is asked *at every threshold scale*.
+
+### Attack path for (c′) — the long pole
+
+The zero-free-region site.  Do NOT expect to clear it.  Two recorded routes:
+
+* **(c′-VK)** cite it, as the dependency does with
+  `Erdos67b.PolynomialHeightPrimeCorrelationBound` (note: *that* `Prop` uses the range
+  `Y ≤ |v| ≤ T·Y^D` — it only claims polynomial height and deliberately avoids small `v`, which
+  independently confirms lap 92's diagnosis).
+* **(c′-vdC)** the unconditional probe worth a lap: if `∑_{p≤X}(1 − Re(γ̄ p^{-iv}))/p ≤ ηM` then
+  `n ↦ n^{iv}` is pretentious to the constant `γ`, which should force `|∑_{n≤X} n^{iv}| ≫_η X`;
+  but van der Corput on dyadic blocks gives `|∑_{n≤X} n^{iv}| ≪ X^{1/2} log X` for `1 ≪ |v| ≪ X²`
+  (second derivative of `v log u` is `v/u² ≍ X/N²` on `n ≍ N`).  Contradiction for all
+  `1 ≪ |v| ≤ A²X` — i.e. this would give (c′) **unconditionally on the whole upper range**, with
+  the only remaining band `T X ≤ |v| ≲ 1` handled by Mertens-with-error as in (e).
+  The uncertain half is the mean-value lower bound "pretentious to a constant ⟹ mean `≫ X`"
+  (Halász/Wirsing territory).  **Probe that first, on paper, before writing Lean.**
+
+### ✅ Lap 95 — (c′) SPLIT INTO BANDS; the wall is isolated and named
+
+New module `src/NormalNumbers/ElliottArchBands.lean` (sorry-free, trust triple, in the audit
+surface).  (c′) is cut at `|v| = 1`:
+
+* **(c′-I)** `ShiftedMertensSmall K₀` — `0 < |v| ≤ 1 → ‖archCorr v X‖ ≤ log(1/|v|) + K₀`.
+  Mertens with a small shift; **no zero-free region**.
+* **(c′-II)** `ArchCorrLargeShift A η₁ K₁` — `1 < |v| ≤ A²X → ‖archCorr v X‖ ≤ (1−η₁)·log log X + K₁`.
+  **The wall**, and the only one.
+
+`archimedeanCorrelationBoundAbove_of_bands` proves (c′) from the two with `η = min ρ η₁ / 4`
+(the soft band supplies all the `r`-dependence, so (c′-II) is asked at a *single* `η₁`), and
+`twoPointElliottLog_of_bands` gives the whole two-point leaf on `PrimeDensityAP` + (c′-I) + (c′-II).
+`ElliottSmallShift`'s three consumers now ask `harch` only for `0 < r < 1` (the only range they
+ever instantiate), which is what makes (c′) provable at all: for `r ≥ 2` the threshold degenerates
+to `0` and the statement is FALSE.
+
+**⛔ The `(c′-vdC)` route below is REFUTED as stated** (details in the new module's docstring):
+van der Corput's `k`-th derivative test only replaces the trivial `log t` in `|ζ(1+it)|` by
+`(1/k)·log t` — an *additive* `O(1)` saving on `archCorr`, whereas the consumer needs a
+*proportional* one; a power saving needs `k ≍ (log t)^η` uniformly, i.e. Vinogradov's mean value
+theorem.  And the Halász half needs no vdC at all: `∑_{n≤X} n^{-iv} = X^{1-iv}/(1-iv) + O(1+|v|)`
+exactly, of size `≍ X/|v|`, so that route reproves only what the trivial bound already gives.
+**The true statement of (c′-II) is `|ζ(1+it)| ≪ (log t)^{2/3}` (Vinogradov–Korobov), valid for
+every `η₁ < 1/3`.**  EA-1 boundary check on both new inputs: passes (module docstring).
+
+**Next attack.**  (c′-I) is now the tractable half and should be attacked first: it is
+Mertens-with-a-shift on `|v| ≤ 1`, and the repo already has two-sided Mertens with an absolute
+constant.  The natural Lean route is Abel summation of `p^{-iv}` against
+`abs_primeReciprocals_sub_log_log_le`, splitting at `log Y = 1/|v|` exactly as `exists_reductionScale`
+does — below `Y` bound trivially by `M(Y) = log(1/|v|) + O(1)`, above `Y` the oscillation must be
+harvested, and the honest cost there is a Mertens error term of size `O(1/log²u)` (PNT-strength) or
+a second application of the scale trick.  **That error-term strength is the thing to settle first.**
+
+### ✅ Lap 96 — FIDELITY CORRECTION + the wall narrowed to near-maximal height
+
+**Correction to lap 95 (EA-1).**  (c′-I) `ShiftedMertensSmall` is **not** free of a zero-free
+region.  Splitting at `log Y = 1/|v|` handles `[2,Y]` by two-sided Mertens, but `[Y,X]` needs real
+cancellation and Abel summation against `∑_{p≤u}1/p = log log u + B + E(u)` costs `|v|·∫|E|`, which
+is `O(1)` only for `E = O(1/log²u)` — already PNT strength.  The interval form of the same
+obstruction: the `≍ |v| log X` sign-intervals of `cos(v log p)` each cost one absolute Mertens
+error.  So (c′-I) is **de la Vallée Poussin strength**, and no Mertens-level route exists.  This is
+recorded in the module docstring so it is not re-asserted.
+
+**The narrowing (new, proved).**  `ArchCorrLargeShift` (all `|v| > 1`) now follows from
+
+* `ArchCorrModerate K₁` — the *shape-true* `‖archCorr v X‖ ≤ log log|v| + K₁`, which is what the
+  **trivial** bound `|ζ(σ+it)| ≪ log t` gives; dVP strength, **no Vinogradov**; and
+* `ArchCorrNearMaxHeight A ν η₂ K₂` — the proportional saving on `|v| > heightCut ν X =
+  exp((log X)^{1-ν})` only.
+
+(`archCorrLargeShift_of_moderate_and_nearMax`, with `η = min ν η₂`.)  Reason: below the cut,
+`log log|v| ≤ (1−ν) log log X` already *is* a proportional saving.  So the Vinogradov–Korobov site
+is not "all `|v| > 1`" but the near-maximal-height band alone, and the final input list is
+`twoPointElliottLog_of_three_bands`: `PrimeDensityAP` + `ShiftedMertensSmall` + `ArchCorrModerate`
++ `ArchCorrNearMaxHeight` — three dVP-strength inputs and one narrow Vinogradov one.
+
+**Next attack, in order.**
+1. `ArchCorrModerate` / `ArchCorrSmall` share one engine: `∑_{p≤X} p^{-1-iv} = log ζ(1+1/log X+iv)
+   + O(1)` plus a truncation estimate.  Source the ζ side from `PrimeNumberTheoremAnd.ZetaBounds`
+   (`ZetaSum_aux*`, `ζ₀` Euler–Maclaurin: this gives the trivial `≪ log t` bound directly) and the
+   truncation from `StrongPNT`.  **Survey those two files for a usable `ψ(x) − x` error bound and
+   for a Chebyshev-weighted Abel summation before writing any analysis.**
+2. `ArchCorrNearMaxHeight` stays the wall.  Its one non-Vinogradov hope worth a probe: at
+   near-maximal height `|v| ≥ exp((log X)^{1-ν})` the frequency is *huge* relative to the window, so
+   the relevant exponential sum `∑_{p≤X} p^{-iv}` is in the range where the prime-counting side is
+   dominated by the zero-free region's shape, not by its strength — check whether the zero-free
+   region `σ > 1 − c/log|t|` alone suffices when `log|t| ≫ (log X)^{1-ν}`, since then
+   `c/log|t| ≪ (log X)^{-(1-ν)}` and the relevant contour push may already give a power saving in
+   `log X`.  **That comparison is the route-decisive question for the wall.**
+
+### ✅ Lap 97 — the damping step, and the route that actually reaches (c′-I)/(c′-II-a)
+
+**The route (found by survey, replaces the refuted Abel-summation plan).**  Use
+`1/log n = ∫_0^∞ n^{-w} dw`, so that `∑_p p^{-s} = ∫_0^∞ (−ζ'/ζ)(s+w) dw + O(1)` and both soft
+inputs follow from a bound on `ζ'/ζ` on `σ > 1` by the elementary integration
+`∫_0^∞ min(1/(δ+w), R) dw = log(1/(δR)) + O(1)`:
+
+* sub-unit band `|v| ≤ 1`: `R ≍ 1/|v|`, and the needed non-vanishing `ζ(1+it) ≠ 0` **is already in
+  mathlib** — so (c′-I) may be reachable from mathlib + compactness, *without* a quantitative
+  zero-free region.  (This refines lap 96's correction: the obstruction there was to *Mertens-level*
+  methods, not to ζ-analytic ones.)
+* moderate band `|v| > 1`: `R ≍ log|v|`, which is de la Vallée Poussin.
+
+**Landed (sorry-free, trust triple, in the audit surface):**
+* `sum_log_div_primesUpTo_le` — Mertens' first theorem in this campaign's index set,
+  `∑_{p≤X} log p/p ≤ log X + (log 4 + 4)`, from `Mertens.sum_log_prime_div_eq_log`.
+* `dampedArchCorr` and **`norm_archCorr_sub_dampedArchCorr_le`** — replacing the sharp cutoff
+  `1/p` by `p^{-1-1/log X}` costs at most `1 + (log 4 + 4)/log X`, **uniformly in the frequency**.
+  Mechanism: `1 − p^{-δ} ≤ δ log p` plus Mertens I.
+
+**Trap recorded:** `import PrimeNumberTheoremAnd.IEANTN.Mertens` FAILS — `lean-proofs-latest`
+shadows the `PrimeNumberTheoremAnd` module root with a smaller copy.  The importable path for the
+same file is **`ErdosProblems.Erdos49.PNT.IEANTN.Mertens`**.
+
+**Next step (lap 98):** the other half of the damping, `∑_{p > X} p^{-1-1/log X} = O(1)`, so that
+`archCorr v X = ∑_p p^{-1-1/log X-iv} + O(1)` and the analytic route can start.  Scaffolding exists:
+`Erdos67b.PrimeEstimates.expWeightedPrimeTail` bounds the block `(X, X²]` by `log 2 + 2·mertensBound`
+uniformly; iterate over the blocks `(X^{2^k}, X^{2^{k+1}}]`, where the weight `p^{-1/log X} ≤
+exp(−2^k)` gives geometric decay.
+
+### ✅ Lap 98 — THE DAMPING STEP IS COMPLETE
+
+`archCorr v X` is now an *analytic* object up to an absolute constant.  All sorry-free, trust
+triple, in the audit surface:
+
+* `sum_primesInInterval_split`, `sum_primesUpTo_split` — additivity of prime sums at a cut.
+* `dampedBlock_le` — on a square block `(M,N]`, `N ≤ M²`, the damped weight is `≤ M^{-δ}` and the
+  mass `≤ log 2 + 2·mertensBound`.
+* `sum_exp_neg_two_pow_le` — `∑_{k<K} e^{-2^k} ≤ 1 − 2e^{-2^K}` (the invariant that makes the
+  induction go: the naive `≤ 1` does not close the step).
+* **`dampedTail_le`** — `∑_{X<p≤Y} p^{-1-1/log X} ≤ log 2 + 2·mertensBound` for **every** `Y`,
+  by iterating the block over `(X^{2^k}, X^{2^{k+1}}]` where the weight is `≤ e^{-2^k}`.
+* **`norm_archCorr_sub_dampedPrefix_le`** — the payoff:
+  `‖archCorr v X − ∑_{p≤Y} p^{-1-1/log X-iv}‖ ≤ (1 + (log 4+4)/log X) + (log 2 + 2·mertensBound)`
+  for every `Y ≥ X`, **uniformly in the frequency `v` and in `Y`**.
+
+**Next (lap 99).**  With the damping done, (c′-I)/(c′-II-a) are statements about
+`P(s) := ∑_p p^{-s}` at `s = 1 + 1/log X + iv`.  The remaining chain is:
+1. `P(s) = ∫_0^∞ (−ζ'/ζ)(s+w) dw + O(1)` via `1/log n = ∫_0^∞ n^{-w} dw` (the `O(1)` is the
+   prime-power correction `∑_{p,k≥2} 1/(k p^{kσ}) ≤ 2∑_p p^{-2σ}`, elementary).
+2. the `ζ'/ζ` bound on `σ > 1`: trivial `1/(σ−1)` always, `≍ 1/|s−1|` near the pole (mathlib has
+   `riemannZeta ≠ 0` on `Re ≥ 1`), `≍ log|v|` at height (dVP).
+3. the elementary integration `∫_0^∞ min(1/(δ+w), R) dw = log(1/(δR)) + O(1)`.
+Step 3 is pure calculus and is the right next Lean target — it is independent of the ζ input and
+turns whatever bound step 2 supplies into the two soft inputs directly.
+
+### ✅ Lap 99 — the calculus core, and both soft inputs reduced to ONE analytic statement each
+
+* `ElliottLogIntegral.integral_le_one_add_log` — **the log is produced here.**  A nonnegative `f`
+  on `[0,1]` with `f ≤ T⁻¹` on `[0,T]` and `f ≤ w⁻¹` on `[T,1]` has `∫_0^1 f ≤ 1 + log(1/T)`.
+  Both bands are this one lemma at different `T`: sub-unit band `T = |v|` (pole bound
+  `|ζ'/ζ(σ+w+iv)| ≤ min((δ+w)^{-1},|v|^{-1})`) gives `log(1/|v|)`; moderate band
+  `T = 1/(C log|v|)` (de la Vallée Poussin) gives `log log|v|`.
+* `DampedSeriesBoundSmall` / `DampedSeriesBoundModerate` — the analytic inputs, stated on the
+  *finite* damped prefix so no `tsum` or improper integral is needed anywhere in the consumer.
+* `dampingCost`, `norm_archCorr_sub_dampedPrefix_le'`, and the reductions
+  **`shiftedMertensSmall_of_dampedSeriesBound`**, **`archCorrModerate_of_dampedSeriesBound`**.
+
+So the arithmetic half of both soft inputs is now *discharged*, and the Elliott consumer's input
+list is: `PrimeDensityAP`, `DampedSeriesBoundSmall`, `DampedSeriesBoundModerate`,
+`ArchCorrNearMaxHeight`.  The first three carry no Vinogradov.
+
+**Next (lap 100).**  The one structural gap left on the soft side is the representation
+`∑_p p^{-s} = ∫_0^∞ (−ζ'/ζ)(s+w) dw + O(1)` (from `1/log n = ∫_0^∞ n^{-w} dw`, plus the elementary
+prime-power correction `∑_{p,k≥2} 1/(k p^{kσ}) ≤ 2∑_p p^{-2σ}`).  Its Lean cost is a Fubini
+interchange for a Dirichlet series on `σ > 1`; mathlib's `tsum_integral_eq_integral_tsum` family is
+the handle.  With that plus the ζ'/ζ bounds, `DampedSeriesBound*` follow from
+`integral_le_one_add_log` directly.  **Do the interchange first — it is shared by both bands.**
+
+### ✅ Lap 100 — THE INTERCHANGE IS DONE (and it needed no Fubini)
+
+* `ElliottLogIntegral.integral_rpow_neg_Ioi` — `∫_0^∞ a^{-w} dw = (log a)^{-1}` for `a > 1`
+  (via mathlib's `Real.integral_rpow_mul_exp_neg_mul_Ioi` at `a = 1`, `Γ(1) = 1`), plus
+  `integrableOn_rpow_neg_Ioi` (obtained from the value of the integral, so no separate
+  integrability argument is needed).
+* **`ElliottDamped.dampedPrefix_eq_integral`** — `dampedPrefix v X Y = ∫_0^∞ logWeightedSlice v X Y w dw`
+  where `logWeightedSlice` is the log-weighted damped prime sum at abscissa `1+δ+w`.
+
+**The insight that made this cheap:** because lap 98 stated everything on the *finite* prefix, the
+interchange is `integral_finsetSum` over a `Finset` — **no Fubini, no dominated convergence, no
+tsum**.  The only analytic input is `∫_0^∞ p^{-w} dw = 1/log p`.
+
+**What remains on the soft side** is now purely about the integrand: extend `logWeightedSlice` from
+`{p ≤ Y}` to all primes and prime powers (an `O(1)` change *after* integration, by `dampedTail_le`
+and the elementary `∑_{p,k≥2} 1/(k p^{kσ}) ≤ 2∑_p p^{-2σ}`), identify the result with `−ζ'/ζ`, and
+apply `integral_le_one_add_log`.  The two ζ'/ζ bounds (pole-local for `|v| ≤ 1`, dVP for `|v| > 1`)
+are the only genuinely cited inputs left on this side.
+
+### ✅ Lap 101 — the slice decays geometrically past `w = 1` (elementary, no ζ)
+
+`norm_logWeightedSlice_le_decay` : for `w ≥ 1`,
+`‖logWeightedSlice v X Y w‖ ≤ (4·∑_n n^{-3/2})·2^{-w}`, uniformly in `X`, `Y`, `v`.
+
+Chain: `‖·‖ ≤ ∑_{p≤Y} log p · p^{-1-δ-w}`; `log p ≤ 2√p` (`log_le_two_mul_rpow_half`, from
+`Real.log_le_sub_one_of_pos` applied to `√p`); drop the `δ`; split
+`p^{-1/2-w} = p^{-3/2}·p^{1-w} ≤ p^{-3/2}·2^{1-w}` (`Real.rpow_le_rpow_of_nonpos`); and compare the
+finite prime sum with `∑'_n n^{-3/2}` (`Summable.sum_le_tsum`).  **No numeric evaluation of the
+`p`-series is needed — it is used only as a finite constant.**
+
+This is what makes the improper `w`-integral over `(0,∞)` converge, and it is the last piece that
+is independent of any ζ input.
+
+**Next (lap 102).**  Assemble: `‖dampedPrefix v X Y‖ ≤ ∫_0^1 ‖slice‖ + ∫_1^∞ ‖slice‖`, the second
+being `≤ 4·pSeriesThreeHalves/(2 log 2)` by this lap, the first being
+`integral_le_one_add_log` applied to the *cited* `ζ'/ζ` bound on `[0,1]`.  That turns
+`DampedSeriesBoundSmall`/`Moderate` into a bound on the slice on `[0,1]` alone — i.e. into the two
+classical `ζ'/ζ` statements, with everything else in the campaign proved.
+
+### ✅ Lap 102 — BOTH SOFT INPUTS ARE NOW PURE `ζ'/ζ` STATEMENTS
+
+The whole distance from `archCorr` to `ζ'/ζ` is proved.  New, sorry-free, trust triple:
+
+* `continuous_logWeightedSlice`, `integrableOn_norm_slice_Ioc`, `integrableOn_norm_slice_Ioi`,
+  `integral_norm_slice_Ioi_le` (`∫_1^∞‖slice‖ ≤ tailCost := 4·∑n^{-3/2}/log 2`).
+* `ElliottLogIntegral.integral_le_one_add_log_add_const` — the calculus core in the shape the true
+  estimates have: `|ζ'/ζ(s)| ≤ 1/|s−1| + C`, i.e. **leading constant `1`, additive slack**.
+  (The `K * T⁻¹` form is wrong for this consumer: a multiplicative `K` would multiply the `log`.)
+* **`norm_dampedPrefix_le_of_slice_le'`** — `‖dampedPrefix v X Y‖ ≤ 1 + log(1/T) + K + tailCost`
+  from the two slice clauses, uniformly in `Y` and `v`.
+* `SliceBoundSmall` / `SliceBoundModerate` + **`dampedSeriesBoundSmall_of_sliceBound`**,
+  **`dampedSeriesBoundModerate_of_sliceBound`**, with `T = max(|v|, δ)` resp.
+  `T = max(1/log(|v|+16), δ)`.
+* `DampedSeriesBound*` were given an `X₀` (they are now `∃ X₀ ≥ 2, ∀ X ≥ X₀`), because the
+  calculus needs `δ = 1/log X ≤ 1`, which **fails at `X = 2`** (`1/log 2 ≈ 1.44`).  `X₀ = 3` works.
+
+**The campaign's remaining cited inputs, in full:**
+1. `ElliottCharRigidity.PrimeDensityAP` — Mertens in progressions.
+2. `SliceBoundSmall` — pole-local `ζ'/ζ`; needs only `ζ(1+it) ≠ 0` (**in mathlib**) + compactness.
+3. `SliceBoundModerate` — de la Vallée Poussin `|ζ'/ζ(σ+iv)| ≪ log|v|`.
+4. `ArchCorrNearMaxHeight` — Vinogradov–Korobov, near-maximal height only.
+
+**Next (lap 103).**  Attack (2).  The slice is the *truncated* von Mangoldt series over primes
+only; to compare it with `ζ'/ζ(1+δ+w+iv)` the missing pieces are (a) the prime-power correction
+(elementary, `∑_{p,k≥2} log p · p^{-kσ} ≤ 2∑_p log p · p^{-2σ}`, same `p`-series technique as lap
+101) and (b) the truncation `∑_{p>Y}` — which, **note**, is *not* `O(1)` slice-wise, only after the
+`w`-integration (lap 98's `dampedTail_le`).  So the honest lap-103 target is a slice bound for the
+FULL series plus a separate integrated treatment of the truncation, not a slice bound for the
+truncated series.  Check this before writing Lean: it may be cleaner to restate `SliceBound*` for
+the full series and re-route the truncation through `dampedTail_le`.
+
+### What is OFF the path now
+
+`CharacterClusterRigidity`, `PrimeDensityAP`, `exists_charDefect_le`, `NearTrivialTwist`,
+`TwistModulusDichotomy`.  All proved/stated and they stay in `src/`; `twistAlmostRealDichotomy_of_old`
+records that the old dichotomy implies the new one.  Do not spend laps on them.
+
+---
+
+## Lap 55 (2026-09-25) — Case-B step 1 CLOSED: the pretentious transfer
+
+New module `src/NormalNumbers/ElliottPretentiousTransfer.lean`, **zero sorry, trust triple**,
+in the audit surface.  This discharges item 1 of the lap-54 NEXT list in full.
+
+* `one_sub_re_le_three` / `pretentiousTerm_triangle_bounded` /
+  `pretentiousDistSq_triangle_bounded` — the **1-bounded** pretentious triangle inequality with
+  constant `3`.  The dependency's `Erdos67b.pretentiousDistSq_triangle_sq` was unusable here:
+  it needs all three functions unimodular, but the middle-man `g₁` is only 1-bounded and the
+  target `χ·n^{it}` vanishes at `p ∣ q`.  Proof as designed at lap 54:
+  `1 − Re(ac̄) = [1 − (‖a‖²+‖c‖²)/2] + ‖a−c‖²/2 ≤ (u+v) + 2(u+v)`.
+* `pretentiousDistSq_cover_eq` — for **any** `u` that is a lift of `g` at every prime `≤ X`
+  (which every cover is, by `re_cover_prime_mul_conj`),
+  `pretentiousDistSq g u X = ∑_{p≤X}(1−‖g p‖²)/p`.  Deterministic: no `ω`, no Markov, no good event.
+* `pretentiousDistSq_cover_le` — `≤ 2 ∑_{p≤X}(1−‖g p‖)/p`, i.e. twice the Case-B sum.
+* `mrtNonpretentious_transfer` — `MRTNonpretentious g A X → MRTNonpretentious u A' X` for any
+  `A' ≤ A` with `(A':ℝ) ≤ A/3 − 2D₀`, where `D₀` bounds the Case-B sum.
+
+Note the hypothesis shape: the transfer is stated against the *abstract* lift property
+`(u p * conj (g p)).re = ‖g p‖²`, which is exactly what `exists_cover_pair_ge` already exports.
+So `ElliottRandomize` and `ElliottPretentiousTransfer` compose with no glue.
+
+## Lap 56 (2026-09-25) — Case-B step 3, analytic half CLOSED: the ABSOLUTE squarefull tail
+
+New module `src/NormalNumbers/ElliottSquarefull.lean`, **zero sorry, trust triple**, in the audit
+surface.  Directive item 3's analytic half.
+
+* `geom_sum_Ico_two_le` — `∑_{2 ≤ k ≤ K} r^k ≤ r²/(1-r)`, uniform in the truncation `K`.
+* `local_factor_squarefull_le` — for nonneg multiplicative `f` with `f p = 0` at primes and
+  `f n ≤ 2/n`, the local factor `∑_{k ≤ K} f(p^k) ≤ 1 + 2/(p(p-1))`.  Vanishing at `p` is what
+  kills the `1/p` term.
+* **`sum_Icc_le_exp_two`** — `∑_{m ≤ Y} f m ≤ e²` for **every** such `f` and **every** `Y`.
+
+This is precisely the uniformity the refuted `v`-expansion lacked: there the local factor
+`1 + (1-‖g p‖)/(p-‖g p‖)` depends on `g` and can be large past any pre-chosen `D`; here the bound
+is absolute.  Built on the existing `ElliottEulerBound` scaffolding
+(`sum_Icc_le_euler_product`, `prod_le_exp_prime_sum`, `sum_primesBelow_inv_mul_pred_le_one`) —
+no new analytic infrastructure was needed.
+
+## Lap 57 (2026-09-25) — Case-B step 3 COMPLETE: the squarefull convolution
+
+New module `src/NormalNumbers/ElliottSquarefullConv.lean`, **zero sorry, trust triple**, in the
+audit surface.  Directive item 3 is now closed end to end.
+
+* `cmExt U` — the completely multiplicative extension, `n ↦ n.factorization.prod (p,k) ↦ (U p)^k`.
+  Multiplicativity is `Finsupp.prod_add_index'` off `Nat.factorization_mul`, which needs **no**
+  coprimality: `cmExt` is completely multiplicative for free.  `cmExt_prime_pow : cmExt U (p^k) = U p ^ k`.
+* `mul_apply_divisors` — the divisor-sum form of Dirichlet convolution (mathlib only has the
+  antidiagonal form); one line off `Nat.map_div_right_divisors`.
+* `squarefullPart U = (μ · cmExt U) ⋆ U`, multiplicative, with
+  **`squarefullPart_prime_pow : u (p^k) = U (p^k) - U p · U (p^(k-1))`** for `k ≥ 1`
+  (the `μ`-factor annihilates every exponent `≥ 2`, so the convolution has exactly two terms),
+  hence `u p = 0` and `‖u (p^k)‖ ≤ 2`.
+* **`sum_norm_squarefullPart_div_le_exp_two`** — `∑_{d ≤ Y} ‖u d‖/d ≤ e²` for **every** unimodular
+  multiplicative `U` and **every** `Y`.
+
+Also weakened `ElliottSquarefull.sum_Icc_le_exp_two`'s `hbd` from `∀ n > 0, f n ≤ 2/n` to
+prime powers only, `∀ q prime k, f (q^k) ≤ 2/q^k` — that is all the local-factor proof uses, and
+`‖u n‖ ≤ 2` is *false* for general `n` (it grows with the number of prime factors) while
+`‖u (p^k)‖ ≤ 2` is exactly right.  This was a real trap; the weakened form is the usable one.
+
+## Lap 58 (2026-09-25) — Case-B step 4, arithmetic core PROVED: determinant preservation
+
+New module `src/NormalNumbers/ElliottProgression.lean`, **zero sorry, trust triple**, in the
+audit surface.  Directive item 4's decisive half.
+
+* `integerAffine_progression` — along `n = qk + n₀`, if `d ∣ aq` and `a n₀ + b = d c`, then
+  `integerAffine a b (qk+n₀) = d · ((aq/d) k + c)`.  The quotient is affine in `k`, exactly.
+* **`det_progression`** — with `q = d₁d₂`, `a₁' = a₁d₂`, `a₂' = a₂d₁`,
+  `a₁' c₂ − a₂' c₁ = a₁ b₂ − a₂ b₁`.  **The determinant is preserved EXACTLY**, with no shrinkage
+  and no dependence on `d₁, d₂`.
+* `newDilation_eq`, `dvd_mul_of_prod(')` — the `q = d₁d₂` side conditions, automatic.
+* `exists_progression_of_jointCongruence` — the joint congruence set is closed under `n ↦ n + q`.
+
+**Why this is the part that mattered.**  The whole squarefull expansion is only a *finite*
+reduction to the same rung `AffineCMLogElliott` if the new pair is still admissible — i.e. if
+`a₁'b₂' − a₂'b₁' ≠ 0` — uniformly over the (unboundedly many) `d₁,d₂` the expansion produces.
+Had the determinant degraded with `d₁d₂` the route would have been an infinite regress.  It does
+not degrade: it is *equal*.  Choosing `q = d₁d₂` rather than `lcm` is what buys this.
+
+Still open in step 4 (analytic, not arithmetic): window rescaling `X ↦ X/q` at fixed ratio `W`,
+and the harmonic-weight comparison `1/(qk+n₀) = (1/q)(1/k) + O(1/(qk²))`, whose total cost is an
+absolute constant times `∑_d ‖u d‖/d ≤ e²`.  Deliberately not stated as a lemma yet: the statement
+needs the restricted correlation, which is introduced at assembly.
+
+## Lap 59 (2026-09-25) — item 5 CLOSED: Case A in the THIN window
+
+New module `src/NormalNumbers/ElliottCaseAThin.lean`, **zero sorry, trust triple**, in the audit
+surface.  Directive item 5 done; `exists_caseA_threshold`'s regime hypothesis is now superseded.
+
+* `sum_window_le_transfer_ge` — the affine transfer landing in `[L, Y]` for **any** `L` that
+  lower-bounds the affine form on the window.  `ElliottCaseA.sum_window_le_transfer` is the `L = 1`
+  case; keeping `L` is the whole point.
+* `le_integerAffine_of_mem_window` — the concrete `L = a₁(⌊X/W⌋+1) − |b₁|`, from `X < Wn`.
+* **`norm_elliottLogCorrelation_le_caseA_thin`** — `‖corr‖ ≤ (a₁+|b₁|)·(⌊log₂(Y/L)⌋+1)·2·hallConst·
+  e^{1+B}·e^{−Σ_L} + |b₁|`, with **no hypothesis relating `W` to `X`**.
+
+**Why this was needed.**  The thick-window bound pays `log Y ≈ log X`, which swamps the target
+`ε log W` once `W` is small.  Keeping the range replaces `log Y` by the dyadic block count
+`⌊log₂(Y/L)⌋+1 ≈ log₂ W` — the right order.  Hall's inequality
+(`ElliottHall.sum_Icc_dyadic_le`, lap 53) is exactly what supplies a per-block bound strong enough
+for this; the crude Euler product cannot.
+
+One trap worth recording: `L` is defined by *nat* subtraction `a₁(⌊X/W⌋+1) − |b₁|`, so when
+`|b₁|` dominates it truncates to `0` and the cast inequality `↑(M−b) ≤ ↑M − ↑b` is **false**.
+The proof case-splits; in the truncated branch the bound is just `0 ≤ a₁n+b₁`, i.e. positivity.
+
+## Lap 60 (2026-09-25) — leaf 2 ASSEMBLED, and a real obstruction found
+
+New module `src/NormalNumbers/ElliottLeafTwo.lean`.  `nonasymptotic_of_affineCM` moved here from
+`ElliottLadder` (it must be: it consumes five modules that import `ElliottLadder`);
+`ElliottGeneral.nonasymptoticLogElliott` repointed.  `src/` sorry count 1 → 3: that is the
+**decomposition**, not a regression.
+
+**The assembly is itself gap-free.**  `ElliottEulerBound.primeDefect (normDivArith g₁) L` is
+*literally* `∑_{p ≤ L}(1 − ‖g₁ p‖)/p`, the Case-B sum.  So the Case A / Case B split is `le_or_gt`
+on one real number, and `nonasymptotic_of_affineCM` is proved outright from the two halves — no gap
+at the junction, which is where a two-case argument usually leaks.  `caseAScale a₁ b₁ X W`
+fixes the shared scale `L = a₁(⌊X/W⌋+1) − |b₁|`.
+
+Three disclosed obligations, all in `src/`:
+1. `exists_caseA_thin_threshold` — the Case-A half.  All ingredients proved (lap 59); what remains
+   is the nat-division estimate `Y/L ≤ c(a₁,b₁)·W` plus threshold bookkeeping of the same shape as
+   the already-proved `ElliottCaseA.exists_caseA_threshold`.
+2. `exists_squarefull_tail` — **NEW, found while assembling.**
+3. `exists_caseB_threshold` — the Case-B half, itemised in the docstring: every one of its six
+   steps now names a proved lemma except (4) = obligation 2 and the window/weight reindexing.
+
+### THE OBSTRUCTION (lap 60's real finding)
+
+Case B applies `AffineCMLogElliott` to each substituted pair `(a₁d₂, c₁; a₂d₁, c₂)`.  Lap 58 proved
+the *determinant* survives exactly — but the **dilations** `a₁d₂, a₂d₁` grow with `d₁,d₂`, and
+`AffineCMLogElliott` hands out its threshold `A₀` **per affine pair**.  So `A₀` cannot be taken as a
+sup over all `d`; the `d`-sum must be truncated at a `D` fixed **before** `g₁`, with `A₀` the finite
+max over `d₁,d₂ ≤ D`.  That requires
+
+> `∑_{D < d ≤ Y} ‖u d‖/d ≤ ε'` for **every** unimodular multiplicative `U` and every `Y`,
+
+which is **strictly stronger** than lap 57's `≤ e²` bound on the *total*.  A uniformly bounded
+total does not give uniformly small tails — that is precisely the error that killed the
+`v`-expansion at lap 54, so this had to be checked, not assumed.
+
+**It is true here, and for a concrete reason.**  The local factors `1 + 2/(p(p−1))` are absolute, so
+a Rankin shift is available: `∑_{d>D} ‖u d‖/d ≤ D^{−1/4} ∑_d ‖u d‖/d^{3/4}`, and the shifted Euler
+product `∏_p (1 + ∑_{k≥2} 2/p^{3k/4})` still converges because `3·2/4 = 3/2 > 1`.  Note `δ = 1/2`
+would **fail** (`∑_p 1/(√p(√p−1)) ≍ ∑_p 1/p` diverges), so the shift must be strictly less than
+`1/2`; `1/4` is a safe choice.
+
+## Lap 61 (2026-09-25) — the Rankin ingredients PROVED
+
+New module `src/NormalNumbers/ElliottRankin.lean`, **zero sorry, trust triple**, in the audit
+surface.  The two genuinely new pieces the uniform tail needs:
+
+* `local_factor_geom_le` — the local Euler factor at an **arbitrary** geometric ratio `r`:
+  for nonneg multiplicative `f` with `f p = 0` and `f (p^k) ≤ 2 r^k`, the factor is
+  `≤ 1 + 2 r²/(1−r)`.  Lap 56's `local_factor_squarefull_le` is the case `r = 1/p`; the
+  generalisation is what admits the Rankin ratio `r = p^{-3/4}`.  `geom_sum_Ico_two_le` was already
+  stated for general `r`, so this cost almost nothing — worth noting as a case where the earlier
+  lap's generality paid off.
+* `inv_mul_sqrt_le_telescope` / `sum_Icc_inv_mul_sqrt_le` / `sum_primesBelow_inv_mul_sqrt_le` —
+  **`∑_{p ≤ Y} p^{-3/2} ≤ 2`**, by pure telescoping against `2/√(n−1) − 2/√n`.  No integral
+  comparison and no `rpow`: with `s = √(n−1)`, `t = √n` the step inequality is
+  `s t (t+s) ≤ 2t³`, which follows from `s ≤ t` alone (`nlinarith`).  The unshifted analogue in
+  `ElliottEulerBound` is `sum_primesBelow_inv_mul_pred_le_one`.
+
+Recording the exponent arithmetic, since it is the whole reason the shift is legal: the shifted
+local factor sums `∑_{k≥2} p^{-3k/4}`, whose leading term is `p^{-3/2}`, and `3/2 > 1`.  At
+`δ = 1/2` the leading term would be `p^{-1}` and the prime sum would diverge.
+
+## Lap 62 (2026-09-25) — `exists_squarefull_tail` PROVED: lap 60's obstruction is discharged
+
+`src/NormalNumbers/ElliottRankin.lean` completed; `ElliottLeafTwo.exists_squarefull_tail` is now a
+one-line consequence, **no longer a sorry**.  `src/` sorry count 3 → 2.
+
+* `shifted u n = ‖u n‖ / n^{3/4}`, multiplicative (`Real.mul_rpow`).
+* `five_div_three_le_rpow` / `rpow_neg_le` — `2^{-3/4} ≤ 3/5`, hence `1 − r ≥ 2/5`.  This is the
+  one numeric constant the shift needs and it is tight-ish: `(5/3)^4 = 625/81 ≈ 7.72` vs `2^3 = 8`.
+* `local_factor_shifted_le` — the shifted local factor is `≤ 1 + 5/(p√p)`.
+* **`sum_Icc_shifted_le`** — `∑_{d ≤ Y} ‖u d‖/d^{3/4} ≤ e^{11}`, absolutely.
+* `norm_div_le_shifted_div` — the Rankin step `‖u d‖/d = (‖u d‖/d^{3/4})/d^{1/4}`.
+* **`exists_squarefull_tail_bound`** — `∑_{D < d ≤ Y} ‖u d‖/d ≤ ε` with `D = ⌈(e^{11}/ε)^4⌉`,
+  for every unimodular multiplicative `U` and every `Y`.
+
+Implementation note worth keeping: writing the step as `shifted d / d^{1/4}` rather than
+`d^{-1/4} · shifted d` keeps **every** rpow exponent positive, which removes all the
+`Real.rpow_neg` friction; `gcongr` then closes the monotonicity in one call.
+
+## Lap 63 (2026-09-25) — the two numeric bridges for the Case-A threshold
+
+Added to `src/NormalNumbers/ElliottCaseAThin.lean`, **zero sorry, trust triple**:
+
+* `lt_mul_div_add_one` — `X < W(⌊X/W⌋+1)`.
+* **`div_le_four_mul`** — once `⌊X/W⌋ ≥ 2|b₁| + 2`, the dyadic range satisfies
+  `Y / L ≤ 4W` where `Y = a₁X+|b₁|`, `L = a₁(⌊X/W⌋+1) − |b₁|`.  So the block count
+  `⌊log₂(Y/L)⌋+1 ≤ log₂ W + 3` — the right order for the target `ε log W`.
+* `natLog_mul_log_two_le` — `Nat.log 2 m · log 2 ≤ log m`, off `Nat.pow_log_le_self`; the bridge
+  from the dyadic block count to the real logarithm.
+
+Two notes worth keeping.  (a) `div_le_four_mul` is proved **over `ℤ`** and cast back, because the
+nat truncated subtraction in `L` makes `4W(M−b) = 4WM − 4Wb` a side condition; over `ℤ` the whole
+thing is `linarith` from three explicit steps.  (b) The hypothesis `⌊X/W⌋ ≥ 2|b₁|+2` is exactly
+what makes the shift negligible: the margin needed is `b(1+4W) ≤ 3Wa₁(q+1)`, and `q+1 ≥ 2b+3` gives
+`6Wb+9W` on the right, leaving `b ≤ 2Wb+9W` — true, but `q ≥ b+1` alone is **not** enough.
+
+### The remaining shape of `exists_caseA_thin_threshold`
+
+With the bridges in hand it is a dichotomy on `⌊X/W⌋`:
+* `⌊X/W⌋ ≥ 2|b₁|+2` — use `norm_elliottLogCorrelation_le_caseA_thin` with
+  `L = a₁(⌊X/W⌋+1) − |b₁|` and `div_le_four_mul`;
+* `⌊X/W⌋ < 2|b₁|+2` — then `X < W(2|b₁|+3)`, so `log X ≤ log W + log(2|b₁|+3)`, i.e. we are in the
+  **thick** regime (take `θ = 1/2`, valid once `W ≥ 2|b₁|+3`), and the already-proved
+  `ElliottCaseA.exists_caseA_threshold` applies.
+Note `primeDefect` is monotone in its scale (its summands `1/p − ‖g p‖/p` are `≥ 0` for `1`-bounded
+`g`), so the hypothesis stated at `L` implies the one the thick lemma wants at `Y`.  That
+monotonicity is the joint that makes the two branches share one hypothesis.
+
+### Where leaf 2 stands
+
+Two sorries remain, both in `src/NormalNumbers/ElliottLeafTwo.lean`:
+1. `exists_caseA_thin_threshold` — all ingredients proved (lap 59); remaining is the nat-division
+   estimate `Y/L ≤ c(a₁,b₁)·W` plus threshold bookkeeping mirroring
+   `ElliottCaseA.exists_caseA_threshold`.
+2. `exists_caseB_threshold` — all six itemised steps now name a proved lemma except the
+   window/weight reindexing of step 5 (`X ↦ X/q` at fixed ratio; `1/(qk+n₀)` versus `1/(qk)`).
+
+### NEXT — assemble `exists_squarefull_tail`
+
+Remaining wiring, all of it now over proved lemmas:
+(i) `f n = ‖u n‖ / n^{3/4}` as a multiplicative `ArithmeticFunction ℝ` (needs `Real.mul_rpow`);
+(ii) `f (p^k) ≤ 2 (p^{-3/4})^k` from `norm_squarefullPart_prime_pow_le_two`;
+(iii) `2 r²/(1−r) ≤ 5 p^{-3/2}` for `r = p^{-3/4}`, `p ≥ 2` (uses `1 − 2^{-3/4} ≥ 2/5`);
+(iv) `prod_le_exp_prime_sum` with `w p = 5 p^{-3/2}` ⟹ total `≤ e^{11}`;
+(v) the Rankin step `1/d ≤ (D+1)^{-1/4} d^{-3/4}` for `d ≥ D+1`, then pick `D` with
+    `e^{11} (D+1)^{-1/4} ≤ ε`.
+
+### NEXT — `exists_squarefull_tail` by the Rankin shift
+
+Needs: a shifted variant of `ElliottSquarefull.local_factor_squarefull_le` at exponent `3/4`, and a
+finite bound for `∑_{p ≤ Y} p^{-3/2}` in the style of
+`ElliottEulerBound.sum_primesBelow_inv_mul_pred_le_one`.
+
+### NEXT — assembly of `nonasymptotic_of_affineCM`
+
+All five directive sub-steps of leaf 2 now have their load-bearing content proved:
+1 (cover, lap 54) · 2 (transfer, lap 55) · 3 (squarefull, laps 56–57) ·
+4 (progression arithmetic, lap 58) · 5 (Case A thin, lap 59).
+Open: the step-4 analytic reindexing, and the assembly itself.
+
+### NEXT — item 5 (Case A thin window), then assembly
+
+### NEXT — items 4, 5
+
+### NEXT — arithmetic half of item 3, then items 4, 5
+
+3b. `ElliottSquarefullConv.lean`: for unimodular multiplicative `U`, let `Ũ` be completely
+   multiplicative with `Ũ p = U p` and `u = U ⋆ (μ·Ũ)`.  Prove `u` multiplicative, `u p = 0`,
+   `‖u (p^k)‖ ≤ 2`, hence `fun n => ‖u n‖/n` satisfies exactly the hypotheses of
+   `sum_Icc_le_exp_two`.  Also `pretentiousDistSq Ũ χ X = pretentiousDistSq U χ X` (primes only),
+   so the transfer of lap 55 survives the expansion unchanged.
+
+### NEXT (lap 56), unchanged order from lap 54 minus item 1
+
+2. Case A thin window off `ElliottHall.sum_Icc_dyadic_le` (supersedes `exists_caseA_threshold`;
+   needs no regime hypothesis, so it covers all `W`).
+3. `ElliottSquarefull.lean`: `u = U ⋆ μŨ`, squarefull support, absolute tail `≤ e²`, truncation.
+4. `ElliottProgression.lean`: `d ∣ a₁n+b₁ ⟹ n = qk+n₀`; new pair `(a₁q, a₁n₀+b₁; a₂q, a₂n₀+b₂)`.
+5. Assembly of `nonasymptotic_of_affineCM`.
+
+
+## Reflection — 2026-09-25 (DEEP REFLECTION lap 54, Elliott campaign)
+
+Ground truth re-derived this lap, not inherited: `lake build NormalNumbers.ElliottAxiomAudit`
+green, **9569 jobs**; new permanent audit surface `src/NormalNumbers/ElliottAxiomAudit.lean`
+prints every load-bearing `#print axioms` in one build.  Result: the headline is
+`[propext, sorryAx, Classical.choice, Quot.sound]`; **everything else is the bare trust triple**,
+including `dilatedCMLogElliott`, `affineCM_of_dilatedCM`, `exists_caseA_threshold`,
+`ElliottHall.sum_Icc_dyadic_le` and the dependency's `unitCircleLogElliott`.
+`grep` over `src/NormalNumbers/Elliott*.lean`: **exactly one `sorry`**, at
+`ElliottLadder.lean:297` (`nonasymptotic_of_affineCM`).
+
+### 1. Destination — unchanged, and closer than it has ever been
+
+Prove `Erdos67b.NonasymptoticLogElliott` on top of the dependency's proved unit-circle case.  The
+crux — pushing the graph/Fourier/entropy machinery through *two independent* functions and a
+*common dilation* — was the route-decisive uncertainty and it is **spent**: closed at lap 46,
+kernel-checked.  Laps 17–46 were not a false summit; the object they built
+(`dilatedPairTwistedMean`) is consumed by the headline today.  Remaining distance = one leaf.
+
+### 2. Route — VERDICT **CONTINUE**, with one documented step REFUTED and replaced
+
+No registered trigger had fired (the Elliott section of `DIRECTION.md` carried none; one is
+registered now, ET-1).  The tells of rationalising past a trigger are both absent: whole-lemma
+targets keep closing (lap 46 crux, lap 51 Case A thick window, lap 52 Hall, lap 53 dyadic), and
+the finishability estimate has *risen*, not declined, across the last three altitude laps.
+
+**But the documented Case-B route for leaf 2 contains an invalid step, and this lap kills it.**
+
+> **REFUTED — the `‖g̃‖ = 1 ⋆ v` unimodularisation expansion.**  `PENDING_WORK` (lap 36 Finding 2)
+> argued: `∑_d ‖v(d)‖/d = ∏_p(1 + (1−‖g(p)‖)/(p−‖g(p)‖)) = exp(Σ_X + O(1))`, "finite for
+> `Σ_X ≤ C`, so the tail beyond a `D = D(C,ε)` is small."  The last inference is **false**.
+> `D` must be fixed *before* `g₁` (it feeds `A₀`, which the statement quantifies before `g₁`), and
+> a convergent series with uniformly bounded sum need not have uniformly small tails across a
+> family.  Explicit counterexample satisfying **both** Case B and the non-pretentiousness
+> hypothesis: `g₁ = λ·h`, `h` completely multiplicative with `h(p) = 0` exactly on a set `S` of
+> primes all `> D` with `∑_{p∈S} 1/p = C`, `h(p) = 1` off `S`.  Then `Σ_X(g₁) ≤ C`;
+> `D(g₁,χn^{it};X)² ≥ D(λ,χn^{it};X)² − 2C → ∞`, so `g₁` *is* non-pretentious; and `v` has
+> `‖v(p)‖ = 1` for every `p ∈ S`, so `∑_{d>D}‖v(d)‖/d ≥ C` for **every** `D`.
+
+**The replacement (this lap's main mathematical contribution).**  Do not unimodularise by
+convolution at all.  Unimodularise by an **exact finite two-point average**:
+
+* For `z` with `‖z‖ ≤ 1` set `w(z) = if z = 0 then 1 else z/‖z‖` and
+  `Z_±(z) = z ± i·√(1−‖z‖²)·w(z)`.  Then `‖Z_±‖ = 1` (because `Z_± = w(z)(‖z‖ ± i√(1−‖z‖²))`)
+  and `(Z_+ + Z_-)/2 = z`.  Elementary, exact, no measure theory.
+* Apply it **once per prime power** `p^k ≤ Y := a₁X+‖b₁‖`.  Over the finite space
+  `Ω = {p^k ≤ Y} → Bool` this produces unimodular **multiplicative** `U^ω` with
+  `avg_ω U^ω(m) = ∏_{p^k ‖ m} avg(Z_±) = g(m)` for every `m ≤ Y` (`Finset.prod_univ_sum`).
+* Hence `elliottLogCorrelation g₁ g₂ ⋯ = avg_{ω₁,ω₂} elliottLogCorrelation U₁^{ω₁} U₂^{ω₂} ⋯`
+  (the correlation is linear in each function), so `‖corr(g₁,g₂)‖ ≤ max_ω ‖corr(U₁,U₂)‖`.
+* **The ordering is the whole trick.**  Randomise to a *merely multiplicative* unimodular target
+  first — that needs only one moment per prime power, `E[Z] = z`, which the two-point measure
+  gives exactly.  Randomising to a *completely* multiplicative unimodular target would need
+  `E[V^k] = r^k` for all `k`; the unique solution is the Poisson kernel `P_r(θ)dθ/2π`, which has
+  no finite support, so that ordering is strictly harder.  Only afterwards does the squarefull
+  convolution turn unimodular-multiplicative into unimodular-completely-multiplicative.
+* **The pretentious transfer becomes deterministic.**  `Re(Z_±(z)·conj z) = ‖z‖²` for *both*
+  signs (the perturbation `i√(1−‖z‖²)w(z)` is orthogonal to `z`), so for **every** `ω`
+  `pretentiousDistSq g₁ U₁ X = ∑_{p≤X}(1−‖g₁(p)‖²)/p ≤ 2·Σ_X(g₁)`.  No Markov, no good event.
+  With a 1-bounded triangle inequality this gives `MRTNonpretentious U₁ (A/3 − 2D₀) X`.
+* **The triangle inequality must be re-proved in `src/` for 1-bounded arguments.**  The
+  dependency's `Erdos67b.pretentiousDistSq_triangle_sq` assumes all three functions unimodular;
+  here `g₁` is not, and neither is `χ·n^{it}` (it vanishes at `p ∣ q`).  Constant 3 suffices and
+  is easy: with `u = 1−Re(ab̄)`, `v = 1−Re(bc̄)`,
+  `1−Re(ac̄) = [1−(‖a‖²+‖c‖²)/2] + ‖a−c‖²/2 ≤ (u+v) + 2(u+v)`, using `1−x² ≤ 2(1−x)` on `[0,1]`,
+  `u ≥ 1−‖a‖`, `v ≥ 1−‖c‖`, and `‖a−c‖² ≤ 2(‖a−b‖²+‖b−c‖²)` with `‖a−b‖² ≤ 2u`, `‖b−c‖² ≤ 2v`.
+
+**What survives untouched from the old plan:** Case A (Hall + dyadic, laps 47–53) is the other
+half and is *needed* — it is exactly what supplies the Case-B hypothesis `Σ_X(g₁) < D₀` used in
+the transfer.  The **squarefull** expansion also survives, and is uniform precisely where the
+`v`-expansion is not: `‖u(p^k)‖ = ‖U(p^k) − U(p)U(p^{k−1})‖ ≤ 2`, `u(p) = 0`, so
+`∑_d ‖u(d)‖/d ≤ ∏_p(1 + 2/(p(p−1))) ≤ e²` is an **absolute** constant, independent of `U`.
+
+### 3. Highest-value target — and it is also the hardest
+
+There is exactly one open obligation, so hardest-first and only-one coincide.  Within it, the
+route-decisive piece is **not** Case A's thin window (tractable, ~1 lap) but the **averaging
+identity** of `ElliottRandomize`: if the two-point cover cannot be made to carry the correlation,
+the whole "reduce to unimodular" strategy dies and leaf 2 must instead be attacked by re-proving
+the crux for 1-bounded (non-unimodular) completely multiplicative `f₁,f₂` — a redesign touching
+~10 proved files.  **Smallest decisive probe: state and prove**
+`exists_unimodular_cover : ∀ (g : ℤ → ℂ) (Y : ℕ), IsMultiplicativeOnPositiveInt g → (∀ n, ‖g n‖ ≤ 1) →
+ ∃ (Ω : Finset _) (U : _ → ℤ → ℂ), (∀ ω, unimodular-multiplicative (U ω)) ∧
+   ∀ m ≤ Y, (∑ ω, U ω m)/|Ω| = g m`
+and the corresponding `‖corr‖ ≤ max` corollary.  That is lap 54's work.
+
+### 4. What a sharp outsider would say we are missing
+
+* **A statement-fidelity check we had never run.**  `Erdos67b.IsMultiplicativeOnPositiveInt` has
+  **no coprimality hypothesis**: `∀ m n : ℕ, 0 < m → 0 < n → g (m*n) = g m * g n`.  That is
+  *complete* multiplicativity, identical in shape to `IsCompletelyMultiplicativeOnPositive`.  So
+  the dependency's `NonasymptoticLogElliott` — whose docstring says "exactly as in Tao's Theorem
+  1.3" — is Tao Thm 1.3 **restricted to completely multiplicative `g₁,g₂`**, strictly weaker than
+  the paper ("let `g₁,g₂` be multiplicative functions with `|g_i| ≤ 1`").  The drift is the
+  dependency's, not ours, and the kickoff ratifies its `Prop` as the target, so the target stays;
+  but STATUS.md now says so plainly.  Bonus: the corrected leaf-2 route never uses complete
+  multiplicativity of `g_i`, so stating and proving the genuinely general form in `src/` is a
+  cheap stretch goal once the headline lands.
+* **A permanent audit surface** (`ElliottAxiomAudit.lean`) instead of ad-hoc `#print axioms` in
+  each lap's scratch — added this lap.
+* **Do not re-derive Hall.**  `Erdos448.HalberstamComplete448.halberstam_richert_explicit` is in
+  the dependency (lap 52 found this); `ElliottHall.lean` already instantiates it.
+
+### 4b. Lap 54's proof work — item 1 of the attack order is DONE
+
+`src/NormalNumbers/ElliottRandomize.lean`, zero sorry, every statement trust triple:
+`lift`/`lift_add_lift`/`norm_lift`/`re_lift_mul_conj` (the scalar two-point facts),
+`ppIndex` + `prod_ppIndex`/`ppIndex_mul_of_coprime`/`disjoint_ppIndex_of_coprime`,
+`cover`/`cover_one`/`cover_mul_of_coprime`/`norm_cover`/`cover_prime`/`re_cover_prime_mul_conj`,
+`sum_cover` (the averaging identity), `sum_posExt_cover`,
+`sum_sum_elliottLogCorrelation_cover`, and the decisive corollary **`exists_cover_pair_ge`**:
+
+> for `1`-bounded multiplicative `g₁,g₂ : ℕ → ℂ` and any `Y` dominating the affine images on the
+> window, there exist **unimodular multiplicative** `u₁,u₂` that are lifts of `g₁,g₂` at every
+> prime `≤ Y` (so `(u_i p * conj (g_i p)).re = ‖g_i p‖²`) with
+> `‖elliottLogCorrelation (posExt g₁) (posExt g₂) …‖ ≤ ‖elliottLogCorrelation (posExt u₁) (posExt u₂) …‖`.
+
+So **trigger ET-1 is discharged at lap 54**, eight laps early.  Also new: the permanent audit
+surface `src/NormalNumbers/ElliottAxiomAudit.lean`.
+
+Lean notes worth keeping: `Fintype.prod_sum` turns `∏_i ∑_b` into `∑_{ω : ι → Bool} ∏_i`;
+`Finset.sum_mul_sum` + `← Finset.mul_sum` is the clean way to factor a double sum of
+`w * A ω₁ * B ω₂`; `Nat.support_factorization` is `rfl`, so `Finsupp.mem_support_iff` applies to
+`p ∈ m.primeFactors` after one `rw`; the name is `Finsupp.notMem_support_iff` (not `not_mem_`),
+and `Nat.Prime.primeFactors : p.primeFactors = {p}`.
+
+### 5. Attack order for leaf 2 (replaces the lap-36 "attack order")
+
+1. ~~`ElliottRandomize.lean` — the two-point unimodular cover + the `‖corr‖ ≤ max` corollary.~~ **DONE (lap 54)**
+2. `ElliottPretentiousTransfer.lean` — **← next** the 1-bounded triangle inequality (constant 3), the exact
+   identity `pretentiousDistSq g U X = ∑(1−‖g p‖²)/p`, and `MRTNonpretentious` for the cover.
+3. Case A thin window (off `ElliottHall.sum_Icc_dyadic_le`), superseding `exists_caseA_threshold`.
+4. `ElliottSquarefull.lean` — `u = U ⋆ μŨ`, squarefull support, the absolute tail `≤ e²`.
+5. `ElliottProgression.lean` — `d ∣ a₁n+b₁ ⟹ n = qk+n₀`; determinant `(a₁b₂−a₂b₁)/g ≠ 0`;
+   `1/(qk+n₀) − 1/(qk)` sums to `O(1)`; scale `X ↦ X/q`, ratio `W` preserved; feed
+   `AffineCMLogElliott`.
+6. Assembly of `nonasymptotic_of_affineCM`.
+
+### 6. Honest finishability
+
+One leaf, six named files, every step elementary and hand-verified above; the only real cost is
+bookkeeping volume (step 5 is the fiddliest).  Estimate **≈2500–3500 lines / 15–25 laps** at this
+campaign's observed rate (~9.7k lines of Elliott code in 53 laps).  Confidence the headline lands
+sorry-free on this route: **high** — higher than at lap 36, when the crux was still open and
+leaf 2 rested on a step that turns out to be false.
+
+
+## 2026-09-25 (laps 40–45) — the dilated crux is closed except the mirror leaf
+
+`dilatedNatShiftCMLogElliott` (leaf 1) is **proved**, trust triple.  New proved files:
+`ElliottGenericGraphBounded` (bounded dilated decoupling), `ElliottDilatedSelect`
+(uniform dilated window error, entropy-selected dilated mean, dyadic dilated lower bound,
+**the dilated criterion**), `ElliottDilatedFourier` (dilated Fourier first moment from MRT,
+`MRTNonpretentious_of_le`).  Details and the next attack: `HANDOFF-elliott-2026-09-25-lap45.md`.
+
+Open in scope: `dilatedNatShiftCMLogElliottMirror` (`ElliottDilatedRung.lean:532`) and
+`nonasymptotic_of_affineCM` (`ElliottLadder.lean:295`, Hall).  The mirror is now the crux's last
+leaf: inspect `norm_logProb_dilatedPairTwistedMean_le_of_fourier_first_moment` to see whether the
+second block's moments can be fed in directly (route b) before mirroring the whole upper bound
+(route a, template `ElliottTwistedGraphMirror`).
+
+
+## 2026-09-25 (REVIEW LAP, laps 36+) — corrected priorities
+
+Build green, 9548 jobs.  Real `#print axioms`:
+`ElliottGeneral.nonasymptoticLogElliott = [propext, sorryAx, Classical.choice, Quot.sound]`;
+`ElliottLadder.affineCM_of_dilatedCM`, `ElliottTwistedGraph.shiftCMLogElliott`,
+`ElliottTwoShift.twoShiftCMLogElliott`, `ElliottDilatedUpper.exists_dilatedPairTwistedMean_small_of_fourier_first_moment`,
+`ElliottGenericGraph.exists_logProb_gen_decoupling`,
+`ElliottDilatedBridge.genSum_dilatedEdgeReindexed_affineBlock`,
+`ElliottDilatedCorrelation.norm_logProb_dilatedGraph_sub_correlation_le`,
+`Erdos67b.unitCircleLogElliott` = trust triple.
+
+Two open `sorry`s in scope:
+
+| # | obligation | file | state |
+|---|---|---|---|
+| 1 | `dilatedSliceCMLogElliottGe` | `ElliottDilatedSlice.lean:220` | **DEAD ROUTE** (refuted lap 16) — but the headline still goes through it |
+| 2 | `nonasymptotic_of_affineCM` | `ElliottLadder.lean:297` | open, untouched; decomposed below for the first time |
+
+### Finding 1 (the wiring gap) — the highest-value item
+
+Laps 17–35 built a complete, proved, trust-triple `a`-dilated graph stack, but **nothing in
+`src/` consumes it**: `ElliottGeneral` still calls `ElliottDilatedSlice.dilatedCMLogElliott`.
+So the headline's `sorryAx` is charged to a route nobody intends to finish, and the live route
+carries no headline weight.  **Lap 36 must repoint the headline first**, with the residual gap
+as one named `sorry` on the dilated route (`src/NormalNumbers/ElliottDilatedRung.lean`), then
+prove it.  Decomposing raises nothing; it just moves the debt onto the route that is actually
+being paid down.
+
+### Lap 36 progress on leaf 1 (the dilated crux)
+
+* **Wiring done.**  `src/NormalNumbers/ElliottDilatedRung.lean`: `dilatedCM_of_natShift` is proved,
+  so the headline now depends on the two natural-shift leaves of the LIVE dilated route and no
+  longer on the refuted slice route.
+* **Step (ii) done.**  `src/NormalNumbers/ElliottDilatedWeight.lean` (new, zero sorry, trust
+  triple): `exists_dyadic_dilatedCorrelationWeight_lower` —
+  `(H:ℝ)/(16 a log P) ≤ dilatedCorrelationWeight H a c₁ h (dyadicPrimes P)` under `2P ≤ H` and
+  `4a + 4Ph ≤ H`.  Function-free counting via `card_dilatedProgression_lower`
+  (`H/(4a)` active block positions: `H/(2a)` of them, halved again by the floor).  Constants are
+  the dependency's with one extra factor `4a` — i.e. the dilated analogue of
+  `Erdos67b.exists_dyadic_primeGraphCorrelationWeight_lower`'s `H/(8 log P)`.
+* **Step (i) done.**  `src/NormalNumbers/ElliottDilatedMean.lean` (new, zero sorry, trust triple):
+  `norm_logProb_dilatedMean_sub_correlation_le` — given any decoupling bound `e` on
+  `genDiscrepancyAt` at the residue `n - crtShift H (·*c₁/a)`, the **mean**
+  `logProbExpectation (fun n ↦ dilatedPairTwistedMean (pairTwist f₁ f₂) (affineBlock f₁ a n H)
+  (affineBlock f₂ a n H) a c₁ h s)` is `dilatedCorrelationWeight H a c₁ h s` times the affine
+  correlation, up to `e +` the lap-35 transfer error.  Stated on `dilatedPairTwistedMean`, i.e. on
+  **exactly** the object `ElliottDilatedUpper.exists_dilatedPairTwistedMean_small_of_fourier_first_moment`
+  bounds above (join: `ElliottDilatedBridge.genMeanCRT_dilatedEdgeReindexed`).  So both halves of
+  the crux are now inequalities about the same quantity.
+* **Step (iii)(a) done.**  `src/NormalNumbers/ElliottDilatedGrouped.lean` (new, zero sorry, trust
+  triple): `ungroupBlock (finiteSequenceBlock (groupSeq a f) m n) = affineBlock f a n (a*m)` —
+  lap 28's prediction in the kernel, and with NO positivity hypothesis on `a` (at `a = 0` both
+  sides are functions out of `Fin 0`).  So the entropy/rare-event layer is applied verbatim to the
+  grouped sequence `groupSeq a f k i = f (a k + i)` over the still-finite alphabet `Fin a → ·`, at
+  the ORDINARY base point.  Also proved there: `norm_dilatedEdgeReindexed_sub_le` (the dilated edge
+  perturbation, constant `2Bζ`, the dependency's), `norm_ungroupBlock_sub_le`,
+  `norm_blockExtend_sub_le`, `norm_groupSeq_le`.
+* **Next: step (iii)(b)**, the dilated `exists_logProb_bounded_pairTwisted_decoupling`.  Take
+  `α = (Fin a → ↥net) × (Fin a → ↥net)` with `Erdos67b.exists_finite_unitDisk_approximation`'s net
+  (finite, since `Fin a → finite` is finite), decodes `dᵢ : α → Fin a → ℂ`, and
+  `mkE m b p j = dilatedEdgeReindexed (ungroupBlock (d₁ ∘ b)) (ungroupBlock (d₂ ∘ b)) a c₁ h p j`;
+  the approximating sequence `A : ℕ → α` is chosen componentwise over the finite index `Fin a`.
+  The perturbation budget is the pure-shift one (`ζ = ε/(32 D)`, `D = 1/δ + 1`) because
+  `norm_dilatedEdgeReindexed_sub_le` has the same constant.  Needs generic
+  `norm_genSum_sub_le` / `norm_genMeanCRT_sub_le` / `norm_genDiscrepancyAt_sub_le`, which are the
+  `ElliottTwistedGraphBounded` lemmas with `pairShiftEdge` replaced by an arbitrary edge family.
+* **Then step (iii)(c)**, the entropy-selected scale.  Feed
+  `ElliottGenericGraph.exists_logProb_gen_decoupling` the grouped alphabet of lap 28
+  (`α = Fin a → β`, `G m = (F(am), …, F(am+a-1))`, so `affineBlock f a n (a*m)` is a function of
+  `finiteSequenceBlock G m n`) with `Δ m = crtShift (a*m) (·*c₁/a)` and
+  `mkE m b p j = dilatedEdgeReindexed (decode₁ b) (decode₂ b) a c₁ h p j`; that yields the
+  hypothesis `e = ε (a m)/log(a m)` of `norm_logProb_dilatedMean_sub_correlation_le`.  Then the
+  dyadic lower bound of `ElliottDilatedWeight` and the contradiction against the upper bound, and
+  finally the MRT choreography of `ElliottTwistedGraph.shiftCMLogElliott`.
+
+Superseded next-step note (step (i), now done): combine
+  `ElliottDilatedCorrelation.norm_logProb_dilatedGraph_sub_correlation_le` (lap 35) with
+  `ElliottGenericGraph.exists_logProb_gen_decoupling` (lap 30) at `Δ m = crtShift H (·*c₁/a)`;
+  then `genMeanCRT = dilatedPairTwistedMean` by
+  `ElliottDilatedBridge.genMeanCRT_dilatedEdgeReindexed`.  Then step (iii), the collision with
+  `ElliottDilatedUpper.exists_dilatedPairTwistedMean_small_of_fourier_first_moment`.
+
+### Finding 2 — leaf 2 decomposed: the hard core is Hall, and Shiu is NOT needed
+
+The `ElliottLadder.nonasymptotic_of_affineCM` docstring names the route (Case A: `Sigma(g1)` large,
+trivial; Case B: two Dirichlet-convolution expansions).  This lap pinned down what is actually
+hard and removed one imagined obstacle.
+
+* `Sigma_z(g) := sum_{p <= z} (1 - |g(p)|)/p`.
+* **Case B is elementary.**  `g = g~ * u` with `g~` the completely multiplicative function agreeing
+  with `g` on primes; `u = g * (mu g~)` is multiplicative with `u(p) = 0`, `|u(p^k)| <= 2`, hence
+  supported on squarefull `d`, and `sum_{d squarefull} 1/d` converges **unconditionally**.
+  Then `g~ = ghat . |g~|` with `ghat` completely multiplicative unimodular, and `|g~| = 1 * v`
+  with `v(p^k) = |g(p)|^{k-1}(|g(p)| - 1)`, so
+  `sum_d |v(d)|/d = prod_p (1 + (1-|g(p)|)/(p - |g(p)|)) = exp(Sigma_X + O(1))`.
+  Finite for `Sigma_X <= C`, so the tail beyond a `D = D(C, eps)` is small.  Both expansions leave
+  a divisibility `d | a_i n + b_i`, i.e. a sub-progression, which is absorbed by
+  `AffineCMLogElliott` itself (already proved from the crux) — no new AP machinery.
+* **Case A is the crux of leaf 2**, and it needs a genuine mean-value bound, *not* just an Euler
+  product.  Two sub-regimes, split on a fixed `theta`:
+  - `log W >= theta log X`: the crude Euler-product bound
+    `sum_{m <= Y} h(m)/m <= prod_{p<=Y}(1 + h(p)/p + h(p^2)/p^2 + ...) << log Y . exp(-Sigma_Y)`
+    already suffices, because `log Y << log W / theta`.  **Elementary, formalizable directly.**
+  - `log W < theta log X`: the window `(Y/W, Y]` is logarithmically thin and the crude bound loses
+    the factor `log Y / log W`, which is unbounded.  Here one needs the density form,
+    **Hall's inequality** (Halberstam-Richert Theorem 01):
+    `sum_{m <= Y} h(m) << (Y / log Y) prod_{p <= Y}(1 + h(p)/p + ...)`,
+    for `h` nonnegative multiplicative with `h <= 1`; then partial summation over `O(log W)`
+    dyadic blocks gives `sum_{Y/W < m <= Y} h(m)/m << log W . exp(-Sigma_Y)`.
+* **Removed obstacle:** the correlation is over the affine form `a1 n + b1`, i.e. over the residue
+  class `b1 mod a1`, which naively calls for **Shiu's theorem**.  It does not: in both
+  `NonasymptoticLogElliott` and `AffineCMLogElliott` the modulus `a1` is quantified **before**
+  `eps` and `A0`, so bounding the AP sum by the full sum loses only the fixed constant `a1`.
+  Hall over all integers is enough.
+* **Refuted shortcut (recorded so it is not re-derived):** one would like `v = mu * h` to be
+  sign-definite for completely multiplicative nonnegative `h <= 1`, making the truncation of
+  `sum_d v(d) T(d)` free in the upper direction.  It is not: `v(p^k) <= 0` but `v` is
+  multiplicative, so `sign v(d) = (-1)^{omega(d)}`.  Truncation is therefore not free and the
+  regime split above is the way through.
+* Pretentiousness transfer survives: `Re(ghat(p)w) - Re(g~(p)w) <= |ghat(p) - g~(p)| = 1 - |g(p)|`
+  gives `D(ghat, chi n^{it}; X)^2 <= D(g~, chi n^{it}; X)^2 + C`, with `C` fixed while `A -> inf`.
+  The sub-progression substitution `n = d' k + n0` shrinks the MRT scale `X` to `X/d'`, costing
+  `2 log(1/(1 - log d'/log X)) = O_{d'}(1)` in the distance — also absorbed by `A -> inf`.
+
+**Attack order for leaf 2 when the crux closes:** (a) the Euler-product upper bound for nonneg
+multiplicative `h <= 1` (elementary, lands the `log W >= theta log X` regime outright);
+(b) Hall's inequality; (c) the squarefull expansion; (d) the unimodularisation expansion;
+(e) the pretentiousness transfer; (f) assembly.
+
+
+## 2026-09-25 (lap 16) — Elliott crux: the slice route is REFUTED; general affine forms directly
+
+The lap-15 slice decomposition (below) is superseded.  Reason: centring the edge observable on
+`f1` requires translating by `p*c1`, which turns `a | m` into `a | n - p*c1`, a condition on
+`p mod a`.  It does not factor out of the prime sum, so the indicator cannot be carried as a fixed
+periodic block factor.  **Do not re-derive.**
+
+Correct route, engine PROVED this lap in `src/NormalNumbers/ElliottAffineGraph.lean`:
+the graph step `n -> q n` dilates BOTH shifts (`(a n + c1, a n + c2) -> q*(a n + c1, a n + c2)`),
+so the common dilation `a` is a pure spectator.
+`norm_logProb_affineTwistedObservable_sub_correlation_le` gives every translated edge mean `C/q`
+with the dependency's verbatim errors and no `a`-dependence at all.
+
+**Lap 17: that Fourier lemma is PROVED** — `src/NormalNumbers/ElliottDilatedPairing.lean`,
+`sum_dilatedBlockPairing_mul_phase` + `phase_mul_phase_eq_single_frequency`.  The residue-class
+restriction costs one extra frequency variable `u < a`, and the two phases still combine to a
+SINGLE frequency in the prime `q`, so the fourth-moment / entropy stack is untouched.
+**Lap 18: the dilated graph mean has an exact Fourier identity**
+(`dilatedPairTwistedMean_eq_fourier`), and `dilatedTwistedMultiplier_eq` shows its multiplier is
+LITERALLY the proved `twistedPrimeGraphMultiplier T 1 s w` at frequency `t*h - u*D*c1`, so the whole
+fourth-moment / additive-energy layer transfers verbatim.
+**Lap 19: the large-frequency bound survives the dilation**
+(`norm_dilatedPairTwistedMean_le_largeFrequencies`): same shape `theta*H + (H*M/(T*a)) * sum_{large}
+|bhat(t+uD)|` as the proved `norm_pairTwistedPrimeGraphMean_le_largeFrequencies`.  Needed aliased
+Parseval (`sum_norm_sq_blockFourier_shift`, via a hand-rolled periodic-shift sum lemma).
+**Lap 20: the graph/correlation loop is closed** — `dilatedPairShiftEdge_affineBlock`: on the block
+re-based at `a*(n+1)`, the dilated edge at position `m = a*k + q*c1` IS
+`pairObservable f1 f2 a (q c1) (q c2) (n+1+k)`.
+**Lap 21: `sum_dilatedPairShiftEdge_eq_progression`** — the dilated edge sum is a sum along the
+progression `r, r+a, r+2a, ...` with `r = s mod a`.  The class enters ONLY through `s mod a`, i.e.
+through an `a`-periodic function of the prime `q` — the same fact the alias sum Fourier-expands.
+Caveat: positions below `q*c1` are `a k + (q c1 mod a)` with a smaller quotient, so combining with
+lap 20 needs the hypothesis `floor(q c1 / a) <= n+1` (true in the application, `n >= L >> P|c1|`).
+**Lap 22: `sum_dilatedPairShiftEdge_affineBlock`** — the dilated analogue of
+`pairTwistedSum_sequenceBlock` is proved.  ALL layers of the a-dilated graph argument are now proved
+statements in `src/`: edge->correlation, block edge<->observable, edge sum<->progression, Fourier
+identity, multiplier (= the proved one), large frequencies.
+**Lap 23: `dilatedTwistedMultiplier_eq_twisted`** — the alias variable u ONLY re-twists the
+per-prime weight by a unimodular constant, leaving the shift h and frequency t where the proved
+arithmetic bounds want them.  Hence `sum_fourth_dilatedTwistedMultiplier_le` (fourth moment <= a*B),
+`norm_dilatedTwistedMultiplier_le`, `card_dilatedLargeFrequencies_le` (Markov).  The dilated graph
+needs NO new arithmetic: the additive-energy input is used unchanged, a times.
+**Lap 24: the logarithmic-average layer** —
+`norm_logProb_dilatedPairTwistedMean_le_of_fourier_first_moment`, with the first-moment hypothesis
+on the FIRST block only (Tao's asymmetry preserved), now at the aliased frequencies `t + u*D`.
+Next: `exists_pairTwistedPrimeGraphMean_small_of_fourier_first_moment` for the dilated mean (same
+parameter choreography, N replaced by a*N; a is a constant so zeta absorbs it) and identify the dilated edge with
+`ElliottAffineGraph.affineTwistedObservable`.
+
+Superseded description of that lemma: the `a`-dilated bilinear pairing
+`sum_j b(a j + q c1) c(a j + q c2) e(t j/T) = sum_{t1,t2 : a(t1+t2) = -t} b^(t1) c^(t2) e((t1 c1 + t2 c2) q/T)`,
+generalising `ElliottTwistedGraph.pairBlockPairing` / `sum_pairBlockPairing_mul_phase`.  The phase
+in `q` is still a single frequency, so the fourth-moment / large-frequency / entropy stack above
+is untouched.  See `HANDOFF-elliott-2026-09-25-lap16.md`.
+
+## 2026-09-25 (review lap 15) — Elliott: the crux is RE-DECOMPOSED onto the dilation slice
+
+Campaign: `KICKOFF-2026-09-24-elliott-general.md`, branch `wip/elliott-port`.
+Headline `NormalNumbers.ElliottGeneral.nonasymptoticLogElliott`.  Two open obligations, both in
+`src/NormalNumbers/`:
+
+| # | obligation | state |
+|---|---|---|
+| 1 | `dilatedCMLogElliott` (the crux) | open; analytic core PROVED (`shiftCMLogElliott` + mirror), remaining content isolated below |
+| 2 | `nonasymptotic_of_affineCM` (1-bounded multiplicative -> CM unimodular) | open, untouched, route in its docstring |
+
+### The re-decomposition (this lap's advance)
+
+Previous handoff framed the remaining crux content as "carry an AP of modulus `a` through the
+graph argument, residue `c1`, NOT preserved by `N -> pN`".  That framing is **avoidable**.  Do not
+substitute `m = a n + c1` (residue `c1`); substitute `m = a n` (**residue 0**) and keep both
+shifts in the observable:
+
+```
+sum_{n in Ioc(X/W,X)} (1/n) f1(a n + c1) f2(a n + c2)
+  = a * sum_{m in Ioc(aX/W, aX), a | m} (1/m) f1(m + c1) f2(m + c2)
+```
+
+and this is an **exact identity with no error terms**: it is the dependency's own
+`Erdos67b.sum_elliottDilationSlice` applied to `F m = pIE f1 (m+c1) * pIE f2 (m+c2)`, where
+`Erdos67b.elliottDilationSlice a X W = (elliottLogWindow (a*X) W).filter (a | .)`.
+
+Residue 0 is preserved by every prime dilation `m -> p m`, which is the whole point: the graph
+step `N -> pN` now respects the restriction.  Keeping `c1` in the rung (instead of translating it
+away) is what buys that.
+
+**New rung to freeze in `src/`** (`ElliottDilatedSlice.lean`):
+`DilatedSliceCMLogElliott` = for each `a > 0`, `c1 != c2`, `eps > 0` a threshold `A0` with
+`|| sliceShiftLogCorrelation f1 f2 a c1 c2 X W || <= eps * log W`, MRT hypothesis on `f1` at
+scale `X` (NOT `aX` — the rung bakes `a*X` into the window so the MRT scale stays `X`).
+
+Attack order (items 1 and 2 **DONE** 2026-09-25 lap 15):
+1. ~~`dilatedCM_of_slice`~~ — **DONE** (`ElliottDilatedSlice.elliottLogCorrelation_eq_slice`).
+2. ~~`a = 1`~~ — **DONE**: `ElliottTwoShift.twoShiftCMLogElliott`, wired in as
+   `ElliottDilatedSlice.sliceCM_one` / `dilatedSlice_of_ge`; the open rung is now
+   `DilatedSliceCMLogElliottGe` (`2 ≤ a`).  Route as planned and it worked:
+   `elliottDilationSlice 1 X W = elliottLogWindow X W`, so the rung becomes the two-shift
+   correlation `sum (1/m) f1(m+c1) f2(m+c2)`.  Reduce to `shiftCMLogElliott` (if `c1 < c2`) or
+   `shiftCMLogElliottMirror` on the swapped pair (if `c2 < c1`) by translating the window by `c1`:
+   O(|c1|) boundary terms of weight <= 1 and a weight discrepancy
+   `sum |1/(m-c1) - 1/m| = |c1| sum 1/(m(m-c1)) = O(|c1|)`; both constants depend on `c1, c2` only
+   and are absorbed by enlarging `A0` (`eps log W -> infinity`), exactly as `L0` is in
+   `Erdos67b.elliottExists_finalThreshold`.  Useful: `Erdos67b.norm_sum_harmonic_shift_sub_le`,
+   `Erdos67b.harmonicWeight_sub_shift`, `Erdos67b.mem_elliottLogWindow_shift`.
+3. `a >= 2`: thread `a | m` through the stack.  The graph's own observable already carries a
+   divisibility indicator `pairTwistedDivisibleObservable w f1 f2 q h n = if q | n then ...`; the
+   question is whether `q | n` and `a | n` compose (for `q` a dyadic prime `> a`, `gcd(a,q) = 1`,
+   so `a q | n` iff `a | n/q`, which is exactly what the lower bound needs).  Fallback if they do
+   not: restrict the prime graph to `p = 1 (mod a)` (density `1/phi(a)`, a constant); that needs
+   Mertens in APs and IS a redesign, so probe the composition first.
+
+### Refuted this lap (do not re-derive)
+
+* **Dirichlet-character detour: CIRCULAR.**  Detecting `m = r (mod a)` with `gcd(r,a)=1` by
+  `1_{m=r} = (1/phi(a)) sum_chi conj(chi(r)) chi(m)` works, and `chi * f1` can be kept
+  CM-*unimodular* by replacing `chi` with the completely multiplicative `chi~` that agrees with
+  `chi` off `p | a` and is `1` on `p | a` (they agree on the coprime support).  But removing the
+  leftover coprimality by Mobius (`1_{gcd(m,a)=1} = sum_{e | gcd(m,a)} mu(e)`, `m = e m'`) turns
+  each term into a **mixed-dilation** correlation `sum (1/m') g1(m') f2(e m' + d)`, which
+  `affineCM_of_dilatedCM` sends back to a common dilation, i.e. back to an AP at residue 0 — the
+  same object we started from.  The non-coprime case `g = gcd(r,a) > 1` reduces to the coprime
+  case at modulus `a/g` but again at a mixed dilation.  So the loop
+  `AP(residue r) -> mixed dilation -> AP(residue 0) -> AP(residue r)` has the slice rung as its
+  fixed point.  Go through it.
+* **Additive characters** `1_{a|m} = (1/a) sum_j e(jm/a)`: the twist `m -> e(jm/a)` is not
+  multiplicative, so the resulting correlations leave the rung.  (Recorded lap 14, still true.)
+* **Reducing `a >= 2` to `a = 1` by relabelling**: impossible; `sum (1/n) f1(n) f2(a n + b)` with
+  `gcd(a,b) = 1`, `a >= 2` is equivalent (multiply the first form by `a`) to the multiples-of-`a`
+  slice, and no CM-unimodular `f2'` has `f2'(k+h) = f2(a k + b)`.
 
 
 ## 2026-09-23 — **Theorem C′ is PROVED**; the multicutoff campaign is complete
@@ -13114,3 +14337,1163 @@ needs more than `Real.pi_gt_three` at the constant `21`, so the constant is `22`
    `Erdos67b.PrimeEstimates.reciprocalPrimeInterval_le_log_log_sub_add` replaces
    Brun–Titchmarsh, giving `log((γ_m+δ)/(γ_m−δ)) ≤ 2δ/(γ_m−δ)` per window with the SAME harmonic
    sum — so `sum_inv_gap_le` covers both cases and only the per-window tool changes.
+## Elliott general (Tao 2016 Thm 1.3) — `wip/elliott-port`, 2026-09-25
+
+Headline `NormalNumbers.ElliottGeneral.nonasymptoticLogElliott`; ladder in
+`src/NormalNumbers/ElliottLadder.lean`.  Two open leaves.
+
+**Crux: `dilatedCMLogElliott`** — two independent CM unimodular `f₁,f₂`, common dilation
+`a·n+c₁`, `a·n+c₂`.
+
+* lap 1 (2026-09-25): `affineCM_of_dilatedCM` PROVED — Tao's affine generality is free on this rung
+  (multiply form 1 by `a₂`, form 2 by `a₁`; the constant `f₁(a₂)f₂(a₁)` is unimodular so norms are
+  equal, and `a₁b₂−a₂b₁ ≠ 0` is exactly "the two new shifts differ").  No residue classes, no
+  AP-restricted machinery.  Anchor `unitCircle_of_dilatedCM` PROVED.
+* lap 2 (2026-09-25): **sub-approach refuted, and repaired.**  Lap 1's docstring claimed the
+  two-function case was free because the prime dilation stays a pointwise isometry.  Wrong at the
+  *aggregation* step: `Erdos67b.primeGraphMean` is a complex sum over the graph's primes, so
+  `exists_logProb_dyadic_primeGraphMean_lower` needs every edge to contribute the *same*
+  correlation, and the phase `f₁(p)f₂(p)` from `pairObservable_dilation` varies with `p` and can
+  cancel.  Retracted in the docstring.  The repair is `pairObservable_dilation_twisted` (PROVED):
+  attach the known unimodular weight `conj (f₁(p) f₂(p))` to each prime, restoring exact equality.
+
+**Next attack (lap 3).**  Formalise the **phase-twisted prime graph** in `src/`: thread a weight
+`w : ℕ → ℂ` with `‖w p‖ = 1` through `Erdos67b.primeGraphEdge` / `primeGraphObservable` /
+`primeGraphMean`, restate the lower bound (goes through verbatim with the twist) and check the upper
+bound `exists_primeGraphMean_small_of_fourier_first_moment` — the CRT/Hoeffding concentration and
+large-values count only ever use `‖coordinate observable‖ ≤ 1`, so unimodular weights should pass.
+Start with the weighted `primeGraphMean` and `primeGraphMean_eq_fourier`, the two places a weight
+could break linearity.  Never edit dependency files; new statements in `src/` only.
+
+**Second leaf: `nonasymptotic_of_affineCM`** (`1`-bounded multiplicative → CM unimodular).  Full
+route in its docstring: Hall/Wirsing dichotomy on `∑_{p≤X}(1−‖g₁(p)‖)/p`; Case B's two convolution
+expansions have absolutely convergent `∑1/d` tails and their divisibility constraints are dilations
+of the affine form, hence absorbed by `AffineCMLogElliott` itself.
+
+### Elliott crux, lap 3 (2026-09-25): route-decisive question SETTLED
+
+`src/NormalNumbers/ElliottTwistedGraph.lean`, sorry-free and axiom-clean.  The lap-2 repair
+(per-prime unimodular twist) had one genuinely uncertain step: whether the **additive-energy**
+input — the sharp arithmetic ingredient of the graph upper bound — tolerates the twist.  It does,
+with *no loss in the constant*:
+
+* `twistedPrimeGraphMean_eq_fourier` — `Erdos67b.primeGraphMean_eq_fourier` holds verbatim for the
+  twisted mean; `blockFourier` is untouched and the weight lives **entirely inside the multiplier**.
+  So the twist enters the upper-bound chain only via `twistedPrimeGraphMultiplier`.
+* `fourth_moment_twistedPrimeGraphMultiplier_le_energy` — the twisted multiplier satisfies *exactly*
+  `Erdos67b.fourth_moment_primeGraphMultiplier_le_energy`'s bound
+  `T · #(additiveQuadruples s) · B⁴`.  Structural reason: the dependency's
+  `fourth_moment_weightedExponentialSum_le_energy` is already stated for an **arbitrary** complex
+  weight with `‖w x‖ ≤ B`, so folding a unimodular phase into the reciprocal-prime coefficient is
+  free.  `card_additiveQuadruples_image_mul` is reused unchanged.
+* `norm_twistedPrimeGraphMultiplier_le` (trivial bound unchanged),
+  `twistedPrimeGraphMean_one` / `twistedPrimeGraphMultiplier_one` (untwisted case is `w = 1`, so
+  nothing is lost relative to the proved development).
+
+**Next attack (lap 4).**  Two independent fronts, both now de-risked on the analytic side:
+1. *Upper bound.*  Restate `Erdos67b.norm_primeGraphMean_le_largeFrequencies` and then
+   `exists_primeGraphMean_small_of_fourier_first_moment` for the twisted mean.  Both should follow
+   from `twistedPrimeGraphMean_eq_fourier` plus the two multiplier bounds above, since the large
+   frequency set is defined by the multiplier's size and the twisted multiplier now has both the
+   trivial and the fourth-moment bound.  `primeGraphLargeFrequencies` needs a twisted analogue.
+2. *Two-block edge.*  `Erdos67b.primeGraphEdge b p h j = b j * conj (b (j+ph))` hardcodes
+   `b ⊗ conj b`.  The two-function case needs `b j * c (j+ph)` for the blocks `b, c` of `f₁, f₂`.
+   This is a separate, purely definitional generalisation; the CRT/entropy concentration side
+   (`primeGraphSum`, `primeGraphObservable`, Hoeffding) only uses `‖edge‖ ≤ 1`, which
+   `norm_pairObservable_le_one` supplies.
+
+### Elliott crux, lap 4 (2026-09-25): the two-block graph, and WHY only `g₁` needs pretentiousness
+
+Added to `src/NormalNumbers/ElliottTwistedGraph.lean`, sorry-free and axiom-clean.  This closes the
+*whole Fourier side* of the crux's upper bound for both generalisations at once.
+
+* `pairShiftEdge b c a j` — the two-block edge `b j * c (j+a)`, replacing
+  `Erdos67b.primeGraphEdge`'s hardcoded `b ⊗ conj b`.  `pairShiftEdge_conj` : the proved
+  development's edge is the `c = conj b` case, by `rfl`.  `norm_pairShiftEdge_le`.
+* `pairBlockPairing T b c t = blockFourier T b t * conj (blockFourier T (conj ∘ c) t)` and
+  `sum_pairBlockPairing_mul_phase` — the **bilinear** orthogonality identity, the analogue of
+  `Erdos67b.sum_blockFourier_norm_sq_mul_phase` for two distinct blocks.  Proved from the generic
+  primitive `Erdos67b.sum_phase_block_shift`, which is block-independent and so reusable verbatim.
+* `pairTwistedPrimeGraphMean_eq_fourier` — exact Fourier pairing for the pair-twisted mean.  The two
+  generalisations sit in *separate factors*: the second block only in `pairBlockPairing`, the twist
+  only in `twistedPrimeGraphMultiplier`.  `pairTwistedPrimeGraphMean_conj` recovers the twisted
+  single-block mean.
+* `norm_pairTwistedPrimeGraphMean_le_largeFrequencies` — the analogue of
+  `Erdos67b.norm_primeGraphMean_le_largeFrequencies`.  **Structural payoff:** the right-hand side
+  involves the large-frequency Fourier first moment of the **first** block only; the second block
+  enters solely through the trivial bound `‖blockFourier T (conj ∘ c) t‖ ≤ H` plus Parseval on both
+  blocks (AM–GM on the small-multiplier range).  So the asymmetry of Tao's Theorem 1.3 — non-
+  pretentiousness on `g₁` and *nothing* about `g₂` — is now a formalised consequence of where the
+  proof spends its trivial bound, not an unexplained hypothesis.
+
+**Next attack (lap 5).**  The Fourier/upper-bound side of the crux is done.  Remaining, in order:
+1. *Upper bound assembly.*  Restate `Erdos67b.exists_primeGraphMean_small_of_fourier_first_moment`
+   for `pairTwistedPrimeGraphMean`, feeding it
+   `norm_pairTwistedPrimeGraphMean_le_largeFrequencies` +
+   `fourth_moment_twistedPrimeGraphMultiplier_le_energy` (which bounds
+   `#pairTwistedLargeFrequencies` by Chebyshev, exactly as
+   `Erdos67b.primeGraphLargeFrequencies` is bounded now).
+2. *Lower bound.*  `exists_logProb_dyadic_primeGraphMean_lower` for the pair-twisted mean.  Here the
+   twist does its job: with the weight `conj (f₁(p) f₂(p))` every edge contributes the *same*
+   correlation by `ElliottLadder.pairObservable_dilation_twisted`, so the correlation-weight lower
+   bound `Erdos67b.exists_dyadic_primeGraphCorrelationWeight_lower` applies unchanged.
+3. *CRT/entropy concentration.*  `primeGraphSum` / `primeGraphObservable` / Hoeffding: only uses
+   `‖edge‖ ≤ 1`, supplied by `norm_pairShiftEdge_le` and `ElliottLadder.norm_pairObservable_le_one`.
+
+### Elliott crux, lap 5 (2026-09-25): twisted multiplier bounds — uniform in the twist
+
+Added to `src/NormalNumbers/ElliottTwistedGraph.lean`, sorry-free, axiom-clean.  Ports of the three
+dependency lemmas that feed the graph upper bound, each proved by the dependency's own argument with
+the lap-3/lap-4 twisted lemmas swapped in.  The *only* cost of the twist is carrying `‖w p‖ ≤ 1`:
+
+* `norm_dyadic_twistedPrimeGraphMultiplier_le_primeCounting`
+  (← `Erdos67b.norm_dyadic_primeGraphMultiplier_le_primeCounting`)
+* `exists_dyadic_twistedPrimeGraphMultiplier_fourth_moment_bound` — **same constant `A` and
+  threshold `P₀`** as `Erdos67b.exists_dyadic_primeGraphMultiplier_fourth_moment_bound`; reuses
+  `exists_primesLE_additiveQuadruples_bound`, `card_additiveQuadruples`, `Finset.addEnergy_mono`
+  unchanged.
+* `exists_eventually_twistedPrimeGraphMultiplier_bounds` — the sharp fourth moment `C / log H ^ 4`
+  and the sup bound `16 / log H` at the entropy-selected dyadic scale, **uniform in the twist**
+  (the `∀ w` is inside, after `H ≥ H₁`), with the dependency's constant `C = 32 A K (4h+1)`.
+* `card_pairTwistedLargeFrequencies_le` — Markov/Chebyshev for the twisted frequency count.
+
+Together with lap 4's `norm_pairTwistedPrimeGraphMean_le_largeFrequencies`, every *pointwise*
+ingredient of `Erdos67b.exists_primeGraphMean_small_of_fourier_first_moment` now exists in twisted,
+two-block form.
+
+**Next attack (lap 6).**  The logarithmic-average layer, then assembly:
+1. Port `Erdos67b.norm_logProb_primeGraphMean_le_of_fourier_first_moment` to
+   `pairTwistedPrimeGraphMean` (it wraps lap 4's large-frequency bound in `logProbExpectation` and
+   applies the first-moment hypothesis on the large-frequency set; the hypothesis is on the `b`
+   block only, per lap 4).
+2. Assemble `exists_pairTwistedPrimeGraphMean_small_of_fourier_first_moment`, mirroring
+   `Erdos67b.exists_primeGraphMean_small_of_fourier_first_moment` line for line: the parameter
+   choreography (`cutoff = η/64`, `N = C/cutoff⁴`, `ζ = η/(1024(N+1))`, budget
+   `cutoff + 16ζN ≤ η/32`) carries over verbatim because lap 5's bounds have the dependency's own
+   constants.
+3. Then the lower bound (see lap 4 notes) and the CRT/entropy concentration.
+
+### Elliott crux, lap 6 (2026-09-25): the twisted two-block graph UPPER BOUND is proved
+
+`src/NormalNumbers/ElliottTwistedGraph.lean` — still zero `sorry`s, all axiom-clean.
+
+* `norm_logProb_pairTwistedPrimeGraphMean_le_of_fourier_first_moment`
+  (← `Erdos67b.norm_logProb_primeGraphMean_le_of_fourier_first_moment`).  Lap 4's asymmetry is
+  carried through the logarithmic average: `hfirst` constrains the **`F₁` block only**; `F₂` is
+  merely `1`-bounded.
+* **`exists_pairTwistedPrimeGraphMean_small_of_fourier_first_moment`** — the full analogue of
+  `Erdos67b.exists_primeGraphMean_small_of_fourier_first_moment`, i.e. *one of the two analytic
+  inputs to `Erdos67b.unitCircleLogElliott`*, now available with both generalisations Tao's
+  Theorem 1.3 needs: two independent blocks and a per-prime unimodular twist.  The parameter
+  choreography is the dependency's verbatim (`cutoff = η/64`, `N = C/cutoff⁴`,
+  `ζ = η/(1024(N+1))`, budget `cutoff + 16ζN ≤ η/32`) — possible only because lap 5's bounds carry
+  the dependency's own constants.
+
+**Status of the crux `ElliottLadder.dilatedCMLogElliott`.**  Of the two analytic inputs to the
+proved case:
+* the **graph/Fourier upper bound** is now DONE in twisted two-block form (this lap);
+* the **MRT input** `Erdos67b.mrtModulatedShortIntervalUnrestricted` is applied to `f₁` alone and
+  needs no change beyond relaxing `‖f₁ n‖ = 1` bookkeeping — check whether the `hunit` hypothesis is
+  used essentially or only through `‖·‖ ≤ 1`.
+
+**Next attack (lap 7).**  The graph **lower** bound, which is where the twist earns its keep:
+1. `norm_logProb_divisiblePair_sub_correlation_le` for the pair observable — replace
+   `Erdos67b.unit_pair_dilation` by `ElliottLadder.pairObservable_dilation_twisted`.  With the weight
+   `conj (f₁(p) f₂(p))` every edge contributes the *same* correlation, so
+   `Erdos67b.exists_dyadic_primeGraphCorrelationWeight_lower` and
+   `Erdos67b.primeGraphCorrelationWeight` apply unchanged.
+2. `exists_logProb_primeGraphMean_correlation_close` then
+   `exists_logProb_dyadic_primeGraphMean_lower`, both for `pairTwistedPrimeGraphMean`.
+3. The CRT/entropy concentration in between (`primeGraphSum`, `primeGraphObservable`, Hoeffding,
+   `PrimeGraphDecoupling`) consumes only `‖edge‖ ≤ 1`, supplied by `norm_pairShiftEdge_le`.
+
+### Elliott crux, lap 7 (2026-09-25): the lower-bound edge estimate — the twist earns its keep
+
+`src/NormalNumbers/ElliottTwistedGraph.lean`, still zero `sorry`s, all axiom-clean.
+
+* `pairLogCorrelation L U f₁ f₂ h` — the two-function correlation;
+  `pairLogCorrelation_conj : pairLogCorrelation L U f (conj ∘ f) h = Erdos67b.logPairCorrelation ...`
+  holds by `rfl`, so the proved development's object is literally the `f₂ = conj f₁` case.
+* `pairTwist f₁ f₂ q := conj (f₁ q * f₂ q)`, with `norm_pairTwist = 1` and `pairTwist_mul_cancel`.
+* `pair_dilation` — the two-function dilation identity, exhibiting the constant `f₁(q) f₂(q)` that
+  `Erdos67b.unit_pair_dilation` gets for free as `1`.
+* `pair_dilation_twisted` — **the twisted identity is exact.**  This is what restores "every graph
+  edge contributes the same correlation", the property the lower bound needs.
+* **`norm_logProb_pairTwistedDivisible_sub_correlation_le`** — port of
+  `Erdos67b.norm_logProb_divisiblePair_sub_correlation_le` with the dependency's *identical* error
+  terms `2/M + 2j/(L·M)`.  The only change in the proof is swapping `unit_pair_dilation` for
+  `pair_dilation_twisted`.
+* `pairTwistedDivisibleObservable`, `norm_pairTwistedDivisibleObservable_le_one`.
+
+Key reusability note: `Erdos67b.primeGraphCorrelationWeight` and
+`Erdos67b.exists_dyadic_primeGraphCorrelationWeight_lower` depend only on `H`, `h` and the prime set
+— **not on the functions** — so they apply to the pair-twisted graph unchanged.
+
+**Next attack (lap 8).**  Assemble the lower bound:
+1. Port `Erdos67b.exists_logProb_primeGraphMean_correlation_close` to the pair-twisted mean.  This is
+   the step that goes through the CRT/entropy concentration
+   (`Erdos67b.primeGraphSum`, `primeGraphObservable`, `PrimeGraphDecoupling`, Hoeffding); those
+   consume only `‖edge‖ ≤ 1`, supplied by `norm_pairShiftEdge_le` /
+   `norm_pairTwistedDivisibleObservable_le_one`.  Expect this to be the largest remaining port —
+   check whether `primeGraphCoordinate`/`primeGraphSum` need a twisted analogue or whether the twist
+   can ride inside the block (it cannot ride inside the block: the weight is indexed by the prime,
+   not the position, so `primeGraphObservable` needs the weight threaded, as `twistedPrimeGraphMean`
+   already does).
+2. Then `exists_logProb_dyadic_primeGraphMean_lower`, and finally the contradiction assembly
+   mirroring `Erdos67b.exists_logPairCorrelation_small_of_fourier_first_moments`.
+3. Separately: audit the MRT side (`Erdos67b.mrtModulatedShortIntervalUnrestricted`) — it is applied
+   to `f₁` alone, so it should need no change at all for the crux.
+
+## 2026-09-25 (lap 47) — leaf 2 step (a) landed: the crude Euler-product bound
+
+`src/NormalNumbers/ElliottEulerBound.lean`, trust triple:
+`sum_Icc_le_euler_product` — for nonnegative multiplicative `f : ArithmeticFunction ℝ`,
+`∑_{m ∈ Icc 1 Y} f m ≤ ∏_{p < Y+1} ∑_{k ≤ log₂ Y} f (p^k)`.
+
+Route (the reference corpus' `lean-primorial-sq-divisor-euler-product` recipe; mathlib has **no**
+partial-sum Euler expansion): every `1 ≤ m ≤ Y` divides `eulerModulus Y = ∏_{p ≤ Y} p^{log₂ Y}`
+(prime exponents of `m` are `≤ log₂ m ≤ log₂ Y`), and a *divisor* sum is evaluable —
+`↑ζ * f` is multiplicative, `coe_zeta_mul_apply` turns its value at the modulus into the divisor
+sum, `IsMultiplicative.map_prod` over the pairwise-coprime prime powers splits it, and
+`Nat.sum_divisors_prime_pow` gives the local factors.
+
+**Lap 48 landed step 1 too:** `sum_Icc_le_exp_prime_sum` — for `f` multiplicative, nonnegative,
+with `f n ≤ 1/n`,
+`∑_{m ≤ Y} f m ≤ exp(1 + ∑_{p ≤ Y} f p)`.
+Ingredients, all in the same file and all trust-triple: `local_factor_le` (the `p`-local factor is
+`≤ 1 + f p + 1/(p(p-1))`, geometric tail via `geom_sum_eq`), `sum_primesBelow_inv_mul_pred_le_one`
+(the prime tail `∑_p 1/(p(p-1)) ≤ 1`, by the telescoping `sum_Icc_inv_mul_pred`), then
+`Real.add_one_le_exp` + `Real.exp_sum`.
+With `f m = h m / m` this is `∑_{m ≤ Y} h(m)/m ≤ e · exp(∑_{p ≤ Y} h(p)/p)`, i.e. the crude
+mean-value bound `≪ log Y · exp(-Σ_Y)` once Mertens is applied to `∑_{p≤Y} 1/p`.
+
+**Next on leaf 2, in order.**
+1. Turn `exp(∑_{p ≤ Y} f p)` into `C · log Y · exp(-Σ_Y)` for `f m = ‖g m‖/m`:
+   `∑_{p≤Y} ‖g p‖/p = ∑_{p≤Y} 1/p - Σ_Y = log log Y + O(1) - Σ_Y`, so the bound is
+   `≪ log Y · exp(-Σ_Y)`.  Mertens' second theorem is already available in the dependency
+   (`Util/MertensSecond`-style; check `Erdos67b`/`PrimeEstimates` first).
+2. That lands Case A's regime `log W ≥ θ log X` outright (the window `(Y/W, Y]` is bounded by the
+   full sum and `log Y ≪ log W / θ`).
+3. Hall's inequality (Halberstam–Richert Thm 01) for the thin-window regime — still the hard core.
+
+### lap 49 — Mertens applied: the Case-A mean-value bound is complete
+
+`sum_Icc_le_log_mul_exp_neg_defect` (same file, trust triple): for `f` multiplicative, nonnegative,
+`f n ≤ 1/n`, and `Y ≥ 2`,
+`∑_{m ≤ Y} f m ≤ exp(1 + B) · log Y · exp(-Σ_Y)`,
+`Σ_Y = primeDefect f Y = ∑_{p ≤ Y}(1/p - f p)`, `B = Erdos67b.PrimeEstimates.mertensBound`.
+
+Found rather than re-derived: `Erdos67b.PrimeEstimates.abs_primeReciprocals_sub_log_log_le` is
+Mertens' second theorem with a *uniform* constant, exactly the upper direction needed.  (The repo's
+own `G4.MertensAP` gives only the lower direction; do not use it here.)
+
+**Next on leaf 2.**
+1. Wire this into Case A proper: with `h m = ‖g₁ m‖` and `f m = h m / m`, the correlation is
+   bounded pointwise by `∑_{n ∈ window} ‖g₁(a₁n+b₁)‖/n ≤ a₁ · ∑_{m ≤ a₁X+|b₁|} f m` (bounding the
+   AP by all integers is free — `a₁` is fixed before `ε`).  In the regime `log W ≥ θ log X` this is
+   `≤ C(a₁,θ) e^{-Σ} log W`, so choosing the Case-A threshold `Σ ≥ Σ₀(ε)` closes it.
+   Needs: `f m = ‖g₁ m‖/m` packaged as a multiplicative `ArithmeticFunction ℝ`, and the window
+   inclusion `elliottLogWindow X W ⊆ Icc 1 X`.
+2. Hall's inequality for `log W < θ log X` — still the hard core.
+
+### lap 50 — Case A wiring: correlation ⟶ logarithmic mean of `‖g₁‖`
+
+`src/NormalNumbers/ElliottCaseA.lean` (new), all trust triple:
+* `normDivArith g` — `m ↦ ‖g m‖/m` as an `ArithmeticFunction ℝ`, with
+  `isMultiplicative_normDivArith`, `normDivArith_nonneg`, `normDivArith_le` (`≤ 1/m`).
+  These are exactly the three hypotheses of `sum_Icc_le_log_mul_exp_neg_defect`.
+* `norm_elliottLogCorrelation_le_window_sum` — `‖corr‖ ≤ ∑_{n ∈ window} ‖g₁(a₁n+b₁)‖/n`.
+* `sum_window_le_transfer` — the affine-form transfer:
+  `∑_{n ∈ window} ‖g₁(a₁n+b₁)‖/n ≤ (a₁+|b₁|)·∑_{m ≤ a₁X+|b₁|} ‖g₁ m‖/m + |b₁|`.
+  The `|b₁|` remainder collects the `n` with `a₁n+b₁ ≤ 0`, where `g₁` is unconstrained; it is
+  a *constant*, absorbed by `Erdos67b.elliottExists_finalThreshold` exactly like the `3k`
+  translation cost in `ElliottDilatedRung.dilatedCM_of_natShift`.
+
+**Next: Case A proper.**  Chain the three: for `Σ = primeDefect (normDivArith g₁) (a₁X+|b₁|)`,
+`‖corr‖ ≤ (a₁+|b₁|)·e^{1+B}·log(a₁X+|b₁|)·e^{-Σ} + |b₁|`.
+In the regime `log W ≥ θ log X` we have `log(a₁X+|b₁|) ≤ c(a₁,b₁,θ)·log W` for `W` large, so
+choosing the Case-A threshold `Σ ≥ Σ₀(ε,a₁,b₁,θ)` gives `≤ ε log W`.
+Then: Hall's inequality for `log W < θ log X`; then Case B's two convolution expansions.
+
+### lap 51 — CASE A, THICK-WINDOW REGIME: CLOSED
+
+`ElliottCaseA.exists_caseA_threshold` (trust triple).  For fixed `a₁ > 0, b₁, θ > 0, ε > 0` there
+are `D₀ : ℝ` and `W₀ : ℕ` — depending on **none** of `g₁, g₂, a₂, b₂, X, W` — such that whenever
+`W₀ ≤ W ≤ X`, `θ log X ≤ log W`, and the pretentious defect
+`primeDefect (normDivArith g₁) (a₁X+|b₁|) ≥ D₀`, then
+`‖elliottLogCorrelation g₁ g₂ a₁ a₂ b₁ b₂ X W‖ ≤ ε log W`.
+
+Threshold choreography: `C = a₁+|b₁|`, `K = C·e^{1+B}·(1+1/θ)`, `D₀ = log(2K/ε)`,
+`W₀ = max (a₁+|b₁|+2) ⌈exp(2|b₁|/ε)⌉₊`.  The two halves are `K e^{-D₀} log W = (ε/2) log W`
+(via `log Y ≤ (1+1/θ) log W`, which is where `θ log X ≤ log W` enters) and
+`|b₁| ≤ (ε/2) log W` (where `W ≥ exp(2|b₁|/ε)` enters).
+
+Intermediate also proved: `norm_elliottLogCorrelation_le_caseA`, the master bound
+`‖corr‖ ≤ (a₁+|b₁|)·e^{1+B}·log(a₁X+|b₁|)·e^{-Σ} + |b₁|`, with no regime hypothesis at all.
+
+**Remaining for leaf 2:**
+1. **Hall's inequality** (Halberstam–Richert Thm 01) — the thin-window regime `log W < θ log X`,
+   where the crude Euler bound loses the unbounded factor `log Y / log W`.  THE HARD CORE.
+2. Case B's two convolution expansions (squarefull `u`, unimodularisation `v`) — elementary,
+   absolutely convergent tails.
+3. The pretentiousness transfer and the final assembly.
+
+### lap 52 — THE HARD CORE WAS ALREADY FORMALIZED: Hall's inequality is in the dependency
+
+**Do not re-derive.**  `Erdos448.HalberstamComplete448.halberstam_richert_explicit` IS
+Halberstam–Richert Theorem 01, unconditional and fully explicit: for `h` nonnegative multiplicative
+with `h(p^{j+1}) ≤ λ₁λ₂^j` and `λ₂ < 2`,
+`∑_{n ≤ N} h n ≤ (K(λ₁,λ₂)+1)·(N/log N)·∏_{p ≤ N} ∑'_j h(p^j)/p^j`,
+`K = λ₁(log 4 + 8λ₂ log 2/(1-λ₂/2)²)`.  A `1`-bounded `h` is `λ₁ = λ₂ = 1`.
+(Found by grepping the dependency for `halberstam_richert`; the earlier PENDING_WORK note calling
+this "the hard core, still open" was wrong about its availability, not about its role.)
+
+`src/NormalNumbers/ElliottHall.lean` (new, trust triple):
+* `normFun g n = ‖g n‖` (zero at `0`) with its multiplicativity/boundedness lemmas;
+* `tsum_local_le` — `∑'_j ‖g(p^j)‖/p^j ≤ 1 + ‖g p‖/p + 1/(p(p-1))` (geometric tail, `tsum` form);
+* `sum_Icc_normFun_le` — **the density mean-value bound**
+  `∑_{n ≤ N} ‖g n‖ ≤ hallConst · e^{1+B} · N · exp(-Σ_N)`.
+  The `log N` of Halberstam–Richert cancels *exactly* against the `log N` of the Euler product —
+  that cancellation is the whole difference from the crude bound, and is why dyadic summation over
+  a thin window costs only `log W`.
+
+Also added to `ElliottEulerBound`, for reuse by both routes: `prod_le_exp_prime_sum`, `defectOf`,
+`exp_prime_sum_le_log_mul_exp_neg_defect`.
+
+**Next (lap 53): dyadic partial summation.**
+`∑_{Y/W < m ≤ Y} ‖g m‖/m ≤ ∑_{j < ⌈log₂W⌉} (2/T_j)·∑_{n ≤ 2T_j} ‖g n‖` with `T_j = Y/2^{j+1}`,
+each block `≤ 2·hallConst·e^{1+B}·e^{-Σ}` (monotonicity of `Σ_t` in `t` is needed, or just run the
+Hall bound at each `2T_j` and use `Σ_{2T_j} ≥ Σ` — careful: the defect *grows* with the scale, so
+use the defect at the smallest scale `Y/W`).  Total `≪ log W · e^{-Σ_{Y/W}}`.
+Then Case A's thin-window regime closes exactly like `exists_caseA_threshold`.
+
+### lap 53 — dyadic partial summation: the thin-window logarithmic sum
+
+`ElliottHall.sum_Icc_dyadic_le` (trust triple):
+`∑_{L ≤ m ≤ Y} ‖g m‖/m ≤ (⌊log₂(Y/L)⌋+1) · 2·hallConst·e^{1+B} · exp(-Σ_L)`.
+
+The cost is the **number of dyadic blocks**, not `log Y` — with `L ≈ Y/W` that is `≈ log₂ W`,
+which is exactly the thin-window statement the crude Euler bound cannot give.
+
+Supporting, same file: `primeDefect_mono` (the defect grows with the scale, since each term
+`1/p - ‖g p‖/p ≥ 0` — this is what lets every block be run at the *smallest* defect `Σ_L`) and
+`sum_dyadic_block_le` (one block `(T, 2T]` contributes `≤ 2·hallConst·e^{1+B}·e^{-Σ_L}`, by
+`1/m ≤ 1/T` plus the Hall density bound at `2T`).
+
+Blocks are indexed by `j = Nat.log 2 (m/L)`, the decomposition is a genuine partition
+(`Finset.sum_biUnion` with pairwise disjointness), and `Icc L Y` embeds in the union.
+
+**Next (lap 54): Case A's thin-window regime.**  Retrace lap 50's transfer keeping the window:
+the image of `elliottLogWindow X W` under `n ↦ a₁n+b₁` lies in `Icc L Y` with `L ≈ a₁X/W`,
+`Y = a₁X+|b₁|`, and `Y/L ≲ CW`, so the block count is `≤ log₂(CW)+1 ≪ log W` for `W` large.
+Then the threshold argument of `exists_caseA_threshold` applies verbatim, with **no** regime
+hypothesis — the Hall route covers *all* `W`, so it will supersede `exists_caseA_threshold`
+rather than complement it.
+
+## Laps 71–75 (2026-09-25) — Case-B assembly bricks, and an OBSTRUCTION found and SOLVED
+
+Five new zero-sorry modules land the mechanical half of `exists_caseB_threshold`:
+
+| module | content |
+|---|---|
+| `ElliottStageStep` | `sum_Icc_norm_squarefullPart_le` (`∑_{d≤D}‖u d‖ ≤ D e²`), and the two reusable bricks **`norm_le_of_reduced`** / **`norm_le_of_reduced_second`**: if every reduced correlation at `(d ≤ D, n₀ < d, d ∣ a n₀ + b)` is `≤ M` then the original is `≤ (M+4D)·D e² + (a+\|b\|)(1+log Y−log L)εt`.  One brick per function; applying them in sequence is what avoids the two-variable `gcd` tail. |
+| `ElliottScaleWindow` | `thinScale a b X W = max 1 (a(⌊X/W⌋+1)−\|b\|)`, `thinScale_le_integerAffine`, and **`logRatio_le`**: `1 + log Y − log (thinScale) ≤ log W + logRatioConst a b`, by the thin/thick dichotomy on `⌊X/W⌋ ≥ 2\|b\|+2`.  This is what makes the truncation cost `O(εt log W)` and not `O(εt log X)`. |
+| `ElliottZeroExt` | **`norm_sub_posExt_le`** — replacing `gᵢ : ℤ → ℂ` by `positiveIntExtension (restrictToNat gᵢ)` costs at most the absolute `2(\|b₁\|+\|b₂\|)`; plus `completelyMultiplicative_restrictToNat`. |
+| `ElliottRestricted` (edited) | `norm_restrictedCorr_le` now sums **only over the residues `n₀` with `d ∣ a₁n₀+b₁`**.  Essential, not cosmetic: only for a divisible class is the determinant preserved, so only there can `AffineCMLogElliott` be applied; the other classes are literally empty. |
+| `ElliottThresholdFamily` | `finalDil₁/₂`, `finalShift₁/₂`, **`det_final`** (the doubly substituted determinant is *exactly* `a₁b₂−a₂b₁`, by two `det_newShift`s), `memberThreshold` + `memberThreshold_spec`, and **`familyThreshold`** — one threshold for the whole finite family `d₁,n₀₁,d₂,n₀₂ ≤ D`. |
+
+### 🚨 OBSTRUCTION (found lap 75) — the dichotomy scale and the transfer scale disagree
+
+`ElliottPretentiousTransfer.mrtNonpretentious_transfer` needs `Σ_x(g₁) = ∑_{p≤x}(1−‖g₁ p‖)/p ≤ D₀`
+at the scale `x` where non-pretentiousness is wanted — i.e. at `x ≈ X` (or `X₂ ≈ X/D²`).  But the
+Case A/B dichotomy is on `Σ_L` at the **thin** scale `L = caseAScale ≈ a₁X/W`, because Hall–Shiu
+only ever sees the smallest affine value on the window.  And
+
+  `Σ_X − Σ_L = ∑_{L<p≤X} 1/p ≈ log(log X / log L)`
+
+is **unbounded** exactly when `W` is close to `X` (then `L ≈ a₁` and `Σ_L ≈ 0` while
+`Σ_X ≈ log log X`).  So Case B as written does not follow from Case B's hypothesis, and Case A
+does not cover the gap either: with `Σ_X ≥ D₀` but `Σ_L` small, the `≈ log W` dyadic blocks near
+`L` give no saving at all.  *This is a real gap in the lap-54 route, not a formalisation nuisance.*
+
+### ✅ RESOLUTION (to build) — truncate the window from below at `W^{ε/4}`
+
+Split the window `(X/W, X]` at `ν := max(X/W, ⌈W^{ε/4}⌉)`:
+
+* the discarded piece `(X/W, ν]` has harmonic mass `≤ log ν − log(X/W) + 1 ≤ (ε/4)·log W + 1`,
+  so it is bounded **trivially**, well inside the `ε log W` budget;
+* the retained piece is the genuine correlation at `(X, W'')` with `W'' = X/ν = min(W, X/W^{ε/4})`,
+  whose thin scale is `L'' ≈ a₁ν` and which satisfies `log W'' ≥ (1−ε/4) log W ≥ (1/2) log W`, so
+  an `ε' log W''` bound is an `ε log W` bound;
+* and now `log ν = max(log(X/W), (ε/4) log W) ≥ (ε/8)·max(log X − log W, log W) ≥ (ε/16)·log X`,
+  hence `X ≤ ν^{16/ε}` and therefore
+
+  `Σ_X − Σ_{L''} ≤ ⌈log₂(16/ε)⌉ · (log 2 + 2·mertensBound)`,
+
+  an **absolute constant depending only on `ε`** — obtained by iterating
+  `ElliottScaleDescent.reciprocalPrimeInterval_le_log_two_add` (which is the `X ≤ X'^2` case)
+  `⌈log₂(16/ε)⌉` times.
+
+`max(a−b, b) ≥ a/2` is the whole trick: whichever of "the window is thin" or "the window is fat"
+holds, one of the two candidate cutoffs is already a fixed power of `X`.
+
+### NEXT, in order
+
+1. `ElliottMertensIterate` — `∑_{L<p≤X} 1/p ≤ k(log 2 + 2·mertensBound)` whenever `X ≤ L^(2^k)`,
+   by iterating `reciprocalPrimeInterval_le_log_two_add`; and the matching
+   `mrtNonpretentious_descend_iter` (same iteration on `pretentiousDistSq_descend`).
+2. `ElliottWindowTruncate` — `‖corr at (X,W)‖ ≤ ‖corr at (X,W'')‖ + (mass of the discarded piece)`,
+   with `W'' ≤ W`, plus the mass bound `≤ log(X/W'') − log(X/W) + 1`.
+3. Re-run the dichotomy of `ElliottLeafTwo` at `(X, W'')` instead of `(X, W)`; Case A is already
+   stated for an arbitrary window so it applies verbatim, and Case B now has `Σ_{X₂} ≤ D₀ + c₁`.
+4. The ε-budget assembly itself (`ElliottStageStep` ×2 + `ElliottThresholdFamily`), with
+   `A'' := min(A, W'')` (`MRTNonpretentious` is monotone downwards in `A`) and
+   `A₀ ≥ max(3(T + 2D₀ + 2c₁ + mrtDescentCost + 1), D²(T'+4), A₀ᴬ², …)`.
+
+## Lap 83 (2026-09-25) — **CASE B PROVED; THE HEADLINE IS AXIOM-CLEAN**
+
+`NormalNumbers.ElliottGeneral.nonasymptoticLogElliott` now prints
+`[propext, Classical.choice, Quot.sound]`.  Zero `sorry` remains in the Elliott scope.
+Two new zero-sorry modules:
+
+| module | content |
+|---|---|
+| `ElliottStageCost` | `norm_le_cost_first` / `norm_le_cost_second` — `ElliottStageStep`'s two bricks instantiated at `L = thinScale` and passed through `logRatio_le`, so the truncation cost reads `(a+\|b\|)·(log W + κ)·εt` (a `log W` piece plus an absolute constant).  Also `logRatioConst_mono`, `isCM_cmExt`, `norm_cmExt_eq_one`, `pretentiousDistSq_congr` / `mrtNonpretentious_congr` / **`mrtNonpretentious_cmExt`** (non-pretentiousness depends only on prime values, so it passes from a cover `u` to `cmExt u` for free). |
+| `ElliottCaseB` | `progScale_le`, **`le_progScale`**, **`le_mul_progScale_add`** (the two-sided control of the progression scale), `sum_primesUpTo_eq_primeDefect` (the Case-B sum *is* the Euler defect), `integerAffine_le_of_mem`, **`budget_assemble`** (the ε-budget as pure real arithmetic), and **`exists_caseB_threshold`**. |
+
+### The one real idea of the lap: the budget's circularity is broken by ORDER
+
+The inner (second) expansion's truncation cost is
+`(a₂d₁ + \|a₂n₀₁+b₂\|)·(log W₁ + κ₂)·εt₂`, and it is multiplied by `D₁e²` when it passes back
+through the outer expansion's head bound.  So the tolerance `εt₂` must be small *in terms of `D₁`* —
+while `D₁` is itself produced by `exists_squarefull_tail` from a tolerance.  Reading this as one
+equation `εt ≲ ε/D(εt)³` makes it unsolvable (Rankin only gives `tail ≲ D^{-1/4}`).  It is not one
+equation: **the two expansions need not share a truncation point.**  Choose
+
+`εt₁ = ε/(8(C₁+1))` → `D₁` → `εt₂ = ε/(8(C₂+1)(D₁e²+1))` → `D₂` → `ε'' = ε/(8(D₁e²+1)(D₂e²+1))`,
+
+and take the threshold family at `D = max D₁ D₂`.  Then with `Pᵢ = Dᵢe²` the three `log W`
+coefficients `ε''P₁P₂`, `C₂εt₂P₁`, `C₁εt₁` are each `≤ ε/8`, and everything else is an absolute
+constant absorbed by `W ≥ exp(2·Cst/ε)`.
+
+### Scale bookkeeping that made it go through
+
+* `le_progScale`: `S ≤ (X−n₀)/d` as soon as `d(S+1) ≤ X`; used twice with
+  `Q = (D₁+1)((D₂+1)(S+1)+1) ≤ A₀` to get `S ≤ X₁` and `S ≤ X₂`.
+* `le_mul_progScale_add`: `X ≤ d(X₁+2)`; twice gives `X ≤ D₁D₂X₂ + 2D₁D₂ + 2D₁`, and with
+  `S = T + 2D₁D₂ + 4 ≤ X₂` that is `X ≤ X₂²` — exactly one `mrtNonpretentious_descend_iter` step
+  (`k = 1`) carries non-pretentiousness from `X` down to the doubly reduced scale `X₂`.
+* `A₂ := T = familyThreshold …` is a **fixed** natural, so `A₂ ≤ W₂ = min(min W X₁) X₂` is just
+  `T ≤ S`; that is why the threshold does not have to chase the shrinking window.
+
+### Traps recorded this lap — do NOT re-derive
+
+1. `Nat.primesLE X` and `Erdos67b.primesUpTo X` are *defeq* (`Finset.sum_congr rfl` unifies them),
+   but a membership hypothesis arrives in `Nat.primesLE` form: use
+   `simpa [Nat.primesLE, Nat.mem_primesBelow] using hp`, not `mem_primesUpTo`.
+2. `restrictToNat` has no equation lemma usable by `rw`; use `simp only [restrictToNat]`.
+3. `div_le_div_iff` does **not** exist in this mathlib.  For `c·(ε/(k(c+1))) ≤ ε/k` use the
+   `mul_le_mul_of_nonneg_left (show c ≤ c+1) … ` + `field_simp` shape instead of cross-multiplying.
+4. `le_or_lt` is not available; use `le_or_gt`.
+5. `Σ` is reserved notation — `hΣ` is not a legal identifier.
+6. `Int.natAbs_natCast` must be named explicitly (`simp` alone does not close
+   `((n : ℕ) : ℤ).natAbs = n` inside an `omega` chain).
+7. The assembly needs `set_option maxHeartbeats 1600000`.
+
+### NEXT (see `DIRECTION.md` CURRENT DIRECTIVE)
+
+The genuinely *multiplicative* form `NonasymptoticLogElliottMult`, stated in `src/`: the proved
+headline is the **completely multiplicative** case, because `IsMultiplicativeOnPositiveInt` has no
+coprimality hypothesis.  Nothing in the leaf-2 route consumes complete multiplicativity of `gᵢ`
+(the cover's `cmExt u` supplies it downstream), so the expected shape is a hypothesis weakening
+in place, not a new proof.
+
+## Lap 84 (2026-09-25) — FIDELITY GAP CLOSED: the genuinely multiplicative headline
+
+`DIRECTION.md`'s post-lap-83 objective, done in full.  **Trigger EM-1 did NOT fire**: the lap-83
+audit expectation was exactly right — complete multiplicativity of `g₁, g₂` is consumed **nowhere**
+in the leaf-2 chain.
+
+* New `src/NormalNumbers/ElliottMultStatement.lean`: `IsCoprimeMultOnPosInt` (`g 1 = 1` and
+  `g(mn) = g m · g n` for *coprime* positive `m, n`), the `src/`-owned Prop
+  `NonasymptoticLogElliottMult`, the free downcast `of_isMultiplicative`, and
+  `NonasymptoticLogElliottMult.toCompletelyMultiplicative`.
+* Hypotheses weakened **in place** along the chain — `ElliottCaseA`, `ElliottHall`,
+  `ElliottCaseAThin`, `ElliottZeroExt`, `ElliottCaseB`, `ElliottLeafTwo`.  Only three proof sites
+  needed a coprimality argument threaded through:
+  `ElliottCaseA.isMultiplicative_normDivArith` (`intro m n _` → `intro m n hcop`),
+  `ElliottHall.normFun_mul` (already had `hmn : m.Coprime n` in scope), and
+  `ElliottZeroExt.coprime_mul_restrictToNat`.  Nothing else moved.
+  `ElliottZeroExt.completelyMultiplicative_restrictToNat` keeps the dependency's predicate; it has
+  no consumers (that is itself the audit's confirmation).
+* `ElliottLeafTwo.nonasymptotic_mult_of_affineCM : AffineCMLogElliott → NonasymptoticLogElliottMult`
+  is now the real assembly; `nonasymptotic_of_affineCM` is its one-line CM corollary, so
+  `nonasymptoticLogElliott` is unchanged as a statement and still compiles.
+* `ElliottGeneral.nonasymptoticLogElliottMult` — trust triple, in the audit surface.
+
+Why it was this cheap: Case A only ever feeds `g₁` through `normDivArith`, whose
+`Nat.ArithmeticFunction.IsMultiplicative` is coprime-indexed by definition; Case B routes `gᵢ`
+through the *cover* `u`, and every complete-multiplicativity use downstream is on `cmExt u`, which
+is completely multiplicative by construction (`Finsupp.prod_add_index'`, no coprimality needed).
+The `gᵢ` themselves are only ever evaluated via `coprime_mul_restrictToNat`.
+
+## Lap 85 (2026-09-25) — `DIRECTION.md` item 4: the downstream consumer, stated and DERIVED
+
+New `src/NormalNumbers/ElliottTwoPointLog.lean`, **zero sorry, trust triple**, in the audit surface.
+
+* `zetaOmegaInt u : ℤ → ℂ` — `ζ^{ω(·)}`, `ζ = e(u)`, zero off the positive integers.
+  `isCoprimeMult_zetaOmegaInt` : it is `IsCoprimeMultOnPosInt`, off `ω(mn) = ω m + ω n` for coprime
+  `m, n` (`Nat.primeFactors_mul` + `Coprime.disjoint_primeFactors` + `card_union_of_disjoint`).
+  It is **not** completely multiplicative (`ω(p²) = 1`), which is precisely why lap 84's fidelity
+  upgrade was a prerequisite and not a cosmetic one: the dependency's `Prop` simply does not apply
+  to C1's two-point function.
+* `UniformlyNonPretentious g` — the Delange-side input as a named hypothesis
+  (`D(g, χ·n^{is}; X)² ≥ A` for all moduli `≤ A`, all `|s| ≤ AX`, all large `X`).  This is the
+  content of the `DelangeSlot*` / `TwoPointDelange*` stack, not re-proved here.
+* `TwoPointElliottLog b p q t` — the log-averaged two-point correlation of `ζ^{ω(pn+1)}` against
+  `conj ζ^{ω(qn+1)}` over `1 < n ≤ X`, normalised by `log X`, tending to `0`.
+* `twoPointElliottLog_of_nonPretentious` — the derivation from
+  `ElliottGeneral.nonasymptoticLogElliottMult`, for any `p ≠ q` (determinant `p·1 − q·1 = p − q`).
+
+Not done, and not claimed: the passage from the **logarithmic** average to `CastingOut.TwoPointElliott`'s
+**natural** average.  That is open in general (it is the Chowla-type gap), and the kickoff lists only
+the log form as following from Tao's theorem.  The honest next targets are therefore
+(a) discharging `UniformlyNonPretentious (zetaOmegaInt (t/b))` from the Delange stack, for `t/b ∉ ℤ`, and
+(b) the log→natural passage, which needs an extra input (e.g. a Tauberian/entropy argument) and
+should be scoped by an altitude lap before anyone grinds at it.
+
+## Lap 86 (2026-09-25) — `UniformlyNonPretentious` for `ζ^ω` reduced to ONE named analytic input
+
+New `src/NormalNumbers/ElliottZetaOmegaPretentious.lean`, **zero sorry, trust triple**, in the
+audit surface.  This is the remaining half of `DIRECTION.md` item 4: `ElliottTwoPointLog` derived
+the log two-point statement *from* `UniformlyNonPretentious (zetaOmegaInt u)`; this lap reduces
+that hypothesis to a single explicitly-named crux.
+
+* `zetaOmegaDistSq_eq` — **the algebraic core, proved.**  `ζ^ω` is constantly `ζ` at the primes
+  (`ω(p) = 1`), so for every twist
+  `D(ζ^ω, χ n^{it}; X)² = M(X) − Re(ζ · C(χ,t,X))`, `M = ∑_{p≤X}1/p`,
+  `C = ∑_{p≤X} conj(χ(p)p^{it})/p`.
+* `norm_archimedeanTwist_sub_one_le` — `‖p^{it} − 1‖ ≤ 2|t| log p` (via
+  `Complex.norm_exp_sub_one_le` after `p^{it} = exp(i t log p)`).
+* `NearTrivialTwist χ t X` — `χ` principal at all `p ∤ q`, and `|t| log X · M(X) ≤ 1`.
+* `norm_twistCorr_sub_primeMass_le` — **proved**: in that regime `‖C − M‖ ≤ 2 + 2·M(q)`,
+  an `X`-free bound.  (The conductor primes cost `2∑_{p∣q}1/p ≤ 2M(q)`; the Archimedean part
+  costs `2|t| log X · M ≤ 2`.)
+* `TwistModulusDichotomy A δ` — **THE CRUX, left open as a named `Prop`, not an axiom.**  For
+  `q ≤ A`, `χ` mod `q`, `|t| ≤ A·X`: either near-trivial, or `‖C‖ ≤ (1−δ)M`.
+* `exists_primeMass_ge`, `phase_re_lt_one_of_not_int`, and the two derivations
+  `uniformlyNonPretentious_zetaOmega_of_dichotomy` and `twoPointElliottLog_of_dichotomy`.
+
+**Why the dependency's twist separation does not already give it** (the real finding of this lap).
+`TwistSeparation.characterTwistDistSq_lower_of_correlation_loglog` controls `Re C = M − D(1,χ_t)²`.
+Rotating by the *constant* `ζ` exposes `Im C` too: `Re(ζC)` can be close to `M` even when `Re C` is
+not, namely if `arg C ≈ −arg ζ`.  So the needed statement is about the **modulus** `‖C‖`, which is
+strictly stronger than anything in the dependency, and it is over the polynomial height range
+`|t| ≤ A·X` for which the dependency also names — and deliberately does not prove —
+`PolynomialHeightPrimeCorrelationBound`.  Two independent VK-strength obstacles, then; the
+`DelangeSlot*` stack (mean values of char-like `κ`) does **not** reach either.
+
+**Recorded drift.**  `NearTrivialTwist`'s cutoff is `|t| log X · M(X) ≤ 1` rather than the classical
+`|t| ≤ 1/log X`, a `log log X` narrowing forced by the crude `‖p^{it}−1‖ ≤ 2|t| log p` summed with
+`∑1/p` instead of Mertens' first theorem `∑_{p≤X}(log p)/p = log X + O(1)`, which the dependency does
+not have.  Proving Mertens I in `src/` would widen the near-trivial regime and *weaken* the crux —
+that is the cheapest next improvement, and it is elementary (Chebyshev/Abel summation).
+
+**Next attack on the crux**, in order: (a) Mertens I, to restore the classical cutoff; (b) the
+`k`-th-power bootstrap (`‖w²−β²‖ ≤ 2‖w−β‖` iterated to the order of `χ`, reducing `‖C‖ ≈ M` to the
+purely Archimedean `∑_{p≤X}p^{-ikt}/p ≈ M`); (c) the Archimedean bound
+`|∑_{p≤X}p^{-iv}/p| ≪ log(2+|v| log X)/... ` for `1/log X ≪ |v| ≤ A·X`, which is where the zero-free
+region enters and where the dependency stops.
+
+## Lap 87 (2026-09-25) — crux narrowed: the near-trivial regime restored to the classical cutoff
+
+Attack step (a) of lap 86's list, done.  `TwistModulusDichotomy` is now a **strictly weaker**
+(easier) analytic input than it was a lap ago.
+
+* `exists_mertensOne` — **Mertens' first theorem** `∑_{p≤X}(log p)/p ≤ log X + C` is available
+  after all, in `BoundedGaps.Maynard.exists_uniform_abs_primeLogHarmonicSum_sub_log`
+  (`.lake/packages/BoundedGaps`, already in the import graph via the dependency's
+  `TwistSeparation.lean`).  `primesUpTo X = Nat.primesLE X` by `Nat.primesLE_eq_filter_range`.
+  The constant there is non-explicit (a `tsum` over non-prime prime powers); irrelevant here, so
+  the statement is existential.
+* `NearTrivialTwist` is now just `PrincipalAtGoodPrimes χ ∧ |t| · log X ≤ 1` — the classical
+  cutoff.  Lap 86's extra `· M(X) ≤ 1` clause, a `log log X` loss, is gone.
+* `exists_norm_twistCorr_sub_primeMass_le` — the corresponding `X`-uniform bound
+  `‖C − M‖ ≤ K + 2·M(q)`, now with `K = 2 + 4C` from Mertens I instead of the crude `2 + 2M(q)`
+  at the narrower cutoff.  The Archimedean sum is `2|t|∑(log p)/p ≤ 2|t| log X + 2|t|C ≤ 2 + 4C`
+  using `|t| ≤ 1/log X ≤ 1/log 2 ≤ 2`.
+* `uniformlyNonPretentious_zetaOmega_of_dichotomy` re-plumbed through the existential `K`.
+
+Remaining attack on the crux, unchanged in substance: (b) the `k`-th-power bootstrap
+(`‖w^2 − β^2‖ ≤ 2‖w − β‖`, iterated to the order of `χ`) reducing `‖C‖ ≈ M` to the purely
+Archimedean `|∑_{p≤X} p^{-ikt}/p| ≈ M`; (c) that Archimedean bound for `1/log X ≪ |v| ≤ A·X`,
+which is the zero-free-region input and the same wall the dependency's
+`PolynomialHeightPrimeCorrelationBound` names.
+
+## Lap 88 (2026-09-25) — attack step (b) DONE: the power bootstrap
+
+New `src/NormalNumbers/ElliottTwistBootstrap.lean`, **zero sorry, trust triple**, in the audit
+surface.  This is the second of the three steps listed at lap 86 for cracking
+`TwistModulusDichotomy`.
+
+* `twistDefect w β X = ∑_{p≤X}(1 − Re(β̄ w_p))/p` — clustering of the twist values around a single
+  constant `β`; `twistDefect_eq_sub` : `= M − Re(β̄ C)`.
+* **`exists_unimodular_twistDefect_le`** — the dichotomy's hard alternative *failing* IS
+  clustering: if `‖C‖ ≥ (1−δ)M` then `β := C/‖C‖` is unimodular with `twistDefect ≤ δ·M`.
+  (This is the step that converts a statement about the *modulus* of `C` — the thing lap 86 found
+  the dependency does not control — into a pointwise statement one can bootstrap.)
+* **`twistDefect_pow_le`** — `Δ_k(β^k) ≤ k·√(2·Δ(β)·M)`.  Three elementary inequalities plus
+  Cauchy–Schwarz: `1 − Re z ≤ ‖1 − z‖`; `‖1 − b^k‖ ≤ k‖1 − b‖` (geometric factorisation,
+  `geom_sum_mul`); `‖1−b‖² ≤ 2(1 − Re b)` for `‖b‖ ≤ 1`; then
+  `∑ √(a_p)/p ≤ √(∑ a_p/p)·√M` via `Finset.sum_mul_sq_le_sq_mul_sq` with
+  `f p = √(a_p)/√p`, `g p = 1/√p`.
+
+**What this buys.** Take `k` = the order of `χ`.  Then `χ^k` is principal, so `w_p^k` is purely
+Archimedean at every `p ∤ q`, and the bootstrap says `∑_{p≤X} p^{-ikt}/p` is within `k√(2δ)·M` of
+`β^k·M`.  The crux is thereby reduced to a statement with **no character in it at all**:
+
+> (c) for `1/log X ≪ |v| ≤ A·X`, `|∑_{p≤X} p^{-iv}/p|` is bounded away from `M = log log X + O(1)`.
+
+That is the classical Archimedean prime correlation bound, and it is where the zero-free region
+enters — the same wall as the dependency's `PolynomialHeightPrimeCorrelationBound`.  Note the
+bootstrap's loss is `k√δ`, so step (c) must be quantitative enough to beat a *fixed* `k = ord χ ≤ φ(q) ≤ A`;
+that is fine, since `A` is fixed before `X → ∞`.
+
+Not yet written: the glue lemma `w_p^k = conj(χ^k(p)·p^{ikt})` (needs `DirichletCharacter` power
+API) and the statement of (c).  Next lap.
+
+## Lap 89 (2026-09-25) — the character is GONE: the crux is now a character-free statement
+
+Added to `src/NormalNumbers/ElliottTwistBootstrap.lean` (still **zero sorry, trust triple**, all in
+the audit surface).  This completes the glue that lap 88 left open.
+
+* `archimedeanTwist_pow` — `(p^{it})^k = p^{i(kt)}`, through the `exp` form.
+* **`dirichletChar_pow_totient`** — `(χ p)^{φ(q)} = 1` for every prime `p ∤ q`, by **Euler**
+  (`Nat.ModEq.pow_totient` + `ZMod.natCast_eq_natCast_iff` + `map_pow`).  This avoids needing
+  `orderOf` in the Dirichlet character group and any finiteness instance: `φ(q)` is an explicit
+  exponent that works for every `χ` mod `q` at once.
+* `archCorr v X = ∑_{p≤X} conj(p^{iv})/p` — the purely Archimedean correlation.
+* **`norm_powCorr_sub_archCorr_le`** — the glue: `‖∑ w_p^{φ(q)}/p − archCorr(φ(q)·t)‖ ≤ 2M(q)`.
+  The character dies at every `p ∤ q`; the conductor primes cost an `X`-free constant.
+* **`norm_twistCorr_le_of_archCorr_le`** — **the reduction.**  If
+  `‖archCorr(φ(q)·t, X)‖ ≤ (1−η)M` and the slack `φ(q)√(2δ)·M + 2M(q) < ηM` holds, then
+  `‖C‖ ≤ (1−δ)M` — i.e. the hard alternative of `TwistModulusDichotomy` follows.
+
+**State of the crux.**  `TwistModulusDichotomy A δ` now needs only a statement with **no Dirichlet
+character in it**:
+
+> for `|v| ≤ A²·X` outside the near-trivial range, `‖∑_{p≤X} p^{-iv}/p‖ ≤ (1−η)·∑_{p≤X}1/p`.
+
+The slack condition is satisfiable in the right order — `φ(q) ≤ A` and `M(q) ≤ M(A)` are fixed
+before `X → ∞`, so pick `δ` with `A√(2δ) < η/2`, then `X` with `2M(A) < (η/2)M(X)`.
+
+**What is left, precisely.** Two branches, both classical:
+1. *Large frequency* `|v| ≳ 1/log X`: the Archimedean bound above.  Zero-free region; the same wall
+   as the dependency's `PolynomialHeightPrimeCorrelationBound`.
+2. *Small frequency* `|φ(q)t| ≲ 1/log X`: here the Archimedean factor is ≈ 1 and one must instead
+   conclude that `χ` is principal, which needs the prime density in progressions
+   (`∑_{p≤X, p≡a (q)} 1/p ≍ M/φ(q)`) to rule out a non-principal `χ` clustering at a constant.
+   That branch is *not* yet formalized and is the honest next target; it is strictly easier than
+   branch 1 (Mertens for APs / Dirichlet, no zero-free region needed).
+
+## Lap 90 (2026-09-25) — THE CRUX IS FULLY DECOMPOSED into two named classical inputs
+
+`src/NormalNumbers/ElliottTwistBootstrap.lean` (still **zero sorry, trust triple**).  The chain
+from the two classical analytic inputs all the way to C1's two-point leaf in logarithmic average is
+now machine-checked end to end.
+
+New this lap:
+
+* `twistDefect_le_add` — a pointwise comparison `‖w₁ − w₂‖ ≤ e` transfers between defects.
+* **`exists_charDefect_le`** — **de-twisting at small frequency.**  If `|t| log X ≤ 1` then
+  clustering of the *twisted* values around `β` implies clustering of the **character values
+  alone**, at an absolute additive cost `2 + 4C` (Mertens I again).  This is what makes the small-
+  frequency branch a statement about `χ` only.
+* **`ArchimedeanCorrelationBound A η`** (input c) and **`CharacterClusterRigidity A θ`** (input d),
+  both named `Prop`s, both classical, neither an axiom.
+* **`twistModulusDichotomy_of_inputs`** — the crux follows from (c) + (d), with the parameters in
+  the only order that works: `δ` small enough that the bootstrap loss `A√(2δ)` fits in `η/2`, and
+  `δ < θ` so the de-twisting cost is absorbed once `M(X)` is large.
+* `exists_delta_twistModulusDichotomy` — the explicit `δ = min(min(θ/2, 1/2), R²/2)`,
+  `R = η/(4(A+1))`, supplying a `δ` per level `A`.
+* **`twoPointElliottLog_of_classical_inputs`** — the payoff, depending on nothing but (c) and (d).
+
+`TwistModulusDichotomy` was also weakened to carry its own threshold `∃ X₀, ∀ X ≥ X₀`, and
+`uniformlyNonPretentious_zetaOmega_of_dichotomy` now takes `∀ A, ∃ δ > 0, …` rather than one `δ`
+for all `A` — necessary, since the bootstrap's admissible `δ` shrinks with `A`.
+
+### The whole remaining debt of DIRECTION item 4, in two lines
+
+1. **(c)** `‖∑_{p≤X} p^{-iv}/p‖ ≤ (1−η)∑_{p≤X}1/p` for `1 < |v| log X`, `|v| ≤ A²X`.
+   Zero-free region; polynomial height; the dependency's own `PolynomialHeightPrimeCorrelationBound`.
+2. **(d)** a Dirichlet character clustering at a unimodular constant in the `∑1/p` sense is principal.
+   Needs only prime density in progressions + the homomorphism property + finiteness of the value
+   group.  **No zero-free region.**  This is the strictly easier one and the next target.
+
+Attack for (d), concretely: `∑_{p≤X, p≡a (q)} 1/p ≥ c_q · M(X) − O_q(1)` (Mertens for APs) is the
+one analytic ingredient; the rest is finite algebra — `(1 − Re(β̄χ̄(a)))·S_a ≤ θM` for each unit
+class `a` gives `χ̄(a) ≈ β` for all `a`, then `χ̄(a)χ̄(b) = χ̄(ab)` forces `β ≈ 1`, and
+`χ(a)^{φ(q)} = 1` (already proved as `dirichletChar_pow_totient`) upgrades `≈ 1` to `= 1`.
+
+## Lap 91 (2026-09-25) — INPUT (d) IS NOW A THEOREM: rigidity derived from Mertens in APs
+
+New `src/NormalNumbers/ElliottCharRigidity.lean`, **zero sorry, trust triple**, in the audit
+surface.  Lap 90's input (d) is no longer assumed: it is *proved* from one standard statement.
+
+* **`eq_one_of_pow_eq_one_of_norm_lt`** — the elementary gap: a `k`-th root of unity with
+  `‖1 − z‖ < 1/k` is `1`.  Proof: if `z ≠ 1` then `∑_{m<k} z^m = 0` (off `geom_sum_mul`), so
+  `k = ‖∑_{m<k}(1 − z^m)‖ ≤ k·k·‖1 − z‖`.  **No cyclotomic theory, no root-of-unity
+  classification, no `orderOf`.**
+* `primeClassMass q a X` and **`PrimeDensityAP A`** — Mertens for arithmetic progressions,
+  `c·M(X) − B ≤ ∑_{p≤X, p≡a (q)} 1/p` for every unit class.  This is the *only* remaining analytic
+  input of branch (d), and it needs no zero-free region (only `L(1,χ) ≠ 0`).
+* `class_defect_le` — restricting the clustering sum to one class: the class's whole mass is
+  multiplied by that class's single character defect.
+* **`exists_characterClusterRigidity`** — (d), with the explicit admissible `θ = c/(32A²)`.
+  The chain: `(1−Re(β̄χ̄(a)))·S_a ≤ θM` and `S_a ≥ (c/2)M` give `≤ 2θ/c`; `‖β − χ̄(a)‖² ≤ 4θ/c`
+  for every unit class, including `a = 1` where `χ̄(1) = 1`; the triangle inequality gives
+  `‖1 − χ(p₀)‖ ≤ 2√(4θ/c) < 1/φ(q)`; then `dirichletChar_pow_totient` + the gap lemma give
+  `χ(p₀) = 1`.
+* **`twoPointElliottLog_of_archimedean_and_density`** — the payoff now rests on exactly two
+  classical statements.
+
+Also: `exists_delta_twistModulusDichotomy` and `twoPointElliottLog_of_classical_inputs` now take
+`∀ A, ∃ θ > 0, CharacterClusterRigidity A θ`, since the admissible `θ` shrinks like `1/A²`.
+
+### The entire remaining debt of DIRECTION item 4
+
+1. **(c)** `‖∑_{p≤X}p^{-iv}/p‖ ≤ (1−η)∑_{p≤X}1/p` for `1 < |v| log X`, `|v| ≤ A²X`.
+2. **(d1)** `PrimeDensityAP`: Mertens in progressions.
+
+Nothing else.  (d1) is the softer of the two and is the next target — `BoundedGaps` already carries
+Siegel–Walfisz and the Dirichlet machinery (`TwistSeparation.lean` imports both), so it is worth a
+survey lap before any new analysis is written.
+
+## ✅ 2026-09-25 lap 113 — T2 STARTED: THE MODERATE-BAND `ζ'/ζ` BOUND IS A THEOREM
+
+**Operator objective for this run was already met.**  The run was scoped to "close
+`exists_caseA_thin_threshold` / `exists_caseB_threshold` in `ElliottLeafTwo.lean`".  Re-verified
+in-kernel this lap: both print `[propext, Classical.choice, Quot.sound]`, as does
+`ElliottGeneral.nonasymptoticLogElliott`, and the whole audit build emits **zero** `sorryAx`.
+Lap 83 closed them; the instruction referenced lap 63.  So the lap moved to DIRECTION's T2.
+
+**New, proved, sorry-free** — `src/NormalNumbers/ElliottZetaModerate.lean`:
+
+* `exists_midband_bound B` : `∃ K > 0`, on `1 ≤ Re s ≤ B`, `1 ≤ |Im s| ≤ 3`,
+  `‖ζ'/ζ(s)‖ ≤ K`.  Compactness + `riemannZeta_ne_zero_of_one_le_re` (`s ≠ 1` since `|Im s| ≥ 1`).
+* `exists_highband_bound` : `∃ C > 0`, on `1 ≤ Re s`, `|Im s| > 3`,
+  `‖ζ'/ζ(s)‖ ≤ C·(log|Im s|)⁹`.  **This is the first time the campaign actually consumes
+  `PNTPort.ZetaBounds`** (FINDING 1 of lap 112, acted on).  `σ ≥ 1 > 1 − A/(log|t|)⁹` is immediate,
+  so the zero-free-region hypothesis is free; `Complex.re_add_im` matches `↑σ + ↑t·I` to `s`, and
+  `Real.rpow_natCast` converts the rpow `9` to a monoid pow.
+* `exists_moderate_logDeriv_bound B` : `∃ C > 0`, on `1 ≤ Re s ≤ B`, `1 ≤ |Im s|`,
+  `‖ζ'/ζ(s)‖ ≤ C·(log(|Im s|+16))⁹`.  The two glued; `(log(|t|+16))⁹ ≥ (log 17)⁹ ≥ 1` absorbs the
+  compact constant, and `log|t| ≤ log(|t|+16)` the high one.
+
+**🚨 BUILD CONVENTION CHANGED — green now means THREE builds.**
+`lake build` (9257) AND `lake build NormalNumbers.ElliottAxiomAudit` (9684) AND
+`lake build NormalNumbers.ElliottZetaModerateAudit` (3600).  Reason: `ElliottAxiomAudit` reaches
+`PrimeNumberTheoremAnd.Sobolev` through the `Erdos67b` tree, and `PNTPort.ZetaBounds` needs
+`PNTPort.Sobolev`; both declare `CS.deriv`, so one environment cannot hold both
+(`import PNTPort.Sobolev failed, environment already contains 'CS.deriv'`).  **Anything downstream
+of `PNTPort.ZetaBounds` must be audited in `ElliottZetaModerateAudit`, never in
+`ElliottAxiomAudit`.**  All five declarations there print the trust triple.
+
+### NEXT LAP — T2 step 2, and the interface change it forces
+
+The analytic side is now done.  What remains for `ArchCorrModerate` is the *arithmetic* assembly,
+mirroring `ElliottSliceCap.exists_sliceCapSmall` but in the moderate band.  **Design decision taken
+this lap (record it, do not re-litigate):**
+
+1. The cap band must be restated at `T₉ = max (log(|v|+16))^{-9} (log X)⁻¹` (was `^{-1}`).
+2. The Prop must carry a **multiplicative** constant: `‖slice‖ ≤ C·T₉⁻¹ + K`, not `T₉⁻¹ + K`.
+   *Why this is forced, and why it is free.*  `T₉⁻¹ = min((log(|v|+16))⁹, log X)`.  In the branch
+   `T₉ = (log(|v|+16))^{-9}` we have `(log(|v|+16))⁹ ≤ log X`, so the trivial bound
+   (`norm_logWeightedSlice_le_trivial`, which gives `log X`) is *too weak*, and
+   `exists_moderate_logDeriv_bound` gives `C·(log(|v|+16))⁹` with `C > 1` — the constant cannot be
+   removed.  It is free at the consumer because the cap band has length `T₉`, so
+   `∫₀^{T₉}(C·T₉⁻¹+K) = C + K·T₉`: a multiplicative constant in the cap band costs an **additive**
+   constant in the integral.  (Lap 107 already recorded this; now it is load-bearing.)
+   ⇒ generalize `norm_dampedPrefix_le_of_slice_le'` (`ElliottDamped`:843) to `C·T⁻¹ + K`.
+3. The `log(1/T₉) = 9·log log(|v|+16)` main term then forces
+   `DampedSeriesBoundModerate` / `ArchCorrModerate` to acquire the coefficient `9`, absorbed by
+   `archCorrLargeShift_of_moderate_and_nearMax` moving the height cut from `exp((log X)^{1−ν})` to
+   `exp((log X)^{(1−ν)/9})`.  The far band was already Vinogradov; nothing is lost.
+4. The other branch (`T₉ = (log X)⁻¹`, i.e. `log X ≤ (log(|v|+16))⁹`) is handled by
+   `norm_logWeightedSlice_le_trivial` alone — **no** `ζ'/ζ` needed there.  That split is the whole
+   arithmetic content of the next lap.
+
+Boundary check on the split (EA-1): at the junction `log X = (log(|v|+16))⁹` the two branches give
+`log X + C_triv` and `C·(log(|v|+16))⁹ + K = C·log X + K` — agree up to the constant `C`.  No gap.
+
+## 🔑 2026-09-25 lap 114 — THE STRUCTURAL BLOCKER IS GONE: `PNTPort.ZetaBounds` NOW COEXISTS WITH THE ELLIOTT CHAIN
+
+Lap 113 hit, and this lap **removed**, the real reason the campaign spent ~16 laps citing a de la
+Vallée Poussin bound it already owned.  `import PrimeNumberTheoremAnd.ZetaBounds` failing (lap 112's
+diagnosis) was only the *first* layer.  Underneath it were two genuine **namespace collisions**
+that made `PNTPort.ZetaBounds` unimportable into *any* file that also sees the Elliott chain:
+
+1. `import PNTPort.Sobolev failed, environment already contains 'CS.deriv' from
+   PrimeNumberTheoremAnd.Sobolev` — the Elliott chain reaches `lean-proofs-latest`'s
+   `PrimeNumberTheoremAnd.Sobolev` via `ErdosProblems`/`Util.Primes → Consequences → Defs →
+   Fourier → Sobolev`, and `PNTPort.Sobolev` is a vendored copy of the same `namespace CS`.
+   **Fix:** `PNTPort.ZetaBounds` did not actually need Sobolev.  Its one use of `PNTPort.Fourier`
+   (which is what pulls Sobolev in) is the *function-level* `simp` form `deriv ofReal = fun _ => 1`.
+   Dropped `import PNTPort.Fourier`; restated that one lemma from
+   `PNTPort.Auxiliary.Complex.deriv_ofReal`.
+2. `import PNTPort.EulerMaclaurin failed, environment already contains 'B1' from
+   ErdosProblems.Erdos49.PNT.EulerMaclaurin`.  **Fix:** wrapped `src/PNTPort/EulerMaclaurin.lean`
+   (79 lines, root namespace) in `namespace PNTPort`, `open PNTPort` in `ZetaBounds`.
+
+**Verified:** a probe file importing *both* `NormalNumbers.ElliottSliceCap` and `PNTPort.ZetaBounds`
+now builds (9691 jobs) and `#check`s both `exists_sliceCapSmall` and `LogDerivZetaBndUnif99`.
+
+**Consequences — both large.**
+* The separate `ElliottZetaModerateAudit` target created by lap 113 is **deleted**; the build
+  convention reverts to **TWO** builds, `lake build` (9257) and
+  `lake build NormalNumbers.ElliottAxiomAudit` (**9692**, was 9684).  Disregard lap 113's
+  "green means three builds" note.
+* More importantly: the eventual `ArchCorrModerate` theorem can now be **stated in the same
+  environment as `twoPointElliottLog_of_three_bands`**, i.e. the moderate input can actually be
+  *discharged into the headline chain* rather than proved off to one side.  Before this lap that
+  was impossible and nobody had noticed.
+
+All 158 audited Elliott declarations print `[propext, Classical.choice, Quot.sound]`; zero
+`sorryAx` anywhere in the audit build.
+
+### NEXT LAP — unchanged target, now unobstructed
+
+T2 step 2, exactly as scoped at the end of the lap-113 entry above: the moderate cap assembly
+`exists_sliceCapModerate9`, mirroring `ElliottSliceCap.exists_sliceCapSmall`.  Note
+`ElliottSliceCap.norm_slice_add_logDeriv_le` (`‖slice + ζ'/ζ(sliceAbscissa)‖ ≤ 1 + ppCost`) is
+**band-agnostic** — it already holds for every `v` and every `w ≥ 0`, so the moderate proof reuses
+it verbatim and only the analytic input changes from `exists_band_logDeriv_bound` to
+`ElliottZetaModerate.exists_moderate_logDeriv_bound`.  The two-branch split on
+`max (log(|v|+16))^{-9} (log X)⁻¹` and the forced multiplicative constant are the only new content.
+
+## ✅ 2026-09-25 lap 115 — THE MODERATE CAP CLAUSE IS A THEOREM (`exists_sliceCapModerate9`)
+
+`src/NormalNumbers/ElliottSliceCapModerate.lean`, sorry-free, in the audit surface:
+
+* `ElliottDamped.sliceT9 X v := max ((log(|v|+16))^9)⁻¹ (log X)⁻¹`, so
+  `(sliceT9 X v)⁻¹ = min ((log(|v|+16))^9) (log X)`;
+* `sliceT9_le_one` : `sliceT9 X v ≤ 1` for `X ≥ 2²⁰` (both branches are reciprocals of reals `≥ 1`);
+* `ElliottDamped.SliceCapModerate9 C K` : the cap clause with a multiplicative constant;
+* **`exists_sliceCapModerate9 : ∃ C ≥ 1, ∃ K ≥ 0, SliceCapModerate9 C K`** — with
+  `C = max C₀ 1` and `K = (1 + ppCost) + (log 4 + 4)`.
+
+**The two-branch split, which is the whole content.**
+* `(log(|v|+16))^9 ≤ log X`: the min is `(log(|v|+16))^9`, and the dVP bound
+  `ElliottZetaModerate.exists_moderate_logDeriv_bound 3` covers it, through the band-agnostic
+  `ElliottSliceCap.norm_slice_add_logDeriv_le` (`‖slice + ζ'/ζ(sliceAbscissa)‖ ≤ 1 + ppCost`).
+  `Re s = 1 + δ + w ≤ 3` because `δ ≤ 1` and `w ≤ sliceT9 ≤ 1`; `|Im s| = |v| > 1` ✓.
+* otherwise the min is `log X`, and `norm_logWeightedSlice_le_trivial` alone covers it
+  (`((log X)⁻¹ + w)⁻¹ ≤ log X`) — **no `ζ'/ζ` at all in that branch.**
+
+EA-1 junction check (recorded, do not re-litigate): at `(log(|v|+16))^9 = log X` the branches give
+`C₀·log X + (1+ppCost)` and `log X + (log 4+4)`, both `≤ C·(sliceT9)⁻¹ + K`.  No gap.
+
+Audit: 9693 jobs, zero `sorryAx`, 160 audited Elliott declarations on the trust triple.
+
+### NEXT LAP — T2 step 3: carry the constant `C` through the integration
+
+The cap clause is done; the harmonic clause was done at lap 106 with coefficient exactly `1`.  What
+remains for `ArchCorrModerate` is the *integration*, and the one interface change it forces:
+
+1. **Generalize `ElliottDamped.norm_dampedPrefix_le_of_slice_le'` (`ElliottDamped`:843) from
+   `hcap : ‖slice‖ ≤ T⁻¹ + K` to `hcap : ‖slice‖ ≤ C·T⁻¹ + K`.**  The cap band is `[0,T]`, so this
+   changes the `∫` bound by the additive constant `C` only (`∫₀^T C·T⁻¹ = C`).  This is the single
+   edit; the harmonic half of that lemma is untouched.
+2. Then `SliceBoundModerate9`/`DampedSeriesBoundModerate9` with main term
+   `log(1/sliceT9) ≤ 9·log log(|v|+16)` (from `(sliceT9)⁻¹ ≤ (log(|v|+16))^9` and
+   `Real.log_pow`), i.e. the moderate input acquires the coefficient `9`.
+3. Then `ArchCorrModerate9 (9) K`, and `archCorrLargeShift_of_moderate_and_nearMax` absorbs the
+   `9` by moving the height cut `exp((log X)^{1−ν}) → exp((log X)^{(1−ν)/9})`.
+
+After that the open-input ledger of `twoPointElliottLog_of_three_bands` drops from four to two:
+`PrimeDensityAP` (T3, cheap, `G4MertensAP.mertensRate_residueClass`) and the designated cited
+`ArchCorrNearMaxHeight` (Vinogradov).
+
+## ✅ 2026-09-25 lap 116 — (c′-II-a) IS A THEOREM UP TO THE COEFFICIENT 9
+
+**`ElliottSliceCapModerate.exists_dampedSeriesBoundModerate9`** :
+`∃ K ≥ 0`, for all `X ≥ 2²⁰`, `X ≤ Y`, `|v| > 1`,
+`‖dampedPrefix v X Y‖ ≤ 9·log log(|v|+16) + K`.  Sorry-free, axiom-clean, in the audit surface.
+**The only analytic input anywhere in it is the in-repo `PNTPort.LogDerivZetaBndUnif99`.**
+
+New this lap:
+* `ElliottLogIntegral.integral_le_const_add_log_add_const` — the cap band tolerates a
+  **multiplicative** constant for an **additive** price: cap clause `C·T⁻¹ + K`, harmonic clause
+  `w⁻¹ + K`, conclusion `C + log(1/T) + K`.  Because the cap band is `[0,T]`, `∫₀^T C·T⁻¹ = C`;
+  the `log(1/T)` main term comes entirely from the harmonic band and keeps lap 106's sharp
+  coefficient `1`.
+* `ElliottDamped.norm_dampedPrefix_le_of_slice_le_const` — the same generalization one level up.
+* `ElliottDamped.sliceT9_le_one` (moved here from `ElliottSliceCapModerate`),
+  `SliceBoundModerate9`, `sliceBoundModerate9_of_cap` (harmonic half = lap 106's
+  `sum_log_rpow_le`), `DampedSeriesBoundModerate9`, `dampedSeriesBoundModerate9_of_sliceBound`.
+
+**Where the `9` comes from, exactly one place:** `log(1/sliceT9) ≤ log((log(|v|+16))^9) =
+9·log log(|v|+16)` (`Real.log_pow`), and `sliceT9 ≥ ((log(|v|+16))^9)⁻¹` by `le_max_left`.  The
+exponent is inherited from `PNTPort.ZetaZeroFree9`'s region `σ ≥ 1 − A/(log|t|)^9`.  Nothing else
+in the chain contributes a coefficient.
+
+Audit: 9693 jobs, zero `sorryAx`.
+
+### NEXT LAP — T2 step 4, the last step: `ArchCorrModerate` with the coefficient 9
+
+Two edits, both scoped:
+
+1. **`ElliottDamped.archCorrModerate_of_dampedSeriesBound` has a `9`-analogue.**  The damping
+   step (`norm_archCorr_sub_dampedPrefix_le'`, cost `dampingCost`) is coefficient-blind, so
+   `archCorrModerate9_of_dampedSeriesBound : DampedSeriesBoundModerate9 K →
+   ArchCorrModerate9 (K + dampingCost)` is a copy of the existing proof with
+   `Real.log (Real.log (|v|+16))` replaced by `9 * Real.log (Real.log (|v|+16))`.
+   Define `ElliottArchBands.ArchCorrModerate9 (K)` alongside `ArchCorrModerate` — **do not modify
+   `ArchCorrModerate` itself**, other consumers take it.
+2. **`ElliottArchBands.archCorrLargeShift_of_moderate_and_nearMax` needs a `9`-variant.**  This is
+   the real content of the next lap: the height cut moves from `exp((log X)^{1−ν})` to
+   `exp((log X)^{(1−ν)/9})` so that `9·log log|v| ≤ (1−η)·log log X` still holds below the cut.
+   Check the arithmetic at the cut before writing Lean (EA-1): at `|v| = exp((log X)^{(1−ν)/9})`,
+   `9·log log(|v|+16) ≈ 9·((1−ν)/9)·log log X = (1−ν)·log log X`, so the proportional saving `ν`
+   survives intact — **that is why the exponent is free**, and it is the claim to verify first.
+
+Then `twoPointElliottLog_of_three_bands` needs re-stating with `ArchCorrModerate9`, and the open
+ledger drops to `PrimeDensityAP` (T3) + the cited `ArchCorrNearMaxHeight` (Vinogradov).
+
+## 🏁 2026-09-25 lap 117 — (c′-II-a) IS DISCHARGED.  THE LEDGER IS DOWN TO TWO.
+
+**`ElliottSliceCapModerate.exists_archCorrModerate9 : ∃ K, ArchCorrModerate9 K`** — proved,
+sorry-free, axiom-clean.  Input (c′-II-a) of the Elliott consumer is **no longer a cited classical
+statement**; its only analytic ingredient is the in-repo `PNTPort.LogDerivZetaBndUnif99`.
+
+**`ElliottSliceCapModerate.twoPointElliottLog_of_density_and_nearMax`** — `TwoPointElliottLog b p q t`
+from exactly **two** open inputs:
+
+| input | status |
+| --- | --- |
+| `ElliottCharRigidity.PrimeDensityAP A` | open, **not deep** — T3, reachable from the in-repo `G4MertensAP.mertensRate_residueClass` |
+| `ArchCorrNearMaxHeight A (1−(1−ν)/9) η₂ K₂` | open, **Vinogradov–Korobov** — the designated cited 🟠 axiom |
+
+`ShiftedMertensSmall` (lap 112) and `ArchCorrModerate9` (lap 117) are both discharged *inside* that
+call.  That is DIRECTION's stated objective for this campaign, minus T3.
+
+**The absorbing step, and its boundary check (EA-1, done before the Lean was written).**
+`ElliottArchBands.archCorrLargeShift_of_moderate9_and_nearMax` takes `ArchCorrNearMaxHeight` at the
+shifted parameter `1 − (1−ν)/9` — i.e. the height cut moves from `exp((log X)^{1−ν})` to
+`exp((log X)^{(1−ν)/9})`.  Below that cut `log log(|v|+16) ≤ ((1−ν)/9)·L`, so
+`9·log log(|v|+16) ≤ (1−ν)·L`: **exactly** the bound the unfactored version gets below its own cut,
+with equality *at* the cut.  So the proportional saving `ν` is unchanged; only the share of the
+range handed to Vinogradov grows (`1−(1−ν)/9 ∈ (8/9,1)`), and that band was already Vinogradov.
+The factor `9` is therefore free, as lap 112 predicted — now verified, not asserted.
+
+Note `ArchCorrModerate` and `twoPointElliottLog_of_three_bands` are **untouched**; the `9` versions
+sit alongside them.
+
+Audit: 9693 jobs, zero `sorryAx`, all new declarations on the trust triple.
+
+### NEXT LAP — T3, the last non-cited input: `ElliottCharRigidity.PrimeDensityAP`
+
+`def PrimeDensityAP (A : ℕ) : Prop` at `ElliottCharRigidity`:83 is a bare `Prop` with no theorem
+discharging it.  Ingredients, all in-repo (EP-1 provenance already done by lap 112):
+* `NormalNumbers.G4MertensAP.mertensRate_residueClass` — Mertens for a unit residue class, from
+  mathlib's `LSeries/PrimesInAP` + Chebyshev + Abel summation;
+* `Erdos67b.PrimeEstimates.abs_primeReciprocals_sub_log_log_le` — the two-sided bound for the
+  `primeMass` upper half;
+* uniformity over `q ≤ A` by a finite max.
+Read the exact shape of `PrimeDensityAP` first and check it at its boundary parameters (EA-1)
+before wiring — lap 92's refutation is the precedent.
+
+After T3 the ledger is **one** cited axiom, `ArchCorrNearMaxHeight` (Vinogradov's mean value
+theorem), which DIRECTION designates as the honest endpoint of this campaign.
+
+## 🏁🏁 2026-09-25 lap 118 — **DIRECTION'S OBJECTIVE IS MET: THE LEDGER IS ONE CITED AXIOM**
+
+**T3 done.**  `ElliottPrimeDensityAP.exists_primeDensityAP (A : ℕ) : PrimeDensityAP A` — proved,
+sorry-free, axiom-clean.  `PrimeDensityAP` was a bare `def … : Prop` with no theorem discharging
+it (lap 112's FINDING 2); it is now a theorem.
+
+Route (all in-repo, EP-1 satisfied before writing):
+* four spelling bridges — `primesUpTo_eq_primesLE`, `primesUpTo_eq_primesBelow_succ`,
+  `primeMass_eq_primeReciprocals`, `primeClassMass_eq_sumInvPrimesIn` (the last at `N = X+1`,
+  since `primesBelow` is strict and `primesUpTo` is not);
+* `exists_class_bound` — one unit class: `G4MertensAP.mertensRate_residueClass` gives
+  `c·log log(X+1) − C ≤ primeClassMass`, and
+  `Erdos67b.PrimeEstimates.abs_primeReciprocals_sub_log_log_le` gives
+  `primeMass X ≤ log log X + mertensBound`; combine, and absorb `X ≤ 1` (both masses vanish) into
+  `B := max 0 (C + c·mertensBound)`;
+* `exists_uniform` — a reusable `Finset.induction` lemma: finitely many `∃ c>0, ∃ B≥0, P c B`
+  statements, each antitone in `c` and monotone in `B`, admit one common `(c,B)`.  Applied twice,
+  over the units of a modulus and then over `q ∈ Icc 1 A`.  This is where uniformity in `q` —
+  the whole reason `A` is a parameter — actually happens.
+
+**`ElliottLedger.twoPointElliottLog_of_nearMaxHeight`** — `TwoPointElliottLog b p q t` from the
+**single** cited classical input `ArchCorrNearMaxHeight A (1−(1−ν)/9) η₂ K₂`
+(Vinogradov–Korobov, near-maximal height only).  `PrimeDensityAP`, `CharacterClusterRigidity`,
+`ShiftedMertensSmall` and `ArchCorrModerate9` are all discharged inside that call.
+
+**That is exactly the endpoint DIRECTION names**: "Make `ElliottTwoPointLog.TwoPointElliottLog`
+rest on ONE cited classical axiom — `ArchCorrNearMaxHeight` (Vinogradov–Korobov) — with every other
+input a machine-checked theorem."
+
+Audit: 9696 jobs, zero `sorryAx`, every new declaration `[propext, Classical.choice, Quot.sound]`.
+
+**Two things that must keep being said** (DIRECTION requires both, every lap):
+* The remaining axiom is a **real wall**, not an artefact: at `|v| ≍ X` the trivial
+  `|ζ(1+it)| ≪ log t` gives no proportional saving, and beating it needs `(log t)^{2/3}`.
+* `TwoPointElliottLog` is the **logarithmic** average.  `CastingOut.TwoPointElliott` — what the
+  repo's normality route consumes — is the **natural** average; the passage is a separate,
+  known-open, Chowla-strength problem.  **This does not close the normality route**, and nothing
+  in `src/` currently consumes `TwoPointElliottLog`.
+
+### Where a further lap can still add value
+
+* Chip at `ArchCorrNearMaxHeight` only opportunistically — DIRECTION forbids attacking it head-on
+  and it is never an excuse to stop.
+* `SwingC2.PrimeDensityAP` (line 2969) is a *different*, unrelated `Prop` of the same name in a
+  designated-open module; `tauMomentPrimesShiftStruct_of_primeDensity` consumes it.  Off scope.
+* The honest remaining structural question is the log→natural passage.  Designated Chowla-strength;
+  do not present any partial result on it as closing the route.
+
+## ✅ 2026-09-25 lap 119 — the widened Vinogradov band, audited and machine-checked
+
+Lap 117 asserted in prose that moving the height cut from `exp((log X)^{1−ν})` to
+`exp((log X)^{(1−ν)/9})` "widens the Vinogradov band, and it was already Vinogradov, so nothing is
+lost".  EA-1 says a `Prop` must be checked for truth at its boundary *before* it is built on, and
+lap 117 built on it.  This lap discharges that debt in both directions.
+
+**Direction 1 — the widening is real, and cannot be bluffed away.**
+`ElliottArchBands.archCorrNearMaxHeight_antitone` : `ν ≤ ν' → ArchCorrNearMaxHeight A ν' η K →
+ArchCorrNearMaxHeight A ν η K`.  Since `heightCut ν X = exp((log X)^{1−ν})` *shrinks* as `ν` grows,
+a larger `ν` quantifies over *more* shifts, so the hypothesis is strictly stronger.  The implication
+therefore runs from `ν' = 1−(1−ν)/9` **down** to `ν`, never up — i.e. the ledger really does ask
+more of the cited axiom than `twoPointElliottLog_of_three_bands` did, and no one can later "derive"
+the widened hypothesis from the narrow one.  Proved (needs `log log X ≥ 0`, so the `∃ X₀` is bumped
+through `exists_logLog_ge 0`).
+
+**Direction 2 — the widened hypothesis is nonetheless TRUE** (recorded in the docstring; this is
+the boundary audit proper).  Vinogradov–Korobov gives `|ζ(1+it)| ≪ (log t)^{2/3}`, hence
+`‖archCorr v X‖ ≤ (2/3)·log log|v| + O(1)`; and on the entire range the `Prop` quantifies over,
+`|v| ≤ A²X` forces `log log|v| ≤ L + O(1)`.  So `(1−η)·L + K` holds for **every** `η ≤ 1/3`
+*regardless of the lower cut* — the cut only removes shifts from the range.  Widening costs nothing
+in truth, only in how much of the range is delegated to the cited axiom.  **The lap-117/118 ledger
+is not resting on a false axiom.**
+
+Audit: 9696 jobs, zero `sorryAx`.
+
+### Where a further lap can still add value (unchanged from lap 118)
+
+The campaign's named objective is met.  What remains is either forbidden head-on
+(`ArchCorrNearMaxHeight`), off scope (`SwingC2`'s unrelated same-named `Prop`), or the genuinely
+open structural question — the **log → natural** passage, which is Chowla-strength and must never
+be presented as closing the normality route.
+
+## 🔑🔑 2026-09-25 lap 120 — THE BESPOKE WALL AXIOM IS GONE.  THE DEBT IS ONE EXPONENT.
+
+**`ElliottLedger.twoPointElliottLog_of_zetaExponent`** : `TwoPointElliottLog b p q t` from a
+**single standard analytic fact about `ζ`** —
+
+> `ZetaLogDerivExponent θ` for some `θ < 1`, i.e. `‖ζ'/ζ(s)‖ ≪ (log(|Im s|+16))^θ`
+> on `1 ≤ Re s ≤ 3`, `|Im s| ≥ 1`.
+
+Nothing else.  `PrimeDensityAP`, `CharacterClusterRigidity`, `ShiftedMertensSmall`,
+`ArchCorrModerate` **and `ArchCorrNearMaxHeight`** are all discharged inside that call.
+
+### What happened, and why it was possible
+
+Reading laps 113–117 back, the exponent `9` entered in **exactly one place** —
+`log(1/T) = θ·log log(|v|+16)` — while every other ingredient (`norm_slice_add_logDeriv_le`,
+`sum_log_rpow_le`, `norm_logWeightedSlice_le_trivial`, `integral_le_const_add_log_add_const`) is
+exponent-blind.  So the whole chain is parametric in `θ`.  `src/NormalNumbers/ElliottZetaTheta.lean`
+makes it so: `sliceTheta`, `SliceCapModerateTheta`, `SliceBoundModerateTheta`,
+`DampedSeriesBoundModerateTheta`, `ArchCorrModerateTheta`, each a transcription of the `9`-version
+with `θ` in place of `9` (real `rpow`).
+
+**`archCorrNearMaxHeight_of_exponent`** is the payoff: `ZetaLogDerivExponent θ` implies
+`ArchCorrNearMaxHeight A ν (1−θ) K` for **every** `A` and **every** cut `ν < 1`, `K` uniform.
+The mechanism — and this is the part worth remembering — is that **the lower cut is irrelevant**:
+the saving comes entirely from the range bound `|v| ≤ A²X`, which forces
+`log log(|v|+16) ≤ log 2 + L`, so `θ·log log(|v|+16) + K₁ ≤ θ·L + (θ log 2 + K₁)` on the *whole*
+band.  The cut appears only to force `|v| > 1` (via `heightCut ν X ≥ 17`).  This is lap 119's prose
+audit, now a theorem.
+
+### Why this is strictly better provenance
+
+`ArchCorrNearMaxHeight` is a bespoke `Prop` about `archCorr` that a reader must take on faith as
+"being Vinogradov".  `ZetaLogDerivExponent θ` is the **same shape** as the in-repo, already-proved
+`PNTPort.LogDerivZetaBndUnif99`.  And `zetaLogDerivExponent_nine` **proves the case `θ = 9`**, so
+the parametric statement is not a vacuous generalisation — the repo owns an instance.
+Vinogradov–Korobov is the case `θ = 2/3`.  So the campaign's entire remaining debt is
+
+> the zero-free-region exponent, **`9` ⟶ anything `< 1`**
+
+— checkable against the literature at a glance, and discharged automatically by any future
+strengthening of `src/PNTPort/ZetaBounds.lean`.  `zetaLogDerivExponent_mono` records that larger
+`θ` is the weaker hypothesis, so citing the largest admissible `θ` is the honest thing to do.
+
+**EA-1 at the extreme** (in the docstring): at `|v| = A²X` the two sides are `θ(L + log 2) + K₁`
+against `θL + K`, equal at `K = θ log 2 + K₁` — the constant is sharp for this argument.
+
+Audit: 9697 jobs, zero `sorryAx`.
+
+### Refuted this lap (record, do not retry)
+
+**Averaging over `v` instead of a pointwise bound.**  Checked: `ArchCorrLargeShift` is consumed
+*pointwise* — `twistAlmostRealPropDichotomy_of_inputs` applies it at the single shift `t` of the
+character the dichotomy produces, not under any integral.  So mean-value theorems for `|ζ(1+it)|`
+(fourth moment, Carlson), which would sidestep Vinogradov, **cannot** be substituted.  ⛔
+
+### NEXT LAP
+
+The honest target is now narrow and concrete: **improve the exponent in `src/PNTPort/ZetaBounds.lean`
+below `1`**, or prove `ZetaLogDerivExponent θ` for some `θ < 1` directly.  That is Vinogradov's mean
+value theorem and remains a multi-year target — narrow it, do not file it as infeasible.  Note the
+chain needs only `θ < 1`, which is **weaker than Vinogradov's `2/3`**: any sub-linear bound
+`‖ζ'/ζ‖ ≪ (log t)^{1−ε}` suffices.  Whether that weaker statement has an easier proof than full
+Vinogradov is an open question worth a lap of literature reading.
+
+## ✅ 2026-09-25 lap 121 — non-vacuity anchored, and the debt made machine-visible
+
+Two guards on lap 120's result, because a reduction chain is worthless if its hypotheses cannot
+co-exist, and a "one remaining axiom" claim is worthless if nobody can see how big the gap is.
+
+**1. `ElliottLedger.ledger_nonvacuous`.**  The side conditions of
+`twoPointElliottLog_of_zetaExponent` are `0 < p`, `0 < q`, `p ≠ q` and
+`(CastingOut.phase (t/b)).re < 1`.  The last is `cos(2π t/b) < 1`, i.e. `t/b ∉ ℤ`.  Anchored at
+`b = 1, p = 2, q = 3, t = 1/2`, where `phase (1/2) = exp(πi) = −1` (`phase_half_re`, proved).
+So the ledger reduces a **non-empty** family of statements; it is not conditionally true by
+vacuity of its side conditions.
+
+**2. `ElliottZetaTheta.zetaLogDerivExponent_gap`.**  The whole remaining debt, as one interval:
+
+* **owned**: `θ ∈ [9, ∞)` — `zetaLogDerivExponent_of_nine_le`, from `PNTPort.ZetaZeroFree9`.
+* **needed**: `θ ∈ [0, 1)` — `twoPointElliottLog_of_zetaExponent`.
+* and `zetaLogDerivExponent_mono` says the hypothesis only *weakens* as `θ` grows, so nothing in
+  between comes free.
+
+**Why `9`, and why `< 1` is the honest threshold** (read off `src/PNTPort/ZetaBounds.lean` this
+lap; recorded so no future lap re-derives it):
+* `LogDerivZetaBnd = ZetaInvBnd × ZetaDerivUpperBnd`, i.e. **`9 = 7 + 2`**, where `7` is the cost
+  of `1/‖ζ‖` and `2` that of `‖ζ'‖`.
+* **`ZetaUpperBnd` already gives `‖ζ(σ+it)‖ ≤ C·log|t|` — exponent exactly `1`**, on the *wider*
+  region `σ ≥ 1 − A/log|t|`.
+
+So the classical material sits **precisely at** the threshold on the `ζ` side and **above** it on
+the `ζ'/ζ` side.  That is the analytic content of "the wall is real", now pinned to specific
+in-repo lemmas rather than prose: `|ζ(1+it)| ≪ log t` is borderline, and a proportional saving must
+beat it, i.e. needs `(log t)^{1−ε}`.
+
+**A live question this lap surfaced and did not settle.**  The chain needs only `θ < 1`, which is
+**weaker than Vinogradov's `2/3`** — *any* sub-linear bound suffices.  Whether that weaker
+statement has an easier proof than full Vinogradov is open.  That is the one question worth a
+literature lap; if the answer is no, the honest record is "Vinogradov or nothing".
+
+Audit: 9697 jobs, zero `sorryAx`.
+
+### NEXT LAP
+
+Either (a) the literature question above — is `‖ζ'/ζ(1+it)‖ ≪ (log t)^{1−ε}` known by any route
+cheaper than Vinogradov's mean value theorem? — or (b) begin narrowing `9 → 2` by routing the
+near-max band through `log ζ` (`ZetaUpperBnd`, exponent 1) plus `ZetaInvBnd` (exponent 7) instead
+of through `ζ'/ζ`, which would improve the owned interval to `[7, ∞)`.  Note (b) is a *numeric*
+improvement only — it does not reach `< 1` — so prefer (a), and do (b) only to keep the record
+sharp.  Do **not** file the gap as infeasible.

@@ -198,6 +198,98 @@ set" (settled: gadget per excluded length) but "can ONE sequence carry infinitel
 The nested-layer answer makes every stage's law EXACTLY equal on the decided lengths, so the
 only analysis left is a sparse-perturbation estimate — item 1.  If item 1 fails, the whole
 multi-scale architecture must be redesigned, so it is first.
+*Set by the DEEP REFLECTION lap 112, 2026-09-25.  **ROUTE VERDICT: CONTINUE** — no registered
+trigger has fired (EA-1 is being honoured: laps 95/96/103 each ran the boundary audit and lap 103
+caught its own fidelity bug).  But the reflection found that **three of the four "cited classical"
+inputs the campaign is resting on are already PROVED, sorry-free, INSIDE THIS REPO**, and the
+campaign has been citing them.  That is the course correction.*
+
+**Achieved and frozen.**  `NormalNumbers.ElliottGeneral.nonasymptoticLogElliott` (lap 83) and the
+genuinely multiplicative `…nonasymptoticLogElliottMult` (lap 84) are both **PROVED** and
+`#print axioms`-clean (re-verified lap 112: trust triple; 153 audited Elliott theorems, zero
+`sorryAx`; `src/` Elliott scope zero `sorry`).  Tao 2016 Thm 1.3 is done; do not reopen it.
+
+**THE OBJECTIVE NOW — say it exactly.**  Make `ElliottTwoPointLog.TwoPointElliottLog` (the
+log-averaged two-point correlation of `ζ^{ω(pn+1)}`) rest on **ONE** cited classical axiom —
+`ElliottArchBands.ArchCorrNearMaxHeight` (Vinogradov–Korobov) — with **every other input a
+machine-checked theorem**.  That, and not "close the Elliott consumer", is the honest realistic
+endpoint of this campaign.  Two facts every lap must keep in view:
+
+* the wall at near-maximal height is **real**: at `|v| ≍ X` the trivial `|ζ(1+it)| ≪ log t` gives
+  `log log|v| ≍ log log X`, exactly no proportional saving, and beating it needs
+  `|ζ(1+it)| ≪ (log t)^{2/3}`, i.e. Vinogradov's mean value theorem.  (Independently re-derived
+  this lap, matching lap 95's analysis.)
+* `TwoPointElliottLog` is the **logarithmic** average.  `CastingOut.TwoPointElliott` — what the
+  repo's normality route actually consumes — is the **natural** average, and the passage between
+  them is a separate, known-open, Chowla-strength problem.  Closing this campaign does **not**
+  close the normality route.  Never write or imply that it does.
+
+**Mandated next moves, in this order.**
+
+1. **T1 — finish (c′-I) `ElliottDamped.SliceCapSmall`.**  Fully scoped; the four-step recipe is in
+   `HANDOFF-elliott-2026-09-25-lap111.md` §"NEXT LAP" and `PENDING_WORK.md`.  Do this FIRST not
+   because it is easiest but because it builds the shared bridge
+   `logWeightedSlice v X Y w = −ζ'/ζ(sliceAbscissa X w v) + O(1)`, which T2 reuses; it is the
+   smallest compiler-grounded probe that tests whether that bridge closes at all.
+2. **T2 — `ArchCorrModerate`, from material already in this repo.**  🔑 **`src/PNTPort/ZetaBounds.lean`
+   (3142 lines, ZERO `sorry`, builds in 3597 jobs) already contains `ZetaZeroFree9`,
+   `LogDerivZetaBnd`, `LogDerivZetaBndUnif99`, `ZetaUpperBnd`, `ZetaInvBnd`, `triv_bound_zeta` —
+   all `[propext, Classical.choice, Quot.sound]` (verified lap 112).**  `LogDerivZetaBndUnif99`
+   gives `‖ζ'/ζ(σ+it)‖ ≤ C·(log|t|)^9` for every `σ ≥ 1 − A/(log|t|)^9` and `|t| > 3`.  That is a
+   de la Vallée Poussin-strength input, in-repo and free.  The exponent `9` costs nothing:
+   restate the moderate band at `T = (log(|v|+16))^{-9}` instead of `(log(|v|+16))^{-1}`; the
+   harmonic band then delivers `9·log log(|v|+16)` in place of `log log(|v|+16)`, and
+   `archCorrLargeShift_of_moderate_and_nearMax` absorbs the factor by moving the height cut from
+   `exp((log X)^{1−ν})` to `exp((log X)^{(1−ν)/9})`.  The Vinogradov band widens; it was already
+   Vinogradov, so nothing is lost.  `1 < |v| ≤ 3` is a compactness patch of lap 108's
+   `exists_far_band_bound`.
+3. **T3 — `ElliottCharRigidity.PrimeDensityAP`, also from material already in this repo.**
+   🔑 `src/NormalNumbers/G4MertensAP.lean` proves `mertensRate_residueClass` (Mertens for a unit
+   residue class, from mathlib's `LSeries/PrimesInAP` + Chebyshev + Abel summation) — combine with
+   the two-sided `Erdos67b.PrimeEstimates.abs_primeReciprocals_sub_log_log_le` for the `primeMass`
+   upper half and `PrimeDensityAP A` follows, uniformly over `q ≤ A` by a finite max.  Cheapest of
+   the three; take it when T1/T2 stall.
+
+**⛔ IMPORT GOTCHA (cost the campaign ~16 laps of citing what it owned).**
+`import PrimeNumberTheoremAnd.ZetaBounds` **FAILS** here: `lean-proofs-latest` declares its own
+partial `lean_lib PrimeNumberTheoremAnd` (only Consequences/Defs/Fourier/Mathlib/MediumPNT/
+SmoothExistence/Sobolev/Wiener) which shadows the real package.  **The working import is
+`import PNTPort.ZetaBounds`.**  Before calling ANY classical analytic fact "cited", grep
+`src/PNTPort/` and `src/NormalNumbers/G4*.lean` for it.
+
+**Forbidden drift.**  Do NOT delete, rename or weaken `nonasymptoticLogElliott`,
+`nonasymptoticLogElliottMult`, or anything in the proved leaf-2 chain; do not edit the dependency's
+`Prop`s or `.lake/packages/`.  Do NOT resurrect input (c) (`ArchimedeanCorrelationBound`) or build
+on `twoPointElliottLog_of_archimedean_and_density` — refuted and vacuous; the live consumers are
+`ElliottTwistRepair.twoPointElliottLog_of_repaired_inputs` and
+`ElliottArchBands.twoPointElliottLog_of_three_bands`.  Do NOT spend laps attacking
+`ArchCorrNearMaxHeight` head-on: it is the designated cited 🟠 axiom (Vinogradov's mean value
+theorem), chipped opportunistically only, and NEVER the excuse to stop.  Do NOT reopen Theorem
+C′/multicutoff, `PrimeLambertOscillation`, `MahlerDriftOne`, `SwingC*`, `PairDecouple*`
+(designated-open, off scope).
+
+**🚦 Route trigger (EA-1, fidelity of the remaining inputs) — STILL ARMED.**  Every named classical
+`Prop` this campaign leans on must be **checked for truth at its boundary parameters before it is
+built on** — lap 92's refutation shows a plausible-looking statement can be false by one exponent.
+Before any lap consumes a new input it must either (a) exhibit the true asymptotic shape of both
+sides at the extreme end of every quantified range, or (b) prove a `¬` result and re-decompose.
+If a lap finds an input false at some boundary, write `ROUTE-ESCALATION-<date>.md` and
+re-decompose — do not patch the constant and continue.
+
+**🚦 NEW route trigger (EP-1, provenance of every "cited classical" input).**  Before any lap
+*states* a new classical `Prop` as an open input, it must first record, in the `Prop`'s docstring,
+the result of a search for it in (i) `src/PNTPort/`, (ii) `src/NormalNumbers/G4*.lean` and
+`Erdos67b.PrimeEstimates`, (iii) mathlib.  A `Prop` stated without that line is a defect; delete
+it and search.  **Registered lap 112 because three of four live inputs were citations of theorems
+this repo already owned.**
+
+**Trigger EM-1 (complete multiplicativity consumed somewhere): CLEARED, lap 84.**
+**Trigger ET-1 (two-point cover by lap 62): CLEARED** — `ElliottRandomize.exists_cover_pair_ge`.
+
+**Build/green convention (do not "fix" this).**  The Elliott chain is NOT reachable from
+`src/NormalNumbers.lean`: adding it breaks the root build (`PrimeNumberTheoremAnd.Sobolev` clashes
+with `PNTPort.Sobolev`, `CS.deriv`).  Green therefore means BOTH
+`lake build` (9257 jobs) AND `lake build NormalNumbers.ElliottAxiomAudit` (9684 jobs).
 
 **Directive history.**
 - 2026-09-22 (lap 7 review): graded joint state route.  Supersedes the handoff's "one tier `κ = Unit`" plan.
@@ -330,6 +422,27 @@ install the missing guard for the *class* of statement involved, not just the in
   ASSUMES**: `∃ i` non-pretentious ⇝ `∀ i` non-pretentious, plus `kPointNoExcWith_mono` to pin the
   profile as a degradation-RATE hypothesis.  C3-T4 SERVED/retired, C3-T6 registered.
 
+- 2026-09-25 (review lap): **campaign switch to Elliott** (operator scope, kickoff 2026-09-24).
+  Theorem C' is complete; the Elliott crux is re-decomposed onto the dilation-slice rung and the
+  Dirichlet-character detour is refuted as circular.
+- 2026-09-25 (review lap, laps 36+): slice rung **DEAD** (refuted lap 16); live route is the
+  `a`-dilated graph stack.  Mandate: wire the headline onto it BEFORE finishing the proof.
+- 2026-09-25 (DEEP REFLECTION lap 54): crux CLOSED; verdict CONTINUE.  Leaf 2's **unimodularisation
+  step REFUTED** and replaced by the exact two-point randomisation (multiplicative-first ordering);
+  trigger ET-1 registered; fidelity note recorded (the dependency's Prop is the CM case of Thm 1.3).
+- 2026-09-25 (review lap 83): **HEADLINE PROVED AND AXIOM-CLEAN** (`exists_caseB_threshold` closed).
+  Objective replaced: the `src/`-stated genuinely *multiplicative* form `NonasymptoticLogElliottMult`,
+  the campaign's one remaining fidelity gap.  Trigger ET-1 cleared; trigger EM-1 registered.
+- 2026-09-25 (review lap 92): **input (c) REFUTED in-kernel**; `twoPointElliottLog_of_archimedean_and_density`
+  is vacuous.  Decomposition REVISED to `ElliottTwistRepair` ((c′) above a threshold + (e) below it);
+  rigidity/`PrimeDensityAP` dropped from the critical path; objective is now input (e) first, (c′) second.
+  Trigger EM-1 cleared; trigger EA-1 (boundary-truth audit of every cited input) registered.
+
+- 2026-09-25 (**DEEP REFLECTION lap 112**): route verdict **CONTINUE**, destination RENAMED to
+  "one cited Vinogradov axiom + a built remainder".  Found three of the four live inputs already
+  proved in-repo (`PNTPort.ZetaBounds`, `G4MertensAP`) and corrected the lap-92 claim that
+  `PrimeDensityAP` was proved/off-path — it is an open `Prop` and it is ON the critical path.
+  Order set T1 (c′-I) → T2 `ArchCorrModerate` → T3 `PrimeDensityAP`.  Trigger EP-1 registered.
 
 2026-09-22 correction: `PrefixDecay 4` is false (the k=1 window is identically
 one).  See `G4PrefixDecayAudit.lean` for the proved counterexample and the

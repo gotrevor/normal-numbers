@@ -42,7 +42,7 @@ namespace NormalNumbers
 namespace CastingOut
 
 /-- `∑_{j=1}^{J} j⁻² ≤ 2 − 1/J`, by telescoping.  (Elementary; avoids invoking Basel.) -/
-theorem sum_inv_sq_le (J : ℕ) (hJ : 1 ≤ J) :
+theorem sum_inv_sq_Icc_le_two_sub (J : ℕ) (hJ : 1 ≤ J) :
     ∑ j ∈ Icc 1 J, ((j : ℝ) ^ 2)⁻¹ ≤ 2 - 1 / (J : ℝ) := by
   induction J with
   | zero => omega
@@ -131,7 +131,7 @@ theorem weight_transfer {L a : ℕ} (hL : 0 < L) (haL : a ≤ L) (J : ℕ) (G : 
   · norm_num
     positivity
   · have hsum : ∑ j ∈ Icc 1 J, ((j : ℝ) ^ 2)⁻¹ ≤ 2 := by
-      refine (sum_inv_sq_le J hJ).trans ?_
+      refine (sum_inv_sq_Icc_le_two_sub J hJ).trans ?_
       have : (0 : ℝ) < (J : ℝ) := by exact_mod_cast hJ
       have : 0 < 1 / (J : ℝ) := by positivity
       linarith
@@ -369,7 +369,7 @@ end CastingOut
 end NormalNumbers
 
 -- axiom audit
-#print axioms NormalNumbers.CastingOut.sum_inv_sq_le
+#print axioms NormalNumbers.CastingOut.sum_inv_sq_Icc_le_two_sub
 #print axioms NormalNumbers.CastingOut.weight_transfer
 #print axioms NormalNumbers.CastingOut.elliottLogWindow_pow
 #print axioms NormalNumbers.CastingOut.norm_sum_Ioc_pow_le

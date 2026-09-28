@@ -217,6 +217,182 @@ newest baton `HANDOFF-2026-09-25-5-block-route-refuted-and-rebuilt.md`
 ---
 
 # (below: the Pair A multicutoff campaign — COMPLETE; kept as the durable overview of that work)
+**Tao 2016 Thm 1.3, the general two-point log-Elliott theorem — PROVED and axiom-clean, in both
+the CM and the genuinely multiplicative form.**  (branch `wip/elliott-port`, worktree
+`nn-elliott`).  Pair A multicutoff (Theorem C′) is COMPLETE.  The live frontier is the *downstream
+consumer* `TwoPointElliottLog` for `ζ^{ω}`, whose lap-91 reduction was **refuted in-kernel at lap
+92**, re-decomposed, and — since lap 112 — is known to rest on **four** named classical `Prop`s of
+which **three are already proved, sorry-free, inside this repo**.
+· **Build**: 🟢 green — BOTH `lake build` (9257 jobs) and `lake build NormalNumbers.ElliottAxiomAudit`
+(9684 jobs) are required; the Elliott chain is unreachable from `src/NormalNumbers.lean` because
+`PrimeNumberTheoremAnd.Sobolev` clashes with `PNTPort.Sobolev`. · **Updated**: DEEP REFLECTION lap
+112 · 2026-09-25 · HEAD `44e3cbb`+
+
+## Where it stands (Elliott campaign)
+
+**Done, and frozen.**  `NormalNumbers.ElliottGeneral.nonasymptoticLogElliott :
+Erdos67b.NonasymptoticLogElliott` and the genuinely multiplicative
+`…nonasymptoticLogElliottMult` are **theorems**, `#print axioms` = `[propext, Classical.choice,
+Quot.sound]`.  Re-verified lap 112 from the compiler, not from a handoff: all **153** audited
+Elliott theorems print the trust triple, a scan of all 446 axiom lines the audit build emits finds
+**zero `sorryAx`**, and the Elliott scope of `src/` holds **zero `sorry`**.  The ladder over the
+dependency's proved `Erdos67b.unitCircleLogElliott` is complete in all three rungs: the crux
+`ElliottDilatedRung.dilatedCMLogElliott` (the `a`-dilated two-function graph/Fourier/entropy stack,
+~20 files, laps 17–46), `ElliottLadder.affineCM_of_dilatedCM` (Tao's full affine generality) and
+`ElliottLeafTwo.nonasymptotic_of_affineCM` (1-bounded ⟸ unimodular; Case B landed lap 83).
+
+**The live frontier, stated honestly.**  The open work is the downstream consumer
+`ElliottTwoPointLog.TwoPointElliottLog b p q t` — the *logarithmically* averaged two-point
+correlation of `ζ^{ω(pn+1)}` — which follows from the proved headline once `ζ^ω` is shown
+`UniformlyNonPretentious`.  Lap 92 refuted the first reduction of that
+(`ElliottArchimedeanRefuted.not_archimedeanCorrelationBound`: input (c)'s frequency range reached
+`|v| ≈ 1/log X`, where the claimed bound is false), and `ElliottTwistRepair` +
+`ElliottArchBands` re-derived the payoff from a four-way band split.  Laps 97–111 then turned the
+two soft bands from citations into (almost) proofs: the damping, the interchange, the geometric
+decay, the free slice cutoff, `logTail_le`, Mertens I with **sharp constant 1** (which made the
+harmonic clause of both inputs a *theorem*), the pole-local and whole sub-unit `ζ'/ζ` bounds with
+**no zero-free region**, the prime-power correction, and the exact bridge
+`slice = ∑_{p≤Y} LSeries.term ↗Λ s p`.
+
+**Lap 112's course correction.**  Three of the four remaining inputs are reachable from
+sorry-free material **already in this repo**: `src/PNTPort/ZetaBounds.lean` (3142 lines, 0 `sorry`,
+3597 jobs) proves `ZetaZeroFree9` and `LogDerivZetaBndUnif99` — a de la Vallée Poussin-strength
+zero-free region and `‖ζ'/ζ(σ+it)‖ ≤ C(log|t|)⁹` — all trust-triple; and
+`src/NormalNumbers/G4MertensAP.lean` proves `mertensRate_residueClass`, which is the whole content
+of `PrimeDensityAP`.  They were cited rather than used because `import
+PrimeNumberTheoremAnd.ZetaBounds` **fails** (`lean-proofs-latest` declares a partial `lean_lib` of
+that name that shadows the real package); **the working import is `import PNTPort.ZetaBounds`.**
+The exponent `9` is free at the consumer (restate the moderate band at `T = (log(|v|+16))^{-9}`;
+the height cut moves to `exp((log X)^{(1−ν)/9})`).
+
+**The one real wall.**  `ArchCorrNearMaxHeight` — a *proportional* saving on `∑_{p≤X}p^{-iv}/p` for
+`exp((log X)^{1−ν}) < |v| ≤ A²X`.  At `|v| ≍ X` the trivial `|ζ(1+it)| ≪ log t` saves nothing, the
+free abscissa `σ = 1+λ/log X` gains `log λ` on the main term and loses `log λ + γ` on the
+truncation (exact cancellation), and 3-4-1 bounds `|ζ|` from below, the wrong direction.  Beating it
+needs `|ζ(1+it)| ≪ (log t)^{2/3}`, i.e. **Vinogradov's mean value theorem**.  Independently
+re-derived at lap 112; this is the designated cited 🟠 axiom.
+
+**Statement-fidelity note (re-checked lap 112 against the source).**
+`Erdos67b.IsMultiplicativeOnPositiveInt` carries **no coprimality hypothesis**, i.e. it is
+*complete* multiplicativity, so the dependency's `NonasymptoticLogElliott` is Tao 2016 Thm 1.3
+restricted to completely multiplicative `g₁,g₂`.  That gap is CLOSED in `src/` by
+`ElliottMultStatement.NonasymptoticLogElliottMult` (lap 84), which matches Tao clause for clause:
+`a₁b₂−a₂b₁≠0`, `∃A₀` depending on `ε,aᵢ,bᵢ`, `A₀ ≤ A ≤ W ≤ X`, `|gᵢ| ≤ 1`, `g₁` non-pretentious over
+`q ≤ A` **and `|t| ≤ A·X`**, conclusion `≤ ε·log W`.  No transcription drift.
+
+**Scope note, so no lap overstates it.**  `TwoPointElliottLog` is the **logarithmic** average.
+C1's actual leaf `CastingOut.TwoPointElliott` (consumed by `PairDecoupleTwoPoint`) is the
+**natural** average, and the passage between them is a separate, known-open, Chowla-strength
+problem.  Nothing in `src/` currently consumes `TwoPointElliottLog`.
+
+## What's happened (Elliott campaign, newest first)
+
+- **2026-09-25 (DEEP REFLECTION lap 112) — ROUTE VERDICT CONTINUE; THREE OF FOUR "CITED" INPUTS
+  ARE ALREADY IN THE REPO.**  No registered trigger fired (EA-1 actively honoured by laps 95/96/103).
+  Found `PNTPort.ZetaBounds` (`ZetaZeroFree9`, `LogDerivZetaBndUnif99`, trust-triple, 0 `sorry`) and
+  `G4MertensAP.mertensRate_residueClass`, and the `import PrimeNumberTheoremAnd.*` shadowing bug
+  that hid them.  Corrected the lap-92 claim that `PrimeDensityAP` was proved and off-path — it is
+  an open `Prop` **on** the critical path.  Destination renamed to "one cited Vinogradov axiom +
+  a built remainder"; order set T1 (c′-I) → T2 `ArchCorrModerate` → T3 `PrimeDensityAP`; trigger
+  EP-1 (provenance of every cited input) registered.
+- **2026-09-25 (laps 103–111) — (c′-I) TAKEN APART, ONE ASSEMBLY STEP LEFT.**  Lap 103 repaired a
+  fidelity bug (lap 102's Props claimed the pole bound for the *truncated* sum at every `Y`; the
+  damping is tuned to `X`, so the cutoff is free at `sliceCut X = exp((log X)²)`).  Then
+  `logTail_le` (105), `sum_log_rpow_le` with **coefficient exactly 1** making the harmonic clause a
+  theorem (106), `exists_pole_local_bound` with **no zero-free region** (107),
+  `exists_subunit_logDeriv_bound` (108), `sum_pairs_le` (109), `slice_eq_sum_term` (110),
+  `sum_complement_le` (111).  All sorry-free, all in the audit surface.
+- **2026-09-25 (laps 95–102)** — (c′) split into bands, the Vinogradov wall isolated at
+  near-maximal height only (`ArchCorrNearMaxHeight`); van der Corput refuted as a route to a
+  *proportional* saving; the damping/interchange/decay/integration chain reduced both soft inputs
+  to pure `ζ'/ζ` slice statements.
+- **2026-09-25 (laps 92–94) — INPUT (c) REFUTED IN-KERNEL, AND REPAIRED.**
+  `ElliottArchimedeanRefuted.not_archimedeanCorrelationBound` kills the lap-91 reduction, so
+  `twoPointElliottLog_of_archimedean_and_density` is vacuous.  `ElliottTwistRepair` re-derives the
+  payoff from `AlmostRealTwist` + a threshold split; input (e) discharged by scale reduction (93),
+  `(e)` fully proved (94).
+- **2026-09-25 (laps 84–91)** — fidelity gap CLOSED (`nonasymptoticLogElliottMult`), then the
+  consumer built and its hypothesis decomposed: `zetaOmegaInt`, `UniformlyNonPretentious`,
+  `TwistModulusDichotomy`, the power bootstrap `Δ_k ≤ k√(2ΔM)`, Euler killing the character, and
+  rigidity from `PrimeDensityAP`.
+- **2026-09-25 (lap 83) — THE HEADLINE IS PROVED AND AXIOM-CLEAN.**  `exists_caseB_threshold`, the
+  last open obligation, discharged in `ElliottCaseB.lean`; `nonasymptoticLogElliott` prints the bare
+  trust triple and the Elliott scope holds zero `sorry`.
+
+## Outstanding (Elliott campaign)
+
+### Short-term (mirrors PENDING_WORK top)
+1. **T1 — `ElliottDamped.SliceCapSmall`** (= (c′-I)).  One assembly step: read `L ↗Λ s = −ζ'/ζ(s)`
+   (`LSeries_vonMangoldt_eq_deriv_riemannZeta_div`), split off the complement with
+   `Finset.sum_add_tsum_compl` + `tsum_le_of_sum_le` + `sum_complement_le`, identify the finite part
+   by `slice_eq_sum_term`, then apply `exists_subunit_logDeriv_bound` at
+   `s = sliceAbscissa X w v` (`‖s−1‖ ≥ max(δ+w,|v|) ≥ T`).  **Do this first: it is the smallest
+   probe of the bridge that T2 also depends on.**
+2. **T2 — `ElliottArchBands.ArchCorrModerate`** from `PNTPort.ZetaBounds.LogDerivZetaBndUnif99`,
+   via an exponent-9 restatement of `SliceCapModerate`/`SliceBoundModerate`/
+   `DampedSeriesBoundModerate` and a compactness patch for `1 < |v| ≤ 3`.  Then rescale the height
+   cut in `archCorrLargeShift_of_moderate_and_nearMax` by the constant.
+3. **T3 — `ElliottCharRigidity.PrimeDensityAP`** from `G4MertensAP.mertensRate_residueClass` plus
+   the two-sided `Erdos67b.PrimeEstimates.abs_primeReciprocals_sub_log_log_le`.
+4. Trigger EP-1 on every new input `Prop`: record the provenance search in its docstring.
+
+### Long-term
+`ArchCorrNearMaxHeight` (Vinogradov's mean value theorem) — the single designated cited axiom.
+And, separately and not attempted here, the passage from the logarithmic average back to
+`TwoPointElliott`'s natural average (C1's actual leaf), which is not known in general.
+
+### To completion
+T1 ≈ 1 lap, T3 ≈ 1–2 laps, T2 ≈ 3–6 laps (mostly plumbing the exponent through four `Prop`s).
+After those, the campaign's stated endpoint is reached: **one cited 🟠 axiom + a built remainder.**
+`ArchCorrNearMaxHeight` itself is open-ended (Vinogradov), chipped opportunistically only.
+
+## Axiom ledger — Elliott campaign (real `#print axioms`, DEEP REFLECTION lap 112, 2026-09-25, from `ElliottAxiomAudit`, 9684 jobs)
+
+| headline theorem | paper claim | `#print axioms` shows | status |
+|---|---|---|---|
+| `ElliottGeneral.nonasymptoticLogElliott` | Tao 2016 Thm 1.3 (**CM case**, see fidelity note), unconditional | `[propext, Classical.choice, Quot.sound]` | ✅ **PROVED**, trust triple, no `sorry` |
+| `ElliottGeneral.nonasymptoticLogElliottMult` | Tao 2016 Thm 1.3, **genuinely multiplicative**, unconditional | trust triple | ✅ **PROVED** (lap 84) — the fidelity gap, closed |
+| `ElliottLeafTwo.nonasymptotic_of_affineCM` | `1`-bounded multiplicative ⟸ CM unimodular | trust triple | ✅ (lap 82 shell, lap 83 Case B) |
+| `ElliottLeafTwo.exists_caseA_thin_threshold` | leaf 2, Case A (defect large), **all** windows | trust triple | ✅ (lap 70) |
+| `ElliottCaseB.exists_caseB_threshold` | leaf 2, Case B (defect small) | trust triple | ✅ (lap 83) |
+| `ElliottLadder.affineCM_of_dilatedCM` | Tao's affine reduction | trust triple | ✅ |
+| `ElliottDilatedRung.dilatedCMLogElliott` | **the crux** — two functions, common dilation | trust triple | ✅ (lap 46) |
+| `ElliottTwistedGraph.shiftCMLogElliott`, `ElliottTwoShift.twoShiftCMLogElliott` | the shift cases | trust triple | ✅ |
+| `ElliottRankin.exists_squarefull_tail_bound` | uniform squarefull tail (Rankin shift) | trust triple | ✅ (lap 62) |
+| `ElliottRandomize.exists_cover_pair_ge` | the exact two-point unimodular cover | trust triple | ✅ (lap 54+) |
+| `ElliottPretentiousTransfer.mrtNonpretentious_transfer` | the deterministic pretentious transfer | trust triple | ✅ (lap 55) |
+| `ElliottHall.sum_Icc_dyadic_le` | thin-window logarithmic sum (Halberstam–Richert) | trust triple | ✅ (lap 53) |
+| `Erdos67b.unitCircleLogElliott` (dependency) | the proved special case | trust triple | ✅ |
+| `ElliottArchimedeanRefuted.not_archimedeanCorrelationBound` | *refutation*: input (c) is false | trust triple | ✅ (lap 92) — a `¬` theorem, the honest kind of progress |
+| `ElliottZetaPole.exists_pole_local_bound`, `ElliottZetaPole.exists_subunit_logDeriv_bound` | `‖ζ'/ζ(s)‖ ≤ 1/‖s−1‖+K` on the sub-unit band, **no zero-free region** | trust triple | ✅ (laps 107–108) |
+| `ElliottBridge.slice_eq_sum_term`, `ElliottBridge.sum_complement_le`, `ElliottPrimePower.sum_pairs_le` | the slice ↔ `L ↗Λ` bridge | trust triple | ✅ (laps 109–111) |
+| `PNTPort.ZetaBounds`: `ZetaZeroFree9`, `LogDerivZetaBndUnif99`, `triv_bound_zeta` | de la Vallée Poussin zero-free region; `‖ζ'/ζ‖ ≤ C(log\|t\|)⁹` | trust triple (verified lap 112) | ✅ **in-repo, 0 `sorry`** — import as `PNTPort.ZetaBounds`, NOT `PrimeNumberTheoremAnd.ZetaBounds` |
+| `G4MertensAP.mertensRate_residueClass` | Mertens for a unit residue class | trust triple | ✅ in-repo |
+| `ElliottArchBands.twoPointElliottLog_of_three_bands` | C1's two-point leaf in log average | trust triple, **conditional on the four `Prop`s below** | 🟡 live frontier |
+| `ElliottCharRigidity.twoPointElliottLog_of_archimedean_and_density` | *superseded* | trust triple, but **VACUOUS** — hypothesis (c) refuted | ⛔ do not build on it (lap 92) |
+
+### The FOUR open hypotheses of the live frontier (not axioms, not `sorry` — named `Prop`s)
+
+| input | statement | bucket |
+|---|---|---|
+| **(c′-I)** `ElliottDamped.SliceCapSmall K` | `w ≤ T ⟹ ‖logWeightedSlice v X Y w‖ ≤ T⁻¹+K`, `\|v\| ≤ 1` | 🟡 project-scale — **one assembly step**; all four supporting lemmas proved (laps 105–111) |
+| **(c′-II-a)** `ElliottArchBands.ArchCorrModerate K` | `\|v\| > 1 ⟹ ‖archCorr v X‖ ≤ log log(\|v\|+16)+K` | 🟡 project-scale — **reachable now** from in-repo `LogDerivZetaBndUnif99`, with constant 9 |
+| **(d1)** `ElliottCharRigidity.PrimeDensityAP A` | every unit class mod `q ≤ A` carries a fixed proportion of the prime mass | 🟡 project-scale — **reachable now** from in-repo `G4MertensAP.mertensRate_residueClass` |
+| **(c′-II-b)** `ElliottArchBands.ArchCorrNearMaxHeight A ν η K` | proportional saving on `exp((log X)^{1−ν}) < \|v\| ≤ A²X` | 🟠 proven, GENERATIONAL — Vinogradov's mean value theorem (named reason: no VMVT in mathlib, and the trivial/vdC/3-4-1 routes are each refuted in `ElliottArchBands`'s docstring).  Cited axiom + build plan; chipped opportunistically. |
+
+Math-axiom count for the Elliott campaign: **0** (🟢 0 · 🟡 0 · 🟠 0 · 🔴 0), and **0 open `sorry`**
+in the Elliott scope.  The four open obligations above are *hypotheses on a theorem*, never axioms —
+which is why lap 92's refutation could be a theorem rather than a retraction.  `#print axioms`
+certifies proofs, not statements — the statement anchor is that the headline's *type* is the
+dependency's own `Prop`, which this repo never edits, plus the fidelity note above.
+
+## Pointers (Elliott)
+
+`KICKOFF-2026-09-24-elliott-general.md` · newest baton `HANDOFF-elliott-2026-09-25-lap112.md` ·
+`PENDING_WORK.md` top section (Reflection — 2026-09-25, lap 112) · `DIRECTION.md` CURRENT DIRECTIVE ·
+audit surface `src/NormalNumbers/ElliottAxiomAudit.lean` · `ROUTE-ESCALATION-2026-09-25-archimedean.md`.
+
+---
 
 ## Where it stands (multicutoff campaign)
 
