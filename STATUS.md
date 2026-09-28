@@ -1,10 +1,41 @@
 # STATUS — normal-numbers 📊
 
-State at the post-merge checkpoint of 2026-09-27 (`f5034b6` onward), on branch
-`wip/g5-prime-subset`, Lean/mathlib v4.33.1.  One checkout, every campaign branch merged, and
-`lake build` green.  The per-campaign detail and ledgers from before the merge are in
-`archive/STATUS-to-2026-09-27.md`, and the lap-by-lap log is in
-`archive/PENDING_WORK-to-2026-09-27.md`.
+**Digit-reading dynamics of real numbers: normality, disjunctivity, CF-normality, and the
+richness of arithmetic constants.** · **Build**: 🟢 green (10313 jobs) · **Updated**: lap 1 ·
+2026-09-28 · `cedcf6f`
+
+One checkout on `wip/g5-prime-subset`, Lean/mathlib v4.33.1, every campaign branch merged
+(2026-09-27, `f5034b6`).  Per-campaign detail and ledgers from before the merge are in
+`archive/STATUS-to-2026-09-27.md`; the lap-by-lap log is `archive/PENDING_WORK-to-2026-09-27.md`.
+
+## Where it stands
+
+The live target is **Vandehey 2017 Theorem 1.1** (Möbius images of CF-normal numbers are
+CF-normal), which is down to the single leaf `MobiusCFNScale`: `x ↦ p·x` for prime `p`.  Smith
+descent and Serret killed composite determinants, the diagonal factor, division and all of
+`GL₂(ℤ)`.  The leaf needs Vandehey's transducer programme; its *input* side (Raney normal forms
+§2, the bijectivity-free transfer-operator pin, Doeblin minorization at a common target) is
+built, and as of lap 1 its *output* side (§4.3 Cesàro counting, §5 triggers, §6 assembly) is
+open in `VandeheyOutputFreq.lean` with the upper-bound engine in the kernel.  Four other fronts
+carry proved-but-conditional headlines (Joint Lambert, C3/MRT, Elliott, the casting-out crux
+leaves); their hypotheses are the standing debt.
+
+## What's happened (newest first)
+
+- **2026-09-28 (lap 1, review).**  Course-corrected: three laps had gone into the transducer's
+  input side while the route-decisive output side was untouched.  `VandeheyOutputFreq.lean`
+  opened with the factorized joint-frequency hypothesis `JointStateFreq δ s₀ ν` (limit
+  `ν t · γ(I_q)` — the product form our ψ-mixing gives and Vandehey's Remark 3.6 does not),
+  `gaussMeasure_allWordsEvent`, the finite digit-truncated escape
+  `exists_boundedWords_sum_gt`, the pointwise split `wCount_le_of_finset`, and the engine
+  `eventually_wCount_le`.  Guard rule discharged.  `DIRECTION.md` now carries a binding
+  CURRENT DIRECTIVE.
+- **2026-09-28.**  Vandehey §2 rebuilt on Raney normal form after refuting the paper's own
+  Lemma 2.1 descent (`Mat2.vandeheyStep_not_terminating`); the transfer-operator pin freed of
+  bijectivity; Doeblin at a single common target.
+- **2026-09-28.**  Serret leaf discharged (`mobiusCFNGL2_holds`); Smith reduction to
+  `MobiusCFNScale`; `moshchevitinShkredov_cf_false` proved; `UniformResonantMass` discharged.
+- **2026-09-27.**  Every campaign branch merged into one checkout (`f5034b6`).
 
 ## Open fronts
 
@@ -128,6 +159,33 @@ These are the ratified conjecture nodes.  They are open by design, and none is s
   `FamilyGraded.isNormal_subsetLambert_of_sqrtFreshMassZero`, unconditional.
 - **C4 (2026-09-25).**  `Abelian.c4_realizable`, plus the odd and finite-complement variants.
 - **Elliott, Tao 2016 Thm 1.3.**  Two-point log-Elliott, in both the CM and multiplicative forms.
+
+## Axiom ledger (the fidelity spine)
+
+Math-axiom count excludes the trust base (`propext`, `Classical.choice`, `Quot.sound`).
+This repo holds **no `axiom` declarations**: literature inputs are named hypothesis `Prop`s
+(standing rule 3), so debt shows up as a hypothesis on the theorem, not in `#print axioms`.
+`sorryAx` on a headline means a disclosed open crux, and is listed as such.
+
+| headline theorem | paper claim | `#print axioms` shows | status |
+| --- | --- | --- | --- |
+| `Literature.vandehey_matrix_action_holds` | unconditional (Vandehey 2017 Thm 1.1) | trust base + `sorryAx` | 🟡 open crux `vandeheyUniformFreq_holds`; current frontier; next prerequisite = the §5–§6 output engine (`VandeheyOutputFreq.lean`) then the Raney common-target reach |
+| `Literature.vandeheyUniformFreq_of_scale` | — (reduction) | trust base | 🟢 clean; reduces Thm 1.1 to `MobiusCFNScale` |
+| `Literature.mobiusCFNGL2_holds` | unconditional (Serret) | trust base | 🟢 clean, discharged |
+| `Literature.philipp_psi_mixing_holds` | unconditional (Philipp) | trust base | 🟢 clean, discharged |
+| `moshchevitinShkredov_cf_false` | refutation (Airey–Mance) | trust base | 🟢 clean |
+| `JointLambert.jointLambertDisjunctivity` | conditional on `AGP`, `PrimeIntervalSupply` | trust base | 🟡 both hypotheses are PNT-in-AP strength; next prerequisite = `PrimeIntervalSupply` from the Erdős 446 dyadic prime bound |
+| `CastingOut.conjC3_of_geom_input_band'` | conditional (C3, open conjecture) | trust base | 🔴 by design: `KPointNoExcAtWith` is Tao–Teräväinen-hard, `CharPrimeSumLogQ` needs Dirichlet L-theory, `WideBlockSavingBand` is bespoke.  C3 is itself a conjecture, so a conditional headline is the honest form |
+| `ElliottLedger.twoPointElliottLog_of_zetaExponent` | conditional on `ZetaLogDerivExponent θ`, `θ < 1` | trust base | 🟡 Vinogradov–Korobov gives `θ = 2/3`; repo owns `θ ≥ 9`; gap recorded as `zetaLogDerivExponent_gap` |
+
+**Done** would be: every headline's base is the trust base alone, with 🔴 only where the paper
+is itself conditional.  Today the one 🟡 with a live attack is the Vandehey crux.
+
+## Pointers
+
+`ROADMAP.md` (frozen plan) · `DIRECTION.md` **CURRENT DIRECTIVE** (binding, altitude-owned) ·
+newest baton `HANDOFF.md` / `archive/handoff/HANDOFF-2026-09-28-*` · `PENDING_WORK.md` (queue) ·
+`JUDGE.md` (statement freezing) · `src/NormalNumbers/Maze.lean` (refuted routes, as Lean data).
 
 ## Map of the repo
 - `src/NormalNumbers.lean`: the root import.  `lake build` covers every module except the
