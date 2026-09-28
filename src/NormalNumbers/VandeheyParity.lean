@@ -449,6 +449,284 @@ theorem abs_integral_devFun_prodStep_mul_sub_le {c C θ : ℝ} (hC : 0 ≤ C) (h
 
 end Pin
 
+/-! ## The variance bound for the periodic automaton -/
+
+section Variance
+
+variable (δ : S → ℕ → S) (d t : S) (η p : ZMod 2) (q : List ℕ)
+
+/-- The mean part of the two-point integral, as a function of the pair: an alternation in the
+larger index times the residue at the smaller one. -/
+noncomputable def altMean (c : ℝ) (k k' : ℕ) : ℝ :=
+  (if k + q.length ≤ k' then selSign η p k' * altResidue δ d t η p q c k else 0)
+    + (if k' + q.length ≤ k then selSign η p k * altResidue δ d t η p q c k' else 0)
+
+/-- **The unified alternating correlation bound**, valid for every pair of positions. -/
+theorem abs_integral_devFun_prodStep_mul_sub_altMean_le {c C θ : ℝ} (hC : 0 ≤ C) (hθ0 : 0 ≤ θ)
+    (hc0 : 0 ≤ c) (hc1 : c ≤ 1) (hq : 1 ≤ q.length)
+    (hpin : ∀ (n : ℕ) (e : S) (τ : ℝ), τ ∈ Set.Icc (0 : ℝ) 1 →
+      |stateHorizonIntegral δ (cfCylinder q) n e t τ
+          - c * (gaussMeasure (cfCylinder q)).toReal|
+        ≤ C * θ ^ n * (gaussMeasure (cfCylinder q)).toReal)
+    (k k' : ℕ) :
+    |(∫ y, devFun (prodStep δ) (d, η) (t, p) q (c / 2) k y
+          * devFun (prodStep δ) (d, η) (t, p) q (c / 2) k' y ∂gaussMeasure)
+        - altMean δ d t η p q c k k'|
+      ≤ max 1 (2 * (C + 1)) * max θ (79 / 100) ^ gapExp q.length k k' := by
+  set M : ℝ := max 1 (2 * (C + 1)) with hMdef
+  set ρ : ℝ := max θ (79 / 100) with hρdef
+  have hM1 : (1 : ℝ) ≤ M := le_max_left _ _
+  have hM2 : 2 * (C + 1) ≤ M := le_max_right _ _
+  have hρ0 : 0 ≤ ρ := le_trans hθ0 (le_max_left _ _)
+  have hc20 : (0 : ℝ) ≤ c / 2 := by linarith
+  have hc21 : c / 2 ≤ 1 := by linarith
+  rcases le_or_gt (k + q.length) k' with hcase | hcase
+  · -- `k' = k + |q| + n`
+    have hne : ¬ (k' + q.length ≤ k) := by omega
+    have hgap : gapExp q.length k k' = k' - k - q.length := by rw [gapExp]; omega
+    have hk' : k' = k + q.length + (k' - k - q.length) := by omega
+    rw [altMean, if_pos hcase, if_neg hne, add_zero, hgap]
+    have h := abs_integral_devFun_prodStep_mul_sub_le δ d t η p q hC hθ0 hc0 hc1 hpin k
+      (k' - k - q.length)
+    rw [← hk'] at h
+    refine le_trans h ?_
+    exact mul_le_mul_of_nonneg_right hM2 (pow_nonneg hρ0 _)
+  · rcases le_or_gt (k' + q.length) k with hcase2 | hcase2
+    · have hne : ¬ (k + q.length ≤ k') := by omega
+      have hgap : gapExp q.length k k' = k - k' - q.length := by rw [gapExp]; omega
+      have hk : k = k' + q.length + (k - k' - q.length) := by omega
+      rw [altMean, if_neg hne, if_pos hcase2, zero_add, hgap]
+      have hcomm : (∫ y, devFun (prodStep δ) (d, η) (t, p) q (c / 2) k y
+            * devFun (prodStep δ) (d, η) (t, p) q (c / 2) k' y ∂gaussMeasure)
+          = ∫ y, devFun (prodStep δ) (d, η) (t, p) q (c / 2) k' y
+            * devFun (prodStep δ) (d, η) (t, p) q (c / 2) k y ∂gaussMeasure := by
+        refine integral_congr_ae (Filter.Eventually.of_forall fun y => ?_)
+        ring
+      rw [hcomm]
+      have h := abs_integral_devFun_prodStep_mul_sub_le δ d t η p q hC hθ0 hc0 hc1 hpin k'
+        (k - k' - q.length)
+      rw [← hk] at h
+      refine le_trans h ?_
+      exact mul_le_mul_of_nonneg_right hM2 (pow_nonneg hρ0 _)
+    · -- the overlapping band
+      have hne1 : ¬ (k + q.length ≤ k') := by omega
+      have hne2 : ¬ (k' + q.length ≤ k) := by omega
+      have hgap : gapExp q.length k k' = 0 := by rw [gapExp]; omega
+      rw [altMean, if_neg hne1, if_neg hne2, add_zero, sub_zero, hgap, pow_zero, mul_one]
+      exact le_trans (abs_integral_devFun_mul_le_one (prodStep δ) (d, η) (t, p) q hc20 hc21 k k')
+        hM1
+
+/-- **The variance bound for the periodic product automaton.**  Identical in form to
+`integral_devAvg_sq_le`, with `2` added to the constant: the alternating mean part contributes
+`O(K)` to the double sum because `selSign` cancels over contiguous ranges. -/
+theorem integral_devAvg_prodStep_sq_le {c C θ : ℝ} (hC : 0 ≤ C) (hθ0 : 0 ≤ θ) (hθ1 : θ < 1)
+    (hc0 : 0 ≤ c) (hc1 : c ≤ 1) (hq : 1 ≤ q.length)
+    (hpin : ∀ (n : ℕ) (e : S) (τ : ℝ), τ ∈ Set.Icc (0 : ℝ) 1 →
+      |stateHorizonIntegral δ (cfCylinder q) n e t τ
+          - c * (gaussMeasure (cfCylinder q)).toReal|
+        ≤ C * θ ^ n * (gaussMeasure (cfCylinder q)).toReal)
+    {K : ℕ} (hK : 0 < K) :
+    ∫ y, devAvg (prodStep δ) (d, η) (t, p) q (c / 2) K y ^ 2 ∂gaussMeasure
+      ≤ (2 + (max 1 (2 * (C + 1)) * (2 * q.length + 1)
+          + 2 * (max 1 (2 * (C + 1)) * (1 - max θ (79 / 100))⁻¹))) / K := by
+  classical
+  set M : ℝ := max 1 (2 * (C + 1)) with hMdef
+  set ρ : ℝ := max θ (79 / 100) with hρdef
+  have hM1 : (1 : ℝ) ≤ M := le_max_left _ _
+  have hρ0 : 0 ≤ ρ := le_trans hθ0 (le_max_left _ _)
+  have hρ1 : ρ < 1 := max_lt hθ1 (by norm_num)
+  set B₀ : ℝ := M * (2 * q.length + 1) + 2 * (M * (1 - ρ)⁻¹) with hB₀
+  have hc20 : (0 : ℝ) ≤ c / 2 := by linarith
+  have hc21 : c / 2 ≤ 1 := by linarith
+  have hKR : (0 : ℝ) < K := by exact_mod_cast hK
+  set R : ℕ → ℝ := altResidue δ d t η p q c with hR
+  have hR1 : ∀ k, |R k| ≤ 1 := fun k => abs_altResidue_le_one δ d t η p q hc0 hc1 k
+  set g : ℕ → ℕ → ℝ → ℝ :=
+    fun k k' y => devFun (prodStep δ) (d, η) (t, p) q (c / 2) k y
+      * devFun (prodStep δ) (d, η) (t, p) q (c / 2) k' y with hg
+  have hint : ∀ k k' : ℕ, Integrable (g k k') gaussMeasure :=
+    fun k k' => integrable_devFun_mul (prodStep δ) (d, η) (t, p) q hc20 hc21 k k'
+  have hintrow : ∀ k : ℕ, Integrable (fun y => ∑ k' ∈ Finset.range K, g k k' y) gaussMeasure :=
+    fun k => integrable_finsetSum _ fun k' _ => hint k k'
+  have hpt : ∀ y : ℝ, devAvg (prodStep δ) (d, η) (t, p) q (c / 2) K y ^ 2
+      = (K : ℝ)⁻¹ ^ 2 * ∑ k ∈ Finset.range K, ∑ k' ∈ Finset.range K, g k k' y := by
+    intro y
+    rw [devAvg, mul_pow,
+      pow_two (∑ k ∈ Finset.range K, devFun (prodStep δ) (d, η) (t, p) q (c / 2) k y),
+      Finset.sum_mul_sum]
+  have hsplit : ∫ y, devAvg (prodStep δ) (d, η) (t, p) q (c / 2) K y ^ 2 ∂gaussMeasure
+      = (K : ℝ)⁻¹ ^ 2 * ∑ k ∈ Finset.range K, ∑ k' ∈ Finset.range K,
+          ∫ y, g k k' y ∂gaussMeasure := by
+    calc ∫ y, devAvg (prodStep δ) (d, η) (t, p) q (c / 2) K y ^ 2 ∂gaussMeasure
+        = ∫ y, ((K : ℝ)⁻¹ ^ 2 * ∑ k ∈ Finset.range K, ∑ k' ∈ Finset.range K, g k k' y)
+            ∂gaussMeasure := by simp only [hpt]
+      _ = (K : ℝ)⁻¹ ^ 2 *
+            ∫ y, (∑ k ∈ Finset.range K, ∑ k' ∈ Finset.range K, g k k' y) ∂gaussMeasure :=
+          integral_const_mul _ _
+      _ = (K : ℝ)⁻¹ ^ 2 * ∑ k ∈ Finset.range K,
+            ∫ y, (∑ k' ∈ Finset.range K, g k k' y) ∂gaussMeasure := by
+          rw [integral_finsetSum _ fun k _ => hintrow k]
+      _ = (K : ℝ)⁻¹ ^ 2 * ∑ k ∈ Finset.range K, ∑ k' ∈ Finset.range K,
+            ∫ y, g k k' y ∂gaussMeasure := by
+          refine congrArg _ (Finset.sum_congr rfl fun k _ => ?_)
+          rw [integral_finsetSum _ fun k' _ => hint k k']
+  -- the error part: the existing geometric majorant, row by row
+  have herr : |∑ k ∈ Finset.range K, ∑ k' ∈ Finset.range K,
+        ((∫ y, g k k' y ∂gaussMeasure) - altMean δ d t η p q c k k')| ≤ (K : ℝ) * B₀ := by
+    refine le_trans (Finset.abs_sum_le_sum_abs _ _) ?_
+    have hrow : ∀ k, |∑ k' ∈ Finset.range K,
+        ((∫ y, g k k' y ∂gaussMeasure) - altMean δ d t η p q c k k')| ≤ B₀ := by
+      intro k
+      refine le_trans (Finset.abs_sum_le_sum_abs _ _) ?_
+      calc ∑ k' ∈ Finset.range K, |(∫ y, g k k' y ∂gaussMeasure)
+              - altMean δ d t η p q c k k'|
+          ≤ ∑ k' ∈ Finset.range K, M * ρ ^ gapExp q.length k k' :=
+            Finset.sum_le_sum fun k' _ =>
+              abs_integral_devFun_prodStep_mul_sub_altMean_le δ d t η p q hC hθ0 hc0 hc1 hq
+                hpin k k'
+        _ ≤ B₀ := sum_gap_majorant_le q.length K k hM1 hρ0 hρ1
+    calc ∑ k ∈ Finset.range K, |∑ k' ∈ Finset.range K,
+            ((∫ y, g k k' y ∂gaussMeasure) - altMean δ d t η p q c k k')|
+        ≤ ∑ _k ∈ Finset.range K, B₀ := Finset.sum_le_sum fun k _ => hrow k
+      _ = (K : ℝ) * B₀ := by rw [Finset.sum_const, Finset.card_range, nsmul_eq_mul]
+  -- the mean part: the alternation cancels over each inner range
+  have hinner : ∀ a : ℕ,
+      |∑ j ∈ (Finset.range K).filter (fun j => a ≤ j), selSign η p j| ≤ 1 := by
+    intro a
+    have hfil : (Finset.range K).filter (fun j => a ≤ j) = Finset.Ico a K := by
+      ext j
+      simp only [Finset.mem_filter, Finset.mem_range, Finset.mem_Ico]
+      omega
+    rw [hfil]
+    exact abs_sum_selSign_le η p a K
+  have hhalf : ∀ b : ℕ → ℕ,
+      |∑ k ∈ Finset.range K, ∑ k' ∈ Finset.range K,
+        (if b k ≤ k' then selSign η p k' * R k else 0)| ≤ (K : ℝ) := by
+    intro b
+    have hrw : ∀ k, (∑ k' ∈ Finset.range K, (if b k ≤ k' then selSign η p k' * R k else 0))
+        = (∑ k' ∈ (Finset.range K).filter (fun j => b k ≤ j), selSign η p k') * R k := by
+      intro k
+      rw [Finset.sum_mul, ← Finset.sum_filter]
+    rw [Finset.sum_congr rfl fun k _ => hrw k]
+    refine le_trans (Finset.abs_sum_le_sum_abs _ _) ?_
+    calc ∑ k ∈ Finset.range K,
+          |(∑ k' ∈ (Finset.range K).filter (fun j => b k ≤ j), selSign η p k') * R k|
+        ≤ ∑ _k ∈ Finset.range K, (1 : ℝ) := by
+          refine Finset.sum_le_sum fun k _ => ?_
+          rw [abs_mul]
+          exact mul_le_one₀ (hinner (b k)) (abs_nonneg _) (hR1 k)
+      _ = (K : ℝ) := by rw [Finset.sum_const, Finset.card_range, nsmul_eq_mul, mul_one]
+  have hmean : |∑ k ∈ Finset.range K, ∑ k' ∈ Finset.range K, altMean δ d t η p q c k k'|
+      ≤ 2 * (K : ℝ) := by
+    have hd : ∀ k k' : ℕ, altMean δ d t η p q c k k'
+        = (if k + q.length ≤ k' then selSign η p k' * R k else 0)
+          + (if k' + q.length ≤ k then selSign η p k * R k' else 0) := by
+      intro k k'
+      rw [altMean, hR]
+    have hexp : ∑ k ∈ Finset.range K, ∑ k' ∈ Finset.range K, altMean δ d t η p q c k k'
+        = (∑ k ∈ Finset.range K, ∑ k' ∈ Finset.range K,
+            (if k + q.length ≤ k' then selSign η p k' * R k else 0))
+          + ∑ k ∈ Finset.range K, ∑ k' ∈ Finset.range K,
+            (if k' + q.length ≤ k then selSign η p k * R k' else 0) := by
+      rw [← Finset.sum_add_distrib]
+      refine Finset.sum_congr rfl fun k _ => ?_
+      rw [← Finset.sum_add_distrib]
+      exact Finset.sum_congr rfl fun k' _ => hd k k'
+    have hswap : (∑ k ∈ Finset.range K, ∑ k' ∈ Finset.range K,
+          (if k' + q.length ≤ k then selSign η p k * R k' else 0))
+        = ∑ j ∈ Finset.range K, ∑ i ∈ Finset.range K,
+          (if j + q.length ≤ i then selSign η p i * R j else 0) := Finset.sum_comm
+    rw [hexp, hswap]
+    refine le_trans (abs_add_le _ _) ?_
+    have h1 := hhalf (fun k => k + q.length)
+    linarith
+  -- assemble
+  have htot : (∑ k ∈ Finset.range K, ∑ k' ∈ Finset.range K, ∫ y, g k k' y ∂gaussMeasure)
+      ≤ (K : ℝ) * (2 + B₀) := by
+    have hid : (∑ k ∈ Finset.range K, ∑ k' ∈ Finset.range K, ∫ y, g k k' y ∂gaussMeasure)
+        = (∑ k ∈ Finset.range K, ∑ k' ∈ Finset.range K,
+            ((∫ y, g k k' y ∂gaussMeasure) - altMean δ d t η p q c k k'))
+          + ∑ k ∈ Finset.range K, ∑ k' ∈ Finset.range K, altMean δ d t η p q c k k' := by
+      rw [← Finset.sum_add_distrib]
+      refine Finset.sum_congr rfl fun k _ => ?_
+      rw [← Finset.sum_add_distrib]
+      exact Finset.sum_congr rfl fun k' _ => by ring
+    rw [hid]
+    have h1 := (abs_le.mp herr).2
+    have h2 := (abs_le.mp hmean).2
+    calc _ ≤ (K : ℝ) * B₀ + 2 * (K : ℝ) := by linarith
+      _ = (K : ℝ) * (2 + B₀) := by ring
+  rw [hsplit]
+  calc (K : ℝ)⁻¹ ^ 2 * ∑ k ∈ Finset.range K, ∑ k' ∈ Finset.range K, ∫ y, g k k' y ∂gaussMeasure
+      ≤ (K : ℝ)⁻¹ ^ 2 * ((K : ℝ) * (2 + B₀)) :=
+        mul_le_mul_of_nonneg_left htot (by positivity)
+    _ = (2 + B₀) / K := by field_simp
+
+end Variance
+
+/-! ## The payoff: equidistribution jointly with the parity -/
+
+section Payoff
+
+variable (δ : S → ℕ → S) (t : S) (p : ZMod 2) (q : List ℕ)
+
+/-- **`ClassEquidistribution` for the product automaton.**  The window frequency of a genuine `q`
+restricted to the positions of one parity class, jointly with the state of an automaton the pin
+covers, equidistributes along every CF-normal orbit — with reference weight `c/2`, half the pin's
+constant.  The automaton `prodStep δ` is PERIODIC, so `classEquidistribution_of_pin` does not
+apply to it; only the alternating variance bound does. -/
+theorem classEquidistribution_prodStep [Nonempty S] {c C θ : ℝ} (hC : 0 ≤ C) (hθ0 : 0 ≤ θ)
+    (hθ1 : θ < 1) (hc0 : 0 ≤ c) (hc1 : c ≤ 1) (hq : 1 ≤ q.length)
+    (hpin : ∀ (n : ℕ) (e : S) (τ : ℝ), τ ∈ Set.Icc (0 : ℝ) 1 →
+      |stateHorizonIntegral δ (cfCylinder q) n e t τ
+          - c * (gaussMeasure (cfCylinder q)).toReal|
+        ≤ C * θ ^ n * (gaussMeasure (cfCylinder q)).toReal) :
+    VandeheyCocycle.ClassEquidistribution (prodStep δ) (t, p) q := by
+  have hM1 : (1 : ℝ) ≤ max 1 (2 * (C + 1)) := le_max_left _ _
+  have hρ1 : max θ (79 / 100 : ℝ) < 1 := max_lt hθ1 (by norm_num)
+  have hV0 : (0 : ℝ) ≤ 2 + (max 1 (2 * (C + 1)) * (2 * q.length + 1)
+      + 2 * (max 1 (2 * (C + 1)) * (1 - max θ (79 / 100))⁻¹)) := by
+    have h2 : (0 : ℝ) < 1 - max θ (79 / 100 : ℝ) := by linarith
+    have h3 : (0 : ℝ) ≤ (1 - max θ (79 / 100 : ℝ))⁻¹ := by positivity
+    have h4 : (0 : ℝ) ≤ max 1 (2 * (C + 1)) := by linarith
+    positivity
+  refine classEquidistribution_of_variance (prodStep δ) (t, p) q (c := c / 2)
+    (V := 2 + (max 1 (2 * (C + 1)) * (2 * q.length + 1)
+      + 2 * (max 1 (2 * (C + 1)) * (1 - max θ (79 / 100))⁻¹)))
+    (by linarith) (by linarith) hV0 ?_
+  intro K hK dd
+  obtain ⟨d, η⟩ := dd
+  exact integral_devAvg_prodStep_sq_le δ d t η p q hC hθ0 hθ1 hc0 hc1 hq hpin hK
+
+/-- **`ClassEquidistribution` for the product of a common-reach automaton with the parity.**
+This is the form the Raney transducer needs: `rplusDelta` has a uniform common reach
+(`VandeheyLR.rplus_common_reach`), and `lrDelta`'s own joint count is the product automaton's. -/
+theorem classEquidistribution_prodStep_of_common_reach [Nonempty S] (hq : 1 ≤ q.length)
+    (M : ℕ) (hM : 2 ≤ M) {z : S}
+    (hreach : ∀ d : S, ∃ w : List ℕ, w.length = M ∧ (∀ a ∈ w, 1 ≤ a) ∧
+      runState δ d w = z) :
+    VandeheyCocycle.ClassEquidistribution (prodStep δ) (t, p) q := by
+  obtain ⟨c, C, θ, hc0, hc1, hC, hθ0, hθ1, hpin⟩ :=
+    stateHorizonIntegral_pin_of_reach δ (measurableSet_cfCylinder q) (cfCylinder_subset_Ioo q)
+      M hM hreach t
+  exact classEquidistribution_prodStep δ t p q hC hθ0 hθ1 hc0 hc1 hq
+    (fun n e τ hτ => hpin n e τ hτ)
+
+end Payoff
+
 end VandeheyPar
 
 end NormalNumbers
+
+section
+open NormalNumbers.VandeheyPar
+#print axioms NormalNumbers.VandeheyPar.runState_prodStep
+#print axioms NormalNumbers.VandeheyPar.abs_sum_selSign_le
+#print axioms NormalNumbers.VandeheyPar.jointEvent_prodStep
+#print axioms NormalNumbers.VandeheyPar.devFun_prodStep
+#print axioms NormalNumbers.VandeheyPar.abs_integral_devFun_prodStep_mul_sub_le
+#print axioms NormalNumbers.VandeheyPar.abs_integral_devFun_prodStep_mul_sub_altMean_le
+#print axioms NormalNumbers.VandeheyPar.integral_devAvg_prodStep_sq_le
+#print axioms NormalNumbers.VandeheyPar.classEquidistribution_prodStep
+#print axioms NormalNumbers.VandeheyPar.classEquidistribution_prodStep_of_common_reach
+end
