@@ -687,3 +687,4 @@ import NormalNumbers.VandeheyLRRuns
 import NormalNumbers.VandeheyLRPattern
 import NormalNumbers.VandeheyRunCount
 import NormalNumbers.VandeheyRunBirkhoff
+import NormalNumbers.VandeheyTransportB
