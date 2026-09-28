@@ -1,8 +1,8 @@
 # STATUS — normal-numbers 📊
 
 **Digit-reading dynamics of real numbers: normality, disjunctivity, CF-normality, and the
-richness of arithmetic constants.** · **Build**: 🟢 green (10313 jobs) · **Updated**: lap 1 ·
-2026-09-28 · `cedcf6f`
+richness of arithmetic constants.** · **Build**: 🟢 green (10326 jobs) · **Updated**: lap 4 ·
+2026-09-28 · `VandeheyRaneyReach`
 
 One checkout on `wip/g5-prime-subset`, Lean/mathlib v4.33.1, every campaign branch merged
 (2026-09-27, `f5034b6`).  Per-campaign detail and ledgers from before the merge are in
@@ -11,17 +11,37 @@ One checkout on `wip/g5-prime-subset`, Lean/mathlib v4.33.1, every campaign bran
 ## Where it stands
 
 The live target is **Vandehey 2017 Theorem 1.1** (Möbius images of CF-normal numbers are
-CF-normal), which is down to the single leaf `MobiusCFNScale`: `x ↦ p·x` for prime `p`.  Smith
-descent and Serret killed composite determinants, the diagonal factor, division and all of
-`GL₂(ℤ)`.  The leaf needs Vandehey's transducer programme; its *input* side (Raney normal forms
-§2, the bijectivity-free transfer-operator pin, Doeblin minorization at a common target) is
-built, and as of lap 1 its *output* side (§4.3 Cesàro counting, §5 triggers, §6 assembly) is
-open in `VandeheyOutputFreq.lean` with the upper-bound engine in the kernel.  Four other fronts
+CF-normal), down to the single leaf `MobiusCFNScale`: `x ↦ p·x` for prime `p`.  Smith descent and
+Serret killed composite determinants, the diagonal factor, division and all of `GL₂(ℤ)`.  The
+transducer programme's **output** side (§4.3 Cesàro counting, §5 triggers, §6 assembly, the
+`hK`/`hkK` trigger bounds, and the run↔CF-digit translation) is now closed; the crux is the
+**input** side, `hjs`.  Lap 4 found two route-decisive defects there and the repairs for both: the
+Raney automaton is period-2 in the sign of the determinant (so the uniform-length common reach
+that `classEquidistribution_of_common_reach` demands is impossible — repaired by the row-swap
+involution and the phase-corrected automaton on `RPlus D`), and the capstone's *factorized*
+`JointStateFreq` hypothesis is numerically FALSE at `D = 3` (repaired by carrying a general
+`ρ(q,t)`, with the escape mass controlled for free by `ρ(w,t) ≤ γ(I_w)`).  Four other fronts
 carry proved-but-conditional headlines (Joint Lambert, C3/MRT, Elliott, the casting-out crux
 leaves); their hypotheses are the standing debt.
 
 ## What's happened (newest first)
 
+- **2026-09-28 (lap 4, review).**  Two route-decisive findings on the transducer's input side,
+  plus the enabling algebra.  (a) `det (M · B j) = − det M`, so the Raney automaton carries a
+  deterministic period-2 phase and NO uniform-length common reach exists — the hypothesis of
+  `classEquidistribution_of_common_reach` is unsatisfiable for `lrDelta`.  Repair, in the kernel:
+  `Mat2.balanced_decomp_unique` (the Raney factorization is unique — this PINS the
+  `Classical.choose`-defined `lrDelta`/`lrOut` for the first time), the row-swap involution
+  `ι M = J·M` with `lrDelta ∘ ι = ι ∘ lrDelta` and `lrOut ∘ ι = map not ∘ lrOut`, and the
+  arithmetic core `lrDelta M j = [[0,D],[1,0]] ↔ D ∣ a+bj ∧ D ∣ c+dj` solved over `ZMod D`;
+  numerically the phase-corrected automaton reaches `diag(1,D)` in exactly 2 digits for every
+  prime `D ≤ 23`.  (b) `probes/raney_joint_product.py` REFUTES the factorized `JointStateFreq`
+  at `D = 3` (four states' `ρ(q,t)/γ(I_q)` move 20 % across short `q`, ≈15σ); it holds at `D = 2`
+  only because the stationary law is uniform there.  The capstone must carry a general `ρ`.
+- **2026-09-28 (laps 2–3).**  The output side closed: the §4.3/§5/§6 engine
+  (`VandeheyOutputFreq.lean`), the capstone `mobiusUniformFreq_of_transducer`, Lemma 2.2 in run
+  form, `hK`/`hkK` for the concrete machine, the L/R run dictionary and the CF↔pattern bijection.
+  Structural finding: rescale by RUNS, never by letters (the Gauss digit mean is infinite).
 - **2026-09-28 (lap 1, review).**  Course-corrected: three laps had gone into the transducer's
   input side while the route-decisive output side was untouched.  `VandeheyOutputFreq.lean`
   opened with the factorized joint-frequency hypothesis `JointStateFreq δ s₀ ν` (limit

@@ -676,6 +676,7 @@ import NormalNumbers.VandeheyOutputWord
 import NormalNumbers.VandeheyTrigger
 import NormalNumbers.VandeheyAssembly
 import NormalNumbers.VandeheyLRTransducer
+import NormalNumbers.VandeheyRaneyReach
 import NormalNumbers.VandeheyRunBound
 import NormalNumbers.VandeheyAltCount
 import NormalNumbers.VandeheyLRTrigger

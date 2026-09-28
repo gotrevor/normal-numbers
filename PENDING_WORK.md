@@ -4,6 +4,77 @@ Concrete next moves, cheapest and most clear-cut first.  Front context is in `ST
 lap-by-lap log from before the 2026-09-27 merge is `archive/PENDING_WORK-to-2026-09-27.md`.
 Treadmill laps append dated notes **below the queue**, and a review lap folds them back into it.
 
+## ⚠ TWO ROUTE-DECISIVE FINDINGS (2026-09-28 lap 4) — read before touching the supply side
+
+### F1. The Raney automaton is PERIODIC: no uniform-length common reach, ever
+
+`det (M · B j) = − det M`, so the determinant's sign is a **deterministic period-2 phase** on
+`RState D`.  States of opposite phase are never simultaneously occupied, so no single target `z`
+is reachable from EVERY state by words of one fixed length — and
+`VandeheyTwo.classEquidistribution_of_common_reach` (whose hypothesis is exactly that) can never
+be applied to `lrDelta`.  Equivalently `stateHorizonIntegral_pin_of_reach` is FALSE for a periodic
+chain: the `n`-step kernel oscillates instead of converging.  Numeric: `probes/raney_reach.py`
+(common targets exist for `D = 2,3,5,7,11,13`; no uniform length does).
+
+**Repair, in the kernel as of lap 4** (`VandeheyRaneyReach.lean`, sorry-free):
+* `Mat2.balanced_decomp_unique` — the Raney (L/R word, balanced matrix) factorization is UNIQUE.
+  This pins the `Classical.choose`-defined `lrDelta`/`lrOut` for the first time
+  (`VandeheyLR.lrStep_pin`), which is what makes any concrete computation with them possible.
+* `Mat2.swapRows` (`ι M = J·M`) is an involution of the state set with `det (ι M) = −det M`,
+  `lrDelta (ι M) j = ι (lrDelta M j)` (`lrDelta_swapState`) and
+  `lrOut (ι M) j = (lrOut M j).map not` (`lrOut_swapState`) — an automaton isomorphism swapping
+  the two phases, so the **phase-corrected** automaton `rplusDelta P a := ι (lrDelta P a)` on
+  `RPlus D = {det = +D}` is a genuine finite automaton with `stateAt lrDelta … i = ι^i (stateAt rplusDelta … i)`.
+* The arithmetic core: `lrDelta M j = [[0,D],[1,0]] ↔ D ∣ a + b·j ∧ D ∣ c + d·j`
+  (`lrDelta_eq_zMinus` / `dvd_of_lrDelta_eq_zMinus`), solvable over `ZMod D` for prime `D`
+  because `D ∣ det M` makes the two congruences equivalent (`exists_digit_zMinus`); the one
+  exceptional state is `diag(1,D)` (`eq_zPlus_of_dvd`), and it steps to `diag(D,1)` whatever the
+  digit (`lrDelta_zPlus`), which then returns on the digit `D` (`lrDelta_zDiag`).
+* **Still to land (next lap):** `RPlus D` as a `Fintype`, `rplusDelta`, and
+  `rplus_common_reach` — every `P ∈ RPlus D` reaches `diag(1,D)` in EXACTLY 2 genuine digits.
+  Numerically verified for every prime `D ≤ 23` (`probes/raney_plus.py`); the proof is the
+  assembly of the bullets above (one step off the exceptional state, one step home).
+
+### F2. `JointStateFreq`'s PRODUCT form is FALSE for the concrete machine
+
+`VandeheyOut.mobiusUniformFreq_of_transducer` assumes
+`jointCount(t,q,x,n)/n → ν t · γ(I_q)` with a **single** `ν` independent of `q`.  That shape was
+adopted on lap 1 because it makes countable additivity of the output limit free.  It is not
+available: `probes/raney_joint_product.py` measures `ρ(q,t)/γ(I_q)` over 2.1M Gauss-distributed CF
+digits and finds, for `D = 3`, four states whose ratio moves by up to **20 %** across
+`q ∈ {[1],[2],[3],[4],[1,1],[1,2],[2,1]}` — a ~15σ effect (the other ten states are flat to 0.3 %).
+For `D = 2` it DOES factorize, and the reason is visible: there the stationary law is uniform
+(`1/6` on each reachable state) and a uniform law is invariant under every individual digit's
+action, so the state decouples from the adjacent window.  The Raney digit steps are **not**
+injective, the `D = 3` stationary law is `(0.125 ×6, 0.073 ×2, 0.052 ×2)`, and the state at `i` is
+genuinely correlated with the digits just before `i` — which abut the window at `i`.
+
+**Consequence.**  The capstone must be restated with a general
+`ρ : List ℕ → S → ℝ`, i.e. Vandehey's own un-factorized `ρ ≪≫ μ̃`.  **The factorization is not
+needed:** the reason it was adopted — controlling the escape mass of the countably infinite
+alphabet — is recovered for free from the pointwise bound
+
+> `ρ(w,t) ≤ γ(I_w)`  (because `jointCount ≤ winCard` at every `n`),
+
+so `Σ_{w ∉ F} ρ(w,t) ≤ 1 − Σ_{w ∈ F} γ(I_w)`, and `exists_boundedWords_sum_gt` (already proved)
+supplies an `F` with `Σ_F γ(I_w) > 1 − ε`.  Every `ν t * γ(I_w)` in `VandeheyOutputFreq.lean`
+becomes `ρ w t`, and `wLimit` becomes a sup over finite subfamilies of `Σ_{w∈F} a w * ρ w t`.
+
+**Next, in order.**
+(i) Finish `rplus_common_reach` (F1's last bullet) — small, purely assembly.
+(ii) Generalize `JointStateFreq` → `JointStateFreq'` with `ρ`, and port `VandeheyOutputFreq.lean`
+     (~1100 lines, mechanical: the only real change is the escape bound above).
+(iii) Restate `mobiusUniformFreq_of_transducer` against `ρ`.
+(iv) Then `hjs` is `ClassEquidistribution (rplusDelta hD) t q` for each `q` — which
+     `classEquidistribution_of_common_reach` delivers from (i) — plus the **parity split**:
+     `jointCount lrDelta` is supported on one parity of `i`, so it is
+     `½(jointCount rplusDelta ± Σ_i (−1)^i …)`, and the signed half is FREE from the existing
+     two-point machinery (`abs_integral_devFun_mul_le` bounds an ABSOLUTE value, so inserting
+     `(−1)^k` changes nothing in `integral_devAvg_sq_le`).
+(v) `hlen` is then a COROLLARY, not an analytic leaf: Vandehey's own §6 proof writes `ℓ(n)` as a
+    Birkhoff sum of a BOUNDED window/state function (augment the state with the last emitted
+    letter, so the seam term is local), which the `wCount`/`wLimit` machinery evaluates.
+
 ## 0′. `hK`/`hkK` — **CLOSED** for the `L/R` transducer (2026-09-28 lap 3)
 
 `lr_trigger_bounds` (`VandeheyLRTrigger.lean`) supplies both trigger hypotheses of

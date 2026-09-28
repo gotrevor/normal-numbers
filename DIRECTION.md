@@ -1,38 +1,73 @@
 # DIRECTION — normal-numbers 🧭
 
-## CURRENT DIRECTIVE (altitude-owned; outranks HANDOFF) — set lap 1, 2026-09-28
+## CURRENT DIRECTIVE (altitude-owned; outranks HANDOFF) — set lap 4, 2026-09-28
 
-**Objective.** `vandeheyUniformFreq_holds` (`LiteratureVandehey.lean`), via the single leaf
-`MobiusCFNScale`.  The Smith shortcut of the operator objective is **already discharged**
-(`VandeheySmith.lean`, sorry-free): composite `D`, the diagonal factor, division and all of
-`GL₂(ℤ)` are gone.  So that instruction is spent; what remains is the leaf.
+**Objective.** `vandeheyUniformFreq_holds` (`LiteratureVandehey.lean`).  The output side
+(§4–§6) is DONE (laps 2–3).  What is left is the **input/supply** side: the six named
+hypotheses of `VandeheyOut.mobiusUniformFreq_of_transducer` for the concrete L/R machine.
+`hK`, `hkK`, `hout` are closed.  The crux is now `hjs : JointStateFreq lrDelta s₀ ν`.
 
-**Mandated next move — the §5–§6 output-frequency engine, ABSTRACT, in `src/`.**
-Three laps have built the *input* side (Raney §2, the bijectivity-free pin, Doeblin at a common
-target).  The *output* side (Vandehey Lemma 4.3 + §5 triggers + §6 assembly) has never been
-touched, and it is the route-decisive piece: if output-word frequencies cannot be read off the
-joint (window, state) frequencies, the whole automaton build is worthless.  Build
-`VandeheyOutputFreq.lean` on the hypothesis our machinery actually delivers — the **factorized**
-joint limit `ρ(q,t) = ν(t)·γ(I_q)` that `tendsto_jointCount_of_classEquidistribution` already
-produces (strictly stronger than Vandehey's `ρ ≪≫ μ̃`, and it makes countable additivity free):
-1. `gaussMeasure (allWordsEvent m) = 1`, and finite subfamilies of `allWords m` of measure `> 1−ε`.
-2. **The upper-bound engine**: for a weighted family supported on `allWords m`,
-   `limsup (1/n)·Σ_{i<n} a(wᵢ)·1[tᵢ=t] ≤ ν t · Σ_w a(w) γ(I_w)`.  The finite-subfamily
-   escape is what replaces the tightness patch the published §3 needs.
-3. The assembly: bucket the trigger family by word length, finite truncation below `m`,
-   `K·1_{U_m}` above, `τ_m = Σ_t ν t·γ(⋂-limit) → 0` as the one honest hypothesis.
+**⚠ ROUTE FINDING (lap 4, numeric + structural) — the planned supply route is BLOCKED as
+stated, and the repair is identified.**  `classEquidistribution_of_common_reach` needs a
+common target reachable from EVERY state by a genuine word of ONE fixed length.  The Raney
+automaton `lrDelta` can NEVER satisfy that: `det (M · B_j) = −det M`, so the sign of the
+determinant is a **deterministic period-2 phase** on the state set, and states of opposite
+phase are never simultaneously occupied.  Probe `scratch/raney_reach.py`: for `D = 2,3,5,7,11,13`
+common targets exist but NO uniform length does.  The transfer-operator pin
+(`stateHorizonIntegral_pin_of_reach`) is therefore FALSE for `lrDelta` — a periodic chain's
+`n`-step kernel does not converge.
 
-**Forbidden drift.** Do NOT spend this run on `raneyNorm`/`RaneyState`/the common-target reach
-(HANDOFF's NEXT 1–3).  They are derisked numerically and are supply, not crux.  Do NOT open the
-`PrimeIntervalSupply` side item until the output engine has a stated theorem in the kernel.
+**The repair (verified numerically, lap 4).**  `ι M := J · M` (swap the rows) satisfies
+`ι ∘ lrDelta = lrDelta ∘ ι`, `det (ι M) = −det M`, and `lrOut (ι M) j = (lrOut M j).map not`.
+So on `RPlus D := {M // IsRD D M ∧ M.det = D}` the **phase-corrected** automaton
+`δ̄ P a := ι (lrDelta P a)` is a genuine finite automaton with `stateAt lrDelta … i = ι^i (stateAt δ̄ … i)`,
+and it is APERIODIC: probe `scratch/raney_plus.py` shows every `P ∈ RPlus D` reaches
+`z = diag(1, D)` in EXACTLY 2 steps, for every prime `D` tested (2…13), with digits `≤ D`.
 
-**Why.** Hardest-first.  The output side is the only piece whose feasibility is in real doubt,
-and its shape dictates what the automaton must supply — building the automaton first risks
-supplying the wrong thing.
+**⚠ SECOND ROUTE FINDING (lap 4, numeric) — the capstone's hypothesis SHAPE is wrong.**
+`mobiusUniformFreq_of_transducer` assumes `JointStateFreq`, i.e. the joint (window, state)
+frequency FACTORIZES as `ν t · γ(I_q)` with one `ν`.  `probes/raney_joint_product.py` refutes
+that for the concrete machine: at `D = 3`, four of the fourteen Raney states have
+`ρ(q,t)/γ(I_q)` varying by up to **20 %** across short `q` (≈15σ over 2.1M Gauss CF digits),
+while at `D = 2` it does factorize — because there the stationary law is uniform, and a uniform
+law is invariant under each individual digit's action.  The Raney digit steps are not injective,
+so the state at `i` stays correlated with the digits abutting the window at `i`.
+
+**Mandated next move — four steps, in this order, in `src/`.**
+1. Finish `VandeheyRaneyReach.lean`: `RPlus D` as a `Fintype`, `rplusDelta`, and
+   `rplus_common_reach` — every `P ∈ RPlus D` reaches `diag(1,D)` in EXACTLY 2 genuine digits.
+   The four ingredients are already in the kernel (lap 4); this is assembly.
+2. **De-factorize the output side.**  Replace `JointStateFreq δ s₀ ν` by a general
+   `ρ : List ℕ → S → ℝ` and port `VandeheyOutputFreq.lean`.  The factorization was adopted only
+   to control the infinite alphabet's escape mass, and that is recovered for free from
+   `ρ(w,t) ≤ γ(I_w)` (`jointCount ≤ winCard`) plus the already-proved
+   `exists_boundedWords_sum_gt`.  Then restate `mobiusUniformFreq_of_transducer` against `ρ`.
+3. `hjs` = `ClassEquidistribution (rplusDelta hD) t q` for each `q`, from step 1 via
+   `classEquidistribution_of_common_reach`, PLUS the **parity split**: `jointCount lrDelta` lives
+   on one parity of `i`, so it is `½(jointCount rplusDelta ± Σ_i (−1)^i …)`, and the signed half
+   is FREE from the existing two-point machinery (`abs_integral_devFun_mul_le` bounds an
+   ABSOLUTE value, so inserting `(−1)^k` changes nothing in `integral_devAvg_sq_le`).
+4. `hlen`, `hgen`, `htail`.
+
+**Forbidden drift.**  Do NOT attack `hlen` by the cone-perturbation route of the lap-3 handoff:
+lap 4 found Vandehey's own §6 proof makes `ℓ(n)` a Birkhoff sum of a BOUNDED window/state
+function (augment the state with the last emitted letter), so `hlen` is a COROLLARY of `hjs`
+plus the `wCount`/`wLimit` machinery already in `VandeheyOutputFreq.lean`, not an analytic leaf.
+Do NOT open `PrimeIntervalSupply` until `hjs` has a stated theorem in the kernel.
+
+**Why.** Hardest-first.  `hjs` is the only remaining obligation whose feasibility was in doubt,
+and lap 4 showed BOTH the published route to it and the hypothesis shape it was aimed at are
+wrong; the phase quotient and the de-factorized `ρ` are the repairs, and until they are in the
+kernel every other leaf is building on sand.
 
 Directive history:
 - 2026-09-28 lap 1 (review): crux switched from the automaton supply side (HANDOFF NEXT 1–3) to
   the §5–§6 output-frequency engine; factorized joint limit adopted as the hypothesis shape.
+- 2026-09-28 lap 4 (review): output side done; crux switched to `hjs`.  Recorded (a) the period-2
+  determinant obstruction that kills the uniform-length common reach, with the `ι = J·−` phase
+  quotient that repairs it, and (b) the numeric REFUTATION of the factorized `JointStateFreq`
+  shape, with the `ρ(w,t) ≤ γ(I_w)` escape that makes de-factorizing free.  `hlen` demoted from
+  "analytic leaf" to corollary of `hjs`.
 
 ---
 
