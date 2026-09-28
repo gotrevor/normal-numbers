@@ -255,6 +255,18 @@ discharges it for **every** 1-bounded `g`, `g = 1` included: every summand of
 (`not_ttNonPretentiousUnif_one`). -/
 alias hall_tt_nonpretentious_vacuous := NormalNumbers.CastingOut.ttNonPretentious_trivial
 
+/-- **HALL: the low/high split as a route to `UniformResonantMass`** (`priorArt`, 2026-09-28).
+`C3MrtURMLowHigh.lean` split the resonant primes at `lowHeight t = 16 log(2+|t|)` to tame the
+Brun-Titchmarsh error tail (the absolute-height split in `C3MrtWindowMass` costs `O(|t|)`, an
+exponential over budget).  The split works, and its low range and wide high range are proved
+there; but the narrow high range `|t| < 2δ` needs a dyadic grouping of the per-window Mertens
+additive, and before that landed `C3MrtUniformMass.lean` reached the SAME theorem by a
+different assembly of the same toolkit.  The route is retired as redundant, not refuted: its
+sorry-free lemmas stay, its one open obligation is deleted for want of a consumer.  The C3
+headline `conjC3_of_geom_input_band'` now consumes `uniformResonantMass_holds` directly, so
+`UniformResonantMass` is no longer a hypothesis anywhere on the archimedean side. -/
+alias hall_urm_low_high_split := NormalNumbers.CastingOut.uniformResonantMass_holds
+
 /-- **HALL: Moshchevitin-Shkredov Theorem 1, in its CF specialization** (`falseAsStated`,
 2026-09-28).  The hot-spot criterion Vandehey 2017 Lemma 3.3 leans on -- "uniformly bounded
 upper block frequencies imply normality" -- is FALSE on the non-compact CF alphabet, as
@@ -1020,7 +1032,12 @@ def register : List Hall := [
    "Deduce CF-normality from uniformly bounded upper block frequencies, as Vandehey 2017 Lemma 3.3 does",
    .falseAsStated, .kernel,
    "x = [0;1,2,3,...] has strictly increasing digits, so every block occurs at most once: the hypothesis holds vacuously with sigma = 0 while the digit 1 has frequency 0, not log_2(4/3)",
-   "alias hall_moshchevitin_shkredov_cf_false", "2026-09-28"⟩
+   "alias hall_moshchevitin_shkredov_cf_false", "2026-09-28"⟩,
+  ⟨"low/high split for UniformResonantMass",
+   "Reach UniformResonantMass by splitting the resonant primes at height 16 log(2+|t|) and paying the narrow high range |t| < 2*delta separately",
+   .priorArt, .kernel,
+   "The split is sound and its low and wide-high ranges are proved, but C3MrtUniformMass reached the same theorem first by a different assembly, so the narrow half had no consumer and was retired rather than carried as a sorry",
+   "alias hall_urm_low_high_split; the live headline is conjC3_of_geom_input_band'", "2026-09-28"⟩
 ]
 
 /-- Rows whose verdict is machine-checked in this build. -/

@@ -43,8 +43,23 @@ instead of at an absolute constant.
   `(2+|t|)⁻¹` that the raised starting height supplies — which is exactly what the absolute
   starting height could not do.
 
-This file lands the split, the low range, and the absorption inequality, and states the high
-range as one named sorry (`highResonantMass_le`) carrying that error-tail computation.
+This file lands the split, the low range, and the absorption inequality, and the WIDE half
+(`|t| ≥ 2δ`) of the high range.
+
+## RETIRED 2026-09-28 — redundant second route
+
+`UniformResonantMass` was subsequently proved OUTRIGHT in `C3MrtUniformMass.lean`
+(`uniformResonantMass_holds`, kernel-clean), by a different assembly of the same
+`C3MrtWindowMass` toolkit.  This file's remaining obligation was the narrow half `|t| < 2δ`
+of the high range, where the windows are longer than a unit in `log p` so Brun–Titchmarsh
+does not apply and the per-window Mertens additive has to be grouped dyadically.  Since the
+theorem it was aiming at is already in the kernel, that obligation has no consumer: the
+`sorry`ed `highResonantMass_le_narrow`, and the two statements downstream of it
+(`highResonantMass_le`, `uniformResonantMass_of_high`), are removed rather than carried.
+Nothing imports this file except the root import; nothing outside it ever used any of its
+lemmas.  What survives below is sorry-free and reusable: `lowHeight`, the low/high split of
+`resonantMass`, the Mertens bound on the low range, the `log log` absorption inequality, and
+the wide-half high-range bound.  Maze row: `hall_urm_low_high_split`.
 -/
 
 open Filter Topology Finset Real
@@ -756,92 +771,6 @@ theorem highResonantMass_le_wide {z : ℂ} (hz : ‖z‖ = 1) {δ : ℝ} (hδ0 :
     nlinarith [hstep, hc21, hllY, hδ0]
   linarith [hsum, hmain, herr, hcoef]
 
-/-- **The high range, long-window case `|t| < 2δ`** — the one step of `UniformResonantMass` still
-open.  Here the windows are longer than a unit in `log p`, so Brun–Titchmarsh does not apply and
-the per-window bound must come from the two-sided Mertens estimate
-`Erdos67b.PrimeEstimates.reciprocalPrimeInterval_le_log_log_sub_add`, which gives
-`log((γ_m+δ)/(γ_m−δ)) + 2·mertensBound ≤ 2δ/(γ_m−δ) + 2·mertensBound` per window.  The main term
-is then summed by the SAME `main_sum_le`; what needs care is that the per-window additive
-`2·mertensBound` is paid for, which the window count `K ≤ (2+|t|) log Y ≤ (2+4δ) log Y` makes
-possible only because `|t| < 2δ` bounds `K` by `O_δ(log Y)`, so the bookkeeping must group windows
-rather than charge each one — the same dyadic grouping the short-window case avoids via the
-exponential decay of `err_term_le`. -/
-theorem highResonantMass_le_narrow {z : ℂ} (hz : ‖z‖ = 1) {δ : ℝ} (hδ0 : 0 < δ)
-    (hδ : δ ≤ resEps z) {t : ℝ} (ht : |t| < 2 * δ) {Y : ℕ} (hY : 2 ≤ Y) :
-    highResonantMass z t Y δ
-      ≤ 50 * δ * (Real.log (Real.log Y) + Real.log (2 + |t|)) + (2200040 + 22 * δ) := by
-  sorry
-
-/-- **The high range — the remaining obligation of `UniformResonantMass`.**
-
-Above height `lowHeight t = 16 log(2+|t|)` the resonant primes are covered by the windows
-`|t| log p ∈ (γ_m − δ, γ_m + δ)`, `γ_m = |arg z − 2πm| ≥ 2δ`, and `resonant_window_mass_le`
-bounds window `m` by `16δ/(|t| a_m) + 6(1+a_m)³ exp(−a_m/2)` with `a_m = (γ_m − δ)/|t|`.
-
-* The **main terms** sum to `≤ (32δ/π)(1 + log K) + O(δ)` by `sum_inv_gap_le` and
-  `sum_Icc_symm_le`, with `K ≈ (|t| log Y + δ + π)/(2π)` by `abs_windowIndexW_le`, so
-  `log K ≤ log log Y + log(2+|t|) + O(1)` — inside the `100δ(...)` budget, since `32/π < 11`.
-* The **error terms** are where the sketched route in `C3MrtWindowMass` failed.  Because every
-  window here has `a_m ≥ lowHeight t = 8 log(2+|t|)`, each error carries
-  `exp(−a_m/8) ≤ (2+|t|)⁻¹`, and the windows are spaced `2π/|t|` apart in `a`, so the tail sums
-  to `≲ (|t|/2π) · 8 · (2+|t|)⁻¹ ≤ 4/π = O(1)` via `sum_exp_neg_le` and `window_err_le`.  The
-  `|t|` of the window count is cancelled by the `(2+|t|)⁻¹` the raised starting height supplies.
-
-Disclosed as a `sorry`: this is the Brun–Titchmarsh bookkeeping, not a further analytic input —
-every ingredient it needs is already proved in `C3MrtWindowMass`. -/
-theorem highResonantMass_le {z : ℂ} (hz : ‖z‖ = 1) {δ : ℝ} (hδ0 : 0 < δ) (hδ : δ ≤ resEps z)
-    (t : ℝ) {Y : ℕ} (hY : 2 ≤ Y) :
-    highResonantMass z t Y δ
-      ≤ 50 * δ * (Real.log (Real.log Y) + Real.log (2 + |t|)) + (2200040 + 22 * δ) := by
-  rcases le_or_gt (2 * δ) |t| with ht | ht
-  · exact highResonantMass_le_wide hz hδ0 hδ ht hY
-  · exact highResonantMass_le_narrow hz hδ0 hδ ht hY
-
-/-- **`UniformResonantMass`, modulo the high range.**  With `highResonantMass_le` in hand the
-low/high split closes the statement: the low range contributes
-`ε·log(2+|t|) + C(ε)` with `ε = 50δ`, the high range the rest, and `100δ = 50δ + 50δ` covers
-both.  This is the shape `UniformResonantMass` asks for, with `C` depending only on `z` and `δ`. -/
-theorem uniformResonantMass_of_high {z : ℂ} (hz : ‖z‖ = 1) {δ : ℝ} (hδ0 : 0 < δ)
-    (hδ : δ ≤ resEps z) (t : ℝ) {Y : ℕ} (hY : 2 ≤ Y) :
-    resonantMass z t Y δ
-      ≤ 100 * δ * (Real.log (Real.log Y) + Real.log (2 + |t|))
-        + (Real.log 16 + Real.log (1/(50*δ)) - 1 + Erdos67b.PrimeEstimates.mertensBound
-            + (2200040 + 22 * δ) + 25 * δ + 1) := by
-  have hlow := lowResonantMass_le z t Y δ
-  have habs := log_lowHeight_le (show (0:ℝ) < 50 * δ by linarith) t
-  have hhigh := highResonantMass_le hz hδ0 hδ t hY
-  have hsplit := resonantMass_eq_low_add_high z t Y δ
-  have hll : (0:ℝ) ≤ Real.log (2 + |t|) := by
-    have := abs_nonneg t
-    exact Real.log_nonneg (by linarith)
-  -- `log log Y ≥ log log 2 > −1/2` for `Y ≥ 2`, which is what the `25δ` in the constant pays for
-  have hlogY : Real.log 2 ≤ Real.log (Y : ℝ) := by
-    have : (2:ℝ) ≤ (Y:ℝ) := by exact_mod_cast hY
-    exact Real.log_le_log (by norm_num) this
-  have hexph : (1.6:ℝ) < Real.exp (1/2) := by
-    have hsq : Real.exp (1/2) * Real.exp (1/2) = Real.exp 1 := by
-      rw [← Real.exp_add]; norm_num
-    nlinarith [Real.exp_one_gt_d9, Real.exp_pos (1/2 : ℝ), hsq]
-  have hlog2gt : Real.exp (-(1/2 : ℝ)) < Real.log 2 := by
-    have hinv : Real.exp (-(1/2:ℝ)) = 1 / Real.exp (1/2) := by
-      rw [Real.exp_neg]; ring
-    have h16 : 1 / Real.exp (1/2) < 1 / 1.6 :=
-      one_div_lt_one_div_of_lt (by norm_num) hexph
-    have := Real.log_two_gt_d9
-    rw [hinv]
-    nlinarith
-  have hloglogY : -(1/2 : ℝ) ≤ Real.log (Real.log (Y : ℝ)) := by
-    have hpos : (0:ℝ) < Real.log 2 := Real.log_pos (by norm_num)
-    have h1 : Real.log (Real.exp (-(1/2:ℝ))) ≤ Real.log (Real.log (Y:ℝ)) :=
-      Real.log_le_log (Real.exp_pos _) (le_trans hlog2gt.le hlogY)
-    rwa [Real.log_exp] at h1
-  rw [hsplit]
-  nlinarith [hlow, habs, hhigh, hloglogY, hδ0]
-
 end CastingOut
 
 end NormalNumbers
-
-
-
-

@@ -451,10 +451,31 @@ theorem conjC3_of_geom_input_band {c₀ θ D κ₁ ε C₁ : ℝ} (J Jtop : ℝ 
   exact weylLambertTwist_of_geom_input_at hb hc₀ hθ0 hθ m
     (hin _ (Real.exp_pos _) b hb) (archSupply_of_faithfulArchLower hC)
 
+/-- **`ConjC3` on the banded block debt, with `UniformResonantMass` DISCHARGED.**
+
+Same statement as `conjC3_of_geom_input_band` with the `hURM` hypothesis removed: the `q = 1`
+narrow corner is no longer a named literature input, because `C3MrtUniformMass.lean` proves
+`uniformResonantMass_holds` outright (low/high split at `lowHeight t = 16 log(2+|t|)`, sharp
+window mass, Mertens absorption).  So the archimedean side of C3 now rests only on the
+`K`-point geometric-decay input, the `log`-sized conductor bound `CharPrimeSumLogQ`, and the
+banded block saving.  This is the live C3 headline; `conjC3_of_geom_input_band` stays as the
+hypothesis-explicit form. -/
+theorem conjC3_of_geom_input_band' {c₀ θ D κ₁ ε C₁ : ℝ} (J Jtop : ℝ → ℕ)
+    (hc₀ : 0 < c₀) (hθ0 : 0 < θ) (hθ : θ < 1) (m : ℕ)
+    (hin : ∀ A : ℝ, 0 < A → ∀ b : ℕ, 3 ≤ b → ∀ K,
+      KPointNoExcAtWith A (cKgeom c₀ θ b) (CstKdeg m) K)
+    (hD : 0 < D) (hD125 : 2 * D < 125) (hlog : CharPrimeSumLogQ D)
+    (hκ₁1 : κ₁ ≤ 1) (hε : 0 ≤ ε) (hκε : ε < κ₁) (hC₁ : 0 ≤ C₁)
+    (hcost : BlockBandCost J Jtop ε C₁) (hblk : WideBlockSavingBand J Jtop κ₁) :
+    ConjC3 :=
+  conjC3_of_geom_input_band J Jtop hc₀ hθ0 hθ m hin uniformResonantMass_holds hD hD125 hlog
+    hκ₁1 hε hκε hC₁ hcost hblk
+
 #print axioms norm_blockSum_le_mass
 #print axioms wideTwistSmall_of_blockSavingBand
 #print axioms band_block_complete
 #print axioms conjC3_of_geom_input_band
+#print axioms conjC3_of_geom_input_band'
 
 
 /-! ## §6 the band cost DISCHARGED (directive ②1) — pure arithmetic, no characters, no twists -/
