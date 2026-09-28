@@ -664,5 +664,6 @@ import NormalNumbers.ElliottZetaOmegaPretentious
 import NormalNumbers.ElliottZetaPole
 import NormalNumbers.ElliottZetaTheta
 import NormalNumbers.CFTailFreq
+import NormalNumbers.VandeheyMat2
 import NormalNumbers.VandeheySmith
 import NormalNumbers.VandeheySerret
