@@ -1,7 +1,6 @@
 /.lake
 /drafts
-# PDFs live in ~/personal/papers; papers/*.pdf are tracked symlinks (`papers` tool)
-!papers/*.pdf
+papers/*.pdf
 
 # Claude Code local-only memory. Also in the global ignore, but that lives at
 # ~/.config/git/ignore on the HOST and does not reach the treadmill boxes, so a
