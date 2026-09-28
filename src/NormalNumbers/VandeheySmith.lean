@@ -6,6 +6,7 @@ Authors: Trevor Morris
 import NormalNumbers.LiteratureVandehey
 import NormalNumbers.VandeheyRenyi
 import NormalNumbers.OccurrenceCountEquiv
+import NormalNumbers.CFTailFreq
 
 /-!
 # The Smith-normal-form reduction for Vandehey 2017, Theorem 1.1
@@ -150,6 +151,23 @@ lemma not_irrational_fract {x : ℝ} (h : ¬ Irrational x) : ¬ Irrational (Int.
     rw [Int.fract, Rat.floor_cast]; push_cast; ring
   intro hcon
   exact hcon ⟨q - (⌊q⌋ : ℚ), this.symm⟩
+
+/-! ## CF-normality only sees the digit tail -/
+
+/-- **Tail transfer.**  If the digit sequences of `y` and `z` agree after finite shifts then
+`y` is CF-normal as soon as `z` is.  This is the whole content of "digit-window frequencies
+only see the tail". -/
+theorem isCFNormal_of_digit_shift {y z : ℝ} {M N : ℕ}
+    (h : ∀ n, cfDigit y (n + M) = cfDigit z (n + N)) (hz : IsCFNormal z) : IsCFNormal y := by
+  intro v hv hpos
+  rw [← tendsto_occStart_iff v hv]
+  exact tendsto_occStart_of_shift hv h ((tendsto_occStart_iff v hv _ _).mpr (hz v hv hpos))
+
+/-- **The Gauss shift preserves CF-normality.**  The digits of `gaussMap x` are the digits of
+`x` shifted by one. -/
+theorem isCFNormal_gaussMap {x : ℝ} (hx : IsCFNormal x) : IsCFNormal (gaussMap x) := by
+  refine isCFNormal_of_digit_shift (M := 0) (N := 1) (fun n => ?_) hx
+  simp only [cfDigit, Nat.add_zero, Function.iterate_succ_apply]
 
 /-! ## The per-matrix predicate, and composition -/
 
