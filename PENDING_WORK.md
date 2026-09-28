@@ -4,6 +4,71 @@ Concrete next moves, cheapest and most clear-cut first.  Front context is in `ST
 lap-by-lap log from before the 2026-09-27 merge is `archive/PENDING_WORK-to-2026-09-27.md`.
 Treadmill laps append dated notes **below the queue**, and a review lap folds them back into it.
 
+## ⚠ THE LAP-5 ROUTE FINDING (2026-09-28) — the crux is an ALTERNATING PIN
+
+Lap 5 first de-factorized the output side (commit `39b452f`: `JointStateFreq δ s₀ ρ`,
+`SubWindow ρ`, `tailMass` without `ν`), which F2 below forced.  Then
+`probes/raney_parity_split.py` (3.5M CF digits, `D = 3`) settled the shape of what is left, and
+it is NOT what the lap-4 handoff predicted.
+
+**Three numeric facts, one table.**
+1. The **signed density is ZERO**: `(1/n) Σ_{i<n} (−1)^i 1[w_i = q] 1[P⁺_i = t] ≤ 0.003` for
+   every state and every short `q` (vs. a signal size of `0.25`).  So `lrDelta`'s joint law is
+   exactly **half** the phase-corrected one, `ρ(q,t) = ½ ρ⁺(q, ι^p t)`, `p` the phase of `t`.
+2. The **phase-corrected law itself does NOT factorize**: the two states `(1,2,0,3)` and
+   `(2,1,1,2)` (at `D = 3`) split a joint mass of exactly `¼·γ(I_q)` between them in a
+   `q`-DEPENDENT way (`0.158/0.092` at `q=[1]` vs `0.138/0.112` at `q=[4]`).  So F2 is real, but
+   it is **not a parity artifact** — it is non-factorization of `rplusDelta` itself.
+3. That is **consistent with the kernel**: `VandeheyCocycle.ClassEquidistribution δ t q` binds its
+   reference constant `L` **inside** the per-`q` statement, so `classEquidistribution_rplusDelta`
+   never claimed a `q`-independent `ν`.  De-factorizing was exactly the right repair, and the
+   kernel already supplies the de-factorized `ρ⁺(q,t) = L(q,t)·γ(I_q)`.
+
+**So the remaining content of `hjs` is the PARITY SPLIT, and it is irreducible.**  Since
+`stateAt lrDelta … i = ι^i (stateAt rplusDelta … i)` and `det` pins the phase,
+`1[stateAt lrDelta = t]` lives on ONE parity of `i`; the joint count is therefore the joint count
+of the **product automaton** `δ* := rplusDelta × (ε ↦ ε+1)` on `RPlus D × ZMod 2` at the state
+`(ι^p t, p)`.  Two dead ends, both checked this lap:
+* the plain pin fails for `δ*` (its `n`-step kernel is `1[η+n=p]·(c + O(θⁿ))γ`, which oscillates),
+  so `classEquidistribution_of_pin` does not apply — the period-2 wall reappears at the product;
+* summing the signed identity over states gives `(1 − Σ_t c_t)·signedWin = o(n)`, i.e. `0 = o(n)`.
+  The window-only parity balance `Σ_{i<n}(−1)^i 1[w_i=q] = o(n)` (the CF analogue of "normal to
+  base `b` ⇒ normal to base `b²`") cannot be bootstrapped from the state statistics.
+
+**THE ROUTE (identified lap 5, all inputs already in the kernel).**  Do not generalize the pin;
+work with the product automaton's `devFun` written in the ORIGINAL automaton's events:
+
+> `jointEvent δ* (d,η) (t,p) q k = if η + k = p then jointEvent δ d t q k else ∅`,
+> hence `devFun δ* … k y = 1[η+k=p]·1[J_k] − L·1[W_k]`.
+
+Write `σ_k := (−1)^{k+η−p} = ±1`, so `1[η+k=p] = (1+σ_k)/2`, and take the reference constant
+`L := c/2` where `c` is the `rplusDelta` pin's constant.  Expanding
+`∫ devFun*_k · devFun*_{k'}` against the FOUR existing estimates inside
+`abs_integral_devFun_mul_le` (`hT1`–`hT4`: `|T1 − cγPJ| ≤ CθⁿγPJ`, `|T2 − γPJ| ≤ .79ⁿγPJ`,
+`|T3 − cγPW| ≤ CθⁿγPW`, `|T4 − γPW| ≤ .79ⁿγPW`) the constant parts cancel EXACTLY at `L = c/2`
+and what survives is
+
+>  `mean part = (σ_{k'}/4)·( c·γ_q·PJ(k)·(1 + σ_k) − c²·γ_q·PW(k) ) =: σ_{k'}·R(k)`,  `|R| ≤ ½`.
+
+`R` depends on `k` only.  So in the variance double sum
+`∫ devAvg*² = K⁻² Σ_k Σ_{k'} ∫ devFun*_k devFun*_{k'}` the mean part contributes
+`Σ_k R(k)·Σ_{k'∈[k+ℓ,K)} σ_{k'} = Σ_k R(k)·O(1) = O(K)` — **the alternating factor cancels over
+the inner range**, which is exactly the cancellation the plain pin performed for free.  The rest
+is the existing `Mρ^{gapExp}` majorant, also `O(K)`.  Hence `∫ devAvg*² = O(1/K)`, and from there
+`classEquidistribution_of_pin`'s downstream half (`sum_gaussMeasure_windowBound_le`, the orbit
+split, `tendsto_weighted_window_freq`) is **unchanged** and gives
+`ClassEquidistribution δ* (ι^p t, p) q`, hence `hjs` for `lrDelta`.
+
+**Work items, in order.**
+1. Extract `hT1`–`hT4` out of `abs_integral_devFun_mul_le` as four named lemmas in
+   `VandeheyTwoPoint.lean` (pure refactor; the existing proof then cites them).
+2. `VandeheyParity.lean`: the product automaton (`prodStep`, `runState`/`stateAt` lemmas,
+   `jointEvent_prod_eq`), the `devFun*` product identity, the two-point bound with the
+   `σ_{k'}·R(k)` residue, and the alternating variance bound `∫ devAvg*² ≤ B/K`.
+3. `classEquidistribution_prod` (re-run the `classEquidistribution_of_pin` endgame against the
+   new variance bound), then `jointStateFreq_lrDelta`.
+4. Only then `hlen` (corollary of `hjs`), `hgen`, `htail`.
+
 ## ⚠ TWO ROUTE-DECISIVE FINDINGS (2026-09-28 lap 4) — read before touching the supply side
 
 ### F1. The Raney automaton is PERIODIC: no uniform-length common reach, ever
