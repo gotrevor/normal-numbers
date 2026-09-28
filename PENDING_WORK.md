@@ -20,7 +20,29 @@ cone perturbation: `outLen δ out s₀ x n = Σ_t wCount δ s₀ t (blockLen out
 `tendsto_outLen_div` with limit `c = Σ_t wLimit ρ t (blockLen out t) 1`, needing only a uniform
 block-length bound `hB`.
 
-**What is left of the capstone's hypothesis list** (`mobiusUniformFreq_of_transducer`):
+**ARCHITECTURAL FINDING (lap 6).**  The concrete `out` of `VandeheyLRTrigger` is `lrOutN`, which
+emits `L/R` LETTERS.  Its `outLen` is therefore the LETTER count, and that diverges per input
+digit (infinite Gauss digit mean — `VandeheyRunCount`'s own finding).  So `hB`/`hlen` can NEVER
+hold for `lrOutN`, and the capstone must be driven by the RUN clock.
+`VandeheyRunBirkhoff.lean` (lap 6) supplies that clock:
+
+* augment the state with the last emitted letter, `lrB (M,b) j = (lrDelta M j, last (lrOut M j))`;
+* `altOut (M,b) j = numAlt (b :: lrOut M j) ≤ 2D + 1` (Lemma 2.2, `altOut_le`);
+* `numAlt_lrWord_eq_sum` : `numAlt (b₀ :: lrWord hD s₀ x n) = Σ_{i<n} altOut (stateAt lrB … i) (cfDigit x i)`.
+
+That is exactly the `wCount` shape, with a BOUNDED weight.  So the run count has an
+`x`-independent Cesàro limit as soon as `JointStateFreq` holds for `lrB`, and positivity comes
+from `outLenLimit_pos`'s argument.
+
+**NEXT (lap 7): `JointStateFreq` for the AUGMENTED automaton `lrB`.**  The Bool coordinate is a
+FUNCTION of the previous state and digit whenever `lrOut M j ≠ []`, so the uniform common reach
+lifts: drive every state to `z = diag(1,D)` in 2 digits (`rplus_common_reach`), then ONE more
+fixed digit `j₀` with `lrOut z j₀ ≠ []` makes the Bool a common value too — a uniform common
+reach at length 3 on `RPlus D × Bool`, and `VandeheyTransport`'s phase argument is unchanged
+(the Bool does not interact with the determinant).  Then re-run `VandeheyTransport` verbatim on
+the augmented state set.
+
+**What is left of the capstone**What is left of the capstone's hypothesis list** (`mobiusUniformFreq_of_transducer`):
 1. `hc : 0 < c` — the ONE piece `tendsto_outLen_div` does not give.  `c ≥ 0` is
    `outLenLimit_nonneg`; strict positivity is combinatorial (some state/digit pair of positive
    Gauss mass emits a nonempty block).  Route: pick one genuine one-letter window `w` and a
