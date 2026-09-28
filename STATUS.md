@@ -119,5 +119,5 @@ These are the ratified conjecture nodes.  They are open by design, and none is s
 - `archive/`: pre-merge handoffs, kickoffs, probes, findings and the old DIRECTION/STATUS/
   PENDING_WORK.  Lean docstrings still cite some of these by bare filename, so use
   `find archive -name <file>`.
-- `OVERVIEW.md`/`.html`: the project map as of 2026-09-26.  It predates Joint Lambert, Wall,
-  Philipp and the merges.
+- `OVERVIEW.md`/`.html`: the reader's project map, refreshed 2026-09-28.  Rebuild it with
+  `make -f docs/overview.mk`.
