@@ -441,6 +441,78 @@ private lemma gaussMeasure_toReal_le_one (X : Set ℝ) : (gaussMeasure X).toReal
   have := ENNReal.toReal_mono (by norm_num : (1 : ENNReal) ≠ ⊤) h
   simpa using this
 
+/-! ### The four two-point masses
+
+Extracted from `abs_integral_devFun_mul_le` so that the *alternating* two-point bound
+(`VandeheyParity`, for the product automaton `δ × (ε ↦ ε+1)`, whose `n`-step kernel oscillates
+and whose plain pin is therefore false) can reuse them verbatim.  `PJ` and `PW` below are the
+`γ`-masses of the length-`(k + |q|)` past families, i.e. of `jointEvent δ d t q k` and
+`winEvent q k` themselves. -/
+
+/-- `J_k ∩ J_{k+|q|+n}`: the state pin's own estimate. -/
+theorem abs_measure_joint_inter_joint_sub_le (δ : S → ℕ → S) (d t : S) (q : List ℕ)
+    {c C θ : ℝ}
+    (hpin : ∀ (n : ℕ) (e : S) (τ : ℝ), τ ∈ Set.Icc (0 : ℝ) 1 →
+      |stateHorizonIntegral δ (cfCylinder q) n e t τ
+          - c * (gaussMeasure (cfCylinder q)).toReal|
+        ≤ C * θ ^ n * (gaussMeasure (cfCylinder q)).toReal)
+    (k n : ℕ) :
+    |(gaussMeasure (jointEvent δ d t q k ∩ jointEvent δ d t q (k + q.length + n))).toReal
+        - c * (gaussMeasure (cfCylinder q)).toReal
+          * (gaussMeasure (familySetC (pastJoint δ d t q k))).toReal|
+      ≤ C * θ ^ n * (gaussMeasure (cfCylinder q)).toReal
+          * (gaussMeasure (familySetC (pastJoint δ d t q k))).toReal := by
+  rw [measure_congr (inter_jointEvent_ae_eq δ d t q (pastJoint_len δ d t)
+    (jointEvent_ae_eq δ d t q k) n)]
+  exact abs_gaussMeasure_biUnion_state_sub_le δ (measurableSet_cfCylinder q) t hpin n d
+    (Set.to_countable _) (pastJoint_len δ d t) (pastJoint_pos δ d t)
+
+/-- `J_k ∩ W_{k+|q|+n}`: pure cylinder mixing, no state. -/
+theorem abs_measure_joint_inter_win_sub_le (δ : S → ℕ → S) (d t : S) (q : List ℕ) (k n : ℕ) :
+    |(gaussMeasure (jointEvent δ d t q k ∩ winEvent q (k + q.length + n))).toReal
+        - (gaussMeasure (cfCylinder q)).toReal
+          * (gaussMeasure (familySetC (pastJoint δ d t q k))).toReal|
+      ≤ (79 / 100) ^ n * (gaussMeasure (cfCylinder q)).toReal
+          * (gaussMeasure (familySetC (pastJoint δ d t q k))).toReal := by
+  rw [measure_congr (inter_winEvent_ae_eq q (jointEvent_ae_eq δ d t q k) n)]
+  exact abs_gaussMeasure_familySetC_inter_sub_le (Set.to_countable _)
+    (pastJoint_len δ d t) (pastJoint_pos δ d t)
+    (measurableSet_horizonSet (measurableSet_cfCylinder q) n) (horizonSet_subset _ n)
+    (fun τ hτ => horizonIntegral_pin_geom (measurableSet_cfCylinder q)
+      (cfCylinder_subset_Ioo q) n hτ)
+
+/-- `W_k ∩ J_{k+|q|+n}`: the state pin again, over the window past. -/
+theorem abs_measure_win_inter_joint_sub_le (δ : S → ℕ → S) (d t : S) (q : List ℕ)
+    {c C θ : ℝ}
+    (hpin : ∀ (n : ℕ) (e : S) (τ : ℝ), τ ∈ Set.Icc (0 : ℝ) 1 →
+      |stateHorizonIntegral δ (cfCylinder q) n e t τ
+          - c * (gaussMeasure (cfCylinder q)).toReal|
+        ≤ C * θ ^ n * (gaussMeasure (cfCylinder q)).toReal)
+    (k n : ℕ) :
+    |(gaussMeasure (winEvent q k ∩ jointEvent δ d t q (k + q.length + n))).toReal
+        - c * (gaussMeasure (cfCylinder q)).toReal
+          * (gaussMeasure (familySetC (pastWin q k))).toReal|
+      ≤ C * θ ^ n * (gaussMeasure (cfCylinder q)).toReal
+          * (gaussMeasure (familySetC (pastWin q k))).toReal := by
+  rw [measure_congr (inter_jointEvent_ae_eq δ d t q (pastWin_len) (winEvent_ae_eq q k) n)]
+  exact abs_gaussMeasure_biUnion_state_sub_le δ (measurableSet_cfCylinder q) t hpin n d
+    (Set.to_countable _) pastWin_len pastWin_pos
+
+/-- `W_k ∩ W_{k+|q|+n}`: pure cylinder mixing.  **This is the one input the alternating
+window balance needs**, and it is where the mean term depends only on the smaller index. -/
+theorem abs_measure_win_inter_win_sub_le (q : List ℕ) (k n : ℕ) :
+    |(gaussMeasure (winEvent q k ∩ winEvent q (k + q.length + n))).toReal
+        - (gaussMeasure (cfCylinder q)).toReal
+          * (gaussMeasure (familySetC (pastWin q k))).toReal|
+      ≤ (79 / 100) ^ n * (gaussMeasure (cfCylinder q)).toReal
+          * (gaussMeasure (familySetC (pastWin q k))).toReal := by
+  rw [measure_congr (inter_winEvent_ae_eq q (winEvent_ae_eq q k) n)]
+  exact abs_gaussMeasure_familySetC_inter_sub_le (Set.to_countable _)
+    pastWin_len pastWin_pos
+    (measurableSet_horizonSet (measurableSet_cfCylinder q) n) (horizonSet_subset _ n)
+    (fun τ hτ => horizonIntegral_pin_geom (measurableSet_cfCylinder q)
+      (cfCylinder_subset_Ioo q) n hτ)
+
 /-- **The two-point correlation bound.**  With `k' = k + |q| + n`, the four joint masses combine
 so that the leading terms cancel **exactly** when `L` is the pin's constant `c`: the `𝒥`-terms
 cancel against each other and so do the `𝒲`-terms.  What is left is a pure geometric remainder
@@ -480,26 +552,17 @@ theorem abs_integral_devFun_mul_le (δ : S → ℕ → S) (d t : S) (q : List �
     fun τ hτ => horizonIntegral_pin_geom hqm hq1 n hτ
   -- the four joint masses
   have hT1 : |(gaussMeasure (jointEvent δ d t q k ∩ jointEvent δ d t q (m + n))).toReal
-      - c * γq * PJ| ≤ C * θ ^ n * γq * PJ := by
-    rw [measure_congr (inter_jointEvent_ae_eq δ d t q (pastJoint_len δ d t) (jointEvent_ae_eq δ d t q k) n)]
-    exact abs_gaussMeasure_biUnion_state_sub_le δ hqm t hpin n d (Set.to_countable _)
-      (pastJoint_len δ d t) (pastJoint_pos δ d t)
+      - c * γq * PJ| ≤ C * θ ^ n * γq * PJ :=
+    abs_measure_joint_inter_joint_sub_le δ d t q hpin k n
   have hT2 : |(gaussMeasure (jointEvent δ d t q k ∩ winEvent q (m + n))).toReal
-      - γq * PJ| ≤ (79 / 100) ^ n * γq * PJ := by
-    rw [measure_congr (inter_winEvent_ae_eq q (jointEvent_ae_eq δ d t q k) n)]
-    exact abs_gaussMeasure_familySetC_inter_sub_le (Set.to_countable _)
-      (pastJoint_len δ d t) (pastJoint_pos δ d t)
-      (measurableSet_horizonSet hqm n) (horizonSet_subset _ n) hpin'
+      - γq * PJ| ≤ (79 / 100) ^ n * γq * PJ :=
+    abs_measure_joint_inter_win_sub_le δ d t q k n
   have hT3 : |(gaussMeasure (winEvent q k ∩ jointEvent δ d t q (m + n))).toReal
-      - c * γq * PW| ≤ C * θ ^ n * γq * PW := by
-    rw [measure_congr (inter_jointEvent_ae_eq δ d t q (pastWin_len) (winEvent_ae_eq q k) n)]
-    exact abs_gaussMeasure_biUnion_state_sub_le δ hqm t hpin n d (Set.to_countable _)
-      pastWin_len pastWin_pos
+      - c * γq * PW| ≤ C * θ ^ n * γq * PW :=
+    abs_measure_win_inter_joint_sub_le δ d t q hpin k n
   have hT4 : |(gaussMeasure (winEvent q k ∩ winEvent q (m + n))).toReal
-      - γq * PW| ≤ (79 / 100) ^ n * γq * PW := by
-    rw [measure_congr (inter_winEvent_ae_eq q (winEvent_ae_eq q k) n)]
-    exact abs_gaussMeasure_familySetC_inter_sub_le (Set.to_countable _)
-      pastWin_len pastWin_pos (measurableSet_horizonSet hqm n) (horizonSet_subset _ n) hpin'
+      - γq * PW| ≤ (79 / 100) ^ n * γq * PW :=
+    abs_measure_win_inter_win_sub_le q k n
   -- the exact cancellation
   set T1 : ℝ := (gaussMeasure (jointEvent δ d t q k ∩ jointEvent δ d t q (m + n))).toReal with hT1d
   set T2 : ℝ := (gaussMeasure (jointEvent δ d t q k ∩ winEvent q (m + n))).toReal with hT2d
@@ -1002,32 +1065,27 @@ lemma varConst_nonneg {C θ : ℝ} (_hC : 0 ≤ C) (_hθ0 : 0 ≤ θ) (hθ1 : θ
 /-- **The measure-side bound on `windowBound`.**  Over any finite family of genuine words of
 length `K + |q|`, the `γ`-weighted total of `VandeheyCocycle.windowBound` is
 `O(|S|·√(1/K))` — uniformly in the family.  This is the input the orbit transfer needs. -/
-theorem sum_gaussMeasure_windowBound_le [Nonempty S] (δ : S → ℕ → S) (t : S) (q : List ℕ)
-    {c C θ : ℝ} (hC : 0 ≤ C) (hθ0 : 0 ≤ θ) (hθ1 : θ < 1) (hc0 : 0 ≤ c) (hc1 : c ≤ 1)
-    (hpin : ∀ (n : ℕ) (e : S) (τ : ℝ), τ ∈ Set.Icc (0 : ℝ) 1 →
-      |stateHorizonIntegral δ (cfCylinder q) n e t τ
-          - c * (gaussMeasure (cfCylinder q)).toReal|
-        ≤ C * θ ^ n * (gaussMeasure (cfCylinder q)).toReal)
-    {K : ℕ} (hK : 0 < K) (F : Finset (List ℕ))
+theorem sum_gaussMeasure_windowBound_le_of_variance [Nonempty S] (δ : S → ℕ → S) (t : S)
+    (q : List ℕ) {c V : ℝ} (hc0 : 0 ≤ c) (hc1 : c ≤ 1)
+    {K : ℕ} (hK : 0 < K)
+    (hvar : ∀ d : S, ∫ y, devAvg δ d t q c K y ^ 2 ∂gaussMeasure ≤ V / K)
+    (F : Finset (List ℕ))
     (hFlen : ∀ W ∈ F, W.length = K + q.length) :
     ∑ W ∈ F, (gaussMeasure (cfCylinder W)).toReal
         * VandeheyCocycle.windowBound δ t q c K W
-      ≤ (Fintype.card S : ℝ) * Real.sqrt (varConst C θ q.length / K) := by
+      ≤ (Fintype.card S : ℝ) * Real.sqrt (V / K) := by
   classical
   have hKR : (0 : ℝ) < K := by exact_mod_cast hK
   set p : List ℕ → ℝ := fun W => (gaussMeasure (cfCylinder W)).toReal with hp
   have hp0 : ∀ W, 0 ≤ p W := fun W => ENNReal.toReal_nonneg
-  set R : ℝ := Real.sqrt (varConst C θ q.length / K) with hR
+  set R : ℝ := Real.sqrt (V / K) with hR
   -- per state, the Cauchy–Schwarz bound
   have hper : ∀ d : S, ∑ W ∈ F, p W * |VandeheyCocycle.localAvg δ t q c K d W| ≤ R := by
     intro d
     refine le_trans (sum_gaussMeasure_abs_le_sqrt F hFlen _) ?_
     rw [hR]
     refine Real.sqrt_le_sqrt ?_
-    refine le_trans (sum_gaussMeasure_localAvg_sq_le δ d t q hc0 hc1 hK F hFlen) ?_
-    have := integral_devAvg_sq_le δ d t q hC hθ0 hθ1 hc0 hc1 hpin hK
-    rw [varConst]
-    exact this
+    exact le_trans (sum_gaussMeasure_localAvg_sq_le δ d t q hc0 hc1 hK F hFlen) (hvar d)
   -- `windowBound` is at most the sum of the `|localAvg|`s
   have hwb : ∀ W : List ℕ, VandeheyCocycle.windowBound δ t q c K W
       ≤ ∑ d : S, |VandeheyCocycle.localAvg δ t q c K d W| := by
@@ -1045,6 +1103,24 @@ theorem sum_gaussMeasure_windowBound_le [Nonempty S] (δ : S → ℕ → S) (t :
     _ ≤ ∑ _d : S, R := Finset.sum_le_sum fun d _ => hper d
     _ = (Fintype.card S : ℝ) * R := by
         rw [Finset.sum_const, Finset.card_univ, nsmul_eq_mul]
+
+/-- **The measure-side bound on `windowBound`, from the pin.**  The original form: the pin
+supplies the variance bound with `V = varConst C θ |q|`. -/
+theorem sum_gaussMeasure_windowBound_le [Nonempty S] (δ : S → ℕ → S) (t : S) (q : List ℕ)
+    {c C θ : ℝ} (hC : 0 ≤ C) (hθ0 : 0 ≤ θ) (hθ1 : θ < 1) (hc0 : 0 ≤ c) (hc1 : c ≤ 1)
+    (hpin : ∀ (n : ℕ) (e : S) (τ : ℝ), τ ∈ Set.Icc (0 : ℝ) 1 →
+      |stateHorizonIntegral δ (cfCylinder q) n e t τ
+          - c * (gaussMeasure (cfCylinder q)).toReal|
+        ≤ C * θ ^ n * (gaussMeasure (cfCylinder q)).toReal)
+    {K : ℕ} (hK : 0 < K) (F : Finset (List ℕ))
+    (hFlen : ∀ W ∈ F, W.length = K + q.length) :
+    ∑ W ∈ F, (gaussMeasure (cfCylinder W)).toReal
+        * VandeheyCocycle.windowBound δ t q c K W
+      ≤ (Fintype.card S : ℝ) * Real.sqrt (varConst C θ q.length / K) :=
+  sum_gaussMeasure_windowBound_le_of_variance δ t q hc0 hc1 hK
+    (fun d => by
+      have := integral_devAvg_sq_le δ d t q hC hθ0 hθ1 hc0 hc1 hpin hK
+      rwa [varConst]) F hFlen
 
 end VandeheyTwo
 

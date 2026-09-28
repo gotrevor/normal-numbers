@@ -158,18 +158,14 @@ This is the bridge from the transfer-operator pin `VandeheyState.stateHorizonInt
 the hypothesis that `VandeheyCocycle.tendsto_jointCount_of_classEquidistribution` consumes.  The
 reference weight is the pin's constant `c`, so it mentions neither `x` nor the initial state —
 exactly the `VandeheyUniformFreq` contract. -/
-theorem classEquidistribution_of_pin [Nonempty S] (δ : S → ℕ → S) (t : S) (q : List ℕ)
-    {c C θ : ℝ} (hC : 0 ≤ C) (hθ0 : 0 ≤ θ) (hθ1 : θ < 1) (hc0 : 0 ≤ c) (hc1 : c ≤ 1)
-    (hpin : ∀ (n : ℕ) (e : S) (τ : ℝ), τ ∈ Set.Icc (0 : ℝ) 1 →
-      |stateHorizonIntegral δ (cfCylinder q) n e t τ
-          - c * (gaussMeasure (cfCylinder q)).toReal|
-        ≤ C * θ ^ n * (gaussMeasure (cfCylinder q)).toReal) :
+theorem classEquidistribution_of_variance [Nonempty S] (δ : S → ℕ → S) (t : S) (q : List ℕ)
+    {c V : ℝ} (hc0 : 0 ≤ c) (hc1 : c ≤ 1) (hV0 : 0 ≤ V)
+    (hvar : ∀ (K : ℕ), 0 < K → ∀ d : S,
+      ∫ y, devAvg δ d t q c K y ^ 2 ∂gaussMeasure ≤ V / K) :
     VandeheyCocycle.ClassEquidistribution δ t q := by
   classical
   refine ⟨c, fun ε hε => ?_⟩
   set N : ℝ := (Fintype.card S : ℝ) with hN
-  set V : ℝ := varConst C θ q.length with hV
-  have hV0 : 0 ≤ V := varConst_nonneg hC hθ0 hθ1 _
   -- Step 1: choose `K` from the variance bound
   have htK : Tendsto (fun K : ℕ => N * Real.sqrt (V / K)) atTop (nhds 0) := by
     have h0 : Tendsto (fun K : ℕ => V / (K : ℝ)) atTop (nhds 0) :=
@@ -204,7 +200,7 @@ theorem classEquidistribution_of_pin [Nonempty S] (δ : S → ℕ → S) (t : S)
     fun W hW a ha => ((VandeheyAut.mem_boundedWords m W |>.mp hW).2 a ha).1
   -- the measure-side bound on the finite family
   have hmeas : ∑ W ∈ F, bfun W * (gaussMeasure (cfCylinder W)).toReal < ε / 3 := by
-    have h := sum_gaussMeasure_windowBound_le δ t q hC hθ0 hθ1 hc0 hc1 hpin hK F
+    have h := sum_gaussMeasure_windowBound_le_of_variance δ t q hc0 hc1 hK (hvar K hK) F
       (by intro W hW; rw [hFlen W hW])
     have hcomm : ∑ W ∈ F, (gaussMeasure (cfCylinder W)).toReal * bfun W
         = ∑ W ∈ F, bfun W * (gaussMeasure (cfCylinder W)).toReal :=
@@ -267,6 +263,20 @@ theorem classEquidistribution_of_pin [Nonempty S] (δ : S → ℕ → S) (t : S)
         + B * (m : ℝ) * ((((Finset.range n).filter
             (fun i => ¬ (1 ≤ cfDigit x i ∧ cfDigit x i ≤ Z))).card : ℝ) + (m : ℝ)) := hsplit
     _ ≤ ε * n := le_of_lt hlt
+
+/-- **`ClassEquidistribution` from the pin.**  The original form: the pin gives the variance
+bound with `V = varConst C θ |q|` (`integral_devAvg_sq_le`). -/
+theorem classEquidistribution_of_pin [Nonempty S] (δ : S → ℕ → S) (t : S) (q : List ℕ)
+    {c C θ : ℝ} (hC : 0 ≤ C) (hθ0 : 0 ≤ θ) (hθ1 : θ < 1) (hc0 : 0 ≤ c) (hc1 : c ≤ 1)
+    (hpin : ∀ (n : ℕ) (e : S) (τ : ℝ), τ ∈ Set.Icc (0 : ℝ) 1 →
+      |stateHorizonIntegral δ (cfCylinder q) n e t τ
+          - c * (gaussMeasure (cfCylinder q)).toReal|
+        ≤ C * θ ^ n * (gaussMeasure (cfCylinder q)).toReal) :
+    VandeheyCocycle.ClassEquidistribution δ t q :=
+  classEquidistribution_of_variance δ t q hc0 hc1 (varConst_nonneg hC hθ0 hθ1 _)
+    (fun K hK d => by
+      have := integral_devAvg_sq_le δ d t q hC hθ0 hθ1 hc0 hc1 hpin hK
+      rwa [varConst])
 
 /-! ## The payoff: the class automaton, unconditionally -/
 
