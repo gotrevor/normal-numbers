@@ -28,7 +28,5 @@ Treadmill laps append dated notes **below the queue**, and a review lap folds th
    one doesn't, record "Vinogradov or nothing" in the Maze.
 8. **SwingC2 triage.**  Delete or restate `tauMomentPrimesShiftStruct_of_primeDensity`, which
    takes the vacuous `PrimeDensityAP`, and `survivorLeaf_of_struct`.
-9. **OVERVIEW refresh.**  Add Joint Lambert, Wall, Philipp, Vandehey §3 and the merged C3/Elliott
-   state.
 
 ## Lap notes (newest first)

@@ -18,7 +18,8 @@ digraph NormalNumbers {
     ell -> omega [label="application input still open"];
     kp -> rich [label="conditional reduction"];
     crt -> eb [style=dashed, label="preserve the digit construction", color="#5c4890"];
-    {rank=same; omega; rich; eb;}
+    vand [label="PARTIAL · Vandehey\nMöbius images of CF-normal numbers\n§3 proved; uniform-frequency crux open", color="#995513", style="rounded,dashed"];
+    {rank=same; omega; rich; eb; vand;}
     {rank=same; ell; kp; crt;}
   }
   omega -> carry [style=dashed, label="TWO MISSING STEPS\nlogarithmic → ordinary averages\ntwo points → growing carry depth", color="#995513"];
@@ -28,8 +29,12 @@ digraph NormalNumbers {
     disj [label="PROVED\nEvery base-four word\nalready occurs in G₄", color="#176852", penwidth=2];
     sparse [label="PROVED · C′\nSparse-prime Lambert normality\nFull primes fail its hypothesis", color="#176852", penwidth=2];
     spectrum [label="PROVED · C4\nComplete abelian length spectra\nCounts ones; forgets order", color="#176852", penwidth=2];
+    joint [label="PROVED · conditional\nWords in several E_b at one\ncommon position (two prime inputs)", color="#176852", penwidth=2];
+    wall [label="PROVED\nWall: qx + r stays normal\nPhilipp: CF ψ-mixing", color="#176852", penwidth=2];
     {rank=same; disj; sparse; spectrum;}
+    {rank=same; joint; wall;}
     disj -> sparse -> spectrum [style=invis];
+    joint -> wall [style=invis];
   }
   sparse -> kp [style=invis, minlen=1];
 }
