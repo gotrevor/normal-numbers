@@ -21,8 +21,33 @@ target word `v` that ALTERNATES somewhere (`v[i₀]? ≠ v[i₀+1]?`).  The chai
 3. `VandeheyAltCount.trigger_bounds_of_occIn_le` — `hK` and `hkK` ARE one statement (`kOut` is an
    increment of `occIn`; the `hK` sum telescopes along CF prefixes).
 
+**The translation is CLOSED (lap 3, later).**  `VandeheyLRPattern.lean`:
+`map_range'_eq_patWord` (CF digits match ⇒ the stream reads the forced pattern),
+`cfDigit_of_map_range'_eq_patBody` (converse), and `card_cf_eq_card_patWord` (a BIJECTION
+`n ↦ lrPos w n - 1` between CF occurrences in `[1,N)` of parity `b` and pattern occurrences).
+The dictionary itself is `VandeheyLRRuns.lean`: `lrTail_lrPos` (after `n` runs the point is `Tⁿw`
+or `(Tⁿw)⁻¹`), `lrExpand_eq_runIdx_parity`, `lrExpand_ne_succ_iff`.
+
+**⚠ STRUCTURAL FINDING (lap 3) — rescale by RUNS, never by LETTERS.**  The Gauss measure has
+infinite digit mean, so `lrPos w n / n → ∞` a.e.: the *letter* count per input digit DIVERGES and
+the density of run boundaries in the L/R word is `0`.  Any plan that rescales the L/R-letter index
+against the input index by a positive constant is WRONG.  What is linear is the RUN count, which
+is why Lemma 6.1 is about emitted CF digits.  The bijection above is the right interface precisely
+because it lands on CF INDICES, not letter positions.  Upper half now proved:
+`VandeheyRunCount.numAlt_lrWord_le` — at most `(2D+1)·n` alternations after `n` input digits
+(Lemma 2.2 summed over blocks, one alternation per seam).
+
 **Next, in order.**
-(a) The run↔CF-digit translation (HANDOFF NEXT 2).  An occurrence of a CF word `v` in the image's
+(a′) **`hlen`, the remaining analytic leaf**: the run count grows at least LINEARLY,
+    `runs(lrWord n)/n → c > 0`.  Route: `lrRun_eq` says `M₀·B_{a₁}⋯B_{aₙ} = lrProd w · M_n` with
+    `M_n` in a FINITE set, and the input product's own Stern–Brocot word has exactly `n` runs
+    (one per input digit); right-multiplying by a bounded matrix perturbs the path's cone by a
+    bounded amount, so the two run counts differ by a bounded FACTOR.  Making "perturbs the cone
+    boundedly" precise is the work.  A cheaper sufficient form may be available: the frequency
+    argument only needs `liminf runs/n > 0`.
+(b′) Then factor the assembly (see (b) below) and assemble.
+
+(a) The run↔CF-digit translation (HANDOFF NEXT 2), superseded above.  An occurrence of a CF word `v` in the image's
     expansion is an occurrence of the single `L/R` word `w_v = X · R^{v₁}L^{v₂}⋯ · Y` with the two
     boundary letters FORCED by alternation (maximal runs at both ends = a one-letter look-around).
     `w_v` alternates, so (a) is exactly what supplies the `i₀` that `lr_trigger_bounds` needs.
