@@ -3,6 +3,7 @@ Copyright (c) 2026 Trevor Morris. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import NormalNumbers.VandeheyLRTransducer
+import NormalNumbers.VandeheyAltCount
 
 /-!
 # Vandehey Lemma 2.2, in run form: a block emits at most `2D` alternations
@@ -38,36 +39,12 @@ directions are exactly the cases in which the emitted word is a single run.
 
 namespace NormalNumbers.VandeheyLR
 
-open Mat2
+open Mat2 VandeheyOut
 
-/-! ## Alternations of an `L/R` word -/
+/-! ## Alternations of an `L/R` word
 
-/-- The number of adjacent unequal pairs of an `L/R` word.  The number of runs of a nonempty
-word is `numAlt + 1`. -/
-def numAlt : List Bool → ℕ
-  | [] => 0
-  | _ :: [] => 0
-  | b :: c :: w => (if b = c then 0 else 1) + numAlt (c :: w)
-
-@[simp] lemma numAlt_nil : numAlt [] = 0 := rfl
-@[simp] lemma numAlt_singleton (b : Bool) : numAlt [b] = 0 := rfl
-
-lemma numAlt_cons_le (b : Bool) (w : List Bool) : numAlt (b :: w) ≤ numAlt w + 1 := by
-  cases w with
-  | nil => simp
-  | cons c w =>
-    rw [numAlt]
-    split <;> omega
-
-/-- A constant word has no alternation. -/
-lemma numAlt_eq_zero_of_const : ∀ (w : List Bool) (b : Bool), (∀ x ∈ w, x = b) → numAlt w = 0
-  | [], _, _ => rfl
-  | [_], _, _ => rfl
-  | (u :: v :: w), b, h => by
-      have hu : u = b := h u (by simp)
-      have hv : v = b := h v (by simp)
-      rw [numAlt, if_pos (hu.trans hv.symm),
-        numAlt_eq_zero_of_const (v :: w) b (fun x hx => h x (by simp [hx]))]
+`numAlt` (and its list lemmas) live in `VandeheyAltCount`, where the trigger layer consumes
+them; this file supplies the bound for the words the transducer emits. -/
 
 /-! ## The column action -/
 
