@@ -4,6 +4,33 @@ Concrete next moves, cheapest and most clear-cut first.  Front context is in `ST
 lap-by-lap log from before the 2026-09-27 merge is `archive/PENDING_WORK-to-2026-09-27.md`.
 Treadmill laps append dated notes **below the queue**, and a review lap folds them back into it.
 
+## ✅ LAP 6 (2026-09-28): `hjs` IS CLOSED, and `hlen` is a corollary
+
+`54610ea` **`VandeheyTransport.lean`** — the parity machinery of lap 5 transported back to the
+genuine Raney transducer.  The bridge is `runState_lrDelta_eq`
+(`runState lrDelta M.toRState w = ι^{|w|} (runState rplusDelta M w).toRState`), and the
+determinant PINS the phase (`runState_lrDelta_eq_iff`), so
+`jointSet lrDelta s₀ t q x n = jointSet (prodStep rplusDelta) (s₀,0) (tPlus t, tPhase t) q x n`
+as FINSETS — an ext, not an estimate.  Hence `jointStateFreq_lrDelta` (= `hjs`) and
+`subWindow_rhoLR` (= `hρ`), both `#print axioms`-clean.
+
+**`VandeheyOutLen.lean`** — `hlen` reduced to `hjs`, as the lap-4 finding predicted and with no
+cone perturbation: `outLen δ out s₀ x n = Σ_t wCount δ s₀ t (blockLen out t) 1 x n`
+(`outLen_eq_sum_wCount`), so the length-1 engine `tendsto_wCount_div` gives
+`tendsto_outLen_div` with limit `c = Σ_t wLimit ρ t (blockLen out t) 1`, needing only a uniform
+block-length bound `hB`.
+
+**What is left of the capstone's hypothesis list** (`mobiusUniformFreq_of_transducer`):
+1. `hc : 0 < c` — the ONE piece `tendsto_outLen_div` does not give.  `c ≥ 0` is
+   `outLenLimit_nonneg`; strict positivity is combinatorial (some state/digit pair of positive
+   Gauss mass emits a nonempty block).  Route: pick one genuine one-letter window `w` and a
+   state `t` with `ρ [w] t > 0` and `out t w ≠ []`, and bound `wLimit` below by that single
+   term (`le_csSup` with `Q = {[w]}`) — the `wLimit` sSup is over finite subfamilies, so a
+   one-element `Q` suffices.
+2. `hB` for the `L/R` machine (uniform block length) — expected from the same alternation count
+   that gives `K = 2D + 2 + |v|` in `VandeheyLRTrigger`.
+3. `hgen` (near-free, `patWord_alternation`), `htail` (a cylinder estimate), `hcof`.
+
 ## ⚠ THE LAP-5 ROUTE FINDING (2026-09-28) — the crux is an ALTERNATING PIN
 
 Lap 5 first de-factorized the output side (commit `39b452f`: `JointStateFreq δ s₀ ρ`,

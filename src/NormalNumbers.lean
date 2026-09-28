@@ -39,6 +39,7 @@ import NormalNumbers.VandeheyTwoPoint
 import NormalNumbers.VandeheyClassEquidist
 import NormalNumbers.VandeheyParity
 import NormalNumbers.VandeheyTransport
+import NormalNumbers.VandeheyOutLen
 import NormalNumbers.VandeheyOutputFreq
 import NormalNumbers.VandeheyWeightTV
 import NormalNumbers.VandeheyZFree
