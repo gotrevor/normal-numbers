@@ -16,6 +16,170 @@ interface: it hands the assembly a single `n` whose base-`b` tail is `< ε/2` fo
 `b ≥ 2`, which is precisely what lets one offset pin the digit of `E_b` in all coordinates
 simultaneously.  Arbitrarily late occurrences are already free (`K` and `N` are both
 arbitrary in `exists_joint_small_tail`).  `JointLambertDisjunctivity` is NOT yet claimable.
+## Vandehey 1.1 (2026-09-28, lap C cont.) — **THE BRIDGE IS CLOSED: Vandehey §3 is unconditional**
+
+`src/NormalNumbers/VandeheyClassEquidist.lean` (new, wired, sorry-free, trust triple):
+
+* **`classEquidistribution_of_pin`** — for EVERY finite automaton `δ` whose digit steps are
+  bijections and whose states are `M`-step reachable, `VandeheyCocycle.ClassEquidistribution δ t q`
+  holds with reference weight the pin's constant.  (Stated generically; `q` need not even be
+  genuine or nonempty here.)
+* **`classEquidistribution_classStep`** — instantiated at the class automaton (`classStep D`,
+  prime `D`, `M = 3` from `exists_classWord_three`, bijectivity from `classStep_bijective`,
+  `c = 1/|ℙ¹(ℤ/D)|`).
+* **`tendsto_jointCount_classStep`** — with the already-proved transfer principle: along every
+  CF-normal `x` and from every initial class, the joint (window, class) frequency converges to
+  `γ(I_q)/|ℙ¹(ℤ/D)|`.  **This is the content Vandehey buys from the Airey–Mance-refuted
+  Moshchevitin–Shkredov theorem, and it is now unconditional and machine-checked.**  No hot-spot
+  criterion, no tightness hypothesis, no ergodic theorem.
+
+Supporting: `card_bad_shift_le`, **`sum_windowBound_le_split`** (the orbit split: finite weighted
+count over digit-bounded windows + a residue charged to the digit tail, via
+`card_unbounded_window_le`), `tendsto_weighted_window_freq`.
+
+**The ε-management, recorded.**  Order of choice is forced: `ε ↦ K` (from the variance bound
+`|S|√(varConst/K)`), then `K ↦ Z` (the digit bound must beat `(1+|L|)(K+|q|)τ(Z)`, and `m = K+|q|`
+grows with `K`).  The threshold in `n` may depend on `x`; `K` may not — that is exactly why
+`ClassEquidistribution` puts `∃K` outside `∀x`.
+
+### Next attack (the remaining programme, in order)
+
+1. **The fiber.**  The transducer state space is `M_D` (det-`±D` normal forms), not the class
+   space; the class is the obstruction to synchronization (`PROBE-2026-09-27`), and within a class
+   states DO merge (`probes/cf_transducer_class.py`).  So: define the class projection
+   `M_D → ℙ¹(ℤ/D)` and prove *class-relative synchronization*: for `ℓ` large, the transducer state
+   at time `i` is a function of (class at `i`, last `ℓ` digits) outside a set of positions of
+   frequency `→ 0`.  Then every joint (window, transducer-state) count is a finite sum of joint
+   (window, class) counts, which `tendsto_jointCount_classStep` evaluates.
+2. **Vandehey §2: the Raney transducer.**  Finiteness of the det-`±D` normal forms, the
+   factorization `M·A_n = (output CF matrices)·(normal form)`, identity (9).
+3. **§5–§6: trigger counting.**  Occurrences of a word `r` in the output are triggered by finitely
+   many (state, input window) pairs; `ℓ(n) = c₁n(1+o(1))` and `#occ_r(n) = c_r n(1+o(1))`, so the
+   frequency tends to `c_r/c₁`, independent of `x`.  Then `VandeheyUniformFreq` closes and
+   `vandehey_matrix_action_of_uniformFreq` finishes Theorem 1.1.
+4. Composite `D`: `ClassSpace D = Option (ZMod D)` models `ℙ¹(ℤ/D)` only for prime `D`.  Keep the
+   Markov layer abstract (`classEquidistribution_of_pin` already is) so this is
+   hypothesis-verification, not redesign.
+
+**Useful reduction to keep in mind (not yet formalized).**  By Smith normal form every nonsingular
+integer Möbius map is a composition of `GL₂(ℤ)` maps and `x ↦ nx`, `x ↦ x/n`.  The `GL₂(ℤ)` part is
+elementary (Serret: CF expansions of `GL₂(ℤ)`-equivalent numbers share a tail, so digit frequencies
+agree), so the whole theorem reduces to `x ↦ Dx` for prime `D` — which is exactly the case the class
+automaton above is built for.  This could cut §2's bookkeeping substantially.
+
+## Vandehey 1.1 (2026-09-27, lap C) — THE BRIDGE: state-refined ψ-mixing at gap ZERO is PROVED
+
+`src/NormalNumbers/VandeheyStateMixing.lean` (new, wired, sorry-free, `[propext, Classical.choice,
+Quot.sound]`).  The proved crux `stateHorizonIntegral_pin` was INERT — nothing consumed it.  It now
+consumes into a ψ-mixing statement for `γ` against **every genuine cylinder, with no gap**:
+
+* `abs_setIntegral_tailDensity_sub_le` / `continuousOn_setIntegral_tailDensity` — `τ ↦ ∫_B h_τ`
+  is `2|B|`-Lipschitz on `[0,1]` for any `B ⊆ (0,1)`; strips the horizon bookkeeping off
+  `horizonIntegral_zero_lipschitz`.
+* **`abs_gaussMeasure_cylinder_inter_sub_le`** — THE brick.  From *any* uniform pin
+  `|∫_B h_τ − c| ≤ E` (`τ ∈ [0,1]`) it derives, for every genuine word `v`,
+  `|γ(I_v ∩ T^{−|v|}B) − c·γ(I_v)| ≤ E·γ(I_v)`.
+* `abs_gaussMeasure_familySetC_inter_sub_le` — the countable-family form.
+* **`abs_gaussMeasure_biUnion_cylinder_inter_sub_le`** — the form with a **past-dependent future**:
+  each past cylinder `I_w` may be paired with its own future set `B w`, as long as the pin constant
+  and error are common.  This is the load-bearing generalisation.
+* `abs_gaussMeasure_cylinder_horizon_sub_le` — the unrefined companion (from
+  `horizonIntegral_pin_geom`), in the same normalisation.
+* `VandeheyState.abs_gaussMeasure_cylinder_state_sub_le`,
+  `…_familySetC_state_sub_le`, **`…_biUnion_state_sub_le`** — the state-refined corollaries.
+  The last one pairs `I_v` with `stateHorizonSet δ A n (runState δ d v) t`: the future event read
+  from the state the automaton reaches *after that very word*.
+
+**The insight that makes (A) free, recorded so it is not re-derived.**  The adjacency obstruction
+(`ψ`-mixing is vacuous at gap `0`) is not an obstruction for the *transfer-operator* quantity at
+all, because `CFGammaMixing.setIntegral_inter_preimage` is an EXACT identity —
+`∫_{I_v ∩ T^{−|v|}B} h_s = (∫_B h_{tChain s v})·(∫_{I_v}h_s)` — with `tChain s v ∈ [0,1]`
+(`tChain_mem_Icc`).  So a pin that is *uniform in the tail parameter* is automatically a
+*conditional* statement given the whole past, with zero gap and zero loss of rate.  Composing it
+with the mixture `γ = ∫₀¹(h_s·Leb)dλ(s)` costs nothing because the bound is pointwise in `s`.
+Second consequence: since the pin is uniform in the automaton's **initial state**, the future set
+may depend on the past word — hence no partition of a past family by `runState δ d v` is needed.
+
+**Gotcha.** `𝒫` is Mathlib notation for `Set.powerset`; it cannot be used as an identifier.
+`𝒮`, `𝒱` are fine.
+
+### Next attack, in order (this is the remaining bridge; the plan is fully worked out)
+
+`Φ = K⁻¹∑_{k<K} VandeheyCocycle.jointDev δ d t q L · k` on `(0,1)`, `ℓ = |q|`, `m = K+ℓ`.
+
+1. **Plumbing (a.e. set identifications).**  For irrational `y ∈ (0,1)`:
+   (i) `y ∈ cfCylinder w ↔ w = cfWord y |w|`;
+   (ii) `y ∈ familySetC 𝒮 ↔ cfWord y m ∈ 𝒮` (all words of `𝒮` genuine of length `m`);
+   (iii) `cfWord y (m₁+n) = cfWord y m₁ ++ cfWord (T^{m₁}y) n`;
+   (iv) `q = cfWindow y k ℓ ↔ y ∈ horizonSet (cfCylinder q) k`.
+2. **`jointDev_ae_eq`**: `jointDev δ d t q L y k = 1_{A_k}(y) − L·1_{B_k}(y)` for γ-a.e. `y`, with
+   `A_k = stateHorizonSet δ (cfCylinder q) k d t`, `B_k = horizonSet (cfCylinder q) k`.
+3. **The four a.e. identifications** for `k + ℓ ≤ k'`, `m₁ = k+ℓ`, `n = k'−m₁`:
+   `A_k ∩ A_{k'} =ᵐ ⋃_{v∈𝒱_A}(I_v ∩ T^{−m₁}(stateHorizonSet δ I_q n (runState δ d v) t))`,
+   `A_k ∩ B_{k'} =ᵐ familySetC 𝒱_A ∩ T^{−m₁}(horizonSet I_q n)`, and the two with `𝒱_B`;
+   where `𝒱_A = {v : |v|=m₁ genuine, q = v.drop k, runState δ d (v.take k) = t}`,
+   `𝒱_B = {v : |v|=m₁ genuine, q = v.drop k}`, and `A_k =ᵐ familySetC 𝒱_A`, `B_k =ᵐ familySetC 𝒱_B`.
+4. **The two-point bound**: with `L = c`, the four main terms CANCEL exactly, leaving
+   `|∫ jointDev_k · jointDev_{k'} dγ| ≤ 2(C+1)·max(θ,79/100)^{k'−k−ℓ}·γ(I_q)`.
+5. **`∫Φ²dγ ≤ (2ℓ+1+2(C+1)/(1−ρ))/K`** by summing over the `K²` pairs.
+6. **Cauchy–Schwarz + the disjoint-cylinder comparison**: for any FINITE set `F` of genuine
+   length-`m` words, `∑_{W∈F}γ(I_W)·localAvg(d,W)² ≤ ∫Φ²dγ` (each `I_W` carries the constant
+   value `localAvg(d,W)` by `localAvg_eq` at `i = 0`; the `I_W` are disjoint; `Φ² ≥ 0`), hence
+   `∑_{W∈F}γ(I_W)·windowBound(W) ≤ |S|·√(C₁/K)`.
+7. **The orbit transfer** (`tendsto_windowFreq`, `card_unbounded_window_le`,
+   `tendsto_digitTail_freq`, `digitTail_le`): choose `K` from `ε`, then the digit bound `Z`
+   from `K`; gives `ClassEquidistribution δ t q` for EVERY automaton meeting the pin's hypotheses.
+8. **Instantiate at `classStep D`** (`classStep_bijective`, `exists_classWord_three`, `M = 3`);
+   `tendsto_jointCount_of_classEquidistribution` then closes Vandehey §3 unconditionally.
+
+## Vandehey 1.1 (2026-09-27, review lap) — the ADJACENCY obstruction, and the Rényi brick that removes it
+
+**Landed** (`src/NormalNumbers/VandeheyRenyi.lean`, sorry-free, `[propext, Classical.choice, Quot.sound]`):
+
+* `gaussMeasure_cylinder_renyi_lower` — **the gap-zero Rényi inequality**
+  `(log 2/4)·γ(I_v)·γ(A) ≤ γ(I_v ∩ T^{-|v|}A)`.
+* `gaussMeasure_familySetC_renyi_lower` — the same against a countable family of same-length
+  cylinders (the shape the class past event has).
+* `Doeblin.exists_classWord_three` — every pair of classes is connected by a genuine word of length
+  **exactly** 3 (prime `D`); the parity trap is navigated (`some 0 → ∞` in 1 and 3 steps, never 2).
+* `Doeblin.exists_doeblin_const` — `β > 0` with `β ≤ γ(classEvent D 3 d d')` for all pairs.
+* `Doeblin.exists_minorization_const` — **the conditional Doeblin minorization**:
+  `α·γ(E) ≤ γ(E ∩ T^{-n}(classEvent D 3 d d'))` for EVERY countable union `E` of genuine length-`n`
+  cylinders, with `α = (log 2/4)·β` independent of `E, n, d, d'`.
+
+**The obstruction, recorded so it is not re-derived.**  ψ-mixing
+(`gaussMeasure_cylinder_psi_mixing`, error `(79/100)^g`) is **vacuous at `g = 0`**, and the class
+block and the past block are *adjacent*: the class after `n` digits reads digits `1…n` and the
+Doeblin word occupies `n+1…n+M`.  Inserting a gap does not help — the gap digits act on the class
+by bijections (`classStep_bijective`), so nothing is forgotten, and the Doeblin word would have to
+depend on the unseen gap.  Only a **constant** (gap-free) comparison can serve, and
+`horizonIntegral A 0 t = ∫_A h_t` with `h_t(y) = (1+t)/(1+ty)² ∈ [1/4,2]` on `[0,1]²` supplies it.
+
+**Next attack — the class-refined horizon integral and its geometric pin.**  The remaining crux is
+NOT "the class law becomes uniform" alone: `ClassEquidistribution` needs the class at time `n` to be
+asymptotically uniform *jointly with the digit window at time `n`*, and those blocks are again
+adjacent.  The right object is therefore the **class-refined horizon integral**
+
+> `G_n^{d→d'}(A)(t) := ∫_{y ∈ (0,1) : T^n y ∈ A, σ_{W_n(y)} d = d'} h_t(y) dy`,
+
+with the target pin
+
+> `|G_n^{d→d'}(A)(t) − (1/N)·γ(A)| ≤ C θ^n · γ(A)`, uniformly in `t ∈ [0,1]`, `d`, `d'`, `N = |ℙ¹(ℤ/D)|`.
+
+This is exactly `horizonIntegral_pin_geom` refined by the class, and the `N = 1` case *is* that
+theorem.  The branch recursion is the same one `CFRecursion`/`CFPin` already run,
+`G_{n+1}^{d→d'}(A)(t) = ∑_{a≥1} (branch weight)·G_n^{classStep D d a → d'}(A)(1/(a+t))`, so
+`stepOp_logLipschitz` / `horizonIntegral_logLip` should carry the `t`-direction contraction while
+today's Doeblin minorization supplies the class-direction contraction (all entries of the 3-step
+class kernel `≥ α`).  Granted the pin, everything follows: the joint (window, class) frequency, then
+`ClassEquidistribution` via `vanDerCorput_bound`, then
+`tendsto_jointCount_of_classEquidistribution`.
+
+Why the pin and not a bare Markov contraction: for a NON-Markov chain a uniform minorization gives
+`ν_{n+3}(d'') ≥ α` but iterating it to total-variation convergence needs the conditional law to
+factorize, which Rényi gives only up to constants.  The pin sidesteps the issue by carrying the tail
+parameter `t` as part of the state — the standard transfer-operator formulation — and it is
+simultaneously the statement that decouples the class from the *future* window.
 
 ## Joint Lambert (2026-09-27, lap B) — prime selection CLOSED
 
@@ -9238,3 +9402,880 @@ abbreviation unwound (`IsNormal`/`IsNormalSequence`/`digitOf`, `subsetLambert`/`
 `HANDOFF-2026-09-23-theoremC-COMPLETE.md`'s "next steps"; the campaign's hygiene is now
 complete.  Remaining next steps there: (2) Astra §10 abstract consumer
 `F_N = ∑_j 4^{−j} S_P(y_j, 2N) → 0`; (3) the two off-campaign designated-open `sorry`s.
+
+## 2026-09-27 — Vandehey 1.1 side quest: the either-or ENDGAME landed, crux isolated
+
+`src/NormalNumbers/LiteratureVandehey.lean` (wired into `src/NormalNumbers.lean`), green,
+9278 jobs.  Three new sorry-free, axiom-clean nodes:
+
+* `volume_image_mobius_null` — a nonsingular real Möbius map pushes Lebesgue-null to
+  Lebesgue-null (1-d Jacobian change of variables `lintegral_image_eq_lintegral_abs_deriv_mul`;
+  the pole contributes a subsingleton).
+* `exists_null_cover_notCFNormal_fract` — `{y : ℝ | ¬ IsCFNormal (Int.fract y)}` sits in a
+  measurable Lebesgue-null set (`CFAeNormal.ae_isCFNormal` + density comparison + the
+  `ℤ`-periodization of `Int.fract`).
+* `exists_cfNormal_with_cfNormal_image` — for any integer `(a b; c d)`, `det ≠ 0`, there is
+  `x ∈ (0,1)` off the pole with `x` CF-normal **and** `Mx` CF-normal.  Pigeonhole: pole ∪
+  bad set ∪ `M⁻¹`(bad set) is null, `(0,1)` is not.
+* `vandehey_matrix_action_of_uniformFreq` — **Theorem 1.1 from the crux, unconditionally.**
+
+### Why this is the route-decisive advance
+
+Vandehey's §6 endgame never computes a frequency; the transducer programme only shows the
+limit EXISTS and is the same for every CF-normal `x`, and the identification
+`ρ_v = γ(I_v)` is then a measure-theoretic pigeonhole.  That pigeonhole is now **proved in
+full**, so the *entire* remaining obligation is the single crux
+
+```
+VandeheyUniformFreq :
+  ∀ a b c d, ad − bc ≠ 0 → ∀ genuine v, ∃ L, ∀ x off the pole with Int.fract x CF-normal,
+    freq_v (CF of Int.fract (Mx)) → L
+```
+
+and — this is the point — the **broken Lemma 3.3 (published) / 3.2 (arXiv) is off the
+identification half entirely**.  It is used only inside §3 (Theorem 3.1), i.e. only to get
+existence.  So the tightness-corrected Pyatetskii-Shapiro criterion + tightness of a
+CF-normal point's empirical measures are owed for `vandeheyUniformFreq_holds` and nowhere
+else.  Nothing defective is reproduced anywhere in what is now proved.
+
+### Next attack (in order)
+
+1. **The corrected hot-spot criterion, CF/Gauss form** (Airey–Mance Thm A/B, the one thing
+   the literature gets wrong).  Statement to formalize:
+   if (i) `∃C, ∀ genuine w, limsup_n (visits of the Gauss orbit of y to cfCylinder w in
+   n steps)/n ≤ C · γ(cfCylinder w)`, and (ii) **tightness**: `∀ ε>0, ∃K,
+   limsup_n #{i<n : cfDigit y i > K}/n ≤ ε`, then `IsCFNormal y`.
+   Proof sketch to follow: any subsequential limit of the frequency vector
+   `(freq_w(y))_w ∈ ∏_w [0,1]` (sequentially compact, countable metrizable product — much
+   lighter in Lean than weak-* on measures) is (a) a finitely additive shift-invariant
+   cylinder function, total mass 1 by (ii), (b) `≤ C γ` by (i), hence `≪ γ`; `γ` ergodic
+   for the Gauss map ⇒ it equals `γ`; all limit points equal ⇒ convergence.
+   Sub-obligations to name in `src/`: `cylinderMassOne_of_tight`, `absCont_of_hotSpot`,
+   `eq_gauss_of_invariant_absCont` (the ergodic-uniqueness step; check what
+   `CFAeNormal`/`CFMixing` already give — the repo proves a.e. CF-normality *Birkhoff-free*,
+   so Gauss ergodicity may NOT be available and may have to be routed around, e.g. by
+   using `cylinder_mixing`'s `1 ± Cρ^k` envelope directly to pin the limit).
+2. **Tightness of a CF-normal point's empirical measures**: from `IsCFNormal y`,
+   `#{i<n : cfDigit y i = k}/n → γ(cfCylinder [k])` for each `k`, and
+   `Σ_{k≤K} γ(cfCylinder [k]) → 1` (Gauss–Kuzmin, `CFDigitLaw`), giving
+   `limsup #{i<n : a_i > K}/n ≤ 1 − Σ_{k≤K} γ(I_k) = O(1/K)`.  Note the direction: the
+   `≤` needs the finitely-many-`k` sum to be a LOWER bound on the visits to digits `≤ K`,
+   which is exactly finite additivity of the limit — elementary.
+3. Only then §2 (transducer, integer-matrix normal forms `M_D`), §4–§6.
+
+### Same lap, second commit: the §3 replacement — automaton transfer
+
+`src/NormalNumbers/VandeheyAutomaton.lean` (wired), green.  **Refutes the need for the
+corrected hot-spot criterion on the critical path.**  The reason Vandehey needs
+Pyatetskii-Shapiro at all is that he obtains state/orbit merging only *distributionally*
+(Lemma 3.4, via Saloff-Coste–Zúñiga).  But if the transducer admits a **synchronizing
+word** `z` — reading `z` lands in the same state whatever state you were in — merging is
+**pathwise**, and the whole soft-analysis layer evaporates.  Proved sorry-free this lap:
+
+* `runState`, `Synchronizing`, `syncTarget`, `cfWord`, `cfWindow`, `stateAt` (+ the
+  append/split algebra: `runState_append`, `cfWord_add`, `cfWindow_add`).
+* `stateAt_eq_of_window_sync` — if `z` occurs in the window of `L` digits ending at
+  `m + L`, the state there is `runState δ (syncTarget δ s₁ z) r`: a function of that
+  window alone, independent of the initial state and of everything before position `m`.
+* `stateAt_indep_of_init`, `stateAt_eq_of_window_eq` — the pathwise merging corollaries
+  (two points agreeing on such a stretch are in the same state at its end).
+
+Open leaf, with the full proof plan in its docstring: `exists_jointFreq_limit` — the joint
+(window, state) frequency along a CF-normal `x` converges to an `x`-independent limit.
+
+### Revised attack order (supersedes the previous list)
+
+1. `exists_jointFreq_limit`.  Sub-obligations to name next:
+   * `jointCount_eq_sum_windowCount_add_residue`: for lookback `L`,
+     `jointCount = Σ_{q ∈ Q_t(L)} windowCount (q ++ v) + err`, `Q_t(L) = {q : |q| = L,
+     z is a factor of q, runState δ (syncTarget δ s₁ z) (post-z tail of q) = t}` (finite,
+     `≤ (K)^L` but really just `Finset` over a `Fintype`-free enumeration — index `Q_t` as
+     a `Finset (List ℕ)` via `List.sublistsLen`-style enumeration of bounded-digit words,
+     or carry it as a `Set` with a `Set.Finite` proof), and
+     `err ≤ #{i < n : z not a factor of cfWindow x (i−L) L} + L`.
+   * `windowCount_freq`: `#{i < n : cfWindow x i w.length = w}/n → γ(I_w)` for CF-normal
+     `x` — this is `IsCFNormal` restated through `cfWindow` instead of `countOccurrences`;
+     check `CFWordBridge.lean` for the existing translation.
+   * `zfree_freq_tendsto_zero`: `limsup_n #{i<n : z not a factor of the last L digits}/n
+     ≤ γ(Z_L)` and `γ(Z_L) → 0`.  The second half is where `philipp_psi_mixing_holds` /
+     `CFPsiPin`'s `1 ± Cρᵏ` envelope enters: `γ(Z_{k·|z|}) ≤ (1 − γ(I_z) + Cρ^{|z|})^k`.
+2. `Synchronizing` for Vandehey's `M_D` transducer — the surviving real debt of §2/§4.
+   Note the 2026-08-25 probe (`PROBE-2026-08-25-1235-route-a-transducer.md`) measured
+   `2x` merging pathwise at step 3 over ℤ (and `φ` never merging over `ℤ[φ]`), which is
+   direct evidence that a synchronizing word exists in the INTEGER case — exactly the case
+   Theorem 1.1 needs.  Look for it concretely: a long run of a single large digit should
+   drive any det-`±D` normal form into a canonical state.
+3. §2 transducer construction + identity (9); §5–§6 trigger counting.
+
+### Same lap, third commit: the joint count is a FINITE SUM of window counts (exact)
+
+Added to `VandeheyAutomaton.lean`, all sorry-free:
+
+* `stateAt_eq_runState_window` — the sharpened core.  If `z` occurs anywhere in the lookback
+  window `q = cfWindow x j L`, then `stateAt δ s₀ x (j+L) = runState δ s₁ q` for **any**
+  reference state `s₁`: running the automaton over the window from an arbitrary state already
+  gives the true state, because the run passes through `z`.  No canonical occurrence needs to
+  be chosen, which is what makes the counting argument clean.
+* `cfWindow_eq_range'`, `occStart_eq_card_window`, `tendsto_windowFreq` — CF-normality
+  restated on windows, via the repo's `OccurrenceCountEquiv.tendsto_occStart_iff` (which
+  absorbs the `O(|w|)` right-edge discrepancy between the two counting conventions).
+* `boundedWords K n` + `mem_boundedWords` — the length-`n` words with digits in `[1,K]`, as a
+  `Finset`.  This truncation is the **elementary stand-in for Airey–Mance tightness**: it is
+  what makes the state-fibre sum finite.
+* `joint_iff_window` — at a position whose lookback window contains `z`, the joint
+  (window, state) condition is equivalent to the plain window condition
+  `q ++ v = cfWindow x j (L + |v|)` together with `runState δ s₁ q = t`.
+* `card_joint_good_eq_sum` — **the exact decomposition**:
+  `#{j < n : window ∈ boundedWords K L, z <:+: window, v at j+L, state = t}
+     = Σ_{q ∈ boundedWords K L, z <:+: q, runState δ s₁ q = t} #{j < n : q ++ v = cfWindow x j (L+|v|)}`.
+  Proved by `Finset.card_eq_sum_card_fiberwise` over `j ↦ cfWindow x j L`.
+
+So the joint frequency is now, *exactly*, a finite sum of quantities `tendsto_windowFreq`
+sends to `γ(I_{q++v})`, plus a residue.
+
+### What remains for `exists_jointFreq_limit`
+
+1. **Residue bound** (the only analytic step left):
+   `jointCount − #good ≤ #{j < n : z not a factor of cfWindow x j L}
+       + #{j < n : cfWindow x j L ∉ boundedWords K L} + L`.
+   First term: `≤ Σ_{q ∈ boundedWords K L, z not a factor} (window count)` + the unbounded
+   part, so it reduces to the second plus `γ(z-free bounded words of length L)`.
+   Second term: `≤ L · #{i < n+L : cfDigit x i > K}`, whose frequency CF-normality sends to
+   `L · (1 − Σ_{k=1}^{K} γ(I_{[k]}))` — Gauss–Kuzmin (`CFDigitLaw`) makes that `O(L/K)`.
+   So: take `K = K(L)` with `L/K → 0`.  Elementary; no tightness theorem needed.
+2. **`γ(z-free length-L words) → 0`**: the mixing step.  `philipp_psi_mixing_holds` gives
+   `γ(I_z occurs in a length-|z| block, repeatedly) ≥ 1 − (1 − γ(I_z) + Cρ^{|z|})^{⌊L/|z|⌋}`.
+3. Then a Cauchy-in-`L` squeeze produces `L = lim_L Σ_{q} γ(I_{q++v})`, visibly `x`-free.
+
+### Same lap, fourth commit: the residue is fully bounded (combinatorics done)
+
+`VandeheyAutomaton.lean`, all sorry-free.  `jointSet`/`jointCount`/`mem_jointSet` split out,
+plus `goodSet`, `badSet` and the sandwich:
+
+* `goodSet_card_le_jointCount` — every good position contributes (injection `j ↦ j + L`).
+* `jointCount_le` — `jointCount n ≤ L + #goodSet(n−L) + #badSet(n−L)`, by splitting the
+  joint set at `i < L` and injecting `i ↦ i − L`.
+* `badSet_card_le` — `#badSet ≤ L · #{i < m+L : cfDigit x i ∉ [1,K]}
+     + #{j < m : z is not a factor of cfWindow x j L}`, via a `Finset.biUnion` over the
+  `L` window offsets.
+
+Combined with `card_joint_good_eq_sum`, the joint frequency is now **squeezed between a
+finite sum of window frequencies and that sum plus two explicit error terms**, with all the
+combinatorics discharged.  Only two analytic limits remain:
+
+1. `freq{i : cfDigit x i > K} → 1 − Σ_{k=1}^{K} γ(I_{[k]})` for CF-normal `x` (single-digit
+   case of `tendsto_windowFreq`, plus `Σ_{k≥1} γ(I_{[k]}) = 1` from `CFDigitLaw`); this is
+   `O(1/K)` by Gauss–Kuzmin, so choose `K` after `L`.
+2. `freq{j : z not a factor of cfWindow x j L} → γ(z-free length-L words)` (again
+   `tendsto_windowFreq`, summed over the bounded `z`-free words, with the unbounded part
+   absorbed by (1)), and `γ(z-free length-L words) → 0` in `L` — the one place
+   `philipp_psi_mixing_holds` / `CFPsiPin` is needed.
+
+Then `exists_jointFreq_limit` closes by a Cauchy-in-`L` squeeze, with limit
+`lim_L Σ_{q} γ(I_{q ++ v})` — visibly independent of `x` and of `s₀`.
+
+### Same lap, fifth commit: the digit-tail limit PROVED (tightness, elementary)
+
+`VandeheyAutomaton.lean`, sorry-free:
+
+* `cfWindow_one`, `card_digit_eq_card_window`, `card_digitTail_add_sum` — the exact partition
+  `#{i<n : a_i ∉ [1,K]} + Σ_{k=1}^{K} #{i<n : a_i = k} = n`
+  (`Finset.card_eq_sum_card_fiberwise` over `i ↦ cfDigit x i`).
+* `tendsto_digitTail_freq` — **for CF-normal `x`,
+  `#{i<n : a_i ∉ [1,K]}/n → 1 − Σ_{k=1}^{K} γ(I_{[k]})`, an exact limit.**
+
+This *is* the tightness of a CF-normal point's empirical measures, in the form the argument
+needs, and it is a **consequence** of CF-normality proved here — not an added hypothesis as
+in Airey–Mance Theorem A/B.  Gauss–Kuzmin (`CFDigitLaw`) makes the limit `O(1/K)`; the
+remaining glue is `Σ_{k≥1} γ(I_{[k]}) = 1`, i.e. `Tendsto (fun K => Σ_{k=1}^{K} γ(I_{[k]}))
+atTop (nhds 1)` — look for it in `CFDigitLaw.lean` (the single-digit Gauss–Kuzmin law) before
+reproving.
+
+### Sole remaining analytic leaf for `exists_jointFreq_limit`
+
+`γ(z-free length-L words) → 0`.  Route: `philipp_psi_mixing_holds` / `CFPsiPin`'s `1 ± Cρᵏ`
+envelope gives `γ(no occurrence of z in the k-th block of |z| digits | earlier blocks)
+≤ 1 − γ(I_z) + Cρ^{|z|}`, so `γ(Z_{k|z|}) ≤ (1 − γ(I_z) + Cρ^{|z|})^k → 0` once
+`|z|` is large enough that `Cρ^{|z|} < γ(I_z)` — which needs `γ(I_z) > 0` (true for genuine
+`z`, `CFCylinder`) and can be arranged by replacing `z` with a power `z^m` (still
+synchronizing, since a synchronizing word's extensions are synchronizing).
+
+### Same lap, sixth commit: the LAST analytic leaf closed — `γ(z-free) → 0`
+
+`src/NormalNumbers/VandeheyZFree.lean` (wired), green, **axiom-clean**
+(`[propext, Classical.choice, Quot.sound]`):
+
+* `zFreeSet z k` — the points of `(0,1)` avoiding `z` at the aligned block positions
+  `0, s, …, (k−1)s`, `s = |z| + 1` (one spare digit, so the ψ-mixing gap is `1`).
+* `gaussMeasure_zFreeSet_succ_le` — **the renewal step**:
+  `γ(A_{k+1}) ≤ (1 − (21/100)·γ(I_z))·γ(A_k)`.
+* `gaussMeasure_zFreeSet_le_pow`, `tendsto_gaussMeasure_zFreeSet` — geometric decay, hence
+  `γ(A_k) → 0` for every genuine `z`.
+
+**Why this went through where the textbook route stalls.**  The usual obstruction is that
+the renewal needs `γ(E ∩ T^{-s}A)` for `E` a *union* of cylinders, i.e. a countable cylinder
+decomposition with its null-set bookkeeping.  Sidestepped entirely: the repo's
+`CFPsiPin.gaussMeasure_cylinder_psi_mixing` takes an **arbitrary measurable** future set, so
+put the single cylinder `I_z` in front and the accumulated avoidance set in the future, and
+recover `γ(A_k)` on the other side by Gauss invariance (`CFPin.gaussMeasure_preimage_iterate`).
+The split `(0,1) ∩ T^{-s}A = (I_z ∩ T^{-s}A) ⊔ A_{k+1}` is then just two-set additivity.
+Positivity of `γ(I_z)` comes from `CFScheduleA.gaussMeasure_cfCylinder_toReal_pos`.
+`gaussMeasure_Ioo_inter` (γ ignores intersecting with `(0,1)`) is the small new glue.
+
+### State of the Vandehey 1.1 chain after this lap
+
+| obligation | status |
+|---|---|
+| identification half (`vandehey_matrix_action_of_uniformFreq`) | **PROVED**, axiom-clean |
+| pathwise merging from a synchronizing word | **PROVED** (`stateAt_eq_runState_window`) |
+| joint count = finite sum of window counts | **PROVED** (`card_joint_good_eq_sum`) |
+| residue sandwich | **PROVED** (`jointCount_le`, `badSet_card_le`) |
+| tightness / digit tail | **PROVED** (`tendsto_digitTail_freq`) |
+| `γ(z-free) → 0` | **PROVED** (`tendsto_gaussMeasure_zFreeSet`) |
+| `exists_jointFreq_limit` (glue the above into one limit) | open — pure bookkeeping now |
+| `Synchronizing` for Vandehey's `M_D` transducer | open — §2/§4, the real remaining debt |
+| §2 identity (9), §5–§6 trigger counting | open |
+
+### Next attack
+
+1. **Glue `exists_jointFreq_limit`.**  Everything it needs is now in the file.  Remaining
+   bookkeeping: (a) relate `#{j<m : z not a factor of cfWindow x j L}` to the aligned-block
+   avoidance event, so `tendsto_windowFreq` + `tendsto_gaussMeasure_zFreeSet` apply — note
+   `z <:+: cfWindow x j L` is implied by `z` spelling at *any* aligned block inside the
+   window, so the `z`-free window count is bounded by the count of positions in the
+   `zFreeSet`-style event, itself a (countable) union of bounded cylinders handled exactly
+   like `badSet_card_le`; (b) the Cauchy-in-`L` squeeze, with `K = K(L)` chosen after `L`.
+2. Then the transducer: `Synchronizing` for `M_D`.  Concrete target suggested by the
+   2026-08-25 probe: a long run of one large digit should drive any det-`±D` normal form to a
+   canonical state.
+
+### Same lap, seventh commit: the `z`-free window mass bounded by the avoidance mass
+
+Two new sorry-free pieces bridging `VandeheyAutomaton` and `VandeheyZFree`:
+
+* `VandeheyAut.card_window_mem_eq_sum`, `VandeheyAut.tendsto_window_mem_freq` — for a finite
+  family `F` of genuine length-`L` words, the frequency of positions whose window lands in
+  `F` tends to `Σ_{q ∈ F} γ(I_q)` (fiberwise partition + `tendsto_finsetSum`).
+* `cfDigit_iterate`, `getD_drop`, `mem_zFreeSet_of_mem_cfCylinder`,
+  `sum_gaussMeasure_zfree_le` — for a finite family of `z`-**free** length-`L` words with
+  `k·(|z|+1) ≤ L`, `Σ_{q ∈ F} γ(I_q) ≤ γ(zFreeSet z k)`.  The containment is proved by
+  induction on `k`: a `z`-free `q` forces `x ∉ I_z` (else `z` is a prefix of `q`) and
+  `T^{|z|+1}x ∈ cfCylinder (q.drop (|z|+1))`, still `z`-free; irrationality keeps the orbit
+  in `(0,1)` (`irrational_orbit`), and the rationals are `γ`-null.
+
+Chaining with `tendsto_gaussMeasure_zFreeSet`, the `z`-free window frequency is now
+**squeezed to `0` as `L → ∞`**, uniformly over CF-normal `x`.
+
+### Remaining for `exists_jointFreq_limit` — pure bookkeeping
+
+All inputs exist.  The assembly:
+`freq(jointCount, L) ∈ [Σ_{q ∈ Q_t(L,K)} γ(I_{q++v}) , same + ε(L,K)]` with
+`ε(L,K) = γ(zFreeSet z ⌊L/(|z|+1)⌋) + (L+1)·(1 − Σ_{k≤K} γ(I_{[k]}))`, both terms `→ 0` on
+`K = K(L) → ∞` fast enough (e.g. pick `K` with `(L+1)(1 − Σ_{k≤K}γ(I_{[k]})) ≤ 1/L`, possible
+since `Σ_{k≥1} γ(I_{[k]}) = 1`).  The limit is then `lim_L Σ_q γ(I_{q++v})`, `x`-free and
+`s₀`-free.  Note the sequence `S_L := Σ_{q ∈ Q_t(L,K(L))} γ(I_{q++v})` is Cauchy *because*
+the two-sided squeeze holds for every `L` against a single convergent-in-`L`-free quantity —
+standard, but write it as: any two `L, L'` bound the same `limsup`/`liminf` of the joint
+frequency, so `|S_L − S_{L'}| ≤ ε(L) + ε(L')`.
+
+### Then: the transducer (`Synchronizing` for `M_D`)
+Remains the one genuinely open mathematical debt of Theorem 1.1 on this route.
+
+### Same lap, eighth commit: assembly helpers + the digit tail is `O(1/K)`, uniformly
+
+`src/NormalNumbers/VandeheyTransfer.lean` (wired), sorry-free; plus
+`VandeheyAut.card_unbounded_window_le` extracted out of `badSet_card_le` so it is reusable.
+
+* `tendsto_sub_div`, `tendsto_add_div` — a frequency limit survives a bounded shift of the
+  index (`f(n−L)/n` and `f(m+L)/m` have the same limit as `f(n)/n`).  Needed because the
+  sandwich is stated at `n − L` but the frequency is divided by `n`.
+* `Ioo_subset_iUnion_digit_cylinder` — `(1/(K+1), 1) ⊆ ⋃_{k=1}^{K} I_{[k]}` (for `x` there,
+  `x⁻¹ ∈ (1, K+1)`, so `⌊x⁻¹⌋₊ ∈ [1,K]`); no irrationality needed.
+* `digitTail_le` — **`1 − Σ_{k=1}^{K} γ(I_{[k]}) ≤ log(1 + 1/(K+1))/log 2`**, and
+  `tendsto_digitTail_bound` sends that to `0`.
+
+So `tendsto_digitTail_freq`'s limit is now *quantitatively* `O(1/K)` with an explicit
+bound — the tightness modulus, uniform over all CF-normal points.  This avoids needing
+`Σ_{k≥1} γ(I_{[k]}) = 1` as a separate lemma: the interval cover gives the bound directly
+from `gaussMeasure_Ioo`.
+
+### Remaining: the squeeze (`exists_jointFreq_limit`)
+
+With `A_n := #goodSet(n−L)/n → mainSum(L,K)` and
+`C_n := (L + #goodSet(n−L) + 2L·Dcnt(n,K) + Zcnt(n−L))/n
+   → mainSum(L,K) + 2L·(1 − Σ_{k≤K}γ(I_{[k]})) + Σ_{q ∈ zfreeWords} γ(I_q)`,
+the sandwich `A_n ≤ jointCount(n)/n ≤ C_n` gives
+`liminf ≥ mainSum` and `limsup ≤ mainSum + err(L,K)` with
+`err(L,K) ≤ 2L·log(1+1/(K+1))/log 2 + γ(zFreeSet z ⌊L/(|z|+1)⌋)`.
+Choosing `K` after `L` makes `err(L,K(L)) → 0`, so `limsup = liminf` (the limit exists) and
+the value is within `err` of the `x`-free quantity `mainSum(L,K(L))` for every `L` — hence
+`x`-independent.  **No Cauchy argument on `mainSum` is needed**: the two-sided squeeze against
+an `x`-free quantity does both jobs at once.
+
+### Lap 2026-09-27 (side quest, ninth/tenth commits): the route was WRONG — crux relocated
+
+**`Synchronizing` is unsatisfiable for the transducer Theorem 1.1 needs.**  The integer
+state set is finite, so synchronizability is decidable, and
+`probes/cf_transducer_sync.py` decides it: no synchronizing word for `x↦2x`, `x↦x/2`,
+`x↦(x+1)/2`, `x↦3x` (states 80/77/78/223 on digits 1..8), with a majority of state pairs
+provably unmergeable.  `probes/cf_transducer_class.py` isolates the invariant:
+**mergeable ⟺ equal row lattice `ℤ²M` up to scaling**, 0 mismatches over 3160 + 14878 pairs.
+Reason: after common input `w` the states are `P M W` and `Q N W` with `P,Q,W ∈ GL₂(ℤ)`, so
+projective equality forces `N = λ(Q⁻¹P)M` with `Q⁻¹P ∈ GL₂(ℤ)`; `W` is invertible and can
+never change the row lattice.  Full write-up:
+`PROBE-2026-09-27-transducer-not-synchronizing.md`.
+
+Consequences:
+* `VandeheyAut.exists_jointFreq_limit` is **not false**, but its hypothesis is never met.
+  **Do not spend more effort on it** — the previous handoff's "NEXT 1, pure bookkeeping"
+  would have proved a lemma about an empty hypothesis.
+* The crux is now named exactly: the state is an extension of a `ℙ¹(ℤ/D)`-valued **class
+  cocycle** `c_i = c₀ · B_{a₁} ⋯ B_{a_i} mod D` (only `a mod D` matters — visible in the
+  measured tables), acting by bijections, hence never forgetting.  Theorem 1.1 needs that
+  cocycle to equidistribute *jointly with digit windows*.  That is precisely the content
+  Vandehey buys from the refuted Moshchevitin–Shkredov lemma.  Note this is **not**
+  Wall-shaped: Wall's base-`b` carry automaton *is* synchronizing.
+
+**New mechanism, and its engine is now PROVED** — `src/NormalNumbers/VandeheyCocycle.lean`
+(wired, sorry-free, `[propext, Classical.choice, Quot.sound]`):
+
+* `norm_sum_shift_sub_le` — shifting the summation window by `k` costs `≤ 2Ck`.
+* `cesaro_shift_bound` — **the engine**:
+  `‖∑_{i<n} a i‖ ≤ ∑_{i<n} ‖K⁻¹ • ∑_{k<K} a (i+k)‖ + 2CK` for `‖a‖ ≤ C`, in any normed
+  space.  This is how a *non-synchronizing* cocycle is tamed: with
+  `a i = f(win_i) · χ(P_i)` the local `K`-average factors as the unit `χ(P_i)` times a
+  quantity depending only on the length-`(K+|q|)` window at `i`, so the right-hand side is a
+  plain **window** average — exactly what `VandeheyAut.tendsto_window_mem_freq` evaluates.
+* `cocycleOf`, `windowProd`, `cocycleOf_add` (`P_{i+k} = P_i · Q_i^{(k)}`), `windowProd_add`,
+  `windowProd_eq_of_window_eq`, `cocycleOf_congr` — the cocycle layer, over an arbitrary
+  monoid so `PGL₂(ℤ/D)` is a plug-in and `WallCrux.lean`'s automata can reuse it.
+
+### Next attack (in order)
+
+1. **The mean-zero contraction.**  `cesaro_shift_bound` leaves `∑_i ‖R_i‖` with
+   `R_i = K⁻¹ ∑_{k<K} f(win_{i+k}) · ρ(Q_i^{(k)})`.  Taking `ρ` the permutation
+   representation of the class action on `ℙ¹(ℤ/D)` **restricted to the mean-zero subspace**
+   (the invariant vector must be split off first, or `‖R‖` cannot decay), the obligation is
+   `𝔼_γ‖R‖ → 0` as `K → ∞`.  Route: `𝔼‖R‖² = K⁻²∑_{k,k'} 𝔼[…]`, decorrelate well-separated
+   `k, k'` by `philipp_psi_mixing_holds`, and use that `𝔼ρ(Q^{(k)}) → 0` on the mean-zero
+   subspace (aperiodicity of the digit walk on the finite group generated).  This is the
+   only genuinely new analytic content on the corrected route.
+2. **The concrete class group.**  `g : ℕ → PGL₂(ℤ/D)`, `g a = [[0,1],[1,a]]`; prove it
+   factors through `a mod D`, and that the generated group acts transitively on `ℙ¹(ℤ/D)`
+   (needed for aperiodicity/transitivity).
+3. **Fiber merging inside a class** — the surviving half of the old synchronizing story:
+   two states with equal row lattice DO merge (the probe confirms it), so `Synchronizing`
+   should be replaced by a class-relative version and `stateAt_eq_of_window_sync` restated
+   over it.
+4. **§2 transducer + identity (9)** and **§5–§6 trigger counting**, unchanged.
+
+### Same lap, eleventh commit: the CORRECTED transfer principle, PROVED
+
+`src/NormalNumbers/VandeheyCocycle.lean` grew the replacement for
+`VandeheyAut.exists_jointFreq_limit` (whose `Synchronizing` hypothesis the probe showed is
+unsatisfiable).  All sorry-free, `[propext, Classical.choice, Quot.sound]`.
+
+* `VandeheyAut.stateAt_add` — the plain cocycle identity
+  `stateAt (i+k) = runState (stateAt i) (window at i)`.  **No synchronization needed** — this
+  is the whole substitute for the false "state is a function of the window".
+* `VandeheyAut.cfWindow_take / cfWindow_drop / cfWindow_drop_take` — sub-windows of windows.
+* `jointDev` — the joint (window, state) event's deviation from a reference weight `L`.
+* `localAvg`, `localAvg_eq` — **the key step**: the local `K`-average of `jointDev` at `i` is
+  a function of the length-`(K+|q|)` window at `i` *and the hidden state at `i`*.
+* `windowBound` — the worst case over the finitely many hidden states, hence a function of
+  the **window alone**; `windowBound_le` bounds it by `1 + |L|`.
+* `abs_sum_jointDev_le` — `cesaro_shift_bound` applied:
+  `|∑_{i<n} jointDev i| ≤ ∑_{i<n} windowBound(window at i) + 2(1+|L|)K`.  The right-hand side
+  no longer mentions the initial state at all.
+* `sum_jointDev_eq` — `∑ jointDev = jointCount − L · (window count)`.
+* `ClassEquidistribution δ t q` — **the crux, isolated as one named `Prop`**: some reference
+  weight `L` (mentioning neither `s₀` nor `x`) has `∑_{i<n} windowBound ≤ εn` for all
+  CF-normal `x`, for every `ε` at some `K`.
+* `tendsto_jointCount_of_classEquidistribution` — **the corrected transfer principle**:
+  granted the crux, `jointCount/n → L·γ(I_q)` for every CF-normal `x` and every initial
+  state.  Exactly the `VandeheyUniformFreq` shape, and unconditional otherwise.
+* `classEquidistribution_unit`, `tendsto_jointCount_unit` — **non-vacuity anchor**: the
+  one-state automaton satisfies the crux with `L = 1`, and the principle then reproduces
+  CF-normality's window statement.  So the hypothesis is satisfiable and the conclusion is
+  the expected one.
+
+### Next attack
+
+1. **`ClassEquidistribution` for the concrete class automaton.**  With `L = 1/|X|` on a
+   transitive component, `windowBound` is a `K`-average of `±`-weighted indicators along the
+   class walk; the target `𝔼_γ windowBound → 0` is a second-moment computation:
+   `𝔼‖·‖² = K⁻²∑_{k,k'}𝔼[…]`, decorrelate separated `k,k'` by `philipp_psi_mixing_holds`,
+   and use decay of the nontrivial-character average of the digit walk on the finite group
+   generated by the `B_a mod D`.  Note `ClassEquidistribution` asks for a bound at every `n`
+   (not just in the limit), so the window average must be handled with the digit-tail
+   truncation already available (`card_unbounded_window_le`, `digitTail_le`) — or the `Prop`
+   relaxed to an `atTop` eventuality, which the transfer proof can absorb.
+2. The concrete class automaton itself: `g a = [[0,1],[1,a]] mod D` on `ℙ¹(ℤ/D)`; factors
+   through `a mod D`; transitive.
+3. Fiber merging inside a class (the surviving half of the synchronizing story), then §2
+   identity (9) and §5–§6 trigger counting.
+
+### Same lap, twelfth commit: van der Corput, and a negative finding worth keeping
+
+Two changes to `src/NormalNumbers/VandeheyCocycle.lean` (still sorry-free, axiom-clean).
+
+**Correctness fix.**  `ClassEquidistribution` demanded `∑_{i<n} windowBound ≤ εn` for **all**
+`n`; at small `n` that is unsatisfiable for any non-degenerate automaton (a single term can be
+as large as `1+|L|`).  Relaxed to `∀ᶠ n in atTop`, which the transfer proof absorbs by
+threading one more threshold.  Caught before it could make the crux unprovable-as-stated.
+
+**New: `norm_sum_sq_eq`, `vanDerCorput_bound`.**  One Cauchy–Schwarz on top of
+`cesaro_shift_bound`:
+`‖∑_{i<n} a i‖ ≤ √(n · K⁻² ∑_{k,k'<K} ∑_{i<n} ⟪a(i+k), a(i+k')⟫) + 2CK`.
+So the obligation becomes decay of *correlations* in the gap rather than an `L¹` bound on
+local averages — a first moment instead of a variance.
+
+**Negative finding — do not chase the scalar-character cancellation.**  For a *scalar* cocycle
+`a i = f(win_i)·χ(P_i)` the cocycle cancels outright in `a(i+k)·conj(a i)`, leaving
+correlations with **no** hidden state.  That is unavailable here: the class group is
+`PGL₂(ℤ/D)`, and for `D = 2` that is `S₃` acting on the three points of `ℙ¹(𝔽₂)`, whose only
+scalar character is the sign — far too coarse to detect equidistribution on `X`.  The
+2-dimensional irrep is needed, and for higher-dimensional `π` the quantity `⟪π(Q)z, π(Q')z⟫`
+still depends on `z = π(P_i)w`.  (The sign character alone *is* accessible with no hidden
+state, and would give a genuine partial equidistribution result if ever wanted.)
+
+**What the correlation form does buy.**  `z` ranges over the **finite** orbit `{π(g)w}`, so the
+correlation is `f·f'·Φ(increment, c_{i+k})` with a finite hidden parameter, and the crux drops
+to a single Markov convergence statement:
+
+> `𝔼_γ[ f(win_0)·f(win_m)·(1[d·W_m = d'] − 1/|X|) ] → 0` as `m → ∞`, uniformly in `d, d'`
+
+— the class walk is asymptotically uniform after `m` steps even conditioned on the first `|q|`
+digits and read jointly with the digits at `m`.  Its two inputs are both in reach:
+`philipp_psi_mixing_holds` for the digit blocks, and aperiodicity + transitivity of the walk on
+the finite group generated by the `B_a mod D`.
+
+### Next attack
+
+1. **Aperiodicity + transitivity of the class walk** on `ℙ¹(ℤ/D)` — finite group theory, and
+   the probe's measured tables (`probes/cf_transducer_class.py`) already exhibit the
+   transitive action for `D = 2, 3`, so this is a formalization task, not a research one.
+2. **The Markov convergence statement** displayed above, from (1) + ψ-mixing.
+3. Then `ClassEquidistribution` follows via `vanDerCorput_bound`, and
+   `tendsto_jointCount_of_classEquidistribution` closes the transfer half.
+
+### Same lap, thirteenth commit: the class cocycle IS the Gauss map mod D
+
+`src/NormalNumbers/VandeheyClass.lean` (wired, sorry-free, axiom-clean).  The class dynamics
+left open by the row-lattice refutation is now in **closed form**, and it is the nicest
+possible answer.
+
+A row lattice of index `D` is `L_b = {(u,v) : v ≡ b u}` (`b ∈ ℤ/D`) or `L_∞ = {(u,v) : u ≡ 0}`.
+Ingesting a digit multiplies on the right by `B_a = [[0,1],[1,a]]`, i.e. `(u,v) ↦ (v, u + a v)`,
+so matching coefficients gives `L_b ↦ L_{a + b⁻¹}`, `L_0 ↦ L_∞`, `L_∞ ↦ L_a`:
+
+> **the class cocycle is the continued-fraction map `s ↦ a + 1/s` read modulo `D`**, on
+> `ℙ¹(ℤ/D)` in slope coordinates.
+
+Verified against the transducer itself (`probes/cf_transducer_class.py`, new `check_model`
+section): **8488 transitions over `D = 2, 3, 5` and four different matrices, zero mismatches.**
+
+* `ClassSpace D := Option (ZMod D)`, `classStep` — the automaton.
+* `classStep_of_cast_eq` — it reads its digit only mod `D`, which is why the class walk is a
+  finite object at all.
+* `exists_digit_cast` — every residue is spelled by a *genuine* digit (`≥ 1`); residue `0` is
+  spelled by `D`, never by `0`.
+* `exists_word_reach_none` (`≤ 2` digits), `exists_word_reach` (`≤ 3` digits) — **transitivity**.
+  Steer `b ↦ a + b⁻¹` to `0` by taking `a ≡ −b⁻¹`, then `0 ↦ ∞` for free, then `∞ ↦ a` hits
+  anything.  Note the steering digit depends on the current class: that is the one-line reason
+  the walk is transitive yet has **no synchronizing word**, matching the probe exactly.
+* `exists_return_two_and_three` — returns to `∞` in both 2 and 3 steps, so the chain is
+  **aperiodic on the class space** (period `1`, since every class reaches `∞`).
+* Seven `decide`-checked anchors tying `classStep` to the measured table rows, so the
+  definition is not an unaudited transcription.
+
+**Recorded subtlety.**  Every generator `B_a` has `det = −1`, so all of them lie in the
+*non-identity* coset of `PSL₂` inside `PGL₂(ℤ/D)`: the walk **is** periodic in the group, with
+period 2.  That is harmless because `PSL₂` is already transitive on `ℙ¹`, so the uniform
+measure on either coset pushes to the uniform measure on `X` — but it means aperiodicity must
+be argued on `X`, never on `G`.  `exists_return_two_and_three` does exactly that.
+
+### Next attack
+
+1. **The Markov convergence statement** (the one analytic leaf left):
+   `𝔼_γ[f(win_0)·f(win_m)·(1[d·W_m = d'] − 1/|X|)] → 0` uniformly in `d, d'`.  Inputs now all
+   present: transitivity + aperiodicity on `X` (this commit) and `philipp_psi_mixing_holds`.
+2. Then `ClassEquidistribution` via `vanDerCorput_bound`, and
+   `tendsto_jointCount_of_classEquidistribution` closes the transfer half.
+3. Then the fiber (merging *inside* a class), §2 identity (9), §5–§6 trigger counting.
+
+### Same lap, fourteenth commit: ψ-mixing against a whole FAMILY of cylinders
+
+`src/NormalNumbers/VandeheyMixing.lean` (wired, sorry-free, axiom-clean).  This is the brick
+that removes the obstruction this file recorded twice: the event "the class after `n` digits is
+`d`" is a **union** of length-`n` cylinders, never a single one, and
+`gaussMeasure_cylinder_psi_mixing` only takes a single cylinder in front.
+
+The obstruction dissolves because the repo's bound is **multiplicative** (ψ-mixing, error
+`ρ^g·γ(A)·γ(I_v)`) and not additive (α-mixing, error `ρ^g`): summed over a disjoint family of
+same-length cylinders a multiplicative error reproduces itself with the family's *total* mass in
+place of the single cylinder's.  So
+
+> `|γ(E ∩ T^{-(n+g)}A) − γ(E)·γ(A)| ≤ (79/100)^g · γ(A) · γ(E)`
+
+for `E` **any** finite union of length-`n` cylinders and any measurable `A ⊆ (0,1)`.
+
+* `familySet`, `measurableSet_familySet` — the union of a finite family's cylinders.
+* `gaussMeasure_familySet`, `gaussMeasure_familySet_inter` — additivity, from
+  `cfCylinder_disjoint`; the second says the *intersected* cylinders still add, which is what
+  makes the error sum work.
+* `gaussMeasure_familySet_psi_mixing` — the upgraded bound.
+
+Finite families suffice downstream because the digit truncation is already in place
+(`VandeheyAut.boundedWords`, `card_unbounded_window_le`, `digitTail_le`), and finiteness keeps
+the additivity elementary — no countable-additivity bookkeeping.
+
+### Next attack
+
+1. **The class renewal.**  With the family brick, `ν_m(d,d') := γ{σ_{W_m}(d) = d'}` satisfies a
+   genuine renewal identity: split `σ_{W_m} = σ_u ∘ σ_{W_{m−ℓ}}`, put the length-`(m−ℓ)`
+   family (the class-`e` event) in the past and the cylinder `I_u` in the future, and
+   `gaussMeasure_familySet_psi_mixing` decouples them up to `(79/100)^g`.  Transitivity +
+   aperiodicity on `X` (`VandeheyClass.exists_word_reach`, `exists_return_two_and_three`) then
+   drive `ν_m → 1/|X|` geometrically.
+2. That gives the Markov convergence statement, hence `ClassEquidistribution` via
+   `vanDerCorput_bound`, hence the transfer half via
+   `tendsto_jointCount_of_classEquidistribution`.
+3. Then the fiber (merging inside a class), §2 identity (9), §5–§6 trigger counting.
+
+### Same lap, fifteenth commit: the COUNTABLE family ψ-mixing (the form actually needed)
+
+`gaussMeasure_familySetC_psi_mixing` in `src/NormalNumbers/VandeheyMixing.lean`, sorry-free and
+axiom-clean.  The finite version of the previous commit is not enough: CF digits are unbounded,
+so `{x : σ_{W_n(x)}(d) = e}` is the union of the cylinders of **countably** many length-`n`
+words, not finitely many.  The multiplicative ψ error survives countable summation for exactly
+the reason it survives finite summation, so the digit truncation is **not needed here at all** —
+one fewer moving part than the plan in the previous entry assumed.
+
+* `familySetC`, `measurableSet_familySetC`, `pairwiseDisjoint_cfCylinder`.
+* `gaussMeasure_familySetC`, `gaussMeasure_familySetC_inter` — countable additivity
+  (`measure_biUnion`), for the cylinders and for the intersected cylinders.
+* `gaussMeasure_familySetC_psi_mixing` —
+  `|γ(E ∩ T^{-(n+g)}A) − γ(E)γ(A)| ≤ (79/100)^g · γ(A) · γ(E)` for `E` **any** countable union
+  of length-`n` genuine cylinders.  Summability of both real term families comes from finiteness
+  of the total masses (`ENNReal.summable_toReal`), so the tsum manipulation is legitimate rather
+  than formal.
+
+Mathlib gotchas this lap: `Set.Countable.measurableSet_biUnion` does not exist — use
+`MeasurableSet.biUnion hct`; `tsum_sub` is ENNReal-only, the real one is `Summable.tsum_sub`;
+`tsum_le_tsum` is now `Summable.tsum_le_tsum`; `norm_tsum_le_tsum_norm` needs
+`Summable (‖f ·‖)`, so bridge with `Real.norm_eq_abs` and `Summable.abs`.
+
+### Next attack — the class renewal, now fully unblocked
+
+All inputs are in `src/` and proved:
+* `VandeheyMix.gaussMeasure_familySetC_psi_mixing` — decouple past class event from future block.
+* `VandeheyClass.exists_word_reach` — transitivity in `≤ 3` digits.
+* `VandeheyClass.exists_return_two_and_three` — aperiodicity on `X`.
+
+Plan, and note the **doubly-stochastic shortcut**: since every digit acts *bijectively* on `X`,
+for each fixed `x` the map `σ_{W_m(x)}` is a bijection, so the kernel
+`ν_m(d,d') := γ{x : σ_{W_m(x)}(d) = d'}` has **both** row sums and column sums equal to `1` —
+it is doubly stochastic, hence the uniform distribution is *exactly* stationary, with no
+computation.  So the target is purely a contraction statement, `ν_m → 1/|X|`, and the stationary
+vector never has to be identified.
+
+Doeblin minorization is available at `M = 3` for every prime `D ≥ 2`: every pair `(d,d')` is
+joined by a word of length **exactly** 3 (check the four cases — `some s → some t → some t' →
+some z` with `t, t' ≠ 0`; `some 0 → ∞ → some a → some z`; and the two targeting `∞`), so
+`ν_3(d,d') ≥ min over pairs of γ(I_w) > 0`.  Combine with the ψ error `(79/100)^g` across a gap
+to get geometric convergence for the (non-independent) digit sequence.
+
+### Same lap, sixteenth commit: the class kernel is doubly stochastic
+
+`src/NormalNumbers/VandeheyRenewal.lean` (wired, sorry-free, axiom-clean).  Since the CF digits
+are only ψ-mixing, the class walk is *not* an independent-increment chain and the usual Markov
+machinery is unavailable.  Two structural facts remove the need for it.
+
+* `classStep_injective` / `classStep_bijective` — every digit acts **bijectively** on
+  `ℙ¹(ℤ/D)` (`∞ ↦ a`, `0 ↦ ∞`, `s ↦ a + s⁻¹` injective on `s ≠ 0`; this is `GL₂`
+  invertibility in slope coordinates).  `classSigma`, `classSigma_bijective` lift it to words.
+* `classWords`, `allWords`, `countable_wordSet` — `List ℕ` is a countable *type*, so every word
+  set is countable with no work, and the class events are countable cylinder unions **by
+  definition** (`classEvent := familySetC (classWords …)`).  Consequence worth keeping: the
+  measurability of `cfDigit` is never needed anywhere in this layer, and
+  `gaussMeasure_familySetC_psi_mixing` applies to the class events directly.
+* `exists_unique_source` — **the partition**: a genuine length-`m` word lies in
+  `classWords D m d d'` for exactly one `d`, namely `σ_w⁻¹ d'`.
+* `classEvent_disjoint`, `iUnion_classEvent` — hence the class events over all sources are
+  disjoint and cover the whole length-`m` cylinder family.
+* `sum_classKernel_col` — **double stochasticity**: every column of
+  `ν_m(d,d') = γ(classEvent D m d d')` sums to the total mass of the length-`m` cylinders, so
+  all columns sum to the *same* value.  Therefore **the uniform distribution on `ℙ¹(ℤ/D)` is
+  exactly stationary and never has to be computed**, and the crux is reduced to a pure
+  contraction statement.
+
+### Next attack — the contraction only
+
+1. **Doeblin minorization at `M = 3`**: every pair `(d,d')` is joined by a genuine word of
+   length exactly `3` (cases: `some s → some t → some t' → some z` with `t,t' ≠ 0`;
+   `some 0 → ∞ → some a → some z`; and the two targeting `∞`), so
+   `classKernel D 3 d d' ≥ γ(I_w) > 0` uniformly.  `VandeheyClass.exists_word_reach` gives
+   length `≤ 3`; this needs the *exactly* `3` refinement.
+2. **The contraction step**: `ν_{n+g+3}` in terms of `ν_n` via
+   `gaussMeasure_familySetC_psi_mixing` across a gap `g` (multiplicative error `(79/100)^g`),
+   then the Doeblin coefficient contracts the deviation from uniform by a factor `1 − ε`.
+   Iterating gives `ν_m → 1/|X|` geometrically.
+3. Then `ClassEquidistribution` via `vanDerCorput_bound`, and
+   `tendsto_jointCount_of_classEquidistribution` closes the transfer half.
+4. Then the fiber (merging inside a class), §2 identity (9), §5–§6 trigger counting.
+
+## 2026-09-27 (lap: the state-refined transfer operator is doubly stochastic)
+
+`src/NormalNumbers/VandeheyStatePin.lean` is wired in and green.  It carries the automaton
+state INSIDE the transfer operator, which is the standard device for the adjacency obstruction
+recorded above (class at time `n` and window at time `n` are adjacent, so no ψ-gap helps).
+
+Proved this lap:
+
+* `stateHorizonIntegral_succ` — the refined recursion `F_{n+1}(d,s) = ∑_a w_τ(a) F_n(δ d a,s)(τ_a)`.
+* `sum_stateHorizonIntegral` — `∑_s F_n(d,s) = G_n` (disintegration).
+* **`sum_over_initial_stateHorizonIntegral` — `∑_d F_n(d,s) = G_n` for EVERY `s`**, whenever
+  every digit step `d ↦ δ d a` is a bijection (which `VandeheyRenewal.classStep_bijective`
+  supplies).  Proof: the refined recursion advances the *initial* state, so precomposing with a
+  bijection and summing over the finite state space is a no-op; hence `∑_d F_n(·,s)` satisfies
+  the UNREFINED recursion with the unrefined initial datum `G_0`, and induction closes it.
+* `stateHorizonIntegral_le_two`, `stateHorizonIntegral_nonneg`, `stateHorizonIntegral_le` — the cone.
+
+**Why this matters.**  The two sum identities together say the refined family is *doubly
+stochastic*: uniform-over-`S` is the unique candidate limit and no stationary vector has to be
+computed.  In particular the constant in `stateHorizonIntegral_pin` is forced to be
+`|S|⁻¹·γ(A)` — it is not an extra unknown.
+
+**Open crux**: `stateHorizonIntegral_pin` (disclosed `sorry`, `VandeheyStatePin.lean`).
+
+**Next attack.**  Doeblin contraction of the oscillation of `Φ ↦ stateStepOp δ Φ` over the
+product `S × [0,1]`:
+1. `stateStepOp` fixes constants (`tsum_stepWeight`) and is positive — so oscillation is
+   non-increasing.
+2. Minorization in `M + 1` steps: expanding `stateStepOp^{M}` over digit words gives a term
+   `(∏ w_·) · Φ(runState δ d w, ·)` for each genuine word `w`; `hreach` supplies, for each
+   target `t`, a word of length exactly `M` with `runState δ d w = t`, and its weight product is
+   bounded below uniformly (the Rényi bound `VandeheyRenyi.gaussMeasure_cylinder_renyi_lower` is
+   the measure-side twin).  Hence `stateStepOp^M Φ (d,τ) ≥ ε · min_t inf_τ Φ(t,τ)` with
+   `ε > 0` independent of `d, τ`.
+3. Standard Doeblin: `osc(L^M Φ) ≤ (1 − |S|ε) osc(Φ)`, iterate, and identify the limit constant
+   by the double stochasticity above.
+
+### 2026-09-27 (same lap, part 2): the Doeblin minorization for the OPERATOR is proved
+
+`VandeheyStatePin.lean` now also carries the operator-level machinery:
+
+* `InCone B Φ` — families `Φ : S → ℝ → ℝ` with `0 ≤ Φ ≤ B` on `S × [0,1]`; `summable_stateStep`,
+  `stateStepOp_inCone`, `stateStepIter_inCone`: the cone is invariant, because `stateStepOp` is
+  an average (`tsum_stepWeight = 1`).
+* `stepWeight_ge` — `w_τ(k) ≥ 1/((k+2)(k+3))` uniformly on `τ ∈ [0,1]`.
+* `stateStepIter` and `stateHorizonIntegral_iter` — `F_n(·,s) = Lⁿ F_0(·,s)` on `[0,1]`.
+* **`stateStepIter_ge_word`** — the Doeblin minorization: for a genuine word `w` and `c ≤ Φ` on
+  the state `runState δ d w`, `wordWeight w · c ≤ L^{|w|}Φ(d,τ)` for every `τ ∈ [0,1]`, where
+  `wordWeight w = ∏_{a ∈ w} 1/((a+1)(a+2)) > 0`.  No expansion of `L^{|w|}` over words is used:
+  `stateStepOp` is a tsum of nonnegative terms, so it dominates the term indexed by the first
+  letter of `w`, and the induction runs along `w`.
+
+Combined with `Doeblin.exists_classWord_three` (every class pair joined by a genuine word of
+length exactly 3) this gives, for the class automaton, a uniform `β > 0` with
+`L³Φ(d,τ) ≥ β · inf_τ Φ(t,τ)` for EVERY `d, t`.
+
+**What is still owed for `stateHorizonIntegral_pin`.**  The Doeblin step alone contracts the
+`S`-direction but not the `τ`-direction: the elementary two-sided Doeblin estimate gives
+`osc(L³Φ) ≤ (1 − |S|β)·osc_global(Φ) + β·Σ_t osc_τ(Φ(t,·))`, which is vacuous unless the
+**`τ`-oscillation within a fixed state** also decays.  That is the one remaining ingredient, and
+the repo already proves its scalar analogue: `CFPsiPin.stepOp_logLipschitz` (factor `3/4` per
+step) and `CFPsiPin.horizonIntegral_logLip`.
+
+**Next attack (route-decisive).**  Generalize `stepOp_logLipschitz` from a single `φ` to a
+`k`-indexed family `ψ k`, i.e. to `∑' k, w_τ(k)·ψ k (τ_k)`, which is what `stateStepOp` is with
+`ψ k = Φ(δ d (k+1), ·)`.  The `A`-series of the existing proof is term-by-term and goes through
+verbatim.  The `B`-series is Abel-resummed and is the only real question: it needs
+`ψ_k − ψ_{k+1}` small.  **The structural fact that makes this work for the class automaton:
+`classStep D` depends on the digit only through `a mod D`, so `k ↦ Φ(δ d (k+1), ·)` is
+PERIODIC with period `D`.**  Abel-resum in blocks of `D` instead of `1`: the jump terms become
+`ψ_k(τ_k) − ψ_k(τ_{k+D})` (same `ψ_k`!), controlled by the log-Lipschitz constant, at the price
+of a factor `O(D)` in the contraction constant.  If that factor pushes the rate above `1`, first
+iterate `L` a fixed number of times (the composite still has the same periodicity) or keep the
+`τ`-oscillation only in the *integrated* form the Doeblin step actually consumes.
+
+### 2026-09-27 (same lap, part 3): the family log-Lipschitz obstruction is BROKEN
+
+The attack named in part 2 (generalize `CFPsiPin.stepOp_logLipschitz` to a `k`-indexed family by
+Abel-resumming in blocks of `D`) turned out to be unnecessary — there is a **sharper and simpler
+substitute**, now proved sorry-free in `src/NormalNumbers/VandeheyWeightTV.lean`:
+
+> `WeightTV.tsum_abs_stepWeight_sub_le` —
+> `Σ_k |w_τ(k) − w_{τ'}(k)| ≤ (3/5)·|log(1+τ) − log(1+τ')|` for `τ, τ' ∈ [0,1]`.
+
+Because `Σ_k w_τ(k) = 1` for every `τ`, the `B`-series `Σ_k (w_τ(k) − w_{τ'}(k))·ψ_k(·)` is
+invariant under subtracting a constant from `ψ`, hence bounded by `½·osc(ψ)·Σ_k|Δ_k|` — no Abel
+resummation, and no periodicity of `k ↦ δ d (k+1)` needed.  The `A`-series of the existing proof
+is already term-by-term in `k` and generalizes verbatim.
+
+Mechanism of the new lemma (all in the file's docstring):
+* `stepWeight_sub_eq` — the exact factorization `Δ_k = (a−b)(k²+k−ab)/((k+a)(k+1+a)(k+b)(k+1+b))`
+  with `a = 1+τ`, `b = 1+τ'`.  Sign of `Δ_k` = sign of `k²+k−ab`.
+* `stepWeight_mono_two_le` — hence `Δ_k ≥ 0` for **every** `k ≥ 2` (`k²+k ≥ 6 > 4 ≥ ab`).
+* `Σ_k Δ_k = 0`, so the tail `Σ_{k≥2}` equals `−Δ₀−Δ₁` and `Σ_k|Δ_k| ≤ 2|Δ₀| + 2|Δ₁|`: the whole
+  ℓ¹ norm sits on the two lowest branches.
+* `abs_stepWeight_zero_sub_le` (`≤ ¼·d`) and `abs_stepWeight_one_sub_le` (`≤ (1/30)·d`), both from
+  `Real.le_log_one_add_of_nonneg` (`log t ≥ 2(t−1)/(t+1)`) plus an algebraic inequality —
+  `(a−1)(b−1) ≥ 0` for the first, a two-case `nlinarith` for the second.
+* Total `17/30 ≈ 0.567`, stated as `3/5`.
+
+**The constant is what makes the joint contraction close.**  The 2×2 system for
+`(osc, Lip) ↦ (osc', Lip')` of the refined operator is
+`Lip(LΦ) ≤ ¾·Lip(Φ) + ½·(3/5)·osc(Φ)` and, over a block of Doeblin steps,
+`osc ↦ (1−|X|β)·osc + β·|X|·log2·Lip`, whose accumulated cross-coefficient is `≤ log 2`.  The
+spectral radius is `< 1` exactly when `½·(3/5)·log 2 < ¼`, i.e. `3/5 < 1/(2 log 2) ≈ 0.7213`. ✓
+
+**Next attack.**  Prove the family log-Lipschitz step
+`stateStepOp_logLipschitz : Lip_log(LΦ(d,·)) ≤ ¾·sup_d Lip_log(Φ(d,·)) + (3/10)·osc(Φ)`
+by re-running the `A`-series of `stepOp_logLipschitz_aux` term-by-term (it never mixes indices)
+and replacing its `B`-series by `tsum_abs_stepWeight_sub_le`.  Then the 2×2 linear recursion,
+then `stateHorizonIntegral_pin`.
+
+### 2026-09-27 (same lap, part 4): the family log-Lipschitz contraction is PROVED
+
+`VandeheyStatePin.stateStepOp_logLipschitz` (sorry-free):
+
+> If every `Φ(e,·)` is `L`-log-Lipschitz on `[0,1]` and the whole family lies within `r` of one
+> constant `c`, then `|LΦ(d,t) − LΦ(d,t')| ≤ ((2/5)L + (3/5)r)·d(t,t')`.
+
+Ingredients, both new:
+* `WeightTV.tsum_abs_Afamily_le` — the `A`-series `Σ_k w_t(k)(ψ_k(z_k) − ψ_k(z'_k))` for a
+  `k`-indexed FAMILY, bounded by `(2/5)·L·d`.  The estimate of
+  `CFPsiPin.stepOp_logLipschitz_aux` is term-by-term in `k` (term `k` compares the SAME function
+  at the two branch images), so it survives the passage to a family verbatim: `1/4 + 2/27 +
+  1/18 = 0.3796… ≤ 2/5`.  (`abs_log_stepPt_sub_le` and `summable_sq_bound'` were de-privatised
+  in `CFPsiPin` for reuse; no proof there was touched.)
+* `WeightTV.tsum_abs_stepWeight_sub_le` (part 3) for the `B`-series.
+
+**The 2×2 system now has both rows proved:**
+
+| | contraction | cross term |
+|---|---|---|
+| log-Lipschitz `L` | `2/5` per step (`stateStepOp_logLipschitz`) | `3/5 · r`, `r = osc/2` |
+| oscillation | `1 − |X|β` per Doeblin block (`stateStepIter_ge_word`) | `β|X|·log 2 · L` |
+
+Accumulated over a block the cross-coefficient on the oscillation row is `≤ log 2`, so the
+spectral radius is `< 1` as soon as `(1 − 2/5)·1 > (3/5)·log 2`, i.e. `0.6 > 0.416`. ✓  With the
+sharper `2/5` (rather than the `3/4` of the scalar file) there is ample margin.
+
+**Next attack (the last structural step before `stateHorizonIntegral_pin`).**
+1. `stateStepOp_osc_contract` — the two-sided Doeblin estimate: from `stateStepIter_ge_word`
+   applied to `Φ − inf Φ` and to `sup Φ − Φ`, with `Doeblin.exists_classWord_three` supplying a
+   word of length exactly `3` for every pair, derive
+   `osc(L³Φ) ≤ (1 − |X|β)·osc(Φ) + β·Σ_t osc_τ(Φ(t,·))` and bound
+   `osc_τ(Φ(t,·)) ≤ log 2 · Lip(Φ(t,·))`.
+2. Iterate the pair `(osc_n, L_n)` and conclude geometric decay of `osc_n`; the limit constant is
+   already forced to be `|S|⁻¹γ(A)` by `sum_stateHorizonIntegral` +
+   `sum_over_initial_stateHorizonIntegral`.
+3. `stateHorizonIntegral_pin`, then `ClassEquidistribution` via `vanDerCorput_bound`, then
+   `tendsto_jointCount_of_classEquidistribution`.
+
+### 2026-09-27 (same lap, part 5): the two-sided Doeblin oscillation step is PROVED
+
+`VandeheyStatePin.stateStepIter_doeblin_two_sided` (sorry-free).  With `m = famInf Φ`,
+`M' = famSup Φ` over `S × [0,1]`:
+
+> if every pair of states is joined by a genuine word of length exactly `M` and weight `≥ β > 0`,
+> and `Φ(e,·)` varies by at most `q` on `[0,1]` for each `e`, then
+> `m + β(M'−m−q) ≤ L^M Φ(d,τ) ≤ M' − β(M'−m−q)` for every `d, τ`,
+> i.e. `osc(L^M Φ) ≤ (1 − 2β)·osc(Φ) + 2β·q`.
+
+The route that made this cheap: the **one-point** Doeblin argument.  The naive contraction wants
+`L^MΦ(d,τ) ≥ β Σ_t inf_τ Φ(t,τ)`, which would need `L^M` expanded over words (|X| distinct words
+must be extracted from nested `tsum`s).  Instead pick a single state/parameter within `ε` of the
+supremum, drive `d` there by its reach word, and apply `stateStepIter_ge_word` to the nonnegative
+family `Φ − m`; symmetrically with `M' − Φ`.  One word per `(d, target)` suffices, and the
+resulting factor `1 − 2β` is just as good.
+
+Supporting algebra, all new and sorry-free: `stateStepOp_sub_const`, `stateStepOp_const_sub`,
+`stateStepIter_sub_const`, `stateStepIter_const_sub` (the operator is affine and fixes
+constants), and the range API `famRange / famSup / famInf / le_famSup / famInf_le /
+famInf_nonneg / famSup_le_bound / exists_gt_famSup_sub / exists_lt_famInf_add`.
+
+**Everything the crux needs is now proved except the iteration itself.**  The pair
+`(o_n, L_n) = (osc, log-Lipschitz constant)` of `F_n(·,s)` obeys
+
+* `o_{n+M} ≤ (1 − 2β)·o_n + 2β·q_n`, `q_n ≤ log 2 · L_n`  (`stateStepIter_doeblin_two_sided`)
+* `L_{n+1} ≤ (2/5)·L_n + (3/10)·o_n`  (`stateStepOp_logLipschitz`, with `r = o_n/2`)
+
+whose spectral radius is `< 1` since `(1 − 2/5) > (3/5)·log 2`.
+
+**Next attack.**  (i) A `stateHorizonIntegral`-level instantiation: `q_n ≤ log 2 · L_n` from
+`CFPsiPin.abs_tailDensity_sub_le_log`, and `L_0 ≤ 2 log 2 · γ(A)` from
+`CFPsiPin.horizonIntegral_zero_logLip`, `o_0 ≤ γ(A)`-ish from `stateHorizonIntegral_le_two`.
+(ii) The elementary 2×2 linear iteration lemma: `x_{n+1} ≤ a x_n + b y_n`, `y_{n+1} ≤ c x_n + d y_n`
+with `a,b,c,d ≥ 0` and `(1−a)(1−d) > bc`, `a+d < 2` ⟹ `x_n + κ y_n ≤ θⁿ (x_0 + κ y_0)` for a
+suitable `κ > 0, θ < 1` (choose `κ` in the interval `((a−1)/(−c)`-style gap) — a two-line
+argument once `κ` is named explicitly, e.g. `κ = 1` works when `a + c ≤ θ` and `b + d ≤ θ`.
+(iii) `stateHorizonIntegral_pin`.
+
+### 2026-09-27 (same lap, part 6): the joint contraction is PROVED — geometric decay of the oscillation
+
+`VandeheyStatePin.stateStepIter_osc_geom` (sorry-free):
+
+> For `M ≥ 2`, `0 < β ≤ 1/8`, and every pair of states joined by a genuine word of length `M`
+> with weight `≥ β`:  `osc(L^{Mm} Φ) ≤ (1−β)ᵐ·(Ω₀ + 2β·Λ₀)`,
+> where `Λ₀` bounds the log-Lipschitz constant of `Φ` and `Ω₀` its oscillation.
+
+The Lyapunov function is `V = osc + 2β·Lip`, and the contraction is a **one-line numeric
+miracle**: per block
+`V' = (1−β)·osc + 2βΛ·(log 2 + (2/5)^M) ≤ (1−β)·V` because `log 2 + (2/5)² ≤ 0.6932 + 0.16 =
+0.8532 ≤ 1 − β` for `β ≤ 1/8`.  Both inputs are exactly the two contraction rows proved earlier
+this lap (`stateStepOp_logLipschitz`, factor `2/5`; `stateStepIter_doeblin_two_sided`, factor
+`1 − 2β`), and the `2/5` is what leaves the margin — the scalar file's loose `3/4` would not
+have closed.
+
+Also new and sorry-free: `stateStepIter_add`, `stateStepOp_step_bounds` (one step of the pair),
+`stateStepIter_lip_bound` (`j` steps: `Lip ≤ (2/5)ʲΛ + Ω/2`, oscillation never grows),
+`stateStepOp_mem_range_bounds` (the operator is an average so it never widens the range),
+`stateHorizonIntegral_add` (`F_{n+m} = Lᵐ F_n`), `abs_log_sub_le_log_two`.
+
+**`stateHorizonIntegral_pin` is now pure assembly.**  The remaining steps, none of them
+mathematical:
+1. Instantiate at `Φ = F_0(·,s)`: `Λ₀ = 2 log 2 · γ(A)` from `CFPsiPin.horizonIntegral_zero_logLip`
+   (note `F_0(d,s) = [d=s]·G_0`, so the same constant works), `Ω₀ ≤ γ(A)`-scale from
+   `stateHorizonIntegral_le_two` / `horizonIntegral_zero`.
+2. Extract `β` from `Doeblin.exists_classWord_three`: `β := min` over the finite set `S × S` of
+   `wordWeight w_{d,t}`, positive by `wordWeight_pos`; shrink to `≤ 1/8` if needed (a smaller `β`
+   is still a valid minorization).
+3. The centre: `|S|⁻¹·G_n(τ)` lies between `famInf` and `famSup` of `F_n(·,s)` because the two
+   double-stochasticity identities (`sum_stateHorizonIntegral`,
+   `sum_over_initial_stateHorizonIntegral`) make it the average over `d`.  So
+   `|F_n(d,s)(τ) − |S|⁻¹ G_n(τ)| ≤ osc(F_n)`, and
+   `|G_n(τ) − γ(A)| ≤ (79/100)ⁿ γ(A)` is `CFPsiPin.horizonIntegral_pin_geom`.
+4. Convert `(1−β)^{⌊n/M⌋}` to `θⁿ` with `θ = (1−β)^{1/M}`, absorbing the remainder into `C`.
+
+### 2026-09-27 (same lap, part 7): **`stateHorizonIntegral_pin` IS PROVED** — the crux is closed
+
+`VandeheyStatePin.stateHorizonIntegral_pin` is now sorry-free with trust triple
+`[propext, Classical.choice, Quot.sound]`:
+
+> For an automaton whose every digit step is a bijection and whose every pair of states is joined
+> by a genuine digit word of length `M ≥ 2`, there are `C ≥ 0` and `θ < 1` with
+> `|F_n(d,s)(τ) − (card S)⁻¹·γ(A)| ≤ C·θⁿ·γ(A)` for all `n, d, s` and all `τ ∈ [0,1]`.
+
+The assembly: `β := min over S × S of wordWeight(w_{d,t})`, capped at `1/8`; `Λ₀ = 2log2·γ(A)`
+from `CFPsiPin.horizonIntegral_zero_logLip`; `Ω₀ = 4log2·γ(A)` from the new
+`horizonIntegral_zero_le`; the decay `stateStepIter_osc_geom` at block `M`, extended from
+`M·⌊n/M⌋` to `n` by `stateStepIter_osc_le` and converted to `θⁿ` with `θ = max((1−β)^{1/M}, 79/100)`
+by `geom_block_bound`; the centre `(card S)⁻¹·G_n(τ)` identified as the average over the initial
+state (`sum_over_initial_stateHorizonIntegral`) and pinned to `γ(A)` by
+`CFPsiPin.horizonIntegral_pin_geom`.
+
+**NEXT (the remaining road to `vandeheyUniformFreq_holds`).**
+1. Instantiate `stateHorizonIntegral_pin` at the class automaton: `S = ClassSpace D`,
+   `δ = classStep D`, `M = 3` from `Doeblin.exists_classWord_three`, `hbij` from
+   `VandeheyRenewal.classStep_bijective`.  (`ClassSpace D` is a `Fintype` with `DecidableEq` and
+   is `Nonempty`; check those instances are in scope.)
+2. From the pin derive `VandeheyCocycle.ClassEquidistribution (classStep D) t q` — this is the
+   step `PENDING_WORK` has called "the crux" since the route was set; the pin is its quantitative
+   form, and the passage goes through `vanDerCorput_bound` / `cesaro_shift_bound`.
+3. `tendsto_jointCount_of_classEquidistribution` then gives the transfer half.
+4. The fiber (merging inside a class), §2 transducer + identity (9), §5–§6 trigger counting.
+5. Repoint the `Maze.lean` row citing Vandehey 1.1 from `.cited`.

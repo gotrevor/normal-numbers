@@ -233,7 +233,7 @@ private lemma gT_eq {t t' : ℝ} (ht : 0 ≤ t) (ht' : 0 ≤ t') (k : ℕ) :
   congr 1
   ring
 
-private lemma summable_sq_bound' {f : ℕ → ℝ} {C : ℝ}
+lemma summable_sq_bound' {f : ℕ → ℝ} {C : ℝ}
     (h : ∀ k, |f k| ≤ C / ((k : ℝ) + 1) ^ 2) : Summable f := by
   apply Summable.of_abs
   apply Summable.of_nonneg_of_le (fun k => abs_nonneg _) h
@@ -251,7 +251,7 @@ private lemma summable_sq_bound' {f : ℕ → ℝ} {C : ℝ}
 /-- The branch-image log gap, exactly: `log(1+z_k) − log(1+z'_k)` is bounded by
 `(t−t')/((k+2+t)(k+1+t'))`, the **key** gain of the log metric (the crude
 `|t−t'|` bound would only give `1/(k+1)²`). -/
-private lemma abs_log_stepPt_sub_le {t t' : ℝ} (ht0' : 0 ≤ t') (htt' : t' ≤ t) (k : ℕ) :
+lemma abs_log_stepPt_sub_le {t t' : ℝ} (ht0' : 0 ≤ t') (htt' : t' ≤ t) (k : ℕ) :
     |Real.log (1 + stepPt t k) - Real.log (1 + stepPt t' k)| ≤
       (t - t') / (((k : ℝ) + 2 + t) * ((k : ℝ) + 1 + t')) := by
   have ht0 : (0 : ℝ) ≤ t := le_trans ht0' htt'

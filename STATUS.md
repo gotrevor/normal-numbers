@@ -1645,3 +1645,7 @@ headlines, no 🔴. Trust triple = propext, Classical.choice, Quot.sound through
 DIRECTION.md (CURRENT DIRECTIVE) · ROADMAP.md · KHINCHIN.md (B5′ plan W1–W6) ·
 JUDGE.md · papers/literature-review.md · newest HANDOFF (`ls HANDOFF-*.md | sort | tail -1`) ·
 PENDING_WORK.md · papers/becher-yuhjtman-2019-*.md
+
+---
+
+**Side quest merged 2026-09-27: Vandehey 2017 Thm 1.1** (`wip/vandehey-matrix-action`) - §3 unconditional, two `sorry`s left (`LiteratureVandehey.lean`, `VandeheyAutomaton.lean`); its directive lives in that branch's `DIRECTION.md`, not here.
