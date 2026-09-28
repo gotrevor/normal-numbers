@@ -51,7 +51,7 @@ end Mat2
 
 namespace VandeheyLR
 
-open Mat2
+open Mat2 VandeheyOut
 
 variable {D : ℕ}
 
@@ -98,6 +98,97 @@ theorem head_lrOut_eq_true_iff (hD : 0 < D) (M : RState D) (j : ℕ) {b : Bool}
     exact ⟨fun hcon => absurd hcon (by simp),
       fun hpos => absurd ((Mat2.det_pos_iff_branch hbal).mp hpos) hnbr⟩
 
+/-! ## Blocks are nonempty for large digits -/
+
+/-- For `j ≥ D` the emitted block is nonempty: `M · B_j` cannot already be balanced, because
+the row comparison it would need is broken by `j` once `j` exceeds the entry bound `D`. -/
+theorem lrOut_ne_nil_of_le (hD : 0 < D) (M : RState D) {j : ℕ} (hj : D ≤ j) :
+    lrOut hD M j ≠ [] := by
+  intro hnil
+  have hspec := lrStep_spec hD M j
+  rw [hnil] at hspec
+  have hbal : Balanced (M.val * B j) := by
+    rw [hspec, lrProd]
+    simpa using (lrDelta hD M j).2.2
+  obtain ⟨ha0, haD, hb0, hbD, hc0, hcD, hd0, hdD⟩ := raneyEntry_le M.2
+  have hja : (D : ℤ) ≤ (j : ℤ) := by exact_mod_cast hj
+  have ea : (M.val * B j).a = M.val.b := by simp [mul_def, mul, B]
+  have eb : (M.val * B j).b = M.val.a + M.val.b * (j : ℤ) := by simp [mul_def, mul, B]
+  have ec : (M.val * B j).c = M.val.d := by simp [mul_def, mul, B]
+  have ed : (M.val * B j).d = M.val.c + M.val.d * (j : ℤ) := by simp [mul_def, mul, B]
+  rcases hbal.2 with ⟨h1, h2⟩ | ⟨h1, h2⟩
+  · rw [ea, ec] at h1
+    rw [eb, ed] at h2
+    nlinarith
+  · rw [ea, ec] at h1
+    rw [eb, ed] at h2
+    nlinarith
+
+/-! ## Two consecutive steps always alternate -/
+
+variable {α : Type*} [DecidableEq α]
+
+lemma numAlt_le_cons (b : α) : ∀ w : List α, numAlt w ≤ numAlt (b :: w)
+  | [] => by simp
+  | (c :: w) => by rw [numAlt]; omega
+
+/-- A word with no alternation is constant, so it ends where it starts. -/
+lemma getLast?_of_numAlt_eq_zero : ∀ (c : α) (w : List α), numAlt (c :: w) = 0 →
+    (c :: w).getLast? = some c
+  | c, [], _ => rfl
+  | c, (e :: w), h => by
+      rw [numAlt] at h
+      have hce : c = e := by
+        by_contra hne
+        rw [if_neg hne] at h
+        omega
+      have h0 : numAlt (e :: w) = 0 := by
+        rw [if_pos hce] at h
+        omega
+      rw [List.getLast?_cons_of_ne_nil (by simp), getLast?_of_numAlt_eq_zero e w h0, hce]
+
+/-- **The two-step alternation bound.**  Consecutive nonempty blocks start with opposite
+letters (`head_lrOut_eq_true_iff` + `det_lrDelta`), so either the first block alternates
+internally or the seam does. -/
+theorem one_le_altOut_add (hD : 0 < D) (s : RState D × Bool) {j₁ j₂ : ℕ}
+    (h₁ : lrOut hD s.1 j₁ ≠ []) (h₂ : lrOut hD (lrDelta hD s.1 j₁) j₂ ≠ []) :
+    1 ≤ altOut hD s j₁ + altOut hD (lrB hD s j₁) j₂ := by
+  obtain ⟨c, u, hu⟩ : ∃ c u, lrOut hD s.1 j₁ = c :: u := by
+    cases hcases : lrOut hD s.1 j₁ with
+    | nil => exact absurd hcases h₁
+    | cons c u => exact ⟨c, u, rfl⟩
+  obtain ⟨e, v, hv⟩ : ∃ e v, lrOut hD (lrDelta hD s.1 j₁) j₂ = e :: v := by
+    cases hcases : lrOut hD (lrDelta hD s.1 j₁) j₂ with
+    | nil => exact absurd hcases h₂
+    | cons e v => exact ⟨e, v, rfl⟩
+  -- the two heads are opposite, because the determinant flips
+  have hdet : (lrDelta hD s.1 j₁).val.det = - s.1.val.det := det_lrDelta hD s.1 j₁
+  have hD0 : (0 : ℤ) < (D : ℤ) := by exact_mod_cast hD
+  have hne : c ≠ e := by
+    have hc := head_lrOut_eq_true_iff hD s.1 j₁ hu
+    have he := head_lrOut_eq_true_iff hD (lrDelta hD s.1 j₁) j₂ hv
+    rcases s.1.2.1 with hd | hd <;> cases c <;> cases e <;>
+      simp_all <;> omega
+  by_cases hconst : numAlt (lrOut hD s.1 j₁) = 0
+  · -- constant first block: the SEAM alternates
+    have hlast : (lrOut hD s.1 j₁).getLast? = some c := by
+      rw [hu] at hconst ⊢
+      exact getLast?_of_numAlt_eq_zero c u hconst
+    have hb : (lrB hD s j₁).2 = c := by
+      show (((lrOut hD s.1 j₁).getLast?).getD s.2) = c
+      rw [hlast]; rfl
+    have : 1 ≤ altOut hD (lrB hD s j₁) j₂ := by
+      show 1 ≤ numAlt ((lrB hD s j₁).2 :: lrOut hD (lrB hD s j₁).1 j₂)
+      have hfst : (lrB hD s j₁).1 = lrDelta hD s.1 j₁ := rfl
+      rw [hb, hfst, hv, numAlt, if_neg hne]
+      omega
+    omega
+  · have : 1 ≤ altOut hD s j₁ := by
+      have := numAlt_le_cons s.2 (lrOut hD s.1 j₁)
+      show 1 ≤ numAlt (s.2 :: lrOut hD s.1 j₁)
+      omega
+    omega
+
 end VandeheyLR
 
 end NormalNumbers
@@ -105,4 +196,6 @@ end NormalNumbers
 section
 #print axioms NormalNumbers.Mat2.det_pos_iff_branch
 #print axioms NormalNumbers.VandeheyLR.head_lrOut_eq_true_iff
+#print axioms NormalNumbers.VandeheyLR.lrOut_ne_nil_of_le
+#print axioms NormalNumbers.VandeheyLR.one_le_altOut_add
 end
