@@ -113,17 +113,22 @@ def patWord (b : Bool) (v : List ℕ) : List Bool := (!b) :: patBody b v
 lemma patWord_length (b : Bool) (v : List ℕ) : (patWord b v).length = v.sum + 2 := by
   simp [patWord, patBody_length]
 
+lemma patWord_getElem?_zero (b : Bool) (v : List ℕ) : (patWord b v)[0]? = some (!b) := by
+  simp [patWord]
+
+lemma patWord_getElem?_one (b : Bool) (v : List ℕ) (hv : ∀ x ∈ v.take 1, 1 ≤ x) :
+    (patWord b v)[1]? = some b := by
+  simp only [patWord, List.getElem?_cons_succ]
+  exact patBody_getElem?_zero b v hv
+
 /-- **The pattern alternates at index `0`.**  This is precisely the hypothesis of
 `VandeheyLRTrigger.lr_trigger_bounds`: a genuine CF word (first digit `≥ 1`) has a border letter
 different from its first run's letter, so the encoded pattern is non-constant. -/
 lemma patWord_alternation (b : Bool) (a : ℕ) (v : List ℕ) (ha : 1 ≤ a) :
     (patWord b (a :: v))[0]? ≠ (patWord b (a :: v))[1]? := by
-  have h1 : (patWord b (a :: v))[0]? = some (!b) := by simp [patWord]
+  have h1 : (patWord b (a :: v))[0]? = some (!b) := patWord_getElem?_zero b (a :: v)
   have h2 : (patWord b (a :: v))[1]? = some b := by
-    have := runWord_getElem? b (a :: v) 0 0 (by simp) (by simp; omega)
-    simp only [vPos_zero, Nat.add_zero, xorB_zero] at this
-    simp only [patWord, List.getElem?_cons_succ]
-    refine patBody_getElem?_zero b (a :: v) ?_
+    refine patWord_getElem?_one b (a :: v) ?_
     intro x hx
     simp only [List.take_succ_cons, List.take_zero, List.mem_singleton] at hx
     omega
@@ -341,6 +346,101 @@ theorem cfDigit_of_map_range'_eq_patBody : ∀ (v : List ℕ) (n : ℕ), (∀ x 
         · omega
         · simp
 
+/-! ### The bijection
+
+Putting the two directions together: for a genuine CF word, the CF occurrences in `[1,N)` and the
+`L/R` occurrences of the forced pattern in `[lrPos 1 - 1, lrPos N - 1)` are in bijection, run
+start by run start.  Reading the CF-word frequency off the `L/R` word is then a reindexing. -/
+
+/-- **The converse, packaged.**  An occurrence of the pattern at `P` sits at the end of run
+`runIdx P`, has the matching parity, and pins the next `|v|` CF digits. -/
+theorem cf_of_patWord_occ (P : ℕ) (b : Bool) (a : ℕ) (v : List ℕ) (hv : ∀ x ∈ a :: v, 1 ≤ x)
+    (hocc : (List.range' P ((a :: v).sum + 2)).map (lrExpand w) = patWord b (a :: v)) :
+    P + 1 = lrPos w (runIdx w P + 1) ∧ decide ((runIdx w P + 1) % 2 = 0) = b ∧
+      ∀ i, i < (a :: v).length → cfDigit w (runIdx w P + 1 + i) = (a :: v)[i]! := by
+  set u : List ℕ := a :: v with hu
+  set n : ℕ := runIdx w P + 1 with hn
+  have hhead1 : ∀ x ∈ u.take 1, 1 ≤ x := fun x hx => hv x (List.mem_of_mem_take hx)
+  -- the first two letters of the occurrence
+  have h0 : lrExpand w P = !b := by
+    have h := getElem?_map_range' (lrExpand w) P (u.sum + 2) 0 (by omega)
+    rw [hocc, patWord_getElem?_zero] at h
+    simpa using (Option.some_inj.mp h).symm
+  have h1 : lrExpand w (P + 1) = b := by
+    have h := getElem?_map_range' (lrExpand w) P (u.sum + 2) 1 (by omega)
+    rw [hocc, patWord_getElem?_one b u hhead1] at h
+    exact (Option.some_inj.mp h).symm
+  -- so a run ends at `P`
+  have hstart : P + 1 = lrPos w n := by
+    refine (lrExpand_ne_succ_iff hirr hw P).mp ?_
+    rw [h0, h1]
+    simp
+  -- the parity of that run
+  have hpar : decide (n % 2 = 0) = b := by
+    have hidx : runIdx w (lrPos w n) = n :=
+      runIdx_eq hirr hw n _ le_rfl (lrPos_lt_succ hirr hw n)
+    rw [← h1, hstart, lrExpand_eq_runIdx_parity hirr hw, hidx]
+  -- and the digits
+  refine ⟨hstart, hpar, ?_⟩
+  have htail : (List.range' (lrPos w n) (u.sum + 1)).map (lrExpand w) = patBody b u := by
+    have hcons : (List.range' P (u.sum + 2)).map (lrExpand w)
+        = lrExpand w P :: (List.range' (P + 1) (u.sum + 1)).map (lrExpand w) := by
+      show (List.range' P ((u.sum + 1) + 1)).map (lrExpand w) = _
+      rw [map_range'_succ_left]
+    rw [hcons, patWord] at hocc
+    rw [← hstart]
+    exact (List.cons_eq_cons.mp hocc).2
+  rw [← hpar] at htail
+  exact cfDigit_of_map_range'_eq_patBody hirr hw u n hv htail
+
+/-- **The count identity.**  CF occurrences of a genuine word `v` at indices `[1,N)` with run
+parity `b` correspond exactly to occurrences of `patWord b v` in the `L/R` stream at positions
+`[lrPos 1 - 1, lrPos N - 1)`. -/
+theorem card_cf_eq_card_patWord (b : Bool) (a : ℕ) (v : List ℕ) (hv : ∀ x ∈ a :: v, 1 ≤ x)
+    (N : ℕ) :
+    ((Finset.Ico 1 N).filter (fun n => decide (n % 2 = 0) = b ∧
+        ∀ i, i < (a :: v).length → cfDigit w (n + i) = (a :: v)[i]!)).card
+      = ((Finset.Ico (lrPos w 1 - 1) (lrPos w N - 1)).filter
+          (fun P => (List.range' P ((a :: v).sum + 2)).map (lrExpand w)
+            = patWord b (a :: v))).card := by
+  classical
+  set u : List ℕ := a :: v with hu
+  have hmono := lrPos_strictMono hirr hw
+  have hpos : ∀ m, 1 ≤ m → 1 ≤ lrPos w m := fun m hm => le_trans hm (le_lrPos hirr hw m)
+  refine Finset.card_bij (fun n _ => lrPos w n - 1) ?_ ?_ ?_
+  · -- forward
+    intro n hn
+    simp only [Finset.mem_filter, Finset.mem_Ico] at hn ⊢
+    obtain ⟨⟨hn1, hnN⟩, hpar, hdig⟩ := hn
+    have h1 : lrPos w 1 - 1 ≤ lrPos w n - 1 := by
+      have := hmono.monotone hn1
+      omega
+    have h2 : lrPos w n - 1 < lrPos w N - 1 := by
+      have hlt := hmono hnN
+      have := hpos n hn1
+      omega
+    refine ⟨⟨h1, h2⟩, ?_⟩
+    rw [← hpar]
+    exact map_range'_eq_patWord hirr hw u n hn1 hdig
+  · -- injective
+    intro n hn m hm hEq
+    simp only [Finset.mem_filter, Finset.mem_Ico] at hn hm
+    have h1 := hpos n hn.1.1
+    have h2 := hpos m hm.1.1
+    exact hmono.injective (by omega)
+  · -- surjective
+    intro P hP
+    simp only [Finset.mem_filter, Finset.mem_Ico] at hP
+    obtain ⟨⟨hP1, hP2⟩, hocc⟩ := hP
+    obtain ⟨hstart, hpar, hdig⟩ := cf_of_patWord_occ hirr hw P b a v hv hocc
+    refine ⟨runIdx w P + 1, ?_, by omega⟩
+    simp only [Finset.mem_filter, Finset.mem_Ico]
+    refine ⟨⟨by omega, ?_⟩, hpar, hdig⟩
+    by_contra hcon
+    have hle : N ≤ runIdx w P + 1 := by omega
+    have := hmono.monotone hle
+    omega
+
 end Translate
 
 end NormalNumbers.VandeheyLR
@@ -355,4 +455,6 @@ open NormalNumbers.VandeheyLR
 #print axioms map_range'_eq_runWord
 #print axioms map_range'_eq_patWord
 #print axioms cfDigit_of_map_range'_eq_patBody
+#print axioms cf_of_patWord_occ
+#print axioms card_cf_eq_card_patWord
 end
