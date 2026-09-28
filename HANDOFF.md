@@ -1,102 +1,95 @@
-# Handoff: the period-2 wall is BROKEN — equidistribution for a periodic automaton
+# Handoff: every analytic input of the capstone is PROVED — only assembly is left
 
-**Date**: 2026-09-28 (lap 5) · **Branch**: `wip/g5-prime-subset` · **HEAD**: `20daa82` ·
-`lake build` 🟢 10327 jobs · working tree clean · nothing pushed.
+**Date**: 2026-09-28 (lap 6) · **Branch**: `wip/g5-prime-subset` · **HEAD**: `3173fb4` ·
+`lake build` 🟢 10332 jobs · working tree clean · nothing pushed.
 
-Scope: `sorry-free: src/NormalNumbers/LiteratureVandehey.lean`, i.e. prove
-`vandeheyUniformFreq_holds`.  **`DIRECTION.md`'s CURRENT DIRECTIVE outranks this file**, but its
-lap-4 steps 1–3 are now either DONE or re-aimed by the lap-5 route finding — the full record is
-the new top section of `PENDING_WORK.md`.  Read that before touching the supply side.
+Scope: `sorry-free: src/NormalNumbers/LiteratureVandehey.lean`
+(`vandeheyUniformFreq_holds`).  **`DIRECTION.md`'s CURRENT DIRECTIVE outranks this file**; its
+lap-4/5 steps are now all either DONE or superseded.  The current queue head is the top section
+of `PENDING_WORK.md`.
 
 ## 🎯 Where the proof stands
 
     vandehey_matrix_action_holds                      ← Vandehey 2017 Thm 1.1
       ← vandeheyUniformFreq_of_scaleUniformFreq       ✅ VandeheyLeafReduction
-      ← mobiusUniformFreq_of_transducer               ✅ shape now CORRECT (de-factorized, lap 5)
-            hkK, hK, hout ✅      hρ : SubWindow ρ ✅ (free)
-            hjs  🟡 **the analytic crux is PROVED** (`classEquidistribution_prodStep_of_common_reach`);
-                    what remains is the TRANSPORT to `lrDelta` (see NEXT 1) — bookkeeping, not analysis
-            hlen 🟡 corollary of `hjs` (lap-4 finding; do NOT use the cone route)
-            hgen, htail ⬜
+      ← mobiusUniformFreq_of_transducer               ⚠ needs a RESTATEMENT (see NEXT 1)
+            hjs  ✅ `jointStateFreq_lrDelta` / `jointStateFreq_lrB`   (lap 6 — was THE crux)
+            hρ   ✅ `subWindow_rhoLR` / `subWindow_rhoLRB`            (free)
+            hlen ✅ `tendsto_numAlt_lrWord_div`  (run clock, lap 6)
+            hc   ✅ `zero_lt_runRate`            (lap 6)
+            hkK, hK ✅ `lr_trigger_bounds`;  hout ✅
+            hgen ⬜ (near-free, `patWord_alternation`), htail ⬜ (cylinder estimate), hcof ⬜
 
-## ✅ This lap (5 green commits, all `#print axioms`-clean)
+## ✅ This lap (9 green commits, every headline `#print axioms`-clean)
 
-`39b452f` **De-factorized the whole §4–§6 engine.**  `JointStateFreq δ s₀ ρ` now asks only for an
-`x`-independent `ρ q t` (Vandehey's own Remark 3.6 shape).  The product form `ν t · γ(I_q)` that
-lap 4 refuted is gone; everything the engine used it for comes from the single new inequality
-`SubWindow ρ : 0 ≤ ρ w t ≤ γ(I_w)`, which is FREE for a joint law
-(`jointCount_le_winCard` + `tendsto_windowFreq` ⇒ `jointStateFreq_le_gauss`).  `tailMass` lost its
-`ν` factor entirely; `wLimit_set_bddAbove` bounds by `C`; guard-rule locator/verdict restated;
-`mobiusUniformFreq_of_transducer` restated against `ρ` + `hρ`.
+`54610ea` **`VandeheyTransport.lean` — `hjs` CLOSED.**  Lap 5 proved `ClassEquidistribution` for
+the product automaton `prodStep rplusDelta`; this transports it to the genuine `lrDelta`.
+Bridge: `runState lrDelta M.toRState w = ι^{|w|} (runState rplusDelta M w).toRState`, and the
+DETERMINANT PINS THE PHASE (`runState_lrDelta_eq_iff`), so
+`jointSet lrDelta s₀ t q x n = jointSet (prodStep rplusDelta) (s₀,0) (tPlus t, tPhase t) q x n`
+as FINSETS — an ext, not an estimate.
 
-`bb3f047` **Route finding** (`probes/raney_parity_split.py`, 3.5M CF digits, `D = 3`):
-* the SIGNED density `(1/n)Σ(−1)^i 1[w_i=q]1[P⁺_i=t]` is **0** (≤0.003 vs a 0.25 signal), so
-  `lrDelta`'s joint law is exactly **half** the phase-corrected one;
-* the PHASE-CORRECTED law itself does NOT factorize — two `D=3` states split a mass of exactly
-  `γ(I_q)/4` `q`-dependently.  So lap 4's F2 is real but is **not** a parity artifact;
-* that is consistent with the kernel: `ClassEquidistribution δ t q` binds `L` INSIDE the per-`q`
-  statement, so `classEquidistribution_rplusDelta` never claimed a `q`-independent `ν`.
-* Hence `hjs` reduces to `ClassEquidistribution` for the **product automaton**
-  `prodStep δ := δ × (ε ↦ ε+1)` at `(ι^p t, p)`.  Both obvious routes to that are DEAD: its
-  `n`-step kernel is `1[η+n=p]·(c+O(θⁿ))γ`, which oscillates, so there is no pin; and summing the
-  signed identity over states gives `0 = o(n)`.
+`c8922b4` + `3373096` **`VandeheyOutLen.lean`.**  `outLen = Σ_t wCount δ s₀ t (blockLen out t) 1`,
+so Lemma 6.1 is the length-1 `wCount` engine (`tendsto_outLen_div`).  Plus
+`sum_jointCount_eq_winCard` → `sum_rho_eq_gauss` (`Σ_t ρ q t = γ(I_q)`, the de-factorized
+analogue of `Σ_t ν t = 1`), `le_wLimit_single`, `outLenLimit_pos`.
 
-`d7370c4` **Refactor isolating the one analytic input.**  The four two-point masses are named
-lemmas (`abs_measure_joint_inter_joint_sub_le` + 3 siblings) instead of `have`s inside
-`abs_integral_devFun_mul_le`; `sum_gaussMeasure_windowBound_le_of_variance` and
-`classEquidistribution_of_variance` take `∫ devAvg² ≤ V/K` directly (pin versions are wrappers).
+`0322e3c` **ARCHITECTURAL FINDING + `VandeheyRunBirkhoff.lean`.**  The concrete `out` (`lrOutN`)
+emits LETTERS, whose count per input digit diverges (infinite Gauss digit mean), so no `hB`/`hlen`
+can exist for it: the capstone must run on the RUN clock.  `numAlt_append_eq` (the seam identity)
+shows the right state augmentation is the last emitted letter, and
+`numAlt_lrWord_eq_sum : numAlt (b₀ :: lrWord … n) = Σ_{i<n} altOut (stateAt lrB … i) (cfDigit x i)`
+with `altOut ≤ 2D+1`.
 
-`0bd3b6d` + `20daa82` **`VandeheyParity.lean` (~730 lines, sorry-free) — the wall.**
-* `jointEvent_prodStep` / `devFun_prodStep`: the product automaton's deviation function is
-  `sel η p k · 1[J_k] − L · 1[W_k]` in the ORIGINAL automaton's events.
-* **`abs_integral_devFun_prodStep_mul_sub_le`** — with `L := c/2` (half the pin's constant) the
-  constant part of the two-point integral cancels EXACTLY; the residue is
-  `selSign(k') · altResidue(k)`, a ±1 alternation in the larger index times a function of the
-  smaller one, up to `2(C+1)ρⁿ`.
-* `abs_sum_selSign_le`: the ±1 sign sums to `O(1)` over ANY contiguous range.
-* **`integral_devAvg_prodStep_sq_le`** — `∫ devAvg² ≤ (2+B₀)/K` for the PERIODIC automaton: in the
-  double sum the mean part is `Σ_k R k · Σ_{k'∈Ico (k+|q|) K} selSign k'` (plus its `sum_comm`
-  mirror), so it contributes `O(K)`, not `O(K²)`.  **The alternation performs the cancellation the
-  pin would have performed termwise.**  The error part reuses `sum_gap_majorant_le` unchanged.
-* **`classEquidistribution_prodStep_of_common_reach`** — for any automaton with a uniform common
-  reach (e.g. `rplusDelta`, `VandeheyLR.rplus_common_reach`), the window frequency of a genuine `q`
-  restricted to ONE PARITY CLASS of positions, jointly with the state, equidistributes along EVERY
-  CF-normal orbit, with reference weight `c/2`.
+`3487af4` + `a3f1f87` **`VandeheyTransportB.lean`.**  The involution acts on the augmented state
+by `ι'(M,b) = (ι M, !b)`, so the phase argument is verbatim; `rplusB_common_reach` is a length-3
+uniform common reach (2 digits to `diag(1,D)`, a third whose block `Lᴰʲ` overwrites the letter).
+Hence `jointStateFreq_lrB` and **`tendsto_numAlt_lrWord_div` = Lemma 6.1 for the true clock**.
+
+`7dce80b` + `1b5a0d5` + `3173fb4` **`VandeheyFirstLetter.lean` — `hc` CLOSED.**  Probing D=2..11
+found two exceptionless facts, both now theorems: `det_pos_iff_branch` and
+**`head_lrOut_eq_true_iff` (the first letter of a nonempty block is `L` iff `det M > 0`)**.
+`det` flips every digit ⇒ consecutive blocks start with OPPOSITE letters ⇒
+`one_le_altOut_add : altOut i + altOut (i+1) ≥ 1` (internally, or at the SEAM).  Blocks are
+nonempty for digits `≥ D` (`lrOut_ne_nil_of_le`), so
+`winCard [D,D] x n ≤ 2 · numAlt(… (n+1))` and `γ(I_[D,D]) ≤ 2c`, giving `zero_lt_runRate`.
 
 ## 🎬 Next actions, in order
 
-1. **Transport to `lrDelta`** (new file importing `VandeheyParity` + `VandeheyRaneyReach`).  With
-   `s₀ := diag(D,1) ∈ RPlus D` and `stateAt lrDelta … i = ι^i (stateAt rplusDelta … i)`:
-   `1[stateAt lrDelta … i = t] = 1[P⁺_i = ι^i t]`, and `det` forces the parity, so
-   > `jointCount lrDelta s₀ t q x n = jointCount (prodStep rplusDelta) (s₀,0) (t⁺,p) q x n`,
-   > `(t⁺,p) = (t,0)` if `det t = +D`, `(ι t, 1)` if `det t = −D`.
-   Then `tendsto_jointCount_of_classEquidistribution` on `prodStep rplusDelta` gives
-   `JointStateFreq lrDelta s₀ ρ` with `ρ q t := L(q,t)·γ(I_q)`, and `hρ : SubWindow ρ` from
-   `jointStateFreq_le_gauss` (plus `ρ [] t ≤ 1`, i.e. `γ(cfCylinder []) = 1`).
-   Subtype gymnastics (`RState D` vs `RPlus D`) is the only real work.
-2. `hlen` as a corollary of `hjs` (augment the state with the last emitted letter → `numAlt` is a
-   Birkhoff sum of a bounded window/state function; `wCount`/`wLimit` evaluates it).
-3. `hgen` (near-free, `patWord_alternation`), `htail` (a cylinder estimate).
-4. Only then the `PrimeIntervalSupply` side item of the operator objective.
+1. **Restate the capstone against a SEPARATE clock.**  `mobiusUniformFreq_of_transducer` takes
+   `ℓ(n) = |outWord|`, the letter count.  The run clock is not of that form — a run's VALUE is
+   not a function of a finite state (the partial run length is unbounded), which is exactly why
+   the letter transducer is the finite-state one.  So the capstone wants:
+   * `out := lrOutN` (letters) for the occurrence side, with CF occurrences read through
+     `VandeheyLRPattern.card_cf_eq_card_patWord` (CF occurrences of `v` ↔ `patWord` occurrences
+     in the letter stream) — `hkK`/`hK` are already proved for exactly that `v = patWord b v'`;
+   * `ℓ := numAlt (b₀ :: lrWord …)` (runs), fed to
+     `Rescale.tendsto_div_of_tendsto_comp_of_monotone` (which does need `0 < c` — checked, it
+     inverts `c`; `zero_lt_runRate` supplies it).
+   Guard rule applies to the new `Prop`.
+2. `hgen` (near-free from `patWord_alternation`), `htail` (a cylinder estimate), `hcof` (the run
+   count diverges — follows from `winCard_le_two_mul_numAlt` since `winCard [D,D] x n → ∞`).
+3. Only then the `PrimeIntervalSupply` side item of the operator objective.
 
 ## ⚠ Gotchas found this lap
 
-- `set x := e with h` gives `h : x = e`; a metavariable target (`classEquidistribution_of_variance`'s
-  implicit `c`) makes side-goal `by linarith` fail — pass `(c := …) (V := …)` explicitly.
-- `div_le_div_of_nonneg_right` in this mathlib pin wants `0 ≤ denom`, not `0 <`.
-- `omit [DecidableEq S] in` must precede the docstring, not sit between it and the `lemma`.
-- A lemma with `[DecidableEq S]` cannot be used inside a lemma that `omit`s it.
-- `integral_add` needs explicit `(f := …) (g := …)` or it unifies against `+` of functions.
-- `nlinarith` in a context with a dozen `set`s times out: use `mul_le_one₀` and explicit `calc`.
-- `Finset.sum_comm` alpha-renames for free; `rw [Finset.sum_mul, ← Finset.sum_filter]` turns an
-  `if`-sum into `(filtered sum) * const`.
+- `open Classical in` must precede the DOCSTRING, not sit between it and the `def`.
+- `split` cannot split a dependent `dite` whose branches use the hypothesis: restructure the def
+  so the `if` is on the VALUE (`⟨if c then u else v, by split …⟩`), then `show` + `if_pos`.
+- `!x = y` parses as `!(decide (x = y))`: write `(!x) = y`.
+- `Prod.ext_iff` rewrites ANY product equation (including the one you wanted to keep); use
+  `Prod.mk.injEq` to hit only literal pairs, then `← Prod.ext_iff` to repack.
+- `Subtype.ext` goals across two different subtypes of `Mat2` need an explicit `show` of the
+  `.val` equation; `rw` alone leaves a defeq-but-not-syntactic goal (finish with `rfl`).
+- `wLimit_nonneg` takes `(ha0, haC)` in that order, `wLimit_set_bddAbove` the other way round.
+- A full `lake build` now takes ~4½ minutes; run it in the background before committing.
 
 ## 📁 Files
 
-New: `src/NormalNumbers/VandeheyParity.lean`, `probes/raney_parity_split.py`.
-Changed: `VandeheyOutputFreq.lean`, `VandeheyAssembly.lean`, `VandeheyTwoPoint.lean`,
-`VandeheyClassEquidist.lean`, `src/NormalNumbers.lean`, `PENDING_WORK.md`.
+New: `VandeheyTransport.lean`, `VandeheyOutLen.lean`, `VandeheyRunBirkhoff.lean`,
+`VandeheyTransportB.lean`, `VandeheyFirstLetter.lean`.
+Changed: `src/NormalNumbers.lean`, `PENDING_WORK.md`.
 
 ---
-**→ Next session: NEXT action 1 (transport the parity joint count to `lrDelta`).  Tree clean at
-`20daa82`.**
+**→ Next session: NEXT action 1 (restate the capstone against a separate run clock).  Tree clean
+at `3173fb4`.**
