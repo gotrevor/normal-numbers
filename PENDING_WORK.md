@@ -17,7 +17,14 @@ Treadmill laps append dated notes **below the queue**, and a review lap folds th
      state-restricted count has Cesàro limit `wLimit ν t a m` — defined as a supremum over
      finite subfamilies, so it mentions NO `x`.  That is the published Lemma 4.3's infinite
      case, with no ergodic theory, no Ryll-Nardzewski, no Vitali-Hahn-Saks.
-   - ⬜ **Next: the assembly** (`tendsto_triggerCount`): a trigger family
+   - ✅ Trigger layer: `fireAt` / `fireTotal` (the untruncated per-position multiplicity, a
+     supremum that is ATTAINED because `K` bounds it — `exists_fireAt_eq_fireTotal`),
+     `trigCount` (bucketed by length × state) with `trigCount_eq` identifying it with
+     `Σ_i fireAt i J`, `trigLimit`, and `tendsto_trigCount_div` (the truncated count converges
+     `x`-independently).  Tail layer: `trigPrefix` / `trigInd` / `tailMass`,
+     `fireTotal_sub_fireAt_le` (pointwise: a missed trigger forces the window into
+     `trigPrefix`), `trigTotal_le_trigCount_add` (aggregate), `wLimit_trigInd_le`.
+   - ⬜ **NEXT: close the assembly** (`tendsto_triggerCount`): a trigger family
      `A ⊆ List ℕ × S` with multiplicity `k`, uniform bound `F ≤ K`, bucketed by word length.
      `F − F_{≤m} ≤ K·1_{U_m}`, `U_m ⊆ ⋃_t {i : tᵢ = t, window_m(i) ∈ P_{t,m}}` where `P_{t,m}`
      is the set of length-`m` words agreeing with a trigger of length `> m`.  The ONE honest

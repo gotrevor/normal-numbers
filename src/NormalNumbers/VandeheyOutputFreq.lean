@@ -562,6 +562,289 @@ theorem tendsto_wCount_div (δ : S → ℕ → S) (s₀ : S) {ν : S → ℝ}
   rw [Real.dist_eq, abs_lt]
   constructor <;> linarith
 
+/-! ## Step 2: the trigger family and the truncated counts (Vandehey §5-§6)
+
+A *trigger* for an output word `r` is a pair `(q, t)` — reading the genuine word `q` from
+state `t` emits an output block containing `r` "nicely", with `q` minimal — carrying a
+multiplicity `k q t`.  Vandehey §5: the number of occurrences of `r` in the output of the
+first `n` input digits equals, up to `O(1)`, the number of positions `i < n` at which some
+trigger fires, counted with multiplicity.  Trigger lengths are **not** bounded, so that count
+is `Σ_{i<n} Σ_j k(window of length j at i)(state at i)`, an infinite sum per position; what
+IS bounded is the total, by `K` (§6, via Lemma 2.2). -/
+
+section Assembly
+
+variable [Fintype S]
+
+/-- The multiplicity of the triggers of length in `[1, J]` firing at position `i`. -/
+noncomputable def fireAt (k : List ℕ → S → ℕ) (δ : S → ℕ → S) (s₀ : S) (x : ℝ) (i J : ℕ) : ℕ :=
+  ∑ j ∈ Finset.Icc 1 J, k (cfWindow x i j) (stateAt δ s₀ x i)
+
+/-- The trigger count over the first `n` positions, truncated to trigger length `≤ J`.  The
+bucketing by length and state is what reduces it to the single-length engine. -/
+noncomputable def trigCount (k : List ℕ → S → ℕ) (δ : S → ℕ → S) (s₀ : S) (x : ℝ)
+    (n J : ℕ) : ℝ :=
+  ∑ j ∈ Finset.Icc 1 J, ∑ t : S, wCount δ s₀ t (fun w => (k w t : ℝ)) j x n
+
+/-- The `x`-independent limit of the truncated trigger count. -/
+noncomputable def trigLimit (k : List ℕ → S → ℕ) (ν : S → ℝ) (J : ℕ) : ℝ :=
+  ∑ j ∈ Finset.Icc 1 J, ∑ t : S, wLimit ν t (fun w => (k w t : ℝ)) j
+
+/-- **Summing over states collapses the state indicator.**  At each position exactly one
+state matches, so the state-summed weighted counts read the weight at the actual state. -/
+lemma sum_state_wCount (δ : S → ℕ → S) (s₀ : S) (a : S → List ℕ → ℝ) (m : ℕ) (x : ℝ) (n : ℕ) :
+    ∑ t : S, wCount δ s₀ t (a t) m x n
+      = ∑ i ∈ Finset.range n, a (stateAt δ s₀ x i) (cfWindow x i m) := by
+  classical
+  simp only [wCount]
+  rw [Finset.sum_comm]
+  refine Finset.sum_congr rfl fun i _ => ?_
+  rw [Finset.sum_ite_eq Finset.univ (stateAt δ s₀ x i) (fun t => a t (cfWindow x i m))]
+  simp
+
+/-- **The bucketed count is the positionwise count.**  Vandehey's §6 bookkeeping, as an
+identity: summing the length-`j` state-`t` slices over `j ≤ J` and over `t` gives exactly
+`Σ_{i<n} fireAt i J`. -/
+lemma trigCount_eq (k : List ℕ → S → ℕ) (δ : S → ℕ → S) (s₀ : S) (x : ℝ) (n J : ℕ) :
+    trigCount k δ s₀ x n J = ∑ i ∈ Finset.range n, (fireAt k δ s₀ x i J : ℝ) := by
+  classical
+  rw [trigCount]
+  have h1 : ∀ j ∈ Finset.Icc 1 J, (∑ t : S, wCount δ s₀ t (fun w => (k w t : ℝ)) j x n)
+      = ∑ i ∈ Finset.range n, ((k (cfWindow x i j) (stateAt δ s₀ x i) : ℝ)) := by
+    intro j _
+    exact sum_state_wCount δ s₀ (fun t w => (k w t : ℝ)) j x n
+  rw [Finset.sum_congr rfl h1, Finset.sum_comm]
+  refine Finset.sum_congr rfl fun i _ => ?_
+  rw [fireAt, Nat.cast_sum]
+
+/-- The per-position fire count only grows with the length cut. -/
+lemma fireAt_mono (k : List ℕ → S → ℕ) (δ : S → ℕ → S) (s₀ : S) (x : ℝ) (i : ℕ) :
+    Monotone (fireAt k δ s₀ x i) := by
+  intro J J' hJ
+  refine Finset.sum_le_sum_of_subset_of_nonneg ?_ (fun _ _ _ => Nat.zero_le _)
+  exact Finset.Icc_subset_Icc_right hJ
+
+/-- The window at position `i` is the digit word of the shifted point, so a hypothesis stated
+for all points bounds every window. -/
+lemma fireAt_le_of_bound {k : List ℕ → S → ℕ} {K : ℕ}
+    (hK : ∀ (t : S) (y : ℝ) (J : ℕ), ∑ j ∈ Finset.Icc 1 J, k (cfWord y j) t ≤ K)
+    (δ : S → ℕ → S) (s₀ : S) (x : ℝ) (i J : ℕ) : fireAt k δ s₀ x i J ≤ K := by
+  have h := hK (stateAt δ s₀ x i) (gaussMap^[i] x) J
+  rw [fireAt]
+  refine le_trans (le_of_eq ?_) h
+  exact Finset.sum_congr rfl fun j _ => by rw [cfWord_iterate]
+
+/-- The untruncated multiplicity at a position: the supremum over length cuts.  Bounded by
+`K`, hence attained. -/
+noncomputable def fireTotal (k : List ℕ → S → ℕ) (δ : S → ℕ → S) (s₀ : S) (x : ℝ)
+    (i : ℕ) : ℕ := ⨆ J, fireAt k δ s₀ x i J
+
+lemma bddAbove_fireAt {k : List ℕ → S → ℕ} {K : ℕ}
+    (hK : ∀ (t : S) (y : ℝ) (J : ℕ), ∑ j ∈ Finset.Icc 1 J, k (cfWord y j) t ≤ K)
+    (δ : S → ℕ → S) (s₀ : S) (x : ℝ) (i : ℕ) :
+    BddAbove (Set.range (fireAt k δ s₀ x i)) :=
+  ⟨K, fun c hc => by obtain ⟨J, rfl⟩ := hc; exact fireAt_le_of_bound hK δ s₀ x i J⟩
+
+lemma fireAt_le_fireTotal {k : List ℕ → S → ℕ} {K : ℕ}
+    (hK : ∀ (t : S) (y : ℝ) (J : ℕ), ∑ j ∈ Finset.Icc 1 J, k (cfWord y j) t ≤ K)
+    (δ : S → ℕ → S) (s₀ : S) (x : ℝ) (i J : ℕ) :
+    fireAt k δ s₀ x i J ≤ fireTotal k δ s₀ x i :=
+  le_ciSup (bddAbove_fireAt hK δ s₀ x i) J
+
+lemma fireTotal_le {k : List ℕ → S → ℕ} {K : ℕ}
+    (hK : ∀ (t : S) (y : ℝ) (J : ℕ), ∑ j ∈ Finset.Icc 1 J, k (cfWord y j) t ≤ K)
+    (δ : S → ℕ → S) (s₀ : S) (x : ℝ) (i : ℕ) : fireTotal k δ s₀ x i ≤ K :=
+  ciSup_le fun J => fireAt_le_of_bound hK δ s₀ x i J
+
+/-- **The supremum is attained**: at each position some finite length cut already sees every
+trigger that fires.  This is where the uniform multiplicity bound `K` earns its keep — without
+it the positionwise count could be infinite. -/
+lemma exists_fireAt_eq_fireTotal {k : List ℕ → S → ℕ} {K : ℕ}
+    (hK : ∀ (t : S) (y : ℝ) (J : ℕ), ∑ j ∈ Finset.Icc 1 J, k (cfWord y j) t ≤ K)
+    (δ : S → ℕ → S) (s₀ : S) (x : ℝ) (i : ℕ) :
+    ∃ J, fireAt k δ s₀ x i J = fireTotal k δ s₀ x i := by
+  have hmem : fireTotal k δ s₀ x i ∈ Set.range (fireAt k δ s₀ x i) := by
+    rw [fireTotal, iSup]
+    exact Nat.sSup_mem (Set.range_nonempty _) (bddAbove_fireAt hK δ s₀ x i)
+  obtain ⟨J, hJ⟩ := hmem
+  exact ⟨J, hJ⟩
+
+/-- The untruncated trigger count over the first `n` positions. -/
+noncomputable def trigTotal (k : List ℕ → S → ℕ) (δ : S → ℕ → S) (s₀ : S) (x : ℝ)
+    (n : ℕ) : ℝ := ∑ i ∈ Finset.range n, (fireTotal k δ s₀ x i : ℝ)
+
+lemma trigCount_le_trigTotal {k : List ℕ → S → ℕ} {K : ℕ}
+    (hK : ∀ (t : S) (y : ℝ) (J : ℕ), ∑ j ∈ Finset.Icc 1 J, k (cfWord y j) t ≤ K)
+    (δ : S → ℕ → S) (s₀ : S) (x : ℝ) (n J : ℕ) :
+    trigCount k δ s₀ x n J ≤ trigTotal k δ s₀ x n := by
+  rw [trigCount_eq, trigTotal]
+  refine Finset.sum_le_sum fun i _ => ?_
+  exact_mod_cast fireAt_le_fireTotal hK δ s₀ x i J
+
+/-- **The truncated count converges, `x`-independently.**  Each length-`j` state-`t` slice is
+the single-length engine `tendsto_wCount_div`. -/
+theorem tendsto_trigCount_div {k : List ℕ → S → ℕ} {K : ℕ} {ν : S → ℝ} (δ : S → ℕ → S)
+    (s₀ : S) (hjs : JointStateFreq δ s₀ ν) (hν : ∀ t, 0 ≤ ν t) (hkK : ∀ q t, k q t ≤ K)
+    (J : ℕ) {x : ℝ} (hx : IsCFNormal x) :
+    Tendsto (fun n => trigCount k δ s₀ x n J / n) atTop (nhds (trigLimit k ν J)) := by
+  classical
+  have hslice : ∀ j ∈ Finset.Icc 1 J, ∀ t : S,
+      Tendsto (fun n => wCount δ s₀ t (fun w => (k w t : ℝ)) j x n / n) atTop
+        (nhds (wLimit ν t (fun w => (k w t : ℝ)) j)) := by
+    intro j hj t
+    have hj1 : 0 < j := (Finset.mem_Icc.mp hj).1
+    refine tendsto_wCount_div δ s₀ hjs t (hν t) (C := (K : ℝ)) hj1
+      (fun w => by positivity) (fun w => ?_) hx
+    exact_mod_cast hkK w t
+  have hrw : ∀ n : ℕ, trigCount k δ s₀ x n J / n
+      = ∑ j ∈ Finset.Icc 1 J, ∑ t : S, wCount δ s₀ t (fun w => (k w t : ℝ)) j x n / n := by
+    intro n
+    rw [trigCount, Finset.sum_div]
+    exact Finset.sum_congr rfl fun j _ => by rw [Finset.sum_div]
+  simp only [hrw, trigLimit]
+  exact tendsto_finsetSum _ fun j hj => tendsto_finsetSum _ fun t _ => hslice j hj t
+
+
+/-! ### The trigger tail
+
+The only place the family's *structure* is needed: a position whose truncated count misses a
+trigger must have its length-`J` window equal to the length-`J` prefix of a trigger of length
+`≥ J`.  Those prefixes form a countable same-length family, so their Gauss mass is a genuine
+measure, and the one honest hypothesis is that it vanishes in the limit — Vandehey's Lemma 4.3
+condition (2), that the triggers decide almost everywhere. -/
+
+/-- The length-`m` prefixes of the state-`t` triggers that are still at least `m` long. -/
+def trigPrefix (k : List ℕ → S → ℕ) (t : S) (m : ℕ) : Set (List ℕ) :=
+  {w | w.length = m ∧ (∀ b ∈ w, 1 ≤ b) ∧ ∃ q, k q t ≠ 0 ∧ m ≤ q.length ∧ q.take m = w}
+
+lemma trigPrefix_subset_allWords (k : List ℕ → S → ℕ) (t : S) (m : ℕ) :
+    trigPrefix k t m ⊆ allWords m := fun w hw => ⟨hw.1, hw.2.1⟩
+
+/-- The indicator of `trigPrefix`, as a weight for the single-length engine. -/
+noncomputable def trigInd (k : List ℕ → S → ℕ) (t : S) (m : ℕ) : List ℕ → ℝ :=
+  (trigPrefix k t m).indicator fun _ => (1 : ℝ)
+
+lemma trigInd_nonneg (k : List ℕ → S → ℕ) (t : S) (m : ℕ) (w : List ℕ) :
+    0 ≤ trigInd k t m w := by
+  by_cases h : w ∈ trigPrefix k t m
+  · rw [trigInd, Set.indicator_of_mem h]; norm_num
+  · rw [trigInd, Set.indicator_of_notMem h]
+
+lemma trigInd_le_one (k : List ℕ → S → ℕ) (t : S) (m : ℕ) (w : List ℕ) :
+    trigInd k t m w ≤ 1 := by
+  by_cases h : w ∈ trigPrefix k t m
+  · rw [trigInd, Set.indicator_of_mem h]
+  · rw [trigInd, Set.indicator_of_notMem h]; norm_num
+
+/-- **The tail mass**: the Gauss mass of the still-live trigger prefixes, weighted by the
+state masses.  Antitone in `m`, so it always converges; the hypothesis of the assembly is
+only that its limit is `0`. -/
+noncomputable def tailMass (k : List ℕ → S → ℕ) (ν : S → ℝ) (m : ℕ) : ℝ :=
+  ∑ t : S, ν t * (gaussMeasure (familySetC (trigPrefix k t m))).toReal
+
+/-- Windows nest: the length-`J` window is the length-`J` prefix of any longer window. -/
+lemma cfWindow_take (x : ℝ) (i J j : ℕ) (h : J ≤ j) :
+    (cfWindow x i j).take J = cfWindow x i J := by
+  rw [← cfWord_iterate, ← cfWord_iterate, cfWord_take _ _ _ h]
+
+/-- **The pointwise tail bound.**  A position at which the length-`J` truncation misses a
+trigger has its length-`J` window inside `trigPrefix`. -/
+lemma fireTotal_sub_fireAt_le {k : List ℕ → S → ℕ} {K : ℕ}
+    (hK : ∀ (t : S) (y : ℝ) (J : ℕ), ∑ j ∈ Finset.Icc 1 J, k (cfWord y j) t ≤ K)
+    (hgen : ∀ q t, k q t ≠ 0 → ∀ b ∈ q, 1 ≤ b)
+    (δ : S → ℕ → S) (s₀ : S) (x : ℝ) (i J : ℕ) :
+    (fireTotal k δ s₀ x i : ℝ) - (fireAt k δ s₀ x i J : ℝ)
+      ≤ (K : ℝ) * trigInd k (stateAt δ s₀ x i) J (cfWindow x i J) := by
+  set t : S := stateAt δ s₀ x i with htdef
+  by_cases hind : cfWindow x i J ∈ trigPrefix k t J
+  · rw [trigInd, Set.indicator_of_mem hind, mul_one]
+    have h1 : (fireTotal k δ s₀ x i : ℝ) ≤ (K : ℝ) := by
+      exact_mod_cast fireTotal_le hK δ s₀ x i
+    have h2 : (0 : ℝ) ≤ (fireAt k δ s₀ x i J : ℝ) := Nat.cast_nonneg _
+    linarith
+  · rw [trigInd, Set.indicator_of_notMem hind, mul_zero, sub_nonpos]
+    -- every longer trigger vanishes, so the supremum is already attained at `J`
+    have hzero : ∀ j, J < j → k (cfWindow x i j) t = 0 := by
+      intro j hj
+      by_contra hne
+      refine hind ⟨?_, ?_, cfWindow x i j, hne, ?_, cfWindow_take x i J j hj.le⟩
+      · exact cfWindow_length x i J
+      · intro b hb
+        have hsub : b ∈ cfWindow x i j := by
+          have := List.take_subset J (cfWindow x i j)
+          exact this (by rwa [cfWindow_take x i J j hj.le])
+        exact hgen _ t hne b hsub
+      · rw [cfWindow_length]; exact hj.le
+    have hle : ∀ J', fireAt k δ s₀ x i J' ≤ fireAt k δ s₀ x i J := by
+      intro J'
+      rcases le_or_gt J' J with h | h
+      · exact fireAt_mono k δ s₀ x i h
+      · refine le_of_eq ?_
+        rw [fireAt, fireAt]
+        refine (Finset.sum_subset (Finset.Icc_subset_Icc_right h.le) ?_).symm
+        intro j hj hjn
+        have h1 : 1 ≤ j := (Finset.mem_Icc.mp hj).1
+        have : J < j := by
+          by_contra hcon
+          exact hjn (Finset.mem_Icc.mpr ⟨h1, by omega⟩)
+        exact hzero j this
+    have : fireTotal k δ s₀ x i ≤ fireAt k δ s₀ x i J := ciSup_le hle
+    exact_mod_cast this
+
+/-- **The aggregate tail bound.**  The untruncated count exceeds the truncation by at most `K`
+times the count of positions with a live trigger prefix. -/
+lemma trigTotal_le_trigCount_add {k : List ℕ → S → ℕ} {K : ℕ}
+    (hK : ∀ (t : S) (y : ℝ) (J : ℕ), ∑ j ∈ Finset.Icc 1 J, k (cfWord y j) t ≤ K)
+    (hgen : ∀ q t, k q t ≠ 0 → ∀ b ∈ q, 1 ≤ b)
+    (δ : S → ℕ → S) (s₀ : S) (x : ℝ) (n J : ℕ) :
+    trigTotal k δ s₀ x n
+      ≤ trigCount k δ s₀ x n J + (K : ℝ) * ∑ t : S, wCount δ s₀ t (trigInd k t J) J x n := by
+  classical
+  have hstate : (∑ t : S, wCount δ s₀ t (trigInd k t J) J x n)
+      = ∑ i ∈ Finset.range n, trigInd k (stateAt δ s₀ x i) J (cfWindow x i J) :=
+    sum_state_wCount δ s₀ (fun t => trigInd k t J) J x n
+  rw [trigTotal, trigCount_eq, hstate, Finset.mul_sum, ← Finset.sum_add_distrib]
+  refine Finset.sum_le_sum fun i _ => ?_
+  have := fireTotal_sub_fireAt_le hK hgen δ s₀ x i J
+  linarith
+
+omit [DecidableEq S] [Fintype S] in
+/-- The indicator's limit mass is at most the tail mass slice. -/
+lemma wLimit_trigInd_le {k : List ℕ → S → ℕ} {ν : S → ℝ} {t : S} (hν : 0 ≤ ν t) (m : ℕ) :
+    wLimit ν t (trigInd k t m) m
+      ≤ ν t * (gaussMeasure (familySetC (trigPrefix k t m))).toReal := by
+  classical
+  refine csSup_le (wLimit_set_nonempty ν t (trigInd k t m) m) ?_
+  rintro c ⟨Q, hQ, rfl⟩
+  set P : Finset (List ℕ) := Q.filter (fun w => w ∈ trigPrefix k t m) with hPdef
+  have hsplit : ∑ w ∈ Q, trigInd k t m w * (ν t * (gaussMeasure (cfCylinder w)).toReal)
+      = ν t * ∑ w ∈ P, (gaussMeasure (cfCylinder w)).toReal := by
+    rw [hPdef, Finset.mul_sum, Finset.sum_filter]
+    refine Finset.sum_congr rfl fun w _ => ?_
+    by_cases h : w ∈ trigPrefix k t m
+    · rw [if_pos h, trigInd, Set.indicator_of_mem h]; ring
+    · rw [if_neg h, trigInd, Set.indicator_of_notMem h]; ring
+  rw [hsplit]
+  refine mul_le_mul_of_nonneg_left ?_ hν
+  have hPlen : ∀ w ∈ P, w.length = m := by
+    intro w hw
+    exact (hQ w (Finset.mem_filter.mp hw).1).1
+  have hdisj : (↑P : Set (List ℕ)).PairwiseDisjoint (fun w => cfCylinder w) :=
+    pairwiseDisjoint_cfCylinder (n := m) hPlen
+  have hbi := measure_biUnion_finset (μ := gaussMeasure) hdisj
+    (fun w _ => measurableSet_cfCylinder w)
+  have hsub : (⋃ w ∈ P, cfCylinder w) ⊆ familySetC (trigPrefix k t m) := by
+    refine Set.iUnion₂_subset fun w hw => ?_
+    exact Set.subset_biUnion_of_mem (u := fun w => cfCylinder w)
+      (Finset.mem_filter.mp hw).2
+  calc ∑ w ∈ P, (gaussMeasure (cfCylinder w)).toReal
+      = (gaussMeasure (⋃ w ∈ P, cfCylinder w)).toReal := by
+        rw [← ENNReal.toReal_sum (fun w _ => measure_ne_top _ _), hbi]
+    _ ≤ (gaussMeasure (familySetC (trigPrefix k t m))).toReal :=
+        ENNReal.toReal_mono (measure_ne_top _ _) (measure_mono hsub)
+
+end Assembly
+
 /-! ## The guard rule for `JointStateFreq` -/
 
 /-- Some real is CF-normal (a.e. one is). -/
@@ -645,4 +928,10 @@ open NormalNumbers.VandeheyOut
 #print axioms not_jointStateFreq_unit_zero
 #print axioms eventually_le_wCount
 #print axioms tendsto_wCount_div
+#print axioms trigCount_eq
+#print axioms exists_fireAt_eq_fireTotal
+#print axioms tendsto_trigCount_div
+#print axioms fireTotal_sub_fireAt_le
+#print axioms trigTotal_le_trigCount_add
+#print axioms wLimit_trigInd_le
 end
