@@ -220,6 +220,107 @@ theorem act_startState_eq (hD : 0 < D) {x : ℝ} (hirr : Irrational x)
         Mat2.act_mul _ _ _ hdenMn hdenLR
 
 
+/-! ## The `L/R` expansion of a real, and the prefix property
+
+`R · u = u + 1` and `L · u = u/(u+1)`, so `R` maps `(0,∞)` onto `(1,∞)` and `L` maps it onto
+`(0,1)`.  The two images are disjoint, which is exactly what makes the `L/R` expansion of a
+positive real unique — and makes a factorization `z = lrProd w · u` with `u > 0` *determine* that
+`w` is the expansion's prefix.  No irrationality is needed: the boundary value `z = 1` is never
+produced from a positive `u`. -/
+
+/-- One step of the `L/R` expansion: undo `L` below `1`, undo `R` above. -/
+noncomputable def lrTail (z : ℝ) : ℝ := if z < 1 then z / (1 - z) else z - 1
+
+/-- The letter of the `L/R` expansion at the current point (`true = L`). -/
+noncomputable def lrLetter (z : ℝ) : Bool := decide (z < 1)
+
+/-- The `n`-th letter of the `L/R` expansion of `z`. -/
+noncomputable def lrExpand (z : ℝ) (n : ℕ) : Bool := lrLetter (lrTail^[n] z)
+
+/-- The first `n` letters of the `L/R` expansion of `z`. -/
+noncomputable def lrExpandWord (z : ℝ) (n : ℕ) : List Bool := (List.range n).map (lrExpand z)
+
+lemma lrExpandWord_succ (z : ℝ) (n : ℕ) :
+    lrExpandWord z (n + 1) = lrLetter z :: lrExpandWord (lrTail z) n := by
+  rw [lrExpandWord, List.range_succ_eq_map, List.map_cons, List.map_map]
+  congr 1
+
+lemma act_lrL (u : ℝ) (hu : 0 < u) : lrL.act u = u / (u + 1) := by
+  rw [lrL, act, den]
+  norm_num
+
+lemma act_lrR (u : ℝ) : lrR.act u = u + 1 := by
+  rw [lrR, act, den]
+  norm_num
+
+/-- **The prefix property.**  If `z = lrProd w · u` with `u > 0`, then `w` IS the first `|w|`
+letters of the `L/R` expansion of `z`, and `u` is what remains.  This is the uniqueness of the
+Stern-Brocot path, and it is what turns the transducer's semantic invariant into the statement
+that its output stream is the expansion of the image. -/
+theorem lrExpandWord_of_act : ∀ (w : List Bool) {u : ℝ}, 0 < u →
+    lrExpandWord ((lrProd w).act u) w.length = w ∧
+      lrTail^[w.length] ((lrProd w).act u) = u := by
+  intro w
+  induction w with
+  | nil => intro u _; simp [lrExpandWord, lrProd]
+  | cons b w ih =>
+    intro u hu
+    have hdetw : (lrProd w).det ≠ 0 := by rw [det_lrProd]; norm_num
+    have hz' : 0 < (lrProd w).act u := act_pos_of_nonneg (nonneg_lrProd w) hdetw hu
+    set z' : ℝ := (lrProd w).act u with hz'def
+    have hdenw : (lrProd w).den u ≠ 0 :=
+      ne_of_gt (den_pos_of_nonneg (nonneg_lrProd w) hdetw hu)
+    obtain ⟨ihw, ihu⟩ := ih hu
+    have hstep : (lrProd (b :: w)).act u = (if b = true then lrL else lrR).act z' := by
+      rw [lrProd_cons]
+      refine Mat2.act_mul _ _ _ hdenw ?_
+      cases b
+      · simp only [Bool.false_eq_true, if_false, lrR, den]
+        norm_num
+      · simp only [if_true, lrL, den]
+        push_cast
+        positivity
+    cases b
+    · -- `R`: the point lands above 1
+      have hz : (lrProd (false :: w)).act u = z' + 1 := by
+        rw [hstep]; simp only [Bool.false_eq_true, if_false]; exact act_lrR z'
+      have hnlt : ¬ (z' + 1 < 1) := by linarith
+      constructor
+      · rw [hz, List.length_cons, lrExpandWord_succ, lrLetter, decide_eq_false hnlt,
+          lrTail, if_neg hnlt, add_sub_cancel_right, ihw]
+      · rw [hz, List.length_cons, Function.iterate_succ_apply, lrTail, if_neg hnlt,
+          add_sub_cancel_right, ihu]
+    · -- `L`: the point lands below 1
+      have hz : (lrProd (true :: w)).act u = z' / (z' + 1) := by
+        rw [hstep]; simp only [if_true]; exact act_lrL z' hz'
+      have hlt : z' / (z' + 1) < 1 := by
+        rw [div_lt_one (by linarith)]
+        linarith
+      have hne : z' + 1 ≠ 0 := by linarith
+      have htail : lrTail (z' / (z' + 1)) = z' := by
+        rw [lrTail, if_pos hlt]
+        field_simp
+        ring
+      constructor
+      · rw [hz, List.length_cons, lrExpandWord_succ, lrLetter, decide_eq_true hlt, htail, ihw]
+      · rw [hz, List.length_cons, Function.iterate_succ_apply, htail, ihu]
+
+/-- **The transducer's output IS the `L/R` expansion of the image.**  Combining the semantic
+invariant with the prefix property: at every `n`, the word emitted so far is exactly the
+expansion's prefix of its own length. -/
+theorem lrWord_eq_lrExpandWord (hD : 0 < D) {x : ℝ} (hirr : Irrational x)
+    (hx : x ∈ Set.Ioo (0 : ℝ) 1) (n : ℕ) :
+    lrExpandWord ((startState hD).val.act x) (lrWord hD (startState hD) x n).length
+      = lrWord hD (startState hD) x n := by
+  obtain ⟨-, hmemn⟩ := irrational_orbit x hirr hx n
+  set Mn : Mat2 := (stateAt (lrDelta hD) (startState hD) x n).val with hMn
+  have hMnRD : IsRD D Mn := (stateAt (lrDelta hD) (startState hD) x n).2
+  have hactMn : 0 < Mn.act (gaussMap^[n] x) :=
+    act_pos_of_nonneg (isRD_nonneg hMnRD) (isRD_det_ne hD hMnRD) hmemn.1
+  rw [act_startState_eq hD hirr hx n]
+  exact (lrExpandWord_of_act _ hactMn).1
+
+
 end NormalNumbers.VandeheyLR
 
 section
@@ -227,4 +328,6 @@ open NormalNumbers.VandeheyLR
 #print axioms lrStep_spec
 #print axioms lrRun_eq
 #print axioms act_startState_eq
+#print axioms lrExpandWord_of_act
+#print axioms lrWord_eq_lrExpandWord
 end
