@@ -10,7 +10,13 @@ Treadmill laps append dated notes **below the queue**, and a review lap folds th
    `x ↦ p·x` preserves CF-normality for prime `p`.  The Smith shortcut WORKED and is formalized
    (`mobiusCFN_of_leaves`), and the Serret leaf is PROVED (`mobiusCFNGL2_holds`), so
    `vandeheyUniformFreq_of_scale` reduces all of Theorem 1.1 to this one statement.
-   - Next attack: the abstract **output-frequency transfer principle** (Vandehey §5–§6 in
+   - **Now under way: Vandehey §2.**  `VandeheyMat2.lean` (the matrix layer, `act_cfMat`) and
+     `VandeheyNormalForm.lean` (`M_D`, `isMD_entry_bounds`, `finite_isMD`) are in.  The next
+     item is **Lemma 2.1**, `M·J A_j = A_{d₀} J A_{d₁} ⋯ J A_{d_m}·M'` with `M' ∈ M_D` — a
+     Euclidean descent, elementary, spelled out in `HANDOFF.md`.
+   - The structural insight of 2026-09-28: **the fibre merges by Serret** (`serret_cfEquiv`),
+     so class-relative synchronization is a corollary, not a probe observation.
+   - After §2: the abstract **output-frequency transfer principle** (Vandehey §5–§6 in
      transducer-free form) — if a finite-state transducer reads the input digits and the joint
      (state, input window) frequencies converge to `x`-independent limits, then every output
      word frequency converges.  That is pure combinatorics; it needs no CF theory and no
