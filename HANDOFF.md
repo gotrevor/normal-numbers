@@ -1,137 +1,115 @@
-# Handoff: the output side is CLOSED; the leaf is one concrete transducer, correctness proved
+# Handoff: the trigger bound and the run↔CF-digit translation are CLOSED; one analytic leaf left
 
-**Date**: 2026-09-28 (lap 2) · **Branch**: `wip/g5-prime-subset` · **HEAD**: `1de32fc` ·
-`lake build` 🟢 10319 jobs · working tree clean · nothing pushed.
+**Date**: 2026-09-28 (lap 3) · **Branch**: `wip/g5-prime-subset` · **HEAD**: `ee5365d` ·
+`lake build` 🟢 10325 jobs · working tree clean · nothing pushed.
 
 Scope: `sorry-free: src/NormalNumbers/LiteratureVandehey.lean`, i.e. prove
 `vandeheyUniformFreq_holds`.  Read `DIRECTION.md` CURRENT DIRECTIVE first — it outranks this
-file.  Its mandated move (the §5–§6 output-frequency engine, abstract, in `src/`) is **done**.
+file.  Its mandated move (the §5–§6 output engine) was done in lap 2; this lap discharged the
+two hypotheses that lap 2 named as NEXT 1 and NEXT 2.
 
-## 🎯 Where the proof now stands — ONE chain, ONE open end
+## 🎯 Where the proof stands
 
-    vandehey_matrix_action_holds                      ← the headline (Vandehey 2017 Thm 1.1)
+    vandehey_matrix_action_holds                      ← Vandehey 2017 Thm 1.1
       ← vandeheyUniformFreq_of_scaleUniformFreq       ✅ VandeheyLeafReduction
-      ← ScaleUniformFreq  (x ↦ p·x, prime p, ONE map)
-      ← mobiusUniformFreq_of_transducer               ✅ VandeheyAssembly  ← THE CAPSTONE
-          needs, for the concrete transducer:
-            hout   ✅ (L/R level) lrWord_eq_lrExpandWord     — run↔CF-digit translation OPEN
-            hjs    ⬜ JointStateFreq                          — VandeheyCocycle supplies it
-            hlen   ⬜ ℓ(n)/n → c > 0                          — Vandehey Lemma 6.1
-            hK/hkK ⬜ uniform trigger bound                    — Vandehey Lemma 2.2
-            hgen   ⬜ triggers on genuine words
-            htail  ⬜ Gauss-null trigger tails                 — Lemma 4.3 (2)
+      ← ScaleUniformFreq  (x ↦ p·x, prime p)
+      ← mobiusUniformFreq_of_transducer               ✅ VandeheyAssembly (the capstone)
+          for the concrete L/R transducer:
+            hkK, hK ✅ **PROVED this lap** — `VandeheyLRTrigger.lr_trigger_bounds`
+            hout    ✅ at L/R level (lap 2) + ✅ the run↔CF-digit translation (this lap)
+            hjs     ⬜ JointStateFreq — VandeheyCocycle + the common-target reach
+            hlen    ⬜ **the one analytic leaf**: run count grows at least linearly
+            hgen    ⬜ triggers on genuine words (now near-free: `patWord_alternation`)
+            htail   ⬜ Gauss-null trigger tails
 
-Everything analytic and combinatorial is in the kernel and axiom-clean.  What is left is six
-named hypotheses about a single concrete finite-state machine.
+## ✅ This lap (7 green commits, all `#print axioms`-clean)
 
-## ✅ What landed this run (12 green commits, all `#print axioms`-clean)
+`3d36857` **Lemma 2.2, run form** (`VandeheyRunBound.lean`).  `numAlt`; `colApp` (a Mat2 on a
+column: `L : (p,q) ↦ (p,p+q)`, `R : (p,q) ↦ (p+q,q)`); `numAlt_le_colApp` — each letter ADDS one
+coordinate to the other, so the coordinate SUM bounds the alternation count, and a vanishing
+coordinate persists under only one letter (so the rest of the word is one run, no alternation).
+Fed by `lrStep_col`'s `j`-free identity: `numAlt (lrOut M j) ≤ M.b + M.d ≤ 2D`, **no dependence
+on the ingested digit and no case split on vanishing denominators** — Vandehey's Cases 1–3 vanish.
 
-`1ec1e49` **§6 assembly** — `exists_tendsto_trigTotal`: trigger counts have an `x`-independent
-Cesàro limit.  `trigLimit` monotone and `≤ K`, `L = ⨆ J`, ε/3 sandwich.  Guard rule:
-`exists_tendsto_trigTotal_locator` (empty family, limit 0).
+`170aa47` **Occurrences counted by alternations** (`VandeheyAltCount.lean`).  `altCount` on a
+stream; `card_occ_le_altCount` (an alternation at `i₀` in `v` forces one at `P+i₀`, and `P ↦ P+i₀`
+is injective); `card_occ_le_altCount_add` (`+|v|` is the price of running past the block end);
+`trigger_bounds_of_occIn_le` — **`hK` and `hkK` are ONE statement** (`kOut` is an increment of
+`occIn`, and the `hK` sum telescopes along CF prefixes).
 
-`e6a808f` **`VandeheyLeafReduction`** — the either-or endgame ONE MATRIX AT A TIME.
-`MobiusUniformFreq`, `mobiusCFN_of_uniformFreq`, `ScaleUniformFreq`.  Guard rule:
-`mobiusUniformFreq_one`, `mobiusUniformFreq_const` (the singular `x ↦ 1` satisfies
-`MobiusUniformFreq` but not `MobiusCFN`, so nonsingularity is load-bearing).
+`4737aea` `occIn_le_numAlt_add` — abstract: occurrences starting in the first emitted block are
+`≤ numAlt(block) + 2 + |v|`, with NO reference to the block's LENGTH (which is unbounded).
 
-`cb0d45e` **`VandeheyRescale`** — `tendsto_div_of_tendsto_comp_of_monotone`: a monotone count
-sampled at `ℓ(n)` with `ℓ n/n → c > 0` and `C(ℓ n)/n → L` has `C m/m → L/c` over ALL `m`.
-Pure analysis; used TWICE (input→L/R, L/R→output CF digits).
+`4bd6a43` **`lr_trigger_bounds`** (`VandeheyLRTrigger.lean`) — `hK`/`hkK` for the real machine,
+`K = 2D + 2 + |v|`, for every `v` that alternates somewhere.
 
-`b770708` **`VandeheyOutputWord`** — `outWord`/`outLen`/`outDigit`, `outWord_eq_map_outDigit`,
-`countOccurrences_le_of_prefix`, `tendsto_outCount_div`.
+`f0042d1` **The run dictionary** (`VandeheyLRRuns.lean`).  `lrTail` subtracts one above `1` and
+subtracts one in the RECIPROCAL below `1`, so the L/R expansion is the slow Stern–Brocot CF.
+`lrTail_lrPos`: after `n` runs the point is `Tⁿw` (`n` even) or `(Tⁿw)⁻¹` (`n` odd) — **the runs
+ARE the CF digits**.  `lrExpand_run`, and then `6e30401`: `runIdx`,
+`lrExpand_eq_runIdx_parity` (letter = parity of its run), `runIdx_eq`, `lrExpand_ne_succ_iff`
+(**alternation ⟺ run end**).
 
-`980a2a0` **§5 bucketing** — `occStart_eq_sum_fireOut` (EXACT: occurrences bucket by the block
-they start in), `abs_countOccurrences_sub_sum_fireOut_le` (the `O(1)`),
-`tendsto_countOccurrences_outWord_of_fireOut`.
+`3df352f` + `7463b86` + `61fef68` **The translation, both directions and as a count**
+(`VandeheyLRPattern.lean`).  `patBody b (a::v) = replicate a b ++ patBody (!b) v` is the identity
+that makes everything a one-run induction; `patWord b v = (!b) :: patBody b v` is the single
+forced pattern.  `patWord_alternation` (alternates at index 0 — the hypothesis
+`lr_trigger_bounds` needs), `map_range'_eq_patWord` (forward), `cfDigit_of_map_range'_eq_patBody`
+(converse: a run can't end early — parity flips — nor late — the border differs), and
+**`card_cf_eq_card_patWord`**: a BIJECTION `n ↦ lrPos w n - 1` between CF occurrences in `[1,N)`
+of parity `b` and pattern occurrences.
 
-`85b809d` **`VandeheyTrigger`** — `blocksOf` + `blocksOf_append` (locality), `occIn`, and
-`kOut := occIn q − occIn q.dropLast` (increment ⇒ minimality is FREE), `sum_kOut_eq`.
-
-`9bfb54c` **`fireTotal_kOut_eq_fireOut`** — the §5 identity, ABSTRACT (any block emitter).
-
-`d1a7770` **`VandeheyAssembly`** — `mobiusUniformFreq_of_transducer`, the capstone.
-
-`bf72368` **`VandeheyLRTransducer`** — `RState D` (Fintype), `lrStep`/`lrOut`/`lrDelta` from
-`isRD_ingest`, `lrRun_eq`: `M₀·B_{a₁}⋯B_{aₙ} = lrProd (lrWord n)·M_n`.
-
-`761b568` **`act_startState_eq`** — `D·x = lrProd (lrWord n) · (M_n · Tⁿx)`.
-
-`34857a8` **`lrWord_eq_lrExpandWord`** — the emitted word IS the L/R expansion's prefix.
-
-`8811526` HANDOFF rewrite (this file); old one archived.
-
-`1de32fc` **`mul_B_fst_col` / `lrStep_col`** — the hinge of Lemma 2.2: the first column of
-`M·B_j` is `M`'s second column, INDEPENDENT of `j`.  Source read; decomposition of `hK` recorded
-as `PENDING_WORK.md` item 0′.
-
-## 🔑 The three design findings that made it work
-
-1. **A CF-digit emitter cannot be finite-state.**  `isRD_ingest_cfString` emits
-   `A_{d₀} B_{d₁}⋯B_{d_m}`, and `B_d·A_e = B_{d+e}`, so the last digit is provisional and the
-   pending value is unbounded — it would have to live in the state, killing `Fintype S`.
-   Emitting **L/R letters** fixes it: a letter, once emitted, is final.  The image's CF digits
-   are the RUNS of the L/R word, so "the last run may still grow" is a ONE-LETTER look-ahead.
-   Price: two reindexings, both `VandeheyRescale`.
-2. **Minimality of triggers is free** if `k` is defined as an INCREMENT of a monotone count
-   (`kOut`), not as a "minimal completing word".  Telescoping does the rest.
-3. **`occStart` (already in the repo, from an unrelated audit) makes §5 EXACT.**  It counts start
-   positions reading past the window end, which is precisely the convention in which an
-   occurrence belongs to exactly one block.  Vandehey's four "not nicely" positions are
-   subsumed; the only inequality left (`≤ |v|`) was already proved in `OccurrenceCountEquiv`.
+`ee5365d` **⚠ The structural finding, and the upper half of Lemma 6.1** (`VandeheyRunCount.lean`).
+The Gauss measure has INFINITE digit mean, so the emitted LETTER count per input digit diverges
+a.e. and the density of run boundaries is `0`.  **Never rescale the letter index against the
+input index.**  What is linear is the RUN count — which is why Lemma 6.1 is about emitted CF
+digits, and why the bijection (landing on CF INDICES) is the right interface.  Proved:
+`numAlt_append_le`, `numAlt_lrWord_le` — at most `(2D+1)·n` alternations after `n` input digits.
 
 ## 🎬 Next actions, in order
 
-1. **`hK`/`hkK` — the uniform trigger bound** (Vandehey Lemma 2.2).  Nearest of the six, and now
-   DECOMPOSED — read `PENDING_WORK.md` item 0′ before touching it.  Key correction found this
-   lap: the number of emitted LETTERS is genuinely unbounded (a large digit `j` emits a run of
-   length ~`j`), so do NOT try to bound it — and in particular do not try to use the second
-   column of `M·B_j`, which is the `j`-dependent one.  What is bounded is the number of RUNS =
-   emitted CF digits, and that is the right bound, because a genuine CF word's L/R pattern
-   contains both letters, so an occurrence can only start at a run boundary:
-   `(occurrences starting in block i) ≤ (runs in block i) + O(1)`.
-   The hinge is in the kernel (`lrStep_col`): `(β, δ) = lrProd w · (α', γ')`, with no `j`.
-   Preferred route: feed the ratio `β/δ` to `lrExpandWord_of_act` — `w` is then a prefix of that
-   rational's L/R expansion, a rational's expansion is finite, and `Fintype (RState D)` makes the
-   max over the finitely many states exist.  This avoids Vandehey's four-case split on vanishing
-   denominators; watch the degenerate ratios (`γ' = 0`, `δ = 0`), which `pos_lin` should cover.
-2. **The run↔CF-digit translation.**  An occurrence of a CF word `v` in the image's expansion is
-   an occurrence of the L/R run-pattern of `v` with maximal runs at both ends (the one-letter
-   look-ahead).  Then `outCount` at L/R index rescales to CF index by `VandeheyRescale` again,
-   with `c₂` = the density of run boundaries.
-3. **`hlen`** (Lemma 6.1) — `ℓ(n)/n → c > 0`.  Lower bound: every step emits `≥ 0` and the
-   product must grow; upper: entries bounded by `D`.  Likely wants the ergodic average of the
-   per-step emission length, i.e. `tendsto_wCount_div` at weight `|lrOut|` — the SAME engine.
+1. **`hlen` — the lower bound, the one analytic leaf.**  `liminf (runs of lrWord n)/n > 0`.
+   Route (`PENDING_WORK.md` item (a′)): `lrRun_eq` gives `M₀·B_{a₁}⋯B_{aₙ} = lrProd w · M_n` with
+   `M_n` in a FINITE set, and the input product's own Stern–Brocot word has exactly `n` runs (one
+   per input digit).  Right-multiplying by a bounded matrix perturbs the path's cone boundedly,
+   so the run counts differ by a bounded FACTOR.  Making that precise is the work.  Note only
+   `liminf > 0` is needed, not convergence, if the assembly is restated accordingly.
+2. **Factor the assembly.**  `mobiusUniformFreq_of_transducer` demands `out` emit the image's CF
+   digits; the L/R machine emits letters.  Split it into an alphabet-agnostic `OutputWordFreq`
+   (every output word has an `x`-independent Cesàro frequency, `K` allowed to depend on `v`) plus
+   a CF bridge through `card_cf_eq_card_patWord`.  Note `hK` is FALSE at the L/R level for a
+   CONSTANT `v` (`LL` occurs ~`j` times in one block), so a direct instantiation cannot work —
+   the bridge is forced, not a convenience.
+3. **`hgen`** — now near-free: `patWord_alternation` plus `kOut ≠ 0 → …`.
 4. **`hjs`** — `JointStateFreq` for `lrDelta`, from
-   `VandeheyCocycle.tendsto_jointCount_of_classEquidistribution` + the common-target reach.
-   `archive/handoff/HANDOFF-2026-09-28-raney-section2.md` has the row-family identity
-   `δ(R_b, a) = R_{(a+b⁻¹) mod D}`, probed to `D = 23`.
-5. **`htail`** — Gauss-null trigger tails.  For a FIXED `v` the trigger prefixes shrink because a
-   long window forces many emitted letters; the tail mass is then a cylinder-mass estimate.
+   `VandeheyCocycle.tendsto_jointCount_of_classEquidistribution` + the common-target reach
+   (`archive/handoff/HANDOFF-2026-09-28-raney-section2.md` has the row-family identity).
+5. **`htail`** — Gauss-null trigger tails: a long window forces many emitted letters, so the
+   tail mass is a cylinder estimate.
 
-## ⚠️ Gotchas found this run
+## ⚠ Gotchas found this lap
 
-- `div_add_div_same` does not exist — use `← add_div`.
-- `div_le_div_of_nonneg_right` takes `0 ≤ c`, NOT `0 < c` (pass `h.le`).
-- `Finset.Icc_succ_right` does not exist — `ext p; simp [Finset.mem_Icc, Finset.mem_insert]; omega`.
-- `List.tails_nil` does not exist; `(List.mem_tails _ _).mp`, not `List.mem_tails.mp`.
-- `simp only [f_zero]` cannot see through eta on a partially applied function — `funext` first.
-- `Nonneg.mul` resolves to Mathlib's `Nonneg` subtype instance; write `Mat2.Nonneg.mul`.
-- `Mat2` is NOT a `Monoid`: use `mul_assoc'`, `one_mul'`, `mul_one'`.
-- `finite_isRD D : Finite ↑{M | IsRD D M}` is a `Finite`, not a `Set.Finite`; make `RState` an
-  `abbrev` so the subtype coercion and instances fire, then `Fintype.ofFinite`.
-- `card_filter_range_shift`-style rewrites need the predicate passed EXPLICITLY (higher-order
-  unification will not guess `fun p => Q (c + p)`).
+- `congr 1` on `decide X = decide Y` leaves a Prop EQUALITY, which `omega` cannot do — use
+  `decide_eq_decide.mpr (by omega)`.
+- `Finset.card_insert_of_not_mem` is `card_insert_of_notMem` in this Mathlib.
+- `simp only [Finset.mem_filter]` makes no progress on a `Set`-coerced Finset membership; add
+  `Finset.coe_filter, Set.mem_ofPred_eq` (`Set.mem_setOf_eq` is deprecated).
+- `omega` fails through a `def` wrapper (`runIdx` vs `Nat.findGreatest`): `show` + `rw [← runIdx]`.
+- A `(by omega)` side goal whose statement mentions a not-yet-unified metavariable fails — bind
+  it with a named `have` first.
+- `rw [h]` where `h`'s proof is `rfl` fails on `v.sum + 2 = (v.sum+1)+1`; use `show` (defeq).
+- `include hirr hw` also attaches to lemmas that don't use them — `omit hirr hw in` per lemma, and
+  then pass `(w := w)` explicitly at the call sites.
+- `List.range'_append_1 : range' s m ++ range' (s+m) n = range' s (m+n)` — rewriting with `←`
+  splits the WRONG summand; apply it forward with explicit `(s := …) (m := …) (n := …)`.
 
-## 📁 Key files
+## 📁 New files this lap
 
-`VandeheyOutputFreq.lean` (engine) · `VandeheyOutputWord.lean` (§5 bucketing) ·
-`VandeheyTrigger.lean` (trigger family) · `VandeheyRescale.lean` (reindexing) ·
-`VandeheyAssembly.lean` (capstone) · `VandeheyLRTransducer.lean` (the machine) ·
-`VandeheyLeafReduction.lean` (per-matrix endgame) · `VandeheyRaney.lean` (Raney states, Lemma 2.1).
+`VandeheyRunBound.lean` (Lemma 2.2) · `VandeheyAltCount.lean` (alternation counting + the
+`hK`/`hkK` reduction) · `VandeheyLRTrigger.lean` (the bounds on the real machine) ·
+`VandeheyLRRuns.lean` (the run dictionary) · `VandeheyLRPattern.lean` (the pattern and the
+bijection) · `VandeheyRunCount.lean` (Lemma 6.1, upper half).
 
 ---
-**→ Next session: NEXT action 1 (`hK`, the uniform trigger bound), via route (b) of
-`PENDING_WORK.md` item 0′.  The hinge is already proved; what remains is the run count and the
-`Fintype` maximum.  Nothing is uncommitted; the tree is clean.**
+**→ Next session: NEXT action 1 (`hlen`'s lower bound).  Everything else on the concrete machine
+is either proved or routine.  Tree clean at `ee5365d`.**
