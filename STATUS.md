@@ -20,21 +20,31 @@ State at the post-merge checkpoint of 2026-09-27 (`f5034b6` onward), on branch
   2. The quantitative all-`N` count of paper §6, as a separate target.
 - **Read:** `archive/handoff/HANDOFF-joint-lambert.md`, `papers/2026-09-26-joint-lambert-disjunctivity.md`.
 
-### Vandehey 2017 Thm 1.1: Möbius images of CF-normal numbers are CF-normal (partial)
-- **Proved:**
-  - `VandeheyTwo.tendsto_jointCount_classStep` (`VandeheyClassEquidist.lean`).  This is
-    Vandehey's §3 made unconditional, without the refuted Moshchevitin-Shkredov criterion.
-  - `vandehey_matrix_action_of_uniformFreq`.
-- **Open:**
-  - `vandeheyUniformFreq_holds` (`LiteratureVandehey.lean`, sorry) is the crux: block
-    frequencies along a Möbius image have an `x`-independent limit.
+### Vandehey 2017 Thm 1.1: Möbius images of CF-normal numbers are CF-normal (ONE leaf left)
+- **The Smith reduction (2026-09-28, `VandeheySmith.lean`, sorry-free).**  `MobiusCFN a b c d`
+  is the per-matrix statement; it is closed under matrix product (`MobiusCFN.comp`, whose only
+  CF input is that a CF-normal number is irrational — `not_isCFNormal_of_not_irrational`, proved
+  by the Euclidean descent of the Gauss orbit on rationals).  An elementary Hermite descent on
+  `|det|` (`exists_column_kill`, `mobiusCFN_of_leaves`) writes every nonsingular integer matrix
+  as `M'' · diag(p,1) · V` with `V ∈ GL₂(ℤ)`.  And `vandeheyUniformFreq_of_matrix_action` shows
+  the crux is *equivalent* to Theorem 1.1 (the limit is `γ(I_v)`).
+- **Serret leaf DISCHARGED (2026-09-28, `VandeheySerret.lean`, sorry-free).**
+  `mobiusCFNGL2_holds : MobiusCFNGL2` — `PGL₂(ℤ) = ⟨x ↦ x+n, x ↦ 1/x⟩` by a Euclidean descent
+  on the bottom-left entry; each generator shifts the CF digit sequence boundedly, which
+  `CFTailFreq.tendsto_occStart_of_shift` / `isCFNormal_of_digit_shift` absorbs.  The one real
+  computation is `t ↦ 1 − t`: `T²(1−t) = T t` for `t < 1/2`, `T(1−t) = T² t` for `t > 1/2`.
+- **The single open leaf:** `MobiusCFNScale` — `x ↦ p·x` preserves CF-normality for prime `p`.
+  `vandeheyUniformFreq_of_scale` reduces the whole theorem to it.  Composite determinants, the
+  diagonal factor, division and all of `GL₂(ℤ)` are gone.
+- **Available for that leaf:** `VandeheyTwo.tendsto_jointCount_classStep`
+  (`VandeheyClassEquidist.lean`) — Vandehey's §3 made unconditional, without the refuted
+  Moshchevitin-Shkredov criterion: joint (digit window, `ℙ¹(ℤ/p)` class) frequencies converge to
+  an `x`-independent limit.  What is missing is Vandehey §2 (Raney normal forms) + §5–§6
+  (trigger counting), plus the fibre step (state = class × mergeable fibre).
 - **Retired 2026-09-28:** `exists_jointFreq_limit` is gone.  Its `Synchronizing` hypothesis is
   unsatisfiable for the needed transducer, and that is now a theorem:
-  `VandeheyAut.not_synchronizing_of_injective_quotient` (axiom-free) — a quotient on which
-  every letter acts injectively is never forgotten, and the transducer's row-lattice class in
-  `ℙ¹(ℤ/D)` is such a quotient.  Maze: `hall_vandehey_synchronizing_transducer`.  The live
-  transfer principle is `VandeheyCocycle.tendsto_jointCount_of_classEquidistribution`; its
-  hypothesis `ClassEquidistribution` is the real crux.
+  `VandeheyAut.not_synchronizing_of_injective_quotient` (axiom-free).  Maze:
+  `hall_vandehey_synchronizing_transducer`.
 - **Read:** `archive/handoff/HANDOFF-2026-09-28-vandehey-bridge-CLOSED.md` (its NEXT list),
   `papers/vandehey-2017-open-problem-attack-map.md`.
 

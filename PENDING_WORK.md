@@ -6,10 +6,17 @@ Treadmill laps append dated notes **below the queue**, and a review lap folds th
 
 ## Queue
 
-1. **Vandehey crux `vandeheyUniformFreq_holds`.**
-   - First evaluate the Smith-normal-form shortcut: `GL₂(ℤ)` maps, where CF tails agree
-     (Serret), plus `x ↦ Dx` for prime `D`, which the class automaton already covers.
-   - Otherwise, follow the NEXT list in `archive/handoff/HANDOFF-2026-09-28-vandehey-bridge-CLOSED.md`.
+1. **Vandehey crux — now the single leaf `MobiusCFNScale`** (`VandeheySmith.lean`):
+   `x ↦ p·x` preserves CF-normality for prime `p`.  The Smith shortcut WORKED and is formalized
+   (`mobiusCFN_of_leaves`), and the Serret leaf is PROVED (`mobiusCFNGL2_holds`), so
+   `vandeheyUniformFreq_of_scale` reduces all of Theorem 1.1 to this one statement.
+   - Next attack: the abstract **output-frequency transfer principle** (Vandehey §5–§6 in
+     transducer-free form) — if a finite-state transducer reads the input digits and the joint
+     (state, input window) frequencies converge to `x`-independent limits, then every output
+     word frequency converges.  That is pure combinatorics; it needs no CF theory and no
+     analysis, and it is what turns `tendsto_jointCount_classStep` into digit frequencies of
+     `p·x`.  Then §2 (Raney normal forms, finiteness of the det-`±p` state set) and the fibre
+     step (state = class × mergeable fibre) remain.
 2. **Joint Lambert, unconditional.**  Discharge `AGP` and `PrimeIntervalSupply` from PNT+
    (`WeakPNT_AP`, PNT).  After that, the quantitative §6 count is a separate target.
 3. **C3/MRT `CharTailCancellation`.**  This is the only C3 input with a standard-literature proof:
