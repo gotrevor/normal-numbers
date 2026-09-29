@@ -3164,3 +3164,25 @@ there (it is a net parameter), which is a one-lemma instantiation.
 **So the §7 per-cell input is now exactly `CellMemory`.**  No `P`, no cover hypothesis, no clock
 hypothesis.  The front is `CellMemory + MeanSlack ⟹ BlockAverageBound`, and lap 80 showed both of
 those reduce to the same box-equidistribution statement.
+
+## S7-CX (lap 80): what the crux SAYS — the block sets are the output's own digits
+
+`src/NormalNumbers/VandeheyS7CruxMeaning.lean`, axiom-clean.
+
+    Gⁿx ∈ mapBlockSet (runState Φ x n) w j   ⟺   G^(N n + j) y ∈ I_w ,   y = Φ.mob x, N = runClock
+
+(`mem_mapBlockSet_iff`, straight from `runValue_spec`).  So `BlockAverageBound` is literally an
+upper bound on the frequency with which the OUTPUT's digit string reads `w` — the conclusion
+`IsCFNormal (Φ.mob x)` in upper-bound, clock-reparametrised form.
+
+**This is the lap's sharpest statement of where the difficulty is.**  The crux is a faithful
+restatement of the goal, not a weakening: there is no soft reformulation left to find, and every
+route must produce real information about `y`.  Fact (α) is this seen from the input side; S7-CN's
+discrepancy rigidity is it seen on the state; `CellMemory` and `MeanSlack` are it seen through the
+cell decomposition and the height walk respectively.  All four are the same statement.
+
+Practical consequence: with `ClockLinear` (a theorem, S7-CP) converting the `n`-average to a
+`k`-average, the front's content is exactly
+`limsup_k (1/k)·#{i < k : G^i y ∈ I_w} ≤ C·γ(I_w)`, so future work may be phrased about `y`
+directly with the state entering only through the clock.  That is the recommended frame for the
+next altitude lap.
