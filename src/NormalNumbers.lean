@@ -813,6 +813,7 @@ import NormalNumbers.VandeheyS7ArchWidthFree
 import NormalNumbers.VandeheyS7NoReduction
 import NormalNumbers.VandeheyS7PairCorr
 import NormalNumbers.VandeheyS7Greedy
+import NormalNumbers.VandeheyS7GreedyWidth
 import NormalNumbers.VandeheyS7Quadratic
 import NormalNumbers.VandeheyS7Class
 import NormalNumbers.VandeheyS7Net
