@@ -2688,3 +2688,30 @@ and the gain `2 log fib(L+1)` as a composition on the other side
 (`sₙ₊₁ = (emissions)⁻¹ ∘ sₙ ∘ readState aₙ₊₁`).  Lap 74's `fib_sq_mul_width_le_of_forced` is the
 estimate; what is missing is its `comp` form, exactly as `width_comp_readState` was missing here.
 **That is the single most mechanical remaining task on the front and the right next grind step.**
+
+### Lap 75, eleventh commit — S7-E2: the emission gain in `comp` form; `hstep` complete
+
+Emission is **not** a `MobState` composition on the left (`[[-b,1],[1,0]]` has a negative entry, and
+the nonnegative upper row is what makes the family closed under `comp`).  State it in the direction
+that IS a composition: `s = R_w.comp s'`, `s` before emitting `w`, `s'` after.
+
+* `MobState.mob_nonneg` — a state maps `[0,∞)` into `[0,∞)`.
+* `MobState.width_comp_eq` — **exact**:
+  `(R.comp t).width = |det R| · t.width / (den_R(t.mob 0) · den_R(t.mob 1))`.
+  So emission *widens*: the pre-emission state is the narrow one, by the factor `den²`.
+* `MobState.width_comp_le` — the `R.d²` form.
+* `MobState.deficit_comp_ge` — **the emission gain**: a unimodular `R` with `d ≥ D > 0` costs the
+  pre-emission state `2 log D` of extra lag, i.e. emitting buys `2 log D` back.
+* `MobState.deficit_comp_fib_ge` — the `fib` form, matching lap 74.
+
+**`hstep` is now fully assembled from kernel theorems:**
+
+| `deficit_telescope_le` term | supplied by |
+|---|---|
+| `+ ξ n` (read cost `≍ 2 log aₙ₊₁`) | `deficit_comp_readState_le` (S7-RC) |
+| `− c·Lₙ` (emission gain `2 log R.d`) | `deficit_comp_ge` (S7-E2) |
+
+**The analysis on the lag/clock side is DONE.**  The only remaining gap on that side is identifying
+`R.d` for the actual emitted block with `cfK` of the emitted word — transducer bookkeeping inside
+`StateCoupling`, not analysis.  The next grind lap should do exactly that and nothing else on this
+side; any further estimate-sharpening here is wasted (lap-75 idea 4).
