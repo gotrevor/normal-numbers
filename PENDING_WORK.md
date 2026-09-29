@@ -306,7 +306,28 @@ Three facts, all established lap 30, fix its difficulty and must steer every fur
   into a reduction.  The §7 route now reads: frozen targets ⇐ `GaussACRigidity` (cited) +
   `OrbitWordBound` + a Lévy bound on the image — a ONE-PARAMETER-FREE statement, "the image
   expansion of a CF-normal `x` does not over-represent any finite word".
-  **Next attack (lap 44).**  Two open obligations remain on the route, and both are now sharply
+  **Lap 44 — the second hypothesis, minimised and named.**  Lap 43's reduction never used the
+  quantitative Lévy bound, only tightness of the image's digit distribution, so that is now the
+  hypothesis: `ImageTight y := ∀ ε > 0, ∃ T ≥ 2, eventually blockCount (cellSet [] T) p y / p ≤ ε`,
+  with `imageTight_of_levyBound` (axiom-clean) showing it is strictly weaker than `LevyBound`.
+  `orbitCellBound_of_orbitWordBound` now reads: `0 ≤ C`, `AffineImageIrrational`, `ImageTight` on
+  the image, `OrbitWordBound` ⟹ `OrbitCellBound`.  The `Λ` parameter is gone from the chain.
+  **Why `ImageTight` is a GENUINE second obligation, not a formality** (reasoned, not yet a Lean
+  witness): `OrbitWordBound` is one-sided, and one-sided upper bounds are compatible with digits
+  marching to infinity — if `aᵢ(y) = 2^{2^i}` then every individual word occurs at most once, so
+  every word frequency tends to `0` and the upper bounds hold vacuously, while
+  `log qₚ ≍ 2^p` destroys any Lévy bound and tightness fails outright.  So tightness cannot be
+  derived from the one-sided crux; it needs its own argument.
+  **Next attack (lap 45), in order.**
+  (a) `ImageTight` for `y = fract(φx)` with `x` CF-normal.  The natural route is the CLOCK: the
+  emitted convergent matrices satisfy `Oℓ ≈ Φ Pₙ` with `det Φ = φ` fixed, so `log qℓ(y) ≍
+  log qₙ(x) + O(1)`; a Lévy bound for `x` plus a linear lower bound on the emission rate `ℓ(n)`
+  would give one for `y`.  Prerequisite, and provable on its own: **CF-normal `x` ⟹ `LevyBound x`**
+  — normality gives the EXACT frequencies of `{a ≥ T}`, so a dyadic decomposition of
+  `Σ log(aᵢ+1) ≤ Σ_k (k+1) log 2 · #{i : aᵢ ∈ [2ᵏ, 2ᵏ⁺¹)}` converges against `2⁻ᵏ` tails.
+  (b) `OrbitWordBound` itself — the genuine crux, fact (γ), now the only content-bearing
+  hypothesis besides the cited `GaussACRigidity`.
+  **Older next-attack note (lap 43).**  Two open obligations remain on the route, and both are now sharply
   stated.  (a) `OrbitWordBound` — the genuine crux, fact (γ).  (b) The Lévy bound on the image,
   which is now a REQUIRED input rather than a convenience: probe whether it follows from
   `OrbitWordBound` itself (a word-frequency upper bound plus `cfK_le_prod` may bound

@@ -93,24 +93,42 @@ lemma sum_gaussMeasure_cfCylinder_le (w : List ℕ) (T S : ℕ) :
   rw [← ENNReal.toReal_sum (fun a _ => measure_ne_top _ _)]
   exact ENNReal.toReal_mono hfin hle
 
-/-- **The threshold is free.**  The `T = 1` word bound plus a Lévy bound on the image gives the
+/-- **Tightness of the image's digit distribution** — the *minimal* second hypothesis.  It is
+all that lap 43's reduction uses, and it is strictly weaker than a Lévy bound
+(`imageTight_of_levyBound`). -/
+def ImageTight (y : ℝ) : Prop :=
+  ∀ ε : ℝ, 0 < ε → ∃ T : ℕ, 2 ≤ T ∧ ∀ᶠ p : ℕ in atTop, blockCount (cellSet [] T) p y / p ≤ ε
+
+/-- A Lévy bound implies tightness: the free rate `Λ / log T` tends to `0`. -/
+theorem imageTight_of_levyBound {y : ℝ} (hy : Irrational y) (hmem : y ∈ Set.Ioo (0:ℝ) 1)
+    {Λ : ℝ} (hL : LevyBound y Λ) : ImageTight y := by
+  intro ε hε
+  obtain ⟨M, hM⟩ := ((tendsto_freeRate Λ).eventually
+    (eventually_lt_nhds hε) |>.and (eventually_ge_atTop 2)).exists_forall_of_atTop
+  obtain ⟨h1, h2⟩ := hM M le_rfl
+  exact ⟨M, h2, (tailFreq_le_of_levyBound hy hmem hL h2).mono fun p hp => le_of_lt
+    (lt_of_le_of_lt hp h1)⟩
+
+/-- **The threshold is free.**  The `T = 1` word bound plus tightness of the image gives the
 full cell bound. -/
-theorem orbitCellBound_of_orbitWordBound {q r₀ C Λ : ℝ} (hC : 0 ≤ C)
+theorem orbitCellBound_of_orbitWordBound {q r₀ C : ℝ} (hC : 0 ≤ C)
     (hirr : AffineImageIrrational q r₀)
-    (hlevy : ∀ x : ℝ, IsCFNormal (Int.fract x) → LevyBound (Int.fract (q * x + r₀)) Λ)
+    (htight : ∀ x : ℝ, IsCFNormal (Int.fract x) → ImageTight (Int.fract (q * x + r₀)))
     (hword : OrbitWordBound q r₀ C) : OrbitCellBound q r₀ C := by
   classical
   intro x hx w T hw hT ε hε
   obtain ⟨hyirr, hymem⟩ := irrational_fract_mem (hirr x hx)
   set y := Int.fract (q * x + r₀) with hy
-  have hΛ : 0 ≤ Λ := nonneg_of_levyBound hyirr hymem (hlevy x hx)
-  -- choose the truncation `S` so the residual is below `ε/2`
-  obtain ⟨S, hST, hS2, hSrate⟩ : ∃ S : ℕ, T ≤ S ∧ 2 ≤ S + 1 ∧ Λ / Real.log ((S + 1 : ℕ) : ℝ) < ε / 4 := by
-    have := (tendsto_freeRate Λ).eventually (eventually_lt_nhds (by linarith : (0:ℝ) < ε/4))
-    obtain ⟨M, hM⟩ := (this.and (eventually_ge_atTop (max T 2))).exists_forall_of_atTop
-    refine ⟨max T 2 + M, le_trans (le_max_left _ _) (Nat.le_add_right _ _), by omega, ?_⟩
-    have hge : max T 2 ≤ max T 2 + M + 1 := by omega
-    exact (hM (max T 2 + M + 1) (by omega)).1
+  -- choose the truncation `S` so the residual is below `ε/4`
+  obtain ⟨T₀, hT₀2, hT₀ev⟩ := htight x hx (ε/4) (by linarith)
+  obtain ⟨S, hST, hS2, hSrate⟩ : ∃ S : ℕ, T ≤ S ∧ 2 ≤ S + 1 ∧
+      ∀ᶠ p : ℕ in atTop, blockCount (cellSet [] (S+1)) p y / p ≤ ε / 4 := by
+    refine ⟨max T (T₀ - 1), le_max_left _ _, by omega, ?_⟩
+    refine hT₀ev.mono fun p hp => ?_
+    refine le_trans (le_trans (div_le_div_of_nonneg_right ?_ ?_) le_rfl) hp
+    · exact blockCount_le_of_irrational_subset hyirr hymem
+        (fun t _ _ ht => cellSet_mono_threshold [] (by omega) ht) p
+    · exact Nat.cast_nonneg p
   set F : Finset ℕ := Finset.Icc T S with hF
   set N : ℕ := F.card with hN
   have hNpos : (0:ℝ) < N + 1 := by positivity
@@ -127,7 +145,7 @@ theorem orbitCellBound_of_orbitWordBound {q r₀ C Λ : ℝ} (hC : 0 ≤ C)
     · exact hw e h
     · have : e = a := by simpa using h
       exact this ▸ le_trans hT (Finset.mem_Icc.1 ha).1
-  have hres := tailFreq_le_of_levyBound hyirr hymem (hlevy x hx) hS2
+  have hres := hSrate
   obtain ⟨M, hM⟩ := (eventually_all_finset (I := F)
       (p := fun a p => blockCount (cfCylinder (w ++ [a])) p y / p
         ≤ C * (gaussMeasure (cfCylinder (w ++ [a]))).toReal + ε')).2 hcyl |>.and
@@ -158,7 +176,7 @@ theorem orbitCellBound_of_orbitWordBound {q r₀ C Λ : ℝ} (hC : 0 ≤ C)
       have : (4 * (w.length : ℝ)) / ε < (p:ℝ) := lt_of_le_of_lt hceil this
       rw [div_lt_iff₀ hε] at this
       linarith
-    have h3 : blockCount (cellSet [] (S+1)) p y / p ≤ ε / 4 := le_of_lt (lt_of_le_of_lt hrest hSrate)
+    have h3 : blockCount (cellSet [] (S+1)) p y / p ≤ ε / 4 := hrest
     have h4 : blockCount (cellSet w (S + 1)) p y / p
         ≤ (blockCount (cellSet [] (S+1)) p y + (w.length : ℝ)) / p := by gcongr
     rw [add_div] at h4
@@ -194,6 +212,7 @@ section Audit
 
 #print axioms orbitCellBound_of_orbitWordBound
 #print axioms sum_gaussMeasure_cfCylinder_le
+#print axioms imageTight_of_levyBound
 
 end Audit
 
