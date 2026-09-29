@@ -242,7 +242,31 @@ Three facts, all established lap 30, fix its difficulty and must steer every fur
   itself (`‖qφx‖ ≤ 2/(Tq)`), used at MANY scales simultaneously, i.e. the equidistribution of `x`
   along the `T/4`-separated good scales.  That is fact (γ) again, reached from the Diophantine
   side.  **So lap 38–39 close the Diophantine detour: it is exactly the crux, not a softening.**
-  **Next attack (lap 40):** the only `T`-growing multi-scale object in hand is the pair
+  **Lap 40 — the REFUTATION: `GoodDenBoundPrim` is false without normality**
+  (`VandeheyS7Const.lean`, axiom-clean, sorry-free).  `constCF T := (√(T²+4) − T)/2` is the
+  fixed point of the Gauss map with `ζ⁻¹ = T + ζ`, i.e. `[0; T, T, T, …]`: `gaussMap_constCF`,
+  `cfDigit_constCF` (every digit is `T`), `irrational_constCF` (`T²+4` is never a square for
+  `T ≥ 1`).  Since every digit equals `T`, `nearInt_convDen_le` makes EVERY convergent
+  denominator a primitive `T`-good denominator (`good_cfK_constCF`), and `cfK_le_prod` gives
+  `qₚ ≤ (T+1)ᵖ`, so `goodDenCountPrim_constCF_ge : P − 2 ≤ goodDenCountPrim ζ_T T ((T+1)^P)`.
+  Hence `not_goodDenBoundPrim_constCF : D·log(T+1) < T → ¬ GoodDenBoundPrim ζ_T D`.
+  **What this settles.**  (i) Lap 34's free rate `log Q / log(T/4)` is ATTAINED, so no amount of
+  Diophantine bookkeeping — spacing, primitivity, the transfer — can improve it; the wall located
+  at lap 34 is a genuine wall, not an artifact of a lossy step.  (ii) `GoodDenBoundPrim (φx) D`
+  is NOT an unconditional Diophantine fact; it holds only for `y` with Gauss–Kuzmin tail
+  statistics.  With lap 39's equivalence this means the Diophantine reformulation IS the crux's
+  tail cell, exactly, with no slack anywhere.  **The Diophantine detour is closed as a detour:
+  laps 31–40 converted the tail cell into an equivalent form and proved that form has no
+  independent leverage.**  Any future lap must attack the statistics of the image expansion
+  directly (fact (γ), the `Γ\SL₂(ℝ)` translate problem), not the counting.
+  **Next attack (lap 41).**  The `w ≠ []` cells are now the only untried part of
+  `OrbitCellBound`, and the lap-30 bootstrap note says the tail cell was supposed to CONTROL
+  them.  Since the tail cell is now known to be exactly Gauss–Kuzmin for the image, reverse the
+  bootstrap: assume the tail cell (as a named hypothesis `ImageTailLaw`) and ask whether the
+  general cell follows — i.e. is `OrbitCellBound` a consequence of its own `w = []` case plus the
+  proved geometry (`VandeheyS7Loss.hdist_runWord_le`, `uniform_comparable_of_bddDistortion`)?
+  A positive answer would collapse the crux to a single one-parameter statement.
+  **Older next-attack note (lap 39):** the only `T`-growing multi-scale object in hand is the pair
   `(q, q')` of consecutive good denominators with `Tq ≤ 4q'` (`gap_principle`) together with
   `nearInt_numerator_ge_of_good` (the numerators `m, m'` are excluded from the good set).  Probe:
   does the pair `(q, m)` with `gcd(m,q)=1`, `‖qφx‖ ≤ 2/(Tq)` and `‖mφx‖ ≥ 1/(2q)` force a
