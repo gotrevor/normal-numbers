@@ -3149,3 +3149,18 @@ With `E = √(6|det Φ|/η)` this gives `P → 6/η` as `ρ → 0`, so **any `P 
 small `ρ`**: S7-CA's hypothesis `P` is discharged by a choice of `ρ`, not by an assumption.  What
 remains to wire it into `classFreqSlack_of_cellMemory'` is the bookkeeping that `ρ` is already free
 there (it is a net parameter), which is a one-lemma instantiation.
+
+## S7-CB (lap 80): `P` is gone — `ClassFreqBoundSlack` from `CellMemory` and a fine enough net
+
+`src/NormalNumbers/VandeheyS7CellNoP.lean`, axiom-clean.
+
+* `boxScale Φ η := √(6|det Φ|/η)`; `denMax_runState_le` — a wide run state has `denMax ≤ boxScale`
+  (from `denMax_sq_le_of_denRatio` and the run's band `denRatio ∈ (1/2, 6]`).
+* `pullBound Φ η ρ := (boxScale + 2ρ)² / (|det Φ| − 4ρ(boxScale + ρ))`;
+  `pullLip_cen_le` — every USED centre satisfies `pullLip ≤ pullBound`, unconditionally.
+* `classFreqSlack_of_cellMemory_noP` — S7-CA with `P := pullBound`.  The only side condition is
+  `0 < |det Φ| − 4ρ(boxScale + ρ)`: the net must be fine enough to see the determinant.
+
+**So the §7 per-cell input is now exactly `CellMemory`.**  No `P`, no cover hypothesis, no clock
+hypothesis.  The front is `CellMemory + MeanSlack ⟹ BlockAverageBound`, and lap 80 showed both of
+those reduce to the same box-equidistribution statement.
