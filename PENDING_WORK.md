@@ -11,6 +11,60 @@ The next Lambert target is an all-N occurrence count; its proposed stronger pape
 `docs/JOINT-LAMBERT-QUANTITATIVE-NEXT.md`.  It is not yet formalized.
 
 
+## ⭐ VANDEHEY §7 — LAP 77 (review): FACT (δ), AND THE NEXT TARGET IS `ClassFreqBound`
+
+**Binding version = `DIRECTION.md` CURRENT DIRECTIVE.**  Commits `5a5f0ef` (S7-BX), S7-IN.
+
+### What the review found
+
+* **The width floor was only half the input.**  Laps 58–76 hunted it alone.  Compactness of the
+  state set needs `width ≥ η` AND bounded distortion — and the second half is FREE:
+  `denRatio := (c+d)/d` obeys `r ↦ 1 + 1/(r+a−1)` on a read (contracting *uniformly in the digit*,
+  because the bound does not see `a`) and moves by a factor in `[1/2,2]` on an emission.  So
+  `r > 1/2` from step 1 and `r ≤ 6` from step 2 along ANY run.  Unconditional.
+* **`width = |det|/(d·(c+d))` exactly**, and `|det|` is conserved by the run.  Hence the box lemma:
+  `width ≥ η` ⟹ `d, c+d ≤ √(6|det Φ|/η)` ⟹ all four entries in `[−M, M]` (using `0 ≤ b ≤ d`,
+  `0 ≤ a+b ≤ c+d`).  **The predictor's range is precompact** — directive fact (δ).
+* **`hΦ` is a triviality** (S7-IN, `exists_mob_eq`): `MapState` has REAL entries and bans only
+  `det = 0`, so `z ↦ v + ε(z−u)` interpolates any `u,v ∈ (0,1)`.  Lap 76's "next action #1" (a case
+  analysis on `⌊φ·fract x⌋`) was a misreading; it is not needed and would not have worked, since
+  `z ↦ φz` does not map `[0,1]` into `[0,1]`.
+* **The `∀ Φ` form of `hBA` is needlessly strong.**  `orbitWordBound_of_runBlockAverage_one` asks
+  for the block average at ONE `Φ`; discharge that one.
+
+### The decomposition to build next — `ClassFreqBound`
+
+Fix `η, ρ > 0`.  Let `K_η ⊂ ℝ⁴` be the box of fact (δ) and `{B_i}_{i<M}` a partition of it into
+cells of diameter `ρ`, with centres `t_i`.  Then for `n` with `width(s_n) ≥ η`:
+
+    s_n ∈ B_i  ⟹  mapBlockSet s_n w j  ⊆  E_i := (t_i-pullback of G^{-j}I_w) inflated by ρ' ,
+
+with `ρ' = O(ρ/η²)` by the S7-PB Lipschitz bound.  Each `E_i` is a FIXED set, so CF-normality of
+`x` controls `freq{n : Gⁿx ∈ E_i}` — this is exactly the part fact (α) says predictability kills,
+and the compactness is what buys it back.  The residual is
+
+    `ClassFreqBound` :  limsup (1/p) #{n < p : s_n ∈ B_i ∧ Gⁿx ∈ E_i}  ≤  C · freq{s_n ∈ B_i} · γ(E_i)
+
+i.e. the state cell and the current orbit point do not conspire.  **Do NOT drop the state
+constraint and sum over `i`**: that costs the factor `M = M(η,ρ)` and gives no fixed `C`.
+This is Vandehey's *class equidistribution* with a compact class space in place of a finite one.
+
+Order of work:
+1. `stateCell`/`clusterSet` and the inclusion `mapBlockSet s w j ⊆ E_i` for `s` in a `ρ`-cell —
+   this is the S7-PB Lipschitz bound re-run with the state as the variable, not the target.
+2. `blockAverage_le_of_classFreq`: `BlockAverageBound ⟸ ClassFreqBound + width-frequency`.
+3. Then `ClassFreqBound` itself.  The honest sub-question to probe first: is it FALSE for some
+   predictable family inside the box?  A kernel refutation there is as valuable as a proof, and it
+   would force the arithmetic-of-`Φ` branch of fact (α).
+
+### Still open, unchanged
+
+The width floor in FREQUENCY form (`freq{n : width(s_n) < η} → 0 as η → 0`) is still needed to
+reach the box at all.  Note what fact (δ) changes about it: the states of width `< η` are exactly
+the states about to emit a LARGE digit of the image `y`, so the frequency form is a *tail bound on
+`y`'s digits* — strictly weaker than normality of `y`, and the first place to look for a
+bootstrap.
+
 ## ⭐ VANDEHEY §7 — LAP 76: `StateData` WAS VACUOUS; `PinnedData` REPLACES IT
 
 **Commits `7f36c66` (S7-SA) and `6df6823` (S7-PN).  Read before any use of lap 75's headline.**

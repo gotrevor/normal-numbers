@@ -12,8 +12,8 @@ The next Lambert target is an all-N occurrence count; its proposed stronger pape
 
 
 **Digit-reading dynamics of real numbers: normality, disjunctivity, CF-normality, and the
-richness of arithmetic constants.** · **Build**: 🟢 green (10545 jobs) · **Updated**: lap 74 ·
-2026-09-29 · `604dec8`
+richness of arithmetic constants.** · **Build**: 🟢 green (10576 jobs) · **Updated**: lap 77 ·
+2026-09-29 · `5a5f0ef`
 
 One checkout on `wip/g5-prime-subset`, Lean/mathlib v4.33.1, every campaign branch merged
 (2026-09-27, `f5034b6`).  Per-campaign detail and ledgers from before the merge are in
@@ -30,13 +30,16 @@ axiom-clean): the cited `GaussACRigidity (C/log 2)`, `ImageTight` on the image, 
 image expansion.  Leg 1 (`AffineImageIrrational`) is a theorem for both instances, the threshold
 parameter is free, and the interval / word / cell shapes of the crux are mutually derivable.
 
-As of **lap 74 the measure side of the crux is closed** (`VandeheyS7Pull`): a state's pullback of
-an *arbitrary* target set costs a factor `distortion/width` (Lipschitz inverse + `μH[1] = volume`),
-and — the point — the *tower* `G^{-j} I_w` costs nothing extra, because `γ` is `gaussMap`-invariant,
-so a whole emitted block of length `L` pulls back to Gauss mass `≤ (2K/η)·L·γ(I_w)`.  What remains
-is (i) the **width floor in frequency form** — a uniform floor is impossible by fact (β), and the
-natural bound needs uniform integrability of `log a`, which CF-normality does not supply — and
-(ii) the **predictable block average**, directive fact (α), the open heart.  Four other fronts
+As of **lap 76 the transducer is built** (`runState`/`runClock`, `VandeheyS7Run`…`RunPin`) and the
+front is ONE hypothesis wide: `BlockAverageBound` for the explicit sets
+`mapBlockSet (runState Φ x n) w j`.  **Lap 77 supplies directive fact (δ)** (`VandeheyS7Box`): the
+width is exactly `|det| / (d·(c+d))`, the denominator ratio `(c+d)/d` is trapped in `(1/2, 6]`
+along *any* run (reads contract it uniformly in the digit, emissions move it by ≤ 2), `|det|` is
+conserved, and therefore **every run state of width `≥ η` lies in a fixed box of `ℝ⁴`** of side
+`√(6|det Φ|/η)`.  So the predictor `n ↦ s_n⁻¹(I_w)` has PRECOMPACT range — the one soft escape
+directive fact (α) leaves open — and the crux becomes class equidistribution over a *compact*
+class space, not the self-joining wall.  `hΦ` is discharged outright (S7-IN): `MapState` has real
+entries, so `z ↦ v + ε(z−u)` interpolates.  Four other fronts
 carry proved-but-conditional headlines (Joint Lambert, C3/MRT, Elliott, the casting-out crux
 leaves); their hypotheses are the standing debt.
 
@@ -58,6 +61,19 @@ leaves); their hypotheses are the standing debt.
 
 ## What's happened (newest first)
 
+- **2026-09-29 (lap 77, review).**  Course correction on the INSTRUMENT, not the target.  Laps
+  58–76 hunted a **width floor**; that is only half of what compactness needs, and it is the hard
+  half.  The other half — bounded distortion — is FREE: `denRatio := (c+d)/d` obeys `r ↦ 1+1/(r+a−1)`
+  on a read (contracting *uniformly in the digit*) and moves by a factor in `[1/2,2]` on an
+  emission, so along **any** run `r > 1/2` from step 1 and `r ≤ 6` from step 2, with no hypothesis
+  on `x`, on `Φ`, or on normality.  With `width = |det|/(d(c+d))` exactly and `|det|` conserved,
+  that puts every run state of width `≥ η` in a fixed box (`S7-BX`, `VandeheyS7Box`, `5a5f0ef`,
+  eight lemmas axiom-clean) — **directive fact (δ)**, the precompactness fact (α) leaves room for.
+  Also found and fixed: lap 76's "next action #1" was a misreading — `hΦ` is a triviality
+  (`exists_mob_eq`, `S7-IN`), because `MapState` allows real entries and only bans `det = 0`; and
+  the `∀ Φ` form of `hBA` was needlessly strong (`orbitWordBound_of_runBlockAverage_one`).
+  `DIRECTION.md` CURRENT DIRECTIVE rewritten: next is `ClassFreqBound`, the joint state-cell /
+  cylinder frequency bound.
 - **2026-09-29 (lap 74, review).**  Course correction: nine of laps 58–73 had gone to the SECOND
   obligation (`ImageTight` → `AnchoredPullback` → `StateClock`) while the crux went untouched, and
   `StateClock`'s uniform width floor is the wrong shape — fact (β) exhibits states of arbitrarily
@@ -179,10 +195,25 @@ leaves); their hypotheses are the standing debt.
   lap-48 three-step bootstrap (`no_bound_of_one_le_coeff`, coefficient 3); the bad set is `√δ`,
   not `δ` (`volume_badSet_le`).  And lap 74: `StateClock`'s **uniform** width floor is impossible
   for the true transducer states (fact β), so only the frequency form is live.
-- **What is left**: (1) `S7-BD` the block decomposition, `OrbitWordBound ⟸ WidthFloorFreq +
-  BlockAverageBound`; (2) `S7-WF` the width floor in frequency form, or its refutation —
-  CF-normality does NOT give uniform integrability of `log a`; (3) `S7-BA` the predictable block
-  average, = directive fact (α), the open heart.
+- **The transducer, built lap 76** (`VandeheyS7Run`…`VandeheyS7RunPin`): `runState`/`runClock`
+  realize the image orbit for ANY `Φ` with `Φ.mob x = y`, the clock ratio `N(n+1)/N n → 1` is a
+  theorem, and `orbitWordBound_of_runBlockAverage` reduces the crux to `BlockAverageBound` for
+  `mapBlockSet (runState Φ x n) w j` — explicit sets, nothing existential.
+- **Fact (δ), lap 77** (`VandeheyS7Box`, axiom-clean): `width_eq` (`width = |det|/(d(c+d))`,
+  exactly), `denRatio_comp_readMap` (`r ↦ 1+1/(r+a−1)`, a read contracts uniformly in the digit),
+  `denRatio_emit_comparable` (an emission moves `r` by a factor in `[1/2,2]`),
+  `half_lt_denRatio_runState_succ` + `denRatio_runState_le_six` (so `r ∈ (1/2,6]` along ANY run),
+  `absDet_runState` (`|det|` conserved), and the headline `runState_entries_abs_le`: every run
+  state of width `≥ η` has all four entries in `[−M,M]`, `M = √(6|det Φ|/η)`.
+- **`hΦ` discharged, lap 77** (`VandeheyS7Interp`): `exists_mob_eq` — `z ↦ v + ε(z−u)` is a legal
+  `MapState` (`det = ε ≠ 0`; the CONSTANT map is what `hdet` excludes).  The front is now
+  `AffineImageIrrational + BlockAverageBound`.
+- **What is left**: (1) `ClassFreqBound` — partition the state box into finitely many `ρ`-cells
+  `B_i`, approximate `s_n⁻¹(I_w)` by the fixed set `E_i`, and bound the JOINT frequency
+  `freq{n : s_n ∈ B_i ∧ Gⁿx ∈ E_i}`.  Summing over `i` without the state constraint is NOT allowed
+  (it costs the factor `M`).  (2) the width floor in frequency form, still needed to reach the box
+  at all; (3) `ClassFreqBound` itself — the compact-class-space analogue of Vandehey's class
+  equidistribution, and the successor to directive fact (α).
 - **Read:** `DIRECTION.md` CURRENT DIRECTIVE, `PENDING_WORK.md` lap-74 section,
   `papers/vandehey-2017-open-problem-attack-map.md`, the Maze rows
   `hall_emit_digit_window_function` and `hall_vandehey_synchronizing_transducer`.
@@ -307,9 +338,11 @@ This repo holds **no `axiom` declarations**: literature inputs are named hypothe
 | --- | --- | --- | --- |
 | `Literature.vandehey_matrix_action_holds` (`VandeheyCapstone.lean`) | unconditional (Vandehey 2017 Thm 1.1) | trust base | 🟢 **CLEAN, DISCHARGED 2026-09-29** (`6d7a8ad`).  Route: Serret + Smith reduce to `x ↦ D·x` (`D` prime); the concrete Raney `L/R` transducer supplies a monotone RUN clock with an `x`-independent positive rate (`tendsto_runClock_div`, Lemma 6.1) and an `x`-independent Cesàro limit for the image's CF-occurrence count sampled along it (`exists_tendsto_cfCount_runClock`).  Assembled by `mobiusUniformFreq_of_runClock`.  NB the theorem lives downstream of `LiteratureVandehey.lean` (import cycle); the frozen statements stay there. |
 | `VandeheyS7.affineCFN_of_runClock` (`VandeheyS7Clock.lean`) | — (reduction for the OPEN §7 Problem 1) | trust base | 🟡 clean **as a reduction**: `0 < q` + `RunClock ℓ rate` + `SampledUniformCount q r₀ ℓ` ⊢ `AffineCFN q r₀`, for every real `q, r₀`.  The two hypotheses are named `Prop`s, not axioms.  `SampledUniformCount` is the live frontier; next prerequisite = `StateEquidistribution` on the compact bounded-distortion fiber |
-| `VandeheyS7.vandeheyS7_mul_phi_of_orbitWordBound` (`VandeheyS7Chain.lean`) | — (the LIVE reduction for the OPEN §7 Problem 1) | trust base | 🟡 clean **as a reduction**, three hypotheses wide: `GaussACRigidity (C/log 2)` (cited, standard ergodic theory) + `ImageTight` on the image + `OrbitWordBound φ 0 C` (the crux).  Same for `vandeheyS7_add_phi_of_orbitWordBound`.  current frontier; next prerequisite = `S7-BD`, the block decomposition `OrbitWordBound ⟸ WidthFloorFreq + BlockAverageBound` |
+| `VandeheyS7.vandeheyS7_mul_phi_of_orbitWordBound` (`VandeheyS7Chain.lean`) | — (the LIVE reduction for the OPEN §7 Problem 1) | trust base | 🟡 clean **as a reduction**, three hypotheses wide: `GaussACRigidity (C/log 2)` (cited, standard ergodic theory) + `ImageTight` on the image + `OrbitWordBound φ 0 C` (the crux).  Same for `vandeheyS7_add_phi_of_orbitWordBound`.  current frontier; next prerequisite = `ClassFreqBound` (lap 77): the front is now `AffineImageIrrational + BlockAverageBound` alone (`orbitWordBound_of_runBlockAverage_all`, `VandeheyS7Interp`), and fact (δ) (`runState_entries_abs_le`) makes the predictor's range precompact |
 | `VandeheyS7.MobState.blockPullback_sum_le` (`VandeheyS7Pull.lean`) | — (measure side of the crux) | trust base | ✅ proved lap 74, axiom-clean: a state of width `≥ η`, distortion `≤ K`, pulls a whole emitted block of length `L` back to Gauss mass `≤ (2K/η)·L·γ(I_w)`.  The tower `G^{-j}I_w` is free, by Gauss invariance |
 | `VandeheyS7.MobState.volume_preimage_le` (`VandeheyS7Pull.lean`) | — (instrument) | trust base | ✅ proved lap 74, axiom-clean; the pullback bound for an ARBITRARY target set, no measurability |
+| `VandeheyS7.MapState.runState_entries_abs_le` (`VandeheyS7Box.lean`) | — (directive fact (δ)) | trust base | ✅ proved lap 77, axiom-clean: every run state of width `≥ η` has all four entries in `[−M,M]`, `M = √(6·\|det Φ\|/η)`.  Unconditional — no hypothesis on `x`, `Φ` or normality.  This is the precompactness of the predictor's range |
+| `VandeheyS7.MapState.orbitWordBound_of_runBlockAverage_all` (`VandeheyS7Interp.lean`) | — (the live §7 front) | trust base | 🟡 clean as a reduction, now TWO hypotheses: `AffineImageIrrational` (a theorem for both instances) + `BlockAverageBound` for `mapBlockSet (runState Φ x n) w j`.  `hΦ` discharged by `exists_mob_eq` |
 | `VandeheyS7.anchoredPullback_of_stateClock` (`VandeheyS7Clock2.lean`) | — (second obligation) | trust base | 🟡 clean as a reduction, but PARKED: its `StateClock` hypothesis demands a UNIFORM width floor, which fact (β) makes impossible for the true transducer states.  Next prerequisite = the frequency form `S7-WF` |
 | `VandeheyS7.affineImageIrrational_goldenRatio` (`VandeheyS7Golden.lean`) | — (leg 1) | trust base | ✅ proved lap 30, axiom-clean; same for `affineImageIrrational_add_goldenRatio` |
 | `VandeheyS7.cellCover_inv_log_two` (`VandeheyS7Cell.lean`) | — (geometric leg) | trust base | ✅ proved lap 29, axiom-clean |
