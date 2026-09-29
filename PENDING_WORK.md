@@ -402,6 +402,37 @@ needs one discharged (DIRECTION standing rule 3).
 
 ## Lap notes
 
+### 2026-09-29 lap 13 — MERGING IS DONE: loss of memory, uniform over states (`VandeheyS7Word.lean`)
+
+`spread_runWord_le` : for every initial state `s`, every even word length `n ≥ 3`, and all
+`x, y > 0`,
+
+    hdist ((runWord s w).mob x) ((runWord s w).mob y) ≤ 1 / (fib(n-1) · fib(n)) .
+
+The state does not appear on the right.  The infinite `ℤ[φ]` state set is invisible at this
+range, which is exactly the merging the finite-chain citation was for.  Axiom-clean.
+
+How it goes, in three steps and no dynamics:
+
+* `wordState w = A_{a₁}⋯A_{aₙ}` and `runWord s w = s.comp (wordState w)` (`runWord_eq_comp`).
+* **Fibonacci growth of both rows** (`fib_le_rowMin`).  Prepending `A_a` sends
+  `(a b; c d) ↦ (c, d; a + Ac, b + Ad)`, so `rowMin₁(A_a W) = rowMin₂(W)` and
+  `rowMin₂(A_a W) ≥ rowMin₁(W) + rowMin₂(W)` — a Fibonacci recursion read straight off the matrix
+  product.  No continuants, no Gauss measure, no CF theory.
+* **`det = (-1)^n`** (`det_wordState`), so `ad/bc = 1 + 1/(bc)` and
+  `log(ad/bc) ≤ ad/bc − 1 = 1/(bc) ≤ 1/(fib(n-1)fib(n))` (`spread_wordState_le`).  Then
+  `hdist_comp_le` (lap 12) removes the initial state.
+
+Note the Birkhoff coefficient (lap 11) is NOT used on this route; it is the quantitative
+refinement, kept because it gives a per-two-digit rate.
+
+**Next attack (lap 14): wire merging into `SampledUniformCount`.**  With the window lemma
+(`windowBound`) and merging both in hand, `VandeheyS7Clock.lean`'s `SampledUniformCount q r ℓ` is
+the remaining crux node.  The step to find: `spread_runWord_le` bounds the spread of the machine's
+OUTPUT POINT; turn that into a bound on the discrepancy of the sampled digit counts (the trigger
+windows with `ρ(∂U) = 0` from DIRECTION item 3).  Read `VandeheyS7Clock.lean`'s docstring first
+and identify precisely which quantity the spread bound has to control.
+
 ### 2026-09-29 lap 12 — nonexpansiveness, and calculus was not needed
 
 The expected lap-12 step was mean-value bookkeeping on `birkhoff_derivative_le`.  It is not

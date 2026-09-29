@@ -703,6 +703,7 @@ import NormalNumbers.VandeheyS7Convergent
 import NormalNumbers.VandeheyS7Window
 import NormalNumbers.VandeheyS7Birkhoff
 import NormalNumbers.VandeheyS7Merge
+import NormalNumbers.VandeheyS7Word
 import NormalNumbers.VandeheyLRRuns
 import NormalNumbers.VandeheyLRPattern
 import NormalNumbers.VandeheyRunCount
