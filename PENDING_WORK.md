@@ -112,10 +112,16 @@ Order of work:
    > (`c·q ≤ runClock(q+2)` eventually) ⟹ for every `ε > 0` there is `η > 0` with
    > `widthBadCount Φ x η q ≤ ε·runClock(q+2)` eventually.
 
-   ⚠️ Interface note for the next lap: `WidthFreqBound` fixes `η` and quantifies `ε`; S7-SK
-   delivers the `ε`-then-`η` order, which is what the decomposition actually needs (the net is
-   chosen after `ε`).  `blockAverageBound_of_classFreq` should be restated to pick its net after
-   `ε`, or S7-SK's output threaded through directly.
+   ✅ **Interface FIXED by S7-FT (`VandeheyS7Front`).**  `WidthFreqOrder` is the hypothesis in
+   the order the decomposition needs (ε first, then an affordable width floor η — which is also
+   the order the NET is chosen in), and `blockAverageBound_of_front` /
+   `blockAverageBound_of_scalar` assemble the whole §7 front:
+
+   > **`ClassFreqBound` (uniformly over nets) + `MeanSlack` + `ClockLinear` ⟹
+   > `BlockAverageBound B`.**
+
+   Three hypotheses, and two of them are scalar statements about the emission schedule alone.
+   Only `ClassFreqBound` is about the state space at all.
 
    So the ENTIRE width leg is now two scalar facts: bounded Cesàro average of `log d_n`
    (positive recurrence of one walk reflected at `√(|det Φ|/6)`) and Vandehey's Lemma 6.1.  S7-LG bounds bursts; what remains is that long
