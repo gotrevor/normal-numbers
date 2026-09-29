@@ -3070,3 +3070,28 @@ holds, `WidthFreqBound` at a FIXED `η` fails too and the front must be restated
 `Finset.range_succ` does not exist in this mathlib; the insert form is `Finset.range_add_one`.
 Always `ls` before `cat >` a new module: `VandeheyS7Lag.lean` and `VandeheyS7Ledger.lean` both
 already existed and were clobbered (recovered via `git checkout`).
+
+## S7-SM (lap 80): the straddle set has mass `≍ √w` — `MeanSlack` is probably FALSE
+
+`src/NormalNumbers/VandeheyS7StraddleMass.lean`, axiom-clean.
+
+    straddleSet w := {z | ∃ k ≥ 1, z < 1/k < z + w}
+    K·w ≤ volume (straddleSet w)                    for 1 ≤ K, w ≤ 1/(K(K+1))   (straddle_volume_ge)
+    volume (straddleSet w) ≤ K·w + (1/K + w)        for 1 ≤ K                   (straddle_volume_le)
+
+Both are `≍ √w` at `K ≍ 1/√w`; the lower bound is `K` disjoint windows `(1/k − w, 1/k)`, the upper
+splits at the `K`-th endpoint.
+
+**The route consequence.**  The stall rate is `≍ √w`, not `≍ w`.  With the lag monotone (S7-LD)
+and `w ≍ e^{−λ·lag}`, `d(lag)/dn ≍ e^{−λ·lag/2}` gives `lag n ≍ (2/λ)·log n`, hence
+`Σ_{m<q} slack m ≍ q log q`: **`MeanSlack` (`≤ A·q`) is false by exactly one log factor**, while
+`ClockLinear` (all the front's clock actually needs) survives.  Consequently `WidthFreqBound` at a
+FIXED `η` also fails, and the front must be restated with `η = η(q) → 0` — the same shape change
+S7-MD already forced on `OrbitWordBound` (a modulus, not a constant).
+
+**Next attack (in order).**
+1. Formalize the frequency statement: the orbit's visit frequency to `straddleSet w` is `≍ √w`
+   for a CF-normal point (a finite union of intervals — CF-normality, not a new wall).
+2. Restate `WidthFreqBound`/`MeanSlack` with `η(q)`, and re-price the front (S7-FS/S7-CA) against
+   a shrinking `η`.  If the front survives `η(q) = q^{−c}`, the §7 chain is back on a provable
+   input; if it does not, the width-floor route is refuted and that is a Maze row.
