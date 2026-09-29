@@ -402,6 +402,38 @@ needs one discharged (DIRECTION standing rule 3).
 
 ## Lap notes
 
+### 2026-09-29 lap 21 — THE ROUTE IS NOT BUDGET-LIMITED (`VandeheyS7Budget.lean`)
+
+The question this lap had to settle: `cfDigit_agree_depth` needs `δ_L · scale u m` small, where
+merging gives `δ_L ~ φ^{-2L}` and the cutoff costs `S^m`.  Can `m` be taken PROPORTIONAL to `L`?
+
+**Yes, with an explicit constant, and the constant is positive for every finite cutoff `K`.**
+
+* `goldenRatio_pow_le_fib` : `φ^k ≤ fib (k+2)`, a two-step induction off `φ² = φ + 1` — the same
+  recursion as `fib`, which is why it is exact rather than an estimate.
+* `fib_prod_ge` : `φ^{2k} ≤ fib(k+2)·fib(k+3)`, i.e. `δ_{k+3} ≤ φ^{-2k}`.
+* `budget_le` : `S^m · δ_L ≤ exp(m log S − 2k log φ)` for `L = k+3`.
+* `budget_tendsto_zero` : for any `c < 2 log φ / log S`, the product along `m = ⌊ck⌋` decays
+  geometrically.
+* `not_budget_of_large` (degenerate case): past that threshold the exponent is positive and the
+  bound says nothing, so `2 log φ / log S` is sharp.
+
+All axiom-clean.  **Why this matters for the route, not just the bookkeeping:** raising `K` to
+shrink the exceptional mass raises `S = 4(K+1)²e^{2η}` and so shrinks `c` — but only
+logarithmically, and never to zero.  So the two limits can be taken in the order `K` first, then
+`L → ∞`, and there is no circularity.  A positive proportion of the image digits is determined
+by a bounded window of input digits.  That was the last thing that could have killed Route A on
+arithmetic grounds.
+
+**Next attack (lap 22): assembly into `SampledUniformCount`.**  Every analytic input now exists.
+What remains is bookkeeping of a kind the repo already does elsewhere: the determined image
+digits give block counts that depend only on the input window, so their Cesàro averages converge
+by the input's CF-normality (frequency EXISTENCE only — no value, per
+`affineCFN_of_uniformFreq`).  Concretely: state the "window-determined block count" Prop, prove
+it from `cfDigit_agree_depth` + `budget_le` + the two measure bounds, and then reduce
+`SampledUniformCount` to it.  Expect this to be several laps; it is assembly, not new
+mathematics, and the guard rule applies to each new Prop.
+
 ### 2026-09-29 lap 20 — the scale cutoff is closed, reusing the repo's Khinchin machinery
 
 The lap-19 gap (`gaussMeasure_exceptional_le` is at a FIXED scale, but `cfDigit_agree_depth`
