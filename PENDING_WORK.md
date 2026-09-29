@@ -1927,3 +1927,44 @@ CF-normal orbit satisfy `freq{n : G^{n+k}x ∈ J_n} ≤ C·|J| + ε` for every p
 intervals of length `≤ |J|` with ARBITRARY location?  `not_predictableHitPrinciple` suggests not
 in general; the question is whether the length-`k` window structure saves it.  A kernel answer
 either way is lap 58's deliverable.
+
+### 2026-09-29 lap 58 — the lap-58 probe is ANSWERED, and the attack moves to `ℤ[φ]` (`VandeheyS7Lattice.lean`)
+
+**The probe (location-free hit principle) is dead, and for a reason no structure can repair.**
+Let `J_n` be predictable from `x₁…x_n` with a gap `k` before the observation `G^{n+k}x`.  Fix any
+`x` at all: the prefixes `x₁…x_n` are pairwise distinct, so the *function* `F_n` may be defined to
+send that one word to the length-`δ` interval centred at `G^{n+k}x` (and anywhere else off it).
+That is a legitimate predictable family with hit frequency `1`.  So "predictable + small +
+CF-normal" carries **zero** information about the hit frequency no matter how large the gap `k`
+is: only finiteness of the predictor's range (a *window* predictor) can help, and that case is
+already proved (`windowHit_Ioo_le`).  Do not re-open this; the directive's fact (γ) — the
+arithmetic of `Φ` — is genuinely forced.
+
+**So this lap attacked the arithmetic.**  New module `VandeheyS7Lattice.lean`, all axiom-clean:
+
+* For the additive instance `Φ = [[1,φ],[0,1]]` with `O_n, P_n ∈ SL₂(ℤ)`, every entry of the state
+  `s_n = O_n⁻¹ Φ P_n` lies in `ℤ[φ]` and `det s_n = 1`: **the state is a point of the Hilbert
+  modular group `SL₂(ℤ[φ])`**, not just of `SL₂(ℝ)`.  That is the structure the route has never
+  used.
+* `one_le_abs_zval_mul_zconj` / `abs_zval_ge_inv_abs_zconj` — `|ξ|·|ξ'| ≥ 1` for `0 ≠ ξ ∈ ℤ[φ]`.
+* `dist_rat_ge` — `|ξ − p/q| ≥ 1/(q·|qξ' − p|)`.
+* `abs_zconj_sub_rat_ge` — **Galois repulsion**: `|ξ − p/q| ≤ δ` forces
+  `|ξ' − p/q| ≥ 1/(q²δ)`.  Hugging a rational costs conjugate height at the reciprocal rate.
+* `zquot_sub_rat_ge` — the form the state needs: an image endpoint is a quotient `β/δ` of
+  `ℤ[φ]`-numbers, and `|β/δ − p/q| ≥ 1/(q·|δ|·|qβ' − pδ'|)`.  **A bad state is expensive**: a
+  state whose image straddles `1/k` at scale `≪ γ(I_w)` must sit far out in the *second*
+  archimedean factor.
+* `abs_coeff_le_of_bounded`, `finite_bounded_zPairs` — bounded together with its conjugate ⟹
+  finitely many.  So states bounded in *both* factors form a finite set; discreteness, from the
+  arithmetic side, of what `no_window_function` refutes dynamically.
+
+**The honest accounting this buys, and the next attack.**  The conjugate component of `s_n` is
+`≍ q_ℓ(y)·q_n(x)`, i.e. `e^{Θ(n)}`.  So the repulsion bound forbids badness at scale `δ` only for
+`n ≲ log(1/δ)` — it does **not**, by itself, bound the frequency of bad times, and lap 59 must not
+expect it to.  What it does give is the right frame: *bad time at scale `δ`* is a Diophantine
+coincidence between the `ℤ[φ]`-lattice point `s_n` and a rational `p/q` with `q ≲ 1/δ`, and the
+crux's bad half is now the **counting** question "how many `n < N` admit such a coincidence".
+That is a lattice-point count in `SL₂(ℤ[φ])` (a Hilbert-modular/Duke-type count), not an ergodic
+statement about a moving target — a different and better-posed wall than the self-joining one.
+Lap 59: formalise the count's *statement* (`BadTimeCount`), and try the easy half — an upper bound
+for a single `q` via the repulsion bound plus the exponential growth of `q_n`.

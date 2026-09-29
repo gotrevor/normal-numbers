@@ -720,6 +720,7 @@ import NormalNumbers.VandeheyS7Dioph
 import NormalNumbers.VandeheyS7Transfer
 import NormalNumbers.VandeheyS7Loop
 import NormalNumbers.VandeheyS7Hecke
+import NormalNumbers.VandeheyS7Lattice
 import NormalNumbers.VandeheyS7Predict
 import NormalNumbers.VandeheyS7Loss
 import NormalNumbers.VandeheyS7QuadDigit
