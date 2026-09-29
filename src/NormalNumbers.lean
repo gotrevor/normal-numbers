@@ -754,6 +754,7 @@ import NormalNumbers.VandeheyS7EmitAll
 import NormalNumbers.VandeheyS7CFRun
 import NormalNumbers.VandeheyS7Run
 import NormalNumbers.VandeheyS7Box
+import NormalNumbers.VandeheyS7Near
 import NormalNumbers.VandeheyS7RunOrbit
 import NormalNumbers.VandeheyS7RunClock
 import NormalNumbers.VandeheyS7RunPin
