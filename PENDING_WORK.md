@@ -278,7 +278,19 @@ Three facts, all established lap 30, fix its difficulty and must steer every fur
   unconditional fact (lap 40), and the tail cell does not imply the general cell (lap 41).  What
   remains in `OrbitCellBound` is exactly the joint statistics of the image expansion — fact (γ),
   the `Γ\SL₂(ℝ)` translate problem — and nothing else.
-  **Next attack (lap 42).**  Attack the joint law directly at its smallest nontrivial instance:
+  **Lap 42 — the sharp unconditional form** (`sum_blockCount_cellSet_le`, axiom-clean).  The
+  shift bound upgrades from max to SUM: for any finite family `F` of distinct words of the same
+  length `n`, `∑_{w∈F} blockCount (cellSet w T) p y ≤ blockCount (cellSet [] T) p y + n`, for
+  every irrational `y ∈ (0,1)`.  The cells are pairwise disjoint
+  (`cfCylinder_disjoint_of_length_eq`) so at most one fires at each time `k`, and they all inject
+  into the tail cell under the SINGLE shift `k ↦ n + k`.
+  **This is the exact unconditional content of `OrbitCellBound`.**  Since
+  `∑_{|w|=n} γ(cellSet w T) = γ(cellSet [] T)` too, both sides of the crux sum to the same tail
+  quantity: the crux says PRECISELY that the tail cell's visits are spread across the length-`n`
+  words in proportion to `γ(I_w)`.  It is an equidistribution-ACROSS-WORDS statement *given* the
+  tail — which is exactly why neither marginal can supply it (lap 41) and why the counting lanes
+  are all closed (laps 39–40).  The crux is now stated in its irreducible form.
+  **Next attack (lap 43).**  Attack the joint law directly at its smallest nontrivial instance:
   `w` a single digit.  The two-cell statement "digit `a` then a digit `≥ T`" in the image is the
   first place the product vs. minimum gap bites, and the `s_n = Oₙ⁻¹ΦPₙ` state description says
   exactly which input events produce it.  Concretely: formalize the two-step emission relation

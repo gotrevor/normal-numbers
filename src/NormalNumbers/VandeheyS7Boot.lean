@@ -119,10 +119,86 @@ theorem not_min_le_const_mul {C : ℝ} (hC : 0 < C) :
     have hhalf : C * ((1/(2*C)) * a) = a / 2 := by field_simp
     linarith [hhalf ▸ this, hapos]
 
+
+/-! ## The sharp form: the whole word family shares the tail cell's budget -/
+
+/-- **The summed shift bound.**  For any finite family `F` of *distinct words of the same
+length `n`*, the frequencies of the cells `cellSet w T`, `w ∈ F`, add up to at most the tail
+cell's frequency (plus `n`).  The cells are pairwise disjoint (`cfCylinder_disjoint_of_length_eq`)
+and each injects into the tail cell under the single shift `k ↦ n + k`, so the *sum* — not merely
+the maximum — is controlled.
+
+This is the exact unconditional content available on `OrbitCellBound`: since
+`∑_{|w| = n} γ(cellSet w T) = γ(cellSet [] T)` as well, the crux says precisely that the tail
+cell's visits are **spread across the length-`n` words in proportion to `γ(I_w)`**.  It is an
+equidistribution-across-words statement *given* the tail, which is why neither marginal
+(`blockCount_cellSet_le_shift`, `not_min_le_const_mul`) can supply it. -/
+theorem sum_blockCount_cellSet_le {y : ℝ} (hy : Irrational y) (hmem : y ∈ Set.Ioo (0:ℝ) 1)
+    {n T p : ℕ} (F : Finset (List ℕ)) (hlen : ∀ w ∈ F, w.length = n) :
+    ∑ w ∈ F, blockCount (cellSet w T) p y ≤ blockCount (cellSet [] T) p y + n := by
+  classical
+  -- pointwise: at most one word of `F` is read at time `k`, and it shifts into the tail cell
+  have hpt : ∀ k, ∑ w ∈ F, blockIndic (cellSet w T) (gaussMap^[k] y)
+      ≤ blockIndic (cellSet [] T) (gaussMap^[n + k] y) := by
+    intro k
+    by_cases hex : ∃ w ∈ F, gaussMap^[k] y ∈ cellSet w T
+    · obtain ⟨w₀, hw₀F, hw₀⟩ := hex
+      obtain ⟨hirr', hmem'⟩ := irrational_orbit y hy hmem k
+      have hmem2 := mem_cellSet_nil_of_mem_cellSet hirr' hmem' hw₀
+      have heq : gaussMap^[n + k] y = gaussMap^[w₀.length] (gaussMap^[k] y) := by
+        rw [hlen w₀ hw₀F] at *
+        rw [Function.iterate_add_apply]
+      have hsum : ∑ w ∈ F, blockIndic (cellSet w T) (gaussMap^[k] y) = 1 := by
+        rw [Finset.sum_eq_single_of_mem w₀ hw₀F ?_]
+        · rw [blockIndic, Set.indicator_of_mem hw₀]; simp
+        · intro b hbF hbne
+          have hdisj := cfCylinder_disjoint_of_length_eq
+            (by rw [hlen b hbF, hlen w₀ hw₀F]) hbne
+          have hnot : gaussMap^[k] y ∉ cellSet b T := by
+            intro hb
+            exact (Set.disjoint_left.1 hdisj) (cellSet_subset_cylinder _ _ hb)
+              (cellSet_subset_cylinder _ _ hw₀)
+          rw [blockIndic, Set.indicator_of_notMem hnot]
+      rw [hsum, heq, blockIndic, Set.indicator_of_mem hmem2]
+      simp
+    · push_neg at hex
+      have : ∑ w ∈ F, blockIndic (cellSet w T) (gaussMap^[k] y) = 0 := by
+        refine Finset.sum_eq_zero fun w hw => ?_
+        rw [blockIndic, Set.indicator_of_notMem (hex w hw)]
+      rw [this]
+      exact blockIndic_nonneg _ _
+  have hrw : ∑ k ∈ Finset.range p, blockIndic (cellSet [] T) (gaussMap^[n + k] y)
+      = ∑ j ∈ Finset.Ico n (p + n), blockIndic (cellSet [] T) (gaussMap^[j] y) := by
+    rw [Finset.sum_Ico_eq_sum_range]
+    simp
+  have h2 : ∑ j ∈ Finset.Ico n (p + n), blockIndic (cellSet [] T) (gaussMap^[j] y)
+      ≤ ∑ j ∈ Finset.range (p + n), blockIndic (cellSet [] T) (gaussMap^[j] y) := by
+    refine Finset.sum_le_sum_of_subset_of_nonneg ?_ (fun _ _ _ => blockIndic_nonneg _ _)
+    intro j hj
+    exact Finset.mem_range.2 (Finset.mem_Ico.1 hj).2
+  have h3 : ∑ j ∈ Finset.range (p + n), blockIndic (cellSet [] T) (gaussMap^[j] y)
+      ≤ (∑ j ∈ Finset.range p, blockIndic (cellSet [] T) (gaussMap^[j] y)) + n := by
+    rw [Finset.sum_range_add]
+    have hle : ∑ j ∈ Finset.range n, blockIndic (cellSet [] T) (gaussMap^[p + j] y) ≤ (n:ℝ) := by
+      calc ∑ j ∈ Finset.range n, blockIndic (cellSet [] T) (gaussMap^[p + j] y)
+          ≤ ∑ _j ∈ Finset.range n, (1:ℝ) :=
+            Finset.sum_le_sum fun j _ => blockIndic_le_one _ _
+        _ = (n:ℝ) := by simp
+    linarith
+  calc ∑ w ∈ F, blockCount (cellSet w T) p y
+      = ∑ k ∈ Finset.range p, ∑ w ∈ F, blockIndic (cellSet w T) (gaussMap^[k] y) := by
+        rw [Finset.sum_comm]; rfl
+    _ ≤ ∑ k ∈ Finset.range p, blockIndic (cellSet [] T) (gaussMap^[n + k] y) :=
+        Finset.sum_le_sum fun k _ => hpt k
+    _ = _ := hrw
+    _ ≤ _ := h2
+    _ ≤ _ := h3
+
 section Audit
 
 #print axioms blockCount_cellSet_le_shift
 #print axioms not_min_le_const_mul
+#print axioms sum_blockCount_cellSet_le
 
 end Audit
 
