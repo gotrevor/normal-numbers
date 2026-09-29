@@ -370,17 +370,14 @@ because it lands on CF INDICES, not letter positions.  Upper half now proved:
 
 ## Queue
 
-New math comes first.  Trusted literature inputs (`AGP`, `CharPrimeSumLogQ`, the K-point
-input, `ZetaLogDerivExponent`) stay as hypotheses and are not queue items until a new result
+New math comes first.  Trusted literature inputs (`AGP`, `CharPrimeSumLogQ`,
+`ZetaLogDerivExponent`) stay as hypotheses and are not queue items until a new result
 needs one discharged (DIRECTION standing rule 3).
 
-1. **Elliott margin check.**  A Littlewood-strength `ζ'/ζ ≪ log t / log log t` would suffice if
-   every consumer in `ElliottZetaTheta.lean` tolerates a `log log log` margin.  Check that.  If
-   one doesn't, record "Vinogradov or nothing" in the Maze.
-2. **SwingC2 triage.**  Delete or restate `tauMomentPrimesShiftStruct_of_primeDensity`, which
+1. **SwingC2 triage.**  Delete or restate `tauMomentPrimesShiftStruct_of_primeDensity`, which
    takes the vacuous `PrimeDensityAP`, and `survivorLeaf_of_struct`.
 
-3. **OVERVIEW refresh**: Vandehey 1.1 proved, joint Lambert down to `AGP`.
+2. **OVERVIEW refresh**: Vandehey 1.1 proved, joint Lambert down to `AGP`.
 
 ## Lap notes (newest first)
 
