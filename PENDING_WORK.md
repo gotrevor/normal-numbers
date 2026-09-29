@@ -1794,3 +1794,29 @@ the finitely many length-`n` cylinders meeting it (`sum_gaussMeasure_cfCylinder_
 already exists in `VandeheyS7Cell`).  Route (ii) looks shorter and avoids the cell-frequency
 build; do it first, then assemble `windowHit_Ioo_le` and finally
 `orbitWordBound_of_approxWindowState`.
+
+### 2026-09-29 lap 52 — CF-normality determines CELL frequencies (`VandeheyS7CellFreq.lean`)
+
+Route (i) of lap 51's plan, taken instead of (ii): it has no exceptional set, hence no residue
+term to absorb.
+
+* `blockIndic_cellSet_eq` — pointwise on irrationals, `1_{cellSet w T} = 1_{I_w} − ∑_{1≤a<T}
+  1_{I_{w++[a]}}` (a point of `I_w` has a genuine digit, which either reaches the threshold or
+  equals exactly one sub-threshold `a`).
+* `blockCount_cellSet_eq` — the orbit-count form.
+* `blockCount_freq_cellSet_of_isCFNormal` — the cell frequency of a CF-normal point converges to
+  `γ(I_w) − ∑_{1≤a<T} γ(I_{w++[a]})`.
+
+With `CellCover` (covers an interval by cells, total mass `≤ (1/log2)(b−a)+δ`, ALL irrationals of
+the interval covered) and lap 51's quasi-Bernoulli bound for arbitrary targets, the three
+ingredients of an interval-target window-hit theorem are now in place.
+
+**NEXT (lap 53).**  Assemble `windowHit_Ioo_le`:
+1. the hit-set identity `I_v ∩ T^{−|v|}(cellSet c S) = cellSet (v++c) S` along irrational orbits
+   (same shape as `VandeheyS7Boot.mem_cellSet_nil_of_mem_cellSet`);
+2. frequency of each hit cell from `blockCount_freq_cellSet_of_isCFNormal` at the word `v ++ c`;
+3. mass of each hit cell `≤ (1+8log2) γ(I_v) γ(cellSet c S)` from
+   `gaussMeasure_inter_preimage_le`, summed over the cover to `≤ C γ(I_v)(b−a)`;
+4. sum over `v ∈ V` with `sum_gaussMeasure_le_one_of_length`.
+Then `orbitWordBound_of_approxWindowState` becomes a Hilbert-perturbation argument on top of it,
+and `ApproxWindowState` is the last open obligation of the whole route.
