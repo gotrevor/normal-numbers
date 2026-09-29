@@ -197,4 +197,62 @@ section Audit
 
 end Audit
 
+
+/-! ## The converse reduction: the Diophantine count is *equal* to the large-digit count
+
+`largeDigitCount_le_goodDenCountPrim` (lap 33) bounds the number of digits `≥ T` in the first `p`
+digits of `y` by the primitive good-denominator count.  Legendre supplies the reverse: every
+primitive `T`-good `q ≤ Q` is `qₚ` for some `p ≤ Q`, and past `p = 3` a `T`-good convergent forces
+`T ≤ 2 aₚ + 4` (`le_digit_of_nearInt_le`).  So up to `T ↦ (T−4)/2` and an additive `3`, the two
+counts are the *same* count.  `GoodDenBoundPrim` is therefore a restatement of the crux's tail
+cell, not a reduction of it. -/
+theorem goodDenCountPrim_le_largeDigitCount (hy : Irrational y) (hmem : y ∈ Set.Ioo (0:ℝ) 1)
+    {T Q : ℕ} (hT : 24 ≤ T) :
+    goodDenCountPrim y T Q
+      ≤ 3 + ((Finset.range (Q + 2)).filter (fun p => T ≤ 2 * cfDigit y p + 4)).card := by
+  classical
+  set F : Finset ℕ := (Finset.range (Q + 2)).filter (fun p => T ≤ 2 * cfDigit y p + 4) with hF
+  set A : Finset ℕ := ({0, 1, 2} : Finset ℕ) ∪ F with hA
+  have hsub : ((Finset.Icc 1 Q).filter
+      (fun q : ℕ => nearInt ((q : ℝ) * y) ≤ 2 / ((T : ℝ) * q) ∧
+        Nat.Coprime (round ((q : ℝ) * y)).natAbs q))
+      ⊆ A.image (fun p => cfK (digitWord y p)) := by
+    intro q hq
+    obtain ⟨hmem', hgc⟩ := Finset.mem_filter.1 hq
+    obtain ⟨hgood, hcop⟩ := hgc
+    obtain ⟨hq1, hqQ⟩ := Finset.mem_Icc.1 hmem'
+    obtain ⟨p, hp⟩ := exists_eq_cfK_of_good hy hmem hT hq1 hgood hcop
+    have hple : p ≤ Q := le_trans (le_cfK_digitWord hy hmem p) (by omega)
+    refine Finset.mem_image.2 ⟨p, ?_, hp.symm⟩
+    rw [hA]
+    rcases Nat.lt_or_ge p 3 with h3 | h3
+    · exact Finset.mem_union_left _ (by interval_cases p <;> simp)
+    · refine Finset.mem_union_right _ (Finset.mem_filter.2 ⟨Finset.mem_range.2 (by omega), ?_⟩)
+      -- past index `3` the convergent is `T`-good, so its next digit is large
+      have hvpos := digitWord_pos hy hmem (p + 1)
+      have hfib : Nat.fib 5 ≤ Nat.fib (p + 2) := Nat.fib_mono (by omega)
+      have hbig : 4 < cfK (digitWord y (p + 1)) := by
+        have h := fib_le_cfK (digitWord y (p + 1)) hvpos
+        rw [digitWord_length, show p + 1 + 1 = p + 2 from rfl] at h
+        have h5 : Nat.fib 5 = 5 := by decide
+        omega
+      have hgood' : |(cfK (digitWord y p) : ℝ) * y
+          - (round ((cfK (digitWord y p) : ℝ) * y) : ℝ)|
+          ≤ 2 / ((T : ℝ) * (cfK (digitWord y p) : ℝ)) := by
+        rw [← hp]; exact hgood
+      have := le_digit_of_nearInt_le hy hmem (by omega : 1 ≤ p) hbig hgood'
+      have : (T:ℝ) ≤ ((2 * cfDigit y p + 4 : ℕ) : ℝ) := by push_cast; linarith
+      exact_mod_cast this
+  calc goodDenCountPrim y T Q ≤ (A.image (fun p => cfK (digitWord y p))).card :=
+        Finset.card_le_card hsub
+    _ ≤ A.card := Finset.card_image_le
+    _ ≤ ({0, 1, 2} : Finset ℕ).card + F.card := Finset.card_union_le _ _
+    _ ≤ 3 + F.card := by simp
+
+section Audit2
+
+#print axioms goodDenCountPrim_le_largeDigitCount
+
+end Audit2
+
 end NormalNumbers.VandeheyS7

@@ -227,7 +227,28 @@ Three facts, all established lap 30, fix its difficulty and must steer every fur
   the transfer (laps 35–36: `nearInt_mul_ge_of_good`, `nearInt_numerator_ge_of_good`) —
   i.e. from the arithmetic of `Φ` relating the convergents of `φx` to those of `x` — never from
   sharpening the Diophantine counting.
-  **Next attack (lap 39, unchanged in spirit):** run the unit trick at the STATE
+  **Lap 39 — the equivalence is now a Lean theorem, and the transfer's ceiling is named.**
+  `goodDenCountPrim_le_largeDigitCount` (`VandeheyS7Legendre`, axiom-clean) is the CONVERSE of
+  `largeDigitCount_le_goodDenCountPrim`: every primitive `T`-good `q ≤ Q` is `qₚ` with `p ≤ Q`
+  (Legendre), and past `p = 3` such a convergent forces `T ≤ 2aₚ + 4`, so
+  `goodDenCountPrim y T Q ≤ 3 + #{p < Q+2 : T ≤ 2aₚ(y) + 4}`.  The two counts are now bounded by
+  each other in the kernel; `GoodDenBoundPrim` is formally a restatement of the crux's tail cell.
+  **Directional finding (the reason not to grind the transfer further).**  The transfer's
+  conclusion `‖qx‖ ≥ 1/(16q)` (laps 35–36) is **`T`-INDEPENDENT**: the set it excludes,
+  `{u : ‖qu‖ < 1/(16q)}`, has measure `1/8` for every `q`, no matter how large `T` is.  So the
+  transfer can only ever remove an `O(1)` proportion of scales, never a `1 − O(log T / T)`
+  proportion.  Any bound of the form `(D/T) log Q` must therefore come from a mechanism whose
+  strength GROWS with `T` — and the only `T`-growing input available is the goodness hypothesis
+  itself (`‖qφx‖ ≤ 2/(Tq)`), used at MANY scales simultaneously, i.e. the equidistribution of `x`
+  along the `T/4`-separated good scales.  That is fact (γ) again, reached from the Diophantine
+  side.  **So lap 38–39 close the Diophantine detour: it is exactly the crux, not a softening.**
+  **Next attack (lap 40):** the only `T`-growing multi-scale object in hand is the pair
+  `(q, q')` of consecutive good denominators with `Tq ≤ 4q'` (`gap_principle`) together with
+  `nearInt_numerator_ge_of_good` (the numerators `m, m'` are excluded from the good set).  Probe:
+  does the pair `(q, m)` with `gcd(m,q)=1`, `‖qφx‖ ≤ 2/(Tq)` and `‖mφx‖ ≥ 1/(2q)` force a
+  SECOND excluded scale in the multiplicative window `[q, Tq/4]`, i.e. can the gap principle be
+  iterated with `T`-dependent gain?  A negative answer (with a witness) is equally an advance.
+  **Older next-attack note (lap 38):** run the unit trick at the STATE
   level — `‖qx‖ ≥ 1/(16q)` says the orbit point `(qx, qφx) mod 1` avoids a fixed neighbourhood of
   the `x`-axis whenever the image emits a large digit; combined with `gap_principle` the good
   scales are `T/4`-separated AND confined to a region of the torus of measure `≍ 1/T`.  That pair
