@@ -580,6 +580,7 @@ import NormalNumbers.JointLambertSmallPool
 import NormalNumbers.JointLambertQuantitativeStatement
 import NormalNumbers.JointLambertCountPrimes
 import NormalNumbers.JointLambertCountSchedule
+import NormalNumbers.JointLambertCountCandidates
 import NormalNumbers.JointLambertQuantitative
 import NormalNumbers.WallCrux
 import NormalNumbers.WallRational
