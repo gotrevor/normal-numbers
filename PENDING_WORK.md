@@ -576,7 +576,40 @@ that the emitted word's matrix is the continuant matrix, `q_{k−1} ≤ q_k`, an
 identities above.  All standard and self-contained.  `ConvergentGap` names exactly that input,
 and `burst_ratio_le` is stated so it plugs in as `hfar : v − β ≤ 2*(u − β)`.
 
-**NEXT (lap 8).**  Prove `ConvergentGap` for the real thing: define the continuants of the
+**Lap 8 (same day): `ConvergentGap` is PROVED.**
+`src/NormalNumbers/VandeheyS7Convergent.lean`, all axiom-clean.
+
+`Conv` is the continuant state `(p',q',p,q)` with the recursion
+`(p',q',p,q) ↦ (p, q, p' + a·p, q' + a·q)`, folded over the word; `Conv.Good` is the invariant
+(`0 ≤ p'`, `0 ≤ q' ≤ q`, `1 ≤ q`, `Δ² = 1` for `Δ = p q' − p' q`), carried one step at a time
+(`Good.step`, the determinant by `linear_combination`).  Then:
+
+* `conv_far_eq` — **the gap identity**: `p/q − p'/q' = ((q+q')/q)·((p+p')/(q+q') − p'/q')`.
+  `Δ` CANCELS, so the determinant is needed only as a nonzero, never at its value `±1`.
+* `conv_ratio_le_two` — the constant is in `[1, 2]`, and `q' ≤ q` is the whole of it.
+* `conv_far_le_two_near` — `far ≤ 2·near`, for EVERY word of positive digits, of EVERY length.
+  The burst length appears nowhere.
+* `conv_single` — content locator: one digit, `β = 0`, ratio `(e+1)/e ≤ 2`, visible by hand.
+
+So the geometric input of lap 7 is no longer owed, and the window-lemma chain is complete as
+mathematics:  reading ⇒ distortion ≤ 2 (lap 6) · burst = one pullback with penalty ≤ 2 (lap 7,
+now unconditional by this lap) ⇒ **distortion ≤ 4 along the whole run**.
+
+**Still owed on the window lemma (bookkeeping only, no new mathematics):** wire `Conv.of` to the
+machine — that the emitted word's pullback matrix has first column `(p', q')` of `Conv.of` of the
+emitted word, and that the image interval really lies in that word's cylinder (the emission
+trigger).  Then `distortion_pullback_le` applies verbatim and `BddDistortion`/`EmitRowBound` are
+theorems.
+
+**NEXT (lap 9).**  Either (a) finish that wiring — define the emission trigger as a predicate on
+`MobState` and prove the cylinder containment by induction on the burst, discharging
+`EmitRowBound`; or (b) open the SECOND half of `SampledUniformCount`, the distributional merging
+(Birkhoff–Hopf cone contraction on the Hilbert projective metric), which is the remaining crux
+once the window lemma lands and which `mob_ratio_comparable` is already the right language for.
+(a) is finite and closes a node; (b) is the harder one.  Take (a) first — it converts four laps
+of structure into a discharged hypothesis.
+
+**(superseded) NEXT (lap 8).**  Prove `ConvergentGap` for the real thing: define the continuants of the
 emitted word, prove `q_{k−1} ≤ q_k` and the two distance identities (`|p/q − p'/q'| = 1/(qq')`
 from `det = ±1`), and discharge `ConvergentGap`.  That closes the window lemma
 (`BddDistortion` / `EmitRowBound`), leaving `SampledUniformCount`'s SECOND half — the

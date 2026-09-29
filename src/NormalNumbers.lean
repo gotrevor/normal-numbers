@@ -699,6 +699,7 @@ import NormalNumbers.VandeheyS7Distortion
 import NormalNumbers.VandeheyS7Cocycle
 import NormalNumbers.VandeheyS7Branch
 import NormalNumbers.VandeheyS7Burst
+import NormalNumbers.VandeheyS7Convergent
 import NormalNumbers.VandeheyLRRuns
 import NormalNumbers.VandeheyLRPattern
 import NormalNumbers.VandeheyRunCount
