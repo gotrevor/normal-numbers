@@ -2497,3 +2497,41 @@ statement rather than a slogan.
 3. **The clock rate** `N p ≤ Λ p` — follows from the S7-RD cancellation once the straddle cap
    applies at the relevant scale, i.e. from 2.
 4. **`BlockCoupling`** — bookkeeping.
+
+### Lap 75, fifth commit — S7-DC: the straddle cap is asymptotically vacuous (REFUTED, in kernel)
+
+`VandeheyS7Decouple` settles the question the previous commit raised, with a kernel certificate
+rather than by hand:
+
+* `exists_zeta_pow_pair` — the coefficient pair of `ζⁿ`, `ζ = φ − 1`.
+* `exists_bounded_zval_large_zconj` — for every `R`, a `ℤ[φ]`-number of modulus `≤ 1` with
+  conjugate `≥ R`.  (`abs_zval_ge_inv_abs_zconj` applied to `ζⁿ`: the norm is a unit, so shrinking
+  one place inflates the other at exactly the reciprocal rate.)
+* `exists_unit_zval_large_zconj` — the same with modulus in `[1,3]`, so the real place is bounded
+  **below** too: a state denominator of size `≍ 1` with an unbounded conjugate.
+* `straddle_threshold_lt` — hence for every depth `Q` and every `ε > 0` there is such a denominator
+  whose cap threshold `1/(Q²·|δ|·|δ'|)` is `< ε`.
+
+**Verdict: the straddle cap cannot be applied at a fixed scale along the orbit.**  For `Oₙ⁻¹ Φ Pₙ`
+the conjugate height runs like `q_out·q_in ≍ e^{2λn}` while the real place and the lag stay `O(1)`,
+so Galois repulsion controls the straddle only at the first `O(1)` scales.  **No sharpening of the
+repulsion estimate can fix this** — the two archimedean places of `ℚ(φ)` are independent, which is
+precisely the statement that the relevant homogeneous space is the 2-dimensional Hilbert modular
+surface, not the modular curve.  Sub-route closed.
+
+### Residual after lap 75 (five commits), and the honest shape of the wall
+
+1. **`BlockAverageBound`** = fact (α) = **equidistribution in the second archimedean place**.  After
+   S7-ST and S7-DC these are visibly the same statement, and the identification is now kernel-backed
+   at both ends: the cap is sharp where it applies (S7-ST) and provably unavailable beyond
+   (S7-DC).  This is the whole remaining debt.
+2. **The clock rate** `N p ≤ Λ p` — reduces to 1 via the S7-RD cancellation.
+3. **`BlockCoupling`** — bookkeeping.
+
+**Next lap.**  The only route left that is not the bare wall: find a form of second-place control
+that CF-normality of `x` does supply.  Candidates, in order: (i) the second place enters only through
+`B` (the state's own conjugate entries) and `Q` (the depth) — and `Q` is at our disposal, so ask
+whether a *depth-1* straddle cap (`Q = 1`, avoid only `1/1` and `1/2`) survives, since its threshold
+degrades only as `1/|δ'|` rather than `1/(Q²|δ'|)`; (ii) average the cap over the orbit instead of
+applying it pointwise — `finite_bounded_zPairs` bounds how OFTEN both places can be small
+simultaneously, which is a counting statement, not an equidistribution one.
