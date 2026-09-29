@@ -102,12 +102,55 @@ theorem stall_straddles (Φ : MapState) (x : ℝ) {n : ℕ} (hstall : runWord Φ
   rw [runWord, hb] at hstall
   exact (List.cons_ne_nil b []) hstall
 
+/-- **The converse: a strict straddle blocks the emission.**  If some `1/k` lies strictly inside
+the image then no digit can be emitted — because between `1/(b+1)` and `1/b` there is no other
+reciprocal at all.  With `straddle_of_not_emittable` this characterises the stall times up to the
+boundary case `lo = 1/(b+1)`. -/
+theorem not_emittable_of_strict_straddle {t : MapState} {k : ℕ} (hk : 1 ≤ k)
+    (hlo : min (t.mob 0) (t.mob 1) < 1 / (k : ℝ))
+    (hhi : 1 / (k : ℝ) < max (t.mob 0) (t.mob 1)) :
+    ¬ Emittable t := by
+  rintro ⟨b, u, hem⟩
+  have hb : 1 ≤ b := hem.1
+  have hbR : (1:ℝ) ≤ (b : ℝ) := by exact_mod_cast hb
+  have hbpos : (0:ℝ) < (b : ℝ) := by linarith
+  have heq := (emitStep_iff hb).1 hem
+  -- the image of `t` lies in the cylinder `I_b`
+  have hmob : ∀ z : ℝ, z ∈ Set.Icc (0:ℝ) 1 →
+      1 / ((b : ℝ) + 1) ≤ t.mob z ∧ t.mob z ≤ 1 / (b : ℝ) := by
+    intro z hz
+    have hcomp : t.mob z = (readMap (b : ℝ) hbR).mob (u.mob z) := by
+      rw [← heq, mob_comp _ _ hz]
+    have huz : u.mob z ∈ Set.Icc (0:ℝ) 1 := u.mapsTo hz
+    rw [hcomp, readMap_mob]
+    exact ⟨one_div_le_one_div_of_le (by linarith [huz.1]) (by linarith [huz.2]),
+      one_div_le_one_div_of_le hbpos (by linarith [huz.1])⟩
+  have h0 := hmob 0 ⟨le_refl 0, zero_le_one⟩
+  have h1 := hmob 1 ⟨zero_le_one, le_refl 1⟩
+  have hlo' : 1 / ((b : ℝ) + 1) ≤ min (t.mob 0) (t.mob 1) := le_min h0.1 h1.1
+  have hhi' : max (t.mob 0) (t.mob 1) ≤ 1 / (b : ℝ) := max_le h0.2 h1.2
+  -- so `1/(b+1) < 1/k < 1/b`, i.e. `b < k < b + 1`
+  have hkpos : (0:ℝ) < (k : ℝ) := by exact_mod_cast hk
+  have einv : ∀ r q : ℝ, 0 < r → 0 < q → 1 / r < 1 / q → q < r := by
+    intro r q hr hq h
+    by_contra hc
+    push_neg at hc
+    exact absurd (one_div_le_one_div_of_le hr hc) (not_le.mpr h)
+  have hgt : (b : ℝ) < (k : ℝ) := einv _ _ hkpos hbpos (by linarith)
+  have hlt : (k : ℝ) < (b : ℝ) + 1 :=
+    einv _ _ (by linarith) hkpos (by linarith)
+  have hb' : b < k := by exact_mod_cast hgt
+  have hk' : k < b + 1 := by exact_mod_cast hlt
+  omega
+
+
 end MapState
 
 section Audit
 
 #print axioms MapState.straddle_of_not_emittable
 #print axioms MapState.stall_straddles
+#print axioms MapState.not_emittable_of_strict_straddle
 
 end Audit
 

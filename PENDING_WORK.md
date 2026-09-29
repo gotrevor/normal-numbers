@@ -3111,3 +3111,24 @@ So with S7-SM: **a stall forces one explicit orbit quantity into a set of measur
 remaining step to the `MeanSlack` verdict is the frequency statement (CF-normality on a finite
 union of intervals), not a new wall.  The `lo = 0` case is excluded and is the genuine boundary:
 an image touching `0` admits every digit as a candidate.
+
+### S7-SS addendum: the converse, and the honest status of the `MeanSlack` verdict
+
+`not_emittable_of_strict_straddle` — if some `1/k` lies **strictly** inside the image then no digit
+can be emitted, because between `1/(b+1)` and `1/b` there is no other reciprocal at all.  With
+`straddle_of_not_emittable` this characterises the stall times up to the boundary case
+`lo = 1/(b+1)`:
+
+    stall  ⟺  the image straddles a reciprocal.
+
+**Correction to the S7-SM route note.**  The frequency step is NOT ordinary CF-normality work.
+The straddling quantity is `min (t.mob 0) (t.mob 1)` — a function of the STATE, hence predictable
+from `x₁…x_n` (directive fact (α)) — not a function of the orbit tail.  So CF-normality of `x`
+says nothing about how often it lands in `straddleSet`, and the `√w` stall rate is a *heuristic*,
+not a theorem: it presumes equidistribution of the state's left endpoint.
+
+**That is the finding.**  `MeanSlack` and `CellMemory` are now two independent reductions that land
+on the SAME wall — equidistribution of the state in the compact box (fact (δ)'s cell space).  Neither
+is a genuine reduction of the crux; both are faithful restatements of it.  The next altitude lap
+should therefore stop looking for a third hypothesis to factor the front through, and attack the
+box-equidistribution statement directly, in the modulus shape S7-MD already forced.
