@@ -106,6 +106,16 @@ obstruction is structural, not a constant.
 
 ---
 
+## OPERATOR OBJECTIVE 2026-09-28 (c): finish (b) (bounded, at most 4 laps)
+
+Objective (b) below still stands.  Its analytic inputs are proved (`HANDOFF.md`, lap 6).  What
+remains, in order:
+1. Restate `mobiusUniformFreq_of_transducer` on the run clock.
+2. Close `hgen`, `htail` and `hcof`.
+3. Assemble `vandeheyUniformFreq_holds`.
+If a lap is left over, do (b)'s `PrimeIntervalSupply` side item.  **Stop when
+`vandeheyUniformFreq_holds` is proved, or at the lap cap.**
+
 ## OPERATOR OBJECTIVE 2026-09-28 (b): the Vandehey crux, plus `PrimeIntervalSupply` (bounded, at most 8 laps)
 
 **Main target:** prove `vandeheyUniformFreq_holds : VandeheyUniformFreq`
