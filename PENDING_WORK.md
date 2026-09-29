@@ -540,7 +540,49 @@ So the obligation is sharpened from `BddDistortion` (a sequence of abstract stat
 only), and `bddDistortion_of_emitRowBound` proves the two are the same statement.  `EmitRowBound`
 is exactly what both 2026-08 probes measured saturating at ≈ 2.5.
 
-**NEXT (lap 7).**  Attack `EmitRowBound` directly.  The geometry that should give it: emission
+**Lap 7 (same day): THE BURST PENALTY IS A CONSTANT, not a function of the burst length.**
+`src/NormalNumbers/VandeheyS7Burst.lean`, all axiom-clean.  This is the lap that dissolves the
+loss of Vandehey's Lemma 2.2.
+
+The obvious estimate loses a factor per emitted digit, so a burst of `k` emissions with no
+intervening read would cost `2^k`, and Lemma 2.2 (which bounded bursts) was MEASURED not to port
+(`burst ≤ C + log(1+a)/Lévy`, unbounded, tracking `0.843·ln a`).  The dissolution is that a burst
+should never be analysed digit by digit at all:
+
+1. **A burst of `k` emissions is ONE pullback.**  It is left-multiplication by `B⁻¹` for
+   `B = A_{e₁}⋯A_{e_k}`, whose columns are the continuants `(p_{k−1},q_{k−1})`, `(p_k,q_k)`.
+   `distortion_pullback` (EXACT, for arbitrary `P, Q`):
+
+       distortion_after = distortion_before · (β − M 1)/(β − M 0),   β = P/Q .
+
+   The whole burst costs ONE factor: the ratio of the distances from the two image endpoints to
+   the convergent `β = p_{k−1}/q_{k−1}`.
+2. **That factor is ≤ 2 whatever `k` is.**  The burst emits `e₁…e_k`, so the image lies in the
+   cylinder `C = [e₁,…,e_k]`, endpoints `p_k/q_k` and `(p_k+p_{k−1})/(q_k+q_{k−1})`, and `β` is
+   outside `C` with
+
+       far  = |β − p_k/q_k|                     = 1/(q_{k−1}q_k),
+       near = |β − (p_k+p_{k−1})/(q_k+q_{k−1})| = 1/(q_{k−1}(q_k+q_{k−1})),
+
+   so `far/near = (q_k+q_{k−1})/q_k ≤ 2` since `q_{k−1} ≤ q_k`.  **The burst length does not
+   appear.**  `burst_ratio_le` proves the consequence; `one_le_burst_ratio` records that the
+   lower side is free, so all the content is on the upper side.
+3. `distortion_pullback_le` assembles it: pre-burst distortion `≤ 2` (which reading gives for
+   free, lap 6) plus the geometric input gives post-burst distortion `≤ 4`.  A **window bound of
+   4 along the whole run.**
+
+**Still owed (the only gap between here and the window lemma):** the continuant bookkeeping —
+that the emitted word's matrix is the continuant matrix, `q_{k−1} ≤ q_k`, and the two distance
+identities above.  All standard and self-contained.  `ConvergentGap` names exactly that input,
+and `burst_ratio_le` is stated so it plugs in as `hfar : v − β ≤ 2*(u − β)`.
+
+**NEXT (lap 8).**  Prove `ConvergentGap` for the real thing: define the continuants of the
+emitted word, prove `q_{k−1} ≤ q_k` and the two distance identities (`|p/q − p'/q'| = 1/(qq')`
+from `det = ±1`), and discharge `ConvergentGap`.  That closes the window lemma
+(`BddDistortion` / `EmitRowBound`), leaving `SampledUniformCount`'s SECOND half — the
+distributional merging / trigger windows — as the remaining crux.
+
+**(superseded) NEXT (lap 7).**  Attack `EmitRowBound` directly.  The geometry that should give it: emission
 fires only when the image interval `M([0,1])` lies inside a cylinder `(1/(e+1), 1/e)`, which pins
 `b/d` and `(a+b)/(c+d)` both to that cylinder; combined with the free bound `(c+d)/d ≤ 2` this
 gives `(a+b)/b ≤ 2·(e+1)/e ≤ 4` for a SINGLE emission.  The open part is a BURST of consecutive
