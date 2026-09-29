@@ -25,6 +25,7 @@ import NormalNumbers.VandeheyS7Memory
 import NormalNumbers.VandeheyS7Hecke
 import NormalNumbers.VandeheyS7Predict
 import NormalNumbers.VandeheyS7Quadratic
+import NormalNumbers.VandeheyS7BlockRefute
 
 /-!
 # `Maze.lean` — the halls we have walked, encoded
@@ -334,13 +335,16 @@ the clock rate).  Take `z = √2 − 1`, a fixed point of the Gauss map, so ever
 periodic orbits never merge — they lie in different `GL₂(ℤ)` cycles of `ℚ(√2)` (discriminants
 `8` and `32`) — so time-averaging cannot help and this is not probe trap #2.
 
-The row is `frozen`, not `kernel`: the arithmetic below is machine-checked, but the last step
-(digit frequency ⟹ `blockAvg`) is transducer correctness plus clock-rate bookkeeping and is not
-claimed here.  **The repair costs nothing**: the architecture only ever evaluates the crux at
+**Kernel, as of the same day**: `not_blockForget` (S7-BX) discharges the row outright, by never
+going through digit frequencies at all.  The skew-product orbit of `(shiftState, √2−1)` is a
+`2`-cycle — `shiftState ∘ read 2 = read 1 ∘ midState` and `midState ∘ read 2 = read 4 ∘ shiftState`,
+with the emission unique (`emitStep_unique`) — so the even phase's image `2√2−2` has first digit
+`1` and the odd phase's `(√2−1)/2` has first digit `4`: the block average is `⌈T/2⌉/T ≥ 1/2` for
+every `T`, against `0` from the reference state.  **The repair costs nothing**: the architecture only ever evaluates the crux at
 the orbit points `Gᵐx` of a CF-normal `x`, and a quadratic irrational is never CF-normal.  The
 live crux is `BlockForgetGen` (S7-BG), the same statement with `z` restricted to CF-normal
 points; `BlockForget.gen` records that the refuted form is the stronger one. -/
-alias hall_blockforget_uniform_z := NormalNumbers.VandeheyS7.cfDigit_sqrtTwoSub
+alias hall_blockforget_uniform_z := NormalNumbers.VandeheyS7.MapState.not_blockForget
 
 /-- Companion witness of `hall_blockforget_uniform_z`: the shifted point is a `2`-cycle. -/
 alias hall_blockforget_uniform_z_cycle :=
@@ -1172,9 +1176,9 @@ def register : List Hall := [
    "alias hall_hecke_approximation; module VandeheyS7Hecke; theorems abs_sub_mul_goldenRatio_ge, pow_lt_den_sq_of_image_approx, sq_le_det_of_approx", "2026-09-29"⟩,
   ⟨"BlockForget in the uniform-z form",
    "Ask the block time-average blockAvg s T w z to forget the initial state uniformly over ALL input points z in (0,1)",
-   .falseAsStated, .frozen,
-   "At the Gauss fixed point z = sqrt2 - 1 every digit is 2, so digit 1 has frequency 0 from the identity state; the width-1/3 state t -> 2/(t+2) sends it to 2 sqrt2 - 2, a 2-cycle with digits alternating 1,4, so digit 1 has frequency 1/2 -- a gap of 1/2 for every T, and the two periodic orbits lie in different GL2(Z) cycles of Q(sqrt2) (discriminants 8 and 32) so time-averaging cannot merge them",
-   "alias hall_blockforget_uniform_z (+_cycle, +_state); module VandeheyS7Quadratic; the repair is BlockForgetGen with z restricted to CF-normal points, which the architecture is all that ever needs since a quadratic irrational is never CF-normal", "2026-09-29"⟩,
+   .falseAsStated, .kernel,
+   "At the Gauss fixed point z = sqrt2 - 1 every digit is 2, so the reference block average is exactly 0 for w = [1]; the width-1/3 state t -> 2/(t+2) runs on that input as a 2-cycle through t -> 1/(2t+4), whose two images 2 sqrt2 - 2 and (sqrt2-1)/2 have first digits 1 and 4, so its block average is ceil(T/2)/T >= 1/2 for every T -- a gap of at least 1/2, uniformly in T",
+   "alias hall_blockforget_uniform_z = not_blockForget (+_cycle, +_state); modules VandeheyS7Quadratic, VandeheyS7BlockRefute; the repair is BlockForgetGen with z restricted to CF-normal points, which the architecture is all that ever needs since a quadratic irrational is never CF-normal", "2026-09-29"⟩,
   ⟨"predictable target sets from marginals alone",
    "Conclude OrbitCellBound from: A n = s_n^(-1)(E) is determined by x_1..x_n, has small Gauss mass, and the input orbit has the correct marginal frequencies",
    .refuted, .kernel,

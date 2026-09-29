@@ -796,6 +796,7 @@ import NormalNumbers.VandeheyS7WindowDom
 import NormalNumbers.VandeheyS7Cover
 import NormalNumbers.VandeheyS7BlockForget
 import NormalNumbers.VandeheyS7RefRun
+import NormalNumbers.VandeheyS7BlockRefute
 import NormalNumbers.VandeheyS7IntervalFreq
 import NormalNumbers.VandeheyS7RelFreq
 import NormalNumbers.VandeheyS7RefTarget
