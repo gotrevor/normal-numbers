@@ -1835,3 +1835,19 @@ have digit `0` at position `|w|`, hence are rational, hence Gauss-null.  Consequ
 `I_v ∩ T^{−|v|}(cellSet c S) = cellSet (v++c) S` along irrational orbits, then `windowHit_Ioo_le`
 (frequencies from `blockCount_freq_cellSet_mass`, masses from `gaussMeasure_inter_preimage_le`,
 cover from `cellCover_inv_log_two`, window sum from `sum_gaussMeasure_le_one_of_length`).
+
+### 2026-09-29 lap 54 — the hit cell (`VandeheyS7HitCell.lean`)
+
+* `mem_cellSet_append_iff` — along irrationals, `t ∈ cellSet (v ++ c) S ↔ t ∈ I_v ∧
+  G^{|v|}t ∈ cellSet c S`.  The window-then-cell event IS a single cell, so CF-normality pins its
+  frequency (lap 53) with no extra machinery.
+* `cellSet_append_subset` / `gaussMeasure_cellSet_append_le` — `γ(cellSet (v++c) S) ≤
+  (1 + 8 log 2) γ(I_v) γ(cellSet c S)`, combining the identity (mod the rational null set) with
+  lap 51's quasi-Bernoulli bound.
+
+**NEXT (lap 55).**  `windowHit_Ioo_le`, now pure bookkeeping: for each window `v`, `CellCover`
+supplies `F_v` covering the target interval `(a_v,b_v)` with `∑_{c∈F_v} γ(cellSet c) ≤
+(1/log2)(b_v−a_v)+δ`; pointwise the orbit's hit implies membership in some `cellSet (v++c₁) c₂`;
+`blockCount_freq_cellSet_mass` gives each frequency, `gaussMeasure_cellSet_append_le` each mass,
+`sum_gaussMeasure_le_one_of_length` the sum over windows.  Constant
+`C = (1+8log2)/log2 ≈ 9.0`.

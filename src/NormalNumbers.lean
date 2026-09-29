@@ -741,3 +741,4 @@ import NormalNumbers.VandeheyS7Good
 import NormalNumbers.VandeheyS7WindowHit
 import NormalNumbers.VandeheyS7QuasiBern
 import NormalNumbers.VandeheyS7CellFreq
+import NormalNumbers.VandeheyS7HitCell
