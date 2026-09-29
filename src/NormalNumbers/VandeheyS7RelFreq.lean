@@ -664,6 +664,119 @@ theorem relMass_eq_of_agree (v : List ℕ) {A : Set ℝ} (hAm : MeasurableSet A)
       exact measure_mono Set.inter_subset_right
   rw [relMass, relMass, heq]
 
+/-! ## Robustness at the endpoints: a point has zero frequency
+
+The reference observable's target is an interval off the rationals only when the state's Möbius map
+has rational entries; over `ℤ[φ]` it can differ at the TWO preimages of the cylinder's endpoints.
+Two points cost nothing either: a CF-normal orbit spends zero frequency at any single point,
+because it spends `γ`-mass on every shrinking interval around it. -/
+
+lemma relMass_Ioo_le_width (v : List ℕ) {c δ : ℝ} (hδ : 0 ≤ δ) :
+    relMass v (Set.Ioo (c - δ) (c + δ)) ≤ 2 * δ / Real.log 2 := by
+  refine le_trans (relMass_mono v (Set.Ioo_subset_Icc_self)) ?_
+  refine le_trans (relMass_le_gauss v measurableSet_Icc) ?_
+  exact gaussMeasure_Icc_toReal_le (by linarith) (by linarith)
+
+/-- **A point has zero frequency.** -/
+theorem tendsto_blockCount_relSet_singleton {x : ℝ} (hx : IsCFNormal x)
+    (horb : ∀ k : ℕ, gaussMap^[k] x ∈ Set.Ioo (0:ℝ) 1) {v : List ℕ} (hpv : ∀ a ∈ v, 1 ≤ a)
+    (c : ℝ) :
+    Tendsto (fun p => blockCount (relSet v {c}) p x / (p : ℝ)) atTop (nhds 0) := by
+  have hlog : (0:ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+  rw [Metric.tendsto_atTop]
+  intro ε hε
+  set δ : ℝ := ε * Real.log 2 / 8 with hδdef
+  have hδ0 : (0:ℝ) < δ := by rw [hδdef]; positivity
+  have hmass : relMass v (Set.Ioo (c - δ) (c + δ)) ≤ ε / 4 := by
+    refine le_trans (relMass_Ioo_le_width v hδ0.le) ?_
+    rw [hδdef, div_le_iff₀ hlog]
+    ring_nf
+    nlinarith [hlog]
+  have hfrq := tendsto_blockCount_relSet_Ioo hx horb hpv (c - δ) (c + δ)
+  have hev := hfrq.eventually (eventually_lt_nhds
+    (show relMass v (Set.Ioo (c - δ) (c + δ)) < relMass v (Set.Ioo (c - δ) (c + δ)) + ε / 4 by
+      linarith))
+  obtain ⟨N, hN⟩ := eventually_atTop.1 (hev.and (eventually_gt_atTop 0))
+  refine ⟨N, fun p hp => ?_⟩
+  obtain ⟨hpev, hp0⟩ := hN p hp
+  have hpR : (0:ℝ) < (p : ℝ) := by exact_mod_cast hp0
+  have hsub : ({c} : Set ℝ) ⊆ Set.Ioo (c - δ) (c + δ) := by
+    intro y hy
+    rw [Set.mem_singleton_iff] at hy
+    exact ⟨by linarith [hy ▸ (le_refl c)], by linarith [hy ▸ (le_refl c)]⟩
+  have hmono : blockCount (relSet v {c}) p x ≤ blockCount (relSet v (Set.Ioo (c - δ) (c + δ))) p x :=
+    blockCount_mono (relSet_mono v hsub) p x
+  have hnn : 0 ≤ blockCount (relSet v {c}) p x := by
+    rw [blockCount_apply]
+    exact Finset.sum_nonneg fun k _ => blockIndic_nonneg _ _
+  have hdiv : blockCount (relSet v {c}) p x / (p : ℝ)
+      ≤ blockCount (relSet v (Set.Ioo (c - δ) (c + δ))) p x / (p : ℝ) := by
+    rw [div_le_div_iff_of_pos_right hpR]; exact hmono
+  rw [Real.dist_eq, sub_zero, abs_of_nonneg (div_nonneg hnn hpR.le)]
+  linarith
+
+/-- **The sandwich form.**  A target squeezed between an open interval and its closure has the
+frequency, and the mass, of the interval.  This is the shape the reference observable's target has
+(the two endpoint preimages are the only ambiguity). -/
+theorem tendsto_blockCount_relSet_of_sandwich {x : ℝ} (hx : IsCFNormal x)
+    (horb : ∀ k : ℕ, gaussMap^[k] x ∈ Set.Ioo (0:ℝ) 1) {v : List ℕ} (hpv : ∀ a ∈ v, 1 ≤ a)
+    {A : Set ℝ} {a b : ℝ} (hlo : Set.Ioo a b ⊆ A) (hhi : A ⊆ Set.Icc a b) :
+    Tendsto (fun p => blockCount (relSet v A) p x / (p : ℝ)) atTop
+      (nhds (relMass v (Set.Ioo a b))) := by
+  have hIcc : Set.Icc a b ⊆ Set.Ioo a b ∪ ({a} ∪ {b}) := by
+    intro y hy
+    rcases eq_or_lt_of_le hy.1 with h | h
+    · exact Or.inr (Or.inl (by rw [Set.mem_singleton_iff, ← h]))
+    · rcases eq_or_lt_of_le hy.2 with h' | h'
+      · exact Or.inr (Or.inr (by rw [Set.mem_singleton_iff, h']))
+      · exact Or.inl ⟨h, h'⟩
+  have hlow := tendsto_blockCount_relSet_Ioo hx horb hpv a b
+  have hsa := tendsto_blockCount_relSet_singleton hx horb hpv a
+  have hsb := tendsto_blockCount_relSet_singleton hx horb hpv b
+  have hup : Tendsto (fun p => (blockCount (relSet v (Set.Ioo a b)) p x
+      + (blockCount (relSet v {a}) p x + blockCount (relSet v {b}) p x)) / (p : ℝ)) atTop
+      (nhds (relMass v (Set.Ioo a b))) := by
+    have h := hlow.add (hsa.add hsb)
+    rw [add_zero, add_zero] at h
+    refine h.congr fun p => ?_
+    field_simp
+  refine tendsto_of_tendsto_of_tendsto_of_le_of_le hlow hup (fun p => ?_) (fun p => ?_)
+  · rcases Nat.eq_zero_or_pos p with hp | hp
+    · subst hp; simp [blockCount_apply]
+    · have hpR : (0:ℝ) < (p : ℝ) := by exact_mod_cast hp
+      rw [div_le_div_iff_of_pos_right hpR]
+      exact blockCount_mono (relSet_mono v hlo) p x
+  · rcases Nat.eq_zero_or_pos p with hp | hp
+    · subst hp; simp [blockCount_apply]
+    · have hpR : (0:ℝ) < (p : ℝ) := by exact_mod_cast hp
+      rw [div_le_div_iff_of_pos_right hpR]
+      have hstep : blockCount (relSet v A) p x
+          ≤ blockCount (relSet v (Set.Ioo a b ∪ ({a} ∪ {b}))) p x :=
+        blockCount_mono (relSet_mono v (hhi.trans hIcc)) p x
+      refine hstep.trans ?_
+      have hle : ∀ (U V : Set ℝ) (q : ℕ),
+          blockCount (relSet v (U ∪ V)) q x ≤ blockCount (relSet v U) q x
+            + blockCount (relSet v V) q x := by
+        intro U V q
+        simp only [blockCount_apply, ← Finset.sum_add_distrib]
+        refine Finset.sum_le_sum fun k _ => ?_
+        by_cases hU : gaussMap^[k] x ∈ relSet v U
+        · have : gaussMap^[k] x ∈ relSet v (U ∪ V) := ⟨hU.1, Or.inl hU.2⟩
+          rw [blockIndic_eq_one' this, blockIndic_eq_one' hU]
+          linarith [blockIndic_nonneg (relSet v V) (gaussMap^[k] x)]
+        · by_cases hV : gaussMap^[k] x ∈ relSet v V
+          · have : gaussMap^[k] x ∈ relSet v (U ∪ V) := ⟨hV.1, Or.inr hV.2⟩
+            rw [blockIndic_eq_one' this, blockIndic_eq_one' hV]
+            linarith [blockIndic_nonneg (relSet v U) (gaussMap^[k] x)]
+          · have hnot : gaussMap^[k] x ∉ relSet v (U ∪ V) := by
+              rintro ⟨h1, h2⟩
+              rcases h2 with h | h
+              · exact hU ⟨h1, h⟩
+              · exact hV ⟨h1, h⟩
+            rw [blockIndic_eq_zero' hnot, blockIndic_eq_zero' hU, blockIndic_eq_zero' hV]
+            norm_num
+      exact le_trans (hle _ _ p) (by linarith [hle ({a} : Set ℝ) ({b} : Set ℝ) p])
+
 end NormalNumbers.VandeheyS7
 
 section Audit
@@ -674,6 +787,8 @@ section Audit
 #print axioms NormalNumbers.VandeheyS7.tendsto_blockCount_relSet_Ioo
 #print axioms NormalNumbers.VandeheyS7.tendsto_blockCount_relSet_of_agree
 #print axioms NormalNumbers.VandeheyS7.relMass_eq_of_agree
+#print axioms NormalNumbers.VandeheyS7.tendsto_blockCount_relSet_singleton
+#print axioms NormalNumbers.VandeheyS7.tendsto_blockCount_relSet_of_sandwich
 
 end Audit
 
