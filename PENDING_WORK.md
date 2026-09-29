@@ -1875,3 +1875,29 @@ given `F : (length-k words) → MobState` with the state's action `δ`-close to 
 `windowHit_Ioo_le` applied to the two collar intervals, and the main term is one more application
 with `L = |(F v)⁻¹(I_w)| ≤ distortion · γ(I_w)/η` (lap 49).  Then `ApproxWindowState` itself is
 the single remaining open obligation of Vandehey §7 Problem 1 on this route.
+
+### 2026-09-29 lap 56 — the ergodic side is FINISHED (`VandeheyS7Reduction.lean`)
+
+* `WindowedPullback q r₀ Λ` — the one remaining hypothesis, purely about the machine: for a
+  CF-normal input and an image word `w`, the image orbit's visits to `I_w` are, up to frequency
+  `ε`, matched by input times at which the input lies in an interval **determined by the last `k`
+  input digits** and of length `≤ Λ γ(I_w)`.
+* `orbitWordBound_of_windowedPullback : WindowedPullback q r₀ Λ → OrbitWordBound q r₀
+  ((1+8log2)/log2 · Λ)` — the crux, discharged from it.
+* `vandeheyS7_mul_phi_of_windowedPullback` / `..._add_phi_...` — the frozen §7 targets on three
+  inputs: the cited `GaussACRigidity`, `ImageTight` on the image, and `WindowedPullback`.
+
+Compare lap 47 (three hypotheses, the crux an ergodic statement about a moving target).  The
+whole ergodic side — covering, quasi-Bernoulli masses, cell frequencies, the window sum, the
+absolute constant — is now in the kernel, and the open obligation is a statement about the
+`φ`-transducer only.
+
+**NEXT (lap 57).**  Attack `WindowedPullback` itself.  Its three components, in order of risk:
+(a) the interval per window is `(F v)⁻¹(I_w)`, with `|·| ≤ distortion · γ(I_w)/η` by lap 49 —
+needs the bad-position frequency of lap 48 to make `η` legitimate;
+(b) the state must be a window function up to `δ` — `no_window_function` refutes the EXACT
+version, `hdist_runWord_le` is the only candidate mechanism for the approximate one, and the
+honest question is whether the emitted-digit normalisation `O_n⁻¹` restores location-independence;
+(c) the clock: input times vs output positions, `RunClock` rate `≈ 1` (`VandeheyS7Clock`).
+(b) is the decisive one; a kernel refutation there would force the route onto the arithmetic of
+`Φ` as directive fact (γ) demands.
