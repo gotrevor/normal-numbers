@@ -121,6 +121,76 @@ theorem binTail_eq_three_range (n k J : ℕ) (hkJ : k ≤ J) :
   rw [← hsplit, hfin, htail]
 
 
+/-! ### Step C: the window `H` does not outgrow the candidate range `M`
+
+`three_range_tail_le`'s bracket is `W = 2M(1 + log H) + 2H`, so the `2H` term is only
+harmless if `H = O(M)`.  It is, but `B³ ≤ X` alone is a factor two short; the fix is to run
+the (uniform in `c`) schedule feasibility at the inflated exponent `4c+4`. -/
+
+
+/-- **The small-pool modulus is a twelfth root of the height.**  `eventually_schedule_feasible`
+only asserts `B³ ≤ X`, which is a factor `2` short of what the window comparison `H ≤ M`
+needs.  Applying it at the *inflated* pool exponent `4c+4` — legitimate, since the schedule
+is feasible for every fixed `c` — upgrades the cube to a twelfth power with no new
+analysis. -/
+theorem eventually_modulus_pow_twelve_le (c : ℕ) :
+    ∀ᶠ X : ℕ in atTop, ∀ B : ℕ, 1 ≤ B →
+      B ≤ (2 * (countK X) ^ 3) ^ (1 + c * (countK X) ^ 2) → (B : ℝ) ^ 12 ≤ (X : ℝ) := by
+  filter_upwards [eventually_schedule_feasible (4 * c + 4)
+    (show (0:ℝ) < 1 by norm_num) (show (0:ℝ) < 1 by norm_num),
+    eventually_countK_ge 1] with X hsched hk1 B hB1 hBle
+  set k : ℕ := countK X with hkdef
+  have hpow : B ^ 4 ≤ (2 * k ^ 3) ^ (1 + (4 * c + 4) * k ^ 2) := by
+    calc B ^ 4 ≤ ((2 * k ^ 3) ^ (1 + c * k ^ 2)) ^ 4 := Nat.pow_le_pow_left hBle 4
+      _ = (2 * k ^ 3) ^ (4 * (1 + c * k ^ 2)) := by rw [← pow_mul]; ring_nf
+      _ ≤ (2 * k ^ 3) ^ (1 + (4 * c + 4) * k ^ 2) := by
+          refine Nat.pow_le_pow_right (by positivity) ?_
+          have hk2 : 1 ≤ k ^ 2 := Nat.one_le_pow _ _ (by omega)
+          nlinarith [hk2]
+  have h4 : 1 ≤ B ^ 4 := Nat.one_le_pow _ _ (by omega)
+  have := (hsched (B ^ 4) h4 hpow).1
+  calc (B : ℝ) ^ 12 = (((B ^ 4 : ℕ) : ℝ)) ^ 3 := by push_cast; ring
+    _ ≤ (X : ℝ) := this
+
+/-- **`H ≤ M`: the window `H = ⌈√Y⌉` is below the candidate range `M = ⌊X/B⌋ + 1`.**
+With `Λ¹² ≤ X`, `B, Q ≤ Λ`, `Y = 2QX + J` and `J ≤ X`, one has `√Y · B ≤ X`. -/
+theorem sqrt_window_mul_le {B Q X J Λ : ℕ} (hB1 : 1 ≤ B) (hΛ : 2 ≤ Λ) (hBΛ : B ≤ Λ)
+    (hQΛ : Q ≤ Λ) (hJX : J ≤ X) (hX : (Λ : ℝ) ^ 12 ≤ (X : ℝ)) :
+    Nat.sqrt (2 * Q * X + J) * B ≤ X := by
+  set Y : ℕ := 2 * Q * X + J with hY
+  have hsq : Nat.sqrt Y * Nat.sqrt Y ≤ Y := by
+    have := Nat.sqrt_le' Y; nlinarith [this]
+  -- `(√Y · B)² ≤ Y · Λ² ≤ (2Λ+1)X · Λ² ≤ X · X`
+  have hYle : Y ≤ (2 * Λ + 1) * X := by
+    have h1 : 2 * Q * X ≤ 2 * Λ * X := by
+      exact Nat.mul_le_mul_right _ (Nat.mul_le_mul_left _ hQΛ)
+    calc Y ≤ 2 * Λ * X + X := by omega
+      _ = (2 * Λ + 1) * X := by ring
+  have hΛX : (2 * Λ + 1) * Λ * Λ ≤ X := by
+    have hΛR : (2 : ℝ) ≤ (Λ : ℝ) := by exact_mod_cast hΛ
+    have hkey : (((2 * Λ + 1) * Λ * Λ : ℕ) : ℝ) ≤ (Λ : ℝ) ^ 12 := by
+      push_cast
+      have h9 : (3 : ℝ) ≤ (Λ : ℝ) ^ 9 := by
+        calc (3 : ℝ) ≤ 2 ^ 9 := by norm_num
+          _ ≤ (Λ : ℝ) ^ 9 := by
+              exact pow_le_pow_left₀ (by norm_num) hΛR 9
+      have h12 : (Λ : ℝ) ^ 12 = (Λ : ℝ) ^ 3 * (Λ : ℝ) ^ 9 := by ring
+      have hp3 : (0 : ℝ) < (Λ : ℝ) ^ 3 := by positivity
+      have hsq3 : (Λ : ℝ) ^ 2 ≤ (Λ : ℝ) ^ 3 := by nlinarith [hΛR]
+      have hfin : (3 : ℝ) * (Λ : ℝ) ^ 3 ≤ (Λ : ℝ) ^ 12 := by
+        rw [h12]
+        nlinarith [mul_nonneg hp3.le (sub_nonneg.2 h9)]
+      nlinarith [hsq3, hfin]
+    have : (((2 * Λ + 1) * Λ * Λ : ℕ) : ℝ) ≤ (X : ℝ) := le_trans hkey hX
+    exact_mod_cast this
+  have hmain : (Nat.sqrt Y * B) * (Nat.sqrt Y * B) ≤ X * X := by
+    calc (Nat.sqrt Y * B) * (Nat.sqrt Y * B) = (Nat.sqrt Y * Nat.sqrt Y) * (B * B) := by ring
+      _ ≤ Y * (Λ * Λ) := Nat.mul_le_mul hsq (Nat.mul_le_mul hBΛ hBΛ)
+      _ ≤ ((2 * Λ + 1) * X) * (Λ * Λ) := Nat.mul_le_mul_right _ hYle
+      _ = ((2 * Λ + 1) * Λ * Λ) * X := by ring
+      _ ≤ X * X := Nat.mul_le_mul_right _ hΛX
+  exact Nat.le_of_mul_le_mul_left (by nlinarith [hmain]) (by omega : 0 < 1)
+
 /-! ### Step B: the CRT data and the candidate `Finset` at every chosen height
 
 Steps 1–2 of the module docstring, assembled: pool, allocation avoiding `P`, CRT, and the

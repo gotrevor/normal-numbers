@@ -33,9 +33,17 @@ Also proved: the adaptive far-range split point `countJ k Y0 X = k³ + 2S` with
 of step 3 and is uniform in `k`; the note's `J = ⌊(log₂X)²⌋` is not needed, nor is any
 divisor bound in the far range.
 
+And the window comparison `H ≤ M` of step 3: `eventually_modulus_pow_twelve_le` upgrades
+`B³ ≤ X` to `B¹² ≤ X` (by running `eventually_schedule_feasible` at the inflated pool
+exponent `4c+4` — the schedule is feasible for every fixed `c`, so this is free), and
+`sqrt_window_mul_le` turns that into `√(2QX+J)·B ≤ X`, i.e. `H ≤ M`.  A factor-two defect
+in the note's plan: `B³ ≤ X` alone does NOT give `H = o(M)`, since `√(2QX) ≍ X^{2/3} ≍ X/B`
+exactly at the cube.
+
 What is left inside `exists_good_starts_at_height` is therefore steps 3–4 only: feed
-`three_range_tail_le`, show the total is `≤ θ·(M/(4 log X))/2` (this is the one arithmetic
-inequality still open, and the choice of `J` is a free parameter there), then
+`three_range_tail_le` at `J = countJ`, show the total is `≤ θ·(M/(4 log X))/2` (remaining
+sub-item: `J ≤ X` eventually, and `log H ≤ 2 log X + 2`; then the near/middle half is
+`eventually_near_cost_small` + `eventually_middle_cost_small` with `jointA_tau_le`), then
 `card_good_ge_half` and the injection `m ↦ R + mA`.
 
 Next attack: steps 3–5 of "Exact next boundary" in
