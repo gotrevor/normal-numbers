@@ -2152,3 +2152,22 @@ The structural input lap 66 named, proved from algebra with no calculus:
 (`subset_Ico_of_upwardClosed`), then package: state + measure bound on the pullback ⟹ the pullback
 lies in `(0,c]` or `[1−c,1)`, i.e. exactly an `AnchoredPullback` threshold pair.  After that the
 only gaps to a witness are the size bound `Λ/T` (lap 49's `sub_le_of_image_le`) and the clock.
+
+### 2026-09-29 lap 68 — the anchoring is packaged
+
+* `subset_Ico_of_upwardClosed` (in `VandeheyS7Anchor`) — the mirror of lap 65's lemma.
+* `MobState.mob_pullback_anchored` (in `VandeheyS7Mono`) — **the packaging**: a state plus a
+  measure bound `≤ c` on its tail-cell pullback puts that pullback inside a *fixed* interval at one
+  end, `(0,c′)` or `(1−c′,1)` for any `c′ > c`.  Exactly an `AnchoredPullback` threshold pair.
+  Axiom-clean.
+
+So the remaining gaps between the repo and a witness for `AnchoredPullback` — and hence to
+discharging `ImageTight` outright — are now only two, both already named in the repo:
+1. the **size** bound: `volume (state pullback of (0,1/T)) ≤ Λ/T`, which is lap 49's
+   `sub_le_of_image_le` with the distortion bound `≤ 4` (`VandeheyS7Distortion`);
+2. the **clock**: matching output positions to input times (`VandeheyS7Clock`, rate `≈ 1`).
+
+**NEXT (lap 69).**  Item 1: state and prove `volume_mob_preimage_le` — for a `MobState` of
+distortion `≤ K` whose image has width `≥ η`, the pullback of an output interval of length `L` has
+length `≤ K·L/η`.  The pieces are in `VandeheyS7Distortion`/`VandeheyS7Good`; this is the
+assembly into the measure form `mob_pullback_anchored` consumes.

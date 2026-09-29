@@ -103,12 +103,31 @@ theorem anchored_mob_lt (s : MobState) (r : ℝ) :
   · exact absurd h s.hdet
   · exact Or.inl (downwardClosed_mob_lt s h r)
 
+/-- **The packaging.**  A state, plus a measure bound on its tail-cell pullback, gives exactly an
+`AnchoredPullback` threshold pair: the pullback sits inside a *fixed* interval at either end. -/
+theorem mob_pullback_anchored (s : MobState) (r : ℝ) {c c' : ℝ} (hcc : c < c')
+    (hvol : MeasureTheory.volume {t | t ∈ Set.Ioo (0:ℝ) 1 ∧ s.mob t < r}
+      ≤ ENNReal.ofReal c) :
+    {t | t ∈ Set.Ioo (0:ℝ) 1 ∧ s.mob t < r} ⊆ Set.Ioo 0 c' ∨
+    {t | t ∈ Set.Ioo (0:ℝ) 1 ∧ s.mob t < r} ⊆ Set.Ioo (1 - c') 1 := by
+  have hA : {t | t ∈ Set.Ioo (0:ℝ) 1 ∧ s.mob t < r} ⊆ Set.Ioo (0:ℝ) 1 := fun t ht => ht.1
+  rcases anchored_mob_lt s r with hdown | hup
+  · left
+    intro t ht
+    have := subset_Ioc_of_downwardClosed hA hdown hvol ht
+    exact ⟨this.1, lt_of_le_of_lt this.2 hcc⟩
+  · right
+    intro t ht
+    have := subset_Ico_of_upwardClosed hA hup hvol ht
+    exact ⟨by linarith [this.1], this.2⟩
+
 end MobState
 
 section Audit
 
 #print axioms MobState.mob_sub_mob
 #print axioms MobState.anchored_mob_lt
+#print axioms MobState.mob_pullback_anchored
 
 end Audit
 

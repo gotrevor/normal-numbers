@@ -76,6 +76,30 @@ theorem subset_Ioc_of_downwardClosed {A : Set ℝ} {c : ℝ}
     have := ENNReal.ofReal_eq_zero.1 h1
     linarith
 
+/-- **Anchoring, mirrored.**  An upward-closed subset of `(0,1)` of measure at most `c` lies in
+`[1−c,1)`. -/
+theorem subset_Ico_of_upwardClosed {A : Set ℝ} {c : ℝ}
+    (hA : A ⊆ Set.Ioo (0:ℝ) 1)
+    (hup : ∀ t ∈ A, ∀ t' : ℝ, t' < 1 → t < t' → t' ∈ A)
+    (hvol : volume A ≤ ENNReal.ofReal c) :
+    A ⊆ Set.Ico (1 - c) 1 := by
+  intro t ht
+  have ht1 : t < 1 := (hA ht).2
+  refine ⟨?_, ht1⟩
+  by_contra hcon
+  push_neg at hcon
+  have hsub : Set.Ioo t 1 ⊆ A := fun t' ht' => hup t ht t' ht'.2 ht'.1
+  have h1 : volume (Set.Ioo t 1) ≤ ENNReal.ofReal c :=
+    le_trans (measure_mono hsub) hvol
+  rw [Real.volume_Ioo] at h1
+  by_cases hcneg : 0 ≤ c
+  · have := (ENNReal.ofReal_le_ofReal_iff hcneg).1 h1
+    linarith
+  · have hz : ENNReal.ofReal c = 0 := ENNReal.ofReal_eq_zero.2 (by linarith [not_le.1 hcneg])
+    rw [hz, le_zero_iff] at h1
+    have := ENNReal.ofReal_eq_zero.1 h1
+    linarith
+
 /-- The number of times, before `p`, that the orbit falls below its own lower threshold or above
 its own upper one.  The thresholds may depend on `n` however they like — that is the whole point:
 predictability is free here. -/
@@ -148,6 +172,7 @@ theorem anchoredHitFreq_le {x : ℝ} (hirr : Irrational x) (hmem : x ∈ Set.Ioo
 section Audit
 
 #print axioms subset_Ioc_of_downwardClosed
+#print axioms subset_Ico_of_upwardClosed
 #print axioms anchoredHitCount_le
 #print axioms anchoredHitFreq_le
 
