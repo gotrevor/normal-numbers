@@ -303,6 +303,138 @@ theorem abs_convDen_mul_sub_le {y : ℝ} (hy : Irrational y) (hmem : y ∈ Set.I
         have hKv' : (cfK v : ℝ) ≠ 0 := ne_of_gt hKv
         field_simp
 
+/-! ## The converse: a `T`-good convergent forces a large digit
+
+The reduction above is one-sided.  This section proves the other direction *at the convergent
+denominators*, which is where `goodDenCount` actually lives (any `q` with `‖q y‖ < 1/(2q)` is a
+convergent denominator — Legendre; not formalized here, and the only remaining gap between the two
+counts).  Consequence: the Diophantine hypothesis is **not strictly stronger** than the crux's tail
+case — up to the loss `T ↦ (T−4)/2` the two are equivalent, so the route is lossless.
+-/
+
+/-- **The matching lower bound.**  `|qₚ y − pₚ| ≥ 1/(qₚ + qₚ₊₁)`: a convergent is never
+*too* good.  `y` sits inside the cylinder of depth `p+1`, whose endpoint `pₚ₊₁/qₚ₊₁` is already
+`1/(qₚ qₚ₊₁)` away from `pₚ/qₚ`. -/
+theorem abs_convDen_mul_sub_ge {y : ℝ} (hy : Irrational y) (hmem : y ∈ Set.Ioo (0:ℝ) 1)
+    {p : ℕ} (hp : 1 ≤ p) :
+    1 / ((cfK (digitWord y p) : ℝ) + (cfK (digitWord y (p + 1)) : ℝ))
+      ≤ |(cfK (digitWord y p) : ℝ) * y - (cfNum (digitWord y p) : ℝ)| := by
+  set w := digitWord y p with hw
+  set v := digitWord y (p + 1) with hv
+  have hwne : w ≠ [] := digitWord_ne_nil hp
+  have hvne : v ≠ [] := digitWord_ne_nil (by omega)
+  have hwpos := digitWord_pos hy hmem p
+  have hvpos := digitWord_pos hy hmem (p + 1)
+  have hvd : v.dropLast = w := dropLast_digitWord_succ y p
+  have hKw := cfK_pos hwpos
+  have hKv := cfK_pos hvpos
+  have h1 : |y - (cfNum v : ℝ) / (cfK v : ℝ)|
+      ≤ 1 / ((cfK v : ℝ) * ((cfK v : ℝ) + (cfK w : ℝ))) := by
+    have := abs_sub_convergent_le hvne hvpos (mem_cfCylinder_digitWord hmem (p + 1))
+    rwa [hvd] at this
+  have h2 : |(cfNum v : ℝ) / (cfK v : ℝ) - (cfNum w : ℝ) / (cfK w : ℝ)|
+      = 1 / ((cfK v : ℝ) * (cfK w : ℝ)) := by
+    have := abs_convergent_sub_convergent hvne hvpos
+    rwa [hvd] at this
+  -- reverse triangle inequality
+  have h3 : 1 / ((cfK w : ℝ) * ((cfK w : ℝ) + (cfK v : ℝ)))
+      ≤ |y - (cfNum w : ℝ) / (cfK w : ℝ)| := by
+    have hkey : |(cfNum v : ℝ) / (cfK v : ℝ) - (cfNum w : ℝ) / (cfK w : ℝ)|
+        ≤ |y - (cfNum w : ℝ) / (cfK w : ℝ)| + |y - (cfNum v : ℝ) / (cfK v : ℝ)| := by
+      have h := abs_sub_le ((cfNum v : ℝ) / (cfK v : ℝ)) y ((cfNum w : ℝ) / (cfK w : ℝ))
+      rw [abs_sub_comm ((cfNum v : ℝ) / (cfK v : ℝ)) y] at h
+      linarith
+    rw [h2] at hkey
+    have harith : 1 / ((cfK v : ℝ) * (cfK w : ℝ))
+        - 1 / ((cfK v : ℝ) * ((cfK v : ℝ) + (cfK w : ℝ)))
+        = 1 / ((cfK w : ℝ) * ((cfK w : ℝ) + (cfK v : ℝ))) := by
+      have hKw' : (cfK w : ℝ) ≠ 0 := ne_of_gt hKw
+      have hKv' : (cfK v : ℝ) ≠ 0 := ne_of_gt hKv
+      have h4 : ((cfK v : ℝ) + (cfK w : ℝ)) ≠ 0 := by positivity
+      have h5 : ((cfK w : ℝ) + (cfK v : ℝ)) ≠ 0 := by positivity
+      field_simp
+      ring
+    linarith [h1, hkey, harith]
+  -- multiply through by `qₚ`
+  have hid : (cfK w : ℝ) * y - (cfNum w : ℝ)
+      = (cfK w : ℝ) * (y - (cfNum w : ℝ) / (cfK w : ℝ)) := by
+    rw [mul_sub, mul_div_cancel₀ _ (ne_of_gt hKw)]
+  rw [hid, abs_mul, abs_of_pos hKw]
+  have hmul := mul_le_mul_of_nonneg_left h3 hKw.le
+  refine le_trans (le_of_eq ?_) hmul
+  have hKw' : (cfK w : ℝ) ≠ 0 := ne_of_gt hKw
+  have hsum : ((cfK w : ℝ) + (cfK v : ℝ)) ≠ 0 := by positivity
+  field_simp
+  ring
+
+/-- If an integer is within `1/2` of `x`, it is `round x`. -/
+private lemma round_eq_of_abs_lt {x : ℝ} {m : ℤ} (h : |x - m| < 1/2) : round x = m := by
+  have h1 : |x - (round x : ℝ)| ≤ 1/2 := abs_sub_round x
+  have h2 : |((round x : ℝ)) - (m : ℝ)| < 1 := by
+    calc |((round x : ℝ)) - (m : ℝ)| ≤ |(round x : ℝ) - x| + |x - (m : ℝ)| := abs_sub_le _ _ _
+      _ < 1 := by rw [abs_sub_comm ((round x : ℝ)) x]; linarith
+  have h3 : ((round x - m : ℤ) : ℝ) = (round x : ℝ) - (m : ℝ) := by push_cast; ring
+  have h4 : |(round x - m : ℤ)| < 1 := by
+    have : |((round x - m : ℤ) : ℝ)| < 1 := by rw [h3]; exact h2
+    exact_mod_cast this
+  have h5 := abs_lt.1 h4
+  omega
+
+/-- **The converse.**  A `T`-good convergent denominator forces a large digit:
+`‖qₚ y‖ ≤ 2/(T qₚ)` implies `T ≤ 2 aₚ₊₁ + 4`.  Together with
+`nearInt_convDen_le` this makes the Diophantine form of S7-T *equivalent* to the crux's tail case,
+up to `T ↦ (T−4)/2`. -/
+theorem le_digit_of_nearInt_le {y : ℝ} (hy : Irrational y) (hmem : y ∈ Set.Ioo (0:ℝ) 1)
+    {T p : ℕ} (hp : 1 ≤ p) (hbig : 4 < cfK (digitWord y (p + 1)))
+    (hgood : |(cfK (digitWord y p) : ℝ) * y - (round ((cfK (digitWord y p) : ℝ) * y) : ℝ)|
+      ≤ 2 / ((T : ℝ) * (cfK (digitWord y p) : ℝ))) :
+    (T : ℝ) ≤ 2 * cfDigit y p + 4 := by
+  have hwpos := digitWord_pos hy hmem p
+  have hvpos := digitWord_pos hy hmem (p + 1)
+  have hKw := cfK_pos hwpos
+  have hKv := cfK_pos hvpos
+  have hwne : digitWord y p ≠ [] := digitWord_ne_nil hp
+  -- the nearest integer to `qₚ y` is `pₚ`
+  have hupper := abs_convDen_mul_sub_le hy hmem hp
+  have hhalf : |(cfK (digitWord y p) : ℝ) * y - (cfNum (digitWord y p) : ℝ)| < 1/2 := by
+    have h4 : (4:ℝ) < (cfK (digitWord y (p + 1)) : ℝ) := by exact_mod_cast hbig
+    have : 2 / (cfK (digitWord y (p + 1)) : ℝ) < 1/2 := by
+      rw [div_lt_div_iff₀ hKv (by norm_num)]
+      linarith
+    linarith
+  have hround : round ((cfK (digitWord y p) : ℝ) * y) = (cfNum (digitWord y p) : ℤ) := by
+    refine round_eq_of_abs_lt ?_
+    simpa using hhalf
+  rw [hround] at hgood
+  have hgood' : |(cfK (digitWord y p) : ℝ) * y - (cfNum (digitWord y p) : ℝ)|
+      ≤ 2 / ((T : ℝ) * (cfK (digitWord y p) : ℝ)) := by simpa using hgood
+  -- the lower bound
+  have hlower := abs_convDen_mul_sub_ge hy hmem hp
+  have hTpos : (0:ℝ) ≤ (T:ℝ) := Nat.cast_nonneg T
+  rcases Nat.eq_zero_or_pos T with rfl | hT
+  · have : (0:ℝ) ≤ 2 * cfDigit y p + 4 := by positivity
+    simpa using this
+  have hTposR : (0:ℝ) < (T:ℝ) := by exact_mod_cast hT
+  -- `1/(qₚ + qₚ₊₁) ≤ 2/(T qₚ)` gives `T qₚ ≤ 2 qₚ + 2 qₚ₊₁`
+  have hkey : 1 / ((cfK (digitWord y p) : ℝ) + (cfK (digitWord y (p + 1)) : ℝ))
+      ≤ 2 / ((T : ℝ) * (cfK (digitWord y p) : ℝ)) := le_trans hlower hgood'
+  have hsum : (0:ℝ) < (cfK (digitWord y p) : ℝ) + (cfK (digitWord y (p + 1)) : ℝ) := by linarith
+  rw [div_le_div_iff₀ hsum (by positivity)] at hkey
+  -- `qₚ₊₁ = aₚ₊₁ qₚ + qₚ₋₁ ≤ (aₚ₊₁ + 1) qₚ`
+  have hqv : (cfK (digitWord y (p + 1)) : ℝ)
+      ≤ ((cfDigit y p : ℝ) + 1) * (cfK (digitWord y p) : ℝ) := by
+    have hdl : cfK (digitWord y p).dropLast ≤ cfK (digitWord y p) :=
+      cfK_dropLast_le _ hwpos
+    have hrec : cfK (digitWord y (p + 1))
+        = cfDigit y p * cfK (digitWord y p) + cfK (digitWord y p).dropLast := by
+      rw [digitWord_succ, cfK_concat _ _ hwne]
+    have : cfK (digitWord y (p + 1)) ≤ (cfDigit y p + 1) * cfK (digitWord y p) := by
+      rw [hrec]; nlinarith [hdl]
+    calc (cfK (digitWord y (p + 1)) : ℝ) ≤ (((cfDigit y p + 1) * cfK (digitWord y p) : ℕ) : ℝ) := by
+          exact_mod_cast this
+      _ = ((cfDigit y p : ℝ) + 1) * (cfK (digitWord y p) : ℝ) := by push_cast; ring
+  nlinarith [hkey, hqv, hKw]
+
 /-! ## The counting form -/
 
 /-- `#{q ∈ [1,Q] : ‖q y‖ ≤ 2/(T q)}` — the number of `T`-good denominators up to `Q`. -/
@@ -479,6 +611,8 @@ section Audit
 #print axioms largeDigitCount_le_goodDenCount
 #print axioms tailFreq_le_of_goodDenBound
 #print axioms heuristic_sum_le
+#print axioms abs_convDen_mul_sub_ge
+#print axioms le_digit_of_nearInt_le
 
 end Audit
 
