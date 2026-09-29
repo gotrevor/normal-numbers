@@ -2078,3 +2078,35 @@ a hypothesis.
    if `WindowedPullback`'s exceptional set can be stated with input-side badness only, the chain
    loses a hypothesis outright.
 2. Back to the arithmetic (`VandeheyS7Lattice`/`VandeheyS7Bad`): the bad-time count.
+
+### 2026-09-29 lap 65 — anchored targets escape the refutation (`VandeheyS7Anchor.lean`)
+
+Thread 1 of lap 64 first, honestly: `exists_nearInv_freq_le` is applied to the **image** orbit, so
+lap 64's unconditional input-side bound does not remove `ImageTight` from the chain by
+substitution.  But chasing why produced the better result.
+
+**The observation.**  A transducer state acts by a *monotone* Möbius map, so the pullback of an
+output event "the next output digit is large" (`= cellSet [] T`, i.e. exactly what `ImageTight`
+talks about) is **downward-closed** in `(0,1)` — anchored to an endpoint, not free-floating.  And:
+
+* `subset_Ioc_of_downwardClosed` — a downward-closed `A ⊆ (0,1)` with `|A| ≤ c` satisfies
+  `A ⊆ (0,c]`.  Monotonicity converts a measure bound into *containment in a fixed interval*.
+* `anchoredHitCount_le`, `anchoredHitFreq_le` — hence for CF-normal `x` and **any** predictable
+  family of endpoint-anchored targets with `u n ≤ c`, `v n ≥ 1 − c`:
+  `freq{n : Gⁿx < u n ∨ Gⁿx > v n} ≤ 2c/log 2 + ε`.  All axiom-clean.
+
+**The route fact this establishes.**  The two obligations of the §7 chain are *not* two instances
+of one difficulty:
+
+| half | pullback | status |
+|---|---|---|
+| tail cell / large digit (`ImageTight`, directive fact 2's bad states) | endpoint-anchored | soft — `anchoredHitFreq_le` |
+| general word `I_w` (the crux) | interior, free location | refuted soft — `not_gappedHitPrinciple` |
+
+So `ImageTight` is the *reachable* hypothesis, and the crux is the genuinely hard one — which is
+where the directive already points.
+
+**NEXT (lap 66).**  Cash the anchored principle: prove `ImageTight (Int.fract (q*x+r₀))` from
+(i) the state's monotonicity, (ii) the length bound on the pullback of `(0,1/T)` (lap 49's
+`sub_le_of_image_le` with the distortion bound), (iii) `anchoredHitFreq_le`, and (iv) the clock.
+If it lands, the §7 chain drops from three hypotheses to two.
