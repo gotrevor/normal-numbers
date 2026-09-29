@@ -2057,3 +2057,24 @@ of lap 62's covering (`K = ⌈η^{−1/2}⌉`, each clipped to `[0,1]`, total le
 `δ = ε/(2(K+1))`, to get `freq{n : Gⁿx ∈ nearInv η} ≤ 7√η/log 2 + ε` for CF-normal `x`,
 **unconditionally**.  That discharges the INPUT half of lap 48's bad-position control, leaving
 `ImageTight` needed only on the image.
+
+### 2026-09-29 lap 64 — the bad set is rare for the input orbit, unconditionally
+
+Added to `VandeheyS7IooFreq.lean`, all axiom-clean:
+
+* `blockCount_inter_Ioo` — orbit points lie in `(0,1)`, so a target may be clipped for free.
+* `blockCount_Ioo_le'` — interval frequencies for **any** `a ≤ b` (unclipped).
+* `blockCount_nearInv_freq_le` — **the payoff**: for CF-normal `x`, `0 < η ≤ 1` and any `ε > 0`,
+  `freq{n : Gⁿx ∈ nearInv η} ≤ 7√η/log 2 + ε`, with **no second hypothesis**.
+
+Compare `exists_nearInv_freq_le` (lap 48), which bought the same smallness by spending the chain's
+`ImageTight`.  The INPUT half of lap 48's bad-position control is now discharged; `ImageTight`
+survives only where it must, on the IMAGE orbit, where CF-normality is the conclusion rather than
+a hypothesis.
+
+**NEXT (lap 65).**  Two live threads, take the first:
+1. Re-run lap 48's separation step (`VandeheyS7Sep`, `exists_nearInv_freq_le`'s consumers) on the
+   new unconditional bound and see how far up the chain the removal of `ImageTight` propagates —
+   if `WindowedPullback`'s exceptional set can be stated with input-side badness only, the chain
+   loses a hypothesis outright.
+2. Back to the arithmetic (`VandeheyS7Lattice`/`VandeheyS7Bad`): the bad-time count.
