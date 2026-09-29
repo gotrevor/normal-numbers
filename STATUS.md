@@ -21,6 +21,14 @@ One checkout on `wip/g5-prime-subset`, Lean/mathlib v4.33.1, every campaign bran
 
 ## Where it stands
 
+> **§7 campaign closed 2026-09-29 (laps 27–91).**  The problem is not solved; the deliverable is the
+> map of closed routes with their kernel witnesses: **`docs/VANDEHEY-S7-FALSE-STARTS.md`**.  Read it
+> before re-entering §7.  Short version: the crux `BlockForgetRun`/`BlockForgetAll` is the headline
+> PLUS locality (S7-NR, S7-CK) — never a reduction; the scalar debts were artefacts of a transducer
+> throttled to one digit per read (S7-WQ, S7-GR); and the wall is joint equidistribution of
+> `(state, input point)`, in its sharpest form a no-concentration statement about the image orbit
+> (S7-GS).
+
 The live target is the operator's moonshot, **Vandehey Compositio 2017 §7 Problem 1**: is `φx`
 CF-normal when `x` is?  Theorem 1.1 itself is PROVED (`vandehey_matrix_action_holds`, 2026-09-28),
 and §7 is frozen as `vandeheyS7_mul_phi` / `vandeheyS7_add_phi`.  **The whole chain to both frozen

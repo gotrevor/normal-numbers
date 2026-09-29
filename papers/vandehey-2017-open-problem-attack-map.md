@@ -4,6 +4,10 @@
 Question: x CF-normal, q,r quadratic irrationals, q ≠ 0 ⇒ qx + r CF-normal?
 Simplest instances: x ↦ φx, x ↦ x + φ.  Status: open (posed Compositio 2017).*
 
+> **Read `docs/VANDEHEY-S7-FALSE-STARTS.md` first** (2026-09-29): the closed routes with their
+> kernel witnesses, what survives, and where the wall is.
+
+
 ## 1. The structural diagnosis: it dies on Dirichlet's unit theorem
 
 Vandehey's proof rides on one finiteness: matrices over ℤ with |det| = D and
