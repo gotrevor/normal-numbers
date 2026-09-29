@@ -188,7 +188,14 @@ Three facts, all established lap 30, fix its difficulty and must steer every fur
   the image is a scale at which `x` itself is badly approximated.**  Corollary at `x`'s own
   convergents: `digit_le_of_good_at_convergent : qᵢ(x)` good for `φx` ⟹ `aᵢ(x) ≤ 32`.
   *Limitation, stated honestly:* the good `q` are convergent denominators of `φx`, not of `x`, so
-  this constrains only the overlap.  **Next attack (lap 36):** run the unit trick at the STATE
+  this constrains only the overlap.  **Lap 36:** the transfer extended.  (i) `nearInt_mul_ge_of_good_add` — the SECOND frozen target
+  `x + φ` obeys the same negative correlation, from the same input and with no unit trick
+  (`‖q(x+φ)‖` small + `‖qφ‖ ≥ 1/(4q)` ⟹ `‖qx‖ ≥ 1/(8q)` for `T ≥ 16`), plus
+  `digit_le_of_good_at_convergent_add` (`aᵢ(x) ≤ 16`).  (ii) `nearInt_numerator_ge_of_good` — the
+  numerator of a primitive good approximation is an ANTI-good denominator: `mφx = m²/q + mδ/q` and
+  `gcd(m,q)=1` with `q ≥ 2` give `‖mφx‖ ≥ 1/(2q)`.  So good denominators come in pairs `(q,m)`
+  whose second coordinate is excluded from the good set, purely from `φ(φ−1)=1`.
+  **Next attack (lap 37):** run the unit trick at the STATE
   level — `‖qx‖ ≥ 1/(16q)` says the orbit point `(qx, qφx) mod 1` avoids a fixed neighbourhood of
   the `x`-axis whenever the image emits a large digit; combined with `gap_principle` the good
   scales are `T/4`-separated AND confined to a region of the torus of measure `≍ 1/T`.  That pair

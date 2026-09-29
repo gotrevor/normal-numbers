@@ -173,6 +173,78 @@ theorem nearInt_mul_ge_of_good {x : ℝ} (hx0 : 0 < x) (hx1 : x < 1) {T q : ℕ}
     ring
   linarith [hlip, hgolden, hA, hB, hgoal]
 
+/-! ## The additive target `x + φ`
+
+The second frozen §7 target is `x + φ`, where the same phenomenon appears with no unit trick at
+all: `q(x+φ)` near `ℤ` and `qφ` far from `ℤ` force `qx` far from `ℤ`.  Both frozen targets
+therefore obey the same negative correlation, from the same single fact about `φ`. -/
+
+/-- `nearInt` is subadditive under subtraction. -/
+lemma nearInt_sub_le (a b : ℝ) : nearInt (a - b) ≤ nearInt a + nearInt b := by
+  have h := nearInt_le (a - b) (round a - round b)
+  have hid : a - b - ((round a - round b : ℤ) : ℝ)
+      = (a - (round a : ℝ)) - (b - (round b : ℝ)) := by push_cast; ring
+  rw [hid] at h
+  exact le_trans h (le_trans (abs_sub _ _) (le_of_eq rfl))
+
+/-- **The additive transfer.**  For `T ≥ 16`, a `T`-good denominator for `x + φ` satisfies
+`‖q x‖ ≥ 1/(8q)`: it approximates `x` badly.  Same conclusion as the multiplicative case
+(`nearInt_mul_ge_of_good`), from the same arithmetic input `‖qφ‖ ≥ 1/(4q)`. -/
+theorem nearInt_mul_ge_of_good_add {x : ℝ} {T q : ℕ} (hT : 16 ≤ T) (hq : 1 ≤ q)
+    (hgood : nearInt ((q : ℝ) * (x + Real.goldenRatio)) ≤ 2 / ((T : ℝ) * q)) :
+    1 / (8 * (q : ℝ)) ≤ nearInt ((q : ℝ) * x) := by
+  have hqR : (1:ℝ) ≤ (q:ℝ) := by exact_mod_cast hq
+  have hqpos : (0:ℝ) < (q:ℝ) := by linarith
+  have hTR : (16:ℝ) ≤ (T:ℝ) := by exact_mod_cast hT
+  have hqZ : (0:ℤ) < (q:ℤ) := by exact_mod_cast hq
+  have hphi : 1 / (4 * (q:ℝ)) ≤ nearInt ((q : ℝ) * Real.goldenRatio) := by
+    have h := nearInt_goldenRatio_ge hqZ
+    simpa using h
+  have hsplit : (q : ℝ) * Real.goldenRatio
+      = (q : ℝ) * (x + Real.goldenRatio) - (q : ℝ) * x := by ring
+  have hsub : nearInt ((q : ℝ) * Real.goldenRatio)
+      ≤ nearInt ((q : ℝ) * (x + Real.goldenRatio)) + nearInt ((q : ℝ) * x) := by
+    rw [hsplit]
+    exact nearInt_sub_le _ _
+  have hsmall : 2 / ((T : ℝ) * q) ≤ 1 / (8 * (q:ℝ)) := by
+    rw [div_le_div_iff₀ (by positivity) (by positivity)]
+    nlinarith
+  have harith : 1 / (4 * (q:ℝ)) - 1 / (8 * (q:ℝ)) = 1 / (8 * (q:ℝ)) := by
+    field_simp
+    ring
+  linarith [hphi, hsub, hgood, hsmall, harith]
+
+/-- The additive analogue of `digit_le_of_good_at_convergent`: a convergent denominator of `x` that
+is `T`-good for `x + φ` sits at a digit `≤ 16`. -/
+theorem digit_le_of_good_at_convergent_add {x : ℝ} (hx : Irrational x)
+    (hmem : x ∈ Set.Ioo (0:ℝ) 1) {T i : ℕ} (hT : 16 ≤ T) (hi : 1 ≤ i)
+    (hgood : nearInt ((cfK (digitWord x i) : ℝ) * (x + Real.goldenRatio))
+      ≤ 2 / ((T : ℝ) * (cfK (digitWord x i) : ℝ))) :
+    cfDigit x i ≤ 16 := by
+  have hq1 : 1 ≤ cfK (digitWord x i) := one_le_cfK _ (digitWord_pos hx hmem i)
+  have hbad := nearInt_mul_ge_of_good_add hT hq1 hgood
+  have hgoodx : nearInt ((cfK (digitWord x i) : ℝ) * x)
+      ≤ 2 / (cfK (digitWord x (i + 1)) : ℝ) :=
+    le_trans (nearInt_le _ (cfNum (digitWord x i) : ℤ)) (abs_convDen_mul_sub_le hx hmem hi)
+  have hqR : (1:ℝ) ≤ (cfK (digitWord x i) : ℝ) := by exact_mod_cast hq1
+  have hvR : (0:ℝ) < (cfK (digitWord x (i + 1)) : ℝ) :=
+    cfK_pos (digitWord_pos hx hmem (i + 1))
+  have hchain : 1 / (8 * (cfK (digitWord x i) : ℝ)) ≤ 2 / (cfK (digitWord x (i + 1)) : ℝ) := by
+    linarith
+  rw [div_le_div_iff₀ (by positivity) hvR] at hchain
+  have hle : (cfK (digitWord x (i + 1)) : ℝ) ≤ 16 * (cfK (digitWord x i) : ℝ) := by linarith
+  have hleN : cfK (digitWord x (i + 1)) ≤ 16 * cfK (digitWord x i) := by
+    have : ((cfK (digitWord x (i + 1)) : ℕ) : ℝ) ≤ ((16 * cfK (digitWord x i) : ℕ) : ℝ) := by
+      push_cast; linarith
+    exact_mod_cast this
+  have hrec : cfK (digitWord x (i + 1))
+      = cfDigit x i * cfK (digitWord x i) + cfK (digitWord x i).dropLast := by
+    rw [digitWord_succ, cfK_concat _ _ (digitWord_ne_nil hi)]
+  have hdl : 1 ≤ cfK (digitWord x i).dropLast :=
+    one_le_cfK _ fun a ha => digitWord_pos hx hmem i a (List.mem_of_mem_dropLast ha)
+  have hmul : cfDigit x i * cfK (digitWord x i) ≤ 16 * cfK (digitWord x i) := by omega
+  exact Nat.le_of_mul_le_mul_right (by omega) (Nat.lt_of_lt_of_le Nat.zero_lt_one hq1)
+
 /-! ## The consequence at `x`'s own convergents -/
 
 /-- **The negative correlation.**  If a convergent denominator `qᵢ(x)` of `x` itself is a `T`-good
@@ -214,6 +286,135 @@ theorem digit_le_of_good_at_convergent {x : ℝ} (hx : Irrational x)
   have hmul : cfDigit x i * cfK (digitWord x i) ≤ 32 * cfK (digitWord x i) := by omega
   exact Nat.le_of_mul_le_mul_right (by omega) (Nat.lt_of_lt_of_le Nat.zero_lt_one hq1)
 
+/-! ## The numerator of a good approximation is an *anti*-good denominator
+
+One more consequence of `φ` being a unit, and the sharpest structural constraint this module
+produces.  If `q` is primitive `T`-good for `φx` with numerator `m`, then
+
+  `m φ x = m²/q + mδ/q`   (again because `φ(φ−1) = 1`),
+
+and `m²/q` is a rational with denominator `q` whose numerator is coprime to `q`, hence at distance
+`≥ 1/q` from `ℤ`.  So `‖m φ x‖ ≥ 1/(2q)`: the numerator `m ≍ q` is a *badly* approximating
+denominator for the very same number.  Good denominators therefore come in pairs `(q, m)` whose
+second coordinate is excluded from the good set — a constraint on the good set that uses the
+arithmetic of `φ` and not the orbit at all.
+-/
+
+/-- A rational with denominator `q` that is not an integer is `≥ 1/q` from `ℤ`. -/
+lemma nearInt_div_nat_ge {k : ℤ} {q : ℕ} (hq : 1 ≤ q) (hdvd : ¬ ((q:ℤ) ∣ k)) :
+    1 / (q : ℝ) ≤ nearInt ((k : ℝ) / (q : ℝ)) := by
+  have hqR : (0:ℝ) < (q:ℝ) := by exact_mod_cast hq
+  set r := round ((k : ℝ) / (q : ℝ)) with hr
+  have hne : k - (q:ℤ) * r ≠ 0 := by
+    intro h
+    exact hdvd ⟨r, by linarith [sub_eq_zero.1 h]⟩
+  have habs : (1:ℝ) ≤ |((k - (q:ℤ) * r : ℤ) : ℝ)| := by
+    have h1 : (1:ℤ) ≤ |k - (q:ℤ) * r| := Int.one_le_abs hne
+    have : ((|k - (q:ℤ) * r| : ℤ) : ℝ) ≥ 1 := by exact_mod_cast h1
+    rwa [Int.cast_abs] at this
+  have hid : (k : ℝ) / (q : ℝ) - (r : ℝ) = ((k - (q:ℤ) * r : ℤ) : ℝ) / (q:ℝ) := by
+    push_cast
+    field_simp
+  rw [nearInt, hid, abs_div, abs_of_pos hqR]
+  gcongr
+
+/-- **The numerator is an anti-good denominator.**  For `T ≥ 8` and a primitive `T`-good `q ≥ 2`
+for `φ x`, the numerator `m = round(q φ x)` satisfies `‖m φ x‖ ≥ 1/(2q)`. -/
+theorem nearInt_numerator_ge_of_good {x : ℝ} (hx0 : 0 < x) (hx1 : x < 1) {T q : ℕ}
+    (hT : 8 ≤ T) (hq : 2 ≤ q)
+    (hm : 0 < round ((q : ℝ) * (Real.goldenRatio * x)))
+    (hcop : Nat.Coprime (round ((q : ℝ) * (Real.goldenRatio * x))).natAbs q)
+    (hgood : nearInt ((q : ℝ) * (Real.goldenRatio * x)) ≤ 2 / ((T : ℝ) * q)) :
+    1 / (2 * (q : ℝ)) ≤
+      nearInt ((round ((q : ℝ) * (Real.goldenRatio * x)) : ℝ) * (Real.goldenRatio * x)) := by
+  have hφ2 : Real.goldenRatio < 2 := Real.goldenRatio_lt_two
+  have hφ1 : 1 < Real.goldenRatio := Real.one_lt_goldenRatio
+  have hsq : Real.goldenRatio ^ 2 = Real.goldenRatio + 1 := Real.goldenRatio_sq
+  have hqR : (2:ℝ) ≤ (q:ℝ) := by exact_mod_cast hq
+  have hqpos : (0:ℝ) < (q:ℝ) := by linarith
+  have hTR : (8:ℝ) ≤ (T:ℝ) := by exact_mod_cast hT
+  set m := round ((q : ℝ) * (Real.goldenRatio * x)) with hmdef
+  set δ := (q : ℝ) * (Real.goldenRatio * x) - (m : ℝ) with hδ
+  have hδabs : |δ| ≤ 2 / ((T : ℝ) * q) := hgood
+  -- `m ≤ 2q`, as in `nearInt_mul_ge_of_good`
+  have hmhalf : |δ| ≤ 1/2 := abs_sub_round _
+  have hmlt : (m : ℝ) < 2 * (q:ℝ) + 1 := by
+    have h1 : (q : ℝ) * (Real.goldenRatio * x) < 2 * (q:ℝ) := by
+      have : Real.goldenRatio * x < 2 := by nlinarith
+      nlinarith
+    have h2 : (m:ℝ) ≤ (q : ℝ) * (Real.goldenRatio * x) + 1/2 := by
+      have := abs_le.1 hmhalf
+      linarith [this.1, this.2]
+    linarith
+  have hmle : m ≤ 2 * (q:ℤ) := by
+    have h : (m : ℝ) < ((2 * (q:ℤ) + 1 : ℤ) : ℝ) := by push_cast; linarith
+    have hlt : m < 2 * (q:ℤ) + 1 := by exact_mod_cast h
+    omega
+  have hmR : (1:ℝ) ≤ (m:ℝ) := by exact_mod_cast hm
+  have hmR2 : (m:ℝ) ≤ 2 * (q:ℝ) := by exact_mod_cast hmle
+  -- the unit identity `m φ x = m²/q + m δ/q`
+  have hcol : Real.goldenRatio * (Real.goldenRatio - 1) = 1 := by nlinarith [hsq]
+  have hsum : (m : ℝ) + δ = (q : ℝ) * (Real.goldenRatio * x) := by rw [hδ]; ring
+  have hqx : ((m : ℝ) + δ) * (Real.goldenRatio - 1) = (q : ℝ) * x := by
+    rw [hsum]
+    calc (q : ℝ) * (Real.goldenRatio * x) * (Real.goldenRatio - 1)
+        = (q : ℝ) * x * (Real.goldenRatio * (Real.goldenRatio - 1)) := by ring
+      _ = (q : ℝ) * x := by rw [hcol]; ring
+  have hmul : (q : ℝ) * ((m : ℝ) * (Real.goldenRatio * x)) = (m:ℝ) * (m:ℝ) + (m:ℝ) * δ := by
+    have hre : (q : ℝ) * ((m : ℝ) * (Real.goldenRatio * x))
+        = (m : ℝ) * Real.goldenRatio * ((q : ℝ) * x) := by ring
+    rw [hre, ← hqx]
+    linear_combination ((m:ℝ) * ((m:ℝ) + δ)) * hcol
+  have hkey : (m : ℝ) * (Real.goldenRatio * x)
+      = ((m * m : ℤ) : ℝ) / (q:ℝ) + (m : ℝ) * δ / (q:ℝ) := by
+    have hcomb : ((m * m : ℤ) : ℝ) / (q:ℝ) + (m : ℝ) * δ / (q:ℝ)
+        = (((m:ℝ) * (m:ℝ) + (m:ℝ) * δ)) / (q:ℝ) := by push_cast; ring
+    rw [hcomb, eq_div_iff (ne_of_gt hqpos)]
+    linear_combination hmul
+  -- `q ∤ m²` by primitivity
+  have hdvd : ¬ ((q:ℤ) ∣ m * m) := by
+    intro hd
+    have hnat : q ∣ (m * m).natAbs := by
+      have h := Int.natAbs_dvd_natAbs.2 hd
+      simpa using h
+    have hcop2 : Nat.Coprime (m.natAbs * m.natAbs) q := Nat.Coprime.mul_left hcop hcop
+    have hdd : q ∣ m.natAbs * m.natAbs := by rwa [Int.natAbs_mul] at hnat
+    have hq1 : q = 1 := Nat.Coprime.eq_one_of_dvd hcop2.symm hdd
+    omega
+  have hrat : 1 / (q:ℝ) ≤ nearInt (((m * m : ℤ) : ℝ) / (q:ℝ)) :=
+    nearInt_div_nat_ge (by omega) hdvd
+  -- transport
+  have hclose : |(m : ℝ) * (Real.goldenRatio * x) - ((m * m : ℤ) : ℝ) / (q:ℝ)|
+      = |(m : ℝ) * δ| / (q:ℝ) := by
+    rw [hkey]
+    have : ((m * m : ℤ) : ℝ) / (q:ℝ) + (m : ℝ) * δ / (q:ℝ) - ((m * m : ℤ) : ℝ) / (q:ℝ)
+        = (m : ℝ) * δ / (q:ℝ) := by ring
+    rw [this, abs_div, abs_of_pos hqpos]
+  have hlip := nearInt_ge_sub ((m : ℝ) * (Real.goldenRatio * x)) (((m * m : ℤ) : ℝ) / (q:ℝ))
+  rw [hclose] at hlip
+  -- `|m δ|/q ≤ 2q·(2/(Tq))/q = 4/(Tq) ≤ 1/(2q)`
+  have hmδ : |(m : ℝ) * δ| / (q:ℝ) ≤ 1 / (2 * (q:ℝ)) := by
+    have h1 : |(m : ℝ) * δ| = (m:ℝ) * |δ| := by
+      rw [abs_mul, abs_of_nonneg (by linarith : (0:ℝ) ≤ (m:ℝ))]
+    rw [h1]
+    have h2 : (m:ℝ) * |δ| ≤ 2 * (q:ℝ) * (2 / ((T : ℝ) * q)) := by
+      have h3 : (0:ℝ) ≤ |δ| := abs_nonneg _
+      have h4 : (0:ℝ) ≤ 2 / ((T : ℝ) * q) := by positivity
+      nlinarith [hδabs, hmR2]
+    have h5 : 2 * (q:ℝ) * (2 / ((T : ℝ) * q)) = 4 / (T:ℝ) := by
+      field_simp
+      ring
+    rw [h5] at h2
+    have h6 : 4 / (T:ℝ) / (q:ℝ) ≤ 1 / (2 * (q:ℝ)) := by
+      rw [div_div, div_le_div_iff₀ (by positivity) (by positivity)]
+      nlinarith
+    calc (m:ℝ) * |δ| / (q:ℝ) ≤ (4 / (T:ℝ)) / (q:ℝ) := by gcongr
+      _ ≤ 1 / (2 * (q:ℝ)) := h6
+  have harith : 1 / (q:ℝ) - 1 / (2 * (q:ℝ)) = 1 / (2 * (q:ℝ)) := by
+    field_simp
+    ring
+  linarith [hlip, hrat, hmδ, harith]
+
 section Audit
 
 #print axioms nearInt_add_int
@@ -222,6 +423,11 @@ section Audit
 #print axioms nearInt_goldenRatio_ge
 #print axioms nearInt_mul_ge_of_good
 #print axioms digit_le_of_good_at_convergent
+#print axioms nearInt_sub_le
+#print axioms nearInt_mul_ge_of_good_add
+#print axioms digit_le_of_good_at_convergent_add
+#print axioms nearInt_div_nat_ge
+#print axioms nearInt_numerator_ge_of_good
 
 end Audit
 
