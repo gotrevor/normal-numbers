@@ -1,6 +1,7 @@
 # Handoff — 2026-09-29 — joint Lambert quantitative foundations (small prime pool)
 
-Branch `proof/joint-lambert-unconditional`, baseline `daedc1e`. Full `lake build` green.
+Branch `proof/joint-lambert-unconditional`, baseline `daedc1e`, proof commit `6424f25`
+(this doc committed on top). Full `lake build` green; treadmill stopped at this lap.
 All four deliverables of `KICKOFF-2026-09-29-joint-lambert-small-pool.md` are proved,
 `#print axioms`-clean (`propext, Classical.choice, Quot.sound`), audited by
 `scripts/check-joint-lambert-smallpool.sh`. Every pre-existing `JointLambert*.lean`
