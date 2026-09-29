@@ -1742,3 +1742,33 @@ tail rate `A' = g(A)`.  If `g` has a fixed point below the trivial bound `A = 1`
 CLOSES the crux with an absolute constant.  Deliverable: state `g` in Lean and decide whether the
 loop contracts — a kernel refutation (no contraction) is an equally valid outcome and would
 redirect the route to the arithmetic of `Φ` as the directive's fact (γ) demands.
+
+### 2026-09-29 lap 50 — the hit principle is TRUE for window predictors (`VandeheyS7WindowHit.lean`)
+
+The lap-49 "price" analysis pointed at the wrong culprit.  The `1/η` in the split is not the
+binding constraint: the binding constraint is the *measure → frequency* step, i.e. the hitting
+principle for predictable targets.  `not_predictableHitPrinciple` (lap ~44) refutes it for
+arbitrary sequences and arbitrary predictors — but it is TRUE, with an ABSOLUTE constant, when the
+predictor reads a finite window and the point is genuinely CF-normal:
+
+* `gaussMeasure_append_le` — quasi-multiplicativity `γ(I_{v++u}) ≤ 8 log 2 · γ(I_v) γ(I_u)`,
+  from `volume_cylinder_append_le` plus the two-sided Gauss-density window.
+* `windowHit_le` — for a CF-normal `x`, a finite family `V` of length-`k` windows and a target
+  word `u(v)` per window with `γ(I_{u(v)}) ≤ m`:
+  `∑_{v∈V} freq(I_{v ++ u(v)}) ≤ 8 log 2 · m + ε` eventually.  **No dependence on `k`, on `|V|`,
+  or on where the targets sit.**
+
+So the crux would follow with constant `8 log 2` if the transducer state at input time `n` were
+a function of the last `k` digits (for `k` large, up to error `ε`).  `no_window_function` says it
+is not one EXACTLY; the open point is the APPROXIMATE version, and uniform loss of memory
+(`hdist_runWord_le`, rate `(3−2√2)^{⌊k/2⌋}`) is the only candidate mechanism.
+
+**NEXT (lap 51).**  State `ApproxWindowState k δ`: there is a map `F : (words of length k) →
+MobState` with `hdist (s_n.mob t) ((F (window n)).mob t) ≤ δ` for all `t ∈ (0,1)`, `n ≥ k`.  Then
+(a) prove `orbitWordBound_of_approxWindowState` — the assembly of `windowHit_le` with the
+Hilbert-metric comparison (a `δ`-Hilbert perturbation moves the pullback of `I_w` into the
+pullback of a slightly enlarged word set, whose mass is `(1+O(δ))γ(I_w)`), and (b) attack
+`ApproxWindowState` itself from `hdist_runWord_le` — the honest obstruction is that the
+contraction bounds the image DIAMETER, so the remaining question is whether the EMITTED-digit
+normalisation `O_n⁻¹` restores location-independence.  A kernel refutation of (b) is as valuable
+as a proof, and would finally force the route onto the arithmetic of `Φ` (directive fact γ).

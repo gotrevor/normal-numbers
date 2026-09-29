@@ -738,3 +738,4 @@ import NormalNumbers.VandeheyS7Chain
 import NormalNumbers.VandeheyS7Equiv
 import NormalNumbers.VandeheyS7Sep
 import NormalNumbers.VandeheyS7Good
+import NormalNumbers.VandeheyS7WindowHit
