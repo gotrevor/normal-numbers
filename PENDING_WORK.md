@@ -3186,3 +3186,21 @@ Practical consequence: with `ClockLinear` (a theorem, S7-CP) converting the `n`-
 `limsup_k (1/k)·#{i < k : G^i y ∈ I_w} ≤ C·γ(I_w)`, so future work may be phrased about `y`
 directly with the state entering only through the clock.  That is the recommended frame for the
 next altitude lap.
+
+## S7-SO (lap 80): the crux's counting function IS the output's block count
+
+`src/NormalNumbers/VandeheyS7SlotOut.lean`, axiom-clean.
+
+    slotCount Φ x w p  =  outCount Φ x w (runClock Φ x p)  =  #{ i < N p : Gⁱ y ∈ I_w }
+
+exactly — no error term, no hypothesis beyond a genuine run (`slotCount_eq_outCount`, induction:
+a stall contributes nothing, an emission contributes the output's digit at the new clock time via
+S7-CX).
+
+So the §7 front, stated with no state at all, is
+
+    limsup_p  #{ i < N p : Gⁱ y ∈ I_w } / N p  ≤  C·γ(I_w),
+
+i.e. **`OrbitWordBound` IS the upper-frequency half of `IsCFNormal (Φ.mob x)`**, along the
+subsequence `N p` (which is monotone and unbounded, `runClock_tendsto`).  The reduction is faithful
+and has no slack left to exploit: every remaining route must produce real information about `y`.
