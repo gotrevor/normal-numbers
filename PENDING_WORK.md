@@ -402,6 +402,38 @@ needs one discharged (DIRECTION standing rule 3).
 
 ## Lap notes
 
+### 2026-09-29 lap 18 — DEPTH-`m` DIGIT AGREEMENT IS PROVED
+
+`cfDigit_agree_depth` (axiom-clean): if `|u − v| < δ` and at every level `i < m` the point
+`gaussMap^[i] u` lies in `(0,1)` and avoids `boundaryBad (δ · scale u i)`, then
+`cfDigit v i = cfDigit u i` for all `i < m`.  Here `scale u i = ∏_{j<i} (cfDigit u j + 1)²` is
+the accumulated one-step cost from lap 17.
+
+Two things made it clean:
+
+* **The shift identity is `rfl`.**  `cfDigit x i = cfDigit (gaussMap^[i] x) 0` holds definitionally
+  because `cfDigit x n = ⌊(gaussMap^[n] x)⁻¹⌋₊`.  So the induction carries ONLY the metric
+  invariant `|gaussMap^[i] u − gaussMap^[i] v| < δ · scale u i`, not any digit bookkeeping.
+* **Strictness on both sides.**  `cylinder_of_not_boundaryBad` (refactored out of lap 16's proof)
+  gives `1/(n+1) < v < 1/n` STRICTLY, and the strict upper bound is exactly what keeps
+  `gaussMap v > 0` so the induction can take another step.
+
+So the merging → digits transfer is complete at every depth.  The chain is now:
+
+    spread_runWord_le → abs_sub_runWord_le → cfDigit_agree_depth
+                                           ↘ volume_boundaryBad_le (per level)
+
+**Next attack (lap 19): the measure of the pullback union.**  The only remaining gap in the
+transfer is that the exceptional set is `⋃_{i<m} (gaussMap^[i])⁻¹ (boundaryBad (δ · scale u i))`,
+and its measure must be shown small.  Two facts do it: `gaussMeasure` is `gaussMap`-INVARIANT (so
+each pullback has the same measure as the set itself, no Jacobian to track), and
+`volume_boundaryBad_le` bounds each at `6√(δ · scale u i)`.  What must be controlled is
+`∑_{i<m} √(scale u i)` against `√δ` — and `scale` is exponential in `∑ log(aᵢ+1)`, which is
+`O(m)` a.s. by the SAME Khinchin integral `∫ log(1+a) dγ < ∞` that `VandeheyS7Clock` cites for
+the clock rate.  Note that coincidence: one integral underwrites both named hypotheses.
+First step: find/prove `gaussMeasure` invariance in the repo (`CFInvariance.lean` is the likely
+home) and state the pullback bound.
+
 ### 2026-09-29 lap 17 — one Gauss step costs exactly `(n+1)²`
 
 `gaussMap_eq_sub` and `abs_gaussMap_sub_le`, both axiom-clean.  Inside a depth-one cylinder the

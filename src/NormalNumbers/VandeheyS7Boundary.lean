@@ -169,12 +169,11 @@ theorem cfDigit_zero_eq_of_mem {v : ℝ} {n : ℕ} (hn : 1 ≤ n) (hv0 : 0 < v)
   rw [cfDigit_zero]
   exact Nat.floor_eq_on_Ico _ _ ⟨h1, h2⟩
 
-/-- **Digit agreement off the boundary set.**  If `u` is not within `δ` of any endpoint `1/k`
-and `|u − v| < δ`, then `u` and `v` have the same first CF digit.  With
-`volume_boundaryBad_le`, the exceptional `u` form a set of measure at most `6√δ`. -/
-theorem cfDigit_zero_eq_of_not_boundaryBad {δ u v : ℝ} (hu : u ∈ Ioo (0:ℝ) 1)
-    (hbad : u ∉ boundaryBad δ) (hv0 : 0 < v) (huv : |u - v| < δ) :
-    cfDigit v 0 = cfDigit u 0 := by
+/-- The interval version: `v` lies strictly inside `u`'s own depth-one cylinder.  Strict on both
+sides, which is what keeps `gaussMap v ≠ 0` at the next step. -/
+theorem cylinder_of_not_boundaryBad {δ u v : ℝ} (hu : u ∈ Ioo (0:ℝ) 1)
+    (hbad : u ∉ boundaryBad δ) (huv : |u - v| < δ) :
+    1 ≤ cfDigit u 0 ∧ ((cfDigit u 0 : ℝ) + 1)⁻¹ < v ∧ v < ((cfDigit u 0 : ℝ))⁻¹ := by
   obtain ⟨hu0, hu1⟩ := hu
   obtain ⟨hn1, hlo, hhi⟩ := floor_inv_spec hu0 hu1
   set n : ℕ := ⌊u⁻¹⌋₊ with hn
@@ -198,9 +197,16 @@ theorem cfDigit_zero_eq_of_not_boundaryBad {δ u v : ℝ} (hu : u ∈ Ioo (0:ℝ
     · rw [he] at hfar2; linarith
   obtain ⟨h1, h2⟩ := abs_lt.1 huv
   rw [show cfDigit u 0 = n from rfl]
-  refine cfDigit_zero_eq_of_mem hn1 hv0 ?_ ?_
-  · linarith
-  · linarith
+  exact ⟨hn1, by linarith, by linarith⟩
+
+/-- **Digit agreement off the boundary set.**  If `u` is not within `δ` of any endpoint `1/k`
+and `|u − v| < δ`, then `u` and `v` have the same first CF digit.  With
+`volume_boundaryBad_le`, the exceptional `u` form a set of measure at most `6√δ`. -/
+theorem cfDigit_zero_eq_of_not_boundaryBad {δ u v : ℝ} (hu : u ∈ Ioo (0:ℝ) 1)
+    (hbad : u ∉ boundaryBad δ) (hv0 : 0 < v) (huv : |u - v| < δ) :
+    cfDigit v 0 = cfDigit u 0 := by
+  obtain ⟨hn1, hlo, hhi⟩ := cylinder_of_not_boundaryBad hu hbad huv
+  exact cfDigit_zero_eq_of_mem hn1 hv0 hlo hhi.le
 
 /-! ## One Gauss step: the scale degrades by the square of the digit
 
@@ -252,6 +258,74 @@ theorem abs_gaussMap_sub_le {u v : ℝ} {n : ℕ} (hn : 1 ≤ n) (hu0 : 0 < u) (
     rwa [mul_inv_cancel₀ hpos.ne'] at this
   nlinarith [abs_nonneg (u - v), hstep]
 
+/-! ## Depth `m`: the full digit-agreement theorem
+
+Iterating.  The shift identity is DEFINITIONAL here — `cfDigit x i = cfDigit (gaussMap^[i] x) 0`
+holds by `rfl`, because `cfDigit x n = ⌊(gaussMap^[n] x)⁻¹⌋₊` — so the induction carries only the
+metric invariant `|gaussMap^[i] u − gaussMap^[i] v| < δ · scale u i`, where `scale` accumulates
+the one-step costs of `abs_gaussMap_sub_le`.
+-/
+
+/-- The accumulated expansion cost of the first `i` Gauss steps along `u`. -/
+noncomputable def scale (u : ℝ) (i : ℕ) : ℝ :=
+  ∏ j ∈ Finset.range i, ((cfDigit u j : ℝ) + 1) ^ 2
+
+@[simp] theorem scale_zero (u : ℝ) : scale u 0 = 1 := by simp [scale]
+
+theorem scale_succ (u : ℝ) (i : ℕ) :
+    scale u (i + 1) = scale u i * ((cfDigit u i : ℝ) + 1) ^ 2 := by
+  simp [scale, Finset.prod_range_succ]
+
+theorem scale_pos (u : ℝ) (i : ℕ) : 0 < scale u i :=
+  Finset.prod_pos fun j _ => by positivity
+
+/-- The shift identity, definitionally. -/
+theorem cfDigit_eq_iterate (x : ℝ) (i : ℕ) : cfDigit x i = cfDigit (gaussMap^[i] x) 0 := rfl
+
+/-- **Digit agreement to depth `m`.**  If at every level `i < m` the point `gaussMap^[i] u` is in
+`(0,1)` and avoids the boundary set at the ACCUMULATED scale `δ · scale u i`, then `v` matches
+`u` in all of its first `m` digits.  The exceptional set is a finite union of depth-one bad sets
+pulled back along `gaussMap`. -/
+theorem cfDigit_agree_depth {u v δ : ℝ} (huv : |u - v| < δ) (hv0 : 0 < v) (m : ℕ)
+    (hgood : ∀ i < m, gaussMap^[i] u ∈ Ioo (0:ℝ) 1 ∧
+      gaussMap^[i] u ∉ boundaryBad (δ * scale u i)) :
+    ∀ i < m, cfDigit v i = cfDigit u i := by
+  -- the metric invariant, carried up the orbit
+  have aux : ∀ i, i ≤ m →
+      |gaussMap^[i] u - gaussMap^[i] v| < δ * scale u i ∧ 0 < gaussMap^[i] v := by
+    intro i
+    induction i with
+    | zero => intro _; exact ⟨by simpa using huv, by simpa using hv0⟩
+    | succ i ih =>
+        intro hle
+        have hi : i < m := by omega
+        obtain ⟨hdist, hvpos⟩ := ih (by omega)
+        obtain ⟨hui, hbad⟩ := hgood i hi
+        obtain ⟨hn1, hlo, hhi⟩ := cylinder_of_not_boundaryBad hui hbad hdist
+        obtain ⟨-, hulo, huhi⟩ := floor_inv_spec hui.1 hui.2
+        set n : ℕ := cfDigit (gaussMap^[i] u) 0 with hn
+        have hnr : (1:ℝ) ≤ (n : ℝ) := by exact_mod_cast hn1
+        have hstep := abs_gaussMap_sub_le hn1 hui.1 hvpos hulo huhi hlo hhi.le
+        have hfac : (0:ℝ) < ((n : ℝ) + 1) ^ 2 := by positivity
+        constructor
+        · rw [Function.iterate_succ_apply', Function.iterate_succ_apply', scale_succ]
+          have : ((n : ℝ) + 1) ^ 2 * |gaussMap^[i] u - gaussMap^[i] v|
+              < ((n : ℝ) + 1) ^ 2 * (δ * scale u i) :=
+            by exact mul_lt_mul_of_pos_left hdist hfac
+          have hcd : cfDigit u i = n := rfl
+          rw [hcd]
+          linarith [hstep, this]
+        · rw [Function.iterate_succ_apply']
+          rw [gaussMap_eq_sub hn1 hvpos hlo hhi.le]
+          have : (n : ℝ) < (gaussMap^[i] v)⁻¹ := by
+            rw [lt_inv_comm₀ (by linarith) hvpos]; exact hhi
+          linarith
+  intro i hi
+  obtain ⟨hdist, hvpos⟩ := aux i (le_of_lt hi)
+  obtain ⟨hui, hbad⟩ := hgood i hi
+  rw [cfDigit_eq_iterate v i, cfDigit_eq_iterate u i]
+  exact cfDigit_zero_eq_of_not_boundaryBad hui hbad hvpos hdist
+
 
 section Audit
 
@@ -260,6 +334,7 @@ section Audit
 #print axioms cfDigit_zero_eq_of_not_boundaryBad
 #print axioms gaussMap_eq_sub
 #print axioms abs_gaussMap_sub_le
+#print axioms cfDigit_agree_depth
 
 end Audit
 
