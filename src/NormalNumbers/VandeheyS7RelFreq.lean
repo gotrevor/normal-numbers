@@ -554,6 +554,116 @@ theorem tendsto_blockCount_relSet_Ioo {x : ℝ} (hx : IsCFNormal x)
   rw [Real.dist_eq, abs_lt]
   constructor <;> linarith
 
+/-! ## Robustness: the target only matters up to the rationals
+
+The reference observable's actual target is `s.mob ⁻¹' I_w ∩ (0,1)` (`mapBlockSet s w 0`), which is
+an interval only up to a countable set: the cylinder `I_w` is `uIoo E₀ E₁` off the rationals.  That
+is harmless — a CF-normal orbit is an orbit of irrationals, and `ℚ` is `γ`-null — so the frequency
+and the mass of such a target are those of the interval.  This is the bridge from S7-RQ to the
+reference observable. -/
+
+lemma gaussMeasure_eq_of_diff_subset_rat {S T : Set ℝ} (hSm : MeasurableSet S)
+    (hTm : MeasurableSet T) (hST : S \ T ⊆ Set.range ((↑) : ℚ → ℝ))
+    (hTS : T \ S ⊆ Set.range ((↑) : ℚ → ℝ)) : gaussMeasure S = gaussMeasure T := by
+  have hnull : ∀ {U V : Set ℝ}, U \ V ⊆ Set.range ((↑) : ℚ → ℝ) → gaussMeasure (U \ V) = 0 :=
+    fun h => measure_mono_null h gaussMeasure_range_rat'
+  have hle : ∀ {U V : Set ℝ}, MeasurableSet V → U \ V ⊆ Set.range ((↑) : ℚ → ℝ) →
+      gaussMeasure U ≤ gaussMeasure V := by
+    intro U V hV hUV
+    have h := measure_inter_add_sdiff (μ := gaussMeasure) U hV
+    rw [hnull hUV, add_zero] at h
+    rw [← h]
+    exact measure_mono Set.inter_subset_right
+  exact le_antisymm (hle hTm hST) (hle hSm hTS)
+
+/-- **Rational-blind counting.**  Along an irrational full orbit, a target may be replaced by any
+set agreeing with it at the irrational points of `(0,1)`. -/
+lemma blockCount_relSet_congr_of_agree {x : ℝ} (hirr : Irrational x)
+    (horb : ∀ k : ℕ, gaussMap^[k] x ∈ Set.Ioo (0:ℝ) 1) (v : List ℕ) {A A' : Set ℝ}
+    (hagree : ∀ z, Irrational z → z ∈ Set.Ioo (0:ℝ) 1 → (z ∈ A ↔ z ∈ A')) (p : ℕ) :
+    blockCount (relSet v A) p x = blockCount (relSet v A') p x := by
+  have h01 : x ∈ Set.Ioo (0:ℝ) 1 := by simpa using horb 0
+  rw [blockCount_apply, blockCount_apply]
+  refine Finset.sum_congr rfl fun m _ => ?_
+  have hpt : gaussMap^[v.length] (gaussMap^[m] x) = gaussMap^[m + v.length] x := by
+    rw [← Function.iterate_add_apply]
+    congr 1
+    omega
+  have hptirr : Irrational (gaussMap^[m + v.length] x) :=
+    (irrational_orbit x hirr h01 (m + v.length)).1
+  have hiff := hagree _ hptirr (horb (m + v.length))
+  have hset : gaussMap^[m] x ∈ relSet v A ↔ gaussMap^[m] x ∈ relSet v A' := by
+    simp only [relSet, Set.mem_inter_iff, Set.mem_preimage, hpt]
+    exact and_congr_right fun _ => hiff
+  by_cases hz : gaussMap^[m] x ∈ relSet v A
+  · rw [blockIndic_eq_one' hz, blockIndic_eq_one' (hset.1 hz)]
+  · rw [blockIndic_eq_zero' hz, blockIndic_eq_zero' (fun h => hz (hset.2 h))]
+
+/-- A CF-normal number is irrational (`VandeheySmith`), packaged for use here. -/
+lemma irrational_of_isCFNormal {x : ℝ} (hx : IsCFNormal x) : Irrational x := by
+  by_contra h
+  exact Literature.not_isCFNormal_of_not_irrational h hx
+
+/-- **S7-RQ′, the form the reference observable uses.**  A target that is an interval off the
+rationals has the frequency, and the mass, of that interval. -/
+theorem tendsto_blockCount_relSet_of_agree {x : ℝ} (hx : IsCFNormal x)
+    (horb : ∀ k : ℕ, gaussMap^[k] x ∈ Set.Ioo (0:ℝ) 1) {v : List ℕ} (hpv : ∀ a ∈ v, 1 ≤ a)
+    {A : Set ℝ} (hAm : MeasurableSet A) (hA : A ⊆ Set.Ioo (0:ℝ) 1) {a b : ℝ}
+    (ha : 0 ≤ a) (hb : b ≤ 1)
+    (hagree : ∀ z, Irrational z → z ∈ Set.Ioo (0:ℝ) 1 → (z ∈ A ↔ z ∈ Set.Ioo a b)) :
+    Tendsto (fun p => blockCount (relSet v A) p x / (p : ℝ)) atTop
+      (nhds (relMass v (Set.Ioo a b))) := by
+  have hirr := irrational_of_isCFNormal hx
+  refine (tendsto_blockCount_relSet_Ioo hx horb hpv a b).congr fun p => ?_
+  rw [blockCount_relSet_congr_of_agree hirr horb v hagree p]
+
+/-- And the two masses agree, so the limit can equally be named by the target itself. -/
+theorem relMass_eq_of_agree (v : List ℕ) {A : Set ℝ} (hAm : MeasurableSet A)
+    (hA : A ⊆ Set.Ioo (0:ℝ) 1) {a b : ℝ} (ha : 0 ≤ a) (hb : b ≤ 1)
+    (hagree : ∀ z, Irrational z → z ∈ Set.Ioo (0:ℝ) 1 → (z ∈ A ↔ z ∈ Set.Ioo a b)) :
+    relMass v A = relMass v (Set.Ioo a b) := by
+  have hsub : Set.Ioo a b ⊆ Set.Ioo (0:ℝ) 1 := fun y hy =>
+    ⟨lt_of_le_of_lt ha hy.1, lt_of_lt_of_le hy.2 hb⟩
+  have hdiff : ∀ {U V : Set ℝ}, U ⊆ Set.Ioo (0:ℝ) 1 →
+      (∀ z, Irrational z → z ∈ Set.Ioo (0:ℝ) 1 → (z ∈ U → z ∈ V)) →
+      U \ V ⊆ Set.range ((↑) : ℚ → ℝ) := by
+    intro U V hU himp z hz
+    by_contra hzr
+    exact hz.2 (himp z (by rw [Irrational]; exact hzr) (hU hz.1) hz.1)
+  have h1 : relSet v A \ relSet v (Set.Ioo a b) ⊆ gaussMap^[v.length] ⁻¹'
+      (A \ Set.Ioo a b) := by
+    rintro z ⟨⟨hzv, hzA⟩, hz⟩
+    exact ⟨hzA, fun h => hz ⟨hzv, h⟩⟩
+  have h2 : relSet v (Set.Ioo a b) \ relSet v A ⊆ gaussMap^[v.length] ⁻¹'
+      (Set.Ioo a b \ A) := by
+    rintro z ⟨⟨hzv, hzA⟩, hz⟩
+    exact ⟨hzA, fun h => hz ⟨hzv, h⟩⟩
+  have hnullA : gaussMeasure (gaussMap^[v.length] ⁻¹' (A \ Set.Ioo a b)) = 0 := by
+    refine measure_mono_null (Set.preimage_mono
+      (hdiff hA fun z hzi hz01 hzA => (hagree z hzi hz01).1 hzA)) ?_
+    rw [gaussMeasure_preimage_iterate v.length (by
+      exact (Set.countable_range ((↑) : ℚ → ℝ)).measurableSet)]
+    exact gaussMeasure_range_rat'
+  have hnullB : gaussMeasure (gaussMap^[v.length] ⁻¹' (Set.Ioo a b \ A)) = 0 := by
+    refine measure_mono_null (Set.preimage_mono
+      (hdiff hsub fun z hzi hz01 hzA => (hagree z hzi hz01).2 hzA)) ?_
+    rw [gaussMeasure_preimage_iterate v.length (by
+      exact (Set.countable_range ((↑) : ℚ → ℝ)).measurableSet)]
+    exact gaussMeasure_range_rat'
+  have hSm := measurableSet_relSet v hAm
+  have hTm := measurableSet_relSet v (measurableSet_Ioo (a := a) (b := b))
+  have heq : gaussMeasure (relSet v A) = gaussMeasure (relSet v (Set.Ioo a b)) := by
+    refine le_antisymm ?_ ?_
+    · have h := measure_inter_add_sdiff (μ := gaussMeasure) (relSet v A) hTm
+      rw [measure_mono_null h1 hnullA, add_zero] at h
+      rw [← h]
+      exact measure_mono Set.inter_subset_right
+    · have h := measure_inter_add_sdiff (μ := gaussMeasure) (relSet v (Set.Ioo a b)) hSm
+      rw [measure_mono_null h2 hnullB, add_zero] at h
+      rw [← h]
+      exact measure_mono Set.inter_subset_right
+  rw [relMass, relMass, heq]
+
 end NormalNumbers.VandeheyS7
 
 section Audit
@@ -562,6 +672,8 @@ section Audit
 #print axioms NormalNumbers.VandeheyS7.relMass_cfCylinder
 #print axioms NormalNumbers.VandeheyS7.tendsto_blockCount_relSet_cfCylinder
 #print axioms NormalNumbers.VandeheyS7.tendsto_blockCount_relSet_Ioo
+#print axioms NormalNumbers.VandeheyS7.tendsto_blockCount_relSet_of_agree
+#print axioms NormalNumbers.VandeheyS7.relMass_eq_of_agree
 
 end Audit
 
