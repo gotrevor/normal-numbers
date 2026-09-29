@@ -2572,3 +2572,44 @@ named, finite obligations.
 2. `BlockCoupling` for the actual machine (`VandeheyLRTransducer` has `lrStep_spec`, `lrRun_eq`,
    `act_startState_eq` — the recursion is already there).
 3. (α) itself stays parked behind the wall, as the directive requires.
+
+### Lap 75, seventh commit — S7-CR: the last non-wall question, answered NO
+
+`VandeheyS7ConjRow` settles the question S7-TD raised.
+
+**1. The conjugate bottom row is an integer translate of the real one.**  For the additive instance
+`Φ = [[1,φ],[0,1]]`, `Φ' = [[1,ψ],[0,1]]`, and the two differ only in the `(1,2)` entry, so for
+`s = O⁻¹ Φ P`:
+
+    row₂(s') − row₂(s) = (ψ − φ)·(O⁻¹)₂₁·row₂(P) = −√5·(O⁻¹)₂₁·row₂(P).
+
+`addStateBottom_sub` (the algebra) and `conjRow_sub_eq` (the `√5` form).  This pins the second place
+to the first via ONE integer plus the input convergent's bottom row — and is also why the conjugate
+height grows like `q_in`.
+
+**2. Narrow does NOT imply small conjugate height.**  `narrowState m` (`a,b,c,d = 1,0,1,m`) has
+`width = 1/(1+m)`, and its bottom-row entries are rational, hence *their own* conjugates:
+`exists_narrow_state_large_conj` gives, for every `ε, R`, a state of width `< ε` with conjugate
+entry height `> R`.
+
+**Verdict: the two bad regimes overlap.**  The regime where the S7-RD cancellation needs the
+straddle cap (narrow) is not disjoint from the regime where S7-DC kills the cap (large conjugate
+height).  So the clock-rate debt does **not** close by disjointness; it sits behind second-place
+control exactly as fact (α) does.
+
+### State of the §7 front at the end of lap 75
+
+`vandeheyS7_mul_phi_of_transducerData` / `_add_phi_` (axiom-clean): both frozen targets from
+cited `GaussACRigidity` + `ImageTight` + `TransducerData`.  Inside `TransducerData`:
+
+* `BlockCoupling` — bookkeeping, `VandeheyLRTransducer` has the recursion (`lrStep_spec`,
+  `lrRun_eq`, `act_startState_eq`).  The only thing left that is pure labour.
+* clock regularity — behind second-place control (S7-CR).
+* `BlockAverageBound` = fact (α) — behind second-place control (S7-ST + S7-DC).
+
+**Every non-wall question on the front is now closed, four of them negatively and in the kernel.**
+A future lap has exactly two honest options: (i) grind `BlockCoupling` out of
+`VandeheyLRTransducer`, which is real but adds no mathematics; (ii) attack second-place
+equidistribution directly, which the directive currently forbids as the self-joining wall and which
+would need an altitude lap to re-authorise.  **That choice is above a grind lap's pay grade and
+should be made by the next review lap.**

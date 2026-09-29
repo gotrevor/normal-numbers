@@ -740,6 +740,7 @@ import NormalNumbers.VandeheyS7Read
 import NormalNumbers.VandeheyS7Straddle
 import NormalNumbers.VandeheyS7Decouple
 import NormalNumbers.VandeheyS7Transduce
+import NormalNumbers.VandeheyS7ConjRow
 import NormalNumbers.VandeheyS7Forced
 import NormalNumbers.VandeheyS7Block
 import NormalNumbers.VandeheyS7Predict
