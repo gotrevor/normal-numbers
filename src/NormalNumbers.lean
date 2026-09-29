@@ -807,6 +807,7 @@ import NormalNumbers.VandeheyS7RelFreq
 import NormalNumbers.VandeheyS7RefTarget
 import NormalNumbers.VandeheyS7WordState
 import NormalNumbers.VandeheyS7RefCesaro
+import NormalNumbers.VandeheyS7LevelGen
 import NormalNumbers.VandeheyS7Quadratic
 import NormalNumbers.VandeheyS7Class
 import NormalNumbers.VandeheyS7Net
