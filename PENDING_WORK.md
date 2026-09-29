@@ -402,6 +402,29 @@ needs one discharged (DIRECTION standing rule 3).
 
 ## Lap notes
 
+### 2026-09-29 lap 15 — the trigger window is quantitative: `volume (boundaryBad δ) ≤ 6√δ`
+
+`VandeheyS7Boundary.lean`.  Merging gives two output points within `δ`; a CF digit is `⌊1/x⌋`,
+so the digits agree UNLESS a point is within `δ` of a depth-one cylinder endpoint `1/k`.  That
+bad set is `boundaryBad δ`, and `volume_boundaryBad_le` bounds it by `6√δ`.  Axiom-clean.
+
+**The rate is `√δ`, not `δ`, and that was the thing to get right.**  The endpoints `1/k` are
+infinitely many and accumulate at `0`, so "`2δ` per endpoint" DIVERGES — an obvious-looking route
+that does not work.  The split is by scale: discard `(0, 2√δ)` wholesale (measure `2√δ`), and
+above that scale only the `k ≤ 1/√δ` endpoints are reachable, contributing `2δ(1/√δ + 1) ≤ 4√δ`.
+
+Consequence worth recording: **no digit cutoff is needed.**  The accumulation at `0` was the
+reason to fear one, and paying `√δ` instead of `δ` buys it off.  Since merging supplies
+`δ = 1/(fib(n-1)fib(n))`, exponentially small, `√δ` is still exponentially small and the loss is
+free.  A cutoff would have had to be carried through the entire Cesàro argument.
+
+**Next attack (lap 16): depth `m`.**  Same statement for `cfCylinder w` with `|w| = m`: the bad
+set is the `δ`-neighbourhood of the depth-`m` endpoints.  The depth-`m` cylinder containing a
+point of digit-sum-scale `Q` has length `~1/Q²`, so the same scale split should give
+`O(√δ)` again with an `m`-dependent constant; the clean route is probably induction on `m` using
+`gaussMap`'s expansion `1/x²` rather than re-running the covering.  Then: digits agree off
+`boundaryBad`, and `SampledUniformCount` is Cesàro bookkeeping on a full-measure set.
+
 ### 2026-09-29 lap 14 — the projective-to-absolute bridge
 
 Merging is proved in the Hilbert metric, but CF digits are read off an ABSOLUTE position
