@@ -10,9 +10,10 @@ Advance this lap: the whole analytic spine of §§1–5 went from paper to kerne
 defects in the note's plan were found and repaired (the far range needs no `τ(n) ≤ 2√n`;
 feasibility and rate need *different* bounds on `log B`, crude `k³` and sharp `k² log k`).
 
-Decomposition as of the latest commit: the crux is now TWO named statements in `src`,
-`exists_good_starts_at_height` (chosen-height, steps 1–4) and its §5 transfer inside
-`exists_joint_small_tail_count`.  `JointLambertQuantitative.lean` itself is sorry-free and
+Decomposition as of the latest commit: the crux is ONE named statement in `src`,
+`exists_good_starts_at_height` (chosen-height, steps 1–4).  Its §5 transfer to every `N`
+is PROVED (`exists_joint_small_tail_count`), so the whole route now hangs on the
+chosen-height theorem alone.  `JointLambertQuantitative.lean` itself is sorry-free and
 both headlines are proved from these.  `countK_le_countK` (monotone above `log X ≥ 1`; the
 threshold is load-bearing, since `Real.log` is not monotone through `0`) is proved and is the
 transfer's first ingredient.

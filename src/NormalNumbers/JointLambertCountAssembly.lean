@@ -222,6 +222,206 @@ theorem exists_joint_small_tail_count {c a r : ℕ} (hc : 2 ≤ c) (ha : 2 ≤ a
         (∀ m ∈ T, ∀ b : ℕ, 2 ≤ b →
           0 ≤ ∑' t : ℕ, (tau (m + 1 + k + t) : ℝ) / (b : ℝ) ^ (k + t + 1) ∧
           ∑' t : ℕ, (tau (m + 1 + k + t) : ℝ) / (b : ℝ) ^ (k + t + 1) < ε / 2) := by
-  sorry
+  classical
+  obtain ⟨X0, hheight⟩ := exists_good_starts_at_height hc ha hr hε
+  obtain ⟨C, hC, N1, hrate⟩ := eventually_rate_le c a
+  obtain ⟨N2, hN2⟩ := eventually_atTop.1
+    ((eventually_height_ge a (max X0 3)).and (eventually_countK_le.and
+      ((Real.tendsto_log_atTop.comp tendsto_natCast_atTop_atTop).eventually_ge_atTop (1 : ℝ))))
+  refine ⟨C, hC, max (max N1 N2) 3, fun N hN => ?_⟩
+  have hNN1 : N1 ≤ N := le_trans (le_trans (le_max_left _ _) (le_max_left _ _)) hN
+  have hNN2 : N2 ≤ N := le_trans (le_trans (le_max_right _ _) (le_max_left _ _)) hN
+  have hN3 : 3 ≤ N := le_trans (le_max_right _ _) hN
+  obtain ⟨hXge, ⟨hkN1, hkNle⟩, hlogN1⟩ := hN2 N hNN2
+  set D : ℕ := countD a N with hDdef
+  set X : ℕ := N / D with hXdef
+  have hDpos : 0 < D := countD_pos (a := a) hkN1
+  have hX0 : X0 ≤ X := le_trans (le_max_left _ _) hXge
+  have hX3 : 3 ≤ X := le_trans (le_max_right _ _) hXge
+  have hDX : D * X ≤ N := by
+    rw [hXdef, Nat.mul_comm]
+    exact Nat.div_mul_le_self N D
+  have hNlt : N < D * (X + 1) := by
+    have h1 := Nat.div_add_mod N D
+    have h2 := Nat.mod_lt N hDpos
+    have : D * X + N % D = N := by rw [hXdef]; omega
+    have hmul : D * (X + 1) = D * X + D := by ring
+    omega
+  obtain ⟨B, Dx, hrk, hBpos, hDxpos, hBle, hDxle, T, hcard, hmem, hkill, hsurv, hall⟩ :=
+    hheight X hX0
+  set k : ℕ := countK X with hkdef
+  -- real setup
+  have hXR : (0 : ℝ) < (X : ℝ) := by
+    have : (0 : ℕ) < X := by omega
+    exact_mod_cast this
+  have hNR : (0 : ℝ) < (N : ℝ) := by
+    have : (0 : ℕ) < N := by omega
+    exact_mod_cast this
+  have hlogX1 : (1 : ℝ) ≤ Real.log (X : ℝ) := by
+    have h3 : (3 : ℝ) ≤ (X : ℝ) := by exact_mod_cast hX3
+    have he : Real.exp 1 ≤ 3 := Real.exp_one_lt_d9.le.trans (by norm_num)
+    calc (1 : ℝ) = Real.log (Real.exp 1) := by rw [Real.log_exp]
+      _ ≤ Real.log 3 := Real.log_le_log (Real.exp_pos 1) he
+      _ ≤ Real.log (X : ℝ) := Real.log_le_log (by norm_num) h3
+  have hXN : X ≤ N := by
+    calc X ≤ D * X := Nat.le_mul_of_pos_left _ hDpos
+      _ ≤ N := hDX
+  have hkmono : k ≤ countK N := countK_le_countK (by linarith) hXN
+  -- `k ≥ 2`, directly from `r < k` and `r ≥ 1`
+  have hk1 : 1 ≤ k := by omega
+  -- the offsets fit inside `[0, N)`
+  have hnlt : ∀ n ∈ T, n < N := by
+    intro n hn
+    obtain ⟨-, hnDX⟩ := hmem n hn
+    have hDxD : Dx ≤ D := by
+      rw [hDdef, countD]
+      refine le_trans hDxle ?_
+      exact Nat.mul_le_mul_left 2 (Nat.pow_le_pow_left
+        (Nat.mul_le_mul_left 2 (Nat.pow_le_pow_left hkmono 3)) _)
+    calc n < Dx * X := hnDX
+      _ ≤ D * X := Nat.mul_le_mul_right X hDxD
+      _ ≤ N := hDX
+  -- the shifted good set
+  refine ⟨k, hrk, T.image (fun n => n - 1), ?_, ?_, ?_, ?_, ?_⟩
+  · -- the count
+    have hinj : Set.InjOn (fun n => n - 1) T := by
+      intro x hx y hy hxy
+      have h1 := (hmem x hx).1
+      have h2 := (hmem y hy).1
+      simp only at hxy
+      omega
+    rw [Finset.card_image_of_injOn hinj]
+    refine le_trans ?_ hcard
+    -- `N exp(-C μ²ν) ≤ X / (8 B log X)`
+    set μ : ℝ := Real.log (Real.log (N : ℝ)) with hμdef
+    set ν : ℝ := Real.log (Real.log (Real.log (N : ℝ))) with hνdef
+    have hBR : (1 : ℝ) ≤ (B : ℝ) := by exact_mod_cast hBpos
+    have hden : (0 : ℝ) < 8 * (B : ℝ) * Real.log (X : ℝ) := by
+      have : (0 : ℝ) < Real.log (X : ℝ) := by linarith
+      positivity
+    have hlogXN : Real.log (X : ℝ) ≤ Real.log (N : ℝ) :=
+      Real.log_le_log hXR (by exact_mod_cast hXN)
+    have hloglogXN : Real.log (Real.log (X : ℝ)) ≤ μ := by
+      rw [hμdef]
+      exact Real.log_le_log (by linarith) hlogXN
+    -- `log N ≤ log 2 + log D + log X`
+    have hlogNle : Real.log (N : ℝ) ≤ Real.log 2 + Real.log (D : ℝ) + Real.log (X : ℝ) := by
+      have hDR : (0 : ℝ) < (D : ℝ) := by exact_mod_cast hDpos
+      have hle : (N : ℝ) ≤ 2 * ((D : ℝ) * (X : ℝ)) := by
+        have h1 : (N : ℝ) ≤ ((D * (X + 1) : ℕ) : ℝ) := by exact_mod_cast hNlt.le
+        have h2 : ((D * (X + 1) : ℕ) : ℝ) = (D : ℝ) * ((X : ℝ) + 1) := by push_cast; ring
+        have h3 : (1 : ℝ) ≤ (X : ℝ) := by
+          have : (1 : ℕ) ≤ X := by omega
+          exact_mod_cast this
+        rw [h2] at h1
+        nlinarith [h1, hDR, h3]
+      calc Real.log (N : ℝ) ≤ Real.log (2 * ((D : ℝ) * (X : ℝ))) :=
+            Real.log_le_log hNR hle
+        _ = Real.log 2 + Real.log (D : ℝ) + Real.log (X : ℝ) := by
+            rw [Real.log_mul (by norm_num) (by positivity), Real.log_mul (by positivity)
+              (by positivity)]
+            ring
+    -- `log D = log 2 + (a-1) log(2 k_N³)`
+    have hlogD : Real.log (D : ℝ)
+        = Real.log 2 + ((a - 1 : ℕ) : ℝ) * Real.log (2 * (countK N : ℝ) ^ 3) := by
+      have hcast : ((D : ℕ) : ℝ) = 2 * (2 * (countK N : ℝ) ^ 3) ^ (a - 1) := by
+        rw [hDdef, countD]; push_cast; ring
+      rw [hcast, Real.log_mul (by norm_num) (by positivity), Real.log_pow]
+    -- `log B ≤ (1 + c k_N²) log(2 k_N³)`
+    have hkNR : (1 : ℝ) ≤ (countK N : ℝ) := by exact_mod_cast hkN1
+    have hkR : (1 : ℝ) ≤ (k : ℝ) := by exact_mod_cast hk1
+    have hlog2k3N : (0 : ℝ) ≤ Real.log (2 * (countK N : ℝ) ^ 3) := by
+      refine Real.log_nonneg ?_
+      have : (1 : ℝ) ≤ (countK N : ℝ) ^ 3 := one_le_pow₀ hkNR
+      linarith
+    have hlogB : Real.log (B : ℝ)
+        ≤ (1 + (c : ℝ) * (countK N : ℝ) ^ 2) * Real.log (2 * (countK N : ℝ) ^ 3) := by
+      have hcast : (((2 * k ^ 3) ^ (1 + c * k ^ 2) : ℕ) : ℝ)
+          = (2 * (k : ℝ) ^ 3) ^ (1 + c * k ^ 2) := by push_cast; ring
+      have h1 : Real.log (B : ℝ) ≤ Real.log (((2 * k ^ 3) ^ (1 + c * k ^ 2) : ℕ) : ℝ) :=
+        Real.log_le_log (by linarith) (by exact_mod_cast hBle)
+      rw [hcast, Real.log_pow] at h1
+      have hmono1 : Real.log (2 * (k : ℝ) ^ 3) ≤ Real.log (2 * (countK N : ℝ) ^ 3) := by
+        refine Real.log_le_log (by positivity) ?_
+        have := pow_le_pow_left₀ (show (0:ℝ) ≤ (k:ℝ) by linarith)
+          (show (k : ℝ) ≤ (countK N : ℝ) by exact_mod_cast hkmono) 3
+        linarith
+      have hmono2 : ((1 + c * k ^ 2 : ℕ) : ℝ) ≤ 1 + (c : ℝ) * (countK N : ℝ) ^ 2 := by
+        have := pow_le_pow_left₀ (show (0:ℝ) ≤ (k:ℝ) by linarith)
+          (show (k : ℝ) ≤ (countK N : ℝ) by exact_mod_cast hkmono) 2
+        push_cast
+        nlinarith [Nat.cast_nonneg (α := ℝ) c]
+      have hlogk3nn : (0 : ℝ) ≤ Real.log (2 * (k : ℝ) ^ 3) := by
+        refine Real.log_nonneg ?_
+        have : (1 : ℝ) ≤ (k : ℝ) ^ 3 := one_le_pow₀ hkR
+        linarith
+      calc Real.log (B : ℝ) ≤ ((1 + c * k ^ 2 : ℕ) : ℝ) * Real.log (2 * (k : ℝ) ^ 3) := h1
+        _ ≤ (1 + (c : ℝ) * (countK N : ℝ) ^ 2) * Real.log (2 * (countK N : ℝ) ^ 3) := by
+            refine mul_le_mul hmono2 hmono1 hlogk3nn ?_
+            have : (0 : ℝ) ≤ (c : ℝ) * (countK N : ℝ) ^ 2 := by positivity
+            linarith
+    -- `log(8 B log X) = log 8 + log B + log log X`
+    have hlogden : Real.log (8 * (B : ℝ) * Real.log (X : ℝ))
+        = Real.log 8 + Real.log (B : ℝ) + Real.log (Real.log (X : ℝ)) := by
+      rw [Real.log_mul (by positivity) (by linarith), Real.log_mul (by norm_num)
+        (by linarith)]
+    have hrateN := hrate N hNN1
+    have hlog8N : Real.log (8 * Real.log (N : ℝ)) = Real.log 8 + μ := by
+      rw [Real.log_mul (by norm_num) (by linarith), hμdef]
+    have hl2 : Real.log 2 ≤ 1 := by have := Real.log_two_lt_d9; linarith
+    have haR : ((a - 1 : ℕ) : ℝ) ≤ (a : ℝ) := by
+      have : (a - 1 : ℕ) ≤ a := Nat.sub_le a 1
+      exact_mod_cast this
+    -- the key inequality
+    have hkey : Real.log (N : ℝ)
+        ≤ Real.log (X : ℝ) - Real.log (8 * (B : ℝ) * Real.log (X : ℝ)) + C * μ ^ 2 * ν := by
+      rw [hlogden]
+      rw [hlog8N] at hrateN
+      set Lg : ℝ := Real.log (2 * (countK N : ℝ) ^ 3) with hLgdef
+      have e1 : Real.log (N : ℝ) - Real.log (X : ℝ)
+          ≤ Real.log 2 + (Real.log 2 + ((a - 1 : ℕ) : ℝ) * Lg) := by
+        rw [← hlogD]; linarith [hlogNle]
+      have hPQ : ((a - 1 : ℕ) : ℝ) * Lg ≤ (a : ℝ) * Lg :=
+        mul_le_mul_of_nonneg_right haR hlog2k3N
+      have hexp : (1 + (c : ℝ) * (countK N : ℝ) ^ 2 + (a : ℝ)) * Lg
+          = (1 + (c : ℝ) * (countK N : ℝ) ^ 2) * Lg + (a : ℝ) * Lg := by ring
+      rw [hexp] at hrateN
+      linarith [hrateN, e1, hlogB, hloglogXN, hPQ, hl2]
+    -- exponentiate
+    have hGpos : (0 : ℝ) < (X : ℝ) / (8 * (B : ℝ) * Real.log (X : ℝ)) := by positivity
+    have hlogG : Real.log ((X : ℝ) / (8 * (B : ℝ) * Real.log (X : ℝ)))
+        = Real.log (X : ℝ) - Real.log (8 * (B : ℝ) * Real.log (X : ℝ)) :=
+      Real.log_div (ne_of_gt hXR) (ne_of_gt hden)
+    calc (N : ℝ) * Real.exp (-C * μ ^ 2 * ν)
+        = Real.exp (Real.log (N : ℝ) + -C * μ ^ 2 * ν) := by
+          rw [Real.exp_add, Real.exp_log hNR]
+      _ ≤ Real.exp (Real.log ((X : ℝ) / (8 * (B : ℝ) * Real.log (X : ℝ)))) := by
+          refine Real.exp_le_exp.mpr ?_
+          rw [hlogG]
+          linarith [hkey]
+      _ = (X : ℝ) / (8 * (B : ℝ) * Real.log (X : ℝ)) := Real.exp_log hGpos
+  · intro m hm
+    obtain ⟨n, hn, rfl⟩ := Finset.mem_image.mp hm
+    have h1 := (hmem n hn).1
+    have h2 := hnlt n hn
+    omega
+  · intro m hm j hj hjr
+    obtain ⟨n, hn, rfl⟩ := Finset.mem_image.mp hm
+    have h1 := (hmem n hn).1
+    have hrw : n - 1 + 1 = n := by omega
+    rw [hrw]
+    exact hkill n hn j hj hjr
+  · intro m hm
+    obtain ⟨n, hn, rfl⟩ := Finset.mem_image.mp hm
+    have h1 := (hmem n hn).1
+    have hrw : n - 1 + 1 = n := by omega
+    rw [hrw]
+    exact hsurv n hn
+  · intro m hm b hb
+    obtain ⟨n, hn, rfl⟩ := Finset.mem_image.mp hm
+    have h1 := (hmem n hn).1
+    have hrw : n - 1 + 1 = n := by omega
+    rw [hrw]
+    exact hall n hn b hb
 
 end NormalNumbers.JointLambert
