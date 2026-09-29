@@ -24,6 +24,7 @@ import NormalNumbers.VandeheyAutomaton
 import NormalNumbers.VandeheyS7Memory
 import NormalNumbers.VandeheyS7Hecke
 import NormalNumbers.VandeheyS7Predict
+import NormalNumbers.VandeheyS7Quadratic
 
 /-!
 # `Maze.lean` — the halls we have walked, encoded
@@ -320,6 +321,34 @@ arithmetic of `s_n = O_n⁻¹ Φ P_n`, never predictability plus size.  With
 it cannot be ignored. -/
 alias hall_predictable_from_marginals :=
   NormalNumbers.VandeheyS7.not_predictableHitPrinciple
+
+/-- **HALL: `BlockForget` in the uniform-`z` form** (`falseAsStated`, 2026-09-29).  Route A's
+crux asked the block time-average `blockAvg s T w z` to forget the initial state `s` uniformly
+over ALL input points `z ∈ (0,1)`.  It does not.  The run from state `s` on input `z` emits the
+CF of `s.mob z`, so at a FIXED `z` the block average is the frequency of `w` in that CF (up to
+the clock rate).  Take `z = √2 − 1`, a fixed point of the Gauss map, so every digit is `2`
+(`cfDigit_sqrtTwoSub`): the digit `1` has frequency `0` from the identity state.  The state
+`shiftState : t ↦ 2/(t+2)` has rational entries and width `1/3`, and sends `√2 − 1` to
+`2√2 − 2` (`shiftState_mob_sqrtTwoSub`), a `2`-cycle of the Gauss map whose digits alternate
+`1, 4` (`cfDigit_twoSqrtTwoSub_even/odd`): the digit `1` has frequency `1/2`.  Two distinct
+periodic orbits never merge — they lie in different `GL₂(ℤ)` cycles of `ℚ(√2)` (discriminants
+`8` and `32`) — so time-averaging cannot help and this is not probe trap #2.
+
+The row is `frozen`, not `kernel`: the arithmetic below is machine-checked, but the last step
+(digit frequency ⟹ `blockAvg`) is transducer correctness plus clock-rate bookkeeping and is not
+claimed here.  **The repair costs nothing**: the architecture only ever evaluates the crux at
+the orbit points `Gᵐx` of a CF-normal `x`, and a quadratic irrational is never CF-normal.  The
+live crux is `BlockForgetGen` (S7-BG), the same statement with `z` restricted to CF-normal
+points; `BlockForget.gen` records that the refuted form is the stronger one. -/
+alias hall_blockforget_uniform_z := NormalNumbers.VandeheyS7.cfDigit_sqrtTwoSub
+
+/-- Companion witness of `hall_blockforget_uniform_z`: the shifted point is a `2`-cycle. -/
+alias hall_blockforget_uniform_z_cycle :=
+  NormalNumbers.VandeheyS7.cfDigit_twoSqrtTwoSub_even
+
+/-- Companion witness of `hall_blockforget_uniform_z`: the two states meet at one input. -/
+alias hall_blockforget_uniform_z_state :=
+  NormalNumbers.VandeheyS7.MapState.shiftState_mob_sqrtTwoSub
 
 
 
@@ -1141,6 +1170,11 @@ def register : List Hall := [
    .refuted, .kernel,
    "phi is the worst-approximable real: |p - q phi| >= 1/(4q) from the nonzero integer norm form p^2 - pq - q^2, so agreement of the images to CF depth N costs q^2 > c^N and a determinant pq >= q^2 exponential in N; Thm 1.1's automaton then carries e^(Omega(N)) states while only N input digits are read, so its equidistribution says nothing about that prefix",
    "alias hall_hecke_approximation; module VandeheyS7Hecke; theorems abs_sub_mul_goldenRatio_ge, pow_lt_den_sq_of_image_approx, sq_le_det_of_approx", "2026-09-29"⟩,
+  ⟨"BlockForget in the uniform-z form",
+   "Ask the block time-average blockAvg s T w z to forget the initial state uniformly over ALL input points z in (0,1)",
+   .falseAsStated, .frozen,
+   "At the Gauss fixed point z = sqrt2 - 1 every digit is 2, so digit 1 has frequency 0 from the identity state; the width-1/3 state t -> 2/(t+2) sends it to 2 sqrt2 - 2, a 2-cycle with digits alternating 1,4, so digit 1 has frequency 1/2 -- a gap of 1/2 for every T, and the two periodic orbits lie in different GL2(Z) cycles of Q(sqrt2) (discriminants 8 and 32) so time-averaging cannot merge them",
+   "alias hall_blockforget_uniform_z (+_cycle, +_state); module VandeheyS7Quadratic; the repair is BlockForgetGen with z restricted to CF-normal points, which the architecture is all that ever needs since a quadratic irrational is never CF-normal", "2026-09-29"⟩,
   ⟨"predictable target sets from marginals alone",
    "Conclude OrbitCellBound from: A n = s_n^(-1)(E) is determined by x_1..x_n, has small Gauss mass, and the input orbit has the correct marginal frequencies",
    .refuted, .kernel,
