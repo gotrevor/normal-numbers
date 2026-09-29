@@ -5,6 +5,8 @@ Authors: Trevor Morris
 -/
 import NormalNumbers.JointLambertAGPRange
 
+set_option maxHeartbeats 1000000
+
 /-!
 # Rescaling the prime search: AGP's *consumer* needs far less than AGP
 
@@ -249,5 +251,142 @@ theorem exists_rescaled_prime_supply :
       _ ≤ _ := h
   have hexpand : N * (2 * φ * Λ) = 2 * (N * (φ * Λ)) := by ring
   linarith
+
+/-! ### The rescaled candidate selection -/
+
+/-- `X^(1/4)`-free restatement: the rescaled endpoint as a fourth power of `U = 2^(k¹²)`. -/
+private lemma rescaled_pow_eq (k : ℕ) : (2 : ℕ) ^ (4 * k ^ 12) = 2 ^ (4 * (k ^ 3) ^ 4) := by
+  congr 1
+  ring
+
+/-- **The rescaled prime selection, UNCONDITIONAL.**  Identical in content to
+`exists_joint_prime_candidates` except that the prime-search endpoint is `X = 2^(4k¹²)`
+instead of `2^(4k⁴)` (so the candidate density is `1/(16k¹²)`), and *no* analytic
+hypothesis is taken: `PrimeIntervalSupply` is `primeIntervalSupply_holds` and the AGP
+count is `exists_rescaled_prime_supply`.
+
+The exceptional set is the singleton `{P}` of the excised conductor when `P` is prime and
+`∅` when `P = 1`; `exists_prime_allocation` therefore costs at most one pool prime, which
+is why `D₀ = 1` suffices in the pool inequality. -/
+theorem exists_joint_prime_candidates_rescaled
+    {c a r : ℕ} (hc : 2 ≤ c) (ha : 2 ≤ a) (hr : 1 ≤ r) (K : ℕ) :
+    ∃ (k q : ℕ) (p : ℕ → ℕ → ℕ) (R u : ℕ),
+      K ≤ k ∧ r < k ∧
+      2 ^ k < q ∧ q < 2 * 2 ^ k ∧ q.Prime ∧
+      (∀ j t, j < k → j ≠ r → t < j + 1 →
+        (p j t).Prime ∧ 2 ^ k < p j t ∧ p j t < 2 * 2 ^ k) ∧
+      0 < R ∧ R < jointA c a k r q p ∧ 1 ≤ u ∧ u < jointB c k r q p ∧
+      R + r = jointQ a q * u ∧
+      jointA c a k r q p = jointQ a q * jointB c k r q p ∧
+      u ≡ 1 [MOD q] ∧ Nat.Coprime u (jointB c k r q p) ∧
+      R + r ≡ jointQ a q [MOD q ^ a] ∧
+      (∀ j, j < k → j ≠ r → R + j ≡ slotProd p j ^ (c - 1) [MOD slotProd p j ^ c]) ∧
+      (∀ m j, j < k → j ≠ r →
+        c ^ (j + 1) ∣ NormalNumbers.SwingC2.tau (R + m * jointA c a k r q p + j)) ∧
+      (∀ m, (u + m * jointB c k r q p).Prime →
+        NormalNumbers.SwingC2.tau (R + m * jointA c a k r q p + r) = 2 * a) ∧
+      (∀ j, k ≤ j → j < 2 ^ k → Nat.Coprime (R + j) (jointA c a k r q p)) ∧
+      jointQ a q ≤ (2 * 2 ^ k) ^ (a - 1) ∧
+      jointB c k r q p ≤ (2 * 2 ^ k) ^ (1 + c * killPoolSize k r) ∧
+      jointB c k r q p ≤ 2 ^ (k ^ 4) ∧ jointQ a q ≤ 2 ^ (k ^ 4) ∧ 2 ^ k < R ∧
+      ((2 ^ (4 * k ^ 12) / jointB c k r q p + 1 : ℕ) : ℝ) / (16 * (k : ℝ) ^ 12) ≤
+        (((range (2 ^ (4 * k ^ 12) / jointB c k r q p + 1)).filter
+          (fun m => (u + m * jointB c k r q p).Prime ∧
+            u + m * jointB c k r q p ≤ 2 ^ (4 * k ^ 12))).card : ℝ) := by
+  classical
+  obtain ⟨k0, hsupply⟩ := exists_rescaled_prime_supply
+  obtain ⟨L0, hPIS⟩ := primeIntervalSupply_holds
+  obtain ⟨k, hkK', hkr, hk16, hL0, -, hpool, hschedB, hschedQ⟩ :=
+    exists_selection_scale (max K k0) r c a 1 0 L0
+  have hkK : K ≤ k := le_trans (le_max_left _ _) hkK'
+  have hkk0 : k0 ≤ k := le_trans (le_max_right _ _) hkK'
+  have hk1 : 1 ≤ k := by omega
+  have hL2 : 2 ≤ 2 ^ k := by
+    calc (2 : ℕ) = 2 ^ 1 := rfl
+      _ ≤ 2 ^ k := Nat.pow_le_pow_right (by norm_num) hk1
+  have hkL : k ≤ 2 ^ k := Nat.lt_two_pow_self.le
+  -- ### the excised conductor, fixed before any modulus
+  obtain ⟨P, hPprime, hPcount⟩ := hsupply k hkk0
+  set Dset : Finset ℕ := if P = 1 then (∅ : Finset ℕ) else {P} with hDset
+  have hDcard : Dset.card ≤ 1 := by
+    rw [hDset]; split <;> simp
+  -- ### the prime pool
+  have hpisL := hPIS (2 ^ k) hL0 hL2
+  have hScard : 1 + killPoolSize k r + Dset.card ≤
+      (((Ioo (2 ^ k) (2 * 2 ^ k)).filter Nat.Prime).card) := by
+    have := pool_card_ge (r := r) (D0 := 1) hk1 hpool hpisL
+    omega
+  obtain ⟨q, p, hqS, hpS, hpqne, hpinj, havoid⟩ :=
+    exists_prime_allocation c k r ((Ioo (2 ^ k) (2 * 2 ^ k)).filter Nat.Prime) Dset
+      (fun π hπ => (Finset.mem_filter.mp hπ).2) hScard
+  have hqdata : q.Prime ∧ 2 ^ k < q ∧ q < 2 * 2 ^ k := by
+    obtain ⟨hmem, hpr⟩ := Finset.mem_filter.mp hqS
+    obtain ⟨h1, h2⟩ := Finset.mem_Ioo.mp hmem
+    exact ⟨hpr, h1, h2⟩
+  have hpdata : ∀ j t, j ∈ killedIdx k r → t < j + 1 →
+      (p j t).Prime ∧ 2 ^ k < p j t ∧ p j t < 2 * 2 ^ k := by
+    intro j t hj ht
+    obtain ⟨hmem, hpr⟩ := Finset.mem_filter.mp (hpS j t hj ht)
+    obtain ⟨h1, h2⟩ := Finset.mem_Ioo.mp hmem
+    exact ⟨hpr, h1, h2⟩
+  have hqr : r < jointQ a q := by
+    have h1 : q ^ 1 ≤ q ^ (a - 1) := Nat.pow_le_pow_right hqdata.1.pos (by omega)
+    rw [pow_one] at h1
+    simp only [jointQ]
+    omega
+  obtain ⟨R, u, hR0, hRA, hu1, huB, hRr, hAQB, humod, hcopuB, hres_r, hres_j, hkill,
+      hsurv, htail⟩ :=
+    exists_joint_progression (L := 2 ^ k) (p := p) hc ha hr hkr hkL hqdata.1 hqdata.2.1 hqr
+      (fun j t hjk hjr ht => (hpdata j t (mem_killedIdx.mpr ⟨hjr, hjk⟩) ht).1)
+      (fun j t hjk hjr ht => (hpdata j t (mem_killedIdx.mpr ⟨hjr, hjk⟩) ht).2.1)
+      (fun j t hjk hjr ht => hpqne j t (mem_killedIdx.mpr ⟨hjr, hjk⟩) ht)
+      (fun j t j' t' hjk hjr ht hj'k hj'r ht' he =>
+        hpinj j t j' t' (mem_killedIdx.mpr ⟨hjr, hjk⟩) ht (mem_killedIdx.mpr ⟨hj'r, hj'k⟩) ht' he)
+  have htwo : 2 * 2 ^ k = 2 ^ (k + 1) := by rw [pow_succ]; ring
+  have hQle : jointQ a q ≤ (2 * 2 ^ k) ^ (a - 1) := jointQ_le hqdata.2.2
+  have hBle : jointB c k r q p ≤ (2 * 2 ^ k) ^ (1 + c * killPoolSize k r) :=
+    jointB_le hqdata.2.2 fun j t hj ht => (hpdata j t hj ht).2.2
+  have hQU : jointQ a q ≤ 2 ^ (k ^ 4) := by
+    refine hQle.trans ?_
+    rw [htwo, ← pow_mul]
+    exact Nat.pow_le_pow_right (by norm_num) hschedQ
+  have hBU : jointB c k r q p ≤ 2 ^ (k ^ 4) := by
+    refine hBle.trans ?_
+    rw [htwo, ← pow_mul]
+    refine Nat.pow_le_pow_right (by norm_num) (le_trans ?_ hschedB)
+    exact Nat.mul_le_mul le_rfl
+      (Nat.add_le_add_left (Nat.mul_le_mul le_rfl (killPoolSize_le_sq k r)) 1)
+  have hRL : 2 ^ k < R := by
+    have h0 : (0 : ℕ) ∈ killedIdx k r := mem_killedIdx.mpr ⟨by omega, by omega⟩
+    have hd := hpdata 0 0 h0 (by omega)
+    exact lt_crt_solution hc hr hkr hd.1.two_le hd.2.1 hres_j
+  -- ### the unconditional count
+  have hB1 : 1 ≤ jointB c k r q p := by omega
+  have hcopBP : Nat.Coprime (jointB c k r q p) P := by
+    rcases hPprime with rfl | hP
+    · exact Nat.coprime_one_right _
+    · have hPne : P ≠ 1 := hP.ne_one
+      have hmem : P ∈ Dset := by rw [hDset, if_neg hPne]; simp
+      exact ((Nat.Prime.coprime_iff_not_dvd hP).mpr (havoid P hmem hPne)).symm
+  have hcount := hPcount (jointB c k r q p) u hB1 hBU hcopuB hcopBP
+  have hinj := card_agp_le_card_candidates (B := jointB c k r q p) (u := u)
+    (X := 2 ^ (4 * k ^ 12)) hB1 huB
+  have hBX : jointB c k r q p ≤ 2 ^ (4 * k ^ 12) := by
+    refine hBU.trans (Nat.pow_le_pow_right (by norm_num) ?_)
+    have : k ^ 4 ≤ k ^ 12 := Nat.pow_le_pow_right (by omega) (by norm_num)
+    omega
+  have hk3 : 1 ≤ k ^ 3 := Nat.one_le_pow _ _ (by omega)
+  have hfinal := count_lower_bound (B := jointB c k r q p) (X := 2 ^ (4 * k ^ 12))
+    (k := k ^ 3)
+    (N := ((range (2 ^ (4 * k ^ 12) + 1)).filter
+      (fun z => z.Prime ∧ z % jointB c k r q p = u % jointB c k r q p)).card)
+    hk3 hB1 hBX (rescaled_pow_eq k) hcount
+  have hcast : ((k ^ 3 : ℕ) : ℝ) ^ 4 = (k : ℝ) ^ 12 := by push_cast; ring
+  rw [hcast] at hfinal
+  refine ⟨k, q, p, R, u, hkK, hkr, hqdata.2.1, hqdata.2.2, hqdata.1, ?_, hR0, hRA, hu1, huB,
+    hRr, hAQB, humod, hcopuB, hres_r, hres_j, hkill, hsurv, htail, hQle, hBle, hBU, hQU, hRL,
+    le_trans hfinal (by exact_mod_cast hinj)⟩
+  intro j t hjk hjr ht
+  exact hpdata j t (mem_killedIdx.mpr ⟨hjr, hjk⟩) ht
 
 end NormalNumbers.JointLambert
