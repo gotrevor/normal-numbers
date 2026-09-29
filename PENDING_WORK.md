@@ -429,7 +429,31 @@ Guard rule discharged: content locators `affineUniformFreq_one`, `affineCFN_int_
 degenerate case `not_affineCFN_zero` proves the `q = 0` instance FALSE (the junk expansion of `0`
 contains no `[1]`, while `γ(I_[1]) > 0`), so `q ≠ 0` in `VandeheyS7Problem1` is load-bearing.
 
-**NEXT (lap 2), DIRECTION item 2 — the obstruction as Lean.**  State and prove, against the
+**Lap 2 (same day), DIRECTION item 2 — the obstruction as Lean: DONE.**
+`src/NormalNumbers/VandeheyS7Wall.lean`, four theorems, all axiom-clean.
+
+* `finite_intCast_abs_le` — the content locator for Vandehey's finiteness: over ℤ a bound on
+  the absolute value bounds the set.  This, and nothing about the dynamics, is the certificate.
+* `infinite_zPhi_abs_le_one` — **the certificate has no ℤ[φ] analogue**: `{x ∈ ℤ[φ] : |x| ≤ 1}`
+  is INFINITE, witnessed by the powers of `ζ = φ − 1 = φ⁻¹ ∈ (0,1)`.  Dirichlet's unit theorem
+  made concrete; `IsZPhi.mul` is where `φ² = φ + 1` enters.
+* `infinite_zPhiMatrix_det_one_bounded` — the matrix form: infinitely many determinant-one
+  matrices over ℤ[φ] with every entry bounded by 1 (`!![1, ζ^n; 0, 1]`).
+* `conj_goldenRatio_integral_forces_diagonal` — **pathwise merging is impossible.**  If `V`, `N`
+  are integral and `diag(φ,1) · N = V · diag(φ,1)` then `V 0 1 = V 1 0 = 0`.  So no coupling or
+  synchronising-word merging argument exists for `x ↦ φx`, and Vandehey §5's Saloff-Coste–Zúñiga
+  citation must be replaced by a DISTRIBUTIONAL statement (Birkhoff–Hopf cone contraction).
+
+Scope stated honestly in the module docstring: this kills the finiteness LEMMA over ℤ[φ], which
+is all the Theorem 1.1 proof uses; it does not compute the actual reachable set.
+
+**NEXT (lap 3), DIRECTION items 3–4.**  Factor the Thm 1.1 pipeline so its finite-state step is a
+NAMED hypothesis, then state the compact-fiber substitute that discharges it: the bounded-
+distortion window lemma for reduced post-emission states (NOT the integer descent — corrected
+2026-08-24), and the distributional merging statement.  Every node wires to `AffineUniformFreq`,
+which `affineCFN_of_uniformFreq` has already shown is the entire remaining problem.
+
+**(superseded) NEXT (lap 2), DIRECTION item 2 — the obstruction as Lean.**  State and prove, against the
 existing Raney transducer, that the reachable ℤ[φ] state set is infinite (unit drift), and the
 non-merging fact (`M⁻¹VM` integral for `M = diag(φ,1)` forces `V` diagonal).  Then factor the
 Thm 1.1 pipeline so its finite-state step is a NAMED hypothesis that a compact-fiber substitute

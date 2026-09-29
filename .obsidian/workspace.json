@@ -190,6 +190,7 @@
   },
   "active": "531fa67ef84421ba",
   "lastOpenFiles": [
+    "src/NormalNumbers/VandeheyS7Wall.lean",
     "src/NormalNumbers/VandeheyS7.lean",
     "drafts/2026-09-29-vandehey-note.md",
     "docs/overview.mk",
