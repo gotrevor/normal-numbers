@@ -45,6 +45,14 @@ what changes is the INSTRUMENT, because fact (α)'s one escape hatch is now conc
   and NOT a case analysis on `⌊φ·fract x⌋`; and the `∀ Φ` form of `hBA` should be weakened to the
   `∃ Φ` form before anyone tries to discharge it.
 
+* **Operator check 2026-09-29 12:15 — test `CellMemory` against the Maze BEFORE building on it.**
+  `CellMemory` (S7-CM) says the ρ-net cell of the state is decided by the last `L` input digits.
+  That is close kin to the refuted window-function frame: `no_window_function` exhibits two states
+  of minimal distortion that stay apart after EVERY word, so the far past (the initial state)
+  fixes something the recent digits cannot.  Next lap, first move: either prove `CellMemory` is
+  not refuted by those witnesses (say exactly why the net cell differs from the emitted digit),
+  or refute it in the kernel and add a Maze row.  Guard rule applies.
+
 * **Forbidden drift.**  (i) The window-function frame (`no_window_function`).  (ii) Bounded-error
   decompositions (`cfCount_tendsto_of_decomposition`).  (iii) Serret/commensurator and soft
   self-joining rigidity.  (iv) Finishing `GaussACRigidity` — it stays cited (standing rule 3).
