@@ -510,6 +510,133 @@ lemma tendsto_blockCount_singleton {y C : ℝ} (hC : 0 ≤ C) (hAC : OrbitACHyp 
       rw [this, zero_div]
     simpa [this] using hε
 
+/-! ## The explicit preimage of an interval -/
+
+/-- **The branch decomposition.**  For an irrational `x ∈ (0,1)`, `Tx ∈ (a,b]` happens exactly on
+the `k`-th branch interval `[1/(k+b), 1/(k+a))`, where `k` is the first CF digit of `x`.
+Irrationality removes the one boundary case (`x = 1/(k+1)`, where `Tx = 0`). -/
+lemma mem_branch_iff {a b : ℝ} (ha : 0 ≤ a) (hab : a ≤ b) (hb : b ≤ 1)
+    {x : ℝ} (hirr : Irrational x) (hx : x ∈ Ioo (0:ℝ) 1) {k : ℕ} (hk : 1 ≤ k) :
+    x ∈ Ico (1/((k:ℝ)+b)) (1/((k:ℝ)+a)) ↔ (cfDigit x 0 = k ∧ gaussMap x ∈ Ioc a b) := by
+  have hkR : (1:ℝ) ≤ (k:ℝ) := by exact_mod_cast hk
+  have hka : (0:ℝ) < (k:ℝ) + a := by linarith
+  have hkb : (0:ℝ) < (k:ℝ) + b := by linarith
+  have hx0 : (0:ℝ) < x := hx.1
+  have hginv : gaussMap x = x⁻¹ - (cfDigit x 0 : ℝ) := gaussMap_eq_inv_sub hx
+  constructor
+  · rintro ⟨h1, h2⟩
+    have hinv1 : x⁻¹ ≤ (k:ℝ) + b := by
+      rw [one_div] at h1
+      exact (inv_le_comm₀ hx0 hkb).2 h1
+    have hinv2 : (k:ℝ) + a < x⁻¹ := by
+      rw [one_div] at h2
+      exact (lt_inv_comm₀ hx0 hka).1 h2
+    have hlt : x⁻¹ < (k:ℝ) + 1 := by
+      rcases lt_or_eq_of_le (hinv1.trans (by linarith : (k:ℝ) + b ≤ (k:ℝ) + 1)) with h | h
+      · exact h
+      · exact absurd (h ▸ hirr.inv) (by
+          simpa using (Rat.not_irrational ((k : ℚ) + 1)) ∘ (by
+            intro hh
+            convert hh using 2
+            push_cast
+            ring))
+    have hfl : cfDigit x 0 = k := by
+      rw [cfDigit_zero, Nat.floor_eq_iff (by positivity)]
+      constructor
+      · push_cast; linarith
+      · push_cast; linarith
+    refine ⟨hfl, ?_⟩
+    rw [hginv, hfl]
+    constructor
+    · linarith
+    · linarith
+  · rintro ⟨hfl, h1, h2⟩
+    rw [hginv, hfl] at h1 h2
+    have hinv2 : (k:ℝ) + a < x⁻¹ := by linarith
+    have hinv1 : x⁻¹ ≤ (k:ℝ) + b := by linarith
+    constructor
+    · rw [one_div]
+      exact (inv_le_comm₀ hkb hx0).2 hinv1
+    · rw [one_div]
+      exact (lt_inv_comm₀ hx0 hka).2 hinv2
+
+/-- The branch intervals are disjoint (each determines the first digit), so at most one indicator
+fires; and when one does, the point really is in the preimage. -/
+lemma sum_blockIndic_branch_le {a b : ℝ} (ha : 0 ≤ a) (hab : a ≤ b) (hb : b ≤ 1)
+    {x : ℝ} (hirr : Irrational x) (hx : x ∈ Ioo (0:ℝ) 1) (K : ℕ) :
+    ∑ k ∈ Finset.Icc 1 K, blockIndic (Ico (1/((k:ℝ)+b)) (1/((k:ℝ)+a))) x
+      ≤ blockIndic (gaussMap ⁻¹' (Ioc a b)) x := by
+  by_cases h : ∃ k ∈ Finset.Icc 1 K, x ∈ Ico (1/((k:ℝ)+b)) (1/((k:ℝ)+a))
+  · obtain ⟨k₀, hk₀mem, hk₀⟩ := h
+    have hk₀1 : 1 ≤ k₀ := (Finset.mem_Icc.1 hk₀mem).1
+    obtain ⟨hdig, hgauss⟩ := (mem_branch_iff ha hab hb hirr hx hk₀1).1 hk₀
+    rw [Finset.sum_eq_single k₀ ?_ ?_]
+    · rw [blockIndic, Set.indicator_of_mem hk₀, blockIndic,
+        Set.indicator_of_mem (show x ∈ gaussMap ⁻¹' (Ioc a b) from hgauss)]
+    · intro k hkmem hkne
+      have hk1 : 1 ≤ k := (Finset.mem_Icc.1 hkmem).1
+      rw [blockIndic, Set.indicator_of_notMem]
+      intro hxk
+      exact hkne (((mem_branch_iff ha hab hb hirr hx hk1).1 hxk).1.symm.trans hdig)
+    · intro hnot
+      exact absurd hk₀mem hnot
+  · push_neg at h
+    have : ∑ k ∈ Finset.Icc 1 K, blockIndic (Ico (1/((k:ℝ)+b)) (1/((k:ℝ)+a))) x = 0 := by
+      refine Finset.sum_eq_zero fun k hk => ?_
+      rw [blockIndic, Set.indicator_of_notMem (h k hk)]
+    rw [this]
+    exact blockIndic_nonneg _ _
+
+/-- Conversely, a point of the preimage is on one of the first `K` branches, or else it is tiny —
+and the tail `(0, 1/(K+a))` is what the AC bound makes uniformly negligible. -/
+lemma blockIndic_preimage_le_sum {a b : ℝ} (ha : 0 ≤ a) (hab : a ≤ b) (hb : b ≤ 1)
+    {x : ℝ} (hirr : Irrational x) (hx : x ∈ Ioo (0:ℝ) 1) {K : ℕ} (hK : 1 ≤ K) :
+    blockIndic (gaussMap ⁻¹' (Ioc a b)) x
+      ≤ (∑ k ∈ Finset.Icc 1 K, blockIndic (Ico (1/((k:ℝ)+b)) (1/((k:ℝ)+a))) x)
+        + blockIndic (Ioo 0 (1/((K:ℝ)+a))) x := by
+  by_cases hmem : x ∈ gaussMap ⁻¹' (Ioc a b)
+  · set m := cfDigit x 0 with hm
+    have hm1 : 1 ≤ m := one_le_cfDigit x hirr hx 0
+    have hxm : x ∈ Ico (1/((m:ℝ)+b)) (1/((m:ℝ)+a)) :=
+      (mem_branch_iff ha hab hb hirr hx hm1).2 ⟨rfl, hmem⟩
+    rw [blockIndic, Set.indicator_of_mem hmem]
+    by_cases hmK : m ≤ K
+    · have hmem' : m ∈ Finset.Icc 1 K := Finset.mem_Icc.2 ⟨hm1, hmK⟩
+      have h1 : blockIndic (Ico (1/((m:ℝ)+b)) (1/((m:ℝ)+a))) x
+          ≤ ∑ k ∈ Finset.Icc 1 K, blockIndic (Ico (1/((k:ℝ)+b)) (1/((k:ℝ)+a))) x :=
+        Finset.single_le_sum (a := m)
+          (f := fun k : ℕ => blockIndic (Ico (1/((k:ℝ)+b)) (1/((k:ℝ)+a))) x)
+          (fun k _ => blockIndic_nonneg _ _) hmem'
+      rw [blockIndic, Set.indicator_of_mem hxm] at h1
+      have h2 := blockIndic_nonneg (Ioo (0:ℝ) (1/((K:ℝ)+a))) x
+      simp only [Pi.one_apply] at h1 ⊢
+      linarith
+    · push_neg at hmK
+      have hmR : (K:ℝ) + 1 ≤ (m:ℝ) := by exact_mod_cast hmK
+      have hKa : (0:ℝ) < (K:ℝ) + a := by
+        have : (1:ℝ) ≤ (K:ℝ) := by exact_mod_cast hK
+        linarith
+      have hxlt : x < 1/((K:ℝ)+a) := by
+        refine hxm.2.trans_le ?_
+        apply one_div_le_one_div_of_le hKa
+        linarith
+      have h1 : blockIndic (Ioo (0:ℝ) (1/((K:ℝ)+a))) x = 1 := by
+        rw [blockIndic, Set.indicator_of_mem
+          (show x ∈ Ioo (0:ℝ) (1/((K:ℝ)+a)) from ⟨hx.1, hxlt⟩)]
+        rfl
+      have h2 : (0:ℝ) ≤ ∑ k ∈ Finset.Icc 1 K,
+          blockIndic (Ico (1/((k:ℝ)+b)) (1/((k:ℝ)+a))) x :=
+        Finset.sum_nonneg fun k _ => blockIndic_nonneg _ _
+      rw [h1]
+      simp only [Pi.one_apply]
+      linarith
+  · rw [blockIndic, Set.indicator_of_notMem hmem]
+    have h1 : (0:ℝ) ≤ ∑ k ∈ Finset.Icc 1 K,
+        blockIndic (Ico (1/((k:ℝ)+b)) (1/((k:ℝ)+a))) x :=
+      Finset.sum_nonneg fun k _ => blockIndic_nonneg _ _
+    have h2 := blockIndic_nonneg (Ioo (0:ℝ) (1/((K:ℝ)+a))) x
+    linarith
+
 section Audit
 
 #print axioms limCDF_sub_le
