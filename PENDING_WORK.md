@@ -1851,3 +1851,27 @@ supplies `F_v` covering the target interval `(a_v,b_v)` with `∑_{c∈F_v} γ(c
 `blockCount_freq_cellSet_mass` gives each frequency, `gaussMeasure_cellSet_append_le` each mass,
 `sum_gaussMeasure_le_one_of_length` the sum over windows.  Constant
 `C = (1+8log2)/log2 ≈ 9.0`.
+
+### 2026-09-29 lap 55 — `windowHit_Ioo_le` LANDED (`VandeheyS7HitIoo.lean`)
+
+The interval-target window-hit theorem is proved, axiom-clean:
+
+* `blockCount_hit_Ioo_le` — per window: `freq{ n : Gⁿx ∈ I_v ∧ G^{n+|v|}x ∈ (a,b) } ≤
+  (1+8log2)((b−a)/log2 + δ) γ(I_v) + δ`.
+* `windowHit_Ioo_le` — summed over a same-length window family:
+  `≤ (1+8log2)/log2 · L + ε`, where `L` bounds the target interval lengths.
+  **The constant ≈ 9.0 is absolute** — independent of the window length `k`, of the number of
+  windows, and of where the targets sit.
+
+So the crux `OrbitWordBound` now has a complete proof MODULO one hypothesis: that the transducer
+state at input time `n` is, to accuracy `ε`, a function of the last `k` input digits.  Everything
+else — the covering, the quasi-Bernoulli masses, the cell frequencies, the window sum — is in the
+kernel.
+
+**NEXT (lap 56).**  Define `ApproxWindowState` and prove `orbitWordBound_of_approxWindowState`:
+given `F : (length-k words) → MobState` with the state's action `δ`-close to `F(window)`'s on
+`(0,1)`, the output-word event `G^ℓ y ∈ I_w` at the times matched by the clock pulls back to
+`G^n x ∈ (F(window))⁻¹(I_w)` up to a `δ`-collar; the collar's frequency is `O(δ)` by
+`windowHit_Ioo_le` applied to the two collar intervals, and the main term is one more application
+with `L = |(F v)⁻¹(I_w)| ≤ distortion · γ(I_w)/η` (lap 49).  Then `ApproxWindowState` itself is
+the single remaining open obligation of Vandehey §7 Problem 1 on this route.
