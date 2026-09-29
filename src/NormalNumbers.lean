@@ -749,6 +749,7 @@ import NormalNumbers.VandeheyS7Pin
 import NormalNumbers.VandeheyS7NoEmit
 import NormalNumbers.VandeheyS7MapState
 import NormalNumbers.VandeheyS7EmitEv
+import NormalNumbers.VandeheyS7CylMap
 import NormalNumbers.VandeheyS7ReadComp
 import NormalNumbers.VandeheyS7Emit2
 import NormalNumbers.VandeheyS7CylState
