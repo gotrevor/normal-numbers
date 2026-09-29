@@ -768,6 +768,7 @@ import NormalNumbers.VandeheyS7Reset
 import NormalNumbers.VandeheyS7Compose
 import NormalNumbers.VandeheyS7Modulus
 import NormalNumbers.VandeheyS7PullMap
+import NormalNumbers.VandeheyS7Cluster
 import NormalNumbers.VandeheyS7RunOrbit
 import NormalNumbers.VandeheyS7RunClock
 import NormalNumbers.VandeheyS7RunPin
