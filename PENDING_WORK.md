@@ -1,5 +1,60 @@
 # PENDING WORK — the queue
 
+## ⭐ VANDEHEY §7 — LAP 90: THE CRUX IS REFUTED TWICE, AND RE-BASED
+
+**Commits** `7705dd2a` (S7-BG) · `9142e60c` (Maze) · `64bc5a5c` (S7-RR) · `d507c092` (S7-BX) ·
+`449f11e3` (S7-BY) · `bd4927a5` (S7-BR).  All axiom-clean, `lake build` 🟢 10625 jobs.
+
+### The advance on the crux
+
+1. **`BlockForget` (uniform `z`) is FALSE in the kernel** — `not_blockForget` (S7-BX).  Lap 89 had
+   this only as a frozen Maze row, because the argument went through digit frequencies and needed
+   transducer correctness.  S7-BX avoids that entirely: `emitStep_unique` shows `MapState`'s
+   endpoint inequalities pin the emitted digit (the legal `b` lie in a closed interval of length
+   `1 − |1/mob 0 − 1/mob 1|`, and equality of the two endpoints forces `det = 0`), so `step` is
+   computable; then `shiftState ∘ read 2 = read 1 ∘ midState` and
+   `midState ∘ read 2 = read 4 ∘ shiftState` make the skew orbit at the Gauss fixed point `√2 − 1`
+   a **2-cycle**, with block average `⌈T/2⌉/T ≥ 1/2` against `0` from the reference state.
+
+2. **`BlockForgetGen` (lap 89's CF-normal repair) is FALSE too** — `not_blockForgetGen` (S7-BY),
+   and for a reason that kills the whole SHAPE of repair: the quantifier order is `∃T, ∀z`, so the
+   block length is fixed before the input, while `blockAvg s T w z` at fixed `T` is decided by the
+   state cycle once the first `T` digits are known — and CF-normality is a TAIL property, so a
+   CF-normal `z` may open with `T` copies of the digit `2`
+   (`exists_isCFNormal_mem_cfCylinder`: a genuine cylinder has positive Gauss mass, and the
+   non-CF-normal set is `γ`-null).  Both phases of the cycle decide their target uniformly in the
+   point: `shiftState` maps ALL of `(0,1)` into `(2/3,1)`, `midState` into `(1/6,1/4)`.
+
+3. **Why the crux was never a reduction** — `blockForgetGen_absolute` (S7-RR).  The reference run
+   IS the Gauss shift: `pairStep (refState, z) = (refState, gaussMap z)` unconditionally, so
+   `blockAvg refState T w z` is the INPUT's own empirical `w`-frequency.  Hence the `s' = refState`
+   instance of the crux is the absolute statement "every width-`≥η` state reproduces the input's
+   digit-block statistics" — i.e. the headline — with no forgetting content at all.
+
+4. **The repair that survives** — `BlockForgetRun` (S7-BR).  The architecture never evaluates the
+   crux at an arbitrary `(state, point)` pair; it evaluates it at the pairs the run visits, and
+   needs only their CESÀRO average at the good (width-`≥η`) times.  A single bad pair costs
+   nothing.  `BlockForgetRun` is exactly that hypothesis, `blockForgetRun_of_gen` shows it is
+   implied by the refuted form, and the whole S7-BF/S7-RC architecture down to
+   `exists_uniform_slotCountFreq_of_blockForget` now rests on it, unchanged and axiom-clean.
+
+### Next attack (in order)
+
+1. **Is `BlockForgetRun` itself refutable?**  The S7-BY witness is a single time; to defeat the
+   Cesàro form one needs a POSITIVE FREQUENCY of times `m` at which `runState Φ x m` is a
+   bad-cycle state while `Gᵐx` has the matching prefix.  Along a CF-normal `x` the all-`2` prefix
+   of length `T` has frequency `γ(I_{2^T}) > 0`, so this is NOT obviously safe — the honest first
+   probe is whether the run's state at those times is forced away from the cycle.  A kernel
+   refutation here would close route A entirely; a proof that it cannot happen is the first real
+   positive evidence the route has had.
+2. If `BlockForgetRun` survives probe 1, attack it via S7-RQ: generalise S7-RC's `refLevel` from
+   `refState` to an arbitrary starting state (nothing in the S7-RC proof uses `refState` beyond
+   `stateOf j u = wordState refState (vOf j u)`), turning the crux into the concrete question
+   whether `refLevel s w j B` is `s`-independent in the Cesàro average over `j`.
+3. Scalar width debt (`MeanSlack`, `ClockLinear`) still needed for `RunClock`'s rate /
+   `WidthAfford`.
+
+
 ## Joint Lambert update, 29 September 2026
 
 The synchronized-word theorem is unconditional at proof commit `f6fbf87` on

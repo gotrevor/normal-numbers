@@ -52,6 +52,17 @@ the repo already owns route A's endgame and route B's instrument has a proved-ou
   Keep the scalar width debt (`MeanSlack`, `ClockLinear`): route A needs it for the CLOCK
   (`RunClock`'s rate), so that work is not wasted.
 
+* **LAP-90 AMENDMENT (the crux's name has changed).**  `BlockForget` is REFUTED in the kernel
+  (`not_blockForget`, S7-BX) and so is lap 89's CF-normal repair `BlockForgetGen`
+  (`not_blockForgetGen`, S7-BY): the quantifier order `∃T, ∀z` fixes the block length before the
+  input, and `blockAvg` at a fixed `T` is a finite-prefix functional, while CF-normality is a tail
+  property.  S7-RR explains why no repair of that shape could work — the reference run IS the
+  Gauss shift, so the `s' = refState` instance of the crux is the headline itself.  **The live
+  crux is `BlockForgetRun`** (S7-BR): the same comparison, but only in CESÀRO average over the
+  times the run actually visits, at the good (width-`≥η`) times.  That is the exact hypothesis the
+  architecture consumes, it is strictly weaker (`blockForgetRun_of_gen`), and the refutations —
+  single `(state, point)` pairs — do not touch it.  Everything else in this directive stands.
+
 * **Forbidden drift.**  (i) New unweighted-cover machinery for route B (S7-WD/WD′/CV/FT are
   finished; do not extend them).  (ii) `ClassFreqBound`/`CellMemory` as the front — they are route
   B's residual, and `CellMemory` is a restatement (lap 80).  (iii) The window-function frame,
