@@ -763,6 +763,7 @@ import NormalNumbers.VandeheyS7RunClock
 import NormalNumbers.VandeheyS7RunPin
 import NormalNumbers.VandeheyS7Slot
 import NormalNumbers.VandeheyS7Class
+import NormalNumbers.VandeheyS7Net
 import NormalNumbers.VandeheyS7Interp
 import NormalNumbers.VandeheyS7ReadComp
 import NormalNumbers.VandeheyS7Emit2
