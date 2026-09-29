@@ -2194,3 +2194,23 @@ visit of the image orbit to `cellSet [] T` is a visit of the input orbit to a su
 state at time `n` (`VandeheyS7Clock`, `VandeheyS7Emit`).  With that, `AnchoredPullback` has a
 witness modulo the image-width floor `η`, and the floor is itself the bad-state question — but now
 only for the TAIL half, where lap 65's principle applies.
+
+### 2026-09-29 lap 70 — `AnchoredPullback` from a state clock (`VandeheyS7Clock2.lean`)
+
+* `MobState.exists_thresholds` — lap 69's containment in the `(u,v)` form `anchoredHitCount`
+  consumes (with the degenerate `u = 1, v = 0` branch when the size bound exceeds `1`).
+* `StateClock q r₀ η K` — the remaining obligation, isolated: a sequence of states of width `≥ η`
+  and distortion `≤ K` matching the image orbit's tail-cell visits to input times at which
+  `Gⁿx` lies in `{t : (s n).mob t < 1/T}`.  **No location claim, no window, no measure** — it is
+  the defining property of a transducer plus a width floor.
+* `anchoredPullback_of_stateClock : StateClock q r₀ η K → AnchoredPullback q r₀ (2K/η)`.
+  Axiom-clean.
+
+Chained with lap 66: `StateClock → AnchoredPullback → ImageTight`.  So the chain's second
+hypothesis is now downstream of a statement with no ergodic content at all.
+
+**NEXT (lap 71).**  Build `StateClock` itself from the repo's transducer layer
+(`VandeheyS7Emit`, `VandeheyS7Clock`, `VandeheyRunClock`).  Two sub-obligations, in order:
+(a) the state-orbit identity — the output point at the matched position IS `(s n).mob (Gⁿx)`;
+(b) the width floor `η`, which is the *tail* half of the bad-state question and therefore now
+falls under lap 65's anchored principle rather than under the refuted soft route.
