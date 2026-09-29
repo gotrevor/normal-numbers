@@ -2137,3 +2137,18 @@ pullback of `(0,1/T)` is downward- or upward-closed;
 (b) `sub_le_of_image_le` / `spread_runWord_le` for the `Λ/T` size, with the distortion bound;
 (c) the clock (`VandeheyS7Clock`) to match output positions to input times.
 (a) is the piece to formalise first, and it is elementary: `mob_strictMono_or_strictAnti`.
+
+### 2026-09-29 lap 67 — the state is monotone, so its pullbacks are anchored (`VandeheyS7Mono.lean`)
+
+The structural input lap 66 named, proved from algebra with no calculus:
+
+* `mob_sub_mob` — `s.mob t₂ − s.mob t₁ = (ad − bc)(t₂ − t₁)/((ct₂+d)(ct₁+d))` for `0 ≤ t₁,t₂`.
+* `mob_lt_mob_of_det_pos` / `..._neg` — strict monotonicity on `[0,∞)`, sense given by `det`.
+* `downwardClosed_mob_lt`, `upwardClosed_mob_lt`, `anchored_mob_lt` — hence the sublevel set
+  `{t ∈ (0,1) : s.mob t < r}` is downward-closed or upward-closed: **every** state's tail-cell
+  pullback is anchored to an endpoint.  All axiom-clean.
+
+**NEXT (lap 68).**  Mirror `subset_Ioc_of_downwardClosed` for upward-closed sets
+(`subset_Ico_of_upwardClosed`), then package: state + measure bound on the pullback ⟹ the pullback
+lies in `(0,c]` or `[1−c,1)`, i.e. exactly an `AnchoredPullback` threshold pair.  After that the
+only gaps to a witness are the size bound `Λ/T` (lap 49's `sub_le_of_image_le`) and the clock.
