@@ -111,6 +111,97 @@ theorem exists_good_starts_at_height {c a r : ℕ} (hc : 2 ≤ c) (ha : 2 ≤ a)
               < ε / 2) := by
   sorry
 
+/-! ### The §5 all-`N` transfer: the height schedule `X = ⌊N/D_N⌋` -/
+
+/-- The rescaling step of §5: `D_N = 2(2k_N³)^(a-1)`, an upper bound for `2Q`. -/
+noncomputable def countD (a X : ℕ) : ℕ := 2 * (2 * (countK X) ^ 3) ^ (a - 1)
+
+/-- `D_N > 0`.  The hypothesis `1 ≤ countK X` is needed, not cosmetic: at `countK X = 0`
+and `a > 1` the product `2·(2·0³)^(a-1)` is `0`. -/
+theorem countD_pos {a X : ℕ} (hk : 1 ≤ countK X) : 0 < countD a X := by
+  rw [countD]
+  have h : 0 < 2 * (countK X) ^ 3 := by positivity
+  exact Nat.mul_pos (by norm_num) (Nat.pow_pos h)
+
+/-- `K (log N)^d ≤ N` eventually, for every constant `K > 0` and exponent `d`. -/
+theorem eventually_polylog_le {K : ℝ} (hK : 0 < K) (d : ℕ) :
+    ∀ᶠ N : ℕ in atTop, K * (Real.log (N : ℝ)) ^ d ≤ (N : ℝ) := by
+  have hlo := (Real.isLittleO_pow_log_id_atTop (n := d)).def
+    (show (0 : ℝ) < 1 / K by positivity)
+  have hbase : ∀ᶠ x : ℝ in atTop, K * (Real.log x) ^ d ≤ x := by
+    filter_upwards [hlo, eventually_ge_atTop (1 : ℝ)] with x hx h1
+    have hx0 : (0 : ℝ) < x := by linarith
+    have hlogpos : (0 : ℝ) ≤ Real.log x := Real.log_nonneg h1
+    have hnorm : Real.log x ^ d ≤ 1 / K * x := by
+      simpa [Real.norm_eq_abs, abs_of_nonneg hlogpos,
+        abs_of_nonneg hx0.le, id] using hx
+    have := mul_le_mul_of_nonneg_left hnorm hK.le
+    calc K * (Real.log x) ^ d ≤ K * (1 / K * x) := this
+      _ = x := by field_simp
+  exact Filter.eventually_atTop.2 (by
+    obtain ⟨n0, hn0⟩ := Filter.eventually_atTop.1
+      (tendsto_natCast_atTop_atTop (R := ℝ).eventually hbase)
+    exact ⟨n0, hn0⟩)
+
+/-- **The height goes to infinity.**  `⌊N / D_N⌋ ≥ m` eventually, for every `m`: `D_N` is
+polylogarithmic in `N` because `k_N ≤ 6 log log N ≤ 6 log N`. -/
+theorem eventually_height_ge (a m : ℕ) :
+    ∀ᶠ N : ℕ in atTop, m ≤ N / countD a N := by
+  set K : ℝ := ((m : ℝ) + 1) * (2 * 432 ^ (a - 1)) with hKdef
+  have hK : 0 < K := by rw [hKdef]; positivity
+  filter_upwards [eventually_polylog_le hK (3 * (a - 1)), eventually_countK_le,
+    eventually_ge_atTop 3] with N hpoly hk hN3
+  obtain ⟨hk1, hkle⟩ := hk
+  have hN0 : (0 : ℝ) < (N : ℝ) := by
+    have : (0 : ℕ) < N := by omega
+    exact_mod_cast this
+  have hlogN1 : (1 : ℝ) ≤ Real.log (N : ℝ) := by
+    -- `log N ≥ 1` because `log log N` exists and `countK N ≥ 1`
+    by_contra hcon
+    push_neg at hcon
+    have hle : Real.log (Real.log (N : ℝ)) ≤ 0 :=
+      Real.log_nonpos (Real.log_natCast_nonneg N) hcon.le
+    have hk1R : (1 : ℝ) ≤ (countK N : ℝ) := by exact_mod_cast hk1
+    linarith
+  -- `k_N ≤ 6 log N`
+  have hμ : Real.log (Real.log (N : ℝ)) ≤ Real.log (N : ℝ) :=
+    Real.log_le_self (Real.log_natCast_nonneg N)
+  have hkN : (countK N : ℝ) ≤ 6 * Real.log (N : ℝ) := by linarith
+  -- `2 k_N³ ≤ 432 (log N)³`
+  have hcube : 2 * (countK N : ℝ) ^ 3 ≤ 432 * (Real.log (N : ℝ)) ^ 3 := by
+    have h := pow_le_pow_left₀ (show (0:ℝ) ≤ (countK N : ℝ) by positivity) hkN 3
+    nlinarith [h]
+  have hDreal : ((countD a N : ℕ) : ℝ)
+      ≤ 2 * 432 ^ (a - 1) * (Real.log (N : ℝ)) ^ (3 * (a - 1)) := by
+    have hp : ((2 * (countK N) ^ 3 : ℕ) : ℝ) ^ (a - 1)
+        ≤ (432 * (Real.log (N : ℝ)) ^ 3) ^ (a - 1) := by
+      refine pow_le_pow_left₀ (by positivity) ?_ _
+      push_cast
+      exact hcube
+    have hexp : (432 * (Real.log (N : ℝ)) ^ 3) ^ (a - 1)
+        = 432 ^ (a - 1) * (Real.log (N : ℝ)) ^ (3 * (a - 1)) := by
+      rw [mul_pow, ← pow_mul]
+    rw [countD]
+    push_cast
+    push_cast at hp
+    rw [hexp] at hp
+    linarith
+  -- conclude
+  have hmD : ((m : ℝ) + 1) * ((countD a N : ℕ) : ℝ) ≤ (N : ℝ) := by
+    have h1 : ((m : ℝ) + 1) * ((countD a N : ℕ) : ℝ)
+        ≤ ((m : ℝ) + 1) * (2 * 432 ^ (a - 1) * (Real.log (N : ℝ)) ^ (3 * (a - 1))) :=
+      mul_le_mul_of_nonneg_left hDreal (by positivity)
+    have h2 : ((m : ℝ) + 1) * (2 * 432 ^ (a - 1) * (Real.log (N : ℝ)) ^ (3 * (a - 1)))
+        = K * (Real.log (N : ℝ)) ^ (3 * (a - 1)) := by rw [hKdef]; ring
+    rw [h2] at h1
+    linarith
+  have hnat : m * countD a N ≤ N := by
+    have h : ((m * countD a N : ℕ) : ℝ) ≤ (N : ℝ) := by
+      push_cast
+      nlinarith [hmD, Nat.cast_nonneg (α := ℝ) (countD a N)]
+    exact_mod_cast h
+  exact (Nat.le_div_iff_mul_le (countD_pos (a := a) hk1)).mpr (by omega)
+
 /-- **The counting joint small-tail theorem.**  For fixed `c, a, r` and a fixed margin `ε`,
 there are `C > 0` and `N₀` such that every `N ≥ N₀` admits a killed-window height `k > r`
 and a `Finset` of at least `N exp(-C (log log N)² log log log N)` offsets `m < N`, each
