@@ -793,6 +793,7 @@ import NormalNumbers.VandeheyS7SetBound
 import NormalNumbers.VandeheyS7SkewWindow
 import NormalNumbers.VandeheyS7WindowFreq
 import NormalNumbers.VandeheyS7WindowDom
+import NormalNumbers.VandeheyS7Cover
 import NormalNumbers.VandeheyS7Class
 import NormalNumbers.VandeheyS7Net
 import NormalNumbers.VandeheyS7Mem
