@@ -735,3 +735,4 @@ import NormalNumbers.VandeheyS7Boot
 import NormalNumbers.VandeheyS7Reduce
 import NormalNumbers.VandeheyS7Tight2
 import NormalNumbers.VandeheyS7Chain
+import NormalNumbers.VandeheyS7Equiv

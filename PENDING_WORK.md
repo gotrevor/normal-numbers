@@ -347,7 +347,20 @@ Three facts, all established lap 30, fix its difficulty and must steer every fur
   expansions genuinely decouple: `|qₙ φ x − φpₙ| ≤ φ/qₙ` has `φpₙ ∉ ℤ`, so `x`'s convergents give
   no rational approximations to `φx`.  Tightness of the image therefore needs the clock (the
   emitted-vs-read matrix comparison `Oℓ ≈ ΦPₙ`), and that is the next real build.
-  **Next attack (lap 47), in order.**
+  **Lap 47 — the three shapes of the crux are the same statement** (`VandeheyS7Equiv.lean`,
+  axiom-clean).  `orbitWordBound_of_orbitACBound : 0 ≤ C → AffineImageIrrational q r₀ →
+  OrbitACBound q r₀ C → OrbitWordBound q r₀ (2 log 2 · C)`.  A cylinder IS an interval along an
+  irrational orbit: `cfCylinder_subset_uIcc` puts `I_w` inside `[min,max]` of the rational
+  endpoints `cfVal w`, `cfVal (bumpLast w)`, and an irrational orbit point cannot BE an endpoint,
+  so `blockCount (I_w) ≤ blockCount (Ioo m M)`; and `sub_le_gaussMeasure_cfCylinder` (new) gives
+  `M − m ≤ 2 log 2 · γ(I_w)` from `gaussMeasure_cfCylinder` plus
+  `log(1+M) − log(1+m) ≥ (M−m)/(1+M)` and `M ≤ 1`.
+  With lap 43 (`orbitCellBound_of_orbitWordBound`) and lap 29
+  (`orbitACBound_of_orbitCellBound` + `cellCover_inv_log_two`), the three formulations —
+  INTERVALS, WORDS, CELLS — are now mutually derivable up to absolute constants.  **The route has
+  exactly one crux and the choice of shape is free**, so future laps may attack whichever form is
+  most tractable without changing what is being proved.
+  **Next attack (lap 48), in order.**
   (a) Transfer tightness from `x` to `y = fract(φx)`.  Lap 45 gives `ImageTight x` for free from
   `x`'s normality; what is needed is `ImageTight y`.  The clock is the route
   (`Oℓ ≈ ΦPₙ`, `det Φ = φ` fixed, so `log qℓ(y) ≍ log qₙ(x) + O(1)`), and note that the WEAKER
