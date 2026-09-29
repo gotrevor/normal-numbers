@@ -374,10 +374,20 @@ New math comes first.  Trusted literature inputs (`AGP`, `CharPrimeSumLogQ`,
 `ZetaLogDerivExponent`) stay as hypotheses and are not queue items until a new result
 needs one discharged (DIRECTION standing rule 3).
 
-1. **SwingC2 triage.**  Delete or restate `tauMomentPrimesShiftStruct_of_primeDensity`, which
-   takes the vacuous `PrimeDensityAP`, and `survivorLeaf_of_struct`.
+*(Both former queue items were cleared on 2026-09-29, lap 1 of the §7 objective.)*
 
-2. **OVERVIEW refresh**: Vandehey 1.1 proved, joint Lambert down to `AGP`.
+1. ✅ **SwingC2 triage — done.**  `tauMomentPrimesShiftStruct_of_primeDensity`,
+   `survivorLeaf_of_struct` and `TauMomentPrimesShiftStruct` are **deleted** (no consumer
+   anywhere in the repo).  `PrimeDensityAP` survives as a record of the intended AP input, with
+   the 2026-09-25 review's vacuity defect **repaired** by the extra clause `M ≤ Y`; the repair is
+   load-bearing and proved so in the kernel by `SwingC2.primeDensityAP_pos` (the repaired
+   statement forces a prime to exist in the stated range; the old one did not).  The live open
+   obligation on the headline path is unchanged: `shiftedDivisorIncidence_holds`.
+
+2. ✅ **OVERVIEW refresh — done.**  `OVERVIEW.md` + the pandoc-built `OVERVIEW.html` (hand-patched;
+   it carries custom CSS, so do NOT regenerate it wholesale from the Markdown).  Vandehey Thm 1.1
+   now stated as PROVED, with the §3-free route described and §7 Problem 1 named as the live
+   target; joint Lambert corrected to one remaining input (`AGP`).
 
 ## Lap notes (newest first)
 
