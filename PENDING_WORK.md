@@ -3095,3 +3095,19 @@ S7-MD already forced on `OrbitWordBound` (a modulus, not a constant).
 2. Restate `WidthFreqBound`/`MeanSlack` with `η(q)`, and re-price the front (S7-FS/S7-CA) against
    a shrinking `η`.  If the front survives `η(q) = q^{−c}`, the §7 chain is back on a provable
    input; if it does not, the width-floor route is refuted and that is a Maze row.
+
+## S7-SS (lap 80): a stall IS a straddle — the run/`straddleSet` bridge
+
+`src/NormalNumbers/VandeheyS7StallStraddle.lean`, axiom-clean.  `straddleSet` was also sharpened
+to the half-open form `z ≤ 1/k < z + w` (same mass bounds, `Ioc` windows in the upper bound) so the
+bridge lands on the nose.
+
+* `straddle_of_not_emittable` — a non-emittable state whose image avoids `0` has
+  `lo ≤ 1/a < lo + width` with `a = ⌊1/lo⌋`, i.e. `lo ∈ straddleSet (width t)`.  The proof is the
+  contrapositive of `exists_emit`: `⌊1/lo⌋` is the ONLY candidate digit.
+* `stall_straddles` — at any stall time of the run the post-read state's left endpoint straddles.
+
+So with S7-SM: **a stall forces one explicit orbit quantity into a set of measure `≍ √w`.**  The
+remaining step to the `MeanSlack` verdict is the frequency statement (CF-normality on a finite
+union of intervals), not a new wall.  The `lo = 0` case is excluded and is the genuine boundary:
+an image touching `0` admits every digit as a candidate.
