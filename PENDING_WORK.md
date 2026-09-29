@@ -128,11 +128,14 @@ Order of work:
    S7-DB's Fibonacci height bound into a LINEAR comparison,
    `stallAge_le_slack : stallAge n ≤ 1 + 2·slack n / log 2`.  So `MeanSlack` bounds the mean
    stall age: `Σ_{n<q} stallAge(n+2) ≤ 3q + (2/log 2)·Σ slack`.
-   **Remaining half (next Lean step): the reset-counting bound**
-   `#{n < q : stallAge n < K} ≤ K·(runClock q + 1)` — each emission opens at most `K` times of
-   small age, so `n ↦ (n − stallAge n, stallAge n)` is injective into (resets) × range K.
-   Then `q ≤ K(N_q+1) + (1/K)·Σ stallAge ≤ K(N_q+1) + Cq/K`; pick `K` with `C/K ≤ 1/2` and
-   `N_q ≥ q/(2K) − 1` follows.  That drops the §7 front from three hypotheses to two.
+   ✅ **DONE — S7-RS (`VandeheyS7Reset`).**  `stallAge_sub_self` (the reset time has zero age),
+   `card_smallAge_le` (`#{n<q : stallAge n < K} ≤ (runClock q + 1)·K`, via the injection
+   `n ↦ (n − stallAge n, stallAge n)` into resets × range K), `card_range_le`
+   (`q ≤ K(N_q+1) + (1/K)Σ stallAge`) and `clockLinear_of_meanStallAge`.
+   **`ClockLinear` is now a THEOREM given a bounded mean stall age**, and S7-GR turns
+   `MeanSlack` into exactly that.  So the §7 front has TWO hypotheses, not three.
+   Next Lean step: compose S7-GR + S7-RS into `clockLinear_of_meanSlack` and feed it to
+   `blockAverageBound_of_scalar`, dropping `ClockLinear` from its signature.
 
    So the ENTIRE width leg is now two scalar facts: bounded Cesàro average of `log d_n`
    (positive recurrence of one walk reflected at `√(|det Φ|/6)`) and Vandehey's Lemma 6.1.  S7-LG bounds bursts; what remains is that long
