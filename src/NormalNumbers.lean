@@ -798,6 +798,7 @@ import NormalNumbers.VandeheyS7BlockForget
 import NormalNumbers.VandeheyS7IntervalFreq
 import NormalNumbers.VandeheyS7RelFreq
 import NormalNumbers.VandeheyS7RefTarget
+import NormalNumbers.VandeheyS7WordState
 import NormalNumbers.VandeheyS7Class
 import NormalNumbers.VandeheyS7Net
 import NormalNumbers.VandeheyS7Mem
