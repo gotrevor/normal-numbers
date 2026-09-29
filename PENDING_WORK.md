@@ -389,7 +389,29 @@ needs one discharged (DIRECTION standing rule 3).
    now stated as PROVED, with the §3-free route described and §7 Problem 1 named as the live
    target; joint Lambert corrected to one remaining input (`AGP`).
 
-## Lap notes (newest first)
+## Lap notes
+
+### 2026-09-29 lap 11 — merging: the contraction factor is UNIFORM (`VandeheyS7Merge.lean`)
+
+Next-action #1 from the handoff is done, and it gave more than expected.  Two Gauss branches
+compose to `A_a A_b = (1, B; A, 1+AB)` (`gaussPair`), strictly positive in all four entries with
+determinant exactly `1` — so the Birkhoff diameter is finite after two digits, from any state.
+The surprise: with `ad = 1+t`, `bc = t`, the coefficient collapses to `(√(1+t) − √t)^2`
+(`birkhoffCoeff_one_add`), which is DECREASING in `t`.  Large digits contract more; the worst
+case is the smallest product `t = AB = 1`, i.e. `a = b = 1`.  Hence
+
+    gaussPair_birkhoffCoeff_le :  birkhoffCoeff (A_a A_b) ≤ 3 − 2√2 ≈ 0.1716
+
+for EVERY pair of digits — no digit bound, no positive-frequency argument, no large deviations.
+All axiom-clean.
+
+**Next attack (lap 12):** the mean-value bookkeeping.  `birkhoff_derivative_le` bounds the
+derivative in the log coordinate; combine it with `gaussPair_birkhoffCoeff_le` to get
+`hdist (s.mob x) (s.mob y) ≤ (3−2√2) · hdist x y` for `s = gaussPair a b`, then iterate along the
+input word to get `hdist → 0` geometrically.  That is the loss of memory, and it feeds
+`SampledUniformCount`.
+
+newest first)
 
 ### 2026-09-29 — lap 1 of the §7 objective: targets frozen, and the endgame is OFF ℤ
 
