@@ -470,7 +470,36 @@ The two named hypotheses are the finite-state step, split along its real fault l
 Content locator `affineUniformFreq_of_runClock_locator` (identity clock, rate 1) discharges the
 guard rule; `not_affineCFN_zero` already rules out vacuity.
 
-**NEXT (lap 4).**  Attack `SampledUniformCount` for `q = φ`.  The first sub-node is Route A's
+**Lap 4 (same day), Route A node 1: the compact-fiber substitute is PROVED.**
+`src/NormalNumbers/VandeheyS7Distortion.lean`, all axiom-clean.
+
+The 2026-08-24 correction 2 (drop "compact in PGL₂(ℝ)", keep BOUNDED DISTORTION) is now cashed
+in.  `MobState` is a Möbius state in the shape every post-emission Raney state has (`c ≥ 0 < d`,
+positive determinant) — over ANY ring, which is the point — with
+`distortion s = (c + d)/d`, and
+
+  `MobState.mob_ratio_comparable` : for `0 ≤ u ≤ v ≤ 1`,
+     `(v−u)/distortion ≤ (M v − M u)/(M 1 − M 0) ≤ (v−u)·distortion`.
+
+This is precisely the rôle the finite state set played in Vandehey §5–§6.  There one takes a
+maximum of per-state constants over a finite set; here ONE constant covers the whole family, and
+that two-sided comparability is all his `f_j^±` Riemann squeeze ever consumes.
+`uniform_comparable_of_bddDistortion` states the consequence along a whole state sequence.
+
+So the open obligation is narrowed to the HYPOTHESIS `BddDistortion s` — Route A's window lemma,
+now a named Prop.  Guard rule: `distortion_id` (content locator; identity has distortion 1 and
+the theorem degenerates to equality) and `not_bddAbove_distortion` (distortion is unbounded over
+the ambient family, so `BddDistortion` is a real restriction, not a theorem of the setting).
+
+**NEXT (lap 5).**  Build the `φ`-transducer as a Lean object so `BddDistortion` can be attacked:
+states as `MobState`s carrying `IsZPhi` entries, the update `M_{n+1} = A_out⁻¹ M_n A_{a_{n+1}}`,
+and the emission rule.  Then the window lemma itself, remembering correction 1: Vandehey's
+Lemma 2.1 is an INTEGER DESCENT and does not port, so the proof must be new.  The likeliest
+route is that emission fires exactly when the image interval falls deep into a cylinder, and
+pulling the digits off re-expands the map — i.e. the renormalisation ENFORCES the distortion
+window; `mob_ratio_comparable` is already the right language to state that in.
+
+**(superseded) NEXT (lap 4).**  Attack `SampledUniformCount` for `q = φ`.  The first sub-node is Route A's
 window lemma stated for the REDUCED post-emission states in terms of BOUNDED DISTORTION (not
 compactness in PGL₂(ℝ) — correction 2 of 2026-08-24; the raw state set is unbounded in the
 PROVED case too).  That needs the φ-transducer's state as a Lean object, which does not exist
