@@ -12,7 +12,7 @@ hypothesis is the **recursion**, which determines `s n` from `x₁…xₙ` and f
 the image orbit.  This module states that recursion and proves that it *implies* the coupling.
 
     StatePin x Φ N s v :
-      s 0 = Φ,   N 0 = 0,   N (n+1) = N n + |v n|,   v n ≠ [],   digits of v n ≥ 1,
+      s 0 = Φ,   N 0 = 0,   N (n+1) = N n + |v n|,   N → ∞,   digits of v n ≥ 1,
       (s n).mob maps (0,1) into (0,1),
       cylState (v n) ∘ s (n+1) = s n ∘ readStateAt x n        -- the transducer step, as matrices
 
@@ -24,13 +24,17 @@ The two outputs:
 * `StatePin.realize` — `G^{N n} y = (s n).mob (Gⁿ x)` for all `n`, from `y = Φ.mob x` alone.  The
   induction is exactly the transducer's: read the next input digit (a right `comp`), then strip the
   emitted word off the image (a left `comp`, undone by `gaussMap^[|v n|]`).
-* `StatePin.stateCoupling` — hence the S7-SC coupling, with the states now forced.
+* `StatePin.blockCouplingM` — hence the coupling, with the states now forced.
+
+The clock is only monotone and unbounded, never strictly monotone: a transducer stalls, and
+`v n = []` is allowed.  That is why the reduction goes through S7-C3's `freq_le_of_blockAverage_mono`
+rather than S7-BD's `freq_le_of_blockAverage`.
 
 So `PinnedData` (below) is a bundle whose only genuine freedom is the emitted words `v`, and the
 cheap S7-SA witness is excluded: `lowState (Gⁿy/Gⁿx)` does not satisfy the recursion, because the
 recursion never mentions `y`.
 -/
-import NormalNumbers.VandeheyS7StateAudit
+import NormalNumbers.VandeheyS7Clock3
 import NormalNumbers.VandeheyS7CylState
 import NormalNumbers.VandeheyS7Emit2
 
@@ -161,7 +165,7 @@ structure StatePin (x : ℝ) (Φ : MobState) (N : ℕ → ℕ) (s : ℕ → MobS
   init : s 0 = Φ
   clock0 : N 0 = 0
   clockStep : ∀ n, N (n + 1) = N n + (v n).length
-  emitNonempty : ∀ n, v n ≠ []
+  clockUnbounded : Tendsto N atTop atTop
   emitPos : ∀ n, ∀ a ∈ v n, 1 ≤ a
   reduced : ∀ n, Set.MapsTo (s n).mob (Set.Ioo (0:ℝ) 1) (Set.Ioo (0:ℝ) 1)
   step : ∀ n, (cylState (v n)).comp (s (n + 1)) = (s n).comp (readStateAt x n)
@@ -170,9 +174,8 @@ namespace StatePin
 
 variable {x y : ℝ} {Φ : MobState} {N : ℕ → ℕ} {s : ℕ → MobState} {v : ℕ → List ℕ}
 
-lemma strictMono (h : StatePin x Φ N s v) : StrictMono N := by
-  refine strictMono_nat_of_lt_succ fun n => ?_
-  have hlen : 0 < (v n).length := List.length_pos_iff.2 (h.emitNonempty n)
+lemma mono (h : StatePin x Φ N s v) : Monotone N := by
+  refine monotone_nat_of_le_succ fun n => ?_
   rw [h.clockStep n]; omega
 
 /-- **The realization identity.**  The image orbit at the clock time is the state's image of the
@@ -192,12 +195,13 @@ theorem realize (h : StatePin x Φ N s v)
       rw [h.clockStep n, Nat.add_comm, Function.iterate_add_apply, ih, hkey,
         gaussMap_iterate_cylState_mob (v n) (h.emitPos n) hz]
 
-/-- **The coupling, forced.**  S7-SC's `StateCoupling` now follows from the recursion. -/
-theorem stateCoupling (h : StatePin x Φ N s v)
+/-- **The coupling, forced.**  The S7-C3 coupling now follows from the recursion. -/
+theorem blockCouplingM (h : StatePin x Φ N s v)
     (hx : ∀ k, gaussMap^[k] x ∈ Set.Ioo (0:ℝ) 1) (hy : y = Φ.mob x) (w : List ℕ) :
-    StateCoupling w x y N s where
+    BlockCouplingM (cfCylinder w) x y N (fun n j => stateBlockSet (s n) w j) where
   base := h.clock0
-  strictMono := h.strictMono
+  mono := h.mono
+  unbounded := h.clockUnbounded
   couple := by
     intro n j _
     have hz : (s n).mob (gaussMap^[n] x) ∈ Set.Ioo (0:ℝ) 1 := h.reduced n (hx n)
@@ -249,14 +253,13 @@ theorem orbitWordBound_of_pinnedData {q r₀ C : ℝ} (hC : 0 ≤ C)
     fun k => (irrational_orbit _ hxirr hxmem k).2
   have hB : 0 ≤ C * (gaussMeasure (cfCylinder w)).toReal :=
     mul_nonneg hC ENNReal.toReal_nonneg
-  exact freq_le_of_blockAverage
-    ((hpin.stateCoupling hxo hy w).toBlockCoupling) hratio hB hBA ε hε
+  exact freq_le_of_blockAverage_mono (hpin.blockCouplingM hxo hy w) hratio hB hBA ε hε
 
 section Audit
 
 #print axioms MobState.gaussMap_iterate_cylState_mob
 #print axioms StatePin.realize
-#print axioms StatePin.stateCoupling
+#print axioms StatePin.blockCouplingM
 #print axioms MobState.comp_left_cancel
 #print axioms StatePin.eq_of_emit
 #print axioms orbitWordBound_of_pinnedData
