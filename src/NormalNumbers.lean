@@ -772,6 +772,7 @@ import NormalNumbers.VandeheyS7Cluster
 import NormalNumbers.VandeheyS7CellMem
 import NormalNumbers.VandeheyS7CellRatio
 import NormalNumbers.VandeheyS7FrontSlack
+import NormalNumbers.VandeheyS7CellLim
 import NormalNumbers.VandeheyS7RunOrbit
 import NormalNumbers.VandeheyS7RunClock
 import NormalNumbers.VandeheyS7RunPin
