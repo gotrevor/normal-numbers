@@ -766,6 +766,7 @@ import NormalNumbers.VandeheyS7Front
 import NormalNumbers.VandeheyS7Growth
 import NormalNumbers.VandeheyS7Reset
 import NormalNumbers.VandeheyS7Compose
+import NormalNumbers.VandeheyS7Modulus
 import NormalNumbers.VandeheyS7RunOrbit
 import NormalNumbers.VandeheyS7RunClock
 import NormalNumbers.VandeheyS7RunPin

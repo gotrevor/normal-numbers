@@ -2980,3 +2980,39 @@ and inside `StateData`:
 
 **Next lap**: `StateCoupling` for the Raney machine, and nothing else on this side.  The altitude
 fork (re-authorise the second place, or not) is still open and still belongs to a review lap.
+
+## Lap 79 (2026-09-29) — the crux constant is a MODULUS, not a multiple of γ(I_w)
+
+`VandeheyS7Modulus` (S7-MD) prices the two halves of the distortion route against each other,
+kernel-checked:
+
+    freq(w) ≤ inf_{S>0} [ A/(c·S) + Cp·γ(I_w)·exp(2S) ]   (`slotCount_le_of_modulus`)
+            ≤ 4A/(c·log(1/γ(I_w))) + Cp·√γ(I_w)           (`slotCount_le_modulus`)
+
+The `exp(2S)` is S7-PB's pullback factor `2K/η` at the width floor `η = exp(−2S)` that S7-SK's
+Chebyshev buys for a bad-time frequency `A/(cS)`; the factor `1/η` is SHARP by directive fact (β).
+Consequence, and it is route-decisive:
+
+* **`OrbitWordBound q r₀ C` (freq ≤ C·γ(I_w)) is NOT reachable from bounded distortion plus a
+  first moment on the height.**  Forcing the second term down to `O(γ)` needs `S ≥ ½log(1/γ)`,
+  which buys only `O(1/log(1/γ))` on the first.  The sharp form would need an exponential moment
+  — `Σ_{m<q} 1/width_m = O(q)`, i.e. `Σ d_m² = O(q)` — and since `P(width < η) ≍ η` the integral
+  `∫dη/η` diverges logarithmically, so that moment is not expected to hold.  (Not yet a kernel
+  refutation: it refutes the ROUTE's arithmetic, not the statement.)
+* **A modulus suffices downstream.**  `GaussACRigidity` is invoked to turn "visit frequencies
+  uniformly AC" into "= γ".  Any modulus `freq(I) ≤ μ(|I|)` with `μ(t) → 0` makes every limit
+  point of the empirical measures absolutely continuous, and the unique-AC-invariant-measure form
+  of the cited rigidity closes it.  So the shape of the cited ergodic input should move from
+  "density ≤ C" to "absolutely continuous", and `OrbitWordBound`/`OrbitACBound` should be
+  restated with a modulus.  **This is a directive-level decision** (the current directive pins
+  `OrbitWordBound` as the objective and forbids touching `GaussACRigidity`), so it is logged here
+  for the next altitude lap, not acted on.
+
+Next attack (either order):
+1. `ClassFreqBound net w (Cp·γ/η)` — the honest η-dependent per-cell hypothesis S7-MD consumes.
+   Mechanism: S7-MY (`memory_joint_le`, constant `8 log 2`) for the frequency, S7-PB
+   (`gaussMeasure_preimage_tower_le`, factor `2K/η`) for the mass.  Missing link: the cluster set
+   is an interval, not a cylinder — cover it by finitely many cylinders/cells (S7-CellFreq,
+   S7-HitCell have the cell algebra) — plus `CellMemory` (the cell index is a bounded-memory
+   function of the input digits), which stays the wall.
+2. `MeanSlack` — positive recurrence of the height walk (mean of `log d`).
