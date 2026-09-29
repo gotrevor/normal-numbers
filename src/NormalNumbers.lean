@@ -27,6 +27,7 @@ import NormalNumbers.CFPin
 import NormalNumbers.CFGammaMixing
 import NormalNumbers.CFPsiPin
 import NormalNumbers.GaussErgodic
+import NormalNumbers.GaussKB
 import NormalNumbers.LiteraturePhilipp
 import NormalNumbers.VandeheyAutomaton
 import NormalNumbers.VandeheyCocycle

@@ -67,6 +67,28 @@ the §7 chain.  The binding version is `DIRECTION.md` → CURRENT DIRECTIVE.
      applies to `f ∘ gaussMap`.
    * Last step: `blockCount (cfCylinder v) = blockCount (uIoo cylNear cylFar)` exactly along an
      irrational orbit (`uIoo_subset_cfCylinder`), so weak convergence transfers to cylinders.
+2bis. **`GaussACRigidity`: the compactness-free route (lap 28, `GaussKB.lean`).**  Steps (i) and
+   (ii) are DONE and axiom-clean: `ergodic_gaussMap : Ergodic gaussMap gaussMeasure`
+   (`GaussErgodic.lean`) and `eq_gaussMeasure_of_ac_invariant` (γ is the unique a.c. invariant
+   probability).  Step (iii), Krylov–Bogolyubov, is being done WITHOUT Prokhorov/portmanteau:
+
+   * fix one ultrafilter `orbitUF ≤ atTop` and set `limCDF y t := lim_𝒰 empCDF y p t`.  The
+     values live in the compact `[0,1]`, so the limit exists (`tendsto_empCDF_limCDF`) — no
+     Prokhorov.
+   * **`limCDF_sub_le` (PROVED): the AC bound makes `limCDF` `C`-Lipschitz.**  This is the whole
+     trick: the limit object is continuous by construction, so no continuity-point caveats and
+     no portmanteau theorem are needed.  `limCDF_zero`, `limCDF_one`, `limCDF_mono` also proved.
+   * NEXT: `ν := (limCDF y).stieltjes.measure` (Lipschitz ⇒ monotone + continuous, so a
+     `StieltjesFunction`); `ν (Ioo a b) = limCDF b − limCDF a`; `ν` is a probability on `[0,1]`.
+   * THEN invariance, the one genuinely new step: `T⁻¹(a,b) ∩ (0,1) = ⋃ₖ (1/(k+b), 1/(k+a))` is
+     an EXPLICIT countable union of intervals, and its tail beyond `K` sits inside `(0,1/K)`,
+     which has mass `≤ C/K` uniformly in `p` by the same AC bound.  So the limit interchange is
+     honest and no mapping theorem for a.e.-continuous maps is required.
+   * THEN `ν ≪ Leb ≪ γ` on `(0,1)` + invariance + probability ⇒ `ν = γ` by
+     `eq_gaussMeasure_of_ac_invariant`; cylinders are intervals up to a countable set along an
+     irrational orbit (`uIoo_subset_cfCylinder`), so the cylinder frequencies converge; and since
+     EVERY ultrafilter limit is `γ`, the full sequence converges.
+
 3. `OrbitACBound q r₀ C` — **the crux on this route**.  One-sided, absolute constant, no
    `x`-independence.  Degenerate verdict `one_le_of_orbitACBound`: `C ≥ 1` always.
 
