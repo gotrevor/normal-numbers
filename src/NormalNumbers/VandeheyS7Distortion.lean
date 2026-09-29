@@ -59,13 +59,16 @@ namespace NormalNumbers.VandeheyS7
 open Filter
 
 /-- A Möbius state in the shape every post-emission Raney state has: nonnegative lower row,
-positive `d`, positive determinant.  Nothing here is about `ℤ`, `ℤ[φ]` or any ring — that is the
+positive `d`, positive determinant, and a nonnegative upper row so that the family is closed under composition
+(`VandeheyS7Cocycle`).  Nothing here is about `ℤ`, `ℤ[φ]` or any ring — that is the
 point. -/
 structure MobState where
   a : ℝ
   b : ℝ
   c : ℝ
   d : ℝ
+  ha : 0 ≤ a
+  hb : 0 ≤ b
   hc : 0 ≤ c
   hd : 0 < d
   hdet : 0 < a * d - b * c
@@ -167,7 +170,7 @@ theorem mob_ratio_comparable (s : MobState) {u v : ℝ} (hu : 0 ≤ u) (huv : u 
 /-- The identity state.  Distortion `1`; the comparability theorem degenerates to an equality, so
 all the content is in the bound on `c / d`. -/
 noncomputable def idState : MobState :=
-  ⟨1, 0, 0, 1, le_refl 0, one_pos, by norm_num⟩
+  ⟨1, 0, 0, 1, zero_le_one, le_refl 0, le_refl 0, one_pos, by norm_num⟩
 
 theorem distortion_id : idState.distortion = 1 := by
   simp [distortion, idState]
@@ -178,7 +181,7 @@ theorem not_bddAbove_distortion :
     ¬ BddAbove (Set.range (fun s : MobState => s.distortion)) := by
   rintro ⟨K, hK⟩
   obtain ⟨n, hn⟩ := exists_nat_gt K
-  have hmem : (⟨1, 0, (n : ℝ), 1, Nat.cast_nonneg n, one_pos, by norm_num⟩ :
+  have hmem : (⟨1, 0, (n : ℝ), 1, zero_le_one, le_refl 0, Nat.cast_nonneg n, one_pos, by norm_num⟩ :
       MobState).distortion ∈ Set.range (fun s : MobState => s.distortion) := ⟨_, rfl⟩
   have := hK hmem
   simp only [distortion] at this

@@ -491,7 +491,39 @@ now a named Prop.  Guard rule: `distortion_id` (content locator; identity has di
 the theorem degenerates to equality) and `not_bddAbove_distortion` (distortion is unbounded over
 the ambient family, so `BddDistortion` is a real restriction, not a theorem of the setting).
 
-**NEXT (lap 5).**  Build the `φ`-transducer as a Lean object so `BddDistortion` can be attacked:
+**Lap 5 (same day): distortion is an EXACT COCYCLE, and that is the window lemma's mechanism.**
+`src/NormalNumbers/VandeheyS7Cocycle.lean`, all axiom-clean.
+
+`MobState` is now closed under composition (`comp`, the matrix product; the nonnegativity fields
+were added for this), and the denominators satisfy
+
+  `den_comp` : `den (s ∘ t) x = den t x * den s (t x)`  — EXACTLY, no constant, no inequality.
+
+Denominators are a cocycle over the action.  Hence, with the two-point distortion
+`distOn s u v = den s v / den s u` (and `distortion s = distOn s 0 1`),
+
+  `distOn_comp` : `distOn (s∘t) u v = distOn t u v * distOn s (t u) (t v)`,
+  `distOn_le_one_add` : `distOn s u v ≤ 1 + (v−u)·distortion s` (no upper bound on `v` needed),
+  `distortion_comp_le` : `distortion (s∘t) ≤ distortion t · (1 + |t([0,1])|·distortion s)`.
+
+**Why this is the mechanism.**  The post-emission state is `A_out⁻¹ · M₀ · A_{a₁}⋯A_{aₙ}`.  The
+right factor is a composition of Gauss inverse branches — its distortion is the classical Rényi
+constant, which is exactly the probes' measured "`log 4` for every integer control".  The left
+factor is the drifting ℤ[φ] part with no finiteness certificate.  `distOn_comp` says the drifting
+factor is only ever evaluated ON THE INNER IMAGE, and `distOn_le_one_add` says its contribution
+→ 1 as that image shrinks.  That is the structural reason the probes measured ℤ[φ] distortion
+SATURATING at ≈ 2.5 instead of drifting, while the conjugate place ran to 10^644 — and it is the
+inductive step any window bound must run on.
+
+**NEXT (lap 6).**  Close the quantitative loop.  Two sub-nodes, in order:
+(i) the Rényi bound for the inner factor — `distortion` of any composition of Gauss inverse
+    branches `A_a : y ↦ 1/(a+y)` is ≤ 4, by induction through `distortion_comp_le` (or directly:
+    a Gauss branch has `c = 1, d = a`, so `distortion = (1+a)/a ≤ 2`, and the image has length
+    `1/(a(a+1)) ≤ 1/2`, so the product telescopes).  This is self-contained and should close.
+(ii) the emission rule, which is what makes `|t([0,1])|` small often enough.  Needs the
+     φ-transducer as a Lean object; `distortion_comp_le` is the shape its invariant takes.
+
+**(superseded) NEXT (lap 5).**  Build the `φ`-transducer as a Lean object so `BddDistortion` can be attacked:
 states as `MobState`s carrying `IsZPhi` entries, the update `M_{n+1} = A_out⁻¹ M_n A_{a_{n+1}}`,
 and the emission rule.  Then the window lemma itself, remembering correction 1: Vandehey's
 Lemma 2.1 is an INTEGER DESCENT and does not port, so the proof must be new.  The likeliest
