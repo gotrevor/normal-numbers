@@ -80,7 +80,14 @@ Order of work:
    *deep interiors of long stalls*, and `WidthFreqBound` is now the purely combinatorial
    statement that long stalls have small total length-excess — i.e. Vandehey's Lemma 6.1
    (`ℓ(n) = c₁n(1+o(1))`), which the 2026-08-24 probe measured as SURVIVING the loss of
-   Lemma 2.2 (burst ≤ C + log(1+a)/Lévy, and `∫ log a dμ < ∞`).  S7-LG bounds bursts; what remains is that long
+   Lemma 2.2 (burst ≤ C + log(1+a)/Lévy, and `∫ log a dμ < ∞`).
+   **S7-AG (`VandeheyS7Age`) finishes the translation**: the finite-range stall identity
+   (`runState_add_of_stall'`, the old one assumed a stall FOREVER) plus the stall clock
+   `stallAge` give `width (runState Φ x n) ≤ 36/fib(stallAge n + 1)²` pointwise.  So
+   "narrow at time `n`" IS "has not emitted for ≳ log(1/η)/log φ steps", and `WidthFreqBound`
+   is now a statement about the **emission schedule alone** — no geometry, no state space, no
+   cells.  What is left is exactly: the times lying deeper than `K(η)` inside a stall have
+   frequency → 0 as η → 0.  S7-LG bounds bursts; what remains is that long
    *non-emitting* runs are rare.  Structural observation to formalize: a non-emitting run of
    length `L` forces the input digits `a_n … a_{n+L−1}` to agree with the CF expansion of the
    single point `s_n⁻¹(1/k)` straddled by the image — so a long run is a long coincidence with a
