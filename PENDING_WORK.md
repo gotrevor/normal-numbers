@@ -2367,3 +2367,34 @@ synchronised** — a bookkeeping statement about the transducer's run, not an eq
 cylinder, which is what keeps `O_ℓ` tracking `Φ P_n`).  That is the last piece of `StateClock`, and
 with it the §7 chain drops to two hypotheses: `GaussACRigidity` (cited) and the crux
 `WindowedPullback`.
+
+## Lap 75 (2026-09-29) — S7-BD landed, and S7-WF is a PIGEONHOLE
+
+**S7-BD** (`VandeheyS7Decomp`, commit `facfb1d`): the block decomposition (BD), the inverse clock,
+the tick→every-time interpolation `freq_le_of_clock`, the named residual `BlockAverageBound`, the
+reduction `freq_le_of_blockAverage`, and the bridge `integral_blockHitCount_le` showing the
+**γ-average** of the in-block hit count already meets the crux's constant.  The crux's residual is
+therefore exactly "empirical block average = expected block average for a predictable family",
+= directive fact (α).
+
+**S7-WF** (`VandeheyS7WidthFreq`): *the frequency form of the width floor needs NO ergodic input.*
+Block lengths telescope to the clock (`sum_blockLength`: `Σ_{n<p} Lₙ = N p`), so
+`L · #{n<p : Lₙ ≥ L} ≤ N p` — Markov with no measure (`card_longBlock_le`).  With a clock rate
+`N p ≤ Λ p`, `freq{Lₙ ≥ L} ≤ Λ/L` (`freq_longBlock_le`), and via the named geometric input
+`NarrowForcesBlock` (the CONVERSE of lap 74's `fib_sq_mul_width_le_of_forced`: a state too narrow
+to emit has fallen `log(1/width)` behind, and the next input digit pays it back as one long block),
+`freq{n : width(sₙ) < η} ≤ Λ/L(η) → 0` (`freq_narrow_le`, `narrow_freq_tendsto_zero`).
+
+Nine laps had treated the width floor as needing new ergodic input; it needs only the clock's own
+budget.  Lap 74: a width floor CAPS the block length.  Lap 75: the block-length budget FORCES the
+width floor in frequency.  Same hypothesis, both directions now in the kernel.
+
+### Residual after lap 75
+
+1. **`BlockAverageBound`** — fact (α), the open heart.  The ONLY remaining measure-theoretic debt.
+2. **`NarrowForcesBlock`** — geometric, named, unconditional-looking: needs the emitter's
+   "cannot emit ⟹ image straddles a boundary 1/k, and width < η ⟹ the straddle is at depth
+   ≳ log(1/η)" made precise for the actual Raney states.  Next lap's target.
+3. **The clock rate `N p ≤ Λ p`** — a Lévy-type bound on the image expansion.  The counting side
+   already supplies tail control freely (`tailFreq_le_of_levyBound`); check whether it gives this.
+4. **`BlockCoupling`** for the actual transducer — bookkeeping, not mathematics.
