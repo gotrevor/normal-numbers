@@ -12,8 +12,8 @@ The next Lambert target is an all-N occurrence count; its proposed stronger pape
 
 
 **Digit-reading dynamics of real numbers: normality, disjunctivity, CF-normality, and the
-richness of arithmetic constants.** · **Build**: 🟢 green (10576 jobs) · **Updated**: lap 77 ·
-2026-09-29 · `5a5f0ef`
+richness of arithmetic constants.** · **Build**: 🟢 green (10617 jobs) · **Updated**: lap 88 ·
+2026-09-29 · `c3babcd`
 
 One checkout on `wip/g5-prime-subset`, Lean/mathlib v4.33.1, every campaign branch merged
 (2026-09-27, `f5034b6`).  Per-campaign detail and ledgers from before the merge are in
@@ -43,6 +43,22 @@ entries, so `z ↦ v + ε(z−u)` interpolates.  Four other fronts
 carry proved-but-conditional headlines (Joint Lambert, C3/MRT, Elliott, the casting-out crux
 leaves); their hypotheses are the standing debt.
 
+**Lap 88 (review) changes the ROUTE.**  Route B — the absolute density bound `OrbitWordBound` plus
+the cited `GaussACRigidity` — is demoted: its only surviving instrument is covering the
+state-dependent target by a FIXED finite family, and that is unaffordable (state-blind covering
+exhausts `(0,1)`; a `ρ`-net needs `ρ ≲ γ(I_w)`, hence `≍ρ^{-4}` cells and cover mass
+`≍γ(I_w)^{-3}`, so the constant blows up with `|w|` — fact (ε)).  The repo already owns a SECOND
+reduction of the same headline with **no cited input and no absolute continuity**: universality,
+`affineCFN_of_uniformFreq` and `affineUniformFreq_of_runClock : RunClock + SampledUniformCount ⟹
+AffineCFN`.  Lap 88 builds its architecture: with the skew product of S7-SK, the sliding-block
+identity (`abs_slotCount_sub_sum_blockAvg_le`) makes the crux's frequency the Cesàro average of
+block time-averages, and **`BlockForget`** — the block time-average forgets its initial state,
+uniformly over states of width `≥ η` (an `x`-free statement, GREEN in both Route-A probes) — lets
+ONE reference state replace them all, after which CF-normality evaluates the average
+(`exists_uniform_slotCountFreq`, `VandeheyS7BlockForget`).  The analysis that needs is now in hand
+too: **S7-EQ** (`tendsto_blockCount_Ioo`) computes the orbit frequency of an arbitrary INTERVAL
+along a CF-normal orbit exactly, by a two-sided cylinder squeeze.
+
 ## Superseded overview (Theorem 1.1 era, kept for the reductions it names)
 
 The live target is **Vandehey 2017 Theorem 1.1** (Möbius images of CF-normal numbers are
@@ -60,6 +76,20 @@ carry proved-but-conditional headlines (Joint Lambert, C3/MRT, Elliott, the cast
 leaves); their hypotheses are the standing debt.
 
 ## What's happened (newest first)
+
+- **2026-09-29 (lap 88, review).**  ROUTE CHANGE, recorded in `DIRECTION.md`.  Fact (ε): route B's
+  finite-cover instrument cannot give a `w`-uniform constant (state-blind covering has mass `1`; a
+  `ρ`-net needs `ρ ≲ γ(I_w)`, giving cover mass `≍γ(I_w)^{-3}`), so route B's residual is
+  irreducibly the weighted joint statement `ClassFreqBound` + an AC input.  Universality (route A)
+  takes over: it already reduces the headline (`affineCFN_of_uniformFreq`,
+  `affineUniformFreq_of_runClock`) with **no cited input**.  Two modules landed, both axiom-clean:
+  **S7-BF** (`VandeheyS7BlockForget`, `32ae5b1`) — `blockAvg`, the sliding-block identity, the new
+  `x`-free crux `BlockForget`, and `exists_uniform_slotCountFreq` (one constant `L` that EVERY
+  affordable CF-normal input's crux frequency converges to: the `SampledUniformCount` shape); and
+  **S7-EQ** (`VandeheyS7IntervalFreq`, `c3babcd`) — `tendsto_blockCount_Ioo`, the exact orbit
+  frequency of an arbitrary interval for a CF-normal orbit, by a two-sided cylinder squeeze (the
+  sharp form of S7-CV, factored out).  Laps 81–87's window-domination chain (S7-WC/WN/WD/WD′/CV) is
+  kept: S7-WN and S7-CV are the analysis S7-EQ runs on.
 
 - **2026-09-29 (lap 77, review).**  Course correction on the INSTRUMENT, not the target.  Laps
   58–76 hunted a **width floor**; that is only half of what compactness needs, and it is the hard
@@ -337,8 +367,10 @@ This repo holds **no `axiom` declarations**: literature inputs are named hypothe
 | headline theorem | paper claim | `#print axioms` shows | status |
 | --- | --- | --- | --- |
 | `Literature.vandehey_matrix_action_holds` (`VandeheyCapstone.lean`) | unconditional (Vandehey 2017 Thm 1.1) | trust base | 🟢 **CLEAN, DISCHARGED 2026-09-29** (`6d7a8ad`).  Route: Serret + Smith reduce to `x ↦ D·x` (`D` prime); the concrete Raney `L/R` transducer supplies a monotone RUN clock with an `x`-independent positive rate (`tendsto_runClock_div`, Lemma 6.1) and an `x`-independent Cesàro limit for the image's CF-occurrence count sampled along it (`exists_tendsto_cfCount_runClock`).  Assembled by `mobiusUniformFreq_of_runClock`.  NB the theorem lives downstream of `LiteratureVandehey.lean` (import cycle); the frozen statements stay there. |
-| `VandeheyS7.affineCFN_of_runClock` (`VandeheyS7Clock.lean`) | — (reduction for the OPEN §7 Problem 1) | trust base | 🟡 clean **as a reduction**: `0 < q` + `RunClock ℓ rate` + `SampledUniformCount q r₀ ℓ` ⊢ `AffineCFN q r₀`, for every real `q, r₀`.  The two hypotheses are named `Prop`s, not axioms.  `SampledUniformCount` is the live frontier; next prerequisite = `StateEquidistribution` on the compact bounded-distortion fiber |
-| `VandeheyS7.vandeheyS7_mul_phi_of_orbitWordBound` (`VandeheyS7Chain.lean`) | — (the LIVE reduction for the OPEN §7 Problem 1) | trust base | 🟡 clean **as a reduction**, three hypotheses wide: `GaussACRigidity (C/log 2)` (cited, standard ergodic theory) + `ImageTight` on the image + `OrbitWordBound φ 0 C` (the crux).  Same for `vandeheyS7_add_phi_of_orbitWordBound`.  current frontier; next prerequisite = `ClassFreqBound` (lap 77): the front is now `AffineImageIrrational + BlockAverageBound` alone (`orbitWordBound_of_runBlockAverage_all`, `VandeheyS7Interp`), and fact (δ) (`runState_entries_abs_le`) makes the predictor's range precompact |
+| `VandeheyS7.affineCFN_of_runClock` (`VandeheyS7Clock.lean`) | — (reduction for the OPEN §7 Problem 1) | trust base | 🟡 clean **as a reduction**, and since lap 88 the PRIMARY route: `0 < q` + `RunClock ℓ rate` + `SampledUniformCount q r₀ ℓ` ⊢ `AffineCFN q r₀`, for every real `q, r₀`, with **no cited ergodic input**.  `SampledUniformCount` is the live frontier; next prerequisite = `RefCesaro` (a CF-normality consequence via S7-EQ), and then the crux `BlockForget` |
+| `VandeheyS7.MapState.exists_uniform_slotCountFreq` (`VandeheyS7BlockForget.lean`) | — (route-A architecture, lap 88) | trust base | 🟡 clean as a reduction: `BlockForget w` + `RefCesaro w` + an affordable width floor ⊢ one constant `L` that every CF-normal input's crux frequency converges to.  `BlockForget` is the crux and is `x`-free; `RefCesaro` is a CF-normality consequence (next prerequisite) |
+| `VandeheyS7.tendsto_blockCount_Ioo` (`VandeheyS7IntervalFreq.lean`) | — (the analysis route A runs on) | trust base | ✅ proved lap 88, axiom-clean: a CF-normal orbit's frequency of an arbitrary interval is exactly its Gauss measure.  Two-sided cylinder squeeze; no AC, no ergodic theorem |
+| `VandeheyS7.vandeheyS7_mul_phi_of_orbitWordBound` (`VandeheyS7Chain.lean`) | — (the LIVE reduction for the OPEN §7 Problem 1) | trust base | 🟡 clean **as a reduction**, three hypotheses wide: `GaussACRigidity (C/log 2)` (cited, standard ergodic theory) + `ImageTight` on the image + `OrbitWordBound φ 0 C` (the crux).  Same for `vandeheyS7_add_phi_of_orbitWordBound`.  DEMOTED lap 88 (fact (ε)): the cover instrument cannot give a `w`-uniform `C`, so this route needs `ClassFreqBound` + an AC input.  Kept as the alternative; next prerequisite there = `ClassFreqBound`: the front is now `AffineImageIrrational + BlockAverageBound` alone (`orbitWordBound_of_runBlockAverage_all`, `VandeheyS7Interp`), and fact (δ) (`runState_entries_abs_le`) makes the predictor's range precompact |
 | `VandeheyS7.MobState.blockPullback_sum_le` (`VandeheyS7Pull.lean`) | — (measure side of the crux) | trust base | ✅ proved lap 74, axiom-clean: a state of width `≥ η`, distortion `≤ K`, pulls a whole emitted block of length `L` back to Gauss mass `≤ (2K/η)·L·γ(I_w)`.  The tower `G^{-j}I_w` is free, by Gauss invariance |
 | `VandeheyS7.MobState.volume_preimage_le` (`VandeheyS7Pull.lean`) | — (instrument) | trust base | ✅ proved lap 74, axiom-clean; the pullback bound for an ARBITRARY target set, no measurability |
 | `VandeheyS7.MapState.runState_entries_abs_le` (`VandeheyS7Box.lean`) | — (directive fact (δ)) | trust base | ✅ proved lap 77, axiom-clean: every run state of width `≥ η` has all four entries in `[−M,M]`, `M = √(6·\|det Φ\|/η)`.  Unconditional — no hypothesis on `x`, `Φ` or normality.  This is the precompactness of the predictor's range |
@@ -358,9 +390,9 @@ This repo holds **no `axiom` declarations**: literature inputs are named hypothe
 | `ElliottLedger.twoPointElliottLog_of_zetaExponent` | conditional on `ZetaLogDerivExponent θ`, `θ < 1` | trust base | 🟡 Vinogradov–Korobov gives `θ = 2/3`; repo owns `θ ≥ 9`; gap recorded as `zetaLogDerivExponent_gap` |
 
 **Done** would be: every headline's base is the trust base alone, with 🔴 only where the paper
-is itself conditional.  Today the 🟡 with a live attack is the Vandehey §7 crux
-(`OrbitWordBound`; `OrbitCellBound`/`OrbitACBound` are the same statement in other shapes, and
-`SampledUniformCount` is the older fallback route's crux); `AGP` and `ZetaLogDerivExponent` are
+is itself conditional.  Today the 🟡 with a live attack is the Vandehey §7 crux, since lap 88 in its universality form
+(`SampledUniformCount`, reached through `BlockForget` + `RefCesaro`; `OrbitWordBound` /
+`OrbitCellBound` / `OrbitACBound` are the demoted route-B shapes); `AGP` and `ZetaLogDerivExponent` are
 the other two, both parked.
 
 ## Pointers

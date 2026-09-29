@@ -11,6 +11,85 @@ The next Lambert target is an all-N occurrence count; its proposed stronger pape
 `docs/JOINT-LAMBERT-QUANTITATIVE-NEXT.md`.  It is not yet formalized.
 
 
+## ⭐ VANDEHEY §7 — LAP 88 (review): ROUTE A (UNIVERSALITY), AND THE CRUX IS `BlockForget`
+
+**Binding version = `DIRECTION.md` CURRENT DIRECTIVE.**  Commits `32ae5b1` (S7-BF), `c3babcd`
+(S7-EQ).  This SUPERSEDES the lap-77 section below as the attack path (its facts stay true).
+
+### What the review found
+
+* **Fact (ε) — route B's instrument has a ceiling.**  Route B (`OrbitWordBound` + cited
+  `GaussACRigidity`) needs `limsup freq ≤ C·γ(I_w)` with `C` uniform in `w`.  Its only surviving
+  instrument is a cover of the state-dependent target by a FIXED finite family (S7-WD/WD′/CV/FT).
+  1. State-blind is impossible: over the whole width-`≥η` box the targets exhaust `(0,1)` (a state
+     `z ↦ v + ε(z−u)` of width `1/2` sends ANY `z` into `I_w`), so such a cover has mass `1`.
+  2. Net-indexed is quantitatively dead: the target `s⁻¹(I_w)` is an interval of length `≍γ(I_w)`,
+     so resolving it needs `ρ ≲ γ(I_w)`, the box then carries `≍ρ^{-4}` cells, and the unweighted
+     cover mass is `≍γ(I_w)^{-3}`.  The ℤ[φ]-separation of the reachable states (`|α|·|α^σ| ≥ 1`)
+     says this is intrinsic, not a net artefact.
+  So route B's residual is irreducibly the WEIGHTED joint statement `ClassFreqBound` — which needs
+  the state's empirical law AND absolute continuity.  Route B is now the ALTERNATIVE, not the front.
+* **The repo already owned a second reduction with no cited input.**  `affineCFN_of_uniformFreq`
+  (universality ⟹ the headline, via Vandehey's §6 either-or, whose measure witness is
+  `exists_feasible_cfNormal_affine`) and `affineUniformFreq_of_runClock : RunClock ℓ rate →
+  SampledUniformCount q r₀ ℓ → AffineUniformFreq`.  No `GaussACRigidity`, no constant `C`, no
+  absolute continuity — and the attack map called this route the cheaper one (§3 endgame is FREE).
+  50 laps of momentum walked past it; lap 88 makes it the front.
+
+### The decomposition to work — `BlockForget`
+
+Landed lap 88 (`VandeheyS7BlockForget`, axiom-clean):
+
+    blockAvg s T w z = (1/T) Σ_{j<T} slotObs w (pairStep^[j] (s, z))
+
+* `abs_slotCount_sub_sum_blockAvg_le` — **the sliding-block identity**: `|slotCount p −
+  Σ_{m<p} blockAvg (s_m) T w (Gᵐx)| ≤ T`.  (Each `j`-shift of a length-`p` window costs `j`.)
+* `BlockForget w` — `∀ε>0 ∀η>0 ∃T>0, ∀ s s′ of width ≥ η, ∀ z ∈ (0,1),
+  |blockAvg s T w z − blockAvg s′ T w z| ≤ ε`.  **The new crux.**  No `x`, no normality, no measure.
+* `RefCesaro w` — for the fixed `refState` and each `T`, the Cesàro average of
+  `blockAvg refState T w (Gᵐ x)` has an `x`-independent limit.
+* `WidthAfford Φ x` — for every `δ` an affordable floor `η` (= S7-SK's `exists_eventually_widthBad_le`
+  transported from the clock to the time axis; still resting on `MeanSlack` + `ClockLinear`).
+* ⟹ `exists_abs_slotCountFreq_sub_le` (one `L`, independent of `Φ` and `x`, within `4ε`),
+  `exists_tendsto_slotCountFreq`, `tendsto_slotCountFreq_eq`, `exists_uniform_slotCountFreq`.
+
+### Order of work (= DIRECTION's mandated moves (b), (c))
+
+1. **DONE lap 88 — the analysis: S7-EQ** (`VandeheyS7IntervalFreq`, axiom-clean).
+   `tendsto_blockCount_Ioo : blockCount (Ioo α β) p x / p → γ(Ioo α β)` for CF-normal `x`, by a
+   two-sided cylinder squeeze (`meetWords`/`insideWords`, the sharp form of S7-CV, the digit
+   truncation paid once).  This is strictly sharper than the lap-62 `VandeheyS7IooFreq` bound.
+2. **NEXT — discharge `RefCesaro` from S7-EQ.**  `blockAvg refState T w` is a finite combination of
+   events `{z ∈ I_v ∧ G^{|v|} z ∈ J_v}` with `J_v` an INTERVAL: the state after reading `v` is a
+   function of `v` (S7-WC `pairIter_fst_congr`), the emission condition depends on one more digit,
+   and `mapBlockSet t w 0 = t.mob⁻¹(I_w) ∩ (0,1)` is an interval because `t.mob` is monotone.
+   Each such event is an interval inside a cylinder — `G^{|v|}` restricted to `I_v` is a monotone
+   bijection onto `(0,1)` — so S7-EQ plus the level-`|v|` reparametrisation evaluates its frequency,
+   and the countable union over `v` is truncated by bounded digits exactly as in S7-EQ.
+   Sub-steps to name in Lean: (i) `mapBlockSet_eq_Ioo` (the target IS an interval, from
+   `cfCylinder_endpoints` + monotonicity of `mob`); (ii) `cylinderPullback_Ioo` (the branch of
+   `G^{-j}` on `I_v` maps intervals to intervals); (iii) assemble.
+3. **THEN `BlockForget` itself.**  Instruments in hand: `disc` (S7-CN: reading is inert, the
+   discrepancy is a Möbius map carried unchanged — so the proof must average, not couple),
+   `distortion_runWord_le_two` (the SHAPE contracts), fact (δ)'s box, and S7-SS (stall ⟺ straddle).
+   Shape to try first: a state's block average differs from another's only through the EMISSION
+   SCHEDULE (S7-SO), and the two schedules differ by a bounded lag (S7-LD), so the two block sums
+   are two counts of the same word in two reparametrisations of ONE output stream — the difference
+   should telescope into `O(lag)/T`.  That is the first honest attempt, and it is a Lean-able
+   statement about `runClock` differences, not a measure-theoretic one.
+4. Keep chipping `MeanSlack`/`ClockLinear`: route A needs them for `RunClock`'s rate and for
+   `WidthAfford`.
+
+### Not to be re-walked
+
+* `CellMemory`, `ClassFreqBound` as the front (route B's residual; `CellMemory` is a restatement —
+  lap 80).  Extending the unweighted cover machinery (S7-WD/WD′/CV/FT).  The window-function frame.
+  `GaussACRigidity` (route A does not use it).
+* `VandeheyS7FinTarget.lean` is an UNCOMMITTED, unfinished module in the working tree (the level-`M`
+  cover-mass lemma only, `sum_gaussMeasure_coverWords_le`).  It belongs to route B's ceiling and its
+  headline `slotCount_le_of_finiteTargets` was never written.  Either finish it as the *record* of
+  fact (ε) part 1 or delete it; do NOT build on it.
+
 ## ⭐ VANDEHEY §7 — LAP 77 (review): FACT (δ), AND THE NEXT TARGET IS `ClassFreqBound`
 
 **Binding version = `DIRECTION.md` CURRENT DIRECTIVE.**  Commits `5a5f0ef` (S7-BX), S7-IN.
