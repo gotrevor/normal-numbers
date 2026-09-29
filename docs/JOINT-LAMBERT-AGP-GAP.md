@@ -52,12 +52,16 @@ construction may pick `B` avoiding `Dset`.  No reordering, no `∀ B ∃ Dset` w
 **Audit status of this section.**  §2a was verified in-kernel at the installed pins:
 `#print axioms` on both declarations gives `[propext, Classical.choice, Quot.sound]` only, and
 they are now *consumed* by a committed theorem (`3ddc0b6`), so the full `lake build` gates them.
-§2b–§2d are read off the installed **sources** (paths and line numbers below) and are `sorry`-free
-by `grep` in their own files, but their transitive axiom sets were **not** confirmed in-kernel
-this lap: `#print axioms` on them needs `Util.Linnik.Theorem` and the `Erdos4`/`Erdos48` analytic
+**§2b is now also confirmed in-kernel** (lap 7, second commit): `Erdos4.FGKMT.exists_exponential_prime_distribution`
+gives `[propext, Classical.choice, Quot.sound]`, and it is consumed by
+`NormalNumbers.JointLambert.exists_pointwise_exponential_distribution`
+(`src/NormalNumbers/JointLambertAGPRange.lean`), which is `sorry`-free with the same axiom set —
+so the repo's own build now gates it.  §2c–§2d are read off the installed **sources** (paths and
+line numbers below) and are `sorry`-free by `grep` in their own files, but their transitive axiom
+sets were **not** confirmed in-kernel this lap: `#print axioms` on them needs `Util.Linnik.Theorem` and the `Erdos4`/`Erdos48` analytic
 trees built, and those wide cold builds kept hitting the box's `EMFILE`/"too many open files"
 ceiling (errno 24, rotating target names — the known spurious-build failure, not an elaboration
-error).  Treat §2b–§2d as *stated-and-sourced*, and re-run `probes/AgpAudit.lean` before relying
+error).  Treat §2c–§2d as *stated-and-sourced*, and re-run `probes/AgpAudit.lean` before relying
 on them.  Nothing in §4–§6 depends on their axiom cleanliness: the obstruction argued there is
 that these statements, even taken at face value, have the wrong *shape*.
 
@@ -215,7 +219,12 @@ def AGPExpRange : Prop :=
           (((range (X + 1)).filter (fun z => z.Prime ∧ z % B = u % B)).card : ℝ)
 ```
 
-**Target: `agpExpRange_holds : AGPExpRange`**, with no new hypothesis.
+**Target: `agpExpRange_holds : AGPExpRange`**, with no new hypothesis.  **Opened lap 7** in
+`src/NormalNumbers/JointLambertAGPRange.lean`, which now contains `AGPExpRange` and the proved
+bookkeeping layer — in particular `exists_pointwise_exponential_distribution`, the single-modulus
+(★) form of the installed input, `#print axioms`-clean.  Two disclosed `sorry`s remain there:
+`exceptionalConductor_gt_log` (the `D > log X` adapter of §4) and the quantitative assembly that
+is blocked on it.
 
 Why it bridges.  Every structural feature of `AGP` is present unchanged — the `X`-only
 exceptional set chosen *before* `B` and `u`, `D0 = 1`, `D > log X`, the same relative

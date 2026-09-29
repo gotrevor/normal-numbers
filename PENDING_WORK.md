@@ -51,6 +51,30 @@ against real analytic input and reduces the remaining gap to the single named im
 `AGPExpRange + (log-free zero-density: range extension) ⟹ AGP`.  That density estimate is the
 substantial missing theorem and a multi-lap analytic campaign, deliberately out of scope here.
 
+**Opened, same lap: `src/NormalNumbers/JointLambertAGPRange.lean`** — the named next target, now
+decomposed in `src/` rather than only described in prose.  Proved and axiom-clean there:
+
+* `AGPExpRange` (the def), faithful to `AGP` in every respect but the modulus range;
+* `agpCount_eq_primeCountUpTo` — `AGP`'s prime count and `BoundedGaps.Maynard.primeCountUpTo`
+  are literally the same filter, so the two libraries' encodings need no reconciliation;
+* `mod_mem_coprimeResidues`, `progressionDiscrepancy_le_max`, `maxDisc_le_excisedPrimeSum`;
+* **`exists_pointwise_exponential_distribution`** — the (★) of the gap doc: the installed
+  `Erdos4.FGKMT.exists_exponential_prime_distribution` read at a SINGLE modulus, giving, for one
+  excised conductor `B` and every `q ≤ x^{1/3}` coprime to it and every reduced `u`,
+  `|π(x;q,u) − π(x)/φ(q)| ≤ C x e^{−(a/2)√log x}`.  This is the analytic content `AGPExpRange`
+  needs, and it also confirms §2b of the gap doc in-kernel.
+
+Two disclosed `sorry`s remain in that file, both named and both documented:
+
+1. **`exceptionalConductor_gt_log`** — `AGP`'s `D > log X` clause.  The needed bound is installed
+   (`Erdos48.PageExceptionalWitness.log_scale_lt_quadraticGapDenom`), but the `Erdos4` excision
+   chain projects the Page witness away; closing it means re-entering
+   `exists_excised_distribution_envelope` at a point that still carries the witness.  **This is
+   the next thing to attack on this front.**
+2. `agpExpRange_holds` — the quantitative assembly, blocked only on (1).  The arithmetic is
+   written out in its docstring: (★) + `Erdos446.eventually_primeCounting_tenth_bounds` +
+   `φ(q) ≤ q ≤ exp((a/4)√log x)` reduces it to `(5/2) C log x ≤ exp((a/4)√log x)`.
+
 **Box gotcha (new).** The wide cold builds of `Util.Linnik.Theorem` / the `Erdos4`–`Erdos48`
 analytic trees hit `EMFILE` ("too many open files", errno 24) persistently, and **`taskset -c 0-2`
 did NOT fix it** here — contrary to the reference corpus's `taskset` remedy.  The failure also
