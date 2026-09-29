@@ -733,6 +733,7 @@ import NormalNumbers.VandeheyS7Clock2
 import NormalNumbers.VandeheyS7Fix
 import NormalNumbers.VandeheyS7Width
 import NormalNumbers.VandeheyS7Pull
+import NormalNumbers.VandeheyS7Forced
 import NormalNumbers.VandeheyS7Predict
 import NormalNumbers.VandeheyS7Loss
 import NormalNumbers.VandeheyS7QuadDigit
