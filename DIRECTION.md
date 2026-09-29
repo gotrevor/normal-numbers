@@ -63,6 +63,31 @@ the repo already owns route A's endgame and route B's instrument has a proved-ou
   architecture consumes, it is strictly weaker (`blockForgetRun_of_gen`), and the refutations —
   single `(state, point)` pairs — do not touch it.  Everything else in this directive stands.
 
+* **LAP-91 AMENDMENT (the width debt leaves the critical path; the crux is `BlockForgetAll`).**
+  The lap-91 probe (`experiments/PROBE-2026-09-29-lap91-stall-and-width-walk.md`; exact `ℤ[φ]`
+  arithmetic, output verified against the true CF of `x/φ`) reads the run as follows: the clock
+  deficit STOPS (7 stalls in 18000 reads, so `runClock p/p → 1` — the crux at `[]` is measured
+  green), while `log(1/width)` is a null-recurrent `√n` random walk — **for the rational map
+  `(z+1)/3` as well**, where the theorem is known.  So `WidthAfford` and `MeanSlack` are false in
+  SHAPE, not open; the single mechanism is the queue of known-but-unemitted output digits, whose
+  returns to zero are the stalls.  Three consequences, all in the kernel:
+  1. **S7-WQ** (`VandeheyS7WidthDensity`): sparse wide times make `BlockForgetRun` VACUOUS and
+     `WidthAfford` FALSE — non-vacuity of the crux and satisfiability of the width debt are the
+     same requirement.
+  2. **S7-AW** (`VandeheyS7ArchWidthFree`): the architecture re-derived with the width filter
+     deleted.  `BlockForgetAll` — the same comparison summed over ALL times — alone gives
+     `isCFNormal_image_of_blockForgetAll`.  **`BlockForgetAll` is the crux from now on**; no
+     `RefCesaro`, no clock hypothesis, no width affordability.  The scalar debts (`MeanSlack`,
+     `ClockLinear`, `WidthAfford`) are OFF the critical path — do not spend laps on them.
+  3. **S7-NR** (`VandeheyS7NoReduction`): the crux with the absolute values REMOVED is exactly the
+     headline (`signedForget_iff_slotCountFreq`).  So the whole surplus of route A's front over its
+     own conclusion is the absolute values, i.e. LOCALITY: the run's window statistics must track
+     the input's window by window.  An attack that averages first is attacking the headline
+     directly; the only thing route A adds is the local comparison.
+  Also landed: **S7-LG** (`VandeheyS7LevelGen`) carries S7-RC's level constants to an arbitrary
+  state and reduces the crux's FIXED-state coordinate to an arithmetic statement about finite sums
+  of relative Gauss masses (`abs_blockAvgCesaro_sub_gauss_le_of_levelSum`).
+
 * **Forbidden drift.**  (i) New unweighted-cover machinery for route B (S7-WD/WD′/CV/FT are
   finished; do not extend them).  (ii) `ClassFreqBound`/`CellMemory` as the front — they are route
   B's residual, and `CellMemory` is a restatement (lap 80).  (iii) The window-function frame,
@@ -77,6 +102,9 @@ the repo already owns route A's endgame and route B's instrument has a proved-ou
   off-directive.
 
 Directive history:
+- 2026-09-29 (lap 91): width debt refuted in shape by the probe and removed from the architecture
+  (S7-AW); crux renamed `BlockForgetAll`; S7-NR shows the signed crux is the headline, so the
+  crux's only content is locality.
 - 2026-09-29 (lap 88, review): ROUTE CHANGE — universality (`AffineUniformFreq`, which already
   reduces the headline with NO cited input) replaces the absolute density bound; fact (ε) kills the
   unweighted cover, and the new crux is `BlockForget` (block time-averages forget the initial
