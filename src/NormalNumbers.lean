@@ -800,6 +800,7 @@ import NormalNumbers.VandeheyS7BlockRefute
 import NormalNumbers.VandeheyS7BlockGenRefute
 import NormalNumbers.VandeheyS7RefValue
 import NormalNumbers.VandeheyS7Image
+import NormalNumbers.VandeheyS7ClockOne
 import NormalNumbers.VandeheyS7IntervalFreq
 import NormalNumbers.VandeheyS7RelFreq
 import NormalNumbers.VandeheyS7RefTarget

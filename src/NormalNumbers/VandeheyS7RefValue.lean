@@ -95,12 +95,11 @@ theorem abs_sum_blockAvg_refState_sub_blockCount_le (w : List ℕ) {T : ℕ} (hT
     _ = (T : ℝ) * T := by simp
 
 /-- **The reference Cesàro limit, with its value.** -/
-theorem tendsto_cesaro_blockAvg_refState {w : List ℕ} (hne : w ≠ []) (hpos : ∀ a ∈ w, 1 ≤ a)
-    {T : ℕ} (hT : 0 < T) {x : ℝ} (hx : IsCFNormal x)
-    (horb : ∀ k : ℕ, gaussMap^[k] x ∈ Set.Ioo (0:ℝ) 1) :
+theorem tendsto_cesaro_blockAvg_refState {w : List ℕ} {T : ℕ} (hT : 0 < T) {x : ℝ}
+    (hbc : Tendsto (fun p => blockCount (cfCylinder w) p x / (p : ℝ)) atTop
+      (nhds (gaussMeasure (cfCylinder w)).toReal)) :
     Tendsto (fun p => (∑ m ∈ range p, blockAvg refState T w (gaussMap^[m] x)) / (p : ℝ)) atTop
       (nhds (gaussMeasure (cfCylinder w)).toReal) := by
-  have hbc := blockCount_tendsto_of_isCFNormal hx horb w hne hpos
   have hdiff : Tendsto (fun p : ℕ =>
       (∑ m ∈ range p, blockAvg refState T w (gaussMap^[m] x)) / (p : ℝ)
         - blockCount (cfCylinder w) p x / (p : ℝ)) atTop (nhds 0) := by
@@ -121,19 +120,24 @@ theorem tendsto_cesaro_blockAvg_refState {w : List ℕ} (hne : w ≠ []) (hpos :
 words: the value is forced. -/
 theorem refCesaro_value {w : List ℕ} (hne : w ≠ []) (hpos : ∀ a ∈ w, 1 ≤ a) {T : ℕ} (hT : 0 < T)
     {x : ℝ} (hx : IsCFNormal x) (horb : ∀ k : ℕ, gaussMap^[k] x ∈ Set.Ioo (0:ℝ) 1) {L : ℝ}
+
     (hL : Tendsto (fun p => (∑ m ∈ range p, blockAvg refState T w (gaussMap^[m] x)) / (p : ℝ))
       atTop (nhds L)) : L = (gaussMeasure (cfCylinder w)).toReal :=
-  tendsto_nhds_unique hL (tendsto_cesaro_blockAvg_refState hne hpos hT hx horb)
+  tendsto_nhds_unique hL
+    (tendsto_cesaro_blockAvg_refState hT (blockCount_tendsto_of_isCFNormal hx horb w hne hpos))
 
 /-! ## The architecture, with the constant identified and `RefCesaro` dropped -/
 
 /-- **The architecture theorem, sharpened.**  No `RefCesaro` hypothesis and no anonymous constant:
 `BlockForgetRun` plus an affordable width floor put the crux's frequency within `4ε` of the Gauss
 mass of the cylinder. -/
-theorem abs_slotCountFreq_sub_gauss_le {w : List ℕ} (hne : w ≠ []) (hpos : ∀ a ∈ w, 1 ≤ a)
+theorem abs_slotCountFreq_sub_gauss_le {w : List ℕ}
     (hBF : BlockForgetRun w) {ε : ℝ} (hε : 0 < ε) {η : ℝ} (hη : 0 < η)
     (Φ : MapState) {x : ℝ} (hx : IsCFNormal x)
-    (horb : ∀ k, gaussMap^[k] x ∈ Set.Ioo (0:ℝ) 1) (hbad : WidthBadFreq Φ x η ε) :
+    (horb : ∀ k, gaussMap^[k] x ∈ Set.Ioo (0:ℝ) 1)
+    (hbc : Tendsto (fun p => blockCount (cfCylinder w) p x / (p : ℝ)) atTop
+      (nhds (gaussMeasure (cfCylinder w)).toReal))
+    (hbad : WidthBadFreq Φ x η ε) :
     ∀ᶠ p : ℕ in atTop,
       |slotCount Φ x w p / (p : ℝ) - (gaussMeasure (cfCylinder w)).toReal| ≤ 4 * ε := by
   classical
@@ -144,7 +148,7 @@ theorem abs_slotCountFreq_sub_gauss_le {w : List ℕ} (hne : w ≠ []) (hpos : �
   have hA : ∀ᶠ p : ℕ in atTop, (T : ℝ) / (p : ℝ) ≤ ε := by
     have := (tendsto_const_div_atTop_nhds_zero_nat (T : ℝ)).eventually (eventually_lt_nhds hε)
     filter_upwards [this] with p hp using hp.le
-  have hB := (tendsto_cesaro_blockAvg_refState hne hpos hT hx horb).eventually
+  have hB := (tendsto_cesaro_blockAvg_refState hT hbc).eventually
     (eventually_abs_sub_lt γw hε)
   filter_upwards [hA, hB, hbad, hrun, eventually_gt_atTop 0] with p hA' hB' hbad' hrun' hp0
   have hpR : (0:ℝ) < (p : ℝ) := by exact_mod_cast hp0
@@ -205,16 +209,18 @@ theorem abs_slotCountFreq_sub_gauss_le {w : List ℕ} (hne : w ≠ []) (hpos : �
 /-- **S7-RV, the sharpened route-A architecture.**  `BlockForgetRun` + an affordable width floor
 give the crux's frequency EXACTLY: it converges to `γ(I_w)`, for every CF-normal input and every
 map.  No cited input, no `RefCesaro`, no anonymous constant. -/
-theorem tendsto_slotCountFreq_gauss {w : List ℕ} (hne : w ≠ []) (hpos : ∀ a ∈ w, 1 ≤ a)
+theorem tendsto_slotCountFreq_gauss {w : List ℕ}
     (hBF : BlockForgetRun w) (Φ : MapState) {x : ℝ} (hx : IsCFNormal x)
-    (horb : ∀ k, gaussMap^[k] x ∈ Set.Ioo (0:ℝ) 1) (hwf : WidthAfford Φ x) :
+    (horb : ∀ k, gaussMap^[k] x ∈ Set.Ioo (0:ℝ) 1)
+    (hbc : Tendsto (fun p => blockCount (cfCylinder w) p x / (p : ℝ)) atTop
+      (nhds (gaussMeasure (cfCylinder w)).toReal)) (hwf : WidthAfford Φ x) :
     Tendsto (fun p => slotCount Φ x w p / (p : ℝ)) atTop
       (nhds (gaussMeasure (cfCylinder w)).toReal) := by
   rw [Metric.tendsto_atTop]
   intro δ hδ
   obtain ⟨η, hη, -, hbad⟩ := hwf (δ / 8) (by linarith)
-  have h := abs_slotCountFreq_sub_gauss_le hne hpos hBF (show (0:ℝ) < δ / 8 by linarith) hη
-    Φ hx horb hbad
+  have h := abs_slotCountFreq_sub_gauss_le hBF (show (0:ℝ) < δ / 8 by linarith) hη
+    Φ hx horb hbc hbad
   rw [eventually_atTop] at h
   obtain ⟨N, hN⟩ := h
   refine ⟨N, fun p hp => ?_⟩

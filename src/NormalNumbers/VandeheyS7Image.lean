@@ -81,7 +81,8 @@ theorem tendsto_blockCount_image {w : List ℕ} (hne : w ≠ []) (hpos : ∀ a �
     (hrate : Tendsto (fun p => ((runClock Φ x p : ℕ) : ℝ) / (p : ℝ)) atTop (nhds rate)) :
     Tendsto (fun k => blockCount (cfCylinder w) k (Φ.mob x) / (k : ℝ)) atTop
       (nhds ((gaussMeasure (cfCylinder w)).toReal / rate)) := by
-  have hslot := tendsto_slotCountFreq_gauss hne hpos hBF Φ hx horb hwf
+  have hslot := tendsto_slotCountFreq_gauss hBF Φ hx horb
+    (blockCount_tendsto_of_isCFNormal hx horb w hne hpos) hwf
   have hcomp : Tendsto (fun p => outCount Φ x w (runClock Φ x p) / (p : ℝ)) atTop
       (nhds (gaussMeasure (cfCylinder w)).toReal) := by
     refine hslot.congr fun p => ?_
