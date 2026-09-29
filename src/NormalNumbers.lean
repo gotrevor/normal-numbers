@@ -570,6 +570,7 @@ import NormalNumbers.JointLambertPrimeSelection
 import NormalNumbers.JointLambertTailBounds
 import NormalNumbers.JointLambertTail
 import NormalNumbers.JointLambertDisjunctivity
+import NormalNumbers.JointLambertPrimeInputs
 import NormalNumbers.WallCrux
 import NormalNumbers.WallRational
 import NormalNumbers.TwoPointDelangeParity
