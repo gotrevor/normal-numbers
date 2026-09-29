@@ -402,6 +402,32 @@ needs one discharged (DIRECTION standing rule 3).
 
 ## Lap notes
 
+### 2026-09-29 lap 17 — one Gauss step costs exactly `(n+1)²`
+
+`gaussMap_eq_sub` and `abs_gaussMap_sub_le`, both axiom-clean.  Inside a depth-one cylinder the
+integer part of `x⁻¹` is the SAME integer for both points, so it cancels and
+
+    gaussMap u − gaussMap v = u⁻¹ − v⁻¹ = (v − u)/(u v),   hence
+    |gaussMap u − gaussMap v| ≤ (n+1)² |u − v|
+
+with `n` the shared digit.  Exact, not an estimate: the only inequality is `u, v > 1/(n+1)`.
+
+So a depth-`m` agreement costs `∏_{i<m} (aᵢ+1)^{-2}` in `δ`.  Merging supplies
+`δ_n = 1/(fib(n-1)fib(n))`, which is exponentially small — the right order to pay this, since
+`∑ log(aᵢ+1)` is `O(n)` almost surely (finite Khinchin mean, the same integral
+`∫ log(1+a) dγ < ∞` that `VandeheyS7Clock`'s docstring cites for the clock rate).
+
+**Next attack (lap 18): the depth-`m` induction.**  Iterate `abs_gaussMap_sub_le` with the shift
+identity `cfDigit w (k+1) = cfDigit (gaussMap w) k` (proved in `CFAffineFamily.lean`).  The clean
+statement to aim for:
+
+    ∀ i < m, gaussMap^[i] u ∉ boundaryBad (δ · ∏_{j<i} (cfDigit u j + 1)²)
+      →  ∀ i < m, cfDigit v i = cfDigit u i
+
+i.e. the exceptional set is a FINITE union of depth-one bad sets pulled back along `gaussMap`,
+each of measure `O(√(δ ∏ …))`.  Bounding that union is where the Khinchin integral enters; do the
+induction first and leave the measure of the pullback union as the named node after it.
+
 ### 2026-09-29 lap 16 — digit agreement off the boundary set (lap 15 is now load-bearing)
 
 `cfDigit_zero_eq_of_not_boundaryBad` : if `u ∈ (0,1)` is not within `δ` of ANY endpoint `1/k`,

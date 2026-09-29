@@ -202,12 +202,64 @@ theorem cfDigit_zero_eq_of_not_boundaryBad {δ u v : ℝ} (hu : u ∈ Ioo (0:ℝ
   · linarith
   · linarith
 
+/-! ## One Gauss step: the scale degrades by the square of the digit
+
+To go from depth one to depth `m`, iterate.  Two points in the SAME depth-one cylinder have
+`gaussMap u − gaussMap v = u⁻¹ − v⁻¹` exactly — the integer part cancels because it is the same
+integer — and therefore
+
+    |gaussMap u − gaussMap v|  =  |u − v| / (u v)  ≤  (n+1)² |u − v| ,
+
+`n` being the shared digit.  So each Gauss step costs a factor `(digit+1)²`, and a depth-`m`
+agreement needs `δ` smaller than `∏ (aᵢ+1)^{-2}`.  Merging supplies `δ = 1/(fib(n-1)fib(n))`,
+exponentially small, which is the right order of magnitude to pay this.
+-/
+
+/-- In a depth-one cylinder the integer part of `x⁻¹` is constant, so `gaussMap` is just
+inversion. -/
+theorem gaussMap_eq_sub {u : ℝ} {n : ℕ} (hn : 1 ≤ n) (hu0 : 0 < u)
+    (hlo : ((n : ℝ) + 1)⁻¹ < u) (hhi : u ≤ ((n : ℝ))⁻¹) :
+    gaussMap u = u⁻¹ - (n : ℝ) := by
+  have hnr : (1:ℝ) ≤ (n : ℝ) := by exact_mod_cast hn
+  have h1 : (n : ℝ) ≤ u⁻¹ := by rwa [le_inv_comm₀ (by linarith) hu0]
+  have h2 : u⁻¹ < (n : ℝ) + 1 := (inv_lt_comm₀ (by linarith) hu0).1 hlo
+  have hfloor : ⌊u⁻¹⌋ = (n : ℤ) := by
+    rw [Int.floor_eq_iff]
+    exact ⟨by exact_mod_cast h1, by exact_mod_cast h2⟩
+  have hne : u ≠ 0 := hu0.ne'
+  rw [gaussMap, if_neg hne, Int.fract, hfloor]
+  norm_num
+
+/-- **One Gauss step costs a factor `(n+1)²`.**  The integer part cancels exactly. -/
+theorem abs_gaussMap_sub_le {u v : ℝ} {n : ℕ} (hn : 1 ≤ n) (hu0 : 0 < u) (hv0 : 0 < v)
+    (hul : ((n : ℝ) + 1)⁻¹ < u) (huh : u ≤ ((n : ℝ))⁻¹)
+    (hvl : ((n : ℝ) + 1)⁻¹ < v) (hvh : v ≤ ((n : ℝ))⁻¹) :
+    |gaussMap u - gaussMap v| ≤ ((n : ℝ) + 1) ^ 2 * |u - v| := by
+  have hnr : (1:ℝ) ≤ (n : ℝ) := by exact_mod_cast hn
+  have hd : gaussMap u - gaussMap v = u⁻¹ - v⁻¹ := by
+    rw [gaussMap_eq_sub hn hu0 hul huh, gaussMap_eq_sub hn hv0 hvl hvh]; ring
+  have hid : u⁻¹ - v⁻¹ = (v - u) / (u * v) := by field_simp
+  rw [hd, hid, abs_div, abs_of_pos (by positivity : (0:ℝ) < u * v), abs_sub_comm]
+  rw [div_le_iff₀ (by positivity)]
+  have huv : ((n : ℝ) + 1)⁻¹ * ((n : ℝ) + 1)⁻¹ ≤ u * v :=
+    mul_le_mul hul.le hvl.le (by positivity) hu0.le
+  have hsq : ((n : ℝ) + 1)⁻¹ * ((n : ℝ) + 1)⁻¹ = (((n : ℝ) + 1) ^ 2)⁻¹ := by
+    rw [← mul_inv]; ring_nf
+  rw [hsq] at huv
+  have hpos : (0:ℝ) < ((n : ℝ) + 1) ^ 2 := by positivity
+  have hstep : (1:ℝ) ≤ ((n : ℝ) + 1) ^ 2 * (u * v) := by
+    have := mul_le_mul_of_nonneg_left huv hpos.le
+    rwa [mul_inv_cancel₀ hpos.ne'] at this
+  nlinarith [abs_nonneg (u - v), hstep]
+
 
 section Audit
 
 #print axioms boundaryBad_subset
 #print axioms volume_boundaryBad_le
 #print axioms cfDigit_zero_eq_of_not_boundaryBad
+#print axioms gaussMap_eq_sub
+#print axioms abs_gaussMap_sub_le
 
 end Audit
 
