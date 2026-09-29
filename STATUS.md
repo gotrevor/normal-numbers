@@ -12,14 +12,29 @@ The next Lambert target is an all-N occurrence count; its proposed stronger pape
 
 
 **Digit-reading dynamics of real numbers: normality, disjunctivity, CF-normality, and the
-richness of arithmetic constants.** · **Build**: 🟢 green (10326 jobs) · **Updated**: lap 4 ·
-2026-09-28 · `VandeheyRaneyReach`
+richness of arithmetic constants.** · **Build**: 🟢 green (10503 jobs) · **Updated**: lap 27 ·
+2026-09-29 · `b8e7fd4`
 
 One checkout on `wip/g5-prime-subset`, Lean/mathlib v4.33.1, every campaign branch merged
 (2026-09-27, `f5034b6`).  Per-campaign detail and ledgers from before the merge are in
 `archive/STATUS-to-2026-09-27.md`; the lap-by-lap log is `archive/PENDING_WORK-to-2026-09-27.md`.
 
 ## Where it stands
+
+The live target is the operator's moonshot, **Vandehey Compositio 2017 §7 Problem 1**: is `φx`
+CF-normal when `x` is?  Theorem 1.1 itself is PROVED (`vandehey_matrix_action_holds`, 2026-09-28),
+and §7 is frozen as `vandeheyS7_mul_phi` / `vandeheyS7_add_phi`, reduced to one crux,
+`SampledUniformCount`.  Laps 11–26 proved every analytic input to that crux — merging, the window
+bound, digit transfer at every depth, the scale cutoff, the budget — and then framed the rest as
+bookkeeping against a *window function* of the input.  Review lap 27 refuted that frame in the
+kernel (`no_window_function`): the machine does not forget, and this was
+`hall_vandehey_synchronizing_transducer` a second time.  The corrected route indexes the
+decomposition by state class, not by input word, and the ε-scheme engine
+(`sampledUniformCount_of_approxScheme`) is the consumer.  Four other fronts carry
+proved-but-conditional headlines (Joint Lambert, C3/MRT, Elliott, the casting-out crux leaves);
+their hypotheses are the standing debt.
+
+## Superseded overview (Theorem 1.1 era, kept for the reductions it names)
 
 The live target is **Vandehey 2017 Theorem 1.1** (Möbius images of CF-normal numbers are
 CF-normal), down to the single leaf `MobiusCFNScale`: `x ↦ p·x` for prime `p`.  Smith descent and
@@ -36,6 +51,28 @@ carry proved-but-conditional headlines (Joint Lambert, C3/MRT, Elliott, the cast
 leaves); their hypotheses are the standing debt.
 
 ## What's happened (newest first)
+
+- **2026-09-29 (lap 27, review).**  A route-level correction on the §7 crux, plus the engine the
+  corrected route needs.  (a) `cfCount_tendsto_of_decomposition`'s BOUNDED decomposition error is
+  unattainable: the exceptional set of `cfDigit_agree_depth` has positive Gauss mass, so a
+  CF-normal input meets it with positive frequency and the error is `Θ(p)`.  Replaced by
+  `VandeheyS7Approx`: schemes `(S k, ε k → 0)` chosen before `x`, with `abs_sub_le_of_approx`
+  keeping the limit attached to the scheme, `tendsto_div_of_approxScheme` the engine, and
+  `sampledUniformCount_of_approxScheme` the crux with no existence hypothesis; `approxScheme_sqrt`
+  witnesses that the weakening is strict.  (b) `VandeheyS7Memory.no_window_function` REFUTES the
+  planned window function: `(1,3;0,8)` and `(1,7;0,32)`, both of distortion `1`, emit `2` and `4`
+  after reading *any* word, so the emitted digit is not a function of the window for any window
+  length.  `spread_runWord_le` bounds the image DIAMETER, never its LOCATION.  This is
+  `hall_vandehey_synchronizing_transducer` again, reproved without the `ZMod D` quotient; new row
+  `hall_emit_digit_window_function`.
+- **2026-09-29 (laps 11–26, grind).**  The §7 analytic layer, all axiom-clean: uniform contraction
+  `3−2√2` and the Birkhoff coefficient; `mob_nonexpansive` as a polynomial identity; merging
+  `spread_runWord_le` from a Fibonacci row recursion plus `det = ±1`; `volume (boundaryBad δ) ≤
+  6√δ`; one Gauss step costs exactly `(n+1)²`; `cfDigit_agree_depth`; the scale cutoff off the
+  log-tail bad zone; `budget_le`/`budget_tendsto_zero` (so `m` may be proportional to the word
+  length — the route is not budget-limited); `wordState_eq_conv` (the word matrix IS the
+  continuant matrix, transposed); `triggerGap_of_mem_cyl`; `windowBound_runWord` unconditional
+  along the run; `cfDigit_mob_eq_emitDigit`.
 
 - **2026-09-28 (lap 4, review).**  Two route-decisive findings on the transducer's input side,
   plus the enabling algebra.  (a) `det (M · B j) = − det M`, so the Raney automaton carries a
@@ -86,6 +123,27 @@ leaves); their hypotheses are the standing debt.
      target there: `AGPExpRange` (AGP with `X^{1/4}` cut to `exp(c√log X)`).
   2. The quantitative all-`N` count of paper §6, as a separate target.
 - **Read:** `docs/JOINT-LAMBERT-AGP-GAP.md`, `HANDOFF-joint-lambert.md`, `papers/2026-09-26-joint-lambert-disjunctivity.md`.
+
+### Vandehey §7 Problem 1 (OPERATOR OBJECTIVE): is `φx` CF-normal when `x` is?
+- **Frozen targets** (`VandeheyS7.lean`): `vandeheyS7_mul_phi := AffineCFN goldenRatio 0`,
+  `vandeheyS7_add_phi := AffineCFN 1 goldenRatio`, `VandeheyS7Problem1` for the general quadratic
+  form.  Open statements; `sorry`-free is not expected and they are never weakened.
+- **The reduction, complete and axiom-clean.**  `affineCFN_of_uniformFreq` (any real `q > 0`, any
+  real `r`) → `AffineUniformFreq`; `affineUniformFreq_of_runClock` → `RunClock ℓ rate` ∧
+  `SampledUniformCount q r₀ ℓ`.  The clock is measured (`c₁ ∈ [0.965, 0.989]`) and has a known
+  finite-mean reason (`∫ log(1+a) dγ < ∞`); **`SampledUniformCount` is the crux**.
+- **The wall, as Lean** (`VandeheyS7Wall.lean`): Thm 1.1's finite state set is a certificate about
+  `ℤ` with no `ℤ[φ]` analogue (`ℤ[φ]ˣ` infinite; `M⁻¹VM` integral forces `V` diagonal).
+- **Analytic layer, all proved** (laps 11–26): merging, the window bound along the run, digit
+  transfer to every depth with the `√δ` boundary rate, the scale cutoff, and the budget.
+- **Corrected attack path (lap 27).**  The decomposition must be indexed by (state class, input
+  word), NOT by input words alone — `no_window_function` refutes the latter for every window
+  length, with minimal-distortion witnesses.  Next: name the compact bounded-distortion fiber as
+  the state space, state `StateEquidistribution`, derive `SampledUniformCount` from it through
+  `sampledUniformCount_of_approxScheme`, then attack ν with `VandeheyS7Birkhoff`.
+- **Read:** `DIRECTION.md` CURRENT DIRECTIVE, `papers/vandehey-2017-open-problem-attack-map.md`,
+  `experiments/PROBE-ROUTE-A.md`, the Maze rows `hall_emit_digit_window_function` and
+  `hall_vandehey_synchronizing_transducer`.
 
 ### Vandehey 2017 Thm 1.1: Möbius images of CF-normal numbers are CF-normal (ONE leaf left)
 - **The Smith reduction (2026-09-28, `VandeheySmith.lean`, sorry-free).**  `MobiusCFN a b c d`
@@ -206,6 +264,9 @@ This repo holds **no `axiom` declarations**: literature inputs are named hypothe
 | headline theorem | paper claim | `#print axioms` shows | status |
 | --- | --- | --- | --- |
 | `Literature.vandehey_matrix_action_holds` (`VandeheyCapstone.lean`) | unconditional (Vandehey 2017 Thm 1.1) | trust base | 🟢 **CLEAN, DISCHARGED 2026-09-29** (`6d7a8ad`).  Route: Serret + Smith reduce to `x ↦ D·x` (`D` prime); the concrete Raney `L/R` transducer supplies a monotone RUN clock with an `x`-independent positive rate (`tendsto_runClock_div`, Lemma 6.1) and an `x`-independent Cesàro limit for the image's CF-occurrence count sampled along it (`exists_tendsto_cfCount_runClock`).  Assembled by `mobiusUniformFreq_of_runClock`.  NB the theorem lives downstream of `LiteratureVandehey.lean` (import cycle); the frozen statements stay there. |
+| `VandeheyS7.affineCFN_of_runClock` (`VandeheyS7Clock.lean`) | — (reduction for the OPEN §7 Problem 1) | trust base | 🟡 clean **as a reduction**: `0 < q` + `RunClock ℓ rate` + `SampledUniformCount q r₀ ℓ` ⊢ `AffineCFN q r₀`, for every real `q, r₀`.  The two hypotheses are named `Prop`s, not axioms.  `SampledUniformCount` is the live frontier; next prerequisite = `StateEquidistribution` on the compact bounded-distortion fiber |
+| `VandeheyS7.sampledUniformCount_of_approxScheme` (`VandeheyS7Approx.lean`) | — (engine) | trust base | 🟢 clean; the crux from a uniform ε-approximation scheme, with no existence hypothesis |
+| `VandeheyS7.MobState.no_window_function` (`VandeheyS7Memory.lean`) | refutation | trust base | 🟢 clean; the window-function frame is dead |
 | `Literature.vandeheyUniformFreq_of_scale` | — (reduction) | trust base | 🟢 clean; reduces Thm 1.1 to `MobiusCFNScale` |
 | `Literature.mobiusCFNGL2_holds` | unconditional (Serret) | trust base | 🟢 clean, discharged |
 | `Literature.philipp_psi_mixing_holds` | unconditional (Philipp) | trust base | 🟢 clean, discharged |
@@ -216,7 +277,8 @@ This repo holds **no `axiom` declarations**: literature inputs are named hypothe
 | `ElliottLedger.twoPointElliottLog_of_zetaExponent` | conditional on `ZetaLogDerivExponent θ`, `θ < 1` | trust base | 🟡 Vinogradov–Korobov gives `θ = 2/3`; repo owns `θ ≥ 9`; gap recorded as `zetaLogDerivExponent_gap` |
 
 **Done** would be: every headline's base is the trust base alone, with 🔴 only where the paper
-is itself conditional.  Today the one 🟡 with a live attack is the Vandehey crux.
+is itself conditional.  Today the 🟡 with a live attack is the Vandehey §7 crux
+(`SampledUniformCount`); `AGP` and `ZetaLogDerivExponent` are the other two, both parked.
 
 ## Pointers
 

@@ -11,6 +11,65 @@ The next Lambert target is an all-N occurrence count; its proposed stronger pape
 `docs/JOINT-LAMBERT-QUANTITATIVE-NEXT.md`.  It is not yet formalized.
 
 
+## ⚠️ VANDEHEY §7 — CORRECTED ATTACK PATH (review lap 27, 2026-09-29)
+
+**This supersedes the "next actions" of `HANDOFF-2026-09-29-2330.md`.**  Read it before touching
+the §7 chain.  The binding version is `DIRECTION.md` → CURRENT DIRECTIVE.
+
+### What was wrong
+
+1. **The window function does not exist.**  `VandeheyS7Memory.no_window_function w` (kernel, every
+   `w`, every length): `(1,3;0,8)` and `(1,7;0,32)` map `[0,1]` into the digit-`2` and digit-`4`
+   cylinders, so after reading ANY word they both emit, and emit `2` and `4`.  Both have
+   distortion `1` — the minimum — so the compact bounded-distortion fiber does not evade it.
+   Maze: `hall_emit_digit_window_function`.
+2. **`spread_runWord_le` is not initial-state independence.**  It bounds the image DIAMETER,
+   uniformly in the state.  `runWord s w = s.comp (wordState w)`, so the LOCATION is the state's
+   alone.  Input is appended on the RIGHT: recent digits fix the fine position inside the current
+   interval, the far past fixes the absolute position, and the emitted digit reads the absolute
+   position.
+3. **It is a hall already closed.**  `hall_vandehey_synchronizing_transducer` (2026-09-28): no
+   word merges two state classes.  A window function is exactly such a merge.  Lap 27's module
+   reproves it without the `ZMod D` quotient, so the verdict survives the move off `ℤ`.
+4. **The bounded decomposition error is unattainable.**  The exceptional set of
+   `cfDigit_agree_depth` has POSITIVE Gauss mass, so a CF-normal input meets it with positive
+   frequency: the error is `Θ(p)`, never `O(1)`.  `cfCount_tendsto_of_decomposition` stays in the
+   build (it is subsumed, `approxScheme_of_bddError`) but must not be the consumer.
+
+### What is in hand for the corrected path
+
+* `VandeheyS7Approx.sampledUniformCount_of_approxScheme` — the crux from a family-and-error
+  scheme `(S v k, ε v k → 0)` chosen before `x`.  No existence hypothesis.
+* `MobState.cfDigit_mob_eq_emitDigit` — the emitted digit IS a function of the state.
+* `MobState.canEmit_runWord_of_const` — a state inside one cylinder emits that digit forever.
+* `VandeheyS7Distortion` — the compact substitute for finiteness
+  (`uniform_comparable_of_bddDistortion`); `VandeheyS7Birkhoff` — the `3−2√2` contraction.
+
+### The named next goals (in order)
+
+* **S7-A. The state space.**  A `def` for the post-emission states: `¬ CanEmit` (nothing left to
+  emit) plus `distortion ≤ D`.  Content locator + degenerate case, per the guard rule.  Include
+  the normalization map `strip : MobState → MobState × List ℕ` (emit while you can) and prove it
+  terminates on states whose image is short enough.
+* **S7-B. The state process.**  `stateSeq : ℝ → ℕ → MobState`, the post-emission state after
+  reading `n` CF digits of the input, with the clock `ℓ x n := ` total emitted length.  Prove
+  monotone, and that the emitted stream is the image's CF digit stream (correctness).
+* **S7-C. `StateEquidistribution`.**  The empirical measure of `(stateSeq x n)` converges weakly
+  to an `x`-independent ν, on a class of cells fine enough to resolve `emitDigit`.  This is the
+  ℤ[φ] replacement for `ClassEquidistribution` / `JointStateFreq`.
+* **S7-D. Crux from S7-C.**  Cells × input words give the scheme's finite families; feed
+  `sampledUniformCount_of_approxScheme`.
+* **S7-E. ν itself.**  Birkhoff–Hopf contraction on the compact fiber ⇒ existence and uniqueness.
+
+### The open probe left behind
+
+Is the emitted digit a window function of the input for ONE FIXED `M`?  It is TRUE for
+`M = id` (the image is the input) and expected false for `M = φ`; deciding it needs two reachable
+post-emission states straddling different endpoints `1/k`.  Not on the critical path — S7-C does
+not need it — but it would sharpen the Maze row.
+
+---
+
 Concrete next moves, cheapest and most clear-cut first.  Front context is in `STATUS.md`.  The
 lap-by-lap log from before the 2026-09-27 merge is `archive/PENDING_WORK-to-2026-09-27.md`.
 Treadmill laps append dated notes **below the queue**, and a review lap folds them back into it.

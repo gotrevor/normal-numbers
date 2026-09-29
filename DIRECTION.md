@@ -1,5 +1,38 @@
 # DIRECTION — normal-numbers 🧭
 
+## CURRENT DIRECTIVE (altitude laps only write here; it OUTRANKS the HANDOFF) 🧭
+
+**Set 2026-09-29 (review lap 27).**
+
+* **Objective.**  Vandehey §7 Problem 1, at the crux: `SampledUniformCount q r₀ ℓ`.  Nothing
+  else on this front counts as progress.
+* **Mandated next move.**  Build the **state-indexed** decomposition, not the window-indexed
+  one.  Concretely: (i) name the post-emission state space as the compact bounded-distortion
+  fiber of `VandeheyS7Distortion`; (ii) state `StateEquidistribution` — the empirical measure of
+  the post-emission state process along a CF-normal input converges weakly to an `x`-independent
+  ν; (iii) derive `SampledUniformCount` from it through
+  `VandeheyS7Approx.sampledUniformCount_of_approxScheme`, whose families are then
+  (state cell × input word) pairs; (iv) only then attack ν's existence/uniqueness with
+  `VandeheyS7Birkhoff`.
+* **Forbidden drift.**  Do **not** try to make the image digit a function of a bounded input
+  window.  `VandeheyS7Memory.no_window_function` refutes it in the kernel for every window and
+  every window length, with witnesses of minimal distortion, and it is
+  `hall_emit_digit_window_function` / `hall_vandehey_synchronizing_transducer` in the Maze.
+  Do not use `spread_runWord_le` as "initial-state independence": it bounds the image DIAMETER,
+  never its LOCATION.  Do not hand the chain a bounded-error decomposition
+  (`cfCount_tendsto_of_decomposition`): the exceptional set has positive Gauss mass, so the
+  error is `Θ(p)`; use the ε-scheme.
+* **Why.**  Laps 11–26 proved every analytic input (merging, window bound, digit transfer,
+  budget) and then framed the remainder as bookkeeping against a window function.  That frame
+  is false, and it is a hall the build had already closed a lap earlier.  The state is a genuine
+  hidden variable; replacing Vandehey's finite state set by a measure on a compact fiber is the
+  whole content of Route A, and it must be *stated* before it can be attacked.
+
+Directive history:
+- 2026-09-29 (lap 27, review): window-function frame REFUTED; switch to the state-indexed
+  decomposition; ε-scheme replaces the bounded-error engine.
+
+
 ## OPERATOR OBJECTIVE 2026-09-29: Vandehey §7 Problem 1 🌙
 
 **Target (open, Vandehey Compositio 2017 §7 Problem 1):** if `x` is CF-normal, is `φx` CF-normal?
