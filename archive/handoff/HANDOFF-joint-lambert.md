@@ -1,3 +1,37 @@
+# HANDOFF — joint Lambert: `PrimeIntervalSupply` DISCHARGED; `AGP` is the only hypothesis left
+
+**Update: 2026-09-28 (lap 7), `3ddc0b6`.**  Prior content preserved verbatim below.
+
+`PrimeIntervalSupply` is no longer a hypothesis.  `src/NormalNumbers/JointLambertPrimeInputs.lean`
+proves it from **ordinary PNT** (not PNT in arithmetic progressions) via the installed
+`Erdos446.eventually_dyadicPrimes_card_bounds`, and re-exports the two headlines conditional on
+`AGP` alone:
+
+```
+primeIntervalSupply_holds        : PrimeIntervalSupply
+jointLambertDisjunctivity_of_agp : AGP → JointLambertDisjunctivity
+jointWords_two_four_of_agp       : AGP → JointWords {2, 4}
+#print axioms  -- all three: [propext, Classical.choice, Quot.sound]
+```
+
+Exact frozen types (pinned as compiler-enforced `example`s in the file's `Audit` section); every
+pre-existing `JointLambert*.lean` byte-identical to `7b17c44`; full `lake build` green
+(10352 jobs).  Reproducible axiom check: `scripts/check-joint-lambert-inputs.sh`.
+
+**The remaining hypothesis, mapped: `docs/JOINT-LAMBERT-AGP-GAP.md`.**  Short version — no
+averaged absolute-error bound can supply `AGP`, because `AGP` is a *relative* lower bound whose
+main term `x/(φ(B) log x)` shrinks with the modulus while the error does not; Bombieri–Vinogradov
+would make the admissible modulus range *worse*, and is in any case only a `def` in the installed
+`BoundedGaps`.  The missing input is a log-free zero-density estimate.  **Next target on this
+front:** `AGPExpRange` (gap doc §6) — `AGP` verbatim with `X^{1/4}` cut to `exp(c√log X)`,
+`D0 = 1`, which the installed `Erdos4`/`Erdos48` material plausibly already proves and which
+reduces the gap to one named range extension.
+
+**Not for this front:** the main line is still the Vandehey objective in `DIRECTION.md`
+2026-09-28 (b) — read `HANDOFF.md` at the repo root for that.
+
+---
+
 # HANDOFF — joint Lambert: FINAL ASSEMBLY DONE (conditional headline proved)
 
 Date: 2026-09-27 (lap D).  Operator objective at the top of `DIRECTION.md`

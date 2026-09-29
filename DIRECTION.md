@@ -54,6 +54,10 @@ lap 4 found Vandehey's own §6 proof makes `ℓ(n)` a Birkhoff sum of a BOUNDED 
 function (augment the state with the last emitted letter), so `hlen` is a COROLLARY of `hjs`
 plus the `wCount`/`wLimit` machinery already in `VandeheyOutputFreq.lean`, not an analytic leaf.
 Do NOT open `PrimeIntervalSupply` until `hjs` has a stated theorem in the kernel.
+  ↳ **PREREQUISITE SATISFIED, lap 6** (`VandeheyTransport.jointStateFreq_lrDelta`,
+  `VandeheyTransportB.jointStateFreq_lrB`), and the gate is DISCHARGED: see the
+  2026-09-28 (c) operator objective below, under which `PrimeIntervalSupply` became a
+  theorem at `3ddc0b6`.
 
 **Why.** Hardest-first.  `hjs` is the only remaining obligation whose feasibility was in doubt,
 and lap 4 showed BOTH the published route to it and the hypothesis shape it was aimed at are
@@ -68,6 +72,37 @@ Directive history:
   quotient that repairs it, and (b) the numeric REFUTATION of the factorized `JointStateFreq`
   shape, with the `ρ(w,t) ≤ γ(I_w)` escape that makes de-factorizing free.  `hlen` demoted from
   "analytic leaf" to corollary of `hjs`.
+
+---
+
+## OPERATOR OBJECTIVE 2026-09-28 (c): joint-Lambert prime inputs + AGP gap map — ✅ COMPLETE
+
+**Scope: bounded, at most TWO laps, and NOT a Vandehey assembly campaign.**  Trevor's
+authorization, 2026-09-28: "Go for it! It's an interesting claim".  This section is scoped to the
+joint-Lambert analytic inputs only; the Vandehey objective (b) above and the `PENDING_WORK.md`
+queue are **untouched and still live**, and no Vandehey implementation is modified under it.
+
+The lap-4 gate above ("do not open `PrimeIntervalSupply` until `hjs` is a theorem") is satisfied:
+lap 6 proved `hjs` twice over.  So this objective supersedes that gate for the interval-supply
+item only.
+
+**Deliverables (all met, lap 7, `3ddc0b6` + this commit).**
+1. `src/NormalNumbers/JointLambertPrimeInputs.lean`, namespace `NormalNumbers.JointLambert`:
+   * `primeIntervalSupply_holds : PrimeIntervalSupply`
+   * `jointLambertDisjunctivity_of_agp (hagp : AGP) : JointLambertDisjunctivity`
+   * `jointWords_two_four_of_agp (hagp : AGP) : JointWords {2,4}`
+   Exact frozen headline types, no extra hypotheses, `#print axioms`-clean.  Every
+   pre-existing `JointLambert*.lean` byte-identical to `7b17c44`.
+2. `docs/JOINT-LAMBERT-AGP-GAP.md` — the AGP gap map against the **installed** dependency
+   versions: what is proved, what is only stated, which gaps are adapters, and the one
+   substantial missing analytic theorem (a log-free zero-density estimate).  Names
+   `AGPExpRange` as the single concrete next target.
+
+**Recorded finding.** Interval supply is an *ordinary* PNT consequence, not PNT-in-AP; the
+`STATUS.md` row that called both hypotheses "PNT-in-AP strength" was wrong and is corrected.
+`AGP` is the only analytic hypothesis the joint headline still rests on, and §4 of the gap doc
+shows no averaged absolute-error bound (including Bombieri–Vinogradov) can supply it — the
+obstruction is structural, not a constant.
 
 ---
 

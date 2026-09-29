@@ -4,6 +4,64 @@ Concrete next moves, cheapest and most clear-cut first.  Front context is in `ST
 lap-by-lap log from before the 2026-09-27 merge is `archive/PENDING_WORK-to-2026-09-27.md`.
 Treadmill laps append dated notes **below the queue**, and a review lap folds them back into it.
 
+## ✅ LAP 7 (2026-09-28, bounded joint-Lambert objective): `PrimeIntervalSupply` IS A THEOREM
+
+Scoped operator objective `DIRECTION.md` 2026-09-28 (c), ≤ 2 laps, **not** Vandehey assembly.
+Vandehey's queue below is untouched and remains the main line.
+
+`3ddc0b6` **`src/NormalNumbers/JointLambertPrimeInputs.lean`** — the joint Erdős–Borwein headline
+now rests on `AGP` **alone**:
+
+* `primeIntervalSupply_holds : PrimeIntervalSupply`, from **ordinary PNT** via the installed
+  `Erdos446.eventually_dyadicPrimes_card_bounds` (itself from
+  `BoundedGaps.PrimeNumberTheorem.primeCounting_natCast_isEquivalent`).  Two bookkeeping steps:
+  `dyadicPrimes_eq_filter_Ioo` (for `2 ≤ L` the endpoint `2L` is even and `> 2`, hence composite,
+  so half-open `(L,2L]` = open `(L,2L)` as FINSETS) and the free `1/2 → 1/3` constant.
+* `jointLambertDisjunctivity_of_agp`, `jointWords_two_four_of_agp`.
+
+All three at the exact frozen types (compiler-pinned by the file's `Audit` section), axiom-clean,
+every pre-existing `JointLambert*.lean` byte-identical to `7b17c44`.  Reproducible check:
+`scripts/check-joint-lambert-inputs.sh`.
+
+**`docs/JOINT-LAMBERT-AGP-GAP.md`** — the AGP gap map against the *installed* pins.  Findings:
+
+1. Interval supply was never PNT-in-AP strength; the old `STATUS.md` row saying so is corrected.
+2. Bombieri–Vinogradov is **only a `def`** in the installed `BoundedGaps`
+   (`BombieriVinogradov/Statement.lean:66,76`; the sibling `Challenge.lean` has 3 `sorry`s).
+3. `Erdos4.FGKMT.exists_exponential_prime_distribution` is genuinely stronger than BV in the error
+   factor *and* has the AGP exceptional-set shape (one excised conductor, chosen before the
+   modulus) — but it is an **absolute** error bound, `≤ C x e^{−c√log x}`, and AGP wants a
+   **relative** lower bound whose main term `x/(φ(B) log x)` shrinks with `B`.  So it yields AGP
+   only for `φ(B) ≲ e^{c√log x}`, not `B ≤ x^{1/4}`.  **Structural, not a constant loss**:
+   improving the error factor to `x/(log x)^A` makes the admissible range *worse*.
+4. The `D > log X` clause is a second, smaller gap: the `Erdos4` excision chain drops the Page
+   witness, whose conductor bound `log Q < c·2^22·√m·(log m)^4`
+   (`Erdos48.PageExceptionalWitness.log_scale_lt_quadraticGapDenom`) gives `m ≫ (log Q)^{2−ε}`.
+   Re-threading it is adapter work.
+5. `ElliottPrimeDensityAP.exists_primeDensityAP` is a theorem of the **wrong shape** (fixed finite
+   modulus, reciprocal-prime mass) — not a lead.  No AGP-shaped declaration exists anywhere in
+   `~/src/lean-proofs` or `~/src/FormalPantheon`, so there is no copy to mistake for progress.
+
+**→ NEXT on this front (one target, fully quantified in §6 of the gap doc): `AGPExpRange`** —
+`AGP` verbatim with the modulus range `X^{1/4}` cut to `exp(c√log X)` and `D0 = 1`.  Route: (★)
+at a single modulus via `Finset.single_le_sum` off `exists_exponential_prime_distribution`,
+`eventually_primeCounting_tenth_bounds` for the main term, and the Page-witness re-thread for
+`log X < D`.  Proving it discharges the whole exceptional-set/choice-order architecture of `AGP`
+against real analytic input and reduces the remaining gap to the single named implication
+`AGPExpRange + (log-free zero-density: range extension) ⟹ AGP`.  That density estimate is the
+substantial missing theorem and a multi-lap analytic campaign, deliberately out of scope here.
+
+**Box gotcha (new).** The wide cold builds of `Util.Linnik.Theorem` / the `Erdos4`–`Erdos48`
+analytic trees hit `EMFILE` ("too many open files", errno 24) persistently, and **`taskset -c 0-2`
+did NOT fix it** here — contrary to the reference corpus's `taskset` remedy.  The failure also
+surfaced inside **`lake` itself** reading `.trace` files, not only in `lean` workers.  Our own
+`src/` build is unaffected (the pre-commit full `lake build` is green, 10352 jobs); only the
+unimported analytic dependency trees are hard to bring up.  This is why §2b–§2d of the gap doc are
+marked *stated-and-sourced* rather than in-kernel axiom-audited; `probes/AgpAudit.lean` is the
+prepared audit, to be run once that tree converges.
+
+---
+
 ## ✅ LAP 6 (2026-09-28): `hjs` IS CLOSED, and `hlen` is a corollary
 
 `54610ea` **`VandeheyTransport.lean`** — the parity machinery of lap 5 transported back to the
