@@ -169,6 +169,30 @@ immediately.  Neither bound is yet a Lean theorem.
 
 ## 6. Formalization plan and stopping condition
 
+**Formalization status, 29 September 2026.**  The elementary foundations of §2–§3
+and the §3 prime supply are now Lean theorems, `#print axioms`-clean
+(`propext, Classical.choice, Quot.sound`), audited by
+`scripts/check-joint-lambert-smallpool.sh`:
+
+* `NormalNumbers.JointLambert.tau_mul_le` — `τ(mn) ≤ τ(m)τ(n)`, unconditional.
+* `sum_tau_progression_le_gcd` — equation (1) with the factor `τ(gcd u A)`,
+  and `sum_tau_progression_le_noncoprime` with `τ(A)`.  Both reduce to the frozen
+  coprime estimate at the SAME `H`; no `gcd(g, A/g) = 1` is assumed.
+* `jointA_tau_le` — equation (2) as an upper bound,
+  `τ(A) ≤ (a+1)(c+1)^(k²)`, via repeated submultiplicativity and
+  `killPoolSize_le_sq`; pairwise distinctness of the allocation primes is not used.
+* `eventually_small_prime_pool` — for every `k ≥ K` and EVERY `r`,
+  `1 + killPoolSize k r + 1 ≤ #{p prime : k³ < p < 2k³}`, from
+  `primeIntervalSupply_holds` (ordinary PNT) and `9 (log k)(k²+2) ≤ k³` for
+  `k ≥ 1296`; `exists_prime_allocation_small_pool` is the allocation corollary,
+  the spare `+1` paying for the one excluded `P(X)`.
+
+Modules: `src/NormalNumbers/JointLambertGcdAverage.lean` and
+`src/NormalNumbers/JointLambertSmallPool.lean`.  Every pre-existing
+`JointLambert*.lean` is unchanged.  Still open: the three-range tail assembly of §4,
+the good-set CARDINALITY after Markov, and the all-`N` conversion of §5.
+
+
 First prove (1), `tau` submultiplicativity, and the explicit (2) bound in an
 additive module.  Then expose prime selection for EVERY sufficiently large X,
 with L=k^3 and the explicit `jointB_le` bound, not the old loose 2^(k^4) bound.

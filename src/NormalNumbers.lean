@@ -575,6 +575,8 @@ import NormalNumbers.JointLambertAGPRange
 import NormalNumbers.JointLambertRescaledPrimes
 import NormalNumbers.JointLambertRescaledTail
 import NormalNumbers.JointLambertUnconditional
+import NormalNumbers.JointLambertGcdAverage
+import NormalNumbers.JointLambertSmallPool
 import NormalNumbers.WallCrux
 import NormalNumbers.WallRational
 import NormalNumbers.TwoPointDelangeParity

@@ -1,5 +1,18 @@
 # DIRECTION — normal-numbers 🧭
 
+## ACTIVE OBJECTIVE — 29 September 2026: joint Lambert quantitative foundations
+
+Bounded campaign (<=3 laps) on `proof/joint-lambert-unconditional`, baseline `daedc1e`.
+Target: the elementary foundations and prime-pool supply for the sharper count
+`N exp(-C (log log N)^2 log log log N)` of `docs/JOINT-LAMBERT-QUANTITATIVE-NEXT.md`
+(primes near `k^3` instead of near `(log X)^2`, with a non-coprime middle tail
+paid for by `tau(A) <= (a+1)(c+1)^(k^2)`). Four deliverables: `tau_mul_le`,
+`sum_tau_progression_le_gcd` / `_noncoprime`, `jointA_tau_le`,
+`eventually_small_prime_pool`. New modules only; every pre-existing
+`JointLambert*.lean` is frozen. NOT in scope: AGP, full normality, the full
+occurrence-count headline, Vandehey work.
+See `KICKOFF-2026-09-29-joint-lambert-small-pool.md`.
+
 ## Current Lambert status, 29 September 2026
 
 The bounded qualitative Lambert objective is complete: `f6fbf87` proves the original
