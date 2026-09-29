@@ -406,6 +406,110 @@ lemma limMeasure_le {y C : ℝ} (hC : 0 ≤ C) (hAC : OrbitACHyp y C)
       linarith
     simpa [ENNReal.ofReal_eq_zero.2 this] using zero_le _
 
+/-! ## Towards invariance: elementary count identities -/
+
+/-- The count over a half-open interval is the difference of two initial-segment counts, exactly,
+as long as the orbit stays in `(0,1)`. -/
+lemma blockCount_Ico {y : ℝ} (horb : ∀ k : ℕ, gaussMap^[k] y ∈ Ioo (0:ℝ) 1) {c d : ℝ}
+    (hc : 0 ≤ c) (hcd : c ≤ d) (p : ℕ) :
+    blockCount (Ico c d) p y = blockCount (Ioo 0 d) p y - blockCount (Ioo 0 c) p y := by
+  rw [blockCount_apply, blockCount_apply, blockCount_apply, ← Finset.sum_sub_distrib]
+  refine Finset.sum_congr rfl fun k _ => ?_
+  have hx := horb k
+  set x := gaussMap^[k] y
+  rw [blockIndic, blockIndic, blockIndic]
+  by_cases h1 : x ∈ Ico c d
+  · rw [Set.indicator_of_mem h1,
+      Set.indicator_of_mem (show x ∈ Ioo (0:ℝ) d from ⟨hx.1, h1.2⟩),
+      Set.indicator_of_notMem (fun h => absurd h1.1 (not_le.2 h.2))]
+    simp
+  · rw [Set.indicator_of_notMem h1]
+    by_cases h2 : x ∈ Ioo (0:ℝ) d
+    · have h3 : x ∈ Ioo (0:ℝ) c := by
+        refine ⟨hx.1, ?_⟩
+        by_contra hcon
+        exact h1 ⟨not_lt.1 hcon, h2.2⟩
+      rw [Set.indicator_of_mem h2, Set.indicator_of_mem h3]
+      simp
+    · have h3 : x ∉ Ioo (0:ℝ) c := fun h => h2 ⟨h.1, lt_of_lt_of_le h.2 hcd⟩
+      rw [Set.indicator_of_notMem h2, Set.indicator_of_notMem h3]
+      simp
+
+/-- **Approximate invariance of the empirical measure**, exactly: shifting the window by one costs
+only the two boundary terms. -/
+lemma blockCount_preimage (S : Set ℝ) (p : ℕ) (y : ℝ) :
+    blockCount (gaussMap ⁻¹' S) p y
+      = blockCount S p y - blockIndic S y + blockIndic S (gaussMap^[p] y) := by
+  induction p with
+  | zero => simp [blockCount_apply]
+  | succ n ih =>
+      rw [blockCount_apply, Finset.sum_range_succ, ← blockCount_apply, ih]
+      rw [blockCount_apply (A := S) (n := n + 1), Finset.sum_range_succ, ← blockCount_apply]
+      have h1 : blockIndic (gaussMap ⁻¹' S) (gaussMap^[n] y)
+          = blockIndic S (gaussMap^[n + 1] y) := by
+        rw [blockIndic, blockIndic, Function.iterate_succ_apply']
+        rfl
+      rw [h1]
+      ring
+
+/-- A single point has vanishing empirical density along the ultrafilter — the AC hypothesis
+forbids the orbit from concentrating anywhere.  This is what lets `Ioo`, `Ico` and `Ioc` be used
+interchangeably in every limit below. -/
+lemma tendsto_blockCount_singleton {y C : ℝ} (hC : 0 ≤ C) (hAC : OrbitACHyp y C)
+    (horb : ∀ k : ℕ, gaussMap^[k] y ∈ Ioo (0:ℝ) 1) (c : ℝ) :
+    Tendsto (fun p : ℕ => blockCount {c} p y / p) (orbitUF : Filter ℕ) (nhds 0) := by
+  rw [Metric.tendsto_nhds]
+  intro ε hε
+  by_cases hc : c ∈ Ioo (0:ℝ) 1
+  · obtain ⟨δ, hδ0, hδ⟩ : ∃ δ : ℝ, 0 < δ ∧ 2 * C * δ + ε / 2 < ε := by
+      refine ⟨min (1/2) (ε / (4 * (C + 1))), lt_min (by norm_num) (by positivity), ?_⟩
+      set δ := min (1/2 : ℝ) (ε / (4 * (C + 1))) with hδdef
+      have hδ0 : 0 < δ := lt_min (by norm_num) (by positivity)
+      have hd1 : δ ≤ ε / (4 * (C + 1)) := min_le_right _ _
+      rw [le_div_iff₀ (by positivity)] at hd1
+      nlinarith
+    set a := max 0 (c - δ) with ha
+    set b := min 1 (c + δ) with hb
+    have ha0 : 0 ≤ a := le_max_left _ _
+    have hb1 : b ≤ 1 := min_le_left _ _
+    have hac : a < c := max_lt hc.1 (by linarith)
+    have hcb : c < b := lt_min hc.2 (by linarith)
+    have hab : a ≤ b := le_of_lt (hac.trans hcb)
+    have hba : b - a ≤ 2 * δ := by
+      have h1 : a ≥ c - δ := le_max_right _ _
+      have h2 : b ≤ c + δ := min_le_right _ _
+      linarith
+    have h0 : ∀ᶠ p : ℕ in (orbitUF : Filter ℕ),
+        blockCount (Ioo a b) p y / p ≤ C * (b - a) + ε / 2 :=
+      orbitUF_le_atTop (hAC a b ha0 hab hb1 (ε/2) (by linarith))
+    filter_upwards [h0] with p hp
+    have hmono : blockCount {c} p y ≤ blockCount (Ioo a b) p y :=
+      blockCount_mono (by
+        intro z hz
+        rw [Set.mem_singleton_iff] at hz
+        subst hz
+        exact ⟨hac, hcb⟩) p y
+    rcases Nat.eq_zero_or_pos p with hp0 | hp0
+    · subst hp0; simpa using hε
+    have hpR : (0:ℝ) < p := by exact_mod_cast hp0
+    rw [Real.dist_eq, sub_zero,
+      abs_of_nonneg (div_nonneg (blockCount_nonneg _ _ _) hpR.le)]
+    calc blockCount {c} p y / p ≤ blockCount (Ioo a b) p y / p := by gcongr
+      _ ≤ C * (b - a) + ε / 2 := hp
+      _ ≤ 2 * C * δ + ε / 2 := by nlinarith
+      _ < ε := hδ
+  · have : ∀ p : ℕ, blockCount {c} p y / p = 0 := by
+      intro p
+      have : blockCount {c} p y = 0 := by
+        rw [blockCount_apply]
+        refine Finset.sum_eq_zero fun k _ => ?_
+        rw [blockIndic, Set.indicator_of_notMem]
+        intro h
+        rw [Set.mem_singleton_iff] at h
+        exact hc (h ▸ horb k)
+      rw [this, zero_div]
+    simpa [this] using hε
+
 section Audit
 
 #print axioms limCDF_sub_le
