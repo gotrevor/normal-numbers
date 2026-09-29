@@ -81,7 +81,22 @@ Order of work:
    fact (δ)'s finiteness has to be reused.
 2. **Construct a `StateNet`** from `runState_entries_abs_le` (S7-BX) — a genuinely finite net of
    the box; currently `StateNet` is an interface, not a theorem.
-3. **`ClassFreqBound`** itself, or a kernel refutation of it.
+3. **`ClassFreqBound`** itself.  S7-MY (`VandeheyS7Mem`) settles the MECHANISM: if the cell
+   membership at time `n` is a function of the last `L` input digits, then "selected AND the
+   next digits are `v`" is the occurrence of the single word `u ++ v`, so CF-normality applies
+   to the JOINT event with no independence assumption, and quasi-multiplicativity
+   (`gaussMeasure_append_le`, lap 50) gives `ClassFreqBound` with the ABSOLUTE constant
+   `C = 8 log 2` — independent of `L`, of the selector set, and of the number of cells
+   (`memory_joint_le`).  So the one remaining gap is:
+
+   > **`CellMemory`** — up to times of small frequency, which cell of the fact-(δ) net `s_n`
+   > lies in is determined by a bounded number of recent input digits.
+
+   Fact (γ) says the *matrix* remembers everything; `CellMemory` asks only that its *position
+   in a ρ-net* does not.  Attack: `s_n = (O_n⁻¹ Φ P_{n−L}) · Q_L`; the composition with the
+   last-`L` word `Q_L` contracts the distortion (`distortion_runWord_le_two`) but NOT the
+   location (S7-MM refutation).  The location is carried by `O_n⁻¹`, i.e. by the emitted word —
+   so the real question is whether the recent emitted word is itself recent-input-determined.
 
 ### Still open, unchanged
 
