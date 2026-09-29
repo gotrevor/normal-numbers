@@ -1,6 +1,6 @@
 # Handoff: the joint Lambert headline is UNCONDITIONAL
 
-**Date** 2026-09-29 · **Branch** `proof/joint-lambert-unconditional` · **HEAD** `f6fbf87` ·
+**Date** 2026-09-29 · **Branch** `proof/joint-lambert-unconditional` · **HEAD** `9f0003a` (proof commit `f6fbf87`) ·
 `lake build` 🟢 10481 jobs · tree clean · nothing pushed.
 
 Scope was `sorry-free: src/NormalNumbers/JointLambertUnconditional.lean`. **Met.**

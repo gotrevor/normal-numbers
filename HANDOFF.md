@@ -91,5 +91,5 @@ New: `VandeheyTransport.lean`, `VandeheyOutLen.lean`, `VandeheyRunBirkhoff.lean`
 Changed: `src/NormalNumbers.lean`, `PENDING_WORK.md`.
 
 ---
-**→ Next session: NEXT action 1 (restate the capstone against a separate run clock).  Tree clean
+**→ SUPERSEDED for the Lambert front: see HANDOFF-2026-09-29-joint-lambert-unconditional.md.**
 at `3173fb4`.**
