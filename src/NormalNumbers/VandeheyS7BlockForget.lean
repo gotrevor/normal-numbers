@@ -215,6 +215,34 @@ def BlockForget (w : List ℕ) : Prop :=
     ∀ s s' : MapState, η ≤ s.width → η ≤ s'.width → ∀ z ∈ Set.Ioo (0:ℝ) 1,
       |blockAvg s T w z - blockAvg s' T w z| ≤ ε
 
+/-- **`BlockForgetGen`** — the crux of route A, in the form the architecture actually needs.
+Identical to `BlockForget` except that the input point `z` is restricted to CF-normal points.
+That restriction costs the architecture nothing (`exists_abs_slotCountFreq_sub_le` only ever
+evaluates the hypothesis at the orbit points `Gᵐx` of a CF-normal `x`, and those are CF-normal by
+`isCFNormal_gaussMap`), and it is essential: the uniform-`z` form `BlockForget` is FALSE, refuted
+in `VandeheyS7Quadratic` by two states whose block averages at the quadratic irrational `√2 − 1`
+differ by `≈ 1/2` for every `T`.  A quadratic irrational is never CF-normal, so the witness does
+not touch `BlockForgetGen`. -/
+def BlockForgetGen (w : List ℕ) : Prop :=
+  ∀ ε : ℝ, 0 < ε → ∀ η : ℝ, 0 < η → ∃ T : ℕ, 0 < T ∧
+    ∀ s s' : MapState, η ≤ s.width → η ≤ s'.width → ∀ z ∈ Set.Ioo (0:ℝ) 1, IsCFNormal z →
+      |blockAvg s T w z - blockAvg s' T w z| ≤ ε
+
+/-- The refuted uniform form is stronger: it implies the restricted one. -/
+theorem BlockForget.gen {w : List ℕ} (h : BlockForget w) : BlockForgetGen w := by
+  intro ε hε η hη
+  obtain ⟨T, hT, hfor⟩ := h ε hε η hη
+  exact ⟨T, hT, fun s s' hs hs' z hz _ => hfor s s' hs hs' z hz⟩
+
+/-- CF-normality is preserved by every iterate of the Gauss map. -/
+theorem isCFNormal_iterate {x : ℝ} (hx : IsCFNormal x) (m : ℕ) :
+    IsCFNormal (gaussMap^[m] x) := by
+  induction m with
+  | zero => simpa using hx
+  | succ k ih =>
+      rw [Function.iterate_succ_apply']
+      exact NormalNumbers.Literature.isCFNormal_gaussMap ih
+
 /-- The reference-state Cesàro input: for the FIXED state `refState` and a fixed block length the
 block average is an ordinary function of the orbit point, and its Birkhoff average along a
 CF-normal orbit has an `x`-independent limit.  (Discharge plan: it is an interval-step function up
@@ -275,7 +303,7 @@ lemma abs_limit_sub_le {F : ℕ → ℝ} {a L ε : ℝ} (hF : Tendsto F atTop (n
 width floor `η ≤ 1`, a constant `L` — depending on neither the map `Φ` nor the input `x` — that
 the crux's frequency is eventually `4ε`-close to, for EVERY CF-normal input whose narrow times
 have frequency at most `ε` at that floor. -/
-theorem exists_abs_slotCountFreq_sub_le {w : List ℕ} (hBF : BlockForget w) (hRC : RefCesaro w)
+theorem exists_abs_slotCountFreq_sub_le {w : List ℕ} (hBF : BlockForgetGen w) (hRC : RefCesaro w)
     {ε : ℝ} (hε : 0 < ε) {η : ℝ} (hη : 0 < η) (hη1 : η ≤ 1) :
     ∃ L : ℝ, ∀ (Φ : MapState) (x : ℝ), IsCFNormal x →
       (∀ k, gaussMap^[k] x ∈ Set.Ioo (0:ℝ) 1) → WidthBadFreq Φ x η ε →
@@ -327,6 +355,7 @@ theorem exists_abs_slotCountFreq_sub_le {w : List ℕ} (hBF : BlockForget w) (hR
         intro m hm
         exact hfor (runState Φ x m) refState (not_lt.1 (Finset.mem_filter.1 hm).2)
           (by rw [refState_width]; exact hη1) (gaussMap^[m] x) (horb m)
+          (isCFNormal_iterate hx m)
       have hcard : (((range p).filter fun m => ¬ (runState Φ x m).width < η).card : ℝ)
           ≤ (p : ℝ) := by
         have := Finset.card_filter_le (range p) (fun m => ¬ (runState Φ x m).width < η)
@@ -371,7 +400,7 @@ def WidthAfford (Φ : MapState) (x : ℝ) : Prop :=
   ∀ δ : ℝ, 0 < δ → ∃ η : ℝ, 0 < η ∧ η ≤ 1 ∧ WidthBadFreq Φ x η δ
 
 /-- **Per input: the crux's frequency converges.**  No value is asserted. -/
-theorem exists_tendsto_slotCountFreq {w : List ℕ} (hBF : BlockForget w) (hRC : RefCesaro w)
+theorem exists_tendsto_slotCountFreq {w : List ℕ} (hBF : BlockForgetGen w) (hRC : RefCesaro w)
     (Φ : MapState) {x : ℝ} (hx : IsCFNormal x) (horb : ∀ k, gaussMap^[k] x ∈ Set.Ioo (0:ℝ) 1)
     (hwf : WidthAfford Φ x) :
     ∃ a : ℝ, Tendsto (fun p => slotCount Φ x w p / (p : ℝ)) atTop (nhds a) := by
@@ -384,7 +413,7 @@ theorem exists_tendsto_slotCountFreq {w : List ℕ} (hBF : BlockForget w) (hRC :
 
 /-- **Independence of the input.**  Two CF-normal inputs (and even two maps) that both afford a
 width floor give the SAME frequency.  This is the universality that route A needs. -/
-theorem tendsto_slotCountFreq_eq {w : List ℕ} (hBF : BlockForget w) (hRC : RefCesaro w)
+theorem tendsto_slotCountFreq_eq {w : List ℕ} (hBF : BlockForgetGen w) (hRC : RefCesaro w)
     {Φ Φ' : MapState} {x x' : ℝ} (hx : IsCFNormal x)
     (horb : ∀ k, gaussMap^[k] x ∈ Set.Ioo (0:ℝ) 1) (hwf : WidthAfford Φ x)
     (hx' : IsCFNormal x') (horb' : ∀ k, gaussMap^[k] x' ∈ Set.Ioo (0:ℝ) 1)
@@ -415,7 +444,7 @@ theorem tendsto_slotCountFreq_eq {w : List ℕ} (hBF : BlockForget w) (hRC : Ref
 give one constant `L` that EVERY CF-normal input's crux frequency converges to.  That is the
 `SampledUniformCount` shape — existence of the limit and independence of `x` — with no absolute
 continuity, no constant `C` and no cited ergodic input. -/
-theorem exists_uniform_slotCountFreq {w : List ℕ} (hBF : BlockForget w) (hRC : RefCesaro w) :
+theorem exists_uniform_slotCountFreq {w : List ℕ} (hBF : BlockForgetGen w) (hRC : RefCesaro w) :
     ∃ L : ℝ, ∀ (Φ : MapState) (x : ℝ), IsCFNormal x →
       (∀ k, gaussMap^[k] x ∈ Set.Ioo (0:ℝ) 1) → WidthAfford Φ x →
       Tendsto (fun p => slotCount Φ x w p / (p : ℝ)) atTop (nhds L) := by
@@ -439,6 +468,7 @@ section Audit
 #print axioms MapState.exists_abs_slotCountFreq_sub_le
 #print axioms MapState.exists_tendsto_slotCountFreq
 #print axioms MapState.tendsto_slotCountFreq_eq
+#print axioms MapState.BlockForget.gen
 #print axioms MapState.exists_uniform_slotCountFreq
 
 end Audit
