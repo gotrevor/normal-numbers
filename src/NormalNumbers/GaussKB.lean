@@ -637,6 +637,150 @@ lemma blockIndic_preimage_le_sum {a b : ℝ} (ha : 0 ≤ a) (hab : a ≤ b) (hb 
     have h2 := blockIndic_nonneg (Ioo (0:ℝ) (1/((K:ℝ)+a))) x
     linarith
 
+/-! ## Summing the branch inequalities over the orbit -/
+
+lemma blockCount_union_le (A B : Set ℝ) (p : ℕ) (y : ℝ) :
+    blockCount (A ∪ B) p y ≤ blockCount A p y + blockCount B p y := by
+  rw [blockCount_apply, blockCount_apply, blockCount_apply, ← Finset.sum_add_distrib]
+  refine Finset.sum_le_sum fun k _ => ?_
+  set x := gaussMap^[k] y
+  rw [blockIndic, blockIndic, blockIndic]
+  by_cases hA : x ∈ A
+  · rw [Set.indicator_of_mem hA, Set.indicator_of_mem (Set.mem_union_left B hA)]
+    have := Set.indicator_nonneg (f := (1 : ℝ → ℝ)) (s := B)
+      (fun (_ : ℝ) _ => zero_le_one) x
+    simp only [Pi.one_apply] at *
+    linarith
+  · by_cases hB : x ∈ B
+    · rw [Set.indicator_of_mem hB, Set.indicator_of_mem (Set.mem_union_right A hB),
+        Set.indicator_of_notMem hA]
+      simp
+    · rw [Set.indicator_of_notMem hA, Set.indicator_of_notMem hB,
+        Set.indicator_of_notMem (by simpa using ⟨hA, hB⟩ : x ∉ A ∪ B)]
+      simp
+
+/-- The empirical count of a half-open interval converges to the CDF increment. -/
+lemma tendsto_blockCount_Ico {y : ℝ} (horb : ∀ k : ℕ, gaussMap^[k] y ∈ Ioo (0:ℝ) 1) {c d : ℝ}
+    (hc : 0 ≤ c) (hcd : c ≤ d) :
+    Tendsto (fun p : ℕ => blockCount (Ico c d) p y / p) (orbitUF : Filter ℕ)
+      (nhds (limCDF y d - limCDF y c)) := by
+  have h : ∀ p : ℕ, blockCount (Ico c d) p y / p = empCDF y p d - empCDF y p c := by
+    intro p
+    rw [blockCount_Ico horb hc hcd p, empCDF, empCDF, sub_div]
+  simp only [h]
+  exact (tendsto_empCDF_limCDF y d).sub (tendsto_empCDF_limCDF y c)
+
+/-- The same for the open-closed interval: the two differ only by endpoints, which the AC bound
+makes negligible. -/
+lemma tendsto_blockCount_Ioc {y C : ℝ} (hC : 0 ≤ C) (hAC : OrbitACHyp y C)
+    (horb : ∀ k : ℕ, gaussMap^[k] y ∈ Ioo (0:ℝ) 1) {c d : ℝ} (hc : 0 ≤ c) (hcd : c ≤ d) :
+    Tendsto (fun p : ℕ => blockCount (Ioc c d) p y / p) (orbitUF : Filter ℕ)
+      (nhds (limCDF y d - limCDF y c)) := by
+  have hbase := tendsto_blockCount_Ico horb hc hcd
+  have hsa := tendsto_blockCount_singleton hC hAC horb c
+  have hsb := tendsto_blockCount_singleton hC hAC horb d
+  refine tendsto_of_tendsto_of_tendsto_of_le_of_le
+    (g := fun p : ℕ => blockCount (Ico c d) p y / p - blockCount {c} p y / p)
+    (h := fun p : ℕ => blockCount (Ico c d) p y / p + blockCount {d} p y / p)
+    (by simpa using hbase.sub hsa) (by simpa using hbase.add hsb) ?_ ?_
+  · intro p
+    rcases Nat.eq_zero_or_pos p with hp | hp
+    · subst hp; simp [blockCount_apply]
+    have hpR : (0:ℝ) < p := by exact_mod_cast hp
+    show blockCount (Ico c d) p y / p - blockCount {c} p y / p
+        ≤ blockCount (Ioc c d) p y / p
+    rw [div_sub_div_same, div_le_div_iff_of_pos_right hpR]
+    have : blockCount (Ico c d) p y ≤ blockCount (Ioc c d) p y + blockCount {c} p y := by
+      refine le_trans (blockCount_mono (B := Ioc c d ∪ {c}) ?_ p y) (blockCount_union_le _ _ p y)
+      intro z hz
+      rcases eq_or_lt_of_le hz.1 with h | h
+      · exact Set.mem_union_right _ (by simp [h])
+      · exact Set.mem_union_left _ ⟨h, hz.2.le⟩
+    linarith
+  · intro p
+    rcases Nat.eq_zero_or_pos p with hp | hp
+    · subst hp; simp [blockCount_apply]
+    have hpR : (0:ℝ) < p := by exact_mod_cast hp
+    show blockCount (Ioc c d) p y / p
+        ≤ blockCount (Ico c d) p y / p + blockCount {d} p y / p
+    rw [← add_div, div_le_div_iff_of_pos_right hpR]
+    refine le_trans (blockCount_mono (B := Ico c d ∪ {d}) ?_ p y) (blockCount_union_le _ _ p y)
+    intro z hz
+    rcases eq_or_lt_of_le hz.2 with h | h
+    · exact Set.mem_union_right _ (by simp [h])
+    · exact Set.mem_union_left _ ⟨hz.1.le, h⟩
+
+/-! ## The two-sided bound, and invariance at the level of the CDF -/
+
+lemma sum_blockCount_branch_le {y a b : ℝ} (hirr : Irrational y) (hy : y ∈ Ioo (0:ℝ) 1)
+    (ha : 0 ≤ a) (hab : a ≤ b) (hb : b ≤ 1) (K p : ℕ) :
+    ∑ k ∈ Finset.Icc 1 K, blockCount (Ico (1/((k:ℝ)+b)) (1/((k:ℝ)+a))) p y
+      ≤ blockCount (gaussMap ⁻¹' (Ioc a b)) p y := by
+  simp only [blockCount_apply]
+  rw [Finset.sum_comm]
+  refine Finset.sum_le_sum fun j _ => ?_
+  obtain ⟨hj1, hj2⟩ := irrational_orbit y hirr hy j
+  exact sum_blockIndic_branch_le ha hab hb hj1 hj2 K
+
+lemma blockCount_preimage_le_sum {y a b : ℝ} (hirr : Irrational y) (hy : y ∈ Ioo (0:ℝ) 1)
+    (ha : 0 ≤ a) (hab : a ≤ b) (hb : b ≤ 1) {K : ℕ} (hK : 1 ≤ K) (p : ℕ) :
+    blockCount (gaussMap ⁻¹' (Ioc a b)) p y
+      ≤ (∑ k ∈ Finset.Icc 1 K, blockCount (Ico (1/((k:ℝ)+b)) (1/((k:ℝ)+a))) p y)
+        + blockCount (Ioo 0 (1/((K:ℝ)+a))) p y := by
+  simp only [blockCount_apply]
+  rw [Finset.sum_comm, ← Finset.sum_add_distrib]
+  refine Finset.sum_le_sum fun j _ => ?_
+  obtain ⟨hj1, hj2⟩ := irrational_orbit y hirr hy j
+  exact blockIndic_preimage_le_sum ha hab hb hj1 hj2 hK
+
+/-- The limit of the finite branch sums. -/
+lemma tendsto_sum_blockCount_branch {y : ℝ} (horb : ∀ k : ℕ, gaussMap^[k] y ∈ Ioo (0:ℝ) 1)
+    {a b : ℝ} (ha : 0 ≤ a) (hab : a ≤ b) (K : ℕ) :
+    Tendsto (fun p : ℕ =>
+        ∑ k ∈ Finset.Icc 1 K, blockCount (Ico (1/((k:ℝ)+b)) (1/((k:ℝ)+a))) p y / p)
+      (orbitUF : Filter ℕ)
+      (nhds (∑ k ∈ Finset.Icc 1 K, (limCDF y (1/((k:ℝ)+a)) - limCDF y (1/((k:ℝ)+b))))) := by
+  refine tendsto_finset_sum _ fun k hk => ?_
+  have hk1 : 1 ≤ k := (Finset.mem_Icc.1 hk).1
+  have hkR : (1:ℝ) ≤ (k:ℝ) := by exact_mod_cast hk1
+  have hkb : (0:ℝ) < (k:ℝ) + b := by linarith
+  refine tendsto_blockCount_Ico horb (le_of_lt (div_pos zero_lt_one hkb)) ?_
+  apply one_div_le_one_div_of_le (by linarith)
+  linarith
+
+/-- The empirical count of the preimage converges to the CDF increment: the window shift costs
+only the two boundary terms. -/
+lemma tendsto_blockCount_preimage {y C : ℝ} (hC : 0 ≤ C) (hAC : OrbitACHyp y C)
+    (horb : ∀ k : ℕ, gaussMap^[k] y ∈ Ioo (0:ℝ) 1) {a b : ℝ} (ha : 0 ≤ a) (hab : a ≤ b)
+    (hb : b ≤ 1) :
+    Tendsto (fun p : ℕ => blockCount (gaussMap ⁻¹' (Ioc a b)) p y / p) (orbitUF : Filter ℕ)
+      (nhds (limCDF y b - limCDF y a)) := by
+  have hbase := tendsto_blockCount_Ioc hC hAC horb ha hab
+  have hone : Tendsto (fun p : ℕ => (1:ℝ) / p) (orbitUF : Filter ℕ) (nhds 0) :=
+    tendsto_one_div_atTop_nhds_zero_nat.mono_left orbitUF_le_atTop
+  refine tendsto_of_tendsto_of_tendsto_of_le_of_le
+    (g := fun p : ℕ => blockCount (Ioc a b) p y / p - 1 / p)
+    (h := fun p : ℕ => blockCount (Ioc a b) p y / p + 1 / p)
+    (by simpa using hbase.sub hone) (by simpa using hbase.add hone) ?_ ?_
+  · intro p
+    rcases Nat.eq_zero_or_pos p with hp | hp
+    · subst hp; simp [blockCount_apply]
+    have hpR : (0:ℝ) < p := by exact_mod_cast hp
+    show blockCount (Ioc a b) p y / p - 1 / p ≤ blockCount (gaussMap ⁻¹' (Ioc a b)) p y / p
+    rw [div_sub_div_same, div_le_div_iff_of_pos_right hpR, blockCount_preimage]
+    have h1 := blockIndic_le_one (Ioc a b) y
+    have h2 := blockIndic_nonneg (Ioc a b) (gaussMap^[p] y)
+    linarith
+  · intro p
+    rcases Nat.eq_zero_or_pos p with hp | hp
+    · subst hp; simp [blockCount_apply]
+    have hpR : (0:ℝ) < p := by exact_mod_cast hp
+    show blockCount (gaussMap ⁻¹' (Ioc a b)) p y / p ≤ blockCount (Ioc a b) p y / p + 1 / p
+    rw [← add_div, div_le_div_iff_of_pos_right hpR, blockCount_preimage]
+    have h1 := blockIndic_le_one (Ioc a b) (gaussMap^[p] y)
+    have h2 := blockIndic_nonneg (Ioc a b) y
+    linarith
+
 section Audit
 
 #print axioms limCDF_sub_le
