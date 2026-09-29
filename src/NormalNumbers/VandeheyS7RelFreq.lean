@@ -777,6 +777,76 @@ theorem tendsto_blockCount_relSet_of_sandwich {x : ℝ} (hx : IsCFNormal x)
             norm_num
       exact le_trans (hle _ _ p) (by linarith [hle ({a} : Set ℝ) ({b} : Set ℝ) p])
 
+/-! ## The packaged tool: an order-connected target -/
+
+lemma gaussMeasure_eq_zero_of_volume_zero {S : Set ℝ} (hS : MeasurableSet S)
+    (hvol : volume S = 0) : gaussMeasure S = 0 := by
+  have h := gaussMeasure_le_volume S hS
+  rw [hvol, mul_zero] at h
+  exact le_antisymm h bot_le
+
+lemma gaussMeasure_pair (a b : ℝ) : gaussMeasure ({a} ∪ {b} : Set ℝ) = 0 := by
+  refine gaussMeasure_eq_zero_of_volume_zero
+    ((measurableSet_singleton a).union (measurableSet_singleton b)) ?_
+  exact measure_union_null (by simp) (by simp)
+
+/-- The relative mass ignores the endpoints. -/
+lemma relMass_eq_of_sandwich (v : List ℕ) {A : Set ℝ} {a b : ℝ}
+    (hlo : Set.Ioo a b ⊆ A) (hhi : A ⊆ Set.Icc a b) :
+    relMass v A = relMass v (Set.Ioo a b) := by
+  have hIcc : Set.Icc a b \ Set.Ioo a b ⊆ ({a} ∪ {b} : Set ℝ) := by
+    intro y hy
+    rcases eq_or_lt_of_le hy.1.1 with h | h
+    · exact Or.inl (by rw [Set.mem_singleton_iff, ← h])
+    · rcases eq_or_lt_of_le hy.1.2 with h' | h'
+      · exact Or.inr (by rw [Set.mem_singleton_iff, h'])
+      · exact absurd ⟨h, h'⟩ hy.2
+  have hdiff : relSet v A \ relSet v (Set.Ioo a b)
+      ⊆ gaussMap^[v.length] ⁻¹' ({a} ∪ {b} : Set ℝ) := by
+    rintro z ⟨⟨hzv, hzA⟩, hz⟩
+    exact hIcc ⟨hhi hzA, fun h => hz ⟨hzv, h⟩⟩
+  have hnull : gaussMeasure (gaussMap^[v.length] ⁻¹' ({a} ∪ {b} : Set ℝ)) = 0 := by
+    rw [gaussMeasure_preimage_iterate v.length
+      ((measurableSet_singleton a).union (measurableSet_singleton b))]
+    exact gaussMeasure_pair a b
+  have hTm := measurableSet_relSet v (measurableSet_Ioo (a := a) (b := b))
+  have heq : gaussMeasure (relSet v A) = gaussMeasure (relSet v (Set.Ioo a b)) := by
+    refine le_antisymm ?_ (measure_mono (relSet_mono v hlo))
+    have h := measure_inter_add_sdiff (μ := gaussMeasure) (relSet v A) hTm
+    rw [measure_mono_null hdiff hnull, add_zero] at h
+    rw [← h]
+    exact measure_mono Set.inter_subset_right
+  rw [relMass, relMass, heq]
+
+/-- **S7-RQ, the usable form.**  For an ORDER-CONNECTED target inside `(0,1)` — the shape produced
+by pulling an interval back through a monotone Möbius map — the orbit frequency converges to the
+target's own relative mass.  This is the interface `RefCesaro` consumes. -/
+theorem tendsto_blockCount_relSet_of_ordConnected {x : ℝ} (hx : IsCFNormal x)
+    (horb : ∀ k : ℕ, gaussMap^[k] x ∈ Set.Ioo (0:ℝ) 1) {v : List ℕ} (hpv : ∀ a ∈ v, 1 ≤ a)
+    {A : Set ℝ} (hAm : MeasurableSet A) (hsub : A ⊆ Set.Ioo (0:ℝ) 1) (hoc : A.OrdConnected) :
+    Tendsto (fun p => blockCount (relSet v A) p x / (p : ℝ)) atTop (nhds (relMass v A)) := by
+  rcases Set.eq_empty_or_nonempty A with hempty | hne
+  · subst hempty
+    have hzero : ∀ p : ℕ, blockCount (relSet v (∅ : Set ℝ)) p x / (p : ℝ) = 0 := by
+      intro p
+      rw [blockCount_apply]
+      have : ∀ k : ℕ, blockIndic (relSet v (∅ : Set ℝ)) (gaussMap^[k] x) = 0 := by
+        intro k
+        exact blockIndic_eq_zero' (by simp [relSet])
+      simp [this]
+    have hm : relMass v (∅ : Set ℝ) = 0 := by
+      rw [relMass, show relSet v (∅ : Set ℝ) = ∅ by simp [relSet]]
+      simp
+    rw [hm]
+    exact Tendsto.congr (fun p => (hzero p).symm) tendsto_const_nhds
+  · have hbb : BddBelow A := ⟨0, fun y hy => (hsub hy).1.le⟩
+    have hba : BddAbove A := ⟨1, fun y hy => (hsub hy).2.le⟩
+    have hconn : IsConnected A := ⟨hne, hoc.isPreconnected⟩
+    have hlo : Set.Ioo (sInf A) (sSup A) ⊆ A := hconn.Ioo_csInf_csSup_subset hbb hba
+    have hhi : A ⊆ Set.Icc (sInf A) (sSup A) := subset_Icc_csInf_csSup hbb hba
+    rw [relMass_eq_of_sandwich v hlo hhi]
+    exact tendsto_blockCount_relSet_of_sandwich hx horb hpv hlo hhi
+
 end NormalNumbers.VandeheyS7
 
 section Audit
@@ -789,6 +859,7 @@ section Audit
 #print axioms NormalNumbers.VandeheyS7.relMass_eq_of_agree
 #print axioms NormalNumbers.VandeheyS7.tendsto_blockCount_relSet_singleton
 #print axioms NormalNumbers.VandeheyS7.tendsto_blockCount_relSet_of_sandwich
+#print axioms NormalNumbers.VandeheyS7.tendsto_blockCount_relSet_of_ordConnected
 
 end Audit
 
