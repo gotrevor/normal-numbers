@@ -934,6 +934,8 @@ needs one discharged (DIRECTION standing rule 3).
    now stated as PROVED, with the §3-free route described and §7 Problem 1 named as the live
    target; joint Lambert corrected to one remaining input (`AGP`).
 
+3. 💤 **Parked, not for the current objective: normality's "master conjectures"** (Borel's conjecture and the general Bailey–Crandall Hypothesis A as hypothesis Props with their consequences, plus a Maze test of which rows they reopen).  Trevor, 2026-09-29.  Pick it up when §7 settles or a lap needs a new objective → `docs/proposal-normality-master-conjectures-2026-09-29.md`.
+
 ## Lap notes
 
 ### 2026-09-29 lap 26 — the emitted digit is a function of the STATE alone (`VandeheyS7Emit.lean`)
