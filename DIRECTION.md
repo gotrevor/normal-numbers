@@ -88,6 +88,21 @@ the repo already owns route A's endgame and route B's instrument has a proved-ou
   state and reduces the crux's FIXED-state coordinate to an arithmetic statement about finite sums
   of relative Gauss masses (`abs_blockAvgCesaro_sub_gauss_le_of_levelSum`).
 
+* **LAP-91 AMENDMENT 2 (the width walk is an artifact of the THROTTLE — the instrument was
+  broken, not the route).**  The repo's `step` emits at most ONE digit per read
+  (`runWord_length_le_one`); Vandehey's transducer emits a variable-length word.  Re-running the
+  same exact simulation with MAXIMAL emission (emit while emittable, then read) keeps
+  `slack = log(1/width)` **bounded**: `[0, 12]` over 8000 reads for `z ↦ z/φ`, `[0, 3.4]` for the
+  rational `z ↦ (z+1)/3`, against `25 … 590` and rising for the throttled run.  Emissions track
+  reads to within 1%.  So the queue, the `√n` width walk, and the failure of
+  `WidthAfford`/`MeanSlack` are all consequences of the throttle.  **The next program is the
+  GREEDY transducer**: (1) `stepMax` with termination from the burst bound (`k` emissions force
+  `width ≲ 1/fib(k)²`); (2) the greedy state is reduced after each read, with the step identity;
+  (3) the width floor for reachable reduced states — which the probe says is TRUE and which is
+  exactly what the scalar debts wanted; (4) re-wire `slotCount` and the sliding-block identity to
+  the greedy run, recovering S7-BF/S7-RV with a SATISFIABLE width hypothesis and a non-vacuous
+  crux.  S7-AW (width-free) remains valid as the fallback.
+
 * **Forbidden drift.**  (i) New unweighted-cover machinery for route B (S7-WD/WD′/CV/FT are
   finished; do not extend them).  (ii) `ClassFreqBound`/`CellMemory` as the front — they are route
   B's residual, and `CellMemory` is a restatement (lap 80).  (iii) The window-function frame,

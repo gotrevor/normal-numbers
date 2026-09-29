@@ -97,3 +97,44 @@ The script is four short functions: `ℤ[φ]` mul/add/sign, `comp`, `emit_digit`
 `width` from `|det|/(d(c+d))` with `Decimal` precision set to the coefficients' digit count (the
 coefficients are huge and nearly cancelling — unit drift — so a fixed precision silently returns
 zero, which is the one trap in re-running this).
+
+---
+
+## Finding 3 (the decisive one) — the width walk is an artifact of the THROTTLE
+
+The repo's `step` emits **at most one** digit per read (`runWord_length_le_one`).  Vandehey's
+transducer emits a variable-length word.  Re-running the same exact simulation with **maximal
+emission** (emit repeatedly while the state is emittable, then read) gives:
+
+| map | seed | reads | emissions | reads with no emission | longest burst | `slack = log(1/width)` samples |
+|---|---|---|---|---|---|---|
+| `z/φ` | 1 | 8000 | 8070 | 3551 | 10 | 6.7, 11.0, 4.2, 9.3, 3.1, 11.6, 8.4, 2.8 |
+| `z/φ` | 2 | 8000 | 7903 | 3606 | 12 | 2.8, 2.0, 5.2, 1.6, 1.8, 5.9, 1.0, 3.8 |
+| `(z+1)/3` | 1 | 8000 | 8071 | 3963 | 4 | −0.0, 3.4, 0.7, 1.9, 0.7, −0.0, 1.4, 1.8 |
+| `(z+1)/3` | 2 | 8000 | 7974 | 3985 | 4 | 1.6, 2.6, 1.4, 1.1, 1.6, 0.7, 1.6, 2.5 |
+
+**The slack is bounded** — it stays in `[0, 12]` over 8000 steps, against `25…590` and rising for
+the throttled run at the same scale, and for the rational map it stays in `[0, 3.4]` (the finite
+reduced state set of Vandehey Thm 1.1 showing through).  Emissions track reads to within 1%.
+
+So the queue, the `√n` width walk, and with them the failure of `WidthAfford`/`MeanSlack`, are
+**artifacts of the one-digit-per-read throttle, not features of the problem**.  The greedy
+transducer keeps its state reduced, and a reduced state cannot be narrow for long: a burst of `k`
+emissions needs `width ≲ 1/fib(k)²`, so the width that the lag would destroy is exactly what the
+flush restores.
+
+### What this changes
+
+Route A's architecture is not broken — the *instrument* was.  The program is:
+
+1. define `stepMax` (emit while emittable; termination from the burst bound `k ≲ log(1/width)`) and
+   the greedy run;
+2. prove the greedy state is **reduced** (non-emittable) after each read, and the step identity
+   `cylMap (emitted word) ∘ new state = old state ∘ read`;
+3. then the width floor for reachable reduced states — which the table above says is TRUE, and
+   which is exactly what `WidthAfford`/`MeanSlack` wanted;
+4. re-wire `slotCount`/the sliding-block identity to the greedy run and recover the S7-BF/S7-RV
+   architecture, now with a satisfiable width hypothesis and a non-vacuous crux (S7-WQ).
+
+The width-free architecture (S7-AW) stays valid and is the fallback: it needs no width input at
+all.

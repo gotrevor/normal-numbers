@@ -1,3 +1,35 @@
+## Lap 91 (2026-09-29) — route A's instrument replaced: the greedy transducer
+
+**The advance on the crux.**  Four kernel modules and one probe.  The probe (exact `ℤ[φ]`
+arithmetic, output verified against the true CF of `x/φ`) found that the throttled transducer's
+width is a null-recurrent `√n` walk — refuting `WidthAfford`/`MeanSlack` in shape — and then that
+**with maximal emission the width is bounded** (`slack ∈ [0,12]`, and `[0,3.4]` for the rational
+map).  So the scalar debts were artifacts of the one-digit-per-read throttle.
+
+Landed: `VandeheyS7LevelGen` (S7-LG, the level constants at an arbitrary state; the crux's
+fixed-state coordinate as arithmetic), `VandeheyS7WidthDensity` (S7-WQ, sparse wide times make the
+crux vacuous and `WidthAfford` false), `VandeheyS7ArchWidthFree` (S7-AW, the architecture with the
+width filter deleted: `BlockForgetAll` alone gives `IsCFNormal (Φ.mob x)`),
+`VandeheyS7NoReduction` (S7-NR, the crux without the absolute values IS the headline — the surplus
+is locality), `VandeheyS7PairCorr` (S7-PC, geometric pair-correlation decay and the thin digit
+tail).
+
+**Next attack, in order.**
+1. **`stepMax` and the greedy run.**  Termination: `k` consecutive emissions force
+   `width ≲ 1/fib(k)²` (S7-AG's bound run forwards), so the burst length is bounded by an explicit
+   function of the state.  Then `runGreedy`, `runWordGreedy`, the step identity
+   `cylMap (emitted) ∘ new = old ∘ read`, and reducedness (non-emittability) after each read.
+2. **The width floor for reachable reduced states** — the probe's Finding 3.  This is what
+   `WidthAfford` and `MeanSlack` were trying to say, and for the greedy run it looks TRUE.
+3. **Re-wire the architecture** (`slotCount`, the sliding-block identity, S7-BF/S7-RV) to the
+   greedy run: the crux becomes non-vacuous (S7-WQ) with a satisfiable width hypothesis.
+4. Fallback that needs none of this: `BlockForgetAll` (S7-AW).  Its only surplus over the headline
+   is locality (S7-NR), so an attack must be local; the input half of that locality is the window
+   variance bound, whose two inputs are S7-PC and the repo's `variance_blockCount_le`, and whose
+   missing step is the ORBIT pair-frequency upper bound
+   `limsup (1/p)#{m<p : Gᵐy ∈ I_w ∧ G^{m+g}y ∈ I_w} ≤ γ(I_w ∩ G^{-g}I_w)`.
+5. `GaussACRigidity` stays cited.
+
 # PENDING WORK — the queue
 
 ## ⭐ VANDEHEY §7 — LAP 90: THE CRUX IS REFUTED TWICE, AND RE-BASED
