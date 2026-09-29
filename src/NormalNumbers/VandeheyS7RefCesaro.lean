@@ -284,6 +284,108 @@ theorem exists_eventually_abs_level_sub_le {w : List ℕ} (hw : ∀ a ∈ w, 1 �
   rw [abs_le]
   constructor <;> linarith [h1.1, h1.2, h2.1, h2.2]
 
+/-! ## The assembly: `RefCesaro` -/
+
+/-- The Cesàro average of the block average, expanded over the levels. -/
+lemma sum_blockAvg_div_eq (w : List ℕ) {T : ℕ} (hT : 0 < T) (x : ℝ) (p : ℕ) :
+    (∑ m ∈ range p, blockAvg refState T w (gaussMap^[m] x)) / (p : ℝ)
+      = (∑ j ∈ range T,
+          (∑ m ∈ range p, slotObs w (pairStep^[j] (refState, gaussMap^[m] x))) / (p : ℝ)) / T := by
+  have hTR : (0:ℝ) < T := by exact_mod_cast hT
+  have key : ∑ m ∈ range p, blockAvg refState T w (gaussMap^[m] x)
+      = (∑ j ∈ range T, ∑ m ∈ range p,
+          slotObs w (pairStep^[j] (refState, gaussMap^[m] x))) / T := by
+    rw [Finset.sum_comm, Finset.sum_div]
+    exact Finset.sum_congr rfl fun m _ => rfl
+  rw [key, ← Finset.sum_div, div_div, div_div, mul_comm]
+
+end MapState
+
+/-- **A uniform limit from uniform approximations.**  If, for every tolerance, ONE constant
+approximates every member of a family eventually, then every member converges — to one and the same
+limit. -/
+theorem exists_uniform_limit_of_approx {ι : Type*} {F : ι → ℕ → ℝ}
+    (h : ∀ ε : ℝ, 0 < ε → ∃ L : ℝ, ∀ i : ι, ∀ᶠ p in atTop, |F i p - L| ≤ ε) :
+    ∃ L : ℝ, ∀ i : ι, Tendsto (F i) atTop (nhds L) := by
+  classical
+  by_cases hι : Nonempty ι
+  · obtain ⟨i₀⟩ := hι
+    obtain ⟨a₀, ha₀⟩ := MapState.exists_tendsto_of_approx (F := F i₀)
+      (fun ε hε => by
+        obtain ⟨L, hL⟩ := h ε hε
+        exact ⟨L, hL i₀⟩)
+    refine ⟨a₀, fun i => ?_⟩
+    obtain ⟨a, ha⟩ := MapState.exists_tendsto_of_approx (F := F i)
+      (fun ε hε => by
+        obtain ⟨L, hL⟩ := h ε hε
+        exact ⟨L, hL i⟩)
+    have heq : a = a₀ := by
+      by_contra hne
+      have hd : 0 < |a - a₀| := abs_pos.2 (sub_ne_zero.2 hne)
+      obtain ⟨L, hL⟩ := h (|a - a₀| / 4) (by linarith)
+      have h1 : |a - L| ≤ |a - a₀| / 4 := MapState.abs_limit_sub_le ha (hL i)
+      have h2 : |a₀ - L| ≤ |a - a₀| / 4 := MapState.abs_limit_sub_le ha₀ (hL i₀)
+      have h3 : |a - a₀| ≤ |a - L| + |L - a₀| := by
+        have := abs_add_le (a - L) (L - a₀)
+        simpa using this
+      rw [abs_sub_comm L a₀] at h3
+      linarith
+    exact heq ▸ ha
+  · exact ⟨0, fun i => absurd ⟨i⟩ hι⟩
+
+namespace MapState
+
+/-- **S7-RC, the headline: `RefCesaro` is a THEOREM.**  The reference-state Cesàro input of the
+route-A architecture (S7-BF) is discharged — no cited input, no absolute continuity, no distortion
+constant.  Only CF-normality of the input, S7-RQ's relative equidistribution, and the
+order-connectedness of the reference target (S7-RT). -/
+theorem refCesaro_holds {w : List ℕ} (hw : ∀ a ∈ w, 1 ≤ a) : RefCesaro w := by
+  classical
+  intro T hT
+  have hTR : (0:ℝ) < T := by exact_mod_cast hT
+  set ι := {x : ℝ // IsCFNormal x ∧ ∀ k : ℕ, gaussMap^[k] x ∈ Set.Ioo (0:ℝ) 1} with hι
+  have hmain : ∃ L : ℝ, ∀ i : ι,
+      Tendsto (fun p => (∑ m ∈ range p, blockAvg refState T w (gaussMap^[m] i.1)) / (p : ℝ))
+        atTop (nhds L) := by
+    refine exists_uniform_limit_of_approx (fun ε hε => ?_)
+    choose Bf hBf using fun j : ℕ => exists_eventually_abs_level_sub_le hw j hε
+    refine ⟨(∑ j ∈ range T, refLevel w j (Bf j)) / T, fun i => ?_⟩
+    have hall : ∀ᶠ p : ℕ in atTop, ∀ j ∈ range T,
+        |(∑ m ∈ range p, slotObs w (pairStep^[j] (refState, gaussMap^[m] i.1))) / (p : ℝ)
+          - refLevel w j (Bf j)| ≤ ε := by
+      rw [Filter.eventually_all_finset]
+      intro j _
+      exact hBf j i.1 i.2.1 i.2.2
+    filter_upwards [hall] with p hp
+    have hsplit : (∑ m ∈ range p, blockAvg refState T w (gaussMap^[m] i.1)) / (p : ℝ)
+        - (∑ j ∈ range T, refLevel w j (Bf j)) / T
+        = (∑ j ∈ range T,
+            ((∑ m ∈ range p, slotObs w (pairStep^[j] (refState, gaussMap^[m] i.1))) / (p : ℝ)
+              - refLevel w j (Bf j))) / T := by
+      rw [sum_blockAvg_div_eq w hT i.1 p, ← sub_div, ← Finset.sum_sub_distrib]
+    rw [hsplit, abs_div, abs_of_pos hTR, div_le_iff₀ hTR]
+    calc |∑ j ∈ range T,
+            ((∑ m ∈ range p, slotObs w (pairStep^[j] (refState, gaussMap^[m] i.1))) / (p : ℝ)
+              - refLevel w j (Bf j))|
+        ≤ ∑ j ∈ range T,
+            |(∑ m ∈ range p, slotObs w (pairStep^[j] (refState, gaussMap^[m] i.1))) / (p : ℝ)
+              - refLevel w j (Bf j)| := Finset.abs_sum_le_sum_abs _ _
+      _ ≤ ∑ _j ∈ range T, ε := Finset.sum_le_sum fun j hj => hp j hj
+      _ = ε * T := by rw [Finset.sum_const, Finset.card_range, nsmul_eq_mul]; ring
+  obtain ⟨L, hL⟩ := hmain
+  refine ⟨L, fun x hx horb => ?_⟩
+  exact hL ⟨x, hx, horb⟩
+
+/-- **The chain, with one input left.**  Route A's universality conclusion now rests on
+`BlockForget` ALONE (plus the width affordability that each input must satisfy): `RefCesaro` is
+discharged. -/
+theorem exists_uniform_slotCountFreq_of_blockForget {w : List ℕ} (hw : ∀ a ∈ w, 1 ≤ a)
+    (hBF : BlockForget w) :
+    ∃ L : ℝ, ∀ (Φ : MapState) (x : ℝ), IsCFNormal x →
+      (∀ k, gaussMap^[k] x ∈ Set.Ioo (0:ℝ) 1) → WidthAfford Φ x →
+      Tendsto (fun p => slotCount Φ x w p / (p : ℝ)) atTop (nhds L) :=
+  exists_uniform_slotCountFreq hBF (refCesaro_holds hw)
+
 end MapState
 
 end NormalNumbers.VandeheyS7
@@ -292,5 +394,8 @@ section Audit
 
 #print axioms NormalNumbers.VandeheyS7.MapState.abs_slotObs_sub_sum_refPiece_le
 #print axioms NormalNumbers.VandeheyS7.MapState.exists_eventually_abs_level_sub_le
+#print axioms NormalNumbers.VandeheyS7.exists_uniform_limit_of_approx
+#print axioms NormalNumbers.VandeheyS7.MapState.refCesaro_holds
+#print axioms NormalNumbers.VandeheyS7.MapState.exists_uniform_slotCountFreq_of_blockForget
 
 end Audit
