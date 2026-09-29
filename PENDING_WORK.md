@@ -620,7 +620,41 @@ cylinder (which is what emission MEANS), and identify the pullback matrix's firs
 `Conv.of`'s `(p', q')` (checked by hand: `A_e = (0 1; 1 e)` and `Conv.of [e] = ⟨0,1,1,e⟩`, and the
 recursions agree).  Then `BddDistortion` / `EmitRowBound` are theorems.
 
-**NEXT (lap 10): the SECOND half of `SampledUniformCount`.**  With the window lemma in hand the
+**Lap 10 (same day): the Birkhoff–Hopf coefficient, and its analytic core PROVED.**
+`src/NormalNumbers/VandeheyS7Birkhoff.lean`, axiom-clean.
+
+The second half of `SampledUniformCount` is MERGING.  Vandehey cites Saloff-Coste–Zúñiga for a
+finite chain; that is unavailable twice over here (infinite state set, and pathwise merging is
+PROVABLY IMPOSSIBLE — `conj_goldenRatio_integral_forces_diagonal`).  So the replacement is
+distributional: Birkhoff–Hopf contraction of the Hilbert projective metric.  Landed:
+
+* `hdist`, `mob_mem_Icc`, `hdist_image_le` — a state with POSITIVE entries maps `(0,∞)` into
+  `[b/d, a/c]`, so the image has Hilbert diameter `≤ log(ad/(bc))`.  Finite exactly when all four
+  entries are positive: **positivity, not finiteness, is the right hypothesis over ℤ[φ]**.
+* `birkhoffCoeff a b c d = (√(ad) − √(bc))/(√(ad) + √(bc))` — this is `tanh(Δ/4)` in these terms.
+  `birkhoffCoeff_lt_one` (a genuine contraction factor as soon as `bc > 0`),
+  `birkhoffCoeff_nonneg`, plus both guard-rule cases: `birkhoffCoeff_of_eq` (singular ⇒ 0,
+  constant map) and `birkhoffCoeff_bc_zero` (triangular ⇒ 1, NO contraction — positivity of all
+  four entries is load-bearing).
+* **`birkhoff_denom_bound`** — the whole analytic content, in one inequality:
+  `ac x² + (ad+bc) x + bd ≥ x(√(ad)+√(bc))²`, by AM–GM on `ac x² + bd ≥ 2x√(ac·bd)` with
+  `(ac)(bd) = (ad)(bc)` identifying the geometric mean.
+* `birkhoff_derivative_le` — assembles it: `x(ad−bc)/((cx+d)(ax+b)) ≤ birkhoffCoeff`, i.e. the
+  action is `birkhoffCoeff`-Lipschitz in the log coordinate, modulo mean-value bookkeeping.
+
+**What is left on this node:** the mean-value step (derivative bound ⇒ Lipschitz bound in the log
+coordinate) — no further inequality and no dynamics — and then the loss-of-memory statement for a
+composition, which needs `bc > 0` along the run, i.e. the states to be strictly positive rather
+than merely nonnegative.  **That positivity is the next real question**, and it is a statement
+about the φ-machine, not about the metric.
+
+**NEXT (lap 11).**  Strict positivity of the run states: show `b, c > 0` after enough input
+digits (`gaussBranch` has a zero in the corner, so a single step is not enough — two steps
+should be: `A_a A_b = (1, b; a, ab+1)`, all positive for `a,b ≥ 1`).  That, with
+`birkhoff_derivative_le`, gives a uniform contraction factor `< 1` per two input digits, which is
+the loss of memory that replaces Vandehey's finite-chain merging.
+
+**(superseded) NEXT (lap 10): the SECOND half of `SampledUniformCount`.**  With the window lemma in hand the
 remaining crux is the distributional merging — Birkhoff–Hopf cone contraction of the Hilbert
 projective metric, NOT coupling (`not_synchronizing`-style pathwise merging is provably impossible
 here, `conj_goldenRatio_integral_forces_diagonal`).  `mob_ratio_comparable` is already the right

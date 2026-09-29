@@ -701,6 +701,7 @@ import NormalNumbers.VandeheyS7Branch
 import NormalNumbers.VandeheyS7Burst
 import NormalNumbers.VandeheyS7Convergent
 import NormalNumbers.VandeheyS7Window
+import NormalNumbers.VandeheyS7Birkhoff
 import NormalNumbers.VandeheyLRRuns
 import NormalNumbers.VandeheyLRPattern
 import NormalNumbers.VandeheyRunCount
