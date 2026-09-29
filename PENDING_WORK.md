@@ -601,7 +601,35 @@ emitted word, and that the image interval really lies in that word's cylinder (t
 trigger).  Then `distortion_pullback_le` applies verbatim and `BddDistortion`/`EmitRowBound` are
 theorems.
 
-**NEXT (lap 9).**  Either (a) finish that wiring — define the emission trigger as a predicate on
+**Lap 9 (same day): THE WINDOW LEMMA IS ASSEMBLED.**
+`src/NormalNumbers/VandeheyS7Window.lean`, axiom-clean.
+
+`windowBound` : a state of distortion `≤ 2` — which reading gives for free — whose image
+endpoints sit in the emitted word's cylinder has **post-burst distortion `≤ 4`**, with the
+emitted word's LENGTH appearing nowhere.  Four laps meet in its proof: `distortion_runWord_le_two`
+(lap 6), `distortion_pullback` (lap 7, exact), `conv_far_le_two_near` (lap 8).
+
+Supporting: `cylNear`/`cylFar`/`cylBeta`; `conv_near_ne_zero` (the near distance is `Δ/((q+q')q')`
+— the ONLY use of the continuant determinant in the whole development, and only as a nonzero);
+`TriggerGap` (the emission trigger in the one form the estimate consumes); `triggerGap_endpoints`
+(content locator — the cylinder's own endpoints satisfy it, so the hypothesis is not empty).
+
+**The remaining bookkeeping on this node, with no estimate in it:** turn the machine's operational
+emission trigger into `TriggerGap`, i.e. show the image interval lies in the emitted word's
+cylinder (which is what emission MEANS), and identify the pullback matrix's first column with
+`Conv.of`'s `(p', q')` (checked by hand: `A_e = (0 1; 1 e)` and `Conv.of [e] = ⟨0,1,1,e⟩`, and the
+recursions agree).  Then `BddDistortion` / `EmitRowBound` are theorems.
+
+**NEXT (lap 10): the SECOND half of `SampledUniformCount`.**  With the window lemma in hand the
+remaining crux is the distributional merging — Birkhoff–Hopf cone contraction of the Hilbert
+projective metric, NOT coupling (`not_synchronizing`-style pathwise merging is provably impossible
+here, `conj_goldenRatio_integral_forces_diagonal`).  `mob_ratio_comparable` is already the right
+language: a uniform distortion bound gives uniform two-sided comparability, which is exactly a
+Hilbert-metric diameter bound on the cone of image measures, and a bounded-diameter image is what
+makes the transfer operator a strict contraction.  First target: state the contraction as a Prop
+on `MobState` sequences and prove that `distortion ≤ K` gives a finite Hilbert diameter.
+
+**(superseded) NEXT (lap 9).**  Either (a) finish that wiring — define the emission trigger as a predicate on
 `MobState` and prove the cylinder containment by induction on the burst, discharging
 `EmitRowBound`; or (b) open the SECOND half of `SampledUniformCount`, the distributional merging
 (Birkhoff–Hopf cone contraction on the Hilbert projective metric), which is the remaining crux
