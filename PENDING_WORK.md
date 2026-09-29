@@ -2004,3 +2004,20 @@ Then attack the *single-`q`* case first, where `conjHeight_ge_of_bad` plus the e
 of `q_n(x)` should give an honest upper bound on the number of admissible `n` in a dyadic block —
 and if it does not, record which half of the exponent defeats it, since that is the number the
 whole route now turns on.
+
+### 2026-09-29 lap 61 — the bad set has measure `√δ`, not `δ` (`VandeheyS7BadSet.lean`)
+
+Before counting bad times, calibrate the target.  `badSet δ = {x ∈ (0,1) : |x − 1/k| < δ for some
+k ≥ 1}` is the set of positions where directive fact 2's distortion failure happens, and
+
+* `volume_badSet_le` : `|B(δ)| ≤ 6√δ` for `0 < δ ≤ 1`, axiom-clean.
+
+The exponent is `1/2`, not `1`: the endpoints `1/k` accumulate at `0`, so `B(δ)` swallows an
+interval of length `≈ √δ` there, and the `K = ⌈δ^{−1/2}⌉` separated intervals contribute another
+`2δK ≈ 2√δ`.  The two terms genuinely trade off — dropping the accumulation term would leave a
+bound minimised at `K = 1`.
+
+**Route consequence.**  Any bad-state budget must be written in `√δ`.  This is still enough for the
+ε-scheme (the bad frequency need only tend to `0` with the scale), but a lap that writes `C·δ` is
+off by an unbounded factor and will read as a spurious contradiction.  Lap 60's plan to count bad
+times is hereby calibrated; lap 62 should state `BadTimeCount` with the `√` in it from the start.
