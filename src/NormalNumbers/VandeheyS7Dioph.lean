@@ -115,7 +115,7 @@ lemma cfK_bumpLast' {w : List ℕ} (hw : w ≠ []) :
 
 /-! ## The approximation bound -/
 
-private lemma cfK_pos {w : List ℕ} (hpos : ∀ a ∈ w, 1 ≤ a) : (0:ℝ) < (cfK w : ℝ) := by
+lemma cfK_pos {w : List ℕ} (hpos : ∀ a ∈ w, 1 ≤ a) : (0:ℝ) < (cfK w : ℝ) := by
   have h := one_le_cfK w hpos
   have : 0 < cfK w := Nat.lt_of_lt_of_le Nat.zero_lt_one h
   exact_mod_cast this

@@ -180,7 +180,21 @@ Three facts, all established lap 30, fix its difficulty and must steer every fur
   carry a good denominator actually carry one for at most a `log(T/4)/T` fraction of them.  That is
   a statement about WHICH scales — the orbit's equidistribution — with no remaining slack in the
   size or shape of the sets.
-  **Next attack (lap 35):** instantiate at `y = Int.fract (φ x)`, where `E_q = {u : ‖qφu‖ ≤ 2/(Tq)}`
+  **Lap 35 — the first link between `x`'s expansion and the good set** (`VandeheyS7Transfer.lean`,
+  axiom-clean).  `φ` is a UNIT (`φ⁻¹ = φ−1`) and badly approximable, so a good approximation of
+  `qφx` transports: `qφx = m+δ ⟹ qx = (mφ−m) + δ(φ−1)`, and `‖mφ‖ ≥ 1/(4m)`
+  (`nearInt_goldenRatio_ge`, from lap 30's `abs_sub_mul_goldenRatio_ge`) with `m ≤ 2q` gives
+  `nearInt_mul_ge_of_good : ‖qφx‖ ≤ 2/(Tq) → ‖qx‖ ≥ 1/(16q)` for `T ≥ 32`.  **A `T`-good scale for
+  the image is a scale at which `x` itself is badly approximated.**  Corollary at `x`'s own
+  convergents: `digit_le_of_good_at_convergent : qᵢ(x)` good for `φx` ⟹ `aᵢ(x) ≤ 32`.
+  *Limitation, stated honestly:* the good `q` are convergent denominators of `φx`, not of `x`, so
+  this constrains only the overlap.  **Next attack (lap 36):** run the unit trick at the STATE
+  level — `‖qx‖ ≥ 1/(16q)` says the orbit point `(qx, qφx) mod 1` avoids a fixed neighbourhood of
+  the `x`-axis whenever the image emits a large digit; combined with `gap_principle` the good
+  scales are `T/4`-separated AND confined to a region of the torus of measure `≍ 1/T`.  That pair
+  is the first candidate mechanism for the `1/T` rate that does not route through a soft
+  equidistribution statement.
+  **Older next-attack note (lap 34):** instantiate at `y = Int.fract (φ x)`, where `E_q = {u : ‖qφu‖ ≤ 2/(Tq)}`
   is **`x`-independent**; the open question is then the single sentence "does CF-normality of `x`
   control the visit counts to `{E_q}`?".  Two concrete probes: (i) the `q` occurring are the
   denominators of `φx`, so ask whether `q ∈ ℕ` can be replaced by `qφ ∈ ℤ[φ]` and the norm form
