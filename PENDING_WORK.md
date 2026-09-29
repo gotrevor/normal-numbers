@@ -140,8 +140,15 @@ Three facts, all established lap 30, fix its difficulty and must steer every fur
 
 **Named next targets on the crux, in attack order.**
 
-* **S7-T (tightness).**  `OrbitCellBound` restricted to `w = []`: for CF-normal `x`, the frequency
-  of image digits `≥ T` is at most `C/(T log 2)`.  Equivalent Diophantine form: the number of
+* **S7-T (tightness).**  **Free half PROVED lap 30** (`VandeheyS7Tight.lean`, axiom-clean):
+  `largeDigitCount_mul_log_le` — for EVERY irrational `y ∈ (0,1)`,
+  `#{i<p : cfDigit y i ≥ T} · log T ≤ log (cfK (digitWord y p))`, from
+  `pow_countP_le_prod` + `prod_le_cfK`; hence `tailFreq_le_of_levyBound` gives frequency
+  `≤ Λ/log T` under any Lévy bound `log qₚ ≤ Λp`, and `tendsto_freeRate` says that tends to `0`.
+  **So tightness — the Krylov–Bogolyubov half of `GaussACRigidity` — costs nothing, and the crux
+  never needed it.**  `exists_rate_gap` makes the remaining gap a theorem: for every `C` there is a
+  `T` with `C/T < 1/log T`, so no sharpening of `Λ` can reach the crux's `C/(T log 2)`.
+  **The open content of S7-T is exactly the passage from `1/log T` to `1/T`.**  Still open form:  Equivalent Diophantine form: the number of
   `q ≤ Q` with `‖q φ x‖ < 1/(Tq)` is `≤ (C/T) log Q`.  The `E_q := {u : ‖qφu‖ < 1/(Tq)}` are
   **`x`-independent** sets of Lebesgue measure exactly `2/(Tq)`, so the heuristic is exact; what is
   missing is that CF-normality of `x` says nothing about `{E_q}`.  This is the smallest genuinely
