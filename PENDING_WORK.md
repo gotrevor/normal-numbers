@@ -2643,3 +2643,25 @@ that makes empirical-vs-expected the whole question.
 **Lesson to carry**: an existentially-quantified hypothesis bundle must have its witnesses PINNED or
 it reduces to its own conclusion.  Check every future `∃ N S, …` reduction against a
 `*_trivial` lemma before claiming it reduces anything.
+
+### Lap 75, ninth commit — S7-AU: the vacuity audit of every §7 hypothesis bundle
+
+S7-SC's lesson was applied to every `∃`-bundle on the front.  Verdicts:
+
+| bundle | `∃` over | verdict |
+|---|---|---|
+| `ImageTight` | `T` | **sound** — `cellSet [] T` shrinks in `T`, so the frequency claim has content at every `T`. |
+| `AnchoredPullback` | `u, v, c` | **sound** — `anchoredHitCount` counts the EXCEPTIONAL orbit times, so the cheap `c = 0` makes the count `0` and the hypothesis *stronger*, not weaker.  At least as strong as `ImageTight`, which is what the reduction needs. |
+| `StateClock` | `s : ℕ → MobState` | **sound overall, EMPTY below `T ≈ 1/η`** — now certified. |
+| `BlockCoupling`/`TransducerData` | `S` | **vacuous**; repaired in S7-SC. |
+
+Certified here: `lowState η` (image `[0,η]`, width exactly `η`, distortion exactly `1`,
+`mob t = η·t`).  When `η·T < 1` its image lies entirely below `1/T`, so every orbit time is counted
+and `StateClock`'s inequality holds for free — `blockCount_le_card_lowState`.  So `StateClock` says
+nothing at thresholds `T < 1/η`, and a future lap must use it at `T ≥ 1/η`, where the width floor
+forces the image interval (length `≥ η ≥ 1/T`) to stick out above `1/T` and the condition becomes a
+real constraint on `Gⁿx`.  **This is the quantitative form of directive fact (β): the interesting
+regime is exactly target scale at or below the state width.**
+
+Only one bundle on the front was ever vacuous, and it was this lap's own.  The pre-existing
+reductions survive the audit.
