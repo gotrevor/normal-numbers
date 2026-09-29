@@ -713,6 +713,7 @@ import NormalNumbers.VandeheyS7Emit
 import NormalNumbers.VandeheyS7Approx
 import NormalNumbers.VandeheyS7Memory
 import NormalNumbers.VandeheyS7Orbit
+import NormalNumbers.VandeheyS7Cell
 import NormalNumbers.VandeheyLRRuns
 import NormalNumbers.VandeheyLRPattern
 import NormalNumbers.VandeheyRunCount
