@@ -3016,3 +3016,28 @@ Next attack (either order):
    S7-HitCell have the cell algebra) — plus `CellMemory` (the cell index is a bounded-memory
    function of the input digits), which stays the wall.
 2. `MeanSlack` — positive recurrence of the height walk (mean of `log d`).
+
+## S7-CN (lap 80): the operator check on `CellMemory` — answered
+
+`src/NormalNumbers/VandeheyS7CellNoMerge.lean`.  Verdict: **`CellMemory` is NOT refuted by the
+`no_window_function` / `exists_predictor_all_hit` witnesses.**  Those quantify over two unrelated
+initial states; `CellMemory` is about one run `runState Φ x ·` (one `Φ`, one input), so nothing
+transfers.  No Maze row is owed.
+
+What was proved instead, in the kernel (`disc s t := T · adj S`, the discrepancy matrix):
+
+* `disc_comp_right` — `disc (s·r) (t·r) = (det r) • disc s t`.  **Reading is inert**: the
+  discrepancy of two histories is carried through a window of ANY length unchanged as a Möbius
+  map.  Entrywise form of directive fact (γ); no contraction, ever, from the read action.
+* `disc_comp_left` / `disc_emitStep` — an emission replaces `disc` by `E₂ · disc · adj E₁` with
+  `E_i` the read matrices of the two emitted digits.  This is the only step that can move the
+  discrepancy at all.
+* `mob_eq_of_disc_smul_one` — `disc` is a complete invariant: scalar ⟹ same Möbius map.
+* `cellMemory_selIndic_congr` — `CellMemory` forces the selection to agree at any two times with
+  the same `L`-digit window.  This is the instrument a refutation would need: two run times, same
+  window, different selection.
+
+**Consequence for the route (next attack).**  The whole content of `CellMemory` sits in the LEFT
+action: the needed statement is a Birkhoff–Hopf contraction for `M ↦ E₂ · M · adj E₁` over the
+read matrices the run actually emits.  A memory-loss argument phrased on the input digits cannot
+work and should not be attempted again.
