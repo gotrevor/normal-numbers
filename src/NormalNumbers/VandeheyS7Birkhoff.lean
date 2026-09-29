@@ -46,8 +46,15 @@ and the denominator expands to `a c x² + (a d + b c) x + b d`.  So the whole an
 
 which is AM–GM on `a c x² + b d ≥ 2 x √(a c · b d)` together with `(a c)(b d) = (a d)(b c)`.
 **That inequality is proved here**, and `birkhoff_derivative_le` assembles it into the derivative
-bound.  What is left is the mean-value bookkeeping that turns a derivative bound into a Lipschitz
-bound in the log coordinate — no further inequality, and no dynamics.
+bound.  The mean-value bookkeeping is now done too: `hasDerivAt_mobLog` differentiates
+`t ↦ log f(eᵗ)` (written as a difference of logarithms, so the derivative is immediate), and
+`hdist_mob_le` is the contraction itself,
+
+    `hdist (f x) (f y) ≤ birkhoffCoeff a b c d · hdist x y`   for all `x, y > 0`,
+
+via `Convex.norm_image_sub_le_of_norm_hasDerivWithin_le` on all of `ℝ`.  So the analytic instrument
+for distributional merging is complete; what remains is the *dynamics* — assembling it along the
+state process.
 
 ## Why this is the right instrument, and not a coupling
 
@@ -201,9 +208,85 @@ theorem birkhoff_derivative_le {a b c d x : ℝ} (ha : 0 < a) (hb : 0 < b) (hc :
   rw [hfac]
   nlinarith [hlow, hst, hx.le, sq_nonneg (Real.sqrt (a * d) + Real.sqrt (b * c))]
 
+/-! ## From the derivative bound to the contraction -/
+
+/-- The state's action in the logarithmic coordinate: `t ↦ log f(eᵗ)`, written as a difference of
+logarithms so that its derivative is immediate. -/
+noncomputable def mobLog (a b c d t : ℝ) : ℝ :=
+  Real.log (a * Real.exp t + b) - Real.log (c * Real.exp t + d)
+
+lemma hasDerivAt_mobLog {a b c d : ℝ} (ha : 0 < a) (hb : 0 < b) (hc : 0 < c) (hd : 0 < d)
+    (t : ℝ) :
+    HasDerivAt (mobLog a b c d)
+      (Real.exp t * (a * d - b * c)
+        / ((c * Real.exp t + d) * (a * Real.exp t + b))) t := by
+  have hE : HasDerivAt Real.exp (Real.exp t) t := Real.hasDerivAt_exp t
+  have hE0 : (0:ℝ) < Real.exp t := Real.exp_pos t
+  have hnumpos : (0:ℝ) < a * Real.exp t + b := by positivity
+  have hdenpos : (0:ℝ) < c * Real.exp t + d := by positivity
+  have h1 : HasDerivAt (fun t => a * Real.exp t + b) (a * Real.exp t) t :=
+    ((hE.const_mul a).add_const b)
+  have h2 : HasDerivAt (fun t => c * Real.exp t + d) (c * Real.exp t) t :=
+    ((hE.const_mul c).add_const d)
+  have hl1 : HasDerivAt (fun t => Real.log (a * Real.exp t + b))
+      (a * Real.exp t / (a * Real.exp t + b)) t := h1.log hnumpos.ne'
+  have hl2 : HasDerivAt (fun t => Real.log (c * Real.exp t + d))
+      (c * Real.exp t / (c * Real.exp t + d)) t := h2.log hdenpos.ne'
+  have := hl1.sub hl2
+  refine this.congr_deriv ?_
+  field_simp
+  ring
+
+/-- **Birkhoff–Hopf contraction, assembled.**  The state's action contracts the Hilbert projective
+metric on `(0,∞)` by the factor `birkhoffCoeff`.  This is `birkhoff_derivative_le` plus the
+mean-value theorem in the logarithmic coordinate; no further inequality enters. -/
+theorem hdist_mob_le {a b c d x y : ℝ} (ha : 0 < a) (hb : 0 < b) (hc : 0 < c) (hd : 0 < d)
+    (hdet : 0 ≤ a * d - b * c) (hx : 0 < x) (hy : 0 < y) :
+    hdist ((a * x + b) / (c * x + d)) ((a * y + b) / (c * y + d))
+      ≤ birkhoffCoeff a b c d * hdist x y := by
+  set κ : ℝ := birkhoffCoeff a b c d with hκ
+  have hbound : ∀ t : ℝ,
+      ‖Real.exp t * (a * d - b * c)
+        / ((c * Real.exp t + d) * (a * Real.exp t + b))‖ ≤ κ := by
+    intro t
+    have hE0 : (0:ℝ) < Real.exp t := Real.exp_pos t
+    have hpos : (0:ℝ) ≤ Real.exp t * (a * d - b * c)
+        / ((c * Real.exp t + d) * (a * Real.exp t + b)) := by
+      have : (0:ℝ) < (c * Real.exp t + d) * (a * Real.exp t + b) := by positivity
+      positivity
+    rw [Real.norm_eq_abs, abs_of_nonneg hpos, hκ]
+    exact birkhoff_derivative_le ha hb hc hd hE0 hdet
+  have key := Convex.norm_image_sub_le_of_norm_hasDerivWithin_le
+    (f := mobLog a b c d)
+    (f' := fun t => Real.exp t * (a * d - b * c)
+      / ((c * Real.exp t + d) * (a * Real.exp t + b)))
+    (fun t _ => (hasDerivAt_mobLog ha hb hc hd t).hasDerivWithinAt)
+    (fun t _ => hbound t) convex_univ (Set.mem_univ (Real.log y)) (Set.mem_univ (Real.log x))
+  -- translate both sides out of the logarithmic coordinate
+  have hfx : (0:ℝ) < (a * x + b) / (c * x + d) := by
+    have : (0:ℝ) < c * x + d := by positivity
+    have h2 : (0:ℝ) < a * x + b := by positivity
+    positivity
+  have hfy : (0:ℝ) < (a * y + b) / (c * y + d) := by
+    have : (0:ℝ) < c * y + d := by positivity
+    have h2 : (0:ℝ) < a * y + b := by positivity
+    positivity
+  have hmx : mobLog a b c d (Real.log x)
+      = Real.log ((a * x + b) / (c * x + d)) := by
+    rw [mobLog, Real.exp_log hx, Real.log_div (by positivity) (by positivity)]
+  have hmy : mobLog a b c d (Real.log y)
+      = Real.log ((a * y + b) / (c * y + d)) := by
+    rw [mobLog, Real.exp_log hy, Real.log_div (by positivity) (by positivity)]
+  rw [hmx, hmy] at key
+  rw [hdist, hdist,
+    Real.log_div hfx.ne' hfy.ne', Real.log_div hx.ne' hy.ne']
+  simpa [Real.norm_eq_abs] using key
+
 section Audit
 
 #print axioms hdist_image_le
+#print axioms hasDerivAt_mobLog
+#print axioms hdist_mob_le
 #print axioms birkhoffCoeff_lt_one
 #print axioms birkhoff_denom_bound
 
