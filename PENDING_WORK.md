@@ -1984,3 +1984,23 @@ information about hit frequency, for any gap.  Only *finiteness of the predictor
 and that case is already proved (`windowHit_Ioo_le`).  So the location-determinacy demanded by
 `WindowedPullback` is not an artefact of the statement — it is its entire content, and no
 re-statement of the ergodic side can dodge it.  `VandeheyS7Lattice` is the live attack.
+
+### 2026-09-29 lap 60 — a bad state is priced (`VandeheyS7Bad.lean`)
+
+Directive fact 2's bad state, priced from the arithmetic instead of assumed away:
+
+* `conj_comb_ge_of_close` — an endpoint `β/δ` within `δ₀` of `p/q` forces
+  `|qβ′ − pδ′| ≥ 1/(q·|δ|·δ₀)`.
+* `conjHeight_ge_of_bad` — for an endpoint in `[0,1]` and `δ₀ ≤ 1`, the **conjugate height**
+  `max(|β′|,|δ′|)` of the state's entries is `≥ 1/(3q²·|δ|·δ₀)`.  Badness at scale `δ₀` against a
+  denominator-`q` rational costs conjugate height at the reciprocal rate.
+
+Both axiom-clean.  This converts the crux's bad half from a refuted-as-soft ergodic statement into
+a **lattice-point count** in `SL₂(ℤ[φ])`.
+
+**NEXT (lap 61).**  Name the count.  Define `BadTime x n δ₀ q` (the state at input time `n` is
+`δ₀`-bad against some `p/q`), and state `BadTimeCount`: `#{n < N : ∃ q ≤ 1/δ₀, BadTime …} ≤ C δ₀ N`.
+Then attack the *single-`q`* case first, where `conjHeight_ge_of_bad` plus the exponential growth
+of `q_n(x)` should give an honest upper bound on the number of admissible `n` in a dyadic block —
+and if it does not, record which half of the exponent defeats it, since that is the number the
+whole route now turns on.
