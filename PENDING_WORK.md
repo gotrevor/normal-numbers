@@ -402,6 +402,41 @@ needs one discharged (DIRECTION standing rule 3).
 
 ## Lap notes
 
+### 2026-09-29 lap 20 — the scale cutoff is closed, reusing the repo's Khinchin machinery
+
+The lap-19 gap (`gaussMeasure_exceptional_le` is at a FIXED scale, but `cfDigit_agree_depth`
+needs `ε = δ · scale u i`) is now closed.  The instrument was already in the repo:
+`CFLogTail.logTailFn K` (log of the digit when it exceeds `K`, else `0`) with the Markov bound
+`gaussMeasure_logBadZone_raw_le`, whose `n`'s cancel.  Three new theorems, all axiom-clean:
+
+* `log_digit_succ_le` : `log(a+1) ≤ log(K+1) + log 2 + logTailFn K x`, pointwise.  True in both
+  regimes — for `a ≤ K` the tail term is `0`, for `a > K` it is `log a` and `log(a+1) ≤ log(2a)`.
+* `log_scale_le` : summing along the orbit,
+  `log (scale u n) ≤ 2n(log(K+1) + log 2) + 2·logBirkhoffSum K n u`.
+  (`cfDigit u j = cfDigit (gaussMap^[j] u) 0` is `rfl`, so the Birkhoff sum matches on the nose.)
+* `scale_le_exp` / `gaussMeasure_scale_bad_le` : off the log-tail bad zone `scale u n ≤ S^n` with
+  `S = 4(K+1)²e^{2η}`, and that bad zone has mass `≤ (∫ logTailFn K dγ)/η` UNIFORMLY in `n`.
+  `integral_logTailFn_tendsto_zero` sends it to `0` as `K → ∞`.
+
+**Confirmed: one integral underwrites both named hypotheses.**  `∫ log(1+a) dγ < ∞` is what
+`VandeheyS7Clock` cites for the clock rate AND what pays for the scale cutoff here.  That is a
+structural fact about the route, not a coincidence — record it before it gets re-derived.
+
+The transfer chain is now complete except for assembly:
+
+    spread_runWord_le → abs_sub_runWord_le → cfDigit_agree_depth
+      exceptional set:  gaussMeasure_exceptional_le  (fixed scale)
+      scale cutoff:     gaussMeasure_scale_bad_le    (removes the u-dependence)
+
+**Next attack (lap 21): assemble, and state the残 gap honestly.**  Combine the two measure
+bounds into a single "for a.e. `u`, for all large `n`, the first `m(n)` digits of the image are
+determined by the last `n` input digits" statement, choosing `m(n)` so that
+`δ_n · S^{m(n)} → 0` — merging's `δ_n = 1/(fib(n-1)fib(n))` is exponentially small with rate
+`φ²`, so `m(n) = c·n` works for `c < 2 log φ / log S`.  THEN the remaining step to
+`SampledUniformCount` is the Cesàro/ergodic bookkeeping: digit-block frequencies along the clock.
+Do the `m(n)` arithmetic first — it is pure inequality work and it pins the constant `c`, which
+is the quantity that decides whether the route closes.
+
 ### 2026-09-29 lap 19 — the exceptional set has small Gauss mass
 
 `gaussMeasure_exceptional_le` (axiom-clean): at a fixed scale `ε ∈ (0,1]`,

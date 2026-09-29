@@ -6,6 +6,7 @@ Authors: Trevor Morris
 import NormalNumbers.VandeheyS7Word
 import NormalNumbers.CFDefs
 import NormalNumbers.CFPin
+import NormalNumbers.CFLogTail
 
 /-!
 # The trigger window: the depth-one boundary set has measure `O(√δ)`
@@ -389,6 +390,119 @@ theorem gaussMeasure_exceptional_le {ε : ℝ} (hε : 0 < ε) (hε1 : ε ≤ 1) 
   rw [gaussMeasure_preimage_iterate (measurableSet_boundaryBad ε) i]
   exact gaussMeasure_boundaryBad_le hε hε1
 
+/-! ## The scale cutoff: `scale` is at most exponential, off a set of small measure
+
+`gaussMeasure_exceptional_le` is stated at a fixed scale `ε`, but `cfDigit_agree_depth` needs
+`ε = δ · scale u i`, and `scale` depends on `u`.  The gap is closed by a CUTOFF, and the repo
+already has the instrument: `CFLogTail.logTailFn K` (the log of the digit when it exceeds `K`,
+else `0`) with the Markov bound `gaussMeasure_logBadZone_raw_le`, whose `n`'s cancel.
+
+The pointwise inequality that connects them is
+
+    `log_digit_succ_le` :  log (a + 1) ≤ log (K+1) + log 2 + logTailFn K x ,   a = cfDigit x 0 ,
+
+true in both regimes: for `a ≤ K` the tail term is `0` and `log(a+1) ≤ log(K+1) + log 2`; for
+`a > K` the tail term is `log a` and `log(a+1) ≤ log(2a)`.  Summing along the orbit,
+
+    `log_scale_le` :  log (scale u n) ≤ 2n (log(K+1) + log 2) + 2 · logBirkhoffSum K n u ,
+
+so off the log-tail bad zone `scale u n ≤ S^n` with `S = 4(K+1)² e^{2η}` — exponential, which is
+exactly what merging's exponentially small `δ` can pay.  The Markov bound then makes the bad zone
+small uniformly in `n`, and `∫ logTailFn K dγ → 0` (`integral_logTailFn_tendsto_zero`) makes it
+as small as wanted by raising `K`.
+
+This is the same integral `∫ log(1+a) dγ < ∞` that `VandeheyS7Clock`'s docstring cites for the
+clock rate.  One integral underwrites both named hypotheses — worth recording.
+-/
+
+open NormalNumbers in
+/-- The pointwise truncation inequality. -/
+theorem log_digit_succ_le (K : ℕ) (x : ℝ) :
+    Real.log ((cfDigit x 0 : ℝ) + 1) ≤ Real.log ((K : ℝ) + 1) + Real.log 2 + logTailFn K x := by
+  set a : ℕ := cfDigit x 0 with ha
+  have hlog2 : 0 < Real.log 2 := Real.log_pos (by norm_num)
+  by_cases hK : K < a
+  · -- tail regime: `log(a+1) ≤ log(2a) = log 2 + log a`
+    have ha1 : (1:ℝ) ≤ (a : ℝ) := by exact_mod_cast Nat.one_le_iff_ne_zero.2 (by omega)
+    have hstep : Real.log ((a : ℝ) + 1) ≤ Real.log (2 * (a : ℝ)) :=
+      Real.log_le_log (by linarith) (by linarith)
+    have hsplit : Real.log (2 * (a : ℝ)) = Real.log 2 + Real.log (a : ℝ) :=
+      Real.log_mul (by norm_num) (by linarith)
+    have hK0 : 0 ≤ Real.log ((K : ℝ) + 1) :=
+      Real.log_nonneg (by linarith [Nat.cast_nonneg (α := ℝ) K])
+    have htail : logTailFn K x = Real.log ((a : ℝ)) := by
+      simp only [logTailFn, ← ha, if_pos hK]
+    rw [htail]
+    linarith
+  · -- truncated regime: `a ≤ K`
+    have hale : (a : ℝ) ≤ (K : ℝ) := by exact_mod_cast Nat.le_of_not_lt hK
+    have hstep : Real.log ((a : ℝ) + 1) ≤ Real.log ((K : ℝ) + 1) :=
+      Real.log_le_log (by linarith [Nat.cast_nonneg (α := ℝ) a]) (by linarith)
+    have htail : logTailFn K x = 0 := by
+      simp only [logTailFn, ← ha, if_neg hK]
+    rw [htail]
+    linarith
+
+open NormalNumbers in
+/-- Summing along the orbit: the log of the accumulated scale is controlled by the log-tail
+Birkhoff sum, with a deterministic `n log(K+1)` part. -/
+theorem log_scale_le (K n : ℕ) (u : ℝ) :
+    Real.log (scale u n)
+      ≤ 2 * n * (Real.log ((K : ℝ) + 1) + Real.log 2) + 2 * logBirkhoffSum K n u := by
+  have hprod : Real.log (scale u n)
+      = ∑ j ∈ Finset.range n, 2 * Real.log ((cfDigit u j : ℝ) + 1) := by
+    rw [scale, Real.log_prod]
+    · refine Finset.sum_congr rfl fun j _ => ?_
+      rw [Real.log_pow]
+      push_cast
+      ring
+    · intro j _
+      positivity
+  rw [hprod, logBirkhoffSum_apply, Finset.mul_sum]
+  have hterm : ∀ j ∈ Finset.range n,
+      2 * Real.log ((cfDigit u j : ℝ) + 1)
+        ≤ 2 * (Real.log ((K : ℝ) + 1) + Real.log 2) + 2 * logTailFn K (gaussMap^[j] u) := by
+    intro j _
+    have h := log_digit_succ_le K (gaussMap^[j] u)
+    rw [← cfDigit_eq_iterate u j] at h
+    linarith
+  calc ∑ j ∈ Finset.range n, 2 * Real.log ((cfDigit u j : ℝ) + 1)
+      ≤ ∑ j ∈ Finset.range n,
+          (2 * (Real.log ((K : ℝ) + 1) + Real.log 2)
+            + 2 * logTailFn K (gaussMap^[j] u)) := Finset.sum_le_sum hterm
+    _ = 2 * n * (Real.log ((K : ℝ) + 1) + Real.log 2)
+          + ∑ j ∈ Finset.range n, 2 * logTailFn K (gaussMap^[j] u) := by
+        rw [Finset.sum_add_distrib, Finset.sum_const, Finset.card_range, nsmul_eq_mul]
+        ring
+
+open NormalNumbers in
+/-- **The cutoff, pointwise.**  Off the log-tail bad zone the accumulated scale is at most
+`S^n` with `S = 4(K+1)² e^{2η}`. -/
+theorem scale_le_exp {K n : ℕ} {η : ℝ} {u : ℝ} (hbad : logBirkhoffSum K n u ≤ η * n) :
+    scale u n ≤ Real.exp (2 * n * (Real.log ((K : ℝ) + 1) + Real.log 2 + η)) := by
+  have h := log_scale_le K n u
+  have hpos : 0 < scale u n := scale_pos u n
+  rw [← Real.log_le_iff_le_exp hpos]
+  linarith [h, hbad]
+
+open NormalNumbers in
+/-- **The cutoff, in measure.**  The set where the accumulated scale exceeds the exponential
+bound has Gauss mass at most `(∫ logTailFn K dγ)/η`, UNIFORMLY in `n` — the `n` in the threshold
+and the `n` in the first moment cancel.  Raising `K` sends the bound to `0`
+(`integral_logTailFn_tendsto_zero`). -/
+theorem gaussMeasure_scale_bad_le (K n : ℕ) {η : ℝ} (hη : 0 < η) :
+    (gaussMeasure {x ∈ Ioo (0:ℝ) 1 |
+        Real.exp (2 * n * (Real.log ((K : ℝ) + 1) + Real.log 2 + η)) < scale x n}).toReal
+      ≤ (∫ x, logTailFn K x ∂gaussMeasure) / η := by
+  refine le_trans (ENNReal.toReal_mono ?_ (measure_mono ?_))
+    (gaussMeasure_logBadZone_raw_le n K hη)
+  · exact ne_of_lt (lt_of_le_of_lt (measure_mono (fun x hx => hx.1))
+      (by simpa using measure_lt_top gaussMeasure (Ioo (0:ℝ) 1)))
+  · rintro x ⟨hx, hlt⟩
+    refine ⟨hx, ?_⟩
+    by_contra hcon
+    exact absurd (scale_le_exp (not_lt.1 hcon)) (not_le.2 hlt)
+
 
 section Audit
 
@@ -399,6 +513,9 @@ section Audit
 #print axioms abs_gaussMap_sub_le
 #print axioms cfDigit_agree_depth
 #print axioms gaussMeasure_exceptional_le
+#print axioms log_scale_le
+#print axioms scale_le_exp
+#print axioms gaussMeasure_scale_bad_le
 
 end Audit
 
