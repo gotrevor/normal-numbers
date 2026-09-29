@@ -5,6 +5,7 @@ Authors: Trevor Morris
 -/
 import NormalNumbers.VandeheyS7Anchor
 import NormalNumbers.VandeheyS7Distortion
+import NormalNumbers.VandeheyS7Good
 
 /-!
 # S7-M: the state is monotone, so its tail-cell pullbacks are anchored
@@ -121,6 +122,52 @@ theorem mob_pullback_anchored (s : MobState) (r : ℝ) {c c' : ℝ} (hcc : c < c
     have := subset_Ico_of_upwardClosed hA hup hvol ht
     exact ⟨by linarith [this.1], this.2⟩
 
+
+/-! ## The size bound: bounded distortion makes the anchored interval short -/
+
+theorem mob_zero_nonneg (s : MobState) : 0 ≤ s.mob 0 := by
+  rw [mob]
+  have h2 : 0 < s.c * 0 + s.d := s.den_pos (le_refl 0)
+  have h1 : 0 ≤ s.a * 0 + s.b := by linarith [s.hb]
+  exact div_nonneg h1 h2.le
+
+theorem mob_one_nonneg (s : MobState) : 0 ≤ s.mob 1 := by
+  rw [mob]
+  have h1 : 0 ≤ s.a * 1 + s.b := by linarith [s.ha, s.hb]
+  have h2 : 0 < s.c * 1 + s.d := s.den_pos (by norm_num)
+  exact div_nonneg h1 h2.le
+
+/-- **The size bound.**  For a state of image width `≥ η`, the sublevel set `{mob t < r}` is not
+merely anchored: it sits inside an interval of length `distortion · r/η` at one end of `(0,1)`.
+This is `sub_le_of_image_le` (lap 49) applied to the anchored endpoint pair, and it is the `Λ/T`
+that `AnchoredPullback` asks for, with `Λ = distortion/η` and `r = 1/T`. -/
+theorem mob_sublevel_subset (s : MobState) {r η : ℝ} (hη : 0 < η) (hJ : η ≤ s.width)
+    (hr : 0 ≤ r) :
+    {t | t ∈ Set.Ioo (0:ℝ) 1 ∧ s.mob t < r} ⊆ Set.Ioc 0 (s.distortion * (r / η)) ∨
+    {t | t ∈ Set.Ioo (0:ℝ) 1 ∧ s.mob t < r} ⊆ Set.Ico (1 - s.distortion * (r / η)) 1 := by
+  rcases lt_trichotomy (s.a * s.d - s.b * s.c) 0 with hdet | hdet | hdet
+  · right
+    rintro t ⟨⟨ht0, ht1⟩, htr⟩
+    refine ⟨?_, ht1⟩
+    have hmono : s.mob 1 < s.mob t :=
+      mob_lt_mob_of_det_neg s hdet ht0.le (by norm_num) ht1
+    have hL : |s.mob 1 - s.mob t| ≤ r := by
+      rw [abs_of_nonpos (by linarith)]
+      linarith [s.mob_one_nonneg]
+    have := sub_le_of_image_le s ht0.le ht1.le le_rfl hη hJ hL
+    linarith
+  · exact absurd hdet s.hdet
+  · left
+    rintro t ⟨⟨ht0, ht1⟩, htr⟩
+    refine ⟨ht0, ?_⟩
+    have hmono : s.mob 0 < s.mob t :=
+      mob_lt_mob_of_det_pos s hdet (by norm_num) ht0.le ht0
+    have hL : |s.mob t - s.mob 0| ≤ r := by
+      rw [abs_of_nonneg (by linarith)]
+      linarith [s.mob_zero_nonneg]
+    have := sub_le_of_image_le s (le_refl (0:ℝ)) ht0.le ht1.le hη hJ hL
+    linarith
+
 end MobState
 
 section Audit
@@ -128,6 +175,7 @@ section Audit
 #print axioms MobState.mob_sub_mob
 #print axioms MobState.anchored_mob_lt
 #print axioms MobState.mob_pullback_anchored
+#print axioms MobState.mob_sublevel_subset
 
 end Audit
 

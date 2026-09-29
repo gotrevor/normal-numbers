@@ -2171,3 +2171,26 @@ discharging `ImageTight` outright — are now only two, both already named in th
 distortion `≤ K` whose image has width `≥ η`, the pullback of an output interval of length `L` has
 length `≤ K·L/η`.  The pieces are in `VandeheyS7Distortion`/`VandeheyS7Good`; this is the
 assembly into the measure form `mob_pullback_anchored` consumes.
+
+### 2026-09-29 lap 69 — the size bound (`MobState.mob_sublevel_subset`)
+
+Gap 1 of lap 68 is closed, and closed in a better form than planned — no measure theory at all:
+
+* `mob_zero_nonneg`, `mob_one_nonneg` — the image stays in `[0,∞)` (from the structure's sign
+  fields).
+* `mob_sublevel_subset` — for a state of image width `≥ η` and any `r ≥ 0`, the sublevel set
+  `{t ∈ (0,1) : s.mob t < r}` is contained in `(0, D·r/η]` or in `[1 − D·r/η, 1)`, `D` the
+  distortion.  Axiom-clean.
+
+The proof is lap 49's `sub_le_of_image_le` applied to the *anchored endpoint pair* — `(0,t)` in the
+increasing case, `(t,1)` in the decreasing one — which is available precisely because lap 67 made
+the state's monotonicity explicit.  So the containment is derived directly, without going through
+`volume` and `mob_pullback_anchored`'s measure hypothesis.
+
+This is exactly `AnchoredPullback`'s `Λ/T` with `Λ = D/η` and `r = 1/T`.
+
+**NEXT (lap 70).**  Gap 2, the clock: match output positions `ℓ` to input times `n` so that a
+visit of the image orbit to `cellSet [] T` is a visit of the input orbit to a sublevel set of the
+state at time `n` (`VandeheyS7Clock`, `VandeheyS7Emit`).  With that, `AnchoredPullback` has a
+witness modulo the image-width floor `η`, and the floor is itself the bad-state question — but now
+only for the TAIL half, where lap 65's principle applies.
