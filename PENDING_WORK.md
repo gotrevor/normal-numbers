@@ -49,10 +49,12 @@ the §7 chain.  The binding version is `DIRECTION.md` → CURRENT DIRECTIVE.
 
 `VandeheyS7Orbit.affineCFN_of_orbitACBound` (axiom-clean) proves `AffineCFN q r₀` from
 
-1. `AffineImageIrrational q r₀` — the image of a CF-normal input is irrational.  Free for
-   rational `q`; for `q = φ` it needs "`φ x ∈ ℚ` ⇒ `x` is a quadratic irrational ⇒ not CF-normal".
-   The repo has `QuadraticDisjunctive.lean` and `Literature.not_isCFNormal_of_not_irrational`;
-   the missing piece is "eventually periodic CF ⇒ not CF-normal".  **Cheap, do it early.**
+1. ~~`AffineImageIrrational q r₀`~~ — **DONE, lap 30** (`VandeheyS7Golden.lean`, axiom-clean):
+   `affineImageIrrational_goldenRatio` and `affineImageIrrational_add_goldenRatio`.  If the image
+   were rational, `z = Int.fract x` satisfies an explicit integer quadratic with leading
+   coefficient `r.den²` (`(z+m)² + r(z+m) − r² = (z+m)²(1+φ−φ²) = 0`, resp.
+   `z² + (1−2s)z + (s²−s−1) = 0` with `s = r − m`), so `cfDigit_le_of_quadratic` +
+   `not_isCFNormal_of_bddDigits` finish.  Only `φ² = φ + 1` is used.
 2. `GaussACRigidity C` — CITED.  Discharge plan, all inputs in hand:
    * `MeasurePreserving gaussMap gaussMeasure gaussMeasure` from `gaussMeasure_preimage` +
      `measurable_gaussMap`.
@@ -103,6 +105,57 @@ the §7 chain.  The binding version is `DIRECTION.md` → CURRENT DIRECTIVE.
    "quadratic irrational ⇒ not CF-normal"; only the explicit quadratic for `Int.fract x` when
    `φ x ∈ ℚ` remains.  One-sided, absolute constant, no
    `x`-independence.  Degenerate verdict `one_le_of_orbitACBound`: `C ≥ 1` always.
+
+### ⭐ LAP 30: what the crux `OrbitCellBound` actually IS (do not re-derive)
+
+Write the state at input time `n` as the Möbius map `s_n = O_n⁻¹ Φ P_n` (`O_n` = the emitted
+convergent matrix, `P_n` = the input convergent matrix, `Φ` = the affine map).  Then
+`Gᵗz = s_n(Gⁿx)` at matched times, and the crux is exactly
+
+  `limsup (1/N) #{n < N : Gⁿ x ∈ s_n⁻¹(E)} ≤ C γ(E)` for every cell `E`.
+
+Three facts, all established lap 30, fix its difficulty and must steer every further attack.
+
+* **(α) It is a PREDICTABLE-SET problem.**  `A_n := s_n⁻¹(E)` is determined by `x₁…x_n`, and
+  CF-normality of `x` is a statement about the tail marginal alone.  Any argument that uses only
+  "`A_n` is predictable and `γ(A_n) ≤ D γ(E)`" must fail — that hypothesis is satisfiable by
+  sequences for which the conclusion is false (design the tail to land in the predicted interval
+  on a positive-density set while keeping the word frequencies Gaussian).  *Not yet a Lean
+  refutation; the construction is a named probe (`S7-P1`) below.*
+* **(β) The per-state distortion bound genuinely FAILS.**  A post-emission state whose image
+  `J = s((0,1))` straddles `1/k` at a scale far below `|E|` has `γ(s⁻¹E) ≈ 1/2` while `γ(E)` is
+  arbitrarily small.  Such states are precisely the ones that then emit a HUGE output digit, which
+  is what the cell threshold `T` sees.  So the `w = []` tail-cell case of the crux (tightness:
+  frequency of image digits `≥ T` is `≤ C/(T log 2)`) is the sub-statement that must control them,
+  and the general case is a bootstrap off it, never a bypass.
+* **(γ) The state set is literally `PSL₂(ℤ)`.**  For `Φ = diag(φ,1)` with `φ` irrational,
+  `Γ ∩ Φ⁻¹ΓΦ = {±I}` (a matrix `[[a,b],[c,d]] ∈ SL₂(ℤ)` with `Φ⁻¹MΦ = [[a, b/φ],[cφ, d]]` integral
+  forces `b = c = 0`).  So the state is the point `ΓΦP_n ∈ Γ\SL₂(ℝ)` and no two input words are
+  ever identified.  This is the structural source of `no_window_function`, of
+  `infinite_zPhi_abs_le_one`, and of the failure of pathwise merging, all at once — and it
+  identifies the crux with the translate problem "`Γ g_x(t)` equidistributes ⟹ `Γ Φ g_x(t)` does",
+  which is the self-joining wall.  Vandehey's Thm 1.1 is the same statement for `Φ` in the
+  *commensurator* `GL₂(ℚ)⁺` (a Hecke correspondence, finite-to-one); `φ ∉ ℚ` is exactly why the
+  method stops.
+
+**Named next targets on the crux, in attack order.**
+
+* **S7-T (tightness).**  `OrbitCellBound` restricted to `w = []`: for CF-normal `x`, the frequency
+  of image digits `≥ T` is at most `C/(T log 2)`.  Equivalent Diophantine form: the number of
+  `q ≤ Q` with `‖q φ x‖ < 1/(Tq)` is `≤ (C/T) log Q`.  The `E_q := {u : ‖qφu‖ < 1/(Tq)}` are
+  **`x`-independent** sets of Lebesgue measure exactly `2/(Tq)`, so the heuristic is exact; what is
+  missing is that CF-normality of `x` says nothing about `{E_q}`.  This is the smallest genuinely
+  open piece of the crux, and by (β) everything else waits on it.
+* **S7-H (refutation target, cheap).**  Kill the "approximate `φ` by `F_{k+1}/F_k` and use the
+  PROVED Thm 1.1 + a diagonal argument" route with a theorem.  The accounting: `φ` is
+  badly approximable (`|p − qφ| ≥ 1/(4q)` for `q ≥ 1`, from `|p² − pq − q²| ≥ 1`), so agreeing with
+  `φx` to CF depth `N` forces `q ≳ e^{λN}` and hence a transducer determinant `≳ e^{2λN}` — an
+  automaton with `e^{Ω(N)}` states run for `N` steps, which cannot equidistribute.  Lean witness:
+  the explicit bad-approximability bound plus the depth/determinant inequality.  Maze row
+  `hall_hecke_approximation`.
+* **S7-P1 (probe).**  Make (α) a Lean refutation: an equidistributed sequence in `(0,1)` and a
+  predictable family of intervals of length `δ` met on a set of density `≫ δ`.  This closes an
+  entire class of attacks rather than one route.
 
 ### The FALLBACK route: state-indexed decomposition (named next goals, in order)
 

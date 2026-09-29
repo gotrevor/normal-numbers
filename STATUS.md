@@ -12,8 +12,8 @@ The next Lambert target is an all-N occurrence count; its proposed stronger pape
 
 
 **Digit-reading dynamics of real numbers: normality, disjunctivity, CF-normality, and the
-richness of arithmetic constants.** · **Build**: 🟢 green (10503 jobs) · **Updated**: lap 27 ·
-2026-09-29 · `b8e7fd4`
+richness of arithmetic constants.** · **Build**: 🟢 green (10510 jobs) · **Updated**: lap 30 ·
+2026-09-29 · `8002782`
 
 One checkout on `wip/g5-prime-subset`, Lean/mathlib v4.33.1, every campaign branch merged
 (2026-09-27, `f5034b6`).  Per-campaign detail and ledgers from before the merge are in
@@ -23,16 +23,17 @@ One checkout on `wip/g5-prime-subset`, Lean/mathlib v4.33.1, every campaign bran
 
 The live target is the operator's moonshot, **Vandehey Compositio 2017 §7 Problem 1**: is `φx`
 CF-normal when `x` is?  Theorem 1.1 itself is PROVED (`vandehey_matrix_action_holds`, 2026-09-28),
-and §7 is frozen as `vandeheyS7_mul_phi` / `vandeheyS7_add_phi`, reduced to one crux,
-`SampledUniformCount`.  Laps 11–26 proved every analytic input to that crux — merging, the window
-bound, digit transfer at every depth, the scale cutoff, the budget — and then framed the rest as
-bookkeeping against a *window function* of the input.  Review lap 27 refuted that frame in the
-kernel (`no_window_function`): the machine does not forget, and this was
-`hall_vandehey_synchronizing_transducer` a second time.  The corrected route indexes the
-decomposition by state class, not by input word, and the ε-scheme engine
-(`sampledUniformCount_of_approxScheme`) is the consumer.  Four other fronts carry
-proved-but-conditional headlines (Joint Lambert, C3/MRT, Elliott, the casting-out crux leaves);
-their hypotheses are the standing debt.
+and §7 is frozen as `vandeheyS7_mul_phi` / `vandeheyS7_add_phi`.  **As of lap 30 the whole chain to
+both frozen targets is two hypotheses wide**: `vandeheyS7_mul_phi_of_orbitCellBound` derives the
+target from the cited `GaussACRigidity (C/log 2)` and the crux `OrbitCellBound q r₀ C`, and
+nothing else.  Leg 1 (`AffineImageIrrational`, "the image of a CF-normal number is irrational") is
+now a theorem for both instances via an explicit integer quadratic; the geometric leg
+(`CellCover (1/log 2)`) landed lap 29.  The crux is the statement that the image orbit visits each
+word-cell with frequency at most `C` times its Gauss mass; lap 30 pinned down what it *is* — a
+predictable-set problem whose state set is literally `PSL₂(ℤ)` (because `Γ ∩ Φ⁻¹ΓΦ = {±I}`), i.e.
+the translate-equidistribution question "`Γ g_x(t)` equidistributes ⟹ `Γ Φ g_x(t)` does".  Four
+other fronts carry proved-but-conditional headlines (Joint Lambert, C3/MRT, Elliott, the
+casting-out crux leaves); their hypotheses are the standing debt.
 
 ## Superseded overview (Theorem 1.1 era, kept for the reductions it names)
 
@@ -51,6 +52,19 @@ carry proved-but-conditional headlines (Joint Lambert, C3/MRT, Elliott, the cast
 leaves); their hypotheses are the standing debt.
 
 ## What's happened (newest first)
+
+- **2026-09-29 (lap 30, review).**  Leg 1 of the ergodic route DISCHARGED, for both frozen
+  instances: `VandeheyS7Golden.affineImageIrrational_goldenRatio` and
+  `affineImageIrrational_add_goldenRatio` (axiom-clean).  If `φ x` (resp. `x + φ`) were rational
+  then `z = Int.fract x` is a root of an explicit integer quadratic with leading coefficient
+  `r.den²` — `(z+m)² + r(z+m) − r² = (z+m)²(1 + φ − φ²) = 0`, resp. `z² + (1−2s)z + (s²−s−1) = 0`
+  — so lap 29's `cfDigit_le_of_quadratic` bounds its partial quotients and
+  `not_isCFNormal_of_bddDigits` finishes.  Only `φ² = φ + 1` is used: no Lagrange, no eventual
+  periodicity.  The chain to both frozen targets is now exactly `GaussACRigidity` (cited) plus the
+  crux `OrbitCellBound`.  The review also pinned the crux's structure (see `DIRECTION.md` →
+  CURRENT DIRECTIVE): it is predictable-set decoupling; the per-state distortion bound genuinely
+  fails on states that straddle `1/k` below the cell scale; and `Γ ∩ Φ⁻¹ΓΦ = {±I}` makes the state
+  set `PSL₂(ℤ)` itself, which is the structural source of `no_window_function`.
 
 - **2026-09-29 (lap 27, review).**  A route-level correction on the §7 crux, plus the engine the
   corrected route needs.  (a) `cfCount_tendsto_of_decomposition`'s BOUNDED decomposition error is
@@ -265,7 +279,10 @@ This repo holds **no `axiom` declarations**: literature inputs are named hypothe
 | --- | --- | --- | --- |
 | `Literature.vandehey_matrix_action_holds` (`VandeheyCapstone.lean`) | unconditional (Vandehey 2017 Thm 1.1) | trust base | 🟢 **CLEAN, DISCHARGED 2026-09-29** (`6d7a8ad`).  Route: Serret + Smith reduce to `x ↦ D·x` (`D` prime); the concrete Raney `L/R` transducer supplies a monotone RUN clock with an `x`-independent positive rate (`tendsto_runClock_div`, Lemma 6.1) and an `x`-independent Cesàro limit for the image's CF-occurrence count sampled along it (`exists_tendsto_cfCount_runClock`).  Assembled by `mobiusUniformFreq_of_runClock`.  NB the theorem lives downstream of `LiteratureVandehey.lean` (import cycle); the frozen statements stay there. |
 | `VandeheyS7.affineCFN_of_runClock` (`VandeheyS7Clock.lean`) | — (reduction for the OPEN §7 Problem 1) | trust base | 🟡 clean **as a reduction**: `0 < q` + `RunClock ℓ rate` + `SampledUniformCount q r₀ ℓ` ⊢ `AffineCFN q r₀`, for every real `q, r₀`.  The two hypotheses are named `Prop`s, not axioms.  `SampledUniformCount` is the live frontier; next prerequisite = `StateEquidistribution` on the compact bounded-distortion fiber |
-| `VandeheyS7.sampledUniformCount_of_approxScheme` (`VandeheyS7Approx.lean`) | — (engine) | trust base | 🟢 clean; the crux from a uniform ε-approximation scheme, with no existence hypothesis |
+| `VandeheyS7.vandeheyS7_mul_phi_of_orbitCellBound` (`VandeheyS7Golden.lean`) | — (the LIVE reduction for the OPEN §7 Problem 1) | trust base | 🟡 clean **as a reduction**, and now only TWO hypotheses wide: `GaussACRigidity (C/log 2)` (cited, standard ergodic theory) + `OrbitCellBound φ 0 C` (the crux).  Same for `vandeheyS7_add_phi_of_orbitCellBound`.  current frontier; next prerequisite = the tightness case `w = []` of `OrbitCellBound` (control of large image digits) |
+| `VandeheyS7.affineImageIrrational_goldenRatio` (`VandeheyS7Golden.lean`) | — (leg 1) | trust base | ✅ proved lap 30, axiom-clean; same for `affineImageIrrational_add_goldenRatio` |
+| `VandeheyS7.cellCover_inv_log_two` (`VandeheyS7Cell.lean`) | — (geometric leg) | trust base | ✅ proved lap 29, axiom-clean |
+| `VandeheyS7.sampledUniformCount_of_approxScheme` (`VandeheyS7Approx.lean`) | — (engine, fallback route) | trust base | 🟢 clean; the crux from a uniform ε-approximation scheme, with no existence hypothesis |
 | `VandeheyS7.MobState.no_window_function` (`VandeheyS7Memory.lean`) | refutation | trust base | 🟢 clean; the window-function frame is dead |
 | `Literature.vandeheyUniformFreq_of_scale` | — (reduction) | trust base | 🟢 clean; reduces Thm 1.1 to `MobiusCFNScale` |
 | `Literature.mobiusCFNGL2_holds` | unconditional (Serret) | trust base | 🟢 clean, discharged |
@@ -278,7 +295,8 @@ This repo holds **no `axiom` declarations**: literature inputs are named hypothe
 
 **Done** would be: every headline's base is the trust base alone, with 🔴 only where the paper
 is itself conditional.  Today the 🟡 with a live attack is the Vandehey §7 crux
-(`SampledUniformCount`); `AGP` and `ZetaLogDerivExponent` are the other two, both parked.
+(`OrbitCellBound`, on the primary ergodic route; `SampledUniformCount` is the older fallback
+route's crux); `AGP` and `ZetaLogDerivExponent` are the other two, both parked.
 
 ## Pointers
 

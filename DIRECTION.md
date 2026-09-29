@@ -2,39 +2,53 @@
 
 ## CURRENT DIRECTIVE (altitude laps only write here; it OUTRANKS the HANDOFF) 🧭
 
-**Set 2026-09-29 (review lap 27).**
+**Set 2026-09-29 (review lap 30).**  Supersedes lap 27's directive; the route is UNCHANGED, the
+crux has moved one step in and leg 1 is now a theorem.
 
-* **Objective.**  Vandehey §7 Problem 1, at the crux: `SampledUniformCount q r₀ ℓ`.  Nothing
-  else on this front counts as progress.
-* **Mandated next move — the ERGODIC route is now primary.**  `VandeheyS7Orbit.affineCFN_of_orbitACBound`
-  proves the frozen target from a ONE-SIDED bound `OrbitACBound q r₀ C`
-  (`#{j<p : Gʲz ∈ (a,b)}/p ≤ C(b−a)+ε`) plus the cited `GaussACRigidity C`.  No `x`-independent
-  limit anywhere; the value is forced to be γ.  Work it in this order:
-  (i) **attack `OrbitACBound`** with the distortion/merging layer already proved.  This is the
-  new math and the whole remaining content of the route.
-  (ii) `GaussACRigidity` is textbook ergodic theory: it **stays a cited hypothesis** (standing
-  rule 3, new math first; operator ruling 2026-09-29).  The ergodicity, uniqueness and
-  Krylov–Bogolyubov pieces already landed (`GaussKB.lean` etc.) stay; do not spend further laps
-  finishing the discharge until `OrbitACBound` is proved.
-  The state-indexed decomposition below stays the FALLBACK, not the first move.
-* **Forbidden drift.**  Do **not** try to make the image digit a function of a bounded input
-  window.  `VandeheyS7Memory.no_window_function` refutes it in the kernel for every window and
-  every window length, with witnesses of minimal distortion, and it is
-  `hall_emit_digit_window_function` / `hall_vandehey_synchronizing_transducer` in the Maze.
-  Do not use `spread_runWord_le` as "initial-state independence": it bounds the image DIAMETER,
-  never its LOCATION.  Do not hand the chain a bounded-error decomposition
-  (`cfCount_tendsto_of_decomposition`): the exceptional set has positive Gauss mass, so the
-  error is `Θ(p)`; use the ε-scheme.
-* **Why.**  Laps 11–26 proved every analytic input (merging, window bound, digit transfer,
-  budget) and then framed the remainder as bookkeeping against a window function.  That frame
-  is false, and it is a hall the build had already closed a lap earlier.  The state is a genuine
-  hidden variable; replacing Vandehey's finite state set by a measure on a compact fiber is the
-  whole content of Route A, and it must be *stated* before it can be attacked.
+* **Objective.**  Vandehey §7 Problem 1, at the crux: **`OrbitCellBound q r₀ C`**
+  (`VandeheyS7Cell`).  Nothing else on this front counts as progress.
+* **State of the chain (lap 30).**  `vandeheyS7_mul_phi_of_orbitCellBound` /
+  `vandeheyS7_add_phi_of_orbitCellBound` (`VandeheyS7Golden`, axiom-clean) prove the frozen
+  targets from exactly TWO hypotheses: the cited `GaussACRigidity (C/log 2)` and the crux.
+  Leg 1 (`AffineImageIrrational`) is DISCHARGED for both instances.  `CellCover (1/log 2)` is
+  proved.  So every remaining line of the route runs through `OrbitCellBound`.
+* **Mandated next move.**  Attack `OrbitCellBound` **only**, and prefer moves that either
+  (a) prove an unconditional statement about the image expansion of a CF-normal `x`, or
+  (b) kill a candidate sub-route with a theorem (a refutation with a Lean witness is an advance).
+  `GaussACRigidity` **stays a cited hypothesis** — do not resume `GaussKB.lean` (lap 28 spent a
+  lap there against lap 27's directive; that must not recur).
+* **What the crux IS, established lap 30 (use this, do not re-derive it).**  Writing the state at
+  input time `n` as the Möbius map `s_n = O_n⁻¹ Φ P_n` (`O_n` = emitted convergent matrix, `P_n` =
+  input convergent matrix, `Φ` = the affine map), the crux is
+  `limsup (1/N) #{n<N : Gⁿx ∈ s_n⁻¹(E)} ≤ C γ(E)` for every cell `E`.  Three facts pin it down:
+  1. `s_n⁻¹(E)` is **predictable** — determined by `x₁…x_n` — and CF-normality of `x` is a
+     statement about the tail marginal alone.  So no argument that uses only "predictable +
+     bounded distortion" can work.
+  2. The per-state distortion bound **fails**: a post-emission state whose image `J` straddles
+     `1/k` at a scale far below `|E|` has `γ(s⁻¹E) ≈ 1/2` with `γ(E)` arbitrarily small.  The cell
+     threshold `T` is what such states produce (a huge output digit), so the crux's own `w = []`
+     tail-cell case is the tightness statement that must control them — a bootstrap, not a
+     bypass.
+  3. `Γ ∩ Φ⁻¹ΓΦ = {±I}` for `Φ = diag(φ,1)` (φ irrational), so the state set is *literally*
+     `PSL₂(ℤ)` and the state is the point `ΓΦP_n ∈ Γ\SL₂(ℝ)`.  This is the structural reason
+     behind `no_window_function` and `infinite_zPhi_abs_le_one`, and it identifies the crux with
+     "the ray `Γ g_x(t)` equidistributes ⟹ so does `Γ Φ g_x(t)`" — the self-joining wall.  Do not
+     re-attack the wall softly; attack the ARITHMETIC of `Φ`.
+* **Forbidden drift.**  (i) The window-function frame — `no_window_function` refutes it in the
+  kernel; `spread_runWord_le`/`hdist_runWord_le` bound the image DIAMETER, never its LOCATION.
+  (ii) Bounded-error decompositions (`cfCount_tendsto_of_decomposition`): the exceptional set has
+  positive Gauss mass, so the error is `Θ(p)`.  (iii) Serret/commensurator and soft self-joining
+  rigidity.  (iv) Finishing `GaussACRigidity`.
+* **Why.**  Leg 1 and the geometry are done; the chain is two hypotheses wide and one of them is
+  cited by standing rule 3.  Every further lap that does not touch `OrbitCellBound` is leaf work.
 
 Directive history:
 - 2026-09-29 (lap 27, review): window-function frame REFUTED; ε-scheme replaces the bounded-error
   engine; the ERGODIC route (`OrbitACBound` + `GaussACRigidity`) becomes primary, the
   state-indexed decomposition the fallback.
+- 2026-09-29 (lap 30, review): leg 1 DISCHARGED (`VandeheyS7Golden`), so the crux is the whole
+  chain; crux pinned as the predictable-set/`Γ\SL₂(ℝ)`-translate problem, with the three facts
+  above written into the directive so grind laps stop re-deriving them.
 
 
 ## OPERATOR OBJECTIVE 2026-09-29: Vandehey §7 Problem 1 🌙
