@@ -2665,3 +2665,26 @@ regime is exactly target scale at or below the state width.**
 
 Only one bundle on the front was ever vacuous, and it was this lap's own.  The pre-existing
 reductions survive the audit.
+
+### Lap 75, tenth commit — S7-RC: the read as a composition, so the lag chains
+
+S7-RD priced a read through the *formula* `readWidth s a = |s.mob(1/a) − s.mob(1/(a+1))|`.
+`deficit_telescope_le`'s `hstep` needs the price as a statement about the **next state**.  Link
+supplied:
+
+* `MobState.readState a` — the digit map `t ↦ 1/(a+t)` as a `MobState` (`0,1,1,a`, det `−1`).
+* `MobState.width_comp_readState` — `(s.comp (readState a)).width = s.readWidth a`.
+* `width_comp_readState_le` / `le_width_comp_readState` — S7-RD's two-sided bound, transferred.
+* `MobState.deficit_comp_readState_le` — **exactly `hstep`'s shape**, with
+  `ξ = log(a(a+1)) + log distortion` and no emission gain yet.
+
+`MobState.comp` is already a cocycle (`VandeheyS7Cocycle`), so the lag estimate is now chainable
+along the actual input orbit.  Orientation note: `readState a` reverses the interval
+(`mob 0 = 1/a > 1/(a+1) = mob 1`), which is why `width` as an absolute value is the right invariant
+and why `readWidth` was defined with those endpoints in that order.
+
+**What is still missing for a real `hstep`**: the EMISSION half, i.e. a state for the output digit
+and the gain `2 log fib(L+1)` as a composition on the other side
+(`sₙ₊₁ = (emissions)⁻¹ ∘ sₙ ∘ readState aₙ₊₁`).  Lap 74's `fib_sq_mul_width_le_of_forced` is the
+estimate; what is missing is its `comp` form, exactly as `width_comp_readState` was missing here.
+**That is the single most mechanical remaining task on the front and the right next grind step.**
