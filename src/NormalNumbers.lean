@@ -582,6 +582,7 @@ import NormalNumbers.JointLambertCountPrimes
 import NormalNumbers.JointLambertCountSchedule
 import NormalNumbers.JointLambertCountCandidates
 import NormalNumbers.JointLambertCountTail
+import NormalNumbers.JointLambertCountMarkov
 import NormalNumbers.JointLambertQuantitative
 import NormalNumbers.WallCrux
 import NormalNumbers.WallRational
