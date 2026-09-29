@@ -27,6 +27,8 @@ import NormalNumbers.VandeheyS7Predict
 import NormalNumbers.VandeheyS7Quadratic
 import NormalNumbers.VandeheyS7BlockRefute
 import NormalNumbers.VandeheyS7BlockGenRefute
+import NormalNumbers.VandeheyS7Circular
+import NormalNumbers.VandeheyS7ArchWidthFree
 
 /-!
 # `Maze.lean` — the halls we have walked, encoded
@@ -371,6 +373,29 @@ Consequence: any surviving crux must let `T` depend on the input, i.e. be asympt
 which point the transducer-correctness bridge, and with it the headline, re-enters, so route A's
 `BlockForget` step was never a reduction. -/
 alias hall_blockforget_cfnormal := NormalNumbers.VandeheyS7.MapState.not_blockForgetGen
+
+/-- **HALL: the block-forgetting crux as a REDUCTION of §7 Problem 1** (`restatement`, 2026-09-29).
+Route A factors the headline through a crux (`BlockForget` → `BlockForgetGen` → `BlockForgetRun` →
+`BlockForgetAll`, S7-BF/S7-BR/S7-AW) that compares the run's block statistics with the reference
+state's, and reads that comparison as the remaining analytic input.
+
+**Kernel**: it is not an input, it is the theorem.  S7-RR computes the reference run to be the Gauss
+shift itself, so the comparison is against the INPUT's own statistics; S7-NR then proves both
+directions of the signed form — the crux's Cesàro sum with the absolute value removed holds exactly
+when `slotCount Φ x w p / p → γ(I_w)`, i.e. exactly when the conclusion holds
+(`signedForget_iff_slotCountFreq`).  What the absolute values add is local information and nothing
+else, and `abs_gap_witness` (this row's alias) shows that step is not free: two `[0,1]`-valued
+sequences can have equal Cesàro means while the Cesàro mean of `|difference|` is `1`.
+
+So the crux is the headline PLUS local clock regularity PLUS window concentration: strictly
+stronger, hence never a reduction.  The architecture (`isCFNormal_image_of_blockForgetAll`, S7-AW)
+remains a correct and useful FACTORISATION — it isolates exactly what locality would buy — but no
+lap should treat proving the crux as easier than proving the theorem. -/
+alias hall_blockforget_is_restatement := NormalNumbers.VandeheyS7.abs_gap_witness
+
+/-- The forward half of the same row: the crux does imply the goal. -/
+alias hall_blockforget_implies_goal :=
+  NormalNumbers.VandeheyS7.MapState.isCFNormal_image_of_blockForgetAll
 
 
 
@@ -1202,6 +1227,11 @@ def register : List Hall := [
    .falseAsStated, .kernel,
    "At the Gauss fixed point z = sqrt2 - 1 every digit is 2, so the reference block average is exactly 0 for w = [1]; the width-1/3 state t -> 2/(t+2) runs on that input as a 2-cycle through t -> 1/(2t+4), whose two images 2 sqrt2 - 2 and (sqrt2-1)/2 have first digits 1 and 4, so its block average is ceil(T/2)/T >= 1/2 for every T -- a gap of at least 1/2, uniformly in T",
    "alias hall_blockforget_uniform_z = not_blockForget (+_cycle, +_state); modules VandeheyS7Quadratic, VandeheyS7BlockRefute; the repair is BlockForgetGen with z restricted to CF-normal points, which the architecture is all that ever needs since a quadratic irrational is never CF-normal", "2026-09-29"⟩,
+  ⟨"the block-forgetting crux as a reduction of Vandehey S7 Problem 1",
+   "Factor the headline through BlockForget/BlockForgetGen/BlockForgetRun/BlockForgetAll and treat the block comparison as the remaining analytic input",
+   .restatement, .kernel,
+   "The reference run IS the Gauss shift (S7-RR), so the comparison is against the input's own statistics, and S7-NR proves both directions of the SIGNED form: the crux without its absolute values holds exactly when slotCount / p tends to gamma(I_w), i.e. exactly when the conclusion holds; abs_gap_witness shows the step from signed to absolute is not free (equal Cesaro means, Cesaro mean of the absolute difference 1), so the crux is the headline plus local clock regularity plus window concentration",
+   "alias hall_blockforget_is_restatement = abs_gap_witness, hall_blockforget_implies_goal = isCFNormal_image_of_blockForgetAll; modules VandeheyS7Circular, VandeheyS7NoReduction, VandeheyS7ArchWidthFree, VandeheyS7RefRun; the architecture stays valid as a FACTORISATION of the headline into a local statement", "2026-09-29"⟩,
   ⟨"predictable target sets from marginals alone",
    "Conclude OrbitCellBound from: A n = s_n^(-1)(E) is determined by x_1..x_n, has small Gauss mass, and the input orbit has the correct marginal frequencies",
    .refuted, .kernel,

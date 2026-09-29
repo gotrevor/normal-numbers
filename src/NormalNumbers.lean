@@ -818,6 +818,7 @@ import NormalNumbers.VandeheyS7GreedyCorrect
 import NormalNumbers.VandeheyS7Ledger2
 import NormalNumbers.VandeheyS7NearBoundary
 import NormalNumbers.VandeheyS7GreedyStraddle
+import NormalNumbers.VandeheyS7Circular
 import NormalNumbers.VandeheyS7Quadratic
 import NormalNumbers.VandeheyS7Class
 import NormalNumbers.VandeheyS7Net
