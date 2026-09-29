@@ -402,6 +402,26 @@ needs one discharged (DIRECTION standing rule 3).
 
 ## Lap notes
 
+### 2026-09-29 lap 14 — the projective-to-absolute bridge
+
+Merging is proved in the Hilbert metric, but CF digits are read off an ABSOLUTE position
+(`digit u = ⌊1/u⌋`), so the bound has to be converted.  It converts exactly:
+
+    abs_sub_le_of_hdist_le :  hdist u v ≤ ε  →  |u − v| ≤ max u v · (exp ε − 1)
+
+and since the machine's output point is in `(0,1)` the `max` is harmless.  `abs_sub_runWord_le`
+is the merging bound in that form, still with no initial state on the right.  Axiom-clean.
+Content locator `abs_sub_le_of_hdist_le_zero`: at `ε = 0` it collapses to `u = v`, so all the
+content is in the exponential factor.
+
+**Next attack (lap 15): digit determination.**  With `|u − v| ≤ δ_n → 0`, two output points have
+the same first `m` CF digits as soon as both lie strictly inside the same depth-`m` cylinder.
+Prove the one-digit case first — `u, v ∈ (1/(k+1), 1/k) → both have first digit k` — then the
+depth-`m` version by iterating, and identify the exceptional set (points within `δ_n` of a
+cylinder endpoint) whose Gauss measure `→ 0`.  That exceptional set IS the `ρ(∂U) = 0` trigger
+window of DIRECTION item 3, and once its measure is shown to vanish, `SampledUniformCount` is a
+Cesàro bookkeeping exercise over a set of inputs of full measure.
+
 ### 2026-09-29 lap 13 — MERGING IS DONE: loss of memory, uniform over states (`VandeheyS7Word.lean`)
 
 `spread_runWord_le` : for every initial state `s`, every even word length `n ≥ 3`, and all

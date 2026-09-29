@@ -269,6 +269,69 @@ theorem spread_runWord_le (s : MobState) {w : List ℕ} (heven : Even w.length)
 
 end MobState
 
+/-! ## From the projective bound to an absolute one
+
+The Hilbert metric is the right instrument for the contraction, but CF digits are read off an
+ABSOLUTE position: the digit of `u` is `⌊1/u⌋`, and `u, v` have the same digit as soon as
+`|u − v|` is smaller than the distance from `u` to the nearest cylinder endpoint.  So the merging
+bound has to be converted, and the conversion is exact:
+
+    hdist u v ≤ ε  ⟹  |u − v| ≤ max u v · (exp ε − 1).
+
+Since the machine's output point lies in `(0,1)`, the factor `max u v` is harmless and the bound
+is `exp ε − 1 ≤ ε exp ε`.  With `ε = 1/(fib(n-1) fib(n))` this is summably small, which is what a
+boundary-avoidance (`ρ(∂U) = 0`) argument needs.
+-/
+
+namespace MobState
+
+/-- `hdist u v ≤ ε` bounds the ABSOLUTE difference by `max u v · (exp ε − 1)`. -/
+theorem abs_sub_le_of_hdist_le {u v ε : ℝ} (hu : 0 < u) (hv : 0 < v)
+    (h : hdist u v ≤ ε) : |u - v| ≤ max u v * (Real.exp ε - 1) := by
+  have hε : 0 ≤ ε := le_trans (abs_nonneg _) h
+  have habs : |Real.log (u / v)| ≤ ε := h
+  obtain ⟨hlo, hup⟩ := abs_le.1 habs
+  -- `u/v ≤ exp ε` and `v/u ≤ exp ε`
+  have h1 : u / v ≤ Real.exp ε := by
+    have := Real.exp_le_exp.2 hup
+    rwa [Real.exp_log (div_pos hu hv)] at this
+  have h2 : v / u ≤ Real.exp ε := by
+    have hinv : Real.log (v / u) = -Real.log (u / v) := by rw [← Real.log_inv, inv_div]
+    have : Real.log (v / u) ≤ ε := by rw [hinv]; linarith
+    have := Real.exp_le_exp.2 this
+    rwa [Real.exp_log (div_pos hv hu)] at this
+  have hu' : u ≤ v * Real.exp ε := by
+    rw [div_le_iff₀ hv] at h1; linarith
+  have hv' : v ≤ u * Real.exp ε := by
+    rw [div_le_iff₀ hu] at h2; linarith
+  rcases le_total u v with hle | hle
+  · rw [abs_of_nonpos (by linarith), max_eq_right hle]
+    nlinarith [hv', hu.le]
+  · rw [abs_of_nonneg (by linarith), max_eq_left hle]
+    nlinarith [hu', hv.le]
+
+/-- **Merging in absolute terms.**  The machine's output points from two different inputs, after
+a long common word, differ by `O(exp(1/fib²) − 1)` regardless of the initial state — and the
+initial state still does not appear. -/
+theorem abs_sub_runWord_le (s : MobState) {w : List ℕ} (heven : Even w.length)
+    (h3 : 3 ≤ w.length) {x y : ℝ} (hx : 0 < x) (hy : 0 < y) :
+    |(runWord s w).mob x - (runWord s w).mob y|
+      ≤ max ((runWord s w).mob x) ((runWord s w).mob y) *
+          (Real.exp (1 / ((Nat.fib (w.length - 1) : ℝ) * (Nat.fib w.length : ℝ))) - 1) :=
+  abs_sub_le_of_hdist_le ((runWord s w).mob_pos hx) ((runWord s w).mob_pos hy)
+    (spread_runWord_le s heven h3 hx hy)
+
+/-- Content locator: at `ε = 0` the bound collapses to `u = v`, so all the content is in the
+exponential factor and none in the `max`. -/
+theorem abs_sub_le_of_hdist_le_zero {u v : ℝ} (hu : 0 < u) (hv : 0 < v)
+    (h : hdist u v ≤ 0) : u = v := by
+  have := abs_sub_le_of_hdist_le hu hv h
+  simp only [Real.exp_zero, sub_self, mul_zero] at this
+  have := abs_nonpos_iff.1 this
+  linarith [sub_eq_zero.1 this]
+
+end MobState
+
 section Audit
 
 #print axioms MobState.runWord_eq_comp
@@ -276,6 +339,8 @@ section Audit
 #print axioms MobState.det_wordState
 #print axioms MobState.spread_wordState_le
 #print axioms MobState.spread_runWord_le
+#print axioms MobState.abs_sub_le_of_hdist_le
+#print axioms MobState.abs_sub_runWord_le
 
 end Audit
 
