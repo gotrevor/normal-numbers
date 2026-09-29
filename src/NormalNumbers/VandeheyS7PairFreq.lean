@@ -311,6 +311,124 @@ theorem blockCount_pairSet_le {w : List ℕ} (hw : w ≠ []) {d B : ℕ} {y : �
     rfl
   rw [e1, e2]
 
+/-! ## The frequency limit -/
+
+/-- The shifted digit tail is controlled by the unshifted one. -/
+theorem tailCount_le_shift (y : ℝ) (B c p : ℕ) :
+    tailCount y B c p ≤ (((range (p + c)).filter fun m => B < cfDigit y m).card : ℝ) := by
+  classical
+  have hsub : ((range p).filter fun m => B < cfDigit y (m + c))
+      ⊆ Finset.image (fun m => m - c) ((range (p + c)).filter fun m => B < cfDigit y m) := by
+    intro m hm
+    rw [Finset.mem_filter, Finset.mem_range] at hm
+    refine Finset.mem_image.2 ⟨m + c, ?_, by omega⟩
+    rw [Finset.mem_filter, Finset.mem_range]
+    exact ⟨by omega, hm.2⟩
+  have hcard := Finset.card_le_card hsub
+  have hcard' := Finset.card_image_le (s := ((range (p + c)).filter fun m => B < cfDigit y m))
+    (f := fun m => m - c)
+  rw [tailCount]
+  exact_mod_cast le_trans hcard hcard'
+
+/-- **S7-PF.**  The orbit's pair frequency is at most the pair's Gauss mass, up to any tolerance:
+for every `ε > 0` the count of times at which the orbit is in `I_w` and again in `I_w` after `g`
+steps is eventually at most `(γ(pairSet) + ε)·p`. -/
+theorem blockCount_pairSet_le_mass {w : List ℕ} (hw : w ≠ []) (hwpos : ∀ a ∈ w, 1 ≤ a)
+    {y : ℝ} (hy : IsCFNormal y) (hyorb : ∀ k : ℕ, gaussMap^[k] y ∈ Set.Ioo (0:ℝ) 1)
+    (d : ℕ) {ε : ℝ} (hε : 0 < ε) :
+    ∀ᶠ p : ℕ in atTop,
+      blockCount (pairSet w (w.length + d)) p y
+        ≤ ((gaussMeasure (pairSet w (w.length + d))).toReal + ε) * (p : ℝ) := by
+  classical
+  -- choose the digit bound so that each of the `d` tail terms costs at most `ε/(2d+2)`
+  set δ : ℝ := ε / (4 * (d : ℝ) + 4) with hδ
+  have hδpos : 0 < δ := by
+    rw [hδ]; positivity
+  obtain ⟨B, hB⟩ := exists_digitTail_freq_le hy hyorb hδpos
+  -- the bounded-middle family's frequencies converge to their masses
+  have hfam : Tendsto (fun p => ∑ u ∈ boundedWords B d,
+      blockCount (cfCylinder (w ++ u ++ w)) p y / (p : ℝ)) atTop
+      (nhds (∑ u ∈ boundedWords B d, (gaussMeasure (cfCylinder (w ++ u ++ w))).toReal)) := by
+    refine tendsto_finsetSum _ fun u hu => ?_
+    have hne : w ++ u ++ w ≠ [] := by
+      intro h
+      exact hw (List.append_eq_nil_iff.1 (List.append_eq_nil_iff.1 h).1).1
+    have hpos : ∀ a ∈ w ++ u ++ w, 1 ≤ a := by
+      intro a ha
+      rcases List.mem_append.1 ha with ha' | ha'
+      · rcases List.mem_append.1 ha' with ha'' | ha''
+        · exact hwpos a ha''
+        · exact ((mem_boundedWords.1 hu).2 a ha'').1
+      · exact hwpos a ha'
+    exact blockCount_tendsto_of_isCFNormal hy hyorb _ hne hpos
+  have hmass := sum_gaussMeasure_append_le (B := B) (d := d) hw hwpos
+  have hfamev := hfam.eventually (eventually_lt_nhds
+    (show (∑ u ∈ boundedWords B d, (gaussMeasure (cfCylinder (w ++ u ++ w))).toReal)
+      < (∑ u ∈ boundedWords B d, (gaussMeasure (cfCylinder (w ++ u ++ w))).toReal) + ε / 2 by
+      linarith))
+  -- the `d` tail terms
+  have htail : ∀ᶠ p : ℕ in atTop, ∀ j ∈ range d,
+      tailCount y B (w.length + j) p ≤ δ * ((p : ℝ) + ((w.length + j : ℕ) : ℝ)) := by
+    rw [Filter.eventually_all_finset]
+    intro j _
+    have hshift : ∀ᶠ p : ℕ in atTop,
+        (((range (p + (w.length + j))).filter fun m => B < cfDigit y m).card : ℝ)
+          ≤ δ * ((p : ℝ) + ((w.length + j : ℕ) : ℝ)) := by
+      have := (Filter.tendsto_add_atTop_nat (w.length + j)).eventually hB
+      filter_upwards [this] with p hp
+      have hc : ((p + (w.length + j) : ℕ) : ℝ) = (p : ℝ) + ((w.length + j : ℕ) : ℝ) := by
+        push_cast; ring
+      rw [hc] at hp
+      exact hp
+    filter_upwards [hshift] with p hp
+    exact le_trans (tailCount_le_shift y B (w.length + j) p) hp
+  have hbig : ∀ᶠ p : ℕ in atTop,
+      (d : ℝ) * (δ * (w.length + d : ℕ)) ≤ (ε / 4) * (p : ℝ) := by
+    have hlim : Tendsto (fun p : ℕ => ((d : ℝ) * (δ * (w.length + d : ℕ))) / (p : ℝ)) atTop
+        (nhds 0) := tendsto_const_div_atTop_nhds_zero_nat _
+    filter_upwards [hlim.eventually (eventually_lt_nhds (show (0:ℝ) < ε / 4 by linarith)),
+      eventually_gt_atTop 0] with p hp hp0
+    have hpR : (0:ℝ) < (p : ℝ) := by exact_mod_cast hp0
+    rw [div_lt_iff₀ hpR] at hp
+    linarith
+  filter_upwards [hfamev, htail, hbig, eventually_gt_atTop 0] with p hfam' htail' hbig' hp0
+  have hpR : (0:ℝ) < (p : ℝ) := by exact_mod_cast hp0
+  have hdec := blockCount_pairSet_le (w := w) (d := d) (B := B) hw hyorb p
+  -- the family part
+  have hfam'' : (∑ u ∈ boundedWords B d, blockCount (cfCylinder (w ++ u ++ w)) p y)
+      ≤ ((gaussMeasure (pairSet w (w.length + d))).toReal + ε / 2) * (p : ℝ) := by
+    have hsplit : ∑ u ∈ boundedWords B d, blockCount (cfCylinder (w ++ u ++ w)) p y
+        = (∑ u ∈ boundedWords B d, blockCount (cfCylinder (w ++ u ++ w)) p y / (p : ℝ))
+            * (p : ℝ) := by
+      rw [Finset.sum_mul]
+      exact Finset.sum_congr rfl fun u _ => (div_mul_cancel₀ _ hpR.ne').symm
+    rw [hsplit]
+    refine mul_le_mul_of_nonneg_right ?_ hpR.le
+    linarith
+  -- the tail part
+  have htailsum : ∑ j ∈ range d, tailCount y B (w.length + j) p ≤ (ε / 2) * (p : ℝ) := by
+    have hbound : ∀ j ∈ range d,
+        tailCount y B (w.length + j) p ≤ δ * (p : ℝ) + δ * ((w.length + d : ℕ) : ℝ) := by
+      intro j hj
+      have hjd : j < d := Finset.mem_range.1 hj
+      refine le_trans (htail' j hj) ?_
+      have : ((w.length + j : ℕ) : ℝ) ≤ ((w.length + d : ℕ) : ℝ) := by
+        exact_mod_cast Nat.add_le_add_left hjd.le _
+      nlinarith [hδpos]
+    have hsum := Finset.sum_le_sum hbound
+    rw [Finset.sum_const, Finset.card_range, nsmul_eq_mul] at hsum
+    have hδp : (d : ℝ) * (δ * (p : ℝ)) ≤ (ε / 4) * (p : ℝ) := by
+      have hd : (d : ℝ) * δ ≤ ε / 4 := by
+        have hd0 : (0:ℝ) ≤ (d : ℝ) := Nat.cast_nonneg _
+        rw [hδ, mul_div_assoc', div_le_div_iff₀ (by positivity) (by norm_num : (0:ℝ) < 4)]
+        nlinarith [hd0, hε.le]
+      have h2 : (d : ℝ) * δ * (p : ℝ) ≤ (ε / 4) * (p : ℝ) :=
+        mul_le_mul_of_nonneg_right hd hpR.le
+      calc (d : ℝ) * (δ * (p : ℝ)) = (d : ℝ) * δ * (p : ℝ) := by ring
+        _ ≤ (ε / 4) * (p : ℝ) := h2
+    nlinarith [hsum, hbig']
+  linarith [hdec, hfam'', htailsum]
+
 end NormalNumbers.VandeheyS7
 
 section Audit
@@ -320,5 +438,6 @@ section Audit
 #print axioms NormalNumbers.VandeheyS7.mem_cfCylinder_midWord
 #print axioms NormalNumbers.VandeheyS7.blockIndic_pairSet_le
 #print axioms NormalNumbers.VandeheyS7.blockCount_pairSet_le
+#print axioms NormalNumbers.VandeheyS7.blockCount_pairSet_le_mass
 
 end Audit
