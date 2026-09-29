@@ -429,6 +429,29 @@ theorem blockCount_pairSet_le_mass {w : List ℕ} (hw : w ≠ []) (hwpos : ∀ a
     nlinarith [hsum, hbig']
   linarith [hdec, hfam'', htailsum]
 
+/-! ## The pair frequency against the product bound -/
+
+/-- **The pair frequency, against the independent value.**  Combining S7-PF with S7-PC's mixing
+bound: the orbit's pair frequency at gap `|w| + h` is eventually at most
+`γ(I_w)² + 4(9/10)^h + ε`. -/
+theorem blockCount_pairSet_le_sq {w : List ℕ} (hw : w ≠ []) (hwpos : ∀ a ∈ w, 1 ≤ a)
+    {y : ℝ} (hy : IsCFNormal y) (hyorb : ∀ k : ℕ, gaussMap^[k] y ∈ Set.Ioo (0:ℝ) 1)
+    (h : ℕ) {ε : ℝ} (hε : 0 < ε) :
+    ∀ᶠ p : ℕ in atTop,
+      blockCount (pairSet w (w.length + h)) p y
+        ≤ ((gaussMeasure (cfCylinder w)).toReal ^ 2 + 4 * (9 / 10 : ℝ) ^ h + ε) * (p : ℝ) := by
+  have hmix := abs_gaussMeasure_pair_sub_sq_le w hwpos h
+  have hmixle : (gaussMeasure (pairSet w (w.length + h))).toReal
+      ≤ (gaussMeasure (cfCylinder w)).toReal ^ 2 + 4 * (9 / 10 : ℝ) ^ h := by
+    have := (abs_le.1 hmix).2
+    rw [pairSet]
+    linarith
+  filter_upwards [blockCount_pairSet_le_mass hw hwpos hy hyorb h hε,
+    eventually_gt_atTop 0] with p hp hp0
+  have hpR : (0:ℝ) < (p : ℝ) := by exact_mod_cast hp0
+  refine le_trans hp ?_
+  exact mul_le_mul_of_nonneg_right (by linarith) hpR.le
+
 end NormalNumbers.VandeheyS7
 
 section Audit
@@ -439,5 +462,6 @@ section Audit
 #print axioms NormalNumbers.VandeheyS7.blockIndic_pairSet_le
 #print axioms NormalNumbers.VandeheyS7.blockCount_pairSet_le
 #print axioms NormalNumbers.VandeheyS7.blockCount_pairSet_le_mass
+#print axioms NormalNumbers.VandeheyS7.blockCount_pairSet_le_sq
 
 end Audit
