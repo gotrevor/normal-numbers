@@ -45,7 +45,32 @@ the §7 chain.  The binding version is `DIRECTION.md` → CURRENT DIRECTIVE.
 * `VandeheyS7Distortion` — the compact substitute for finiteness
   (`uniform_comparable_of_bddDistortion`); `VandeheyS7Birkhoff` — the `3−2√2` contraction.
 
-### The named next goals (in order)
+### ⭐ THE PRIMARY ROUTE (lap 27): the ergodic reduction
+
+`VandeheyS7Orbit.affineCFN_of_orbitACBound` (axiom-clean) proves `AffineCFN q r₀` from
+
+1. `AffineImageIrrational q r₀` — the image of a CF-normal input is irrational.  Free for
+   rational `q`; for `q = φ` it needs "`φ x ∈ ℚ` ⇒ `x` is a quadratic irrational ⇒ not CF-normal".
+   The repo has `QuadraticDisjunctive.lean` and `Literature.not_isCFNormal_of_not_irrational`;
+   the missing piece is "eventually periodic CF ⇒ not CF-normal".  **Cheap, do it early.**
+2. `GaussACRigidity C` — CITED.  Discharge plan, all inputs in hand:
+   * `MeasurePreserving gaussMap gaussMeasure gaussMeasure` from `gaussMeasure_preimage` +
+     `measurable_gaussMap`.
+   * **Ergodicity of `gaussMap` for γ** from `Literature.philipp_psi_mixing_holds`: for an
+     invariant `E` and a cylinder `I_u`, `γ(I_u ∩ E) = γ(I_u ∩ T^{-m}E) → γ(I_u)γ(E)`; approximate
+     `E` by finite unions of cylinders, then take `I_u → E`.  Needs σ(cylinders) ⊇ Borel mod null.
+   * Uniqueness of the a.c. invariant probability: mathlib
+     `MeasureTheory.MeasurePreserving.rnDeriv_comp_aeEq` makes `dμ/dγ` invariant, ergodicity makes
+     it constant.
+   * Krylov–Bogolyubov on `[0,1]`: mathlib Prokhorov gives `CompactSpace (ProbabilityMeasure E)`
+     for compact `E`; the a.c. bound kills the `1/k` discontinuities so the mapping theorem
+     applies to `f ∘ gaussMap`.
+   * Last step: `blockCount (cfCylinder v) = blockCount (uIoo cylNear cylFar)` exactly along an
+     irrational orbit (`uIoo_subset_cfCylinder`), so weak convergence transfers to cylinders.
+3. `OrbitACBound q r₀ C` — **the crux on this route**.  One-sided, absolute constant, no
+   `x`-independence.  Degenerate verdict `one_le_of_orbitACBound`: `C ≥ 1` always.
+
+### The FALLBACK route: state-indexed decomposition (named next goals, in order)
 
 * **S7-A. The state space.**  A `def` for the post-emission states: `¬ CanEmit` (nothing left to
   emit) plus `distortion ≤ D`.  Content locator + degenerate case, per the guard rule.  Include

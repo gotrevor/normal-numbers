@@ -6,14 +6,16 @@
 
 * **Objective.**  Vandehey §7 Problem 1, at the crux: `SampledUniformCount q r₀ ℓ`.  Nothing
   else on this front counts as progress.
-* **Mandated next move.**  Build the **state-indexed** decomposition, not the window-indexed
-  one.  Concretely: (i) name the post-emission state space as the compact bounded-distortion
-  fiber of `VandeheyS7Distortion`; (ii) state `StateEquidistribution` — the empirical measure of
-  the post-emission state process along a CF-normal input converges weakly to an `x`-independent
-  ν; (iii) derive `SampledUniformCount` from it through
-  `VandeheyS7Approx.sampledUniformCount_of_approxScheme`, whose families are then
-  (state cell × input word) pairs; (iv) only then attack ν's existence/uniqueness with
-  `VandeheyS7Birkhoff`.
+* **Mandated next move — the ERGODIC route is now primary.**  `VandeheyS7Orbit.affineCFN_of_orbitACBound`
+  proves the frozen target from a ONE-SIDED bound `OrbitACBound q r₀ C`
+  (`#{j<p : Gʲz ∈ (a,b)}/p ≤ C(b−a)+ε`) plus the cited `GaussACRigidity C`.  No `x`-independent
+  limit anywhere; the value is forced to be γ.  Work it in this order:
+  (i) **discharge `GaussACRigidity`** — ergodicity of `gaussMap` for γ from
+  `Literature.philipp_psi_mixing_holds` + `gaussMeasure_preimage`, then uniqueness of the a.c.
+  invariant probability (mathlib's `MeasurePreserving.rnDeriv_comp_aeEq`), then Krylov–Bogolyubov
+  on the compact `[0,1]` (mathlib's Prokhorov `CompactSpace (ProbabilityMeasure E)`);
+  (ii) **attack `OrbitACBound`** with the distortion/merging layer already proved.
+  The state-indexed decomposition below stays the FALLBACK, not the first move.
 * **Forbidden drift.**  Do **not** try to make the image digit a function of a bounded input
   window.  `VandeheyS7Memory.no_window_function` refutes it in the kernel for every window and
   every window length, with witnesses of minimal distortion, and it is
@@ -29,8 +31,9 @@
   whole content of Route A, and it must be *stated* before it can be attacked.
 
 Directive history:
-- 2026-09-29 (lap 27, review): window-function frame REFUTED; switch to the state-indexed
-  decomposition; ε-scheme replaces the bounded-error engine.
+- 2026-09-29 (lap 27, review): window-function frame REFUTED; ε-scheme replaces the bounded-error
+  engine; the ERGODIC route (`OrbitACBound` + `GaussACRigidity`) becomes primary, the
+  state-indexed decomposition the fallback.
 
 
 ## OPERATOR OBJECTIVE 2026-09-29: Vandehey §7 Problem 1 🌙
