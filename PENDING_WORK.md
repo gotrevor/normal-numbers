@@ -3204,3 +3204,27 @@ So the §7 front, stated with no state at all, is
 i.e. **`OrbitWordBound` IS the upper-frequency half of `IsCFNormal (Φ.mob x)`**, along the
 subsequence `N p` (which is monotone and unbounded, `runClock_tendsto`).  The reduction is faithful
 and has no slack left to exploit: every remaining route must produce real information about `y`.
+
+## S7-MR (lap 80): how far a MODULUS reaches — it must be SET-level
+
+`src/NormalNumbers/VandeheyS7ModulusReach.lean`, axiom-clean.
+
+`sqrt_modulus_sum_unbounded`: splitting mass `t` into `N` equal pieces turns the bound `√t` into
+`N·√(t/N) = √(N t)`, which exceeds any `C`.  **A modulus is not subadditive**, so the standard
+covering proof of absolute continuity does not run from a CYLINDER-level modulus.
+
+This is not a proof artefact: the Bernoulli measure on CF digits restricted to `{1,2}` is singular
+w.r.t. `γ` yet satisfies `ν(I_w) ≤ γ(I_w)^α` on every cylinder for suitable `α ∈ (0,1)` (both
+sides decay geometrically; `α` is the ratio of the rates).  Cylinder moduli genuinely fail to
+detect singularity, in this very digit system.
+
+**Correction to S7-MD's route note**, which said "a modulus is all that absolute continuity of a
+limit point requires".  True only for a SET-level modulus.  `OrbitACBound` must therefore read
+
+    limsup_k #{ i < k : Gⁱy ∈ E }/k ≤ ω(γ E)     for every measurable E ⊆ (0,1),
+
+not just for `E = I_w`.  The good news: S7-MD's two inputs — the pullback bound
+`γ(s⁻¹E) ≤ (2K/η)γ(E)` (S7-PB) and `ClassFreqBound` — are already set-level statements; only the
+packaging specialised them to cylinders.  The fix is a restatement, not new mathematics, but it
+must be made BEFORE the AC step is attempted or the proof will not close.  This is now the
+concrete content of next action #1.
