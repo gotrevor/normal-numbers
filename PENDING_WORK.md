@@ -87,7 +87,17 @@ Order of work:
    "narrow at time `n`" IS "has not emitted for ≳ log(1/η)/log φ steps", and `WidthFreqBound`
    is now a statement about the **emission schedule alone** — no geometry, no state space, no
    cells.  What is left is exactly: the times lying deeper than `K(η)` inside a stall have
-   frequency → 0 as η → 0.  S7-LG bounds bursts; what remains is that long
+   frequency → 0 as η → 0.
+   **S7-DB (`VandeheyS7Debt`) collapses that to ONE scalar statement.**  The current stall age is
+   a debit on the height ledger: `log fib(stallAge n + 1) + Σ log b_i ≤ ledgerConst + Σ log(a_i+5)`
+   (`log_fib_stallAge_le`), i.e. `stallAge n · log φ ≤ slack n` up to a constant.  And summing the
+   stall clock is an identity about the schedule:
+   `Σ_{n<p} stallAge n = ½ Σ_{stalls} len(len+1)`.  So `Σ_{n<p} stallAge n = O(p)` gives
+   `Σ len² = O(p)`, and Chebyshev gives `Σ_{len>K} len = O(p/K) → 0` — which IS `WidthFreqBound`
+   by S7-AG.  **Remaining obligation, in full:** the height ledger's running slack has bounded
+   Cesàro average, equivalently `(1/p) Σ_{n<p} log d_n = O(1)` — positive recurrence of one
+   scalar walk reflected at `√(|det Φ|/6)`.  No geometry, no cells, no state space.
+   Next Lean step: the Chebyshev bookkeeping `Σ_{n<p} stallAge n = O(p) ⟹ WidthFreqBound`.  S7-LG bounds bursts; what remains is that long
    *non-emitting* runs are rare.  Structural observation to formalize: a non-emitting run of
    length `L` forces the input digits `a_n … a_{n+L−1}` to agree with the CF expansion of the
    single point `s_n⁻¹(1/k)` straddled by the image — so a long run is a long coincidence with a
