@@ -3307,3 +3307,18 @@ not just for `E = I_w`.  The good news: S7-MD's two inputs — the pullback boun
 packaging specialised them to cylinders.  The fix is a restatement, not new mathematics, but it
 must be made BEFORE the AC step is attempted or the proof will not close.  This is now the
 concrete content of next action #1.
+
+## Lap 89 (2026-09-29) — route A: `RefCesaro` discharged, `BlockForget` refuted as stated
+
+* **DONE**: `RefCesaro` is a theorem (`MapState.refCesaro_holds`, S7-RC), so route A's universality
+  conclusion rests on `BlockForget` alone. Chain: S7-RQ (relative equidistribution, no distortion
+  constant) → S7-RT (order-connected target) → S7-WS (state as a function of the word) → S7-RC.
+* **CRUX ADVANCE (refutation)**: `BlockForget`'s `∀ z ∈ (0,1)` is FALSE. Witness in the kernel
+  (S7-QD, `VandeheyS7Quadratic`): `√2−1` (all digits `2`) and `2√2−2` (digits `1,4,1,4,…`) are two
+  `GL₂(ℤ)` cycles of `ℚ(√2)`, joined by the rational-entry state `t ↦ 2/(t+2)` of width `1/3`. For
+  `w = [1]` the two block averages sit at `0` and `1/2` for every `T`.
+* **NEXT ATTACK**: `BlockForgetGen` — the same statement with `z` restricted to CF-normal input
+  points, which is all the architecture uses (step 2 of `exists_abs_slotCountFreq_sub_le` evaluates
+  at `Gᵐx`; `isCFNormal_of_digit_shift` supplies normality of the shifts). Rebuild S7-BF on it, add
+  the Maze row for the refuted uniform form, then test state-independence of the level constants
+  `refLevel` with the S7-RQ machinery.
