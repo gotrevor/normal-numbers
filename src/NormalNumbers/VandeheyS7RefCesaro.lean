@@ -193,6 +193,97 @@ theorem abs_slotObs_sub_sum_refPiece_le {w : List ℕ} (B j : ℕ) {z : ℝ}
     rw [abs_of_nonneg hnn]
     linarith
 
+/-! ## The level constant and the level limit -/
+
+/-- The `j`-th level's limit at digit bound `B`: a finite sum of relative masses, depending on
+neither the input nor the map. -/
+noncomputable def refLevel (w : List ℕ) (j B : ℕ) : ℝ :=
+  ∑ u ∈ boundedWords B (j + 1),
+    digitEmit (stateOf j u) (aOf j u) * relMass (vOf j u) (targOf w j u)
+
+lemma sum_refPiece_eq (w : List ℕ) (j B : ℕ) (x : ℝ) (p : ℕ) :
+    ∑ m ∈ range p, ∑ u ∈ boundedWords B (j + 1), refPiece w j u (gaussMap^[m] x)
+      = ∑ u ∈ boundedWords B (j + 1), digitEmit (stateOf j u) (aOf j u)
+          * blockCount (relSet (vOf j u) (targOf w j u)) p x := by
+  rw [Finset.sum_comm]
+  refine Finset.sum_congr rfl fun u _ => ?_
+  rw [blockCount_apply, Finset.mul_sum]
+  rfl
+
+/-- The summed form of the pointwise decomposition. -/
+lemma abs_sum_slotObs_sub_le {w : List ℕ} (B j : ℕ) {x : ℝ}
+    (horb : ∀ k : ℕ, gaussMap^[k] x ∈ Set.Ioo (0:ℝ) 1) (p : ℕ) :
+    |(∑ m ∈ range p, slotObs w (pairStep^[j] (refState, gaussMap^[m] x)))
+        - ∑ u ∈ boundedWords B (j + 1), digitEmit (stateOf j u) (aOf j u)
+            * blockCount (relSet (vOf j u) (targOf w j u)) p x|
+      ≤ (p : ℝ) - blockCount (⋃ u ∈ boundedWords B (j + 1), cfCylinder u) p x := by
+  rw [← sum_refPiece_eq w j B x p, ← Finset.sum_sub_distrib]
+  refine (Finset.abs_sum_le_sum_abs _ _).trans ?_
+  have hE : (p : ℝ) - blockCount (⋃ u ∈ boundedWords B (j + 1), cfCylinder u) p x
+      = ∑ m ∈ range p,
+        (1 - blockIndic (⋃ u ∈ boundedWords B (j + 1), cfCylinder u) (gaussMap^[m] x)) := by
+    rw [blockCount_apply, Finset.sum_sub_distrib]
+    simp
+  rw [hE]
+  refine Finset.sum_le_sum fun m _ => ?_
+  refine abs_slotObs_sub_sum_refPiece_le B j (fun k => ?_)
+  rw [← Function.iterate_add_apply]
+  exact horb _
+
+/-- **The level limit.**  For every tolerance there is a digit bound at which the `j`-th level's
+Cesàro average is eventually within the tolerance of the constant `refLevel w j B`, for EVERY
+CF-normal input. -/
+theorem exists_eventually_abs_level_sub_le {w : List ℕ} (hw : ∀ a ∈ w, 1 ≤ a) (j : ℕ)
+    {ε : ℝ} (hε : 0 < ε) :
+    ∃ B : ℕ, ∀ x : ℝ, IsCFNormal x → (∀ k : ℕ, gaussMap^[k] x ∈ Set.Ioo (0:ℝ) 1) →
+      ∀ᶠ p : ℕ in atTop,
+        |(∑ m ∈ range p, slotObs w (pairStep^[j] (refState, gaussMap^[m] x))) / (p : ℝ)
+          - refLevel w j B| ≤ ε := by
+  obtain ⟨B, hB⟩ := VandeheyOut.exists_boundedWords_sum_gt (j + 1)
+    (show (0:ℝ) < ε / 4 by linarith)
+  refine ⟨B, fun x hx horb => ?_⟩
+  set E : Set ℝ := ⋃ u ∈ boundedWords B (j + 1), cfCylinder u with hEdef
+  set mG := ∑ u ∈ boundedWords B (j + 1), (gaussMeasure (cfCylinder u)).toReal with hmG
+  have hfE : Tendsto (fun p => blockCount E p x / (p : ℝ)) atTop (nhds mG) := by
+    rw [hEdef, hmG]
+    exact tendsto_windowFreq (S := boundedWords B (j + 1)) hx horb (Nat.succ_pos j)
+      (fun u hu => boundedWords_len hu) (fun u hu => boundedWords_pos hu)
+  have hfS : Tendsto (fun p => ∑ u ∈ boundedWords B (j + 1),
+      digitEmit (stateOf j u) (aOf j u)
+        * (blockCount (relSet (vOf j u) (targOf w j u)) p x / (p : ℝ))) atTop
+      (nhds (refLevel w j B)) := by
+    rw [refLevel]
+    refine tendsto_finsetSum _ fun u hu => ?_
+    exact (tendsto_blockCount_relSet_of_ordConnected hx horb (vOf_pos hu)
+      (measurableSet_targOf w j u) (targOf_subset w j u)
+      (targOf_ordConnected hw hu)).const_mul _
+  have hevS := hfS.eventually (eventually_abs_sub_lt (refLevel w j B)
+    (show (0:ℝ) < ε / 4 by linarith))
+  have hevE := hfE.eventually (eventually_gt_nhds (show mG - ε / 4 < mG by linarith))
+  filter_upwards [hevS, hevE, eventually_gt_atTop 0] with p hpS hpE hp0
+  have hpR : (0:ℝ) < (p : ℝ) := by exact_mod_cast hp0
+  have hbnd := abs_sum_slotObs_sub_le (w := w) B j horb p
+  have hdiv : |(∑ m ∈ range p, slotObs w (pairStep^[j] (refState, gaussMap^[m] x))) / (p : ℝ)
+      - ∑ u ∈ boundedWords B (j + 1), digitEmit (stateOf j u) (aOf j u)
+          * (blockCount (relSet (vOf j u) (targOf w j u)) p x / (p : ℝ))|
+      ≤ 1 - blockCount E p x / (p : ℝ) := by
+    have hsplit : ∑ u ∈ boundedWords B (j + 1), digitEmit (stateOf j u) (aOf j u)
+        * (blockCount (relSet (vOf j u) (targOf w j u)) p x / (p : ℝ))
+        = (∑ u ∈ boundedWords B (j + 1), digitEmit (stateOf j u) (aOf j u)
+            * blockCount (relSet (vOf j u) (targOf w j u)) p x) / (p : ℝ) := by
+      rw [Finset.sum_div]
+      exact Finset.sum_congr rfl fun u _ => by ring
+    rw [hsplit, div_sub_div_same, abs_div, abs_of_pos hpR, div_le_iff₀ hpR]
+    have harith : (1 - blockCount E p x / (p : ℝ)) * (p : ℝ)
+        = (p : ℝ) - blockCount E p x := by field_simp
+    rw [harith]
+    exact hbnd
+  have hmass : (1:ℝ) - mG ≤ ε / 4 := by rw [hmG] at hB ⊢; linarith
+  have h1 := abs_lt.1 hpS
+  have h2 := abs_le.1 hdiv
+  rw [abs_le]
+  constructor <;> linarith [h1.1, h1.2, h2.1, h2.2]
+
 end MapState
 
 end NormalNumbers.VandeheyS7
@@ -200,5 +291,6 @@ end NormalNumbers.VandeheyS7
 section Audit
 
 #print axioms NormalNumbers.VandeheyS7.MapState.abs_slotObs_sub_sum_refPiece_le
+#print axioms NormalNumbers.VandeheyS7.MapState.exists_eventually_abs_level_sub_le
 
 end Audit
