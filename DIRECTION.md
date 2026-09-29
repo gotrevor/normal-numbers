@@ -10,11 +10,12 @@
   proves the frozen target from a ONE-SIDED bound `OrbitACBound q r₀ C`
   (`#{j<p : Gʲz ∈ (a,b)}/p ≤ C(b−a)+ε`) plus the cited `GaussACRigidity C`.  No `x`-independent
   limit anywhere; the value is forced to be γ.  Work it in this order:
-  (i) **discharge `GaussACRigidity`** — ergodicity of `gaussMap` for γ from
-  `Literature.philipp_psi_mixing_holds` + `gaussMeasure_preimage`, then uniqueness of the a.c.
-  invariant probability (mathlib's `MeasurePreserving.rnDeriv_comp_aeEq`), then Krylov–Bogolyubov
-  on the compact `[0,1]` (mathlib's Prokhorov `CompactSpace (ProbabilityMeasure E)`);
-  (ii) **attack `OrbitACBound`** with the distortion/merging layer already proved.
+  (i) **attack `OrbitACBound`** with the distortion/merging layer already proved.  This is the
+  new math and the whole remaining content of the route.
+  (ii) `GaussACRigidity` is textbook ergodic theory: it **stays a cited hypothesis** (standing
+  rule 3, new math first; operator ruling 2026-09-29).  The ergodicity, uniqueness and
+  Krylov–Bogolyubov pieces already landed (`GaussKB.lean` etc.) stay; do not spend further laps
+  finishing the discharge until `OrbitACBound` is proved.
   The state-indexed decomposition below stays the FALLBACK, not the first move.
 * **Forbidden drift.**  Do **not** try to make the image digit a function of a bounded input
   window.  `VandeheyS7Memory.no_window_function` refutes it in the kernel for every window and
