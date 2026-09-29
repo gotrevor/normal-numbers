@@ -391,6 +391,50 @@ needs one discharged (DIRECTION standing rule 3).
 
 ## Lap notes (newest first)
 
+### 2026-09-29 — lap 1 of the §7 objective: targets frozen, and the endgame is OFF ℤ
+
+`src/NormalNumbers/VandeheyS7.lean` (new, in the root import).
+
+**Frozen (never weakened):** `AffineCFN q r` (`∀ x, IsCFNormal (Int.fract x) → IsCFNormal
+(Int.fract (q*x+r))`), `AffineUniformFreq q r` (the crux: every genuine word has an
+`x`-INDEPENDENT frequency limit in the image; no value asserted), `IsQuadOverRat`,
+`VandeheyS7Problem1`, `vandeheyS7_mul_phi := AffineCFN φ 0`, `vandeheyS7_add_phi := AffineCFN 1 φ`.
+An `Audit` section pins all three headline Props by `rfl`, and
+`vandeheyS7_mul_phi_of` / `vandeheyS7_add_phi_of` prove in-kernel that the two instances really
+are instances of the general Prop (so the general form cannot silently drift off them).
+
+**The lap's advance on the crux.**  The attack map's §3 asserted that Vandehey's either-or
+endgame "works verbatim for any `M`", so that the whole problem reduces to frequency EXISTENCE.
+That is now a THEOREM, axiom-clean:
+
+    affineCFN_of_uniformFreq : 0 < q → AffineUniformFreq q r → AffineCFN q r
+
+for EVERY real `q > 0` and EVERY real `r` — no integrality, no quadraticity, nothing about ℤ[φ].
+Both instances are reduced (`vandeheyS7_mul_phi_of_uniformFreq`, `vandeheyS7_add_phi_of_uniformFreq`).
+
+Two things made it port.  (i) The integer version (`Literature.mobiusCFN_of_uniformFreq`) pins the
+unknown limit with `exists_cfNormal_with_cfNormal_image`, a Γ-orbit argument that does not exist
+over ℤ[φ]; the replacement pin is the MEASURE-theoretic witness
+`exists_feasible_cfNormal_affine` (both `x₀` and `q x₀ + r` CF-normal, from two conull sets
+meeting on the feasible window), which never looks at the arithmetic of the coefficients and so is
+indifferent to the unit group.  (ii) That witness needs `-q < r < 1`, which `r = φ` violates;
+`affineCFN_add_int` / `affineUniformFreq_add_int` show both Props depend on `r` only mod 1, so
+`Int.fract` reduces the general `r` to the window.
+
+**Consequence to carry: the ℤ[φ] wall is entirely on the frequency-EXISTENCE side.**  No part of
+what remains needs a limit VALUE.  Route A's nodes (window/bounded-distortion lemma, distributional
+merging, trigger windows) all feed `AffineUniformFreq` and nothing else.
+
+Guard rule discharged: content locators `affineUniformFreq_one`, `affineCFN_int_translate`;
+degenerate case `not_affineCFN_zero` proves the `q = 0` instance FALSE (the junk expansion of `0`
+contains no `[1]`, while `γ(I_[1]) > 0`), so `q ≠ 0` in `VandeheyS7Problem1` is load-bearing.
+
+**NEXT (lap 2), DIRECTION item 2 — the obstruction as Lean.**  State and prove, against the
+existing Raney transducer, that the reachable ℤ[φ] state set is infinite (unit drift), and the
+non-merging fact (`M⁻¹VM` integral for `M = diag(φ,1)` forces `V` diagonal).  Then factor the
+Thm 1.1 pipeline so its finite-state step is a NAMED hypothesis that a compact-fiber substitute
+can discharge.
+
 ### 2026-09-28 — OPERATOR OBJECTIVE items 1-3, all three landed
 
 1. **`moshchevitinShkredov_cf_false` PROVED** (`MoshchevitinShkredovRefuted.lean`, wired into

@@ -692,6 +692,7 @@ import NormalNumbers.VandeheyScaleCount
 import NormalNumbers.VandeheyRunDict
 import NormalNumbers.VandeheyCFBridge
 import NormalNumbers.VandeheyCapstone
+import NormalNumbers.VandeheyS7
 import NormalNumbers.VandeheyLRRuns
 import NormalNumbers.VandeheyLRPattern
 import NormalNumbers.VandeheyRunCount
