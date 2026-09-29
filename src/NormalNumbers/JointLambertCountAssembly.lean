@@ -627,4 +627,112 @@ theorem exists_joint_small_tail_count {c a r : ℕ} (hc : 2 ≤ c) (ha : 2 ≤ a
     rw [hrw]
     exact hall n hn b hb
 
+/-! ### Step D: the two logarithmic bookkeeping bounds of step 3
+
+`J ≤ X` (needed by `sqrt_window_mul_le`) and `log H = O(log X)` (needed to turn the
+bracket `W = 2M(1+log H) + 2H` into `O(M log X)`). -/
+
+
+/-- `Nat.log 2 n ≤ 2 log n`, the real-valued form of `2^(Nat.log 2 n) ≤ n`. -/
+theorem natLog_two_le {n : ℕ} (hn : 1 ≤ n) : (Nat.log 2 n : ℝ) ≤ 2 * Real.log (n : ℝ) := by
+  have hpow : (2 : ℕ) ^ Nat.log 2 n ≤ n := Nat.pow_log_le_self 2 (by omega)
+  have hR : (2 : ℝ) ^ (Nat.log 2 n) ≤ (n : ℝ) := by exact_mod_cast hpow
+  have hn0 : (0 : ℝ) < (n : ℝ) := by exact_mod_cast (show 0 < n by omega)
+  have hlog : (Nat.log 2 n : ℝ) * Real.log 2 ≤ Real.log (n : ℝ) := by
+    have := Real.log_le_log (by positivity) hR
+    rwa [Real.log_pow] at this
+  have hl2 : (0.69 : ℝ) ≤ Real.log 2 := by have := Real.log_two_gt_d9; linarith
+  nlinarith [hlog, hl2, Nat.cast_nonneg (α := ℝ) (Nat.log 2 n)]
+
+/-- `log(√Y + 1) ≤ 2 log X + 2` whenever `Y ≤ 3X²`: the `log H` factor of the
+three-range bracket costs only `O(log X)`. -/
+theorem log_window_le {X Y : ℕ} (hX : 1 ≤ X) (hY : Y ≤ 3 * (X * X)) :
+    Real.log ((Nat.sqrt Y + 1 : ℕ) : ℝ) ≤ 2 * Real.log (X : ℝ) + 2 := by
+  have hXR : (1 : ℝ) ≤ (X : ℝ) := by exact_mod_cast hX
+  have hHle : (Nat.sqrt Y + 1 : ℕ) ≤ 4 * (X * X) := by
+    have h1 : Nat.sqrt Y ≤ Y := Nat.sqrt_le_self Y
+    have h2 : 1 ≤ X * X := Nat.one_le_iff_ne_zero.2 (by positivity)
+    omega
+  have hHR : ((Nat.sqrt Y + 1 : ℕ) : ℝ) ≤ 4 * (X : ℝ) * (X : ℝ) := by
+    have h : ((Nat.sqrt Y + 1 : ℕ) : ℝ) ≤ ((4 * (X * X) : ℕ) : ℝ) := by exact_mod_cast hHle
+    push_cast at h ⊢; linarith
+  have hstep := Real.log_le_log (by positivity) hHR
+  refine le_trans hstep ?_
+  have hrw : Real.log (4 * (X : ℝ) * (X : ℝ)) = Real.log 4 + 2 * Real.log (X : ℝ) := by
+    rw [show (4 : ℝ) * (X : ℝ) * (X : ℝ) = 4 * ((X : ℝ) * (X : ℝ)) by ring,
+      Real.log_mul (by norm_num) (by positivity), Real.log_mul (by positivity) (by positivity)]
+    ring
+  rw [hrw]
+  have : Real.log 4 ≤ 2 := by
+    have h := Real.log_le_sub_one_of_pos (show (0:ℝ) < 4 by norm_num)
+    have h2 : Real.log 4 = 2 * Real.log 2 := by
+      rw [show (4:ℝ) = 2 ^ 2 by norm_num, Real.log_pow]; norm_num
+    have := Real.log_two_lt_d9
+    linarith
+  linarith
+
+/-- **`J ≤ X` eventually**, uniformly in the window bound `Y₀ ≤ 2X²`: `countJ` is
+`k³ + O(log X) = O((log X)³)`. -/
+theorem eventually_countJ_le : ∀ᶠ X : ℕ in atTop,
+    ∀ Y0 : ℕ, Y0 ≤ 2 * (X * X) → countJ (countK X) Y0 X ≤ X := by
+  filter_upwards [eventually_countK_le, eventually_polylog_le
+    (show (0:ℝ) < 244 by norm_num) 3, eventually_ge_atTop 3,
+    (Real.tendsto_log_atTop.comp tendsto_natCast_atTop_atTop).eventually_ge_atTop (1 : ℝ)]
+    with X hk hpoly hX3 hlog1 Y0 hY0
+  obtain ⟨hk1, hkle⟩ := hk
+  simp only [Function.comp] at hlog1
+  have hXR : (1 : ℝ) ≤ (X : ℝ) := by
+    have : (1 : ℕ) ≤ X := by omega
+    exact_mod_cast this
+  have hL : (1 : ℝ) ≤ Real.log (X : ℝ) := hlog1
+  set L : ℝ := Real.log (X : ℝ) with hLdef
+  -- `k ≤ 6 log X`
+  have hμ : Real.log (Real.log (X : ℝ)) ≤ Real.log (X : ℝ) :=
+    Real.log_le_self (Real.log_natCast_nonneg X)
+  have hkR : (countK X : ℝ) ≤ 6 * L := by linarith [hμ, hkle]
+  have hk3 : ((countK X : ℕ) : ℝ) ^ 3 ≤ 216 * L ^ 3 := by
+    have h := pow_le_pow_left₀ (show (0:ℝ) ≤ ((countK X : ℕ) : ℝ) by positivity) hkR 3
+    nlinarith [h]
+  -- the two `Nat.log` terms
+  have hY1 : Y0 + 1 ≤ 3 * (X * X) := by
+    have h2 : 1 ≤ X * X := Nat.one_le_iff_ne_zero.2 (by positivity)
+    omega
+  have hlY : ((Nat.log 2 (Y0 + 1) : ℕ) : ℝ) ≤ 4 * L + 4 := by
+    refine le_trans (natLog_two_le (by omega)) ?_
+    have h1 : ((Y0 + 1 : ℕ) : ℝ) ≤ 3 * (X : ℝ) * (X : ℝ) := by
+      have h : ((Y0 + 1 : ℕ) : ℝ) ≤ ((3 * (X * X) : ℕ) : ℝ) := by exact_mod_cast hY1
+      push_cast at h ⊢; linarith
+    have h2 := Real.log_le_log (by positivity) h1
+    have hrw : Real.log (3 * (X : ℝ) * (X : ℝ)) = Real.log 3 + 2 * L := by
+      rw [show (3 : ℝ) * (X : ℝ) * (X : ℝ) = 3 * ((X : ℝ) * (X : ℝ)) by ring,
+        Real.log_mul (by norm_num) (by positivity),
+        Real.log_mul (by positivity) (by positivity), hLdef]
+      ring
+    have hl3 : Real.log 3 ≤ 2 := by
+      have := Real.log_le_sub_one_of_pos (show (0:ℝ) < 3 by norm_num); linarith
+    rw [hrw] at h2
+    linarith
+  have hlX : ((Nat.log 2 (X + 1) : ℕ) : ℝ) ≤ 2 * L + 2 := by
+    refine le_trans (natLog_two_le (by omega)) ?_
+    have h1 : ((X + 1 : ℕ) : ℝ) ≤ 2 * (X : ℝ) := by push_cast; linarith
+    have h2 := Real.log_le_log (by positivity) h1
+    rw [Real.log_mul (by norm_num) (by positivity)] at h2
+    have := Real.log_two_lt_d9
+    rw [hLdef]
+    linarith
+  -- assemble
+  have hJR : ((countJ (countK X) Y0 X : ℕ) : ℝ) ≤ 244 * L ^ 3 := by
+    have hJn : ((countJ (countK X) Y0 X : ℕ) : ℝ)
+        = ((countK X : ℕ) : ℝ) ^ 3
+          + 2 * (((Nat.log 2 (Y0 + 1) : ℕ) : ℝ) + 1 + (((Nat.log 2 (X + 1) : ℕ) : ℝ) + 1)) := by
+      simp only [countJ]; push_cast; ring
+    have hL3 : L ≤ L ^ 3 := by
+      nlinarith [mul_nonneg (mul_nonneg (show (0:ℝ) ≤ L by linarith)
+        (show (0:ℝ) ≤ L - 1 by linarith)) (show (0:ℝ) ≤ L + 1 by linarith)]
+    rw [hJn]
+    linarith [hk3, hlY, hlX, hL3]
+  have : ((countJ (countK X) Y0 X : ℕ) : ℝ) ≤ (X : ℝ) := le_trans hJR hpoly
+  exact_mod_cast this
+
+
 end NormalNumbers.JointLambert

@@ -40,10 +40,14 @@ exponent `4c+4` — the schedule is feasible for every fixed `c`, so this is fre
 in the note's plan: `B³ ≤ X` alone does NOT give `H = o(M)`, since `√(2QX) ≍ X^{2/3} ≍ X/B`
 exactly at the cube.
 
+Step 3's logarithmic bookkeeping is proved too: `natLog_two_le`, `log_window_le`
+(`log(√Y+1) ≤ 2 log X + 2` for `Y ≤ 3X²`) and `eventually_countJ_le` (`J ≤ X` eventually,
+uniformly in the window bound `Y₀ ≤ 2X²`, since `countJ = k³ + O(log X) = O((log X)³)`).
+
 What is left inside `exists_good_starts_at_height` is therefore steps 3–4 only: feed
-`three_range_tail_le` at `J = countJ`, show the total is `≤ θ·(M/(4 log X))/2` (remaining
-sub-item: `J ≤ X` eventually, and `log H ≤ 2 log X + 2`; then the near/middle half is
-`eventually_near_cost_small` + `eventually_middle_cost_small` with `jointA_tau_le`), then
+`three_range_tail_le` at `J = countJ`, show the total is `≤ θ·(M/(4 log X))/2` (the near/middle half
+is now only `eventually_near_cost_small` + `eventually_middle_cost_small` with
+`jointA_tau_le`, since `W ≤ 14 M log X` follows from `log_window_le` and `H ≤ M`), then
 `card_good_ge_half` and the injection `m ↦ R + mA`.
 
 Next attack: steps 3–5 of "Exact next boundary" in
