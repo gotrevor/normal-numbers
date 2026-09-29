@@ -11,6 +11,54 @@ The next Lambert target is an all-N occurrence count; its proposed stronger pape
 `docs/JOINT-LAMBERT-QUANTITATIVE-NEXT.md`.  It is not yet formalized.
 
 
+## ⭐ VANDEHEY §7 — LAP 76: `StateData` WAS VACUOUS; `PinnedData` REPLACES IT
+
+**Commits `7f36c66` (S7-SA) and `6df6823` (S7-PN).  Read before any use of lap 75's headline.**
+
+### The defect
+
+`stateData_of_orbitWordBound` (kernel, axiom-clean): the crux IMPLIES lap 75's `StateData`.  With
+the unit clock, `lowState (Gⁿy/Gⁿx)` is a legitimate `MobState` (width `Gⁿy/Gⁿx`, distortion `1`)
+sending `Gⁿx` to `Gⁿy`, so the pinned pullback set contains `Gⁿx` iff `Gⁿy ∈ I_w` and
+`BlockAverageBound` unwinds to the conclusion.  Together with lap 75's
+`orbitWordBound_of_stateData` this is a closed circle: **S7-SC's repair did not repair anything.**
+
+Rule, sharper than S7-SC's: *pinning a witness to a TYPE pins nothing.*  `MobState` is large enough
+to interpolate the single pair of points the coupling ever evaluates.  A hypothesis about a machine
+has content only when its data is pinned as a FUNCTION of the input.
+
+### The repair (`VandeheyS7Pin`, S7-PN)
+
+`StatePin x Φ N s v`: `s 0 = Φ`, `N 0 = 0`, `N (n+1) = N n + |v n|`, `v n ≠ []`, digits of `v n`
+genuine, `(s n).mob` maps `(0,1)` into `(0,1)`, and the step as MATRICES
+
+    cylState (v n) ∘ s (n+1) = s n ∘ readStateAt x n .
+
+`y` appears nowhere in it.  `StatePin.realize` then PROVES `G^{N n} y = (s n).mob (Gⁿ x)` from
+`y = Φ.mob x`, and `StatePin.stateCoupling` gives S7-SC's coupling for free.  The non-gameability
+certificate is `StatePin.eq_of_emit` (via `MobState.comp_left_cancel`): `(x, Φ, v)` determines `s`
+and `N` outright.  `PinnedData` / `orbitWordBound_of_pinnedData` is the new front.
+
+### Where the front stands after this lap
+
+    vandeheyS7_mul_phi / _add_phi
+      ⇐ GaussACRigidity (C/log 2)   -- cited, standing rule 3
+      + ImageTight                  -- audited sound (S7-AU)
+      + PinnedData q r₀ C           -- S7-PN; only non-bookkeeping part is BlockAverageBound
+
+### Next attack
+
+1. **Build a `StatePin` for `Φ = diag(φ,1)`**, i.e. exhibit `v` (the Raney emission) with the
+   reduced-state condition.  `VandeheyLRTransducer` has `lrStep_spec`/`lrRun_eq`/`act_startState_eq`;
+   the missing piece is the `MapsTo` field, which is exactly "the state is reduced".  Existence of
+   `v` is NOT free — it is the transducer's correctness — but it is finite bookkeeping, not analysis.
+2. **Then, and only then, fact (α)**: `BlockAverageBound` for the pinned sets.  Unchanged as the
+   wall.  Note the pinned sets now have both their `γ`-mass (S7-PB tower bound) and their
+   predictability (S7-PN `eq_of_emit`) certified, so the statement is finally the clean
+   "empirical vs expected for a predictable family".
+3. Re-audit every remaining `∃`-bundle against the SHARPER rule (type-pinning is not pinning):
+   `ImageTight`, `AnchoredPullback`, `StateClock` were audited under the weaker rule only.
+
 ## ⭐ VANDEHEY §7 — LAP 74 DECOMPOSITION (review lap; binding version = `DIRECTION.md`)
 
 **This supersedes the "next actions" of `HANDOFF-2026-09-29-lap58-73.md`.**  Everything below the
