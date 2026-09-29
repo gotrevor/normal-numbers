@@ -689,6 +689,7 @@ import NormalNumbers.VandeheyLRTrigger
 import NormalNumbers.VandeheyLetterGrowth
 import NormalNumbers.VandeheyLRTail
 import NormalNumbers.VandeheyScaleCount
+import NormalNumbers.VandeheyRunDict
 import NormalNumbers.VandeheyLRRuns
 import NormalNumbers.VandeheyLRPattern
 import NormalNumbers.VandeheyRunCount
