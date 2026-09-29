@@ -3041,3 +3041,32 @@ What was proved instead, in the kernel (`disc s t := T · adj S`, the discrepanc
 action: the needed statement is a Birkhoff–Hopf contraction for `M ↦ E₂ · M · adj E₁` over the
 read matrices the run actually emits.  A memory-loss argument phrased on the input digits cannot
 work and should not be attempted again.
+
+## S7-LD (lap 80): the lag and the two-sided width ledger — the `MeanSlack` prerequisite
+
+`src/NormalNumbers/VandeheyS7LagLedger.lean`, all `#print axioms`-clean.
+
+* `lag Φ x n := n − runClock Φ x n` is **monotone** (`lag_mono`) and equals the stall count
+  (`lag_eq_card_stalls`).  One read, at most one emission per step: a stall can never be repaid.
+* `width_comp_readMap_le_div` — reading digit `a` divides the width by at least `a`
+  (`(s·r).d = s.c + s.d·a`, `(s·r).c = s.d`, `|det readMap| = 1`); `width_comp_readMap_le` is the
+  qualitative form.
+* `width_le_width_of_emitStep` — emitting never narrows (`u.d = t.b ≤ t.d`,
+  `u.c+u.d = t.a+t.b ≤ t.c+t.d`).
+* `width_emitStep_le` — emitting widens by at most `(b+1)²` (`t.d ≤ (b+1)u.d` and
+  `t.c+t.d ≤ (b+1)(u.c+u.d)` from `u.b ≤ u.d`, `u.a+u.b ≤ u.c+u.d`).
+
+**What this says about `MeanSlack` (next attack).**  `log (1/width)` is a walk with increments
+`≥ log a` per read and `≥ −2 log(b+1)` per emit, reflected above by `width ≤ 1`, and the lag is
+monotone.  So `MeanSlack` (`Σ slack ≤ A·q`, i.e. bounded MEAN, not merely a linear clock) is
+equivalent to the stalls being rare enough that the accumulated lag stays `O(1)` on average.
+Heuristic to test next: a state of width `w` straddles a cylinder endpoint with probability
+`≍ √w`, which would make the lag grow like `log n` and make `MeanSlack` **false** by a log factor
+(while `ClockLinear`, already derived from it, would survive).  The decisive probe is therefore a
+lower bound on the stall frequency, not another attempt to prove `MeanSlack`.  If that heuristic
+holds, `WidthFreqBound` at a FIXED `η` fails too and the front must be restated with `η = η(q)`.
+
+### Gotcha (lap 80)
+`Finset.range_succ` does not exist in this mathlib; the insert form is `Finset.range_add_one`.
+Always `ls` before `cat >` a new module: `VandeheyS7Lag.lean` and `VandeheyS7Ledger.lean` both
+already existed and were clobbered (recovered via `git checkout`).
