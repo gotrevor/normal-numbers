@@ -92,4 +92,3 @@ Changed: `src/NormalNumbers.lean`, `PENDING_WORK.md`.
 
 ---
 **→ SUPERSEDED for the Lambert front: see HANDOFF-2026-09-29-joint-lambert-unconditional.md.**
-at `3173fb4`.**
