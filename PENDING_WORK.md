@@ -290,7 +290,29 @@ Three facts, all established lap 30, fix its difficulty and must steer every fur
   words in proportion to `γ(I_w)`.  It is an equidistribution-ACROSS-WORDS statement *given* the
   tail — which is exactly why neither marginal can supply it (lap 41) and why the counting lanes
   are all closed (laps 39–40).  The crux is now stated in its irreducible form.
-  **Next attack (lap 43).**  Attack the joint law directly at its smallest nontrivial instance:
+  **Lap 43 — THE THRESHOLD IS FREE: the crux collapses to its `T = 1` case**
+  (`VandeheyS7Reduce.lean`, axiom-clean, sorry-free).  `OrbitWordBound q r₀ C` is the `T = 1`
+  statement — `freq(I_w) ≤ C γ(I_w) + ε` for every finite word `w` in the image expansion.
+  `orbitCellBound_of_orbitWordBound : 0 ≤ C → AffineImageIrrational q r₀ →
+  (LevyBound on the image) → OrbitWordBound q r₀ C → OrbitCellBound q r₀ C`.
+  Three steps, all from pieces already proved: (i) `cellSet_subset_union` — along irrationals the
+  cell splits as `⋃_{T ≤ a ≤ S} I_{w++[a]} ∪ cellSet w (S+1)`; (ii) the residual is killed by the
+  FREE tightness — lap 41's `blockCount_cellSet_le_shift` reduces it to the tail cell and
+  `tailFreq_le_of_levyBound` makes it `≤ Λ/log(S+1) → 0` (`tendsto_freeRate`); (iii) the finitely
+  many cylinders go to the hypothesis and their masses sum to `≤ γ(cellSet w T)` because they are
+  disjoint subsets of it (`sum_gaussMeasure_cfCylinder_le`).
+  **This is the payoff of laps 38–42.**  Those laps proved the threshold parameter carries no
+  content (the tail is free, the counting is equivalent, the bootstrap fails); lap 43 turns that
+  into a reduction.  The §7 route now reads: frozen targets ⇐ `GaussACRigidity` (cited) +
+  `OrbitWordBound` + a Lévy bound on the image — a ONE-PARAMETER-FREE statement, "the image
+  expansion of a CF-normal `x` does not over-represent any finite word".
+  **Next attack (lap 44).**  Two open obligations remain on the route, and both are now sharply
+  stated.  (a) `OrbitWordBound` — the genuine crux, fact (γ).  (b) The Lévy bound on the image,
+  which is now a REQUIRED input rather than a convenience: probe whether it follows from
+  `OrbitWordBound` itself (a word-frequency upper bound plus `cfK_le_prod` may bound
+  `log qₚ` by `Σ log(aᵢ+1)` and hence by a `C`-weighted Gauss average), which would leave
+  exactly one open statement in the whole chain.
+  **Older next-attack note (lap 42).**  Attack the joint law directly at its smallest nontrivial instance:
   `w` a single digit.  The two-cell statement "digit `a` then a digit `≥ T`" in the image is the
   first place the product vs. minimum gap bites, and the `s_n = Oₙ⁻¹ΦPₙ` state description says
   exactly which input events produce it.  Concretely: formalize the two-step emission relation
