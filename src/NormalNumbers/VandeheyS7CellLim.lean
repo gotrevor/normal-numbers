@@ -151,18 +151,19 @@ open Classical in
 give the per-cell bound with constant `B = (1 + 8 log 2)·Σ_{c ∈ F} γ(cellSet c)` and slack `L`.
 The selector mass cancels, so `B` is free of the cell, of `L`, and of the number of cells. -/
 theorem classFreqSlack_of_cellMemory {net : StateNet Φ x η ρ M} {L : ℕ}
-    {U : Fin M → Finset (List ℕ)} {F : Finset (List ℕ × ℕ)} {B : ℝ} (w : List ℕ)
+    {U : Fin M → Finset (List ℕ)} {F : Fin M → Finset (List ℕ × ℕ)} {B : ℝ} (w : List ℕ)
     (hx : Irrational x) (hmem : x ∈ Set.Ioo (0:ℝ) 1) (hCFn : IsCFNormal x) (hL : 2 ≤ L)
     (hUlen : ∀ i : Fin M, ∀ u ∈ U i, u.length = L ∧ (∀ a ∈ u, 1 ≤ a))
     (hUsel : ∀ i : Fin M, ∀ m : ℕ, L ≤ m + 2 →
       selIndic net i m
         = if ∃ u ∈ U i, gaussMap^[m + 2 - L] x ∈ cfCylinder u then 1 else 0)
     (hUne : ∀ i : Fin M, (U i).Nonempty)
-    (hF : ∀ c ∈ F, (∀ e ∈ c.1, 1 ≤ e) ∧ 1 ≤ c.2)
+    (hF : ∀ i : Fin M, ∀ c ∈ F i, (∀ e ∈ c.1, 1 ≤ e) ∧ 1 ≤ c.2)
     (hcov : ∀ i : Fin M, ∀ z : ℝ, Irrational z → z ∈ Set.Ioo (0:ℝ) 1 →
       z ∈ clusterSet (net.cen i) w (4 * ρ / Real.sqrt (|Φ.det| / 6)) →
-      ∃ c ∈ F, z ∈ cellSet c.1 c.2)
-    (hB : (1 + 8 * Real.log 2) * ∑ c ∈ F, (gaussMeasure (cellSet c.1 c.2)).toReal ≤ B) :
+      ∃ c ∈ F i, z ∈ cellSet c.1 c.2)
+    (hB : ∀ i : Fin M,
+      (1 + 8 * Real.log 2) * ∑ c ∈ F i, (gaussMeasure (cellSet c.1 c.2)).toReal ≤ B) :
     ClassFreqBoundSlack net w B := by
   classical
   intro ε hε i
@@ -172,12 +173,12 @@ theorem classFreqSlack_of_cellMemory {net : StateNet Φ x η ρ M} {L : ℕ}
     intro u hu
     obtain ⟨hlen, hpos⟩ := hUlen i u hu
     exact ⟨by intro h; rw [h] at hlen; simp at hlen; omega, hpos⟩
-  set N : ℕ → ℝ := fun q => ∑ u ∈ U i, ∑ c ∈ F,
+  set N : ℕ → ℝ := fun q => ∑ u ∈ U i, ∑ c ∈ F i,
     blockCount (cellSet (u ++ c.1) c.2) (q + 2) x with hN
   set D : ℕ → ℝ := fun q => ∑ u ∈ U i, blockCount (cfCylinder u) (q + 2 - L) x with hD
-  set nm : ℝ := ∑ u ∈ U i, ∑ c ∈ F, (gaussMeasure (cellSet (u ++ c.1) c.2)).toReal with hnm
+  set nm : ℝ := ∑ u ∈ U i, ∑ c ∈ F i, (gaussMeasure (cellSet (u ++ c.1) c.2)).toReal with hnm
   set dm : ℝ := ∑ u ∈ U i, (gaussMeasure (cfCylinder u)).toReal with hdm
-  have hNlim := tendsto_num hx hmem hCFn (U i) F hUne' hF
+  have hNlim := tendsto_num hx hmem hCFn (U i) (F i) hUne' (hF i)
   have hDlim := tendsto_den hx hmem hCFn (U i) hL hUne'
   have hdmpos : 0 < dm := by
     obtain ⟨u₀, hu₀⟩ := hUne i
@@ -187,36 +188,36 @@ theorem classFreqSlack_of_cellMemory {net : StateNet Φ x η ρ M} {L : ℕ}
     rw [hdm]
     exact Finset.sum_pos hpos ⟨u₀, hu₀⟩
   -- the mass comparison: the selector mass cancels
-  have hcellnn : ∀ c ∈ F, 0 ≤ (gaussMeasure (cellSet c.1 c.2)).toReal := by
+  have hcellnn : ∀ c ∈ F i, 0 ≤ (gaussMeasure (cellSet c.1 c.2)).toReal := by
     intro c _; positivity
   have hmass : nm ≤ B * dm := by
     set Cq : ℝ := 1 + 8 * Real.log 2 with hCq
-    set S : ℝ := ∑ c ∈ F, (gaussMeasure (cellSet c.1 c.2)).toReal with hS
-    have h1 : nm ≤ ∑ u ∈ U i, ∑ c ∈ F, Cq * ((gaussMeasure (cfCylinder u)).toReal
+    set S : ℝ := ∑ c ∈ F i, (gaussMeasure (cellSet c.1 c.2)).toReal with hS
+    have h1 : nm ≤ ∑ u ∈ U i, ∑ c ∈ F i, Cq * ((gaussMeasure (cfCylinder u)).toReal
         * (gaussMeasure (cellSet c.1 c.2)).toReal) := by
       rw [hnm]
       refine Finset.sum_le_sum fun u hu => Finset.sum_le_sum fun c _ => ?_
       exact gaussMeasure_cellSet_append_le u c.1 (hUne' u hu).2 c.2
-    have hinner : ∀ u : List ℕ, ∑ c ∈ F, Cq * ((gaussMeasure (cfCylinder u)).toReal
+    have hinner : ∀ u : List ℕ, ∑ c ∈ F i, Cq * ((gaussMeasure (cfCylinder u)).toReal
         * (gaussMeasure (cellSet c.1 c.2)).toReal)
         = (Cq * (gaussMeasure (cfCylinder u)).toReal) * S := by
       intro u
       rw [hS, Finset.mul_sum]
       exact Finset.sum_congr rfl fun c _ => by ring
-    have h2 : ∑ u ∈ U i, ∑ c ∈ F, Cq * ((gaussMeasure (cfCylinder u)).toReal
+    have h2 : ∑ u ∈ U i, ∑ c ∈ F i, Cq * ((gaussMeasure (cfCylinder u)).toReal
         * (gaussMeasure (cellSet c.1 c.2)).toReal) = Cq * dm * S := by
       rw [Finset.sum_congr rfl (fun u _ => hinner u), ← Finset.sum_mul, ← Finset.mul_sum, hdm]
     have hstep : nm ≤ Cq * dm * S := by rw [← h2]; exact h1
     have hdmnn : 0 ≤ dm := hdmpos.le
     have hfin : Cq * dm * S ≤ B * dm := by
-      have h := mul_le_mul_of_nonneg_right hB hdmnn
+      have h := mul_le_mul_of_nonneg_right (hB i) hdmnn
       nlinarith [h]
     linarith
   have hB0 : 0 ≤ B := by
-    have hsum : 0 ≤ ∑ c ∈ F, (gaussMeasure (cellSet c.1 c.2)).toReal :=
+    have hsum : 0 ≤ ∑ c ∈ F i, (gaussMeasure (cellSet c.1 c.2)).toReal :=
       Finset.sum_nonneg hcellnn
     have hlog : (0:ℝ) < Real.log 2 := Real.log_pos (by norm_num)
-    nlinarith [hB]
+    nlinarith [hB i]
   -- the two sandwiches
   have hnum : ∀ᶠ q in atTop, cellHitCount net w i q ≤ (L:ℝ) + N q := by
     filter_upwards with q
