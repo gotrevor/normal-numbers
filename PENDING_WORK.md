@@ -2535,3 +2535,40 @@ whether a *depth-1* straddle cap (`Q = 1`, avoid only `1/1` and `1/2`) survives,
 degrades only as `1/|δ'|` rather than `1/(Q²|δ'|)`; (ii) average the cap over the orbit instead of
 applying it pointwise — `finite_bounded_zPairs` bounds how OFTEN both places can be small
 simultaneously, which is a counting statement, not an equidistribution one.
+
+### Lap 75, sixth commit — S7-TD: the whole §7 front rests on ONE named hypothesis
+
+`VandeheyS7Transduce` completes the directive's move (a) against the real definition:
+
+* `TransducerData q r₀ C` — what the Raney machine must supply, for each CF-normal `x` and each
+  admissible `w`: a clock `N`, the pulled-back block sets `S`, `BlockCoupling`, clock regularity
+  `N(n+1)/N n → 1`, and `BlockAverageBound (C·γ(I_w))`.
+* `orbitWordBound_of_transducerData` — that gives the crux `OrbitWordBound q r₀ C`.
+* `vandeheyS7_mul_phi_of_transducerData`, `vandeheyS7_add_phi_of_transducerData` — **both frozen
+  targets from three hypotheses**: cited `GaussACRigidity`, `ImageTight`, `TransducerData`.
+  All axiom-clean.
+
+The value is in the separation, since the three components of `TransducerData` differ wildly:
+
+| component | status |
+|---|---|
+| `BlockCoupling` | bookkeeping about the Raney machine; no mathematics |
+| clock regularity | by S7-RD/S7-LAG ⟺ a Cesàro bound on `log aₙ`; CF-normality does NOT give it, so a real but FINITE debt |
+| `BlockAverageBound` | fact (α); by S7-ST/S7-DC the same statement as second-place equidistribution — the wall, and now the ONLY wall on the front |
+
+Nothing else on the §7 route is open: everything that is not (α) is proved or reduced to these two
+named, finite obligations.
+
+### Where a future lap should go
+
+1. **The clock-rate debt is the only tractable thing left.**  It is NOT the wall.  Attack:
+   the S7-RD cancellation (`deficit_read_le` pays `2 log a`, lap 74's
+   `fib_sq_mul_width_le_of_forced` buys `L ≍ 2 log a / log φ²`) needs the straddle cap only where
+   the state is narrow, and S7-DC kills the cap only where the conjugate height is LARGE.  Ask
+   whether those two regimes are disjoint — i.e. whether a narrow state necessarily has SMALL
+   conjugate height.  `finite_bounded_zPairs` says both places small simultaneously is a finite
+   condition, which is the right shape.  This is the one open question on the front that is not
+   the wall, and it is concrete.
+2. `BlockCoupling` for the actual machine (`VandeheyLRTransducer` has `lrStep_spec`, `lrRun_eq`,
+   `act_startState_eq` — the recursion is already there).
+3. (α) itself stays parked behind the wall, as the directive requires.
