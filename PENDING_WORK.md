@@ -402,6 +402,30 @@ needs one discharged (DIRECTION standing rule 3).
 
 ## Lap notes
 
+### 2026-09-29 lap 16 — digit agreement off the boundary set (lap 15 is now load-bearing)
+
+`cfDigit_zero_eq_of_not_boundaryBad` : if `u ∈ (0,1)` is not within `δ` of ANY endpoint `1/k`,
+and `|u − v| < δ`, then `cfDigit v 0 = cfDigit u 0`.  Axiom-clean.  With
+`volume_boundaryBad_le` the exceptional `u` have measure `≤ 6√δ`, so the first CF digit is
+locally constant at scale `δ` off a set of measure `O(√δ)`.
+
+That closes the merging → digits transfer at depth one:
+
+    abs_sub_runWord_le  (|u − v| ≤ δ_n, no state)
+      +  cfDigit_zero_eq_of_not_boundaryBad  (digits agree off boundaryBad)
+      +  volume_boundaryBad_le  (that set has measure ≤ 6√δ_n)
+
+Supporting lemmas, all elementary and reusable: `cfDigit_zero` (`= ⌊x⁻¹⌋₊`), `floor_inv_spec`
+(`1/(n+1) < u ≤ 1/n` for `n = ⌊1/u⌋₊ ≥ 1`), `cfDigit_zero_eq_of_mem` (converse).
+
+**Next attack (lap 17): depth `m`.**  `cfDigit v i = cfDigit u i` for all `i < m`.  The honest
+route is induction on `i` through `gaussMap`: if `u, v` share digit `0` and both lie in the same
+depth-one cylinder, then `|gaussMap u − gaussMap v| ≤ |u − v| / (u v) ≤ (n+1)² |u − v|`, so the
+scale degrades by the SQUARE of the digit at each step.  That is why the depth-`m` bad set needs
+`δ` exponentially small in `m` — and merging supplies exactly that (`δ_n = 1/(fib(n-1)fib(n))`).
+Formalise the one-step expansion bound first; it is a two-line `gaussMap` computation given
+`Int.fract` on the relevant interval.
+
 ### 2026-09-29 lap 15 — the trigger window is quantitative: `volume (boundaryBad δ) ≤ 6√δ`
 
 `VandeheyS7Boundary.lean`.  Merging gives two output points within `δ`; a CF digit is `⌊1/x⌋`,

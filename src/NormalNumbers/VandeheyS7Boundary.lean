@@ -134,11 +134,80 @@ theorem volume_boundaryBad_le {δ : ℝ} (hδ : 0 < δ) (hδ1 : δ ≤ 1) :
     _ = ENNReal.ofReal (6 * Real.sqrt δ) := by
         rw [← ENNReal.ofReal_add (by positivity) (by positivity)]; ring_nf
 
+/-! ## Digit agreement off the boundary set
+
+This is what the estimate is for.  Outside `boundaryBad δ` the first CF digit is LOCALLY
+CONSTANT at scale `δ`, so merging (`abs_sub_runWord_le`) transfers directly: two output points
+within `δ` of each other have the same first digit unless one of them is in a set of measure
+`6√δ`.
+-/
+
+/-- `cfDigit x 0 = ⌊x⁻¹⌋₊`, unfolded. -/
+theorem cfDigit_zero (x : ℝ) : cfDigit x 0 = ⌊x⁻¹⌋₊ := rfl
+
+/-- The depth-one cylinder containing `u`: `1/(n+1) < u ≤ 1/n` for `n = ⌊1/u⌋₊ ≥ 1`. -/
+theorem floor_inv_spec {u : ℝ} (hu0 : 0 < u) (hu1 : u < 1) :
+    1 ≤ ⌊u⁻¹⌋₊ ∧ ((⌊u⁻¹⌋₊ : ℝ) + 1)⁻¹ < u ∧ u ≤ ((⌊u⁻¹⌋₊ : ℝ))⁻¹ := by
+  have hinv : 1 < u⁻¹ := by
+    rw [lt_inv_comm₀ one_pos hu0]; simpa using hu1
+  have hn1 : 1 ≤ ⌊u⁻¹⌋₊ := Nat.one_le_floor_iff _ |>.2 hinv.le
+  have hnr : (1:ℝ) ≤ (⌊u⁻¹⌋₊ : ℝ) := by exact_mod_cast hn1
+  have hfl : ((⌊u⁻¹⌋₊ : ℕ) : ℝ) ≤ u⁻¹ := Nat.floor_le (by positivity)
+  have hfu : u⁻¹ < (⌊u⁻¹⌋₊ : ℝ) + 1 := by
+    have := Nat.lt_floor_add_one (u⁻¹)
+    exact_mod_cast this
+  refine ⟨hn1, ?_, ?_⟩
+  · rw [inv_lt_comm₀ (by linarith) hu0]; exact hfu
+  · rw [le_inv_comm₀ hu0 (by linarith)]; exact hfl
+
+/-- If `1/(n+1) < v ≤ 1/n` with `n ≥ 1` then `cfDigit v 0 = n`. -/
+theorem cfDigit_zero_eq_of_mem {v : ℝ} {n : ℕ} (hn : 1 ≤ n) (hv0 : 0 < v)
+    (hlo : ((n : ℝ) + 1)⁻¹ < v) (hhi : v ≤ ((n : ℝ))⁻¹) : cfDigit v 0 = n := by
+  have hnr : (1:ℝ) ≤ (n : ℝ) := by exact_mod_cast hn
+  have h1 : (n : ℝ) ≤ v⁻¹ := by rwa [le_inv_comm₀ (by linarith) hv0]
+  have h2 : v⁻¹ < (n : ℝ) + 1 := (inv_lt_comm₀ (by linarith) hv0).1 hlo
+  rw [cfDigit_zero]
+  exact Nat.floor_eq_on_Ico _ _ ⟨h1, h2⟩
+
+/-- **Digit agreement off the boundary set.**  If `u` is not within `δ` of any endpoint `1/k`
+and `|u − v| < δ`, then `u` and `v` have the same first CF digit.  With
+`volume_boundaryBad_le`, the exceptional `u` form a set of measure at most `6√δ`. -/
+theorem cfDigit_zero_eq_of_not_boundaryBad {δ u v : ℝ} (hu : u ∈ Ioo (0:ℝ) 1)
+    (hbad : u ∉ boundaryBad δ) (hv0 : 0 < v) (huv : |u - v| < δ) :
+    cfDigit v 0 = cfDigit u 0 := by
+  obtain ⟨hu0, hu1⟩ := hu
+  obtain ⟨hn1, hlo, hhi⟩ := floor_inv_spec hu0 hu1
+  set n : ℕ := ⌊u⁻¹⌋₊ with hn
+  have hnr : (1:ℝ) ≤ (n : ℝ) := by exact_mod_cast hn1
+  -- `u` is `δ`-far from BOTH endpoints of its own cylinder
+  have hfar : ∀ k : ℕ, 1 ≤ k → δ ≤ |u - (k:ℝ)⁻¹| := by
+    intro k hk
+    by_contra hcon
+    exact hbad ⟨⟨hu0, hu1⟩, k, hk, not_le.1 hcon⟩
+  have hfar1 : δ ≤ |u - (n:ℝ)⁻¹| := hfar n hn1
+  have hfar2 : δ ≤ |u - ((n:ℝ) + 1)⁻¹| := by
+    have h := hfar (n + 1) (by omega)
+    rwa [Nat.cast_add, Nat.cast_one] at h
+  have hup : u ≤ (n:ℝ)⁻¹ - δ := by
+    rcases abs_cases (u - (n:ℝ)⁻¹) with ⟨he, -⟩ | ⟨he, -⟩
+    · rw [he] at hfar1; linarith
+    · rw [he] at hfar1; linarith
+  have hdown : ((n:ℝ) + 1)⁻¹ + δ ≤ u := by
+    rcases abs_cases (u - ((n:ℝ) + 1)⁻¹) with ⟨he, -⟩ | ⟨he, -⟩
+    · rw [he] at hfar2; linarith
+    · rw [he] at hfar2; linarith
+  obtain ⟨h1, h2⟩ := abs_lt.1 huv
+  rw [show cfDigit u 0 = n from rfl]
+  refine cfDigit_zero_eq_of_mem hn1 hv0 ?_ ?_
+  · linarith
+  · linarith
+
 
 section Audit
 
 #print axioms boundaryBad_subset
 #print axioms volume_boundaryBad_le
+#print axioms cfDigit_zero_eq_of_not_boundaryBad
 
 end Audit
 
