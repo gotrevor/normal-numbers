@@ -2461,3 +2461,39 @@ is a live candidate to refute it.
    This is the sharpest open question and it is fully within reach: `deficit_telescope_le` plus
    `deficit_read_le` plus lap 74's `fib_sq_mul_width_le_of_forced`.
 3. **`BlockCoupling`** for the actual transducer — bookkeeping.
+
+### Lap 75, fourth commit — S7-ST: the straddle cap, and the wall LOCATED
+
+`VandeheyS7Straddle` finally uses `VandeheyS7Lattice.zquot_sub_rat_ge` (built around lap 30 and
+unused since) for the thing it was made for:
+
+* `notMem_uIcc_of_gap` — elementary: a point further from `u` than `v` is cannot lie between them.
+* `image_no_rational_of_zquot` — **the straddle cap.**  If an image interval has one endpoint a
+  `ℤ[φ]`-quotient `β/δ` with `|β'| ≤ B`, `|δ'| ≤ D`, and width `< 1/(Q²·|δ|·(B+D))`, then it
+  contains **no** rational of denominator `≤ Q`.  So it straddles no digit boundary of depth `≤ Q`
+  and the emitter must fire.  This is the arithmetic of `Φ` doing work no distortion estimate can:
+  the underlying repulsion is false over `ℚ(φ)` and true over `ℤ[φ]`.
+
+Why this matters for the route: straddling is simultaneously (β) — the reason the pullback needs a
+width floor — and the obstruction to the S7-RD cancellation (a read of `a` costs `2 log a` of lag
+and the emitter buys it back as `L ≍ 2 log a / log φ²` digits **only if the narrow image lies in a
+cylinder at all**).  One cap answers both.
+
+**The wall, now located.**  The cap is effective only while `|δ|(B+D) ≪ 1/width`.  For the Raney
+state `Oₙ⁻¹ Φ Pₙ` the conjugate height runs like `q_out·q_in`, so `log(|δ|(B+D)) ≍ 2λn` while the
+lag to drain is `O(1)`: **Galois repulsion controls the straddle at the first `O(1)` scales and
+weakens linearly thereafter.**  What is missing is therefore not a sharper repulsion estimate but
+equidistribution in the *second archimedean place* — the frequency with which the conjugate height
+is large relative to the scale.  That is the self-joining wall, and it is now a quantitative
+statement rather than a slogan.
+
+### Residual after lap 75 (four commits)
+
+1. **`BlockAverageBound`** — fact (α); with the above, it is visibly the same question as
+   second-place equidistribution.  The only measure-theoretic debt.
+2. **Second-place frequency**: `freq{n : conjugate height of sₙ ≥ 1/width(sₙ)} → 0`.  This is the
+   sharp form of the wall and the right next target; `finite_bounded_zPairs` (discreteness) is the
+   only tool in the repo pointed at it.
+3. **The clock rate** `N p ≤ Λ p` — follows from the S7-RD cancellation once the straddle cap
+   applies at the relevant scale, i.e. from 2.
+4. **`BlockCoupling`** — bookkeeping.

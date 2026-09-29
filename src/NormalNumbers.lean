@@ -737,6 +737,7 @@ import NormalNumbers.VandeheyS7Decomp
 import NormalNumbers.VandeheyS7WidthFreq
 import NormalNumbers.VandeheyS7Lag
 import NormalNumbers.VandeheyS7Read
+import NormalNumbers.VandeheyS7Straddle
 import NormalNumbers.VandeheyS7Forced
 import NormalNumbers.VandeheyS7Block
 import NormalNumbers.VandeheyS7Predict
