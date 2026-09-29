@@ -394,9 +394,71 @@ theorem wordState_eq_conv (w : List ℕ) (hpos : ∀ a ∈ w, 1 ≤ a) :
 
 end MobState
 
+/-! ## `TriggerGap` is unconditional on the word matrix
+
+`windowBound` takes `TriggerGap s w` as a hypothesis, and `triggerGap_endpoints` discharges it
+from two endpoint identities.  With `wordState_eq_conv` those identities become theorems for
+`s = wordState w`:
+
+    (wordState w).mob 0 = b/d = p/q       = cylFar w ,
+    (wordState w).mob 1 = (a+b)/(c+d) = (p+p')/(q+q') = cylNear w .
+
+Note they come out SWAPPED relative to `triggerGap_endpoints`' phrasing — the word matrix reads
+`0` to the far endpoint and `1` to the near one — which is why the swapped variant is proved
+here.  `TriggerGap` is symmetric in what it demands (both images between near and far), so the
+same argument serves.
+
+The upshot, `triggerGap_wordState`, is that the trigger hypothesis is ACHIEVED, with no side
+conditions beyond the digits being genuine.  It is the extremal case: the machine's accumulated
+state sits between `wordState w` and its neighbours, so this pins the endpoint of the range the
+general statement has to cover.
+-/
+
+namespace MobState
+
+theorem mob_wordState_zero (w : List ℕ) (hpos : ∀ a ∈ w, 1 ≤ a) :
+    (wordState w).mob 0 = cylFar w := by
+  obtain ⟨-, hb, -, hd⟩ := wordState_eq_conv w hpos
+  simp only [mob, cylFar, mul_zero, zero_add]
+  rw [hb, hd]
+
+theorem mob_wordState_one (w : List ℕ) (hpos : ∀ a ∈ w, 1 ≤ a) :
+    (wordState w).mob 1 = cylNear w := by
+  obtain ⟨ha, hb, hc, hd⟩ := wordState_eq_conv w hpos
+  simp only [mob, cylNear, mul_one]
+  rw [ha, hb, hc, hd]
+  push_cast
+  ring_nf
+
+/-- The swapped form of `triggerGap_endpoints`: `TriggerGap` demands only that both images lie
+between the near and far endpoints, so which one is hit at `0` does not matter. -/
+theorem triggerGap_endpoints_swap (w : List ℕ) (hw : w ≠ []) (hpos : ∀ a ∈ w, 1 ≤ a)
+    {s : MobState} (h0 : s.mob 0 = cylFar w) (h1 : s.mob 1 = cylNear w) :
+    TriggerGap s w := by
+  have hk := conv_ratio_le_two w hpos
+  have heq : cylFar w - cylBeta w
+      = ((((Conv.of w).q : ℝ) + (Conv.of w).q') / (Conv.of w).q) * (cylNear w - cylBeta w) := by
+    unfold cylFar cylBeta cylNear
+    exact conv_far_eq w hw hpos
+  set k : ℝ := (((Conv.of w).q : ℝ) + (Conv.of w).q') / (Conv.of w).q with hkdef
+  have hk1 : 1 ≤ k := hk.2
+  have hle : |cylNear w - cylBeta w| ≤ |cylFar w - cylBeta w| := by
+    rw [heq, abs_mul, abs_of_nonneg (by linarith : (0:ℝ) ≤ k)]
+    nlinarith [abs_nonneg (cylNear w - cylBeta w)]
+  exact ⟨h0 ▸ hle, h0 ▸ le_refl _, h1 ▸ le_refl _, h1 ▸ hle⟩
+
+/-- **The trigger is achieved.**  On the word matrix itself `TriggerGap` holds with no side
+condition beyond the digits being genuine. -/
+theorem triggerGap_wordState (w : List ℕ) (hw : w ≠ []) (hpos : ∀ a ∈ w, 1 ≤ a) :
+    TriggerGap (wordState w) w :=
+  triggerGap_endpoints_swap w hw hpos (mob_wordState_zero w hpos) (mob_wordState_one w hpos)
+
+end MobState
+
 section Audit
 
 #print axioms MobState.runWord_eq_comp
+#print axioms MobState.triggerGap_wordState
 #print axioms MobState.wordState_eq_conv
 #print axioms MobState.fib_le_rowMin
 #print axioms MobState.det_wordState

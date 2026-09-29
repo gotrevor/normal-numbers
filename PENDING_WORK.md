@@ -402,6 +402,32 @@ needs one discharged (DIRECTION standing rule 3).
 
 ## Lap notes
 
+### 2026-09-29 lap 24 — `TriggerGap` is achieved, unconditionally, on the word matrix
+
+`triggerGap_wordState : TriggerGap (wordState w) w` for any nonempty word with genuine digits —
+no side conditions at all.  Axiom-clean.  This removes `windowBound`'s trigger hypothesis in the
+extremal case, via two endpoint identities that `wordState_eq_conv` (lap 23) makes immediate:
+
+    (wordState w).mob 0 = b/d       = p/q         = cylFar w
+    (wordState w).mob 1 = (a+b)/(c+d) = (p+p')/(q+q') = cylNear w
+
+**They come out SWAPPED** relative to `triggerGap_endpoints`' phrasing: the word matrix reads `0`
+to the FAR endpoint and `1` to the near one.  Hence `triggerGap_endpoints_swap`.  `TriggerGap` is
+symmetric in what it demands (both images between near and far), so the same argument serves —
+but the swap is worth recording, since assuming the original orientation would silently produce a
+false endpoint identity.
+
+Scope, stated honestly: this is the EXTREMAL case, `s = wordState w`, not the general machine
+state.  The machine's accumulated state is `s₀ · wordState w` (lap 13's `runWord_eq_comp`), and
+what this pins is the endpoint of the range the general statement must cover.
+
+**Next attack (lap 25): `TriggerGap` for `s₀ · wordState w`.**  The general statement is that
+composing with the initial state on the LEFT keeps both images between near and far.  That should
+follow from monotonicity of `s₀.mob` on `(0,∞)` — the same fact that gave `mob_ratio_le` /
+`mob_ratio_ge` in lap 12 — since `s₀` maps the interval `[cylFar, cylNear]` into an interval with
+the same ordering.  If it goes through, `windowBound` becomes unconditional along the whole run,
+and obligation 1 of lap 22 (defining `F`) is unblocked.
+
 ### 2026-09-29 lap 23 — the word matrix IS the continuant matrix (transposed)
 
 The handoff's queued bookkeeping is done, and it landed on lap 13's `wordState`:
