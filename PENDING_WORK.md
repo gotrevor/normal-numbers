@@ -1968,3 +1968,19 @@ That is a lattice-point count in `SL₂(ℤ[φ])` (a Hilbert-modular/Duke-type c
 statement about a moving target — a different and better-posed wall than the self-joining one.
 Lap 59: formalise the count's *statement* (`BadTimeCount`), and try the easy half — an upper bound
 for a single `q` via the repulsion bound plus the exponential growth of `q_n`.
+
+### 2026-09-29 lap 59 — the lap-58 probe, now in the kernel (`VandeheyS7Gap.lean`)
+
+Lap 58's prose argument is a theorem, at **every** gap `k`:
+
+* `exists_predictor_all_hit` — for any sequence `u`, any width `δ > 0` and any gap `k`, the
+  predictor `F l := u (l.length + k) − δ/2` reads only the prefix `u₀…u_{n−1}` and yet its
+  announced interval of width `δ` contains `u_{n+k}` for every `n`.  Hit frequency `1`.
+* `not_gappedHitPrinciple k` — so the gapped principle fails against a sequence with *perfect*
+  marginals (`cycGrid 10`, `δ = 1/2`): frequency `1` where it allows `6/10`.
+
+**Consequence, and it is a route fact:** "predictable + narrow + CF-normal orbit" carries zero
+information about hit frequency, for any gap.  Only *finiteness of the predictor's range* helps,
+and that case is already proved (`windowHit_Ioo_le`).  So the location-determinacy demanded by
+`WindowedPullback` is not an artefact of the statement — it is its entire content, and no
+re-statement of the ergodic side can dodge it.  `VandeheyS7Lattice` is the live attack.
