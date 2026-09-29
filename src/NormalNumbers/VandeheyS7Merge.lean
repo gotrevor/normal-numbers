@@ -195,11 +195,131 @@ theorem three_sub_two_sqrt_two_nonneg : (0:ℝ) ≤ 3 - 2 * Real.sqrt 2 := by
 
 end MobState
 
+
+/-!
+## Nonexpansiveness, with no calculus at all
+
+The mean-value route (differentiate `t ↦ log (f (e^t))`, bound the derivative by
+`birkhoff_derivative_le`, integrate) was the expected lap-12 step.  It is not needed: the
+statement that a nonnegative Möbius map does not EXPAND the Hilbert metric is a polynomial
+identity.  For `0 < u ≤ v` and nonnegative `A, B, C, D`,
+
+    v (A u + B)(C v + D) − u (A v + B)(C u + D)  =  (v − u) (A C u v + B C (u + v) + B D)  ≥ 0 ,
+    v (A v + B)(C u + D) − u (A u + B)(C v + D)  =  (v − u) (A C u v + A D v + B D)        ≥ 0 ,
+
+which say exactly `u/v ≤ f(v)/f(u) ≤ v/u`, i.e. `hdist (f u) (f v) ≤ hdist u v`
+(`mob_nonexpansive`).  No sign condition on the determinant, so it holds for every `MobState`,
+in either orientation.
+
+This is what makes the state harmless.  The machine's state after `n` steps is `s₀ · W`, and
+`mob_nonexpansive` says `s₀` can only shrink whatever `W` produces.  So a diameter bound for the
+word alone (`hdist_image_le` applied to `W`) bounds the spread from EVERY initial state at once —
+which is the loss of memory, obtained without ever making two trajectories equal.
+-/
+
+namespace MobState
+
+/-- The numerator is positive on the positive half-line: `a x + b = 0` forces `a = b = 0`, hence
+`det = 0`. -/
+theorem mob_num_pos (s : MobState) {x : ℝ} (hx : 0 < x) : 0 < s.a * x + s.b := by
+  rcases eq_or_lt_of_le s.ha with ha0 | ha0
+  · rcases eq_or_lt_of_le s.hb with hb0 | hb0
+    · exact absurd (by rw [← ha0, ← hb0]; ring) s.hdet
+    · simpa [← ha0] using hb0
+  · have : 0 < s.a * x := mul_pos ha0 hx
+    linarith [s.hb]
+
+theorem mob_pos (s : MobState) {x : ℝ} (hx : 0 < x) : 0 < s.mob x :=
+  div_pos (s.mob_num_pos hx) (s.den_pos hx.le)
+
+/-- Upper half of nonexpansiveness: `f(v)/f(u) ≤ v/u` for `0 < u ≤ v`. -/
+theorem mob_ratio_le (s : MobState) {u v : ℝ} (hu : 0 < u) (huv : u ≤ v) :
+    s.mob v / s.mob u ≤ v / u := by
+  have hv : 0 < v := lt_of_lt_of_le hu huv
+  have hdu : 0 < s.c * u + s.d := s.den_pos hu.le
+  have hdv : 0 < s.c * v + s.d := s.den_pos hv.le
+  have hnu : 0 < s.a * u + s.b := s.mob_num_pos hu
+  have hnv : 0 < s.a * v + s.b := s.mob_num_pos hv
+  rw [div_le_div_iff₀ (s.mob_pos hu) hu]
+  simp only [mob, div_mul_eq_mul_div, mul_div_assoc']
+  rw [div_le_div_iff₀ hdv hdu]
+  have hkey : v * (s.a * u + s.b) * (s.c * v + s.d)
+      - (s.a * v + s.b) * u * (s.c * u + s.d)
+      = (v - u) * (s.a * s.c * u * v + s.b * s.c * (u + v) + s.b * s.d) := by ring
+  have hnn : 0 ≤ s.a * s.c * u * v + s.b * s.c * (u + v) + s.b * s.d := by
+    have h1 := mul_nonneg (mul_nonneg (mul_nonneg s.ha s.hc) hu.le) hv.le
+    have h2 := mul_nonneg (mul_nonneg s.hb s.hc) (by linarith : (0:ℝ) ≤ u + v)
+    have h3 := mul_nonneg s.hb s.hd.le
+    linarith
+  linarith [mul_nonneg (sub_nonneg.2 huv) hnn, hkey]
+
+/-- Lower half: `u/v ≤ f(v)/f(u)` for `0 < u ≤ v`.  Together with `mob_ratio_le` this is
+nonexpansiveness; no determinant sign is used, so it holds in either orientation. -/
+theorem mob_ratio_ge (s : MobState) {u v : ℝ} (hu : 0 < u) (huv : u ≤ v) :
+    u / v ≤ s.mob v / s.mob u := by
+  have hv : 0 < v := lt_of_lt_of_le hu huv
+  have hdu : 0 < s.c * u + s.d := s.den_pos hu.le
+  have hdv : 0 < s.c * v + s.d := s.den_pos hv.le
+  have hnu : 0 < s.a * u + s.b := s.mob_num_pos hu
+  have hnv : 0 < s.a * v + s.b := s.mob_num_pos hv
+  rw [div_le_div_iff₀ hv (s.mob_pos hu)]
+  simp only [mob, div_mul_eq_mul_div, mul_div_assoc']
+  rw [div_le_div_iff₀ hdu hdv]
+  have hkey : (s.a * v + s.b) * v * (s.c * u + s.d)
+      - u * (s.a * u + s.b) * (s.c * v + s.d)
+      = (v - u) * (s.a * s.c * u * v + s.a * s.d * (u + v) + s.b * s.d) := by ring
+  have hnn : 0 ≤ s.a * s.c * u * v + s.a * s.d * (u + v) + s.b * s.d := by
+    have h1 := mul_nonneg (mul_nonneg (mul_nonneg s.ha s.hc) hu.le) hv.le
+    have h2 := mul_nonneg (mul_nonneg s.ha s.hd.le) (by linarith : (0:ℝ) ≤ u + v)
+    have h3 := mul_nonneg s.hb s.hd.le
+    linarith
+  linarith [mul_nonneg (sub_nonneg.2 huv) hnn, hkey]
+
+/-- The oriented half of nonexpansiveness, `0 < u ≤ v`. -/
+theorem hdist_mob_le_of_le (s : MobState) {u v : ℝ} (hu : 0 < u) (huv : u ≤ v) :
+    hdist (s.mob v) (s.mob u) ≤ hdist v u := by
+  have hv : 0 < v := lt_of_lt_of_le hu huv
+  have hpu : 0 < s.mob u := s.mob_pos hu
+  have hpv : 0 < s.mob v := s.mob_pos hv
+  have hr : 0 < s.mob v / s.mob u := div_pos hpv hpu
+  have hR : (1:ℝ) ≤ v / u := (one_le_div hu).2 huv
+  have hlogR : 0 ≤ Real.log (v / u) := Real.log_nonneg hR
+  have hup := Real.log_le_log hr (s.mob_ratio_le hu huv)
+  have hlo := Real.log_le_log (by positivity) (s.mob_ratio_ge hu huv)
+  have hinv : Real.log (u / v) = -Real.log (v / u) := by
+    rw [← Real.log_inv, inv_div]
+  rw [hinv] at hlo
+  rw [hdist, hdist, abs_of_nonneg hlogR, abs_le]
+  exact ⟨by linarith, by linarith⟩
+
+/-- **Nonexpansiveness of every state for the Hilbert projective metric** — proved by a
+polynomial identity, with no calculus and no hypothesis on the determinant.  This is what makes
+the machine's state harmless: it can only shrink the spread produced by the input word. -/
+theorem mob_nonexpansive (s : MobState) {x y : ℝ} (hx : 0 < x) (hy : 0 < y) :
+    hdist (s.mob x) (s.mob y) ≤ hdist x y := by
+  rcases le_total x y with h | h
+  · rw [hdist_comm (s.mob x), hdist_comm x]
+    exact s.hdist_mob_le_of_le hx h
+  · exact s.hdist_mob_le_of_le hy h
+
+/-- **The state is harmless: the spread after a word is bounded uniformly over initial states.**
+`s₀` can only shrink what the word `t` produces, so any diameter bound for `t` alone bounds the
+spread from EVERY initial state at once.  This is the loss of memory, and it never makes two
+trajectories equal — pathwise merging stays refuted. -/
+theorem hdist_comp_le (s t : MobState) {x y : ℝ} (hx : 0 < x) (hy : 0 < y) :
+    hdist ((s.comp t).mob x) ((s.comp t).mob y) ≤ hdist (t.mob x) (t.mob y) := by
+  rw [mob_comp s t hx.le, mob_comp s t hy.le]
+  exact s.mob_nonexpansive (t.mob_pos hx) (t.mob_pos hy)
+
+end MobState
+
 section Audit
 
 #print axioms MobState.gaussPair_det
 #print axioms birkhoffCoeff_one_add
 #print axioms MobState.gaussPair_birkhoffCoeff_le
+#print axioms MobState.mob_nonexpansive
+#print axioms MobState.hdist_comp_le
 
 end Audit
 

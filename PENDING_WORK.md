@@ -391,6 +391,34 @@ needs one discharged (DIRECTION standing rule 3).
 
 ## Lap notes
 
+### 2026-09-29 lap 12 — nonexpansiveness, and calculus was not needed
+
+The expected lap-12 step was mean-value bookkeeping on `birkhoff_derivative_le`.  It is not
+needed.  That every nonnegative Möbius map is NONEXPANSIVE for the Hilbert metric is a polynomial
+identity: for `0 < u ≤ v` and nonnegative `A,B,C,D`,
+
+    v(Au+B)(Cv+D) − u(Av+B)(Cu+D) = (v−u)(ACuv + BC(u+v) + BD) ≥ 0
+    v(Av+B)(Cu+D) − u(Au+B)(Cv+D) = (v−u)(ACuv + AD(u+v) + BD) ≥ 0
+
+i.e. `u/v ≤ f(v)/f(u) ≤ v/u` (`mob_ratio_le`, `mob_ratio_ge`), hence `mob_nonexpansive` — with NO
+hypothesis on the determinant, so it holds for every `MobState` in either orientation.  All
+axiom-clean.
+
+The payoff is `hdist_comp_le`: `hdist ((s.comp t).mob x) ((s.comp t).mob y) ≤ hdist (t.mob x)
+(t.mob y)`.  The initial state `s` can only SHRINK what the input word `t` produces, so a
+diameter bound for the word alone bounds the spread from every initial state at once.  That is
+the loss of memory, and it is exactly what the infinite `ℤ[φ]` state set made unobtainable by the
+finite-chain route.
+
+**Next attack (lap 13): the word diameter goes to zero.**  Combine `hdist_comp_le` with
+`hdist_image_le` applied to the word state `W = A_{a₁}···A_{a_n}`: the image diameter is
+`log (ad/bc)`, and `det W = ±1` gives `ad/bc = 1 ± 1/(bc)` with `bc` a product of consecutive
+continuants, so the diameter is `≤ 1/(bc) → 0`.  Note this route needs NO contraction factor at
+all — `gaussPair_birkhoffCoeff_le` (lap 11) becomes the quantitative refinement rather than the
+load-bearing step.  Formalise `runWord`'s entries as continuants (the `Conv` fold in
+`VandeheyS7Convergent.lean` is the right instrument; `cfP`/`cfK` are NOT, see the handoff gotcha)
+and prove `q_n → ∞`.
+
 ### 2026-09-29 lap 11 — merging: the contraction factor is UNIFORM (`VandeheyS7Merge.lean`)
 
 Next-action #1 from the handoff is done, and it gave more than expected.  Two Gauss branches
