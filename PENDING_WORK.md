@@ -2214,3 +2214,32 @@ hypothesis is now downstream of a statement with no ergodic content at all.
 (a) the state-orbit identity — the output point at the matched position IS `(s n).mob (Gⁿx)`;
 (b) the width floor `η`, which is the *tail* half of the bad-state question and therefore now
 falls under lap 65's anchored principle rather than under the refuted soft route.
+
+### 2026-09-29 lap 71 — the width floor is a fixed point, and the coefficient is all of it (`VandeheyS7Fix.lean`)
+
+`StateClock`'s only non-bookkeeping content is the width floor `η`.  Tracing where it comes from
+closes a loop, and the loop is now priced in the kernel:
+
+* the floor fails exactly when the image orbit visits `nearInv η` (`width_ge_of_mem_of_far`);
+* lap 48's `blockCount_nearInv_le` bounds those visits **unconditionally**, but by
+  `3 · freq(cellSet [] (T+1))` — three times the tail frequency `ImageTight` is about;
+* so `StateClock → AnchoredPullback → ImageTight` gives `x ≤ b + λ x` with `λ = 3`.
+
+* `le_div_of_self_le_add` — with `0 ≤ λ < 1` the loop closes: `x ≤ b/(1−λ)`.
+* `no_bound_of_one_le_coeff`, `tailBootstrap_coeff_three_gives_no_bound` — with `λ ≥ 1` it bounds
+  nothing, and that is a witness, not a gap in the search.
+
+**So the whole of the remaining tail obligation is the coefficient.**  Two attacks, and the second
+is the one that does not loop:
+
+1. charge bad times *injectively* to tail-cell times (`λ = 1`) and gain the rest from the free
+   scale separation between the floor `η` and the threshold `T` — i.e. lap 49's `TailRate`;
+2. **a width floor that is not routed through the image at all.**  The state's width is an
+   arithmetic quantity: for the additive instance it is controlled by the `ℤ[φ]` denominator entry
+   (`VandeheyS7Lattice`), so a lower bound on it is a *height* statement about `SL₂(ℤ[φ])` points.
+   Directive fact (γ) again, and the only non-circular route.
+
+**NEXT (lap 72).**  Attack 2: relate `MobState.width` to the `ℤ[φ]` entries — `width = |det| /
+((c+d)d)`, so a width floor is exactly an upper bound on the denominator entries' size, i.e. a
+height bound on the state as a lattice point.  Prove the identity first; it is elementary and it
+is what lets `VandeheyS7Lattice`'s finiteness/repulsion results speak about widths.
