@@ -455,9 +455,103 @@ theorem triggerGap_wordState (w : List ℕ) (hw : w ≠ []) (hpos : ∀ a ∈ w,
 
 end MobState
 
+/-! ## `TriggerGap` is exactly "the image interval sits in the cylinder"
+
+Lap 24 proved the extremal case.  The general one is NOT obtained by composing with the initial
+state on the left — `s₀(cylFar w)` need not lie between near and far, so that route is wrong and
+is recorded here so it is not retried.  The correct general statement is the operational one:
+`TriggerGap s w` holds as soon as both image endpoints lie in `w`'s cylinder, which is precisely
+the condition under which the machine emits `w`.
+
+Why it works.  `conv_far_eq` gives `far − β = k (near − β)` with `1 ≤ k ≤ 2`, so `near − β` and
+`far − β` have the SAME sign: `β` lies outside the interval `[near, far]` (it is the other
+endpoint of the parent cylinder, and `near` is the mediant, which separates them), and `near` is
+the closer of the two.  Hence `|·− β|` is monotone across the interval and every interior point
+`x` satisfies `|near − β| ≤ |x − β| ≤ |far − β|` — which is `TriggerGap` verbatim.
+-/
+
+namespace MobState
+
+/-- Distance to `β` is monotone across the cylinder: every point between the endpoints is at
+least as far as `near` and at most as far as `far`. -/
+theorem abs_sub_beta_mem (w : List ℕ) (hw : w ≠ []) (hpos : ∀ a ∈ w, 1 ≤ a)
+    {x : ℝ} (hx : x ∈ Set.uIcc (cylNear w) (cylFar w)) :
+    |cylNear w - cylBeta w| ≤ |x - cylBeta w| ∧
+      |x - cylBeta w| ≤ |cylFar w - cylBeta w| := by
+  have hk := conv_ratio_le_two w hpos
+  have heq : cylFar w - cylBeta w
+      = ((((Conv.of w).q : ℝ) + (Conv.of w).q') / (Conv.of w).q) * (cylNear w - cylBeta w) := by
+    unfold cylFar cylBeta cylNear
+    exact conv_far_eq w hw hpos
+  set k : ℝ := (((Conv.of w).q : ℝ) + (Conv.of w).q') / (Conv.of w).q with hkdef
+  have hk1 : 1 ≤ k := hk.2
+  set t : ℝ := cylNear w - cylBeta w with htdef
+  have htne : t ≠ 0 := conv_near_ne_zero w hw hpos
+  rw [Set.mem_uIcc] at hx
+  rcases lt_or_gt_of_ne htne with hneg | hpos'
+  · -- `t < 0`: then `far ≤ near` and everything is negative
+    have hfar : cylFar w - cylBeta w = k * t := heq
+    have hle : cylFar w ≤ cylNear w := by nlinarith [hfar, hneg, hk1]
+    have hxb : cylFar w ≤ x ∧ x ≤ cylNear w := by
+      rcases hx with ⟨h1, h2⟩ | ⟨h1, h2⟩
+      · exact ⟨by linarith, by linarith⟩
+      · exact ⟨h1, h2⟩
+    have h1 : k * t ≤ x - cylBeta w := by linarith [hxb.1, hfar]
+    have h2 : x - cylBeta w ≤ t := by linarith [hxb.2]
+    rw [abs_of_neg hneg, abs_of_neg (by linarith : x - cylBeta w < 0),
+      abs_of_neg (by rw [hfar]; nlinarith)]
+    constructor <;> linarith
+  · -- `t > 0`
+    have hfar : cylFar w - cylBeta w = k * t := heq
+    have hle : cylNear w ≤ cylFar w := by nlinarith [hfar, hpos', hk1]
+    have hxb : cylNear w ≤ x ∧ x ≤ cylFar w := by
+      rcases hx with ⟨h1, h2⟩ | ⟨h1, h2⟩
+      · exact ⟨h1, h2⟩
+      · exact ⟨by linarith, by linarith⟩
+    have h1 : t ≤ x - cylBeta w := by linarith [hxb.1]
+    have h2 : x - cylBeta w ≤ k * t := by linarith [hxb.2, hfar]
+    rw [abs_of_pos hpos', abs_of_pos (by linarith : (0:ℝ) < x - cylBeta w),
+      abs_of_pos (by rw [hfar]; nlinarith)]
+    constructor <;> linarith
+
+/-- **`TriggerGap`, from the operational condition.**  Both image endpoints in `w`'s cylinder —
+which is exactly when the machine emits `w` — gives the trigger. -/
+theorem triggerGap_of_mem_cyl (w : List ℕ) (hw : w ≠ []) (hpos : ∀ a ∈ w, 1 ≤ a)
+    {s : MobState} (h0 : s.mob 0 ∈ Set.uIcc (cylNear w) (cylFar w))
+    (h1 : s.mob 1 ∈ Set.uIcc (cylNear w) (cylFar w)) :
+    TriggerGap s w := by
+  obtain ⟨a0, b0⟩ := abs_sub_beta_mem w hw hpos h0
+  obtain ⟨a1, b1⟩ := abs_sub_beta_mem w hw hpos h1
+  exact ⟨a0, b0, a1, b1⟩
+
+/-- **The window lemma along the run, with no trigger hypothesis.**  Reading any nonempty input
+word gives `distortion ≤ 2` for free (`distortion_runWord_le_two`), and the operational emission
+condition gives the trigger (`triggerGap_of_mem_cyl`).  So post-burst distortion `≤ 4` holds
+along the machine's run, from ANY initial state, with only the nondegeneracy side conditions
+left. -/
+theorem windowBound_runWord (s : MobState) (u : List ℕ) (hu : u ≠ [])
+    (w : List ℕ) (hw : w ≠ []) (hpos : ∀ a ∈ w, 1 ≤ a)
+    (h0 : (runWord s u).mob 0 ∈ Set.uIcc (cylNear w) (cylFar w))
+    (h1 : (runWord s u).mob 1 ∈ Set.uIcc (cylNear w) (cylFar w))
+    (hQ : (((Conv.of w).q' : ℤ) : ℝ) ≠ 0)
+    (hden0 : ((Conv.of w).p' : ℝ) * (runWord s u).d
+      - ((Conv.of w).q' : ℝ) * (runWord s u).b ≠ 0)
+    (hden1 : ((Conv.of w).p' : ℝ) * ((runWord s u).c + (runWord s u).d)
+      - ((Conv.of w).q' : ℝ) * ((runWord s u).a + (runWord s u).b) ≠ 0) :
+    |(((Conv.of w).p' : ℝ) * ((runWord s u).c + (runWord s u).d)
+        - ((Conv.of w).q' : ℝ) * ((runWord s u).a + (runWord s u).b))
+      / (((Conv.of w).p' : ℝ) * (runWord s u).d
+        - ((Conv.of w).q' : ℝ) * (runWord s u).b)| ≤ 4 :=
+  windowBound (runWord s u) w hw hpos (distortion_runWord_le_two s u hu)
+    (triggerGap_of_mem_cyl w hw hpos h0 h1) hQ hden0 hden1
+
+end MobState
+
 section Audit
 
 #print axioms MobState.runWord_eq_comp
+#print axioms MobState.windowBound_runWord
+#print axioms MobState.triggerGap_of_mem_cyl
 #print axioms MobState.triggerGap_wordState
 #print axioms MobState.wordState_eq_conv
 #print axioms MobState.fib_le_rowMin

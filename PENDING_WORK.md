@@ -402,6 +402,38 @@ needs one discharged (DIRECTION standing rule 3).
 
 ## Lap notes
 
+### 2026-09-29 lap 25 — the window lemma is UNCONDITIONAL along the run
+
+**A route correction first, recorded so it is not retried.**  Lap 24's stated next step — get the
+general `TriggerGap` by composing with the initial state on the LEFT — is WRONG.  `s₀(cylFar w)`
+need not lie between near and far, so left-composition does not preserve the trigger.  The
+correct general statement is the operational one.
+
+* `abs_sub_beta_mem` : distance to `β` is monotone across the cylinder.  `conv_far_eq` gives
+  `far − β = k(near − β)` with `1 ≤ k ≤ 2`, so the two have the SAME sign — `β` lies outside
+  `[near, far]` (it is the parent cylinder's other endpoint, with `near` the separating mediant)
+  and `near` is the closer.  Hence every `x` between them has `|near−β| ≤ |x−β| ≤ |far−β|`.
+* `triggerGap_of_mem_cyl` : both image endpoints in `w`'s cylinder — exactly when the machine
+  emits `w` — gives `TriggerGap`.  This is the general case, not the extremal one.
+* `windowBound_runWord` : **post-burst distortion ≤ 4 along the machine's run, from ANY initial
+  state, with no trigger hypothesis and no distortion hypothesis.**  Reading gives
+  `distortion ≤ 2` for free (`distortion_runWord_le_two`) and emission gives the trigger.  Only
+  the nondegeneracy side conditions (`hQ`, `hden0`, `hden1`) remain, and those are
+  non-vanishing-denominator conditions, not estimates.
+
+All axiom-clean.  The window lemma was "done as mathematics" per the 2026-09-29 handoff; it is
+now done as a theorem about the machine.
+
+**Next attack (lap 26): obligation 1 of lap 22 — define `F`.**  Nothing structural is in the way
+any more.  The pieces: `runWord_eq_comp` (state = initial · word), `windowBound_runWord` (bounded
+distortion along the run), `cfDigit_agree_depth` + `budget_le` (a window of input determines a
+proportional number of image digits).  What to build: a definition of the emitted-digit function
+`F : List ℕ → ℕ` from the machine's state, and the statement that the image digit at position `j`
+equals `F` of the input window.  Start by writing down the machine as an explicit corecursion
+(state + emission) rather than leaving it implicit in `runWord`/`emit`; the emission side
+condition of `emit` (`e·a ≤ c`, `e·b ≤ d`) is what picks `e`, so `F` should be defined as the
+largest such `e`, and then `mob_emit` says it does the right thing.
+
 ### 2026-09-29 lap 24 — `TriggerGap` is achieved, unconditionally, on the word matrix
 
 `triggerGap_wordState : TriggerGap (wordState w) w` for any nonempty word with genuine digits —
