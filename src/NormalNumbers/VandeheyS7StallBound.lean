@@ -181,6 +181,68 @@ theorem clock_linear_of_uniform_width (Φ : MapState) {x : ℝ}
     Nat.mul_le_mul_left _ (le_trans ht hmono)
   omega
 
+
+/-! ## The clock deficit IS the stall count
+
+S7-CO identified the crux at the empty word with "the clock runs at rate `1`".  The identity
+below turns that into a statement about STALLS, which is the form a probe can attack: the crux at
+`[]` holds exactly when the transducer's stalls have density zero.
+-/
+
+open Classical in
+/-- The number of stalls before time `p`. -/
+noncomputable def stallCount (Φ : MapState) (x : ℝ) (p : ℕ) : ℕ :=
+  ((range p).filter fun n => runWord Φ x n = []).card
+
+theorem runClock_add_stallCount (Φ : MapState) (x : ℝ) (p : ℕ) :
+    runClock Φ x p + stallCount Φ x p = p := by
+  classical
+  induction p with
+  | zero => simp [runClock, stallCount]
+  | succ n ih =>
+      rw [runClock_succ, stallCount, Finset.range_add_one, Finset.filter_insert]
+      by_cases h : runWord Φ x n = []
+      · rw [if_pos h, Finset.card_insert_of_notMem (by simp), h]
+        simp only [List.length_nil]
+        rw [stallCount] at ih
+        omega
+      · rw [if_neg h]
+        have hlen : (runWord Φ x n).length = 1 := by
+          have hle := runWord_length_le_one Φ x n
+          rcases List.eq_nil_or_concat (runWord Φ x n) with h0 | ⟨u, a, hu⟩
+          · exact absurd h0 h
+          · rw [hu] at hle ⊢; simp at hle ⊢; omega
+        rw [hlen, stallCount] at *
+        omega
+
+/-- **The clock deficit is exactly the stall count.**  So a clock rate of `1` — equivalently, the
+crux at the empty word (S7-CO) — says precisely that stalls have density zero. -/
+theorem stallCount_eq (Φ : MapState) (x : ℝ) (p : ℕ) :
+    (stallCount Φ x p : ℝ) = (p : ℝ) - ((runClock Φ x p : ℕ) : ℝ) := by
+  have := runClock_add_stallCount Φ x p
+  have hc : ((runClock Φ x p + stallCount Φ x p : ℕ) : ℝ) = (p : ℝ) := by exact_mod_cast this
+  push_cast at hc
+  linarith
+
+/-- The crux at `[]`, restated: stalls have density zero. -/
+theorem tendsto_stallCount_div_zero_iff (Φ : MapState) (x : ℝ) :
+    Tendsto (fun p => ((runClock Φ x p : ℕ) : ℝ) / (p : ℝ)) atTop (nhds 1) ↔
+      Tendsto (fun p => (stallCount Φ x p : ℝ) / (p : ℝ)) atTop (nhds 0) := by
+  constructor
+  · intro h
+    have := (tendsto_const_nhds (x := (1:ℝ)) (f := atTop (α := ℕ))).sub h
+    refine Tendsto.congr' ?_ (by simpa using this)
+    filter_upwards [eventually_gt_atTop 0] with p hp
+    have hpR : (0:ℝ) < (p:ℝ) := by exact_mod_cast hp
+    rw [stallCount_eq, sub_div, div_self hpR.ne']
+  · intro h
+    have := (tendsto_const_nhds (x := (1:ℝ)) (f := atTop (α := ℕ))).sub h
+    refine Tendsto.congr' ?_ (by simpa using this)
+    filter_upwards [eventually_gt_atTop 0] with p hp
+    have hpR : (0:ℝ) < (p:ℝ) := by exact_mod_cast hp
+    rw [stallCount_eq, sub_div, div_self hpR.ne']
+    ring
+
 end MapState
 
 end NormalNumbers.VandeheyS7
@@ -190,5 +252,7 @@ section Audit
 #print axioms NormalNumbers.VandeheyS7.MapState.exists_stallAge_bound
 #print axioms NormalNumbers.VandeheyS7.MapState.exists_emit_in_window
 #print axioms NormalNumbers.VandeheyS7.MapState.clock_linear_of_uniform_width
+#print axioms NormalNumbers.VandeheyS7.MapState.runClock_add_stallCount
+#print axioms NormalNumbers.VandeheyS7.MapState.tendsto_stallCount_div_zero_iff
 
 end Audit
