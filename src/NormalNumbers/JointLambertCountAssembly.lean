@@ -1,0 +1,75 @@
+/-
+Copyright (c) 2026 Trevor Morris. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Trevor Morris
+-/
+import NormalNumbers.JointLambertCountRate
+import NormalNumbers.JointLambertRescaledTail
+
+/-!
+# The counting analogue of the joint small-tail theorem
+
+`exists_joint_small_tail_all_bases_rescaled` produces **one** offset carrying the prescribed
+divisor data and a small base tail in every base.  The count needs a whole `Finset` of such
+offsets inside `[0, N)`, of cardinality at least `N exp(-C (log log N)² log log log N)`.
+
+`exists_joint_small_tail_count` is exactly that statement, in the offset convention of
+`jointWordCount` (data at `m + 1`, so `m` is the offset and the first requested digit is
+`m + 1`).  It is the *only* remaining hole in the ratified headlines: given it,
+`jointWords_quantitative` follows by `floor_digit_of_common_offset` plus
+`jointWordCount_ge_of_subset`, with no further estimate.
+
+## Content locator for the hole
+
+The proof is §§3–5 of `docs/JOINT-LAMBERT-QUANTITATIVE-NEXT.md`.  Every *estimate* it needs
+is already proved and `#print axioms`-clean; what is missing is the arithmetic wiring:
+
+1. **Height and pool.**  `k = countK X`, `L = k³`.  Take `P` from
+   `exists_candidate_indices_every_height c`, then the allocation primes in `(L, 2L)` from
+   `exists_prime_allocation_small_pool` avoiding `P`, then `R, A, B, Q` from
+   `exists_joint_progression`.  `jointB_le` at `L := k³` gives
+   `B ≤ (2k³)^(1 + c · killPoolSize k r) ≤ (2k³)^(1 + c k²)` via `killPoolSize_le_sq`, which
+   is the hypothesis `exists_candidate_indices_every_height` wants.
+2. **Candidates.**  `M = ⌊X/B⌋ + 1`; at least `M/(4 log X)` indices `m < M` have `u + mB`
+   prime and `≤ X`.  That index set is the `Finset` the Markov step filters.
+3. **Tail.**  `three_range_tail_le` with `Y = 2QX`, `J = ⌊(log₂ X)²⌋`, `H = ⌈√Y⌉`.  The
+   resulting cost, divided by `M/(4 log X)`, is bounded by
+   `eventually_near_cost_small` and `eventually_middle_cost_small` (the far term is
+   `(2Y + 2J + 2)2^{-J}`, negligible since `2^J = X^{log₂ X}`).  Needs `k < L < J`
+   eventually, and `jointA_tau_le` for `τ(A)`.
+4. **Markov.**  `card_good_ge_half` at the fixed threshold `2δ`.  The surviving indices map
+   injectively to offsets `Q p - r - 1` (injective because `A > 0`).
+5. **All `N`.**  `k_N = countK N`, `D_N = 2(2k_N³)^(a-1)`, `X = ⌊N/D_N⌋`; `eventually_rate_le`
+   converts `X/(8 B log X)` into `N exp(-C (log log N)² log log log N)`.
+
+No step above is believed to be blocked; the remaining work is bookkeeping of floors and of
+the `Finset` images, not a new estimate.
+-/
+
+namespace NormalNumbers.JointLambert
+
+open Finset Filter NormalNumbers.SwingC2
+
+/-- **The counting joint small-tail theorem.**  For fixed `c, a, r` and a fixed margin `ε`,
+there are `C > 0` and `N₀` such that every `N ≥ N₀` admits a killed-window height `k > r`
+and a `Finset` of at least `N exp(-C (log log N)² log log log N)` offsets `m < N`, each
+carrying the prescribed divisor data at `m + 1` and a base tail below `ε/2` in **every** base
+`b ≥ 2` simultaneously.
+
+This is the counting analogue of `exists_joint_small_tail_all_bases_rescaled`, which returns
+a single offset.  See the module docstring for the content locator of the proof. -/
+theorem exists_joint_small_tail_count {c a r : ℕ} (hc : 2 ≤ c) (ha : 2 ≤ a) (hr : 1 ≤ r)
+    {ε : ℝ} (hε : 0 < ε) :
+    ∃ C : ℝ, 0 < C ∧ ∃ N0 : ℕ, ∀ N : ℕ, N0 ≤ N →
+      ∃ k : ℕ, r < k ∧ ∃ T : Finset ℕ,
+        (N : ℝ) * Real.exp (-C * (Real.log (Real.log (N : ℝ))) ^ 2
+            * Real.log (Real.log (Real.log (N : ℝ)))) ≤ (T.card : ℝ) ∧
+        (∀ m ∈ T, m < N) ∧
+        (∀ m ∈ T, ∀ j, j < k → j ≠ r → c ^ (j + 1) ∣ tau (m + 1 + j)) ∧
+        (∀ m ∈ T, tau (m + 1 + r) = 2 * a) ∧
+        (∀ m ∈ T, ∀ b : ℕ, 2 ≤ b →
+          0 ≤ ∑' t : ℕ, (tau (m + 1 + k + t) : ℝ) / (b : ℝ) ^ (k + t + 1) ∧
+          ∑' t : ℕ, (tau (m + 1 + k + t) : ℝ) / (b : ℝ) ^ (k + t + 1) < ε / 2) := by
+  sorry
+
+end NormalNumbers.JointLambert

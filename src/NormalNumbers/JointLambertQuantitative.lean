@@ -7,6 +7,7 @@ import NormalNumbers.JointLambertQuantitativeStatement
 import NormalNumbers.JointLambertUnconditional
 import NormalNumbers.JointLambertGcdAverage
 import NormalNumbers.JointLambertSmallPool
+import NormalNumbers.JointLambertCountAssembly
 
 /-!
 # The quantitative joint Lambert theorem
@@ -89,7 +90,89 @@ theorem jointWords_quantitative (S : Finset ℕ) (hb2 : ∀ b ∈ S, 2 ≤ b)
       (N : ℝ) * Real.exp (-C * (Real.log (Real.log (N : ℝ))) ^ 2
         * Real.log (Real.log (Real.log (N : ℝ))))
           ≤ (jointWordCount S lengths values N : ℝ) := by
-  sorry
+  classical
+  rcases S.eq_empty_or_nonempty with rfl | hne
+  · -- empty base set: the count is `N`, and `exp(-μ²ν) ≤ 1` once `log log N ≥ 1`
+    refine ⟨1, one_pos, ?_⟩
+    have htend2 : Filter.Tendsto (fun N : ℕ => Real.log (Real.log (N : ℝ))) atTop atTop :=
+      Real.tendsto_log_atTop.comp (Real.tendsto_log_atTop.comp tendsto_natCast_atTop_atTop)
+    obtain ⟨N0, hN0⟩ := eventually_atTop.1 (htend2.eventually_ge_atTop (3 : ℝ))
+    refine ⟨N0, fun N hN => ?_⟩
+    have hμ : (3 : ℝ) ≤ Real.log (Real.log (N : ℝ)) := hN0 N hN
+    have hν : (0 : ℝ) ≤ Real.log (Real.log (Real.log (N : ℝ))) := by
+      refine Real.log_nonneg ?_
+      linarith
+    rw [jointWordCount_empty]
+    have hexp : Real.exp (-1 * (Real.log (Real.log (N : ℝ))) ^ 2
+        * Real.log (Real.log (Real.log (N : ℝ)))) ≤ 1 := by
+      refine Real.exp_le_one_iff.mpr ?_
+      have hsq : (0 : ℝ) ≤ (Real.log (Real.log (N : ℝ))) ^ 2 := by positivity
+      nlinarith [hsq, hν]
+    have hN0' : (0 : ℝ) ≤ (N : ℝ) := Nat.cast_nonneg N
+    nlinarith [hexp, hN0']
+  -- a common multiple of the bases
+  set c : ℕ := ∏ b ∈ S, b with hcdef
+  have hbc : ∀ b ∈ S, b ∣ c := fun b hb => Finset.dvd_prod_of_mem _ hb
+  have hc2 : 2 ≤ c := by
+    obtain ⟨b₀, hb₀⟩ := hne
+    have h1 : b₀ ≤ c :=
+      Finset.single_le_prod' (f := fun i => i) (fun i hi => by have := hb2 i hi; omega) hb₀
+    have := hb2 b₀ hb₀
+    omega
+  -- one positive margin over the finite set
+  set P : ℕ := ∏ b ∈ S, b ^ lengths b with hPdef
+  have hPbig : ∀ b ∈ S, b ^ lengths b ≤ P :=
+    fun b hb => Finset.single_le_prod' (f := fun i => i ^ lengths i)
+      (fun i hi => Nat.one_le_pow _ _ (by have := hb2 i hi; omega)) hb
+  have hPpos : 0 < P := Finset.prod_pos fun b hb => Nat.pow_pos (by have := hb2 b hb; omega)
+  have hPR : (0 : ℝ) < (P : ℝ) := by exact_mod_cast hPpos
+  set ε : ℝ := 1 / (P : ℝ) with hεdef
+  have hε : 0 < ε := by rw [hεdef]; positivity
+  -- interior cylinders for the prescribed words
+  obtain ⟨s, a, hs2, ha2, hbox⟩ := evenEncoding S hb2
+      (fun b => (values b : ℝ) / (b : ℝ) ^ lengths b)
+      (fun b => ((values b : ℝ) + 1 / 2) / (b : ℝ) ^ lengths b) (by
+        intro b hb
+        have hb2' := hb2 b hb
+        have hb0 : (0 : ℝ) < b := by
+          have : (2 : ℝ) ≤ b := by exact_mod_cast hb2'
+          linarith
+        have hbl0 : (0 : ℝ) < (b : ℝ) ^ lengths b := by positivity
+        obtain ⟨hlen, hval⟩ := hwin b hb
+        have hvR : (values b : ℝ) + 1 ≤ (b : ℝ) ^ lengths b := by
+          have h1 : (values b : ℕ) + 1 ≤ b ^ lengths b := by omega
+          have h2 : ((values b : ℕ) + 1 : ℝ) ≤ ((b ^ lengths b : ℕ) : ℝ) := by
+            exact_mod_cast h1
+          simpa using h2
+        refine ⟨by positivity, ?_, ?_⟩
+        · rw [div_lt_div_iff₀ hbl0 hbl0]
+          nlinarith [hbl0]
+        · rw [div_le_one hbl0]; linarith)
+  obtain ⟨r, rfl⟩ : ∃ r, s = r + 1 := ⟨s - 1, by omega⟩
+  have hr1 : 1 ≤ r := by omega
+  obtain ⟨C, hC, N0, hmain⟩ := exists_joint_small_tail_count hc2 ha2 hr1 hε
+  refine ⟨C, hC, N0, fun N hN => ?_⟩
+  obtain ⟨k, hkr, T, hcard, hlt, hkill, hsurv, hall⟩ := hmain N hN
+  refine le_trans hcard ?_
+  have hwitness : ∀ m ∈ T, ∀ b ∈ S,
+      ⌊(b : ℝ) ^ lengths b * orbit b (CastingOut.erdosBorweinAtBase b) m⌋ = (values b : ℤ) := by
+    intro m hm b hbS
+    have hb2' := hb2 b hbS
+    have hb0 : (0 : ℝ) < b := by
+      have : (2 : ℝ) ≤ b := by exact_mod_cast hb2'
+      linarith
+    have hbl0 : (0 : ℝ) < (b : ℝ) ^ lengths b := by positivity
+    obtain ⟨hlen, hval⟩ := hwin b hbS
+    obtain ⟨hlo, hhi⟩ := hbox b hbS
+    obtain ⟨hT0, hTε⟩ := hall m hm b hb2'
+    have hmargin : ε / 2 ≤ (1 / 2) / (b : ℝ) ^ lengths b := by
+      have h1 : ((b ^ lengths b : ℕ) : ℝ) ≤ (P : ℝ) := by exact_mod_cast hPbig b hbS
+      have h2 : (b : ℝ) ^ lengths b ≤ (P : ℝ) := by simpa using h1
+      rw [hεdef, div_div, div_div, div_le_div_iff₀ (by positivity) (by positivity)]
+      nlinarith [h2, hbl0]
+    exact floor_digit_of_common_offset b (lengths b) (values b) c a r k m hb2' (hbc b hbS)
+      hval hkr (hkill m hm) (hsurv m hm) hlo hhi hT0 (lt_of_lt_of_le hTε hmargin)
+  exact_mod_cast jointWordCount_ge_of_subset T hlt hwitness
 
 /-- **The power count.**  For each fixed `ε > 0`, eventually `A(N) ≥ N^{1-ε}`.
 Derived from `jointWords_quantitative` and `iteratedLog_rate_le_eps_log`; `ε > 1` is
