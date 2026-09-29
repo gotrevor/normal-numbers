@@ -62,3 +62,36 @@ the audit script passes.  Nothing in `wip/`; no `sorry` was relocated at any poi
 
 Not in scope and untouched: AGP (its pre-existing gaps in `JointLambertAGPRange.lean`
 remain, deliberately), full normality, Vandehey (owned by the main checkout).
+
+## Checkpoint, end of run
+
+Branch `proof/joint-lambert-unconditional`, HEAD `7303046c`, baseline
+`e2828b32`.  Working tree clean; full `lake build` green (10492 jobs);
+`scripts/check-joint-lambert-count.sh` passes.  Six commits this run:
+
+* e9ef7d51 Markov at a fixed threshold, keeping the good-set cardinality
+* 7741efad Far range and the full three-range tail bound
+* 7173bf42 Near and middle tail ranges of the three-range split
+* ab36e7f8 Candidate index count at every chosen height
+* 5b0fb219 Small-pool schedule clears Siegel-Walfisz at every large height
+* 8771af98 Chosen-height prime supply for the counting route
+* 989b0c76 Prove the o(log N) iterated-log rate lemma
+* 0e43a2dc Joint Lambert quantitative count: freeze statement surface and ratified headlines
+
+`box done --green` run: the objective is met, not merely checkpointed.
+
+## Exact next steps, if this line is picked up again
+
+Nothing is outstanding on the count.  Natural successors, in order of value, none of them
+started and none of them authorized by the current DIRECTION scope:
+
+1. **A positive limiting frequency** for the joint word count, i.e. replacing
+   `N exp(-C (log log N)² log log log N)` by `c(w) N`.  That is a genuinely different
+   problem: the present route loses the factor in the Markov step, which discards all but
+   `M/(8 log X)` of the candidate indices.  It would need a second-moment or sieve input,
+   not a sharpening of any estimate here.
+2. **Normality of `E_b`** — strictly stronger than anything proved here, and the count
+   above deliberately makes no frequency or normality claim.
+3. **The AGP gaps** in `JointLambertAGPRange.lean` (untouched by this campaign, and
+   irrelevant to it: the count does not depend on AGP).
+4. **Vandehey** — owned by the main checkout, not this worktree.
