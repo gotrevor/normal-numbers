@@ -123,6 +123,17 @@ Order of work:
    Three hypotheses, and two of them are scalar statements about the emission schedule alone.
    Only `ClassFreqBound` is about the state space at all.
 
+   🔻 **And `ClockLinear` looks like a CONSEQUENCE of `MeanSlack`, not a separate hypothesis.**
+   S7-GR (`VandeheyS7Growth`) has the first half: `two_pow_le_fib` (`2^k ≤ fib(2k+1)`) turns
+   S7-DB's Fibonacci height bound into a LINEAR comparison,
+   `stallAge_le_slack : stallAge n ≤ 1 + 2·slack n / log 2`.  So `MeanSlack` bounds the mean
+   stall age: `Σ_{n<q} stallAge(n+2) ≤ 3q + (2/log 2)·Σ slack`.
+   **Remaining half (next Lean step): the reset-counting bound**
+   `#{n < q : stallAge n < K} ≤ K·(runClock q + 1)` — each emission opens at most `K` times of
+   small age, so `n ↦ (n − stallAge n, stallAge n)` is injective into (resets) × range K.
+   Then `q ≤ K(N_q+1) + (1/K)·Σ stallAge ≤ K(N_q+1) + Cq/K`; pick `K` with `C/K ≤ 1/2` and
+   `N_q ≥ q/(2K) − 1` follows.  That drops the §7 front from three hypotheses to two.
+
    So the ENTIRE width leg is now two scalar facts: bounded Cesàro average of `log d_n`
    (positive recurrence of one walk reflected at `√(|det Φ|/6)`) and Vandehey's Lemma 6.1.  S7-LG bounds bursts; what remains is that long
    *non-emitting* runs are rare.  Structural observation to formalize: a non-emitting run of
