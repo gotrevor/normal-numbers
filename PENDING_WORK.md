@@ -318,7 +318,29 @@ Three facts, all established lap 30, fix its difficulty and must steer every fur
   every word frequency tends to `0` and the upper bounds hold vacuously, while
   `log qₚ ≍ 2^p` destroys any Lévy bound and tightness fails outright.  So tightness cannot be
   derived from the one-sided crux; it needs its own argument.
-  **Next attack (lap 45), in order.**
+  **Lap 45 — CF-normality DOES give tightness** (`VandeheyS7Tight2.lean`, axiom-clean,
+  sorry-free).  `imageTight_of_isCFNormal : Irrational y → y ∈ Ioo 0 1 → IsCFNormal y →
+  ImageTight y`.  Two elementary ingredients: `blockCount_cellSet_nil_add_eq` — at each orbit
+  time the digit is `≥ T` or equals exactly one `a ∈ [1,T)`, so
+  `blockCount (cellSet [] T) p y + ∑_{a<T} blockCount (I_{[a]}) p y = p`; and
+  `one_le_sum_gaussMeasure_cfCylinder_singleton` — every `t ∈ (0,1)` lies in `I_{[cfDigit t 0]}`
+  and a digit `> n` forces `t ≤ 1/n`, so `Ioo 0 1 ⊆ (⋃_{a≤n} I_{[a]}) ∪ Ioo 0 (2/n)` and hence
+  `1 ≤ ∑_{a≤n} γ(I_{[a]}) + (2/n)/log 2`.  No null-set argument: the covering is exact,
+  rationals included.  `blockCount_freq_of_isCFNormal` (the converse of
+  `isCFNormal_of_orbit_freq`, same `≤|v|` window↔orbit gap) is the bridge.
+  **This vindicates lap 44's weakening.**  `LevyBound` would need `∑ log(aᵢ+1) = O(p)`, a uniform
+  integrability statement that CF-normality does NOT supply — a sparse sequence of enormous
+  digits moves no cell frequency while blowing up `∑ log aᵢ`.  Tightness is exactly the part of
+  Lévy that normality gives, so `ImageTight` was the right hypothesis and `LevyBound` would have
+  been unprovable.
+  **Next attack (lap 46), in order.**
+  (a) Transfer tightness from `x` to `y = fract(φx)`.  Lap 45 gives `ImageTight x` for free from
+  `x`'s normality; what is needed is `ImageTight y`.  The clock is the route
+  (`Oℓ ≈ ΦPₙ`, `det Φ = φ` fixed, so `log qℓ(y) ≍ log qₙ(x) + O(1)`), and note that the WEAKER
+  tightness statement may not need the full clock: a large image digit at emitted time `ℓ` means
+  the state's image interval is tiny, which costs input digits.
+  (b) `OrbitWordBound` — the crux.
+  **Older next-attack note (lap 45), in order.**
   (a) `ImageTight` for `y = fract(φx)` with `x` CF-normal.  The natural route is the CLOCK: the
   emitted convergent matrices satisfy `Oℓ ≈ Φ Pₙ` with `det Φ = φ` fixed, so `log qℓ(y) ≍
   log qₙ(x) + O(1)`; a Lévy bound for `x` plus a linear lower bound on the emission rate `ℓ(n)`

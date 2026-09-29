@@ -733,3 +733,4 @@ import NormalNumbers.VandeheyS7Legendre
 import NormalNumbers.VandeheyS7Const
 import NormalNumbers.VandeheyS7Boot
 import NormalNumbers.VandeheyS7Reduce
+import NormalNumbers.VandeheyS7Tight2
