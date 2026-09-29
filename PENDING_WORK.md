@@ -57,6 +57,32 @@ Order of work:
    predictable family inside the box?  A kernel refutation there is as valuable as a proof, and it
    would force the arithmetic-of-`Φ` branch of fact (α).
 
+### LAP 78 progress (commits `48c0703`, `84d24cb`, + S7-CL)
+
+* **S7-LG (`VandeheyS7Ledger`)** — the height ledger telescopes.  `∏ b_k ≤ C·∏(a_{k+2}+5)`
+  unconditionally (`prod_emitFac_le`), hence `card_bigEmit_le`: big output digits are rare at
+  rate `O(1/log T)`.  This is the **burst half** of the width-frequency question.
+* **S7-SL (`VandeheyS7Slot`)** — `BlockAverageBound` has no block structure: one emission, one
+  test.  `blockAverageBound_iff_slot` restates the crux as a relative frequency among emission
+  times.  Free bound `B = 1` (`slotCount_le_runClock`) is what a proof must beat by `γ(I_w)`.
+* **S7-CL (`VandeheyS7Class`)** — directive item (c) DONE.  `StateNet` is the net interface,
+  `clusterSet` the fixed sets, `mapBlockSet_subset_clusterSet` the containment, and
+  `blockAverageBound_of_classFreq` the reduction
+  `ClassFreqBound + WidthFreqBound ⟹ BlockAverageBound`, with **no loss of constant** (the
+  per-cell denominators sum to the clock, `sum_cellCount_le_runClock`).
+
+### Next attack (directive item (d))
+
+1. **`WidthFreqBound`** — the drift half.  S7-LG bounds bursts; what remains is that long
+   *non-emitting* runs are rare.  Structural observation to formalize: a non-emitting run of
+   length `L` forces the input digits `a_n … a_{n+L−1}` to agree with the CF expansion of the
+   single point `s_n⁻¹(1/k)` straddled by the image — so a long run is a long coincidence with a
+   *predictable* word.  CF-normality of `x` limits those only for FIXED words, which is where
+   fact (δ)'s finiteness has to be reused.
+2. **Construct a `StateNet`** from `runState_entries_abs_le` (S7-BX) — a genuinely finite net of
+   the box; currently `StateNet` is an interface, not a theorem.
+3. **`ClassFreqBound`** itself, or a kernel refutation of it.
+
 ### Still open, unchanged
 
 The width floor in FREQUENCY form (`freq{n : width(s_n) < η} → 0 as η → 0`) is still needed to
