@@ -1718,3 +1718,27 @@ Gauss mass `≤ C γ(I_w)`.  Formalize "reduced state + image not straddling a r
 predictability obstruction (`not_predictableHitPrinciple`) bites; the honest next probe is to see
 whether the good-state pullback bound is uniform enough to survive the `s_n` dependence, or
 whether a Lean witness refutes it.
+
+### 2026-09-29 lap 49 — the good half, and the exact price of the split (`VandeheyS7Good.lean`)
+
+* `MobState.width_ge_of_mem_of_far` — two points of the image at distance `≥ η` force the image
+  to be `≥ η` wide.  For a *reduced* state the two points are the current output point and the
+  reciprocal `1/k` the state straddles, so lap 48's "far from every `1/k`" is exactly a lower
+  bound on the image width.
+* `MobState.sub_le_of_image_le` — the pullback bound: a sub-interval of `[0,1]` whose image has
+  length `≤ L` has length `≤ distortion · L / η` once the image is `≥ η` wide.
+* `splitConstant_not_absolute` — **the price, in the kernel.**  The good/bad split delivers
+  `freq(I_w) ≤ (D/η)·γ(I_w) + ε(η)`, and the factor `D/η` beats any candidate absolute `C`.  So
+  the split ALONE cannot produce `OrbitWordBound`: `ImageTight` is rateless, and a rateless error
+  cannot pay for a scale-dependent constant.  (Shape statement, not a refutation of the crux.)
+* `TailRate y A` (`freq(digit ≥ T) ≤ A/T`) + `imageTight_of_tailRate` — the named missing input.
+  It is the `w = []` case of the crux in QUANTITATIVE form.
+
+**NEXT (lap 50) — the fixed-point bootstrap.**  Run the split under `TailRate y A` instead of
+`ImageTight`: bad positions at scale `η = 1/(2(T+1)³)` then cost `3A/(T+1) + o(1)` rather than a
+rateless `ε`, while the good constant is `D·2(T+1)³`.  Balancing gives a word bound
+`freq(I_w) ≤ f(A, γ(I_w))`; specialising it back to `w = [a]`, `a ≥ T`, and summing returns a
+tail rate `A' = g(A)`.  If `g` has a fixed point below the trivial bound `A = 1`, the bootstrap
+CLOSES the crux with an absolute constant.  Deliverable: state `g` in Lean and decide whether the
+loop contracts — a kernel refutation (no contraction) is an equally valid outcome and would
+redirect the route to the arithmetic of `Φ` as the directive's fact (γ) demands.
