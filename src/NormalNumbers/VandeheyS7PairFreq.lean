@@ -35,6 +35,7 @@ the statement is CF-normality of one cylinder.
 bounded family empty and the bound trivially `d · (tail)`, which is `≥ 1` for `d ≥ 1`.
 -/
 import NormalNumbers.VandeheyS7PairCorr
+import NormalNumbers.VandeheyS7CFRun
 
 namespace NormalNumbers.VandeheyS7
 
@@ -154,11 +155,170 @@ theorem sum_gaussMeasure_append_le {w : List ℕ} (hw : w ≠ []) (hwpos : ∀ a
   rw [← ENNReal.toReal_sum (fun u _ => measure_ne_top _ _)]
   exact ENNReal.toReal_mono (measure_ne_top _ _) hmono
 
+/-! ## The pointwise decomposition -/
+
+/-- The middle word of `z` at depth `|w|`, length `d`. -/
+noncomputable def midWord (w : List ℕ) (d : ℕ) (z : ℝ) : List ℕ :=
+  (List.range d).map fun j => cfDigit z (w.length + j)
+
+@[simp] lemma midWord_length (w : List ℕ) (d : ℕ) (z : ℝ) : (midWord w d z).length = d := by
+  simp [midWord]
+
+lemma midWord_getD {w : List ℕ} {d : ℕ} {z : ℝ} {j : ℕ} (hj : j < d) :
+    (midWord w d z).getD j 0 = cfDigit z (w.length + j) := by
+  rw [midWord, List.getD_eq_getElem _ _ (by simpa using hj)]
+  simp
+
+/-- **The occurrence is a cylinder event when its middle digits are small.** -/
+theorem mem_cfCylinder_midWord {w : List ℕ} (hw : w ≠ []) {d : ℕ} {z : ℝ}
+    (hz : z ∈ pairSet w (w.length + d)) :
+    z ∈ cfCylinder (w ++ midWord w d z ++ w) := by
+  obtain ⟨⟨hz01, hdig1⟩, hz2⟩ := hz
+  obtain ⟨hz2mem, hdig2⟩ := hz2
+  refine ⟨hz01, fun i hi => ?_⟩
+  have hlen : (w ++ midWord w d z ++ w).length = w.length + d + w.length := by
+    simp [List.length_append]
+    omega
+  rw [hlen] at hi
+  rcases lt_or_ge i w.length with h1 | h1
+  · rw [getD_append_left (by rw [List.length_append]; simp; omega), getD_append_left h1]
+    exact hdig1 i h1
+  rcases lt_or_ge i (w.length + d) with h2 | h2
+  · -- the middle segment: the digit is the one `midWord` recorded
+    rw [getD_append_left (by rw [List.length_append]; simp; omega),
+      getD_append_right h1, midWord_getD (by omega)]
+    congr 1
+    omega
+  · -- the second copy of `w`, reached through the shift
+    rw [getD_append_right (by rw [List.length_append]; simp; omega)]
+    have hshift : cfDigit (gaussMap^[w.length + d] z) (i - (w.length + d))
+        = cfDigit z (w.length + d + (i - (w.length + d))) := by
+      rw [cfDigit, cfDigit, ← Function.iterate_add_apply, Nat.add_comm]
+    have hval := hdig2 (i - (w.length + d)) (by omega)
+    rw [hshift] at hval
+    rw [show w.length + d + (i - (w.length + d)) = i from by omega] at hval
+    rw [hval]
+    have hll : (w ++ midWord w d z).length = w.length + d := by
+      rw [List.length_append, midWord_length]
+    rw [hll]
+
+/-- The middle word is a legitimate bounded word when all its digits are at most `B`. -/
+theorem midWord_mem_boundedWords {w : List ℕ} {d B : ℕ} {z : ℝ}
+    (hz : ∀ k : ℕ, gaussMap^[k] z ∈ Set.Ioo (0:ℝ) 1)
+    (hsmall : ∀ j < d, cfDigit z (w.length + j) ≤ B) :
+    midWord w d z ∈ boundedWords B d := by
+  rw [mem_boundedWords]
+  refine ⟨by simp, fun a ha => ?_⟩
+  obtain ⟨j, hj, rfl⟩ : ∃ j, j < d ∧ cfDigit z (w.length + j) = a := by
+    simp only [midWord, List.mem_map, List.mem_range] at ha
+    obtain ⟨j, hj, rfl⟩ := ha
+    exact ⟨j, hj, rfl⟩
+  exact ⟨MapState.one_le_cfDigit hz _, hsmall j hj⟩
+
+/-! ## The counting bound -/
+
+open Classical in
+/-- The number of times before `p` at which the digit exceeds `B`, shifted by `c`. -/
+noncomputable def tailCount (y : ℝ) (B c p : ℕ) : ℝ :=
+  (((range p).filter fun m => B < cfDigit y (m + c)).card : ℝ)
+
+/-- **The pointwise decomposition.**  An occurrence of the pair event is either a bounded-middle
+cylinder event, or one of its middle digits is large. -/
+theorem blockIndic_pairSet_le {w : List ℕ} (hw : w ≠ []) {d B : ℕ} {y : ℝ}
+    (hy : ∀ k : ℕ, gaussMap^[k] y ∈ Set.Ioo (0:ℝ) 1) (m : ℕ) :
+    blockIndic (pairSet w (w.length + d)) (gaussMap^[m] y)
+      ≤ (∑ u ∈ boundedWords B d, blockIndic (cfCylinder (w ++ u ++ w)) (gaussMap^[m] y))
+        + ∑ j ∈ range d, (if B < cfDigit y (m + (w.length + j)) then (1:ℝ) else 0) := by
+  classical
+  set z := gaussMap^[m] y with hz
+  have hznorm : ∀ k : ℕ, gaussMap^[k] z ∈ Set.Ioo (0:ℝ) 1 := by
+    intro k; rw [hz, ← Function.iterate_add_apply]; exact hy _
+  have hdshift : ∀ j : ℕ, cfDigit z (w.length + j) = cfDigit y (m + (w.length + j)) := by
+    intro j
+    rw [hz, cfDigit, cfDigit, ← Function.iterate_add_apply, Nat.add_comm]
+  by_cases hmem : z ∈ pairSet w (w.length + d)
+  · by_cases hsmall : ∀ j < d, cfDigit z (w.length + j) ≤ B
+    · -- the bounded-middle branch
+      have hu : midWord w d z ∈ boundedWords B d := midWord_mem_boundedWords hznorm hsmall
+      have hzc : z ∈ cfCylinder (w ++ midWord w d z ++ w) := mem_cfCylinder_midWord hw hmem
+      have hone : blockIndic (cfCylinder (w ++ midWord w d z ++ w)) z = 1 :=
+        blockIndic_eq_one' hzc
+      have hle : blockIndic (cfCylinder (w ++ midWord w d z ++ w)) z
+          ≤ ∑ u ∈ boundedWords B d, blockIndic (cfCylinder (w ++ u ++ w)) z :=
+        Finset.single_le_sum (f := fun u => blockIndic (cfCylinder (w ++ u ++ w)) z)
+          (fun u _ => blockIndic_nonneg _ _) hu
+      have htail : (0:ℝ) ≤ ∑ j ∈ range d,
+          (if B < cfDigit y (m + (w.length + j)) then (1:ℝ) else 0) := by
+        refine Finset.sum_nonneg fun j _ => ?_
+        by_cases h : B < cfDigit y (m + (w.length + j)) <;> simp [h]
+      rw [blockIndic_eq_one' hmem]
+      rw [hone] at hle
+      linarith
+    · -- the large-digit branch
+      push_neg at hsmall
+      obtain ⟨j, hj, hjb⟩ := hsmall
+      have hpos : (1:ℝ) ≤ ∑ j ∈ range d,
+          (if B < cfDigit y (m + (w.length + j)) then (1:ℝ) else 0) := by
+        have hterm : (if B < cfDigit y (m + (w.length + j)) then (1:ℝ) else 0) = 1 := by
+          rw [if_pos]
+          rw [← hdshift j]; exact hjb
+        calc (1:ℝ) = (if B < cfDigit y (m + (w.length + j)) then (1:ℝ) else 0) := hterm.symm
+          _ ≤ ∑ j ∈ range d, (if B < cfDigit y (m + (w.length + j)) then (1:ℝ) else 0) := by
+              refine Finset.single_le_sum
+                (f := fun j => if B < cfDigit y (m + (w.length + j)) then (1:ℝ) else 0)
+                (fun j _ => ?_) (Finset.mem_range.2 hj)
+              by_cases h : B < cfDigit y (m + (w.length + j)) <;> simp [h]
+      have hsum0 : (0:ℝ) ≤ ∑ u ∈ boundedWords B d, blockIndic (cfCylinder (w ++ u ++ w)) z :=
+        Finset.sum_nonneg fun u _ => blockIndic_nonneg _ _
+      rw [blockIndic_eq_one' hmem]
+      linarith
+  · rw [blockIndic_eq_zero' hmem]
+    have h1 : (0:ℝ) ≤ ∑ u ∈ boundedWords B d, blockIndic (cfCylinder (w ++ u ++ w)) z :=
+      Finset.sum_nonneg fun u _ => blockIndic_nonneg _ _
+    have h2 : (0:ℝ) ≤ ∑ j ∈ range d,
+        (if B < cfDigit y (m + (w.length + j)) then (1:ℝ) else 0) := by
+      refine Finset.sum_nonneg fun j _ => ?_
+      by_cases h : B < cfDigit y (m + (w.length + j)) <;> simp [h]
+    linarith
+
+/-- **The summed decomposition.** -/
+theorem blockCount_pairSet_le {w : List ℕ} (hw : w ≠ []) {d B : ℕ} {y : ℝ}
+    (hy : ∀ k : ℕ, gaussMap^[k] y ∈ Set.Ioo (0:ℝ) 1) (p : ℕ) :
+    blockCount (pairSet w (w.length + d)) p y
+      ≤ (∑ u ∈ boundedWords B d, blockCount (cfCylinder (w ++ u ++ w)) p y)
+        + ∑ j ∈ range d, tailCount y B (w.length + j) p := by
+  classical
+  rw [blockCount_apply]
+  have hterm : ∀ m ∈ range p,
+      blockIndic (pairSet w (w.length + d)) (gaussMap^[m] y)
+        ≤ (∑ u ∈ boundedWords B d, blockIndic (cfCylinder (w ++ u ++ w)) (gaussMap^[m] y))
+          + ∑ j ∈ range d, (if B < cfDigit y (m + (w.length + j)) then (1:ℝ) else 0) :=
+    fun m _ => blockIndic_pairSet_le hw hy m
+  refine le_trans (Finset.sum_le_sum hterm) ?_
+  rw [Finset.sum_add_distrib]
+  have e1 : ∑ m ∈ range p, ∑ u ∈ boundedWords B d,
+        blockIndic (cfCylinder (w ++ u ++ w)) (gaussMap^[m] y)
+      = ∑ u ∈ boundedWords B d, blockCount (cfCylinder (w ++ u ++ w)) p y := by
+    rw [Finset.sum_comm]
+    exact Finset.sum_congr rfl fun u _ => (blockCount_apply _ _ _).symm
+  have e2 : ∑ m ∈ range p, ∑ j ∈ range d,
+        (if B < cfDigit y (m + (w.length + j)) then (1:ℝ) else 0)
+      = ∑ j ∈ range d, tailCount y B (w.length + j) p := by
+    rw [Finset.sum_comm]
+    refine Finset.sum_congr rfl fun j _ => ?_
+    rw [tailCount, Finset.card_filter]
+    push_cast
+    rfl
+  rw [e1, e2]
+
 end NormalNumbers.VandeheyS7
 
 section Audit
 
 #print axioms NormalNumbers.VandeheyS7.cfCylinder_append_subset_pairSet
 #print axioms NormalNumbers.VandeheyS7.sum_gaussMeasure_append_le
+#print axioms NormalNumbers.VandeheyS7.mem_cfCylinder_midWord
+#print axioms NormalNumbers.VandeheyS7.blockIndic_pairSet_le
+#print axioms NormalNumbers.VandeheyS7.blockCount_pairSet_le
 
 end Audit
