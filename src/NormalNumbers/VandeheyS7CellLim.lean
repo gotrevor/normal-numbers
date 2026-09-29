@@ -147,26 +147,24 @@ theorem tendsto_den {L : ℕ} (hx : Irrational x) (hmem : x ∈ Set.Ioo (0:ℝ) 
   exact tendsto_finsetSum _ hterm
 
 open Classical in
-/-- **S7-CT, the payoff.**  `CellMemory`'s selector words plus any cell cover of the cluster set
-give the per-cell bound with constant `B = (1 + 8 log 2)·Σ_{c ∈ F} γ(cellSet c)` and slack `L`.
-The selector mass cancels, so `B` is free of the cell, of `L`, and of the number of cells. -/
-theorem classFreqSlack_of_cellMemory {net : StateNet Φ x η ρ M} {L : ℕ}
+/-- The per-cell statement, for ONE cell: this is where the work happens. -/
+theorem classFreqSlack_at {net : StateNet Φ x η ρ M} {L : ℕ}
     {U : Fin M → Finset (List ℕ)} {F : Fin M → Finset (List ℕ × ℕ)} {B : ℝ} (w : List ℕ)
     (hx : Irrational x) (hmem : x ∈ Set.Ioo (0:ℝ) 1) (hCFn : IsCFNormal x) (hL : 2 ≤ L)
     (hUlen : ∀ i : Fin M, ∀ u ∈ U i, u.length = L ∧ (∀ a ∈ u, 1 ≤ a))
     (hUsel : ∀ i : Fin M, ∀ m : ℕ, L ≤ m + 2 →
       selIndic net i m
         = if ∃ u ∈ U i, gaussMap^[m + 2 - L] x ∈ cfCylinder u then 1 else 0)
-    (hUne : ∀ i : Fin M, (U i).Nonempty)
-    (hF : ∀ i : Fin M, ∀ c ∈ F i, (∀ e ∈ c.1, 1 ≤ e) ∧ 1 ≤ c.2)
-    (hcov : ∀ i : Fin M, ∀ z : ℝ, Irrational z → z ∈ Set.Ioo (0:ℝ) 1 →
+    {i : Fin M} (hUne : (U i).Nonempty)
+    (hF : ∀ c ∈ F i, (∀ e ∈ c.1, 1 ≤ e) ∧ 1 ≤ c.2)
+    (hcov : ∀ z : ℝ, Irrational z → z ∈ Set.Ioo (0:ℝ) 1 →
       z ∈ clusterSet (net.cen i) w (4 * ρ / Real.sqrt (|Φ.det| / 6)) →
       ∃ c ∈ F i, z ∈ cellSet c.1 c.2)
-    (hB : ∀ i : Fin M,
-      (1 + 8 * Real.log 2) * ∑ c ∈ F i, (gaussMeasure (cellSet c.1 c.2)).toReal ≤ B) :
-    ClassFreqBoundSlack net w B := by
+    (hB : (1 + 8 * Real.log 2) * ∑ c ∈ F i, (gaussMeasure (cellSet c.1 c.2)).toReal ≤ B)
+    {ε : ℝ} (hε : 0 < ε) :
+    ∃ K : ℝ, 0 ≤ K ∧ ∀ᶠ q in atTop,
+      cellHitCount net w i q ≤ (B + ε) * cellCount net i q + K := by
   classical
-  intro ε hε i
   refine ⟨(L:ℝ), by positivity, ?_⟩
   -- the words of `U i` are genuine
   have hUne' : ∀ u ∈ U i, u ≠ [] ∧ (∀ a ∈ u, 1 ≤ a) := by
@@ -178,10 +176,10 @@ theorem classFreqSlack_of_cellMemory {net : StateNet Φ x η ρ M} {L : ℕ}
   set D : ℕ → ℝ := fun q => ∑ u ∈ U i, blockCount (cfCylinder u) (q + 2 - L) x with hD
   set nm : ℝ := ∑ u ∈ U i, ∑ c ∈ F i, (gaussMeasure (cellSet (u ++ c.1) c.2)).toReal with hnm
   set dm : ℝ := ∑ u ∈ U i, (gaussMeasure (cfCylinder u)).toReal with hdm
-  have hNlim := tendsto_num hx hmem hCFn (U i) (F i) hUne' (hF i)
+  have hNlim := tendsto_num hx hmem hCFn (U i) (F i) hUne' hF
   have hDlim := tendsto_den hx hmem hCFn (U i) hL hUne'
   have hdmpos : 0 < dm := by
-    obtain ⟨u₀, hu₀⟩ := hUne i
+    obtain ⟨u₀, hu₀⟩ := hUne
     have hpos : ∀ u ∈ U i, 0 < (gaussMeasure (cfCylinder u)).toReal := by
       intro u hu
       exact gaussMeasure_cfCylinder_toReal_pos u (hUne' u hu).1 (hUne' u hu).2
@@ -210,22 +208,46 @@ theorem classFreqSlack_of_cellMemory {net : StateNet Φ x η ρ M} {L : ℕ}
     have hstep : nm ≤ Cq * dm * S := by rw [← h2]; exact h1
     have hdmnn : 0 ≤ dm := hdmpos.le
     have hfin : Cq * dm * S ≤ B * dm := by
-      have h := mul_le_mul_of_nonneg_right (hB i) hdmnn
+      have h := mul_le_mul_of_nonneg_right hB hdmnn
       nlinarith [h]
     linarith
   have hB0 : 0 ≤ B := by
     have hsum : 0 ≤ ∑ c ∈ F i, (gaussMeasure (cellSet c.1 c.2)).toReal :=
       Finset.sum_nonneg hcellnn
     have hlog : (0:ℝ) < Real.log 2 := Real.log_pos (by norm_num)
-    nlinarith [hB i]
+    nlinarith [hB]
   -- the two sandwiches
   have hnum : ∀ᶠ q in atTop, cellHitCount net w i q ≤ (L:ℝ) + N q := by
     filter_upwards with q
-    exact cellHitCount_le_blockCounts hx hmem w hUlen hUsel i (hcov i) q
+    exact cellHitCount_le_blockCounts hx hmem w hUlen hUsel i hcov q
   have hden : ∀ᶠ q in atTop, D q ≤ cellCount net i q := by
     filter_upwards [eventually_ge_atTop L] with q hq
     exact cellCount_ge_blockCounts hUlen hUsel i hL hq
   exact classFreqSlack_of_limits i hnum hden hNlim hDlim hdmpos hB0 hmass hε
+
+open Classical in
+/-- **S7-CT, the payoff.**  `CellMemory`'s selector words plus any cell cover of the cluster set
+give the per-cell bound with constant `B = (1 + 8 log 2)·Σ_{c ∈ F} γ(cellSet c)` and slack `L`.
+The selector mass cancels, so `B` is free of the cell, of `L`, and of the number of cells. -/
+theorem classFreqSlack_of_cellMemory {net : StateNet Φ x η ρ M} {L : ℕ}
+    {U : Fin M → Finset (List ℕ)} {F : Fin M → Finset (List ℕ × ℕ)} {B : ℝ} (w : List ℕ)
+    (hx : Irrational x) (hmem : x ∈ Set.Ioo (0:ℝ) 1) (hCFn : IsCFNormal x) (hL : 2 ≤ L)
+    (hUlen : ∀ i : Fin M, ∀ u ∈ U i, u.length = L ∧ (∀ a ∈ u, 1 ≤ a))
+    (hUsel : ∀ i : Fin M, ∀ m : ℕ, L ≤ m + 2 →
+      selIndic net i m
+        = if ∃ u ∈ U i, gaussMap^[m + 2 - L] x ∈ cfCylinder u then 1 else 0)
+    (hUne : ∀ i : Fin M, (U i).Nonempty)
+    (hF : ∀ i : Fin M, ∀ c ∈ F i, (∀ e ∈ c.1, 1 ≤ e) ∧ 1 ≤ c.2)
+    (hcov : ∀ i : Fin M, ∀ z : ℝ, Irrational z → z ∈ Set.Ioo (0:ℝ) 1 →
+      z ∈ clusterSet (net.cen i) w (4 * ρ / Real.sqrt (|Φ.det| / 6)) →
+      ∃ c ∈ F i, z ∈ cellSet c.1 c.2)
+    (hB : ∀ i : Fin M,
+      (1 + 8 * Real.log 2) * ∑ c ∈ F i, (gaussMeasure (cellSet c.1 c.2)).toReal ≤ B) :
+    ClassFreqBoundSlack net w B := by
+  classical
+  intro ε hε i
+  exact classFreqSlack_at w hx hmem hCFn hL hUlen hUsel (hUne i) (hF i) (hcov i) (hB i) hε
+
 
 end MapState
 
