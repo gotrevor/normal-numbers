@@ -716,6 +716,7 @@ import NormalNumbers.VandeheyS7Orbit
 import NormalNumbers.VandeheyS7Cell
 import NormalNumbers.VandeheyS7Golden
 import NormalNumbers.VandeheyS7Tight
+import NormalNumbers.VandeheyS7Dioph
 import NormalNumbers.VandeheyS7Hecke
 import NormalNumbers.VandeheyS7Predict
 import NormalNumbers.VandeheyS7Loss
