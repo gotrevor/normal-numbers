@@ -2243,3 +2243,27 @@ is the one that does not loop:
 ((c+d)d)`, so a width floor is exactly an upper bound on the denominator entries' size, i.e. a
 height bound on the state as a lattice point.  Prove the identity first; it is elementary and it
 is what lets `VandeheyS7Lattice`'s finiteness/repulsion results speak about widths.
+
+### 2026-09-29 lap 72 — the width is arithmetic (`VandeheyS7Width.lean`)
+
+Attack 2 of lap 71, landed:
+
+* `width_eq` — `width s = |ad − bc| / ((c+d)·d)`, an identity;
+* `width_eq_det_div` — equivalently `|det| / (distortion · d²)`;
+* `width_ge_of_height` — so a width floor **is** a height bound: a lower bound on `|det|` plus an
+  upper bound on `distortion · d²` gives one;
+* `width_ge_of_zdet` — and for the additive instance, where `det = m₁ + m₂φ ∈ ℤ[φ]`, Galois
+  repulsion supplies the determinant half for free:
+  `width ≥ 1 / (|m₁ + m₂ψ| · distortion · d²)`.  **A width floor with no ergodic input.**
+
+All axiom-clean.  The tail obligation of the §7 chain is now a lattice-height statement about
+`SL₂(ℤ[φ])` points — the shape directive fact (γ) asks for, and, unlike the lap-71 bootstrap, one
+that never mentions the image orbit.
+
+**NEXT (lap 73).**  The height bound itself: for the additive instance the state is
+`s_n = O_ℓ⁻¹ Φ P_n`, so `d` and `det′` are explicit in `q_ℓ(y)`, `q_n(x)` and `√5`.  Write those
+two quantities out (`d = q_{ℓ−1}(y)·(p_n + φ q_n) − …`, `det = 1` for the shear, so `|det′| = 1`!)
+— note the shear has determinant `1` exactly, which makes `width_ge_of_zdet` read
+`width ≥ 1/(distortion · d²)` with no conjugate at all.  The remaining question is then purely
+`d = O(1/√η)`, i.e. the state's denominator entry does not grow — which is a statement about the
+CLOCK staying synchronised, not about equidistribution.
