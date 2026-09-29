@@ -259,7 +259,33 @@ Three facts, all established lap 30, fix its difficulty and must steer every fur
   laps 31–40 converted the tail cell into an equivalent form and proved that form has no
   independent leverage.**  Any future lap must attack the statistics of the image expansion
   directly (fact (γ), the `Γ\SL₂(ℝ)` translate problem), not the counting.
-  **Next attack (lap 41).**  The `w ≠ []` cells are now the only untried part of
+  **Lap 41 — the bootstrap, resolved** (`VandeheyS7Boot.lean`, axiom-clean, sorry-free).
+  `blockCount_cellSet_le_shift`: UNCONDITIONALLY, for every irrational `y ∈ (0,1)`, every word
+  `w` and every `T`, `blockCount (cellSet w T) p y ≤ blockCount (cellSet [] T) p y + w.length`.
+  The reason is the shift — `Gⁿy ∈ cellSet w T` forces `Gⁿ⁺ᴸy ∈ cellSet [] T` (`cfDigit_add`) and
+  `n ↦ n + L` is injective.  So the general cell's frequency is ALWAYS at most the tail cell's,
+  with no hypothesis and no geometry; and `cellSet_mono_threshold` gives the other marginal,
+  `freq(w,T) ≤ freq(I_w)`, for free.
+  **But the bootstrap cannot close.**  The crux demands `freq(w,T) ≤ C·γ(cellSet w T)` and
+  `γ(cellSet w T) ≍ γ(I_w)·γ(cellSet [] T)` — a PRODUCT, while the two unconditional bounds give
+  only the MINIMUM.  `not_min_le_const_mul` (kernel): for every `C > 0` there are
+  `a, b ∈ (0,1]` with `C·ab < min a b` (witness `a = b = 1/(2C)`).  So lap 30's "the tail cell
+  controls the general cell" is FALSE as stated: no combination of the tail cell with the
+  word-frequency bound produces the general cell.  The crux needs the JOINT law of "word `w`,
+  then a large digit" in the image — genuine independence, not two marginals.
+  **Cumulative verdict of laps 38–41.**  Every counting-side lane is now closed by a theorem:
+  the Diophantine form is equivalent to the tail cell (lap 39), the tail cell is not an
+  unconditional fact (lap 40), and the tail cell does not imply the general cell (lap 41).  What
+  remains in `OrbitCellBound` is exactly the joint statistics of the image expansion — fact (γ),
+  the `Γ\SL₂(ℝ)` translate problem — and nothing else.
+  **Next attack (lap 42).**  Attack the joint law directly at its smallest nontrivial instance:
+  `w` a single digit.  The two-cell statement "digit `a` then a digit `≥ T`" in the image is the
+  first place the product vs. minimum gap bites, and the `s_n = Oₙ⁻¹ΦPₙ` state description says
+  exactly which input events produce it.  Concretely: formalize the two-step emission relation
+  (`MobState.cfDigit_mob_eq_emitDigit` composed with itself) and ask what input word class the
+  pair `(a, ≥T)` pulls back to — a NAMED finite-state condition on `x`'s digits would turn the
+  joint law into a statement CF-normality of `x` can reach.
+  **Older next-attack note (lap 40).**  The `w ≠ []` cells are now the only untried part of
   `OrbitCellBound`, and the lap-30 bootstrap note says the tail cell was supposed to CONTROL
   them.  Since the tail cell is now known to be exactly Gauss–Kuzmin for the image, reverse the
   bootstrap: assume the tail cell (as a named hypothesis `ImageTailLaw`) and ask whether the

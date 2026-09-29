@@ -731,3 +731,4 @@ import NormalNumbers.VandeheyTransportB
 import NormalNumbers.VandeheyFirstLetter
 import NormalNumbers.VandeheyS7Legendre
 import NormalNumbers.VandeheyS7Const
+import NormalNumbers.VandeheyS7Boot
