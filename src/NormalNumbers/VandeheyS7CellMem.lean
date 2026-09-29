@@ -233,10 +233,109 @@ theorem cellHitCount_le_blockCounts {net : StateNet Φ x η ρ M} {L : ℕ}
 
 end MapState
 
+/-! ## The denominator -/
+
+/-- Distinct words of the same length have disjoint cylinders. -/
+theorem cfCylinder_eq_of_mem_of_length {u v : List ℕ} (hlen : u.length = v.length) {z : ℝ}
+    (hu : z ∈ cfCylinder u) (hv : z ∈ cfCylinder v) : u = v := by
+  refine List.ext_getElem hlen fun i h1 h2 => ?_
+  have hu' := hu.2 i h1
+  have hv' := hv.2 i h2
+  rw [List.getD_eq_getElem _ _ h1] at hu'
+  rw [List.getD_eq_getElem _ _ h2] at hv'
+  rw [← hu', hv']
+
+namespace MapState
+
+variable {Φ : MapState} {x : ℝ} {η ρ : ℝ} {M : ℕ}
+
+open Classical in
+/-- Under `CellMemory` the selection indicator is the SUM of the selector cylinders' indicators:
+distinct words of the same length are mutually exclusive. -/
+theorem selIndic_eq_sum {net : StateNet Φ x η ρ M} {L : ℕ}
+    {U : Fin M → Finset (List ℕ)}
+    (hUlen : ∀ i : Fin M, ∀ u ∈ U i, u.length = L ∧ (∀ a ∈ u, 1 ≤ a))
+    (hUsel : ∀ i : Fin M, ∀ m : ℕ, L ≤ m + 2 →
+      selIndic net i m
+        = if ∃ u ∈ U i, gaussMap^[m + 2 - L] x ∈ cfCylinder u then 1 else 0)
+    (i : Fin M) (m : ℕ) (hm : L ≤ m + 2) :
+    selIndic net i m
+      = ∑ u ∈ U i, blockIndic (cfCylinder u) (gaussMap^[m + 2 - L] x) := by
+  classical
+  set z : ℝ := gaussMap^[m + 2 - L] x with hz
+  rw [hUsel i m hm]
+  by_cases hex : ∃ u ∈ U i, z ∈ cfCylinder u
+  · obtain ⟨u, huU, huz⟩ := hex
+    rw [if_pos ⟨u, huU, huz⟩]
+    have hone : ∀ v ∈ U i, blockIndic (cfCylinder v) z = if v = u then 1 else 0 := by
+      intro v hvU
+      by_cases hv : z ∈ cfCylinder v
+      · have : v = u := cfCylinder_eq_of_mem_of_length
+          (by rw [(hUlen i v hvU).1, (hUlen i u huU).1]) hv huz
+        rw [if_pos this, blockIndic, Set.indicator_of_mem hv]; rfl
+      · have hvu : v ≠ u := by
+          intro h; rw [h] at hv; exact hv huz
+        rw [if_neg hvu, blockIndic, Set.indicator_of_notMem hv]
+    rw [Finset.sum_congr rfl hone, Finset.sum_ite_eq' (U i) u (fun _ => (1:ℝ)), if_pos huU]
+  · rw [if_neg hex]
+    refine (Finset.sum_eq_zero fun v hvU => ?_).symm
+    have hv : z ∉ cfCylinder v := fun h => hex ⟨v, hvU, h⟩
+    rw [blockIndic, Set.indicator_of_notMem hv]
+
+open Classical in
+/-- **The denominator.**  Under `CellMemory` the cell's emission mass is at least the number of
+visits of the orbit to the selector cylinders, over the shifted window. -/
+theorem cellCount_ge_blockCounts {net : StateNet Φ x η ρ M} {L : ℕ}
+    {U : Fin M → Finset (List ℕ)}
+    (hUlen : ∀ i : Fin M, ∀ u ∈ U i, u.length = L ∧ (∀ a ∈ u, 1 ≤ a))
+    (hUsel : ∀ i : Fin M, ∀ m : ℕ, L ≤ m + 2 →
+      selIndic net i m
+        = if ∃ u ∈ U i, gaussMap^[m + 2 - L] x ∈ cfCylinder u then 1 else 0)
+    (i : Fin M) {q : ℕ} (hL : 2 ≤ L) (hq : L ≤ q) :
+    ∑ u ∈ U i, blockCount (cfCylinder u) (q + 2 - L) x ≤ cellCount net i q := by
+  classical
+  set T : Finset ℕ := (Finset.range q).filter (fun m => L ≤ m + 2) with hT
+  have hTsum : ∑ m ∈ T, selIndic net i m ≤ cellCount net i q := by
+    rw [cellCount_eq_sum_selIndic]
+    exact Finset.sum_le_sum_of_subset_of_nonneg (Finset.filter_subset _ _)
+      (fun m _ _ => selIndic_nonneg net i m)
+  refine le_trans ?_ hTsum
+  have hrw : ∑ m ∈ T, selIndic net i m
+      = ∑ m ∈ T, ∑ u ∈ U i, blockIndic (cfCylinder u) (gaussMap^[m + 2 - L] x) := by
+    refine Finset.sum_congr rfl fun m hm => ?_
+    exact selIndic_eq_sum hUlen hUsel i m (Finset.mem_filter.mp hm).2
+  rw [hrw, Finset.sum_comm]
+  refine Finset.sum_le_sum fun u _ => ?_
+  -- the shift is a bijection from `T` onto `range (q + 2 − L)`
+  have hinj : ∀ m₁ ∈ T, ∀ m₂ ∈ T, m₁ + 2 - L = m₂ + 2 - L → m₁ = m₂ := by
+    intro m₁ h₁ m₂ h₂ heq
+    have h₁' := (Finset.mem_filter.mp h₁).2
+    have h₂' := (Finset.mem_filter.mp h₂).2
+    omega
+  have himg : Finset.range (q + 2 - L) ⊆ T.image (fun m => m + 2 - L) := by
+    intro k hk
+    have hkq := Finset.mem_range.mp hk
+    refine Finset.mem_image.mpr ⟨k + L - 2, ?_, ?_⟩
+    · refine Finset.mem_filter.mpr ⟨Finset.mem_range.mpr (by omega), by omega⟩
+    · omega
+  have hnn : ∀ k, 0 ≤ blockIndic (cfCylinder u) (gaussMap^[k] x) := fun k =>
+    Set.indicator_nonneg (by intro _ _; norm_num) _
+  calc blockCount (cfCylinder u) (q + 2 - L) x
+      = ∑ k ∈ Finset.range (q + 2 - L), blockIndic (cfCylinder u) (gaussMap^[k] x) := by
+        rw [blockCount_apply]
+    _ ≤ ∑ k ∈ T.image (fun m => m + 2 - L), blockIndic (cfCylinder u) (gaussMap^[k] x) :=
+        Finset.sum_le_sum_of_subset_of_nonneg himg (fun k _ _ => hnn k)
+    _ = ∑ m ∈ T, blockIndic (cfCylinder u) (gaussMap^[m + 2 - L] x) := Finset.sum_image hinj
+
+end MapState
+
 section Audit
 
 #print axioms MapState.selIndic_mul_blockIndic_le
 #print axioms MapState.cellHitCount_le_blockCounts
+#print axioms cfCylinder_eq_of_mem_of_length
+#print axioms MapState.selIndic_eq_sum
+#print axioms MapState.cellCount_ge_blockCounts
 
 end Audit
 
