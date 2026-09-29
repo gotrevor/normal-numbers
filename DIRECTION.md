@@ -1,8 +1,49 @@
 # DIRECTION — normal-numbers 🧭
 
-**No active objective.**  The next run takes its objective from the operator: a kickoff file,
-plus a dated section at the top of this file that names the target theorem and the stop
-condition.  Open fronts: `STATUS.md`.  Queue: `PENDING_WORK.md`.
+## OPERATOR OBJECTIVE 2026-09-29: Vandehey §7 Problem 1 🌙
+
+**Target (open, Vandehey Compositio 2017 §7 Problem 1):** if `x` is CF-normal, is `φx` CF-normal?
+Is `x + φ`?  Moonshot lane: the objective is a conjecture graph, not "prove X".  There is no
+stop condition beyond the lap cap; a refutation of a route is an advance, and a lap succeeds by
+advancing the crux, not by sorry count.
+
+**Read first:** `papers/vandehey-2017-open-problem-attack-map.md` (§1 diagnosis, §2 dead ends,
+§3 Route A with the three 2026-08-24 corrections), `experiments/PROBE-ROUTE-A.md`,
+`archive/probe/PROBE-2026-08-25-1235-route-a-transducer.md`, and the Maze.  Serret/commensurator
+and soft rigidity (self-joinings of geodesic flow) are dead; do not relitigate them.
+
+**Graph to build:**
+1. **Frozen targets.**  A new module `VandeheyS7.lean` (in the root import) stating
+   `vandeheyS7_mul_phi : ∀ x, IsCFNormal (Int.fract x) → IsCFNormal (Int.fract (goldenRatio * x))`
+   and `vandeheyS7_add_phi` (for `x + φ`), plus the general quadratic-irrational form as a Prop.
+   These are open statements: `sorry`-free is not expected, and they are never weakened.
+   Record the frozen names and commit in `HANDOFF.md`.
+2. **The obstruction, as Lean.**  The Thm 1.1 pipeline (Raney normal form → transducer → class
+   equidistribution → run clock, `VandeheyCapstone.lean`) needs a finite state set.  State as
+   Props, with probes, where it breaks over `ℤ[φ]`: unit drift makes the reachable state set
+   infinite; pathwise merging is impossible (`M⁻¹VM` integral forces `V` diagonal for
+   `M = diag(φ,1)`); Lemma 2.2's bounded burst fails (`burst ≤ C + log(1+a)/Lévy` instead).
+   Prove what is provable (infinitude of the state set, the non-merging fact) and add Maze rows.
+3. **Route A: replace finiteness.**  The dynamics read only the real place.  Candidate nodes:
+   a bounded-distortion window lemma for reduced post-emission states (the compact analogue of
+   `entries ≤ D`; the integer descent does NOT port), a distributional merging statement
+   (Birkhoff–Hopf cone contraction, not coupling), trigger windows with `ρ(∂U) = 0` in place of
+   trigger strings, and the endgame either-or trick (verbatim for any `M`, so the problem reduces
+   to "every string has a limiting frequency in `φx`, independent of the CF-normal `x`").  Wire
+   each node to the frozen target by a theorem, even a conditional one.
+4. **Reuse before rebuild.**  Factor the Thm 1.1 pipeline so its finite-state step is a named
+   hypothesis; the new work supplies a compact-fiber substitute for that hypothesis.
+
+Guard rule applies to every new Prop (content locator + degenerate cases).  A Prop that turns
+out false goes in the Maze with its refutation, never silently weakened.
+
+**Lap 1 side items (cheap, do first):** SwingC2 triage and the OVERVIEW refresh (Vandehey 1.1
+proved, joint Lambert rests on AGP alone) from `PENDING_WORK.md`; prune them from the queue when
+done.
+
+---
+
+Open fronts: `STATUS.md`.  Queue: `PENDING_WORK.md`.
 
 Completed runs (the directive text is in git history, the outcome in `STATUS.md`):
 - 2026-09-28 (a): Moshchevitin–Shkredov refuted; C3 headline without `hURM`; Vandehey automaton
