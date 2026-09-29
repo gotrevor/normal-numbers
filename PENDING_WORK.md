@@ -2267,3 +2267,23 @@ two quantities out (`d = q_{ℓ−1}(y)·(p_n + φ q_n) − …`, `det = 1` for 
 `width ≥ 1/(distortion · d²)` with no conjugate at all.  The remaining question is then purely
 `d = O(1/√η)`, i.e. the state's denominator entry does not grow — which is a statement about the
 CLOCK staying synchronised, not about equidistribution.
+
+### 2026-09-29 lap 73 — the unimodular case: width floor **=** height bound
+
+For the additive instance `det Φ = 1` and the convergent matrices are unimodular, so `|det| = 1`
+and the conjugate drops out of lap 72's bound entirely.  What is left is an equivalence:
+
+* `width_eq_of_det_one` — `width = 1/((c+d)·d)`;
+* `width_ge_of_det_one_of_height` — `(c+d)·d ≤ H ⟹ width ≥ 1/H`;
+* `height_le_of_width_ge` — **and conversely** `width ≥ η ⟹ (c+d)·d ≤ 1/η`.
+
+So nothing is lost in the reduction: `StateClock`'s width floor *is* the statement that the
+state's denominator entries stay bounded.  And since `s_n = O_ℓ⁻¹ Φ P_n` with `O_ℓ ≈ Φ P_n` (that
+is what the emitted matrix tracks), bounded entries is precisely **the clock staying
+synchronised** — a bookkeeping statement about the transducer's run, not an equidistribution one.
+
+**NEXT (lap 74).**  Prove synchronisation: `‖O_ℓ⁻¹ Φ P_n‖ = O(1)` along the run, from
+`VandeheyS7Emit`'s emission rule (the machine emits precisely while the image is inside a
+cylinder, which is what keeps `O_ℓ` tracking `Φ P_n`).  That is the last piece of `StateClock`, and
+with it the §7 chain drops to two hypotheses: `GaussACRigidity` (cited) and the crux
+`WindowedPullback`.

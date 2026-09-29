@@ -106,6 +106,36 @@ theorem width_ge_of_zdet (s : MobState) {m₁ m₂ : ℤ} (hm : ¬ (m₁ = 0 ∧
         exact mul_le_mul_of_nonneg_right h1 hcpos.le
     _ = |zval m₁ m₂| * (|zconj m₁ m₂| * (s.distortion * s.d ^ 2)) := by ring
 
+
+/-! ## The unimodular case: the floor is exactly a bound on the denominator entries
+
+For the additive instance `Φ = [[1,φ],[0,1]]` has determinant `1` and the convergent matrices are
+unimodular, so the state has `|det| = 1` and the conjugate drops out of `width_ge_of_zdet`
+entirely.  What is left is an equivalence, with nothing lost in either direction. -/
+
+theorem width_eq_of_det_one (s : MobState) (hdet : |s.a * s.d - s.b * s.c| = 1) :
+    s.width = 1 / ((s.c + s.d) * s.d) := by
+  rw [width_eq, hdet]
+
+/-- **The floor, from a height bound.** -/
+theorem width_ge_of_det_one_of_height (s : MobState)
+    (hdet : |s.a * s.d - s.b * s.c| = 1) {H : ℝ} (hH : 0 < H)
+    (hle : (s.c + s.d) * s.d ≤ H) : 1 / H ≤ s.width := by
+  have hd : 0 < s.d := s.hd
+  have hcd : 0 < s.c + s.d := by linarith [s.hc]
+  rw [width_eq_of_det_one s hdet]
+  apply one_div_le_one_div_of_le (by positivity) hle
+
+/-- **And conversely** — so the reduction loses nothing: a width floor *is* a height bound. -/
+theorem height_le_of_width_ge (s : MobState) (hdet : |s.a * s.d - s.b * s.c| = 1)
+    {η : ℝ} (hη : 0 < η) (hw : η ≤ s.width) : (s.c + s.d) * s.d ≤ 1 / η := by
+  have hd : 0 < s.d := s.hd
+  have hcd : 0 < s.c + s.d := by linarith [s.hc]
+  rw [width_eq_of_det_one s hdet] at hw
+  rw [le_div_iff₀ hη]
+  rw [le_div_iff₀ (by positivity)] at hw
+  linarith
+
 end MobState
 
 section Audit
@@ -114,6 +144,8 @@ section Audit
 #print axioms MobState.width_eq_det_div
 #print axioms MobState.width_ge_of_height
 #print axioms MobState.width_ge_of_zdet
+#print axioms MobState.width_ge_of_det_one_of_height
+#print axioms MobState.height_le_of_width_ge
 
 end Audit
 
