@@ -707,6 +707,7 @@ import NormalNumbers.VandeheyS7Word
 import NormalNumbers.VandeheyS7Boundary
 import NormalNumbers.VandeheyS7Budget
 import NormalNumbers.VandeheyS7Assemble
+import NormalNumbers.VandeheyS7Emit
 import NormalNumbers.VandeheyLRRuns
 import NormalNumbers.VandeheyLRPattern
 import NormalNumbers.VandeheyRunCount

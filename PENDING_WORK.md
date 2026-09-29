@@ -402,6 +402,40 @@ needs one discharged (DIRECTION standing rule 3).
 
 ## Lap notes
 
+### 2026-09-29 lap 26 — the emitted digit is a function of the STATE alone (`VandeheyS7Emit.lean`)
+
+    cfDigit_mob_eq_emitDigit :  0 < s.b → CanEmit s → y ∈ [0,1] → cfDigit (s.mob y) 0 = emitDigit s
+
+**That is the whole point of the lap.**  The emitted digit does not depend on the unread future
+of the input.  Since the state after reading a window is `s₀ · wordState w` (`runWord_eq_comp`)
+and merging makes `s₀` invisible (`spread_runWord_le`), the digit is a function of the WINDOW —
+which is exactly what `cfCount_tendsto_of_decomposition` (lap 22) takes as its hypothesis.
+
+Supporting, all axiom-clean:
+
+* `mob_mem_uIcc` : a state maps `[0,1]` — the range of every possible continuation — into the
+  interval between `s.mob 0` and `s.mob 1`.  The sign of `det` decides the orientation and
+  `uIcc` absorbs it, so NO hypothesis on `det` is needed.  (The two exact identities
+  `mob y − mob 0 = y·D/(d(cy+d))` and `mob 1 − mob y = (1−y)·D/((c+d)(cy+d))` carry it.)
+* `cfDigit_zero_antitone` / `cfDigit_zero_eq_of_between` : `⌊1/·⌋` is antitone, so a digit that
+  agrees at the endpoints is constant across the interval.
+* `CanEmit s := cfDigit (s.mob 0) 0 = cfDigit (s.mob 1) 0`, with `emitDigit` the common value.
+
+`0 < s.b` is load-bearing and not cosmetic: `phiState` has `b = 0`, where `mob 0 = 0` and the
+digit is the junk value.  It is the same side condition the repo's `emit` already carries.
+
+Degenerate case `not_canEmit_of_ne`: when the endpoints disagree, no digit is determined and the
+machine must read more input — which is precisely the `boundaryBad` situation of
+`VandeheyS7Boundary`.  **That is why that set had to be measured**, and the two modules now meet.
+
+**Next attack (lap 27): the window function `F` itself.**  Define `F w := emitDigit (wordState w)`
+(or `emitDigit (s₀.comp (wordState w))` and then quotient out `s₀` by merging).  The statement to
+prove: for a.e. input and all large windows, the image digit at the corresponding position equals
+`F` of the window.  The `CanEmit` hypothesis is discharged off `boundaryBad` by
+`cfDigit_agree_depth`; the `s₀`-independence is `spread_runWord_le`.  Both are in hand, so this
+is a matter of lining up the indices — the clock `ℓ` is what relates input position to image
+position, and it is `VandeheyS7Clock`'s FIRST named hypothesis, believed fine and measured.
+
 ### 2026-09-29 lap 25 — the window lemma is UNCONDITIONAL along the run
 
 **A route correction first, recorded so it is not retried.**  Lap 24's stated next step — get the
