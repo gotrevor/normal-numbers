@@ -1,5 +1,16 @@
 # PENDING WORK — the queue
 
+## Current Lambert status, 29 September 2026
+
+The bounded qualitative Lambert objective is complete: `f6fbf87` proves the original
+common-position theorem unconditionally.  [Completed proof](docs/JOINT-LAMBERT-RESCALED-PROOF.md).
+The [next quantitative target](docs/JOINT-LAMBERT-QUANTITATIVE-NEXT.md) has a paper derivation
+of `N exp(-C (log log N)^2 log log log N)` occurrences for every sufficiently large N.
+No new treadmill is launched by this documentation update.  The older AGP-only status
+below is historical; proving AGP is not the next Lambert obligation.  Vandehey work is
+separate, in the main checkout.
+
+
 Concrete next moves, cheapest and most clear-cut first.  Front context is in `STATUS.md`.  The
 lap-by-lap log from before the 2026-09-27 merge is `archive/PENDING_WORK-to-2026-09-27.md`.
 Treadmill laps append dated notes **below the queue**, and a review lap folds them back into it.

@@ -2,7 +2,13 @@
 
 **Date** 2026-09-28 (lap 7, bounded joint-Lambert campaign) · **HEAD at writing** `3ddc0b6`
 
-After `3ddc0b6` the joint Erdős–Borwein headline rests on **exactly one** analytic
+**Current status, 29 September 2026:** the qualitative headline is proved unconditionally
+at `f6fbf87`; [proof route](JOINT-LAMBERT-RESCALED-PROOF.md).
+This document preserves the audit of AGP itself.  Its missing stronger theorem is not a
+remaining dependency of the Lambert headline.  The [quantitative next target](JOINT-LAMBERT-QUANTITATIVE-NEXT.md)
+also has a paper route using the installed pointwise estimate.
+
+Historically, after `3ddc0b6`, the available joint Erdős–Borwein headline rested on **one** analytic
 hypothesis.  `PrimeIntervalSupply` is a theorem
 (`src/NormalNumbers/JointLambertPrimeInputs.lean`, `primeIntervalSupply_holds`), so
 
@@ -289,8 +295,8 @@ necessary for the qualitative joint-Lambert headline, and it is not: see
 The detour came from two demands that the consumer never made.
 
 1. **The search endpoint was tied to the modulus.** The old schedule fixed `X = 2^{4k⁴}` with
-   `B ≤ 2^{k⁴}`, i.e. `B = X^{1/4}` — precisely the AGP range. Nothing downstream requires
-   that; `X` may grow as fast in `k` as we like. At `X = 2^{4k¹²}` the same modulus sits in
+   `B ≤ 2^{k⁴}`, hence `B ≤ X^{1/4}`, the old allowance. Nothing downstream requires
+   that; the larger endpoint below still permits the tail bounds. At `X = 2^{4k¹²}` the same modulus sits in
    the Siegel–Walfisz range, where §2b's *proved* input already applies.
 2. **A lower bound on the excised conductor was demanded.** §2/§4 above are right that the
    installed chain excises `minFac(χ.modulus)` and admits no lower bound. But

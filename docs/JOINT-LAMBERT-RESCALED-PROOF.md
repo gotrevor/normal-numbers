@@ -15,14 +15,16 @@ Nothing in the mathematics of the joint-Lambert assembly. The only change is the
 | pool interval | `(2^k, 2^{k+1})` | same |
 | CRT modulus | `B ≤ 2^{k⁴}` | same |
 | search endpoint | `X = 2^{4k⁴}` | `X = 2^{4k¹²}` |
-| modulus vs endpoint | `B = X^{1/4}` | `B = X^{1/12}`, and `log B = k⁴ ≪ √log X = 2k⁶√log 2` |
+| modulus vs endpoint | `B ≤ X^{1/4}` | `log B ≤ k⁴ log 2 = O((log X)^{1/3}) = o(√log X)` |
 | analytic input | `AGP` (hypothesis) | `exists_pointwise_exponential_distribution` (**theorem**) |
 | candidate density | `1/(16k⁴)` | `1/(16k¹²)` |
 | excised conductor | `Dset`, `|Dset| ≤ D₀`, each `> log X` | `Dset = {P}` or `∅`, **no size condition** |
 
-`B ≤ X^{1/4}` is exactly the range where only AGP-strength input works. `log B ≪ √log X`
-is the Siegel–Walfisz range, where the installed material already lives. The consumer never
-cared which: it consumes only "at least `M/(16·poly(k))` candidate indices".
+The old implementation used AGP to cover its entire modulus allowance.  The rescaled
+allowance makes the installed exponential discrepancy estimate small relative to the main
+term.  The qualitative consumer needs only enough candidates for the tail argument.
+This is an excised-conductor estimate; no claim about a full unexcised Siegel-Walfisz
+theorem over this range is needed.
 
 ## 2. The scale inequalities
 
@@ -33,13 +35,15 @@ Write `η, C` for the constants of `exists_pointwise_exponential_distribution`,
 `B ≤ X^{1/3}`, i.e. `B ≤ powerDistributionLevel X = ⌊X^{1/3}⌋`.
 
 **(b) The error is dominated** (`eventually_rescaled_error_small`). We need
-`C·X·e^{−(η/2)√Λ} · φ(B) · Λ ≤ (2/5)·X`, i.e.
+`C·X·e^{−(η/2)√Λ} · φ(B) · Λ ≤ (2/5)·X`.  After division by X,
+the left side is at most the following majorant, using `φ(B) ≤ 2^{k⁴}` and `log 2 ≤ 1`:
 
     C · 4k¹² · 2^{k⁴} · exp(−η k⁶ s)  =  4C·k¹²·exp(k⁴ log 2 − η k⁶ s)  ≤  2/5,
 
 which holds eventually because `η s k² ≥ log 2 + 1` eventually, making the exponent
 `≤ −k⁴ ≤ −k`. **On the old schedule the same computation gives the exponent
-`k⁴ log 2 − η k² s → +∞`** — that divergence, and nothing else, is what forced AGP.
+`k⁴ log 2 − η k² s → +∞`**.  This shows the old coarse bound cannot
+justify this error comparison; it does not establish that the actual construction needs AGP.
 
 **(c) The count.** `π(X) ≥ (9/10) X/log X` (`Erdos446.eventually_primeCounting_tenth_bounds`),
 so `π(X;B,u) ≥ π(X)/φ(B) − E ≥ (9/10 − 2/5)·X/(φ(B)Λ) = X/(2φ(B)Λ)` — AGP's own conclusion.
@@ -78,3 +82,11 @@ New: `JointLambertRescaledPrimes.lean`, `JointLambertRescaledTail.lean`,
 `JointLambertUnconditional.lean`. Every pre-existing `JointLambert*.lean` is byte-for-byte
 identical to `20d5f75` (`git diff --numstat 20d5f75` over them is empty); only
 `src/NormalNumbers.lean` gains three imports.
+
+## 6. Next target: a quantitative count
+
+The all-N count does not require uniformity across varying bases.  At fixed bases and words,
+the original paper's much smaller modulus already fits the installed error estimate.
+[The new derivation](JOINT-LAMBERT-QUANTITATIVE-NEXT.md) goes further: a non-coprime
+middle-tail estimate permits primes near k^3 and the proposed count
+`N exp(-C (log log N)^2 log log log N)`.  This strengthening is paper work, not yet Lean.

@@ -20,9 +20,9 @@ Raney automaton is period-2 in the sign of the determinant (so the uniform-lengt
 that `classEquidistribution_of_common_reach` demands is impossible — repaired by the row-swap
 involution and the phase-corrected automaton on `RPlus D`), and the capstone's *factorized*
 `JointStateFreq` hypothesis is numerically FALSE at `D = 3` (repaired by carrying a general
-`ρ(q,t)`, with the escape mass controlled for free by `ρ(w,t) ≤ γ(I_w)`).  Four other fronts
-carry proved-but-conditional headlines (Joint Lambert, C3/MRT, Elliott, the casting-out crux
-leaves); their hypotheses are the standing debt.
+`ρ(q,t)`, with the escape mass controlled for free by `ρ(w,t) ≤ γ(I_w)`).  Joint Lambert has since become unconditional (`f6fbf87`).  The inherited Vandehey summary
+above records the earlier shared-checkout state; current Lambert details follow below.
+C3/MRT, Elliott and the casting-out crux leaves still carry conditional headlines.
 
 ## What's happened (newest first)
 
@@ -59,22 +59,20 @@ leaves); their hypotheses are the standing debt.
 
 ## Open fronts
 
-### Joint Lambert: simultaneous disjunctivity (headline proved, conditional)
-- **Proved** (`JointLambertDisjunctivity.lean`):
-  - `JointLambert.jointLambertDisjunctivity (hagp : AGP) (hpis : PrimeIntervalSupply)`: for
-    every finite set of bases, every tuple of target words occurs at one common digit offset,
-    infinitely often.
-  - `jointWords_two_four`: the dependent-base check.
-- **Hypotheses left:** `AGP` only (`JointLambertPrimeSelection.lean:64`).  `PrimeIntervalSupply`
-  (`:74`) is discharged by `JointLambertPrimeInputs.primeIntervalSupply_holds` (lap 7) from
-  ordinary PNT; use `jointLambertDisjunctivity_of_agp` / `jointWords_two_four_of_agp`.
-- **Remains:**
-  1. Discharge `AGP`.  Gap map: `docs/JOINT-LAMBERT-AGP-GAP.md`.  Averaged absolute-error
-     bounds (including Bombieri–Vinogradov, itself only a `def` in the installed tree) provably
-     cannot supply it; the missing input is a log-free zero-density estimate.  Next concrete
-     target there: `AGPExpRange` (AGP with `X^{1/4}` cut to `exp(c√log X)`).
-  2. The quantitative all-`N` count of paper §6, as a separate target.
-- **Read:** `docs/JOINT-LAMBERT-AGP-GAP.md`, `HANDOFF-joint-lambert.md`, `papers/2026-09-26-joint-lambert-disjunctivity.md`.
+### Joint Lambert: simultaneous disjunctivity (unconditional)
+
+- **Proved:** `JointLambert.jointLambertDisjunctivity_unconditional` and
+  `jointWords_two_four_unconditional` in `JointLambertUnconditional.lean` (`f6fbf87`).
+  Every tuple of valid words across finitely many distinct bases occurs at common positions
+  infinitely often, including bases 2 and 4.  No analytic hypotheses remain on this theorem.
+- **Mechanism:** rescale the search and use `exists_pointwise_exponential_distribution`;
+  the AGP and AGPExpRange statements remain separate open analytic targets.
+- **Next mathematical target:** the quantitative all-N bound
+  `N exp(-C (log log N)^2 log log log N)`.  The new paper argument uses primes near k^3,
+  a gcd-weighted divisor average and three tail ranges.  It is not yet formalized.
+- **Read:** [completed proof](docs/JOINT-LAMBERT-RESCALED-PROOF.md),
+  [quantitative derivation](docs/JOINT-LAMBERT-QUANTITATIVE-NEXT.md),
+  [original paper](papers/2026-09-26-joint-lambert-disjunctivity.md).
 
 ### Vandehey 2017 Thm 1.1: Möbius images of CF-normal numbers are CF-normal (ONE leaf left)
 - **The Smith reduction (2026-09-28, `VandeheySmith.lean`, sorry-free).**  `MobiusCFN a b c d`
@@ -199,7 +197,7 @@ This repo holds **no `axiom` declarations**: literature inputs are named hypothe
 | `Literature.mobiusCFNGL2_holds` | unconditional (Serret) | trust base | 🟢 clean, discharged |
 | `Literature.philipp_psi_mixing_holds` | unconditional (Philipp) | trust base | 🟢 clean, discharged |
 | `moshchevitinShkredov_cf_false` | refutation (Airey–Mance) | trust base | 🟢 clean |
-| `JointLambert.jointLambertDisjunctivity_of_agp` | conditional on `AGP` **alone** | trust base | 🟡 `PrimeIntervalSupply` is now a THEOREM (`primeIntervalSupply_holds`, lap 7) from **ordinary PNT** — it was never PNT-in-AP strength, and the two hypotheses were never of equal strength. `AGP` alone remains, and needs a log-free zero-density estimate: `docs/JOINT-LAMBERT-AGP-GAP.md` |
+| `JointLambert.jointLambertDisjunctivity_unconditional` | **none** | installed prime distribution + CRT + tail | Proved at `f6fbf87`; quantitative strengthening remains paper work. |
 | `JointLambert.primeIntervalSupply_holds` | **none** | `Erdos446.eventually_dyadicPrimes_card_bounds` → real PNT | ✅ proved, axiom-clean |
 | `CastingOut.conjC3_of_geom_input_band'` | conditional (C3, open conjecture) | trust base | 🔴 by design: `KPointNoExcAtWith` is Tao–Teräväinen-hard, `CharPrimeSumLogQ` needs Dirichlet L-theory, `WideBlockSavingBand` is bespoke.  C3 is itself a conjecture, so a conditional headline is the honest form |
 | `ElliottLedger.twoPointElliottLog_of_zetaExponent` | conditional on `ZetaLogDerivExponent θ`, `θ < 1` | trust base | 🟡 Vinogradov–Korobov gives `θ = 2/3`; repo owns `θ ≥ 9`; gap recorded as `zetaLogDerivExponent_gap` |

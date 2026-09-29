@@ -21,10 +21,9 @@ them is empty); only `src/NormalNumbers.lean` gains three imports.
 obstacles to the *strong* `AGP` statement, but the qualitative joint-Lambert headline asks for
 much less, and two avoidable demands of the old schedule hid that.
 
-1. **The CRT modulus was tied to the search endpoint.** `X = 2^{4k⁴}` with `B ≤ 2^{k⁴}` puts
-   `B = X^{1/4}` — precisely the AGP range. Nothing downstream needs the tie: `X` may grow as
-   fast in the killed-window height `k` as we like. At `X = 2^{4k¹²}` the same `B` sits in the
-   **Siegel–Walfisz** range, `log B = k⁴ ≪ √log X = 2k⁶√log 2`, where the already-proved and
+1. **The CRT modulus was tied to the search endpoint.** `X = 2^{4k⁴}` with `B ≤ 2^{k⁴}` gives
+   `B ≤ X^{1/4}`, the allowance covered by the old AGP input. The specific larger search endpoint below is compatible with the downstream tail bounds. At `X = 2^{4k¹²}` the same `B` sits in the
+   small-modulus regime of the excised-conductor estimate, `log B ≤ k⁴ log 2 = o(√log X)`, with `√log X = 2k⁶√log 2`, where the already-proved and
    axiom-clean `exists_pointwise_exponential_distribution` applies.
 2. **A lower bound on the excised conductor was demanded.** `exists_prime_allocation` dodges any
    finite set of non-unit moduli at one pool prime each, with no size hypothesis, so `AGP`'s
@@ -33,8 +32,7 @@ much less, and two avoidable demands of the old schedule hid that.
 
 **The decisive inequality** (`eventually_rescaled_error_small`): the relative error budget is
 `4C·k¹²·exp(k⁴ log 2 − η k⁶ √log 2) → 0` because `k⁶ ≫ k⁴`. The *identical* computation on the
-old schedule gives `exp(k⁴ log 2 − η k² √log 2) → +∞`. That divergence, and nothing else, is what
-forced AGP.
+old schedule gives `exp(k⁴ log 2 − η k² √log 2) → +∞`. The old coarse estimate does not make the installed error small enough; this is not a necessity result for AGP.
 
 ## The chain
 
@@ -56,11 +54,16 @@ The `JointLambertAGPRange` sorries are designated-open audit surface; do not att
 
 ## Next dependency, if this line is continued
 
-The natural next target is the **quantitative** statement (the paper's frequency count) rather
-than the qualitative common-position one. That does need a genuine density input, and the
-rescale trick does not reach it: the candidate density `1/(16k¹²)` is enough for "some index
-exists" but the frequency statement needs the count uniform in the *base*, which re-couples `X`
-to the window. Expect AGP, or a log-free zero-density estimate, to be genuinely required there.
+The next target is the **quantitative all-N count**, with a stronger proposed rate:
+`N exp(-C (log log N)^2 log log log N)`.
+See `docs/JOINT-LAMBERT-QUANTITATIVE-NEXT.md` for the full paper derivation.
+
+**Correction, 29 September:** the original version of this handoff claimed that quantitative
+counting needs uniformity in the base and hence stronger prime-distribution machinery.
+That was not established and is not a requirement of the target.  Bases and words stay
+fixed; the original paper's modulus already fits the proved pointwise discrepancy bound.
+The new three-range tail argument reduces the prime-pool size and improves the rate further.
+The count is not yet formalized.  Do not launch a full-AGP campaign to pursue it.
 
 ## Gotchas found this lap
 

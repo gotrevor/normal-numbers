@@ -1,5 +1,16 @@
 # Handoff: every analytic input of the capstone is PROVED — only assembly is left
 
+## Current Lambert status, 29 September 2026
+
+The bounded qualitative Lambert objective is complete: `f6fbf87` proves the original
+common-position theorem unconditionally.  [Completed proof](docs/JOINT-LAMBERT-RESCALED-PROOF.md).
+The [next quantitative target](docs/JOINT-LAMBERT-QUANTITATIVE-NEXT.md) has a paper derivation
+of `N exp(-C (log log N)^2 log log log N)` occurrences for every sufficiently large N.
+No new treadmill is launched by this documentation update.  The older AGP-only status
+below is historical; proving AGP is not the next Lambert obligation.  Vandehey work is
+separate, in the main checkout.
+
+
 **Date**: 2026-09-28 (lap 6) · **Branch**: `wip/g5-prime-subset` · **HEAD**: `3173fb4` ·
 `lake build` 🟢 10332 jobs · working tree clean · nothing pushed.
 
