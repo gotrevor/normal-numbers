@@ -2715,3 +2715,40 @@ that IS a composition: `s = R_w.comp s'`, `s` before emitting `w`, `s'` after.
 `R.d` for the actual emitted block with `cfK` of the emitted word — transducer bookkeeping inside
 `StateCoupling`, not analysis.  The next grind lap should do exactly that and nothing else on this
 side; any further estimate-sharpening here is wasted (lap-75 idea 4).
+
+### Lap 75, twelfth commit — S7-CY: `R.d = cfK w`; the lag side has NO analytic gap left
+
+S7-E2 reduced the emission gain to `2 log R.d` and flagged one gap: identifying `R.d` with the
+continuant of the emitted word.  Closed.
+
+* `MobState.cylState w` — the cylinder map `t ↦ [0; a₁,…,aₙ + t]`, i.e.
+  `readState a₁ ∘ ⋯ ∘ readState aₙ`.
+* `MobState.cylState_bd` — the convergent identification, as ONE simultaneous induction:
+  `(cylState w).d = cfK w` and `(cylState w).b = cfNum w`.  The continuant recursion
+  `cfK (a::b::l) = a·cfK(b::l) + cfK l` **is** the `comp` recursion `d(a::w) = a·d w + b w` paired
+  with `b(a::w) = d w`.  The repo's `cfNum` convention (`cfNum [] = 0`) is what makes this come out;
+  `cfP [] = 1` would not.
+* `MobState.cylState_det` — `|det| = 1`, discharging `deficit_comp_ge`'s unimodularity hypothesis.
+* `MobState.deficit_comp_cylState_ge` — **the emission gain with no free parameters**: emitting `w`
+  buys `2 log (cfK w)` of lag.
+* `MobState.deficit_comp_cylState_fib_ge` — the `fib` form, matching lap 74.
+
+**`deficit_telescope_le`'s `hstep` is now discharged end to end into kernel theorems** — read
+(S7-RC) and emission (S7-E2 + S7-CY).  There is no remaining analytic gap on the lag/clock side of
+the §7 front.
+
+### The front at the end of lap 75 (twelve proof commits)
+
+    vandeheyS7_mul_phi / _add_phi
+      ⇐ GaussACRigidity (cited)  +  ImageTight (audited sound)  +  StateData
+
+and inside `StateData`:
+
+| component | status |
+|---|---|
+| `StateCoupling` | pure transducer bookkeeping — the ONLY labour left, and it is labour, not mathematics |
+| clock regularity | `hstep` fully supplied (S7-RC + S7-E2 + S7-CY); needs `Σ log aₙ` control, which is behind second-place equidistribution (S7-CR) |
+| `BlockAverageBound` | fact (α) = second-place equidistribution (S7-ST + S7-DC) — the wall |
+
+**Next lap**: `StateCoupling` for the Raney machine, and nothing else on this side.  The altitude
+fork (re-authorise the second place, or not) is still open and still belongs to a review lap.
