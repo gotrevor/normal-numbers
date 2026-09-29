@@ -791,6 +791,7 @@ import NormalNumbers.VandeheyS7Slot
 import NormalNumbers.VandeheyS7Skew
 import NormalNumbers.VandeheyS7SetBound
 import NormalNumbers.VandeheyS7SkewWindow
+import NormalNumbers.VandeheyS7WindowFreq
 import NormalNumbers.VandeheyS7Class
 import NormalNumbers.VandeheyS7Net
 import NormalNumbers.VandeheyS7Mem
