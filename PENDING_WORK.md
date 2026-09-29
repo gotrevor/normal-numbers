@@ -195,7 +195,16 @@ Three facts, all established lap 30, fix its difficulty and must steer every fur
   numerator of a primitive good approximation is an ANTI-good denominator: `mφx = m²/q + mδ/q` and
   `gcd(m,q)=1` with `q ≥ 2` give `‖mφx‖ ≥ 1/(2q)`.  So good denominators come in pairs `(q,m)`
   whose second coordinate is excluded from the good set, purely from `φ(φ−1)=1`.
-  **Next attack (lap 37):** run the unit trick at the STATE
+  **Lap 37 — the loop is closed** (`VandeheyS7Loop.lean`, axiom-clean).  `goodDenCountPrim_fract`
+  (the count does not see `Int.fract`: `nearInt_mul_fract` plus `coprime_shift_iff`, since the
+  numerator moves by the integer `q⌊r⌋`) and `goodDenBoundPrim_fract_iff` let the hypothesis be
+  stated for the RAW multiplier.  Hence `tailFreq_mul_phi_of_goodDenBound` and
+  `tailFreq_add_phi_of_goodDenBound`: for CF-normal `x`, `GoodDenBoundPrim (φx) D` (resp.
+  `(x+φ)`) plus a Lévy bound gives the crux's `O(1/T)` tail frequency for the FROZEN targets, with
+  irrationality supplied by `VandeheyS7Golden`'s leg 1.  The §7 route now reads end-to-end:
+  frozen target ⇐ `GaussACRigidity` + `OrbitCellBound`; `OrbitCellBound`'s tail cell ⇐
+  `#{q ≤ Q : ‖qφx‖ ≤ 2/(Tq), gcd = 1} ≤ (D/T) log Q`, a statement about `x`-independent sets.
+  **Next attack (lap 38):** run the unit trick at the STATE
   level — `‖qx‖ ≥ 1/(16q)` says the orbit point `(qx, qφx) mod 1` avoids a fixed neighbourhood of
   the `x`-axis whenever the image emits a large digit; combined with `gap_principle` the good
   scales are `T/4`-separated AND confined to a region of the torus of measure `≍ 1/T`.  That pair
