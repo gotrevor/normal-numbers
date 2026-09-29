@@ -89,7 +89,19 @@ the §7 chain.  The binding version is `DIRECTION.md` → CURRENT DIRECTIVE.
      irrational orbit (`uIoo_subset_cfCylinder`), so the cylinder frequencies converge; and since
      EVERY ultrafilter limit is `γ`, the full sequence converges.
 
-3. `OrbitACBound q r₀ C` — **the crux on this route**.  One-sided, absolute constant, no
+3. `OrbitACBound q r₀ C` — **the crux on this route**.  **Lap 29: now word-shaped.**
+   `VandeheyS7Cell.orbitACBound_of_orbitCellBound` + `cellCover_inv_log_two` (both axiom-clean)
+   reduce it to `OrbitCellBound q r₀ C`: an upper bound on the frequency of each finite word, and of
+   "word then large digit", in the image expansion — the shape the transducer layer produces.
+   Refuted sub-approaches (do not retry): the nest reformulation is tautological; a bound on the
+   number of distinct `K`-window sets gives a cell-dependent constant that explodes; and
+   `GaussACRigidity` cannot be weakened from a linear bound to a modulus of continuity (a Hölder CDF
+   can be singular).  What is left is exactly S7-C below.  The two instruments S7-C needs are now
+   proved: `VandeheyS7Loss.hdist_runWord_le` (exponential merging, uniform in the state) and
+   `uniform_comparable_of_bddDistortion`.  Leg 1 is also nearly done:
+   `VandeheyS7QuadDigit.not_isCFNormal_of_bddDigits` + `cfDigit_le_of_quadratic` give
+   "quadratic irrational ⇒ not CF-normal"; only the explicit quadratic for `Int.fract x` when
+   `φ x ∈ ℚ` remains.  One-sided, absolute constant, no
    `x`-independence.  Degenerate verdict `one_le_of_orbitACBound`: `C ≥ 1` always.
 
 ### The FALLBACK route: state-indexed decomposition (named next goals, in order)
