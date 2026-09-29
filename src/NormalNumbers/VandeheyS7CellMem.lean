@@ -120,11 +120,123 @@ theorem selIndic_mul_blockIndic_le {net : StateNet Φ x η ρ M} {L : ℕ}
   · rw [hsel, if_neg hex, zero_mul]
     exact hsum_nonneg
 
+
+/-! ## Summing the bridge -/
+
+open Classical in
+lemma cellHitCount_eq_sum (net : StateNet Φ x η ρ M) (w : List ℕ) (i : Fin M) (q : ℕ) :
+    cellHitCount net w i q
+      = ∑ m ∈ Finset.range q, selIndic net i m *
+          blockIndic (clusterSet (net.cen i) w (4 * ρ / Real.sqrt (|Φ.det| / 6)))
+            (gaussMap^[m + 2] x) := by
+  classical
+  unfold cellHitCount selIndic
+  refine Finset.sum_congr rfl fun m _ => ?_
+  by_cases h : net.idx m = i ∧ η ≤ (runState Φ x (m + 2)).width
+  · rw [if_pos h, if_pos h]
+  · rw [if_neg h, if_neg h, zero_mul]
+
+open Classical in
+/-- **The count form of the bridge.**  Summing `selIndic_mul_blockIndic_le` over `m < q`: the
+cell's hit count is, up to the `L` initial times, at most the total number of visits of the orbit
+to the finitely many fixed cells `u ++ c`. -/
+theorem cellHitCount_le_blockCounts {net : StateNet Φ x η ρ M} {L : ℕ}
+    (hx : Irrational x) (hmem : x ∈ Set.Ioo (0:ℝ) 1) (w : List ℕ)
+    {U : Fin M → Finset (List ℕ)}
+    (hUlen : ∀ i : Fin M, ∀ u ∈ U i, u.length = L ∧ (∀ a ∈ u, 1 ≤ a))
+    (hUsel : ∀ i : Fin M, ∀ m : ℕ, L ≤ m + 2 →
+      selIndic net i m
+        = if ∃ u ∈ U i, gaussMap^[m + 2 - L] x ∈ cfCylinder u then 1 else 0)
+    {F : Finset (List ℕ × ℕ)} (i : Fin M)
+    (hcov : ∀ z : ℝ, Irrational z → z ∈ Set.Ioo (0:ℝ) 1 →
+      z ∈ clusterSet (net.cen i) w (4 * ρ / Real.sqrt (|Φ.det| / 6)) →
+      ∃ c ∈ F, z ∈ cellSet c.1 c.2)
+    (q : ℕ) :
+    cellHitCount net w i q
+      ≤ (L : ℝ) + ∑ u ∈ U i, ∑ c ∈ F,
+          blockCount (cellSet (u ++ c.1) c.2) (q + 2) x := by
+  classical
+  set A : Set ℝ := clusterSet (net.cen i) w (4 * ρ / Real.sqrt (|Φ.det| / 6)) with hA
+  set g : List ℕ → List ℕ × ℕ → ℕ → ℝ :=
+    fun u c k => blockIndic (cellSet (u ++ c.1) c.2) (gaussMap^[k] x) with hg
+  have hgnn : ∀ u c k, 0 ≤ g u c k := fun u c k =>
+    Set.indicator_nonneg (by intro _ _; norm_num) _
+  set T : Finset ℕ := (Finset.range q).filter (fun m => L ≤ m + 2) with hT
+  set Tc : Finset ℕ := (Finset.range q).filter (fun m => ¬ L ≤ m + 2) with hTc
+  set f : ℕ → ℝ := fun m => selIndic net i m * blockIndic A (gaussMap^[m + 2] x) with hf
+  have hfnn : ∀ m, 0 ≤ f m := by
+    intro m
+    exact mul_nonneg (selIndic_nonneg net i m)
+      (Set.indicator_nonneg (by intro _ _; norm_num) _)
+  have hsplit : ∑ m ∈ Finset.range q, f m = ∑ m ∈ T, f m + ∑ m ∈ Tc, f m := by
+    rw [hT, hTc, Finset.sum_filter_add_sum_filter_not]
+  -- the initial times contribute at most `L`
+  have hbad : ∑ m ∈ Tc, f m ≤ (L : ℝ) := by
+    have hcard : Tc.card ≤ L := by
+      have hsub : Tc ⊆ Finset.range L := by
+        intro m hm
+        have := (Finset.mem_filter.mp (hTc ▸ hm)).2
+        exact Finset.mem_range.mpr (by omega)
+      have := Finset.card_le_card hsub
+      simpa using this
+    have hone : ∀ m ∈ Tc, f m ≤ 1 := by
+      intro m _
+      have he : selIndic net i m ≤ 1 := by
+        rw [selIndic]
+        split
+        · rcases emitIndic_eq_zero_or_one Φ x (m + 2) with h | h <;> rw [h] <;> norm_num
+        · norm_num
+      have hb : blockIndic A (gaussMap^[m + 2] x) ≤ 1 := by
+        rw [blockIndic]
+        by_cases hz : gaussMap^[m + 2] x ∈ A
+        · rw [Set.indicator_of_mem hz]; norm_num
+        · rw [Set.indicator_of_notMem hz]; norm_num
+      have hbn : 0 ≤ blockIndic A (gaussMap^[m + 2] x) :=
+        Set.indicator_nonneg (by intro _ _; norm_num) _
+      have hen : 0 ≤ selIndic net i m := selIndic_nonneg net i m
+      rw [hf]
+      nlinarith
+    calc ∑ m ∈ Tc, f m ≤ ∑ _m ∈ Tc, (1:ℝ) := Finset.sum_le_sum hone
+      _ = (Tc.card : ℝ) := by rw [Finset.sum_const, nsmul_eq_mul, mul_one]
+      _ ≤ (L : ℝ) := by exact_mod_cast hcard
+  -- the rest is dominated by the fixed cells, after reindexing `m ↦ m + 2 − L`
+  have hgood : ∑ m ∈ T, f m
+      ≤ ∑ u ∈ U i, ∑ c ∈ F, blockCount (cellSet (u ++ c.1) c.2) (q + 2) x := by
+    have hstep : ∀ m ∈ T, f m ≤ ∑ u ∈ U i, ∑ c ∈ F, g u c (m + 2 - L) := by
+      intro m hm
+      have hmL := (Finset.mem_filter.mp (hT ▸ hm)).2
+      exact selIndic_mul_blockIndic_le hx hmem hUlen hUsel hcov i m hmL
+    refine le_trans (Finset.sum_le_sum hstep) ?_
+    rw [Finset.sum_comm]
+    refine Finset.sum_le_sum fun u _ => ?_
+    rw [Finset.sum_comm]
+    refine Finset.sum_le_sum fun c _ => ?_
+    -- reindex: `m ↦ m + 2 − L` is injective on `T` and lands in `range (q+2)`
+    have hinj : ∀ m₁ ∈ T, ∀ m₂ ∈ T, m₁ + 2 - L = m₂ + 2 - L → m₁ = m₂ := by
+      intro m₁ h₁ m₂ h₂ heq
+      have h₁' := (Finset.mem_filter.mp (hT ▸ h₁)).2
+      have h₂' := (Finset.mem_filter.mp (hT ▸ h₂)).2
+      omega
+    have himg : T.image (fun m => m + 2 - L) ⊆ Finset.range (q + 2) := by
+      intro k hk
+      obtain ⟨m, hmT, rfl⟩ := Finset.mem_image.mp hk
+      have hmq := Finset.mem_range.mp (Finset.mem_filter.mp (hT ▸ hmT)).1
+      exact Finset.mem_range.mpr (by omega)
+    calc ∑ m ∈ T, g u c (m + 2 - L)
+        = ∑ k ∈ T.image (fun m => m + 2 - L), g u c k := (Finset.sum_image hinj).symm
+      _ ≤ ∑ k ∈ Finset.range (q + 2), g u c k :=
+          Finset.sum_le_sum_of_subset_of_nonneg himg (fun k _ _ => hgnn u c k)
+      _ = blockCount (cellSet (u ++ c.1) c.2) (q + 2) x := by
+          rw [blockCount_apply]
+  rw [cellHitCount_eq_sum net w i q, ← hf, hsplit]
+  linarith
+
 end MapState
 
 section Audit
 
 #print axioms MapState.selIndic_mul_blockIndic_le
+#print axioms MapState.cellHitCount_le_blockCounts
 
 end Audit
 
