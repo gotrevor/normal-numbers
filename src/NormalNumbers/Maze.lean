@@ -26,6 +26,7 @@ import NormalNumbers.VandeheyS7Hecke
 import NormalNumbers.VandeheyS7Predict
 import NormalNumbers.VandeheyS7Quadratic
 import NormalNumbers.VandeheyS7BlockRefute
+import NormalNumbers.VandeheyS7BlockGenRefute
 
 /-!
 # `Maze.lean` — the halls we have walked, encoded
@@ -353,6 +354,23 @@ alias hall_blockforget_uniform_z_cycle :=
 /-- Companion witness of `hall_blockforget_uniform_z`: the two states meet at one input. -/
 alias hall_blockforget_uniform_z_state :=
   NormalNumbers.VandeheyS7.MapState.shiftState_mob_sqrtTwoSub
+
+/-- **HALL: the CF-normal repair of `BlockForget`** (`falseAsStated`, 2026-09-29, same day as the
+row above).  Once the uniform-`z` crux fell, the natural repair was to restrict the input
+quantifier to CF-normal `z` (`BlockForgetGen`, S7-BG), since a quadratic irrational is never
+CF-normal and the architecture only ever evaluates the crux at orbit points of a CF-normal input.
+The repair is FALSE, and for a reason that no further repair of this shape survives: the crux's
+quantifier order is `∃ T, ∀ z`, so the block length is fixed BEFORE the input, while
+`blockAvg s T w z` at a fixed `T` is decided by the state cycle alone once the first `T` digits of
+`z` are known — and CF-normality is a tail property, so a CF-normal `z` may open with any
+prescribed prefix.  Feed it `T` copies of the digit `2`: the state cycle is the S7-BX cycle, whose
+two phases send ALL of `(0,1)` into `(2/3,1)` and `(1/6,1/4)` respectively, so the block average
+is `≥ 1/2` from `shiftState` against `0` from the reference state.
+
+Consequence: any surviving crux must let `T` depend on the input, i.e. be asymptotic in `T` — at
+which point the transducer-correctness bridge, and with it the headline, re-enters, so route A's
+`BlockForget` step was never a reduction. -/
+alias hall_blockforget_cfnormal := NormalNumbers.VandeheyS7.MapState.not_blockForgetGen
 
 
 
@@ -1174,6 +1192,11 @@ def register : List Hall := [
    .refuted, .kernel,
    "phi is the worst-approximable real: |p - q phi| >= 1/(4q) from the nonzero integer norm form p^2 - pq - q^2, so agreement of the images to CF depth N costs q^2 > c^N and a determinant pq >= q^2 exponential in N; Thm 1.1's automaton then carries e^(Omega(N)) states while only N input digits are read, so its equidistribution says nothing about that prefix",
    "alias hall_hecke_approximation; module VandeheyS7Hecke; theorems abs_sub_mul_goldenRatio_ge, pow_lt_den_sq_of_image_approx, sq_le_det_of_approx", "2026-09-29"⟩,
+  ⟨"BlockForget repaired to CF-normal inputs",
+   "Restrict the crux's input quantifier to CF-normal z, on the ground that a quadratic irrational is never CF-normal",
+   .falseAsStated, .kernel,
+   "The quantifier order is exists T then forall z, so the block length is fixed before the input while blockAvg at a fixed T is decided by the first T digits; CF-normality is a tail property, so a CF-normal z can open with T copies of the digit 2, and then the S7-BX state cycle gives block average at least 1/2 from shiftState against 0 from the reference state",
+   "alias hall_blockforget_cfnormal = not_blockForgetGen; module VandeheyS7BlockGenRefute; any surviving crux must be asymptotic in T, which re-imports transducer correctness and hence the headline", "2026-09-29"⟩,
   ⟨"BlockForget in the uniform-z form",
    "Ask the block time-average blockAvg s T w z to forget the initial state uniformly over ALL input points z in (0,1)",
    .falseAsStated, .kernel,
