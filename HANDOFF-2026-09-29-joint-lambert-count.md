@@ -14,12 +14,14 @@ plus root imports.
 
 **Proved this campaign.**  Every *estimate* of the counting route §§1–5.  See the table.
 
-**NOT proved.**  The headline `jointWords_quantitative` itself.  One `sorry` remains, in
-`src/NormalNumbers/JointLambertQuantitative.lean`, and it is the **assembly**: wiring the
-CRT construction (`exists_joint_progression`, `exists_prime_allocation_small_pool`, the
-encoder margin `δ`, `floor_digit_of_common_offset`) to the five estimates below and to
-`jointWordCount_ge_of_subset`.  `jointWords_power_count` is fully derived and has no hole of
-its own.
+**NOT proved.**  Exactly ONE `sorry` remains in the whole chain:
+`exists_good_starts_at_height` in `src/NormalNumbers/JointLambertCountAssembly.lean`
+(the chosen-height theorem, steps 1–4 of the note's §§3–4).  Everything else is proved:
+`JointLambertQuantitative.lean` is sorry-free, both headlines are derived, and the §5
+all-`N` transfer `exists_joint_small_tail_count` is proved.
+
+Verify with `#print axioms NormalNumbers.JointLambert.jointWords_quantitative`: the only
+non-standard axiom is `sorryAx`, traceable to that single declaration.
 
 ## What landed, module by module
 
@@ -55,9 +57,29 @@ All `#print axioms`-clean (`propext, Classical.choice, Quot.sound`).
    `(log log N)³` into `(log log N)² log log log N`.  Keeping the two separate made both
    proofs short; conflating them is what made the older route look harder than it is.
 
+## Progress after the first handoff draft
+
+Landed since: `exists_good_starts_at_height` introduced as the single named crux; both
+headlines and the §5 transfer proved from it; `countK_le_countK` (monotone above
+`log X ≥ 1` — the threshold is load-bearing, `Real.log` is not monotone through `0`);
+`countD`/`countD_pos` (positivity needs `1 ≤ countK X`, since `2·(2·0³)^(a-1) = 0`);
+`eventually_polylog_le`; `eventually_height_ge` (`⌊N/D_N⌋ → ∞`, `D_N` polylogarithmic);
+`eventually_near_cost_small`, `eventually_middle_cost_small`, `pow_two_countK_ge`,
+`eventually_countK_ge`; `progression_le_window`, `le_sqrt_succ_sq`,
+`progression_window_le_sq`.
+
+A third mathematical finding: the middle cost needs no logarithms.
+`(c+1)^{k²}(1/2)^{k³} = ((c+1)2^{-k})^{k²} ≤ 2^{-k²} ≤ 2^{-k}` as soon as `2(c+1) ≤ 2^k`,
+so the middle cost is literally `(a+1)` times the near cost.  The note's route through
+`O_a(1) + 2 log log X + k² log(c+1) − k³ log 2 → −∞` is correct but unnecessary.
+
 ## Exact next boundary
 
-The remaining obligation is mechanical but not small: the §3 arithmetic assembly.  In order:
+The one remaining obligation is `exists_good_starts_at_height`, the chosen-height theorem.
+The qualitative single-witness analogue is `exists_joint_small_tail_rescaled`
+(`JointLambertRescaledTail.lean`, ~330 lines) — that proof is the structural template, with
+the schedule `X = 2^(4k¹²)` replaced by a caller-chosen `X` and `k = countK X`, and the
+final witness extraction replaced by `card_good_ge_half`.  In order:
 
 1. Fix `c = ∏_{b∈S} b`, and `a, r, δ` from `evenEncoding`, exactly as
    `jointWords_unconditional` does (that proof is the template — reread its first 60 lines).
@@ -74,7 +96,25 @@ The remaining obligation is mechanical but not small: the §3 arithmetic assembl
 5. All-`N`: `k_N = countK N`, `D_N = 2(2k_N³)^(a-1)`, `X = ⌊N/D_N⌋`; then
    `eventually_rate_le` converts `X/(8B log X) ≥ N exp(-C…)`.
 
-Nothing above is believed to be blocked; step 3's two limits are the only remaining
-analytic work, and both are of the same shape as `eventually_cube_log_le_sqrt`.
+Nothing above is believed to be blocked, and no analytic work remains: steps 3 and 5's
+limits are all proved (`eventually_near_cost_small`, `eventually_middle_cost_small`,
+`eventually_rate_le`, `eventually_height_ge`), and step 3's window bounds are
+`progression_window_le_sq`.  What is left is the arithmetic wiring, of roughly the size of
+`exists_joint_small_tail_rescaled`.
+
+A useful further decomposition, if the single proof proves unwieldy: split
+`exists_good_starts_at_height` into (a) a CRT-plus-candidate-`Finset` statement at height
+`X` carrying `B ≤ (2k³)^(1+ck²)`, `Q ≤ (2k³)^(a-1)`, the divisor data and
+`|T| ≥ M/(4 log X)`, and (b) a statement that the total three-range tail over that `T` is at
+most `δ · |T|`.  Then (a) + (b) + `card_good_ge_half` is the theorem.
 
 Not in scope and untouched: AGP, full normality, Vandehey (owned by the main checkout).
+
+## Checkpoint, end of lap
+
+Branch `proof/joint-lambert-unconditional`, HEAD `b60dc7e3`, baseline `e2828b32`.
+Working tree clean; full `lake build` green; nothing uncommitted.  Fourteen green commits
+this lap, every one build-verified by the pre-commit hook.
+
+`box done` NOT run: the target is not met.  One disclosed `sorry` stands on the crux, which
+is the correct checkpoint state, not a completion.
