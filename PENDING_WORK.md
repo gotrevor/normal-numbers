@@ -333,7 +333,21 @@ Three facts, all established lap 30, fix its difficulty and must steer every fur
   digits moves no cell frequency while blowing up `∑ log aᵢ`.  Tightness is exactly the part of
   Lévy that normality gives, so `ImageTight` was the right hypothesis and `LevyBound` would have
   been unprovable.
-  **Next attack (lap 46), in order.**
+  **Lap 46 — the chain assembled** (`VandeheyS7Chain.lean`, axiom-clean).
+  `vandeheyS7_mul_phi_of_orbitWordBound` / `vandeheyS7_add_phi_of_orbitWordBound`: both frozen
+  §7 targets now follow from exactly THREE inputs — the cited `GaussACRigidity (C/log 2)`, the
+  crux `OrbitWordBound`, and `ImageTight` on the image.  Compare lap 30: three hypotheses, one
+  carrying a threshold `T` and a Lévy constant `Λ`; both parameters are now gone.
+  `imageTight_of_image_isCFNormal` records that `ImageTight` is strictly weaker than the
+  conclusion, so it is a legitimate intermediate target, not a restatement of it.
+  **Recorded obstruction on (a).**  Transferring tightness from `x` to `y = fract(φx)` does NOT
+  go through the Diophantine route: `largeDigitCount_le_goodDenCountPrim` + `goodDenCountPrim_le_log`
+  give `#{i<p : aᵢ(y) ≥ T} ≤ 4 + log qₚ(y)/log(T/4)`, so dividing by `p` needs `log qₚ(y) = O(p)`
+  — a Lévy bound for the IMAGE, which is what tightness was supposed to avoid.  And the two
+  expansions genuinely decouple: `|qₙ φ x − φpₙ| ≤ φ/qₙ` has `φpₙ ∉ ℤ`, so `x`'s convergents give
+  no rational approximations to `φx`.  Tightness of the image therefore needs the clock (the
+  emitted-vs-read matrix comparison `Oℓ ≈ ΦPₙ`), and that is the next real build.
+  **Next attack (lap 47), in order.**
   (a) Transfer tightness from `x` to `y = fract(φx)`.  Lap 45 gives `ImageTight x` for free from
   `x`'s normality; what is needed is `ImageTight y`.  The clock is the route
   (`Oℓ ≈ ΦPₙ`, `det Φ = φ` fixed, so `log qℓ(y) ≍ log qₙ(x) + O(1)`), and note that the WEAKER
