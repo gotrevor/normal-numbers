@@ -221,11 +221,199 @@ lemma limCDF_mono (y : ℝ) : Monotone (limCDF y) := by
   exact le_of_tendsto_of_tendsto (tendsto_empCDF_limCDF y s) (tendsto_empCDF_limCDF y t)
     (Eventually.of_forall fun p => empCDF_mono y p hst)
 
+/-! ## The limit CDF, globally -/
+
+lemma limCDF_of_nonpos (y : ℝ) {t : ℝ} (ht : t ≤ 0) : limCDF y t = 0 := by
+  refine tendsto_nhds_unique (tendsto_empCDF_limCDF y t) ?_
+  have : ∀ p : ℕ, empCDF y p t = 0 := by
+    intro p
+    rw [empCDF, blockCount_apply]
+    have : ∀ k ∈ Finset.range p, blockIndic (Ioo (0:ℝ) t) (gaussMap^[k] y) = 0 := by
+      intro k _
+      rw [blockIndic, Set.indicator_of_notMem]
+      intro hx
+      exact absurd (hx.1.trans hx.2) (by linarith)
+    rw [Finset.sum_congr rfl this]
+    simp
+  simpa [this] using tendsto_const_nhds (α := ℝ) (f := (orbitUF : Filter ℕ)) (a := (0:ℝ))
+
+lemma limCDF_of_one_le {y : ℝ} (horb : ∀ k : ℕ, gaussMap^[k] y ∈ Ioo (0:ℝ) 1) {t : ℝ}
+    (ht : 1 ≤ t) : limCDF y t = 1 := by
+  refine le_antisymm (limCDF_mem_Icc y t).2 ?_
+  rw [← limCDF_one horb]
+  exact limCDF_mono y ht
+
+/-- The clamp of `t` to `[0,1]` does not change the limit CDF. -/
+lemma limCDF_clamp {y : ℝ} (horb : ∀ k : ℕ, gaussMap^[k] y ∈ Ioo (0:ℝ) 1) (t : ℝ) :
+    limCDF y t = limCDF y (max 0 (min t 1)) := by
+  rcases le_or_gt t 0 with h | h
+  · rw [limCDF_of_nonpos y h, min_eq_left (by linarith), max_eq_left h, limCDF_of_nonpos y le_rfl]
+  · rcases le_or_gt t 1 with h1 | h1
+    · rw [min_eq_left h1, max_eq_right h.le]
+    · rw [min_eq_right h1.le, max_eq_right zero_le_one, limCDF_of_one_le horb h1.le,
+        limCDF_of_one_le horb le_rfl]
+
+/-- **Global Lipschitz bound.** -/
+theorem limCDF_sub_le' {y C : ℝ} (hC : 0 ≤ C) (hAC : OrbitACHyp y C)
+    (horb : ∀ k : ℕ, gaussMap^[k] y ∈ Ioo (0:ℝ) 1) {a b : ℝ} (hab : a ≤ b) :
+    limCDF y b - limCDF y a ≤ C * (b - a) := by
+  set a' := max 0 (min a 1) with ha'
+  set b' := max 0 (min b 1) with hb'
+  have ha'0 : 0 ≤ a' := le_max_left _ _
+  have hb'1 : b' ≤ 1 := max_le zero_le_one (min_le_right _ _)
+  have hab' : a' ≤ b' := by
+    apply max_le_max le_rfl
+    exact min_le_min hab le_rfl
+  have hdiff : b' - a' ≤ b - a := by
+    rcases le_or_gt a 0 with h | h
+    · have : a' = 0 := by rw [ha', min_eq_left (by linarith), max_eq_left h]
+      rw [this]
+      rcases le_or_gt b 1 with h1 | h1
+      · rcases le_or_gt b 0 with h0 | h0
+        · have : b' = 0 := by rw [hb', min_eq_left (by linarith), max_eq_left h0]
+          rw [this]; linarith
+        · have : b' = b := by rw [hb', min_eq_left h1, max_eq_right h0.le]
+          rw [this]; linarith
+      · have : b' = 1 := by rw [hb', min_eq_right h1.le, max_eq_right zero_le_one]
+        rw [this]; linarith
+    · rcases le_or_gt a 1 with h1 | h1
+      · have haa : a' = a := by rw [ha', min_eq_left h1, max_eq_right h.le]
+        rw [haa]
+        rcases le_or_gt b 1 with hb1 | hb1
+        · have : b' = b := by rw [hb', min_eq_left hb1, max_eq_right (by linarith : (0:ℝ) ≤ b)]
+          rw [this]
+        · have : b' = 1 := by rw [hb', min_eq_right hb1.le, max_eq_right zero_le_one]
+          rw [this]; linarith
+      · have haa : a' = 1 := by rw [ha', min_eq_right h1.le, max_eq_right zero_le_one]
+        have hbb : b' = 1 := by
+          rw [hb', min_eq_right (by linarith : (1:ℝ) ≤ b), max_eq_right zero_le_one]
+        rw [haa, hbb]; linarith
+  calc limCDF y b - limCDF y a = limCDF y b' - limCDF y a' := by
+        rw [← limCDF_clamp horb, ← limCDF_clamp horb]
+    _ ≤ C * (b' - a') := limCDF_sub_le hC hAC ha'0 hab' hb'1
+    _ ≤ C * (b - a) := by nlinarith
+
+lemma limCDF_lipschitz {y C : ℝ} (hC : 0 ≤ C) (hAC : OrbitACHyp y C)
+    (horb : ∀ k : ℕ, gaussMap^[k] y ∈ Ioo (0:ℝ) 1) :
+    LipschitzWith (Real.toNNReal C) (limCDF y) := by
+  refine LipschitzWith.of_dist_le_mul fun s t => ?_
+  rw [Real.coe_toNNReal C hC, Real.dist_eq, Real.dist_eq, abs_sub_le_iff]
+  constructor
+  · rcases le_or_gt s t with h | h
+    · have := limCDF_mono y h
+      have h2 := limCDF_sub_le' hC hAC horb h
+      rw [abs_of_nonpos (by linarith)]
+      nlinarith
+    · have h2 := limCDF_sub_le' hC hAC horb h.le
+      rw [abs_of_nonneg (by linarith)]
+      nlinarith
+  · rcases le_or_gt s t with h | h
+    · have h2 := limCDF_sub_le' hC hAC horb h
+      have := limCDF_mono y h
+      rw [abs_of_nonpos (by linarith)]
+      nlinarith
+    · have h2 := limCDF_sub_le' hC hAC horb h.le
+      have := limCDF_mono y h.le
+      rw [abs_of_nonneg (by linarith)]
+      nlinarith
+
+/-! ## The limit measure -/
+
+/-- Comparison of Stieltjes measures: it is enough to compare the increments, because both outer
+measures are infima over the *same* covers by `Ioc`s. -/
+lemma stieltjes_measure_le {f g : StieltjesFunction ℝ}
+    (h : ∀ a b : ℝ, ENNReal.ofReal (f b - f a) ≤ ENNReal.ofReal (g b - g a)) :
+    f.measure ≤ g.measure := by
+  have hlen : ∀ s : Set ℝ, f.length s ≤ g.length s := by
+    intro s
+    rw [StieltjesFunction.length_eq, StieltjesFunction.length_eq]
+    exact iInf_mono fun a => iInf_mono fun b => iInf_mono fun _ => h a b
+  have houter : f.outer ≤ g.outer :=
+    MeasureTheory.OuterMeasure.le_ofFunction.2
+      fun s => (MeasureTheory.OuterMeasure.ofFunction_le s).trans (hlen s)
+  intro s
+  rw [StieltjesFunction.measure, StieltjesFunction.measure]
+  exact houter s
+
+/-- The linear Stieltjes function `t ↦ C·t`, whose measure is `C·volume`. -/
+noncomputable def linStieltjes {C : ℝ} (hC : 0 ≤ C) : StieltjesFunction ℝ where
+  toFun := fun t => C * t
+  mono' := fun s t hst => by dsimp; nlinarith
+  right_continuous' := fun x =>
+    (continuous_const.mul continuous_id).continuousAt.continuousWithinAt
+
+@[simp] lemma linStieltjes_apply {C : ℝ} (hC : 0 ≤ C) (t : ℝ) : linStieltjes hC t = C * t := rfl
+
+lemma linStieltjes_measure {C : ℝ} (hC : 0 ≤ C) :
+    (linStieltjes hC).measure = ENNReal.ofReal C • volume := by
+  refine Measure.ext_of_Ioc _ _ fun a b hab => ?_
+  rw [StieltjesFunction.measure_Ioc, Measure.smul_apply, smul_eq_mul, Real.volume_Ioc,
+    ← ENNReal.ofReal_mul hC]
+  simp only [linStieltjes_apply]
+  ring_nf
+
+/-- The limit CDF as a `StieltjesFunction`: Lipschitz, hence continuous, hence right-continuous. -/
+noncomputable def limStieltjes {y C : ℝ} (hC : 0 ≤ C) (hAC : OrbitACHyp y C)
+    (horb : ∀ k : ℕ, gaussMap^[k] y ∈ Ioo (0:ℝ) 1) : StieltjesFunction ℝ where
+  toFun := limCDF y
+  mono' := limCDF_mono y
+  right_continuous' := fun x =>
+    ((limCDF_lipschitz hC hAC horb).continuous.continuousAt).continuousWithinAt
+
+@[simp] lemma limStieltjes_apply {y C : ℝ} (hC : 0 ≤ C) (hAC : OrbitACHyp y C)
+    (horb : ∀ k : ℕ, gaussMap^[k] y ∈ Ioo (0:ℝ) 1) (t : ℝ) :
+    limStieltjes hC hAC horb t = limCDF y t := rfl
+
+/-- **The limit measure of the orbit**: the Stieltjes measure of the limit CDF. -/
+noncomputable def limMeasure {y C : ℝ} (hC : 0 ≤ C) (hAC : OrbitACHyp y C)
+    (horb : ∀ k : ℕ, gaussMap^[k] y ∈ Ioo (0:ℝ) 1) : Measure ℝ :=
+  (limStieltjes hC hAC horb).measure
+
+lemma limMeasure_Ioc {y C : ℝ} (hC : 0 ≤ C) (hAC : OrbitACHyp y C)
+    (horb : ∀ k : ℕ, gaussMap^[k] y ∈ Ioo (0:ℝ) 1) (a b : ℝ) :
+    limMeasure hC hAC horb (Ioc a b) = ENNReal.ofReal (limCDF y b - limCDF y a) :=
+  (limStieltjes hC hAC horb).measure_Ioc a b
+
+/-- The limit measure is a probability measure: no mass escapes to the ends. -/
+lemma limMeasure_univ {y C : ℝ} (hC : 0 ≤ C) (hAC : OrbitACHyp y C)
+    (horb : ∀ k : ℕ, gaussMap^[k] y ∈ Ioo (0:ℝ) 1) :
+    limMeasure hC hAC horb Set.univ = 1 := by
+  have hbot : Tendsto (limStieltjes hC hAC horb) atBot (nhds 0) := by
+    refine Tendsto.congr' ?_ tendsto_const_nhds
+    filter_upwards [eventually_le_atBot (0:ℝ)] with t ht
+    exact (limCDF_of_nonpos y ht).symm
+  have htop : Tendsto (limStieltjes hC hAC horb) atTop (nhds 1) := by
+    refine Tendsto.congr' ?_ tendsto_const_nhds
+    filter_upwards [eventually_ge_atTop (1:ℝ)] with t ht
+    exact (limCDF_of_one_le horb ht).symm
+  rw [limMeasure, StieltjesFunction.measure_univ _ hbot htop]
+  simp
+
+/-- **The limit measure is absolutely continuous**, with density at most `C` — the payoff of the
+Lipschitz bound. -/
+lemma limMeasure_le {y C : ℝ} (hC : 0 ≤ C) (hAC : OrbitACHyp y C)
+    (horb : ∀ k : ℕ, gaussMap^[k] y ∈ Ioo (0:ℝ) 1) :
+    limMeasure hC hAC horb ≤ ENNReal.ofReal C • volume := by
+  rw [limMeasure, ← linStieltjes_measure hC]
+  refine stieltjes_measure_le fun a b => ?_
+  rcases le_or_gt a b with hab | hab
+  · refine ENNReal.ofReal_le_ofReal ?_
+    have h := limCDF_sub_le' hC hAC horb hab
+    simp only [linStieltjes_apply, limStieltjes_apply]
+    nlinarith
+  · have : limCDF y b - limCDF y a ≤ 0 := by
+      have := limCDF_mono y hab.le
+      linarith
+    simpa [ENNReal.ofReal_eq_zero.2 this] using zero_le _
+
 section Audit
 
 #print axioms limCDF_sub_le
 #print axioms limCDF_one
 #print axioms limCDF_mono
+#print axioms limCDF_sub_le'
+#print axioms limMeasure_univ
+#print axioms limMeasure_le
 
 end Audit
 
