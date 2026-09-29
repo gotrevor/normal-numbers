@@ -2,58 +2,54 @@
 
 ## CURRENT DIRECTIVE (altitude laps only write here; it OUTRANKS the HANDOFF) 🧭
 
-**Set 2026-09-29 (review lap 74).**  Supersedes lap 30's directive.  The destination is unchanged;
-what changes is WHICH obligation a grind lap may spend itself on.
+**Set 2026-09-29 (review lap 77).**  Supersedes lap 74's directive.  Same destination, same crux;
+what changes is the INSTRUMENT, because fact (α)'s one escape hatch is now concretely in reach.
 
-* **Objective.**  Vandehey §7 Problem 1, at the crux: **`OrbitWordBound q r₀ C`**
-  (`VandeheyS7Reduce`) — equivalently `OrbitCellBound` / `OrbitACBound`, all three mutually
-  derivable since S7-Q.  Nothing else on this front counts as progress.
-* **State of the chain (lap 74).**  `vandeheyS7_mul_phi_of_orbitWordBound` /
-  `vandeheyS7_add_phi_of_orbitWordBound` (`VandeheyS7Chain`, axiom-clean) derive both frozen
-  targets from exactly three hypotheses: the cited `GaussACRigidity (C/log 2)`, `ImageTight` on
-  the image, and the crux.  Leg 1 is a theorem (`VandeheyS7Golden`), the threshold parameter is
-  free (`orbitCellBound_of_orbitWordBound`), `CellCover (1/log 2)` is proved.
+* **Objective.**  Vandehey §7 Problem 1, at the crux: **`OrbitWordBound q r₀ C`**, now in the
+  explicit shape `BlockAverageBound` for the sets `mapBlockSet (runState Φ x n) w j`
+  (`MapState.orbitWordBound_of_runBlockAverage`, `VandeheyS7RunPin`).  Nothing else counts.
 
-* **Course correction — why this directive changed.**
-  1. **Crux-neglect.**  Nine of laps 58–73 went to the SECOND obligation
-     (`ImageTight` → `AnchoredPullback` → `StateClock`).  The crux itself got no direct attack.
-     The lap-73 handoff's "next action #1" (close `StateClock`) would have continued that; it is
-     OVERRULED.
-  2. **`StateClock`'s uniform width floor is the wrong shape — by this directive's own fact (β).**
-     A post-emission state straddling `1/k` at a scale far below any `η` *is* a state of width
-     `< η`, so the true transducer states have no uniform floor.  `StateClock` quantifies its
-     states existentially, so it is not literally refuted; but its natural instantiation is dead.
-     Any further `StateClock` lap must first land the FREQUENCY form
-     (`freq{n : width(sₙ) < η} → 0 as η → 0`), or a kernel refutation of the uniform form.
-  3. **The width floor is shared.**  It is exactly the hypothesis of the new pullback bound, so
-     it serves the crux as well — but only in the frequency form.  That is what makes it on-path.
+* **NEW — fact (δ), the reason this directive changed.**  Directive fact (α) says only *finiteness
+  of the predictor's range* or genuine arithmetic of `Φ` can beat predictability.  The range is
+  **precompact**, and both halves are elementary:
+  1. **The box lemma.**  `width s = |det s| / (s.d·(s.c+s.d))` exactly.  So `|det| ≤ D`,
+     `width ≥ η` and `denRatio := (c+d)/d ∈ [1/K, K]` force `d ≤ √(KD/η)` and `c+d ≤ √(KD/η)`,
+     and then `0 ≤ b ≤ d`, `0 ≤ a+b ≤ c+d` put **all four entries in `[−M, M]`,
+     `M = √(KD/η)`**.  Compactness needs bounded DISTORTION, not a width floor — lap 74 was
+     looking for the floor alone and that is why the search stalled.
+  2. **The distortion IS bounded along the run**, by a one-line recursion on `r = denRatio`:
+     a read is `r ↦ (r+a)/(r+a−1) = 1 + 1/(r+a−1)`, so after any read `r ∈ (1, 1+1/(r₀+a−1)]`;
+     an emission is `r ↦ (mob 1 / mob 0)·r` with `mob 1/mob 0 ∈ [b/(b+1), (b+1)/b] ⊆ [1/2,2]`
+     because the image lies in `I_b`.  Reads contract `r` towards `1` *uniformly in the digit*,
+     emissions move it by a factor ≤ 2.  So `r` is trapped in an absolute band from step 1 on —
+     no hypothesis, no width floor, no normality.
+  So: **the reduced states of width ≥ η lie in a fixed compact box of `ℝ⁴`**, hence — up to a
+  precision `ρ` costing an additive `O(ρ/η²)` in measure — the predictor `n ↦ s_n⁻¹(I_w)` takes
+  **finitely many values**, i.e. `A_n ⊆ E_i^{+ρ'}` for one of `M(η,ρ)` FIXED sets `E_i`.
 
-* **What is now in the kernel for the crux** (lap 74, `VandeheyS7Pull`, all axiom-clean):
-  `MobState.volume_preimage_le` — the pullback bound for an **arbitrary** target set, constant
-  `distortion/width`, via a Lipschitz inverse and `μH[1] = volume`;
-  `MobState.gaussMeasure_preimage_le` — the Gauss form, constant `2·distortion/width`;
-  `MobState.gaussMeasure_preimage_tower_le` — **the tower is free**: the bound on
-  `s⁻¹(G^{-j} I_w)` does NOT depend on `j`, because `γ` is `gaussMap`-invariant;
-  `blockPullback_sum_le` — a whole emitted block of length `L` pulls back to total Gauss mass
-  `≤ (2K/η)·L·γ(I_w)`.  **The measure side of the crux is therefore done**, with the right
-  density and no accumulation along the block.
+* **What fact (δ) turns the crux into.**  Not "empirical vs expected for an arbitrary predictable
+  family" (hopeless, fact (α)) but: for the finite cell decomposition `{B_i}` of the state box,
+  **the joint frequency `freq{n : s_n ∈ B_i ∧ Gⁿx ∈ E_i}` must not exceed `freq{s_n ∈ B_i}·γ(E_i)`
+  by more than a constant.**  That is Vandehey's *class equidistribution* with a COMPACT class
+  space in place of a finite one — a different and much better-posed wall than the self-joining
+  one.  (Dropping the state constraint and summing is NOT allowed: it costs the factor `M`.)
 
 * **Mandated next move**, in this order:
-  (a) the transducer **block decomposition**, in Lean: occurrences of `w` in the first `p` output
-      digits `= Σₙ #{j < Lₙ : Gⁿx ∈ sₙ⁻¹(G^{-j} I_w)}`, yielding
-      `OrbitWordBound ⟸ (width floor) + (predictable block average)`; name the residual
-      `BlockAverageBound` and give it the guard-rule pair;
-  (b) the width floor in FREQUENCY form — or a kernel refutation of the uniform form;
-  (c) only then the predictable-average step, which is fact (α) and is the open heart.
-  Prefer, as always, unconditional statements about the image expansion of a CF-normal `x`, or
-  kernel refutations of sub-routes.  `GaussACRigidity` stays a cited hypothesis (standing rule 3).
+  (a) the **box lemma** and `denRatio`, for `MapState`, unconditional;
+  (b) **`denRatio` bounds along `runState`** — the read step, the emit step, the trapped band;
+  (c) the **finite-cell approximation**: name `ClassFreqBound` (joint state-cell/cylinder
+      frequency) and prove `BlockAverageBound ⟸ ClassFreqBound + width-frequency`;
+  (d) only then attack `ClassFreqBound` itself.
+  Along the way, the two cheap corrections found this lap: `hΦ` is **trivially** instantiable
+  (`MapState` admits `z ↦ v + ε(z−u)`, det `ε ≠ 0`), so lap 76's "next action #1" is a triviality
+  and NOT a case analysis on `⌊φ·fract x⌋`; and the `∀ Φ` form of `hBA` should be weakened to the
+  `∃ Φ` form before anyone tries to discharge it.
 
-* **Forbidden drift.**  (i) The window-function frame — `no_window_function` refutes it in the
-  kernel; `spread_runWord_le`/`hdist_runWord_le` bound the image DIAMETER, never its LOCATION.
-  (ii) Bounded-error decompositions (`cfCount_tendsto_of_decomposition`): the exceptional set has
-  positive Gauss mass, so the error is `Θ(p)`.  (iii) Serret/commensurator and soft self-joining
-  rigidity.  (iv) Finishing `GaussACRigidity`.  (v) **A further `StateClock` lap in the
-  uniform-`η` form.**
+* **Forbidden drift.**  (i) The window-function frame (`no_window_function`).  (ii) Bounded-error
+  decompositions (`cfCount_tendsto_of_decomposition`).  (iii) Serret/commensurator and soft
+  self-joining rigidity.  (iv) Finishing `GaussACRigidity` — it stays cited (standing rule 3).
+  (v) `StateClock` in the uniform-`η` form.  (vi) **Re-auditing the older `∃`-bundles by hand**;
+  the sharper rule (type-pinning is not pinning) is recorded, the front is `runState`-explicit now.
 
 * **What the crux IS, established lap 30 (use this, do not re-derive it).**  Writing the state at
   input time `n` as the Möbius map `s_n = O_n⁻¹ Φ P_n` (`O_n` = emitted convergent matrix, `P_n` =
@@ -61,21 +57,21 @@ what changes is WHICH obligation a grind lap may spend itself on.
   `limsup (1/N) #{n<N : Gⁿx ∈ s_n⁻¹(E)} ≤ C γ(E)` for every cell `E`.  Three facts pin it down:
   1. **(α)** `s_n⁻¹(E)` is **predictable** — determined by `x₁…x_n` — and CF-normality of `x` is a
      statement about the tail marginal alone.  So no argument that uses only "predictable +
-     bounded distortion" can work (`exists_predictor_all_hit`: for ANY sequence a prefix-reading
-     predictor hits its own interval every time).  Only *finiteness of the predictor's range*, or
-     genuine arithmetic of `Φ`, can help.
+     bounded distortion" can work (`exists_predictor_all_hit`).  Only *finiteness of the
+     predictor's range* — see fact (δ), which now supplies it — or genuine arithmetic of `Φ`.
   2. **(β)** The per-state distortion bound **fails** at small width: a post-emission state whose
      image `J` straddles `1/k` at a scale far below `|E|` has `γ(s⁻¹E) ≈ 1/2` with `γ(E)`
-     arbitrarily small.  This is also why no uniform width floor exists (see the correction above).
+     arbitrarily small.  This is why no uniform width floor exists; it does NOT obstruct (δ),
+     which only needs the width floor on a set of times of frequency `1 − δ`.
   3. **(γ)** `Γ ∩ Φ⁻¹ΓΦ = {±I}` for `Φ = diag(φ,1)` (φ irrational), so the state set is *literally*
-     `PSL₂(ℤ)` and the state is the point `ΓΦP_n ∈ Γ\SL₂(ℝ)`.  This is the structural reason
-     behind `no_window_function` and `infinite_zPhi_abs_le_one`, and it identifies the crux with
-     "the ray `Γ g_x(t)` equidistributes ⟹ so does `Γ Φ g_x(t)`" — the self-joining wall.  Do not
-     re-attack the wall softly; attack the ARITHMETIC of `Φ`.
+     `PSL₂(ℤ)` and the state is the point `ΓΦP_n ∈ Γ\SL₂(ℝ)`.  Fact (δ) is the compatible reading:
+     the *matrix* remembers everything (γ), but the *reduced state of width ≥ η* lives in a
+     compact box (δ), and only the latter is what the predictor sees.
 
-* **Why.**  The chain is three hypotheses wide; one is cited by standing rule 3, one is the crux,
-  and the third is now known to need the same width input the crux does.  So the width floor and
-  the crux are ONE problem, and the block pullback is the only new instrument.
+* **Why.**  Three hypotheses became one (`BlockAverageBound`), and that one is now stated about
+  explicitly defined sets.  Fact (α) named the only two ways past it; (δ) delivers the first one
+  cheaply, and it is unconditional.  A lap that does not either build (δ)'s machinery or attack
+  `ClassFreqBound` is off-directive.
 
 Directive history:
 - 2026-09-29 (lap 27, review): window-function frame REFUTED; ε-scheme replaces the bounded-error
@@ -83,11 +79,12 @@ Directive history:
   state-indexed decomposition the fallback.
 - 2026-09-29 (lap 30, review): leg 1 DISCHARGED (`VandeheyS7Golden`), so the crux is the whole
   chain; crux pinned as the predictable-set/`Γ\SL₂(ℝ)`-translate problem, with facts (α)(β)(γ).
-- 2026-09-29 (lap 74, review): crux-neglect corrected (9 of laps 58–73 went to the second
-  obligation); `StateClock`'s uniform width floor identified as the wrong shape by fact (β); the
-  MEASURE side of the crux closed by S7-PB (`blockPullback_sum_le`, the tower is free), and the
-  residual named as block-average + width-frequency.
-
+- 2026-09-29 (lap 74, review): crux-neglect corrected; `StateClock`'s uniform width floor
+  identified as the wrong shape by fact (β); the MEASURE side of the crux closed by S7-PB.
+- 2026-09-29 (lap 77, review): fact (δ) — the reduced state set of width `≥ η` is a COMPACT BOX
+  (box lemma + `denRatio` trapped by the read/emit recursion), so fact (α)'s "finiteness of the
+  predictor's range" is available; the crux becomes `ClassFreqBound`, class equidistribution over
+  a compact class space.
 
 ## OPERATOR OBJECTIVE 2026-09-29: Vandehey §7 Problem 1 🌙
 
