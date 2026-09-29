@@ -30,14 +30,23 @@ open Filter VandeheyAut Literature
 
 variable {S : Type*} [DecidableEq S] [Fintype S]
 
+/-- Every CF digit of an irrational's fractional part is genuine.  This is where the
+*genuineness* of the windows the trigger engine sees comes from: it is a property of the ORBIT,
+not of the trigger family (a window containing a `0` digit can perfectly well carry a nonzero
+trigger multiplicity, so the old `hgen` hypothesis was not available for the concrete machine). -/
+lemma one_le_cfDigit_fract {x : ℝ} (hx : IsCFNormal (Int.fract x)) (m : ℕ) :
+    1 ≤ cfDigit (Int.fract x) m := by
+  have hirr : Irrational x := irrational_of_isCFNormal_fract hx
+  obtain ⟨h0, h1, hfirr⟩ := fract_mem_Ioo_of_irrational hirr
+  exact one_le_cfDigit _ hfirr ⟨h0, h1⟩ m
+
 /-- **The whole output side, as one reduction.**  A finite-state transducer `(δ, out)` whose
 
 * joint (window, state) frequencies converge to an `x`-independent law `ρ` (`hjs`, supplied by
   `VandeheyCocycle.tendsto_jointCount_of_classEquidistribution`), dominated by the window law
   (`hρ : SubWindow ρ`, free from `jointCount ≤ winCard` — see `jointStateFreq_le_gauss`),
 * output is unbounded (`hcof`) and grows linearly with a common rate (`hlen`, Lemma 6.1),
-* trigger multiplicities are uniformly bounded (`hkK`, `hK`, Lemma 2.2) and supported on genuine
-  words (`hgen`),
+* trigger multiplicities are uniformly bounded (`hkK`, `hK`, Lemma 2.2),
 * trigger tails are Gauss-null (`htail`, Lemma 4.3 condition (2)),
 * and whose output stream IS the CF expansion of the image (`hout`, the transducer's correctness)
 
@@ -51,7 +60,6 @@ theorem mobiusUniformFreq_of_transducer
     (hkK : ∀ v q t, kOut δ out v q t ≤ K)
     (hK : ∀ (v : List ℕ) (t : S) (y : ℝ) (J : ℕ),
       ∑ j ∈ Finset.Icc 1 J, kOut δ out v (cfWord y j) t ≤ K)
-    (hgen : ∀ v q t, kOut δ out v q t ≠ 0 → ∀ e ∈ q, 1 ≤ e)
     (htail : ∀ v, Tendsto (tailMass (kOut δ out v)) atTop (nhds 0))
     (hc : 0 < c)
     (hlen : ∀ y : ℝ, IsCFNormal y →
@@ -63,7 +71,7 @@ theorem mobiusUniformFreq_of_transducer
   classical
   intro v hne _hpos
   obtain ⟨L, hL⟩ := exists_tendsto_trigTotal (k := kOut δ out v) (K := K) δ s₀ hjs hρ
-    (hkK v) (hK v) (hgen v) (htail v)
+    (hkK v) (hK v) (htail v)
   refine ⟨L / c, fun x hden hx => ?_⟩
   set y : ℝ := Int.fract x with hy
   -- the trigger count IS the block occurrence count
@@ -75,7 +83,7 @@ theorem mobiusUniformFreq_of_transducer
       rw [fireTotal_kOut_eq_fireOut δ out s₀ y (hcof y) v i]
   have h1 : Tendsto (fun n => ((∑ i ∈ Finset.range n, fireOut y (hcof y) v i : ℕ) : ℝ) / n)
       atTop (nhds L) := by
-    refine (hL y hx).congr ?_
+    refine (hL y hx (one_le_cfDigit_fract hx)).congr ?_
     intro n
     rw [hsum n]
   -- hence the occurrence count in the output word, and then in the output stream
@@ -95,5 +103,6 @@ end NormalNumbers.VandeheyOut
 
 section
 open NormalNumbers.VandeheyOut
+#print axioms one_le_cfDigit_fract
 #print axioms mobiusUniformFreq_of_transducer
 end

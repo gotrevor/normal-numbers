@@ -767,10 +767,10 @@ lemma cfWindow_take (x : ℝ) (i J j : ℕ) (h : J ≤ j) :
 
 /-- **The pointwise tail bound.**  A position at which the length-`J` truncation misses a
 trigger has its length-`J` window inside `trigPrefix`. -/
-lemma fireTotal_sub_fireAt_le {k : List ℕ → S → ℕ} {K : ℕ}
+lemma fireTotal_sub_fireAt_le {k : List ℕ → S → ℕ} {K : ℕ} {x : ℝ}
     (hK : ∀ (t : S) (y : ℝ) (J : ℕ), ∑ j ∈ Finset.Icc 1 J, k (cfWord y j) t ≤ K)
-    (hgen : ∀ q t, k q t ≠ 0 → ∀ b ∈ q, 1 ≤ b)
-    (δ : S → ℕ → S) (s₀ : S) (x : ℝ) (i J : ℕ) :
+    (hgen : ∀ m, 1 ≤ cfDigit x m)
+    (δ : S → ℕ → S) (s₀ : S) (i J : ℕ) :
     (fireTotal k δ s₀ x i : ℝ) - (fireAt k δ s₀ x i J : ℝ)
       ≤ (K : ℝ) * trigInd k (stateAt δ s₀ x i) J (cfWindow x i J) := by
   set t : S := stateAt δ s₀ x i with htdef
@@ -791,7 +791,9 @@ lemma fireTotal_sub_fireAt_le {k : List ℕ → S → ℕ} {K : ℕ}
         have hsub : b ∈ cfWindow x i j := by
           have := List.take_subset J (cfWindow x i j)
           exact this (by rwa [cfWindow_take x i J j hj.le])
-        exact hgen _ t hne b hsub
+        obtain ⟨a, -, ha⟩ : ∃ a < j, cfDigit x (i + a) = b := by
+          simpa [cfWindow] using hsub
+        exact ha ▸ hgen _
       · rw [cfWindow_length]; exact hj.le
     have hle : ∀ J', fireAt k δ s₀ x i J' ≤ fireAt k δ s₀ x i J := by
       intro J'
@@ -811,10 +813,10 @@ lemma fireTotal_sub_fireAt_le {k : List ℕ → S → ℕ} {K : ℕ}
 
 /-- **The aggregate tail bound.**  The untruncated count exceeds the truncation by at most `K`
 times the count of positions with a live trigger prefix. -/
-lemma trigTotal_le_trigCount_add {k : List ℕ → S → ℕ} {K : ℕ}
+lemma trigTotal_le_trigCount_add {k : List ℕ → S → ℕ} {K : ℕ} {x : ℝ}
     (hK : ∀ (t : S) (y : ℝ) (J : ℕ), ∑ j ∈ Finset.Icc 1 J, k (cfWord y j) t ≤ K)
-    (hgen : ∀ q t, k q t ≠ 0 → ∀ b ∈ q, 1 ≤ b)
-    (δ : S → ℕ → S) (s₀ : S) (x : ℝ) (n J : ℕ) :
+    (hgen : ∀ m, 1 ≤ cfDigit x m)
+    (δ : S → ℕ → S) (s₀ : S) (n J : ℕ) :
     trigTotal k δ s₀ x n
       ≤ trigCount k δ s₀ x n J + (K : ℝ) * ∑ t : S, wCount δ s₀ t (trigInd k t J) J x n := by
   classical
@@ -823,7 +825,7 @@ lemma trigTotal_le_trigCount_add {k : List ℕ → S → ℕ} {K : ℕ}
     sum_state_wCount δ s₀ (fun t => trigInd k t J) J x n
   rw [trigTotal, trigCount_eq, hstate, Finset.mul_sum, ← Finset.sum_add_distrib]
   refine Finset.sum_le_sum fun i _ => ?_
-  have := fireTotal_sub_fireAt_le hK hgen δ s₀ x i J
+  have := fireTotal_sub_fireAt_le hK hgen δ s₀ i J
   linarith
 
 omit [DecidableEq S] [Fintype S] in
@@ -1014,7 +1016,7 @@ lemma trigLimit_le {k : List ℕ → S → ℕ} {K : ℕ} {ρ : List ℕ → S �
     _ = (K : ℝ) * n := by simp [mul_comm]
 
 /-- **The §6 assembly** (Vandehey Theorem 1.1's frequency step).  For a trigger family with a
-uniform multiplicity bound `K`, genuine trigger words, and vanishing tail mass, the untruncated
+uniform multiplicity bound `K` and vanishing tail mass, the untruncated
 trigger count has a Cesàro limit that is the *same* for every CF-normal `x`.  This is the
 output-frequency engine: output-word frequencies are read off the joint (window, state)
 frequencies with no reference to the point. -/
@@ -1022,9 +1024,8 @@ theorem exists_tendsto_trigTotal {k : List ℕ → S → ℕ} {K : ℕ} {ρ : Li
     (δ : S → ℕ → S) (s₀ : S) (hjs : JointStateFreq δ s₀ ρ) (hρ : SubWindow ρ)
     (hkK : ∀ q t, k q t ≤ K)
     (hK : ∀ (t : S) (y : ℝ) (J : ℕ), ∑ j ∈ Finset.Icc 1 J, k (cfWord y j) t ≤ K)
-    (hgen : ∀ q t, k q t ≠ 0 → ∀ b ∈ q, 1 ≤ b)
     (htail : Tendsto (tailMass k) atTop (nhds 0)) :
-    ∃ L : ℝ, ∀ x : ℝ, IsCFNormal x →
+    ∃ L : ℝ, ∀ x : ℝ, IsCFNormal x → (∀ m, 1 ≤ cfDigit x m) →
       Tendsto (fun n => trigTotal k δ s₀ x n / n) atTop (nhds L) := by
   classical
   have hmono : Monotone (trigLimit k ρ) := trigLimit_mono hρ hkK
@@ -1035,7 +1036,7 @@ theorem exists_tendsto_trigTotal {k : List ℕ → S → ℕ} {K : ℕ} {ρ : Li
   set L : ℝ := ⨆ J, trigLimit k ρ J with hLdef
   have hLtend : Tendsto (trigLimit k ρ) atTop (nhds L) := tendsto_atTop_ciSup hmono hbdd
   have hJle : ∀ J, trigLimit k ρ J ≤ L := fun J => le_ciSup hbdd J
-  refine ⟨L, fun x hx => ?_⟩
+  refine ⟨L, fun x hx hgen => ?_⟩
   rw [Metric.tendsto_nhds]
   intro ε hε
   -- pick a length cut that both saturates `L` and kills the tail
@@ -1089,7 +1090,7 @@ theorem exists_tendsto_trigTotal {k : List ℕ → S → ℕ} {K : ℕ} {ρ : Li
   have hupp : trigTotal k δ s₀ x n / n < L + ε := by
     have hsplit : trigTotal k δ s₀ x n / n
         ≤ trigCount k δ s₀ x n J / n + (K : ℝ) * W n := by
-      have hbase := trigTotal_le_trigCount_add hK hgen δ s₀ x n J
+      have hbase := trigTotal_le_trigCount_add hK hgen δ s₀ n J
       have hWn : W n = (∑ t : S, wCount δ s₀ t (trigInd k t J) J x n) / n := by
         simp only [hWdef, ← Finset.sum_div]
       have hcomb : trigCount k δ s₀ x n J / n + (K : ℝ) * W n
@@ -1104,8 +1105,8 @@ theorem exists_tendsto_trigTotal {k : List ℕ → S → ℕ} {K : ℕ} {ρ : Li
 
 /-! ### Guard rule for the assembly's hypothesis bundle
 
-`hK`, `hgen` and `htail` are not a new `Prop`, but they are a new hypothesis bundle, so they need
-a content locator: the EMPTY trigger family satisfies all three, and its limit is `0` — which
+`hK` and `htail` are not a new `Prop`, but they are a new hypothesis bundle, so they need
+a content locator: the EMPTY trigger family satisfies both, and its limit is `0` — which
 shows the content of `exists_tendsto_trigTotal` is entirely in the nonempty case. -/
 
 omit [DecidableEq S] [Fintype S] in
@@ -1125,7 +1126,7 @@ lemma trigTotal_zero (δ : S → ℕ → S) (s₀ : S) (x : ℝ) (n : ℕ) :
     trigTotal (fun _ _ => 0) δ s₀ x n = 0 := by
   simp [trigTotal, fireTotal_zero]
 
-/-- **Content locator** (guard rule): the empty trigger family satisfies `hK`, `hgen` and
+/-- **Content locator** (guard rule): the empty trigger family satisfies `hK` and
 `htail`, and the resulting Cesàro limit is `0`.  So the hypothesis bundle is consistent, and all
 the content of `exists_tendsto_trigTotal` lives in the nonempty case. -/
 theorem exists_tendsto_trigTotal_locator {ρ : List ℕ → S → ℝ} (δ : S → ℕ → S) (s₀ : S)

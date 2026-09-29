@@ -680,6 +680,7 @@ import NormalNumbers.VandeheyRescale
 import NormalNumbers.VandeheyOutputWord
 import NormalNumbers.VandeheyTrigger
 import NormalNumbers.VandeheyAssembly
+import NormalNumbers.VandeheyRunClock
 import NormalNumbers.VandeheyLRTransducer
 import NormalNumbers.VandeheyRaneyReach
 import NormalNumbers.VandeheyRunBound
