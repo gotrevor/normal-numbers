@@ -2613,3 +2613,33 @@ A future lap has exactly two honest options: (i) grind `BlockCoupling` out of
 equidistribution directly, which the directive currently forbids as the self-joining wall and which
 would need an altitude lap to re-authorise.  **That choice is above a grind lap's pay grade and
 should be made by the next review lap.**
+
+### Lap 75, eighth commit — S7-SC: S7-TD's bundle was VACUOUS; repaired
+
+Found by asking whether this lap's own `BlockCoupling` can be satisfied for free.  **It can.**
+
+* `blockCoupling_trivial` — take `S n j = {_t | G^{N n+j} y ∈ A}` (constant-true or constant-false).
+  Nothing in `BlockCoupling` ties `S n j` to the transducer state.
+* `blockAverageBound_trivial_iff` — with that `S`, `BlockAverageBound` unwinds **exactly** to the
+  clock-tick form of the crux's own conclusion.  So `TransducerData` was a faithful restatement of
+  `OrbitWordBound`, not a reduction of it.  S7-TD's headline claim was inflated.
+
+Unaffected: `blockCount_clock_eq` (BD) is a true and useful identity, and
+`integral_blockHitCount_le` a true and useful measure bound.  The error was treating the *bundle* as
+content-bearing.
+
+**The repair.**  `StateCoupling` pins the sets: `S n j` must be
+`stateBlockSet (s n) w j = (s n).mob⁻¹(G^{-j} I_w ∩ (0,1)) ∩ (0,1)` for a family of `MobState`s.
+Not satisfiable for free — the sets are determined by `s`, and their `γ`-masses are then pinned by
+`MobState.gaussMeasure_preimage_tower_le`.  `StateData` is the honest bundle;
+`orbitWordBound_of_stateData`, `vandeheyS7_mul_phi_of_stateData`,
+`vandeheyS7_add_phi_of_stateData` re-derive the frozen targets from it.  All axiom-clean.
+
+**Corrected headline for lap 75**: the §7 front is `GaussACRigidity` (cited) + `ImageTight` +
+`StateData`, and `StateData`'s only non-bookkeeping component is `BlockAverageBound` **for the
+pinned pullback sets** — which is fact (α) precisely because those sets carry the `γ`-mass bound
+that makes empirical-vs-expected the whole question.
+
+**Lesson to carry**: an existentially-quantified hypothesis bundle must have its witnesses PINNED or
+it reduces to its own conclusion.  Check every future `∃ N S, …` reduction against a
+`*_trivial` lemma before claiming it reduces anything.
