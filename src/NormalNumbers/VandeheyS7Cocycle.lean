@@ -85,7 +85,7 @@ noncomputable def comp (s t : MobState) : MobState where
         - (s.a * t.b + s.b * t.d) * (s.c * t.a + s.d * t.c)
         = (s.a * s.d - s.b * s.c) * (t.a * t.d - t.b * t.c) := by ring
     rw [hid]
-    exact mul_pos s.hdet t.hdet
+    exact mul_ne_zero s.hdet t.hdet
 
 @[simp] theorem comp_a (s t : MobState) : (s.comp t).a = s.a * t.a + s.b * t.c := rfl
 @[simp] theorem comp_b (s t : MobState) : (s.comp t).b = s.a * t.b + s.b * t.d := rfl

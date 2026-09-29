@@ -59,7 +59,7 @@ namespace NormalNumbers.VandeheyS7
 open Filter
 
 /-- A Möbius state in the shape every post-emission Raney state has: nonnegative lower row,
-positive `d`, positive determinant, and a nonnegative upper row so that the family is closed under composition
+positive `d`, nonzero determinant (either sign: Raney states have `det = ±D`), and a nonnegative upper row so that the family is closed under composition
 (`VandeheyS7Cocycle`).  Nothing here is about `ℤ`, `ℤ[φ]` or any ring — that is the
 point. -/
 structure MobState where
@@ -71,7 +71,7 @@ structure MobState where
   hb : 0 ≤ b
   hc : 0 ≤ c
   hd : 0 < d
-  hdet : 0 < a * d - b * c
+  hdet : a * d - b * c ≠ 0
 
 namespace MobState
 
@@ -113,14 +113,15 @@ theorem mob_sub (s : MobState) {u v : ℝ} (hu : 0 ≤ u) (hv : 0 ≤ v) :
   rw [div_sub_div _ _ h1 h2, div_eq_div_iff (mul_ne_zero h1 h2) (mul_ne_zero h1 h2)]
   ring
 
-/-- The image of the whole interval has positive length. -/
-theorem mob_one_sub_mob_zero_pos (s : MobState) : 0 < s.mob 1 - s.mob 0 := by
+/-- The image of the whole interval is nondegenerate.  Its orientation is the sign of the
+determinant, which the comparability ratio below is insensitive to. -/
+theorem mob_one_sub_mob_zero_ne (s : MobState) : s.mob 1 - s.mob 0 ≠ 0 := by
   rw [s.mob_sub (by norm_num) (by norm_num)]
   have h0 := s.den_pos (le_refl (0:ℝ))
   have h1 := s.den_pos (zero_le_one)
-  apply div_pos
-  · nlinarith [s.hdet]
-  · exact mul_pos h1 h0
+  have : (0:ℝ) < (s.c * 1 + s.d) * (s.c * 0 + s.d) := mul_pos h1 h0
+  refine div_ne_zero ?_ this.ne'
+  simpa using s.hdet
 
 /-! ## The comparability theorem -/
 
@@ -140,7 +141,7 @@ theorem mob_ratio_comparable (s : MobState) {u v : ℝ} (hu : 0 ≤ u) (huv : u 
   have hpv := s.den_pos hv'
   have hp0 := s.den_pos (le_refl (0:ℝ))
   have hp1 := s.den_pos (zero_le_one)
-  have hdenom : s.mob 1 - s.mob 0 ≠ 0 := (s.mob_one_sub_mob_zero_pos).ne'
+  have hdenom : s.mob 1 - s.mob 0 ≠ 0 := s.mob_one_sub_mob_zero_ne
   -- the ratio, computed
   have hratio : (s.mob v - s.mob u) / (s.mob 1 - s.mob 0)
       = (v - u) * ((s.c + s.d) * s.d) / ((s.c * v + s.d) * (s.c * u + s.d)) := by
@@ -148,7 +149,7 @@ theorem mob_ratio_comparable (s : MobState) {u v : ℝ} (hu : 0 ≤ u) (huv : u 
     have hd0 : s.c * (0:ℝ) + s.d = s.d := by ring
     have hd1 : s.c * (1:ℝ) + s.d = s.c + s.d := by ring
     rw [hd0, hd1]
-    have hne : s.a * s.d - s.b * s.c ≠ 0 := s.hdet.ne'
+    have hne : s.a * s.d - s.b * s.c ≠ 0 := s.hdet
     field_simp
     ring
   have hvu : 0 ≤ v - u := by linarith

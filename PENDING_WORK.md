@@ -515,7 +515,43 @@ factor is only ever evaluated ON THE INNER IMAGE, and `distOn_le_one_add` says i
 SATURATING at ≈ 2.5 instead of drifting, while the conjugate place ran to 10^644 — and it is the
 inductive step any window bound must run on.
 
-**NEXT (lap 6).**  Close the quantitative loop.  Two sub-nodes, in order:
+**Lap 6 (same day): reading is FREE; emitting is the whole problem.**
+`src/NormalNumbers/VandeheyS7Branch.lean`, all axiom-clean.  (`MobState.hdet` relaxed from
+`0 < det` to `det ≠ 0` — Raney states have `det = ±D`, and the comparability ratio of
+`VandeheyS7Distortion` is orientation-blind, so the refactor cost nothing.)
+
+The `φ`-machine is now a Lean object: `gaussBranch a : y ↦ 1/(a+y)` (totalised at `a = 0`),
+`phiState = diag(φ,1)`, `runWord` the fold.  Two facts, and they are sharper than the attack map
+expected.
+
+1. **Reading an input digit is free.**  Right-composition by `A_a` sends the lower row `(c,d)` to
+   `(d, c + a·d)`, so with `a ≥ 1`, `c ≥ 0` it lands in `c ≤ d` FROM ANYWHERE and stays.  Hence
+   `distortion_runWord_le_two`: after at least one input digit the distortion is `≤ 2`, from any
+   initial state, with NO arithmetic hypothesis and no finiteness.  This is the in-kernel form of
+   the probes' "real place flat, no drift", and over ℤ it is Rényi's bounded-distortion property.
+2. **Emitting swaps the rows.**  `emit e s` is left-multiplication by `(−e,1;1,0)`, i.e.
+   `(a,b;c,d) ↦ (c−e·a, d−e·b; a, b)` (`mob_emit` proves it is `z ↦ 1/z − e`).  So
+   `distortion_emit : distortion (emit e s) = (s.a + s.b)/s.b` — the UPPER row's ratio, while
+   reading controls the LOWER row's.  Reading pushes the state into the good region; emitting
+   throws it back out.  **That exchange is the entire content of the window lemma.**
+
+So the obligation is sharpened from `BddDistortion` (a sequence of abstract states) to
+`EmitRowBound` (one explicit arithmetic ratio `(a+b)/b` of two ℤ[φ] numbers, at emission times
+only), and `bddDistortion_of_emitRowBound` proves the two are the same statement.  `EmitRowBound`
+is exactly what both 2026-08 probes measured saturating at ≈ 2.5.
+
+**NEXT (lap 7).**  Attack `EmitRowBound` directly.  The geometry that should give it: emission
+fires only when the image interval `M([0,1])` lies inside a cylinder `(1/(e+1), 1/e)`, which pins
+`b/d` and `(a+b)/(c+d)` both to that cylinder; combined with the free bound `(c+d)/d ≤ 2` this
+gives `(a+b)/b ≤ 2·(e+1)/e ≤ 4` for a SINGLE emission.  The open part is a BURST of consecutive
+emissions with no intervening read, where the crude factor compounds — which is exactly the
+content of the lost Lemma 2.2 (`burst ≤ C + log(1+a)/Lévy`, unbounded, measured 0.843·ln a).
+So the next target is: state the emission trigger as a hypothesis, prove the single-emission
+bound, and then find what replaces the burst bound.  Note `∫ log(1+a) dγ < ∞` is still available,
+which is why the run clock survives; the question is whether a MULTIPLICATIVE burst penalty can
+be averaged the same way.
+
+**(superseded) NEXT (lap 6).**  Close the quantitative loop.  Two sub-nodes, in order:
 (i) the Rényi bound for the inner factor — `distortion` of any composition of Gauss inverse
     branches `A_a : y ↦ 1/(a+y)` is ≤ 4, by induction through `distortion_comp_le` (or directly:
     a Gauss branch has `c = 1, d = a`, so `distortion = (1+a)/a ≤ 2`, and the image has length
