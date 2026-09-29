@@ -28,6 +28,10 @@ import NormalNumbers.VandeheyS7Quadratic
 import NormalNumbers.VandeheyS7BlockRefute
 import NormalNumbers.VandeheyS7BlockGenRefute
 import NormalNumbers.VandeheyS7Circular
+import NormalNumbers.VandeheyS7StateCouple
+import NormalNumbers.VandeheyS7StateAudit
+import NormalNumbers.VandeheyS7Audit
+import NormalNumbers.VandeheyS7WidthDensity
 import NormalNumbers.VandeheyS7ArchWidthFree
 
 /-!
@@ -392,6 +396,39 @@ stronger, hence never a reduction.  The architecture (`isCFNormal_image_of_block
 remains a correct and useful FACTORISATION — it isolates exactly what locality would buy — but no
 lap should treat proving the crux as easier than proving the theorem. -/
 alias hall_blockforget_is_restatement := NormalNumbers.VandeheyS7.abs_gap_witness
+
+/-- **HALL: the `TransducerData` bundle** (`vacuous`, 2026-09-27).  Route B's §7 front was packaged
+as an existential over a family of sets `S n j` said to carry the transducer's block structure.
+Nothing in `BlockCoupling` ties `S n j` to the state, so `S n j = univ`/`∅` according to whether the
+slot hits the target satisfies it whenever the conclusion holds (`blockCoupling_trivial`): the
+bundle is a restatement of `OrbitWordBound`, not a reduction of it.  The repair pins the sets to a
+state family (`StateCoupling`/`StateData`) — and that repair is itself vacuous, next row. -/
+alias hall_transducerdata_vacuous := NormalNumbers.VandeheyS7.blockCoupling_trivial
+
+/-- **HALL: the `StateData` repair** (`restatement`, 2026-09-27).  Pinning the coupling sets to a
+family of `MobState`s pins nothing: the type is large enough to interpolate any single pair of
+points, so `lowState (Gⁿy / Gⁿx)` sends `Gⁿx` to `Gⁿy` exactly and
+`stateData_of_orbitWordBound` derives the bundle from its own conclusion.  A transducer hypothesis
+has content only when the state family is pinned to the input AS A FUNCTION, by the read/emit
+recursion — which is what `runState` (S7-RN) finally supplies. -/
+alias hall_statedata_restatement := NormalNumbers.VandeheyS7.stateData_of_orbitWordBound
+
+/-- **HALL: `StateClock` below the width scale** (`vacuous`, 2026-09-27).  `StateClock q r₀ η K`
+compares an orbit count against a threshold `T`; at `T < 1/η` the state `lowState η` has its whole
+image below `1/T`, so every orbit time is counted and the inequality holds for free
+(`blockCount_le_card_lowState`).  The hypothesis has content only at `T ≥ 1/η`. -/
+alias hall_stateclock_below_width := NormalNumbers.VandeheyS7.blockCount_le_card_lowState
+
+/-- **HALL: the one-digit-per-read throttle** (`refuted`, 2026-09-29, lap 91).  Every §7 scalar debt
+(`WidthAfford`, `MeanSlack`, `ClockLinear`'s uniform floor) was stated for a transducer whose `step`
+emits AT MOST ONE digit per read (`runWord_length_le_one`).  That throttle creates a queue of
+known-but-unemitted output digits; the queue is a mean-zero random walk, so `log (1/width)` is
+null-recurrent of size `≍ √n` and the wide times have density ZERO.  `not_widthAfford_of_wide_sparse`
+(this row's alias) then makes `WidthAfford` FALSE, and `crux_sum_le_of_wide_sparse` makes the
+width-filtered crux vacuous on the same run.  Vandehey's transducer emits a variable-length word;
+with maximal emission (S7-GR's `flushState`) the same exact simulation keeps the slack bounded and
+`freq(width < η) ≍ √η`.  **Moral: price the instrument before the hypothesis.** -/
+alias hall_one_digit_throttle := NormalNumbers.VandeheyS7.MapState.not_widthAfford_of_wide_sparse
 
 /-- The forward half of the same row: the crux does imply the goal. -/
 alias hall_blockforget_implies_goal :=
@@ -1232,6 +1269,41 @@ def register : List Hall := [
    .restatement, .kernel,
    "The reference run IS the Gauss shift (S7-RR), so the comparison is against the input's own statistics, and S7-NR proves both directions of the SIGNED form: the crux without its absolute values holds exactly when slotCount / p tends to gamma(I_w), i.e. exactly when the conclusion holds; abs_gap_witness shows the step from signed to absolute is not free (equal Cesaro means, Cesaro mean of the absolute difference 1), so the crux is the headline plus local clock regularity plus window concentration",
    "alias hall_blockforget_is_restatement = abs_gap_witness, hall_blockforget_implies_goal = isCFNormal_image_of_blockForgetAll; modules VandeheyS7Circular, VandeheyS7NoReduction, VandeheyS7ArchWidthFree, VandeheyS7RefRun; the architecture stays valid as a FACTORISATION of the headline into a local statement", "2026-09-29"⟩,
+  ⟨"the TransducerData bundle as the S7 front",
+   "Package the transducer's block structure as an existential over sets S n j and treat the bundle as the remaining hypothesis",
+   .vacuous, .kernel,
+   "Nothing ties S n j to the state, so S n j = univ or empty according to whether the slot hits the target satisfies BlockCoupling whenever the conclusion holds: the bundle is a restatement of OrbitWordBound",
+   "alias hall_transducerdata_vacuous = blockCoupling_trivial; module VandeheyS7StateCouple; the repair StateCoupling/StateData is the next row", "2026-09-27"⟩,
+  ⟨"the StateData repair of the bundle",
+   "Pin the coupling sets to a family of MobStates, so that the bundle is no longer free",
+   .restatement, .kernel,
+   "Pinning to a TYPE pins nothing: lowState (G^n y / G^n x) is a legitimate MobState sending G^n x to G^n y, so stateData_of_orbitWordBound derives the bundle from its own conclusion; a transducer hypothesis has content only when the state family is pinned to the input as a function, by the read/emit recursion",
+   "alias hall_statedata_restatement = stateData_of_orbitWordBound; module VandeheyS7StateAudit; the honest pinning is runState (S7-RN)", "2026-09-27"⟩,
+  ⟨"StateClock below the width scale",
+   "Use StateClock q r0 eta K at a threshold T without relating T to the width floor eta",
+   .vacuous, .kernel,
+   "At T < 1/eta the state lowState eta has its entire image below 1/T, so every orbit time is counted by the comparison set and the inequality holds for free",
+   "alias hall_stateclock_below_width = blockCount_le_card_lowState; module VandeheyS7Audit; the hypothesis has content only at T at least 1/eta", "2026-09-27"⟩,
+  ⟨"the one-digit-per-read throttle behind the S7 scalar debts",
+   "State WidthAfford / MeanSlack / ClockLinear for a transducer whose step emits at most one digit per read",
+   .refuted, .kernel,
+   "The throttle creates a queue of known-but-unemitted output digits whose length is a mean-zero random walk, so log(1/width) is null-recurrent of size sqrt(n) and the wide times have density zero; not_widthAfford_of_wide_sparse then makes WidthAfford false and crux_sum_le_of_wide_sparse makes the width-filtered crux vacuous on the same run, while the GREEDY transducer (maximal emission, S7-GR) keeps the slack bounded with freq(width < eta) of order sqrt(eta)",
+   "alias hall_one_digit_throttle = not_widthAfford_of_wide_sparse; modules VandeheyS7WidthDensity, VandeheyS7Greedy; probe experiments/PROBE-2026-09-29-lap91-stall-and-width-walk.md Findings 2-4", "2026-09-29"⟩,
+  ⟨"bounded-error decomposition of the image count",
+   "Reduce SampledUniformCount to: the image's occurrence count agrees with a finite input-word family's count up to a bounded error C",
+   .falseAsStated, .cited,
+   "The window function computing the image digit is wrong exactly on the set where the orbit comes within delta of a cylinder endpoint, whose Gauss mass is positive (gaussMeasure_exceptional_le); a CF-normal input meets a positive-mass set with positive frequency, so the decomposition error is Theta(p), never O(1) -- the epsilon-scheme (approxScheme) replaces it",
+   "module VandeheyS7Approx header; the surviving engine is tendsto_div_of_approxScheme", "2026-09-29"⟩,
+  ⟨"Diophantine good-denominator detour for the tail cell",
+   "Turn OrbitCellBound's w = [] case into a count of T-good rational approximations to the image and bound that count",
+   .wall, .cited,
+   "largeDigitCount_le_goodDenCount is unconditional and exact, but the counting input it needs -- #{q <= Q : ||q y|| <= 2/(Tq)} <= (D/T) log Q for the SPECIFIC image y -- is a Zaremba-strength statement about one real number, not an average, and no such bound is available",
+   "module VandeheyS7Dioph; theorems largeDigitCount_le_goodDenCount, tailFreq_le_of_goodDenBound", "2026-09-29"⟩,
+  ⟨"route B's unweighted cover of the state-dependent target",
+   "Cover the state-dependent target by a FIXED finite family of cylinders, uniformly over the width-at-least-eta state box, and cite GaussACRigidity",
+   .refuted, .cited,
+   "State-blind is impossible -- over the whole box the targets' union is all of (0,1), so a cover valid for every state has mass 1, not C gamma(I_w); and net-indexed is quantitatively dead -- resolving a target of length gamma(I_w) needs precision rho <= gamma(I_w), so the box carries rho^(-4) cells and the unweighted cover mass is gamma(I_w)^(-3), i.e. C blows up with |w|; the Z[phi]-separation of the reachable states says this is not an artefact of the net",
+   "DIRECTION.md fact (epsilon), review lap 88; modules VandeheyS7WD/WD'/CV/FT are finished and must not be extended", "2026-09-29"⟩,
   ⟨"predictable target sets from marginals alone",
    "Conclude OrbitCellBound from: A n = s_n^(-1)(E) is determined by x_1..x_n, has small Gauss mass, and the input orbit has the correct marginal frequencies",
    .refuted, .kernel,
