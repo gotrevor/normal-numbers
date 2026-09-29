@@ -402,6 +402,42 @@ needs one discharged (DIRECTION standing rule 3).
 
 ## Lap notes
 
+### 2026-09-29 lap 22 — the Cesàro engine, and the remaining obligation isolated to ONE hypothesis
+
+`VandeheyS7Assemble.lean`, both theorems axiom-clean.
+
+* `cfFreq_finset_sum` : a FINITE family of input words has a joint occurrence frequency, namely
+  `∑ γ(I_u)`.  Finite additivity on top of CF-normality — the engine that turns "the image digit
+  is a window function of the input" into an image frequency.
+* `cfCount_tendsto_of_decomposition` : if the image's count of `v` agrees with the total count of
+  a finite family `S` of input words **up to a bounded error**, then
+  `cfCount v z p / p → ∑_{u∈S} γ(I_u)`.  The limit depends only on `S`, hence only on the window
+  function and `v` — **NOT on `x`.  That is precisely the `x`-independence `SampledUniformCount`
+  asks for.**
+
+The bounded-error form is the right one: edge effects of a fixed-length window are `O(1)` in `p`,
+not `o(p)` in disguise, so nothing is being smuggled.
+
+**Where the route now stands.**  Everything analytic is proved; the whole remaining gap is the
+single hypothesis `hdecomp` — identifying `S` from `cfDigit_agree_depth`.  Two sub-obligations:
+
+1. **The window function.**  Show the image digit at position `j` is a fixed function of a
+   fixed-length window of the input digits.  All the ingredients exist
+   (`cfDigit_agree_depth` + `budget_le` + the two measure bounds); what is missing is the
+   *definition* of `F` and the statement that the machine's emission is what `runWord` computes
+   (the handoff's "remaining bookkeeping on the window lemma": `TriggerGap`, and identifying the
+   pullback matrix's first column with `Conv.of`'s `(p', q')`).
+2. **Finiteness of `S`.**  `S` is finite only after the digit cutoff `K`; uncapped it is
+   countably infinite and the limit/sum exchange needs the repo's existing summability inputs
+   (`CFAeKhinchin.summable_logMul_vol_cfCylinder`, `summable_sqLog_gaussMeasure_cfCylinder`).
+
+**Next attack (lap 23): obligation 1, starting with the emission bookkeeping.**  It is the older
+of the two and was already queued in the 2026-09-29 handoff.  Concretely: turn the φ-machine's
+operational emission trigger into `TriggerGap`, and prove `A_e = (0 1; 1 e)` matches
+`Conv.of [e] = ⟨0,1,1,e⟩` (hand-checked already; the recursions agree).  That makes
+`BddDistortion` / `EmitRowBound` theorems rather than hypotheses, and it is what lets `F` be
+defined at all.
+
 ### 2026-09-29 lap 21 — THE ROUTE IS NOT BUDGET-LIMITED (`VandeheyS7Budget.lean`)
 
 The question this lap had to settle: `cfDigit_agree_depth` needs `δ_L · scale u m` small, where
