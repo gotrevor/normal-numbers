@@ -447,7 +447,38 @@ contains no `[1]`, while `γ(I_[1]) > 0`), so `q ≠ 0` in `VandeheyS7Problem1` 
 Scope stated honestly in the module docstring: this kills the finiteness LEMMA over ℤ[φ], which
 is all the Theorem 1.1 proof uses; it does not compute the actual reachable set.
 
-**NEXT (lap 3), DIRECTION items 3–4.**  Factor the Thm 1.1 pipeline so its finite-state step is a
+**Lap 3 (same day), DIRECTION items 3–4: the pipeline is FACTORED.**
+`src/NormalNumbers/VandeheyS7Clock.lean`, all axiom-clean.
+
+`VandeheyOut.mobiusUniformFreq_of_runClock` — the restatement that made Thm 1.1 assemble — has a
+proof that is ONE rescaling and nothing else: no transducer, no output stream, no determinant, no
+state set.  So it ports verbatim to a real affine map, and the whole of §7 Problem 1 now reads
+
+    affineCFN_of_runClock : 0 < q → RunClock ℓ rate → SampledUniformCount q r₀ ℓ → AffineCFN q r₀
+
+with both φ instances instantiated (`vandeheyS7_mul_phi_of_runClock`, `..._add_phi_of_runClock`).
+The two named hypotheses are the finite-state step, split along its real fault line:
+
+* `RunClock ℓ rate` — monotone clock, positive `x`-independent rate.  Formally MAP-FREE (it
+  does not mention `q`, `r₀`), which is the half of the bundle that is not about the image at
+  all.  Believed fine: the attack map's 2026-08-24 measurement has `l(n) = c₁n(1+o(1))`
+  surviving the loss of Lemma 2.2 because `∫log(1+a)dγ < ∞`; `c₁ ∈ [0.965, 0.989]`.
+* `SampledUniformCount q r₀ ℓ` — `x`-independent Cesàro limit for each word's count sampled
+  along the clock.  **This is the entire remaining crux**, and the only place the lost ℤ[φ]
+  finiteness has to be replaced (trigger windows + distributional merging, Route A nodes 2–3).
+
+Content locator `affineUniformFreq_of_runClock_locator` (identity clock, rate 1) discharges the
+guard rule; `not_affineCFN_zero` already rules out vacuity.
+
+**NEXT (lap 4).**  Attack `SampledUniformCount` for `q = φ`.  The first sub-node is Route A's
+window lemma stated for the REDUCED post-emission states in terms of BOUNDED DISTORTION (not
+compactness in PGL₂(ℝ) — correction 2 of 2026-08-24; the raw state set is unbounded in the
+PROVED case too).  That needs the φ-transducer's state as a Lean object, which does not exist
+yet: building it (states as Möbius maps over ℤ[φ], update `M_{n+1} = A_out⁻¹ M_n A_{a_{n+1}}`,
+distortion as a real functional) is the lap-4 deliverable, with the window lemma as the first
+disclosed `sorry` on it.
+
+**(superseded) NEXT (lap 3), DIRECTION items 3–4.**  Factor the Thm 1.1 pipeline so its finite-state step is a
 NAMED hypothesis, then state the compact-fiber substitute that discharges it: the bounded-
 distortion window lemma for reduced post-emission states (NOT the integer descent — corrected
 2026-08-24), and the distributional merging statement.  Every node wires to `AffineUniformFreq`,

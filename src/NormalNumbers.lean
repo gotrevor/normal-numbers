@@ -694,6 +694,7 @@ import NormalNumbers.VandeheyCFBridge
 import NormalNumbers.VandeheyCapstone
 import NormalNumbers.VandeheyS7
 import NormalNumbers.VandeheyS7Wall
+import NormalNumbers.VandeheyS7Clock
 import NormalNumbers.VandeheyLRRuns
 import NormalNumbers.VandeheyLRPattern
 import NormalNumbers.VandeheyRunCount
