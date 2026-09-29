@@ -148,11 +148,23 @@ Three facts, all established lap 30, fix its difficulty and must steer every fur
   **So tightness — the Krylov–Bogolyubov half of `GaussACRigidity` — costs nothing, and the crux
   never needed it.**  `exists_rate_gap` makes the remaining gap a theorem: for every `C` there is a
   `T` with `C/T < 1/log T`, so no sharpening of `Λ` can reach the crux's `C/(T log 2)`.
-  **The open content of S7-T is exactly the passage from `1/log T` to `1/T`.**  Still open form:  Equivalent Diophantine form: the number of
-  `q ≤ Q` with `‖q φ x‖ < 1/(Tq)` is `≤ (C/T) log Q`.  The `E_q := {u : ‖qφu‖ < 1/(Tq)}` are
-  **`x`-independent** sets of Lebesgue measure exactly `2/(Tq)`, so the heuristic is exact; what is
-  missing is that CF-normality of `x` says nothing about `{E_q}`.  This is the smallest genuinely
-  open piece of the crux, and by (β) everything else waits on it.
+  **The open content of S7-T is exactly the passage from `1/log T` to `1/T`.**
+  **Lap 31 made that passage a named Lean hypothesis** (`VandeheyS7Dioph.lean`, axiom-clean,
+  sorry-free): `GoodDenBound y D` — `#{q ≤ Q : ‖q y‖ ≤ 2/(Tq)} ≤ (D/T) log Q` — together with any
+  Lévy bound gives the crux's rate, `tailFreq_le_of_goodDenBound : freq ≤ DΛ/T + ε`.  The
+  reduction is unconditional: `largeDigitCount_le_goodDenCount` bounds
+  `#{i < p : aᵢ(y) ≥ T}` by `1 + #{q ≤ Qₚ : ‖q y‖ ≤ 2/(Tq)}` with `Qₚ = cfK (digitWord y p)`, via
+  `nearInt_convDen_le` (a digit `≥ T` IS a `T`-good approximation, from the new `cfDet`
+  determinant identity + `abs_convDen_mul_sub_le : |qₚ y − pₚ| ≤ 2/qₚ₊₁`) and the strictly
+  monotone injection `i ↦ qᵢ`.  `heuristic_sum_le` shows the demanded bound is exactly the total
+  measure `∑_{q≤Q} 2/(Tq) ≤ (2/T)(1+log Q)` of the target sets, so the Diophantine form is sharp,
+  not lossy.
+  **Next attack (lap 32):** instantiate at `y = Int.fract (φ x)`, where `E_q = {u : ‖qφu‖ ≤ 2/(Tq)}`
+  is **`x`-independent**; the open question is then the single sentence "does CF-normality of `x`
+  control the visit counts to `{E_q}`?".  Two concrete probes: (i) the `q` occurring are the
+  denominators of `φx`, so ask whether `q ∈ ℕ` can be replaced by `qφ ∈ ℤ[φ]` and the norm form
+  used as in S7-H; (ii) look for a REFUTATION of `GoodDenBound` for some CF-normal `x` — it would
+  kill the Diophantine route as stated and force the `w ≠ []` cells back in.
 * **S7-H — DONE, lap 30** (`VandeheyS7Hecke.lean`, axiom-clean; Maze row
   `hall_hecke_approximation`).  The "approximate `φ` by `F_{k+1}/F_k`, apply the PROVED Thm 1.1,
   diagonalize" route is refuted by its own accounting: `goldenNorm_factor` +
