@@ -690,6 +690,8 @@ import NormalNumbers.VandeheyLetterGrowth
 import NormalNumbers.VandeheyLRTail
 import NormalNumbers.VandeheyScaleCount
 import NormalNumbers.VandeheyRunDict
+import NormalNumbers.VandeheyCFBridge
+import NormalNumbers.VandeheyCapstone
 import NormalNumbers.VandeheyLRRuns
 import NormalNumbers.VandeheyLRPattern
 import NormalNumbers.VandeheyRunCount
