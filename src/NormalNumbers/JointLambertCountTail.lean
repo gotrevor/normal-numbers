@@ -112,6 +112,57 @@ theorem near_middle_tail_le {R A M H k L J : ℕ} (hA : 0 < A) (hR : 0 < R) (hH 
     mul_le_mul_of_nonneg_right (sum_half_Ico_le L J) (by positivity)
   nlinarith [h1, h2]
 
+/-! ### The far range, and the full three-range bound -/
+
+/-- **Far range** (note §4, simplified).  Beyond `J` the crude `τ(n) ≤ n` bound already
+suffices: `∑_{j≥J} τ(n_m+j)2^{-j} ≤ (2(Y+J)+2) 2^{-J}` when `n_m ≤ Y`.
+
+The note reaches for `τ(n) ≤ 2√n` here, to get `(√Y + √J)2^{-J}`.  That refinement is
+unnecessary: at the schedule `J = ⌊(log₂ X)²⌋` one has `2^J = X^{log₂ X}`, which dwarfs
+`Y = 2QX` with room to spare, so the linear bound is already negligible.  Avoiding the
+square root removes an entire estimate from the dependency chain. -/
+theorem far_tail_le {M Y J : ℕ} (n : ℕ → ℕ) (hY : ∀ m, m < M → n m ≤ Y) :
+    (∑ m ∈ range M, (1 / 2 : ℝ) ^ J * ∑' t : ℕ, (tau (n m + J + t) : ℝ) / 2 ^ t)
+      ≤ (M : ℝ) * ((2 * (Y : ℝ) + 2 * (J : ℝ) + 2) * (1 / 2 : ℝ) ^ J) := by
+  have hterm : ∀ m ∈ range M,
+      (1 / 2 : ℝ) ^ J * ∑' t : ℕ, (tau (n m + J + t) : ℝ) / 2 ^ t
+        ≤ (2 * (Y : ℝ) + 2 * (J : ℝ) + 2) * (1 / 2 : ℝ) ^ J := by
+    intro m hm
+    have hmM : m < M := Finset.mem_range.mp hm
+    have h1 := tsum_tau_div_le (n m + J)
+    have h2 : (2 : ℝ) * ((n m + J : ℕ) : ℝ) + 2 ≤ 2 * (Y : ℝ) + 2 * (J : ℝ) + 2 := by
+      have : ((n m : ℕ) : ℝ) ≤ (Y : ℝ) := by exact_mod_cast hY m hmM
+      push_cast
+      linarith
+    have hchain : (∑' t : ℕ, (tau (n m + J + t) : ℝ) / 2 ^ t)
+        ≤ 2 * (Y : ℝ) + 2 * (J : ℝ) + 2 := by
+      refine le_trans h1 ?_
+      push_cast at h2 ⊢
+      linarith
+    calc (1 / 2 : ℝ) ^ J * ∑' t : ℕ, (tau (n m + J + t) : ℝ) / 2 ^ t
+        ≤ (1 / 2 : ℝ) ^ J * (2 * (Y : ℝ) + 2 * (J : ℝ) + 2) :=
+          mul_le_mul_of_nonneg_left hchain (by positivity)
+      _ = (2 * (Y : ℝ) + 2 * (J : ℝ) + 2) * (1 / 2 : ℝ) ^ J := by ring
+  refine le_trans (Finset.sum_le_sum hterm) ?_
+  rw [Finset.sum_const, Finset.card_range, nsmul_eq_mul]
+
+/-- **The full three-range tail bound** (note §4).  The tail of each candidate index is
+split as `[k, J)` plus `[J, ∞)`; the first part is `near_middle_tail_le`, the second
+`far_tail_le`. -/
+theorem three_range_tail_le {R A M H k L J Y : ℕ} (hA : 0 < A) (hR : 0 < R) (hH : 1 ≤ H)
+    (hkL : k ≤ L) (hLJ : L ≤ J)
+    (hbd : ∀ j, j < J → ∀ m, m < M → (R + j) + m * A ≤ H ^ 2)
+    (hcop : ∀ j, k ≤ j → j < L → Nat.Coprime (R + j) A)
+    (hY : ∀ m, m < M → R + m * A ≤ Y) :
+    (∑ m ∈ range M, ((∑ j ∈ Ico k J, (tau (R + j + m * A) : ℝ) * (1 / 2 : ℝ) ^ j)
+        + (1 / 2 : ℝ) ^ J * ∑' t : ℕ, (tau ((R + m * A) + J + t) : ℝ) / 2 ^ t))
+      ≤ (2 * M * (1 + Real.log H) + 2 * H)
+          * (2 * (1 / 2 : ℝ) ^ k + (tau A : ℝ) * (2 * (1 / 2 : ℝ) ^ L))
+        + (M : ℝ) * ((2 * (Y : ℝ) + 2 * (J : ℝ) + 2) * (1 / 2 : ℝ) ^ J) := by
+  rw [Finset.sum_add_distrib]
+  exact add_le_add (near_middle_tail_le hA hR hH hkL hLJ hbd hcop)
+    (far_tail_le (M := M) (Y := Y) (J := J) (fun m => R + m * A) hY)
+
 /-! ### Permanent boundary controls -/
 
 /-- Empty tail range: `k = J` gives the zero sum, and the bound is nonnegative. -/
