@@ -38,7 +38,34 @@ theorem iteratedLog_rate_le_eps_log (C ε : ℝ) (hC : 0 < C) (hε : 0 < ε) :
     ∃ N0 : ℕ, ∀ N : ℕ, N0 ≤ N →
       C * (Real.log (Real.log (N : ℝ))) ^ 2 * Real.log (Real.log (Real.log (N : ℝ)))
         ≤ ε * Real.log (N : ℝ) := by
-  sorry
+  -- work in the variable `L = log N`, which tends to `atTop`
+  have hbase : ∀ᶠ L : ℝ in atTop,
+      C * (Real.log L) ^ 2 * Real.log (Real.log L) ≤ ε * L := by
+    have hlo := (Real.isLittleO_pow_log_id_atTop (n := 3)).def (div_pos hε hC)
+    filter_upwards [hlo, eventually_ge_atTop (3 : ℝ)] with L hL h3
+    have hL0 : (0 : ℝ) < L := by linarith
+    have hlog1 : (1 : ℝ) ≤ Real.log L := by
+      have : Real.log 3 ≤ Real.log L := Real.log_le_log (by norm_num) h3
+      have h1 : (1 : ℝ) ≤ Real.log 3 := by
+        rw [show (1 : ℝ) = Real.log (Real.exp 1) by rw [Real.log_exp]]
+        exact Real.log_le_log (Real.exp_pos 1) (by
+          have := Real.exp_one_lt_d9
+          linarith)
+      linarith
+    have hstep : Real.log (Real.log L) ≤ Real.log L := Real.log_le_self (by linarith)
+    have hsq : (0 : ℝ) ≤ C * (Real.log L) ^ 2 := by positivity
+    have h1 : C * (Real.log L) ^ 2 * Real.log (Real.log L) ≤ C * (Real.log L) ^ 3 := by
+      nlinarith [hsq, hstep]
+    have hnorm : Real.log L ^ 3 ≤ ε / C * L := by
+      have h2 : ‖Real.log L ^ 3‖ ≤ ε / C * ‖id L‖ := hL
+      simpa [Real.norm_eq_abs, abs_of_nonneg (show (0:ℝ) ≤ Real.log L by linarith),
+        abs_of_nonneg hL0.le, id] using h2
+    calc C * (Real.log L) ^ 2 * Real.log (Real.log L) ≤ C * (Real.log L) ^ 3 := h1
+      _ ≤ C * (ε / C * L) := by exact mul_le_mul_of_nonneg_left hnorm hC.le
+      _ = ε * L := by field_simp
+  have htend : Filter.Tendsto (fun N : ℕ => Real.log (N : ℝ)) atTop atTop :=
+    Real.tendsto_log_atTop.comp tendsto_natCast_atTop_atTop
+  exact Filter.eventually_atTop.mp (htend.eventually hbase)
 
 /-- **The quantitative joint Lambert count.**  For every finite set `S` of bases `≥ 2`
 and every choice of a nonempty valid word in each base, the number of offsets `n < N` at
