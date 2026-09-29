@@ -97,7 +97,28 @@ Order of work:
    by S7-AG.  **Remaining obligation, in full:** the height ledger's running slack has bounded
    Cesàro average, equivalently `(1/p) Σ_{n<p} log d_n = O(1)` — positive recurrence of one
    scalar walk reflected at `√(|det Φ|/6)`.  No geometry, no cells, no state space.
-   Next Lean step: the Chebyshev bookkeeping `Σ_{n<p} stallAge n = O(p) ⟹ WidthFreqBound`.  S7-LG bounds bursts; what remains is that long
+   **S7-SK (`VandeheyS7Slack`) DOES the reduction — and corrects the route.**  S7-DB's stall
+   bound is a LOWER bound on the height, so it gives "long stall ⟹ narrow", not the converse,
+   and the converse is FALSE (one huge input digit narrows the state with no stall at all).
+   The honest reduction goes through the slack directly and is cleaner:
+   `slack m := log d_{m+2} − log √(|det Φ|/6) ≥ 0` (`slack_nonneg`, from `d_runState_ge`), and
+
+       `width_ge_of_slack_le` :  slack m ≤ S  ⟹  e^(−2S) ≤ width ,
+
+   with an ABSOLUTE exponent — the two `|det Φ|`s cancel.  Chebyshev on a nonnegative sequence
+   (`widthBadCount_le_sum_slack`) then gives `exists_eventually_widthBad_le`:
+
+   > **MeanSlack** (`Σ_{m<q} slack m ≤ A·q` eventually) **+ ClockLinear**
+   > (`c·q ≤ runClock(q+2)` eventually) ⟹ for every `ε > 0` there is `η > 0` with
+   > `widthBadCount Φ x η q ≤ ε·runClock(q+2)` eventually.
+
+   ⚠️ Interface note for the next lap: `WidthFreqBound` fixes `η` and quantifies `ε`; S7-SK
+   delivers the `ε`-then-`η` order, which is what the decomposition actually needs (the net is
+   chosen after `ε`).  `blockAverageBound_of_classFreq` should be restated to pick its net after
+   `ε`, or S7-SK's output threaded through directly.
+
+   So the ENTIRE width leg is now two scalar facts: bounded Cesàro average of `log d_n`
+   (positive recurrence of one walk reflected at `√(|det Φ|/6)`) and Vandehey's Lemma 6.1.  S7-LG bounds bursts; what remains is that long
    *non-emitting* runs are rare.  Structural observation to formalize: a non-emitting run of
    length `L` forces the input digits `a_n … a_{n+L−1}` to agree with the CF expansion of the
    single point `s_n⁻¹(1/k)` straddled by the image — so a long run is a long coincidence with a
