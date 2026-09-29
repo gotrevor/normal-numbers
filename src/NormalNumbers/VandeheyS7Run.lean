@@ -116,7 +116,93 @@ noncomputable def runWord (Φ : MapState) (x : ℝ) (n : ℕ) : List ℕ :=
 lemma runWord_length_le_one (Φ : MapState) (x : ℝ) (n : ℕ) :
     (runWord Φ x n).length ≤ 1 := step_snd_length_le _
 
+
+/-! ## S7-RN2: the step identity and the emission inverse -/
+
+lemma idMap_comp (s : MapState) : idMap.comp s = s := by
+  refine ext_entries ?_ ?_ ?_ ?_ <;> simp [comp_a, comp_b, comp_c, comp_d, idMap]
+
+lemma comp_idMap (s : MapState) : s.comp idMap = s := by
+  refine ext_entries ?_ ?_ ?_ ?_ <;> simp [comp_a, comp_b, comp_c, comp_d, idMap]
+
+lemma cylMap_singleton {a : ℕ} (ha : 1 ≤ a) :
+    cylMap [a] = readMap ((a : ℕ) : ℝ) (by exact_mod_cast ha) := by
+  rw [cylMap_cons ha, cylMap_nil, comp_idMap]
+
+/-- Reading a digit is inverted by one Gauss step. -/
+lemma gaussMap_readMap_mob {a : ℕ} (ha : 1 ≤ a) {z : ℝ} (hz : z ∈ Set.Ioo (0:ℝ) 1) :
+    gaussMap ((readMap ((a : ℕ) : ℝ) (by exact_mod_cast ha)).mob z) = z := by
+  have ha1 : (1:ℝ) ≤ ((a : ℕ) : ℝ) := by exact_mod_cast ha
+  have h1 : 0 < z + ((a : ℕ) : ℝ) := by linarith [hz.1]
+  rw [readMap_mob]
+  have hne : (1:ℝ) / (z + ((a : ℕ) : ℝ)) ≠ 0 := by positivity
+  rw [gaussMap, if_neg hne, one_div, inv_inv]
+  have hcast : ((a : ℕ) : ℝ) = (((a : ℕ) : ℤ) : ℝ) := by push_cast; ring
+  rw [hcast, Int.fract_add_intCast, Int.fract_eq_self.2 ⟨hz.1.le, hz.2⟩]
+
+lemma readMap_mapsTo_Ioo {a : ℕ} (ha : 1 ≤ a) :
+    Set.MapsTo (readMap ((a : ℕ) : ℝ) (by exact_mod_cast ha)).mob
+      (Set.Ioo (0:ℝ) 1) (Set.Ioo (0:ℝ) 1) := by
+  have ha1 : (1:ℝ) ≤ ((a : ℕ) : ℝ) := by exact_mod_cast ha
+  intro z hz
+  rw [readMap_mob]
+  have h1 : 0 < z + ((a : ℕ) : ℝ) := by linarith [hz.1]
+  refine ⟨by positivity, ?_⟩
+  rw [div_lt_one h1]
+  linarith [hz.1]
+
+lemma cylMap_mapsTo_Ioo : ∀ (w : List ℕ), (∀ e ∈ w, 1 ≤ e) →
+    Set.MapsTo (cylMap w).mob (Set.Ioo (0:ℝ) 1) (Set.Ioo (0:ℝ) 1)
+  | [], _ => by intro z hz; simpa [cylMap_nil] using hz
+  | a :: w, hpos => by
+      have ha : 1 ≤ a := hpos a (by simp)
+      have hw : ∀ e ∈ w, 1 ≤ e := fun e he => hpos e (by simp [he])
+      intro z hz
+      rw [cylMap_cons ha, mob_comp _ _ ⟨hz.1.le, hz.2.le⟩]
+      exact readMap_mapsTo_Ioo ha (cylMap_mapsTo_Ioo w hw hz)
+
+/-- **The tail identity for `MapState`.**  `|w|` Gauss steps strip `w` off `cylMap w`'s image. -/
+theorem gaussMap_iterate_cylMap_mob : ∀ (w : List ℕ), (∀ e ∈ w, 1 ≤ e) → ∀ {z : ℝ},
+    z ∈ Set.Ioo (0:ℝ) 1 → gaussMap^[w.length] ((cylMap w).mob z) = z
+  | [], _, z, _ => by simp [cylMap_nil]
+  | a :: w, hpos, z, hz => by
+      have ha : 1 ≤ a := hpos a (by simp)
+      have hw : ∀ e ∈ w, 1 ≤ e := fun e he => hpos e (by simp [he])
+      have hmem : (cylMap w).mob z ∈ Set.Ioo (0:ℝ) 1 := cylMap_mapsTo_Ioo w hw hz
+      rw [cylMap_cons ha, mob_comp _ _ ⟨hz.1.le, hz.2.le⟩, List.length_cons,
+        Function.iterate_succ_apply, gaussMap_readMap_mob ha hmem]
+      exact gaussMap_iterate_cylMap_mob w hw hz
+
+/-! ## The step identity of the run -/
+
+/-- **The transducer step.**  Exactly the shape `StatePin.step` asks for. -/
+theorem runState_succ (Φ : MapState) (x : ℝ) (n : ℕ) :
+    (cylMap (runWord Φ x n)).comp (runState Φ x (n + 1))
+      = (runState Φ x n).comp (readAt x n) := by
+  set t := (runState Φ x n).comp (readAt x n) with ht
+  by_cases h : Emittable t
+  · obtain ⟨b, hemit, hword⟩ := step_emitStep h
+    have hb : 1 ≤ b := hemit.1
+    have hrw : runWord Φ x n = [b] := hword
+    have hst : runState Φ x (n + 1) = (step t).1 := rfl
+    rw [hrw, hst, cylMap_singleton hb]
+    exact (emitStep_iff hb).1 hemit
+  · have hrw : runWord Φ x n = [] := by
+      show (step t).2 = []
+      rw [step_of_not_emittable h]
+    have hst : runState Φ x (n + 1) = t := by
+      show (step t).1 = t
+      rw [step_of_not_emittable h]
+    rw [hrw, hst, cylMap_nil, idMap_comp]
+
 end MapState
+
+section Audit2
+
+#print axioms MapState.gaussMap_iterate_cylMap_mob
+#print axioms MapState.runState_succ
+
+end Audit2
 
 section Audit
 
