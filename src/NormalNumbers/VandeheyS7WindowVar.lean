@@ -229,6 +229,140 @@ theorem sum_sq_window_le (w : List ℕ) (y : ℝ) (p T : ℕ) :
     rw [Finset.sum_congr rfl (fun m _ => hswap m)]
     exact sum_pair_shift_le w y p T j' j h hjT
 
+/-! ## The assembly: the window variance -/
+
+/-- **The double sum, bounded.**  Eventually the expanded square is at most
+`(T²(γ² + ε) + 2T(|w| + 40)) · (p + T)`. -/
+theorem sum_sq_window_le_bound {w : List ℕ} (hw : w ≠ []) (hwpos : ∀ a ∈ w, 1 ≤ a)
+    {y : ℝ} (hy : IsCFNormal y) (hyorb : ∀ k : ℕ, gaussMap^[k] y ∈ Set.Ioo (0:ℝ) 1)
+    (T : ℕ) {ε : ℝ} (hε : 0 < ε) :
+    ∀ᶠ p : ℕ in atTop,
+      ∑ m ∈ range p, (blockCount (cfCylinder w) T (gaussMap^[m] y)) ^ 2
+        ≤ ((T : ℝ) ^ 2 * ((gaussMeasure (cfCylinder w)).toReal ^ 2 + ε)
+            + 2 * (T : ℝ) * ((w.length : ℝ) + 40)) * ((p : ℝ) + (T : ℝ)) := by
+  classical
+  set γw := (gaussMeasure (cfCylinder w)).toReal with hγ
+  -- one eventual bound per gap, and there are finitely many gaps
+  have hgaps : ∀ᶠ p : ℕ in atTop, ∀ g ∈ range (T + 1),
+      blockCount (pairSet w g) (p + T) y ≤ (γw ^ 2 + pairErr w g + ε) * ((p : ℝ) + (T : ℝ)) := by
+    rw [Filter.eventually_all_finset]
+    intro g _
+    have hshift := (Filter.tendsto_add_atTop_nat T).eventually
+      (blockCount_pairSet_le_err hw hwpos hy hyorb g hε)
+    filter_upwards [hshift] with p hp
+    have hc : ((p + T : ℕ) : ℝ) = (p : ℝ) + (T : ℝ) := by push_cast; ring
+    rwa [hc] at hp
+  filter_upwards [hgaps, eventually_gt_atTop 0] with p hp hp0
+  have hpT : (0:ℝ) ≤ (p : ℝ) + (T : ℝ) := by positivity
+  refine le_trans (sum_sq_window_le w y p T) ?_
+  -- bound each term by its gap's bound
+  have hterm : ∀ j ∈ range T, ∀ j' ∈ range T,
+      blockCount (pairSet w (max j j' - min j j')) (p + T) y
+        ≤ (γw ^ 2 + pairErr w (max j j' - min j j') + ε) * ((p : ℝ) + (T : ℝ)) := by
+    intro j hj j' hj'
+    have hjT : j < T := Finset.mem_range.1 hj
+    have hj'T : j' < T := Finset.mem_range.1 hj'
+    refine hp _ (Finset.mem_range.2 ?_)
+    rcases le_total j j' with h | h
+    · rw [max_eq_right h, min_eq_left h]; omega
+    · rw [max_eq_left h, min_eq_right h]; omega
+  have hstep : ∑ j ∈ range T, ∑ j' ∈ range T,
+      blockCount (pairSet w (max j j' - min j j')) (p + T) y
+      ≤ ∑ j ∈ range T, ∑ j' ∈ range T,
+          (γw ^ 2 + pairErr w (max j j' - min j j') + ε) * ((p : ℝ) + (T : ℝ)) :=
+    Finset.sum_le_sum fun j hj => Finset.sum_le_sum fun j' hj' => hterm j hj j' hj'
+  refine le_trans hstep ?_
+  -- the constant part and the error part
+  have hrow : ∀ j ∈ range T, ∑ j' ∈ range T, pairErr w (max j j' - min j j')
+      ≤ 2 * ((w.length : ℝ) + 40) := by
+    intro j hj
+    have hsplit : ∑ j' ∈ range T, pairErr w (max j j' - min j j')
+        = (∑ j' ∈ (range T).filter (fun j' => j ≤ j'), pairErr w (max j j' - min j j'))
+          + ∑ j' ∈ (range T).filter (fun j' => ¬ j ≤ j'), pairErr w (max j j' - min j j') :=
+      (Finset.sum_filter_add_sum_filter_not _ _ _).symm
+    rw [hsplit]
+    have hup : ∑ j' ∈ (range T).filter (fun j' => j ≤ j'), pairErr w (max j j' - min j j')
+        ≤ (w.length : ℝ) + 40 := by
+      have hinj : ∀ a ∈ (range T).filter (fun j' => j ≤ j'),
+          ∀ b ∈ (range T).filter (fun j' => j ≤ j'), a - j = b - j → a = b := by
+        intro a ha b hb hab
+        have ha' := (Finset.mem_filter.1 ha).2
+        have hb' := (Finset.mem_filter.1 hb).2
+        omega
+      have hcongr : ∀ j' ∈ (range T).filter (fun j' => j ≤ j'),
+          pairErr w (max j j' - min j j') = pairErr w (j' - j) := by
+        intro j' hj'
+        have h := (Finset.mem_filter.1 hj').2
+        rw [max_eq_right h, min_eq_left h]
+      rw [Finset.sum_congr rfl hcongr]
+      have himg : ∑ j' ∈ (range T).filter (fun j' => j ≤ j'), pairErr w (j' - j)
+          = ∑ g ∈ ((range T).filter (fun j' => j ≤ j')).image (fun j' => j' - j), pairErr w g :=
+        (Finset.sum_image (f := fun g => pairErr w g) hinj).symm
+      rw [himg]
+      have hsub : ((range T).filter (fun j' => j ≤ j')).image (fun j' => j' - j) ⊆ range T := by
+        intro g hg
+        obtain ⟨j', hj', rfl⟩ := Finset.mem_image.1 hg
+        exact Finset.mem_range.2 (by
+          have := Finset.mem_range.1 (Finset.mem_filter.1 hj').1
+          omega)
+      refine le_trans (Finset.sum_le_sum_of_subset_of_nonneg hsub
+        (fun g _ _ => pairErr_nonneg w g)) ?_
+      exact sum_pairErr_le w T
+    have hdown : ∑ j' ∈ (range T).filter (fun j' => ¬ j ≤ j'), pairErr w (max j j' - min j j')
+        ≤ (w.length : ℝ) + 40 := by
+      have hinj : ∀ a ∈ (range T).filter (fun j' => ¬ j ≤ j'),
+          ∀ b ∈ (range T).filter (fun j' => ¬ j ≤ j'), j - a = j - b → a = b := by
+        intro a ha b hb hab
+        have ha' := (Finset.mem_filter.1 ha).2
+        have hb' := (Finset.mem_filter.1 hb).2
+        omega
+      have hcongr : ∀ j' ∈ (range T).filter (fun j' => ¬ j ≤ j'),
+          pairErr w (max j j' - min j j') = pairErr w (j - j') := by
+        intro j' hj'
+        have h : j' ≤ j := le_of_not_ge (Finset.mem_filter.1 hj').2
+        rw [max_eq_left h, min_eq_right h]
+      rw [Finset.sum_congr rfl hcongr]
+      have himg : ∑ j' ∈ (range T).filter (fun j' => ¬ j ≤ j'), pairErr w (j - j')
+          = ∑ g ∈ ((range T).filter (fun j' => ¬ j ≤ j')).image (fun j' => j - j'), pairErr w g :=
+        (Finset.sum_image (f := fun g => pairErr w g) hinj).symm
+      rw [himg]
+      have hsub : ((range T).filter (fun j' => ¬ j ≤ j')).image (fun j' => j - j') ⊆ range T := by
+        intro g hg
+        obtain ⟨j', hj', rfl⟩ := Finset.mem_image.1 hg
+        exact Finset.mem_range.2 (by
+          have := Finset.mem_range.1 (Finset.mem_filter.1 hj').1
+          have := Finset.mem_range.1 hj
+          omega)
+      refine le_trans (Finset.sum_le_sum_of_subset_of_nonneg hsub
+        (fun g _ _ => pairErr_nonneg w g)) ?_
+      exact sum_pairErr_le w T
+    linarith
+  -- assemble
+  have hsum : ∑ j ∈ range T, ∑ j' ∈ range T,
+      (γw ^ 2 + pairErr w (max j j' - min j j') + ε) * ((p : ℝ) + (T : ℝ))
+      ≤ ((T : ℝ) ^ 2 * (γw ^ 2 + ε) + 2 * (T : ℝ) * ((w.length : ℝ) + 40))
+          * ((p : ℝ) + (T : ℝ)) := by
+    have hrowbound : ∀ j ∈ range T, ∑ j' ∈ range T,
+        (γw ^ 2 + pairErr w (max j j' - min j j') + ε) * ((p : ℝ) + (T : ℝ))
+        ≤ ((T : ℝ) * (γw ^ 2 + ε) + 2 * ((w.length : ℝ) + 40)) * ((p : ℝ) + (T : ℝ)) := by
+      intro j hj
+      have hexp : ∑ j' ∈ range T,
+          (γw ^ 2 + pairErr w (max j j' - min j j') + ε) * ((p : ℝ) + (T : ℝ))
+          = ((T : ℝ) * (γw ^ 2 + ε) + ∑ j' ∈ range T, pairErr w (max j j' - min j j'))
+              * ((p : ℝ) + (T : ℝ)) := by
+        rw [← Finset.sum_mul]
+        congr 1
+        rw [Finset.sum_add_distrib, Finset.sum_add_distrib, Finset.sum_const, Finset.sum_const,
+          Finset.card_range, nsmul_eq_mul, nsmul_eq_mul]
+        ring
+      rw [hexp]
+      exact mul_le_mul_of_nonneg_right (by linarith [hrow j hj]) hpT
+    refine le_trans (Finset.sum_le_sum hrowbound) ?_
+    rw [Finset.sum_const, Finset.card_range, nsmul_eq_mul]
+    refine le_of_eq ?_
+    ring
+  exact hsum
+
 end NormalNumbers.VandeheyS7
 
 section Audit
@@ -237,5 +371,6 @@ section Audit
 #print axioms NormalNumbers.VandeheyS7.sum_pairErr_le
 #print axioms NormalNumbers.VandeheyS7.sum_pair_shift_le
 #print axioms NormalNumbers.VandeheyS7.sum_sq_window_le
+#print axioms NormalNumbers.VandeheyS7.sum_sq_window_le_bound
 
 end Audit
