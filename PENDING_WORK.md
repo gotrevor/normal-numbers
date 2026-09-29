@@ -402,6 +402,34 @@ needs one discharged (DIRECTION standing rule 3).
 
 ## Lap notes
 
+### 2026-09-29 lap 23 — the word matrix IS the continuant matrix (transposed)
+
+The handoff's queued bookkeeping is done, and it landed on lap 13's `wordState`:
+
+    wordState_eq_conv :  wordState w  =  (p', p ; q', q)   for  Conv.of w = ⟨p', q', p, q⟩
+
+(all digits `≥ 1`), axiom-clean.  Supporting: `idState_comp`, `wordState_append` (appending a
+digit multiplies on the right).
+
+**The transpose is the content, not a convention slip.**  The word matrix is built by PREPENDING
+branches — which is what the machine does as it reads input — while `Conv` is built by APPENDING
+digits, which is what the continuant recursion does.  Those two are transpose-conjugate.  Both
+recursions were checked against each other: appending sends `(a,b;c,d) ↦ (b, a+e·b ; d, c+e·d)`
+on the word matrix and `(p',q',p,q) ↦ (p, q, p'+e·p, q'+e·q)` on `Conv`, which agree under the
+transpose, and the base cases agree (`idState = (1,0;0,1)`, `Conv.of [] = ⟨1,0,0,1⟩`).
+
+**Consequence worth recording:** lap 13's Fibonacci growth of the word matrix's ROWS is literally
+the classical growth of the convergent denominators `q_n`.  Two separately-derived facts are now
+known to be one fact, and `windowBound`'s `Conv`-language hypotheses (`(of w).p'`, `(of w).q'`)
+can be discharged from `wordState` facts and vice versa.
+
+**Next attack (lap 24): `TriggerGap` from the machine.**  `windowBound` takes `TriggerGap s w` as
+a hypothesis and `triggerGap_endpoints` proves it when `s.mob 0 = cylNear w` and
+`s.mob 1 = cylFar w`.  With `wordState_eq_conv` in hand those two endpoint identities are now
+statements about `wordState`, so prove them there.  That turns `windowBound` from conditional
+into unconditional along the machine's run, which is the last structural gap before `F` can be
+defined (obligation 1 of lap 22).
+
 ### 2026-09-29 lap 22 — the Cesàro engine, and the remaining obligation isolated to ONE hypothesis
 
 `VandeheyS7Assemble.lean`, both theorems axiom-clean.

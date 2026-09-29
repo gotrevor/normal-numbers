@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
 import NormalNumbers.VandeheyS7Merge
+import NormalNumbers.VandeheyS7Convergent
 
 /-!
 # The word matrix: Fibonacci growth of both rows, and determinant `±1`
@@ -332,9 +333,71 @@ theorem abs_sub_le_of_hdist_le_zero {u v : ℝ} (hu : 0 < u) (hv : 0 < v)
 
 end MobState
 
+/-! ## The word matrix IS the continuant matrix
+
+The handoff's queued bookkeeping: identify the pullback matrix's columns with `Conv.of`'s
+convergents.  It lands on `wordState` (this module), and the identification is exact —
+**`wordState w` is the TRANSPOSE of the continuant matrix**:
+
+    wordState w  =  (p', p ; q', q)   for   Conv.of w = ⟨p', q', p, q⟩ .
+
+Checked against both recursions: appending a digit sends `(a,b;c,d) ↦ (b, a + e·b ; d, c + e·d)`
+on the word matrix and `(p',q',p,q) ↦ (p, q, p' + e·p, q' + e·q)` on `Conv`, and under the
+transpose identification these are the same map.  The base cases agree too
+(`idState = (1,0;0,1)`, `Conv.of [] = ⟨1,0,0,1⟩`).
+
+The transpose is the content, and it is not a convention slip: the word matrix is built by
+PREPENDING branches (which is what the machine does, reading input) while `Conv` is built by
+APPENDING digits (which is what the continuant recursion does).  Those are transpose-conjugate,
+and that is why lap 13's Fibonacci growth of the ROWS is the same statement as the classical
+growth of the convergent denominators.
+-/
+
+namespace MobState
+
+theorem idState_comp (t : MobState) : idState.comp t = t := by
+  cases t
+  simp [comp, idState]
+
+/-- Appending a digit multiplies on the right. -/
+theorem wordState_append (w : List ℕ) (a : ℕ) :
+    wordState (w ++ [a]) = (wordState w).comp (gaussBranch a) := by
+  induction w with
+  | nil => rw [List.nil_append, wordState_cons, wordState_nil, comp_idState, idState_comp]
+  | cons b w ih =>
+      rw [List.cons_append, wordState_cons, ih, wordState_cons, comp_assoc]
+
+/-- **The word matrix is the transpose of the continuant matrix.** -/
+theorem wordState_eq_conv (w : List ℕ) (hpos : ∀ a ∈ w, 1 ≤ a) :
+    (wordState w).a = ((Conv.of w).p' : ℝ) ∧ (wordState w).b = ((Conv.of w).p : ℝ) ∧
+      (wordState w).c = ((Conv.of w).q' : ℝ) ∧ (wordState w).d = ((Conv.of w).q : ℝ) := by
+  induction w using List.reverseRecOn with
+  | nil => refine ⟨?_, ?_, ?_, ?_⟩ <;> simp [idState, Conv.of]
+  | append_singleton w a ih =>
+      have hposw : ∀ b ∈ w, 1 ≤ b := fun b hb => hpos b (by simp [hb])
+      have hposa : 1 ≤ a := hpos a (by simp)
+      obtain ⟨ha, hb, hc, hd⟩ := ih hposw
+      have hmax : ((max 1 a : ℕ) : ℝ) = (a : ℝ) := by
+        rw [max_eq_right hposa]
+      rw [wordState_append, Conv.of_append_digit]
+      refine ⟨?_, ?_, ?_, ?_⟩
+      · simp only [comp_a, gaussBranch, Conv.step]
+        rw [hb]; ring
+      · simp only [comp_b, gaussBranch, Conv.step, hmax]
+        push_cast
+        rw [ha, hb]; ring
+      · simp only [comp_c, gaussBranch, Conv.step]
+        rw [hd]; ring
+      · simp only [comp_d, gaussBranch, Conv.step, hmax]
+        push_cast
+        rw [hc, hd]; ring
+
+end MobState
+
 section Audit
 
 #print axioms MobState.runWord_eq_comp
+#print axioms MobState.wordState_eq_conv
 #print axioms MobState.fib_le_rowMin
 #print axioms MobState.det_wordState
 #print axioms MobState.spread_wordState_le
