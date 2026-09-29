@@ -739,3 +739,4 @@ import NormalNumbers.VandeheyS7Equiv
 import NormalNumbers.VandeheyS7Sep
 import NormalNumbers.VandeheyS7Good
 import NormalNumbers.VandeheyS7WindowHit
+import NormalNumbers.VandeheyS7QuasiBern

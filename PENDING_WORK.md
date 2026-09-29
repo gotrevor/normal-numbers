@@ -1772,3 +1772,25 @@ pullback of a slightly enlarged word set, whose mass is `(1+O(δ))γ(I_w)`), and
 contraction bounds the image DIAMETER, so the remaining question is whether the EMITTED-digit
 normalisation `O_n⁻¹` restores location-independence.  A kernel refutation of (b) is as valuable
 as a proof, and would finally force the route onto the arithmetic of `Φ` (directive fact γ).
+
+### 2026-09-29 lap 51 — quasi-Bernoulli for arbitrary targets (`VandeheyS7QuasiBern.lean`)
+
+Lap 50's mass bound only covered cylinder targets; the approximate-window route produces
+*intervals* `F(v)⁻¹(I_w)`.  Upgraded, via the repo's own correlation-decay theorem
+`gaussMeasure_cylinder_mixing` at gap `g = 0`:
+
+* `gaussMeasure_inter_preimage_le` — `γ(I_v ∩ T^{−|v|}A) ≤ (1 + 8 log 2) γ(I_v) γ(A)` for EVERY
+  measurable `A ⊆ (0,1)`.  (Strictly generalises `gaussMeasure_append_le`.)
+* `gaussMeasure_inter_preimage_Ioo_le` — the interval form
+  `γ(I_v ∩ T^{−|v|}(a,b)) ≤ ((1+8log2)/log2) (b−a) γ(I_v)`.
+
+**NEXT (lap 52).**  The one remaining ingredient of an interval-target window-hit theorem is the
+FREQUENCY side: CF-normality gives cylinder frequencies, and the hit set `I_v ∩ T^{−k}(a,b)` is
+not a cylinder.  Two routes: (i) cell frequencies — along an irrational orbit
+`cellSet w T = I_w \ ⋃_{1≤a<T} I_{w++[a]}` exactly, so `blockCount(cellSet w T)` is a finite
+signed combination of cylinder counts and CF-normality gives its limit; then `CellCover` covers
+the interval with total mass `≤ (1/log2)(b−a)+δ`.  (ii) direct outer approximation of `(a,b)` by
+the finitely many length-`n` cylinders meeting it (`sum_gaussMeasure_cfCylinder_meeting_le`
+already exists in `VandeheyS7Cell`).  Route (ii) looks shorter and avoids the cell-frequency
+build; do it first, then assemble `windowHit_Ioo_le` and finally
+`orbitWordBound_of_approxWindowState`.
