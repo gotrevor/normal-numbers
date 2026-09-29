@@ -1,3 +1,22 @@
+## CRUX (2026-09-29) — joint Lambert quantitative count
+
+Open obligation: `jointWords_quantitative` in
+`src/NormalNumbers/JointLambertQuantitative.lean` (one `sorry`).  It is the §3 ARITHMETIC
+ASSEMBLY only — every estimate it needs is now proved and `#print axioms`-clean:
+`exists_candidate_indices_every_height`, `three_range_tail_le`, `card_good_ge_half`,
+`eventually_rate_le`, `iteratedLog_rate_le_eps_log`.
+
+Advance this lap: the whole analytic spine of §§1–5 went from paper to kernel, and two
+defects in the note's plan were found and repaired (the far range needs no `τ(n) ≤ 2√n`;
+feasibility and rate need *different* bounds on `log B`, crude `k³` and sharp `k² log k`).
+
+Next attack: steps 1–5 of "Exact next boundary" in
+`HANDOFF-2026-09-29-joint-lambert-count.md`.  The only remaining analytic items are the two
+limits `(log X)² 2^(-k) → 0` and `(log X)² (a+1)(c+1)^(k²) 2^(-k³) → 0`, both of the same
+shape as the already-proved `eventually_cube_log_le_sqrt`.
+
+---
+
 # PENDING WORK — the queue
 
 ## Current Lambert status, 29 September 2026
