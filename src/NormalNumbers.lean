@@ -709,6 +709,7 @@ import NormalNumbers.VandeheyS7Budget
 import NormalNumbers.VandeheyS7Assemble
 import NormalNumbers.VandeheyS7Emit
 import NormalNumbers.VandeheyS7Approx
+import NormalNumbers.VandeheyS7Memory
 import NormalNumbers.VandeheyLRRuns
 import NormalNumbers.VandeheyLRPattern
 import NormalNumbers.VandeheyRunCount

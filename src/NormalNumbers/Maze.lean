@@ -21,6 +21,7 @@ import NormalNumbers.WalshBase
 import NormalNumbers.WallRational
 import NormalNumbers.MoshchevitinShkredovRefuted
 import NormalNumbers.VandeheyAutomaton
+import NormalNumbers.VandeheyS7Memory
 
 /-!
 # `Maze.lean` — the halls we have walked, encoded
@@ -273,6 +274,22 @@ general as `not_synchronizing_of_injective_quotient`.  The sorried
 `ClassEquidistribution` is the crux the class cocycle actually poses. -/
 alias hall_vandehey_synchronizing_transducer :=
   NormalNumbers.VandeheyAut.not_synchronizing_of_injective_quotient
+
+/-- **HALL: the emitted digit as a window function of the input** (`falseAsStated`,
+2026-09-29).  The §7 assembly planned to compute the image digit at a position from a bounded
+window of the input digits, `F w := emitDigit (wordState w)`, citing the merging bound
+`spread_runWord_le` for independence of the initial state.  `spread_runWord_le` bounds the
+DIAMETER of the image of `[0,1]`, uniformly in the initial state; it says nothing about the
+image's LOCATION, and `runWord s w = s.comp (wordState w)` puts the location entirely in the
+initial state.  Witnesses: `⟨1,3;0,8⟩` and `⟨1,7;0,32⟩` map `[0,1]` into the digit-`2` and
+digit-`4` cylinders, so after reading ANY word they both emit, and emit `2` and `4`.  Both
+have distortion `1`, so the bounded-distortion compact fiber does not evade it.  What
+survives is `cfDigit_mob_eq_emitDigit`: the digit is a function of the STATE, so the
+decomposition must be indexed by (state class, input word), as `JointStateFreq` is in the
+proved integer case. -/
+alias hall_emit_digit_window_function :=
+  NormalNumbers.VandeheyS7.MobState.no_window_function
+
 
 
 /-- **HALL: the `min`-rule descent of Vandehey 2017 Lemma 2.1** (`refuted`, 2026-09-28).
@@ -1082,7 +1099,12 @@ def register : List Hall := [
    "Replace Vandehey 2017 Theorem 3.1 by pathwise state-merging after a synchronizing word",
    .falseAsStated, .kernel,
    "The state fibres over P^1(Z/D) by row-lattice class and every letter acts bijectively on that quotient, so no word merges two classes: the Synchronizing hypothesis is unsatisfiable and every statement carrying it is vacuous for this automaton",
-   "alias hall_vandehey_synchronizing_transducer; probe archive/probe/PROBE-2026-09-27-transducer-not-synchronizing.md", "2026-09-28"⟩
+   "alias hall_vandehey_synchronizing_transducer; probe archive/probe/PROBE-2026-09-27-transducer-not-synchronizing.md", "2026-09-28"⟩,
+  ⟨"emitted digit as a window function of the input",
+   "Compute the image CF digit at a position from a bounded window of the input digits, F w = emitDigit (wordState w), with the initial state made invisible by merging",
+   .falseAsStated, .kernel,
+   "spread_runWord_le bounds the image DIAMETER uniformly in the initial state, not its LOCATION, and runWord s w = s.comp (wordState w) leaves the location entirely to s; the states (1,3;0,8) and (1,7;0,32), both of distortion 1, map [0,1] into the digit-2 and digit-4 cylinders and so emit 2 and 4 after reading ANY word",
+   "alias hall_emit_digit_window_function; module VandeheyS7Memory; what survives is cfDigit_mob_eq_emitDigit, so the decomposition must be indexed by (state class, input word)", "2026-09-29"⟩
 ]
 
 /-- Rows whose verdict is machine-checked in this build. -/
