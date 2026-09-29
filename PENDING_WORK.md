@@ -3132,3 +3132,20 @@ on the SAME wall — equidistribution of the state in the compact box (fact (δ)
 is a genuine reduction of the crux; both are faithful restatements of it.  The next altitude lap
 should therefore stop looking for a third hypothesis to factor the front through, and attack the
 box-equidistribution statement directly, in the modulus shape S7-MD already forced.
+
+## S7-PN (lap 80): the used centre's `pullLip` — lap 79's next action #1, discharged
+
+`src/NormalNumbers/VandeheyS7PullNear.lean`, axiom-clean.
+
+* `abs_entries_le_denMax` — every entry of a `MapState` is bounded by `denMax` in absolute value
+  (from `0 ≤ b ≤ d`, `0 ≤ a+b ≤ c+d`, `0 < d`, `0 < c+d`).
+* `denMax_sq_le_of_denRatio` — `denMax² = pullLip·|det| ≤ K·|det|/width`; along a run `K = 6`
+  (S7-Box), so a wide state has `denMax ≤ √(6|det Φ|/η)`.
+* `pullLip_le_of_near` — a centre entrywise `ρ`-close to `s` has
+  `pullLip cen ≤ (E + 2ρ)² / (|det s| − 4ρ(E+ρ))` whenever `denMax s ≤ E` and the denominator is
+  positive.  The numerator moves by `≤ 2ρ`, the determinant by `≤ 4ρ(E+ρ)`.
+
+With `E = √(6|det Φ|/η)` this gives `P → 6/η` as `ρ → 0`, so **any `P > 6/η` is admissible for all
+small `ρ`**: S7-CA's hypothesis `P` is discharged by a choice of `ρ`, not by an assumption.  What
+remains to wire it into `classFreqSlack_of_cellMemory'` is the bookkeeping that `ρ` is already free
+there (it is a net parameter), which is a one-lemma instantiation.
