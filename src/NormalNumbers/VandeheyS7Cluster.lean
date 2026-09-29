@@ -107,6 +107,49 @@ theorem gaussMeasure_clusterSet_le (t : MapState) (w : List ℕ) (hw : w ≠ [])
     positivity
   linarith
 
+
+/-- **The cluster set is short.**  Two points of `clusterSet t w κ` have images in one interval of
+length `|I_w| + 2κ`, so S7-PM's expansion bound caps their distance: the cluster set fits in an
+interval of length `2·pullLip·(|I_w| + 2κ)`.  No monotonicity of `mob` is needed. -/
+theorem clusterSet_subset_Icc (t : MapState) (w : List ℕ) (hw : w ≠ [])
+    (hpos : ∀ a ∈ w, 1 ≤ a) {κ : ℝ} (hκ : 0 ≤ κ) :
+    ∃ α : ℝ, clusterSet t w κ
+      ⊆ Set.Icc α (α + 2 * (t.pullLip * ((volume (cfCylinder w)).toReal + 2 * κ))) := by
+  classical
+  obtain ⟨a, c, hsub, hlen⟩ := cfCylinder_subset_Icc_length w hw hpos
+  have hvolcyl : (0:ℝ) ≤ (volume (cfCylinder w)).toReal := by positivity
+  have hac : a ≤ c := by linarith [hlen, hvolcyl]
+  have hth : Metric.cthickening κ (cfCylinder w ∩ Set.Ioo (0:ℝ) 1)
+      ⊆ Set.Icc (a - κ) (c + κ) :=
+    cthickening_subset_Icc hac hκ (le_trans Set.inter_subset_left hsub)
+  set D : ℝ := t.pullLip * ((volume (cfCylinder w)).toReal + 2 * κ) with hD
+  have hDnn : 0 ≤ D := by
+    have := t.pullLip_pos
+    rw [hD]; positivity
+  rcases Set.eq_empty_or_nonempty (clusterSet t w κ) with hemp | ⟨z₀, hz₀⟩
+  · exact ⟨0, by rw [hemp]; exact Set.empty_subset _⟩
+  refine ⟨z₀ - D, fun z hz => ?_⟩
+  have hmem : ∀ {u : ℝ}, u ∈ clusterSet t w κ →
+      u ∈ Set.Icc (0:ℝ) 1 ∧ t.mob u ∈ Set.Icc (a - κ) (c + κ) := by
+    intro u hu
+    exact ⟨⟨hu.2.1.le, hu.2.2.le⟩, hth hu.1⟩
+  obtain ⟨hzI, hzim⟩ := hmem hz
+  obtain ⟨hz₀I, hz₀im⟩ := hmem hz₀
+  have himg : |t.mob z - t.mob z₀| ≤ (volume (cfCylinder w)).toReal + 2 * κ := by
+    rw [abs_le]
+    constructor
+    · have := hzim.1; have := hz₀im.2; linarith [hlen]
+    · have := hzim.2; have := hz₀im.1; linarith [hlen]
+  have hexp := t.abs_sub_le_pullLip (u := z₀) (v := z) hz₀I hzI
+  have hdist : |z - z₀| ≤ D := by
+    have hLnn : 0 ≤ t.pullLip := t.pullLip_pos.le
+    rw [hD]
+    calc |z - z₀| ≤ t.pullLip * |t.mob z - t.mob z₀| := hexp
+      _ ≤ t.pullLip * ((volume (cfCylinder w)).toReal + 2 * κ) :=
+        mul_le_mul_of_nonneg_left himg hLnn
+  rw [abs_le] at hdist
+  exact ⟨by linarith [hdist.1], by linarith [hdist.2]⟩
+
 /-- The `width` form: on a state of width `≥ η` whose denominator ratio lies in `[1/K, K]`. -/
 theorem gaussMeasure_clusterSet_le_width (t : MapState) (w : List ℕ) (hw : w ≠ [])
     (hpos : ∀ a ∈ w, 1 ≤ a) {κ η K : ℝ} (hκ : 0 ≤ κ) (hη : 0 < η) (hK : 1 ≤ K)
@@ -129,6 +172,7 @@ section Audit
 
 #print axioms cthickening_subset_Icc
 #print axioms MapState.gaussMeasure_clusterSet_le
+#print axioms MapState.clusterSet_subset_Icc
 #print axioms MapState.gaussMeasure_clusterSet_le_width
 
 end Audit
