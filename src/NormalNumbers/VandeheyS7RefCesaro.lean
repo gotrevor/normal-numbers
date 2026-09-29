@@ -377,10 +377,10 @@ theorem refCesaro_holds {w : List ℕ} (hw : ∀ a ∈ w, 1 ≤ a) : RefCesaro w
   exact hL ⟨x, hx, horb⟩
 
 /-- **The chain, with one input left.**  Route A's universality conclusion now rests on
-`BlockForgetGen` ALONE (plus the width affordability that each input must satisfy): `RefCesaro` is
+`BlockForgetRun` ALONE (plus the width affordability that each input must satisfy): `RefCesaro` is
 discharged. -/
 theorem exists_uniform_slotCountFreq_of_blockForget {w : List ℕ} (hw : ∀ a ∈ w, 1 ≤ a)
-    (hBF : BlockForgetGen w) :
+    (hBF : BlockForgetRun w) :
     ∃ L : ℝ, ∀ (Φ : MapState) (x : ℝ), IsCFNormal x →
       (∀ k, gaussMap^[k] x ∈ Set.Ioo (0:ℝ) 1) → WidthAfford Φ x →
       Tendsto (fun p => slotCount Φ x w p / (p : ℝ)) atTop (nhds L) :=
