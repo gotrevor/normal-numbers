@@ -725,6 +725,7 @@ import NormalNumbers.VandeheyS7Gap
 import NormalNumbers.VandeheyS7Bad
 import NormalNumbers.VandeheyS7BadSet
 import NormalNumbers.VandeheyS7BadMass
+import NormalNumbers.VandeheyS7IooFreq
 import NormalNumbers.VandeheyS7Predict
 import NormalNumbers.VandeheyS7Loss
 import NormalNumbers.VandeheyS7QuadDigit

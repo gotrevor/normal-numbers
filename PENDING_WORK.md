@@ -2041,3 +2041,19 @@ CF-normality is a hypothesis we hold: cover `nearInv η` by the `K = ⌈η^{−1
 (`cellCover_inv_log_two`, the same route `windowHit_Ioo_le` uses for a single interval), and sum.
 That gives `freq{n : Gⁿx ∈ nearInv η} ≤ C√η + ε` for CF-normal `x` with no second hypothesis — and
 would remove `ImageTight` from lap 48's separation step, leaving it needed only on the IMAGE.
+
+### 2026-09-29 lap 63 — interval frequencies, unwindowed (`VandeheyS7IooFreq.lean`)
+
+* `blockCount_freq_cellSet_nil` — the nil-word case `blockCount_freq_cellSet_mass` was missing
+  (it needed `w ≠ []` only to call `blockCount_freq_of_isCFNormal`; for `w = []` the cylinder is
+  `(0,1)` and the frequency is `1`).  With it, **every** cell of a cover has a frequency.
+* `blockCount_Ioo_le` — hence for a CF-normal `x` and any `(a,b) ⊆ [0,1]`,
+  `freq{n : Gⁿx ∈ (a,b)} ≤ (b−a)/log 2 + 2δ`.  No window, absolute constant, axiom-clean.
+
+This is the unwindowed companion of `windowHit_Ioo_le` and it is what lap 64 needs.
+
+**NEXT (lap 64).**  `blockCount_nearInv_freq_le`: sum `blockCount_Ioo_le` over the `K+1` intervals
+of lap 62's covering (`K = ⌈η^{−1/2}⌉`, each clipped to `[0,1]`, total length `≤ 7√η`) with
+`δ = ε/(2(K+1))`, to get `freq{n : Gⁿx ∈ nearInv η} ≤ 7√η/log 2 + ε` for CF-normal `x`,
+**unconditionally**.  That discharges the INPUT half of lap 48's bad-position control, leaving
+`ImageTight` needed only on the image.
