@@ -1820,3 +1820,18 @@ ingredients of an interval-target window-hit theorem are now in place.
 4. sum over `v ∈ V` with `sum_gaussMeasure_le_one_of_length`.
 Then `orbitWordBound_of_approxWindowState` becomes a Hilbert-perturbation argument on top of it,
 and `ApproxWindowState` is the last open obligation of the whole route.
+
+### 2026-09-29 lap 53 — the cell mass identity closes the frequency/mass mismatch
+
+Lap 52's cell-frequency limit was the alternating sum `γ(I_w) − ∑_{1≤a<T} γ(I_{w++[a]})`, which
+is an upper bound for `γ(cellSet w T)` — the WRONG direction for the assembly, which needs the
+limit to be at most the quasi-Bernoulli mass.  `gaussMeasure_cellSet_eq` closes the gap: the two
+are EQUAL, because the only points of `I_w` missed by the cell and its sub-threshold extensions
+have digit `0` at position `|w|`, hence are rational, hence Gauss-null.  Consequence
+`blockCount_freq_cellSet_mass`: the cell frequency of a CF-normal point converges to
+`γ(cellSet w T)` itself.
+
+**NEXT (lap 54).**  Unchanged from lap 52's plan, now unblocked: the hit-set identity
+`I_v ∩ T^{−|v|}(cellSet c S) = cellSet (v++c) S` along irrational orbits, then `windowHit_Ioo_le`
+(frequencies from `blockCount_freq_cellSet_mass`, masses from `gaussMeasure_inter_preimage_le`,
+cover from `cellCover_inv_log_two`, window sum from `sum_gaussMeasure_le_one_of_length`).

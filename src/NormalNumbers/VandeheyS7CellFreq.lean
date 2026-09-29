@@ -138,11 +138,106 @@ theorem blockCount_freq_cellSet_of_isCFNormal {y : ℝ} (hirr : Irrational y)
   refine this.congr fun p => ?_
   rw [blockCount_cellSet_eq hirr hmem w T p, sub_div, Finset.sum_div]
 
+/-! ## The mass form of the identity -/
+
+private lemma gaussMeasure_countable_zero {S : Set ℝ} (hS : S.Countable) :
+    gaussMeasure S = 0 := by
+  have hm : MeasurableSet S := hS.measurableSet
+  have h := gaussMeasure_le_volume S hm
+  rw [hS.measure_zero volume, mul_zero] at h
+  simpa using h
+
+/-- Points of `(0,1)` whose digit at position `n` vanishes are rational. -/
+theorem irrational_of_cfDigit_ne_zero {t : ℝ} (hirr : Irrational t) (hmem : t ∈ Set.Ioo (0:ℝ) 1)
+    (n : ℕ) : 1 ≤ cfDigit t n := one_le_cfDigit t hirr hmem n
+
+/-- **The mass identity.**  `γ(cellSet w T) = γ(I_w) − ∑_{1≤a<T} γ(I_{w++[a]})`: the cell is the
+cylinder minus its sub-threshold extensions, up to the rational null set. -/
+theorem gaussMeasure_cellSet_eq (w : List ℕ) {T : ℕ} (hT : 1 ≤ T) :
+    (gaussMeasure (cellSet w T)).toReal
+      = (gaussMeasure (cfCylinder w)).toReal
+        - ∑ a ∈ Finset.Ico 1 T, (gaussMeasure (cfCylinder (w ++ [a]))).toReal := by
+  classical
+  set E : Set ℝ := ⋃ a ∈ Finset.Ico 1 T, cfCylinder (w ++ [a]) with hE
+  have hdisj : (↑(Finset.Ico 1 T) : Set ℕ).PairwiseDisjoint
+      (fun a => cfCylinder (w ++ [a])) := by
+    intro a _ b _ hab
+    exact cfCylinder_disjoint_of_length_eq (by simp) (by simp [hab])
+  have hEmeas := measure_biUnion_finset (μ := gaussMeasure) hdisj
+    (fun a _ => measurableSet_cfCylinder _)
+  -- the cell and the extensions are disjoint, and together they exhaust the cylinder
+  have hdisj2 : Disjoint (cellSet w T) E := by
+    rw [Set.disjoint_left]
+    rintro t ⟨-, hd⟩ ht
+    have hd' : T ≤ cfDigit t w.length := hd
+    simp only [hE, Set.mem_iUnion, exists_prop] at ht
+    obtain ⟨a, ha, hta⟩ := ht
+    have : cfDigit t w.length = a := by
+      have := hta.2 w.length (by simp)
+      simpa using this
+    have hlt := (Finset.mem_Ico.1 ha).2
+    omega
+  have hsub : cellSet w T ∪ E ⊆ cfCylinder w := by
+    rintro t (ht | ht)
+    · exact ht.1
+    · simp only [hE, Set.mem_iUnion, exists_prop] at ht
+      obtain ⟨a, -, hta⟩ := ht
+      exact cfCylinder_append_subset w [a] hta
+  have hsup : cfCylinder w ⊆ cellSet w T ∪ E ∪ Set.range ((↑) : ℚ → ℝ) := by
+    intro t ht
+    by_cases hirr : Irrational t
+    · have hd1 : 1 ≤ cfDigit t w.length := one_le_cfDigit t hirr ht.1 _
+      rcases Nat.lt_or_ge (cfDigit t w.length) T with hlt | hge
+      · refine Or.inl (Or.inr ?_)
+        simp only [hE, Set.mem_iUnion, exists_prop]
+        exact ⟨cfDigit t w.length, Finset.mem_Ico.2 ⟨hd1, hlt⟩, mem_cfCylinder_snoc ht⟩
+      · exact Or.inl (Or.inl ⟨ht, hge⟩)
+    · refine Or.inr ?_
+      rw [Irrational, not_not] at hirr
+      exact hirr
+  have hnull : gaussMeasure (Set.range ((↑) : ℚ → ℝ)) = 0 :=
+    gaussMeasure_countable_zero (Set.countable_range _)
+  have hEm : MeasurableSet E := by
+    refine Finset.measurableSet_biUnion _ (fun a _ => measurableSet_cfCylinder _)
+  have h1 : gaussMeasure (cellSet w T) + gaussMeasure E = gaussMeasure (cellSet w T ∪ E) :=
+    (measure_union hdisj2 hEm).symm
+  have hle : gaussMeasure (cfCylinder w) ≤ gaussMeasure (cellSet w T ∪ E) := by
+    calc gaussMeasure (cfCylinder w)
+        ≤ gaussMeasure ((cellSet w T ∪ E) ∪ Set.range ((↑) : ℚ → ℝ)) := measure_mono hsup
+      _ ≤ gaussMeasure (cellSet w T ∪ E) + gaussMeasure (Set.range ((↑) : ℚ → ℝ)) :=
+          measure_union_le _ _
+      _ = gaussMeasure (cellSet w T ∪ E) := by rw [hnull, add_zero]
+  have hge : gaussMeasure (cellSet w T ∪ E) ≤ gaussMeasure (cfCylinder w) := measure_mono hsub
+  have heq : gaussMeasure (cellSet w T) + gaussMeasure E = gaussMeasure (cfCylinder w) := by
+    rw [h1]; exact le_antisymm hge hle
+  -- pass to real numbers
+  have hfin : ∀ s : Set ℝ, gaussMeasure s ≠ ⊤ := fun s => measure_ne_top gaussMeasure s
+  have hreal : (gaussMeasure (cellSet w T)).toReal + (gaussMeasure E).toReal
+      = (gaussMeasure (cfCylinder w)).toReal := by
+    rw [← ENNReal.toReal_add (hfin _) (hfin _), heq]
+  have hEreal : (gaussMeasure E).toReal
+      = ∑ a ∈ Finset.Ico 1 T, (gaussMeasure (cfCylinder (w ++ [a]))).toReal := by
+    rw [hE, hEmeas, ENNReal.toReal_sum (fun a _ => hfin _)]
+  rw [hEreal] at hreal
+  linarith
+
+/-- The cell-frequency limit, in the form downstream consumers want. -/
+theorem blockCount_freq_cellSet_mass {y : ℝ} (hirr : Irrational y)
+    (hmem : y ∈ Set.Ioo (0:ℝ) 1) (h : IsCFNormal y) (w : List ℕ) (hw : w ≠ [])
+    (hpos : ∀ a ∈ w, 1 ≤ a) {T : ℕ} (hT : 1 ≤ T) :
+    Tendsto (fun p => blockCount (cellSet w T) p y / (p:ℝ)) atTop
+      (nhds (gaussMeasure (cellSet w T)).toReal) := by
+  rw [gaussMeasure_cellSet_eq w hT]
+  exact blockCount_freq_cellSet_of_isCFNormal hirr hmem h w hw hpos T
+
+
 section Audit
 
 #print axioms blockIndic_cellSet_eq
 #print axioms blockCount_cellSet_eq
 #print axioms blockCount_freq_cellSet_of_isCFNormal
+#print axioms gaussMeasure_cellSet_eq
+#print axioms blockCount_freq_cellSet_mass
 
 end Audit
 
