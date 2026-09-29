@@ -12,8 +12,8 @@ The next Lambert target is an all-N occurrence count; its proposed stronger pape
 
 
 **Digit-reading dynamics of real numbers: normality, disjunctivity, CF-normality, and the
-richness of arithmetic constants.** · **Build**: 🟢 green (10510 jobs) · **Updated**: lap 30 ·
-2026-09-29 · `8002782`
+richness of arithmetic constants.** · **Build**: 🟢 green (10545 jobs) · **Updated**: lap 74 ·
+2026-09-29 · `604dec8`
 
 One checkout on `wip/g5-prime-subset`, Lean/mathlib v4.33.1, every campaign branch merged
 (2026-09-27, `f5034b6`).  Per-campaign detail and ledgers from before the merge are in
@@ -23,17 +23,22 @@ One checkout on `wip/g5-prime-subset`, Lean/mathlib v4.33.1, every campaign bran
 
 The live target is the operator's moonshot, **Vandehey Compositio 2017 §7 Problem 1**: is `φx`
 CF-normal when `x` is?  Theorem 1.1 itself is PROVED (`vandehey_matrix_action_holds`, 2026-09-28),
-and §7 is frozen as `vandeheyS7_mul_phi` / `vandeheyS7_add_phi`.  **As of lap 30 the whole chain to
-both frozen targets is two hypotheses wide**: `vandeheyS7_mul_phi_of_orbitCellBound` derives the
-target from the cited `GaussACRigidity (C/log 2)` and the crux `OrbitCellBound q r₀ C`, and
-nothing else.  Leg 1 (`AffineImageIrrational`, "the image of a CF-normal number is irrational") is
-now a theorem for both instances via an explicit integer quadratic; the geometric leg
-(`CellCover (1/log 2)`) landed lap 29.  The crux is the statement that the image orbit visits each
-word-cell with frequency at most `C` times its Gauss mass; lap 30 pinned down what it *is* — a
-predictable-set problem whose state set is literally `PSL₂(ℤ)` (because `Γ ∩ Φ⁻¹ΓΦ = {±I}`), i.e.
-the translate-equidistribution question "`Γ g_x(t)` equidistributes ⟹ `Γ Φ g_x(t)` does".  Four
-other fronts carry proved-but-conditional headlines (Joint Lambert, C3/MRT, Elliott, the
-casting-out crux leaves); their hypotheses are the standing debt.
+and §7 is frozen as `vandeheyS7_mul_phi` / `vandeheyS7_add_phi`.  **The whole chain to both frozen
+targets is three hypotheses wide** (`vandeheyS7_mul_phi_of_orbitWordBound`, `VandeheyS7Chain`,
+axiom-clean): the cited `GaussACRigidity (C/log 2)`, `ImageTight` on the image, and the crux
+`OrbitWordBound φ 0 C` — an upper bound `freq(I_w) ≤ C γ(I_w)` on every word's frequency in the
+image expansion.  Leg 1 (`AffineImageIrrational`) is a theorem for both instances, the threshold
+parameter is free, and the interval / word / cell shapes of the crux are mutually derivable.
+
+As of **lap 74 the measure side of the crux is closed** (`VandeheyS7Pull`): a state's pullback of
+an *arbitrary* target set costs a factor `distortion/width` (Lipschitz inverse + `μH[1] = volume`),
+and — the point — the *tower* `G^{-j} I_w` costs nothing extra, because `γ` is `gaussMap`-invariant,
+so a whole emitted block of length `L` pulls back to Gauss mass `≤ (2K/η)·L·γ(I_w)`.  What remains
+is (i) the **width floor in frequency form** — a uniform floor is impossible by fact (β), and the
+natural bound needs uniform integrability of `log a`, which CF-normality does not supply — and
+(ii) the **predictable block average**, directive fact (α), the open heart.  Four other fronts
+carry proved-but-conditional headlines (Joint Lambert, C3/MRT, Elliott, the casting-out crux
+leaves); their hypotheses are the standing debt.
 
 ## Superseded overview (Theorem 1.1 era, kept for the reductions it names)
 
@@ -53,6 +58,18 @@ leaves); their hypotheses are the standing debt.
 
 ## What's happened (newest first)
 
+- **2026-09-29 (lap 74, review).**  Course correction: nine of laps 58–73 had gone to the SECOND
+  obligation (`ImageTight` → `AnchoredPullback` → `StateClock`) while the crux went untouched, and
+  `StateClock`'s uniform width floor is the wrong shape — fact (β) exhibits states of arbitrarily
+  small width, so the true transducer states admit no uniform floor.  `DIRECTION.md` now forbids a
+  further uniform-`η` `StateClock` lap.  Landed instead the **measure side of the crux**
+  (`VandeheyS7Pull`, `604dec8`, all axiom-clean): `volume_preimage_le` bounds the state pullback of
+  an ARBITRARY set by `distortion/width` (via `Set.InjOn.invFunOn` +
+  `LipschitzOnWith.hausdorffMeasure_image_le` + `μH[1] = volume`), `gaussMeasure_preimage_tower_le`
+  shows **the tower is free** (the bound on `s⁻¹(G^{-j}I_w)` is independent of `j`, by Gauss
+  invariance), and `blockPullback_sum_le` gives a whole emitted block of length `L` total mass
+  `≤ (2K/η)·L·γ(I_w)` — linear in `L`, with exactly the density the crux demands.  Residual named:
+  `WidthFloorFreq` + `BlockAverageBound`.
 - **2026-09-29 (lap 30, review).**  Leg 1 of the ergodic route DISCHARGED, for both frozen
   instances: `VandeheyS7Golden.affineImageIrrational_goldenRatio` and
   `affineImageIrrational_add_goldenRatio` (axiom-clean).  If `φ x` (resp. `x + φ`) were rational
@@ -142,22 +159,33 @@ leaves); their hypotheses are the standing debt.
 - **Frozen targets** (`VandeheyS7.lean`): `vandeheyS7_mul_phi := AffineCFN goldenRatio 0`,
   `vandeheyS7_add_phi := AffineCFN 1 goldenRatio`, `VandeheyS7Problem1` for the general quadratic
   form.  Open statements; `sorry`-free is not expected and they are never weakened.
-- **The reduction, complete and axiom-clean.**  `affineCFN_of_uniformFreq` (any real `q > 0`, any
-  real `r`) → `AffineUniformFreq`; `affineUniformFreq_of_runClock` → `RunClock ℓ rate` ∧
-  `SampledUniformCount q r₀ ℓ`.  The clock is measured (`c₁ ∈ [0.965, 0.989]`) and has a known
-  finite-mean reason (`∫ log(1+a) dγ < ∞`); **`SampledUniformCount` is the crux**.
+- **The live chain, three hypotheses wide** (`VandeheyS7Chain`, axiom-clean):
+  `vandeheyS7_mul_phi_of_orbitWordBound` ⊢ the frozen target from `GaussACRigidity (C/log 2)`
+  (cited) + `ImageTight` on the image + the crux `OrbitWordBound φ 0 C`.  Same for `x + φ`.
+- **Discharged legs.**  Leg 1 `AffineImageIrrational` (both instances, `VandeheyS7Golden`, lap 30);
+  the geometric leg `CellCover (1/log 2)` (lap 29); the threshold parameter
+  (`orbitCellBound_of_orbitWordBound`, lap 43); input tightness (`imageTight_of_isCFNormal`, lap 45);
+  the three shapes of the crux are mutually derivable (S7-Q, `VandeheyS7Equiv`).
+- **The measure side of the crux, done lap 74** (`VandeheyS7Pull`): `volume_preimage_le`
+  (arbitrary target, factor `distortion/width`), `gaussMeasure_preimage_le` (factor
+  `2·distortion/width`), `gaussMeasure_preimage_tower_le` (**the tower is free**),
+  `blockPullback_sum_le` (a block of length `L` costs `(2K/η)·L·γ(I_w)`).
 - **The wall, as Lean** (`VandeheyS7Wall.lean`): Thm 1.1's finite state set is a certificate about
-  `ℤ` with no `ℤ[φ]` analogue (`ℤ[φ]ˣ` infinite; `M⁻¹VM` integral forces `V` diagonal).
-- **Analytic layer, all proved** (laps 11–26): merging, the window bound along the run, digit
-  transfer to every depth with the `√δ` boundary rate, the scale cutoff, and the budget.
-- **Corrected attack path (lap 27).**  The decomposition must be indexed by (state class, input
-  word), NOT by input words alone — `no_window_function` refutes the latter for every window
-  length, with minimal-distortion witnesses.  Next: name the compact bounded-distortion fiber as
-  the state space, state `StateEquidistribution`, derive `SampledUniformCount` from it through
-  `sampledUniformCount_of_approxScheme`, then attack ν with `VandeheyS7Birkhoff`.
-- **Read:** `DIRECTION.md` CURRENT DIRECTIVE, `papers/vandehey-2017-open-problem-attack-map.md`,
-  `experiments/PROBE-ROUTE-A.md`, the Maze rows `hall_emit_digit_window_function` and
-  `hall_vandehey_synchronizing_transducer`.
+  `ℤ` with no `ℤ[φ]` analogue (`ℤ[φ]ˣ` infinite; `M⁻¹VM` integral forces `V` diagonal).  The state
+  is a point of `SL₂(ℤ[φ])` (S7-L) and `Γ ∩ Φ⁻¹ΓΦ = {±I}`, so the state set is literally `PSL₂(ℤ)`.
+- **Refuted, with Lean witnesses** (do not retry): the window-function frame
+  (`no_window_function`); bounded-error decompositions (the exceptional set has positive Gauss
+  mass); the predictable-hit principle at every gap `k` (`exists_predictor_all_hit`, S7-G2); the
+  lap-48 three-step bootstrap (`no_bound_of_one_le_coeff`, coefficient 3); the bad set is `√δ`,
+  not `δ` (`volume_badSet_le`).  And lap 74: `StateClock`'s **uniform** width floor is impossible
+  for the true transducer states (fact β), so only the frequency form is live.
+- **What is left**: (1) `S7-BD` the block decomposition, `OrbitWordBound ⟸ WidthFloorFreq +
+  BlockAverageBound`; (2) `S7-WF` the width floor in frequency form, or its refutation —
+  CF-normality does NOT give uniform integrability of `log a`; (3) `S7-BA` the predictable block
+  average, = directive fact (α), the open heart.
+- **Read:** `DIRECTION.md` CURRENT DIRECTIVE, `PENDING_WORK.md` lap-74 section,
+  `papers/vandehey-2017-open-problem-attack-map.md`, the Maze rows
+  `hall_emit_digit_window_function` and `hall_vandehey_synchronizing_transducer`.
 
 ### Vandehey 2017 Thm 1.1: Möbius images of CF-normal numbers are CF-normal (ONE leaf left)
 - **The Smith reduction (2026-09-28, `VandeheySmith.lean`, sorry-free).**  `MobiusCFN a b c d`
@@ -279,7 +307,10 @@ This repo holds **no `axiom` declarations**: literature inputs are named hypothe
 | --- | --- | --- | --- |
 | `Literature.vandehey_matrix_action_holds` (`VandeheyCapstone.lean`) | unconditional (Vandehey 2017 Thm 1.1) | trust base | 🟢 **CLEAN, DISCHARGED 2026-09-29** (`6d7a8ad`).  Route: Serret + Smith reduce to `x ↦ D·x` (`D` prime); the concrete Raney `L/R` transducer supplies a monotone RUN clock with an `x`-independent positive rate (`tendsto_runClock_div`, Lemma 6.1) and an `x`-independent Cesàro limit for the image's CF-occurrence count sampled along it (`exists_tendsto_cfCount_runClock`).  Assembled by `mobiusUniformFreq_of_runClock`.  NB the theorem lives downstream of `LiteratureVandehey.lean` (import cycle); the frozen statements stay there. |
 | `VandeheyS7.affineCFN_of_runClock` (`VandeheyS7Clock.lean`) | — (reduction for the OPEN §7 Problem 1) | trust base | 🟡 clean **as a reduction**: `0 < q` + `RunClock ℓ rate` + `SampledUniformCount q r₀ ℓ` ⊢ `AffineCFN q r₀`, for every real `q, r₀`.  The two hypotheses are named `Prop`s, not axioms.  `SampledUniformCount` is the live frontier; next prerequisite = `StateEquidistribution` on the compact bounded-distortion fiber |
-| `VandeheyS7.vandeheyS7_mul_phi_of_orbitCellBound` (`VandeheyS7Golden.lean`) | — (the LIVE reduction for the OPEN §7 Problem 1) | trust base | 🟡 clean **as a reduction**, and now only TWO hypotheses wide: `GaussACRigidity (C/log 2)` (cited, standard ergodic theory) + `OrbitCellBound φ 0 C` (the crux).  Same for `vandeheyS7_add_phi_of_orbitCellBound`.  current frontier; next prerequisite = the tightness case `w = []` of `OrbitCellBound` (control of large image digits) |
+| `VandeheyS7.vandeheyS7_mul_phi_of_orbitWordBound` (`VandeheyS7Chain.lean`) | — (the LIVE reduction for the OPEN §7 Problem 1) | trust base | 🟡 clean **as a reduction**, three hypotheses wide: `GaussACRigidity (C/log 2)` (cited, standard ergodic theory) + `ImageTight` on the image + `OrbitWordBound φ 0 C` (the crux).  Same for `vandeheyS7_add_phi_of_orbitWordBound`.  current frontier; next prerequisite = `S7-BD`, the block decomposition `OrbitWordBound ⟸ WidthFloorFreq + BlockAverageBound` |
+| `VandeheyS7.MobState.blockPullback_sum_le` (`VandeheyS7Pull.lean`) | — (measure side of the crux) | trust base | ✅ proved lap 74, axiom-clean: a state of width `≥ η`, distortion `≤ K`, pulls a whole emitted block of length `L` back to Gauss mass `≤ (2K/η)·L·γ(I_w)`.  The tower `G^{-j}I_w` is free, by Gauss invariance |
+| `VandeheyS7.MobState.volume_preimage_le` (`VandeheyS7Pull.lean`) | — (instrument) | trust base | ✅ proved lap 74, axiom-clean; the pullback bound for an ARBITRARY target set, no measurability |
+| `VandeheyS7.anchoredPullback_of_stateClock` (`VandeheyS7Clock2.lean`) | — (second obligation) | trust base | 🟡 clean as a reduction, but PARKED: its `StateClock` hypothesis demands a UNIFORM width floor, which fact (β) makes impossible for the true transducer states.  Next prerequisite = the frequency form `S7-WF` |
 | `VandeheyS7.affineImageIrrational_goldenRatio` (`VandeheyS7Golden.lean`) | — (leg 1) | trust base | ✅ proved lap 30, axiom-clean; same for `affineImageIrrational_add_goldenRatio` |
 | `VandeheyS7.cellCover_inv_log_two` (`VandeheyS7Cell.lean`) | — (geometric leg) | trust base | ✅ proved lap 29, axiom-clean |
 | `VandeheyS7.sampledUniformCount_of_approxScheme` (`VandeheyS7Approx.lean`) | — (engine, fallback route) | trust base | 🟢 clean; the crux from a uniform ε-approximation scheme, with no existence hypothesis |
@@ -295,8 +326,9 @@ This repo holds **no `axiom` declarations**: literature inputs are named hypothe
 
 **Done** would be: every headline's base is the trust base alone, with 🔴 only where the paper
 is itself conditional.  Today the 🟡 with a live attack is the Vandehey §7 crux
-(`OrbitCellBound`, on the primary ergodic route; `SampledUniformCount` is the older fallback
-route's crux); `AGP` and `ZetaLogDerivExponent` are the other two, both parked.
+(`OrbitWordBound`; `OrbitCellBound`/`OrbitACBound` are the same statement in other shapes, and
+`SampledUniformCount` is the older fallback route's crux); `AGP` and `ZetaLogDerivExponent` are
+the other two, both parked.
 
 ## Pointers
 

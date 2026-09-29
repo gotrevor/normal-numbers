@@ -11,6 +11,65 @@ The next Lambert target is an all-N occurrence count; its proposed stronger pape
 `docs/JOINT-LAMBERT-QUANTITATIVE-NEXT.md`.  It is not yet formalized.
 
 
+## ⭐ VANDEHEY §7 — LAP 74 DECOMPOSITION (review lap; binding version = `DIRECTION.md`)
+
+**This supersedes the "next actions" of `HANDOFF-2026-09-29-lap58-73.md`.**  Everything below the
+lap-27 header is still correct history; read this first.
+
+### What the review found
+
+* **Crux-neglect.**  Nine of laps 58–73 attacked the SECOND obligation (`ImageTight` →
+  `AnchoredPullback` → `StateClock`).  The crux `OrbitWordBound` got no direct attack in that run.
+* **`StateClock`'s uniform width floor is the wrong shape.**  Directive fact (β) says a
+  post-emission state can straddle `1/k` at a scale far below any `η`; such a state HAS width
+  `< η`.  So the true transducer states admit no uniform floor.  `StateClock` existentially
+  quantifies its states, so it is not refuted — but its natural instantiation is dead, and a
+  further lap on it in the uniform-`η` form is forbidden by the directive.
+* **The width floor is shared** between the two obligations: it is precisely the hypothesis of the
+  new pullback bound.  So the honest single problem is "how often is the state narrow?".
+
+### What landed lap 74 — the measure side of the crux is DONE (`VandeheyS7Pull`, axiom-clean)
+
+| name | statement |
+|---|---|
+| `MobState.expand_le` / `contract_le` | `(width/distortion)·|u−v| ≤ |mob u − mob v| ≤ (width·distortion)·|u−v|` on `[0,1]` |
+| `MobState.volume_preimage_le` | **arbitrary** `A`: `|mob⁻¹A ∩ (0,1)| ≤ (distortion/width)·|A|` |
+| `MobState.gaussMeasure_preimage_le` | `γ(mob⁻¹A ∩ (0,1)) ≤ (2·distortion/width)·γ(A)`, `A ⊆ (0,1)` measurable |
+| `gaussMeasure_preimage_iterate` | `γ(G^{-j}S) = γ(S)` |
+| `MobState.gaussMeasure_preimage_tower_le` | **the tower is free**: the bound on `s⁻¹(G^{-j}I_w)` is independent of `j` |
+| `blockPullback_sum_le` | a block of length `L` pulls back to total mass `≤ (2K/η)·L·γ(I_w)` |
+| `MobState.one_le_volume_preimage_image` | content locator: the `1/width` is not an artefact |
+
+Method note worth keeping: the general-`A` bound comes from `Set.InjOn.invFunOn` +
+`LipschitzOnWith.hausdorffMeasure_image_le` + `MeasureTheory.hausdorffMeasure_real (μH[1] = volume)`.
+No change-of-variables, no open-set decomposition, no measurability hypothesis on `A`.
+
+Why the BLOCK form and not one output time at a time: while the input point is frozen the
+transducer emits `L` forced digits, and those are the first `L` digits of the single point
+`z = s(Gⁿx)`.  The event "`w` occurs at offset `j` in the block" is `Gⁿx ∈ s⁻¹(G^{-j}I_w)`, and
+`G^{-j}I_w` is a countable union of cylinders — not an interval, which is why the lap-65 interval
+bound `sub_le_of_image_le` could not be used.  Gauss invariance makes the whole block cost the
+same constant as one step, so the estimate is LINEAR in `L` with density exactly `γ(I_w)`.
+
+### Attack order for the next laps
+
+1. **S7-BD (block decomposition).**  State, in Lean, that the output-word count over `p` output
+   digits equals `Σₙ #{j < Lₙ : Gⁿx ∈ sₙ⁻¹(G^{-j}I_w)}` for a monotone clock `n ↦ Lₙ` with
+   `Σ Lₙ = p`, and derive `OrbitWordBound ⟸ WidthFloorFreq + BlockAverageBound`.  Guard rule:
+   `Lₙ = 0` for all `n` (no output) and `w = []` are the degenerate cases; the content locator is
+   that `BlockAverageBound` at `Lₙ ≡ 1` is the lap-30 one-step statement.
+2. **S7-WF (width frequency).**  `freq{n : width(sₙ) < η} → 0 as η → 0`.  Heuristic to test:
+   narrow states occur exactly during a burst, a burst from input digit `a` lasts `≍ log a / λ`
+   output digits, so the bad frequency is `≍ Σ_{a ≥ A} freq(a)·log a`.  **CF-normality does NOT
+   give uniform integrability of `log a`** — a CF-normal `x` may have `(1/N)Σ log aₙ → ∞`.  So
+   either (i) find the extra input that supplies it, or (ii) REFUTE the frequency form too, which
+   would be a route-decisive refutation and a genuine advance.  Do (ii) first if (i) stalls: a
+   CF-normal `x` with digits `a_{k!} = 2^{k!}` is the candidate witness.
+3. **S7-BA (block average).**  The residual, = directive fact (α).  Do not spend a lap here until
+   1 and 2 are settled.
+
+---
+
 ## ⚠️ VANDEHEY §7 — CORRECTED ATTACK PATH (review lap 27, 2026-09-29)
 
 **This supersedes the "next actions" of `HANDOFF-2026-09-29-2330.md`.**  Read it before touching

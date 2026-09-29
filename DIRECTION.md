@@ -2,53 +2,91 @@
 
 ## CURRENT DIRECTIVE (altitude laps only write here; it OUTRANKS the HANDOFF) 🧭
 
-**Set 2026-09-29 (review lap 30).**  Supersedes lap 27's directive; the route is UNCHANGED, the
-crux has moved one step in and leg 1 is now a theorem.
+**Set 2026-09-29 (review lap 74).**  Supersedes lap 30's directive.  The destination is unchanged;
+what changes is WHICH obligation a grind lap may spend itself on.
 
-* **Objective.**  Vandehey §7 Problem 1, at the crux: **`OrbitCellBound q r₀ C`**
-  (`VandeheyS7Cell`).  Nothing else on this front counts as progress.
-* **State of the chain (lap 30).**  `vandeheyS7_mul_phi_of_orbitCellBound` /
-  `vandeheyS7_add_phi_of_orbitCellBound` (`VandeheyS7Golden`, axiom-clean) prove the frozen
-  targets from exactly TWO hypotheses: the cited `GaussACRigidity (C/log 2)` and the crux.
-  Leg 1 (`AffineImageIrrational`) is DISCHARGED for both instances.  `CellCover (1/log 2)` is
-  proved.  So every remaining line of the route runs through `OrbitCellBound`.
-* **Mandated next move.**  Attack `OrbitCellBound` **only**, and prefer moves that either
-  (a) prove an unconditional statement about the image expansion of a CF-normal `x`, or
-  (b) kill a candidate sub-route with a theorem (a refutation with a Lean witness is an advance).
-  `GaussACRigidity` **stays a cited hypothesis** — do not resume `GaussKB.lean` (lap 28 spent a
-  lap there against lap 27's directive; that must not recur).
-* **What the crux IS, established lap 30 (use this, do not re-derive it).**  Writing the state at
-  input time `n` as the Möbius map `s_n = O_n⁻¹ Φ P_n` (`O_n` = emitted convergent matrix, `P_n` =
-  input convergent matrix, `Φ` = the affine map), the crux is
-  `limsup (1/N) #{n<N : Gⁿx ∈ s_n⁻¹(E)} ≤ C γ(E)` for every cell `E`.  Three facts pin it down:
-  1. `s_n⁻¹(E)` is **predictable** — determined by `x₁…x_n` — and CF-normality of `x` is a
-     statement about the tail marginal alone.  So no argument that uses only "predictable +
-     bounded distortion" can work.
-  2. The per-state distortion bound **fails**: a post-emission state whose image `J` straddles
-     `1/k` at a scale far below `|E|` has `γ(s⁻¹E) ≈ 1/2` with `γ(E)` arbitrarily small.  The cell
-     threshold `T` is what such states produce (a huge output digit), so the crux's own `w = []`
-     tail-cell case is the tightness statement that must control them — a bootstrap, not a
-     bypass.
-  3. `Γ ∩ Φ⁻¹ΓΦ = {±I}` for `Φ = diag(φ,1)` (φ irrational), so the state set is *literally*
-     `PSL₂(ℤ)` and the state is the point `ΓΦP_n ∈ Γ\SL₂(ℝ)`.  This is the structural reason
-     behind `no_window_function` and `infinite_zPhi_abs_le_one`, and it identifies the crux with
-     "the ray `Γ g_x(t)` equidistributes ⟹ so does `Γ Φ g_x(t)`" — the self-joining wall.  Do not
-     re-attack the wall softly; attack the ARITHMETIC of `Φ`.
+* **Objective.**  Vandehey §7 Problem 1, at the crux: **`OrbitWordBound q r₀ C`**
+  (`VandeheyS7Reduce`) — equivalently `OrbitCellBound` / `OrbitACBound`, all three mutually
+  derivable since S7-Q.  Nothing else on this front counts as progress.
+* **State of the chain (lap 74).**  `vandeheyS7_mul_phi_of_orbitWordBound` /
+  `vandeheyS7_add_phi_of_orbitWordBound` (`VandeheyS7Chain`, axiom-clean) derive both frozen
+  targets from exactly three hypotheses: the cited `GaussACRigidity (C/log 2)`, `ImageTight` on
+  the image, and the crux.  Leg 1 is a theorem (`VandeheyS7Golden`), the threshold parameter is
+  free (`orbitCellBound_of_orbitWordBound`), `CellCover (1/log 2)` is proved.
+
+* **Course correction — why this directive changed.**
+  1. **Crux-neglect.**  Nine of laps 58–73 went to the SECOND obligation
+     (`ImageTight` → `AnchoredPullback` → `StateClock`).  The crux itself got no direct attack.
+     The lap-73 handoff's "next action #1" (close `StateClock`) would have continued that; it is
+     OVERRULED.
+  2. **`StateClock`'s uniform width floor is the wrong shape — by this directive's own fact (β).**
+     A post-emission state straddling `1/k` at a scale far below any `η` *is* a state of width
+     `< η`, so the true transducer states have no uniform floor.  `StateClock` quantifies its
+     states existentially, so it is not literally refuted; but its natural instantiation is dead.
+     Any further `StateClock` lap must first land the FREQUENCY form
+     (`freq{n : width(sₙ) < η} → 0 as η → 0`), or a kernel refutation of the uniform form.
+  3. **The width floor is shared.**  It is exactly the hypothesis of the new pullback bound, so
+     it serves the crux as well — but only in the frequency form.  That is what makes it on-path.
+
+* **What is now in the kernel for the crux** (lap 74, `VandeheyS7Pull`, all axiom-clean):
+  `MobState.volume_preimage_le` — the pullback bound for an **arbitrary** target set, constant
+  `distortion/width`, via a Lipschitz inverse and `μH[1] = volume`;
+  `MobState.gaussMeasure_preimage_le` — the Gauss form, constant `2·distortion/width`;
+  `MobState.gaussMeasure_preimage_tower_le` — **the tower is free**: the bound on
+  `s⁻¹(G^{-j} I_w)` does NOT depend on `j`, because `γ` is `gaussMap`-invariant;
+  `blockPullback_sum_le` — a whole emitted block of length `L` pulls back to total Gauss mass
+  `≤ (2K/η)·L·γ(I_w)`.  **The measure side of the crux is therefore done**, with the right
+  density and no accumulation along the block.
+
+* **Mandated next move**, in this order:
+  (a) the transducer **block decomposition**, in Lean: occurrences of `w` in the first `p` output
+      digits `= Σₙ #{j < Lₙ : Gⁿx ∈ sₙ⁻¹(G^{-j} I_w)}`, yielding
+      `OrbitWordBound ⟸ (width floor) + (predictable block average)`; name the residual
+      `BlockAverageBound` and give it the guard-rule pair;
+  (b) the width floor in FREQUENCY form — or a kernel refutation of the uniform form;
+  (c) only then the predictable-average step, which is fact (α) and is the open heart.
+  Prefer, as always, unconditional statements about the image expansion of a CF-normal `x`, or
+  kernel refutations of sub-routes.  `GaussACRigidity` stays a cited hypothesis (standing rule 3).
+
 * **Forbidden drift.**  (i) The window-function frame — `no_window_function` refutes it in the
   kernel; `spread_runWord_le`/`hdist_runWord_le` bound the image DIAMETER, never its LOCATION.
   (ii) Bounded-error decompositions (`cfCount_tendsto_of_decomposition`): the exceptional set has
   positive Gauss mass, so the error is `Θ(p)`.  (iii) Serret/commensurator and soft self-joining
-  rigidity.  (iv) Finishing `GaussACRigidity`.
-* **Why.**  Leg 1 and the geometry are done; the chain is two hypotheses wide and one of them is
-  cited by standing rule 3.  Every further lap that does not touch `OrbitCellBound` is leaf work.
+  rigidity.  (iv) Finishing `GaussACRigidity`.  (v) **A further `StateClock` lap in the
+  uniform-`η` form.**
+
+* **What the crux IS, established lap 30 (use this, do not re-derive it).**  Writing the state at
+  input time `n` as the Möbius map `s_n = O_n⁻¹ Φ P_n` (`O_n` = emitted convergent matrix, `P_n` =
+  input convergent matrix, `Φ` = the affine map), the crux is
+  `limsup (1/N) #{n<N : Gⁿx ∈ s_n⁻¹(E)} ≤ C γ(E)` for every cell `E`.  Three facts pin it down:
+  1. **(α)** `s_n⁻¹(E)` is **predictable** — determined by `x₁…x_n` — and CF-normality of `x` is a
+     statement about the tail marginal alone.  So no argument that uses only "predictable +
+     bounded distortion" can work (`exists_predictor_all_hit`: for ANY sequence a prefix-reading
+     predictor hits its own interval every time).  Only *finiteness of the predictor's range*, or
+     genuine arithmetic of `Φ`, can help.
+  2. **(β)** The per-state distortion bound **fails** at small width: a post-emission state whose
+     image `J` straddles `1/k` at a scale far below `|E|` has `γ(s⁻¹E) ≈ 1/2` with `γ(E)`
+     arbitrarily small.  This is also why no uniform width floor exists (see the correction above).
+  3. **(γ)** `Γ ∩ Φ⁻¹ΓΦ = {±I}` for `Φ = diag(φ,1)` (φ irrational), so the state set is *literally*
+     `PSL₂(ℤ)` and the state is the point `ΓΦP_n ∈ Γ\SL₂(ℝ)`.  This is the structural reason
+     behind `no_window_function` and `infinite_zPhi_abs_le_one`, and it identifies the crux with
+     "the ray `Γ g_x(t)` equidistributes ⟹ so does `Γ Φ g_x(t)`" — the self-joining wall.  Do not
+     re-attack the wall softly; attack the ARITHMETIC of `Φ`.
+
+* **Why.**  The chain is three hypotheses wide; one is cited by standing rule 3, one is the crux,
+  and the third is now known to need the same width input the crux does.  So the width floor and
+  the crux are ONE problem, and the block pullback is the only new instrument.
 
 Directive history:
 - 2026-09-29 (lap 27, review): window-function frame REFUTED; ε-scheme replaces the bounded-error
   engine; the ERGODIC route (`OrbitACBound` + `GaussACRigidity`) becomes primary, the
   state-indexed decomposition the fallback.
 - 2026-09-29 (lap 30, review): leg 1 DISCHARGED (`VandeheyS7Golden`), so the crux is the whole
-  chain; crux pinned as the predictable-set/`Γ\SL₂(ℝ)`-translate problem, with the three facts
-  above written into the directive so grind laps stop re-deriving them.
+  chain; crux pinned as the predictable-set/`Γ\SL₂(ℝ)`-translate problem, with facts (α)(β)(γ).
+- 2026-09-29 (lap 74, review): crux-neglect corrected (9 of laps 58–73 went to the second
+  obligation); `StateClock`'s uniform width floor identified as the wrong shape by fact (β); the
+  MEASURE side of the crux closed by S7-PB (`blockPullback_sum_le`, the tower is free), and the
+  residual named as block-average + width-frequency.
 
 
 ## OPERATOR OBJECTIVE 2026-09-29: Vandehey §7 Problem 1 🌙
