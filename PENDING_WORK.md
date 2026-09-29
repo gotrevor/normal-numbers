@@ -370,66 +370,20 @@ because it lands on CF INDICES, not letter positions.  Upper half now proved:
 
 ## Queue
 
-0. **THE CRUX (binding, see `DIRECTION.md` CURRENT DIRECTIVE) — Vandehey §5–§6, the OUTPUT
-   side, in `VandeheyOutputFreq.lean`.**  Decomposition, as fixed by lap 1 of 2026-09-28:
-   - ✅ `gaussMeasure_allWordsEvent`, `exists_boundedWords_sum_gt` (the finite digit-truncated
-     escape from the infinite CF alphabet — the elementary stand-in for Airey–Mance tightness).
-   - ✅ `wCount_le_of_finset` (pointwise split), `eventually_wCount_le` (the upper-bound engine:
-     `wCount ≤ (Sb + ε)·n` eventually, for any bound `Sb` on finite length-`m` subfamily mass).
-   - ✅ `eventually_le_wCount` (truncation LOWER bound) and **`tendsto_wCount_div`**: for a
-     bounded nonnegative weight on the countably infinite length-`m` genuine words, the
-     state-restricted count has Cesàro limit `wLimit ν t a m` — defined as a supremum over
-     finite subfamilies, so it mentions NO `x`.  That is the published Lemma 4.3's infinite
-     case, with no ergodic theory, no Ryll-Nardzewski, no Vitali-Hahn-Saks.
-   - ✅ Trigger layer: `fireAt` / `fireTotal` (the untruncated per-position multiplicity, a
-     supremum that is ATTAINED because `K` bounds it — `exists_fireAt_eq_fireTotal`),
-     `trigCount` (bucketed by length × state) with `trigCount_eq` identifying it with
-     `Σ_i fireAt i J`, `trigLimit`, and `tendsto_trigCount_div` (the truncated count converges
-     `x`-independently).  Tail layer: `trigPrefix` / `trigInd` / `tailMass`,
-     `fireTotal_sub_fireAt_le` (pointwise: a missed trigger forces the window into
-     `trigPrefix`), `trigTotal_le_trigCount_add` (aggregate), `wLimit_trigInd_le`.
-   - ⬜ **NEXT: close the assembly** (`tendsto_triggerCount`): a trigger family
-     `A ⊆ List ℕ × S` with multiplicity `k`, uniform bound `F ≤ K`, bucketed by word length.
-     `F − F_{≤m} ≤ K·1_{U_m}`, `U_m ⊆ ⋃_t {i : tᵢ = t, window_m(i) ∈ P_{t,m}}` where `P_{t,m}`
-     is the set of length-`m` words agreeing with a trigger of length `> m`.  The ONE honest
-     hypothesis is `τ_m := Σ_t ν t·γ(familySetC P_{t,m}) → 0`, i.e.
-     `γ(⋂_m familySetC P_{t,m}) = 0`: the triggers decide a.e.  Note `familySetC P_{t,m}` is
-     decreasing in `m`, so `τ_m` converges automatically — the hypothesis is only that the
-     limit is `0`, which is Vandehey's Lemma 4.3 condition (2) in honest form.
-     Conclusion: `(1/n)Σ_{i<n} F(x,i) → Σ_{(q,t)∈A} k(q,t)·ν t·γ(I_q)`, `x`-independent.
-   - ⬜ **Then `MobiusCFNScale` needs a per-matrix `vandehey_matrix_action_of_uniformFreq`.**
-     The existing one is global (`∀` matrices); the leaf route needs the single-matrix form so
-     the either-or endgame can pin `L = γ(I_v)` from a per-matrix uniform-frequency statement.
-     Cheap refactor, do it when the assembly lands.
-   - ⬜ Only THEN the supply side: `raneyNorm` as a total function, `RaneyState D` as a
-     `Fintype`, and the common-target reach (old HANDOFF NEXT 1–3).
-
-1. **Vandehey crux — the single leaf `MobiusCFNScale`** (`VandeheySmith.lean`):
-   `x ↦ p·x` preserves CF-normality for prime `p`.  The Smith shortcut WORKED and is formalized
-   (`mobiusCFN_of_leaves`), and the Serret leaf is PROVED (`mobiusCFNGL2_holds`), so
-   `vandeheyUniformFreq_of_scale` reduces all of Theorem 1.1 to this one statement.
-   - **Now under way: Vandehey §2.**  `VandeheyMat2.lean` (the matrix layer, `act_cfMat`) and
-     `VandeheyNormalForm.lean` (`M_D`, `isMD_entry_bounds`, `finite_isMD`) are in.  The next
-     item is **Lemma 2.1**, `M·J A_j = A_{d₀} J A_{d₁} ⋯ J A_{d_m}·M'` with `M' ∈ M_D` — a
-     Euclidean descent, elementary, spelled out in `HANDOFF.md`.
-   - The structural insight of 2026-09-28: **the fibre merges by Serret** (`serret_cfEquiv`),
-     so class-relative synchronization is a corollary, not a probe observation.
-   - After §2: the abstract **output-frequency transfer principle** (Vandehey §5–§6 in
-     transducer-free form) — if a finite-state transducer reads the input digits and the joint
-     (state, input window) frequencies converge to `x`-independent limits, then every output
-     word frequency converges.  That is pure combinatorics; it needs no CF theory and no
-     analysis, and it is what turns `tendsto_jointCount_classStep` into digit frequencies of
-     `p·x`.  Then §2 (Raney normal forms, finiteness of the det-`±p` state set) and the fibre
-     step (state = class × mergeable fibre) remain.
-2. **Joint Lambert, unconditional.**  Discharge `AGP` and `PrimeIntervalSupply` from PNT+
-   (`WeakPNT_AP`, PNT).  After that, the quantitative §6 count is a separate target.
-3. **C3/MRT `CharTailCancellation`.**  This is the only C3 input with a standard-literature proof:
+1. **Joint Lambert, unconditional: discharge `AGP`**, the only hypothesis left since
+   `PrimeIntervalSupply` was proved (`3ddc0b6`).  AGP is Alford–Granville–Pomerance 1994
+   Thm 2.1, primes in progressions with at most `D0` exceptional moduli.  `docs/JOINT-LAMBERT-AGP-GAP.md`
+   maps what the installed dependencies supply.  The named intermediate target is `AGPExpRange`
+   (`JointLambertAGPRange.lean`).  The quantitative §6 count is a separate target after that.
+2. **C3/MRT `CharTailCancellation`.**  This is the only C3 input with a standard-literature proof:
    Euler product, then `L(1,χ) ≫ q^{-1/2}`, then arg-L winding.
-4. **Elliott margin check.**  A Littlewood-strength `ζ'/ζ ≪ log t / log log t` would suffice if
+3. **Elliott margin check.**  A Littlewood-strength `ζ'/ζ ≪ log t / log log t` would suffice if
    every consumer in `ElliottZetaTheta.lean` tolerates a `log log log` margin.  Check that.  If
    one doesn't, record "Vinogradov or nothing" in the Maze.
-5. **SwingC2 triage.**  Delete or restate `tauMomentPrimesShiftStruct_of_primeDensity`, which
+4. **SwingC2 triage.**  Delete or restate `tauMomentPrimesShiftStruct_of_primeDensity`, which
    takes the vacuous `PrimeDensityAP`, and `survivorLeaf_of_struct`.
+
+5. **OVERVIEW refresh**: Vandehey 1.1 proved, joint Lambert down to `AGP`.
 
 ## Lap notes (newest first)
 
