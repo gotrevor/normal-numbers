@@ -445,6 +445,30 @@ theorem ergodic_gaussMap : Ergodic gaussMap gaussMeasure where
       rw [measure_compl hs (measure_ne_top _ _), gaussMeasure_univ, hs1]
       simp
 
+/-! ## Uniqueness of the absolutely continuous invariant probability -/
+
+/-- **The Gauss measure is the unique absolutely continuous invariant probability.**  Ergodicity
+makes the Radon–Nikodym derivative `dμ/dγ` — which is a.e. invariant for *any* pair of invariant
+finite measures (`MeasurePreserving.rnDeriv_comp_aeEq`) — a.e. constant, and the total mass pins
+the constant to `1`.  This is step (ii) of the `GaussACRigidity` discharge. -/
+theorem eq_gaussMeasure_of_ac_invariant {μ : Measure ℝ} [IsFiniteMeasure μ]
+    (hac : μ ≪ gaussMeasure) (hinv : MeasurePreserving gaussMap μ μ)
+    (hmass : μ Set.univ = 1) : μ = gaussMeasure := by
+  obtain ⟨c, hc⟩ := ergodic_gaussMap.ae_eq_const_of_ae_eq_comp₀
+    (μ.measurable_rnDeriv gaussMeasure).nullMeasurable
+    (hinv.rnDeriv_comp_aeEq measurePreserving_gaussMap)
+  have hμ : μ = gaussMeasure.withDensity (μ.rnDeriv gaussMeasure) :=
+    (Measure.withDensity_rnDeriv_eq μ gaussMeasure hac).symm
+  have hsm : μ = c • gaussMeasure := by
+    rw [hμ, withDensity_congr_ae hc]
+    show gaussMeasure.withDensity (fun _ => c) = c • gaussMeasure
+    rw [withDensity_const]
+  have hc1 : c = 1 := by
+    have := hmass
+    rw [hsm, Measure.smul_apply, smul_eq_mul, gaussMeasure_univ, mul_one] at this
+    exact this
+  rw [hsm, hc1, one_smul]
+
 /-! ## Guard rule: locators and degenerate cases -/
 
 /-- Degenerate case: the empty set is invariant, with `γ = 0`. -/
@@ -489,6 +513,7 @@ section Audit
 #print axioms not_gaussInvariant_Ioo_half
 #print axioms measurePreserving_gaussMap
 #print axioms ergodic_gaussMap
+#print axioms eq_gaussMeasure_of_ac_invariant
 
 end Audit
 
