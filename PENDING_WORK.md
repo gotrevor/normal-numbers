@@ -51,6 +51,27 @@ transducer emits `L` forced digits, and those are the first `L` digits of the si
 bound `sub_le_of_image_le` could not be used.  Gauss invariance makes the whole block cost the
 same constant as one step, so the estimate is LINEAR in `L` with density exactly `γ(I_w)`.
 
+### S7-FB / S7-BL (same lap): forced blocks, and the width/length equivalence
+
+`VandeheyS7Forced` + `VandeheyS7Block`, all axiom-clean:
+
+* `MobState.cfDigit_image_eq_basepoint` — a forced block is a chunk of the CF expansion of the
+  BASEPOINT `s.mob 0`.  For `s = O_t⁻¹ Φ P_n` that is `O_t⁻¹ Φ (p/q)`, a `GL₂(ℤ)`-image of
+  `φ·(rational)`, Serret-equivalent to `φ p/q`.
+* `MobState.width_le_of_forced` — forcing `w` costs `width ≤ 2·distortion·γ(I_w)`; equivalently
+  (`one_le_pullbackConstant_of_forced`) the lap-74 pullback constant is `≥ 1/γ(I_w)`, so on a
+  forced block the pullback bound degenerates to the trivial `≤ 1`.
+* `gaussMeasure_cfCylinder_mul_fib_le` — cylinder decay, `γ(I_u)·fib(|u|+1)² ≤ 1/log 2`.
+* `MobState.fib_sq_mul_width_le_of_forced` — **the cap**: `fib(L+1)²·width·log 2 ≤ 2·distortion`,
+  i.e. `L = O(log(1/width))`.
+* `MobState.exists_forcedLength_bound` — for every floor `η>0` and cap `K` there is an `L₀`
+  beyond which no such state forces a word.
+
+**The route's two halves are ONE hypothesis**: `width ≥ η ⟺ forced blocks shorter than L₀(η,K)`.
+So "the pullback needs a width floor" and "the counting needs bounded bursts" are the same
+statement, and the crux's residual is the FREQUENCY of narrow states, plus the distribution of the
+basepoints the long bursts spell out.
+
 ### Attack order for the next laps
 
 1. **S7-BD (block decomposition).**  State, in Lean, that the output-word count over `p` output
