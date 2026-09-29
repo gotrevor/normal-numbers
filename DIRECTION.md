@@ -2,86 +2,74 @@
 
 ## CURRENT DIRECTIVE (altitude laps only write here; it OUTRANKS the HANDOFF) 🧭
 
-**Set 2026-09-29 (review lap 77).**  Supersedes lap 74's directive.  Same destination, same crux;
-what changes is the INSTRUMENT, because fact (α)'s one escape hatch is now concretely in reach.
+**Set 2026-09-29 (review lap 88).**  Supersedes lap 77's directive.  Same destination.  The
+ROUTE changes: off the absolute density bound (route B), onto **universality** (route A), because
+the repo already owns route A's endgame and route B's instrument has a proved-out ceiling.
 
-* **Objective.**  Vandehey §7 Problem 1, at the crux: **`OrbitWordBound q r₀ C`**, now in the
-  explicit shape `BlockAverageBound` for the sets `mapBlockSet (runState Φ x n) w j`
-  (`MapState.orbitWordBound_of_runBlockAverage`, `VandeheyS7RunPin`).  Nothing else counts.
+* **Objective.**  `AffineUniformFreq Real.goldenRatio 0` — *the image's word frequencies converge
+  to a limit that does not depend on which CF-normal `x` is fed in.*  Nothing else counts.
+  It already implies the headline, axiom-clean and with NO cited input
+  (`affineCFN_of_uniformFreq`), and it is already factored:
+  `affineUniformFreq_of_runClock : RunClock ℓ rate → SampledUniformCount q r₀ ℓ → AffineUniformFreq`
+  (`VandeheyS7Clock`).  So the target is `SampledUniformCount` (plus the clock rate).
 
-* **NEW — fact (δ), the reason this directive changed.**  Directive fact (α) says only *finiteness
-  of the predictor's range* or genuine arithmetic of `Φ` can beat predictability.  The range is
-  **precompact**, and both halves are elementary:
-  1. **The box lemma.**  `width s = |det s| / (s.d·(s.c+s.d))` exactly.  So `|det| ≤ D`,
-     `width ≥ η` and `denRatio := (c+d)/d ∈ [1/K, K]` force `d ≤ √(KD/η)` and `c+d ≤ √(KD/η)`,
-     and then `0 ≤ b ≤ d`, `0 ≤ a+b ≤ c+d` put **all four entries in `[−M, M]`,
-     `M = √(KD/η)`**.  Compactness needs bounded DISTORTION, not a width floor — lap 74 was
-     looking for the floor alone and that is why the search stalled.
-  2. **The distortion IS bounded along the run**, by a one-line recursion on `r = denRatio`:
-     a read is `r ↦ (r+a)/(r+a−1) = 1 + 1/(r+a−1)`, so after any read `r ∈ (1, 1+1/(r₀+a−1)]`;
-     an emission is `r ↦ (mob 1 / mob 0)·r` with `mob 1/mob 0 ∈ [b/(b+1), (b+1)/b] ⊆ [1/2,2]`
-     because the image lies in `I_b`.  Reads contract `r` towards `1` *uniformly in the digit*,
-     emissions move it by a factor ≤ 2.  So `r` is trapped in an absolute band from step 1 on —
-     no hypothesis, no width floor, no normality.
-  So: **the reduced states of width ≥ η lie in a fixed compact box of `ℝ⁴`**, hence — up to a
-  precision `ρ` costing an additive `O(ρ/η²)` in measure — the predictor `n ↦ s_n⁻¹(I_w)` takes
-  **finitely many values**, i.e. `A_n ⊆ E_i^{+ρ'}` for one of `M(η,ρ)` FIXED sets `E_i`.
+* **Why route B is demoted (fact (ε), this lap's finding).**  Route B wants
+  `limsup freq ≤ C·γ(I_w)` with `C` uniform in `w`, then cites `GaussACRigidity`.  Its only
+  surviving instrument is a cover of the state-dependent target by a FIXED finite family
+  (S7-WD/WD′/CV/FT).  That cover cannot be afforded:
+  1. **state-blind is impossible** — over the whole width-`≥η` state box the targets' union is all
+     of `(0,1)`, so a cover valid for every state has mass `1`, not `C·γ(I_w)`;
+  2. **net-indexed is quantitatively dead** — resolving a target of length `≍γ(I_w)` needs net
+     precision `ρ ≲ γ(I_w)`, so the box carries `≍ρ^{-4}` cells and the unweighted cover mass is
+     `≍γ(I_w)^{-3}`: `C` blows up as `|w|` grows.  The ℤ[φ]-separation of the reachable states
+     (`|α|·|α^σ| ≥ 1` for `0 ≠ α ∈ ℤ[φ]`) says this is not an artefact of the net.
+  So route B's residual is irreducibly the WEIGHTED joint statement `ClassFreqBound`, which needs
+  the state's empirical law AND an absolute-continuity input.  Route A needs neither.
 
-* **What fact (δ) turns the crux into.**  Not "empirical vs expected for an arbitrary predictable
-  family" (hopeless, fact (α)) but: for the finite cell decomposition `{B_i}` of the state box,
-  **the joint frequency `freq{n : s_n ∈ B_i ∧ Gⁿx ∈ E_i}` must not exceed `freq{s_n ∈ B_i}·γ(E_i)`
-  by more than a constant.**  That is Vandehey's *class equidistribution* with a COMPACT class
-  space in place of a finite one — a different and much better-posed wall than the self-joining
-  one.  (Dropping the state constraint and summing is NOT allowed: it costs the factor `M`.)
+* **Route A's decomposition — the mandated program (`BlockForget`).**  With `f = slotObs w` and the
+  skew product `pairStep` (S7-SK), the sliding-block identity turns the run's Cesàro average into
+  the Cesàro average over `m` of `blockAvg (s_m) T w (G^m x)`.  Name
+  > **`BlockForget`**: `∀ ε>0, ∃ T, ∀ states s s′, ∀ z ∈ (0,1),`
+  > `|blockAvg s T w z − blockAvg s′ T w z| ≤ ε`
+  — the block time-average forgets the initial state, uniformly in the input segment.  Then
+  replacing `s_m` by ONE reference state `s*` makes the integrand a FIXED function of `z` alone,
+  and CF-normality of `x` evaluates its Cesàro average (S7-WN + the interval/cylinder squeeze).
+  Hence **`BlockForget` + CF-normality ⟹ `SampledUniformCount` ⟹ the headline.**
+  `BlockForget` mentions no `x` and no normality: it is a statement about the skew product alone;
+  it is what BOTH 2026-08-24/25 probes measured GREEN (the state law is KS-indistinguishable
+  across four initial states from ~60 steps on); and pathwise non-merging (S7-CN: reading is
+  inert) does not contradict it — time-averaging, not trajectory equality, is the right test
+  (probe trap #2).
 
 * **Mandated next move**, in this order:
-  (a) the **box lemma** and `denRatio`, for `MapState`, unconditional;
-  (b) **`denRatio` bounds along `runState`** — the read step, the emit step, the trapped band;
-  (c) the **finite-cell approximation**: name `ClassFreqBound` (joint state-cell/cylinder
-      frequency) and prove `BlockAverageBound ⟸ ClassFreqBound + width-frequency`;
-  (d) only then attack `ClassFreqBound` itself.
-  Along the way, the two cheap corrections found this lap: `hΦ` is **trivially** instantiable
-  (`MapState` admits `z ↦ v + ε(z−u)`, det `ε ≠ 0`), so lap 76's "next action #1" is a triviality
-  and NOT a case analysis on `⌊φ·fract x⌋`; and the `∀ Φ` form of `hBA` should be weakened to the
-  `∃ Φ` form before anyone tries to discharge it.
+  (a) `VandeheyS7BlockForget` — `blockAvg`, the sliding-block Cesàro identity, the statement
+      `BlockForget`, and the architecture theorem down to the one named input;
+  (b) the reference-state observable: `blockAvg s* T w ·` is an interval-step function of `z`
+      (finite after a digit truncation) — the bridge to S7-WN/S7-CV;
+  (c) then `BlockForget` itself: Birkhoff–Hopf / Hilbert-metric contraction on the fibre, with
+      `disc` (S7-CN) as the comparison instrument and `distortion_runWord_le_two` as the
+      contraction already in hand.
+  Keep the scalar width debt (`MeanSlack`, `ClockLinear`): route A needs it for the CLOCK
+  (`RunClock`'s rate), so that work is not wasted.
 
-* **Operator check 2026-09-29 12:15 — test `CellMemory` against the Maze BEFORE building on it.**
-  `CellMemory` (S7-CM) says the ρ-net cell of the state is decided by the last `L` input digits.
-  That is close kin to the refuted window-function frame: `no_window_function` exhibits two states
-  of minimal distortion that stay apart after EVERY word, so the far past (the initial state)
-  fixes something the recent digits cannot.  Next lap, first move: either prove `CellMemory` is
-  not refuted by those witnesses (say exactly why the net cell differs from the emitted digit),
-  or refute it in the kernel and add a Maze row.  Guard rule applies.
+* **Forbidden drift.**  (i) New unweighted-cover machinery for route B (S7-WD/WD′/CV/FT are
+  finished; do not extend them).  (ii) `ClassFreqBound`/`CellMemory` as the front — they are route
+  B's residual, and `CellMemory` is a restatement (lap 80).  (iii) The window-function frame,
+  bounded-error decompositions, Serret/commensurator, soft self-joining rigidity.  (iv) Finishing
+  `GaussACRigidity` — route A does not use it; it stays cited.  (v) `StateClock` in the
+  uniform-`η` form.
 
-* **Forbidden drift.**  (i) The window-function frame (`no_window_function`).  (ii) Bounded-error
-  decompositions (`cfCount_tendsto_of_decomposition`).  (iii) Serret/commensurator and soft
-  self-joining rigidity.  (iv) Finishing `GaussACRigidity` — it stays cited (standing rule 3).
-  (v) `StateClock` in the uniform-`η` form.  (vi) **Re-auditing the older `∃`-bundles by hand**;
-  the sharper rule (type-pinning is not pinning) is recorded, the front is `runState`-explicit now.
-
-* **What the crux IS, established lap 30 (use this, do not re-derive it).**  Writing the state at
-  input time `n` as the Möbius map `s_n = O_n⁻¹ Φ P_n` (`O_n` = emitted convergent matrix, `P_n` =
-  input convergent matrix, `Φ` = the affine map), the crux is
-  `limsup (1/N) #{n<N : Gⁿx ∈ s_n⁻¹(E)} ≤ C γ(E)` for every cell `E`.  Three facts pin it down:
-  1. **(α)** `s_n⁻¹(E)` is **predictable** — determined by `x₁…x_n` — and CF-normality of `x` is a
-     statement about the tail marginal alone.  So no argument that uses only "predictable +
-     bounded distortion" can work (`exists_predictor_all_hit`).  Only *finiteness of the
-     predictor's range* — see fact (δ), which now supplies it — or genuine arithmetic of `Φ`.
-  2. **(β)** The per-state distortion bound **fails** at small width: a post-emission state whose
-     image `J` straddles `1/k` at a scale far below `|E|` has `γ(s⁻¹E) ≈ 1/2` with `γ(E)`
-     arbitrarily small.  This is why no uniform width floor exists; it does NOT obstruct (δ),
-     which only needs the width floor on a set of times of frequency `1 − δ`.
-  3. **(γ)** `Γ ∩ Φ⁻¹ΓΦ = {±I}` for `Φ = diag(φ,1)` (φ irrational), so the state set is *literally*
-     `PSL₂(ℤ)` and the state is the point `ΓΦP_n ∈ Γ\SL₂(ℝ)`.  Fact (δ) is the compatible reading:
-     the *matrix* remembers everything (γ), but the *reduced state of width ≥ η* lives in a
-     compact box (δ), and only the latter is what the predictor sees.
-
-* **Why.**  Three hypotheses became one (`BlockAverageBound`), and that one is now stated about
-  explicitly defined sets.  Fact (α) named the only two ways past it; (δ) delivers the first one
-  cheaply, and it is unconditional.  A lap that does not either build (δ)'s machinery or attack
-  `ClassFreqBound` is off-directive.
+* **What the crux IS now.**  `BlockForget`: two states, the same input segment, one time-average.
+  Facts (α)(β)(γ)(δ) all survive and none obstructs it — (α)'s counterexample families are not
+  orbits of an autonomous map (S7-SK), (γ)'s rigidity is about pathwise identity, and (δ)'s box is
+  where the two states live.  A lap that does not either build (a)/(b) or attack `BlockForget` is
+  off-directive.
 
 Directive history:
+- 2026-09-29 (lap 88, review): ROUTE CHANGE — universality (`AffineUniformFreq`, which already
+  reduces the headline with NO cited input) replaces the absolute density bound; fact (ε) kills the
+  unweighted cover, and the new crux is `BlockForget` (block time-averages forget the initial
+  state), which is `x`-free and probe-verified.
 - 2026-09-29 (lap 27, review): window-function frame REFUTED; ε-scheme replaces the bounded-error
   engine; the ERGODIC route (`OrbitACBound` + `GaussACRigidity`) becomes primary, the
   state-indexed decomposition the fallback.
