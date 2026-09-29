@@ -1,100 +1,15 @@
-## Lap 91 (2026-09-29) — route A's instrument replaced: the greedy transducer
+## Vandehey §7 Problem 1 — CLOSED 2026-09-29 (laps 27–91) 🏁
 
-**The advance on the crux.**  Four kernel modules and one probe.  The probe (exact `ℤ[φ]`
-arithmetic, output verified against the true CF of `x/φ`) found that the throttled transducer's
-width is a null-recurrent `√n` walk — refuting `WidthAfford`/`MeanSlack` in shape — and then that
-**with maximal emission the width is bounded** (`slack ∈ [0,12]`, and `[0,3.4]` for the rational
-map).  So the scalar debts were artifacts of the one-digit-per-read throttle.
+Not solved.  The map of closed routes, with a kernel witness for each, is
+**`docs/VANDEHEY-S7-FALSE-STARTS.md`**; every verdict is aliased in `src/NormalNumbers/Maze.lean`,
+and `DIRECTION.md`'s "Completed runs" carries the three findings a future lap must not re-derive
+(the crux is the headline plus locality; the scalar debts were artefacts of the one-digit-per-read
+throttle; the wall is joint equidistribution of `(state, input point)`).  The lap-by-lap §7 record
+is in the handoffs `HANDOFF-2026-09-29-lap*.md` and in `archive/PENDING_WORK-to-2026-09-27.md`.
 
-Landed: `VandeheyS7LevelGen` (S7-LG, the level constants at an arbitrary state; the crux's
-fixed-state coordinate as arithmetic), `VandeheyS7WidthDensity` (S7-WQ, sparse wide times make the
-crux vacuous and `WidthAfford` false), `VandeheyS7ArchWidthFree` (S7-AW, the architecture with the
-width filter deleted: `BlockForgetAll` alone gives `IsCFNormal (Φ.mob x)`),
-`VandeheyS7NoReduction` (S7-NR, the crux without the absolute values IS the headline — the surplus
-is locality), `VandeheyS7PairCorr` (S7-PC, geometric pair-correlation decay and the thin digit
-tail).
-
-**Lap-91 second half.**  The greedy transducer is now IN the kernel: `VandeheyS7Greedy` (S7-GR,
-`flushState`/`flushWord`, termination from the width), `VandeheyS7GreedyWidth` (S7-GW, an emission
-pays `b²`, a read costs `a(a+1)(r+2+1/r)`), `VandeheyS7GreedyCorrect` (S7-GC, **transducer
-correctness**: the greedy output IS the image's continued fraction), `VandeheyS7Ledger2` (S7-LD2,
-the output cannot outgrow the input), `VandeheyS7NearBoundary` (S7-NB, a point near a boundary has a
-large digit within two steps).  The probe now measures, for the greedy run,
-`freq(width < η) ≍ √η` across five decades — exactly `γ(straddleSet η)` (S7-SM) — so `WidthAfford`
-and `MeanSlack` are TRUE for it, and the remaining obligation is *the image orbit does not
-over-visit the `√η`-neighbourhood of the cylinder boundaries*.
-
-**Next attack, in order.**
-1. **`stepMax` and the greedy run.**  Termination: `k` consecutive emissions force
-   `width ≲ 1/fib(k)²` (S7-AG's bound run forwards), so the burst length is bounded by an explicit
-   function of the state.  Then `runGreedy`, `runWordGreedy`, the step identity
-   `cylMap (emitted) ∘ new = old ∘ read`, and reducedness (non-emittability) after each read.
-2. **The width floor for reachable reduced states** — the probe's Finding 3.  This is what
-   `WidthAfford` and `MeanSlack` were trying to say, and for the greedy run it looks TRUE.
-3. **Re-wire the architecture** (`slotCount`, the sliding-block identity, S7-BF/S7-RV) to the
-   greedy run: the crux becomes non-vacuous (S7-WQ) with a satisfiable width hypothesis.
-4. Fallback that needs none of this: `BlockForgetAll` (S7-AW).  Its only surplus over the headline
-   is locality (S7-NR), so an attack must be local; the input half of that locality is the window
-   variance bound, whose two inputs are S7-PC and the repo's `variance_blockCount_le`, and whose
-   missing step is the ORBIT pair-frequency upper bound
-   `limsup (1/p)#{m<p : Gᵐy ∈ I_w ∧ G^{m+g}y ∈ I_w} ≤ γ(I_w ∩ G^{-g}I_w)`.
-5. `GaussACRigidity` stays cited.
-
-# PENDING WORK — the queue
-
-## ⭐ VANDEHEY §7 — LAP 90: THE CRUX IS REFUTED TWICE, AND RE-BASED
-
-**Commits** `7705dd2a` (S7-BG) · `9142e60c` (Maze) · `64bc5a5c` (S7-RR) · `d507c092` (S7-BX) ·
-`449f11e3` (S7-BY) · `bd4927a5` (S7-BR).  All axiom-clean, `lake build` 🟢 10625 jobs.
-
-### The advance on the crux
-
-1. **`BlockForget` (uniform `z`) is FALSE in the kernel** — `not_blockForget` (S7-BX).  Lap 89 had
-   this only as a frozen Maze row, because the argument went through digit frequencies and needed
-   transducer correctness.  S7-BX avoids that entirely: `emitStep_unique` shows `MapState`'s
-   endpoint inequalities pin the emitted digit (the legal `b` lie in a closed interval of length
-   `1 − |1/mob 0 − 1/mob 1|`, and equality of the two endpoints forces `det = 0`), so `step` is
-   computable; then `shiftState ∘ read 2 = read 1 ∘ midState` and
-   `midState ∘ read 2 = read 4 ∘ shiftState` make the skew orbit at the Gauss fixed point `√2 − 1`
-   a **2-cycle**, with block average `⌈T/2⌉/T ≥ 1/2` against `0` from the reference state.
-
-2. **`BlockForgetGen` (lap 89's CF-normal repair) is FALSE too** — `not_blockForgetGen` (S7-BY),
-   and for a reason that kills the whole SHAPE of repair: the quantifier order is `∃T, ∀z`, so the
-   block length is fixed before the input, while `blockAvg s T w z` at fixed `T` is decided by the
-   state cycle once the first `T` digits are known — and CF-normality is a TAIL property, so a
-   CF-normal `z` may open with `T` copies of the digit `2`
-   (`exists_isCFNormal_mem_cfCylinder`: a genuine cylinder has positive Gauss mass, and the
-   non-CF-normal set is `γ`-null).  Both phases of the cycle decide their target uniformly in the
-   point: `shiftState` maps ALL of `(0,1)` into `(2/3,1)`, `midState` into `(1/6,1/4)`.
-
-3. **Why the crux was never a reduction** — `blockForgetGen_absolute` (S7-RR).  The reference run
-   IS the Gauss shift: `pairStep (refState, z) = (refState, gaussMap z)` unconditionally, so
-   `blockAvg refState T w z` is the INPUT's own empirical `w`-frequency.  Hence the `s' = refState`
-   instance of the crux is the absolute statement "every width-`≥η` state reproduces the input's
-   digit-block statistics" — i.e. the headline — with no forgetting content at all.
-
-4. **The repair that survives** — `BlockForgetRun` (S7-BR).  The architecture never evaluates the
-   crux at an arbitrary `(state, point)` pair; it evaluates it at the pairs the run visits, and
-   needs only their CESÀRO average at the good (width-`≥η`) times.  A single bad pair costs
-   nothing.  `BlockForgetRun` is exactly that hypothesis, `blockForgetRun_of_gen` shows it is
-   implied by the refuted form, and the whole S7-BF/S7-RC architecture down to
-   `exists_uniform_slotCountFreq_of_blockForget` now rests on it, unchanged and axiom-clean.
-
-### Next attack (in order)
-
-1. **Is `BlockForgetRun` itself refutable?**  The S7-BY witness is a single time; to defeat the
-   Cesàro form one needs a POSITIVE FREQUENCY of times `m` at which `runState Φ x m` is a
-   bad-cycle state while `Gᵐx` has the matching prefix.  Along a CF-normal `x` the all-`2` prefix
-   of length `T` has frequency `γ(I_{2^T}) > 0`, so this is NOT obviously safe — the honest first
-   probe is whether the run's state at those times is forced away from the cycle.  A kernel
-   refutation here would close route A entirely; a proof that it cannot happen is the first real
-   positive evidence the route has had.
-2. If `BlockForgetRun` survives probe 1, attack it via S7-RQ: generalise S7-RC's `refLevel` from
-   `refState` to an arbitrary starting state (nothing in the S7-RC proof uses `refState` beyond
-   `stateOf j u = wordState refState (vOf j u)`), turning the crux into the concrete question
-   whether `refLevel s w j B` is `s`-independent in the Cesàro average over `j`.
-3. Scalar width debt (`MeanSlack`, `ClockLinear`) still needed for `RunClock`'s rate /
-   `WidthAfford`.
+**Do not re-open §7 without reading that doc.**  If a new idea survives it, the live formulations
+to attack are `BlockForgetAll` (S7-AW, the whole architecture rests on it alone) and the
+no-concentration statement of S7-GS.
 
 
 ## Joint Lambert update, 29 September 2026
