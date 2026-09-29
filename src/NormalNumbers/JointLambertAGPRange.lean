@@ -6,6 +6,7 @@ Authors: Trevor Morris
 import NormalNumbers.JointLambertPrimeInputs
 import ErdosProblems.Erdos4.FGKMTWeightedDistribution
 import ErdosProblems.Erdos446.PrimeDyadic
+import ErdosProblems.Erdos4.FGKMTPrimeExcision
 
 /-!
 # `AGPExpRange` — AGP on the Siegel–Walfisz modulus range
@@ -42,13 +43,14 @@ are literally the same function, and a single modulus can be extracted from the 
 sum.  The assembly (§2) carries two disclosed `sorry`s, both named and both discussed in
 the gap document:
 
-* `exceptionalConductor_gt_log` — the `D > log X` clause.  The needed conductor bound is
-  installed (`Erdos48.PageExceptionalWitness.log_scale_lt_quadraticGapDenom` gives
-  `m ≫ (log Q)^{2−ε}`), but the `Erdos4` excision chain
-  (`exists_excised_distribution_envelope → exists_exponential_centered_distribution →
-  exists_exponential_prime_distribution`) *discards* the Page witness, so the bound cannot
-  be read off the statement we consume.  Adapter work, not new mathematics.
-* `agpExpRange_holds` — the quantitative assembly, blocked only on the above.
+* `exceptionalModulus_gt_log` — the `D > log X` clause.  §2 below traces the excised conductor to
+  its root and finds a sharper obstruction than the one first suspected: the installed chain
+  excises `minFac (χ.modulus)` by *coprimality*, which admits no lower bound at all
+  (`minFac m` can be `2` for arbitrarily large `m`).  §2 proves that the AGP-shaped
+  *divisibility* excision is sound at the Landau–Page level, which relocates the gap to a genuine
+  Landau–Siegel statement about the conductor itself.
+* `agpExpRange_holds` — the quantitative assembly, blocked on the above **and** on re-deriving
+  five upstream theorems with divisibility-based excision.
 
 `AGP` itself is untouched and stays frozen.
 -/
@@ -140,24 +142,88 @@ theorem exists_pointwise_exponential_distribution :
 
 /-! ### 2. The assembly, and the one adapter gap that blocks it -/
 
-/-- **The `D > log X` clause — DISCLOSED GAP, adapter work.**
+/-! ### 2. The `D > log X` clause: the excision has the wrong SHAPE
 
-`AGP` (and `AGPExpRange`) require every excluded modulus to exceed `log X`.  The excised
-conductor returned by `exists_exponential_prime_distribution` carries only
-`B ≤ exp (a √log x)` and `B = 1 ∨ B.Prime` — no *lower* bound.  The bound that is needed
-does exist in the installed tree: a Page exceptional conductor `m` at scale `Q` satisfies
-`Real.log Q < c * (2^22 * √m * (log m)^4)`
-(`Erdos48.PageExceptionalWitness.log_scale_lt_quadraticGapDenom`), i.e. `m ≫ (log Q)^{2−ε}`,
-comfortably `> log x` at `Q ≍ x^{1/3}`.  But the `Erdos4` excision chain
-(`exists_excised_distribution_envelope → exists_exponential_centered_distribution →
-exists_exponential_prime_distribution`) projects the Page witness away, so the bound is not
-derivable from the statement consumed above: closing this needs re-entering that chain at a
-point where the witness is still present.  Adapter work, not new mathematics — but not
-free, and deliberately left open rather than assumed. -/
-theorem exceptionalConductor_gt_log :
-    ∃ a : ℝ, 0 < a ∧ ∀ᶠ x : ℕ in atTop, ∃ B : ℕ,
-      B ≤ Erdos4.FGKMT.exponentialConductorCutoff a x ∧ (B = 1 ∨ B.Prime) ∧
-        (B = 1 ∨ Real.log (x : ℝ) < B) := by
+Lap 7 traced the excised conductor of `exists_exponential_prime_distribution` to its root and
+found a sharper obstruction than "the Page witness is projected away".  The chain is
+
+  `exists_landauPage_unique` → `exists_prime_excision_of_unique` → `exists_uniform_prime_excision`
+  → `exists_uniform_twisted_sum` → `exists_uniform_primitive_maximum`
+  → `exists_excised_distribution_envelope` → `exists_exponential_centered_distribution`
+  → `exists_exponential_prime_distribution`,
+
+and at `exists_prime_excision_of_unique`
+(`.lake/packages/lean-proofs-latest/src/latest/ErdosProblems/Erdos4/FGKMTPrimeExcision.lean:8`)
+the excised value is
+
+    B := (χ.modulus).minFac,
+
+the **smallest prime factor** of the exceptional character's conductor, with the exclusion
+expressed as coprimality `d.Coprime B`.  So no lower bound on `B` is available even in principle:
+the exceptional conductor `m` may be large while `minFac m = 2`, and then `B = 2 ≤ log X` for every
+`X ≥ 3`.  Re-threading a Landau–Siegel lower bound on `m` therefore does **not** close `AGP`'s
+`D > log X` clause — the quantity being excised is not `m`.
+
+The repair is structural, and §2 below shows it is mathematically sound at the Landau–Page level:
+excise `m` itself and express the exclusion as **divisibility** `¬ D ∣ d` rather than coprimality.
+That is exactly `AGP`'s own form, and it is the right form: a Dirichlet character mod `d` is
+induced by a primitive character whose conductor divides `d`, so an exceptional primitive character
+of conductor `m` can only pollute moduli that are **multiples** of `m`.  Coprimality to `minFac m`
+is a strictly cruder exclusion than the mathematics requires.
+
+What this costs: the excision variant below cannot be fed to the *existing* chain, because
+`¬ m ∣ d` does not imply `d.Coprime (minFac m)`.  Consuming it means re-deriving
+`exists_uniform_twisted_sum` … `exists_exponential_prime_distribution` with divisibility-based
+excision — five substantial upstream theorems, in a dependency this campaign does not modify.
+That, not a missing analytic input, is what currently blocks `AGPExpRange`. -/
+
+/-- **The AGP-shaped excision is sound.**  One modulus removed — by *divisibility*, as `AGP`
+states it — kills the common exceptional real character, whenever the Landau–Page uniqueness
+holds at scale `Q`.  Compare
+`Erdos4.FGKMT.exists_prime_excision_of_unique`, which excises `minFac χ.modulus` by coprimality
+and so admits no lower bound on the excised value; here the excised value **is** the exceptional
+conductor, which a Landau–Siegel gap can bound from below. -/
+theorem exists_modulus_excision_of_unique {M Q : ℕ} (hQ : 2 ≤ Q)
+    (hunique : Set.Subsingleton
+      {χ : Erdos4.FGKMT.PrimitiveCharacter | Erdos4.FGKMT.HasExceptionalRealZero M Q χ}) :
+    ∃ D : ℕ, D ≤ Q ∧ (D = 1 ∨ 1 < D) ∧
+      ∀ χ : Erdos4.FGKMT.PrimitiveCharacter, ¬ D ∣ χ.modulus →
+        ¬ Erdos4.FGKMT.HasExceptionalRealZero M Q χ := by
+  classical
+  by_cases hex : ∃ χ : Erdos4.FGKMT.PrimitiveCharacter,
+      Erdos4.FGKMT.HasExceptionalRealZero M Q χ
+  · obtain ⟨χ, hχ⟩ := hex
+    refine ⟨χ.modulus, hχ.1, Or.inr χ.modulus_gt_one, ?_⟩
+    intro ψ hdvd hψ
+    have heq : χ = ψ := hunique hχ hψ
+    subst heq
+    exact hdvd dvd_rfl
+  · exact ⟨1, by omega, Or.inl rfl, fun χ _ hχ => hex ⟨χ, hχ⟩⟩
+
+/-- The uniform form: one Landau–Page constant `M` serves every scale `Q`, with the excluded
+modulus supplied by divisibility.  This is `Erdos4.FGKMT.exists_uniform_prime_excision` with
+`AGP`'s exclusion shape in place of coprimality-to-`minFac`. -/
+theorem exists_uniform_modulus_excision :
+    ∃ M : ℕ, 2 ≤ M ∧ ∀ Q : ℕ, 2 ≤ Q →
+      ∃ D : ℕ, D ≤ Q ∧ (D = 1 ∨ 1 < D) ∧
+        ∀ χ : Erdos4.FGKMT.PrimitiveCharacter, ¬ D ∣ χ.modulus →
+          ¬ Erdos4.FGKMT.HasExceptionalRealZero M Q χ := by
+  obtain ⟨M, hM, huniq⟩ := Erdos4.FGKMT.exists_landauPage_unique
+  exact ⟨M, hM, fun Q hQ => exists_modulus_excision_of_unique hQ (huniq Q)⟩
+
+/-- **The remaining obligation, isolated.**  With the excision above, `AGP`'s `D > log X` clause
+becomes exactly a Landau–Siegel lower bound on the *exceptional conductor* — a statement about `m`,
+which is now the excised value.  The ingredients are installed
+(`Erdos48.PageExceptionalWitness.log_scale_lt_quadraticGapDenom`:
+`log Q < c · 2^22 · √m · (log m)^4`, hence `m ≫ (log Q)^{2−ε}`), but they are stated for the
+`Erdos48` Page window, not for `Erdos4.FGKMT.exceptionalWidth M Q = 1/(M² log(2Q²))`, and the
+effective quadratic gap they use needs the window narrow enough to force `χ² = 1`, which is not
+established for the Landau–Page `M` here.  DISCLOSED: this is the honest remaining sub-goal. -/
+theorem exceptionalModulus_gt_log :
+    ∃ M : ℕ, 2 ≤ M ∧ ∀ᶠ x : ℕ in atTop, ∀ Q : ℕ, 2 ≤ Q → (Q : ℝ) ≤ (x : ℝ) →
+      ∃ D : ℕ, D ≤ Q ∧ (D = 1 ∨ Real.log (x : ℝ) < D) ∧
+        ∀ χ : Erdos4.FGKMT.PrimitiveCharacter, ¬ D ∣ χ.modulus →
+          ¬ Erdos4.FGKMT.HasExceptionalRealZero M Q χ := by
   sorry
 
 /-- **`AGPExpRange` — DISCLOSED GAP, quantitative assembly.**
@@ -173,9 +239,9 @@ take `Dset := if B = 1 then ∅ else {B}` for the excised conductor `B` of
   `φ(q) ≤ q ≤ exp(c √log x)` with `c := a/4`, this reduces to
   `(5/2) C log x ≤ exp((a/4) √log x)`, true for all large `x`.
 
-Blocked only on `exceptionalConductor_gt_log`: without it `Dset` cannot be given the
-`log X < D` property that `AGPExpRange` (faithfully, following `AGP`) demands.  Filling
-that adapter should close this theorem too. -/
+Blocked on `exceptionalModulus_gt_log`, and — per §2 — on re-deriving the excision chain with
+divisibility in place of coprimality-to-`minFac`, since the installed chain's excised value
+admits no lower bound.  Neither is a missing analytic input; both are real work. -/
 theorem agpExpRange_holds : AGPExpRange := by
   sorry
 

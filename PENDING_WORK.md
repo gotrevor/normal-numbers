@@ -66,14 +66,28 @@ decomposed in `src/` rather than only described in prose.  Proved and axiom-clea
 
 Two disclosed `sorry`s remain in that file, both named and both documented:
 
-1. **`exceptionalConductor_gt_log`** — `AGP`'s `D > log X` clause.  The needed bound is installed
-   (`Erdos48.PageExceptionalWitness.log_scale_lt_quadraticGapDenom`), but the `Erdos4` excision
-   chain projects the Page witness away; closing it means re-entering
-   `exists_excised_distribution_envelope` at a point that still carries the witness.  **This is
-   the next thing to attack on this front.**
-2. `agpExpRange_holds` — the quantitative assembly, blocked only on (1).  The arithmetic is
-   written out in its docstring: (★) + `Erdos446.eventually_primeCounting_tenth_bounds` +
-   `φ(q) ≤ q ≤ exp((a/4)√log x)` reduces it to `(5/2) C log x ≤ exp((a/4)√log x)`.
+1. **`exceptionalModulus_gt_log`** — `AGP`'s `D > log X` clause.  **Route correction, same lap:**
+   my first diagnosis (the `Erdos4` chain projects away `Erdos48`'s Page witness, so re-threading
+   it is adapter work) was WRONG, and the real obstruction is worse.  Tracing the chain to its
+   root, `Erdos4/FGKMTPrimeExcision.lean:8` excises `B := (χ.modulus).minFac` — the *smallest
+   prime factor* of the exceptional conductor — with the exclusion stated as coprimality.  No
+   lower bound on `B` is possible even in principle: `m` can be huge with `minFac m = 2`, giving
+   `B = 2 ≤ log X` always.  A Landau–Siegel bound on `m` does not help because `m` is not what is
+   excised.
+   **The repair is proved sound in-kernel this lap:** `exists_modulus_excision_of_unique` and
+   `exists_uniform_modulus_excision` excise `m` itself with `AGP`'s own **divisibility** exclusion
+   `¬ D ∣ d`, which is also the mathematically correct one — a character mod `d` is induced by a
+   primitive character of conductor dividing `d`, so an exceptional conductor `m` pollutes only
+   *multiples* of `m`.  Coprimality-to-`minFac` is strictly cruder than needed.
+   Cost, stated plainly: `¬ m ∣ d` does not imply `d.Coprime (minFac m)`, so the new excision
+   cannot feed the existing chain.  Using it means re-deriving `exists_uniform_twisted_sum` …
+   `exists_exponential_prime_distribution` with divisibility excision — five upstream theorems in
+   a dependency this campaign does not modify.  **That is the honest size of this item**, and it
+   is no longer describable as adapter work.
+2. `agpExpRange_holds` — the quantitative assembly, blocked on (1) and on that re-derivation.  The
+   arithmetic is written out in its docstring: (★) +
+   `Erdos446.eventually_primeCounting_tenth_bounds` + `φ(q) ≤ q ≤ exp((a/4)√log x)` reduces it to
+   `(5/2) C log x ≤ exp((a/4)√log x)`.
 
 **Box gotcha (new).** The wide cold builds of `Util.Linnik.Theorem` / the `Erdos4`–`Erdos48`
 analytic trees hit `EMFILE` ("too many open files", errno 24) persistently, and **`taskset -c 0-2`

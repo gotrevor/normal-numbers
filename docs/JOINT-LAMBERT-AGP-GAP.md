@@ -169,14 +169,41 @@ the admissible range in (†) collapses from `exp(c√log x)` to `(log x)^{A−1
 **Averaged absolute error is therefore not an adequate relative-error lower bound for
 every modulus, at any constant.**  Nothing installed closes the range gap.
 
-A **second, smaller** gap: §2b's excised conductor `B` comes with **no lower bound** —
-`B ≤ exp(a√log x)`, `B = 1 ∨ B.Prime`, nothing more — whereas `AGP` requires every
-`D ∈ Dset` to exceed `log X`.  The needed bound does exist in the installed tree (§2c,
-`m ≫ (log Q)^{2−ε}` at scale `Q ≍ x^{1/3}`, comfortably `> log x`), but it is attached to
-`Erdos48`'s `PageExceptionalWitness`, and the `Erdos4` excision chain
-(`exists_excised_distribution_envelope → exists_exponential_centered_distribution →
-exists_exponential_prime_distribution`) discards the witness.  Re-threading it is
-adapter work, not new mathematics.
+A **second gap, sharper than it first appears** (traced to its root lap 7, second half).
+`AGP` requires every `D ∈ Dset` to exceed `log X`, while §2b's excised conductor carries only
+`B ≤ exp(a√log x)` and `B = 1 ∨ B.Prime`.  My first reading blamed the `Erdos4` chain for
+projecting away `Erdos48`'s Page witness, so that the installed bound `m ≫ (log Q)^{2−ε}` could
+not be read off.  **That reading was wrong, and the truth is worse.**  Following the chain
+
+    exists_landauPage_unique → exists_prime_excision_of_unique → exists_uniform_prime_excision
+    → exists_uniform_twisted_sum → exists_uniform_primitive_maximum
+    → exists_excised_distribution_envelope → exists_exponential_centered_distribution
+    → exists_exponential_prime_distribution
+
+to its root, `…/ErdosProblems/Erdos4/FGKMTPrimeExcision.lean:8` excises
+
+    B := (χ.modulus).minFac,
+
+the **smallest prime factor** of the exceptional conductor, with the exclusion stated as
+coprimality `d.Coprime B`.  No lower bound on `B` exists even in principle: the exceptional
+conductor `m` can be large while `minFac m = 2`, and then `B = 2 ≤ log X` for every `X ≥ 3`.
+Re-threading a Landau–Siegel bound on `m` does not help, because `m` is not what is excised.
+
+**The repair is structural, and it is now proved sound in-kernel.**
+`NormalNumbers.JointLambert.exists_modulus_excision_of_unique` and
+`exists_uniform_modulus_excision` (`src/NormalNumbers/JointLambertAGPRange.lean`, axiom-clean)
+excise `m` **itself**, with the exclusion expressed as **divisibility** `¬ D ∣ d` — which is
+`AGP`'s own form, and the mathematically right one: a character mod `d` is induced by a primitive
+character whose conductor divides `d`, so an exceptional primitive character of conductor `m` can
+only pollute **multiples** of `m`.  Coprimality to `minFac m` is strictly cruder than the
+mathematics requires.  With `m` as the excised value, `D > log X` becomes a genuine
+Landau–Siegel statement about the conductor, which §2c's ingredients address.
+
+The cost of the repair, stated plainly: `¬ m ∣ d` does **not** imply `d.Coprime (minFac m)`, so
+the new excision cannot be fed to the existing chain.  Consuming it means re-deriving
+`exists_uniform_twisted_sum` … `exists_exponential_prime_distribution` with divisibility-based
+excision — five substantial upstream theorems, in a dependency this campaign does not modify.
+So this is **not** the "adapter work, not new mathematics" it was first called.
 
 ---
 
@@ -187,7 +214,8 @@ adapter work, not new mathematics.
 | open vs half-open dyadic interval, `1/2 → 1/3` constant | ✅ adapter, **done** (`3ddc0b6`) |
 | single-modulus extraction from `excisedPrimeSum` (★) | adapter (`Finset.single_le_sum`) |
 | `π(x) ≥ (9/10) x/log x` | ✅ installed (§2a) |
-| exceptional conductor `> log X` | adapter, re-thread §2c through the §2b chain |
+| AGP-shaped (divisibility) excision is sound | ✅ **proved lap 7** (`exists_uniform_modulus_excision`) |
+| exceptional conductor `> log X` | ❌ not an adapter: the installed chain excises `minFac m`, which has no lower bound; needs the chain re-derived with divisibility excision, plus a Landau–Siegel bound on `m` |
 | **modulus range `exp(c√log X) → X^{1/4}`** | ❌ **substantial missing theorem** |
 
 The missing theorem is a **log-free zero-density estimate** for Dirichlet `L`-functions

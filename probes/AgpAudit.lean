@@ -1,5 +1,4 @@
 import NormalNumbers.JointLambertAGPRange
 #print axioms NormalNumbers.JointLambert.exists_pointwise_exponential_distribution
-#print axioms NormalNumbers.JointLambert.agpCount_eq_primeCountUpTo
-#print axioms NormalNumbers.JointLambert.maxDisc_le_excisedPrimeSum
-#print axioms Erdos4.FGKMT.exists_exponential_prime_distribution
+#print axioms NormalNumbers.JointLambert.exists_modulus_excision_of_unique
+#print axioms NormalNumbers.JointLambert.exists_uniform_modulus_excision
