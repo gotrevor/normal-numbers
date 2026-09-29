@@ -758,6 +758,7 @@ import NormalNumbers.VandeheyS7Near
 import NormalNumbers.VandeheyS7Finite
 import NormalNumbers.VandeheyS7Height
 import NormalNumbers.VandeheyS7Ledger
+import NormalNumbers.VandeheyS7Stall
 import NormalNumbers.VandeheyS7RunOrbit
 import NormalNumbers.VandeheyS7RunClock
 import NormalNumbers.VandeheyS7RunPin

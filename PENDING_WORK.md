@@ -73,7 +73,14 @@ Order of work:
 
 ### Next attack (directive item (d))
 
-1. **`WidthFreqBound`** — the drift half.  S7-LG bounds bursts; what remains is that long
+1. **`WidthFreqBound`** — the drift half.  **S7-SA (`VandeheyS7Stall`) closes its structural
+   half**: a stall of length `k` forces `width ≤ 36/fib(k+1)²`, absolutely (no `Φ`, no `x`, no
+   normality — the two `|det Φ|`s cancel).  Contrapositive `stall_length_lt_of_width`: a state
+   of width `≥ η` has been stalling `O(log(1/η))` steps.  So the narrow times are exactly the
+   *deep interiors of long stalls*, and `WidthFreqBound` is now the purely combinatorial
+   statement that long stalls have small total length-excess — i.e. Vandehey's Lemma 6.1
+   (`ℓ(n) = c₁n(1+o(1))`), which the 2026-08-24 probe measured as SURVIVING the loss of
+   Lemma 2.2 (burst ≤ C + log(1+a)/Lévy, and `∫ log a dμ < ∞`).  S7-LG bounds bursts; what remains is that long
    *non-emitting* runs are rare.  Structural observation to formalize: a non-emitting run of
    length `L` forces the input digits `a_n … a_{n+L−1}` to agree with the CF expansion of the
    single point `s_n⁻¹(1/k)` straddled by the image — so a long run is a long coincidence with a
@@ -97,6 +104,26 @@ Order of work:
    last-`L` word `Q_L` contracts the distortion (`distortion_runWord_le_two`) but NOT the
    location (S7-MM refutation).  The location is carried by `O_n⁻¹`, i.e. by the emitted word —
    so the real question is whether the recent emitted word is itself recent-input-determined.
+
+   ⚠️ **`CellMemory` in the PATHWISE form is dead, and this is already on record.**
+   `papers/vandehey-2017-open-problem-attack-map.md` §3: pathwise merging is *provably*
+   impossible for `Φ = diag(φ,1)` (two states coincide iff `Φ⁻¹VΦ` is integral, which forces
+   `V` diagonal, i.e. the same input prefix; `2x` merges at step 3, `φ` never in 1200 steps).
+   The width alone kills it: `width ≍ d⁻²` and `log d` is a two-sided random walk over the
+   WHOLE history (S7-HT), so no bounded window determines the ρ-cell.  The replacement the
+   attack map names is **distributional** merging — Birkhoff–Hopf contraction of the Hilbert
+   projective metric on the positive cone, which is what `distortion_runWord_le_two` already
+   is for the SHAPE.  So the correct next form of the obligation is not "the cell is
+   finite-memory" but "the empirical joint law of (cell, future word) factorizes".
+
+   ⭐ **And the attack map says the endgame is FREE** (Vandehey §6): `E_Φ = Φ(CF-normals)` has
+   positive Lebesgue measure and CF-normals are co-null, so `E_Φ ∩ E ≠ ∅`, and the either-or
+   trick upgrades that to `E_Φ ⊆ E`.  Hence the ENTIRE problem reduces to *"every string
+   appears in Φx with a limiting frequency independent of the CF-normal x"* — **no limit
+   identification, no `γ(I_w)` on the right-hand side**.  `OrbitWordBound` (the directive's
+   objective) is the Pyatetskii–Shapiro route to the same place; the universality route is the
+   recorded alternative and is cheaper, but it is OUTSIDE the current directive, so it is
+   logged here for the next altitude lap rather than acted on.
 
 ### Still open, unchanged
 
