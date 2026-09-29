@@ -1,5 +1,16 @@
 # Handoff: Vandehey 2017 Theorem 1.1 is PROVED
 
+## Joint Lambert update, 29 September 2026
+
+The synchronized-word theorem is unconditional at proof commit `f6fbf87` on
+`proof/joint-lambert-unconditional`, in the sibling checkout `normal-numbers-lambert`.
+There are no remaining prime-distribution hypotheses on that theorem.
+The old AGP target below is a separate analytic question, not a prerequisite.
+The next Lambert target is an all-N occurrence count; its proposed stronger paper bound is
+`N exp(-C (log log N)^2 log log log N)`, documented on that branch in
+`docs/JOINT-LAMBERT-QUANTITATIVE-NEXT.md`.  It is not yet formalized.
+
+
 **Date**: 2026-09-29 (lap 9) · **Branch**: `wip/g5-prime-subset` · **HEAD**: `6d7a8ad` (+ this docs
 commit) · `lake build` 🟢 10485 jobs · working tree clean · nothing pushed.
 

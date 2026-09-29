@@ -1,5 +1,16 @@
 # PENDING WORK — the queue
 
+## Joint Lambert update, 29 September 2026
+
+The synchronized-word theorem is unconditional at proof commit `f6fbf87` on
+`proof/joint-lambert-unconditional`, in the sibling checkout `normal-numbers-lambert`.
+There are no remaining prime-distribution hypotheses on that theorem.
+The old AGP target below is a separate analytic question, not a prerequisite.
+The next Lambert target is an all-N occurrence count; its proposed stronger paper bound is
+`N exp(-C (log log N)^2 log log log N)`, documented on that branch in
+`docs/JOINT-LAMBERT-QUANTITATIVE-NEXT.md`.  It is not yet formalized.
+
+
 Concrete next moves, cheapest and most clear-cut first.  Front context is in `STATUS.md`.  The
 lap-by-lap log from before the 2026-09-27 merge is `archive/PENDING_WORK-to-2026-09-27.md`.
 Treadmill laps append dated notes **below the queue**, and a review lap folds them back into it.
