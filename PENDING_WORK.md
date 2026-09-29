@@ -18,7 +18,21 @@ both headlines are proved from these.  `countK_le_countK` (monotone above `log X
 threshold is load-bearing, since `Real.log` is not monotone through `0`) is proved and is the
 transfer's first ingredient.
 
-Next attack: steps 1–5 of "Exact next boundary" in
+Advance, lap 1 of the 2026-09-29 count campaign: the crux's steps 1–2 are now PROVED, not
+just planned.  `exists_candidate_data_at_height` (in `JointLambertCountAssembly.lean`)
+delivers, at every large caller-chosen `X`, the pool prime, the allocation, the CRT solution
+`R, u`, the divisor data, the near-range coprimality, `Q ≤ (2k³)^(a-1)`,
+`B ≤ (2k³)^(1+ck²)` and the candidate count `≥ M/(4 log X)`.  Also proved:
+`binTail_eq_three_range`, the identity that the digit reader's tsum
+`∑' t τ(n+k+t)/2^(k+t)` *is* the three-range expression `three_range_tail_le` bounds — the
+bridge that lets the counting route reuse the frozen tail estimate verbatim.
+
+What is left inside `exists_good_starts_at_height` is therefore steps 3–4 only: feed
+`three_range_tail_le`, show the total is `≤ θ·(M/(4 log X))/2` (this is the one arithmetic
+inequality still open, and the choice of `J` is a free parameter there), then
+`card_good_ge_half` and the injection `m ↦ R + mA`.
+
+Next attack: steps 3–5 of "Exact next boundary" in
 `HANDOFF-2026-09-29-joint-lambert-count.md`.  The only remaining analytic items are the two
 limits `(log X)² 2^(-k) → 0` and `(log X)² (a+1)(c+1)^(k²) 2^(-k³) → 0`, both of the same
 shape as the already-proved `eventually_cube_log_le_sqrt`.

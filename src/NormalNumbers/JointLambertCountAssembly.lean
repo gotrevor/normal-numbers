@@ -5,6 +5,8 @@ Authors: Trevor Morris
 -/
 import NormalNumbers.JointLambertCountRate
 import NormalNumbers.JointLambertRescaledTail
+import NormalNumbers.JointLambertSmallPool
+import NormalNumbers.JointLambertCountCandidates
 
 /-!
 # The counting analogue of the joint small-tail theorem
@@ -79,6 +81,137 @@ theorem countK_le_countK {X Y : ℕ} (hX : 1 ≤ Real.log (X : ℝ)) (h : X ≤ 
     Real.log_le_log (by linarith) hlog
   rw [Real.logb, Real.logb]
   exact mul_le_mul_of_nonneg_left (div_le_div_of_nonneg_right hinner hl2.le) (by norm_num)
+
+/-! ### Step A: the binary tail *is* the three-range expression
+
+`three_range_tail_le` bounds `∑_j τ(n+j)2^{-j}` split at `J`.  The digit reader
+`floor_digit_of_common_offset` consumes the *tsum* `∑' t τ(n+k+t)/2^(k+t)`.  These are the
+same number, which is what lets the counting route reuse the frozen tail estimate. -/
+
+
+/-- **The binary tail is exactly the three-range expression.** -/
+theorem binTail_eq_three_range (n k J : ℕ) (hkJ : k ≤ J) :
+    ∑' t : ℕ, (tau (n + k + t) : ℝ) / 2 ^ (k + t)
+      = (∑ j ∈ Ico k J, (tau (n + j) : ℝ) * (1 / 2 : ℝ) ^ j)
+        + (1 / 2 : ℝ) ^ J * ∑' t : ℕ, (tau (n + J + t) : ℝ) / 2 ^ t := by
+  set f : ℕ → ℝ := fun t => (tau (n + k + t) : ℝ) / 2 ^ (k + t) with hf
+  have hsumf : Summable f := by
+    refine ((summable_tau_div (n + k)).mul_right ((1 : ℝ) / 2 ^ k)).congr ?_
+    intro t
+    simp only [hf]
+    rw [pow_add]
+    ring
+  set D := J - k with hD
+  have hsplit := hsumf.sum_add_tsum_nat_add D
+  have hfin : ∑ t ∈ range D, f t = ∑ j ∈ Ico k J, (tau (n + j) : ℝ) * (1 / 2 : ℝ) ^ j := by
+    rw [Finset.sum_Ico_eq_sum_range]
+    refine Finset.sum_congr (by rw [hD]) fun t _ => ?_
+    simp only [hf]
+    rw [show n + k + t = n + (k + t) by omega]
+    rw [div_pow, one_pow]
+    ring
+  have htail : ∑' i : ℕ, f (i + D)
+      = (1 / 2 : ℝ) ^ J * ∑' t : ℕ, (tau (n + J + t) : ℝ) / 2 ^ t := by
+    rw [← tsum_mul_left]
+    refine tsum_congr fun i => ?_
+    simp only [hf]
+    rw [show n + k + (i + D) = n + J + i by omega,
+      show k + (i + D) = J + i by omega, pow_add, div_pow, one_pow]
+    field_simp
+  rw [← hsplit, hfin, htail]
+
+
+/-! ### Step B: the CRT data and the candidate `Finset` at every chosen height
+
+Steps 1–2 of the module docstring, assembled: pool, allocation avoiding `P`, CRT, and the
+candidate count.  `P` is chosen from `exists_candidate_indices_every_height` *before* the
+allocation, and `exists_prime_allocation_small_pool` dodges it, which is what makes
+`Coprime B P` available to the prime-supply bound. -/
+
+/-- **CRT data and candidate indices at every large chosen height `X`.**  With
+`k = countK X` and `L = k³`, there are a pool prime `q ∈ (k³, 2k³)`, allocation primes `p`
+in the same interval, and a CRT solution `R, u` such that the arithmetic progression
+`m ↦ R + m·A` carries the prescribed divisor data, the near-range coprimality on `[k, L)`,
+the small-pool size bounds `Q ≤ (2k³)^(a-1)` and `B ≤ (2k³)^(1+ck²)`, and at least
+`M/(4 log X)` of the `M = ⌊X/B⌋+1` indices `m` have `u + mB` prime and `≤ X`. -/
+theorem exists_candidate_data_at_height {c a r : ℕ} (hc : 2 ≤ c) (ha : 2 ≤ a) (hr : 1 ≤ r) :
+    ∃ X0 : ℕ, ∀ X : ℕ, X0 ≤ X →
+      ∃ (q R u : ℕ) (p : ℕ → ℕ → ℕ),
+        r < countK X ∧ 2 ≤ countK X ∧
+        (countK X) ^ 3 < q ∧ q < 2 * (countK X) ^ 3 ∧ q.Prime ∧
+        (∀ j t, j ∈ killedIdx (countK X) r → t < j + 1 → (p j t).Prime) ∧
+        0 < R ∧ R < jointA c a (countK X) r q p ∧
+        1 ≤ u ∧ u < jointB c (countK X) r q p ∧
+        jointA c a (countK X) r q p
+          = jointQ a q * jointB c (countK X) r q p ∧
+        (∀ m j, j < countK X → j ≠ r →
+          c ^ (j + 1) ∣ tau (R + m * jointA c a (countK X) r q p + j)) ∧
+        (∀ m, (u + m * jointB c (countK X) r q p).Prime →
+          tau (R + m * jointA c a (countK X) r q p + r) = 2 * a) ∧
+        (∀ j, countK X ≤ j → j < (countK X) ^ 3 →
+          Nat.Coprime (R + j) (jointA c a (countK X) r q p)) ∧
+        jointQ a q ≤ (2 * (countK X) ^ 3) ^ (a - 1) ∧
+        jointB c (countK X) r q p ≤ (2 * (countK X) ^ 3) ^ (1 + c * (countK X) ^ 2) ∧
+        ((X / jointB c (countK X) r q p + 1 : ℕ) : ℝ) / (4 * Real.log (X : ℝ))
+          ≤ (((range (X / jointB c (countK X) r q p + 1)).filter
+              (fun m => (u + m * jointB c (countK X) r q p).Prime ∧
+                u + m * jointB c (countK X) r q p ≤ X)).card : ℝ) := by
+  classical
+  obtain ⟨K, hpool⟩ := eventually_small_prime_pool
+  obtain ⟨X1, hcand⟩ := exists_candidate_indices_every_height c
+  obtain ⟨X2, hk⟩ := eventually_atTop.1 (eventually_countK_ge (max K (max (r + 1) 2)))
+  refine ⟨max X1 X2, fun X hX => ?_⟩
+  have hX1 : X1 ≤ X := le_trans (le_max_left _ _) hX
+  have hX2 : X2 ≤ X := le_trans (le_max_right _ _) hX
+  have hkge := hk X hX2
+  set k : ℕ := countK X with hkdef
+  have hkK : K ≤ k := le_trans (le_max_left _ _) hkge
+  have hkr : r < k := by
+    have := le_trans (le_trans (le_max_left _ _) (le_max_right _ _)) hkge
+    omega
+  have hk2 : 2 ≤ k := le_trans (le_trans (le_max_right _ _) (le_max_right _ _)) hkge
+  obtain ⟨P, hPprime, hPcount⟩ := hcand X hX1
+  obtain ⟨q, p, hqS, hpS, hpqne, hpinj, havoid⟩ :=
+    exists_prime_allocation_small_pool hpool c k r P hkK
+  have hqdata : q.Prime ∧ k ^ 3 < q ∧ q < 2 * k ^ 3 := by
+    obtain ⟨hmem, hpr⟩ := Finset.mem_filter.mp hqS
+    obtain ⟨h1, h2⟩ := Finset.mem_Ioo.mp hmem
+    exact ⟨hpr, h1, h2⟩
+  have hpdata : ∀ j t, j ∈ killedIdx k r → t < j + 1 →
+      (p j t).Prime ∧ k ^ 3 < p j t ∧ p j t < 2 * k ^ 3 := by
+    intro j t hj ht
+    obtain ⟨hmem, hpr⟩ := Finset.mem_filter.mp (hpS j t hj ht)
+    obtain ⟨h1, h2⟩ := Finset.mem_Ioo.mp hmem
+    exact ⟨hpr, h1, h2⟩
+  have hkL : k ≤ k ^ 3 := Nat.le_self_pow (by norm_num) k
+  have hqr : r < jointQ a q := by
+    have h1 : q ^ 1 ≤ q ^ (a - 1) := Nat.pow_le_pow_right hqdata.1.pos (by omega)
+    rw [pow_one] at h1
+    simp only [jointQ]
+    have : r < k ^ 3 := by omega
+    omega
+  obtain ⟨R, u, hR0, hRA, hu1, huB, hRr, hAQB, humod, hcopuB, hres_r, hres_j, hkill,
+      hsurv, htail⟩ :=
+    exists_joint_progression (L := k ^ 3) (p := p) hc ha hr hkr hkL hqdata.1 hqdata.2.1 hqr
+      (fun j t hjk hjr ht => (hpdata j t (mem_killedIdx.mpr ⟨hjr, hjk⟩) ht).1)
+      (fun j t hjk hjr ht => (hpdata j t (mem_killedIdx.mpr ⟨hjr, hjk⟩) ht).2.1)
+      (fun j t hjk hjr ht => hpqne j t (mem_killedIdx.mpr ⟨hjr, hjk⟩) ht)
+      (fun j t j' t' hjk hjr ht hj'k hj'r ht' he =>
+        hpinj j t j' t' (mem_killedIdx.mpr ⟨hjr, hjk⟩) ht (mem_killedIdx.mpr ⟨hj'r, hj'k⟩) ht' he)
+  have hQle : jointQ a q ≤ (2 * k ^ 3) ^ (a - 1) := jointQ_le hqdata.2.2
+  have hBle : jointB c k r q p ≤ (2 * k ^ 3) ^ (1 + c * k ^ 2) := by
+    refine le_trans (jointB_le hqdata.2.2 fun j t hj ht => (hpdata j t hj ht).2.2) ?_
+    exact Nat.pow_le_pow_right (by positivity)
+      (Nat.add_le_add_left (Nat.mul_le_mul le_rfl (killPoolSize_le_sq k r)) 1)
+  have hB1 : 1 ≤ jointB c k r q p := by omega
+  have hcopBP : Nat.Coprime (jointB c k r q p) P := by
+    rcases hPprime with rfl | hP
+    · exact Nat.coprime_one_right _
+    · exact ((Nat.Prime.coprime_iff_not_dvd hP).mpr (havoid hP.ne_one)).symm
+  have hcount := hPcount (jointB c k r q p) u hB1 hBle huB hcopuB hcopBP
+  exact ⟨q, R, u, p, hkr, hk2, hqdata.2.1, hqdata.2.2, hqdata.1,
+    fun j t hj ht => (hpdata j t hj ht).1, hR0, hRA, hu1, huB, hAQB, hkill, hsurv, htail,
+    hQle, hBle, hcount⟩
 
 /-- **The chosen-height good-offset theorem** (§§3–4).  At every sufficiently large
 caller-chosen height `X` the CRT construction produces a modulus `B` in the small-pool range,
