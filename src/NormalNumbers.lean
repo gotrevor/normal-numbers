@@ -714,6 +714,7 @@ import NormalNumbers.VandeheyS7Approx
 import NormalNumbers.VandeheyS7Memory
 import NormalNumbers.VandeheyS7Orbit
 import NormalNumbers.VandeheyS7Cell
+import NormalNumbers.VandeheyS7Golden
 import NormalNumbers.VandeheyS7Loss
 import NormalNumbers.VandeheyS7QuadDigit
 import NormalNumbers.VandeheyLRRuns
