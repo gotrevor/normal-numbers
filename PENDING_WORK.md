@@ -1901,3 +1901,29 @@ honest question is whether the emitted-digit normalisation `O_n⁻¹` restores l
 (c) the clock: input times vs output positions, `RunClock` rate `≈ 1` (`VandeheyS7Clock`).
 (b) is the decisive one; a kernel refutation there would force the route onto the arithmetic of
 `Φ` as directive fact (γ) demands.
+
+### 2026-09-29 lap 57 — the SHAPE is a window function, the LOCATION is not (`VandeheyS7Shape.lean`)
+
+Attacking `WindowedPullback`'s decisive component: is the transducer target window-determined?
+Answer, made precise:
+
+* `MobState.mob_ratio_near_affine` — a Möbius state distorts RELATIVE lengths inside an interval
+  of length `ε` by at most `1 + distortion·ε`, two-sided.  Exact algebra: the ratio is
+  `((cβ+d)(cα+d))/((cv+d)(cu+d))`, and all four points lie in `[α,β]`.
+* `mob_ratio_near_affine_le` + `tendsto_windowShapeError` — a state reading a depth-`k` cylinder
+  (length `≤ 2/2ᵏ`) with distortion `≤ K` distorts relative lengths by `1 + 2K/2ᵏ → 1`.
+
+**So the length coordinate of the target IS window-determined, uniformly in the prefix; the
+location coordinate is the entire remaining content of `WindowedPullback`.**  That matches
+`no_window_function` exactly (it refutes location-determinacy, not shape-determinacy) and
+explains why laps 38–47's diameter bounds never sufficed.
+
+**NEXT (lap 58) — the newly visible option.**  Restate the crux so that only relative lengths
+enter.  Concretely: in `WindowedPullback`, replace "an interval `(A v, B v)` determined by `v`"
+by "an interval of LENGTH `≤ Λ γ(I_w)` whose location is arbitrary", and ask what the window-hit
+theorem gives then.  `windowHit_Ioo_le` as proved needs the location (it feeds `A v, B v` into
+the cover), so the honest first probe is whether a location-free variant is TRUE: does a
+CF-normal orbit satisfy `freq{n : G^{n+k}x ∈ J_n} ≤ C·|J| + ε` for every predictable family of
+intervals of length `≤ |J|` with ARBITRARY location?  `not_predictableHitPrinciple` suggests not
+in general; the question is whether the length-`k` window structure saves it.  A kernel answer
+either way is lap 58's deliverable.

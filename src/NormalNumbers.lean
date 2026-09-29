@@ -744,3 +744,4 @@ import NormalNumbers.VandeheyS7CellFreq
 import NormalNumbers.VandeheyS7HitCell
 import NormalNumbers.VandeheyS7HitIoo
 import NormalNumbers.VandeheyS7Reduction
+import NormalNumbers.VandeheyS7Shape
