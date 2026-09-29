@@ -743,6 +743,7 @@ import NormalNumbers.VandeheyS7Transduce
 import NormalNumbers.VandeheyS7ConjRow
 import NormalNumbers.VandeheyS7StateCouple
 import NormalNumbers.VandeheyS7Audit
+import NormalNumbers.VandeheyS7StateAudit
 import NormalNumbers.VandeheyS7ReadComp
 import NormalNumbers.VandeheyS7Emit2
 import NormalNumbers.VandeheyS7CylState
