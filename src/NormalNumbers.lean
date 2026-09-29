@@ -729,3 +729,4 @@ import NormalNumbers.VandeheyRunCount
 import NormalNumbers.VandeheyRunBirkhoff
 import NormalNumbers.VandeheyTransportB
 import NormalNumbers.VandeheyFirstLetter
+import NormalNumbers.VandeheyS7Legendre

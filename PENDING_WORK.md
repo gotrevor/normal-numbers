@@ -204,7 +204,30 @@ Three facts, all established lap 30, fix its difficulty and must steer every fur
   irrationality supplied by `VandeheyS7Golden`'s leg 1.  The §7 route now reads end-to-end:
   frozen target ⇐ `GaussACRigidity` + `OrbitCellBound`; `OrbitCellBound`'s tail cell ⇐
   `#{q ≤ Q : ‖qφx‖ ≤ 2/(Tq), gcd = 1} ≤ (D/T) log Q`, a statement about `x`-independent sets.
-  **Next attack (lap 38):** run the unit trick at the STATE
+  **Lap 38 — LEGENDRE, and with it the verdict on the Diophantine route**
+  (`VandeheyS7Legendre.lean`, axiom-clean, sorry-free).  `exists_eq_cfK_of_good`: for `T ≥ 24`,
+  EVERY primitive `T`-good denominator of an irrational `y ∈ (0,1)` IS a convergent denominator
+  of `y`.  The proof is elementary and needs neither the sign alternation of `qₙy − pₙ` (which the
+  repo does not have) nor Fibonacci growth.  With `m = round(qy)` and `c p := q·pₚ − m·qₚ ∈ ℤ`:
+  `c p = 0` forces `q = qₚ` (both fractions primitive — `hcop` and `coprime_cfNum_cfK'`), so if `q`
+  is no convergent denominator then `|c p| ≥ 1` for every `p`, and expanding
+  `−c p = q(qₚy − pₚ) − qₚ(qy − m)` against `abs_convDen_mul_sub_le` gives the SELF-PROPAGATING
+  bound `1 ≤ 2q/qₚ₊₁ + 2qₚ/(Tq)` (`one_le_cross_bound`): `qₚ ≤ 3q` ⟹ `2qₚ/(Tq) ≤ 1/4` ⟹
+  `2q/qₚ₊₁ ≥ 3/4` ⟹ `qₚ₊₁ ≤ 8q/3 ≤ 3q`.  Base `q₀ = 1`; the index `p = 0` (not covered by
+  `abs_convDen_mul_sub_le`) is handled directly — `q₁ > 3q` forces `y ≤ 1/q₁ < 1/(3q)`, so
+  `round(qy) = 0`, so coprimality gives `q = 1 = q₀`.  Then `qₚ → ∞` (`le_cfK_digitWord`) closes it.
+  **What this DECIDES.**  Together with lap 32's `le_digit_of_nearInt_le` (a `T`-good convergent
+  forces `T ≤ 2aₚ₊₁ + 4`) the good set is now pinned from BOTH sides:
+  `goodDenCountPrim y T Q` counts exactly the convergent denominators `≤ Q` whose next digit is
+  `≳ T/2`.  So `GoodDenBoundPrim y D` is not a weakening of the crux's tail cell — it is a
+  RESTATEMENT of it, and laps 31–37 bought a reformulation, not a reduction.  **There is no
+  remaining slack on the Diophantine side**: sets are the right size (`heuristic_sum_le`),
+  primitivity is the right normalization, the spacing is forced (`gap_principle`), and now the
+  good set carries no denominators beyond the convergents.  Any further advance must come from
+  the transfer (laps 35–36: `nearInt_mul_ge_of_good`, `nearInt_numerator_ge_of_good`) —
+  i.e. from the arithmetic of `Φ` relating the convergents of `φx` to those of `x` — never from
+  sharpening the Diophantine counting.
+  **Next attack (lap 39, unchanged in spirit):** run the unit trick at the STATE
   level — `‖qx‖ ≥ 1/(16q)` says the orbit point `(qx, qφx) mod 1` avoids a fixed neighbourhood of
   the `x`-axis whenever the image emits a large digit; combined with `gap_principle` the good
   scales are `T/4`-separated AND confined to a region of the torus of measure `≍ 1/T`.  That pair
