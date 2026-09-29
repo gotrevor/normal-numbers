@@ -162,9 +162,22 @@ Three facts, all established lap 30, fix its difficulty and must steer every fur
   exponential in `N`, so Thm 1.1's automaton has `e^{Ω(N)}` states while reading `N` digits.
   **Where the content sits:** for a rational target the norm form vanishes identically — that is
   precisely why Thm 1.1 is provable and this is not.
-* **S7-P1 (probe).**  Make (α) a Lean refutation: an equidistributed sequence in `(0,1)` and a
-  predictable family of intervals of length `δ` met on a set of density `≫ δ`.  This closes an
-  entire class of attacks rather than one route.
+* **S7-P1 — DONE, lap 30** (`VandeheyS7Predict.lean`, axiom-clean; Maze row
+  `hall_predictable_from_marginals`).  Fact (α) is now a kernel refutation.
+  `PredictableHitPrinciple` — "a sequence with perfect marginals on cells of width `1/m` lands in
+  its own predicted interval of width `δ` at most a `δ + 1/m` fraction of the time" — is FALSE:
+  the grid `u n = n/k` is *exactly* uniform on the `k` cells (`cellUniform_grid`, zero error) and
+  yet `u n ∈ (u_{n−1}, u_{n−1}+δ)` for every `n ≥ 1` once `1/k < δ` (`hitCount_grid`), so the hit
+  frequency is `(k−1)/k`.  At `δ = 1/2, k = 10`: `9/10` observed against `6/10` allowed
+  (`not_predictableHitPrinciple`).  **Consequence, and the standing instruction for the crux:** any
+  proof of `OrbitCellBound` must use the specific arithmetic of `s_n = O_n⁻¹ Φ P_n` (fact (γ)) —
+  never "predictable + small + correct marginals".  With `no_window_function` this closes both
+  soft routes: the state cannot be forgotten, and it cannot be ignored.
+  *Remaining gap in the witness (cheap, optional):* the refutation is at a finite horizon with
+  exact marginals; extending it to an infinite equidistributed sequence is the block-concatenation
+  of grids, `O(√N)` discrepancy, and needs no new idea.
+  *Next locator worth having:* the same principle IS true for a CONSTANT predictor (cover
+  `(c, c+δ)` by `⌈δm⌉+2` cells), which would pin the content on the past-dependence exactly.
 
 ### The FALLBACK route: state-indexed decomposition (named next goals, in order)
 

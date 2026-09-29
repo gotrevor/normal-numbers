@@ -23,6 +23,7 @@ import NormalNumbers.MoshchevitinShkredovRefuted
 import NormalNumbers.VandeheyAutomaton
 import NormalNumbers.VandeheyS7Memory
 import NormalNumbers.VandeheyS7Hecke
+import NormalNumbers.VandeheyS7Predict
 
 /-!
 # `Maze.lean` — the halls we have walked, encoded
@@ -305,6 +306,20 @@ sits: for a *rational* target the norm form vanishes identically, which is exact
 itself is provable and this is not. -/
 alias hall_hecke_approximation :=
   NormalNumbers.VandeheyS7.pow_lt_den_sq_of_image_approx
+
+/-- **HALL: predictable target sets from marginals alone** (`refuted`, 2026-09-29).  The crux
+`OrbitCellBound` unwinds to a bound on `#{n<N : Gⁿx ∈ A n}` where `A n = s_n⁻¹(E)` is determined by
+`x₁…x_n` and is small, and the input orbit has the correct marginal frequencies.  Those three
+facts do not suffice, and the witness is elementary: the grid `u n = n/k` is *exactly* uniform on
+the `k` cells of width `1/k` — perfect marginals, zero error — yet `u n` lies in
+`(u_{n−1}, u_{n−1} + δ)` for every `n ≥ 1` as soon as `1/k < δ`, a hit frequency of `(k−1)/k`
+against an interval of length `δ`.  At `δ = 1/2`, `k = 10`: `9/10` observed against `6/10`
+allowed.  Consequence for the route: any proof of `OrbitCellBound` must use the specific
+arithmetic of `s_n = O_n⁻¹ Φ P_n`, never predictability plus size.  With
+`hall_emit_digit_window_function` this closes both soft routes: the state cannot be forgotten, and
+it cannot be ignored. -/
+alias hall_predictable_from_marginals :=
+  NormalNumbers.VandeheyS7.not_predictableHitPrinciple
 
 
 
@@ -1125,7 +1140,12 @@ def register : List Hall := [
    "Approximate phi by F_(k+1)/F_k, apply the PROVED Vandehey Thm 1.1 to each rational multiple, and pass to a diagonal limit using that nearby reals share a long CF prefix",
    .refuted, .kernel,
    "phi is the worst-approximable real: |p - q phi| >= 1/(4q) from the nonzero integer norm form p^2 - pq - q^2, so agreement of the images to CF depth N costs q^2 > c^N and a determinant pq >= q^2 exponential in N; Thm 1.1's automaton then carries e^(Omega(N)) states while only N input digits are read, so its equidistribution says nothing about that prefix",
-   "alias hall_hecke_approximation; module VandeheyS7Hecke; theorems abs_sub_mul_goldenRatio_ge, pow_lt_den_sq_of_image_approx, sq_le_det_of_approx", "2026-09-29"⟩
+   "alias hall_hecke_approximation; module VandeheyS7Hecke; theorems abs_sub_mul_goldenRatio_ge, pow_lt_den_sq_of_image_approx, sq_le_det_of_approx", "2026-09-29"⟩,
+  ⟨"predictable target sets from marginals alone",
+   "Conclude OrbitCellBound from: A n = s_n^(-1)(E) is determined by x_1..x_n, has small Gauss mass, and the input orbit has the correct marginal frequencies",
+   .refuted, .kernel,
+   "Perfect marginals do not stop a sequence landing in its own predicted interval: the grid u n = n/k is exactly uniform on the k cells of width 1/k, yet u n lies in (u_(n-1), u_(n-1) + delta) for every n >= 1 once 1/k < delta, a hit frequency of (k-1)/k against an interval of length delta; at delta = 1/2, k = 10 that is 9/10 observed against 6/10 allowed",
+   "alias hall_predictable_from_marginals; module VandeheyS7Predict; theorems cellUniform_grid, hitCount_grid, not_predictableHitPrinciple; any OrbitCellBound proof must use the arithmetic of s_n = O_n^(-1) Phi P_n", "2026-09-29"⟩
 ]
 
 /-- Rows whose verdict is machine-checked in this build. -/
