@@ -124,4 +124,116 @@ section Audit
 
 end Audit
 
+
+/-! ## S7-EE2: width, and emission from the orbit point alone -/
+
+namespace MapState
+
+/-- The width of a state: the length of the image interval `mob([0,1])`. -/
+noncomputable def width (s : MapState) : ℝ := |s.mob 1 - s.mob 0|
+
+lemma width_nonneg (s : MapState) : 0 ≤ s.width := abs_nonneg _
+
+/-- The difference formula: `mob` moves monotonically, with sign the sign of the determinant. -/
+lemma mob_sub_eq (s : MapState) {z z' : ℝ} (hz : z ∈ Icc (0:ℝ) 1) (hz' : z' ∈ Icc (0:ℝ) 1) :
+    s.mob z - s.mob z'
+      = (s.a * s.d - s.b * s.c) * (z - z') / ((s.c * z + s.d) * (s.c * z' + s.d)) := by
+  have hd1 : 0 < s.c * z + s.d := s.den_pos hz
+  have hd2 : 0 < s.c * z' + s.d := s.den_pos hz'
+  unfold mob
+  rw [div_sub_div _ _ hd1.ne' hd2.ne']
+  congr 1
+  ring
+
+/-- Every value of `mob` on `[0,1]` lies between the two endpoint values. -/
+theorem mob_mem_uIcc (s : MapState) {z : ℝ} (hz : z ∈ Icc (0:ℝ) 1) :
+    s.mob z ∈ uIcc (s.mob 0) (s.mob 1) := by
+  have h0 : (0:ℝ) ∈ Icc (0:ℝ) 1 := ⟨le_refl 0, zero_le_one⟩
+  have h1 : (1:ℝ) ∈ Icc (0:ℝ) 1 := ⟨zero_le_one, le_refl 1⟩
+  have hdz : 0 < s.c * z + s.d := s.den_pos hz
+  have hd0 : 0 < s.c * (0:ℝ) + s.d := s.den_pos h0
+  have hd1 : 0 < s.c * (1:ℝ) + s.d := s.den_pos h1
+  have e0 : s.mob z - s.mob 0
+      = (s.a * s.d - s.b * s.c) * (z - 0) / ((s.c * z + s.d) * (s.c * 0 + s.d)) :=
+    s.mob_sub_eq hz h0
+  have e1 : s.mob 1 - s.mob z
+      = (s.a * s.d - s.b * s.c) * (1 - z) / ((s.c * 1 + s.d) * (s.c * z + s.d)) :=
+    s.mob_sub_eq h1 hz
+  rcases lt_trichotomy (s.a * s.d - s.b * s.c) 0 with hD | hD | hD
+  · refine Set.mem_uIcc.2 (Or.inr ⟨?_, ?_⟩)
+    · have : s.mob 1 - s.mob z ≤ 0 := by
+        rw [e1]
+        exact div_nonpos_of_nonpos_of_nonneg
+          (mul_nonpos_of_nonpos_of_nonneg hD.le (by linarith [hz.2])) (by positivity)
+      linarith
+    · have : s.mob z - s.mob 0 ≤ 0 := by
+        rw [e0]
+        exact div_nonpos_of_nonpos_of_nonneg
+          (mul_nonpos_of_nonpos_of_nonneg hD.le (by linarith [hz.1])) (by positivity)
+      linarith
+  · exact absurd hD s.hdet
+  · refine Set.mem_uIcc.2 (Or.inl ⟨?_, ?_⟩)
+    · have : 0 ≤ s.mob z - s.mob 0 := by
+        rw [e0]
+        exact div_nonneg (mul_nonneg hD.le (by linarith [hz.1])) (by positivity)
+      linarith
+    · have : 0 ≤ s.mob 1 - s.mob z := by
+        rw [e1]
+        exact div_nonneg (mul_nonneg hD.le (by linarith [hz.2])) (by positivity)
+      linarith
+
+/-- **Everything inside the image interval.**  Two points of `[0,1]` never spread further than the
+endpoints do. -/
+theorem abs_sub_le_width (s : MapState) {z z' : ℝ} (hz : z ∈ Icc (0:ℝ) 1)
+    (hz' : z' ∈ Icc (0:ℝ) 1) : |s.mob z - s.mob z'| ≤ s.width := by
+  have h1 := Set.mem_uIcc.1 (s.mob_mem_uIcc hz)
+  have h2 := Set.mem_uIcc.1 (s.mob_mem_uIcc hz')
+  rw [width, abs_sub_le_iff]
+  rcases h1 with ⟨ha, hb⟩ | ⟨ha, hb⟩ <;> rcases h2 with ⟨hc, hd⟩ | ⟨hc, hd⟩ <;>
+    constructor <;>
+    · rcases abs_cases (s.mob 1 - s.mob 0) with ⟨he, _⟩ | ⟨he, _⟩ <;> rw [he] <;> linarith
+
+/-- **Emission from the orbit point.**  If the state's image contains the irrational `p` and the
+state is narrower than `p`'s distance to its two cylinder walls, the digit of `p` is emitted. -/
+theorem exists_emit_of_width (t : MapState) {z₀ : ℝ} (hz₀ : z₀ ∈ Icc (0:ℝ) 1)
+    (hp : t.mob z₀ ∈ Ioo (0:ℝ) 1) (hirr : Irrational (t.mob z₀))
+    (hnarrow : ∀ a : ℕ, 1 ≤ a → t.mob z₀ ∈ Ioo (1 / ((a : ℝ) + 1)) (1 / (a : ℝ)) →
+      t.width < min (t.mob z₀ - 1 / ((a : ℝ) + 1)) (1 / (a : ℝ) - t.mob z₀)) :
+    ∃ (a : ℕ) (ha : 1 ≤ a) (u : MapState),
+      (readMap (a : ℝ) (by exact_mod_cast ha)).comp u = t := by
+  obtain ⟨a, ha, hmem⟩ := exists_digit_of_irrational hp hirr
+  have ha1 : (1:ℝ) ≤ (a : ℝ) := by exact_mod_cast ha
+  have hw := hnarrow a ha hmem
+  have h0 : |t.mob 0 - t.mob z₀| ≤ t.width :=
+    t.abs_sub_le_width ⟨le_refl 0, zero_le_one⟩ hz₀
+  have h1 : |t.mob 1 - t.mob z₀| ≤ t.width :=
+    t.abs_sub_le_width ⟨zero_le_one, le_refl 1⟩ hz₀
+  have hb0 := abs_le.1 h0
+  have hb1 := abs_le.1 h1
+  have hmin1 : t.width < t.mob z₀ - 1 / ((a : ℝ) + 1) := lt_of_lt_of_le hw (min_le_left _ _)
+  have hmin2 : t.width < 1 / (a : ℝ) - t.mob z₀ := lt_of_lt_of_le hw (min_le_right _ _)
+  obtain ⟨u, hu⟩ := t.exists_emit ha1
+    (by linarith [hb0.1]) (by linarith [hb0.2]) (by linarith [hb1.1]) (by linarith [hb1.2])
+  exact ⟨a, ha, u, hu⟩
+
+/-- Width contracts under a fixed left factor at that factor's Lipschitz rate. -/
+theorem width_comp_le (s t : MapState) :
+    (s.comp t).width ≤ |s.a * s.d - s.b * s.c| / s.minDen ^ 2 * t.width := by
+  have h0 : (0:ℝ) ∈ Icc (0:ℝ) 1 := ⟨le_refl 0, zero_le_one⟩
+  have h1 : (1:ℝ) ∈ Icc (0:ℝ) 1 := ⟨zero_le_one, le_refl 1⟩
+  rw [width, mob_comp s t h1, mob_comp s t h0]
+  have hb := s.dist_mob_le (t.mapsTo h1) (t.mapsTo h0)
+  rw [width]
+  exact hb
+
+end MapState
+
+section Audit2
+
+#print axioms MapState.abs_sub_le_width
+#print axioms MapState.exists_emit_of_width
+#print axioms MapState.width_comp_le
+
+end Audit2
+
 end NormalNumbers.VandeheyS7
