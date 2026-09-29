@@ -106,6 +106,15 @@ obstruction is structural, not a constant.
 
 ---
 
+## OPERATOR OBJECTIVE 2026-09-28 (c): finish (b) — ✅ COMPLETE, lap 9 (`6d7a8ad`)
+
+`vandeheyUniformFreq_holds` and `vandehey_matrix_action_holds` are THEOREMS, `#print axioms` =
+[propext, Classical.choice, Quot.sound].  Vandehey 2017 Theorem 1.1 is formalized.  The last
+obligation was `hcount`; `src/NormalNumbers/VandeheyCFBridge.lean` closes it as a chain of
+bounded differences (run dictionary + parity split + leading-run shift), and
+`src/NormalNumbers/VandeheyCapstone.lean` assembles the headline.  Objective (b)'s main target
+is met; its `PrimeIntervalSupply` side item was already done at `3ddc0b6`.
+
 ## OPERATOR OBJECTIVE 2026-09-28 (c): finish (b) (bounded, at most 4 laps)
 
 Objective (b) below still stands.  Its analytic inputs are proved (`HANDOFF.md`, lap 6).  What

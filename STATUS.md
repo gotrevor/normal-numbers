@@ -194,7 +194,7 @@ This repo holds **no `axiom` declarations**: literature inputs are named hypothe
 
 | headline theorem | paper claim | `#print axioms` shows | status |
 | --- | --- | --- | --- |
-| `Literature.vandehey_matrix_action_holds` | unconditional (Vandehey 2017 Thm 1.1) | trust base + `sorryAx` | 🟡 open crux `vandeheyUniformFreq_holds`; current frontier; next prerequisite = the §5–§6 output engine (`VandeheyOutputFreq.lean`) then the Raney common-target reach |
+| `Literature.vandehey_matrix_action_holds` (`VandeheyCapstone.lean`) | unconditional (Vandehey 2017 Thm 1.1) | trust base | 🟢 **CLEAN, DISCHARGED 2026-09-29** (`6d7a8ad`).  Route: Serret + Smith reduce to `x ↦ D·x` (`D` prime); the concrete Raney `L/R` transducer supplies a monotone RUN clock with an `x`-independent positive rate (`tendsto_runClock_div`, Lemma 6.1) and an `x`-independent Cesàro limit for the image's CF-occurrence count sampled along it (`exists_tendsto_cfCount_runClock`).  Assembled by `mobiusUniformFreq_of_runClock`.  NB the theorem lives downstream of `LiteratureVandehey.lean` (import cycle); the frozen statements stay there. |
 | `Literature.vandeheyUniformFreq_of_scale` | — (reduction) | trust base | 🟢 clean; reduces Thm 1.1 to `MobiusCFNScale` |
 | `Literature.mobiusCFNGL2_holds` | unconditional (Serret) | trust base | 🟢 clean, discharged |
 | `Literature.philipp_psi_mixing_holds` | unconditional (Philipp) | trust base | 🟢 clean, discharged |

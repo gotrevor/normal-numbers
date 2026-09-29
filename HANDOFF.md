@@ -1,96 +1,81 @@
-# Handoff: the capstone has ONE obligation left — `hcount`
+# Handoff: Vandehey 2017 Theorem 1.1 is PROVED
 
-**Date**: 2026-09-29 (lap 8) · **Branch**: `wip/g5-prime-subset` · **HEAD**: `4b59e62` ·
-`lake build` 🟢 10483 jobs · working tree clean · nothing pushed.
+**Date**: 2026-09-29 (lap 9) · **Branch**: `wip/g5-prime-subset` · **HEAD**: `6d7a8ad` (+ this docs
+commit) · `lake build` 🟢 10485 jobs · working tree clean · nothing pushed.
 
-Scope: `sorry-free: src/NormalNumbers/LiteratureVandehey.lean` (`vandeheyUniformFreq_holds`),
-under **DIRECTION.md OPERATOR OBJECTIVE 2026-09-28 (c)** — finish the Vandehey assembly.
-DIRECTION.md outranks this file.
+Scope: **MET.**  `DIRECTION.md` OPERATOR OBJECTIVE 2026-09-28 (c) — finish the Vandehey assembly —
+is complete.
 
-## 🎯 Where the proof stands
+## 🎯 The headline
 
-    vandehey_matrix_action_holds                       ← Vandehey 2017 Thm 1.1
-      ← vandeheyUniformFreq_of_scaleUniformFreq        ✅ (reduces to `x ↦ D·x`, D prime)
-      ← mobiusUniformFreq_of_runClock                  ✅ NEW (VandeheyRunClock)
-            hr    ✅ `zero_lt_runRate'`                  (VandeheyRunDict)
-            hmono ✅ `runClock_mono`                     (VandeheyRunDict)
-            hrate ✅ `tendsto_runClock_div`              (VandeheyRunDict)
-            hcount ⬜ **THE ONLY OPEN OBLIGATION**
+    Literature.vandehey_matrix_action_holds        -- NormalNumbers/VandeheyCapstone.lean
+    #print axioms ⇒ [propext, Classical.choice, Quot.sound]        (no sorryAx)
 
-## ✅ This lap (5 green commits, every headline `#print axioms`-clean)
+    vandehey_matrix_action
+      ← vandehey_matrix_action_of_uniformFreq      (either-or endgame, LiteratureVandehey)
+      ← vandeheyUniformFreq_of_scaleUniformFreq    (Serret + Smith ⇒ x ↦ D·x, D prime)
+      ← scaleUniformFreq_holds                     (VandeheyCFBridge)         ✅ NEW
+      ← mobiusUniformFreq_of_runClock              (VandeheyRunClock)
+            hr    ✅ zero_lt_runRate'
+            hmono ✅ runClock_mono'   (NEW: unconditional — see below)
+            hrate ✅ tendsto_runClock_div          (Lemma 6.1)
+            hcount ✅ exists_tendsto_cfCount_runClock                          ✅ NEW
 
-`329ea74` **The run-clock restatement + `hgen` dissolved.**
-`mobiusUniformFreq_of_runClock`: `MobiusUniformFreq` talks about `cfDigit` of the image
-*directly*, so the assembly never needed the automaton to PRODUCE the output stream — only a
-monotone clock with rate `r > 0` and a Cesàro limit for the count sampled along it.  `hcof` and
-`hout` therefore do not exist in the new capstone.  Separately: `hgen` ("triggers are supported
-on genuine words") is NOT a property of a trigger family — a window with a `0` digit can carry a
-trigger (`B_0` is the swap, and it emits).  It is a property of the ORBIT, and there it is free:
-`exists_tendsto_trigTotal` now takes `∀ m, 1 ≤ cfDigit x m`, supplied by `one_le_cfDigit_fract`.
+## ✅ This lap
 
-`6de4882` **`VandeheyLetterGrowth.lean` — the LOWER Lemma 2.2.**  `genuine_length_le`:
-`|q| ≤ 2·|lrBlocks t q| + 2D + 6` for every Raney state.  Entry-sum comparison across the
-word-level transducer identity `lrBlocks_run` (needed because `trigPrefix` quantifies over WORDS,
-not orbits): `L`/`R` at most double the entry sum and Raney entries are `≤ D`; on COLUMN sums
-`B_j` acts by `(c₁,c₂) ↦ (c₂, c₁ + j c₂)`, the Fibonacci recursion — `fib_col_le`, a single-step
-induction once stated with both columns.  `col₂ t ≥ 1` because `col₂ t = 0` forces `det t = 0`.
+`6d7a8ad` **`VandeheyCFBridge.lean` (`hcount`) + `VandeheyCapstone.lean` (the headline).**
+`hcount` is one chain of bounded differences, every constant a function of `D` and `|v|` only:
 
-`e366e8e` **`VandeheyLRTail.lean` — `htail`, and it is not analytic.**  `tailMass` is EXACTLY `0`
-past `2|v| + 2D + 6`: `trigPrefix` is empty there (`length_le_of_kOut_ne_zero`).
+1. `countOccurrences ↔ occStart` on both sides (slack `|v|`, resp. `|patWord|`).
+2. `card_range_split` / `card_parity_split`: the image's CF start-position count over `range M`
+   is, up to the single index `0`, the sum over the two parities of the parity-restricted count
+   over `Ico 1 M` — and `card_cf_eq_card_patWord` turns each into a **pattern card** on letter
+   positions `[lrPos img 1 − 1, lrPos img M − 1)`.
+3. `patCard_window`: the two ends of that window cost at most ONE occurrence.  Below
+   `lrPos img 1 − 1` there is **none**: `cf_of_patWord_occ` forces `P + 1 = lrPos (runIdx P + 1)`
+   with `runIdx P + 1 ≥ 1`, so `P ≥ lrPos 1 − 1` is automatic.  Above `lrPos img M − 1` the same
+   identity plus `runClock = runIdx (N − k₀)` pins the run index to `M`, leaving only
+   `P = lrPos M − 1`.
+4. `patCard_shift`: past the leading `R^{⌊D·fract x⌋}` run the stream of `D·fract x` **is** the
+   stream of the image, so the two position sets are in bijection; the head costs `k₀ ≤ D`
+   (`headRun_le`).
+5. `occStart_patN_eq`: `encLetter` is injective, so the engine's ℕ-alphabet occurrence count and
+   the `Bool`-level pattern card are literally the same natural number.
 
-`864f0d8` **`VandeheyScaleCount.lean` — the engine, wired to the machine.**
-`exists_tendsto_countOccurrences_patN`: the count of `patWord b v` in the emitted letter word has
-an `x`-independent Cesàro limit.  Plus `lr_hcof` (third corollary of the lower Lemma 2.2),
-`startPlus`, and `cesaro_of_bounded_diff`.
+`runIdx_mono'` (new, and the one genuine simplification): `runIdx w P` is
+`Nat.findGreatest (fun n => lrPos w n ≤ P) P` — a predicate that only *weakens* as `P` grows with
+a bound that only *grows*, so `Nat.findGreatest_mono` gives monotonicity for **every** `w`, with
+no irrationality.  That is what lets `runClock` satisfy the *unconditional* `hmono` of
+`mobiusUniformFreq_of_runClock` (the old `runClock_mono` needed `Irrational x`).
 
-`4b59e62` **`VandeheyRunDict.lean` — the clock.**  `runClock`, `runClock_mono`,
-`tendsto_runClock_div`, `zero_lt_runRate'`.  Key new lemma `numAlt_lrExpandWord`: `numAlt` of the
-length-`L+1` prefix of an `L/R` expansion IS `runIdx w L`.  Plus `map_range_split` /
-`lrExpand_shift` for the leading `R^{⌊z⌋}` run (`⌊z⌋ ≤ D − 1`, uniformly bounded).
-
-## 🎬 Next actions — `hcount`, and nothing else
-
-Goal: for genuine `v = a :: v'` and prime `D`, an `x`-independent `L` with
-`cfCount v (imgOf D x) (runClock hD x n) / n → L`.  **The plan is fully worked out; it is
-`O(1)` bookkeeping, no new mathematics.**  Let `img = imgOf D x`, `k₀ = headRun D x`,
-`P n = letterLen hD x n`, `M = runClock hD x n`.
-
-1. **A-side.**  `|cfCount v img M − occStart v (cfDigit img) M| ≤ |v|`
-   (`countOccurrences_le_occStart` / `occStart_le_countOccurrences_add`, already in the kernel).
-   Split `occStart` over `Ico 1 M` by parity (cost: index `0`, ≤ 1) and apply
-   `VandeheyLRPattern.card_cf_eq_card_patWord` to get, for each `b`, a count of `patWord b v`
-   occurrences in letter positions `Ico (lrPos img 1 − 1) (lrPos img M − 1)`.
-2. **No occurrence below `lrPos img 1 − 1`**: `cf_of_patWord_occ` gives `P = lrPos (runIdx P + 1) − 1`
-   for ANY occurrence, so `P < lrPos 1 − 1` forces `runIdx P = 0` hence `P = lrPos 1 − 1`.
-   So both windows may be taken to start at `0`.
-3. **B-side.**  `countOccurrences (patN b v) (outWord …)` vs the position count over
-   `range (P n)`: `≤ |patN|` slack; then shift by `k₀ ≤ D − 1` (`map_range_split`) to positions
-   of `lrExpand img` over `range (P n − k₀)`.  Letters vs encoded letters: `encLetter` injective.
-4. **Window difference ≤ 1.**  `lrPos img M ≤ P n − k₀ < lrPos img (M+1)` (this is exactly what
-   `runClock = runIdx img (P n − k₀)` says), and an occurrence in `[lrPos M − 1, P n − k₀)` has
-   `lrPos i − 1` there, so `i = M` by `lrPos_strictMono`: at most ONE extra, per parity.
-5. Feed the total (a bounded difference) to `cesaro_of_bounded_diff` with
-   `L = L_true + L_false` from `exists_tendsto_countOccurrences_patN`, then
-   `mobiusUniformFreq_of_runClock` and `vandeheyUniformFreq_of_scaleUniformFreq` finish
-   `vandeheyUniformFreq_holds`.
+**Structural move.**  `vandeheyUniformFreq_holds` / `vandehey_matrix_action_holds` now live in
+`VandeheyCapstone.lean`, not `LiteratureVandehey.lean`: every module of the Raney chain imports
+the latter for the frozen `VandeheyUniformFreq` / `vandehey_matrix_action` statements, so proving
+the crux there is an import cycle.  Both frozen statements and the endgame reduction
+`vandehey_matrix_action_of_uniformFreq` are byte-identical where they were.
 
 ## ⚠ Gotchas found this lap
 
-- `Nonneg.mul` resolves to a mathlib `Mul` instance; write `Mat2.Nonneg.mul`.
-- `Nat.fib_add_two : fib (n+2) = fib n + fib (n+1)` — that order.
-- Section `variable`s used only in a PROOF need `include h₁ h₂ in` before the declaration; inside
-  an equation-compiler recursion, call the lemma WITHOUT them (they are re-applied automatically).
-- `rw [hpval]` where `hpval : v = …` rewrites `v` inside `v.length` too; rewrite the other side.
-- `set k₀ := headRun D x` leaves `omega` unable to see `k₀ = ⌊·⌋.toNat`; introduce the equation as
-  a `have … := rfl` and `rw` it into the hypothesis instead of the goal.
-- `Int.fract_sub_intCast`, `List.take_drop : take i (drop j l) = drop j (take (j+i) l)`.
+- `set x := e with h` folds `e` only in hypotheses that **already exist**.  Obtain everything
+  first, `set` last — otherwise `omega` sees two atoms for one term and fails with a counterexample
+  whose `where` block shows both spellings (that is the tell).
+- `div_add_div_same` is shadowed inside `NormalNumbers.VandeheyLR`; use `ring`.
+- `Finset.card_filter_add_card_filter_not` takes ONE explicit argument (the set), not two.
+- `occStart` filters over `Finset.range`; a `Finset.Ico 0 N` target needs
+  `← Finset.range_eq_Ico` **before** `Finset.filter_congr`.
+- Two concurrent `lake build`s reliably trigger the box's "too many open files" (see the
+  reference corpus note `lean-box-fd-exhaustion-is-mmap-not-nofile.md`); it can also invalidate
+  mathlib traces and provoke a wide rebuild.  Never run two builds at once; retry loops fix it.
 
 ## 📁 Files
 
-New: `VandeheyRunClock.lean`, `VandeheyLetterGrowth.lean`, `VandeheyLRTail.lean`,
-`VandeheyScaleCount.lean`, `VandeheyRunDict.lean`.
-Changed: `VandeheyOutputFreq.lean` (hgen → orbit genuineness), `VandeheyAssembly.lean`,
-`src/NormalNumbers.lean`.
+New: `VandeheyCFBridge.lean`, `VandeheyCapstone.lean`.
+Changed: `LiteratureVandehey.lean` (the two theorems moved out; statements untouched),
+`src/NormalNumbers.lean`, `STATUS.md`, `DIRECTION.md`.
 
----
-**→ Next session: `hcount`, steps 1–5 above.  Tree clean at `4b59e62`.**
+## 🎬 Next
+
+Vandehey is finished.  The remaining open fronts are the casting-out conjectures C1/C3
+(`SwingC1*.lean`, `SwingC3*.lean`, `C3MrtNoExc.lean`), `PairDecoupleProve`, and the joint-Lambert
+`AGP` gap (`docs/JOINT-LAMBERT-AGP-GAP.md` names `AGPExpRange` as the concrete next target).
+Take an objective from `PENDING_WORK.md`.
