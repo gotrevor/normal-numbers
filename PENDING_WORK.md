@@ -159,7 +159,18 @@ Three facts, all established lap 30, fix its difficulty and must steer every fur
   monotone injection `i ↦ qᵢ`.  `heuristic_sum_le` shows the demanded bound is exactly the total
   measure `∑_{q≤Q} 2/(Tq) ≤ (2/T)(1+log Q)` of the target sets, so the Diophantine form is sharp,
   not lossy.
-  **Next attack (lap 32):** instantiate at `y = Int.fract (φ x)`, where `E_q = {u : ‖qφu‖ ≤ 2/(Tq)}`
+  **Lap 32:** the converse at the convergents — `abs_convDen_mul_sub_ge : 1/(qₚ+qₚ₊₁) ≤ |qₚy−pₚ|`
+  plus `round_eq_of_abs_lt` give `le_digit_of_nearInt_le : ‖qₚy‖ ≤ 2/(Tqₚ) → T ≤ 2aₚ₊₁+4`, so
+  large digit ⟺ `T`-good convergent.
+  **Lap 33 (a real correction, found in the kernel):** the ALL-`q` count overshoots.  Multiples of a
+  very good denominator are good (`nearInt_mul_good`), so one digit `aₚ ≥ Tk²` alone contributes
+  `k ≈ √(aₚ/T)` denominators (`card_le_goodDenCount_of_large_digit`) against `1` digit.  Since
+  `E[√a] < ∞` but `> 0` under Gauss–Kuzmin, the all-`q` count of a normal `y` is `≍ (1/√T) log Q`,
+  so `GoodDenBound` as first stated is FALSE and only the **primitive** count can carry the `1/T`
+  demand.  `goodDenCountPrim` / `GoodDenBoundPrim` are the corrected objects, and the reduction
+  survives verbatim because convergents are primitive (`coprime_cfNum_cfK`, from `cfDet`):
+  `largeDigitCount_le_goodDenCountPrim` + `tailFreq_le_of_goodDenBoundPrim`.
+  **Next attack (lap 34):** instantiate at `y = Int.fract (φ x)`, where `E_q = {u : ‖qφu‖ ≤ 2/(Tq)}`
   is **`x`-independent**; the open question is then the single sentence "does CF-normality of `x`
   control the visit counts to `{E_q}`?".  Two concrete probes: (i) the `q` occurring are the
   denominators of `φx`, so ask whether `q ∈ ℕ` can be replaced by `qφ ∈ ℤ[φ]` and the norm form

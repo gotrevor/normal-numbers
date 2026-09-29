@@ -601,6 +601,236 @@ theorem tailFreq_le_of_goodDenBound {y : ℝ} (hy : Irrational y) (hmem : y ∈ 
     _ ≤ ε * p + (D / T) * (Λ * p) := by linarith
     _ = ((D / T) * Λ + ε) * p := by ring
 
+/-! ## The all-`q` count overshoots: the hypothesis must be PRIMITIVE
+
+A subtlety that only the kernel finds.  `goodDenCount` counts *every* `q ≤ Q` with
+`‖q y‖ ≤ 2/(Tq)`, and multiples of a *very* good denominator are again good
+(`nearInt_nat_mul_le`): if `‖qy‖ ≤ 2/(T k² q)` then `‖(jq)y‖ ≤ 2/(T jq)` for all `j ≤ k`.  A single
+digit `aₚ ≥ T k²` therefore contributes `k ≈ √(aₚ/T)` extra terms to the count
+(`card_le_goodDenCount_of_large_digit`) while contributing **one** to the digit count.  Since the
+Gauss–Kuzmin mean of `√a` is finite but nonzero, the naive all-`q` count of a normal `y` is
+`≍ (1/√T) log Q`, not `(1/T) log Q` — so `GoodDenBound` as literally stated is *false*, and the
+`1/T` demand can only be made of the **primitive** count `goodDenCountPrim`, where `m/q` is in
+lowest terms.  The reduction survives verbatim, because convergents are automatically primitive
+(`coprime_cfNum_cfK`, from `cfDet`).
+-/
+
+/-- Distance to the nearest integer. -/
+noncomputable def nearInt (r : ℝ) : ℝ := |r - (round r : ℝ)|
+
+lemma nearInt_le (r : ℝ) (m : ℤ) : nearInt r ≤ |r - (m : ℝ)| := round_le r m
+
+lemma nearInt_nonneg (r : ℝ) : 0 ≤ nearInt r := abs_nonneg _
+
+/-- `‖k r‖ ≤ k ‖r‖`. -/
+lemma nearInt_nat_mul_le (k : ℕ) (r : ℝ) : nearInt ((k : ℝ) * r) ≤ (k : ℝ) * nearInt r := by
+  have h := nearInt_le ((k : ℝ) * r) ((k : ℤ) * round r)
+  calc nearInt ((k : ℝ) * r) ≤ |(k : ℝ) * r - (((k : ℤ) * round r : ℤ) : ℝ)| := h
+    _ = (k : ℝ) * nearInt r := by
+        rw [nearInt]
+        have hid : (k : ℝ) * r - (((k : ℤ) * round r : ℤ) : ℝ)
+            = (k : ℝ) * (r - (round r : ℝ)) := by push_cast; ring
+        rw [hid, abs_mul, abs_of_nonneg (Nat.cast_nonneg (α := ℝ) k)]
+
+/-- **Convergents are primitive.**  `gcd(pₙ, qₙ) = 1`, straight from the determinant identity. -/
+theorem coprime_cfNum_cfK {w : List ℕ} (hw : w ≠ []) : Nat.Coprime (cfNum w) (cfK w) := by
+  have hdet := cfDet w hw
+  set d := Nat.gcd (cfNum w) (cfK w) with hd
+  have h1 : (d : ℤ) ∣ (cfNum w : ℤ) := Int.natCast_dvd_natCast.2 (Nat.gcd_dvd_left _ _)
+  have h2 : (d : ℤ) ∣ (cfK w : ℤ) := Int.natCast_dvd_natCast.2 (Nat.gcd_dvd_right _ _)
+  have h3 : (d : ℤ) ∣ (-1 : ℤ) ^ w.length := by
+    rw [← hdet]
+    exact dvd_sub (h2.mul_right _) (h1.mul_right _)
+  have hunit : ((-1 : ℤ) ^ w.length) ∣ 1 :=
+    ⟨(-1 : ℤ) ^ w.length, by rw [← pow_add, ← two_mul, pow_mul]; norm_num⟩
+  have h4 : (d : ℤ) ∣ 1 := h3.trans hunit
+  have h5 : (d : ℤ) = 1 := Int.eq_one_of_dvd_one (by positivity) h4
+  exact_mod_cast h5
+
+/-- **Multiples of a very good denominator are good.**  This is why the all-`q` count is the wrong
+hypothesis. -/
+theorem nearInt_mul_good {y : ℝ} {q k j T : ℕ} (hT : 1 ≤ T) (hq : 1 ≤ q) (hj : 1 ≤ j)
+    (hjk : j ≤ k) (hgood : nearInt ((q : ℝ) * y) ≤ 2 / ((T : ℝ) * (k : ℝ) ^ 2 * q)) :
+    nearInt (((j * q : ℕ) : ℝ) * y) ≤ 2 / ((T : ℝ) * ((j * q : ℕ) : ℝ)) := by
+  have hTpos : (0:ℝ) < (T:ℝ) := by exact_mod_cast hT
+  have hqpos : (0:ℝ) < (q:ℝ) := by exact_mod_cast hq
+  have hjpos : (0:ℝ) < (j:ℝ) := by exact_mod_cast hj
+  have hkpos : (0:ℝ) < (k:ℝ) := lt_of_lt_of_le hjpos (by exact_mod_cast hjk)
+  have hjkR : (j:ℝ) ≤ (k:ℝ) := by exact_mod_cast hjk
+  have hcast : ((j * q : ℕ) : ℝ) * y = (j : ℝ) * ((q : ℝ) * y) := by push_cast; ring
+  rw [hcast]
+  calc nearInt ((j : ℝ) * ((q : ℝ) * y)) ≤ (j : ℝ) * nearInt ((q : ℝ) * y) :=
+        nearInt_nat_mul_le j _
+    _ ≤ (j : ℝ) * (2 / ((T : ℝ) * (k : ℝ) ^ 2 * q)) :=
+        mul_le_mul_of_nonneg_left hgood hjpos.le
+    _ ≤ 2 / ((T : ℝ) * ((j * q : ℕ) : ℝ)) := by
+        rw [mul_div_assoc'] at *
+        rw [div_le_div_iff₀ (by positivity) (by push_cast; positivity)]
+        push_cast
+        have hj2 : (j:ℝ) ^ 2 ≤ (k:ℝ) ^ 2 := by nlinarith
+        nlinarith [mul_pos hTpos hqpos]
+
+/-- **The overshoot, as a counting statement.**  One digit `aₚ ≥ T k²` alone puts `k` denominators
+into the all-`q` good set.  (A digit contributes `1` to `blockCount`, so the all-`q` count is not
+comparable to the digit count with a constant.) -/
+theorem card_le_goodDenCount_of_large_digit {y : ℝ} (hy : Irrational y)
+    (hmem : y ∈ Set.Ioo (0:ℝ) 1) {T p k : ℕ} (hT : 1 ≤ T) (hp : 1 ≤ p) (hk : 1 ≤ k)
+    (hdig : T * k ^ 2 ≤ cfDigit y p) :
+    k ≤ goodDenCount y T (k * cfK (digitWord y p)) := by
+  set q := cfK (digitWord y p) with hq
+  have hqpos : 1 ≤ q := one_le_cfK _ (digitWord_pos hy hmem p)
+  have hqR : (0:ℝ) < (q:ℝ) := by exact_mod_cast hqpos
+  have hTpos : (0:ℝ) < (T:ℝ) := by exact_mod_cast hT
+  have hkR : (0:ℝ) < (k:ℝ) := by exact_mod_cast hk
+  -- `‖q y‖ ≤ 2/q_{p+1} ≤ 2/(T k² q)`
+  have hvery : nearInt ((q : ℝ) * y) ≤ 2 / ((T : ℝ) * (k : ℝ) ^ 2 * q) := by
+    have h1 : nearInt ((q : ℝ) * y) ≤ 2 / (cfK (digitWord y (p + 1)) : ℝ) :=
+      le_trans (nearInt_le _ (cfNum (digitWord y p) : ℤ)) (abs_convDen_mul_sub_le hy hmem hp)
+    have h2 : (T : ℝ) * (k : ℝ) ^ 2 * q ≤ (cfK (digitWord y (p + 1)) : ℝ) := by
+      have hge := cfK_succ_ge_of_large_digit hy hmem hp hdig
+      have : ((T * k ^ 2 * q : ℕ) : ℝ) ≤ (cfK (digitWord y (p + 1)) : ℝ) := by
+        exact_mod_cast hge
+      calc (T : ℝ) * (k : ℝ) ^ 2 * q = ((T * k ^ 2 * q : ℕ) : ℝ) := by push_cast; ring
+        _ ≤ _ := this
+    exact le_trans h1 (div_le_div_of_nonneg_left (by norm_num) (by positivity) h2)
+  -- the `k` multiples `j q`, `1 ≤ j ≤ k`, are all in the good set
+  have hmaps : ∀ j ∈ Finset.Icc 1 k, j * q ∈ (Finset.Icc 1 (k * q)).filter
+      (fun r : ℕ => |(r : ℝ) * y - (round ((r : ℝ) * y) : ℝ)| ≤ 2 / ((T : ℝ) * r)) := by
+    intro j hj
+    obtain ⟨hj1, hjk⟩ := Finset.mem_Icc.1 hj
+    refine Finset.mem_filter.2 ⟨Finset.mem_Icc.2 ⟨?_, ?_⟩, ?_⟩
+    · exact Nat.one_le_iff_ne_zero.2 (by positivity)
+    · exact Nat.mul_le_mul_right _ hjk
+    · exact nearInt_mul_good hT hqpos hj1 hjk hvery
+  have hinj : Set.InjOn (fun j => j * q) (Finset.Icc 1 k : Finset ℕ) := by
+    intro a _ b _ hab
+    simpa using Nat.eq_of_mul_eq_mul_right hqpos hab
+  have := Finset.card_le_card_of_injOn _ hmaps hinj
+  simpa [goodDenCount, Nat.card_Icc] using this
+
+/-- The **primitive** good-denominator count: only `q` whose nearest-integer numerator is coprime
+to it.  This is the count for which the crux's `1/T` rate is the right demand, and the one the
+reduction actually produces (`coprime_cfNum_cfK`). -/
+noncomputable def goodDenCountPrim (y : ℝ) (T Q : ℕ) : ℕ :=
+  ((Finset.Icc 1 Q).filter
+    (fun q : ℕ => nearInt ((q : ℝ) * y) ≤ 2 / ((T : ℝ) * q) ∧
+      Nat.Coprime (round ((q : ℝ) * y)).natAbs q)).card
+
+lemma goodDenCountPrim_le_goodDenCount (y : ℝ) (T Q : ℕ) :
+    goodDenCountPrim y T Q ≤ goodDenCount y T Q := by
+  rw [goodDenCountPrim, goodDenCount]
+  refine Finset.card_le_card (fun q hq => ?_)
+  obtain ⟨hq1, hq2⟩ := Finset.mem_filter.1 hq
+  exact Finset.mem_filter.2 ⟨hq1, hq2.1⟩
+
+/-! ## The reduction, in its correct (primitive) form -/
+
+/-- For `p ≥ 3` the nearest integer to `qₚ y` is `pₚ`: `qₚ₊₁ ≥ fib (p+2) ≥ 5 > 4`. -/
+lemma round_eq_cfNum {y : ℝ} (hy : Irrational y) (hmem : y ∈ Set.Ioo (0:ℝ) 1)
+    {p : ℕ} (hp : 3 ≤ p) :
+    round ((cfK (digitWord y p) : ℝ) * y) = (cfNum (digitWord y p) : ℤ) := by
+  have hvpos := digitWord_pos hy hmem (p + 1)
+  have hKv := cfK_pos hvpos
+  have hfib : Nat.fib 5 ≤ Nat.fib (p + 2) := Nat.fib_mono (by omega)
+  have hbig : 4 < cfK (digitWord y (p + 1)) := by
+    have h := fib_le_cfK (digitWord y (p + 1)) hvpos
+    rw [digitWord_length, show p + 1 + 1 = p + 2 from rfl] at h
+    have h5 : Nat.fib 5 = 5 := by decide
+    omega
+  have h4 : (4:ℝ) < (cfK (digitWord y (p + 1)) : ℝ) := by exact_mod_cast hbig
+  have hupper := abs_convDen_mul_sub_le hy hmem (by omega : 1 ≤ p)
+  have hhalf : |(cfK (digitWord y p) : ℝ) * y - (cfNum (digitWord y p) : ℝ)| < 1/2 := by
+    have : 2 / (cfK (digitWord y (p + 1)) : ℝ) < 1/2 := by
+      rw [div_lt_div_iff₀ hKv (by norm_num)]
+      linarith
+    linarith
+  exact round_eq_of_abs_lt (by simpa using hhalf)
+
+/-- **The reduction, primitive form.**  The same injection `i ↦ qᵢ`, now landing in the primitive
+good set: convergents are primitive (`coprime_cfNum_cfK`) and, past index `3`, their numerator IS
+the nearest integer (`round_eq_cfNum`). -/
+theorem largeDigitCount_le_goodDenCountPrim {y : ℝ} (hy : Irrational y)
+    (hmem : y ∈ Set.Ioo (0:ℝ) 1) {T p : ℕ} (hT : 1 ≤ T) (hp : 1 ≤ p) :
+    blockCount (cellSet [] T) p y ≤ 3 + goodDenCountPrim y T (cfK (digitWord y p)) := by
+  rw [blockCount_cellSet_nil_eq hy hmem T p, countP_digitWord_eq_card]
+  set S := (Finset.range p).filter (fun i => T ≤ cfDigit y i) with hS
+  set G := (Finset.Icc 1 (cfK (digitWord y p))).filter
+    (fun q : ℕ => nearInt ((q : ℝ) * y) ≤ 2 / ((T : ℝ) * q) ∧
+      Nat.Coprime (round ((q : ℝ) * y)).natAbs q) with hG
+  have hsub : S ⊆ ({0, 1, 2} : Finset ℕ) ∪ S.filter (fun i => 3 ≤ i) := by
+    intro i hi
+    rcases Nat.lt_or_ge i 3 with h | h
+    · refine Finset.mem_union_left _ ?_
+      interval_cases i <;> simp
+    · exact Finset.mem_union_right _ (Finset.mem_filter.2 ⟨hi, h⟩)
+  have hinj : Set.InjOn (fun i => cfK (digitWord y i)) (S.filter (fun i => 3 ≤ i) : Finset ℕ) := by
+    intro a ha b hb hab
+    simp only [Finset.coe_filter, Set.mem_setOf_eq, hS, Finset.mem_filter] at ha hb
+    rcases lt_trichotomy a b with h | h | h
+    · exact absurd hab (ne_of_lt (cfK_digitWord_lt hy hmem (by omega) h))
+    · exact h
+    · exact absurd hab.symm (ne_of_lt (cfK_digitWord_lt hy hmem (by omega) h))
+  have hmaps : ∀ i ∈ S.filter (fun i => 3 ≤ i), cfK (digitWord y i) ∈ G := by
+    intro i hi
+    simp only [hS, Finset.mem_filter, Finset.mem_range] at hi
+    obtain ⟨⟨hir, hid⟩, hi3⟩ := hi
+    refine Finset.mem_filter.2 ⟨Finset.mem_Icc.2 ⟨one_le_cfK _ (digitWord_pos hy hmem i),
+      cfK_digitWord_le hy hmem (by omega) hir.le⟩, ?_, ?_⟩
+    · exact nearInt_convDen_le hy hmem hT (by omega) hid
+    · rw [round_eq_cfNum hy hmem hi3]
+      simpa using coprime_cfNum_cfK (digitWord_ne_nil (show 0 < i by omega))
+  have hcard : (S.filter (fun i => 3 ≤ i)).card ≤ G.card :=
+    Finset.card_le_card_of_injOn _ hmaps hinj
+  have h1 : S.card ≤ 3 + (S.filter (fun i => 3 ≤ i)).card := by
+    have h2 := Finset.card_le_card hsub
+    have h3 := Finset.card_union_le ({0, 1, 2} : Finset ℕ) (S.filter (fun i => 3 ≤ i))
+    have h4 : ({0, 1, 2} : Finset ℕ).card = 3 := by decide
+    omega
+  have : S.card ≤ 3 + G.card := by omega
+  rw [goodDenCountPrim, ← hG]
+  exact_mod_cast this
+
+/-- The Diophantine hypothesis, in the form the overshoot forces: the **primitive** good
+denominators up to `Q` number at most `(D/T) log Q`.  `heuristic_sum_le` says this is the sharp
+heuristic count, and the multiples that break the all-`q` form
+(`card_le_goodDenCount_of_large_digit`) are excluded by primitivity. -/
+def GoodDenBoundPrim (y : ℝ) (D : ℝ) : Prop :=
+  ∀ T : ℕ, 1 ≤ T → ∀ᶠ Q : ℕ in atTop, (goodDenCountPrim y T Q : ℝ) ≤ (D / T) * Real.log Q
+
+/-- **The crux's tail case from the primitive Diophantine bound.**  Same conclusion as
+`tailFreq_le_of_goodDenBound`, now from the hypothesis that survives the overshoot. -/
+theorem tailFreq_le_of_goodDenBoundPrim {y : ℝ} (hy : Irrational y) (hmem : y ∈ Set.Ioo (0:ℝ) 1)
+    {D Λ : ℝ} (hD : 0 ≤ D) (hgd : GoodDenBoundPrim y D) (hL : LevyBound y Λ)
+    {T : ℕ} (hT : 1 ≤ T) {ε : ℝ} (hε : 0 < ε) :
+    ∀ᶠ p : ℕ in atTop, blockCount (cellSet [] T) p y / p ≤ (D / T) * Λ + ε := by
+  have hTpos : (0:ℝ) < (T:ℝ) := by exact_mod_cast hT
+  have hDT : 0 ≤ D / T := by positivity
+  obtain ⟨N, hN⟩ := exists_nat_gt (3 / ε)
+  have hNpos : (0:ℝ) < N := lt_of_le_of_lt (by positivity) hN
+  filter_upwards [(tendsto_cfK_digitWord hy hmem).eventually (hgd T hT), hL,
+    eventually_ge_atTop N, eventually_gt_atTop 0] with p h1 h2 h3 h4
+  have hpr : (0:ℝ) < p := by exact_mod_cast h4
+  have hpN : (N:ℝ) ≤ (p:ℝ) := by exact_mod_cast h3
+  have hthree : (3:ℝ) ≤ ε * p := by
+    have hlt : 3 / (N:ℝ) < ε := by
+      rw [div_lt_iff₀ hNpos]
+      rw [div_lt_iff₀ hε] at hN
+      linarith
+    have hle : 3 / (p:ℝ) ≤ 3 / (N:ℝ) := div_le_div_of_nonneg_left (by norm_num) hNpos hpN
+    have : 3 / (p:ℝ) ≤ ε := by linarith
+    rw [div_le_iff₀ hpr] at this
+    linarith
+  have hbc := largeDigitCount_le_goodDenCountPrim hy hmem hT h4
+  rw [div_le_iff₀ hpr]
+  calc blockCount (cellSet [] T) p y
+      ≤ 3 + (goodDenCountPrim y T (cfK (digitWord y p)) : ℝ) := hbc
+    _ ≤ 3 + (D / T) * Real.log (cfK (digitWord y p)) := by linarith
+    _ ≤ 3 + (D / T) * (Λ * p) := by
+        have := mul_le_mul_of_nonneg_left h2 hDT
+        linarith
+    _ ≤ ε * p + (D / T) * (Λ * p) := by linarith
+    _ = ((D / T) * Λ + ε) * p := by ring
+
 section Audit
 
 #print axioms cfDet
@@ -613,6 +843,12 @@ section Audit
 #print axioms heuristic_sum_le
 #print axioms abs_convDen_mul_sub_ge
 #print axioms le_digit_of_nearInt_le
+#print axioms coprime_cfNum_cfK
+#print axioms nearInt_mul_good
+#print axioms card_le_goodDenCount_of_large_digit
+#print axioms round_eq_cfNum
+#print axioms largeDigitCount_le_goodDenCountPrim
+#print axioms tailFreq_le_of_goodDenBoundPrim
 
 end Audit
 
