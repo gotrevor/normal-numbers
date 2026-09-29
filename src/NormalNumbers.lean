@@ -686,6 +686,7 @@ import NormalNumbers.VandeheyRaneyReach
 import NormalNumbers.VandeheyRunBound
 import NormalNumbers.VandeheyAltCount
 import NormalNumbers.VandeheyLRTrigger
+import NormalNumbers.VandeheyLetterGrowth
 import NormalNumbers.VandeheyLRRuns
 import NormalNumbers.VandeheyLRPattern
 import NormalNumbers.VandeheyRunCount
