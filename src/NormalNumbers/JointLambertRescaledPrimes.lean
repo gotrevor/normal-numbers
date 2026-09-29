@@ -55,6 +55,14 @@ lemma eventually_poly_le_two_pow (d : ℕ) (c : ℝ) :
     rw [div_le_div_iff₀ h2 hc] at hk
     linarith
 
+
+/-- Natural-number form of `eventually_poly_le_two_pow`. -/
+lemma eventually_nat_poly_le_two_pow (d c : ℕ) :
+    ∀ᶠ k : ℕ in atTop, c * k ^ d ≤ 2 ^ k := by
+  filter_upwards [eventually_poly_le_two_pow d (c : ℝ)] with k hk
+  have : ((c * k ^ d : ℕ) : ℝ) ≤ ((2 ^ k : ℕ) : ℝ) := by push_cast; exact hk
+  exact_mod_cast this
+
 /-! ### The decay estimate: the rescaled schedule really does dominate the error -/
 
 /-- `2^m = exp (m log 2)` for a natural exponent. -/

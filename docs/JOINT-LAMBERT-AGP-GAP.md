@@ -277,3 +277,26 @@ weakened to `∀ D ∈ Dset, M ≤ D` for an arbitrary fixed `M` (§2c's
 
 No normality claim, no quantitative-occurrence claim, and no change to any frozen
 statement is involved in any of the above.
+
+---
+
+## Correction (2026-09-29): obstacles to AGP are not obstacles to the Lambert consumer
+
+Everything above is about `AGP` itself, and stands. It does **not** establish that `AGP` is
+necessary for the qualitative joint-Lambert headline, and it is not: see
+`docs/JOINT-LAMBERT-RESCALED-PROOF.md`.
+
+The detour came from two demands that the consumer never made.
+
+1. **The search endpoint was tied to the modulus.** The old schedule fixed `X = 2^{4k⁴}` with
+   `B ≤ 2^{k⁴}`, i.e. `B = X^{1/4}` — precisely the AGP range. Nothing downstream requires
+   that; `X` may grow as fast in `k` as we like. At `X = 2^{4k¹²}` the same modulus sits in
+   the Siegel–Walfisz range, where §2b's *proved* input already applies.
+2. **A lower bound on the excised conductor was demanded.** §2/§4 above are right that the
+   installed chain excises `minFac(χ.modulus)` and admits no lower bound. But
+   `exists_prime_allocation` dodges any finite set of non-unit moduli at one pool prime each,
+   with **no** size hypothesis, so the `D > log X` clause was never needed by the consumer.
+
+`jointLambertDisjunctivity_unconditional` and `jointWords_two_four_unconditional` are now
+theorems with no hypotheses. `AGP` and `AGPExpRange` remain open; the analysis of §4–§6 of
+this document is unaffected, and is simply no longer on the headline's critical path.
