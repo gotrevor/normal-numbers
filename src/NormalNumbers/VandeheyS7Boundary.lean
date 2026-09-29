@@ -5,6 +5,7 @@ Authors: Trevor Morris
 -/
 import NormalNumbers.VandeheyS7Word
 import NormalNumbers.CFDefs
+import NormalNumbers.CFPin
 
 /-!
 # The trigger window: the depth-one boundary set has measure `O(√δ)`
@@ -326,6 +327,68 @@ theorem cfDigit_agree_depth {u v δ : ℝ} (huv : |u - v| < δ) (hv0 : 0 < v) (m
   rw [cfDigit_eq_iterate v i, cfDigit_eq_iterate u i]
   exact cfDigit_zero_eq_of_not_boundaryBad hui hbad hvpos hdist
 
+/-! ## The exceptional set has small Gauss measure
+
+`cfDigit_agree_depth` asks `gaussMap^[i] u` to avoid `boundaryBad` at each level `i < m`.  The
+set of `u` that fail is `⋃_{i<m} (gaussMap^[i])⁻¹ (boundaryBad ε)`, and two facts bound it:
+
+* **`gaussMeasure` is `gaussMap`-invariant**, so each pullback has the SAME mass as
+  `boundaryBad ε` — there is no Jacobian to track (`gaussMeasure_preimage_iterate`, already in
+  `CFPin`);
+* the density is at most `1/log 2`, so `volume_boundaryBad_le` transfers.
+
+The result is `gaussMeasure_exceptional_le`: mass at most `m · 6√ε / log 2`.  Linear in `m` and
+`√ε` — and merging supplies `ε` exponentially small in the word length, so this is summable.
+
+The scale `ε = δ · scale u i` still depends on `u`, which is why the statement here is for a
+FIXED `ε`: the remaining step is a cutoff `scale u m ≤ S` on a set of large measure, which is
+where the Khinchin integral `∫ log(1+a) dγ < ∞` enters.  That is the next node, and it is
+deliberately separated from this one, which carries no arithmetic at all.
+-/
+
+/-- `boundaryBad δ`, reindexed as an explicit countable union of intervals. -/
+theorem boundaryBad_eq_iUnion (δ : ℝ) :
+    boundaryBad δ = Ioo (0:ℝ) 1 ∩
+      ⋃ k : ℕ, Ioo ((((k : ℝ) + 1))⁻¹ - δ) ((((k : ℝ) + 1))⁻¹ + δ) := by
+  ext x
+  simp only [boundaryBad, mem_setOf_eq, mem_inter_iff, mem_iUnion, mem_Ioo]
+  constructor
+  · rintro ⟨hx, k, hk, hclose⟩
+    refine ⟨hx, k - 1, ?_⟩
+    have hcast : ((k - 1 : ℕ) : ℝ) + 1 = (k : ℝ) := by
+      have : (k - 1 : ℕ) + 1 = k := by omega
+      exact_mod_cast congrArg (fun n : ℕ => (n : ℝ)) this
+    rw [hcast]
+    obtain ⟨h1, h2⟩ := abs_lt.1 hclose
+    exact ⟨by linarith, by linarith⟩
+  · rintro ⟨hx, k, h1, h2⟩
+    refine ⟨hx, k + 1, by omega, ?_⟩
+    have hcast : ((k + 1 : ℕ) : ℝ) = (k : ℝ) + 1 := by push_cast; ring
+    rw [hcast, abs_lt]
+    exact ⟨by linarith, by linarith⟩
+
+theorem measurableSet_boundaryBad (δ : ℝ) : MeasurableSet (boundaryBad δ) := by
+  rw [boundaryBad_eq_iUnion]
+  exact measurableSet_Ioo.inter (MeasurableSet.iUnion fun _ => measurableSet_Ioo)
+
+/-- The Gauss mass of the boundary set, from the Lebesgue bound and the density window. -/
+theorem gaussMeasure_boundaryBad_le {δ : ℝ} (hδ : 0 < δ) (hδ1 : δ ≤ 1) :
+    gaussMeasure (boundaryBad δ)
+      ≤ ENNReal.ofReal (Real.log 2)⁻¹ * ENNReal.ofReal (6 * Real.sqrt δ) :=
+  le_trans (gaussMeasure_le_volume _ (measurableSet_boundaryBad δ))
+    (by gcongr; exact volume_boundaryBad_le hδ hδ1)
+
+/-- **The exceptional set of `cfDigit_agree_depth`, at a fixed scale, has small Gauss mass.**
+Invariance means each level contributes the same, so the bound is linear in the depth. -/
+theorem gaussMeasure_exceptional_le {ε : ℝ} (hε : 0 < ε) (hε1 : ε ≤ 1) (m : ℕ) :
+    gaussMeasure (⋃ i ∈ Finset.range m, (gaussMap^[i]) ⁻¹' boundaryBad ε)
+      ≤ m * (ENNReal.ofReal (Real.log 2)⁻¹ * ENNReal.ofReal (6 * Real.sqrt ε)) := by
+  refine le_trans (measure_biUnion_finset_le _ _) ?_
+  refine le_trans (Finset.sum_le_sum fun i _ => ?_)
+    (le_of_eq (by rw [Finset.sum_const, Finset.card_range, nsmul_eq_mul]))
+  rw [gaussMeasure_preimage_iterate (measurableSet_boundaryBad ε) i]
+  exact gaussMeasure_boundaryBad_le hε hε1
+
 
 section Audit
 
@@ -335,6 +398,7 @@ section Audit
 #print axioms gaussMap_eq_sub
 #print axioms abs_gaussMap_sub_le
 #print axioms cfDigit_agree_depth
+#print axioms gaussMeasure_exceptional_le
 
 end Audit
 

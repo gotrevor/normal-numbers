@@ -402,6 +402,35 @@ needs one discharged (DIRECTION standing rule 3).
 
 ## Lap notes
 
+### 2026-09-29 lap 19 — the exceptional set has small Gauss mass
+
+`gaussMeasure_exceptional_le` (axiom-clean): at a fixed scale `ε ∈ (0,1]`,
+
+    gaussMeasure (⋃_{i<m} (gaussMap^[i])⁻¹ (boundaryBad ε))  ≤  m · 6√ε / log 2 .
+
+Linear in the depth `m` and in `√ε`.  Merging supplies `ε` exponentially small in the word
+length, so this is summable — the Borel–Cantelli input.
+
+Reuse, not rebuild: `gaussMeasure_preimage_iterate` was already in `CFPin.lean` (invariance, so
+each level contributes the SAME mass — no Jacobian), and `gaussMeasure_le_volume` was already in
+`CFDigitLaw.lean` (density ≤ 1/log 2).  New here: `boundaryBad_eq_iUnion` (reindexed as an
+explicit countable union of intervals) and `measurableSet_boundaryBad`.
+
+**The one honest gap, deliberately separated.**  This statement is for a FIXED `ε`, but
+`cfDigit_agree_depth` needs `ε = δ · scale u i`, which depends on `u`.  The missing step is a
+CUTOFF: on the set `{u : scale u m ≤ S}` the fixed-scale bound applies with `ε = δS`, and the
+complement `{u : scale u m > S}` must be shown small.  Since `log (scale u m) = 2∑_{i<m}
+log(cfDigit u i + 1)`, that is exactly a large-deviation statement for the Khinchin integral
+`∫ log(1+a) dγ < ∞` — the same integral `VandeheyS7Clock` cites for the clock rate.
+
+**Next attack (lap 20):** state `ScaleCutoff` as a named Prop (guard rule: content locator +
+degenerate case) — `∀ η > 0, ∃ S, ∀ m, gaussMeasure {u | scale u m > S^m} < η` or the Cesàro form
+— and prove the pieces that do not need the ergodic theorem: `log (scale u m) = 2∑ log(aᵢ+1)`
+(`Finset.prod_range` + `Real.log_prod`), monotonicity, and the reduction of `SampledUniformCount`
+to `ScaleCutoff` + what is already proved.  Check `CFDigitLaw.lean` / `CFBlockFreq.lean` first:
+the repo may already have the Birkhoff average of `log(1+a)` from the Khinchin work
+(`KHINCHIN.md`).
+
 ### 2026-09-29 lap 18 — DEPTH-`m` DIGIT AGREEMENT IS PROVED
 
 `cfDigit_agree_depth` (axiom-clean): if `|u − v| < δ` and at every level `i < m` the point
