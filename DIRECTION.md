@@ -1,3 +1,19 @@
+# ACTIVE SCOPE (2026-09-29) — joint Lambert quantitative COUNT
+
+Authorized by Trevor 2026-09-29.  Branch `proof/joint-lambert-unconditional`, baseline
+`e2828b32`.  See `KICKOFF-2026-09-29-joint-lambert-count.md` for the ratified statement.
+
+* Target: unconditional all-`N` count `A(N) ≥ N exp(-C (log log N)² log log log N)`, and
+  the fixed-`ε` corollary `A(N) ≥ N^(1-ε)`.  Frozen in
+  `src/NormalNumbers/JointLambertQuantitativeStatement.lean` and
+  `src/NormalNumbers/JointLambertQuantitative.lean`.
+* DONE already: the qualitative theorem, the gcd/non-coprime divisor average, the small
+  prime pool (`23b3f2d2`).  The count is NOT done until its whole dependency chain is.
+* Out of scope in this worktree: Vandehey (owned by the main checkout), full AGP,
+  promotion/novelty campaigns.
+
+---
+
 # DIRECTION — normal-numbers 🧭
 
 ## ACTIVE OBJECTIVE — 29 September 2026: joint Lambert quantitative foundations
