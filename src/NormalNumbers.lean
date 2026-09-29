@@ -809,6 +809,7 @@ import NormalNumbers.VandeheyS7WordState
 import NormalNumbers.VandeheyS7RefCesaro
 import NormalNumbers.VandeheyS7LevelGen
 import NormalNumbers.VandeheyS7WidthDensity
+import NormalNumbers.VandeheyS7ArchWidthFree
 import NormalNumbers.VandeheyS7Quadratic
 import NormalNumbers.VandeheyS7Class
 import NormalNumbers.VandeheyS7Net
