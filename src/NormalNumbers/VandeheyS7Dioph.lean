@@ -831,6 +831,208 @@ theorem tailFreq_le_of_goodDenBoundPrim {y : ℝ} (hy : Irrational y) (hmem : y 
     _ ≤ ε * p + (D / T) * (Λ * p) := by linarith
     _ = ((D / T) * Λ + ε) * p := by ring
 
+/-! ## The gap principle: primitivity restores geometric sparsity
+
+The overshoot of the all-`q` count came from multiples, which primitivity forbids.  What survives
+is the classical gap principle: two distinct primitive `T`-good denominators differ by a factor
+`≥ T/4`.  So the primitive count up to `Q` is `O(log Q / log T)` — back to the *free* rate of
+`VandeheyS7Tight`, but now as a statement about `x`-independent sets, and with the missing content
+displayed exactly:
+
+> the primitive good denominators are automatically `T/4`-spaced (`gap_principle`), i.e. they
+> occupy at most `log Q / log(T/4)` of the scales; `GoodDenBoundPrim` demands that they occupy only
+> a `1/T` fraction of the `≍ log Q` Lévy scales.
+
+That is the whole remaining gap, and it is a statement about *which* scales carry a good
+denominator — the equidistribution of the orbit, not the size of the target sets.
+-/
+
+/-- Two distinct primitive fractions are `1/(qq')` apart. -/
+private lemma one_le_abs_cross {m m' : ℤ} {q q' : ℕ} (hq : 1 ≤ q) (hq' : 1 ≤ q')
+    (hne : q ≠ q') (hp : Nat.Coprime m.natAbs q) (hp' : Nat.Coprime m'.natAbs q') :
+    1 ≤ |m * (q' : ℤ) - m' * (q : ℤ)| := by
+  rcases eq_or_ne (m * (q' : ℤ) - m' * (q : ℤ)) 0 with h0 | h0
+  · exfalso
+    have heq : m * (q' : ℤ) = m' * (q : ℤ) := by linarith [sub_eq_zero.1 h0]
+    have hcop : IsCoprime (q : ℤ) m := by
+      rw [Int.isCoprime_iff_gcd_eq_one, Int.gcd_comm]
+      simpa [Int.gcd, Int.natAbs_natCast] using hp
+    have hcop' : IsCoprime (q' : ℤ) m' := by
+      rw [Int.isCoprime_iff_gcd_eq_one, Int.gcd_comm]
+      simpa [Int.gcd, Int.natAbs_natCast] using hp'
+    have hd1 : (q : ℤ) ∣ (q' : ℤ) := by
+      refine hcop.dvd_of_dvd_mul_left ?_
+      exact ⟨m', by linarith [heq]⟩
+    have hd2 : (q' : ℤ) ∣ (q : ℤ) := by
+      refine hcop'.dvd_of_dvd_mul_left ?_
+      exact ⟨m, by linarith [heq]⟩
+    have h1 : q ∣ q' := Int.ofNat_dvd.1 hd1
+    have h2 : q' ∣ q := Int.ofNat_dvd.1 hd2
+    exact hne (Nat.dvd_antisymm h1 h2)
+  · rcases lt_or_gt_of_ne h0 with h | h
+    · have : m * (q' : ℤ) - m' * (q : ℤ) ≤ -1 := by omega
+      rw [abs_of_neg h]; omega
+    · have : 1 ≤ m * (q' : ℤ) - m' * (q : ℤ) := by omega
+      rw [abs_of_pos h]; omega
+
+/-- **The gap principle.**  Two distinct primitive `T`-good denominators differ by a factor at
+least `T/4`: `T q ≤ 4 q'` whenever `q < q'`.  Unconditional — no normality, no `φ`. -/
+theorem gap_principle {y : ℝ} {T q q' : ℕ} (hq : 1 ≤ q) (hlt : q < q')
+    (hg : nearInt ((q : ℝ) * y) ≤ 2 / ((T : ℝ) * q))
+    (hp : Nat.Coprime (round ((q : ℝ) * y)).natAbs q)
+    (hg' : nearInt ((q' : ℝ) * y) ≤ 2 / ((T : ℝ) * q'))
+    (hp' : Nat.Coprime (round ((q' : ℝ) * y)).natAbs q') :
+    (T : ℝ) * q ≤ 4 * q' := by
+  have hq' : 1 ≤ q' := le_trans hq hlt.le
+  have hqR : (0:ℝ) < (q:ℝ) := by exact_mod_cast hq
+  have hqR' : (0:ℝ) < (q':ℝ) := by exact_mod_cast hq'
+  have hltR : (q:ℝ) < (q':ℝ) := by exact_mod_cast hlt
+  rcases Nat.eq_zero_or_pos T with rfl | hT
+  · simp only [Nat.cast_zero, zero_mul]
+    positivity
+  have hTR : (0:ℝ) < (T:ℝ) := by exact_mod_cast hT
+  set m := round ((q : ℝ) * y) with hm
+  set m' := round ((q' : ℝ) * y) with hm'
+  -- the two approximations, in `|y − m/q|` form
+  have hA : |(q : ℝ) * y - (m : ℝ)| * ((T:ℝ) * (q:ℝ)) ≤ 2 := by
+    have h := hg
+    rw [nearInt, le_div_iff₀ (by positivity : (0:ℝ) < (T:ℝ) * (q:ℝ))] at h
+    exact h
+  have hA' : |(q' : ℝ) * y - (m' : ℝ)| * ((T:ℝ) * (q':ℝ)) ≤ 2 := by
+    have h := hg'
+    rw [nearInt, le_div_iff₀ (by positivity : (0:ℝ) < (T:ℝ) * (q':ℝ))] at h
+    exact h
+  have h1 : |y - (m : ℝ) / (q : ℝ)| ≤ 2 / ((T : ℝ) * (q:ℝ) ^ 2) := by
+    have hid : y - (m : ℝ) / (q : ℝ) = ((q : ℝ) * y - (m : ℝ)) / (q : ℝ) := by
+      field_simp
+    rw [hid, abs_div, abs_of_pos hqR, div_le_div_iff₀ hqR (by positivity)]
+    nlinarith [hA, hqR, abs_nonneg ((q : ℝ) * y - (m : ℝ))]
+  have h2 : |y - (m' : ℝ) / (q' : ℝ)| ≤ 2 / ((T : ℝ) * (q':ℝ) ^ 2) := by
+    have hid : y - (m' : ℝ) / (q' : ℝ) = ((q' : ℝ) * y - (m' : ℝ)) / (q' : ℝ) := by
+      field_simp
+    rw [hid, abs_div, abs_of_pos hqR', div_le_div_iff₀ hqR' (by positivity)]
+    nlinarith [hA', hqR', abs_nonneg ((q' : ℝ) * y - (m' : ℝ))]
+  -- the two fractions are distinct, hence `1/(q q')` apart
+  have hcross := one_le_abs_cross hq hq' (by omega) hp hp'
+  have h3 : 1 / ((q:ℝ) * (q':ℝ)) ≤ |(m : ℝ) / (q : ℝ) - (m' : ℝ) / (q' : ℝ)| := by
+    have hid : (m : ℝ) / (q : ℝ) - (m' : ℝ) / (q' : ℝ)
+        = (((m * (q' : ℤ) - m' * (q : ℤ) : ℤ)) : ℝ) / ((q:ℝ) * (q':ℝ)) := by
+      push_cast
+      field_simp
+    rw [hid, abs_div, abs_of_pos (mul_pos hqR hqR')]
+    have hnum : (1:ℝ) ≤ |(((m * (q' : ℤ) - m' * (q : ℤ) : ℤ)) : ℝ)| := by
+      have hge : ((|m * (q' : ℤ) - m' * (q : ℤ)| : ℤ) : ℝ) ≥ 1 := by exact_mod_cast hcross
+      rwa [Int.cast_abs] at hge
+    gcongr
+  -- combine
+  have hmono : 2 / ((T : ℝ) * (q':ℝ) ^ 2) ≤ 2 / ((T : ℝ) * (q:ℝ) ^ 2) := by
+    apply div_le_div_of_nonneg_left (by norm_num) (by positivity)
+    have hsq : (q:ℝ) ^ 2 ≤ (q':ℝ) ^ 2 := by nlinarith [hltR, hqR]
+    nlinarith [hsq, hTR]
+  have htri : |(m : ℝ) / (q : ℝ) - (m' : ℝ) / (q' : ℝ)|
+      ≤ |y - (m : ℝ) / (q : ℝ)| + |y - (m' : ℝ) / (q' : ℝ)| := by
+    have h := abs_sub_le ((m : ℝ) / (q : ℝ)) y ((m' : ℝ) / (q' : ℝ))
+    rw [abs_sub_comm ((m : ℝ) / (q : ℝ)) y] at h
+    linarith
+  have h5 : 1 / ((q:ℝ) * (q':ℝ)) ≤ 4 / ((T : ℝ) * (q:ℝ) ^ 2) := by
+    have hsplit : 2 / ((T : ℝ) * (q:ℝ) ^ 2) + 2 / ((T : ℝ) * (q:ℝ) ^ 2)
+        = 4 / ((T : ℝ) * (q:ℝ) ^ 2) := by ring
+    linarith
+  rw [div_le_div_iff₀ (by positivity) (by positivity)] at h5
+  nlinarith [h5, hqR, hqR']
+
+/-! ### The count that the gap principle gives -/
+
+/-- A finite set of positive naturals in which every pair is separated by a factor `c ≥ 1`
+contains an element `≥ c^(card−1)`. -/
+private lemma exists_geom_le_of_gap {c : ℝ} (hc : 1 ≤ c) :
+    ∀ (n : ℕ) (S : Finset ℕ), S.card = n + 1 → (∀ a ∈ S, 1 ≤ a) →
+      (∀ a ∈ S, ∀ b ∈ S, a < b → c * a ≤ b) → ∃ M ∈ S, c ^ n ≤ (M : ℝ) := by
+  have hc0 : (0:ℝ) ≤ c := le_trans zero_le_one hc
+  intro n
+  induction n with
+  | zero =>
+      intro S hcard hpos _
+      obtain ⟨M, hM⟩ := Finset.card_eq_one.1 hcard
+      refine ⟨M, by simp [hM], ?_⟩
+      have : (1:ℝ) ≤ (M:ℝ) := by exact_mod_cast hpos M (by simp [hM])
+      simpa using this
+  | succ n ih =>
+      intro S hcard hpos hgap
+      have hne : S.Nonempty := Finset.card_pos.1 (by omega)
+      set M := S.max' hne with hMdef
+      have hMmem : M ∈ S := S.max'_mem hne
+      have hcard' : (S.erase M).card = n + 1 := by
+        rw [Finset.card_erase_of_mem hMmem]; omega
+      obtain ⟨M', hM'mem, hM'⟩ := ih (S.erase M) hcard'
+        (fun a ha => hpos a (Finset.mem_of_mem_erase ha))
+        (fun a ha b hb hab =>
+          hgap a (Finset.mem_of_mem_erase ha) b (Finset.mem_of_mem_erase hb) hab)
+      have hM'S : M' ∈ S := Finset.mem_of_mem_erase hM'mem
+      have hM'lt : M' < M := by
+        have h1 := S.le_max' M' hM'S
+        have h2 : M' ≠ M := Finset.ne_of_mem_erase hM'mem
+        omega
+      have hstep := hgap M' hM'S M hMmem hM'lt
+      refine ⟨M, hMmem, ?_⟩
+      have hpow : (0:ℝ) ≤ c ^ n := pow_nonneg hc0 n
+      calc c ^ (n + 1) = c * c ^ n := by ring
+        _ ≤ c * (M' : ℝ) := mul_le_mul_of_nonneg_left hM' hc0
+        _ ≤ (M : ℝ) := hstep
+
+/-- **The count the gap principle gives.**  For `T ≥ 5` the primitive good denominators up to `Q`
+number at most `1 + log Q / log (T/4)`.  Unconditional, and exactly the *free* rate: the
+Diophantine language reproduces `tailFreq_le_of_levyBound`'s `1/log T` without any normality — so
+the passage to `1/T` is not a matter of the target sets' size or of primitivity, but of **which
+scales** carry a good denominator. -/
+theorem goodDenCountPrim_le_log {y : ℝ} {T Q : ℕ} (hT : 5 ≤ T) (hQ : 1 ≤ Q) :
+    (goodDenCountPrim y T Q : ℝ) ≤ 1 + Real.log Q / Real.log ((T:ℝ) / 4) := by
+  set c : ℝ := (T:ℝ) / 4 with hcdef
+  have hT5 : (5:ℝ) ≤ (T:ℝ) := by exact_mod_cast hT
+  have hc1 : 1 < c := by rw [hcdef]; rw [lt_div_iff₀ (by norm_num)]; linarith
+  have hlogc : 0 < Real.log c := Real.log_pos hc1
+  have hQR : (1:ℝ) ≤ (Q:ℝ) := by exact_mod_cast hQ
+  set S := (Finset.Icc 1 Q).filter
+    (fun q : ℕ => nearInt ((q : ℝ) * y) ≤ 2 / ((T : ℝ) * q) ∧
+      Nat.Coprime (round ((q : ℝ) * y)).natAbs q) with hS
+  have hcardS : goodDenCountPrim y T Q = S.card := by rw [goodDenCountPrim, hS]
+  rcases Nat.eq_zero_or_pos S.card with h0 | hpos
+  · rw [hcardS, h0]
+    have : 0 ≤ Real.log Q / Real.log c :=
+      div_nonneg (Real.log_nonneg hQR) hlogc.le
+    simpa using by linarith
+  -- the gap property
+  have hmem : ∀ a ∈ S, 1 ≤ a ∧ a ≤ Q ∧
+      nearInt ((a : ℝ) * y) ≤ 2 / ((T : ℝ) * a) ∧
+      Nat.Coprime (round ((a : ℝ) * y)).natAbs a := by
+    intro a ha
+    obtain ⟨h1, h2⟩ := Finset.mem_filter.1 ha
+    obtain ⟨h3, h4⟩ := Finset.mem_Icc.1 h1
+    exact ⟨h3, h4, h2.1, h2.2⟩
+  have hgap : ∀ a ∈ S, ∀ b ∈ S, a < b → c * a ≤ b := by
+    intro a ha b hb hab
+    obtain ⟨ha1, -, ha3, ha4⟩ := hmem a ha
+    obtain ⟨-, -, hb3, hb4⟩ := hmem b hb
+    have h := gap_principle ha1 hab ha3 ha4 hb3 hb4
+    rw [hcdef]
+    rw [div_mul_eq_mul_div, div_le_iff₀ (by norm_num : (0:ℝ) < 4)]
+    linarith
+  obtain ⟨n, hn⟩ : ∃ n, S.card = n + 1 := ⟨S.card - 1, by omega⟩
+  obtain ⟨M, hMS, hM⟩ := exists_geom_le_of_gap hc1.le n S hn
+    (fun a ha => (hmem a ha).1) hgap
+  have hMQ : (M:ℝ) ≤ (Q:ℝ) := by exact_mod_cast (hmem M hMS).2.1
+  -- take logs
+  have hlogle : (n : ℝ) * Real.log c ≤ Real.log Q := by
+    have h1 : Real.log (c ^ n) ≤ Real.log Q :=
+      Real.log_le_log (by positivity) (le_trans hM hMQ)
+    rwa [Real.log_pow] at h1
+  have hnle : (n : ℝ) ≤ Real.log Q / Real.log c := by
+    rw [le_div_iff₀ hlogc]
+    exact hlogle
+  rw [hcardS, hn]
+  push_cast
+  linarith
+
 section Audit
 
 #print axioms cfDet
@@ -849,6 +1051,8 @@ section Audit
 #print axioms round_eq_cfNum
 #print axioms largeDigitCount_le_goodDenCountPrim
 #print axioms tailFreq_le_of_goodDenBoundPrim
+#print axioms gap_principle
+#print axioms goodDenCountPrim_le_log
 
 end Audit
 

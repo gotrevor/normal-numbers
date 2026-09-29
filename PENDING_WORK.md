@@ -170,7 +170,17 @@ Three facts, all established lap 30, fix its difficulty and must steer every fur
   demand.  `goodDenCountPrim` / `GoodDenBoundPrim` are the corrected objects, and the reduction
   survives verbatim because convergents are primitive (`coprime_cfNum_cfK`, from `cfDet`):
   `largeDigitCount_le_goodDenCountPrim` + `tailFreq_le_of_goodDenBoundPrim`.
-  **Next attack (lap 34):** instantiate at `y = Int.fract (φ x)`, where `E_q = {u : ‖qφu‖ ≤ 2/(Tq)}`
+  **Lap 34:** `gap_principle` — two distinct primitive `T`-good denominators satisfy `Tq ≤ 4q'`
+  (classical, unconditional, from `one_le_abs_cross`), and `goodDenCountPrim_le_log`:
+  `goodDenCountPrim y T Q ≤ 1 + log Q / log(T/4)` for `T ≥ 5`.  So primitivity DOES restore
+  sparsity — but only to the free rate `1/log T`.  **This localizes the wall precisely:** the
+  target sets are the right size (`heuristic_sum_le`), primitivity is the right normalization
+  (`card_le_goodDenCount_of_large_digit`), the good denominators are automatically `T/4`-spaced
+  (`gap_principle`); the ONLY missing statement is that the `≍ log Q / log T` scales that *could*
+  carry a good denominator actually carry one for at most a `log(T/4)/T` fraction of them.  That is
+  a statement about WHICH scales — the orbit's equidistribution — with no remaining slack in the
+  size or shape of the sets.
+  **Next attack (lap 35):** instantiate at `y = Int.fract (φ x)`, where `E_q = {u : ‖qφu‖ ≤ 2/(Tq)}`
   is **`x`-independent**; the open question is then the single sentence "does CF-normality of `x`
   control the visit counts to `{E_q}`?".  Two concrete probes: (i) the `q` occurring are the
   denominators of `φx`, so ask whether `q ∈ ℕ` can be replaced by `qφ ∈ ℤ[φ]` and the norm form
