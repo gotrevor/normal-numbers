@@ -2398,3 +2398,33 @@ width floor in frequency.  Same hypothesis, both directions now in the kernel.
 3. **The clock rate `N p ≤ Λ p`** — a Lévy-type bound on the image expansion.  The counting side
    already supplies tail control freely (`tailFreq_le_of_levyBound`); check whether it gives this.
 4. **`BlockCoupling`** for the actual transducer — bookkeeping, not mathematics.
+
+### Lap 75 addendum — S7-LAG: lap 75's own bridge was the wrong shape
+
+`VandeheyS7Lag` **corrects** lap 75's `NarrowForcesBlock`.  That hypothesis ("width(sₙ) < η ⟹
+Lₙ ≥ L", the burst at the SAME input time) is not what the geometry delivers: a state too narrow to
+emit straddles a boundary `1/k`, and the next input digit shrinks `J` without necessarily moving it
+off the boundary, so the state can stay narrow *and silent* for several input times before the burst.
+`freq_narrow_le` is a true theorem about a hypothesis the transducer does not satisfy in that form.
+
+The correct bridge is amortized, and is now in the kernel:
+
+* `MobState.deficit s = -log (width s)` — the emitter's lag; `deficit_nonneg` when `width ≤ 1`.
+* `MobState.lt_width_iff_deficit` — narrowness *is* large lag, exactly.
+* `card_gt_le_sum_div` — Markov for a nonnegative sequence.
+* `freq_narrow_le_of_lag` / `narrow_freq_tendsto_zero_of_lag` — **from the single hypothesis
+  `Σ_{n<p} deficit(sₙ) ≤ Λ p` ("the emitter's lag is O(1) on average")**,
+  `freq{n : width(sₙ) < η} ≤ Λ / log(1/η) → 0`, uniformly in `p`.  This is the directive's
+  frequency form, from a hypothesis strictly weaker than `NarrowForcesBlock` and of the right shape.
+* `deficit_telescope_le` — `c·N p ≤ deficit(s₀) + Σ_{n<p} ξ n` when each step raises the lag by
+  `≤ ξ n` and lowers it by `≥ c` per emitted digit.  This is simultaneously the clock rate
+  `N p ≤ Λ p` that `freq_longBlock_le` wants, and the reason handoff idea 3 bites:
+  `ξ n ≍ 2 log a_{n+1}` for the Raney transducer, and CF-normality does **not** bound
+  `(1/p) Σ log a`.  So the clock rate is a genuine residual.
+
+### Residual after the lap-75 addendum
+
+1. **`BlockAverageBound`** — fact (α), the open heart, the only measure-theoretic debt.
+2. **`Σ deficit ≤ Λ p`** (average lag) and the per-step inequality `hstep` for the Raney states —
+   both geometry of `Φ` and the emission rule; the shapes are now fixed by `deficit_telescope_le`.
+3. **`BlockCoupling`** for the actual transducer — bookkeeping.
