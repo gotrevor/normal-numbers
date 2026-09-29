@@ -135,11 +135,107 @@ theorem sum_pairErr_le (w : List ℕ) (T : ℕ) :
       _ = 40 := by norm_num
   linarith
 
+/-! ## The double sum -/
+
+/-- One `(j, j')` term of the expanded square is a shifted pair count. -/
+theorem sum_pair_shift_le (w : List ℕ) (y : ℝ) (p T j j' : ℕ) (hj : j ≤ j') (hj' : j' < T) :
+    ∑ m ∈ range p, blockIndic (cfCylinder w) (gaussMap^[m + j] y)
+        * blockIndic (cfCylinder w) (gaussMap^[m + j'] y)
+      ≤ blockCount (pairSet w (j' - j)) (p + T) y := by
+  classical
+  have hterm : ∀ m ∈ range p,
+      blockIndic (cfCylinder w) (gaussMap^[m + j] y)
+          * blockIndic (cfCylinder w) (gaussMap^[m + j'] y)
+        = blockIndic (pairSet w (j' - j)) (gaussMap^[m + j] y) := by
+    intro m _
+    by_cases h1 : gaussMap^[m + j] y ∈ cfCylinder w
+    · by_cases h2 : gaussMap^[m + j'] y ∈ cfCylinder w
+      · have hmem : gaussMap^[m + j] y ∈ pairSet w (j' - j) := by
+          refine ⟨h1, ?_⟩
+          have : gaussMap^[j' - j] (gaussMap^[m + j] y) = gaussMap^[m + j'] y := by
+            rw [← Function.iterate_add_apply]
+            congr 1
+            omega
+          rw [Set.mem_preimage, this]
+          exact h2
+        rw [blockIndic_eq_one' h1, blockIndic_eq_one' h2, blockIndic_eq_one' hmem, mul_one]
+      · have hnot : gaussMap^[m + j] y ∉ pairSet w (j' - j) := by
+          intro hmem
+          refine h2 ?_
+          have hiter : gaussMap^[j' - j] (gaussMap^[m + j] y) = gaussMap^[m + j'] y := by
+            rw [← Function.iterate_add_apply]
+            congr 1
+            omega
+          have := hmem.2
+          rw [Set.mem_preimage, hiter] at this
+          exact this
+        rw [blockIndic_eq_zero' h2, blockIndic_eq_zero' hnot, mul_zero]
+    · have hnot : gaussMap^[m + j] y ∉ pairSet w (j' - j) := fun hmem => h1 hmem.1
+      rw [blockIndic_eq_zero' h1, blockIndic_eq_zero' hnot, zero_mul]
+  rw [Finset.sum_congr rfl hterm, blockCount_apply]
+  -- the shifted window sits inside `range (p + T)`
+  have hsub : (range p).image (fun m => m + j) ⊆ range (p + T) := by
+    intro n hn
+    obtain ⟨m, hm, rfl⟩ := Finset.mem_image.1 hn
+    exact Finset.mem_range.2 (by
+      have := Finset.mem_range.1 hm
+      omega)
+  have hinj : ∀ a ∈ range p, ∀ b ∈ range p, a + j = b + j → a = b := by
+    intro a _ b _ h; omega
+  have himg : ∑ m ∈ range p, blockIndic (pairSet w (j' - j)) (gaussMap^[m + j] y)
+      = ∑ n ∈ (range p).image (fun m => m + j),
+          blockIndic (pairSet w (j' - j)) (gaussMap^[n] y) :=
+    (Finset.sum_image (f := fun n => blockIndic (pairSet w (j' - j)) (gaussMap^[n] y)) hinj).symm
+  rw [himg]
+  exact Finset.sum_le_sum_of_subset_of_nonneg hsub (fun n _ _ => blockIndic_nonneg _ _)
+
+/-- **The expanded square, as pair counts.** -/
+theorem sum_sq_window_le (w : List ℕ) (y : ℝ) (p T : ℕ) :
+    ∑ m ∈ range p, (blockCount (cfCylinder w) T (gaussMap^[m] y)) ^ 2
+      ≤ ∑ j ∈ range T, ∑ j' ∈ range T,
+          blockCount (pairSet w (max j j' - min j j')) (p + T) y := by
+  classical
+  have hexp : ∀ m : ℕ, (blockCount (cfCylinder w) T (gaussMap^[m] y)) ^ 2
+      = ∑ j ∈ range T, ∑ j' ∈ range T,
+          blockIndic (cfCylinder w) (gaussMap^[m + j] y)
+            * blockIndic (cfCylinder w) (gaussMap^[m + j'] y) := by
+    intro m
+    have hshift : ∀ j : ℕ, blockIndic (cfCylinder w) (gaussMap^[j] (gaussMap^[m] y))
+        = blockIndic (cfCylinder w) (gaussMap^[m + j] y) := by
+      intro j
+      rw [← Function.iterate_add_apply, Nat.add_comm]
+    rw [blockCount_apply, pow_two, Finset.sum_mul_sum]
+    exact Finset.sum_congr rfl fun j _ => Finset.sum_congr rfl fun j' _ => by
+      rw [hshift j, hshift j']
+  rw [Finset.sum_congr rfl (fun m _ => hexp m)]
+  rw [Finset.sum_comm]
+  refine Finset.sum_le_sum fun j hj => ?_
+  have hjT : j < T := Finset.mem_range.1 hj
+  rw [Finset.sum_comm]
+  refine Finset.sum_le_sum fun j' hj' => ?_
+  have hj'T : j' < T := Finset.mem_range.1 hj'
+  rcases le_total j j' with h | h
+  · have hmm : max j j' - min j j' = j' - j := by
+      rw [max_eq_right h, min_eq_left h]
+    rw [hmm]
+    exact sum_pair_shift_le w y p T j j' h hj'T
+  · have hmm : max j j' - min j j' = j - j' := by
+      rw [max_eq_left h, min_eq_right h]
+    rw [hmm]
+    have hswap : ∀ m : ℕ, blockIndic (cfCylinder w) (gaussMap^[m + j] y)
+        * blockIndic (cfCylinder w) (gaussMap^[m + j'] y)
+        = blockIndic (cfCylinder w) (gaussMap^[m + j'] y)
+          * blockIndic (cfCylinder w) (gaussMap^[m + j] y) := fun m => by ring
+    rw [Finset.sum_congr rfl (fun m _ => hswap m)]
+    exact sum_pair_shift_le w y p T j' j h hjT
+
 end NormalNumbers.VandeheyS7
 
 section Audit
 
 #print axioms NormalNumbers.VandeheyS7.blockCount_pairSet_le_err
 #print axioms NormalNumbers.VandeheyS7.sum_pairErr_le
+#print axioms NormalNumbers.VandeheyS7.sum_pair_shift_le
+#print axioms NormalNumbers.VandeheyS7.sum_sq_window_le
 
 end Audit
