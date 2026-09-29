@@ -205,6 +205,123 @@ theorem three_range_tail_le {R A M H k L J Y : ℕ} (hA : 0 < A) (hR : 0 < R) (h
   exact add_le_add (near_middle_tail_le hA hR hH hkL hLJ hbd hcop)
     (far_tail_le (M := M) (Y := Y) (J := J) (fun m => R + m * A) hY)
 
+/-! ### The adaptive far-range split point
+
+The note fixes `J = ⌊(log₂ X)²⌋` and reaches for `τ(n) ≤ 2√n`.  Neither is needed: `J` may
+be chosen *adaptively* at each height from the window bound `Y₀ = 2QX`, large enough that
+`2^J ≥ (Y₀+1)²(X+1)²2^{k³}`, and then the far cost is `O(X^{-2})` with the crude
+`τ(n) ≤ n` already frozen in `tsum_tau_div_le`. -/
+
+
+/-- The far-range split point, chosen adaptively at each height from the window bound
+`Y₀ = 2QX` and the height `X`: `J = k³ + 2S` with `2^S > (Y₀+1)(X+1)`. -/
+def countJ (k Y0 X : ℕ) : ℕ :=
+  k ^ 3 + 2 * (Nat.log 2 (Y0 + 1) + 1 + (Nat.log 2 (X + 1) + 1))
+
+theorem le_countJ (k Y0 X : ℕ) : k ^ 3 ≤ countJ k Y0 X := Nat.le_add_right _ _
+
+theorem two_pow_countJ_ge (k Y0 X : ℕ) :
+    ((Y0 : ℝ) + 1) ^ 2 * ((X : ℝ) + 1) ^ 2 * (2 : ℝ) ^ (k ^ 3)
+      ≤ (2 : ℝ) ^ (countJ k Y0 X) := by
+  have hY : (Y0 : ℝ) + 1 < 2 ^ (Nat.log 2 (Y0 + 1) + 1) := by
+    have := Nat.lt_pow_succ_log_self (by norm_num : 1 < 2) (Y0 + 1)
+    have h : ((Y0 + 1 : ℕ) : ℝ) < ((2 ^ (Nat.log 2 (Y0 + 1) + 1) : ℕ) : ℝ) := by
+      exact_mod_cast this
+    push_cast at h
+    linarith
+  have hX : (X : ℝ) + 1 < 2 ^ (Nat.log 2 (X + 1) + 1) := by
+    have := Nat.lt_pow_succ_log_self (by norm_num : 1 < 2) (X + 1)
+    have h : ((X + 1 : ℕ) : ℝ) < ((2 ^ (Nat.log 2 (X + 1) + 1) : ℕ) : ℝ) := by
+      exact_mod_cast this
+    push_cast at h
+    linarith
+  set S : ℕ := Nat.log 2 (Y0 + 1) + 1 + (Nat.log 2 (X + 1) + 1) with hS
+  have hprod : ((Y0 : ℝ) + 1) * ((X : ℝ) + 1) ≤ (2 : ℝ) ^ S := by
+    rw [hS, pow_add]
+    nlinarith [hY, hX, pow_pos (by norm_num : (0:ℝ) < 2) (Nat.log 2 (Y0 + 1) + 1),
+      pow_pos (by norm_num : (0:ℝ) < 2) (Nat.log 2 (X + 1) + 1)]
+  have hsq : (((Y0 : ℝ) + 1) * ((X : ℝ) + 1)) ^ 2 ≤ ((2 : ℝ) ^ S) ^ 2 := by
+    apply pow_le_pow_left₀ (by positivity) hprod
+  have hexp : ((2 : ℝ) ^ S) ^ 2 * (2 : ℝ) ^ (k ^ 3) = (2 : ℝ) ^ (countJ k Y0 X) := by
+    rw [← pow_mul, ← pow_add]
+    congr 1
+    simp only [countJ, ← hS]
+    omega
+  calc ((Y0 : ℝ) + 1) ^ 2 * ((X : ℝ) + 1) ^ 2 * (2 : ℝ) ^ (k ^ 3)
+      = (((Y0 : ℝ) + 1) * ((X : ℝ) + 1)) ^ 2 * (2 : ℝ) ^ (k ^ 3) := by ring
+    _ ≤ ((2 : ℝ) ^ S) ^ 2 * (2 : ℝ) ^ (k ^ 3) := by
+        exact mul_le_mul_of_nonneg_right hsq (by positivity)
+    _ = _ := hexp
+
+/-- **The far-range cost at the adaptive split point** is `O(X^{-2})`, uniformly in `k`
+and in the window bound `Y₀`.  This is the estimate that replaces the note's
+`τ(n) ≤ 2√n`: at `J = countJ`, `2^J` dwarfs the window, and no divisor bound is needed. -/
+theorem far_cost_le {k Y0 X : ℕ} (hX : 1 ≤ X) (hXY : X ≤ Y0) :
+    (2 * ((Y0 : ℝ) + (countJ k Y0 X : ℕ)) + 2 * ((countJ k Y0 X : ℕ) : ℝ) + 2)
+        * (1 / 2 : ℝ) ^ (countJ k Y0 X)
+      ≤ 24 / ((X : ℝ) + 1) ^ 2 := by
+  have hXR : (1 : ℝ) ≤ (X : ℝ) := by exact_mod_cast hX
+  have hXYR : (X : ℝ) ≤ (Y0 : ℝ) := by exact_mod_cast hXY
+  set J : ℕ := countJ k Y0 X with hJ
+  set T : ℝ := (2 : ℝ) ^ (k ^ 3) with hT
+  set u : ℝ := (Y0 : ℝ) + 1 with hu
+  set v : ℝ := (X : ℝ) + 1 with hv
+  have hT1 : (1 : ℝ) ≤ T := one_le_pow₀ (by norm_num)
+  have hv2 : (2 : ℝ) ≤ v := by simp only [hv]; linarith
+  have hvu : v ≤ u := by simp only [hu, hv]; linarith
+  have hden : u ^ 2 * v ^ 2 * T ≤ (2 : ℝ) ^ J := two_pow_countJ_ge k Y0 X
+  have hden0 : (0 : ℝ) < (2 : ℝ) ^ J := by positivity
+  have hlogY : (Nat.log 2 (Y0 + 1) : ℝ) ≤ u := by
+    have h : ((Nat.log 2 (Y0 + 1) : ℕ) : ℝ) ≤ ((Y0 + 1 : ℕ) : ℝ) := by
+      exact_mod_cast Nat.log_le_self 2 (Y0 + 1)
+    push_cast at h; simp only [hu]; linarith
+  have hlogX : (Nat.log 2 (X + 1) : ℝ) ≤ v := by
+    have h : ((Nat.log 2 (X + 1) : ℕ) : ℝ) ≤ ((X + 1 : ℕ) : ℝ) := by
+      exact_mod_cast Nat.log_le_self 2 (X + 1)
+    push_cast at h; simp only [hv]; linarith
+  have hk3 : ((k ^ 3 : ℕ) : ℝ) ≤ T := by
+    have h : ((k ^ 3 : ℕ) : ℝ) ≤ ((2 ^ (k ^ 3) : ℕ) : ℝ) := by
+      exact_mod_cast (Nat.lt_two_pow_self (n := k ^ 3)).le
+    simp only [hT]; exact_mod_cast h
+  have hJR : (J : ℝ) ≤ T + 2 * (u + v + 2) := by
+    have hJn : (J : ℝ) = ((k ^ 3 : ℕ) : ℝ)
+        + 2 * ((Nat.log 2 (Y0 + 1) : ℝ) + 1 + ((Nat.log 2 (X + 1) : ℝ) + 1)) := by
+      simp only [hJ, countJ]; push_cast; ring
+    rw [hJn]
+    linarith [hlogY, hlogX, hk3]
+  have huv : u + v + 2 ≤ 2 * (u * v) := by nlinarith
+  have hnum : 2 * ((Y0 : ℝ) + (J : ℝ)) + 2 * (J : ℝ) + 2 ≤ 2 * u + 4 * T + 16 * (u * v) := by
+    have hY0u : (Y0 : ℝ) = u - 1 := by simp only [hu]; ring
+    rw [hY0u]; linarith [hJR, huv]
+  have hfinal : (2 * u + 4 * T + 16 * (u * v)) / (2 : ℝ) ^ J ≤ 24 / v ^ 2 := by
+    rw [div_le_div_iff₀ hden0 (by positivity)]
+    have hu1 : (1 : ℝ) ≤ u := by linarith
+    have hv0 : (0 : ℝ) < v := by linarith
+    have hu0 : (0 : ℝ) < u := by linarith
+    have hut : (1 : ℝ) ≤ u * T := by nlinarith
+    have hbase : (0 : ℝ) ≤ u * v ^ 2 := by positivity
+    have e1 : 2 * u * v ^ 2 ≤ 2 * (u ^ 2 * v ^ 2 * T) := by
+      have := mul_le_mul_of_nonneg_left hut hbase
+      nlinarith [this]
+    have e2 : 4 * T * v ^ 2 ≤ 4 * (u ^ 2 * v ^ 2 * T) := by
+      have hu2' : (1 : ℝ) ≤ u ^ 2 := by nlinarith
+      have hb : (0 : ℝ) ≤ T * v ^ 2 := by positivity
+      nlinarith [mul_le_mul_of_nonneg_left hu2' hb]
+    have e3 : 16 * (u * v) * v ^ 2 ≤ 16 * (u ^ 2 * v ^ 2 * T) := by
+      have hvuT : v ≤ u * T := by nlinarith
+      have hb : (0 : ℝ) ≤ u * v ^ 2 := by positivity
+      nlinarith [mul_le_mul_of_nonneg_left hvuT hb]
+    have key : (2 * u + 4 * T + 16 * (u * v)) * v ^ 2 ≤ 24 * (u ^ 2 * v ^ 2 * T) := by
+      nlinarith [e1, e2, e3, mul_pos (mul_pos (mul_pos hu0 hu0) (mul_pos hv0 hv0))
+        (show (0:ℝ) < T by linarith)]
+    linarith [key, hden]
+  calc (2 * ((Y0 : ℝ) + (J : ℝ)) + 2 * (J : ℝ) + 2) * (1 / 2 : ℝ) ^ J
+      = (2 * ((Y0 : ℝ) + (J : ℝ)) + 2 * (J : ℝ) + 2) / (2 : ℝ) ^ J := by
+        rw [div_pow, one_pow]; ring
+    _ ≤ (2 * u + 4 * T + 16 * (u * v)) / (2 : ℝ) ^ J := by
+        gcongr
+    _ ≤ 24 / v ^ 2 := hfinal
+
 /-! ### Permanent boundary controls -/
 
 /-- Empty tail range: `k = J` gives the zero sum, and the bound is nonnegative. -/

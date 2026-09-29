@@ -27,6 +27,12 @@ delivers, at every large caller-chosen `X`, the pool prime, the allocation, the 
 `∑' t τ(n+k+t)/2^(k+t)` *is* the three-range expression `three_range_tail_le` bounds — the
 bridge that lets the counting route reuse the frozen tail estimate verbatim.
 
+Also proved: the adaptive far-range split point `countJ k Y0 X = k³ + 2S` with
+`2^S > (Y₀+1)(X+1)`, and `far_cost_le`: at that `J` the far cost
+`(2Y+2J+2)(1/2)^J ≤ 24/(X+1)²` whenever `X ≤ Y₀`.  This removes the last free parameter
+of step 3 and is uniform in `k`; the note's `J = ⌊(log₂X)²⌋` is not needed, nor is any
+divisor bound in the far range.
+
 What is left inside `exists_good_starts_at_height` is therefore steps 3–4 only: feed
 `three_range_tail_le`, show the total is `≤ θ·(M/(4 log X))/2` (this is the one arithmetic
 inequality still open, and the choice of `J` is a free parameter there), then
