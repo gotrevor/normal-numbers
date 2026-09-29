@@ -2110,3 +2110,30 @@ where the directive already points.
 (i) the state's monotonicity, (ii) the length bound on the pullback of `(0,1/T)` (lap 49's
 `sub_le_of_image_le` with the distortion bound), (iii) `anchoredHitFreq_le`, and (iv) the clock.
 If it lands, the §7 chain drops from three hypotheses to two.
+
+### 2026-09-29 lap 66 — `ImageTight` reduces to an ANCHORED pullback (`VandeheyS7Tight3.lean`)
+
+The anchored principle is cashed:
+
+* `AnchoredPullback q r₀ Λ` — the image orbit's visits to the tail cell `cellSet [] T` are, up to
+  frequency `ε`, matched by input times at which the input lies below its own lower threshold or
+  above its own upper one, both within `Λ/T` of the endpoint.
+* `imageTight_of_anchoredPullback : AnchoredPullback q r₀ Λ → ImageTight (fract (q x + r₀))` for
+  every CF-normal `x`.  Axiom-clean.
+
+**Why this is strictly weaker than `WindowedPullback`.**  `WindowedPullback` must name an interval
+*determined by the last `k` input digits* — location-determinacy, which `no_window_function`
+refutes exactly and `not_gappedHitPrinciple` shows cannot be softened.  `AnchoredPullback` names no
+window, lets the thresholds depend on `n` arbitrarily, and constrains only their *size*.  That
+freedom is legitimate only because the tail-cell target is endpoint-anchored (lap 65), and the size
+`Λ/T` is what bounded distortion already supplies.
+
+So the §7 chain's second obligation has moved from an assumption about the image to a soft
+statement about the machine.
+
+**NEXT (lap 67).**  Build a witness for `AnchoredPullback` from the repo's transducer layer:
+(a) the state's monotonicity (`MobState.mob` is monotone in `t` — sign of `ad − bc`), so the
+pullback of `(0,1/T)` is downward- or upward-closed;
+(b) `sub_le_of_image_le` / `spread_runWord_le` for the `Λ/T` size, with the distortion bound;
+(c) the clock (`VandeheyS7Clock`) to match output positions to input times.
+(a) is the piece to formalise first, and it is elementary: `mob_strictMono_or_strictAnti`.
