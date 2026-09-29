@@ -2021,3 +2021,23 @@ bound minimised at `K = 1`.
 ε-scheme (the bad frequency need only tend to `0` with the scale), but a lap that writes `C·δ` is
 off by an unbounded factor and will read as a spurious contradiction.  Lap 60's plan to count bad
 times is hereby calibrated; lap 62 should state `BadTimeCount` with the `√` in it from the start.
+
+### 2026-09-29 lap 62 — the lap-48 bad set is small, unconditionally (`VandeheyS7BadMass.lean`)
+
+Joining lap 61's measure estimate to lap 48's `nearInv η` (the set where bounded distortion
+fails):
+
+* `measurableSet_nearInv`, `volume_nearInv_le` : `|nearInv η| ≤ 7√η`;
+* `gaussMeasure_nearInv_le` : `γ(nearInv η) ≤ 7√η / log 2`.
+
+Both axiom-clean and **unconditional** — no `ImageTight`.  Compare `exists_nearInv_freq_le`, which
+buys the same smallness in *frequency* at the cost of the chain's second hypothesis.  So the split
+is now exact: the **measure** half of "bad states are rare" is free; the **measure → frequency**
+half is the whole cost, and `not_gappedHitPrinciple` says that half cannot be soft.
+
+**NEXT (lap 63).**  Try to make the frequency half unconditional too, for the INPUT orbit, where
+CF-normality is a hypothesis we hold: cover `nearInv η` by the `K = ⌈η^{−1/2}⌉` intervals plus
+`(0, 1/K + η)` (the covering is already written), push each through the cell cover
+(`cellCover_inv_log_two`, the same route `windowHit_Ioo_le` uses for a single interval), and sum.
+That gives `freq{n : Gⁿx ∈ nearInv η} ≤ C√η + ε` for CF-normal `x` with no second hypothesis — and
+would remove `ImageTight` from lap 48's separation step, leaving it needed only on the IMAGE.
