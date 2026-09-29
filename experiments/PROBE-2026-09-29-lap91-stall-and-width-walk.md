@@ -138,3 +138,44 @@ Route A's architecture is not broken — the *instrument* was.  The program is:
 
 The width-free architecture (S7-AW) stays valid and is the fallback: it needs no width input at
 all.
+
+---
+
+## Finding 4 — the greedy run's narrow-time frequency is `≍ √η`, exactly as S7-SM predicts
+
+Exact rational arithmetic, `Φ : z ↦ (z+1)/3`, 40000 reads, greedy emission (40056 output digits,
+mean slack `2.046`, max `19.68`):
+
+| `η` | `freq(width < η)` | `√η` | `freq(output digit > 1/(4η))` |
+|---|---|---|---|
+| `10⁻¹` | 0.2988 | 0.316 | 0.417 |
+| `10⁻²` | 0.0949 | 0.100 | 0.053 |
+| `10⁻³` | 0.0294 | 0.0316 | 0.0053 |
+| `10⁻⁴` | 0.0084 | 0.010 | 0.0005 |
+| `10⁻⁶` | 0.0010 | 0.001 | 0.0000 |
+
+So `freq(width < η) ≍ √η` to two digits across five decades.  That is **exactly the Gauss measure of
+`straddleSet η`** (S7-SM: `volume (straddleSet w) ≍ √w`), which with S7-SS (a stall IS a straddle)
+says the state's endpoint process visits the straddle set at its own measure — the state is
+behaving like an equidistributed point, which is the crux in its own coordinates.
+
+Consequences:
+
+* **`WidthAfford` is TRUE for the greedy run**, with the quantitative rate `bad(η) ≍ √η`;
+* **`MeanSlack` is TRUE** (`mean slack ≈ 2.05` over 40000 reads, stable);
+* consecutive narrow times come in runs of 1 or 2, so the multiplicity in any "narrow time ⇒ large
+  digit" accounting is bounded.
+
+## Finding 5 — why the naive large-digit accounting is off by `√η`, and what the right one is
+
+S7-NB proves that a point within `w` of the boundary `1/(k+1)` has a digit `≥ 1/(4(k+1)²w)` within
+two steps.  The table's last column shows the digit-tail frequency is `≍ η`, while the narrow-time
+frequency is `≍ √η`: the gap is the factor `(k+1)²`.  A narrow state near a boundary with LARGE `k`
+forces only a modest digit, and summing the straddle windows over `k` (window width `≍ η(k+1)²`
+while `γ(I_k) ≍ k⁻²`) is what produces `√η`.  So the honest route to the width debt is the
+`k`-weighted straddle count — S7-SM's computation — and not the digit tail.
+
+What that leaves: `freq(width < η) ≤ freq(image orbit ∈ straddleSet η)`, i.e. the width debt for the
+greedy run is *the image orbit does not over-visit the `√η`-neighbourhood of the cylinder
+boundaries*.  That is strictly weaker than the headline (no digit frequencies, only a
+no-concentration bound), and it is the sharpest form of the remaining scalar obligation.

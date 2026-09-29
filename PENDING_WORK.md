@@ -14,6 +14,16 @@ width filter deleted: `BlockForgetAll` alone gives `IsCFNormal (Φ.mob x)`),
 is locality), `VandeheyS7PairCorr` (S7-PC, geometric pair-correlation decay and the thin digit
 tail).
 
+**Lap-91 second half.**  The greedy transducer is now IN the kernel: `VandeheyS7Greedy` (S7-GR,
+`flushState`/`flushWord`, termination from the width), `VandeheyS7GreedyWidth` (S7-GW, an emission
+pays `b²`, a read costs `a(a+1)(r+2+1/r)`), `VandeheyS7GreedyCorrect` (S7-GC, **transducer
+correctness**: the greedy output IS the image's continued fraction), `VandeheyS7Ledger2` (S7-LD2,
+the output cannot outgrow the input), `VandeheyS7NearBoundary` (S7-NB, a point near a boundary has a
+large digit within two steps).  The probe now measures, for the greedy run,
+`freq(width < η) ≍ √η` across five decades — exactly `γ(straddleSet η)` (S7-SM) — so `WidthAfford`
+and `MeanSlack` are TRUE for it, and the remaining obligation is *the image orbit does not
+over-visit the `√η`-neighbourhood of the cylinder boundaries*.
+
 **Next attack, in order.**
 1. **`stepMax` and the greedy run.**  Termination: `k` consecutive emissions force
    `width ≲ 1/fib(k)²` (S7-AG's bound run forwards), so the burst length is bounded by an explicit
