@@ -22,6 +22,7 @@ import NormalNumbers.WallRational
 import NormalNumbers.MoshchevitinShkredovRefuted
 import NormalNumbers.VandeheyAutomaton
 import NormalNumbers.VandeheyS7Memory
+import NormalNumbers.VandeheyS7Hecke
 
 /-!
 # `Maze.lean` — the halls we have walked, encoded
@@ -289,6 +290,21 @@ decomposition must be indexed by (state class, input word), as `JointStateFreq` 
 proved integer case. -/
 alias hall_emit_digit_window_function :=
   NormalNumbers.VandeheyS7.MobState.no_window_function
+
+/-- **HALL: Hecke approximation of `φ` by Fibonacci ratios** (`refuted`, 2026-09-29).  The repo
+owns Vandehey 2017 Theorem 1.1, so the most natural route to §7 is to approximate: each
+`(F_{k+1}/F_k)·x` is CF-normal, the ratios converge to `φ`, nearby reals share a long CF prefix,
+so take a diagonal limit.  It dies on the *cost* of the approximation.  `φ` is the
+worst-approximable real — `|p − qφ| ≥ 1/(4q)` (`abs_sub_mul_goldenRatio_ge`), from the nonzero
+integer norm form `p² − pq − q² = (p − qφ)(p − qψ)` — so buying agreement of the images to CF
+depth `N` forces `q² > cᴺ` (`pow_lt_den_sq_of_image_approx`) and hence a determinant
+`pq ≥ q² > cᴺ` (`sq_le_det_of_approx`).  Theorem 1.1's automaton then carries `e^{Ω(N)}` states
+while only `N` input digits are read: its equidistribution, an asymptotic statement about that
+automaton, says nothing about the prefix the diagonal argument needs.  Note where the content
+sits: for a *rational* target the norm form vanishes identically, which is exactly why Theorem 1.1
+itself is provable and this is not. -/
+alias hall_hecke_approximation :=
+  NormalNumbers.VandeheyS7.pow_lt_den_sq_of_image_approx
 
 
 
@@ -1104,7 +1120,12 @@ def register : List Hall := [
    "Compute the image CF digit at a position from a bounded window of the input digits, F w = emitDigit (wordState w), with the initial state made invisible by merging",
    .falseAsStated, .kernel,
    "spread_runWord_le bounds the image DIAMETER uniformly in the initial state, not its LOCATION, and runWord s w = s.comp (wordState w) leaves the location entirely to s; the states (1,3;0,8) and (1,7;0,32), both of distortion 1, map [0,1] into the digit-2 and digit-4 cylinders and so emit 2 and 4 after reading ANY word",
-   "alias hall_emit_digit_window_function; module VandeheyS7Memory; what survives is cfDigit_mob_eq_emitDigit, so the decomposition must be indexed by (state class, input word)", "2026-09-29"⟩
+   "alias hall_emit_digit_window_function; module VandeheyS7Memory; what survives is cfDigit_mob_eq_emitDigit, so the decomposition must be indexed by (state class, input word)", "2026-09-29"⟩,
+  ⟨"Hecke approximation of phi by Fibonacci ratios",
+   "Approximate phi by F_(k+1)/F_k, apply the PROVED Vandehey Thm 1.1 to each rational multiple, and pass to a diagonal limit using that nearby reals share a long CF prefix",
+   .refuted, .kernel,
+   "phi is the worst-approximable real: |p - q phi| >= 1/(4q) from the nonzero integer norm form p^2 - pq - q^2, so agreement of the images to CF depth N costs q^2 > c^N and a determinant pq >= q^2 exponential in N; Thm 1.1's automaton then carries e^(Omega(N)) states while only N input digits are read, so its equidistribution says nothing about that prefix",
+   "alias hall_hecke_approximation; module VandeheyS7Hecke; theorems abs_sub_mul_goldenRatio_ge, pow_lt_den_sq_of_image_approx, sq_le_det_of_approx", "2026-09-29"⟩
 ]
 
 /-- Rows whose verdict is machine-checked in this build. -/

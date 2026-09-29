@@ -153,13 +153,15 @@ Three facts, all established lap 30, fix its difficulty and must steer every fur
   **`x`-independent** sets of Lebesgue measure exactly `2/(Tq)`, so the heuristic is exact; what is
   missing is that CF-normality of `x` says nothing about `{E_q}`.  This is the smallest genuinely
   open piece of the crux, and by (β) everything else waits on it.
-* **S7-H (refutation target, cheap).**  Kill the "approximate `φ` by `F_{k+1}/F_k` and use the
-  PROVED Thm 1.1 + a diagonal argument" route with a theorem.  The accounting: `φ` is
-  badly approximable (`|p − qφ| ≥ 1/(4q)` for `q ≥ 1`, from `|p² − pq − q²| ≥ 1`), so agreeing with
-  `φx` to CF depth `N` forces `q ≳ e^{λN}` and hence a transducer determinant `≳ e^{2λN}` — an
-  automaton with `e^{Ω(N)}` states run for `N` steps, which cannot equidistribute.  Lean witness:
-  the explicit bad-approximability bound plus the depth/determinant inequality.  Maze row
-  `hall_hecke_approximation`.
+* **S7-H — DONE, lap 30** (`VandeheyS7Hecke.lean`, axiom-clean; Maze row
+  `hall_hecke_approximation`).  The "approximate `φ` by `F_{k+1}/F_k`, apply the PROVED Thm 1.1,
+  diagonalize" route is refuted by its own accounting: `goldenNorm_factor` +
+  `one_le_abs_goldenNorm` give `abs_sub_mul_goldenRatio_ge : |p − qφ| ≥ 1/(4q)`, hence
+  `pow_lt_den_sq_of_image_approx : |(p/q)x − φx| < |x|/(4cᴺ) → cᴺ < q²` and
+  `sq_le_det_of_approx : q² ≤ pq`.  Buying `N` digits of agreement costs a determinant
+  exponential in `N`, so Thm 1.1's automaton has `e^{Ω(N)}` states while reading `N` digits.
+  **Where the content sits:** for a rational target the norm form vanishes identically — that is
+  precisely why Thm 1.1 is provable and this is not.
 * **S7-P1 (probe).**  Make (α) a Lean refutation: an equidistributed sequence in `(0,1)` and a
   predictable family of intervals of length `δ` met on a set of density `≫ δ`.  This closes an
   entire class of attacks rather than one route.
