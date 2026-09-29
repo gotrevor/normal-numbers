@@ -10,6 +10,13 @@ Advance this lap: the whole analytic spine of §§1–5 went from paper to kerne
 defects in the note's plan were found and repaired (the far range needs no `τ(n) ≤ 2√n`;
 feasibility and rate need *different* bounds on `log B`, crude `k³` and sharp `k² log k`).
 
+Decomposition as of the latest commit: the crux is now TWO named statements in `src`,
+`exists_good_starts_at_height` (chosen-height, steps 1–4) and its §5 transfer inside
+`exists_joint_small_tail_count`.  `JointLambertQuantitative.lean` itself is sorry-free and
+both headlines are proved from these.  `countK_le_countK` (monotone above `log X ≥ 1`; the
+threshold is load-bearing, since `Real.log` is not monotone through `0`) is proved and is the
+transfer's first ingredient.
+
 Next attack: steps 1–5 of "Exact next boundary" in
 `HANDOFF-2026-09-29-joint-lambert-count.md`.  The only remaining analytic items are the two
 limits `(log X)² 2^(-k) → 0` and `(log X)² (a+1)(c+1)^(k²) 2^(-k³) → 0`, both of the same

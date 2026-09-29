@@ -50,6 +50,67 @@ namespace NormalNumbers.JointLambert
 
 open Finset Filter NormalNumbers.SwingC2
 
+
+/-! ### Monotonicity of the height schedule
+
+The all-`N` transfer of §5 applies the chosen-height theorem at `X = ⌊N/D_N⌋ ≤ N` and needs
+`k_X ≤ k_N`, i.e. `countK` monotone.  It is, and elementarily so. -/
+
+/-- `Real.log` is monotone along `ℕ`, including at `0` (where it is `0` and the right side is
+nonnegative). -/
+theorem log_natCast_mono {X Y : ℕ} (h : X ≤ Y) : Real.log (X : ℝ) ≤ Real.log (Y : ℝ) := by
+  rcases Nat.eq_zero_or_pos X with rfl | hX
+  · simpa using Real.log_natCast_nonneg Y
+  · have hX0 : (0 : ℝ) < (X : ℝ) := by exact_mod_cast hX
+    exact Real.log_le_log hX0 (by exact_mod_cast h)
+
+/-- **`countK` is monotone above the threshold `log X ≥ 1`.**  `k_X ≤ k_N` whenever
+`X ≤ N` and `log X ≥ 1`.
+
+The hypothesis is not decorative: `Real.log` is *not* monotone through `0`, so for tiny `X`
+with `log X < 1` the inner `log (log X)` can decrease.  The transfer only ever uses the
+inequality at large `X`, where it holds. -/
+theorem countK_le_countK {X Y : ℕ} (hX : 1 ≤ Real.log (X : ℝ)) (h : X ≤ Y) :
+    countK X ≤ countK Y := by
+  refine Nat.ceil_le_ceil ?_
+  have hl2 : (0 : ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+  have hlog := log_natCast_mono h
+  have hinner : Real.log (Real.log (X : ℝ)) ≤ Real.log (Real.log (Y : ℝ)) :=
+    Real.log_le_log (by linarith) hlog
+  rw [Real.logb, Real.logb]
+  exact mul_le_mul_of_nonneg_left (div_le_div_of_nonneg_right hinner hl2.le) (by norm_num)
+
+/-- **The chosen-height good-offset theorem** (§§3–4).  At every sufficiently large
+caller-chosen height `X` the CRT construction produces a modulus `B` in the small-pool range,
+a step `D` bounding the rescaling `2Q`, and a `Finset` of at least `X/(8 B log X)` *starts*
+`n < D·X`, each carrying the prescribed divisor data at `n` and a base tail below `ε/2` in
+every base `b ≥ 2`.
+
+This is steps 1–4 of the module docstring: pool and CRT, candidate count, three-range tail,
+Markov.  `exists_joint_small_tail_count` is its §5 transfer to every `N`, using
+`countK_le_countK` and `eventually_rate_le`.
+
+TODO(assembly): the five inputs are `exists_candidate_indices_every_height`,
+`exists_prime_allocation_small_pool`, `exists_joint_progression`, `three_range_tail_le`
+(with `jointA_tau_le`, `eventually_near_cost_small`, `eventually_middle_cost_small`) and
+`card_good_ge_half`. -/
+theorem exists_good_starts_at_height {c a r : ℕ} (hc : 2 ≤ c) (ha : 2 ≤ a) (hr : 1 ≤ r)
+    {ε : ℝ} (hε : 0 < ε) :
+    ∃ X0 : ℕ, ∀ X : ℕ, X0 ≤ X →
+      ∃ B D : ℕ, r < countK X ∧ 0 < B ∧ 0 < D ∧
+        B ≤ (2 * (countK X) ^ 3) ^ (1 + c * (countK X) ^ 2) ∧
+        D ≤ 2 * (2 * (countK X) ^ 3) ^ (a - 1) ∧
+        ∃ T : Finset ℕ,
+          (X : ℝ) / (8 * (B : ℝ) * Real.log (X : ℝ)) ≤ (T.card : ℝ) ∧
+          (∀ n ∈ T, 1 ≤ n ∧ n < D * X) ∧
+          (∀ n ∈ T, ∀ j, j < countK X → j ≠ r → c ^ (j + 1) ∣ tau (n + j)) ∧
+          (∀ n ∈ T, tau (n + r) = 2 * a) ∧
+          (∀ n ∈ T, ∀ b : ℕ, 2 ≤ b →
+            0 ≤ ∑' t : ℕ, (tau (n + countK X + t) : ℝ) / (b : ℝ) ^ (countK X + t + 1) ∧
+            ∑' t : ℕ, (tau (n + countK X + t) : ℝ) / (b : ℝ) ^ (countK X + t + 1)
+              < ε / 2) := by
+  sorry
+
 /-- **The counting joint small-tail theorem.**  For fixed `c, a, r` and a fixed margin `ε`,
 there are `C > 0` and `N₀` such that every `N ≥ N₀` admits a killed-window height `k > r`
 and a `Finset` of at least `N exp(-C (log log N)² log log log N)` offsets `m < N`, each
