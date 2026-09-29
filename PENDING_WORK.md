@@ -2430,3 +2430,34 @@ The correct bridge is amortized, and is now in the kernel:
 2. **`Σ deficit ≤ Λ p`** (average lag) and the per-step inequality `hstep` for the Raney states —
    both geometry of `Φ` and the emission rule; the shapes are now fixed by `deficit_telescope_le`.
 3. **`BlockCoupling`** for the actual transducer — bookkeeping.
+
+### Lap 75, third commit — S7-RD: the read's price on the lag, two-sided and exact
+
+`VandeheyS7Read` discharges the `ξ n` of `deficit_telescope_le` into real geometry, with no slack:
+
+* `MobState.readWidth_eq` — the exact post-read width
+  `|det|·(1/(a(a+1))) / ((c/a+d)(c/(a+1)+d))`.
+* `MobState.read_den_bounds` — the denominator product is squeezed in `[d², (c+d)²]`.
+* `MobState.readWidth_le` — `readWidth a ≤ distortion·width/(a(a+1))`, **attained at `c = 0`**.
+* `MobState.readWidth_ge` — `width/(distortion·a(a+1)) ≤ readWidth a`, also attained.  Two-sided,
+  so a read can never OVERpay the lag and no slack accumulates along the orbit.
+* `MobState.deficit_read_le` — the lag form:
+  `deficit(after reading a) ≤ deficit(before) + log(a(a+1)) + log distortion`.
+
+So `ξ n = log(a_{n+1}(a_{n+1}+1)) + log K ≍ 2 log a_{n+1}`, exactly as `deficit_telescope_le`
+predicted, and the clock rate `N p ≤ Λ p` requires `(1/p) Σ log a` bounded — which CF-normality
+does not give (handoff idea 3).  **That is now a kernel-grounded statement about the route, not a
+heuristic**: the clock rate is a genuine residual, and the CF-normal `x` with `a_{k!} = 2^{k!}`
+is a live candidate to refute it.
+
+### Residual after lap 75 (three commits)
+
+1. **`BlockAverageBound`** — fact (α), the open heart; the only measure-theoretic debt.
+2. **The clock rate `N p ≤ Λ p`** — now known to be equivalent to a Cesàro bound on `log a`,
+   which CF-normality does NOT supply.  Either the emission gain `2 log fib(L+1)` absorbs it
+   (the burst pays for itself: a large `a` costs `2 log a` of lag and immediately buys
+   `L ≍ 2 log a / log φ²` output digits, so the SAME `Σ log a` appears on both sides and cancels),
+   or the route needs a genuinely different clock.  **Next lap: prove the cancellation.**
+   This is the sharpest open question and it is fully within reach: `deficit_telescope_le` plus
+   `deficit_read_le` plus lap 74's `fib_sq_mul_width_le_of_forced`.
+3. **`BlockCoupling`** for the actual transducer — bookkeeping.
