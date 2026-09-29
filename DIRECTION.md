@@ -27,7 +27,8 @@ The pre-merge directive history is in `archive/DIRECTION-to-2026-09-27.md`.
    in `src/NormalNumbers/Maze.lean`, aliased onto the refuting theorem.  Read the Maze before
    proposing a route.
 3. **Literature inputs are named hypothesis `Prop`s**: cited, faithful or weaker, never `axiom`.
-   Proving one is a side quest in its own right (Philipp and Wall were proved this way).
+   **New math comes first.**  A literature input stays assumed until a new result needs it
+   discharged; then proving it is a side quest (Philipp and Wall were proved this way).
 4. **Frozen statements stay byte-identical.**  A campaign's ratified headline and its frozen
    modules are pinned by commit in that campaign's kickoff.  Statement freezing is JUDGE-owned
    (`JUDGE.md`).

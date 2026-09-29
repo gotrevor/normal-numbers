@@ -370,20 +370,17 @@ because it lands on CF INDICES, not letter positions.  Upper half now proved:
 
 ## Queue
 
-1. **Joint Lambert, unconditional: discharge `AGP`**, the only hypothesis left since
-   `PrimeIntervalSupply` was proved (`3ddc0b6`).  AGP is Alford–Granville–Pomerance 1994
-   Thm 2.1, primes in progressions with at most `D0` exceptional moduli.  `docs/JOINT-LAMBERT-AGP-GAP.md`
-   maps what the installed dependencies supply.  The named intermediate target is `AGPExpRange`
-   (`JointLambertAGPRange.lean`).  The quantitative §6 count is a separate target after that.
-2. **C3/MRT `CharTailCancellation`.**  This is the only C3 input with a standard-literature proof:
-   Euler product, then `L(1,χ) ≫ q^{-1/2}`, then arg-L winding.
-3. **Elliott margin check.**  A Littlewood-strength `ζ'/ζ ≪ log t / log log t` would suffice if
+New math comes first.  Trusted literature inputs (`AGP`, `CharPrimeSumLogQ`, the K-point
+input, `ZetaLogDerivExponent`) stay as hypotheses and are not queue items until a new result
+needs one discharged (DIRECTION standing rule 3).
+
+1. **Elliott margin check.**  A Littlewood-strength `ζ'/ζ ≪ log t / log log t` would suffice if
    every consumer in `ElliottZetaTheta.lean` tolerates a `log log log` margin.  Check that.  If
    one doesn't, record "Vinogradov or nothing" in the Maze.
-4. **SwingC2 triage.**  Delete or restate `tauMomentPrimesShiftStruct_of_primeDensity`, which
+2. **SwingC2 triage.**  Delete or restate `tauMomentPrimesShiftStruct_of_primeDensity`, which
    takes the vacuous `PrimeDensityAP`, and `survivorLeaf_of_struct`.
 
-5. **OVERVIEW refresh**: Vandehey 1.1 proved, joint Lambert down to `AGP`.
+3. **OVERVIEW refresh**: Vandehey 1.1 proved, joint Lambert down to `AGP`.
 
 ## Lap notes (newest first)
 
