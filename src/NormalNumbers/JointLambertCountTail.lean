@@ -112,6 +112,48 @@ theorem near_middle_tail_le {R A M H k L J : ℕ} (hA : 0 < A) (hR : 0 < R) (hH 
     mul_le_mul_of_nonneg_right (sum_half_Ico_le L J) (by positivity)
   nlinarith [h1, h2]
 
+/-! ### Window arithmetic for the three-range bound
+
+`three_range_tail_le` needs two size facts about the progression: every start `n_m = R + mA`
+is at most `Y`, and every value `n_m + j` in the tail window is at most `H²`.  Both are pure
+arithmetic in the CRT data, and both are proved here once so the assembly never re-derives
+them.  `Y = 2QX` is the note's choice, and it is exactly what `A = QB`, `R < A` and
+`m < ⌊X/B⌋ + 1` give. -/
+
+/-- **Every progression start is at most `2QX`.**  `m A = Q(mB) ≤ QX` and `R < A = QB ≤ QX`. -/
+theorem progression_le_window {R A B Q X m : ℕ} (hAQB : A = Q * B) (hRA : R < A)
+    (hB : 1 ≤ B) (hBX : B ≤ X) (hm : m < X / B + 1) :
+    R + m * A ≤ 2 * Q * X := by
+  have hmle : m ≤ X / B := by omega
+  have hmA : m * A ≤ Q * X := by
+    calc m * A = Q * (m * B) := by rw [hAQB]; ring
+      _ ≤ Q * (X / B * B) := Nat.mul_le_mul_left _ (Nat.mul_le_mul_right _ hmle)
+      _ ≤ Q * X := Nat.mul_le_mul_left _ (Nat.div_mul_le_self _ _)
+  have hR : R ≤ Q * X := by
+    calc R ≤ A := hRA.le
+      _ = Q * B := hAQB
+      _ ≤ Q * X := Nat.mul_le_mul_left _ hBX
+  calc R + m * A ≤ Q * X + Q * X := Nat.add_le_add hR hmA
+    _ = 2 * Q * X := by ring
+
+/-- **The square window.**  With `H = ⌊√Z⌋ + 1` one has `1 ≤ H` and `Z ≤ H²`, so `H` is a
+legitimate divisor-average parameter for every value below `Z`. -/
+theorem le_sqrt_succ_sq (Z : ℕ) : 1 ≤ Nat.sqrt Z + 1 ∧ Z ≤ (Nat.sqrt Z + 1) ^ 2 := by
+  refine ⟨by omega, ?_⟩
+  have h := Nat.lt_succ_sqrt' Z
+  exact h.le
+
+/-- The window bound in the shape `three_range_tail_le` consumes: with `H = ⌊√(Y+J)⌋ + 1`,
+every tail value `(R + j) + mA` with `j < J` and `m < M` is at most `H²`. -/
+theorem progression_window_le_sq {R A B Q X J M Y : ℕ} (hAQB : A = Q * B) (hRA : R < A)
+    (hB : 1 ≤ B) (hBX : B ≤ X) (hM : M ≤ X / B + 1) (hY : 2 * Q * X + J ≤ Y) :
+    ∀ j, j < J → ∀ m, m < M → (R + j) + m * A ≤ (Nat.sqrt Y + 1) ^ 2 := by
+  intro j hj m hm
+  have hstart : R + m * A ≤ 2 * Q * X :=
+    progression_le_window hAQB hRA hB hBX (by omega)
+  have hZ := (le_sqrt_succ_sq Y).2
+  omega
+
 /-! ### The far range, and the full three-range bound -/
 
 /-- **Far range** (note §4, simplified).  Beyond `J` the crude `τ(n) ≤ n` bound already
