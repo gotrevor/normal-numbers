@@ -1686,3 +1686,35 @@ Landed in the kernel (`VandeheyOutputFreq.lean`, all `#print axioms`-clean):
 `gaussMeasure_allWordsEvent`, `exists_boundedWords_sum_gt`, `wCount_le_of_finset`,
 `eventually_wCount_le`, plus the guard-rule quartet for the new `Prop` `JointStateFreq`.
 
+
+### 2026-09-29 lap 48 — the bad-state bootstrap is de-circularised (`VandeheyS7Sep.lean`)
+
+**Advance on the crux (`OrbitWordBound`).**  The directive's obstruction (2) — "the per-state
+distortion bound fails at states whose image straddles `1/k` far below the scale of `E`, and the
+crux's own `w = []` case is what must control them, a bootstrap" — is now a *counting* statement
+with no circularity, because `ImageTight` is an INDEPENDENT hypothesis of the assembled chain
+(`vandeheyS7_mul_phi_of_orbitWordBound`), so it may be used freely while proving the word bound.
+
+Proved, all axiom-clean:
+
+* `dist_inv_ge_of_digits_le` — **the separation estimate**: if the first THREE CF digits of
+  `t ∈ (0,1)` are `≤ T`, then `|t − 1/k| ≥ 1/(2(T+1)³)` for every `k ≥ 1`.  Three cases
+  (`k = a₀`, `k < a₀`, `k > a₀`) with gaps `S/(a₀(a₀+S))`, `1/(a₀(a₀−1))`, `(1−S)/((a₀+S)(a₀+1))`;
+  the second digit bounds `S` from below, the third bounds `1 − S` from below.
+* `two_digits_insufficient` — two digits are NOT enough (`a₀ = a₁ = 1` puts `t` arbitrarily near
+  `1/2`), so the third digit is load-bearing, not slack.
+* `exists_large_digit_of_near_inv` — the contrapositive: near a reciprocal ⇒ a digit `> T` among
+  the first three.  This is "bad state ⇒ huge output digit" in the kernel.
+* `blockCount_nearInv_le` — `#{visits to nearInv(1/(2(T+1)³))} ≤ 3·#{visits to cellSet [] (T+1)} + 6`.
+* `exists_nearInv_freq_le` — **the payoff**: `ImageTight y` ⇒ for every `ε` there is a scale `η`
+  at which the orbit of `y` spends frequency `≤ ε` within `η` of the reciprocals.
+
+**NEXT (lap 49).**  The remaining half of the distortion route: at a *good* output position (image
+point `η`-far from every `1/k`) the post-emission state's image interval `J` has `|J| ≥ η`-type
+lower bound, hence `uniform_comparable_of_bddDistortion` applies and the pullback of `I_w` has
+Gauss mass `≤ C γ(I_w)`.  Formalize "reduced state + image not straddling a reciprocal at scale
+`η` ⇒ `|J| ≥ η`" against `MobState`, then sum: frequency ≤ (good positions, distortion bound) +
+(bad positions, `exists_nearInv_freq_le`).  Note the good-position estimate is still where the
+predictability obstruction (`not_predictableHitPrinciple`) bites; the honest next probe is to see
+whether the good-state pullback bound is uniform enough to survive the `s_n` dependence, or
+whether a Lean witness refutes it.
