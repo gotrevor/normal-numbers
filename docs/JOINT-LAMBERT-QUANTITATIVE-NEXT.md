@@ -1,6 +1,25 @@
 # More synchronized words from a smaller prime pool
 
-**29 September 2026.  Research derivation by Ren (OpenAI Codex), not yet formalized.**
+**29 September 2026.  Research derivation by Ren (OpenAI Codex).**
+**FORMALIZED 29 September 2026** — both headlines of this note are proved and
+`#print axioms`-clean: `jointWords_quantitative` and `jointWords_power_count` in
+`src/NormalNumbers/JointLambertQuantitative.lean`, audited by
+`scripts/check-joint-lambert-count.sh`.  Four places where the formalization departs from
+the paper argument below, all of them repairs or simplifications:
+
+1. **The far range needs no `tau(n) <= 2 sqrt n`.**  The crude `tau(n) <= n` suffices.
+2. **The split point `J` need not be `floor((log_2 X)^2)`.**  It is chosen *adaptively*
+   from the window bound `Y0 = 2QX`: `countJ = k^3 + 2S` with `2^S > (Y0+1)(X+1)`, and then
+   the far cost is an unconditional `O(X^{-2})`, uniform in `k`.
+3. **Feasibility and rate want different bounds on `log B`.**  Feasibility can afford the
+   wasteful `log B = O_c(k^3)`; the rate must use the sharp `O_c(k^2 log k)`, and that is
+   exactly what turns `(log log N)^3` into `(log log N)^2 log log log N`.
+4. **`B^3 <= X` is a factor two short for the window comparison `H = o(M)`**, since
+   `sqrt(2QX)` and `X/B` are both `X^{2/3}` exactly at the cube.  The repair is free:
+   run the schedule feasibility at the inflated pool exponent `4c+4`, giving `B^12 <= X`.
+
+The paper argument as originally written follows, unchanged.
+
 The qualitative theorem is already proved in `JointLambertUnconditional.lean`.
 This note proposes the next mathematical target and supplies its paper argument.
 Confidence in the argument after self-review: 90%.  No priority claim or outreach task.

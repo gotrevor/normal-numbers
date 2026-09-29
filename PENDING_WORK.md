@@ -1,59 +1,21 @@
-## CRUX (2026-09-29) — joint Lambert quantitative count
+## DONE (2026-09-29) — joint Lambert quantitative count
 
-Open obligation: `jointWords_quantitative` in
-`src/NormalNumbers/JointLambertQuantitative.lean` (one `sorry`).  It is the §3 ARITHMETIC
-ASSEMBLY only — every estimate it needs is now proved and `#print axioms`-clean:
-`exists_candidate_indices_every_height`, `three_range_tail_le`, `card_good_ge_half`,
-`eventually_rate_le`, `iteratedLog_rate_le_eps_log`.
+**Both ratified headlines are proved, with their full dependency chains, and are
+`#print axioms`-clean** (`propext, Classical.choice, Quot.sound` only):
 
-Advance this lap: the whole analytic spine of §§1–5 went from paper to kernel, and two
-defects in the note's plan were found and repaired (the far range needs no `τ(n) ≤ 2√n`;
-feasibility and rate need *different* bounds on `log B`, crude `k³` and sharp `k² log k`).
+* `jointWords_quantitative` — for every finite `S` of bases `≥ 2` and fixed valid words,
+  `A(N) ≥ N exp(-C (log log N)² log log log N)` for every `N ≥ N0`;
+* `jointWords_power_count` — for every fixed `ε > 0`, eventually `A(N) ≥ N^(1-ε)`.
 
-Decomposition as of the latest commit: the crux is ONE named statement in `src`,
-`exists_good_starts_at_height` (chosen-height, steps 1–4).  Its §5 transfer to every `N`
-is PROVED (`exists_joint_small_tail_count`), so the whole route now hangs on the
-chosen-height theorem alone.  `JointLambertQuantitative.lean` itself is sorry-free and
-both headlines are proved from these.  `countK_le_countK` (monotone above `log X ≥ 1`; the
-threshold is load-bearing, since `Real.log` is not monotone through `0`) is proved and is the
-transfer's first ingredient.
+Permanent audit: `scripts/check-joint-lambert-count.sh` (frozen-source diff against
+`e2828b32`, full build, exact ratified types, the `{2,4}` specialization, the boundary
+controls, and transitive axiom verification of both headlines).
 
-Advance, lap 1 of the 2026-09-29 count campaign: the crux's steps 1–2 are now PROVED, not
-just planned.  `exists_candidate_data_at_height` (in `JointLambertCountAssembly.lean`)
-delivers, at every large caller-chosen `X`, the pool prime, the allocation, the CRT solution
-`R, u`, the divisor data, the near-range coprimality, `Q ≤ (2k³)^(a-1)`,
-`B ≤ (2k³)^(1+ck²)` and the candidate count `≥ M/(4 log X)`.  Also proved:
-`binTail_eq_three_range`, the identity that the digit reader's tsum
-`∑' t τ(n+k+t)/2^(k+t)` *is* the three-range expression `three_range_tail_le` bounds — the
-bridge that lets the counting route reuse the frozen tail estimate verbatim.
-
-Also proved: the adaptive far-range split point `countJ k Y0 X = k³ + 2S` with
-`2^S > (Y₀+1)(X+1)`, and `far_cost_le`: at that `J` the far cost
-`(2Y+2J+2)(1/2)^J ≤ 24/(X+1)²` whenever `X ≤ Y₀`.  This removes the last free parameter
-of step 3 and is uniform in `k`; the note's `J = ⌊(log₂X)²⌋` is not needed, nor is any
-divisor bound in the far range.
-
-And the window comparison `H ≤ M` of step 3: `eventually_modulus_pow_twelve_le` upgrades
-`B³ ≤ X` to `B¹² ≤ X` (by running `eventually_schedule_feasible` at the inflated pool
-exponent `4c+4` — the schedule is feasible for every fixed `c`, so this is free), and
-`sqrt_window_mul_le` turns that into `√(2QX+J)·B ≤ X`, i.e. `H ≤ M`.  A factor-two defect
-in the note's plan: `B³ ≤ X` alone does NOT give `H = o(M)`, since `√(2QX) ≍ X^{2/3} ≍ X/B`
-exactly at the cube.
-
-Step 3's logarithmic bookkeeping is proved too: `natLog_two_le`, `log_window_le`
-(`log(√Y+1) ≤ 2 log X + 2` for `Y ≤ 3X²`) and `eventually_countJ_le` (`J ≤ X` eventually,
-uniformly in the window bound `Y₀ ≤ 2X²`, since `countJ = k³ + O(log X) = O((log X)³)`).
-
-What is left inside `exists_good_starts_at_height` is therefore steps 3–4 only: feed
-`three_range_tail_le` at `J = countJ`, show the total is `≤ θ·(M/(4 log X))/2` (the near/middle half
-is now only `eventually_near_cost_small` + `eventually_middle_cost_small` with
-`jointA_tau_le`, since `W ≤ 14 M log X` follows from `log_window_le` and `H ≤ M`), then
-`card_good_ge_half` and the injection `m ↦ R + mA`.
-
-Next attack: steps 3–5 of "Exact next boundary" in
-`HANDOFF-2026-09-29-joint-lambert-count.md`.  The only remaining analytic items are the two
-limits `(log X)² 2^(-k) → 0` and `(log X)² (a+1)(c+1)^(k²) 2^(-k³) → 0`, both of the same
-shape as the already-proved `eventually_cube_log_le_sqrt`.
+Four mathematical findings, recorded at the head of
+`docs/JOINT-LAMBERT-QUANTITATIVE-NEXT.md`: the far range needs no `τ(n) ≤ 2√n`; the split
+point `J` is better chosen adaptively than as `⌊(log₂X)²⌋`; feasibility and rate need
+*different* bounds on `log B`; and `B³ ≤ X` is exactly a factor two short of the window
+comparison `H = o(M)`, repaired for free by running the schedule at pool exponent `4c+4`.
 
 ---
 

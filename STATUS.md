@@ -24,6 +24,14 @@ involution and the phase-corrected automaton on `RPlus D`), and the capstone's *
 above records the earlier shared-checkout state; current Lambert details follow below.
 C3/MRT, Elliott and the casting-out crux leaves still carry conditional headlines.
 
+## Joint Lambert quantitative count — DONE, 29 September 2026
+
+The unconditional all-`N` occurrence count is proved and axiom-clean:
+`jointWords_quantitative` gives `A(N) ≥ N exp(-C (log log N)² log log log N)` for every
+`N ≥ N0`, and `jointWords_power_count` gives `A(N) ≥ N^(1-ε)` eventually, for every fixed
+`ε > 0`.  Audit: `scripts/check-joint-lambert-count.sh`.  Details and the four findings
+against the paper plan: `HANDOFF-2026-09-29-joint-lambert-count-DONE.md`.
+
 ## What's happened (newest first)
 
 - **2026-09-28 (lap 4, review).**  Two route-decisive findings on the transducer's input side,
