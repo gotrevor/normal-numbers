@@ -1,5 +1,28 @@
 # DIRECTION — normal-numbers 🧭
 
+## OPERATOR WRAP-UP 2026-09-29 16:45 — §7 campaign closes at the end of this round 🧹
+
+Trevor: the campaign did not solve §7 Problem 1, but the kernel-checked false starts are the
+deliverable ("breadcrumbs that ward off future LLMs from the same fruitless path").  The remaining
+laps of this round do ONLY the following, in order, and this outranks the CURRENT DIRECTIVE below:
+
+1. **Circularity check.**  Prove (or state precisely why not) that the goal
+   `IsCFNormal (Φ.mob x)` implies `BlockForgetRun`.  If it does, `BlockForgetRun` is a
+   restatement, not a reduction: say so in its docstring and add a Maze row.
+2. **Maze audit.**  Every refuted §7 sub-route has a `Maze.lean` row aliased onto its refuting
+   theorem: window-function digit, bounded-error decomposition, Hecke/Fibonacci approximation,
+   predictable-hit principle (all gaps), Diophantine good-denominator detour, tail-cell bootstrap,
+   vacuous hypothesis bundles (`TransducerData`, `StateData`), uniform-z and CF-normal-z
+   `BlockForget`, route B's covering ceiling, and anything else in the handoffs.  Add the missing ones.
+3. **One map for the next reader:** `docs/VANDEHEY-S7-FALSE-STARTS.md`.  For each false start: the
+   idea in one sentence, why it looks promising, the kernel witness that kills it (theorem name),
+   and its Maze row.  Then what WAS proved and reusable (compact box, distortion ≤ 4, loss of
+   memory, window domination, relative equidistribution, the skew product, image irrationality),
+   and the honest location of the wall.  Link it from the top of
+   `papers/vandehey-2017-open-problem-attack-map.md` and from `STATUS.md`.
+4. Collapse the §7 OPERATOR OBJECTIVE and CURRENT DIRECTIVE into one "Completed runs" line
+   pointing at that doc, and prune §7 items from `PENDING_WORK.md`.
+
 ## CURRENT DIRECTIVE (altitude laps only write here; it OUTRANKS the HANDOFF) 🧭
 
 **Set 2026-09-29 (review lap 88).**  Supersedes lap 77's directive.  Same destination.  The
