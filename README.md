@@ -1,5 +1,7 @@
 # normal-numbers
 
+> **The wide questions and ranked frontier bets: [HEADLINES.md](HEADLINES.md)** (30 September 2026).
+>
 > **Current state and open fronts: [STATUS.md](STATUS.md)** (post-merge, 27 September 2026); the queue is [PENDING_WORK.md](PENDING_WORK.md).
 >
 > **Project map (26 September 2026):** [overview and diagram](OVERVIEW.md) · [browser edition](OVERVIEW.html).  What is proved, where the gaps are, and where we are pressing.

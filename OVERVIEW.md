@@ -1,7 +1,7 @@
 # Normal Numbers: where the proof stands
 
 **Project map · 28 September 2026**  
-[Visual edition](OVERVIEW.html) · [Detailed research review](docs/REVIEW-2026-09-25-research-trajectory.md)
+[Headlines: the wide questions and ranked bets](HEADLINES.md) · [Visual edition](OVERVIEW.html) · [Detailed research review](docs/REVIEW-2026-09-25-research-trajectory.md)
 
 ## The destination
 
@@ -26,7 +26,7 @@ The programme has produced substantial complete results around this goal.  The r
 | **G₄ is disjunctive** | Every finite base-four digit word appears. | Occurrence does not determine frequency. |
 | **C′: a family of prime Lambert constants is normal** | Keep a prime set P with divergent reciprocal sum but vanishing reciprocal mass between √N and N.  Its Lambert constant is base-four normal. | All primes fail the vanishing-mass condition.  This is a finished theorem about a different family. |
 | **C4: complete classification of abelian length spectra** | For binary digits, every set of positive lengths that is empty or contains 1 can be exactly the set of lengths with the correct binomial count of ones. | This statistic forgets digit order.  It does not establish normality of G₄. |
-| **Simultaneous Lambert disjunctivity (conditional)** | For finitely many distinct bases, including dependent ones such as 2 and 4, any prescribed words occur in the constants E_b = ∑ 1/(bⁿ − 1) at one common digit position, infinitely often. | Assumes two named prime-distribution inputs (primes in progressions with few exceptional moduli, and primes in (L, 2L)).  This is about occurrence, not frequency. |
+| **Simultaneous Lambert disjunctivity** | For finitely many distinct bases, including dependent ones such as 2 and 4, any prescribed words occur in the constants E_b = ∑ 1/(bⁿ − 1) at one common digit position, infinitely often, with at least N^(1−ε) occurrences below N. | Unconditional (29 September) on branch `proof/joint-lambert-unconditional`, sibling checkout `normal-numbers-lambert`, not yet merged here.  This is about occurrence, not frequency. |
 | **Wall: rational maps preserve normality** | If x is normal in base b, so is qx + r for every rational q ≠ 0 and every rational r. | A classical theorem, now machine-checked. |
 | **Philipp: continued-fraction ψ-mixing** | Gauss-measure cylinder sets mix at a geometric rate. | A classical input, proved rather than assumed. |
 | **General two-point logarithmic Elliott** | A general theorem controlling logarithmically averaged two-point correlations of multiplicative functions is proved. | Applying it to the relevant prime-factor function still needs an estimate; its averages are logarithmic. |
@@ -55,7 +55,7 @@ The published two-point result with exceptional scales does not supply that inpu
 
 ### Erdős–Borwein: simultaneous words across distinct bases
 
-Scalar binary disjunctivity already has a [peer paper and conditional Lean development](https://github.com/CaptainSude/erdos-borwein-disjunctivity/tree/bd98789a177470cc4b3e33e6769e859f6144c906).  Our simultaneous version is now **formalized**: `jointLambertDisjunctivity` proves that prescribed words occur in finitely many constants **E_b** at a **common digit position**, infinitely often, even for bases 2 and 4.  The [paper proof](papers/2026-09-26-joint-lambert-disjunctivity.md) is the blueprint.  Of the two analytic inputs, the interval-supply one (primes in every (L, 2L)) is now **discharged from the ordinary prime number theorem**, so the theorem rests on a single hypothesis: primes in progressions with few exceptional moduli.  Discharging it would make the theorem unconditional; `docs/JOINT-LAMBERT-AGP-GAP.md` maps that gap and names the next concrete target.  The quantitative occurrence count is a separate target.  Our scalar C2 implementation remains incomplete.
+Scalar binary disjunctivity already has a [peer paper and conditional Lean development](https://github.com/CaptainSude/erdos-borwein-disjunctivity/tree/bd98789a177470cc4b3e33e6769e859f6144c906).  Our simultaneous version is now **formalized**: `jointLambertDisjunctivity` proves that prescribed words occur in finitely many constants **E_b** at a **common digit position**, infinitely often, even for bases 2 and 4.  The [paper proof](papers/2026-09-26-joint-lambert-disjunctivity.md) is the blueprint.  Both analytic inputs are now gone: interval supply follows from the ordinary prime number theorem, and rescaling the prime-search endpoint bypasses AGP, so the theorem is **unconditional**, together with an all-N occurrence count of N·exp(−C(log log N)² log log log N) (29 September, branch `proof/joint-lambert-unconditional`, not yet merged here).  AGP remains a separate analytic question (`docs/JOINT-LAMBERT-AGP-GAP.md`).  Our scalar C2 implementation remains incomplete.
 
 ### Continued fractions: Vandehey's open problem
 
