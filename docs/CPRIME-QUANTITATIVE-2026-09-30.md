@@ -1,6 +1,6 @@
 # Quantitative C′: discrepancy from bounded fresh mass
 
-Ren, 2026-09-30, attended.  Paper-level derivation, **not yet refereed**.  Frozen statements:
+Ren, 2026-09-30, attended.  Paper-level derivation, **refereed once** (independent subagent, same day: no false step; ~85% `CPrimeQuant`, ~80% `CPrimeResidueRich`; its fixes are applied below).  Frozen statements:
 `src/NormalNumbers/CPrimeQuantStatement.lean` (`CPrimeQuant`, `CPrimeResidueRich`), compile-checked.
 Source proof: `papers/ROUND2-multicutoff-astra.md` §§2–11, Lean `PrimeModelFamilyGraded.lean`.
 
@@ -19,25 +19,25 @@ every word of length `L` has positive lower frequency once `q ≥ q₀(L)`.
 These would be the first frequency statements about a prime-Lambert constant built from a natural
 prime set.  At `ρ = log 2` (all primes, G₄) the bound is trivial, as it must be.
 
-Confidence the argument is correct as written: about 75%.  That the corollary is new: about 70%, by
+Confidence the argument is correct: about 80%, after the referee pass.  That the corollary is new: about 70%, by
 a literature check of the C′ neighbourhood only.
 
-## Why it works: only one term of the C′ proof ever needed `u_N → ∞`
+## Why it works: with `u` fixed, only the transfer term carries `ρ`
 
 C′ bounds the window mean `W_h(N)` (the prefix mean of `e(h·4ⁿ x_P)`, truncated to `J` digits).  The
 bound is a sum of four terms (`windowMean_le_terms`: `termE1`, `termE4a/b/c`, `termE5`).  The
 schedule is `(8.1)`: `J = min(⌊L3 N⌋, ⌊S_N/8⌋)`, cutoffs `y_j = ⌊N^(u⁻²·2⁻ʲ)⌋`, integer `u`.
 
-Now **fix `u`** instead of letting `u_N → ∞`, and keep everything else.
+Now **fix `u`** instead of letting `u_N → ∞`, and keep everything else.  Three terms used the divergence: E1 (transfer), E4a (`e^(−u²/32) → 0`) and E4b (`e^(−u) → 0`).  With `u` fixed, E4a and E4b become constants `O(e^(−u))`, carried in the bound below.  The transfer term is the only one that grows with `ρ`.
 
 | term | paper | with fixed `u` and bounded `ρ` |
 |---|---|---|
 | cutoff range, `y_J ≥ exp(√log N)` | §8 | unchanged: needs only `u² ≤ L3 N`, true eventually |
-| support budget `R ≤ N^(1/8)` | (8.2): `log R/log N ≤ (278+4u)/u²` | holds iff `u ≥ 66` |
-| joint error E4 | (5.3), (8.4) | `≤ 4e^(−u) + e²⁰·e^(−u²/32)/(e^(u²/128)−1) + o(1)`; the radical term is below `e^(−100)` at `u = 66` |
+| support budget | (8.2): `log R/log N ≤ (278+4u)/u²` | `R ≤ N^(1/8)` holds iff `u ≥ 66`, but it is only sufficient: the CRT remainder needs `2 log R/log N + (√2+1)/16 < 1`, i.e. `u ≥ 31`.  Below about `u = 35–40`, E4a's `e^(−u)`-sized constant swamps `ρ`.  **The Lean path is worse**: `termE4c_tendsto`'s constants need `u ≥ 3000` as written, or about `u ≥ 176` retuned within its own slack |
+| joint error E4 | (5.3), (8.4) | `≤ 4e^(−u) + 2e²⁰·e^(−u²/32)/(e^(u²/128)−1) + o(1)`; the radical term is below `e^(−100)` at `u = 66` |
 | model contraction E5 | (5.4), (8.6) | still `→ 0`: `S_P(2J, y_{j₀}) ≥ S_N − O_{u,ρ,j₀}(1) − log 2J`, while `J ≤ S_N/8` |
-| infinite phase tail | §8 end, `tail_graded` | still `→ 0`: needs `S_P(N,2N) ≤ 1`, true since `ρ ≤ log 2 < 1` |
-| **transfer E1** | (2.1) | **the only term that does not vanish** (below) |
+| infinite phase tail | §8 end, `tail_graded` | still `→ 0`: needs `S_P(N,2N) ≤ 1`, true since `ρ ≤ ρ₀ < 1` in the statement |
+| **transfer E1** | (2.1) | **the term linear in `ρ`** (below) |
 
 **Transfer.**  By (2.1), `|W − W_y| ≤ Σ_j a_j·[2 S_P(y_j, N) + J/N]`, with `a_j = |e(h/4ʲ) − 1|`.
 The paper bounds `a_j ≤ 4π|h|4⁻ʲ`; we use the sharper `a_j ≤ min(2, 2π|h|4⁻ʲ)`.  The root chain
@@ -74,23 +74,30 @@ most `D`.
 | `3·10⁻⁶` | 0.023 | every length-2 word has positive lower frequency | `φ(q) ≈ 231 000` |
 | `10⁻⁶` | 0.009 | every length-3 word has lower frequency `≥ 0.0066` | `φ(q) ≈ 690 000` |
 
-The cost is dominated by `c_u` through the `u ≥ 66` floor from the support budget, so tuning (8.2)
-lowers `q₀` directly.
+The cost is dominated by `c_u` through the `u` floor.  On paper `u` can drop to about 35–40.  With the Lean path's current constants (`u = 3000`, `c_u = 26.1`) every `D` rises about 1.6×: `ρ = 10⁻⁵` gives 0.101 and `ρ = 10⁻⁶` gives 0.014, so length-3 words survive at lower frequency `≥ 0.0016`.  Numeric check: the referee reproduced this table exactly.
 
-## Review targets (before any campaign)
+## Referee findings and build gaps
 
-1. **Fixed `u` really suffices in every Lean-path lemma.**  `schedule_admissible` and
-   `yBotG_le_yG` were proved for the adaptive `uG`.  Check that no admissibility clause silently
-   uses `uG → ∞`.  The paper checks above say none does.
-2. **The sharper `a_j` bound enters (2.1) cleanly.**  It is a pointwise bound on
-   `|e(t) − 1|`, so this should be routine.
-3. **Mertens in progressions, both directions.**  The corollary needs
-   `Σ_{√N<p≤N, p≡a} 1/p → log 2/φ(q)`, or any upper bound `O(1/φ(q))`.  Check what
-   `G4MertensAP` and the PNT-in-AP modules actually provide; Brun–Titchmarsh-type upper bounds
-   suffice.
-4. **Erdős–Turán is not in the build** (only mentioned in docstrings).  It is the one piece of
-   known infrastructure the Lean route must add.  A Fejér-kernel sandwich for a single interval is
-   enough.
+**Verified**, all as OK:
+- the sharper `a_j` bound enters (2.1) cleanly;
+- the chain length `⌈log₂(4u²2ʲ)⌉ ≤ 3+j+2log₂u`, and the closed j-sum;
+- contraction and tail under bounded `ρ`;
+- the Erdős–Turán step;
+- both frozen statements are faithful: `CPrimeQuant` is non-vacuous, and `ρ → 0` recovers C′.
+
+**Lean-path work the campaign must do:**
+1. **Refactor the schedule.**  `uG` builds in `εu² ≤ 1` (`epsG_mul_uG_sq_le`).  Restate
+   `recipSumIoc_yG_le` as `ρ′(j+2+2log₂u)`.  Relax E5's `htail ≤ 1` to a bounded `K_h`; the
+   majorant `e^(22+K_h)(2J)^12 e^(−6J)` still tends to `0`.
+2. **Retune `termE4c`** (or sharpen `gradedLevel`) so a moderate constant `u` suffices.
+3. **Sharpen `siteBudget`** (`4π|h|4^(−(j+1))`) to `min(2, 2π|h|4⁻ʲ)` upstream in
+   `PrimeModelKMTGraded`.
+4. **Quantitative Weyl wiring.**  `isNormal_subsetLambert_of_KMT_along` is qualitative.  The orbit
+   Weyl sum differs from `windowMeanS` by at most `2π|h|·TailOK`, and this needs writing out.
+5. **Erdős–Turán**, not in the build.  A single-interval Fejér sandwich is enough.
+6. **Mertens in progressions, upper bound.**  `G4MertensAP` gives only the lower bound
+   (`MertensRate`).  The corollary needs `r_P → log 2/φ(q)`, or Brun–Titchmarsh's
+   `≤ (2+o(1)) log 2/φ(q)`.
 
 ## What it does not do
 

@@ -6,12 +6,13 @@ the commit that lands this kickoff (standing rule 4).
 
 **Why.**  These would be the first frequency theorems for prime-Lambert constants of natural prime
 sets.  Primes `≡ a (mod q)` give orbit discrepancy `O(log³φ(q)/φ(q))`.  Paper derivation:
-`docs/CPRIME-QUANTITATIVE-2026-09-30.md`.  Its review targets 1–4 come first; a lap that finds one
+`docs/CPRIME-QUANTITATIVE-2026-09-30.md`.  It was refereed once, with no false step and gaps in constants and infrastructure only; they are listed in the doc's "Referee findings and build gaps" section.  Those gaps come first; a lap that finds one
 of them false records it in `Maze.lean` and stops.
 
 **Route.**
-1. **Fixed-`u` schedule.**  Rerun `PrimeModelFamilyGraded`'s schedule with a constant `u ≥ 66` in
-   place of `uG`.  Reuse `window_bound_schedule` unchanged.
+1. **Fixed-`u` schedule.**  Rerun `PrimeModelFamilyGraded`'s schedule with a constant `u` in place
+   of `uG`.  The Lean constants need `u ≥ 3000` as written, or about `u ≥ 176` after retuning
+   `termE4c`.  Reuse `window_bound_schedule`.  The doc lists six build gaps; clear them in order.
 2. **Limsup bounds.**  Re-prove `termE4*`/`termE5`/tail as limsup statements under
    `SqrtFreshMassLe P ρ`.
 3. **Transfer.**  Bound `termE1` using the sharper `a_j ≤ min(2, 2π|h|4⁻ʲ)` together with the root
