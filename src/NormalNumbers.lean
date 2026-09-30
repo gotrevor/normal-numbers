@@ -481,6 +481,7 @@ import NormalNumbers.PrimeModelSqrtFreshBlocks
 import NormalNumbers.PrimeModelGradedCrossCheck
 import NormalNumbers.OccurrenceCountEquiv
 import NormalNumbers.PrimeModelGradedStatement
+import NormalNumbers.CPrimeQuantStatement
 import NormalNumbers.StonehamSixFailure
 import NormalNumbers.CastingOut
 import NormalNumbers.SwingC1Log

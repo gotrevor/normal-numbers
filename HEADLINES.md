@@ -40,7 +40,7 @@ disjunctivity and `N^{1−o(1)}` counts, and cannot reach positive density.  For
 mass tends to `log 2`, so C′ does not apply.
 
 **Frontier.**
-1. ⭐ **Quantitative C′: the normality defect is controlled by the fresh mass.**  The Astra paper
+1. ⭐ **Quantitative C′: the normality defect is controlled by the fresh mass.**  *Update 2026-09-30: derived on paper with `c = 1` up to `log³`, see `docs/CPRIME-QUANTITATIVE-2026-09-30.md`; the text below is the original proposal.*  The Astra paper
    (`papers/ROUND2-multicutoff-astra.md` §11.3) shows `r_P → 0` *characterizes the geometric
    consumer*.  It says nothing about `r_P` small but positive.  Conjecture shape, with
    `ρ = limsup r_P(N)`:
@@ -75,7 +75,7 @@ mass tends to `log 2`, so C′ does not apply.
 - it shows "`11` recurs in binary `√2`" is equivalent to a carry statement (Axiom C);
 - it shows counting alone saturates at `√N` ones.
 
-**Known unconditional rungs not yet in the repo.**
+**Known unconditional rungs not yet in the repo** (Literature-`Prop` candidates, not campaigns; see H6).
 1. **Bailey–Borwein–Crandall–Pomerance 2004.**
    - An algebraic irrational of degree `D` has `≫ N^(1/D)` ones among its first `N` binary digits.
    - The proof is elementary: the ones-count is submultiplicative, pushed through the minimal
@@ -175,18 +175,14 @@ versus base `b`.  Which subsets of the family can be exactly the tests a number 
   - The B5′ constructions are the machinery.  Verify both characterizations before planting.
 - **C4 in base `b > 2`**, with multinomial counts.
 
-## H6. The NN library: classical theorems proved, not cited 📚
+## H6. The NN library: classical theorems proved, not cited 📚 (not a destination)
 
-Trevor's framing (2026-09-27): prove the basic literature facts as side quests, so the repo becomes
-the NN library while the moonshots keep citing freely.
-
-**Done.**  Wall, Pillai, Philipp ψ-mixing, Becher–Yuhjtman (B5′), Stoneham `α₂,₃`, Vandehey 1.1,
-Wall-rational.
-
-**Cheapest next.**  Champernowne's constant is normal *as a real number*.  OldMathematician's
-sequence theorem plus our `Bridge` upgrade gives it.  Fork and `require` that repo; never vendor it.
-
-**Then.**  Copeland–Erdős 1946, general Stoneham, Rauzy, Agafonov, Schmidt.
+**Superseded 2026-09-30.**  New mathematics is the goal; formalizing a known theorem is not a
+target (KB `new-math-not-formalization`).  Known results enter as named hypothesis `Prop`s, and a
+proof of one happens only when a new result consumes it.  Already done: Wall, Pillai, Philipp
+ψ-mixing, Becher–Yuhjtman (B5′), Stoneham `α₂,₃`, Vandehey 1.1, Wall-rational.  The classical
+theorems named in H2–H5 (BBCP, Adamczewski–Bugeaud, Rauzy, Agafonov, Schmidt, Champernowne) are
+Literature-`Prop` candidates, not campaigns.
 
 ## Cross-cutting instruments 🔧
 
@@ -202,13 +198,15 @@ sequence theorem plus our `Bridge` upgrade gives it.  Fork and `require` that re
 
 | # | Bet | Headline | Kind | Confidence |
 |---|---|---|---|---|
-| 1 | Quantitative C′: probe, then audit of §10 | H1 | new math | ~45% that the shape holds |
-| 2 | Master-conjectures pass: Borel + Hypothesis A as Props, consequence graph, Maze test | H2, H3 | conjecture graph | ~85% that it lands (the Schanuel pass proved 10 consequences in one lap) |
-| 3 | BBCP `N^(1/D)` ones | H2 | known result; first digit theorem on `√2` | ~70% in 1–3 laps |
-| 4 | Growing-prime localized log: paper audit, then finite-`P` in Lean | H3 | new math (paper) | ~70% on paper |
-| 5 | Champernowne as a real, then Copeland–Erdős | H6 | library | high |
-| 6 | Base spectrum (Schmidt, Becher–Bugeaud–Slaman) | H5 | library+ | unassessed |
-| 7 | Harvest explicit open problems from 2024–26 normal-number papers | all | sweep | lean-formalizations answered Saito's Problem 1.8 this way in 2 laps |
+| 1 | **Quantitative C′**: derived on paper 2026-09-30 (discrepancy `≤ Cρ log³(1/ρ)`; residue classes `O(log³φ(q)/φ(q))`), frozen in `CPrimeQuantStatement.lean`; next is a referee pass, then the kickoff → `docs/CPRIME-QUANTITATIVE-2026-09-30.md` | H1 | new math | ~75% the derivation holds |
+| 2 | Is C′'s linear-in-`ρ` defect sharp, or do the fresh primes cancel?  Measure `|W − W_y|` against its triangle bound on residue-class sets | H1 | new math (instrument) | open question |
+| 3 | Master-conjectures pass: Borel + Hypothesis A as Props, consequence graph, Maze test | H2, H3 | conjecture graph | ~85% that it lands (the Schanuel pass proved 10 consequences in one lap) |
+| 4 | Growing-prime localized log: paper audit, then the new growing-`P` theorem | H3 | new math (paper) | ~70% on paper |
+| 5 | Harvest explicit open problems from 2024–26 normal-number papers | all | sweep | lean-formalizations answered Saito's Problem 1.8 this way in 2 laps |
+
+**Not destinations** (known results; enter as Literature `Prop`s when a new result needs them):
+BBCP `N^(1/D)`, Adamczewski–Bugeaud, Champernowne, Copeland–Erdős, Schmidt, Becher–Bugeaud–Slaman,
+Rauzy, Agafonov.
 
 **Don't fund:**
 - a generic G₄ CLT, or a renamed full-Weyl hypothesis;
