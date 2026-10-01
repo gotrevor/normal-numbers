@@ -140,20 +140,27 @@ square root of `CPrimeResidueRich`'s.  At `u ≍ ρ⁻²` the cutoff constant is
      `δ C_h/u²`.  The statement's `δ/√u` is deliberately looser.  **Open check (d).**
 
 **Literature inputs** (Literature Props):
-- **Granville–Shao 2018**, Thm 2.1.  Frozen as `Literature.GranvilleShaoBVResidue`, faithfulness
-  **unaudited** (check (a)).
+- **Granville–Shao 2018**, Corollary 7.1.  Frozen as `Literature.GranvilleShaoCor71`.  Classical
+  BV is `BoundedGaps.Maynard.bombieriVinogradov`, already in the dependency tree.
+- **Selberg–Delange for `z^{ω_P}`** (Tenenbaum II.5.2), frozen as
+  `Literature.SelbergDelangeResidue`.  The instantiation of its hypotheses is ours.
+- **Halberstam–Richert Thm 3.12**, the upper sieve for two linear forms, frozen weakened as
+  `Literature.SelbergUpperTwoForms`.  The theorem number is recalled and has not been re-opened.
 - **de la Bretèche–Tenenbaum**, *Friable averages of complex arithmetic functions*,
-  arXiv:2305.06486: friable Selberg–Delange for complex `κ`.  This is the authority for `F_κ`
-  at complex `κ`, the case the probe could not confirm.
+  arXiv:2305.06486: friable Selberg–Delange for complex `κ`.  It is needed **only in the probe
+  regime**, as the authority for `F_κ` at complex `κ`.  In the proof regime, C′'s own proved
+  model bound (5.3) gives the frozen single-site mean to `O(e^{−u})`, so no friable input
+  enters the proof.
 - **Tenenbaum–Wu**, *Moyennes de certaines fonctions multiplicatives sur les entiers friables*,
   J. reine angew. Math. 564 (2003).
 - **The fundamental lemma of sieve theory**, upper and lower, and the **Selberg upper sieve**
   for two linear forms (Halberstam–Richert, *Sieve Methods*).
 - **Siegel–Walfisz / Mertens in progressions** (`G4MertensAP` has the lower bound only).
 
-Lean statements are owed for every input but Granville–Shao.  They are not written yet because
-a faithful statement of a friable asymptotic is a real job.  A sloppy one is how Maze rows
-120–123 happened (constants quantified in the wrong place).
+Every input used by the proof now has a Lean statement.  The wiring is frozen as believed
+`sorry` theorems, each with its confidence, an English proof and its evidence:
+`twistedSiegelWalfisz`, `multBVResidue_of`, `siteFactorization_of`, `pairSecondOrder_of` and
+`cprimeResidueQuad_of`.  Still owed: the fundamental lemma (upper and lower), for check (b).
 
 ## Negative-inventory check
 
@@ -195,11 +202,17 @@ Every row of `src/NormalNumbers/Maze.lean` (140 rows) was read.  These touch thi
 
 ## Open checks, before any lap
 
-- **(a) Granville–Shao faithfulness.**  Theorem 2.1 is stated for `Ξ = {1}`.  `z^{Ω_P}`
-  correlates with characters mod `q₀`, so Siegel–Walfisz fails at moduli sharing a factor with
-  `q₀`.  The paper calls the `Ξ`-modification straightforward and states it only for
-  Theorems 2.2–2.3.  The coprime-moduli restriction in the Literature Prop is our step.  Read
-  §7 (the deduction of 2.1 from 2.2) and confirm that `Ξ` threads through.
+- **(a) Granville–Shao faithfulness: RESOLVED (2026-10-01, later).**  The first draft cited
+  GS Theorem 2.1, whose Siegel–Walfisz hypothesis fails here.  `z^{Ω_P}` correlates with
+  characters mod `q₀`.  The right citation is **GS Corollary 7.1** (§7).
+  - It holds for every `f ∈ C`, stated with `Δ_A`: the characters of conductor `≤ (log x)^B` are
+    subtracted.
+  - Its only hypothesis is BV for `f·1_P`, which is classical BV at modulus `lcm(q, q₀)`.
+  - At moduli `e` coprime to `q₀`, the gap `Δ − Δ_A` involves only characters of conductor
+    coprime to `q₀`.  A twisted Siegel–Walfisz bound (`TwistedSiegelWalfisz`, believed ~80%,
+    Selberg–Delange with characters plus Siegel) controls them, at a cost of `(log x)^{2B+1}`.
+  - Lean: `Literature.GranvilleShaoCor71` (faithful transcription) and
+    `multBVResidue_of : Cor71 → BV → TwistedSW → MultBVResidue := sorry`.
 - **(b) Weighted two-sided sieve transfer.**  The upper-sieve half of C′ (5.2), and the
   Cauchy–Schwarz weighting.  New writing, standard ingredients.
 - **(c) Uniformity in `J`.**  Count the moduli multiplicity with the `w_j` weights explicitly.

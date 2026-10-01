@@ -4,6 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
 import NormalNumbers.CPrimeQuantStatement
+import BoundedGaps.BombieriVinogradov.Statement
+import Mathlib.NumberTheory.DirichletCharacter.Orthogonality
 
 /-!
 # Site factorization: the frozen statements behind `RelativeFirstOrder`
@@ -26,8 +28,10 @@ This file freezes the three statements that would make that defect quadratic:
 * `CPrimeResidueQuad`: the consumer.  Residue classes mod `q` have discrepancy
   `O(log³φ(q)/φ(q)²)`, the square of `CPrimeResidueRich`'s rate.
 
-The one external input the mechanism names is `Literature.GranvilleShaoBVResidue`
-(Bombieri–Vinogradov for `z^{Ω_P}`, Granville–Shao 2018).  Paper statement, mechanism and the
+Literature inputs: `Literature.GranvilleShaoCor71` (Bombieri–Vinogradov for multiplicative
+functions), `BoundedGaps.Maynard.bombieriVinogradov` (classical), `Literature.SelbergDelangeResidue`,
+`Literature.SelbergUpperTwoForms`.  The believed wiring theorems (`sorry`, with confidence and
+evidence) are at the end.  Paper statement, mechanism and the
 negative-inventory check: `docs/CPRIME-SITE-FACTORIZATION-2026-10-01.md`.
 
 ## Guard rule
@@ -123,7 +127,88 @@ end NormalNumbers.PrimeModel.SiteFactor
 
 namespace NormalNumbers.Literature
 
-open NormalNumbers.PrimeModel.SiteFactor
+open Filter Topology
+
+/-- Granville–Shao's class `C`: `f(1) = 1` and `f·log = Λ_f ∗ f` with `|Λ_f(n)| ≤ Λ(n)`, i.e.
+`−F'/F = ∑ Λ_f(n) n^{−s}` with `|Λ_f| ≤ Λ`.  This forces `|f| ≤ 1` and an Euler product.  Every
+1-bounded completely multiplicative function is in `C`. -/
+def InClassC (f : ℕ → ℂ) : Prop :=
+  f 1 = 1 ∧ ∃ Λf : ℕ → ℂ, (∀ n, ‖Λf n‖ ≤ ArithmeticFunction.vonMangoldt n) ∧
+    ∀ n, 1 ≤ n → f n * Real.log n = ∑ d ∈ n.divisors, Λf d * f (n / d)
+
+/-- `Δ_A(f, x; q, a)`, with `A` the primitive characters of conductor `≤ D`:
+`∑_{n≤x, n≡a (q)} f(n) − (1/φ(q)) ∑_{χ mod q, cond χ ≤ D} χ̄(a) ∑_{n≤x} f(n)χ(n)`.
+The principal character has conductor `1`, so `D ≥ 1` contains the usual `Δ`.  (GS print
+`χ(a)`; orthogonality needs `χ̄(a)` with their `S_f(x, χ) = ∑ f(n)χ(n)`.) -/
+noncomputable def apDiscrepancyChar (f : ℕ → ℂ) (x q a : ℕ) (D : ℝ) : ℂ :=
+  (∑ n ∈ (Finset.Icc 1 x).filter (fun n => n % q = a % q), f n)
+    - (1 / (Nat.totient q : ℂ)) *
+      ∑ χ ∈ (Finset.univ.filter (fun χ : DirichletCharacter ℂ q => (χ.conductor : ℝ) ≤ D)),
+        (starRingEnd ℂ) (χ (a : ZMod q)) * ∑ n ∈ Finset.Icc 1 x, f n * χ (n : ZMod q)
+
+/-- `∑_{q≤Q} max_{(a,q)=1} |Δ_A(f, x; q, a)|`. -/
+noncomputable def bvSumChar (f : ℕ → ℂ) (x Q : ℕ) (D : ℝ) : ℝ :=
+  ∑ q ∈ Finset.Icc 1 Q, ⨆ a : {a : Fin q // Nat.Coprime a.val q},
+    ‖apDiscrepancyChar f x q a.val.val D‖
+
+/-- **Granville–Shao, Corollary 7.1 (cited).**  A. Granville, X. Shao, *When does the
+Bombieri–Vinogradov theorem hold for a given multiplicative function?*, Forum Math. Sigma 6
+(2018), arXiv:1706.05710v1, §7, Corollary 7.1.  Fix `A ≥ 0`, `B > A + 5`, `γ > 2A + 6`; put
+`Q = x^{1/2}/(log x)^B`, `y = x/(log x)^γ`, `A` = primitive characters of conductor
+`≤ (log x)^B`.  If `f ∈ C` and `∑_{q≤Q} max |Δ_A(f·1_P, X; q, a)| ≪ x/((log x)^A log(x/y))` for
+all `y ≤ X ≤ x`, then `∑_{q≤Q} max |Δ_A(f, x; q, a)| ≪ x/(log x)^A`.  No Siegel–Walfisz
+hypothesis: the characters it would control are subtracted in `Δ_A`.  Uniform in an
+`x`-dependent `f` (the point of the paper's §2).
+Transcription: the implied constant of the conclusion depends on `A, B, γ` and the hypothesis's
+constant `K`; real `X ∈ [y, x]` becomes natural `X ≥ ⌊y⌋` (the sums only see `⌊X⌋`); a
+threshold `x₀` is allowed (weaker). -/
+def GranvilleShaoCor71 : Prop :=
+  ∀ A B γ : ℝ, 0 ≤ A → A + 5 < B → 2 * A + 6 < γ → ∀ K : ℝ, 0 ≤ K →
+    ∃ C : ℝ, 0 ≤ C ∧ ∃ x₀ : ℕ, ∀ x : ℕ, x₀ ≤ x → ∀ f : ℕ → ℂ, InClassC f →
+      (∀ X : ℕ, ⌊(x : ℝ) / Real.log x ^ γ⌋₊ ≤ X → X ≤ x →
+        bvSumChar (fun n => if n.Prime then f n else 0) X ⌊Real.sqrt x / Real.log x ^ B⌋₊
+            (Real.log x ^ B)
+          ≤ K * x / (Real.log x ^ A * Real.log ((x : ℝ) / ((x : ℝ) / Real.log x ^ γ)))) →
+      bvSumChar f x ⌊Real.sqrt x / Real.log x ^ B⌋₊ (Real.log x ^ B) ≤ C * x / Real.log x ^ A
+
+/-- **Selberg–Delange for `z^{ω_P}`, `P` a residue class (cited corollary).**  Tenenbaum,
+*Introduction to Analytic and Probabilistic Number Theory* (3rd ed.), Thm II.5.2 with `N = 0`,
+applied to `F(s) = ∑ z^{ω_P(n)} n^{−s} = ζ(s)^{1+κ} G(s)`, `κ = (z − 1)/φ(q₀)`.  Here
+`G = ∏_{χ mod q₀} L(s, χ)^{c_χ} × (absolutely convergent)` is holomorphic in a fixed zero-free
+region; for fixed `q₀` a possible exceptional zero sits at a fixed distance from `1`.  Main term
+`x (log x)^κ G(1)/Γ(1+κ)`, relative error `O(1/log x)`.  `G(1)` is the limit of the partial
+Euler products `∏_{p≤X} (1 − 1/p)^{1+κ}(1 + f(p)/(p − 1))`, by Mertens in progressions.
+⚠️ Instantiating the class `P(z; c₀, δ, M)` hypotheses is OUR step (unaudited), as is the
+Euler-product identification of `G(1)`.  At a pole of `Γ(1+κ)` Mathlib's `Γ = 0` gives main term
+`0`, matching `1/Γ` entire. -/
+def SelbergDelangeResidue : Prop :=
+  ∀ q₀ a : ℕ, 3 ≤ q₀ → Nat.Coprime a q₀ → ∀ z : ℂ, ‖z‖ = 1 →
+    ∃ L₀ : ℂ,
+      Tendsto (fun X : ℕ => ∏ p ∈ (Finset.Icc 1 X).filter Nat.Prime,
+        (1 - 1 / (p : ℂ)) ^ (1 + (z - 1) / (Nat.totient q₀ : ℂ)) *
+          (1 + (if p % q₀ = a % q₀ then z else 1) / ((p : ℂ) - 1))) atTop (𝓝 L₀) ∧
+      ∃ C : ℝ, 0 ≤ C ∧ ∀ x : ℕ, 3 ≤ x →
+        ‖(∑ n ∈ Finset.Icc 1 x,
+              z ^ ((n.primeFactors.filter (fun p => p % q₀ = a % q₀)).card)) / (x : ℂ)
+          - L₀ * (Real.log x : ℂ) ^ ((z - 1) / (Nat.totient q₀ : ℂ))
+              * (Complex.Gamma (1 + (z - 1) / (Nat.totient q₀ : ℂ)))⁻¹‖
+        ≤ C * Real.log x ^ (((z - 1) / (Nat.totient q₀ : ℂ)).re - 1)
+
+/-- **Upper-bound sieve for a prime pair in two linear forms (cited, weakened).**
+Halberstam–Richert, *Sieve Methods* (1974), Theorem 3.12: for `(a, b) = 1`, `2 ∣ ab`,
+`#{p ≤ x : ap + b prime} ≤ 8 ∏_{p>2}(1 − (p−1)⁻²) ∏_{2<p∣ab} (p−1)/(p−2) · x/log²x (1 + o(1))`.
+Weakened here to an unspecified absolute constant times `(ab/φ(ab))²`, which dominates the
+`ab`-product.  ⚠️ Theorem number recalled, not re-opened this session. -/
+def SelbergUpperTwoForms : Prop :=
+  ∃ C : ℝ, 0 < C ∧ ∀ a b : ℕ, 0 < a → 0 < b → Nat.Coprime a b → ∀ x : ℕ, 3 ≤ x →
+    (((Finset.Icc 1 x).filter (fun p => p.Prime ∧ (a * p + b).Prime)).card : ℝ)
+      ≤ C * ((a * b : ℕ) / (Nat.totient (a * b) : ℝ)) ^ 2 * x / Real.log x ^ 2
+
+end NormalNumbers.Literature
+
+namespace NormalNumbers.PrimeModel.SiteFactor
+
+open NormalNumbers.Literature
 
 /-- `Ω` restricted to the primes of `S` up to `y`, with multiplicity. -/
 def omegaMultLe (S : ℕ → Prop) [DecidablePred S] (y n : ℕ) : ℕ :=
@@ -134,18 +219,11 @@ noncomputable def apDiscrepancy (f : ℕ → ℂ) (x e c : ℕ) : ℂ :=
   (∑ n ∈ (Finset.Icc 1 x).filter (fun n => n % e = c % e), f n)
     - (1 / (Nat.totient e : ℂ)) * ∑ n ∈ (Finset.Icc 1 x).filter (fun n => Nat.Coprime n e), f n
 
-/-- **Bombieri–Vinogradov for `z^{Ω_{P,≤y}}`, moduli coprime to `q₀` (cited, AUDIT PENDING).**
-Source: A. Granville, X. Shao, *When does the Bombieri–Vinogradov theorem hold for a given
-multiplicative function?*, Forum Math. Sigma (2018), arXiv:1706.05710, Theorem 2.1, which is
-uniform in an `x`-dependent `f` in the class `C` (`|Λ_f| ≤ Λ`; `z^{Ω}` is completely
-multiplicative and 1-bounded, so it qualifies).  Its hypothesis (2.1) is classical BV for primes
-in `P`, i.e. primes `≡ a` mod `q₀·e`.
-⚠️ Faithfulness is NOT yet audited.  Theorem 2.1 is stated for `Ξ = {1}`, and `z^{Ω_P}`
-correlates with characters mod `q₀`, so the Siegel–Walfisz hypothesis fails at moduli sharing a
-factor with `q₀`.  The paper calls the `Ξ`-modification straightforward and states it for
-Theorems 2.2–2.3 only.  Restricting to `(e, q₀) = 1` removes those characters from `Ξ_e`; that
-step is ours.  `y = x` gives the full function. -/
-def GranvilleShaoBVResidue : Prop :=
+/-- **BV for `z^{Ω_{P,≤y}}` at moduli coprime to `q₀` (derived, believed).**  The form
+`SiteFactorization` consumes.  `y = x` gives the full function.  Plain `Δ` is right here: at
+moduli coprime to `q₀` the only small-conductor characters `z^{Ω_P}` correlates with (those mod
+`q₀`) are not induced, and `TwistedSiegelWalfisz` removes the rest. -/
+def MultBVResidue : Prop :=
   ∀ q₀ a : ℕ, 3 ≤ q₀ → Nat.Coprime a q₀ → ∀ z : ℂ, ‖z‖ = 1 → ∀ A : ℝ, 0 < A →
     ∃ B C : ℝ, 0 < C ∧ ∀ x y : ℕ, 2 ≤ x →
       ∑ e ∈ (Finset.Icc 1 ⌊Real.sqrt x / Real.log x ^ B⌋₊).filter (fun e => Nat.Coprime e q₀),
@@ -153,4 +231,64 @@ def GranvilleShaoBVResidue : Prop :=
           ‖apDiscrepancy (fun n => z ^ omegaMultLe (residueClass q₀ a) y n) x e c.val.val‖
         ≤ C * x / Real.log x ^ A
 
-end NormalNumbers.Literature
+/-- **Siegel–Walfisz for twisted `z^{Ω_{P,≤y}}` (believed, open node).**  For a nonprincipal
+character `χ` of modulus `r ≤ (log x)^B` coprime to `q₀`, `∑_{n≤x} z^{Ω_{P,≤y}(n)} χ(n) ≪_A
+x/(log x)^A`, uniformly in `y`.  `χ·z^{Ω_P}` has Dirichlet series `∏_ψ L(s, χψ)^{c_ψ}`
+(`ψ mod q₀`) with every `χψ` nonprincipal, so there is no pole at `s = 1`; with Siegel's theorem
+the bound is ineffective but holds.  Uniformity in `y` is the part to check. -/
+def TwistedSiegelWalfisz : Prop :=
+  ∀ q₀ a : ℕ, 3 ≤ q₀ → Nat.Coprime a q₀ → ∀ z : ℂ, ‖z‖ = 1 → ∀ A B : ℝ, 0 < A → 0 < B →
+    ∃ C : ℝ, 0 < C ∧ ∀ x y r : ℕ, 3 ≤ x → 1 ≤ r → (r : ℝ) ≤ Real.log x ^ B →
+      Nat.Coprime r q₀ → ∀ χ : DirichletCharacter ℂ r, χ ≠ 1 →
+        ‖∑ n ∈ Finset.Icc 1 x, z ^ omegaMultLe (residueClass q₀ a) y n * χ (n : ZMod r)‖
+          ≤ C * x / Real.log x ^ A
+
+/-- Believed, ~80%.  English proof: Selberg–Delange with characters (Tenenbaum II.5) plus
+Siegel's theorem for the `L(s, χψ)`; the `y`-truncation removes `z`-weights above `y`, which
+changes `G` by a factor holomorphic and bounded in the same region, uniformly in `y`.
+Evidence: none numerical; the `y = x`, `z = 1` case is Siegel–Walfisz-for-`1`, a theorem. -/
+theorem twistedSiegelWalfisz : TwistedSiegelWalfisz := sorry
+
+/-- Believed, ~80%.  English proof: GS Corollary 7.1 applies to `f = z^{Ω_{P,≤y}} ∈ C`
+(completely multiplicative, 1-bounded).  Its hypothesis is BV for `f·1_P`: on primes `f` is
+`1 + (z−1)·1[p ≡ a (q₀), p ≤ y]`, so `Δ_A(f·1_P; q)` is classical BV at modulus `lcm(q, q₀)`
+(characters mod `q₀` are subtracted inside `Δ_A` when `q₀ ∣ q`), and the cutoff `p ≤ y` costs
+two BV evaluations.  Then `Δ = Δ_A + ∑_{χ ∈ A_e, χ ≠ χ₀} χ̄(c) S_f(x, χ)/φ(e)`; for `(e, q₀) = 1`
+each `χ` has conductor coprime to `q₀`, so `TwistedSiegelWalfisz` bounds it, and the sum over `e`
+loses only `(log x)^{2B+1}`, absorbed by choosing `A` larger.  This replaces the 2026-10-01
+first-draft citation of GS Theorem 2.1, whose Siegel–Walfisz hypothesis fails at moduli sharing a
+factor with `q₀` (doc, open check (a): resolved this way). -/
+theorem multBVResidue_of (h71 : GranvilleShaoCor71)
+    (hBV : BoundedGaps.Maynard.bombieriVinogradov) (hTSW : TwistedSiegelWalfisz) :
+    MultBVResidue := sorry
+
+/-- Believed, ~60%.  English proof (doc §Mechanism): `T1'_k = mean[Φ^{≠k}(n)·(F − F_y)(n+k)]`;
+sandwich C′'s CRT atoms (moduli `≤ N^{3/8}`) between fundamental-lemma sieves; BV for `F`,
+`F_y` (`MultBVResidue`) handles each progression; main terms agree prime-by-prime except at
+`q′ ∈ (y_k, y_j]` (cost `O(1/y_k)`); the global ratio `M[F]/M[F_y]` is
+`SelbergDelangeResidue` over C′'s proved model mean (5.3), giving `siteFactor` up to
+`O(e^{−u})`.  Open checks (b) two-sided weighted transfer, (c) uniformity in `J`, (d)
+atom-size error.
+Evidence: at `a = 1, 0.5` (NOT the proof regime) the measured `G = T1/W_y` converges to the
+analytic limit for residue classes, `2^20 → 2^26` (`probes/data-2026-10-01-cprime-analytic-G.md`).
+Controls: `P = {101}` exact one-prime test, and `J = 1`, where the statement is an identity. -/
+theorem siteFactorization_of (hBV : MultBVResidue) (hSD : SelbergDelangeResidue) :
+    SiteFactorization := sorry
+
+/-- Believed, ~70%.  English proof: the left side lives on `n` with fresh primes at two sites,
+`n + j = pm`, `n + j' = p′m′`; for fixed small cofactors the count of `p` is a prime pair in two
+linear forms (`SelbergUpperTwoForms`, in progressions mod `q₀`), and summing `1/(m m′ log² )` over
+the cofactor ranges gives the product of the two sites' fresh masses.  Pairs with `pp′ ≤ N` are
+CRT-exact.  Evidence: `|T2|/ρ² ∈ [0.2, 4.6]`, stable `2^22 → 2^24`, every set
+(`probes/data-2026-09-30-cprime-fresh-cancellation.md`); control `P = {101, 103}` exact. -/
+theorem pairSecondOrder_of (h : SelbergUpperTwoForms) : PairSecondOrder := sorry
+
+/-- Believed, ~70% given the two premises.  English proof (doc §Chain): `|W| ≤ |W_y|(1+|G_h|)
++ |T1' − W_y G_h| + |W − W_y − T1'|`; `|W_y| ≤ 4e^{−u} + o(1)` from C′ (5.3)–(5.4); take
+`u = ⌈ρ⁻²⌉`, then Erdős–Turán with `H = ⌈ρ⁻²⌉`.  Shares the six build gaps of
+`docs/CPRIME-QUANTITATIVE-2026-09-30.md` (Erdős–Turán, quantitative Weyl wiring, Mertens-AP
+upper bound, …). -/
+theorem cprimeResidueQuad_of (hSF : SiteFactorization) (hPair : PairSecondOrder) :
+    CPrimeResidueQuad := sorry
+
+end NormalNumbers.PrimeModel.SiteFactor
