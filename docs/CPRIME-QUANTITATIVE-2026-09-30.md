@@ -106,7 +106,60 @@ the unfrozen primes in `(y_j, N]`, and a positive-density `P` leaves a defect li
 mass.  Reaching G₄ still needs cancellation *inside* that mass: the same wall as C1/C3.  The
 quantitative theorem measures the wall's thickness; it does not thin it.
 
-**The next research question this opens.**  Is the linear-in-`ρ` defect sharp for this
-architecture, or do the fresh primes cancel?  An instrument: compare `|W_h − W_{y,h}|` with its
-triangle bound numerically on residue-class sets.  A large gap would locate the cancellation G₄
-needs in a controlled family, before attempting it at `ρ = log 2`.
+## The instrument: do the fresh primes cancel?  (measured 2026-09-30)
+
+`experiments/cprime_fresh_cancellation.py` (tests: `test_cprime_fresh_cancellation.py`, 8 checks,
+hand-derived).  Data: `probes/data-2026-09-30-cprime-fresh-cancellation.md` (T1/T2, h = 1, 3) and
+`…-h135.md` (h = 1, 3, 5, N = 2^20..2^24).
+
+**Setup.**
+- Prime sets: residue classes `1 mod q` (q = 3 … 61) and `2 mod 31`, deterministically thinned
+  primes (θ = 1/2 … 1/32), and all primes.
+- `J = 5` sites; cutoffs `y_j = N^(2^−j)`.  The paper's `a = u⁻²` is numerically degenerate at
+  reachable `N`, so these are not the proof's cutoffs.
+- Exact split: `W − W_y = T1 + T2`.  T1 keeps the `n` whose fresh primes sit at one site.  T2 keeps
+  the `n` with fresh primes at two or more sites, i.e. a prime pair `p | n+j`, `p′ | n+j′`.
+
+**Findings.**
+1. **No first-order cancellation.**  At small `ρ`:
+   - `A = |W − W_y| ≈ M`, the pointwise L¹ mass: `A/M ≈ 0.85–0.95` at `h = 1`.
+   - `A ≈ 2ρ` at `h = 1`, flat from `2^20` to `2^24`.
+   - The triangle bound is sharp up to a constant at reachable scales.
+2. **It tracks the frozen mean.**  Where `|W_y|` visibly moves (`1 mod 3`, thinned 1/2 and 1/4),
+   `A/|W_y|` is stable across `N`: 0.955 → 0.974 → 0.984 for `1 mod 3` at `h = 1`.  This is the
+   multiplicative, size-budget picture of the 2026-09-19 fable verdict: `T1 ≈ W_y·G_h(ρ)`.  Fresh
+   primes rescale the frozen mean rather than adding independent error.  For sparse sets
+   `|W_y| ≈ 1` at these `N`, so the relative form is **untested** there.
+3. **The multi-site term is second order.**  `|T2|/ρ² ∈ [0.2, 4.6]` for every set, `ρ` from 0.69
+   down to 0.012, stable from `2^22` to `2^24`.  Typical values are ≈ 1.5 at `h = 1` and ≈ 3.5 at
+   `h = 3`.  Example: `1 mod 61`, `ρ = 0.012`, `T2 = 2.7·10⁻⁴`.
+
+**What this suggests: the wall sits at second order in the fresh mass.**  Here is the difficulty
+check.
+- **Proved:** the `O(ρ log³)` bound above.
+- **Unproved premise `RelativeFirstOrder`:** `T1 = W_y·G_h + o(1)`, with `G_h` bounded and
+  `N`-independent.  Since `W_y → 0` under model contraction, T1 would drop out.  What remains is
+  `|T2| ≤ C(Σ_j S_P(y_j, N))²` from an **upper-bound** sieve on prime pairs, which needs no parity
+  input.  The discrepancy would improve to `O(ρ² polylog)`.
+- **Candidate mechanism for the premise:**
+  - Order the fresh primes by size, as in peeling identity (10)–(13).
+  - For `p ≤ N^(1/2−ε)`, condition on `p | n+j` inside the frozen CRT sieve: one extra
+    congruence, error `R²p/N`, summable.
+  - For `p > √N`, the cofactor is `k < N/p`.  Swap the sums, and the other sites' frozen phases at
+    `pk + c` need primes in progressions to moduli `≤ R² ≤ N^(1/4)` on average: a
+    Bombieri–Vinogradov level, which the build lacks.
+  - The pivot factor `Σ_{k≤N/p} z^(ω_frozen(k))` is the deterministic size budget.
+- **Where it stops:** T2's *relative* form would need prime-pair correlations, which is
+  parity-barrier territory.  So the argument stops at `ρ²` on purpose.
+- **Sibling check:** at all primes (`ρ = log 2`, `C ≈ 1.5`) the `ρ²` bound is trivial, so the
+  premise does not accidentally claim G₄.
+- **Maze check:** the premise is not the refuted per-prime "regeneration as feedback" or the
+  restatement-only signed peeling sum (7).  It asks for the size-budget factor `G_h` to be
+  *deterministic*, and uses `ρ` as the expansion parameter.
+- **Confidence:** about 70% that `T2 = O(ρ²)` persists in the proof's cutoff regime; about 40%
+  that `RelativeFirstOrder` is provable by the mechanism above.
+
+**The next research question.**  Answered in part by the measurement above.  The fresh primes do
+not cancel at first order; they rescale.  The open question is now `RelativeFirstOrder`.  Its
+first concrete test: track `T1/W_y` at a moderate fixed `a < 1`, on dense residue classes where
+`W_y` decays visibly.

@@ -199,7 +199,7 @@ Literature-`Prop` candidates, not campaigns.
 | # | Bet | Headline | Kind | Confidence |
 |---|---|---|---|---|
 | 1 | **Quantitative C′**: derived on paper 2026-09-30 (discrepancy `≤ Cρ log³(1/ρ)`; residue classes `O(log³φ(q)/φ(q))`), frozen in `CPrimeQuantStatement.lean`; next is a referee pass, then the kickoff → `docs/CPRIME-QUANTITATIVE-2026-09-30.md` | H1 | new math | ~75% the derivation holds |
-| 2 | Is C′'s linear-in-`ρ` defect sharp, or do the fresh primes cancel?  Measure `|W − W_y|` against its triangle bound on residue-class sets | H1 | new math (instrument) | open question |
+| 2 | **`RelativeFirstOrder`**: measured 2026-09-30, fresh primes do not cancel at first order but rescale the frozen mean, and the multi-site term is `O(ρ²)` (`experiments/cprime_fresh_cancellation.py`).  Prove `T1 = W_y·G + o(1)` (CRT below `√N`, Bombieri–Vinogradov above), which upgrades the discrepancy to `O(ρ²)` and puts the parity wall at second order | H1 | new math | ~40% that the mechanism works |
 | 3 | Master-conjectures pass: Borel + Hypothesis A as Props, consequence graph, Maze test | H2, H3 | conjecture graph | ~85% that it lands (the Schanuel pass proved 10 consequences in one lap) |
 | 4 | Growing-prime localized log: paper audit, then the new growing-`P` theorem | H3 | new math (paper) | ~70% on paper |
 | 5 | Harvest explicit open problems from 2024–26 normal-number papers | all | sweep | lean-formalizations answered Saito's Problem 1.8 this way in 2 laps |
