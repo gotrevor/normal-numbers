@@ -32,8 +32,24 @@ Expectations HAND-DERIVED, not captured from the probe:
   c = 648/65536
       T1 = Sbar = c * sum_{j=2..5} (z_j - 1),   G = T1 / W_y = Sbar / (1 + c(z_1 - 1)),
       C = T1 - W_y Sbar = -c (z_1 - 1) Sbar.
+* Analytic G levels.  g_inf(d, w, s) = s^(-dw) e^(-gamma dw)/Gamma(1+dw) - 1:
+    d = 1, w = 1, s = 1/2:  2 e^(-gamma)/Gamma(2) - 1 = 2 * 0.5614594836 - 1 = 0.1229189672;
+    d = 1/2, w = -2 (z = -1): 1/Gamma(0) = 0, so g = -1 exactly;
+    d -> 0: g = d w log(1/s) + O(d^2).
+  log_mertens(10) = log((1/2)(2/3)(4/5)(6/7)) = log(8/35).  g_sd with d = 1, w = 1, N = 10,
+  primes {2,3,5,7}, y = 3:  (log 10)(8/35) * (1 + 1/5)(1 + 1/7) / Gamma(2) - 1 = 384 log(10)/1225 - 1.
+  G_A for P = {101}: site 1 has Mf = My (101 frozen), sites 2..5 have My = 1, Mf = 1 + c w_k, so
+  G_A = c sum_{k=2..5} w_k (= Sbar), and prod_k My_k = 1 + c w_1 = W_y.
+* Generalized Dickman R_kappa(u).  kappa = 1 is Dickman: F = e^(-gamma) int_0^u rho, and on [1, 2]
+  rho(t) = 1 - log t, so int_0^u rho = 2u - u log u - 1 and R(u) = F/(e^(-gamma) u) = 2 - log u - 1/u.
+  F(oo) = 1 (int_0^oo rho = e^gamma for kappa = 1; the Selberg-Delange normalization in general) gives
+  R(u) -> e^(gamma kappa) Gamma(1 + kappa) u^(-kappa), checked at u = 12 for real and complex kappa.
+  kappa = -1 (d = 1/2, z = -1) is a pole: the site factor is -1.  Small kappa: R = 1 - kappa log u.
+* Frozen-mean ratio, P = {3}, N = 100, y = 10: mean of z^[3 | m] over m = 1..100 is
+  1 + (z - 1) * 33/100, CRT product 1 + (z - 1)/3.
+* Extrapolation: G = 2 + 3i + (1 - i)*10/L sampled at L = 10, 20, 40 recovers G_oo = 2 + 3i with miss 0.
 
-Run: uv run --with numpy --with pytest pytest -q experiments/test_cprime_fresh_cancellation.py
+Run: uv run --with numpy --with scipy --with pytest pytest -q experiments/test_cprime_fresh_cancellation.py
 """
 import cmath
 import math
@@ -138,3 +154,62 @@ def test_cli_relative_report_runs():
     rows = [l for l in out.splitlines() if l.startswith("| p = 1 mod 3 |")]
     assert len(rows) == 2  # one set, one h, two values of a
     assert "y_j = N^(0.5*2^-j)" in out
+
+
+def test_g_inf_hand_values():
+    assert abs(probe.g_inf(1.0, 1.0, 0.5) - 0.1229189672) < 1e-9
+    assert abs(probe.g_inf(0.5, -2.0, 0.5) - (-1)) < 1e-12
+    w, d = complex(-1, 1), 1e-6
+    assert abs(probe.g_inf(d, w, 0.25) - d * w * math.log(4)) < 1e-10
+
+
+def test_g_sd_hand_value():
+    assert abs(probe.log_mertens(10) - math.log(8 / 35)) < 1e-12
+    g = probe.g_sd(1.0, 1.0, 10, np.array([2, 3, 5, 7]), 3, math.log(8 / 35))
+    assert abs(g - (384 * math.log(10) / 1225 - 1)) < 1e-12
+
+
+def test_site_reduction_one_prime_exact():
+    N = 1 << 16
+    [m] = probe.measure(N, np.array([101]), [1], a=1.0)
+    c = 648 / 65536
+    assert abs(m["GA"] - c * sum(e(1 / 4 ** j) - 1 for j in range(2, 6))) < 1e-12
+    assert abs(m["My_prod_over_Wy"] - 1) < 1e-12
+
+
+def test_dickman_R_kappa_one_closed_form():
+    for u in (1.25, 1.5, 2.0):
+        assert abs(probe.dickman_R(1, u) - (2 - math.log(u) - 1 / u)) < 1e-12
+
+
+def test_dickman_R_normalization_at_infinity():
+    from scipy.special import gamma
+    g = probe.EULER_GAMMA
+    for k in (1, 0.5, -0.5, complex(-0.3, 0.3), complex(-0.5, 0.5)):
+        want = cmath.exp(g * k) * gamma(1 + k) * 12 ** (-k)
+        assert abs(probe.dickman_R(k, 12) - want) < 1e-5 * abs(want)
+
+
+def test_dickman_pole_and_small_kappa():
+    assert probe.g_dickman(0.5, -2.0, 0.5) == -1
+    k = complex(-1e-6, 1e-6)
+    assert abs(probe.dickman_R(k, 8) - (1 - k * math.log(8))) < 1e-9
+
+
+def test_extrapolate_exact_on_model():
+    Ls = [10.0, 20.0, 40.0]
+    Gs = [complex(2, 3) + complex(1, -1) * 10 / L for L in Ls]
+    Goo, miss = probe.extrapolate(Ls, Gs)
+    assert abs(Goo - complex(2, 3)) < 1e-12 and miss < 1e-12
+
+
+def test_dickman_boundary_re_kappa_minus_one():
+    # z = -i, d = 1: kappa = -1 - i up to rounding; must be finite, not the Re < -1 refusal
+    k = complex(math.cos(3 * math.pi / 2) - 1, -1)
+    assert np.isfinite(probe.dickman_R(k, 4))
+
+
+def test_frozen_mean_ratio_one_prime():
+    z = e(1 / 4)
+    r = probe.frozen_mean_ratio(100, np.array([3]), z, 10)
+    assert abs(r - (1 + (z - 1) * 33 / 100) / (1 + (z - 1) / 3)) < 1e-12

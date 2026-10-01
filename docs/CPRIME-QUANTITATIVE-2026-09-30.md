@@ -205,3 +205,97 @@ about 3% across `N = 2^20 → 2^24` for every set with `ρ ≤ 0.35`.  The phase
 An analytic `G` that matches is the statement the CRT/Bombieri–Vinogradov mechanism has to deliver.
 Confidence: about 75% that `RelativeFirstOrder` holds in the small-ρ regime (up from about 60%
 implicit); about 40% that the mechanism proves it (unchanged).
+
+## Analytic `G_h`  (2026-10-01)
+
+Data: `probes/data-2026-10-01-cprime-analytic-G.md`.  Probe modes: `--report sites | limit | frozen`.
+Tests: 19, hand-derived.
+
+**The formula.**  Write `w_k = z_k − 1` and `κ_k = δ·w_k`, where `δ` is the density of `P` among
+the primes (`δ = 1/φ(q)` for a residue class, so `ρ = δ log 2`).  Let `u_k = 2^k/a`.  Then
+
+    G_h = Σ_k g_k,   g_k = 1/R_{κ_k}(u_k) − 1,
+
+where `R_κ` solves the delay equation
+
+    R = 1 on [0, 1],   R'(t) = −(κ/t)·((t−1)/t)^κ·R(t−1).
+
+On `[1, 2]` it has the closed form `R = 1 − κ Σ_n b^(κ+n+1)/(κ+n+1)`, with `b = 1 − 1/t`.
+`F_κ(u) = A u^κ R_κ(u)`, with `A = e^(−γκ)/Γ(1+κ)`, is the generalized Dickman distribution
+function: the law of `log d / log y` under the weights `w^ω(d)/d` on `y`-smooth `d`.  Its
+normalization `F(∞) = 1` is checked numerically for real and complex `κ`.
+
+Properties:
+- `G_h` depends on `P` only through `δ`.  It is bounded and independent of N.
+- To first order in `δ` it is the linear fresh mass `Σ_k δ w_k log u_k`.
+- When `κ` is a negative integer (`z = −1` with `δ = 1/2` or 1), the site factor is exactly `−1`.
+- As `u → ∞`, `g_k → u^κ e^(−γκ)/Γ(1+κ) − 1`.  That simpler form misses the frozen mean's own size
+  budget, and is off by about 35% for all primes at `y = √N`.
+
+**Derivation, two steps.**
+1. **Site reduction.**  If the fresh factor at site `k`, conditioned on the frozen configuration,
+   depends only on site `k`, then `T1/W_y = Σ_k [Mf_k/My_k − 1]`.  Here `Mf` and `My` are the means
+   of `z^ω_P` and `z^ω_{P,≤y}` over a single integer.
+2. **Single-integer asymptotics.**
+   - `Mf` uses the Selberg–Delange main term `(log N)^κ H/Γ(1+κ)`.
+   - `My` is the CRT product `Π_{p≤y}(1 + w/p)` times `F_κ(u)`.
+   - In the ratio the Mertens products cancel down to the fresh tail `Π_{y<p≤N}(1 + w/p) → u^κ`.
+     That leaves `1/R_κ(u)`.
+
+**Measured, N = 2^20 → 2^26.**  The four levels are:
+- `G`, measured;
+- `G_A`, the site reduction with exact single-integer means;
+- `G_SD`, finite-N analytic: the Selberg–Delange main term, the exact Mertens-in-progressions tail and `F`;
+- `G_∞`, the limit.
+
+Results:
+- **Site reduction holds for residue classes.**  `|G − G_A|/|G|` is 0.5–3% whenever every prime of
+  `P` exceeds `J`.
+  - With a prime `≤ J` in `P` (2 in the thinned sets; 2, 3 and 5 in all primes), the product of
+    site means breaks.  `Π My_k/W_y` reaches 0.0 or 2.7, and `G_A` blows up where `My_1 = 0`
+    (`z = −1` at `p = 2`).
+  - Measured `G` still matches `G_SD` in those cases, because the shared small primes cancel in
+    `T1/W_y`.
+  - So the correct statement of step 1 is a frozen-weighted conditional mean, not a product of
+    site means.
+- **Finite-N analytic level.**  `|G_A − G_SD|` is 2–12% for `δ ≤ 1/2` and shrinks with N.  For
+  `1 mod 5`, h = 1, a = 1: 7.9 → 7.0 → 6.2 → 5.6%.  For `1 mod 3`: 11.8 → 8.5%.
+- **The limit shows up at reachable N for residue classes.**  `|G − G_∞|/|G_∞|` decreases
+  monotonically at every h and both values of a:
+  - `1 mod 5`: from 12–20% at `2^20` to 5–10% at `2^26`;
+  - `1 mod 3`: from 6–17% to 5–14%;
+  - `1 mod 31`: from 45–58% to 29–47%.  Its first frozen prime is 311, so the small-`y` sites are
+    far from asymptotic.
+  - all primes, a = 1, h = 1: 61 → 51 → 44 → 37%.  This is the drift of 2026-10-01 morning, now
+    explained as convergence to `G_∞`.
+  - The golden-ratio thinned sets wander and don't converge cleanly.  They are deterministic
+    pseudo-random sets, and their density is only a heuristic.
+  - A two-point `1/log N` extrapolation is too unstable to quote: it overshoots `G_∞` by 3–30%.
+- **The Dickman factor `F_κ` is needed, and confirmed only for real `κ`.**
+  - Without it, the all-primes gap between `G_A` and `G_SD` sits flat at 35% (0.358, 0.350,
+    0.349).  With it, the gap shrinks (0.56 → 0.33 at 2^26).
+  - Direct check at `κ = 1`: the exact frozen mean over its CRT product approaches `F_1(2) = 0.906`
+    at the `1/log N` rate (gap 4.1 → 3.2%).
+  - Complex or negative `κ` at `u = 2` is **not confirmed**.
+    - `1 mod 3` at h = 1 (κ = −½+½i): a 4.2 → 3.9% gap, barely moving.
+    - `1 mod 5` at h = 2 (κ = −½): 0.45 → 0.74%, **growing**.
+    - All primes at h = 1: 52% off.
+  - For `δ ≤ 1/4` the factor is below 1% at every site, so the small-ρ regime does not depend on it.
+  - `dickman_F` returns `inf` at the poles (κ = −1, −2).  The finite limit there (`e^γ/u` on
+    `(1, 2]` for κ = −1) does not match the measured 1.05–1.07 either.  The pole cases are
+    unresolved.
+
+**What this does to the mechanism.**
+- Step 2 is classical mean-value theory: Selberg–Delange, plus smooth-number weighted means for
+  `F_κ`.  It enters as Literature Props.
+- The new content is all in step 1 for the fresh primes above `y_k`.  For `n + k = p·m`, the
+  frozen configuration at the other sites must equidistribute along `n = pm − k`, summed over `p`.
+  That is a weighted Bombieri–Vinogradov statement.  At the proof's cutoffs the frozen moduli stay
+  below `N^(1/8)`, inside BV's level ½.
+- The crux of `RelativeFirstOrder` is therefore one weighted-BV conditional factorization, with an
+  explicit constant `G_h` to land on.
+
+**Confidence.**
+- About 80% that `RelativeFirstOrder` holds for small ρ (up from 75%).
+- About 45% that the mechanism proves it (up from 40%, because the crux is now one named step).
+- Unresolved: `F_κ` for complex `κ` with `Re κ < 0` at `u = 2`, and the pole cases.
