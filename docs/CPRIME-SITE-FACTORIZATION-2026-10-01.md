@@ -2,7 +2,7 @@
 
 Ren, 2026-10-01, attended.  Paper statement plus mechanism sketch, **not refereed**.  Frozen in Lean, compile-checked:
 `src/NormalNumbers/CPrimeSiteFactorization.lean` (`SiteFactorization`, `PairSecondOrder`,
-`CPrimeResidueQuad`, `Literature.GranvilleShaoBVResidue`).  Predecessor:
+`CPrimeResidueQuad`, `Literature.GranvilleShaoCor71`, `MultBVResidue`).  Predecessor:
 `docs/CPRIME-QUANTITATIVE-2026-09-30.md`, sections "`RelativeFirstOrder`, measured" and
 "Analytic `G_h`".
 
@@ -118,7 +118,7 @@ square root of `CPrimeResidueRich`'s.  At `u ≍ ρ⁻²` the cutoff constant is
    - Weighting by `|F − F_y| ≤ min(2, |w_k|·ω_{P,>y_k})` and Cauchy–Schwarz gives a per-site
      error `|w_k|·e^{−u/2}·δ log s_k`, which is summable over `k`.  **Open check (b).**
 2. **BV for `F` and `F_y`.**  For each atom modulus `e` (coprime to `q`, since its primes lie in
-   `P`), the progression sums of `F − F_y` follow from `Literature.GranvilleShaoBVResidue`.
+   `P`), the progression sums of `F − F_y` follow from `MultBVResidue` (derived from GS Corollary 7.1).
    - The moduli are `≤ N^{3/8} < N^{1/2−ε}`, inside the BV range.
    - The savings are absolute, `N(log N)^{−A}`, and the main term is `≍ N` for fixed `u`.  So
      the AGP obstruction (`docs/JOINT-LAMBERT-AGP-GAP.md`: BV cannot give a *relative* lower
