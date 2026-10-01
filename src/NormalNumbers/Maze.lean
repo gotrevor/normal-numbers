@@ -1313,7 +1313,7 @@ def register : List Hall := [
    "Prove C-prime's RelativeFirstOrder (SiteFactorization) by writing the one-site fresh term as the other sites' frozen phase against z^Omega_P - z^Omega_(P,<=y), sieving the other sites into CRT atoms and applying Granville-Shao BV for multiplicative functions",
    .wall, .cited,
    "The reduction is sound and the main term is right, but uniformity in the growing window J fails. The multi-site sieve gives moduli multiplicity (2J)^omega(e), a loss of (log N)^(O(delta J^2)); deep sites cannot be dropped below J1 ~ log_4 log log N; and BV saves only a fixed (log N)^(-A). The |w_j|-weighted expansion (multiplicity C_h^omega(e)) has no level control. This is the fixed-window-conductor-at-depth wall again. REOPEN IF: BV for z^Omega_(P,<=y) at moduli <= x^(3/8) with a super-polylog saving (Delta_A with conductors up to exp(c sqrt log x) plus excision), or a sieve with polylog l1 mass at growing depth",
-   "docs/CPRIME-SITE-FACTORIZATION-2026-10-01.md (referee section); CPrimeSiteFactorization.lean siteFactorization_of docstring", "2026-10-01"⟩
+   "docs/CPRIME-SITE-FACTORIZATION-2026-10-01.md (referee section); CPrimeSiteFactorization.lean: card_siteAssignments (the J^omega(e) multiplicity, kernel target), DepthUniformMultBV (the reopen condition, open node), siteFactorization_of_depthUniform", "2026-10-01"⟩
 ]
 
 /-- Rows whose verdict is machine-checked in this build. -/

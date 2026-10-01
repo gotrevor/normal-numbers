@@ -296,6 +296,55 @@ The probe has only `J = 5`, so it cannot see the growing-`J` gap. -/
 theorem siteFactorization_of (hBV : MultBVResidue) (hSD : SelbergDelangeResidue) :
     SiteFactorization := sorry
 
+/-! ### The depth wall, as statements (2026-10-01 referee)
+
+The route `MultBVResidue → SiteFactorization` stops at uniformity in the growing window `J`
+(Maze row "site factorization via log-power BV").  The two statements below are what that verdict
+rests on, and what would reopen it. -/
+
+/-- The residues `n mod e` at which every prime of `e` divides some window entry `n + j`,
+`1 ≤ j ≤ J`.  These are the CRT atoms the multi-site sieve feeds into progressions. -/
+def siteAssignments (J e : ℕ) : Finset ℕ :=
+  (Finset.range e).filter (fun n => ∀ p ∈ e.primeFactors, ∃ j ∈ Finset.Icc 1 J, p ∣ n + j)
+
+/-- **Multiplicity of a sieve modulus (kernel target, provable by CRT).**  For squarefree `e`
+whose primes all exceed `J`, each prime picks exactly one of the `J` sites, so `e` carries
+`J^{ω(e)}` progressions.  This is the source of the wall: summed against BV, the loss is
+`∑_e J^{ω(e)}/e ≈ (log R)^J`, and with `J` growing no fixed `(log N)^{−A}` saving absorbs it.
+The `|w_j|`-weighted divisor expansion, which would replace `J^{ω(e)}` by `C_h^{ω(e)}`, has no
+level control (its truncation needs `log D ≫ δ log log N · log y`), so it does not escape. -/
+theorem card_siteAssignments (J e : ℕ) (he : Squarefree e) (hJ : ∀ p ∈ e.primeFactors, J < p) :
+    (siteAssignments J e).card = J ^ e.primeFactors.card := sorry
+
+/-- **Depth-uniform multiplicative BV (open node).**  BV for `z^{Ω_{P,≤y}}` at moduli
+`≤ x^{3/8}` made of P-primes, **weighted by the site multiplicity `K^{ω(e)}` with
+`K = 2·winJ x` growing**.  Constants depend on `A` only.  This is exactly what the sieve route
+needs and what a fixed-`A` BV (Granville–Shao) does not give.
+Candidate mechanism: `Δ_A` with conductors up to `exp(c√log x)` plus a Gallagher-style large
+sieve and excision of one exceptional modulus.  For primes, the repo's
+`Erdos4.FGKMT.exists_exponential_prime_distribution` has that strength; the version for
+multiplicative functions is not in the literature found.
+⚠️ The plain-`Δ` form may FAIL if an exceptional zero sits at a conductor built from P-primes;
+if so, restate in `Δ_A` form with the exceptional characters' main terms explicit.
+Confidence it holds as stated: ~40%. -/
+def DepthUniformMultBV : Prop :=
+  ∀ q₀ a : ℕ, 3 ≤ q₀ → Nat.Coprime a q₀ → ∀ z : ℂ, ‖z‖ = 1 → ∀ A : ℝ, 0 < A →
+    ∃ C : ℝ, 0 < C ∧ ∀ x y : ℕ, 3 ≤ x →
+      ∑ e ∈ (Finset.Icc 1 ⌊(x : ℝ) ^ (3 / 8 : ℝ)⌋₊).filter
+          (fun e => ∀ p ∈ e.primeFactors, residueClass q₀ a p),
+        ((2 * winJ x : ℕ) : ℝ) ^ e.primeFactors.card *
+          ⨆ c : {c : Fin e // Nat.Coprime c.val e},
+            ‖apDiscrepancy (fun n => z ^ omegaMultLe (residueClass q₀ a) y n) x e c.val.val‖
+        ≤ C * x / Real.log x ^ A
+
+/-- Believed, ~50% given the hypotheses.  This is the reopened route: `DepthUniformMultBV`
+absorbs the `(2J)^{ω(e)}` multiplicity that sinks `siteFactorization_of`.  The remaining steps are
+the parts the referee passed: the identity, the main term with its `1/Γ(1+κ)` size budget,
+step (b) by positivity, and the moduli coprime to `q₀`.  Check (d) is still owed: uniformity of
+`∑_{(m,e)=1} F(m)` over `e ≤ N^{3/8}` with many prime factors. -/
+theorem siteFactorization_of_depthUniform (hD : DepthUniformMultBV)
+    (hSD : SelbergDelangeResidue) : SiteFactorization := sorry
+
 /-- Believed, ~70%.  English proof: the left side lives on `n` with fresh primes at two sites,
 `n + j = pm`, `n + j' = p′m′`; for fixed small cofactors the count of `p` is a prime pair in two
 linear forms (`SelbergUpperTwoForms`, in progressions mod `q₀`), and summing `1/(m m′ log² )` over
