@@ -70,6 +70,17 @@ naturally-occurring constant is Khinchin-typical, whether CF-normality and
 base-b normality imply each other pointwise (they don't a.e.-trivially, and no
 implication is known).
 
+## Intuition: how CF-normality behaves (2026-10-01, Trevor Q&A)
+
+Handles that landed when Trevor asked "how should I wrap my head around CF normality?":
+
+- **Skewed, correlated digits.**  ~41.5% of a CF-normal number's partial quotients are 1, P(a=k) ~ 1/k² tail, mean digit infinite, geometric mean K₀ ≈ 2.685.  Digits are not independent (Philipp ψ-mixing is the substitute for i.i.d.).  "Every block at its fair frequency" means the Gauss measure of the cylinder, never bᵏ.
+- **Eventually periodic = quadratic irrational** (Lagrange), the CF counterpart of "eventually periodic = rational" in base b.  So φ = [1;1,1,…] plays the role in CF that a rational plays in base b.
+- **The native arithmetic is projective.**  Base-b digits are friendly to + and × (finite automata do them; Wall: x normal ⇒ qx + r normal, q,r ∈ ℚ).  CF digits are friendly to GL₂(ℤ) Möbius maps, which change only finitely many digits.  So x + ½ is already a real theorem in CF (Vandehey 2017), not a one-liner.
+- **Geometric picture** (Caroline Series): the Gauss map is a cross-section of geodesic flow on the modular surface SL₂(ℤ)\ℍ; a CF expansion is a geodesic's path through the Farey tessellation, and CF-normal ≈ that geodesic equidistributes.  φ-scaling is not in SL₂(ℤ) and its conjugate meets SL₂(ℤ) only in ±I, so the transducer state never folds back into a finite set: the §7 wall in one sentence.
+- **Why x + φ is the natural CF question**: it is "add an eventually periodic thing", but addition is not native to CF, so periodicity does not buy a finite automaton the way it does in base b.  Rauzy-style framing in HEADLINES H4.
+- **Reading**: Einsiedler-Ward, *Ergodic Theory with a View Towards Number Theory*, ch. 3 (Gauss map) and ch. 9 (geodesic flow, modular surface); Khinchin, *Continued Fractions* (metric theory).
+
 ## Both expansions at once? (2026-08-23 follow-up)
 
 Trevor's question: can a number be *both* normal and Khinchin-typical?
