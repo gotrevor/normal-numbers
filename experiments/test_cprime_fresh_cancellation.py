@@ -27,6 +27,11 @@ Expectations HAND-DERIVED, not captured from the probe:
   j >= 2 forces no hit at site 1, so the frozen product is 1 on every two-site n.  Hence
       T2 = (1/N) sum_{j != j' in 2..5} (z_j - 1)(z_j' - 1) #{n < N : 101 | n+j, 103 | n+j'},
   counted here by a direct loop independent of the probe's sieve.
+* Relative first order, P = {101}, N = 2^16, a = 1, h = 1: the frozen product is 1 off the 648
+  hits at site 1, and every fresh hit (site j >= 2) lands where the frozen product is 1, so with
+  c = 648/65536
+      T1 = Sbar = c * sum_{j=2..5} (z_j - 1),   G = T1 / W_y = Sbar / (1 + c(z_1 - 1)),
+      C = T1 - W_y Sbar = -c (z_1 - 1) Sbar.
 
 Run: uv run --with numpy --with pytest pytest -q experiments/test_cprime_fresh_cancellation.py
 """
@@ -112,3 +117,24 @@ def test_order_split_two_primes_exact():
     T2 /= N
     assert abs(T2) > 1e-6
     assert abs(m["T2"] - abs(T2)) < 1e-12
+
+
+def test_relative_first_order_one_prime_exact():
+    N = 1 << 16
+    [m] = probe.measure(N, np.array([101]), [1], a=1.0)
+    c = 648 / 65536
+    Sbar = c * sum(e(1 / 4 ** j) - 1 for j in range(2, 6))
+    Wy = 1 + c * (e(1 / 4) - 1)
+    assert abs(m["Sbar"] - Sbar) < 1e-12
+    assert abs(m["G"] - Sbar / Wy) < 1e-12
+    assert abs(m["C"] - (-c * (e(1 / 4) - 1) * Sbar)) < 1e-12
+
+
+def test_cli_relative_report_runs():
+    import subprocess
+    out = subprocess.run([os.path.join(HERE, "cprime_fresh_cancellation.py"), "--logN", "14",
+                          "--h", "1", "--a", "1", "0.5", "--sets", "p = 1 mod 3",
+                          "--report", "relative"], capture_output=True, text=True, check=True).stdout
+    rows = [l for l in out.splitlines() if l.startswith("| p = 1 mod 3 |")]
+    assert len(rows) == 2  # one set, one h, two values of a
+    assert "y_j = N^(0.5*2^-j)" in out

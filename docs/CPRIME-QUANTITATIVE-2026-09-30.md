@@ -163,3 +163,45 @@ check.
 not cancel at first order; they rescale.  The open question is now `RelativeFirstOrder`.  Its
 first concrete test: track `T1/W_y` at a moderate fixed `a < 1`, on dense residue classes where
 `W_y` decays visibly.
+
+## `RelativeFirstOrder`, measured  (2026-10-01)
+
+Data: `probes/data-2026-10-01-cprime-relative-first-order.md`.  The probe now reports
+`G = T1/W_y`, the independent-sites value `Sbar` (the mean of `Σ_j (z_j^fresh_j − 1)`), and the
+coupling `C = T1 − W_y·Sbar`.  The hand-derived test is the one-prime case `P = {101}`, where
+`G = Sbar/(1 + c(z_1 − 1))` exactly.
+
+**Verdict: the premise survives its direct test at reachable N.**  At fixed `a`, `G` holds within
+about 3% across `N = 2^20 → 2^24` for every set with `ρ ≤ 0.35`.  The phase holds within about 1°.
+
+- **T1 follows W_y down.**  The clearest case is `h = 2`, `a = 1`.  For `1 mod 3`, `|W_y|` falls
+  0.262 → 0.234 → 0.212 (−19%), `|T1|` falls 0.370 → 0.331 → 0.301 (−19%), and
+  `|G| = 1.413, 1.420, 1.423`.  `thin 0.25` is the same: `W_y` −9%, `G` 0.707 → 0.727.  Even all
+  primes at `h = 2` behave this way: `W_y` −38%, `T1` −36%.
+- **The fresh part is coupled to the frozen product, and the coupling holds steady in N.**  At
+  `a = 1`, `|C|/|T1|` is 0.13 (`1 mod 5`), 0.25 (`1 mod 3`) and 0.29 (`thin 0.5`), with drift of
+  0.01 or less.  It shrinks as `a` decreases: 0.03–0.06 at `a = 0.5` and h = 1.  So `G ≠ Sbar`.
+  The size budget enters as a deterministic multiplicative factor, not as noise, which is the form
+  the premise asks for.  `|G|/|Sbar|` sits at 1.12 (`1 mod 5`), 1.28 (`1 mod 3`) and 1.36
+  (`thin 0.5`) at h = 1 and drifts less than 1% per step.  Most of the drift that remains in `G`
+  is `Sbar`'s own drift, which is the slow Mertens-in-progressions convergence of the fresh mass.
+- **One exception, outside the small-ρ regime: all primes (ρ = 0.69) at a = 1, h = 1 and 3.**
+  `|G|` falls 3.73 → 3.53 → 3.34, and its phase rotates 138° → 145°, while `|W_y|` stays flat at
+  0.137.  `|G|/|Sbar|` falls 7% per step.  My guess was a critical exponent: the site-local
+  size-budget factor `(1−t)^(δ(z−1))` stops being integrable once `δ(1 − cos 2πh/4) ≥ 1`.  The
+  `h = 2` control **refutes** that guess.  It predicts `1 mod 3` and `thin 0.5` (δ = 1/2) are
+  critical at h = 2, yet both are stable to 1%.  The cause of the all-primes drift is unknown.
+  Quantitative C′ concerns small `ρ`, so this does not touch the premise as used.
+
+**Limits.**
+- Only `a ≥ 0.25` is measured, not the proof's `u⁻²`.
+- `log N` moves only 20 → 24, so "steady in N" means steady over a 20% change in `log N`.  A
+  `1/log N` drift cannot be ruled out, and `Sbar` itself shows one.
+- At `a = 0.25` the sparse classes have `W_y = 1` exactly (no frozen primes), so those rows are
+  uninformative.
+
+**Next:** derive `G_h` as a site-local Dickman-type integral, in the conditional form
+`E[z^ω_y (z^f − 1)] / E[z^ω_y]` per site.  Then compare it with the measured `G` and its N-drift.
+An analytic `G` that matches is the statement the CRT/Bombieri–Vinogradov mechanism has to deliver.
+Confidence: about 75% that `RelativeFirstOrder` holds in the small-ρ regime (up from about 60%
+implicit); about 40% that the mechanism proves it (unchanged).

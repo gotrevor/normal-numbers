@@ -25,11 +25,18 @@ keeps every n whose fresh primes sit at ONE site, and T2 collects n with fresh p
 more sites (a prime-pair configuration p | n+j, p' | n+j', j != j').  If T2 = O(rho^2) the
 parity-type wall enters only at second order in the fresh mass.
 
+Relative first order (--report relative): the premise RelativeFirstOrder says T1 = W_y G_h + o(1)
+with G_h bounded and N-independent.  Reported: G = T1 / W_y (modulus and phase), the
+independent-sites model Sbar = mean of sum_j (z_j^fresh_j - 1) (what G would be if the fresh part
+were uncorrelated with the frozen product), and the coupling C = T1 - W_y Sbar = cov(frozen,
+fresh), as |C|/|T1|.  The premise predicts G stable in N at fixed a while T1 tracks W_y.
+
 Cutoffs: y_j = N^(a 2^-j) with a = --a (default 1, so y_1 = sqrt N).  The paper's a = u^-2 with
 u >= 66 is numerically degenerate (y_1 ~ 1 at N = 2^24); this probe measures the mechanism at
 reachable scales, not the paper's constants.  J = floor(log2 log2 N) + 1 (the repo's windowJ).
 
-    experiments/cprime_fresh_cancellation.py [--logN 20 22 24] [--h 1 3 5] [--a 1.0]
+    experiments/cprime_fresh_cancellation.py [--logN 20 22 24] [--h 1 3 5] [--a 1.0 0.5]
+        [--sets "p = 1 mod 3" "thin 0.5"] [--report transfer|relative]
 Tests: experiments/test_cprime_fresh_cancellation.py
 """
 import argparse
@@ -114,11 +121,16 @@ def measure(N, ps, hs, a=1.0):
         A = abs(W - Wyv)
         T1 = (Wy * S1).mean()
         T2 = W - Wyv - T1
+        Sbar = S1.mean()
+        G = T1 / Wyv if Wyv else complex("nan")
+        C = T1 - Wyv * Sbar
         rows.append(dict(N=N, J=J, h=h, rho=rho, W=abs(W), Wy=abs(Wyv), A=A, M=M, B=B,
                          T1=abs(T1), T2=abs(T2), T2_over_rho2=abs(T2) / rho ** 2 if rho else float("nan"),
                          A1=abs(W1v - Wyv), A2=abs(W - W1v),
                          A_over_M=A / M if M else float("nan"),
-                         A_over_Wy=A / abs(Wyv) if abs(Wyv) else float("inf")))
+                         A_over_Wy=A / abs(Wyv) if abs(Wyv) else float("inf"),
+                         G=G, Sbar=Sbar, C=C, Wy_c=Wyv, T1_c=T1,
+                         C_over_T1=abs(C) / abs(T1) if T1 else float("nan")))
     return rows
 
 
@@ -142,21 +154,37 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--logN", type=int, nargs="+", default=[20, 22, 24])
     ap.add_argument("--h", type=int, nargs="+", default=[1, 3, 5])
-    ap.add_argument("--a", type=float, default=1.0)
+    ap.add_argument("--a", type=float, nargs="+", default=[1.0])
+    ap.add_argument("--sets", nargs="+", default=None,
+                    help="keep only the prime sets with these exact names")
+    ap.add_argument("--report", choices=["transfer", "relative"], default="transfer")
     args = ap.parse_args(argv)
     for lN in args.logN:
         N = 1 << lN
         ps = primes_upto(N + 64)
-        print(f"\n## N = 2^{lN}, J = {window_J(N)}, y_j = N^({args.a:g}*2^-j)")
-        print("| set | h | rho | abs W_y | abs W | A | M | B | A/M | A/abs W_y | A1 | A2 | T1 | T2 | T2/rho^2 |")
-        print("|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|")
-        for name, P in prime_sets(ps):
-            for m in measure(N, P, args.h, args.a):
-                print(f"| {name} | {m['h']} | {m['rho']:.4f} | {m['Wy']:.4f} | {m['W']:.4f} | "
-                      f"{m['A']:.4f} | {m['M']:.4f} | {m['B']:.3f} | {m['A_over_M']:.3f} | "
-                      f"{m['A_over_Wy']:.3f} | {m['A1']:.4f} | {m['A2']:.4f} | "
-                      f"{m['T1']:.4f} | {m['T2']:.5f} | {m['T2_over_rho2']:.2f} |")
-                sys.stdout.flush()
+        sets = [(n, P) for n, P in prime_sets(ps)
+                if args.sets is None or n in args.sets]
+        for a in args.a:
+            print(f"\n## N = 2^{lN}, J = {window_J(N)}, y_j = N^({a:g}*2^-j)")
+            if args.report == "transfer":
+                print("| set | h | rho | abs W_y | abs W | A | M | B | A/M | A/abs W_y | A1 | A2 | T1 | T2 | T2/rho^2 |")
+                print("|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|")
+            else:
+                print("| set | h | rho | abs W_y | abs T1 | abs G | arg G (deg) | abs Sbar | arg Sbar (deg) | abs C / abs T1 |")
+                print("|---|---|---|---|---|---|---|---|---|---|")
+            for name, P in sets:
+                for m in measure(N, P, args.h, a):
+                    if args.report == "transfer":
+                        print(f"| {name} | {m['h']} | {m['rho']:.4f} | {m['Wy']:.4f} | {m['W']:.4f} | "
+                              f"{m['A']:.4f} | {m['M']:.4f} | {m['B']:.3f} | {m['A_over_M']:.3f} | "
+                              f"{m['A_over_Wy']:.3f} | {m['A1']:.4f} | {m['A2']:.4f} | "
+                              f"{m['T1']:.4f} | {m['T2']:.5f} | {m['T2_over_rho2']:.2f} |")
+                    else:
+                        G, Sb = m["G"], m["Sbar"]
+                        print(f"| {name} | {m['h']} | {m['rho']:.4f} | {m['Wy']:.4f} | {m['T1']:.4f} | "
+                              f"{abs(G):.4f} | {math.degrees(np.angle(G)):.1f} | {abs(Sb):.4f} | "
+                              f"{math.degrees(np.angle(Sb)):.1f} | {m['C_over_T1']:.3f} |")
+                    sys.stdout.flush()
 
 
 if __name__ == "__main__":
