@@ -49,6 +49,10 @@ Expectations HAND-DERIVED, not captured from the probe:
   1 + (z - 1) * 33/100, CRT product 1 + (z - 1)/3.
 * Extrapolation: G = 2 + 3i + (1 - i)*10/L sampled at L = 10, 20, 40 recovers G_oo = 2 + 3i with miss 0.
 
+* PairSecondOrder ratio, P = {101, 103}, N = 2^16, a = 1: site 1 freezes both primes (fresh mass 0),
+  sites 2..5 have fresh mass 1/101 + 1/103 each, so Fw = (1/101 + 1/103) * sum_{j=2..5} |z_j - 1|, and
+  T2/Fw^2 uses the directly counted T2 of the order-split test.  P = {101}: T2 = 0, ratio 0.
+
 Run: uv run --with numpy --with scipy --with pytest pytest -q experiments/test_cprime_fresh_cancellation.py
 """
 import cmath
@@ -213,3 +217,20 @@ def test_frozen_mean_ratio_one_prime():
     z = e(1 / 4)
     r = probe.frozen_mean_ratio(100, np.array([3]), z, 10)
     assert abs(r - (1 + (z - 1) * 33 / 100) / (1 + (z - 1) / 3)) < 1e-12
+
+
+def test_pair_second_order_ratio_exact():
+    N = 1 << 16
+    [m] = probe.measure(N, np.array([101, 103]), [1], a=1.0)
+    Fw = (1 / 101 + 1 / 103) * sum(abs(e(1 / 4 ** j) - 1) for j in range(2, 6))
+    T2 = 0
+    for j in range(2, 6):
+        for jp in range(2, 6):
+            if j != jp:
+                cnt = sum(1 for n in range(N) if (n + j) % 101 == 0 and (n + jp) % 103 == 0)
+                T2 += (e(1 / 4 ** j) - 1) * (e(1 / 4 ** jp) - 1) * cnt
+    T2 /= N
+    assert abs(m["Fw"] - Fw) < 1e-12
+    assert abs(m["T2_over_Fw2"] - abs(T2) / Fw ** 2) < 1e-9
+    [m1] = probe.measure(N, np.array([101]), [1], a=1.0)
+    assert m1["T2_over_Fw2"] < 1e-9

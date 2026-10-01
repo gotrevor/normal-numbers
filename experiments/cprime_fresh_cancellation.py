@@ -31,6 +31,9 @@ independent-sites model Sbar = mean of sum_j (z_j^fresh_j - 1) (what G would be 
 were uncorrelated with the frozen product), and the coupling C = T1 - W_y Sbar = cov(frozen,
 fresh), as |C|/|T1|.  The premise predicts G stable in N at fixed a while T1 tracks W_y.
 
+Second order (--report pair): T2 = W - W_y - T1, where the probe's T1 = mean[Phi_y * sum_j (z_j^fresh_j - 1)]
+is the Lean T1' (freshOneSite).  PairSecondOrder says |T2| <= C * Fw^2 with Fw = sum_j |z_j - 1| S_P(y_j, N), C absolute.
+
 Analytic G (--report sites).  Four nested values of G, each gap isolating one step:
     G     measured T1 / W_y;
     G_A   sum_k [Mf_k / My_k - 1], with Mf_k = mean z_k^omega_P(n+k), My_k = mean z_k^omega_{<=y_k}(n+k)
@@ -53,7 +56,7 @@ u >= 66 is numerically degenerate (y_1 ~ 1 at N = 2^24); this probe measures the
 reachable scales, not the paper's constants.  J = floor(log2 log2 N) + 1 (the repo's windowJ).
 
     experiments/cprime_fresh_cancellation.py [--logN 20 22 24] [--h 1 3 5] [--a 1.0 0.5]
-        [--sets "p = 1 mod 3" "thin 0.5"] [--report transfer|relative|sites|limit|frozen]
+        [--sets "p = 1 mod 3" "thin 0.5"] [--report transfer|relative|sites|limit|frozen|pair]
 Tests: experiments/test_cprime_fresh_cancellation.py
 """
 import argparse
@@ -207,6 +210,7 @@ def measure(N, ps, hs, a=1.0, delta=None):
         W1 = np.ones(N, dtype=np.complex128)
         S1 = np.zeros(N, dtype=np.complex128)  # sum_j (z_j^fresh_j(n+j) - 1)
         B = 0.0
+        Fw = 0.0  # weighted fresh mass sum_j |z_j - 1| * S_P(y_j, N), PairSecondOrder's B_h
         GA = 0.0
         My_prod = 1.0
         GSD = GI = GI0 = 0.0 if delta is not None else complex("nan")
@@ -219,6 +223,7 @@ def measure(N, ps, hs, a=1.0, delta=None):
             W1 *= tab[mid[j - 1][j:j + N]]
             S1 += tab[full_cnt[j:j + N] - frozen[j - 1][j:j + N]] - 1
             B += abs(z - 1) * (2 * fresh[j - 1] + J / N)
+            Fw += abs(z - 1) * fresh[j - 1]
             Mf = tab[full_cnt[j:j + N]].mean()
             My = tab[frozen[j - 1][j:j + N]].mean()
             GA += Mf / My - 1 if abs(My) > 1e-12 else complex("nan")
@@ -247,6 +252,7 @@ def measure(N, ps, hs, a=1.0, delta=None):
         C = T1 - Wyv * Sbar
         rows.append(dict(N=N, J=J, h=h, rho=rho, W=abs(W), Wy=abs(Wyv), A=A, M=M, B=B,
                          T1=abs(T1), T2=abs(T2), T2_over_rho2=abs(T2) / rho ** 2 if rho else float("nan"),
+                         Fw=Fw, T2_over_Fw2=abs(T2) / Fw ** 2 if Fw else float("nan"),
                          A1=abs(W1v - Wyv), A2=abs(W - W1v),
                          A_over_M=A / M if M else float("nan"),
                          A_over_Wy=A / abs(Wyv) if abs(Wyv) else float("inf"),
@@ -362,7 +368,7 @@ def main(argv=None):
     ap.add_argument("--a", type=float, nargs="+", default=[1.0])
     ap.add_argument("--sets", nargs="+", default=None,
                     help="keep only the prime sets with these exact names")
-    ap.add_argument("--report", choices=["transfer", "relative", "sites", "limit", "frozen"], default="transfer")
+    ap.add_argument("--report", choices=["transfer", "relative", "sites", "limit", "frozen", "pair"], default="transfer")
     args = ap.parse_args(argv)
     if args.report == "limit":
         return report_limit(args)
@@ -378,6 +384,9 @@ def main(argv=None):
             if args.report == "transfer":
                 print("| set | h | rho | abs W_y | abs W | A | M | B | A/M | A/abs W_y | A1 | A2 | T1 | T2 | T2/rho^2 |")
                 print("|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|")
+            elif args.report == "pair":
+                print("| set | h | rho | Fw | abs T2 | T2/rho^2 | T2/Fw^2 |")
+                print("|---|---|---|---|---|---|---|")
             elif args.report == "relative":
                 print("| set | h | rho | abs W_y | abs T1 | abs G | arg G (deg) | abs Sbar | arg Sbar (deg) | abs C / abs T1 |")
                 print("|---|---|---|---|---|---|---|---|---|---|")
@@ -391,6 +400,9 @@ def main(argv=None):
                               f"{m['A']:.4f} | {m['M']:.4f} | {m['B']:.3f} | {m['A_over_M']:.3f} | "
                               f"{m['A_over_Wy']:.3f} | {m['A1']:.4f} | {m['A2']:.4f} | "
                               f"{m['T1']:.4f} | {m['T2']:.5f} | {m['T2_over_rho2']:.2f} |")
+                    elif args.report == "pair":
+                        print(f"| {name} | {m['h']} | {m['rho']:.4f} | {m['Fw']:.4f} | {m['T2']:.6f} | "
+                              f"{m['T2_over_rho2']:.2f} | {m['T2_over_Fw2']:.3f} |")
                     elif args.report == "sites":
                         print(f"| {name} | {m['h']} | {m['Wy']:.4f} | {polar(m['My_prod_over_Wy'])} | "
                               f"{polar(m['G'])} | {polar(m['GA'])} | {polar(m['GSD'])} | {polar(m['Ginf'])} | "
