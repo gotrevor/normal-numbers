@@ -60,6 +60,11 @@ Two passes, in this order.
 If your route is not here, it is genuinely unwalked — say so out loud, because that is rarer
 than it feels.
 
+**Adding a row?**  State its obstruction in Lean first (a theorem, a `¬`, or a `sorry` statement
+with a confidence), and for a `wall` its reopen condition as a `def … : Prop`.  Then add a `Link`
+in `MazeAudit.lean`.  `#maze_audit` fails the build on a row with no link: its reasons would be
+prose only.
+
 ## The three tiers
 
 * `Tier.kernel` — the verdict is a **theorem in this build**, re-exported below by `alias`.

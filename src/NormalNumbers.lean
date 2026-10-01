@@ -483,6 +483,7 @@ import NormalNumbers.OccurrenceCountEquiv
 import NormalNumbers.PrimeModelGradedStatement
 import NormalNumbers.CPrimeQuantStatement
 import NormalNumbers.CPrimeSiteFactorization
+import NormalNumbers.MazeAudit
 import NormalNumbers.StonehamSixFailure
 import NormalNumbers.CastingOut
 import NormalNumbers.SwingC1Log

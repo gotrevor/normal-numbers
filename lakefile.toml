@@ -34,3 +34,10 @@ subDir = "src/latest"
 name = "PrimeNumberTheoremAnd"
 git = "https://github.com/AlexKontorovich/PrimeNumberTheoremAnd.git"
 rev = "55270df807213fc3584523d09e0311d7dc073ff5"
+
+# Shared research-ledger checks (#maze_audit): Maze rows must cite declarations.
+[[require]]
+name = "LeanLedger"
+git = "https://github.com/gotrevor/lean-agent-skills.git"
+rev = "97a1e13bb29d802404be0ced664743b75fd4bf31"
+subDir = "lean"
