@@ -1308,7 +1308,12 @@ def register : List Hall := [
    "Conclude OrbitCellBound from: A n = s_n^(-1)(E) is determined by x_1..x_n, has small Gauss mass, and the input orbit has the correct marginal frequencies",
    .refuted, .kernel,
    "Perfect marginals do not stop a sequence landing in its own predicted interval: the grid u n = n/k is exactly uniform on the k cells of width 1/k, yet u n lies in (u_(n-1), u_(n-1) + delta) for every n >= 1 once 1/k < delta, a hit frequency of (k-1)/k against an interval of length delta; at delta = 1/2, k = 10 that is 9/10 observed against 6/10 allowed",
-   "alias hall_predictable_from_marginals; module VandeheyS7Predict; theorems cellUniform_grid, hitCount_grid, not_predictableHitPrinciple; any OrbitCellBound proof must use the arithmetic of s_n = O_n^(-1) Phi P_n", "2026-09-29"⟩
+   "alias hall_predictable_from_marginals; module VandeheyS7Predict; theorems cellUniform_grid, hitCount_grid, not_predictableHitPrinciple; any OrbitCellBound proof must use the arithmetic of s_n = O_n^(-1) Phi P_n", "2026-09-29"⟩,
+  ⟨"site factorization via log-power BV",
+   "Prove C-prime's RelativeFirstOrder (SiteFactorization) by writing the one-site fresh term as the other sites' frozen phase against z^Omega_P - z^Omega_(P,<=y), sieving the other sites into CRT atoms and applying Granville-Shao BV for multiplicative functions",
+   .wall, .cited,
+   "The reduction is sound and the main term is right, but uniformity in the growing window J fails. The multi-site sieve gives moduli multiplicity (2J)^omega(e), a loss of (log N)^(O(delta J^2)); deep sites cannot be dropped below J1 ~ log_4 log log N; and BV saves only a fixed (log N)^(-A). The |w_j|-weighted expansion (multiplicity C_h^omega(e)) has no level control. This is the fixed-window-conductor-at-depth wall again. REOPEN IF: BV for z^Omega_(P,<=y) at moduli <= x^(3/8) with a super-polylog saving (Delta_A with conductors up to exp(c sqrt log x) plus excision), or a sieve with polylog l1 mass at growing depth",
+   "docs/CPRIME-SITE-FACTORIZATION-2026-10-01.md (referee section); CPrimeSiteFactorization.lean siteFactorization_of docstring", "2026-10-01"⟩
 ]
 
 /-- Rows whose verdict is machine-checked in this build. -/

@@ -6,27 +6,48 @@ Ren, 2026-10-01, attended.  Paper statement plus mechanism sketch, **not referee
 `docs/CPRIME-QUANTITATIVE-2026-09-30.md`, sections "`RelativeFirstOrder`, measured" and
 "Analytic `G_h`".
 
-## Verdict
+## Verdict (after the referee pass, 2026-10-01)
 
-- **The crux is no longer an unknown weighted BV.**  Write the one-site fresh term as a
-  correlation of the other sites' frozen phase with `F − F_y` at site `k`.  Here
-  `F = z^{Ω_P}` and `F_y = z^{Ω_{P,≤y}}` are 1-bounded multiplicative functions.  So the crux is
-  Bombieri–Vinogradov for those two functions, at moduli up to `N^{3/8}`.
-- **That is Granville–Shao 2018, Theorem 2.1** (arXiv:1706.05710).  BV holds for an
-  `f` in their class `C` whenever BV holds for `f` on the primes and Siegel–Walfisz holds for `f`.
-  For a residue class `P` the prime condition is classical BV in progressions mod `q₀e`.
-- **The previous doc's CRT/BV split by prime size is unnecessary.**  No range of fresh primes
-  needs its own argument.
-- **The negative-inventory check passes** (table below).  Two items need care:
-  - the late-band-regeneration row's constant `e^γ/|Γ(i)| = 3.41` is exactly `G_h`'s
-    size-budget factor at `κ = i − 1`, which is a consistency check;
-  - the parity sibling (phases `(1/2, 1/2)`) reduces to a type-I statement weaker than
-    Mangerel 2016.
+**The reduction to known theorems does not survive as written.**  An independent referee, with
+its main claims re-checked by me, found that the crux is uniformity in the growing window `J`.
+That is the repo's wall "fixed-window conductor at depth" again.  Maze row: "site factorization
+via log-power BV" (`wall`).
+
+- **What holds:**
+  - the identity `T1'_k = mean[Φ^{≠k}(n)·(F − F_y)(n+k)]`;
+  - the main term `W_y·g(κ_k, s_k)`.  The `1/Γ(1+κ)` size budget is genuinely present, and the
+    first order is `δ w_k log s_k`;
+  - the Granville–Shao Corollary 7.1 transcription;
+  - the parity sibling, which is type I.
+- **What fails:**
+  - The sieve that turns the other sites into progressions has modulus multiplicity about
+    `(2J)^{ω(e)}`, a loss of `(log N)^{O(δJ²)}`.  BV saves only a fixed `(log N)^{−A}`.
+  - Deep sites can be dropped only down to `J₁ ≳ log₄ log log N`, because each still carries
+    phase `|w_j|·δ log log N`.
+  - My `|w_j|`-weights argument for multiplicity `C_h^{ω(e)}` uses the weighted divisor
+    expansion, which has **no level control**.  Withdrawn.
+- **Needed to reopen:**
+  - BV for `z^{Ω_{P,≤y}}` at moduli `≤ x^{3/8}` with a **super-polylog** saving.  Candidate:
+    `Δ_A` with conductors up to `exp(c√log x)`, a Gallagher-style large-sieve bound, and an
+    excised exceptional modulus.  For primes this is the FGKMT-type input the repo already has,
+    `Erdos4.FGKMT.exists_exponential_prime_distribution`; the multiplicative-function version
+    is not in the literature I found.
+  - Or: a sieve whose `ℓ¹` mass stays polylog at growing depth.
 - **Confidence:**
-  - `RelativeFirstOrder` holds in the small-ρ regime for residue classes: about 85%.
-  - The assembly below proves `SiteFactorization`: about 60% (up from 45%).  The four open
-    checks are listed at the end.
-  - `CPrimeResidueQuad`, discrepancy `O(log³φ(q)/φ(q)²)`: about 55%.
+  - `SiteFactorization` is true (proof regime, residue classes): about 75%.
+  - This assembly proves it: about 15–20% (referee: 15%; down from 60%).
+  - `CPrimeResidueQuad`, corrected to `O(log⁵φ(q)/φ(q)²)`: about 45%, carried by the truth of
+    the statement, not by this proof.
+  - `PairSecondOrder`: about 75%.  Measured `|T2|/Fw² ∈ [0.007, 0.53]`, stable in N
+    (`probes/data-2026-10-01-cprime-pair-second-order.md`).
+
+### First-draft verdict (superseded; kept for the record)
+
+- The one-site fresh term is a correlation of the other sites' frozen phase with `F − F_y`.  So
+  the crux "is" BV for `F = z^{Ω_P}` and `F_y`, at moduli up to `N^{3/8}`, which is
+  Granville–Shao.  The first draft cited their Thm 2.1; the faithful input is Cor 7.1, check (a).
+- The previous doc's CRT/BV split by prime size is unnecessary.  That still holds.
+- Confidence then: about 60% for the assembly.
 
 ## Setup
 
@@ -36,8 +57,9 @@ Ren, 2026-10-01, attended.  Paper statement plus mechanism sketch, **not referee
   sieve budget `R ≤ N^{1/8}`).
 - Frozen phase `Φ(n) = ∏_j z_j^{ω_{P,≤y_j}(n+j)}`, so `W_y = mean Φ`.  `Φ^{≠k}` drops site `k`.
 - `T1' = Σ_k T1'_k`, with `T1'_k = mean[ Φ(n)·(z_k^{ω_{P,>y_k}(n+k)} − 1) ]`.  This is the fresh
-  primes at site `k` with every frozen part kept.  `T1'` differs from the probe's exact `T1`
-  only on `n` with fresh primes at two sites.
+  primes at site `k` with every frozen part kept.  The probe's `T1` column **is** `T1'`, so its
+  `T2 = W − W_y − T1'` is exactly `PairSecondOrder`'s left side.  The exact one-site term differs
+  from `T1'` only on `n` with fresh primes at two sites.
 
 The identity that drives everything:
 
@@ -94,16 +116,23 @@ probe's `|T2|/ρ² ∈ [0.2, 4.6]`, stable in `N`, is the numerical face of this
 - `|W| ≤ |W_y|(1 + |G_h|) + |T1' − W_y G_h| + |W − W_y − T1'|`.
 - `|G_h(u)| ≤ C(k_h + δ log u)`, with `k_h = ⌈log₄|h|⌉`.  At sites `k ≤ k_h`,
   `|g| ≤ 1 + e^{O(δ)}`.  Beyond them, `|g| ≲ |κ_k| log s_k`, which is geometric in `k`.
-- So `limsup|W_h| ≤ C[(k_h + log u)e^{−u} + e^{−u/2} + δ/√u + ρ²(k_h + log u)²]`.
+- So `limsup|W_h| ≤ C[(k_h + log u)e^{−u} + e^{−u/2} + δ/√u + B_h(u)²]`.  Here
+  `B_h(u) ≍ ρ(k_h log u + k_h² + log u)` (referee): the sites `k ≤ k_h` each carry `|w_k| ≍ 1`
+  and fresh mass `δ log(u²2^k)`.
 - Take `u = ⌈ρ⁻²⌉`.  Then `e^{−u/2}`, `δ/√u` and `e^{−u}log u` are all `≤ Cρ²`, and
   `log u ≍ log(1/ρ)`.  Also `u ≥ 66` for small `ρ`, and `u² ≤ L3 N` eventually.
-- So `limsup|W_h| ≤ Cρ²(log|h| + log(1/ρ))²`.
-- Erdős–Turán with `H = ⌈ρ⁻²⌉`: `D ≤ 6/H + (4/π)Σ_{h≤H}|W_h|/h ≤ Cρ² log³(1/ρ)`.
+- So `limsup|W_h| ≤ Cρ²L⁴`, with `L = log|h| + log(1/ρ)`.
+- Erdős–Turán with `H = ⌈ρ⁻²⌉`: `D ≤ 6/H + (4/π)Σ_{h≤H}|W_h|/h ≤ Cρ² log⁵(1/ρ)`.
+- `SiteFactorization`'s constant must be polylog in `h`, chosen before `h`, or this sum
+  diverges.  The Lean form now has `C(1 + log|h|)^m`.
+- `winJ ≈ log₂log₂N` puts `y_J < 2J`, outside C′'s hypotheses, so (5.3)–(5.4) need a
+  deep-site truncation at `J₁ ≈ L3 N`.  That costs `4^{−J₁}δ log log N → 0`.
 
-For residue classes this gives `D = O(log³φ(q)/φ(q)²)`, which is `CPrimeResidueQuad`.  The
+For residue classes this gives `D = O(log⁵φ(q)/φ(q)²)`, which is `CPrimeResidueQuad`.  (The
+first draft said `log³`, an arithmetic slip the referee caught.)  The
 modulus needed for every length-`L` word to have positive lower frequency drops to about the
 square root of `CPrimeResidueRich`'s.  At `u ≍ ρ⁻²` the cutoff constant is
-`c_u = 3 + 2log₂u ≍ log(1/ρ)`, which is what the `log³` absorbs.
+`c_u = 3 + 2log₂u ≍ log(1/ρ)`, which the `log⁵` absorbs.
 
 ## Mechanism (sketch)
 
@@ -175,7 +204,7 @@ Every row of `src/NormalNumbers/Maze.lean` (140 rows) was read.  These touch thi
 | signed sum (7) | restatement | Not a restatement.  The proof route names an external estimate (Granville–Shao BV), and the consequence stops at `ρ²`: `T2` keeps `W ≠ 0` for all primes |
 | absolute propagated budget B | refuted as universally necessary | Not used |
 | full prime-incidence independence | refuted: TV → 1 at fixed-power cutoffs | Fresh primes are never modeled as independent.  The fresh side is the true multiplicative mean (SD).  Only the frozen side uses C′'s model, at TV `≤ 4e^{−u}`, and that is C′'s proved bound |
-| fixed-window conductor at depth | wall: no uniformity at growing depth | **Check (c).**  `J` grows.  Uniformity rests on the `\|w_j\| ≤ 2π\|h\|4^{−j}` weights in the sieve expansion |
+| fixed-window conductor at depth | wall: no uniformity at growing depth | **Hit.**  This is where the route stops (referee): the multi-site sieve multiplicity `(2J)^{ω(e)}` against BV's fixed log-power saving.  New Maze row "site factorization via log-power BV" |
 | TT (3.3), K-point, Lebesgue scales | vacuous / false as stated: quantifier order | In the Lean Props, `C_h` comes before `q, u, N`, and the error is a fixed function of `u`.  The Literature Prop fixes `B, C` before `x, y` |
 | peeling (12): dropping neighbors is the invalid shortcut | rule | Neighbors are kept: `Φ^{≠k}` stays in full.  The claim is their equidistribution along `F − F_y`, which is the BV content |
 | peeling §6.4 parity test, phases (1/2, 1/2) | test | Run below |
@@ -183,7 +212,7 @@ Every row of `src/NormalNumbers/Maze.lean` (140 rows) was read.  These touch thi
 
 ## Known-false siblings
 
-1. **All primes (G₄).**  `3 ≤ q` excludes it in Lean.  On paper `ρ = log 2`, so `ρ²·log³` is
+1. **All primes (G₄).**  `3 ≤ q` excludes it in Lean.  On paper `ρ = log 2`, so `ρ²·log⁵` is
    trivial and nothing is claimed about G₄.  `SiteFactorization` at `δ = 1` is still plausible,
    and the probe's all-primes `G` converges toward `G_∞` (61 → 37%).
 2. **Two-point parity** (§6.4 of the peeling audit): `J = 2`, `z₁ = z₂ = −1`, all primes.
@@ -191,8 +220,10 @@ Every row of `src/NormalNumbers/Maze.lean` (140 rows) was read.  These touch thi
      `mean[(−1)^{ω(n+1)}·(−1)^{ω_{≤y}(n+2)}] = O(e^{−u/2})`.
    - That is Liouville at one site against a **truncated** parity at the other.  After sieve
      truncation it is `λ` in progressions to small moduli: type I, BV-strength.
-   - Mangerel (arXiv:1612.09544) proves cancellation for the harder case with **both** sides
-     truncated.
+   - With `d_p ≤ 2`, the fundamental lemma plus BV for `(−1)^ω` handles it.  It does not reach
+     Chowla, because the error does not vanish as `y → N^{1/2}`.  (The first draft called
+     Mangerel's both-sides-truncated result "the harder case"; that is backwards.)
+   - This sibling does **not** exercise growing `J`, which is where the real gap is.
    - The genuinely parity-forbidden correlation, full `ω` at both sites, sits in `T2`, which is
      only upper-bounded.  Not forbidden.
 3. **One-site control** `z^{ω(n+1)}`: an exact identity (table above).
@@ -213,14 +244,23 @@ Every row of `src/NormalNumbers/Maze.lean` (140 rows) was read.  These touch thi
     Selberg–Delange with characters plus Siegel) controls them, at a cost of `(log x)^{2B+1}`.
   - Lean: `Literature.GranvilleShaoCor71` (faithful transcription) and
     `multBVResidue_of : Cor71 → BV → TwistedSW → MultBVResidue := sorry`.
-- **(b) Weighted two-sided sieve transfer.**  The upper-sieve half of C′ (5.2), and the
-  Cauchy–Schwarz weighting.  New writing, standard ingredients.
-- **(c) Uniformity in `J`.**  Count the moduli multiplicity with the `w_j` weights explicitly.
-- **(d) Atom-size error.**  Confirm `O(δ/u²)`; the frozen statement allows `δ/√u`.
-- Then a referee pass, as for the C′ doc.
+- **(b) Weighted two-sided transfer: FIXED.**  Cauchy–Schwarz needs `Σ(λ⁺−λ⁻)|G|²`, which is
+  another equidistribution claim.  Use positivity instead: `λ⁺ − λ⁻ ≥ 0` pointwise,
+  `|F − F_y| ≤ min(2, |w_k| s_k)`, and `Σ(λ⁺−λ⁻)` is exact by CRT.  Total `C_h u² e^{−u}`.
+- **(c) Uniformity in `J`: FAILS.**  This is the wall in the Verdict above.
+- **Atom modulus and `q₀`: disputed and settled.**  The referee read C′'s
+  `Q = ∏_{p≤2J} p` literally: once `2J > q₀`, `q₀`'s primes divide every atom modulus, where
+  plain-`Δ` BV fails.  But the frozen phase depends only on P-primes, and those never divide
+  `q₀`.  So `Q` can be cut to `∏_{p≤2J, p∈P} p`, and the coprime-to-`q₀` claim stands.
+- **(d) Restated (referee).**  In the identity form site `k` is not atomized, so "`D_k` fixed in
+  an atom" does not apply.  The real check is uniformity of `Σ_{(m,e)=1} F(m)` over `e ≤ N^{3/8}`
+  with many prime factors.
+- **`TwistedSiegelWalfisz`.**  The uniform-in-`y` sketch was wrong: `Σ_{p≤y} p^{−σ}` blows up
+  when `log y ≫ log T`.  A two-regime argument is owed; the statement is about 85%.
+- Referee pass: done 2026-10-01.
 
-**Not a lap target yet.**  Every ingredient is a known theorem.  The new content is the identity
-and the assembly, plus the corollary.  A lap would wire `SiteFactorization + PairSecondOrder ⇒
+**Not a lap target.**  The missing input is a super-polylog BV for multiplicative functions,
+or a depth-uniform sieve.  That is a research question, not wiring.  A lap would wire `SiteFactorization + PairSecondOrder ⇒
 CPrimeResidueQuad` from Literature Props.  That shares the six build gaps of the C′ doc
 (Erdős–Turán, quantitative Weyl wiring, …).
 

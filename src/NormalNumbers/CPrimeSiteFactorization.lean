@@ -93,14 +93,17 @@ noncomputable def siteG (δ : ℝ) (h : ℤ) (J u : ℕ) : ℂ :=
   ∑ k : Fin J, siteFactor ((δ : ℂ) * (zPhase h J k - 1)) ((u : ℝ) ^ 2 * 2 ^ (k.val + 1))
 
 /-- **Site factorization (frozen).**  For residue classes, `T1' = W_y · G_h(u)` up to
-`C_h (e^{−u/2} + δ/√u)`, with `C_h` uniform in the modulus and in `u`. -/
+`C (1 + log|h|)^m (e^{−u/2} + δ/√u)`, with `C, m` uniform in `h`, the modulus and `u`.
+(Referee 2026-10-01: the constant must be polylog in `h`, chosen before `h`, or Erdős–Turán
+cannot sum it.) -/
 def SiteFactorization : Prop :=
-  ∃ u₀ : ℕ, ∀ h : ℤ, h ≠ 0 → ∃ C : ℝ, 0 < C ∧
+  ∃ u₀ m : ℕ, ∃ C : ℝ, 0 < C ∧ ∀ h : ℤ, h ≠ 0 →
     ∀ q a : ℕ, 3 ≤ q → Nat.Coprime a q → ∀ u : ℕ, u₀ ≤ u → ∀ ε > 0, ∀ᶠ N : ℕ in atTop,
       ‖freshOneSite (residueClass q a) (winJ N) (cutU u N (winJ N)) h N
         - windowMeanLeG (residueClass q a) (winJ N) (cutU u N (winJ N)) h N
           * siteG (1 / (Nat.totient q : ℝ)) h (winJ N) u‖
-        ≤ C * (Real.exp (-(u : ℝ) / 2) + 1 / ((Nat.totient q : ℝ) * Real.sqrt u)) + ε
+        ≤ C * (1 + Real.log |(h : ℝ)|) ^ m
+            * (Real.exp (-(u : ℝ) / 2) + 1 / ((Nat.totient q : ℝ) * Real.sqrt u)) + ε
 
 /-- The weighted fresh mass `∑_k |z_k − 1| · δ log(u²·2^{k+1})`, the expansion parameter. -/
 noncomputable def freshBudget (δ : ℝ) (h : ℤ) (J u : ℕ) : ℝ :=
@@ -117,11 +120,13 @@ def PairSecondOrder : Prop :=
         ≤ C * freshBudget (1 / (Nat.totient q : ℝ)) h (winJ N) u ^ 2 + ε
 
 /-- **Quadratic residue-class discrepancy (frozen consumer).**  Primes `≡ a (mod q)` give orbit
-discrepancy `≤ C log³φ(q)/φ(q)²`, uniformly in the unit `a`. -/
+discrepancy `≤ C log⁵φ(q)/φ(q)²`, uniformly in the unit `a`.  (`log⁵`, not `log³`: the weighted
+fresh mass is `ρ(k_h log u + k_h² + log u)`, its square is `ρ²L⁴`, and Erdős–Turán adds one `L`;
+referee 2026-10-01.) -/
 def CPrimeResidueQuad : Prop :=
   ∃ C : ℝ, 0 < C ∧ ∃ q₀ : ℕ, ∀ q a : ℕ, q₀ ≤ q → Nat.Coprime a q →
     OrbitDefectLe (PrimeLambert.subsetLambert (residueClass q a) 4)
-      (C * Real.log (Nat.totient q) ^ 3 / (Nat.totient q : ℝ) ^ 2)
+      (C * Real.log (Nat.totient q) ^ 5 / (Nat.totient q : ℝ) ^ 2)
 
 end NormalNumbers.PrimeModel.SiteFactor
 
@@ -180,14 +185,15 @@ region; for fixed `q₀` a possible exceptional zero sits at a fixed distance fr
 Euler products `∏_{p≤X} (1 − 1/p)^{1+κ}(1 + f(p)/(p − 1))`, by Mertens in progressions.
 ⚠️ Instantiating the class `P(z; c₀, δ, M)` hypotheses is OUR step (unaudited), as is the
 Euler-product identification of `G(1)`.  At a pole of `Γ(1+κ)` Mathlib's `Γ = 0` gives main term
-`0`, matching `1/Γ` entire. -/
+`0`, matching `1/Γ` entire.  The constant is uniform on `|z| = 1` (II.5.2 is uniform for
+`|z| ≤ A`); the wiring uses infinitely many `z_k`. -/
 def SelbergDelangeResidue : Prop :=
-  ∀ q₀ a : ℕ, 3 ≤ q₀ → Nat.Coprime a q₀ → ∀ z : ℂ, ‖z‖ = 1 →
+  ∀ q₀ a : ℕ, 3 ≤ q₀ → Nat.Coprime a q₀ → ∃ C : ℝ, 0 ≤ C ∧ ∀ z : ℂ, ‖z‖ = 1 →
     ∃ L₀ : ℂ,
       Tendsto (fun X : ℕ => ∏ p ∈ (Finset.Icc 1 X).filter Nat.Prime,
         (1 - 1 / (p : ℂ)) ^ (1 + (z - 1) / (Nat.totient q₀ : ℂ)) *
           (1 + (if p % q₀ = a % q₀ then z else 1) / ((p : ℂ) - 1))) atTop (𝓝 L₀) ∧
-      ∃ C : ℝ, 0 ≤ C ∧ ∀ x : ℕ, 3 ≤ x →
+      ∀ x : ℕ, 3 ≤ x →
         ‖(∑ n ∈ Finset.Icc 1 x,
               z ^ ((n.primeFactors.filter (fun p => p % q₀ = a % q₀)).card)) / (x : ℂ)
           - L₀ * (Real.log x : ℂ) ^ ((z - 1) / (Nat.totient q₀ : ℂ))
@@ -243,10 +249,12 @@ def TwistedSiegelWalfisz : Prop :=
         ‖∑ n ∈ Finset.Icc 1 x, z ^ omegaMultLe (residueClass q₀ a) y n * χ (n : ZMod r)‖
           ≤ C * x / Real.log x ^ A
 
-/-- Believed, ~80%.  English proof: Selberg–Delange with characters (Tenenbaum II.5) plus
-Siegel's theorem for the `L(s, χψ)`; the `y`-truncation removes `z`-weights above `y`, which
-changes `G` by a factor holomorphic and bounded in the same region, uniformly in `y`.
-Evidence: none numerical; the `y = x`, `z = 1` case is Siegel–Walfisz-for-`1`, a theorem. -/
+/-- Believed, ~85% (statement).  English proof: Selberg–Delange with characters (Tenenbaum
+II.5) plus Siegel's theorem for the `L(s, χψ)`.  ⚠️ The earlier sketch ("the `y`-truncation
+changes `G` by a factor bounded uniformly in `y`") is WRONG (referee 2026-10-01):
+`∑_{p≤y} p^{−σ}` on `σ = 1 − c/log T` blows up when `log y ≫ log T`.  A two-regime argument
+(small `y`: the twist by `χ` acts on the `y`-rough part; large `y`: contour as for `y = x`) is
+owed.  Evidence: none numerical; `y = x`, `z = 1` is Siegel–Walfisz, a theorem. -/
 theorem twistedSiegelWalfisz : TwistedSiegelWalfisz := sorry
 
 /-- Believed, ~80%.  English proof: GS Corollary 7.1 applies to `f = z^{Ω_{P,≤y}} ∈ C`
@@ -262,16 +270,29 @@ theorem multBVResidue_of (h71 : GranvilleShaoCor71)
     (hBV : BoundedGaps.Maynard.bombieriVinogradov) (hTSW : TwistedSiegelWalfisz) :
     MultBVResidue := sorry
 
-/-- Believed, ~60%.  English proof (doc §Mechanism): `T1'_k = mean[Φ^{≠k}(n)·(F − F_y)(n+k)]`;
+/-- ⚠️ **Believed ~15%: these hypotheses are probably INSUFFICIENT** (referee 2026-10-01).  The
+statement `SiteFactorization` itself is believed ~75%.  The gap is **uniformity in the growing
+window `J`**, which is the Maze wall "fixed-window conductor at depth" again (row "site factorization via
+log-power BV").  The multi-site sieve feeding BV carries modulus multiplicity about
+`(2J)^{ω(e)}`, so its loss is `(log N)^{O(δJ²)}`.  Cutting the sites only gets to
+`J₁ ≳ log₄ log log N`, while BV saves a FIXED power `(log N)^{−A}`.  The `|w_j|`-weighted
+divisor expansion that would give multiplicity `C_h^{ω(e)}` has no level control.  Needed: BV
+for `z^{Ω_{P,≤y}}` with a super-polylog saving (e.g. `Δ_A` with conductors up to
+`exp(c√log x)` plus an exceptional-modulus excision), or a sieve with polylog `ℓ¹` mass at
+growing depth.
+Original sketch (doc §Mechanism): `T1'_k = mean[Φ^{≠k}(n)·(F − F_y)(n+k)]`;
 sandwich C′'s CRT atoms (moduli `≤ N^{3/8}`) between fundamental-lemma sieves; BV for `F`,
 `F_y` (`MultBVResidue`) handles each progression; main terms agree prime-by-prime except at
 `q′ ∈ (y_k, y_j]` (cost `O(1/y_k)`); the global ratio `M[F]/M[F_y]` is
 `SelbergDelangeResidue` over C′'s proved model mean (5.3), giving `siteFactor` up to
-`O(e^{−u})`.  Open checks (b) two-sided weighted transfer, (c) uniformity in `J`, (d)
-atom-size error.
+`O(e^{−u})`.  Step (b) has a working replacement: positivity of `λ⁺ − λ⁻` and the sup bound
+`|F − F_y| ≤ min(2, |w_k| s_k)`, total `C_h u² e^{−u}`.  The atom modulus `Q` must be cut down to
+the P-primes `≤ 2J`.  The frozen phase sees only P-primes, and those never divide `q₀`, so the
+moduli stay coprime to `q₀`.
 Evidence: at `a = 1, 0.5` (NOT the proof regime) the measured `G = T1/W_y` converges to the
 analytic limit for residue classes, `2^20 → 2^26` (`probes/data-2026-10-01-cprime-analytic-G.md`).
-Controls: `P = {101}` exact one-prime test, and `J = 1`, where the statement is an identity. -/
+Controls: `P = {101}` exact one-prime test, and `J = 1`, where the statement is an identity.
+The probe has only `J = 5`, so it cannot see the growing-`J` gap. -/
 theorem siteFactorization_of (hBV : MultBVResidue) (hSD : SelbergDelangeResidue) :
     SiteFactorization := sorry
 
@@ -279,13 +300,19 @@ theorem siteFactorization_of (hBV : MultBVResidue) (hSD : SelbergDelangeResidue)
 `n + j = pm`, `n + j' = p′m′`; for fixed small cofactors the count of `p` is a prime pair in two
 linear forms (`SelbergUpperTwoForms`, in progressions mod `q₀`), and summing `1/(m m′ log² )` over
 the cofactor ranges gives the product of the two sites' fresh masses.  Pairs with `pp′ ≤ N` are
-CRT-exact.  Evidence: `|T2|/ρ² ∈ [0.2, 4.6]`, stable `2^22 → 2^24`, every set
-(`probes/data-2026-09-30-cprime-fresh-cancellation.md`); control `P = {101, 103}` exact. -/
+CRT-exact.  Evidence (`probes/data-2026-10-01-cprime-pair-second-order.md`):
+- `|T2|/Fw² ∈ [0.007, 0.53]` over every set, `h ∈ {1, 3, 5}`, `a ∈ {1, 0.5}`, `N = 2^20…2^24`;
+- it is stable in `N`, while `|T2|/ρ²` spans `[0.2, 40]` and grows with `h`;
+- at fixed `N` it rises mildly with `q` (`0.18` at q = 3, `0.37` at q = 61), but falls with `N`
+  for the sparsest classes.
+Control: `P = {101, 103}` exact (`test_pair_second_order_ratio_exact`).  Not the proof regime. -/
 theorem pairSecondOrder_of (h : SelbergUpperTwoForms) : PairSecondOrder := sorry
 
 /-- Believed, ~70% given the two premises.  English proof (doc §Chain): `|W| ≤ |W_y|(1+|G_h|)
 + |T1' − W_y G_h| + |W − W_y − T1'|`; `|W_y| ≤ 4e^{−u} + o(1)` from C′ (5.3)–(5.4); take
-`u = ⌈ρ⁻²⌉`, then Erdős–Turán with `H = ⌈ρ⁻²⌉`.  Shares the six build gaps of
+`u = ⌈ρ⁻²⌉`, then Erdős–Turán with `H = ⌈ρ⁻²⌉`, which gives `ρ² log⁵(1/ρ)`.  C′'s (5.3)–(5.4)
+need a deep-site truncation lemma under `winJ`: its `y_J < 2J`.  Cutting at `J₁ ≈ L3 N` costs
+`4^{−J₁} δ log log N → 0`.  Shares the six build gaps of
 `docs/CPRIME-QUANTITATIVE-2026-09-30.md` (Erdős–Turán, quantitative Weyl wiring, Mertens-AP
 upper bound, …). -/
 theorem cprimeResidueQuad_of (hSF : SiteFactorization) (hPair : PairSecondOrder) :
