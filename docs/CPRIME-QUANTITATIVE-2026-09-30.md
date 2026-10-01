@@ -299,3 +299,8 @@ Results:
 - About 80% that `RelativeFirstOrder` holds for small ρ (up from 75%).
 - About 45% that the mechanism proves it (up from 40%, because the crux is now one named step).
 - Unresolved: `F_κ` for complex `κ` with `Re κ < 0` at `u = 2`, and the pole cases.
+
+## Site factorization, frozen  (2026-10-01)
+
+→ `docs/CPRIME-SITE-FACTORIZATION-2026-10-01.md`.  The "weighted BV" crux above reduces to Bombieri–Vinogradov for the
+multiplicative functions `z^{Ω_P}`, `z^{Ω_{P,≤y}}` (Granville–Shao 2018), and the CRT/BV split by prime size is unnecessary.
