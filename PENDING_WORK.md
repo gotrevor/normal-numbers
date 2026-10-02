@@ -4,9 +4,11 @@
 `borel_sqrt_two`.  Key new lemma: `not_irrational_of_hasFiniteAttractor_base` (B–C Thm 2.10 for
 `x ↦ bx mod 1`, any `b ≥ 2`), plus `hasFiniteAttractor_perturb`; BBP surrogate `piP/piQ`
 (eq. (3) numerator scaled by 16 so the orbit is exactly `piSurrogate`).
-**Next (Phase 2):** π normal base 2 from base 16 (need a base-power normality transfer — grep repo
-for `isNormal_pow`/base change), `ln 2` base 3 (B–C Thm 1.1: `Σ 1/(n 3ⁿ)`-type orbit),
-π² base 64 via `PiSqBBP`, Borel ⇒ disjunctive.  Then Phase 3 Maze test.
+**Phases 2–3 DONE** (MasterConsequences / MasterKicked / MasterPiSq / MasterLnTwoBase3 / MasterMaze).
+Open follow-ups (not campaign-blocking): `Irrational (π²)` in-repo (mathlib's Cartwright lemmas are
+private; would make `hypA_piSq_base2` hypothesis-free); `catalan`/`ζ(3)`-type BBP formulas as more
+machine instances; convert remaining legacy Maze rows in `mazeTestImplied` to links once their
+obstructions are stated.
 
 ## ζ_Y campaign (launched 2026-10-02) — CLOSED lap 2
 
