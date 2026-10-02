@@ -6,6 +6,7 @@ Authors: Trevor Morris
 import NormalNumbers.LnTwo
 import NormalNumbers.PiBBP
 import NormalNumbers.LnTwoIrrational
+import NormalNumbers.KickedOrbit
 
 /-!
 # Normality's master conjectures as hypothesis `Prop`s (campaign launched 2026-10-02)
@@ -126,13 +127,24 @@ theorem fract_two_mul_fract (t : ℝ) : Int.fract (2 * Int.fract t) = Int.fract 
   have : 2 * Int.fract t = 2 * t - ((2 * ⌊t⌋ : ℤ) : ℝ) := by rw [Int.fract]; push_cast; ring
   rw [this, Int.fract_sub_intCast]
 
-/-- Bailey–Crandall Thm 2.10 for the doubling map: a finite attractor forces rationality. -/
-theorem not_irrational_of_hasFiniteAttractor (x : ℝ) (hx : HasFiniteAttractor (orbit 2 x)) :
-    ¬ Irrational x := by
+theorem circDist_mul_nat (a b' : ℝ) (b : ℕ) : circDist (b * b') (b * a) ≤ b * circDist a b' := by
+  calc circDist (b * b') (b * a) ≤ |b * b' - b * a - ((-(b * round (a - b')) : ℤ) : ℝ)| :=
+        circDist_le_int _ _ _
+    _ = |(-(b : ℝ)) * ((a - b') - round (a - b'))| := by push_cast; ring_nf
+    _ = _ := by rw [abs_mul, abs_neg, Nat.abs_cast]; rfl
+
+theorem fract_nat_mul_fract (b : ℕ) (t : ℝ) :
+    Int.fract (b * Int.fract t) = Int.fract (b * t) := by
+  have : (b : ℝ) * Int.fract t = b * t - ((b * ⌊t⌋ : ℤ) : ℝ) := by rw [Int.fract]; push_cast; ring
+  rw [this, Int.fract_sub_intCast]
+
+/-- Bailey–Crandall Thm 2.10 for `x ↦ b·x mod 1`: a finite attractor forces rationality. -/
+theorem not_irrational_of_hasFiniteAttractor_base (b : ℕ) (hb : 2 ≤ b) (x : ℝ)
+    (hx : HasFiniteAttractor (orbit b x)) : ¬ Irrational x := by
   intro hirr
   obtain ⟨W, hW, h⟩ := hx
-  -- separation constant
-  set S := ((W ×ˢ W).image (fun pr : ℝ × ℝ => circDist (2 * pr.1) pr.2)).filter (0 < ·)
+  have hbR : (2 : ℝ) ≤ b := by exact_mod_cast hb
+  set S := ((W ×ˢ W).image (fun pr : ℝ × ℝ => circDist (b * pr.1) pr.2)).filter (0 < ·)
   have hne : (insert (1 : ℝ) S).Nonempty := Finset.insert_nonempty _ _
   set η := (insert (1 : ℝ) S).min' hne
   have hη : 0 < η := by
@@ -141,68 +153,76 @@ theorem not_irrational_of_hasFiniteAttractor (x : ℝ) (hx : HasFiniteAttractor 
     rcases Finset.mem_insert.1 hm with h1 | h1
     · rw [h1]; norm_num
     · exact (Finset.mem_filter.1 h1).2
-  have hsep : ∀ w ∈ W, ∀ w' ∈ W, circDist (2 * w) w' < η → circDist (2 * w) w' = 0 := by
+  have hsep : ∀ w ∈ W, ∀ w' ∈ W, circDist (b * w) w' < η → circDist (b * w) w' = 0 := by
     intro w hw w' hw' hlt
     by_contra hne0
-    have hpos : 0 < circDist (2 * w) w' := lt_of_le_of_ne (circDist_nonneg _ _) (Ne.symm hne0)
-    have hmem : circDist (2 * w) w' ∈ insert (1 : ℝ) S :=
+    have hpos : 0 < circDist (b * w) w' := lt_of_le_of_ne (circDist_nonneg _ _) (Ne.symm hne0)
+    have hmem : circDist (b * w) w' ∈ insert (1 : ℝ) S :=
       Finset.mem_insert_of_mem (Finset.mem_filter.2
         ⟨Finset.mem_image.2 ⟨(w, w'), Finset.mem_product.2 ⟨hw, hw'⟩, rfl⟩, hpos⟩)
     exact absurd (Finset.min'_le _ _ hmem) (not_le.2 hlt)
-  set ε := min (η / 4) (1 / 8) with hεdef
+  set ε := min (η / (2 * (b + 1))) (1 / (2 * (b + 1))) with hεdef
   have hε : 0 < ε := by positivity
+  have hεη : ε * (b + 1) < η := by
+    have : ε ≤ η / (2 * (b + 1)) := min_le_left _ _
+    rw [le_div_iff₀ (by positivity)] at this; nlinarith
+  have hε1 : ε * (b + 1) < 1 := by
+    have : ε ≤ 1 / (2 * (b + 1)) := min_le_right _ _
+    rw [le_div_iff₀ (by positivity)] at this; nlinarith
   obtain ⟨K, hK⟩ := h ε hε
   choose w hwW hwd using hK
-  set y : ℕ → ℝ := fun k => orbit 2 x (K + k) with hydef
-  have hy_succ : ∀ k, y (k + 1) = Int.fract (2 * y k) := by
+  set y : ℕ → ℝ := fun k => orbit b x (K + k) with hydef
+  have hy_succ : ∀ k, y (k + 1) = Int.fract (b * y k) := by
     intro k
-    simp only [hydef, orbit, fract_two_mul_fract]
-    congr 1; rw [show K + (k + 1) = (K + k) + 1 by omega, pow_succ]; push_cast; ring
-  -- step A
-  have hA : ∀ k, circDist (2 * w k) (w (k + 1)) = 0 := by
+    simp only [hydef, orbit, fract_nat_mul_fract]
+    congr 1; rw [show K + (k + 1) = (K + k) + 1 by omega, pow_succ]; ring
+  have hA : ∀ k, circDist (b * w k) (w (k + 1)) = 0 := by
     intro k
     apply hsep _ (hwW k) _ (hwW (k + 1))
-    have h1 := circDist_two_mul (y k) (w k)
-    have h2 : circDist (2 * y k) (w (k + 1)) < ε := by
+    have h1 := circDist_mul_nat (y k) (w k) b
+    have h2 : circDist (b * y k) (w (k + 1)) < ε := by
       rw [← circDist_fract, ← hy_succ]; exact hwd (k + 1)
-    have h3 := circDist_triangle (2 * w k) (2 * y k) (w (k + 1))
+    have h3 := circDist_triangle (b * w k) (b * y k) (w (k + 1))
     have h4 : circDist (y k) (w k) < ε := hwd k
-    have : ε ≤ η / 4 := min_le_left _ _
-    linarith
-  -- step B
+    have : (b : ℝ) * circDist (y k) (w k) ≤ b * ε := by
+      apply mul_le_mul_of_nonneg_left h4.le; positivity
+    nlinarith
   set e : ℕ → ℝ := fun k => y k - w k - round (y k - w k) with hedef
   have he_lt : ∀ k, |e k| < ε := fun k => hwd k
-  have hε8 : ε ≤ 1 / 8 := min_le_right _ _
-  have he_succ : ∀ k, e (k + 1) = 2 * e k := by
+  have he_succ : ∀ k, e (k + 1) = b * e k := by
     intro k
-    have hz : ∃ m : ℤ, 2 * w k - w (k + 1) = m := by
+    have hz : ∃ m : ℤ, b * w k - w (k + 1) = m := by
       have h0 := hA k
       unfold circDist at h0
-      exact ⟨round (2 * w k - w (k + 1)), by linarith [abs_eq_zero.1 h0]⟩
+      exact ⟨round (b * w k - w (k + 1)), by linarith [abs_eq_zero.1 h0]⟩
     obtain ⟨m, hm⟩ := hz
-    set j : ℤ := 2 * round (y k - w k) - ⌊2 * y k⌋ + m - round (y (k + 1) - w (k + 1))
-    have hj : e (k + 1) - 2 * e k = j := by
+    set j : ℤ := b * round (y k - w k) - ⌊(b : ℝ) * y k⌋ + m - round (y (k + 1) - w (k + 1))
+    have hj : e (k + 1) - b * e k = j := by
       simp only [hedef, j]; rw [hy_succ k, Int.fract]; push_cast; linarith
     have hjabs : |(j : ℝ)| < 1 := by
       rw [← hj]
-      calc |e (k + 1) - 2 * e k| ≤ |e (k + 1)| + |2 * e k| := abs_sub _ _
-        _ = |e (k + 1)| + 2 * |e k| := by rw [abs_mul]; norm_num
-        _ < 1 := by linarith [he_lt k, he_lt (k + 1)]
+      calc |e (k + 1) - b * e k| ≤ |e (k + 1)| + |b * e k| := abs_sub _ _
+        _ = |e (k + 1)| + b * |e k| := by rw [abs_mul, Nat.abs_cast]
+        _ ≤ ε + b * ε := by
+          have := he_lt k
+          gcongr
+          · exact (he_lt (k + 1)).le
+        _ < 1 := by linarith
     have : j = 0 := by
       rw [← Int.cast_abs] at hjabs
       have : |j| < 1 := by exact_mod_cast hjabs
       exact Int.abs_lt_one_iff.1 this
     rw [this] at hj; push_cast at hj; linarith
-  have he_pow : ∀ k, e k = 2 ^ k * e 0 := by
+  have he_pow : ∀ k, e k = (b : ℝ) ^ k * e 0 := by
     intro k; induction k with
     | zero => simp
     | succ k ih => rw [he_succ, ih, pow_succ]; ring
   have he0 : e 0 = 0 := by
     by_contra hne0
     have hpos : 0 < |e 0| := abs_pos.2 hne0
-    obtain ⟨k, hk⟩ := pow_unbounded_of_one_lt (ε / |e 0|) (by norm_num : (1 : ℝ) < 2)
+    obtain ⟨k, hk⟩ := pow_unbounded_of_one_lt (ε / |e 0|) (by linarith : (1 : ℝ) < b)
     have := he_lt k
-    rw [he_pow, abs_mul, abs_of_pos (by positivity : (0 : ℝ) < 2 ^ k)] at this
+    rw [he_pow, abs_mul, abs_of_pos (by positivity : (0 : ℝ) < (b : ℝ) ^ k)] at this
     rw [div_lt_iff₀ hpos] at hk
     linarith
   have hyw : ∀ k, y k = Int.fract (w k) := by
@@ -212,7 +232,6 @@ theorem not_irrational_of_hasFiniteAttractor (x : ℝ) (hx : HasFiniteAttractor 
       simp only [hedef] at hek; push_cast; linarith
     rw [this, Int.fract_add_intCast]
     simp only [hydef, orbit, Int.fract_fract]
-  -- step C: pigeonhole
   have hmaps : ∀ k ∈ Finset.range (W.card + 1), y k ∈ W.image Int.fract := by
     intro k _; rw [hyw]; exact Finset.mem_image_of_mem _ (hwW k)
   have hcard : (W.image Int.fract).card < (Finset.range (W.card + 1)).card := by
@@ -220,15 +239,89 @@ theorem not_irrational_of_hasFiniteAttractor (x : ℝ) (hx : HasFiniteAttractor 
   obtain ⟨i, -, j, -, hij, hyij⟩ := Finset.exists_ne_map_eq_of_card_lt_of_maps_to hcard hmaps
   simp only [hydef, orbit] at hyij
   obtain ⟨z, hz⟩ := Int.fract_eq_fract.1 hyij
-  have hq : ((2 : ℚ) ^ (K + i) - 2 ^ (K + j)) ≠ 0 := by
+  have hq : ((b : ℚ) ^ (K + i) - b ^ (K + j)) ≠ 0 := by
     intro h0
-    have : (2 : ℚ) ^ (K + i) = 2 ^ (K + j) := by linarith
-    have := Nat.pow_right_injective (le_refl 2) (by exact_mod_cast this : 2 ^ (K + i) = 2 ^ (K + j))
+    have : (b : ℚ) ^ (K + i) = b ^ (K + j) := by linarith
+    have := Nat.pow_right_injective hb (by exact_mod_cast this : b ^ (K + i) = b ^ (K + j))
     omega
   have := hirr.mul_ratCast hq
   push_cast at this
-  rw [show x * (2 ^ (K + i) - 2 ^ (K + j)) = (z : ℝ) by push_cast at hz; linarith] at this
+  rw [show x * ((b : ℝ) ^ (K + i) - b ^ (K + j)) = (z : ℝ) by linarith] at this
   exact Int.not_irrational z this
+
+/-- Bailey–Crandall Thm 2.10 for the doubling map: a finite attractor forces rationality. -/
+theorem not_irrational_of_hasFiniteAttractor (x : ℝ) (hx : HasFiniteAttractor (orbit 2 x)) :
+    ¬ Irrational x :=
+  not_irrational_of_hasFiniteAttractor_base 2 le_rfl x hx
+
+/-- Bailey–Crandall eq. (3), scaled by 16: numerator. -/
+noncomputable def piP : ℤ[X] := C 16 * (C 120 * X ^ 2 - C 89 * X + C 16)
+/-- Bailey–Crandall eq. (3): denominator. -/
+noncomputable def piQ : ℤ[X] :=
+  C 512 * X ^ 4 - C 1024 * X ^ 3 + C 712 * X ^ 2 - C 206 * X + C 21
+
+theorem piQ_eval (n : ℕ) : ((piQ.eval ((n + 1 : ℕ) : ℤ) : ℤ) : ℝ)
+    = (8 * (n : ℝ) + 1) * (8 * n + 4) * (8 * n + 5) * (8 * n + 6) / 8 := by
+  simp [piQ]; ring
+
+theorem pi_kick_eq (n : ℕ) :
+    ((piP.eval ((n + 1 : ℕ) : ℤ) : ℤ) : ℝ) / ((piQ.eval ((n + 1 : ℕ) : ℤ) : ℤ) : ℝ)
+      = 16 * bbpKick n := by
+  rw [piQ_eval]
+  simp only [piP, bbpKick, eval_mul, eval_C, eval_add, eval_sub, eval_pow, eval_X]
+  have h1 : (8 * (n : ℝ) + 1) ≠ 0 := by positivity
+  have h4 : (8 * (n : ℝ) + 4) ≠ 0 := by positivity
+  have h5 : (8 * (n : ℝ) + 5) ≠ 0 := by positivity
+  have h6 : (8 * (n : ℝ) + 6) ≠ 0 := by positivity
+  push_cast
+  field_simp
+  ring
+
+theorem bcOrbit_pi : bcOrbit piP piQ 16 = piSurrogate := by
+  funext n
+  induction n with
+  | zero => simp [bcOrbit, piSurrogate, piPartial]
+  | succ n ih =>
+    rw [bcOrbit, ih, pi_kick_eq, piSurrogate, piSurrogate]
+    set t := (16 : ℝ) ^ n * piPartial n
+    have : ((16 : ℕ) : ℝ) * Int.fract t + 16 * bbpKick n
+        = (16 * t + 16 * bbpKick n) + ((-(16 * ⌊t⌋) : ℤ) : ℝ) := by
+      rw [Int.fract]; push_cast; ring
+    rw [this, Int.fract_add_intCast]
+    congr 1
+    simp only [t, piPartial, Finset.sum_range_succ, bbpTerm]
+    field_simp
+    ring
+
+theorem piQ_natDegree : piQ.natDegree = 4 := by unfold piQ; compute_degree!
+theorem piP_natDegree : piP.natDegree = 2 := by unfold piP; compute_degree!
+
+theorem piQ_ne (n : ℕ) (hn : 1 ≤ n) : piQ.eval (n : ℤ) ≠ 0 := by
+  obtain ⟨m, rfl⟩ : ∃ m, n = m + 1 := ⟨n - 1, by omega⟩
+  intro h
+  have := piQ_eval m
+  rw [h] at this
+  have : (0 : ℝ) < (8 * (m : ℝ) + 1) * (8 * m + 4) * (8 * m + 5) * (8 * m + 6) / 8 := by positivity
+  push_cast at *; linarith
+
+theorem piSurrogate_mem_Ico (n : ℕ) : piSurrogate n ∈ Set.Ico (0 : ℝ) 1 :=
+  ⟨Int.fract_nonneg _, Int.fract_lt_one _⟩
+
+theorem tendsto_pi_tail (hπ : PiBBP) :
+    Tendsto (fun n : ℕ => (16 : ℝ) ^ n * piTail n) atTop (nhds 0) := by
+  have hlim : Tendsto (fun n : ℕ => 22 * (1 / ((n : ℝ) + 1))) atTop (nhds 0) := by
+    simpa using tendsto_one_div_add_atTop_nhds_zero_nat.const_mul (22 : ℝ)
+  refine squeeze_zero (fun n => ?_) (fun n => ?_) hlim
+  · exact le_trans (by positivity) (piTail_ge hπ n)
+  · refine (piTail_le hπ n).trans ?_
+    rw [div_le_iff₀ (by positivity)]
+    have : (0 : ℝ) ≤ n := n.cast_nonneg
+    field_simp
+    nlinarith
+
+theorem orbit_pi_eq (n : ℕ) :
+    orbit 16 Real.pi n = Int.fract (piSurrogate n + (16 : ℝ) ^ n * piTail n) := by
+  rw [orbit_eq_fract_add_tail 16 Real.pi (piPartial n) n, piSurrogate, piTail]; push_cast; rfl
 
 theorem bcOrbit_lnTwo : bcOrbit (C 1) X 2 = lnTwoOrbit := by
   funext n
@@ -258,7 +351,19 @@ theorem hypA_lnTwo (hA : BaileyCrandallHypA) : IsNormal 2 (Real.log 2) := by
 
 /-- Hypothesis A and the BBP formula give the normality of `π` in base 16. -/
 theorem hypA_pi_base16 (hA : BaileyCrandallHypA) (hπ : PiBBP) : IsNormal 16 Real.pi := by
-  sorry
+  have hp : piP ≠ 0 := by
+    intro h; have := piP_natDegree; rw [h] at this; simp at this
+  rcases hA piP piQ 16 hp (by rw [piP_natDegree, piQ_natDegree]; norm_num) piQ_ne (by norm_num)
+    with hfa | heq
+  · exfalso
+    rw [bcOrbit_pi] at hfa
+    have hpert := hasFiniteAttractor_perturb _ _ hfa (tendsto_pi_tail hπ)
+    rw [← funext orbit_pi_eq] at hpert
+    exact not_irrational_of_hasFiniteAttractor_base 16 (by norm_num) _ hpert irrational_pi
+  · rw [bcOrbit_pi] at heq
+    rw [isNormal_iff_equidistributed_orbit 16 (by norm_num) Real.pi, funext orbit_pi_eq]
+    exact equidistributed_of_fract_perturb _ _ heq piSurrogate_mem_Ico
+      (fun n => le_trans (by positivity) (piTail_ge hπ n)) (tendsto_pi_tail hπ)
 
 /-- Borel's conjecture gives the normality of `√2` in base 2. -/
 theorem borel_sqrt_two (hB : BorelConjecture) : IsNormal 2 (Real.sqrt 2) := by
