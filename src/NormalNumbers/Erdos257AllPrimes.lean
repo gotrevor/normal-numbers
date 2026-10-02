@@ -5,6 +5,7 @@ Authors: Trevor Morris
 -/
 import NormalNumbers.Erdos257Base2
 import NormalNumbers.G4Base2WeakSched
+import NormalNumbers.Erdos257Divergent
 
 /-!
 # Erdős #257 for every infinite set of primes: the case split (audit 2026-10-02)
@@ -22,9 +23,11 @@ Write `F_S(e) = Σ_{p ∈ S, p < 2^{2^e}} 1/p` (`sumInvPrimesIn S (2^2^e)`; Mert
   `erdos257_primeSubset` needs the stronger `MertensRate` (`F_S(e) ≥ c·e − C`);
   `weakMertensRate_of_mertensRate` shows (i) contains it.  `erdos257_weakRate`, proved.
 * **(iii) the gap**, divergent but `F_S(e) = e^{o(1)}` along a subsequence (`GapSet`), e.g.
-  `towerGapPrimes` (`F_S(e) ≈ log₂ e · log 2`).  `erdos257_gapSet`, `sorry` (30%).
+  `towerGapPrimes` (`F_S(e) ≈ log₂ e · log 2`).  `erdos257_gapSet`, proved: every divergent
+  prime set is handled by the decoupled base-2 frame (`isDisjunctive_subsetLambert_two_of_divergent`,
+  moment order and far tail both `S`-restricted, cutoff at the first crossing of the demand).
 
-The wiring `erdos257_allPrimes_of_cases` is proved.
+The wiring `erdos257_allPrimes_of_cases` is proved, conditional only on the two cited inputs.
 
 **Splitting does not shrink the gap** (`weakMertensRate_mono`, `gapSet_subset_noWeakRate`): the
 rate is monotone in `S`, so a gap set has no regular subset at all, and splitting
@@ -197,7 +200,9 @@ theorem squareBlockPrimes_not_mertensRate (c C : ℝ) :
     ¬ G4.MertensAP.MertensRate (· ∈ squareBlockPrimes) c C := by
   sorry
 
-/-- **Case (iii), the open step.**  `sorry`, 30%.
+/-- **Case (iii).**  Proved from `isDisjunctive_subsetLambert_two_of_divergent` (2026-10-02):
+the obstruction `G4.SchedB.hypE_frame_excludes_logRate` was an artefact of the `HypE` frame, and
+both of its sources were `S`-restricted (`G4FarTailS`, `G4SchedBE2`).  The original sketch: 
 
 Sketch.  In the base-2 frame the cutoff exponent `e` enters in two ways: through the demand
 `F_S(e) ≥ M(K)` and through the moment cap `10⁵·T K·e ≤ 2^{8K²}`, whose factor `e` comes from
@@ -212,8 +217,8 @@ that are not monotone in the cutoff (`four_mul_le_two_pow_NE`: `e ≤ 2^{8K²}` 
 divergent sets: his proof needs the tail `Σ 1/nᵢ` beyond the chosen moduli to be `< 1`. -/
 theorem isDisjunctive_subsetLambert_two_of_gapSet (htt : CastingOut.TTEquidistributedDyadic)
     {S : Set ℕ} [DecidablePred (· ∈ S)] (hS : GapSet S) :
-    IsDisjunctive 2 (PrimeLambert.subsetLambert (· ∈ S) 2) := by
-  sorry
+    IsDisjunctive 2 (PrimeLambert.subsetLambert (· ∈ S) 2) :=
+  isDisjunctive_subsetLambert_two_of_divergent htt hS.1 hS.2.1
 
 /-- **Case (iii)** in the #257 shape. -/
 theorem erdos257_gapSet (htt : CastingOut.TTEquidistributedDyadic) {S : Set ℕ}

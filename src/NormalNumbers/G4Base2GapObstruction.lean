@@ -116,7 +116,8 @@ witness frame in which the cutoff exponent may be as large as `2^{2^{m₁}}` (ne
 log-rate sets), i.e. both the moment order and the far tail are controlled by `S`-restricted
 reciprocal sums.  Stated as: for every `ℓ, w` there is a covariance-form witness for every
 divergent prime set.  This is exactly what `isDisjunctive_subsetLambert_two_of_gapSet` would
-consume; no frame realising it is known. -/
+consume.  Realised in the `farCS` witness form (`ScheduleWitnessSCS`) by
+`G4.SchedB.Dec.exists_scheduleWitnessSCS_two_of_divergent`. -/
 def SRestrictedFrame : Prop :=
   ∀ (S : ℕ → Prop) [DecidablePred S], (∀ p, S p → p.Prime) →
     Filter.Tendsto (fun e : ℕ => MertensAP.sumInvPrimesIn S (2 ^ 2 ^ e)) Filter.atTop Filter.atTop →

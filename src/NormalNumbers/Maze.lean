@@ -1337,7 +1337,7 @@ def register : List Hall := [
   ⟨"Erdős #257 gap sets via an S-restricted moment cap alone",
    "Prove isDisjunctive_subsetLambert_two_of_gapSet by restricting term_b/term_c (the moment order Mc) to S-primes and keeping the HypE frame",
    .refuted, .kernel,
-   "HypE forces e <= 2^(8K^2) (HypE.e_le), and four_mul_le_two_pow_NE' independently needs e <= 2^(50K^2) because farC ~ log log X ~ e is an all-primes sum against 2^N, N = 100K^2; a set with F_S(e) <= A log(e+1) + C then has at most O(K^2) mass in the frame against a demand of 1000K^3, so no cutoff works for large K. REOPEN IF: a frame with farC and Mc both S-restricted, or N growing like m_1",
+   "HypE forces e <= 2^(8K^2) (HypE.e_le), and four_mul_le_two_pow_NE' independently needs e <= 2^(50K^2) because farC ~ log log X ~ e is an all-primes sum against 2^N, N = 100K^2; a set with F_S(e) <= A log(e+1) + C then has at most O(K^2) mass in the frame against a demand of 1000K^3, so no cutoff works for large K. REOPEN IF: a frame with farC and Mc both S-restricted, or N growing like m_1. REOPENED AND REALIZED 2026-10-02: HypE2 + farCS give isDisjunctive_subsetLambert_two_of_divergent",
    "theorem G4.SchedB.hypE_frame_excludes_logRate; reopen node G4.SchedB.SRestrictedFrame; module G4Base2GapObstruction", "2026-10-02"⟩
 ]
 

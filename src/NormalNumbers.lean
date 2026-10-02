@@ -925,3 +925,5 @@ import NormalNumbers.G4FarTailS
 import NormalNumbers.G4SchedBE2
 import NormalNumbers.G4SubsetWitnessCovS
 import NormalNumbers.G4Base2DecSched
+import NormalNumbers.G4Base2DecAssembly
+import NormalNumbers.Erdos257Divergent

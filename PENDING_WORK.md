@@ -2698,3 +2698,6 @@ Gap 1 (schedule) PROVED: src/NormalNumbers/CPrimeQuantSchedule.lean — QuantSch
   (needs a ScheduleWitnessSC variant whose hfar field uses farCS — see G4SubsetWitnessCov:75).
   Then the gap-set cutoff: first e with F_S(e) ≥ D has F_S(e) ≤ D+7 (increment from
   `sum_inv_primes_Ioc_le`, 4(1+log 2) < 7), take s ≈ (D+7)/3 + m₁.
+- DONE (lap 1e): crux closed. `isDisjunctive_subsetLambert_two_of_divergent` (Erdos257Divergent)
+  ⇒ `isDisjunctive_subsetLambert_two_of_gapSet`; `erdos257_allPrimes_of_cases` axiom-clean.
+  See HANDOFF-2026-10-02-allprimes-lap1.md.
