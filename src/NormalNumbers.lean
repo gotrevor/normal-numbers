@@ -488,6 +488,7 @@ import NormalNumbers.CPrimeQuantAP
 import NormalNumbers.CPrimeQuant
 import NormalNumbers.LiteratureVandeheyDifferencing
 import NormalNumbers.GrowingLocalizedLog
+import NormalNumbers.MasterConjectures
 import NormalNumbers.GrowingLocalizedLogExponent
 import NormalNumbers.GrowingLocalizedLogCost
 import NormalNumbers.GrowingLocalizedLogM
