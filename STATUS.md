@@ -376,6 +376,10 @@ These are the ratified conjecture nodes.  They are open by design, and none is s
   π² in bases 16/2 given `Irrational (π²)` (`hypA_piSq_base2`), Borel ⇒ disjunctive.  Maze test:
   `MasterMaze.lean` (`mazeTestImplied`/`mazeTestNotImplied`; `equidistributed_lnTwoOrbit_iff`,
   `run_sublinear_of_isNormal`).
+- **Joint Lambert + Campbell (merged 2026-10-02).**  `JointLambert.jointWords_quantitative`; with `S = {2}`,
+  `Literature.Campbell.campbellEQuestion_holds` answers Campbell arXiv:2605.24160 §4 (every binary string
+  occurs infinitely often in binary `E`).  Priority citation `Campbell2026AbelianThm1` (decimal
+  abelian-normal, not normal) for our binary `exists_abelianNormal_not_normal`.
 - **Erdős #257 for `A = k·S` (2026-10-02, 1 lap).**  `Erdos257.erdos257_kMul`: `Σ_{n∈k·S} 1/(2ⁿ−1)` is
   irrational for every `k ≥ 2` and every prime set `S` with a Mertens rate (all primes:
   `erdos257_kMul_primes`; residue classes: `erdos257_kMul_residueClass`); `erdos257_twoMul_normal`: normal
