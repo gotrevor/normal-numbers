@@ -1,5 +1,8 @@
 # HANDOFF — explicit-square lane (row 3), lap 2 — 2026-10-02
 
+
+Branch `proof/sqnormal`, HEAD `01fd13fc` (green, full lake build). Run stopped via `box done --green`.
+Next steps (outside this lane): row 5 sorries in ExplicitSquareNonNormal.lean (no known mechanism).
 Row 3 target `NormalNumbers.ExplicitSquare.exists_computable_normal_sq_not_normal` is PROVED,
 axioms = [propext, Classical.choice, Quot.sound] (takes `BakerBanajiQuarterCantor` as hypothesis).
 Frozen statements untouched (diff of the frozen file: one import + the proof body).
