@@ -1,6 +1,6 @@
 # HANDOFF — ζ_Y campaign, lap 2 (2026-10-02): CLOSED
 
-Branch `proof/zeta-y`, build green.
+Branch `proof/zeta-y`, HEAD `a271f104` (proof commit), build green; run stopped via `box done --green`.
 
 - `zetaY_isNormal` **PROVED** (conditional on the hypothesis argument `VandeheyThm51` only).
   `exists_unbounded_zetaY` proved in lap 1.  `#print axioms` on both: propext, Classical.choice,
