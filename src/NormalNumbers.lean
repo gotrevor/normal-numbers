@@ -486,6 +486,8 @@ import NormalNumbers.CPrimeQuantSchedule
 import NormalNumbers.CPrimeQuantET
 import NormalNumbers.CPrimeQuantAP
 import NormalNumbers.CPrimeQuant
+import NormalNumbers.LiteratureVandeheyDifferencing
+import NormalNumbers.GrowingLocalizedLog
 import NormalNumbers.CPrimeSiteFactorization
 import NormalNumbers.MazeAudit
 import NormalNumbers.StonehamSixFailure
