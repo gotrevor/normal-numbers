@@ -1,3 +1,11 @@
+## Erdős #257 base 2 — lap 3 (2026-10-02, re-frozen on TTEquidistributedDyadic)
+
+Headline + both corollaries in `Erdos257Base2.lean` now PROVED from one sorry'd lemma
+`exists_scheduleWitnessSC_two` (N3–N7).  New `G4SubsetWitnessCov.lean`: `ScheduleWitnessSC`
+(witness with the `VeryLargeCov` field replacing pointwise `hMx`/log-ratio term) and
+`isDisjunctive_subsetLambert_of_witnessC` (proved).  Next: split `exists_scheduleWitnessSC_two`
+into N7 (schedule from a `VeryLargeCov` supply at κ ≪ 2^{-K/2}) and N6 (supply from TT dyadic).
+
 ## Erdős #257 base 2 on prime subsets (launched 2026-10-02) — STOPPED lap 1: cited input vacuous
 
 **Interface done:** `G4VeryLargeCov.lean` — `VeryLargeCov`, N1 `sum_sq_le_of_cov` /
