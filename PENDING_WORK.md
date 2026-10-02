@@ -2709,3 +2709,14 @@ Gap 1 (schedule) PROVED: src/NormalNumbers/CPrimeQuantSchedule.lean — QuantSch
 - DONE (lap 1e): crux closed. `isDisjunctive_subsetLambert_two_of_divergent` (Erdos257Divergent)
   ⇒ `isDisjunctive_subsetLambert_two_of_gapSet`; `erdos257_allPrimes_of_cases` axiom-clean.
   See HANDOFF-2026-10-02-allprimes-lap1.md.
+
+## Explicit-square lane (row 3), 2026-10-02 — crux plan
+Done: `sqrt_bakerBanaji_hyp`, `ae_isNormal_of_polyDecay` (DecayAeNormal.lean),
+`Derandomize.exists_primrec_avoid` + `coins_pre` (computable conditional-expectation greedy).
+Remaining for `exists_computable_isNormal_sqrt_of_polyDecay`:
+- C2 SqrtDigits: `⌊2^m √y⌋ = Nat.sqrt ⌊4^m y⌋`, `⌊2^n realOfDigits⌋ = Σ_{i<n} s_i 2^{n-1-i}` (proper digits);
+  orbit dyadic visit `u_k ∈ [v/2^ℓ,(v+1)/2^ℓ)` ↔ `⌊2^{k+ℓ}x⌋ % 2^ℓ = v` — exact Nat test from e-prefix.
+- C3 analytic: μ{|visit_N/N − 2^{-ℓ}| > t} ≤ c/(t²√N) via trapUp/trapLo = difference of hats,
+  hat Fourier coeffs (1−cos 2πhL)/(2π²h²), Fourier series HasSum, Markov + second_moment_le.
+- C4 assembly: index bad tests by (level n, ℓ, v) with N=n^4, tolerances, computable J from rational C',δ';
+  avoidance ⇒ dyadic visit freqs along n^4 ⇒ all N ⇒ `equidistributed_of_badic` ⇒ normal.
