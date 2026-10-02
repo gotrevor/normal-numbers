@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
 import NormalNumbers.LiteratureTTEquidistributed
+import NormalNumbers.G4VeryLargeCov
 
 /-!
 # Erdős #257 at base 2 for prime subsets (campaign launched 2026-10-02)
