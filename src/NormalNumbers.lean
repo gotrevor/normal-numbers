@@ -514,6 +514,7 @@ import NormalNumbers.Erdos257
 import NormalNumbers.LiteratureTTEquidistributed
 import NormalNumbers.G4VeryLargeCov
 import NormalNumbers.G4SubsetWitnessCov
+import NormalNumbers.G4Base2Cov
 import NormalNumbers.LiteratureTTEquidistributedDefect
 import NormalNumbers.Erdos257Base2
 import NormalNumbers.CPrimeSiteFactorization
