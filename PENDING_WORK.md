@@ -1,3 +1,11 @@
+## TT dyadic bridge (2026-10-02) — DONE
+* PROVED `CastingOut.ttEquidistributedDyadic_of_real : TTEquidistributedReal → TTEquidistributedDyadic`
+  (axioms: propext, Classical.choice, Quot.sound).  Helpers in `TTDyadicBridge.lean`:
+  `perturb_bound` (δ transfer via (3.1) at q=1 + boundary terms), `card_mul_le_integral` (parity-
+  disjoint windows), `log_le_card_dyadicScales`, `dyadic_of_real_core` (c' = min c 1/4, η = L^{-2c'}).
+* So `TTEquidistributedDyadic` is now a theorem from TT 3.1(i) verbatim.  Next (another lane's call):
+  re-freeze the Erdős #257 headline on `TTEquidistributedReal`, as the referee recommended.
+
 ## Erdős #257 base 2 — lap 4 (2026-10-02)
 * N7 PROVED: `SchedB.exists_scheduleWitnessSC_two_of_supplyEff` (G4Base2Sched.lean) — b=3 parameter
   layer + base-2 hM/hB/hbig/hfar/hbudget (`scheduleWitnessSC2`), (k₄,e) chosen under the moment cap.

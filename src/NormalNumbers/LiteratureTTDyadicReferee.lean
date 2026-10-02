@@ -3,7 +3,7 @@ Copyright (c) 2026 Trevor Morris. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
-import NormalNumbers.LiteratureTTEquidistributedDefect
+import NormalNumbers.TTDyadicBridge
 
 /-!
 # Referee pass on `TTEquidistributedDyadic` (2026-10-02)
@@ -17,8 +17,8 @@ unformalized derivation.  This file splits them.
   `E ⊆ [√X, X]` is charged by `∫_E dt/t`, and the conclusion (3.4) is asked at **every real**
   `N ∈ [√X, X] \ E`.  Asking it at real `N` is what closes the null-set loophole that made
   `TTEquidistributedCorrelation` a theorem.
-* `ttEquidistributedDyadic_of_real` — the derivation, stated (85%, English proof below); proving
-  it moves `TTEquidistributedDyadic` from "self-derived citation" to "theorem from TT".
+* `ttEquidistributedDyadic_of_real` — the derivation, **proved** (2026-10-02, via
+  `NormalNumbers/TTDyadicBridge.lean`): `TTEquidistributedDyadic` is a theorem from TT verbatim.
 * `TTEquidistributedDyadicPow2` — the consumer's actual demand: `binPair_cov_core`
   (`G4Base2PairCov.lean`) instantiates the conclusion only at `N = 2^j`.
 * `ttEquidistributedDyadicPow2_of_dyadic` — proved.
@@ -52,7 +52,10 @@ def TTEquidistributedReal : Prop :=
                     (g₁ (n + h₁) - ((δ N : ℝ) : ℂ)) * g₂ (n + h₂)‖
                 ≤ Cst * L ^ (-c)
 
-/-- **The derivation behind `TTEquidistributedDyadic`** (believed, 85%; referee 2026-10-02).
+/-- **The derivation behind `TTEquidistributedDyadic`** (proved; referee 2026-10-02).  The
+formal proof (`TTBridge.dyadic_of_real_core`) uses `c' = min c 1 / 4`, `η = L^{-2c'}`, one-sided
+windows `[N, N(1+η)]`, crude term counts, and declares the top scale exceptional; the sketch
+below (with `c/2`) is the original plan.
 
 English proof.  Fix `(c, Cst)` from the literal form and put `η := L^{-c/2}`, `c' := c/2`.
 (1) *Transfer.*  From (3.1) with `q = 1` (constant `1`), `|δ_N| ≤ 3` and
@@ -66,7 +69,8 @@ which is `≪ L^{−c/2}·#dyadicScales X` once a scale exists.  (3) The bound a
 `Cst L^{−c} + O(L^{−c/2})`, and `W, h ≤ L^{c/2} ≤ L^c`.  Small `L` is absorbed by enlarging `Cst`
 (then `E` = all scales is admissible). -/
 theorem ttEquidistributedDyadic_of_real : TTEquidistributedReal → TTEquidistributedDyadic := by
-  sorry
+  rintro ⟨c, Cst, hc, hCst, h⟩
+  exact TTBridge.dyadic_of_real_core hc hCst h
 
 /-- **What the consumer uses.**  `binPair_cov_core` instantiates `TTEquidistributedDyadic` only at
 the left endpoint `N = 2^j` of each non-exceptional dyadic scale. -/
