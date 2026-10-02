@@ -11,3 +11,10 @@ Campaign `KICKOFF-2026-10-02-master-conjectures.md`: all three phases landed in 
 
 All headline axioms = [propext, Classical.choice, Quot.sound].  STATUS / OVERVIEW / HEADLINES bet 3
 rows written.  Next: see PENDING_WORK top section (optional follow-ups).
+
+## Checkpoint (treadmill stop)
+Branch `proof/master-conjectures`, HEAD 46c3efcc before this note.  Stop signalled via
+`box done --green`.  Exact next steps if reopened: (1) prove `Irrational (π²)` (adapt mathlib's
+Cartwright integrals, which are private) to drop the hypothesis from `hypA_piSq_base16/base2`;
+(2) more `hypA_isNormal_of_kicked` instances (other BBP-type constants); (3) state obstructions for
+the legacy Maze rows listed in `mazeTestImplied` and link them in `MazeAudit.lean`.
