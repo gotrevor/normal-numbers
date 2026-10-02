@@ -11,9 +11,9 @@ only when all three phases are, not when the file is sorry-free.
 
 **Joint Lambert, unconditional + quantitative (closed 2026-09-30, merged 2026-10-02).**  Simultaneous
 Lambert disjunctivity for any finite set of distinct bases, with `≥ N^(1−ε)` common-position
-occurrences (`jointWords_quantitative`, `JointLambertQuantitative.lean`).  Answers Campbell
-arXiv:2605.24160's question (every binary string occurs infinitely often in `E`); see
-`Literature.lean` `CampbellEQuestion`.
+occurrences (`jointWords_quantitative`, `JointLambertQuantitative.lean`).  Gives a hypothesis-free
+proof of Campbell arXiv:2605.24160's question (every binary string occurs infinitely often in `E`),
+first answered on paper by CaptainSude (`Literature.Campbell.CaptainSude2026EDisjunctive`).
 
 **Growing-prime localized logarithm (2 laps, closed 2026-10-02).**  `zetaY_isNormal` +
 `exists_unbounded_zetaY` (`src/NormalNumbers/GrowingLocalizedLog.lean`), conditional on the cited
