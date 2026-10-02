@@ -483,6 +483,7 @@ import NormalNumbers.OccurrenceCountEquiv
 import NormalNumbers.PrimeModelGradedStatement
 import NormalNumbers.CPrimeQuantStatement
 import NormalNumbers.CPrimeQuantSchedule
+import NormalNumbers.CPrimeQuantET
 import NormalNumbers.CPrimeQuant
 import NormalNumbers.CPrimeSiteFactorization
 import NormalNumbers.MazeAudit
