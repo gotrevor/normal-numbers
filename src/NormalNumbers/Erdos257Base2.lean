@@ -8,7 +8,7 @@ import NormalNumbers.LiteratureTTEquidistributedDefect
 import NormalNumbers.G4VeryLargeCov
 import NormalNumbers.G4SubsetWitnessCov
 import NormalNumbers.G4Base2Cov
-import NormalNumbers.G4Base2Supply
+import NormalNumbers.G4Base2PairCov
 
 /-!
 # Erdős #257 at base 2 for prime subsets (campaign launched 2026-10-02)
@@ -178,7 +178,7 @@ theorem veryLargeCovSupply_of_TT (htt : CastingOut.TTEquidistributedDyadic) :
     omega
   have hbinp : ∀ ℓ, ∀ p ∈ bins ℓ, p.Prime ∧ Y < p := fun ℓ p hp =>
     hQp p (hcover ▸ Finset.mem_biUnion.2 ⟨ℓ, Finset.mem_univ _, hp⟩)
-  obtain ⟨x, hx1, hx2, hpair⟩ := he₁ e he₁e B hBB bins hbinp
+  obtain ⟨x, hx1, hx2, hpair⟩ := he₁ e he₁e B hBB bins hbinp (fun ℓ => (hmassθ ℓ).trans (by linarith))
   refine ⟨x, hx1, hx2, ?_⟩
   -- sizes at `X = 2^x`
   have hXY : Y ^ 100 ≤ 2 ^ x := by
