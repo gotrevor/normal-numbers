@@ -1,3 +1,22 @@
+## ζ_Y campaign (launched 2026-10-02) — lap 1
+
+**Advance on crux N8:** Vandehey's Lemma 6.3 (the `Ĩ_k` table, constant `c`) is replaced by a
+proved, constant-free window: `GrowingLocalizedLogExponent.lean`.  The invariant
+`F_k = (ν_k − γ_k)(2^{k+1} − 1)` satisfies `F_{k+1} = F_k(1 − α_k) + 1` (`F_succ`), with
+`k − 1 + (k+2)/2^k ≤ F_k ≤ k + 1` (`F_bounds`).  `exists_window`: every `y ≥ 1/4` has `k ≤ y + 2`
+with `|F_k − y| ≤ 3/4`.  `exponents_le`: then both exponents are `≤ 1 − 2^{−k−4}`.
+`vandehey_window_bound` (axiom-clean modulo the hypothesis `VandeheyThm51`): for `2 ≤ L`,
+`log L ≤ 4 log m`, some `k ≤ log m/log L + 2` gives
+`‖Σ_{n≤L} e(a bⁿ/m)‖ ≤ (A_k + B_k) L^{1−2^{−k−4}} (1 + log m)^{2^{−k}}`.
+The saving `2^{−k−4}` (vs Vandehey's `2^{−k−3}`) costs a factor 2 in the saving, irrelevant.
+
+**Next attack (rest of N8):** the cost side, Lemma 5.4 in closed form:
+`log(A_k + B_k) ≤ s(k+1) log 2 + 2 log M + (3/2) log Q + log C_{P,1/2} + …` for `k ≤ s + O(1)`,
+plus N7 `log M ≤ (log 2) Σ_{p≤Y}(p−1) + π(Y) log Y` (LTE).  Note the slack: with
+`π(Y) ≤ (1−ε) log₂ log N`, any `k ≤ y + 2 ≤ s(1+o(1)) + 3` and any cost `exp(O(Y²))` suffices,
+so a crude induction `A_k + B_k ≤ (2^{s+3} Q M C)^{?}` is enough; `C_{P,α_k}` needs
+`∏ p^α/(p^α − 1) ≤ ∏ (1 + 1/(α log p))` (Lemma 4.2/5.3), the delicate factor.
+
 ## Vandehey §7 Problem 1 — CLOSED 2026-09-29 (laps 27–91) 🏁
 
 Not solved.  The map of closed routes, with a kernel witness for each, is
