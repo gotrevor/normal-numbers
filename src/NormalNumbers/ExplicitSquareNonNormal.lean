@@ -158,7 +158,13 @@ homogeneous case (ours) is also Mosquera–Shmerkin 2018 (Ann. Acad. Sci. Fenn. 
 **Faithful-or-weaker.**  This is the specialisation to the law of `cantorReal`, which is
 self-similar (IFS `t ↦ 1/2 + (t − 1/2)/4`, `t ↦ 1/2 + (t − 1/2)/4 + 1/8`, weights `1/2`),
 non-atomic, and supported in `[1/2, 2/3]`; the window `[1/2, 1]` is `[0,1]` after the rational
-affine change `t ↦ 2t − 1`, which preserves self-similarity and the hypotheses on `F`. -/
+affine change `t ↦ 2t − 1`, which preserves self-similarity and the hypotheses on `F`.
+
+**Refereed 2026-10-02** (`docs/BAKER-BANAJI-REFEREE-2026-10-02.md`, against 2401.01241v2 = Math.
+Ann. 392 (2025), Cor 1.5): implied as published, 93%.  Numeric tripwire
+`probes/bakerbanaji_sqrt_decay_probe.py` (exact average over all `2^20` coin prefixes): for `√`,
+`|pushFourier|` falls from `0.18` at `ξ = 2^8` to `0.010–0.023` at `ξ = 2^18..2^20` (fit `≈ ξ^{-0.31}`);
+control `F = 4t` stays at `0.6926` along `ξ = 2·4^j`, matching `Π |cos(π 4^{-m})|` to `1e-6`. -/
 def BakerBanajiQuarterCantor : Prop :=
   ∀ F : ℝ → ℝ, ∀ U : Set ℝ, IsOpen U → Set.Icc (1 / 2 : ℝ) 1 ⊆ U → ContDiffOn ℝ 2 F U →
     (∀ t ∈ Set.Icc (1 / 2 : ℝ) 1, deriv (deriv F) t ≠ 0) → PolyDecay F
