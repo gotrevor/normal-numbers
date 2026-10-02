@@ -10,7 +10,12 @@ with `|F_k − y| ≤ 3/4`.  `exponents_le`: then both exponents are `≤ 1 − 
 `‖Σ_{n≤L} e(a bⁿ/m)‖ ≤ (A_k + B_k) L^{1−2^{−k−4}} (1 + log m)^{2^{−k}}`.
 The saving `2^{−k−4}` (vs Vandehey's `2^{−k−3}`) costs a factor 2 in the saving, irrelevant.
 
-**Next attack (rest of N8):** the cost side, Lemma 5.4 in closed form:
+**Lap 1b (cost side, done):** `GrowingLocalizedLogCost.lean` — `constPair_sum_le`:
+`A_k + B_k ≤ 9·2^{3s+2}·Q·M·2^{(k+5)s}` for any prime set (crude Lemma 5.4; `cP_le`
+`C_{P,x} ≤ (3/x)^s`).  Remaining for N8: N7 (`log M` via LTE) and the assembly into
+`korobov_uniform_saving`.
+
+**(superseded) Next attack (rest of N8):** the cost side, Lemma 5.4 in closed form:
 `log(A_k + B_k) ≤ s(k+1) log 2 + 2 log M + (3/2) log Q + log C_{P,1/2} + …` for `k ≤ s + O(1)`,
 plus N7 `log M ≤ (log 2) Σ_{p≤Y}(p−1) + π(Y) log Y` (LTE).  Note the slack: with
 `π(Y) ≤ (1−ε) log₂ log N`, any `k ≤ y + 2 ≤ s(1+o(1)) + 3` and any cost `exp(O(Y²))` suffices,

@@ -489,6 +489,7 @@ import NormalNumbers.CPrimeQuant
 import NormalNumbers.LiteratureVandeheyDifferencing
 import NormalNumbers.GrowingLocalizedLog
 import NormalNumbers.GrowingLocalizedLogExponent
+import NormalNumbers.GrowingLocalizedLogCost
 import NormalNumbers.CPrimeSiteFactorization
 import NormalNumbers.MazeAudit
 import NormalNumbers.StonehamSixFailure
