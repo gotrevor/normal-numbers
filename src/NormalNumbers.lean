@@ -493,6 +493,7 @@ import NormalNumbers.GrowingLocalizedLogCost
 import NormalNumbers.GrowingLocalizedLogM
 import NormalNumbers.GrowingLocalizedLogArith
 import NormalNumbers.GrowingLocalizedLogTail
+import NormalNumbers.GrowingLocalizedLogCount
 import NormalNumbers.GrowingLocalizedLogWitness
 import NormalNumbers.CPrimeSiteFactorization
 import NormalNumbers.MazeAudit
