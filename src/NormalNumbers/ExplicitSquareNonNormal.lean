@@ -6,6 +6,7 @@ Authors: Trevor Morris
 import NormalNumbers.WallRational
 import NormalNumbers.Bridge
 import NormalNumbers.OccurrenceCountEquiv
+import NormalNumbers.DecayAeNormal
 import Mathlib.Computability.Partrec
 import Mathlib.Probability.ProductMeasure
 import Mathlib.Probability.Distributions.Uniform
@@ -200,7 +201,15 @@ Confidence 97%.  Proof (Manai 2609.24665 `lem:decaynormal`, base 2 only): for `h
 `equidistributed_of_weyl` and `isNormal_iff_equidistributed_orbit`. -/
 theorem ae_isNormal_of_polyDecay (F : ℝ → ℝ) (hF : Measurable F) (hd : PolyDecay F) :
     ∀ᵐ ω ∂coinMeasure, IsNormal 2 (F (cantorReal ω)) := by
-  sorry
+  have hc : Measurable cantorReal := by
+    unfold cantorReal realOfDigits
+    refine Measurable.tsum fun i => Measurable.div_const ?_ _
+    refine Measurable.comp (measurable_of_countable (fun n : ℕ => (n : ℝ))) ?_
+    exact (measurable_of_countable (fun b : Bool =>
+      if i = 0 then 1 else if i % 2 = 0 then (if b then 1 else 0) else 0)).comp
+      (measurable_pi_apply (i / 2 - 1))
+  obtain ⟨C, δ, hC, hδ, hdec⟩ := hd
+  exact DecayAeNormal.ae_isNormal_two_of_decay coinMeasure _ (hF.comp hc) hC hδ hdec
 
 /-- **The mechanism visibly fails on the affine sibling**: no rational affine `F` has
 polynomial decay, because decay would make a.e. `F(y)` normal
