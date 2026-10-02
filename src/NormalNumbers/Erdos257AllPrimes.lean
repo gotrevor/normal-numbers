@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
 import NormalNumbers.Erdos257Base2
+import NormalNumbers.G4Base2WeakSched
 
 /-!
 # Erdős #257 for every infinite set of primes: the case split (audit 2026-10-02)
@@ -19,7 +20,7 @@ Write `F_S(e) = Σ_{p ∈ S, p < 2^{2^e}} 1/p` (`sumInvPrimesIn S (2^2^e)`; Mert
 * **(i) regular**, `F_S(e) ≥ e^ε − C` for some `ε > 0` (`WeakMertensRate`): the base-2 route of
   `Erdos257Base2` with the schedule's demand/cap window re-checked.  The proved headline
   `erdos257_primeSubset` needs the stronger `MertensRate` (`F_S(e) ≥ c·e − C`);
-  `weakMertensRate_of_mertensRate` shows (i) contains it.  `erdos257_weakRate`, `sorry` (50%).
+  `weakMertensRate_of_mertensRate` shows (i) contains it.  `erdos257_weakRate`, proved.
 * **(iii) the gap**, divergent but `F_S(e) = e^{o(1)}` along a subsequence (`GapSet`), e.g.
   `towerGapPrimes` (`F_S(e) ≈ log₂ e · log 2`).  `erdos257_gapSet`, `sorry` (30%).
 
@@ -102,7 +103,9 @@ theorem weakMertensRate_mono {S S' : ℕ → Prop} [DecidablePred S] [DecidableP
   obtain ⟨hε, C, hC⟩ := hw
   exact ⟨hε, C, fun e => (hC e).trans (G4.MertensAP.sumInvPrimesIn_le_of_subset h _)⟩
 
-/-- **The stretched base-2 theorem** (case (i)), `sorry`, 50%.
+/-- **The stretched base-2 theorem** (case (i)).  Proved: the cap check is
+`G4.SchedB.moment_cap_weak` (cutoff `n^⌈1/ε⌉` at `K = 2^{j+2}`), the witness
+`G4.SchedB.exists_scheduleWitnessSC_two_of_supplyEff_weak`.
 
 Sketch.  The Mertens rate is consumed once, by `MertensAP.exists_cutoff_subset`: the schedule
 needs a cutoff exponent `e` with `F_S(e) ≥ M(K)`, demand `M(K) = exp(O(K log K))`, inside the
@@ -114,7 +117,18 @@ tolerate `e` at the top of the window (b ≥ 3: 70%; base 2: 50%). -/
 theorem isDisjunctive_subsetLambert_two_of_weakRate
     (htt : CastingOut.TTEquidistributedDyadic) {S : ℕ → Prop} [DecidablePred S] {ε : ℝ}
     (hw : WeakMertensRate S ε) : IsDisjunctive 2 (PrimeLambert.subsetLambert S 2) := by
-  sorry
+  obtain ⟨hε, C, hC⟩ := hw
+  refine G4.isDisjunctive_subsetLambert_of_witnessC S 2 le_rfl fun ℓ w hw homit => ?_
+  rcases Nat.eq_zero_or_pos ℓ with hℓ | hℓ
+  · exfalso
+    subst hℓ
+    have hw0 : w = 0 := by simpa using hw
+    subst hw0
+    have := homit 0
+    simp only [Nat.cast_zero, pow_zero, zero_add, div_one] at this
+    exact this (orbit_mem_Ico 2 (PrimeLambert.subsetLambert S 2) 0)
+  · exact G4.SchedB.exists_scheduleWitnessSC_two_of_supplyEff_weak S
+      (veryLargeCovSupplyEff_of_TT htt) hε hC ℓ w hℓ
 
 /-- For a prime set, `k·S` at `k = 1` is `S`. -/
 theorem kMulPrimes_one_eq {S : Set ℕ} (hS : ∀ p ∈ S, p.Prime) :
