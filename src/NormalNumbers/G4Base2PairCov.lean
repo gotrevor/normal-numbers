@@ -167,9 +167,51 @@ lemma aux_Px {P ε t s : ℝ} (hP : 0 ≤ P) (hε : 0 < ε) (hs : 0 < s) (h1 : 2
   rw [div_le_iff₀ hε] at h1
   nlinarith
 
-/-- **N6 core.**  From TT 3.1(i) (dyadic) and N5 (`binInd_ap_mean`).  75%. -/
-theorem binPair_cov (htt : CastingOut.TTEquidistributedDyadic) (K N : ℕ) (hK : 1 ≤ K)
-    {ε₂ : ℝ} (hε : 0 < ε₂) (Bmax : ℕ) : ∃ e₀ : ℕ, ∀ e, e₀ ≤ e → ∀ B ≤ Bmax,
+/-- The good-`L` conditions used per threshold in `binPair_cov`. -/
+def GoodL (c C₅ X₀ A η L : ℝ) : Prop :=
+  1 ≤ L ∧ A ≤ L ^ c ∧ A * L ^ (-c) < η ∧ A / L < η ∧
+    (C₅ * L) ^ ((1 : ℝ) / 10) ≤ C₅ * L / 101 ∧ X₀ ≤ Real.exp (C₅ * L)
+
+/-- **N6 core at a given cutoff.**  TT's constants `c, Cst`, N5's `C₅' ≤ C₅, X₀`, the three
+good-`L` conditions at `L = 101·2^{mE}·log 2 / C₅`, and `Z ≤ 2^{mE}`. -/
+theorem binPair_cov_core {c Cst : ℝ} (hc : 0 < c) (hCst : 0 < Cst)
+    (hTT : ∀ g₁ g₂ : ℕ → ℂ, CastingOut.IsCoprimeMultiplicativeNat g₁ →
+      CastingOut.IsCoprimeMultiplicativeNat g₂ →
+      (∀ n, ‖g₁ n‖ ≤ 1) → (∀ n, ‖g₂ n‖ ≤ 1) → (∀ n, (g₁ n).im = 0) →
+      ∀ X L : ℝ, 2 ≤ X → 1 ≤ L → L ≤ Real.log X → ∀ δ : ℝ → ℝ,
+        (∀ N : ℝ, X ^ (0.4 : ℝ) ≤ N → N ≤ X → ∀ a q : ℕ, 1 ≤ q →
+          ‖(∑ n ∈ (Finset.Ioc ⌊N⌋₊ ⌊2 * N⌋₊).filter (fun n => n % q = a % q), g₁ n)
+              - (((N / q) * δ N : ℝ) : ℂ)‖ ≤ N / L) →
+        (∀ p : ℕ, p.Prime → Real.exp (Real.log X ^ ((1 : ℝ) / 11)) ≤ p →
+          (p : ℝ) ≤ Real.exp (Real.log X ^ ((1 : ℝ) / 10)) → g₁ p = 1) →
+        ∃ E : Finset ℕ, E ⊆ CastingOut.dyadicScales X ∧
+          (E.card : ℝ) ≤ Cst * L ^ (-c) * ((CastingOut.dyadicScales X).card : ℝ) ∧
+          ∀ j ∈ CastingOut.dyadicScales X, j ∉ E →
+            ∀ N : ℕ, (2 : ℝ) ^ j ≤ (N : ℝ) → (N : ℝ) < 2 ^ (j + 1) →
+              ∀ W b h₁ h₂ : ℕ, 0 < W → (W : ℝ) ≤ L ^ c →
+                (h₁ : ℝ) ≤ L ^ c → (h₂ : ℝ) ≤ L ^ c → h₁ ≠ h₂ →
+                ‖((W : ℝ) / (N : ℝ) : ℝ) •
+                    ∑ n ∈ (Finset.Ioc N (2 * N)).filter (fun n => n % W = b % W),
+                      (g₁ (n + h₁) - ((δ N : ℝ) : ℂ)) * g₂ (n + h₂)‖
+                  ≤ Cst * L ^ (-c))
+    {C₅' C₅ X₀ : ℝ} (hC₅' : 0 < C₅') (hC₅1 : 1 ≤ C₅) (hC₅C : C₅' ≤ C₅)
+    (h5 : ∀ X : ℝ, X₀ ≤ X → ∀ Y : ℝ,
+      X ^ ((1 : ℝ) / 101) ≤ Y → ∀ I : Finset ℕ, (∀ p ∈ I, p.Prime ∧ Y < p) →
+      ∀ N : ℝ, X ^ (0.4 : ℝ) ≤ N → N ≤ X → ∀ a q : ℕ, 1 ≤ q →
+        ‖(∑ n ∈ (Ioc ⌊N⌋₊ ⌊2 * N⌋₊).filter (fun n => n % q = a % q), binInd I n)
+            - (((N / q) * binDelta I N : ℝ) : ℂ)‖ ≤ N / (Real.log X / C₅'))
+    (K N : ℕ) (hK : 1 ≤ K) {ε₂ : ℝ} (hε : 0 < ε₂) (Bmax J₀ : ℕ)
+    (hJ₀ : (1 / 2 : ℝ) ^ J₀ < ε₂ / 96) (e : ℕ)
+    (hev : GoodL c C₅ X₀ (((gridOf K N hK).P₀ + (K + N) * gridDm K N : ℕ) : ℝ) (ε₂ / 6)
+        (101 * 2 ^ SchedB.mE K e * Real.log 2 / C₅) ∧
+      GoodL c C₅ X₀ (J₀ * Bmax ^ 2 * Cst * 102 + 1 : ℝ) 1
+        (101 * 2 ^ SchedB.mE K e * Real.log 2 / C₅) ∧
+      GoodL c C₅ X₀ (Cst + 3 * (gridOf K N hK).P₀ : ℝ) (ε₂ / 6 / 4)
+        (101 * 2 ^ SchedB.mE K e * Real.log 2 / C₅))
+    (hmZ : J₀ + (K + N) * gridDm K N + 2 * (gridOf K N hK).P₀
+        + ⌈12 * ((gridOf K N hK).P₀ : ℝ) * (2 * (((K + N) * gridDm K N : ℕ) : ℝ) + 6) / (ε₂ / 6)⌉₊
+        + ⌈288 * (gridOf K N hK).P₀ / ε₂⌉₊ + 1 ≤ 2 ^ SchedB.mE K e) :
+    ∀ B ≤ Bmax,
       ∀ bins : Fin B → Finset ℕ, (∀ ℓ, ∀ p ∈ bins ℓ, p.Prime ∧ SchedB.YE K e < p) → (∀ ℓ, mass (bins ℓ) ≤ 1) →
       ∃ x : ℕ, 100 * 2 ^ SchedB.mE K e ≤ x ∧ x ≤ 101 * 2 ^ SchedB.mE K e ∧
         ∀ ℓ ℓ' : Fin B, ∀ i j : (gridOf K N hK).Idx, i ≠ j →
@@ -180,11 +222,7 @@ theorem binPair_cov (htt : CastingOut.TTEquidistributedDyadic) (K N : ℕ) (hK :
               * ((binInd (bins ℓ') (n + shiftAL (gridOf K N hK).B (gridOf K N hK).Q
                   (gridOf K N hK).D₀ j)).re - binDelta (bins ℓ') (dyBase n))| ≤ ε₂ := by
   classical
-  obtain ⟨c, Cst, hc, hCst, hTT⟩ := htt
-  obtain ⟨C₅', X₀, hC₅', h5⟩ := binInd_ap_mean
-  set C₅ : ℝ := max C₅' 1 with hC₅def
-  have hC₅1 : 1 ≤ C₅ := le_max_right _ _
-  have hC₅C : C₅' ≤ C₅ := le_max_left _ _
+  intro B hB bins hbins hmass
   set G := gridOf K N hK with hG
   set P₀ : ℕ := G.P₀ with hP₀def
   have hP₀ : 0 < P₀ := G.P₀_pos
@@ -193,39 +231,12 @@ theorem binPair_cov (htt : CastingOut.TTEquidistributedDyadic) (K N : ℕ) (hK :
   have hρle : ∀ i : G.Idx, shiftAL G.B G.Q G.D₀ i ≤ Hs := fun i => gridOf.shiftAL_le hK i
   set η : ℝ := ε₂ / 6 with hη
   have hη0 : 0 < η := by positivity
-  obtain ⟨J₀, hJ₀⟩ := exists_pow_lt_of_lt_one (show 0 < ε₂ / 96 by positivity)
-    (show (1 / 2 : ℝ) < 1 by norm_num)
-  -- asymptotics in `L`
-  have hevL : ∀ᶠ L : ℝ in Filter.atTop,
-      (1 ≤ L ∧ ((P₀ + Hs : ℕ) : ℝ) ≤ L ^ c ∧ ((P₀ + Hs : ℕ) : ℝ) * L ^ (-c) < η ∧
-        ((P₀ + Hs : ℕ) : ℝ) / L < η ∧ (C₅ * L) ^ ((1 : ℝ) / 10) ≤ C₅ * L / 101 ∧
-        X₀ ≤ Real.exp (C₅ * L)) ∧
-      (1 ≤ L ∧ (J₀ * Bmax ^ 2 * Cst * 102 + 1 : ℝ) ≤ L ^ c ∧
-        (J₀ * Bmax ^ 2 * Cst * 102 + 1 : ℝ) * L ^ (-c) < 1 ∧
-        (J₀ * Bmax ^ 2 * Cst * 102 + 1 : ℝ) / L < 1 ∧ (C₅ * L) ^ ((1 : ℝ) / 10) ≤ C₅ * L / 101 ∧
-        X₀ ≤ Real.exp (C₅ * L)) ∧
-      (1 ≤ L ∧ (Cst + 3 * P₀ : ℝ) ≤ L ^ c ∧ (Cst + 3 * P₀ : ℝ) * L ^ (-c) < η / 4 ∧
-        (Cst + 3 * P₀ : ℝ) / L < η / 4 ∧ (C₅ * L) ^ ((1 : ℝ) / 10) ≤ C₅ * L / 101 ∧
-        X₀ ≤ Real.exp (C₅ * L)) :=
-    (ev_L hc _ η hη0 hC₅1 X₀).and ((ev_L hc _ 1 one_pos hC₅1 X₀).and
-      (ev_L hc _ (η / 4) (by positivity) hC₅1 X₀))
-  have hLm : Filter.Tendsto (fun m : ℕ => (101 * 2 ^ m * Real.log 2) / C₅) Filter.atTop
-      Filter.atTop := by
-    have h2 : Filter.Tendsto (fun m : ℕ => (2 : ℝ) ^ m) Filter.atTop Filter.atTop :=
-      tendsto_pow_atTop_atTop_of_one_lt (by norm_num)
-    have hl : (0 : ℝ) < 101 * Real.log 2 / C₅ := by
-      have := Real.log_pos (show (1 : ℝ) < 2 by norm_num); positivity
-    refine (h2.const_mul_atTop hl).congr fun m => ?_
-    ring
-  obtain ⟨m₀, hm₀⟩ := Filter.eventually_atTop.1 (hLm.eventually hevL)
-  set Z : ℕ := J₀ + Hs + 2 * P₀ + ⌈12 * P₀ * (2 * Hs + 6) / η⌉₊ + ⌈288 * P₀ / ε₂⌉₊ + 1 with hZ
-  refine ⟨m₀ + Z, fun e he B hB bins hbins hmass => ?_⟩
   set m := SchedB.mE K e with hm
   have hme : e ≤ m := by rw [hm]; unfold SchedB.mE; omega
   have hm2 : m < 2 ^ m := Nat.lt_two_pow_self
-  have hmZ : Z ≤ 2 ^ m := by omega
-  obtain ⟨⟨hL1, hPL, -, hPL', hsm, hX₀⟩, ⟨-, -, hJL, -, -, -⟩, ⟨-, -, hCL, hCL', -, -⟩⟩ :=
-    hm₀ m (by omega)
+  set Z : ℕ := J₀ + Hs + 2 * P₀ + ⌈12 * P₀ * (2 * Hs + 6) / η⌉₊ + ⌈288 * P₀ / ε₂⌉₊ + 1 with hZ
+  have hmZ : Z ≤ 2 ^ m := hmZ
+  obtain ⟨⟨hL1, hPL, -, hPL', hsm, hX₀⟩, ⟨-, -, hJL, -, -, -⟩, ⟨-, -, hCL, hCL', -, -⟩⟩ := hev
   set L : ℝ := 101 * 2 ^ m * Real.log 2 / C₅ with hL
   set a : ℕ := 101 * 2 ^ m with ha
   set XT : ℝ := (2 : ℝ) ^ a with hXT
@@ -422,5 +433,65 @@ theorem binPair_cov (htt : CastingOut.TTEquidistributedDyadic) (K N : ℕ) (hK :
     aux_Px (Nat.cast_nonneg _) hε (by positivity) hZε hxm
   have hJ : 2 * 16 * (1 / 2 : ℝ) ^ J₀ ≤ ε₂ / 3 := by linarith
   linarith
+
+
+/-- **N6 core.**  From TT 3.1(i) (dyadic) and N5 (`binInd_ap_mean`).  75%. -/
+theorem binPair_cov (htt : CastingOut.TTEquidistributedDyadic) (K N : ℕ) (hK : 1 ≤ K)
+    {ε₂ : ℝ} (hε : 0 < ε₂) (Bmax : ℕ) : ∃ e₀ : ℕ, ∀ e, e₀ ≤ e → ∀ B ≤ Bmax,
+      ∀ bins : Fin B → Finset ℕ, (∀ ℓ, ∀ p ∈ bins ℓ, p.Prime ∧ SchedB.YE K e < p) → (∀ ℓ, mass (bins ℓ) ≤ 1) →
+      ∃ x : ℕ, 100 * 2 ^ SchedB.mE K e ≤ x ∧ x ≤ 101 * 2 ^ SchedB.mE K e ∧
+        ∀ ℓ ℓ' : Fin B, ∀ i j : (gridOf K N hK).Idx, i ≠ j →
+          |((apSample (2 ^ x) (gridOf K N hK).P₀ (gridOf K N hK).b₀).card : ℝ)⁻¹ *
+            ∑ n ∈ apSample (2 ^ x) (gridOf K N hK).P₀ (gridOf K N hK).b₀,
+              ((binInd (bins ℓ) (n + shiftAL (gridOf K N hK).B (gridOf K N hK).Q
+                  (gridOf K N hK).D₀ i)).re - binDelta (bins ℓ) (dyBase n))
+              * ((binInd (bins ℓ') (n + shiftAL (gridOf K N hK).B (gridOf K N hK).Q
+                  (gridOf K N hK).D₀ j)).re - binDelta (bins ℓ') (dyBase n))| ≤ ε₂ := by
+  classical
+  obtain ⟨c, Cst, hc, hCst, hTT⟩ := htt
+  obtain ⟨C₅', X₀, hC₅', h5⟩ := binInd_ap_mean
+  set C₅ : ℝ := max C₅' 1 with hC₅def
+  have hC₅1 : 1 ≤ C₅ := le_max_right _ _
+  have hC₅C : C₅' ≤ C₅ := le_max_left _ _
+  set G := gridOf K N hK with hG
+  set P₀ : ℕ := G.P₀ with hP₀def
+  have hP₀ : 0 < P₀ := G.P₀_pos
+  have hb₀ : G.b₀ < P₀ := G.b₀_lt_P₀
+  set Hs : ℕ := (K + N) * gridDm K N with hHs
+  have hρle : ∀ i : G.Idx, shiftAL G.B G.Q G.D₀ i ≤ Hs := fun i => gridOf.shiftAL_le hK i
+  set η : ℝ := ε₂ / 6 with hη
+  have hη0 : 0 < η := by positivity
+  obtain ⟨J₀, hJ₀⟩ := exists_pow_lt_of_lt_one (show 0 < ε₂ / 96 by positivity)
+    (show (1 / 2 : ℝ) < 1 by norm_num)
+  -- asymptotics in `L`
+  have hevL : ∀ᶠ L : ℝ in Filter.atTop,
+      (1 ≤ L ∧ ((P₀ + Hs : ℕ) : ℝ) ≤ L ^ c ∧ ((P₀ + Hs : ℕ) : ℝ) * L ^ (-c) < η ∧
+        ((P₀ + Hs : ℕ) : ℝ) / L < η ∧ (C₅ * L) ^ ((1 : ℝ) / 10) ≤ C₅ * L / 101 ∧
+        X₀ ≤ Real.exp (C₅ * L)) ∧
+      (1 ≤ L ∧ (J₀ * Bmax ^ 2 * Cst * 102 + 1 : ℝ) ≤ L ^ c ∧
+        (J₀ * Bmax ^ 2 * Cst * 102 + 1 : ℝ) * L ^ (-c) < 1 ∧
+        (J₀ * Bmax ^ 2 * Cst * 102 + 1 : ℝ) / L < 1 ∧ (C₅ * L) ^ ((1 : ℝ) / 10) ≤ C₅ * L / 101 ∧
+        X₀ ≤ Real.exp (C₅ * L)) ∧
+      (1 ≤ L ∧ (Cst + 3 * P₀ : ℝ) ≤ L ^ c ∧ (Cst + 3 * P₀ : ℝ) * L ^ (-c) < η / 4 ∧
+        (Cst + 3 * P₀ : ℝ) / L < η / 4 ∧ (C₅ * L) ^ ((1 : ℝ) / 10) ≤ C₅ * L / 101 ∧
+        X₀ ≤ Real.exp (C₅ * L)) :=
+    (ev_L hc _ η hη0 hC₅1 X₀).and ((ev_L hc _ 1 one_pos hC₅1 X₀).and
+      (ev_L hc _ (η / 4) (by positivity) hC₅1 X₀))
+  have hLm : Filter.Tendsto (fun m : ℕ => (101 * 2 ^ m * Real.log 2) / C₅) Filter.atTop
+      Filter.atTop := by
+    have h2 : Filter.Tendsto (fun m : ℕ => (2 : ℝ) ^ m) Filter.atTop Filter.atTop :=
+      tendsto_pow_atTop_atTop_of_one_lt (by norm_num)
+    have hl : (0 : ℝ) < 101 * Real.log 2 / C₅ := by
+      have := Real.log_pos (show (1 : ℝ) < 2 by norm_num); positivity
+    refine (h2.const_mul_atTop hl).congr fun m => ?_
+    ring
+  obtain ⟨m₀, hm₀⟩ := Filter.eventually_atTop.1 (hLm.eventually hevL)
+  set Z : ℕ := J₀ + Hs + 2 * P₀ + ⌈12 * P₀ * (2 * Hs + 6) / η⌉₊ + ⌈288 * P₀ / ε₂⌉₊ + 1 with hZ
+  refine ⟨m₀ + Z, fun e he => ?_⟩
+  set m := SchedB.mE K e with hm
+  have hme : e ≤ m := by rw [hm]; unfold SchedB.mE; omega
+  have hm2 : m < 2 ^ m := Nat.lt_two_pow_self
+  exact binPair_cov_core hc hCst hTT hC₅' hC₅1 hC₅C h5 K N hK hε Bmax J₀ hJ₀ e
+    (hm₀ m (by omega)) (show Z ≤ 2 ^ m by omega)
 
 end NormalNumbers.G4.Base2
