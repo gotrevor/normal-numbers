@@ -47,9 +47,68 @@ theorem binErr_le_pairs (c : ℕ) : (c : ℝ) - (if c = 0 then 0 else 1) ≤ (c.
     have : (0 : ℝ) ≤ (c.choose 2 : ℝ) := by positivity
     linarith
 
+/-- The leaf as first stated (no lower bound on `N`) is **false**: for `I = ∅`, `N = 0` the
+truncation empties `binDelta`, so `|1 − δ| = 1 > 0`.  The repaired leaf below adds `1 ≤ 2N`
+(all call sites have `N = dyBase n ≥ 1`, or need only `|δ| ≤ 3`, see `abs_binDelta_le`). -/
+theorem not_abs_one_sub_binDelta_le :
+    ¬ (∀ (I : Finset ℕ), (∀ p ∈ I, p.Prime) → mass I ≤ 1 → ∀ N : ℝ,
+      |1 - binDelta I N| ≤ 2 * mass I) := by
+  intro h
+  have := h ∅ (by simp) (by simp [mass]) 0
+  simp [binDelta, mass, filter_singleton] at this; norm_num at this
+
 theorem abs_one_sub_binDelta_le (I : Finset ℕ) (hI : ∀ p ∈ I, p.Prime) (hm : mass I ≤ 1)
-    (N : ℝ) : |1 - binDelta I N| ≤ 2 * mass I := by
-  sorry
+    {N : ℝ} (hN : 1 ≤ 2 * N) : |1 - binDelta I N| ≤ 2 * mass I := by
+  set F := I.powerset.filter (fun T => ((∏ p ∈ T, p : ℕ) : ℝ) ≤ 2 * N) with hF
+  have h0 : ∅ ∈ F := by simp [hF, hN]
+  have hpos : ∀ T ∈ I.powerset, (0 : ℝ) < ((∏ p ∈ T, p : ℕ) : ℝ) := by
+    intro T hT
+    have : 0 < ∏ p ∈ T, p := prod_pos fun p hp => (hI p (mem_powerset.1 hT hp)).pos
+    exact_mod_cast this
+  have hδ : binDelta I N = 1 + ∑ T ∈ F.erase ∅, (-1 : ℝ) ^ T.card / ((∏ p ∈ T, p : ℕ) : ℝ) := by
+    unfold binDelta; rw [← hF, ← add_sum_erase _ _ h0]; simp
+  have hm0 : 0 ≤ mass I := sum_nonneg fun p _ => by positivity
+  have hprod : ∑ T ∈ I.powerset, ∏ p ∈ T, (p : ℝ)⁻¹ ≤ Real.exp (mass I) := by
+    rw [← prod_one_add]; exact Real.prod_one_add_le_exp_sum _ fun p => by positivity
+  have hexp : Real.exp (mass I) ≤ 1 + 2 * mass I := by
+    have := Real.abs_exp_sub_one_sub_id_le (x := mass I) (by rw [abs_of_nonneg hm0]; exact hm)
+    rw [abs_le] at this; nlinarith
+  rw [hδ, sub_add_cancel_left, abs_neg]
+  calc |∑ T ∈ F.erase ∅, (-1 : ℝ) ^ T.card / ((∏ p ∈ T, p : ℕ) : ℝ)|
+      ≤ ∑ T ∈ F.erase ∅, |(-1 : ℝ) ^ T.card / ((∏ p ∈ T, p : ℕ) : ℝ)| := abs_sum_le_sum_abs _ _
+    _ ≤ ∑ T ∈ I.powerset.erase ∅, ∏ p ∈ T, (p : ℝ)⁻¹ := by
+        rw [sum_congr rfl fun T hT => ?_]
+        · exact sum_le_sum_of_subset_of_nonneg (erase_subset_erase _ (filter_subset _ _))
+            (fun T _ _ => prod_nonneg fun p _ => by positivity)
+        · have hT' : T ∈ I.powerset := (filter_subset _ _) (mem_of_mem_erase hT)
+          rw [abs_div, abs_pow, abs_neg, abs_one, one_pow, abs_of_pos (hpos T hT'), Nat.cast_prod,
+            prod_inv_distrib, one_div]
+    _ = ∑ T ∈ I.powerset, ∏ p ∈ T, (p : ℝ)⁻¹ - 1 := by
+        rw [← add_sum_erase _ _ (empty_mem_powerset I)]; simp
+    _ ≤ 2 * mass I := by linarith
+
+theorem binDelta_eq_zero_of_lt (I : Finset ℕ) (hI : ∀ p ∈ I, p.Prime) {N : ℝ} (hN : 2 * N < 1) :
+    binDelta I N = 0 := by
+  unfold binDelta
+  rw [sum_eq_zero]
+  intro T hT
+  exfalso
+  rw [mem_filter, mem_powerset] at hT
+  have : 0 < ∏ p ∈ T, p := prod_pos fun p hp => (hI p (hT.1 hp)).pos
+  have : (1 : ℝ) ≤ ((∏ p ∈ T, p : ℕ) : ℝ) := by exact_mod_cast this
+  linarith [hT.2]
+
+theorem abs_binDelta_le (I : Finset ℕ) (hI : ∀ p ∈ I, p.Prime) (hm : mass I ≤ 1) (N : ℝ) :
+    |binDelta I N| ≤ 3 := by
+  by_cases hN : 1 ≤ 2 * N
+  · have h := abs_one_sub_binDelta_le I hI hm hN
+    rw [abs_le] at h ⊢; constructor <;> linarith
+  · rw [binDelta_eq_zero_of_lt I hI (by linarith)]; norm_num
+
+lemma one_le_two_mul_dyBase (n : ℕ) : 1 ≤ 2 * dyBase n := by
+  unfold dyBase
+  have : (1 : ℝ) ≤ 2 ^ Nat.log 2 (n - 1) := one_le_pow₀ (by norm_num)
+  linarith
 
 variable (S : ℕ → Prop) [DecidablePred S]
 
@@ -155,7 +214,7 @@ theorem veryLargeCov_of_bins (G : GridParams) (X Y M : ℕ) {B : ℕ} (bins : Fi
     intro n
     refine (abs_sum_le_sum_abs _ _).trans ?_
     calc ∑ ℓ, |1 - binDelta (bins ℓ) (dyBase n)| ≤ ∑ ℓ, 2 * mass (bins ℓ) :=
-          sum_le_sum fun ℓ _ => abs_one_sub_binDelta_le _ (hbinI ℓ) (hmass ℓ) _
+          sum_le_sum fun ℓ _ => abs_one_sub_binDelta_le _ (hbinI ℓ) (hmass ℓ) (one_le_two_mul_dyBase n)
       _ = 2 * ∑ ℓ, mass (bins ℓ) := by rw [mul_sum]
       _ ≤ 10 := by linarith
   have hFμ : ∀ n ∈ P, ∀ i, |F i n - μ n| ≤ 111 := by

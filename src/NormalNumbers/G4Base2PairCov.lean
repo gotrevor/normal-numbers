@@ -345,9 +345,7 @@ theorem binPair_cov_core {c Cst : ℝ} (hc : 0 < c) (hCst : 0 < Cst)
   intro ℓ ℓ' i j hij
   have hδb : ∀ ℓ₁ : Fin B, ∀ N' : ℝ, |binDelta (bins ℓ₁) N'| ≤ 3 := by
     intro ℓ₁ N'
-    have h := abs_one_sub_binDelta_le (bins ℓ₁) (fun p hp => (hbins ℓ₁ p hp).1) (hmass ℓ₁) N'
-    have h2 := hmass ℓ₁
-    rw [abs_le] at h ⊢; constructor <;> linarith
+    exact abs_binDelta_le (bins ℓ₁) (fun p hp => (hbins ℓ₁ p hp).1) (hmass ℓ₁) N'
   set ρ := fun i : G.Idx => shiftAL G.B G.Q G.D₀ i with hρ
   have hF : ∀ n, |((binInd (bins ℓ) (n + ρ i)).re - binDelta (bins ℓ) (dyBase n))
       * ((binInd (bins ℓ') (n + ρ j)).re - binDelta (bins ℓ') (dyBase n))| ≤ 16 := by
