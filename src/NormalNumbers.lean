@@ -511,6 +511,8 @@ import NormalNumbers.GrowingLocalizedLogNormal
 import NormalNumbers.GrowingLocalizedLogWitness
 import NormalNumbers.GrowingLocalizedLogDiagonal
 import NormalNumbers.Erdos257
+import NormalNumbers.LiteratureTTEquidistributed
+import NormalNumbers.Erdos257Base2
 import NormalNumbers.CPrimeSiteFactorization
 import NormalNumbers.MazeAudit
 import NormalNumbers.StonehamSixFailure
