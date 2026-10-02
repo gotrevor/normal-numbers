@@ -526,6 +526,7 @@ import NormalNumbers.G4Base2Blocks
 import NormalNumbers.G4Base2Pair
 import NormalNumbers.G4Base2PairCov
 import NormalNumbers.LiteratureTTEquidistributedDefect
+import NormalNumbers.LiteratureTTDyadicReferee
 import NormalNumbers.Erdos257Base2
 import NormalNumbers.Erdos257AllPrimes
 import NormalNumbers.LiteratureCampbell
