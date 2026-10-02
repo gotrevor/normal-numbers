@@ -482,6 +482,7 @@ import NormalNumbers.PrimeModelGradedCrossCheck
 import NormalNumbers.OccurrenceCountEquiv
 import NormalNumbers.PrimeModelGradedStatement
 import NormalNumbers.CPrimeQuantStatement
+import NormalNumbers.CPrimeQuant
 import NormalNumbers.CPrimeSiteFactorization
 import NormalNumbers.MazeAudit
 import NormalNumbers.StonehamSixFailure

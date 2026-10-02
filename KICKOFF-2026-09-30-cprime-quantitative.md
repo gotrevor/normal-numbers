@@ -1,4 +1,4 @@
-# KICKOFF: quantitative C′ (prepared 2026-09-30, NOT launched)
+# KICKOFF: quantitative C′ (prepared 2026-09-30, LAUNCHED 2026-10-02 on Trevor's word, worktree `normal-numbers-cprime`, branch `proof/cprime-quant`)
 
 **Target.**  Prove `CPrimeQuant` and then `CPrimeResidueRich`
 (`src/NormalNumbers/CPrimeQuantStatement.lean`).  Both statements are frozen: byte-identical from

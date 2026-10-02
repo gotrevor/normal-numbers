@@ -1,5 +1,16 @@
 # DIRECTION — normal-numbers 🧭
 
+## CURRENT DIRECTIVE (2026-10-02): quantitative C′ 🎯
+
+Prove `cPrimeQuant_holds : CPrimeQuant` and then `cPrimeResidueRich_holds : CPrimeResidueRich`
+(`src/NormalNumbers/CPrimeQuant.lean`).  The statements in `CPrimeQuantStatement.lean` are frozen
+byte-identical.  Follow `KICKOFF-2026-09-30-cprime-quantitative.md` (route steps 1-5; clear the
+six build gaps listed in `docs/CPRIME-QUANTITATIVE-2026-09-30.md` "Referee findings and build gaps"
+first).  Decompose into named sub-lemmas freely; a step found FALSE gets a `Maze.lean` row aliased
+onto its refuting theorem, and then the lap stops and says so.  Out of scope: the quadratic
+sharpening `CPrimeResidueQuad` / `SiteFactorization` (walled 2026-10-01, Maze "site factorization
+via log-power BV").
+
 ## Completed runs 🏁
 
 **Vandehey §7 Problem 1 (laps 27–91, closed 2026-09-29).**  Not solved.  The deliverable is the
