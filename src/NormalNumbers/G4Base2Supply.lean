@@ -5,6 +5,7 @@ Authors: Trevor Morris
 -/
 import NormalNumbers.G4Base2TTHyp
 import NormalNumbers.G4Base2Cov
+import NormalNumbers.G4VeryLargeCov
 import NormalNumbers.G4SchedBE
 import NormalNumbers.LiteratureTTEquidistributedDefect
 
@@ -97,5 +98,118 @@ theorem binPair_cov (htt : CastingOut.TTEquidistributedDyadic) (K N : ℕ) (hK :
               * ((binInd (bins ℓ') (n + shiftAL (gridOf K N hK).B (gridOf K N hK).Q
                   (gridOf K N hK).D₀ j)).re - binDelta (bins ℓ') (dyBase n))| ≤ ε₂ := by
   sorry
+
+/-- `(1 − g_I(m)).re ≤ binCount I m`, and both are nonnegative. -/
+lemma one_sub_binInd_re_le (I : Finset ℕ) (m : ℕ) :
+    0 ≤ (1 - binInd I m).re ∧ (1 - binInd I m).re ≤ binCount I m := by
+  rw [one_sub_binInd_re]
+  split_ifs with h
+  · simp [h]
+  · refine ⟨zero_le_one, ?_⟩
+    have : 1 ≤ binCount I m := Nat.one_le_iff_ne_zero.2 h
+    exact_mod_cast this
+
+lemma avg_le_of_le (P : Finset ℕ) (f : ℕ → ℝ) {V : ℝ} (hV : 0 ≤ V) (h : ∀ n ∈ P, f n ≤ V) :
+    (P.card : ℝ)⁻¹ * ∑ n ∈ P, f n ≤ V := by
+  rcases P.eq_empty_or_nonempty with rfl | hP
+  · simpa using hV
+  · have hc : (0 : ℝ) < P.card := by exact_mod_cast hP.card_pos
+    rw [inv_mul_le_iff₀ hc]
+    calc ∑ n ∈ P, f n ≤ ∑ _n ∈ P, V := sum_le_sum h
+      _ = P.card * V := by simp
+
+/-- **The deterministic assembly.**  Bins covering the very-large primes, an error-mean bound
+`ε₁` and bin-pair bounds `ε₂` give `VeryLargeCov` with `V = 20000`,
+`κ = B²·ε₂ + 323·ε₁`. -/
+theorem veryLargeCov_of_bins (G : GridParams) (X Y M : ℕ) {B : ℕ} (bins : Fin B → Finset ℕ)
+    (hdisj : ∀ ℓ ℓ', ℓ ≠ ℓ' → Disjoint (bins ℓ) (bins ℓ'))
+    (hcover : univ.biUnion bins = vlPrimes S Y G.P₀ M)
+    (hprime : ∀ ℓ, ∀ p ∈ bins ℓ, p.Prime)
+    (hM : ∀ n ∈ apSample X G.P₀ G.b₀, ∀ i : G.Idx, n + shiftAL G.B G.Q G.D₀ i ≤ M)
+    (hω : ∀ n ∈ apSample X G.P₀ G.b₀, ∀ i : G.Idx,
+      omegaVLS S Y G.P₀ (n + shiftAL G.B G.Q G.D₀ i) ≤ 101)
+    (hmass : ∀ ℓ, mass (bins ℓ) ≤ 1) (htot : ∑ ℓ, mass (bins ℓ) ≤ 5)
+    {ε₁ ε₂ : ℝ} (hε₁ : 0 ≤ ε₁)
+    (herr : ∀ i : G.Idx, ((apSample X G.P₀ G.b₀).card : ℝ)⁻¹ * ∑ n ∈ apSample X G.P₀ G.b₀,
+      ∑ ℓ, ((binCount (bins ℓ) (n + shiftAL G.B G.Q G.D₀ i) : ℝ)
+        - (if binCount (bins ℓ) (n + shiftAL G.B G.Q G.D₀ i) = 0 then 0 else 1)) ≤ ε₁)
+    (hpair : ∀ ℓ ℓ' : Fin B, ∀ i j : G.Idx, i ≠ j →
+      |((apSample X G.P₀ G.b₀).card : ℝ)⁻¹ * ∑ n ∈ apSample X G.P₀ G.b₀,
+        ((binInd (bins ℓ) (n + shiftAL G.B G.Q G.D₀ i)).re - binDelta (bins ℓ) (dyBase n))
+        * ((binInd (bins ℓ') (n + shiftAL G.B G.Q G.D₀ j)).re - binDelta (bins ℓ') (dyBase n))|
+        ≤ ε₂) :
+    VeryLargeCov S G X Y 20000 ((B : ℝ) ^ 2 * ε₂ + (2 * 111 + 101) * ε₁) := by
+  set P := apSample X G.P₀ G.b₀ with hP
+  set ρ := fun i : G.Idx => shiftAL G.B G.Q G.D₀ i with hρ
+  set μ : ℕ → ℝ := fun n => ∑ ℓ, (1 - binDelta (bins ℓ) (dyBase n)) with hμ
+  set F : G.Idx → ℕ → ℝ := fun i n => ∑ ℓ, (1 - binInd (bins ℓ) (n + ρ i)).re with hF
+  set E : G.Idx → ℕ → ℝ := fun i n => ∑ ℓ, ((binCount (bins ℓ) (n + ρ i) : ℝ)
+        - (if binCount (bins ℓ) (n + ρ i) = 0 then 0 else 1)) with hE
+  have hbinI : ∀ ℓ, ∀ p ∈ bins ℓ, p.Prime := hprime
+  -- the decomposition ω = F + E
+  have hdec : ∀ n ∈ P, ∀ i, (omegaVLS S Y G.P₀ (n + ρ i) : ℝ) = F i n + E i n := by
+    intro n hn i
+    have hpos : 0 < n + ρ i := by have := shiftAL_pos G i; simp only [hρ]; omega
+    rw [omegaVLS_eq_sum_bins S hpos (hM n hn i) bins hdisj hcover]
+    simp only [hF, hE]
+    push_cast
+    rw [← sum_add_distrib]
+    refine sum_congr rfl fun ℓ _ => ?_
+    rw [one_sub_binInd_re]; ring
+  have hFE : ∀ n ∈ P, ∀ i, 0 ≤ F i n ∧ 0 ≤ E i n := by
+    intro n _ i
+    refine ⟨sum_nonneg fun ℓ _ => (one_sub_binInd_re_le _ _).1, sum_nonneg fun ℓ _ => ?_⟩
+    have h := one_sub_binInd_re_le (bins ℓ) (n + ρ i)
+    rw [one_sub_binInd_re] at h
+    linarith [h.2]
+  have hFle : ∀ n ∈ P, ∀ i, F i n + E i n ≤ 101 := by
+    intro n hn i
+    rw [← hdec n hn i]; exact_mod_cast hω n hn i
+  have hμb : ∀ n, |μ n| ≤ 10 := by
+    intro n
+    refine (abs_sum_le_sum_abs _ _).trans ?_
+    calc ∑ ℓ, |1 - binDelta (bins ℓ) (dyBase n)| ≤ ∑ ℓ, 2 * mass (bins ℓ) :=
+          sum_le_sum fun ℓ _ => abs_one_sub_binDelta_le _ (hbinI ℓ) (hmass ℓ) _
+      _ = 2 * ∑ ℓ, mass (bins ℓ) := by rw [mul_sum]
+      _ ≤ 10 := by linarith
+  have hFμ : ∀ n ∈ P, ∀ i, |F i n - μ n| ≤ 111 := by
+    intro n hn i
+    have h1 := hFE n hn i; have h2 := hFle n hn i; have h3 := hμb n
+    rw [abs_le] at h3 ⊢; constructor <;> linarith
+  refine ⟨μ, fun i => ?_, fun i j hij => ?_⟩
+  · refine avg_le_of_le P _ (by norm_num) fun n hn => ?_
+    have h1 := hFE n hn i; have h2 := hFle n hn i; have h3 := hμb n
+    have hω' := hdec n hn i
+    have hb : |(omegaVLS S Y G.P₀ (n + ρ i) : ℝ) - μ n| ≤ 111 := by
+      rw [abs_le] at h3 ⊢; constructor <;> linarith
+    have := sq_abs ((omegaVLS S Y G.P₀ (n + ρ i) : ℝ) - μ n)
+    nlinarith [abs_nonneg ((omegaVLS S Y G.P₀ (n + ρ i) : ℝ) - μ n)]
+  · have hmain : |(P.card : ℝ)⁻¹ * ∑ n ∈ P, (F i n - μ n) * (F j n - μ n)| ≤ (B : ℝ) ^ 2 * ε₂ := by
+      have hu : ∀ k : G.Idx, ∀ n, F k n - μ n
+          = ∑ ℓ, ((binDelta (bins ℓ) (dyBase n)) - (binInd (bins ℓ) (n + ρ k)).re) := by
+        intro k n
+        simp only [hF, hμ]
+        rw [← sum_sub_distrib]
+        refine sum_congr rfl fun ℓ _ => ?_
+        simp only [Complex.sub_re, Complex.one_re]; ring
+      simp_rw [hu]
+      refine abs_avg_binSum_le P _ _ fun ℓ ℓ' => ?_
+      have h := hpair ℓ ℓ' i j hij
+      have heq : ∀ n, (binDelta (bins ℓ) (dyBase n) - (binInd (bins ℓ) (n + ρ i)).re)
+            * (binDelta (bins ℓ') (dyBase n) - (binInd (bins ℓ') (n + ρ j)).re)
+          = ((binInd (bins ℓ) (n + ρ i)).re - binDelta (bins ℓ) (dyBase n))
+            * ((binInd (bins ℓ') (n + ρ j)).re - binDelta (bins ℓ') (dyBase n)) := fun n => by
+        ring
+      simp_rw [heq]; exact h
+    have := abs_avg_cross_le P (F i) (F j) (E i) (E j) μ (C₀ := 111) (A := 101) (by norm_num)
+      (by norm_num) (fun n hn => hFμ n hn i) (fun n hn => hFμ n hn j)
+      (fun n hn => (hFE n hn i).2) (fun n hn => (hFE n hn j).2)
+      (fun n hn => by linarith [hFle n hn i, (hFE n hn i).1]) (herr i) (herr j) hmain
+    have hrw : ∀ n ∈ P, ((omegaVLS S Y G.P₀ (n + ρ i) : ℝ) - μ n)
+        * ((omegaVLS S Y G.P₀ (n + ρ j) : ℝ) - μ n)
+        = (F i n + E i n - μ n) * (F j n + E j n - μ n) := fun n hn => by
+      rw [hdec n hn i, hdec n hn j]
+    rw [sum_congr rfl hrw]
+    simpa using this
 
 end NormalNumbers.G4.Base2
