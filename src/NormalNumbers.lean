@@ -519,6 +519,7 @@ import NormalNumbers.G4Base2Bins
 import NormalNumbers.G4Base2TTHyp
 import NormalNumbers.G4Base2Supply
 import NormalNumbers.G4Base2Blocks
+import NormalNumbers.G4Base2Pair
 import NormalNumbers.LiteratureTTEquidistributedDefect
 import NormalNumbers.Erdos257Base2
 import NormalNumbers.CPrimeSiteFactorization
