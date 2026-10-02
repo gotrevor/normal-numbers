@@ -353,4 +353,125 @@ lemma window_mean_err (H : ℕ) (α β : ℝ) (u : ℕ → ℝ) (n : ℕ) (hn : 
         mul_le_mul_of_nonneg_left hsum (by positivity)
     _ = 2 * ∑ k ∈ Icc 1 H, φ k := by field_simp
 
+/-! ### The sandwich -/
+
+lemma fejK_ii (H : ℕ) (p q : ℝ) : IntervalIntegrable (fejK H) volume p q :=
+  (continuous_fejK H).intervalIntegrable _ _
+
+/-- An integral over a sub-interval of a period is at most `1`. -/
+lemma integral_fejK_le_one (H : ℕ) {p q r : ℝ} (hpr : r ≤ p) (hpq : p ≤ q) (hq : q ≤ r + 1) :
+    ∫ t in p..q, fejK H t ≤ 1 := by
+  rw [← integral_fejK_period H r]
+  exact integral_mono_interval hpr hpq hq
+    (Filter.Eventually.of_forall fun t => fejK_nonneg H t) (fejK_ii H _ _)
+
+/-- Away from `ℤ`, the kernel integrates to at most length times `1/(4δ²(H+1))`. -/
+lemma integral_fejK_le_away (H : ℕ) {δ p q : ℝ} (hδ : 0 < δ) (hpq : p ≤ q)
+    (hpt : ∀ t ∈ Set.Icc p q, δ ≤ |t| ∧ |t| ≤ 1 - δ) :
+    ∫ t in p..q, fejK H t ≤ (q - p) * (1 / (4 * δ ^ 2 * (H + 1))) := by
+  have := integral_mono_on hpq (fejK_ii H p q) intervalIntegrable_const
+    (fun t ht => fejK_le H hδ (hpt t ht).1 (hpt t ht).2)
+  rw [intervalIntegral.integral_const, smul_eq_mul] at this
+  exact this
+
+/-- The central mass: `∫_{−δ}^{δ} K ≥ 1 − 1/(4δ²(H+1))`. -/
+lemma integral_fejK_center (H : ℕ) {δ : ℝ} (hδ : 0 < δ) (hδ2 : δ ≤ 1 / 2) :
+    1 - 1 / (4 * δ ^ 2 * (H + 1)) ≤ ∫ t in (-δ)..δ, fejK H t := by
+  have hsplit := integral_add_adjacent_intervals (fejK_ii H (-δ) δ) (fejK_ii H δ (-δ + 1))
+  rw [integral_fejK_period] at hsplit
+  have hside := integral_fejK_le_away H hδ (show δ ≤ -δ + 1 by linarith) (fun t ht => by
+    obtain ⟨h1, h2⟩ := ht
+    have ht0 : 0 ≤ t := by linarith
+    rw [abs_of_nonneg ht0]; constructor <;> linarith)
+  have hη : 0 ≤ 1 / (4 * δ ^ 2 * (H + 1)) := by positivity
+  have : (-δ + 1 - δ) * (1 / (4 * δ ^ 2 * (H + 1))) ≤ 1 / (4 * δ ^ 2 * (H + 1)) := by
+    have : -δ + 1 - δ ≤ 1 := by linarith
+    nlinarith
+  linarith
+
+/-- Upper sandwich: `1_{[a,c)}(x) ≤ g(x) + η` with window `[a − δ, c + δ]`. -/
+lemma ind_le_fejG_up (H : ℕ) {a c δ : ℝ} (hδ : 0 < δ) (hδ2 : δ ≤ 1 / 2) (hac : a ≤ c) (x : ℝ) :
+    (if x ∈ Set.Ico a c then (1 : ℝ) else 0)
+      ≤ fejG H (a - δ) (c + δ) x + 1 / (4 * δ ^ 2 * (H + 1)) := by
+  have hη : 0 ≤ 1 / (4 * δ ^ 2 * (H + 1)) := by positivity
+  split_ifs with hx
+  · obtain ⟨hx1, hx2⟩ := hx
+    have hc := integral_fejK_center H hδ hδ2
+    have : ∫ t in (-δ)..δ, fejK H t ≤ fejG H (a - δ) (c + δ) x := by
+      unfold fejG
+      exact integral_mono_interval (by linarith) (by linarith) (by linarith)
+        (Filter.Eventually.of_forall fun t => fejK_nonneg H t) (fejK_ii H _ _)
+    linarith
+  · have := fejG_nonneg H (show a - δ ≤ c + δ by linarith) x
+    linarith
+
+/-- Lower sandwich: for `x ∈ [0,1)`, `g(x) ≤ 1_{[a,c)}(x) + η` with window `[a + δ, c − δ]`. -/
+lemma fejG_lo_le_ind (H : ℕ) {a c δ : ℝ} (hδ : 0 < δ) (ha : 0 ≤ a) (hc : c ≤ 1)
+    (hac : 2 * δ ≤ c - a) {x : ℝ} (hx0 : 0 ≤ x) (hx1 : x < 1) :
+    fejG H (a + δ) (c - δ) x
+      ≤ (if x ∈ Set.Ico a c then (1 : ℝ) else 0) + 1 / (4 * δ ^ 2 * (H + 1)) := by
+  have hη : 0 ≤ 1 / (4 * δ ^ 2 * (H + 1)) := by positivity
+  unfold fejG
+  split_ifs with hx
+  · obtain ⟨hxa, hxc⟩ := hx
+    have := integral_fejK_le_one H (p := x - (c - δ)) (q := x - (a + δ)) (r := x - (c - δ)) le_rfl (by linarith) (by linarith)
+    linarith
+  · have hlen : (x - (a + δ) - (x - (c - δ))) * (1 / (4 * δ ^ 2 * (H + 1)))
+        ≤ 1 / (4 * δ ^ 2 * (H + 1)) := by
+      have : x - (a + δ) - (x - (c - δ)) ≤ 1 := by linarith
+      have : 0 ≤ x - (a + δ) - (x - (c - δ)) := by linarith
+      nlinarith
+    refine le_trans (integral_fejK_le_away H hδ (by linarith) ?_) (by linarith)
+    intro t ⟨ht1, ht2⟩
+    rcases lt_or_ge x a with hxa | hxa
+    · have : t < 0 := by linarith
+      rw [abs_of_neg this]; constructor <;> linarith
+    · have hxc : c ≤ x := by
+        by_contra h; exact hx ⟨hxa, lt_of_not_ge h⟩
+      have : 0 ≤ t := by linarith
+      rw [abs_of_nonneg this]; constructor <;> linarith
+
+/-- **Erdős–Turán by the Fejér sandwich.**  For a sequence in `[0,1)` and `0 < δ ≤ 1/2`,
+`|visits/n − (c − a)| ≤ 2δ + 1/(4δ²(H+1)) + 2∑_{k≤H} |W_k|/(πk)`. -/
+theorem visit_err (H : ℕ) (u : ℕ → ℝ) (hu : ∀ k, 0 ≤ u k ∧ u k < 1) {a c δ : ℝ}
+    (hδ : 0 < δ) (hδ2 : δ ≤ 1 / 2) (ha : 0 ≤ a) (hac : a ≤ c) (hc : c ≤ 1) (n : ℕ) (hn : 0 < n) :
+    |(visitCount u a c n : ℝ) / n - (c - a)|
+      ≤ 2 * δ + 1 / (4 * δ ^ 2 * (H + 1))
+        + 2 * ∑ k ∈ Icc 1 H, ‖fourierMean u (k : ℤ) n‖ / (π * k) := by
+  set η := 1 / (4 * δ ^ 2 * (H + 1)) with hη
+  set E := 2 * ∑ k ∈ Icc 1 H, ‖fourierMean u (k : ℤ) n‖ / (π * k) with hE
+  have hη0 : 0 ≤ η := by positivity
+  have hE0 : 0 ≤ E := by
+    have := window_mean_err H 0 0 u n hn; exact (abs_nonneg _).trans this
+  have hnR : (0 : ℝ) < n := by exact_mod_cast hn
+  have hcnt : (visitCount u a c n : ℝ) = ∑ k ∈ range n, (if u k ∈ Set.Ico a c then (1 : ℝ) else 0) := by
+    rw [visitCount, Finset.natCast_card_filter]
+  -- upper
+  have hup : (visitCount u a c n : ℝ) / n ≤ (c - a) + 2 * δ + E + η := by
+    have h1 : (visitCount u a c n : ℝ) ≤ ∑ k ∈ range n, fejG H (a - δ) (c + δ) (u k) + n * η := by
+      rw [hcnt]
+      refine (Finset.sum_le_sum fun k _ => ind_le_fejG_up H hδ hδ2 hac (u k)).trans (le_of_eq ?_)
+      rw [Finset.sum_add_distrib, Finset.sum_const, Finset.card_range, nsmul_eq_mul]
+    have h2 := (abs_le.mp (window_mean_err H (a - δ) (c + δ) u n hn)).2
+    rw [div_le_iff₀ hnR]
+    have h3 : (∑ k ∈ range n, fejG H (a - δ) (c + δ) (u k))
+        = (∑ k ∈ range n, fejG H (a - δ) (c + δ) (u k)) / n * n := by field_simp
+    nlinarith
+  -- lower
+  have hlo : (c - a) - 2 * δ - E - η ≤ (visitCount u a c n : ℝ) / n := by
+    rcases lt_or_ge (c - a) (2 * δ) with hsmall | hbig
+    · have : 0 ≤ (visitCount u a c n : ℝ) / n := by positivity
+      linarith
+    have h1 : ∑ k ∈ range n, fejG H (a + δ) (c - δ) (u k) ≤ (visitCount u a c n : ℝ) + n * η := by
+      rw [hcnt]
+      refine (Finset.sum_le_sum fun k _ =>
+        fejG_lo_le_ind H hδ ha hc hbig (hu k).1 (hu k).2).trans (le_of_eq ?_)
+      rw [Finset.sum_add_distrib, Finset.sum_const, Finset.card_range, nsmul_eq_mul]
+    have h2 := (abs_le.mp (window_mean_err H (a + δ) (c - δ) u n hn)).1
+    rw [le_div_iff₀ hnR]
+    have h3 : (∑ k ∈ range n, fejG H (a + δ) (c - δ) (u k))
+        = (∑ k ∈ range n, fejG H (a + δ) (c - δ) (u k)) / n * n := by field_simp
+    nlinarith
+  rw [abs_le]; constructor <;> linarith
+
 end NormalNumbers.PrimeModel.Quant

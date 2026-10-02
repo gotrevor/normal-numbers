@@ -5,6 +5,7 @@ Authors: Trevor Morris
 -/
 import NormalNumbers.CPrimeQuantSchedule
 import NormalNumbers.WeylCriterion
+import NormalNumbers.CPrimeQuantET
 import NormalNumbers.G4WiringSparse
 import Mathlib.NumberTheory.Harmonic.Bounds
 
@@ -274,13 +275,52 @@ theorem orbitWeylQuant : ∃ C₁ ρ₁ : ℝ, 0 < C₁ ∧ 0 < ρ₁ ∧ ρ₁ 
   exact orbitWeylLe_of_window P _ (tailOK_of_sqrtFreshMassLe P (lt_of_le_of_lt hρ1 hρ₁1) hS hP)
     _ (hW P hP ρ hρ hρ1 hS)
 
-/-- **Trapezoid Erdős–Turán.**  Weyl bounds up to frequency `H` give interval discrepancy
-`4δ + 1/(δH) + Σ_{h=1}^{H} 2B(h)/h`.  95% (standard; the `1/h` weight is `|ĝ(h)| ≤ 1/(π|h|)` for
-a trapezoid, the tail is `Σ_{|h|>H} 1/(π²δh²)` against the trivial bound `|W_h| ≤ 1`). -/
+/-- **Erdős–Turán (Fejér sandwich).**  Weyl bounds up to frequency `H` give interval discrepancy
+`2δ + 1/(4δ²(H+1)) + Σ_{h=1}^{H} 2B(h)/h`, via `visit_err` (CPrimeQuantET). -/
 theorem orbitDefectLe_of_weyl (x : ℝ) (B : ℤ → ℝ) (hW : OrbitWeylLe x B) (δ : ℝ) (hδ : 0 < δ)
-    (H : ℕ) (hH : 1 ≤ H) :
-    OrbitDefectLe x (4 * δ + 1 / (δ * H) + ∑ h ∈ Finset.Icc 1 H, 2 * B h / h) := by
-  sorry
+    (hδ2 : δ ≤ 1 / 2) (H : ℕ) (hH : 1 ≤ H) :
+    OrbitDefectLe x (2 * δ + 1 / (4 * δ ^ 2 * (H + 1))
+      + ∑ h ∈ Finset.Icc 1 H, 2 * B h / h) := by
+  intro a c ha hac hc ε hε
+  have hHR : (0 : ℝ) < H := by exact_mod_cast hH
+  set ε' := ε / (2 * H) with hε'
+  have hε'0 : 0 < ε' := by positivity
+  have hB0 : ∀ k : ℕ, 1 ≤ k → 0 ≤ B k := by
+    intro k hk
+    refine le_of_forall_pos_le_add fun e he => ?_
+    obtain ⟨n, hn⟩ := (hW k (by exact_mod_cast (show k ≠ 0 by omega)) e he).exists
+    linarith [norm_nonneg (fourierMean (orbit 4 x) (k : ℤ) n)]
+  have hall : ∀ᶠ n : ℕ in atTop, ∀ k ∈ Finset.Icc 1 H,
+      ‖fourierMean (orbit 4 x) (k : ℤ) n‖ ≤ B k + ε' := by
+    rw [Filter.eventually_all_finset]
+    intro k hk
+    exact hW k (by have := (Finset.mem_Icc.mp hk).1; exact_mod_cast (show k ≠ 0 by omega)) ε' hε'0
+  filter_upwards [hall, eventually_gt_atTop 0] with n hn hn0
+  have hu : ∀ k, 0 ≤ orbit 4 x k ∧ orbit 4 x k < 1 :=
+    fun k => ⟨Int.fract_nonneg _, Int.fract_lt_one _⟩
+  refine (visit_err H (orbit 4 x) hu hδ hδ2 ha hac hc n hn0).trans ?_
+  have hterm : ∀ k ∈ Finset.Icc 1 H, 2 * (‖fourierMean (orbit 4 x) (k : ℤ) n‖ / (Real.pi * k))
+      ≤ 2 * B k / k + 2 * ε' := by
+    intro k hk
+    have hk1 := (Finset.mem_Icc.mp hk).1
+    have hkR : (1 : ℝ) ≤ k := by exact_mod_cast hk1
+    have hW' := hn k hk
+    have hBk := hB0 k hk1
+    have hπ : (1 : ℝ) ≤ Real.pi := by linarith [Real.pi_gt_three]
+    have e1 : ‖fourierMean (orbit 4 x) (k : ℤ) n‖ / (Real.pi * k)
+        ≤ ‖fourierMean (orbit 4 x) (k : ℤ) n‖ / k :=
+      div_le_div_of_nonneg_left (norm_nonneg _) (by positivity) (by nlinarith)
+    have e2 : ‖fourierMean (orbit 4 x) (k : ℤ) n‖ / k ≤ B k / k + ε' := by
+      rw [div_le_iff₀ (by positivity), add_mul, div_mul_cancel₀ _ (by positivity)]
+      nlinarith
+    have : 2 * B k / k = 2 * (B k / k) := by ring
+    linarith
+  have hsum := Finset.sum_le_sum hterm
+  rw [← Finset.mul_sum, Finset.sum_add_distrib, Finset.sum_const, Nat.card_Icc,
+    nsmul_eq_mul] at hsum
+  have : ((H + 1 - 1 : ℕ) : ℝ) * (2 * ε') = ε := by
+    rw [Nat.add_sub_cancel, hε']; field_simp
+  linarith
 
 lemma orbitDefectLe_mono {x D D' : ℝ} (h : OrbitDefectLe x D) (hD : D ≤ D') :
     OrbitDefectLe x D' := by
@@ -288,29 +328,28 @@ lemma orbitDefectLe_mono {x D D' : ℝ} (h : OrbitDefectLe x D) (hD : D ≤ D') 
   filter_upwards [h a c ha hac hc ε hε] with n hn
   linarith
 
-/-- Arithmetic for the glue: with `L = log(1/ρ) ≥ log 3` and `H = ⌈1/ρ²⌉`, `log(H+1) ≤ 3L`. -/
+/-- Arithmetic for the glue: with `L = log(1/ρ) ≥ log 3` and `H = ⌈1/ρ³⌉`, `log(H+1) ≤ 4L`. -/
 lemma log_H_succ_le {ρ : ℝ} (hρ : 0 < ρ) (hρ3 : ρ ≤ 1 / 3) :
-    Real.log ((⌈1 / ρ ^ 2⌉₊ : ℝ) + 1) ≤ 3 * Real.log (1 / ρ) := by
-  have hρ2 : 0 < ρ ^ 2 := by positivity
-  have hceil : (⌈1 / ρ ^ 2⌉₊ : ℝ) < 1 / ρ ^ 2 + 1 := Nat.ceil_lt_add_one (by positivity)
-  have h1 : (1 : ℝ) ≤ 1 / ρ ^ 2 := by
-    rw [le_div_iff₀ hρ2]; nlinarith
-  have hle : (⌈1 / ρ ^ 2⌉₊ : ℝ) + 1 ≤ (1 / ρ) ^ 3 := by
-    have : 3 / ρ ^ 2 ≤ (1 / ρ) ^ 3 := by
-      rw [div_pow, one_pow, div_le_div_iff₀ hρ2 (by positivity)]; nlinarith
-    have : 1 / ρ ^ 2 + 2 ≤ 3 / ρ ^ 2 := by
-      have : 3 / ρ ^ 2 = 1 / ρ ^ 2 + 2 * (1 / ρ ^ 2) := by ring
-      linarith
+    Real.log ((⌈1 / ρ ^ 3⌉₊ : ℝ) + 1) ≤ 4 * Real.log (1 / ρ) := by
+  have hceil : (⌈1 / ρ ^ 3⌉₊ : ℝ) < 1 / ρ ^ 3 + 1 := Nat.ceil_lt_add_one (by positivity)
+  set y := 1 / ρ with hy
+  have hy3 : 3 ≤ y := by rw [hy, le_div_iff₀ hρ]; linarith
+  have hρy : 1 / ρ ^ 3 = y ^ 3 := by rw [hy, div_pow, one_pow]
+  have hle : (⌈1 / ρ ^ 3⌉₊ : ℝ) + 1 ≤ y ^ 4 := by
+    have h27 : 27 ≤ y ^ 3 := by nlinarith [sq_nonneg y]
+    have : y ^ 3 + 2 ≤ y ^ 4 := by
+      have : y ^ 4 = y * y ^ 3 := by ring
+      nlinarith
     linarith
-  calc Real.log ((⌈1 / ρ ^ 2⌉₊ : ℝ) + 1) ≤ Real.log ((1 / ρ) ^ 3) :=
+  calc Real.log ((⌈1 / ρ ^ 3⌉₊ : ℝ) + 1) ≤ Real.log (y ^ 4) :=
         Real.log_le_log (by positivity) hle
-    _ = 3 * Real.log (1 / ρ) := by rw [Real.log_pow]; norm_num
+    _ = 4 * Real.log y := by rw [Real.log_pow]; norm_num
 
-/-- **Glue.**  The crux plus trapezoid Erdős–Turán give `CPrimeQuant` with
-`C = 5 + 128C₁` and `ρ₀ = min(ρ₁, 1/3)`. -/
+/-- **Glue.**  The crux plus Fejér Erdős–Turán (`δ = ρ`, `H = ⌈1/ρ³⌉`) give `CPrimeQuant` with
+`C = 3 + 250C₁` and `ρ₀ = min(ρ₁, 1/3)`. -/
 theorem cPrimeQuant_of_parts : CPrimeQuant := by
   obtain ⟨C₁, ρ₁, hC₁, hρ₁, hρ₁1, hW⟩ := orbitWeylQuant
-  refine ⟨5 + 128 * C₁, min ρ₁ (1 / 3), by positivity, by positivity,
+  refine ⟨3 + 250 * C₁, min ρ₁ (1 / 3), by positivity, by positivity,
     lt_of_le_of_lt (min_le_right _ _) (by norm_num), ?_⟩
   intro P _ hP ρ hρ hρ0 hS
   have hρ3 : ρ ≤ 1 / 3 := hρ0.trans (min_le_right _ _)
@@ -320,21 +359,23 @@ theorem cPrimeQuant_of_parts : CPrimeQuant := by
     have : Real.exp 1 ≤ 3 := le_of_lt (lt_trans Real.exp_one_lt_d9 (by norm_num))
     calc Real.exp 1 ≤ 3 := this
       _ ≤ 1 / ρ := by rw [le_div_iff₀ hρ]; linarith
-  set H := ⌈1 / ρ ^ 2⌉₊ with hHdef
+  set H := ⌈1 / ρ ^ 3⌉₊ with hHdef
   have hH1 : 1 ≤ H := Nat.one_le_iff_ne_zero.mpr (by
     rw [hHdef]; exact (Nat.ceil_pos.mpr (by positivity)).ne')
-  have hHge : 1 / ρ ^ 2 ≤ (H : ℝ) := Nat.le_ceil _
-  have hD := orbitDefectLe_of_weyl _ _ (hW P hP ρ hρ (hρ0.trans (min_le_left _ _)) hS) ρ hρ H hH1
+  have hHge : 1 / ρ ^ 3 ≤ (H : ℝ) := Nat.le_ceil _
+  have hD := orbitDefectLe_of_weyl _ _ (hW P hP ρ hρ (hρ0.trans (min_le_left _ _)) hS) ρ hρ
+    (by linarith) H hH1
   refine orbitDefectLe_mono hD ?_
-  -- the three pieces
-  have htail : 1 / (ρ * H) ≤ ρ := by
+  have htail : 1 / (4 * ρ ^ 2 * (H + 1)) ≤ ρ := by
     rw [div_le_iff₀ (by positivity)]
-    have : 1 / ρ ^ 2 * ρ ^ 2 = 1 := by field_simp
-    nlinarith [mul_le_mul_of_nonneg_right hHge (le_of_lt (by positivity : (0:ℝ) < ρ ^ 2))]
+    have h3 : 1 / ρ ^ 3 * ρ ^ 3 = 1 := by field_simp
+    have : ρ ^ 3 * (H : ℝ) ≥ 1 := by
+      nlinarith [mul_le_mul_of_nonneg_right hHge (le_of_lt (by positivity : (0:ℝ) < ρ ^ 3))]
+    nlinarith [pow_pos hρ 3]
   have hlogH := log_H_succ_le hρ hρ3
   have hterm : ∀ h ∈ Finset.Icc 1 H,
       2 * (C₁ * ρ * (L + Real.log (|((h : ℤ) : ℝ)| + 1)) ^ 2) / (h : ℝ)
-        ≤ 32 * C₁ * ρ * L ^ 2 * (1 / (h : ℝ)) := by
+        ≤ 50 * C₁ * ρ * L ^ 2 * (1 / (h : ℝ)) := by
     intro h hh
     rw [Finset.mem_Icc] at hh
     have hhpos : (0 : ℝ) < h := by exact_mod_cast hh.1
@@ -342,17 +383,17 @@ theorem cPrimeQuant_of_parts : CPrimeQuant := by
       push_cast; exact abs_of_pos hhpos
     rw [habs]
     have hlog0 : 0 ≤ Real.log ((h : ℝ) + 1) := Real.log_nonneg (by linarith)
-    have hlogh : Real.log ((h : ℝ) + 1) ≤ 3 * L := by
+    have hlogh : Real.log ((h : ℝ) + 1) ≤ 4 * L := by
       refine le_trans (Real.log_le_log (by linarith) ?_) hlogH
       have : (h : ℝ) ≤ H := by exact_mod_cast hh.2
       linarith
-    have hsq : (L + Real.log ((h : ℝ) + 1)) ^ 2 ≤ 16 * L ^ 2 := by nlinarith
+    have hsq : (L + Real.log ((h : ℝ) + 1)) ^ 2 ≤ 25 * L ^ 2 := by nlinarith
     rw [mul_one_div, div_le_div_iff_of_pos_right hhpos]
     have : 0 ≤ C₁ * ρ := by positivity
     nlinarith
   have hsum := Finset.sum_le_sum hterm
   rw [← Finset.mul_sum] at hsum
-  have hharm : ∑ h ∈ Finset.Icc 1 H, 1 / (h : ℝ) ≤ 1 + 3 * L := by
+  have hharm : ∑ h ∈ Finset.Icc 1 H, 1 / (h : ℝ) ≤ 1 + 4 * L := by
     have hh := harmonic_le_one_add_log H
     have heq : ∑ h ∈ Finset.Icc 1 H, 1 / (h : ℝ) = (harmonic H : ℝ) := by
       rw [harmonic_eq_sum_Icc]; push_cast; simp [one_div]
@@ -362,14 +403,14 @@ theorem cPrimeQuant_of_parts : CPrimeQuant := by
       Real.log_le_log (by exact_mod_cast hH1) (by linarith)
     linarith
   have hL0 : 0 ≤ L := by linarith
-  have hfin : 32 * C₁ * ρ * L ^ 2 * (1 + 3 * L) ≤ 128 * C₁ * ρ * L ^ 3 := by
+  have hfin : 50 * C₁ * ρ * L ^ 2 * (1 + 4 * L) ≤ 250 * C₁ * ρ * L ^ 3 := by
     have : 0 ≤ C₁ * ρ * L ^ 2 := by positivity
     nlinarith
   have hsum' := hsum.trans (mul_le_mul_of_nonneg_left hharm (by positivity))
   have hρL : ρ ≤ ρ * L ^ 3 := le_mul_of_one_le_right hρ.le (one_le_pow₀ hL1)
-  have : 4 * ρ + 1 / (ρ * H) + ∑ h ∈ Finset.Icc 1 H,
+  have : 2 * ρ + 1 / (4 * ρ ^ 2 * (H + 1)) + ∑ h ∈ Finset.Icc 1 H,
       2 * (C₁ * ρ * (L + Real.log (|((h : ℤ) : ℝ)| + 1)) ^ 2) / (h : ℝ)
-        ≤ (5 + 128 * C₁) * ρ * L ^ 3 := by nlinarith
+        ≤ (3 + 250 * C₁) * ρ * L ^ 3 := by nlinarith
   exact this
 
 /-- **Quantitative C′.**  Bounded square-root fresh mass `ρ ≤ ρ₀` plus a divergent reciprocal sum
