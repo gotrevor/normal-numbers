@@ -376,6 +376,13 @@ These are the ratified conjecture nodes.  They are open by design, and none is s
   π² in bases 16/2 given `Irrational (π²)` (`hypA_piSq_base2`), Borel ⇒ disjunctive.  Maze test:
   `MasterMaze.lean` (`mazeTestImplied`/`mazeTestNotImplied`; `equidistributed_lnTwoOrbit_iff`,
   `run_sublinear_of_isNormal`).
+- **Computable normal `x` with `x²` not normal (2026-10-02, audit + 2 laps).**
+  `ExplicitSquare.exists_computable_normal_sq_not_normal`: `x = √y`, `y = cantorReal e` (binary digits 0 at
+  every odd place, so no `11` and `y` is not normal, `not_isNormal_cantorReal`), `e : ℕ → Bool` `Computable`,
+  `x` normal in base 2.  Conditional only on the cited `BakerBanajiQuarterCantor` (BB 2401.01241 Cor 1.5,
+  refereed implied 93%, decay probe with affine control).  Answers Manai 2506.15422 §1 / 2508.09319 in the
+  computable sense; existence was Manai 2609.24665 `thm:2`.  Engines: `DecayAeNormal`, `Derandomize`,
+  `ComputableNormal`.  Row 5 (deterministic `y`, `1/y` normal) parked: no mechanism, barriers stated.
 - **Erdős #257 for EVERY infinite set of primes (2026-10-02, audit + 2 laps).**
   `Erdos257.erdos257_allPrimes_of_literature` (`Erdos257Headline.lean`): `Σ_{p∈S} 1/(2ᵖ−1)` is irrational for
   every infinite prime set `S`, conditional only on `Literature.Erdos1968CoprimeSummable` (convergent `Σ1/p`)
