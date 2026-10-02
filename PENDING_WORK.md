@@ -12,7 +12,7 @@ The saving `2^{−k−4}` (vs Vandehey's `2^{−k−3}`) costs a factor 2 in the
 
 **Lap 1b (cost side, done):** `GrowingLocalizedLogCost.lean` — `constPair_sum_le`:
 `A_k + B_k ≤ 9·2^{3s+2}·Q·M·2^{(k+5)s}` for any prime set (crude Lemma 5.4; `cP_le`
-`C_{P,x} ≤ (3/x)^s`).  Remaining for N8: N7 (`log M` via LTE) and the assembly into
+`C_{P,x} ≤ (3/x)^s`).  N7 done: `bigM_two_le` (`GrowingLocalizedLogM.lean`, LTE), `M ≤ ∏_p 2^p·2Q`.  Remaining for N8: the assembly into
 `korobov_uniform_saving`.
 
 **(superseded) Next attack (rest of N8):** the cost side, Lemma 5.4 in closed form:
