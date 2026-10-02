@@ -28,3 +28,12 @@ Accepted.  `Erdos257Base2.lean` headlines are re-frozen on `CastingOut.TTEquidis
 (the derivation from TT Thm 3.1(i), with `c/4`, is now in its docstring, 85%).
 `TTEquidistributedCorrelation` stays as the recorded vacuous transcription (Maze row).  The stuck
 flag is cleared: continue with N3-N8 against the dyadic Prop (N6 now consumes it).
+
+## STUCK-BAIL (2026-10-02, erdos257b2 run, strike 1)
+- **What:** this run's operator scope — Erdős #257 base 2 headline axiom-clean — is MET (2d2e70e1).
+  Verify: `#print axioms` of `NormalNumbers.Erdos257.{isDisjunctive_subsetLambert_two,
+  erdos257_primeSubset, erdos257_residueClass}` = `[propext, Classical.choice, Quot.sound]`.
+- **Why stuck:** the repo-wide self-stop gate counts 23 sorries in other lanes (outside the operator's
+  scope for this run), so `box done` is declined; no lap in this scope can clear them.
+- **Need from operator:** relaunch/stop with `--done-when` scoped to `src/NormalNumbers/Erdos257Base2.lean`
+  (or accept done).  Details: `HANDOFF-2026-10-02-erdos257b2-lap5.md`.
