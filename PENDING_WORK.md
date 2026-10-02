@@ -2720,3 +2720,19 @@ Remaining for `exists_computable_isNormal_sqrt_of_polyDecay`:
   hat Fourier coeffs (1−cos 2πhL)/(2π²h²), Fourier series HasSum, Markov + second_moment_le.
 - C4 assembly: index bad tests by (level n, ℓ, v) with N=n^4, tolerances, computable J from rational C',δ';
   avoidance ⇒ dyadic visit freqs along n^4 ⇒ all N ⇒ `equidistributed_of_badic` ⇒ normal.
+
+### Row 3 CLOSED (lap 2, 2026-10-02)
+`ExplicitSquare.exists_computable_normal_sq_not_normal` is proved; `#print axioms` shows only
+propext / Classical.choice / Quot.sound.  It takes `BakerBanajiQuarterCantor` as a hypothesis
+(cited, faithful-or-weaker), nothing else.
+- `ComputableNormal.exists_computable_normal_of_digits` (generic: decay + Primrec binary floors
+  ⇒ computable coins with normal image): `block_bound` (≤ c₁/n³ per dyadic block, via
+  `visit_deviation` ρ=t=1/(4n), N=n^10), `level_bound` (≤ 2c₁/n²; `sum_blocks_le`),
+  `tsum_tail_le`/`tele_sum` (explicit tails, J k = 2c₁·8^(k+1), n₀ = 8c₁+2), `dens_badT`,
+  `normal_of_good` (subsequence n^10 + `tendsto_div_of_monotone_of_exists_subseq_tendsto_div`).
+- `SqrtFloor`: `floor_sqrt`, `primrec_sqrt` (Nat.sqrt as a bounded count), `floor_mul_two_pow`,
+  `cdL`/`sqrtPhi`/`primrec_sqrtPhi`, `floor_sqrt_digits`.
+- `Bridge.floor_realOfDigits_mul_pow` made public.
+Remaining in the file: row 5 only (operator: no mechanism, leave).
+Note: Bridge edit forces rebuild of whole-Mathlib importers; parallel `lake build` hits
+"Too many open files" here — build those modules one at a time, then the full build.

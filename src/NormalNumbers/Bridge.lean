@@ -131,7 +131,7 @@ private theorem head_mul_pow (b : ℕ) (hb : 2 ≤ b) (s : ℕ → ℕ) (i : ℕ
 /-- The floor of `realOfDigits b s · b^(i+1)` is the integer whose base-`b`
 digits are `s 0 … s i`: the head contributes exactly that natural number and
 the (proper) tail contributes an amount in `[0, 1)`. -/
-private theorem floor_realOfDigits_mul_pow (b : ℕ) (hb : 2 ≤ b) (s : ℕ → ℕ)
+theorem floor_realOfDigits_mul_pow (b : ℕ) (hb : 2 ≤ b) (s : ℕ → ℕ)
     (hs : ∀ i, s i < b) (hp : ProperDigits b s) (i : ℕ) :
     ⌊realOfDigits b s * (b : ℝ) ^ (i + 1)⌋
       = (∑ k ∈ Finset.range (i + 1), s k * b ^ (i - k) : ℕ) := by

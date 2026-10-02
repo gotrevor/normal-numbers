@@ -7,6 +7,7 @@ import NormalNumbers.WallRational
 import NormalNumbers.Bridge
 import NormalNumbers.OccurrenceCountEquiv
 import NormalNumbers.DecayAeNormal
+import NormalNumbers.SqrtFloor
 import Mathlib.Computability.Partrec
 import Mathlib.Probability.ProductMeasure
 import Mathlib.Probability.Distributions.Uniform
@@ -252,7 +253,24 @@ halving of BLD Algorithm 1 is a computable choice of `e k` keeping the invariant
 count is needed: Step 1's decay is uniform in the frequency. -/
 theorem exists_computable_isNormal_sqrt_of_polyDecay (hd : PolyDecay Real.sqrt) :
     ∃ e : ℕ → Bool, Computable e ∧ IsNormal 2 (Real.sqrt (cantorReal e)) := by
-  sorry
+  obtain ⟨C, δ, hC, hδ, hdec⟩ := hd
+  have hc : Measurable cantorReal := by
+    unfold cantorReal realOfDigits
+    refine Measurable.tsum fun i => Measurable.div_const ?_ _
+    refine Measurable.comp (measurable_of_countable (fun n : ℕ => (n : ℝ))) ?_
+    exact (measurable_of_countable (fun b : Bool =>
+      if i = 0 then 1 else if i % 2 = 0 then (if b then 1 else 0) else 0)).comp
+      (measurable_pi_apply (i / 2 - 1))
+  refine ComputableNormal.exists_computable_normal_of_digits SqrtFloor.sqrtPhi
+    (fun ω => Real.sqrt (cantorReal ω)) (Real.continuous_sqrt.measurable.comp hc)
+    (fun ω => Real.sqrt_nonneg _) hC hδ (fun ξ hξ => hdec ξ hξ) SqrtFloor.primrec_sqrtPhi
+    fun ω m => SqrtFloor.floor_sqrt_digits _ (cantorDigits_lt ω) (cantorDigits_proper ω) m _
+      fun k hk => ?_
+  unfold SqrtFloor.cdL cantorDigits Derandomize.pre
+  split_ifs with h0 h2 h3 h3 <;> try rfl
+  all_goals
+    rw [List.getD_eq_getElem _ _ (by simp; omega)] at *
+    simp_all
 
 /-! ## The row-3 target -/
 

@@ -934,4 +934,5 @@ import NormalNumbers.Derandomize
 import NormalNumbers.HatFourier
 import NormalNumbers.VisitDeviation
 import NormalNumbers.ComputableNormal
+import NormalNumbers.SqrtFloor
 import NormalNumbers.ExplicitSquareNonNormal
