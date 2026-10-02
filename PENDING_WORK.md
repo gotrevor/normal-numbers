@@ -2665,3 +2665,17 @@ Gap 3 PROVED: siteBudget is now min 2 (4π|h|4^{-(j+1)}) upstream (PrimeModelKMT
 Gap 1 (schedule) PROVED: src/NormalNumbers/CPrimeQuantSchedule.lean — QuantSchedule.windowMean_le_terms holds for every fixed u ≥ 10, no fresh-mass hyp.  NEXT: in CPrimeQuant.lean, make windowWeylQuant import the schedule and bound limsup of termE1 (via recipSumIoc_yG_le + epsG ≤ ρ+ε eventually), E4a (termE4a_le: 4e^20 e^{-u²/32}), E4b (≤0.6·1.6e^{-u}), E4c (→0 needs u ≥ ? — check termE4c_tendsto's use of uG), E5 (→0).
 
 **CRUX PROVED (2026-10-02):** `orbitWeylQuant` / `windowWeylQuant` axiom-clean (C₁ = 10⁶, ρ₁ = 1/3, u = max(3000, ⌈log 1/ρ⌉)).  `cPrimeQuant_holds` now rests only on `orbitDefectLe_of_weyl` (trapezoid Erdős–Turán).  Then `cPrimeResidueRich_holds`.
+
+## Erdős #257 all-primes lane (2026-10-02, allprimes lap 1)
+- DONE: case (i) `isDisjunctive_subsetLambert_two_of_weakRate` proved (G4Base2WeakSched:
+  `exists_cutoff_subset_weak`, `moment_cap_weak` with K = 2^{j+2}, j ≥ ⌈1/ε⌉+1). Axiom-clean.
+- CRUX finding: `G4.SchedB.hypE_frame_excludes_logRate` (proved) — the HypE frame caps e ≤ 2^{8K²},
+  and `four_mul_le_two_pow_NE'` (farC ≈ log log X ≈ e, an ALL-primes sum, against 2^N, N=100K²)
+  caps it independently; log-rate sets (towerGapPrimes) cannot meet demand 1000K³. Maze row added.
+  So S-restricting Mc alone is refuted; reopen node `SRestrictedFrame`.
+- NEXT attack on crux: S-restrict farC (far tail over Y<p≤X needs only S-primes in subsetLambert?)
+  — read where farC enters (G4Remainder / farBound) and whether its log log X is Σ_{p≤X} 1/p over
+  all primes or structural (sample size).  Also the docstring claim "F_S(e+1)−F_S(e) ≤ log 2+o(1)
+  ⇒ window hit" needs the window [M(K), cap(F_S)] nonempty with cap in terms of F_S.
+- Phase 1 leftovers: towerGapPrimes_gapSet, squareBlockPrimes_weakRate/not_mertensRate need
+  per-block Mertens Σ_{2^{2^m}≤p<2^{2^{m+1}}} 1/p = log 2 + O(2^{-m}) (two-sided, effective).

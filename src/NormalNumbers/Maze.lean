@@ -3,6 +3,7 @@ Copyright (c) 2026 Trevor Morris. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import NormalNumbers.CFScheduleARefuted
+import NormalNumbers.G4Base2GapObstruction
 import NormalNumbers.VandeheyRaney
 import NormalNumbers.G4EntropyBarrier
 import NormalNumbers.G4EntropySubsample
@@ -1332,7 +1333,12 @@ def register : List Hall := [
    "Prove C-prime's RelativeFirstOrder (SiteFactorization) by writing the one-site fresh term as the other sites' frozen phase against z^Omega_P - z^Omega_(P,<=y), sieving the other sites into CRT atoms and applying Granville-Shao BV for multiplicative functions",
    .wall, .cited,
    "The reduction is sound and the main term is right, but uniformity in the growing window J fails. The multi-site sieve gives moduli multiplicity (2J)^omega(e), a loss of (log N)^(O(delta J^2)); deep sites cannot be dropped below J1 ~ log_4 log log N; and BV saves only a fixed (log N)^(-A). The |w_j|-weighted expansion (multiplicity C_h^omega(e)) has no level control. This is the fixed-window-conductor-at-depth wall again. REOPEN IF: BV for z^Omega_(P,<=y) at moduli <= x^(3/8) with a super-polylog saving (Delta_A with conductors up to exp(c sqrt log x) plus excision), or a sieve with polylog l1 mass at growing depth",
-   "docs/CPRIME-SITE-FACTORIZATION-2026-10-01.md (referee section); CPrimeSiteFactorization.lean: card_siteAssignments (the J^omega(e) multiplicity, kernel target), DepthUniformMultBV (the reopen condition, open node), siteFactorization_of_depthUniform", "2026-10-01"⟩
+   "docs/CPRIME-SITE-FACTORIZATION-2026-10-01.md (referee section); CPrimeSiteFactorization.lean: card_siteAssignments (the J^omega(e) multiplicity, kernel target), DepthUniformMultBV (the reopen condition, open node), siteFactorization_of_depthUniform", "2026-10-01"⟩,
+  ⟨"Erdős #257 gap sets via an S-restricted moment cap alone",
+   "Prove isDisjunctive_subsetLambert_two_of_gapSet by restricting term_b/term_c (the moment order Mc) to S-primes and keeping the HypE frame",
+   .refuted, .kernel,
+   "HypE forces e <= 2^(8K^2) (HypE.e_le), and four_mul_le_two_pow_NE' independently needs e <= 2^(50K^2) because farC ~ log log X ~ e is an all-primes sum against 2^N, N = 100K^2; a set with F_S(e) <= A log(e+1) + C then has at most O(K^2) mass in the frame against a demand of 1000K^3, so no cutoff works for large K. REOPEN IF: a frame with farC and Mc both S-restricted, or N growing like m_1",
+   "theorem G4.SchedB.hypE_frame_excludes_logRate; reopen node G4.SchedB.SRestrictedFrame; module G4Base2GapObstruction", "2026-10-02"⟩
 ]
 
 /-- Rows whose verdict is machine-checked in this build. -/

@@ -34,6 +34,8 @@ def mazeRows : List RowInfo :=
 
 /-- Each linked row and the declarations it rests on. -/
 def mazeLinks : List Link := [
+  ⟨"Erdős #257 gap sets via an S-restricted moment cap alone",
+   [``G4.SchedB.hypE_frame_excludes_logRate], [``G4.SchedB.SRestrictedFrame]⟩,
   ⟨"site factorization via log-power BV",
    [``card_siteAssignments, ``siteFactorization_of], [``DepthUniformMultBV]⟩,
   ⟨"old Good.sep", [``hall_good_sep], []⟩,
@@ -183,7 +185,7 @@ def mazeLegacy : List String := [
   "Diophantine good-denominator detour for the tail cell",
   "route B's unweighted cover of the state-dependent target"]
 
-/-- info: maze audit: 142 rows, 35 cite declarations, 107 legacy (prose only) -/
+/-- info: maze audit: 143 rows, 36 cite declarations, 107 legacy (prose only) -/
 #guard_msgs in
 #maze_audit mazeRows, mazeLinks, mazeLegacy
 
