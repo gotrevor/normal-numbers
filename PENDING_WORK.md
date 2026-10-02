@@ -2512,3 +2512,4 @@ a pure window-mean bound on `windowMeanS P (JG P N) h N` (J-schedule unchanged; 
 `uuU u b = u + b`, rerun `schedule_admissible` + `window_bound_schedule` → `windowMean_le_termsU`,
 then limsup bounds per term.
 Gap 3 PROVED: siteBudget is now min 2 (4π|h|4^{-(j+1)}) upstream (PrimeModelKMTGraded); C′ chain unchanged and green.  Without the cap, E1 is linear in |h| and the frozen ρ log³ rate is unreachable via ET.
+Gap 1 (schedule) PROVED: src/NormalNumbers/CPrimeQuantSchedule.lean — QuantSchedule.windowMean_le_terms holds for every fixed u ≥ 10, no fresh-mass hyp.  NEXT: in CPrimeQuant.lean, make windowWeylQuant import the schedule and bound limsup of termE1 (via recipSumIoc_yG_le + epsG ≤ ρ+ε eventually), E4a (termE4a_le: 4e^20 e^{-u²/32}), E4b (≤0.6·1.6e^{-u}), E4c (→0 needs u ≥ ? — check termE4c_tendsto's use of uG), E5 (→0).
