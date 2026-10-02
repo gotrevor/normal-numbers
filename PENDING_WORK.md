@@ -7,6 +7,12 @@ Headline + both corollaries in `Erdos257Base2.lean` now PROVED from one sorry'd 
 into N7 (schedule from a `VeryLargeCov` supply at κ ≪ 2^{-K/2}) and N6 (supply from TT dyadic).
 DONE: split as `VeryLargeCovSupply` (V=20000, κ→0 as e→∞ at SchedB scales XE/YE),
 `veryLargeCovSupply_of_TT` (N3–N6, sorry) and `exists_scheduleWitnessSC_two_of_supply` (N7, sorry).
+Lap-3 finding: `VeryLargeCovSupply` must CHOOSE X = 2^x (x ∈ [100,101]·2^{mE}): TT's bad
+scales may include the top block (X/2,X] (half the sample), so fixed X=XE is not derivable.
+N6 plan: TT at X_TT = 2^{101·2^{mE}}, one E per bin pair (B²), union bound over J₀ top blocks
+of ≈2^{mE} candidate x; blocks (2^k,2^{k+1}] exact since X is a power of 2; κ ≲ B²(Cst L^{-c}
++ 1/L + 2^{-J₀}) + C/B + C·P₀/log Y.  Centre μ(n) = Σ_ℓ(1−δ_ℓ(N(n))) + ē; F-part bounded by
+~106 (not B), so the err cross terms cost O(ē) = O(1/B).
 N7 check: rowL2 2 K = 2^{-K}/3, rowL1 = 1; need κ ≤ 2^{-K/2}/(256K²); b≥3-only spots: gridB_bound, hN (clog), hfar, freqSeed.
 
 ## Erdős #257 base 2 on prime subsets (launched 2026-10-02) — STOPPED lap 1: cited input vacuous

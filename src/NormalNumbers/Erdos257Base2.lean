@@ -46,13 +46,19 @@ open G4
 
 variable {S : ℕ → Prop} [DecidablePred S]
 
-/-- **The very-large covariance supply at the `SchedB` scales** (`X = 2^{100·2^{mE}}`,
-`Y = 2^{2^{mE}}`): for every grid of the schedule family, `κ` can be made arbitrarily small by
-taking the cutoff exponent `e` large, with the fixed variance budget `V = 20000`
-(`ω_{S,>Y}(m) ≤ 101` pointwise for `m ≤ Mx`). -/
+/-- **The very-large covariance supply near the `SchedB` scales** (`Y = 2^{2^{mE}}`, and a
+power-of-two `X = 2^x` with `100·2^{mE} ≤ x ≤ 101·2^{mE}`, so `Y^{100} ≤ X ≤ Y^{101}`): for every
+grid of the schedule family, `κ` can be made arbitrarily small by taking the cutoff exponent `e`
+large, with the fixed variance budget `V = 20000` (`ω_{S,>Y}(m) ≤ 102` for `m ≤ Mx`).
+
+**Why `X` is chosen, not fixed** (found 2026-10-02 lap 3): TT's dyadic conclusion may fail on a
+fraction `Cst·L^{-c}` of scales, which can include the top block `(X/2, X]` carrying half the
+sample.  So `X` must be picked among `≈ 2^{mE}` candidate powers of two whose top `J₀` blocks are
+all good scales; a union bound over the `B²` bin pairs leaves one. -/
 def VeryLargeCovSupply (S : ℕ → Prop) [DecidablePred S] : Prop :=
   ∀ K N : ℕ, ∀ hK : 1 ≤ K, ∀ κ : ℝ, 0 < κ → ∃ e₀ : ℕ, ∀ e, e₀ ≤ e →
-    VeryLargeCov S (gridOf K N hK) (SchedB.XE K e) (SchedB.YE K e) 20000 κ
+    ∃ x : ℕ, 100 * 2 ^ SchedB.mE K e ≤ x ∧ x ≤ 101 * 2 ^ SchedB.mE K e ∧
+      VeryLargeCov S (gridOf K N hK) (2 ^ x) (SchedB.YE K e) 20000 κ
 
 /-- **N3–N6: the covariance supply from Tao–Teräväinen 3.1(i)** (dyadic form).  Route: bins of
 `S ∩ (Y, Mx]` of harmonic mass `≤ 1/B` (N3), `ω_{S,>Y} = Σ_ℓ (1 − g_ℓ) + err` (N4), TT's
