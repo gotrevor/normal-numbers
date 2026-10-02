@@ -362,6 +362,10 @@ These are the ratified conjecture nodes.  They are open by design, and none is s
 - **Campaign B (2026-09-20).**  Master additive weight, polylog-`c` weights.
 - **Pair A multicutoff, Theorem C′ (2026-09-23).**
   `FamilyGraded.isNormal_subsetLambert_of_sqrtFreshMassZero`, unconditional.
+- **Quantitative C′ (2026-10-02, 2 laps).**  `Quant.cPrimeQuant_holds`: bounded square-root fresh
+  mass `ρ ≤ ρ₀` + divergent reciprocal sum ⇒ base-4 orbit discrepancy `≤ Cρ log³(1/ρ)`.
+  `Quant.cPrimeResidueRich_holds`: every fixed-length base-4 word has positive lower frequency in
+  `∑_{p≡a (q)} 1/(4ᵖ−1)` for all large `q`.  Unconditional.
 - **C4 (2026-09-25).**  `Abelian.c4_realizable`, plus the odd and finite-complement variants.
 - **Elliott, Tao 2016 Thm 1.3.**  Two-point log-Elliott, in both the CM and multiplicative forms.
 

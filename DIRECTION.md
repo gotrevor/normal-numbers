@@ -1,17 +1,12 @@
 # DIRECTION — normal-numbers 🧭
 
-## CURRENT DIRECTIVE (2026-10-02): quantitative C′ 🎯
-
-Prove `cPrimeQuant_holds : CPrimeQuant` and then `cPrimeResidueRich_holds : CPrimeResidueRich`
-(`src/NormalNumbers/CPrimeQuant.lean`).  The statements in `CPrimeQuantStatement.lean` are frozen
-byte-identical.  Follow `KICKOFF-2026-09-30-cprime-quantitative.md` (route steps 1-5; clear the
-six build gaps listed in `docs/CPRIME-QUANTITATIVE-2026-09-30.md` "Referee findings and build gaps"
-first).  Decompose into named sub-lemmas freely; a step found FALSE gets a `Maze.lean` row aliased
-onto its refuting theorem, and then the lap stops and says so.  Out of scope: the quadratic
-sharpening `CPrimeResidueQuad` / `SiteFactorization` (walled 2026-10-01, Maze "site factorization
-via log-power BV").
-
 ## Completed runs 🏁
+
+**Quantitative C′ (2 laps, closed 2026-10-02).**  `cPrimeQuant_holds` and
+`cPrimeResidueRich_holds` (`src/NormalNumbers/CPrimeQuant.lean`), unconditional; route as in
+`KICKOFF-2026-09-30-cprime-quantitative.md` (Fejér Erdős–Turán, fixed-`u` schedule, Mertens in
+APs ≤ 9/φ(q)).  The quadratic sharpening `CPrimeResidueQuad` stays walled (Maze "site
+factorization via log-power BV").
 
 **Vandehey §7 Problem 1 (laps 27–91, closed 2026-09-29).**  Not solved.  The deliverable is the
 machine-checked map of closed routes: **`docs/VANDEHEY-S7-FALSE-STARTS.md`**, with every verdict

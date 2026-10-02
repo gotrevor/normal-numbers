@@ -198,7 +198,7 @@ Literature-`Prop` candidates, not campaigns.
 
 | # | Bet | Headline | Kind | Confidence |
 |---|---|---|---|---|
-| 1 | **Quantitative C′**: derived on paper 2026-09-30 (discrepancy `≤ Cρ log³(1/ρ)`; residue classes `O(log³φ(q)/φ(q))`), frozen in `CPrimeQuantStatement.lean`; next is a referee pass, then the kickoff → `docs/CPRIME-QUANTITATIVE-2026-09-30.md` | H1 | new math | ~75% the derivation holds |
+| 1 | ✅ **PROVED 2026-10-02** (`Quant.cPrimeQuant_holds`, `Quant.cPrimeResidueRich_holds`, `CPrimeQuant.lean`, unconditional).  **Quantitative C′**: derived on paper 2026-09-30 (discrepancy `≤ Cρ log³(1/ρ)`; residue classes `O(log³φ(q)/φ(q))`), frozen in `CPrimeQuantStatement.lean`; next is a referee pass, then the kickoff → `docs/CPRIME-QUANTITATIVE-2026-09-30.md` | H1 | new math | ~75% the derivation holds |
 | 2 | **`RelativeFirstOrder`**: measured 2026-09-30/10-01; frozen 2026-10-01 as `SiteFactorization` + `PairSecondOrder` ⇒ `CPrimeResidueQuad` (`O(log⁵φ(q)/φ(q)²)`; `src/NormalNumbers/CPrimeSiteFactorization.lean`, `docs/CPRIME-SITE-FACTORIZATION-2026-10-01.md`).  The reduction to Granville–Shao BV failed referee: the multi-site sieve's `(2J)^{ω(e)}` multiplicity beats BV's log-power saving at growing depth (Maze wall "site factorization via log-power BV" = the fixed-window-conductor-at-depth wall).  Reopen with a super-polylog BV for `z^{Ω_P}` or a depth-uniform sieve | H1 | new math | statement ~75%, current route ~15–20% |
 | 3 | Master-conjectures pass: Borel + Hypothesis A as Props, consequence graph, Maze test | H2, H3 | conjecture graph | ~85% that it lands (the Schanuel pass proved 10 consequences in one lap) |
 | 4 | Growing-prime localized log: paper audit, then the new growing-`P` theorem | H3 | new math (paper) | ~70% on paper |
