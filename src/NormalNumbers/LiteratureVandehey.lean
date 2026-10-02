@@ -30,10 +30,14 @@ CF-normal `x`.  The identification `ρ_r = γ(I_r)` is then free, by a measure-t
 pigeonhole.  So the whole theorem factors as
 
 * `VandeheyUniformFreq` — the crux (§2–§6): *the frequency of every genuine word in
-  `Mx` converges to a limit independent of the CF-normal `x`*.  This is where the
-  hot-spot criterion is used (§3, Theorem 3.1), so this is where we owe the
-  **tightness-corrected** criterion plus tightness of a CF-normal point's empirical
-  measures.  `sorry` here, disclosed; attacked lap by lap.
+  `Mx` converges to a limit independent of the CF-normal `x`*.  **PROVED**, 2026-09-29, in
+  `NormalNumbers.VandeheyCapstone` (`vandeheyUniformFreq_holds`) — downstream of this file,
+  because the Raney-transducer chain that proves it imports this file for the statement.  The
+  route does NOT go through §3's hot-spot criterion at all: Serret and Smith reduce to
+  `x ↦ D·x` for prime `D`, and there the `L/R` transducer supplies a monotone RUN clock with an
+  `x`-independent positive rate and an `x`-independent Cesàro count sampled along it
+  (`VandeheyRunClock.mobiusUniformFreq_of_runClock`).  So the tightness-corrected criterion,
+  and tightness of a CF-normal point's empirical measures, are not owed.
 * `vandehey_matrix_action_of_uniformFreq` — **PROVED here, unconditionally.**  Given the
   crux, Theorem 1.1 follows.  The broken lemma plays no role in this half: identifying
   `ρ_r` needs only that a.e. real is CF-normal (`ae_isCFNormal`) and that a nonsingular
@@ -291,16 +295,13 @@ theorem vandehey_matrix_action_of_uniformFreq (h : VandeheyUniformFreq) :
     tendsto_nhds_unique (hL x₀ hx₀den hx₀n) (hx₀img v hne hpos)
   exact hLγ ▸ hL x hden hx
 
-/-! ## Step 4: the headline -/
+/-! ## Step 4: the headline
 
-/-- The crux, still open: Vandehey §2–§6, with §3's hot-spot step to be replaced by the
-tightness-corrected criterion (module docstring).  Disclosed `sorry`. -/
-theorem vandeheyUniformFreq_holds : VandeheyUniformFreq := by
-  sorry
-
-/-- **Vandehey 2017, Theorem 1.1**: integer Möbius maps with nonzero determinant
-preserve CF-normality. -/
-theorem vandehey_matrix_action_holds : vandehey_matrix_action :=
-  vandehey_matrix_action_of_uniformFreq vandeheyUniformFreq_holds
+`vandeheyUniformFreq_holds` and `vandehey_matrix_action_holds` are **proved**, in
+`NormalNumbers.VandeheyCapstone`.  They cannot live here: the proof runs through the Raney
+transducer chain (`VandeheySerret` → … → `VandeheyCFBridge`), every module of which imports this
+file for `VandeheyUniformFreq` and `vandehey_matrix_action`.  This module therefore keeps the
+*statements* and the endgame reduction (`vandehey_matrix_action_of_uniformFreq`), and the
+capstone module discharges them. -/
 
 end NormalNumbers.Literature

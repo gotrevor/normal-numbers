@@ -21,6 +21,18 @@ import NormalNumbers.WalshBase
 import NormalNumbers.WallRational
 import NormalNumbers.MoshchevitinShkredovRefuted
 import NormalNumbers.VandeheyAutomaton
+import NormalNumbers.VandeheyS7Memory
+import NormalNumbers.VandeheyS7Hecke
+import NormalNumbers.VandeheyS7Predict
+import NormalNumbers.VandeheyS7Quadratic
+import NormalNumbers.VandeheyS7BlockRefute
+import NormalNumbers.VandeheyS7BlockGenRefute
+import NormalNumbers.VandeheyS7Circular
+import NormalNumbers.VandeheyS7StateCouple
+import NormalNumbers.VandeheyS7StateAudit
+import NormalNumbers.VandeheyS7Audit
+import NormalNumbers.VandeheyS7WidthDensity
+import NormalNumbers.VandeheyS7ArchWidthFree
 
 /-!
 # `Maze.lean` — the halls we have walked, encoded
@@ -47,6 +59,11 @@ Two passes, in this order.
 
 If your route is not here, it is genuinely unwalked — say so out loud, because that is rarer
 than it feels.
+
+**Adding a row?**  State its obstruction in Lean first (a theorem, a `¬`, or a `sorry` statement
+with a confidence), and for a `wall` its reopen condition as a `def … : Prop`.  Then add a `Link`
+in `MazeAudit.lean`.  `#maze_audit` fails the build on a row with no link: its reasons would be
+prose only.
 
 ## The three tiers
 
@@ -273,6 +290,155 @@ general as `not_synchronizing_of_injective_quotient`.  The sorried
 `ClassEquidistribution` is the crux the class cocycle actually poses. -/
 alias hall_vandehey_synchronizing_transducer :=
   NormalNumbers.VandeheyAut.not_synchronizing_of_injective_quotient
+
+/-- **HALL: the emitted digit as a window function of the input** (`falseAsStated`,
+2026-09-29).  The §7 assembly planned to compute the image digit at a position from a bounded
+window of the input digits, `F w := emitDigit (wordState w)`, citing the merging bound
+`spread_runWord_le` for independence of the initial state.  `spread_runWord_le` bounds the
+DIAMETER of the image of `[0,1]`, uniformly in the initial state; it says nothing about the
+image's LOCATION, and `runWord s w = s.comp (wordState w)` puts the location entirely in the
+initial state.  Witnesses: `⟨1,3;0,8⟩` and `⟨1,7;0,32⟩` map `[0,1]` into the digit-`2` and
+digit-`4` cylinders, so after reading ANY word they both emit, and emit `2` and `4`.  Both
+have distortion `1`, so the bounded-distortion compact fiber does not evade it.  What
+survives is `cfDigit_mob_eq_emitDigit`: the digit is a function of the STATE, so the
+decomposition must be indexed by (state class, input word), as `JointStateFreq` is in the
+proved integer case. -/
+alias hall_emit_digit_window_function :=
+  NormalNumbers.VandeheyS7.MobState.no_window_function
+
+/-- **HALL: Hecke approximation of `φ` by Fibonacci ratios** (`refuted`, 2026-09-29).  The repo
+owns Vandehey 2017 Theorem 1.1, so the most natural route to §7 is to approximate: each
+`(F_{k+1}/F_k)·x` is CF-normal, the ratios converge to `φ`, nearby reals share a long CF prefix,
+so take a diagonal limit.  It dies on the *cost* of the approximation.  `φ` is the
+worst-approximable real — `|p − qφ| ≥ 1/(4q)` (`abs_sub_mul_goldenRatio_ge`), from the nonzero
+integer norm form `p² − pq − q² = (p − qφ)(p − qψ)` — so buying agreement of the images to CF
+depth `N` forces `q² > cᴺ` (`pow_lt_den_sq_of_image_approx`) and hence a determinant
+`pq ≥ q² > cᴺ` (`sq_le_det_of_approx`).  Theorem 1.1's automaton then carries `e^{Ω(N)}` states
+while only `N` input digits are read: its equidistribution, an asymptotic statement about that
+automaton, says nothing about the prefix the diagonal argument needs.  Note where the content
+sits: for a *rational* target the norm form vanishes identically, which is exactly why Theorem 1.1
+itself is provable and this is not. -/
+alias hall_hecke_approximation :=
+  NormalNumbers.VandeheyS7.pow_lt_den_sq_of_image_approx
+
+/-- **HALL: predictable target sets from marginals alone** (`refuted`, 2026-09-29).  The crux
+`OrbitCellBound` unwinds to a bound on `#{n<N : Gⁿx ∈ A n}` where `A n = s_n⁻¹(E)` is determined by
+`x₁…x_n` and is small, and the input orbit has the correct marginal frequencies.  Those three
+facts do not suffice, and the witness is elementary: the grid `u n = n/k` is *exactly* uniform on
+the `k` cells of width `1/k` — perfect marginals, zero error — yet `u n` lies in
+`(u_{n−1}, u_{n−1} + δ)` for every `n ≥ 1` as soon as `1/k < δ`, a hit frequency of `(k−1)/k`
+against an interval of length `δ`.  At `δ = 1/2`, `k = 10`: `9/10` observed against `6/10`
+allowed.  Consequence for the route: any proof of `OrbitCellBound` must use the specific
+arithmetic of `s_n = O_n⁻¹ Φ P_n`, never predictability plus size.  With
+`hall_emit_digit_window_function` this closes both soft routes: the state cannot be forgotten, and
+it cannot be ignored. -/
+alias hall_predictable_from_marginals :=
+  NormalNumbers.VandeheyS7.not_predictableHitPrinciple
+
+/-- **HALL: `BlockForget` in the uniform-`z` form** (`falseAsStated`, 2026-09-29).  Route A's
+crux asked the block time-average `blockAvg s T w z` to forget the initial state `s` uniformly
+over ALL input points `z ∈ (0,1)`.  It does not.  The run from state `s` on input `z` emits the
+CF of `s.mob z`, so at a FIXED `z` the block average is the frequency of `w` in that CF (up to
+the clock rate).  Take `z = √2 − 1`, a fixed point of the Gauss map, so every digit is `2`
+(`cfDigit_sqrtTwoSub`): the digit `1` has frequency `0` from the identity state.  The state
+`shiftState : t ↦ 2/(t+2)` has rational entries and width `1/3`, and sends `√2 − 1` to
+`2√2 − 2` (`shiftState_mob_sqrtTwoSub`), a `2`-cycle of the Gauss map whose digits alternate
+`1, 4` (`cfDigit_twoSqrtTwoSub_even/odd`): the digit `1` has frequency `1/2`.  Two distinct
+periodic orbits never merge — they lie in different `GL₂(ℤ)` cycles of `ℚ(√2)` (discriminants
+`8` and `32`) — so time-averaging cannot help and this is not probe trap #2.
+
+**Kernel, as of the same day**: `not_blockForget` (S7-BX) discharges the row outright, by never
+going through digit frequencies at all.  The skew-product orbit of `(shiftState, √2−1)` is a
+`2`-cycle — `shiftState ∘ read 2 = read 1 ∘ midState` and `midState ∘ read 2 = read 4 ∘ shiftState`,
+with the emission unique (`emitStep_unique`) — so the even phase's image `2√2−2` has first digit
+`1` and the odd phase's `(√2−1)/2` has first digit `4`: the block average is `⌈T/2⌉/T ≥ 1/2` for
+every `T`, against `0` from the reference state.  **The repair costs nothing**: the architecture only ever evaluates the crux at
+the orbit points `Gᵐx` of a CF-normal `x`, and a quadratic irrational is never CF-normal.  The
+live crux is `BlockForgetGen` (S7-BG), the same statement with `z` restricted to CF-normal
+points; `BlockForget.gen` records that the refuted form is the stronger one. -/
+alias hall_blockforget_uniform_z := NormalNumbers.VandeheyS7.MapState.not_blockForget
+
+/-- Companion witness of `hall_blockforget_uniform_z`: the shifted point is a `2`-cycle. -/
+alias hall_blockforget_uniform_z_cycle :=
+  NormalNumbers.VandeheyS7.cfDigit_twoSqrtTwoSub_even
+
+/-- Companion witness of `hall_blockforget_uniform_z`: the two states meet at one input. -/
+alias hall_blockforget_uniform_z_state :=
+  NormalNumbers.VandeheyS7.MapState.shiftState_mob_sqrtTwoSub
+
+/-- **HALL: the CF-normal repair of `BlockForget`** (`falseAsStated`, 2026-09-29, same day as the
+row above).  Once the uniform-`z` crux fell, the natural repair was to restrict the input
+quantifier to CF-normal `z` (`BlockForgetGen`, S7-BG), since a quadratic irrational is never
+CF-normal and the architecture only ever evaluates the crux at orbit points of a CF-normal input.
+The repair is FALSE, and for a reason that no further repair of this shape survives: the crux's
+quantifier order is `∃ T, ∀ z`, so the block length is fixed BEFORE the input, while
+`blockAvg s T w z` at a fixed `T` is decided by the state cycle alone once the first `T` digits of
+`z` are known — and CF-normality is a tail property, so a CF-normal `z` may open with any
+prescribed prefix.  Feed it `T` copies of the digit `2`: the state cycle is the S7-BX cycle, whose
+two phases send ALL of `(0,1)` into `(2/3,1)` and `(1/6,1/4)` respectively, so the block average
+is `≥ 1/2` from `shiftState` against `0` from the reference state.
+
+Consequence: any surviving crux must let `T` depend on the input, i.e. be asymptotic in `T` — at
+which point the transducer-correctness bridge, and with it the headline, re-enters, so route A's
+`BlockForget` step was never a reduction. -/
+alias hall_blockforget_cfnormal := NormalNumbers.VandeheyS7.MapState.not_blockForgetGen
+
+/-- **HALL: the block-forgetting crux as a REDUCTION of §7 Problem 1** (`restatement`, 2026-09-29).
+Route A factors the headline through a crux (`BlockForget` → `BlockForgetGen` → `BlockForgetRun` →
+`BlockForgetAll`, S7-BF/S7-BR/S7-AW) that compares the run's block statistics with the reference
+state's, and reads that comparison as the remaining analytic input.
+
+**Kernel**: it is not an input, it is the theorem.  S7-RR computes the reference run to be the Gauss
+shift itself, so the comparison is against the INPUT's own statistics; S7-NR then proves both
+directions of the signed form — the crux's Cesàro sum with the absolute value removed holds exactly
+when `slotCount Φ x w p / p → γ(I_w)`, i.e. exactly when the conclusion holds
+(`signedForget_iff_slotCountFreq`).  What the absolute values add is local information and nothing
+else, and `abs_gap_witness` (this row's alias) shows that step is not free: two `[0,1]`-valued
+sequences can have equal Cesàro means while the Cesàro mean of `|difference|` is `1`.
+
+So the crux is the headline PLUS local clock regularity PLUS window concentration: strictly
+stronger, hence never a reduction.  The architecture (`isCFNormal_image_of_blockForgetAll`, S7-AW)
+remains a correct and useful FACTORISATION — it isolates exactly what locality would buy — but no
+lap should treat proving the crux as easier than proving the theorem. -/
+alias hall_blockforget_is_restatement := NormalNumbers.VandeheyS7.abs_gap_witness
+
+/-- **HALL: the `TransducerData` bundle** (`vacuous`, 2026-09-27).  Route B's §7 front was packaged
+as an existential over a family of sets `S n j` said to carry the transducer's block structure.
+Nothing in `BlockCoupling` ties `S n j` to the state, so `S n j = univ`/`∅` according to whether the
+slot hits the target satisfies it whenever the conclusion holds (`blockCoupling_trivial`): the
+bundle is a restatement of `OrbitWordBound`, not a reduction of it.  The repair pins the sets to a
+state family (`StateCoupling`/`StateData`) — and that repair is itself vacuous, next row. -/
+alias hall_transducerdata_vacuous := NormalNumbers.VandeheyS7.blockCoupling_trivial
+
+/-- **HALL: the `StateData` repair** (`restatement`, 2026-09-27).  Pinning the coupling sets to a
+family of `MobState`s pins nothing: the type is large enough to interpolate any single pair of
+points, so `lowState (Gⁿy / Gⁿx)` sends `Gⁿx` to `Gⁿy` exactly and
+`stateData_of_orbitWordBound` derives the bundle from its own conclusion.  A transducer hypothesis
+has content only when the state family is pinned to the input AS A FUNCTION, by the read/emit
+recursion — which is what `runState` (S7-RN) finally supplies. -/
+alias hall_statedata_restatement := NormalNumbers.VandeheyS7.stateData_of_orbitWordBound
+
+/-- **HALL: `StateClock` below the width scale** (`vacuous`, 2026-09-27).  `StateClock q r₀ η K`
+compares an orbit count against a threshold `T`; at `T < 1/η` the state `lowState η` has its whole
+image below `1/T`, so every orbit time is counted and the inequality holds for free
+(`blockCount_le_card_lowState`).  The hypothesis has content only at `T ≥ 1/η`. -/
+alias hall_stateclock_below_width := NormalNumbers.VandeheyS7.blockCount_le_card_lowState
+
+/-- **HALL: the one-digit-per-read throttle** (`refuted`, 2026-09-29, lap 91).  Every §7 scalar debt
+(`WidthAfford`, `MeanSlack`, `ClockLinear`'s uniform floor) was stated for a transducer whose `step`
+emits AT MOST ONE digit per read (`runWord_length_le_one`).  That throttle creates a queue of
+known-but-unemitted output digits; the queue is a mean-zero random walk, so `log (1/width)` is
+null-recurrent of size `≍ √n` and the wide times have density ZERO.  `not_widthAfford_of_wide_sparse`
+(this row's alias) then makes `WidthAfford` FALSE, and `crux_sum_le_of_wide_sparse` makes the
+width-filtered crux vacuous on the same run.  Vandehey's transducer emits a variable-length word;
+with maximal emission (S7-GR's `flushState`) the same exact simulation keeps the slack bounded and
+`freq(width < η) ≍ √η`.  **Moral: price the instrument before the hypothesis.** -/
+alias hall_one_digit_throttle := NormalNumbers.VandeheyS7.MapState.not_widthAfford_of_wide_sparse
+
+/-- The forward half of the same row: the crux does imply the goal. -/
+alias hall_blockforget_implies_goal :=
+  NormalNumbers.VandeheyS7.MapState.isCFNormal_image_of_blockForgetAll
+
 
 
 /-- **HALL: the `min`-rule descent of Vandehey 2017 Lemma 2.1** (`refuted`, 2026-09-28).
@@ -1082,7 +1248,77 @@ def register : List Hall := [
    "Replace Vandehey 2017 Theorem 3.1 by pathwise state-merging after a synchronizing word",
    .falseAsStated, .kernel,
    "The state fibres over P^1(Z/D) by row-lattice class and every letter acts bijectively on that quotient, so no word merges two classes: the Synchronizing hypothesis is unsatisfiable and every statement carrying it is vacuous for this automaton",
-   "alias hall_vandehey_synchronizing_transducer; probe archive/probe/PROBE-2026-09-27-transducer-not-synchronizing.md", "2026-09-28"⟩
+   "alias hall_vandehey_synchronizing_transducer; probe archive/probe/PROBE-2026-09-27-transducer-not-synchronizing.md", "2026-09-28"⟩,
+  ⟨"emitted digit as a window function of the input",
+   "Compute the image CF digit at a position from a bounded window of the input digits, F w = emitDigit (wordState w), with the initial state made invisible by merging",
+   .falseAsStated, .kernel,
+   "spread_runWord_le bounds the image DIAMETER uniformly in the initial state, not its LOCATION, and runWord s w = s.comp (wordState w) leaves the location entirely to s; the states (1,3;0,8) and (1,7;0,32), both of distortion 1, map [0,1] into the digit-2 and digit-4 cylinders and so emit 2 and 4 after reading ANY word",
+   "alias hall_emit_digit_window_function; module VandeheyS7Memory; what survives is cfDigit_mob_eq_emitDigit, so the decomposition must be indexed by (state class, input word)", "2026-09-29"⟩,
+  ⟨"Hecke approximation of phi by Fibonacci ratios",
+   "Approximate phi by F_(k+1)/F_k, apply the PROVED Vandehey Thm 1.1 to each rational multiple, and pass to a diagonal limit using that nearby reals share a long CF prefix",
+   .refuted, .kernel,
+   "phi is the worst-approximable real: |p - q phi| >= 1/(4q) from the nonzero integer norm form p^2 - pq - q^2, so agreement of the images to CF depth N costs q^2 > c^N and a determinant pq >= q^2 exponential in N; Thm 1.1's automaton then carries e^(Omega(N)) states while only N input digits are read, so its equidistribution says nothing about that prefix",
+   "alias hall_hecke_approximation; module VandeheyS7Hecke; theorems abs_sub_mul_goldenRatio_ge, pow_lt_den_sq_of_image_approx, sq_le_det_of_approx", "2026-09-29"⟩,
+  ⟨"BlockForget repaired to CF-normal inputs",
+   "Restrict the crux's input quantifier to CF-normal z, on the ground that a quadratic irrational is never CF-normal",
+   .falseAsStated, .kernel,
+   "The quantifier order is exists T then forall z, so the block length is fixed before the input while blockAvg at a fixed T is decided by the first T digits; CF-normality is a tail property, so a CF-normal z can open with T copies of the digit 2, and then the S7-BX state cycle gives block average at least 1/2 from shiftState against 0 from the reference state",
+   "alias hall_blockforget_cfnormal = not_blockForgetGen; module VandeheyS7BlockGenRefute; any surviving crux must be asymptotic in T, which re-imports transducer correctness and hence the headline", "2026-09-29"⟩,
+  ⟨"BlockForget in the uniform-z form",
+   "Ask the block time-average blockAvg s T w z to forget the initial state uniformly over ALL input points z in (0,1)",
+   .falseAsStated, .kernel,
+   "At the Gauss fixed point z = sqrt2 - 1 every digit is 2, so the reference block average is exactly 0 for w = [1]; the width-1/3 state t -> 2/(t+2) runs on that input as a 2-cycle through t -> 1/(2t+4), whose two images 2 sqrt2 - 2 and (sqrt2-1)/2 have first digits 1 and 4, so its block average is ceil(T/2)/T >= 1/2 for every T -- a gap of at least 1/2, uniformly in T",
+   "alias hall_blockforget_uniform_z = not_blockForget (+_cycle, +_state); modules VandeheyS7Quadratic, VandeheyS7BlockRefute; the repair is BlockForgetGen with z restricted to CF-normal points, which the architecture is all that ever needs since a quadratic irrational is never CF-normal", "2026-09-29"⟩,
+  ⟨"the block-forgetting crux as a reduction of Vandehey S7 Problem 1",
+   "Factor the headline through BlockForget/BlockForgetGen/BlockForgetRun/BlockForgetAll and treat the block comparison as the remaining analytic input",
+   .restatement, .kernel,
+   "The reference run IS the Gauss shift (S7-RR), so the comparison is against the input's own statistics, and S7-NR proves both directions of the SIGNED form: the crux without its absolute values holds exactly when slotCount / p tends to gamma(I_w), i.e. exactly when the conclusion holds; abs_gap_witness shows the step from signed to absolute is not free (equal Cesaro means, Cesaro mean of the absolute difference 1), so the crux is the headline plus local clock regularity plus window concentration",
+   "alias hall_blockforget_is_restatement = abs_gap_witness, hall_blockforget_implies_goal = isCFNormal_image_of_blockForgetAll; modules VandeheyS7Circular, VandeheyS7NoReduction, VandeheyS7ArchWidthFree, VandeheyS7RefRun; the architecture stays valid as a FACTORISATION of the headline into a local statement", "2026-09-29"⟩,
+  ⟨"the TransducerData bundle as the S7 front",
+   "Package the transducer's block structure as an existential over sets S n j and treat the bundle as the remaining hypothesis",
+   .vacuous, .kernel,
+   "Nothing ties S n j to the state, so S n j = univ or empty according to whether the slot hits the target satisfies BlockCoupling whenever the conclusion holds: the bundle is a restatement of OrbitWordBound",
+   "alias hall_transducerdata_vacuous = blockCoupling_trivial; module VandeheyS7StateCouple; the repair StateCoupling/StateData is the next row", "2026-09-27"⟩,
+  ⟨"the StateData repair of the bundle",
+   "Pin the coupling sets to a family of MobStates, so that the bundle is no longer free",
+   .restatement, .kernel,
+   "Pinning to a TYPE pins nothing: lowState (G^n y / G^n x) is a legitimate MobState sending G^n x to G^n y, so stateData_of_orbitWordBound derives the bundle from its own conclusion; a transducer hypothesis has content only when the state family is pinned to the input as a function, by the read/emit recursion",
+   "alias hall_statedata_restatement = stateData_of_orbitWordBound; module VandeheyS7StateAudit; the honest pinning is runState (S7-RN)", "2026-09-27"⟩,
+  ⟨"StateClock below the width scale",
+   "Use StateClock q r0 eta K at a threshold T without relating T to the width floor eta",
+   .vacuous, .kernel,
+   "At T < 1/eta the state lowState eta has its entire image below 1/T, so every orbit time is counted by the comparison set and the inequality holds for free",
+   "alias hall_stateclock_below_width = blockCount_le_card_lowState; module VandeheyS7Audit; the hypothesis has content only at T at least 1/eta", "2026-09-27"⟩,
+  ⟨"the one-digit-per-read throttle behind the S7 scalar debts",
+   "State WidthAfford / MeanSlack / ClockLinear for a transducer whose step emits at most one digit per read",
+   .refuted, .kernel,
+   "The throttle creates a queue of known-but-unemitted output digits whose length is a mean-zero random walk, so log(1/width) is null-recurrent of size sqrt(n) and the wide times have density zero; not_widthAfford_of_wide_sparse then makes WidthAfford false and crux_sum_le_of_wide_sparse makes the width-filtered crux vacuous on the same run, while the GREEDY transducer (maximal emission, S7-GR) keeps the slack bounded with freq(width < eta) of order sqrt(eta)",
+   "alias hall_one_digit_throttle = not_widthAfford_of_wide_sparse; modules VandeheyS7WidthDensity, VandeheyS7Greedy; probe experiments/PROBE-2026-09-29-lap91-stall-and-width-walk.md Findings 2-4", "2026-09-29"⟩,
+  ⟨"bounded-error decomposition of the image count",
+   "Reduce SampledUniformCount to: the image's occurrence count agrees with a finite input-word family's count up to a bounded error C",
+   .falseAsStated, .cited,
+   "The window function computing the image digit is wrong exactly on the set where the orbit comes within delta of a cylinder endpoint, whose Gauss mass is positive (gaussMeasure_exceptional_le); a CF-normal input meets a positive-mass set with positive frequency, so the decomposition error is Theta(p), never O(1) -- the epsilon-scheme (approxScheme) replaces it",
+   "module VandeheyS7Approx header; the surviving engine is tendsto_div_of_approxScheme", "2026-09-29"⟩,
+  ⟨"Diophantine good-denominator detour for the tail cell",
+   "Turn OrbitCellBound's w = [] case into a count of T-good rational approximations to the image and bound that count",
+   .wall, .cited,
+   "largeDigitCount_le_goodDenCount is unconditional and exact, but the counting input it needs -- #{q <= Q : ||q y|| <= 2/(Tq)} <= (D/T) log Q for the SPECIFIC image y -- is a Zaremba-strength statement about one real number, not an average, and no such bound is available",
+   "module VandeheyS7Dioph; theorems largeDigitCount_le_goodDenCount, tailFreq_le_of_goodDenBound", "2026-09-29"⟩,
+  ⟨"route B's unweighted cover of the state-dependent target",
+   "Cover the state-dependent target by a FIXED finite family of cylinders, uniformly over the width-at-least-eta state box, and cite GaussACRigidity",
+   .refuted, .cited,
+   "State-blind is impossible -- over the whole box the targets' union is all of (0,1), so a cover valid for every state has mass 1, not C gamma(I_w); and net-indexed is quantitatively dead -- resolving a target of length gamma(I_w) needs precision rho <= gamma(I_w), so the box carries rho^(-4) cells and the unweighted cover mass is gamma(I_w)^(-3), i.e. C blows up with |w|; the Z[phi]-separation of the reachable states says this is not an artefact of the net",
+   "DIRECTION.md fact (epsilon), review lap 88; modules VandeheyS7WD/WD'/CV/FT are finished and must not be extended", "2026-09-29"⟩,
+  ⟨"predictable target sets from marginals alone",
+   "Conclude OrbitCellBound from: A n = s_n^(-1)(E) is determined by x_1..x_n, has small Gauss mass, and the input orbit has the correct marginal frequencies",
+   .refuted, .kernel,
+   "Perfect marginals do not stop a sequence landing in its own predicted interval: the grid u n = n/k is exactly uniform on the k cells of width 1/k, yet u n lies in (u_(n-1), u_(n-1) + delta) for every n >= 1 once 1/k < delta, a hit frequency of (k-1)/k against an interval of length delta; at delta = 1/2, k = 10 that is 9/10 observed against 6/10 allowed",
+   "alias hall_predictable_from_marginals; module VandeheyS7Predict; theorems cellUniform_grid, hitCount_grid, not_predictableHitPrinciple; any OrbitCellBound proof must use the arithmetic of s_n = O_n^(-1) Phi P_n", "2026-09-29"⟩,
+  ⟨"site factorization via log-power BV",
+   "Prove C-prime's RelativeFirstOrder (SiteFactorization) by writing the one-site fresh term as the other sites' frozen phase against z^Omega_P - z^Omega_(P,<=y), sieving the other sites into CRT atoms and applying Granville-Shao BV for multiplicative functions",
+   .wall, .cited,
+   "The reduction is sound and the main term is right, but uniformity in the growing window J fails. The multi-site sieve gives moduli multiplicity (2J)^omega(e), a loss of (log N)^(O(delta J^2)); deep sites cannot be dropped below J1 ~ log_4 log log N; and BV saves only a fixed (log N)^(-A). The |w_j|-weighted expansion (multiplicity C_h^omega(e)) has no level control. This is the fixed-window-conductor-at-depth wall again. REOPEN IF: BV for z^Omega_(P,<=y) at moduli <= x^(3/8) with a super-polylog saving (Delta_A with conductors up to exp(c sqrt log x) plus excision), or a sieve with polylog l1 mass at growing depth",
+   "docs/CPRIME-SITE-FACTORIZATION-2026-10-01.md (referee section); CPrimeSiteFactorization.lean: card_siteAssignments (the J^omega(e) multiplicity, kernel target), DepthUniformMultBV (the reopen condition, open node), siteFactorization_of_depthUniform", "2026-10-01"⟩
 ]
 
 /-- Rows whose verdict is machine-checked in this build. -/

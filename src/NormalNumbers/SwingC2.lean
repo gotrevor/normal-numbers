@@ -2934,73 +2934,56 @@ theorem carryLeaf_of_tauMomentPrimes (b : ℕ) (hb : 3 ≤ b) (h : TauMomentPrim
   have hcast : ((b ^ K : ℕ) : ℤ) = (b : ℤ) ^ K := by push_cast; ring
   omega
 
-/-! ### The decomposition of the crux into ONE arithmetic hypothesis
+/-! ### The decomposition of the crux into ONE arithmetic hypothesis (RETIRED 2026-09-29)
 
-Everything elementary is now proved (`tau_shift_sum_AP_gen`): along the INTEGERS of the
+Everything elementary is proved (`tau_shift_sum_AP_gen`): along the INTEGERS of the
 progression the shifted divisor function obeys the first moment with the two explicit loss
 factors `log₂ e + 1` and `τ(gcd(M, 2^a r + e))`.  What is missing is only that the survivor
 must be PRIME.
 
-The gap is therefore a single statement about the density of primes in an arithmetic
-progression, in one specific and completely explicit range.  It is stated below as
-`PrimeDensityAP`, and the crux splits into exactly two named leaves:
+This section used to split that gap into `PrimeDensityAP` plus two sorried leaves
+(`tauMomentPrimesShiftStruct_of_primeDensity`, `survivorLeaf_of_struct`).  **Both leaves are
+deleted**: the review of 2026-09-25 (`docs/REVIEW-2026-09-25-normal-numbers.md` §"Statement
+defect and test") found the AP node as stated was too weak to feed them.  Its conclusion
+`Y / M ≤ B ^ 2 * (prime count)` uses natural-number division and permits `Y = N + 1 < M`, so at
+e.g. `M = 16, r = 9, N = B = 4, Y = 5` it holds as `0 ≤ 0` with *no* primes at all, while the
+consumer `TauMomentPrimesShiftStruct` demanded a nonempty prime set.  The implication was
+therefore not provable as advertised, and nothing in the repo consumed either leaf.
 
-* `tauMomentPrimesShiftStruct_of_primeDensity` — Markov on `tau_shift_sum_AP_gen`, the union
-  over shifts by `sum_le_of_geom_bound`, and the pigeonhole against `PrimeDensityAP`.  No new
-  mathematics; the budget inequality is `b^K ≥ 32·(log₂e+1)·2^{k}·(log₂D+2)·B²` which, with
-  `B = b^{K/4}` and `log₂ D ≤ b^{K/4}`, clears with a factor `b^{K/4}` to spare.
-* `survivorLeaf_of_struct` — supplies the two structural hypotheses from the kill progression:
-  the gcd bound from `exists_kill_progression'` (every prime of `gcd(M, 2^a r + K+1+k)` is
-  `≤ j₀ + e`, hence at most `k−2` of them, each to the first power, so `τ ≤ 2^k`) and the
-  2-adic room from `exists_survivor_data_large`.
+The defect is repaired in the surviving statement below by demanding `M ≤ Y` (which forces
+`1 ≤ Y / M`, hence a positive prime count).  It is kept as a *record of the intended AP input*
+only; the live open obligation on the headline path is `ShiftedDivisorIncidence`, stated
+immediately after, which routes through Brun–Titchmarsh instead and needs no uniform AP density.
 
-**On the status of `PrimeDensityAP`.**  For a FIXED modulus it is the prime number theorem in
-arithmetic progressions, and the `B²` of slack is two logarithms more than PNT gives.  The
-content is the uniformity: here `log₂ M ≤ B` and `log₂ Y ≤ B`, i.e. `M` may be a genuine power
-of `Y`.  The budget forces this — `b^K ≥ (log Y)²` caps `log₂ Y` at `b^{K/2}` while
-`log₂ M ≈ b(ℓ+K+5)^4` is polynomial in `K`, so `M = exp((log Y)^θ)` with `θ` bounded away from
-`0` and `M` is never polylogarithmic in `Y`.  That places the statement inside the classical
-zero-free-region range but OUTSIDE the range in which a Landau–Siegel zero can be excluded, so
-it is not a consequence of anything unconditional in the literature.  It is the honest single
-hypothesis on which this route rests. -/
+**On the status of the repaired `PrimeDensityAP`.**  For a FIXED modulus it is the prime number
+theorem in arithmetic progressions, and the `B²` of slack is two logarithms more than PNT gives.
+The content is the uniformity: here `log₂ M ≤ B` and `log₂ Y ≤ B`, i.e. `M` may be a genuine
+power of `Y`.  That places the statement inside the classical zero-free-region range but OUTSIDE
+the range in which a Landau–Siegel zero can be excluded, so it is not a consequence of anything
+unconditional in the literature. -/
 
-/-- **The one open arithmetic input: primes in an arithmetic progression, with `log₂ M ≤ B`
-and `log₂ Y ≤ B`, at density `(Y/M)/B²`.**  See the section docstring for its status. -/
+/-- **Record of the intended AP input** (no consumer; see the section docstring).  Primes in an
+arithmetic progression with `log₂ M ≤ B`, `log₂ Y ≤ B`, at density `(Y/M)/B²`.  The clause
+`M ≤ Y` is the 2026-09-29 repair of the vacuity defect: without it the conclusion is satisfiable
+with zero primes by taking `Y < M`. -/
 def PrimeDensityAP : Prop :=
   ∀ M r N B : ℕ, 0 < M → Nat.Coprime r M → Nat.log 2 M ≤ B → N ≤ B → 4 ≤ B →
-    ∃ Y : ℕ, N < Y ∧ Nat.log 2 Y ≤ B ∧
+    ∃ Y : ℕ, N < Y ∧ M ≤ Y ∧ Nat.log 2 Y ≤ B ∧
       Y / M ≤ B ^ 2 *
         ((Finset.Icc 1 Y).filter (fun p => N < p ∧ p.Prime ∧ p % M = r % M)).card
 
-/-- **The shift leaf with the structural hypotheses the construction actually supplies.**
-Two extra hypotheses over `TauMomentPrimesShift`: `hgcd`, which `exists_kill_progression'`
-gives, and the 2-adic room `log₂(b^{K/4}) ≤ a`, which `exists_survivor_data_large` gives. -/
-def TauMomentPrimesShiftStruct (b : ℕ) : Prop :=
-  ∀ K M r a N : ℕ, 2 ≤ K → 0 < M → Nat.Coprime r M →
-    Nat.log 2 M ≤ b ^ (K / 4) → N ≤ b ^ (K / 4) →
-    Nat.log 2 (b ^ (K / 4)) ≤ a → a ≤ b ^ (K / 4) →
-    (∀ k : ℕ, (Nat.gcd M (2 ^ a * r + (K + 1 + k))).divisors.card ≤ 2 ^ k) →
-    ∃ Y : ℕ, ∃ P : Finset ℕ,
-      (∀ p ∈ P, N < p ∧ p.Prime ∧ p ≡ r [MOD M] ∧ p ≤ Y) ∧ 0 < P.card ∧
-      ∀ k : ℕ, 4 * 2 ^ k *
-          (P.filter (fun p => b ^ K / 4 * (k + 1) * 2 ^ k < tau (2 ^ a * p + K + 1 + k))).card
-        ≤ P.card
-
-/-- **Leaf 1 of the decomposition.**  Markov on `tau_shift_sum_AP_gen` plus the pigeonhole
-against `PrimeDensityAP`.  Every ingredient is proved; what remains is the arithmetic of the
-budget inequality.  Open. -/
-theorem tauMomentPrimesShiftStruct_of_primeDensity (b : ℕ) (hb : 3 ≤ b) (H : PrimeDensityAP) :
-    TauMomentPrimesShiftStruct b := by
-  sorry
-
-/-- **Leaf 2 of the decomposition.**  Supplies the two structural hypotheses of
-`TauMomentPrimesShiftStruct` from the kill progression (`exists_kill_progression'`, this
-session) and the large-exponent survivor data (`exists_survivor_data_large`), then runs the
-already-proved chain `TauMomentPrimesShift ⟹ TauMomentPrimes ⟹ CarryLeaf ⟹ SurvivorLeaf`.
-Open. -/
-theorem survivorLeaf_of_struct (b : ℕ) (hb : 3 ≤ b) (h : TauMomentPrimesShiftStruct b) :
-    SurvivorLeaf b := by
-  sorry
+/-- The repair is load-bearing: the repaired `PrimeDensityAP` does force a prime to exist in
+the stated range, which the old statement did not. -/
+theorem primeDensityAP_pos (H : PrimeDensityAP) (M r N B : ℕ) (hM : 0 < M)
+    (hr : Nat.Coprime r M) (hMB : Nat.log 2 M ≤ B) (hNB : N ≤ B) (hB : 4 ≤ B) :
+    ∃ Y : ℕ, N < Y ∧ 0 < ((Finset.Icc 1 Y).filter
+      (fun p => N < p ∧ p.Prime ∧ p % M = r % M)).card := by
+  obtain ⟨Y, hNY, hMY, _, hcnt⟩ := H M r N B hM hr hMB hNB hB
+  refine ⟨Y, hNY, ?_⟩
+  by_contra hc
+  rw [Nat.not_lt, Nat.le_zero] at hc
+  rw [hc, Nat.mul_zero, Nat.le_zero, Nat.div_eq_zero_iff] at hcnt
+  omega
 
 /-- **The one open obligation on the headline path.**  A SINGLE shifted-divisor estimate along
 the primes of one arithmetic progression: Brun–Titchmarsh applied to

@@ -28,12 +28,18 @@ open NormalNumbers.PrimeModel.PhaseFactor
 
 variable (S : ℕ → Prop) [DecidablePred S]
 
-/-- The per-site phase budget `a_j = 4π|h| / 4^{j+1}` (Fable §2). -/
+/-- The per-site phase budget `a_j = min(2, 4π|h| / 4^{j+1})` (Fable §2; the cap `2` is the
+trivial `|e(θ) − 1| ≤ 2`, which quantitative C′ needs to keep the transfer polylogarithmic in `h`). -/
 noncomputable def siteBudget (h : ℤ) (j : ℕ) : ℝ :=
-  4 * Real.pi * |(h : ℝ)| * ((1 : ℝ) / 4) ^ (j + 1)
+  min 2 (4 * Real.pi * |(h : ℝ)| * ((1 : ℝ) / 4) ^ (j + 1))
 
 theorem siteBudget_nonneg (h : ℤ) (j : ℕ) : 0 ≤ siteBudget h j := by
-  unfold siteBudget; positivity
+  unfold siteBudget; exact le_min (by norm_num) (by positivity)
+
+theorem siteBudget_le_lin (h : ℤ) (j : ℕ) :
+    siteBudget h j ≤ 4 * Real.pi * |(h : ℝ)| * ((1 : ℝ) / 4) ^ (j + 1) := min_le_right _ _
+
+theorem siteBudget_le_two (h : ℤ) (j : ℕ) : siteBudget h j ≤ 2 := min_le_left _ _
 
 theorem sum_siteBudget_le (h : ℤ) (k : ℕ) :
     ∑ j : Fin k, siteBudget h j.val ≤ 4 * Real.pi * |(h : ℝ)| / 3 := by
@@ -50,10 +56,11 @@ theorem sum_siteBudget_le (h : ℤ) (k : ℕ) :
   have h1 : ∑ j : Fin k, siteBudget h j.val = ∑ j ∈ Finset.range k, siteBudget h j :=
     Fin.sum_univ_eq_sum_range (fun j => siteBudget h j) k
   have h2 : ∑ j ∈ Finset.range k, siteBudget h j
-      = (4 * Real.pi * |(h : ℝ)|) * ∑ j ∈ Finset.range k, ((1 : ℝ) / 4) ^ (j + 1) := by
+      ≤ (4 * Real.pi * |(h : ℝ)|) * ∑ j ∈ Finset.range k, ((1 : ℝ) / 4) ^ (j + 1) := by
     rw [Finset.mul_sum]
-    exact Finset.sum_congr rfl fun j _ => by unfold siteBudget; ring
-  rw [h1, h2]
+    exact Finset.sum_le_sum fun j _ => (siteBudget_le_lin h j).trans (le_of_eq (by ring))
+  rw [h1]
+  refine h2.trans ?_
   have hc : (0 : ℝ) ≤ 4 * Real.pi * |(h : ℝ)| := by positivity
   nlinarith [hgeom]
 
@@ -69,8 +76,10 @@ theorem norm_zPhase_sub_one_le' (h : ℤ) (k : ℕ) (j : Fin k) :
   rw [habs] at hb
   have hzeq : zPhase h k j = ePhase ((h : ℝ) / (4 : ℝ) ^ (j.val + 1)) := rfl
   rw [hzeq]
-  refine hb.trans (le_of_eq ?_)
-  unfold siteBudget; ring
+  refine le_min ?_ (hb.trans (le_of_eq (by ring)))
+  calc ‖ePhase ((h : ℝ) / (4 : ℝ) ^ (j.val + 1)) - 1‖
+      ≤ ‖ePhase ((h : ℝ) / (4 : ℝ) ^ (j.val + 1))‖ + ‖(1 : ℂ)‖ := norm_sub_le _ _
+    _ = 2 := by rw [norm_ePhase, norm_one]; norm_num
 
 theorem norm_pow_sub_pow_le'' (z : ℂ) (hz : ‖z‖ = 1) (a c : ℕ) {B : ℝ}
     (hB : ‖z - 1‖ ≤ B) : ‖z ^ (a + c) - z ^ a‖ ≤ (c : ℝ) * B := by

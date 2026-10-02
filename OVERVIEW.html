@@ -200,22 +200,33 @@ now <strong>formalized</strong>: <code>jointLambertDisjunctivity</code>
 proves that prescribed words occur in finitely many constants
 <strong>E_b</strong> at a <strong>common digit position</strong>,
 infinitely often, even for bases 2 and 4. The <a href="papers/2026-09-26-joint-lambert-disjunctivity.md">paper proof</a>
-is the blueprint. Two analytic inputs remain hypotheses: primes in
-progressions with few exceptional moduli, and primes in every interval
-(L, 2L). Discharging them would make the theorem unconditional. The
+is the blueprint. Of the two analytic inputs, the interval-supply one (primes in every
+(L, 2L)) is now <strong>discharged from the ordinary prime number
+theorem</strong>, so the theorem rests on a single hypothesis: primes in
+progressions with few exceptional moduli. Discharging it would make the
+theorem unconditional; <code>docs/JOINT-LAMBERT-AGP-GAP.md</code> maps that
+gap and names the next concrete target. The
 quantitative occurrence count is a separate target. Our scalar C2
 implementation remains incomplete.</p>
 <h3 id="continued-fractions-vandeheys-open-problem">Continued fractions:
 Vandehey’s open problem</h3>
 <p>Vandehey (2017) asks whether a Möbius image of a
-continued-fraction-normal number is again continued-fraction normal. His
+continued-fraction-normal number is again continued-fraction normal. His own
 §3 relied on a Moshchevitin–Shkredov criterion that Airey and Mance
-refuted. That section is now <strong>proved unconditionally</strong>:
-along every CF-normal x, the joint frequency of a digit window and a
-projective class mod a prime D converges to its expected value. The
-remaining crux is a uniform block-frequency limit along the image. A
-counterexample to the Moshchevitin–Shkredov criterion as stated, using
-the digits 1, 2, 3, …, is stated in Lean but not yet proved.</p>
+refuted; the counterexample, using the digits 1, 2, 3, …, is now
+<strong>proved in Lean</strong>, so the gap in the published version of
+record is machine-checked rather than merely noted. His <strong>Theorem 1.1
+is now proved here unconditionally, and by a different route that never uses
+§3 at all</strong>: Serret’s theorem plus Smith’s reduction bring the general
+integer matrix down to multiplication by a prime, and there the explicit
+Raney L/R transducer supplies everything — a joint digit-window/projective-class
+equidistribution along every CF-normal x, converted to a digit frequency along
+the image by a monotone run clock. So integer Möbius maps provably preserve CF
+normality. What stays open is Vandehey’s §7 Problem 1:
+<strong>quadratic-irrational</strong> maps such as x ↦ φx and x ↦ x + φ, where
+the transducer’s state set lives over ℤ[φ] and Dirichlet’s unit theorem
+destroys the finiteness the whole argument rested on. That is the current
+target.</p>
 <h2 id="what-would-count-as-a-change-in-position">What would count as a
 change in position?</h2>
 <table>
@@ -245,13 +256,13 @@ assessable.</td>
 normality.</td>
 </tr>
 <tr>
-<td>Discharge the joint Lambert prime inputs</td>
+<td>Discharge the remaining joint Lambert prime input</td>
 <td>Makes common-position words in distinct constants
 unconditional.</td>
 </tr>
 <tr>
-<td>Prove Vandehey’s uniform-frequency crux</td>
-<td>Möbius images of CF-normal numbers are CF-normal.</td>
+<td>Break the ℤ[φ] finiteness wall in Vandehey’s §7 Problem 1</td>
+<td>Quadratic-irrational images, such as φx and x + φ, of CF-normal numbers.</td>
 </tr>
 <tr>
 <td>Prove ordinary cancellation through G₄’s growing carries</td>
@@ -273,7 +284,7 @@ rungs</a>, <a href="src/NormalNumbers/AbelianWindowBuild.lean">C4
 theorem</a>, <a href="src/NormalNumbers/JointLambertDisjunctivity.lean">joint
 Lambert</a>, <a href="src/NormalNumbers/ElliottLedger.lean">Elliott
 ledger</a>, <a href="src/NormalNumbers/C3MrtBlockDefect.lean">C3
-headline</a>, <a href="src/NormalNumbers/VandeheyClassEquidist.lean">Vandehey §3</a>, <a href="src/NormalNumbers/SwingC2.lean">C2 construction</a>, and <a href="src/NormalNumbers/Maze.lean">retired routes</a>. The September 25
+headline</a>, <a href="src/NormalNumbers/VandeheyCapstone.lean">Vandehey Thm 1.1</a>, <a href="src/NormalNumbers/SwingC2.lean">C2 construction</a>, and <a href="src/NormalNumbers/Maze.lean">retired routes</a>. The September 25
 review predates C3’s repair and the latest Elliott reduction.</p>
 <p>This is the maintained reader’s map. Update it when a frontier is
 proved, refuted, or replaced; keep proof details in their existing
