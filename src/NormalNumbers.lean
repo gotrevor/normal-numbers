@@ -498,6 +498,7 @@ import NormalNumbers.GrowingLocalizedLogBlock
 import NormalNumbers.GrowingLocalizedLogCostBound
 import NormalNumbers.GrowingLocalizedLogAsymp
 import NormalNumbers.GrowingLocalizedLogAssembly
+import NormalNumbers.GrowingLocalizedLogWeyl
 import NormalNumbers.GrowingLocalizedLogWitness
 import NormalNumbers.CPrimeSiteFactorization
 import NormalNumbers.MazeAudit
