@@ -166,4 +166,100 @@ lemma fejK_le (H : ℕ) {δ t : ℝ} (hδ : 0 < δ) (h1 : δ ≤ |t|) (h2 : |t| 
   have hH : (0 : ℝ) < (H : ℝ) + 1 := by positivity
   nlinarith [mul_le_mul_of_nonneg_right hsq (by positivity : (0:ℝ) ≤ 4 * δ ^ 2 * ((H : ℝ) + 1))]
 
+/-! ## The window function -/
+
+/-- The Fejér window `g(x) = ∫_{x−β}^{x−α} K_H`, a smoothed indicator of `[α, β]`. -/
+noncomputable def fejG (H : ℕ) (α β x : ℝ) : ℝ := ∫ t in (x - β)..(x - α), fejK H t
+
+lemma fejG_nonneg (H : ℕ) {α β : ℝ} (hαβ : α ≤ β) (x : ℝ) : 0 ≤ fejG H α β x :=
+  intervalIntegral.integral_nonneg (by linarith) (fun t _ => fejK_nonneg H t)
+
+/-- The `m`-th coefficient of the window, `(e(−mα) − e(−mβ))/(2πim)`. -/
+noncomputable def winCoef (α β : ℝ) (m : ℤ) : ℂ :=
+  (Complex.exp (-(2 * π * I * (m : ℝ) * α)) - Complex.exp (-(2 * π * I * (m : ℝ) * β)))
+    / (2 * π * I * (m : ℝ))
+
+lemma norm_winCoef_le (α β : ℝ) {m : ℤ} (hm : m ≠ 0) :
+    ‖winCoef α β m‖ ≤ 1 / (π * |(m : ℝ)|) := by
+  have hm' : (0 : ℝ) < |(m : ℝ)| := abs_pos.mpr (by exact_mod_cast hm)
+  rw [winCoef, norm_div]
+  have hnum : ‖Complex.exp (-(2 * π * I * (m : ℝ) * α)) - Complex.exp (-(2 * π * I * (m : ℝ) * β))‖
+      ≤ 2 := by
+    refine (norm_sub_le _ _).trans ?_
+    have h1 : ∀ y : ℝ, ‖Complex.exp (-(2 * π * I * (m : ℝ) * y))‖ = 1 := by
+      intro y; rw [Complex.norm_exp]; simp
+    rw [h1, h1]; norm_num
+  have hden : ‖(2 * π * I * (m : ℝ) : ℂ)‖ = 2 * π * |(m : ℝ)| := by
+    rw [norm_mul, norm_mul, norm_mul, Complex.norm_I, Complex.norm_real, Complex.norm_real]
+    simp [abs_of_pos Real.pi_pos]
+  rw [hden, div_le_div_iff₀ (by positivity) (by positivity)]
+  nlinarith [mul_le_mul_of_nonneg_right hnum (by positivity : (0:ℝ) ≤ π * |(m : ℝ)|)]
+
+/-- One term of the window integral. -/
+lemma integral_window_term (m : ℤ) (α β x : ℝ) :
+    ∫ t in (x - β)..(x - α), Complex.exp (2 * π * I * (m : ℝ) * t)
+      = if m = 0 then ((β - α : ℝ) : ℂ)
+        else Complex.exp (2 * π * I * (m : ℝ) * x) * winCoef α β m := by
+  split_ifs with hm
+  · subst hm; simp
+  · rw [integral_exp_int hm, winCoef, mul_div_assoc']
+    congr 1
+    rw [mul_sub, ← Complex.exp_add, ← Complex.exp_add]
+    congr 2 <;> push_cast <;> ring
+
+/-- **The mean of the window along a sequence** is `β − α` plus off-diagonal Weyl terms. -/
+lemma window_mean_eq (H : ℕ) (α β : ℝ) (u : ℕ → ℝ) (n : ℕ) (hn : 0 < n) :
+    (((∑ k ∈ range n, fejG H α β (u k)) / n : ℝ) : ℂ)
+      = ((β - α : ℝ) : ℂ) + (1 / ((H : ℂ) + 1)) * ∑ j ∈ range (H + 1),
+          ∑ l ∈ (range (H + 1)).erase j,
+            winCoef α β ((j : ℤ) - l) * fourierMean u ((j : ℤ) - l) n := by
+  have hpt : ∀ x : ℝ, ((fejG H α β x : ℝ) : ℂ) = (1 / ((H : ℂ) + 1)) * ∑ j ∈ range (H + 1),
+      ∑ l ∈ range (H + 1), (if ((j : ℤ) - l) = 0 then ((β - α : ℝ) : ℂ)
+        else Complex.exp (2 * π * I * ((((j : ℤ) - l : ℤ)) : ℝ) * x) * winCoef α β ((j : ℤ) - l)) := by
+    intro x
+    rw [fejG, ← intervalIntegral.integral_ofReal]
+    simp_rw [fejK_expand]
+    rw [intervalIntegral.integral_const_mul]
+    rw [intervalIntegral.integral_finsetSum (fun j _ =>
+      (continuous_finsetSum _ (fun l _ => by fun_prop)).intervalIntegrable _ _)]
+    congr 1
+    refine Finset.sum_congr rfl fun j _ => ?_
+    rw [intervalIntegral.integral_finsetSum (fun l _ =>
+      (by fun_prop : Continuous _).intervalIntegrable _ _)]
+    exact Finset.sum_congr rfl fun l _ => integral_window_term _ α β x
+  have hnR : ((n : ℝ) : ℂ) ≠ 0 := by exact_mod_cast hn.ne'
+  push_cast
+  simp_rw [hpt]
+  rw [← Finset.mul_sum, Finset.sum_comm]
+  have hj : ∀ j ∈ range (H + 1), ∑ x ∈ range n, ∑ l ∈ range (H + 1),
+      (if ((j : ℤ) - l) = 0 then ((β - α : ℝ) : ℂ)
+        else Complex.exp (2 * π * I * ((((j : ℤ) - l : ℤ)) : ℝ) * (u x)) * winCoef α β ((j : ℤ) - l))
+      = (n : ℂ) * ((β - α : ℝ) : ℂ) + (n : ℂ) * ∑ l ∈ (range (H + 1)).erase j,
+          winCoef α β ((j : ℤ) - l) * fourierMean u ((j : ℤ) - l) n := by
+    intro j hj
+    rw [Finset.sum_comm, ← Finset.add_sum_erase _ _ hj]
+    simp only [sub_self, if_true, Finset.sum_const, Finset.card_range, nsmul_eq_mul]
+    congr 1
+    rw [Finset.mul_sum]
+    refine Finset.sum_congr rfl fun l hl => ?_
+    have hlj : ((j : ℤ) - l) ≠ 0 := by
+      have := Finset.ne_of_mem_erase hl; omega
+    simp only [hlj, if_false]
+    rw [← Finset.sum_mul, fourierMean]
+    have hn' : (n : ℂ) ≠ 0 := by exact_mod_cast hn.ne'
+    have hsum : ∑ x ∈ range n, Complex.exp (2 * π * I * ((((j : ℤ) - l : ℤ)) : ℝ) * (u x))
+        = ∑ k ∈ range n, Complex.exp (2 * π * I * (((j : ℤ) - l : ℤ) : ℂ) * (u k : ℂ)) := by
+      refine Finset.sum_congr rfl fun k _ => ?_
+      congr 1
+    rw [hsum]
+    field_simp
+    try ring
+  rw [Finset.sum_congr rfl hj, Finset.sum_add_distrib, ← Finset.mul_sum]
+  simp only [Finset.sum_const, Finset.card_range, nsmul_eq_mul]
+  have hn' : (n : ℂ) ≠ 0 := by exact_mod_cast hn.ne'
+  have hH : ((H : ℂ) + 1) ≠ 0 := by exact_mod_cast Nat.succ_ne_zero H
+  push_cast
+  field_simp
+  rw [← Finset.mul_sum]; ring
+
 end NormalNumbers.PrimeModel.Quant
