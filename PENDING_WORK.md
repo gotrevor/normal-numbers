@@ -1,3 +1,14 @@
+## Erdős #257 base 2 — lap 4 (2026-10-02)
+* N7 PROVED: `SchedB.exists_scheduleWitnessSC_two_of_supplyEff` (G4Base2Sched.lean) — b=3 parameter
+  layer + base-2 hM/hB/hbig/hfar/hbudget (`scheduleWitnessSC2`), (k₄,e) chosen under the moment cap.
+* Finding: the ineffective supply (`∃ e₀`) cannot feed N7 — `HypE` caps e ≤ 2^{8K²}/(10⁵T).  Old
+  sorry'd `exists_scheduleWitnessSC_two_of_supply` removed (unprovable shape); replaced by
+  `SchedB.VeryLargeCovSupplyEff` (threshold A·(P₀(c₀+1)2^t)^A ≤ 2^e).
+* OPEN on path: `veryLargeCovSupplyEff_of_TT` (Erdos257Base2.lean).  Next attack: effective
+  `binPair_cov` (replace `ev_L` filter by explicit L ≥ D(2u)^k), then re-run the supply proof
+  with Z ≤ poly(P₀(c₀+1)2^t); plus leaves N5, exists_bins, abs_one_sub_binDelta_le,
+  sum_inv_vlPrimes_le, avg_binErr_le.
+
 ## Erdős #257 base 2 — lap 3 (2026-10-02, re-frozen on TTEquidistributedDyadic)
 
 Headline + corollaries PROVED from: N7 `exists_scheduleWitnessSC_two_of_supply` (sorry) and the

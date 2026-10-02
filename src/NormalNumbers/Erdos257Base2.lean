@@ -9,6 +9,7 @@ import NormalNumbers.G4VeryLargeCov
 import NormalNumbers.G4SubsetWitnessCov
 import NormalNumbers.G4Base2Cov
 import NormalNumbers.G4Base2PairCov
+import NormalNumbers.G4Base2Sched
 
 /-!
 # Erdős #257 at base 2 for prime subsets (campaign launched 2026-10-02)
@@ -231,20 +232,21 @@ theorem veryLargeCovSupply_of_TT (htt : CastingOut.TTEquidistributedDyadic) :
   have : (2 * 111 + 101 : ℝ) * ε₁ ≤ κ / 2 := aux_e hκ hsq hC6 hθκ
   linarith
 
-/-- **N7: the base-2 schedule.**  A Mertens rate and the covariance supply give a schedule
-witness for every omitted dyadic cylinder.  At `bb = 2`, `rowL1 = 1`, `rowL2 = 2^{-K}/3`, so the
-very-large term needs `κ ≤ 2^{-K/2}/(256 K²)`, which the supply provides; the remaining fields
-are the `b ≥ 3` schedule (`SchedB.scheduleWitnessSE`) redone at `b = 2`.  70%. -/
-theorem exists_scheduleWitnessSC_two_of_supply (hsup : VeryLargeCovSupply S)
-    {c C : ℝ} (hm : MertensAP.MertensRate S c C) (ℓ w : ℕ) (hℓ : 1 ≤ ℓ) :
-    Nonempty (ScheduleWitnessSC S 2 ℓ w) := by
+/-- **N3–N6, effective: the covariance supply from Tao–Teräväinen 3.1(i).**  Same route as
+`veryLargeCovSupply_of_TT`, with every threshold made explicit: the TT/N5 constants
+`c, Cst, C₅, X₀, Y₀, C₆` are absolute, and every other demand (`L^c ≥ P₀ + shift`,
+`Cst·L^{-c}·J₀·B² < 1`, `log Y ≥ C₆P₀/κ`, …) is polynomial in `P₀·(shift+1)·2^t`.
+Needed because `SchedB.HypE` caps the cutoff (`SchedB.moment_cap_two`).  Route: replace the
+filter step `ev_L` in `binPair_cov` by an explicit threshold `L ≥ D·(2u)^k`.  80%. -/
+theorem veryLargeCovSupplyEff_of_TT (htt : CastingOut.TTEquidistributedDyadic) :
+    SchedB.VeryLargeCovSupplyEff S := by
   sorry
 
 /-- **N6 + N7: the base-2 schedule witness with the covariance interface.** -/
 theorem exists_scheduleWitnessSC_two (htt : CastingOut.TTEquidistributedDyadic)
     {c C : ℝ} (hm : MertensAP.MertensRate S c C) (ℓ w : ℕ) (hℓ : 1 ≤ ℓ) :
     Nonempty (ScheduleWitnessSC S 2 ℓ w) :=
-  exists_scheduleWitnessSC_two_of_supply (veryLargeCovSupply_of_TT htt) hm ℓ w hℓ
+  SchedB.exists_scheduleWitnessSC_two_of_supplyEff S (veryLargeCovSupplyEff_of_TT htt) hm ℓ w hℓ
 
 /-- **Base-2 disjunctivity of `Σ_{p∈S} 1/(2ᵖ − 1)`** for any prime set with a Mertens rate,
 conditional on Tao–Teräväinen Theorem 3.1(i).  75% (audit). -/

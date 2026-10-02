@@ -532,6 +532,230 @@ noncomputable def scheduleWitnessSC2 (ℓ w e k₄ x : ℕ) (hℓ : 1 ≤ ℓ) (
     hfar := hfar_two (x := x) hK4 hE hx1 hx2
     hbudget := hbudget_two S (x := x) hK4 hE hx1 hlow }
 
+/-! ### The effective covariance supply and the choice of `(k₄, e)` -/
+
+/-- **The very-large covariance supply, effective form.**  One absolute `A` such that at every
+cutoff exponent `e` with `A·(P₀·(shift + 1)·2^t)^A ≤ 2^e` there is a power-of-two sample
+`2^x`, `x ∈ [100, 101]·2^{mE}`, carrying `VeryLargeCov` with `V = 20000` and any
+`κ ≥ 2^{-t}`.  The ineffective form (`∃ e₀`) cannot feed the schedule, whose moment cap bounds
+`e` by `2^{8K²}/(10⁵ T)`. -/
+def VeryLargeCovSupplyEff : Prop :=
+  ∃ A : ℕ, ∀ K N : ℕ, ∀ hK : 1 ≤ K, ∀ κ : ℝ, ∀ t : ℕ, (1 / 2 : ℝ) ^ t ≤ κ → ∀ e : ℕ,
+    A * ((gridOf K N hK).P₀ * ((K + N) * gridDm K N + 1) * 2 ^ t) ^ A ≤ 2 ^ e →
+    ∃ x : ℕ, 100 * 2 ^ mE K e ≤ x ∧ x ≤ 101 * 2 ^ mE K e ∧
+      VeryLargeCov S (gridOf K N hK) (2 ^ x) (YE K e) 20000 κ
+
+/-- The size `P₀·(shift + 1)·2^K` in bits. -/
+lemma sizeZ_le {K : ℕ} (hK : 100 ≤ K) :
+    (gridOf K (N K) (by omega)).P₀ * ((K + N K) * gridDm K (N K) + 1) * 2 ^ K
+      ≤ 2 ^ (4 * logP₀Nat K + 2 * (K + N K) + K) := by
+  have hK1 : 1 ≤ K := by omega
+  set L := logP₀Nat K
+  have hP : ((gridOf K (N K) hK1).P₀ : ℝ) ≤ (2 : ℝ) ^ (2 * L) :=
+    (Sched.P₀_le_exp hK1).trans (Sched.exp_nat_le_two_pow L)
+  have hD : (gridDm K (N K) : ℝ) ≤ (2 : ℝ) ^ (2 * L) := by
+    have h1 : (gridDm K (N K) : ℝ) ≤ gridP₀Bound K (N K) := by
+      exact_mod_cast Sched.gridDm_le_gridP₀Bound K (N K) hK1
+    have hpos : (0 : ℝ) < gridP₀Bound K (N K) := lt_of_lt_of_le
+      (by exact_mod_cast gridDm_pos K (N K)) h1
+    have h2 : (gridP₀Bound K (N K) : ℝ) ≤ Real.exp L := by
+      calc (gridP₀Bound K (N K) : ℝ) = Real.exp (Real.log (gridP₀Bound K (N K))) :=
+            (Real.exp_log hpos).symm
+        _ ≤ _ := Real.exp_le_exp.2 (Sched.log_gridP₀Bound_le hK1)
+    exact h1.trans (h2.trans (Sched.exp_nat_le_two_pow L))
+  have hKN : 2 * (K + N K) ≤ 2 ^ (2 * (K + N K)) := by
+    have := Nat.lt_two_pow_self (n := 2 * (K + N K)); omega
+  have hKNr : (2 : ℝ) * ((K + N K : ℕ) : ℝ) ≤ (2 : ℝ) ^ (2 * (K + N K)) := by exact_mod_cast hKN
+  have hD1 : (1 : ℝ) ≤ gridDm K (N K) := by exact_mod_cast gridDm_pos K (N K)
+  have hKN1 : (1 : ℝ) ≤ ((K + N K : ℕ) : ℝ) := by
+    have : 1 ≤ K + N K := by omega
+    exact_mod_cast this
+  have hmid : (((K + N K) * gridDm K (N K) + 1 : ℕ) : ℝ)
+      ≤ (2 : ℝ) ^ (2 * (K + N K)) * (2 : ℝ) ^ (2 * L) := by
+    push_cast
+    have : ((K : ℝ) + N K) * gridDm K (N K) + 1 ≤ 2 * ((K : ℝ) + N K) * gridDm K (N K) := by
+      push_cast at hKN1; nlinarith
+    push_cast at hKNr
+    calc ((K : ℝ) + N K) * gridDm K (N K) + 1 ≤ 2 * ((K : ℝ) + N K) * gridDm K (N K) := this
+      _ ≤ (2 : ℝ) ^ (2 * (K + N K)) * (2 : ℝ) ^ (2 * L) := by gcongr
+  have hfin : (((gridOf K (N K) hK1).P₀ * ((K + N K) * gridDm K (N K) + 1) * 2 ^ K : ℕ) : ℝ)
+      ≤ (((2 ^ (4 * L + 2 * (K + N K) + K)) : ℕ) : ℝ) := by
+    rw [Nat.cast_mul, Nat.cast_mul]
+    calc ((gridOf K (N K) hK1).P₀ : ℝ) * (((K + N K) * gridDm K (N K) + 1 : ℕ) : ℝ)
+          * ((2 ^ K : ℕ) : ℝ)
+        ≤ (2 : ℝ) ^ (2 * L) * ((2 : ℝ) ^ (2 * (K + N K)) * (2 : ℝ) ^ (2 * L)) * (2 : ℝ) ^ K := by
+          push_cast; gcongr
+          push_cast at hmid; exact hmid
+      _ = (((2 ^ (4 * L + 2 * (K + N K) + K)) : ℕ) : ℝ) := by
+          push_cast; rw [← pow_add, ← pow_add, ← pow_add]; ring_nf
+  exact_mod_cast hfin
+
+/-- The moment cap at the inflated cutoff. -/
+lemma moment_cap_two {k₄ e : ℕ} (hk : 25 ≤ k₄) (he : e ≤ 2 ^ (4 * k₄) * (4 * k₄) ^ (84 * k₄ + 20)) :
+    100000 * T (4 * k₄) * e ≤ 2 ^ m₂ (4 * k₄) := by
+  set K := 4 * k₄ with hK
+  have hK100 : 100 ≤ K := by omega
+  have hT := Sched.T_le hK100
+  have hKk : K ≤ 2 ^ k₄ := by
+    have := k₄_bound_one hk; omega
+  have h1 : 100000 * T K * e ≤ 2 ^ 17 * (K ^ (3 * K + 3) * (2 ^ K * K ^ (84 * k₄ + 20))) := by
+    calc 100000 * T K * e ≤ 2 ^ 17 * T K * e := by gcongr; norm_num
+      _ ≤ 2 ^ 17 * K ^ (3 * K + 3) * (2 ^ K * K ^ (84 * k₄ + 20)) := by gcongr
+      _ = _ := by ring
+  have h2 : K ^ (3 * K + 3) * K ^ (84 * k₄ + 20) ≤ 2 ^ (k₄ * (96 * k₄ + 23)) := by
+    rw [← pow_add, pow_mul]
+    calc K ^ (3 * K + 3 + (84 * k₄ + 20)) ≤ (2 ^ k₄) ^ (3 * K + 3 + (84 * k₄ + 20)) :=
+          Nat.pow_le_pow_left hKk _
+      _ = (2 ^ k₄) ^ (96 * k₄ + 23) := by rw [hK]; ring_nf
+  calc 100000 * T K * e ≤ 2 ^ 17 * (K ^ (3 * K + 3) * (2 ^ K * K ^ (84 * k₄ + 20))) := h1
+    _ = 2 ^ 17 * 2 ^ K * (K ^ (3 * K + 3) * K ^ (84 * k₄ + 20)) := by ring
+    _ ≤ 2 ^ 17 * 2 ^ K * 2 ^ (k₄ * (96 * k₄ + 23)) := by gcongr
+    _ = 2 ^ (17 + K + k₄ * (96 * k₄ + 23)) := by rw [← pow_add, ← pow_add]
+    _ ≤ 2 ^ m₂ K := by
+        refine Nat.pow_le_pow_right (by norm_num) ?_
+        unfold m₂; rw [hK]; nlinarith
+
+/-- The inflated cutoff stays under `2^K·K^{21K+20}`. -/
+lemma e_bound_two {k₄ A Dc e₀ : ℕ} (hk : 25 ≤ k₄) (hA : A ≤ k₄) (hDc : Dc ≤ k₄)
+    (h : Hyp 3 (4 * k₄))
+    (he₀ : e₀ ≤ Dc * (m₁ 3 (4 * k₄) + (4 * k₄) ^ 2 + 1)) :
+    max (max e₀ (m₁ 3 (4 * k₄)))
+        (A + A * (4 * logP₀Nat (4 * k₄) + 2 * (4 * k₄ + Sched.N (4 * k₄)) + 4 * k₄))
+      ≤ 2 ^ (4 * k₄) * (4 * k₄) ^ (84 * k₄ + 20) := by
+  set K := 4 * k₄ with hK
+  have hK100 : 100 ≤ K := by omega
+  have hm₁ := m₁_le h
+  have hL := Sched.logP₀Nat_le hK100
+  have hN := Sched.N_le hK100
+  have hKpow : 1 ≤ K ^ (3 * K + 3) := Nat.one_le_pow _ _ (by omega)
+  have hDcK : Dc ≤ 2 ^ K := by
+    have := Nat.lt_two_pow_self (n := K); omega
+  have hp1 : K ^ (3 * K + 3) ≤ K ^ (84 * k₄ + 20) :=
+    Nat.pow_le_pow_right (by omega) (by omega)
+  have hp2 : K ^ 2 ≤ K ^ (3 * K + 3) := Nat.pow_le_pow_right (by omega) (by omega)
+  have hp3 : K ^ 3 ≤ K ^ (20 * K + 17) := Nat.pow_le_pow_right (by omega) (by omega)
+  have hp4 : K ≤ K ^ (20 * K + 17) := Nat.le_self_pow (by omega) _
+  have hp5 : K ^ (20 * K + 17) * K ^ 2 ≤ K ^ (84 * k₄ + 20) := by
+    rw [← pow_add]; exact Nat.pow_le_pow_right (by omega) (by omega)
+  have h2K : 1 ≤ 2 ^ K := Nat.one_le_two_pow
+  -- branch 1
+  have b1 : e₀ ≤ 2 ^ K * K ^ (84 * k₄ + 20) := by
+    have : m₁ 3 K + K ^ 2 + 1 ≤ K ^ (84 * k₄ + 20) := by
+      have : 3 * K ^ (3 * K + 3) ≤ K * K ^ (3 * K + 3) := Nat.mul_le_mul_right _ (by omega)
+      have : K * K ^ (3 * K + 3) ≤ K ^ (84 * k₄ + 20) := by
+        rw [← pow_succ']; exact Nat.pow_le_pow_right (by omega) (by omega)
+      omega
+    calc e₀ ≤ Dc * (m₁ 3 K + K ^ 2 + 1) := he₀
+      _ ≤ 2 ^ K * K ^ (84 * k₄ + 20) := Nat.mul_le_mul hDcK this
+  have b2 : m₁ 3 K ≤ 2 ^ K * K ^ (84 * k₄ + 20) := by
+    have := Nat.le_mul_of_pos_left (K ^ (84 * k₄ + 20)) (show 0 < 2 ^ K by positivity)
+    omega
+  have b3 : A + A * (4 * logP₀Nat K + 2 * (K + N K) + K) ≤ 2 ^ K * K ^ (84 * k₄ + 20) := by
+    have hw : 1 + (4 * logP₀Nat K + 2 * (K + N K) + K) ≤ 10 * K ^ (20 * K + 17) := by omega
+    have hAK : A ≤ K := by omega
+    have : A + A * (4 * logP₀Nat K + 2 * (K + N K) + K)
+        = A * (1 + (4 * logP₀Nat K + 2 * (K + N K) + K)) := by ring
+    rw [this]
+    calc A * (1 + (4 * logP₀Nat K + 2 * (K + N K) + K)) ≤ K * (10 * K ^ (20 * K + 17)) :=
+          Nat.mul_le_mul hAK hw
+      _ ≤ K * (K * K ^ (20 * K + 17)) :=
+          Nat.mul_le_mul_left K (Nat.mul_le_mul_right _ (by omega))
+      _ = K ^ 2 * K ^ (20 * K + 17) := by ring
+      _ ≤ K ^ (84 * k₄ + 20) := by rw [mul_comm]; exact hp5
+      _ ≤ 2 ^ K * K ^ (84 * k₄ + 20) := Nat.le_mul_of_pos_left _ (by positivity)
+  exact max_le (max_le b1 b2) b3
+
+/-- **N7 from the effective supply.** -/
+theorem exists_scheduleWitnessSC_two_of_supplyEff (hsup : VeryLargeCovSupplyEff S)
+    {c C : ℝ} (hmert : MertensAP.MertensRate S c C) (ℓ w : ℕ) (hℓ : 1 ≤ ℓ) :
+    Nonempty (ScheduleWitnessSC S 2 ℓ w) := by
+  classical
+  obtain ⟨A, hA⟩ := hsup
+  obtain ⟨hc, -⟩ := id hmert
+  have hl2 : (0 : ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+  have hl2' : Real.log 2 ≤ 1 := by linarith [Real.log_two_lt_d9]
+  set X : ℝ := (24 + max C 0 + c) / (c * Real.log 2) with hX
+  have hX0 : 0 < X := by rw [hX]; have : (0:ℝ) ≤ max C 0 := le_max_right _ _; positivity
+  set Dc : ℕ := ⌈X + 1⌉₊ with hDc
+  have hDcge : X + 1 ≤ (Dc : ℝ) := Nat.le_ceil _
+  have hDc1 : 1 ≤ Dc := by
+    have : (1 : ℝ) ≤ (Dc : ℝ) := by linarith
+    exact_mod_cast this
+  set k₄ : ℕ := max (max (k₄bℓ 3 ℓ) Dc) (A + 25) with hk₄
+  have hk : k₄bℓ 3 ℓ ≤ k₄ := le_trans (le_max_left _ _) (le_max_left _ _)
+  have hDck : Dc ≤ k₄ := le_trans (le_max_right _ _) (le_max_left _ _)
+  have hAk : A + 25 ≤ k₄ := le_max_right _ _
+  set K : ℕ := 4 * k₄ with hKdef
+  have h : Hyp 3 K := hyp_KG (by norm_num) hℓ hk
+  have hK100 : 100 ≤ K := h.hK
+  obtain ⟨e₀, hsum₀, hbnd₀⟩ := MertensAP.exists_cutoff_subset hmert hK100 (m₁ 3 K)
+  obtain ⟨M1, hM1⟩ : ∃ M1, m₁ 3 K = M1 := ⟨_, rfl⟩
+  rw [hM1] at hsum₀ hbnd₀
+  set Am : ℕ := M1 + K ^ 2 + 1 with hAmdef
+  have hAmK : M1 ≤ Am ∧ K ^ 2 ≤ Am ∧ 1 ≤ Am := by omega
+  have hAmeq : Am = M1 + K ^ 2 + 1 := rfl
+  clear_value Am
+  have hA1 : (1 : ℝ) ≤ (Am : ℝ) := by exact_mod_cast hAmK.2.2
+  have hm₁A : (M1 : ℝ) ≤ (Am : ℝ) := by exact_mod_cast hAmK.1
+  have hKA : ((K : ℝ)) ^ 2 ≤ (Am : ℝ) := by
+    have h' : ((K ^ 2 : ℕ) : ℝ) ≤ (Am : ℝ) := by exact_mod_cast hAmK.2.1
+    push_cast at h'; linarith
+  have hm₁0 : (0 : ℝ) ≤ (M1 : ℝ) := Nat.cast_nonneg _
+  have hCmax : C ≤ max C 0 := le_max_left _ _
+  have hCmax0 : (0 : ℝ) ≤ max C 0 := le_max_right _ _
+  have hQ : ((M1 : ℝ) * Real.log 2 + 21 * (K : ℝ) ^ 2 + 2 + C + c)
+      ≤ (Am : ℝ) * (24 + max C 0 + c) := by
+    have h1 : (M1 : ℝ) * Real.log 2 ≤ (Am : ℝ) :=
+      (mul_le_of_le_one_right hm₁0 hl2').trans hm₁A
+    have h2 : 21 * (K : ℝ) ^ 2 ≤ 21 * (Am : ℝ) := by linarith
+    have h3 : (2 : ℝ) ≤ 2 * (Am : ℝ) := by linarith
+    have h4 : C ≤ max C 0 * (Am : ℝ) := hCmax.trans (le_mul_of_one_le_right hCmax0 hA1)
+    have h5 : c ≤ c * (Am : ℝ) := le_mul_of_one_le_right hc.le hA1
+    have e : (Am : ℝ) * (24 + max C 0 + c) = 24 * Am + max C 0 * Am + c * Am := by ring
+    rw [e]; linarith
+  have hbnd : (e₀ : ℝ) ≤ (Dc : ℝ) * (Am : ℝ) := by
+    have hdiv : ((M1 : ℝ) * Real.log 2 + 21 * (K : ℝ) ^ 2 + 2 + C + c)
+        / (c * Real.log 2) ≤ (Am : ℝ) * X := by
+      rw [hX, ← mul_div_assoc, div_le_div_iff₀ (by positivity) (by positivity)]
+      exact mul_le_mul_of_nonneg_right hQ (by positivity)
+    have hmax : max 0 (((M1 : ℝ) * Real.log 2 + 21 * (K : ℝ) ^ 2 + 2 + C + c)
+        / (c * Real.log 2)) ≤ (Am : ℝ) * X := by
+      refine max_le ?_ hdiv
+      positivity
+    have : (e₀ : ℝ) ≤ (Am : ℝ) * X + 1 := by linarith
+    nlinarith
+  have he₀ : e₀ ≤ Dc * Am := by
+    have : (e₀ : ℝ) ≤ ((Dc * Am : ℕ) : ℝ) := by push_cast; linarith
+    exact_mod_cast this
+  set w₂ : ℕ := 4 * logP₀Nat K + 2 * (K + N K) + K with hw₂
+  set e : ℕ := max (max e₀ (m₁ 3 K)) (A + A * w₂) with hedef
+  have hele := e_bound_two (k₄ := k₄) (A := A) (Dc := Dc) (e₀ := e₀) (by omega) (by omega)
+    hDck h (by rw [hM1, ← hAmeq]; exact he₀)
+  have hhi : McE K e ≤ 2 ^ m₂ K := moment_cap_two (by omega) hele
+  have hlo : m₁ 3 K ≤ e := le_trans (le_max_right _ _) (le_max_left _ _)
+  have he₀e : e₀ ≤ e := le_trans (le_max_left _ _) (le_max_left _ _)
+  have hE : HypE 3 K e := ⟨h, hlo, hhi⟩
+  have hlow : (m₁ 3 K : ℝ) * Real.log 2 - 21 * ((K : ℕ) : ℝ) ^ 2 - 4
+      ≤ ∑ p ∈ (smallPrimes (RE e) (gridOf K (N K) hE.hK1).P₀).filter S, (p : ℝ)⁻¹ := by
+    rw [hM1]
+    refine hsum₀.trans ?_
+    refine Finset.sum_le_sum_of_subset_of_nonneg ?_ (fun p _ _ => by positivity)
+    intro p hp
+    rw [Finset.mem_filter] at hp ⊢
+    exact ⟨smallPrimes_mono (Nat.pow_le_pow_right (by norm_num)
+      (Nat.pow_le_pow_right (by norm_num) he₀e)) hp.1, hp.2⟩
+  -- the supply's threshold
+  have hZ := sizeZ_le hK100
+  have hthr : A * ((gridOf K (N K) hE.hK1).P₀ * ((K + N K) * gridDm K (N K) + 1) * 2 ^ K) ^ A
+      ≤ 2 ^ e := by
+    calc A * ((gridOf K (N K) hE.hK1).P₀ * ((K + N K) * gridDm K (N K) + 1) * 2 ^ K) ^ A
+        ≤ 2 ^ A * (2 ^ w₂) ^ A :=
+          Nat.mul_le_mul (Nat.lt_two_pow_self).le (Nat.pow_le_pow_left hZ _)
+      _ = 2 ^ (A + A * w₂) := by rw [← pow_mul, ← pow_add, mul_comm w₂]
+      _ ≤ 2 ^ e := Nat.pow_le_pow_right (by norm_num) (le_max_right _ _)
+  obtain ⟨x, hx1, hx2, hcov⟩ := hA K (N K) hE.hK1 ((1 / 2 : ℝ) ^ K) K le_rfl e hthr
+  exact ⟨scheduleWitnessSC2 S ℓ w e k₄ x hℓ hk hE hlow hx1 hx2 hcov⟩
+
 end SchedB
 
 end NormalNumbers.G4
