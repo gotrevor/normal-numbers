@@ -5,6 +5,7 @@ Authors: Trevor Morris
 -/
 import NormalNumbers.LiteratureVandeheyDifferencing
 import NormalNumbers.RealDefs
+import NormalNumbers.GrowingLocalizedLogWitness
 
 /-!
 # The growing-prime localized logarithm `ζ_Y` (campaign launched 2026-10-02)
@@ -61,7 +62,7 @@ theorem zetaY_isNormal (hV : Literature.VandeheyDiff.VandeheyThm51)
 /-- The theorem has content: an admissible `Y` with `Y → ∞`, hence unbounded prime support. -/
 theorem exists_unbounded_zetaY : ∃ Y : ℕ → ℕ, Monotone Y ∧ (∀ m, 3 ≤ Y m) ∧
     Tendsto Y atTop atTop ∧
-    ∀ᶠ n : ℕ in atTop, ((Y n).primeCounting : ℝ) ≤ (1 / 2) * Real.logb 2 (Real.log n) := by
-  sorry
+    ∀ᶠ n : ℕ in atTop, ((Y n).primeCounting : ℝ) ≤ (1 / 2) * Real.logb 2 (Real.log n) :=
+  ⟨witnessY, witnessY_mono, three_le_witnessY, witnessY_tendsto, witnessY_admissible⟩
 
 end NormalNumbers.GrowingLocalizedLog
