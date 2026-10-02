@@ -123,18 +123,64 @@ theorem orbitWeylLe_of_window (Jsched : ℕ → ℕ) (hTail : TailOK S Jsched) (
     (windowMeanS S (Jsched N) h N)
   linarith
 
+/-- Bounded square-root fresh mass below `1` controls the dyadic fresh mass `S_P(N, 2N)`. -/
+theorem freshMassTwo_of_sqrtFreshMassLe {ρ : ℝ} (hρ : ρ < 1) (hS : SqrtFreshMassLe S ρ) :
+    ∀ᶠ N : ℕ in atTop, recipSumIoc S N (2 * N) ≤ 1 := by
+  have hev := hS ((1 - ρ) / 2) (by linarith)
+  have h2 : Tendsto (fun N : ℕ => 2 * N) atTop atTop :=
+    tendsto_id.const_mul_atTop' (by norm_num)
+  filter_upwards [h2.eventually hev] with N hN
+  have hsq : Nat.sqrt (2 * N) ≤ N := by
+    by_contra hc
+    have h1 : N + 1 ≤ Nat.sqrt (2 * N) := by omega
+    have h2 : (N + 1) ^ 2 ≤ Nat.sqrt (2 * N) ^ 2 := Nat.pow_le_pow_left h1 2
+    have h3 := Nat.sqrt_le' (2 * N)
+    nlinarith
+  have hmono : recipSumIoc S N (2 * N) ≤ recipSumIoc S (Nat.sqrt (2 * N)) (2 * N) := by
+    unfold recipSumIoc
+    refine Finset.sum_le_sum_of_subset_of_nonneg
+      (Finset.filter_subset_filter _ (Finset.Ioc_subset_Ioc_left hsq)) ?_
+    exact fun p _ _ => by positivity
+  linarith
+
+/-- **Tail under bounded fresh mass.**  The graded schedule `JG` keeps a negligible tail as soon
+as `ρ < 1` (the doc's "infinite phase tail" row). -/
+theorem tailOK_of_sqrtFreshMassLe {ρ : ℝ} (hρ : ρ < 1) (hS : SqrtFreshMassLe S ρ)
+    (hP : DivergentRecip S) : TailOK S (FamilyGraded.JG S) := by
+  rw [TailOK]
+  refine squeeze_zero' (Eventually.of_forall (fun N => ?_)) ?_
+    (FamilyGraded.tail_graded S (freshMassTwo_of_sqrtFreshMassLe S hρ hS) hP)
+  · exact div_nonneg (Finset.sum_nonneg fun _ _ => abs_nonneg _) (Nat.cast_nonneg N)
+  · filter_upwards [eventually_ge_atTop 1] with N hN
+    exact tail_error_L1 S (FamilyGraded.JG S N) N hN
+
 end Wiring
 
-/-- **The crux (quantitative Weyl bound).**  Bounded square-root fresh mass gives Weyl sums of
-size `O(ρ (log(1/ρ) + log|h|)²)`.  Paper: doc §"Transfer", `|W_h| = O(ρ(log²|h| + log u log|h| +
-log u)) + 4e^{−u}` at fixed `u`, then `u = max(u₀, ⌈log 1/ρ⌉)`.  70% (paper refereed; the Lean
-path needs the fixed-`u` schedule, build gaps 1–4). -/
+/-- **The crux (window-mean form).**  On the graded site count `J = JG P N`, bounded square-root
+fresh mass gives truncated window means of size `O(ρ (log(1/ρ) + log|h|)²)`.  Paper: doc
+§"Transfer", `|W_h| = O(ρ(log²|h| + log u log|h| + log u)) + 4e^{−u}` at fixed `u` (cutoffs
+`y_j = N^{u⁻²2⁻ʲ}`, a schedule independent of `J`), then `u = max(u₀, ⌈log 1/ρ⌉)`.  70% (paper
+refereed; Lean path = build gaps 1–3: the fixed-`u` rerun of `windowMean_le_terms` and limsup
+versions of `termE1/E4a/E4b/E4c/E5`). -/
+theorem windowWeylQuant : ∃ C₁ ρ₁ : ℝ, 0 < C₁ ∧ 0 < ρ₁ ∧ ρ₁ < 1 ∧
+    ∀ (P : ℕ → Prop) [DecidablePred P], G4Sparse.DivergentRecip P →
+      ∀ ρ : ℝ, 0 < ρ → ρ ≤ ρ₁ → SqrtFreshMassLe P ρ →
+        ∀ h : ℤ, h ≠ 0 → ∀ ε > 0, ∀ᶠ N : ℕ in atTop,
+          ‖G4Sparse.windowMeanS P (FamilyGraded.JG P N) h N‖
+            ≤ C₁ * ρ * (Real.log (1 / ρ) + Real.log (|(h : ℝ)| + 1)) ^ 2 + ε := by
+  sorry
+
+/-- **The crux (orbit form).**  Bounded square-root fresh mass gives orbit Weyl sums of size
+`O(ρ (log(1/ρ) + log|h|)²)`: `windowWeylQuant` through the quantitative wiring. -/
 theorem orbitWeylQuant : ∃ C₁ ρ₁ : ℝ, 0 < C₁ ∧ 0 < ρ₁ ∧ ρ₁ < 1 ∧
     ∀ (P : ℕ → Prop) [DecidablePred P], G4Sparse.DivergentRecip P →
       ∀ ρ : ℝ, 0 < ρ → ρ ≤ ρ₁ → SqrtFreshMassLe P ρ →
         OrbitWeylLe (PrimeLambert.subsetLambert P 4)
           (fun h => C₁ * ρ * (Real.log (1 / ρ) + Real.log (|(h : ℝ)| + 1)) ^ 2) := by
-  sorry
+  obtain ⟨C₁, ρ₁, hC₁, hρ₁, hρ₁1, hW⟩ := windowWeylQuant
+  refine ⟨C₁, ρ₁, hC₁, hρ₁, hρ₁1, fun P _ hP ρ hρ hρ1 hS => ?_⟩
+  exact orbitWeylLe_of_window P _ (tailOK_of_sqrtFreshMassLe P (lt_of_le_of_lt hρ1 hρ₁1) hS hP)
+    _ (hW P hP ρ hρ hρ1 hS)
 
 /-- **Trapezoid Erdős–Turán.**  Weyl bounds up to frequency `H` give interval discrepancy
 `4δ + 1/(δH) + Σ_{h=1}^{H} 2B(h)/h`.  95% (standard; the `1/h` weight is `|ĝ(h)| ≤ 1/(π|h|)` for

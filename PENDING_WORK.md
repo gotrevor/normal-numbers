@@ -2504,3 +2504,10 @@ concrete content of next action #1.
 - `orbitDefectLe_of_weyl` — trapezoid Erdős–Turán (4δ + 1/(δH) + Σ 2B(h)/h).  Route:
   `fourierCoeffOn_of_hasDeriv_right` on `trapUp/trapLo`, summable coefficients, pointwise Fourier
   series (`has_pointwise_sum_fourier_series_of_summable`).
+
+Lap 1 cont.: gap 4 PROVED (`orbitWeylLe_of_window`); tail PROVED under ρ<1
+(`tailOK_of_sqrtFreshMassLe`); `orbitWeylQuant` PROVED from `windowWeylQuant` — the crux is now
+a pure window-mean bound on `windowMeanS P (JG P N) h N` (J-schedule unchanged; only the cutoffs
+`y_j` and tiers `u_b` become fixed-`u`).  NEXT: new file with `yU u N j = ⌊N^{u⁻²2⁻ʲ}⌋`,
+`uuU u b = u + b`, rerun `schedule_admissible` + `window_bound_schedule` → `windowMean_le_termsU`,
+then limsup bounds per term.
