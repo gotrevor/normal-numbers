@@ -10,6 +10,7 @@ import NormalNumbers.G4SchedBE
 import NormalNumbers.LiteratureTTEquidistributedDefect
 import NormalNumbers.G4Base2Mertens
 import NormalNumbers.G4Base2N5
+import NormalNumbers.G4Base2Pairs
 
 /-!
 # N3–N6: the very-large covariance supply, decomposed
@@ -302,7 +303,125 @@ theorem avg_binErr_le : ∃ C₆ : ℝ, 0 < C₆ ∧ ∀ (X Y P₀ b₀ ρ : ℕ
     ((apSample X P₀ b₀).card : ℝ)⁻¹ * ∑ n ∈ apSample X P₀ b₀, ∑ ℓ,
         ((binCount (bins ℓ) (n + ρ) : ℝ) - (if binCount (bins ℓ) (n + ρ) = 0 then 0 else 1))
       ≤ ∑ ℓ, mass (bins ℓ) ^ 2 + C₆ * P₀ / Real.log Y := by
-  sorry
+  refine ⟨250, by norm_num, fun X Y P₀ b₀ ρ B bins hP₀ hb hP₀Y hYX hρX hρ h2P hdisj hpr => ?_⟩
+  set S := apSample X P₀ b₀ with hS
+  have hY2 : 2 ≤ Y := by omega
+  have hYr : (2 : ℝ) ≤ Y := by exact_mod_cast hY2
+  have hlogY : 0 < Real.log Y := Real.log_pos (by linarith)
+  have hPr : (0 : ℝ) < P₀ := by exact_mod_cast hP₀
+  have hXr : (2 : ℝ) * P₀ ≤ X := by exact_mod_cast h2P
+  have hX0 : (0 : ℝ) < X := by linarith
+  have hs : (X : ℝ) / (2 * P₀) ≤ S.card := by
+    have h := card_apSample_ge X P₀ b₀ hP₀ hb
+    have : (X : ℝ) / (2 * P₀) ≤ (X : ℝ) / P₀ - 1 := by
+      rw [div_le_iff₀ (by positivity)]
+      have : (X : ℝ) / P₀ * P₀ = X := div_mul_cancel₀ _ hPr.ne'
+      nlinarith
+    linarith
+  have hspos : (0 : ℝ) < S.card := lt_of_lt_of_le (by positivity) hs
+  have hIp : ∀ ℓ, ∀ p ∈ bins ℓ, p.Prime := fun ℓ p hp => (hpr ℓ p hp).1
+  -- pointwise: bin error ≤ number of dividing pairs
+  set D : Fin B → Finset ℕ → ℕ → ℝ := fun ℓ T n => if (∏ p ∈ T, p) ∣ n + ρ then 1 else 0
+  have hpt : ∀ n ∈ S, ∑ ℓ, ((binCount (bins ℓ) (n + ρ) : ℝ)
+      - (if binCount (bins ℓ) (n + ρ) = 0 then 0 else 1))
+      ≤ ∑ ℓ, ∑ T ∈ (bins ℓ).powersetCard 2, D ℓ T n := by
+    intro n _
+    refine sum_le_sum fun ℓ _ => ?_
+    refine (binErr_le_pairs _).trans (le_of_eq ?_)
+    rw [choose_binCount_eq (hIp ℓ), card_filter]; push_cast; rfl
+  -- per-pair count
+  have hpair : ∀ ℓ, ∀ T ∈ (bins ℓ).powersetCard 2, ∑ n ∈ S, D ℓ T n
+      ≤ (X : ℝ) / P₀ * ∏ p ∈ T, (p : ℝ)⁻¹ + (if ∏ p ∈ T, p ≤ 2 * X then 1 else 0) := by
+    intro ℓ T hT
+    have hTs := (mem_powersetCard.1 hT).1
+    have hTp : ∀ p ∈ T, p.Prime := fun p hp => hIp ℓ p (hTs hp)
+    have hd : 0 < ∏ p ∈ T, p := prod_pos fun p hp => (hTp p hp).pos
+    have hdr : (0 : ℝ) < ((∏ p ∈ T, p : ℕ) : ℝ) := by exact_mod_cast hd
+    have heq : (X : ℝ) / P₀ * ∏ p ∈ T, (p : ℝ)⁻¹ = (X : ℝ) / (P₀ * ((∏ p ∈ T, p : ℕ) : ℝ)) := by
+      rw [prod_inv_distrib, ← Nat.cast_prod]; field_simp
+    rw [heq]
+    simp only [D]
+    rw [sum_boole]
+    split_ifs with h2X
+    · have hcop : P₀.Coprime (∏ p ∈ T, p) := Nat.Coprime.prod_right fun p hp =>
+        (Nat.Coprime.symm ((Nat.Prime.coprime_iff_not_dvd (hTp p hp)).2
+          fun h => absurd (Nat.le_of_dvd hP₀ h) (by have := (hpr ℓ p (hTs hp)).2; omega)))
+      exact card_apSample_dvd_le hP₀ hd hρ hcop
+    · rw [add_zero]
+      have : S.filter (fun n => (∏ p ∈ T, p) ∣ n + ρ) = ∅ := by
+        rw [filter_eq_empty_iff]
+        intro n hn hdv
+        have hn' : n < X := by
+          simp only [hS, apSample, mem_filter, mem_range] at hn; exact hn.1
+        have := Nat.le_of_dvd (by omega) hdv
+        omega
+      rw [this]; simp only [card_empty, Nat.cast_zero]; positivity
+  -- the total
+  have hswap : ∑ n ∈ S, ∑ ℓ, ∑ T ∈ (bins ℓ).powersetCard 2, D ℓ T n
+      = ∑ ℓ, ∑ T ∈ (bins ℓ).powersetCard 2, ∑ n ∈ S, D ℓ T n := by
+    rw [sum_comm]; refine sum_congr rfl fun ℓ _ => ?_; rw [sum_comm]
+  have hmain : ∀ ℓ, ∑ T ∈ (bins ℓ).powersetCard 2, ∏ p ∈ T, (p : ℝ)⁻¹ ≤ mass (bins ℓ) ^ 2 / 2 := by
+    intro ℓ
+    have := two_mul_sum_pairs_le (bins ℓ) (fun p => (p : ℝ)⁻¹) (fun p => by positivity)
+    unfold mass; linarith
+  set A : Fin B → Finset (Finset ℕ) := fun ℓ =>
+    ((bins ℓ).powersetCard 2).filter (fun T => ∏ p ∈ T, p ≤ 2 * X)
+  set U := univ.biUnion bins
+  have hU : ∀ p ∈ U, p.Prime ∧ Y < p := by
+    intro p hp; obtain ⟨ℓ, -, hℓ⟩ := mem_biUnion.1 hp; exact hpr ℓ p hℓ
+  have hcnt : ∑ ℓ, ∑ T ∈ (bins ℓ).powersetCard 2, (if ∏ p ∈ T, p ≤ 2 * X then (1 : ℝ) else 0)
+      ≤ 40 * Real.log 4 * (2 * X : ℕ) / Real.log Y := by
+    have e : ∑ ℓ, ∑ T ∈ (bins ℓ).powersetCard 2, (if ∏ p ∈ T, p ≤ 2 * X then (1 : ℝ) else 0)
+        = ((univ.biUnion A).card : ℝ) := by
+      rw [card_biUnion]
+      · push_cast; refine sum_congr rfl fun ℓ _ => ?_; rw [sum_boole]
+      · intro ℓ _ ℓ' _ hne
+        rw [Function.onFun, disjoint_left]
+        intro T hT hT'
+        have h1 := (mem_powersetCard.1 (mem_filter.1 hT).1)
+        have h2 := (mem_powersetCard.1 (mem_filter.1 hT').1)
+        obtain ⟨a, ha⟩ : T.Nonempty := card_pos.1 (by omega)
+        exact disjoint_left.1 (hdisj ℓ ℓ' hne) (h1.1 ha) (h2.1 ha)
+    rw [e]
+    refine le_trans (Nat.cast_le.2 (card_le_card ?_)) (card_pairs_le hY2 hU (2 * X))
+    intro T hT
+    obtain ⟨ℓ, -, hℓ⟩ := mem_biUnion.1 hT
+    obtain ⟨h1, h2⟩ := mem_filter.1 hℓ
+    refine mem_filter.2 ⟨mem_powersetCard.2 ⟨fun p hp => mem_biUnion.2 ⟨ℓ, mem_univ _,
+      (mem_powersetCard.1 h1).1 hp⟩, (mem_powersetCard.1 h1).2⟩, h2⟩
+  have htot : ∑ n ∈ S, ∑ ℓ, ((binCount (bins ℓ) (n + ρ) : ℝ)
+      - (if binCount (bins ℓ) (n + ρ) = 0 then 0 else 1))
+      ≤ (X : ℝ) / P₀ * ∑ ℓ, mass (bins ℓ) ^ 2 / 2 + 40 * Real.log 4 * (2 * X : ℕ) / Real.log Y := by
+    refine (sum_le_sum hpt).trans ?_
+    rw [hswap]
+    calc ∑ ℓ, ∑ T ∈ (bins ℓ).powersetCard 2, ∑ n ∈ S, D ℓ T n
+        ≤ ∑ ℓ, ∑ T ∈ (bins ℓ).powersetCard 2, ((X : ℝ) / P₀ * ∏ p ∈ T, (p : ℝ)⁻¹
+            + (if ∏ p ∈ T, p ≤ 2 * X then 1 else 0)) :=
+          sum_le_sum fun ℓ _ => sum_le_sum fun T hT => hpair ℓ T hT
+      _ = (X : ℝ) / P₀ * ∑ ℓ, ∑ T ∈ (bins ℓ).powersetCard 2, ∏ p ∈ T, (p : ℝ)⁻¹
+          + ∑ ℓ, ∑ T ∈ (bins ℓ).powersetCard 2, (if ∏ p ∈ T, p ≤ 2 * X then (1 : ℝ) else 0) := by
+          simp only [sum_add_distrib, mul_sum]
+      _ ≤ (X : ℝ) / P₀ * ∑ ℓ, mass (bins ℓ) ^ 2 / 2 + 40 * Real.log 4 * (2 * X : ℕ) / Real.log Y := by
+          gcongr with ℓ
+          exact hmain ℓ
+  have hinv : ((S.card : ℝ))⁻¹ ≤ 2 * P₀ / X := by
+    rw [inv_le_comm₀ hspos (by positivity), inv_div]; exact hs
+  have hl4 := log_four_lt
+  have hl40 : 0 ≤ Real.log 4 := Real.log_nonneg (by norm_num)
+  have hM0 : 0 ≤ ∑ ℓ, mass (bins ℓ) ^ 2 / 2 := sum_nonneg fun _ _ => by positivity
+  have hR0 : 0 ≤ (X : ℝ) / P₀ * ∑ ℓ, mass (bins ℓ) ^ 2 / 2
+      + 40 * Real.log 4 * (2 * X : ℕ) / Real.log Y := by positivity
+  calc ((S.card : ℝ))⁻¹ * ∑ n ∈ S, ∑ ℓ, ((binCount (bins ℓ) (n + ρ) : ℝ)
+        - (if binCount (bins ℓ) (n + ρ) = 0 then 0 else 1))
+      ≤ ((S.card : ℝ))⁻¹ * ((X : ℝ) / P₀ * ∑ ℓ, mass (bins ℓ) ^ 2 / 2
+          + 40 * Real.log 4 * (2 * X : ℕ) / Real.log Y) :=
+        mul_le_mul_of_nonneg_left htot (by positivity)
+    _ ≤ 2 * P₀ / X * ((X : ℝ) / P₀ * ∑ ℓ, mass (bins ℓ) ^ 2 / 2
+          + 40 * Real.log 4 * (2 * X : ℕ) / Real.log Y) := by gcongr
+    _ = ∑ ℓ, mass (bins ℓ) ^ 2 + 160 * Real.log 4 * P₀ / Real.log Y := by
+        rw [← sum_div]; push_cast; field_simp; ring
+    _ ≤ ∑ ℓ, mass (bins ℓ) ^ 2 + 250 * P₀ / Real.log Y := by
+        gcongr; linarith
 
 /-- `(1 − g_I(m)).re ≤ binCount I m`, and both are nonnegative. -/
 lemma one_sub_binInd_re_le (I : Finset ℕ) (m : ℕ) :

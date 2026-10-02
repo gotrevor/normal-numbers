@@ -520,6 +520,7 @@ import NormalNumbers.G4Base2TTHyp
 import NormalNumbers.G4Base2Mertens
 import NormalNumbers.G4Base2Rough
 import NormalNumbers.G4Base2N5
+import NormalNumbers.G4Base2Pairs
 import NormalNumbers.G4Base2Supply
 import NormalNumbers.G4Base2Blocks
 import NormalNumbers.G4Base2Pair
