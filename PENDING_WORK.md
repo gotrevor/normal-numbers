@@ -2684,3 +2684,10 @@ Gap 1 (schedule) PROVED: src/NormalNumbers/CPrimeQuantSchedule.lean — QuantSch
 - NEXT: check that the base-2 witness's far term (hfar_two / farBound via omegaR) can consume
   ω_S instead of ω (where is omegaR introduced in the subset witness? G4SubsetCWitness / VeryLargeCov),
   then the Mc (term_b/term_c) S-restriction in G4SchedBE.
+- DONE (lap 1c): `G4.farCS` + `sum_omegaS_shiftG_le`, `sum_abs_farPartW_subset_leS`, `farAvgS_leS`
+  (G4FarTailS): the whole subset far-tail chain now closes with C_S = log((X+Dm)/|P|) + F_S(X+Dm)
+  in place of farC.  In the base-2 frame F_S(X) ≤ F_S(e) + O(K²) (all-primes Mertens increment
+  over the exponent window [e, mE+7]), so the far tail no longer forces e ≤ 2^{O(K²)}.
+- NEXT: (a) an `S`-far-tail variant of the witness structure (ScheduleWitnessSC.hfar with farCS)
+  and its PropD lemma (copy of gridFrameW_subset_propD wiring at G4SubsetJunk:372);
+  (b) the Mc S-restriction (term_b/term_c in G4SchedBE).
