@@ -389,7 +389,7 @@ These are the ratified conjecture nodes.  They are open by design, and none is s
   on the cited `CastingOut.TTEquidistributedDyadic` (Tao–Teräväinen Thm 3.1(i), dyadic form, derived
   85%; the first transcription was vacuous, `ttEquidistributedCorrelation_trivially_true`).
 - **Joint Lambert + Campbell (merged 2026-10-02).**  `JointLambert.jointWords_quantitative`; with `S = {2}`,
-  `Literature.Campbell.campbellEQuestion_holds` answers Campbell arXiv:2605.24160 §4 (every binary string
+  `Literature.Campbell.campbellEQuestion_holds` re-proves (no hypotheses; first answered on paper by CaptainSude, `CaptainSude2026EDisjunctive`) Campbell arXiv:2605.24160 §4 (every binary string
   occurs infinitely often in binary `E`).  Priority citation `Campbell2026AbelianThm1` (decimal
   abelian-normal, not normal) for our binary `exists_abelianNormal_not_normal`.
 - **Erdős #257 for `A = k·S` (2026-10-02, 1 lap).**  `Erdos257.erdos257_kMul`: `Σ_{n∈k·S} 1/(2ⁿ−1)` is

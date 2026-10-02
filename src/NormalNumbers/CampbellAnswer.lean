@@ -8,7 +8,10 @@ import NormalNumbers.JointLambertQuantitative
 import NormalNumbers.AdderEscape
 
 /-!
-# Campbell's question on the binary digits of `E`, answered
+# Campbell's question on the binary digits of `E`: an independent Lean proof
+
+First answered on paper by CaptainSude (`Literature.Campbell.CaptainSude2026EDisjunctive`, the
+priority reference); this proof assumes nothing.
 
 `jointWords_quantitative` with the single base `{2}` puts any binary word at `≥ N^{1−o(1)}`
 positions below `N` in the digits of `E₂ = Σ 1/(2ⁿ − 1)`, hence infinitely often.  Route:
