@@ -930,4 +930,5 @@ import NormalNumbers.G4Base2DecSched
 import NormalNumbers.G4Base2DecAssembly
 import NormalNumbers.Erdos257Divergent
 import NormalNumbers.DecayAeNormal
+import NormalNumbers.Derandomize
 import NormalNumbers.ExplicitSquareNonNormal
