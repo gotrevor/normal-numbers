@@ -2492,3 +2492,15 @@ concrete content of next action #1.
   at `Gᵐx`; `isCFNormal_of_digit_shift` supplies normality of the shifts). Rebuild S7-BF on it, add
   the Maze row for the refuted uniform form, then test state-independence of the level constants
   `refLevel` with the S7-RQ machinery.
+
+## C′ quant lap 1 (2026-10-02)
+
+`cPrimeQuant_holds` now = `cPrimeQuant_of_parts` (glue PROVED, C = 5+128C₁, ρ₀ = min(ρ₁,1/3),
+δ = ρ, H = ⌈1/ρ²⌉) from two named sorries in `src/NormalNumbers/CPrimeQuant.lean`:
+- `orbitWeylQuant` — THE CRUX: limsup ‖fourierMean (orbit 4 x) h‖ ≤ C₁ρ(log(1/ρ)+log(|h|+1))².
+  Next: fixed-`u` rerun of `PrimeModelFamilyGraded` (doc build gaps 1–4); first sub-step is gap 4
+  (quantitative version of `isNormal_subsetLambert_of_KMT_along`: fourierMean of the orbit vs
+  `windowMeanS`, error ≤ 2π|h|·TailOK).
+- `orbitDefectLe_of_weyl` — trapezoid Erdős–Turán (4δ + 1/(δH) + Σ 2B(h)/h).  Route:
+  `fourierCoeffOn_of_hasDeriv_right` on `trapUp/trapLo`, summable coefficients, pointwise Fourier
+  series (`has_pointwise_sum_fourier_series_of_summable`).
