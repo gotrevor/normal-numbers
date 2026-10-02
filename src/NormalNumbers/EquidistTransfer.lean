@@ -170,6 +170,162 @@ theorem equidistributed_of_interleave (v : ℕ → ℝ) (K : ℕ) (hK : 0 < K)
   rw [Finset.sum_congr rfl this, ← Finset.sum_div]
   ring
 
+theorem sum_le_sum_add_of_eventually (f g : ℕ → ℝ) (N₀ : ℕ) (hf : ∀ k, f k ≤ 1)
+    (hg : ∀ k, 0 ≤ g k) (h : ∀ k, N₀ ≤ k → f k ≤ g k) (n : ℕ) :
+    ∑ k ∈ Finset.range n, f k ≤ ∑ k ∈ Finset.range n, g k + N₀ := by
+  have h1 : ∑ k ∈ Finset.range n, f k
+      ≤ ∑ k ∈ Finset.range n, (g k + if k < N₀ then (1 : ℝ) else 0) := by
+    refine Finset.sum_le_sum fun k _ => ?_
+    split_ifs with hk
+    · linarith [hf k, hg k]
+    · linarith [h k (by omega)]
+  have h2 : ∑ k ∈ Finset.range n, (if k < N₀ then (1 : ℝ) else 0) ≤ N₀ := by
+    rw [Finset.sum_boole]
+    have : ((Finset.range n).filter (· < N₀)).card ≤ N₀ := by
+      calc ((Finset.range n).filter (· < N₀)).card ≤ (Finset.range N₀).card :=
+            Finset.card_le_card fun k hk => by
+              simp only [Finset.mem_filter] at hk; exact Finset.mem_range.2 hk.2
+        _ = N₀ := Finset.card_range _
+    simpa using (show (((Finset.range n).filter (· < N₀)).card : ℝ) ≤ N₀ by exact_mod_cast this)
+  rw [Finset.sum_add_distrib] at h1
+  linarith
+
+/-- **Two-sided equidistribution stability**: perturbing an equidistributed `[0,1)`-sequence by
+any vanishing amount (either sign), mod 1, preserves equidistribution. -/
+theorem equidistributed_of_fract_perturb_abs (u δ : ℕ → ℝ)
+    (hu : Equidistributed u) (hu01 : ∀ n, u n ∈ Set.Ico (0 : ℝ) 1)
+    (hδ : Tendsto δ atTop (nhds 0)) :
+    Equidistributed (fun n => Int.fract (u n + δ n)) := by
+  intro a c ha hac hc1
+  rw [Metric.tendsto_atTop]
+  intro ε hε
+  set e : ℝ := min (ε / 16) (1 / 4) with he_def
+  have he0 : 0 < e := lt_min (by positivity) (by norm_num)
+  have hee : e ≤ ε / 16 := min_le_left _ _
+  have he4 : e ≤ 1 / 4 := min_le_right _ _
+  obtain ⟨N₀, hN₀⟩ := (Metric.tendsto_atTop.1 hδ) e he0
+  have hδe : ∀ k, N₀ ≤ k → |δ k| < e := fun k hk => by
+    simpa [Real.dist_eq] using hN₀ k hk
+  set I : (ℕ → ℝ) → ℝ → ℝ → ℕ → ℝ := fun w a' c' k => if w k ∈ Set.Ico a' c' then 1 else 0
+  have hI01 : ∀ w a' c' k, 0 ≤ I w a' c' k ∧ I w a' c' k ≤ 1 := by
+    intro w a' c' k; simp only [I]; split_ifs <;> norm_num
+  set v : ℕ → ℝ := fun n => Int.fract (u n + δ n)
+  -- intervals
+  set a1 := max (a - e) 0; set c1 := min (c + e) 1
+  set a2 := min (a + 1 - e) 1
+  set c3 := max (c + e - 1) 0
+  set a4 := min (a + e) c; set c4 := max a4 (c - e)
+  have hupper : ∀ k, N₀ ≤ k → I v a c k ≤ I u a1 (max a1 c1) k + I u a2 1 k + I u 0 c3 k := by
+    intro k hk
+    have hd := abs_lt.1 (hδe k hk)
+    obtain ⟨hx0, hx1⟩ := hu01 k
+    simp only [I, v]
+    by_cases hP : Int.fract (u k + δ k) ∈ Set.Ico a c
+    · rw [if_pos hP]
+      obtain ⟨hp1, hp2⟩ := hP
+      have hcases : (0 ≤ u k + δ k ∧ u k + δ k < 1) ∨ u k + δ k < 0 ∨ 1 ≤ u k + δ k := by
+        by_cases h0 : 0 ≤ u k + δ k
+        · by_cases h1 : u k + δ k < 1
+          · exact Or.inl ⟨h0, h1⟩
+          · exact Or.inr (Or.inr (not_lt.1 h1))
+        · exact Or.inr (Or.inl (not_le.1 h0))
+      rcases hcases with ⟨h0, h1⟩ | h0 | h1
+      · rw [Int.fract_eq_self.mpr ⟨h0, h1⟩] at hp1 hp2
+        have : u k ∈ Set.Ico a1 (max a1 c1) :=
+          ⟨max_le (by linarith) hx0, lt_max_of_lt_right (lt_min (by linarith) hx1)⟩
+        rw [if_pos this]
+        split_ifs <;> norm_num
+      · have hfr : Int.fract (u k + δ k) = u k + δ k + 1 := by
+          rw [← Int.fract_add_one, Int.fract_eq_self.mpr ⟨by linarith, by linarith⟩]
+        rw [hfr] at hp1 hp2
+        have : u k ∈ Set.Ico 0 c3 := ⟨hx0, lt_max_of_lt_left (by linarith)⟩
+        rw [if_pos this]
+        split_ifs <;> norm_num
+      · have hfr : Int.fract (u k + δ k) = u k + δ k - 1 := by
+          rw [← Int.fract_sub_one, Int.fract_eq_self.mpr ⟨by linarith, by linarith⟩]
+        rw [hfr] at hp1 hp2
+        have : u k ∈ Set.Ico a2 1 := ⟨(min_le_left _ _).trans (by linarith), hx1⟩
+        rw [if_pos this]
+        split_ifs <;> norm_num
+    · rw [if_neg hP]
+      linarith [(hI01 u a1 (max a1 c1) k).1, (hI01 u a2 1 k).1, (hI01 u 0 c3 k).1]
+  have hlower : ∀ k, N₀ ≤ k → I u a4 c4 k ≤ I v a c k := by
+    intro k hk
+    have hd := abs_lt.1 (hδe k hk)
+    obtain ⟨hx0, hx1⟩ := hu01 k
+    simp only [I, v]
+    by_cases hP : u k ∈ Set.Ico a4 c4
+    · obtain ⟨hp1, hp2⟩ := hP
+      have hlt : u k < c - e := by
+        rcases lt_max_iff.1 hp2 with h | h
+        · linarith
+        · exact h
+      have hae : a + e ≤ u k := by
+        rcases min_cases (a + e) c with ⟨h1, _⟩ | ⟨h1, _⟩
+        · rw [show a4 = a + e from h1] at hp1; exact hp1
+        · rw [show a4 = c from h1] at hp1; linarith
+      rw [if_pos ⟨hp1, hp2⟩, if_pos]
+      rw [Int.fract_eq_self.mpr ⟨by linarith, by linarith⟩]
+      exact ⟨by linarith, by linarith⟩
+    · rw [if_neg hP]; exact (hI01 v a c k).1
+  have hfreq : ∀ a' c', 0 ≤ a' → a' ≤ c' → c' ≤ 1 → Tendsto
+      (fun n : ℕ => (∑ k ∈ Finset.range n, I u a' c' k) / n) atTop (nhds (c' - a')) := by
+    intro a' c' h1 h2 h3
+    have := hu a' c' h1 h2 h3
+    simp_rw [visitCount_eq_sum] at this
+    exact this
+  have hc0 : 0 ≤ c := ha.trans hac
+  have hle1 : a1 ≤ max a1 c1 := le_max_left _ _
+  have hmx : max a1 c1 ≤ 1 := max_le (max_le (by linarith) zero_le_one) (min_le_right _ _)
+  obtain ⟨N₁, hN₁⟩ := Metric.tendsto_atTop.1 (hfreq a1 (max a1 c1) (le_max_right _ _) hle1 hmx) e he0
+  obtain ⟨N₂, hN₂⟩ := Metric.tendsto_atTop.1
+    (hfreq a2 1 (le_min (by linarith) zero_le_one) (min_le_right _ _) le_rfl) e he0
+  obtain ⟨N₃, hN₃⟩ := Metric.tendsto_atTop.1
+    (hfreq 0 c3 le_rfl (le_max_right _ _) (max_le (by linarith) zero_le_one)) e he0
+  have ha4 : 0 ≤ a4 := le_min (by positivity) hc0
+  obtain ⟨N₅, hN₅⟩ := Metric.tendsto_atTop.1
+    (hfreq a4 c4 ha4 (le_max_left _ _) (max_le ((min_le_right _ _).trans hc1) (by linarith))) e he0
+  obtain ⟨N₄, hN₄⟩ := Metric.tendsto_atTop.mp
+    (tendsto_const_div_atTop_nhds_zero_nat (N₀ : ℝ)) e he0
+  refine ⟨max (max N₁ N₂) (max (max N₃ N₄) (max N₅ 1)), fun n hn => ?_⟩
+  have b₁ := hN₁ n (by omega)
+  have b₂ := hN₂ n (by omega)
+  have b₃ := hN₃ n (by omega)
+  have b₄ := hN₄ n (by omega)
+  have b₅ := hN₅ n (by omega)
+  rw [Real.dist_eq, abs_sub_lt_iff] at b₁ b₂ b₃ b₄ b₅
+  have hnR : (0 : ℝ) ≤ n := Nat.cast_nonneg n
+  have hup := sum_le_sum_add_of_eventually (I v a c)
+    (fun k => I u a1 (max a1 c1) k + I u a2 1 k + I u 0 c3 k) N₀ (fun k => (hI01 v a c k).2)
+    (fun k => by linarith [(hI01 u a1 (max a1 c1) k).1, (hI01 u a2 1 k).1, (hI01 u 0 c3 k).1])
+    hupper n
+  have hlo := sum_le_sum_add_of_eventually (I u a4 c4) (I v a c) N₀
+    (fun k => (hI01 u a4 c4 k).2) (fun k => (hI01 v a c k).1) hlower n
+  rw [Finset.sum_add_distrib, Finset.sum_add_distrib] at hup
+  have hup' := div_le_div_of_nonneg_right hup hnR
+  have hlo' := div_le_div_of_nonneg_right hlo hnR
+  simp only [add_div] at hup' hlo'
+  have hV : (visitCount (fun n => Int.fract (u n + δ n)) a c n : ℝ) / n
+      = (∑ k ∈ Finset.range n, I v a c k) / n := by rw [visitCount_eq_sum]
+  rw [Real.dist_eq, abs_sub_lt_iff, hV]
+  have l1 : max a1 c1 - a1 ≤ c - a + 2 * e := by
+    rcases max_cases a1 c1 with ⟨h1, _⟩ | ⟨h1, _⟩ <;> rw [h1]
+    · linarith
+    · have : a - e ≤ a1 := le_max_left _ _
+      have : c1 ≤ c + e := min_le_left _ _
+      linarith
+  have l2 : 1 - a2 ≤ e := by
+    have : 1 - e ≤ a2 := le_min (by linarith) (by linarith)
+    linarith
+  have l3 : c3 - 0 ≤ e := by
+    have : c3 ≤ e := max_le (by linarith) he0.le
+    linarith
+  have l5 : c - a - 2 * e ≤ c4 - a4 := by
+    have : c - e ≤ c4 := le_max_right _ _
+    have : a4 ≤ a + e := min_le_left _ _
+    linarith
+  constructor <;> linarith
+
 theorem fract_natCast_mul_fract (m : ℕ) (t : ℝ) :
     Int.fract (m * Int.fract t) = Int.fract (m * t) := by
   have : (m : ℝ) * Int.fract t = m * t - ((m * ⌊t⌋ : ℤ) : ℝ) := by
