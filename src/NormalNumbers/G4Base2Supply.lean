@@ -242,9 +242,61 @@ theorem omegaVLS_le {Y P₀ m : ℕ} (hY : 2 ≤ Y) (hm : m < Y ^ 102) : omegaVL
   have := Nat.le_of_dvd (Nat.pos_of_ne_zero hm0) hdvd
   omega
 
-/-- **N4, average.** -/
-theorem avg_binErr_le : ∃ C₆ : ℝ, 0 < C₆ ∧ ∀ (X Y P₀ b₀ ρ : ℕ) (B : ℕ) (bins : Fin B → Finset ℕ),
+lemma exists_primes_card_gt (K : ℕ) : ∃ J : Finset ℕ, J.card = K ∧ ∀ p ∈ J, p.Prime ∧ K < p := by
+  have hinf : {p : ℕ | p.Prime ∧ K < p}.Infinite := by
+    have := Nat.infinite_setOfPred_prime.sdiff (Set.finite_le_nat K)
+    refine this.mono fun p hp => ⟨hp.1, by simpa using hp.2⟩
+  obtain ⟨J, hJ, hc⟩ := hinf.exists_subset_card_eq K
+  exact ⟨J, hc, fun p hp => hJ hp⟩
+
+/-- The N4 leaf as first stated (no `0 < ρ`) is **false**: at `ρ = 0, b₀ = 0` the sample
+contains `n = 0`, every prime divides `0`, and a bin of `K` huge primes (mass `≤ 1`) gives
+mean bin error `(K − 1)/2`. -/
+theorem not_avg_binErr_le_rho_zero : ¬ ∃ C₆ : ℝ, 0 < C₆ ∧ ∀ (X Y P₀ b₀ ρ : ℕ) (B : ℕ)
+    (bins : Fin B → Finset ℕ),
     0 < P₀ → b₀ < P₀ → P₀ < Y → Y ≤ X → ρ ≤ X → 2 * P₀ ≤ X →
+    (∀ ℓ ℓ', ℓ ≠ ℓ' → Disjoint (bins ℓ) (bins ℓ')) →
+    (∀ ℓ, ∀ p ∈ bins ℓ, p.Prime ∧ Y < p) →
+    ((apSample X P₀ b₀).card : ℝ)⁻¹ * ∑ n ∈ apSample X P₀ b₀, ∑ ℓ,
+        ((binCount (bins ℓ) (n + ρ) : ℝ) - (if binCount (bins ℓ) (n + ρ) = 0 then 0 else 1))
+      ≤ ∑ ℓ, mass (bins ℓ) ^ 2 + C₆ * P₀ / Real.log Y := by
+  rintro ⟨C₆, hC₆, h⟩
+  set K : ℕ := ⌈2 * (1 + C₆ / Real.log 2) + 3⌉₊ with hK
+  have hKr : 2 * (1 + C₆ / Real.log 2) + 3 ≤ K := Nat.le_ceil _
+  have hl2 : 0 < Real.log 2 := Real.log_pos (by norm_num)
+  have hK2 : 2 ≤ K := by
+    have : (2 : ℝ) ≤ K := by
+      have : 0 ≤ C₆ / Real.log 2 := by positivity
+      linarith
+    exact_mod_cast this
+  obtain ⟨J, hJc, hJ⟩ := exists_primes_card_gt K
+  have hm := h 2 2 1 0 0 1 (fun _ => J) (by norm_num) (by norm_num) (by norm_num) le_rfl
+    (by norm_num) le_rfl (fun ℓ ℓ' hne => absurd (Subsingleton.elim ℓ ℓ') hne)
+    (fun _ p hp => ⟨(hJ p hp).1, by have := (hJ p hp).2; omega⟩)
+  have hS : apSample 2 1 0 = {0, 1} := by decide
+  have hc0 : binCount J 0 = K := by
+    unfold binCount; rw [filter_true_of_mem fun p _ => dvd_zero p, hJc]
+  have hc1 : binCount J 1 = 0 := by
+    unfold binCount; rw [card_eq_zero, filter_eq_empty_iff]
+    intro p hp; exact (hJ p hp).1.not_dvd_one
+  have hmass : mass J ≤ 1 := by
+    unfold mass
+    calc ∑ p ∈ J, (p : ℝ)⁻¹ ≤ ∑ _p ∈ J, (K : ℝ)⁻¹ := sum_le_sum fun p hp => by
+          have : (K : ℝ) < p := by exact_mod_cast (hJ p hp).2
+          exact inv_anti₀ (by positivity) this.le
+      _ = 1 := by rw [sum_const, hJc, nsmul_eq_mul, mul_inv_cancel₀ (by positivity)]
+  rw [hS] at hm
+  simp only [Fin.sum_univ_one, sum_insert (by decide : (0 : ℕ) ∉ ({1} : Finset ℕ)), sum_singleton,
+    zero_add, hc0, hc1] at hm
+  rw [if_neg (by omega)] at hm
+  norm_num at hm
+  have hm2 : mass J ^ 2 ≤ 1 := by
+    have : 0 ≤ mass J := sum_nonneg fun _ _ => by positivity
+    nlinarith
+  linarith
+/-- **N4, average** (repaired: `0 < ρ`; see `not_avg_binErr_le_rho_zero`). -/
+theorem avg_binErr_le : ∃ C₆ : ℝ, 0 < C₆ ∧ ∀ (X Y P₀ b₀ ρ : ℕ) (B : ℕ) (bins : Fin B → Finset ℕ),
+    0 < P₀ → b₀ < P₀ → P₀ < Y → Y ≤ X → ρ ≤ X → 0 < ρ → 2 * P₀ ≤ X →
     (∀ ℓ ℓ', ℓ ≠ ℓ' → Disjoint (bins ℓ) (bins ℓ')) →
     (∀ ℓ, ∀ p ∈ bins ℓ, p.Prime ∧ Y < p) →
     ((apSample X P₀ b₀).card : ℝ)⁻¹ * ∑ n ∈ apSample X P₀ b₀, ∑ ℓ,

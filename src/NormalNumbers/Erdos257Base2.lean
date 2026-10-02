@@ -217,7 +217,7 @@ theorem veryLargeCovSupply_of_TT (htt : CastingOut.TTEquidistributedDyadic) :
       exact lt_of_le_of_lt hMle' hlt102)))
     (fun ℓ => (hmassθ ℓ).trans (by linarith)) (by rw [← hmassQ']; exact hmassQ) hε₁0
     (fun i => hErr (2 ^ x) Y G.P₀ G.b₀ _ B bins G.P₀_pos G.b₀_lt_P₀ hP₀Y hYX
-      ((gridOf.shiftAL_le hK i).trans (le_trans hc₀Y hYX)) (by omega) hdisj hbinp) hpair
+      ((gridOf.shiftAL_le hK i).trans (le_trans hc₀Y hYX)) (shiftAL_pos G i) (by omega) hdisj hbinp) hpair
   -- κ' ≤ κ
   obtain ⟨μ, hV, hC⟩ := hcov
   refine ⟨μ, hV, fun i j hij => (hC i j hij).trans ?_⟩
@@ -496,7 +496,7 @@ theorem veryLargeCovSupplyEff_of_TT (htt : CastingOut.TTEquidistributedDyadic) :
       exact lt_of_le_of_lt hMle' hlt102)))
     (fun ℓ => (hmassθ ℓ).trans (by linarith)) (by rw [← hmassQ']; exact hmassQ) hε₁0
     (fun i => hErr (2 ^ x) Y G.P₀ G.b₀ _ B bins G.P₀_pos G.b₀_lt_P₀ hP₀Y hYX
-      ((gridOf.shiftAL_le hK i).trans (le_trans hc₀Y hYX)) h2P hdisj hbinp) hpair
+      ((gridOf.shiftAL_le hK i).trans (le_trans hc₀Y hYX)) (shiftAL_pos G i) h2P hdisj hbinp) hpair
   obtain ⟨μ, hV, hC⟩ := hcov
   refine ⟨μ, hV, fun i j hij => (hC i j hij).trans ?_⟩
   have hmass0 : ∀ ℓ, 0 ≤ Base2.mass (bins ℓ) := fun ℓ =>
