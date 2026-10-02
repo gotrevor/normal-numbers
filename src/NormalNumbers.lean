@@ -924,3 +924,4 @@ import NormalNumbers.VandeheyS7Shape
 import NormalNumbers.G4FarTailS
 import NormalNumbers.G4SchedBE2
 import NormalNumbers.G4SubsetWitnessCovS
+import NormalNumbers.G4Base2DecSched
