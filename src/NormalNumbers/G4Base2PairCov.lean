@@ -142,6 +142,31 @@ lemma card_dyadicScales_two_pow (a : ℕ) :
   refine (card_filter_le _ _).trans ?_
   rw [card_range, hlog, Nat.ceil_natCast]
 
+lemma aux_blk {C Lc P L r H t s η : ℝ} (hP : 0 ≤ P) (hL : 0 < L) (hs : 0 < s) (hst : s ≤ t)
+    (hr : r ≤ H) (hr0 : 0 ≤ r) (hC : 0 ≤ C) (hLc : 0 ≤ Lc) (hη : 0 < η)
+    (h1 : (C + 3 * P) * Lc < η / 4) (h2 : (C + 3 * P) / L < η / 4)
+    (h3 : 12 * P * (2 * H + 6) / η ≤ s) :
+    C * Lc + 3 * (P / t * (t / L + 2 * r + 6)) ≤ η := by
+  have ht : 0 < t := lt_of_lt_of_le hs hst
+  have e : P / t * (t / L + 2 * r + 6) = P / L + P * (2 * r + 6) / t := by
+    field_simp; ring
+  rw [e]
+  have a1 : C * Lc ≤ (C + 3 * P) * Lc := by nlinarith
+  have a2 : 3 * (P / L) ≤ (C + 3 * P) / L := by
+    rw [mul_div_assoc', div_le_div_iff_of_pos_right hL]; linarith
+  have a3 : 3 * (P * (2 * r + 6) / t) ≤ η / 4 := by
+    rw [div_le_iff₀ hη] at h3
+    rw [mul_div_assoc', div_le_iff₀ ht]
+    have : P * (2 * r + 6) ≤ P * (2 * H + 6) := by nlinarith
+    nlinarith
+  linarith
+
+lemma aux_Px {P ε t s : ℝ} (hP : 0 ≤ P) (hε : 0 < ε) (hs : 0 < s) (h1 : 288 * P / ε ≤ t)
+    (h2 : t ≤ s) : 6 * 16 * P / s ≤ ε / 3 := by
+  rw [div_le_iff₀ hs]
+  rw [div_le_iff₀ hε] at h1
+  nlinarith
+
 /-- **N6 core.**  From TT 3.1(i) (dyadic) and N5 (`binInd_ap_mean`).  75%. -/
 theorem binPair_cov (htt : CastingOut.TTEquidistributedDyadic) (K N : ℕ) (hK : 1 ≤ K)
     {ε₂ : ℝ} (hε : 0 < ε₂) (Bmax : ℕ) : ∃ e₀ : ℕ, ∀ e, e₀ ≤ e → ∀ B ≤ Bmax,
@@ -272,6 +297,130 @@ theorem binPair_cov (htt : CastingOut.TTEquidistributedDyadic) (K N : ℕ) (hK :
       (by rw [hlogXT]; nlinarith) (binDelta (bins pr.1)) (h31 pr.1) (hsmall pr.1)
   choose Ef hEsub hEcard hEgood using hE
   set U := univ.biUnion Ef with hU
-  sorry
+  have hLc0 : 0 ≤ L ^ (-c) := Real.rpow_nonneg hLpos.le _
+  have hscal : ((CastingOut.dyadicScales XT).card : ℝ) ≤ 102 * 2 ^ m := by
+    have h := card_dyadicScales_two_pow a
+    have h' : ((CastingOut.dyadicScales XT).card : ℝ) ≤ ((a + 1 : ℕ) : ℝ) := by
+      rw [hXT]; exact_mod_cast h
+    have h1 : (1 : ℝ) ≤ 2 ^ m := one_le_pow₀ (by norm_num)
+    rw [ha] at h'; push_cast at h'; linarith
+  have hUcard : (U.card : ℝ) ≤ (B : ℝ) ^ 2 * (Cst * L ^ (-c) * (102 * 2 ^ m)) := by
+    have h1 : (U.card : ℝ) ≤ ∑ pr : Fin B × Fin B, ((Ef pr).card : ℝ) := by
+      exact_mod_cast card_biUnion_le
+    refine h1.trans ?_
+    calc ∑ pr : Fin B × Fin B, ((Ef pr).card : ℝ)
+        ≤ ∑ _pr : Fin B × Fin B, Cst * L ^ (-c) * (102 * 2 ^ m) :=
+          sum_le_sum fun pr _ => (hEcard pr).trans (by gcongr)
+      _ = (B : ℝ) ^ 2 * (Cst * L ^ (-c) * (102 * 2 ^ m)) := by
+          rw [sum_const, card_univ, Fintype.card_prod, Fintype.card_fin, nsmul_eq_mul]
+          push_cast; ring
+  have hJU : J₀ * U.card < 2 ^ m + 1 := by
+    have hBr : (B : ℝ) ≤ Bmax := by exact_mod_cast hB
+    have hB0 : (0 : ℝ) ≤ B := Nat.cast_nonneg _
+    have hm0 : (0 : ℝ) < 2 ^ m := by positivity
+    have hJ0 : (0 : ℝ) ≤ J₀ := Nat.cast_nonneg _
+    have key : (J₀ : ℝ) * U.card < 2 ^ m := by
+      calc (J₀ : ℝ) * U.card ≤ J₀ * ((B : ℝ) ^ 2 * (Cst * L ^ (-c) * (102 * 2 ^ m))) :=
+            mul_le_mul_of_nonneg_left hUcard hJ0
+        _ ≤ J₀ * ((Bmax : ℝ) ^ 2 * (Cst * L ^ (-c) * (102 * 2 ^ m))) := by gcongr
+        _ = (J₀ * Bmax ^ 2 * Cst * 102) * L ^ (-c) * 2 ^ m := by ring
+        _ ≤ (J₀ * Bmax ^ 2 * Cst * 102 + 1) * L ^ (-c) * 2 ^ m := by gcongr; linarith
+        _ < 1 * 2 ^ m := mul_lt_mul_of_pos_right hJL hm0
+        _ = 2 ^ m := one_mul _
+    have : ((J₀ * U.card : ℕ) : ℝ) < ((2 ^ m + 1 : ℕ) : ℝ) := by push_cast; linarith
+    exact_mod_cast this
+  obtain ⟨x, hx1, hx2, hgood⟩ := exists_good_x U (100 * 2 ^ m) (2 ^ m + 1) J₀ hJU
+  refine ⟨x, hx1, by omega, ?_⟩
+  intro ℓ ℓ' i j hij
+  have hδb : ∀ ℓ₁ : Fin B, ∀ N' : ℝ, |binDelta (bins ℓ₁) N'| ≤ 3 := by
+    intro ℓ₁ N'
+    have h := abs_one_sub_binDelta_le (bins ℓ₁) (fun p hp => (hbins ℓ₁ p hp).1) (hmass ℓ₁) N'
+    have h2 := hmass ℓ₁
+    rw [abs_le] at h ⊢; constructor <;> linarith
+  set ρ := fun i : G.Idx => shiftAL G.B G.Q G.D₀ i with hρ
+  have hF : ∀ n, |((binInd (bins ℓ) (n + ρ i)).re - binDelta (bins ℓ) (dyBase n))
+      * ((binInd (bins ℓ') (n + ρ j)).re - binDelta (bins ℓ') (dyBase n))| ≤ 16 := by
+    intro n
+    have a1 := abs_re_binInd_le (bins ℓ) (n + ρ i)
+    have a2 := abs_re_binInd_le (bins ℓ') (n + ρ j)
+    have d1 := hδb ℓ (dyBase n)
+    have d2 := hδb ℓ' (dyBase n)
+    rw [abs_mul]
+    have e1 : |(binInd (bins ℓ) (n + ρ i)).re - binDelta (bins ℓ) (dyBase n)| ≤ 4 :=
+      (abs_sub _ _).trans (by linarith)
+    have e2 : |(binInd (bins ℓ') (n + ρ j)).re - binDelta (bins ℓ') (dyBase n)| ≤ 4 :=
+      (abs_sub _ _).trans (by linarith)
+    exact (mul_le_mul e1 e2 (abs_nonneg _) (by norm_num)).trans (by norm_num)
+  have hmx : m ≤ x - J₀ := by omega
+  have hZη : 12 * P₀ * (2 * Hs + 6) / η ≤ (2 : ℝ) ^ m := by
+    have h1 : 12 * P₀ * (2 * Hs + 6) / η ≤ (⌈12 * P₀ * (2 * Hs + 6) / η⌉₊ : ℝ) := Nat.le_ceil _
+    have h2 : ⌈12 * P₀ * (2 * Hs + 6) / η⌉₊ ≤ 2 ^ m := by omega
+    have h3 : ((⌈12 * P₀ * (2 * Hs + 6) / η⌉₊ : ℕ) : ℝ) ≤ ((2 ^ m : ℕ) : ℝ) := by exact_mod_cast h2
+    push_cast at h3; linarith
+  have hZε : 288 * P₀ / ε₂ ≤ (2 : ℝ) ^ m := by
+    have h1 : 288 * P₀ / ε₂ ≤ (⌈288 * P₀ / ε₂⌉₊ : ℝ) := Nat.le_ceil _
+    have h2 : ⌈288 * P₀ / ε₂⌉₊ ≤ 2 ^ m := by omega
+    have h3 : ((⌈288 * P₀ / ε₂⌉₊ : ℕ) : ℝ) ≤ ((2 ^ m : ℕ) : ℝ) := by exact_mod_cast h2
+    push_cast at h3; linarith
+  have hblk : ∀ k, x - J₀ ≤ k → k < x → |(P₀ : ℝ) / 2 ^ k * blockSum2 (fun n =>
+        ((binInd (bins ℓ) (n + ρ i)).re - binDelta (bins ℓ) (dyBase n))
+        * ((binInd (bins ℓ') (n + ρ j)).re - binDelta (bins ℓ') (dyBase n))) P₀ G.b₀ k| ≤ η := by
+    intro k hk1 hk2
+    have hkU : k ∉ U := hgood k hk1 hk2
+    have hkE : k ∉ Ef (ℓ, ℓ') := fun h => hkU (mem_biUnion.2 ⟨(ℓ, ℓ'), mem_univ _, h⟩)
+    have hJm : J₀ ≤ 2 ^ m := by omega
+    have hka1 : a ≤ 2 * k := by rw [ha]; omega
+    have hka2 : k + 1 ≤ a := by rw [ha]; omega
+    have hks : k ∈ CastingOut.dyadicScales XT := by
+      rw [hXT]; exact mem_dyadicScales_two_pow hka1 hka2
+    have hmk : m ≤ k := by omega
+    have hρHs : ∀ i' : G.Idx, ρ i' ≤ Hs := hρle
+    have hHsk : Hs ≤ 2 ^ k := by
+      have : 2 ^ m ≤ 2 ^ k := Nat.pow_le_pow_right (by norm_num) hmk
+      omega
+    have hPHs : ((P₀ + Hs : ℕ) : ℝ) ≤ L ^ c := hPL
+    have hP₀L : (P₀ : ℝ) ≤ L ^ c := le_trans (by exact_mod_cast Nat.le_add_right _ _) hPHs
+    have hρL : ∀ i' : G.Idx, (ρ i' : ℝ) ≤ L ^ c := fun i' =>
+      le_trans (by exact_mod_cast (hρHs i').trans (Nat.le_add_left _ _)) hPHs
+    have hρne : ρ i ≠ ρ j := fun h => hij (G.ρ_injective h)
+    have hTTk := hEgood (ℓ, ℓ') k hks hkE (2 ^ k) (by push_cast; exact le_rfl)
+      (by push_cast; exact pow_lt_pow_right₀ (by norm_num) (by omega))
+      P₀ G.b₀ (ρ i) (ρ j) hP₀ hP₀L (hρL i) (hρL j) hρne
+    have h2k : ((2 ^ k : ℕ) : ℝ) = (2 : ℝ) ^ k := by push_cast; ring
+    have hXT04 : XT ^ (0.4 : ℝ) ≤ ((2 ^ k : ℕ) : ℝ) := by
+      rw [h2k]
+      have h : (0.4 : ℝ) * (a : ℝ) ≤ (k : ℝ) := by
+        have : (a : ℝ) ≤ 2 * k := by exact_mod_cast hka1
+        have : (0 : ℝ) ≤ k := Nat.cast_nonneg _
+        linarith
+      exact two_pow_rpow_le (by norm_num) h
+    have hkXT : ((2 ^ k : ℕ) : ℝ) ≤ XT := by
+      rw [h2k]; exact pow_le_pow_right₀ (by norm_num) (by omega)
+    have hN5 := h31 ℓ ((2 ^ k : ℕ) : ℝ) hXT04 hkXT (G.b₀ + ρ i) P₀ hP₀
+    have hfl1 : ⌊((2 ^ k : ℕ) : ℝ)⌋₊ = 2 ^ k := Nat.floor_natCast _
+    have hfl2 : ⌊2 * ((2 ^ k : ℕ) : ℝ)⌋₊ = 2 * 2 ^ k := by
+      rw [show (2 : ℝ) * ((2 ^ k : ℕ) : ℝ) = ((2 * 2 ^ k : ℕ) : ℝ) by push_cast; ring]
+      exact Nat.floor_natCast _
+    rw [hfl1, hfl2] at hN5
+    have hgb := good_block_bound (bins ℓ) (bins ℓ') P₀ G.b₀ k (ρ i) (ρ j) hP₀ hb₀
+      ((hρHs i).trans hHsk) (E := ((2 ^ k : ℕ) : ℝ) / L) (by positivity)
+      (hδb ℓ _) (hδb ℓ' _) hTTk hN5
+    refine hgb.trans ?_
+    rw [h2k]
+    have hs2 : (2 : ℝ) ^ m ≤ 2 ^ k := pow_le_pow_right₀ (by norm_num) hmk
+    have hρr : (ρ i : ℝ) ≤ Hs := by exact_mod_cast hρHs i
+    have hC0 : (0 : ℝ) ≤ Cst := hCst.le
+    exact aux_blk (Nat.cast_nonneg _) hLpos (by positivity) hs2 hρr (Nat.cast_nonneg _) hC0
+      hLc0 hη0 hCL hCL' hZη
+  have hfin := abs_avg_le_blocks _ hF hP₀ hb₀ (by omega)
+    (show 2 * P₀ ≤ 2 ^ x by
+      have : 2 ^ m ≤ 2 ^ x := Nat.pow_le_pow_right (by norm_num) (by omega)
+      omega) hη0.le hblk
+  refine hfin.trans ?_
+  have hxm : (2 : ℝ) ^ m ≤ 2 ^ x := pow_le_pow_right₀ (by norm_num) (by omega)
+  have hPx : 6 * 16 * (P₀ : ℝ) / 2 ^ x ≤ ε₂ / 3 :=
+    aux_Px (Nat.cast_nonneg _) hε (by positivity) hZε hxm
+  have hJ : 2 * 16 * (1 / 2 : ℝ) ^ J₀ ≤ ε₂ / 3 := by linarith
+  linarith
 
 end NormalNumbers.G4.Base2
