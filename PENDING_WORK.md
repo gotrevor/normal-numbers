@@ -1,3 +1,12 @@
+## Erdős #257 for A = k·S (launched 2026-10-02) — CLOSED lap 1
+
+All five frozen statements in `Erdos257.lean` PROVED; `#print axioms` = [propext,
+Classical.choice, Quot.sound] for each.  New: `subsetLambert_two_pow_eq` (the Lambert identity
+`c_S(2ᵏ) = Σ_{n∈k·S} 1/(2ⁿ−1)`, via `subsetLambert_eq_tsum_inv` + injective reindex `p ↦ kp`),
+`isNormal_two_of_four` (base change 4 → 2 through Wall: odd orbit points are the doubling map of
+the base-4 orbit, `visitCount_two_even`, then an even/odd squeeze).  Open debt is upstream only
+(C′ hypotheses `SqrtFreshMassZero`, `DivergentRecip` are arguments).
+
 ## ζ_Y campaign (launched 2026-10-02) — CLOSED lap 2
 
 **Lap 2: `zetaY_isNormal` PROVED**, conditional only on the hypothesis argument
