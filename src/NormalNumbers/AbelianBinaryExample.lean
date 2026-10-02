@@ -16,6 +16,8 @@ under the induced block law, so every window's one-count is Binomial (suffix + w
 prefix, independent in the limit by base-16 normality of `c`).  But `0011` has limiting frequency
 `5/64`.  Design note: `DESIGN-2026-09-23-binary-abelian-nonnormal.md`; exact probe:
 `probes/abelian_hex_construction.py`.
+
+Prior (decimal) example: `Literature.Campbell.Campbell2026AbelianThm1` (arXiv:2603.04396, Thm 1).
 -/
 
 open Finset Filter Topology

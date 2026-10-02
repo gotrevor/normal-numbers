@@ -1,6 +1,6 @@
 # Simultaneous words in distinct Erdős–Borwein constants
 
-**Research draft, 26 September 2026.**  Ren (Codex) derived the simultaneous extension below.  The scalar construction is credited to the prior sources in §1.  This is a complete proposed paper proof, self-reviewed but not independently refereed.  The character-separation ingredient is proved in `src/NormalNumbers/JointLambertEncoding.lean`; the full arithmetic theorem is not yet formalized.  Mathematical confidence: 85%.  Novelty confidence: 75%, pending a broader literature check.
+**Research draft, 26 September 2026; status updated 29 September 2026.**  Ren (OpenAI Codex) derived the simultaneous extension; the scalar construction is credited in section 1.  The qualitative common-position theorem is now proved unconditionally in `src/NormalNumbers/JointLambertUnconditional.lean` (proof commit `f6fbf87`).  The counting bound below remains a paper argument, not a Lean theorem.  [The completed proof route](../docs/JOINT-LAMBERT-RESCALED-PROOF.md) avoids AGP.  [The next quantitative target](../docs/JOINT-LAMBERT-QUANTITATIVE-NEXT.md) improves the proposed bound using a smaller prime pool and a three-range tail estimate.  No priority claim is made.
 
 ## Result and boundary
 
@@ -10,7 +10,9 @@ For an integer (b\ge2), write
  E_b=\sum_{m\ge1}\frac1{b^m-1}=\sum_{m\ge1}\frac{\tau(m)}{b^m}.
 \]
 
-**Proposed theorem.**  Let (b_1,\ldots,b_d\ge2) be any finite list of **distinct** integer bases.  For each (i), prescribe a finite nonempty base-(b_i) word (w_i).  There are infinitely many common positions (n) such that (w_i) starts at digit (n) of (E_{b_i}), simultaneously for every (i).  In fact, for suitable constants (C,N_0), depending on the bases and words, the number of such positions among the first (N) digits is at least
+**Qualitative theorem (proved in Lean).**  Let (b_1,\ldots,b_d\ge2) be any finite list of **distinct** integer bases.  For each (i), prescribe a finite nonempty base-(b_i) word (w_i).  There are infinitely many common positions (n) such that (w_i) starts at digit (n) of (E_{b_i}), simultaneously for every (i).
+
+**Quantitative paper claim (not yet formalized).**  For suitable constants (C,N_0), depending on the bases and words, the number of such positions among the first (N) digits is at least
 
 \[
  N\exp\{-C(\log\log N)^3\}\qquad(N\ge N_0).
@@ -24,13 +26,13 @@ Thus the orbit
 
 is dense in the full (d)-torus.  The bases may share factors or be powers of one another: **2 and 4 are included**.  Repeated identical bases must be excluded, since their coordinates are identical.  This concerns different constants (E_2,E_4), not two expansions of the same real number.  It proves neither normality nor positive lower density of these occurrences; the displayed lower bound has relative density tending to zero.
 
-## 1. Prior art and what is new here
+## 1. Prior work and the simultaneous extension
 
 The first candidate examined this session was scalar disjunctivity via selectable congruence primes.  That is already claimed in [CaptainSude's paper and Lean repository](https://github.com/CaptainSude/erdos-borwein-disjunctivity/tree/bd98789a177470cc4b3e33e6769e859f6144c906), revision `bd98789a177470cc4b3e33e6769e859f6144c906` (7 September 2026).  I read its complete `paper/erdos-borwein-disjunctivity.tex` this session.  It proves binary scalar disjunctivity on paper with the same quantitative shape as above.  Its Lean headline explicitly assumes AGP and a prime-interval estimate.  The paper invokes published unconditional results for these inputs; the conditional status of its Lean development is **not** a new open analytic assumption in the paper theorem.
 
 Its method extends [Campbell, arXiv:2605.24160](https://arxiv.org/abs/2605.24160), which proves recurrence of `11`.  The construction uses the AGP prime-distribution theorem in [Vandehey, Proposition 2.1](https://arxiv.org/abs/1206.0340).  The underlying source is [Alford, Granville and Pomerance, 1994](https://math.dartmouth.edu/~carlp/PDF/paper95.pdf).
 
-**The scalar congruence construction, the buffer of large primes, and its scalar occurrence bound are prior art.**  The new ingredient here is the simultaneous even-integer encoding in §2, followed by the adaptation that makes a single survivor prescribe every coordinate at a common position.  Neither coprimality nor multiplicative independence of the bases is assumed.  Targeted searches for joint/simultaneous Lambert disjunctivity and the repo's negative inventory found no matching result.  That search is limited evidence, not a priority claim.
+**The scalar congruence construction, the buffer of large primes, and its scalar occurrence bound are prior art.**  The simultaneous extension uses the even-integer encoding in §2, followed by the adaptation that makes a single survivor prescribe every coordinate at a common position.  Neither coprimality nor multiplicative independence of the bases is assumed.  Targeted searches for joint/simultaneous Lambert disjunctivity and the repo's negative inventory found no matching result.  That search is limited evidence, not a priority claim.
 
 The September 25 NN review had described scalar C2 as a fresh mathematical endpoint without carrying forward this prior claim, although the September 13 KB leaf had already recorded it.  The present note corrects that assessment; simply completing the scalar C2 branch would be an independent formalization.
 
@@ -73,6 +75,8 @@ To justify hitting a closed interior box directly, apply weak convergence to its
 
 ## 3. The inherited analytic input
 
+**Historical route, not a remaining hypothesis.**  Sections 3-6 retain the original AGP-based paper proof for comparison.  The qualitative Lean theorem uses the proved pointwise estimate described below instead.  It also suffices for the quantitative schedule of this paper, as explained after the AGP statement.
+
 Use the following published AGP consequence.  There are constants (X_0,D_0) such that for every (X>X_0), a set (\mathcal D(X)) of at most (D_0) integers greater than (\log X) exists with
 
 \[
@@ -80,6 +84,8 @@ Use the following published AGP consequence.  There are constants (X_0,D_0) such
 \]
 
 for all (B\le X^{1/4}), (\gcd(u,B)=1), provided no member of (\mathcal D(X)) divides (B).  Fix the height **before** choosing the primes in the modulus.  The second input, a standard PNT consequence, is that ((L,2L)) contains (\gg L/\log L) primes.  Both are ordinary mathematical inputs; neither is newly proved in this note.
+
+**Weaker input already proved in Lean.**  `exists_pointwise_exponential_distribution` in `JointLambertAGPRange.lean` supplies fixed positive constants gamma and C_0 and, at each sufficiently large X, one P equal to 1 or a prime, chosen before B and u.  For B at most X^(1/3), coprime to P, every reduced residue has discrepancy at most C_0 X exp(-gamma sqrt(log X)) from pi(X)/phi(B).  In section 4, log B is O((log log X)^3), so the relative error C_0 phi(B) log X exp(-gamma sqrt(log X)) tends to zero.  Ordinary PNT therefore gives the same lower bound as AGP.  Delete P from the pool if present; this costs at most one prime and imposes no lower bound on P.  This supplies an alternative analytic input for the quantitative paper proof as well; formalizing the all-N count is still separate work.
 
 The elementary divisor-average estimate is
 
@@ -239,6 +245,6 @@ This tends to infinity, completing the proposed proof including arbitrarily late
 
 The existing `probes/swingc2_window.py` now has `encode`, `character`, and `test` commands, with its original no-argument census retained.  Run the persistent CLI suite with `./probes/swingc2_window.py test -q`.  It includes hand-computed 58 and 22 witnesses, a shallow resonance, persistent duplicate-base obstruction, the zero character, and explicit resource-cap outcomes.  It does not approximate digit frequencies or infer infinite claims from a finite census.
 
-`src/NormalNumbers/JointLambertEncoding.lean` proves normalized-character convergence, eventual nonvanishing, convergence of the original character to zero, and eventual nonintegrality of the even-lattice character.  The formal statement takes the smallest supported base explicitly; remove zero coefficients before applying it.  This is the key separation calculation in §2, not yet the compact-torus encoding theorem or §§3–6.
+The completed formal chain is `evenEncoding` in `JointLambertEncodingProof.lean`, the finite CRT/divisor construction in `JointLambertArithmetic.lean`, unconditional prime selection and tail control in `JointLambertRescaledPrimes.lean` and `JointLambertRescaledTail.lean`, and `jointLambertDisjunctivity_unconditional` in `JointLambertUnconditional.lean`.  It includes the dependent-base instance `JointWords {2,4}`.  The frozen qualitative statements have not changed.  Historical docstrings in the frozen modules describe their status when introduced; this paragraph and the proof module give the current status.
 
-Next mathematical review should target the passage from scalar to simultaneous in §§2, 4, and 6.  Subsequent Lean work belongs on a prepared treadmill: freeze the joint cylinder statement, finish the finite-measure Fourier bridge, and parameterize the scalar CRT/tail construction by the lcm of the bases.  Preserve AGP and prime-interval supply as explicit named inputs until their proofs are imported.  Do not claim the full headline merely because the character lemma compiles, and do not detour into normality, prime-tuple hypotheses, or scalar C2 bookkeeping.
+**Next mathematical target:** the all-N count in [JOINT-LAMBERT-QUANTITATIVE-NEXT.md](../docs/JOINT-LAMBERT-QUANTITATIVE-NEXT.md), with the stronger proposed lower bound N exp(-C (log log N)^2 log log log N).  Its extra ingredient is divisor averaging without coprimality, permitting a prime pool near k^3 and a separate middle-tail estimate.  The paper derivation is complete but not yet formalized.  Do not route that work through proving AGP or impose uniformity in the bases: bases and words are fixed before the constants are chosen.

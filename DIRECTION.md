@@ -9,6 +9,12 @@ only when all three phases are, not when the file is sorry-free.
 
 ## Completed runs 🏁
 
+**Joint Lambert, unconditional + quantitative (closed 2026-09-30, merged 2026-10-02).**  Simultaneous
+Lambert disjunctivity for any finite set of distinct bases, with `≥ N^(1−ε)` common-position
+occurrences (`jointWords_quantitative`, `JointLambertQuantitative.lean`).  Answers Campbell
+arXiv:2605.24160's question (every binary string occurs infinitely often in `E`); see
+`Literature.lean` `CampbellEQuestion`.
+
 **Growing-prime localized logarithm (2 laps, closed 2026-10-02).**  `zetaY_isNormal` +
 `exists_unbounded_zetaY` (`src/NormalNumbers/GrowingLocalizedLog.lean`), conditional on the cited
 `VandeheyThm51` only.  Route: `KICKOFF-2026-10-02-growing-localized-log.md`, audit repairs applied

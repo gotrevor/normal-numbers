@@ -44,6 +44,43 @@ unchecked.  With counted dyadic scales, the sample `[0,X)` still needs its dyadi
 endpoints `X/2^{j+1}` to be good scales: choose among the j's (fraction of bad scales small,
 bad blocks bounded pointwise by A²) — that averaging is the N6 content.
 
+## DONE (2026-09-29) — joint Lambert quantitative count
+
+**Both ratified headlines are proved, with their full dependency chains, and are
+`#print axioms`-clean** (`propext, Classical.choice, Quot.sound` only):
+
+* `jointWords_quantitative` — for every finite `S` of bases `≥ 2` and fixed valid words,
+  `A(N) ≥ N exp(-C (log log N)² log log log N)` for every `N ≥ N0`;
+* `jointWords_power_count` — for every fixed `ε > 0`, eventually `A(N) ≥ N^(1-ε)`.
+
+Permanent audit: `scripts/check-joint-lambert-count.sh` (frozen-source diff against
+`e2828b32`, full build, exact ratified types, the `{2,4}` specialization, the boundary
+controls, and transitive axiom verification of both headlines).
+
+Four mathematical findings, recorded at the head of
+`docs/JOINT-LAMBERT-QUANTITATIVE-NEXT.md`: the far range needs no `τ(n) ≤ 2√n`; the split
+point `J` is better chosen adaptively than as `⌊(log₂X)²⌋`; feasibility and rate need
+*different* bounds on `log B`; and `B³ ≤ X` is exactly a factor two short of the window
+comparison `H = o(M)`, repaired for free by running the schedule at pool exponent `4c+4`.
+
+---
+
+# PENDING WORK — the queue
+
+## Current Lambert status, 29 September 2026
+
+The bounded qualitative Lambert objective is complete: `f6fbf87` proves the original
+common-position theorem unconditionally.  [Completed proof](docs/JOINT-LAMBERT-RESCALED-PROOF.md).
+The [next quantitative target](docs/JOINT-LAMBERT-QUANTITATIVE-NEXT.md) has a paper derivation
+of `N exp(-C (log log N)^2 log log log N)` occurrences for every sufficiently large N.
+No new treadmill is launched by this documentation update.  The older AGP-only status
+below is historical; proving AGP is not the next Lambert obligation.  Vandehey work is
+separate, in the main checkout.
+
+
+Concrete next moves, cheapest and most clear-cut first.  Front context is in `STATUS.md`.  The
+lap-by-lap log from before the 2026-09-27 merge is `archive/PENDING_WORK-to-2026-09-27.md`.
+Treadmill laps append dated notes **below the queue**, and a review lap folds them back into it.
 ## Erdős #257 for A = k·S (launched 2026-10-02) — CLOSED lap 1
 
 All five frozen statements in `Erdos257.lean` PROVED; `#print axioms` = [propext,
