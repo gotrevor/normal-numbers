@@ -46,12 +46,12 @@ For `S` = all primes, irrationality is Tao–Teräväinen's theorem.  Disjunctiv
 
 ## 3. `A = ℕ`: the binary digits of `E` (unconditional)
 
-**Theorem.**  Every binary word appears infinitely often in the binary expansion of the Erdős–Borwein constant `E = Σ_{n≥1} 1/(2ⁿ − 1)`.  This answers the question in Campbell, [arXiv:2605.24160](https://arxiv.org/abs/2605.24160) §4.
+**Theorem.**  Every binary word appears infinitely often in the binary expansion of the Erdős–Borwein constant `E = Σ_{n≥1} 1/(2ⁿ − 1)`.  This is the question asked in Campbell, [arXiv:2605.24160](https://arxiv.org/abs/2605.24160) §4.
 
 - [`campbellEQuestion_holds`](https://github.com/gotrevor/normal-numbers/blob/6ada9f0cba4944b9f9acc70797a406f2e9ece63b/src/NormalNumbers/CampbellAnswer.lean#L132), for the statement [`CampbellEQuestion`](https://github.com/gotrevor/normal-numbers/blob/6ada9f0cba4944b9f9acc70797a406f2e9ece63b/src/NormalNumbers/LiteratureCampbell.lean#L33).
 - Quantitatively, for each `ε > 0` a fixed word starts at `≥ N^{1−ε}` of the first `N` positions once `N` is large ([`jointWords_power_count`](https://github.com/gotrevor/normal-numbers/blob/6ada9f0cba4944b9f9acc70797a406f2e9ece63b/src/NormalNumbers/JointLambertQuantitative.lean#L180)).
 
-The same statement appears, conditionally on two analytic inputs, in [CaptainSude/erdos-borwein-disjunctivity](https://github.com/CaptainSude/erdos-borwein-disjunctivity) by a different method.
+**Prior work.**  This statement is already proved on paper in [CaptainSude/erdos-borwein-disjunctivity](https://github.com/CaptainSude/erdos-borwein-disjunctivity/tree/bd98789a177470cc4b3e33e6769e859f6144c906) (7 September 2026), extending Campbell's construction for `11`; that paper uses published prime-distribution theorems (Alford–Granville–Pomerance), which its Lean development takes as hypotheses.  What is new here is a Lean proof with no hypotheses, the count above, and a simultaneous version: for any finite set of distinct bases `b ≥ 2` (2 and 4 included) and a word in each base, there are infinitely many common positions where every word starts in the matching `E_b` ([`jointWords_quantitative`](https://github.com/gotrevor/normal-numbers/blob/6ada9f0cba4944b9f9acc70797a406f2e9ece63b/src/NormalNumbers/JointLambertQuantitative.lean)).
 
 ## 4. Every infinite set of primes (conditional on two cited inputs)
 
