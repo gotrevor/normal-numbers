@@ -16,3 +16,8 @@ Branch `proof/erdos257-base2`.  `#print axioms` for `isDisjunctive_subsetLambert
   C₆ = 250.
 - No Maze row: both refutations were missing side-hypotheses on internal leaves, repaired in place;
   the refuting theorems sit next to the repaired leaves.
+
+## Stop note
+Operator scope (headline axioms clean) is MET. `box done` signalled; the repo-wide gate will decline
+because 23 unrelated sorries remain elsewhere — this run should be relaunched with
+`--done-when` scoped to Erdos257Base2 if the host relaunches it.
