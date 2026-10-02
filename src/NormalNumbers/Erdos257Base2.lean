@@ -8,6 +8,7 @@ import NormalNumbers.LiteratureTTEquidistributedDefect
 import NormalNumbers.G4VeryLargeCov
 import NormalNumbers.G4SubsetWitnessCov
 import NormalNumbers.G4Base2Cov
+import NormalNumbers.G4Base2Bins
 
 /-!
 # Erdős #257 at base 2 for prime subsets (campaign launched 2026-10-02)
