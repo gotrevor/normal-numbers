@@ -2691,3 +2691,10 @@ Gap 1 (schedule) PROVED: src/NormalNumbers/CPrimeQuantSchedule.lean — QuantSch
 - NEXT: (a) an `S`-far-tail variant of the witness structure (ScheduleWitnessSC.hfar with farCS)
   and its PropD lemma (copy of gridFrameW_subset_propD wiring at G4SubsetJunk:372);
   (b) the Mc S-restriction (term_b/term_c in G4SchedBE).
+- DONE (lap 1d): `G4SchedBE2` — budget layer with the moment order decoupled: `SchedB.Dec.HypE2 b K e s`
+  (Mc = McE K s, `hbudget_holdsE_gen` takes `Σ_{sm} 1/p ≤ 3s+5` as hypothesis).
+- NEXT: copy the witness assembly (G4SchedBEAssembly scheduleWitnessSE pieces used by
+  G4Base2Sched.scheduleWitnessSC2) onto HypE2, with hfar via `farAvgS_leS`/farCS
+  (needs a ScheduleWitnessSC variant whose hfar field uses farCS — see G4SubsetWitnessCov:75).
+  Then the gap-set cutoff: first e with F_S(e) ≥ D has F_S(e) ≤ D+7 (increment from
+  `sum_inv_primes_Ioc_le`, 4(1+log 2) < 7), take s ≈ (D+7)/3 + m₁.
