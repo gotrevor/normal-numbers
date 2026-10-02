@@ -502,6 +502,7 @@ import NormalNumbers.GrowingLocalizedLogWeyl
 import NormalNumbers.GrowingLocalizedLogScale
 import NormalNumbers.GrowingLocalizedLogNormal
 import NormalNumbers.GrowingLocalizedLogWitness
+import NormalNumbers.GrowingLocalizedLogDiagonal
 import NormalNumbers.CPrimeSiteFactorization
 import NormalNumbers.MazeAudit
 import NormalNumbers.StonehamSixFailure
