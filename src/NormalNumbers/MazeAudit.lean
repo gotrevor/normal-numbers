@@ -6,6 +6,7 @@ Authors: Trevor Morris
 import NormalNumbers.Maze
 import NormalNumbers.CPrimeSiteFactorization
 import LeanLedger.MazeLinks
+import NormalNumbers.MasterMaze
 
 /-!
 # Maze audit: every closed route cites declarations
@@ -65,7 +66,11 @@ def mazeLinks : List Link := [
   ⟨"the StateData repair of the bundle", [``hall_statedata_restatement], []⟩,
   ⟨"StateClock below the width scale", [``hall_stateclock_below_width], []⟩,
   ⟨"the one-digit-per-read throttle behind the S7 scalar debts", [``hall_one_digit_throttle], []⟩,
-  ⟨"predictable target sets from marginals alone", [``hall_predictable_from_marginals], []⟩]
+  ⟨"predictable target sets from marginals alone", [``hall_predictable_from_marginals], []⟩,
+  ⟨"Hypothesis A as weaker",
+   [``NormalNumbers.MasterConjectures.equidistributed_lnTwoOrbit_iff], []⟩,
+  ⟨"KickBootstrap", [``NormalNumbers.MasterConjectures.equidistributed_lnTwoOrbit_iff],
+   [``NormalNumbers.MasterConjectures.BaileyCrandallHypA]⟩]
 
 /-- Rows whose reasons are still prose only (as of 2026-10-01).  Only shrinks. -/
 def mazeLegacy : List String := [
@@ -105,7 +110,6 @@ def mazeLegacy : List String := [
   "Khinchin from frequencies alone",
   "Fermat-quotient coordinate",
   "e kick-barrier",
-  "KickBootstrap",
   "T3 ShortOrbitCancel",
   "CRT stacking to a sqrt(n) threshold",
   "LnTwoLatticeAvoid (alien R1)",
@@ -113,7 +117,6 @@ def mazeLegacy : List String := [
   "Lagarias footnote-1",
   "beta below 9 (run cap)",
   "beta = 8 sharpening",
-  "Hypothesis A as weaker",
   "kick-floor-only lemma",
   "irrationality-measure route",
   "2-adic Kurschak trick",
@@ -179,7 +182,7 @@ def mazeLegacy : List String := [
   "Diophantine good-denominator detour for the tail cell",
   "route B's unweighted cover of the state-dependent target"]
 
-/-- info: maze audit: 141 rows, 32 cite declarations, 109 legacy (prose only) -/
+/-- info: maze audit: 141 rows, 34 cite declarations, 107 legacy (prose only) -/
 #guard_msgs in
 #maze_audit mazeRows, mazeLinks, mazeLegacy
 
