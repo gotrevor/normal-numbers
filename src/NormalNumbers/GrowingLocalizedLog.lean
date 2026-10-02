@@ -6,6 +6,7 @@ Authors: Trevor Morris
 import NormalNumbers.LiteratureVandeheyDifferencing
 import NormalNumbers.RealDefs
 import NormalNumbers.GrowingLocalizedLogWitness
+import NormalNumbers.GrowingLocalizedLogNormal
 
 /-!
 # The growing-prime localized logarithm `ζ_Y` (campaign launched 2026-10-02)
@@ -57,7 +58,18 @@ theorem zetaY_isNormal (hV : Literature.VandeheyDiff.VandeheyThm51)
     (hY : ∀ᶠ n : ℕ in atTop,
       ((Y n).primeCounting : ℝ) ≤ (1 - ε) * Real.logb 2 (Real.log n)) :
     IsNormal 2 (zetaY Y) := by
-  sorry
+  have hS3 : ∀ K, Retained Y (3 ^ K) ∧ Retained Y (2 * 3 ^ K) := by
+    intro K
+    have h3p : ∀ p, p.Prime → p ∣ 3 ^ K → p = 3 := fun p hp hd =>
+      (Nat.prime_dvd_prime_iff_eq hp Nat.prime_three).1 (hp.dvd_of_dvd_pow hd)
+    refine ⟨⟨Nat.one_le_pow _ _ (by norm_num), fun p hp hd => ?_⟩,
+      ⟨by have := Nat.one_le_pow K 3 (by norm_num); omega, fun p hp hd => ?_⟩⟩
+    · rw [h3p p hp hd]; exact h3 _
+    · rcases (Nat.Prime.dvd_mul hp).1 hd with h | h
+      · have := Nat.le_of_dvd two_pos h; linarith [h3 (2 * 3 ^ K)]
+      · rw [h3p p hp h]; exact h3 _
+  exact isNormal_xS hV hmono h3 hS3 (fun m hm => hm.1) (fun m p hm _ hp hd => hm.2 p hp hd)
+    hε hY
 
 /-- The theorem has content: an admissible `Y` with `Y → ∞`, hence unbounded prime support. -/
 theorem exists_unbounded_zetaY : ∃ Y : ℕ → ℕ, Monotone Y ∧ (∀ m, 3 ≤ Y m) ∧

@@ -1,4 +1,13 @@
-## ζ_Y campaign (launched 2026-10-02) — lap 1
+## ζ_Y campaign (launched 2026-10-02) — CLOSED lap 2
+
+**Lap 2: `zetaY_isNormal` PROVED**, conditional only on the hypothesis argument
+`VandeheyThm51`; `#print axioms` = [propext, Classical.choice, Quot.sound] for both headlines.
+New: `weyl_scale`, `weyl_Rs` (`GrowingLocalizedLogScale.lean`, N9 complete);
+`ePhase_orbit`, `orbit_sum_close`, `isNormal_xS` (`GrowingLocalizedLogNormal.lean`, N10).
+The frozen statement is unchanged; only an import line and the proof body changed.
+Remaining open debt for this route: discharging `VandeheyThm51` itself (side quest).
+
+### lap 1 record
 
 **Advance on crux N8:** Vandehey's Lemma 6.3 (the `Ĩ_k` table, constant `c`) is replaced by a
 proved, constant-free window: `GrowingLocalizedLogExponent.lean`.  The invariant
