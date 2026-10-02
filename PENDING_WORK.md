@@ -15,6 +15,20 @@ The saving `2^{−k−4}` (vs Vandehey's `2^{−k−3}`) costs a factor 2 in the
 `C_{P,x} ≤ (3/x)^s`).  N7 done: `bigM_two_le` (`GrowingLocalizedLogM.lean`, LTE), `M ≤ ∏_p 2^p·2Q`.  Remaining for N8: the assembly into
 `korobov_uniform_saving`.
 
+**Lap 1c:** `exists_unbounded_zetaY` PROVED (`GrowingLocalizedLogWitness.lean`).
+N3–N5 PROVED generically (`GrowingLocalizedLogArith.lean`): for any index set `S` at a clean time
+`n` (`CleanAt`: support `≤ Z`, `m < 2^{n−m}`), `Rs S n = Tnum/oddD` (`Rs_eq`), `3 ∤ Tnum`
+(`three_not_dvd_Tnum`), and `den_bounds`: `den(aR_n) ∣ oddD` (odd, primes `≤ Z`, `≤ n^{π Z}`
+by `oddD_le`), `3^{⌊log₃ n⌋} ≤ den(aR_n)·|a|`.
+
+**Plan for the rest (`zetaY_isNormal`)** — fixed-length blocks, not runs:
+* generic `S` (3-smooth ⊆ S, support ≤ Z monotone, π(Z n) ≤ (1−ε)log₂log n); instantiate Retained Y.
+* tail: `2^n x_S − R_n ∈ [0, 1/(n+1)]`; `R_{n+t} = 2^t R_n` with no S in `(n, n+t]`.
+* blocks of length `H ≈ N exp(−(log log N)^3)`; a block starting at `n₀ ≥ √N` is clean if no S in
+  `[n₀ − B, n₀ + H)`, `B = log₂ N + 1`; unclean blocks ≤ 2·Ψ(N) + 1, Ψ ≤ (1+log₂N)^{π(Z N)}.
+* clean block sum = Vandehey sum with `m = den(hR_{n₀})`, `a = num`; `vandehey_window_bound` +
+  `constPair_sum_le` + `bigM_two_le`; need `Y ≲ poly(π(Y))` via `Chebyshev.psi_ge`.
+
 **(superseded) Next attack (rest of N8):** the cost side, Lemma 5.4 in closed form:
 `log(A_k + B_k) ≤ s(k+1) log 2 + 2 log M + (3/2) log Q + log C_{P,1/2} + …` for `k ≤ s + O(1)`,
 plus N7 `log M ≤ (log 2) Σ_{p≤Y}(p−1) + π(Y) log Y` (LTE).  Note the slack: with

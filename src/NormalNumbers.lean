@@ -491,6 +491,8 @@ import NormalNumbers.GrowingLocalizedLog
 import NormalNumbers.GrowingLocalizedLogExponent
 import NormalNumbers.GrowingLocalizedLogCost
 import NormalNumbers.GrowingLocalizedLogM
+import NormalNumbers.GrowingLocalizedLogArith
+import NormalNumbers.GrowingLocalizedLogWitness
 import NormalNumbers.CPrimeSiteFactorization
 import NormalNumbers.MazeAudit
 import NormalNumbers.StonehamSixFailure
