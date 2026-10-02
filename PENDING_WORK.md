@@ -26,7 +26,7 @@ by `oddD_le`), `3^{⌊log₃ n⌋} ≤ den(aR_n)·|a|`.
 * DONE (Tail.lean): `two_pow_mul_xS_sub`, `Rs_shift`.  DONE (Count.lean): `card_smooth_le` (N1), `le_of_primeCounting` (Z ≤ 17(π Z+1)²).
 * blocks of length `H ≈ N exp(−(log log N)^3)`; a block starting at `n₀ ≥ √N` is clean if no S in
   `[n₀ − B, n₀ + H)`, `B = log₂ N + 1`; unclean blocks ≤ 2·Ψ(N) + 1, Ψ ≤ (1+log₂N)^{π(Z N)}.
-* clean block sum = Vandehey sum with `m = den(hR_{n₀})`, `a = num`; `vandehey_window_bound` +
+* DONE (Block.lean) `block_bound`. clean block sum = Vandehey sum with `m = den(hR_{n₀})`, `a = num`; `vandehey_window_bound` +
   `constPair_sum_le` + `bigM_two_le`; need `Y ≲ poly(π(Y))` via `Chebyshev.psi_ge`.
 
 **(superseded) Next attack (rest of N8):** the cost side, Lemma 5.4 in closed form:
