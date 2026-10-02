@@ -8,6 +8,7 @@ import NormalNumbers.G4Base2Cov
 import NormalNumbers.G4VeryLargeCov
 import NormalNumbers.G4SchedBE
 import NormalNumbers.LiteratureTTEquidistributedDefect
+import NormalNumbers.G4Base2Mertens
 
 /-!
 # N3–N6: the very-large covariance supply, decomposed
@@ -211,7 +212,16 @@ variable (S : ℕ → Prop) [DecidablePred S]
 
 theorem sum_inv_vlPrimes_le : ∃ Y₀ : ℕ, ∀ Y P₀ M : ℕ, Y₀ ≤ Y → M ≤ Y ^ 102 →
     mass (vlPrimes S Y P₀ M) ≤ 5 := by
-  sorry
+  refine ⟨⌈Real.exp 13860⌉₊, fun Y P₀ M hY hM => ?_⟩
+  have hY' : Real.exp 13860 ≤ Y := (Nat.ceil_le).1 hY
+  have hlog : 13860 ≤ Real.log Y := by
+    have := Real.log_le_log (Real.exp_pos _) hY'
+    rwa [Real.log_exp] at this
+  refine le_trans ?_ (sum_inv_primes_Y102_le hlog)
+  unfold mass vlPrimes
+  refine sum_le_sum_of_subset_of_nonneg (fun p hp => ?_) (fun _ _ _ => by positivity)
+  simp only [mem_filter, mem_range] at hp ⊢
+  exact ⟨by omega, hp.2.1, hp.2.2.2.2⟩
 
 theorem omegaVLS_le {Y P₀ m : ℕ} (hY : 2 ≤ Y) (hm : m < Y ^ 102) : omegaVLS S Y P₀ m ≤ 101 := by
   by_contra hc
