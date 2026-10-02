@@ -932,4 +932,5 @@ import NormalNumbers.Erdos257Divergent
 import NormalNumbers.DecayAeNormal
 import NormalNumbers.Derandomize
 import NormalNumbers.HatFourier
+import NormalNumbers.VisitDeviation
 import NormalNumbers.ExplicitSquareNonNormal
