@@ -3,7 +3,7 @@ Copyright (c) 2026 Trevor Morris. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
-import NormalNumbers.CPrimeQuantStatement
+import NormalNumbers.CPrimeQuantSchedule
 import NormalNumbers.WeylCriterion
 import NormalNumbers.G4WiringSparse
 import Mathlib.NumberTheory.Harmonic.Bounds
@@ -156,6 +156,22 @@ theorem tailOK_of_sqrtFreshMassLe {ρ : ℝ} (hρ : ρ < 1) (hS : SqrtFreshMassL
 
 end Wiring
 
+/-- `log₄ n ≤ log(n + 1)`. -/
+lemma natLog4_le_log (n : ℕ) : ((Nat.log 4 n : ℕ) : ℝ) ≤ Real.log ((n : ℝ) + 1) := by
+  rcases Nat.eq_zero_or_pos n with rfl | hn
+  · simp
+  have hpow : ((4 : ℝ) ^ (Nat.log 4 n)) ≤ (n : ℝ) := by
+    exact_mod_cast Nat.pow_log_le_self 4 hn.ne'
+  have hl := Real.log_le_log (by positivity) hpow
+  rw [Real.log_pow] at hl
+  have h4 : (1 : ℝ) ≤ Real.log 4 := by
+    rw [Real.le_log_iff_exp_le (by norm_num)]
+    linarith [Real.exp_one_lt_d9]
+  have hn1 : Real.log (n : ℝ) ≤ Real.log ((n : ℝ) + 1) :=
+    Real.log_le_log (by exact_mod_cast hn) (by linarith)
+  have : (0 : ℝ) ≤ (Nat.log 4 n : ℝ) := Nat.cast_nonneg _
+  nlinarith
+
 /-- **The crux (window-mean form).**  On the graded site count `J = JG P N`, bounded square-root
 fresh mass gives truncated window means of size `O(ρ (log(1/ρ) + log|h|)²)`.  Paper: doc
 §"Transfer", `|W_h| = O(ρ(log²|h| + log u log|h| + log u)) + 4e^{−u}` at fixed `u` (cutoffs
@@ -168,7 +184,83 @@ theorem windowWeylQuant : ∃ C₁ ρ₁ : ℝ, 0 < C₁ ∧ 0 < ρ₁ ∧ ρ₁
         ∀ h : ℤ, h ≠ 0 → ∀ ε > 0, ∀ᶠ N : ℕ in atTop,
           ‖G4Sparse.windowMeanS P (FamilyGraded.JG P N) h N‖
             ≤ C₁ * ρ * (Real.log (1 / ρ) + Real.log (|(h : ℝ)| + 1)) ^ 2 + ε := by
-  sorry
+  refine ⟨10 ^ 6, 1 / 3, by norm_num, by norm_num, by norm_num, ?_⟩
+  intro P _ hP ρ hρ hρ3 hS h hh ε hε
+  set L := Real.log (1 / ρ) with hL
+  have hL1 : 1 ≤ L := by
+    rw [hL, Real.le_log_iff_exp_le (by positivity)]
+    calc Real.exp 1 ≤ 3 := le_of_lt (lt_trans Real.exp_one_lt_d9 (by norm_num))
+      _ ≤ 1 / ρ := by rw [le_div_iff₀ hρ]; linarith
+  set u : ℕ := max 3000 ⌈L⌉₊ with hu
+  have hu3000 : 3000 ≤ u := le_max_left _ _
+  have huL : L ≤ (u : ℝ) := (Nat.le_ceil L).trans (by exact_mod_cast le_max_right _ _)
+  have huL' : (u : ℝ) ≤ 3001 + L := by
+    have h1 : (⌈L⌉₊ : ℝ) < L + 1 := Nat.ceil_lt_add_one (by linarith)
+    rcases le_total 3000 ⌈L⌉₊ with hc | hc
+    · rw [hu, max_eq_right hc]; linarith
+    · rw [hu, max_eq_left hc]; push_cast; linarith
+  have hE0 : (0 : ℝ) ≤ 2 * ρ := by linarith
+  have hE : ∀ᶠ N : ℕ in atTop, FamilyGraded.epsG P N ≤ 2 * ρ := by
+    filter_upwards [QuantSchedule.epsG_eventually_le P hS hρ] with N hN; linarith
+  -- the pointwise and limiting pieces
+  have hwin := QuantSchedule.windowMean_le_terms P u (by omega) hP h
+  have hE1 := QuantSchedule.termE1_le P u (by omega) h hE0 hE
+  have hE4a := QuantSchedule.termE4a_le P u (by omega)
+  have hE4c := QuantSchedule.termE4c_tendsto P u hu3000 hP
+  have hE5 := QuantSchedule.termE5_tendsto P u hu3000 hP h hE0 hE
+  have hJN := (QuantSchedule.JG_div_tendsto P u hP).const_mul (4 * Real.pi * |(h : ℝ)| / 3)
+  rw [mul_zero] at hJN
+  have hsmall := (hE4c.add hE5).add hJN
+  rw [add_zero, add_zero] at hsmall
+  -- the constant
+  set M := L + Real.log (|(h : ℝ)| + 1) with hM
+  have hlogh : 0 ≤ Real.log (|(h : ℝ)| + 1) := Real.log_nonneg (by linarith [abs_nonneg (h : ℝ)])
+  have hM1 : 1 ≤ M := by linarith
+  set k : ℝ := ((Nat.log 4 h.natAbs + 1 : ℕ) : ℝ) with hk
+  have hk0 : 0 ≤ k := Nat.cast_nonneg _
+  have hkM : k ≤ 2 * M := by
+    have h1 := natLog4_le_log h.natAbs
+    have h2 : ((h.natAbs : ℕ) : ℝ) = |(h : ℝ)| := by rw [Nat.cast_natAbs, Int.cast_abs]
+    rw [h2] at h1
+    rw [hk]; push_cast; linarith
+  set c : ℝ := 2 + 3 * (u : ℝ) with hc
+  have hc0 : 0 ≤ c := by positivity
+  have hcM : c ≤ 9100 * M := by rw [hc]; nlinarith
+  have hpi : Real.pi ≤ 4 := by linarith [Real.pi_lt_d2]
+  have hA : 2 * (2 * k * (k + c) + 4 * Real.pi * (k + c)) ≤ 400000 * M ^ 2 := by
+    have hkc : k + c ≤ 9102 * M := by linarith
+    have hkc0 : 0 ≤ k + c := by linarith
+    have h1 : 2 * k * (k + c) ≤ 2 * (2 * M) * (9102 * M) := by
+      apply mul_le_mul (by linarith) hkc hkc0 (by linarith)
+    have h2 : 4 * Real.pi * (k + c) ≤ 16 * (9102 * M) := by
+      have := mul_le_mul hpi hkc hkc0 (by norm_num)
+      nlinarith [Real.pi_pos]
+    nlinarith
+  -- the exponentially small terms are at most `ρ` each
+  have hexpu : Real.exp (-(u : ℝ)) ≤ ρ := by
+    calc Real.exp (-(u : ℝ)) ≤ Real.exp (-L) := Real.exp_le_exp.mpr (by linarith)
+      _ = ρ := by rw [hL, Real.log_div (by norm_num) hρ.ne', Real.log_one, zero_sub, neg_neg,
+          Real.exp_log hρ]
+  have hu0 : (3000 : ℝ) ≤ (u : ℝ) := by exact_mod_cast hu3000
+  have hexp4a : 4 * Real.exp 20 * Real.exp (-((u : ℝ) ^ 2 / 32)) ≤ 4 * ρ := by
+    have : Real.exp 20 * Real.exp (-((u : ℝ) ^ 2 / 32)) ≤ Real.exp (-(u : ℝ)) := by
+      rw [← Real.exp_add]; apply Real.exp_le_exp.mpr; nlinarith
+    linarith
+  -- assemble
+  filter_upwards [hwin, hE1, hE4a, hsmall.eventually (gt_mem_nhds hε),
+    (FamilyGraded.JG_tendsto P hP).eventually_ge_atTop (h.natAbs + 1), eventually_gt_atTop 0]
+    with N hw h1 h4a hsm hJ hN
+  have hb := hw ⟨h.natAbs + 1, by omega, hJ, G4Sparse.nontrivial_site hh⟩ hN
+  have h4b := QuantSchedule.termE4b_le P u N
+  have hρ0 : 0 ≤ ρ := hρ.le
+  have hfin : 2 * (2 * ρ) * (2 * k * (k + c) + 4 * Real.pi * (k + c)) ≤ 2 * ρ * (400000 * M ^ 2) := by
+    have := mul_le_mul_of_nonneg_left hA (by positivity : (0:ℝ) ≤ 2 * ρ)
+    nlinarith
+  have hM2 : 1 ≤ M ^ 2 := one_le_pow₀ hM1
+  have hk' : ((Nat.log 4 h.natAbs + 1 : ℕ) : ℝ) = k := rfl
+  have hc' : (2 + 3 * (u : ℝ)) = c := rfl
+  have : 5 * ρ ≤ 5 * ρ * M ^ 2 := le_mul_of_one_le_right (by positivity) hM2
+  nlinarith
 
 /-- **The crux (orbit form).**  Bounded square-root fresh mass gives orbit Weyl sums of size
 `O(ρ (log(1/ρ) + log|h|)²)`: `windowWeylQuant` through the quantitative wiring. -/
