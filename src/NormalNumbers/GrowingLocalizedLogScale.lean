@@ -180,4 +180,80 @@ theorem weyl_scale (hV : VandeheyThm51) {S : ℕ → Prop} {z N L ℓ c c' : ℕ
         _ ≤ δ * N := by gcongr
     linarith
 
+/-- **N9.**  `Σ_{n<N} e(h R_n) = o(N)` for every `h ≠ 0`, under the growth hypothesis. -/
+theorem weyl_Rs (hV : VandeheyThm51) {S : ℕ → Prop} {Z : ℕ → ℕ} (hmono : Monotone Z)
+    (hZ3 : ∀ n, 3 ≤ Z n) (hS3 : ∀ K, S (3 ^ K) ∧ S (2 * 3 ^ K))
+    (hsupp : ∀ m p, S m → 1 ≤ m → p.Prime → p ∣ m → p ≤ Z m) {ε : ℝ} (hε : 0 < ε)
+    (hY : ∀ᶠ n : ℕ in atTop,
+      ((Z n).primeCounting : ℝ) ≤ (1 - ε) * Real.logb 2 (Real.log n))
+    (h : ℤ) (hh : h ≠ 0) {δ : ℝ} (hδ : 0 < δ) :
+    ∀ᶠ N : ℕ in atTop, ‖∑ n ∈ range N, ePhase ((h : ℝ) * (Rs S n : ℝ))‖ ≤ δ * N := by
+  classical
+  set ε' := min ε 1 with hε'
+  have hε'0 : 0 < ε' := lt_min hε one_pos
+  have hε'1 : ε' ≤ 1 := min_le_right _ _
+  obtain ⟨c1, hc1⟩ : ∃ c, 81 * h.natAbs ^ 4 + 6 * h.natAbs + 2 ≤ 2 ^ c :=
+    ⟨_, (Nat.lt_two_pow_self).le⟩
+  obtain ⟨c2, hc2⟩ : ∃ c : ℕ, 8 / δ ≤ (2 : ℝ) ^ c := pow_unbounded_of_one_lt _ one_lt_two
+    |>.imp fun _ h => h.le
+  obtain ⟨c', hc'⟩ : ∃ c : ℕ, 4 / δ ≤ (2 : ℝ) ^ c := pow_unbounded_of_one_lt _ one_lt_two
+    |>.imp fun _ h => h.le
+  set c := c1 + c2
+  have hc1' : 81 * h.natAbs ^ 4 + 6 * h.natAbs + 2 ≤ 2 ^ c :=
+    hc1.trans (Nat.pow_le_pow_right (by norm_num) (by omega))
+  have hc2' : 8 / δ ≤ (2 : ℝ) ^ c :=
+    hc2.trans (pow_le_pow_right₀ (by norm_num) (by omega))
+  have hℓev : ∀ᶠ ℓ : ℕ in atTop, (c + c' + 10) * (ℓ + 3) ^ 4 ≤ 2 ^ ℓ ∧ c' + 2 ≤ ℓ ∧
+      512 * Real.exp (ε' * Real.log 2) * ((62 + c') * Real.log 2) * ((ℓ : ℝ) + 3) ^ 4 ≤
+        Real.exp (ε' * Real.log 2 * ℓ) :=
+    (eventually_poly_le_two_pow _).and ((eventually_ge_atTop _).and
+      (eventually_poly_le_exp (mul_pos hε'0 (Real.log_pos one_lt_two)) _))
+  have hlog : Tendsto (fun N => Nat.log 2 (Nat.log 2 N)) atTop atTop :=
+    tendsto_log2.comp tendsto_log2
+  filter_upwards [hlog.eventually hℓev, hY, eventually_ge_atTop 3] with N ⟨hpoly, hℓc, hbig⟩ hYN hN3
+  set L := Nat.log 2 N
+  set ℓ := Nat.log 2 L
+  have hℓ1 : 1 ≤ ℓ := by omega
+  have hL0 : L ≠ 0 := by intro h0; simp [ℓ, h0] at hℓ1
+  have hNL : 2 ^ L ≤ N := Nat.pow_log_le_self 2 (by omega)
+  have hNL' : N < 2 ^ (L + 1) := Nat.lt_pow_succ_log_self (by norm_num) N
+  have hLℓ : 2 ^ ℓ ≤ L := Nat.pow_log_le_self 2 hL0
+  have hLℓ' : L < 2 ^ (ℓ + 1) := Nat.lt_pow_succ_log_self (by norm_num) L
+  -- the logarithm
+  have hNr : (3 : ℝ) ≤ N := by exact_mod_cast hN3
+  have hlN1 : 1 ≤ Real.log N := by
+    rw [Real.le_log_iff_exp_le (by linarith)]
+    exact (Real.exp_one_lt_d9.trans (by norm_num)).le.trans hNr
+  have hlN0 : 0 < Real.log N := by linarith
+  set y := Real.logb 2 (Real.log N)
+  have hy0 : 0 ≤ y := Real.logb_nonneg one_lt_two hlN1
+  have hYN' : ((Z N).primeCounting : ℝ) ≤ (1 - ε') * y := by
+    have : (1 - ε) * y ≤ (1 - ε') * y :=
+      mul_le_mul_of_nonneg_right (by linarith [min_le_left ε 1]) hy0
+    linarith
+  have hy : y < ℓ + 1 := by
+    have h1 : Real.log N < 2 ^ (ℓ + 1) := by
+      have s : Real.log N ≤ (L + 1) * Real.log 2 := by
+        have : Real.log N ≤ Real.log ((2 : ℝ) ^ (L + 1)) :=
+          Real.log_le_log (by linarith) (by exact_mod_cast hNL'.le)
+        rw [Real.log_pow] at this; push_cast at this; linarith
+      have h2 : ((L : ℝ) + 1) ≤ 2 ^ (ℓ + 1) := by exact_mod_cast hLℓ'
+      have hl := Real.log_two_lt_d9
+      have : (0 : ℝ) ≤ L := by positivity
+      nlinarith
+    rw [Real.logb_lt_iff_lt_rpow one_lt_two hlN0]
+    exact_mod_cast h1
+  have hπ : (Z N).primeCounting ≤ ℓ + 1 := by
+    have : ((Z N).primeCounting : ℝ) < ℓ + 1 := by nlinarith
+    have : (Z N).primeCounting < ℓ + 1 := by exact_mod_cast this
+    omega
+  have hπN : (2 : ℝ) ^ ((Z N).primeCounting : ℝ) ≤ Real.log N ^ (1 - ε') := by
+    calc (2 : ℝ) ^ ((Z N).primeCounting : ℝ) ≤ (2 : ℝ) ^ (y * (1 - ε')) :=
+          Real.rpow_le_rpow_of_exponent_le one_le_two (by linarith)
+      _ = Real.log N ^ (1 - ε') := by
+          rw [Real.rpow_mul zero_le_two, Real.rpow_logb two_pos (by norm_num) hlN0]
+  exact weyl_scale hV h hh hS3
+    (fun m p hS hm hmN hp hpm => (hsupp m p hS hm hp hpm).trans (hmono hmN)) (hZ3 N)
+    hε'0 hε'1 hδ hc1' hc2' hc' hNL hNL' hLℓ hLℓ' hπ hπN hbig hpoly hℓc
+
 end NormalNumbers.GrowingLocalizedLog
