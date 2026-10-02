@@ -46,14 +46,38 @@ open G4
 
 variable {S : ℕ → Prop} [DecidablePred S]
 
-/-- **N6 + N7: the base-2 schedule witness with the covariance interface.**  For every omitted
-dyadic cylinder, a Mertens rate and TT 3.1(i) (dyadic form) produce `ScheduleWitnessSC S 2 ℓ w`.
-Open: N3–N5 (bins), N6 (`VeryLargeCov` from `TTEquidistributedDyadic`), N7 (base-2 schedule
-arithmetic).  70% (audit §4). -/
-theorem exists_scheduleWitnessSC_two (htt : CastingOut.TTEquidistributedDyadic)
+/-- **The very-large covariance supply at the `SchedB` scales** (`X = 2^{100·2^{mE}}`,
+`Y = 2^{2^{mE}}`): for every grid of the schedule family, `κ` can be made arbitrarily small by
+taking the cutoff exponent `e` large, with the fixed variance budget `V = 20000`
+(`ω_{S,>Y}(m) ≤ 101` pointwise for `m ≤ Mx`). -/
+def VeryLargeCovSupply (S : ℕ → Prop) [DecidablePred S] : Prop :=
+  ∀ K N : ℕ, ∀ hK : 1 ≤ K, ∀ κ : ℝ, 0 < κ → ∃ e₀ : ℕ, ∀ e, e₀ ≤ e →
+    VeryLargeCov S (gridOf K N hK) (SchedB.XE K e) (SchedB.YE K e) 20000 κ
+
+/-- **N3–N6: the covariance supply from Tao–Teräväinen 3.1(i)** (dyadic form).  Route: bins of
+`S ∩ (Y, Mx]` of harmonic mass `≤ 1/B` (N3), `ω_{S,>Y} = Σ_ℓ (1 − g_ℓ) + err` (N4), TT's
+hypothesis (3.1) for the bin indicators `g_ℓ` via the rough-number count (N5), and averaging the
+dyadic-block conclusion over `[0, X)` with the bad scales charged pointwise (N6).
+`κ ≪ B²·(log X)^{-c} + A/B`, so `κ → 0` as `e → ∞` with `B` chosen late.  No Mertens rate is
+needed.  75% (audit §4). -/
+theorem veryLargeCovSupply_of_TT (htt : CastingOut.TTEquidistributedDyadic) :
+    VeryLargeCovSupply S := by
+  sorry
+
+/-- **N7: the base-2 schedule.**  A Mertens rate and the covariance supply give a schedule
+witness for every omitted dyadic cylinder.  At `bb = 2`, `rowL1 = 1`, `rowL2 = 2^{-K}/3`, so the
+very-large term needs `κ ≤ 2^{-K/2}/(256 K²)`, which the supply provides; the remaining fields
+are the `b ≥ 3` schedule (`SchedB.scheduleWitnessSE`) redone at `b = 2`.  70%. -/
+theorem exists_scheduleWitnessSC_two_of_supply (hsup : VeryLargeCovSupply S)
     {c C : ℝ} (hm : MertensAP.MertensRate S c C) (ℓ w : ℕ) (hℓ : 1 ≤ ℓ) :
     Nonempty (ScheduleWitnessSC S 2 ℓ w) := by
   sorry
+
+/-- **N6 + N7: the base-2 schedule witness with the covariance interface.** -/
+theorem exists_scheduleWitnessSC_two (htt : CastingOut.TTEquidistributedDyadic)
+    {c C : ℝ} (hm : MertensAP.MertensRate S c C) (ℓ w : ℕ) (hℓ : 1 ≤ ℓ) :
+    Nonempty (ScheduleWitnessSC S 2 ℓ w) :=
+  exists_scheduleWitnessSC_two_of_supply (veryLargeCovSupply_of_TT htt) hm ℓ w hℓ
 
 /-- **Base-2 disjunctivity of `Σ_{p∈S} 1/(2ᵖ − 1)`** for any prime set with a Mertens rate,
 conditional on Tao–Teräväinen Theorem 3.1(i).  75% (audit). -/

@@ -5,6 +5,9 @@ Headline + both corollaries in `Erdos257Base2.lean` now PROVED from one sorry'd 
 (witness with the `VeryLargeCov` field replacing pointwise `hMx`/log-ratio term) and
 `isDisjunctive_subsetLambert_of_witnessC` (proved).  Next: split `exists_scheduleWitnessSC_two`
 into N7 (schedule from a `VeryLargeCov` supply at κ ≪ 2^{-K/2}) and N6 (supply from TT dyadic).
+DONE: split as `VeryLargeCovSupply` (V=20000, κ→0 as e→∞ at SchedB scales XE/YE),
+`veryLargeCovSupply_of_TT` (N3–N6, sorry) and `exists_scheduleWitnessSC_two_of_supply` (N7, sorry).
+N7 check: rowL2 2 K = 2^{-K}/3, rowL1 = 1; need κ ≤ 2^{-K/2}/(256K²); b≥3-only spots: gridB_bound, hN (clog), hfar, freqSeed.
 
 ## Erdős #257 base 2 on prime subsets (launched 2026-10-02) — STOPPED lap 1: cited input vacuous
 
