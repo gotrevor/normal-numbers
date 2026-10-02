@@ -1,14 +1,11 @@
 # DIRECTION — normal-numbers 🧭
 
-## CURRENT DIRECTIVE (2026-10-02): the growing-prime localized logarithm 🎯
-
-Prove `zetaY_isNormal` (conditional on the cited `VandeheyThm51` only) and
-`exists_unbounded_zetaY` (`src/NormalNumbers/GrowingLocalizedLog.lean`).  Follow
-`KICKOFF-2026-10-02-growing-localized-log.md`; read
-`docs/GROWING-PRIME-LOCALIZED-LOG-AUDIT-2026-10-02.md` first.  Crux N8 first.  Frozen statements
-stay byte-identical; a false step gets a Maze row and the lap stops.
-
 ## Completed runs 🏁
+
+**Growing-prime localized logarithm (2 laps, closed 2026-10-02).**  `zetaY_isNormal` +
+`exists_unbounded_zetaY` (`src/NormalNumbers/GrowingLocalizedLog.lean`), conditional on the cited
+`VandeheyThm51` only.  Route: `KICKOFF-2026-10-02-growing-localized-log.md`, audit repairs applied
+(cutoff `N·exp(−(log log N)³)`, per-segment depth).
 
 **Quantitative C′ (2 laps, closed 2026-10-02).**  `cPrimeQuant_holds` and
 `cPrimeResidueRich_holds` (`src/NormalNumbers/CPrimeQuant.lean`), unconditional; route as in

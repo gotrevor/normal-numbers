@@ -362,6 +362,11 @@ These are the ratified conjecture nodes.  They are open by design, and none is s
 - **Campaign B (2026-09-20).**  Master additive weight, polylog-`c` weights.
 - **Pair A multicutoff, Theorem C′ (2026-09-23).**
   `FamilyGraded.isNormal_subsetLambert_of_sqrtFreshMassZero`, unconditional.
+- **Growing-prime localized logarithm (2026-10-02, 2 laps).**  `GrowingLocalizedLog.zetaY_isNormal`:
+  `ζ_Y = Σ_{P⁺(m) ≤ Y(m)} 1/(m·2ᵐ)` is normal in base 2 for monotone `Y ≥ 3` with
+  `π(Y n) ≤ (1−ε) log₂ log n`; `exists_unbounded_zetaY` gives an admissible `Y → ∞`.  Conditional on
+  the cited `Literature.VandeheyDiff.VandeheyThm51` (Vandehey 2016 Thm 5.1, numerically tripwired).
+  Engine: `isNormal_xS` (any retained set keeping `3ᴷ`, `2·3ᴷ`).
 - **Quantitative C′ (2026-10-02, 2 laps).**  `Quant.cPrimeQuant_holds`: bounded square-root fresh
   mass `ρ ≤ ρ₀` + divergent reciprocal sum ⇒ base-4 orbit discrepancy `≤ Cρ log³(1/ρ)`.
   `Quant.cPrimeResidueRich_holds`: every fixed-length base-4 word has positive lower frequency in
