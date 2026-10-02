@@ -32,12 +32,109 @@ noncomputable def mass (I : Finset ℕ) : ℝ := ∑ p ∈ I, (p : ℝ)⁻¹
 /-- The dyadic base of `n`: `2^k` for `n ∈ (2^k, 2^{k+1}]`. -/
 noncomputable def dyBase (n : ℕ) : ℝ := (2 : ℝ) ^ Nat.log 2 (n - 1)
 
+theorem exists_bins_aux (Q : Finset ℕ) {θ : ℝ} (hθ : 0 < θ) (hQ : ∀ p ∈ Q, (p : ℝ)⁻¹ ≤ θ) :
+    ∃ B : ℕ, ∃ bins : Fin B → Finset ℕ,
+      (∀ ℓ ℓ', ℓ ≠ ℓ' → Disjoint (bins ℓ) (bins ℓ')) ∧ univ.biUnion bins = Q ∧
+      (∀ ℓ, mass (bins ℓ) ≤ 2 * θ) ∧
+      (∀ ℓ ℓ', ℓ ≠ ℓ' → θ ≤ mass (bins ℓ) ∨ θ ≤ mass (bins ℓ')) := by
+  induction Q using Finset.induction_on with
+  | empty => exact ⟨0, Fin.elim0, fun ℓ => ℓ.elim0, by simp, fun ℓ => ℓ.elim0, fun ℓ => ℓ.elim0⟩
+  | insert p Q hpQ ih =>
+    obtain ⟨B, bins, hd, hu, hm, hp⟩ := ih fun q hq => hQ q (mem_insert_of_mem hq)
+    have hpθ := hQ p (mem_insert_self _ _)
+    have hpn : ∀ ℓ, p ∉ bins ℓ := fun ℓ h => hpQ (hu ▸ mem_biUnion.2 ⟨ℓ, mem_univ _, h⟩)
+    have hmi : ∀ I, p ∉ I → mass (insert p I) = mass I + (p : ℝ)⁻¹ := fun I h => by
+      unfold mass; rw [sum_insert h]; ring
+    by_cases hs : ∃ ℓ₀, mass (bins ℓ₀) < θ
+    · obtain ⟨ℓ₀, hℓ₀⟩ := hs
+      refine ⟨B, Function.update bins ℓ₀ (insert p (bins ℓ₀)), ?_, ?_, ?_, ?_⟩
+      · intro ℓ ℓ' hne
+        simp only [Function.update_apply]
+        split_ifs with h1 h2 h2
+        · exact absurd (h1.trans h2.symm) hne
+        · subst h1; exact disjoint_insert_left.2 ⟨hpn ℓ', hd _ _ hne⟩
+        · subst h2; exact disjoint_insert_right.2 ⟨hpn ℓ, hd _ _ hne⟩
+        · exact hd _ _ hne
+      · ext x
+        simp only [mem_biUnion, mem_univ, true_and, Function.update_apply, mem_insert]
+        constructor
+        · rintro ⟨ℓ, hx⟩
+          split_ifs at hx with h1
+          · rcases mem_insert.1 hx with h | h
+            · exact Or.inl h
+            · exact Or.inr (hu ▸ mem_biUnion.2 ⟨ℓ₀, mem_univ _, h⟩)
+          · exact Or.inr (hu ▸ mem_biUnion.2 ⟨ℓ, mem_univ _, hx⟩)
+        · rintro (rfl | hx)
+          · exact ⟨ℓ₀, by simp⟩
+          · obtain ⟨ℓ, -, hℓ⟩ := mem_biUnion.1 (hu.symm ▸ hx)
+            refine ⟨ℓ, ?_⟩
+            split_ifs with h1
+            · subst h1; exact mem_insert_of_mem hℓ
+            · exact hℓ
+      · intro ℓ
+        simp only [Function.update_apply]
+        split_ifs with h1
+        · subst h1; rw [hmi _ (hpn _)]; linarith
+        · exact hm ℓ
+      · intro ℓ ℓ' hne
+        simp only [Function.update_apply]
+        split_ifs with h1 h2 h2
+        · exact absurd (h1.trans h2.symm) hne
+        · subst h1
+          exact Or.inr ((hp ℓ ℓ' hne).resolve_left (by linarith))
+        · subst h2
+          exact Or.inl ((hp ℓ' ℓ (Ne.symm hne)).resolve_left (by linarith))
+        · exact hp ℓ ℓ' hne
+    · push Not at hs
+      refine ⟨B + 1, Fin.cons {p} bins, ?_, ?_, ?_, ?_⟩
+      · intro ℓ ℓ' hne
+        cases ℓ using Fin.cases <;> cases ℓ' using Fin.cases
+        · exact absurd rfl hne
+        · simpa using hpn _
+        · simpa using hpn _
+        · simpa using hd _ _ (fun h => hne (by rw [h]))
+      · ext x
+        simp only [mem_biUnion, mem_univ, true_and, mem_insert, Fin.exists_fin_succ, Fin.cons_zero,
+          Fin.cons_succ, mem_singleton]
+        rw [← hu]; simp
+      · intro ℓ
+        cases ℓ using Fin.cases
+        · simp only [Fin.cons_zero]; unfold mass; simp; linarith
+        · simpa using hm _
+      · intro ℓ ℓ' hne
+        cases ℓ using Fin.cases
+        · cases ℓ' using Fin.cases
+          · exact absurd rfl hne
+          · simpa using Or.inr (hs _)
+        · simpa using Or.inl (hs _)
+
 /-- **N3.** -/
 theorem exists_bins (Q : Finset ℕ) {θ : ℝ} (hθ : 0 < θ) (hQ : ∀ p ∈ Q, (p : ℝ)⁻¹ ≤ θ) :
     ∃ B : ℕ, ∃ bins : Fin B → Finset ℕ,
       (∀ ℓ ℓ', ℓ ≠ ℓ' → Disjoint (bins ℓ) (bins ℓ')) ∧ univ.biUnion bins = Q ∧
       (∀ ℓ, mass (bins ℓ) ≤ 2 * θ) ∧ (B : ℝ) ≤ mass Q / θ + 1 := by
-  sorry
+  obtain ⟨B, bins, hd, hu, hm, hp⟩ := exists_bins_aux Q hθ hQ
+  refine ⟨B, bins, hd, hu, hm, ?_⟩
+  have hmQ : mass Q = ∑ ℓ, mass (bins ℓ) := by
+    unfold mass; rw [← hu, sum_biUnion (fun ℓ _ ℓ' _ h => hd ℓ ℓ' h)]
+  have hnn : ∀ ℓ, 0 ≤ mass (bins ℓ) := fun ℓ => sum_nonneg fun _ _ => by positivity
+  rcases Nat.eq_zero_or_pos B with rfl | hB
+  · simp; positivity
+  obtain ⟨ℓ₀, -, hmin⟩ := exists_min_image univ (fun ℓ => mass (bins ℓ)) ⟨⟨0, hB⟩, mem_univ _⟩
+  have hge : ∀ ℓ ∈ univ.erase ℓ₀, θ ≤ mass (bins ℓ) := by
+    intro ℓ hℓ
+    rcases hp ℓ ℓ₀ (ne_of_mem_erase hℓ) with h | h
+    · exact h
+    · exact h.trans (hmin ℓ (mem_univ _))
+  have h1 : ((B : ℝ) - 1) * θ ≤ mass Q := by
+    rw [hmQ, ← add_sum_erase _ _ (mem_univ ℓ₀)]
+    have := card_nsmul_le_sum _ _ _ hge
+    rw [card_erase_of_mem (mem_univ _), card_univ, Fintype.card_fin, nsmul_eq_mul,
+      Nat.cast_sub hB] at this
+    push_cast at this
+    linarith [hnn ℓ₀]
+  have : (B : ℝ) - 1 ≤ mass Q / θ := by rw [le_div_iff₀ hθ]; exact h1
+  linarith
 
 theorem binErr_le_pairs (c : ℕ) : (c : ℝ) - (if c = 0 then 0 else 1) ≤ (c.choose 2 : ℝ) := by
   rcases c with _ | c
