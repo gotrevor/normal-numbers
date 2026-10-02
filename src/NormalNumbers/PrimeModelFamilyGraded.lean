@@ -689,7 +689,11 @@ theorem termE1_tendsto (hS : SqrtFreshMassZero P) (hP : DivergentRecip P) (h : �
     intro j
     have hj : (j : ℕ) ≤ J1 N := le_trans (le_of_lt j.2) (JG_le_J1 P N)
     have hR := hchain (j : ℕ) hj
-    have hb : siteBudget h (j : ℕ) = 4 * Real.pi * |(h : ℝ)| * ((1 : ℝ) / 4) ^ ((j : ℕ) + 1) := rfl
+    have hb : siteBudget h (j : ℕ) ≤ 4 * Real.pi * |(h : ℝ)| * ((1 : ℝ) / 4) ^ ((j : ℕ) + 1) :=
+      siteBudget_le_lin h _
+    have hR0 := recipSumIoc_nonneg P (yG P N (j : ℕ)) N
+    have hb2 := mul_le_mul_of_nonneg_right hb (by positivity :
+      (0 : ℝ) ≤ 2 * recipSumIoc P (yG P N (j : ℕ)) N)
     have hRC : recipSumIoc P (yG P N (j : ℕ)) N
         ≤ (((j : ℕ) : ℝ) + 2 + 2 * L) / u ^ 2 := by
       rw [hLdef]
@@ -709,7 +713,14 @@ theorem termE1_tendsto (hS : SqrtFreshMassZero P) (hP : DivergentRecip P) (h : �
           * ((((j : ℕ) : ℝ) + 2 + 2 * L) / u ^ 2)
         = 8 * Real.pi * |(h : ℝ)| * (((1 : ℝ) / 4) ^ ((j : ℕ) + 1)
             * (((j : ℕ) : ℝ) + 2 + 2 * L)) / u ^ 2 := by ring
-    rw [hb, e1]
+    have e3 : siteBudget h (j : ℕ) * (2 * recipSumIoc P (yG P N (j : ℕ)) N + (JG P N : ℝ) / N)
+        = siteBudget h (j : ℕ) * (2 * recipSumIoc P (yG P N (j : ℕ)) N)
+          + siteBudget h (j : ℕ) * ((JG P N : ℝ) / N) := by ring
+    have e4 : 4 * Real.pi * |(h : ℝ)| * ((1 : ℝ) / 4) ^ ((j : ℕ) + 1)
+          * (2 * recipSumIoc P (yG P N (j : ℕ)) N)
+        = 8 * Real.pi * |(h : ℝ)| * ((1 : ℝ) / 4) ^ ((j : ℕ) + 1)
+            * recipSumIoc P (yG P N (j : ℕ)) N := by ring
+    rw [e3]
     linarith [hkey, e2.le, e2.ge]
   refine le_trans (Finset.sum_le_sum (fun j _ => hsite j)) ?_
   rw [Finset.sum_add_distrib]

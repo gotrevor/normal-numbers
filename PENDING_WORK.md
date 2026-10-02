@@ -2511,3 +2511,4 @@ a pure window-mean bound on `windowMeanS P (JG P N) h N` (J-schedule unchanged; 
 `y_j` and tiers `u_b` become fixed-`u`).  NEXT: new file with `yU u N j = ⌊N^{u⁻²2⁻ʲ}⌋`,
 `uuU u b = u + b`, rerun `schedule_admissible` + `window_bound_schedule` → `windowMean_le_termsU`,
 then limsup bounds per term.
+Gap 3 PROVED: siteBudget is now min 2 (4π|h|4^{-(j+1)}) upstream (PrimeModelKMTGraded); C′ chain unchanged and green.  Without the cap, E1 is linear in |h| and the frozen ρ log³ rate is unreachable via ET.
