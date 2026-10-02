@@ -2679,3 +2679,8 @@ Gap 1 (schedule) PROVED: src/NormalNumbers/CPrimeQuantSchedule.lean — QuantSch
   ⇒ window hit" needs the window [M(K), cap(F_S)] nonempty with cap in terms of F_S.
 - Phase 1 leftovers: towerGapPrimes_gapSet, squareBlockPrimes_weakRate/not_mertensRate need
   per-block Mertens Σ_{2^{2^m}≤p<2^{2^{m+1}}} 1/p = log 2 + O(2^{-m}) (two-sided, effective).
+- DONE (lap 1b): `G4.sum_omegaS_add_le` (G4FarTailS) — S-restricted far-tail AP mean,
+  Σ ω_S(n+ρ)·log2 ≤ |P|(log((X+ρ)/|P|) + F_S(X+ρ)). First half of `SRestrictedFrame`.
+- NEXT: check that the base-2 witness's far term (hfar_two / farBound via omegaR) can consume
+  ω_S instead of ω (where is omegaR introduced in the subset witness? G4SubsetCWitness / VeryLargeCov),
+  then the Mc (term_b/term_c) S-restriction in G4SchedBE.

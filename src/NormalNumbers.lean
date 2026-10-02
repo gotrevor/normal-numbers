@@ -921,3 +921,4 @@ import NormalNumbers.VandeheyS7HitCell
 import NormalNumbers.VandeheyS7HitIoo
 import NormalNumbers.VandeheyS7Reduction
 import NormalNumbers.VandeheyS7Shape
+import NormalNumbers.G4FarTailS
