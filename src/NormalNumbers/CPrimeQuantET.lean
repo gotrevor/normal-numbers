@@ -262,4 +262,95 @@ lemma window_mean_eq (H : ℕ) (α β : ℝ) (u : ℕ → ℝ) (n : ℕ) (hn : 0
   field_simp
   rw [← Finset.mul_sum]; ring
 
+/-- Frequency `−m` is the conjugate of frequency `m`. -/
+lemma norm_fourierMean_neg (u : ℕ → ℝ) (m : ℤ) (n : ℕ) :
+    ‖fourierMean u (-m) n‖ = ‖fourierMean u m n‖ := by
+  have : fourierMean u (-m) n = (starRingEnd ℂ) (fourierMean u m n) := by
+    rw [fourierMean, fourierMean, map_div₀, map_sum, Complex.conj_natCast]
+    congr 1
+    refine Finset.sum_congr rfl fun k _ => ?_
+    rw [← Complex.exp_conj]; congr 1
+    simp [Complex.conj_ofReal, map_ofNat]
+  rw [this, Complex.norm_conj]
+
+/-- **Counting.**  For fixed `j ≤ H`, each gap `k = |j − l| ∈ [1, H]` occurs at most twice. -/
+lemma sum_erase_gap_le (H j : ℕ) (hj : j ≤ H) (φ : ℕ → ℝ) (hφ : ∀ k, 0 ≤ φ k) :
+    ∑ l ∈ (range (H + 1)).erase j, φ ((j : ℤ) - l).natAbs
+      ≤ 2 * ∑ k ∈ Icc 1 H, φ k := by
+  rw [← Finset.sum_filter_add_sum_filter_not _ (fun l => l < j)]
+  have side : ∀ (A : Finset ℕ), (∀ l ∈ A, l ∈ (range (H + 1)).erase j) →
+      Set.InjOn (fun l : ℕ => ((j : ℤ) - l).natAbs) A →
+      ∑ l ∈ A, φ ((j : ℤ) - l).natAbs ≤ ∑ k ∈ Icc 1 H, φ k := by
+    intro A hA hinj
+    rw [← Finset.sum_image (f := φ) (fun x hx y hy hxy => hinj hx hy hxy)]
+    refine Finset.sum_le_sum_of_subset_of_nonneg ?_ (fun k _ _ => hφ k)
+    intro k hk
+    obtain ⟨l, hl, rfl⟩ := Finset.mem_image.mp hk
+    have := hA l hl
+    rw [Finset.mem_erase, Finset.mem_range] at this
+    rw [Finset.mem_Icc]; omega
+  have h1 := side ((range (H + 1)).erase j |>.filter (fun l => l < j))
+    (fun l hl => (Finset.mem_filter.mp hl).1) (by
+      intro x hx y hy hxy
+      have := (Finset.mem_filter.mp hx).2; have := (Finset.mem_filter.mp hy).2
+      simp only at hxy; omega)
+  have h2 := side ((range (H + 1)).erase j |>.filter (fun l => ¬ l < j))
+    (fun l hl => (Finset.mem_filter.mp hl).1) (by
+      intro x hx y hy hxy
+      have := (Finset.mem_filter.mp hx).2; have := (Finset.mem_filter.mp hy).2
+      simp only at hxy; omega)
+  linarith
+
+/-- **The window error.**  `|mean of g − (β − α)| ≤ 2 ∑_{k=1}^{H} |W_k|/(πk)`. -/
+lemma window_mean_err (H : ℕ) (α β : ℝ) (u : ℕ → ℝ) (n : ℕ) (hn : 0 < n) :
+    |(∑ k ∈ range n, fejG H α β (u k)) / n - (β - α)|
+      ≤ 2 * ∑ k ∈ Icc 1 H, ‖fourierMean u (k : ℤ) n‖ / (π * k) := by
+  set φ : ℕ → ℝ := fun k => ‖fourierMean u (k : ℤ) n‖ / (π * k) with hφ
+  have hφ0 : ∀ k, 0 ≤ φ k := fun k => by simp only [hφ]; positivity
+  have hid := window_mean_eq H α β u n hn
+  have hcomp : (((∑ k ∈ range n, fejG H α β (u k)) / n - (β - α) : ℝ) : ℂ)
+      = (1 / ((H : ℂ) + 1)) * ∑ j ∈ range (H + 1), ∑ l ∈ (range (H + 1)).erase j,
+          winCoef α β ((j : ℤ) - l) * fourierMean u ((j : ℤ) - l) n := by
+    push_cast at hid ⊢; rw [hid]; ring
+  rw [← Real.norm_eq_abs, ← Complex.norm_real, hcomp, norm_mul]
+  have hH : ‖(1 / ((H : ℂ) + 1))‖ = 1 / ((H : ℝ) + 1) := by
+    rw [norm_div, norm_one]; congr 1
+    exact_mod_cast Complex.norm_natCast (H + 1)
+  rw [hH]
+  have hterm : ∀ j ∈ range (H + 1), ∀ l ∈ (range (H + 1)).erase j,
+      ‖winCoef α β ((j : ℤ) - l) * fourierMean u ((j : ℤ) - l) n‖
+        ≤ φ ((j : ℤ) - l).natAbs := by
+    intro j _ l hl
+    have hne : ((j : ℤ) - l) ≠ 0 := by have := Finset.ne_of_mem_erase hl; omega
+    rw [norm_mul]
+    have hw := norm_winCoef_le α β hne
+    have hF : ‖fourierMean u ((j : ℤ) - l) n‖ = ‖fourierMean u (((j : ℤ) - l).natAbs : ℤ) n‖ := by
+      rcases Int.natAbs_eq ((j : ℤ) - l) with h | h
+      · rw [← h]
+      · conv_lhs => rw [h]
+        rw [norm_fourierMean_neg]
+    have habs : |(((j : ℤ) - l : ℤ) : ℝ)| = ((((j : ℤ) - l).natAbs : ℕ) : ℝ) := by
+      rw [Nat.cast_natAbs, Int.cast_abs]
+    rw [habs] at hw
+    simp only [hφ]
+    rw [hF, div_eq_mul_one_div, mul_comm]
+    exact mul_le_mul_of_nonneg_left hw (norm_nonneg _)
+  have hsum : ‖∑ j ∈ range (H + 1), ∑ l ∈ (range (H + 1)).erase j,
+      winCoef α β ((j : ℤ) - l) * fourierMean u ((j : ℤ) - l) n‖
+      ≤ ((H : ℝ) + 1) * (2 * ∑ k ∈ Icc 1 H, φ k) := by
+    refine (norm_sum_le _ _).trans ?_
+    have : ∀ j ∈ range (H + 1), ‖∑ l ∈ (range (H + 1)).erase j,
+        winCoef α β ((j : ℤ) - l) * fourierMean u ((j : ℤ) - l) n‖ ≤ 2 * ∑ k ∈ Icc 1 H, φ k := by
+      intro j hj
+      refine (norm_sum_le _ _).trans ((Finset.sum_le_sum (hterm j hj)).trans ?_)
+      exact sum_erase_gap_le H j (by have := Finset.mem_range.mp hj; omega) φ hφ0
+    refine (Finset.sum_le_sum this).trans (le_of_eq ?_)
+    rw [Finset.sum_const, Finset.card_range, nsmul_eq_mul]; push_cast; ring
+  have hpos : (0 : ℝ) < (H : ℝ) + 1 := by positivity
+  calc 1 / ((H : ℝ) + 1) * ‖∑ j ∈ range (H + 1), ∑ l ∈ (range (H + 1)).erase j,
+        winCoef α β ((j : ℤ) - l) * fourierMean u ((j : ℤ) - l) n‖
+      ≤ 1 / ((H : ℝ) + 1) * (((H : ℝ) + 1) * (2 * ∑ k ∈ Icc 1 H, φ k)) :=
+        mul_le_mul_of_nonneg_left hsum (by positivity)
+    _ = 2 * ∑ k ∈ Icc 1 H, φ k := by field_simp
+
 end NormalNumbers.PrimeModel.Quant
