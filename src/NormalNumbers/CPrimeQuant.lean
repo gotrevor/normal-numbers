@@ -5,6 +5,7 @@ Authors: Trevor Morris
 -/
 import NormalNumbers.CPrimeQuantStatement
 import NormalNumbers.WeylCriterion
+import NormalNumbers.G4WiringSparse
 import Mathlib.NumberTheory.Harmonic.Bounds
 
 /-!
@@ -37,6 +38,92 @@ open Filter
 mean is eventually within `ε` of `B h`. -/
 def OrbitWeylLe (x : ℝ) (B : ℤ → ℝ) : Prop :=
   ∀ h : ℤ, h ≠ 0 → ∀ ε > 0, ∀ᶠ n : ℕ in atTop, ‖fourierMean (orbit 4 x) h n‖ ≤ B h + ε
+
+/-! ### Gap 4: quantitative wiring (orbit Weyl sums vs the truncated window mean) -/
+
+section Wiring
+
+open NormalNumbers.PrimeLambert NormalNumbers.G4 NormalNumbers.G4Sparse Topology
+
+variable (S : ℕ → Prop) [DecidablePred S]
+
+/-- Under `TailOK`, the orbit prefix Fourier mean and the truncated window mean are asymptotic
+(the `hgoal` step of `G4Sparse.prefix_fourier_tendsto_zero`, isolated). -/
+theorem prefix_sub_window_tendsto (Jsched : ℕ → ℕ) (hTail : TailOK S Jsched) (h : ℤ) :
+    Tendsto (fun N => fourierMean (orbit 4 (subsetLambert S 4)) h N
+      - windowMeanS S (Jsched N) h N) atTop (𝓝 0) := by
+  set F : ℕ → ℂ := fun n => ePhase (h * orbit 4 (subsetLambert S 4) n) with hF
+  have hFtail : ∀ n : ℕ, F n = ePhase (h * (TWeight.subset S).tailB 4 n) := by
+    intro n
+    have hshift : (h : ℝ) * Int.fract ((TWeight.subset S).tailB 4 n)
+        = (h : ℝ) * (TWeight.subset S).tailB 4 n
+          + ((-(h * ⌊(TWeight.subset S).tailB 4 n⌋) : ℤ) : ℝ) := by
+      rw [Int.fract]; push_cast; ring
+    rw [hF]
+    simp only
+    rw [orbit_eq_fract_tailB_subset, hshift, ePhase_add_int]
+  have hgoal : Tendsto (fun N => prefixMean F N - windowMeanS S (Jsched N) h N) atTop (𝓝 0) := by
+    refine tendsto_zero_iff_norm_tendsto_zero.mpr ?_
+    refine squeeze_zero' (Eventually.of_forall (fun _ => norm_nonneg _))
+      (g := fun N : ℕ => 4 * Real.pi * |(h : ℝ)| *
+        ((∑ n ∈ Finset.range N,
+            |(TWeight.subset S).tailB 4 n - truncTailS S (Jsched N) n|) / N)) ?_
+      (by simpa using hTail.const_mul (4 * Real.pi * |(h : ℝ)|))
+    filter_upwards [eventually_gt_atTop 0] with N hN
+    have hNR : (0 : ℝ) < N := by exact_mod_cast hN
+    set J := Jsched N with hJ
+    have hsub : prefixMean F N - windowMeanS S J h N
+        = (∑ n ∈ Finset.range N,
+            (ePhase (h * (TWeight.subset S).tailB 4 n) - ePhase (h * truncTailS S J n))) / N := by
+      rw [prefixMean, windowMeanS, prefixMean, ← sub_div, ← Finset.sum_sub_distrib]
+      congr 1
+      exact Finset.sum_congr rfl (fun n _ => by rw [hFtail n])
+    rw [hsub, norm_div, Complex.norm_natCast]
+    rw [div_le_iff₀ hNR, mul_assoc, div_mul_cancel₀ _ (ne_of_gt hNR)]
+    calc ‖∑ n ∈ Finset.range N,
+            (ePhase (h * (TWeight.subset S).tailB 4 n) - ePhase (h * truncTailS S J n))‖
+        ≤ ∑ n ∈ Finset.range N,
+            ‖ePhase (h * (TWeight.subset S).tailB 4 n) - ePhase (h * truncTailS S J n)‖ :=
+          norm_sum_le _ _
+      _ ≤ ∑ n ∈ Finset.range N, 4 * Real.pi * |(h : ℝ)| *
+            |(TWeight.subset S).tailB 4 n - truncTailS S J n| := by
+          refine Finset.sum_le_sum (fun n _ => ?_)
+          calc ‖ePhase (h * (TWeight.subset S).tailB 4 n) - ePhase (h * truncTailS S J n)‖
+              ≤ 4 * Real.pi *
+                  |(h : ℝ) * (TWeight.subset S).tailB 4 n - (h : ℝ) * truncTailS S J n| :=
+                norm_ePhase_sub _ _
+            _ = 4 * Real.pi * |(h : ℝ)| *
+                  |(TWeight.subset S).tailB 4 n - truncTailS S J n| := by
+                rw [← mul_sub, abs_mul]; ring
+      _ = 4 * Real.pi * |(h : ℝ)| *
+            ∑ n ∈ Finset.range N, |(TWeight.subset S).tailB 4 n - truncTailS S J n| := by
+          rw [Finset.mul_sum]
+  refine hgoal.congr (fun N => ?_)
+  congr 1
+  rw [fourierMean, prefixMean]
+  congr 1
+  refine Finset.sum_congr rfl (fun k _ => ?_)
+  rw [hF]; simp only; rw [ePhase]
+  congr 1
+  push_cast
+  ring
+
+/-- **Quantitative wiring.**  A negligible tail and limsup window-mean bounds `B` give the
+orbit Weyl bound `OrbitWeylLe` with the same `B`. -/
+theorem orbitWeylLe_of_window (Jsched : ℕ → ℕ) (hTail : TailOK S Jsched) (B : ℤ → ℝ)
+    (hB : ∀ h : ℤ, h ≠ 0 → ∀ ε > 0, ∀ᶠ N : ℕ in atTop,
+      ‖windowMeanS S (Jsched N) h N‖ ≤ B h + ε) :
+    OrbitWeylLe (subsetLambert S 4) B := by
+  intro h hh ε hε
+  have hd := (prefix_sub_window_tendsto S Jsched hTail h).norm
+  rw [norm_zero] at hd
+  filter_upwards [hB h hh (ε / 2) (by linarith), hd.eventually (gt_mem_nhds (by linarith : (0:ℝ) < ε / 2))]
+    with N h1 h2
+  have := norm_sub_norm_le (fourierMean (orbit 4 (subsetLambert S 4)) h N)
+    (windowMeanS S (Jsched N) h N)
+  linarith
+
+end Wiring
 
 /-- **The crux (quantitative Weyl bound).**  Bounded square-root fresh mass gives Weyl sums of
 size `O(ρ (log(1/ρ) + log|h|)²)`.  Paper: doc §"Transfer", `|W_h| = O(ρ(log²|h| + log u log|h| +
