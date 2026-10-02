@@ -37,3 +37,4 @@ flag is cleared: continue with N3-N8 against the dyadic Prop (N6 now consumes it
   scope for this run), so `box done` is declined; no lap in this scope can clear them.
 - **Need from operator:** relaunch/stop with `--done-when` scoped to `src/NormalNumbers/Erdos257Base2.lean`
   (or accept done).  Details: `HANDOFF-2026-10-02-erdos257b2-lap5.md`.
+Re-confirmed 2026-10-02 (fresh lap): build green, axioms trust-base only; stuck strike 2 recorded.
