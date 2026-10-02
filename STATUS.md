@@ -376,6 +376,13 @@ These are the ratified conjecture nodes.  They are open by design, and none is s
   π² in bases 16/2 given `Irrational (π²)` (`hypA_piSq_base2`), Borel ⇒ disjunctive.  Maze test:
   `MasterMaze.lean` (`mazeTestImplied`/`mazeTestNotImplied`; `equidistributed_lnTwoOrbit_iff`,
   `run_sublinear_of_isNormal`).
+- **Erdős #257 for EVERY infinite set of primes (2026-10-02, audit + 2 laps).**
+  `Erdos257.erdos257_allPrimes_of_literature` (`Erdos257Headline.lean`): `Σ_{p∈S} 1/(2ᵖ−1)` is irrational for
+  every infinite prime set `S`, conditional only on `Literature.Erdos1968CoprimeSummable` (convergent `Σ1/p`)
+  and `CastingOut.TTEquidistributedReal` (literal TT Thm 3.1(i)).  Divergent case: base-2 disjunctivity with
+  no rate, `isDisjunctive_subsetLambert_two_of_divergent(_literature)` (S-restricted moment cap + far tail,
+  `G4SchedBE2`, `G4FarTailS`).  The counted form is now a theorem, `ttEquidistributedDyadic_of_real`
+  (`TTDyadicBridge.lean`).  Outward note: `docs/notes/erdos-257.md`.
 - **Erdős #257 at base 2 for prime subsets (2026-10-02, ~6 laps).**  `Erdos257.isDisjunctive_subsetLambert_two`:
   `Σ_{p∈S} 1/(2ᵖ−1)` is disjunctive in base 2 for every prime set `S` with a Mertens rate (new even
   for all primes); `erdos257_primeSubset`, `erdos257_residueClass`: Erdős #257 for `A = S`.  Conditional
