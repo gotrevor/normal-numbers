@@ -21,3 +21,4 @@ its only hypothesis `CastingOut.TTEquidistributedCorrelation` is PROVABLY TRUE
 base-2 disjunctivity (open). Verify: `#print axioms` on that theorem = trust base.
 Ask: operator re-freezes the headline on `CastingOut.TTEquidistributedDyadic`. Details:
 HANDOFF-2026-10-02-erdos257b2-lap1.md.
+Re-confirmed 2026-10-02 (lap 2): stuck-bail confirmed, treadmill halted for operator.
