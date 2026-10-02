@@ -9,6 +9,7 @@ import NormalNumbers.G4VeryLargeCov
 import NormalNumbers.G4SchedBE
 import NormalNumbers.LiteratureTTEquidistributedDefect
 import NormalNumbers.G4Base2Mertens
+import NormalNumbers.G4Base2N5
 
 /-!
 # N3–N6: the very-large covariance supply, decomposed
