@@ -4,10 +4,11 @@
 * Finding: the ineffective supply (`∃ e₀`) cannot feed N7 — `HypE` caps e ≤ 2^{8K²}/(10⁵T).  Old
   sorry'd `exists_scheduleWitnessSC_two_of_supply` removed (unprovable shape); replaced by
   `SchedB.VeryLargeCovSupplyEff` (threshold A·(P₀(c₀+1)2^t)^A ≤ 2^e).
-* OPEN on path: `veryLargeCovSupplyEff_of_TT` (Erdos257Base2.lean).  Next attack: effective
-  `binPair_cov` (replace `ev_L` filter by explicit L ≥ D(2u)^k), then re-run the supply proof
-  with Z ≤ poly(P₀(c₀+1)2^t); plus leaves N5, exists_bins, abs_one_sub_binDelta_le,
-  sum_inv_vlPrimes_le, avg_binErr_le.
+* PROVED: `binPair_cov_eff` (G4Base2GoodL.lean, explicit good-L threshold), and
+  `veryLargeCovSupplyEff_of_TT` (Erdos257Base2.lean).  Erdos257Base2.lean has NO local sorry.
+* Headline axioms still show sorryAx via the leaves: N5 `binInd_ap_mean` (G4Base2TTHyp),
+  `exists_bins`, `abs_one_sub_binDelta_le`, `sum_inv_vlPrimes_le`, `avg_binErr_le` (G4Base2Supply).
+  Next: these five, easiest first (exists_bins greedy, abs_one_sub_binDelta_le).
 
 ## Erdős #257 base 2 — lap 3 (2026-10-02, re-frozen on TTEquidistributedDyadic)
 
