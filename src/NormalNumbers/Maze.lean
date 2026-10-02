@@ -15,6 +15,7 @@ import NormalNumbers.G4WiringSparse
 import NormalNumbers.StonehamSixFailure
 import NormalNumbers.CastingOut
 import NormalNumbers.C3MrtTTDefect
+import NormalNumbers.LiteratureTTEquidistributedDefect
 import NormalNumbers.C3MrtBlockDefect
 import NormalNumbers.Walsh
 import NormalNumbers.WalshBase
@@ -502,6 +503,14 @@ conclusion only at integer scales, so `E = ℕ ∩ [√X, X]` is free and the wh
 (`full_exceptional_set_not_admissible`). -/
 alias hall_lebesgue_exceptional_scales :=
   NormalNumbers.CastingOut.twoPointNaturalCorrelation_trivially_true
+
+/-- **HALL: TT Theorem 3.1(i) with a Lebesgue-measured exceptional set** (`vacuous`,
+2026-10-02).  The frozen `TTEquidistributedCorrelation` repeats the case-(ii) defect: `E ⊆ ℝ`
+charged by `∫_E t⁻¹`, conclusion asked only at natural `N`, so `E = ℕ ∩ [√X, X]` is free and the
+`Prop` is provably true.  The Erdős #257 base-2 headline conditional on it is therefore the
+unconditional statement.  Repair: `CastingOut.TTEquidistributedDyadic`. -/
+alias hall_tt_equidistributed_vacuous :=
+  NormalNumbers.CastingOut.ttEquidistributedCorrelation_trivially_true
 
 /-- **HALL: a constant-fraction saving on every dyadic block** (`falseAsStated`, 2026-09-25).
 Lap 112 reduced the wide archimedean debt to `WideBlockSaving κ`: a saving `1 − κ` on *every*
@@ -1224,6 +1233,11 @@ def register : List Hall := [
    .vacuous, .kernel,
    "The conclusion is only asked at integer scales, so E = the integers in [sqrt X, X] has zero cost and excludes every scale: the Prop is provably true and empty",
    "alias hall_lebesgue_exceptional_scales; faithful cost CastingOut.TwoPointDyadicCorrelation", "2026-09-25"⟩,
+  ⟨"TT 3.1(i) with a Lebesgue-measured exceptional set",
+   "Carry Tao-Teraeväinen Theorem 3.1(i) as TTEquidistributedCorrelation, the one cited input of the Erdos 257 base-2 prime-subset headline",
+   .vacuous, .kernel,
+   "Same defect as the case-(ii) row: E is charged by the integral of 1/t but the conclusion is asked only at natural N, so E = the naturals in [sqrt X, X] is free; the Prop is a theorem, N6 (VeryLargeCov from TT) cannot be derived from it, and the headline conditional on it is unconditional base-2 disjunctivity. REOPEN IF: the input is restated with counted dyadic scales (TTEquidistributedDyadic) and the headline re-frozen on it",
+   "alias hall_tt_equidistributed_vacuous; module LiteratureTTEquidistributedDefect; repair CastingOut.TTEquidistributedDyadic", "2026-10-02"⟩,
   ⟨"uniform casting-out law (C1 draft)",
    "Assume a normal number's window digit sum is uniform mod b-1",
    .falseAsStated, .kernel,

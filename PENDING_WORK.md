@@ -1,3 +1,24 @@
+## Erdős #257 base 2 on prime subsets (launched 2026-10-02) — STOPPED lap 1: cited input vacuous
+
+**Interface done:** `G4VeryLargeCov.lean` — `VeryLargeCov`, N1 `sum_sq_le_of_cov` /
+`blockSum_sq_le_of_cov`, `bigAvgS_le_of_cov`, N2 `gridFrameW_subset_propD_of_cov` (PropD at any
+`bb ≥ 2` from a covariance bound; axiom-clean).
+**Route blocker (kernel):** `CastingOut.ttEquidistributedCorrelation_trivially_true`
+(`LiteratureTTEquidistributedDefect.lean`; Maze row "TT 3.1(i) with a Lebesgue-measured
+exceptional set", alias `hall_tt_equidistributed_vacuous`).  The frozen TT 3.1(i) Prop charges
+`E ⊆ ℝ` by `∫_E t⁻¹` but asks the conclusion only at natural `N`, so `E = ℕ ∩ [√X,X]` is free —
+the same defect as the 2026-09-25 case-(ii) row.  So N6 cannot be derived and the frozen headline
+is, in effect, UNCONDITIONAL base-2 disjunctivity.  Per operator instruction, stopped.
+**To resume (needs a human decision, frozen file):** re-freeze the headline on the repair
+`CastingOut.TTEquidistributedDyadic` (counted dyadic scales), then N3–N6 as in the audit §4.
+N7 notes from this lap: the b≥3 schedule (`G4SchedB*`, `Hyp.hb : 3 ≤ b`) needs a b=2 copy;
+shifts/P₀ ≤ exp(logP₀Nat K) depend on K only, so `(log X)^c` beats them by taking the cutoff
+exponent `e ≥ logP₀Nat K / c` (room under the cap 2^{8K²}); `hfar` at b=2 needs
+`2^N ≥ K·2^{k₄}·A` (N = 100K², fine); `freqSeed 2 K` vs `freqSeed_le_quarter_pow` (3 ≤ b) is
+unchecked.  With counted dyadic scales, the sample `[0,X)` still needs its dyadic block
+endpoints `X/2^{j+1}` to be good scales: choose among the j's (fraction of bad scales small,
+bad blocks bounded pointwise by A²) — that averaging is the N6 content.
+
 ## Erdős #257 for A = k·S (launched 2026-10-02) — CLOSED lap 1
 
 All five frozen statements in `Erdos257.lean` PROVED; `#print axioms` = [propext,

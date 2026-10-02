@@ -513,6 +513,7 @@ import NormalNumbers.GrowingLocalizedLogDiagonal
 import NormalNumbers.Erdos257
 import NormalNumbers.LiteratureTTEquidistributed
 import NormalNumbers.G4VeryLargeCov
+import NormalNumbers.LiteratureTTEquidistributedDefect
 import NormalNumbers.Erdos257Base2
 import NormalNumbers.CPrimeSiteFactorization
 import NormalNumbers.MazeAudit

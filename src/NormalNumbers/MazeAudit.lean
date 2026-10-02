@@ -52,6 +52,7 @@ def mazeLinks : List Link := [
   ⟨"K-point no-exceptional-set input as stated", [``hall_kpoint_noexc_false], []⟩,
   ⟨"the named open problem TwoPointNaturalCorrelationNoExc", [``hall_two_point_noexc_false], []⟩,
   ⟨"Lebesgue-measured exceptional set of scales", [``hall_lebesgue_exceptional_scales], []⟩,
+  ⟨"TT 3.1(i) with a Lebesgue-measured exceptional set", [``hall_tt_equidistributed_vacuous], []⟩,
   ⟨"uniform casting-out law (C1 draft)", [``hall_uniform_casting_out], []⟩,
   ⟨"Moshchevitin-Shkredov hot-spot criterion for continued fractions", [``hall_moshchevitin_shkredov_cf_false], []⟩,
   ⟨"low/high split for UniformResonantMass", [``hall_urm_low_high_split], []⟩,
@@ -182,7 +183,7 @@ def mazeLegacy : List String := [
   "Diophantine good-denominator detour for the tail cell",
   "route B's unweighted cover of the state-dependent target"]
 
-/-- info: maze audit: 141 rows, 34 cite declarations, 107 legacy (prose only) -/
+/-- info: maze audit: 142 rows, 35 cite declarations, 107 legacy (prose only) -/
 #guard_msgs in
 #maze_audit mazeRows, mazeLinks, mazeLegacy
 
