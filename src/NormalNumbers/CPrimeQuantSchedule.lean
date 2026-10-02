@@ -3,7 +3,7 @@ Copyright (c) 2026 Trevor Morris. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
-import NormalNumbers.PrimeModelFamilyGraded
+import NormalNumbers.CPrimeQuantStatement
 
 /-!
 # Quantitative C′: the fixed-`u` schedule (build gap 1)
@@ -991,5 +991,499 @@ theorem windowMean_le_terms (hu : 10 ≤ u) (hP : DivergentRecip P)
     rw [Finset.mem_filter] at hp ⊢
     exact ⟨hp.1, le_trans hp.2 hyc⟩
   exact Finset.sum_le_sum_of_subset_of_nonneg hsub (fun p _ _ => by positivity)
+
+
+/-- **Leaf G5c-5 (E4c) — PROVED.**  Every factor is `N^{o(1)}` and the `1/N` wins:
+
+* `(2J)# ≤ 4^{2J} ≤ N^{0.09}` since `J ≤ L₃N ≤ L₂N/2` while `log N ≥ (L₂N/2)²`;
+* `∏_j ⌊T_j⌋ ≤ ∏_j N^{2^{−j/2}/16} ≤ N^{0.25}` since `√(2^{−j}) ≤ (3/4)^j` sums to `≤ 4`;
+* `R² ≤ N^{0.09}` since `log R = ∑_b (128(b+1) + 4u_b + 14) log y_b
+  ≤ (142 + 4u_N)·a_N·log N·∑_b (b+1)2^{−b} ≤ 12(142+4u_N)/u_N²·log N`, and the graded support
+  level is what makes this `o(log N)` — the constant class count gave `128 J log y_0` instead.
+
+So `termE4c ≤ 2 N^{0.09+0.25+0.09-1} ≤ 2 N^{−1/2} → 0`. -/
+theorem termE4c_tendsto (hu : 3000 ≤ u) (hP : DivergentRecip P) :
+    Tendsto (termE4c P u) atTop (𝓝 0) := by
+  have hmaj : Tendsto (fun N : ℕ => 2 * Real.exp (-(0.5 : ℝ) * Real.log (N : ℝ)))
+      atTop (𝓝 0) := by
+    have hlog : Tendsto (fun N : ℕ => Real.log (N : ℝ)) atTop atTop :=
+      Real.tendsto_log_atTop.comp tendsto_natCast_atTop_atTop
+    have h1 : Tendsto (fun N : ℕ => -(0.5 : ℝ) * Real.log (N : ℝ)) atTop atBot := by
+      have h2 : Tendsto (fun N : ℕ => (0.5 : ℝ) * Real.log (N : ℝ)) atTop atTop :=
+        Filter.Tendsto.const_mul_atTop (by norm_num) hlog
+      have h3 := tendsto_neg_atTop_atBot.comp h2
+      refine h3.congr fun N => ?_
+      simp only [Function.comp_apply]
+      ring
+    simpa using (Real.tendsto_exp_atBot.comp h1).const_mul (2 : ℝ)
+  refine squeeze_zero' (Eventually.of_forall fun N => ?_) ?_ hmaj
+  · rw [termE4c]
+    have h1 : (0:ℝ) ≤ ∏ j : Fin (JG P N), (Nat.floor (TG N j) : ℝ) :=
+      Finset.prod_nonneg fun j _ => Nat.cast_nonneg _
+    positivity
+  filter_upwards [yBotG_le_yG_nat P u (by omega), yBotG_tendsto.eventually_ge_atTop 16,
+    Eventually.of_forall (fun _ => (by omega : 3000 ≤ u)), JG_le_L3 P u,
+    L2_tendsto.eventually_ge_atTop (2500 : ℝ), eventually_ge_atTop 3]
+    with N hybot hy16 hu3000 hJL3 hL2 hN3
+  have hJ1le : JG P N ≤ J1 N := JG_le_J1 P N
+  have hNr : (3 : ℝ) ≤ (N : ℝ) := by exact_mod_cast hN3
+  have hNpos : (0 : ℝ) < (N : ℝ) := by linarith
+  have hlogN : (0 : ℝ) < Real.log (N : ℝ) := Real.log_pos (by linarith)
+  have hu3000r : (3000 : ℝ) ≤ (u : ℝ) := by exact_mod_cast hu3000
+  obtain ⟨hL3one, hL3half, -⟩ := L3_bounds hL2
+  -- (a) the primorial
+  have hlog4 : Real.log (4 : ℝ) = 2 * Real.log 2 := by
+    rw [show (4 : ℝ) = 2 ^ (2 : ℕ) by norm_num, Real.log_pow]; push_cast; ring
+  have hlog4le : Real.log (4 : ℝ) ≤ 1.3863 := by
+    have := Real.log_two_lt_d9; rw [hlog4]; linarith
+  have hlog4nn : (0 : ℝ) ≤ Real.log (4 : ℝ) := Real.log_nonneg (by norm_num)
+  have hJ0 : (0 : ℝ) ≤ ((JG P N : ℕ) : ℝ) := Nat.cast_nonneg _
+  have hE := log_ge_sq (N := N) hlogN (by linarith)
+  have hAexp : 2 * ((JG P N : ℕ) : ℝ) * Real.log 4 ≤ 0.09 * Real.log (N : ℝ) := by
+    have s2 : ((JG P N : ℕ) : ℝ) ≤ L2 N / 2 := le_trans hJL3 hL3half
+    have s4 : 2 * ((JG P N : ℕ) : ℝ) * Real.log 4 ≤ 1.3863 * L2 N := by nlinarith
+    nlinarith [hE, hL2, mul_nonneg (by linarith : (0:ℝ) ≤ L2 N - 2500)
+      (by linarith : (0:ℝ) ≤ L2 N)]
+  have hA : ((primorial (2 * JG P N) : ℕ) : ℝ) ≤ Real.exp (0.09 * Real.log (N : ℝ)) := by
+    refine le_trans (primorial_le_four_pow_real _) ?_
+    have hpow : (4 : ℝ) ^ (2 * JG P N) = Real.exp (2 * ((JG P N : ℕ) : ℝ) * Real.log 4) := by
+      rw [← Real.rpow_natCast (4 : ℝ) (2 * JG P N), Real.rpow_def_of_pos (by norm_num)]
+      congr 1; push_cast; try ring
+    rw [hpow]
+    exact Real.exp_le_exp.mpr hAexp
+  -- (b) the Markov thresholds
+  have hTeq : ∀ j : ℕ, TG N j
+      = Real.exp ((1 / 16 : ℝ) * Real.sqrt (((1 : ℝ) / 2) ^ j) * Real.log (N : ℝ)) := by
+    intro j
+    rw [TG, Real.rpow_def_of_pos hNpos]
+    congr 1; ring
+  have hB : (∏ j : Fin (JG P N), (Nat.floor (TG N j) : ℝ))
+      ≤ Real.exp (0.25 * Real.log (N : ℝ)) := by
+    have h1 : (∏ j : Fin (JG P N), (Nat.floor (TG N j) : ℝ))
+        ≤ ∏ j : Fin (JG P N), TG N j :=
+      Finset.prod_le_prod (fun j _ => Nat.cast_nonneg _)
+        (fun j _ => Nat.floor_le (by rw [hTeq]; positivity))
+    have h2 : (∏ j : Fin (JG P N), TG N j)
+        = Real.exp (∑ j : Fin (JG P N),
+            (1 / 16 : ℝ) * Real.sqrt (((1 : ℝ) / 2) ^ (j : ℕ)) * Real.log (N : ℝ)) := by
+      rw [Real.exp_sum]
+      exact Finset.prod_congr rfl (fun j _ => hTeq _)
+    have h3 : (∑ j : Fin (JG P N),
+        (1 / 16 : ℝ) * Real.sqrt (((1 : ℝ) / 2) ^ (j : ℕ)) * Real.log (N : ℝ))
+        ≤ 0.25 * Real.log (N : ℝ) := by
+      have hs : (∑ j : Fin (JG P N), (1 / 16 : ℝ) * Real.sqrt (((1 : ℝ) / 2) ^ (j : ℕ)))
+          ≤ 0.25 := by
+        rw [Fin.sum_univ_eq_sum_range
+          (fun i => (1 / 16 : ℝ) * Real.sqrt (((1 : ℝ) / 2) ^ i)) (JG P N)]
+        have hb : ∑ i ∈ Finset.range (JG P N), (1 / 16 : ℝ) * Real.sqrt (((1 : ℝ) / 2) ^ i)
+            ≤ (1 / 16 : ℝ) * ∑ i ∈ Finset.range (JG P N), ((3 : ℝ) / 4) ^ i := by
+          rw [Finset.mul_sum]
+          exact Finset.sum_le_sum fun i _ =>
+            mul_le_mul_of_nonneg_left (sqrt_half_pow_le i) (by norm_num)
+        have := sum_three_quarter_le (JG P N)
+        linarith
+      calc (∑ j : Fin (JG P N),
+            (1 / 16 : ℝ) * Real.sqrt (((1 : ℝ) / 2) ^ (j : ℕ)) * Real.log (N : ℝ))
+          = (∑ j : Fin (JG P N), (1 / 16 : ℝ) * Real.sqrt (((1 : ℝ) / 2) ^ (j : ℕ)))
+              * Real.log (N : ℝ) := by rw [Finset.sum_mul]
+        _ ≤ 0.25 * Real.log (N : ℝ) := mul_le_mul_of_nonneg_right hs hlogN.le
+    rw [h2] at h1
+    exact le_trans h1 (Real.exp_le_exp.mpr h3)
+  -- (c) the graded support level
+  have hlogy : ∀ b : Fin (JG P N), Real.log ((yG u N (b : ℕ) : ℕ) : ℝ)
+      ≤ aG u N * ((1 : ℝ) / 2) ^ (b : ℕ) * Real.log (N : ℝ) := by
+    intro b
+    have h16 : (16 : ℝ) ≤ ((yG u N (b : ℕ) : ℕ) : ℝ) := by
+      have : 16 ≤ yG u N (b : ℕ) := le_trans hy16 (hybot _ (by omega))
+      exact_mod_cast this
+    have hle : ((yG u N (b : ℕ) : ℕ) : ℝ)
+        ≤ (N : ℝ) ^ (aG u N * ((1 : ℝ) / 2) ^ (b : ℕ)) := Nat.floor_le (by positivity)
+    have := Real.log_le_log (by linarith) hle
+    rwa [Real.log_rpow hNpos] at this
+  have haG : aG u N = 1 / (u : ℝ) ^ 2 := rfl
+  have haGpos : (0 : ℝ) < aG u N := by rw [haG]; positivity
+  set C : ℝ := (142 + 4 * (u : ℝ)) * (aG u N * Real.log (N : ℝ)) with hCdef
+  have hC0 : (0 : ℝ) ≤ C := by rw [hCdef]; positivity
+  have hCsmall : C * 12 ≤ 0.045 * Real.log (N : ℝ) := by
+    have hu0 : (0 : ℝ) < (u : ℝ) := by linarith
+    have hkey : (142 + 4 * (u : ℝ)) * aG u N * 12 ≤ 0.045 := by
+      have h1 : (142 + 4 * (u : ℝ)) * (1 / (u : ℝ) ^ 2) * 12
+          = (142 * 12 + 48 * (u : ℝ)) / (u : ℝ) ^ 2 := by
+        field_simp; ring
+      rw [haG, h1, div_le_iff₀ (by positivity)]
+      nlinarith [mul_nonneg (show (0:ℝ) ≤ (u : ℝ) - 3000 by linarith)
+        (show (0:ℝ) ≤ (u : ℝ) by linarith)]
+    have hrw : C * 12
+        = ((142 + 4 * (u : ℝ)) * aG u N * 12) * Real.log (N : ℝ) := by
+      rw [hCdef]; ring
+    rw [hrw]
+    exact mul_le_mul_of_nonneg_right hkey hlogN.le
+  have hgl : gradedLevel (Finset.univ : Finset (Fin (JG P N)))
+      (fun b : Fin (JG P N) => (b : ℕ) + 1) (uuG P u N)
+      (fun b : Fin (JG P N) => ((yG u N b : ℕ) : ℝ))
+      ≤ Real.exp (0.045 * Real.log (N : ℝ)) := by
+    simp only [gradedLevel]
+    refine Real.exp_le_exp.mpr ?_
+    have hterm : ∀ b ∈ (Finset.univ : Finset (Fin (JG P N))),
+        (128 * ((((b : ℕ) + 1 : ℕ)) : ℝ) + 4 * ((uuG P u N b : ℕ) : ℝ) + 14)
+            * Real.log ((yG u N (b : ℕ) : ℕ) : ℝ)
+          ≤ C * (((b : ℕ) : ℝ) + 1) * ((1 : ℝ) / 2) ^ (b : ℕ) := by
+      intro b _
+      have huu : ((uuG P u N b : ℕ) : ℝ) = (u : ℝ) + ((b : ℕ) : ℝ) := by
+        simp only [uuG]; push_cast; ring
+      have hb0 : (0 : ℝ) ≤ ((b : ℕ) : ℝ) := Nat.cast_nonneg _
+      have hcoef : (128 * ((((b : ℕ) + 1 : ℕ)) : ℝ) + 4 * ((uuG P u N b : ℕ) : ℝ) + 14)
+          ≤ (142 + 4 * (u : ℝ)) * (((b : ℕ) : ℝ) + 1) := by
+        rw [huu]; push_cast; nlinarith
+      have hcnn : (0 : ℝ)
+          ≤ 128 * ((((b : ℕ) + 1 : ℕ)) : ℝ) + 4 * ((uuG P u N b : ℕ) : ℝ) + 14 := by positivity
+      have hrhs : (0 : ℝ) ≤ aG u N * ((1 : ℝ) / 2) ^ (b : ℕ) * Real.log (N : ℝ) := by
+        positivity
+      calc (128 * ((((b : ℕ) + 1 : ℕ)) : ℝ) + 4 * ((uuG P u N b : ℕ) : ℝ) + 14)
+            * Real.log ((yG u N (b : ℕ) : ℕ) : ℝ)
+          ≤ (128 * ((((b : ℕ) + 1 : ℕ)) : ℝ) + 4 * ((uuG P u N b : ℕ) : ℝ) + 14)
+              * (aG u N * ((1 : ℝ) / 2) ^ (b : ℕ) * Real.log (N : ℝ)) :=
+            mul_le_mul_of_nonneg_left (hlogy b) hcnn
+        _ ≤ ((142 + 4 * (u : ℝ)) * (((b : ℕ) : ℝ) + 1))
+              * (aG u N * ((1 : ℝ) / 2) ^ (b : ℕ) * Real.log (N : ℝ)) :=
+            mul_le_mul_of_nonneg_right hcoef hrhs
+        _ = C * (((b : ℕ) : ℝ) + 1) * ((1 : ℝ) / 2) ^ (b : ℕ) := by rw [hCdef]; ring
+    refine le_trans (Finset.sum_le_sum hterm) ?_
+    have hfin : ∑ b : Fin (JG P N), (C * (((b : ℕ) : ℝ) + 1) * ((1 : ℝ) / 2) ^ (b : ℕ))
+        ≤ C * 12 := by
+      rw [Fin.sum_univ_eq_sum_range
+        (fun i => C * ((i : ℝ) + 1) * ((1 : ℝ) / 2) ^ i) (JG P N)]
+      have hrw : ∑ i ∈ Finset.range (JG P N), C * ((i : ℝ) + 1) * ((1 : ℝ) / 2) ^ i
+          = C * ∑ i ∈ Finset.range (JG P N), (((i : ℝ) + 1) * ((1 : ℝ) / 2) ^ i) := by
+        rw [Finset.mul_sum]; exact Finset.sum_congr rfl (fun i _ => by ring)
+      rw [hrw]
+      exact mul_le_mul_of_nonneg_left (sum_succ_half_le (JG P N)) hC0
+    linarith
+  have hC : (gradedLevel (Finset.univ : Finset (Fin (JG P N)))
+      (fun b : Fin (JG P N) => (b : ℕ) + 1) (uuG P u N)
+      (fun b : Fin (JG P N) => ((yG u N b : ℕ) : ℝ))) ^ 2
+      ≤ Real.exp (0.09 * Real.log (N : ℝ)) := by
+    have h0 : (0 : ℝ) ≤ gradedLevel (Finset.univ : Finset (Fin (JG P N)))
+        (fun b : Fin (JG P N) => (b : ℕ) + 1) (uuG P u N)
+        (fun b : Fin (JG P N) => ((yG u N b : ℕ) : ℝ)) := by
+      rw [gradedLevel]; exact (Real.exp_pos _).le
+    calc (gradedLevel (Finset.univ : Finset (Fin (JG P N)))
+          (fun b : Fin (JG P N) => (b : ℕ) + 1) (uuG P u N)
+          (fun b : Fin (JG P N) => ((yG u N b : ℕ) : ℝ))) ^ 2
+        ≤ (Real.exp (0.045 * Real.log (N : ℝ))) ^ 2 := pow_le_pow_left₀ h0 hgl 2
+      _ = Real.exp (0.09 * Real.log (N : ℝ)) := by
+          rw [sq, ← Real.exp_add]; congr 1; ring
+  -- assemble
+  have hApos : (0 : ℝ) ≤ ((primorial (2 * JG P N) : ℕ) : ℝ) := Nat.cast_nonneg _
+  have hBpos : (0 : ℝ) ≤ ∏ j : Fin (JG P N), (Nat.floor (TG N j) : ℝ) :=
+    Finset.prod_nonneg fun j _ => Nat.cast_nonneg _
+  have hCpos : (0 : ℝ) ≤ (gradedLevel (Finset.univ : Finset (Fin (JG P N)))
+      (fun b : Fin (JG P N) => (b : ℕ) + 1) (uuG P u N)
+      (fun b : Fin (JG P N) => ((yG u N b : ℕ) : ℝ))) ^ 2 := by positivity
+  have hprod : ((primorial (2 * JG P N) : ℕ) : ℝ)
+      * (∏ j : Fin (JG P N), (Nat.floor (TG N j) : ℝ))
+      * (gradedLevel (Finset.univ : Finset (Fin (JG P N)))
+          (fun b : Fin (JG P N) => (b : ℕ) + 1) (uuG P u N)
+          (fun b : Fin (JG P N) => ((yG u N b : ℕ) : ℝ))) ^ 2
+      ≤ Real.exp (0.43 * Real.log (N : ℝ)) := by
+    have h1 : ((primorial (2 * JG P N) : ℕ) : ℝ)
+        * (∏ j : Fin (JG P N), (Nat.floor (TG N j) : ℝ))
+        ≤ Real.exp (0.09 * Real.log (N : ℝ)) * Real.exp (0.25 * Real.log (N : ℝ)) :=
+      mul_le_mul hA hB hBpos (Real.exp_pos _).le
+    calc ((primorial (2 * JG P N) : ℕ) : ℝ)
+          * (∏ j : Fin (JG P N), (Nat.floor (TG N j) : ℝ))
+          * (gradedLevel (Finset.univ : Finset (Fin (JG P N)))
+              (fun b : Fin (JG P N) => (b : ℕ) + 1) (uuG P u N)
+              (fun b : Fin (JG P N) => ((yG u N b : ℕ) : ℝ))) ^ 2
+        ≤ (Real.exp (0.09 * Real.log (N : ℝ)) * Real.exp (0.25 * Real.log (N : ℝ)))
+            * Real.exp (0.09 * Real.log (N : ℝ)) :=
+          mul_le_mul h1 hC hCpos (by positivity)
+      _ = Real.exp (0.43 * Real.log (N : ℝ)) := by
+          rw [← Real.exp_add, ← Real.exp_add]; congr 1; ring
+  have hinv : Real.exp (-(Real.log (N : ℝ))) = 1 / (N : ℝ) := by
+    rw [Real.exp_neg, Real.exp_log hNpos, one_div]
+  calc termE4c P u N
+      = 2 * (((primorial (2 * JG P N) : ℕ) : ℝ)
+          * (∏ j : Fin (JG P N), (Nat.floor (TG N j) : ℝ))
+          * (gradedLevel (Finset.univ : Finset (Fin (JG P N)))
+              (fun b : Fin (JG P N) => (b : ℕ) + 1) (uuG P u N)
+              (fun b : Fin (JG P N) => ((yG u N b : ℕ) : ℝ))) ^ 2) * (1 / (N : ℝ)) := by
+        rw [termE4c]; ring
+    _ ≤ 2 * Real.exp (0.43 * Real.log (N : ℝ)) * (1 / (N : ℝ)) := by
+        have := mul_le_mul_of_nonneg_left hprod (by norm_num : (0:ℝ) ≤ 2)
+        exact mul_le_mul_of_nonneg_right this (by positivity)
+    _ = 2 * (Real.exp (0.43 * Real.log (N : ℝ)) * Real.exp (-(Real.log (N : ℝ)))) := by
+        rw [hinv]; ring
+    _ = 2 * Real.exp (-(0.57 : ℝ) * Real.log (N : ℝ)) := by
+        rw [← Real.exp_add]; congr 2; ring
+    _ ≤ 2 * Real.exp (-(0.5 : ℝ) * Real.log (N : ℝ)) := by
+        refine mul_le_mul_of_nonneg_left (Real.exp_le_exp.mpr ?_) (by norm_num)
+        nlinarith [hlogN.le]
+
+
+/-- **Leaf G5c-6 (E5) — PROVED.**  Astra (8.6).  At the near-top cutoff `y_c`,
+`c = cIdx P h N ≤ log₄|h|`:
+
+    ∑_{p ∈ P, 2J < p ≤ y_c} 1/p = S_P(y_c) − S_P(2J)
+                                = (S_P(N) − S_P(y_c,N)) − S_P(2J)
+                                ≥ 8J − 1 − (12 L₂(2J) + 21),
+
+from `JG_le_mass` (`8J ≤ S_P(N)`), the **short** root chain `recipSumIoc_yG_le`
+(`S_P(y_c,N) ≤ (c + 2 + 2 log₂ u_N)/u_N² ≤ 1` once `u_N ≥ log₄|h| + 5`) and Mertens
+(`FamilySharp.recipSumLe_le_crude`).  With `L₂(2J) ≤ log(2J)` this gives
+
+    E5 ≤ e^{2J} · e^{−8J + 22 + 12 log 2J} = e^{22} (2J)^{12} / (e^6)^J → 0.
+
+The `e^{22}` and the twelfth power are pure slack; the point is that the linear term `−6J`
+survives, which is exactly what tying `J_N` to the **full** mass `S_P(N)` bought. -/
+theorem termE5_tendsto (hu : 3000 ≤ u) (hP : DivergentRecip P) (h : ℤ) {E : ℝ} (hE0 : 0 ≤ E)
+    (hE : ∀ᶠ N : ℕ in atTop, epsG P N ≤ E) :
+    Tendsto (termE5 P u h) atTop (𝓝 0) := by
+  set K : ℝ := E * (((Nat.log 4 h.natAbs : ℕ) : ℝ) + 2 + 3 * (u : ℝ)) with hKdef
+  have he6 : (1 : ℝ) < Real.exp 6 := by
+    have := Real.add_one_lt_exp (show (6 : ℝ) ≠ 0 by norm_num)
+    linarith
+  have hmaj : Tendsto
+      (fun m : ℕ => Real.exp (22 + K) * (2 * (m : ℝ)) ^ 12 / (Real.exp 6) ^ m) atTop (𝓝 0) := by
+    have h1 := tendsto_pow_const_div_const_pow_of_one_lt 12 he6
+    have h2 : Tendsto
+        (fun m : ℕ => (Real.exp (22 + K) * 2 ^ 12) * ((m : ℝ) ^ 12 / (Real.exp 6) ^ m))
+        atTop (𝓝 0) := by simpa using h1.const_mul (Real.exp (22 + K) * 2 ^ 12)
+    refine h2.congr fun m => ?_
+    rw [mul_pow]; ring
+  refine squeeze_zero' (Eventually.of_forall fun N => ?_) ?_ (hmaj.comp (JG_tendsto P hP))
+  · simp only [termE5]; positivity
+  filter_upwards [recipSumIoc_yG_le P u (by omega), yBotG_le_yG_nat P u (by omega), twoJ1_lt_yBotG,
+    yG_le_self P u (by omega), (JG_tendsto P hP).eventually_ge_atTop 2,
+    hE, eventually_ge_atTop 1] with N hchain hybot htwoJ hyself hJ2 hEN hN1
+  -- the index of the contracting site
+  have hJ1le : JG P N ≤ J1 N := JG_le_J1 P N
+  have hcJ : cIdx P h N ≤ JG P N - 1 := min_le_right _ _
+  have hcC0 : cIdx P h N ≤ Nat.log 4 h.natAbs := min_le_left _ _
+  have hcJ1 : cIdx P h N ≤ J1 N := by omega
+  have hy0 : yG u N (cIdx P h N) ≤ yG u N 0 := yG_antitone P u hN1 (Nat.zero_le _)
+  have h2Jy : 2 * JG P N ≤ yG u N (cIdx P h N) := by
+    have := hybot (cIdx P h N) hcJ1
+    omega
+  have hycN : yG u N (cIdx P h N) ≤ N := hyself _
+  -- the index set of E5 is the mass on `(2J, y_c]`
+  have hset : ((midPrimes P (2 * JG P N) (yG u N 0)).filter
+      (fun p => p ≤ yG u N (cIdx P h N)))
+      = (Finset.Ioc (2 * JG P N) (yG u N (cIdx P h N))).filter (fun p => p.Prime ∧ P p) := by
+    ext p
+    simp only [Finset.mem_filter, mem_midPrimes, Finset.mem_Ioc]
+    constructor
+    · rintro ⟨⟨hp, hPp, hlt, -⟩, hle⟩
+      exact ⟨⟨hlt, hle⟩, hp, hPp⟩
+    · rintro ⟨⟨hlt, hle⟩, hp, hPp⟩
+      exact ⟨⟨hp, hPp, hlt, le_trans hle hy0⟩, hle⟩
+  have hsum : ∑ p ∈ ((midPrimes P (2 * JG P N) (yG u N 0)).filter
+      (fun p => p ≤ yG u N (cIdx P h N))), (1 : ℝ) / (p : ℝ)
+      = recipSumIoc P (2 * JG P N) (yG u N (cIdx P h N)) := by
+    rw [hset]; rfl
+  -- numeric preliminaries
+  have hJ2r : (2 : ℝ) ≤ ((JG P N : ℕ) : ℝ) := by exact_mod_cast hJ2
+  have h2Jgt : (1 : ℝ) < ((2 * JG P N : ℕ) : ℝ) := by push_cast; linarith
+  have hlog2J : (0 : ℝ) < Real.log ((2 * JG P N : ℕ) : ℝ) := Real.log_pos h2Jgt
+  have hL2le : L2 (2 * JG P N) ≤ Real.log ((2 * JG P N : ℕ) : ℝ) := by
+    have := Real.log_le_sub_one_of_pos hlog2J
+    simp only [L2]
+    linarith
+  have hcrude : recipSumLe P (2 * JG P N) ≤ 12 * L2 (2 * JG P N) + 21 :=
+    NormalNumbers.PrimeModel.FamilySharp.recipSumLe_le_crude P (by omega)
+  -- the short root chain kills the mass above `y_c`
+  have htail : recipSumIoc P (yG u N (cIdx P h N)) N ≤ K := by
+    have hu0 : (1 : ℝ) ≤ (u : ℝ) := by exact_mod_cast (by omega : 1 ≤ u)
+    have hcr : ((cIdx P h N : ℕ) : ℝ) ≤ ((Nat.log 4 h.natAbs : ℕ) : ℝ) := by exact_mod_cast hcC0
+    have hulog : Real.log (u : ℝ) ≤ (u : ℝ) - 1 :=
+      Real.log_le_sub_one_of_pos (by linarith)
+    have hlog2 : (0.6931471803 : ℝ) < Real.log 2 := Real.log_two_gt_d9
+    have hdiv : 2 * Real.log (u : ℝ) / Real.log 2 ≤ 3 * (u : ℝ) := by
+      rw [div_le_iff₀ (by linarith)]
+      nlinarith [mul_nonneg (by linarith : (0:ℝ) ≤ (u : ℝ)) (by linarith : (0 : ℝ) ≤ Real.log 2 - 0.6931471803),
+        Real.log_nonneg hu0]
+    have hlogu0 : 0 ≤ 2 * Real.log (u : ℝ) / Real.log 2 :=
+      div_nonneg (by linarith [Real.log_nonneg hu0]) (by linarith)
+    have heps0 := epsG_nonneg P N
+    refine (hchain _ hcJ1).trans ?_
+    rw [hKdef]
+    have hin : ((cIdx P h N : ℕ) : ℝ) + 2 + 2 * Real.log (u : ℝ) / Real.log 2
+        ≤ ((Nat.log 4 h.natAbs : ℕ) : ℝ) + 2 + 3 * (u : ℝ) := by linarith
+    calc epsG P N * (((cIdx P h N : ℕ) : ℝ) + 2 + 2 * Real.log (u : ℝ) / Real.log 2)
+        ≤ E * (((cIdx P h N : ℕ) : ℝ) + 2 + 2 * Real.log (u : ℝ) / Real.log 2) :=
+          mul_le_mul_of_nonneg_right hEN (by positivity)
+      _ ≤ _ := mul_le_mul_of_nonneg_left hin hE0
+  have hmass : 8 * ((JG P N : ℕ) : ℝ) ≤ recipSumLe P N := JG_le_mass P N
+  have hsplit1 : recipSumLe P (yG u N (cIdx P h N))
+      = recipSumLe P (2 * JG P N) + recipSumIoc P (2 * JG P N) (yG u N (cIdx P h N)) :=
+    recipSumLe_add_recipSumIoc P h2Jy
+  have hsplit2 : recipSumLe P N
+      = recipSumLe P (yG u N (cIdx P h N)) + recipSumIoc P (yG u N (cIdx P h N)) N :=
+    recipSumLe_add_recipSumIoc P hycN
+  have hSigma : 8 * ((JG P N : ℕ) : ℝ) - (22 + K) - 12 * Real.log ((2 * JG P N : ℕ) : ℝ)
+      ≤ recipSumIoc P (2 * JG P N) (yG u N (cIdx P h N)) := by linarith
+  -- assemble
+  simp only [Function.comp_apply, termE5]
+  rw [hsum]
+  have hstep : Real.exp (-recipSumIoc P (2 * JG P N) (yG u N (cIdx P h N)))
+      ≤ Real.exp (-(8 * ((JG P N : ℕ) : ℝ) - (22 + K)
+          - 12 * Real.log ((2 * JG P N : ℕ) : ℝ))) :=
+    Real.exp_le_exp.mpr (by linarith)
+  have hxpos : (0 : ℝ) < 2 * ((JG P N : ℕ) : ℝ) := by linarith
+  have hlogpow : Real.exp (12 * Real.log (2 * ((JG P N : ℕ) : ℝ)))
+      = (2 * ((JG P N : ℕ) : ℝ)) ^ (12 : ℕ) := by
+    rw [show (12 : ℝ) * Real.log (2 * ((JG P N : ℕ) : ℝ))
+        = Real.log ((2 * ((JG P N : ℕ) : ℝ)) ^ (12 : ℕ)) by rw [Real.log_pow]; push_cast; ring]
+    exact Real.exp_log (pow_pos hxpos 12)
+  have hfact : Real.exp (2 * ((JG P N : ℕ) : ℝ))
+      * Real.exp (-(8 * ((JG P N : ℕ) : ℝ) - (22 + K)
+          - 12 * Real.log ((2 * JG P N : ℕ) : ℝ)))
+      = Real.exp (22 + K) * (2 * ((JG P N : ℕ) : ℝ)) ^ 12 / (Real.exp 6) ^ (JG P N) := by
+    have hx : ((2 * JG P N : ℕ) : ℝ) = 2 * ((JG P N : ℕ) : ℝ) := by push_cast; ring
+    rw [hx, ← Real.exp_add,
+      show 2 * ((JG P N : ℕ) : ℝ) + -(8 * ((JG P N : ℕ) : ℝ) - (22 + K)
+          - 12 * Real.log (2 * ((JG P N : ℕ) : ℝ)))
+        = ((22 + K) + 12 * Real.log (2 * ((JG P N : ℕ) : ℝ))) - ((JG P N : ℕ) : ℝ) * 6 by ring,
+      Real.exp_sub, Real.exp_add, hlogpow, Real.exp_nat_mul]
+  calc Real.exp (2 * ((JG P N : ℕ) : ℝ))
+        * Real.exp (-recipSumIoc P (2 * JG P N) (yG u N (cIdx P h N)))
+      ≤ Real.exp (2 * ((JG P N : ℕ) : ℝ))
+        * Real.exp (-(8 * ((JG P N : ℕ) : ℝ) - (22 + K)
+            - 12 * Real.log ((2 * JG P N : ℕ) : ℝ))) :=
+        mul_le_mul_of_nonneg_left hstep (Real.exp_pos _).le
+    _ = _ := hfact
+
+/-! ## Quantitative leaves (limsup bounds at fixed `u`) -/
+
+omit u in
+/-- Bounded square-root fresh mass bounds the surrogate `ε_N` eventually. -/
+theorem epsG_eventually_le {ρ : ℝ} (hS : Quant.SqrtFreshMassLe P ρ) {ε : ℝ} (hε : 0 < ε) :
+    ∀ᶠ N : ℕ in atTop, epsG P N ≤ ρ + ε := by
+  obtain ⟨T, hT⟩ := eventually_atTop.1 (hS ε hε)
+  filter_upwards [yBotG_tendsto.eventually_ge_atTop T] with N hN
+  exact epsG_le P (fun q hq => hT q (le_trans hN hq))
+
+omit P u in
+/-- **The capped site weights.**  With `k = log₄|h| + 1` and `c ≥ 2`,
+`∑_j min(2, 4π|h|4^{−j−1}) (j + c) ≤ 2k(k + c) + 4π(k + c)`: the sites below `k` pay the cap `2`,
+the sites above pay a geometric series. -/
+theorem sum_siteBudget_weight (h : ℤ) (J : ℕ) {c : ℝ} (hc : 2 ≤ c) :
+    ∑ j : Fin J, siteBudget h j.val * ((j : ℝ) + c)
+      ≤ 2 * ((Nat.log 4 h.natAbs + 1 : ℕ) : ℝ) * (((Nat.log 4 h.natAbs + 1 : ℕ) : ℝ) + c)
+        + 4 * Real.pi * (((Nat.log 4 h.natAbs + 1 : ℕ) : ℝ) + c) := by
+  set k : ℕ := Nat.log 4 h.natAbs + 1 with hk
+  have hhk : (|(h : ℝ)|) ≤ (4 : ℝ) ^ k := by
+    have h1 : h.natAbs < 4 ^ k := Nat.lt_pow_succ_log_self (by norm_num) _
+    have h2 : (|(h : ℝ)|) = (h.natAbs : ℝ) := by
+      rw [Nat.cast_natAbs, Int.cast_abs]
+    rw [h2]; exact_mod_cast h1.le
+  set G : ℕ → ℝ := fun j => if j < k then 2 * ((j : ℝ) + c)
+    else Real.pi * ((1 : ℝ) / 4) ^ (j - k) * ((j : ℝ) + c) with hG
+  have hG0 : ∀ j, 0 ≤ G j := by
+    intro j; simp only [hG]; split_ifs
+    · have : (0:ℝ) ≤ j := Nat.cast_nonneg j; nlinarith
+    · have : (0:ℝ) ≤ j := Nat.cast_nonneg j; positivity
+  have hpt : ∀ j : ℕ, siteBudget h j * ((j : ℝ) + c) ≤ G j := by
+    intro j
+    have hjc : (0 : ℝ) ≤ (j : ℝ) + c := by have : (0:ℝ) ≤ j := Nat.cast_nonneg j; linarith
+    simp only [hG]; split_ifs with hj
+    · exact mul_le_mul_of_nonneg_right (siteBudget_le_two h j) hjc
+    · refine mul_le_mul_of_nonneg_right ((siteBudget_le_lin h j).trans ?_) hjc
+      push_neg at hj
+      have hpow : (4 : ℝ) ^ (j + 1) = 4 * (4 : ℝ) ^ (j - k) * (4 : ℝ) ^ k := by
+        rw [mul_assoc, ← pow_add, show j - k + k = j by omega, pow_succ]; ring
+      have e1 : 4 * Real.pi * |(h : ℝ)| * ((1 : ℝ) / 4) ^ (j + 1)
+          = Real.pi * ((1 : ℝ) / 4) ^ (j - k) * (|(h : ℝ)| / (4 : ℝ) ^ k) := by
+        rw [div_pow, div_pow, one_pow, one_pow, hpow]; field_simp
+      rw [e1]
+      have : |(h : ℝ)| / (4 : ℝ) ^ k ≤ 1 := by
+        rw [div_le_one (by positivity)]; exact hhk
+      have hp : 0 ≤ Real.pi * ((1 : ℝ) / 4) ^ (j - k) := by positivity
+      calc Real.pi * ((1 : ℝ) / 4) ^ (j - k) * (|(h : ℝ)| / (4 : ℝ) ^ k)
+          ≤ Real.pi * ((1 : ℝ) / 4) ^ (j - k) * 1 := mul_le_mul_of_nonneg_left this hp
+        _ = _ := by ring
+  rw [Fin.sum_univ_eq_sum_range (fun j => siteBudget h j * ((j : ℝ) + c)) J]
+  refine (Finset.sum_le_sum fun j _ => hpt j).trans ?_
+  refine (Finset.sum_le_sum_of_subset_of_nonneg (Finset.range_subset_range.mpr
+    (Nat.le_add_left J k)) (fun j _ _ => hG0 j)).trans ?_
+  rw [Finset.sum_range_add]
+  have hA : ∑ j ∈ Finset.range k, G j ≤ 2 * (k : ℝ) * ((k : ℝ) + c) := by
+    have : ∀ j ∈ Finset.range k, G j ≤ 2 * ((k : ℝ) + c) := by
+      intro j hj
+      have hj' := Finset.mem_range.mp hj
+      simp only [hG, if_pos hj']
+      have : (j : ℝ) ≤ k := by exact_mod_cast hj'.le
+      linarith
+    refine (Finset.sum_le_sum this).trans (le_of_eq ?_)
+    rw [Finset.sum_const, Finset.card_range, nsmul_eq_mul]; ring
+  have hB : ∑ i ∈ Finset.range J, G (k + i) ≤ 4 * Real.pi * ((k : ℝ) + c) := by
+    have heq : ∀ i ∈ Finset.range J, G (k + i)
+        = 4 * Real.pi * (((1 : ℝ) / 4) ^ (i + 1) * ((i : ℝ) + 2 + 2 * (((k : ℝ) + c - 2) / 2))) := by
+      intro i _
+      simp only [hG, if_neg (by omega : ¬ k + i < k), show k + i - k = i by omega]
+      push_cast; rw [pow_succ]; ring
+    rw [Finset.sum_congr rfl heq, ← Finset.mul_sum]
+    have hL : (0 : ℝ) ≤ ((k : ℝ) + c - 2) / 2 := by
+      have : (0 : ℝ) ≤ k := Nat.cast_nonneg k; linarith
+    have := sum_quarter_weight_le hL J
+    have hpi : 0 ≤ 4 * Real.pi := by positivity
+    calc 4 * Real.pi * ∑ i ∈ Finset.range J, ((1 : ℝ) / 4) ^ (i + 1)
+          * ((i : ℝ) + 2 + 2 * (((k : ℝ) + c - 2) / 2))
+        ≤ 4 * Real.pi * (1 + 2 * (((k : ℝ) + c - 2) / 2)) := mul_le_mul_of_nonneg_left this hpi
+      _ ≤ _ := by
+          apply mul_le_mul_of_nonneg_left _ hpi; linarith
+  linarith
+
+/-- **E1 at fixed `u`.**  If `ε_N ≤ E` eventually, the transfer term is eventually at most
+`2E·(2k(k+c) + 4π(k+c)) + (4π|h|/3)·J/N` with `k = log₄|h|+1`, `c = 2 + 3u`. -/
+theorem termE1_le (hu : 10 ≤ u) (h : ℤ) {E : ℝ} (hE0 : 0 ≤ E)
+    (hE : ∀ᶠ N : ℕ in atTop, epsG P N ≤ E) : ∀ᶠ N : ℕ in atTop,
+    termE1 P u h N ≤ 2 * E * (2 * ((Nat.log 4 h.natAbs + 1 : ℕ) : ℝ)
+        * (((Nat.log 4 h.natAbs + 1 : ℕ) : ℝ) + (2 + 3 * (u : ℝ)))
+        + 4 * Real.pi * (((Nat.log 4 h.natAbs + 1 : ℕ) : ℝ) + (2 + 3 * (u : ℝ))))
+      + (4 * Real.pi * |(h : ℝ)| / 3) * ((JG P N : ℝ) / N) := by
+  filter_upwards [recipSumIoc_yG_le P u hu, hE] with N hchain hEN
+  have hu0 : (1 : ℝ) ≤ (u : ℝ) := by exact_mod_cast (by omega : 1 ≤ u)
+  have hlog2 : (0.6931471803 : ℝ) < Real.log 2 := Real.log_two_gt_d9
+  have hulog : Real.log (u : ℝ) ≤ (u : ℝ) - 1 := Real.log_le_sub_one_of_pos (by linarith)
+  have hdiv : 2 * Real.log (u : ℝ) / Real.log 2 ≤ 3 * (u : ℝ) := by
+    rw [div_le_iff₀ (by linarith)]
+    nlinarith [mul_nonneg (by linarith : (0:ℝ) ≤ (u : ℝ))
+      (by linarith : (0 : ℝ) ≤ Real.log 2 - 0.6931471803), Real.log_nonneg hu0]
+  have heps0 := epsG_nonneg P N
+  have hsite : ∀ j : Fin (JG P N), siteBudget h j.val
+      * (2 * recipSumIoc P (yG u N j) N + ((JG P N : ℕ) : ℝ) / N)
+      ≤ 2 * E * (siteBudget h j.val * ((j : ℝ) + (2 + 3 * (u : ℝ))))
+        + siteBudget h j.val * (((JG P N : ℕ) : ℝ) / N) := by
+    intro j
+    have hj : (j : ℕ) ≤ J1 N := le_trans (le_of_lt j.2) (JG_le_J1 P N)
+    have hR := hchain (j : ℕ) hj
+    have hin : ((j : ℕ) : ℝ) + 2 + 2 * Real.log (u : ℝ) / Real.log 2
+        ≤ ((j : ℕ) : ℝ) + (2 + 3 * (u : ℝ)) := by linarith
+    have hR' : recipSumIoc P (yG u N j) N ≤ E * (((j : ℕ) : ℝ) + (2 + 3 * (u : ℝ))) := by
+      refine hR.trans ((mul_le_mul_of_nonneg_right hEN ?_).trans
+        (mul_le_mul_of_nonneg_left hin hE0))
+      have : (0:ℝ) ≤ ((j : ℕ) : ℝ) := Nat.cast_nonneg _
+      have : 0 ≤ 2 * Real.log (u : ℝ) / Real.log 2 :=
+        div_nonneg (by linarith [Real.log_nonneg hu0]) (by linarith)
+      linarith
+    have hb := siteBudget_nonneg h j.val
+    nlinarith [mul_le_mul_of_nonneg_left hR' hb]
+  rw [termE1]
+  refine (Finset.sum_le_sum fun j _ => hsite j).trans ?_
+  rw [Finset.sum_add_distrib, ← Finset.mul_sum, ← Finset.sum_mul]
+  have h1 := sum_siteBudget_weight h (JG P N) (c := 2 + 3 * (u : ℝ)) (by linarith)
+  have h2 := sum_siteBudget_le h (JG P N)
+  have hJN : (0 : ℝ) ≤ ((JG P N : ℕ) : ℝ) / N := by positivity
+  have := mul_le_mul_of_nonneg_left h1 (by positivity : (0:ℝ) ≤ 2 * E)
+  have := mul_le_mul_of_nonneg_right h2 hJN
+  linarith
+
+/-- **E4b at fixed `u`**: the sieve defect is at most `e^{−u}`. -/
+theorem termE4b_le (N : ℕ) : termE4b P u N ≤ Real.exp (-(u : ℝ)) := by
+  have hs := sum_uuG_le P u N
+  rw [termE4b]
+  have : 0 ≤ Real.exp (-(u : ℝ)) := (Real.exp_pos _).le
+  linarith
 
 end NormalNumbers.PrimeModel.QuantSchedule
