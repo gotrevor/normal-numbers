@@ -1,5 +1,7 @@
 # HANDOFF — Erdős #257 all-primes lane, lap 1 (2026-10-02)
 
+Branch `proof/257-allprimes`, HEAD `e34ed96c`; no uncommitted edits. Stop signalled via `box done --green`.
+
 **Scope met.** `#print axioms NormalNumbers.Erdos257.erdos257_allPrimes_of_cases`
 = `[propext, Classical.choice, Quot.sound]`.  Conditional on the two cited Props
 (`Literature.Erdos1968CoprimeSummable`, `CastingOut.TTEquidistributedDyadic`).
