@@ -146,4 +146,24 @@ theorem abs_avg_le_blocks (f : ℕ → ℝ) {F ε' : ℝ} (hF : ∀ n, |f n| ≤
         have h3 : 2 * F * P₀ / 2 ^ x + 4 * F * P₀ / 2 ^ x = 6 * F * P₀ / 2 ^ x := by ring
         rw [h1]; linarith
 
+/-- **Pigeonhole for the scale.**  If `J₀·|E| < L`, some `x ∈ [a, a+L)` has no bad scale among
+its top `J₀` scales `[x − J₀, x)`. -/
+theorem exists_good_x (E : Finset ℕ) (a L J₀ : ℕ) (h : J₀ * E.card < L) :
+    ∃ x, a ≤ x ∧ x < a + L ∧ ∀ j, x - J₀ ≤ j → j < x → j ∉ E := by
+  classical
+  set bad := E.biUnion (fun j => Ioc j (j + J₀)) with hbad
+  have hcard : bad.card ≤ J₀ * E.card := by
+    refine (card_biUnion_le).trans ?_
+    calc ∑ j ∈ E, (Ioc j (j + J₀)).card = ∑ _j ∈ E, J₀ := by
+          refine sum_congr rfl fun j _ => ?_
+          simp
+      _ = J₀ * E.card := by rw [sum_const, smul_eq_mul, mul_comm]
+      _ ≤ J₀ * E.card := le_rfl
+  have hlt : bad.card < (Ico a (a + L)).card := by simp; omega
+  obtain ⟨x, hx, hxb⟩ := exists_mem_notMem_of_card_lt_card hlt
+  rw [mem_Ico] at hx
+  refine ⟨x, hx.1, hx.2, fun j hj1 hj2 hjE => hxb ?_⟩
+  rw [hbad, mem_biUnion]
+  exact ⟨j, hjE, mem_Ioc.2 ⟨hj2, by omega⟩⟩
+
 end NormalNumbers.G4.Base2
