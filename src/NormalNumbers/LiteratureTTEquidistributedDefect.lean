@@ -49,9 +49,16 @@ theorem ttEquidistributedCorrelation_trivially_true : TTEquidistributedCorrelati
 /-- **Theorem 3.1(i), with the exceptional scales counted** (the repair; not yet consumed).
 Same hypotheses as `TTEquidistributedCorrelation`; the exceptional set is a `Finset` of dyadic
 exponents of `[√X, X]` holding at most a fraction `Cst · L^{-c}` of them, and the conclusion
-holds at every natural `N ∈ [2^j, 2^{j+1})` of every non-exceptional scale `j`.  Unverified
-against the paper beyond the case-(ii) precedent: TT measure `E` by logarithmic density, which
-for a union of dyadic blocks is this count up to a constant. -/
+holds at every natural `N ∈ [2^j, 2^{j+1})` of every non-exceptional scale `j`.
+
+**Why TT imply it (operator check 2026-10-02, 85%).**  TT's `E` need not be a union of whole
+blocks, so this is a derived consequence, not a transcription.  Perturbation: moving `N` to `N'`
+with `|N − N'| ≤ ηN` changes `(W/N)·Σ_{N<n≤2N, n≡b (W)} (…)` by `O(W·η + W/N)`.  So if a natural
+`N` has a non-`E` real point within relative distance `η`, the bound holds at `N` with constant
+`Cst·L^{−c} + O(Wη)`.  A block can fail only if `E` contains an interval of log-length `≳ η`
+inside or next to it, so the failing blocks number `≲ L^{−c}·log X/η`.  Take `η = L^{−c/2}` and
+restrict to `W, h ≤ L^{c/4}`: at most `≲ L^{−c/2}·#scales` failing blocks and a bound
+`≲ L^{−c/4}`.  That is this statement with `c/4` in place of `c` (it asserts only `∃ c > 0`). -/
 def TTEquidistributedDyadic : Prop :=
   ∃ c Cst : ℝ, 0 < c ∧ 0 < Cst ∧
     ∀ g₁ g₂ : ℕ → ℂ, IsCoprimeMultiplicativeNat g₁ → IsCoprimeMultiplicativeNat g₂ →

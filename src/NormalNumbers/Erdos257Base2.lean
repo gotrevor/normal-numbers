@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
 import NormalNumbers.LiteratureTTEquidistributed
+import NormalNumbers.LiteratureTTEquidistributedDefect
 import NormalNumbers.G4VeryLargeCov
 
 /-!
@@ -24,7 +25,9 @@ pointwise bound by a second-moment one (N1 `blockSum_sq_le_of_cov`, N2
 
 ## Frozen statements (do not edit; prove them)
 
-* `isDisjunctive_subsetLambert_two`, conditional on `CastingOut.TTEquidistributedCorrelation` only.
+* `isDisjunctive_subsetLambert_two`, conditional on `CastingOut.TTEquidistributedDyadic` only
+  (re-frozen 2026-10-02 by the operator: the first transcription,
+  `TTEquidistributedCorrelation`, is vacuous, `ttEquidistributedCorrelation_trivially_true`).
 * `erdos257_primeSubset`: Erdős #257 for `A = S` itself, any prime set with a Mertens rate.
 * `erdos257_residueClass`: the residue-class instance.
 
@@ -44,19 +47,19 @@ variable {S : ℕ → Prop} [DecidablePred S]
 
 /-- **Base-2 disjunctivity of `Σ_{p∈S} 1/(2ᵖ − 1)`** for any prime set with a Mertens rate,
 conditional on Tao–Teräväinen Theorem 3.1(i).  75% (audit). -/
-theorem isDisjunctive_subsetLambert_two (htt : CastingOut.TTEquidistributedCorrelation)
+theorem isDisjunctive_subsetLambert_two (htt : CastingOut.TTEquidistributedDyadic)
     {c C : ℝ} (hm : MertensAP.MertensRate S c C) :
     IsDisjunctive 2 (PrimeLambert.subsetLambert S 2) := by
   sorry
 
 /-- **Erdős #257 for a prime set `A = S`** with a Mertens rate. -/
-theorem erdos257_primeSubset (htt : CastingOut.TTEquidistributedCorrelation)
+theorem erdos257_primeSubset (htt : CastingOut.TTEquidistributedDyadic)
     {c C : ℝ} (hm : MertensAP.MertensRate S c C) :
     Irrational (∑' n : kMulPrimes S 1, (1 : ℝ) / (2 ^ n.1 - 1)) := by
   sorry
 
 /-- **Erdős #257 for the primes `≡ a (mod q)`.** -/
-theorem erdos257_residueClass (htt : CastingOut.TTEquidistributedCorrelation)
+theorem erdos257_residueClass (htt : CastingOut.TTEquidistributedDyadic)
     {q : ℕ} [NeZero q] {a : ZMod q} (ha : IsUnit a) :
     Irrational (∑' n : kMulPrimes (fun p => (p : ZMod q) = a) 1, (1 : ℝ) / (2 ^ n.1 - 1)) := by
   sorry

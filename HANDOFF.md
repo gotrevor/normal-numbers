@@ -22,3 +22,9 @@ base-2 disjunctivity (open). Verify: `#print axioms` on that theorem = trust bas
 Ask: operator re-freezes the headline on `CastingOut.TTEquidistributedDyadic`. Details:
 HANDOFF-2026-10-02-erdos257b2-lap1.md.
 Re-confirmed 2026-10-02 (lap 2): stuck-bail confirmed, treadmill halted for operator.
+
+## OPERATOR RESOLUTION (2026-10-02)
+Accepted.  `Erdos257Base2.lean` headlines are re-frozen on `CastingOut.TTEquidistributedDyadic`
+(the derivation from TT Thm 3.1(i), with `c/4`, is now in its docstring, 85%).
+`TTEquidistributedCorrelation` stays as the recorded vacuous transcription (Maze row).  The stuck
+flag is cleared: continue with N3-N8 against the dyadic Prop (N6 now consumes it).
