@@ -489,6 +489,7 @@ import NormalNumbers.CPrimeQuant
 import NormalNumbers.LiteratureVandeheyDifferencing
 import NormalNumbers.GrowingLocalizedLog
 import NormalNumbers.MasterConjectures
+import NormalNumbers.EquidistTransfer
 import NormalNumbers.MasterConsequences
 import NormalNumbers.GrowingLocalizedLogExponent
 import NormalNumbers.GrowingLocalizedLogCost

@@ -6,6 +6,7 @@ Authors: Trevor Morris
 import NormalNumbers.MasterConjectures
 import NormalNumbers.PowerBaseReal
 import NormalNumbers.Disjunctive
+import NormalNumbers.EquidistTransfer
 
 /-!
 # Phase 2: the consequence graph of the master conjectures
@@ -47,5 +48,19 @@ theorem hypA_pi_isDisjunctive_two (hA : BaileyCrandallHypA) (hπ : PiBBP) :
 theorem hypA_pi_isDisjunctive_two_pow (hA : BaileyCrandallHypA) (hπ : PiBBP) (k : ℕ)
     (hk : 1 ≤ k) : IsDisjunctive (2 ^ k) Real.pi :=
   (isDisjunctive_pow_iff 2 k le_rfl hk _).1 (hypA_pi_isDisjunctive_two hA hπ)
+
+/-- Hypothesis A + BBP ⇒ `π` normal in base 2 (base descent `16 = 2⁴`,
+`isNormal_of_isNormal_pow`). -/
+theorem hypA_pi_base2 (hA : BaileyCrandallHypA) (hπ : PiBBP) : IsNormal 2 Real.pi :=
+  isNormal_of_isNormal_pow (b := 2) (K := 4) le_rfl (by norm_num) (hypA_pi_base16 hA hπ)
+
+/-- Hypothesis A + BBP ⇒ `π` normal in base 4 (`16 = 4²`). -/
+theorem hypA_pi_base4 (hA : BaileyCrandallHypA) (hπ : PiBBP) : IsNormal 4 Real.pi :=
+  isNormal_of_isNormal_pow (b := 4) (K := 2) (by norm_num) (by norm_num) (hypA_pi_base16 hA hπ)
+
+/-- Hypothesis A + BBP ⇒ `π` normal in every base `2^k`, `k ≥ 1`. -/
+theorem hypA_pi_base_two_pow (hA : BaileyCrandallHypA) (hπ : PiBBP) (k : ℕ) (hk : 0 < k) :
+    IsNormal (2 ^ k) Real.pi :=
+  PowerBase.isNormal_pow (by norm_num) hk (hypA_pi_base2 hA hπ)
 
 end NormalNumbers.MasterConjectures
