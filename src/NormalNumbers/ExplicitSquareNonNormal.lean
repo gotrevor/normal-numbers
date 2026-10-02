@@ -170,7 +170,24 @@ Confidence 99%.  Proof: `U = Set.Ioi 0`; `Real.contDiffOn_sqrt`-style smoothness
 theorem sqrt_bakerBanaji_hyp :
     ∃ U : Set ℝ, IsOpen U ∧ Set.Icc (1 / 2 : ℝ) 1 ⊆ U ∧ ContDiffOn ℝ 2 Real.sqrt U ∧
       ∀ t ∈ Set.Icc (1 / 2 : ℝ) 1, deriv (deriv Real.sqrt) t ≠ 0 := by
-  sorry
+  refine ⟨Set.Ioi 0, isOpen_Ioi, fun t ht => lt_of_lt_of_le (by norm_num) ht.1, ?_, ?_⟩
+  · intro x hx
+    exact (Real.contDiffAt_sqrt (ne_of_gt hx)).contDiffWithinAt
+  · intro t ht
+    have ht0 : 0 < t := lt_of_lt_of_le (by norm_num) ht.1
+    have hev : deriv Real.sqrt =ᶠ[nhds t] fun s => 1 / (2 * Real.sqrt s) := by
+      filter_upwards [lt_mem_nhds ht0] with s hs
+      exact (Real.hasDerivAt_sqrt (ne_of_gt hs)).deriv
+    rw [hev.deriv_eq]
+    have h1 : HasDerivAt (fun s => 2 * Real.sqrt s) (2 * (1 / (2 * Real.sqrt t))) t :=
+      (Real.hasDerivAt_sqrt (ne_of_gt ht0)).const_mul 2
+    have hs : 0 < Real.sqrt t := Real.sqrt_pos.2 ht0
+    have h2 : HasDerivAt (fun s => (2 * Real.sqrt s)⁻¹) _ t := h1.inv (by positivity)
+    have : (fun s => 1 / (2 * Real.sqrt s)) = fun s => (2 * Real.sqrt s)⁻¹ := by
+      funext s; simp
+    rw [this, h2.deriv]
+    have : 0 < 2 * (1 / (2 * Real.sqrt t)) / (2 * Real.sqrt t) ^ 2 := by positivity
+    rw [neg_div]; exact neg_ne_zero.2 this.ne'
 
 /-! ## Step 1: decay ⇒ almost-sure normality (Manai 2609.24665 `lem:decaynormal`) -/
 
