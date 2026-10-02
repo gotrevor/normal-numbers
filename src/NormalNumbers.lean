@@ -929,3 +929,4 @@ import NormalNumbers.G4SubsetWitnessCovS
 import NormalNumbers.G4Base2DecSched
 import NormalNumbers.G4Base2DecAssembly
 import NormalNumbers.Erdos257Divergent
+import NormalNumbers.ExplicitSquareNonNormal
