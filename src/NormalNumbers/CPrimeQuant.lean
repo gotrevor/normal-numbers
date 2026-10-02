@@ -6,6 +6,9 @@ Authors: Trevor Morris
 import NormalNumbers.CPrimeQuantSchedule
 import NormalNumbers.WeylCriterion
 import NormalNumbers.CPrimeQuantET
+import NormalNumbers.CPrimeQuantAP
+import NormalNumbers.LiteratureBMStrong
+import NormalNumbers.Wall
 import NormalNumbers.G4WiringSparse
 import Mathlib.NumberTheory.Harmonic.Bounds
 
@@ -418,11 +421,123 @@ give orbit discrepancy `≤ C·ρ·log³(1/ρ)` for `∑_{p∈P} 1/(4ᵖ−1)`. 
 (the crux) and `orbitDefectLe_of_weyl` (trapezoid Erdős–Turán) by `cPrimeQuant_of_parts`. -/
 theorem cPrimeQuant_holds : CPrimeQuant := cPrimeQuant_of_parts
 
+/-- **Orbit discrepancy to word frequency.**  A discrepancy `D < 4^{-L}` gives every nonempty
+base-4 word of length `L` positive lower frequency (`Literature.visitCount_eq_card_matchesAt`
+and the `w.length` boundary windows of `card_filter_matchesAt_le`). -/
+theorem wordFreq_of_defect {x D : ℝ} (hD : OrbitDefectLe x D) {w : List ℕ} (hw : w ≠ [])
+    (hwd : ∀ d ∈ w, d < 4) (hDl : D < 1 / (4 : ℝ) ^ w.length) :
+    ∃ c > (0 : ℝ), ∀ᶠ n : ℕ in atTop,
+      c ≤ (countOccurrences w ((List.range n).map (digitOf 4 (Int.fract x))) : ℝ) / n := by
+  set v := blockNatVal 4 w with hv
+  set P : ℝ := (4 : ℝ) ^ w.length with hP
+  have hP0 : 0 < P := by positivity
+  have hvlt : v < 4 ^ w.length := blockNatVal_lt 4 w hwd
+  have hv1 : (v : ℝ) + 1 ≤ P := by rw [hP]; exact_mod_cast hvlt
+  set g := 1 / P - D with hg
+  have hg0 : 0 < g := by rw [hg]; linarith
+  refine ⟨g / 2, by positivity, ?_⟩
+  have hlen : (v + 1 : ℝ) / P - v / P = 1 / P := by ring
+  have hE := hD (v / P) ((v + 1) / P) (by positivity)
+    (div_le_div_of_nonneg_right (by linarith) hP0.le) (by rw [div_le_one hP0]; exact hv1)
+    (g / 4) (by positivity)
+  filter_upwards [hE, eventually_ge_atTop ⌈4 * w.length / g⌉₊, eventually_gt_atTop 0] with n hn hnL hn0
+  have hnR : (0 : ℝ) < n := by exact_mod_cast hn0
+  have horb : orbit 4 x = orbit 4 (Int.fract x) := (funext (orbit_fract 4 x)).symm
+  have hvc := Literature.visitCount_eq_card_matchesAt 4 (by norm_num) x w hwd n
+  rw [Nat.cast_ofNat, ← hv, ← hP] at hvc
+  rw [horb, hvc, hlen] at hn
+  have hcnt := (card_filter_matchesAt_le (digitOf 4 (Int.fract x)) w hw n).2
+  have hcntR : (((Finset.range n).filter (MatchesAt (digitOf 4 (Int.fract x)) w)).card : ℝ)
+      ≤ (countOccurrences w ((List.range n).map (digitOf 4 (Int.fract x))) : ℝ) + w.length := by
+    exact_mod_cast hcnt
+  have hLn : (w.length : ℝ) / n ≤ g / 4 := by
+    rw [div_le_iff₀ hnR]
+    have := (Nat.le_ceil (4 * (w.length : ℝ) / g)).trans
+      (by exact_mod_cast hnL : (⌈4 * (w.length : ℝ) / g⌉₊ : ℝ) ≤ n)
+    rw [div_le_iff₀ hg0] at this
+    linarith
+  have hlow := (abs_le.mp hn).1
+  have : (((Finset.range n).filter (MatchesAt (digitOf 4 (Int.fract x)) w)).card : ℝ) / n
+      ≤ (countOccurrences w ((List.range n).map (digitOf 4 (Int.fract x))) : ℝ) / n + w.length / n := by
+    rw [← add_div]; exact div_le_div_of_nonneg_right hcntR hnR.le
+  linarith
+
+/-- Arithmetic: `ρ log³(1/ρ) ≤ 216 √ρ` for `0 < ρ ≤ 1`. -/
+lemma rho_log_cube_le {ρ : ℝ} (hρ : 0 < ρ) (hρ1 : ρ ≤ 1) :
+    ρ * Real.log (1 / ρ) ^ 3 ≤ 216 * Real.sqrt ρ := by
+  have hl0 : 0 ≤ Real.log (1 / ρ) := Real.log_nonneg (by rw [le_div_iff₀ hρ]; linarith)
+  have hl := Real.log_le_rpow_div (x := 1 / ρ) (by positivity) (by norm_num : (0 : ℝ) < 1 / 6)
+  have hs : 0 < Real.sqrt ρ := Real.sqrt_pos.mpr hρ
+  -- (1/ρ)^(1/6) cubed is 1/√ρ
+  have hcube : ((1 / ρ) ^ (1 / 6 : ℝ)) ^ 3 = 1 / Real.sqrt ρ := by
+    rw [← Real.rpow_natCast, ← Real.rpow_mul (by positivity), Real.sqrt_eq_rpow,
+      Real.div_rpow zero_le_one hρ.le, Real.one_rpow]
+    norm_num
+  have h1 : Real.log (1 / ρ) ^ 3 ≤ (6 * (1 / ρ) ^ (1 / 6 : ℝ)) ^ 3 := by
+    have : Real.log (1 / ρ) ≤ 6 * (1 / ρ) ^ (1 / 6 : ℝ) := by
+      have e : (1 / ρ) ^ (1 / 6 : ℝ) / (1 / 6) = 6 * (1 / ρ) ^ (1 / 6 : ℝ) := by ring
+      linarith
+    exact pow_le_pow_left₀ hl0 this 3
+  rw [mul_pow, hcube] at h1
+  have hsq : ρ = Real.sqrt ρ * Real.sqrt ρ := (Real.mul_self_sqrt hρ.le).symm
+  calc ρ * Real.log (1 / ρ) ^ 3 ≤ ρ * (6 ^ 3 * (1 / Real.sqrt ρ)) :=
+        mul_le_mul_of_nonneg_left h1 hρ.le
+    _ = 216 * Real.sqrt ρ := by
+        conv_lhs => rw [hsq]
+        field_simp; norm_num
+
 /-- **Residue-class richness.**  Every fixed-length base-4 word has positive lower frequency in
-`∑_{p≡a (q)} 1/(4ᵖ−1)` once `q` is large.  From `cPrimeQuant_holds` with `ρ = log 2/φ(q)`, Mertens
-in progressions, `DivergentRecip` (mathlib's `not_summable_residueClass_prime_div`) and the
-orbit-to-digit window translation.  85% given `cPrimeQuant_holds`. -/
+`∑_{p≡a (q)} 1/(4ᵖ−1)` once `q` is large: `cPrimeQuant_holds` at a fixed `ρ*` small for `L`,
+`sqrtFreshMassLe_residue` (`ρ ≤ 9/φ(q) ≤ ρ*` for `q > ((K+1)!)^K`), `divergentRecip_residue`
+and `wordFreq_of_defect`. -/
 theorem cPrimeResidueRich_holds : CPrimeResidueRich := by
-  sorry
+  obtain ⟨C, ρ₀, hC, hρ₀, hρ₀1, hQ⟩ := cPrimeQuant_holds
+  intro L
+  set θ : ℝ := 1 / (4 : ℝ) ^ L with hθ
+  have hθ0 : 0 < θ := by positivity
+  set r : ℝ := θ / (432 * C) with hr
+  have hr0 : 0 < r := by positivity
+  set ρs : ℝ := min ρ₀ (r ^ 2) with hρs
+  have hρs0 : 0 < ρs := lt_min hρ₀ (by positivity)
+  have hρs1 : ρs ≤ 1 := (min_le_left _ _).trans hρ₀1.le
+  -- the discrepancy at ρs is below θ
+  have hdisc : C * ρs * Real.log (1 / ρs) ^ 3 < θ := by
+    have h1 := rho_log_cube_le hρs0 hρs1
+    have h2 : Real.sqrt ρs ≤ r := by
+      rw [Real.sqrt_le_left hr0.le]; exact min_le_right _ _
+    have : C * ρs * Real.log (1 / ρs) ^ 3 ≤ C * (216 * r) := by
+      rw [mul_assoc]
+      exact mul_le_mul_of_nonneg_left (h1.trans (by linarith)) hC.le
+    have e : C * (216 * r) = θ / 2 := by rw [hr]; field_simp; ring
+    linarith
+  -- K with 9/K ≤ ρs
+  set K : ℕ := ⌈9 / ρs⌉₊ + 1 with hK
+  refine ⟨((K + 1).factorial) ^ K + 1, fun q a hq ha w hwL hwd => ?_⟩
+  have hq1 : 1 ≤ q := le_trans (by omega) hq
+  have hφK : K ≤ q.totient := le_totient_of_large K (by omega)
+  have hφ : 9 / (q.totient : ℝ) ≤ ρs := by
+    have hKpos : (0 : ℝ) < K := by rw [hK]; positivity
+    have : 9 / ρs ≤ (K : ℝ) := by
+      rw [hK]; push_cast; linarith [Nat.le_ceil (9 / ρs)]
+    rw [div_le_iff₀ (by exact_mod_cast (lt_of_lt_of_le (by omega : 0 < K) hφK))]
+    rw [div_le_iff₀ hρs0] at this
+    have : (K : ℝ) ≤ q.totient := by exact_mod_cast hφK
+    nlinarith
+  have hS : SqrtFreshMassLe (fun p => p % q = a % q) ρs := by
+    intro ε hε
+    filter_upwards [sqrtFreshMassLe_residue hq1 ha ε hε] with N hN
+    linarith
+  have hD := hQ (fun p => p % q = a % q) (divergentRecip_residue hq1 ha) ρs hρs0
+    (min_le_left _ _) hS
+  by_cases hw : w = []
+  · subst hw
+    refine ⟨1, one_pos, ?_⟩
+    filter_upwards [eventually_gt_atTop 0] with n hn
+    have hnil : ∀ l : List ℕ, countOccurrences [] l = l.length + 1 := by
+      intro l; rw [countOccurrences_eq_card]; simp
+    rw [hnil, List.length_map, List.length_range]
+    have hnR : (0 : ℝ) < n := by exact_mod_cast hn
+    rw [le_div_iff₀ hnR]; push_cast; linarith
+  · exact wordFreq_of_defect hD hw hwd (by rw [hwL]; exact hdisc)
 
 end NormalNumbers.PrimeModel.Quant

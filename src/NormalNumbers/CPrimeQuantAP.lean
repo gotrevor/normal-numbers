@@ -309,4 +309,76 @@ theorem sqrtFreshMassLe_residue {q a : ℕ} (hq : 1 ≤ q) (ha : a.Coprime q) :
     nlinarith
   linarith
 
+/-! ### `φ(q) → ∞` and divergence -/
+
+/-- `φ(n) ≥ K` once `n > ((K+1)!)^K`: otherwise every prime `p ∣ n` has `p ≤ K` and every
+exponent is `< K`, so `n ∣ ((K+1)!)^K`. -/
+theorem le_totient_of_large (K : ℕ) {n : ℕ} (hn : ((K + 1).factorial) ^ K < n) :
+    K ≤ n.totient := by
+  by_contra hlt
+  push_neg at hlt
+  have hn0 : n ≠ 0 := by omega
+  have hM0 : ((K + 1).factorial) ^ K ≠ 0 := pow_ne_zero _ (Nat.factorial_ne_zero _)
+  have hdvd : n ∣ ((K + 1).factorial) ^ K := by
+    rw [← Nat.factorization_le_iff_dvd hn0 hM0]
+    intro p
+    by_cases he : n.factorization p = 0
+    · rw [he]; exact Nat.zero_le _
+    have hp : p.Prime := Nat.prime_of_mem_primeFactors (Finsupp.mem_support_iff.mpr he)
+    have hpn : p ∣ n := Nat.dvd_of_factorization_pos he
+    have hφp : p.totient ≤ n.totient := Nat.le_of_dvd (Nat.totient_pos.mpr (by omega))
+      (Nat.totient_dvd_of_dvd hpn)
+    rw [Nat.totient_prime hp] at hφp
+    have hpK : p ≤ K + 1 := by omega
+    have hpfac : p ∣ (K + 1).factorial := (Nat.Prime.dvd_factorial hp).mpr hpK
+    have hfac1 : 1 ≤ (K + 1).factorial.factorization p := by
+      have := (hp.dvd_iff_one_le_factorization (Nat.factorial_ne_zero _)).mp hpfac
+      exact this
+    have hpe : p ^ n.factorization p ∣ n := Nat.ordProj_dvd n p
+    have hφpe : (p ^ n.factorization p).totient ≤ n.totient :=
+      Nat.le_of_dvd (Nat.totient_pos.mpr (by omega)) (Nat.totient_dvd_of_dvd hpe)
+    obtain ⟨k, hk⟩ : ∃ k, n.factorization p = k + 1 := ⟨n.factorization p - 1, by omega⟩
+    rw [hk] at hφpe ⊢
+    rw [Nat.totient_prime_pow_succ hp] at hφpe
+    have h2 : 2 ^ k ≤ p ^ k := Nat.pow_le_pow_left hp.two_le k
+    have h3 : k < 2 ^ k := Nat.lt_two_pow_self
+    have h4 : 1 ≤ p - 1 := by have := hp.two_le; omega
+    have h5 : p ^ k ≤ p ^ k * (p - 1) := Nat.le_mul_of_pos_right _ h4
+    rw [Nat.factorization_pow]
+    simp only [Finsupp.smul_apply, smul_eq_mul]
+    have : k + 1 ≤ K := by omega
+    nlinarith
+  exact absurd (Nat.le_of_dvd (Nat.pos_of_ne_zero hM0) hdvd) (by omega)
+
+/-- Primes `≡ a (mod q)` have divergent reciprocal sum (from `mertensRate_residueClass`). -/
+theorem divergentRecip_residue {q a : ℕ} (hq : 1 ≤ q) (ha : a.Coprime q) :
+    G4Sparse.DivergentRecip (fun p => p % q = a % q) := by
+  haveI : NeZero q := ⟨by omega⟩
+  have haZ : IsUnit (a : ZMod q) := (ZMod.isUnit_iff_coprime a q).mpr ha
+  obtain ⟨c, C, hc, hM⟩ := G4.MertensAP.mertensRate_residueClass haZ
+  intro hsum
+  set g : ℕ → ℝ := fun p => if p.Prime ∧ p % q = a % q then (1 : ℝ) / p else 0 with hg
+  have hg0 : ∀ p, 0 ≤ g p := fun p => by simp only [hg]; split_ifs <;> positivity
+  have hbound : ∀ N : ℕ, 2 ≤ N → c * Real.log (Real.log N) - C ≤ ∑' p, g p := by
+    intro N hN
+    refine (hM N hN).trans ?_
+    have : G4.MertensAP.sumInvPrimesIn (fun p => (p : ZMod q) = a) N
+        ≤ ∑ p ∈ range N, g p := by
+      rw [G4.MertensAP.sumInvPrimesIn, Finset.sum_filter, Nat.primesBelow, Finset.sum_filter]
+      refine Finset.sum_le_sum fun p _ => ?_
+      simp only [hg]
+      by_cases hp : p.Prime
+      · by_cases hpa : (p : ZMod q) = a
+        · rw [if_pos hp, if_pos hpa, if_pos ⟨hp, (ZMod.natCast_eq_natCast_iff' p a q).mp hpa⟩,
+            one_div]
+        · rw [if_pos hp, if_neg hpa]; split_ifs <;> positivity
+      · rw [if_neg hp]; split_ifs <;> positivity
+    exact this.trans (hsum.sum_le_tsum _ (fun p _ => hg0 p))
+  -- `log log N → ∞`
+  have ht : Tendsto (fun N : ℕ => c * Real.log (Real.log N) - C) atTop atTop := by
+    refine tendsto_atTop_add_const_right _ _ (Tendsto.const_mul_atTop hc ?_)
+    exact Real.tendsto_log_atTop.comp (Real.tendsto_log_atTop.comp tendsto_natCast_atTop_atTop)
+  obtain ⟨N, hN⟩ := ((ht.eventually_gt_atTop (∑' p, g p)).and (eventually_ge_atTop 2)).exists
+  linarith [hbound N hN.2]
+
 end NormalNumbers.PrimeModel.Quant
