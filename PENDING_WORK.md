@@ -6,6 +6,17 @@ Classical.choice, Quot.sound] for each.  New: `subsetLambert_two_pow_eq` (the La
 `isNormal_two_of_four` (base change 4 → 2 through Wall: odd orbit points are the doubling map of
 the base-4 orbit, `visitCount_two_even`, then an even/odd squeeze).  Open debt is upstream only
 (C′ hypotheses `SqrtFreshMassZero`, `DivergentRecip` are arguments).
+## Master conjectures campaign (2026-10-02)
+
+**Phase 1 DONE** (`MasterConjectures.lean`, axioms = trust base): `hypA_lnTwo`, `hypA_pi_base16`,
+`borel_sqrt_two`.  Key new lemma: `not_irrational_of_hasFiniteAttractor_base` (B–C Thm 2.10 for
+`x ↦ bx mod 1`, any `b ≥ 2`), plus `hasFiniteAttractor_perturb`; BBP surrogate `piP/piQ`
+(eq. (3) numerator scaled by 16 so the orbit is exactly `piSurrogate`).
+**Phases 2–3 DONE** (MasterConsequences / MasterKicked / MasterPiSq / MasterLnTwoBase3 / MasterMaze).
+Open follow-ups (not campaign-blocking): `Irrational (π²)` in-repo (mathlib's Cartwright lemmas are
+private; would make `hypA_piSq_base2` hypothesis-free); `catalan`/`ζ(3)`-type BBP formulas as more
+machine instances; convert remaining legacy Maze rows in `mazeTestImplied` to links once their
+obstructions are stated.
 
 ## ζ_Y campaign (launched 2026-10-02) — CLOSED lap 2
 

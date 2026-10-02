@@ -1,5 +1,12 @@
 # DIRECTION — normal-numbers 🧭
 
+## CURRENT DIRECTIVE (2026-10-02): normality's master conjectures 🎯
+
+Follow `KICKOFF-2026-10-02-master-conjectures.md`: prove the three planted consequences of
+`BorelConjecture` / `BaileyCrandallHypA` (`src/NormalNumbers/MasterConjectures.lean`), grow the
+consequence graph, then run the Maze test.  Frozen statements stay byte-identical.  The run is done
+only when all three phases are, not when the file is sorry-free.
+
 ## Completed runs 🏁
 
 **Growing-prime localized logarithm (2 laps, closed 2026-10-02).**  `zetaY_isNormal` +

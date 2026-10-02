@@ -362,6 +362,18 @@ These are the ratified conjecture nodes.  They are open by design, and none is s
 - **Campaign B (2026-09-20).**  Master additive weight, polylog-`c` weights.
 - **Pair A multicutoff, Theorem C′ (2026-09-23).**
   `FamilyGraded.isNormal_subsetLambert_of_sqrtFreshMassZero`, unconditional.
+- **Master conjectures (2026-10-02, 1 lap).**  `BorelConjecture`, `BaileyCrandallHypA` (Tier P
+  Props).  Planted: `hypA_lnTwo`, `hypA_pi_base16`, `borel_sqrt_two`.  Engine
+  `hypA_isNormal_of_kicked` (B–C Thm 2.10 for every base: `not_irrational_of_hasFiniteAttractor_base`;
+  two-sided tail `equidistributed_of_fract_perturb_abs`); base descent `isNormal_of_isNormal_pow`.
+  Consequences: π normal in base 2 (`hypA_pi_base2_uncond`), ln 2 in base 3 (`hypA_lnTwo_base3`),
+  π² in bases 16/2 given `Irrational (π²)` (`hypA_piSq_base2`), Borel ⇒ disjunctive.  Maze test:
+  `MasterMaze.lean` (`mazeTestImplied`/`mazeTestNotImplied`; `equidistributed_lnTwoOrbit_iff`,
+  `run_sublinear_of_isNormal`).
+- **Erdős #257 for `A = k·S` (2026-10-02, 1 lap).**  `Erdos257.erdos257_kMul`: `Σ_{n∈k·S} 1/(2ⁿ−1)` is
+  irrational for every `k ≥ 2` and every prime set `S` with a Mertens rate (all primes:
+  `erdos257_kMul_primes`; residue classes: `erdos257_kMul_residueClass`); `erdos257_twoMul_normal`: normal
+  in base 2 at `k = 2` for C′ sets.  Unconditional.  Via `subsetLambert S (2ᵏ)` = the #257 sum.
 - **Growing-prime localized logarithm (2026-10-02, 2 laps).**  `GrowingLocalizedLog.zetaY_isNormal`:
   `ζ_Y = Σ_{P⁺(m) ≤ Y(m)} 1/(m·2ᵐ)` is normal in base 2 for monotone `Y ≥ 3` with
   `π(Y n) ≤ (1−ε) log₂ log n`; `exists_unbounded_zetaY` gives an admissible `Y → ∞`.  Conditional on
