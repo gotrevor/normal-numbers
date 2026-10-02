@@ -503,6 +503,7 @@ import NormalNumbers.GrowingLocalizedLogScale
 import NormalNumbers.GrowingLocalizedLogNormal
 import NormalNumbers.GrowingLocalizedLogWitness
 import NormalNumbers.GrowingLocalizedLogDiagonal
+import NormalNumbers.Erdos257
 import NormalNumbers.CPrimeSiteFactorization
 import NormalNumbers.MazeAudit
 import NormalNumbers.StonehamSixFailure
