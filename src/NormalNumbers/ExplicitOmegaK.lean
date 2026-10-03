@@ -5,6 +5,7 @@ Authors: Trevor Morris
 -/
 import NormalNumbers.ExplicitSquareNonNormal
 import NormalNumbers.OmegaKCalculus
+import NormalNumbers.SqrtCantorAbs
 
 /-!
 # Manai's algebraic normality degree: explicit points of `Ω_k`
@@ -161,8 +162,8 @@ prefix, so the exact test `fails` becomes a sandwich test (count visits of the c
 changes the constants.  Then `Derandomize.exists_primrec_avoid` as in
 `ComputableNormal.exists_computable_normal_of_digits`, and `normal_of_good` in each base. -/
 theorem exists_computable_isAbsNormal_sqrt_of_polyDecay (hd : PolyDecay Real.sqrt) :
-    ∃ e : ℕ → Bool, Computable e ∧ IsAbsNormal (Real.sqrt (cantorReal e)) := by
-  sorry
+    ∃ e : ℕ → Bool, Computable e ∧ IsAbsNormal (Real.sqrt (cantorReal e)) :=
+  SqrtCantorAbs.exists_computable_absNormal_sqrt hd
 
 /-- **Manai's problem for `k = 2`: an explicit point of `Ω₂`.**  `x = √y`, `y = cantorReal e`,
 `e` computable; conditional on the cited, refereed `BakerBanajiQuarterCantor`.  Wiring proved
