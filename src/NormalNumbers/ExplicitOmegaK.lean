@@ -7,6 +7,7 @@ import NormalNumbers.ExplicitSquareNonNormal
 import NormalNumbers.OmegaKCalculus
 import NormalNumbers.SqrtCantorAbs
 import NormalNumbers.DigitCantor
+import NormalNumbers.CantorCylinders
 
 /-!
 # Manai's algebraic normality degree: explicit points of `Ω_k`
@@ -641,7 +642,13 @@ theorem pushFourier_split (m : ℕ) : ∀ F : ℝ → ℝ, Measurable F → ∀ 
     ring_nf
     rfl
 
-open Classical in
+open CantorCylinders in
+theorem psiL_eq_phi : ∀ w : List Bool, psiL w = phi w
+  | [] => by funext t; simp [psiL, phi, offs]
+  | c :: w => by
+    rw [← psi_comp_phi, ← psiL_eq_phi w]; rfl
+
+open Classical CantorCylinders in
 /-- **Few depth-`m` cylinders come within `r` of a point.**
 
 Confidence 92%.  English proof: `psiL w t = L_w + (t − 1/2)4^{-m}` with
@@ -653,7 +660,61 @@ theorem card_near_cylinders_le (m : ℕ) (z r : ℝ) (hr : 0 < r) :
     (((Derandomize.allStrings m).filter fun w =>
       decide (∃ t ∈ Set.Icc (1 / 2 : ℝ) 1, |psiL w t - z| < r)).length : ℝ) ≤
         4 * 4 ^ m * r + 2 := by
-  sorry
+  set δ : ℝ := 1 / 4 ^ m / 2 with hδ
+  have hδ0 : 0 < δ := by positivity
+  have h4 : (0 : ℝ) < 4 ^ m := by positivity
+  set a : ℝ := z - r - 1 / 4 ^ m with ha
+  set L : ℝ := 4 * 4 ^ m * r + 1 with hL
+  set l := (Derandomize.allStrings m).filter fun w =>
+      decide (∃ t ∈ Set.Icc (1 / 2 : ℝ) 1, |psiL w t - z| < r)
+  have hnd : l.Nodup := (Derandomize.nodup_allStrings m).filter _
+  have hlen : l.length = l.toFinset.card := (List.toFinset_card_of_nodup hnd).symm
+  have hmem : ∀ w ∈ l.toFinset, w.length = m ∧ 0 < (offs w - a) / δ ∧ (offs w - a) / δ < L := by
+    intro w hw
+    rw [List.mem_toFinset, List.mem_filter, Derandomize.mem_allStrings] at hw
+    obtain ⟨hwl, hw⟩ := hw
+    obtain ⟨t, ht, hlt⟩ := of_decide_eq_true hw
+    rw [psiL_eq_phi, phi, hwl, abs_lt] at hlt
+    have e1 : (1 / 2) / 4 ^ m ≤ t / 4 ^ m := by gcongr; exact ht.1
+    have e2 : t / 4 ^ m ≤ 1 / 4 ^ m := by gcongr; exact ht.2
+    refine ⟨hwl, div_pos (by linarith) hδ0, ?_⟩
+    rw [div_lt_iff₀ hδ0, hL, hδ]
+    have : (4 * 4 ^ m * r + 1) * (1 / 4 ^ m / 2) = 2 * r + 1 / 4 ^ m / 2 := by
+      field_simp; ring
+    rw [this]
+    have : 1 / 2 / (4 : ℝ) ^ m = 1 / 4 ^ m / 2 := by ring
+    linarith
+  let f : List Bool → ℕ := fun w => ⌊(offs w - a) / δ⌋₊
+  have hinj : Set.InjOn f l.toFinset := by
+    intro w hw w' hw' hf
+    by_contra hne
+    obtain ⟨hl1, hp1, -⟩ := hmem w hw
+    obtain ⟨hl2, hp2, -⟩ := hmem w' hw'
+    have hs := offs_sep w w' (hl1.trans hl2.symm) hne
+    rw [hl1] at hs
+    have h1 := Nat.floor_le hp1.le
+    have h2 := Nat.lt_floor_add_one ((offs w - a) / δ)
+    have h3 := Nat.floor_le hp2.le
+    have h4 := Nat.lt_floor_add_one ((offs w' - a) / δ)
+    simp only [f] at hf
+    rw [hf] at h1 h2
+    have : |(offs w - a) / δ - (offs w' - a) / δ| < 1 := by rw [abs_lt]; constructor <;> linarith
+    rw [← sub_div, abs_div, abs_of_pos hδ0, div_lt_one hδ0] at this
+    rw [show offs w - a - (offs w' - a) = offs w - offs w' by ring] at this
+    linarith
+  have hmaps : Set.MapsTo f l.toFinset (Finset.range ⌈L⌉₊) := by
+    intro w hw
+    obtain ⟨-, hp, hL'⟩ := hmem w hw
+    simp only [Finset.coe_range, Set.mem_Iio, f]
+    rw [Nat.floor_lt hp.le]
+    exact hL'.trans_le (Nat.le_ceil L)
+  have hcard := Finset.card_le_card_of_injOn f hmaps hinj
+  rw [Finset.card_range] at hcard
+  rw [hlen]
+  have hL0 : 0 ≤ L := by positivity
+  calc (l.toFinset.card : ℝ) ≤ ⌈L⌉₊ := by exact_mod_cast hcard
+    _ ≤ L + 1 := (Nat.ceil_lt_add_one hL0).le
+    _ = _ := by rw [hL]; ring
 
 /-- **BB's uniform bound with the `max|F'|` lower bound discharged.**  Proved: from `hBB` with `A₁ = A₂ = A`, `a₂ = a`, `a₁ = a/4`.  The
 missing hypothesis `∃ t, a/4 ≤ |F'(t)|`: by the mean value theorem for `F'` on `[1/2, 1]`
