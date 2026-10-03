@@ -1407,6 +1407,431 @@ theorem decay_Gfam (hBB : BakerBanajiUniformQuarterCantor) (k : ℕ) (hk : 2 ≤
       _ ≤ K * (1 + 4 * (hgtBound i : ℝ)) * W * (2 * hgtBound i * |ξ| ^ (-δ')) := by gcongr
       _ ≤ _ := by nlinarith [mul_pos (by positivity : (0 : ℝ) < 2 * hgtBound i) hXδ]
 
+/-! ## Exact lower approximations (`approx_Gfam`) -/
+
+section ApproxGfam
+open OmegaKApprox CantorSelfSimilar
+
+/-- `Σ_{j<n} f j` as a list sum (primitive recursive in `f`). -/
+def rsum (n : ℕ) (f : ℕ → ℕ) : ℕ := ((List.range n).map f).sum
+
+theorem rsum_eq (n : ℕ) (f : ℕ → ℕ) : rsum n f = ∑ j ∈ Finset.range n, f j := by
+  unfold rsum
+  induction n with
+  | zero => simp
+  | succ n ih => rw [List.range_succ, List.map_append, List.sum_append, ih, Finset.sum_range_succ]; simp
+
+theorem primrec_rsum {α : Type*} [Primcodable α] {f : α → ℕ} {g : α → ℕ → ℕ} (hf : Primrec f)
+    (hg : Primrec₂ g) : Primrec fun a => rsum (f a) (g a) := by
+  have h := Primrec.list_map (Primrec.list_range.comp hf) hg
+  have hs : Primrec fun l : List ℕ => l.sum :=
+    (Primrec.list_foldr Primrec.id (Primrec.const 0)
+      (Primrec.nat_add.comp (Primrec.fst.comp Primrec.snd) (Primrec.snd.comp Primrec.snd)).to₂).of_eq
+      fun l => by
+        induction l with
+        | nil => rfl
+        | cons a l ih => simp only [id] at ih ⊢; rw [List.foldr_cons, ih, List.sum_cons]
+  exact hs.comp h
+
+theorem coeff_polyOfList (l : List ℤ) (j : ℕ) : (polyOfList l).coeff j = l.getD j 0 := by
+  rw [polyOfList, finsetSum_coeff]
+  simp only [coeff_C_mul_X_pow, Finset.sum_ite_eq, Finset.mem_range]
+  split_ifs with h
+  · rfl
+  · simp [List.getD_eq_getElem?_getD, not_lt.1 h]
+
+/-- Validity test of a coefficient list: `1 ≤ deg < k`. -/
+def okL (k : ℕ) (l : List ℤ) : Prop :=
+  1 ≤ rsum (l.length - 1) (fun j => (l.getD (j + 1) 0).natAbs) ∧
+    rsum (l.length - k) (fun j => (l.getD (j + k) 0).natAbs) ≤ 0
+
+instance (k : ℕ) : DecidablePred (okL k) := fun l => by unfold okL; infer_instance
+
+theorem getD_eq_zero_of_le {l : List ℤ} {j : ℕ} (h : l.length ≤ j) : l.getD j 0 = 0 := by
+  simp [List.getD_eq_getElem?_getD, h]
+
+theorem okL_iff (k : ℕ) (hk : 1 ≤ k) (l : List ℤ) :
+    okL k l ↔ 1 ≤ (polyOfList l).natDegree ∧ (polyOfList l).natDegree < k := by
+  have hA : (1 ≤ (polyOfList l).natDegree ↔ ∃ j, 1 ≤ j ∧ l.getD j 0 ≠ 0) := by
+    rw [← not_iff_not, not_le, Nat.lt_one_iff, ← Nat.le_zero, natDegree_le_iff_coeff_eq_zero]
+    simp [coeff_polyOfList, Nat.pos_iff_ne_zero, Nat.one_le_iff_ne_zero]
+    exact ⟨fun h x => h (x + 1) (by omega), fun h N hN => by
+      obtain ⟨m, rfl⟩ := Nat.exists_eq_succ_of_ne_zero hN; exact h m⟩
+  have hB : ((polyOfList l).natDegree < k ↔ ∀ j, k ≤ j → l.getD j 0 = 0) := by
+    rw [show (polyOfList l).natDegree < k ↔ (polyOfList l).natDegree ≤ k - 1 by omega,
+      natDegree_le_iff_coeff_eq_zero]
+    simp only [coeff_polyOfList]
+    exact ⟨fun h j hj => h j (by omega), fun h j hj => h j (by omega)⟩
+  rw [hA, hB, okL, rsum_eq, rsum_eq, Nat.le_zero, Finset.sum_eq_zero_iff, Nat.one_le_iff_ne_zero,
+    Ne, Finset.sum_eq_zero_iff]
+  simp only [Finset.mem_range, Int.natAbs_eq_zero, not_forall]
+  constructor
+  · rintro ⟨⟨j, hj, h⟩, h2⟩
+    refine ⟨⟨j + 1, by omega, h⟩, fun j' hj' => ?_⟩
+    by_cases hl : j' < l.length
+    · have := h2 (j' - k) (by omega); rwa [Nat.sub_add_cancel hj'] at this
+    · exact getD_eq_zero_of_le (by omega)
+  · rintro ⟨⟨j, hj, h⟩, h2⟩
+    have hl : j < l.length := by
+      by_contra hc; exact h (getD_eq_zero_of_le (by omega))
+    refine ⟨⟨j - 1, by omega, ?_⟩, fun j' _ => h2 _ (by omega)⟩
+    rwa [Nat.sub_add_cancel hj]
+
+/-- The coefficient list actually used for index `i`. -/
+def clist (k i : ℕ) : List ℤ :=
+  if okL k ((Encodable.decode (α := List ℤ) i).getD []) then (Encodable.decode i).getD [] else [0, 1]
+
+theorem primrec_clist (k : ℕ) : Primrec (clist k) := by
+  have hd : Primrec fun i : ℕ => (Encodable.decode (α := List ℤ) i).getD [] :=
+    Primrec.option_getD.comp Primrec.decode (Primrec.const [])
+  have hg : ∀ m : ℕ, Primrec₂ fun (l : List ℤ) (j : ℕ) => (l.getD (j + m) 0).natAbs := fun m =>
+    (primrec_natAbs.comp ((Primrec.list_getD 0).comp Primrec.fst
+      (Primrec.nat_add.comp Primrec.snd (Primrec.const m)))).to₂
+  have hok : PrimrecPred (okL k) :=
+    PrimrecPred.and (Primrec.nat_le.comp (Primrec.const 1) (primrec_rsum
+      (Primrec.nat_sub.comp Primrec.list_length (Primrec.const 1)) (hg 1)))
+      (Primrec.nat_le.comp (primrec_rsum
+      (Primrec.nat_sub.comp Primrec.list_length (Primrec.const k)) (hg k)) (Primrec.const 0))
+  exact Primrec.ite (hok.comp hd) hd (Primrec.const _)
+
+theorem polyOfList_01 : polyOfList [0, 1] = X := by
+  simp [polyOfList, Finset.sum_range_succ]
+
+theorem polyOfList_clist (k i : ℕ) (hk : 1 ≤ k) : polyOfList (clist k i) = polyOfCode k i := by
+  unfold clist polyOfCode
+  rcases h : (Encodable.decode (α := List ℤ) i) with _ | l
+  · simp only [Option.getD_none]
+    rw [if_neg]; · exact polyOfList_01
+    rw [okL_iff k hk]; simp [polyOfList]
+  · simp only [Option.getD_some]
+    by_cases hc : okL k l
+    · rw [if_pos hc, if_pos ((okL_iff k hk l).1 hc)]
+    · rw [if_neg hc, if_neg (fun h' => hc ((okL_iff k hk l).2 h')), polyOfList_01]
+
+theorem hgt_polyOfList (l : List ℤ) :
+    (hgt (polyOfList l) : ℝ) = ∑ j ∈ Finset.range l.length, |((l.getD j 0 : ℤ) : ℝ)| := by
+  rw [hgt_cast]
+  set N := max ((polyOfList l).natDegree + 1) l.length
+  have e1 := Finset.sum_subset (Finset.range_subset_range.2 (le_max_left ((polyOfList l).natDegree + 1) l.length))
+    (f := fun j => |((polyOfList l).coeff j : ℝ)|) (fun j hj hn => by
+      simp only [Finset.mem_range, not_lt] at hj hn
+      simp [coeff_eq_zero_of_natDegree_lt (Nat.lt_of_lt_of_le (Nat.lt_succ_self _) hn)])
+  have e2 := Finset.sum_subset (Finset.range_subset_range.2 (le_max_right ((polyOfList l).natDegree + 1) l.length))
+    (f := fun j => |((l.getD j 0 : ℤ) : ℝ)|) (fun j hj hn => by
+      simp only [Finset.mem_range, not_lt] at hj hn
+      rw [getD_eq_zero_of_le hn]; simp)
+  rw [e1, e2]
+  simp [coeff_polyOfList]
+
+theorem yN_ge : ∀ q : List Bool, 4 ^ q.length ≤ yN q
+  | [] => by simp [yN]
+  | c :: q => by
+    have := yN_ge q
+    simp only [yN, List.length_cons, pow_succ]
+    have h3 : 3 * 4 ^ q.length ≤ (3 + c.toNat) * 4 ^ q.length := Nat.mul_le_mul_right _ (by omega)
+    omega
+
+theorem aeval_polyOfList (x : ℝ) (l : List ℤ) :
+    aeval x (polyOfList l) = ∑ j ∈ Finset.range l.length, ((l.getD j 0 : ℤ) : ℝ) * x ^ j := by
+  simp [polyOfList, map_sum]
+
+theorem abs_sum_coeff_le (l : List ℤ) {x : ℝ} (h0 : 0 ≤ x) (h1 : x ≤ 1) :
+    |∑ j ∈ Finset.range l.length, ((l.getD j 0 : ℤ) : ℝ) * x ^ j| ≤
+      ∑ j ∈ Finset.range l.length, |((l.getD j 0 : ℤ) : ℝ)| := by
+  refine (Finset.abs_sum_le_sum_abs _ _).trans (Finset.sum_le_sum fun j _ => ?_)
+  rw [abs_mul, abs_of_nonneg (pow_nonneg h0 j)]
+  exact mul_le_of_le_one_right (abs_nonneg _) (pow_le_one₀ h0 h1)
+
+/-- Integer `k`-th root bracket: with `T k = e + c`, `X = ⌊(Y 2^e)^{1/k}⌋` satisfies
+`X/2^T ≤ (Y/2^c)^{1/k} ≤ X/2^T + 2^{-T}`. -/
+theorem root_bracket (k T e c Y : ℕ) (hk : k ≠ 0) (hc : T * k = e + c) :
+    ((iroot k (Y * 2 ^ e) : ℕ) : ℝ) / 2 ^ T ≤ ((Y : ℝ) / 2 ^ c) ^ ((k : ℝ)⁻¹) ∧
+      ((Y : ℝ) / 2 ^ c) ^ ((k : ℝ)⁻¹) ≤ ((iroot k (Y * 2 ^ e) : ℕ) : ℝ) / 2 ^ T + (1 / 2) ^ T := by
+  set X := iroot k (Y * 2 ^ e)
+  set s := ((Y : ℝ) / 2 ^ c) ^ ((k : ℝ)⁻¹)
+  have h2 : (2 : ℝ) ^ (T * k) = 2 ^ e * 2 ^ c := by rw [hc, pow_add]
+  have hs : s ^ k = (Y : ℝ) / 2 ^ c := Real.rpow_inv_natCast_pow (by positivity) hk
+  have hs0 : 0 ≤ s := Real.rpow_nonneg (by positivity) _
+  have hX : (X : ℝ) ^ k ≤ Y * 2 ^ e := by exact_mod_cast iroot_pow_le (Nat.one_le_iff_ne_zero.2 hk) _
+  have hX1 : (Y : ℝ) * 2 ^ e < (X + 1) ^ k := by
+    exact_mod_cast lt_iroot_succ_pow (Nat.one_le_iff_ne_zero.2 hk) _
+  have hc0 : (0 : ℝ) < 2 ^ c := by positivity
+  have he0 : (0 : ℝ) < 2 ^ e := by positivity
+  constructor
+  · rw [← pow_le_pow_iff_left₀ (by positivity) hs0 hk, hs, div_pow, ← pow_mul, h2,
+      div_le_div_iff₀ (by positivity) hc0]
+    calc (X : ℝ) ^ k * 2 ^ c ≤ (Y * 2 ^ e) * 2 ^ c := by gcongr
+      _ = _ := by ring
+  · have e1 : ((X : ℝ) + 1) / 2 ^ T = X / 2 ^ T + (1 / 2) ^ T := by rw [div_pow, one_pow]; ring
+    rw [← e1]
+    refine le_of_lt ((pow_lt_pow_iff_left₀ hs0 (by positivity) hk).1 ?_)
+    rw [hs, div_pow, ← pow_mul, h2, div_lt_div_iff₀ hc0 (by positivity)]
+    calc (Y : ℝ) * (2 ^ e * 2 ^ c) = (Y * 2 ^ e) * 2 ^ c := by ring
+      _ < (X + 1) ^ k * 2 ^ c := by gcongr
+
+/-- Precision exponent. -/
+def Tn (k D : ℕ) : ℕ := 2 * D + k + 2
+
+/-- The integer root numerator: `Xn/2^T ≈ (y_lo)^{1/k}`. -/
+def Xn (k : ℕ) (q : List Bool) : ℕ :=
+  iroot k (yN q * 2 ^ (Tn k q.length * k - (2 * q.length + 1)))
+
+/-- Height of a coefficient list. -/
+def Hn (l : List ℤ) : ℕ := rsum l.length fun j => (l.getD j 0).natAbs
+
+/-- Positive / negative parts of `2^{TL} Σ a_j (X/2^T)^j`. -/
+def Sp (k : ℕ) (l : List ℤ) (q : List Bool) : ℕ :=
+  rsum l.length fun j => (l.getD j 0).toNat * Xn k q ^ j * 2 ^ (Tn k q.length * (l.length - j))
+
+def Sm (k : ℕ) (l : List ℤ) (q : List Bool) : ℕ :=
+  rsum l.length fun j => (-l.getD j 0).toNat * Xn k q ^ j * 2 ^ (Tn k q.length * (l.length - j))
+
+def Num (k : ℕ) (l : List ℤ) (q : List Bool) : ℕ :=
+  4 ^ q.length * (Sp k l q + Hn l * 2 ^ (Tn k q.length * l.length)) -
+    (Hn l * 2 ^ (Tn k q.length * l.length) + 4 ^ q.length * Sm k l q)
+
+def Den (l : List ℤ) (k : ℕ) (q : List Bool) : ℕ :=
+  2 * Hn l * 2 ^ (Tn k q.length * l.length) * 4 ^ q.length
+
+theorem Hn_cast (l : List ℤ) :
+    (Hn l : ℝ) = ∑ j ∈ Finset.range l.length, |((l.getD j 0 : ℤ) : ℝ)| := by
+  rw [Hn, rsum_eq]; push_cast; simp [Nat.cast_natAbs, Int.cast_abs]
+
+theorem Sp_sub_Sm (k : ℕ) (l : List ℤ) (q : List Bool) :
+    (Sp k l q : ℝ) - Sm k l q = 2 ^ (Tn k q.length * l.length) *
+      ∑ j ∈ Finset.range l.length, ((l.getD j 0 : ℤ) : ℝ) *
+        ((Xn k q : ℝ) / 2 ^ Tn k q.length) ^ j := by
+  rw [Sp, Sm, rsum_eq, rsum_eq]; push_cast
+  rw [← Finset.sum_sub_distrib, Finset.mul_sum]
+  refine Finset.sum_congr rfl fun j hj => ?_
+  rw [Finset.mem_range] at hj
+  set T := Tn k q.length
+  have h := congrArg (Int.cast (R := ℝ)) (Int.toNat_sub_toNat_neg (l.getD j 0))
+  push_cast at h
+  have e : (2 : ℝ) ^ (T * l.length) = 2 ^ (T * (l.length - j)) * 2 ^ (T * j) := by
+    rw [← pow_add]; congr 1; rw [← mul_add, Nat.sub_add_cancel hj.le]
+  rw [e, div_pow, ← pow_mul, ← h]
+  field_simp
+
+theorem approx_core (k : ℕ) (hk : 2 ≤ k) (l : List ℤ) (hdeg : (polyOfList l).natDegree < k)
+    (hH : 1 ≤ Hn l) (ω : ℕ → Bool) (D : ℕ) :
+    0 ≤ (Num k l (Derandomize.pre ω D) : ℝ) / Den l k (Derandomize.pre ω D) ∧
+    (Num k l (Derandomize.pre ω D) : ℝ) / Den l k (Derandomize.pre ω D) ≤
+      (Gk k (polyOfList l) (cantorReal ω) + Hn l) / (2 * Hn l) ∧
+    (Gk k (polyOfList l) (cantorReal ω) + Hn l) / (2 * Hn l) ≤
+      (Num k l (Derandomize.pre ω D) : ℝ) / Den l k (Derandomize.pre ω D) + (1 / 2 : ℝ) ^ D := by
+  set q := Derandomize.pre ω D with hqdef
+  have hq : q.length = D := Derandomize.length_pre ω D
+  set p := polyOfList l
+  set L := l.length
+  set T := Tn k D with hT
+  set H : ℝ := (Hn l : ℝ) with hHdef
+  have H1 : (1 : ℝ) ≤ H := by rw [hHdef]; exact_mod_cast hH
+  have hHp : (hgt p : ℝ) = H := by rw [hgt_polyOfList, hHdef, Hn_cast]
+  have hk0 : k ≠ 0 := by omega
+  obtain ⟨hy1, hy2⟩ := cantorReal_mem_prefix D ω
+  rw [← hqdef] at hy1 hy2
+  set y := cantorReal ω
+  set ylo : ℝ := (yN q : ℝ) / 2 ^ (2 * D + 1)
+  have hYge : (4 : ℝ) ^ D ≤ yN q := by rw [← hq]; exact_mod_cast yN_ge q
+  have h2D : (2 : ℝ) ^ (2 * D + 1) = 2 * 4 ^ D := by rw [pow_succ, pow_mul]; norm_num; ring
+  have hlo : 1 / 2 ≤ ylo := by
+    rw [le_div_iff₀ (by positivity), h2D]; linarith
+  have hy23 : y ≤ 2 / 3 := cantorReal_le_two_thirds ω
+  have hloW : ylo ∈ Set.Icc (1 / 2 : ℝ) 1 := ⟨hlo, by linarith⟩
+  have hyW : y ∈ Set.Icc (1 / 2 : ℝ) 1 := ⟨by linarith, by linarith⟩
+  -- (1) the prefix error
+  have E1 : |Gk k p y - Gk k p ylo| ≤ 4 * H * ((1 / 4 : ℝ) ^ D / 6) := by
+    have hd : ∀ t ∈ Set.Icc (1 / 2 : ℝ) 1, DifferentiableAt ℝ (Gk k p) t := fun t ht =>
+      (analyticOnNhd_Gk k p t (show (0 : ℝ) < t by linarith [ht.1])).differentiableAt
+    have := (convex_Icc (1 / 2 : ℝ) 1).norm_image_sub_le_of_norm_deriv_le hd
+      (fun t ht => by rw [Real.norm_eq_abs]; exact (deriv_Gk_le k p hdeg t ht).1.trans (le_of_eq (by rw [hHp])))
+      hloW hyW
+    rw [Real.norm_eq_abs, Real.norm_eq_abs, abs_of_nonneg (sub_nonneg.2 hy1)] at this
+    calc _ ≤ _ := this
+      _ ≤ _ := by gcongr; linarith
+  -- (2) the root error
+  set X := Xn k q
+  set xt : ℝ := (X : ℝ) / 2 ^ T
+  set sl := ylo ^ ((k : ℝ)⁻¹)
+  have hbr : xt ≤ sl ∧ sl ≤ xt + (1 / 2) ^ T := by
+    have := root_bracket k T (T * k - (2 * D + 1)) (2 * D + 1) (yN q) hk0
+      (by have : 2 * D + 1 ≤ T * k := by (rw [hT, Tn]; nlinarith)
+          omega)
+    simpa [X, Xn, hq, xt, sl, ylo, hT] using this
+  have hxt0 : 0 ≤ xt := by positivity
+  have hsl1 : sl ≤ 1 := Real.rpow_le_one (by linarith) (by linarith) (by positivity)
+  set S : ℝ := ∑ j ∈ Finset.range L, ((l.getD j 0 : ℤ) : ℝ) * xt ^ j
+  have E2 : |Gk k p ylo - S| ≤ H * (k * (1 / 2 : ℝ) ^ T) := by
+    rw [Gk, aeval_polyOfList, ← Finset.sum_sub_distrib, hHdef, Hn_cast, Finset.sum_mul]
+    refine (Finset.abs_sum_le_sum_abs _ _).trans (Finset.sum_le_sum fun j _ => ?_)
+    rw [← mul_sub, abs_mul]
+    by_cases ha : l.getD j 0 = 0
+    · rw [ha]; simp
+    · have hj : j ≤ p.natDegree := le_natDegree_of_ne_zero (by rw [coeff_polyOfList]; exact ha)
+      gcongr
+      calc |sl ^ j - xt ^ j| ≤ j * |sl - xt| :=
+            abs_pow_sub_pow_le_unit j (by positivity) hsl1 hxt0 (by linarith)
+        _ ≤ k * (1 / 2 : ℝ) ^ T := by
+            gcongr
+            · exact_mod_cast (hj.trans hdeg.le)
+            · rw [abs_of_nonneg (by linarith)]; linarith
+  -- the precision budget
+  have hkT : (k : ℝ) * (1 / 2) ^ T ≤ (1 / 4 : ℝ) ^ D / 4 := by
+    have hk2 : (k : ℝ) * (1 / 2) ^ k ≤ 1 := by
+      rw [one_div_pow, mul_one_div, div_le_one (by positivity)]
+      exact_mod_cast Nat.lt_two_pow_self.le
+    rw [hT, Tn, pow_add, pow_add, pow_mul]
+    have : ((1 / 2 : ℝ) ^ 2) ^ D = (1 / 4) ^ D := by norm_num
+    rw [this]
+    have h4 : (0 : ℝ) ≤ (1 / 4) ^ D := by positivity
+    nlinarith
+  -- (3) the integer arithmetic: `A = max 0 (R − 4^{-D}/2)`
+  set R : ℝ := (S + H) / (2 * H)
+  set F : ℝ := (4 : ℝ) ^ D
+  have hF : 0 < F := by positivity
+  have hP : (0 : ℝ) < 2 ^ (T * L) := by positivity
+  have hSS := Sp_sub_Sm k l q
+  rw [hq] at hSS
+  have hA : (Num k l q : ℝ) / Den l k q = max 0 (R - (1 / 4 : ℝ) ^ D / 2) := by
+    have hDen : (Den l k q : ℝ) = 2 * H * 2 ^ (T * L) * F := by
+      simp [Den, hq, hHdef, F, hT, L]
+    have key : ((4 ^ D * (Sp k l q + Hn l * 2 ^ (T * L)) : ℕ) : ℝ) -
+        ((Hn l * 2 ^ (T * L) + 4 ^ D * Sm k l q : ℕ) : ℝ) = (R - (1 / 4 : ℝ) ^ D / 2) *
+          (2 * H * 2 ^ (T * L) * F) := by
+      push_cast
+      have e4 : (1 / 4 : ℝ) ^ D * F = 1 := by rw [← mul_pow]; norm_num
+      have : (4 : ℝ) ^ D * (Sp k l q + H * 2 ^ (T * L)) - (H * 2 ^ (T * L) + 4 ^ D * Sm k l q) =
+          F * ((Sp k l q : ℝ) - Sm k l q) + F * H * 2 ^ (T * L) - H * 2 ^ (T * L) := by ring
+      rw [this, hSS]
+      simp only [R]
+      field_simp
+      linear_combination (2 ^ (T * L) * H) * e4
+    have hNum : Num k l q = 4 ^ D * (Sp k l q + Hn l * 2 ^ (T * L)) -
+        (Hn l * 2 ^ (T * L) + 4 ^ D * Sm k l q) := by simp [Num, hq, hT, L]
+    have hD0 : (0 : ℝ) < 2 * H * 2 ^ (T * L) * F := by positivity
+    rw [hDen, hNum]
+    by_cases hle : Hn l * 2 ^ (T * L) + 4 ^ D * Sm k l q ≤ 4 ^ D * (Sp k l q + Hn l * 2 ^ (T * L))
+    · rw [Nat.cast_sub hle, key, mul_div_cancel_right₀ _ hD0.ne']
+      have : 0 ≤ (R - (1 / 4 : ℝ) ^ D / 2) := by
+        have := key ▸ (sub_nonneg.2 (by exact_mod_cast hle :
+          ((Hn l * 2 ^ (T * L) + 4 ^ D * Sm k l q : ℕ) : ℝ) ≤
+            ((4 ^ D * (Sp k l q + Hn l * 2 ^ (T * L)) : ℕ) : ℝ)))
+        exact nonneg_of_mul_nonneg_left this hD0
+      rw [max_eq_right this]
+    · rw [Nat.sub_eq_zero_of_le (le_of_not_ge hle)]
+      have hlt : ((4 ^ D * (Sp k l q + Hn l * 2 ^ (T * L)) : ℕ) : ℝ) <
+          ((Hn l * 2 ^ (T * L) + 4 ^ D * Sm k l q : ℕ) : ℝ) := by exact_mod_cast not_le.1 hle
+      have : (R - (1 / 4 : ℝ) ^ D / 2) * (2 * H * 2 ^ (T * L) * F) < 0 := by rw [← key]; linarith
+      have : R - (1 / 4 : ℝ) ^ D / 2 < 0 := neg_of_mul_neg_left this hD0.le
+      rw [max_eq_left this.le, Nat.cast_zero, zero_div]
+  rw [hA]
+  -- (4) assemble
+  have hGS : |Gk k p y - S| ≤ H * (1 / 4 : ℝ) ^ D := by
+    have := abs_sub_le (Gk k p y) (Gk k p ylo) S
+    have h4 : (0 : ℝ) ≤ (1 / 4) ^ D := by positivity
+    nlinarith
+  have hGR : |(Gk k p y + H) / (2 * H) - R| ≤ (1 / 4 : ℝ) ^ D / 2 := by
+    rw [show (Gk k p y + H) / (2 * H) - R = (Gk k p y - S) / (2 * H) by simp only [R]; ring,
+      abs_div, abs_of_pos (by linarith : (0 : ℝ) < 2 * H), div_le_iff₀ (by linarith)]
+    nlinarith
+  have hG0 : 0 ≤ (Gk k p y + H) / (2 * H) := by
+    have hb : |Gk k p y| ≤ H := by
+      rw [Gk, aeval_polyOfList, hHdef, Hn_cast]
+      exact abs_sum_coeff_le l (Real.rpow_nonneg (by linarith) _)
+        (Real.rpow_le_one (by linarith) (by linarith) (by positivity))
+    apply div_nonneg _ (by linarith)
+    linarith [neg_abs_le (Gk k p y)]
+  have h41 : (1 / 4 : ℝ) ^ D ≤ (1 / 2) ^ D := by gcongr; norm_num
+  rw [abs_le] at hGR
+  refine ⟨le_max_left _ _, max_le hG0 (by linarith), ?_⟩
+  linarith [le_max_right 0 (R - (1 / 4 : ℝ) ^ D / 2)]
+
+theorem primrec_Tlen (k : ℕ) : Primrec fun q : List Bool => Tn k q.length :=
+  Primrec.nat_add.comp (Primrec.nat_add.comp (Primrec.nat_mul.comp (Primrec.const 2)
+    Primrec.list_length) (Primrec.const k)) (Primrec.const 2)
+
+theorem primrec_Xn (k : ℕ) : Primrec (Xn k) :=
+  primrec_iroot.comp (Primrec.const k) (Primrec.nat_mul.comp primrec_yN
+    (ComputableNormal.primrec_pow.comp (Primrec.const 2) (Primrec.nat_sub.comp
+      (Primrec.nat_mul.comp (primrec_Tlen k) (Primrec.const k))
+      (Primrec.nat_add.comp (Primrec.nat_mul.comp (Primrec.const 2) Primrec.list_length)
+        (Primrec.const 1)))))
+
+theorem primrec_Spm (k : ℕ) (f : ℤ → ℕ) (hf : Primrec f) :
+    Primrec fun x : List ℤ × List Bool => rsum x.1.length fun j =>
+      f (x.1.getD j 0) * Xn k x.2 ^ j * 2 ^ (Tn k x.2.length * (x.1.length - j)) := by
+  refine primrec_rsum (Primrec.list_length.comp Primrec.fst) ?_
+  exact (Primrec.nat_mul.comp (Primrec.nat_mul.comp
+    (hf.comp ((Primrec.list_getD 0).comp (Primrec.fst.comp Primrec.fst) Primrec.snd))
+    (ComputableNormal.primrec_pow.comp ((primrec_Xn k).comp (Primrec.snd.comp Primrec.fst))
+      Primrec.snd))
+    (ComputableNormal.primrec_pow.comp (Primrec.const 2) (Primrec.nat_mul.comp
+      ((primrec_Tlen k).comp (Primrec.snd.comp Primrec.fst))
+      (Primrec.nat_sub.comp (Primrec.list_length.comp (Primrec.fst.comp Primrec.fst))
+        Primrec.snd)))).to₂
+
+theorem primrec_Hn : Primrec Hn :=
+  primrec_rsum Primrec.list_length
+    (primrec_natAbs.comp ((Primrec.list_getD 0).comp Primrec.fst Primrec.snd)).to₂
+
+theorem primrec_Num (k : ℕ) : Primrec fun x : List ℤ × List Bool => Num k x.1 x.2 := by
+  have hP : Primrec fun x : List ℤ × List Bool => Hn x.1 * 2 ^ (Tn k x.2.length * x.1.length) :=
+    Primrec.nat_mul.comp (primrec_Hn.comp Primrec.fst) (ComputableNormal.primrec_pow.comp
+      (Primrec.const 2) (Primrec.nat_mul.comp ((primrec_Tlen k).comp Primrec.snd)
+        (Primrec.list_length.comp Primrec.fst)))
+  have hF : Primrec fun x : List ℤ × List Bool => 4 ^ x.2.length :=
+    ComputableNormal.primrec_pow.comp (Primrec.const 4) (Primrec.list_length.comp Primrec.snd)
+  exact Primrec.nat_sub.comp (Primrec.nat_mul.comp hF (Primrec.nat_add.comp
+      (primrec_Spm k _ primrec_toNat) hP))
+    (Primrec.nat_add.comp hP (Primrec.nat_mul.comp hF (primrec_Spm k _ primrec_negPart)))
+
+theorem primrec_Den (k : ℕ) : Primrec fun x : List ℤ × List Bool => Den x.1 k x.2 :=
+  Primrec.nat_mul.comp (Primrec.nat_mul.comp (Primrec.nat_mul.comp (Primrec.const 2)
+    (primrec_Hn.comp Primrec.fst)) (ComputableNormal.primrec_pow.comp
+      (Primrec.const 2) (Primrec.nat_mul.comp ((primrec_Tlen k).comp Primrec.snd)
+        (Primrec.list_length.comp Primrec.fst))))
+    (ComputableNormal.primrec_pow.comp (Primrec.const 4) (Primrec.list_length.comp Primrec.snd))
+
+theorem approx_Gfam_aux (k : ℕ) (hk : 2 ≤ k) :
+    ∃ (Ψ : ℕ → ℕ → ℕ → List Bool → ℕ) (A : ℕ → List Bool → ℝ),
+      (Primrec fun x : ℕ × ℕ × ℕ × List Bool => Ψ x.1 x.2.1 x.2.2.1 x.2.2.2) ∧
+      (∀ i b m p, Ψ i b m p = ⌊A i p * (b : ℝ) ^ m⌋₊) ∧ (∀ i p, 0 ≤ A i p) ∧
+      ∀ i ω D, A i (Derandomize.pre ω D) ≤ Gfam k i ω ∧
+        Gfam k i ω ≤ A i (Derandomize.pre ω D) + (1 / 2 : ℝ) ^ D := by
+  refine ⟨fun i b m q => Num k (clist k i) q * b ^ m / Den (clist k i) k q,
+    fun i q => (Num k (clist k i) q : ℝ) / Den (clist k i) k q, ?_, ?_, ?_, ?_⟩
+  · have hl : Primrec fun x : ℕ × ℕ × ℕ × List Bool => (clist k x.1, x.2.2.2) :=
+      Primrec.pair ((primrec_clist k).comp Primrec.fst)
+        (Primrec.snd.comp (Primrec.snd.comp Primrec.snd))
+    have hN : Primrec fun x : ℕ × ℕ × ℕ × List Bool => Num k (clist k x.1) x.2.2.2 :=
+      ((primrec_Num k).comp hl :)
+    have hD : Primrec fun x : ℕ × ℕ × ℕ × List Bool => Den (clist k x.1) k x.2.2.2 :=
+      ((primrec_Den k).comp hl :)
+    have hb : Primrec fun x : ℕ × ℕ × ℕ × List Bool => x.2.1 ^ x.2.2.1 :=
+      ComputableNormal.primrec_pow.comp (Primrec.fst.comp Primrec.snd)
+        (Primrec.fst.comp (Primrec.snd.comp Primrec.snd))
+    exact Primrec.nat_div.comp (Primrec.nat_mul.comp hN hb) hD
+  · intro i b m q
+    dsimp only
+    rw [← Nat.floor_div_eq_div (K := ℝ) (Num k (clist k i) q * b ^ m)]
+    congr 1; push_cast; ring
+  · intro i q; positivity
+  · intro i ω D
+    obtain ⟨_, hk'⟩ := polyOfCode_deg k i hk
+    have hpl := polyOfList_clist k i (by omega)
+    have hH : (hgt (polyOfCode k i) : ℝ) = Hn (clist k i) := by
+      rw [← hpl, hgt_polyOfList, Hn_cast]
+    have hH1 : 1 ≤ Hn (clist k i) := by
+      have := one_le_hgt (polyOfCode_ne_zero k i)
+      exact_mod_cast (show (1 : ℝ) ≤ Hn (clist k i) by rw [← hH]; exact_mod_cast this)
+    obtain ⟨_, h2, h3⟩ := approx_core k hk (clist k i) (by rw [hpl]; exact hk') hH1 ω D
+    unfold Gfam
+    rw [hH, ← hpl]
+    exact ⟨h2, h3⟩
+
+end ApproxGfam
+
 /-- **Computable lower approximations of the normalised family with exact primitive recursive
 floors.**
 
@@ -1423,7 +1848,7 @@ theorem approx_Gfam (k : ℕ) (hk : 2 ≤ k) :
       (∀ i b m p, Ψ i b m p = ⌊A i p * (b : ℝ) ^ m⌋₊) ∧ (∀ i p, 0 ≤ A i p) ∧
       ∀ i ω D, A i (Derandomize.pre ω D) ≤ Gfam k i ω ∧
         Gfam k i ω ≤ A i (Derandomize.pre ω D) + (1 / 2 : ℝ) ^ D := by
-  sorry
+  exact approx_Gfam_aux k hk
 
 /-- **Simultaneous derandomization: one computable `e` making every `G_p(y)`, `1 ≤ deg p < k`,
 normal in every base.**  Wiring proved: `exists_computable_absNormal_family` on the normalised
