@@ -734,7 +734,17 @@ measurable map composes measurably (restrict to the subtype, or replace `GP` by
 `U.piecewise GP 0`, which agrees on the range). -/
 theorem measurable_GPfam {Q : ℤ[X]} {u : ℕ} (hu : IsBranch Q u) (i : ℕ) :
     Measurable (GPfam Q u i) := by
-  sorry
+  classical
+  obtain ⟨U, hU, hsub, han⟩ := analyticOnNhd_GP hu
+  set F := GP Q u (polyOfCodeQ Q i)
+  have hGm : Measurable (U.piecewise F 0) :=
+    ContinuousOn.measurable_piecewise (han _).continuousOn continuousOn_const hU.measurableSet
+  have heq : (fun ω => F (cantorReal ω)) = fun ω => U.piecewise F 0 (cantorReal ω) := by
+    funext ω; exact (Set.piecewise_eq_of_mem _ _ _ (hsub (cantorReal_mem_window ω))).symm
+  have h2 : Measurable fun ω => F (cantorReal ω) := by
+    rw [heq]; exact hGm.comp CantorSelfSimilar.measurable_cantorReal
+  unfold GPfam
+  exact (h2.add_const _).div_const _
 
 /-- **Computable lower approximations of the normalised family with exact primitive recursive
 floors** (the analogue of `approx_Gfam`, with bisection for `Q⁻¹`).
