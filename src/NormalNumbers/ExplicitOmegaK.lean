@@ -308,7 +308,9 @@ clause with its explicit constant**, specialised to the law of `cantorReal`: the
 change `A(s) = 1/2 + s/2` scales `F'` by `1/2` and `F''` by `1/4`, which costs a factor
 `2^κ 4^κ`, absorbed into `C`.  `a₂ > 0` gives BB's `F'' ≠ 0` on `[0,1]`.  The IFS check is the
 one refereed for `ExplicitSquare.BakerBanajiQuarterCantor`.  BB's `C, η, κ` need not be
-effective; the derandomization only hard-codes rationals `C' ≥ C`, `η' ≤ η`, `κ' ≥ κ`. -/
+effective.  ⚠️ Corrected 2026-10-02 (`docs/BAKER-BANAJI-ANALYTIC-REFEREE-2026-10-02.md`): the bound
+is not monotone in `κ` (for `a > 1`) or `η` (for `|ξ| < 1`), so hard-coding rationals needs
+`x^{-κ} ≤ 1 + x^{-κ'}` for `κ' ≥ κ` (so `C' ≥ 4C`) and `C' ≥ 1` to cover `|ξ| < 1`. -/
 def BakerBanajiUniformQuarterCantor : Prop :=
   ∃ C η κ : ℝ, 0 < C ∧ 0 < η ∧ 0 < κ ∧
     ∀ F : ℝ → ℝ, ∀ U : Set ℝ, IsOpen U → Set.Icc (1 / 2 : ℝ) 1 ⊆ U → ContDiffOn ℝ 2 F U →
