@@ -14,3 +14,8 @@ propext, Classical.choice, Quot.sound.
   (free-count bound `sqrt_le_freeCount`, `M_ge`), Liouville window test `clBad` (`clBad_mass`,
   `frequently_free_of_clBad`).
 * Headline docstring still says "Confidence 60%" (statement/docstring left untouched as frozen).
+
+## Checkpoint
+Branch `proof/cantorliou`, HEAD `39a0c5af` (+ this note).  Scoped target met; stop signalled.
+Next (optional, outside scope): refresh the "Confidence 60%" docstring on the computable headline
+(text only, if the operator un-freezes it); write `docs/notes/` entry for 10.37.
