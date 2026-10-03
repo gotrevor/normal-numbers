@@ -1,12 +1,10 @@
-## LevinSparse lane (2026-10-03, lap 1)
-* HEADLINE DONE: `exists_levinRate_oddNormal` — `#print axioms` = propext, Classical.choice, Quot.sound
-  (conditional only through the hypotheses Levin1999, BLDLemma5).  All operator-listed leaves proved;
-  `bld_doubleSum_le` proved from Lemma 5 alone (Lemma 6 not needed: small-valuation gaps counted trivially,
-  large-valuation gaps are multiples of 2^{B+1-c}).
-* Off-headline open: `exists_computable_bld_odd_add` wired via `exists_computable_avoid_oracle` (proved,
-  oracle derandomizer) from `bld_doubleSum_eff` (80%), `prob_visit_dev_odd` (85%), `oddTestFamily` (70%).
-  Key finding: Markov on second moments gives (log N)^{-1/2} masses, not summable; need Chebyshev (η^4).
-* `exists_absNormal_base2_fast`: open research problem (Schmidt 1960 tools for bases 2^a m), 20%.
+## LevinSparse lane (2026-10-03) — headline + computable DONE
+* `exists_levinRate_oddNormal` and `exists_computable_bld_odd_add`: `#print axioms` = propext,
+  Classical.choice, Quot.sound (conditional only via hypotheses Levin1999, BLDLemma5).
+* Only remaining sorry in LevinSparse.lean: `exists_absNormal_base2_fast` — a frozen OPEN PROBLEM
+  (absolutely normal with base-2 discrepancy o(N^{-1/2}); ABSS 1707.02628 "barrier"; best known
+  O(log^3 N / N^{1/2})).  Operator decision needed: convert to a `def … : Prop` conjecture node
+  (LEAN-NEW-MATH table) or keep as open target.  Not attackable this run.
 
 ## BAD-normal (A) and reciprocal (B) lanes (2026-10-03) — DONE
 * `ReciprocalNormal.lean` sorry-free.  `exists_computable_absNormal_recip_not_normal` (on
