@@ -1,6 +1,6 @@
 # HANDOFF — pointer
 
-This is a thin pointer, not an overview.  Read, in order:
+This is a thin pointer, not an overview.  Newest lap: `HANDOFF-2026-10-03-levinsparse-lap1.md` (BLOCKED, operator-gated).  Read, in order:
 
 1. **`DIRECTION.md` → CURRENT DIRECTIVE** — binding, altitude-owned, outranks every baton.
 2. **`STATUS.md`** — the living overview (refreshed on review laps).
