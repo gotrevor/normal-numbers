@@ -286,6 +286,51 @@ theorem exists_isBranch (Q : ℤ[X]) (hQ : 0 < Q.natDegree) : ∃ u : ℕ, IsBra
     rw [← Int.cast_abs]
     exact_mod_cast Int.one_le_abs hc0
 
+/-- On a branch `σQ` is expanding (`σ = ±1`): `t − s ≤ σQ(t) − σQ(s)` for `u ≤ s ≤ t`.  Proved
+(IVT for the sign of `Q'`, then the mean value inequality). -/
+theorem branch_expand {Q : ℤ[X]} {u : ℕ} (hu : IsBranch Q u) :
+    ∃ σ : ℝ, (σ = 1 ∨ σ = -1) ∧ ∀ s t : ℝ, (u : ℝ) ≤ s → s ≤ t →
+      t - s ≤ σ * aeval t Q - σ * aeval s Q := by
+  have hc' : Continuous fun x : ℝ => aeval x (derivative Q) := by fun_prop
+  have hsign : (∀ x : ℝ, (u : ℝ) ≤ x → 1 ≤ aeval x (derivative Q)) ∨
+      (∀ x : ℝ, (u : ℝ) ≤ x → 1 ≤ -aeval x (derivative Q)) := by
+    have key : ∀ x y : ℝ, (u : ℝ) ≤ x → (u : ℝ) ≤ y →
+        ¬ (aeval x (derivative Q) < 0 ∧ 0 < aeval y (derivative Q)) := by
+      rintro x y hx hy ⟨h1, h2⟩
+      obtain ⟨z, hz, hz0⟩ := isPreconnected_Ici.intermediate_value hx hy hc'.continuousOn
+        ⟨h1.le, h2.le⟩
+      have := hu z hz
+      simp only at hz0; rw [hz0] at this; norm_num at this
+    have hu0 := hu u le_rfl
+    rcases le_abs'.1 hu0 with h | h
+    · right; intro x hx
+      have := hu x hx
+      rcases le_abs'.1 this with h' | h'
+      · linarith
+      · exact absurd ⟨by linarith, by linarith⟩ (key u x le_rfl hx)
+    · left; intro x hx
+      have := hu x hx
+      rcases le_abs'.1 this with h' | h'
+      · exact absurd ⟨by linarith, by linarith⟩ (key x u hx le_rfl)
+      · linarith
+  have hd : ∀ σ : ℝ, ∀ x, HasDerivAt (fun x : ℝ => σ * aeval x Q) (σ * aeval x (derivative Q)) x :=
+    fun σ x => (Polynomial.hasDerivAt_aeval Q x).const_mul σ
+  have go : ∀ σ : ℝ, (∀ x : ℝ, (u : ℝ) ≤ x → 1 ≤ σ * aeval x (derivative Q)) →
+      ∀ s t : ℝ, (u : ℝ) ≤ s → s ≤ t → t - s ≤ σ * aeval t Q - σ * aeval s Q := by
+    intro σ hσ s t hs hst
+    have := (convex_Ici (u : ℝ)).mul_sub_le_image_sub_of_le_deriv (f := fun x => σ * aeval x Q)
+      (by fun_prop) (fun x _ => (hd σ x).differentiableAt.differentiableWithinAt) (C := 1)
+      (fun x hx => by
+        rw [interior_Ici] at hx
+        rw [(hd σ x).deriv]; exact hσ x (le_of_lt hx)) s hs t (le_trans hs hst) hst
+    simpa using this
+  rcases hsign with h | h
+  · exact ⟨1, Or.inl rfl, go 1 (fun x hx => by simpa using h x hx)⟩
+  · exact ⟨-1, Or.inr rfl, go (-1) (fun x hx => by simpa using h x hx)⟩
+
+theorem aeval_intCast_eq (Q : ℤ[X]) (z : ℤ) : ((Q.eval z : ℤ) : ℝ) = aeval (z : ℝ) Q := by
+  simp [aeval_def, eval₂_eq_eval_map]
+
 /-- **The window and the branch inverse.**
 
 Confidence 92%.  English proof: on `[u, ∞)`, `Q'` is continuous with `|Q'| ≥ 1`, so it has a
@@ -302,7 +347,74 @@ theorem branch_spec {Q : ℤ[X]} {u : ℕ} (hu : IsBranch Q u) :
         (aQ Q u : ℝ) + (cQ Q u : ℝ) * y) ∧
       ∀ y ∈ Set.Icc (1 / 2 : ℝ) 1,
         brInv Q u ((aQ Q u : ℝ) + (cQ Q u : ℝ) * y) ∈ Set.Icc ((u : ℝ) + 1) ((u : ℝ) + 2) := by
-  sorry
+  obtain ⟨σ, hσ, hexp⟩ := branch_expand hu
+  have hσ2 : σ * σ = 1 := by rcases hσ with rfl | rfl <;> norm_num
+  set g : ℝ → ℝ := fun x => σ * aeval x Q with hg
+  have hmono : ∀ s t : ℝ, (u : ℝ) ≤ s → s < t → g s < g t := fun s t hs hst => by
+    have := hexp s t hs hst.le; simp only [hg]; linarith
+  have ha : (aQ Q u : ℝ) = 2 * aeval ((u : ℝ) + 1) Q - aeval ((u : ℝ) + 2) Q := by
+    simp only [aQ]; push_cast
+    rw [aeval_intCast_eq, aeval_intCast_eq]; push_cast; ring
+  have hc : (cQ Q u : ℝ) = 2 * (aeval ((u : ℝ) + 2) Q - aeval ((u : ℝ) + 1) Q) := by
+    simp only [cQ]; push_cast
+    rw [aeval_intCast_eq, aeval_intCast_eq]; push_cast; ring
+  set A := g ((u : ℝ) + 1) with hA
+  set B := g ((u : ℝ) + 2) with hB
+  have hAB : 1 ≤ B - A := by
+    have := hexp ((u : ℝ) + 1) ((u : ℝ) + 2) (by linarith) (by linarith); simp only [hA, hB, hg]; linarith
+  have hval : ∀ y : ℝ, σ * ((aQ Q u : ℝ) + (cQ Q u : ℝ) * y) = A + (B - A) * (2 * y - 1) := by
+    intro y; rw [ha, hc]; simp only [hA, hB, hg]; ring
+  have hgu : g u ≤ A - 1 := by
+    have := hexp (u : ℝ) ((u : ℝ) + 1) le_rfl (by linarith); simp only [hA, hg]; linarith
+  have hgu3 : B + 1 ≤ g ((u : ℝ) + 3) := by
+    have := hexp ((u : ℝ) + 2) ((u : ℝ) + 3) (by linarith) (by linarith); simp only [hB, hg]; linarith
+  have hgcont : Continuous g := by simp only [hg]; fun_prop
+  refine ⟨?_, ?_, {y | σ * ((aQ Q u : ℝ) + (cQ Q u : ℝ) * y) ∈ Set.Ioo (g u) (g ((u : ℝ) + 3))},
+    ?_, ?_, ?_, ?_⟩
+  · intro h0
+    have : (cQ Q u : ℝ) = 0 := by exact_mod_cast h0
+    have h2 := hval 1; have h1 := hval 0
+    rw [this] at h2 h1; linarith
+  · intro s hs t ht hst
+    simp only at hst
+    by_contra hne
+    rcases lt_or_gt_of_ne hne with h | h
+    · have := hmono s t (by linarith [hs.1]) h; simp only [hg, hst] at this; linarith
+    · have := hmono t s (by linarith [ht.1]) h; simp only [hg, hst] at this; linarith
+  · exact isOpen_Ioo.preimage (by fun_prop)
+  · intro y hy
+    simp only [Set.mem_ofPred_eq, Set.mem_Ioo, hval]
+    constructor <;> nlinarith [hy.1, hy.2]
+  · intro y hy
+    simp only [Set.mem_ofPred_eq] at hy
+    obtain ⟨x, hx, hgx⟩ := intermediate_value_Ioo (by linarith : (u : ℝ) ≤ (u : ℝ) + 3)
+      hgcont.continuousOn hy
+    have hex : ∃ x ∈ Set.Ioi (u : ℝ), aeval x Q = (aQ Q u : ℝ) + (cQ Q u : ℝ) * y := by
+      refine ⟨x, hx.1, ?_⟩
+      have := congrArg (σ * ·) hgx
+      simp only [hg, ← mul_assoc, hσ2, one_mul] at this
+      exact this
+    exact Function.invFunOn_eq hex
+  · intro y hy
+    set w := (aQ Q u : ℝ) + (cQ Q u : ℝ) * y
+    have hw1 : A ≤ σ * w := by rw [hval]; nlinarith [hy.1, hy.2]
+    have hw2 : σ * w ≤ B := by rw [hval]; nlinarith [hy.1, hy.2]
+    have hex : ∃ x ∈ Set.Ioi (u : ℝ), aeval x Q = w := by
+      obtain ⟨x, hx, hgx⟩ := intermediate_value_Icc (by linarith : (u : ℝ) + 1 ≤ (u : ℝ) + 2)
+        hgcont.continuousOn ⟨hw1, hw2⟩
+      refine ⟨x, by simp only [Set.mem_Ioi]; linarith [hx.1], ?_⟩
+      have := congrArg (σ * ·) hgx
+      simp only [hg, ← mul_assoc, hσ2, one_mul] at this
+      exact this
+    have hmem : brInv Q u w ∈ Set.Ioi (u : ℝ) := Function.invFunOn_mem hex
+    have hQ : aeval (brInv Q u w) Q = w := Function.invFunOn_eq hex
+    have hgx : g (brInv Q u w) = σ * w := by simp only [hg, hQ]
+    simp only [Set.mem_Ioi] at hmem
+    constructor
+    · by_contra hlt; push Not at hlt
+      have := hmono _ _ hmem.le hlt; linarith
+    · by_contra hlt; push Not at hlt
+      have := hmono _ _ (by linarith) hlt; linarith
 
 /-- **`G_P` is analytic near the window, uniformly in `P`.**
 
