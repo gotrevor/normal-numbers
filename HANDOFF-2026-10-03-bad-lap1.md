@@ -11,3 +11,8 @@ Both operator lanes closed.
 * Build note: the full `lake build` intermittently hits "Too many open files" (EMFILE) after a
   low-level module changes; building the failing module alone and re-running converges (≈70 rounds).
 * Remaining open content: only the cited Props' referee passes (see PENDING_WORK.md top entry).
+
+## Checkpoint (final)
+Branch `proof/bad`, HEAD 77749c62. Scoped target met; `box done --green` issued.
+Next steps (future run): referee `Literature.BakerBanajiSparse` and `Literature.SahlstenStevensBernoulli12`
+transcriptions; optionally write `docs/notes/` notes for Bugeaud 10.17/10.18 and the BAD-normal result.
