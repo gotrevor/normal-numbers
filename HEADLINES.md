@@ -65,6 +65,8 @@ mass tends to `log 2`, so C′ does not apply.
    log-density first step.  It is C1 territory, so count it with C1.
 3. **Richness of `E_b`.**  Freezing tops out at `N·exp(−C(log log N)² log log log N)`.  Richness
    needs the same statistical mechanism as C3, so count it with C3.
+   *Audit 2026-10-03 (`audit/edensity`): no rung freezable (R1 ~3%, R2 ~1%); the base-2 free kill
+   `2^{ω_odd} ∣ τ` moves the crux to a `log log n` band, see `docs/EDENSITY-AUDIT-2026-10-03.md`.*
 
 ## H2. Algebraic irrationals are normal (Borel 1950) √
 

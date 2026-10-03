@@ -34,6 +34,14 @@ def mazeRows : List RowInfo :=
 
 /-- Each linked row and the declarations it rests on. -/
 def mazeLinks : List Link := [
+  ⟨"CRT freezing for density of the binary words of E",
+   [``EDensity.eCount_power, ``JointLambert.jointWords_quantitative, ``EDensity.RungPolylog,
+    ``EDensity.RungRich], [``EDensity.ResidualSmallPolylog]⟩,
+  ⟨"free 2-adic kill plus forced band for E",
+   [``EDensity.two_pow_oddExpCount_dvd_card_divisors,
+    ``EDensity.fract_card_divisors_div_two_pow_eq_zero, ``EDensity.card_odd_card_divisors_le,
+    ``Erdos257Squarefree.SqfreeBinaryDisjunctive],
+   [``EDensity.ResidualSmallOften, ``EDensity.ResidualSmallPolylog]⟩,
   ⟨"Erdős #257 for squarefree / k-free A via the Chowla-Erdős kill",
    [``Erdos257Squarefree.DuverneyTachiya2019KFree, ``Erdos257Squarefree.erdos257_squarefree_of_literature,
     ``Erdos257Squarefree.erdos257_kFree_of_literature], []⟩,
@@ -191,7 +199,7 @@ def mazeLegacy : List String := [
   "Diophantine good-denominator detour for the tail cell",
   "route B's unweighted cover of the state-dependent target"]
 
-/-- info: maze audit: 145 rows, 38 cite declarations, 107 legacy (prose only) -/
+/-- info: maze audit: 147 rows, 40 cite declarations, 107 legacy (prose only) -/
 #guard_msgs in
 #maze_audit mazeRows, mazeLinks, mazeLegacy
 

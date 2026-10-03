@@ -36,6 +36,7 @@ import NormalNumbers.VandeheyS7Audit
 import NormalNumbers.VandeheyS7WidthDensity
 import NormalNumbers.VandeheyS7ArchWidthFree
 import NormalNumbers.Erdos257Squarefree
+import NormalNumbers.EDensityAudit
 
 /-!
 # `Maze.lean` — the halls we have walked, encoded
@@ -1356,7 +1357,17 @@ def register : List Hall := [
    "Prove binary disjunctivity of sum 2^omega(m) 2^-m by replacing EvenEncoding with the survivor value 2^omega(n+r)/2^(r+1)",
    .refuted, .kernel,
    "A power of two over a power of two has fractional part 0 or 2^-t, so one survivor writes one bit and no survivor lands in the 101 cylinder (5/8, 3/4); a word with l ones needs l positions with exactly prescribed omega on one CRT progression, a prime-tuple / joint local Erdos-Kac input",
-   "alias hall_sqfree_single_survivor; theorems Erdos257Squarefree.not_powTwoEncoding, fract_two_pow_div_two_pow; open target SqfreeBinaryDisjunctive", "2026-10-03"⟩
+   "alias hall_sqfree_single_survivor; theorems Erdos257Squarefree.not_powTwoEncoding, fract_two_pow_div_two_pow; open target SqfreeBinaryDisjunctive", "2026-10-03"⟩,
+  ⟨"CRT freezing for density of the binary words of E",
+   "Count the Campbell / joint-Lambert CRT witnesses more efficiently to reach count_w(N) >= N/(log N)^A (R1) or >= c N (R2) for E = sum 1/(2^n-1)",
+   .wall, .cited,
+   "Every witness lies on one progression n = R + mA whose modulus kills k positions; k >= log_2 log N is forced because the uncontrolled tail sum tau(n+j)/2^j has mean (log N) 2^-k, and killing position j costs j+1 CRT primes, so log A ~ k^2 log k; the writer n+r = Q p needs a prime for an exact tau, a further 1/log N. Density is at most 1/(A log N) -> 0, topping out at N exp(-C (log log N)^2 log log log N). REOPEN IF: a statistical tail bound replaces killing, i.e. ResidualSmallPolylog (shifted-prime form for general words)",
+   "EDensityAudit.lean: eCount_power, RungPolylog, RungRich, ResidualSmallPolylog; JointLambertQuantitative.jointWords_quantitative; docs/EDENSITY-AUDIT-2026-10-03.md", "2026-10-03"⟩,
+  ⟨"free 2-adic kill plus forced band for E",
+   "Use 2^omega_odd(m) | tau(m) to kill positions j <= (1-eps) log log n for free and force-kill only the band, to reach R1 for the binary words of E",
+   .wall, .cited,
+   "The free kill is real (two_pow_oddExpCount_dvd_card_divisors) but leaves the band j = log log n +- O(sqrt(log log n)), whose positions carry O(1) random fractions. Force-killing the band needs >> log log N log log log N distinct primes, a primorial of size (log N)^(c (log log log N)^2), so only N/(log N)^(C (log log log N)^2). The statistical alternative is a sieve in dimension ~ log log N with a per-position margin ~ log log log N, giving at best (log log N)^(-C) for the all-zero word, and a general word also needs one exactly prescribed tau (a parity-sensitive joint local Erdos-Kac input). Sibling control: tau mod 2 alone reads only squares, <= sqrt N + 1 ones (card_odd_card_divisors_le). REOPEN IF: ResidualSmallOften or ResidualSmallPolylog is proved, plus a writer input for general words",
+   "EDensityAudit.lean: two_pow_oddExpCount_dvd_card_divisors, fract_card_divisors_div_two_pow_eq_zero, card_odd_card_divisors_le, ResidualSmallOften, ResidualSmallPolylog; Erdos257Squarefree.SqfreeBinaryDisjunctive; docs/EDENSITY-AUDIT-2026-10-03.md", "2026-10-03"⟩
 ]
 
 /-- Rows whose verdict is machine-checked in this build. -/
