@@ -626,6 +626,81 @@ theorem not_deriv2_lower_GP_of_affineIn {Q P : ℤ[X]} {u : ℕ} (hu : IsBranch 
     exact this.deriv
   rw [hd.deriv_eq, deriv_const]
 
+/-! Coefficient-mass bounds for `P`, `P'`, `P''` on `|x| ≤ B`. -/
+
+/-- Truncated coefficient mass `Σ_{j<N} |p_j|`. -/
+noncomputable def cs (p : ℤ[X]) (N : ℕ) : ℝ := ∑ j ∈ Finset.range N, |(p.coeff j : ℝ)|
+
+theorem cs_nonneg (p : ℤ[X]) (N : ℕ) : 0 ≤ cs p N :=
+  Finset.sum_nonneg fun _ _ => abs_nonneg _
+
+theorem abs_aeval_le_cs (p : ℤ[X]) {N : ℕ} (hN : p.natDegree < N) {x B : ℝ} (hB : 1 ≤ B)
+    (hx : |x| ≤ B) : |aeval x p| ≤ cs p N * B ^ (N - 1) := by
+  rw [aeval_eq_sum_range' hN, cs, Finset.sum_mul]
+  refine (Finset.abs_sum_le_sum_abs _ _).trans (Finset.sum_le_sum fun j hj => ?_)
+  have hj' : j ≤ N - 1 := by have := Finset.mem_range.1 hj; omega
+  rw [zsmul_eq_mul, abs_mul, abs_pow]
+  gcongr
+  calc |x| ^ j ≤ B ^ j := pow_le_pow_left₀ (abs_nonneg x) hx j
+    _ ≤ B ^ (N - 1) := pow_le_pow_right₀ hB hj'
+
+theorem cs_derivative_le (p : ℤ[X]) (N : ℕ) :
+    cs (derivative p) N ≤ N * cs p (N + 1) := by
+  rw [cs, cs, Finset.sum_range_succ', mul_add, Finset.mul_sum]
+  have h0 : 0 ≤ (N : ℝ) * |(p.coeff 0 : ℝ)| := by positivity
+  refine le_add_of_le_of_nonneg (Finset.sum_le_sum fun j hj => ?_) h0
+  rw [coeff_derivative]
+  push_cast
+  rw [abs_mul, mul_comm]
+  have : |((j : ℝ) + 1)| ≤ N := by
+    rw [abs_of_nonneg (by positivity)]
+    have := Finset.mem_range.1 hj; exact_mod_cast this
+  exact mul_le_mul_of_nonneg_right this (abs_nonneg _)
+
+theorem cs_eq_hgt (p : ℤ[X]) : cs p (p.natDegree + 1) = hgt p := by
+  rw [cs, hgt_cast]
+
+theorem cs_succ_of_lt (p : ℤ[X]) {N : ℕ} (h : p.natDegree < N) : cs p (N + 1) = cs p N := by
+  rw [cs, cs, Finset.sum_range_succ, coeff_eq_zero_of_natDegree_lt h]; simp
+
+theorem succ_sq_le_four_pow (d : ℕ) : ((d : ℝ) + 1) ^ 2 ≤ 4 ^ d := by
+  have h : d + 1 ≤ 2 ^ d := Nat.lt_two_pow_self
+  have : ((d + 1) ^ 2 : ℕ) ≤ 4 ^ d := by
+    calc (d + 1) ^ 2 ≤ (2 ^ d) ^ 2 := Nat.pow_le_pow_left h 2
+      _ = 4 ^ d := by rw [← pow_mul, mul_comm, pow_mul]; norm_num
+  exact_mod_cast this
+
+theorem abs_aeval_deriv_le (P : ℤ[X]) {x B : ℝ} (hB : 1 ≤ B) (hx : |x| ≤ B) :
+    |aeval x P| ≤ hgt P * B ^ P.natDegree ∧
+    |aeval x (derivative P)| ≤ ((P.natDegree : ℝ) + 1) * hgt P * B ^ P.natDegree ∧
+    |aeval x (derivative (derivative P))| ≤
+      ((P.natDegree : ℝ) + 1) ^ 2 * hgt P * B ^ P.natDegree := by
+  set d := P.natDegree
+  have h1 : (derivative P).natDegree < d + 1 :=
+    lt_of_le_of_lt (natDegree_derivative_le P) (by omega)
+  have h2 : (derivative (derivative P)).natDegree < d + 1 :=
+    lt_of_le_of_lt (natDegree_derivative_le _) (by omega)
+  have hc1 : cs (derivative P) (d + 1) ≤ ((d : ℝ) + 1) * hgt P := by
+    have := cs_derivative_le P (d + 1)
+    rw [cs_succ_of_lt P (by omega), cs_eq_hgt] at this; push_cast at this; exact this
+  have hc2 : cs (derivative (derivative P)) (d + 1) ≤ ((d : ℝ) + 1) ^ 2 * hgt P := by
+    have := cs_derivative_le (derivative P) (d + 1)
+    rw [cs_succ_of_lt _ h1] at this; push_cast at this
+    calc _ ≤ _ := this
+      _ ≤ ((d : ℝ) + 1) * (((d : ℝ) + 1) * hgt P) := by gcongr
+      _ = _ := by ring
+  have hBd : 0 ≤ B ^ d := by positivity
+  refine ⟨?_, ?_, ?_⟩
+  · have := abs_aeval_le_cs P (Nat.lt_succ_self d) hB hx
+    rw [cs_eq_hgt] at this; simpa using this
+  · have := abs_aeval_le_cs _ h1 hB hx
+    rw [Nat.add_sub_cancel] at this
+    exact this.trans (by gcongr)
+  · have := abs_aeval_le_cs _ h2 hB hx
+    rw [Nat.add_sub_cancel] at this
+    exact this.trans (by gcongr)
+
+set_option maxHeartbeats 1000000 in
 /-- **Window bounds for `G_P`, `G_P'`, `G_P''` by the height.**
 
 Confidence 90%.  English proof: `x ∈ [u+1, u+2]`, so `|P(x)| ≤ hgt P (u+2)^{deg P}`.
@@ -638,7 +713,101 @@ theorem GP_bounds {Q : ℤ[X]} {u : ℕ} (hu : IsBranch Q u) :
       |GP Q u P t| ≤ (hgt P : ℝ) * ((u : ℝ) + 2) ^ P.natDegree ∧
       |deriv (GP Q u P) t| ≤ (L : ℝ) ^ (P.natDegree + 1) * hgt P ∧
       |deriv (deriv (GP Q u P)) t| ≤ (L : ℝ) ^ (P.natDegree + 1) * hgt P := by
-  sorry
+  set B : ℝ := (u : ℝ) + 2 with hBdef
+  have hB : 1 ≤ B := by rw [hBdef]; linarith [(Nat.cast_nonneg u : (0 : ℝ) ≤ u)]
+  set c : ℝ := (cQ Q u : ℝ) with hcdef
+  have hc1 : 1 ≤ |c| := by
+    rw [hcdef, ← Int.cast_abs]; exact_mod_cast Int.one_le_abs (branch_spec hu).1
+  have hcc : |c| ≤ c ^ 2 := by rw [← sq_abs]; nlinarith
+  have hc2 : 1 ≤ c ^ 2 := hc1.trans hcc
+  set M : ℝ := ((Q.natDegree : ℝ) + 1) ^ 2 * hgt Q * B ^ Q.natDegree + 1 with hM
+  have hM1 : 1 ≤ M := by
+    have : (0:ℝ) ≤ ((Q.natDegree : ℝ) + 1) ^ 2 * hgt Q * B ^ Q.natDegree := by positivity
+    rw [hM]; linarith
+  refine ⟨⌈8 * c ^ 2 * M * B⌉₊, ?_, fun P t ht => ?_⟩
+  · have : (1 : ℝ) ≤ 8 * c ^ 2 * M * B := by
+      have h1 := one_le_mul_of_one_le_of_one_le (one_le_mul_of_one_le_of_one_le hc2 hM1) hB
+      linarith
+    exact_mod_cast (Nat.one_le_cast.1 (this.trans (Nat.le_ceil _)) : 1 ≤ ⌈8 * c ^ 2 * M * B⌉₊)
+  set L : ℝ := ((⌈8 * c ^ 2 * M * B⌉₊ : ℕ) : ℝ)
+  set d := P.natDegree
+  have hL : 8 * c ^ 2 * M * B ≤ L := Nat.le_ceil _
+  have hx := Xf_mem_Icc hu ht
+  have hxB : |Xf Q u t| ≤ B := by
+    rw [abs_of_nonneg (by linarith [hx.1, (Nat.cast_nonneg u : (0 : ℝ) ≤ u)])]; exact hx.2
+  have hV := window_sub_Vset hu ht
+  obtain ⟨hP0, hP1, hP2⟩ := abs_aeval_deriv_le P hB hxB
+  obtain ⟨-, hQ1, hQ2⟩ := abs_aeval_deriv_le Q hB hxB
+  have hQ1' : |aeval (Xf Q u t) (derivative Q)| ≤ M := by
+    have : ((Q.natDegree : ℝ) + 1) * hgt Q * B ^ Q.natDegree ≤
+        ((Q.natDegree : ℝ) + 1) ^ 2 * hgt Q * B ^ Q.natDegree := by
+      gcongr; nlinarith
+    rw [hM]; linarith
+  have hQ2' : |aeval (Xf Q u t) (derivative (derivative Q))| ≤ M := by rw [hM]; linarith
+  have hQl : 1 ≤ |aeval (Xf Q u t) (derivative Q)| := hu _ (by linarith [hx.1])
+  have hH : (0 : ℝ) ≤ hgt P := Nat.cast_nonneg _
+  have hBd : 0 ≤ B ^ d := by positivity
+  set K := 2 * c ^ 2 * M * ((d : ℝ) + 1) ^ 2 * B ^ d * hgt P with hK
+  have hKL : K ≤ L ^ (d + 1) * hgt P := by
+    have h4 := succ_sq_le_four_pow d
+    have hL4 : 4 * B ≤ L := by
+      have h1 : 1 ≤ c ^ 2 * M := one_le_mul_of_one_le_of_one_le hc2 hM1
+      have : 4 * B ≤ 8 * c ^ 2 * M * B := by nlinarith
+      linarith
+    have hLd : (4 * B) ^ d ≤ L ^ d := pow_le_pow_left₀ (by positivity) hL4 d
+    have : 2 * c ^ 2 * M * ((d : ℝ) + 1) ^ 2 * B ^ d ≤ L ^ (d + 1) := by
+      rw [pow_succ]
+      calc 2 * c ^ 2 * M * ((d : ℝ) + 1) ^ 2 * B ^ d ≤ 2 * c ^ 2 * M * 4 ^ d * B ^ d := by gcongr
+        _ ≤ 8 * c ^ 2 * M * B * (4 * B) ^ d := by
+            rw [mul_pow]; have : 0 ≤ c ^ 2 * M * 4 ^ d * B ^ d := by positivity
+            nlinarith
+        _ ≤ L * L ^ d := by
+            exact mul_le_mul hL hLd (by positivity) (by positivity)
+        _ = L ^ d * L := by ring
+    rw [hK]; gcongr
+  refine ⟨?_, ?_, ?_⟩
+  · rw [GP_eq_Xf]; exact hP0
+  · rw [(hasDerivAt_GP hu P hV).deriv, abs_div, abs_mul]
+    refine (div_le_of_le_mul₀ (by positivity) (by positivity) ?_).trans hKL
+    calc |c| * |aeval (Xf Q u t) (derivative P)| ≤ c ^ 2 * (((d : ℝ) + 1) * hgt P * B ^ d) := by
+          gcongr
+      _ ≤ K * 1 := by
+          rw [hK, mul_one]
+          have hd1 : (1 : ℝ) ≤ (d : ℝ) + 1 := by linarith [(Nat.cast_nonneg d : (0 : ℝ) ≤ d)]
+          have : ((d : ℝ) + 1) ≤ 2 * M * ((d : ℝ) + 1) ^ 2 := by
+            have := one_le_mul_of_one_le_of_one_le hM1 hd1
+            nlinarith
+          have h0 : 0 ≤ c ^ 2 * hgt P * B ^ d := by positivity
+          calc c ^ 2 * (((d : ℝ) + 1) * hgt P * B ^ d) = (c ^ 2 * hgt P * B ^ d) * ((d : ℝ) + 1) := by
+                ring
+            _ ≤ (c ^ 2 * hgt P * B ^ d) * (2 * M * ((d : ℝ) + 1) ^ 2) :=
+                mul_le_mul_of_nonneg_left this h0
+            _ = _ := by ring
+      _ ≤ K * |aeval (Xf Q u t) (derivative Q)| := by gcongr
+  · rw [deriv2_GP_eq hu P hV, abs_div, abs_mul, abs_pow, abs_pow, sq_abs]
+    refine (div_le_of_le_mul₀ (by positivity) (by positivity) ?_).trans hKL
+    have hW : |aeval (Xf Q u t) (wPoly P Q)| ≤
+        ((d : ℝ) + 1) ^ 2 * hgt P * B ^ d * M + ((d : ℝ) + 1) * hgt P * B ^ d * M := by
+      simp only [wPoly, map_sub, map_mul]
+      refine (abs_sub _ _).trans (add_le_add ?_ ?_) <;> rw [abs_mul]
+      · exact mul_le_mul hP2 hQ1' (abs_nonneg _) (by positivity)
+      · exact mul_le_mul hP1 hQ2' (abs_nonneg _) (by positivity)
+    calc c ^ 2 * |aeval (Xf Q u t) (wPoly P Q)| ≤
+        c ^ 2 * (((d : ℝ) + 1) ^ 2 * hgt P * B ^ d * M + ((d : ℝ) + 1) * hgt P * B ^ d * M) := by
+          gcongr
+      _ ≤ K * 1 := by
+          rw [hK, mul_one]
+          have hd1 : (1 : ℝ) ≤ (d : ℝ) + 1 := by linarith [(Nat.cast_nonneg d : (0 : ℝ) ≤ d)]
+          have : ((d : ℝ) + 1) ≤ ((d : ℝ) + 1) ^ 2 := by nlinarith
+          have h0 : 0 ≤ c ^ 2 * hgt P * B ^ d * M := by positivity
+          calc c ^ 2 * (((d : ℝ) + 1) ^ 2 * hgt P * B ^ d * M + ((d : ℝ) + 1) * hgt P * B ^ d * M)
+              = (c ^ 2 * hgt P * B ^ d * M) * (((d : ℝ) + 1) ^ 2 + ((d : ℝ) + 1)) := by ring
+            _ ≤ (c ^ 2 * hgt P * B ^ d * M) * (2 * ((d : ℝ) + 1) ^ 2) :=
+                mul_le_mul_of_nonneg_left (by linarith) h0
+            _ = _ := by ring
+      _ ≤ K * |aeval (Xf Q u t) (derivative Q)| ^ 3 := by
+          gcongr; exact one_le_pow₀ hQl
+
 
 set_option maxHeartbeats 1000000 in
 /-- **The cylinder cut, uniform in the zero count.**  `pushFourier_le_of_deriv2_lower` with its
