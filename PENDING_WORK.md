@@ -1,14 +1,12 @@
 ## LevinSparse lane (2026-10-03, lap 1)
-* PROVED: del_ae_tendsto (deterministic core `tendsto_of_summable_sq_div`), discLe_fract_add,
-  isNormal_of_discLe, fract_bldPoint_small, secondMoment_translate_le (coin-flip Fourier product,
-  `integral_ee_step`/`norm_integral_ee_bldPoint_le`), ae_isNormal_odd_add (`summable_inv_mul_log_rpow`,
-  `fourierMean_orbit`), sparse_expSet, sIcc_expSet_le, rate_arith, exists_not_isNormal_two_dense.
-* Headline crux remaining: bld_doubleSum_le (fork in progress).
-* Off-headline: exists_computable_bld_odd_add — existing derandomizer (`Derandomize.exists_primrec_avoid`,
-  `ComputableNormalB.level_bound_b`) needs Primrec tests and polynomial decay; here α is only Computable
-  and decay is (log N)^{-1.005} on second moments.  Needs (i) a Computable (oracle) version of the avoider,
-  (ii) Chebyshev bad sets along N_k = ⌊exp(k^{0.999})⌋.  exists_absNormal_base2_fast is an open problem
-  (needs Schmidt 1960 for bases 2^a m).
+* HEADLINE DONE: `exists_levinRate_oddNormal` — `#print axioms` = propext, Classical.choice, Quot.sound
+  (conditional only through the hypotheses Levin1999, BLDLemma5).  All operator-listed leaves proved;
+  `bld_doubleSum_le` proved from Lemma 5 alone (Lemma 6 not needed: small-valuation gaps counted trivially,
+  large-valuation gaps are multiples of 2^{B+1-c}).
+* Off-headline open: `exists_computable_bld_odd_add` wired via `exists_computable_avoid_oracle` (proved,
+  oracle derandomizer) from `bld_doubleSum_eff` (80%), `prob_visit_dev_odd` (85%), `oddTestFamily` (70%).
+  Key finding: Markov on second moments gives (log N)^{-1/2} masses, not summable; need Chebyshev (η^4).
+* `exists_absNormal_base2_fast`: open research problem (Schmidt 1960 tools for bases 2^a m), 20%.
 
 ## BAD-normal (A) and reciprocal (B) lanes (2026-10-03) — DONE
 * `ReciprocalNormal.lean` sorry-free.  `exists_computable_absNormal_recip_not_normal` (on
