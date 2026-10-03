@@ -391,8 +391,10 @@ theorem exists_computable_mem_Omega (hBB : BakerBanajiUniformQuarterCantor) (k :
 
 /-- A Borel probability measure on `ℝ` stationary for a **non-trivial** (no common fixed point)
 finite IFS of similarities `t ↦ r_a t + c_a`, `0 < |r_a| < 1`, mapping `[1/2, 1]` into itself,
-with positive weights summing to `1` (the class of Baker–Banaji Cor. `c:analyticnormal`, after
-the window change). -/
+with positive weights summing to `1` (the class of Baker–Banaji Cor. 2.10 of arXiv v2, label
+`c:analyticnormal`, after the window change).  With `IsProbabilityMeasure ν` this pins `ν` to the
+unique stationary Borel probability on `ℝ`; the distinct-fixed-points clause excludes Dirac masses
+(`docs/BAKER-BANAJI-GENERAL-REFEREE-2026-10-02.md`). -/
 def IsSelfSimilarOnWindow (ν : Measure ℝ) : Prop :=
   ∃ (n : ℕ) (r c : Fin n → ℝ) (w : Fin n → ENNReal),
     (∀ a, r a ≠ 0 ∧ |r a| < 1) ∧ (∀ a, 0 < w a) ∧ ∑ a, w a = 1 ∧
@@ -400,7 +402,7 @@ def IsSelfSimilarOnWindow (ν : Measure ℝ) : Prop :=
     (∃ a b, c a / (1 - r a) ≠ c b / (1 - r b)) ∧
     ν = ∑ a, w a • ν.map (fun t => r a * t + c a)
 
-/-- **Cited input: Baker–Banaji, arXiv 2401.01241v2, Corollary `c:analyticnormal`**, general
+/-- **Cited input: Baker–Banaji, arXiv 2401.01241v2, Corollary 2.10 (`c:analyticnormal`)**, general
 self-similar form: Property (A) for `F_*ν`, `F` analytic non-affine, `ν` self-similar.
 
 **Faithful-or-weaker**: as for `BakerBanajiAnalyticQuarterCantor` (`q_n = bⁿ`, countably many
