@@ -240,7 +240,35 @@ upper density `≤ m · 0`).  Confidence 97%.  English proof: given `ε`, take `
 `𝕊 = {i : digit i = 1}`, which has density `0` by `OneFreqZero`; `1 < 2^ε`. -/
 theorem isDeterministic_of_oneFreqZero {y : ℝ} (hy : ExplicitSquare.OneFreqZero y) :
     IsDeterministic 2 y := by
-  sorry
+  classical
+  set ω := digitOf 2 (Int.fract y)
+  intro ε hε
+  refine ⟨1, {[0]}, ⟨{i | ω i ≠ 0}, ?_, ?_⟩, ?_⟩
+  · intro δ hδ
+    have hev := (Metric.tendsto_nhds.1 hy) δ hδ
+    filter_upwards [hev, eventually_gt_atTop 0] with N hN hN0
+    have hNR : (0 : ℝ) < N := by exact_mod_cast hN0
+    rw [Real.dist_eq, sub_zero, abs_lt] at hN
+    have h2 := (div_lt_iff₀ hNR).1 hN.2
+    have hsub : ((Finset.range N).filter (· ∈ {i | ω i ≠ 0})).card ≤
+        countOccurrences [1] ((List.range N).map ω) := by
+      rw [countOccurrences_eq]
+      refine Finset.card_le_card_of_injOn id (fun i hi => ?_) (fun _ _ _ _ h => h)
+      simp only [Finset.coe_filter, Finset.mem_range, Set.mem_setOf_eq] at hi
+      have h2 : ω i < 2 := digitOf_lt 2 le_rfl _ i
+      simp only [id, Finset.coe_filter, Finset.mem_range, Set.mem_setOf_eq, List.length_singleton,
+        List.range'_one, List.map_cons, List.map_nil, List.cons.injEq, and_true]
+      exact ⟨by omega, by omega, by omega⟩
+    have hc : ((((Finset.range N).filter (· ∈ {i | ω i ≠ 0})).card : ℕ) : ℝ) ≤ δ * N :=
+      (Nat.cast_le.2 hsub).trans h2.le
+    refine le_trans (le_of_eq ?_) (hc.trans ?_)
+    · congr
+    · nlinarith [mul_pos hε hNR]
+  · intro i hi
+    simp only [Set.mem_setOf_eq, not_not] at hi
+    simp only [Finset.mem_singleton, List.ofFn_succ, List.ofFn_zero, Fin.val_zero, add_zero]
+    exact congrArg (· :: []) hi
+  · simpa using Real.one_lt_rpow (by norm_num : (1 : ℝ) < 2) hε
 
 /-- Independent route to B-D Cor. 9.15 through Manai 2606.08325 Cor. 1.4. -/
 theorem detSqNotDet_of_manai (hM : Literature.Manai2026.QuadraticLogWitness)
