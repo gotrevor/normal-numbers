@@ -276,6 +276,14 @@ theorem card_le_freeCount₂ {s e s' M : ℕ} (hes : e ≤ s') (heM : e ≤ M)
 theorem isFree_runEnd (k : ℕ) : isFree ((k + 2) * runStart k) = true :=
   isFree_after le_rfl (by rw [runStart_succ_eq]; have := lt_runStart k; nlinarith)
 
+theorem summable_ptDigit (free : ℕ → Bool) (ω : ℕ → Bool) :
+    Summable fun i => (ptDigit free ω i : ℝ) / (3 : ℝ) ^ (i + 1) := by
+  refine Summable.of_nonneg_of_le (fun i => by positivity) (fun i => ?_)
+    ((summable_geometric_of_lt_one (r := (3 : ℝ)⁻¹) (by norm_num) (by norm_num)))
+  have : (ptDigit free ω i : ℝ) ≤ 3 := by exact_mod_cast (ptDigit_lt free ω i).le
+  rw [inv_pow, div_le_iff₀ (by positivity), pow_succ, inv_mul_cancel_left₀ (by positivity)]
+  exact this
+
 /-! ## Liouville -/
 
 /-- **Liouville property.**  Confidence 93%.
@@ -289,7 +297,80 @@ forces zeros, so the geometric bound `Σ_{i ≥ L} 2·3^{-(i+1)} = 3^{-L}` is st
 theorem liouville_cantorLiouvilleReal (ω : ℕ → Bool)
     (hω : ∀ n, ∃ i, n ≤ i ∧ isFree i = true ∧ ω i = true) :
     Liouville (cantorLiouvilleReal ω) := by
-  sorry
+  intro n
+  set A := runStart n
+  set T := (n + 2) * A
+  set d := ptDigit isFree ω
+  set f : ℕ → ℝ := fun i => (d i : ℝ) / 3 ^ (i + 1)
+  have hf : Summable f := summable_ptDigit isFree ω
+  have hd2 : ∀ i, (d i : ℝ) ≤ 2 := fun i => by
+    have : d i ≤ 2 := by simp only [d, ptDigit]; split_ifs <;> norm_num
+    exact_mod_cast this
+  have hf0 : ∀ i, 0 ≤ f i := fun i => by positivity
+  have hrun : ∀ i, A ≤ i → i < T → d i = 0 := by
+    intro i h1 h2
+    have := isForced_of_mem_run (k := n) h1 h2
+    simp [d, ptDigit, isFree, this]
+  obtain ⟨i0, hi0, hfree, hωi⟩ := hω T
+  have hA1 : 1 ≤ A := by have := lt_runStart n; omega
+  set a : ℤ := ∑ i ∈ Finset.range A, ((d i * 3 ^ (A - 1 - i) : ℕ) : ℤ)
+  set b : ℤ := 3 ^ A
+  have hb : (b : ℝ) = 3 ^ A := by simp [b]
+  have hb1 : 1 < b := one_lt_pow₀ (by norm_num) (by omega)
+  have hx : cantorLiouvilleReal ω = ∑ i ∈ Finset.range T, f i + ∑' i, f (i + T) := by
+    unfold cantorLiouvilleReal pt realOfDigits
+    simp only [Nat.cast_ofNat]
+    exact (hf.sum_add_tsum_nat_add T).symm
+  have hpart : ∑ i ∈ Finset.range T, f i = a / b := by
+    have hT : T = A + (T - A) := by have : A ≤ T := by simp only [T]; nlinarith
+                                    omega
+    rw [hT, Finset.sum_range_add]
+    have hz : ∑ x ∈ Finset.range (T - A), f (A + x) = 0 :=
+      Finset.sum_eq_zero fun x hx => by
+        simp only [Finset.mem_range] at hx
+        simp [f, hrun (A + x) (by omega) (by omega)]
+    rw [hz, add_zero, hb]
+    simp only [a]; push_cast
+    rw [Finset.sum_div]
+    refine Finset.sum_congr rfl fun i hi => ?_
+    simp only [Finset.mem_range] at hi
+    simp only [f]
+    have : (3 : ℝ) ^ A = 3 ^ (A - 1 - i) * 3 ^ (i + 1) := by rw [← pow_add]; congr 1; omega
+    rw [this]; field_simp
+  set t := ∑' i, f (i + T)
+  have hft : Summable fun i => f (i + T) := (summable_nat_add_iff T).2 hf
+  have htpos : 0 < t := by
+    refine hft.tsum_pos (fun i => hf0 _) (i0 - T) ?_
+    simp only [f, d, ptDigit, Nat.sub_add_cancel hi0, hfree, hωi]; norm_num
+  have hg : Summable fun i : ℕ => (2 : ℝ) / 3 ^ (i + T + 1) := by
+    have := (summable_geometric_of_lt_one (r := (1 / 3 : ℝ)) (by norm_num) (by norm_num)).mul_left
+      (2 / 3 ^ (T + 1))
+    refine this.congr fun i => ?_
+    rw [one_div_pow]; field_simp; ring
+  have hgsum : ∑' i : ℕ, (2 : ℝ) / 3 ^ (i + T + 1) = 1 / 3 ^ T := by
+    have : (fun i : ℕ => (2 : ℝ) / 3 ^ (i + T + 1)) = fun i => 2 / 3 ^ (T + 1) * (1 / 3) ^ i := by
+      funext i; rw [one_div_pow, show i + T + 1 = i + (T + 1) by ring, pow_add, pow_succ]; field_simp
+    rw [this, tsum_mul_left, tsum_geometric_of_lt_one (by norm_num) (by norm_num), pow_succ]
+    field_simp; norm_num
+  have hnext : T ≤ runStart (n + 1) := by
+    simp only [T, A, runStart_succ_eq]; nlinarith
+  have hzero : d (runStart (n + 1)) = 0 := by
+    simp [d, ptDigit, isFree_runStart]
+  have htlt : t < 1 / 3 ^ T := by
+    rw [← hgsum]
+    refine Summable.tsum_lt_tsum_of_nonneg (i := runStart (n + 1) - T) (fun i => hf0 _)
+      (fun i => ?_) ?_ hg
+    · simp only [f]; gcongr; exact hd2 _
+    · simp only [f, Nat.sub_add_cancel hnext, hzero, Nat.cast_zero, zero_div]; positivity
+  refine ⟨a, b, hb1, ?_, ?_⟩
+  · rw [hx, hpart]; intro h; linarith
+  · rw [hx, hpart, add_sub_cancel_left, abs_of_pos htpos, hb]
+    calc t < 1 / 3 ^ T := htlt
+      _ ≤ 1 / ((3 : ℝ) ^ A) ^ n := by
+        rw [← pow_mul]
+        apply one_div_le_one_div_of_le (by positivity)
+        apply pow_le_pow_right₀ (by norm_num)
+        simp only [T]; nlinarith
 
 /-- **Almost every coin sequence has infinitely many free `2`s.**  Confidence 98%.
 
@@ -432,14 +513,6 @@ at distance `≥ 1/18` from `{0, 1/2, 1}`, so `|cos(2πt)| ≤ cos(π/9)`.  Prob
 theorem abs_cos_le_of_tdig_ne (ξ : ℤ) (i : ℕ) (h : tdig ξ (i + 1) ≠ tdig ξ i) :
     |Real.cos (2 * Real.pi * ξ / 3 ^ (i + 2))| ≤ Real.cos (Real.pi / 9) := by
   sorry
-
-theorem summable_ptDigit (free : ℕ → Bool) (ω : ℕ → Bool) :
-    Summable fun i => (ptDigit free ω i : ℝ) / (3 : ℝ) ^ (i + 1) := by
-  refine Summable.of_nonneg_of_le (fun i => by positivity) (fun i => ?_)
-    ((summable_geometric_of_lt_one (r := (3 : ℝ)⁻¹) (by norm_num) (by norm_num)))
-  have : (ptDigit free ω i : ℝ) ≤ 3 := by exact_mod_cast (ptDigit_lt free ω i).le
-  rw [inv_pow, div_le_iff₀ (by positivity), pow_succ, inv_mul_cancel_left₀ (by positivity)]
-  exact this
 
 theorem pt_consB (free : ℕ → Bool) (c : Bool) (ω : ℕ → Bool) :
     pt free (consB c ω) = (if free 0 && c then 2 else 0) / 3 +
