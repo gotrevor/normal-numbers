@@ -858,6 +858,214 @@ theorem secondMoment_translate_le (S : Set ℕ) (hS0 : 0 ∉ S) (α : ℝ) (h : 
   refine Finset.sum_le_sum fun p _ => (norm_sum_le _ _).trans ?_
   exact Finset.sum_le_sum fun q _ => hterm _
 
+theorem padicValNat_le_of_dvd_aux {a b : ℕ} (hb : b ≠ 0) (h : a ∣ b) :
+    padicValNat 2 a ≤ padicValNat 2 b := by
+  have ha : a ≠ 0 := by rintro rfl; simp at h; exact hb h
+  exact (padicValNat_dvd_iff_le hb).1 ((pow_padicValNat_dvd).trans h)
+
+/-- LTE upper bound: `ν₂(rᵍ − 1) ≤ ν₂(r² − 1) + ν₂(g)` for odd `r ≥ 3`, `g ≥ 1`. -/
+
+theorem lte_le (r g : ℕ) (hr : Odd r) (hr3 : 3 ≤ r) (hg : g ≠ 0) :
+    padicValNat 2 (r ^ g - 1) ≤ padicValNat 2 (r ^ 2 - 1) + padicValNat 2 g := by
+  have hx : ¬ 2 ∣ r := by rintro ⟨k, rfl⟩; exact (Nat.not_even_iff_odd.2 hr) ⟨k, by ring⟩
+  have h1 := padicValNat.pow_two_sub_one (x := r) (n := 2 * g) (by omega) hx (by omega)
+    ⟨g, by ring⟩
+  have hrg : 1 ≤ r ^ g := Nat.one_le_pow _ _ (by omega)
+  have hdvd : r ^ g - 1 ∣ r ^ (2 * g) - 1 := by
+    refine ⟨r ^ g + 1, ?_⟩
+    obtain ⟨s, hs⟩ := Nat.exists_eq_add_of_le hrg
+    rw [pow_mul', hs, show 1 + s - 1 = s by omega]
+    zify [show 1 ≤ (1 + s) ^ 2 from Nat.one_le_pow _ _ (by omega)]
+    ring
+  have hne : r ^ (2 * g) - 1 ≠ 0 := by
+    have : 1 < r ^ (2 * g) := Nat.one_lt_pow (by omega) (by omega)
+    omega
+  have hle := padicValNat_le_of_dvd_aux hne hdvd
+  have hmul : padicValNat 2 (r ^ 2 - 1) = padicValNat 2 (r + 1) + padicValNat 2 (r - 1) := by
+    rw [show r ^ 2 - 1 = (r + 1) * (r - 1) by
+      rcases Nat.exists_eq_add_of_le (show 1 ≤ r by omega) with ⟨s, rfl⟩
+      simp; ring_nf; omega]
+    exact padicValNat.mul (by omega) (by omega)
+  have h2g : padicValNat 2 (2 * g) = 1 + padicValNat 2 g := padicValNat.mul (by norm_num) hg |>.trans (by simp)
+  omega
+
+theorem rieszTail_nonneg (S : Set ℕ) (a : ℕ) (t : ℝ) : 0 ≤ rieszTail S a t := by
+  unfold rieszTail
+  exact le_ciInf fun M => Finset.prod_nonneg fun _ _ => abs_nonneg _
+
+theorem rieszTail_le_one (S : Set ℕ) (a : ℕ) (t : ℝ) : rieszTail S a t ≤ 1 := by
+  unfold rieszTail
+  refine (ciInf_le ⟨0, ?_⟩ 0).trans ?_
+  · rintro _ ⟨M, rfl⟩; exact Finset.prod_nonneg fun _ _ => abs_nonneg _
+  · simp
+
+theorem rieszTail_neg (S : Set ℕ) (a : ℕ) (t : ℝ) : rieszTail S a (-t) = rieszTail S a t := by
+  unfold rieszTail
+  congr 1; funext M
+  refine Finset.prod_congr rfl fun k _ => ?_
+  rw [show Real.pi * -t / 2 ^ (k - a) = -(Real.pi * t / 2 ^ (k - a)) by ring, Real.cos_neg]
+
+theorem rieszTail_abs (S : Set ℕ) (a : ℕ) (t : ℝ) : rieszTail S a |t| = rieszTail S a t := by
+  rcases abs_choice t with h | h <;> rw [h]
+  exact rieszTail_neg S a t
+
+/-- Shift identity: the factors `k ≤ a` of `rieszTail S 0 (2^a m)` are `|cos(π·integer)| = 1`. -/
+
+theorem rieszTail_shift (S : Set ℕ) (a m : ℕ) :
+    rieszTail S 0 ((2 : ℝ) ^ a * m) = rieszTail S a m := by
+  classical
+  unfold rieszTail
+  congr 1; funext M
+  rw [← Finset.prod_filter_mul_prod_filter_not _ (· ≤ a)]
+  have h1 : ∏ k ∈ ((Finset.Ioc 0 M).filter (· ∈ S)).filter (· ≤ a),
+      |Real.cos (Real.pi * ((2 : ℝ) ^ a * m) / 2 ^ (k - 0))| = 1 := by
+    refine Finset.prod_eq_one fun k hk => ?_
+    have hka : k ≤ a := (Finset.mem_filter.1 hk).2
+    have : Real.pi * ((2 : ℝ) ^ a * m) / 2 ^ (k - 0) = ((2 ^ (a - k) * m : ℕ) : ℝ) * Real.pi := by
+      rw [Nat.sub_zero, show a = (a - k) + k by omega]
+      push_cast
+      rw [Nat.add_sub_cancel, pow_add]
+      field_simp
+    rw [this, Real.cos_nat_mul_pi]
+    simp
+  rw [h1, one_mul]
+  have hset : ((Finset.Ioc 0 M).filter (· ∈ S)).filter (fun k => ¬ k ≤ a) =
+      (Finset.Ioc a M).filter (· ∈ S) := by
+    ext k; simp only [Finset.mem_filter, Finset.mem_Ioc]; grind
+  rw [hset]
+  refine Finset.prod_congr rfl fun k hk => ?_
+  have hka : a < k := (Finset.mem_Ioc.1 (Finset.mem_filter.1 hk).1).1
+  congr 2
+  rw [Nat.sub_zero, show k = (k - a) + a by omega, Nat.add_sub_cancel, pow_add]
+  field_simp
+
+/-- `Nat.log 2 L ≤ 2 log L`. -/
+
+theorem natLog_le_two_log (L : ℕ) : (Nat.log 2 L : ℝ) ≤ 2 * Real.log L := by
+  rcases Nat.eq_zero_or_pos L with rfl | hL
+  · simp
+  have hp : (2 : ℝ) ^ Nat.log 2 L ≤ L := by exact_mod_cast Nat.pow_log_le_self 2 hL.ne'
+  have := Real.log_le_log (by positivity) hp
+  rw [Real.log_pow] at this
+  have h2 := Real.log_two_gt_d9
+  nlinarith [(Nat.cast_nonneg (Nat.log 2 L) : (0:ℝ) ≤ _)]
+
+/-- The Lemma-5 threshold at valuation `≈ 2 log₂ log N` is eventually below `log₂ N`. -/
+
+theorem eventually_threshold (K ρ v : ℝ) (hK : 0 < K) (hρ : 0 < ρ) (hv : 0 ≤ v) :
+    ∃ L₀ : ℕ, ∀ L : ℕ, L₀ ≤ L →
+      K * (v + 2 * (Nat.log 2 L : ℝ) + 3) ^ (1 / ρ) + 10 ^ 30 ≤ L := by
+  set c : ℝ := 1 / (2 * K * 5 ^ (1 / ρ)) with hc
+  have h5 : (0 : ℝ) < 5 ^ (1 / ρ) := by positivity
+  have hcpos : 0 < c := by positivity
+  have hO := (isLittleO_log_rpow_rpow_atTop (1 / ρ) one_pos).bound hcpos
+  have hlog := Real.tendsto_log_atTop.eventually_ge_atTop (v + 3)
+  have hbig := eventually_ge_atTop (2 * 10 ^ 30 : ℝ)
+  obtain ⟨x₀, hx₀⟩ := eventually_atTop.1 (hO.and (hlog.and hbig))
+  refine ⟨⌈x₀⌉₊, fun L hL => ?_⟩
+  have hxL : x₀ ≤ L := (Nat.le_ceil x₀).trans (by exact_mod_cast hL)
+  obtain ⟨h1, h2, h3⟩ := hx₀ L hxL
+  have hLpos : (0 : ℝ) < L := by linarith
+  have hlog0 : 0 ≤ Real.log L := by linarith
+  rw [Real.norm_of_nonneg (by positivity), Real.rpow_one, Real.norm_of_nonneg hLpos.le] at h1
+  have hnl := natLog_le_two_log L
+  have hmono : (v + 2 * (Nat.log 2 L : ℝ) + 3) ^ (1 / ρ) ≤ (5 * Real.log L) ^ (1 / ρ) :=
+    Real.rpow_le_rpow (by positivity) (by linarith) (by positivity)
+  rw [Real.mul_rpow (by norm_num) hlog0] at hmono
+  have : K * (5 ^ (1 / ρ) * Real.log L ^ (1 / ρ)) ≤ L / 2 := by
+    calc K * (5 ^ (1 / ρ) * Real.log L ^ (1 / ρ)) ≤ K * (5 ^ (1 / ρ) * (c * L)) := by gcongr
+      _ = L / 2 := by rw [hc]; field_simp
+  nlinarith
+
+/-- Reindexing the strict upper triangle by the gap. -/
+
+theorem sum_gap_le (φ : ℕ → ℝ) (hφ : ∀ g, 0 ≤ φ g) (q N : ℕ) :
+    ∑ p ∈ Finset.range N, (if q < p then φ (p - q) else 0) ≤
+      ∑ k ∈ Finset.range N, φ (k + 1) := by
+  rw [← Finset.sum_filter]
+  have hset : (Finset.range N).filter (q < ·) = Finset.Ico (q + 1) N := by
+    ext p; simp only [Finset.mem_filter, Finset.mem_range, Finset.mem_Ico]; omega
+  rw [hset, Finset.sum_Ico_eq_sum_range]
+  have : ∀ k, φ (q + 1 + k - q) = φ (k + 1) := fun k => by congr 1; omega
+  simp_rw [this]
+  exact Finset.sum_le_sum_of_subset_of_nonneg
+    (Finset.range_subset_range.2 (by omega)) (fun _ _ _ => hφ _)
+
+/-- The gap term `|h|(rᵍ − 1)rᵠ`. -/
+noncomputable def gapTerm (S : Set ℕ) (h : ℤ) (r g q : ℕ) : ℝ :=
+  rieszTail S 0 (((h.natAbs * (r ^ g - 1) : ℕ) : ℝ) * (r : ℝ) ^ q)
+
+theorem abs_gap (h : ℤ) (r p q : ℕ) (hr : 1 ≤ r) (hqp : q ≤ p) :
+    |(h : ℝ) * ((r : ℝ) ^ p - (r : ℝ) ^ q)| =
+      ((h.natAbs * (r ^ (p - q) - 1) : ℕ) : ℝ) * (r : ℝ) ^ q := by
+  have hrg : 1 ≤ r ^ (p - q) := Nat.one_le_pow _ _ (by omega)
+  have hrR : (1 : ℝ) ≤ (r : ℝ) ^ (p - q) := by exact_mod_cast hrg
+  rw [Nat.cast_mul, Nat.cast_sub hrg, Nat.cast_natAbs]
+  push_cast
+  rw [show (r : ℝ) ^ p = (r : ℝ) ^ q * (r : ℝ) ^ (p - q) by rw [← pow_add]; congr 1; omega]
+  rw [show (h : ℝ) * ((r : ℝ) ^ q * (r : ℝ) ^ (p - q) - (r : ℝ) ^ q) =
+      (h : ℝ) * ((r : ℝ) ^ (p - q) - 1) * (r : ℝ) ^ q by ring]
+  rw [abs_mul, abs_mul, abs_of_nonneg (by positivity : (0 : ℝ) ≤ (r : ℝ) ^ q),
+    abs_of_nonneg (by linarith : (0 : ℝ) ≤ (r : ℝ) ^ (p - q) - 1)]
+
+theorem term_le (S : Set ℕ) (h : ℤ) (r p q : ℕ) (hr : 1 ≤ r) :
+    rieszTail S 0 ((h : ℝ) * ((r : ℝ) ^ p - (r : ℝ) ^ q)) ≤
+      (if p = q then 1 else 0) + (if q < p then gapTerm S h r (p - q) q else 0) +
+        (if p < q then gapTerm S h r (q - p) p else 0) := by
+  rcases lt_trichotomy p q with hpq | rfl | hpq
+  · rw [if_neg hpq.ne, if_neg (by omega), if_pos hpq, zero_add, zero_add, gapTerm,
+      ← abs_gap h r q p hr hpq.le, rieszTail_abs,
+      show (h : ℝ) * ((r : ℝ) ^ q - (r : ℝ) ^ p) = -((h : ℝ) * ((r : ℝ) ^ p - (r : ℝ) ^ q)) by ring,
+      rieszTail_neg]
+  · simp only [if_true, lt_irrefl, if_false, add_zero]
+    exact rieszTail_le_one _ _ _
+  · rw [if_neg hpq.ne', if_pos hpq, if_neg (by omega), zero_add, add_zero, gapTerm,
+      ← abs_gap h r p q hr hpq.le, rieszTail_abs]
+
+theorem gapSum_le {S : Set ℕ} {K ρ : ℝ}
+    (hL5 : ∀ a ℓ r N : ℕ, Odd ℓ → Odd r → 3 ≤ r →
+      (2 : ℝ) ^ (K * ((a : ℝ) + 1) ^ (1 / ρ) + 10 ^ 30) ≤ N →
+        ∑ n ∈ Finset.range N, rieszTail S a ((ℓ : ℝ) * (r : ℝ) ^ n) ≤
+          (2 : ℝ) ^ (padicValNat 2 (r ^ 2 - 1) + 2) * N / Real.log N ^ (1.005 : ℝ))
+    (r : ℕ) (hr : Odd r) (hr3 : 3 ≤ r) (h : ℤ) (hh : h ≠ 0) (g : ℕ) (hg : 1 ≤ g) (N B : ℕ)
+    (hthr : ∀ a : ℕ, a ≤ padicValNat 2 h.natAbs + B →
+      (2 : ℝ) ^ (K * ((a : ℝ) + 1) ^ (1 / ρ) + 10 ^ 30) ≤ N) :
+    ∑ q ∈ Finset.range N, gapTerm S h r g q ≤
+      (2 : ℝ) ^ (padicValNat 2 (r ^ 2 - 1) + 2) * N / Real.log N ^ (1.005 : ℝ) +
+        (if 2 ^ (B + 1 - padicValNat 2 (r ^ 2 - 1)) ∣ g then (N : ℝ) else 0) := by
+  have hrg1 : 1 < r ^ g := Nat.one_lt_pow (by omega) (by omega)
+  have hrg : r ^ g - 1 ≠ 0 := by omega
+  have hhn : h.natAbs ≠ 0 := Int.natAbs_ne_zero.2 hh
+  have hn0 : h.natAbs * (r ^ g - 1) ≠ 0 := mul_ne_zero hhn hrg
+  obtain ⟨a, ℓ, hodd, hn⟩ := Nat.exists_eq_two_pow_mul_odd hn0
+  have hX : 0 ≤ (2 : ℝ) ^ (padicValNat 2 (r ^ 2 - 1) + 2) * N / Real.log N ^ (1.005 : ℝ) := by
+    have := Real.log_natCast_nonneg N
+    positivity
+  have hterm : ∀ q, gapTerm S h r g q = rieszTail S a ((ℓ : ℝ) * (r : ℝ) ^ q) := by
+    intro q
+    have := rieszTail_shift S a (ℓ * r ^ q)
+    push_cast at this
+    rw [gapTerm, hn, ← this]
+    push_cast; ring_nf
+  simp_rw [hterm]
+  have hℓ0 : ℓ ≠ 0 := by rintro rfl; simp at hodd
+  have ha : a = padicValNat 2 h.natAbs + padicValNat 2 (r ^ g - 1) := by
+    have h1 : padicValNat 2 (2 ^ a * ℓ) = a := by
+      rw [padicValNat.mul (by positivity) hℓ0, padicValNat.prime_pow,
+        padicValNat.eq_zero_of_not_dvd (by rintro ⟨k, rfl⟩; exact (Nat.not_even_iff_odd.2 hodd) ⟨k, by ring⟩), add_zero]
+    rw [← h1, ← hn, padicValNat.mul hhn hrg]
+  by_cases hgood : a ≤ padicValNat 2 h.natAbs + B
+  · have := hL5 a ℓ r N hodd hr hr3 (hthr a hgood)
+    split_ifs <;> linarith
+  · have hdvd : 2 ^ (B + 1 - padicValNat 2 (r ^ 2 - 1)) ∣ g := by
+      have hl := lte_le r g hr hr3 (by omega)
+      exact (pow_dvd_pow 2 (by omega)).trans (pow_padicValNat_dvd (p := 2) (n := g))
+    rw [if_pos hdvd]
+    have : ∑ q ∈ Finset.range N, rieszTail S a ((ℓ : ℝ) * (r : ℝ) ^ q) ≤ N := by
+      refine (Finset.sum_le_sum fun q _ => rieszTail_le_one S a _).trans ?_
+      simp
+    linarith
+
 /-- **BLD Lemma 7, cosine form.**  The double sum decays like `(log N)^{-1.005}`.  This is the
 inequality BLD's proof of Lemma 7 actually establishes (2607.06773 pp. 9–11, "Combining the
 estimates"), before they bound the integral by it.
@@ -876,7 +1084,127 @@ theorem bld_doubleSum_le (hL5 : Literature.BLDLemma5) {S : Set ℕ} {ρ : ℝ} (
       (∑ p ∈ Finset.range N, ∑ q ∈ Finset.range N,
           rieszTail S 0 ((h : ℝ) * ((r : ℝ) ^ p - (r : ℝ) ^ q))) / (N : ℝ) ^ 2 ≤
         C / Real.log N ^ (1.005 : ℝ) := by
-  sorry
+  obtain ⟨K, hK, hL5'⟩ := hL5 S ρ hS
+  have hρ : 0 < ρ := hS.2.2.1
+  set v := padicValNat 2 h.natAbs with hv
+  set c := padicValNat 2 (r ^ 2 - 1) with hc
+  obtain ⟨L₀, hL₀⟩ := eventually_threshold K ρ v hK hρ (by positivity)
+  refine ⟨4 + 2 ^ (c + 3) + 2 ^ c, by positivity, 2 ^ (L₀ + 2) + 3, fun N hN => ?_⟩
+  set L := Nat.log 2 N with hLdef
+  have hLL : L₀ + 2 ≤ L := Nat.le_log_of_pow_le one_lt_two (by omega)
+  set lam := Nat.log 2 L with hlam
+  set B := 2 * lam + 2 with hB
+  have hN3 : 3 ≤ N := le_trans (Nat.le_add_left 3 _) hN
+  have hNpos : (0 : ℝ) < N := by exact_mod_cast (show 0 < N by omega)
+  have hlog1 : 1 ≤ Real.log N := by
+    rw [Real.le_log_iff_exp_le hNpos]
+    have := Real.exp_one_lt_d9
+    have : (3 : ℝ) ≤ N := by exact_mod_cast hN3
+    linarith
+  have hlogB : Real.log N ^ 2 ≤ 2 ^ B := by
+    have h1 : N < 2 ^ (L + 1) := Nat.lt_pow_succ_log_self one_lt_two N
+    have h1R : (N : ℝ) < 2 ^ (L + 1) := by exact_mod_cast h1
+    have h2 : Real.log N < (L + 1 : ℕ) * Real.log 2 := by
+      rw [← Real.log_pow]; exact Real.log_lt_log hNpos (by exact_mod_cast h1)
+    have hl2 := Real.log_two_lt_d9
+    have hl2' := Real.log_pos (by norm_num : (1:ℝ) < 2)
+    have h3 : L < 2 ^ (lam + 1) := Nat.lt_pow_succ_log_self one_lt_two L
+    have h3R : ((L + 1 : ℕ) : ℝ) ≤ 2 ^ (lam + 1) := by exact_mod_cast h3
+    have h4 : Real.log N ≤ 2 ^ (lam + 1) := by
+      have : ((L + 1 : ℕ) : ℝ) * Real.log 2 ≤ ((L + 1 : ℕ) : ℝ) := by
+        have : (0 : ℝ) ≤ ((L + 1 : ℕ) : ℝ) := by positivity
+        nlinarith
+      linarith
+    calc Real.log N ^ 2 ≤ ((2 : ℝ) ^ (lam + 1)) ^ 2 := pow_le_pow_left₀ (by linarith) h4 2
+      _ = 2 ^ B := by rw [← pow_mul]; congr 1; omega
+  have hlogN : Real.log N ^ 2 ≤ 4 * N := by
+    have hs : Real.log (Real.sqrt N) ≤ Real.sqrt N - 1 :=
+      Real.log_le_sub_one_of_pos (Real.sqrt_pos.2 hNpos)
+    rw [Real.log_sqrt hNpos.le] at hs
+    have hs0 : 0 ≤ Real.log N := by linarith
+    have : Real.log N ≤ 2 * Real.sqrt N := by linarith
+    calc Real.log N ^ 2 ≤ (2 * Real.sqrt N) ^ 2 := pow_le_pow_left₀ hs0 this 2
+      _ = 4 * N := by rw [mul_pow, Real.sq_sqrt hNpos.le]; ring
+  set ℓ := Real.log N ^ (1.005 : ℝ) with hℓ
+  have hℓpos : 0 < ℓ := Real.rpow_pos_of_pos (by linarith) _
+  have hℓ2 : ℓ ≤ Real.log N ^ 2 := by
+    rw [hℓ, ← Real.rpow_two]
+    exact Real.rpow_le_rpow_of_exponent_le hlog1 (by norm_num)
+  have hthr : ∀ a : ℕ, a ≤ v + B →
+      (2 : ℝ) ^ (K * ((a : ℝ) + 1) ^ (1 / ρ) + 10 ^ 30) ≤ N := by
+    intro a ha
+    have haR : (a : ℝ) + 1 ≤ (v : ℝ) + 2 * (lam : ℝ) + 3 := by
+      have : (a : ℝ) ≤ ((v + B : ℕ) : ℝ) := by exact_mod_cast ha
+      rw [hB] at this; push_cast at this; linarith
+    have h1 : K * ((a : ℝ) + 1) ^ (1 / ρ) + 10 ^ 30 ≤ L := by
+      have := hL₀ L (by omega)
+      have hm : ((a : ℝ) + 1) ^ (1 / ρ) ≤ ((v : ℝ) + 2 * (lam : ℝ) + 3) ^ (1 / ρ) :=
+        Real.rpow_le_rpow (by positivity) haR (by positivity)
+      nlinarith
+    calc (2 : ℝ) ^ (K * ((a : ℝ) + 1) ^ (1 / ρ) + 10 ^ 30) ≤ (2 : ℝ) ^ (L : ℝ) :=
+          Real.rpow_le_rpow_of_exponent_le (by norm_num) h1
+      _ = ((2 ^ L : ℕ) : ℝ) := by rw [Real.rpow_natCast]; push_cast; rfl
+      _ ≤ N := by exact_mod_cast Nat.pow_log_le_self 2 (by omega)
+  -- the double sum
+  set G : ℕ → ℕ → ℝ := fun g q => gapTerm S h r g q with hG
+  have hG0 : ∀ g q, 0 ≤ G g q := fun g q => rieszTail_nonneg _ _ _
+  have hT : ∑ p ∈ Finset.range N, ∑ q ∈ Finset.range N,
+      rieszTail S 0 ((h : ℝ) * ((r : ℝ) ^ p - (r : ℝ) ^ q)) ≤
+      N + 2 * ∑ k ∈ Finset.range N, ∑ q ∈ Finset.range N, G (k + 1) q := by
+    calc _ ≤ ∑ p ∈ Finset.range N, ∑ q ∈ Finset.range N,
+          ((if p = q then (1 : ℝ) else 0) + (if q < p then G (p - q) q else 0) +
+            (if p < q then G (q - p) p else 0)) :=
+          Finset.sum_le_sum fun p _ => Finset.sum_le_sum fun q _ => term_le S h r p q (by omega)
+      _ = ∑ p ∈ Finset.range N, ∑ q ∈ Finset.range N, (if p = q then (1 : ℝ) else 0) +
+          ∑ q ∈ Finset.range N, ∑ p ∈ Finset.range N, (if q < p then G (p - q) q else 0) +
+          ∑ p ∈ Finset.range N, ∑ q ∈ Finset.range N, (if p < q then G (q - p) p else 0) := by
+          simp only [Finset.sum_add_distrib]
+          rw [Finset.sum_comm (f := fun p q => if q < p then G (p - q) q else 0)]
+      _ ≤ N + ∑ q ∈ Finset.range N, ∑ k ∈ Finset.range N, G (k + 1) q +
+          ∑ p ∈ Finset.range N, ∑ k ∈ Finset.range N, G (k + 1) p := by
+          refine add_le_add (add_le_add (le_of_eq ?_) (Finset.sum_le_sum fun q _ =>
+            sum_gap_le (fun g => G g q) (fun g => hG0 g q) q N)) (Finset.sum_le_sum fun p _ =>
+            sum_gap_le (fun g => G g p) (fun g => hG0 g p) p N)
+          simp only [Finset.sum_ite_eq, Finset.mem_range, Finset.sum_ite, Finset.sum_const_zero]
+          rw [Finset.filter_true_of_mem (fun x hx => Finset.mem_range.1 hx)]
+          simp
+      _ = _ := by rw [Finset.sum_comm]; ring
+  set X := (2 : ℝ) ^ (c + 2) * N / ℓ with hX
+  set D := 2 ^ (B + 1 - c) with hD
+  have hGs : ∑ k ∈ Finset.range N, ∑ q ∈ Finset.range N, G (k + 1) q ≤
+      N * X + N * ((N / D : ℕ) : ℝ) := by
+    calc _ ≤ ∑ k ∈ Finset.range N, (X + (if D ∣ k + 1 then (N : ℝ) else 0)) :=
+          Finset.sum_le_sum fun k _ =>
+            gapSum_le hL5' r hr hr3 h hh (k + 1) (by omega) N B hthr
+      _ = N * X + N * ((N / D : ℕ) : ℝ) := by
+          rw [Finset.sum_add_distrib, ← Finset.sum_filter, Finset.sum_const, Finset.sum_const,
+            nsmul_eq_mul, nsmul_eq_mul, Nat.card_multiples, Finset.card_range]
+          ring
+  have hQ : ((N / D : ℕ) : ℝ) * D ≤ N := by exact_mod_cast Nat.div_mul_le_self N D
+  have hDc : (2 : ℝ) ^ (B + 1) ≤ (D : ℝ) * 2 ^ c := by
+    rw [hD]; push_cast; rw [← pow_add]
+    exact pow_le_pow_right₀ (by norm_num) (by omega)
+  have hDpos : (0 : ℝ) < D := by rw [hD]; positivity
+  rw [div_le_div_iff₀ (by positivity) hℓpos]
+  have hXℓ : X * ℓ = 2 ^ (c + 2) * N := by rw [hX]; field_simp
+  have hc2 : (2 : ℝ) ^ (c + 3) = 2 * 2 ^ (c + 2) := by ring
+  have hB1 : (2 : ℝ) ^ (B + 1) = 2 * 2 ^ B := by ring
+  have hQℓ : 2 * ((N / D : ℕ) : ℝ) * ℓ ≤ 2 ^ c * N := by
+    have h2ℓ : 2 * ℓ ≤ D * 2 ^ c := by linarith
+    have hQ0 : (0 : ℝ) ≤ ((N / D : ℕ) : ℝ) := by positivity
+    have : ((N / D : ℕ) : ℝ) * (2 * ℓ) ≤ ((N / D : ℕ) : ℝ) * (D * 2 ^ c) :=
+      mul_le_mul_of_nonneg_left h2ℓ hQ0
+    nlinarith [pow_pos (two_pos : (0:ℝ) < 2) c]
+  have hT' := hT.trans (by linarith [hGs] : (N : ℝ) + 2 * ∑ k ∈ Finset.range N,
+      ∑ q ∈ Finset.range N, G (k + 1) q ≤ N + 2 * (N * X + N * ((N / D : ℕ) : ℝ)))
+  calc _ ≤ ((N : ℝ) + 2 * (N * X + N * ((N / D : ℕ) : ℝ))) * ℓ :=
+        mul_le_mul_of_nonneg_right hT' hℓpos.le
+    _ = N * ℓ + 2 * N * (X * ℓ) + N * (2 * ((N / D : ℕ) : ℝ) * ℓ) := by ring
+    _ ≤ N * (4 * N) + 2 * N * (2 ^ (c + 2) * N) + N * (2 ^ c * N) := by
+        rw [hXℓ]
+        gcongr
+        linarith
+    _ = _ := by rw [hc2]; ring
 
 theorem summable_inv_mul_log_rpow {p : ℝ} (hp : 1 < p) :
     Summable fun N : ℕ => 1 / ((N : ℝ) * Real.log N ^ p) := by
