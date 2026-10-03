@@ -1243,7 +1243,7 @@ theorem exists_computable_absNormal_family (Ψ : ℕ → ℕ → ℕ → List Bo
     (hdec : ∀ i, ∀ ξ : ℝ, ξ ≠ 0 →
       ‖∫ ω, DecayAeNormal.ee (ξ * G i ω) ∂Derandomize.coins‖ ≤ c i * |ξ| ^ (-δ)) :
     ∃ e : ℕ → Bool, Computable e ∧ ∀ i b, 2 ≤ b → IsNormal b (G i e) := by
-  sorry
+  exact FamilyDerandomize.exists_computable_absNormal_family Ψ hΨp A hΨ hA0 G hGm hAG c hc hδ hdec
 
 theorem natAbs_le_encode (z : ℤ) : z.natAbs ≤ Encodable.encode z := by
   change z.natAbs ≤ Equiv.intEquivNat z
