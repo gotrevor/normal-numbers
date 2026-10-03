@@ -132,6 +132,16 @@ end Literature
 
 /-! ## Base 2: the sparse perturbation barely moves the discrepancy -/
 
+theorem visitCount_zero_eq (u : ℕ → ℝ) (hu : ∀ n, u n ∈ Set.Ico (0 : ℝ) 1) (c : ℝ) (N : ℕ) :
+    visitCount u 0 c N = ((Finset.range N).filter fun n => u n < c).card := by
+  unfold visitCount
+  congr 1
+  ext n
+  simp only [Finset.mem_filter, Set.mem_Ico]
+  constructor
+  · rintro ⟨h1, _, h2⟩; exact ⟨h1, h2⟩
+  · rintro ⟨h1, h2⟩; exact ⟨h1, (hu n).1, h2⟩
+
 /-- **Shift lemma.**  Moving all points outside `B` up by at most `η` (mod 1) costs at most
 `2D + η + #B/N` in star discrepancy.
 
@@ -144,7 +154,110 @@ theorem discLe_fract_add (u δ : ℕ → ℝ) (N : ℕ) (D η : ℝ) (B : Finset
     (hu : ∀ n, u n ∈ Set.Ico (0 : ℝ) 1) (hδ0 : ∀ n, 0 ≤ δ n) (hη : 0 ≤ η)
     (hδ : ∀ n < N, n ∉ B → δ n ≤ η) (hD : DiscLe u N D) :
     DiscLe (fun n => Int.fract (u n + δ n)) N (2 * D + η + B.card / N) := by
-  sorry
+  intro c hc
+  set v : ℕ → ℝ := fun n => Int.fract (u n + δ n) with hv
+  have hvI : ∀ n, v n ∈ Set.Ico (0 : ℝ) 1 := fun n => ⟨Int.fract_nonneg _, Int.fract_lt_one _⟩
+  rcases Nat.eq_zero_or_pos N with rfl | hN
+  · have h1 := hD 1 ⟨zero_le_one, le_rfl⟩
+    simp at h1 ⊢
+    rw [abs_of_nonneg hc.1]
+    nlinarith [hc.2, abs_nonneg D]
+  have hNR : (0 : ℝ) < N := by exact_mod_cast hN
+  have hD0 : 0 ≤ D := (abs_nonneg _).trans (hD 0 ⟨le_rfl, zero_le_one⟩)
+  set U : ℝ → ℕ := fun c => ((Finset.range N).filter fun n => u n < c).card with hUdef
+  have hUb : ∀ c ∈ Set.Icc (0 : ℝ) 1, N * (c - D) ≤ U c ∧ (U c : ℝ) ≤ N * (c + D) := by
+    intro c hc
+    have := hD c hc
+    rw [visitCount_zero_eq u hu] at this
+    rw [abs_le] at this
+    obtain ⟨h1, h2⟩ := this
+    constructor
+    · have := (le_div_iff₀ hNR).1 (by linarith : c - D ≤ (U c : ℝ) / N); linarith
+    · have := (div_le_iff₀ hNR).1 (by linarith : (U c : ℝ) / N ≤ c + D); linarith
+  set V := ((Finset.range N).filter fun n => v n < c).card with hVdef
+  have hBc : (((Finset.range N).filter fun n => n ∈ B).card : ℝ) ≤ B.card := by
+    exact_mod_cast Finset.card_le_card (fun n hn => (Finset.mem_filter.1 hn).2)
+  -- lower bound
+  have hlow : (N : ℝ) * (c - η - D) ≤ V + B.card := by
+    by_cases hce : 0 ≤ c - η
+    · have hsub : (Finset.range N).filter (fun n => u n < c - η) ⊆
+          ((Finset.range N).filter fun n => v n < c) ∪ (Finset.range N).filter fun n => n ∈ B := by
+        intro n hn
+        obtain ⟨hnN, hun⟩ := Finset.mem_filter.1 hn
+        by_cases hnB : n ∈ B
+        · exact Finset.mem_union_right _ (Finset.mem_filter.2 ⟨hnN, hnB⟩)
+        · refine Finset.mem_union_left _ (Finset.mem_filter.2 ⟨hnN, ?_⟩)
+          have := hδ n (Finset.mem_range.1 hnN) hnB
+          have hlt : u n + δ n < 1 := by linarith [hc.2]
+          simp only [hv]
+          rw [Int.fract_eq_self.2 ⟨by linarith [(hu n).1, hδ0 n], hlt⟩]
+          linarith
+      have h1 := Finset.card_le_card hsub
+      have h2 := Finset.card_union_le ((Finset.range N).filter fun n => v n < c)
+        ((Finset.range N).filter fun n => n ∈ B)
+      have h3 : (U (c - η) : ℝ) ≤ V + B.card := by
+        have : U (c - η) ≤ V + ((Finset.range N).filter fun n => n ∈ B).card := h1.trans h2
+        have : (U (c - η) : ℝ) ≤ V + (((Finset.range N).filter fun n => n ∈ B).card : ℝ) := by
+          exact_mod_cast this
+        linarith
+      have := (hUb (c - η) ⟨hce, by linarith [hc.2]⟩).1
+      linarith
+    · push Not at hce
+      have : (N : ℝ) * (c - η - D) ≤ 0 := mul_nonpos_of_nonneg_of_nonpos hNR.le (by linarith)
+      have : (0 : ℝ) ≤ V + B.card := by positivity
+      linarith
+  -- upper bound
+  have hup : (V : ℝ) ≤ B.card + N * (c + D) + N * (η + D) := by
+    by_cases hη1 : η ≤ 1
+    · have hsub : (Finset.range N).filter (fun n => v n < c) ⊆
+          (((Finset.range N).filter fun n => n ∈ B) ∪ (Finset.range N).filter fun n => u n < c) ∪
+            (Finset.range N).filter fun n => ¬ u n < 1 - η := by
+        intro n hn
+        obtain ⟨hnN, hvn⟩ := Finset.mem_filter.1 hn
+        by_cases hnB : n ∈ B
+        · exact Finset.mem_union_left _ (Finset.mem_union_left _ (Finset.mem_filter.2 ⟨hnN, hnB⟩))
+        by_cases hu1 : u n < 1 - η
+        · refine Finset.mem_union_left _ (Finset.mem_union_right _ (Finset.mem_filter.2 ⟨hnN, ?_⟩))
+          have := hδ n (Finset.mem_range.1 hnN) hnB
+          have hlt : u n + δ n < 1 := by linarith
+          simp only [hv] at hvn
+          rw [Int.fract_eq_self.2 ⟨by linarith [(hu n).1, hδ0 n], hlt⟩] at hvn
+          linarith [hδ0 n]
+        · exact Finset.mem_union_right _ (Finset.mem_filter.2 ⟨hnN, hu1⟩)
+      have h1 := Finset.card_le_card hsub
+      have h2 := Finset.card_union_le (((Finset.range N).filter fun n => n ∈ B) ∪
+        (Finset.range N).filter fun n => u n < c) ((Finset.range N).filter fun n => ¬ u n < 1 - η)
+      have h3 := Finset.card_union_le ((Finset.range N).filter fun n => n ∈ B)
+        ((Finset.range N).filter fun n => u n < c)
+      have h4 := Finset.card_filter_add_card_filter_not (s := Finset.range N)
+        (p := fun n => u n < 1 - η)
+      rw [Finset.card_range] at h4
+      have hU1 := (hUb (1 - η) ⟨by linarith, by linarith⟩).1
+      have hUc := (hUb c hc).2
+      have h5 : (V : ℝ) ≤ ((Finset.range N).filter fun n => n ∈ B).card + U c +
+          ((Finset.range N).filter fun n => ¬ u n < 1 - η).card := by
+        exact_mod_cast h1.trans (h2.trans (Nat.add_le_add_right h3 _))
+      have h6 : (((Finset.range N).filter fun n => ¬ u n < 1 - η).card : ℝ) = N - U (1 - η) := by
+        have : (U (1 - η) : ℝ) + ((Finset.range N).filter fun n => ¬ u n < 1 - η).card = N := by
+          exact_mod_cast h4
+        linarith
+      linarith
+    · have : V ≤ N := by
+        simpa using Finset.card_filter_le (Finset.range N) (fun n => v n < c)
+      have : (V : ℝ) ≤ N := by exact_mod_cast this
+      push Not at hη1
+      have : (N : ℝ) ≤ N * (η + D) := by nlinarith
+      have : 0 ≤ (N : ℝ) * (c + D) := by nlinarith [hc.1]
+      have : (0 : ℝ) ≤ B.card := by positivity
+      linarith
+  rw [visitCount_zero_eq v hvI, ← hVdef, abs_le]
+  have hBN : (B.card : ℝ) / N * N = B.card := div_mul_cancel₀ _ hNR.ne'
+  have hVN : (V : ℝ) / N * N = V := div_mul_cancel₀ _ hNR.ne'
+  constructor
+  · refine le_of_mul_le_mul_right ?_ hNR
+    nlinarith
+  · refine le_of_mul_le_mul_right ?_ hNR
+    nlinarith
 
 /-- **Digit tail of a sparse point.**  `{2ⁿy} ≤ 2/N` except for at most
 `(log₂N + 2)·S(1, N + log₂N + 2)` indices `n < N`.
@@ -197,7 +310,47 @@ Confidence 95%.  Proof: `visitCount u a c N = visitCount u 0 c N − visitCount 
 theorem isNormal_of_discLe (b : ℕ) (hb : 2 ≤ b) (x : ℝ) (ε : ℕ → ℝ)
     (hε : Tendsto ε atTop (𝓝 0)) (h : ∀ N : ℕ, 2 ≤ N → DiscLe (orbit b x) N (ε N)) :
     IsNormal b x := by
-  sorry
+  rw [isNormal_iff_equidistributed_orbit b hb]
+  have hu : ∀ n, orbit b x n ∈ Set.Ico (0 : ℝ) 1 := fun n =>
+    ⟨Int.fract_nonneg _, Int.fract_lt_one _⟩
+  intro a c ha hac hc1
+  have hsplit : ∀ N, (visitCount (orbit b x) a c N : ℝ) =
+      visitCount (orbit b x) 0 c N - visitCount (orbit b x) 0 a N := by
+    intro N
+    rw [eq_sub_iff_add_eq]
+    norm_cast
+    unfold visitCount
+    rw [← Finset.card_union_of_disjoint]
+    · congr 1; ext n; simp only [Finset.mem_union, Finset.mem_filter, Set.mem_Ico]
+      constructor
+      · rintro (⟨h1, h2, h3⟩ | ⟨h1, h2, h3⟩) <;> exact ⟨h1, by linarith, by linarith⟩
+      · rintro ⟨h1, h2, h3⟩
+        by_cases hna : a ≤ orbit b x n
+        · exact Or.inl ⟨h1, hna, h3⟩
+        · push Not at hna; exact Or.inr ⟨h1, h2, hna⟩
+    · rw [Finset.disjoint_left]
+      intro n h1 h2
+      simp only [Finset.mem_filter, Set.mem_Ico] at h1 h2
+      linarith [h1.2.1, h2.2.2]
+  rw [Metric.tendsto_atTop]
+  intro e he
+  obtain ⟨K, hK⟩ := Metric.tendsto_atTop.1 hε (e / 3) (by positivity)
+  refine ⟨max K 2, fun N hN => ?_⟩
+  have hN2 : 2 ≤ N := le_of_max_le_right hN
+  have hεN := hK N (le_of_max_le_left hN)
+  rw [Real.dist_eq, sub_zero] at hεN
+  have h1 := h N hN2 c ⟨by linarith, hc1⟩
+  have h2 := h N hN2 a ⟨ha, by linarith⟩
+  rw [Real.dist_eq, hsplit, sub_div]
+  have := abs_sub_le ((visitCount (orbit b x) 0 c N : ℝ) / N - c) 0
+    ((visitCount (orbit b x) 0 a N : ℝ) / N - a)
+  rw [show (visitCount (orbit b x) 0 c N : ℝ) / N - visitCount (orbit b x) 0 a N / N - (c - a)
+    = ((visitCount (orbit b x) 0 c N : ℝ) / N - c) - ((visitCount (orbit b x) 0 a N : ℝ) / N - a)
+    by ring]
+  have := abs_sub ((visitCount (orbit b x) 0 c N : ℝ) / N - c)
+    ((visitCount (orbit b x) 0 a N : ℝ) / N - a)
+  have := le_abs_self (ε N)
+  linarith
 
 /-! ## Odd bases: BLD's second moment survives translation -/
 
@@ -328,6 +481,174 @@ theorem del_ae_tendsto {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω) [IsPr
   refine this.congr fun N => ?_
   rw [ENNReal.toReal_ofReal (hg0 _ ω)]
 
+/-- The `k`-th term of `bldPoint`. -/
+noncomputable def bldTerm (S : Set ℕ) (ω : ℕ → Bool) (k : ℕ) : ℝ := by
+  classical exact (if k ∈ S ∧ ω k = true then (1 : ℝ) else 0) / 2 ^ k
+
+theorem bldPoint_eq_tsum (S : Set ℕ) (ω : ℕ → Bool) :
+    bldPoint S ω = ∑' k, bldTerm S ω k := by
+  unfold bldPoint bldTerm; rfl
+
+theorem bldTerm_nonneg (S : Set ℕ) (ω : ℕ → Bool) (k : ℕ) : 0 ≤ bldTerm S ω k := by
+  unfold bldTerm; split_ifs <;> positivity
+
+theorem bldTerm_le (S : Set ℕ) (ω : ℕ → Bool) (k : ℕ) : bldTerm S ω k ≤ (1 / 2) ^ k := by
+  unfold bldTerm
+  rw [one_div_pow]
+  split_ifs <;> simp
+
+theorem summable_bldTerm (S : Set ℕ) (ω : ℕ → Bool) : Summable (bldTerm S ω) :=
+  Summable.of_nonneg_of_le (bldTerm_nonneg S ω) (bldTerm_le S ω)
+    (summable_geometric_of_lt_one (by norm_num) (by norm_num))
+
+theorem measurable_bldPoint (S : Set ℕ) : Measurable (bldPoint S) := by
+  classical
+  have : bldPoint S = fun ω => ∑' k, bldTerm S ω k := funext (bldPoint_eq_tsum S)
+  rw [this]
+  refine Measurable.tsum fun k => ?_
+  unfold bldTerm
+  refine Measurable.div_const ?_ _
+  exact (measurable_of_countable (fun b : Bool => if k ∈ S ∧ b = true then (1 : ℝ) else 0)).comp
+    (measurable_pi_apply k)
+
+/-- Flip coin `k`. -/
+def flipAt (k : ℕ) (ω : ℕ → Bool) : ℕ → Bool := Function.update ω k (!ω k)
+
+theorem flipAt_eq (k : ℕ) (ω : ℕ → Bool) :
+    flipAt k ω = fun i => (if i = k then (fun b : Bool => !b) else id) (ω i) := by
+  funext i
+  unfold flipAt
+  by_cases h : i = k
+  · subst h; simp
+  · simp [Function.update_of_ne h, h]
+
+theorem measurePreserving_flipAt (k : ℕ) : MeasurePreserving (flipAt k) coinMeasure coinMeasure := by
+  have hm : ∀ i, Measurable ((if i = k then (fun b : Bool => !b) else id) : Bool → Bool) :=
+    fun i => measurable_of_countable _
+  have hf : flipAt k = fun ω i => (if i = k then (fun b : Bool => !b) else id) (ω i) :=
+    funext (flipAt_eq k)
+  refine ⟨by rw [hf]; exact measurable_pi_lambda _ fun i => (hm i).comp (measurable_pi_apply i), ?_⟩
+  rw [hf]
+  unfold coinMeasure
+  rw [Measure.infinitePi_map_pi _ hm]
+  congr 1
+  funext i
+  split_ifs
+  · ext A hA
+    rw [Measure.map_apply (measurable_of_countable _) hA]
+    classical
+    rw [PMF.toMeasure_apply_fintype, PMF.toMeasure_apply_fintype]
+    simp [Set.indicator, PMF.uniformOfFintype_apply, Fintype.card_bool]
+    by_cases h1 : true ∈ A <;> by_cases h2 : false ∈ A <;> simp [h1, h2, add_comm]
+  · exact Measure.map_id
+
+theorem bldPoint_split (T : Set ℕ) (k : ℕ) (hk : k ∈ T) (ω : ℕ → Bool) :
+    bldPoint T ω = bldPoint (T \ {k}) ω + (if ω k = true then (1 : ℝ) else 0) / 2 ^ k := by
+  classical
+  rw [bldPoint_eq_tsum, bldPoint_eq_tsum]
+  have h : bldTerm T ω = fun j => bldTerm (T \ {k}) ω j +
+      if j = k then (if ω k = true then (1 : ℝ) else 0) / 2 ^ k else 0 := by
+    funext j
+    unfold bldTerm
+    by_cases hj : j = k
+    · subst hj; by_cases hw : ω j = true <;> simp [hk, hw]
+    · simp [hj]
+  rw [h, Summable.tsum_add (summable_bldTerm _ _) (summable_of_ne_finset_zero
+    (s := {k}) (fun j hj => by simp at hj; simp [hj])), tsum_ite_eq]
+
+theorem bldPoint_flipAt (T : Set ℕ) (k : ℕ) (ω : ℕ → Bool) :
+    bldPoint (T \ {k}) (flipAt k ω) = bldPoint (T \ {k}) ω := by
+  classical
+  rw [bldPoint_eq_tsum, bldPoint_eq_tsum]
+  congr 1; funext j
+  unfold bldTerm
+  by_cases hj : j = k
+  · subst hj; simp
+  · simp [flipAt, Function.update_of_ne hj]
+
+theorem integrable_ee_comp {f : (ℕ → Bool) → ℝ} (hf : Measurable f) :
+    Integrable (fun ω => ee (f ω)) coinMeasure :=
+  Integrable.of_bound ((measurable_ee.comp hf).aestronglyMeasurable) 1
+    (Eventually.of_forall fun ω => (norm_ee _).le)
+
+/-- One coin integrated out. -/
+
+theorem integral_ee_step (T : Set ℕ) (k : ℕ) (hk : k ∈ T) (t : ℝ) :
+    ∫ ω, ee (t * bldPoint T ω) ∂coinMeasure =
+      (∫ ω, ee (t * bldPoint (T \ {k}) ω) ∂coinMeasure) * ((1 + ee (t / 2 ^ k)) / 2) := by
+  set g : (ℕ → Bool) → ℂ := fun ω => ee (t * bldPoint T ω)
+  have hgm : Measurable (fun ω => t * bldPoint T ω) := (measurable_bldPoint T).const_mul t
+  have hgM : Measurable g := measurable_ee.comp hgm
+  have hpres := measurePreserving_flipAt k
+  have h1 : ∫ ω, g (flipAt k ω) ∂coinMeasure = ∫ ω, g ω ∂coinMeasure := by
+    rw [← integral_map hpres.measurable.aemeasurable hgM.aestronglyMeasurable, hpres.map_eq]
+  have hpt : ∀ ω, g ω + g (flipAt k ω) =
+      ee (t * bldPoint (T \ {k}) ω) * (1 + ee (t / 2 ^ k)) := by
+    intro ω
+    simp only [g]
+    rw [bldPoint_split T k hk ω, bldPoint_split T k hk (flipAt k ω), bldPoint_flipAt]
+    have hfk : flipAt k ω k = !ω k := by simp [flipAt]
+    rw [hfk]
+    rw [mul_add, mul_add, ee_add, ee_add]
+    cases ω k <;> simp [ee] <;> ring_nf
+  have hint : Integrable g coinMeasure := integrable_ee_comp hgm
+  have hint2 : Integrable (fun ω => g (flipAt k ω)) coinMeasure :=
+    integrable_ee_comp (hgm.comp hpres.measurable)
+  have h2 : 2 * ∫ ω, g ω ∂coinMeasure =
+      ∫ ω, ee (t * bldPoint (T \ {k}) ω) * (1 + ee (t / 2 ^ k)) ∂coinMeasure := by
+    simp_rw [← hpt]
+    rw [integral_add hint hint2, h1]; ring
+  rw [integral_mul_const] at h2
+  change ∫ ω, g ω ∂coinMeasure = _
+  linear_combination h2 / 2
+
+theorem integral_ee_finset (t : ℝ) (F : Finset ℕ) : ∀ T : Set ℕ, (↑F : Set ℕ) ⊆ T →
+    ∫ ω, ee (t * bldPoint T ω) ∂coinMeasure =
+      (∫ ω, ee (t * bldPoint (T \ ↑F) ω) ∂coinMeasure) *
+        ∏ k ∈ F, ((1 + ee (t / 2 ^ k)) / 2) := by
+  classical
+  induction F using Finset.induction_on with
+  | empty => intro T _; simp
+  | insert k F hkF ih =>
+    intro T hT
+    have hFT : (↑F : Set ℕ) ⊆ T := fun x hx => hT (by simp [hx])
+    have hk : k ∈ T \ ↑F := ⟨hT (by simp), by simpa using hkF⟩
+    rw [ih T hFT, integral_ee_step (T \ ↑F) k hk t, Finset.prod_insert hkF,
+      show (T \ (F : Set ℕ)) \ {k} = T \ ((insert k F : Finset ℕ) : Set ℕ) by
+        ext x; simp; tauto]
+    ring
+
+theorem norm_one_add_ee_div_two (s : ℝ) : ‖(1 + ee s) / 2‖ = |Real.cos (Real.pi * s)| := by
+  have h : (1 + ee s) / 2 = ee (s / 2) * (Real.cos (Real.pi * s) : ℂ) := by
+    rw [Complex.ofReal_cos, Complex.cos]
+    unfold ee
+    rw [mul_div_assoc', mul_add, ← Complex.exp_add, ← Complex.exp_add,
+      show 2 * (Real.pi : ℂ) * Complex.I * ((s / 2 : ℝ) : ℂ) + ((Real.pi * s : ℝ) : ℂ) * Complex.I
+        = 2 * Real.pi * Complex.I * (s : ℂ) by push_cast; ring,
+      show 2 * (Real.pi : ℂ) * Complex.I * ((s / 2 : ℝ) : ℂ) + -((Real.pi * s : ℝ) : ℂ) * Complex.I
+        = 0 by push_cast; ring, Complex.exp_zero, add_comm]
+  rw [h, norm_mul, norm_ee, one_mul, Complex.norm_real, Real.norm_eq_abs]
+
+theorem norm_integral_ee_bldPoint_le (S : Set ℕ) (t : ℝ) :
+    ‖∫ ω, ee (t * bldPoint S ω) ∂coinMeasure‖ ≤ rieszTail S 0 t := by
+  classical
+  unfold rieszTail
+  refine le_ciInf fun M => ?_
+  set F := (Finset.Ioc 0 M).filter (· ∈ S)
+  have hF : (↑F : Set ℕ) ⊆ S := fun x hx => (Finset.mem_filter.1 hx).2
+  rw [integral_ee_finset t F S hF, norm_mul, norm_prod]
+  have h1 : ‖∫ ω, ee (t * bldPoint (S \ ↑F) ω) ∂coinMeasure‖ ≤ 1 :=
+    (norm_integral_le_of_norm_le_const (C := 1) (Eventually.of_forall fun ω => (norm_ee _).le)).trans
+      (by simp)
+  have h2 : ∏ k ∈ F, ‖(1 + ee (t / 2 ^ k)) / 2‖ =
+      ∏ k ∈ F, |Real.cos (Real.pi * t / 2 ^ (k - 0))| := by
+    refine Finset.prod_congr rfl fun k _ => ?_
+    rw [norm_one_add_ee_div_two, Nat.sub_zero, mul_div_assoc]
+  rw [h2]
+  have h0 : 0 ≤ ∏ k ∈ F, |Real.cos (Real.pi * t / 2 ^ (k - 0))| :=
+    Finset.prod_nonneg fun _ _ => abs_nonneg _
+  nlinarith [norm_nonneg (∫ ω, ee (t * bldPoint (S \ ↑F) ω) ∂coinMeasure)]
+
 /-- **Translation invariance of the second moment bound.**  For any `α`,
 `𝔼|N⁻¹Σ_{j<N} e(h rʲ(α + y))|² ≤ N⁻² Σ_{p,q<N} |μ̂_S(h(rᵖ − r^q))|`, and
 `|μ̂_S(t)| = Π_{k∈S} |cos(πt/2ᵏ)| = rieszTail S 0 t` (BLD §2).
@@ -341,7 +662,43 @@ theorem secondMoment_translate_le (S : Set ℕ) (hS0 : 0 ∉ S) (α : ℝ) (h : 
         ∂coinMeasure ≤
       (∑ p ∈ Finset.range N, ∑ q ∈ Finset.range N,
         rieszTail S 0 ((h : ℝ) * ((r : ℝ) ^ p - (r : ℝ) ^ q))) / (N : ℝ) ^ 2 := by
-  sorry
+  have hym : Measurable (fun ω => α + bldPoint S ω) := (measurable_bldPoint S).const_add α
+  have hint : ∀ u : ℝ, Integrable (fun ω => ee (u * (α + bldPoint S ω))) coinMeasure :=
+    fun u => integrable_ee_comp (hym.const_mul u)
+  have hnd : ∀ ω, ‖(∑ j ∈ Finset.range N, ee (h * (r : ℝ) ^ j * (α + bldPoint S ω))) / (N : ℂ)‖ ^ 2
+      = ‖∑ j ∈ Finset.range N, ee (h * (r : ℝ) ^ j * (α + bldPoint S ω))‖ ^ 2 / (N : ℝ) ^ 2 := by
+    intro ω; rw [norm_div, Complex.norm_natCast, div_pow]
+  simp_rw [hnd]
+  rw [integral_div]
+  gcongr
+  have hexp : ∀ ω, ((‖∑ j ∈ Finset.range N, ee (h * (r : ℝ) ^ j * (α + bldPoint S ω))‖ ^ 2 : ℝ)
+      : ℂ) = ∑ p ∈ Finset.range N, ∑ q ∈ Finset.range N,
+        ee (((h : ℝ) * ((r : ℝ) ^ p - (r : ℝ) ^ q)) * (α + bldPoint S ω)) := by
+    intro ω
+    rw [sq_norm_sum_ee (fun j => h * (r : ℝ) ^ j * (α + bldPoint S ω))]
+    refine Finset.sum_congr rfl fun p _ => Finset.sum_congr rfl fun q _ => ?_
+    congr 1; ring
+  have hI : ((∫ ω, ‖∑ j ∈ Finset.range N, ee (h * (r : ℝ) ^ j * (α + bldPoint S ω))‖ ^ 2
+      ∂coinMeasure : ℝ) : ℂ) = ∑ p ∈ Finset.range N, ∑ q ∈ Finset.range N,
+        ∫ ω, ee (((h : ℝ) * ((r : ℝ) ^ p - (r : ℝ) ^ q)) * (α + bldPoint S ω)) ∂coinMeasure := by
+    rw [← integral_complex_ofReal]
+    simp_rw [hexp]
+    rw [integral_finsetSum _ fun p _ => integrable_finsetSum _ fun q _ => hint _]
+    refine Finset.sum_congr rfl fun p _ => ?_
+    rw [integral_finsetSum _ fun q _ => hint _]
+  have hterm : ∀ u : ℝ, ‖∫ ω, ee (u * (α + bldPoint S ω)) ∂coinMeasure‖ ≤ rieszTail S 0 u := by
+    intro u
+    have : (fun ω => ee (u * (α + bldPoint S ω))) =
+        fun ω => ee (u * α) * ee (u * bldPoint S ω) := by
+      funext ω; rw [mul_add, ee_add]
+    rw [this, integral_const_mul, norm_mul, norm_ee, one_mul]
+    exact norm_integral_ee_bldPoint_le S u
+  have := congrArg Complex.re hI
+  rw [Complex.ofReal_re] at this
+  rw [this]
+  refine (Complex.re_le_norm _).trans ((norm_sum_le _ _).trans ?_)
+  refine Finset.sum_le_sum fun p _ => (norm_sum_le _ _).trans ?_
+  exact Finset.sum_le_sum fun q _ => hterm _
 
 /-- **BLD Lemma 7, cosine form.**  The double sum decays like `(log N)^{-1.005}`.  This is the
 inequality BLD's proof of Lemma 7 actually establishes (2607.06773 pp. 9–11, "Combining the
@@ -363,6 +720,61 @@ theorem bld_doubleSum_le (hL5 : Literature.BLDLemma5) {S : Set ℕ} {ρ : ℝ} (
         C / Real.log N ^ (1.005 : ℝ) := by
   sorry
 
+theorem summable_inv_mul_log_rpow {p : ℝ} (hp : 1 < p) :
+    Summable fun N : ℕ => 1 / ((N : ℝ) * Real.log N ^ p) := by
+  set g : ℕ → ℝ := fun n => 1 / ((max n 3 : ℕ) * Real.log (max n 3 : ℕ) ^ p) with hg
+  have hlogpos : ∀ n : ℕ, 3 ≤ n → 0 < Real.log n := fun n hn =>
+    Real.log_pos (by exact_mod_cast (by omega : 1 < n))
+  have hg0 : ∀ n, 0 ≤ g n := fun n => by
+    have := hlogpos (max n 3) (le_max_right _ _)
+    simp only [hg]; positivity
+  have hmono : ∀ ⦃m n⦄, 0 < m → m ≤ n → g n ≤ g m := by
+    intro m n _ hmn
+    have h3 : max m 3 ≤ max n 3 := max_le_max hmn le_rfl
+    have hm := hlogpos (max m 3) (le_max_right _ _)
+    have hR : ((max m 3 : ℕ) : ℝ) ≤ (max n 3 : ℕ) := by exact_mod_cast h3
+    have hm0 : (0 : ℝ) < (max m 3 : ℕ) := by
+      have : 0 < max m 3 := by omega
+      exact_mod_cast this
+    have hl : Real.log (max m 3 : ℕ) ≤ Real.log (max n 3 : ℕ) := Real.log_le_log hm0 hR
+    simp only [hg]
+    apply one_div_le_one_div_of_le (by positivity)
+    gcongr
+  have hcond : Summable fun k : ℕ => (2 : ℝ) ^ k * g (2 ^ k) := by
+    rw [← summable_nat_add_iff 2]
+    have hb : Summable fun k : ℕ => (Real.log 2 ^ p)⁻¹ * ((k : ℝ) + 2) ^ (-p) := by
+      refine Summable.mul_left _ ?_
+      have := (summable_nat_add_iff 2).2 (Real.summable_nat_rpow.2 (by linarith : -p < -1))
+      simpa using this
+    refine hb.congr fun k => ?_
+    have hmax : max (2 ^ (k + 2)) 3 = 2 ^ (k + 2) := by
+      have : 4 ≤ 2 ^ (k + 2) := by
+        rw [pow_add]; have := Nat.one_le_two_pow (n := k); omega
+      omega
+    simp only [hg, hmax]
+    push_cast
+    rw [Real.log_pow, Real.mul_rpow (by positivity) (Real.log_nonneg (by norm_num)),
+      Real.rpow_neg (by positivity)]
+    push_cast
+    field_simp
+  have hgs := (summable_condensed_iff_of_nonneg hg0 hmono).1 hcond
+  rw [← summable_nat_add_iff 3] at hgs ⊢
+  refine hgs.congr fun n => ?_
+  simp only [hg, show max (n + 3) 3 = n + 3 by omega]
+
+theorem fourierMean_orbit (r : ℕ) (x : ℝ) (h : ℤ) (N : ℕ) :
+    fourierMean (orbit r x) h N = (∑ k ∈ Finset.range N, ee (h * (r : ℝ) ^ k * x)) / N := by
+  unfold fourierMean
+  congr 1
+  refine Finset.sum_congr rfl fun k _ => ?_
+  have := ee_int_mul_fract h (x * (r : ℝ) ^ k)
+  unfold ee at this
+  unfold orbit
+  push_cast at this ⊢
+  rw [show 2 * (Real.pi : ℂ) * Complex.I * (h : ℂ) * ((Int.fract (x * (r : ℝ) ^ k) : ℝ) : ℂ)
+      = 2 * Real.pi * Complex.I * ((h : ℂ) * ((Int.fract (x * (r : ℝ) ^ k) : ℝ) : ℂ)) by ring, this]
+  unfold ee; push_cast; ring_nf
+
 /-- **Odd-base normality of every translate**, `μ_S`-almost surely.
 
 Confidence 85%.  Proof: for each odd `r ≥ 3` and `h ≠ 0` (countably many), `del_ae_tendsto`
@@ -374,27 +786,43 @@ Weyl mean of `orbit r x` equals the raw mean as in `fourierMean_orbit_two`) and 
 theorem ae_isNormal_odd_add (hL5 : Literature.BLDLemma5) {S : Set ℕ} {ρ : ℝ} (hS : Sparse S ρ)
     (α : ℝ) :
     ∀ᵐ ω ∂coinMeasure, ∀ r : ℕ, 3 ≤ r → Odd r → IsNormal r (α + bldPoint S ω) := by
-  sorry
+  have hS0 : 0 ∉ S := hS.1
+  have hone : ∀ r : ℕ, 3 ≤ r → Odd r → ∀ h : ℤ, h ≠ 0 → ∀ᵐ ω ∂coinMeasure, Tendsto
+      (fun N : ℕ => (∑ j ∈ Finset.range N, ee (h * (r : ℝ) ^ j * (α + bldPoint S ω))) / (N : ℂ))
+      atTop (𝓝 0) := by
+    intro r hr3 hr h hh
+    obtain ⟨C, hC, N₀, hN₀⟩ := bld_doubleSum_le hL5 hS r hr hr3 h hh
+    refine del_ae_tendsto coinMeasure _ (fun j => measurable_ee.comp
+      (((measurable_bldPoint S).const_add α).const_mul _)) (fun _ _ => (norm_ee _).le) ?_
+    refine Summable.of_norm_bounded_eventually
+      ((summable_inv_mul_log_rpow (p := 1.005) (by norm_num)).mul_left C) ?_
+    rw [Nat.cofinite_eq_atTop, eventually_atTop]
+    refine ⟨max N₀ 2, fun N hN => ?_⟩
+    have hN2 : 2 ≤ N := le_of_max_le_right hN
+    have hNpos : (0 : ℝ) < N := by exact_mod_cast (by omega : 0 < N)
+    have hlog : 0 < Real.log N := Real.log_pos (by exact_mod_cast (by omega : 1 < N))
+    have hI0 : 0 ≤ ∫ ω, ‖(∑ j ∈ Finset.range N, ee (h * (r : ℝ) ^ j * (α + bldPoint S ω)))
+        / (N : ℂ)‖ ^ 2 ∂coinMeasure := integral_nonneg fun _ => by positivity
+    rw [Real.norm_of_nonneg (by positivity)]
+    have h1 := (secondMoment_translate_le S hS0 α h r N).trans (hN₀ N (le_of_max_le_left hN))
+    calc _ ≤ (C / Real.log N ^ (1.005 : ℝ)) / N := by gcongr
+      _ = C * (1 / ((N : ℝ) * Real.log N ^ (1.005 : ℝ))) := by field_simp
+  have hall : ∀ᵐ ω ∂coinMeasure, ∀ r : ℕ, ∀ h : ℤ, 3 ≤ r → Odd r → h ≠ 0 → Tendsto
+      (fun N : ℕ => (∑ j ∈ Finset.range N, ee (h * (r : ℝ) ^ j * (α + bldPoint S ω))) / (N : ℂ))
+      atTop (𝓝 0) := by
+    rw [ae_all_iff]; intro r
+    rw [ae_all_iff]; intro h
+    by_cases hr : 3 ≤ r ∧ Odd r ∧ h ≠ 0
+    · filter_upwards [hone r hr.1 hr.2.1 h hr.2.2] with ω hω _ _ _ using hω
+    · exact Eventually.of_forall fun ω h1 h2 h3 => absurd ⟨h1, h2, h3⟩ hr
+  filter_upwards [hall] with ω hω r hr3 hr
+  rw [isNormal_iff_equidistributed_orbit r (by omega)]
+  refine equidistributed_of_weyl _ (fun k => ⟨Int.fract_nonneg _, Int.fract_lt_one _⟩) ?_
+  intro h hh
+  refine (hω r h hr3 hr hh).congr fun N => ?_
+  rw [fourierMean_orbit]
 
 /-! ## The sparse set -/
-
-/-- BLD's example is sparse (their §1 claim; they give no proof).
-
-Confidence 85%.  Proof: `⌈e^{j/100}⌉ ∈ [a, a+k]` iff `e^{j/100} ∈ (a−1, a+k]`.  For `a ≥ 101`
-consecutive values differ by `> 1`, so they are distinct and the count is
-`≥ 100 log((a+k)/(a−1)) − 1 ≥ 100(1 − ρ) log k − O(1)` for `a ≤ k^ρ`; with `ρ = 1/2` this is
-`≥ 50 log k − O(1) ≥ 1.5 · 30 log k` for large `k`.  For `a ≤ 100` every integer in `[2, 100]`
-is hit and the count is `≥ 100 log((a+k)/101) − 1`.  Density zero: `sIcc_expSet_le`. -/
-theorem sparse_expSet : Sparse expSet (1 / 2) := by
-  sorry
-
-/-- Logarithmic count: `#(expSet ∩ [1, N]) ≤ 100 log N + 1`.
-
-Confidence 97%.  Proof: `⌈e^{j/100}⌉ ≤ N` forces `j ≤ 100 log N`, and the map `j ↦ ⌈e^{j/100}⌉`
-covers the set. -/
-theorem sIcc_expSet_le (N : ℕ) (hN : 1 ≤ N) :
-    (sIcc expSet 1 N : ℝ) ≤ 100 * Real.log N + 1 := by
-  sorry
 
 theorem zero_not_mem_expSet : 0 ∉ expSet := by
   rintro ⟨j, hj, h0⟩
@@ -404,6 +832,141 @@ theorem zero_not_mem_expSet : 0 ∉ expSet := by
   rw [← h0] at this
   simp at this
 
+/-- Logarithmic count: `#(expSet ∩ [1, N]) ≤ 100 log N + 1`.
+
+Confidence 97%.  Proof: `⌈e^{j/100}⌉ ≤ N` forces `j ≤ 100 log N`, and the map `j ↦ ⌈e^{j/100}⌉`
+covers the set. -/
+theorem sIcc_expSet_le (N : ℕ) (hN : 1 ≤ N) :
+    (sIcc expSet 1 N : ℝ) ≤ 100 * Real.log N + 1 := by
+  classical
+  set J := ⌊100 * Real.log N⌋₊
+  have hsub : (Finset.Icc 1 N).filter (· ∈ expSet) ⊆
+      (Finset.Icc 1 J).image fun j : ℕ => ⌈Real.exp ((j : ℝ) / 100)⌉₊ := by
+    intro k hk
+    simp only [Finset.mem_filter, Finset.mem_Icc] at hk
+    obtain ⟨⟨_, hkN⟩, j, hj, rfl⟩ := hk
+    refine Finset.mem_image.2 ⟨j, Finset.mem_Icc.2 ⟨hj, ?_⟩, rfl⟩
+    apply Nat.le_floor
+    have h1 : Real.exp ((j : ℝ) / 100) ≤ N :=
+      (Nat.le_ceil _).trans (by exact_mod_cast hkN)
+    have h2 := Real.log_le_log (Real.exp_pos _) h1
+    rw [Real.log_exp] at h2
+    linarith
+  have hc : sIcc expSet 1 N ≤ J := by
+    unfold sIcc
+    refine (Finset.card_le_card hsub).trans (Finset.card_image_le.trans ?_)
+    simp
+  have hl : 0 ≤ Real.log N := Real.log_nonneg (by exact_mod_cast hN)
+  calc (sIcc expSet 1 N : ℝ) ≤ J := by exact_mod_cast hc
+    _ ≤ 100 * Real.log N := Nat.floor_le (by positivity)
+    _ ≤ _ := by linarith
+
+/-- BLD's example is sparse (their §1 claim; they give no proof).
+
+Confidence 85%.  Proof: `⌈e^{j/100}⌉ ∈ [a, a+k]` iff `e^{j/100} ∈ (a−1, a+k]`.  For `a ≥ 101`
+consecutive values differ by `> 1`, so they are distinct and the count is
+`≥ 100 log((a+k)/(a−1)) − 1 ≥ 100(1 − ρ) log k − O(1)` for `a ≤ k^ρ`; with `ρ = 1/2` this is
+`≥ 50 log k − O(1) ≥ 1.5 · 30 log k` for large `k`.  For `a ≤ 100` every integer in `[2, 100]`
+is hit and the count is `≥ 100 log((a+k)/101) − 1`.  Density zero: `sIcc_expSet_le`. -/
+theorem sparse_expSet : Sparse expSet (1 / 2) := by
+  classical
+  refine ⟨zero_not_mem_expSet, ?_, by norm_num, 1 / 2, by norm_num, ⌈Real.exp 101⌉₊, ?_⟩
+  · have h0 := (Real.tendsto_pow_log_div_mul_add_atTop 1 0 1 one_ne_zero).comp
+      tendsto_natCast_atTop_atTop
+    have h1 : Tendsto (fun n : ℕ => 100 * (Real.log n / n) + 1 / (n : ℝ)) atTop (𝓝 0) := by
+      have := (h0.const_mul 100).add (tendsto_const_div_atTop_nhds_zero_nat 1)
+      simpa [Function.comp_def] using this
+    refine squeeze_zero' (Eventually.of_forall fun n => by positivity) ?_ h1
+    filter_upwards [eventually_ge_atTop 1] with n hn
+    have hnp : (0 : ℝ) < n := by exact_mod_cast hn
+    rw [div_le_iff₀ hnp]
+    have := sIcc_expSet_le n hn
+    calc (sIcc expSet 1 n : ℝ) ≤ 100 * Real.log n + 1 := this
+      _ = _ := by field_simp
+  · intro k hk a ha
+    have hkR : Real.exp 101 ≤ k := (Nat.le_ceil _).trans (by exact_mod_cast hk)
+    have hkpos : (0 : ℝ) < k := (Real.exp_pos _).trans_le hkR
+    set u := Real.log k with hu
+    have hu101 : 101 ≤ u := by
+      have := Real.log_le_log (Real.exp_pos _) hkR; rwa [Real.log_exp] at this
+    have hek : Real.exp u = k := Real.exp_log hkpos
+    have hsq : (k : ℝ) ^ (1 / 2 : ℝ) = Real.exp (u / 2) := by
+      rw [← hek, ← Real.exp_mul]; ring_nf
+    rw [hsq] at ha
+    set j0 := ⌈50 * u + 500⌉₊
+    set j1 := ⌊100 * u⌋₊
+    set f : ℕ → ℕ := fun j => ⌈Real.exp ((j : ℝ) / 100)⌉₊
+    have he5 : (100 : ℝ) ≤ Real.exp 5 := by
+      have h := Real.exp_one_gt_d9
+      have : Real.exp 5 = Real.exp 1 ^ 5 := by rw [← Real.exp_nat_mul]; norm_num
+      rw [this]; nlinarith [pow_le_pow_left₀ (by norm_num : (0:ℝ) ≤ 2.7) (show (2.7:ℝ) ≤ Real.exp 1 by linarith) 5]
+    have hlo : ∀ j ∈ Finset.Icc j0 j1, Real.exp (u / 2) * 100 ≤ Real.exp ((j : ℝ) / 100) := by
+      intro j hj
+      have : (j0 : ℝ) ≤ j := by exact_mod_cast (Finset.mem_Icc.1 hj).1
+      have : 50 * u + 500 ≤ (j : ℝ) := (Nat.le_ceil _).trans this
+      calc Real.exp (u / 2) * 100 ≤ Real.exp (u / 2) * Real.exp 5 := by gcongr
+        _ = Real.exp (u / 2 + 5) := (Real.exp_add _ _).symm
+        _ ≤ _ := Real.exp_le_exp.2 (by linarith)
+    have hhi : ∀ j ∈ Finset.Icc j0 j1, Real.exp ((j : ℝ) / 100) ≤ k := by
+      intro j hj
+      have : (j : ℝ) ≤ j1 := by exact_mod_cast (Finset.mem_Icc.1 hj).2
+      have : (j : ℝ) ≤ 100 * u := this.trans (Nat.floor_le (by linarith))
+      rw [← hek]; exact Real.exp_le_exp.2 (by linarith)
+    have hinj : Set.InjOn f (Finset.Icc j0 j1 : Set ℕ) := by
+      intro i hi j hj hij
+      by_contra hne
+      have key : ∀ i j, i ∈ Finset.Icc j0 j1 → j ∈ Finset.Icc j0 j1 → i < j → f i ≠ f j := by
+        intro i j hi hj hlt heq
+        have hx := hlo i hi
+        have hx1 : (100 : ℝ) ≤ Real.exp ((i : ℝ) / 100) :=
+          le_trans (by nlinarith [Real.one_le_exp (show 0 ≤ u / 2 by linarith)]) hx
+        have hij' : (i : ℝ) + 1 ≤ j := by exact_mod_cast hlt
+        have hy : Real.exp ((i : ℝ) / 100) * Real.exp (1 / 100) ≤ Real.exp ((j : ℝ) / 100) := by
+          rw [← Real.exp_add]; exact Real.exp_le_exp.2 (by linarith)
+        have h01 : 1 + 1 / 100 ≤ Real.exp (1 / 100) := by
+          have := Real.add_one_le_exp (1 / 100 : ℝ); linarith
+        have hgap : Real.exp ((i : ℝ) / 100) + 1 ≤ Real.exp ((j : ℝ) / 100) := by nlinarith
+        have c1 : (f i : ℝ) < Real.exp ((i : ℝ) / 100) + 1 := Nat.ceil_lt_add_one (by positivity)
+        have c2 : Real.exp ((j : ℝ) / 100) ≤ f j := Nat.le_ceil _
+        rw [heq] at c1
+        linarith
+      rcases lt_or_gt_of_ne hne with h | h
+      · exact key i j hi hj h hij
+      · exact key j i hj hi h hij.symm
+    have hsub : (Finset.Icc j0 j1).image f ⊆ (Finset.Icc a (a + k)).filter (· ∈ expSet) := by
+      intro m hm
+      obtain ⟨j, hj, rfl⟩ := Finset.mem_image.1 hm
+      have hjpos : 1 ≤ j := by
+        have : (j0 : ℝ) ≤ j := by exact_mod_cast (Finset.mem_Icc.1 hj).1
+        have : (1 : ℝ) ≤ j := by
+          have := (Nat.le_ceil (50 * u + 500)).trans this; linarith
+        exact_mod_cast this
+      simp only [Finset.mem_filter, Finset.mem_Icc]
+      refine ⟨⟨?_, ?_⟩, j, hjpos, rfl⟩
+      · have h1 : (a : ℝ) ≤ Real.exp ((j : ℝ) / 100) := by
+          have := hlo j hj; nlinarith [Real.exp_pos (u / 2)]
+        exact_mod_cast h1.trans (Nat.le_ceil _)
+      · have := Nat.ceil_mono (hhi j hj)
+        rw [Nat.ceil_natCast] at this
+        simp only [f]
+        omega
+    have hcard : (Finset.Icc j0 j1).card ≤ sIcc expSet a (a + k) := by
+      unfold sIcc
+      rw [← Finset.card_image_of_injOn hinj]
+      exact Finset.card_le_card hsub
+    have hj0 : (j0 : ℝ) < 50 * u + 501 := by
+      have := Nat.ceil_lt_add_one (show 0 ≤ 50 * u + 500 by linarith); linarith
+    have hj1 : 100 * u - 1 < (j1 : ℝ) := by
+      have := Nat.lt_floor_add_one (100 * u); linarith
+    have hle : j0 ≤ j1 + 1 := by
+      have : (j0 : ℝ) ≤ j1 + 1 := by linarith
+      exact_mod_cast this
+    have hc : ((Finset.Icc j0 j1).card : ℝ) = j1 + 1 - j0 := by
+      rw [Nat.card_Icc]; push_cast [hle]; ring
+    calc (1 + 1 / 2) * (30 * u) ≤ (j1 : ℝ) + 1 - j0 := by linarith
+      _ = _ := hc.symm
+      _ ≤ _ := by exact_mod_cast hcard
+
 /-- **Rate arithmetic** for the headline.
 
 Confidence 99%.  Proof: for `N ≥ 2`, `Nat.log 2 N + 2 ≤ 3 log N / log 2 ≤ 5 log N`,
@@ -412,7 +975,43 @@ theorem rate_arith (C : ℝ) (hC : 0 < C) (N : ℕ) (hN : 2 ≤ N) :
     2 * (C * Real.log N ^ 2 / N) + 2 / N +
         (Nat.log 2 N + 2) * (100 * Real.log ((N + Nat.log 2 N + 2 : ℕ) : ℝ) + 1) / N ≤
       (2 * C + 2000) * Real.log N ^ 2 / N := by
-  sorry
+  have hNpos : (0 : ℝ) < N := by exact_mod_cast (show 0 < N by omega)
+  set l := Real.log N with hl
+  set a : ℝ := (Nat.log 2 N : ℝ)
+  set b := Real.log ((N + Nat.log 2 N + 2 : ℕ) : ℝ)
+  have hl2 : Real.log 2 ≤ l := Real.log_le_log (by norm_num) (by exact_mod_cast hN)
+  have hlog2 := Real.log_two_gt_d9
+  have ha : a * Real.log 2 ≤ l := by
+    have h1 : 2 ^ Nat.log 2 N ≤ N := Nat.pow_log_le_self 2 (by omega)
+    have : Real.log ((2 : ℝ) ^ Nat.log 2 N) ≤ l :=
+      Real.log_le_log (by positivity) (by exact_mod_cast h1)
+    rwa [Real.log_pow] at this
+  have ha0 : 0 ≤ a := by positivity
+  have hb : b ≤ 2 + l := by
+    have hlt : Nat.log 2 N < N := Nat.log_lt_self 2 (by omega)
+    have hM : ((N + Nat.log 2 N + 2 : ℕ) : ℝ) ≤ 3 * N := by
+      have : N + Nat.log 2 N + 2 ≤ 3 * N := by omega
+      exact_mod_cast this
+    have hMp : (0 : ℝ) < ((N + Nat.log 2 N + 2 : ℕ) : ℝ) := by positivity
+    have := Real.log_le_log hMp hM
+    rw [Real.log_mul (by norm_num) hNpos.ne'] at this
+    have h3 : Real.log 3 ≤ 3 - 1 := Real.log_le_sub_one_of_pos (by norm_num)
+    linarith
+  have hb0 : 0 ≤ b := Real.log_nonneg (by
+    have : (1 : ℕ) ≤ N + Nat.log 2 N + 2 := by omega
+    exact_mod_cast this)
+  have key : 2 + (a + 2) * (100 * b + 1) ≤ 2000 * l ^ 2 := by
+    have hal : a ≤ 1.45 * l := by nlinarith
+    have h1 : a + 2 ≤ 4.4 * l := by nlinarith
+    have h2 : 100 * b + 1 ≤ 392 * l := by nlinarith
+    have : (a + 2) * (100 * b + 1) ≤ (4.4 * l) * (392 * l) :=
+      mul_le_mul h1 h2 (by positivity) (by nlinarith)
+    nlinarith
+  have e : 2 * (C * l ^ 2 / N) + 2 / N + (a + 2) * (100 * b + 1) / N =
+      (2 * C * l ^ 2 + (2 + (a + 2) * (100 * b + 1))) / N := by ring
+  rw [e]
+  apply div_le_div_of_nonneg_right _ hNpos.le
+  nlinarith
 
 /-! ## Headline -/
 
