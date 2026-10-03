@@ -341,6 +341,15 @@ step would be an intrinsic algorithm constructing a number `x` for which `P(x)` 
 independent of `Q` and `P(x)` is normal iff `Q(x)` is.  The right condition is
 `P ∉ span_ℚ(1, Q)`.
 
+**Audit 2026-10-03 (freeze on `proof/manaiq`, `src/NormalNumbers/ExplicitPQ.lean`).**  Freshness
+correction: Manai 2609.24665 Thm 1.3 (§4.1 proof: `x = g(r + sY)`, `g` the local inverse of a
+non-affine `C²` map) already gives, applied to `f = Q ∘ P⁻¹`, a.s. existence of absolutely normal
+`P(x)` with `Q(x)` non-normal for a **single** pair.  Not stated as an answer, not computable, one
+`P` at a time on a shrunk interval.  The new content is the computable `x` serving every
+`P ∉ span(1, Q)` at once.  Structural difference from `Ω_k`: the zero count `deg W_P` is unbounded
+over `P`, so the cut exponent `δ_N ~ δ₀/(N+1)` is not uniform; handled by
+`FamilyDerandomize.exists_computable_absNormal_family_var` (proved), costing `Kc 1 δ ≤ 32/δ²`.
+
 ### 3.2 The answer, and why it is sharp
 
 **Claim (paper 80%).**  For every non-constant `Q ∈ ℤ[X]` there is a computable `x` with `Q(x)`

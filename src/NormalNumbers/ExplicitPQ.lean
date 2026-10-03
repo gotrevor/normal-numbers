@@ -1,0 +1,523 @@
+/-
+Copyright (c) 2026 Trevor Morris. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Trevor Morris
+-/
+import NormalNumbers.ExplicitOmegaK
+import NormalNumbers.FamilyDerandomizeVar
+
+/-!
+# Manai's `P`/`Q` algorithm: `P(x)` normal, `Q(x)` non-normal
+
+Sweep: `docs/OPEN-PROBLEMS-SWEEP-2026-10-03.md` §3.
+
+**Target.**  Manai, *Digit Mixing under Polynomial Maps*, arXiv 2606.08325v1, §1.1: "A natural
+next step would be an intrinsic algorithm constructing a number `x` for which `P(x)` is normal
+and `Q(x)` is non-normal - provided that the polynomials `P` and `Q` are linearly independent."
+"Normal" is absolute normality (the paper's convention).
+
+**Transcription.**  Linear independence is too weak as written: `P = Q + 1` is independent of
+`Q` and `P(x)` is normal iff `Q(x)` is (Wall).  The sharp condition is `P ∉ span_ℚ(1, Q)`
+(`AffineIn`).  The headline (`exists_computable_PQ`) gives, for every non-constant `Q ∈ ℤ[X]`,
+**one** computable `x` (a computable real, on an explicit monotone branch of `Q`) with `Q(x)`
+not normal in base 2 and, for every `P ∈ ℤ[X]`, `P(x)` absolutely normal **iff**
+`P ∉ span_ℚ(1, Q)`.  `Ω_k` (`ExplicitOmegaK`) is the case `Q = Xᵏ`, `deg P < k`
+(`not_affineIn_X_pow`).
+
+**Freshness (2026-10-03).**  `papers followups 2606.08325`: Manai 2609.24665 and 2508.09319 only.
+⚠️ Manai 2609.24665 Thm 1.3 (proof in its §4.1) already contains the mechanism for a **single**
+pair: applied to the local map `f = Q ∘ P⁻¹` (non-affine iff `P ∉ span(1, Q)`), it yields an
+absolutely normal `P(x)` with `Q(x)` not normal, almost surely along a Bernoulli measure.  It is
+not stated as an answer, it is not computable, and it handles one `P` with `f'' ≠ 0` on a shrunk
+interval.  New here: one computable `x` for **all** `P ∉ span(1, Q)` at once, across the
+inflection points of every `G_P`.
+
+## Route (the `Ω_k` engine with `Xᵏ` replaced by `Q`)
+
+* **Branch** (`IsBranch`): `|Q'| ≥ 1` on `[u, ∞)`, `u ∈ ℕ` (`exists_isBranch`).  The window
+  `[u + 1, u + 2]` has integer endpoints, `Q` is injective there, and
+  `a = 2Q(u+1) − Q(u+2)`, `c = 2(Q(u+2) − Q(u+1)) ≠ 0` send `y ∈ [1/2, 1]` onto `Q([u+1, u+2])`.
+* **Point**: `x = Q⁻¹(a + c·y)` (`brInv`), `y = cantorReal e`.  `Q(x) = a + c y` is a rational
+  affine image of a quarter-Cantor point, so not normal (`not_isNormal_rat_affine_cantorReal`).
+* **Maps**: `G_P(y) = P(Q⁻¹(a + c y))` (`GP`) is analytic near the window and
+  `G_P'' = c² · W_P(x) / Q'(x)³`, `W_P = P''Q' − P'Q''` (`wPoly`).  `W_P ≡ 0` iff
+  `(P'/Q')' ≡ 0` iff `P ∈ span_ℚ(1, Q)` (`wPoly_ne_zero_of_not_affineIn`).
+* **Cut**: `|G_P''(y)| ≥ L^{-(N+3)} Π_{z ∈ Z} |y − z|` with `|Z| ≤ N = deg W_P` and `L`
+  depending only on `Q` (`deriv2_GP_lower`), fed to the cylinder cut made uniform in `N`
+  (`pushFourier_le_of_deriv2_lower_unif`).
+* **Derandomize**: the zero count `N` is unbounded over `P`, so the decay exponent `δ_N` shrinks;
+  `FamilyDerandomize.exists_computable_absNormal_family_var` (proved) takes a per-index
+  exponent, paying only `Kc 1 δ ≤ 32/δ²` (`Kc_one_le_of_le_one`, proved).
+
+**Sibling control.**  For `P ∈ span_ℚ(1, Q)` the mechanism must fail, and does: `G_P` is
+rational affine near the window (`GP_eq_of_affineIn`), so the cut's hypothesis is unsatisfiable
+(`not_deriv2_lower_GP_of_affineIn`), and Wall makes `P(x)` non-normal
+(`not_isAbsNormal_of_affineIn`).
+
+Cited inputs: only `BakerBanajiUniformQuarterCantor` (computable form) and
+`BakerBanajiAnalyticQuarterCantor` (a.e. form), both already refereed in `ExplicitOmegaK`.
+-/
+
+open MeasureTheory Filter Topology Polynomial
+
+namespace NormalNumbers.ExplicitPQ
+
+open ExplicitSquare ExplicitOmegaK
+
+/-! ### The dichotomy condition -/
+
+/-- `P` is a rational affine function of `Q`: `P ∈ span_ℚ(1, Q)`. -/
+def AffineIn (P Q : ℤ[X]) : Prop :=
+  ∃ α β : ℚ, P.map (Int.castRingHom ℚ) = C α * Q.map (Int.castRingHom ℚ) + C β
+
+/-- The numerator of `(P ∘ Q⁻¹)''`: `W_P = P''Q' − P'Q''`. -/
+noncomputable def wPoly (P Q : ℤ[X]) : ℤ[X] :=
+  derivative (derivative P) * derivative Q - derivative P * derivative (derivative Q)
+
+theorem aeval_eq_of_affineIn {P Q : ℤ[X]} {α β : ℚ}
+    (h : P.map (Int.castRingHom ℚ) = C α * Q.map (Int.castRingHom ℚ) + C β) (x : ℝ) :
+    aeval x P = (α : ℝ) * aeval x Q + β := by
+  have := congrArg (aeval x) h
+  rw [show Int.castRingHom ℚ = algebraMap ℤ ℚ from rfl, aeval_map_algebraMap,
+    map_add, map_mul, aeval_map_algebraMap, aeval_C, aeval_C] at this
+  simpa using this
+
+/-- Zero is not normal in base 2 (its digit sequence never contains `1`). -/
+theorem not_isNormal_two_zero : ¬ IsNormal 2 0 := by
+  intro h
+  have hcount : ∀ l : List ℕ, (∀ d ∈ l, d = 0) → countOccurrences [1] l = 0 := by
+    intro l hl
+    induction l with
+    | nil => rfl
+    | cons a l ih =>
+      have ha : a = 0 := hl a (List.mem_cons_self ..)
+      have ih' := ih fun d hd => hl d (List.mem_cons_of_mem _ hd)
+      unfold countOccurrences at ih' ⊢
+      rw [List.tails_cons, List.countP_cons, ih', ha]
+      rfl
+  have hdig : ∀ i, digitOf 2 (Int.fract (0 : ℝ)) i = 0 := by
+    intro i; simp [digitOf]
+  have ht := h [1] (by simp) (by simp)
+  have h0 : (fun n : ℕ => (countOccurrences [1] ((List.range n).map
+      (digitOf 2 (Int.fract (0 : ℝ)))) : ℝ) / n) = fun _ => 0 := by
+    funext n
+    rw [hcount _ (fun d hd => by
+      obtain ⟨i, _, rfl⟩ := List.mem_map.1 hd; exact hdig i)]
+    simp
+  rw [h0] at ht
+  have := tendsto_nhds_unique ht tendsto_const_nhds
+  norm_num at this
+
+/-- A rational is not normal in base 2 (Wall moves it to `0`). -/
+theorem not_isNormal_two_ratCast (β : ℚ) : ¬ IsNormal 2 (β : ℝ) := by
+  intro h
+  have := isNormal_rat_mul_add 2 le_rfl _ 1 (-β) one_ne_zero h
+  apply not_isNormal_two_zero
+  convert this using 1
+  push_cast; ring
+
+/-- **Sharpness (Wall).**  An affine-in-`Q` polynomial inherits non-normality from `Q(x)`
+(`α = 0` gives a rational).  Proved. -/
+theorem not_isAbsNormal_of_affineIn {P Q : ℤ[X]} (h : AffineIn P Q) {x : ℝ}
+    (hx : ¬ IsNormal 2 (aeval x Q)) : ¬ IsAbsNormal (aeval x P) := by
+  obtain ⟨α, β, hαβ⟩ := h
+  intro hP
+  have h2 := hP 2 le_rfl
+  rw [aeval_eq_of_affineIn hαβ] at h2
+  by_cases hα : α = 0
+  · subst hα
+    apply not_isNormal_two_ratCast β
+    simpa using h2
+  · apply hx
+    have := isNormal_rat_mul_add 2 le_rfl _ α⁻¹ (-(β / α)) (inv_ne_zero hα) h2
+    convert this using 1
+    have hα' : (α : ℝ) ≠ 0 := by exact_mod_cast hα
+    push_cast
+    field_simp
+    ring
+
+/-- **Guard (content locator): `Q = Xᵏ` recovers `Ω_k`.**  Every `p` with `1 ≤ deg p < k` is
+outside `span_ℚ(1, Xᵏ)`, so the headline at `Q = Xᵏ` contains `exists_computable_mem_Omega`'s
+normality half.  Proved. -/
+theorem not_affineIn_X_pow (k : ℕ) (p : ℤ[X]) (h1 : 1 ≤ p.natDegree) (hk : p.natDegree < k) :
+    ¬ AffineIn p (X ^ k) := by
+  rintro ⟨α, β, h⟩
+  have hinj : Function.Injective (Int.castRingHom ℚ) := Int.cast_injective
+  have hdeg : (p.map (Int.castRingHom ℚ)).natDegree = p.natDegree :=
+    natDegree_map_eq_of_injective hinj p
+  have hk0 : k ≠ 0 := by omega
+  have hck := congrArg (fun r => r.coeff k) h
+  simp only [Polynomial.map_pow, map_X, coeff_add, coeff_C_mul, coeff_X_pow_self, mul_one,
+    coeff_C, if_neg hk0, add_zero] at hck
+  rw [coeff_eq_zero_of_natDegree_lt (by rw [hdeg]; exact hk)] at hck
+  rw [← hck, C_0, zero_mul, zero_add] at h
+  have := congrArg natDegree h
+  rw [natDegree_C, hdeg] at this
+  omega
+
+/-- **`W_P ≢ 0` off the span.**
+
+Confidence 93%.  English proof: over `ℚ`, `W_P = 0` says `P''Q' = P'Q''`, i.e.
+`(P'/Q')' = 0` as rational functions (`Q' ≠ 0` since `deg Q ≥ 1`), so `P' = αQ'` with `α ∈ ℚ`
+(a rational function with zero derivative in characteristic 0 is constant), and integrating,
+`P = αQ + β`.  Contrapositive. -/
+theorem wPoly_ne_zero_of_not_affineIn {P Q : ℤ[X]} (hQ : 0 < Q.natDegree) (hP : ¬ AffineIn P Q) :
+    wPoly P Q ≠ 0 := by
+  sorry
+
+/-! ### The branch and the maps -/
+
+/-- A branch start: `|Q'| ≥ 1` on `[u, ∞)`. -/
+def IsBranch (Q : ℤ[X]) (u : ℕ) : Prop :=
+  ∀ x : ℝ, (u : ℝ) ≤ x → 1 ≤ |aeval x (derivative Q)|
+
+/-- `a = 2Q(u+1) − Q(u+2)`. -/
+noncomputable def aQ (Q : ℤ[X]) (u : ℕ) : ℤ := 2 * Q.eval ((u : ℤ) + 1) - Q.eval ((u : ℤ) + 2)
+
+/-- `c = 2(Q(u+2) − Q(u+1))`, so `y ↦ a + c y` maps `[1/2, 1]` onto `[Q(u+1), Q(u+2)]`. -/
+noncomputable def cQ (Q : ℤ[X]) (u : ℕ) : ℤ := 2 * (Q.eval ((u : ℤ) + 2) - Q.eval ((u : ℤ) + 1))
+
+/-- The branch inverse of `Q` on `(u, ∞)`. -/
+noncomputable def brInv (Q : ℤ[X]) (u : ℕ) (w : ℝ) : ℝ :=
+  Function.invFunOn (fun x : ℝ => aeval x Q) (Set.Ioi (u : ℝ)) w
+
+/-- `G_P(y) = P(Q⁻¹(a + c y))`. -/
+noncomputable def GP (Q : ℤ[X]) (u : ℕ) (P : ℤ[X]) (y : ℝ) : ℝ :=
+  aeval (brInv Q u ((aQ Q u : ℝ) + (cQ Q u : ℝ) * y)) P
+
+/-- The witness `x = Q⁻¹(a + c · cantorReal e)`. -/
+noncomputable def xPQ (Q : ℤ[X]) (u : ℕ) (e : ℕ → Bool) : ℝ :=
+  brInv Q u ((aQ Q u : ℝ) + (cQ Q u : ℝ) * cantorReal e)
+
+theorem GP_cantorReal (Q : ℤ[X]) (u : ℕ) (P : ℤ[X]) (e : ℕ → Bool) :
+    GP Q u P (cantorReal e) = aeval (xPQ Q u e) P := rfl
+
+/-- **A branch exists.**
+
+Confidence 95%.  English proof: `Q' ≠ 0` has integer leading coefficient `ℓ`, `|ℓ| ≥ 1`, and
+degree `d − 1`.  With `B = Σ_j |coeff_j Q'|`, for `x ≥ B + 1` we get
+`|Q'(x)| ≥ |ℓ| x^{d−1} − (B − |ℓ|) x^{d−2} ≥ x^{d−2}(x − B) ≥ 1` (for `d = 1`, `Q' = ℓ`). -/
+theorem exists_isBranch (Q : ℤ[X]) (hQ : 0 < Q.natDegree) : ∃ u : ℕ, IsBranch Q u := by
+  sorry
+
+/-- **The window and the branch inverse.**
+
+Confidence 92%.  English proof: on `[u, ∞)`, `Q'` is continuous with `|Q'| ≥ 1`, so it has a
+constant sign (IVT) and `Q` is strictly monotone there with `|Q(s) − Q(t)| ≥ |s − t|` (MVT).
+Hence `c ≠ 0` (`|c| ≥ 2`), `Q` is injective on `[u+1, u+2]`, and for `y` in a small open
+neighbourhood `U` of `[1/2, 1]` the value `a + c y` lies in `Q((u, ∞))` (an open interval by
+IVT, containing `[Q(u+1), Q(u+2)]` in its interior); `invFunOn` then returns its unique preimage
+in `(u, ∞)`, which lies in `[u+1, u+2]` when `y ∈ [1/2, 1]` (endpoints `y = 1/2 ↦ u+1`,
+`y = 1 ↦ u+2`, monotonicity). -/
+theorem branch_spec {Q : ℤ[X]} {u : ℕ} (hu : IsBranch Q u) :
+    cQ Q u ≠ 0 ∧ Set.InjOn (fun x : ℝ => aeval x Q) (Set.Icc ((u : ℝ) + 1) ((u : ℝ) + 2)) ∧
+    ∃ U : Set ℝ, IsOpen U ∧ Set.Icc (1 / 2 : ℝ) 1 ⊆ U ∧
+      (∀ y ∈ U, aeval (brInv Q u ((aQ Q u : ℝ) + (cQ Q u : ℝ) * y)) Q =
+        (aQ Q u : ℝ) + (cQ Q u : ℝ) * y) ∧
+      ∀ y ∈ Set.Icc (1 / 2 : ℝ) 1,
+        brInv Q u ((aQ Q u : ℝ) + (cQ Q u : ℝ) * y) ∈ Set.Icc ((u : ℝ) + 1) ((u : ℝ) + 2) := by
+  sorry
+
+/-- **`G_P` is analytic near the window, uniformly in `P`.**
+
+Confidence 85%.  English proof: `Q` restricted to `(u, ∞)` has nonvanishing derivative, so it is
+a local analytic diffeomorphism and its inverse is analytic
+(`OpenPartialHomeomorph.analyticAt_symm`, from `HasStrictDerivAt.toOpenPartialHomeomorph`); on
+`branch_spec`'s `U`, `brInv` agrees with that inverse, and `G_P` is a polynomial in it composed
+with the affine `y ↦ a + c y`.  `U` does not depend on `P`. -/
+theorem analyticOnNhd_GP {Q : ℤ[X]} {u : ℕ} (hu : IsBranch Q u) :
+    ∃ U : Set ℝ, IsOpen U ∧ Set.Icc (1 / 2 : ℝ) 1 ⊆ U ∧
+      ∀ P : ℤ[X], AnalyticOnNhd ℝ (GP Q u P) U := by
+  sorry
+
+/-- **Lower bound for `G_P''` by a product of distances, explicit in the zero count.**
+
+Confidence 88%.  English proof: on the window, `G_P''(y) = c² W_P(x)/Q'(x)³` with
+`x = brInv(a + c y) ∈ [u+1, u+2]` (implicit differentiation, `branch_spec`).  Write
+`W_P = ℓ Π (X − ρ_i)` over `ℂ`, `|ℓ| ≥ 1`, `N = deg W_P` roots.  For real `x`,
+`|x − ρ| ≥ |x − Re ρ|`.  The map `y ↦ x` is monotone with `|dx/dy| = |c|/|Q'(x)| ≥ 1/M`,
+`M = 1 + max_{[u+1,u+2]} |Q'|`, so with `τ(σ)` the `y`-preimage of `σ` when `σ ∈ [u+1, u+2]`
+and the nearer window endpoint otherwise, `|x − σ| ≥ |y − τ(σ)|/M`.  So
+`|G_P''(y)| ≥ c² M^{-3} M^{-N} Π |y − τ_i| ≥ M^{-(N+3)} Π |y − τ_i|` (`c² ≥ 1`).  `L = M`
+depends only on `Q` and `u`. -/
+theorem deriv2_GP_lower {Q : ℤ[X]} {u : ℕ} (hu : IsBranch Q u) :
+    ∃ L : ℕ, 1 ≤ L ∧ ∀ P : ℤ[X], wPoly P Q ≠ 0 →
+      ∃ Z : Multiset ℝ, Z.card ≤ (wPoly P Q).natDegree ∧ ∀ t ∈ Set.Icc (1 / 2 : ℝ) 1,
+        ((L : ℝ) ^ ((wPoly P Q).natDegree + 3))⁻¹ * (Z.map fun z => |t - z|).prod ≤
+          |deriv (deriv (GP Q u P)) t| := by
+  sorry
+
+/-- **Sibling identity: `G_P` is rational affine near the window when `P ∈ span(1, Q)`.**
+Proved from `branch_spec` (`Q(brInv w) = w` on `U`) and `aeval_eq_of_affineIn`. -/
+theorem GP_eq_of_affineIn {Q P : ℤ[X]} {u : ℕ} (hu : IsBranch Q u) {α β : ℚ}
+    (h : P.map (Int.castRingHom ℚ) = C α * Q.map (Int.castRingHom ℚ) + C β) :
+    ∃ U : Set ℝ, IsOpen U ∧ Set.Icc (1 / 2 : ℝ) 1 ⊆ U ∧ ∀ y ∈ U,
+      GP Q u P y = (α : ℝ) * ((aQ Q u : ℝ) + (cQ Q u : ℝ) * y) + β := by
+  obtain ⟨-, -, U, hU, hsub, hinv, -⟩ := branch_spec hu
+  refine ⟨U, hU, hsub, fun y hy => ?_⟩
+  rw [GP, aeval_eq_of_affineIn h, hinv y hy]
+
+/-- **Known-false sibling: the cut cannot run on `P ∈ span_ℚ(1, Q)`.**  `G_P` is affine on a
+neighbourhood of the window, so `G_P'' ≡ 0` there and no lower bound `c Π |t − z|` holds
+(`not_deriv2_lower_of_deriv2_eq_zero`).  Proved from `GP_eq_of_affineIn`. -/
+theorem not_deriv2_lower_GP_of_affineIn {Q P : ℤ[X]} {u : ℕ} (hu : IsBranch Q u)
+    (h : AffineIn P Q) {c : ℝ} (hc : 0 < c) (Z : Multiset ℝ) :
+    ¬ ∀ t ∈ Set.Icc (1 / 2 : ℝ) 1, c * (Z.map fun z => |t - z|).prod ≤
+      |deriv (deriv (GP Q u P)) t| := by
+  obtain ⟨α, β, hαβ⟩ := h
+  obtain ⟨U, hU, hsub, hU'⟩ := GP_eq_of_affineIn hu hαβ
+  refine not_deriv2_lower_of_deriv2_eq_zero _ (fun t ht => ?_) hc Z
+  have hd : deriv (GP Q u P) =ᶠ[𝓝 t] fun _ => (α : ℝ) * (cQ Q u : ℝ) := by
+    filter_upwards [hU.mem_nhds (hsub ht)] with s hs
+    have hev : GP Q u P =ᶠ[𝓝 s] fun y => (α : ℝ) * ((aQ Q u : ℝ) + (cQ Q u : ℝ) * y) + β := by
+      filter_upwards [hU.mem_nhds hs] with y hy using hU' y hy
+    rw [hev.deriv_eq]
+    have : HasDerivAt (fun y => (α : ℝ) * ((aQ Q u : ℝ) + (cQ Q u : ℝ) * y) + β)
+        ((α : ℝ) * (cQ Q u : ℝ)) s := by
+      have := ((hasDerivAt_id s).const_mul (cQ Q u : ℝ)).const_add (aQ Q u : ℝ)
+      simpa using (this.const_mul (α : ℝ)).add_const (β : ℝ)
+    exact this.deriv
+  rw [hd.deriv_eq, deriv_const]
+
+/-- **Window bounds for `G_P`, `G_P'`, `G_P''` by the height.**
+
+Confidence 90%.  English proof: `x ∈ [u+1, u+2]`, so `|P(x)| ≤ hgt P (u+2)^{deg P}`.
+`G_P' = c P'(x)/Q'(x)` and `G_P'' = c²(P''Q' − P'Q'')(x)/Q'(x)³` with `|Q'(x)| ≥ 1`;
+`|P^{(j)}(x)| ≤ (deg P)^j hgt P (u+2)^{deg P} ≤ 4^{deg P} hgt P (u+2)^{deg P}` for `j ≤ 2`,
+and `|Q'|, |Q''|, |c|` are bounded on the window by a constant depending on `Q, u` only;
+absorb everything into `L^{deg P + 1}` with `L ≥ 4(u+2) · (1 + |c|)² · (1 + max|Q'| + max|Q''|)`. -/
+theorem GP_bounds {Q : ℤ[X]} {u : ℕ} (hu : IsBranch Q u) :
+    ∃ L : ℕ, 1 ≤ L ∧ ∀ P : ℤ[X], ∀ t ∈ Set.Icc (1 / 2 : ℝ) 1,
+      |GP Q u P t| ≤ (hgt P : ℝ) * ((u : ℝ) + 2) ^ P.natDegree ∧
+      |deriv (GP Q u P) t| ≤ (L : ℝ) ^ (P.natDegree + 1) * hgt P ∧
+      |deriv (deriv (GP Q u P)) t| ≤ (L : ℝ) ^ (P.natDegree + 1) * hgt P := by
+  sorry
+
+/-- **The cylinder cut, uniform in the zero count.**  `pushFourier_le_of_deriv2_lower` with its
+constants made explicit in `N` (new lemma; the existing one is untouched).
+
+Confidence 85%.  English proof: rerun `pushFourier_le_of_deriv2_lower`'s proof keeping track of
+`N`.  With BB's `C, η, κ` (`pushFourier_le_of_deriv2_ge`), the depth exponent is
+`ε = η / (4κ(N+2))`, the output exponent `δ = min(η/2, ε/2) ≥ δ₀/(N+1)` for
+`δ₀ = min(η/2, η/(16κ))`, and the constant `K ≥ max(2⌈κ⌉, C 4^{κ+2} + 12N + 1)` is at most
+`K₀ (N + 1)` for `K₀ = max(2⌈κ⌉, ⌈C 4^{κ+2}⌉ + 13)`.  Enlarging the exponent of `(1 + c⁻¹)` from
+`2⌈κ⌉` to `K₀(N+1)` only weakens the bound. -/
+theorem pushFourier_le_of_deriv2_lower_unif (hBB : BakerBanajiUniformQuarterCantor) :
+    ∃ K₀ : ℕ, 0 < K₀ ∧ ∃ δ₀ : ℝ, 0 < δ₀ ∧ δ₀ ≤ 1 ∧ ∀ N : ℕ,
+      ∀ F : ℝ → ℝ, ∀ U : Set ℝ, IsOpen U → Set.Icc (1 / 2 : ℝ) 1 ⊆ U → ContDiffOn ℝ 2 F U →
+      ∀ c A : ℝ, 0 < c →
+      (∀ t ∈ Set.Icc (1 / 2 : ℝ) 1, |deriv F t| ≤ A) →
+      (∀ t ∈ Set.Icc (1 / 2 : ℝ) 1, |deriv (deriv F) t| ≤ A) →
+      ∀ Z : Multiset ℝ, Z.card ≤ N →
+      (∀ t ∈ Set.Icc (1 / 2 : ℝ) 1, c * (Z.map fun z => |t - z|).prod ≤ |deriv (deriv F) t|) →
+      ∀ ξ : ℝ, ξ ≠ 0 → ‖pushFourier F ξ‖ ≤
+        (K₀ * (N + 1) : ℝ) * (1 + A) * (1 + c⁻¹) ^ (K₀ * (N + 1)) * |ξ| ^ (-(δ₀ / (N + 1))) := by
+  sorry
+
+/-! ### The family over all `P ∉ span(1, Q)` -/
+
+open Classical in
+/-- Index `i` → the decoded polynomial when it lies off `span(1, Q)` (tested by `wPoly ≠ 0`),
+and the default `X^{deg Q + 1}` otherwise. -/
+noncomputable def polyOfCodeQ (Q : ℤ[X]) (i : ℕ) : ℤ[X] :=
+  match (Encodable.decode i : Option (List ℤ)) with
+  | some l => if wPoly (polyOfList l) Q ≠ 0 then polyOfList l else X ^ (Q.natDegree + 1)
+  | none => X ^ (Q.natDegree + 1)
+
+/-- The default is off the span: `deg X^{d+1} > deg(αQ + β)`.  Proved. -/
+theorem not_affineIn_X_pow_succ (Q : ℤ[X]) : ¬ AffineIn (X ^ (Q.natDegree + 1)) Q := by
+  rintro ⟨α, β, h⟩
+  have hinj : Function.Injective (Int.castRingHom ℚ) := Int.cast_injective
+  have hdeg : (Q.map (Int.castRingHom ℚ)).natDegree = Q.natDegree :=
+    natDegree_map_eq_of_injective hinj Q
+  have hck := congrArg (fun r => r.coeff (Q.natDegree + 1)) h
+  simp only [Polynomial.map_pow, map_X, coeff_X_pow_self, coeff_add, coeff_C_mul, coeff_C,
+    if_neg (Nat.succ_ne_zero _), add_zero] at hck
+  rw [coeff_eq_zero_of_natDegree_lt (by rw [hdeg]; omega), mul_zero] at hck
+  exact one_ne_zero hck
+
+theorem exists_polyOfCodeQ_eq {Q : ℤ[X]} (hQ : 0 < Q.natDegree) {P : ℤ[X]}
+    (hP : ¬ AffineIn P Q) : ∃ i, polyOfCodeQ Q i = P := by
+  refine ⟨Encodable.encode ((List.range (P.natDegree + 1)).map P.coeff), ?_⟩
+  simp only [polyOfCodeQ, Encodable.encodek, polyOfList_coeffs,
+    if_pos (wPoly_ne_zero_of_not_affineIn hQ hP)]
+
+theorem wPoly_polyOfCodeQ_ne_zero {Q : ℤ[X]} (hQ : 0 < Q.natDegree) (i : ℕ) :
+    wPoly (polyOfCodeQ Q i) Q ≠ 0 := by
+  classical
+  unfold polyOfCodeQ
+  split
+  · split_ifs with h
+    · exact h
+    · exact wPoly_ne_zero_of_not_affineIn hQ (not_affineIn_X_pow_succ Q)
+  · exact wPoly_ne_zero_of_not_affineIn hQ (not_affineIn_X_pow_succ Q)
+
+/-- Normalising height: `|G_P| ≤ HQ − 1` on the window, `HQ ≥ 1`. -/
+noncomputable def HQ (u : ℕ) (P : ℤ[X]) : ℕ := hgt P * (u + 2) ^ P.natDegree + 1
+
+/-- The normalised family `(G_P(y) + H)/(2H) ∈ [0, 1]`, `P = polyOfCodeQ Q i`. -/
+noncomputable def GPfam (Q : ℤ[X]) (u i : ℕ) (ω : ℕ → Bool) : ℝ :=
+  (GP Q u (polyOfCodeQ Q i) (cantorReal ω) + HQ u (polyOfCodeQ Q i)) /
+    (2 * HQ u (polyOfCodeQ Q i))
+
+/-- Confidence 92%.  English proof: `GP Q u P` is continuous on `branch_spec`'s open `U`
+(`analyticOnNhd_GP`), `cantorReal` is measurable with values in the window `⊆ U`
+(`cantorReal_mem_window`), and a function continuous on an open set containing the range of a
+measurable map composes measurably (restrict to the subtype, or replace `GP` by
+`U.piecewise GP 0`, which agrees on the range). -/
+theorem measurable_GPfam {Q : ℤ[X]} {u : ℕ} (hu : IsBranch Q u) (i : ℕ) :
+    Measurable (GPfam Q u i) := by
+  sorry
+
+/-- **Computable lower approximations of the normalised family with exact primitive recursive
+floors** (the analogue of `approx_Gfam`, with bisection for `Q⁻¹`).
+
+Confidence 85%.  English proof: a length-`D` prefix fixes `y` up to `4^{-D}/6`, and `|GPfam'| ≤
+L^{deg P+1} hgt P / (2 HQ)` on the window (`GP_bounds`), so `GPfam` moves by at most
+`2^{-D}/3 · 2^{-(deg P + 1) log₂ L}`-scaled amounts; take `D' = D + (deg P + 1)⌈log₂ L⌉ + 3`
+coin digits instead.  Compute `x_lo = brInv(a + c y_lo)` to precision `2^{-M}` by `M` steps of
+bisection on `[u+1, u+2]` using exact integer evaluation of `Q` at dyadics (valid by
+monotonicity, `branch_spec`), then `P(x_lo)` exactly as a dyadic, with `|P'| ≤ L^{deg P+1} hgt P`
+on the window controlling the error.  As in `approx_Gfam`, `A = max 0 (R − 2^{-D}/2)` is a
+rational with primitive recursive numerator/denominator (all bounds primitive recursive in the
+decoded coefficient list and the fixed data `Q, u, L`), which gives the two-sided bracket.
+The validity test `wPoly (polyOfList l) Q ≠ 0` is a primitive recursive test on coefficient
+lists. -/
+theorem approx_GPfam {Q : ℤ[X]} {u : ℕ} (hu : IsBranch Q u) (hQ : 0 < Q.natDegree) :
+    ∃ (Ψ : ℕ → ℕ → ℕ → List Bool → ℕ) (A : ℕ → List Bool → ℝ),
+      (Primrec fun x : ℕ × ℕ × ℕ × List Bool => Ψ x.1 x.2.1 x.2.2.1 x.2.2.2) ∧
+      (∀ i b m p, Ψ i b m p = ⌊A i p * (b : ℝ) ^ m⌋₊) ∧ (∀ i p, 0 ≤ A i p) ∧
+      ∀ i ω D, A i (Derandomize.pre ω D) ≤ GPfam Q u i ω ∧
+        GPfam Q u i ω ≤ A i (Derandomize.pre ω D) + (1 / 2 : ℝ) ^ D := by
+  sorry
+
+/-- **Uniform decay data for the family: primitive recursive constants, per-index exponent.**
+
+Confidence 85%.  English proof: for index `i` with `P = polyOfCodeQ Q i`, put
+`N_i = (decoded list length) + deg Q` (primitive recursive, `≥ deg W_P` since
+`deg W_P ≤ deg P + deg Q − 3`).  `pushFourier_le_of_deriv2_lower_unif` with `N = N_i`,
+`c = L^{-(N_i+3)}` (`deriv2_GP_lower`, using `wPoly_polyOfCodeQ_ne_zero`),
+`A = L^{deg P + 1} hgt P` (`GP_bounds`), `U` from `analyticOnNhd_GP`, gives
+`‖pushFourier (GP Q u P) ξ‖ ≤ K₀(N_i+1)(1 + A)(1 + L^{N_i+3})^{K₀(N_i+1)} |ξ|^{-δ₀/(N_i+1)}`.
+Normalising as in `decay_Gfam` (`∫ e(ξ GPfam) = e(ξ/2) pushFourier GP (ξ/(2H))`, `coins =
+coinMeasure`) costs a factor `2H`, `H = HQ u P ≤` the primitive recursive `hgtBound`-type bound,
+and `|ξ| < 1` is covered by adding `1`.  So `δ i = δ₀/(N_i + 1) ≤ 1`, `c i` is primitive
+recursive, and `κ i = 32 ⌈δ₀⁻¹⌉² (N_i+1)²` bounds `Kc 1 (δ i)` (`Kc_one_le_of_le_one`). -/
+theorem decay_GPfam (hBB : BakerBanajiUniformQuarterCantor) {Q : ℤ[X]} {u : ℕ}
+    (hu : IsBranch Q u) (hQ : 0 < Q.natDegree) :
+    ∃ c : ℕ → ℕ, Primrec c ∧ ∃ δ : ℕ → ℝ, (∀ i, 0 < δ i) ∧ ∃ κ : ℕ → ℕ, Primrec κ ∧
+      (∀ i, ComputableNormal.Kc 1 (δ i) ≤ κ i) ∧ ∀ i, ∀ ξ : ℝ, ξ ≠ 0 →
+        ‖∫ ω, DecayAeNormal.ee (ξ * GPfam Q u i ω) ∂Derandomize.coins‖ ≤ c i * |ξ| ^ (-δ i) := by
+  sorry
+
+/-- **Simultaneous derandomization: one computable `e` making every `G_P(y)`,
+`P ∉ span(1, Q)`, normal in every base.**  Wiring proved: the per-index derandomizer on the
+normalised family, then every `P` has an index and Wall undoes the normalisation. -/
+theorem exists_computable_isAbsNormal_GP (hBB : BakerBanajiUniformQuarterCantor) {Q : ℤ[X]}
+    {u : ℕ} (hu : IsBranch Q u) (hQ : 0 < Q.natDegree) :
+    ∃ e : ℕ → Bool, Computable e ∧ ∀ P : ℤ[X], ¬ AffineIn P Q →
+      IsAbsNormal (GP Q u P (cantorReal e)) := by
+  obtain ⟨Ψ, A, hΨp, hΨ, hA0, hAG⟩ := approx_GPfam hu hQ
+  obtain ⟨c, hc, δ, hδ, κ, hκ, hκδ, hdec⟩ := decay_GPfam hBB hu hQ
+  obtain ⟨e, hce, hn⟩ := FamilyDerandomize.exists_computable_absNormal_family_var Ψ hΨp A hΨ
+    hA0 (GPfam Q u) (measurable_GPfam hu) hAG c hc δ hδ κ hκ hκδ hdec
+  refine ⟨e, hce, fun P hP b hb => ?_⟩
+  obtain ⟨i, hi⟩ := exists_polyOfCodeQ_eq hQ hP
+  have hq : ((2 * HQ u P : ℕ) : ℚ) ≠ 0 := by
+    have : 1 ≤ HQ u P := Nat.le_add_left 1 _
+    exact_mod_cast (show 2 * HQ u P ≠ 0 by omega)
+  have h := isNormal_rat_mul_add b hb _ ((2 * HQ u P : ℕ) : ℚ) (-(HQ u P : ℚ)) hq (hn i b hb)
+  have hH : (0 : ℝ) < HQ u P := by exact_mod_cast Nat.succ_pos _
+  convert h using 1
+  simp only [GPfam, hi]
+  push_cast
+  field_simp
+  ring
+
+/-- **`x` is a computable real.**
+
+Confidence 85%.  English proof: `e` computable gives dyadic approximations of `y = cantorReal e`
+(`4^{-D}` from a length-`D` prefix), hence of `w = a + c y`; bisection on `[u+1, u+2]` with exact
+integer evaluation of `Q` at dyadics locates `Q⁻¹` to the matching precision (monotone branch,
+`|Q'| ≥ 1`, so `|Q⁻¹(w) − Q⁻¹(w')| ≤ |w − w'|`). -/
+theorem exists_computable_approx_xPQ {Q : ℤ[X]} {u : ℕ} (hu : IsBranch Q u) {e : ℕ → Bool}
+    (he : Computable e) :
+    ∃ f : ℕ → ℤ, Computable f ∧ ∀ n : ℕ, |xPQ Q u e - f n / 2 ^ n| ≤ (1 / 2 : ℝ) ^ n := by
+  sorry
+
+/-! ### The headlines -/
+
+/-- **Manai 2606.08325 §1.1, answered (computable form, sharp).**  For every non-constant
+`Q ∈ ℤ[X]` there is one computable real `x`, on an explicit monotone branch of `Q`, with
+`Q(x) = a + c · cantorReal e` (`e` computable, `a, c ∈ ℤ`, `c ≠ 0`) not normal in base 2, and for
+every `P ∈ ℤ[X]`: `P(x)` is absolutely normal **iff** `P ∉ span_ℚ(1, Q)`.
+
+Wiring proved: `exists_isBranch`, `branch_spec`, `exists_computable_isAbsNormal_GP`,
+`exists_computable_approx_xPQ`, `not_isNormal_rat_affine_cantorReal`,
+`not_isAbsNormal_of_affineIn`. -/
+theorem exists_computable_PQ (hBB : BakerBanajiUniformQuarterCantor) (Q : ℤ[X])
+    (hQ : 0 < Q.natDegree) :
+    ∃ (u : ℕ) (a c : ℤ) (e : ℕ → Bool) (x : ℝ), Computable e ∧ c ≠ 0 ∧
+      x ∈ Set.Icc ((u : ℝ) + 1) ((u : ℝ) + 2) ∧
+      Set.InjOn (fun z : ℝ => aeval z Q) (Set.Icc ((u : ℝ) + 1) ((u : ℝ) + 2)) ∧
+      aeval x Q = (a : ℝ) + c * cantorReal e ∧
+      (∃ f : ℕ → ℤ, Computable f ∧ ∀ n : ℕ, |x - f n / 2 ^ n| ≤ (1 / 2 : ℝ) ^ n) ∧
+      ¬ IsNormal 2 (aeval x Q) ∧
+      ∀ P : ℤ[X], IsAbsNormal (aeval x P) ↔ ¬ AffineIn P Q := by
+  obtain ⟨u, hu⟩ := exists_isBranch Q hQ
+  obtain ⟨hc0, hinj, U, -, hsub, hinv, hmem⟩ := branch_spec hu
+  obtain ⟨e, hce, hP⟩ := exists_computable_isAbsNormal_GP hBB hu hQ
+  have hy := cantorReal_mem_window e
+  have hQx : aeval (xPQ Q u e) Q = (aQ Q u : ℝ) + (cQ Q u : ℝ) * cantorReal e :=
+    hinv _ (hsub hy)
+  have hnn : ¬ IsNormal 2 (aeval (xPQ Q u e) Q) := by
+    rw [hQx]
+    have h := not_isNormal_rat_affine_cantorReal e (cQ Q u : ℚ) (aQ Q u : ℚ)
+      (by exact_mod_cast hc0)
+    intro h'; apply h
+    convert h' using 1
+    push_cast; ring
+  refine ⟨u, aQ Q u, cQ Q u, e, xPQ Q u e, hce, hc0, hmem _ hy, hinj, hQx,
+    exists_computable_approx_xPQ hu hce, hnn, fun P => ⟨fun hN hA => ?_, fun hA => ?_⟩⟩
+  · exact not_isAbsNormal_of_affineIn hA hnn hN
+  · exact hP P hA
+
+/-- **The a.e. form**, from the analytic Baker–Banaji corollary (as `ae_mem_Omega`): almost every
+quarter-Cantor `y` gives such an `x`.  Wiring proved: `analyticOnNhd_GP`, `deriv2_GP_lower` (for
+`G_P'' ≢ 0` on the window), a countable intersection over `P`, `branch_spec`. -/
+theorem exists_PQ_of_analytic (hBB : BakerBanajiAnalyticQuarterCantor) (Q : ℤ[X])
+    (hQ : 0 < Q.natDegree) :
+    ∃ x : ℝ, ¬ IsNormal 2 (aeval x Q) ∧ ∀ P : ℤ[X], ¬ AffineIn P Q → IsAbsNormal (aeval x P) := by
+  obtain ⟨u, hu⟩ := exists_isBranch Q hQ
+  obtain ⟨hc0, -, U₁, -, hsub₁, hinv, -⟩ := branch_spec hu
+  obtain ⟨U, hU, hsub, han⟩ := analyticOnNhd_GP hu
+  obtain ⟨L, hL, hlow⟩ := deriv2_GP_lower hu
+  have hne : ∀ P : ℤ[X], ¬ AffineIn P Q →
+      ∃ t ∈ Set.Icc (1 / 2 : ℝ) 1, deriv (deriv (GP Q u P)) t ≠ 0 := by
+    intro P hP
+    obtain ⟨Z, -, hZ⟩ := hlow P (wPoly_ne_zero_of_not_affineIn hQ hP)
+    by_contra hall
+    push Not at hall
+    have hc : (0 : ℝ) < ((L : ℝ) ^ ((wPoly P Q).natDegree + 3))⁻¹ := by
+      have : (0 : ℝ) < L := by exact_mod_cast hL
+      positivity
+    exact not_deriv2_lower_of_deriv2_eq_zero _ hall hc Z hZ
+  have hae : ∀ P : ℤ[X], ∀ᵐ ω ∂coinMeasure, ¬ AffineIn P Q →
+      IsAbsNormal (GP Q u P (cantorReal ω)) := by
+    intro P
+    by_cases hP : AffineIn P Q
+    · exact Eventually.of_forall fun ω h => absurd hP h
+    · filter_upwards [hBB (GP Q u P) U hU hsub (han P) (hne P hP)] with ω hω
+      exact fun _ => hω
+  obtain ⟨ω, hω⟩ := (ae_all_iff.2 hae).exists
+  have hy := cantorReal_mem_window ω
+  refine ⟨xPQ Q u ω, ?_, fun P hP => hω P hP⟩
+  rw [show aeval (xPQ Q u ω) Q = (aQ Q u : ℝ) + (cQ Q u : ℝ) * cantorReal ω from
+    hinv _ (hsub₁ hy)]
+  have h := not_isNormal_rat_affine_cantorReal ω (cQ Q u : ℚ) (aQ Q u : ℚ)
+    (by exact_mod_cast hc0)
+  intro h'; apply h
+  convert h' using 1
+  push_cast; ring
+
+end NormalNumbers.ExplicitPQ
