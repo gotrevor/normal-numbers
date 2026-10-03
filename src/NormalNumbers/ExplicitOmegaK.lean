@@ -6,6 +6,7 @@ Authors: Trevor Morris
 import NormalNumbers.ExplicitSquareNonNormal
 import NormalNumbers.OmegaKCalculus
 import NormalNumbers.SqrtCantorAbs
+import NormalNumbers.DigitCantor
 
 /-!
 # Manai's algebraic normality degree: explicit points of `Ω_k`
@@ -415,7 +416,177 @@ def BakerBanajiAnalytic : Prop :=
 points `1/2 ≠ 2/3` (`docs/BAKER-BANAJI-REFEREE-2026-10-02.md`); transfer `∀ᵐ` along the map. -/
 theorem bakerBanajiAnalyticQuarterCantor_of_general (h : BakerBanajiAnalytic) :
     BakerBanajiAnalyticQuarterCantor := by
-  sorry
+  have hBB := h
+  intro F U hU hsub hF hF''
+  have hmc := CantorSelfSimilar.measurable_cantorReal
+  have hss : IsSelfSimilarOnWindow (coinMeasure.map cantorReal) := by
+    refine ⟨2, fun _ => 1 / 4, fun a => 3 / 8 + (if a = 1 then 1 / 8 else 0),
+      fun _ => 2⁻¹, ?_, ?_, ?_, ?_, ⟨0, 1, by norm_num⟩, ?_⟩
+    · intro _; norm_num [abs_of_pos]
+    · intro _; simp
+    · simp only [Fin.sum_univ_two, ENNReal.inv_two_add_inv_two]
+    · intro a t ht
+      obtain ⟨h1, h2⟩ := ht
+      dsimp only
+      split_ifs <;> constructor <;> linarith
+    · ext A hA
+      have hps : ∀ c, Measurable (CantorSelfSimilar.psi c) := fun c => by
+        unfold CantorSelfSimilar.psi; fun_prop
+      have hm : ∀ (a : Fin 2) (c : Bool), (c = true ↔ a = 1) →
+          (coinMeasure.map cantorReal).map (fun t => 1 / 4 * t + (3 / 8 +
+            (if a = 1 then 1 / 8 else 0))) A =
+          (coinMeasure.map (CantorSelfSimilar.consB c)) (cantorReal ⁻¹' A) := by
+        intro a c hc
+        have hfm : Measurable (fun t : ℝ => 1 / 4 * t + (3 / 8 +
+            (if a = 1 then (1 : ℝ) / 8 else 0))) := by fun_prop
+        rw [Measure.map_apply hfm hA, Measure.map_apply hmc (hfm hA),
+          Measure.map_apply (CantorSelfSimilar.measurable_consB c) (hmc hA)]
+        congr 1; ext ω
+        simp only [Set.mem_preimage, CantorSelfSimilar.cantorReal_consB,
+          CantorSelfSimilar.psi]
+        have he : (1 / 2 + if c = true then (1 : ℝ) / 8 else 0) + (cantorReal ω - 1 / 2) / 4 =
+            1 / 4 * cantorReal ω + (3 / 8 + if a = 1 then 1 / 8 else 0) := by
+          by_cases h : a = 1 <;> simp [h, hc] <;> ring
+        rw [he]
+      rw [Measure.finsetSum_apply, Fin.sum_univ_two, Measure.smul_apply, Measure.smul_apply,
+        smul_eq_mul, smul_eq_mul, hm 0 false (by decide), hm 1 true (by decide),
+        Measure.map_apply hmc hA]
+      conv_lhs => rw [CantorSelfSimilar.coinMeasure_eq]
+      simp only [Measure.add_apply, Measure.smul_apply, smul_eq_mul]
+      ring
+  have h := hBB (coinMeasure.map cantorReal) (Measure.isProbabilityMeasure_map hmc.aemeasurable)
+    hss F U hU hsub hF hF''
+  exact ae_of_ae_map hmc.aemeasurable h
+
+/-- The missing-digit measure `DigitCantor.nu m` (base `m + 2`, digits `{0, …, m}`) is
+self-similar on the window: maps `f_a t = t/(m+2) + 1/2 + (a − 1)/(2(m+2))`, weights `1/(m+1)`,
+fixed points of `f_0, f_1` distinct. -/
+theorem isSelfSimilarOnWindow_nu (m : ℕ) (hm : 1 ≤ m) :
+    IsSelfSimilarOnWindow (DigitCantor.nu m) := by
+  have hB : (0 : ℝ) < m + 2 := by positivity
+  refine ⟨m + 1, fun _ => 1 / (m + 2 : ℝ), fun a => 1 / 2 + ((a : ℕ) - 1 : ℝ) / (2 * (m + 2)),
+    fun _ => ((m + 1 : ℕ) : ENNReal)⁻¹, ?_, ?_, DigitCantor.card_inv_sum, ?_, ?_,
+    DigitCantor.nu_eq_sum_map⟩
+  · intro _
+    refine ⟨by positivity, ?_⟩
+    rw [abs_of_pos (by positivity), div_lt_one hB]
+    linarith
+  · intro _; simp
+  · intro a t ht
+    have ha : ((a : ℕ) : ℝ) ≤ m := by exact_mod_cast Nat.lt_succ_iff.1 a.isLt
+    have hkey : 1 / (m + 2 : ℝ) * t + (1 / 2 + ((a : ℕ) - 1 : ℝ) / (2 * (m + 2))) =
+        1 / 2 + (2 * t + (a : ℕ) - 1) / (2 * (m + 2)) := by
+      field_simp; ring
+    rw [hkey]
+    obtain ⟨ht1, ht2⟩ := ht
+    have hn : 0 ≤ (2 * t + (a : ℕ) - 1) / (2 * (m + 2)) :=
+      div_nonneg (by linarith [((a : ℕ).cast_nonneg : (0 : ℝ) ≤ (a : ℕ))]) (by positivity)
+    have hu : (2 * t + (a : ℕ) - 1) / (2 * (m + 2)) ≤ 1 / 2 := by
+      rw [div_le_iff₀ (by positivity)]; linarith
+    constructor <;> linarith
+  · refine ⟨⟨0, by omega⟩, ⟨1, by omega⟩, ?_⟩
+    have hr : (1 : ℝ) - 1 / (m + 2) ≠ 0 := by
+      have : 1 / (m + 2 : ℝ) < 1 := by rw [div_lt_one hB]; linarith
+      intro h; linarith
+    intro h
+    rw [div_left_inj' hr] at h
+    simp at h
+    linarith
+
+/-- `ν_m`-a.e. `y` has `y^{1/k} ∈ Ω_k` (the `ae_mem_Omega` argument, on `ν_m`). -/
+theorem ae_digit_mem_Omega (hBB : BakerBanajiAnalytic) (k : ℕ) (hk : 2 ≤ k) (m : ℕ)
+    (hm : 1 ≤ m) :
+    ∀ᵐ ω ∂DigitCantor.digitMeasure m, DigitCantor.yReal m ω ^ ((k : ℝ)⁻¹) ∈ Omega k := by
+  have hp : ∀ p : ℤ[X], ∀ᵐ ω ∂DigitCantor.digitMeasure m,
+      1 ≤ p.natDegree → p.natDegree < k → IsAbsNormal (Gk k p (DigitCantor.yReal m ω)) := by
+    intro p
+    by_cases hlow : 1 ≤ p.natDegree ∧ p.natDegree < k
+    · have h := hBB (DigitCantor.nu m) inferInstance (isSelfSimilarOnWindow_nu m hm) (Gk k p)
+        (Set.Ioi 0) isOpen_Ioi window_sub_Ioi (analyticOnNhd_Gk k p)
+        (exists_deriv2_Gk_ne_zero k p hlow.1 hlow.2)
+      filter_upwards [ae_of_ae_map DigitCantor.measurable_yReal.aemeasurable h] with ω hω
+      exact fun _ _ => hω
+    · exact Eventually.of_forall fun ω h1 h2 => absurd ⟨h1, h2⟩ hlow
+  filter_upwards [ae_all_iff.2 hp] with ω hω
+  have hy0 : 0 ≤ DigitCantor.yReal m ω := by
+    linarith [(DigitCantor.yReal_mem_Icc ω).1]
+  refine mem_Omega_of (by omega) (fun p h1 h2 => hω p h1 h2) ⟨X ^ k, by simp, ?_⟩
+  rw [show aeval (DigitCantor.yReal m ω ^ ((k : ℝ)⁻¹)) (X ^ k : ℤ[X]) = DigitCantor.yReal m ω by
+    simp [Real.rpow_inv_natCast_pow hy0 (by omega : k ≠ 0)]]
+  exact fun h => DigitCantor.not_isNormal_yReal ω (h (m + 2) (by omega))
+
+/-- `x ↦ x^k` is `k`-Lipschitz on `[0, 1]`. -/
+theorem lipschitzOnWith_pow (k : ℕ) :
+    LipschitzOnWith (k : NNReal) (fun x : ℝ => x ^ k) (Set.Icc 0 1) := by
+  refine LipschitzOnWith.of_dist_le_mul fun x hx y hy => ?_
+  rw [Real.dist_eq, Real.dist_eq]
+  refine (abs_pow_sub_pow_le x y k).trans ?_
+  have hmx : max |x| |y| ≤ 1 := max_le (by rw [abs_of_nonneg hx.1]; exact hx.2)
+    (by rw [abs_of_nonneg hy.1]; exact hy.2)
+  have : max |x| |y| ^ (k - 1) ≤ 1 := pow_le_one₀ (le_max_of_le_left (abs_nonneg _)) hmx
+  simp only [NNReal.coe_natCast]
+  calc |x - y| * k * max |x| |y| ^ (k - 1) ≤ |x - y| * k * 1 := by gcongr
+    _ = k * |x - y| := by ring
+
+/-- **`dim_H Ω_k ≥ d`** for every `d ≤ 1` with `(m+2)^d ≤ m + 1`: mass distribution on `ν_m`,
+then the bi-Lipschitz root map. -/
+theorem le_dimH_Omega (hBB : BakerBanajiAnalytic) (k : ℕ) (hk : 2 ≤ k) (m : ℕ) (hm : 1 ≤ m)
+    (d : NNReal) (hd1 : d ≤ 1) (hd : ((m + 2 : ℕ) : ℝ) ^ (d : ℝ) ≤ m + 1) :
+    (d : ENNReal) ≤ dimH (Omega k) := by
+  set G := {ω | DigitCantor.yReal m ω ^ ((k : ℝ)⁻¹) ∈ Omega k}
+  set E := DigitCantor.yReal m '' G
+  have hE : 1 ≤ DigitCantor.nu m E := by
+    have hGc : DigitCantor.digitMeasure m Gᶜ = 0 := ae_iff.1 (ae_digit_mem_Omega hBB k hk m hm)
+    calc (1 : ENNReal) = DigitCantor.digitMeasure m Set.univ := measure_univ.symm
+      _ ≤ DigitCantor.digitMeasure m G + DigitCantor.digitMeasure m Gᶜ := by
+          rw [← Set.union_compl_self G]; exact measure_union_le _ _
+      _ = DigitCantor.digitMeasure m G := by rw [hGc, add_zero]
+      _ ≤ DigitCantor.digitMeasure m (DigitCantor.yReal m ⁻¹' E) :=
+          measure_mono (Set.subset_preimage_image _ _)
+      _ ≤ DigitCantor.nu m E := Measure.le_map_apply DigitCantor.measurable_yReal.aemeasurable E
+  have h1 := DigitCantor.le_dimH_of_one_le_nu d hd1 hd E hE
+  set R := (fun t : ℝ => t ^ ((k : ℝ)⁻¹)) '' E
+  have hk0 : k ≠ 0 := by omega
+  have hRsub : R ⊆ Set.Icc 0 1 := by
+    rintro _ ⟨_, ⟨ω, -, rfl⟩, rfl⟩
+    have hy := DigitCantor.yReal_mem_Icc ω
+    exact ⟨Real.rpow_nonneg (by linarith [hy.1]) _,
+      Real.rpow_le_one (by linarith [hy.1]) hy.2 (by positivity)⟩
+  have hRΩ : R ⊆ Omega k := by
+    rintro _ ⟨_, ⟨ω, hω, rfl⟩, rfl⟩
+    exact hω
+  have hER : E ⊆ (fun x : ℝ => x ^ k) '' R := by
+    rintro _ ⟨ω, hω, rfl⟩
+    refine ⟨_, ⟨_, ⟨ω, hω, rfl⟩, rfl⟩, ?_⟩
+    exact Real.rpow_inv_natCast_pow (by linarith [(DigitCantor.yReal_mem_Icc ω).1]) hk0
+  calc (d : ENNReal) ≤ dimH E := h1
+    _ ≤ dimH ((fun x : ℝ => x ^ k) '' R) := dimH_mono hER
+    _ ≤ dimH R := ((lipschitzOnWith_pow k).mono hRsub).dimH_image_le
+    _ ≤ dimH (Omega k) := dimH_mono hRΩ
+
+/-- `(2^L)^{(L−1)/L} = 2^{L−1} ≤ 2^L − 1`: the exponent `s_L = (L−1)/L` is admissible for
+`ν_{2^L − 2}`. -/
+theorem rpow_le_of_two_pow (L : ℕ) (hL : 1 ≤ L) :
+    (((2 ^ L - 2 + 2 : ℕ) : ℝ)) ^ (((L : ℝ) - 1) / L) ≤ ((2 ^ L - 2 : ℕ) : ℝ) + 1 := by
+  have h2L : 2 ≤ 2 ^ L := by
+    calc 2 = 2 ^ 1 := rfl
+      _ ≤ 2 ^ L := Nat.pow_le_pow_right (by norm_num) hL
+  have hc : ((2 ^ L - 2 + 2 : ℕ) : ℝ) = (2 : ℝ) ^ L := by
+    rw [Nat.sub_add_cancel h2L]; push_cast; ring
+  have hLr : (0 : ℝ) < L := by exact_mod_cast hL
+  rw [hc, ← Real.rpow_natCast, ← Real.rpow_mul (by norm_num),
+    show (L : ℝ) * (((L : ℝ) - 1) / L) = ((L - 1 : ℕ) : ℝ) by
+      rw [Nat.cast_sub hL]; field_simp; push_cast; ring,
+    Real.rpow_natCast]
+  have hm : ((2 ^ L - 2 : ℕ) : ℝ) + 1 = ((2 ^ L - 1 : ℕ) : ℝ) := by
+    rw [Nat.cast_sub h2L, Nat.cast_sub (by omega)]; push_cast; ring
+  rw [hm]
+  have : 2 ^ (L - 1) ≤ 2 ^ L - 1 := by
+    have h := Nat.pow_le_pow_right (show 0 < 2 by norm_num) (show L - 1 + 1 = L by omega).le
+    have : 2 ^ L = 2 * 2 ^ (L - 1) := by rw [← pow_succ']; congr 1; omega
+    have : 1 ≤ 2 ^ (L - 1) := Nat.one_le_two_pow
+    omega
+  exact_mod_cast this
 
 /-- **Manai's problem, dimension part: `dim_H Ω_k = 1` for every `k ≥ 2`.**
 
@@ -430,6 +601,37 @@ Every `y` in its support has base-`2^L` digit `2^L − 1` with frequency `0` exc
 bi-Lipschitz on the window.  Hence `dim_H Ω_k ≥ s_L → 1`; `≤ 1` since `Ω_k ⊆ ℝ`. -/
 theorem dimH_Omega_eq_one (hBB : BakerBanajiAnalytic) (k : ℕ) (hk : 2 ≤ k) :
     dimH (Omega k) = 1 := by
-  sorry
+  refine le_antisymm ((dimH_mono (Set.subset_univ _)).trans Real.dimH_univ.le) ?_
+  by_contra hlt
+  push Not at hlt
+  have hDtop : dimH (Omega k) ≠ ⊤ := ne_top_of_lt hlt
+  set D := (dimH (Omega k)).toReal
+  have hD1 : D < 1 := by
+    have := ENNReal.toReal_strict_mono ENNReal.one_ne_top hlt
+    simpa using this
+  obtain ⟨L, hL⟩ := exists_nat_gt (1 / (1 - D))
+  have hpos : 0 < 1 - D := by linarith
+  have hL1 : (1 : ℝ) < L := by
+    have : 1 ≤ 1 / (1 - D) := by
+      rw [le_div_iff₀ hpos]; linarith [ENNReal.toReal_nonneg (a := dimH (Omega k))]
+    linarith
+  have hL1n : 2 ≤ L := by exact_mod_cast hL1
+  have hLr : (0 : ℝ) < L := by linarith
+  set d : NNReal := ⟨((L : ℝ) - 1) / L, div_nonneg (by linarith) hLr.le⟩
+  have hd1 : d ≤ 1 := by
+    rw [← NNReal.coe_le_coe]; show ((L : ℝ) - 1) / L ≤ 1
+    rw [div_le_one hLr]; linarith
+  have hm : 1 ≤ 2 ^ L - 2 := by
+    have : 4 ≤ 2 ^ L := by
+      calc 4 = 2 ^ 2 := rfl
+        _ ≤ 2 ^ L := Nat.pow_le_pow_right (by norm_num) hL1n
+    omega
+  have h := le_dimH_Omega hBB k hk (2 ^ L - 2) hm d hd1 (rpow_le_of_two_pow L (by omega))
+  have h' := ENNReal.toReal_mono hDtop h
+  simp only [ENNReal.coe_toReal] at h'
+  change ((L : ℝ) - 1) / L ≤ D at h'
+  rw [div_le_iff₀ hLr] at h'
+  rw [div_lt_iff₀ hpos] at hL
+  nlinarith
 
 end NormalNumbers.ExplicitOmegaK

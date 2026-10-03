@@ -1,3 +1,14 @@
+## Manai Ω_k dimension lane (2026-10-03) — DONE
+* PROVED `ExplicitOmegaK.dimH_Omega_eq_one` from `BakerBanajiAnalytic` alone; `#print axioms` =
+  propext, Classical.choice, Quot.sound.
+* New module `DigitCantor.lean`: `nu m` = law of `1/2 + z/2`, `z` base `m+2` with i.i.d. uniform
+  digits in `{0..m}`; `nu_eq_sum_map` (self-similarity), `not_isNormal_yReal`, `sep_of_ne`
+  (digit separation), `nu_le_of_ediam_lt` / `nu_le_mul_ediam_rpow` (Frostman, `C = 2b²`, any
+  `d ≤ 1` with `b^d ≤ m+1`), `le_dimH_of_one_le_nu` (mass distribution via `le_hausdorffMeasure`).
+* Wiring in ExplicitOmegaK: `isSelfSimilarOnWindow_nu`, `ae_digit_mem_Omega`, `lipschitzOnWith_pow`,
+  `le_dimH_Omega`, `rpow_le_of_two_pow` (b = 2^L, d = (L−1)/L).
+* Also PROVED: `bakerBanajiAnalyticQuarterCantor_of_general` (law of cantorReal is self-similar on the window).
+
 ## Manai Ω_k lane (2026-10-03) — Phase 1 + Phase 2 DONE
 * `ExplicitOmegaK.Omega_nonempty` (needs only `BakerBanajiAnalyticQuarterCantor`) and
   `exists_computable_mem_Omega_two` (needs only `BakerBanajiQuarterCantor`): `#print axioms` =
