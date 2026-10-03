@@ -1124,10 +1124,135 @@ theorem measurable_GPfam {Q : ℤ[X]} {u : ℕ} (hu : IsBranch Q u) (i : ℕ) :
   unfold GPfam
   exact (h2.add_const _).div_const _
 
+/-! ### Refutation of the frozen `approx_GPfam`
+
+A length-`D` prefix pins `y` only to `4^{-D}/6`, while `GPfam` has slope `c·P'(x)/(2 HQ·Q'(x))`,
+which the normalisation `2 HQ` does not control: `Q'` can be small at the left window end while
+`c = 2(Q(u+2) − Q(u+1))` is large.  For `Q = X + 512(X − 1)⁹`, `u = 0`, `P = X`, `D = 4`, the two
+codes `0000 1111…` and `0000 0000…` share a prefix but their `GPfam` values differ by more than
+`1/16`.  So no `A` can satisfy the bracket, whatever its computability. -/
+
+section Refutation
+open CantorSelfSimilar
+
+theorem cantorReal_false : cantorReal (fun _ => false) = 1 / 2 := by
+  have h : consB false (fun _ => false) = fun _ => false := by
+    funext i; cases i <;> rfl
+  have := cantorReal_consB false (fun _ => false)
+  rw [h, psi] at this
+  simp only [Bool.false_eq_true, if_false] at this
+  linarith
+
+theorem cantorReal_true : cantorReal (fun _ => true) = 2 / 3 := by
+  have h : consB true (fun _ => true) = fun _ => true := by
+    funext i; cases i <;> rfl
+  have := cantorReal_consB true (fun _ => true)
+  rw [h, psi] at this
+  simp only [if_true] at this
+  linarith
+
+/-- The witness map: `Q = X + 512 (X − 1)⁹`, flat (`Q' = 1`) at the left window end `x = 1` but
+with `Q(2) − Q(1) = 513`. -/
+noncomputable def Qbad : ℤ[X] := X + C 512 * (X - 1) ^ 9
+
+theorem aeval_Qbad (x : ℝ) : aeval x Qbad = x + 512 * (x - 1) ^ 9 := by
+  simp [Qbad, map_ofNat]
+
+theorem isBranch_Qbad : IsBranch Qbad 0 := by
+  intro x _
+  have : aeval x (derivative Qbad) = 1 + 4608 * (x - 1) ^ 8 := by
+    simp [Qbad, derivative_mul, derivative_pow, map_ofNat]; ring
+  rw [this, abs_of_nonneg (by positivity)]
+  have : 0 ≤ (x - 1) ^ 8 := by positivity
+  linarith
+
+theorem natDegree_Qbad : Qbad.natDegree = 9 := by
+  unfold Qbad
+  have h1 : (X - 1 : ℤ[X]) = X - C 1 := by simp
+  rw [h1, natDegree_add_eq_right_of_natDegree_lt]
+  · rw [natDegree_C_mul (by norm_num), natDegree_pow, natDegree_X_sub_C]
+  · rw [natDegree_C_mul (by norm_num), natDegree_pow, natDegree_X_sub_C, natDegree_X]; norm_num
+
+theorem aQ_Qbad : aQ Qbad 0 = -512 := by
+  simp [aQ, Qbad]
+
+theorem cQ_Qbad : cQ Qbad 0 = 1026 := by
+  simp [cQ, Qbad]
+
+/-- The frozen statement of `approx_GPfam`, as a `Prop` (refuted by `not_approxGPfamClaim`). -/
+def ApproxGPfamClaim : Prop :=
+  ∀ (Q : ℤ[X]) (u : ℕ), IsBranch Q u → 0 < Q.natDegree →
+    ∃ (Ψ : ℕ → ℕ → ℕ → List Bool → ℕ) (A : ℕ → List Bool → ℝ),
+      (Primrec fun x : ℕ × ℕ × ℕ × List Bool => Ψ x.1 x.2.1 x.2.2.1 x.2.2.2) ∧
+      (∀ i b m p, Ψ i b m p = ⌊A i p * (b : ℝ) ^ m⌋₊) ∧ (∀ i p, 0 ≤ A i p) ∧
+      ∀ i ω D, A i (Derandomize.pre ω D) ≤ GPfam Q u i ω ∧
+        GPfam Q u i ω ≤ A i (Derandomize.pre ω D) + (1 / 2 : ℝ) ^ D
+
+theorem not_affineIn_X_Qbad : ¬ AffineIn X Qbad := by
+  rintro ⟨α, β, h⟩
+  have e := fun x : ℝ => aeval_eq_of_affineIn h x
+  have e1 := e 1; have e2 := e 2; have e3 := e (3 / 2)
+  simp only [aeval_X, aeval_Qbad] at e1 e2 e3
+  norm_num at e1 e2 e3
+  linarith
+
+theorem not_approxGPfamClaim : ¬ ApproxGPfamClaim := by
+  intro hC
+  have hu := isBranch_Qbad
+  have hQ : 0 < Qbad.natDegree := by rw [natDegree_Qbad]; norm_num
+  obtain ⟨Ψ, A, -, -, -, hAG⟩ := hC Qbad 0 hu hQ
+  obtain ⟨i, hi⟩ := exists_polyOfCodeQ_eq hQ not_affineIn_X_Qbad
+  set ω' : ℕ → Bool := fun _ => false
+  set ω : ℕ → Bool := consB false (consB false (consB false (consB false (fun _ => true))))
+  have hpre : Derandomize.pre ω 4 = Derandomize.pre ω' 4 := rfl
+  have hy' : cantorReal ω' = 1 / 2 := cantorReal_false
+  have hy : cantorReal ω = 1 / 2 + 1 / 1536 := by
+    simp only [ω, cantorReal_consB, cantorReal_true, psi]; norm_num
+  have hfam : ∀ ν : ℕ → Bool, GPfam Qbad 0 i ν = (Xf Qbad 0 (cantorReal ν) + 3) / 6 := by
+    intro ν
+    have hH : HQ 0 X = 3 := by simp [HQ, hgt_X]
+    simp only [GPfam, hi, hH, GP_eq_Xf, aeval_X]
+    push_cast; ring
+  have hwin : ∀ ν : ℕ → Bool, aeval (Xf Qbad 0 (cantorReal ν)) Qbad =
+      -512 + 1026 * cantorReal ν := by
+    intro ν
+    have := (Xf_spec (window_sub_Vset hu (cantorReal_mem_window ν))).2
+    rw [this, aQ_Qbad, cQ_Qbad]; push_cast; ring
+  have hx' : Xf Qbad 0 (cantorReal ω') = 1 := by
+    have hm := Xf_mem_Icc hu (cantorReal_mem_window ω')
+    obtain ⟨-, hinj, -⟩ := branch_spec hu
+    refine hinj hm ⟨by norm_num, by norm_num⟩ ?_
+    simp only
+    rw [hwin, hy', aeval_Qbad]; norm_num
+  have hx : 11 / 8 < Xf Qbad 0 (cantorReal ω) := by
+    have hm := Xf_mem_Icc hu (cantorReal_mem_window ω)
+    have hQx := hwin ω
+    rw [aeval_Qbad] at hQx
+    by_contra hle
+    push Not at hle
+    have h0 : 0 ≤ Xf Qbad 0 (cantorReal ω) - 1 := by
+      have := hm.1; push_cast at this; linarith
+    have h9 : (Xf Qbad 0 (cantorReal ω) - 1) ^ 9 ≤ (3 / 8 : ℝ) ^ 9 :=
+      pow_le_pow_left₀ h0 (by linarith) 9
+    have h38 : (3 / 8 : ℝ) ^ 9 = 19683 / 134217728 := by norm_num
+    rw [h38] at h9
+    linarith
+  have h1 := (hAG i ω' 4).1
+  have h2 := (hAG i ω 4).2
+  rw [hpre] at h2
+  rw [hfam] at h1 h2
+  rw [hx'] at h1
+  norm_num at h1 h2
+  linarith
+
+end Refutation
+
 /-- **Computable lower approximations of the normalised family with exact primitive recursive
 floors** (the analogue of `approx_Gfam`, with bisection for `Q⁻¹`).
 
-Confidence 85%.  English proof: a length-`D` prefix fixes `y` up to `4^{-D}/6`, and `|GPfam'| ≤
+**FALSE** (`not_approxGPfamClaim`, proved): the slope of `GPfam` is not bounded by the prefix
+resolution, so the frozen precision `2^{-D}` from a length-`D` prefix is unattainable.  The
+English proof below overlooked that `A` may read only `D` coins.  Original confidence 85%.  English proof: a length-`D` prefix fixes `y` up to `4^{-D}/6`, and `|GPfam'| ≤
 L^{deg P+1} hgt P / (2 HQ)` on the window (`GP_bounds`), so `GPfam` moves by at most
 `2^{-D}/3 · 2^{-(deg P + 1) log₂ L}`-scaled amounts; take `D' = D + (deg P + 1)⌈log₂ L⌉ + 3`
 coin digits instead.  Compute `x_lo = brInv(a + c y_lo)` to precision `2^{-M}` by `M` steps of
