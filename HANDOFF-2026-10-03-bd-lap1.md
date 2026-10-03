@@ -6,3 +6,5 @@ answered No from the cited Props `DetSub 2`, `DetSqNotDet`.  Details: PENDING_WO
 
 Next (optional): discharge `DetSub` (B-D Cor. 4.12(2)) or `DetSqNotDet` (Cor. 9.15) to make item 2
 unconditional; write `docs/notes/` note for item 4.
+
+Branch: proof/bd.  HEAD at handoff: 1bc6efa2.  Build green; `box done --green` issued.
