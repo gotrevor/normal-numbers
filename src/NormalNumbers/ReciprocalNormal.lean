@@ -92,12 +92,27 @@ theorem Ainv_nonneg (p : List Bool) : 0 ≤ Ainv p := by
 /-- **Leaf: exact floors.**  Confidence 92%.  Proof: `⌊(3/2)·bᵐ⌋₊ = 3bᵐ/2` and
 `⌊4^D bᵐ/(Y+1)⌋₊ = bᵐ4^D/(Y+1)` by `Nat.floor_div_eq_div` after `push_cast`. -/
 theorem PsiInv_eq (b m : ℕ) (p : List Bool) : PsiInv b m p = ⌊Ainv p * (b : ℝ) ^ m⌋₊ := by
-  sorry
+  unfold PsiInv Ainv
+  split_ifs
+  · rw [show (3 / 2 : ℝ) * (b : ℝ) ^ m = ((3 * b ^ m : ℕ) : ℝ) / ((2 : ℕ) : ℝ) by push_cast; ring,
+      Nat.floor_div_eq_div]
+  · rw [show (4 : ℝ) ^ p.length / ((Yp p : ℝ) + 1) * (b : ℝ) ^ m =
+      ((b ^ m * 4 ^ p.length : ℕ) : ℝ) / ((Yp p + 1 : ℕ) : ℝ) by push_cast; ring,
+      Nat.floor_div_eq_div]
 
 /-- **Leaf: primitive recursive floors.**  Confidence 92%.  Proof: `primrec_Yp`, `primrec_pow`,
 `nat_mul`, `nat_div`, `Primrec.ite` on `p.length ≤ 1` (as in `SqrtCantorAbs.primrec_Psi`). -/
 theorem primrec_PsiInv : Primrec fun x : ℕ × ℕ × List Bool => PsiInv x.1 x.2.1 x.2.2 := by
-  sorry
+  have hL := Primrec.list_length.comp (Primrec.snd.comp (Primrec.snd (α := ℕ) (β := ℕ × List Bool)))
+  have hY := primrec_Yp.comp (Primrec.snd.comp (Primrec.snd (α := ℕ) (β := ℕ × List Bool)))
+  have hB := ComputableNormal.primrec_pow.comp (Primrec.fst (α := ℕ) (β := ℕ × List Bool))
+    (Primrec.fst.comp Primrec.snd)
+  have hD := ComputableNormal.primrec_pow.comp (Primrec.const 4) hL
+  have h1 := Primrec.nat_div.comp (Primrec.nat_mul.comp (Primrec.const 3) hB) (Primrec.const 2)
+  have h2 := Primrec.nat_div.comp (Primrec.nat_mul.comp hB hD)
+    (Primrec.succ.comp hY)
+  exact (Primrec.ite (PrimrecRel.comp Primrec.nat_le hL (Primrec.const 1)) h1 h2).of_eq
+    fun x => rfl
 
 /-- **Leaf: the sandwich `Ainv (pre ω D) ≤ 1/y ≤ Ainv (pre ω D) + 2^{-D}`**, `y = cantorReal ω`.
 
@@ -107,7 +122,39 @@ Confidence 88%.  Proof: `y ∈ [1/2, 2/3]` (digit `0` is `1`; the free digits su
 `1/y − 4^D/(Y+1) = ((Y+1)/4^D − y)/(y·(Y+1)/4^D) ≤ 4^{-D}/y² ≤ 4·4^{-D} ≤ 2^{-D}`. -/
 theorem Ainv_bounds (ω : ℕ → Bool) (D : ℕ) :
     Ainv (pre ω D) ≤ 1 / cantorReal ω ∧ 1 / cantorReal ω ≤ Ainv (pre ω D) + (1 / 2 : ℝ) ^ D := by
-  sorry
+  have hlo := OmegaKApprox.one_half_le_cantorReal ω
+  have hhi := OmegaKApprox.cantorReal_le_two_thirds ω
+  set y := cantorReal ω with hydef
+  have hy0 : 0 < y := by linarith
+  unfold Ainv
+  rw [length_pre]
+  split_ifs with hD
+  · have hp : (1 / 2 : ℝ) ≤ (1 / 2) ^ D := by
+      calc (1 / 2 : ℝ) = (1 / 2) ^ 1 := by norm_num
+        _ ≤ (1 / 2) ^ D := pow_le_pow_of_le_one (by norm_num) (by norm_num) hD
+    constructor
+    · rw [le_div_iff₀ hy0]; linarith
+    · rw [div_le_iff₀ hy0]; nlinarith
+  · have hY := Yp_pre ω D
+    have hfl := Nat.floor_le (show 0 ≤ y * 2 ^ (2 * D) by positivity)
+    have hlt := Nat.lt_floor_add_one (y * 2 ^ (2 * D))
+    rw [← hY] at hfl hlt
+    set t : ℝ := 2 ^ D with ht
+    have e4 : (2 : ℝ) ^ (2 * D) = t ^ 2 := by rw [ht, ← pow_mul, mul_comm]
+    have e4' : (4 : ℝ) ^ D = t ^ 2 := by rw [ht, ← pow_mul, mul_comm, pow_mul]; norm_num
+    have eh : (1 / 2 : ℝ) ^ D = 1 / t := by rw [ht, one_div_pow]
+    rw [e4] at hfl hlt
+    rw [e4', eh]
+    have ht4 : (4 : ℝ) ≤ t := by
+      rw [ht]
+      calc (4 : ℝ) = 2 ^ 2 := by norm_num
+        _ ≤ 2 ^ D := pow_le_pow_right₀ (by norm_num) (by omega)
+    set Y : ℝ := (Yp (pre ω D) : ℝ)
+    have hq : 0 < Y + 1 := by positivity
+    constructor
+    · rw [div_le_div_iff₀ hq hy0]; linarith
+    · rw [div_add_div _ _ hq.ne' (by positivity), div_le_div_iff₀ hy0 (by positivity)]
+      nlinarith [mul_le_mul_of_nonneg_left ht4 (by positivity : (0:ℝ) ≤ t)]
 
 theorem measurable_inv_cantorReal : Measurable fun ω => 1 / cantorReal ω := by
   simp only [one_div]
