@@ -1139,7 +1139,58 @@ English proof.  `sched j = e^{√j}(1 + O(j e^{−√j}))` and `e^{√(j+1)}/e^{
 with `√(j+1) − √j ≤ 1/(2√j) → 0`. -/
 theorem sched_ratio :
     Tendsto (fun j => (sched (j + 1) : ℝ) / sched j) atTop (𝓝 1) := by
-  sorry
+  have hs : Tendsto (fun j : ℕ => 1 / Real.sqrt j) atTop (𝓝 0) := by
+    have : Tendsto (fun j : ℕ => Real.sqrt j) atTop atTop :=
+      Real.tendsto_sqrt_atTop.comp tendsto_natCast_atTop_atTop
+    exact this.inv_tendsto_atTop.congr fun j => by simp
+  have h2 : Tendsto (fun j : ℕ => 2 / (j : ℝ)) atTop (𝓝 0) :=
+    tendsto_const_div_atTop_nhds_zero_nat 2
+  have hu : Tendsto (fun j : ℕ => Real.exp (1 / Real.sqrt j) * (1 + 2 / (j : ℝ))) atTop (𝓝 1) := by
+    have := ((Real.continuous_exp.tendsto 0).comp hs).mul ((tendsto_const_nhds (x := (1:ℝ))).add h2)
+    simpa using this
+  refine tendsto_of_tendsto_of_tendsto_of_le_of_le' tendsto_const_nhds hu ?_ ?_
+  · refine Eventually.of_forall fun j => ?_
+    have h0 : (0 : ℝ) < sched j := by exact_mod_cast one_le_sched j
+    rw [le_div_iff₀ h0, one_mul]
+    exact_mod_cast (sched_strictMono (Nat.lt_succ_self j)).le
+  · filter_upwards [eventually_ge_atTop 1] with j hj
+    have hj' : (1 : ℝ) ≤ j := by exact_mod_cast hj
+    have h0 : (0 : ℝ) < sched j := by exact_mod_cast one_le_sched j
+    rw [div_le_iff₀ h0]
+    set E := Real.exp (Real.sqrt j)
+    set q := Real.exp (1 / Real.sqrt j)
+    have hsq : 0 < Real.sqrt j := Real.sqrt_pos.2 (by linarith)
+    have hE1 : 1 ≤ E := Real.one_le_exp (Real.sqrt_nonneg _)
+    have hq1 : 1 ≤ q := Real.one_le_exp (by positivity)
+    have hEs : Real.exp (Real.sqrt ((j + 1 : ℕ) : ℝ)) ≤ q * E := by
+      rw [← Real.exp_add]
+      apply Real.exp_le_exp.2
+      rw [Real.sqrt_le_iff]
+      refine ⟨by positivity, ?_⟩
+      have : (Real.sqrt j) ^ 2 = j := Real.sq_sqrt (by linarith)
+      have h1 : (1 / Real.sqrt j + Real.sqrt j) ^ 2 = 1 / j + 2 + j := by
+        field_simp; rw [this]; ring
+      rw [h1]; push_cast
+      have : 0 ≤ 1 / (j : ℝ) := by positivity
+      linarith
+    have hup : (sched (j + 1) : ℝ) ≤ q * E + (j + 1) := by
+      unfold sched; push_cast
+      have := Nat.floor_le (Real.exp_pos (Real.sqrt ((j + 1 : ℕ) : ℝ))).le
+      push_cast at this hEs
+      linarith
+    have hlow : E - 1 + j ≤ (sched j : ℝ) := by
+      unfold sched; push_cast
+      have := Nat.lt_floor_add_one E
+      linarith
+    have hkey : (E - 1 + j) * (1 + 2 / j) ≥ E + j + 1 := by
+      have : (E - 1 + j) * (2 / j) ≥ 2 := by
+        rw [ge_iff_le, mul_div_assoc', le_div_iff₀ (by linarith)]; nlinarith
+      nlinarith
+    calc (sched (j + 1) : ℝ) ≤ q * E + (j + 1) := hup
+      _ ≤ q * (E + j + 1) := by nlinarith
+      _ ≤ q * ((E - 1 + j) * (1 + 2 / j)) := by gcongr
+      _ ≤ q * ((sched j : ℝ) * (1 + 2 / j)) := by gcongr
+      _ = _ := by ring
 
 /-- **The runs keep a `1/log` fraction of free positions.**  Confidence 95%.
 
