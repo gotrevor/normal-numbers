@@ -367,6 +367,10 @@ theorem one_le_hgt {p : ℤ[X]} (hp : p ≠ 0) : 1 ≤ hgt p := by
     _ ≤ hgt p := Finset.single_le_sum (f := fun j => (p.coeff j).natAbs) (fun _ _ => Nat.zero_le _)
           (Finset.mem_range.2 (Nat.lt_succ_self _))
 
+theorem hgt_cast (p : ℤ[X]) : (hgt p : ℝ) =
+    ∑ j ∈ Finset.range (p.natDegree + 1), |(p.coeff j : ℝ)| := by
+  simp [hgt, Nat.cast_sum, Nat.cast_natAbs, Int.cast_abs]
+
 /-- **Lower bound for `G_p''` by a product of distances.**
 
 Confidence 90%.  English proof: with `s = t^{1/k} ∈ [2^{-1/k}, 1]` and `d = deg p`,
@@ -391,7 +395,46 @@ Confidence 95%.  English proof: on `t ∈ [1/2, 1]`, `G_p'(t) = Σ_j a_j (j/k) t
 theorem deriv_Gk_le (k : ℕ) (p : ℤ[X]) (hk : p.natDegree < k) :
     ∀ t ∈ Set.Icc (1 / 2 : ℝ) 1, |deriv (Gk k p) t| ≤ 4 * (hgt p : ℝ) ∧
       |deriv (deriv (Gk k p)) t| ≤ 4 * (hgt p : ℝ) := by
-  sorry
+  intro t ht
+  have ht0 : 0 < t := by linarith [ht.1]
+  have hkpos : (0 : ℝ) < k := by exact_mod_cast (show 0 < k by omega)
+  have hr : ∀ i ∈ Finset.range (p.natDegree + 1), 0 ≤ (i : ℝ) / k ∧ (i : ℝ) / k ≤ 1 := by
+    intro i hi
+    have hik : (i : ℝ) ≤ k := by
+      have := Finset.mem_range.1 hi; exact_mod_cast (show i ≤ k by omega)
+    exact ⟨by positivity, (div_le_one hkpos).2 hik⟩
+  have hpow : ∀ e : ℝ, -2 ≤ e → e ≤ 0 → t ^ e ≤ 4 := by
+    intro e he1 he2
+    calc t ^ e ≤ t ^ (-2 : ℝ) := Real.rpow_le_rpow_of_exponent_ge ht0 ht.2 he1
+      _ = (t ^ 2)⁻¹ := by rw [Real.rpow_neg ht0.le]; norm_cast
+      _ ≤ 4 := by
+        rw [inv_le_comm₀ (by positivity) (by norm_num)]; nlinarith [ht.1]
+  rw [hgt_cast, Finset.mul_sum]
+  constructor
+  · rw [show Gk k p = OmegaKCalculus.gk k p from rfl,
+      (OmegaKCalculus.deriv_gk_eventually k p ht0).eq_of_nhds]
+    refine (Finset.abs_sum_le_sum_abs _ _).trans (Finset.sum_le_sum fun i hi => ?_)
+    obtain ⟨h0, h1⟩ := hr i hi
+    rw [abs_mul, abs_mul, abs_of_nonneg h0, abs_of_pos (Real.rpow_pos_of_pos ht0 _)]
+    have := hpow ((i : ℝ) / k - 1) (by linarith) (by linarith)
+    have ha := abs_nonneg (p.coeff i : ℝ)
+    nlinarith [mul_le_mul_of_nonneg_left h1 ha, Real.rpow_pos_of_pos ht0 ((i : ℝ) / k - 1)]
+  · rw [show Gk k p = OmegaKCalculus.gk k p from rfl, OmegaKCalculus.deriv2_gk k p ht0]
+    refine (Finset.abs_sum_le_sum_abs _ _).trans (Finset.sum_le_sum fun i hi => ?_)
+    obtain ⟨h0, h1⟩ := hr i hi
+    rw [abs_mul, abs_mul, abs_mul, abs_of_nonneg h0,
+      abs_of_nonpos (show (i : ℝ) / k - 1 ≤ 0 by linarith),
+      abs_of_pos (Real.rpow_pos_of_pos ht0 ((i : ℝ) / k - 2))]
+    have := hpow ((i : ℝ) / k - 2) (by linarith) (by linarith)
+    have ha := abs_nonneg (p.coeff i : ℝ)
+    have hq : (i : ℝ) / k * -((i : ℝ) / k - 1) ≤ 1 := by nlinarith
+    have hq0 : 0 ≤ (i : ℝ) / k * -((i : ℝ) / k - 1) := by nlinarith
+    calc |(p.coeff i : ℝ)| * ((i : ℝ) / k) * -((i : ℝ) / k - 1) * t ^ ((i : ℝ) / k - 2)
+        = |(p.coeff i : ℝ)| * ((i : ℝ) / k * -((i : ℝ) / k - 1)) * t ^ ((i : ℝ) / k - 2) := by ring
+      _ ≤ |(p.coeff i : ℝ)| * 1 * 4 := by
+          apply mul_le_mul (mul_le_mul_of_nonneg_left hq ha) this (Real.rpow_pos_of_pos ht0 _).le
+            (by positivity)
+      _ = 4 * |(p.coeff i : ℝ)| := by ring
 
 /-- **Sibling control: the cut's hypothesis excludes maps with `F'' ≡ 0` on the window.**  A
 finite `Z` misses some point of the window, where the product is positive. -/
