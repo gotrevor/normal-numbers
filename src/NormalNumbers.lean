@@ -937,3 +937,4 @@ import NormalNumbers.ComputableNormal
 import NormalNumbers.SqrtFloor
 import NormalNumbers.ExplicitSquareNonNormal
 import NormalNumbers.ExplicitOmegaK
+import NormalNumbers.DeterministicBD
