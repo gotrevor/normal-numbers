@@ -371,6 +371,36 @@ theorem hgt_cast (p : ℤ[X]) : (hgt p : ℝ) =
     ∑ j ∈ Finset.range (p.natDegree + 1), |(p.coeff j : ℝ)| := by
   simp [hgt, Nat.cast_sum, Nat.cast_natAbs, Int.cast_abs]
 
+/-- The clamp `τ(σ)` of the `deriv2_Gk_lower` proof. -/
+noncomputable def tauK (k : ℕ) (σ : ℝ) : ℝ := if σ < 0 then 1 / 2 else if σ ≤ 1 then σ ^ k else 1
+
+theorem abs_pow_sub_pow_le_unit {a b : ℝ} (k : ℕ) (ha : 0 ≤ a) (ha1 : a ≤ 1) (hb : 0 ≤ b)
+    (hb1 : b ≤ 1) : |a ^ k - b ^ k| ≤ k * |a - b| := by
+  have h := abs_pow_sub_pow_le (a := a) (b := b) (n := k)
+  have hm : max |a| |b| ^ (k - 1) ≤ 1 := by
+    apply pow_le_one₀ (le_max_of_le_left (abs_nonneg _))
+    rw [abs_of_nonneg ha, abs_of_nonneg hb]; exact max_le ha1 hb1
+  calc _ ≤ _ := h
+    _ ≤ |a - b| * k * 1 := by gcongr
+    _ = _ := by ring
+
+theorem abs_sub_tauK_le (k : ℕ) (hk : 1 ≤ k) {s : ℝ} (hs : 1 / 2 ≤ s) (hs1 : s ≤ 1) (σ : ℝ) :
+    |s ^ k - tauK k σ| ≤ k * |s - σ| := by
+  have hk' : (1 : ℝ) ≤ k := by exact_mod_cast hk
+  unfold tauK
+  split_ifs with h0 h1
+  · have : 0 ≤ s ^ k := by positivity
+    have : s ^ k ≤ 1 := pow_le_one₀ (by linarith) hs1
+    rw [abs_sub_le_iff, abs_of_pos (by linarith : 0 < s - σ)]
+    constructor <;> nlinarith
+  · exact abs_pow_sub_pow_le_unit k (by linarith) hs1 (not_lt.1 h0) h1
+  · have := abs_pow_sub_pow_le_unit k (by linarith) hs1 zero_le_one le_rfl
+    rw [one_pow] at this
+    calc _ ≤ _ := this
+      _ ≤ _ := by
+        apply mul_le_mul_of_nonneg_left _ (by linarith)
+        rw [abs_of_nonpos (by linarith), abs_of_neg (by linarith)]; linarith
+
 /-- **Lower bound for `G_p''` by a product of distances.**
 
 Confidence 90%.  English proof: with `s = t^{1/k} ∈ [2^{-1/k}, 1]` and `d = deg p`,
@@ -385,7 +415,111 @@ theorem deriv2_Gk_lower (k : ℕ) (p : ℤ[X]) (h1 : 1 ≤ p.natDegree) (hk : p.
     ∃ Z : Multiset ℝ, Z.card ≤ k - 2 ∧ ∀ t ∈ Set.Icc (1 / 2 : ℝ) 1,
       ((2 : ℝ) * (k : ℝ) ^ (k + 1))⁻¹ * (Z.map fun z => |t - z|).prod ≤
         |deriv (deriv (Gk k p)) t| := by
-  sorry
+  set d := p.natDegree with hd
+  have hk0 : k ≠ 0 := by omega
+  have hkpos : (0 : ℝ) < k := by exact_mod_cast (show 0 < k by omega)
+  set Q := OmegaKCalculus.qPoly k p with hQ
+  set R := Q.divX with hR
+  have hQ0 : Q.coeff 0 = 0 := by
+    rw [hQ, OmegaKCalculus.qPoly_coeff k p 0 (Nat.zero_le _)]; simp
+  have hQR : ∀ s, Q.eval s = s * R.eval s := by
+    intro s
+    conv_lhs => rw [← divX_mul_X_add Q, hQ0]
+    simp [mul_comm, hR]
+  have hlc : 1 / (k : ℝ) ^ 2 ≤ |Q.coeff d| := by
+    rw [hQ, OmegaKCalculus.qPoly_coeff k p d le_rfl]
+    have hp0 : p ≠ 0 := by rintro rfl; simp [hd] at h1
+    have ha : (1 : ℝ) ≤ |(p.coeff d : ℝ)| := by
+      have : p.coeff d ≠ 0 := leadingCoeff_ne_zero.2 hp0
+      have : (1 : ℤ) ≤ |p.coeff d| := Int.one_le_abs this
+      exact_mod_cast this
+    have hd1 : (1 : ℝ) ≤ d := by exact_mod_cast h1
+    have hdk : (d : ℝ) + 1 ≤ k := by exact_mod_cast hk
+    have hlt : (d : ℝ) / k - 1 < 0 := by rw [sub_neg, div_lt_one hkpos]; linarith
+    rw [abs_mul, abs_mul, abs_of_pos (show (0 : ℝ) < d / k by positivity), abs_of_neg hlt]
+    have e1 : 1 / (k : ℝ) ≤ d / k := by gcongr
+    have e2 : 1 / (k : ℝ) ≤ -(d / k - 1) := by
+      rw [neg_sub, one_sub_div hkpos.ne']; gcongr; linarith
+    calc 1 / (k : ℝ) ^ 2 = 1 * (1 / k) * (1 / k) := by ring
+      _ ≤ _ := by gcongr
+  have hQd : Q.natDegree = d := by
+    apply le_antisymm
+    · rw [hQ, OmegaKCalculus.qPoly]
+      exact natDegree_sum_le_of_forall_le _ _ fun i hi =>
+        (natDegree_C_mul_X_pow_le _ _).trans (Nat.lt_succ_iff.1 (Finset.mem_range.1 hi))
+    · apply le_natDegree_of_ne_zero
+      intro h0; rw [h0, abs_zero] at hlc; have : 0 < 1 / (k : ℝ) ^ 2 := by positivity
+      linarith
+  have hRd : R.natDegree = d - 1 := by rw [hR, natDegree_divX_eq_natDegree_tsub_one, hQd]
+  have hRlc : R.leadingCoeff = Q.coeff d := by
+    rw [leadingCoeff, hRd, hR, coeff_divX]; congr 1; omega
+  set P := R.map (algebraMap ℝ ℂ) with hP
+  have hPd : P.natDegree = d - 1 := by rw [hP, natDegree_map, hRd]
+  have hPlc : P.leadingCoeff = (Q.coeff d : ℂ) := by
+    rw [hP, leadingCoeff_map, hRlc]; rfl
+  refine ⟨P.roots.map fun ρ => tauK k ρ.re, ?_, fun t ht => ?_⟩
+  · rw [Multiset.card_map, IsAlgClosed.card_roots_eq_natDegree, hPd]; omega
+  have ht0 : 0 < t := by linarith [ht.1]
+  set s := t ^ ((k : ℝ)⁻¹) with hs
+  have hsk : s ^ k = t := Real.rpow_inv_natCast_pow ht0.le hk0
+  have hs1 : s ≤ 1 := Real.rpow_le_one ht0.le ht.2 (by positivity)
+  have hst : t ≤ s := by
+    rw [← hsk]; exact pow_le_of_le_one (by positivity) hs1 hk0
+  have hs2 : 1 / 2 ≤ s := by linarith [ht.1]
+  have hG : |deriv (deriv (Gk k p)) t| = |s * R.eval s| * t ^ (-2 : ℝ) := by
+    rw [show Gk k p = OmegaKCalculus.gk k p from rfl,
+      OmegaKCalculus.deriv2_gk_eq_qPoly k hk0 p ht0, abs_mul, ← hQ, hQR,
+      abs_of_pos (Real.rpow_pos_of_pos ht0 _)]
+  have ht2 : 1 ≤ t ^ (-2 : ℝ) := Real.one_le_rpow_of_pos_of_le_one_of_nonpos ht0 ht.2 (by norm_num)
+  have hRe : ((R.eval s : ℝ) : ℂ) = (Q.coeff d : ℂ) * (P.roots.map fun ρ => (s : ℂ) - ρ).prod := by
+    have hfac := C_leadingCoeff_mul_prod_multiset_X_sub_C
+      (IsAlgClosed.card_roots_eq_natDegree (p := P))
+    have : ((R.eval s : ℝ) : ℂ) = P.eval (s : ℂ) := by
+      rw [hP, eval_map_algebraMap, show (s : ℂ) = algebraMap ℝ ℂ s from rfl,
+        aeval_algebraMap_apply, coe_aeval_eq_eval]; rfl
+    rw [this]
+    conv_lhs => rw [← hfac]
+    rw [eval_mul, eval_C, eval_multiset_prod, hPlc, Multiset.map_map]
+    simp
+  have hRabs : |R.eval s| = |Q.coeff d| * (P.roots.map fun ρ => ‖(s : ℂ) - ρ‖).prod := by
+    have := congrArg (fun z : ℂ => ‖z‖) hRe
+    simp only [Complex.norm_real, Real.norm_eq_abs, norm_mul] at this
+    rw [this]; congr 1
+    have := map_multiset_prod (normHom (α := ℂ)) (P.roots.map fun ρ => (s : ℂ) - ρ)
+    simpa [Multiset.map_map, Function.comp_def] using this
+  have hfac : ∀ ρ ∈ P.roots, (1 / (k : ℝ)) * |t - tauK k ρ.re| ≤ ‖(s : ℂ) - ρ‖ := by
+    intro ρ _
+    have h := abs_sub_tauK_le k (by omega) hs2 hs1 ρ.re
+    rw [hsk] at h
+    have hre : |s - ρ.re| ≤ ‖(s : ℂ) - ρ‖ := by
+      have := Complex.abs_re_le_norm ((s : ℂ) - ρ); simpa using this
+    rw [div_mul_eq_mul_div, one_mul, div_le_iff₀ hkpos]; nlinarith
+  have hprod := Multiset.prod_map_le_prod_map₀ _ _ (fun ρ _ => by positivity) hfac
+  rw [Multiset.prod_map_mul, Multiset.map_const', Multiset.prod_replicate] at hprod
+  have hn : P.roots.card ≤ k - 2 := by
+    rw [IsAlgClosed.card_roots_eq_natDegree, hPd]; omega
+  set PP := (P.roots.map fun ρ => |t - tauK k ρ.re|).prod with hPP
+  have hPP0 : 0 ≤ PP := Multiset.prod_nonneg fun x hx => by
+    obtain ⟨_, _, rfl⟩ := Multiset.mem_map.1 hx; exact abs_nonneg _
+  rw [Multiset.map_map]
+  change _ * PP ≤ _
+  have hk1 : (1 : ℝ) ≤ k := by exact_mod_cast (show 1 ≤ k by omega)
+  have hcmp : ((2 : ℝ) * (k : ℝ) ^ (k + 1))⁻¹ ≤ 1 / 2 * (1 / (k : ℝ) ^ 2) * (1 / k) ^ P.roots.card := by
+    rw [div_pow, one_pow, show (1 / 2 : ℝ) * (1 / (k : ℝ) ^ 2) * (1 / (k : ℝ) ^ P.roots.card) =
+      ((2 : ℝ) * (k : ℝ) ^ (2 + P.roots.card))⁻¹ by rw [pow_add]; field_simp]
+    exact inv_anti₀ (by positivity)
+      (mul_le_mul_of_nonneg_left (pow_le_pow_right₀ hk1 (by omega)) (by norm_num))
+  have hRpos : 0 ≤ (P.roots.map fun ρ => ‖(s : ℂ) - ρ‖).prod := Multiset.prod_nonneg fun x hx => by
+    obtain ⟨_, _, rfl⟩ := Multiset.mem_map.1 hx; exact norm_nonneg _
+  rw [hG, abs_mul, abs_of_pos (by linarith : (0 : ℝ) < s), hRabs]
+  calc ((2 : ℝ) * (k : ℝ) ^ (k + 1))⁻¹ * PP
+      ≤ 1 / 2 * (1 / (k : ℝ) ^ 2) * ((1 / k) ^ P.roots.card * PP) := by
+        rw [← mul_assoc]; exact mul_le_mul_of_nonneg_right hcmp hPP0
+    _ ≤ s * (|Q.coeff d| * (P.roots.map fun ρ => ‖(s : ℂ) - ρ‖).prod) := by
+        rw [← mul_assoc s]
+        apply mul_le_mul (mul_le_mul hs2 hlc (by positivity) (by linarith)) hprod
+          (by positivity) (by positivity)
+    _ ≤ _ := le_mul_of_one_le_right (by positivity) ht2
 
 /-- **Upper bounds for `G_p'` and `G_p''` on the window by the height.**
 
