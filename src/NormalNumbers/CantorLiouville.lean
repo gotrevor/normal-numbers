@@ -504,6 +504,25 @@ theorem sum_pow_changes (c : ℤ) (hc : c ≠ 0) (M : ℕ) (P : Finset ℕ)
       2 * 3 ^ M * ((1 + 2 * θ) / 3) ^ P.card := by
   sorry
 
+theorem abs_cos_le_mid {θ : ℝ} (h1 : 2 * Real.pi / 9 ≤ θ) (h2 : θ ≤ 8 * Real.pi / 9) :
+    |Real.cos θ| ≤ Real.cos (Real.pi / 9) := by
+  have hp := Real.pi_pos
+  rw [abs_le]; constructor
+  · have : Real.cos (8 * Real.pi / 9) ≤ Real.cos θ :=
+      Real.cos_le_cos_of_nonneg_of_le_pi (by linarith) (by linarith) h2
+    have e : Real.cos (8 * Real.pi / 9) = -Real.cos (Real.pi / 9) := by
+      rw [show 8 * Real.pi / 9 = Real.pi - Real.pi / 9 by ring, Real.cos_pi_sub]
+    linarith
+  · exact Real.cos_le_cos_of_nonneg_of_le_pi (by linarith) (by linarith) (by linarith)
+
+theorem abs_cos_le_of_mem {w : ℝ} (h : (1 / 9 ≤ w ∧ w ≤ 4 / 9) ∨ (5 / 9 ≤ w ∧ w ≤ 8 / 9)) :
+    |Real.cos (2 * Real.pi * w)| ≤ Real.cos (Real.pi / 9) := by
+  have hp := Real.pi_pos
+  rcases h with ⟨h1, h2⟩ | ⟨h1, h2⟩
+  · exact abs_cos_le_mid (by nlinarith) (by nlinarith)
+  · rw [← Real.cos_two_pi_sub]
+    exact abs_cos_le_mid (by nlinarith) (by nlinarith)
+
 /-- **A digit change forces a Riesz factor below `cos(π/9)`.**  Confidence 97%.
 
 English proof.  `t = ξ/3^{i+2} mod 1` has leading ternary digits `(tdig ξ (i+1), tdig ξ i)`, so
@@ -512,7 +531,45 @@ at distance `≥ 1/18` from `{0, 1/2, 1}`, so `|cos(2πt)| ≤ cos(π/9)`.  Prob
 `|ξ| < 3000`, `i < 6` is `0.93969262078603 ≈ cos(π/9)` (attained). -/
 theorem abs_cos_le_of_tdig_ne (ξ : ℤ) (i : ℕ) (h : tdig ξ (i + 1) ≠ tdig ξ i) :
     |Real.cos (2 * Real.pi * ξ / 3 ^ (i + 2))| ≤ Real.cos (Real.pi / 9) := by
-  sorry
+  unfold tdig at h
+  set a := ξ / 3 ^ (i + 1) % 3
+  set b := ξ / 3 ^ i % 3
+  set q := ξ / 3 ^ (i + 2)
+  set s := ξ % 3 ^ i
+  have h3 : (0 : ℤ) < 3 ^ i := by positivity
+  have e1 : ξ = 3 ^ i * (ξ / 3 ^ i) + s := (Int.mul_ediv_add_emod ξ _).symm
+  have e2 : ξ / 3 ^ i = 3 * (ξ / 3 ^ (i + 1)) + b := by
+    have := (Int.mul_ediv_add_emod (ξ / 3 ^ i) 3).symm
+    rw [Int.ediv_ediv_of_nonneg (by positivity), ← pow_succ] at this; exact this
+  have e3 : ξ / 3 ^ (i + 1) = 3 * q + a := by
+    have := (Int.mul_ediv_add_emod (ξ / 3 ^ (i + 1)) 3).symm
+    rw [Int.ediv_ediv_of_nonneg (by positivity), ← pow_succ] at this; exact this
+  have hs0 : 0 ≤ s := Int.emod_nonneg _ h3.ne'
+  have hs1 : s < 3 ^ i := Int.emod_lt_of_pos _ h3
+  have ha0 : 0 ≤ a := Int.emod_nonneg _ (by norm_num)
+  have ha1 : a < 3 := Int.emod_lt_of_pos _ (by norm_num)
+  have hb0 : 0 ≤ b := Int.emod_nonneg _ (by norm_num)
+  have hb1 : b < 3 := Int.emod_lt_of_pos _ (by norm_num)
+  have hξ : (ξ : ℝ) = 3 ^ (i + 2) * q + 3 ^ (i + 1) * a + 3 ^ i * b + s := by
+    have : ξ = 3 ^ (i + 2) * q + 3 ^ (i + 1) * a + 3 ^ i * b + s := by
+      rw [e1, e2, e3]; ring
+    exact_mod_cast this
+  set u : ℝ := s / 3 ^ (i + 2)
+  have hP : (0 : ℝ) < 3 ^ i := by positivity
+  have hu0 : 0 ≤ u := by positivity
+  have hu1 : u < 1 / 9 := by
+    have : (s : ℝ) < 3 ^ i := by exact_mod_cast hs1
+    simp only [u]; rw [div_lt_iff₀ (by positivity), pow_add]; nlinarith
+  have harg : 2 * Real.pi * ξ / 3 ^ (i + 2) =
+      2 * Real.pi * ((a : ℝ) / 3 + b / 9 + u) + (q : ℤ) * (2 * Real.pi) := by
+    rw [hξ]; simp only [u]; field_simp; ring
+  rw [harg, Real.cos_add_int_mul_two_pi]
+  apply abs_cos_le_of_mem
+  have hA : a = 0 ∨ a = 1 ∨ a = 2 := by omega
+  have hB : b = 0 ∨ b = 1 ∨ b = 2 := by omega
+  rcases hA with hA | hA | hA <;> rcases hB with hB | hB | hB <;> rw [hA, hB] at h ⊢ <;>
+    simp at h <;> norm_num <;>
+    first | (left; constructor <;> linarith) | (right; constructor <;> linarith)
 
 theorem pt_consB (free : ℕ → Bool) (c : Bool) (ω : ℕ → Bool) :
     pt free (consB c ω) = (if free 0 && c then 2 else 0) / 3 +
