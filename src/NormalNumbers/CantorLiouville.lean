@@ -2006,11 +2006,6 @@ theorem clW_antitone : Antitone clW := by
 
 theorem clA_nonneg (p : List Bool) : 0 ≤ clA p := by unfold clA; positivity
 
-theorem clA_bounds (ω : ℕ → Bool) (D : ℕ) :
-    clA (pre ω D) ≤ cantorLiouvilleReal ω ∧
-      cantorLiouvilleReal ω ≤ clA (pre ω D) + (1 / 2 : ℝ) ^ D := by
-  sorry
-
 theorem clW_nonneg (N : ℕ) : 0 ≤ clW N := by unfold clW; positivity
 
 theorem primrec_clNr : Primrec clNr :=
@@ -2153,6 +2148,46 @@ theorem clNs_ratio (a : ℝ) (ha : 1 < a) : ∀ᶠ j in atTop, (clNs (j + 1) : �
   have hs0 : (0 : ℝ) < (Nat.sqrt j : ℝ) + 1 := by positivity
   have : ((Nat.sqrt j : ℝ) + 8) * clNs j ≤ ((Nat.sqrt j : ℝ) + 1) * (a * clNs j) := by nlinarith
   exact le_of_mul_le_mul_left (hstep.trans this) hs0
+
+
+theorem clA_pre (ω : ℕ → Bool) (D : ℕ) :
+    clA (pre ω D) = ∑ i ∈ Finset.range D, (ptDigit isFree ω i : ℝ) / (3 : ℝ) ^ (i + 1) := by
+  rw [clA, clNum, length_pre, ComputableNormalB.list_sum_range_map, Nat.cast_sum, Finset.sum_div]
+  refine Finset.sum_congr rfl fun i hi => ?_
+  have hi' := Finset.mem_range.1 hi
+  have hd : clDig (pre ω D) i = ptDigit isFree ω i := by
+    unfold clDig ptDigit; rw [getD_pre ω hi']; cases isFree i && ω i <;> rfl
+  rw [hd]; push_cast
+  rw [div_eq_div_iff (by positivity) (by positivity), mul_assoc, ← pow_add,
+    show D - 1 - i + (i + 1) = D by omega]
+
+theorem clA_bounds (ω : ℕ → Bool) (D : ℕ) :
+    clA (pre ω D) ≤ cantorLiouvilleReal ω ∧
+      cantorLiouvilleReal ω ≤ clA (pre ω D) + (1 / 2 : ℝ) ^ D := by
+  have hs := summable_ptDigit isFree ω
+  have hx : cantorLiouvilleReal ω = clA (pre ω D) +
+      ∑' k, (ptDigit isFree ω (k + D) : ℝ) / (3 : ℝ) ^ (k + D + 1) := by
+    rw [clA_pre, cantorLiouvilleReal, pt, realOfDigits]
+    exact (hs.sum_add_tsum_nat_add D).symm
+  have ht0 : 0 ≤ ∑' k, (ptDigit isFree ω (k + D) : ℝ) / (3 : ℝ) ^ (k + D + 1) :=
+    tsum_nonneg fun k => by positivity
+  have hterm : (fun k : ℕ => (2 : ℝ) / 3 ^ (k + D + 1)) = fun k => 2 / 3 ^ (D + 1) * (3⁻¹ : ℝ) ^ k := by
+    funext k; rw [inv_pow]; field_simp; ring
+  have hgeo := summable_geometric_of_lt_one (r := (3 : ℝ)⁻¹) (by norm_num) (by norm_num)
+  have hgs : Summable fun k : ℕ => (2 : ℝ) / 3 ^ (k + D + 1) := by
+    rw [hterm]; exact hgeo.mul_left _
+  have e : ∑' k : ℕ, (2 : ℝ) / 3 ^ (k + D + 1) = 1 / 3 ^ D := by
+    rw [hterm, tsum_mul_left, tsum_geometric_of_lt_one (by norm_num) (by norm_num), pow_succ]
+    field_simp; norm_num
+  have ht1 : ∑' k, (ptDigit isFree ω (k + D) : ℝ) / (3 : ℝ) ^ (k + D + 1) ≤ 1 / (3 : ℝ) ^ D := by
+    rw [← e]
+    refine (hs.comp_injective (add_left_injective D)).tsum_le_tsum (fun k => ?_) hgs
+    have : (ptDigit isFree ω (k + D) : ℝ) ≤ 2 := by exact_mod_cast Nat.le_of_lt_succ (ptDigit_lt _ _ _)
+    exact div_le_div_of_nonneg_right this (by positivity)
+  have h32 : 1 / (3 : ℝ) ^ D ≤ (1 / 2 : ℝ) ^ D := by
+    rw [one_div_pow]; exact one_div_le_one_div_of_le (by positivity)
+      (pow_le_pow_left₀ (by norm_num) (by norm_num) D)
+  constructor <;> linarith
 
 
 theorem cl_ev : ∀ᶠ j in atTop, 8 ≤ clNr j ∧ clNr j ≤ clNs j ∧
