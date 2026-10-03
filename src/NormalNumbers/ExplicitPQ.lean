@@ -416,6 +416,60 @@ theorem branch_spec {Q : ℤ[X]} {u : ℕ} (hu : IsBranch Q u) :
     · by_contra hlt; push Not at hlt
       have := hmono _ _ (by linarith) hlt; linarith
 
+/-! Branch inverse: injectivity on `(u, ∞)`, open image, analyticity (inverse function theorem). -/
+
+theorem injOn_Ioi_of_isBranch {Q : ℤ[X]} {u : ℕ} (hu : IsBranch Q u) :
+    Set.InjOn (fun x : ℝ => aeval x Q) (Set.Ioi (u : ℝ)) := by
+  obtain ⟨σ, hσ, hexp⟩ := branch_expand hu
+  intro s hs t ht hst
+  simp only at hst
+  by_contra hne
+  rcases lt_or_gt_of_ne hne with h | h
+  · have := hexp s t (le_of_lt hs) h.le; rw [hst] at this; linarith
+  · have := hexp t s (le_of_lt ht) h.le; rw [hst] at this; linarith
+
+theorem analyticAt_brInv {Q : ℤ[X]} {u : ℕ} (hu : IsBranch Q u) {w₀ : ℝ}
+    (hev : ∀ᶠ w in 𝓝 w₀, brInv Q u w ∈ Set.Ioi (u : ℝ) ∧ aeval (brInv Q u w) Q = w) :
+    AnalyticAt ℝ (brInv Q u) w₀ := by
+  set f : ℝ → ℝ := fun x => aeval x Q with hf
+  obtain ⟨h0mem, h0eq⟩ := hev.self_of_nhds
+  set x₀ := brInv Q u w₀
+  have hfa : AnalyticAt ℝ f x₀ := analyticAt_id.aeval_polynomial Q
+  have hd : deriv f x₀ ≠ 0 := by
+    rw [(Polynomial.hasDerivAt_aeval Q x₀).deriv]
+    intro h; have := hu x₀ (le_of_lt h0mem); rw [h] at this; norm_num at this
+  have hr := hfa.analyticAt_localInverse hd
+  set r := hfa.hasStrictDerivAt.localInverse _ _ _ hd
+  have hfx : f x₀ = w₀ := h0eq
+  rw [hfx] at hr
+  have hrx : r w₀ = x₀ := by
+    rw [← hfx]; exact HasStrictFDerivAt.localInverse_apply_image ..
+  have hrc : ContinuousAt r w₀ := hr.continuousAt
+  have hright : ∀ᶠ w in 𝓝 w₀, f (r w) = w := by
+    have := HasStrictDerivAt.eventually_right_inverse hfa.hasStrictDerivAt hd
+    rwa [hfx] at this
+  have hrin : ∀ᶠ w in 𝓝 w₀, r w ∈ Set.Ioi (u : ℝ) :=
+    hrc.eventually (by rw [hrx]; exact isOpen_Ioi.mem_nhds h0mem)
+  refine hr.congr ?_
+  filter_upwards [hev, hright, hrin] with w hw h1 h2
+  exact injOn_Ioi_of_isBranch hu h2 hw.1 (h1.trans hw.2.symm)
+
+theorem isOpen_image_Ioi {Q : ℤ[X]} {u : ℕ} (hu : IsBranch Q u) :
+    IsOpen ((fun x : ℝ => aeval x Q) '' Set.Ioi (u : ℝ)) := by
+  rw [isOpen_iff_mem_nhds]
+  rintro _ ⟨x, hx, rfl⟩
+  have hd : aeval x (derivative Q) ≠ 0 := by
+    intro h; have := hu x (le_of_lt hx); rw [h] at this; norm_num at this
+  rw [← ((Polynomial.hasStrictDerivAt_aeval Q x).map_nhds_eq hd)]
+  exact Filter.image_mem_map (isOpen_Ioi.mem_nhds hx)
+
+theorem brInv_spec {Q : ℤ[X]} {u : ℕ} {w : ℝ}
+    (hw : w ∈ (fun x : ℝ => aeval x Q) '' Set.Ioi (u : ℝ)) :
+    brInv Q u w ∈ Set.Ioi (u : ℝ) ∧ aeval (brInv Q u w) Q = w := by
+  obtain ⟨x, hx, hxw⟩ := hw
+  have hex : ∃ x ∈ Set.Ioi (u : ℝ), aeval x Q = w := ⟨x, hx, hxw⟩
+  exact ⟨Function.invFunOn_mem hex, Function.invFunOn_eq hex⟩
+
 /-- **`G_P` is analytic near the window, uniformly in `P`.**
 
 Confidence 85%.  English proof: `Q` restricted to `(u, ∞)` has nonvanishing derivative, so it is
@@ -426,7 +480,20 @@ with the affine `y ↦ a + c y`.  `U` does not depend on `P`. -/
 theorem analyticOnNhd_GP {Q : ℤ[X]} {u : ℕ} (hu : IsBranch Q u) :
     ∃ U : Set ℝ, IsOpen U ∧ Set.Icc (1 / 2 : ℝ) 1 ⊆ U ∧
       ∀ P : ℤ[X], AnalyticOnNhd ℝ (GP Q u P) U := by
-  sorry
+  obtain ⟨-, -, U₀, -, hsub₀, hinv, hmem⟩ := branch_spec hu
+  set W := (fun x : ℝ => aeval x Q) '' Set.Ioi (u : ℝ) with hW
+  have hWo : IsOpen W := isOpen_image_Ioi hu
+  refine ⟨(fun y : ℝ => (aQ Q u : ℝ) + (cQ Q u : ℝ) * y) ⁻¹' W,
+    hWo.preimage (by fun_prop), fun y hy => ?_, fun P y hy => ?_⟩
+  · refine ⟨_, ?_, hinv y (hsub₀ hy)⟩
+    have := (hmem y hy).1
+    simp only [Set.mem_Ioi]; linarith
+  · have hbr : AnalyticAt ℝ (brInv Q u) ((aQ Q u : ℝ) + (cQ Q u : ℝ) * y) :=
+      analyticAt_brInv hu (by
+        filter_upwards [hWo.mem_nhds hy] with w hw using brInv_spec hw)
+    have haff : AnalyticAt ℝ (fun y : ℝ => (aQ Q u : ℝ) + (cQ Q u : ℝ) * y) y :=
+      analyticAt_const.add (analyticAt_const.mul analyticAt_id)
+    exact (AnalyticAt.comp (g := brInv Q u) (f := fun y : ℝ => (aQ Q u : ℝ) + (cQ Q u : ℝ) * y) (x := y) hbr haff).aeval_polynomial P
 
 /-- **Lower bound for `G_P''` by a product of distances, explicit in the zero count.**
 
