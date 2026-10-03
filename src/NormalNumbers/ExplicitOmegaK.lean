@@ -9,6 +9,7 @@ import NormalNumbers.SqrtCantorAbs
 import NormalNumbers.DigitCantor
 import NormalNumbers.CantorCylinders
 import NormalNumbers.FamilyDerandomize
+import NormalNumbers.OmegaKApprox
 
 /-!
 # Manai's algebraic normality degree: explicit points of `Ω_k`
