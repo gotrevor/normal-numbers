@@ -29,7 +29,7 @@ Answers frozen here (both **No**), direction in `docs/OPEN-PROBLEMS-SWEEP-2026-1
   route to `DetSqNotDet` via Manai 2606.08325 is `detSqNotDet_of_manai`.
 * Item 4: `dimH_detProducts`, `dimH_detRatios`, `dimH_detRecipProducts` (each `= 0`), the null-set
   forms `volume_detProducts` etc., and `not_productQuestion`, `not_ratioQuestion`,
-  `not_recipProductQuestion`.  These are proved from two `sorry` leaves:
+  `not_recipProductQuestion`.  These are proved unconditionally (no cited Props) from two leaves:
   (a) `deterministic_subexp_cover` (deterministic numbers are a countable union of sets with
   subexponential `b`-adic cylinder counts) and (b) `dimH_prod_le_of_subexp` (a product of two such
   sets has `dimH ≤ 2ε`).  The assembly (c) is proved.
@@ -96,7 +96,50 @@ period `p`; for `m ≥ 1` the length-`m` windows starting after the preperiod ta
 values, so `F` = those windows and `𝕊` = the finite preperiod give `C(ε, m) ≤ p < 2^{εm}` once
 `m > log₂ p / ε`.  Not needed by the headlines; it locates content (`irrational_of_not_det_sq`). -/
 theorem isDeterministic_ratCast (b : ℕ) (hb : 2 ≤ b) (q : ℚ) : IsDeterministic b q := by
-  sorry
+  set y := Int.fract (q : ℝ)
+  set D := q.den
+  have hD : (0 : ℝ) < D := by exact_mod_cast q.den_pos
+  -- every orbit point is `k / D` with `k < D`
+  have hstate : ∀ i, ∃ k ∈ Finset.range D, orbit b y i = (k : ℝ) / D := by
+    intro i
+    have hyD : ∃ M : ℤ, y * D = M := ⟨q.num - ⌊(q : ℝ)⌋ * D, by
+      rw [show y = (q : ℝ) - ⌊(q : ℝ)⌋ from rfl, sub_mul, Rat.cast_def]
+      field_simp; push_cast; ring⟩
+    obtain ⟨M, hM⟩ := hyD
+    set z := y * (b : ℝ) ^ i
+    have hzD : z * D = ((M * (b : ℤ) ^ i : ℤ) : ℝ) := by
+      rw [show z = y * (b : ℝ) ^ i from rfl]; push_cast; rw [← hM]; ring
+    have h0 := Int.fract_nonneg z
+    have h1 := Int.fract_lt_one z
+    set K : ℤ := M * (b : ℤ) ^ i - ⌊z⌋ * D with hK
+    have hKe : Int.fract z * D = K := by
+      rw [Int.fract, sub_mul, hzD, hK]; push_cast; ring
+    have hK0 : 0 ≤ K := by have : (0 : ℝ) ≤ K := by rw [← hKe]; positivity
+                           exact_mod_cast this
+    have hKD : K < D := by
+      have : (K : ℝ) < D := by rw [← hKe]; nlinarith
+      exact_mod_cast this
+    refine ⟨K.toNat, Finset.mem_range.2 (by omega), ?_⟩
+    rw [orbit, eq_div_iff hD.ne', hKe]
+    exact_mod_cast (Int.toNat_of_nonneg hK0).symm
+  intro ε hε
+  obtain ⟨m, hm⟩ := exists_nat_gt ((D : ℝ) / (ε * Real.log 2))
+  refine ⟨m, (Finset.range D).image fun k : ℕ =>
+    List.ofFn fun j : Fin m => digitOf b ((k : ℝ) / D) j, ⟨∅, ?_, ?_⟩, ?_⟩
+  · intro δ hδ
+    exact Eventually.of_forall fun N => by simp; positivity
+  · intro i _
+    obtain ⟨k, hk, hki⟩ := hstate i
+    refine Finset.mem_image.2 ⟨k, hk, ?_⟩
+    congr 1; funext j
+    rw [← hki, digitOf_orbit b hb y (Int.fract_nonneg _)]
+  · refine (Nat.cast_le.2 Finset.card_image_le).trans_lt ?_
+    rw [Finset.card_range]
+    have hl : 0 < Real.log 2 := Real.log_pos (by norm_num)
+    rw [Real.rpow_def_of_pos two_pos]
+    have := Real.add_one_le_exp (Real.log 2 * (ε * m))
+    rw [div_lt_iff₀ (by positivity)] at hm
+    nlinarith
 
 end NormalNumbers.Deterministic
 

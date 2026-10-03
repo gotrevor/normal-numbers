@@ -1,3 +1,14 @@
+## Bergelson-Downarowicz questions 2 and 4 (2026-10-03) — DONE
+* `DeterministicBD.lean` sorry-free.  Item 4 (`not_productQuestion`, `not_ratioQuestion`,
+  `not_recipProductQuestion`, `dimH_det*`, `volume_det*`) is UNCONDITIONAL, every base `b ≥ 2`:
+  `#print axioms` = propext, Classical.choice, Quot.sound.
+* Leaf (a) `deterministic_subexp_cover`: prefix count via `candSuffix` (F-block at good positions,
+  digit elsewhere; `card_candSuffix_le`), bad-set count `card_smallSubsets_le`
+  (`≤ (1+r)^N / r^k`, replaces the entropy/phase argument), `floor_eq_digVal`, `subexp_asymp`.
+* Leaf (b) `dimH_prod_le_of_subexp`: `hausdorffMeasure_le_liminf_sum` with `b^{2εN}` squares.
+* `isDeterministic_ratCast` (orbit takes ≤ den values, `S = ∅`), `isDeterministic_of_oneFreqZero`.
+* Item 2 remains conditional on the cited `DetSub 2`, `DetSqNotDet` (by design).
+
 ## Manai Ω_k dimension lane (2026-10-03) — DONE
 * PROVED `ExplicitOmegaK.dimH_Omega_eq_one` from `BakerBanajiAnalytic` alone; `#print axioms` =
   propext, Classical.choice, Quot.sound.
