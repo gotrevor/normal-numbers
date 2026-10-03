@@ -20,7 +20,9 @@ Audit of open-problem sweep rows 3 and 5 (`docs/OPEN-PROBLEMS-SWEEP-2026-10-02.m
 
 * **Row 3** (Manai 2506.15422v5 §1; Manai 2508.09319v4, open problem after Def. `def:deg`):
   explicitly determine a normal `x` with `x²` not normal.  Existence is Manai 2609.24665v1
-  `thm:2` (measure-theoretic).
+  `thm:2` (measure-theoretic).  ⚠️ Manai's "normal" is ABSOLUTE normality (2506.15422 §1,
+  2508.09319 Def. `def:deg`); this file proves the base-2 version.  The all-bases upgrade is
+  `ExplicitOmegaK.exists_computable_mem_Omega_two`.
 * **Row 5** (Bergelson–Downarowicz 2506.12929v1, "Some natural open problems" items 2, 3):
   is `1/y` deterministic for deterministic `y`?  Is there a normal number with deterministic
   reciprocal?
@@ -280,7 +282,7 @@ theorem exists_computable_isNormal_sqrt_of_polyDecay (hd : PolyDecay Real.sqrt) 
 
 /-! ## The row-3 target -/
 
-/-- **Row 3 (target): an explicit normal `x` with `x²` not normal**, `x = √y`,
+/-- **Row 3, base-2 version: an explicit base-2 normal `x` with `x²` not normal**, `x = √y`,
 `y = cantorReal e` for a **computable** coin sequence `e`.  Wired from the cited
 Baker–Banaji input and the two named steps. -/
 theorem exists_computable_normal_sq_not_normal (hBB : BakerBanajiQuarterCantor) :

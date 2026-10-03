@@ -1,10 +1,10 @@
-# A computable normal number whose square is not normal
+# A computable base-2 normal number whose square is not normal
 
 [ Claude wrote this note at my direction.  The Lean files it links are the authority.  -Trevor ]
 
-Manai ([arXiv:2506.15422](https://arxiv.org/abs/2506.15422), §1) writes that "it would be very interesting to determine a normal number `x` such that `x²` is not normal".  In [arXiv:2508.09319](https://arxiv.org/abs/2508.09319) he asks for an explicit `x` in each of the classes `Ω_k`.  Existence of a normal `x` with `x²` not normal follows from Manai's [arXiv:2609.24665](https://arxiv.org/abs/2609.24665) Theorem 2, through a measure-theoretic argument that names no particular `x`.
+Manai ([arXiv:2506.15422](https://arxiv.org/abs/2506.15422), §1) writes that "it would be very interesting to determine a normal number `x` such that `x²` is not normal".  In [arXiv:2508.09319](https://arxiv.org/abs/2508.09319) he asks for an explicit `x` in each of the classes `Ω_k`.  In both papers "normal" means **absolutely normal** (normal in every base `b ≥ 2`).  Existence of a normal `x` with `x²` not normal follows from Manai's [arXiv:2609.24665](https://arxiv.org/abs/2609.24665) Theorem 2, through a measure-theoretic argument that names no particular `x`.
 
-This note records a **computable** example, proved in Lean at commit [`5b94540`](https://github.com/gotrevor/normal-numbers/tree/5b945408f75d251a6a238ce8b372fe32d9a124ad).  It rests on one cited theorem, stated as a hypothesis.
+This note records a **computable** example **for base 2**: `x` is proved normal in base 2, not in every base.  It is proved in Lean at commit [`5b94540`](https://github.com/gotrevor/normal-numbers/tree/5b945408f75d251a6a238ce8b372fe32d9a124ad).  It rests on one cited theorem, stated as a hypothesis.
 
 ## The result
 
@@ -29,6 +29,8 @@ Let `e : ℕ → {0,1}` be a coin sequence, and let `y_e ∈ [1/2, 2/3]` have bi
 [`BakerBanajiQuarterCantor`](https://github.com/gotrevor/normal-numbers/blob/5b945408f75d251a6a238ce8b372fe32d9a124ad/src/NormalNumbers/ExplicitSquareNonNormal.lean#L168) specialises Baker–Banaji, *Polynomial Fourier decay for fractal measures and their pushforwards*, [arXiv:2401.01241](https://arxiv.org/abs/2401.01241) (Math. Ann. 392 (2025)), Corollary 1.5, to this measure.  The only non-verbatim step is an affine rescaling of the window from `[0,1]` to `[1/2, 1]`.  That step is needed because `√` is not `C²` at `0`.  A numeric check, averaging exactly over all `2²⁰` coin prefixes, shows the transform of the `√`-pushforward falling from about `0.18` at `ξ = 2⁸` to about `0.02` at `ξ = 2²⁰`.  The affine control `4t` stays at `0.6926` ([probe](https://github.com/gotrevor/normal-numbers/blob/5b945408f75d251a6a238ce8b372fe32d9a124ad/probes/bakerbanaji_sqrt_decay_probe.py)).
 
 ## What is not claimed
+
+- Absolute normality of `x`.  Manai's question asks for `x` normal in every base; here `x` is normal in base 2 (and `x² = y_e` is not normal in base 2, hence not absolutely normal).  Running the derandomization in every base at once is in progress here, and would answer his question as posed.
 
 - A closed-form `x`.  The coins are computable, but Baker–Banaji's constants are not made explicit here.  Whether "computable" meets Manai's "determine" is his call.
 - The other classes `Ω_k`, `k ≥ 3`, and their Hausdorff dimension.  These are under study here.
