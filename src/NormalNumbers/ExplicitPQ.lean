@@ -155,6 +155,53 @@ theorem not_affineIn_X_pow (k : ℕ) (p : ℤ[X]) (h1 : 1 ≤ p.natDegree) (hk :
   rw [natDegree_C, hdeg] at this
   omega
 
+/-- `p'q = pq'` with `q ≠ 0` forces `p = αq` over `ℚ`: put `α = p(x₀)/q(x₀)` and compare root
+multiplicities of `p − αq` at `x₀`.  Proved. -/
+theorem wronsk_const (p q : ℚ[X]) (hq : q ≠ 0)
+    (h : derivative p * q = p * derivative q) : ∃ α : ℚ, p = C α * q := by
+  obtain ⟨x0, hx0⟩ : ∃ x0 : ℚ, q.eval x0 ≠ 0 := by
+    by_contra hall
+    push Not at hall
+    exact hq (eq_zero_of_infinite_isRoot q (by
+      convert Set.infinite_univ (α := ℚ); ext x; simp [hall x]))
+  refine ⟨p.eval x0 / q.eval x0, ?_⟩
+  set r := p - C (p.eval x0 / q.eval x0) * q with hr
+  have hr' : derivative r * q = r * derivative q := by
+    rw [hr, derivative_sub, derivative_mul, derivative_C, zero_mul, zero_add]
+    linear_combination h
+  have hrx : r.eval x0 = 0 := by
+    rw [hr, eval_sub, eval_mul, eval_C]; field_simp; ring
+  by_contra hne
+  have hr0 : r ≠ 0 := fun h0 => hne (by rw [← sub_eq_zero]; exact h0)
+  obtain ⟨s, hs, hnd⟩ := exists_eq_pow_rootMultiplicity_mul_and_not_dvd r hr0 x0
+  have hk : 0 < r.rootMultiplicity x0 := (rootMultiplicity_pos hr0).2 hrx
+  obtain ⟨j, hj⟩ : ∃ j, r.rootMultiplicity x0 = j + 1 := ⟨_, (Nat.succ_pred_eq_of_pos hk).symm⟩
+  rw [hj] at hs
+  have hsx : s.eval x0 ≠ 0 := by
+    intro h0; exact hnd (dvd_iff_isRoot.2 h0)
+  have key : (X - C x0) ^ j * (C ((j : ℚ) + 1) * s * q +
+      (X - C x0) * (derivative s * q - s * derivative q)) = (X - C x0) ^ j * 0 := by
+    rw [hs, derivative_mul, derivative_X_sub_C_pow] at hr'
+    simp only [Nat.add_sub_cancel] at hr'
+    rw [mul_zero]
+    have : ((↑(j + 1) : ℚ[X])) = C ((j : ℚ) + 1) := by simp
+    rw [← sub_eq_zero] at hr'
+    rw [← hr']
+    push_cast
+    simp only [map_add, map_natCast, C_1]
+    ring
+  have key2 := mul_left_cancel₀ (pow_ne_zero j (X_sub_C_ne_zero x0)) key
+  have := congrArg (eval x0) key2
+  simp only [eval_add, eval_mul, eval_C, eval_sub, eval_X, sub_self, zero_mul, add_zero,
+    eval_zero] at this
+  have hj1 : ((j : ℚ) + 1) ≠ 0 := by positivity
+  exact hsx (by
+    rcases mul_eq_zero.1 this with h | h
+    · rcases mul_eq_zero.1 h with h | h
+      · exact absurd h hj1
+      · exact h
+    · exact absurd h hx0)
+
 /-- **`W_P ≢ 0` off the span.**
 
 Confidence 93%.  English proof: over `ℚ`, `W_P = 0` says `P''Q' = P'Q''`, i.e.
@@ -163,7 +210,22 @@ Confidence 93%.  English proof: over `ℚ`, `W_P = 0` says `P''Q' = P'Q''`, i.e.
 `P = αQ + β`.  Contrapositive. -/
 theorem wPoly_ne_zero_of_not_affineIn {P Q : ℤ[X]} (hQ : 0 < Q.natDegree) (hP : ¬ AffineIn P Q) :
     wPoly P Q ≠ 0 := by
-  sorry
+  intro hW
+  apply hP
+  set f := Int.castRingHom ℚ
+  have hinj : Function.Injective f := Int.cast_injective
+  have hWq := congrArg (Polynomial.map f) hW
+  simp only [wPoly, Polynomial.map_sub, Polynomial.map_mul, ← derivative_map, Polynomial.map_zero]
+    at hWq
+  have hq : derivative (Q.map f) ≠ 0 := by
+    intro h
+    have := derivative_eq_zero.1 h
+    rw [natDegree_map_eq_of_injective hinj] at this; omega
+  obtain ⟨α, hα⟩ := wronsk_const _ _ hq (by rw [← sub_eq_zero]; exact hWq)
+  have hd : derivative (P.map f - C α * Q.map f) = 0 := by
+    rw [derivative_sub, derivative_mul, derivative_C, zero_mul, zero_add, hα, sub_self]
+  refine ⟨α, (P.map f - C α * Q.map f).coeff 0, ?_⟩
+  rw [← eq_C_of_natDegree_eq_zero (derivative_eq_zero.1 hd), add_sub_cancel]
 
 /-! ### The branch and the maps -/
 
@@ -198,7 +260,31 @@ Confidence 95%.  English proof: `Q' ≠ 0` has integer leading coefficient `ℓ`
 degree `d − 1`.  With `B = Σ_j |coeff_j Q'|`, for `x ≥ B + 1` we get
 `|Q'(x)| ≥ |ℓ| x^{d−1} − (B − |ℓ|) x^{d−2} ≥ x^{d−2}(x − B) ≥ 1` (for `d = 1`, `Q' = ℓ`). -/
 theorem exists_isBranch (Q : ℤ[X]) (hQ : 0 < Q.natDegree) : ∃ u : ℕ, IsBranch Q u := by
-  sorry
+  set p : ℝ[X] := (derivative Q).map (Int.castRingHom ℝ) with hp
+  have hev : ∀ x : ℝ, aeval x (derivative Q) = eval x p := fun x => by
+    rw [hp, eval_map, aeval_def]; rfl
+  have hQ' : derivative Q ≠ 0 := by
+    intro h
+    have := derivative_eq_zero.1 h
+    omega
+  have hinj : Function.Injective (Int.castRingHom ℝ) := Int.cast_injective
+  by_cases hd : 0 < p.degree
+  · obtain ⟨B, hB⟩ := Filter.eventually_atTop.1
+      ((Polynomial.abs_tendsto_atTop p hd).eventually_ge_atTop 1)
+    refine ⟨⌈B⌉₊, fun x hx => ?_⟩
+    rw [hev]; exact hB x ((Nat.le_ceil B).trans hx)
+  · push Not at hd
+    have h0 : (derivative Q).natDegree = 0 := by
+      have := natDegree_eq_zero_iff_degree_le_zero.2 hd
+      rwa [hp, natDegree_map_eq_of_injective hinj] at this
+    rw [natDegree_eq_zero] at h0
+    obtain ⟨c, hc⟩ := h0
+    have hc0 : c ≠ 0 := by rintro rfl; exact hQ' (by rw [← hc, C_0])
+    refine ⟨0, fun x _ => ?_⟩
+    rw [← hc, aeval_C]
+    simp only [algebraMap_int_eq, eq_intCast]
+    rw [← Int.cast_abs]
+    exact_mod_cast Int.one_le_abs hc0
 
 /-- **The window and the branch inverse.**
 
