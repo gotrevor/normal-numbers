@@ -47,3 +47,10 @@ Re-confirmed 2026-10-02 (fresh lap): build green, axioms trust-base only; stuck 
 - **Need from operator:** accept done, or relaunch with `--done-when` scoped to this lane.
   Details: `HANDOFF-2026-10-03-dimh-lap1.md`.
 Re-confirmed 2026-10-03 (fresh lap): `#print axioms dimH_Omega_eq_one` = trust base only; stuck strike 2 recorded.
+
+## STUCK-BAIL (2026-10-03, levinsparse run) — CONFIRMED, treadmill halted for operator
+- **Done:** `NormalNumbers.LevinSparse.exists_levinRate_oddNormal` proved; `#print axioms` = [propext, Classical.choice, Quot.sound].
+- **Blocker:** scope `sorry-free:src/NormalNumbers/LevinSparse.lean` has one sorry, `exists_absNormal_base2_fast`,
+  a FROZEN statement of an open problem (absolutely normal x with base-2 discrepancy O(N^-θ), θ>1/2; ABSS 1707.02628 barrier).
+- **Operator ask:** convert `exists_absNormal_base2_fast` to a `def … : Prop` conjecture node, or rescope `--done-when` to exclude it.
+  Details: `HANDOFF-2026-10-03-levinsparse-lap1.md`.
