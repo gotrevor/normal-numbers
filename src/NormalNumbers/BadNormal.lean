@@ -475,10 +475,18 @@ Gauss map*, Math. Ann. **364** (2016), 983–1023 (arXiv 1312.3619), **Theorem 1
 numbering (`thm:main`): any Gibbs measure for the Gauss map restricted to `B(𝒜)`, `𝒜` finite, with
 `dim μ > 1/2`, has polynomial decay; Bernoulli measures are Gibbs (their Remark `rmk:examples`(1)).
 Here `dim μ = log 2 / λ`, `λ = 2·𝔼 log(a + x) ≈ 1.34602` (depth-20 exact cylinder average,
-`probes/bad_bernoulli12_dimension.py`), so `dim μ ≈ 0.51496 > 1/2`: covered, with little margin.
+`probes/bad_bernoulli12_dimension.py`; the transfer-operator pressure derivative in
+`probes/sahlsten_stevens_cf12_probe.py` gives `λ = 1.34602223`), so `dim μ = 0.514960 > 1/2`:
+covered, with little margin.
 
-**Faithful-or-weaker:** the statement below is the specialisation to `μ` = law of `cfCoin` under
-`coins`.  Referee pass pending. -/
+**Third route.**  Baker–Banaji, Math. Ann. 392 (2025), Thm 1.2 (arXiv 2401.01241v2,
+`thm:analyticthm`): a self-conformal measure of an analytic IFS on `[0,1]` with a non-affine map
+has polynomial decay for all `ξ ≠ 0`.
+
+**Faithful (equivalent):** the specialisation to `μ` = law of `cfCoin` under `coins`; SS hypotheses
+checked after the conjugacy `A(x) = 12(x − 1/3)/5` (images `I₁ = [4/7, 1]`, `I₂ = [4/55, 8/35]`),
+and `L_φ^*μ = μ` for `φ ≡ −log 2` is the IFS stationarity equation.  Refereed 2026-10-03, implied
+(93%): `docs/BAD-NORMAL-REFEREE-2026-10-03.md`; tripwire `probes/sahlsten_stevens_cf12_probe.py`. -/
 def SahlstenStevensBernoulli12 : Prop :=
   ∃ C δ : ℝ, 0 < C ∧ 0 < δ ∧
     ∀ ξ : ℝ, ξ ≠ 0 → ‖∫ ω, ee (ξ * cfCoin ω) ∂coins‖ ≤ C * |ξ| ^ (-δ)

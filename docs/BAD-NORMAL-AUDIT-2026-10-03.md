@@ -4,9 +4,9 @@ Source: `docs/OPEN-PROBLEMS-SWEEP-2026-10-03b.md` candidates #1 and #4.  Branch 
 
 | Target | Verdict | Lean | Cited input |
 |---|---|---|---|
-| (A) computable absolutely normal number with all partial quotients in {1,2} | sound, no prior art found; freshness ~70% | `NormalNumbers.BadNormal.exists_computable_absNormal_bad` (wired; 5 leaves + 1 anchor `sorry`) | `BadNormal.Literature.SahlstenStevensBernoulli12` (referee pending) |
+| (A) computable absolutely normal number with all partial quotients in {1,2} | sound, no prior art found; freshness ~70% | `NormalNumbers.BadNormal.exists_computable_absNormal_bad` (proved) | `BadNormal.Literature.SahlstenStevensBernoulli12` (refereed 2026-10-03, 93%) |
 | (B) Bugeaud 10.18 + 10.17 (b = 2, normal) | sound, no prior art found; freshness ~65% | `NormalNumbers.ReciprocalNormal.exists_computable_absNormal_recip_not_normal` (wired; 3 leaves) | `ExplicitSquare.BakerBanajiQuarterCantor` (refereed 93%) |
-| (B') Bugeaud 10.17, every b ≥ 2, simply normal and normal | sound | `ReciprocalNormal.exists_computable_absNormal_recip_not_simplyNormal` (wired; 2 leaves) | `ReciprocalNormal.Literature.BakerBanajiSparse` (referee pending) |
+| (B') Bugeaud 10.17, every b ≥ 2, simply normal and normal | sound | `ReciprocalNormal.exists_computable_absNormal_recip_not_simplyNormal` (proved) | `ReciprocalNormal.Literature.BakerBanajiSparse` (refereed 2026-10-03, 93%) |
 
 ## (A) Prior art, searched deeper than the sweep
 

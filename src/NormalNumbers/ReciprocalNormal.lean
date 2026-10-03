@@ -31,7 +31,7 @@ decay of the law of `1/cantorReal ω`; the all-bases derandomizer gives a comput
 * `exists_computable_absNormal_recip_not_simplyNormal`: 10.17 in both versions for **every**
   `b ≥ 2`, via the sparse base-`b` Cantor point `ySparse b e` (digit `0` has frequency `≥ 2/3`),
   on the cited `Literature.BakerBanajiSparse` (same Baker–Banaji corollary, another self-similar
-  measure; referee pending).
+  measure; refereed 2026-10-03, 93%).
 
 ⚠️ Same seam as `ExplicitSquare` / `ExplicitPQ`: corollary-sized, harvest it inside a note.
 -/
@@ -205,7 +205,7 @@ noncomputable def sparsePushFourier (b : ℕ) (F : ℝ → ℝ) (ξ : ℝ) : ℂ
 namespace Literature
 
 /-- **Cited input: Baker–Banaji, *Polynomial Fourier decay for fractal measures and their
-pushforwards*, Math. Ann. 392 (2025) (arXiv 2401.01241v2), Corollary 1.5** (`t:self-similar`),
+pushforwards*, Math. Ann. 392 (2025) (arXiv 2401.01241v2), Corollary 1.5, "In particular" clause** (`t:self-similar`),
 as quoted in Manai 2609.24665 `thm:BB`: for a non-atomic self-similar probability measure `μ`
 supported in `[0,1]` and `F` `C²` on a neighbourhood of `[0,1]` with `F'' ≠ 0` on `[0,1]`,
 `|∫ e(ξF) dμ| ≤ C|ξ|^{-δ}`.
@@ -216,12 +216,14 @@ supported in `[0,1]` and `F` `C²` on a neighbourhood of `[0,1]` with `F'' ≠ 0
   hull `[0, 1/(b³−1)]` are `[0, b⁻³/(b³−1)]` and `[b⁻³, b⁻³ + b⁻³/(b³−1)]`, disjoint since
   `b³ ≥ 8`), so non-atomic; a translate is again self-similar.
 * Support: `ySparse b ω ∈ [⌈b/2⌉/b, ⌈b/2⌉/b + 1/(b³ − 1)] ⊆ [1/2, 1)`.
-* Window: as in `ExplicitSquare.BakerBanajiQuarterCantor`, the rational affine change
-  `t ↦ 2t − 1` maps `[1/2, 1]` to `[0, 1]`, preserves self-similarity, and turns `F` into
-  `F((s+1)/2)`, `C²` near `[0,1]` with second derivative `F''/4 ≠ 0`.
+* Window: `s = 2y − 1` gives the IFS `ψ_ω(s) = s/b³ + a(1 − b⁻³) + 2ω/b³`,
+  `a = 2⌊(b+1)/2⌋/b − 1 ∈ [0, 1/b]`, with `ψ_ω[0,1] ⊆ [0, 7/8]` and distinct fixed points
+  `a ≠ a + 2/(b³−1)`; `F` becomes `F((s+1)/2)`, `C²` near `[0,1]` with second derivative `F''/4 ≠ 0`.
 * For `b = 2` this measure differs from the refereed quarter-Cantor law only in the gap pattern.
 
-**Faithful-or-weaker:** specialisation of BB Cor 1.5 to the measures `μ_b`.  Referee pending. -/
+**Faithful-or-weaker:** specialisation of BB Cor 1.5 to the measures `μ_b`.  Refereed 2026-10-03, implied
+(93%): `docs/BAD-NORMAL-REFEREE-2026-10-03.md`.  No `κ/η` monotonicity issue: the existential
+`C_{F,μ}` clause is used directly. -/
 def BakerBanajiSparse : Prop :=
   ∀ b : ℕ, 2 ≤ b → ∀ F : ℝ → ℝ, ∀ U : Set ℝ, IsOpen U → Set.Icc (1 / 2 : ℝ) 1 ⊆ U →
     ContDiffOn ℝ 2 F U → (∀ t ∈ Set.Icc (1 / 2 : ℝ) 1, deriv (deriv F) t ≠ 0) →
