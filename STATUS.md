@@ -376,6 +376,12 @@ These are the ratified conjecture nodes.  They are open by design, and none is s
   π² in bases 16/2 given `Irrational (π²)` (`hypA_piSq_base2`), Borel ⇒ disjunctive.  Maze test:
   `MasterMaze.lean` (`mazeTestImplied`/`mazeTestNotImplied`; `equidistributed_lnTwoOrbit_iff`,
   `run_sublinear_of_isNormal`).
+- **Manai's `Ω_k` (2026-10-02, audit + 2 laps).**  `ExplicitOmegaK.exists_computable_mem_Omega_two`: computable
+  `e` with `√(cantorReal e)` ABSOLUTELY normal and in `Ω₂` (answers Manai's x² question as posed), cond. on
+  `BakerBanajiQuarterCantor`.  `ExplicitOmegaK.Omega_nonempty` / `ae_mem_Omega`: `Ω_k ≠ ∅` for every `k ≥ 2`
+  (Manai: "not even known"), cond. on `BakerBanajiAnalyticQuarterCantor` (BB v2 Cor 2.10, refereed 92%).
+  Open: explicit `Ω_k`, `k ≥ 3` (`exists_computable_mem_Omega`, 65%), `dimH_Omega_eq_one` (80%).
+  Note: `docs/notes/computable-normal-square-not-normal.md`.
 - **Computable normal `x` with `x²` not normal (2026-10-02, audit + 2 laps).**
   `ExplicitSquare.exists_computable_normal_sq_not_normal`: `x = √y`, `y = cantorReal e` (binary digits 0 at
   every odd place, so no `11` and `y` is not normal, `not_isNormal_cantorReal`), `e : ℕ → Bool` `Computable`,
