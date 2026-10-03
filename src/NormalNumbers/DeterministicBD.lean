@@ -14,8 +14,9 @@ import Mathlib.NumberTheory.Transcendental.Liouville.Basic
 
 Source: V. Bergelson, T. Downarowicz, *On preservation of normality and determinism under
 arithmetic operations*, arXiv:2506.12929v1 (2025-06-15, the only arXiv version on 2026-10-03),
-§9.6 "Some natural open problems" (TeX label `S7`; theorem numbers below were computed from the
-v1 TeX source `Final2.tex`, counter `thm` per section, and are given with their TeX labels):
+§8.6 "Some natural open problems" (TeX label `S7`; theorem numbers below are those of the printed
+v1 PDF, with their TeX labels; the TeX hides a section in a `comment` block, so TeX counters run one
+ahead outside §3, `docs/BERGELSON-DOWNAROWICZ-REFEREE-2026-10-03.md`):
 
 > 2. Is the reciprocal of a nonzero deterministic number always deterministic?
 >
@@ -67,7 +68,7 @@ def IsDeterministicSeq (ω : ℕ → ℕ) : Prop :=
 /-- B-D **Def. 3.10** (label `detn`): "A real number `x` is deterministic in base `r` if its alias
 `ω_r(x)` is a deterministic sequence."  The alias (B-D §2, eq. `expansion`) is the digit sequence
 after the radix point, with the expansion ending in `0`s for `b`-adic rationals (§4.1); that is
-`digitOf b (Int.fract x)`.  Any base `b ≥ 2`; B-D's §9 examples are base `2`. -/
+`digitOf b (Int.fract x)`.  Any base `b ≥ 2`; B-D's §8 examples are base `2`. -/
 def IsDeterministic (b : ℕ) (x : ℝ) : Prop :=
   IsDeterministicSeq (digitOf b (Int.fract x))
 
@@ -147,26 +148,27 @@ namespace NormalNumbers.Literature.BergelsonDownarowicz
 
 open NormalNumbers.Deterministic
 
-/-- **B-D 2506.12929v1 Cor. 4.12(2)** (label `rrr`): "`𝒟(r) = 𝒟^⊥(r)`.  The set `𝒟(r)` is a
+/-- **B-D 2506.12929v1 Cor. 4.11(2)** (label `rrr`): "`𝒟(r) = 𝒟^⊥(r)`.  The set `𝒟(r)` is a
 subgroup of `(ℝ,+)`."  Stated as closure under subtraction (weaker than the full statement).
-Proved in B-D through the torus model (Cor. 4.11(4), label `rauzy`): the sum map is continuous on
+Proved in B-D through the torus model (Cor. 4.10(4), label `rauzy`): the sum map is continuous on
 `𝕋`, so carries are absorbed, and entropy is subadditive on joinings.  Transcribed through
 Thm. 3.9 (`IsDeterministic` is their Def. 3.8, the corollary is about Def. 3.5). -/
 def DetSub (b : ℕ) : Prop :=
   ∀ x y : ℝ, IsDeterministic b x → IsDeterministic b y → IsDeterministic b (x - y)
 
-/-- **B-D Cor. 9.15** (label `x^2`): "The square of a deterministic number need not be
-deterministic."  Base `2` (the construction, Thm. 9.11 `cex` and Prop. 9.13 `1/y`, is binary). -/
+/-- **B-D Cor. 8.15** (label `x^2`): "The square of a deterministic number need not be
+deterministic."  Base `2` (the construction, Thm. 8.11 `cex` and Prop. 8.13 `1/y`, is binary). -/
 def DetSqNotDet : Prop :=
   ∃ s : ℝ, IsDeterministic 2 s ∧ ¬ IsDeterministic 2 (s ^ 2)
 
-/-- **B-D Prop. 4.8(1),(4)** (label `nordet1`) with Thm. 3.9: a point is deterministic iff its
+/-- **B-D Prop. 4.7(1),(4)** (label `nordet1`) with Thm. 3.9: a point is deterministic iff its
 entropy exists and is `0`; a real is normal in base `r` iff its entropy exists and is `log r`.
-Hence no normal number is deterministic. -/
+Hence no normal number is deterministic.  Guarded by `2 ≤ b`: at `b = 1` every real is both
+`IsNormal 1` and `IsDeterministic 1` (referee 2026-10-03). -/
 def NormalNotDet (b : ℕ) : Prop :=
-  ∀ x : ℝ, IsNormal b x → ¬ IsDeterministic b x
+  2 ≤ b → ∀ x : ℝ, IsNormal b x → ¬ IsDeterministic b x
 
-/-- **B-D open question 2** (§9.6), as a `Prop`.  `not_reciprocalQuestion` answers it. -/
+/-- **B-D open question 2** (§8.6), as a `Prop`.  `not_reciprocalQuestion` answers it. -/
 def ReciprocalQuestion (b : ℕ) : Prop :=
   ∀ y : ℝ, y ≠ 0 → IsDeterministic b y → IsDeterministic b y⁻¹
 
@@ -188,14 +190,17 @@ namespace NormalNumbers.Literature.Manai2026
 
 open NormalNumbers.ExplicitSquare
 
-/-- **Consequence of Manai 2606.08325v1 Cor. 1.4** (label `cor:quadratic-log`): for
-`X = Σ ξ_n 2^{-n}` with independent `ξ_n ~ Bernoulli(p_n)` and
-`v_n = p_n(1-p_n) ≥ A (log n / n)^{1/2}` (`A ≥ A₀`), `X²` is almost surely absolutely normal.
-Taking `p_n → 0` at that rate, the digit-1 frequency of `X` is a.s. `0` (Kolmogorov's SLLN).
-⚠️ That second conjunct is a routine probability step **not stated by Manai**; base-2 normality
-is weaker than his absolute normality. -/
-def QuadraticLogWitness : Prop :=
-  ∃ X : ℝ, OneFreqZero X ∧ IsNormal 2 (X ^ 2)
+/-- **Manai 2606.08325v1 Cor. 1.4** (label `cor:quadratic-log`), weakened from absolute normality to
+base `2`: for `X = Σ ξ_n 2^{-(n+1)}` with independent `ξ_n ∈ {0,1}`, `P(ξ_n = 1) = p_n`, and
+`p_n(1-p_n) ≥ A (log n / n)^{1/2}` eventually (`A ≥ A₀`), `X²` is almost surely normal.  Referee
+`docs/BERGELSON-DOWNAROWICZ-REFEREE-2026-10-03.md` §4. -/
+def Cor14 : Prop :=
+  ∃ A₀ : ℝ, 0 < A₀ ∧ ∀ A ≥ A₀, ∀ p : ℕ → ℝ, (∀ n, p n ∈ Set.Icc (0 : ℝ) 1) →
+    (∀ᶠ n : ℕ in atTop, A * (Real.log n / n) ^ (1 / 2 : ℝ) ≤ p n * (1 - p n)) →
+    ∀ (Ω : Type) [MeasureSpace Ω] [IsProbabilityMeasure (volume : Measure Ω)]
+      (ξ : ℕ → Ω → ℕ), (∀ n, Measurable (ξ n)) → ProbabilityTheory.iIndepFun ξ volume →
+      (∀ n, volume.real {ω | ξ n ω = 1} = p n ∧ volume.real {ω | ξ n ω = 0} = 1 - p n) →
+      ∀ᵐ ω, IsNormal 2 ((∑' n, (ξ n ω : ℝ) / 2 ^ (n + 1)) ^ 2)
 
 end NormalNumbers.Literature.Manai2026
 
@@ -207,8 +212,10 @@ numbers (product half of the paper; the sum half is not used). -/
 def Erdos1962Product : Prop :=
   ∀ z : ℝ, z ≠ 0 → ∃ x y : ℝ, _root_.Liouville x ∧ _root_.Liouville y ∧ z = x * y
 
-/-- Classical: the Liouville numbers have Hausdorff dimension `0` (Jarník; e.g. Oxtoby, *Measure
-and Category*, ch. 2 "Liouville numbers": `h`-measure zero for every dimension function). -/
+/-- Classical: the Liouville numbers have `s`-dimensional Hausdorff measure `0` for every `s > 0`
+(Oxtoby, *Measure and Category*, GTM 2, Thm. 2.4, as cited by Chalebgwa–Morris; number 80%), hence
+`dimH = 0`.  Elementary: cover by `⋃_{q ≥ Q} ⋃_p B(p/q, q^{-n})`, `H^s ≤ Σ (q+1)(2q^{-n})^s → 0`
+for `ns > 2`. -/
 def DimHZero : Prop :=
   dimH {x : ℝ | _root_.Liouville x} = 0
 
@@ -256,7 +263,7 @@ theorem hua_witness {b : ℕ} (hsub : DetSub b) {s : ℝ}
   ring
 
 /-- **Answer to Bergelson–Downarowicz question 2: No.**  Some nonzero base-2 deterministic number
-has a non-deterministic reciprocal.  From B-D Cor. 4.12(2) and Cor. 9.15. -/
+has a non-deterministic reciprocal.  From B-D Cor. 4.11(2) and Cor. 8.15. -/
 theorem exists_deterministic_inv_not_deterministic (hsub : DetSub 2) (hsq : DetSqNotDet) :
     ∃ y : ℝ, y ≠ 0 ∧ IsDeterministic 2 y ∧ ¬ IsDeterministic 2 y⁻¹ := by
   obtain ⟨s, hs, hs2⟩ := hsq
@@ -313,11 +320,25 @@ theorem isDeterministic_of_oneFreqZero {y : ℝ} (hy : ExplicitSquare.OneFreqZer
     exact congrArg (· :: []) hi
   · simpa using Real.one_lt_rpow (by norm_num : (1 : ℝ) < 2) hε
 
-/-- Independent route to B-D Cor. 9.15 through Manai 2606.08325 Cor. 1.4. -/
-theorem detSqNotDet_of_manai (hM : Literature.Manai2026.QuadraticLogWitness)
+/-- A real with digit-1 frequency `0` whose square is normal in base `2`. -/
+def QuadraticLogWitness : Prop :=
+  ∃ X : ℝ, ExplicitSquare.OneFreqZero X ∧ IsNormal 2 (X ^ 2)
+
+/-- **Manai's Cor. 1.4 gives a witness.**  Confidence 90%.  English proof: take `A = A₀`,
+`p n = min (1/2) (2 A₀ (log n / n)^{1/2})` (so `p n (1 - p n) ≥ p n / 2 ≥ A₀(…)^{1/2}` once the min
+is the second branch, and `p n → 0`).  `Ω = ℕ → ℕ` with the product of Bernoulli(`p n`) laws, `ξ`
+the coordinates.  (i) Digit-1 frequency `0` a.s.: `E S_N = Σ_{n<N} p n = o(N)`, `Var S_N ≤ N`;
+Chebyshev at `N = 2^k` is summable, so Borel–Cantelli plus monotonicity of `S_N` gives
+`S_N / N → 0` a.s.  (ii) A.s. `ξ` is not eventually `1` (`∏_{n ≥ M} p n = 0`), so `X < 1` and the
+binary digits of `X` are the `ξ n`.  (iii) Intersect with the a.s. event of `Cor14`. -/
+theorem quadraticLogWitness_of_cor14 (h : Literature.Manai2026.Cor14) : QuadraticLogWitness := by
+  sorry
+
+/-- Independent route to B-D Cor. 8.15 through Manai 2606.08325 Cor. 1.4. -/
+theorem detSqNotDet_of_manai (hM : Literature.Manai2026.Cor14)
     (hN : NormalNotDet 2) : DetSqNotDet := by
-  obtain ⟨X, hX, hX2⟩ := hM
-  exact ⟨X, isDeterministic_of_oneFreqZero hX, hN _ hX2⟩
+  obtain ⟨X, hX, hX2⟩ := quadraticLogWitness_of_cor14 hM
+  exact ⟨X, isDeterministic_of_oneFreqZero hX, hN le_rfl _ hX2⟩
 
 /-! ## Item 4: products, ratios, reciprocal products have `dimH 0` -/
 
