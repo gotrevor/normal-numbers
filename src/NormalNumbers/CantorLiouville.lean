@@ -1192,6 +1192,87 @@ theorem sched_ratio :
       _ ≤ q * ((sched j : ℝ) * (1 + 2 / j)) := by gcongr
       _ = _ := by ring
 
+theorem isFree_of_not_mem_run {i : ℕ} (h : ∀ k, ¬ (runStart k ≤ i ∧ i < (k + 2) * runStart k)) :
+    isFree i = true := by
+  unfold isFree isForced
+  simp only [Bool.not_eq_true', List.any_eq_false, List.mem_range, Bool.and_eq_true,
+    decide_eq_true_eq]
+  intro k _ hk
+  exact h k hk
+
+theorem runStart_succ_eq (k : ℕ) : runStart (k + 1) = 2 * (k + 2) * runStart k := rfl
+
+theorem runStart_mono : Monotone runStart := by
+  refine monotone_nat_of_le_succ fun k => ?_
+  rw [runStart_succ_eq]; nlinarith
+
+theorem runEnd_mono : Monotone fun k => (k + 2) * runStart k := by
+  refine monotone_nat_of_le_succ fun k => ?_
+  show (k + 2) * runStart k ≤ (k + 1 + 2) * runStart (k + 1)
+  rw [runStart_succ_eq]
+  have : (k + 2) * runStart k ≤ (k + 2) * runStart k * (2 * (k + 3)) :=
+    Nat.le_mul_of_pos_right _ (by positivity)
+  calc _ ≤ (k + 2) * runStart k * (2 * (k + 3)) := this
+    _ = _ := by ring
+
+/-- Lower end of the free gap before run `k`. -/
+def gapStart : ℕ → ℕ
+  | 0 => 0
+  | k + 1 => (k + 2) * runStart k
+
+theorem isFree_gap {k i : ℕ} (h1 : gapStart k ≤ i) (h2 : i < runStart k) : isFree i = true := by
+  refine isFree_of_not_mem_run fun j ⟨hj1, hj2⟩ => ?_
+  rcases Nat.lt_or_ge j k with hjk | hjk
+  · cases k with
+    | zero => omega
+    | succ k =>
+      have := runEnd_mono (show j ≤ k by omega)
+      simp only [gapStart] at h1
+      simp only at this; omega
+  · have := runStart_mono hjk; omega
+
+theorem isFree_after {k i : ℕ} (h1 : (k + 2) * runStart k ≤ i) (h2 : i < runStart (k + 1)) :
+    isFree i = true := isFree_gap (k := k + 1) h1 h2
+
+theorem gap_size (k : ℕ) : runStart k ≤ 2 * (runStart k - gapStart k) := by
+  cases k with
+  | zero => simp [gapStart]; omega
+  | succ k =>
+    simp only [gapStart, runStart_succ_eq]
+    have : 2 * (k + 2) * runStart k = 2 * ((k + 2) * runStart k) := by ring
+    rw [this]; omega
+
+theorem two_pow_le_runStart (k : ℕ) : 2 ^ k ≤ runStart k := by
+  induction k with
+  | zero => simp [runStart]
+  | succ k ih => rw [runStart_succ_eq, pow_succ]; nlinarith
+
+theorem card_le_freeCount {s e M : ℕ} (he : e ≤ M) (hf : ∀ i, s ≤ i → i < e → isFree i = true) :
+    e - s ≤ freeCount isFree M := by
+  unfold freeCount
+  rw [← Nat.card_Ico]
+  refine Finset.card_le_card fun i hi => ?_
+  simp only [Finset.mem_Ico] at hi
+  simp only [Finset.mem_filter, Finset.mem_range]
+  exact ⟨by omega, hf i hi.1 hi.2⟩
+
+theorem card_le_freeCount₂ {s e s' M : ℕ} (hes : e ≤ s') (heM : e ≤ M)
+    (hf : ∀ i, s ≤ i → i < e → isFree i = true) (hf' : ∀ i, s' ≤ i → i < M → isFree i = true) :
+    (e - s) + (M - s') ≤ freeCount isFree M := by
+  unfold freeCount
+  rcases Nat.lt_or_ge M s' with hM | hM
+  · have := card_le_freeCount heM hf
+    unfold freeCount at this
+    omega
+  rw [← Nat.card_Ico, ← Nat.card_Ico, ← Finset.card_union_of_disjoint]
+  · refine Finset.card_le_card fun i hi => ?_
+    simp only [Finset.mem_union, Finset.mem_Ico] at hi
+    simp only [Finset.mem_filter, Finset.mem_range]
+    rcases hi with hi | hi
+    · exact ⟨by omega, hf i hi.1 hi.2⟩
+    · exact ⟨by omega, hf' i hi.1 hi.2⟩
+  · rw [Finset.disjoint_left]; intro i h1 h2; simp only [Finset.mem_Ico] at h1 h2; omega
+
 /-- **The runs keep a `1/log` fraction of free positions.**  Confidence 95%.
 
 English proof.  For `M < a 0 = 4` all positions are free.  For `a k ≤ M < a (k+1)`: the block
@@ -1200,7 +1281,38 @@ English proof.  For `M < a 0 = 4` all positions are free.  For `a k ≤ M < a (k
 block `[(k+2) a k, M)` adds `M − (k+2) a k`, again giving `≥ M/(2(k+2))`.  Finally
 `a k ≥ 4^{k+1}`, so `k + 2 ≤ log₂ M + 2`. -/
 theorem le_freeCount (M : ℕ) : M ≤ 2 * (Nat.log 2 M + 2) * freeCount isFree M := by
-  sorry
+  rcases Nat.lt_or_ge M 4 with hM | hM
+  · have := card_le_freeCount (s := 0) (e := M) (M := M) le_rfl
+      (fun i _ h2 => isFree_gap (k := 0) (by simp [gapStart]) (by simp [runStart]; omega))
+    simp only [Nat.sub_zero] at this
+    nlinarith [Nat.zero_le (Nat.log 2 M)]
+  have hex : ∃ k, M < runStart (k + 1) :=
+    ⟨M, lt_of_lt_of_le (Nat.lt_two_pow_self) (two_pow_le_runStart _ |>.trans' (Nat.pow_le_pow_right (by norm_num) (Nat.le_succ M)))⟩
+  classical
+  set k := Nat.find hex
+  have hk1 : M < runStart (k + 1) := Nat.find_spec hex
+  have hk0 : runStart k ≤ M := by
+    rcases Nat.eq_zero_or_pos k with h0 | hpos
+    · rw [h0]; simp [runStart]; omega
+    · have hm : ¬ M < runStart (k - 1 + 1) := Nat.find_min hex (by omega)
+      rw [Nat.sub_add_cancel hpos] at hm; omega
+  have hF := card_le_freeCount₂ (s := gapStart k) (e := runStart k) (s' := (k + 2) * runStart k)
+    (M := M) (by nlinarith) hk0 (fun i h1 h2 => isFree_gap h1 h2)
+    (fun i h1 h2 => isFree_after h1 (by omega))
+  have hg := gap_size k
+  have hlog : k ≤ Nat.log 2 M :=
+    Nat.le_log_of_pow_le (by norm_num) ((two_pow_le_runStart k).trans hk0)
+  have hmain : M ≤ 2 * (k + 2) * freeCount isFree M := by
+    rcases Nat.lt_or_ge M ((k + 2) * runStart k) with hc | hc
+    · have : M - (k + 2) * runStart k = 0 := by omega
+      rw [this, add_zero] at hF
+      nlinarith
+    · obtain ⟨t, ht⟩ : ∃ t, M = (k + 2) * runStart k + t := ⟨M - (k + 2) * runStart k, by omega⟩
+      have : M - (k + 2) * runStart k = t := by omega
+      rw [this] at hF
+      nlinarith
+  calc M ≤ 2 * (k + 2) * freeCount isFree M := hmain
+    _ ≤ _ := by gcongr
 
 /-- **The Cassels bound is summable along the schedule.**  Confidence 92%.
 
