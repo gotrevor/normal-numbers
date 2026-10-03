@@ -1,3 +1,15 @@
+## LevinSparse lane (2026-10-03, lap 1)
+* PROVED: del_ae_tendsto (deterministic core `tendsto_of_summable_sq_div`), discLe_fract_add,
+  isNormal_of_discLe, fract_bldPoint_small, secondMoment_translate_le (coin-flip Fourier product,
+  `integral_ee_step`/`norm_integral_ee_bldPoint_le`), ae_isNormal_odd_add (`summable_inv_mul_log_rpow`,
+  `fourierMean_orbit`), sparse_expSet, sIcc_expSet_le, rate_arith, exists_not_isNormal_two_dense.
+* Headline crux remaining: bld_doubleSum_le (fork in progress).
+* Off-headline: exists_computable_bld_odd_add — existing derandomizer (`Derandomize.exists_primrec_avoid`,
+  `ComputableNormalB.level_bound_b`) needs Primrec tests and polynomial decay; here α is only Computable
+  and decay is (log N)^{-1.005} on second moments.  Needs (i) a Computable (oracle) version of the avoider,
+  (ii) Chebyshev bad sets along N_k = ⌊exp(k^{0.999})⌋.  exists_absNormal_base2_fast is an open problem
+  (needs Schmidt 1960 for bases 2^a m).
+
 ## BAD-normal (A) and reciprocal (B) lanes (2026-10-03) — DONE
 * `ReciprocalNormal.lean` sorry-free.  `exists_computable_absNormal_recip_not_normal` (on
   `BakerBanajiQuarterCantor`) and `exists_computable_absNormal_recip_not_simplyNormal` (on
