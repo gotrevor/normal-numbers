@@ -577,55 +577,6 @@ theorem deriv2_GP_eq {Q : ℤ[X]} {u : ℕ} (hu : IsBranch Q u) (P : ℤ[X]) {y 
   field_simp
   ring
 
-/-- **Lower bound for `G_P''` by a product of distances, explicit in the zero count.**
-
-Confidence 88%.  English proof: on the window, `G_P''(y) = c² W_P(x)/Q'(x)³` with
-`x = brInv(a + c y) ∈ [u+1, u+2]` (implicit differentiation, `branch_spec`).  Write
-`W_P = ℓ Π (X − ρ_i)` over `ℂ`, `|ℓ| ≥ 1`, `N = deg W_P` roots.  For real `x`,
-`|x − ρ| ≥ |x − Re ρ|`.  The map `y ↦ x` is monotone with `|dx/dy| = |c|/|Q'(x)| ≥ 1/M`,
-`M = 1 + max_{[u+1,u+2]} |Q'|`, so with `τ(σ)` the `y`-preimage of `σ` when `σ ∈ [u+1, u+2]`
-and the nearer window endpoint otherwise, `|x − σ| ≥ |y − τ(σ)|/M`.  So
-`|G_P''(y)| ≥ c² M^{-3} M^{-N} Π |y − τ_i| ≥ M^{-(N+3)} Π |y − τ_i|` (`c² ≥ 1`).  `L = M`
-depends only on `Q` and `u`. -/
-theorem deriv2_GP_lower {Q : ℤ[X]} {u : ℕ} (hu : IsBranch Q u) :
-    ∃ L : ℕ, 1 ≤ L ∧ ∀ P : ℤ[X], wPoly P Q ≠ 0 →
-      ∃ Z : Multiset ℝ, Z.card ≤ (wPoly P Q).natDegree ∧ ∀ t ∈ Set.Icc (1 / 2 : ℝ) 1,
-        ((L : ℝ) ^ ((wPoly P Q).natDegree + 3))⁻¹ * (Z.map fun z => |t - z|).prod ≤
-          |deriv (deriv (GP Q u P)) t| := by
-  sorry
-
-/-- **Sibling identity: `G_P` is rational affine near the window when `P ∈ span(1, Q)`.**
-Proved from `branch_spec` (`Q(brInv w) = w` on `U`) and `aeval_eq_of_affineIn`. -/
-theorem GP_eq_of_affineIn {Q P : ℤ[X]} {u : ℕ} (hu : IsBranch Q u) {α β : ℚ}
-    (h : P.map (Int.castRingHom ℚ) = C α * Q.map (Int.castRingHom ℚ) + C β) :
-    ∃ U : Set ℝ, IsOpen U ∧ Set.Icc (1 / 2 : ℝ) 1 ⊆ U ∧ ∀ y ∈ U,
-      GP Q u P y = (α : ℝ) * ((aQ Q u : ℝ) + (cQ Q u : ℝ) * y) + β := by
-  obtain ⟨-, -, U, hU, hsub, hinv, -⟩ := branch_spec hu
-  refine ⟨U, hU, hsub, fun y hy => ?_⟩
-  rw [GP, aeval_eq_of_affineIn h, hinv y hy]
-
-/-- **Known-false sibling: the cut cannot run on `P ∈ span_ℚ(1, Q)`.**  `G_P` is affine on a
-neighbourhood of the window, so `G_P'' ≡ 0` there and no lower bound `c Π |t − z|` holds
-(`not_deriv2_lower_of_deriv2_eq_zero`).  Proved from `GP_eq_of_affineIn`. -/
-theorem not_deriv2_lower_GP_of_affineIn {Q P : ℤ[X]} {u : ℕ} (hu : IsBranch Q u)
-    (h : AffineIn P Q) {c : ℝ} (hc : 0 < c) (Z : Multiset ℝ) :
-    ¬ ∀ t ∈ Set.Icc (1 / 2 : ℝ) 1, c * (Z.map fun z => |t - z|).prod ≤
-      |deriv (deriv (GP Q u P)) t| := by
-  obtain ⟨α, β, hαβ⟩ := h
-  obtain ⟨U, hU, hsub, hU'⟩ := GP_eq_of_affineIn hu hαβ
-  refine not_deriv2_lower_of_deriv2_eq_zero _ (fun t ht => ?_) hc Z
-  have hd : deriv (GP Q u P) =ᶠ[𝓝 t] fun _ => (α : ℝ) * (cQ Q u : ℝ) := by
-    filter_upwards [hU.mem_nhds (hsub ht)] with s hs
-    have hev : GP Q u P =ᶠ[𝓝 s] fun y => (α : ℝ) * ((aQ Q u : ℝ) + (cQ Q u : ℝ) * y) + β := by
-      filter_upwards [hU.mem_nhds hs] with y hy using hU' y hy
-    rw [hev.deriv_eq]
-    have : HasDerivAt (fun y => (α : ℝ) * ((aQ Q u : ℝ) + (cQ Q u : ℝ) * y) + β)
-        ((α : ℝ) * (cQ Q u : ℝ)) s := by
-      have := ((hasDerivAt_id s).const_mul (cQ Q u : ℝ)).const_add (aQ Q u : ℝ)
-      simpa using (this.const_mul (α : ℝ)).add_const (β : ℝ)
-    exact this.deriv
-  rw [hd.deriv_eq, deriv_const]
-
 /-! Coefficient-mass bounds for `P`, `P'`, `P''` on `|x| ≤ B`. -/
 
 /-- Truncated coefficient mass `Σ_{j<N} |p_j|`. -/
@@ -699,6 +650,182 @@ theorem abs_aeval_deriv_le (P : ℤ[X]) {x B : ℝ} (hB : 1 ≤ B) (hx : |x| ≤
   · have := abs_aeval_le_cs _ h2 hB hx
     rw [Nat.add_sub_cancel] at this
     exact this.trans (by gcongr)
+
+/-- Clamp to the branch window `[u+1, u+2]`. -/
+noncomputable def clampW (u : ℕ) (σ : ℝ) : ℝ := max ((u : ℝ) + 1) (min σ ((u : ℝ) + 2))
+
+theorem clampW_mem (u : ℕ) (σ : ℝ) : clampW u σ ∈ Set.Icc ((u : ℝ) + 1) ((u : ℝ) + 2) :=
+  ⟨le_max_left _ _, max_le (by linarith) (min_le_right _ _)⟩
+
+theorem abs_sub_clampW_le (u : ℕ) {x : ℝ} (hx : x ∈ Set.Icc ((u : ℝ) + 1) ((u : ℝ) + 2))
+    (σ : ℝ) : |x - clampW u σ| ≤ |x - σ| := by
+  unfold clampW
+  rcases le_total σ ((u : ℝ) + 2) with h | h
+  · rw [min_eq_left h]
+    rcases le_total ((u : ℝ) + 1) σ with h' | h'
+    · rw [max_eq_right h']
+    · rw [max_eq_left h', abs_of_nonneg (by linarith [hx.1]), abs_of_nonneg (by linarith [hx.1])]
+      linarith
+  · rw [min_eq_right h, max_eq_right (by linarith), abs_of_nonpos (by linarith [hx.2]),
+      abs_of_nonpos (by linarith [hx.2])]
+    linarith
+
+/-- **Lower bound for `G_P''` by a product of distances, explicit in the zero count.**
+
+Confidence 88%.  English proof: on the window, `G_P''(y) = c² W_P(x)/Q'(x)³` with
+`x = brInv(a + c y) ∈ [u+1, u+2]` (implicit differentiation, `branch_spec`).  Write
+`W_P = ℓ Π (X − ρ_i)` over `ℂ`, `|ℓ| ≥ 1`, `N = deg W_P` roots.  For real `x`,
+`|x − ρ| ≥ |x − Re ρ|`.  The map `y ↦ x` is monotone with `|dx/dy| = |c|/|Q'(x)| ≥ 1/M`,
+`M = 1 + max_{[u+1,u+2]} |Q'|`, so with `τ(σ)` the `y`-preimage of `σ` when `σ ∈ [u+1, u+2]`
+and the nearer window endpoint otherwise, `|x − σ| ≥ |y − τ(σ)|/M`.  So
+`|G_P''(y)| ≥ c² M^{-3} M^{-N} Π |y − τ_i| ≥ M^{-(N+3)} Π |y − τ_i|` (`c² ≥ 1`).  `L = M`
+depends only on `Q` and `u`. -/
+theorem deriv2_GP_lower {Q : ℤ[X]} {u : ℕ} (hu : IsBranch Q u) :
+    ∃ L : ℕ, 1 ≤ L ∧ ∀ P : ℤ[X], wPoly P Q ≠ 0 →
+      ∃ Z : Multiset ℝ, Z.card ≤ (wPoly P Q).natDegree ∧ ∀ t ∈ Set.Icc (1 / 2 : ℝ) 1,
+        ((L : ℝ) ^ ((wPoly P Q).natDegree + 3))⁻¹ * (Z.map fun z => |t - z|).prod ≤
+          |deriv (deriv (GP Q u P)) t| := by
+  set B : ℝ := (u : ℝ) + 2 with hBdef
+  have hB : 1 ≤ B := by rw [hBdef]; linarith [(Nat.cast_nonneg u : (0 : ℝ) ≤ u)]
+  set a : ℝ := (aQ Q u : ℝ)
+  set c : ℝ := (cQ Q u : ℝ) with hcdef
+  have hc1 : 1 ≤ |c| := by
+    rw [hcdef, ← Int.cast_abs]; exact_mod_cast Int.one_le_abs (branch_spec hu).1
+  have hc0 : c ≠ 0 := fun h => by rw [h, abs_zero] at hc1; norm_num at hc1
+  set M : ℝ := ((Q.natDegree : ℝ) + 1) * hgt Q * B ^ Q.natDegree + 1 with hM
+  have hM1 : 1 ≤ M := by
+    have : (0:ℝ) ≤ ((Q.natDegree : ℝ) + 1) * hgt Q * B ^ Q.natDegree := by positivity
+    rw [hM]; linarith
+  have hM0 : 0 < M := by linarith
+  have hWin : ∀ x ∈ Set.Icc ((u : ℝ) + 1) ((u : ℝ) + 2), |aeval x (derivative Q)| ≤ M := by
+    intro x hx
+    have hxB : |x| ≤ B := by
+      rw [abs_of_nonneg (by linarith [hx.1, (Nat.cast_nonneg u : (0 : ℝ) ≤ u)])]; exact hx.2
+    have := (abs_aeval_deriv_le Q hB hxB).2.1
+    rw [hM]; linarith
+  have hLip : ∀ x ∈ Set.Icc ((u : ℝ) + 1) ((u : ℝ) + 2), ∀ x' ∈ Set.Icc ((u : ℝ) + 1) ((u : ℝ) + 2),
+      |aeval x Q - aeval x' Q| ≤ M * |x - x'| := by
+    intro x hx x' hx'
+    have := Convex.norm_image_sub_le_of_norm_deriv_le (f := fun x : ℝ => aeval x Q)
+      (fun z _ => (Polynomial.hasDerivAt_aeval Q z).differentiableAt)
+      (fun z hz => by rw [(Polynomial.hasDerivAt_aeval Q z).deriv]; exact hWin z hz)
+      (convex_Icc _ _) hx' hx
+    simpa [Real.norm_eq_abs] using this
+  set τ : ℝ → ℝ := fun σ => (aeval (clampW u σ) Q - a) / c with hτ
+  have hτ_le : ∀ t ∈ Set.Icc (1 / 2 : ℝ) 1, ∀ σ : ℝ, |t - τ σ| ≤ M * |Xf Q u t - σ| := by
+    intro t ht σ
+    have hx := Xf_mem_Icc hu ht
+    have hQx : aeval (Xf Q u t) Q = a + c * t := (Xf_spec (window_sub_Vset hu ht)).2
+    have e : t - τ σ = (aeval (Xf Q u t) Q - aeval (clampW u σ) Q) / c := by
+      rw [hτ, hQx]; field_simp; ring
+    rw [e, abs_div]
+    calc |aeval (Xf Q u t) Q - aeval (clampW u σ) Q| / |c|
+        ≤ |aeval (Xf Q u t) Q - aeval (clampW u σ) Q| :=
+          div_le_self (abs_nonneg _) hc1
+      _ ≤ M * |Xf Q u t - clampW u σ| := hLip _ hx _ (clampW_mem u σ)
+      _ ≤ M * |Xf Q u t - σ| := mul_le_mul_of_nonneg_left (abs_sub_clampW_le u hx σ) hM0.le
+  refine ⟨⌈M⌉₊, ?_, fun P hW => ?_⟩
+  · exact_mod_cast (Nat.one_le_cast.1 (hM1.trans (Nat.le_ceil _)) : 1 ≤ ⌈M⌉₊)
+  set W := wPoly P Q
+  set N := W.natDegree
+  set Wc : ℂ[X] := W.map (algebraMap ℤ ℂ) with hWc
+  have hWcd : Wc.natDegree = N := by
+    rw [hWc, natDegree_map_eq_of_injective (RingHom.injective_int (algebraMap ℤ ℂ))]
+  have hWclc : Wc.leadingCoeff = ((W.leadingCoeff : ℤ) : ℂ) := by
+    rw [hWc, leadingCoeff_map_of_injective (RingHom.injective_int (algebraMap ℤ ℂ))]; rfl
+  have hlc : (1 : ℝ) ≤ ‖((W.leadingCoeff : ℤ) : ℂ)‖ := by
+    rw [Complex.norm_intCast, ← Int.cast_abs]
+    exact_mod_cast Int.one_le_abs (leadingCoeff_ne_zero.2 hW)
+  refine ⟨Wc.roots.map fun ρ => τ ρ.re, ?_, fun t ht => ?_⟩
+  · rw [Multiset.card_map, IsAlgClosed.card_roots_eq_natDegree, hWcd]
+  set x := Xf Q u t
+  have hx := Xf_mem_Icc hu ht
+  have hQl : 1 ≤ |aeval x (derivative Q)| := hu _ (by linarith [hx.1])
+  have hQM := hWin x hx
+  have hWe : ((aeval x W : ℝ) : ℂ) = ((W.leadingCoeff : ℤ) : ℂ) *
+      (Wc.roots.map fun ρ => (x : ℂ) - ρ).prod := by
+    have hfac := C_leadingCoeff_mul_prod_multiset_X_sub_C
+      (IsAlgClosed.card_roots_eq_natDegree (p := Wc))
+    have : ((aeval x W : ℝ) : ℂ) = Wc.eval (x : ℂ) := by
+      rw [hWc, eval_map_algebraMap, show (x : ℂ) = algebraMap ℝ ℂ x from rfl,
+        aeval_algebraMap_apply]; rfl
+    rw [this]
+    conv_lhs => rw [← hfac]
+    rw [eval_mul, eval_C, eval_multiset_prod, hWclc, Multiset.map_map]
+    simp
+  have hWabs : |aeval x W| = ‖((W.leadingCoeff : ℤ) : ℂ)‖ *
+      (Wc.roots.map fun ρ => ‖(x : ℂ) - ρ‖).prod := by
+    have := congrArg (fun z : ℂ => ‖z‖) hWe
+    simp only [Complex.norm_real, Real.norm_eq_abs, norm_mul] at this
+    rw [this]; congr 1
+    have := map_multiset_prod (normHom (α := ℂ)) (Wc.roots.map fun ρ => (x : ℂ) - ρ)
+    simpa [Multiset.map_map, Function.comp_def] using this
+  have hfac : ∀ ρ ∈ Wc.roots, M⁻¹ * |t - τ ρ.re| ≤ ‖(x : ℂ) - ρ‖ := by
+    intro ρ _
+    have h := hτ_le t ht ρ.re
+    have hre : |x - ρ.re| ≤ ‖(x : ℂ) - ρ‖ := by
+      have := Complex.abs_re_le_norm ((x : ℂ) - ρ); simpa using this
+    rw [inv_mul_le_iff₀ hM0]; nlinarith
+  have hprod := Multiset.prod_map_le_prod_map₀ _ _ (fun ρ _ => by positivity) hfac
+  rw [Multiset.prod_map_mul, Multiset.map_const', Multiset.prod_replicate,
+    IsAlgClosed.card_roots_eq_natDegree, hWcd] at hprod
+  set PP := (Wc.roots.map fun ρ => |t - τ ρ.re|).prod with hPP
+  have hPP0 : 0 ≤ PP := Multiset.prod_nonneg fun z hz => by
+    obtain ⟨_, _, rfl⟩ := Multiset.mem_map.1 hz; exact abs_nonneg _
+  rw [Multiset.map_map]
+  change _ * PP ≤ _
+  have hRpos : 0 ≤ (Wc.roots.map fun ρ => ‖(x : ℂ) - ρ‖).prod := Multiset.prod_nonneg fun z hz => by
+    obtain ⟨_, _, rfl⟩ := Multiset.mem_map.1 hz; exact norm_nonneg _
+  have hML : M ≤ (⌈M⌉₊ : ℝ) := Nat.le_ceil _
+  have hc2 : 1 ≤ c ^ 2 := by rw [← sq_abs]; nlinarith
+  have hQ3 : |aeval x (derivative Q)| ^ 3 ≤ M ^ 3 := pow_le_pow_left₀ (abs_nonneg _) hQM 3
+  have hQ3p : 0 < |aeval x (derivative Q)| ^ 3 := by positivity
+  rw [deriv2_GP_eq hu P (window_sub_Vset hu ht), abs_div, abs_mul, abs_pow, abs_pow, sq_abs,
+    le_div_iff₀ hQ3p]
+  have hWlow : (M ^ N)⁻¹ * PP ≤ |aeval x W| := by
+    rw [hWabs]
+    calc (M ^ N)⁻¹ * PP = M⁻¹ ^ N * PP := by rw [inv_pow]
+      _ ≤ (Wc.roots.map fun ρ => ‖(x : ℂ) - ρ‖).prod := hprod
+      _ ≤ _ := le_mul_of_one_le_left hRpos hlc
+  calc ((⌈M⌉₊ : ℝ) ^ (N + 3))⁻¹ * PP * |aeval x (derivative Q)| ^ 3
+      ≤ (M ^ (N + 3))⁻¹ * PP * M ^ 3 := by
+        gcongr
+      _ = (M ^ N)⁻¹ * PP := by rw [pow_add]; field_simp
+      _ ≤ |aeval x W| := hWlow
+      _ ≤ c ^ 2 * |aeval x W| := le_mul_of_one_le_left (abs_nonneg _) hc2
+
+
+/-- **Sibling identity: `G_P` is rational affine near the window when `P ∈ span(1, Q)`.**
+Proved from `branch_spec` (`Q(brInv w) = w` on `U`) and `aeval_eq_of_affineIn`. -/
+theorem GP_eq_of_affineIn {Q P : ℤ[X]} {u : ℕ} (hu : IsBranch Q u) {α β : ℚ}
+    (h : P.map (Int.castRingHom ℚ) = C α * Q.map (Int.castRingHom ℚ) + C β) :
+    ∃ U : Set ℝ, IsOpen U ∧ Set.Icc (1 / 2 : ℝ) 1 ⊆ U ∧ ∀ y ∈ U,
+      GP Q u P y = (α : ℝ) * ((aQ Q u : ℝ) + (cQ Q u : ℝ) * y) + β := by
+  obtain ⟨-, -, U, hU, hsub, hinv, -⟩ := branch_spec hu
+  refine ⟨U, hU, hsub, fun y hy => ?_⟩
+  rw [GP, aeval_eq_of_affineIn h, hinv y hy]
+
+/-- **Known-false sibling: the cut cannot run on `P ∈ span_ℚ(1, Q)`.**  `G_P` is affine on a
+neighbourhood of the window, so `G_P'' ≡ 0` there and no lower bound `c Π |t − z|` holds
+(`not_deriv2_lower_of_deriv2_eq_zero`).  Proved from `GP_eq_of_affineIn`. -/
+theorem not_deriv2_lower_GP_of_affineIn {Q P : ℤ[X]} {u : ℕ} (hu : IsBranch Q u)
+    (h : AffineIn P Q) {c : ℝ} (hc : 0 < c) (Z : Multiset ℝ) :
+    ¬ ∀ t ∈ Set.Icc (1 / 2 : ℝ) 1, c * (Z.map fun z => |t - z|).prod ≤
+      |deriv (deriv (GP Q u P)) t| := by
+  obtain ⟨α, β, hαβ⟩ := h
+  obtain ⟨U, hU, hsub, hU'⟩ := GP_eq_of_affineIn hu hαβ
+  refine not_deriv2_lower_of_deriv2_eq_zero _ (fun t ht => ?_) hc Z
+  have hd : deriv (GP Q u P) =ᶠ[𝓝 t] fun _ => (α : ℝ) * (cQ Q u : ℝ) := by
+    filter_upwards [hU.mem_nhds (hsub ht)] with s hs
+    have hev : GP Q u P =ᶠ[𝓝 s] fun y => (α : ℝ) * ((aQ Q u : ℝ) + (cQ Q u : ℝ) * y) + β := by
+      filter_upwards [hU.mem_nhds hs] with y hy using hU' y hy
+    rw [hev.deriv_eq]
+    have : HasDerivAt (fun y => (α : ℝ) * ((aQ Q u : ℝ) + (cQ Q u : ℝ) * y) + β)
+        ((α : ℝ) * (cQ Q u : ℝ)) s := by
+      have := ((hasDerivAt_id s).const_mul (cQ Q u : ℝ)).const_add (aQ Q u : ℝ)
+      simpa using (this.const_mul (α : ℝ)).add_const (β : ℝ)
+    exact this.deriv
+  rw [hd.deriv_eq, deriv_const]
 
 set_option maxHeartbeats 1000000 in
 /-- **Window bounds for `G_P`, `G_P'`, `G_P''` by the height.**
