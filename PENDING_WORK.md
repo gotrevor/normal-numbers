@@ -10,7 +10,7 @@
   `SqrtCantorAbs.lean`.
 * Phase 3 plan (explicit, so constants are computable from p):
   1. [DONE] `CantorSelfSimilar.pushFourier_self_similar` (one-step μ = ½ψ₁μ + ½ψ₀μ).
-  2. depth-m: ‖pF F ξ‖ ≤ 2^{-m} Σ_{w} ‖pF (F∘ψ_w) ξ‖, ψ_w affine ratio 4^{-m}.
+  2. [DONE] `CantorCylinders.pushFourier_cylinders` (depth m, φ_w t = offs w + t/4^m), `offs_sep`, `card_near_le` (≤ 4R·4^m+2 words with offset within R of z) — also covers step 4 counting.
   3. |Q(s)| ≥ |lead Q|·dist_ℂ(s, roots)^deg (complex roots; no root location needed);
      t²G_p'' = Q(t^{1/k}).
   4. bad words (cylinder within r of a root's real part): count ≤ deg·(24 r 4^m + 2).
