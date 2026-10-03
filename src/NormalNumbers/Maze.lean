@@ -35,6 +35,7 @@ import NormalNumbers.VandeheyS7StateAudit
 import NormalNumbers.VandeheyS7Audit
 import NormalNumbers.VandeheyS7WidthDensity
 import NormalNumbers.VandeheyS7ArchWidthFree
+import NormalNumbers.Erdos257Squarefree
 
 /-!
 # `Maze.lean` — the halls we have walked, encoded
@@ -469,6 +470,13 @@ sorry-free lemmas stay, its one open obligation is deleted for want of a consume
 headline `conjC3_of_geom_input_band'` now consumes `uniformResonantMass_holds` directly, so
 `UniformResonantMass` is no longer a hypothesis anywhere on the archimedean side. -/
 alias hall_urm_low_high_split := NormalNumbers.CastingOut.uniformResonantMass_holds
+
+/-- **HALL: single-survivor encoding for squarefree Erdős #257 at base 2** (`refuted`,
+2026-10-03).  The joint-Lambert construction reads its word off one survivor coefficient `2a`;
+for squarefree `A` the coefficient is `2^{ω}`, a power of two, so one survivor contributes one
+bit (`fract_two_pow_div_two_pow`) and the encoding misses the cylinder of `101`.  Disjunctivity
+would need one exact-`ω` survivor per `1`-bit along one CRT progression. -/
+alias hall_sqfree_single_survivor := NormalNumbers.Erdos257Squarefree.not_powTwoEncoding
 
 /-- **HALL: Moshchevitin-Shkredov Theorem 1, in its CF specialization** (`falseAsStated`,
 2026-09-28).  The hot-spot criterion Vandehey 2017 Lemma 3.3 leans on -- "uniformly bounded
@@ -1338,7 +1346,17 @@ def register : List Hall := [
    "Prove isDisjunctive_subsetLambert_two_of_gapSet by restricting term_b/term_c (the moment order Mc) to S-primes and keeping the HypE frame",
    .refuted, .kernel,
    "HypE forces e <= 2^(8K^2) (HypE.e_le), and four_mul_le_two_pow_NE' independently needs e <= 2^(50K^2) because farC ~ log log X ~ e is an all-primes sum against 2^N, N = 100K^2; a set with F_S(e) <= A log(e+1) + C then has at most O(K^2) mass in the frame against a demand of 1000K^3, so no cutoff works for large K. REOPEN IF: a frame with farC and Mc both S-restricted, or N growing like m_1. REOPENED AND REALIZED 2026-10-02: HypE2 + farCS give isDisjunctive_subsetLambert_two_of_divergent",
-   "theorem G4.SchedB.hypE_frame_excludes_logRate; reopen node G4.SchedB.SRestrictedFrame; module G4Base2GapObstruction", "2026-10-02"⟩
+   "theorem G4.SchedB.hypE_frame_excludes_logRate; reopen node G4.SchedB.SRestrictedFrame; module G4Base2GapObstruction", "2026-10-02"⟩,
+  ⟨"Erdős #257 for squarefree / k-free A via the Chowla-Erdős kill",
+   "Rerun the Campbell / joint-Lambert construction with coefficient 2^omega(m) to prove the squarefree (and k-free) #257 sum irrational at base 2",
+   .priorArt, .cited,
+   "CRT kills (j+1 primes exactly dividing n+j give 2^(j+1) | 2^omega(n+j)) plus the tau tail bound already prove it with no prime input, and that is Duverney-Tachiya, Forum Math. 31 (2019), Cor. 1.2 and Ex. 1.1 (linear independence, every base 2^j; k-free at bases q <= k). Semiprime A is not covered and the kill does not transfer (C(omega,2) is not robust to the cofactor). REOPEN IF: never as irrationality; the live question is SqfreeBinaryDisjunctive",
+   "Erdos257Squarefree.lean: DuverneyTachiya2019KFree, erdos257_squarefree_of_literature, erdos257_kFree_of_literature; docs/OPEN-PROBLEMS-SWEEP-2026-10-03.md §4", "2026-10-03"⟩,
+  ⟨"squarefree #257 single-survivor encoding at base 2",
+   "Prove binary disjunctivity of sum 2^omega(m) 2^-m by replacing EvenEncoding with the survivor value 2^omega(n+r)/2^(r+1)",
+   .refuted, .kernel,
+   "A power of two over a power of two has fractional part 0 or 2^-t, so one survivor writes one bit and no survivor lands in the 101 cylinder (5/8, 3/4); a word with l ones needs l positions with exactly prescribed omega on one CRT progression, a prime-tuple / joint local Erdos-Kac input",
+   "alias hall_sqfree_single_survivor; theorems Erdos257Squarefree.not_powTwoEncoding, fract_two_pow_div_two_pow; open target SqfreeBinaryDisjunctive", "2026-10-03"⟩
 ]
 
 /-- Rows whose verdict is machine-checked in this build. -/

@@ -34,6 +34,12 @@ def mazeRows : List RowInfo :=
 
 /-- Each linked row and the declarations it rests on. -/
 def mazeLinks : List Link := [
+  ⟨"Erdős #257 for squarefree / k-free A via the Chowla-Erdős kill",
+   [``Erdos257Squarefree.DuverneyTachiya2019KFree, ``Erdos257Squarefree.erdos257_squarefree_of_literature,
+    ``Erdos257Squarefree.erdos257_kFree_of_literature], []⟩,
+  ⟨"squarefree #257 single-survivor encoding at base 2",
+   [``hall_sqfree_single_survivor, ``Erdos257Squarefree.fract_two_pow_div_two_pow],
+   [``Erdos257Squarefree.SqfreeBinaryDisjunctive]⟩,
   ⟨"Erdős #257 gap sets via an S-restricted moment cap alone",
    [``G4.SchedB.hypE_frame_excludes_logRate], [``G4.SchedB.SRestrictedFrame]⟩,
   ⟨"site factorization via log-power BV",
@@ -185,7 +191,7 @@ def mazeLegacy : List String := [
   "Diophantine good-denominator detour for the tail cell",
   "route B's unweighted cover of the state-dependent target"]
 
-/-- info: maze audit: 143 rows, 36 cite declarations, 107 legacy (prose only) -/
+/-- info: maze audit: 145 rows, 38 cite declarations, 107 legacy (prose only) -/
 #guard_msgs in
 #maze_audit mazeRows, mazeLinks, mazeLegacy
 

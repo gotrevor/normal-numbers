@@ -530,6 +530,7 @@ import NormalNumbers.LiteratureTTDyadicReferee
 import NormalNumbers.Erdos257Base2
 import NormalNumbers.Erdos257AllPrimes
 import NormalNumbers.Erdos257Headline
+import NormalNumbers.Erdos257Squarefree
 import NormalNumbers.LiteratureCampbell
 import NormalNumbers.CampbellAnswer
 import NormalNumbers.CPrimeSiteFactorization

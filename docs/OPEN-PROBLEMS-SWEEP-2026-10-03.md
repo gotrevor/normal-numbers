@@ -435,6 +435,20 @@ the repo's `Computable e` convention from `exists_computable_mem_Omega`.
 
 ## 4. Erdős #257 for squarefree `A` (15%; paper 60%)
 
+**Audit 2026-10-03 (branch `audit/sqfree`): closed, prior art + refuted encoding.**
+Irrationality for squarefree and `k`-free `A` is Duverney–Tachiya, Forum Math. 31 (2019),
+Cor. 1.2 and Ex. 1.1 (the Chowla–Erdős kill: CRT gives `ω(n+j) ≥ j+1`, and `2^ω ≤ τ` bounds the
+tail; no prime input).  §4.1's "no source lists squarefree" missed it; Cook's #257 paper cites it
+(Remark 6).  Lean: `Erdos257Squarefree.DuverneyTachiya2019KFree` (cited),
+`erdos257_squarefree_of_literature`, `erdos257_kFree_of_literature`.  The disjunctive form is
+not reachable by the single-survivor encoding: `2^ω/2^{r+1}` writes one bit
+(`fract_two_pow_div_two_pow`, `not_powTwoEncoding`); the §4.2 multi-position replacement needs
+exact `ω` at several shifts on one progression, i.e. prime tuples / joint local Erdős–Kac, not
+"standard CRT" (CRT controls only lower bounds on `ω`).  Open target kept as
+`SqfreeBinaryDisjunctive`.  Semiprimes: not covered, and the kill does not transfer.  Maze rows
+"Erdős #257 for squarefree / k-free A via the Chowla-Erdős kill" and "squarefree #257
+single-survivor encoding at base 2".
+
 ### 4.1 Source and freshness
 
 erdosproblems.com/257, edited 2026-04-15, verbatim: "Let `A ⊆ ℕ` be an infinite set. Is
