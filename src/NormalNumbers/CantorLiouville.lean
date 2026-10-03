@@ -986,6 +986,63 @@ theorem secondMoment_le (free : ℕ → Bool) (h : ℤ) (hh : h ≠ 0) :
 
 /-! ## Davenport–Erdős–LeVeque along a slow schedule -/
 
+theorem tendsto_of_tendsto_sched (z : ℕ → ℂ) (hz : ∀ k, ‖z k‖ ≤ 1) (n : ℕ → ℕ) (hn : StrictMono n)
+    (hratio : Tendsto (fun j => (n (j + 1) : ℝ) / n j) atTop (𝓝 1))
+    (h : Tendsto (fun j : ℕ => ‖∑ k ∈ Finset.range (n j), z k‖ / (n j : ℝ)) atTop (𝓝 0)) :
+    Tendsto (fun N : ℕ => (∑ k ∈ Finset.range N, z k) / (N : ℂ)) atTop (𝓝 0) := by
+  set S : ℕ → ℂ := fun N => ∑ k ∈ Finset.range N, z k
+  rw [tendsto_zero_iff_norm_tendsto_zero, Metric.tendsto_atTop]
+  intro ε hε
+  have h1 := Metric.tendsto_atTop.1 h (ε / 2) (by positivity)
+  have h2 := Metric.tendsto_atTop.1 hratio (ε / 2) (by positivity)
+  obtain ⟨J1, hJ1⟩ := h1
+  obtain ⟨J2, hJ2⟩ := h2
+  set J := max (max J1 J2) 1
+  refine ⟨n J, fun N hN => ?_⟩
+  have hex : ∃ j, N < n (j + 1) := ⟨N, lt_of_lt_of_le (Nat.lt_succ_self N) (hn.id_le (N + 1) : N + 1 ≤ n (N + 1))⟩
+  classical
+  set j := Nat.find hex
+  have hj1 : N < n (j + 1) := Nat.find_spec hex
+  have hJj : J ≤ j := by
+    by_contra hc
+    push_neg at hc
+    have : n (j + 1) ≤ n J := hn.monotone (by omega)
+    omega
+  have hjN : n j ≤ N := by
+    rcases Nat.eq_zero_or_pos j with h0 | hpos
+    · omega
+    · have hm : ¬ N < n (j - 1 + 1) := Nat.find_min hex (by omega)
+      rw [Nat.sub_add_cancel hpos] at hm; omega
+  have hnj : (1 : ℝ) ≤ n j := by
+    have : 1 ≤ n j := le_trans (by omega : 1 ≤ j) (hn.id_le j : j ≤ n j); exact_mod_cast this
+  have hdiff : ‖S N - S (n j)‖ ≤ (N - n j : ℕ) := by
+    have : S N - S (n j) = ∑ k ∈ Finset.Ico (n j) N, z k := by
+      simp only [S]; rw [Finset.sum_range_sub_sum_range hjN]
+      congr 1; ext k; simp [Finset.mem_Ico]; omega
+    rw [this]
+    refine (norm_sum_le _ _).trans ?_
+    refine (Finset.sum_le_sum fun k _ => hz k).trans ?_
+    simp
+  have hA := hJ1 j (by omega)
+  have hB := hJ2 j (by omega)
+  rw [Real.dist_eq, sub_zero, abs_of_nonneg (by positivity)] at hA
+  rw [Real.dist_eq, abs_lt] at hB
+  have hNR : (n j : ℝ) ≤ N := by exact_mod_cast hjN
+  have hNR2 : (N : ℝ) < n (j + 1) := by exact_mod_cast hj1
+  have hdR : ((N - n j : ℕ) : ℝ) = N - n j := by push_cast [hjN]; ring
+  rw [hdR] at hdiff
+  have hNpos : (0 : ℝ) < N := by linarith
+  rw [Real.dist_eq, sub_zero, abs_of_nonneg (norm_nonneg _), norm_div, Complex.norm_natCast]
+  have hSN : ‖S N‖ ≤ ‖S (n j)‖ + (N - n j) := by
+    have := norm_le_insert' (S N) (S (n j)); linarith
+  have hq : (n (j + 1) : ℝ) < (1 + ε / 2) * n j := by
+    have := (div_lt_iff₀ (by linarith : (0:ℝ) < n j)).1 (by linarith : (n (j + 1) : ℝ) / n j < 1 + ε / 2)
+    linarith
+  rw [div_lt_iff₀ hNpos]
+  have hA' : ‖S (n j)‖ < ε / 2 * n j := by
+    have := (div_lt_iff₀ (by linarith : (0:ℝ) < n j)).1 hA; linarith
+  nlinarith
+
 /-- **DEL along a schedule with ratio → 1.**  Confidence 97%.
 
 English proof.  As in `DecayAeNormal.ae_tendsto_weyl`: the hypothesis makes
@@ -999,7 +1056,66 @@ theorem ae_isNormal_two_of_secondMoment {Ω : Type*} [MeasurableSpace Ω] (μ : 
     (hsum : ∀ h : ℤ, h ≠ 0 → Summable fun j =>
       (∫ ω, ‖∑ k ∈ Finset.range (n j), ee (h * 2 ^ k * G ω)‖ ^ 2 ∂μ) / ((n j : ℝ) ^ 2)) :
     ∀ᵐ ω ∂μ, IsNormal 2 (G ω) := by
-  sorry
+  have hone : ∀ h : ℤ, h ≠ 0 → ∀ᵐ ω ∂μ, Tendsto
+      (fun N : ℕ => (∑ k ∈ Finset.range N, ee (h * 2 ^ k * G ω)) / (N : ℂ)) atTop (𝓝 0) := by
+    intro h hh
+    set S : ℕ → Ω → ℂ := fun N ω => ∑ k ∈ Finset.range N, ee (h * 2 ^ k * G ω) with hSdef
+    have hSm : ∀ N, Measurable (S N) := fun N =>
+      Finset.measurable_sum _ fun k _ => measurable_ee.comp (hG.const_mul _)
+    have hSb : ∀ N ω, ‖S N ω‖ ≤ N := fun N ω =>
+      (norm_sum_le _ _).trans (by simp [norm_ee])
+    set f : ℕ → Ω → ℝ := fun j ω => ‖S (n j) ω‖ ^ 2 / ((n j : ℝ)) ^ 2 with hfdef
+    have hf0 : ∀ j ω, 0 ≤ f j ω := fun j ω => by positivity
+    have hfm : ∀ j, Measurable (f j) := fun j => (((hSm _).norm.pow_const 2).div_const _)
+    have hfi : ∀ j, Integrable (f j) μ := fun j =>
+      Integrable.of_bound (hfm j).aestronglyMeasurable 1 (Eventually.of_forall fun ω => by
+        rw [Real.norm_of_nonneg (hf0 j ω)]
+        rcases Nat.eq_zero_or_pos (n j) with h0 | hpos
+        · simp [f, h0]
+        · have hpos' : (0 : ℝ) < n j := by exact_mod_cast hpos
+          rw [div_le_one (by positivity)]
+          exact pow_le_pow_left₀ (norm_nonneg _) (hSb _ ω) 2)
+    have hfI : ∀ j, ∫ ω, f j ω ∂μ =
+        (∫ ω, ‖∑ k ∈ Finset.range (n j), ee (h * 2 ^ k * G ω)‖ ^ 2 ∂μ) / ((n j : ℝ) ^ 2) := by
+      intro j; simp only [f, S]; rw [integral_div]
+    have hlin : ∫⁻ ω, ∑' j, ENNReal.ofReal (f j ω) ∂μ ≠ ⊤ := by
+      rw [lintegral_tsum fun j => (hfm j).ennreal_ofReal.aemeasurable]
+      refine ne_top_of_le_ne_top (ENNReal.ofReal_ne_top
+        (r := ∑' j : ℕ, ∫ ω, f j ω ∂μ)) ?_
+      have hs : Summable fun j => ∫ ω, f j ω ∂μ := by simp_rw [hfI]; exact hsum h hh
+      rw [ENNReal.ofReal_tsum_of_nonneg (fun j => integral_nonneg (hf0 j)) hs]
+      refine ENNReal.tsum_le_tsum fun j => ?_
+      rw [← ofReal_integral_eq_lintegral_ofReal (hfi j) (Eventually.of_forall (hf0 j))]
+    have hae := ae_lt_top' (AEMeasurable.tsum fun j =>
+      (hfm j).ennreal_ofReal.aemeasurable) hlin
+    filter_upwards [hae] with ω hω
+    have h1 : Tendsto (fun j => ENNReal.ofReal (f j ω)) atTop (𝓝 0) :=
+      ENNReal.tendsto_atTop_zero_of_tsum_ne_top hω.ne
+    have h2 : Tendsto (fun j => f j ω) atTop (𝓝 0) := by
+      have := (ENNReal.tendsto_toReal ENNReal.zero_ne_top).comp h1
+      simpa [Function.comp_def, ENNReal.toReal_ofReal (hf0 _ ω)] using this
+    have h3 : Tendsto (fun j : ℕ => ‖S (n j) ω‖ / (n j : ℝ)) atTop (𝓝 0) := by
+      have := h2.sqrt
+      rw [Real.sqrt_zero] at this
+      refine this.congr fun j => ?_
+      simp only [hfdef]
+      rw [Real.sqrt_div' _ (by positivity), Real.sqrt_sq (norm_nonneg _), Real.sqrt_sq (by positivity)]
+    exact tendsto_of_tendsto_sched (fun k => ee (h * 2 ^ k * G ω)) (fun k => (norm_ee _).le) n hn
+      hratio h3
+  have hall : ∀ᵐ ω ∂μ, ∀ h : ℤ, h ≠ 0 → Tendsto
+      (fun N : ℕ => (∑ k ∈ Finset.range N, ee (h * 2 ^ k * G ω)) / (N : ℂ)) atTop (𝓝 0) := by
+    rw [ae_all_iff]
+    intro h
+    by_cases hh : h = 0
+    · exact Eventually.of_forall fun ω hne => absurd hh hne
+    · filter_upwards [hone h hh] with ω hω _ using hω
+  filter_upwards [hall] with ω hω
+  rw [isNormal_iff_equidistributed_orbit 2 le_rfl]
+  refine equidistributed_of_weyl _ (fun k => ⟨Int.fract_nonneg _, Int.fract_lt_one _⟩) ?_
+  intro h hh
+  have := hω h hh
+  refine this.congr fun N => ?_
+  rw [fourierMean_orbit_two]
 
 /-- The schedule `⌊exp √j⌋ + j`. -/
 noncomputable def sched (j : ℕ) : ℕ := ⌊Real.exp (Real.sqrt j)⌋₊ + j
