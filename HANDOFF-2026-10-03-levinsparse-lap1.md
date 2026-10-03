@@ -14,3 +14,7 @@
 * Exact ask: convert it to a `def … : Prop` conjecture node (LEAN-NEW-MATH convention for open
   conjectures) or rescope `done-when` to exclude it.
 * Verify: `grep -n sorry src/NormalNumbers/LevinSparse.lean` → one hit, inside that theorem.
+
+## Re-confirmed (lap 2, 2026-10-03)
+`#print axioms exists_levinRate_oddNormal` = [propext, Classical.choice, Quot.sound]. The only sorry left is still
+`exists_absNormal_base2_fast`, which is a frozen open problem. Stuck strike 2. Same ask as above.
