@@ -2013,31 +2013,150 @@ theorem clA_bounds (ω : ℕ → Bool) (D : ℕ) :
 
 theorem clW_nonneg (N : ℕ) : 0 ≤ clW N := by unfold clW; positivity
 
-theorem cl_secondMoment (h : ℤ) (hh : h ≠ 0) (N : ℕ) (hN : 1 ≤ N) :
-    ∫ ω, ‖∑ k ∈ Finset.range N, ee (h * 2 ^ k * cantorLiouvilleReal ω)‖ ^ 2 ∂coins ≤
-      16 * |(h : ℝ)| * N ^ 2 * clW N := by
-  sorry
-
 theorem primrec_clNr : Primrec clNr :=
   Primrec.nat_add.comp SqrtFloor.primrec_sqrt (Primrec.const 8)
 
-theorem tendsto_clNs : Tendsto clNs atTop atTop := by
-  sorry
+theorem cl_secondMoment (h : ℤ) (hh : h ≠ 0) (N : ℕ) (hN : 1 ≤ N) :
+    ∫ ω, ‖∑ k ∈ Finset.range N, ee (h * 2 ^ k * cantorLiouvilleReal ω)‖ ^ 2 ∂coins ≤
+      16 * |(h : ℝ)| * N ^ 2 * clW N := by
+  have hb := secondMoment_le_explicit isFree h hh N hN
+  have hW : clW N = Real.exp (-(Real.log (3 / 2) / 2) * freeCount isFree (Nat.log 3 N / 2)) +
+      (N : ℝ) ^ (-(1 / 2 : ℝ)) := by
+    rw [clW, max_eq_left hN]
+  set e := padicValNat 3 h.natAbs
+  have h3 : 3 ^ e ≤ h.natAbs := Nat.le_of_dvd (Int.natAbs_pos.2 hh) pow_padicValNat_dvd
+  have h3R : (3 : ℝ) ^ e ≤ |(h : ℝ)| := by
+    have e1 : ((h.natAbs : ℕ) : ℝ) = |(h : ℝ)| := by simp [Nat.cast_natAbs, Int.cast_abs]
+    rw [← e1]; exact_mod_cast h3
+  have h1 : (1 : ℝ) ≤ |(h : ℝ)| := by
+    rw [← Int.cast_abs]; exact_mod_cast Int.one_le_abs hh
+  have hC : (1 + 3 * (3 ^ (e + 1) + 2) : ℝ) ≤ 16 * |(h : ℝ)| := by
+    rw [pow_succ]; linarith
+  rw [hW]
+  refine hb.trans ?_
+  have : (0 : ℝ) ≤ (N : ℝ) ^ 2 * (Real.exp (-(Real.log (3 / 2) / 2) * freeCount isFree (Nat.log 3 N / 2)) +
+      (N : ℝ) ^ (-(1 / 2 : ℝ))) := by positivity
+  calc _ = (1 + 3 * (3 ^ (e + 1) + 2) : ℝ) * ((N : ℝ) ^ 2 * (Real.exp (-(Real.log (3 / 2) / 2) * freeCount isFree (Nat.log 3 N / 2)) +
+      (N : ℝ) ^ (-(1 / 2 : ℝ)))) := by ring
+    _ ≤ 16 * |(h : ℝ)| * ((N : ℝ) ^ 2 * (Real.exp (-(Real.log (3 / 2) / 2) * freeCount isFree (Nat.log 3 N / 2)) +
+      (N : ℝ) ^ (-(1 / 2 : ℝ)))) := mul_le_mul_of_nonneg_right hC this
+    _ = _ := by ring
 
-theorem clNs_ratio (a : ℝ) (ha : 1 < a) : ∀ᶠ j in atTop, (clNs (j + 1) : ℝ) ≤ a * clNs j := by
-  sorry
+theorem getD_pre (ω : ℕ → Bool) {n k : ℕ} (hk : k < n) : (pre ω n).getD k false = ω k := by
+  simp [pre, List.getD_eq_getElem?_getD, hk]
 
-theorem cl_ev : ∀ᶠ j in atTop, 8 ≤ clNr j ∧ clNr j ≤ clNs j ∧
-    (clNr j : ℝ) ^ 6 * clW (clNs j) ≤ 1 / ((j : ℝ) + 1) ^ 4 := by
-  sorry
+theorem sq_le_two_pow (J : ℕ) : (J + 1) ^ 2 ≤ 2 ^ (J + 2) := by
+  induction J with
+  | zero => norm_num
+  | succ J ih =>
+    rcases Nat.lt_or_ge J 2 with h | h
+    · interval_cases J <;> norm_num
+    · have : (J + 2) ^ 2 ≤ 2 * (J + 1) ^ 2 := by nlinarith
+      calc (J + 1 + 1) ^ 2 = (J + 2) ^ 2 := by ring
+        _ ≤ 2 * (J + 1) ^ 2 := this
+        _ ≤ 2 * 2 ^ (J + 2) := by omega
+        _ = 2 ^ (J + 1 + 2) := by ring
 
 theorem clBad_mass (J : ℕ) :
     coins.real {ω | clBad J (pre ω (clD J)) = true} ≤ 1 / ((J : ℝ) + 1) ^ 2 := by
-  sorry
+  set S := (Finset.range (J + 2)).image (fun i => winStart J + i)
+  have hset : {ω | clBad J (pre ω (clD J)) = true} = Set.pi (S : Set ℕ) (fun _ => {false}) := by
+    ext ω
+    simp only [Set.mem_setOf_eq, clBad, List.all_eq_true, List.mem_range, Bool.not_eq_true',
+      Set.mem_pi, S, Finset.coe_image, Finset.coe_range, Set.mem_image, Set.mem_Iio,
+      Set.mem_singleton_iff, forall_exists_index, and_imp]
+    constructor
+    · rintro h _ i hi rfl; rw [← getD_pre ω (n := clD J) (by unfold clD; omega)]; exact h i hi
+    · intro h i hi; rw [getD_pre ω (by unfold clD; omega)]; exact h _ i hi rfl
+  rw [hset, measureReal_def]
+  have hm : coins (Set.pi (S : Set ℕ) (fun _ => {false})) = (2⁻¹ : ENNReal) ^ (J + 2) := by
+    show ExplicitSquare.coinMeasure _ = _
+    unfold ExplicitSquare.coinMeasure
+    rw [Measure.infinitePi_pi _ (fun _ _ => measurableSet_singleton _)]
+    rw [Finset.prod_congr rfl (fun i _ => by rw [CantorSelfSimilar.uniform_apply])]
+    rw [Finset.prod_const, Finset.card_image_of_injective _ (add_right_injective _),
+      Finset.card_range]
+    simp
+  rw [hm, ENNReal.toReal_pow, ENNReal.toReal_inv]
+  simp only [ENNReal.toReal_ofNat, inv_pow]
+  rw [← one_div, div_le_div_iff₀ (by positivity) (by positivity), one_mul, one_mul]
+  exact_mod_cast sq_le_two_pow J
 
 theorem frequently_free_of_clBad (e : ℕ → Bool) (j₁ : ℕ)
     (h : ∀ J, j₁ ≤ J → clBad J (pre e (clD J)) = false) :
     ∀ n, ∃ i, n ≤ i ∧ isFree i = true ∧ e i = true := by
+  intro n
+  set J := max n j₁
+  have hJ := h J (le_max_right _ _)
+  simp only [clBad, List.all_eq_false, List.mem_range, Bool.not_eq_false'] at hJ
+  obtain ⟨i, hi, hx⟩ := hJ
+  rw [getD_pre e (by unfold clD; omega)] at hx
+  have ha := lt_runStart J
+  have hx' : e (winStart J + i) = true := by simpa using hx
+  have hnJ : n ≤ J := le_max_left _ _
+  have hJa : J ≤ (J + 2) * runStart J := by nlinarith
+  refine ⟨winStart J + i, ?_, ?_, hx'⟩
+  · unfold winStart; omega
+  · refine isFree_after (k := J) (by unfold winStart; omega) ?_
+    rw [runStart_succ_eq]; unfold winStart; nlinarith
+
+theorem tendsto_clNs : Tendsto clNs atTop atTop := by
+  refine tendsto_atTop_atTop.2 fun b => ⟨b * b, fun j hj => ?_⟩
+  have hs := Nat.le_sqrt.2 hj
+  have h4 := Nat.lt_pow_self (n := Nat.sqrt j) (by norm_num : 1 < 4)
+  unfold clNs
+  have : 4 ^ Nat.sqrt j ≤ 4 ^ Nat.sqrt j * (4 * Nat.sqrt j + 6 * (j - Nat.sqrt j * Nat.sqrt j) + 4) :=
+    Nat.le_mul_of_pos_right _ (by omega)
+  omega
+
+theorem clNs_step (j : ℕ) : (Nat.sqrt j + 1) * clNs (j + 1) ≤ (Nat.sqrt j + 8) * clNs j := by
+  set s := Nat.sqrt j
+  have hs1 : s * s ≤ j := Nat.sqrt_le j
+  have hs2 : j < (s + 1) * (s + 1) := Nat.lt_succ_sqrt j
+  have hP : 0 < 4 ^ s := by positivity
+  set t := j - s * s with ht
+  have hjt : j = s * s + t := by omega
+  rcases Nat.lt_or_ge (j + 1) ((s + 1) * (s + 1)) with hc | hc
+  · have e : Nat.sqrt (j + 1) = s := le_antisymm (Nat.lt_succ_iff.1 (Nat.sqrt_lt.2 hc))
+      (Nat.le_sqrt.2 (by omega))
+    have e2 : j + 1 - s * s = t + 1 := by omega
+    unfold clNs; rw [e, e2]
+    have hin : (s + 1) * (4 * s + 6 * (t + 1) + 4) ≤ (s + 8) * (4 * s + 6 * t + 4) := by nlinarith
+    calc (s + 1) * (4 ^ s * (4 * s + 6 * (t + 1) + 4))
+        = 4 ^ s * ((s + 1) * (4 * s + 6 * (t + 1) + 4)) := by ring
+      _ ≤ 4 ^ s * ((s + 8) * (4 * s + 6 * t + 4)) := Nat.mul_le_mul_left _ hin
+      _ = _ := by ring
+  · have hj1 : j + 1 = (s + 1) * (s + 1) := by omega
+    have e : Nat.sqrt (j + 1) = s + 1 := le_antisymm (Nat.lt_succ_iff.1 (Nat.sqrt_lt.2 (by nlinarith)))
+      (Nat.le_sqrt.2 hc)
+    have e2 : j + 1 - (s + 1) * (s + 1) = 0 := by omega
+    have et : t = 2 * s := by nlinarith
+    rw [show clNs j = 4 ^ s * (4 * s + 6 * t + 4) from rfl, show clNs (j + 1) = 4 ^ Nat.sqrt (j + 1) *
+      (4 * Nat.sqrt (j + 1) + 6 * (j + 1 - Nat.sqrt (j + 1) * Nat.sqrt (j + 1)) + 4) from rfl, e, e2, et]
+    have hin : (s + 1) * (4 * (4 * (s + 1) + 6 * 0 + 4)) ≤ (s + 8) * (4 * s + 6 * (2 * s) + 4) := by
+      nlinarith
+    calc (s + 1) * (4 ^ (s + 1) * (4 * (s + 1) + 6 * 0 + 4))
+        = 4 ^ s * ((s + 1) * (4 * (4 * (s + 1) + 6 * 0 + 4))) := by ring
+      _ ≤ 4 ^ s * ((s + 8) * (4 * s + 6 * (2 * s) + 4)) := Nat.mul_le_mul_left _ hin
+      _ = _ := by ring
+
+theorem clNs_ratio (a : ℝ) (ha : 1 < a) : ∀ᶠ j in atTop, (clNs (j + 1) : ℝ) ≤ a * clNs j := by
+  set K : ℕ := ⌈7 / (a - 1)⌉₊
+  filter_upwards [eventually_ge_atTop (K * K)] with j hj
+  have hs : K ≤ Nat.sqrt j := Nat.le_sqrt.2 hj
+  have hK : 7 / (a - 1) ≤ (Nat.sqrt j : ℝ) := (Nat.le_ceil _).trans (by exact_mod_cast hs)
+  have hstep : ((Nat.sqrt j : ℝ) + 1) * clNs (j + 1) ≤ ((Nat.sqrt j : ℝ) + 8) * clNs j := by
+    exact_mod_cast clNs_step j
+  have ha1 : 0 < a - 1 := by linarith
+  have h7 : 7 ≤ (a - 1) * Nat.sqrt j := by rw [div_le_iff₀ ha1] at hK; linarith
+  have hN : (0 : ℝ) ≤ clNs j := by positivity
+  have hs0 : (0 : ℝ) < (Nat.sqrt j : ℝ) + 1 := by positivity
+  have : ((Nat.sqrt j : ℝ) + 8) * clNs j ≤ ((Nat.sqrt j : ℝ) + 1) * (a * clNs j) := by nlinarith
+  exact le_of_mul_le_mul_left (hstep.trans this) hs0
+
+
+theorem cl_ev : ∀ᶠ j in atTop, 8 ≤ clNr j ∧ clNr j ≤ clNs j ∧
+    (clNr j : ℝ) ^ 6 * clW (clNs j) ≤ 1 / ((j : ℝ) + 1) ^ 4 := by
   sorry
 
 theorem measurable_cantorLiouvilleReal : Measurable cantorLiouvilleReal := measurable_pt isFree
