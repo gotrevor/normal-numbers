@@ -85,6 +85,311 @@ theorem Abad_nonneg (p : List Bool) : 0 ≤ Abad p := by
   unfold Abad
   exact le_min (by exact_mod_cast cfVal_nonneg _) (by exact_mod_cast cfVal_nonneg _)
 
+/-! ## CF interval machinery for the leaves -/
+
+/-- `[0; a₁, …, a_D + s]`-style tail evaluation: `gcf w s = [0; w, (tail of value s)]`. -/
+noncomputable def gcf : List ℕ → ℝ → ℝ
+  | [], s => s
+  | a :: l, s => 1 / (a + gcf l s)
+
+theorem cfVal_append_real (w u : List ℕ) :
+    ((cfVal (w ++ u) : ℚ) : ℝ) = gcf w (cfVal u) := by
+  induction w with
+  | nil => simp [gcf]
+  | cons a l ih => simp only [List.cons_append, cfVal, gcf]; push_cast; rw [ih]
+
+theorem cfVal_append_one : ∀ w : List ℕ, cfVal (w ++ [1]) = cfVal (bumpLast w)
+  | [] => by simp [bumpLast, cfVal]
+  | [a] => by simp [bumpLast, cfVal]
+  | a :: b :: l => by
+      rw [bumpLast_cons (by simp), List.cons_append]
+      simp only [cfVal]
+      rw [cfVal_append_one (b :: l)]
+
+theorem gcf_zero (w : List ℕ) : gcf w 0 = cfVal w := by
+  have := (cfVal_append_real w []).symm
+  rw [List.append_nil] at this
+  simpa [cfVal] using this
+
+theorem gcf_one (w : List ℕ) : gcf w 1 = cfVal (bumpLast w) := by
+  rw [← cfVal_append_one, cfVal_append_real]; simp [cfVal]
+
+theorem gcf_nonneg (w : List ℕ) {s : ℝ} (hs : 0 ≤ s) : 0 ≤ gcf w s := by
+  induction w with
+  | nil => exact hs
+  | cons a l ih => simp only [gcf]; positivity
+
+theorem gcf_mem_uIcc (w : List ℕ) (hpos : ∀ a ∈ w, 1 ≤ a) {s : ℝ} (hs : s ∈ Set.Icc (0 : ℝ) 1) :
+    gcf w s ∈ Set.uIcc (gcf w 0) (gcf w 1) := by
+  induction w with
+  | nil => simpa [gcf, Set.uIcc_of_le zero_le_one] using hs
+  | cons a l ih =>
+    have ha : (1 : ℝ) ≤ a := by exact_mod_cast hpos a (by simp)
+    have h := ih fun x hx => hpos x (List.mem_cons_of_mem _ hx)
+    have h0 := gcf_nonneg l (le_refl (0:ℝ))
+    have h1 := gcf_nonneg l (zero_le_one' ℝ)
+    have hx := gcf_nonneg l hs.1
+    simp only [gcf]
+    rw [Set.mem_uIcc] at h ⊢
+    rcases h with ⟨hl, hr⟩ | ⟨hl, hr⟩
+    · right; constructor <;> apply one_div_le_one_div_of_le (by positivity) <;> linarith
+    · left; constructor <;> apply one_div_le_one_div_of_le (by positivity) <;> linarith
+
+theorem fib_mul_ge (n : ℕ) : 2 ^ n ≤ Nat.fib (n + 1) * Nat.fib (n + 2) := by
+  induction n with
+  | zero => simp
+  | succ n ih =>
+    rw [pow_succ, show n + 1 + 2 = n + 3 by ring, show n + 1 + 1 = n + 2 by ring,
+      Nat.fib_add_two (n := n + 1)]
+    have : Nat.fib (n + 1) ≤ Nat.fib (n + 2) := Nat.fib_mono (by omega)
+    nlinarith
+
+theorem width_le (w : List ℕ) (hpos : ∀ a ∈ w, 1 ≤ a) :
+    |((cfVal w : ℚ) : ℝ) - ((cfVal (bumpLast w) : ℚ) : ℝ)| ≤ (1 / 2 : ℝ) ^ w.length := by
+  rcases eq_or_ne w [] with rfl | hw
+  · simp [bumpLast, cfVal]
+  have h := abs_cfVal_sub_bumpLast w hw hpos
+  have hc : |((cfVal w : ℚ) : ℝ) - ((cfVal (bumpLast w) : ℚ) : ℝ)| =
+      ((|cfVal w - cfVal (bumpLast w)| : ℚ) : ℝ) := by push_cast; ring_nf
+  rw [hc, h, cfK_bumpLast hw]
+  have hK := fib_le_cfK w hpos
+  have hK' := fib_le_cfK w.dropLast fun a ha => hpos a (List.mem_of_mem_dropLast ha)
+  obtain ⟨D, hD⟩ : ∃ D, w.length = D + 1 := ⟨w.length - 1, by
+    have := List.length_pos_of_ne_nil hw; omega⟩
+  rw [List.length_dropLast, hD] at hK'
+  rw [hD] at hK ⊢
+  simp only [Nat.add_sub_cancel] at hK'
+  have hf := fib_mul_ge (D + 1)
+  have hmul : 2 ^ (D + 1) ≤ cfK w * (cfK w + cfK w.dropLast) := by
+    have e : Nat.fib (D + 1 + 2) = Nat.fib (D + 1) + Nat.fib (D + 1 + 1) := Nat.fib_add_two
+    calc 2 ^ (D + 1) ≤ Nat.fib (D + 1 + 1) * (Nat.fib (D + 1) + Nat.fib (D + 1 + 1)) := by
+          rw [← e]; exact hf
+      _ ≤ cfK w * (cfK w + cfK w.dropLast) := by
+          apply Nat.mul_le_mul hK; omega
+  have hmR : ((2 : ℝ) ^ (D + 1)) ≤ (cfK w : ℝ) * ((cfK w : ℝ) + (cfK w.dropLast : ℝ)) := by
+    exact_mod_cast hmul
+  push_cast
+  rw [one_div_pow]
+  exact one_div_le_one_div_of_le (by positivity) hmR
+
+/-- The `n`-th convergent of `cfCoin ω`. -/
+noncomputable def conv (ω : ℕ → Bool) (n : ℕ) : ℝ := ((cfVal (bWord (pre ω n)) : ℚ) : ℝ)
+
+theorem pre_add (ω : ℕ → Bool) (D k : ℕ) :
+    pre ω (D + k) = pre ω D ++ (List.range k).map fun i => ω (D + i) := by
+  simp [pre, List.range_add, List.map_map, Function.comp_def]
+
+theorem conv_mem (ω : ℕ → Bool) {D n : ℕ} (h : D ≤ n) :
+    conv ω n ∈ Set.uIcc ((cfVal (bWord (pre ω D)) : ℚ) : ℝ)
+      ((cfVal (bumpLast (bWord (pre ω D))) : ℚ) : ℝ) := by
+  obtain ⟨k, rfl⟩ := Nat.exists_eq_add_of_le h
+  set u := bWord ((List.range k).map fun i => ω (D + i))
+  have hu : cfVal u ∈ Set.Icc (0 : ℚ) 1 := cfVal_mem_Icc u (bWord_pos _)
+  have e : bWord (pre ω (D + k)) = bWord (pre ω D) ++ u := by
+    simp only [bWord, pre_add, List.map_append, u]
+  unfold conv
+  rw [e, cfVal_append_real, ← gcf_zero, ← gcf_one]
+  refine gcf_mem_uIcc _ (bWord_pos _) ⟨?_, ?_⟩
+  · exact_mod_cast hu.1
+  · exact_mod_cast hu.2
+
+theorem conv_dist (ω : ℕ → Bool) {D n m : ℕ} (hn : D ≤ n) (hm : D ≤ m) :
+    |conv ω n - conv ω m| ≤ (1 / 2 : ℝ) ^ D := by
+  have h := Set.abs_sub_le_of_uIcc_subset_uIcc
+    (Set.uIcc_subset_uIcc (conv_mem ω hm) (conv_mem ω hn))
+  refine h.trans ?_
+  rw [abs_sub_comm]
+  simpa [bWord, length_pre] using width_le (bWord (pre ω D)) (bWord_pos _)
+
+theorem conv_tendsto (ω : ℕ → Bool) : Tendsto (conv ω) atTop (𝓝 (cfCoin ω)) := by
+  have hc : CauchySeq (conv ω) := by
+    rw [Metric.cauchySeq_iff']
+    intro ε hε
+    obtain ⟨D, hD⟩ := exists_pow_lt_of_lt_one hε (by norm_num : (1 / 2 : ℝ) < 1)
+    refine ⟨D, fun n hn => ?_⟩
+    rw [Real.dist_eq]
+    exact (conv_dist ω hn le_rfl).trans_lt hD
+  obtain ⟨L, hL⟩ := cauchySeq_tendsto_of_complete hc
+  have : cfCoin ω = L := hL.limUnder_eq
+  rw [this]; exact hL
+
+theorem Abad_bounds' (ω : ℕ → Bool) (D : ℕ) :
+    Abad (pre ω D) ≤ cfCoin ω ∧ cfCoin ω ≤ Abad (pre ω D) + (1 / 2 : ℝ) ^ D := by
+  have hmem : cfCoin ω ∈ Set.uIcc ((cfVal (bWord (pre ω D)) : ℚ) : ℝ)
+      ((cfVal (bumpLast (bWord (pre ω D))) : ℚ) : ℝ) :=
+    isClosed_Icc.mem_of_tendsto (conv_tendsto ω)
+      (eventually_atTop.2 ⟨D, fun n hn => conv_mem ω hn⟩)
+  have hw := width_le (bWord (pre ω D)) (bWord_pos _)
+  rw [show (bWord (pre ω D)).length = D by simp [bWord, length_pre]] at hw
+  rw [Set.mem_uIcc] at hmem
+  unfold Abad
+  constructor
+  · rcases hmem with h | h
+    · exact (min_le_left _ _).trans h.1
+    · exact (min_le_right _ _).trans h.1
+  · rcases hmem with h | h
+    · rw [abs_le] at hw
+      rcases le_total ((cfVal (bWord (pre ω D)) : ℚ) : ℝ)
+        ((cfVal (bumpLast (bWord (pre ω D))) : ℚ) : ℝ) with hh | hh
+      · rw [min_eq_left hh]; linarith [h.2]
+      · rw [min_eq_right hh]; linarith [h.2]
+    · rw [abs_le] at hw
+      rcases le_total ((cfVal (bWord (pre ω D)) : ℚ) : ℝ)
+        ((cfVal (bumpLast (bWord (pre ω D))) : ℚ) : ℝ) with hh | hh
+      · rw [min_eq_left hh]; linarith [h.2]
+      · rw [min_eq_right hh]; linarith [h.2]
+
+theorem measurable_cfCoin' : Measurable cfCoin := by
+  have hm : ∀ n, Measurable fun ω => conv ω n := by
+    intro n
+    have h : Measurable fun v : Fin n → Bool =>
+        (((cfVal (bWord (List.ofFn v))) : ℚ) : ℝ) := measurable_of_countable _
+    have h2 : Measurable fun ω : ℕ → Bool => fun i : Fin n => ω i :=
+      measurable_pi_lambda _ fun i => measurable_pi_apply _
+    convert h.comp h2 using 2 with ω
+    simp only [Function.comp, conv, pre]
+    congr 3
+    apply List.ext_getElem <;> simp
+  exact measurable_of_tendsto_metrizable hm (tendsto_pi_nhds.2 conv_tendsto)
+
+/-- `cfK` and its "tail" companion, by one `foldr`. -/
+def cfK' : List ℕ → ℕ
+  | [] => 0
+  | _ :: l => cfK l
+
+theorem cfK_cons' (a : ℕ) (l : List ℕ) : cfK (a :: l) = a * cfK l + cfK' l := by
+  cases l with
+  | nil => simp [cfK, cfK']
+  | cons b l => simp [cfK, cfK']
+
+theorem foldr_cfK (l : List ℕ) :
+    l.foldr (fun a q => (a * q.1 + q.2, q.1)) (1, 0) = (cfK l, cfK' l) := by
+  induction l with
+  | nil => rfl
+  | cons a l ih => rw [List.foldr_cons, ih, cfK_cons']; rfl
+
+theorem primrec_cfK : Primrec cfK := by
+  have h : Primrec fun l : List ℕ => l.foldr (fun a q => (a * q.1 + q.2, q.1)) (1, 0) :=
+    Primrec.list_foldr Primrec.id (Primrec.const (1, 0))
+      (Primrec.pair (Primrec.nat_add.comp (Primrec.nat_mul.comp (Primrec.fst.comp Primrec.snd)
+        (Primrec.fst.comp (Primrec.snd.comp Primrec.snd)))
+        (Primrec.snd.comp (Primrec.snd.comp Primrec.snd)))
+        (Primrec.fst.comp (Primrec.snd.comp Primrec.snd))).to₂
+  exact (Primrec.fst.comp h).of_eq fun l => by rw [foldr_cfK]
+
+theorem bumpLast_eq (w : List ℕ) : bumpLast w = w.reverse.tail.reverse ++ [w.reverse.headI + 1] := by
+  unfold bumpLast
+  congr 2
+  · rw [List.tail_reverse, List.reverse_reverse]
+  · cases w using List.reverseRecOn <;> simp
+
+theorem primrec_bumpLast : Primrec bumpLast := by
+  have h1 := Primrec.list_reverse.comp (Primrec.list_tail.comp (Primrec.list_reverse (α := ℕ)))
+  have h2 := Primrec.succ.comp (Primrec.list_headI.comp (Primrec.list_reverse (α := ℕ)))
+  exact (Primrec.list_append.comp h1 (Primrec.list_cons.comp h2 (Primrec.const []))).of_eq
+    fun w => (bumpLast_eq w).symm
+
+theorem primrec_PsiBad' : Primrec fun x : ℕ × ℕ × List Bool => PsiBad x.1 x.2.1 x.2.2 := by
+  have hp := Primrec.snd.comp (Primrec.snd (α := ℕ) (β := ℕ × List Bool))
+  have hw : Primrec fun x : ℕ × ℕ × List Bool => bWord x.2.2 :=
+    Primrec.list_map hp ((Primrec.dom_bool dig).comp Primrec.snd).to₂
+  have hw' := primrec_bumpLast.comp hw
+  have hB := ComputableNormal.primrec_pow.comp (Primrec.fst (α := ℕ) (β := ℕ × List Bool))
+    (Primrec.fst.comp Primrec.snd)
+  have hq : ∀ {f : ℕ × ℕ × List Bool → List ℕ}, Primrec f →
+      Primrec fun x => cfP (f x) * x.1 ^ x.2.1 / cfK (f x) := fun hf =>
+    Primrec.nat_div.comp (Primrec.nat_mul.comp (primrec_cfK.comp
+      (Primrec.list_drop.comp (Primrec.const 1) hf)) hB) (primrec_cfK.comp hf)
+  exact (Primrec.ite (Primrec.eq.comp hp (Primrec.const [])) (Primrec.const 0)
+    (Primrec.nat_min.comp (hq hw) (hq hw'))).of_eq fun x => rfl
+
+theorem PsiBad_eq' (b m : ℕ) (p : List Bool) : PsiBad b m p = ⌊Abad p * (b : ℝ) ^ m⌋₊ := by
+  unfold PsiBad Abad
+  split_ifs with hp
+  · subst hp; simp [bWord, bumpLast, cfVal]
+  have hw : bWord p ≠ [] := by simpa [bWord] using hp
+  have hpos := bWord_pos p
+  have key : ∀ w : List ℕ, w ≠ [] → (∀ a ∈ w, 1 ≤ a) →
+      ⌊((cfVal w : ℚ) : ℝ) * (b : ℝ) ^ m⌋₊ = cfP w * b ^ m / cfK w := by
+    intro w hw hpos
+    rw [cfVal_eq_div w hw hpos, ← Nat.floor_div_eq_div (K := ℝ)]
+    congr 1; push_cast; ring
+  rw [min_mul_of_nonneg _ _ (by positivity), Monotone.map_min Nat.floor_mono,
+    key _ hw hpos, key _ (bumpLast_ne_nil _) (bumpLast_pos hpos)]
+
+theorem pre_succ' (ω : ℕ → Bool) (k : ℕ) : pre ω (k + 1) = ω 0 :: pre (fun i => ω (i + 1)) k := by
+  simp only [pre, List.range_succ_eq_map, List.map_cons, List.map_map, Function.comp_def]
+
+theorem cfCoin_shift (ω : ℕ → Bool) :
+    cfCoin ω = 1 / ((dig (ω 0) : ℝ) + cfCoin fun i => ω (i + 1)) := by
+  set ω' : ℕ → Bool := fun i => ω (i + 1)
+  have h1 : Tendsto (fun k => conv ω (k + 1)) atTop (𝓝 (cfCoin ω)) :=
+    (conv_tendsto ω).comp (tendsto_add_atTop_nat 1)
+  have hd : (1 : ℝ) ≤ dig (ω 0) := by exact_mod_cast dig_pos _
+  have h0 : 0 ≤ cfCoin ω' := (Abad_nonneg _).trans (Abad_bounds' ω' 0).1
+  have h2 : Tendsto (fun k => 1 / ((dig (ω 0) : ℝ) + conv ω' k)) atTop
+      (𝓝 (1 / ((dig (ω 0) : ℝ) + cfCoin ω'))) :=
+    tendsto_const_nhds.div (tendsto_const_nhds.add (conv_tendsto ω')) (by linarith : (0:ℝ) < _).ne'
+  refine tendsto_nhds_unique h1 (h2.congr fun k => ?_)
+  simp only [conv, pre_succ', bWord, List.map_cons, cfVal]
+  push_cast; rfl
+
+theorem cfCoin_nonneg (ω : ℕ → Bool) : 0 ≤ cfCoin ω :=
+  (Abad_nonneg _).trans (Abad_bounds' ω 0).1
+
+theorem cfCoin_le_one (ω : ℕ → Bool) : cfCoin ω ≤ 1 := by
+  have := (Abad_bounds' ω 0).2
+  have h0 : Abad (pre ω 0) = 0 := by simp [Abad, pre, bWord, bumpLast, cfVal]
+  rw [h0] at this; simpa using this
+
+theorem dig_le_two (b : Bool) : dig b ≤ 2 := by cases b <;> simp [dig]
+
+theorem third_le_cfCoin (ω : ℕ → Bool) : 1 / 3 ≤ cfCoin ω := by
+  rw [cfCoin_shift]
+  have h := cfCoin_le_one (fun i => ω (i + 1))
+  have h0 := cfCoin_nonneg (fun i => ω (i + 1))
+  have hd : (dig (ω 0) : ℝ) ≤ 2 := by exact_mod_cast dig_le_two _
+  have hd1 : (1 : ℝ) ≤ dig (ω 0) := by exact_mod_cast dig_pos _
+  exact one_div_le_one_div_of_le (by positivity) (by linarith)
+
+theorem cfCoin_lt_one (ω : ℕ → Bool) : cfCoin ω < 1 := by
+  rw [cfCoin_shift]
+  have h := third_le_cfCoin (fun i => ω (i + 1))
+  have hd1 : (1 : ℝ) ≤ dig (ω 0) := by exact_mod_cast dig_pos _
+  rw [div_lt_one (by positivity)]; linarith
+
+theorem cfDigit_cfCoin' (ω : ℕ → Bool) (n : ℕ) : cfDigit (cfCoin ω) n = dig (ω n) := by
+  induction n generalizing ω with
+  | zero =>
+    have h := cfCoin_lt_one (fun i => ω (i + 1))
+    have h0 := cfCoin_nonneg (fun i => ω (i + 1))
+    rw [cfDigit_zero, cfCoin_shift, one_div, inv_inv, Nat.floor_eq_iff (by positivity)]
+    constructor <;> linarith
+  | succ n ih =>
+    rw [cfDigit_succ]
+    have hx : gaussMap (cfCoin ω) = cfCoin fun i => ω (i + 1) := by
+      have hpos : cfCoin ω ≠ 0 := (lt_of_lt_of_le (by norm_num) (third_le_cfCoin ω)).ne'
+      rw [gaussMap, if_neg hpos, cfCoin_shift ω, one_div, inv_inv, Int.fract_eq_iff]
+      refine ⟨cfCoin_nonneg _, cfCoin_lt_one _, dig (ω 0), ?_⟩
+      push_cast; ring
+    rw [hx, ih]
+
+theorem cfCoin_const_false' : cfCoin (fun _ => false) = (Real.sqrt 5 - 1) / 2 := by
+  have h := cfCoin_shift (fun _ => false)
+  set x := cfCoin fun _ => false
+  have h0 : 0 ≤ x := cfCoin_nonneg _
+  simp only [dig] at h
+  push_cast at h
+  have hx : x * (1 + x) = 1 := by
+    have h' := h
+    rwa [eq_div_iff (by linarith : (1 : ℝ) + x ≠ 0)] at h'
+  have hs := Real.sq_sqrt (show (0 : ℝ) ≤ 5 by norm_num)
+  have hs0 := Real.sqrt_nonneg 5
+  have hm : (2 * x + 1 - Real.sqrt 5) * (2 * x + 1 + Real.sqrt 5) = 0 := by nlinarith
+  rcases mul_eq_zero.1 hm with h1 | h1
+  · linarith
+  · nlinarith
+
 /-- **Leaf: the floors are exact.**
 
 Confidence 90%.  Proof: for `p = []`, `Abad [] = min 0 1 = 0`.  Otherwise `w = bWord p ≠ []` and
@@ -92,7 +397,7 @@ Confidence 90%.  Proof: for `p = []`, `Abad [] = min 0 1 = 0`.  Otherwise `w = b
 `K = cfK ≥ 1` (`fib_le_cfK`); `⌊(P/K)·bᵐ⌋₊ = P·bᵐ / K` (`Nat.floor_div_eq_div`), and the floor of a
 minimum is the minimum of the floors (monotone). -/
 theorem PsiBad_eq (b m : ℕ) (p : List Bool) : PsiBad b m p = ⌊Abad p * (b : ℝ) ^ m⌋₊ := by
-  sorry
+  exact PsiBad_eq' b m p
 
 /-- **Leaf: the floors are primitive recursive.**
 
@@ -101,7 +406,7 @@ is a two-step list recursion, primitive recursive via the pair `(cfK l, cfK (l.d
 `List.foldr` (`cfK (a :: l) = a·cfK l + cfK (l.drop 1)`); then `nat_mul`, `primrec_pow`, `nat_div`,
 `min`, and the `p = []` test. -/
 theorem primrec_PsiBad : Primrec fun x : ℕ × ℕ × List Bool => PsiBad x.1 x.2.1 x.2.2 := by
-  sorry
+  exact primrec_PsiBad'
 
 /-- **Leaf: the coin map is measurable.**
 
@@ -111,7 +416,7 @@ at every `ω` (the convergents are Cauchy: consecutive ones differ by `1/(q_n q_
 `q_n ≥ F_{n+1}` by `fib_le_cfK`), so `cfCoin` is the pointwise limit and
 `measurable_of_tendsto_metrizable` applies. -/
 theorem measurable_cfCoin : Measurable cfCoin := by
-  sorry
+  exact measurable_cfCoin'
 
 /-- **Leaf: the approximation sandwich `A(pre ω D) ≤ cfCoin ω ≤ A(pre ω D) + 2^{-D}`.**
 
@@ -123,7 +428,7 @@ the limit `cfCoin ω` does too.  The interval has length `1/(K(K+K'))` with `K =
 (`fib_le_cfK`; `F_{D+1}F_{D+2}` is `1, 2, 6, 15, 40, …`, and the ratio exceeds `2` from `D = 1`). -/
 theorem Abad_bounds (ω : ℕ → Bool) (D : ℕ) :
     Abad (pre ω D) ≤ cfCoin ω ∧ cfCoin ω ≤ Abad (pre ω D) + (1 / 2 : ℝ) ^ D := by
-  sorry
+  exact Abad_bounds' ω D
 
 /-- **Leaf (content locator): the partial quotients of `cfCoin ω` are exactly `dig (ω n)`.**
 
@@ -134,7 +439,7 @@ rational, while `cfCoin ω` is irrational because it lies in nested cylinders wh
 Interior points of `cfCylinder w` have first `|w|` digits `w` (`cfCylinder_endpoints`, third
 clause); take `D = n + 1`. -/
 theorem cfDigit_cfCoin (ω : ℕ → Bool) (n : ℕ) : cfDigit (cfCoin ω) n = dig (ω n) := by
-  sorry
+  exact cfDigit_cfCoin' ω n
 
 /-! ## The cited decay input -/
 
@@ -233,6 +538,6 @@ Confidence 85%.  Proof: `cfVal` of `n` ones is `F_n/F_{n+1}` (`cfVal_eq_div`, co
 are Fibonacci), which tends to `1/φ = (√5 − 1)/2`; `limUnder` of a convergent sequence is its
 limit (`Tendsto.limUnder_eq`). -/
 theorem cfCoin_const_false : cfCoin (fun _ => false) = (Real.sqrt 5 - 1) / 2 := by
-  sorry
+  exact cfCoin_const_false'
 
 end NormalNumbers.BadNormal

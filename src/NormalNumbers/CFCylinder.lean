@@ -285,20 +285,20 @@ determinant computation.  Everything here is private scaffolding for
 `cfVal (bumpLast w)`. -/
 def bumpLast (w : List ℕ) : List ℕ := w.dropLast ++ [w.getLastD 0 + 1]
 
-private lemma bumpLast_cons {a : ℕ} {m : List ℕ} (hm : m ≠ []) :
+lemma bumpLast_cons {a : ℕ} {m : List ℕ} (hm : m ≠ []) :
     bumpLast (a :: m) = a :: bumpLast m := by
   cases m with
   | nil => exact absurd rfl hm
   | cons b l => simp [bumpLast]
 
-private lemma bumpLast_pos {w : List ℕ} (hpos : ∀ a ∈ w, 1 ≤ a) :
+lemma bumpLast_pos {w : List ℕ} (hpos : ∀ a ∈ w, 1 ≤ a) :
     ∀ a ∈ bumpLast w, 1 ≤ a := by
   intro a ha
   rcases List.mem_append.1 ha with h | h
   · exact hpos a (List.mem_of_mem_dropLast h)
   · simp only [List.mem_singleton] at h; omega
 
-private lemma bumpLast_ne_nil (w : List ℕ) : bumpLast w ≠ [] := by
+lemma bumpLast_ne_nil (w : List ℕ) : bumpLast w ≠ [] := by
   simp [bumpLast]
 
 lemma cfK_concat (v : List ℕ) (z : ℕ) (hv : v ≠ []) :
@@ -308,7 +308,7 @@ lemma cfK_concat (v : List ℕ) (z : ℕ) (hv : v ≠ []) :
   ring
 
 /-- `K(bump w) = K(w) + K(w⁻)`: continuants are affine in the last digit. -/
-private lemma cfK_bumpLast {w : List ℕ} (hw : w ≠ []) :
+lemma cfK_bumpLast {w : List ℕ} (hw : w ≠ []) :
     cfK (bumpLast w) = cfK w + cfK w.dropLast := by
   obtain ⟨v, z, rfl⟩ : ∃ v z, w = v ++ [z] :=
     ⟨w.dropLast, w.getLast hw, (List.dropLast_append_getLast hw).symm⟩
@@ -320,7 +320,7 @@ private lemma cfK_bumpLast {w : List ℕ} (hw : w ≠ []) :
       List.dropLast_concat]
     ring
 
-private lemma cfVal_mem_Icc (w : List ℕ) (hpos : ∀ a ∈ w, 1 ≤ a) :
+lemma cfVal_mem_Icc (w : List ℕ) (hpos : ∀ a ∈ w, 1 ≤ a) :
     cfVal w ∈ Set.Icc (0 : ℚ) 1 := by
   induction w with
   | nil => simp [cfVal]
@@ -335,7 +335,7 @@ private lemma cfVal_mem_Icc (w : List ℕ) (hpos : ∀ a ∈ w, 1 ≤ a) :
           div_le_one hd]
         linarith
 
-private lemma add_cfVal (a : ℕ) (m : List ℕ) (hpos : ∀ x ∈ m, 1 ≤ x) :
+lemma add_cfVal (a : ℕ) (m : List ℕ) (hpos : ∀ x ∈ m, 1 ≤ x) :
     (a : ℚ) + cfVal m = (cfK (a :: m) : ℚ) / (cfK m : ℚ) := by
   cases m with
   | nil => simp [cfVal, cfK]
@@ -349,7 +349,7 @@ private lemma add_cfVal (a : ℕ) (m : List ℕ) (hpos : ∀ x ∈ m, 1 ≤ x) :
       field_simp
 
 /-- The determinant computation: `|[0;w] − [0;bump w]| = 1/(K(w)·K(bump w))`. -/
-private lemma abs_cfVal_sub_bumpLast (w : List ℕ) (hw : w ≠ [])
+lemma abs_cfVal_sub_bumpLast (w : List ℕ) (hw : w ≠ [])
     (hpos : ∀ a ∈ w, 1 ≤ a) :
     |cfVal w - cfVal (bumpLast w)| =
       1 / ((cfK w : ℚ) * (cfK (bumpLast w) : ℚ)) := by

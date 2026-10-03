@@ -1,3 +1,17 @@
+## BAD-normal (A) and reciprocal (B) lanes (2026-10-03) — DONE
+* `ReciprocalNormal.lean` sorry-free.  `exists_computable_absNormal_recip_not_normal` (on
+  `BakerBanajiQuarterCantor`) and `exists_computable_absNormal_recip_not_simplyNormal` (on
+  `Literature.BakerBanajiSparse`, every `b ≥ 2`): `#print axioms` = propext, Classical.choice, Quot.sound.
+  Sparse engine: `sdL`/`sYp` (prefix reader, `sYp_pre` via `floor_realOfDigits_mul_pow`), `Asp`/`PsiSp`;
+  `y ≥ 1/2` read off the `k = 0` term of the floor sum.
+* `BadNormal.lean` sorry-free.  `exists_computable_absNormal_bad` (on `SahlstenStevensBernoulli12`) and
+  `cfCoin_const_false`: trust base only.  Mechanism: Möbius tail form `gcf` (`cfVal_append_real`,
+  `gcf_mem_uIcc`), widths `≤ 2^{-D}` via `fib_mul_ge` (`F_{n+1}F_{n+2} ≥ 2^n`), Cauchy limit
+  (`conv_tendsto`); digits via the shift identity `cfCoin_shift` and `1/3 ≤ cfCoin < 1` (no
+  irrationality/cylinder argument needed).  `primrec_cfK` via a pair `foldr` (`cfK'`).
+  CFCylinder: `bumpLast_*`, `cfK_bumpLast`, `cfVal_mem_Icc`, `add_cfVal`, `abs_cfVal_sub_bumpLast` made public.
+* Open: only the cited Props (referee: `BakerBanajiSparse`, `SahlstenStevensBernoulli12`).
+
 ## Manai P/Q lane (2026-10-03) — DONE
 * `ExplicitPQ.exists_computable_PQ` PROVED (from `BakerBanajiUniformQuarterCantor` only); `#print axioms`
   = propext, Classical.choice, Quot.sound.  `exists_PQ_of_analytic` likewise.  ExplicitPQ.lean has no sorry.
