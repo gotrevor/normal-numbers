@@ -9,6 +9,8 @@ import NormalNumbers.Wall
 import NormalNumbers.WeylCriterion
 import NormalNumbers.DecayAeNormal
 import NormalNumbers.Derandomize
+import NormalNumbers.ComputableNormalB
+import Mathlib.NumberTheory.Transcendental.Lindemann.AnalyticalPart
 
 /-!
 # Levin's rate in base 2, normal in every odd base
@@ -2494,6 +2496,1630 @@ theorem prob_visit_dev_odd (hL5 : Literature.BLDLemma5) {S : Set ℕ} {ρ : ℝ}
       rw [← add_div]; gcongr; linarith
     linarith
 
+namespace OddTests
+
+open Polynomial
+
+open ComputableNormalB
+
+/-! ## Generic count tests (general `N`, top depth `L`) -/
+
+section Gen
+
+variable (Ψ : ℕ → ℕ → List Bool → ℕ)
+
+/-- Approximate visits to the top depth-`L` cell among the first `N + L` orbit points. -/
+def Tg (b L N : ℕ) (p : List Bool) : ℕ :=
+  ((List.range (N + L)).map fun j => if dA Ψ b j L p = b ^ L - 1 then 1 else 0).sum
+
+/-- `|Vc/N − b^{-ℓ}| > 3/(4L)`. -/
+def failsG (b L N ℓ v : ℕ) (p : List Bool) : Prop :=
+  3 * N * b ^ ℓ < 4 * L * (Vc Ψ b ℓ v N p * b ^ ℓ - N + (N - Vc Ψ b ℓ v N p * b ^ ℓ))
+
+/-- `Tg > N/(4L)`. -/
+def failsTopG (b L N : ℕ) (p : List Bool) : Prop := N < 4 * L * Tg Ψ b L N p
+
+instance (b L N ℓ v : ℕ) (p : List Bool) : Decidable (failsG Ψ b L N ℓ v p) := by
+  unfold failsG; infer_instance
+
+instance (b L N : ℕ) (p : List Bool) : Decidable (failsTopG Ψ b L N p) := by
+  unfold failsTopG; infer_instance
+
+variable (A : List Bool → ℝ)
+
+theorem abs_Vtrue_sub_Vc_leG (hΨ : ∀ b m p, Ψ b m p = ⌊A p * (b : ℝ) ^ m⌋₊)
+    (b : ℕ) (hb : 2 ≤ b) (x : ℝ) (p : List Bool) (ha : 0 ≤ A p) (hax : A p ≤ x)
+    (L N : ℕ) (hη : (x - A p) * (b : ℝ) ^ (N + 2 * L) ≤ 1) {ℓ v : ℕ} (hℓn : ℓ ≤ L) :
+    |(visitCount (orbit b x) ((v : ℝ) / (b : ℝ) ^ ℓ) ((v + 1 : ℝ) / (b : ℝ) ^ ℓ) N : ℝ) -
+      (Vc Ψ b ℓ v N p : ℝ)| ≤ Tg Ψ b L N p := by
+  have hb1 : (1 : ℝ) ≤ b := by exact_mod_cast (by omega : 1 ≤ b)
+  have hx0 : 0 ≤ x := ha.trans hax
+  set t : ℕ → ℕ := fun j => if dA Ψ b j L p = b ^ L - 1 then 1 else 0 with ht
+  have hterm : ∀ k < N, |(if orbit b x k ∈ Set.Ico ((v : ℝ) / (b : ℝ) ^ ℓ)
+      ((v + 1 : ℝ) / (b : ℝ) ^ ℓ) then (1 : ℝ) else 0) -
+      (if dA Ψ b k ℓ p = v then (1 : ℝ) else 0)| ≤ (t (ℓ + k) : ℝ) := by
+    intro k hk
+    have hiff := orbit_mem_iff_b b hb x hx0 k ℓ v
+    by_cases hfl : ⌊x * (b : ℝ) ^ (k + ℓ)⌋₊ = ⌊A p * (b : ℝ) ^ (k + ℓ)⌋₊
+    · have hd : dA Ψ b k ℓ p = ⌊x * (b : ℝ) ^ (k + ℓ)⌋₊ % b ^ ℓ := by
+        rw [dA, hΨ, hfl]
+      have hPQ : orbit b x k ∈ Set.Ico ((v : ℝ) / (b : ℝ) ^ ℓ) ((v + 1 : ℝ) / (b : ℝ) ^ ℓ) ↔
+          dA Ψ b k ℓ p = v := by rw [hiff, hd]
+      have ht0 : (0 : ℝ) ≤ t (ℓ + k) := by positivity
+      by_cases hQ : dA Ψ b k ℓ p = v
+      · rw [if_pos (hPQ.2 hQ), if_pos hQ]; simpa using ht0
+      · rw [if_neg (fun h => hQ (hPQ.1 h)), if_neg hQ]; simpa using ht0
+    · have htop := top_of_floor_ne b hb ha hax (k + ℓ) L ?_ hfl
+      · have : t (ℓ + k) = 1 := by
+          simp only [ht, dA, hΨ, show ℓ + k + L = k + ℓ + L by ring]
+          rw [if_pos htop]
+        rw [this]
+        split_ifs <;> norm_num
+      · have hbn : (0 : ℝ) < (b : ℝ) ^ L := by positivity
+        have hpow : (b : ℝ) ^ (k + ℓ) * (b : ℝ) ^ L ≤ (b : ℝ) ^ (N + 2 * L) := by
+          rw [← pow_add]; exact pow_le_pow_right₀ hb1 (by omega)
+        rw [le_div_iff₀ hbn]
+        have h0 : 0 ≤ x - A p := by linarith
+        calc (x - A p) * (b : ℝ) ^ (k + ℓ) * (b : ℝ) ^ L
+            = (x - A p) * ((b : ℝ) ^ (k + ℓ) * (b : ℝ) ^ L) := by ring
+          _ ≤ (x - A p) * (b : ℝ) ^ (N + 2 * L) := by gcongr
+          _ ≤ 1 := hη
+  rw [visitCount_eq_sum, Vc, list_sum_range_map, Tg, list_sum_range_map]
+  push_cast
+  rw [← Finset.sum_sub_distrib]
+  refine (Finset.abs_sum_le_sum_abs _ _).trans ?_
+  refine (Finset.sum_le_sum fun k hk => hterm k (Finset.mem_range.1 hk)).trans ?_
+  calc ∑ k ∈ Finset.range N, (t (ℓ + k) : ℝ)
+      ≤ ∑ j ∈ Finset.range (ℓ + N), (t j : ℝ) := by
+        rw [Finset.sum_range_add]; simp only [le_add_iff_nonneg_left]; positivity
+    _ ≤ ∑ j ∈ Finset.range (N + L), (t j : ℝ) :=
+        Finset.sum_le_sum_of_subset_of_nonneg (Finset.range_subset_range.2 (by omega))
+          fun _ _ _ => by positivity
+    _ = _ := by simp only [ht]; push_cast; rfl
+
+theorem Tg_le (hΨ : ∀ b m p, Ψ b m p = ⌊A p * (b : ℝ) ^ m⌋₊)
+    (b : ℕ) (hb : 2 ≤ b) (x : ℝ) (p : List Bool) (ha : 0 ≤ A p) (hax : A p ≤ x)
+    (L N : ℕ) (hη : (x - A p) * (b : ℝ) ^ (N + 2 * L) ≤ 1) :
+    (Tg Ψ b L N p : ℝ) ≤ visitCount (orbit b x) 0 (1 / (b : ℝ) ^ L) (N + L) +
+      visitCount (orbit b x) (1 - 1 / (b : ℝ) ^ L) 1 (N + L) := by
+  have hb1 : (1 : ℝ) ≤ b := by exact_mod_cast (by omega : 1 ≤ b)
+  rw [Tg, list_sum_range_map, visitCount_eq_sum, visitCount_eq_sum]
+  push_cast
+  rw [← Finset.sum_add_distrib]
+  refine Finset.sum_le_sum fun j hj => ?_
+  have hj' := Finset.mem_range.1 hj
+  by_cases h1 : dA Ψ b j L p = b ^ L - 1
+  swap
+  · rw [if_neg h1]; split_ifs <;> norm_num
+  rw [if_pos h1]
+  have hη' : (x - A p) * (b : ℝ) ^ j ≤ 1 / (b : ℝ) ^ L := by
+    have hbn : (0 : ℝ) < (b : ℝ) ^ L := by positivity
+    have hpow : (b : ℝ) ^ j * (b : ℝ) ^ L ≤ (b : ℝ) ^ (N + 2 * L) := by
+      rw [← pow_add]; exact pow_le_pow_right₀ hb1 (by omega)
+    rw [le_div_iff₀ hbn]
+    have h0 : 0 ≤ x - A p := by linarith
+    calc (x - A p) * (b : ℝ) ^ j * (b : ℝ) ^ L = (x - A p) * ((b : ℝ) ^ j * (b : ℝ) ^ L) := by ring
+      _ ≤ (x - A p) * (b : ℝ) ^ (N + 2 * L) := by gcongr
+      _ ≤ 1 := hη
+  have htop : ⌊A p * (b : ℝ) ^ (j + L)⌋₊ % b ^ L = b ^ L - 1 := by
+    rw [dA, hΨ] at h1; exact h1
+  rcases orbit_mem_of_top b hb ha hax j L hη' htop with h | h
+  · rw [if_pos h]; split_ifs <;> norm_num
+  · rw [if_pos h]; split_ifs <;> norm_num
+
+theorem failsG_iff {b L N ℓ v : ℕ} {p : List Bool} (hL : 1 ≤ L) (hN : 1 ≤ N) (hb : 1 ≤ b) :
+    failsG Ψ b L N ℓ v p ↔
+      3 / (4 * (L : ℝ)) < |(Vc Ψ b ℓ v N p : ℝ) / N - 1 / (b : ℝ) ^ ℓ| := by
+  unfold failsG
+  have key : ((4 * L * (Vc Ψ b ℓ v N p * b ^ ℓ - N +
+      (N - Vc Ψ b ℓ v N p * b ^ ℓ)) : ℕ) : ℝ) =
+      4 * L * |(Vc Ψ b ℓ v N p : ℝ) * (b : ℝ) ^ ℓ - (N : ℝ)| := by
+    rw [Nat.cast_mul (4 * L), ComputableNormal.cast_absdiff]; push_cast; ring
+  rw [← @Nat.cast_lt ℝ, key]
+  push_cast
+  set V : ℝ := (Vc Ψ b ℓ v N p : ℝ)
+  have hnR : (1 : ℝ) ≤ L := by exact_mod_cast hL
+  have hbR : (1 : ℝ) ≤ b := by exact_mod_cast hb
+  have hNR : (1 : ℝ) ≤ N := by exact_mod_cast hN
+  have hP : (0 : ℝ) < (b : ℝ) ^ ℓ := by positivity
+  have eq : V / (N : ℝ) - 1 / (b : ℝ) ^ ℓ =
+      (V * (b : ℝ) ^ ℓ - (N : ℝ)) / ((N : ℝ) * (b : ℝ) ^ ℓ) := by
+    field_simp
+  rw [eq, abs_div, abs_of_pos (show (0:ℝ) < (N : ℝ) * (b : ℝ) ^ ℓ by positivity),
+    div_lt_div_iff₀ (by positivity) (by positivity)]
+  constructor <;> intro h <;> nlinarith
+
+theorem failsTopG_iff {b L N : ℕ} {p : List Bool} :
+    failsTopG Ψ b L N p ↔ (N : ℝ) < 4 * L * (Tg Ψ b L N p : ℝ) := by
+  unfold failsTopG
+  rw [← @Nat.cast_lt ℝ]; push_cast; rfl
+
+theorem good_of_passG (hΨ : ∀ b m p, Ψ b m p = ⌊A p * (b : ℝ) ^ m⌋₊)
+    {b L N ℓ v : ℕ} (hb : 2 ≤ b) (hL : 1 ≤ L) (hN : 1 ≤ N) (hℓn : ℓ ≤ L) (x : ℝ) (p : List Bool)
+    (ha : 0 ≤ A p) (hax : A p ≤ x) (hη : (x - A p) * (b : ℝ) ^ (N + 2 * L) ≤ 1)
+    (htop : ¬ failsTopG Ψ b L N p) (hf : ¬ failsG Ψ b L N ℓ v p) :
+    |(visitCount (orbit b x) ((v : ℝ) / (b : ℝ) ^ ℓ) ((v + 1 : ℝ) / (b : ℝ) ^ ℓ) N : ℝ) /
+      (N : ℝ) - 1 / (b : ℝ) ^ ℓ| ≤ 1 / (L : ℝ) := by
+  rw [failsG_iff Ψ hL hN (by omega), not_lt] at hf
+  rw [failsTopG_iff, not_lt] at htop
+  have hd := abs_Vtrue_sub_Vc_leG Ψ A hΨ b hb x p ha hax L N hη hℓn (v := v)
+  have hnR : (1 : ℝ) ≤ L := by exact_mod_cast hL
+  have hN0 : (0 : ℝ) < (N : ℝ) := by exact_mod_cast hN
+  set Vt := (visitCount (orbit b x) ((v : ℝ) / (b : ℝ) ^ ℓ) ((v + 1 : ℝ) / (b : ℝ) ^ ℓ) N : ℝ)
+  set V := (Vc Ψ b ℓ v N p : ℝ)
+  set T := (Tg Ψ b L N p : ℝ)
+  have hT : T / (N : ℝ) ≤ 1 / (4 * (L : ℝ)) := by
+    rw [div_le_div_iff₀ hN0 (by positivity)]; linarith
+  have hd' : |Vt / (N : ℝ) - V / (N : ℝ)| ≤ T / (N : ℝ) := by
+    rw [← sub_div, abs_div, abs_of_pos hN0]; exact div_le_div_of_nonneg_right hd hN0.le
+  have e : 1 / (L : ℝ) = 3 / (4 * L) + 1 / (4 * L) := by field_simp; ring
+  rw [e]
+  calc |Vt / (N : ℝ) - 1 / (b : ℝ) ^ ℓ|
+      ≤ |V / (N : ℝ) - 1 / (b : ℝ) ^ ℓ| + |Vt / (N : ℝ) - V / (N : ℝ)| := by
+        have := abs_sub_le (Vt / (N : ℝ)) (V / (N : ℝ)) (1 / (b : ℝ) ^ ℓ)
+        linarith
+    _ ≤ _ := by gcongr; exact hd'.trans hT
+
+theorem dev_of_failsG (hΨ : ∀ b m p, Ψ b m p = ⌊A p * (b : ℝ) ^ m⌋₊)
+    {b L N ℓ v : ℕ} (hb : 2 ≤ b) (hL : 1 ≤ L) (hN : 1 ≤ N) (hℓn : ℓ ≤ L) (x : ℝ) (p : List Bool)
+    (ha : 0 ≤ A p) (hax : A p ≤ x) (hη : (x - A p) * (b : ℝ) ^ (N + 2 * L) ≤ 1)
+    (htop : ¬ failsTopG Ψ b L N p) (hf : failsG Ψ b L N ℓ v p) :
+    1 / (2 * (L : ℝ)) <
+      |(visitCount (orbit b x) ((v : ℝ) / (b : ℝ) ^ ℓ) ((v + 1 : ℝ) / (b : ℝ) ^ ℓ) N : ℝ) /
+        (N : ℝ) - 1 / (b : ℝ) ^ ℓ| := by
+  rw [failsG_iff Ψ hL hN (by omega)] at hf
+  rw [failsTopG_iff, not_lt] at htop
+  have hd := abs_Vtrue_sub_Vc_leG Ψ A hΨ b hb x p ha hax L N hη hℓn (v := v)
+  have hnR : (1 : ℝ) ≤ L := by exact_mod_cast hL
+  have hN0 : (0 : ℝ) < (N : ℝ) := by exact_mod_cast hN
+  set Vt := (visitCount (orbit b x) ((v : ℝ) / (b : ℝ) ^ ℓ) ((v + 1 : ℝ) / (b : ℝ) ^ ℓ) N : ℝ)
+  set V := (Vc Ψ b ℓ v N p : ℝ)
+  set T := (Tg Ψ b L N p : ℝ)
+  have hT : T / (N : ℝ) ≤ 1 / (4 * (L : ℝ)) := by
+    rw [div_le_div_iff₀ hN0 (by positivity)]; linarith
+  have hd' : |Vt / (N : ℝ) - V / (N : ℝ)| ≤ T / (N : ℝ) := by
+    rw [← sub_div, abs_div, abs_of_pos hN0]; exact div_le_div_of_nonneg_right hd hN0.le
+  have e : 3 / (4 * (L : ℝ)) = 1 / (2 * L) + 1 / (4 * L) := by field_simp; ring
+  rw [e] at hf
+  have := abs_sub_le (V / (N : ℝ)) (Vt / (N : ℝ)) (1 / (b : ℝ) ^ ℓ)
+  have hc := abs_sub_comm (V / (N : ℝ)) (Vt / (N : ℝ))
+  linarith
+
+theorem tail_of_failsTopG (hΨ : ∀ b m p, Ψ b m p = ⌊A p * (b : ℝ) ^ m⌋₊)
+    {b L N : ℕ} (hb : 2 ≤ b) (x : ℝ) (p : List Bool)
+    (ha : 0 ≤ A p) (hax : A p ≤ x) (hη : (x - A p) * (b : ℝ) ^ (N + 2 * L) ≤ 1)
+    (htop : failsTopG Ψ b L N p) :
+    (N : ℝ) < 8 * L * visitCount (orbit b x) 0 (1 / (b : ℝ) ^ L) (N + L) ∨
+    (N : ℝ) < 8 * L * visitCount (orbit b x) (1 - 1 / (b : ℝ) ^ L) 1 (N + L) := by
+  rw [failsTopG_iff] at htop
+  have h := Tg_le Ψ A hΨ b hb x p ha hax L N hη
+  by_contra hc
+  push Not at hc
+  have hn0 : (0 : ℝ) ≤ L := by positivity
+  nlinarith [hc.1, hc.2, mul_le_mul_of_nonneg_left h (by positivity : (0:ℝ) ≤ 4 * L)]
+
+end Gen
+
+
+/-! ## Primitive recursiveness, with a parameter in the floor function -/
+
+section PrimrecG
+
+variable (Ψ : ℕ × ℕ → ℕ → ℕ → List Bool → ℕ)
+  (hΨp : Primrec fun x : (ℕ × ℕ) × ℕ × ℕ × List Bool => Ψ x.1 x.2.1 x.2.2.1 x.2.2.2)
+
+include hΨp
+
+variable {α : Type*} [Primcodable α]
+
+theorem primrec_dAG {fz : α → ℕ × ℕ} {fb fE fr : α → ℕ} {fp : α → List Bool} (hz : Primrec fz)
+    (hb : Primrec fb) (hE : Primrec fE) (hr : Primrec fr) (hp : Primrec fp) :
+    Primrec fun a => dA (Ψ (fz a)) (fb a) (fE a) (fr a) (fp a) :=
+  Primrec.nat_mod.comp (hΨp.comp (Primrec.pair hz (Primrec.pair hb
+    (Primrec.pair (Primrec.nat_add.comp hE hr) hp))))
+    (ComputableNormal.primrec_pow.comp hb hr)
+
+theorem primrec_VcG {fz : α → ℕ × ℕ} {fb fl fv fN : α → ℕ} {fp : α → List Bool}
+    (hz : Primrec fz) (hb : Primrec fb)
+    (hl : Primrec fl) (hv : Primrec fv) (hN : Primrec fN) (hp : Primrec fp) :
+    Primrec fun a => Vc (Ψ (fz a)) (fb a) (fl a) (fv a) (fN a) (fp a) := by
+  have hg : Primrec₂ fun (a : α) (k : ℕ) =>
+      if dA (Ψ (fz a)) (fb a) k (fl a) (fp a) = fv a then 1 else 0 :=
+    (Primrec.ite (Primrec.eq.comp (primrec_dAG Ψ hΨp (hz.comp Primrec.fst)
+      (hb.comp Primrec.fst) Primrec.snd
+      (hl.comp Primrec.fst) (hp.comp Primrec.fst)) (hv.comp Primrec.fst))
+      (Primrec.const 1) (Primrec.const 0)).to₂
+  exact primrec_sum_map (Primrec.list_range.comp hN) hg
+
+theorem primrec_TgG {fz : α → ℕ × ℕ} {fb fL fN : α → ℕ} {fp : α → List Bool}
+    (hz : Primrec fz) (hb : Primrec fb) (hL : Primrec fL) (hN : Primrec fN)
+    (hp : Primrec fp) : Primrec fun a => Tg (Ψ (fz a)) (fb a) (fL a) (fN a) (fp a) := by
+  have hg : Primrec₂ fun (a : α) (j : ℕ) =>
+      if dA (Ψ (fz a)) (fb a) j (fL a) (fp a) = fb a ^ fL a - 1 then 1 else 0 :=
+    (Primrec.ite (Primrec.eq.comp (primrec_dAG Ψ hΨp (hz.comp Primrec.fst)
+      (hb.comp Primrec.fst) Primrec.snd
+      (hL.comp Primrec.fst) (hp.comp Primrec.fst))
+      (Primrec.nat_sub.comp (ComputableNormal.primrec_pow.comp (hb.comp Primrec.fst)
+        (hL.comp Primrec.fst)) (Primrec.const 1)))
+      (Primrec.const 1) (Primrec.const 0)).to₂
+  exact primrec_sum_map (Primrec.list_range.comp (Primrec.nat_add.comp hN hL)) hg
+
+theorem primrec_failsG {fz : α → ℕ × ℕ} {fb fL fN fl fv : α → ℕ} {fp : α → List Bool}
+    (hz : Primrec fz) (hb : Primrec fb)
+    (hL : Primrec fL) (hN : Primrec fN) (hl : Primrec fl) (hv : Primrec fv) (hp : Primrec fp) :
+    PrimrecPred fun a => failsG (Ψ (fz a)) (fb a) (fL a) (fN a) (fl a) (fv a) (fp a) := by
+  have hP : Primrec fun a => fb a ^ fl a := ComputableNormal.primrec_pow.comp hb hl
+  have hV := primrec_VcG Ψ hΨp hz hb hl hv hN hp
+  have hVP := Primrec.nat_mul.comp hV hP
+  have lhs := Primrec.nat_mul.comp (Primrec.nat_mul.comp (Primrec.const 3) hN) hP
+  have rhs := Primrec.nat_mul.comp (Primrec.nat_mul.comp (Primrec.const 4) hL)
+    (Primrec.nat_add.comp (Primrec.nat_sub.comp hVP hN) (Primrec.nat_sub.comp hN hVP))
+  exact (Primrec.nat_lt.comp lhs rhs).of_eq fun a => by unfold failsG; rfl
+
+theorem primrec_failsTopG {fz : α → ℕ × ℕ} {fb fL fN : α → ℕ} {fp : α → List Bool}
+    (hz : Primrec fz) (hb : Primrec fb) (hL : Primrec fL) (hN : Primrec fN) (hp : Primrec fp) :
+    PrimrecPred fun a => failsTopG (Ψ (fz a)) (fb a) (fL a) (fN a) (fp a) :=
+  (Primrec.nat_lt.comp hN (Primrec.nat_mul.comp (Primrec.nat_mul.comp (Primrec.const 4) hL)
+    (primrec_TgG Ψ hΨp hz hb hL hN hp))).of_eq fun a => by unfold failsTopG; rfl
+
+end PrimrecG
+
+/-! ## The concrete tests -/
+
+/-- Numerator of the prefix approximation `A = numA / 2^D`: the oracle's `⌊α 2^D⌋` plus the
+coins at positions `k ≤ D` flagged by the oracle's mask (the positions of `S`). -/
+def numA (D o : ℕ) (p : List Bool) : ℕ :=
+  o.unpair.1 + ((List.range (D + 1)).map fun k =>
+    if o.unpair.2 / 2 ^ k % 2 = 1 ∧ p.getD k false = true then 2 ^ (D - k) else 0).sum
+
+/-- Floors of the approximation, parameter `z = (D, o)`. -/
+def PsiO (z : ℕ × ℕ) (r m : ℕ) (p : List Bool) : ℕ := numA z.1 z.2 p * r ^ m / 2 ^ z.1
+
+/-- Admissible test depth `L` at octave `s`. -/
+def Pgood (L s : ℕ) : Prop := 256 * L ≤ s ∧ (2 ^ 25 * L ^ (L + 11)) ^ 250 ≤ s
+
+instance (L s : ℕ) : Decidable (Pgood L s) := by unfold Pgood; infer_instance
+
+/-- Test depth at octave `s`: the number of admissible `L ≥ 1`. -/
+def Lf (s : ℕ) : ℕ := ((List.range s).map fun L => if Pgood (L + 1) s then 1 else 0).sum
+
+/-- Binary precision at octave `s`. -/
+def Dd (s : ℕ) : ℕ := 1 + Lf s * (2 * Lf s * 2 ^ s + 2 * Lf s)
+
+/-- Failing count for base `r` at checkpoint `N`. -/
+def cellBad (z : ℕ × ℕ) (r L N : ℕ) (p : List Bool) : ℕ :=
+  (if failsTopG (PsiO z) r L N p then 1 else 0) +
+  ((List.range (L + 1)).map fun ℓ => if 1 ≤ ℓ then
+    ((List.range (r ^ ℓ)).map fun v => if failsG (PsiO z) r L N ℓ v p then 1 else 0).sum
+    else 0).sum
+
+/-- Failing count at octave `s`: checkpoints `m 2^s`, `1 ≤ m ≤ 2L`; odd bases `3 ≤ r ≤ L`. -/
+def levelBadO (s o : ℕ) (p : List Bool) : ℕ :=
+  if 5 ≤ Lf s then
+    ((List.range (2 * Lf s + 1)).map fun m => if 1 ≤ m then
+      ((List.range (Lf s + 1)).map fun r => if 3 ≤ r ∧ r % 2 = 1 then
+        cellBad (Dd s, o) r (Lf s) (m * 2 ^ s) p else 0).sum else 0).sum
+  else 0
+
+def BpO (s₀ : ℕ) (x : ℕ × ℕ × List Bool) : Bool := decide (0 < levelBadO (x.1 + s₀) x.2.1 x.2.2)
+
+def dO (s₀ j : ℕ) : ℕ := Dd (j + s₀) + 1
+
+theorem primrec_numA : Primrec fun x : (ℕ × ℕ) × List Bool => numA x.1.1 x.1.2 x.2 := by
+  have c1 : PrimrecPred fun y : ((ℕ × ℕ) × List Bool) × ℕ => y.1.1.2.unpair.2 / 2 ^ y.2 % 2 = 1 :=
+    Primrec.eq.comp (Primrec.nat_mod.comp (Primrec.nat_div.comp
+        (Primrec.snd.comp (Primrec.unpair.comp (Primrec.snd.comp (Primrec.fst.comp Primrec.fst))))
+        (ComputableNormal.primrec_pow.comp (Primrec.const 2) Primrec.snd)) (Primrec.const 2))
+        (Primrec.const 1)
+  have c2 : PrimrecPred fun y : ((ℕ × ℕ) × List Bool) × ℕ => y.1.2.getD y.2 false = true :=
+    Primrec.eq.comp ((Primrec.list_getD false).comp (Primrec.snd.comp Primrec.fst)
+        Primrec.snd) (Primrec.const true)
+  have c3 : Primrec fun y : ((ℕ × ℕ) × List Bool) × ℕ => 2 ^ (y.1.1.1 - y.2) :=
+    ComputableNormal.primrec_pow.comp (Primrec.const 2)
+        (Primrec.nat_sub.comp (Primrec.fst.comp (Primrec.fst.comp Primrec.fst)) Primrec.snd)
+  have hg : Primrec₂ fun (x : (ℕ × ℕ) × List Bool) (k : ℕ) =>
+      if x.1.2.unpair.2 / 2 ^ k % 2 = 1 ∧ x.2.getD k false = true then 2 ^ (x.1.1 - k) else 0 :=
+    (Primrec.ite (PrimrecPred.and c1 c2) c3 (Primrec.const 0)).to₂
+  exact (Primrec.nat_add.comp (Primrec.fst.comp (Primrec.unpair.comp
+    (Primrec.snd.comp Primrec.fst)))
+    (primrec_sum_map (Primrec.list_range.comp (Primrec.succ.comp
+      (Primrec.fst.comp Primrec.fst))) hg)).of_eq fun x => rfl
+
+theorem primrec_PsiO :
+    Primrec fun x : (ℕ × ℕ) × ℕ × ℕ × List Bool => PsiO x.1 x.2.1 x.2.2.1 x.2.2.2 := by
+  have h1 : Primrec fun x : (ℕ × ℕ) × ℕ × ℕ × List Bool => numA x.1.1 x.1.2 x.2.2.2 :=
+    primrec_numA.comp (Primrec.pair Primrec.fst (Primrec.snd.comp (Primrec.snd.comp Primrec.snd)))
+  exact (Primrec.nat_div.comp (Primrec.nat_mul.comp h1
+    (ComputableNormal.primrec_pow.comp (Primrec.fst.comp Primrec.snd)
+      (Primrec.fst.comp (Primrec.snd.comp Primrec.snd))))
+    (ComputableNormal.primrec_pow.comp (Primrec.const 2) (Primrec.fst.comp Primrec.fst))).of_eq
+    fun x => rfl
+
+theorem primrecPred_Pgood : PrimrecPred fun x : ℕ × ℕ => Pgood x.1 x.2 := by
+  have hpw := ComputableNormal.primrec_pow
+  refine (PrimrecPred.and (Primrec.nat_le.comp (Primrec.nat_mul.comp (Primrec.const 256)
+    Primrec.fst) Primrec.snd) (Primrec.nat_le.comp (hpw.comp (Primrec.nat_mul.comp
+      (Primrec.const (2 ^ 25)) (hpw.comp Primrec.fst (Primrec.nat_add.comp Primrec.fst
+        (Primrec.const 11)))) (Primrec.const 250)) Primrec.snd)).of_eq fun x => ?_
+  unfold Pgood; rfl
+
+theorem primrec_Lf : Primrec Lf := by
+  have hg : Primrec₂ fun (s L : ℕ) => if Pgood (L + 1) s then 1 else 0 :=
+    (Primrec.ite (primrecPred_Pgood.comp (Primrec.pair (Primrec.succ.comp Primrec.snd)
+      Primrec.fst)) (Primrec.const 1) (Primrec.const 0)).to₂
+  exact (primrec_sum_map Primrec.list_range hg).of_eq fun s => rfl
+
+theorem primrec_Dd : Primrec Dd := by
+  have hL := primrec_Lf
+  exact (Primrec.nat_add.comp (Primrec.const 1) (Primrec.nat_mul.comp hL
+    (Primrec.nat_add.comp (Primrec.nat_mul.comp (Primrec.nat_mul.comp (Primrec.const 2) hL)
+      (ComputableNormal.primrec_pow.comp (Primrec.const 2) Primrec.id))
+      (Primrec.nat_mul.comp (Primrec.const 2) hL)))).of_eq fun s => rfl
+
+theorem primrec_dO (s₀ : ℕ) : Primrec (dO s₀) :=
+  (Primrec.succ.comp (primrec_Dd.comp (Primrec.nat_add.comp Primrec.id (Primrec.const s₀)))).of_eq
+    fun _ => rfl
+
+section PrimrecC
+
+variable {α : Type*} [Primcodable α]
+
+attribute [local irreducible] failsG failsTopG in
+theorem primrec_cellBad {fz : α → ℕ × ℕ} {fr fL fN : α → ℕ} {fp : α → List Bool}
+    (hz : Primrec fz) (hr : Primrec fr) (hL : Primrec fL) (hN : Primrec fN) (hp : Primrec fp) :
+    Primrec fun a => cellBad (fz a) (fr a) (fL a) (fN a) (fp a) := by
+  have hΨ := primrec_PsiO
+  have htop : Primrec fun a => if failsTopG (PsiO (fz a)) (fr a) (fL a) (fN a) (fp a) then 1 else 0 :=
+    Primrec.ite (primrec_failsTopG PsiO hΨ hz hr hL hN hp) (Primrec.const 1) (Primrec.const 0)
+  have hin : Primrec fun y : α × ℕ =>
+      ((List.range (fr y.1 ^ y.2)).map fun v =>
+        if failsG (PsiO (fz y.1)) (fr y.1) (fL y.1) (fN y.1) y.2 v (fp y.1) then 1 else 0).sum := by
+    have hfv : Primrec₂ fun (y : α × ℕ) (v : ℕ) =>
+        if failsG (PsiO (fz y.1)) (fr y.1) (fL y.1) (fN y.1) y.2 v (fp y.1) then 1 else 0 :=
+      (Primrec.ite (primrec_failsG PsiO hΨ (hz.comp (Primrec.fst.comp Primrec.fst))
+        (hr.comp (Primrec.fst.comp Primrec.fst))
+        (hL.comp (Primrec.fst.comp Primrec.fst)) (hN.comp (Primrec.fst.comp Primrec.fst))
+        (Primrec.snd.comp Primrec.fst) Primrec.snd
+        (hp.comp (Primrec.fst.comp Primrec.fst))) (Primrec.const 1) (Primrec.const 0)).to₂
+    exact primrec_sum_map (Primrec.list_range.comp
+      (ComputableNormal.primrec_pow.comp (hr.comp Primrec.fst) Primrec.snd)) hfv
+  have hg : Primrec₂ fun (a : α) (ℓ : ℕ) => if 1 ≤ ℓ then
+      ((List.range (fr a ^ ℓ)).map fun v =>
+        if failsG (PsiO (fz a)) (fr a) (fL a) (fN a) ℓ v (fp a) then 1 else 0).sum else 0 :=
+    (Primrec.ite (Primrec.nat_le.comp (Primrec.const 1) Primrec.snd) hin (Primrec.const 0)).to₂
+  exact (Primrec.nat_add.comp htop
+    (primrec_sum_map (Primrec.list_range.comp (Primrec.succ.comp hL)) hg)).of_eq
+    fun a => rfl
+
+attribute [local irreducible] cellBad in
+theorem primrec_levelBadO : Primrec fun x : ℕ × ℕ × List Bool => levelBadO x.1 x.2.1 x.2.2 := by
+  have hL : Primrec fun x : ℕ × ℕ × List Bool => Lf x.1 := primrec_Lf.comp Primrec.fst
+  -- innermost: context (x, m), binder r
+  have hr : Primrec₂ fun (y : (ℕ × ℕ × List Bool) × ℕ) (r : ℕ) =>
+      if 3 ≤ r ∧ r % 2 = 1 then
+        cellBad (Dd y.1.1, y.1.2.1) r (Lf y.1.1) (y.2 * 2 ^ y.1.1) y.1.2.2 else 0 := by
+    have c1 : PrimrecPred fun z : ((ℕ × ℕ × List Bool) × ℕ) × ℕ => 3 ≤ z.2 ∧ z.2 % 2 = 1 :=
+      PrimrecPred.and (Primrec.nat_le.comp (Primrec.const 3) Primrec.snd)
+        (Primrec.eq.comp (Primrec.nat_mod.comp Primrec.snd (Primrec.const 2)) (Primrec.const 1))
+    have hx : Primrec fun z : ((ℕ × ℕ × List Bool) × ℕ) × ℕ => z.1.1 := Primrec.fst.comp Primrec.fst
+    have cb : Primrec fun z : ((ℕ × ℕ × List Bool) × ℕ) × ℕ =>
+        cellBad (Dd z.1.1.1, z.1.1.2.1) z.2 (Lf z.1.1.1) (z.1.2 * 2 ^ z.1.1.1) z.1.1.2.2 :=
+      primrec_cellBad (Primrec.pair (primrec_Dd.comp (Primrec.fst.comp hx))
+          (Primrec.fst.comp (Primrec.snd.comp hx))) Primrec.snd
+        (hL.comp hx) (Primrec.nat_mul.comp (Primrec.snd.comp Primrec.fst)
+          (ComputableNormal.primrec_pow.comp (Primrec.const 2) (Primrec.fst.comp hx)))
+        (Primrec.snd.comp (Primrec.snd.comp hx))
+    exact (Primrec.ite c1 cb (Primrec.const 0)).to₂
+  have hm : Primrec₂ fun (x : ℕ × ℕ × List Bool) (m : ℕ) => if 1 ≤ m then
+      ((List.range (Lf x.1 + 1)).map fun r => if 3 ≤ r ∧ r % 2 = 1 then
+        cellBad (Dd x.1, x.2.1) r (Lf x.1) (m * 2 ^ x.1) x.2.2 else 0).sum else 0 :=
+    (Primrec.ite (Primrec.nat_le.comp (Primrec.const 1) Primrec.snd)
+      (primrec_sum_map (Primrec.list_range.comp (Primrec.succ.comp (hL.comp Primrec.fst))) hr)
+      (Primrec.const 0)).to₂
+  exact (Primrec.ite (Primrec.nat_le.comp (Primrec.const 5) hL)
+    (primrec_sum_map (Primrec.list_range.comp (Primrec.succ.comp
+      (Primrec.nat_mul.comp (Primrec.const 2) hL))) hm) (Primrec.const 0)).of_eq fun x => by
+    unfold levelBadO; rfl
+
+theorem primrec_BpO (s₀ : ℕ) : Primrec (BpO s₀) := by
+  have h : Primrec fun x : ℕ × ℕ × List Bool => levelBadO (x.1 + s₀) x.2.1 x.2.2 :=
+    primrec_levelBadO.comp (Primrec.pair (Primrec.nat_add.comp Primrec.fst (Primrec.const s₀))
+      Primrec.snd)
+  exact (Primrec.nat_lt.comp (Primrec.const 0) h).decide.of_eq fun x => rfl
+
+end PrimrecC
+
+/-! ## The oracle -/
+
+/-- Bit mask of `f` on `[0, D]`. -/
+def maskR (f : ℕ → Bool) (D : ℕ) : ℕ :=
+  Nat.rec (motive := fun _ => ℕ) (cond (f 0) 1 0) (fun y IH => IH + cond (f (y + 1)) (2 ^ (y + 1)) 0) D
+
+theorem maskR_succ (f : ℕ → Bool) (D : ℕ) :
+    maskR f (D + 1) = maskR f D + cond (f (D + 1)) (2 ^ (D + 1)) 0 := rfl
+
+theorem maskR_lt (f : ℕ → Bool) (D : ℕ) : maskR f D < 2 ^ (D + 1) := by
+  induction D with
+  | zero => simp only [maskR]; cases f 0 <;> simp
+  | succ D ih =>
+    rw [maskR_succ]
+    cases f (D + 1) <;> simp [pow_succ] <;> omega
+
+theorem maskR_bit (f : ℕ → Bool) {D k : ℕ} (hk : k ≤ D) :
+    (maskR f D / 2 ^ k % 2 = 1) ↔ f k = true := by
+  induction D with
+  | zero =>
+    obtain rfl : k = 0 := by omega
+    simp only [maskR]; cases f 0 <;> simp
+  | succ D ih =>
+    rw [maskR_succ]
+    rcases Nat.lt_or_ge k (D + 1) with hlt | hge
+    · rw [← ih (by omega)]
+      cases f (D + 1)
+      · simp
+      · simp only [cond_true]
+        have h2 : 2 ^ (D + 1) = 2 ^ k * (2 * 2 ^ (D - k)) := by
+          rw [← pow_succ', ← pow_add]; congr 1; omega
+        rw [h2, Nat.add_mul_div_left _ _ (by positivity), Nat.add_mul_mod_self_left]
+    · obtain rfl : k = D + 1 := by omega
+      have hlt := maskR_lt f D
+      cases hf : f (D + 1)
+      · simp [Nat.div_eq_of_lt hlt]
+      · simp only [cond_true]
+        rw [Nat.add_div_right _ (by positivity), Nat.div_eq_of_lt hlt]
+        simp
+
+theorem computable_maskR {f : ℕ → Bool} (hf : Computable f) : Computable (maskR f) := by
+  have hh : Computable₂ fun (_ : ℕ) (q : ℕ × ℕ) => q.2 + cond (f (q.1 + 1)) (2 ^ (q.1 + 1)) 0 := by
+    refine Computable₂.mk ?_
+    refine (Primrec.nat_add.to_comp).comp (Computable.snd.comp Computable.snd) ?_
+    exact Computable.cond (hf.comp (Computable.succ.comp (Computable.fst.comp Computable.snd)))
+      ((ComputableNormal.primrec_pow.to_comp).comp (Computable.const 2)
+        (Computable.succ.comp (Computable.fst.comp Computable.snd))) (Computable.const 0)
+  exact (Computable.nat_rec Computable.id (Computable.cond (hf.comp (Computable.const 0))
+    (Computable.const 1) (Computable.const 0)) hh).of_eq fun D => rfl
+
+open Classical in
+/-- Membership in BLD's example set, as a Boolean. -/
+noncomputable def membS (k : ℕ) : Bool := decide (k ∈ expSet)
+
+/-- The oracle for test `j`: `⌊α 2^D⌋` paired with the mask of `S ∩ [0, D]`. -/
+noncomputable def oO (α : ℝ) (s₀ j : ℕ) : ℕ :=
+  Nat.pair ⌊α * 2 ^ Dd (j + s₀)⌋₊ (maskR membS (Dd (j + s₀)))
+
+theorem computable_oO (α : ℝ) (hα : Computable fun n : ℕ => ⌊α * 2 ^ n⌋₊)
+    (hm : Computable membS) (s₀ : ℕ) : Computable (oO α s₀) := by
+  have hD : Computable fun j : ℕ => Dd (j + s₀) :=
+    (primrec_Dd.comp (Primrec.nat_add.comp Primrec.id (Primrec.const s₀))).to_comp
+  exact ((Primrec₂.natPair.to_comp).comp (hα.comp hD) ((computable_maskR hm).comp hD)).of_eq
+    fun j => rfl
+
+/-! ## The prefix approximation -/
+
+theorem pre_getD (ω : ℕ → Bool) {n k : ℕ} (hk : k < n) : (pre ω n).getD k false = ω k := by
+  simp [pre, List.getD_eq_getElem?_getD, hk]
+
+theorem numA_oO (α : ℝ) (s₀ j : ℕ) (ω : ℕ → Bool) :
+    ((numA (Dd (j + s₀)) (oO α s₀ j) (pre ω (Dd (j + s₀) + 1)) : ℕ) : ℝ) / 2 ^ Dd (j + s₀) =
+      (⌊α * 2 ^ Dd (j + s₀)⌋₊ : ℝ) / 2 ^ Dd (j + s₀) +
+        ∑ k ∈ Finset.range (Dd (j + s₀) + 1), bldTerm expSet ω k := by
+  classical
+  set D := Dd (j + s₀)
+  unfold numA oO
+  simp only [Nat.unpair_pair]
+  rw [list_sum_range_map]
+  push_cast
+  rw [add_div, Finset.sum_div]
+  congr 1
+  refine Finset.sum_congr rfl fun k hk => ?_
+  have hkD : k ≤ D := Nat.lt_succ_iff.1 (Finset.mem_range.1 hk)
+  have hc : (maskR membS D / 2 ^ k % 2 = 1 ∧ (pre ω (D + 1)).getD k false = true) ↔
+      (k ∈ expSet ∧ ω k = true) := by
+    rw [maskR_bit membS hkD, pre_getD ω (by omega)]
+    simp [membS]
+  unfold bldTerm
+  by_cases h : k ∈ expSet ∧ ω k = true
+  · rw [if_pos (hc.2 h), if_pos h]
+    push_cast
+    rw [show (2 : ℝ) ^ D = 2 ^ (D - k) * 2 ^ k by rw [← pow_add]; congr 1; omega]
+    field_simp
+  · rw [if_neg (fun h' => h (hc.1 h')), if_neg h]; simp
+
+theorem approx_oO (α : ℝ) (hα0 : 0 ≤ α) (s₀ j : ℕ) (ω : ℕ → Bool) :
+    let A := ((numA (Dd (j + s₀)) (oO α s₀ j) (pre ω (Dd (j + s₀) + 1)) : ℕ) : ℝ) /
+      2 ^ Dd (j + s₀)
+    0 ≤ A ∧ A ≤ α + bldPoint expSet ω ∧ α + bldPoint expSet ω ≤ A + 2 / 2 ^ Dd (j + s₀) := by
+  intro A
+  set D := Dd (j + s₀)
+  have hA : A = (⌊α * 2 ^ D⌋₊ : ℝ) / 2 ^ D + ∑ k ∈ Finset.range (D + 1), bldTerm expSet ω k :=
+    numA_oO α s₀ j ω
+  have hD : (0 : ℝ) < 2 ^ D := by positivity
+  have hfl1 : (⌊α * 2 ^ D⌋₊ : ℝ) / 2 ^ D ≤ α := by
+    rw [div_le_iff₀ hD]; exact Nat.floor_le (by positivity)
+  have hfl2 : α < (⌊α * 2 ^ D⌋₊ : ℝ) / 2 ^ D + 1 / 2 ^ D := by
+    rw [← add_div, lt_div_iff₀ hD]; exact Nat.lt_floor_add_one _
+  have hs := summable_bldTerm expSet ω
+  have hsplit := hs.sum_add_tsum_nat_add (D + 1)
+  have htail0 : 0 ≤ ∑' i, bldTerm expSet ω (i + (D + 1)) :=
+    tsum_nonneg fun i => bldTerm_nonneg _ _ _
+  have htail1 : ∑' i, bldTerm expSet ω (i + (D + 1)) ≤ 1 / 2 ^ D := by
+    have hg : Summable fun i : ℕ => (1 / 2 : ℝ) ^ (i + (D + 1)) :=
+      (summable_nat_add_iff (D + 1)).2 (summable_geometric_of_lt_one (by norm_num) (by norm_num))
+    refine (Summable.tsum_le_tsum (fun i => bldTerm_le _ _ _)
+      ((summable_nat_add_iff (D + 1)).2 hs) hg).trans (le_of_eq ?_)
+    simp_rw [pow_add]
+    rw [tsum_mul_right, tsum_geometric_of_lt_one (by norm_num) (by norm_num)]
+    field_simp
+    rw [← mul_pow]; norm_num
+  have hsum0 : 0 ≤ ∑ k ∈ Finset.range (D + 1), bldTerm expSet ω k :=
+    Finset.sum_nonneg fun k _ => bldTerm_nonneg _ _ _
+  rw [bldPoint_eq_tsum, ← hsplit]
+  refine ⟨by rw [hA]; positivity, ?_, ?_⟩
+  · rw [hA]; linarith
+  · rw [hA]
+    have : (2 : ℝ) / 2 ^ D = 1 / 2 ^ D + 1 / 2 ^ D := by ring
+    linarith
+
+/-- The floors of the approximation. -/
+theorem PsiO_eq (z : ℕ × ℕ) (r m : ℕ) (p : List Bool) :
+    PsiO z r m p = ⌊((numA z.1 z.2 p : ℕ) : ℝ) / 2 ^ z.1 * (r : ℝ) ^ m⌋₊ := by
+  unfold PsiO
+  rw [show ((numA z.1 z.2 p : ℕ) : ℝ) / 2 ^ z.1 * (r : ℝ) ^ m =
+    ((numA z.1 z.2 p * r ^ m : ℕ) : ℝ) / ((2 ^ z.1 : ℕ) : ℝ) by push_cast; ring,
+    Nat.floor_div_eq_div]
+
+/-! ## The depth function -/
+
+theorem Pgood_anti {L L' s : ℕ} (hL : L' ≤ L) (h : Pgood L s) : Pgood L' s := by
+  obtain ⟨h1, h2⟩ := h
+  refine ⟨by omega, le_trans ?_ h2⟩
+  apply Nat.pow_le_pow_left
+  apply Nat.mul_le_mul_left
+  rcases Nat.eq_zero_or_pos L' with rfl | hL'
+  · positivity
+  · calc L' ^ (L' + 11) ≤ L ^ (L' + 11) := Nat.pow_le_pow_left hL _
+      _ ≤ L ^ (L + 11) := Nat.pow_le_pow_right (by omega) (by omega)
+
+theorem Pgood_mono {L s s' : ℕ} (hs : s ≤ s') (h : Pgood L s) : Pgood L s' :=
+  ⟨h.1.trans hs, h.2.trans hs⟩
+
+theorem Lf_eq_card (s : ℕ) :
+    Lf s = ((Finset.range s).filter fun L => Pgood (L + 1) s).card := by
+  unfold Lf
+  rw [list_sum_range_map, Finset.card_filter]
+
+theorem le_Lf {L s : ℕ} (h : Pgood L s) : L ≤ Lf s := by
+  rw [Lf_eq_card]
+  have hLs : L ≤ s := by have := h.1; omega
+  calc L = (Finset.range L).card := (Finset.card_range L).symm
+    _ ≤ _ := Finset.card_le_card fun L' hL' => by
+      rw [Finset.mem_range] at hL'
+      exact Finset.mem_filter.2 ⟨Finset.mem_range.2 (by omega), Pgood_anti (by omega) h⟩
+
+theorem Pgood_Lf {s : ℕ} (h1 : 1 ≤ Lf s) : Pgood (Lf s) s := by
+  by_contra hne
+  have hsub : ((Finset.range s).filter fun L => Pgood (L + 1) s) ⊆ Finset.range (Lf s - 1) := by
+    intro L hL
+    obtain ⟨_, hP⟩ := Finset.mem_filter.1 hL
+    rw [Finset.mem_range]
+    by_contra hge
+    exact hne (Pgood_anti (by omega) hP)
+  have := Finset.card_le_card hsub
+  rw [← Lf_eq_card, Finset.card_range] at this
+  omega
+
+theorem tendsto_Lf : Tendsto Lf atTop atTop := by
+  rw [tendsto_atTop_atTop]
+  intro M
+  refine ⟨256 * M + (2 ^ 25 * M ^ (M + 11)) ^ 250, fun s hs => le_Lf ⟨by omega, by omega⟩⟩
+
+theorem Lf_le (s : ℕ) : 256 * Lf s ≤ s := by
+  rcases Nat.eq_zero_or_pos (Lf s) with h | h
+  · rw [h]; omega
+  · exact (Pgood_Lf h).1
+
+/-- Precision suffices for every checkpoint and base at octave `s`. -/
+theorem eta_ok (s r N : ℕ) (hr : r ≤ Lf s) (hN : N ≤ 2 * Lf s * 2 ^ s) {δ : ℝ} (h0 : 0 ≤ δ)
+    (hδ : δ ≤ 2 / 2 ^ Dd s) : δ * (r : ℝ) ^ (N + 2 * Lf s) ≤ 1 := by
+  set L := Lf s
+  have hr2 : (r : ℝ) ≤ 2 ^ L := by
+    have : r < 2 ^ L := lt_of_le_of_lt hr Nat.lt_two_pow_self
+    exact_mod_cast this.le
+  have hpow : (r : ℝ) ^ (N + 2 * L) ≤ 2 ^ (Dd s - 1) := by
+    calc (r : ℝ) ^ (N + 2 * L) ≤ (2 ^ L : ℝ) ^ (N + 2 * L) := pow_le_pow_left₀ (by positivity) hr2 _
+      _ = 2 ^ (L * (N + 2 * L)) := by rw [← pow_mul]
+      _ ≤ 2 ^ (Dd s - 1) := by
+          apply pow_le_pow_right₀ (by norm_num)
+          have hDd : Dd s = 1 + L * (2 * L * 2 ^ s + 2 * L) := rfl
+          have : L * (N + 2 * L) ≤ L * (2 * L * 2 ^ s + 2 * L) := Nat.mul_le_mul_left _ (by omega)
+          omega
+  have hD : (2 : ℝ) ^ Dd s = 2 * 2 ^ (Dd s - 1) := by
+    have hDd : Dd s = 1 + L * (2 * L * 2 ^ s + 2 * L) := rfl
+    rw [← pow_succ']; congr 1; omega
+  calc δ * (r : ℝ) ^ (N + 2 * L) ≤ (2 / 2 ^ Dd s) * 2 ^ (Dd s - 1) := by gcongr
+    _ = 1 := by rw [hD]; field_simp
+
+/-! ## Passing every test ⇒ normal in every odd base -/
+
+theorem sum_range_eq_zero {f : ℕ → ℕ} {n : ℕ} (h : ((List.range n).map f).sum = 0) {k : ℕ}
+    (hk : k < n) : f k = 0 := by
+  rw [list_sum_range_map, Finset.sum_eq_zero_iff] at h
+  exact h k (Finset.mem_range.2 hk)
+
+theorem pass_cell {s o : ℕ} {p : List Bool} (h : levelBadO s o p = 0) (h5 : 5 ≤ Lf s) {m r : ℕ}
+    (hm1 : 1 ≤ m) (hm : m ≤ 2 * Lf s) (hr3 : 3 ≤ r) (hrL : r ≤ Lf s) (hodd : r % 2 = 1) :
+    ¬ failsTopG (PsiO (Dd s, o)) r (Lf s) (m * 2 ^ s) p ∧
+      ∀ ℓ, 1 ≤ ℓ → ℓ ≤ Lf s → ∀ v, v < r ^ ℓ →
+        ¬ failsG (PsiO (Dd s, o)) r (Lf s) (m * 2 ^ s) ℓ v p := by
+  unfold levelBadO at h
+  rw [if_pos h5] at h
+  have h1 := sum_range_eq_zero h (k := m) (by omega)
+  rw [if_pos hm1] at h1
+  have h2 := sum_range_eq_zero h1 (k := r) (by omega)
+  rw [if_pos ⟨hr3, hodd⟩] at h2
+  unfold cellBad at h2
+  rw [Nat.add_eq_zero_iff] at h2
+  obtain ⟨h3, h4⟩ := h2
+  refine ⟨fun ht => by rw [if_pos ht] at h3; exact one_ne_zero h3, fun ℓ hℓ1 hℓL v hv hf => ?_⟩
+  have h5' := sum_range_eq_zero h4 (k := ℓ) (by omega)
+  rw [if_pos hℓ1] at h5'
+  have h6 := sum_range_eq_zero h5' (k := v) hv
+  rw [if_pos hf] at h6
+  exact one_ne_zero h6
+
+theorem good_of_pass (α : ℝ) (hα0 : 0 ≤ α) (s₀ : ℕ) (e : ℕ → Bool)
+    (hpass : ∀ j, BpO s₀ (j, oO α s₀ j, pre e (dO s₀ j)) = false)
+    {s : ℕ} (hs : s₀ ≤ s) (h5 : 5 ≤ Lf s) {m : ℕ} (hm1 : 1 ≤ m) (hm : m ≤ 2 * Lf s)
+    {r : ℕ} (hr3 : 3 ≤ r) (hrL : r ≤ Lf s) (hodd : r % 2 = 1)
+    {ℓ : ℕ} (hℓ1 : 1 ≤ ℓ) (hℓL : ℓ ≤ Lf s) {v : ℕ} (hv : v < r ^ ℓ) :
+    |(visitCount (orbit r (α + bldPoint expSet e)) ((v : ℝ) / (r : ℝ) ^ ℓ)
+        ((v + 1 : ℝ) / (r : ℝ) ^ ℓ) (m * 2 ^ s) : ℝ) / ((m * 2 ^ s : ℕ) : ℝ) -
+      1 / (r : ℝ) ^ ℓ| ≤ 1 / (Lf s : ℝ) := by
+  obtain ⟨j, rfl⟩ : ∃ j, s = j + s₀ := ⟨s - s₀, by omega⟩
+  have hz : levelBadO (j + s₀) (oO α s₀ j) (pre e (Dd (j + s₀) + 1)) = 0 := by
+    have := hpass j
+    simp only [BpO, dO] at this
+    have := of_decide_eq_false this
+    omega
+  obtain ⟨htop, hcell⟩ := pass_cell hz h5 hm1 hm hr3 hrL hodd
+  set z : ℕ × ℕ := (Dd (j + s₀), oO α s₀ j)
+  set A : List Bool → ℝ := fun p => ((numA z.1 z.2 p : ℕ) : ℝ) / 2 ^ z.1
+  obtain ⟨ha, hax, hxa⟩ := approx_oO α hα0 s₀ j e
+  have hη := eta_ok (j + s₀) r (m * 2 ^ (j + s₀)) hrL (by
+      have := Nat.mul_le_mul_right (2 ^ (j + s₀)) hm; linarith)
+    (δ := α + bldPoint expSet e - A (pre e (Dd (j + s₀) + 1))) (by simp only [A, z]; linarith)
+    (by simp only [A, z]; linarith)
+  exact good_of_passG (PsiO z) A (fun r m p => PsiO_eq z r m p) (by omega) (by omega)
+    (Nat.one_le_iff_ne_zero.2 (by positivity)) hℓL (α + bldPoint expSet e) _ ha hax hη htop
+    (hcell ℓ hℓ1 hℓL v hv)
+
+/-- Checkpoint ratio. -/
+theorem ckpt_ratio (M s₁ n : ℕ) (hM : 1 ≤ M) :
+    M * ((M + (n + 1) % M) * 2 ^ ((n + 1) / M + s₁)) ≤
+      (M + 1) * ((M + n % M) * 2 ^ (n / M + s₁)) := by
+  set q := n / M
+  set t := n % M
+  have ht : t < M := Nat.mod_lt _ (by omega)
+  have hn : n + 1 = (t + 1) + M * q := by have := Nat.div_add_mod n M; simp only [q, t]; omega
+  rcases Nat.lt_or_ge (t + 1) M with hlt | hge
+  · have h1 : (n + 1) / M = q := by
+      rw [hn, Nat.add_mul_div_left _ _ (by omega), Nat.div_eq_of_lt hlt, zero_add]
+    have h2 : (n + 1) % M = t + 1 := by
+      rw [hn, Nat.add_mul_mod_self_left, Nat.mod_eq_of_lt hlt]
+    rw [h1, h2]
+    have : M * (M + (t + 1)) ≤ (M + 1) * (M + t) := by nlinarith
+    calc M * ((M + (t + 1)) * 2 ^ (q + s₁)) = (M * (M + (t + 1))) * 2 ^ (q + s₁) := by ring
+      _ ≤ ((M + 1) * (M + t)) * 2 ^ (q + s₁) := Nat.mul_le_mul_right _ this
+      _ = _ := by ring
+  · have ht1 : t + 1 = M := by omega
+    have h1 : (n + 1) / M = q + 1 := by
+      rw [hn, ht1, show M + M * q = M * (q + 1) by ring, Nat.mul_div_cancel_left _ (by omega)]
+    have h2 : (n + 1) % M = 0 := by
+      rw [hn, ht1, show M + M * q = M * (q + 1) by ring, Nat.mul_mod_right]
+    rw [h1, h2, show q + 1 + s₁ = (q + s₁) + 1 by ring, pow_succ]
+    have : M * (M * 2) ≤ (M + 1) * (M + t) := by nlinarith
+    calc M * ((M + 0) * (2 ^ (q + s₁) * 2)) = (M * (M * 2)) * 2 ^ (q + s₁) := by ring
+      _ ≤ ((M + 1) * (M + t)) * 2 ^ (q + s₁) := Nat.mul_le_mul_right _ this
+      _ = _ := by ring
+
+theorem isNormal_of_pass (α : ℝ) (hα0 : 0 ≤ α) (s₀ : ℕ) (e : ℕ → Bool)
+    (hpass : ∀ j, BpO s₀ (j, oO α s₀ j, pre e (dO s₀ j)) = false)
+    (r : ℕ) (hr3 : 3 ≤ r) (hr : Odd r) : IsNormal r (α + bldPoint expSet e) := by
+  have hodd : r % 2 = 1 := Nat.odd_iff.1 hr
+  rw [isNormal_iff_equidistributed_orbit r (by omega)]
+  refine equidistributed_of_badic r (by omega) _ fun ℓ hℓ v hv => ?_
+  refine tendsto_div_of_monotone_of_exists_subseq_tendsto_div _ _
+    (fun m n h => by exact_mod_cast ComputableNormal.visitCount_mono_n _ _ _ h) fun a ha => ?_
+  obtain ⟨M₀, hM₀⟩ := exists_nat_gt (1 / (a - 1))
+  set M := max M₀ 1
+  have hM1 : 1 ≤ M := le_max_right _ _
+  have hMa : 1 + 1 / (M : ℝ) ≤ a := by
+    have hMR : (M₀ : ℝ) ≤ M := by exact_mod_cast le_max_left _ _
+    have ha1 : 0 < a - 1 := by linarith
+    have hMpos : (0 : ℝ) < M := by exact_mod_cast hM1
+    have : 1 / (a - 1) < M := hM₀.trans_le hMR
+    rw [div_lt_iff₀ ha1] at this
+    have : 1 / (M : ℝ) ≤ a - 1 := by rw [div_le_iff₀ hMpos]; linarith
+    linarith
+  obtain ⟨s₁, hs₁⟩ := eventually_atTop.1 ((tendsto_Lf.eventually_ge_atTop
+    (max (max (2 * M) r) (max ℓ 5))).and (eventually_ge_atTop s₀))
+  set c : ℕ → ℕ := fun n => (M + n % M) * 2 ^ (n / M + s₁) with hc
+  refine ⟨c, Eventually.of_forall fun n => ?_, ?_, ?_⟩
+  · have h := ckpt_ratio M s₁ n hM1
+    have hMpos : (0 : ℝ) < M := by exact_mod_cast hM1
+    have hR : (M : ℝ) * (c (n + 1) : ℝ) ≤ ((M : ℝ) + 1) * (c n : ℝ) := by exact_mod_cast h
+    have hcn : (0 : ℝ) ≤ c n := by positivity
+    calc (c (n + 1) : ℝ) ≤ (1 + 1 / (M : ℝ)) * c n := by
+          rw [le_iff_exists_nonneg_add] at hR ⊢
+          obtain ⟨δ, hδ, hδe⟩ := hR
+          refine ⟨δ / M, by positivity, ?_⟩
+          field_simp
+          linarith
+      _ ≤ a * c n := by gcongr
+  · refine tendsto_atTop_mono (fun n => ?_) ((Nat.tendsto_div_const_atTop (Nat.one_le_iff_ne_zero.1 hM1)))
+    calc n / M ≤ 2 ^ (n / M + s₁) := (Nat.lt_two_pow_self).le.trans
+          (Nat.pow_le_pow_right (by norm_num) (by omega))
+      _ ≤ (M + n % M) * 2 ^ (n / M + s₁) := Nat.le_mul_of_pos_left _ (by omega)
+  · rw [tendsto_iff_norm_sub_tendsto_zero]
+    have hsT : Tendsto (fun n : ℕ => n / M + s₁) atTop atTop :=
+      tendsto_atTop_mono (fun n => Nat.le_add_right _ _)
+        (Nat.tendsto_div_const_atTop (Nat.one_le_iff_ne_zero.1 hM1))
+    refine squeeze_zero_norm' ?_ (tendsto_one_div_atTop_nhds_zero_nat.comp
+      (tendsto_Lf.comp hsT))
+    refine Eventually.of_forall fun n => ?_
+    obtain ⟨hL, hs⟩ := hs₁ (n / M + s₁) (Nat.le_add_left _ _)
+    simp only [Real.norm_eq_abs, abs_abs, Function.comp_apply]
+    have hmM : n % M < M := Nat.mod_lt _ hM1
+    have hL1 : 2 * M ≤ Lf (n / M + s₁) := le_trans (le_trans (le_max_left _ _) (le_max_left _ _)) hL
+    have hL2 : r ≤ Lf (n / M + s₁) := le_trans (le_trans (le_max_right _ _) (le_max_left _ _)) hL
+    have hL3 : ℓ ≤ Lf (n / M + s₁) := le_trans (le_trans (le_max_left _ _) (le_max_right _ _)) hL
+    have hL4 : 5 ≤ Lf (n / M + s₁) := le_trans (le_trans (le_max_right _ _) (le_max_right _ _)) hL
+    exact good_of_pass α hα0 s₀ e hpass hs hL4 (by omega) (by omega) hr3 hL2 hodd
+      hℓ hL3 hv
+
+/-! ## Tail sums -/
+
+theorem rpow_tele {θ x : ℝ} (hθ : 0 < θ) (hθ1 : θ ≤ 1) (hx : 1 ≤ x) :
+    x ^ (-(1 + θ)) ≤ (4 / θ) * (x ^ (-θ) - (x + 1) ^ (-θ)) := by
+  have hx0 : 0 < x := by linarith
+  set t := (x + 1) / x with ht
+  have ht1 : 1 ≤ t := by rw [ht, le_div_iff₀ hx0]; linarith
+  have ht2 : t ≤ 2 := by rw [ht, div_le_iff₀ hx0]; linarith
+  have hsplit : (x + 1) ^ (-θ) = x ^ (-θ) * t ^ (-θ) := by
+    rw [← Real.mul_rpow hx0.le (by linarith), ht, mul_div_cancel₀ _ hx0.ne']
+  have hlog0 : 0 ≤ Real.log t := Real.log_nonneg ht1
+  have hlog1 : Real.log t ≤ 1 := by
+    have := Real.log_le_sub_one_of_pos (by linarith : 0 < t); linarith
+  have hlogl : 1 / (2 * x) ≤ Real.log t := by
+    have h := Real.one_sub_inv_le_log_of_pos (by linarith : 0 < t)
+    have : 1 / (2 * x) ≤ 1 - t⁻¹ := by
+      rw [ht, inv_div]
+      rw [show 1 - x / (x + 1) = 1 / (x + 1) by field_simp; ring]
+      rw [div_le_div_iff₀ (by positivity) (by positivity)]; linarith
+    linarith
+  set u := θ * Real.log t with hu
+  have hu0 : 0 ≤ u := by positivity
+  have hu1 : u ≤ 1 := by
+    calc u ≤ 1 * 1 := by rw [hu]; exact mul_le_mul hθ1 hlog1 hlog0 (by norm_num)
+      _ = 1 := by norm_num
+  have htθ : t ^ (-θ) = Real.exp (-u) := by
+    rw [Real.rpow_def_of_pos (by linarith), hu]; ring_nf
+  have hexp : Real.exp (-u) ≤ 1 - u / 2 := by
+    have h1 : 1 + u ≤ Real.exp u := by linarith [Real.add_one_le_exp u]
+    rw [Real.exp_neg, inv_le_iff_one_le_mul₀ (Real.exp_pos u)]
+    have : 0 ≤ 1 - u / 2 := by linarith
+    nlinarith
+  have hxθ : 0 < x ^ (-θ) := Real.rpow_pos_of_pos hx0 _
+  have hlhs : x ^ (-(1 + θ)) = x ^ (-θ) / x := by
+    rw [show -(1 + θ) = -θ + (-1) by ring, Real.rpow_add hx0, Real.rpow_neg_one]; ring
+  rw [hlhs, hsplit, htθ]
+  have key : θ / (4 * x) ≤ 1 - Real.exp (-u) := by
+    have : θ / (4 * x) ≤ u / 2 := by
+      rw [hu]
+      have := mul_le_mul_of_nonneg_left hlogl hθ.le
+      calc θ / (4 * x) = θ * (1 / (2 * x)) / 2 := by field_simp; ring
+        _ ≤ θ * Real.log t / 2 := by linarith
+    linarith
+  calc x ^ (-θ) / x = (4 / θ) * (x ^ (-θ) * (θ / (4 * x))) := by field_simp
+    _ ≤ (4 / θ) * (x ^ (-θ) * (1 - Real.exp (-u))) := by gcongr
+    _ = _ := by ring
+
+/-- Tail of `Σ (j + n₀)^{-(1+θ)}`. -/
+theorem tsum_rpow_tail {θ : ℝ} (hθ : 0 < θ) (hθ1 : θ ≤ 1) (n₀ : ℕ) (hn₀ : 1 ≤ n₀) :
+    Summable (fun j : ℕ => ((j + n₀ : ℕ) : ℝ) ^ (-(1 + θ))) ∧
+      ∑' j : ℕ, ((j + n₀ : ℕ) : ℝ) ^ (-(1 + θ)) ≤ (4 / θ) * (n₀ : ℝ) ^ (-θ) := by
+  set g : ℕ → ℝ := fun j => ((j + n₀ : ℕ) : ℝ) ^ (-θ) with hg
+  have hle : ∀ j : ℕ, ((j + n₀ : ℕ) : ℝ) ^ (-(1 + θ)) ≤ (4 / θ) * (g j - g (j + 1)) := by
+    intro j
+    have := rpow_tele hθ hθ1 (x := ((j + n₀ : ℕ) : ℝ)) (by exact_mod_cast (by omega : 1 ≤ j + n₀))
+    simp only [hg]
+    convert this using 3
+    push_cast; ring
+  have hnn : ∀ j : ℕ, 0 ≤ ((j + n₀ : ℕ) : ℝ) ^ (-(1 + θ)) := fun j => by positivity
+  have hsum : ∀ n, ∑ j ∈ Finset.range n, ((j + n₀ : ℕ) : ℝ) ^ (-(1 + θ)) ≤
+      (4 / θ) * (n₀ : ℝ) ^ (-θ) := by
+    intro n
+    calc ∑ j ∈ Finset.range n, ((j + n₀ : ℕ) : ℝ) ^ (-(1 + θ))
+        ≤ ∑ j ∈ Finset.range n, (4 / θ) * (g j - g (j + 1)) := Finset.sum_le_sum fun j _ => hle j
+      _ = (4 / θ) * (g 0 - g n) := by
+          rw [← Finset.mul_sum, Finset.sum_range_sub']
+      _ ≤ (4 / θ) * g 0 := by
+          have : 0 ≤ g n := by simp only [hg]; positivity
+          have : 0 < 4 / θ := by positivity
+          nlinarith
+      _ = (4 / θ) * (n₀ : ℝ) ^ (-θ) := by simp [hg]
+  exact ⟨summable_of_sum_range_le hnn hsum, Real.tsum_le_of_sum_range_le hnn hsum⟩
+
+/-! ## Mass of a test -/
+
+/-- Deviation event for the translate. -/
+def devSet (α : ℝ) (r : ℕ) (a c : ℝ) (N : ℕ) (η : ℝ) : Set (ℕ → Bool) :=
+  {ω | η < |(visitCount (orbit r (α + bldPoint expSet ω)) a c N : ℝ) / N - (c - a)|}
+
+theorem three_pow_ge (L : ℕ) (hL : 5 ≤ L) : 32 * L ≤ 3 ^ L := by
+  induction L, hL using Nat.le_induction with
+  | base => norm_num
+  | succ n hn ih => rw [pow_succ]; omega
+
+/-- A failing top test is a deviation event. -/
+theorem top_dev {r L N : ℕ} (hr3 : 3 ≤ r) (hL : 5 ≤ L) (hLN : L ≤ N) {V : ℕ}
+    (h : (N : ℝ) < 8 * L * V) :
+    1 / (32 * (L : ℝ)) < |(V : ℝ) / ((N + L : ℕ) : ℝ) - 1 / (r : ℝ) ^ L| := by
+  have hLR : (5 : ℝ) ≤ L := by exact_mod_cast hL
+  have hNR : (L : ℝ) ≤ N := by exact_mod_cast hLN
+  have hN' : (0 : ℝ) < ((N + L : ℕ) : ℝ) := by push_cast; linarith
+  have h1 : 1 / (16 * (L : ℝ)) < (V : ℝ) / ((N + L : ℕ) : ℝ) := by
+    rw [div_lt_div_iff₀ (by positivity) hN']
+    push_cast
+    nlinarith
+  have h2 : 1 / (r : ℝ) ^ L ≤ 1 / (32 * (L : ℝ)) := by
+    have h3 : (32 * L : ℝ) ≤ (r : ℝ) ^ L := by
+      have := three_pow_ge L hL
+      have h4 : ((3 : ℕ) : ℝ) ^ L ≤ (r : ℝ) ^ L :=
+        pow_le_pow_left₀ (by positivity) (by exact_mod_cast hr3) _
+      have h5 : ((32 * L : ℕ) : ℝ) ≤ ((3 ^ L : ℕ) : ℝ) := by exact_mod_cast this
+      push_cast at h4 h5
+      linarith
+    exact one_div_le_one_div_of_le (by positivity) h3
+  have e : 1 / (16 * (L : ℝ)) = 1 / (32 * L) + 1 / (32 * L) := by field_simp; ring
+  rw [lt_abs]; left; linarith
+
+theorem pos_of_sum_pos {f : ℕ → ℕ} {n : ℕ} (h : 0 < ((List.range n).map f).sum) :
+    ∃ k < n, 0 < f k := by
+  rw [list_sum_range_map] at h
+  obtain ⟨k, hk, hpos⟩ := exists_pos_of_sum_pos h
+  exact ⟨k, Finset.mem_range.1 hk, hpos⟩
+
+/-- The union of deviation events covering a failing octave. -/
+def coverO (α : ℝ) (s m r : ℕ) : Set (ℕ → Bool) :=
+  if 1 ≤ m ∧ 3 ≤ r ∧ r % 2 = 1 then
+    devSet α r 0 (1 / (r : ℝ) ^ Lf s) (m * 2 ^ s + Lf s) (1 / (32 * (Lf s : ℝ))) ∪
+    devSet α r (1 - 1 / (r : ℝ) ^ Lf s) 1 (m * 2 ^ s + Lf s) (1 / (32 * (Lf s : ℝ))) ∪
+    ⋃ ℓ ∈ Finset.range (Lf s + 1), ⋃ v ∈ Finset.range (r ^ ℓ),
+      (if 1 ≤ ℓ then devSet α r ((v : ℝ) / (r : ℝ) ^ ℓ) ((v + 1 : ℝ) / (r : ℝ) ^ ℓ) (m * 2 ^ s)
+        (1 / (2 * (Lf s : ℝ))) else ∅)
+  else ∅
+
+theorem fail_subset (α : ℝ) (hα0 : 0 ≤ α) (s₀ j : ℕ) :
+    {ω : ℕ → Bool | 0 < levelBadO (j + s₀) (oO α s₀ j) (pre ω (Dd (j + s₀) + 1))} ⊆
+      ⋃ m ∈ Finset.range (2 * Lf (j + s₀) + 1), ⋃ r ∈ Finset.range (Lf (j + s₀) + 1),
+        coverO α (j + s₀) m r := by
+  intro ω hω
+  simp only [Set.mem_setOf_eq] at hω
+  set s := j + s₀
+  set L := Lf s
+  set z : ℕ × ℕ := (Dd s, oO α s₀ j)
+  set p := pre ω (Dd s + 1)
+  set x := α + bldPoint expSet ω
+  set A : List Bool → ℝ := fun p => ((numA z.1 z.2 p : ℕ) : ℝ) / 2 ^ z.1
+  obtain ⟨ha, hax, hxa⟩ := approx_oO α hα0 s₀ j ω
+  unfold levelBadO at hω
+  split_ifs at hω with h5
+  swap; · exact absurd hω (lt_irrefl 0)
+  obtain ⟨m, hm, hmpos⟩ := pos_of_sum_pos hω
+  split_ifs at hmpos with hm1
+  swap; · exact absurd hmpos (lt_irrefl 0)
+  obtain ⟨r, hr, hrpos⟩ := pos_of_sum_pos hmpos
+  split_ifs at hrpos with hr3
+  swap; · exact absurd hrpos (lt_irrefl 0)
+  simp only [Set.mem_iUnion, Finset.mem_range, exists_prop]
+  refine ⟨m, hm, r, hr, ?_⟩
+  unfold coverO
+  rw [if_pos ⟨hm1, hr3⟩]
+  have hrL : r ≤ L := by omega
+  have hη := eta_ok s r (m * 2 ^ s) hrL (by
+      have := Nat.mul_le_mul_right (2 ^ s) (show m ≤ 2 * L by omega); linarith)
+    (δ := x - A p) (by simp only [A, z, x, p]; linarith) (by simp only [A, z, x, p]; linarith)
+  have hΨ : ∀ b m p, PsiO z b m p = ⌊A p * (b : ℝ) ^ m⌋₊ := fun b m p => PsiO_eq z b m p
+  have hLs : 256 * L ≤ s := Lf_le s
+  have hLN : L ≤ m * 2 ^ s := by
+    have : s < 2 ^ s := Nat.lt_two_pow_self
+    have : 2 ^ s ≤ m * 2 ^ s := Nat.le_mul_of_pos_left _ (by omega)
+    omega
+  unfold cellBad at hrpos
+  by_cases htop : failsTopG (PsiO z) r L (m * 2 ^ s) p
+  · rcases tail_of_failsTopG (PsiO z) A hΨ (by omega) x p ha hax hη htop with h | h
+    · left; left
+      simp only [devSet, Set.mem_setOf_eq]
+      have := top_dev hr3.1 h5 hLN h
+      simpa [sub_zero] using this
+    · left; right
+      simp only [devSet, Set.mem_setOf_eq]
+      have := top_dev hr3.1 h5 hLN h
+      simpa [sub_sub_cancel] using this
+  · rw [if_neg htop, zero_add] at hrpos
+    obtain ⟨ℓ, hℓ, hℓpos⟩ := pos_of_sum_pos hrpos
+    split_ifs at hℓpos with hℓ1
+    swap; · exact absurd hℓpos (lt_irrefl 0)
+    obtain ⟨v, hv, hvpos⟩ := pos_of_sum_pos hℓpos
+    split_ifs at hvpos with hf
+    swap; · exact absurd hvpos (lt_irrefl 0)
+    right
+    simp only [Set.mem_iUnion, Finset.mem_range, exists_prop]
+    refine ⟨ℓ, hℓ, v, hv, ?_⟩
+    rw [if_pos hℓ1]
+    simp only [devSet, Set.mem_setOf_eq]
+    have := dev_of_failsG (PsiO z) A hΨ (by omega) (by omega) (by omega) (by omega) x p ha hax hη
+      htop hf
+    have e : ((v + 1 : ℝ) / (r : ℝ) ^ ℓ - (v : ℝ) / (r : ℝ) ^ ℓ) = 1 / (r : ℝ) ^ ℓ := by ring
+    rw [e]
+    push_cast at this ⊢
+    exact this
+
+/-- The cited Chebyshev bound, as used here. -/
+def DevBound (α : ℝ) (K s₁ : ℕ) : Prop :=
+  ∀ s : ℕ, s₁ ≤ s → ∀ r : ℕ, 3 ≤ r → r ≤ s → Odd r → ∀ a c : ℝ, 0 ≤ a → a ≤ c →
+      c ≤ 1 → ∀ η : ℝ, 8 / (s : ℝ) ≤ η → ∀ N : ℕ, 2 ^ s ≤ N →
+        coinMeasure.real {ω | η < |(visitCount (orbit r (α + bldPoint expSet ω)) a c N : ℝ) / N -
+          (c - a)|} ≤ K * (r : ℝ) ^ 4 / (η ^ 4 * (s : ℝ) ^ (1.005 : ℝ))
+
+/-- Weight of one deviation event at octave `s`. -/
+noncomputable def Wt (K s : ℕ) : ℝ :=
+  K * (Lf s : ℝ) ^ 4 * (32 * (Lf s : ℝ)) ^ 4 / (s : ℝ) ^ (1.005 : ℝ)
+
+theorem devSet_le {α : ℝ} {K s₁ : ℕ} (hK : DevBound α K s₁) {s : ℕ} (hs : s₁ ≤ s)
+    (h5 : 5 ≤ Lf s) {r : ℕ} (hr3 : 3 ≤ r) (hrL : r ≤ Lf s) (hodd : r % 2 = 1)
+    {a c : ℝ} (ha : 0 ≤ a) (hac : a ≤ c) (hc : c ≤ 1) {η : ℝ} (hη : 1 / (32 * (Lf s : ℝ)) ≤ η)
+    {N : ℕ} (hN : 2 ^ s ≤ N) :
+    coinMeasure.real (devSet α r a c N η) ≤ Wt K s := by
+  have hLs := Lf_le s
+  have hLR : (5 : ℝ) ≤ Lf s := by exact_mod_cast h5
+  have hsR : (256 * (Lf s : ℝ)) ≤ s := by exact_mod_cast hLs
+  have hs0 : (0 : ℝ) < s := by linarith
+  have hη0 : 0 < η := lt_of_lt_of_le (by positivity) hη
+  have h8 : 8 / (s : ℝ) ≤ η := by
+    refine le_trans ?_ hη
+    rw [div_le_div_iff₀ hs0 (by positivity)]; linarith
+  have h := hK s hs r hr3 (by omega) (Nat.odd_iff.2 hodd) a c ha hac hc η h8 N hN
+  refine h.trans ?_
+  unfold Wt
+  have hsp : (0 : ℝ) < (s : ℝ) ^ (1.005 : ℝ) := Real.rpow_pos_of_pos hs0 _
+  rw [div_le_div_iff₀ (by positivity) hsp]
+  have hrR : (r : ℝ) ≤ Lf s := by exact_mod_cast hrL
+  have h1 : (r : ℝ) ^ 4 ≤ (Lf s : ℝ) ^ 4 := pow_le_pow_left₀ (by positivity) hrR 4
+  have h2 : 1 ≤ η ^ 4 * (32 * (Lf s : ℝ)) ^ 4 := by
+    rw [← mul_pow]
+    have : 1 ≤ η * (32 * (Lf s : ℝ)) := by
+      rw [div_le_iff₀ (by positivity)] at hη; linarith
+    exact one_le_pow₀ this
+  have hK0 : (0 : ℝ) ≤ K := by positivity
+  have := mul_le_mul h1 h2 (by norm_num) (by positivity)
+  calc (K : ℝ) * (r : ℝ) ^ 4 * (s : ℝ) ^ (1.005 : ℝ)
+      ≤ K * ((Lf s : ℝ) ^ 4 * (η ^ 4 * (32 * (Lf s : ℝ)) ^ 4)) * (s : ℝ) ^ (1.005 : ℝ) := by
+        gcongr; linarith
+    _ = _ := by ring
+
+theorem coverO_le {α : ℝ} {K s₁ : ℕ} (hK : DevBound α K s₁) {s : ℕ} (hs : s₁ ≤ s)
+    (h5 : 5 ≤ Lf s) {m r : ℕ} (hrL : r ≤ Lf s) :
+    coinMeasure.real (coverO α s m r) ≤ (2 + (Lf s + 1) * Lf s ^ Lf s) * Wt K s := by
+  have hW : 0 ≤ Wt K s := by unfold Wt; positivity
+  unfold coverO
+  split_ifs with hg
+  swap; · simp only [measureReal_empty]; positivity
+  obtain ⟨hm1, hr3, hodd⟩ := hg
+  set L := Lf s
+  have hL1 : (1 : ℝ) ≤ L := by exact_mod_cast (by omega : 1 ≤ L)
+  have hrpos : (0 : ℝ) < (r : ℝ) ^ L := by positivity
+  have hN : 2 ^ s ≤ m * 2 ^ s := Nat.le_mul_of_pos_left _ (by omega)
+  have hN' : 2 ^ s ≤ m * 2 ^ s + L := hN.trans (Nat.le_add_right _ _)
+  have hinvr : 1 / (r : ℝ) ^ L ≤ 1 := by
+    rw [div_le_one hrpos]; exact one_le_pow₀ (by exact_mod_cast (by omega : 1 ≤ r))
+  have hT0 := devSet_le hK hs h5 hr3 hrL hodd (a := 0) (c := 1 / (r : ℝ) ^ L) le_rfl
+    (by positivity) hinvr le_rfl hN'
+  have hinv0 : 0 ≤ 1 / (r : ℝ) ^ L := by positivity
+  have hT1 := devSet_le hK hs h5 hr3 hrL hodd (a := 1 - 1 / (r : ℝ) ^ L) (c := 1)
+    (by linarith) (by linarith) le_rfl le_rfl hN'
+  have hcell : ∀ ℓ ∈ Finset.range (L + 1), ∀ v ∈ Finset.range (r ^ ℓ),
+      coinMeasure.real (if 1 ≤ ℓ then devSet α r ((v : ℝ) / (r : ℝ) ^ ℓ)
+        ((v + 1 : ℝ) / (r : ℝ) ^ ℓ) (m * 2 ^ s) (1 / (2 * (L : ℝ))) else ∅) ≤ Wt K s := by
+    intro ℓ _ v hv
+    split_ifs with hℓ
+    · have hrl : (0 : ℝ) < (r : ℝ) ^ ℓ := by positivity
+      have hvr : (v : ℝ) + 1 ≤ (r : ℝ) ^ ℓ := by
+        have : v + 1 ≤ r ^ ℓ := Finset.mem_range.1 hv
+        exact_mod_cast this
+      refine devSet_le hK hs h5 hr3 hrL hodd (by positivity) ?_ ?_ ?_ hN
+      · exact div_le_div_of_nonneg_right (by linarith) hrl.le
+      · rw [div_le_one hrl]; exact hvr
+      · rw [div_le_div_iff₀ (by positivity) (by positivity)]; linarith
+    · simp only [measureReal_empty]; exact hW
+  have hrL' : (r : ℝ) ≤ L := by exact_mod_cast hrL
+  calc coinMeasure.real (_ ∪ _ ∪ _)
+      ≤ coinMeasure.real (devSet α r 0 (1 / (r : ℝ) ^ L) (m * 2 ^ s + L) (1 / (32 * (L : ℝ))))
+        + coinMeasure.real (devSet α r (1 - 1 / (r : ℝ) ^ L) 1 (m * 2 ^ s + L)
+            (1 / (32 * (L : ℝ))))
+        + ∑ ℓ ∈ Finset.range (L + 1), ∑ v ∈ Finset.range (r ^ ℓ),
+            coinMeasure.real (if 1 ≤ ℓ then devSet α r ((v : ℝ) / (r : ℝ) ^ ℓ)
+              ((v + 1 : ℝ) / (r : ℝ) ^ ℓ) (m * 2 ^ s) (1 / (2 * (L : ℝ))) else ∅) := by
+        refine (measureReal_union_le _ _).trans (add_le_add (measureReal_union_le _ _) ?_)
+        refine (measureReal_biUnion_finset_le _ _).trans (Finset.sum_le_sum fun ℓ _ => ?_)
+        exact measureReal_biUnion_finset_le _ _
+    _ ≤ Wt K s + Wt K s + ∑ ℓ ∈ Finset.range (L + 1), ∑ v ∈ Finset.range (r ^ ℓ), Wt K s := by
+        gcongr with ℓ hℓ v hv
+        exact hcell ℓ hℓ v hv
+    _ ≤ Wt K s + Wt K s + ∑ ℓ ∈ Finset.range (L + 1), (L : ℝ) ^ L * Wt K s := by
+        gcongr with ℓ hℓ
+        rw [Finset.sum_const, Finset.card_range, nsmul_eq_mul]
+        gcongr
+        push_cast
+        calc (r : ℝ) ^ ℓ ≤ (L : ℝ) ^ ℓ := pow_le_pow_left₀ (by positivity) hrL' _
+          _ ≤ (L : ℝ) ^ L := pow_le_pow_right₀ hL1 (Nat.lt_succ_iff.1 (Finset.mem_range.1 hℓ))
+    _ = (2 + (L + 1) * L ^ L) * Wt K s := by
+        rw [Finset.sum_const, Finset.card_range, nsmul_eq_mul]; push_cast; ring
+
+theorem count_le (L : ℕ) (hL : 5 ≤ L) :
+    (2 * L + 1) * (L + 1) * (2 + (L + 1) * L ^ L) * (L ^ 4 * (32 * L) ^ 4) ≤
+      2 ^ 25 * L ^ (L + 11) := by
+  have h1 : 2 * L + 1 ≤ 3 * L := by omega
+  have h2 : L + 1 ≤ 2 * L := by omega
+  have hLL : 1 ≤ L ^ L := Nat.one_le_pow _ _ (by omega)
+  have h3 : 2 + (L + 1) * L ^ L ≤ 3 * L ^ (L + 1) := by
+    rw [pow_succ]
+    have : (L + 1) * L ^ L ≤ 2 * L * L ^ L := Nat.mul_le_mul_right _ h2
+    nlinarith
+  calc (2 * L + 1) * (L + 1) * (2 + (L + 1) * L ^ L) * (L ^ 4 * (32 * L) ^ 4)
+      ≤ (3 * L) * (2 * L) * (3 * L ^ (L + 1)) * (L ^ 4 * (32 * L) ^ 4) := by gcongr
+    _ = 18 * 2 ^ 20 * L ^ (L + 11) := by ring
+    _ ≤ 2 ^ 25 * L ^ (L + 11) := by gcongr; norm_num
+
+theorem level_le {α : ℝ} {K s₁ : ℕ} (hK : DevBound α K s₁) (hα0 : 0 ≤ α) (s₀ j : ℕ)
+    (hs : s₁ ≤ j + s₀) :
+    coinMeasure.real {ω | 0 < levelBadO (j + s₀) (oO α s₀ j) (pre ω (Dd (j + s₀) + 1))} ≤
+      K * ((j + s₀ : ℕ) : ℝ) ^ (-(1 + 1 / 1000 : ℝ)) := by
+  set s := j + s₀
+  have hR : 0 ≤ (K : ℝ) * ((s : ℕ) : ℝ) ^ (-(1 + 1 / 1000 : ℝ)) := by positivity
+  by_cases h5 : 5 ≤ Lf s
+  swap
+  · have : {ω : ℕ → Bool | 0 < levelBadO s (oO α s₀ j) (pre ω (Dd s + 1))} = ∅ := by
+      ext ω; simp [levelBadO, h5]
+    rw [this, measureReal_empty]; exact hR
+  set L := Lf s
+  have hLR : (5 : ℝ) ≤ L := by exact_mod_cast h5
+  have hsR : (256 * (L : ℝ)) ≤ s := by exact_mod_cast Lf_le s
+  have hs0 : (0 : ℝ) < s := by linarith
+  have hW : 0 ≤ Wt K s := by unfold Wt; positivity
+  have hcov := fail_subset α hα0 s₀ j
+  calc coinMeasure.real {ω | 0 < levelBadO s (oO α s₀ j) (pre ω (Dd s + 1))}
+      ≤ coinMeasure.real (⋃ m ∈ Finset.range (2 * L + 1), ⋃ r ∈ Finset.range (L + 1),
+          coverO α s m r) := measureReal_mono hcov (measure_ne_top _ _)
+    _ ≤ ∑ m ∈ Finset.range (2 * L + 1), ∑ r ∈ Finset.range (L + 1),
+          coinMeasure.real (coverO α s m r) :=
+        (measureReal_biUnion_finset_le _ _).trans (Finset.sum_le_sum fun m _ =>
+          measureReal_biUnion_finset_le _ _)
+    _ ≤ ∑ m ∈ Finset.range (2 * L + 1), ∑ r ∈ Finset.range (L + 1),
+          (2 + (L + 1) * L ^ L) * Wt K s :=
+        Finset.sum_le_sum fun m _ => Finset.sum_le_sum fun r hr =>
+          coverO_le hK hs h5 (Nat.lt_succ_iff.1 (Finset.mem_range.1 hr))
+    _ = (((2 * L + 1) * (L + 1) * (2 + (L + 1) * L ^ L) : ℕ) : ℝ) * Wt K s := by
+        simp only [Finset.sum_const, Finset.card_range, nsmul_eq_mul]; push_cast; ring
+    _ = K * ((((2 * L + 1) * (L + 1) * (2 + (L + 1) * L ^ L) * (L ^ 4 * (32 * L) ^ 4) : ℕ) : ℝ)
+          / (s : ℝ) ^ (1.005 : ℝ)) := by
+        unfold Wt; push_cast; ring
+    _ ≤ K * (((2 ^ 25 * L ^ (L + 11) : ℕ) : ℝ) / (s : ℝ) ^ (1.005 : ℝ)) := by
+        refine mul_le_mul_of_nonneg_left (div_le_div_of_nonneg_right ?_ (by positivity))
+          (by positivity)
+        exact_mod_cast count_le L h5
+    _ ≤ K * ((s : ℝ) ^ ((250 : ℕ)⁻¹ : ℝ) / (s : ℝ) ^ (1.005 : ℝ)) := by
+        gcongr
+        have hP := (Pgood_Lf (by omega : 1 ≤ L)).2
+        have hX : (((2 ^ 25 * L ^ (L + 11) : ℕ) : ℝ) ^ 250) ≤ (s : ℝ) := by exact_mod_cast hP
+        calc ((2 ^ 25 * L ^ (L + 11) : ℕ) : ℝ)
+            = ((((2 ^ 25 * L ^ (L + 11) : ℕ) : ℝ) ^ 250) ^ ((250 : ℕ)⁻¹ : ℝ)) :=
+              (Real.pow_rpow_inv_natCast (by positivity) (by norm_num)).symm
+          _ ≤ (s : ℝ) ^ ((250 : ℕ)⁻¹ : ℝ) :=
+              Real.rpow_le_rpow (by positivity) hX (by positivity)
+    _ = K * ((s : ℕ) : ℝ) ^ (-(1 + 1 / 1000 : ℝ)) := by
+        rw [← Real.rpow_sub hs0]; norm_num
+
+
+/-- `e^j` is never a natural number for `j ≥ 1` (Hermite's estimate, via mathlib's
+`exp_polynomial_approx` applied to `X − j`). -/
+theorem exp_nat_ne_nat {j : ℕ} (hj : 1 ≤ j) (M : ℕ) : Real.exp j ≠ M := by
+  intro hM
+  set f : ℤ[X] := X - C (j : ℤ) with hf
+  have hf0 : f.eval 0 ≠ 0 := by simp [hf]; omega
+  obtain ⟨c, hc⟩ := LindemannWeierstrass.exp_polynomial_approx f hf0
+  -- a large prime
+  have hlim : Tendsto (fun p : ℕ => c ^ p / ((p - 1).factorial : ℝ)) atTop (𝓝 0) := by
+    have h := (FloorSemiring.tendsto_pow_div_factorial_atTop c).const_mul c
+    rw [mul_zero] at h
+    have h2 := h.comp (tendsto_sub_atTop_nat 1)
+    refine h2.congr' ?_
+    filter_upwards [eventually_ge_atTop 1] with p hp
+    simp only [Function.comp_apply]
+    rw [← mul_div_assoc, ← pow_succ', Nat.sub_add_cancel hp]
+  obtain ⟨P, hP⟩ := eventually_atTop.1 (hlim.eventually (gt_mem_nhds one_pos))
+  obtain ⟨p, hpge, hp⟩ := Nat.exists_infinite_primes (P + j + M + 2)
+  have hpc : c ^ p / ((p - 1).factorial : ℝ) < 1 := hP p (by omega)
+  have hpf : p > (f.eval 0).natAbs := by simp [hf]; omega
+  obtain ⟨n, hn, gp, -, hbound⟩ := hc p hpf hp
+  have hroot : (j : ℂ) ∈ f.aroots ℂ := by rw [hf, aroots_X_sub_C]; simp
+  have hb := hbound hroot
+  have hexp : Complex.exp (j : ℂ) = (M : ℂ) := by
+    rw [← Complex.ofReal_natCast, ← Complex.ofReal_exp, hM]; simp
+  have hae : aeval (j : ℂ) gp = ((gp.eval (j : ℤ) : ℤ) : ℂ) := by
+    rw [show (j : ℂ) = algebraMap ℤ ℂ (j : ℤ) by simp,
+      aeval_algebraMap_apply_eq_algebraMap_eval]
+    simp
+  rw [hexp, hae, zsmul_eq_mul, nsmul_eq_mul] at hb
+  set z : ℤ := n * M - p * gp.eval (j : ℤ) with hz
+  have hzC : (n : ℂ) * (M : ℂ) - (p : ℂ) * ((gp.eval (j : ℤ) : ℤ) : ℂ) = (z : ℂ) := by
+    simp [hz]
+  rw [hzC] at hb
+  have hz0 : z = 0 := by
+    by_contra hne
+    have h1 : (1 : ℝ) ≤ ‖(z : ℂ)‖ := by
+      rw [Complex.norm_intCast]; exact_mod_cast Int.one_le_abs hne
+    linarith
+  have hdvd : (p : ℤ) ∣ n * M := ⟨gp.eval (j : ℤ), by linarith⟩
+  rcases (Int.Prime.dvd_mul' hp hdvd) with h | h
+  · exact hn h
+  · have hM0 : M ≠ 0 := by
+      intro h0; rw [h0] at hM; simp at hM
+    have : p ∣ M := Int.natCast_dvd_natCast.1 h
+    have := Nat.le_of_dvd (Nat.pos_of_ne_zero hM0) this
+    omega
+
+/-! ## Rational brackets for `e` -/
+
+theorem e_lower (n : ℕ) (hn : 1 ≤ n) : (((n + 1 : ℕ) : ℝ) / n) ^ n ≤ Real.exp 1 := by
+  have hnR : (0 : ℝ) < n := by exact_mod_cast hn
+  have h1 : ((n + 1 : ℕ) : ℝ) / n ≤ Real.exp (1 / n) := by
+    have := Real.add_one_le_exp (1 / (n : ℝ))
+    push_cast; rw [add_div, div_self hnR.ne']; linarith
+  calc (((n + 1 : ℕ) : ℝ) / n) ^ n ≤ Real.exp (1 / n) ^ n :=
+        pow_le_pow_left₀ (by positivity) h1 _
+    _ = Real.exp 1 := by rw [← Real.exp_nat_mul]; congr 1; field_simp
+
+theorem e_upper (n : ℕ) (hn : 1 ≤ n) : Real.exp 1 ≤ (((n + 1 : ℕ) : ℝ) / n) ^ (n + 1) := by
+  have hnR : (0 : ℝ) < n := by exact_mod_cast hn
+  have hn1 : (0 : ℝ) < (n : ℝ) + 1 := by positivity
+  have h1 : Real.exp (1 / ((n : ℝ) + 1)) ≤ ((n + 1 : ℕ) : ℝ) / n := by
+    have h := Real.add_one_le_exp (-(1 / ((n : ℝ) + 1)))
+    have h2 : (n : ℝ) / (n + 1) ≤ Real.exp (-(1 / ((n : ℝ) + 1))) := by
+      have : -(1 / ((n : ℝ) + 1)) + 1 = n / (n + 1) := by field_simp; ring
+      linarith
+    rw [Real.exp_neg] at h2
+    have h3 := Real.exp_pos (1 / ((n : ℝ) + 1))
+    rw [le_inv_comm₀ (by positivity) h3, inv_div] at h2
+    push_cast; exact h2
+  calc Real.exp 1 = Real.exp (1 / ((n : ℝ) + 1)) ^ (n + 1) := by
+        rw [← Real.exp_nat_mul]; congr 1; push_cast; field_simp
+    _ ≤ _ := pow_le_pow_left₀ (by positivity) h1 _
+
+theorem exp_nat_eq (j : ℕ) : Real.exp j = Real.exp 1 ^ j := by
+  rw [← Real.exp_nat_mul, mul_one]
+
+/-- Certificate `e^j < M`. -/
+def hiC (n j M : ℕ) : Prop := (n + 1) ^ ((n + 1) * j) < M * n ^ ((n + 1) * j)
+
+/-- Certificate `M < e^j`. -/
+def loC (n j M : ℕ) : Prop := M * n ^ (n * j) < (n + 1) ^ (n * j)
+
+instance (n j M : ℕ) : Decidable (hiC n j M) := by unfold hiC; infer_instance
+instance (n j M : ℕ) : Decidable (loC n j M) := by unfold loC; infer_instance
+
+theorem hiC_iff {n j M : ℕ} (hn : 1 ≤ n) :
+    hiC n j M ↔ ((((n + 1 : ℕ) : ℝ) / n) ^ (n + 1)) ^ j < M := by
+  have hnR : (0 : ℝ) < n := by exact_mod_cast hn
+  unfold hiC
+  rw [← pow_mul, div_pow, div_lt_iff₀ (by positivity), ← @Nat.cast_lt ℝ]
+  push_cast; rfl
+
+theorem loC_iff {n j M : ℕ} (hn : 1 ≤ n) :
+    loC n j M ↔ (M : ℝ) < ((((n + 1 : ℕ) : ℝ) / n) ^ n) ^ j := by
+  have hnR : (0 : ℝ) < n := by exact_mod_cast hn
+  unfold loC
+  rw [← pow_mul, div_pow, lt_div_iff₀ (by positivity), ← @Nat.cast_lt ℝ]
+  push_cast; rfl
+
+theorem exp_lt_of_hiC {n j M : ℕ} (hn : 1 ≤ n) (h : hiC n j M) : Real.exp j < M := by
+  rw [hiC_iff hn] at h
+  rw [exp_nat_eq]
+  exact lt_of_le_of_lt (pow_le_pow_left₀ (Real.exp_pos 1).le (e_upper n hn) j) h
+
+theorem lt_exp_of_loC {n j M : ℕ} (hn : 1 ≤ n) (h : loC n j M) : (M : ℝ) < Real.exp j := by
+  rw [loC_iff hn] at h
+  rw [exp_nat_eq]
+  exact lt_of_lt_of_le h (pow_le_pow_left₀ (by positivity) (e_lower n hn) j)
+
+theorem tendsto_lo : Tendsto (fun n : ℕ => (((n + 1 : ℕ) : ℝ) / n) ^ n) atTop
+    (𝓝 (Real.exp 1)) := by
+  refine (Real.tendsto_one_add_div_pow_exp 1).congr' ?_
+  filter_upwards [eventually_ge_atTop 1] with n hn
+  have hnR : (0 : ℝ) < n := by exact_mod_cast hn
+  congr 1; push_cast; field_simp
+
+theorem tendsto_hi : Tendsto (fun n : ℕ => (((n + 1 : ℕ) : ℝ) / n) ^ (n + 1)) atTop
+    (𝓝 (Real.exp 1)) := by
+  have h2 : Tendsto (fun n : ℕ => (((n + 1 : ℕ) : ℝ) / n)) atTop (𝓝 1) := by
+    have := (tendsto_const_nhds (x := (1 : ℝ))).add tendsto_one_div_atTop_nhds_zero_nat
+    rw [add_zero] at this
+    refine this.congr' ?_
+    filter_upwards [eventually_ge_atTop 1] with n hn
+    have hnR : (0 : ℝ) < n := by exact_mod_cast hn
+    push_cast; field_simp
+  have := tendsto_lo.mul h2
+  rw [mul_one] at this
+  exact this.congr fun n => by rw [pow_succ]
+
+/-- Some `n` settles the comparison of `e^j` with `M` (for `j ≥ 1`). -/
+theorem eventually_cert {j : ℕ} (hj : 1 ≤ j) (M : ℕ) :
+    ∀ᶠ n in atTop, 1 ≤ n ∧ (hiC n j M ∨ loC n j M) := by
+  have hne := exp_nat_ne_nat hj M
+  rcases lt_or_gt_of_ne hne with hlt | hgt
+  · have h := (tendsto_hi.pow j).eventually (gt_mem_nhds (by rw [← exp_nat_eq]; exact hlt))
+    filter_upwards [h, eventually_ge_atTop 1] with n hn hn1
+    exact ⟨hn1, Or.inl ((hiC_iff hn1).2 hn)⟩
+  · have h := (tendsto_lo.pow j).eventually (lt_mem_nhds (by rw [← exp_nat_eq]; exact hgt))
+    filter_upwards [h, eventually_ge_atTop 1] with n hn hn1
+    exact ⟨hn1, Or.inr ((loC_iff hn1).2 hn)⟩
+
+/-! ## Membership in `expSet` through comparisons of `e^j` with integers -/
+
+theorem exp_div_pow (j : ℕ) : Real.exp ((j : ℝ) / 100) ^ 100 = Real.exp j := by
+  rw [← Real.exp_nat_mul]; congr 1; push_cast; ring
+
+theorem mem_expSet_iff (k : ℕ) : k ∈ expSet ↔ 2 ≤ k ∧ ∃ j < 100 * k,
+    ((k - 1 : ℕ) : ℝ) ^ 100 < Real.exp ((j + 1 : ℕ) : ℝ) ∧
+      Real.exp ((j + 1 : ℕ) : ℝ) < (k : ℝ) ^ 100 := by
+  constructor
+  · rintro ⟨j, hj, rfl⟩
+    set y := Real.exp ((j : ℝ) / 100) with hy
+    have hjR : (0 : ℝ) < j := by exact_mod_cast hj
+    have hy1 : 1 < y := Real.one_lt_exp_iff.2 (by positivity)
+    have hk2 : 2 ≤ ⌈y⌉₊ := by
+      have : 1 < ⌈y⌉₊ := Nat.lt_ceil.2 (by exact_mod_cast hy1)
+      omega
+    set k := ⌈y⌉₊
+    have hyk : y ≤ k := Nat.le_ceil y
+    have hky : (k : ℝ) < y + 1 := Nat.ceil_lt_add_one (by positivity)
+    have hk1 : ((k - 1 : ℕ) : ℝ) = (k : ℝ) - 1 := by push_cast [show 1 ≤ k by omega]; ring
+    have hlow : ((k - 1 : ℕ) : ℝ) ^ 100 < Real.exp (j : ℝ) := by
+      rw [← exp_div_pow, hk1]
+      exact pow_lt_pow_left₀ (by linarith) (by have : (2 : ℝ) ≤ k := by exact_mod_cast hk2
+                                               linarith) (by norm_num)
+    have hup : Real.exp (j : ℝ) < (k : ℝ) ^ 100 := by
+      refine lt_of_le_of_ne ?_ ?_
+      · rw [← exp_div_pow]; exact pow_le_pow_left₀ (by positivity) hyk _
+      · have := exp_nat_ne_nat hj (k ^ 100); push_cast at this; exact this
+    refine ⟨hk2, j - 1, ?_, ?_⟩
+    · -- e^j < k^100 < e^{100k}
+      have hke : (k : ℝ) < Real.exp k := by linarith [Real.add_one_le_exp (k : ℝ)]
+      have h2 : (k : ℝ) ^ 100 < Real.exp ((100 * k : ℕ) : ℝ) := by
+        have e : Real.exp ((100 * k : ℕ) : ℝ) = Real.exp k ^ 100 := by
+          rw [← Real.exp_nat_mul]; push_cast; ring_nf
+        rw [e]
+        exact pow_lt_pow_left₀ hke (by positivity) (by norm_num)
+      have h3 : Real.exp (j : ℝ) < Real.exp ((100 * k : ℕ) : ℝ) := hup.trans h2
+      rw [Real.exp_lt_exp] at h3
+      have : j < 100 * k := by exact_mod_cast h3
+      omega
+    · rw [show j - 1 + 1 = j by omega]; exact ⟨hlow, hup⟩
+  · rintro ⟨hk2, j, -, hlow, hup⟩
+    refine ⟨j + 1, by omega, ?_⟩
+    set y := Real.exp (((j + 1 : ℕ) : ℝ) / 100) with hy
+    have hy0 : 0 < y := Real.exp_pos _
+    have hpow : y ^ 100 = Real.exp ((j + 1 : ℕ) : ℝ) := exp_div_pow (j + 1)
+    have hk1 : ((k - 1 : ℕ) : ℝ) = (k : ℝ) - 1 := by push_cast [show 1 ≤ k by omega]; ring
+    have h1 : (k : ℝ) - 1 < y := by
+      by_contra hc; push Not at hc
+      have : y ^ 100 ≤ ((k : ℝ) - 1) ^ 100 := pow_le_pow_left₀ hy0.le hc _
+      rw [hk1] at hlow; linarith
+    have h2 : y < k := by
+      by_contra hc; push Not at hc
+      have : (k : ℝ) ^ 100 ≤ y ^ 100 := pow_le_pow_left₀ (by positivity) hc _
+      linarith
+    symm
+    rw [Nat.ceil_eq_iff (by omega)]
+    refine ⟨?_, h2.le⟩
+    rw [hk1]; exact h1
+
+/-- Number of unsettled comparisons for `k` at precision `n`. -/
+def cntBad (k n : ℕ) : ℕ :=
+  ((List.range (100 * k)).map fun j => ((List.range 2).map fun i =>
+    if hiC n (j + 1) ((k - i) ^ 100) ∨ loC n (j + 1) ((k - i) ^ 100) then 0 else 1).sum).sum
+
+/-- Precision `n` settles every comparison needed for `k`. -/
+def CertP (k n : ℕ) : Prop := 1 ≤ n ∧ cntBad k n = 0
+
+/-- Number of witnesses `j` for `k ∈ expSet` at precision `n`. -/
+def cntV (k n : ℕ) : ℕ :=
+  ((List.range (100 * k)).map fun j =>
+    if loC n (j + 1) ((k - 1) ^ 100) ∧ hiC n (j + 1) (k ^ 100) then 1 else 0).sum
+
+def VP (k n : ℕ) : Prop := 2 ≤ k ∧ 0 < cntV k n
+
+instance (k n : ℕ) : Decidable (CertP k n) := by unfold CertP; infer_instance
+instance (k n : ℕ) : Decidable (VP k n) := by unfold VP; infer_instance
+
+theorem certP_spec {k n : ℕ} (h : CertP k n) {j i : ℕ} (hj : j < 100 * k) (hi : i < 2) :
+    hiC n (j + 1) ((k - i) ^ 100) ∨ loC n (j + 1) ((k - i) ^ 100) := by
+  obtain ⟨_, h0⟩ := h
+  unfold cntBad at h0
+  rw [ComputableNormalB.list_sum_range_map, Finset.sum_eq_zero_iff] at h0
+  have h1 := h0 j (Finset.mem_range.2 hj)
+  rw [ComputableNormalB.list_sum_range_map, Finset.sum_eq_zero_iff] at h1
+  have h2 := h1 i (Finset.mem_range.2 hi)
+  by_contra hc
+  rw [if_neg hc] at h2
+  exact one_ne_zero h2
+
+theorem exists_certP (k : ℕ) : ∃ n, CertP k n := by
+  have hall : ∀ᶠ n in atTop, ∀ j ∈ Finset.range (100 * k), ∀ i ∈ Finset.range 2,
+      1 ≤ n ∧ (hiC n (j + 1) ((k - i) ^ 100) ∨ loC n (j + 1) ((k - i) ^ 100)) := by
+    rw [Finset.eventually_all]
+    intro j _
+    rw [Finset.eventually_all]
+    intro i _
+    exact eventually_cert (by omega) _
+  obtain ⟨n, hn⟩ := (hall.and (eventually_ge_atTop 1)).exists
+  refine ⟨n, hn.2, ?_⟩
+  unfold cntBad
+  rw [ComputableNormalB.list_sum_range_map, Finset.sum_eq_zero_iff]
+  intro j hj
+  rw [ComputableNormalB.list_sum_range_map, Finset.sum_eq_zero_iff]
+  intro i hi
+  rw [if_pos (hn.1 j hj i hi).2]
+
+theorem VP_iff {k n : ℕ} (h : CertP k n) : VP k n ↔ k ∈ expSet := by
+  have hn : 1 ≤ n := h.1
+  rw [mem_expSet_iff]
+  unfold VP cntV
+  constructor
+  · rintro ⟨hk2, hpos⟩
+    rw [ComputableNormalB.list_sum_range_map] at hpos
+    obtain ⟨j, hj, hp⟩ := ComputableNormalB.exists_pos_of_sum_pos hpos
+    split_ifs at hp with hc
+    swap; · exact absurd hp (lt_irrefl 0)
+    refine ⟨hk2, j, Finset.mem_range.1 hj, ?_, ?_⟩
+    · have := lt_exp_of_loC hn hc.1; push_cast at this ⊢; exact this
+    · have := exp_lt_of_hiC hn hc.2; push_cast at this ⊢; exact this
+  · rintro ⟨hk2, j, hj, hlow, hup⟩
+    refine ⟨hk2, ?_⟩
+    rw [ComputableNormalB.list_sum_range_map]
+    refine lt_of_lt_of_le ?_ (Finset.single_le_sum (f := fun j =>
+      if loC n (j + 1) ((k - 1) ^ 100) ∧ hiC n (j + 1) (k ^ 100) then 1 else 0)
+      (fun _ _ => Nat.zero_le _) (Finset.mem_range.2 hj))
+    have hA : loC n (j + 1) ((k - 1) ^ 100) := by
+      rcases certP_spec h hj (i := 1) (by norm_num) with hc | hc
+      · have := exp_lt_of_hiC hn hc; push_cast at this hlow; linarith
+      · exact hc
+    have hB : hiC n (j + 1) (k ^ 100) := by
+      rcases certP_spec h hj (i := 0) (by norm_num) with hc | hc
+      · simpa using hc
+      · have := lt_exp_of_loC hn hc; push_cast at this hup; simp at this; linarith
+    rw [if_pos ⟨hA, hB⟩]; norm_num
+
+/-! ## Computability -/
+
+section Prim
+
+variable {α : Type*} [Primcodable α]
+
+theorem primrec_hiC {fn fj fM : α → ℕ} (hn : Primrec fn) (hj : Primrec fj) (hM : Primrec fM) :
+    PrimrecPred fun a => hiC (fn a) (fj a) (fM a) := by
+  have hp := ComputableNormal.primrec_pow
+  have he : Primrec fun a => (fn a + 1) * fj a := Primrec.nat_mul.comp (Primrec.succ.comp hn) hj
+  exact (Primrec.nat_lt.comp (hp.comp (Primrec.succ.comp hn) he)
+    (Primrec.nat_mul.comp hM (hp.comp hn he))).of_eq fun a => by unfold hiC; rfl
+
+theorem primrec_loC {fn fj fM : α → ℕ} (hn : Primrec fn) (hj : Primrec fj) (hM : Primrec fM) :
+    PrimrecPred fun a => loC (fn a) (fj a) (fM a) := by
+  have hp := ComputableNormal.primrec_pow
+  have he : Primrec fun a => fn a * fj a := Primrec.nat_mul.comp hn hj
+  exact (Primrec.nat_lt.comp (Primrec.nat_mul.comp hM (hp.comp hn he))
+    (hp.comp (Primrec.succ.comp hn) he)).of_eq fun a => by unfold loC; rfl
+
+end Prim
+
+attribute [local irreducible] hiC loC in
+theorem primrec_cntBad : Primrec fun x : ℕ × ℕ => cntBad x.1 x.2 := by
+  have hp := ComputableNormal.primrec_pow
+  have hin : Primrec₂ fun (y : (ℕ × ℕ) × ℕ) (i : ℕ) =>
+      if hiC y.1.2 (y.2 + 1) ((y.1.1 - i) ^ 100) ∨ loC y.1.2 (y.2 + 1) ((y.1.1 - i) ^ 100)
+      then 0 else 1 := by
+    have hM : Primrec fun z : ((ℕ × ℕ) × ℕ) × ℕ => (z.1.1.1 - z.2) ^ 100 :=
+      hp.comp (Primrec.nat_sub.comp (Primrec.fst.comp (Primrec.fst.comp Primrec.fst)) Primrec.snd)
+        (Primrec.const 100)
+    have hn : Primrec fun z : ((ℕ × ℕ) × ℕ) × ℕ => z.1.1.2 :=
+      Primrec.snd.comp (Primrec.fst.comp Primrec.fst)
+    have hj : Primrec fun z : ((ℕ × ℕ) × ℕ) × ℕ => z.1.2 + 1 :=
+      Primrec.succ.comp (Primrec.snd.comp Primrec.fst)
+    exact (Primrec.ite (PrimrecPred.or (primrec_hiC hn hj hM) (primrec_loC hn hj hM))
+      (Primrec.const 0) (Primrec.const 1)).to₂
+  have hout : Primrec₂ fun (x : ℕ × ℕ) (j : ℕ) => ((List.range 2).map fun i =>
+      if hiC x.2 (j + 1) ((x.1 - i) ^ 100) ∨ loC x.2 (j + 1) ((x.1 - i) ^ 100)
+      then 0 else 1).sum :=
+    (primrec_sum_map (Primrec.const (List.range 2)) hin).to₂
+  exact (primrec_sum_map (Primrec.list_range.comp (Primrec.nat_mul.comp (Primrec.const 100)
+    Primrec.fst)) hout).of_eq fun x => rfl
+
+attribute [local irreducible] hiC loC in
+theorem primrec_cntV : Primrec fun x : ℕ × ℕ => cntV x.1 x.2 := by
+  have hp := ComputableNormal.primrec_pow
+  have hg : Primrec₂ fun (x : ℕ × ℕ) (j : ℕ) =>
+      if loC x.2 (j + 1) ((x.1 - 1) ^ 100) ∧ hiC x.2 (j + 1) (x.1 ^ 100) then 1 else 0 := by
+    have hn : Primrec fun z : (ℕ × ℕ) × ℕ => z.1.2 := Primrec.snd.comp Primrec.fst
+    have hj : Primrec fun z : (ℕ × ℕ) × ℕ => z.2 + 1 := Primrec.succ.comp Primrec.snd
+    exact (Primrec.ite (PrimrecPred.and
+      (primrec_loC hn hj (hp.comp (Primrec.nat_sub.comp (Primrec.fst.comp Primrec.fst)
+        (Primrec.const 1)) (Primrec.const 100)))
+      (primrec_hiC hn hj (hp.comp (Primrec.fst.comp Primrec.fst) (Primrec.const 100))))
+      (Primrec.const 1) (Primrec.const 0)).to₂
+  exact (primrec_sum_map (Primrec.list_range.comp (Primrec.nat_mul.comp (Primrec.const 100)
+    Primrec.fst)) hg).of_eq fun x => rfl
+
+theorem primrecPred_CertP : PrimrecPred fun x : ℕ × ℕ => CertP x.1 x.2 :=
+  (PrimrecPred.and (Primrec.nat_le.comp (Primrec.const 1) Primrec.snd)
+    (Primrec.eq.comp primrec_cntBad (Primrec.const 0))).of_eq fun x => by unfold CertP; rfl
+
+theorem primrecPred_VP : PrimrecPred fun x : ℕ × ℕ => VP x.1 x.2 :=
+  (PrimrecPred.and (Primrec.nat_le.comp (Primrec.const 2) Primrec.fst)
+    (Primrec.nat_lt.comp (Primrec.const 0) primrec_cntV)).of_eq fun x => by unfold VP; rfl
+
+/-- **Membership in BLD's example set is computable.**
+
+Confidence 90%.  Proof: `k ∈ expSet ⟺ k ≥ 2 ∧ ∃ j ∈ [1, 100k], (k−1)^100 < e^j ≤ k^100`; the
+equality `e^j = M` never happens for `j ≥ 1` (`e^j ∉ ℕ`: apply `exp_polynomial_approx` to
+`X − j`: `n e^j − p g(j)` is a nonzero integer for large primes `p`, yet `≤ c^p/(p−1)! → 0`), so
+every comparison is settled by the rational bounds `Σ_{i<n} 1/i! ≤ e ≤ Σ_{i<n} 1/i! + (n+1)/(n!n)`
+for some `n` (`Real.exp_bound`); search for the first `n` settling all `≤ 200k` comparisons
+(`Computable.find`). -/
+theorem computable_membS : Computable membS := by
+  have hfind : Computable fun k => Nat.find (exists_certP k) :=
+    Computable.find (P := CertP) primrecPred_CertP.computablePred exists_certP
+  have hV : Computable fun k => decide (VP k (Nat.find (exists_certP k))) :=
+    (primrecPred_VP.computablePred.decide (p := fun x : ℕ × ℕ => VP x.1 x.2)).comp
+      (Computable.pair Computable.id hfind)
+  refine hV.of_eq fun k => ?_
+  unfold membS
+  have := VP_iff (Nat.find_spec (exists_certP k))
+  simp only [decide_eq_decide]
+  exact this
+
+
+/-! ## Assembly -/
+
+theorem dens_BpO (α : ℝ) (s₀ j : ℕ) :
+    dens (fun j p => BpO s₀ (j, oO α s₀ j, p)) (dO s₀) j [] =
+      coinMeasure.real {ω | 0 < levelBadO (j + s₀) (oO α s₀ j) (pre ω (Dd (j + s₀) + 1))} := by
+  unfold dens
+  simp only [List.length_nil, Nat.sub_zero]
+  rw [← coins_pre, measureReal_def]
+  congr 2
+  ext ω
+  simp [badAt, BpO, dO, List.take_of_length_le (le_of_eq (length_pre ω _))]
+
+/-- `y ^ 1000`, kept opaque to spare the elaborator. -/
+@[irreducible] def P1000 (y : ℕ) : ℕ := y ^ 1000
+
+theorem primrec_P1000 : Primrec P1000 :=
+  (ComputableNormal.primrec_pow.comp Primrec.id (Primrec.const 1000)).of_eq fun y => by
+    unfold P1000; rfl
+
+theorem P1000_cast (y : ℕ) : ((P1000 y : ℕ) : ℝ) = (y : ℝ) ^ 1000 := by
+  unfold P1000; push_cast; rfl
+
+theorem rpow_le_inv {y n : ℕ} (hy : 1 ≤ y) (hn : P1000 y ≤ n) :
+    (n : ℝ) ^ (-(1 / 1000 : ℝ)) ≤ 1 / (y : ℝ) := by
+  have hyR : (1 : ℝ) ≤ y := by exact_mod_cast hy
+  have hnR : ((y : ℝ) ^ 1000) ≤ n := by rw [← P1000_cast]; exact_mod_cast hn
+  have hn0 : (0 : ℝ) < n := lt_of_lt_of_le (by positivity) hnR
+  have h1 : (y : ℝ) ≤ (n : ℝ) ^ ((1000 : ℕ)⁻¹ : ℝ) := by
+    calc (y : ℝ) = ((y : ℝ) ^ 1000) ^ ((1000 : ℕ)⁻¹ : ℝ) :=
+          (Real.pow_rpow_inv_natCast (by positivity) (by norm_num)).symm
+      _ ≤ _ := Real.rpow_le_rpow (by positivity) hnR (by positivity)
+  rw [Real.rpow_neg hn0.le, ← one_div]
+  have : ((1000 : ℕ)⁻¹ : ℝ) = 1 / 1000 := by norm_num
+  rw [this] at h1
+  exact one_div_le_one_div_of_le (by positivity) h1
+
+theorem oddTestFamily' (hL5 : Literature.BLDLemma5) (α : ℝ) (hα0 : 0 ≤ α)
+    (hα : Computable fun n : ℕ => ⌊α * 2 ^ n⌋₊) :
+    ∃ (Bp : ℕ × ℕ × List Bool → Bool) (o : ℕ → ℕ) (d J : ℕ → ℕ),
+      Primrec Bp ∧ Computable o ∧ Primrec d ∧ Primrec J ∧
+      Summable (fun j => dens (fun j p => Bp (j, o j, p)) d j []) ∧
+      ∑' j, dens (fun j p => Bp (j, o j, p)) d j [] ≤ 1 / 4 ∧
+      (∀ k, ∑' j, (if J k < j then dens (fun j p => Bp (j, o j, p)) d j [] else 0) ≤
+        (1 / 8 : ℝ) ^ (k + 1)) ∧
+      ∀ e : ℕ → Bool, (∀ j, Bp (j, o j, pre e (d j)) = false) →
+        ∀ r : ℕ, 3 ≤ r → Odd r → IsNormal r (α + bldPoint expSet e) := by
+  obtain ⟨K, s₁, hK⟩ := prob_visit_dev_odd hL5 sparse_expSet α
+  have hDB : DevBound α K s₁ := hK
+  set s₀ := s₁ + P1000 (16000 * K + 1) + 1 with hs₀
+  set Jf : ℕ → ℕ := fun k => P1000 (4000 * K * 8 ^ (k + 1) + 1) with hJf
+  set dd : ℕ → ℝ := fun j => dens (fun j p => BpO s₀ (j, oO α s₀ j, p)) (dO s₀) j [] with hdd
+  set f : ℕ → ℝ := fun j => K * ((j + s₀ : ℕ) : ℝ) ^ (-(1 + 1 / 1000 : ℝ)) with hf
+  have hθ : (0 : ℝ) < 1 / 1000 := by norm_num
+  have hθ1 : (1 / 1000 : ℝ) ≤ 1 := by norm_num
+  have hdd0 : ∀ j, 0 ≤ dd j := fun j => dens_nonneg j []
+  have hddf : ∀ j, dd j ≤ f j := fun j => by
+    simp only [hdd, hf]
+    rw [dens_BpO]
+    exact level_le hDB hα0 s₀ j (by omega)
+  have htailf : ∀ n₀ : ℕ, 1 ≤ n₀ → Summable (fun i : ℕ => K * ((i + n₀ : ℕ) : ℝ) ^
+      (-(1 + 1 / 1000 : ℝ))) ∧ ∑' i : ℕ, K * ((i + n₀ : ℕ) : ℝ) ^ (-(1 + 1 / 1000 : ℝ)) ≤
+        K * (4000 * (n₀ : ℝ) ^ (-(1 / 1000 : ℝ))) := by
+    intro n₀ hn₀
+    obtain ⟨h1, h2⟩ := tsum_rpow_tail hθ hθ1 n₀ hn₀
+    refine ⟨h1.mul_left _, ?_⟩
+    rw [tsum_mul_left]
+    have : (4 : ℝ) / (1 / 1000) = 4000 := by norm_num
+    rw [this] at h2
+    exact mul_le_mul_of_nonneg_left h2 (by positivity)
+  obtain ⟨hfs, hft⟩ := htailf s₀ (by omega)
+  have hfs' : Summable f := hfs
+  have hds : Summable dd := hfs'.of_nonneg_of_le hdd0 hddf
+  refine ⟨BpO s₀, oO α s₀, dO s₀, Jf, primrec_BpO s₀, computable_oO α hα computable_membS s₀, primrec_dO s₀,
+    ?_, hds, ?_, ?_, fun e he r hr3 hr => isNormal_of_pass α hα0 s₀ e he r hr3 hr⟩
+  · exact primrec_P1000.comp (Primrec.succ.comp (Primrec.nat_mul.comp
+      (Primrec.const (4000 * K)) (ComputableNormal.primrec_pow.comp (Primrec.const 8)
+        Primrec.succ))) |>.of_eq fun k => by simp only [hJf, mul_assoc]
+  · calc ∑' j, dd j ≤ ∑' j, f j := hds.tsum_le_tsum hddf hfs'
+      _ ≤ K * (4000 * (s₀ : ℝ) ^ (-(1 / 1000 : ℝ))) := hft
+      _ ≤ K * (4000 * (1 / ((16000 * K + 1 : ℕ) : ℝ))) := by
+          gcongr
+          exact rpow_le_inv (by omega) (by omega)
+      _ ≤ 1 / 4 := by
+          push_cast
+          rw [mul_one_div, ← mul_div_assoc, div_le_div_iff₀ (by positivity) (by norm_num)]
+          nlinarith [(Nat.cast_nonneg K : (0 : ℝ) ≤ K)]
+  · intro k
+    set h : ℕ → ℝ := fun j => if Jf k < j then dd j else 0 with hh
+    have hh0 : ∀ j, 0 ≤ h j := fun j => by simp only [hh]; split_ifs <;> simp [hdd0]
+    have hhs : Summable h := hds.of_nonneg_of_le hh0 fun j => by
+      simp only [hh]; split_ifs <;> simp [hdd0]
+    have hsplit := hhs.sum_add_tsum_nat_add (Jf k + 1)
+    have hzero : ∑ i ∈ Finset.range (Jf k + 1), h i = 0 :=
+      Finset.sum_eq_zero fun i hi => by
+        simp only [hh]; rw [if_neg (by have := Finset.mem_range.1 hi; omega)]
+    rw [hzero, zero_add] at hsplit
+    obtain ⟨hgs, hgt⟩ := htailf (Jf k + 1 + s₀) (by omega)
+    show ∑' j, h j ≤ _
+    rw [← hsplit]
+    calc ∑' i, h (i + (Jf k + 1))
+        ≤ ∑' i : ℕ, K * ((i + (Jf k + 1 + s₀) : ℕ) : ℝ) ^ (-(1 + 1 / 1000 : ℝ)) := by
+          refine ((summable_nat_add_iff (Jf k + 1)).2 hhs).tsum_le_tsum (fun i => ?_) hgs
+          simp only [hh]
+          rw [if_pos (by omega)]
+          refine (hddf _).trans (le_of_eq ?_)
+          simp only [hf]
+          congr 3
+          omega
+      _ ≤ K * (4000 * ((Jf k + 1 + s₀ : ℕ) : ℝ) ^ (-(1 / 1000 : ℝ))) := hgt
+      _ ≤ K * (4000 * (1 / ((4000 * K * 8 ^ (k + 1) + 1 : ℕ) : ℝ))) := by
+          gcongr
+          exact rpow_le_inv (by omega) (by simp only [hJf]; omega)
+      _ ≤ (1 / 8 : ℝ) ^ (k + 1) := by
+          push_cast
+          rw [div_pow, one_pow, mul_one_div, ← mul_div_assoc,
+            div_le_div_iff₀ (by positivity) (by positivity)]
+          have h8 : (0 : ℝ) < 8 ^ (k + 1) := by positivity
+          nlinarith [(Nat.cast_nonneg K : (0 : ℝ) ≤ K)]
+
+end OddTests
+
 /-- **The odd-base test family** for `α + bldPoint expSet e`: finite-prefix tests (decided from
 `d j` coins and the oracle value `o j = ⌊α 2^{d j}⌋₊`), with the avoider's mass and computable-tail
 conditions, such that passing every test forces normality in every odd base.
@@ -2516,7 +4142,7 @@ theorem oddTestFamily (hL5 : Literature.BLDLemma5) (α : ℝ) (hα0 : 0 ≤ α)
         (1 / 8 : ℝ) ^ (k + 1)) ∧
       ∀ e : ℕ → Bool, (∀ j, Bp (j, o j, pre e (d j)) = false) →
         ∀ r : ℕ, 3 ≤ r → Odd r → IsNormal r (α + bldPoint expSet e) := by
-  sorry
+  exact OddTests.oddTestFamily' hL5 α hα0 hα
 
 /-- **Derandomization stretch (65%).**  For computable `α ∈ [0,1)` (Levin's `α` is an explicit
 digit concatenation), a computable coin sequence `e` with `α + bldPoint expSet e` normal in every
