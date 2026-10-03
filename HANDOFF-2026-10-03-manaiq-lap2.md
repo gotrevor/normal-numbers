@@ -11,6 +11,6 @@ Route: refuted `approx_GPfam` (deleted; `not_approxGPfamClaim` kept) replaced by
 HEAD before this note: 1dbe0085.  Tree clean, lake build green.
 
 ## Next steps (optional, off-scope)
-* Headline done; nothing open in ExplicitPQ.lean.  Possible tidy-ups: drop now-unused ,
-  ,  (proved, off path) only if a reviewer wants; write the outward
-  note  (statement, cited Baker–Banaji Prop, refutation of approx_GPfam).
+* Headline done; nothing open in ExplicitPQ.lean.  Possible tidy-ups: drop the now-unused `GPfam`,
+  `decay_GPfam`, `measurable_GPfam` (proved, off path) only if a reviewer wants; write the outward
+  note `docs/notes/manai-pq.md` (statement, cited Baker–Banaji Prop, refutation of approx_GPfam).
