@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
 import NormalNumbers.ExplicitSquareNonNormal
+import NormalNumbers.DigitInterval
 import Mathlib.Topology.MetricSpace.HausdorffDimension
 import Mathlib.MeasureTheory.Measure.Hausdorff
 import Mathlib.NumberTheory.Transcendental.Liouville.Basic
@@ -255,6 +256,270 @@ def SubexpCylinderCount (b : ℕ) (ε : ℝ) (A : Set ℝ) : Prop :=
   ∃ N₀ : ℕ, ∀ N ≥ N₀, ∃ T : Finset ℤ, (T.card : ℝ) ≤ (b : ℝ) ^ (ε * N) ∧
     A ⊆ ⋃ t ∈ T, Ico ((t : ℝ) / (b : ℝ) ^ N) (((t : ℝ) + 1) / (b : ℝ) ^ N)
 
+/-! ### Leaf (a): counting prefixes -/
+
+/-- Candidate suffixes `w[i,N)`: an `F`-block at a good position with room for it, else any digit. -/
+def candSuffix (b m N : ℕ) (T : Finset ℕ) (F : Finset (List ℕ)) (i : ℕ) : Finset (List ℕ) :=
+  if N ≤ i then {[]}
+  else if i ∉ T ∧ 0 < m ∧ i + m ≤ N then
+    F.biUnion fun f => (candSuffix b m N T F (i + m)).image (f ++ ·)
+  else (Finset.range b).biUnion fun d => (candSuffix b m N T F (i + 1)).image (d :: ·)
+termination_by N - i
+decreasing_by all_goals omega
+
+theorem ofFn_window_eq (ω : ℕ → ℕ) (m i : ℕ) :
+    (List.ofFn fun j : Fin m => ω (i + j)) = (List.range' i m).map ω := by
+  induction m generalizing i with
+  | zero => simp
+  | succ m ih =>
+    rw [List.ofFn_succ, List.range'_succ, List.map_cons]
+    rw [← ih (i + 1)]
+    simp only [Fin.val_zero, add_zero, Fin.val_succ, List.cons.injEq, true_and]
+    congr 1; funext j; congr 1; omega
+
+theorem mem_candSuffix (b m N : ℕ) (T : Finset ℕ) (F : Finset (List ℕ)) (ω : ℕ → ℕ)
+    (hω : ∀ j, ω j < b) (hgood : ∀ i, i ∉ T → i < N → (List.ofFn fun j : Fin m => ω (i + j)) ∈ F)
+    (i : ℕ) : (List.range' i (N - i)).map ω ∈ candSuffix b m N T F i := by
+  rw [candSuffix]
+  split_ifs with h1 h2
+  · simp [show N - i = 0 by omega]
+  · have hsplit : List.range' i (N - i) = List.range' i m ++ List.range' (i + m) (N - (i + m)) := by
+      have := @List.range'_append i m (N - (i + m)) 1
+      simp only [one_mul] at this
+      rw [this, show m + (N - (i + m)) = N - i by omega]
+    rw [hsplit, List.map_append]
+    refine Finset.mem_biUnion.2 ⟨_, ?_, Finset.mem_image.2 ⟨_, mem_candSuffix b m N T F ω hω hgood (i + m), rfl⟩⟩
+    rw [← ofFn_window_eq]; exact hgood i h2.1 (by omega)
+  · have hsplit : List.range' i (N - i) = i :: List.range' (i + 1) (N - (i + 1)) := by
+      rw [show N - i = (N - (i + 1)) + 1 by omega, List.range'_succ]
+    rw [hsplit, List.map_cons]
+    exact Finset.mem_biUnion.2 ⟨ω i, Finset.mem_range.2 (hω i),
+      Finset.mem_image.2 ⟨_, mem_candSuffix b m N T F ω hω hgood (i + 1), rfl⟩⟩
+termination_by N - i
+decreasing_by all_goals omega
+
+theorem card_candSuffix_le (b m N : ℕ) (hb : 1 ≤ b) (hm : 0 < m) (T : Finset ℕ)
+    (F : Finset (List ℕ)) (G : ℝ) (hG : 1 ≤ G) (hF : (F.card : ℝ) ≤ G) (i : ℕ) :
+    ((candSuffix b m N T F i).card : ℝ) ≤
+      G ^ (((N - i : ℕ) : ℝ) / m) * (b : ℝ) ^ ((T.filter (i ≤ ·)).card + min m (N - i)) := by
+  have hb1 : (1 : ℝ) ≤ b := by exact_mod_cast hb
+  have hmR : (0 : ℝ) < m := by exact_mod_cast hm
+  rw [candSuffix]
+  split_ifs with h1 h2
+  · simp only [Finset.card_singleton, Nat.cast_one]
+    exact one_le_mul_of_one_le_of_one_le (Real.one_le_rpow hG (by positivity)) (one_le_pow₀ hb1)
+  · have ih := card_candSuffix_le b m N hb hm T F G hG hF (i + m)
+    have hc : ((F.biUnion fun f => (candSuffix b m N T F (i + m)).image (f ++ ·)).card : ℝ) ≤
+        F.card * (candSuffix b m N T F (i + m)).card := by
+      have := Finset.card_biUnion_le (s := F) (t := fun f => (candSuffix b m N T F (i + m)).image (f ++ ·))
+      have h2' : ∑ f ∈ F, ((candSuffix b m N T F (i + m)).image (f ++ ·)).card ≤
+          F.card * (candSuffix b m N T F (i + m)).card := by
+        calc _ ≤ ∑ f ∈ F, (candSuffix b m N T F (i + m)).card :=
+              Finset.sum_le_sum fun f _ => Finset.card_image_le
+          _ = _ := by simp
+      exact_mod_cast this.trans h2'
+    refine hc.trans ?_
+    have hT : (T.filter (i + m ≤ ·)).card ≤ (T.filter (i ≤ ·)).card :=
+      Finset.card_le_card fun j hj => by
+        rw [Finset.mem_filter] at hj ⊢; exact ⟨hj.1, by omega⟩
+    have hexp : (((N - i : ℕ) : ℝ) / m) = 1 + ((N - (i + m) : ℕ) : ℝ) / m := by
+      rw [Nat.cast_sub (by omega), Nat.cast_sub (by omega)]; field_simp; push_cast; ring
+    rw [hexp, Real.rpow_add (by linarith), Real.rpow_one, mul_assoc]
+    exact mul_le_mul hF (ih.trans (mul_le_mul_of_nonneg_left
+      (pow_le_pow_right₀ hb1 (add_le_add hT (by omega))) (by positivity))) (by positivity)
+      (by linarith)
+  · have ih := card_candSuffix_le b m N hb hm T F G hG hF (i + 1)
+    have hc : (((Finset.range b).biUnion fun d => (candSuffix b m N T F (i + 1)).image (d :: ·)).card : ℝ) ≤
+        b * (candSuffix b m N T F (i + 1)).card := by
+      have := Finset.card_biUnion_le (s := Finset.range b) (t := fun d => (candSuffix b m N T F (i + 1)).image (d :: ·))
+      have h2' : ∑ d ∈ Finset.range b, ((candSuffix b m N T F (i + 1)).image (d :: ·)).card ≤
+          b * (candSuffix b m N T F (i + 1)).card := by
+        calc _ ≤ ∑ d ∈ Finset.range b, (candSuffix b m N T F (i + 1)).card :=
+              Finset.sum_le_sum fun d _ => Finset.card_image_le
+          _ = _ := by simp
+      exact_mod_cast this.trans h2'
+    refine hc.trans ?_
+    have hsplitT : (T.filter (i ≤ ·)).card = (T.filter (i + 1 ≤ ·)).card + (if i ∈ T then 1 else 0) := by
+      have : T.filter (i ≤ ·) = (T.filter (i + 1 ≤ ·)) ∪ (T.filter (· = i)) := by
+        ext j; simp only [Finset.mem_filter, Finset.mem_union]; constructor
+        · rintro ⟨h, h'⟩; rcases Nat.lt_or_ge i j with h'' | h''
+          · exact Or.inl ⟨h, h''⟩
+          · exact Or.inr ⟨h, by omega⟩
+        · rintro (⟨h, h'⟩ | ⟨h, h'⟩) <;> exact ⟨h, by omega⟩
+      rw [this, Finset.card_union_of_disjoint (Finset.disjoint_filter.2 fun j _ h1 h2 => by omega)]
+      congr 1
+      split_ifs with h
+      · exact Finset.card_eq_one.2 ⟨i, by
+          ext j; simp only [Finset.mem_filter, Finset.mem_singleton]
+          exact ⟨fun h' => h'.2, fun h' => ⟨h' ▸ h, h'⟩⟩⟩
+      · rw [Finset.card_eq_zero, Finset.filter_eq_empty_iff]; intro j hj hji; exact h (hji ▸ hj)
+    have hnat : (T.filter (i + 1 ≤ ·)).card + min m (N - (i + 1)) + 1 ≤
+        (T.filter (i ≤ ·)).card + min m (N - i) := by
+      rw [hsplitT]; split_ifs at h2 ⊢ with h <;> [omega; (push Not at h2; have := h2 h hm; omega)]
+    calc (b : ℝ) * (candSuffix b m N T F (i + 1)).card
+        ≤ b * (G ^ (((N - (i + 1) : ℕ) : ℝ) / m) *
+            (b : ℝ) ^ ((T.filter (i + 1 ≤ ·)).card + min m (N - (i + 1)))) := by gcongr
+      _ = G ^ (((N - (i + 1) : ℕ) : ℝ) / m) *
+            (b : ℝ) ^ ((T.filter (i + 1 ≤ ·)).card + min m (N - (i + 1)) + 1) := by ring
+      _ ≤ _ := mul_le_mul (Real.rpow_le_rpow_of_exponent_le hG
+            (div_le_div_of_nonneg_right (Nat.cast_le.2 (by omega)) hmR.le))
+            (pow_le_pow_right₀ hb1 hnat) (by positivity) (by positivity)
+termination_by N - i
+decreasing_by all_goals omega
+
+/-- Subsets of `range N` of size `≤ k`, counted with a weight `r ≤ 1`. -/
+theorem card_smallSubsets_le (N k : ℕ) {r : ℝ} (hr0 : 0 < r) (hr1 : r ≤ 1) :
+    (((Finset.range N).powerset.filter (fun T => T.card ≤ k)).card : ℝ) ≤ (1 + r) ^ N / r ^ k := by
+  rw [le_div_iff₀ (by positivity)]
+  have hsum := Finset.sum_pow_mul_eq_add_pow r 1 (Finset.range N)
+  simp only [one_pow, mul_one, Finset.card_range] at hsum
+  rw [add_comm 1 r, ← hsum, Finset.card_eq_sum_ones, Nat.cast_sum, Finset.sum_mul]
+  refine (Finset.sum_le_sum fun T hT => ?_).trans
+    (Finset.sum_le_sum_of_subset_of_nonneg (Finset.filter_subset _ _) fun _ _ _ => by positivity)
+  simp only [Nat.cast_one, one_mul]
+  exact pow_le_pow_of_le_one hr0.le hr1 (Finset.mem_filter.1 hT).2
+
+/-- Base-`b` value of a digit list (most significant first). -/
+def digVal (b : ℕ) (w : List ℕ) : ℤ := w.foldl (fun a d => b * a + d) 0
+
+theorem floor_eq_digVal (b : ℕ) (hb : 2 ≤ b) (y : ℝ) (hy0 : 0 ≤ y) (hy1 : y < 1) (N : ℕ) :
+    ⌊y * (b : ℝ) ^ N⌋ = digVal b ((List.range' 0 N).map (digitOf b y)) := by
+  induction N with
+  | zero => simp [digVal, Int.floor_eq_zero_iff.2 ⟨hy0, hy1⟩]
+  | succ N ih =>
+    have := @List.range'_append 0 N 1 1
+    simp only [one_mul, zero_add] at this
+    rw [← this, floor_mul_pow_succ b hb y hy0 N, ih]
+    simp [digVal, List.foldl_append]
+
+theorem subexp_asymp (b : ℕ) (hb : 2 ≤ b) (ε : ℝ) (hε : 0 < ε) :
+    ∃ r ε' : ℝ, 0 < r ∧ r ≤ 1 ∧ 0 < ε' ∧ ε' ≤ 1 / 4 ∧ ∀ m N : ℕ, 2 * (m : ℝ) ≤ ε * N →
+      (1 + r) ^ N / r ^ (⌊2 * ε' * N⌋₊) * (2 : ℝ) ^ (ε' * N) * (b : ℝ) ^ (⌊2 * ε' * N⌋₊ + m) ≤
+        (b : ℝ) ^ (ε * N) := by
+  have hb2 : (2 : ℝ) ≤ b := by exact_mod_cast hb
+  have hb0 : (0 : ℝ) < b := by linarith
+  set L := Real.log b with hL
+  have hL2 : Real.log 2 ≤ L := Real.log_le_log (by norm_num) hb2
+  have hL0 : 0 < L := lt_of_lt_of_le (Real.log_pos (by norm_num)) hL2
+  set r := min 1 (ε * L / 4) with hr
+  have hr0 : 0 < r := lt_min one_pos (by positivity)
+  have hr1 : r ≤ 1 := min_le_left _ _
+  have hrε : r ≤ ε * L / 4 := min_le_right _ _
+  set c := - Real.log r with hc
+  have hc0 : 0 ≤ c := by rw [hc, neg_nonneg]; exact Real.log_nonpos hr0.le hr1
+  set ε' := min (1 / 4) (ε * L / (4 * (2 * c + 3 * L))) with hε'
+  have hden : 0 < 4 * (2 * c + 3 * L) := by positivity
+  have hε'0 : 0 < ε' := lt_min (by norm_num) (by positivity)
+  have hε'b : ε' * (2 * c + 3 * L) ≤ ε * L / 4 := by
+    have : ε' ≤ ε * L / (4 * (2 * c + 3 * L)) := min_le_right _ _
+    rw [le_div_iff₀ hden] at this; nlinarith
+  refine ⟨r, ε', hr0, hr1, hε'0, min_le_left _ _, fun m N hmN => ?_⟩
+  set k := ⌊2 * ε' * N⌋₊
+  have hk : (k : ℝ) ≤ 2 * ε' * N := Nat.floor_le (by positivity)
+  have hN0 : (0 : ℝ) ≤ N := Nat.cast_nonneg N
+  have e1 : (1 + r) ^ N = Real.exp (N * Real.log (1 + r)) := by
+    rw [← Real.log_pow, Real.exp_log (by positivity)]
+  have e2 : 1 / r ^ k = Real.exp (k * c) := by
+    rw [hc, mul_neg, Real.exp_neg, ← Real.log_pow, Real.exp_log (by positivity), one_div]
+  have e3 : (2 : ℝ) ^ (ε' * N) = Real.exp (Real.log 2 * (ε' * N)) := Real.rpow_def_of_pos two_pos _
+  have e4 : (b : ℝ) ^ (k + m) = Real.exp (((k + m : ℕ) : ℝ) * L) := by
+    rw [← Real.log_pow, Real.exp_log (by positivity)]
+  have e5 : (b : ℝ) ^ (ε * N) = Real.exp (L * (ε * N)) := Real.rpow_def_of_pos hb0 _
+  rw [div_eq_mul_one_div, e1, e2, e3, e4, e5, ← Real.exp_add, ← Real.exp_add, ← Real.exp_add]
+  apply Real.exp_le_exp.2
+  have hlog1 : Real.log (1 + r) ≤ r := by
+    have := Real.log_le_sub_one_of_pos (show 0 < 1 + r by linarith); linarith
+  push_cast
+  have h1 : (N : ℝ) * Real.log (1 + r) ≤ N * (ε * L / 4) := by
+    apply mul_le_mul_of_nonneg_left (hlog1.trans hrε) hN0
+  have h2 : (k : ℝ) * c ≤ 2 * ε' * N * c := mul_le_mul_of_nonneg_right hk hc0
+  have h3 : Real.log 2 * (ε' * N) ≤ L * (ε' * N) := mul_le_mul_of_nonneg_right hL2 (by positivity)
+  have h4 : (k : ℝ) * L ≤ 2 * ε' * N * L := mul_le_mul_of_nonneg_right hk hL0.le
+  have h5 : (m : ℝ) * L ≤ ε * N / 2 * L := mul_le_mul_of_nonneg_right (by linarith) hL0.le
+  have h6 : N * (ε' * (2 * c + 3 * L)) ≤ N * (ε * L / 4) := mul_le_mul_of_nonneg_left hε'b hN0
+  nlinarith
+
+open Classical in
+/-- One piece of the cover of `𝒟(b)`: integer part `k`, block length `m`, block family `F`, and a
+bad set of density `≤ 2ε'` beyond `N₁`. -/
+def detPiece (b : ℕ) (ε' : ℝ) (p : ℤ × ℕ × Finset (List ℕ) × ℕ) : Set ℝ :=
+  {x | ⌊x⌋ = p.1 ∧ 0 < p.2.1 ∧ (p.2.2.1.card : ℝ) < (2 : ℝ) ^ (ε' * p.2.1) ∧
+    ∃ S : Set ℕ, (∀ N ≥ p.2.2.2, ((((Finset.range N).filter (· ∈ S)).card : ℕ) : ℝ) ≤ 2 * ε' * N) ∧
+      ∀ i, i ∉ S → (List.ofFn fun j : Fin p.2.1 => digitOf b (Int.fract x) (i + j)) ∈ p.2.2.1}
+
+open Classical in
+theorem subexp_detPiece (b : ℕ) (hb : 2 ≤ b) {ε r ε' : ℝ} (hε : 0 < ε) (hr0 : 0 < r) (hr1 : r ≤ 1)
+    (hε'0 : 0 < ε')
+    (hasymp : ∀ m N : ℕ, 2 * (m : ℝ) ≤ ε * N →
+      (1 + r) ^ N / r ^ (⌊2 * ε' * N⌋₊) * (2 : ℝ) ^ (ε' * N) * (b : ℝ) ^ (⌊2 * ε' * N⌋₊ + m) ≤
+        (b : ℝ) ^ (ε * N))
+    (p : ℤ × ℕ × Finset (List ℕ) × ℕ) : SubexpCylinderCount b ε (detPiece b ε' p) := by
+  obtain ⟨k, m, F, N₁⟩ := p
+  have hb0 : (0 : ℝ) < b := Nat.cast_pos.2 (by omega)
+  by_cases h : 0 < m ∧ (F.card : ℝ) < (2 : ℝ) ^ (ε' * m)
+  swap
+  · refine ⟨0, fun N _ => ⟨∅, by simp; positivity, fun x hx => absurd ⟨hx.2.1, hx.2.2.1⟩ h⟩⟩
+  obtain ⟨hm, hF⟩ := h
+  have hmR : (0 : ℝ) < m := by exact_mod_cast hm
+  refine ⟨max N₁ ⌈2 * m / ε⌉₊, fun N hN => ?_⟩
+  set K := ⌊2 * ε' * N⌋₊
+  set G : ℝ := (2 : ℝ) ^ (ε' * m)
+  have hG : 1 ≤ G := Real.one_le_rpow (by norm_num) (by positivity)
+  have hGN : G ^ (((N - 0 : ℕ) : ℝ) / m) = (2 : ℝ) ^ (ε' * N) := by
+    rw [← Real.rpow_mul (by norm_num)]; congr 1; simp only [Nat.sub_zero]; field_simp
+  have hmN : 2 * (m : ℝ) ≤ ε * N := by
+    have h1 : (⌈2 * m / ε⌉₊ : ℝ) ≤ N := by exact_mod_cast le_of_max_le_right hN
+    have h2 := Nat.le_ceil (2 * (m : ℝ) / ε)
+    rw [div_le_iff₀ hε] at h2; nlinarith
+  refine ⟨((Finset.range N).powerset.filter (fun Ts => Ts.card ≤ K)).biUnion
+    (fun Ts => (candSuffix b m N Ts F 0).image (fun w => k * (b : ℤ) ^ N + digVal b w)), ?_, ?_⟩
+  · refine le_trans ?_ (hasymp m N hmN)
+    have hcard := Finset.card_biUnion_le (s := (Finset.range N).powerset.filter (fun Ts => Ts.card ≤ K))
+      (t := fun Ts => (candSuffix b m N Ts F 0).image (fun w => k * (b : ℤ) ^ N + digVal b w))
+    have hterm : ∀ Ts ∈ (Finset.range N).powerset.filter (fun Ts => Ts.card ≤ K),
+        ((((candSuffix b m N Ts F 0).image (fun w => k * (b : ℤ) ^ N + digVal b w)).card : ℕ) : ℝ) ≤
+          (2 : ℝ) ^ (ε' * N) * (b : ℝ) ^ (K + m) := by
+      intro Ts hTs
+      have hTsK := (Finset.mem_filter.1 hTs).2
+      refine (Nat.cast_le.2 Finset.card_image_le).trans ?_
+      refine (card_candSuffix_le b m N (by omega) hm Ts F G hG hF.le 0).trans ?_
+      rw [hGN]
+      refine mul_le_mul_of_nonneg_left (pow_le_pow_right₀ (by exact_mod_cast (by omega : 1 ≤ b)) ?_)
+        (by positivity)
+      have : (Ts.filter (0 ≤ ·)).card ≤ Ts.card := Finset.card_filter_le _ _
+      have : min m (N - 0) ≤ m := min_le_left _ _
+      omega
+    calc ((Finset.biUnion _ _).card : ℝ)
+        ≤ ∑ Ts ∈ (Finset.range N).powerset.filter (fun Ts => Ts.card ≤ K),
+            ((((candSuffix b m N Ts F 0).image (fun w => k * (b : ℤ) ^ N + digVal b w)).card : ℕ) : ℝ) := by
+          exact_mod_cast hcard
+      _ ≤ ∑ _Ts ∈ (Finset.range N).powerset.filter (fun Ts => Ts.card ≤ K),
+            (2 : ℝ) ^ (ε' * N) * (b : ℝ) ^ (K + m) := Finset.sum_le_sum hterm
+      _ = (((Finset.range N).powerset.filter (fun Ts => Ts.card ≤ K)).card : ℝ) *
+            ((2 : ℝ) ^ (ε' * N) * (b : ℝ) ^ (K + m)) := by rw [Finset.sum_const, nsmul_eq_mul]
+      _ ≤ (1 + r) ^ N / r ^ K * ((2 : ℝ) ^ (ε' * N) * (b : ℝ) ^ (K + m)) :=
+          mul_le_mul_of_nonneg_right (card_smallSubsets_le N K hr0 hr1) (by positivity)
+      _ = _ := by ring
+  · rintro x ⟨hk, -, -, S, hS, hwin⟩
+    set t := ⌊x * (b : ℝ) ^ N⌋
+    have hbN : (0 : ℝ) < (b : ℝ) ^ N := by positivity
+    refine mem_iUnion₂.2 ⟨t, ?_, ?_⟩
+    · refine Finset.mem_biUnion.2 ⟨(Finset.range N).filter (· ∈ S), ?_, Finset.mem_image.2
+        ⟨(List.range' 0 N).map (digitOf b (Int.fract x)), ?_, ?_⟩⟩
+      · refine Finset.mem_filter.2 ⟨Finset.mem_powerset.2 (Finset.filter_subset _ _), ?_⟩
+        exact Nat.le_floor (hS N (le_of_max_le_left hN))
+      · have := mem_candSuffix b m N ((Finset.range N).filter (· ∈ S)) F (digitOf b (Int.fract x))
+          (digitOf_lt b hb _) (fun i hi hiN => hwin i fun hiS =>
+            hi (Finset.mem_filter.2 ⟨Finset.mem_range.2 hiN, hiS⟩)) 0
+        simpa using this
+      · rw [← floor_eq_digVal b hb _ (Int.fract_nonneg x) (Int.fract_lt_one x)]
+        have hx : x * (b : ℝ) ^ N = ((k * (b : ℤ) ^ N : ℤ) : ℝ) + Int.fract x * (b : ℝ) ^ N := by
+          rw [Int.fract, hk]; push_cast; ring
+        rw [show t = ⌊x * (b : ℝ) ^ N⌋ from rfl, hx, Int.floor_intCast_add]
+    · have h1 := Int.floor_le (x * (b : ℝ) ^ N)
+      have h2 := Int.lt_floor_add_one (x * (b : ℝ) ^ N)
+      exact ⟨by rw [div_le_iff₀ hbN]; exact h1, by rw [lt_div_iff₀ hbN]; exact h2⟩
+
 /-- **Leaf (a): `𝒟(b)` has packing dimension `0`.**  Confidence 85%.
 
 English proof.  Fix `ε > 0`; pick `ε' > 0` with `H(2ε') + ε' + 2ε' log₂ b < ε log₂ b`
@@ -270,7 +535,34 @@ bad (`≤ 2^{(N/m) H(2ε')}`), the good windows (`|F|^{N/m} ≤ 2^{ε'N}`), the 
 theorem deterministic_subexp_cover (b : ℕ) (hb : 2 ≤ b) (ε : ℝ) (hε : 0 < ε) :
     ∃ E : ℕ → Set ℝ, (∀ i, SubexpCylinderCount b ε (E i)) ∧
       {x : ℝ | IsDeterministic b x} ⊆ ⋃ i, E i := by
-  sorry
+  classical
+  obtain ⟨r, ε', hr0, hr1, hε'0, hε'4, hasymp⟩ := subexp_asymp b hb ε hε
+  obtain ⟨g, hg⟩ := exists_surjective_nat (ℤ × ℕ × Finset (List ℕ) × ℕ)
+  refine ⟨fun n => detPiece b ε' (g n), fun n => subexp_detPiece b hb hε hr0 hr1 hε'0 hasymp _, ?_⟩
+  intro x hx
+  obtain ⟨m, F, ⟨S, hS, hwin⟩, hF⟩ := hx ε' hε'0
+  obtain ⟨N₁, hN₁⟩ := eventually_atTop.1 (hS ε' hε'0)
+  have hm : 0 < m := by
+    by_contra h0
+    have hm0 : m = 0 := by omega
+    subst hm0
+    have hF0 : F = ∅ := by
+      have h1 : F.card < 1 := by exact_mod_cast (by simpa using hF : (F.card : ℝ) < 1)
+      exact Finset.card_eq_zero.1 (by omega)
+    have hall : ∀ i, i ∈ S := fun i => by_contra fun hi => by simpa [hF0] using hwin i hi
+    have := hN₁ (max N₁ 1) (le_max_left _ _)
+    have hc : (((Finset.range (max N₁ 1)).filter (· ∈ S)).card) = max N₁ 1 := by
+      rw [Finset.filter_true_of_mem fun i _ => hall i, Finset.card_range]
+    rw [hc] at this
+    have h1 : (1 : ℝ) ≤ (max N₁ 1 : ℕ) := by exact_mod_cast le_max_right _ _
+    nlinarith
+  obtain ⟨n, hn⟩ := hg (⌊x⌋, m, F, N₁)
+  refine mem_iUnion.2 ⟨n, ?_⟩
+  rw [hn]
+  refine ⟨rfl, hm, hF, S, fun N hN => ?_, hwin⟩
+  have := hN₁ N hN
+  convert this using 1
+  · ring
 
 /-- A product of two rank-`N` `b`-adic cells has sup-metric diameter `≤ b^{-N}`. -/
 theorem ediam_cell_prod_le {b : ℕ} (hb : 2 ≤ b) (N : ℕ) (s t : ℤ) :
