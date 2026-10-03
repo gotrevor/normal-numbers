@@ -1,18 +1,13 @@
-## Manai P/Q lane (2026-10-03) — ExplicitPQ.lean, in progress
-* PROVED leaves: `pushFourier_le_of_deriv2_lower_unif`, `exists_isBranch`, `wPoly_ne_zero_of_not_affineIn`
-  (`wronsk_const`), `branch_spec` (`branch_expand`), `analyticOnNhd_GP` (`analyticAt_brInv`),
-  `measurable_GPfam`, `GP_bounds`, `deriv2_GP_lower`, `decay_GPfam`.  The a.e. headline
-  `exists_PQ_of_analytic` now rests only on proved leaves.
-* REFUTED frozen leaf `approx_GPfam` (`not_approxGPfamClaim`): normalising by `2 HQ` does not bound
-  the slope; `Q = X + 512(X−1)⁹`, `u = 0`, `P = X`, `D = 4` gives two codes with a common 4-prefix
-  and `GPfam` gap `> 1/16`.
-* NEXT (crux): rewire `exists_computable_isAbsNormal_GP` (statement unchanged) through a
-  re-normalised family `(G_P + H)/(2 H S_i)`, `S_i ≥ |c|(deg bound + 1)` primrec, so slope `≤ 1/2`.
-  Needs: (1) list-level primrec test for `AffineIn` (evaluate at `n+1` integer points, cross-multiply
-  in ℕ pos/neg parts); (2) primrec grid search for `Q⁻¹` (`f(n+1) = if C(n+1) then n+1 else f n`,
-  `C` monotone, integer comparison of `σQ(N/2^T)` with `σ w_lo`); (3) exact `P(x̃)` via pos/neg
-  sums (copy `Sp/Sm` from `ExplicitOmegaK`); (4) `Num/Den` with truncated subtraction = `max 0`.
-  The same grid search gives `exists_computable_approx_xPQ`.
+## Manai P/Q lane (2026-10-03) — DONE
+* `ExplicitPQ.exists_computable_PQ` PROVED (from `BakerBanajiUniformQuarterCantor` only); `#print axioms`
+  = propext, Classical.choice, Quot.sound.  `exists_PQ_of_analytic` likewise.  ExplicitPQ.lean has no sorry.
+* The frozen leaf `approx_GPfam` was FALSE (`not_approxGPfamClaim`, kept with `ApproxGPfamClaim`); the
+  theorem was deleted and the derandomization rerouted through the re-normalised family `GPfam2`
+  (normaliser `M = (Σ|l_j|(u+2)^{|l|}+1)(|c|+1)(|l|+1)`, slope ≤ 1/2): `approx2_core`/`approx_GPfam2`,
+  `decay_GPfam2`, `measurable_GPfam2`.  Supporting: `grid_bracket` (primrec monotone grid inverse of Q),
+  `affFail_iff` (primrec test for P ∈ span(1,Q)), `exists_lst_eq`/`not_affineIn_lst`.
+* `exists_computable_approx_xPQ` from the grid (`approx_xPQ_aux`, `computable_pre`).
+* `GPfam`, `decay_GPfam`, `measurable_GPfam` remain proved but are now off the headline path.
 
 ## Bergelson-Downarowicz questions 2 and 4 (2026-10-03) — DONE
 * `DeterministicBD.lean` sorry-free.  Item 4 (`not_productQuestion`, `not_ratioQuestion`,
