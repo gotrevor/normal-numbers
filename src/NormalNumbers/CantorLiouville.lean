@@ -5,6 +5,7 @@ Authors: Trevor Morris
 -/
 import NormalNumbers.ExplicitSquareNonNormal
 import NormalNumbers.DecayAeNormal
+import NormalNumbers.CantorSelfSimilar
 import Mathlib.Topology.Instances.CantorSet
 import Mathlib.NumberTheory.Transcendental.Liouville.Basic
 
@@ -69,7 +70,7 @@ open MeasureTheory Filter Topology
 
 namespace NormalNumbers.CantorLiouville
 
-open DecayAeNormal ExplicitSquare
+open DecayAeNormal ExplicitSquare CantorSelfSimilar
 
 /-! ## The forced zero-runs -/
 
@@ -234,6 +235,24 @@ theorem tdig_mul_three_pow (c : ℤ) {i j : ℕ} (hij : i < j) : tdig (c * 3 ^ j
   rw [ht, pow_succ]
   simp [Int.mul_emod_left, ← mul_assoc]
 
+theorem padicValNat_four_pow_sub_one (n : ℕ) (hn : n ≠ 0) :
+    padicValNat 3 (4 ^ n - 1) = 1 + padicValNat 3 n := by
+  have := padicValNat.pow_sub_pow (p := 3) (x := 4) (y := 1) (by decide) (by norm_num)
+    (by norm_num) (by norm_num) hn
+  simpa using this
+
+theorem three_pow_dvd_iff (j n : ℕ) (hn : n ≠ 0) :
+    3 ^ j ∣ 4 ^ n - 1 ↔ j ≤ 1 + padicValNat 3 n := by
+  have : (4 ^ n - 1) ≠ 0 := by
+    have : 4 ≤ 4 ^ n := Nat.le_self_pow hn 4
+    omega
+  rw [padicValNat_dvd_iff_le this, padicValNat_four_pow_sub_one n hn]
+
+theorem two_pow_eq_one_iff {n e : ℕ} :
+    (2 : ZMod n) ^ e = 1 ↔ n ∣ 2 ^ e - 1 := by
+  rw [← ZMod.natCast_eq_zero_iff, Nat.cast_sub (Nat.one_le_two_pow), sub_eq_zero]
+  push_cast; rfl
+
 /-- **Content locator: `2` generates `(ℤ/3^{M+1})ˣ`.**  Confidence 99%.
 
 English proof.  `2 ≡ −1 (mod 3)` has order `2` mod `3`; by lifting the exponent,
@@ -241,7 +260,30 @@ English proof.  `2 ≡ −1 (mod 3)` has order `2` mod `3`; by lifting the expon
 order of `2` is `2·3^M = φ(3^{M+1})`.  This is exactly what fails for `3` (`3` is not a unit). -/
 theorem orderOf_two_zmod_three_pow (M : ℕ) :
     orderOf (2 : ZMod (3 ^ (M + 1))) = 2 * 3 ^ M := by
-  sorry
+  apply orderOf_eq_of_pow_and_pow_div_prime (by positivity)
+  · rw [two_pow_eq_one_iff, pow_mul, show (2:ℕ)^2 = 4 by norm_num,
+      three_pow_dvd_iff _ _ (by positivity), padicValNat.prime_pow]
+    omega
+  · intro p hp hpd
+    rcases (Nat.Prime.dvd_mul hp).1 hpd with h2 | h3
+    · have : p = 2 := (Nat.prime_dvd_prime_iff_eq hp Nat.prime_two).1 h2
+      subst this
+      rw [show 2 * 3 ^ M / 2 = 3 ^ M by omega]
+      intro h
+      have h' := congrArg (ZMod.castHom (dvd_pow_self 3 (Nat.succ_ne_zero M)) (ZMod 3)) h
+      rw [map_pow, map_one, map_ofNat] at h'
+      have hodd : Odd (3 ^ M) := Odd.pow (by decide)
+      rw [show (2 : ZMod 3) = -1 by decide, hodd.neg_one_pow] at h'
+      exact absurd h' (by decide)
+    · have : p = 3 := (Nat.prime_dvd_prime_iff_eq hp Nat.prime_three).1
+        (Nat.Prime.dvd_of_dvd_pow hp h3)
+      subst this
+      rcases M with _ | M
+      · simp at h3
+      · rw [show 2 * 3 ^ (M + 1) / 3 = 2 * 3 ^ M by rw [pow_succ]; omega,
+          Ne, two_pow_eq_one_iff, pow_mul, show (2:ℕ)^2 = 4 by norm_num,
+          three_pow_dvd_iff _ _ (by positivity), padicValNat.prime_pow]
+        omega
 
 /-- **Digit changes are i.i.d. over a full period** (exact identity).  Confidence 93%.
 
@@ -271,6 +313,102 @@ theorem abs_cos_le_of_tdig_ne (ξ : ℤ) (i : ℕ) (h : tdig ξ (i + 1) ≠ tdig
     |Real.cos (2 * Real.pi * ξ / 3 ^ (i + 2))| ≤ Real.cos (Real.pi / 9) := by
   sorry
 
+theorem summable_ptDigit (free : ℕ → Bool) (ω : ℕ → Bool) :
+    Summable fun i => (ptDigit free ω i : ℝ) / (3 : ℝ) ^ (i + 1) := by
+  refine Summable.of_nonneg_of_le (fun i => by positivity) (fun i => ?_)
+    ((summable_geometric_of_lt_one (r := (3 : ℝ)⁻¹) (by norm_num) (by norm_num)))
+  have : (ptDigit free ω i : ℝ) ≤ 3 := by exact_mod_cast (ptDigit_lt free ω i).le
+  rw [inv_pow, div_le_iff₀ (by positivity), pow_succ, inv_mul_cancel_left₀ (by positivity)]
+  exact this
+
+theorem pt_consB (free : ℕ → Bool) (c : Bool) (ω : ℕ → Bool) :
+    pt free (consB c ω) = (if free 0 && c then 2 else 0) / 3 +
+      pt (fun i => free (i + 1)) ω / 3 := by
+  unfold pt realOfDigits
+  simp only [Nat.cast_ofNat]
+  rw [(summable_ptDigit free (consB c ω)).tsum_eq_zero_add, ← tsum_div_const]
+  congr 1
+  · simp [ptDigit, consB]
+  · refine tsum_congr fun i => ?_
+    simp only [ptDigit, consB]
+    rw [pow_succ _ (i + 1)]; field_simp; split_ifs with hh <;> simp_all
+
+theorem norm_one_add_ee_div_two (t : ℝ) : ‖(1 + ee t) / 2‖ = |Real.cos (Real.pi * t)| := by
+  have : (1 + ee t) / 2 = ee (t / 2) * (Real.cos (Real.pi * t) : ℂ) := by
+    rw [Complex.ofReal_cos, Complex.cos]
+    unfold ee
+    have e1 : Complex.exp (2 * Real.pi * Complex.I * ((t / 2 : ℝ) : ℂ)) *
+        Complex.exp (((Real.pi * t : ℝ) : ℂ) * Complex.I) =
+        Complex.exp (2 * Real.pi * Complex.I * (t : ℂ)) := by
+      rw [← Complex.exp_add]; congr 1; push_cast; ring
+    have e2 : Complex.exp (2 * Real.pi * Complex.I * ((t / 2 : ℝ) : ℂ)) *
+        Complex.exp (-(((Real.pi * t : ℝ) : ℂ)) * Complex.I) = 1 := by
+      rw [← Complex.exp_add, ← Complex.exp_zero]; congr 1; push_cast; ring
+    rw [mul_div_assoc', mul_add, e1, e2]; ring
+  rw [this, norm_mul, norm_ee, one_mul, Complex.norm_real, Real.norm_eq_abs]
+
+theorem charFun_real (M : ℕ) : ∀ (free : ℕ → Bool) (ξ : ℝ),
+    ‖∫ ω, ee (ξ * pt free ω) ∂coinMeasure‖ ≤
+      ∏ p ∈ (Finset.range M).filter (fun p => free p = true),
+        |Real.cos (2 * Real.pi * ξ / 3 ^ (p + 1))| := by
+  induction M with
+  | zero =>
+    intro free ξ
+    simp only [Finset.range_zero, Finset.filter_empty, Finset.prod_empty]
+    refine (norm_integral_le_of_norm_le_const (C := 1)
+      (Eventually.of_forall fun ω => (norm_ee _).le)).trans ?_
+    simp
+  | succ M ih =>
+    intro free ξ
+    set free' : ℕ → Bool := fun i => free (i + 1)
+    set g : (ℕ → Bool) → ℂ := fun ω => ee (ξ * pt free ω)
+    have hgm : Measurable g := measurable_ee.comp ((measurable_pt free).const_mul ξ)
+    have hgi : ∀ μ : Measure (ℕ → Bool), IsFiniteMeasure μ → Integrable g μ := fun μ _ =>
+      Integrable.of_bound hgm.aestronglyMeasurable 1
+        (Eventually.of_forall fun ω => (norm_ee _).le)
+    set I' := ∫ ω, ee (ξ / 3 * pt free' ω) ∂coinMeasure
+    have hc : ∀ c, ∫ ω, g (consB c ω) ∂coinMeasure =
+        ee (ξ * ((if free 0 && c then 2 else 0) / 3)) * I' := by
+      intro c
+      rw [← integral_const_mul]
+      refine integral_congr_ae (Eventually.of_forall fun ω => ?_)
+      simp only [g, pt_consB, ← ee_add]
+      congr 1; ring
+    have hsplit : ∫ ω, g ω ∂coinMeasure =
+        2⁻¹ * ∫ ω, g (consB true ω) ∂coinMeasure + 2⁻¹ * ∫ ω, g (consB false ω) ∂coinMeasure := by
+      conv_lhs => rw [coinMeasure_eq]
+      rw [integral_add_measure ((hgi _ inferInstance).smul_measure (by simp))
+          ((hgi _ inferInstance).smul_measure (by simp)),
+        integral_smul_measure, integral_smul_measure,
+        integral_map (measurable_consB true).aemeasurable hgm.aestronglyMeasurable,
+        integral_map (measurable_consB false).aemeasurable hgm.aestronglyMeasurable]
+      simp [ENNReal.toReal_inv]
+    have hI' := ih free' (ξ / 3)
+    change ‖∫ ω, g ω ∂coinMeasure‖ ≤ _
+    rw [hsplit, hc, hc, Finset.prod_filter, Finset.prod_range_succ', ← Finset.prod_filter]
+    have hre : ∏ p ∈ (Finset.range M).filter (fun p => free (p + 1) = true),
+        |Real.cos (2 * Real.pi * ξ / 3 ^ (p + 1 + 1))| =
+        ∏ p ∈ (Finset.range M).filter (fun p => free' p = true),
+        |Real.cos (2 * Real.pi * (ξ / 3) / 3 ^ (p + 1))| := by
+      refine Finset.prod_congr rfl fun p _ => ?_
+      congr 2; rw [pow_succ]; ring
+    rw [hre]
+    by_cases h0 : free 0 = true
+    · simp only [h0, Bool.true_and, if_true, Bool.false_eq_true, if_false]
+      have : 2⁻¹ * (ee (ξ * (2 / 3)) * I') + 2⁻¹ * (ee (ξ * (0 / 3)) * I') =
+          ((1 + ee (2 * ξ / 3)) / 2) * I' := by
+        rw [show ξ * (0 / 3) = 0 by ring, show ξ * (2 / 3) = 2 * ξ / 3 by ring]
+        simp [ee]; ring
+      rw [this, norm_mul, norm_one_add_ee_div_two, mul_comm,
+        show Real.pi * (2 * ξ / 3) = 2 * Real.pi * ξ / 3 ^ (0 + 1) by ring]
+      exact mul_le_mul_of_nonneg_right hI' (abs_nonneg _)
+    · simp only [Bool.not_eq_true] at h0
+      simp only [h0, Bool.false_and, Bool.false_eq_true, if_false]
+      have : 2⁻¹ * (ee (ξ * (0 / 3)) * I') + 2⁻¹ * (ee (ξ * (0 / 3)) * I') = I' := by
+        rw [show ξ * (0 / 3) = 0 by ring]; simp [ee]; ring
+      rw [this, mul_one]
+      exact hI'
+
 /-- **Riesz-product bound for the characteristic function.**  Confidence 94%.
 
 English proof.  `pt free ω = Σ_{p<M} d_p 3^{-(p+1)} + 3^{-M}·(tail)`, the two parts independent
@@ -280,8 +418,445 @@ contribute `1`; the tail factor has modulus `≤ 1`. -/
 theorem charFun_norm_le (free : ℕ → Bool) (ξ : ℤ) (M : ℕ) :
     ‖∫ ω, ee (ξ * pt free ω) ∂coinMeasure‖ ≤
       ∏ p ∈ (Finset.range M).filter (fun p => free p = true),
-        |Real.cos (2 * Real.pi * ξ / 3 ^ (p + 1))| := by
-  sorry
+        |Real.cos (2 * Real.pi * ξ / 3 ^ (p + 1))| :=
+  charFun_real M free ξ
+
+/-! ### Cassels' three-point route to `secondMoment_le` -/
+
+theorem cos_three_sum (x : ℝ) :
+    Real.cos x + Real.cos (x + 2 * Real.pi / 3) + Real.cos (x + 2 * (2 * Real.pi / 3)) = 0 := by
+  have h1 : Real.cos (2 * Real.pi / 3) = -1 / 2 := by
+    rw [show 2 * Real.pi / 3 = Real.pi - Real.pi / 3 by ring, Real.cos_pi_sub, Real.cos_pi_div_three]
+    ring
+  have h2 : Real.sin (2 * Real.pi / 3) = Real.sqrt 3 / 2 := by
+    rw [show 2 * Real.pi / 3 = Real.pi - Real.pi / 3 by ring, Real.sin_pi_sub,
+      Real.sin_pi_div_three]
+  have h3 : Real.cos (2 * (2 * Real.pi / 3)) = -1 / 2 := by
+    rw [Real.cos_two_mul, h1]; ring
+  have h4 : Real.sin (2 * (2 * Real.pi / 3)) = -(Real.sqrt 3 / 2) := by
+    rw [Real.sin_two_mul, h1, h2]; ring
+  rw [Real.cos_add, Real.cos_add, h1, h2, h3, h4]; ring
+
+/-- **Cassels' three-point bound.** -/
+theorem three_point (x : ℝ) :
+    ∑ t ∈ Finset.range 3, |Real.cos (x + t * (2 * Real.pi / 3))| ≤ 2 := by
+  simp only [Finset.sum_range_succ, Finset.sum_range_zero, Nat.cast_zero, Nat.cast_one,
+    Nat.cast_ofNat, zero_mul, add_zero, one_mul, zero_add]
+  have hs := cos_three_sum x
+  have a1 := Real.cos_le_one x
+  have a2 := Real.cos_le_one (x + 2 * Real.pi / 3)
+  have a3 := Real.cos_le_one (x + 2 * (2 * Real.pi / 3))
+  have b1 := Real.neg_one_le_cos x
+  have b2 := Real.neg_one_le_cos (x + 2 * Real.pi / 3)
+  have b3 := Real.neg_one_le_cos (x + 2 * (2 * Real.pi / 3))
+  rcases abs_cases (Real.cos x) with ⟨e1, _⟩ | ⟨e1, _⟩ <;>
+  rcases abs_cases (Real.cos (x + 2 * Real.pi / 3)) with ⟨e2, _⟩ | ⟨e2, _⟩ <;>
+  rcases abs_cases (Real.cos (x + 2 * (2 * Real.pi / 3))) with ⟨e3, _⟩ | ⟨e3, _⟩ <;>
+  rw [e1, e2, e3] <;> linarith
+
+/-- Positions `p ∈ [v+1, v+k)` that are free. -/
+def posSet (free : ℕ → Bool) (v k : ℕ) : Finset ℕ :=
+  (Finset.range (v + k)).filter fun p => v + 1 ≤ p ∧ free p = true
+
+/-- The Riesz majorant at offset `v`. -/
+noncomputable def Hf (free : ℕ → Bool) (v k : ℕ) (u : ℝ) : ℝ :=
+  ∏ p ∈ posSet free v k, |Real.cos (2 * Real.pi * (3 ^ v * u) / 3 ^ (p + 1))|
+
+theorem Hf_nonneg (free : ℕ → Bool) (v k : ℕ) (u : ℝ) : 0 ≤ Hf free v k u :=
+  Finset.prod_nonneg fun _ _ => abs_nonneg _
+
+theorem Hf_le_one (free : ℕ → Bool) (v k : ℕ) (u : ℝ) : Hf free v k u ≤ 1 :=
+  Finset.prod_le_one (fun _ _ => abs_nonneg _) fun _ _ => Real.abs_cos_le_one _
+
+theorem Hf_periodic (free : ℕ → Bool) (v k : ℕ) (u : ℝ) (s : ℤ) :
+    Hf free v k (u + 3 ^ k * s) = Hf free v k u := by
+  unfold Hf
+  refine Finset.prod_congr rfl fun p hp => ?_
+  simp only [posSet, Finset.mem_filter, Finset.mem_range] at hp
+  have he : (3 : ℝ) ^ v * 3 ^ k = 3 ^ (p + 1) * 3 ^ (v + k - (p + 1)) := by
+    rw [← pow_add, ← pow_add]; congr 1; omega
+  have : 2 * Real.pi * (3 ^ v * (u + 3 ^ k * s)) / 3 ^ (p + 1) =
+      2 * Real.pi * (3 ^ v * u) / 3 ^ (p + 1) + ((s * 3 ^ (v + k - (p + 1)) : ℤ) : ℝ) * (2 * Real.pi) := by
+    have h3 : (3 : ℝ) ^ (p + 1) ≠ 0 := by positivity
+    field_simp
+    push_cast
+    linear_combination (s : ℝ) * he
+  rw [this, Real.cos_add_int_mul_two_pi]
+
+theorem Hf_succ (free : ℕ → Bool) (v k : ℕ) (hk : 1 ≤ k) (u : ℝ) :
+    Hf free v (k + 1) u = Hf free v k u *
+      (if free (v + k) = true then |Real.cos (2 * Real.pi * (3 ^ v * u) / 3 ^ (v + k + 1))| else 1) := by
+  unfold Hf posSet
+  rw [show v + (k + 1) = (v + k) + 1 by ring, Finset.range_add_one, Finset.filter_insert]
+  by_cases hf : free (v + k) = true
+  · rw [if_pos ⟨by omega, hf⟩, Finset.prod_insert (by simp), if_pos hf, mul_comm]
+  · rw [if_neg (fun h => hf h.2), if_neg hf, mul_one]
+
+theorem sum_range_mul_eq (f : ℕ → ℝ) (L q : ℕ) :
+    ∑ w ∈ Finset.range (L * q), f w = ∑ t ∈ Finset.range q, ∑ u ∈ Finset.range L, f (L * t + u) := by
+  induction q with
+  | zero => simp
+  | succ q ih => rw [Nat.mul_succ, Finset.sum_range_add, ih, Finset.sum_range_succ]
+
+theorem three_dvd_add_iff (k t u : ℕ) (hk : 1 ≤ k) : 3 ∣ 3 ^ k * t + u ↔ 3 ∣ u := by
+  have : 3 ∣ 3 ^ k * t := Dvd.dvd.mul_right (dvd_pow_self 3 (by omega)) t
+  exact (Nat.dvd_add_right this)
+
+/-- **Cassels' residue bound.**  Over units `u mod 3^{j+1}`, the majorant averages to
+`(2/3)^{#free positions}`. -/
+theorem residue_sum_le (free : ℕ → Bool) (v : ℕ) : ∀ j : ℕ,
+    ∑ u ∈ Finset.range (3 ^ (j + 1)), (if 3 ∣ u then 0 else Hf free v (j + 1) u) ≤
+      2 * 3 ^ j * (2 / 3 : ℝ) ^ (posSet free v (j + 1)).card := by
+  intro j
+  induction j with
+  | zero =>
+    have : posSet free v (0 + 1) = ∅ := by
+      ext p; simp [posSet]; omega
+    simp only [this, Finset.card_empty, pow_zero, Hf, Finset.prod_empty]
+    simp [Finset.sum_range_succ]
+    norm_num
+  | succ j ih =>
+    set k := j + 1
+    have hk : 1 ≤ k := by omega
+    rw [show 3 ^ (k + 1) = 3 ^ k * 3 by ring, sum_range_mul_eq, Finset.sum_comm]
+    have hstep : ∀ u ∈ Finset.range (3 ^ k),
+        ∑ t ∈ Finset.range 3, (if 3 ∣ 3 ^ k * t + u then (0:ℝ) else
+          Hf free v (k + 1) ((3 ^ k * t + u : ℕ) : ℝ)) ≤
+        (if free (v + k) = true then 2 else 3) * (if 3 ∣ u then 0 else Hf free v k u) := by
+      intro u _
+      by_cases hu : 3 ∣ u
+      · simp [three_dvd_add_iff k _ u hk, hu]
+      · simp only [three_dvd_add_iff k _ u hk, hu, if_false]
+        have hper : ∀ t : ℕ, Hf free v k ((3 ^ k * t + u : ℕ) : ℝ) = Hf free v k u := by
+          intro t
+          have := Hf_periodic free v k u t
+          rw [← this]; congr 1; push_cast; ring
+        simp_rw [Hf_succ free v k hk, hper, ← Finset.mul_sum]
+        rw [mul_comm]
+        gcongr
+        · exact Hf_nonneg _ _ _ _
+        by_cases hf : free (v + k) = true
+        · simp only [hf, if_true]
+          have := three_point (2 * Real.pi * (3 ^ v * u) / 3 ^ (v + k + 1))
+          refine le_of_eq_of_le (Finset.sum_congr rfl fun t _ => ?_) this
+          congr 2
+          push_cast
+          field_simp
+          ring
+        · simp [hf]
+    refine (Finset.sum_le_sum hstep).trans ?_
+    rw [← Finset.mul_sum]
+    have hcard : (posSet free v (k + 1)).card =
+        (posSet free v k).card + (if free (v + k) = true then 1 else 0) := by
+      unfold posSet
+      rw [show v + (k + 1) = (v + k) + 1 by ring, Finset.range_add_one, Finset.filter_insert]
+      by_cases hf : free (v + k) = true
+      · rw [if_pos ⟨by omega, hf⟩, Finset.card_insert_of_notMem (by simp), if_pos hf]
+      · rw [if_neg (fun h => hf h.2), if_neg hf, add_zero]
+    rw [hcard]
+    by_cases hf : free (v + k) = true
+    · simp only [hf, if_true]
+      calc (2 : ℝ) * _ ≤ 2 * (2 * 3 ^ j * (2 / 3 : ℝ) ^ (posSet free v k).card) := by gcongr
+        _ = _ := by rw [pow_succ, pow_succ]; ring
+    · simp only [hf, if_false, Bool.false_eq_true, add_zero]
+      calc (3 : ℝ) * _ ≤ 3 * (2 * 3 ^ j * (2 / 3 : ℝ) ^ (posSet free v k).card) := by gcongr
+        _ = _ := by rw [pow_succ]; ring
+
+theorem Hf_mod (free : ℕ → Bool) (v k n : ℕ) :
+    Hf free v k ((n % 3 ^ k : ℕ) : ℝ) = Hf free v k n := by
+  have := Hf_periodic free v k ((n % 3 ^ k : ℕ) : ℝ) ((n / 3 ^ k : ℕ) : ℤ)
+  rw [← this]; congr 1
+  have h := Nat.mod_add_div n (3 ^ k)
+  have h' : ((n % 3 ^ k : ℕ) : ℝ) + ((3 ^ k * (n / 3 ^ k) : ℕ) : ℝ) = n := by
+    rw [← Nat.cast_add, h]
+  push_cast at h'
+  rw [Int.cast_natCast]; linarith
+
+theorem card_units_range (j : ℕ) :
+    ((Finset.range (3 ^ (j + 1))).filter fun u => ¬ 3 ∣ u).card = 2 * 3 ^ j := by
+  have h := Nat.totient_prime_pow Nat.prime_three (Nat.succ_pos j)
+  rw [Nat.totient_eq_card_coprime] at h
+  rw [show 2 * 3 ^ j = 3 ^ (j + 1 - 1) * (3 - 1) by simp; ring, ← h]
+  congr 1
+  refine Finset.filter_congr fun u _ => ?_
+  rw [Nat.coprime_pow_left_iff (Nat.succ_pos j), Nat.Prime.coprime_iff_not_dvd Nat.prime_three]
+
+/-- **One period of the doubling orbit covers the units once.** -/
+theorem block_sum (free : ℕ → Bool) (v j c : ℕ) (hc : ¬ 3 ∣ c) :
+    ∑ b ∈ Finset.range (2 * 3 ^ j), Hf free v (j + 1) ((c * 2 ^ b : ℕ) : ℝ) =
+      ∑ u ∈ Finset.range (3 ^ (j + 1)), (if 3 ∣ u then 0 else Hf free v (j + 1) u) := by
+  have hfl : ∑ u ∈ Finset.range (3 ^ (j + 1)), (if 3 ∣ u then 0 else Hf free v (j + 1) u) =
+      ∑ u ∈ (Finset.range (3 ^ (j + 1))).filter (fun u => ¬ 3 ∣ u), Hf free v (j + 1) u := by
+    rw [Finset.sum_filter]; refine Finset.sum_congr rfl fun u _ => ?_; split_ifs <;> simp_all
+  rw [hfl]
+  simp_rw [← Hf_mod free v (j + 1) (c * 2 ^ _)]
+  set n := 3 ^ (j + 1)
+  have hcop : Nat.Coprime c n :=
+    Nat.Coprime.pow_right _ ((Nat.Prime.coprime_iff_not_dvd Nat.prime_three).2 hc).symm
+  have hord := orderOf_two_zmod_three_pow j
+  have hfin : IsOfFinOrder (2 : ZMod n) := orderOf_pos_iff.1 (by rw [hord]; positivity)
+  have hinj : Set.InjOn (fun b => c * 2 ^ b % n) (Finset.range (2 * 3 ^ j) : Set ℕ) := by
+    intro a ha b hb hab
+    simp only [Finset.coe_range, Set.mem_Iio] at ha hb
+    have h1 : ((c * 2 ^ a : ℕ) : ZMod n) = ((c * 2 ^ b : ℕ) : ZMod n) :=
+      (ZMod.natCast_eq_natCast_iff' _ _ _).2 hab
+    push_cast at h1
+    have hu : IsUnit (c : ZMod n) := (ZMod.unitOfCoprime c hcop).isUnit
+    have h2 := hu.mul_left_cancel h1
+    rw [hfin.pow_inj_mod, hord, Nat.mod_eq_of_lt ha, Nat.mod_eq_of_lt hb] at h2
+    exact h2
+  have hmaps : Set.MapsTo (fun b => c * 2 ^ b % n) (Finset.range (2 * 3 ^ j) : Set ℕ)
+      ((Finset.range n).filter fun u => ¬ 3 ∣ u : Finset ℕ) := by
+    intro b _
+    simp only [Finset.coe_filter, Finset.mem_range, Set.mem_setOf_eq]
+    refine ⟨Nat.mod_lt _ (by positivity), fun h3 => ?_⟩
+    have h3n : 3 ∣ n := dvd_pow_self 3 (Nat.succ_ne_zero j)
+    have : 3 ∣ c * 2 ^ b := by
+      rw [← Nat.mod_add_div (c * 2 ^ b) n]
+      exact dvd_add h3 (Dvd.dvd.mul_right h3n _)
+    rcases (Nat.Prime.dvd_mul Nat.prime_three).1 this with h | h
+    · exact hc h
+    · exact absurd (Nat.Prime.dvd_of_dvd_pow Nat.prime_three h) (by decide)
+  refine Finset.sum_nbij (fun b => c * 2 ^ b % n) (fun b hb => hmaps hb) hinj ?_ (fun _ _ => rfl)
+  exact Finset.surjOn_of_injOn_of_card_le _ hmaps hinj
+    (by rw [card_units_range, Finset.card_range])
+
+/-- **Partial periods.** -/
+theorem sum_Hf_le (free : ℕ → Bool) (v j c : ℕ) (hc : ¬ 3 ∣ c) (N : ℕ) :
+    ∑ b ∈ Finset.range N, Hf free v (j + 1) ((c * 2 ^ b : ℕ) : ℝ) ≤
+      (N + 2 * 3 ^ j) * (2 / 3 : ℝ) ^ (posSet free v (j + 1)).card := by
+  set L := 2 * 3 ^ j
+  set f : ℕ → ℝ := fun b => Hf free v (j + 1) ((c * 2 ^ b : ℕ) : ℝ)
+  have hL : 0 < L := by positivity
+  have hper1 : (3 ^ (j + 1)) ∣ 2 ^ L - 1 := by
+    rw [← two_pow_eq_one_iff]
+    have := pow_orderOf_eq_one (2 : ZMod (3 ^ (j + 1)))
+    rwa [orderOf_two_zmod_three_pow] at this
+  have hper : ∀ t b, f (L * t + b) = f b := by
+    intro t b
+    induction t with
+    | zero => simp
+    | succ t ih =>
+      rw [← ih]
+      obtain ⟨s, hs⟩ := hper1
+      simp only [f]
+      have h2 : 1 ≤ 2 ^ L := Nat.one_le_two_pow
+      have : c * 2 ^ (L * (t + 1) + b) = c * 2 ^ (L * t + b) + 3 ^ (j + 1) * (c * 2 ^ (L * t + b) * s) := by
+        rw [show L * (t + 1) + b = (L * t + b) + L by ring, pow_add]
+        have : 2 ^ L = 3 ^ (j + 1) * s + 1 := by omega
+        rw [this]; ring
+      rw [this]
+      have := Hf_periodic free v (j + 1) ((c * 2 ^ (L * t + b) : ℕ) : ℝ) ((c * 2 ^ (L * t + b) * s : ℕ) : ℤ)
+      rw [← this]; congr 1; push_cast; ring
+  set q := N / L + 1
+  have hNq : N ≤ L * q := by
+    have := Nat.lt_div_mul_add (a := N) hL
+    simp only [q]; nlinarith [Nat.div_add_mod N L, Nat.mod_lt N hL]
+  have hf0 : ∀ b, 0 ≤ f b := fun b => Hf_nonneg _ _ _ _
+  calc ∑ b ∈ Finset.range N, f b ≤ ∑ b ∈ Finset.range (L * q), f b :=
+        Finset.sum_le_sum_of_subset_of_nonneg (Finset.range_subset_range.2 hNq) (fun b _ _ => hf0 b)
+    _ = q * ∑ b ∈ Finset.range L, f b := by
+        rw [sum_range_mul_eq]; simp_rw [hper]; simp
+    _ ≤ q * (L * (2 / 3 : ℝ) ^ (posSet free v (j + 1)).card) := by
+        gcongr
+        rw [block_sum free v j c hc]
+        refine (residue_sum_le free v j).trans (le_of_eq ?_)
+        simp [L]
+    _ ≤ _ := by
+        rw [← mul_assoc]
+        gcongr
+        have : (q : ℝ) * L ≤ N + L := by
+          have h1 : (N / L) * L ≤ N := Nat.div_mul_le_self N L
+          have : ((N / L : ℕ) : ℝ) * L ≤ N := by exact_mod_cast h1
+          simp only [q]; push_cast; linarith
+        simpa [L] using this
+
+/-- The Riesz majorant of `|μ̂(ξ)|` (`charFun_norm_le`). -/
+noncomputable def Bf (free : ℕ → Bool) (M : ℕ) (ξ : ℝ) : ℝ :=
+  ∏ p ∈ (Finset.range M).filter (fun p => free p = true), |Real.cos (2 * Real.pi * ξ / 3 ^ (p + 1))|
+
+theorem Bf_nonneg (free : ℕ → Bool) (M : ℕ) (ξ : ℝ) : 0 ≤ Bf free M ξ :=
+  Finset.prod_nonneg fun _ _ => abs_nonneg _
+
+theorem Bf_le_one (free : ℕ → Bool) (M : ℕ) (ξ : ℝ) : Bf free M ξ ≤ 1 :=
+  Finset.prod_le_one (fun _ _ => abs_nonneg _) fun _ _ => Real.abs_cos_le_one _
+
+theorem Bf_neg (free : ℕ → Bool) (M : ℕ) (ξ : ℝ) : Bf free M (-ξ) = Bf free M ξ := by
+  unfold Bf
+  refine Finset.prod_congr rfl fun p _ => ?_
+  rw [mul_neg, neg_div, Real.cos_neg]
+
+theorem Bf_le_Hf (free : ℕ → Bool) (v k : ℕ) (u : ℝ) :
+    Bf free (v + k) (3 ^ v * u) ≤ Hf free v k u := by
+  unfold Bf Hf
+  have hsub : posSet free v k ⊆ (Finset.range (v + k)).filter (fun p => free p = true) := by
+    intro p hp; simp only [posSet, Finset.mem_filter] at hp ⊢; exact ⟨hp.1, hp.2.2⟩
+  rw [← Finset.prod_sdiff hsub]
+  have h1 : ∏ p ∈ (Finset.range (v + k)).filter (fun p => free p = true) \ posSet free v k,
+      |Real.cos (2 * Real.pi * (3 ^ v * u) / 3 ^ (p + 1))| ≤ 1 :=
+    Finset.prod_le_one (fun _ _ => abs_nonneg _) fun _ _ => Real.abs_cos_le_one _
+  have h2 : 0 ≤ ∏ p ∈ posSet free v k, |Real.cos (2 * Real.pi * (3 ^ v * u) / 3 ^ (p + 1))| :=
+    Finset.prod_nonneg fun _ _ => abs_nonneg _
+  nlinarith
+
+theorem freeCount_le (free : ℕ → Bool) (v k : ℕ) :
+    freeCount free (v + k) ≤ v + 1 + (posSet free v k).card := by
+  unfold freeCount posSet
+  have : (Finset.range (v + k)).filter (fun i => free i = true) ⊆
+      Finset.range (v + 1) ∪ (Finset.range (v + k)).filter fun p => v + 1 ≤ p ∧ free p = true := by
+    intro p hp
+    simp only [Finset.mem_filter, Finset.mem_range, Finset.mem_union] at hp ⊢
+    by_cases h : p < v + 1
+    · exact Or.inl h
+    · exact Or.inr ⟨hp.1, by omega, hp.2⟩
+  refine (Finset.card_le_card this).trans ((Finset.card_union_le _ _).trans ?_)
+  simp
+
+/-- **Good shifts.**  If `v₃(c)` is small compared with the free count, the orbit sum of the
+majorant saves `(2/3)^{F/2}`. -/
+theorem good_shift (free : ℕ → Bool) (M N : ℕ) (hMN : 3 ^ M ≤ N) (c : ℕ) (hc : c ≠ 0)
+    (hv : padicValNat 3 c + 1 ≤ freeCount free M / 2) :
+    ∑ b ∈ Finset.range N, Bf free M ((c * 2 ^ b : ℕ) : ℝ) ≤
+      2 * N * (2 / 3 : ℝ) ^ (freeCount free M / 2) := by
+  obtain ⟨v, c', hc', hcc⟩ := Nat.exists_eq_pow_mul_and_not_dvd hc 3 (by norm_num)
+  have hvv : padicValNat 3 c = v := by
+    rw [hcc, padicValNat.mul (by positivity) (by rintro rfl; simp at hc'),
+      padicValNat.prime_pow, padicValNat.eq_zero_of_not_dvd hc', add_zero]
+  rw [hvv] at hv
+  have hFM : freeCount free M ≤ M := by
+    unfold freeCount; exact (Finset.card_filter_le _ _).trans (by simp)
+  obtain ⟨j, hj⟩ : ∃ j, M = v + (j + 1) := ⟨M - v - 1, by omega⟩
+  have hterm : ∀ b, Bf free M ((c * 2 ^ b : ℕ) : ℝ) ≤ Hf free v (j + 1) ((c' * 2 ^ b : ℕ) : ℝ) := by
+    intro b
+    have := Bf_le_Hf free v (j + 1) ((c' * 2 ^ b : ℕ) : ℝ)
+    rw [← hj] at this
+    refine le_of_eq_of_le ?_ this
+    congr 1; rw [hcc]; push_cast; ring
+  have hcard := freeCount_le free v (j + 1)
+  rw [← hj] at hcard
+  have hL : (2 * 3 ^ j : ℝ) ≤ N := by
+    have : 2 * 3 ^ j ≤ 3 ^ M := by
+      rw [hj, pow_add, pow_succ]; nlinarith [Nat.one_le_pow v 3 (by norm_num), Nat.one_le_pow j 3 (by norm_num)]
+    exact_mod_cast this.trans hMN
+  calc _ ≤ ∑ b ∈ Finset.range N, Hf free v (j + 1) ((c' * 2 ^ b : ℕ) : ℝ) :=
+        Finset.sum_le_sum fun b _ => hterm b
+    _ ≤ (N + 2 * 3 ^ j) * (2 / 3 : ℝ) ^ (posSet free v (j + 1)).card := sum_Hf_le free v j c' hc' N
+    _ ≤ (2 * N) * (2 / 3 : ℝ) ^ (freeCount free M / 2) := by
+        gcongr ?_ * ?_
+        · linarith
+        · exact pow_le_pow_of_le_one (by norm_num) (by norm_num) (by omega)
+
+theorem tri_sum_le (G : ℕ → ℕ → ℝ) (hG : ∀ d b, 0 ≤ G d b) (N : ℕ) :
+    ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N, (if m < n then G (n - m) m else 0) ≤
+      ∑ d ∈ Finset.Ico 1 N, ∑ b ∈ Finset.range N, G d b := by
+  rw [Finset.sum_comm, Finset.sum_comm (s := Finset.Ico 1 N)]
+  refine Finset.sum_le_sum fun m _ => ?_
+  rw [← Finset.sum_filter]
+  rw [← Finset.sum_image (f := fun d => G d m) (g := fun n => n - m)]
+  · refine Finset.sum_le_sum_of_subset_of_nonneg ?_ fun _ _ _ => hG _ _
+    intro d hd
+    simp only [Finset.mem_image, Finset.mem_filter, Finset.mem_range] at hd
+    obtain ⟨n, ⟨hn, hmn⟩, rfl⟩ := hd
+    simp only [Finset.mem_Ico]; omega
+  · intro a ha b hb hab
+    simp only [Finset.coe_filter, Finset.mem_range, Set.mem_setOf_eq] at ha hb
+    simp only at hab; omega
+
+theorem pair_sum_le (Φ : ℕ → ℕ → ℝ) (G : ℕ → ℕ → ℝ) (hG : ∀ d b, 0 ≤ G d b)
+    (hd : ∀ n, Φ n n ≤ 1) (hlt : ∀ n m, m < n → Φ n m ≤ G (n - m) m)
+    (hgt : ∀ n m, n < m → Φ n m ≤ G (m - n) n) (N : ℕ) :
+    ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N, Φ n m ≤
+      N + 2 * ∑ d ∈ Finset.Ico 1 N, ∑ b ∈ Finset.range N, G d b := by
+  have hsplit : ∀ n m, Φ n m ≤ (if m < n then G (n - m) m else 0) + (if n = m then 1 else 0) +
+      (if n < m then G (m - n) n else 0) := by
+    intro n m
+    rcases lt_trichotomy m n with h | h | h
+    · simp [h, h.ne', not_lt.2 h.le, hlt n m h]
+    · subst h; simp [hd]
+    · simp [h, h.ne, not_lt.2 h.le, hgt n m h]
+  calc _ ≤ ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N,
+        ((if m < n then G (n - m) m else 0) + (if n = m then 1 else 0) +
+          (if n < m then G (m - n) n else 0)) :=
+        Finset.sum_le_sum fun n _ => Finset.sum_le_sum fun m _ => hsplit n m
+    _ = ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N, (if m < n then G (n - m) m else 0) + N +
+        ∑ m ∈ Finset.range N, ∑ n ∈ Finset.range N, (if n < m then G (m - n) n else 0) := by
+        simp only [Finset.sum_add_distrib]
+        rw [Finset.sum_comm (f := fun n m => if n < m then G (m - n) n else 0)]
+        congr 1
+        congr 1
+        simp
+        rw [Finset.filter_true_of_mem fun x hx => Finset.mem_range.1 hx, Finset.card_range]
+    _ ≤ _ := by
+        have := tri_sum_le G hG N
+        linarith
+
+theorem bad_count (e W N : ℕ) :
+    ((Finset.Ico 1 N).filter (fun m => W ≤ e + padicValNat 3 (2 ^ m - 1))).card ≤
+      N / 3 ^ (W - e - 1) := by
+  rw [← Nat.Ioc_filter_dvd_card_eq_div]
+  refine Finset.card_le_card ?_
+  intro m hm
+  simp only [Finset.mem_filter, Finset.mem_Ico, Finset.mem_Ioc] at hm ⊢
+  refine ⟨⟨by omega, by omega⟩, ?_⟩
+  rcases Nat.lt_or_ge (W - e) 2 with hr | hr
+  · rw [show W - e - 1 = 0 by omega, pow_zero]; exact one_dvd _
+  · obtain ⟨r, hr'⟩ : ∃ r, W - e = r + 1 + 1 := ⟨W - e - 2, by omega⟩
+    have hne : 2 ^ m - 1 ≠ 0 := by
+      have : 2 ≤ 2 ^ m := Nat.le_self_pow (by omega) 2
+      omega
+    have h3 : 3 ^ (r + 1 + 1) ∣ 2 ^ m - 1 :=
+      (padicValNat_dvd_iff_le hne).2 (by omega)
+    rw [← two_pow_eq_one_iff, ← orderOf_dvd_iff_pow_eq_one, orderOf_two_zmod_three_pow] at h3
+    rw [show W - e - 1 = r + 1 by omega]
+    exact (Dvd.intro_left _ rfl).trans h3
+
+theorem Bf_abs (free : ℕ → Bool) (M : ℕ) (ξ : ℝ) : Bf free M |ξ| = Bf free M ξ := by
+  rcases abs_cases ξ with ⟨h, _⟩ | ⟨h, _⟩ <;> rw [h]; rw [Bf_neg]
+
+/-- Expansion of the second moment into Riesz majorants. -/
+theorem secondMoment_expand (free : ℕ → Bool) (h : ℤ) (M N : ℕ) :
+    ∫ ω, ‖∑ k ∈ Finset.range N, ee (h * 2 ^ k * pt free ω)‖ ^ 2 ∂coinMeasure ≤
+      ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N, Bf free M (h * ((2 : ℝ) ^ n - 2 ^ m)) := by
+  have hG := measurable_pt free
+  have hint : ∀ ξ : ℝ, Integrable (fun ω => ee (ξ * pt free ω)) coinMeasure := fun ξ =>
+    Integrable.of_bound ((measurable_ee.comp (hG.const_mul ξ)).aestronglyMeasurable) 1
+      (Eventually.of_forall fun ω => (norm_ee _).le)
+  have hexp : ∀ ω, ((‖∑ k ∈ Finset.range N, ee (h * 2 ^ k * pt free ω)‖ ^ 2 : ℝ) : ℂ) =
+      ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N,
+        ee ((h * ((2 : ℝ) ^ n - 2 ^ m)) * pt free ω) := by
+    intro ω
+    rw [sq_norm_sum_ee (fun k => h * 2 ^ k * pt free ω)]
+    refine Finset.sum_congr rfl fun n _ => Finset.sum_congr rfl fun m _ => ?_
+    congr 1; ring
+  have hI : ((∫ ω, ‖∑ k ∈ Finset.range N, ee (h * 2 ^ k * pt free ω)‖ ^ 2 ∂coinMeasure : ℝ) : ℂ) =
+      ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N,
+        ∫ ω, ee ((h * ((2 : ℝ) ^ n - 2 ^ m)) * pt free ω) ∂coinMeasure := by
+    rw [← integral_complex_ofReal]
+    simp_rw [hexp]
+    rw [integral_finsetSum _ fun n _ => integrable_finsetSum _ fun m _ => hint _]
+    refine Finset.sum_congr rfl fun n _ => ?_
+    rw [integral_finsetSum _ fun m _ => hint _]
+  have := congrArg Complex.re hI
+  rw [Complex.ofReal_re] at this
+  rw [this]
+  refine (Complex.re_le_norm _).trans ((norm_sum_le _ _).trans ?_)
+  refine Finset.sum_le_sum fun n _ => (norm_sum_le _ _).trans ?_
+  exact Finset.sum_le_sum fun m _ => charFun_real M free _
+
+theorem pow_two_sub_le (W : ℕ) (F : ℕ) (hW : W = F / 2) :
+    (2 / 3 : ℝ) ^ W ≤ 3 / 2 * Real.exp (-(Real.log (3 / 2) / 2) * F) := by
+  have hl : 0 < Real.log (3 / 2) := Real.log_pos (by norm_num)
+  have h1 : (2 / 3 : ℝ) ^ W = Real.exp (-(W * Real.log (3 / 2))) := by
+    rw [← Real.rpow_natCast, Real.rpow_def_of_pos (by norm_num),
+      show (2 / 3 : ℝ) = (3 / 2)⁻¹ by norm_num, Real.log_inv]
+    ring_nf
+  have hWF : (F : ℝ) ≤ 2 * W + 1 := by
+    have : F ≤ 2 * W + 1 := by omega
+    exact_mod_cast this
+  rw [h1, show (3 / 2 : ℝ) = Real.exp (Real.log (3 / 2)) by rw [Real.exp_log (by norm_num)],
+    ← Real.exp_add, Real.exp_log (by norm_num)]
+  apply Real.exp_le_exp.2
+  nlinarith
 
 /-- **The quantitative Cassels lemma** (the content of the campaign).  Confidence 85%.
 
@@ -305,7 +880,109 @@ theorem secondMoment_le (free : ℕ → Bool) (h : ℤ) (hh : h ≠ 0) :
       ∫ ω, ‖∑ k ∈ Finset.range N, ee (h * 2 ^ k * pt free ω)‖ ^ 2 ∂coinMeasure ≤
         C * (N : ℝ) ^ 2 *
           (Real.exp (-c * freeCount free (Nat.log 3 N / 2)) + (N : ℝ) ^ (-(1 / 2 : ℝ))) := by
-  sorry
+  set e := padicValNat 3 h.natAbs
+  have hl : 0 < Real.log (3 / 2) := Real.log_pos (by norm_num)
+  refine ⟨1 + 3 * (3 ^ (e + 1) + 2), Real.log (3 / 2) / 2, by positivity, by positivity,
+    fun N hN => ?_⟩
+  set M := Nat.log 3 N / 2
+  set F := freeCount free M
+  set W := F / 2
+  have hMN : 3 ^ M ≤ N :=
+    (Nat.pow_le_pow_right (by norm_num) (Nat.div_le_self _ _)).trans
+      (Nat.pow_log_le_self 3 (by omega))
+  set G : ℕ → ℕ → ℝ := fun d b => Bf free M (h * ((2 : ℝ) ^ d - 1) * 2 ^ b)
+  have hpair := pair_sum_le (fun n m => Bf free M (h * ((2 : ℝ) ^ n - 2 ^ m))) G
+    (fun d b => Bf_nonneg _ _ _) (fun n => Bf_le_one _ _ _)
+    (fun n m hmn => le_of_eq (by
+      simp only [G]; congr 1
+      rw [show (2 : ℝ) ^ n = 2 ^ (n - m) * 2 ^ m by rw [← pow_add]; congr 1; omega]; ring))
+    (fun n m hmn => le_of_eq (by
+      simp only [G]; rw [← Bf_neg]; congr 1
+      rw [show (2 : ℝ) ^ m = 2 ^ (m - n) * 2 ^ n by rw [← pow_add]; congr 1; omega]; ring)) N
+  -- per-shift bound
+  have hshift : ∀ d ∈ Finset.Ico 1 N, ∑ b ∈ Finset.range N, G d b ≤
+      (if W ≤ e + padicValNat 3 (2 ^ d - 1) then (N : ℝ) else 0) +
+        2 * N * (2 / 3 : ℝ) ^ W := by
+    intro d hd
+    simp only [Finset.mem_Ico] at hd
+    have hd1 : 1 ≤ 2 ^ d - 1 := by
+      have : 2 ≤ 2 ^ d := Nat.le_self_pow (by omega) 2
+      omega
+    split_ifs with hbad
+    · refine (Finset.sum_le_sum fun b _ => Bf_le_one free M _).trans ?_
+      have : (0 : ℝ) ≤ 2 * N * (2 / 3 : ℝ) ^ W := by positivity
+      simp; linarith
+    · rw [zero_add]
+      set c := h.natAbs * (2 ^ d - 1)
+      have hc : c ≠ 0 := Nat.mul_ne_zero (Int.natAbs_ne_zero.2 hh) (by omega)
+      have hv : padicValNat 3 c = e + padicValNat 3 (2 ^ d - 1) :=
+        padicValNat.mul (Int.natAbs_ne_zero.2 hh) (by omega)
+      refine le_of_eq_of_le (Finset.sum_congr rfl fun b _ => ?_)
+        (good_shift free M N hMN c hc (by omega))
+      simp only [G]
+      rw [← Bf_abs]
+      congr 1
+      have hd2 : (0 : ℝ) ≤ 2 ^ d - 1 := by
+        have : (1:ℝ) ≤ 2 ^ d := one_le_pow₀ (by norm_num); linarith
+      simp only [c]
+      push_cast [Nat.cast_sub (Nat.one_le_two_pow)]
+      rw [abs_mul, abs_mul, abs_of_pos (by positivity : (0:ℝ) < 2 ^ b),
+        abs_of_nonneg hd2, Nat.cast_natAbs, Int.cast_abs]
+  have hsumd : ∑ d ∈ Finset.Ico 1 N, ∑ b ∈ Finset.range N, G d b ≤
+      N * ((N / 3 ^ (W - e - 1) : ℕ) : ℝ) + N * (2 * N * (2 / 3 : ℝ) ^ W) := by
+    refine (Finset.sum_le_sum hshift).trans ?_
+    rw [Finset.sum_add_distrib, ← Finset.sum_filter, Finset.sum_const, Finset.sum_const,
+      nsmul_eq_mul, nsmul_eq_mul, Nat.card_Ico]
+    have hb := bad_count e W N
+    have : (((Finset.Ico 1 N).filter (fun m => W ≤ e + padicValNat 3 (2 ^ m - 1))).card : ℝ) ≤
+        ((N / 3 ^ (W - e - 1) : ℕ) : ℝ) := by exact_mod_cast hb
+    have hN1 : ((N - 1 : ℕ) : ℝ) ≤ N := by exact_mod_cast Nat.sub_le N 1
+    have : (0 : ℝ) ≤ 2 * N * (2 / 3 : ℝ) ^ W := by positivity
+    nlinarith
+  have hdiv : ((N / 3 ^ (W - e - 1) : ℕ) : ℝ) ≤ N * 3 ^ (e + 1) * (2 / 3 : ℝ) ^ W := by
+    have h1 : (N / 3 ^ (W - e - 1)) * 3 ^ W ≤ N * 3 ^ (e + 1) := by
+      calc (N / 3 ^ (W - e - 1)) * 3 ^ W ≤ (N / 3 ^ (W - e - 1)) * (3 ^ (W - e - 1) * 3 ^ (e + 1)) := by
+            gcongr; rw [← pow_add]; exact Nat.pow_le_pow_right (by norm_num) (by omega)
+        _ = (N / 3 ^ (W - e - 1)) * 3 ^ (W - e - 1) * 3 ^ (e + 1) := by ring
+        _ ≤ N * 3 ^ (e + 1) := by gcongr; exact Nat.div_mul_le_self _ _
+    have h2 : ((N / 3 ^ (W - e - 1) : ℕ) : ℝ) * 3 ^ W ≤ N * 3 ^ (e + 1) := by exact_mod_cast h1
+    have h3 : (2 / 3 : ℝ) ^ W * 3 ^ W = 2 ^ W := by rw [← mul_pow]; norm_num
+    have h4 : (1 : ℝ) ≤ 2 ^ W := one_le_pow₀ (by norm_num)
+    have h5 : (0 : ℝ) < 3 ^ W := by positivity
+    rw [← mul_le_mul_iff_of_pos_right h5]
+    calc _ ≤ (N : ℝ) * 3 ^ (e + 1) := h2
+      _ ≤ (N : ℝ) * 3 ^ (e + 1) * 2 ^ W := le_mul_of_one_le_right (by positivity) h4
+      _ = _ := by rw [mul_assoc _ ((2 / 3 : ℝ) ^ W), h3]
+  have hexp := pow_two_sub_le W F rfl
+  have hNr : (N : ℝ) ≤ (N : ℝ) ^ 2 * (N : ℝ) ^ (-(1 / 2 : ℝ)) := by
+    have hN0 : (1 : ℝ) ≤ N := by exact_mod_cast hN
+    have : (N : ℝ) ^ 2 * (N : ℝ) ^ (-(1 / 2 : ℝ)) = N * (N : ℝ) ^ (1 / 2 : ℝ) := by
+      rw [show (N : ℝ) ^ 2 = N * N ^ (1 : ℝ) by rw [Real.rpow_one]; ring, mul_assoc,
+        ← Real.rpow_add (by positivity)]
+      norm_num
+    rw [this]
+    have : (1 : ℝ) ≤ (N : ℝ) ^ (1 / 2 : ℝ) := Real.one_le_rpow hN0 (by norm_num)
+    nlinarith
+  have hI := (secondMoment_expand free h M N).trans hpair
+  set E := Real.exp (-(Real.log (3 / 2) / 2) * F)
+  set R := (N : ℝ) ^ (-(1 / 2 : ℝ))
+  set P := (2 / 3 : ℝ) ^ W
+  have hE : 0 ≤ E := (Real.exp_pos _).le
+  have hR : 0 ≤ R := by positivity
+  have hP : 0 ≤ P := by positivity
+  have hN0 : (0 : ℝ) ≤ N := by positivity
+  have h3e : (1 : ℝ) ≤ 3 ^ (e + 1) := one_le_pow₀ (by norm_num)
+  -- I ≤ N + 2 (N * N * 3^{e+1} P + 2 N² P)
+  have hfin : ∫ ω, ‖∑ k ∈ Finset.range N, ee (h * 2 ^ k * pt free ω)‖ ^ 2 ∂coinMeasure ≤
+      N + 2 * ((N : ℝ) ^ 2 * (3 ^ (e + 1) + 2) * P) := by
+    have := mul_le_mul_of_nonneg_left hdiv hN0
+    nlinarith
+  calc _ ≤ N + 2 * ((N : ℝ) ^ 2 * (3 ^ (e + 1) + 2) * P) := hfin
+    _ ≤ (N : ℝ) ^ 2 * R + 2 * ((N : ℝ) ^ 2 * (3 ^ (e + 1) + 2) * (3 / 2 * E)) := by
+        gcongr
+    _ ≤ _ := by
+        have hN2 : (0 : ℝ) ≤ (N : ℝ) ^ 2 := by positivity
+        nlinarith [mul_nonneg hN2 hE, mul_nonneg hN2 hR, mul_nonneg (mul_nonneg hN2 hR) (by positivity : (0:ℝ) ≤ 3 ^ (e + 1) + 2)]
 
 /-! ## Davenport–Erdős–LeVeque along a slow schedule -/
 
