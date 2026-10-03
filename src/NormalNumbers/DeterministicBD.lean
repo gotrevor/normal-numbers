@@ -38,6 +38,7 @@ Answers frozen here (both **No**), direction in `docs/OPEN-PROBLEMS-SWEEP-2026-1
 -/
 
 open Filter MeasureTheory Set
+open scoped ENNReal NNReal Topology
 
 namespace NormalNumbers.Deterministic
 
@@ -271,6 +272,25 @@ theorem deterministic_subexp_cover (b : ℕ) (hb : 2 ≤ b) (ε : ℝ) (hε : 0 
       {x : ℝ | IsDeterministic b x} ⊆ ⋃ i, E i := by
   sorry
 
+/-- A product of two rank-`N` `b`-adic cells has sup-metric diameter `≤ b^{-N}`. -/
+theorem ediam_cell_prod_le {b : ℕ} (hb : 2 ≤ b) (N : ℕ) (s t : ℤ) :
+    Metric.ediam (Ico ((s : ℝ) / (b : ℝ) ^ N) (((s : ℝ) + 1) / (b : ℝ) ^ N) ×ˢ
+      Ico ((t : ℝ) / (b : ℝ) ^ N) (((t : ℝ) + 1) / (b : ℝ) ^ N)) ≤
+      ENNReal.ofReal (((b : ℝ) ^ N)⁻¹) := by
+  have hbN : (0 : ℝ) < (b : ℝ) ^ N := by positivity
+  have key : ∀ u : ℤ, ∀ x ∈ Ico ((u : ℝ) / (b : ℝ) ^ N) (((u : ℝ) + 1) / (b : ℝ) ^ N),
+      ∀ y ∈ Ico ((u : ℝ) / (b : ℝ) ^ N) (((u : ℝ) + 1) / (b : ℝ) ^ N),
+      edist x y ≤ ENNReal.ofReal (((b : ℝ) ^ N)⁻¹) := by
+    intro u x hx y hy
+    rw [edist_dist, Real.dist_eq]
+    apply ENNReal.ofReal_le_ofReal
+    have h1 : (((u:ℝ) + 1) / (b:ℝ) ^ N) - (u : ℝ) / (b:ℝ)^N = ((b:ℝ)^N)⁻¹ := by
+      field_simp; ring
+    rw [abs_le]; constructor <;> linarith [hx.1, hx.2, hy.1, hy.2]
+  refine Metric.ediam_le fun p hp q hq => ?_
+  rw [Prod.edist_eq]
+  exact max_le (key s _ hp.1 _ hq.1) (key t _ hp.2 _ hq.2)
+
 /-- **Leaf (b): box-counting bound for a product.**  Confidence 92%.
 
 English proof.  For `N ≥ max N₀_A N₀_B`, `A ×ˢ B` is covered by `|T_A| |T_B| ≤ b^{2εN}` squares
@@ -281,7 +301,77 @@ scale* count is used; `dimH A = dimH B = 0` alone is not enough (`not_dimH_prod_
 theorem dimH_prod_le_of_subexp {b : ℕ} (hb : 2 ≤ b) {ε : ℝ} (hε : 0 ≤ ε) {A B : Set ℝ}
     (hA : SubexpCylinderCount b ε A) (hB : SubexpCylinderCount b ε B) :
     dimH (A ×ˢ B) ≤ ENNReal.ofReal (2 * ε) := by
-  sorry
+  obtain ⟨NA, hA⟩ := hA
+  obtain ⟨NB, hB⟩ := hB
+  have gA : ∀ N : ℕ, ∃ T : Finset ℤ, NA ≤ N → ((T.card : ℝ) ≤ (b : ℝ) ^ (ε * N) ∧
+      A ⊆ ⋃ t ∈ T, Ico ((t : ℝ) / (b : ℝ) ^ N) (((t : ℝ) + 1) / (b : ℝ) ^ N)) := fun N =>
+    if h : NA ≤ N then let ⟨T, hT⟩ := hA N h; ⟨T, fun _ => hT⟩ else ⟨∅, fun h' => absurd h' h⟩
+  have gB : ∀ N : ℕ, ∃ T : Finset ℤ, NB ≤ N → ((T.card : ℝ) ≤ (b : ℝ) ^ (ε * N) ∧
+      B ⊆ ⋃ t ∈ T, Ico ((t : ℝ) / (b : ℝ) ^ N) (((t : ℝ) + 1) / (b : ℝ) ^ N)) := fun N =>
+    if h : NB ≤ N then let ⟨T, hT⟩ := hB N h; ⟨T, fun _ => hT⟩ else ⟨∅, fun h' => absurd h' h⟩
+  choose TA hTA using gA
+  choose TB hTB using gB
+  have hb1 : (1 : ℝ) < b := by exact_mod_cast hb
+  have hb0 : (0 : ℝ) < b := by linarith
+  refine dimH_le fun d hd => ?_
+  by_contra hlt
+  push Not at hlt
+  have hdε : 2 * ε < (d : ℝ) := by
+    have := (ENNReal.ofReal_lt_iff_lt_toReal (by positivity) (by simp)).1 hlt
+    simpa using this
+  let cell : ℕ → ℤ × ℤ → Set (ℝ × ℝ) := fun N p =>
+    Ico ((p.1 : ℝ) / (b : ℝ) ^ N) (((p.1 : ℝ) + 1) / (b : ℝ) ^ N) ×ˢ
+      Ico ((p.2 : ℝ) / (b : ℝ) ^ N) (((p.2 : ℝ) + 1) / (b : ℝ) ^ N)
+  have hle := Measure.hausdorffMeasure_le_liminf_sum (X := ℝ × ℝ) (d : ℝ) (A ×ˢ B) (l := atTop)
+    (ι := fun N => (TA N ×ˢ TB N : Finset (ℤ × ℤ))) (fun N : ℕ => ENNReal.ofReal (((b : ℝ) ^ N)⁻¹))
+    ?_ (fun N p => cell N p.1) ?_ ?_
+  rotate_left
+  · rw [← ENNReal.ofReal_zero]
+    refine ENNReal.tendsto_ofReal ?_
+    exact tendsto_inv_atTop_zero.comp (tendsto_pow_atTop_atTop_of_one_lt hb1)
+  · exact Eventually.of_forall fun N p => ediam_cell_prod_le hb N p.1.1 p.1.2
+  · filter_upwards [eventually_ge_atTop (max NA NB)] with N hN
+    rintro ⟨x, y⟩ ⟨hx, hy⟩
+    obtain ⟨-, hAc⟩ := hTA N (le_of_max_le_left hN)
+    obtain ⟨-, hBc⟩ := hTB N (le_of_max_le_right hN)
+    have hx' := hAc hx
+    have hy' := hBc hy
+    simp only [mem_iUnion] at hx' hy'
+    obtain ⟨s, hs, hxs⟩ := hx'
+    obtain ⟨t, ht, hyt⟩ := hy'
+    exact mem_iUnion.2 ⟨⟨(s, t), Finset.mem_product.2 ⟨hs, ht⟩⟩, hxs, hyt⟩
+  have hzero : μH[d] (A ×ˢ B) = 0 := by
+    refine le_antisymm (hle.trans ?_) zero_le
+    have hg : Tendsto (fun N : ℕ => ENNReal.ofReal ((b : ℝ) ^ ((2 * ε - d) * N))) atTop (𝓝 0) := by
+      rw [← ENNReal.ofReal_zero]
+      refine ENNReal.tendsto_ofReal ?_
+      have : Tendsto (fun N : ℕ => (2 * ε - d) * (N : ℝ)) atTop atBot :=
+        tendsto_natCast_atTop_atTop.const_mul_atTop_of_neg (by linarith) |>.congr fun _ => rfl
+      exact (tendsto_rpow_atBot_of_base_gt_one _ hb1).comp this
+    refine (liminf_le_liminf ?_).trans (le_of_eq hg.liminf_eq)
+    filter_upwards [eventually_ge_atTop (max NA NB)] with N hN
+    have hcA := (hTA N (le_of_max_le_left hN)).1
+    have hcB := (hTB N (le_of_max_le_right hN)).1
+    have hbN : (0 : ℝ) < (b : ℝ) ^ N := by positivity
+    calc ∑ p : (TA N ×ˢ TB N : Finset (ℤ × ℤ)), Metric.ediam (cell N p.1) ^ (d : ℝ)
+        ≤ ∑ _p : (TA N ×ˢ TB N : Finset (ℤ × ℤ)), ENNReal.ofReal (((b : ℝ) ^ N)⁻¹ ^ (d : ℝ)) := by
+          refine Finset.sum_le_sum fun p _ => ?_
+          rw [← ENNReal.ofReal_rpow_of_nonneg (x := ((b : ℝ) ^ N)⁻¹) (p := (d : ℝ)) (by positivity) d.2]
+          exact ENNReal.rpow_le_rpow (ediam_cell_prod_le hb N p.1.1 p.1.2) d.2
+      _ = ENNReal.ofReal (((TA N).card * (TB N).card : ℕ) * ((b : ℝ) ^ N)⁻¹ ^ (d : ℝ)) := by
+          rw [Finset.sum_const, Finset.card_univ, Fintype.card_coe, Finset.card_product,
+            nsmul_eq_mul, ENNReal.ofReal_mul (by positivity), ENNReal.ofReal_natCast]
+      _ ≤ ENNReal.ofReal ((b : ℝ) ^ ((2 * ε - d) * N)) := by
+          apply ENNReal.ofReal_le_ofReal
+          have e1 : ((b : ℝ) ^ N)⁻¹ ^ (d : ℝ) = (b : ℝ) ^ (-(d : ℝ) * N) := by
+            rw [← Real.rpow_natCast, ← Real.rpow_neg_one, ← Real.rpow_mul hb0.le,
+              ← Real.rpow_mul hb0.le]; ring_nf
+          have e2 : (b : ℝ) ^ ((2 * ε - d) * N) = (b : ℝ) ^ (ε * N) * (b : ℝ) ^ (ε * N) *
+              (b : ℝ) ^ (-(d : ℝ) * N) := by
+            rw [← Real.rpow_add hb0, ← Real.rpow_add hb0]; ring_nf
+          rw [e1, e2]; push_cast
+          gcongr
+  exact absurd (hd ▸ hzero) (by simp)
 
 /-- A map that is `C¹` at every point of `s` does not raise Hausdorff dimension on `s`. -/
 theorem dimH_image_le_of_contDiffAt {E F : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
