@@ -940,3 +940,4 @@ import NormalNumbers.ExplicitOmegaK
 import NormalNumbers.DeterministicBD
 import NormalNumbers.FamilyDerandomizeVar
 import NormalNumbers.ExplicitPQ
+import NormalNumbers.PQApprox
