@@ -46,3 +46,4 @@ Re-confirmed 2026-10-02 (fresh lap): build green, axioms trust-base only; stuck 
 - **Why stuck:** the repo-wide self-stop gate counts sorries in other lanes, outside this run's scope.
 - **Need from operator:** accept done, or relaunch with `--done-when` scoped to this lane.
   Details: `HANDOFF-2026-10-03-dimh-lap1.md`.
+Re-confirmed 2026-10-03 (fresh lap): `#print axioms dimH_Omega_eq_one` = trust base only; stuck strike 2 recorded.
