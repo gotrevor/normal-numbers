@@ -495,6 +495,88 @@ theorem analyticOnNhd_GP {Q : ℤ[X]} {u : ℕ} (hu : IsBranch Q u) :
       analyticAt_const.add (analyticAt_const.mul analyticAt_id)
     exact (AnalyticAt.comp (g := brInv Q u) (f := fun y : ℝ => (aQ Q u : ℝ) + (cQ Q u : ℝ) * y) (x := y) hbr haff).aeval_polynomial P
 
+/-! Calculus of `G_P`: `G_P' = c P'(x)/Q'(x)`, `G_P'' = c² W_P(x)/Q'(x)³`, `x = Xf y`. -/
+
+/-- The open set of `y` with `a + c y ∈ Q((u, ∞))`. -/
+def Vset (Q : ℤ[X]) (u : ℕ) : Set ℝ :=
+  (fun y : ℝ => (aQ Q u : ℝ) + (cQ Q u : ℝ) * y) ⁻¹' ((fun x : ℝ => aeval x Q) '' Set.Ioi (u : ℝ))
+
+/-- `x(y) = Q⁻¹(a + c y)`. -/
+noncomputable def Xf (Q : ℤ[X]) (u : ℕ) (y : ℝ) : ℝ :=
+  brInv Q u ((aQ Q u : ℝ) + (cQ Q u : ℝ) * y)
+
+theorem GP_eq_Xf (Q : ℤ[X]) (u : ℕ) (P : ℤ[X]) : GP Q u P = fun y => aeval (Xf Q u y) P := rfl
+
+theorem isOpen_Vset {Q : ℤ[X]} {u : ℕ} (hu : IsBranch Q u) : IsOpen (Vset Q u) :=
+  (isOpen_image_Ioi hu).preimage (by fun_prop)
+
+theorem window_sub_Vset {Q : ℤ[X]} {u : ℕ} (hu : IsBranch Q u) :
+    Set.Icc (1 / 2 : ℝ) 1 ⊆ Vset Q u := by
+  obtain ⟨-, -, U₀, -, hsub₀, hinv, hmem⟩ := branch_spec hu
+  intro y hy
+  refine ⟨_, ?_, hinv y (hsub₀ hy)⟩
+  have := (hmem y hy).1
+  simp only [Set.mem_Ioi]; linarith
+
+theorem Xf_mem_Icc {Q : ℤ[X]} {u : ℕ} (hu : IsBranch Q u) {y : ℝ}
+    (hy : y ∈ Set.Icc (1 / 2 : ℝ) 1) : Xf Q u y ∈ Set.Icc ((u : ℝ) + 1) ((u : ℝ) + 2) := by
+  obtain ⟨-, -, -, -, -, -, h⟩ := branch_spec hu
+  exact h y hy
+
+theorem Xf_spec {Q : ℤ[X]} {u : ℕ} {y : ℝ} (hy : y ∈ Vset Q u) :
+    Xf Q u y ∈ Set.Ioi (u : ℝ) ∧ aeval (Xf Q u y) Q = (aQ Q u : ℝ) + (cQ Q u : ℝ) * y :=
+  brInv_spec hy
+
+theorem aeval_derivative_ne_zero {Q : ℤ[X]} {u : ℕ} (hu : IsBranch Q u) {x : ℝ}
+    (hx : x ∈ Set.Ioi (u : ℝ)) : aeval x (derivative Q) ≠ 0 := by
+  intro h; have := hu x (le_of_lt hx); rw [h] at this; norm_num at this
+
+theorem hasDerivAt_Xf {Q : ℤ[X]} {u : ℕ} (hu : IsBranch Q u) {y : ℝ} (hy : y ∈ Vset Q u) :
+    HasDerivAt (Xf Q u) ((cQ Q u : ℝ) / aeval (Xf Q u y) (derivative Q)) y := by
+  set w := (aQ Q u : ℝ) + (cQ Q u : ℝ) * y
+  have hW : IsOpen ((fun x : ℝ => aeval x Q) '' Set.Ioi (u : ℝ)) := isOpen_image_Ioi hu
+  have hev : ∀ᶠ v in 𝓝 w, brInv Q u v ∈ Set.Ioi (u : ℝ) ∧ aeval (brInv Q u v) Q = v := by
+    filter_upwards [hW.mem_nhds hy] with v hv using brInv_spec hv
+  have hb : HasDerivAt (brInv Q u) (aeval (brInv Q u w) (derivative Q))⁻¹ w :=
+    HasDerivAt.of_local_left_inverse (analyticAt_brInv hu hev).continuousAt
+      (Polynomial.hasDerivAt_aeval Q _) (aeval_derivative_ne_zero hu (Xf_spec hy).1)
+      (hev.mono fun v hv => hv.2)
+  have haff : HasDerivAt (fun y : ℝ => (aQ Q u : ℝ) + (cQ Q u : ℝ) * y) (cQ Q u : ℝ) y := by
+    simpa using ((hasDerivAt_id y).const_mul (cQ Q u : ℝ)).const_add (aQ Q u : ℝ)
+  have := HasDerivAt.comp (h₂ := brInv Q u) (h := fun y : ℝ => (aQ Q u : ℝ) + (cQ Q u : ℝ) * y)
+    y hb haff
+  exact this.congr_deriv (by rw [div_eq_inv_mul]; rfl)
+
+theorem hasDerivAt_GP {Q : ℤ[X]} {u : ℕ} (hu : IsBranch Q u) (P : ℤ[X]) {y : ℝ}
+    (hy : y ∈ Vset Q u) :
+    HasDerivAt (GP Q u P) ((cQ Q u : ℝ) * aeval (Xf Q u y) (derivative P) /
+      aeval (Xf Q u y) (derivative Q)) y := by
+  rw [GP_eq_Xf]
+  have := (Polynomial.hasDerivAt_aeval P (Xf Q u y)).comp y (hasDerivAt_Xf hu hy)
+  exact this.congr_deriv (by ring)
+
+theorem deriv2_GP_eq {Q : ℤ[X]} {u : ℕ} (hu : IsBranch Q u) (P : ℤ[X]) {y : ℝ}
+    (hy : y ∈ Vset Q u) :
+    deriv (deriv (GP Q u P)) y = (cQ Q u : ℝ) ^ 2 * aeval (Xf Q u y) (wPoly P Q) /
+      aeval (Xf Q u y) (derivative Q) ^ 3 := by
+  set c := (cQ Q u : ℝ)
+  have hd : deriv (GP Q u P) =ᶠ[𝓝 y] fun y => c * aeval (Xf Q u y) (derivative P) /
+      aeval (Xf Q u y) (derivative Q) := by
+    filter_upwards [(isOpen_Vset hu).mem_nhds hy] with v hv using (hasDerivAt_GP hu P hv).deriv
+  rw [hd.deriv_eq]
+  have hX := hasDerivAt_Xf hu hy
+  have h1 := ((Polynomial.hasDerivAt_aeval (derivative P) (Xf Q u y)).comp y hX).const_mul c
+  have h2 := (Polynomial.hasDerivAt_aeval (derivative Q) (Xf Q u y)).comp y hX
+  have hne := aeval_derivative_ne_zero hu (Xf_spec hy).1
+  have := h1.div h2 hne
+  have e : deriv (fun y => c * aeval (Xf Q u y) (derivative P) /
+      aeval (Xf Q u y) (derivative Q)) y = _ := this.deriv
+  rw [e]
+  simp only [Function.comp]
+  simp only [wPoly, map_sub, map_mul]
+  field_simp
+  ring
+
 /-- **Lower bound for `G_P''` by a product of distances, explicit in the zero count.**
 
 Confidence 88%.  English proof: on the window, `G_P''(y) = c² W_P(x)/Q'(x)³` with
