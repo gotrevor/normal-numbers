@@ -903,6 +903,95 @@ theorem good_cylinder_bound {C η κ : ℝ}
       (mul_le_mul_of_nonneg_left hprod hc.le).trans hl
     calc c * s ^ (N + 2) = s * (s * (c * s ^ N)) := by ring
       _ ≤ _ := by gcongr
+theorem norm_list_map_sum_le {α : Type*} (l : List α) (f : α → ℂ) :
+    ‖(l.map f).sum‖ ≤ (l.map fun a => ‖f a‖).sum := by
+  induction l with
+  | nil => simp
+  | cons a l ih => simp only [List.map_cons, List.sum_cons]; exact (norm_add_le _ _).trans (by linarith)
+
+/-- **The cut at depth `m`**: bad cylinders cost `≤ 6N·2^{-m}`, good ones BB's bound. -/
+theorem pushFourier_cut_split {C η κ : ℝ}
+    (hB : ∀ F : ℝ → ℝ, ∀ U : Set ℝ, IsOpen U → Set.Icc (1 / 2 : ℝ) 1 ⊆ U → ContDiffOn ℝ 2 F U →
+      ∀ A a : ℝ, 0 < a →
+      (∀ t ∈ Set.Icc (1 / 2 : ℝ) 1, |deriv F t| ≤ A) →
+      (∀ t ∈ Set.Icc (1 / 2 : ℝ) 1, |deriv (deriv F) t| ≤ A) →
+      (∀ t ∈ Set.Icc (1 / 2 : ℝ) 1, a ≤ |deriv (deriv F) t|) →
+      ∀ ξ : ℝ, ξ ≠ 0 →
+        ‖pushFourier F ξ‖ ≤ C * (1 + 2 * A + (a / 4) ^ (-κ)) * (1 + a ^ (-κ)) * |ξ| ^ (-η))
+    (hC : 0 < C)
+    (N : ℕ) (F : ℝ → ℝ) (U : Set ℝ) (hU : IsOpen U) (hsub : Set.Icc (1 / 2 : ℝ) 1 ⊆ U)
+    (hF : ContDiffOn ℝ 2 F U) (c A : ℝ) (hc : 0 < c)
+    (hA1 : ∀ t ∈ Set.Icc (1 / 2 : ℝ) 1, |deriv F t| ≤ A)
+    (hA2 : ∀ t ∈ Set.Icc (1 / 2 : ℝ) 1, |deriv (deriv F) t| ≤ A)
+    (Z : Multiset ℝ) (hZ : Z.card ≤ N)
+    (hlow : ∀ t ∈ Set.Icc (1 / 2 : ℝ) 1, c * (Z.map fun z => |t - z|).prod ≤ |deriv (deriv F) t|)
+    (m : ℕ) (ξ : ℝ) (hξ : ξ ≠ 0) :
+    ‖pushFourier F ξ‖ ≤ 6 * N / 2 ^ m +
+      C * (1 + 2 * A + (c * (1 / 4 ^ m) ^ (N + 2) / 4) ^ (-κ)) *
+        (1 + (c * (1 / 4 ^ m) ^ (N + 2)) ^ (-κ)) * |ξ| ^ (-η) := by
+  classical
+  set B := C * (1 + 2 * A + (c * (1 / 4 ^ m) ^ (N + 2) / 4) ^ (-κ)) *
+        (1 + (c * (1 / 4 ^ m) ^ (N + 2)) ^ (-κ)) * |ξ| ^ (-η) with hBdef
+  have hA0 : 0 ≤ A := (abs_nonneg _).trans (hA1 1 ⟨by norm_num, le_rfl⟩)
+  have hB0 : 0 ≤ B := by
+    have h1 := Real.rpow_nonneg (show 0 ≤ c * (1 / 4 ^ m) ^ (N + 2) / 4 by positivity) (-κ)
+    have h2 := Real.rpow_nonneg (show 0 ≤ c * (1 / 4 ^ m) ^ (N + 2) by positivity) (-κ)
+    have h3 := Real.rpow_nonneg (abs_nonneg ξ) (-η)
+    positivity
+  set r : ℝ := 1 / 4 ^ m with hr
+  have hr0 : 0 < r := by positivity
+  set G := U.piecewise F 0
+  have hGm : Measurable G :=
+    ContinuousOn.measurable_piecewise (hF.continuousOn) continuousOn_const hU.measurableSet
+  have hwin : ∀ (w : List Bool), ∀ t ∈ Set.Icc (1 / 2 : ℝ) 1, psiL w t ∈ Set.Icc (1 / 2 : ℝ) 1 :=
+    fun w t ht => by rw [psiL_eq_phi]; exact CantorCylinders.phi_mem_window w ht
+  have hFG : pushFourier F ξ = pushFourier G ξ :=
+    pushFourier_congr_window (fun t ht => (Set.piecewise_eq_of_mem _ _ _ (hsub ht)).symm) ξ
+  have hterm : ∀ w : List Bool, pushFourier (G ∘ psiL w) ξ = pushFourier (F ∘ psiL w) ξ :=
+    fun w => pushFourier_congr_window (fun t ht =>
+      Set.piecewise_eq_of_mem _ _ _ (hsub (hwin w t ht))) ξ
+  rw [hFG, pushFourier_split m G hGm ξ]
+  simp only [hterm]
+  set l := Derandomize.allStrings m
+  let near : ℝ → List Bool → Bool := fun z w =>
+    decide (∃ t ∈ Set.Icc (1 / 2 : ℝ) 1, |psiL w t - z| < r)
+  let p : List Bool → Bool := fun w => decide (∃ z ∈ Z.toFinset, near z w = true)
+  have hsum := list_sum_le_bad l p (fun w => ‖pushFourier (F ∘ psiL w) ξ‖) hB0
+    (fun w _ => norm_pushFourier_le_one _ _) (fun w hw hpw => by
+      have hwl : w.length = m := (Derandomize.mem_allStrings m w).1 hw
+      refine good_cylinder_bound hB N F U hU hsub hF c A hc hA1 hA2 Z hZ hlow w ?_ ξ hξ |>.trans
+        (by rw [hwl])
+      intro z hz t ht
+      by_contra hlt
+      push Not at hlt
+      have : p w = true := by
+        refine decide_eq_true ⟨z, Multiset.mem_toFinset.2 hz, decide_eq_true ⟨t, ht, ?_⟩⟩
+        rw [hwl] at hlt; exact hlt
+      rw [this] at hpw; exact Bool.noConfusion hpw)
+  have hcount : ((l.filter p).length : ℝ) ≤ 6 * N := by
+    have h1 := length_filter_exists_le l Z.toFinset near
+    have h2 : ∀ z ∈ Z.toFinset, ((l.filter (near z)).length : ℝ) ≤ 6 := by
+      intro z _
+      have := card_near_cylinders_le m z r hr0
+      have e : (4 : ℝ) * 4 ^ m * r = 4 := by rw [hr]; field_simp
+      rw [e] at this
+      exact this.trans (by norm_num)
+    calc ((l.filter p).length : ℝ) ≤ ∑ z ∈ Z.toFinset, ((l.filter (near z)).length : ℝ) := by
+          exact_mod_cast h1
+      _ ≤ ∑ z ∈ Z.toFinset, (6 : ℝ) := Finset.sum_le_sum h2
+      _ = Z.toFinset.card * 6 := by rw [Finset.sum_const, nsmul_eq_mul]
+      _ ≤ N * 6 := by
+          gcongr; exact_mod_cast (Multiset.toFinset_card_le Z).trans hZ
+      _ = 6 * N := by ring
+  rw [norm_mul, norm_inv, norm_pow, Complex.norm_ofNat]
+  have hlen : (l.length : ℝ) = 2 ^ m := by rw [length_allStrings]; push_cast; ring
+  have h2m : (0 : ℝ) < 2 ^ m := by positivity
+  calc (2 ^ m : ℝ)⁻¹ * ‖(l.map fun w => pushFourier (F ∘ psiL w) ξ).sum‖
+      ≤ (2 ^ m : ℝ)⁻¹ * ((l.filter p).length + l.length * B) := by
+        gcongr
+        exact (norm_list_map_sum_le _ _).trans hsum
+    _ ≤ (2 ^ m : ℝ)⁻¹ * (6 * N + 2 ^ m * B) := by rw [hlen]; gcongr
+    _ = 6 * N / 2 ^ m + B := by field_simp
 /-- **The cylinder cut: explicit polynomial decay when `|F''| ≥ c · Π_{z ∈ Z}|t − z|`, `|Z| ≤ N`.**
 
 Confidence 88%.  English proof (BB Thm 1.1's proof, effective).  Take `K ≥ 1` from the end.  For
