@@ -201,6 +201,83 @@ theorem isNormal_of_discLe (b : ℕ) (hb : 2 ≤ b) (x : ℝ) (ε : ℕ → ℝ)
 
 /-! ## Odd bases: BLD's second moment survives translation -/
 
+/-- Deterministic core of Davenport–Erdős–LeVeque: unit-bounded summands with
+`Σ_N ‖A_N‖²/N < ∞` have means `A_N → 0` (a mean `≥ ε` at `M` persists on `[M, M + εM/2]`,
+contributing `≥ ε³/64` to the series). -/
+theorem tendsto_of_summable_sq_div (z : ℕ → ℂ) (hz : ∀ k, ‖z k‖ ≤ 1)
+    (hs : Summable fun N : ℕ => ‖(∑ k ∈ Finset.range N, z k) / (N : ℂ)‖ ^ 2 / N) :
+    Tendsto (fun N : ℕ => (∑ k ∈ Finset.range N, z k) / (N : ℂ)) atTop (𝓝 0) := by
+  set S : ℕ → ℂ := fun N => ∑ k ∈ Finset.range N, z k with hS
+  have hdiff : ∀ M N, M ≤ N → ‖S N - S M‖ ≤ (N - M : ℕ) := by
+    intro M N hMN
+    have : S N - S M = ∑ k ∈ Finset.Ico M N, z k := by
+      simp only [S]; rw [Finset.sum_range_sub_sum_range hMN]
+      congr 1; ext k; simp [Finset.mem_Ico]; omega
+    rw [this]
+    refine (norm_sum_le _ _).trans ?_
+    refine (Finset.sum_le_sum fun k _ => hz k).trans ?_
+    simp
+  rw [Metric.tendsto_atTop]
+  intro ε hε
+  set e : ℝ := min ε 1 with he
+  have he0 : 0 < e := lt_min hε one_pos
+  have he1 : e ≤ 1 := min_le_right _ _
+  obtain ⟨s, hsv⟩ := (summable_iff_vanishing_norm.1 hs) (e ^ 3 / 64) (by positivity)
+  refine ⟨s.sup id + 1, fun M hM => ?_⟩
+  rw [dist_zero_right]
+  by_contra hcon
+  push Not at hcon
+  have hMe : e ≤ ‖S M / (M : ℂ)‖ := (min_le_left _ _).trans hcon
+  have hM1 : 1 ≤ M := by omega
+  have hMR : (1 : ℝ) ≤ M := by exact_mod_cast hM1
+  have hMpos : (0 : ℝ) < M := by linarith
+  have hSM : e * M ≤ ‖S M‖ := by
+    rw [norm_div, Complex.norm_natCast, le_div_iff₀ hMpos] at hMe; exact hMe
+  set j : ℕ := ⌊e * M / 2⌋₊ with hj
+  have hjle : (j : ℝ) ≤ e * M / 2 := Nat.floor_le (by positivity)
+  have hjgt : e * M / 2 < (j : ℝ) + 1 := Nat.lt_floor_add_one _
+  set t := Finset.Icc M (M + j) with ht
+  have hdisj : Disjoint t s := by
+    rw [Finset.disjoint_left]
+    intro n hn hns
+    have h1 : n ≤ s.sup id := Finset.le_sup (f := id) hns
+    have : M ≤ n := (Finset.mem_Icc.1 hn).1
+    omega
+  have hsmall := hsv t hdisj
+  have hlow : ∀ n ∈ t, e ^ 2 / (32 * M) ≤ ‖S n / (n : ℂ)‖ ^ 2 / n := by
+    intro n hn
+    obtain ⟨h1, h2⟩ := Finset.mem_Icc.1 hn
+    have hnR : (M : ℝ) ≤ n := by exact_mod_cast h1
+    have hn2 : (n : ℝ) ≤ M + j := by exact_mod_cast h2
+    have hnpos : (0 : ℝ) < n := by linarith
+    have hd := hdiff M n h1
+    have hcast : ((n - M : ℕ) : ℝ) = n - M := by push_cast [h1]; ring
+    rw [hcast] at hd
+    have hSn : e * M / 2 ≤ ‖S n‖ := by
+      have := norm_sub_norm_le (S M) (S n)
+      rw [norm_sub_rev] at hd
+      linarith
+    have hn2M : (n : ℝ) ≤ 2 * M := by nlinarith
+    rw [norm_div, Complex.norm_natCast, div_pow, div_div]
+    rw [div_le_div_iff₀ (by positivity) (by positivity)]
+    have : (e * M / 2) ^ 2 ≤ ‖S n‖ ^ 2 := pow_le_pow_left₀ (by positivity) hSn 2
+    have hn3 : (n : ℝ) ^ 2 * n ≤ 8 * M ^ 3 := by
+      have := pow_le_pow_left₀ hnpos.le hn2M 3
+      nlinarith
+    nlinarith [sq_nonneg (e : ℝ), mul_pos hMpos hMpos]
+  have hsum : e ^ 3 / 64 ≤ ∑ n ∈ t, ‖S n / (n : ℂ)‖ ^ 2 / n := by
+    calc e ^ 3 / 64 ≤ ((j : ℝ) + 1) * (e ^ 2 / (32 * M)) := by
+          rw [mul_div_assoc', le_div_iff₀ (by positivity)]
+          nlinarith [sq_nonneg e]
+      _ = ∑ n ∈ t, e ^ 2 / (32 * M) := by
+          rw [Finset.sum_const, ht, Nat.card_Icc, nsmul_eq_mul, show M + j + 1 - M = j + 1 by omega]
+          push_cast; ring
+      _ ≤ _ := Finset.sum_le_sum hlow
+  have hnn : 0 ≤ ∑ n ∈ t, ‖S n / (n : ℂ)‖ ^ 2 / n :=
+    Finset.sum_nonneg fun n _ => by positivity
+  rw [Real.norm_of_nonneg hnn] at hsmall
+  linarith
+
 /-- **Davenport–Erdős–LeVeque** (Michigan Math. J. 10 (1963) 311–314, Theorem 1), for
 unit-bounded measurable functions on a probability space: `Σ_N N⁻¹ 𝔼|A_N|² < ∞` forces
 `A_N → 0` a.s., `A_N = N⁻¹ Σ_{n<N} f_n`.
@@ -214,7 +291,42 @@ theorem del_ae_tendsto {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω) [IsPr
     (hs : Summable fun N : ℕ =>
       (∫ ω, ‖(∑ n ∈ Finset.range N, f n ω) / (N : ℂ)‖ ^ 2 ∂μ) / N) :
     ∀ᵐ ω ∂μ, Tendsto (fun N : ℕ => (∑ n ∈ Finset.range N, f n ω) / (N : ℂ)) atTop (𝓝 0) := by
-  sorry
+  set g : ℕ → Ω → ℝ := fun N ω => ‖(∑ n ∈ Finset.range N, f n ω) / (N : ℂ)‖ ^ 2 / N with hg
+  have hg0 : ∀ N ω, 0 ≤ g N ω := fun N ω => by positivity
+  have hgm : ∀ N, Measurable (g N) := fun N =>
+    (((Finset.measurable_sum _ fun n _ => hf n).div_const _).norm.pow_const 2).div_const _
+  have hA1 : ∀ N ω, ‖(∑ n ∈ Finset.range N, f n ω) / (N : ℂ)‖ ≤ 1 := by
+    intro N ω
+    rcases Nat.eq_zero_or_pos N with rfl | hN
+    · simp
+    rw [norm_div, Complex.norm_natCast, div_le_one (by exact_mod_cast hN)]
+    exact (norm_sum_le _ _).trans (by simpa using Finset.sum_le_sum fun n (_ : n ∈ Finset.range N) => hb n ω)
+  have hgi : ∀ N, Integrable (g N) μ := fun N =>
+    Integrable.of_bound (hgm N).aestronglyMeasurable 1 (Eventually.of_forall fun ω => by
+      rw [Real.norm_of_nonneg (hg0 N ω)]
+      simp only [hg]
+      rcases Nat.eq_zero_or_pos N with rfl | hN
+      · simp
+      have hN1 : (1 : ℝ) ≤ N := by exact_mod_cast hN
+      rw [div_le_one (by linarith)]
+      have := pow_le_one₀ (norm_nonneg _) (hA1 N ω) (n := 2)
+      linarith)
+  have hgI : ∀ N, ∫ ω, g N ω ∂μ =
+      (∫ ω, ‖(∑ n ∈ Finset.range N, f n ω) / (N : ℂ)‖ ^ 2 ∂μ) / N := fun N => integral_div _ _
+  have hlin : ∫⁻ ω, ∑' N, ENNReal.ofReal (g N ω) ∂μ ≠ ⊤ := by
+    rw [lintegral_tsum fun N => (hgm N).ennreal_ofReal.aemeasurable]
+    have hs' : Summable fun N => ∫ ω, g N ω ∂μ := by simpa [hgI] using hs
+    refine ne_top_of_le_ne_top (ENNReal.ofReal_ne_top (r := ∑' N, ∫ ω, g N ω ∂μ)) ?_
+    rw [ENNReal.ofReal_tsum_of_nonneg (fun N => integral_nonneg (hg0 N)) hs']
+    refine ENNReal.tsum_le_tsum fun N => ?_
+    rw [← ofReal_integral_eq_lintegral_ofReal (hgi N) (Eventually.of_forall (hg0 N))]
+  have hae := ae_lt_top' (AEMeasurable.tsum fun N =>
+    (hgm N).ennreal_ofReal.aemeasurable) hlin
+  filter_upwards [hae] with ω hω
+  refine tendsto_of_summable_sq_div (fun n => f n ω) (fun n => hb n ω) ?_
+  have := ENNReal.summable_toReal hω.ne
+  refine this.congr fun N => ?_
+  rw [ENNReal.toReal_ofReal (hg0 _ ω)]
 
 /-- **Translation invariance of the second moment bound.**  For any `α`,
 `𝔼|N⁻¹Σ_{j<N} e(h rʲ(α + y))|² ≤ N⁻² Σ_{p,q<N} |μ̂_S(h(rᵖ − r^q))|`, and
