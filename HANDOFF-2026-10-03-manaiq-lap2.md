@@ -7,3 +7,10 @@ Route: refuted `approx_GPfam` (deleted; `not_approxGPfamClaim` kept) replaced by
 (slope-controlled normaliser), exact ℕ grid inverse of Q (`grid_bracket`), primrec affine test
 (`affFail_iff`).  `exists_computable_isAbsNormal_GP` rewired (statement unchanged);
 `exists_computable_approx_xPQ` proved from the grid.  See PENDING_WORK.md top entry.
+
+HEAD before this note: 1dbe0085.  Tree clean, lake build green.
+
+## Next steps (optional, off-scope)
+* Headline done; nothing open in ExplicitPQ.lean.  Possible tidy-ups: drop now-unused ,
+  ,  (proved, off path) only if a reviewer wants; write the outward
+  note  (statement, cited Baker–Banaji Prop, refutation of approx_GPfam).
