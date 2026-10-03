@@ -293,6 +293,7 @@ theorem GP_bounds {Q : ℤ[X]} {u : ℕ} (hu : IsBranch Q u) :
       |deriv (deriv (GP Q u P)) t| ≤ (L : ℝ) ^ (P.natDegree + 1) * hgt P := by
   sorry
 
+set_option maxHeartbeats 1000000 in
 /-- **The cylinder cut, uniform in the zero count.**  `pushFourier_le_of_deriv2_lower` with its
 constants made explicit in `N` (new lemma; the existing one is untouched).
 
@@ -312,7 +313,108 @@ theorem pushFourier_le_of_deriv2_lower_unif (hBB : BakerBanajiUniformQuarterCant
       (∀ t ∈ Set.Icc (1 / 2 : ℝ) 1, c * (Z.map fun z => |t - z|).prod ≤ |deriv (deriv F) t|) →
       ∀ ξ : ℝ, ξ ≠ 0 → ‖pushFourier F ξ‖ ≤
         (K₀ * (N + 1) : ℝ) * (1 + A) * (1 + c⁻¹) ^ (K₀ * (N + 1)) * |ξ| ^ (-(δ₀ / (N + 1))) := by
-  sorry
+  obtain ⟨C, η, κ, hC, hη, hκ, hB⟩ := pushFourier_le_of_deriv2_ge hBB
+  set D : ℝ := 2 * C * (2 + 4 ^ κ) with hD
+  set K₀ : ℕ := 13 + ⌈D⌉₊ + 2 * ⌈κ⌉₊ with hK₀
+  set δ₀ : ℝ := min 1 (min (η / 2) (η / (16 * κ))) with hδ₀
+  have hδ₀0 : 0 < δ₀ := by positivity
+  refine ⟨K₀, by omega, δ₀, hδ₀0, min_le_left _ _,
+    fun N F U hU hsub hF c A hc hA1 hA2 Z hZ hlow ξ hξ => ?_⟩
+  set ε : ℝ := η / (4 * κ * (N + 2)) with hεdef
+  have hε : 0 < ε := by positivity
+  have hεκ : ε * (N + 2) * κ = η / 4 := by rw [hεdef]; field_simp
+  set δ : ℝ := δ₀ / (N + 1) with hδdef
+  have hN1 : (1 : ℝ) ≤ N + 1 := by linarith [(Nat.cast_nonneg N : (0 : ℝ) ≤ N)]
+  have hδ : 0 < δ := by positivity
+  have hδε : δ ≤ ε / 2 := by
+    rw [hδdef, hεdef, div_le_iff₀ (by linarith)]
+    have h1 : δ₀ ≤ η / (16 * κ) := (min_le_right _ _).trans (min_le_right _ _)
+    calc δ₀ ≤ η / (16 * κ) := h1
+      _ ≤ η / (4 * κ * (N + 2)) / 2 * (N + 1) := by
+          rw [div_div, div_mul_eq_mul_div, div_le_div_iff₀ (by positivity) (by positivity)]
+          have : (0 : ℝ) ≤ η * κ := by positivity
+          nlinarith [(Nat.cast_nonneg N : (0 : ℝ) ≤ N)]
+  have hδη : δ ≤ η / 2 := by
+    have h1 : δ₀ ≤ η / 2 := (min_le_right _ _).trans (min_le_left _ _)
+    rw [hδdef, div_le_iff₀ (by linarith)]
+    nlinarith
+  set K : ℕ := K₀ * (N + 1) with hK
+  set K : ℕ := K₀ * (N + 1) with hK
+  suffices hmain : ‖pushFourier F ξ‖ ≤ K * (1 + A) * (1 + c⁻¹) ^ K * |ξ| ^ (-δ) by
+    rw [hK, hδdef] at hmain; push_cast at hmain; exact hmain
+  have hA0 : 0 ≤ A := (abs_nonneg _).trans (hA1 1 ⟨by norm_num, le_rfl⟩)
+  set X := |ξ| with hXdef
+  have hX0 : 0 < X := abs_pos.2 hξ
+  have hb1 : (1 : ℝ) ≤ 1 + c⁻¹ := by linarith [inv_pos.2 hc]
+  set P : ℝ := (1 + c⁻¹) ^ ⌈κ⌉₊ with hP
+  set Q : ℝ := (1 + c⁻¹) ^ K with hQ
+  have hP1 : 1 ≤ P := one_le_pow₀ hb1
+  have hQ1 : 1 ≤ Q := one_le_pow₀ hb1
+  have hKκ : 2 * ⌈κ⌉₊ ≤ K := by rw [hK, hK₀]; nlinarith
+  have hPQ : P * P ≤ Q := by
+    rw [hP, hQ, ← pow_add]; exact pow_le_pow_right₀ hb1 (by omega)
+  have hKr : (12 * N + D + 1 : ℝ) ≤ K := by
+    have hKn : 13 * N + ⌈D⌉₊ + 1 ≤ K := by rw [hK, hK₀]; nlinarith
+    have : (13 * N + ⌈D⌉₊ + 1 : ℝ) ≤ K := by exact_mod_cast hKn
+    linarith [Nat.le_ceil D, (Nat.cast_nonneg N : (0 : ℝ) ≤ N)]
+  have hD0 : 0 ≤ D := by rw [hD]; positivity
+  rcases lt_or_ge X 1 with hX1 | hX1
+  · have hu : 1 ≤ X ^ (-δ) := Real.one_le_rpow_of_pos_of_le_one_of_nonpos hX0 hX1.le (by linarith)
+    calc ‖pushFourier F ξ‖ ≤ 1 := norm_pushFourier_le_one F ξ
+      _ ≤ (K : ℝ) * (1 + A) * Q * X ^ (-δ) := by
+          have : (1 : ℝ) ≤ K := by linarith [(Nat.cast_nonneg N : (0 : ℝ) ≤ N)]
+          have h1 : 1 ≤ (K : ℝ) * (1 + A) := by nlinarith
+          have h2 : 1 ≤ (K : ℝ) * (1 + A) * Q := by nlinarith
+          nlinarith
+  obtain ⟨m, hm1, hm2⟩ := exists_pow4_bracket hX1 hε
+  have hsplit := pushFourier_cut_split hB hC N F U hU hsub hF c A hc hA1 hA2 Z hZ hlow m ξ hξ
+  set a : ℝ := c * (1 / 4 ^ m) ^ (N + 2) with ha
+  have ha0 : 0 < a := by positivity
+  set Y : ℝ := P * X ^ (η / 4) with hY
+  have hXη4 : 1 ≤ X ^ (η / 4) := Real.one_le_rpow hX1 (by positivity)
+  have hY1 : 1 ≤ Y := by rw [hY]; nlinarith
+  have haY : a ^ (-κ) ≤ Y := a_rpow_neg_le hX1 hκ hc N m hm1 hεκ
+  have ha4 : (a / 4) ^ (-κ) = 4 ^ κ * a ^ (-κ) := by
+    rw [Real.div_rpow ha0.le (by norm_num), Real.rpow_neg (by norm_num : (0 : ℝ) ≤ 4)]
+    field_simp
+  have h4κ : 0 < (4 : ℝ) ^ κ := by positivity
+  have hbad := inv_two_pow_le hX1 m hm2
+  have hu : X ^ (-(ε / 2)) ≤ X ^ (-δ) := Real.rpow_le_rpow_of_exponent_le hX1 (by linarith)
+  have hw : X ^ (η / 4) * X ^ (η / 4) * X ^ (-η) ≤ X ^ (-δ) := by
+    rw [← Real.rpow_add hX0, ← Real.rpow_add hX0]
+    exact Real.rpow_le_rpow_of_exponent_le hX1 (by linarith)
+  have hXη : 0 < X ^ (-η) := Real.rpow_pos_of_pos hX0 _
+  have hXδ : 0 < X ^ (-δ) := Real.rpow_pos_of_pos hX0 _
+  have hbad' : 6 * (N : ℝ) / 2 ^ m ≤ 12 * N * X ^ (-δ) := by
+    rw [div_eq_mul_one_div]
+    calc 6 * (N : ℝ) * (1 / 2 ^ m) ≤ 6 * N * (2 * X ^ (-(ε / 2))) := by gcongr
+      _ ≤ 6 * N * (2 * X ^ (-δ)) := by gcongr
+      _ = _ := by ring
+  have hgood : C * (1 + 2 * A + (a / 4) ^ (-κ)) * (1 + a ^ (-κ)) * X ^ (-η) ≤
+      D * (1 + A) * Q * X ^ (-δ) := by
+    rw [ha4]
+    have e1 : 1 + 2 * A + 4 ^ κ * a ^ (-κ) ≤ (2 + 4 ^ κ) * (1 + A) * Y := by
+      have h1 : 4 ^ κ * a ^ (-κ) ≤ 4 ^ κ * Y := by gcongr
+      have h2 : A ≤ A * Y := le_mul_of_one_le_right hA0 hY1
+      have h3 : 0 ≤ 4 ^ κ * A * Y := by positivity
+      have : (2 + 4 ^ κ) * (1 + A) * Y = 2 * Y + 2 * (A * Y) + 4 ^ κ * Y + 4 ^ κ * A * Y := by ring
+      rw [this]; linarith
+    have e2 : 1 + a ^ (-κ) ≤ 2 * Y := by linarith
+    have hapos : 0 ≤ a ^ (-κ) := by positivity
+    calc C * (1 + 2 * A + 4 ^ κ * a ^ (-κ)) * (1 + a ^ (-κ)) * X ^ (-η)
+        ≤ C * ((2 + 4 ^ κ) * (1 + A) * Y) * (2 * Y) * X ^ (-η) := by gcongr
+      _ = D * (1 + A) * (P * P) * (X ^ (η / 4) * X ^ (η / 4) * X ^ (-η)) := by
+          rw [hD, hY]; ring
+      _ ≤ D * (1 + A) * Q * X ^ (-δ) := by gcongr
+  calc ‖pushFourier F ξ‖ ≤ _ := hsplit
+    _ ≤ 12 * N * X ^ (-δ) + D * (1 + A) * Q * X ^ (-δ) := add_le_add hbad' hgood
+    _ ≤ (12 * N + D + 1) * (1 + A) * Q * X ^ (-δ) := by
+        have : 12 * (N : ℝ) * X ^ (-δ) ≤ 12 * N * ((1 + A) * Q) * X ^ (-δ) := by
+          have : 1 ≤ (1 + A) * Q := by nlinarith
+          have hN : (0 : ℝ) ≤ 12 * N := by positivity
+          exact mul_le_mul_of_nonneg_right (le_mul_of_one_le_right hN this) hXδ.le
+        nlinarith [mul_pos (mul_pos (by linarith : (0 : ℝ) < 1 + A) (by linarith : (0 : ℝ) < Q)) hXδ]
+    _ ≤ K * (1 + A) * Q * X ^ (-δ) := by gcongr
 
 /-! ### The family over all `P ∉ span(1, Q)` -/
 
