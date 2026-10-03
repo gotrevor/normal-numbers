@@ -1314,6 +1314,64 @@ theorem le_freeCount (M : ℕ) : M ≤ 2 * (Nat.log 2 M + 2) * freeCount isFree 
   calc M ≤ 2 * (k + 2) * freeCount isFree M := hmain
     _ ≤ _ := by gcongr
 
+theorem ev_log_le {r ε : ℝ} (hr : 0 < r) (hε : 0 < ε) :
+    ∀ᶠ x : ℝ in atTop, Real.log x ≤ ε * x ^ r := by
+  filter_upwards [(isLittleO_log_rpow_atTop hr).bound hε, eventually_ge_atTop 0] with x hx hx0
+  rw [Real.norm_eq_abs, Real.norm_eq_abs, abs_of_nonneg (Real.rpow_nonneg hx0 _)] at hx
+  exact (le_abs_self _).trans hx
+
+theorem sqrt_sqrt_eq (x : ℝ) (hx : 0 ≤ x) : Real.sqrt (Real.sqrt x) = x ^ (1 / 4 : ℝ) := by
+  rw [Real.sqrt_eq_rpow, Real.sqrt_eq_rpow, ← Real.rpow_mul hx]; norm_num
+
+theorem exp_neg_two_log (j : ℕ) (hj : 1 ≤ j) : Real.exp (-(2 * Real.log j)) = 1 / (j : ℝ) ^ 2 := by
+  have : (0 : ℝ) < j := by exact_mod_cast hj
+  rw [Real.exp_neg, show 2 * Real.log j = Real.log ((j : ℝ) ^ 2) by rw [Real.log_pow]; push_cast; ring,
+    Real.exp_log (by positivity), one_div]
+
+theorem summable_inv_sq_nat : Summable fun j : ℕ => 1 / (j : ℝ) ^ 2 :=
+  Real.summable_one_div_nat_pow.2 (by norm_num)
+
+theorem exp_sqrt_le_sched (j : ℕ) (hj : 1 ≤ j) : Real.exp (Real.sqrt j) ≤ sched j := by
+  unfold sched; push_cast
+  have := Nat.lt_floor_add_one (Real.exp (Real.sqrt j))
+  have : (1 : ℝ) ≤ j := by exact_mod_cast hj
+  linarith
+
+theorem log_three_lt : Real.log 3 < (7 / 5) := by
+  have h : Real.log 3 < Real.log 4 := Real.log_lt_log (by norm_num) (by norm_num)
+  have h4 : Real.log 4 = 2 * Real.log 2 := by
+    rw [show (4 : ℝ) = 2 ^ 2 by norm_num, Real.log_pow]; norm_num
+  have := Real.log_two_lt_d9
+  linarith
+
+/-- `M_j = ⌊log₃ sched j⌋/2 ≥ √j/4` eventually. -/
+theorem ev_M_ge : ∀ᶠ j : ℕ in atTop, Real.sqrt j / 4 ≤ ((Nat.log 3 (sched j) / 2 : ℕ) : ℝ) := by
+  filter_upwards [eventually_ge_atTop 100] with j hj
+  have hj1 : 1 ≤ j := by omega
+  set n := sched j
+  set L := Nat.log 3 n
+  have hn : (0 : ℝ) < n := by exact_mod_cast one_le_sched j
+  have hlt : (n : ℝ) < 3 ^ (L + 1) := by exact_mod_cast Nat.lt_pow_succ_log_self (by norm_num) n
+  have hlog : Real.log n < (L + 1) * Real.log 3 := by
+    have := Real.log_lt_log hn hlt
+    rw [Real.log_pow] at this; push_cast at this; linarith
+  have hsq : Real.sqrt j ≤ Real.log n := by
+    rw [Real.le_log_iff_exp_le hn]; exact exp_sqrt_le_sched j hj1
+  have h3 := log_three_lt
+  have hl3 : 0 < Real.log 3 := Real.log_pos (by norm_num)
+  have hL : Real.sqrt j / (7 / 5) - 1 < L := by
+    have : Real.sqrt j < (L + 1) * (7 / 5) := by nlinarith
+    have : Real.sqrt j / (7 / 5) < L + 1 := by rw [div_lt_iff₀ (by norm_num)]; linarith
+    linarith
+  have hM : ((L : ℝ) - 1) / 2 ≤ ((L / 2 : ℕ) : ℝ) := by
+    have : L ≤ 2 * (L / 2) + 1 := by omega
+    have : (L : ℝ) ≤ 2 * ((L / 2 : ℕ) : ℝ) + 1 := by exact_mod_cast this
+    linarith
+  have h10 : 10 ≤ Real.sqrt j := by
+    rw [show (10 : ℝ) = Real.sqrt 100 by rw [show (100:ℝ) = 10 ^ 2 by norm_num, Real.sqrt_sq (by norm_num)]]
+    exact Real.sqrt_le_sqrt (by exact_mod_cast hj)
+  linarith
+
 /-- **The Cassels bound is summable along the schedule.**  Confidence 92%.
 
 English proof.  With `N = sched j ≥ e^{√j} − 1` and `M = ⌊log₃ N⌋/2 ≥ √j/(2 ln 3) − 2`,
@@ -1323,7 +1381,73 @@ English proof.  With `N = sched j ≥ e^{√j} − 1` and `M = ⌊log₃ N⌋/2 
 theorem summable_sched_bound (C c : ℝ) (hC : 0 < C) (hc : 0 < c) :
     Summable fun j => C * (Real.exp (-c * freeCount isFree (Nat.log 3 (sched j) / 2)) +
       (sched j : ℝ) ^ (-(1 / 2 : ℝ))) := by
-  sorry
+  refine Summable.mul_left C (Summable.add ?_ ?_)
+  · -- first term
+    have hMt : Tendsto (fun j : ℕ => ((Nat.log 3 (sched j) / 2 : ℕ) : ℝ)) atTop atTop := by
+      refine tendsto_atTop_mono' atTop ev_M_ge ?_
+      exact (Real.tendsto_sqrt_atTop.comp tendsto_natCast_atTop_atTop).atTop_div_const (by norm_num)
+    have hA : ∀ᶠ x : ℝ in atTop, Real.log x ≤ Real.log 2 / 2 * x ^ (1 / 2 : ℝ) ∧ 16 ≤ x :=
+      (ev_log_le (by norm_num) (by positivity)).and (eventually_ge_atTop 16)
+    have hA' := hMt.eventually hA
+    have hB := (tendsto_natCast_atTop_atTop (R := ℝ)).eventually (ev_log_le (r := 1 / 4) (ε := c / 8)
+      (by norm_num) (by positivity))
+    refine Summable.of_norm_bounded_eventually summable_inv_sq_nat ?_
+    rw [Nat.cofinite_eq_atTop]
+    filter_upwards [hA', hB, ev_M_ge, eventually_ge_atTop 1] with j hjA hjB hjM hj1
+    set M := Nat.log 3 (sched j) / 2
+    set F := freeCount isFree M
+    obtain ⟨hlogM, hM16⟩ := hjA
+    have hMpos : (0 : ℝ) < M := by linarith
+    have hsM : Real.sqrt M = (M : ℝ) ^ (1 / 2 : ℝ) := Real.sqrt_eq_rpow _
+    -- Nat.log 2 M + 2 ≤ √M
+    have hl2 : (Nat.log 2 M : ℝ) * Real.log 2 ≤ Real.log M := by
+      have : ((2 ^ Nat.log 2 M : ℕ) : ℝ) ≤ M := by
+        exact_mod_cast Nat.pow_log_le_self 2 (by intro h; rw [h] at hMpos; simp at hMpos)
+      have := Real.log_le_log (by positivity) this
+      push_cast at this; rw [Real.log_pow] at this; exact this
+    have hlog2 : 0 < Real.log 2 := Real.log_pos (by norm_num)
+    have hsq4 : 4 ≤ Real.sqrt M := by
+      rw [show (4 : ℝ) = Real.sqrt 16 by rw [show (16:ℝ) = 4 ^ 2 by norm_num, Real.sqrt_sq (by norm_num)]]
+      exact Real.sqrt_le_sqrt hM16
+    have hden : (Nat.log 2 M : ℝ) + 2 ≤ Real.sqrt M := by
+      have : (Nat.log 2 M : ℝ) * Real.log 2 ≤ Real.log 2 / 2 * Real.sqrt M := by
+        rw [hsM]; linarith
+      have : (Nat.log 2 M : ℝ) ≤ Real.sqrt M / 2 := by nlinarith
+      linarith
+    have hF : Real.sqrt M / 2 ≤ F := by
+      have h := le_freeCount M
+      have h' : (M : ℝ) ≤ 2 * ((Nat.log 2 M : ℝ) + 2) * F := by exact_mod_cast h
+      have hsMM : Real.sqrt M * Real.sqrt M = M := Real.mul_self_sqrt hMpos.le
+      have hF0 : (0 : ℝ) ≤ F := by positivity
+      have hspos : 0 < Real.sqrt M := Real.sqrt_pos.2 hMpos
+      nlinarith
+    have hj0 : (0 : ℝ) ≤ j := by positivity
+    have hsqM : Real.sqrt (Real.sqrt j) / 2 ≤ Real.sqrt M := by
+      have := Real.sqrt_le_sqrt hjM
+      rw [Real.sqrt_div' _ (by norm_num), show Real.sqrt 4 = 2 by
+        rw [show (4:ℝ) = 2 ^ 2 by norm_num, Real.sqrt_sq (by norm_num)]] at this
+      exact this
+    rw [sqrt_sqrt_eq _ hj0] at hsqM
+    have hkey : 2 * Real.log j ≤ c * F := by
+      have : c * ((j : ℝ) ^ (1 / 4 : ℝ) / 4) ≤ c * F := by
+        apply mul_le_mul_of_nonneg_left _ hc.le; linarith
+      linarith
+    rw [Real.norm_of_nonneg (Real.exp_pos _).le, ← exp_neg_two_log j hj1]
+    apply Real.exp_le_exp.2; linarith
+  · -- second term
+    have hB := (tendsto_natCast_atTop_atTop (R := ℝ)).eventually (ev_log_le (r := 1 / 2) (ε := 1 / 4)
+      (by norm_num) (by norm_num))
+    refine Summable.of_norm_bounded_eventually summable_inv_sq_nat ?_
+    rw [Nat.cofinite_eq_atTop]
+    filter_upwards [hB, eventually_ge_atTop 1] with j hjB hj1
+    have hs : (0 : ℝ) < sched j := by exact_mod_cast one_le_sched j
+    rw [Real.norm_of_nonneg (Real.rpow_nonneg hs.le _), ← exp_neg_two_log j hj1]
+    calc (sched j : ℝ) ^ (-(1 / 2 : ℝ)) ≤ (Real.exp (Real.sqrt j)) ^ (-(1 / 2 : ℝ)) :=
+          Real.rpow_le_rpow_of_nonpos (Real.exp_pos _) (exp_sqrt_le_sched j hj1) (by norm_num)
+      _ = Real.exp (-(Real.sqrt j / 2)) := by rw [← Real.exp_mul]; ring_nf
+      _ ≤ _ := by
+          apply Real.exp_le_exp.2
+          rw [Real.sqrt_eq_rpow]; linarith
 
 /-- **Almost every Cantor–Liouville point is normal to base 2** (wiring, proved from the
 leaves above). -/
