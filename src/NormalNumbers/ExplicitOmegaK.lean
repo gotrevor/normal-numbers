@@ -992,6 +992,55 @@ theorem pushFourier_cut_split {C η κ : ℝ}
         exact (norm_list_map_sum_le _ _).trans hsum
     _ ≤ (2 ^ m : ℝ)⁻¹ * (6 * N + 2 ^ m * B) := by rw [hlen]; gcongr
     _ = 6 * N / 2 ^ m + B := by field_simp
+/-- `4^m ≤ X^ε < 4^{m+1}` for `m = ⌊ε log₄ X⌋₊`. -/
+theorem exists_pow4_bracket {X ε : ℝ} (hX : 1 ≤ X) (hε : 0 < ε) :
+    ∃ m : ℕ, (4 : ℝ) ^ m ≤ X ^ ε ∧ X ^ ε < 4 * 4 ^ m := by
+  set L := Real.logb 4 (X ^ ε)
+  have hXe : 1 ≤ X ^ ε := Real.one_le_rpow hX hε.le
+  have hL : 0 ≤ L := Real.logb_nonneg (by norm_num) hXe
+  have h4L : (4 : ℝ) ^ L = X ^ ε := Real.rpow_logb (by norm_num) (by norm_num) (by linarith)
+  refine ⟨⌊L⌋₊, ?_, ?_⟩
+  · rw [← h4L, ← Real.rpow_natCast]
+    exact Real.rpow_le_rpow_of_exponent_le (by norm_num) (Nat.floor_le hL)
+  · rw [← h4L, ← pow_succ', ← Real.rpow_natCast]
+    exact Real.rpow_lt_rpow_of_exponent_lt (by norm_num) (by push_cast; exact Nat.lt_floor_add_one L)
+
+/-- Bad-cylinder weight: `2^{-m} < 2 X^{-ε/2}`. -/
+theorem inv_two_pow_le {X ε : ℝ} (hX : 1 ≤ X) (m : ℕ) (h : X ^ ε < 4 * 4 ^ m) :
+    1 / (2 : ℝ) ^ m ≤ 2 * X ^ (-(ε / 2)) := by
+  have hX0 : 0 < X := by linarith
+  have hsq : (X ^ (ε / 2)) ^ 2 = X ^ ε := by
+    rw [← Real.rpow_natCast, ← Real.rpow_mul hX0.le]; norm_num
+  have h2 : (X ^ (ε / 2)) ^ 2 < (2 * 2 ^ m) ^ 2 := by
+    rw [hsq, mul_pow, ← pow_mul, mul_comm m 2, pow_mul]; norm_num; linarith
+  have h3 : X ^ (ε / 2) < 2 * 2 ^ m :=
+    lt_of_pow_lt_pow_left₀ 2 (by positivity) h2
+  have hp : 0 < X ^ (ε / 2) := Real.rpow_pos_of_pos hX0 _
+  rw [Real.rpow_neg hX0.le, div_le_iff₀ (by positivity)]
+  calc (1 : ℝ) = (X ^ (ε / 2))⁻¹ * X ^ (ε / 2) := by field_simp
+    _ ≤ (X ^ (ε / 2))⁻¹ * (2 * 2 ^ m) := by gcongr
+    _ = _ := by ring
+
+/-- Good-cylinder lower bound: `a^{-κ} ≤ (1+c⁻¹)^{⌈κ⌉} X^{η/4}` for `a = c 4^{-m(N+2)}`. -/
+theorem a_rpow_neg_le {X ε κ η c : ℝ} (hX : 1 ≤ X) (hκ : 0 < κ) (hc : 0 < c)
+    (N m : ℕ) (hm : (4 : ℝ) ^ m ≤ X ^ ε) (hεκ : ε * (N + 2) * κ = η / 4) :
+    (c * (1 / 4 ^ m) ^ (N + 2)) ^ (-κ) ≤ (1 + c⁻¹) ^ ⌈κ⌉₊ * X ^ (η / 4) := by
+  have hX0 : 0 < X := by linarith
+  have hM : (0 : ℝ) < 4 ^ m := by positivity
+  rw [Real.mul_rpow hc.le (by positivity)]
+  apply mul_le_mul _ _ (by positivity) (by positivity)
+  · rw [Real.rpow_neg hc.le, ← Real.inv_rpow hc.le]
+    calc c⁻¹ ^ κ ≤ (1 + c⁻¹) ^ κ := Real.rpow_le_rpow (by positivity) (by linarith) hκ.le
+      _ ≤ (1 + c⁻¹) ^ (⌈κ⌉₊ : ℝ) :=
+          Real.rpow_le_rpow_of_exponent_le (by linarith [inv_pos.2 hc]) (Nat.le_ceil κ)
+      _ = _ := Real.rpow_natCast _ _
+  · rw [one_div, inv_pow, Real.rpow_neg (by positivity), Real.inv_rpow (by positivity), inv_inv]
+    calc (((4 : ℝ) ^ m) ^ (N + 2)) ^ κ ≤ ((X ^ ε) ^ (N + 2)) ^ κ := by gcongr
+      _ = X ^ (η / 4) := by
+          rw [← Real.rpow_natCast, ← Real.rpow_mul hX0.le, ← Real.rpow_mul hX0.le, ← hεκ]
+          push_cast; ring_nf
+
+set_option maxHeartbeats 1000000 in
 /-- **The cylinder cut: explicit polynomial decay when `|F''| ≥ c · Π_{z ∈ Z}|t − z|`, `|Z| ≤ N`.**
 
 Confidence 88%.  English proof (BB Thm 1.1's proof, effective).  Take `K ≥ 1` from the end.  For
@@ -1016,7 +1065,89 @@ theorem pushFourier_le_of_deriv2_lower (hBB : BakerBanajiUniformQuarterCantor) (
       ∀ Z : Multiset ℝ, Z.card ≤ N →
       (∀ t ∈ Set.Icc (1 / 2 : ℝ) 1, c * (Z.map fun z => |t - z|).prod ≤ |deriv (deriv F) t|) →
       ∀ ξ : ℝ, ξ ≠ 0 → ‖pushFourier F ξ‖ ≤ K * (1 + A) * (1 + c⁻¹) ^ K * |ξ| ^ (-δ) := by
-  sorry
+  obtain ⟨C, η, κ, hC, hη, hκ, hB⟩ := pushFourier_le_of_deriv2_ge hBB
+  set ε : ℝ := η / (4 * κ * (N + 2)) with hεdef
+  have hε : 0 < ε := by positivity
+  have hεκ : ε * (N + 2) * κ = η / 4 := by rw [hεdef]; field_simp
+  set δ : ℝ := min ε η / 2 with hδdef
+  have hδ : 0 < δ := by positivity
+  have hδε : δ ≤ ε / 2 := by rw [hδdef]; gcongr; exact min_le_left _ _
+  have hδη : δ ≤ η / 2 := by rw [hδdef]; gcongr; exact min_le_right _ _
+  set D : ℝ := 2 * C * (2 + 4 ^ κ) with hD
+  set K : ℕ := 12 * N + ⌈D⌉₊ + 2 * ⌈κ⌉₊ + 1 with hK
+  refine ⟨K, by omega, δ, hδ, fun F U hU hsub hF c A hc hA1 hA2 Z hZ hlow ξ hξ => ?_⟩
+  have hA0 : 0 ≤ A := (abs_nonneg _).trans (hA1 1 ⟨by norm_num, le_rfl⟩)
+  set X := |ξ| with hXdef
+  have hX0 : 0 < X := abs_pos.2 hξ
+  have hb1 : (1 : ℝ) ≤ 1 + c⁻¹ := by linarith [inv_pos.2 hc]
+  set P : ℝ := (1 + c⁻¹) ^ ⌈κ⌉₊ with hP
+  set Q : ℝ := (1 + c⁻¹) ^ K with hQ
+  have hP1 : 1 ≤ P := one_le_pow₀ hb1
+  have hQ1 : 1 ≤ Q := one_le_pow₀ hb1
+  have hPQ : P * P ≤ Q := by
+    rw [hP, hQ, ← pow_add]; exact pow_le_pow_right₀ hb1 (by omega)
+  have hKr : (12 * N + D + 1 : ℝ) ≤ K := by
+    rw [hK]; push_cast; linarith [Nat.le_ceil D, (Nat.cast_nonneg ⌈κ⌉₊ : (0 : ℝ) ≤ _)]
+  have hD0 : 0 ≤ D := by rw [hD]; positivity
+  rcases lt_or_ge X 1 with hX1 | hX1
+  · have hu : 1 ≤ X ^ (-δ) := Real.one_le_rpow_of_pos_of_le_one_of_nonpos hX0 hX1.le (by linarith)
+    calc ‖pushFourier F ξ‖ ≤ 1 := norm_pushFourier_le_one F ξ
+      _ ≤ (K : ℝ) * (1 + A) * Q * X ^ (-δ) := by
+          have : (1 : ℝ) ≤ K := by linarith [(Nat.cast_nonneg N : (0 : ℝ) ≤ N)]
+          have h1 : 1 ≤ (K : ℝ) * (1 + A) := by nlinarith
+          have h2 : 1 ≤ (K : ℝ) * (1 + A) * Q := by nlinarith
+          nlinarith
+  obtain ⟨m, hm1, hm2⟩ := exists_pow4_bracket hX1 hε
+  have hsplit := pushFourier_cut_split hB hC N F U hU hsub hF c A hc hA1 hA2 Z hZ hlow m ξ hξ
+  set a : ℝ := c * (1 / 4 ^ m) ^ (N + 2) with ha
+  have ha0 : 0 < a := by positivity
+  set Y : ℝ := P * X ^ (η / 4) with hY
+  have hXη4 : 1 ≤ X ^ (η / 4) := Real.one_le_rpow hX1 (by positivity)
+  have hY1 : 1 ≤ Y := by rw [hY]; nlinarith
+  have haY : a ^ (-κ) ≤ Y := a_rpow_neg_le hX1 hκ hc N m hm1 hεκ
+  have ha4 : (a / 4) ^ (-κ) = 4 ^ κ * a ^ (-κ) := by
+    rw [Real.div_rpow ha0.le (by norm_num), Real.rpow_neg (by norm_num : (0 : ℝ) ≤ 4)]
+    field_simp
+  have h4κ : 0 < (4 : ℝ) ^ κ := by positivity
+  have hbad := inv_two_pow_le hX1 m hm2
+  have hu : X ^ (-(ε / 2)) ≤ X ^ (-δ) := Real.rpow_le_rpow_of_exponent_le hX1 (by linarith)
+  have hw : X ^ (η / 4) * X ^ (η / 4) * X ^ (-η) ≤ X ^ (-δ) := by
+    rw [← Real.rpow_add hX0, ← Real.rpow_add hX0]
+    exact Real.rpow_le_rpow_of_exponent_le hX1 (by linarith)
+  have hXη : 0 < X ^ (-η) := Real.rpow_pos_of_pos hX0 _
+  have hXδ : 0 < X ^ (-δ) := Real.rpow_pos_of_pos hX0 _
+  -- bad part
+  have hbad' : 6 * (N : ℝ) / 2 ^ m ≤ 12 * N * X ^ (-δ) := by
+    rw [div_eq_mul_one_div]
+    calc 6 * (N : ℝ) * (1 / 2 ^ m) ≤ 6 * N * (2 * X ^ (-(ε / 2))) := by gcongr
+      _ ≤ 6 * N * (2 * X ^ (-δ)) := by gcongr
+      _ = _ := by ring
+  -- good part
+  have hgood : C * (1 + 2 * A + (a / 4) ^ (-κ)) * (1 + a ^ (-κ)) * X ^ (-η) ≤
+      D * (1 + A) * Q * X ^ (-δ) := by
+    rw [ha4]
+    have e1 : 1 + 2 * A + 4 ^ κ * a ^ (-κ) ≤ (2 + 4 ^ κ) * (1 + A) * Y := by
+      have h1 : 4 ^ κ * a ^ (-κ) ≤ 4 ^ κ * Y := by gcongr
+      have h2 : A ≤ A * Y := le_mul_of_one_le_right hA0 hY1
+      have h3 : 0 ≤ 4 ^ κ * A * Y := by positivity
+      have : (2 + 4 ^ κ) * (1 + A) * Y = 2 * Y + 2 * (A * Y) + 4 ^ κ * Y + 4 ^ κ * A * Y := by ring
+      rw [this]; linarith
+    have e2 : 1 + a ^ (-κ) ≤ 2 * Y := by linarith
+    have hapos : 0 ≤ a ^ (-κ) := by positivity
+    calc C * (1 + 2 * A + 4 ^ κ * a ^ (-κ)) * (1 + a ^ (-κ)) * X ^ (-η)
+        ≤ C * ((2 + 4 ^ κ) * (1 + A) * Y) * (2 * Y) * X ^ (-η) := by gcongr
+      _ = D * (1 + A) * (P * P) * (X ^ (η / 4) * X ^ (η / 4) * X ^ (-η)) := by
+          rw [hD, hY]; ring
+      _ ≤ D * (1 + A) * Q * X ^ (-δ) := by gcongr
+  calc ‖pushFourier F ξ‖ ≤ _ := hsplit
+    _ ≤ 12 * N * X ^ (-δ) + D * (1 + A) * Q * X ^ (-δ) := add_le_add hbad' hgood
+    _ ≤ (12 * N + D + 1) * (1 + A) * Q * X ^ (-δ) := by
+        have : 12 * (N : ℝ) * X ^ (-δ) ≤ 12 * N * ((1 + A) * Q) * X ^ (-δ) := by
+          have : 1 ≤ (1 + A) * Q := by nlinarith
+          have hN : (0 : ℝ) ≤ 12 * N := by positivity
+          exact mul_le_mul_of_nonneg_right (le_mul_of_one_le_right hN this) hXδ.le
+        nlinarith [mul_pos (mul_pos (by linarith : (0 : ℝ) < 1 + A) (by linarith : (0 : ℝ) < Q)) hXδ]
+    _ ≤ K * (1 + A) * Q * X ^ (-δ) := by gcongr
 
 /-- **Global polynomial decay for every `G_p`, `1 ≤ deg p < k`, despite inflection points.**
 Wiring proved: the cylinder cut (`pushFourier_le_of_deriv2_lower`, `N = k − 2`) fed with
