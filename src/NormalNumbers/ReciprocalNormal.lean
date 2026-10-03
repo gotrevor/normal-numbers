@@ -292,6 +292,94 @@ theorem not_isSimplyNormal_ySparse (b : ℕ) (hb : 2 ≤ b) (e : ℕ → Bool) :
   have : (60 : ℝ) ≤ n := by exact_mod_cast hn60
   linarith
 
+/-- Sparse digit `k` read from a coin prefix `p`. -/
+def sdL (b k : ℕ) (p : List Bool) : ℕ :=
+  if k = 0 then (b + 1) / 2 else if k % 3 = 2 then (if p.getD (k / 3) false = true then 1 else 0)
+    else 0
+
+/-- `⌊ySparse b ω · b^{3D+2}⌋` read from a prefix of length `D`. -/
+def sYp (b : ℕ) (p : List Bool) : ℕ :=
+  ((List.range (3 * p.length + 2)).map fun k => sdL b k p * b ^ (3 * p.length + 1 - k)).sum
+
+/-- Lower approximation `b^{3D+2}/(Y+1)` of `1/ySparse`. -/
+noncomputable def Asp (b : ℕ) (p : List Bool) : ℝ := (b : ℝ) ^ (3 * p.length + 2) / ((sYp b p : ℝ) + 1)
+
+/-- Its base-`b'` floors. -/
+def PsiSp (b b' m : ℕ) (p : List Bool) : ℕ := b' ^ m * b ^ (3 * p.length + 2) / (sYp b p + 1)
+
+theorem PsiSp_eq (b b' m : ℕ) (p : List Bool) : PsiSp b b' m p = ⌊Asp b p * (b' : ℝ) ^ m⌋₊ := by
+  unfold PsiSp Asp
+  rw [show (b : ℝ) ^ (3 * p.length + 2) / ((sYp b p : ℝ) + 1) * (b' : ℝ) ^ m =
+    ((b' ^ m * b ^ (3 * p.length + 2) : ℕ) : ℝ) / ((sYp b p + 1 : ℕ) : ℝ) by push_cast; ring,
+    Nat.floor_div_eq_div]
+
+theorem primrec_sdL (b : ℕ) : Primrec₂ (sdL b) := by
+  have hk : Primrec fun x : ℕ × List Bool => x.1 := Primrec.fst
+  have hp : Primrec fun x : ℕ × List Bool => x.2 := Primrec.snd
+  have hget : Primrec fun x : ℕ × List Bool => x.2.getD (x.1 / 3) false :=
+    (Primrec.list_getD false).comp hp (Primrec.nat_div.comp hk (Primrec.const 3))
+  have hb : Primrec fun x : ℕ × List Bool =>
+      if x.2.getD (x.1 / 3) false = true then 1 else 0 :=
+    Primrec.ite (Primrec.eq.comp hget (Primrec.const true)) (Primrec.const 1) (Primrec.const 0)
+  have hev : Primrec fun x : ℕ × List Bool =>
+      if x.1 % 3 = 2 then (if x.2.getD (x.1 / 3) false = true then 1 else 0) else 0 :=
+    Primrec.ite (Primrec.eq.comp (Primrec.nat_mod.comp hk (Primrec.const 3)) (Primrec.const 2))
+      hb (Primrec.const 0)
+  exact (Primrec.ite (Primrec.eq.comp hk (Primrec.const 0)) (Primrec.const ((b + 1) / 2))
+    hev).of_eq fun x => rfl
+
+theorem primrec_sYp (b : ℕ) : Primrec (sYp b) := by
+  have hL : Primrec fun p : List Bool => 3 * p.length :=
+    Primrec.nat_mul.comp (Primrec.const 3) Primrec.list_length
+  have hf : Primrec fun p : List Bool => List.range (3 * p.length + 2) :=
+    Primrec.list_range.comp (Primrec.nat_add.comp hL (Primrec.const 2))
+  have hg : Primrec fun y : List Bool × ℕ => sdL b y.2 y.1 * b ^ (3 * y.1.length + 1 - y.2) :=
+    Primrec.nat_mul.comp ((primrec_sdL b).comp Primrec.snd Primrec.fst)
+      (ComputableNormal.primrec_pow.comp (Primrec.const b)
+        (Primrec.nat_sub.comp (Primrec.nat_add.comp (hL.comp Primrec.fst) (Primrec.const 1))
+          Primrec.snd))
+  exact (primrec_sum_map hf hg.to₂).of_eq fun p => rfl
+
+theorem primrec_PsiSp (b : ℕ) :
+    Primrec fun x : ℕ × ℕ × List Bool => PsiSp b x.1 x.2.1 x.2.2 := by
+  have hp := Primrec.snd.comp (Primrec.snd (α := ℕ) (β := ℕ × List Bool))
+  have hY := (primrec_sYp b).comp hp
+  have hB := ComputableNormal.primrec_pow.comp (Primrec.fst (α := ℕ) (β := ℕ × List Bool))
+    (Primrec.fst.comp Primrec.snd)
+  have hD := ComputableNormal.primrec_pow.comp (Primrec.const b)
+    (Primrec.nat_add.comp (Primrec.nat_mul.comp (Primrec.const 3) (Primrec.list_length.comp hp))
+      (Primrec.const 2))
+  exact (Primrec.nat_div.comp (Primrec.nat_mul.comp hB hD) (Primrec.succ.comp hY)).of_eq
+    fun x => rfl
+
+theorem sparseDigits_lt (b : ℕ) (hb : 2 ≤ b) (e : ℕ → Bool) (i : ℕ) : sparseDigits b e i < b := by
+  unfold sparseDigits; split_ifs <;> omega
+
+theorem sparseDigits_proper (b : ℕ) (hb : 2 ≤ b) (e : ℕ → Bool) :
+    ProperDigits b (sparseDigits b e) := by
+  intro N
+  refine ⟨3 * N + 1, by omega, ?_⟩
+  have h1 : (3 * N + 1) % 3 = 1 := by omega
+  have : sparseDigits b e (3 * N + 1) = 0 := by simp [sparseDigits, h1]
+  omega
+
+theorem sYp_pre (b : ℕ) (hb : 2 ≤ b) (ω : ℕ → Bool) (D : ℕ) :
+    ⌊ySparse b ω * (b : ℝ) ^ (3 * D + 2)⌋ = (sYp b (pre ω D) : ℤ) := by
+  have h := floor_realOfDigits_mul_pow b hb _ (sparseDigits_lt b hb ω)
+    (sparseDigits_proper b hb ω) (3 * D + 1)
+  unfold ySparse
+  rw [show 3 * D + 2 = 3 * D + 1 + 1 by ring, h, sYp, length_pre]
+  congr 1
+  rw [← List.sum_toFinset _ List.nodup_range, List.toFinset_range]
+  refine Finset.sum_congr rfl fun k hk => ?_
+  have hk' := Finset.mem_range.1 hk
+  congr 1
+  · unfold sdL sparseDigits pre
+    split_ifs with h0 h2 h3 h3 <;> try rfl
+    all_goals
+      rw [List.getD_eq_getElem _ _ (by simp; omega)] at *
+      simp_all
+
 /-- **Leaf: engine inputs for `1/ySparse b`** (measurability and exact lower approximations).
 
 Confidence 88%.  Proof: measurability as `CantorSelfSimilar.measurable_cantorReal` (each digit is a
@@ -306,7 +394,63 @@ theorem sparse_engine_inputs (b : ℕ) (hb : 2 ≤ b) :
       Primrec (fun x : ℕ × ℕ × List Bool => Ψ x.1 x.2.1 x.2.2) ∧
       (∀ b' m p, Ψ b' m p = ⌊A p * (b' : ℝ) ^ m⌋₊) ∧ (∀ p, 0 ≤ A p) ∧
       ∀ ω D, A (pre ω D) ≤ 1 / ySparse b ω ∧ 1 / ySparse b ω ≤ A (pre ω D) + (1 / 2 : ℝ) ^ D := by
-  sorry
+  refine ⟨?_, PsiSp b, Asp b, primrec_PsiSp b, PsiSp_eq b, fun p => by unfold Asp; positivity, ?_⟩
+  · simp only [one_div]
+    refine Measurable.inv ?_
+    unfold ySparse realOfDigits
+    refine Measurable.tsum fun i => Measurable.div_const ?_ _
+    refine Measurable.comp (measurable_of_countable (fun n : ℕ => (n : ℝ))) ?_
+    exact (measurable_of_countable (fun c : Bool =>
+      if i = 0 then (b + 1) / 2 else if i % 3 = 2 then (if c then 1 else 0) else 0)).comp
+      (measurable_pi_apply (i / 3))
+  · intro ω D
+    have hfl := sYp_pre b hb ω D
+    have hb1 : (2 : ℝ) ≤ b := by exact_mod_cast hb
+    set y := ySparse b ω
+    set N : ℝ := (b : ℝ) ^ (3 * D + 2) with hN
+    have hNpos : 0 < N := by positivity
+    have hlo := Int.floor_le (y * N)
+    have hhi := Int.lt_floor_add_one (y * N)
+    rw [hfl] at hlo hhi
+    push_cast at hlo hhi
+    set Y : ℝ := (sYp b (pre ω D) : ℝ)
+    -- `Y ≥ s₀ b^{3D+1}` (the `k = 0` term), so `y ≥ Y/N ≥ s₀/b ≥ 1/2`
+    have hY0 : ((b + 1) / 2 * b ^ (3 * D + 1) : ℕ) ≤ sYp b (pre ω D) := by
+      unfold sYp
+      rw [length_pre, List.range_succ_eq_map, List.map_cons, List.sum_cons]
+      have : sdL b 0 (pre ω D) = (b + 1) / 2 := by simp [sdL]
+      rw [this, Nat.sub_zero]; omega
+    have hY0' : (b : ℝ) ^ (3 * D + 1) * b ≤ 2 * Y := by
+      have h2 : b ≤ 2 * ((b + 1) / 2) := by omega
+      have h4 : b * b ^ (3 * D + 1) ≤ 2 * sYp b (pre ω D) :=
+        calc b * b ^ (3 * D + 1) ≤ 2 * ((b + 1) / 2) * b ^ (3 * D + 1) :=
+              Nat.mul_le_mul_right _ h2
+          _ = 2 * ((b + 1) / 2 * b ^ (3 * D + 1)) := by ring
+          _ ≤ 2 * sYp b (pre ω D) := by omega
+      have := (Nat.cast_le (α := ℝ)).2 h4
+      push_cast at this; linarith
+    have hNb : N = (b : ℝ) ^ (3 * D + 1) * b := by rw [hN, pow_succ]
+    have hy2 : N ≤ 2 * y * N := by rw [hNb] at hlo ⊢; nlinarith
+    have hyh : (1 / 2 : ℝ) ≤ y := by
+      by_contra hc; push_neg at hc; nlinarith
+    have hy0 : 0 < y := by linarith
+    set t : ℝ := 2 ^ D with ht
+    have htpos : 0 < t := by positivity
+    have hNt : 4 * t ≤ N := by
+      have : (2 : ℝ) ^ (3 * D + 2) ≤ N := pow_le_pow_left₀ (by norm_num) hb1 _
+      have e : (2 : ℝ) ^ (3 * D + 2) = 4 * (t * t * t) := by rw [ht]; ring
+      have : t ≤ t * t * t := by
+        have : 1 ≤ t := one_le_pow₀ (by norm_num)
+        nlinarith
+      linarith
+    have eh : (1 / 2 : ℝ) ^ D = 1 / t := by rw [ht, one_div_pow]
+    have hq : 0 < Y + 1 := by positivity
+    unfold Asp
+    rw [length_pre, ← hN, eh]
+    constructor
+    · rw [div_le_div_iff₀ hq hy0]; linarith
+    · rw [div_add_div _ _ hq.ne' htpos.ne', div_le_div_iff₀ hy0 (by positivity)]
+      nlinarith [mul_le_mul_of_nonneg_left hlo htpos.le]
 
 /-- **Bugeaud 10.17 for every base `b ≥ 2`, both versions, computably**: `ξ = 1/ySparse b e`
 is absolutely normal (so normal and simply normal to base `b`) while `1/ξ` is not simply normal
