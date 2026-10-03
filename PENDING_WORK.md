@@ -1,3 +1,18 @@
+## Manai Ω_k lane (2026-10-03) — Phase 1 + Phase 2 DONE
+* `ExplicitOmegaK.Omega_nonempty` (needs only `BakerBanajiAnalyticQuarterCantor`) and
+  `exists_computable_mem_Omega_two` (needs only `BakerBanajiQuarterCantor`): `#print axioms` =
+  propext, Classical.choice, Quot.sound.
+* Proved: `analyticOnNhd_Gk`, `exists_deriv2_Gk_ne_zero`, `deriv2_Gk_three_eq_zero` (inflection
+  obstruction for k = 3), `bakerBanajiQuarterCantor_of_uniform` (helpers `OmegaKCalculus.lean`);
+  `exists_computable_isAbsNormal_sqrt_of_polyDecay` via the new generic all-bases derandomization
+  `ComputableNormalB.exists_computable_absNormal` (tests on a computable lower approximation +
+  top-cell test; base-uniform decay constant from `VisitDeviationB`) instantiated in
+  `SqrtCantorAbs.lean`.
+* Open in the file: Phase 3 stretch `polyDecay_Gk`, `exists_computable_isAbsNormal_Gk` (next attack:
+  extend `exists_computable_absNormal` to a countable family `G_i` with per-i constants `C_i`
+  admitted at levels `n ≥ n(i)`; the hard part is computable constants for `polyDecay_Gk`), and the
+  out-of-scope `dimH_Omega_eq_one`, `bakerBanajiAnalyticQuarterCantor_of_general`.
+
 ## TT dyadic bridge (2026-10-02) — DONE
 * PROVED `CastingOut.ttEquidistributedDyadic_of_real : TTEquidistributedReal → TTEquidistributedDyadic`
   (axioms: propext, Classical.choice, Quot.sound).  Helpers in `TTDyadicBridge.lean`:
