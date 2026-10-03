@@ -9,3 +9,8 @@ root bracket `root_bracket`, `k·2^{-T} ≤ 4^{-D}/4`).
 ExplicitOmegaK.lean is sorry-free. `#print axioms exists_computable_mem_Omega` =
 [propext, Classical.choice, Quot.sound] (BakerBanajiUniformQuarterCantor enters as a hypothesis).
 Full `lake build` green.
+
+## Final checkpoint
+HEAD e71f17a3 on proof/omegak3 (not pushed). Scoped target met; `box done --green` issued.
+Next steps (outside this lane): none for ExplicitOmegaK. Remaining repo sorries
+(e.g. ExplicitSquareNonNormal.lean) are designated-open for other lanes.
