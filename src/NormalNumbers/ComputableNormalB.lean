@@ -401,4 +401,299 @@ theorem tail_prob (b : ℕ) (hb : 2 ≤ b) (G : Ω → ℝ) (hG : Measurable G) 
 
 end Prob
 
+/-! ## Test outcomes -/
+
+section Outcomes
+
+variable (Ψ : ℕ → ℕ → List Bool → ℕ)
+
+theorem fails_iff_b {b n ℓ v : ℕ} {p : List Bool} (hn : 1 ≤ n) (hb : 1 ≤ b) :
+    fails Ψ b n ℓ v p ↔
+      3 / (4 * (n : ℝ)) < |(Vc Ψ b ℓ v (n ^ 14) p : ℝ) / (n ^ 14 : ℕ) - 1 / (b : ℝ) ^ ℓ| := by
+  unfold fails
+  have key : ((4 * n * (Vc Ψ b ℓ v (n ^ 14) p * b ^ ℓ - n ^ 14 +
+      (n ^ 14 - Vc Ψ b ℓ v (n ^ 14) p * b ^ ℓ)) : ℕ) : ℝ) =
+      4 * n * |(Vc Ψ b ℓ v (n ^ 14) p : ℝ) * (b : ℝ) ^ ℓ - (n : ℝ) ^ 14| := by
+    rw [Nat.cast_mul (4 * n), cast_absdiff]; push_cast; ring
+  rw [← @Nat.cast_lt ℝ, key]
+  push_cast
+  set V : ℝ := (Vc Ψ b ℓ v (n ^ 14) p : ℝ)
+  have hnR : (1 : ℝ) ≤ n := by exact_mod_cast hn
+  have hbR : (1 : ℝ) ≤ b := by exact_mod_cast hb
+  have hN : (0 : ℝ) < (n : ℝ) ^ 14 := by positivity
+  have hP : (0 : ℝ) < (b : ℝ) ^ ℓ := by positivity
+  have eq : V / (n : ℝ) ^ 14 - 1 / (b : ℝ) ^ ℓ =
+      (V * (b : ℝ) ^ ℓ - (n : ℝ) ^ 14) / ((n : ℝ) ^ 14 * (b : ℝ) ^ ℓ) := by
+    field_simp
+  rw [eq, abs_div, abs_of_pos (show (0:ℝ) < (n : ℝ) ^ 14 * (b : ℝ) ^ ℓ by positivity),
+    div_lt_div_iff₀ (by positivity) (by positivity)]
+  constructor <;> intro h <;> nlinarith
+
+theorem failsTop_iff_b {b n : ℕ} {p : List Bool} :
+    failsTop Ψ b n p ↔ ((n ^ 14 : ℕ) : ℝ) < 4 * n * (Tc Ψ b n p : ℝ) := by
+  unfold failsTop
+  rw [← @Nat.cast_lt ℝ]; push_cast; rfl
+
+theorem eta_le (A : List Bool → ℝ) {b n : ℕ} (hb : b ≤ n) (x : ℝ) (p : List Bool)
+    (hax : A p ≤ x) (hxa : x ≤ A p + (1 / 2 : ℝ) ^ (n * (n ^ 14 + 2 * n))) :
+    (x - A p) * (b : ℝ) ^ (n ^ 14 + 2 * n) ≤ 1 := by
+  have h0 : 0 ≤ x - A p := by linarith
+  have hb2 : (b : ℝ) ≤ 2 ^ n := by
+    have : b < 2 ^ n := lt_of_le_of_lt hb Nat.lt_two_pow_self
+    exact_mod_cast this.le
+  have hpow : (b : ℝ) ^ (n ^ 14 + 2 * n) ≤ 2 ^ (n * (n ^ 14 + 2 * n)) := by
+    rw [pow_mul]; exact pow_le_pow_left₀ (by positivity) hb2 _
+  calc (x - A p) * (b : ℝ) ^ (n ^ 14 + 2 * n)
+      ≤ (1 / 2 : ℝ) ^ (n * (n ^ 14 + 2 * n)) * 2 ^ (n * (n ^ 14 + 2 * n)) := by
+        gcongr; linarith
+    _ = 1 := by rw [← mul_pow]; norm_num
+
+/-- Passing the tests: every tested block has true frequency within `1/n`. -/
+theorem good_of_pass (A : List Bool → ℝ) (hΨ : ∀ b m p, Ψ b m p = ⌊A p * (b : ℝ) ^ m⌋₊)
+    {b n ℓ v : ℕ} (hb : 2 ≤ b) (hn : 1 ≤ n) (hℓn : ℓ ≤ n) (x : ℝ) (p : List Bool)
+    (ha : 0 ≤ A p) (hax : A p ≤ x) (hη : (x - A p) * (b : ℝ) ^ (n ^ 14 + 2 * n) ≤ 1)
+    (htop : ¬ failsTop Ψ b n p) (hf : ¬ fails Ψ b n ℓ v p) :
+    |(visitCount (orbit b x) ((v : ℝ) / (b : ℝ) ^ ℓ) ((v + 1 : ℝ) / (b : ℝ) ^ ℓ) (n ^ 14) : ℝ) /
+      ((n ^ 14 : ℕ) : ℝ) - 1 / (b : ℝ) ^ ℓ| ≤ 1 / (n : ℝ) := by
+  rw [fails_iff_b Ψ hn (by omega), not_lt] at hf
+  rw [failsTop_iff_b, not_lt] at htop
+  have hd := abs_Vtrue_sub_Vc_le Ψ A hΨ b hb x p ha hax n hη hℓn (v := v)
+  have hnR : (1 : ℝ) ≤ n := by exact_mod_cast hn
+  have hN : (0 : ℝ) < ((n ^ 14 : ℕ) : ℝ) := by positivity
+  set Vt := (visitCount (orbit b x) ((v : ℝ) / (b : ℝ) ^ ℓ) ((v + 1 : ℝ) / (b : ℝ) ^ ℓ) (n ^ 14) : ℝ)
+  set V := (Vc Ψ b ℓ v (n ^ 14) p : ℝ)
+  set T := (Tc Ψ b n p : ℝ)
+  have hT : T / ((n ^ 14 : ℕ) : ℝ) ≤ 1 / (4 * (n : ℝ)) := by
+    rw [div_le_div_iff₀ hN (by positivity)]; linarith
+  have hd' : |Vt / ((n ^ 14 : ℕ) : ℝ) - V / ((n ^ 14 : ℕ) : ℝ)| ≤ T / ((n ^ 14 : ℕ) : ℝ) := by
+    rw [← sub_div, abs_div, abs_of_pos hN]; exact div_le_div_of_nonneg_right hd hN.le
+  have e : 1 / (n : ℝ) = 3 / (4 * n) + 1 / (4 * n) := by field_simp; ring
+  rw [e]
+  calc |Vt / ((n ^ 14 : ℕ) : ℝ) - 1 / (b : ℝ) ^ ℓ|
+      ≤ |V / ((n ^ 14 : ℕ) : ℝ) - 1 / (b : ℝ) ^ ℓ| + |Vt / ((n ^ 14 : ℕ) : ℝ) - V / ((n ^ 14 : ℕ) : ℝ)| := by
+        have := abs_sub_le (Vt / ((n ^ 14 : ℕ) : ℝ)) (V / ((n ^ 14 : ℕ) : ℝ)) (1 / (b : ℝ) ^ ℓ)
+        linarith
+    _ ≤ _ := by gcongr; exact hd'.trans hT
+
+/-- Failing a block test without failing the top test: true deviation `> 1/(2n)`. -/
+theorem dev_of_fails (A : List Bool → ℝ) (hΨ : ∀ b m p, Ψ b m p = ⌊A p * (b : ℝ) ^ m⌋₊)
+    {b n ℓ v : ℕ} (hb : 2 ≤ b) (hn : 1 ≤ n) (hℓn : ℓ ≤ n) (x : ℝ) (p : List Bool)
+    (ha : 0 ≤ A p) (hax : A p ≤ x) (hη : (x - A p) * (b : ℝ) ^ (n ^ 14 + 2 * n) ≤ 1)
+    (htop : ¬ failsTop Ψ b n p) (hf : fails Ψ b n ℓ v p) :
+    1 / (2 * (n : ℝ)) <
+      |(visitCount (orbit b x) ((v : ℝ) / (b : ℝ) ^ ℓ) ((v + 1 : ℝ) / (b : ℝ) ^ ℓ) (n ^ 14) : ℝ) /
+        ((n ^ 14 : ℕ) : ℝ) - 1 / (b : ℝ) ^ ℓ| := by
+  rw [fails_iff_b Ψ hn (by omega)] at hf
+  rw [failsTop_iff_b, not_lt] at htop
+  have hd := abs_Vtrue_sub_Vc_le Ψ A hΨ b hb x p ha hax n hη hℓn (v := v)
+  have hnR : (1 : ℝ) ≤ n := by exact_mod_cast hn
+  have hN : (0 : ℝ) < ((n ^ 14 : ℕ) : ℝ) := by positivity
+  set Vt := (visitCount (orbit b x) ((v : ℝ) / (b : ℝ) ^ ℓ) ((v + 1 : ℝ) / (b : ℝ) ^ ℓ) (n ^ 14) : ℝ)
+  set V := (Vc Ψ b ℓ v (n ^ 14) p : ℝ)
+  set T := (Tc Ψ b n p : ℝ)
+  have hT : T / ((n ^ 14 : ℕ) : ℝ) ≤ 1 / (4 * (n : ℝ)) := by
+    rw [div_le_div_iff₀ hN (by positivity)]; linarith
+  have hd' : |Vt / ((n ^ 14 : ℕ) : ℝ) - V / ((n ^ 14 : ℕ) : ℝ)| ≤ T / ((n ^ 14 : ℕ) : ℝ) := by
+    rw [← sub_div, abs_div, abs_of_pos hN]; exact div_le_div_of_nonneg_right hd hN.le
+  have e : 3 / (4 * (n : ℝ)) = 1 / (2 * n) + 1 / (4 * n) := by field_simp; ring
+  rw [e] at hf
+  have := abs_sub_le (V / ((n ^ 14 : ℕ) : ℝ)) (Vt / ((n ^ 14 : ℕ) : ℝ)) (1 / (b : ℝ) ^ ℓ)
+  have hc := abs_sub_comm (V / ((n ^ 14 : ℕ) : ℝ)) (Vt / ((n ^ 14 : ℕ) : ℝ))
+  linarith
+
+/-- Failing the top test: many true visits near `0` or near `1`. -/
+theorem tail_of_failsTop (A : List Bool → ℝ) (hΨ : ∀ b m p, Ψ b m p = ⌊A p * (b : ℝ) ^ m⌋₊)
+    {b n : ℕ} (hb : 2 ≤ b) (x : ℝ) (p : List Bool)
+    (ha : 0 ≤ A p) (hax : A p ≤ x) (hη : (x - A p) * (b : ℝ) ^ (n ^ 14 + 2 * n) ≤ 1)
+    (htop : failsTop Ψ b n p) :
+    ((n ^ 14 : ℕ) : ℝ) < 8 * n * visitCount (orbit b x) 0 (1 / (b : ℝ) ^ n) (n ^ 14 + n) ∨
+    ((n ^ 14 : ℕ) : ℝ) < 8 * n * visitCount (orbit b x) (1 - 1 / (b : ℝ) ^ n) 1 (n ^ 14 + n) := by
+  rw [failsTop_iff_b] at htop
+  have h := Tc_le Ψ A hΨ b hb x p ha hax n hη
+  by_contra hc
+  push Not at hc
+  have hn0 : (0 : ℝ) ≤ n := by positivity
+  nlinarith [hc.1, hc.2, mul_le_mul_of_nonneg_left h (by positivity : (0:ℝ) ≤ 4 * n)]
+
+end Outcomes
+
+/-! ## The level bound -/
+
+theorem two_pow_ge (n : ℕ) (hn : 8 ≤ n) : 32 * n ≤ 2 ^ n := by
+  induction n, hn using Nat.le_induction with
+  | base => norm_num
+  | succ n hn ih => rw [pow_succ]; omega
+
+theorem exists_pos_of_sum_pos {ι : Type*} {s : Finset ι} {f : ι → ℕ} (h : 0 < ∑ i ∈ s, f i) :
+    ∃ i ∈ s, 0 < f i := by
+  obtain ⟨i, hi, hne⟩ := Finset.exists_ne_zero_of_sum_ne_zero h.ne'
+  exact ⟨i, hi, Nat.pos_of_ne_zero hne⟩
+
+section Level
+
+variable (Ψ : ℕ → ℕ → List Bool → ℕ)
+
+/-- Extraction: a failing level has a failing top test or a failing tested block. -/
+theorem levelBad_pos_cases {n : ℕ} {p : List Bool} (h : 0 < levelBad Ψ n p) :
+    ∃ b ∈ (Finset.range (n + 1)).filter (2 ≤ ·),
+      failsTop Ψ b n p ∨ ∃ ℓ ∈ (Finset.range (n + 1)).filter (fun ℓ => 1 ≤ ℓ ∧ b ^ ℓ ≤ n),
+        ∃ v ∈ Finset.range (b ^ ℓ), fails Ψ b n ℓ v p := by
+  rw [levelBad, list_sum_range_map] at h
+  obtain ⟨b, hb, hpos⟩ := exists_pos_of_sum_pos h
+  split_ifs at hpos with h2
+  · refine ⟨b, Finset.mem_filter.2 ⟨hb, h2⟩, ?_⟩
+    rw [baseBad] at hpos
+    by_cases ht : failsTop Ψ b n p
+    · exact Or.inl ht
+    · right
+      rw [if_neg ht, zero_add, list_sum_range_map] at hpos
+      obtain ⟨ℓ, hℓ, hpos⟩ := exists_pos_of_sum_pos hpos
+      split_ifs at hpos with hc
+      · rw [list_sum_range_map] at hpos
+        obtain ⟨v, hv, hpos⟩ := exists_pos_of_sum_pos hpos
+        split_ifs at hpos with hf
+        · exact ⟨ℓ, Finset.mem_filter.2 ⟨hℓ, hc⟩, v, hv, hf⟩
+        · exact absurd hpos (lt_irrefl 0)
+      · exact absurd hpos (lt_irrefl 0)
+  · exact absurd hpos (lt_irrefl 0)
+
+/-- A passing level passes every test. -/
+theorem pass_of_levelBad_zero {n : ℕ} {p : List Bool} (h : levelBad Ψ n p = 0) {b : ℕ}
+    (hb : 2 ≤ b) (hbn : b ≤ n) :
+    ¬ failsTop Ψ b n p ∧ ∀ ℓ, 1 ≤ ℓ → b ^ ℓ ≤ n → ∀ v, v < b ^ ℓ → ¬ fails Ψ b n ℓ v p := by
+  rw [levelBad, list_sum_range_map, Finset.sum_eq_zero_iff] at h
+  have h1 := h b (Finset.mem_range.2 (by omega))
+  rw [if_pos hb, baseBad, Nat.add_eq_zero_iff] at h1
+  obtain ⟨h1, h2⟩ := h1
+  refine ⟨fun ht => by rw [if_pos ht] at h1; exact one_ne_zero h1, fun ℓ hℓ hℓn v hv hf => ?_⟩
+  rw [list_sum_range_map, Finset.sum_eq_zero_iff] at h2
+  have hℓle : ℓ ≤ n := (Nat.lt_pow_self (by omega : 1 < b)).le.trans hℓn
+  have h3 := h2 ℓ (Finset.mem_range.2 (by omega))
+  rw [if_pos ⟨hℓ, hℓn⟩, list_sum_range_map, Finset.sum_eq_zero_iff] at h3
+  have h4 := h3 v (Finset.mem_range.2 hv)
+  rw [if_pos hf] at h4
+  exact one_ne_zero h4
+
+end Level
+
+/-- **Level mass.** -/
+theorem level_bound_b (Ψ : ℕ → ℕ → List Bool → ℕ) (A : List Bool → ℝ)
+    (hΨ : ∀ b m p, Ψ b m p = ⌊A p * (b : ℝ) ^ m⌋₊) (hA0 : ∀ p, 0 ≤ A p)
+    (G : (ℕ → Bool) → ℝ) (hGm : Measurable G)
+    (hAG : ∀ ω D, A (pre ω D) ≤ G ω ∧ G ω ≤ A (pre ω D) + (1 / 2 : ℝ) ^ D)
+    {C δ : ℝ} (hC : 0 < C) (hδ : 0 < δ)
+    (hdec : ∀ ξ : ℝ, ξ ≠ 0 → ‖∫ ω, ee (ξ * G ω) ∂coins‖ ≤ C * |ξ| ^ (-δ))
+    {n : ℕ} (hn : 8 ≤ n) :
+    coins.real {ω | 0 < levelBad Ψ n (pre ω (n * (n ^ 14 + 2 * n)))} ≤
+      49344 * Real.sqrt (1 + Kc C δ) / (n : ℝ) ^ 2 := by
+  set D := n * (n ^ 14 + 2 * n)
+  set S := (Finset.range (n + 1)).filter (2 ≤ ·)
+  set L : ℕ → Finset ℕ := fun b => (Finset.range (n + 1)).filter (fun ℓ => 1 ≤ ℓ ∧ b ^ ℓ ≤ n)
+  set T0 : ℕ → Set (ℕ → Bool) := fun b => {ω | ((n ^ 14 : ℕ) : ℝ) <
+    8 * n * visitCount (orbit b (G ω)) 0 (1 / (b : ℝ) ^ n) (n ^ 14 + n)}
+  set T1 : ℕ → Set (ℕ → Bool) := fun b => {ω | ((n ^ 14 : ℕ) : ℝ) <
+    8 * n * visitCount (orbit b (G ω)) (1 - 1 / (b : ℝ) ^ n) 1 (n ^ 14 + n)}
+  set Dv : ℕ → ℕ → ℕ → Set (ℕ → Bool) := fun b ℓ v => {ω | 1 / (2 * (n : ℝ)) <
+      |(visitCount (orbit b (G ω)) ((v : ℝ) / (b : ℝ) ^ ℓ) ((v + 1 : ℝ) / (b : ℝ) ^ ℓ) (n ^ 14) : ℝ) /
+        ((n ^ 14 : ℕ) : ℝ) - 1 / (b : ℝ) ^ ℓ|}
+  have hn1 : 1 ≤ n := by omega
+  have hnR : (1 : ℝ) ≤ n := by exact_mod_cast hn1
+  have hsub : {ω | 0 < levelBad Ψ n (pre ω D)} ⊆
+      ⋃ b ∈ S, ((T0 b ∪ T1 b) ∪ ⋃ ℓ ∈ L b, ⋃ v ∈ Finset.range (b ^ ℓ), Dv b ℓ v) := by
+    intro ω hω
+    obtain ⟨b, hbS, hcase⟩ := levelBad_pos_cases Ψ hω
+    have hbS' := Finset.mem_filter.1 hbS
+    have hb2 : 2 ≤ b := hbS'.2
+    have hbn : b ≤ n := Nat.lt_succ_iff.1 (Finset.mem_range.1 hbS'.1)
+    have hax := (hAG ω D).1
+    have hη := eta_le A hbn (G ω) (pre ω D) hax (hAG ω D).2
+    simp only [Set.mem_iUnion, Set.mem_union]
+    refine ⟨b, hbS, ?_⟩
+    by_cases ht : failsTop Ψ b n (pre ω D)
+    · left
+      exact tail_of_failsTop Ψ A hΨ hb2 (G ω) (pre ω D) (hA0 _) hax hη ht
+    · right
+      rcases hcase with h | ⟨ℓ, hℓ, v, hv, hf⟩
+      · exact absurd h ht
+      have hℓ' := Finset.mem_filter.1 hℓ
+      refine ⟨ℓ, hℓ, v, hv, ?_⟩
+      exact dev_of_fails Ψ A hΨ hb2 hn1 (Nat.lt_succ_iff.1 (Finset.mem_range.1 hℓ'.1)) (G ω)
+        (pre ω D) (hA0 _) hax hη ht hf
+  set W := Real.sqrt (1 + Kc C δ)
+  have hW : 0 ≤ W := Real.sqrt_nonneg _
+  have hT : ∀ b ∈ S, coins.real (T0 b) ≤ 12288 * W / (n : ℝ) ^ 5 ∧
+      coins.real (T1 b) ≤ 12288 * W / (n : ℝ) ^ 5 := by
+    intro b hbS
+    have hb2 : 2 ≤ b := (Finset.mem_filter.1 hbS).2
+    have hbn : (32 * (n : ℝ)) ≤ (b : ℝ) ^ n := by
+      have h1 := two_pow_ge n hn
+      have h2 : 2 ^ n ≤ b ^ n := Nat.pow_le_pow_left hb2 n
+      exact_mod_cast h1.trans h2
+    have hP : (0 : ℝ) < (b : ℝ) ^ n := by positivity
+    have hsmall : 1 / (b : ℝ) ^ n ≤ 1 / (32 * (n : ℝ)) :=
+      one_div_le_one_div_of_le (by positivity) hbn
+    have hpos1 : 0 < 1 / (b : ℝ) ^ n := by positivity
+    have hle1 : 1 / (b : ℝ) ^ n ≤ 1 := hsmall.trans (by
+      rw [div_le_one (by positivity)]; linarith)
+    constructor
+    · exact tail_prob coins b hb2 G hGm hC hδ hdec hn1 0 _ le_rfl (by positivity) hle1
+        (by simpa using hsmall)
+    · exact tail_prob coins b hb2 G hGm hC hδ hdec hn1 _ 1 (by linarith) (by linarith) le_rfl
+        (by simpa using hsmall)
+  have hDv : ∀ b ∈ S, ∀ ℓ ∈ L b, ∀ v ∈ Finset.range (b ^ ℓ),
+      coins.real (Dv b ℓ v) ≤ 48 * W / (n : ℝ) ^ 5 := by
+    intro b hbS ℓ hℓ v hv
+    exact block_prob coins b (Finset.mem_filter.1 hbS).2 G hGm hC hδ hdec hn1
+      (Finset.mem_filter.1 hℓ).2.1 (Finset.mem_range.1 hv)
+  have hcardS : (S.card : ℝ) ≤ 2 * n := by
+    have : S.card ≤ n + 1 := (Finset.card_filter_le _ _).trans (by simp)
+    have : (S.card : ℝ) ≤ n + 1 := by exact_mod_cast this
+    linarith
+  have hblocks : ∀ b ∈ S, (∑ ℓ ∈ L b, ((b ^ ℓ : ℕ) : ℝ)) ≤ 2 * (n : ℝ) ^ 2 := by
+    intro b _
+    have hc : ((L b).card : ℝ) ≤ 2 * n := by
+      have : (L b).card ≤ n + 1 := (Finset.card_filter_le _ _).trans (by simp)
+      have : ((L b).card : ℝ) ≤ n + 1 := by exact_mod_cast this
+      linarith
+    calc (∑ ℓ ∈ L b, ((b ^ ℓ : ℕ) : ℝ)) ≤ ∑ ℓ ∈ L b, (n : ℝ) :=
+          Finset.sum_le_sum fun ℓ hℓ => by exact_mod_cast (Finset.mem_filter.1 hℓ).2.2
+      _ = ((L b).card : ℝ) * n := by rw [Finset.sum_const, nsmul_eq_mul]
+      _ ≤ 2 * n * n := by gcongr
+      _ = 2 * (n : ℝ) ^ 2 := by ring
+  have hper : ∀ b ∈ S, coins.real ((T0 b ∪ T1 b) ∪
+      ⋃ ℓ ∈ L b, ⋃ v ∈ Finset.range (b ^ ℓ), Dv b ℓ v) ≤ 24672 * W / (n : ℝ) ^ 3 := by
+    intro b hbS
+    refine (measureReal_union_le _ _).trans ?_
+    have h1 : coins.real (T0 b ∪ T1 b) ≤ 2 * (12288 * W / (n : ℝ) ^ 5) := by
+      refine (measureReal_union_le _ _).trans ?_
+      linarith [(hT b hbS).1, (hT b hbS).2]
+    have h2 : coins.real (⋃ ℓ ∈ L b, ⋃ v ∈ Finset.range (b ^ ℓ), Dv b ℓ v) ≤
+        2 * (n : ℝ) ^ 2 * (48 * W / (n : ℝ) ^ 5) := by
+      refine (measureReal_biUnion_finset_le _ _).trans ?_
+      calc ∑ ℓ ∈ L b, coins.real (⋃ v ∈ Finset.range (b ^ ℓ), Dv b ℓ v)
+          ≤ ∑ ℓ ∈ L b, ((b ^ ℓ : ℕ) : ℝ) * (48 * W / (n : ℝ) ^ 5) := by
+            refine Finset.sum_le_sum fun ℓ hℓ => (measureReal_biUnion_finset_le _ _).trans ?_
+            calc ∑ v ∈ Finset.range (b ^ ℓ), coins.real (Dv b ℓ v)
+                ≤ ∑ v ∈ Finset.range (b ^ ℓ), 48 * W / (n : ℝ) ^ 5 :=
+                  Finset.sum_le_sum fun v hv => hDv b hbS ℓ hℓ v hv
+              _ = _ := by simp
+        _ = (∑ ℓ ∈ L b, ((b ^ ℓ : ℕ) : ℝ)) * (48 * W / (n : ℝ) ^ 5) := by rw [Finset.sum_mul]
+        _ ≤ _ := by gcongr; exact hblocks b hbS
+    have hn5 : (0 : ℝ) < (n : ℝ) ^ 5 := by positivity
+    have e1 : 2 * (12288 * W / (n : ℝ) ^ 5) = 24576 * W / (n : ℝ) ^ 3 / (n : ℝ) ^ 2 := by
+      field_simp; ring
+    have e2 : 2 * (n : ℝ) ^ 2 * (48 * W / (n : ℝ) ^ 5) = 96 * W / (n : ℝ) ^ 3 := by
+      field_simp; ring
+    have h3 : 24576 * W / (n : ℝ) ^ 3 / (n : ℝ) ^ 2 ≤ 24576 * W / (n : ℝ) ^ 3 :=
+      div_le_self (by positivity) (one_le_pow₀ hnR)
+    have e3 : 24672 * W / (n : ℝ) ^ 3 = 24576 * W / (n : ℝ) ^ 3 + 96 * W / (n : ℝ) ^ 3 := by ring
+    linarith
+  refine (measureReal_mono hsub (measure_ne_top _ _)).trans
+    ((measureReal_biUnion_finset_le _ _).trans ?_)
+  calc ∑ b ∈ S, coins.real ((T0 b ∪ T1 b) ∪ ⋃ ℓ ∈ L b, ⋃ v ∈ Finset.range (b ^ ℓ), Dv b ℓ v)
+      ≤ ∑ b ∈ S, 24672 * W / (n : ℝ) ^ 3 := Finset.sum_le_sum hper
+    _ = (S.card : ℝ) * (24672 * W / (n : ℝ) ^ 3) := by rw [Finset.sum_const, nsmul_eq_mul]
+    _ ≤ 2 * n * (24672 * W / (n : ℝ) ^ 3) := by gcongr
+    _ = 49344 * W / (n : ℝ) ^ 2 := by field_simp; ring
+
 end NormalNumbers.ComputableNormalB
