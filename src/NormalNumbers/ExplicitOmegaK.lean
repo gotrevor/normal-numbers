@@ -1244,6 +1244,82 @@ theorem exists_computable_absNormal_family (Ψ : ℕ → ℕ → ℕ → List Bo
     ∃ e : ℕ → Bool, Computable e ∧ ∀ i b, 2 ≤ b → IsNormal b (G i e) := by
   sorry
 
+theorem natAbs_le_encode (z : ℤ) : z.natAbs ≤ Encodable.encode z := by
+  change z.natAbs ≤ Equiv.intEquivNat z
+  rcases z with n | n
+  · show n ≤ Equiv.natSumNatEquivNat (Sum.inl n); simp; omega
+  · show n + 1 ≤ Equiv.natSumNatEquivNat (Sum.inr n); simp; omega
+
+theorem sum_natAbs_le_encode : ∀ l : List ℤ, (l.map Int.natAbs).sum ≤ Encodable.encode l
+  | [] => by simp
+  | a :: l => by
+    have h1 := natAbs_le_encode a
+    have h2 := sum_natAbs_le_encode l
+    have h3 := Nat.add_le_pair (Encodable.encode a) (Encodable.encode l)
+    show _ ≤ Nat.pair (Encodable.encode a) (Encodable.encode l) + 1
+    simp; omega
+
+theorem sum_range_getD_le : ∀ (l : List ℤ) (n : ℕ),
+    ∑ j ∈ Finset.range n, (l.getD j 0).natAbs ≤ (l.map Int.natAbs).sum
+  | [], n => by simp
+  | a :: l, 0 => by simp
+  | a :: l, n + 1 => by
+    rw [Finset.sum_range_succ']
+    have := sum_range_getD_le l n
+    simp only [List.getD_cons_succ, List.getD_cons_zero, List.map_cons, List.sum_cons]
+    omega
+
+theorem hgt_polyOfList_le (l : List ℤ) : hgt (polyOfList l) ≤ (l.map Int.natAbs).sum := by
+  refine le_trans (Finset.sum_le_sum fun j _ => ?_) (sum_range_getD_le l _)
+  rw [polyOfList, finsetSum_coeff]
+  simp only [coeff_C_mul_X_pow, Finset.sum_ite_eq, Finset.mem_range]
+  split_ifs <;> simp
+
+theorem hgt_X : hgt (X : ℤ[X]) = 1 := by
+  simp [hgt, Finset.sum_range_succ]
+
+/-- Primitive recursive height bound for the family. -/
+def hgtBound (i : ℕ) : ℕ := Encodable.encode (Encodable.decode (α := List ℤ) i) + 1
+
+theorem primrec_hgtBound : Primrec hgtBound :=
+  Primrec.succ.comp (Primrec.encdec (α := List ℤ))
+
+theorem hgt_polyOfCode_le (k i : ℕ) : hgt (polyOfCode k i) ≤ hgtBound i := by
+  unfold polyOfCode hgtBound
+  rcases h : (Encodable.decode i : Option (List ℤ)) with _ | l
+  · simp [hgt_X]
+  · simp only
+    have : Encodable.encode (some l) = Encodable.encode l + 1 := rfl
+    rw [this]
+    split_ifs
+    · have := hgt_polyOfList_le l; have := sum_natAbs_le_encode l; omega
+    · rw [hgt_X]; omega
+
+theorem polyOfCode_deg (k i : ℕ) (hk : 2 ≤ k) :
+    1 ≤ (polyOfCode k i).natDegree ∧ (polyOfCode k i).natDegree < k := by
+  unfold polyOfCode
+  split
+  · split_ifs with h
+    · exact h
+    · simp; omega
+  · simp; omega
+
+theorem integral_ee_Gfam (k i : ℕ) (ξ : ℝ) :
+    ∫ ω, DecayAeNormal.ee (ξ * Gfam k i ω) ∂Derandomize.coins =
+      DecayAeNormal.ee (ξ / 2) *
+        pushFourier (Gk k (polyOfCode k i)) (ξ / (2 * hgt (polyOfCode k i))) := by
+  have hH : (hgt (polyOfCode k i) : ℝ) ≠ 0 := by
+    have := one_le_hgt (polyOfCode_ne_zero k i); positivity
+  have hHc : ((hgt (polyOfCode k i) : ℕ) : ℂ) ≠ 0 := by exact_mod_cast hH
+  unfold pushFourier
+  rw [← integral_const_mul]
+  refine integral_congr_ae (Eventually.of_forall fun ω => ?_)
+  simp only [DecayAeNormal.ee, Gfam, ← Complex.exp_add]
+  congr 1
+  push_cast
+  field_simp
+  ring
+
 /-- **Uniform, primitive recursive decay constants for the normalised family.**
 
 Confidence 85%.  English proof: from `polyDecay_Gk`'s proof (the cut with `N = k − 2`,
@@ -1256,7 +1332,78 @@ with `K, δ` depending only on `k`.  Normalising, `∫ e(ξ Gfam) = e(ξ/2)·pus
 theorem decay_Gfam (hBB : BakerBanajiUniformQuarterCantor) (k : ℕ) (hk : 2 ≤ k) :
     ∃ c : ℕ → ℕ, Primrec c ∧ ∃ δ : ℝ, 0 < δ ∧ ∀ i, ∀ ξ : ℝ, ξ ≠ 0 →
       ‖∫ ω, DecayAeNormal.ee (ξ * Gfam k i ω) ∂Derandomize.coins‖ ≤ c i * |ξ| ^ (-δ) := by
-  sorry
+  obtain ⟨K, hK, δ, hδ, hcut⟩ := pushFourier_le_of_deriv2_lower hBB (k - 2)
+  set W : ℕ := (1 + 2 * k ^ (k + 1)) ^ K with hW
+  refine ⟨fun i => K * (1 + 4 * hgtBound i) * W * (2 * hgtBound i) + 2 * hgtBound i, ?_,
+    min δ 1, lt_min hδ one_pos, fun i ξ hξ => ?_⟩
+  · have hB := primrec_hgtBound
+    exact Primrec.nat_add.comp (Primrec.nat_mul.comp (Primrec.nat_mul.comp (Primrec.nat_mul.comp
+      (Primrec.const K) (Primrec.nat_add.comp (Primrec.const 1)
+        (Primrec.nat_mul.comp (Primrec.const 4) hB))) (Primrec.const W))
+      (Primrec.nat_mul.comp (Primrec.const 2) hB)) (Primrec.nat_mul.comp (Primrec.const 2) hB)
+  set p := polyOfCode k i with hp
+  obtain ⟨h1, hk'⟩ := polyOfCode_deg k i hk
+  obtain ⟨Z, hZ, hlow⟩ := deriv2_Gk_lower k p h1 hk'
+  have hb := deriv_Gk_le k p hk'
+  have hk0 : (0 : ℝ) < k := by exact_mod_cast (show 0 < k by omega)
+  set c0 : ℝ := ((2 : ℝ) * (k : ℝ) ^ (k + 1))⁻¹ with hc0
+  have hc : 0 < c0 := inv_pos.2 (mul_pos two_pos (pow_pos hk0 _))
+  set H : ℝ := (hgt p : ℝ) with hHdef
+  have hH1 : 1 ≤ H := by rw [hHdef]; exact_mod_cast one_le_hgt (polyOfCode_ne_zero k i)
+  have hHB : H ≤ hgtBound i := by rw [hHdef]; exact_mod_cast hgt_polyOfCode_le k i
+  set δ' := min δ 1 with hδ'
+  have hδ'0 : 0 < δ' := lt_min hδ one_pos
+  have hδ'1 : δ' ≤ 1 := min_le_right _ _
+  set ζ := ξ / (2 * H) with hζ
+  have hζ0 : ζ ≠ 0 := div_ne_zero hξ (by positivity)
+  have hX0 : 0 < |ξ| := abs_pos.2 hξ
+  have hWr : (1 + c0⁻¹) ^ K = (W : ℝ) := by rw [hc0, inv_inv, hW]; push_cast; ring
+  rw [integral_ee_Gfam, norm_mul]
+  have hee : ‖DecayAeNormal.ee (ξ / 2)‖ = 1 := by
+    unfold DecayAeNormal.ee
+    rw [show 2 * Real.pi * Complex.I * ((ξ / 2 : ℝ) : ℂ) = ((2 * Real.pi * (ξ / 2) : ℝ) : ℂ) *
+      Complex.I by push_cast; ring, Complex.norm_exp_ofReal_mul_I]
+  rw [hee, one_mul]
+  have hBr : (1 : ℝ) ≤ hgtBound i := hH1.trans hHB
+  have hpush : ((K * (1 + 4 * hgtBound i) * W * (2 * hgtBound i) + 2 * hgtBound i : ℕ) : ℝ) =
+      K * (1 + 4 * (hgtBound i : ℝ)) * W * (2 * hgtBound i) + 2 * hgtBound i := by push_cast; ring
+  rw [hpush]
+  have hXδ : 0 < |ξ| ^ (-δ') := Real.rpow_pos_of_pos hX0 _
+  have hWpos : (1 : ℝ) ≤ W := by rw [hW]; push_cast; exact one_le_pow₀ (by linarith [(by positivity : (0:ℝ) ≤ 2 * (k:ℝ) ^ (k + 1))])
+  rcases lt_or_ge |ζ| 1 with hz | hz
+  · -- small frequency
+    have hξH : |ξ| ≤ 2 * H := by
+      rw [hζ, abs_div, abs_of_pos (by positivity : (0 : ℝ) < 2 * H), div_lt_one (by positivity)] at hz
+      exact hz.le
+    have e1 : (2 * H) ^ (-δ') ≤ |ξ| ^ (-δ') := Real.rpow_le_rpow_of_nonpos hX0 hξH (by linarith)
+    have e2 : (2 * H)⁻¹ ≤ (2 * H) ^ (-δ') := by
+      rw [← Real.rpow_neg_one]
+      exact Real.rpow_le_rpow_of_exponent_le (by linarith) (by linarith)
+    have e3 : 1 ≤ 2 * (hgtBound i : ℝ) * |ξ| ^ (-δ') := by
+      calc (1 : ℝ) = 2 * H * (2 * H)⁻¹ := by field_simp
+        _ ≤ 2 * hgtBound i * |ξ| ^ (-δ') := by gcongr; exact e2.trans e1
+    have e4 : 0 ≤ K * (1 + 4 * (hgtBound i : ℝ)) * W * (2 * hgtBound i) * |ξ| ^ (-δ') := by
+      positivity
+    calc _ ≤ (1 : ℝ) := norm_pushFourier_le_one _ _
+      _ ≤ _ := by nlinarith
+  · have hcb := hcut (Gk k p) (Set.Ioi 0) isOpen_Ioi window_sub_Ioi
+      ((analyticOnNhd_Gk k p).contDiffOn isOpen_Ioi.uniqueDiffOn) c0 (4 * H) hc
+      (fun t ht => (hb t ht).1) (fun t ht => (hb t ht).2) Z hZ hlow ζ hζ0
+    rw [hWr] at hcb
+    have e1 : |ζ| ^ (-δ) ≤ |ζ| ^ (-δ') :=
+      Real.rpow_le_rpow_of_exponent_le hz (by linarith [min_le_left δ 1])
+    have e2 : |ζ| ^ (-δ') ≤ 2 * H * |ξ| ^ (-δ') := by
+      rw [hζ, abs_div, abs_of_pos (by positivity : (0 : ℝ) < 2 * H),
+        Real.div_rpow hX0.le (by positivity), Real.rpow_neg (by positivity : (0 : ℝ) ≤ 2 * H),
+        div_inv_eq_mul, mul_comm]
+      gcongr
+      calc (2 * H) ^ δ' ≤ (2 * H) ^ (1 : ℝ) := Real.rpow_le_rpow_of_exponent_le (by linarith) hδ'1
+        _ = 2 * H := Real.rpow_one _
+    have hK0 : (0 : ℝ) ≤ K * (1 + 4 * H) * W := by positivity
+    calc _ ≤ K * (1 + 4 * H) * W * |ζ| ^ (-δ) := hcb
+      _ ≤ K * (1 + 4 * H) * W * (2 * H * |ξ| ^ (-δ')) := by gcongr; exact e1.trans e2
+      _ ≤ K * (1 + 4 * (hgtBound i : ℝ)) * W * (2 * hgtBound i * |ξ| ^ (-δ')) := by gcongr
+      _ ≤ _ := by nlinarith [mul_pos (by positivity : (0 : ℝ) < 2 * hgtBound i) hXδ]
 
 /-- **Computable lower approximations of the normalised family with exact primitive recursive
 floors.**
