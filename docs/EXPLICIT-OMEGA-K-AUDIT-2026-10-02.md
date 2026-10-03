@@ -42,3 +42,27 @@ Lean record: `src/NormalNumbers/ExplicitOmegaK.lean`, namespace `NormalNumbers.E
 `--require-decls NormalNumbers.ExplicitOmegaK.Omega_nonempty,NormalNumbers.ExplicitOmegaK.ae_mem_Omega,NormalNumbers.ExplicitOmegaK.exists_computable_mem_Omega_two,NormalNumbers.ExplicitOmegaK.exists_computable_mem_Omega,NormalNumbers.ExplicitOmegaK.mem_Omega_coe_iff,NormalNumbers.ExplicitOmegaK.BakerBanajiAnalyticQuarterCantor,NormalNumbers.ExplicitOmegaK.BakerBanajiUniformQuarterCantor,NormalNumbers.ExplicitOmegaK.exists_deriv2_Gk_ne_zero,NormalNumbers.ExplicitOmegaK.exists_computable_isAbsNormal_sqrt_of_polyDecay`
 
 `polyDecay_Gk`, `exists_computable_isAbsNormal_Gk` and `dimH_Omega_eq_one` are second-phase work.
+
+## `k ≥ 3` lane frozen (2026-10-02, branch `proof/omegak3`)
+
+**Verdict: the route is sound.**  BB Cor 1.5 (`t:self-similar`, arXiv v2 TeX re-read today) really is uniform: "there exist `η, κ, C > 0` such that for **all** `C²` `F` with `F'' ≠ 0` on `[0,1]`" the explicit bound holds.  BB's own proof of Thm 1.1 (§`s:analyticthm`) is exactly the cylinder cut, done non-effectively.  The effective version needs only the **number** of zeros of `G_p''` and a lower bound `|G_p''| ≥ c·Π|t − z|` with `c = (2k^{k+1})⁻¹` (`deriv2_Gk_lower`); it never needs where the zeros are.  So every constant is explicit in `k` and the height `hgt p`, with no root isolation.
+
+**Sibling test.**  The cut's hypothesis cannot hold when `F'' ≡ 0` on the window (`not_deriv2_lower_of_deriv2_eq_zero`, proved), so it cannot hold for the identity `G_{X^k}` either (`not_deriv2_lower_Gk_X_pow`, proved), where decay is false (`not_polyDecay_rat_affine`).
+
+**Freshness.**  `papers followups 2401.01241` (30 citing papers): the nearest is Banaji–Yu 2503.07508 (quantitative).  Its bound `2(2κ₂ − 1)/(4 + 2κ_* − 1)` is `0` for our dimension-1/2 measure, so it is no help.  Nothing newer gives an effective form of BB Thm 1.1.  `papers followups 2508.09319` is unchanged (Manai only).
+
+**Wired (proved from leaves):** `polyDecay_Gk`, `exists_computable_isAbsNormal_Gk`.  **Proved outright:** `pushFourier_split` (depth-`m` self-similarity), `pushFourier_le_of_deriv2_ge` (BB with the `max|F'|` hypothesis discharged by the MVT), `exists_polyOfCode_eq`, `measurable_Gfam`, `one_le_hgt`.
+
+**Leaves (sorry):**
+
+| Leaf | Confidence |
+|---|---|
+| `deriv2_Gk_lower` | 90% |
+| `deriv_Gk_le` | 95% |
+| `card_near_cylinders_le` | 92% |
+| `pushFourier_le_of_deriv2_lower` (the cut) | 88% |
+| `exists_computable_absNormal_family` | 85% |
+| `decay_Gfam` | 85% |
+| `approx_Gfam` | 85% |
+
+No new cited Prop: everything rests on the refereed `BakerBanajiUniformQuarterCantor`.

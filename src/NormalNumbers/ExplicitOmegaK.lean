@@ -343,41 +343,360 @@ theorem bakerBanajiQuarterCantor_of_uniform (h : BakerBanajiUniformQuarterCantor
   have := Real.rpow_pos_of_pos ha₂ (-κ)
   positivity
 
-/-- **Global polynomial decay for every `G_p`, `1 ≤ deg p < k`, despite inflection points.**
+/-! ### Explicit decay across inflection points: the cylinder cut
 
-Confidence 85%.  English proof: `G_p''` has finitely many zeros `z₁ … z_d` (`d < k`) in
-`[1/2, 1]`, each of finite order `≤ k − 2` (`exists_deriv2_Gk_ne_zero`'s polynomial in `s`), so
-`|G_p''(t)| ≥ c_p · dist(t, Z)^{k−2}`.  Split `μ` into its `2^m` depth-`m` cylinders
-`μ = 2^{-m} Σ_w (φ_w)_* μ`, `φ_w` affine of ratio `4^{-m}` (self-similarity).  Bad cylinders (hull
-within `r` of `Z`) carry mass `≤ d(2·4^m r + 2)2^{-m}`.  On a good cylinder apply the uniform
-bound to `F = G_p ∘ φ_w` (after the window rescaling): `max|F'| ≍ 4^{-m}`,
-`min|F''| ≥ 16^{-m} c_p r^{k−2}`, so its transform is `≤ C_p 4^{mκ}(16^m r^{-(k−2)})^{κ}|ξ|^{-η}`.
-Take `m = ⌊ε log₄|ξ|⌋`, `r = |ξ|^{-ε}` with `ε = ε(η, κ, k)` small: the total is `≤ C'_p|ξ|^{-δ}`,
-`δ = δ(η, κ, k) > 0`.  All constants are computable from the coefficients of `p` (root
-isolation for `c_p`). -/
+This is Baker–Banaji's own proof of their Theorem 1.1 (arXiv 2401.01241v2, §`s:analyticthm`),
+made effective.  Split `μ` into depth-`m` cylinders (`pushFourier_split`).  Discard the few
+cylinders near the zeros of `G_p''` (`card_near_cylinders_le`).  Apply Cor 1.5's explicit
+constant on the rest (`pushFourier_le_of_deriv2_ge`).  The zero set enters only through its
+**size** and a lower bound `|G_p''(t)| ≥ c · Π_{z ∈ Z} |t − z|` (`deriv2_Gk_lower`), never through
+where the zeros are.  So every constant is explicit in `k` and the coefficient height `hgt p`,
+which is what the derandomization over all `p` needs (`decay_Gfam`).
+
+**Sibling control.**  An affine map (`G_{X^k}` is the identity, `Gk_X_pow`) cannot meet the
+cut's hypothesis (`not_deriv2_lower_of_deriv2_eq_zero`), consistent with `not_polyDecay_rat_affine`.
+So the cut cannot "prove" decay for the one map where decay is false. -/
+
+/-- Coefficient height `Σ_j |a_j|` of an integer polynomial. -/
+noncomputable def hgt (p : ℤ[X]) : ℕ := ∑ j ∈ Finset.range (p.natDegree + 1), (p.coeff j).natAbs
+
+theorem one_le_hgt {p : ℤ[X]} (hp : p ≠ 0) : 1 ≤ hgt p := by
+  have hlc : (p.coeff p.natDegree).natAbs ≠ 0 := by
+    rw [Int.natAbs_ne_zero]; exact leadingCoeff_ne_zero.2 hp
+  calc 1 ≤ (p.coeff p.natDegree).natAbs := Nat.one_le_iff_ne_zero.2 hlc
+    _ ≤ hgt p := Finset.single_le_sum (f := fun j => (p.coeff j).natAbs) (fun _ _ => Nat.zero_le _)
+          (Finset.mem_range.2 (Nat.lt_succ_self _))
+
+/-- **Lower bound for `G_p''` by a product of distances.**
+
+Confidence 90%.  English proof: with `s = t^{1/k} ∈ [2^{-1/k}, 1]` and `d = deg p`,
+`k² t² G_p''(t) = Σ_{1 ≤ j ≤ d} j(j−k) a_j s^j = s R(s)` with `R ∈ ℤ[s]` of degree `d − 1` and
+leading coefficient `d(d−k)a_d`, so `|lead R| ≥ 1`.  Over `ℂ`, `|R(s)| = |lead| Π|s − ρ_i| ≥
+Π|s − Re ρ_i|` for real `s`.  For each real `σ` pick `τ(σ) = σ^k` if `0 ≤ σ ≤ 1`, `τ = 1` if
+`σ > 1`, `τ = 1/2` if `σ < 0`; then `|s − σ| ≥ |t − τ(σ)|/k` (mean value theorem for `s ↦ s^k` on
+`[0,1]`, resp. `1 − s^k ≤ k(1 − s)`, resp. `|t − 1/2| ≤ 1/2 ≤ s`).  With `t ≤ 1` and `s ≥ 1/2`:
+`|G_p''(t)| ≥ |Q(s)| ≥ (1/2)k^{-2}k^{-(d−1)} Π|t − τ_i| ≥ (2k^{k+1})^{-1} Π|t − τ_i|`, and
+`Z = {τ_i}` has `d − 1 ≤ k − 2` points (with multiplicity).  For `d = 1` the product is empty. -/
+theorem deriv2_Gk_lower (k : ℕ) (p : ℤ[X]) (h1 : 1 ≤ p.natDegree) (hk : p.natDegree < k) :
+    ∃ Z : Multiset ℝ, Z.card ≤ k - 2 ∧ ∀ t ∈ Set.Icc (1 / 2 : ℝ) 1,
+      ((2 : ℝ) * (k : ℝ) ^ (k + 1))⁻¹ * (Z.map fun z => |t - z|).prod ≤
+        |deriv (deriv (Gk k p)) t| := by
+  sorry
+
+/-- **Upper bounds for `G_p'` and `G_p''` on the window by the height.**
+
+Confidence 95%.  English proof: on `t ∈ [1/2, 1]`, `G_p'(t) = Σ_j a_j (j/k) t^{j/k − 1}` and
+`G_p''(t) = Σ_j a_j (j/k)(j/k − 1) t^{j/k − 2}` (`OmegaKCalculus.deriv2_gk`).  For `j ≤ d < k`:
+`|j/k| < 1`, `t^{j/k − 1} ≤ 2`, `|(j/k)(j/k − 1)| ≤ 1/4`, `t^{j/k − 2} ≤ 4`. -/
+theorem deriv_Gk_le (k : ℕ) (p : ℤ[X]) (hk : p.natDegree < k) :
+    ∀ t ∈ Set.Icc (1 / 2 : ℝ) 1, |deriv (Gk k p) t| ≤ 4 * (hgt p : ℝ) ∧
+      |deriv (deriv (Gk k p)) t| ≤ 4 * (hgt p : ℝ) := by
+  sorry
+
+/-- **Sibling control: the cut's hypothesis excludes maps with `F'' ≡ 0` on the window.**  A
+finite `Z` misses some point of the window, where the product is positive. -/
+theorem not_deriv2_lower_of_deriv2_eq_zero (F : ℝ → ℝ)
+    (hF : ∀ t ∈ Set.Icc (1 / 2 : ℝ) 1, deriv (deriv F) t = 0) {c : ℝ} (hc : 0 < c)
+    (Z : Multiset ℝ) :
+    ¬ ∀ t ∈ Set.Icc (1 / 2 : ℝ) 1, c * (Z.map fun z => |t - z|).prod ≤ |deriv (deriv F) t| := by
+  classical
+  intro h
+  obtain ⟨t, ht, htZ⟩ := (Set.Icc_infinite (show (1 / 2 : ℝ) < 1 by norm_num)).exists_notMem_finset
+    Z.toFinset
+  have hpos : 0 < (Z.map fun z => |t - z|).prod := by
+    refine Multiset.prod_pos fun a ha => ?_
+    obtain ⟨z, hz, rfl⟩ := Multiset.mem_map.1 ha
+    refine abs_pos.2 (sub_ne_zero.2 fun hzt => htZ ?_)
+    rw [hzt]; exact Multiset.mem_toFinset.2 hz
+  have := h t ht
+  rw [hF t ht, abs_zero] at this
+  linarith [mul_pos hc hpos]
+
+/-- The identity map `G_{X^k}` fails the cut's hypothesis (the affine sibling). -/
+theorem not_deriv2_lower_Gk_X_pow (k : ℕ) (hk : k ≠ 0) {c : ℝ} (hc : 0 < c) (Z : Multiset ℝ) :
+    ¬ ∀ t ∈ Set.Icc (1 / 2 : ℝ) 1, c * (Z.map fun z => |t - z|).prod ≤
+      |deriv (deriv (Gk k (X ^ k))) t| := by
+  refine not_deriv2_lower_of_deriv2_eq_zero _ (fun t ht => ?_) hc Z
+  have hev : Gk k (X ^ k) =ᶠ[𝓝 t] id := by
+    filter_upwards [lt_mem_nhds (show (0 : ℝ) < t by linarith [ht.1])] with u hu
+    exact Gk_X_pow k hk hu.le
+  have hd : deriv (Gk k (X ^ k)) =ᶠ[𝓝 t] fun _ => 1 := by
+    filter_upwards [lt_mem_nhds (show (0 : ℝ) < t by linarith [ht.1])] with u hu
+    have hev' : Gk k (X ^ k) =ᶠ[𝓝 u] id := by
+      filter_upwards [lt_mem_nhds hu] with v hv
+      exact Gk_X_pow k hk hv.le
+    rw [hev'.deriv_eq, deriv_id]
+  rw [hd.deriv_eq, deriv_const]
+
+/-- Depth-`m` cylinder map: `psiL [w₀, …, w_{m−1}] = ψ_{w₀} ∘ ⋯ ∘ ψ_{w_{m−1}}`, affine of ratio
+`4^{-m}`, mapping the window into itself. -/
+noncomputable def psiL (w : List Bool) : ℝ → ℝ :=
+  w.foldr (fun c f => CantorSelfSimilar.psi c ∘ f) id
+
+theorem measurable_psi (c : Bool) : Measurable (CantorSelfSimilar.psi c) := by
+  unfold CantorSelfSimilar.psi; fun_prop
+
+theorem list_sum_flatMap_pair {β : Type*} (l : List (List Bool)) (g : List Bool → β)
+    [AddCommMonoid β] :
+    ((l.flatMap fun s => [false :: s, true :: s]).map g).sum =
+      (l.map fun s => g (true :: s)).sum + (l.map fun s => g (false :: s)).sum := by
+  induction l with
+  | nil => simp
+  | cons s l ih =>
+    simp only [List.flatMap_cons, List.map_append, List.sum_append, ih, List.map_cons,
+      List.sum_cons, List.map_nil, List.sum_nil, add_zero]
+    abel
+
+/-- **Depth-`m` self-similarity of `pushFourier`** (`pushFourier_self_similar` iterated):
+`\hat{F_*μ}(ξ) = 2^{-m} Σ_{|w| = m} \hat{(F∘ψ_w)_*μ}(ξ)`. -/
+theorem pushFourier_split (m : ℕ) : ∀ F : ℝ → ℝ, Measurable F → ∀ ξ : ℝ,
+    pushFourier F ξ = ((2 : ℂ) ^ m)⁻¹ *
+      ((Derandomize.allStrings m).map fun w => pushFourier (F ∘ psiL w) ξ).sum := by
+  induction m with
+  | zero => intro F _ ξ; simp [Derandomize.allStrings, psiL]
+  | succ m ih =>
+    intro F hF ξ
+    rw [CantorSelfSimilar.pushFourier_self_similar F hF ξ, ih _ (hF.comp (measurable_psi true)) ξ,
+      ih _ (hF.comp (measurable_psi false)) ξ, Derandomize.allStrings,
+      list_sum_flatMap_pair (Derandomize.allStrings m) (fun w => pushFourier (F ∘ psiL w) ξ)]
+    simp only [psiL, List.foldr_cons]
+    rw [pow_succ]
+    ring_nf
+    rfl
+
+open Classical in
+/-- **Few depth-`m` cylinders come within `r` of a point.**
+
+Confidence 92%.  English proof: `psiL w t = L_w + (t − 1/2)4^{-m}` with
+`L_w = 1/2 + Σ_{i<m} [w_i] 4^{-i}/8`; distinct `w` of length `m` give left ends `L_w` at mutual
+distance `≥ 4^{-m}/2` (base-4 digits in `{0,1}`), and the image of the window has length
+`4^{-m}/2`.  A cylinder meeting `(z − r, z + r)` has `L_w ∈ (z − r − 4^{-m}/2, z + r)`, an
+interval of length `2r + 4^{-m}/2`, which holds at most `4·4^m r + 2` such points. -/
+theorem card_near_cylinders_le (m : ℕ) (z r : ℝ) (hr : 0 < r) :
+    (((Derandomize.allStrings m).filter fun w =>
+      decide (∃ t ∈ Set.Icc (1 / 2 : ℝ) 1, |psiL w t - z| < r)).length : ℝ) ≤
+        4 * 4 ^ m * r + 2 := by
+  sorry
+
+/-- **BB's uniform bound with the `max|F'|` lower bound discharged.**  Proved: from `hBB` with `A₁ = A₂ = A`, `a₂ = a`, `a₁ = a/4`.  The
+missing hypothesis `∃ t, a/4 ≤ |F'(t)|`: by the mean value theorem for `F'` on `[1/2, 1]`
+(`F` is `C²` on the open `U ⊇ [1/2,1]`), `|F'(1) − F'(1/2)| = |F''(c)|/2 ≥ a/2`, so one of the two
+endpoints has `|F'| ≥ a/4`.  BB's factor `1 + A₁ + a₁^{-κ} + A₂` is `1 + 2A + (a/4)^{-κ}`. -/
+theorem pushFourier_le_of_deriv2_ge (hBB : BakerBanajiUniformQuarterCantor) :
+    ∃ C η κ : ℝ, 0 < C ∧ 0 < η ∧ 0 < κ ∧
+      ∀ F : ℝ → ℝ, ∀ U : Set ℝ, IsOpen U → Set.Icc (1 / 2 : ℝ) 1 ⊆ U → ContDiffOn ℝ 2 F U →
+      ∀ A a : ℝ, 0 < a →
+      (∀ t ∈ Set.Icc (1 / 2 : ℝ) 1, |deriv F t| ≤ A) →
+      (∀ t ∈ Set.Icc (1 / 2 : ℝ) 1, |deriv (deriv F) t| ≤ A) →
+      (∀ t ∈ Set.Icc (1 / 2 : ℝ) 1, a ≤ |deriv (deriv F) t|) →
+      ∀ ξ : ℝ, ξ ≠ 0 →
+        ‖pushFourier F ξ‖ ≤ C * (1 + 2 * A + (a / 4) ^ (-κ)) * (1 + a ^ (-κ)) * |ξ| ^ (-η) := by
+  obtain ⟨C, η, κ, hC, hη, hκ, hB⟩ := hBB
+  refine ⟨C, η, κ, hC, hη, hκ, fun F U hU hsub hF A a ha hA1 hA2 hlow ξ hξ => ?_⟩
+  have hW : Set.Icc (1 / 2 : ℝ) 1 ⊆ U := hsub
+  have hcont : ContinuousOn (deriv F) (Set.Icc (1 / 2 : ℝ) 1) :=
+    (hF.continuousOn_deriv_of_isOpen hU (by norm_num)).mono hW
+  have hdiff : DifferentiableOn ℝ (deriv F) (Set.Ioo (1 / 2 : ℝ) 1) :=
+    ((hF.deriv_of_isOpen hU (m := 1) (by norm_num)).differentiableOn (by norm_num)).mono
+      (Set.Ioo_subset_Icc_self.trans hW)
+  obtain ⟨t, ht, hteq⟩ := exists_deriv_eq_slope (deriv F) (by norm_num : (1 / 2 : ℝ) < 1)
+    hcont hdiff
+  have hat := hlow t (Set.Ioo_subset_Icc_self ht)
+  rw [hteq] at hat
+  have key : ∃ t ∈ Set.Icc (1 / 2 : ℝ) 1, a / 4 ≤ |deriv F t| := by
+    by_contra hno
+    push Not at hno
+    have h1 := hno 1 ⟨by norm_num, le_rfl⟩
+    have h2 := hno (1 / 2) ⟨le_rfl, by norm_num⟩
+    have : |deriv F 1 - deriv F (1 / 2)| < a / 2 :=
+      (abs_sub _ _).trans_lt (by linarith)
+    rw [show (1 : ℝ) - 1 / 2 = 1 / 2 by norm_num, abs_div, abs_of_pos (by norm_num : (0 : ℝ) < 1 / 2),
+      le_div_iff₀ (by norm_num)] at hat
+    linarith
+  have := hB F U hU hsub hF A (a / 4) A a (by positivity) ha hA1 key hA2 hlow ξ hξ
+  convert this using 3
+  ring
+
+/-- **The cylinder cut: explicit polynomial decay when `|F''| ≥ c · Π_{z ∈ Z}|t − z|`, `|Z| ≤ N`.**
+
+Confidence 88%.  English proof (BB Thm 1.1's proof, effective).  Take `K ≥ 1` from the end.  For
+`|ξ| < 1`, `‖pushFourier‖ ≤ 1 ≤ K·…`.  For `|ξ| ≥ 1` put `ε = η/(4κ(N+2))`,
+`m = ⌊ε log₄|ξ|⌋` (so `4^m ≤ |ξ|^ε < 4^{m+1}`) and `r = |ξ|^{-ε} ≤ 4^{-m}`.  Replace `F` by
+`U.piecewise F 0` (same values on the support) to get measurability and apply
+`pushFourier_split m`.  **Bad** `w` (window image within `r` of some `z ∈ Z`): at most
+`N(4·4^m r + 2) ≤ 6N` of them (`card_near_cylinders_le`), each term `≤ 1`, weight `2^{-m} <
+2|ξ|^{-ε/2}`.  **Good** `w`: `F_w = F ∘ psiL w` is `C²` on `(psiL w)⁻¹ U ⊇ [1/2,1]`, with
+`F_w' = 4^{-m}F'∘ψ_w`, `F_w'' = 16^{-m}F''∘ψ_w`, so `|F_w'|, |F_w''| ≤ A` and
+`|F_w''| ≥ a := 16^{-m} c r^N` (each `|t − z| ≥ r`, `r ≤ 1`, `|Z| ≤ N`).  So
+`a^{-1} ≤ (1 + c⁻¹)|ξ|^{(N+2)ε}`, and `pushFourier_le_of_deriv2_ge` bounds the term by
+`C(1+2A+4^κ X)(1+X)|ξ|^{-η} ≤ C 4^{κ+2}(1+A)(1+c⁻¹)^{2⌈κ⌉}|ξ|^{2κ(N+2)ε − η}`,
+`X = (1+c⁻¹)^{⌈κ⌉}|ξ|^{κ(N+2)ε}`, and `2κ(N+2)ε = η/2`.  Total: `δ = min(η/2, ε/2)` and
+`K ≥ max(2⌈κ⌉, C 4^{κ+2} + 12N + 1)`. -/
+theorem pushFourier_le_of_deriv2_lower (hBB : BakerBanajiUniformQuarterCantor) (N : ℕ) :
+    ∃ K : ℕ, 0 < K ∧ ∃ δ : ℝ, 0 < δ ∧
+      ∀ F : ℝ → ℝ, ∀ U : Set ℝ, IsOpen U → Set.Icc (1 / 2 : ℝ) 1 ⊆ U → ContDiffOn ℝ 2 F U →
+      ∀ c A : ℝ, 0 < c →
+      (∀ t ∈ Set.Icc (1 / 2 : ℝ) 1, |deriv F t| ≤ A) →
+      (∀ t ∈ Set.Icc (1 / 2 : ℝ) 1, |deriv (deriv F) t| ≤ A) →
+      ∀ Z : Multiset ℝ, Z.card ≤ N →
+      (∀ t ∈ Set.Icc (1 / 2 : ℝ) 1, c * (Z.map fun z => |t - z|).prod ≤ |deriv (deriv F) t|) →
+      ∀ ξ : ℝ, ξ ≠ 0 → ‖pushFourier F ξ‖ ≤ K * (1 + A) * (1 + c⁻¹) ^ K * |ξ| ^ (-δ) := by
+  sorry
+
+/-- **Global polynomial decay for every `G_p`, `1 ≤ deg p < k`, despite inflection points.**
+Wiring proved: the cylinder cut (`pushFourier_le_of_deriv2_lower`, `N = k − 2`) fed with
+`deriv2_Gk_lower` and `deriv_Gk_le`.  (Non-effectively this is also BB Thm 1.1 for `G_p ∘ A`.) -/
 theorem polyDecay_Gk (hBB : BakerBanajiUniformQuarterCantor) (k : ℕ) (p : ℤ[X])
     (h1 : 1 ≤ p.natDegree) (hk : p.natDegree < k) : PolyDecay (Gk k p) := by
+  obtain ⟨K, hK, δ, hδ, hcut⟩ := pushFourier_le_of_deriv2_lower hBB (k - 2)
+  obtain ⟨Z, hZ, hlow⟩ := deriv2_Gk_lower k p h1 hk
+  have hb := deriv_Gk_le k p hk
+  have hk0 : (0 : ℝ) < k := by exact_mod_cast (show 0 < k by omega)
+  have hc : (0 : ℝ) < ((2 : ℝ) * (k : ℝ) ^ (k + 1))⁻¹ := inv_pos.2 (mul_pos two_pos (pow_pos hk0 _))
+  refine ⟨K * (1 + 4 * (hgt p : ℝ)) * (1 + ((2 : ℝ) * (k : ℝ) ^ (k + 1))⁻¹⁻¹) ^ K, δ, ?_, hδ,
+    fun ξ hξ => hcut (Gk k p) (Set.Ioi 0) isOpen_Ioi window_sub_Ioi
+      ((analyticOnNhd_Gk k p).contDiffOn isOpen_Ioi.uniqueDiffOn) _ (4 * (hgt p : ℝ)) hc
+      (fun t ht => (hb t ht).1) (fun t ht => (hb t ht).2) Z hZ hlow ξ hξ⟩
+  have hKr : (0 : ℝ) < K := by exact_mod_cast hK
+  positivity
+
+/-! ### Explicit: one computable `e` for all `p` and all bases
+
+Index the polynomials by `ℕ` (`polyOfCode`, through `Encodable (List ℤ)`), normalise each `G_p`
+into `[0, 1]` by the rational affine map `x ↦ (x + H)/(2H)`, `H = hgt p` (`Gfam`), and run the
+all-bases derandomization of `ComputableNormalB` over the whole family
+(`exists_computable_absNormal_family`).  Wall's rational affine invariance
+(`isNormal_rat_mul_add`) undoes the normalisation. -/
+
+/-- Coefficient list → polynomial `Σ_j l_j X^j`. -/
+noncomputable def polyOfList (l : List ℤ) : ℤ[X] :=
+  ∑ j ∈ Finset.range l.length, C (l.getD j 0) * X ^ j
+
+/-- Index `i` → the polynomial with coefficient list `decode i` when it has `1 ≤ deg < k`, and
+`X` otherwise (so every index carries a map with polynomial decay when `k ≥ 2`). -/
+noncomputable def polyOfCode (k i : ℕ) : ℤ[X] :=
+  match (Encodable.decode i : Option (List ℤ)) with
+  | some l => if 1 ≤ (polyOfList l).natDegree ∧ (polyOfList l).natDegree < k then polyOfList l
+      else X
+  | none => X
+
+theorem polyOfList_coeffs (p : ℤ[X]) :
+    polyOfList ((List.range (p.natDegree + 1)).map p.coeff) = p := by
+  unfold polyOfList
+  rw [List.length_map, List.length_range]
+  conv_rhs => rw [p.as_sum_range_C_mul_X_pow]
+  refine Finset.sum_congr rfl fun j hj => ?_
+  rw [Finset.mem_range] at hj
+  simp [List.getD_eq_getElem?_getD, hj]
+
+/-- Every `p` with `1 ≤ deg p < k` has an index. -/
+theorem exists_polyOfCode_eq (k : ℕ) (p : ℤ[X]) (h1 : 1 ≤ p.natDegree) (hk : p.natDegree < k) :
+    ∃ i, polyOfCode k i = p := by
+  refine ⟨Encodable.encode ((List.range (p.natDegree + 1)).map p.coeff), ?_⟩
+  simp only [polyOfCode, Encodable.encodek, polyOfList_coeffs, if_pos (And.intro h1 hk)]
+
+theorem polyOfCode_ne_zero (k i : ℕ) : polyOfCode k i ≠ 0 := by
+  unfold polyOfCode
+  split
+  · split_ifs with h
+    · intro h0; rw [h0] at h; simp at h
+    · exact X_ne_zero
+  · exact X_ne_zero
+
+/-- The normalised family: `Gfam k i ω = (G_p(y) + H)/(2H) ∈ [0, 1]`, `p = polyOfCode k i`,
+`H = hgt p`, `y = cantorReal ω`. -/
+noncomputable def Gfam (k i : ℕ) (ω : ℕ → Bool) : ℝ :=
+  (Gk k (polyOfCode k i) (cantorReal ω) + hgt (polyOfCode k i)) / (2 * hgt (polyOfCode k i))
+
+theorem measurable_Gfam (k i : ℕ) : Measurable (Gfam k i) := by
+  unfold Gfam Gk
+  have h1 : Measurable fun ω => cantorReal ω ^ ((k : ℝ)⁻¹) :=
+    CantorSelfSimilar.measurable_cantorReal.pow_const _
+  have h2 := (Polynomial.continuous_aeval (R := ℤ) (A := ℝ) (polyOfCode k i)).measurable.comp h1
+  exact (h2.add_const _).div_const _
+
+/-- **Generic family derandomization** (`ComputableNormalB.exists_computable_absNormal` for
+countably many maps at once).
+
+Confidence 85%.  English proof: as in `exists_computable_absNormal`, with level-`n` bad events
+over pairs `(i, b)` admitted when `i ≤ n` and `n ≥ n(i)`.  `level_bound_b` gives the per-`i`
+level mass `49344·√(1 + Kc (c i) δ)/n²`, and `Kc C δ = C·K_δ` is linear in `C`, so with `K_δ`
+hard-coded as a natural number the per-`i` constant `c₁(i) ≤ 49344(1 + c i·⌈K_δ⌉)` is primitive
+recursive.  Choose `n(i) = 8 + 4·2^{i+3}c₁(i)` so `Σ_i Σ_{n ≥ n(i)} c₁(i)/n² ≤ 1/8`; the
+combined bad test is primitive recursive in `(n, prefix)` and its tail is computably summable,
+so `Derandomize.exists_primrec_avoid` applies.  Every `(i, b)` is tested at every level
+`n ≥ max(n(i), i, b)`, so `normal_of_good_b` gives `IsNormal b (G i e)`. -/
+theorem exists_computable_absNormal_family (Ψ : ℕ → ℕ → ℕ → List Bool → ℕ)
+    (hΨp : Primrec fun x : ℕ × ℕ × ℕ × List Bool => Ψ x.1 x.2.1 x.2.2.1 x.2.2.2)
+    (A : ℕ → List Bool → ℝ) (hΨ : ∀ i b m p, Ψ i b m p = ⌊A i p * (b : ℝ) ^ m⌋₊)
+    (hA0 : ∀ i p, 0 ≤ A i p) (G : ℕ → (ℕ → Bool) → ℝ) (hGm : ∀ i, Measurable (G i))
+    (hAG : ∀ i ω D, A i (Derandomize.pre ω D) ≤ G i ω ∧
+      G i ω ≤ A i (Derandomize.pre ω D) + (1 / 2 : ℝ) ^ D)
+    (c : ℕ → ℕ) (hc : Primrec c) {δ : ℝ} (hδ : 0 < δ)
+    (hdec : ∀ i, ∀ ξ : ℝ, ξ ≠ 0 →
+      ‖∫ ω, DecayAeNormal.ee (ξ * G i ω) ∂Derandomize.coins‖ ≤ c i * |ξ| ^ (-δ)) :
+    ∃ e : ℕ → Bool, Computable e ∧ ∀ i b, 2 ≤ b → IsNormal b (G i e) := by
+  sorry
+
+/-- **Uniform, primitive recursive decay constants for the normalised family.**
+
+Confidence 85%.  English proof: from `polyDecay_Gk`'s proof (the cut with `N = k − 2`,
+`c = (2k^{k+1})^{-1}`, `A = 4H`): `‖pushFourier (Gk k p) ξ‖ ≤ K(1 + 4H)(1 + 2k^{k+1})^K|ξ|^{-δ}`
+with `K, δ` depending only on `k`.  Normalising, `∫ e(ξ Gfam) = e(ξ/2)·pushFourier (Gk k p)
+(ξ/(2H))` (`coins = coinMeasure`, same `e`), so with `δ' = min δ 1` the bound is
+`≤ K(1 + 4H)(1 + 2k^{k+1})^K (2H) |ξ|^{-δ'}` for `|ξ| ≥ 1` and `≤ 1` otherwise.  `H` is bounded by
+`1 + Σ |l_j|` over the decoded list (or `1` for the default `X`), primitive recursive in `i`
+(`Primcodable (List ℤ)`), so `c i := K(1 + 4B_i)(1 + 2k^{k+1})^K·2B_i + 1` works. -/
+theorem decay_Gfam (hBB : BakerBanajiUniformQuarterCantor) (k : ℕ) (hk : 2 ≤ k) :
+    ∃ c : ℕ → ℕ, Primrec c ∧ ∃ δ : ℝ, 0 < δ ∧ ∀ i, ∀ ξ : ℝ, ξ ≠ 0 →
+      ‖∫ ω, DecayAeNormal.ee (ξ * Gfam k i ω) ∂Derandomize.coins‖ ≤ c i * |ξ| ^ (-δ) := by
+  sorry
+
+/-- **Computable lower approximations of the normalised family with exact primitive recursive
+floors.**
+
+Confidence 85%.  English proof: a length-`D` prefix fixes `y = cantorReal ω` up to an unknown
+tail in `[0, 4^{-D}/6]`; `|Gfam'| ≤ 4H/(2H) = 2` on the window (`deriv_Gk_le`), so `Gfam`
+varies by `≤ 4^{-D}/3` over the cylinder.  Compute a rational `R` with
+`|R − Gfam(y_lo)| ≤ 2^{-D}/6`: each `y_lo^{j/k}` is `⌊(Y^j 2^{kM})^{1/k}⌋/2^M` up to `2^{-M}`
+(integer `k`-th root by bounded search, primitive recursive), `M = D + ⌈log₂ H⌉ + 3`.  Put
+`A = max 0 (R − 2^{-D}/2)` (a rational, so `⌊A bᵐ⌋` is primitive recursive); since
+`0 ≤ Gfam`, both `A ≤ Gfam ω` and `Gfam ω ≤ A + 2^{-D}` hold for every `ω` extending the prefix. -/
+theorem approx_Gfam (k : ℕ) (hk : 2 ≤ k) :
+    ∃ (Ψ : ℕ → ℕ → ℕ → List Bool → ℕ) (A : ℕ → List Bool → ℝ),
+      (Primrec fun x : ℕ × ℕ × ℕ × List Bool => Ψ x.1 x.2.1 x.2.2.1 x.2.2.2) ∧
+      (∀ i b m p, Ψ i b m p = ⌊A i p * (b : ℝ) ^ m⌋₊) ∧ (∀ i p, 0 ≤ A i p) ∧
+      ∀ i ω D, A i (Derandomize.pre ω D) ≤ Gfam k i ω ∧
+        Gfam k i ω ≤ A i (Derandomize.pre ω D) + (1 / 2 : ℝ) ^ D := by
   sorry
 
 /-- **Simultaneous derandomization: one computable `e` making every `G_p(y)`, `1 ≤ deg p < k`,
-normal in every base.**  The hardest step.
-
-Confidence 70%.  English proof: enumerate `ℤ[X]` by coefficient lists `a ∈ List ℤ` (Primcodable).
-`polyDecay_Gk` holds with **computable** rational constants `C(a), δ(a)` (BB's `C, η, κ`
-hard-coded as rationals; the dependence on `p` is through computable bounds on `max|G_p'|`,
-`max|G_p''|`, the root separation of `t²G_p''`).  Bad events `B(a, b, n)` (base `b`, level `n`,
-as in `ComputableNormal.badT` with the sandwich test of
-`exists_computable_isAbsNormal_sqrt_of_polyDecay`) are decided from a computable coin prefix
-because `G_p(y)` is computable to precision `2^{-K}` from `y` to precision `2^{-K-c(a)}`.  Admit
-`(a, b)` at level `n` only when `code a + b ≤ log₂ n`; the total mass is
-`Σ_n 2c n^{-2} log² n · max C(a)` over admitted `a`, which needs admission thresholds `n(a)`
-growing with `C(a)`, still computable; the tail modulus is computable.  Then
-`Derandomize.exists_primrec_avoid`.  Every `(a, b)` is admitted from some level on, so each
-`G_p(y)` is `b`-normal (`normal_of_good`). -/
+normal in every base.**  Wiring proved: `exists_computable_absNormal_family` on the normalised
+family (`approx_Gfam`, `decay_Gfam`, `measurable_Gfam`), then every `p` has an index
+(`exists_polyOfCode_eq`) and Wall's rational affine invariance undoes the normalisation.  For
+`k ≤ 1` the conclusion is vacuous. -/
 theorem exists_computable_isAbsNormal_Gk (hBB : BakerBanajiUniformQuarterCantor) (k : ℕ) :
     ∃ e : ℕ → Bool, Computable e ∧ ∀ p : ℤ[X], 1 ≤ p.natDegree → p.natDegree < k →
       IsAbsNormal (Gk k p (cantorReal e)) := by
-  sorry
+  by_cases hk : 2 ≤ k
+  swap
+  · exact ⟨fun _ => false, Computable.const _, fun p h1 h2 => absurd (h1.trans_lt h2) (by omega)⟩
+  obtain ⟨Ψ, A, hΨp, hΨ, hA0, hAG⟩ := approx_Gfam k hk
+  obtain ⟨c, hc, δ, hδ, hdec⟩ := decay_Gfam hBB k hk
+  obtain ⟨e, hce, hn⟩ := exists_computable_absNormal_family Ψ hΨp A hΨ hA0 (Gfam k)
+    (measurable_Gfam k) hAG c hc hδ hdec
+  refine ⟨e, hce, fun p h1 h2 b hb => ?_⟩
+  obtain ⟨i, hi⟩ := exists_polyOfCode_eq k p h1 h2
+  have hH : (1 : ℝ) ≤ hgt p := by exact_mod_cast one_le_hgt (hi ▸ polyOfCode_ne_zero k i)
+  have hq : ((2 * hgt p : ℕ) : ℚ) ≠ 0 := by
+    have : 1 ≤ hgt p := by exact_mod_cast hH
+    exact_mod_cast (show 2 * hgt p ≠ 0 by omega)
+  have h := isNormal_rat_mul_add b hb _ ((2 * hgt p : ℕ) : ℚ) (-(hgt p : ℚ)) hq (hn i b hb)
+  convert h using 1
+  simp only [Gfam, hi]
+  push_cast
+  field_simp
+  ring
 
 /-- **Manai's problem, explicit part: a computable point of `Ω_k` for every `k ≥ 2`.**
 `x_k = y^{1/k}`, `y = cantorReal e`, `e` computable.  Wiring proved from
