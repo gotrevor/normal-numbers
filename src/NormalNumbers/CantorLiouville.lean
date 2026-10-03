@@ -486,24 +486,6 @@ theorem orderOf_two_zmod_three_pow (M : ℕ) :
           three_pow_dvd_iff _ _ (by positivity), padicValNat.prime_pow]
         omega
 
-/-- **Digit changes are i.i.d. over a full period** (exact identity).  Confidence 93%.
-
-English proof.  Let `v = v₃(c)`, `c = 3^v c'` with `3 ∤ c'`.  By `orderOf_two_zmod_three_pow`,
-as `j` runs over `[0, 2·3^M)`, `c' 2ʲ mod 3^{M+1−v}` takes every unit value exactly `3^v`
-times.  Units `u < 3^{n}` correspond bijectively to (digit 0 ∈ {1,2}, digits `1..n−1` ∈
-{0,1,2}^{n−1}), so digits `1..M−v` of `u` are i.i.d. uniform.  Digit `i` of `c·2ʲ`, for
-`v < i ≤ M`, is digit `i − v ≥ 1` of `u` (Euclidean division is compatible with reduction
-mod `3^{M+1}`).  The pairs `(i, i+1)`, `i ∈ P`, are disjoint (`hsep`) and lie in
-`(v, M]`, so the change indicators are independent with `P(change) = 6/9`, and
-`𝔼 θ^{changes} = Π_{i∈P} (1/3 + 2θ/3)`.  Probe: `probes/cantorliou_changes_probe.py`
-(236 exact rational cases, all equal; the base-3 sibling differs). -/
-theorem sum_pow_changes (c : ℤ) (hc : c ≠ 0) (M : ℕ) (P : Finset ℕ)
-    (hlo : ∀ i ∈ P, padicValInt 3 c < i) (hhi : ∀ i ∈ P, i + 1 ≤ M)
-    (hsep : ∀ i ∈ P, ∀ i' ∈ P, i < i' → i + 2 ≤ i') (θ : ℝ) :
-    ∑ j ∈ Finset.range (2 * 3 ^ M), θ ^ changes (c * 2 ^ j) P =
-      2 * 3 ^ M * ((1 + 2 * θ) / 3) ^ P.card := by
-  sorry
-
 theorem abs_cos_le_mid {θ : ℝ} (h1 : 2 * Real.pi / 9 ≤ θ) (h2 : θ ≤ 8 * Real.pi / 9) :
     |Real.cos θ| ≤ Real.cos (Real.pi / 9) := by
   have hp := Real.pi_pos
@@ -1107,6 +1089,238 @@ theorem pow_two_sub_le (W : ℕ) (F : ℕ) (hW : W = F / 2) :
     ← Real.exp_add, Real.exp_log (by norm_num)]
   apply Real.exp_le_exp.2
   nlinarith
+
+/-! ### The exact digit-change identity -/
+
+/-- Natural ternary digit. -/
+def dg (w k : ℕ) : ℕ := w / 3 ^ k % 3
+
+/-- Digit changes of a natural number at pairs `(k, k+1)`, `k ∈ Q`. -/
+def chg (w : ℕ) (Q : Finset ℕ) : ℕ := (Q.filter fun k => dg w (k + 1) ≠ dg w k).card
+
+theorem dg_add_low {w n t k : ℕ} (hw : w < 3 ^ n) (hk : k < n) : dg (3 ^ n * t + w) k = dg w k := by
+  unfold dg
+  have : 3 ^ n = 3 ^ k * 3 ^ (n - k) := by rw [← pow_add]; congr 1; omega
+  rw [this, mul_assoc, add_comm, Nat.add_mul_div_left _ _ (by positivity)]
+  obtain ⟨r, hr⟩ : ∃ r, n - k = r + 1 := ⟨n - k - 1, by omega⟩
+  rw [hr, pow_succ]
+  have h0 : 3 ^ r * (3 * t) % 3 = 0 := by rw [mul_left_comm]; exact Nat.mul_mod_right 3 _
+  simp [mul_assoc, Nat.add_mod, h0]
+
+theorem dg_add_top {w n t : ℕ} (hw : w < 3 ^ n) (ht : t < 3) : dg (3 ^ n * t + w) n = t := by
+  unfold dg
+  rw [add_comm, Nat.add_mul_div_left _ _ (by positivity), Nat.div_eq_of_lt hw, zero_add,
+    Nat.mod_eq_of_lt ht]
+
+theorem chg_add (w n t : ℕ) (hw : w < 3 ^ (n + 1)) (ht : t < 3) (Q : Finset ℕ)
+    (hQ : ∀ k ∈ Q, k + 1 ≤ n + 1) :
+    chg (3 ^ (n + 1) * t + w) Q = chg w (Q.erase n) +
+      (if n ∈ Q ∧ t ≠ dg w n then 1 else 0) := by
+  unfold chg
+  have hsplit : Q.filter (fun k => dg (3 ^ (n + 1) * t + w) (k + 1) ≠ dg (3 ^ (n + 1) * t + w) k) =
+      (Q.erase n).filter (fun k => dg w (k + 1) ≠ dg w k) ∪
+        (if n ∈ Q ∧ t ≠ dg w n then {n} else ∅) := by
+    ext k
+    simp only [Finset.mem_filter, Finset.mem_union, Finset.mem_erase]
+    constructor
+    · rintro ⟨hk, hne⟩
+      by_cases hkn : k = n
+      · subst hkn
+        right
+        rw [dg_add_top hw ht, dg_add_low hw (by omega)] at hne
+        rw [if_pos ⟨hk, hne⟩]; simp
+      · left
+        have hk1 := hQ k hk
+        rw [dg_add_low hw (by omega), dg_add_low hw (by omega)] at hne
+        exact ⟨⟨hkn, hk⟩, hne⟩
+    · rintro (⟨⟨hkn, hk⟩, hne⟩ | h)
+      · have hk1 := hQ k hk
+        refine ⟨hk, ?_⟩
+        rw [dg_add_low hw (by omega), dg_add_low hw (by omega)]; exact hne
+      · split_ifs at h with hc
+        · simp at h; subst h
+          refine ⟨hc.1, ?_⟩
+          rw [dg_add_top hw ht, dg_add_low hw (by omega)]; exact hc.2
+        · simp at h
+  rw [hsplit, Finset.card_union_of_disjoint]
+  · split_ifs <;> simp
+  · split_ifs
+    · simp
+    · simp
+
+theorem sum_units_pow_chg (θ : ℝ) : ∀ n : ℕ, ∀ Q : Finset ℕ, (∀ k ∈ Q, k + 1 ≤ n) →
+    ∑ w ∈ Finset.range (3 ^ (n + 1)), (if 3 ∣ w then 0 else θ ^ chg w Q) =
+      2 * 3 ^ n * ((1 + 2 * θ) / 3) ^ Q.card := by
+  intro n
+  induction n with
+  | zero =>
+    intro Q hQ
+    have : Q = ∅ := Finset.eq_empty_of_forall_notMem fun k hk => by have := hQ k hk; omega
+    subst this
+    simp [chg, Finset.sum_range_succ]; norm_num
+  | succ n ih =>
+    intro Q hQ
+    rw [show 3 ^ (n + 1 + 1) = 3 ^ (n + 1) * 3 by ring, sum_range_mul_eq, Finset.sum_comm]
+    have hw : ∀ w ∈ Finset.range (3 ^ (n + 1)),
+        ∑ t ∈ Finset.range 3, (if 3 ∣ 3 ^ (n + 1) * t + w then (0:ℝ) else
+          θ ^ chg (3 ^ (n + 1) * t + w) Q) =
+        (if n ∈ Q then 1 + 2 * θ else 3) * (if 3 ∣ w then 0 else θ ^ chg w (Q.erase n)) := by
+      intro w hw
+      simp only [Finset.mem_range] at hw
+      simp only [three_dvd_add_iff (n + 1) _ w (by omega)]
+      by_cases h3 : 3 ∣ w
+      · simp [h3]
+      simp only [h3, if_false]
+      have hd : dg w n < 3 := Nat.mod_lt _ (by norm_num)
+      rw [Finset.sum_congr rfl fun t ht => by
+        rw [chg_add w n t hw (Finset.mem_range.1 ht) Q hQ, pow_add]]
+      rw [← Finset.mul_sum, mul_comm]
+      congr 1
+      by_cases hn : n ∈ Q
+      · simp only [hn, true_and, if_true]
+        simp only [Finset.sum_range_succ, Finset.sum_range_zero]
+        interval_cases h : dg w n <;> simp <;> ring
+      · simp [hn]
+    rw [Finset.sum_congr rfl hw, ← Finset.mul_sum]
+    have hQ' : ∀ k ∈ Q.erase n, k + 1 ≤ n := by
+      intro k hk; rw [Finset.mem_erase] at hk; have := hQ k hk.2; omega
+    rw [ih _ hQ']
+    by_cases hn : n ∈ Q
+    · rw [if_pos hn, ← Finset.card_erase_add_one hn, pow_succ, pow_succ]
+      ring
+    · rw [if_neg hn, Finset.erase_eq_of_notMem hn, pow_succ]; ring
+
+theorem tdig_eq_dg (X : ℤ) {k M : ℕ} (hk : k ≤ M) :
+    tdig X k = (dg ((X % 3 ^ (M + 1)).toNat) k : ℤ) := by
+  have hP : (0 : ℤ) < 3 ^ (M + 1) := by positivity
+  have hr0 : 0 ≤ X % 3 ^ (M + 1) := Int.emod_nonneg _ hP.ne'
+  unfold dg tdig
+  push_cast
+  rw [Int.toNat_of_nonneg hr0]
+  have key : ∀ q r : ℤ, (3 ^ (M + 1) * q + r) / 3 ^ k % 3 = r / 3 ^ k % 3 := by
+    intro q r
+    have : (3 : ℤ) ^ (M + 1) = 3 ^ k * (3 * 3 ^ (M - k)) := by
+      rw [← pow_succ', ← pow_add]; congr 1; omega
+    rw [this, add_comm, mul_assoc, Int.add_mul_ediv_left _ _ (by positivity), mul_assoc,
+      Int.add_mul_emod_self_left]
+  conv_lhs => rw [← Int.mul_ediv_add_emod X (3 ^ (M + 1))]
+  exact key _ _
+
+theorem tdig_pow_mul (X : ℤ) {v i : ℕ} (h : v ≤ i) : tdig (3 ^ v * X) i = tdig X (i - v) := by
+  unfold tdig
+  have : (3 : ℤ) ^ i = 3 ^ v * 3 ^ (i - v) := by rw [← pow_add]; congr 1; omega
+  rw [this, Int.mul_ediv_mul_of_pos _ _ (by positivity)]
+
+theorem isUnit_intCast_of_not_dvd (c : ℤ) (hc : ¬ (3 : ℤ) ∣ c) (M : ℕ) :
+    IsUnit (c : ZMod (3 ^ (M + 1))) := by
+  have hcop : Nat.Coprime c.natAbs (3 ^ (M + 1)) := by
+    refine Nat.Coprime.pow_right _ ((Nat.Prime.coprime_iff_not_dvd Nat.prime_three).2 ?_).symm
+    intro h; exact hc (Int.natCast_dvd.2 h)
+  have hu := (ZMod.unitOfCoprime _ hcop).isUnit
+  rcases Int.natAbs_eq c with h | h
+  · rw [h]; simpa using hu
+  · rw [h, Int.cast_neg, Int.cast_natCast]; exact hu.neg
+
+/-- **Digit changes are i.i.d. over a full period** (exact identity).  Confidence 93%.
+
+English proof.  Let `v = v₃(c)`, `c = 3^v c'` with `3 ∤ c'`.  By `orderOf_two_zmod_three_pow`,
+as `j` runs over `[0, 2·3^M)`, `c' 2ʲ mod 3^{M+1−v}` takes every unit value exactly `3^v`
+times.  Units `u < 3^{n}` correspond bijectively to (digit 0 ∈ {1,2}, digits `1..n−1` ∈
+{0,1,2}^{n−1}), so digits `1..M−v` of `u` are i.i.d. uniform.  Digit `i` of `c·2ʲ`, for
+`v < i ≤ M`, is digit `i − v ≥ 1` of `u` (Euclidean division is compatible with reduction
+mod `3^{M+1}`).  The pairs `(i, i+1)`, `i ∈ P`, are disjoint (`hsep`) and lie in
+`(v, M]`, so the change indicators are independent with `P(change) = 6/9`, and
+`𝔼 θ^{changes} = Π_{i∈P} (1/3 + 2θ/3)`.  Probe: `probes/cantorliou_changes_probe.py`
+(236 exact rational cases, all equal; the base-3 sibling differs). -/
+theorem sum_pow_changes (c : ℤ) (hc : c ≠ 0) (M : ℕ) (P : Finset ℕ)
+    (hlo : ∀ i ∈ P, padicValInt 3 c < i) (hhi : ∀ i ∈ P, i + 1 ≤ M)
+    (hsep : ∀ i ∈ P, ∀ i' ∈ P, i < i' → i + 2 ≤ i') (θ : ℝ) :
+    ∑ j ∈ Finset.range (2 * 3 ^ M), θ ^ changes (c * 2 ^ j) P =
+      2 * 3 ^ M * ((1 + 2 * θ) / 3) ^ P.card := by
+  -- c = 3^v c'
+  obtain ⟨v, m, hm, hcm⟩ := Nat.exists_eq_pow_mul_and_not_dvd (Int.natAbs_ne_zero.2 hc) 3 (by norm_num)
+  have hv : padicValInt 3 c = v := by
+    rw [padicValInt, hcm, padicValNat.mul (by positivity) (by rintro rfl; simp at hm),
+      padicValNat.prime_pow, padicValNat.eq_zero_of_not_dvd hm, add_zero]
+  rw [hv] at hlo
+  set c' : ℤ := c.sign * m
+  have hcc : c = 3 ^ v * c' := by
+    conv_lhs => rw [← Int.sign_mul_natAbs c, hcm]
+    push_cast; ring
+  have hc' : ¬ (3 : ℤ) ∣ c' := by
+    intro h
+    have : (3 : ℤ) ∣ (m : ℤ) := by
+      rcases Int.sign_trichotomy c with h1 | h1 | h1
+      · simpa [c', h1] using h
+      · exact absurd (Int.sign_eq_zero_iff_zero.1 h1) hc
+      · simpa [c', h1] using h
+    exact hm (Int.natCast_dvd_natCast.1 this)
+  set n := 3 ^ (M + 1)
+  set w : ℕ → ℕ := fun j => ((c' * 2 ^ j) % n).toNat
+  set Q := P.image (fun i => i - v)
+  have hQ : ∀ k ∈ Q, k + 1 ≤ M := by
+    intro k hk; simp only [Q, Finset.mem_image] at hk
+    obtain ⟨i, hi, rfl⟩ := hk; have := hhi i hi; omega
+  have hinjP : Set.InjOn (fun i => i - v) (P : Set ℕ) := by
+    intro a ha b hb hab; have := hlo a ha; have := hlo b hb; simp only at hab; omega
+  have hcardQ : Q.card = P.card := Finset.card_image_of_injOn hinjP
+  have hch : ∀ j, changes (c * 2 ^ j) P = chg (w j) Q := by
+    intro j
+    unfold changes chg
+    simp only [Q]
+    rw [Finset.filter_image, Finset.card_image_of_injOn (hinjP.mono (Finset.coe_subset.2 (Finset.filter_subset _ _)))]
+    congr 1
+    refine Finset.filter_congr fun i hi => ?_
+    have h1 := hlo i hi; have h2 := hhi i hi
+    rw [hcc, mul_assoc, tdig_pow_mul _ (by omega), tdig_pow_mul _ (by omega),
+      tdig_eq_dg _ (M := M) (by omega), tdig_eq_dg _ (M := M) (by omega)]
+    simp only [w, show i + 1 - v = i - v + 1 by omega]
+    exact_mod_cast Iff.rfl
+  simp_rw [hch]
+  rw [← hcardQ, ← sum_units_pow_chg θ M Q hQ]
+  have hfl : ∑ u ∈ Finset.range n, (if 3 ∣ u then 0 else θ ^ chg u Q) =
+      ∑ u ∈ (Finset.range n).filter (fun u => ¬ 3 ∣ u), θ ^ chg u Q := by
+    rw [Finset.sum_filter]; refine Finset.sum_congr rfl fun u _ => ?_; split_ifs <;> simp_all
+  rw [hfl]
+  have hP : (0 : ℤ) < n := by positivity
+  have hcast : ∀ j, ((w j : ℕ) : ZMod n) = (c' : ZMod n) * 2 ^ j := by
+    intro j
+    simp only [w]
+    have h0 : 0 ≤ c' * 2 ^ j % n := Int.emod_nonneg _ hP.ne'
+    rw [show ((((c' * 2 ^ j) % n).toNat : ℕ) : ZMod n) = (((c' * 2 ^ j) % n : ℤ) : ZMod n) by
+      rw [← Int.toNat_of_nonneg h0]; simp [h0]]
+    rw [ZMod.intCast_mod]; push_cast; ring
+  have hord := orderOf_two_zmod_three_pow M
+  have hfin : IsOfFinOrder (2 : ZMod n) := orderOf_pos_iff.1 (by rw [hord]; positivity)
+  have hu := isUnit_intCast_of_not_dvd c' hc' M
+  have hinj : Set.InjOn w (Finset.range (2 * 3 ^ M) : Set ℕ) := by
+    intro a ha b hb hab
+    simp only [Finset.coe_range, Set.mem_Iio] at ha hb
+    have h1 := congrArg (fun x : ℕ => (x : ZMod n)) hab
+    simp only [hcast] at h1
+    have h2 := hu.mul_left_cancel h1
+    rw [hfin.pow_inj_mod, hord, Nat.mod_eq_of_lt ha, Nat.mod_eq_of_lt hb] at h2
+    exact h2
+  have hmaps : Set.MapsTo w (Finset.range (2 * 3 ^ M) : Set ℕ)
+      ((Finset.range n).filter fun u => ¬ 3 ∣ u : Finset ℕ) := by
+    intro j _
+    simp only [Finset.coe_filter, Finset.mem_range, Set.mem_setOf_eq]
+    have h0 : 0 ≤ c' * 2 ^ j % n := Int.emod_nonneg _ hP.ne'
+    have hlt : c' * 2 ^ j % n < n := Int.emod_lt_of_pos _ hP
+    refine ⟨by simp only [w]; omega, fun h3 => ?_⟩
+    have h3' : (3 : ℤ) ∣ c' * 2 ^ j % n := by
+      have := Int.natCast_dvd_natCast.2 h3; simp only [w] at this
+      rwa [Int.toNat_of_nonneg h0] at this
+    have h3n : (3 : ℤ) ∣ n := by simp only [n]; push_cast; exact dvd_pow_self 3 (Nat.succ_ne_zero M)
+    have : (3 : ℤ) ∣ c' * 2 ^ j := by
+      rw [← Int.mul_ediv_add_emod (c' * 2 ^ j) n, add_comm]
+      exact dvd_add h3' (Dvd.dvd.mul_right h3n _)
+    rcases (Int.prime_three.dvd_or_dvd this) with h | h
+    · exact hc' h
+    · have := Int.prime_three.dvd_of_dvd_pow h; norm_num at this
+  refine Finset.sum_nbij w (fun b hb => hmaps hb) hinj ?_ (fun _ _ => rfl)
+  exact Finset.surjOn_of_injOn_of_card_le _ hmaps hinj
+    (by rw [card_units_range, Finset.card_range])
 
 /-- **The quantitative Cassels lemma** (the content of the campaign).  Confidence 85%.
 
