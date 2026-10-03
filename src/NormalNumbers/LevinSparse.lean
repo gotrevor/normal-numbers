@@ -8,6 +8,7 @@ import NormalNumbers.PowerBaseReal
 import NormalNumbers.Wall
 import NormalNumbers.WeylCriterion
 import NormalNumbers.DecayAeNormal
+import NormalNumbers.Derandomize
 
 /-!
 # Levin's rate in base 2, normal in every odd base
@@ -51,6 +52,200 @@ points in `C(S)`.  Base `4 = 2²` is fine: it follows from base 2 (`PowerBase.is
 -/
 
 open MeasureTheory Filter Topology
+
+namespace NormalNumbers.Derandomize
+
+/-- Oracle list `[o 0, …, o (n-1)]`. -/
+def oList (o : ℕ → ℕ) (n : ℕ) : List ℕ := (List.range n).map o
+
+theorem computable_oList {o : ℕ → ℕ} (ho : Computable o) : Computable (oList o) := by
+  have hh : Computable₂ fun (_ : ℕ) (x : ℕ × List ℕ) => x.2 ++ [o x.1] :=
+    (Computable.list_concat.comp (Computable.snd.comp Computable.snd)
+      (ho.comp (Computable.fst.comp Computable.snd))).to₂
+  refine (Computable.nat_rec (f := fun n : ℕ => n) (g := fun _ => ([] : List ℕ))
+    Computable.id (Computable.const _) hh).of_eq fun n => ?_
+  induction n with
+  | zero => rfl
+  | succ n ih => simp only [oList, List.range_succ, List.map_append, List.map_singleton] at ih ⊢; rw [← ih]
+
+section Oracle
+variable (Bp : ℕ × ℕ × List Bool → Bool) (o : ℕ → ℕ) (d J : ℕ → ℕ)
+
+/-- `W` with the oracle values supplied as a list. -/
+def Wo (k : ℕ) (L : List ℕ) (q : List Bool) : ℕ :=
+  ((List.range (J k + 1)).map fun j =>
+    cnt (fun s => Bp (j, L.getD j 0, s.take (d j))) (d j - q.length) q *
+      2 ^ (bigS d J k - (d j - q.length))).sum
+
+theorem W_eq_Wo (k : ℕ) (q : List Bool) :
+    W (fun j p => Bp (j, o j, p)) d J k q = Wo Bp d J k (oList o (J k + 1)) q := by
+  unfold W Wo cntJ
+  congr 1
+  refine List.map_congr_left fun j hj => ?_
+  have hj' : j < J k + 1 := List.mem_range.1 hj
+  have : (oList o (J k + 1)).getD j 0 = o j := by
+    simp [oList, List.getD_eq_getElem?_getD, hj']
+  rw [this]
+  rfl
+
+variable {Bp o d J}
+
+theorem primrec_Wo (hB : Primrec Bp) (hd : Primrec d) (hJ : Primrec J) :
+    Primrec fun x : ℕ × List ℕ × List Bool => Wo Bp d J x.1 x.2.1 x.2.2 := by
+  have hf : Primrec fun x : ℕ × List ℕ × List Bool => List.range (J x.1 + 1) :=
+    Primrec.list_range.comp (Primrec.succ.comp (hJ.comp Primrec.fst))
+  have hcnt : Primrec fun y : (ℕ × List ℕ × List Bool) × ℕ =>
+      cnt (fun s => Bp (y.2, y.1.2.1.getD y.2 0, s.take (d y.2))) (d y.2 - y.1.2.2.length) y.1.2.2 := by
+    have hA : Primrec fun y : (ℕ × List ℕ × List Bool) × ℕ => allStrings (d y.2 - y.1.2.2.length) :=
+      primrec_allStrings.comp (Primrec.nat_sub.comp (hd.comp Primrec.snd)
+        (Primrec.list_length.comp (Primrec.snd.comp (Primrec.snd.comp Primrec.fst))))
+    have hc : Primrec fun z : ((ℕ × List ℕ × List Bool) × ℕ) × List Bool =>
+        Bp (z.1.2, z.1.1.2.1.getD z.1.2 0, (z.1.1.2.2 ++ z.2).take (d z.1.2)) := by
+      refine hB.comp (Primrec.pair (Primrec.snd.comp Primrec.fst) (Primrec.pair ?_ ?_))
+      · exact (Primrec.list_getD 0).comp (Primrec.fst.comp (Primrec.snd.comp (Primrec.fst.comp Primrec.fst)))
+          (Primrec.snd.comp Primrec.fst)
+      · exact Primrec.list_take.comp (hd.comp (Primrec.snd.comp Primrec.fst))
+          (Primrec.list_append.comp (Primrec.snd.comp (Primrec.snd.comp (Primrec.fst.comp Primrec.fst)))
+            Primrec.snd)
+    have hg : Primrec₂ fun (y : (ℕ × List ℕ × List Bool) × ℕ) (s : List Bool) =>
+        (bif Bp (y.2, y.1.2.1.getD y.2 0, (y.1.2.2 ++ s).take (d y.2)) then 1 else 0 : ℕ) :=
+      (Primrec.cond hc (Primrec.const 1) (Primrec.const 0)).to₂
+    refine (primrec_sum_map hA hg).of_eq fun y => ?_
+    unfold cnt
+    congr 1
+    refine List.map_congr_left fun s _ => ?_
+    dsimp only
+    by_cases hb : Bp (y.2, y.1.2.1.getD y.2 0, (y.1.2.2 ++ s).take (d y.2)) = true <;> simp
+  have hg : Primrec₂ fun (x : ℕ × List ℕ × List Bool) (j : ℕ) =>
+      cnt (fun s => Bp (j, x.2.1.getD j 0, s.take (d j))) (d j - x.2.2.length) x.2.2 *
+        2 ^ (bigS d J x.1 - (d j - x.2.2.length)) := by
+    have hE : Primrec fun y : (ℕ × List ℕ × List Bool) × ℕ =>
+        bigS d J y.1.1 - (d y.2 - y.1.2.2.length) :=
+      Primrec.nat_sub.comp ((primrec_bigS hd hJ).comp (Primrec.fst.comp Primrec.fst))
+        (Primrec.nat_sub.comp (hd.comp Primrec.snd)
+          (Primrec.list_length.comp (Primrec.snd.comp (Primrec.snd.comp Primrec.fst))))
+    have hm : Primrec fun y : (ℕ × List ℕ × List Bool) × ℕ =>
+        cnt (fun s => Bp (y.2, y.1.2.1.getD y.2 0, s.take (d y.2))) (d y.2 - y.1.2.2.length) y.1.2.2 *
+          2 ^ (bigS d J y.1.1 - (d y.2 - y.1.2.2.length)) :=
+      Primrec.nat_mul.comp hcnt (primrec_pow2.comp hE)
+    exact hm.to₂
+  exact (primrec_sum_map hf hg).of_eq fun x => rfl
+
+theorem computable_algo_oracle (hB : Primrec Bp) (ho : Computable o) (hd : Primrec d)
+    (hJ : Primrec J) : Computable (algo (fun j p => Bp (j, o j, p)) d J) := by
+  have hW := primrec_Wo hB hd hJ
+  have hL : Computable fun k : ℕ => oList o (J k + 1) :=
+    (computable_oList ho).comp (Primrec.succ.comp hJ).to_comp
+  have hch : Computable₂ (choose (fun j p => Bp (j, o j, p)) d J) := by
+    have hp1 : Computable fun x : ℕ × List Bool => (x.1, oList o (J x.1 + 1), x.2 ++ [true]) :=
+      Computable.pair Computable.fst (Computable.pair (hL.comp Computable.fst)
+        (Computable.list_concat.comp Computable.snd (Computable.const true)))
+    have h1 : Computable fun x : ℕ × List Bool => Wo Bp d J x.1 (oList o (J x.1 + 1)) (x.2 ++ [true]) :=
+      (hW.to_comp.comp hp1).of_eq fun x => rfl
+    have hp2 : Computable fun x : ℕ × List Bool => (x.1, oList o (J x.1 + 1), x.2 ++ [false]) :=
+      Computable.pair Computable.fst (Computable.pair (hL.comp Computable.fst)
+        (Computable.list_concat.comp Computable.snd (Computable.const false)))
+    have h2 : Computable fun x : ℕ × List Bool => Wo Bp d J x.1 (oList o (J x.1 + 1)) (x.2 ++ [false]) :=
+      (hW.to_comp.comp hp2).of_eq fun x => rfl
+    have hlt : Primrec fun x : ℕ × ℕ => decide (x.1 < x.2) :=
+      (Primrec.nat_lt.comp Primrec.fst Primrec.snd).decide
+    refine (hlt.to_comp.comp (h1.pair h2)).to₂.of_eq fun x => ?_
+    simp only [choose, W_eq_Wo]
+  have hpre : Computable (preA (fun j p => Bp (j, o j, p)) d J) := by
+    have hg : Computable₂ fun (_ : ℕ) (x : ℕ × List Bool) =>
+        x.2 ++ [choose (fun j p => Bp (j, o j, p)) d J x.1 x.2] :=
+      (Computable.list_concat.comp (Computable.snd.comp Computable.snd)
+        (hch.comp (Computable.fst.comp Computable.snd) (Computable.snd.comp Computable.snd))).to₂
+    refine (Computable.nat_rec (f := fun n : ℕ => n) (g := fun _ => ([] : List Bool))
+      Computable.id (Computable.const _) hg).of_eq fun n => ?_
+    induction n with
+    | zero => rfl
+    | succ n ih => simp only [preA] at ih ⊢; rw [← ih]
+  exact hch.comp Computable.id hpre
+
+end Oracle
+
+/-- **Computable avoidance relative to a computable oracle.** -/
+theorem exists_computable_avoid_oracle (Bp : ℕ × ℕ × List Bool → Bool) (hB : Primrec Bp)
+    (o : ℕ → ℕ) (ho : Computable o)
+    (d : ℕ → ℕ) (hd : Primrec d) (J : ℕ → ℕ) (hJ : Primrec J)
+    (hsum : Summable fun j => dens (fun j p => Bp (j, o j, p)) d j [])
+    (htot : ∑' j, dens (fun j p => Bp (j, o j, p)) d j [] ≤ 1 / 4)
+    (htail : ∀ k, ∑' j, (if J k < j then dens (fun j p => Bp (j, o j, p)) d j [] else 0) ≤
+      (1 / 8 : ℝ) ^ (k + 1)) :
+    ∃ e : ℕ → Bool, Computable e ∧ ∀ j, Bp (j, o j, pre e (d j)) = false := by
+  set bad : ℕ → List Bool → Bool := fun j p => Bp (j, o j, p) with hbaddef
+  suffices h : ∃ e : ℕ → Bool, Computable e ∧ ∀ j, bad j (pre e (d j)) = false from h
+  refine ⟨algo bad d J, computable_algo_oracle hB ho hd hJ, ?_⟩
+  set Φ : List Bool → ℝ := fun q => ∑' j, dens bad d j q with hΦdef
+  have hsq : ∀ q, Summable fun j => dens bad d j q := fun q =>
+    (hsum.mul_left (2 ^ q.length)).of_nonneg_of_le (fun j => dens_nonneg j q)
+      (fun j => dens_le_pow j q)
+  have hT : ∀ k q, Summable fun j => if J k < j then dens bad d j q else 0 := fun k q =>
+    (hsq q).of_nonneg_of_le (fun j => by split_ifs <;> simp [dens_nonneg])
+      (fun j => by split_ifs <;> simp [dens_nonneg])
+  have hTnn : ∀ k q, 0 ≤ ∑' j, (if J k < j then dens bad d j q else 0) := fun k q =>
+    tsum_nonneg fun j => by split_ifs <;> simp [dens_nonneg]
+  have hsplit : ∀ k q, Φ q = F (bad := bad) (d := d) (J := J) k q +
+      ∑' j, (if J k < j then dens bad d j q else 0) := by
+    intro k q
+    have hA : Summable fun j => if j < J k + 1 then dens bad d j q else 0 :=
+      (hsq q).of_nonneg_of_le (fun j => by split_ifs <;> simp [dens_nonneg])
+        (fun j => by split_ifs <;> simp [dens_nonneg])
+    have hpt : (fun j => dens bad d j q) = fun j =>
+        (if j < J k + 1 then dens bad d j q else 0) + (if J k < j then dens bad d j q else 0) := by
+      funext j; split_ifs <;> first | omega | simp
+    simp only [hΦdef]
+    rw [hpt, hA.tsum_add (hT k q)]
+    congr 1
+    rw [tsum_eq_sum (s := Finset.range (J k + 1)) (fun j hj => by
+      rw [if_neg (by simpa using hj)])]
+    unfold F
+    exact Finset.sum_congr rfl fun j hj => if_pos (Finset.mem_range.1 hj)
+  have htailq : ∀ k q, q.length = k + 1 →
+      ∑' j, (if J k < j then dens bad d j q else 0) ≤ (1 / 4 : ℝ) ^ (k + 1) := by
+    intro k q hq
+    calc ∑' j, (if J k < j then dens bad d j q else 0)
+        ≤ ∑' j, (2 : ℝ) ^ (k + 1) * (if J k < j then dens bad d j [] else 0) := by
+          refine (hT k q).tsum_le_tsum (fun j => ?_) ((hT k []).mul_left _)
+          split_ifs
+          · rw [← hq]; exact dens_le_pow j q
+          · simp
+      _ = 2 ^ (k + 1) * ∑' j, (if J k < j then dens bad d j [] else 0) := tsum_mul_left
+      _ ≤ 2 ^ (k + 1) * (1 / 8) ^ (k + 1) := by gcongr; exact htail k
+      _ = (1 / 4) ^ (k + 1) := by rw [← mul_pow]; norm_num
+  have hstep : ∀ k, Φ (preA bad d J (k + 1)) ≤ Φ (preA bad d J k) + (1 / 4 : ℝ) ^ (k + 1) := by
+    intro k
+    rw [hsplit k (preA bad d J (k + 1))]
+    have h1 := htailq k (preA bad d J (k + 1)) (length_preA (k + 1))
+    have h2 : F (bad := bad) (d := d) (J := J) k (preA bad d J (k + 1)) ≤
+        F (bad := bad) (d := d) (J := J) k (preA bad d J k) := F_choose_le k _
+    have h3 := hsplit k (preA bad d J k)
+    have h4 := hTnn k (preA bad d J k)
+    linarith
+  have hbound : ∀ k, Φ (preA bad d J k) ≤ 1 / 4 + (1 - (1 / 4 : ℝ) ^ k) / 3 := by
+    intro k
+    induction k with
+    | zero => simp only [preA, pow_zero, sub_self, zero_div, add_zero]; exact htot
+    | succ k ih =>
+      have := hstep k
+      rw [pow_succ] at this ⊢
+      linarith
+  intro j
+  rw [pre_algo]
+  have hlen := length_preA (bad := bad) (d := d) (J := J) (d j)
+  have hd1 := dens_of_le (bad := bad) (d := d) j (preA bad d J (d j)) hlen.ge
+  rw [List.take_of_length_le hlen.le] at hd1
+  have hle : dens bad d j (preA bad d J (d j)) ≤ Φ (preA bad d J (d j)) :=
+    (hsq _).le_tsum j (fun i _ => dens_nonneg i _)
+  have hb := hbound (d j)
+  have hp : (0 : ℝ) ≤ (1 / 4) ^ (d j) := by positivity
+  by_contra hc
+  rw [Bool.not_eq_false] at hc
+  rw [if_pos hc] at hd1
+  linarith
+
+end NormalNumbers.Derandomize
 
 namespace NormalNumbers.LevinSparse
 
@@ -1620,6 +1815,67 @@ theorem exists_absNormal_base2_fast :
       ∀ N : ℕ, 2 ≤ N → DiscLe (orbit 2 x) N (C / (N : ℝ) ^ θ) := by
   sorry
 
+section ComputableBLD
+
+open Derandomize
+
+/-- **Effective, frequency-uniform form of `bld_doubleSum_le`** on octaves: one constant `C` and one
+start `s₀` (both depending only on `S`, via BLD's `K` and `ρ`) serve every odd base `r ≤ s` and
+every frequency `0 < |h| ≤ s²` at every `N ≥ 2^s`.
+
+Confidence 80%.  Proof: rerun `bld_doubleSum_le`'s split with the Lemma 5 threshold made explicit:
+for `|h| ≤ s²` and `N ≥ 2^s`, every shift used has `a = ν₂(h) + d(g) ≤ 2 log₂ s + 2 log₂ log N`,
+and `2^{K(a+1)^{1/ρ} + 10³⁰} ≤ N` once `log₂ N ≥ s ≥ s₀`; the constant `2^{2ν₂(r²−1)+4} ≤ 16 r⁴`;
+`log N ≥ s log 2`. -/
+theorem bld_doubleSum_eff (hL5 : Literature.BLDLemma5) {S : Set ℕ} {ρ : ℝ} (hS : Sparse S ρ) :
+    ∃ C s₀ : ℕ, ∀ s : ℕ, s₀ ≤ s → ∀ r : ℕ, 3 ≤ r → r ≤ s → Odd r → ∀ h : ℤ, h ≠ 0 →
+      |h| ≤ (s : ℤ) ^ 2 → ∀ N : ℕ, 2 ^ s ≤ N →
+        (∑ p ∈ Finset.range N, ∑ q ∈ Finset.range N,
+            rieszTail S 0 ((h : ℝ) * ((r : ℝ) ^ p - (r : ℝ) ^ q))) / (N : ℝ) ^ 2 ≤
+          C * (r : ℝ) ^ 4 / (s : ℝ) ^ (1.005 : ℝ) := by
+  sorry
+
+/-- **Visit deviation of the translate, Chebyshev form.**  For the sparse measure, the probability
+that the base-`r` visit frequency of `[a, c)` at time `N ∈ [2^s, ∞)` deviates by more than `η` is
+`≤ K r⁴ / (η⁴ s^{1.005})`, for `η ≥ 8/s`.
+
+Confidence 85%.  Proof: plateau sandwich of width `ρ = η/4` (`VisitDeviation.visit_deviation`
+pattern, `plB ρ` coefficient majorant, `Σ plB = 2/(3ρ)`); frequencies `|n| > H = s²` cost
+`≤ 2/(ρH) ≤ η/4` deterministically; for `|n| ≤ s²`, Cauchy–Schwarz
+`(Σ B_n |A_n|)² ≤ (Σ B_n)(Σ B_n |A_n|²)` and Chebyshev with `t = η/4`, the second moments from
+`secondMoment_translate_le` + `bld_doubleSum_eff`. -/
+theorem prob_visit_dev_odd (hL5 : Literature.BLDLemma5) {S : Set ℕ} {ρ : ℝ} (hS : Sparse S ρ)
+    (α : ℝ) :
+    ∃ K s₀ : ℕ, ∀ s : ℕ, s₀ ≤ s → ∀ r : ℕ, 3 ≤ r → r ≤ s → Odd r → ∀ a c : ℝ, 0 ≤ a → a ≤ c →
+      c ≤ 1 → ∀ η : ℝ, 8 / (s : ℝ) ≤ η → ∀ N : ℕ, 2 ^ s ≤ N →
+        coinMeasure.real {ω | η < |(visitCount (orbit r (α + bldPoint S ω)) a c N : ℝ) / N - (c - a)|}
+          ≤ K * (r : ℝ) ^ 4 / (η ^ 4 * (s : ℝ) ^ (1.005 : ℝ)) := by
+  sorry
+
+/-- **The odd-base test family** for `α + bldPoint expSet e`: finite-prefix tests (decided from
+`d j` coins and the oracle value `o j = ⌊α 2^{d j}⌋₊`), with the avoider's mass and computable-tail
+conditions, such that passing every test forces normality in every odd base.
+
+Confidence 70% (the construction is routine but long).  Construction: octave `s ≥ s₀`,
+`L = Nat.log 2 s + 1`; checkpoints `N = 2^s + t ⌊2^s/L⌋`, `t < L`; bases odd `3 ≤ r ≤ L`; dyadic
+intervals of length `2^{-m}`, `m ≤ L`; threshold `η = 1/L`; the test reads `A = ⌊α2^D⌋/2^D + y_D`
+(`y_D` the prefix value of `bldPoint`), `D = ⌈N log₂ r⌉ + s`, so `A r^k` is within `2^{-s}` of
+`x r^k` for `k < N`, and tests intervals widened by `2^{-s}` (margin absorbed in `η`).  Masses from
+`prob_visit_dev_odd`: octave `s` costs `≲ L^{11} K / s^{1.005}`, summable; computable tail by
+comparison with `∫ (log t)^{11} t^{-1.005}`.  Passing: checkpoint ratios `→ 1` interpolate all `N`;
+dyadic intervals generate all intervals; Wall. -/
+theorem oddTestFamily (hL5 : Literature.BLDLemma5) (α : ℝ) (hα0 : 0 ≤ α)
+    (hα : Computable fun n : ℕ => ⌊α * 2 ^ n⌋₊) :
+    ∃ (Bp : ℕ × ℕ × List Bool → Bool) (o : ℕ → ℕ) (d J : ℕ → ℕ),
+      Primrec Bp ∧ Computable o ∧ Primrec d ∧ Primrec J ∧
+      Summable (fun j => dens (fun j p => Bp (j, o j, p)) d j []) ∧
+      ∑' j, dens (fun j p => Bp (j, o j, p)) d j [] ≤ 1 / 4 ∧
+      (∀ k, ∑' j, (if J k < j then dens (fun j p => Bp (j, o j, p)) d j [] else 0) ≤
+        (1 / 8 : ℝ) ^ (k + 1)) ∧
+      ∀ e : ℕ → Bool, (∀ j, Bp (j, o j, pre e (d j)) = false) →
+        ∀ r : ℕ, 3 ≤ r → Odd r → IsNormal r (α + bldPoint expSet e) := by
+  sorry
+
 /-- **Derandomization stretch (65%).**  For computable `α ∈ [0,1)` (Levin's `α` is an explicit
 digit concatenation), a computable coin sequence `e` with `α + bldPoint expSet e` normal in every
 odd base.  Route: BLD Theorem 3's algorithm (Becher–Figueira reformulation of Sierpiński, bad
@@ -1630,6 +1886,10 @@ theorem exists_computable_bld_odd_add (hL5 : Literature.BLDLemma5) (α : ℝ) (h
     (hα : Computable fun n : ℕ => ⌊α * 2 ^ n⌋₊) :
     ∃ e : ℕ → Bool, Computable e ∧
       ∀ r : ℕ, 3 ≤ r → Odd r → IsNormal r (α + bldPoint expSet e) := by
-  sorry
+  obtain ⟨Bp, o, d, J, hB, ho, hd, hJ, hsum, htot, htail, hpass⟩ := oddTestFamily hL5 α hα0 hα
+  obtain ⟨e, he, hav⟩ := exists_computable_avoid_oracle Bp hB o ho d hd J hJ hsum htot htail
+  exact ⟨e, he, hpass e hav⟩
+
+end ComputableBLD
 
 end NormalNumbers.LevinSparse
