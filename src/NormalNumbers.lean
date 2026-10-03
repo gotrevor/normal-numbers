@@ -944,3 +944,4 @@ import NormalNumbers.ExplicitPQ
 import NormalNumbers.BadNormal
 import NormalNumbers.ReciprocalNormal
 import NormalNumbers.LevinSparse
+import NormalNumbers.CantorLiouville
