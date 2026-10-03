@@ -135,4 +135,270 @@ theorem orbit_mem_of_top (b : ℕ) (hb : 2 ≤ b) {a x : ℝ} (ha : 0 ≤ a) (ha
     have hY : Int.fract Y = Y - ⌊Y⌋ := rfl
     linarith
 
+/-! ## The tests -/
+
+section Tests
+
+variable (Ψ : ℕ → ℕ → List Bool → ℕ)
+
+/-- Approximate depth-`r` digit block at orbit index `E`. -/
+def dA (b E r : ℕ) (p : List Bool) : ℕ := Ψ b (E + r) p % b ^ r
+
+/-- Approximate visit count of the cell `(ℓ, v)` among the first `N` orbit points. -/
+def Vc (b ℓ v N : ℕ) (p : List Bool) : ℕ :=
+  ((List.range N).map fun k => if dA Ψ b k ℓ p = v then 1 else 0).sum
+
+/-- Approximate visits to the top depth-`n` cell among the first `n^14 + n` orbit points. -/
+def Tc (b n : ℕ) (p : List Bool) : ℕ :=
+  ((List.range (n ^ 14 + n)).map fun j => if dA Ψ b j n p = b ^ n - 1 then 1 else 0).sum
+
+/-- `|Vc/N − b^{-ℓ}| > 3/(4n)`, `N = n^14`. -/
+def fails (b n ℓ v : ℕ) (p : List Bool) : Prop :=
+  3 * n ^ 14 * b ^ ℓ < 4 * n * (Vc Ψ b ℓ v (n ^ 14) p * b ^ ℓ - n ^ 14 +
+    (n ^ 14 - Vc Ψ b ℓ v (n ^ 14) p * b ^ ℓ))
+
+/-- `Tc > N/(4n)`. -/
+def failsTop (b n : ℕ) (p : List Bool) : Prop := n ^ 14 < 4 * n * Tc Ψ b n p
+
+instance (b n ℓ v : ℕ) (p : List Bool) : Decidable (fails Ψ b n ℓ v p) := by
+  unfold fails; infer_instance
+
+instance (b n : ℕ) (p : List Bool) : Decidable (failsTop Ψ b n p) := by
+  unfold failsTop; infer_instance
+
+/-- Number of failing tests for base `b` at level `n`. -/
+def baseBad (b n : ℕ) (p : List Bool) : ℕ :=
+  (if failsTop Ψ b n p then 1 else 0) +
+  ((List.range (n + 1)).map fun ℓ => if 1 ≤ ℓ ∧ b ^ ℓ ≤ n then
+    ((List.range (b ^ ℓ)).map fun v => if fails Ψ b n ℓ v p then 1 else 0).sum else 0).sum
+
+/-- Number of failing tests at level `n`, all bases `2 ≤ b ≤ n`. -/
+def levelBad (n : ℕ) (p : List Bool) : ℕ :=
+  ((List.range (n + 1)).map fun b => if 2 ≤ b then baseBad Ψ b n p else 0).sum
+
+def badT (n₀ j : ℕ) (p : List Bool) : Bool := decide (0 < levelBad Ψ (j + n₀) p)
+
+/-- Depth of test `j`: `n (n^14 + 2n)` coins, `n = j + n₀`. -/
+def depth (n₀ j : ℕ) : ℕ := (j + n₀) * ((j + n₀) ^ 14 + 2 * (j + n₀))
+
+end Tests
+
+/-! ## Counting -/
+
+theorem list_sum_range_map (f : ℕ → ℕ) (N : ℕ) :
+    ((List.range N).map f).sum = ∑ k ∈ Finset.range N, f k := by
+  induction N with
+  | zero => simp
+  | succ N ih => simp [List.range_succ, Finset.sum_range_succ, ih]
+
+theorem visitCount_eq_sum (u : ℕ → ℝ) (a c : ℝ) (N : ℕ) :
+    visitCount u a c N = ∑ k ∈ Finset.range N, if u k ∈ Set.Ico a c then 1 else 0 := by
+  classical
+  unfold visitCount
+  rw [Finset.card_filter]
+
+section Count
+
+variable (Ψ : ℕ → ℕ → List Bool → ℕ) (A : List Bool → ℝ)
+
+/-- **Block counts: true vs approximate, error at most the top count.** -/
+theorem abs_Vtrue_sub_Vc_le (hΨ : ∀ b m p, Ψ b m p = ⌊A p * (b : ℝ) ^ m⌋₊)
+    (b : ℕ) (hb : 2 ≤ b) (x : ℝ) (p : List Bool) (ha : 0 ≤ A p) (hax : A p ≤ x)
+    (n : ℕ) (hη : (x - A p) * (b : ℝ) ^ (n ^ 14 + 2 * n) ≤ 1) {ℓ v : ℕ} (hℓn : ℓ ≤ n) :
+    |(visitCount (orbit b x) ((v : ℝ) / (b : ℝ) ^ ℓ) ((v + 1 : ℝ) / (b : ℝ) ^ ℓ) (n ^ 14) : ℝ) -
+      (Vc Ψ b ℓ v (n ^ 14) p : ℝ)| ≤ Tc Ψ b n p := by
+  have hb1 : (1 : ℝ) ≤ b := by exact_mod_cast (by omega : 1 ≤ b)
+  have hx0 : 0 ≤ x := ha.trans hax
+  set t : ℕ → ℕ := fun j => if dA Ψ b j n p = b ^ n - 1 then 1 else 0 with ht
+  -- termwise
+  have hterm : ∀ k < n ^ 14, |(if orbit b x k ∈ Set.Ico ((v : ℝ) / (b : ℝ) ^ ℓ)
+      ((v + 1 : ℝ) / (b : ℝ) ^ ℓ) then (1 : ℝ) else 0) -
+      (if dA Ψ b k ℓ p = v then (1 : ℝ) else 0)| ≤ (t (ℓ + k) : ℝ) := by
+    intro k hk
+    have hiff := orbit_mem_iff_b b hb x hx0 k ℓ v
+    by_cases hfl : ⌊x * (b : ℝ) ^ (k + ℓ)⌋₊ = ⌊A p * (b : ℝ) ^ (k + ℓ)⌋₊
+    · have hd : dA Ψ b k ℓ p = ⌊x * (b : ℝ) ^ (k + ℓ)⌋₊ % b ^ ℓ := by
+        rw [dA, hΨ, hfl]
+      have hPQ : orbit b x k ∈ Set.Ico ((v : ℝ) / (b : ℝ) ^ ℓ) ((v + 1 : ℝ) / (b : ℝ) ^ ℓ) ↔
+          dA Ψ b k ℓ p = v := by rw [hiff, hd]
+      have ht0 : (0 : ℝ) ≤ t (ℓ + k) := by positivity
+      by_cases hQ : dA Ψ b k ℓ p = v
+      · rw [if_pos (hPQ.2 hQ), if_pos hQ]; simpa using ht0
+      · rw [if_neg (fun h => hQ (hPQ.1 h)), if_neg hQ]; simpa using ht0
+    · have htop := top_of_floor_ne b hb ha hax (k + ℓ) n ?_ hfl
+      · have : t (ℓ + k) = 1 := by
+          simp only [ht, dA, hΨ, show ℓ + k + n = k + ℓ + n by ring]
+          rw [if_pos htop]
+        rw [this]
+        split_ifs <;> norm_num
+      · have hbn : (0 : ℝ) < (b : ℝ) ^ n := by positivity
+        have hpow : (b : ℝ) ^ (k + ℓ) * (b : ℝ) ^ n ≤ (b : ℝ) ^ (n ^ 14 + 2 * n) := by
+          rw [← pow_add]; exact pow_le_pow_right₀ hb1 (by omega)
+        rw [le_div_iff₀ hbn]
+        have h0 : 0 ≤ x - A p := by linarith
+        calc (x - A p) * (b : ℝ) ^ (k + ℓ) * (b : ℝ) ^ n
+            = (x - A p) * ((b : ℝ) ^ (k + ℓ) * (b : ℝ) ^ n) := by ring
+          _ ≤ (x - A p) * (b : ℝ) ^ (n ^ 14 + 2 * n) := by gcongr
+          _ ≤ 1 := hη
+  rw [visitCount_eq_sum, Vc, list_sum_range_map, Tc, list_sum_range_map]
+  push_cast
+  rw [← Finset.sum_sub_distrib]
+  refine (Finset.abs_sum_le_sum_abs _ _).trans ?_
+  refine (Finset.sum_le_sum fun k hk => hterm k (Finset.mem_range.1 hk)).trans ?_
+  calc ∑ k ∈ Finset.range (n ^ 14), (t (ℓ + k) : ℝ)
+      ≤ ∑ j ∈ Finset.range (ℓ + n ^ 14), (t j : ℝ) := by
+        rw [Finset.sum_range_add]; simp only [le_add_iff_nonneg_left]; positivity
+    _ ≤ ∑ j ∈ Finset.range (n ^ 14 + n), (t j : ℝ) :=
+        Finset.sum_le_sum_of_subset_of_nonneg (Finset.range_subset_range.2 (by omega))
+          fun _ _ _ => by positivity
+    _ = _ := by simp only [ht]; push_cast; rfl
+
+/-- **Top count ≤ true visits near `0` and near `1`.** -/
+theorem Tc_le (hΨ : ∀ b m p, Ψ b m p = ⌊A p * (b : ℝ) ^ m⌋₊)
+    (b : ℕ) (hb : 2 ≤ b) (x : ℝ) (p : List Bool) (ha : 0 ≤ A p) (hax : A p ≤ x)
+    (n : ℕ) (hη : (x - A p) * (b : ℝ) ^ (n ^ 14 + 2 * n) ≤ 1) :
+    (Tc Ψ b n p : ℝ) ≤ visitCount (orbit b x) 0 (1 / (b : ℝ) ^ n) (n ^ 14 + n) +
+      visitCount (orbit b x) (1 - 1 / (b : ℝ) ^ n) 1 (n ^ 14 + n) := by
+  have hb1 : (1 : ℝ) ≤ b := by exact_mod_cast (by omega : 1 ≤ b)
+  rw [Tc, list_sum_range_map, visitCount_eq_sum, visitCount_eq_sum]
+  push_cast
+  rw [← Finset.sum_add_distrib]
+  refine Finset.sum_le_sum fun j hj => ?_
+  have hj' := Finset.mem_range.1 hj
+  by_cases h1 : dA Ψ b j n p = b ^ n - 1
+  swap
+  · rw [if_neg h1]; split_ifs <;> norm_num
+  rw [if_pos h1]
+  have hη' : (x - A p) * (b : ℝ) ^ j ≤ 1 / (b : ℝ) ^ n := by
+    have hbn : (0 : ℝ) < (b : ℝ) ^ n := by positivity
+    have hpow : (b : ℝ) ^ j * (b : ℝ) ^ n ≤ (b : ℝ) ^ (n ^ 14 + 2 * n) := by
+      rw [← pow_add]; exact pow_le_pow_right₀ hb1 (by omega)
+    rw [le_div_iff₀ hbn]
+    have h0 : 0 ≤ x - A p := by linarith
+    calc (x - A p) * (b : ℝ) ^ j * (b : ℝ) ^ n = (x - A p) * ((b : ℝ) ^ j * (b : ℝ) ^ n) := by ring
+      _ ≤ (x - A p) * (b : ℝ) ^ (n ^ 14 + 2 * n) := by gcongr
+      _ ≤ 1 := hη
+  have htop : ⌊A p * (b : ℝ) ^ (j + n)⌋₊ % b ^ n = b ^ n - 1 := by
+    rw [dA, hΨ] at h1; exact h1
+  rcases orbit_mem_of_top b hb ha hax j n hη' htop with h | h
+  · rw [if_pos h]; split_ifs <;> norm_num
+  · rw [if_pos h]; split_ifs <;> norm_num
+
+end Count
+
+/-! ## Probability bounds -/
+
+section Prob
+
+variable {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω) [IsProbabilityMeasure μ]
+
+theorem sqrt_bound_le {n N : ℕ} (hn : 1 ≤ n) (hN : n ^ 14 ≤ N) {K : ℝ} (hK : 0 ≤ K) :
+    Real.sqrt (((N : ℝ) + K) / (N : ℝ) ^ 2) ≤ Real.sqrt (1 + K) / (n : ℝ) ^ 7 := by
+  have hnR : (1 : ℝ) ≤ n := by exact_mod_cast hn
+  have hNR : ((n : ℝ) ^ 14) ≤ N := by exact_mod_cast hN
+  have h14 : (1 : ℝ) ≤ (n : ℝ) ^ 14 := one_le_pow₀ hnR
+  have hN1 : (1 : ℝ) ≤ N := h14.trans hNR
+  rw [show Real.sqrt (1 + K) / (n : ℝ) ^ 7 = Real.sqrt ((1 + K) / ((n : ℝ) ^ 7) ^ 2) by
+    rw [Real.sqrt_div' _ (by positivity), Real.sqrt_sq (by positivity)]]
+  apply Real.sqrt_le_sqrt
+  rw [div_le_div_iff₀ (by positivity) (by positivity)]
+  have e : ((n : ℝ) ^ 7) ^ 2 = (n : ℝ) ^ 14 := by ring
+  rw [e]
+  have : ((N : ℝ) + K) * (n : ℝ) ^ 14 ≤ (1 + K) * (N : ℝ) * N := by
+    have a1 := mul_le_mul_of_nonneg_left hNR hK
+    have a2 := mul_le_mul_of_nonneg_left hNR (by linarith : (0:ℝ) ≤ N)
+    have a3 := mul_le_mul_of_nonneg_left hN1 (mul_nonneg hK (by linarith : (0:ℝ) ≤ N))
+    nlinarith
+  nlinarith
+
+/-- Block deviation `> 1/(2n)` has probability `≤ 48 √(1+K) / n^5`. -/
+theorem block_prob (b : ℕ) (hb : 2 ≤ b) (G : Ω → ℝ) (hG : Measurable G) {C δ : ℝ}
+    (hC : 0 < C) (hδ : 0 < δ) (hdec : ∀ ξ : ℝ, ξ ≠ 0 → ‖∫ ω, ee (ξ * G ω) ∂μ‖ ≤ C * |ξ| ^ (-δ))
+    {n ℓ v : ℕ} (hn : 1 ≤ n) (hℓ : 1 ≤ ℓ) (hv : v < b ^ ℓ) :
+    μ.real {ω | 1 / (2 * (n : ℝ)) <
+      |(visitCount (orbit b (G ω)) ((v : ℝ) / (b : ℝ) ^ ℓ) ((v + 1 : ℝ) / (b : ℝ) ^ ℓ) (n ^ 14) : ℝ) /
+        ((n ^ 14 : ℕ) : ℝ) - 1 / (b : ℝ) ^ ℓ|} ≤ 48 * Real.sqrt (1 + Kc C δ) / (n : ℝ) ^ 5 := by
+  have hnR : (1 : ℝ) ≤ n := by exact_mod_cast hn
+  have hP : (0 : ℝ) < (b : ℝ) ^ ℓ := by positivity
+  have hvR : (v : ℝ) + 1 ≤ (b : ℝ) ^ ℓ := by exact_mod_cast hv
+  have hP2 : (2 : ℝ) ≤ (b : ℝ) ^ ℓ := by
+    have : 2 ≤ b ^ ℓ := le_trans hb (Nat.le_self_pow (by omega) b)
+    exact_mod_cast this
+  have hK := Kc_nonneg hC hδ
+  have hN1 : 1 ≤ n ^ 14 := Nat.one_le_pow _ _ hn
+  have e1 : (v + 1 : ℝ) / (b : ℝ) ^ ℓ - (v : ℝ) / (b : ℝ) ^ ℓ = 1 / (b : ℝ) ^ ℓ := by ring
+  have hdev := visit_deviation_b μ b hb G hG hC hδ hdec ((v : ℝ) / (b : ℝ) ^ ℓ)
+    ((v + 1 : ℝ) / (b : ℝ) ^ ℓ) (1 / (6 * (n : ℝ))) (1 / (6 * (n : ℝ)))
+    (by positivity) (by gcongr; linarith) (by rw [div_le_one hP]; exact hvR)
+    (by rw [e1, div_le_div_iff₀ hP (by norm_num)]; linarith)
+    (by positivity) (by rw [div_le_div_iff₀ (by positivity) (by norm_num)]; linarith)
+    (by positivity) (n ^ 14) hN1
+  rw [e1] at hdev
+  have e2 : 2 * (1 / (6 * (n : ℝ))) + 1 / (6 * (n : ℝ)) = 1 / (2 * (n : ℝ)) := by
+    field_simp; ring
+  rw [e2] at hdev
+  refine hdev.trans ?_
+  have hsq := sqrt_bound_le (N := n ^ 14) hn (by push_cast; rfl) hK
+  push_cast at hsq ⊢
+  have e : 2 * (2 / (3 * (1 / (6 * (n : ℝ)))) / (1 / (6 * (n : ℝ)))) = 48 * (n : ℝ) ^ 2 := by
+    field_simp; ring
+  unfold Kc at hsq ⊢
+  rw [← mul_assoc, e]
+  calc 48 * (n : ℝ) ^ 2 * Real.sqrt (((n : ℝ) ^ 14 + C * 2 ^ δ * ((1 - 2 ^ (-δ / 2))⁻¹) ^ 2) /
+        ((n : ℝ) ^ 14) ^ 2)
+      ≤ 48 * (n : ℝ) ^ 2 * (Real.sqrt (1 + C * 2 ^ δ * ((1 - 2 ^ (-δ / 2))⁻¹) ^ 2) /
+        (n : ℝ) ^ 7) := by gcongr
+    _ = _ := by field_simp
+
+/-- Visits to a short cell `[a, c)`, `c − a ≤ 1/(32n)`, exceeding `n^14/(8n)` among the first
+`n^14 + n` points, have probability `≤ 12288 √(1+K) / n^5`. -/
+theorem tail_prob (b : ℕ) (hb : 2 ≤ b) (G : Ω → ℝ) (hG : Measurable G) {C δ : ℝ}
+    (hC : 0 < C) (hδ : 0 < δ) (hdec : ∀ ξ : ℝ, ξ ≠ 0 → ‖∫ ω, ee (ξ * G ω) ∂μ‖ ≤ C * |ξ| ^ (-δ))
+    {n : ℕ} (hn : 1 ≤ n) (a c : ℝ) (ha : 0 ≤ a) (hac : a ≤ c) (hc : c ≤ 1)
+    (hlen : c - a ≤ 1 / (32 * (n : ℝ))) :
+    μ.real {ω | ((n ^ 14 : ℕ) : ℝ) < 8 * n * visitCount (orbit b (G ω)) a c (n ^ 14 + n)} ≤
+      12288 * Real.sqrt (1 + Kc C δ) / (n : ℝ) ^ 5 := by
+  have hnR : (1 : ℝ) ≤ n := by exact_mod_cast hn
+  have hK := Kc_nonneg hC hδ
+  have hN1 : 1 ≤ n ^ 14 + n := by omega
+  have hdev := visit_deviation_b μ b hb G hG hC hδ hdec a c (1 / (96 * (n : ℝ)))
+    (1 / (96 * (n : ℝ))) ha hac hc (hlen.trans (by
+      rw [div_le_div_iff₀ (by positivity) (by norm_num)]; linarith))
+    (by positivity) (by rw [div_le_div_iff₀ (by positivity) (by norm_num)]; linarith)
+    (by positivity) (n ^ 14 + n) hN1
+  have hsub : {ω | ((n ^ 14 : ℕ) : ℝ) < 8 * n * visitCount (orbit b (G ω)) a c (n ^ 14 + n)} ⊆
+      {ω | 2 * (1 / (96 * (n : ℝ))) + 1 / (96 * (n : ℝ)) <
+        |(visitCount (orbit b (G ω)) a c (n ^ 14 + n) : ℝ) / ((n ^ 14 + n : ℕ) : ℝ) - (c - a)|} := by
+    intro ω hω
+    simp only [Set.mem_ofPred_eq] at hω ⊢
+    set V := (visitCount (orbit b (G ω)) a c (n ^ 14 + n) : ℝ)
+    have hN : (0 : ℝ) < ((n ^ 14 + n : ℕ) : ℝ) := by positivity
+    have hle : ((n ^ 14 + n : ℕ) : ℝ) ≤ 2 * ((n ^ 14 : ℕ) : ℝ) := by
+      push_cast
+      have : (n : ℝ) ≤ (n : ℝ) ^ 14 := le_self_pow₀ hnR (by norm_num)
+      linarith
+    have h1 : 1 / (16 * (n : ℝ)) < V / ((n ^ 14 + n : ℕ) : ℝ) := by
+      rw [div_lt_div_iff₀ (by positivity) hN]
+      nlinarith
+    have e : 2 * (1 / (96 * (n : ℝ))) + 1 / (96 * (n : ℝ)) = 1 / (32 * (n : ℝ)) := by
+      field_simp; ring
+    rw [e, lt_abs]; left
+    have : 1 / (16 * (n : ℝ)) = 1 / (32 * (n : ℝ)) + 1 / (32 * (n : ℝ)) := by
+      field_simp; ring
+    linarith
+  refine (measureReal_mono hsub (measure_ne_top _ _)).trans (hdev.trans ?_)
+  have hsq := sqrt_bound_le (N := n ^ 14 + n) hn (by omega) hK
+  push_cast at hsq ⊢
+  have e : 2 * (2 / (3 * (1 / (96 * (n : ℝ)))) / (1 / (96 * (n : ℝ)))) = 12288 * (n : ℝ) ^ 2 := by
+    field_simp; ring
+  unfold Kc at hsq ⊢
+  rw [← mul_assoc, e]
+  calc 12288 * (n : ℝ) ^ 2 * Real.sqrt (((n : ℝ) ^ 14 + n + C * 2 ^ δ * ((1 - 2 ^ (-δ / 2))⁻¹) ^ 2) /
+        ((n : ℝ) ^ 14 + n) ^ 2)
+      ≤ 12288 * (n : ℝ) ^ 2 * (Real.sqrt (1 + C * 2 ^ δ * ((1 - 2 ^ (-δ / 2))⁻¹) ^ 2) /
+        (n : ℝ) ^ 7) := by gcongr
+    _ = _ := by field_simp
+
+end Prob
+
 end NormalNumbers.ComputableNormalB
