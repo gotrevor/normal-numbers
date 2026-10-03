@@ -5,6 +5,7 @@ Authors: Trevor Morris
 -/
 import NormalNumbers.ExplicitOmegaK
 import NormalNumbers.FamilyDerandomizeVar
+import NormalNumbers.PQGrid
 
 /-!
 # Manai's `P`/`Q` algorithm: `P(x)` normal, `Q(x)` non-normal
