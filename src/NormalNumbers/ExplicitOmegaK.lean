@@ -755,6 +755,154 @@ theorem pushFourier_le_of_deriv2_ge (hBB : BakerBanajiUniformQuarterCantor) :
   convert this using 3
   ring
 
+/-! #### Cylinder-cut helpers -/
+
+theorem cantorReal_mem_window (ω : ℕ → Bool) : cantorReal ω ∈ Set.Icc (1 / 2 : ℝ) 1 := by
+  refine ⟨?_, (cantorReal_mem_Ico ω).2.le⟩
+  have hsum : Summable fun i => (cantorDigits ω i : ℝ) / ((2 : ℕ) : ℝ) ^ (i + 1) := by
+    refine Summable.of_nonneg_of_le (fun i => by positivity) (fun i => ?_)
+      ((summable_geometric_two).mul_left (1 / 2))
+    have : (cantorDigits ω i : ℝ) ≤ 1 := by exact_mod_cast Nat.lt_succ_iff.1 (cantorDigits_lt ω i)
+    rw [Nat.cast_ofNat, pow_succ]
+    calc (cantorDigits ω i : ℝ) / (2 ^ i * 2) ≤ 1 / (2 ^ i * 2) := by gcongr
+      _ = 1 / 2 * (1 / 2) ^ i := by rw [div_pow, one_pow]; field_simp
+  have := hsum.le_tsum 0 (fun j _ => by positivity)
+  unfold cantorReal realOfDigits
+  simpa [cantorDigits] using this
+
+theorem pushFourier_congr_window {F G : ℝ → ℝ} (h : ∀ t ∈ Set.Icc (1 / 2 : ℝ) 1, F t = G t)
+    (ξ : ℝ) : pushFourier F ξ = pushFourier G ξ := by
+  unfold pushFourier
+  congr 1; funext ω
+  rw [h _ (cantorReal_mem_window ω)]
+
+theorem norm_pushFourier_le_one (F : ℝ → ℝ) (ξ : ℝ) : ‖pushFourier F ξ‖ ≤ 1 := by
+  unfold pushFourier
+  refine (norm_integral_le_integral_norm _).trans ?_
+  have : ∀ ω : ℕ → Bool, ‖Complex.exp (2 * Real.pi * Complex.I * ((ξ * F (cantorReal ω) : ℝ) : ℂ))‖ = 1 := by
+    intro ω
+    rw [show 2 * Real.pi * Complex.I * ((ξ * F (cantorReal ω) : ℝ) : ℂ) =
+      ((2 * Real.pi * (ξ * F (cantorReal ω)) : ℝ) : ℂ) * Complex.I by push_cast; ring,
+      Complex.norm_exp_ofReal_mul_I]
+  rw [integral_congr_ae (Eventually.of_forall this)]
+  simp
+
+theorem deriv_comp_affine (F : ℝ → ℝ) (o s : ℝ) :
+    deriv (fun t => F (o + s * t)) = fun t => s * deriv F (o + s * t) := by
+  funext t
+  have := deriv_comp_mul_left (f := fun u => F (o + u)) (c := s) (x := t)
+  simp only [smul_eq_mul] at this
+  rw [this, deriv_comp_const_add]
+
+theorem psiL_affine (w : List Bool) : psiL w = fun t =>
+    CantorCylinders.offs w + (1 / 4 ^ w.length) * t := by
+  rw [psiL_eq_phi]; funext t; simp [CantorCylinders.phi]; ring
+
+theorem length_allStrings (m : ℕ) : (Derandomize.allStrings m).length = 2 ^ m := by
+  induction m with
+  | zero => rfl
+  | succ m ih =>
+    simp only [Derandomize.allStrings, List.length_flatMap, List.length_cons, List.length_nil]
+    simp [ih, pow_succ]
+
+theorem length_filter_exists_le {α β : Type*} [DecidableEq β] (l : List α) (s : Finset β)
+    (q : β → α → Bool) :
+    (l.filter fun w => decide (∃ z ∈ s, q z w = true)).length ≤
+      ∑ z ∈ s, (l.filter (q z)).length := by
+  induction l with
+  | nil => simp
+  | cons a l ih =>
+    simp only [List.filter_cons]
+    have hsplit : ∑ z ∈ s, ((if q z a = true then a :: l.filter (q z) else l.filter (q z))).length
+        = ∑ z ∈ s, ((if q z a = true then 1 else 0) + (l.filter (q z)).length) := by
+      refine Finset.sum_congr rfl fun z _ => ?_
+      split_ifs <;> simp [add_comm]
+    rw [hsplit, Finset.sum_add_distrib]
+    split_ifs with h
+    · obtain ⟨z, hz, hqz⟩ := of_decide_eq_true h
+      have : 1 ≤ ∑ z ∈ s, (if q z a = true then 1 else 0) :=
+        le_trans (by simp [hqz]) (Finset.single_le_sum (f := fun z => if q z a = true then 1 else 0)
+          (fun _ _ => Nat.zero_le _) hz)
+      simp only [List.length_cons]; omega
+    · omega
+
+theorem list_sum_le_bad {α : Type*} (l : List α) (p : α → Bool) (f : α → ℝ) {B : ℝ} (hB : 0 ≤ B)
+    (h1 : ∀ w ∈ l, f w ≤ 1) (h2 : ∀ w ∈ l, p w = false → f w ≤ B) :
+    (l.map f).sum ≤ (l.filter p).length + l.length * B := by
+  induction l with
+  | nil => simp
+  | cons a l ih =>
+    have ih := ih (fun w hw => h1 w (List.mem_cons_of_mem _ hw))
+      (fun w hw => h2 w (List.mem_cons_of_mem _ hw))
+    simp only [List.map_cons, List.sum_cons, List.filter_cons, List.length_cons]
+    cases hp : p a
+    · have := h2 a List.mem_cons_self hp; simp; linarith
+    · have := h1 a List.mem_cons_self; simp; linarith
+
+/-- **One good cylinder**: Baker–Banaji's explicit bound for `F ∘ psiL w` when the window image
+stays `≥ s = 4^{-m}` from every point of `Z`. -/
+theorem good_cylinder_bound {C η κ : ℝ}
+    (hB : ∀ F : ℝ → ℝ, ∀ U : Set ℝ, IsOpen U → Set.Icc (1 / 2 : ℝ) 1 ⊆ U → ContDiffOn ℝ 2 F U →
+      ∀ A a : ℝ, 0 < a →
+      (∀ t ∈ Set.Icc (1 / 2 : ℝ) 1, |deriv F t| ≤ A) →
+      (∀ t ∈ Set.Icc (1 / 2 : ℝ) 1, |deriv (deriv F) t| ≤ A) →
+      (∀ t ∈ Set.Icc (1 / 2 : ℝ) 1, a ≤ |deriv (deriv F) t|) →
+      ∀ ξ : ℝ, ξ ≠ 0 →
+        ‖pushFourier F ξ‖ ≤ C * (1 + 2 * A + (a / 4) ^ (-κ)) * (1 + a ^ (-κ)) * |ξ| ^ (-η))
+    (N : ℕ) (F : ℝ → ℝ) (U : Set ℝ) (hU : IsOpen U) (hsub : Set.Icc (1 / 2 : ℝ) 1 ⊆ U)
+    (hF : ContDiffOn ℝ 2 F U) (c A : ℝ) (hc : 0 < c)
+    (hA1 : ∀ t ∈ Set.Icc (1 / 2 : ℝ) 1, |deriv F t| ≤ A)
+    (hA2 : ∀ t ∈ Set.Icc (1 / 2 : ℝ) 1, |deriv (deriv F) t| ≤ A)
+    (Z : Multiset ℝ) (hZ : Z.card ≤ N)
+    (hlow : ∀ t ∈ Set.Icc (1 / 2 : ℝ) 1, c * (Z.map fun z => |t - z|).prod ≤ |deriv (deriv F) t|)
+    (w : List Bool)
+    (hfar : ∀ z ∈ Z, ∀ t ∈ Set.Icc (1 / 2 : ℝ) 1, 1 / 4 ^ w.length ≤ |psiL w t - z|)
+    (ξ : ℝ) (hξ : ξ ≠ 0) :
+    ‖pushFourier (F ∘ psiL w) ξ‖ ≤
+      C * (1 + 2 * A + (c * (1 / 4 ^ w.length) ^ (N + 2) / 4) ^ (-κ)) *
+        (1 + (c * (1 / 4 ^ w.length) ^ (N + 2)) ^ (-κ)) * |ξ| ^ (-η) := by
+  set s : ℝ := 1 / 4 ^ w.length with hs
+  set o := CantorCylinders.offs w
+  have hs0 : 0 < s := by positivity
+  have hs1 : s ≤ 1 := by rw [hs]; exact div_le_one_of_le₀ (one_le_pow₀ (by norm_num)) (by positivity)
+  have hφ : psiL w = fun t => o + s * t := psiL_affine w
+  have hwin : ∀ t ∈ Set.Icc (1 / 2 : ℝ) 1, psiL w t ∈ Set.Icc (1 / 2 : ℝ) 1 := fun t ht => by
+    rw [psiL_eq_phi]; exact CantorCylinders.phi_mem_window w ht
+  have hcomp : F ∘ psiL w = fun t => F (o + s * t) := by rw [hφ]; rfl
+  have hd1 : deriv (F ∘ psiL w) = fun t => s * deriv F (o + s * t) := by
+    rw [hcomp, deriv_comp_affine]
+  have hd2 : deriv (deriv (F ∘ psiL w)) = fun t => s * (s * deriv (deriv F) (o + s * t)) := by
+    rw [hd1, deriv_const_mul_field', deriv_comp_affine]
+  have hA0 : 0 ≤ A := (abs_nonneg _).trans (hA1 1 ⟨by norm_num, le_rfl⟩)
+  have hcont : Continuous (psiL w) := by rw [hφ]; fun_prop
+  have hcd : ContDiffOn ℝ 2 (psiL w) (psiL w ⁻¹' U) := by
+    rw [hφ]; exact (contDiff_const.add (contDiff_const.mul contDiff_id)).contDiffOn
+  refine hB (F ∘ psiL w) (psiL w ⁻¹' U) (hU.preimage hcont) (fun t ht => hsub (hwin t ht))
+    (hF.comp hcd (fun t ht => ht)) A _ (by positivity) ?_ ?_ ?_ ξ hξ
+  · intro t ht
+    have := hA1 _ (hwin t ht)
+    rw [hd1]; simp only [hφ] at this ⊢
+    rw [abs_mul, abs_of_pos hs0]; nlinarith [abs_nonneg (deriv F (o + s * t))]
+  · intro t ht
+    have := hA2 _ (hwin t ht)
+    rw [hd2]; simp only [hφ] at this ⊢
+    rw [abs_mul, abs_mul, abs_of_pos hs0]
+    have h0 := abs_nonneg (deriv (deriv F) (o + s * t))
+    have : s * |deriv (deriv F) (o + s * t)| ≤ A := by nlinarith
+    nlinarith
+  · intro t ht
+    have hl := hlow _ (hwin t ht)
+    have hprod : s ^ N ≤ (Z.map fun z => |psiL w t - z|).prod := by
+      have := Multiset.prod_map_le_prod_map₀ (s := Z) (fun _ => s) (fun z => |psiL w t - z|)
+        (fun _ _ => hs0.le) (fun z hz => hfar z hz t ht)
+      rw [Multiset.map_const', Multiset.prod_replicate] at this
+      exact (pow_le_pow_of_le_one hs0.le hs1 hZ).trans this
+    rw [hd2]; simp only [hφ] at hl hprod ⊢
+    rw [abs_mul, abs_mul, abs_of_pos hs0]
+    have hcs : c * s ^ N ≤ |deriv (deriv F) (o + s * t)| :=
+      (mul_le_mul_of_nonneg_left hprod hc.le).trans hl
+    calc c * s ^ (N + 2) = s * (s * (c * s ^ N)) := by ring
+      _ ≤ _ := by gcongr
 /-- **The cylinder cut: explicit polynomial decay when `|F''| ≥ c · Π_{z ∈ Z}|t − z|`, `|Z| ≤ N`.**
 
 Confidence 88%.  English proof (BB Thm 1.1's proof, effective).  Take `K ≥ 1` from the end.  For
