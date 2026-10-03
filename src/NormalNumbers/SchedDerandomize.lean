@@ -521,4 +521,252 @@ theorem level_bound_w (Ψ : ℕ → ℕ → List Bool → ℕ) (A : List Bool �
   calc _ ≤ _ := this
     _ = 74016 * (n : ℝ) ^ 3 * Real.sqrt (κ * Wv) * Zc := by simp only [X]; ring
 
+/-! ## Primitive recursiveness of the tests -/
+
+section Primrec
+
+variable (Ψ : ℕ → ℕ → List Bool → ℕ)
+  (hΨp : Primrec fun x : ℕ × ℕ × List Bool => Ψ x.1 x.2.1 x.2.2)
+
+include hΨp
+
+variable {α : Type*} [Primcodable α]
+
+theorem sprimrec_dA {fb fE fr : α → ℕ} {fp : α → List Bool} (hb : Primrec fb) (hE : Primrec fE)
+    (hr : Primrec fr) (hp : Primrec fp) :
+    Primrec fun a => dA Ψ (fb a) (fE a) (fr a) (fp a) :=
+  Primrec.nat_mod.comp (hΨp.comp (Primrec.pair hb (Primrec.pair (Primrec.nat_add.comp hE hr) hp)))
+    (primrec_pow.comp hb hr)
+
+theorem sprimrec_Vc {fb fl fv fN : α → ℕ} {fp : α → List Bool} (hb : Primrec fb)
+    (hl : Primrec fl) (hv : Primrec fv) (hN : Primrec fN) (hp : Primrec fp) :
+    Primrec fun a => Vc Ψ (fb a) (fl a) (fv a) (fN a) (fp a) := by
+  have hg : Primrec₂ fun (a : α) (k : ℕ) => if dA Ψ (fb a) k (fl a) (fp a) = fv a then 1 else 0 :=
+    (Primrec.ite (Primrec.eq.comp (sprimrec_dA Ψ hΨp (hb.comp Primrec.fst) Primrec.snd
+      (hl.comp Primrec.fst) (hp.comp Primrec.fst)) (hv.comp Primrec.fst))
+      (Primrec.const 1) (Primrec.const 0)).to₂
+  exact primrec_sum_map (Primrec.list_range.comp hN) hg
+
+theorem sprimrec_Tc {fb fn fN : α → ℕ} {fp : α → List Bool} (hb : Primrec fb) (hn : Primrec fn)
+    (hN : Primrec fN) (hp : Primrec fp) : Primrec fun a => Tc Ψ (fb a) (fn a) (fN a) (fp a) := by
+  have hg : Primrec₂ fun (a : α) (j : ℕ) =>
+      if dA Ψ (fb a) j (fn a) (fp a) = fb a ^ fn a - 1 then 1 else 0 :=
+    (Primrec.ite (Primrec.eq.comp (sprimrec_dA Ψ hΨp (hb.comp Primrec.fst) Primrec.snd
+      (hn.comp Primrec.fst) (hp.comp Primrec.fst))
+      (Primrec.nat_sub.comp (primrec_pow.comp (hb.comp Primrec.fst) (hn.comp Primrec.fst))
+        (Primrec.const 1)))
+      (Primrec.const 1) (Primrec.const 0)).to₂
+  exact primrec_sum_map (Primrec.list_range.comp (Primrec.nat_add.comp hN hn)) hg
+
+theorem sprimrec_fails {fb fn fN fl fv : α → ℕ} {fp : α → List Bool} (hb : Primrec fb)
+    (hn : Primrec fn) (hN : Primrec fN) (hl : Primrec fl) (hv : Primrec fv) (hp : Primrec fp) :
+    PrimrecPred fun a => fails Ψ (fb a) (fn a) (fN a) (fl a) (fv a) (fp a) := by
+  have hP : Primrec fun a => fb a ^ fl a := primrec_pow.comp hb hl
+  have hV := sprimrec_Vc Ψ hΨp hb hl hv hN hp
+  have hVP := Primrec.nat_mul.comp hV hP
+  have lhs := Primrec.nat_mul.comp (Primrec.nat_mul.comp (Primrec.const 3) hN) hP
+  have rhs := Primrec.nat_mul.comp (Primrec.nat_mul.comp (Primrec.const 4) hn)
+    (Primrec.nat_add.comp (Primrec.nat_sub.comp hVP hN) (Primrec.nat_sub.comp hN hVP))
+  exact (Primrec.nat_lt.comp lhs rhs).of_eq fun a => by unfold fails; rfl
+
+theorem sprimrec_failsTop {fb fn fN : α → ℕ} {fp : α → List Bool} (hb : Primrec fb)
+    (hn : Primrec fn) (hN : Primrec fN) (hp : Primrec fp) :
+    PrimrecPred fun a => failsTop Ψ (fb a) (fn a) (fN a) (fp a) := by
+  exact (Primrec.nat_lt.comp hN (Primrec.nat_mul.comp (Primrec.nat_mul.comp (Primrec.const 4) hn)
+    (sprimrec_Tc Ψ hΨp hb hn hN hp))).of_eq fun a => by unfold failsTop; rfl
+
+attribute [local irreducible] fails failsTop in
+theorem sprimrec_levelBad {fn fN : α → ℕ} {fp : α → List Bool}
+    (hn : Primrec fn) (hN : Primrec fN) (hp : Primrec fp) :
+    Primrec fun a => levelBad Ψ (fn a) (fN a) (fp a) := by
+  have htop : Primrec fun a => if failsTop Ψ 2 (fn a) (fN a) (fp a) then 1 else 0 :=
+    Primrec.ite (sprimrec_failsTop Ψ hΨp (Primrec.const 2) hn hN hp) (Primrec.const 1)
+      (Primrec.const 0)
+  have hin : Primrec fun y : α × ℕ =>
+      ((List.range (2 ^ y.2)).map fun v =>
+        if fails Ψ 2 (fn y.1) (fN y.1) y.2 v (fp y.1) then 1 else 0).sum := by
+    have hfv : Primrec₂ fun (y : α × ℕ) (v : ℕ) =>
+        if fails Ψ 2 (fn y.1) (fN y.1) y.2 v (fp y.1) then 1 else 0 :=
+      (Primrec.ite (sprimrec_fails Ψ hΨp (Primrec.const 2)
+        (hn.comp (Primrec.fst.comp Primrec.fst)) (hN.comp (Primrec.fst.comp Primrec.fst))
+        (Primrec.snd.comp Primrec.fst) Primrec.snd
+        (hp.comp (Primrec.fst.comp Primrec.fst))) (Primrec.const 1) (Primrec.const 0)).to₂
+    exact primrec_sum_map (Primrec.list_range.comp
+      (primrec_pow.comp (Primrec.const 2) Primrec.snd)) hfv
+  have hcond : PrimrecPred fun y : α × ℕ => 1 ≤ y.2 ∧ 2 ^ y.2 ≤ fn y.1 :=
+    PrimrecPred.and (Primrec.nat_le.comp (Primrec.const 1) Primrec.snd)
+      (Primrec.nat_le.comp (primrec_pow.comp (Primrec.const 2) Primrec.snd)
+        (hn.comp Primrec.fst))
+  have hg : Primrec₂ fun (a : α) (ℓ : ℕ) => if 1 ≤ ℓ ∧ 2 ^ ℓ ≤ fn a then
+      ((List.range (2 ^ ℓ)).map fun v =>
+        if fails Ψ 2 (fn a) (fN a) ℓ v (fp a) then 1 else 0).sum else 0 :=
+    (Primrec.ite hcond hin (Primrec.const 0)).to₂
+  exact (Primrec.nat_add.comp htop
+    (primrec_sum_map (Primrec.list_range.comp (Primrec.succ.comp hn)) hg)).of_eq
+    fun a => rfl
+
+end Primrec
+
+/-! ## Assembly -/
+
+theorem pre_take' (ω : ℕ → Bool) {m n : ℕ} (h : m ≤ n) : (pre ω n).take m = pre ω m := by
+  simp only [pre]
+  rw [← List.map_take, List.take_range, Nat.min_eq_left h]
+
+theorem dens_eq_real (bad : ℕ → List Bool → Bool) (d : ℕ → ℕ) (j : ℕ) :
+    dens bad d j [] = coins.real {ω | bad j (pre ω (d j)) = true} := by
+  unfold dens
+  simp only [List.length_nil, Nat.sub_zero]
+  rw [← coins_pre, measureReal_def]
+  congr 2
+  ext ω
+  simp [badAt, List.take_of_length_le (le_of_eq (length_pre ω _))]
+
+/-- **Derandomization along a slow schedule.** -/
+theorem exists_computable_normal_sched (Ψ : ℕ → ℕ → List Bool → ℕ)
+    (hΨp : Primrec fun x : ℕ × ℕ × List Bool => Ψ x.1 x.2.1 x.2.2) (A : List Bool → ℝ)
+    (hΨ : ∀ b m p, Ψ b m p = ⌊A p * (b : ℝ) ^ m⌋₊) (hA0 : ∀ p, 0 ≤ A p)
+    (G : (ℕ → Bool) → ℝ) (hGm : Measurable G)
+    (hAG : ∀ ω D, A (pre ω D) ≤ G ω ∧ G ω ≤ A (pre ω D) + (1 / 2 : ℝ) ^ D)
+    {κ : ℝ} (hκ : 0 ≤ κ) (W : ℕ → ℝ) (hW0 : ∀ N, 0 ≤ W N) (hWa : Antitone W)
+    (hsm : ∀ h : ℤ, h ≠ 0 → ∀ N : ℕ, 1 ≤ N →
+      ∫ ω, ‖∑ k ∈ Finset.range N, ee (h * 2 ^ k * G ω)‖ ^ 2 ∂coins ≤ κ * |(h : ℝ)| * N ^ 2 * W N)
+    (Ns nr : ℕ → ℕ) (hNs : Primrec Ns) (hnr : Primrec nr) (hNtop : Tendsto Ns atTop atTop)
+    (hrat : ∀ a : ℝ, 1 < a → ∀ᶠ j in atTop, (Ns (j + 1) : ℝ) ≤ a * Ns j)
+    (hnrtop : Tendsto nr atTop atTop)
+    (hev : ∀ᶠ j in atTop, 8 ≤ nr j ∧ nr j ≤ Ns j ∧
+      (nr j : ℝ) ^ 6 * W (Ns j) ≤ 1 / ((j : ℝ) + 1) ^ 4)
+    (bad' : ℕ → List Bool → Bool) (hbad' : Primrec₂ bad') (d' : ℕ → ℕ) (hd' : Primrec d')
+    (hmass : ∀ j, coins.real {ω | bad' j (pre ω (d' j)) = true} ≤ 1 / ((j : ℝ) + 1) ^ 2) :
+    ∃ e : ℕ → Bool, Computable e ∧ IsNormal 2 (G e) ∧
+      ∃ j₁, ∀ j, j₁ ≤ j → bad' j (pre e (d' j)) = false := by
+  obtain ⟨j₀, hj₀⟩ := eventually_atTop.1 hev
+  set B : ℝ := 74016 * Real.sqrt κ * Zc + 1 with hBdef
+  have hB0 : 0 < B := by have := Zc_nonneg; positivity
+  set j₁ : ℕ := j₀ + ⌈4 * B⌉₊ + 2 with hj₁def
+  have hj₁B : 4 * B ≤ (j₁ : ℝ) := by
+    have := Nat.le_ceil (4 * B); rw [hj₁def]; push_cast; linarith
+  set D1 : ℕ → ℕ := fun J => Ns J + 2 * nr J with hD1
+  set bad : ℕ → List Bool → Bool := fun j p =>
+    decide (0 < levelBad Ψ (nr (j + j₁)) (Ns (j + j₁)) (p.take (D1 (j + j₁)))) ||
+      bad' (j + j₁) (p.take (d' (j + j₁))) with hbaddef
+  set d : ℕ → ℕ := fun j => max (D1 (j + j₁)) (d' (j + j₁)) with hddef
+  have hJ1 : Primrec fun j : ℕ => j + j₁ := Primrec.nat_add.comp Primrec.id (Primrec.const _)
+  have hD1p : Primrec D1 := Primrec.nat_add.comp hNs (Primrec.nat_mul.comp (Primrec.const 2) hnr)
+  have hbad : Primrec₂ bad := by
+    have h1 : PrimrecPred fun x : ℕ × List Bool =>
+        0 < levelBad Ψ (nr (x.1 + j₁)) (Ns (x.1 + j₁)) (x.2.take (D1 (x.1 + j₁))) :=
+      Primrec.nat_lt.comp (Primrec.const 0) (sprimrec_levelBad Ψ hΨp
+        (hnr.comp (hJ1.comp Primrec.fst)) (hNs.comp (hJ1.comp Primrec.fst))
+        (Primrec.list_take.comp (hD1p.comp (hJ1.comp Primrec.fst)) Primrec.snd))
+    have h2 : Primrec fun x : ℕ × List Bool => bad' (x.1 + j₁) (x.2.take (d' (x.1 + j₁))) :=
+      hbad'.comp (hJ1.comp Primrec.fst)
+        (Primrec.list_take.comp (hd'.comp (hJ1.comp Primrec.fst)) Primrec.snd)
+    exact (Primrec.or.comp h1.decide h2).to₂
+  have hd : Primrec d := Primrec.nat_max.comp (hD1p.comp hJ1) (hd'.comp hJ1)
+  have hdj : ∀ j, dens bad d j [] ≤ B / ((j : ℝ) + ((j₁ + 1 : ℕ) : ℝ)) ^ 2 := by
+    intro j
+    set J := j + j₁ with hJ
+    obtain ⟨hn8, hnN, hW6⟩ := hj₀ J (by omega)
+    rw [dens_eq_real]
+    have hsub : {ω | bad j (pre ω (d j)) = true} ⊆
+        {ω | 0 < levelBad Ψ (nr J) (Ns J) (pre ω (D1 J))} ∪ {ω | bad' J (pre ω (d' J)) = true} := by
+      intro ω hω
+      simp only [Set.mem_setOf_eq, hbaddef, Bool.or_eq_true, decide_eq_true_eq] at hω
+      rw [pre_take' ω (le_max_left _ _), pre_take' ω (le_max_right _ _)] at hω
+      exact hω
+    refine (measureReal_mono hsub (measure_ne_top _ _)).trans
+      ((measureReal_union_le _ _).trans ?_)
+    have hN1 : 1 ≤ Ns J := by omega
+    have hW := hW0 (Ns J)
+    have hL := level_bound_w Ψ A hΨ hA0 G hGm hAG hκ hW (n := nr J) (N := Ns J) (D := D1 J) hn8
+      hnN le_rfl (fun h hh => hsm h hh _ hN1) (fun h hh => (hsm h hh _ (by omega)).trans (by
+        have := hWa (show Ns J ≤ Ns J + nr J by omega)
+        have : 0 ≤ κ * |(h : ℝ)| * ((Ns J + nr J : ℕ) : ℝ) ^ 2 := by positivity
+        exact mul_le_mul_of_nonneg_left (hWa (by omega)) this))
+    have hJR : ((j : ℝ) + ((j₁ + 1 : ℕ) : ℝ)) = (J : ℝ) + 1 := by rw [hJ]; push_cast; ring
+    rw [hJR]
+    have hJ0 : (0 : ℝ) < (J : ℝ) + 1 := by positivity
+    have hsq : (nr J : ℝ) ^ 3 * Real.sqrt (W (Ns J)) ≤ 1 / ((J : ℝ) + 1) ^ 2 := by
+      have e1 : (nr J : ℝ) ^ 3 * Real.sqrt (W (Ns J)) = Real.sqrt ((nr J : ℝ) ^ 6 * W (Ns J)) := by
+        rw [Real.sqrt_mul (by positivity), show (nr J : ℝ) ^ 6 = ((nr J : ℝ) ^ 3) ^ 2 by ring,
+          Real.sqrt_sq (by positivity)]
+      have e2 : Real.sqrt (1 / ((J : ℝ) + 1) ^ 4) = 1 / ((J : ℝ) + 1) ^ 2 := by
+        rw [show 1 / ((J : ℝ) + 1) ^ 4 = (1 / ((J : ℝ) + 1) ^ 2) ^ 2 by rw [div_pow, one_pow, ← pow_mul],
+          Real.sqrt_sq (by positivity)]
+      rw [e1, ← e2]; exact Real.sqrt_le_sqrt hW6
+    have hlev : 74016 * (nr J : ℝ) ^ 3 * Real.sqrt (κ * W (Ns J)) * Zc ≤
+        74016 * Real.sqrt κ * Zc / ((J : ℝ) + 1) ^ 2 := by
+      rw [Real.sqrt_mul hκ]
+      have hZ := Zc_nonneg
+      have hk := Real.sqrt_nonneg κ
+      rw [le_div_iff₀ (by positivity)]
+      have := mul_le_mul_of_nonneg_left hsq (by positivity : (0:ℝ) ≤ 74016 * Real.sqrt κ * Zc)
+      rw [mul_one_div, le_div_iff₀ (by positivity)] at this
+      nlinarith
+    have hm := hmass J
+    have hJ1R : ((J : ℝ) + 1) = (J : ℝ) + 1 := rfl
+    calc _ ≤ 74016 * Real.sqrt κ * Zc / ((J : ℝ) + 1) ^ 2 + 1 / ((J : ℝ) + 1) ^ 2 :=
+          add_le_add (hL.trans hlev) hm
+      _ = B / ((J : ℝ) + 1) ^ 2 := by rw [hBdef]; ring
+  have hnn : ∀ j, 0 ≤ dens bad d j [] := fun j => dens_nonneg j []
+  obtain ⟨hs0, ht0⟩ := tsum_tail_le _ hnn B hB0.le 0 (j₁ + 1) (by omega) (fun j _ => hdj j)
+  simp only [zero_le, if_true, Nat.cast_zero, zero_add] at hs0 ht0
+  have hj₁pos : (0 : ℝ) < j₁ := by have : 0 < j₁ := by omega
+                                   exact_mod_cast this
+  have htot : ∑' j, dens bad d j [] ≤ 1 / 4 := by
+    refine ht0.trans ?_
+    push_cast
+    rw [show (j₁ : ℝ) + 1 - 1 = j₁ by ring, div_le_div_iff₀ hj₁pos (by norm_num)]
+    linarith
+  set c : ℕ := ⌈B⌉₊ + 1 with hcdef
+  have hcB : B ≤ (c : ℝ) := by rw [hcdef]; push_cast; linarith [Nat.le_ceil B]
+  set J : ℕ → ℕ := fun k => c * 8 ^ (k + 1) with hJdef
+  have hJp : Primrec J :=
+    Primrec.nat_mul.comp (Primrec.const _) (primrec_pow.comp (Primrec.const 8) Primrec.succ)
+  have htail : ∀ k, ∑' j, (if J k < j then dens bad d j [] else 0) ≤ (1 / 8 : ℝ) ^ (k + 1) := by
+    intro k
+    obtain ⟨_, ht⟩ := tsum_tail_le _ hnn B hB0.le (J k + 1) (j₁ + 1) (by omega) (fun j _ => hdj j)
+    have e : (fun j => if J k < j then dens bad d j [] else 0) =
+        fun j => if J k + 1 ≤ j then dens bad d j [] else 0 := by
+      funext j; simp only [Nat.lt_iff_add_one_le]
+    rw [e]
+    refine ht.trans ?_
+    have h8 : (0 : ℝ) < 8 ^ (k + 1) := by positivity
+    have hJR : ((J k : ℕ) : ℝ) = c * 8 ^ (k + 1) := by simp [hJdef]
+    have hden : (0 : ℝ) < ((J k + 1 : ℕ) : ℝ) + ((j₁ + 1 : ℕ) : ℝ) - 1 := by
+      push_cast; rw [hJR]
+      have : (0 : ℝ) ≤ c * 8 ^ (k + 1) := by positivity
+      linarith
+    rw [div_pow, one_pow, div_le_div_iff₀ hden h8]
+    push_cast; rw [hJR]
+    have : (1 : ℝ) ≤ 8 ^ (k + 1) := one_le_pow₀ (by norm_num)
+    nlinarith
+  obtain ⟨e, hce, hav⟩ := exists_primrec_avoid bad hbad d hd J hJp hs0 htot htail
+  have hpass : ∀ J', j₁ ≤ J' → levelBad Ψ (nr J') (Ns J') (pre e (D1 J')) = 0 ∧
+      bad' J' (pre e (d' J')) = false := by
+    intro J' hJ'
+    have h := hav (J' - j₁)
+    simp only [hbaddef, hddef, Nat.sub_add_cancel hJ', Bool.or_eq_false_iff,
+      decide_eq_false_iff_not, not_lt, Nat.le_zero] at h
+    rw [pre_take' e (le_max_left _ _), pre_take' e (le_max_right _ _)] at h
+    exact h
+  refine ⟨e, hce, ?_, j₁, fun j hj => (hpass j hj).2⟩
+  rw [isNormal_iff_equidistributed_orbit 2 le_rfl]
+  refine equidistributed_of_badic 2 le_rfl _ fun ℓ hℓ v hv => ?_
+  refine tendsto_div_of_monotone_of_exists_subseq_tendsto_div _ _
+    (fun m n h => by exact_mod_cast visitCount_mono_n _ _ _ h) fun a ha =>
+      ⟨Ns, hrat a ha, hNtop, ?_⟩
+  rw [tendsto_iff_norm_sub_tendsto_zero]
+  refine squeeze_zero_norm' ?_ (tendsto_one_div_atTop_nhds_zero_nat.comp hnrtop)
+  filter_upwards [eventually_ge_atTop (max j₀ j₁), hnrtop.eventually_ge_atTop (2 ^ ℓ)] with J' hJ' hℓn
+  obtain ⟨hn8, hnN, -⟩ := hj₀ J' (le_of_max_le_left hJ')
+  obtain ⟨hlev, -⟩ := hpass J' (le_of_max_le_right hJ')
+  obtain ⟨htop, hp⟩ := pass_of_levelBad_zero Ψ hlev
+  have hℓle : ℓ ≤ nr J' := (Nat.lt_two_pow_self).le.trans hℓn
+  have hax := (hAG e (D1 J')).1
+  simp only [Real.norm_eq_abs, abs_abs, Function.comp]
+  exact good_of_pass Ψ A hΨ le_rfl (by omega) (by omega) hℓle (G e) _ (hA0 _) hax
+    (eta_le A (G e) _ hax (hAG e _).2) htop (hp ℓ hℓ hℓn v hv)
+
 end NormalNumbers.SchedDerandomize
