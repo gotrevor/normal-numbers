@@ -2190,9 +2190,167 @@ theorem clA_bounds (ω : ℕ → Bool) (D : ℕ) :
   constructor <;> linarith
 
 
+theorem exp_sqrt_le_clNs (j : ℕ) : Real.exp (Real.sqrt j) ≤ clNs j := by
+  set s := Nat.sqrt j
+  have hlt : (j : ℝ) < ((s : ℝ) + 1) ^ 2 := by
+    have := Nat.lt_succ_sqrt j; push_cast [sq]; exact_mod_cast this
+  have hsq : Real.sqrt j ≤ s + 1 := by
+    rw [Real.sqrt_le_left (by positivity)]; exact hlt.le
+  have he : Real.exp ((s : ℝ) + 1) ≤ 4 ^ (s + 1) := by
+    rw [show ((s : ℝ) + 1) = ((s + 1 : ℕ) : ℝ) by push_cast; ring, ← Real.exp_one_pow]
+    exact pow_le_pow_left₀ (Real.exp_pos 1).le
+      (by have := Real.exp_one_lt_d9; linarith) _
+  have hN : 4 ^ (s + 1) ≤ clNs j := by
+    unfold clNs; rw [pow_succ]; exact Nat.mul_le_mul_left _ (by omega)
+  calc Real.exp (Real.sqrt j) ≤ Real.exp ((s : ℝ) + 1) := Real.exp_le_exp.2 hsq
+    _ ≤ 4 ^ (s + 1) := he
+    _ ≤ clNs j := by exact_mod_cast hN
+
+theorem M_ge (j n : ℕ) (hj : 100 ≤ j) (hn1 : 1 ≤ n) (hen : Real.exp (Real.sqrt j) ≤ n) :
+    Real.sqrt j / 4 ≤ ((Nat.log 3 n / 2 : ℕ) : ℝ) := by
+  set L := Nat.log 3 n
+  have hn : (0 : ℝ) < n := by exact_mod_cast hn1
+  have hlt : (n : ℝ) < 3 ^ (L + 1) := by exact_mod_cast Nat.lt_pow_succ_log_self (by norm_num) n
+  have hlog : Real.log n < (L + 1) * Real.log 3 := by
+    have := Real.log_lt_log hn hlt
+    rw [Real.log_pow] at this; push_cast at this; linarith
+  have hsq : Real.sqrt j ≤ Real.log n := by
+    rw [Real.le_log_iff_exp_le hn]; exact hen
+  have h3 := log_three_lt
+  have hl3 : 0 < Real.log 3 := Real.log_pos (by norm_num)
+  have hL : Real.sqrt j / (7 / 5) - 1 < L := by
+    have : Real.sqrt j < (L + 1) * (7 / 5) := by nlinarith
+    have : Real.sqrt j / (7 / 5) < L + 1 := by rw [div_lt_iff₀ (by norm_num)]; linarith
+    linarith
+  have hM : ((L : ℝ) - 1) / 2 ≤ ((L / 2 : ℕ) : ℝ) := by
+    have : L ≤ 2 * (L / 2) + 1 := by omega
+    have : (L : ℝ) ≤ 2 * ((L / 2 : ℕ) : ℝ) + 1 := by exact_mod_cast this
+    linarith
+  have h10 : 10 ≤ Real.sqrt j := by
+    rw [show (10 : ℝ) = Real.sqrt 100 by rw [show (100:ℝ) = 10 ^ 2 by norm_num, Real.sqrt_sq (by norm_num)]]
+    exact Real.sqrt_le_sqrt (by exact_mod_cast hj)
+  linarith
+
+/-- Free count lower bound `√M/2 ≤ F(M)` once `log M ≤ (log 2/2) √M` and `M ≥ 16`. -/
+theorem sqrt_le_freeCount (M : ℕ) (hM16 : (16 : ℝ) ≤ M)
+    (hlogM : Real.log M ≤ Real.log 2 / 2 * (M : ℝ) ^ (1 / 2 : ℝ)) :
+    Real.sqrt M / 2 ≤ freeCount isFree M := by
+  have hMpos : (0 : ℝ) < M := by linarith
+  have hsM : Real.sqrt M = (M : ℝ) ^ (1 / 2 : ℝ) := Real.sqrt_eq_rpow _
+  have hl2 : (Nat.log 2 M : ℝ) * Real.log 2 ≤ Real.log M := by
+    have : ((2 ^ Nat.log 2 M : ℕ) : ℝ) ≤ M := by
+      exact_mod_cast Nat.pow_log_le_self 2 (by intro h; rw [h] at hMpos; simp at hMpos)
+    have := Real.log_le_log (by positivity) this
+    push_cast at this; rw [Real.log_pow] at this; exact this
+  have hlog2 : 0 < Real.log 2 := Real.log_pos (by norm_num)
+  have hsq4 : 4 ≤ Real.sqrt M := by
+    rw [show (4 : ℝ) = Real.sqrt 16 by rw [show (16:ℝ) = 4 ^ 2 by norm_num, Real.sqrt_sq (by norm_num)]]
+    exact Real.sqrt_le_sqrt hM16
+  have hden : (Nat.log 2 M : ℝ) + 2 ≤ Real.sqrt M := by
+    have : (Nat.log 2 M : ℝ) * Real.log 2 ≤ Real.log 2 / 2 * Real.sqrt M := by
+      rw [hsM]; linarith
+    have : (Nat.log 2 M : ℝ) ≤ Real.sqrt M / 2 := by nlinarith
+    linarith
+  have h := le_freeCount M
+  have h' : (M : ℝ) ≤ 2 * ((Nat.log 2 M : ℝ) + 2) * freeCount isFree M := by exact_mod_cast h
+  have hsMM : Real.sqrt M * Real.sqrt M = M := Real.mul_self_sqrt hMpos.le
+  have hF0 : (0 : ℝ) ≤ freeCount isFree M := by positivity
+  have hspos : 0 < Real.sqrt M := Real.sqrt_pos.2 hMpos
+  nlinarith
+
 theorem cl_ev : ∀ᶠ j in atTop, 8 ≤ clNr j ∧ clNr j ≤ clNs j ∧
     (clNr j : ℝ) ^ 6 * clW (clNs j) ≤ 1 / ((j : ℝ) + 1) ^ 4 := by
-  sorry
+  set c : ℝ := Real.log (3 / 2) / 2 with hcdef
+  have hc : 0 < c := by have := Real.log_pos (by norm_num : (1:ℝ) < 3 / 2); positivity
+  have hc1 : c ≤ 1 := by
+    have := Real.log_le_sub_one_of_pos (by norm_num : (0:ℝ) < 3 / 2); rw [hcdef]; linarith
+  have hNs1 : ∀ j, 1 ≤ clNs j := fun j => by
+    have := exp_sqrt_le_clNs j
+    have h1 : (1 : ℝ) ≤ clNs j := (Real.one_le_exp (Real.sqrt_nonneg _)).trans this
+    exact_mod_cast h1
+  have hMev : ∀ᶠ j : ℕ in atTop, Real.sqrt j / 4 ≤ ((Nat.log 3 (clNs j) / 2 : ℕ) : ℝ) := by
+    filter_upwards [eventually_ge_atTop 100] with j hj
+    exact M_ge j _ hj (hNs1 j) (exp_sqrt_le_clNs j)
+  have hMt : Tendsto (fun j : ℕ => ((Nat.log 3 (clNs j) / 2 : ℕ) : ℝ)) atTop atTop := by
+    refine tendsto_atTop_mono' atTop hMev ?_
+    exact (Real.tendsto_sqrt_atTop.comp tendsto_natCast_atTop_atTop).atTop_div_const (by norm_num)
+  have hA : ∀ᶠ x : ℝ in atTop, Real.log x ≤ Real.log 2 / 2 * x ^ (1 / 2 : ℝ) ∧ 16 ≤ x :=
+    (ev_log_le (by norm_num) (by positivity)).and (eventually_ge_atTop 16)
+  have hA' := hMt.eventually hA
+  have hB := (tendsto_natCast_atTop_atTop (R := ℝ)).eventually (ev_log_le (r := 1 / 4) (ε := c / 84)
+    (by norm_num) (by positivity))
+  filter_upwards [hA', hB, hMev, eventually_ge_atTop 100] with j hjA hjB hjM hj100
+  set s := Nat.sqrt j
+  set M := Nat.log 3 (clNs j) / 2
+  set F := freeCount isFree M
+  set q : ℝ := (j : ℝ) ^ (1 / 4 : ℝ)
+  have hjR : (100 : ℝ) ≤ j := by exact_mod_cast hj100
+  have hj0 : (0 : ℝ) ≤ j := by positivity
+  have hs1 : s * s ≤ j := Nat.sqrt_le j
+  have hs4 : 4 ≤ s := Nat.le_sqrt.2 (by omega)
+  have hsj : s ≤ j := by nlinarith
+  refine ⟨by unfold clNr; omega, ?_, ?_⟩
+  · unfold clNr clNs
+    have : s + 1 ≤ 4 ^ s := Nat.lt_pow_self (n := s) (by norm_num : 1 < 4)
+    nlinarith
+  -- free-count bound
+  have hF : Real.sqrt M / 2 ≤ F := sqrt_le_freeCount M hjA.2 hjA.1
+  have hsqM : q / 2 ≤ Real.sqrt M := by
+    have := Real.sqrt_le_sqrt hjM
+    rw [Real.sqrt_div' _ (by norm_num), show Real.sqrt 4 = 2 by
+      rw [show (4:ℝ) = 2 ^ 2 by norm_num, Real.sqrt_sq (by norm_num)], sqrt_sqrt_eq _ hj0] at this
+    exact this
+  set E := Real.exp (-(c * q / 4)) with hE
+  have hE1 : Real.exp (-(Real.log (3 / 2) / 2) * F) ≤ E := by
+    apply Real.exp_le_exp.2
+    have : c * (q / 4) ≤ c * F := mul_le_mul_of_nonneg_left (by linarith) hc.le
+    rw [← hcdef]; linarith
+  have hq : q ≤ Real.sqrt j := by
+    rw [Real.sqrt_eq_rpow]
+    exact Real.rpow_le_rpow_of_exponent_le (by linarith) (by norm_num)
+  have hq0 : 0 ≤ q := by positivity
+  have hE2 : ((max (clNs j) 1 : ℕ) : ℝ) ^ (-(1 / 2 : ℝ)) ≤ E := by
+    rw [max_eq_left (hNs1 j)]
+    calc ((clNs j : ℕ) : ℝ) ^ (-(1 / 2 : ℝ)) ≤ (Real.exp (Real.sqrt j)) ^ (-(1 / 2 : ℝ)) :=
+          Real.rpow_le_rpow_of_nonpos (Real.exp_pos _) (exp_sqrt_le_clNs j) (by norm_num)
+      _ = Real.exp (-(Real.sqrt j / 2)) := by rw [← Real.exp_mul]; ring_nf
+      _ ≤ E := by
+          apply Real.exp_le_exp.2
+          have : c * q ≤ 1 * Real.sqrt j := mul_le_mul hc1 hq hq0 (by norm_num)
+          linarith
+  have hW : clW (clNs j) ≤ 2 * E := by unfold clW; linarith
+  -- polynomial vs E
+  have hlogj : 21 * Real.log j ≤ c * q / 4 := by
+    have := hjB
+    linarith
+  have hpow : (j : ℝ) ^ 21 ≤ Real.exp (c * q / 4) := by
+    rw [← Real.exp_log (by positivity : (0:ℝ) < (j : ℝ) ^ 21), Real.log_pow]
+    exact Real.exp_le_exp.2 (by push_cast; linarith)
+  have hEm : E * Real.exp (c * q / 4) = 1 := by rw [hE, ← Real.exp_add]; simp
+  have h2j : (2 : ℝ) * (2 * j) ^ 10 ≤ (j : ℝ) ^ 21 := by
+    have : (2 : ℝ) ^ 11 ≤ (j : ℝ) ^ 11 := pow_le_pow_left₀ (by norm_num) (by linarith) 11
+    calc (2 : ℝ) * (2 * j) ^ 10 = 2 ^ 11 * (j : ℝ) ^ 10 := by ring
+      _ ≤ (j : ℝ) ^ 11 * (j : ℝ) ^ 10 := by gcongr
+      _ = _ := by ring
+  have hE0 : 0 ≤ E := (Real.exp_pos _).le
+  have hkey : (2 : ℝ) * (2 * j) ^ 10 * E ≤ 1 := by
+    calc (2 : ℝ) * (2 * j) ^ 10 * E ≤ Real.exp (c * q / 4) * E :=
+          mul_le_mul_of_nonneg_right (h2j.trans hpow) hE0
+      _ = 1 := by rw [mul_comm]; exact hEm
+  have hnr : (clNr j : ℝ) ≤ 2 * j := by
+    unfold clNr; push_cast
+    have : (s : ℝ) ≤ j := by exact_mod_cast hsj
+    linarith
+  have hj1 : (j : ℝ) + 1 ≤ 2 * j := by linarith
+  have hJ0 : (0 : ℝ) < (j : ℝ) + 1 := by positivity
+  rw [le_div_iff₀ (by positivity)]
+  calc (clNr j : ℝ) ^ 6 * clW (clNs j) * ((j : ℝ) + 1) ^ 4
+      ≤ (2 * j) ^ 6 * (2 * E) * (2 * j) ^ 4 := by
+        gcongr
+        exact clW_nonneg _
+    _ = 2 * (2 * j) ^ 10 * E := by ring
+    _ ≤ 1 := hkey
+
 
 theorem measurable_cantorLiouvilleReal : Measurable cantorLiouvilleReal := measurable_pt isFree
 
