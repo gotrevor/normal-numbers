@@ -943,3 +943,4 @@ import NormalNumbers.FamilyDerandomizeVar
 import NormalNumbers.ExplicitPQ
 import NormalNumbers.BadNormal
 import NormalNumbers.ReciprocalNormal
+import NormalNumbers.CantorLiouville

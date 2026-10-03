@@ -216,6 +216,8 @@ proof with `A = {1,…,N}` gives `F(N)` for all `N ≥ 2`, uniformly.
 
 ## 2. Bugeaud 10.37: a Liouville number in the middle-third Cantor set, normal to base 2 (20%; paper 70%)
 
+**Audited and frozen 2026-10-03** on branch `proof/cantorliou`: `src/NormalNumbers/CantorLiouville.lean`, verdict in `docs/CANTOR-LIOUVILLE-AUDIT-2026-10-03.md` (sound; open as far as found).  The frozen statements supersede the draft in §2.4.
+
 ### 2.1 Source and freshness
 
 Bugeaud 2012, p. 219, verbatim: "There exist Liouville numbers in the middle third Cantor set K
