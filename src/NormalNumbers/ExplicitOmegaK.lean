@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
 import NormalNumbers.ExplicitSquareNonNormal
+import NormalNumbers.OmegaKCalculus
 
 /-!
 # Manai's algebraic normality degree: explicit points of `Ω_k`
@@ -196,8 +197,8 @@ theorem top_witness (k : ℕ) (hk : k ≠ 0) (e : ℕ → Bool) :
 
 Confidence 98%.  Proof: `t ↦ t^{1/k}` is analytic on `(0, ∞)` (`exp (log t / k)`), and `aeval`
 of a polynomial is a finite sum of products. -/
-theorem analyticOnNhd_Gk (k : ℕ) (p : ℤ[X]) : AnalyticOnNhd ℝ (Gk k p) (Set.Ioi 0) := by
-  sorry
+theorem analyticOnNhd_Gk (k : ℕ) (p : ℤ[X]) : AnalyticOnNhd ℝ (Gk k p) (Set.Ioi 0) :=
+  OmegaKCalculus.analyticOnNhd_gk k p
 
 /-- **`G_p` is never affine on `[1/2, 1]` when `1 ≤ deg p < k`** (the difficulty-check lemma).
 
@@ -207,8 +208,8 @@ Confidence 96%.  Proof: with `s = t^{1/k}` and `p = Σ_{j ≤ d} a_j X^j`,
 degree `d`, with at most `d` roots; `s` ranges over the infinite interval `[2^{-1/k}, 1]`.
 Fails exactly when `d = k` and `p = a X^k + b` (`G_p` affine): the affine sibling. -/
 theorem exists_deriv2_Gk_ne_zero (k : ℕ) (p : ℤ[X]) (h1 : 1 ≤ p.natDegree)
-    (hk : p.natDegree < k) : ∃ t ∈ Set.Icc (1 / 2 : ℝ) 1, deriv (deriv (Gk k p)) t ≠ 0 := by
-  sorry
+    (hk : p.natDegree < k) : ∃ t ∈ Set.Icc (1 / 2 : ℝ) 1, deriv (deriv (Gk k p)) t ≠ 0 :=
+  OmegaKCalculus.exists_deriv2_gk_ne_zero k p h1 hk
 
 /-- **Sibling control**: for `p = X^k`, `G_p` is the identity, and no point of the
 quarter-Cantor set is normal.  So any mechanism proving `p(x_k)` normal must use `deg p < k`
@@ -227,7 +228,20 @@ Confidence 97%.  Proof: `t² G_p''(t) = (2/3)(−1/3) n s² − (1/3)(−2/3) m 
 `s = t^{1/3}`, which vanishes at `s = m/n`. -/
 theorem deriv2_Gk_three_eq_zero (m n : ℕ) (hm : 0 < m) (hn : 0 < n) :
     deriv (deriv (Gk 3 (C (n : ℤ) * X ^ 2 - C (m : ℤ) * X))) (((m : ℝ) / n) ^ 3) = 0 := by
-  sorry
+  have hmr : (0 : ℝ) < m := by exact_mod_cast hm
+  have hnr : (0 : ℝ) < n := by exact_mod_cast hn
+  have ht : (0 : ℝ) < ((m : ℝ) / n) ^ 3 := by positivity
+  have hdeg : (C (n : ℤ) * X ^ 2 - C (m : ℤ) * X).natDegree = 2 := by
+    compute_degree!
+    exact_mod_cast hn.ne'
+  show deriv (deriv (OmegaKCalculus.gk 3 _)) _ = 0
+  rw [OmegaKCalculus.deriv2_gk_eq_qPoly 3 (by norm_num) _ ht, OmegaKCalculus.qPoly, hdeg,
+    show ((((m : ℝ) / n) ^ 3) ^ (((3 : ℕ) : ℝ)⁻¹)) = (m : ℝ) / n from
+      Real.pow_rpow_inv_natCast (by positivity) (by norm_num)]
+  simp [Finset.sum_range_succ, coeff_X]
+  left
+  field_simp
+  ring
 
 /-! ### Non-explicit: `Ω_k ≠ ∅` from Baker–Banaji's analytic corollary -/
 
@@ -313,7 +327,17 @@ open `U ⊇ [1/2,1]`), so take `A₁, A₂` their maxima, `a₂` the minimum of 
 contradicting `F'' ≠ 0`. -/
 theorem bakerBanajiQuarterCantor_of_uniform (h : BakerBanajiUniformQuarterCantor) :
     BakerBanajiQuarterCantor := by
-  sorry
+  obtain ⟨C, η, κ, hC, hη, hκ, hB⟩ := h
+  intro F U hU hsub hF hF''
+  obtain ⟨A₁, a₁, A₂, a₂, ha₁, ha₂, h1, h2, h3, h4⟩ :=
+    OmegaKCalculus.exists_window_bounds F U hU hsub hF hF''
+  have hA₁ : 0 ≤ A₁ := (abs_nonneg _).trans (h1 1 ⟨by norm_num, le_rfl⟩)
+  have hA₂ : 0 ≤ A₂ := (abs_nonneg _).trans (h3 1 ⟨by norm_num, le_rfl⟩)
+  refine ⟨C * (1 + A₁ + a₁ ^ (-κ) + A₂) * (1 + a₂ ^ (-κ)), η, ?_, hη, fun ξ hξ =>
+    hB F U hU hsub hF A₁ a₁ A₂ a₂ ha₁ ha₂ h1 h2 h3 h4 ξ hξ⟩
+  have := Real.rpow_pos_of_pos ha₁ (-κ)
+  have := Real.rpow_pos_of_pos ha₂ (-κ)
+  positivity
 
 /-- **Global polynomial decay for every `G_p`, `1 ≤ deg p < k`, despite inflection points.**
 
