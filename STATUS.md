@@ -380,7 +380,7 @@ These are the ratified conjecture nodes.  They are open by design, and none is s
   `e` with `√(cantorReal e)` ABSOLUTELY normal and in `Ω₂` (answers Manai's x² question as posed), cond. on
   `BakerBanajiQuarterCantor`.  `ExplicitOmegaK.Omega_nonempty` / `ae_mem_Omega`: `Ω_k ≠ ∅` for every `k ≥ 2`
   (Manai: "not even known"), cond. on `BakerBanajiAnalyticQuarterCantor` (BB v2 Cor 2.10, refereed 92%).
-  Open: explicit `Ω_k`, `k ≥ 3` (`exists_computable_mem_Omega`, 65%), `dimH_Omega_eq_one` (80%).
+  `ExplicitOmegaK.dimH_Omega_eq_one`: `dim_H Ω_k = 1` ∀k≥2, cond. `BakerBanajiAnalytic` (general self-similar BB Cor 2.10, refereed 92%), via missing-digit measures `DigitCantor`.  Open: explicit `Ω_k`, `k ≥ 3` (`exists_computable_mem_Omega`, 65%).
   Note: `docs/notes/computable-normal-square-not-normal.md`.
 - **Computable normal `x` with `x²` not normal (2026-10-02, audit + 2 laps).**
   `ExplicitSquare.exists_computable_normal_sq_not_normal`: `x = √y`, `y = cantorReal e` (binary digits 0 at

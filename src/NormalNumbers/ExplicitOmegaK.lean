@@ -592,15 +592,12 @@ theorem rpow_le_of_two_pow (L : ℕ) (hL : 1 ≤ L) :
 
 /-- **Manai's problem, dimension part: `dim_H Ω_k = 1` for every `k ≥ 2`.**
 
-Confidence 80% (true 92%).  English proof: for `L ≥ 2` let `ν_L` be the law of the real whose
-base-`2^L` expansion has leading digit `2^{L−1}` and i.i.d. uniform digits `D_i ∈ {0, …, 2^L − 2}`: self-similar on the
-window (`2^L − 1` maps of ratio `2^{-L}`, open set condition), non-trivial, so
-`BakerBanajiAnalytic` applies to every `G_p` (`analyticOnNhd_Gk`, `exists_deriv2_Gk_ne_zero`).
-Every `y` in its support has base-`2^L` digit `2^L − 1` with frequency `0` except on the
-`ν_L`-null set of dyadic rationals, so `y` is not normal in base `2^L`.  As in `ae_mem_Omega`,
-`ν_L`-a.e. `y` has `y^{1/k} ∈ Ω_k`.  `ν_L(B(y, ρ)) ≤ C ρ^{s_L}`, `s_L = log(2^L−1)/(L log 2)`, so
-(mass distribution principle) every `ν_L`-full set has `dim_H ≥ s_L`, and `t ↦ t^{1/k}` is
-bi-Lipschitz on the window.  Hence `dim_H Ω_k ≥ s_L → 1`; `≤ 1` since `Ω_k ⊆ ℝ`. -/
+Proved from `BakerBanajiAnalytic`.  For a base `b = m + 2 ≥ 3`, `DigitCantor.nu m` is the law of
+`y = 1/2 + z/2`, `z` with i.i.d. uniform base-`b` digits in `{0, …, b − 2}`: self-similar on the
+window, so `BakerBanajiAnalytic` applies to every `G_p`; every `y` is non-normal in base `b`, so
+`ν`-a.e. `y^{1/k} ∈ Ω_k`.  Frostman bound + mass distribution principle
+(`DigitCantor.le_dimH_of_one_le_nu`) and bi-Lipschitz `t ↦ t^{1/k}` give
+`dim_H Ω_k ≥ log(b−1)/log b → 1`; `≤ 1` since `Ω_k ⊆ ℝ`. -/
 theorem dimH_Omega_eq_one (hBB : BakerBanajiAnalytic) (k : ℕ) (hk : 2 ≤ k) :
     dimH (Omega k) = 1 := by
   refine le_antisymm ((dimH_mono (Set.subset_univ _)).trans Real.dimH_univ.le) ?_
