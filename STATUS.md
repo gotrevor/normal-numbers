@@ -376,6 +376,7 @@ These are the ratified conjecture nodes.  They are open by design, and none is s
   π² in bases 16/2 given `Irrational (π²)` (`hypA_piSq_base2`), Borel ⇒ disjunctive.  Maze test:
   `MasterMaze.lean` (`mazeTestImplied`/`mazeTestNotImplied`; `equidistributed_lnTwoOrbit_iff`,
   `run_sublinear_of_isNormal`).
+- **Bergelson–Downarowicz 2506.12929 §8.6 questions 2 and 4 (2026-10-03, sweep + 1 lap): both No.**  `Deterministic.not_productQuestion` / `not_ratioQuestion` / `not_recipProductQuestion` UNCONDITIONAL (`dimH` of products/ratios/reciprocal products of deterministic numbers is 0; packing-type cover `deterministic_subexp_cover`; Liouville control `not_dimH_prod_zero_of_dimH_zero`).  `not_reciprocalQuestion` cond. B-D Cor 4.11(2) `DetSub` + Cor 8.15 `DetSqNotDet` (refereed 93%/88%).  Open: `quadraticLogWitness_of_cor14` (Manai route, 90%, not on the headline path).  Note `docs/notes/deterministic-numbers.md`.
 - **Manai's `Ω_k` (2026-10-02, audit + 2 laps).**  `ExplicitOmegaK.exists_computable_mem_Omega_two`: computable
   `e` with `√(cantorReal e)` ABSOLUTELY normal and in `Ω₂` (answers Manai's x² question as posed), cond. on
   `BakerBanajiQuarterCantor`.  `ExplicitOmegaK.Omega_nonempty` / `ae_mem_Omega`: `Ω_k ≠ ∅` for every `k ≥ 2`
