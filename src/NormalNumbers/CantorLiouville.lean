@@ -1904,8 +1904,105 @@ def clBad (J : ℕ) (p : List Bool) : Bool :=
 
 def clD (J : ℕ) : ℕ := winStart J + J + 2
 
+theorem primrec_runStart : Primrec runStart := by
+  have h : Primrec (Nat.rec (motive := fun _ => ℕ) 4 fun k ih => 2 * (k + 2) * ih) :=
+    Primrec.nat_rec₁ 4 (Primrec.nat_mul.comp (Primrec.nat_mul.comp (Primrec.const 2)
+      (Primrec.nat_add.comp Primrec.fst (Primrec.const 2))) Primrec.snd).to₂
+  refine h.of_eq fun k => ?_
+  induction k with
+  | zero => rfl
+  | succ k ih => simp only [runStart] at *; rw [← ih]
+
+theorem isFree_eq (i : ℕ) : isFree i = decide (((List.range (i + 1)).map fun k =>
+    if runStart k ≤ i ∧ i < (k + 2) * runStart k then 1 else 0).sum = 0) := by
+  rw [Bool.eq_iff_iff, decide_eq_true_eq, ComputableNormalB.list_sum_range_map,
+    Finset.sum_eq_zero_iff]
+  simp only [isFree, isForced, Bool.not_eq_true', List.any_eq_false, List.mem_range,
+    Finset.mem_range, Bool.and_eq_true, decide_eq_true_eq, ite_eq_right_iff, one_ne_zero,
+    imp_false]
+
+theorem primrec_isFree : Primrec isFree := by
+  have hr := primrec_runStart
+  have hg : Primrec₂ fun (i k : ℕ) => if runStart k ≤ i ∧ i < (k + 2) * runStart k then 1 else 0 :=
+    (Primrec.ite (PrimrecPred.and (Primrec.nat_le.comp (hr.comp Primrec.snd) Primrec.fst)
+      (Primrec.nat_lt.comp Primrec.fst (Primrec.nat_mul.comp
+        (Primrec.nat_add.comp Primrec.snd (Primrec.const 2)) (hr.comp Primrec.snd))))
+      (Primrec.const 1) (Primrec.const 0)).to₂
+  have hs := primrec_sum_map (Primrec.list_range.comp Primrec.succ) hg
+  exact (Primrec.eq.comp hs (Primrec.const 0)).decide.of_eq fun i => (isFree_eq i).symm
+
+theorem primrec_clDig : Primrec₂ clDig := by
+  have := Primrec.cond (Primrec.and.comp (primrec_isFree.comp Primrec.snd)
+      ((Primrec.list_getD false).comp Primrec.fst Primrec.snd)) (Primrec.const 2) (Primrec.const 0)
+  exact this.to₂
+
+theorem primrec_clNum : Primrec clNum := by
+  have hg : Primrec₂ fun (p : List Bool) (i : ℕ) => clDig p i * 3 ^ (p.length - 1 - i) :=
+    (Primrec.nat_mul.comp (primrec_clDig.comp Primrec.fst Primrec.snd)
+      (ComputableNormal.primrec_pow.comp (Primrec.const 3)
+        (Primrec.nat_sub.comp (Primrec.nat_sub.comp (Primrec.list_length.comp Primrec.fst)
+          (Primrec.const 1)) Primrec.snd))).to₂
+  exact (primrec_sum_map (Primrec.list_range.comp Primrec.list_length) hg).of_eq fun p => rfl
+
+theorem primrec_clΨ : Primrec fun x : ℕ × ℕ × List Bool => clΨ x.1 x.2.1 x.2.2 := by
+  have hp : Primrec fun x : ℕ × ℕ × List Bool => x.2.2 := Primrec.snd.comp Primrec.snd
+  exact Primrec.nat_div.comp (Primrec.nat_mul.comp (primrec_clNum.comp hp)
+    (ComputableNormal.primrec_pow.comp Primrec.fst (Primrec.fst.comp Primrec.snd)))
+    (ComputableNormal.primrec_pow.comp (Primrec.const 3) (Primrec.list_length.comp hp))
+
+theorem primrec_clNs : Primrec clNs := by
+  have hs := SqrtFloor.primrec_sqrt
+  exact Primrec.nat_mul.comp (ComputableNormal.primrec_pow.comp (Primrec.const 4) hs)
+    (Primrec.nat_add.comp (Primrec.nat_add.comp (Primrec.nat_mul.comp (Primrec.const 4) hs)
+      (Primrec.nat_mul.comp (Primrec.const 6) (Primrec.nat_sub.comp Primrec.id
+        (Primrec.nat_mul.comp hs hs)))) (Primrec.const 4))
+
+theorem primrec_winStart : Primrec winStart :=
+  Primrec.nat_mul.comp (Primrec.nat_add.comp Primrec.id (Primrec.const 2)) primrec_runStart
+
+theorem primrec_clD : Primrec clD :=
+  Primrec.nat_add.comp (Primrec.nat_add.comp primrec_winStart Primrec.id) (Primrec.const 2)
+
+theorem clBad_eq (J : ℕ) (p : List Bool) : clBad J p = decide (((List.range (J + 2)).map fun i =>
+    if p.getD (winStart J + i) false = true then 1 else 0).sum = 0) := by
+  rw [Bool.eq_iff_iff, decide_eq_true_eq, ComputableNormalB.list_sum_range_map,
+    Finset.sum_eq_zero_iff]
+  simp only [clBad, List.all_eq_true, List.mem_range, Finset.mem_range, Bool.not_eq_true',
+    ite_eq_right_iff, one_ne_zero, imp_false, Bool.not_eq_true]
+
+theorem primrec_clBad : Primrec₂ clBad := by
+  have hg : Primrec₂ fun (x : ℕ × List Bool) (i : ℕ) =>
+      if x.2.getD (winStart x.1 + i) false = true then 1 else 0 :=
+    (Primrec.ite (Primrec.eq.comp ((Primrec.list_getD false).comp (Primrec.snd.comp Primrec.fst)
+      (Primrec.nat_add.comp (primrec_winStart.comp (Primrec.fst.comp Primrec.fst)) Primrec.snd))
+      (Primrec.const true)) (Primrec.const 1) (Primrec.const 0)).to₂
+  have hs := primrec_sum_map (Primrec.list_range.comp (Primrec.nat_add.comp Primrec.fst (Primrec.const 2))) hg
+  exact ((Primrec.eq.comp hs (Primrec.const 0)).decide.of_eq fun x => (clBad_eq x.1 x.2).symm).to₂
+
 theorem clΨ_eq (b m : ℕ) (p : List Bool) : clΨ b m p = ⌊clA p * (b : ℝ) ^ m⌋₊ := by
-  sorry
+  rw [clA, show (clNum p : ℝ) / 3 ^ p.length * (b : ℝ) ^ m =
+    ((clNum p * b ^ m : ℕ) : ℝ) / ((3 ^ p.length : ℕ) : ℝ) by push_cast; ring,
+    Nat.floor_div_eq_div, clΨ]
+
+theorem tendsto_clNr : Tendsto clNr atTop atTop := by
+  refine tendsto_atTop_atTop.2 fun b => ⟨b * b, fun a ha => ?_⟩
+  unfold clNr; have := Nat.le_sqrt.2 ha; omega
+
+theorem clW_antitone : Antitone clW := by
+  intro m n hmn
+  unfold clW
+  have hF : freeCount isFree (Nat.log 3 m / 2) ≤ freeCount isFree (Nat.log 3 n / 2) := by
+    unfold freeCount
+    exact Finset.card_le_card (Finset.filter_subset_filter _ (Finset.range_mono
+      (Nat.div_le_div_right (Nat.log_mono_right hmn))))
+  have hl : 0 < Real.log (3 / 2) := Real.log_pos (by norm_num)
+  have hFR : (freeCount isFree (Nat.log 3 m / 2) : ℝ) ≤ freeCount isFree (Nat.log 3 n / 2) := by
+    exact_mod_cast hF
+  gcongr ?_ + ?_
+  · exact Real.exp_le_exp.2 (by nlinarith)
+  · apply Real.rpow_le_rpow_of_nonpos (by positivity) _ (by norm_num)
+    exact_mod_cast max_le_max hmn le_rfl
+
 
 theorem clA_nonneg (p : List Bool) : 0 ≤ clA p := by unfold clA; positivity
 
@@ -1914,26 +2011,11 @@ theorem clA_bounds (ω : ℕ → Bool) (D : ℕ) :
       cantorLiouvilleReal ω ≤ clA (pre ω D) + (1 / 2 : ℝ) ^ D := by
   sorry
 
-theorem primrec_runStart : Primrec runStart := by
-  sorry
-
-theorem primrec_isFree : Primrec isFree := by
-  sorry
-
-theorem primrec_clΨ : Primrec fun x : ℕ × ℕ × List Bool => clΨ x.1 x.2.1 x.2.2 := by
-  sorry
-
 theorem clW_nonneg (N : ℕ) : 0 ≤ clW N := by unfold clW; positivity
-
-theorem clW_antitone : Antitone clW := by
-  sorry
 
 theorem cl_secondMoment (h : ℤ) (hh : h ≠ 0) (N : ℕ) (hN : 1 ≤ N) :
     ∫ ω, ‖∑ k ∈ Finset.range N, ee (h * 2 ^ k * cantorLiouvilleReal ω)‖ ^ 2 ∂coins ≤
       16 * |(h : ℝ)| * N ^ 2 * clW N := by
-  sorry
-
-theorem primrec_clNs : Primrec clNs := by
   sorry
 
 theorem primrec_clNr : Primrec clNr :=
@@ -1945,17 +2027,8 @@ theorem tendsto_clNs : Tendsto clNs atTop atTop := by
 theorem clNs_ratio (a : ℝ) (ha : 1 < a) : ∀ᶠ j in atTop, (clNs (j + 1) : ℝ) ≤ a * clNs j := by
   sorry
 
-theorem tendsto_clNr : Tendsto clNr atTop atTop := by
-  sorry
-
 theorem cl_ev : ∀ᶠ j in atTop, 8 ≤ clNr j ∧ clNr j ≤ clNs j ∧
     (clNr j : ℝ) ^ 6 * clW (clNs j) ≤ 1 / ((j : ℝ) + 1) ^ 4 := by
-  sorry
-
-theorem primrec_clBad : Primrec₂ clBad := by
-  sorry
-
-theorem primrec_clD : Primrec clD := by
   sorry
 
 theorem clBad_mass (J : ℕ) :
