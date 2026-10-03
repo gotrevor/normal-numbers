@@ -8,6 +8,17 @@
   `ComputableNormalB.exists_computable_absNormal` (tests on a computable lower approximation +
   top-cell test; base-uniform decay constant from `VisitDeviationB`) instantiated in
   `SqrtCantorAbs.lean`.
+* Phase 3 plan (explicit, so constants are computable from p):
+  1. [DONE] `CantorSelfSimilar.pushFourier_self_similar` (one-step μ = ½ψ₁μ + ½ψ₀μ).
+  2. depth-m: ‖pF F ξ‖ ≤ 2^{-m} Σ_{w} ‖pF (F∘ψ_w) ξ‖, ψ_w affine ratio 4^{-m}.
+  3. |Q(s)| ≥ |lead Q|·dist_ℂ(s, roots)^deg (complex roots; no root location needed);
+     t²G_p'' = Q(t^{1/k}).
+  4. bad words (cylinder within r of a root's real part): count ≤ deg·(24 r 4^m + 2).
+  5. good words: BakerBanajiUniform on F∘ψ_w with explicit A₁,a₁,A₂,a₂ in (H(p), 4^{-m}, r).
+  6. choose m, r as powers of |ξ| ⇒ ‖pF G_p ξ‖ ≤ K₀ (1+H)^e |ξ|^{-δ}, δ = δ(η,κ,k).
+  7. family version of ComputableNormalB (admit p_i at level n when its computable bound ≤ n,
+     N = n^20), dyadic lower approximation of G_p(y) (Nat k-th root via counting sum,
+     interval evaluation of p), shift by an integer to make it ≥ 0.
 * Open in the file: Phase 3 stretch `polyDecay_Gk`, `exists_computable_isAbsNormal_Gk` (next attack:
   extend `exists_computable_absNormal` to a countable family `G_i` with per-i constants `C_i`
   admitted at levels `n ≥ n(i)`; the hard part is computable constants for `polyDecay_Gk`), and the
