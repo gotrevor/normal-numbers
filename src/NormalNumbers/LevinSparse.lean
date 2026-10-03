@@ -1819,6 +1819,506 @@ section ComputableBLD
 
 open Derandomize
 
+/-- Core of `bld_doubleSum_le` with the Lemma-5 threshold as a hypothesis. -/
+
+theorem bld_doubleSum_core {S : Set ℕ} {K ρ : ℝ}
+    (hL5' : ∀ a ℓ r N : ℕ, Odd ℓ → Odd r → 3 ≤ r →
+      (2 : ℝ) ^ (K * ((a : ℝ) + 1) ^ (1 / ρ) + 10 ^ 30) ≤ N →
+        ∑ n ∈ Finset.range N, rieszTail S a ((ℓ : ℝ) * (r : ℝ) ^ n) ≤
+          (2 : ℝ) ^ (padicValNat 2 (r ^ 2 - 1) + 2) * N / Real.log N ^ (1.005 : ℝ))
+    (r : ℕ) (hr : Odd r) (hr3 : 3 ≤ r) (h : ℤ) (hh : h ≠ 0) (N : ℕ) (hN3 : 3 ≤ N)
+    (hthr : ∀ a : ℕ, a ≤ padicValNat 2 h.natAbs + (2 * Nat.log 2 (Nat.log 2 N) + 2) →
+      (2 : ℝ) ^ (K * ((a : ℝ) + 1) ^ (1 / ρ) + 10 ^ 30) ≤ N) :
+    (∑ p ∈ Finset.range N, ∑ q ∈ Finset.range N,
+        rieszTail S 0 ((h : ℝ) * ((r : ℝ) ^ p - (r : ℝ) ^ q))) / (N : ℝ) ^ 2 ≤
+      (4 + 2 ^ (padicValNat 2 (r ^ 2 - 1) + 3) + 2 ^ (padicValNat 2 (r ^ 2 - 1))) /
+        Real.log N ^ (1.005 : ℝ) := by
+  set v := padicValNat 2 h.natAbs with hv
+  set c := padicValNat 2 (r ^ 2 - 1) with hc
+  set L := Nat.log 2 N with hLdef
+  set lam := Nat.log 2 L with hlam
+  set B := 2 * lam + 2 with hB
+  have hNpos : (0 : ℝ) < N := by exact_mod_cast (show 0 < N by omega)
+  have hlog1 : 1 ≤ Real.log N := by
+    rw [Real.le_log_iff_exp_le hNpos]
+    have := Real.exp_one_lt_d9
+    have : (3 : ℝ) ≤ N := by exact_mod_cast hN3
+    linarith
+  have hlogB : Real.log N ^ 2 ≤ 2 ^ B := by
+    have h1 : N < 2 ^ (L + 1) := Nat.lt_pow_succ_log_self one_lt_two N
+    have h1R : (N : ℝ) < 2 ^ (L + 1) := by exact_mod_cast h1
+    have h2 : Real.log N < (L + 1 : ℕ) * Real.log 2 := by
+      rw [← Real.log_pow]; exact Real.log_lt_log hNpos (by exact_mod_cast h1)
+    have hl2 := Real.log_two_lt_d9
+    have hl2' := Real.log_pos (by norm_num : (1:ℝ) < 2)
+    have h3 : L < 2 ^ (lam + 1) := Nat.lt_pow_succ_log_self one_lt_two L
+    have h3R : ((L + 1 : ℕ) : ℝ) ≤ 2 ^ (lam + 1) := by exact_mod_cast h3
+    have h4 : Real.log N ≤ 2 ^ (lam + 1) := by
+      have : ((L + 1 : ℕ) : ℝ) * Real.log 2 ≤ ((L + 1 : ℕ) : ℝ) := by
+        have : (0 : ℝ) ≤ ((L + 1 : ℕ) : ℝ) := by positivity
+        nlinarith
+      linarith
+    calc Real.log N ^ 2 ≤ ((2 : ℝ) ^ (lam + 1)) ^ 2 := pow_le_pow_left₀ (by linarith) h4 2
+      _ = 2 ^ B := by rw [← pow_mul]; congr 1; omega
+  have hlogN : Real.log N ^ 2 ≤ 4 * N := by
+    have hs : Real.log (Real.sqrt N) ≤ Real.sqrt N - 1 :=
+      Real.log_le_sub_one_of_pos (Real.sqrt_pos.2 hNpos)
+    rw [Real.log_sqrt hNpos.le] at hs
+    have hs0 : 0 ≤ Real.log N := by linarith
+    have : Real.log N ≤ 2 * Real.sqrt N := by linarith
+    calc Real.log N ^ 2 ≤ (2 * Real.sqrt N) ^ 2 := pow_le_pow_left₀ hs0 this 2
+      _ = 4 * N := by rw [mul_pow, Real.sq_sqrt hNpos.le]; ring
+  set ℓ := Real.log N ^ (1.005 : ℝ) with hℓ
+  have hℓpos : 0 < ℓ := Real.rpow_pos_of_pos (by linarith) _
+  have hℓ2 : ℓ ≤ Real.log N ^ 2 := by
+    rw [hℓ, ← Real.rpow_two]
+    exact Real.rpow_le_rpow_of_exponent_le hlog1 (by norm_num)
+  -- the double sum
+  set G : ℕ → ℕ → ℝ := fun g q => gapTerm S h r g q with hG
+  have hG0 : ∀ g q, 0 ≤ G g q := fun g q => rieszTail_nonneg _ _ _
+  have hT : ∑ p ∈ Finset.range N, ∑ q ∈ Finset.range N,
+      rieszTail S 0 ((h : ℝ) * ((r : ℝ) ^ p - (r : ℝ) ^ q)) ≤
+      N + 2 * ∑ k ∈ Finset.range N, ∑ q ∈ Finset.range N, G (k + 1) q := by
+    calc _ ≤ ∑ p ∈ Finset.range N, ∑ q ∈ Finset.range N,
+          ((if p = q then (1 : ℝ) else 0) + (if q < p then G (p - q) q else 0) +
+            (if p < q then G (q - p) p else 0)) :=
+          Finset.sum_le_sum fun p _ => Finset.sum_le_sum fun q _ => term_le S h r p q (by omega)
+      _ = ∑ p ∈ Finset.range N, ∑ q ∈ Finset.range N, (if p = q then (1 : ℝ) else 0) +
+          ∑ q ∈ Finset.range N, ∑ p ∈ Finset.range N, (if q < p then G (p - q) q else 0) +
+          ∑ p ∈ Finset.range N, ∑ q ∈ Finset.range N, (if p < q then G (q - p) p else 0) := by
+          simp only [Finset.sum_add_distrib]
+          rw [Finset.sum_comm (f := fun p q => if q < p then G (p - q) q else 0)]
+      _ ≤ N + ∑ q ∈ Finset.range N, ∑ k ∈ Finset.range N, G (k + 1) q +
+          ∑ p ∈ Finset.range N, ∑ k ∈ Finset.range N, G (k + 1) p := by
+          refine add_le_add (add_le_add (le_of_eq ?_) (Finset.sum_le_sum fun q _ =>
+            sum_gap_le (fun g => G g q) (fun g => hG0 g q) q N)) (Finset.sum_le_sum fun p _ =>
+            sum_gap_le (fun g => G g p) (fun g => hG0 g p) p N)
+          simp only [Finset.sum_ite_eq, Finset.mem_range, Finset.sum_ite, Finset.sum_const_zero]
+          rw [Finset.filter_true_of_mem (fun x hx => Finset.mem_range.1 hx)]
+          simp
+      _ = _ := by rw [Finset.sum_comm]; ring
+  set X := (2 : ℝ) ^ (c + 2) * N / ℓ with hX
+  set D := 2 ^ (B + 1 - c) with hD
+  have hGs : ∑ k ∈ Finset.range N, ∑ q ∈ Finset.range N, G (k + 1) q ≤
+      N * X + N * ((N / D : ℕ) : ℝ) := by
+    calc _ ≤ ∑ k ∈ Finset.range N, (X + (if D ∣ k + 1 then (N : ℝ) else 0)) :=
+          Finset.sum_le_sum fun k _ =>
+            gapSum_le hL5' r hr hr3 h hh (k + 1) (by omega) N B hthr
+      _ = N * X + N * ((N / D : ℕ) : ℝ) := by
+          rw [Finset.sum_add_distrib, ← Finset.sum_filter, Finset.sum_const, Finset.sum_const,
+            nsmul_eq_mul, nsmul_eq_mul, Nat.card_multiples, Finset.card_range]
+          ring
+  have hQ : ((N / D : ℕ) : ℝ) * D ≤ N := by exact_mod_cast Nat.div_mul_le_self N D
+  have hDc : (2 : ℝ) ^ (B + 1) ≤ (D : ℝ) * 2 ^ c := by
+    rw [hD]; push_cast; rw [← pow_add]
+    exact pow_le_pow_right₀ (by norm_num) (by omega)
+  have hDpos : (0 : ℝ) < D := by rw [hD]; positivity
+  rw [div_le_div_iff₀ (by positivity) hℓpos]
+  have hXℓ : X * ℓ = 2 ^ (c + 2) * N := by rw [hX]; field_simp
+  have hc2 : (2 : ℝ) ^ (c + 3) = 2 * 2 ^ (c + 2) := by ring
+  have hB1 : (2 : ℝ) ^ (B + 1) = 2 * 2 ^ B := by ring
+  have hQℓ : 2 * ((N / D : ℕ) : ℝ) * ℓ ≤ 2 ^ c * N := by
+    have h2ℓ : 2 * ℓ ≤ D * 2 ^ c := by linarith
+    have hQ0 : (0 : ℝ) ≤ ((N / D : ℕ) : ℝ) := by positivity
+    have : ((N / D : ℕ) : ℝ) * (2 * ℓ) ≤ ((N / D : ℕ) : ℝ) * (D * 2 ^ c) :=
+      mul_le_mul_of_nonneg_left h2ℓ hQ0
+    nlinarith [pow_pos (two_pos : (0:ℝ) < 2) c]
+  have hT' := hT.trans (by linarith [hGs] : (N : ℝ) + 2 * ∑ k ∈ Finset.range N,
+      ∑ q ∈ Finset.range N, G (k + 1) q ≤ N + 2 * (N * X + N * ((N / D : ℕ) : ℝ)))
+  calc _ ≤ ((N : ℝ) + 2 * (N * X + N * ((N / D : ℕ) : ℝ))) * ℓ :=
+        mul_le_mul_of_nonneg_right hT' hℓpos.le
+    _ = N * ℓ + 2 * N * (X * ℓ) + N * (2 * ((N / D : ℕ) : ℝ) * ℓ) := by ring
+    _ ≤ N * (4 * N) + 2 * N * (2 ^ (c + 2) * N) + N * (2 ^ c * N) := by
+        rw [hXℓ]
+        gcongr
+        linarith
+    _ = _ := by rw [hc2]; ring
+
+theorem eventually_threshold4 (K ρ : ℝ) (hK : 0 < K) (hρ : 0 < ρ) :
+    ∃ L₀ : ℕ, ∀ L : ℕ, L₀ ≤ L →
+      K * (4 * (Nat.log 2 L : ℝ) + 4) ^ (1 / ρ) + 10 ^ 30 ≤ L := by
+  set c : ℝ := 1 / (2 * K * 9 ^ (1 / ρ)) with hc
+  have h9 : (0 : ℝ) < 9 ^ (1 / ρ) := by positivity
+  have hcpos : 0 < c := by positivity
+  have hO := (isLittleO_log_rpow_rpow_atTop (1 / ρ) one_pos).bound hcpos
+  have hlog := Real.tendsto_log_atTop.eventually_ge_atTop (4 : ℝ)
+  have hbig := eventually_ge_atTop (2 * 10 ^ 30 : ℝ)
+  obtain ⟨x₀, hx₀⟩ := eventually_atTop.1 (hO.and (hlog.and hbig))
+  refine ⟨⌈x₀⌉₊, fun L hL => ?_⟩
+  have hxL : x₀ ≤ L := (Nat.le_ceil x₀).trans (by exact_mod_cast hL)
+  obtain ⟨h1, h2, h3⟩ := hx₀ L hxL
+  have hLpos : (0 : ℝ) < L := by linarith
+  have hlog0 : 0 ≤ Real.log L := by linarith
+  rw [Real.norm_of_nonneg (by positivity), Real.rpow_one, Real.norm_of_nonneg hLpos.le] at h1
+  have hnl := natLog_le_two_log L
+  have hmono : (4 * (Nat.log 2 L : ℝ) + 4) ^ (1 / ρ) ≤ (9 * Real.log L) ^ (1 / ρ) :=
+    Real.rpow_le_rpow (by positivity) (by linarith) (by positivity)
+  rw [Real.mul_rpow (by norm_num) hlog0] at hmono
+  have : K * (9 ^ (1 / ρ) * Real.log L ^ (1 / ρ)) ≤ L / 2 := by
+    calc K * (9 ^ (1 / ρ) * Real.log L ^ (1 / ρ)) ≤ K * (9 ^ (1 / ρ) * (c * L)) := by gcongr
+      _ = L / 2 := by rw [hc]; field_simp
+  nlinarith
+
+open VisitDeviation in
+
+/-- **Chebyshev form of the orbit-average deviation**, with frequencies above `H` charged to a
+deterministic tail `τ`. -/
+
+theorem prob_mean_dev_cheb {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω) [IsProbabilityMeasure μ]
+    (u : ℕ → Ω → ℝ) (hu : ∀ k, Measurable (u k))
+    (f : C(AddCircle (1 : ℝ), ℂ)) (B : ℤ → ℝ) (hB0 : ∀ n, 0 ≤ B n)
+    (hB : ∀ n, n ≠ 0 → ‖fourierCoeff f n‖ ≤ B n) (hBs : Summable B)
+    (N : ℕ) (hN : 1 ≤ N) (H : ℕ) (M τ t : ℝ) (ht : 0 < t) (hM : 0 ≤ M)
+    (hmom : ∀ n : ℤ, n ≠ 0 → n.natAbs ≤ H →
+      ∫ ω, ‖(∑ k ∈ Finset.range N, ee (n * u k ω)) / (N : ℂ)‖ ^ 2 ∂μ ≤ M)
+    (hτ : ∑' n, (if n.natAbs ≤ H then 0 else B n) ≤ τ) :
+    μ.real {ω | t + τ < ‖(∑ k ∈ Finset.range N, f ((u k ω : ℝ) : AddCircle (1 : ℝ))) / N -
+        fourierCoeff f 0‖} ≤ (∑' n, B n) ^ 2 * M / t ^ 2 := by
+  classical
+  set A : ℤ → Ω → ℂ := fun n ω => (∑ k ∈ Finset.range N, ee (n * u k ω)) / (N : ℂ) with hAdef
+  have hNpos : (0 : ℝ) < N := by exact_mod_cast (by omega : 0 < N)
+  have hAm : ∀ n, Measurable (A n) := fun n =>
+    (Finset.measurable_sum _ fun k _ => measurable_ee.comp ((hu k).const_mul _)).div_const _
+  have hAb : ∀ n ω, ‖A n ω‖ ≤ 1 := by
+    intro n ω
+    simp only [A]
+    rw [norm_div, Complex.norm_natCast, div_le_one hNpos]
+    refine (norm_sum_le _ _).trans ?_
+    simp [norm_ee]
+  set F : Finset ℤ := (Finset.Icc (-(H : ℤ)) H).filter (· ≠ 0) with hF
+  have hmemF : ∀ n, n ∈ F ↔ n ≠ 0 ∧ n.natAbs ≤ H := by
+    intro n
+    simp only [hF, Finset.mem_filter, Finset.mem_Icc]
+    constructor
+    · rintro ⟨⟨h1, h2⟩, h3⟩; exact ⟨h3, by omega⟩
+    · rintro ⟨h3, h1⟩; exact ⟨⟨by omega, by omega⟩, h3⟩
+  set Y : Ω → ℝ := fun ω => ∑ n ∈ F, B n * ‖A n ω‖ with hY
+  set Bt : ℤ → ℝ := fun n => if n.natAbs ≤ H then 0 else B n with hBt
+  have hBts : Summable Bt := hBs.of_nonneg_of_le (fun n => by simp only [Bt]; split_ifs <;> simp [hB0])
+    (fun n => by simp only [Bt]; split_ifs <;> simp [hB0])
+  have hXY : ∀ ω, ∑' n, (if n = 0 then 0 else B n * ‖A n ω‖) ≤ Y ω + τ := by
+    intro ω
+    set gF : ℤ → ℝ := fun n => if n ∈ F then B n * ‖A n ω‖ else 0
+    have hgF : ∑' n, gF n = Y ω := by
+      rw [tsum_eq_sum (s := F) (fun n hn => by simp only [gF]; rw [if_neg hn])]
+      exact Finset.sum_congr rfl fun n hn => by simp only [gF]; rw [if_pos hn]
+    have hgFs : Summable gF := summable_of_ne_finset_zero (s := F)
+      (fun n hn => by simp only [gF]; rw [if_neg hn])
+    have hle : ∀ n, (if n = 0 then 0 else B n * ‖A n ω‖) ≤ gF n + Bt n := by
+      intro n
+      simp only [gF, Bt]
+      by_cases h0 : n = 0
+      · subst h0
+        have : (0:ℤ) ∉ F := fun h => ((hmemF 0).1 h).1 rfl
+        simp [this]
+      · by_cases hH : n.natAbs ≤ H
+        · rw [if_neg h0, if_pos ((hmemF n).2 ⟨h0, hH⟩), if_pos hH, add_zero]
+        · rw [if_neg h0, if_neg (fun h => hH ((hmemF n).1 h).2), if_neg hH, zero_add]
+          exact mul_le_of_le_one_right (hB0 n) (hAb n ω)
+    have hs1 : Summable fun n => (if n = 0 then (0:ℝ) else B n * ‖A n ω‖) :=
+      hBs.of_nonneg_of_le (fun n => by split_ifs; exact le_rfl; exact mul_nonneg (hB0 n) (norm_nonneg _))
+        (fun n => by split_ifs; exact hB0 n; exact mul_le_of_le_one_right (hB0 n) (hAb n ω))
+    calc _ ≤ ∑' n, (gF n + Bt n) := hs1.tsum_le_tsum hle (hgFs.add hBts)
+      _ = Y ω + ∑' n, Bt n := by rw [hgFs.tsum_add hBts, hgF]
+      _ ≤ Y ω + τ := by linarith
+  have hY0 : ∀ ω, 0 ≤ Y ω := fun ω => Finset.sum_nonneg fun n _ => mul_nonneg (hB0 n) (norm_nonneg _)
+  have hYm : Measurable Y := Finset.measurable_sum _ fun n _ => (hAm n).norm.const_mul _
+  set SB := ∑ n ∈ F, B n with hSB
+  have hSB0 : 0 ≤ SB := Finset.sum_nonneg fun n _ => hB0 n
+  have hSBle : SB ≤ ∑' n, B n := hBs.sum_le_tsum _ (fun n _ => hB0 n)
+  have hY2 : ∀ ω, Y ω ^ 2 ≤ SB * ∑ n ∈ F, B n * ‖A n ω‖ ^ 2 := by
+    intro ω
+    refine Finset.sum_sq_le_sum_mul_sum_of_sq_le_mul F (fun n _ => hB0 n)
+      (fun n _ => mul_nonneg (hB0 n) (by positivity)) (fun n _ => le_of_eq (by ring))
+  have hAi : ∀ n, Integrable (fun ω => ‖A n ω‖ ^ 2) μ := fun n =>
+    Integrable.of_bound ((hAm n).norm.pow_const 2).aestronglyMeasurable 1
+      (Eventually.of_forall fun ω => by
+        rw [Real.norm_of_nonneg (by positivity)]
+        exact pow_le_one₀ (norm_nonneg _) (hAb n ω))
+  have hZi : Integrable (fun ω => SB * ∑ n ∈ F, B n * ‖A n ω‖ ^ 2) μ :=
+    (integrable_finset_sum _ fun n _ => (hAi n).const_mul _).const_mul _
+  have hEZ : ∫ ω, SB * ∑ n ∈ F, B n * ‖A n ω‖ ^ 2 ∂μ ≤ (∑' n, B n) ^ 2 * M := by
+    rw [integral_const_mul, integral_finset_sum _ fun n _ => (hAi n).const_mul _]
+    have h1 : ∑ n ∈ F, ∫ ω, B n * ‖A n ω‖ ^ 2 ∂μ ≤ SB * M := by
+      rw [hSB, Finset.sum_mul]
+      refine Finset.sum_le_sum fun n hn => ?_
+      rw [integral_const_mul]
+      obtain ⟨h1, h2⟩ := (hmemF n).1 hn
+      exact mul_le_mul_of_nonneg_left (hmom n h1 h2) (hB0 n)
+    calc SB * ∑ n ∈ F, ∫ ω, B n * ‖A n ω‖ ^ 2 ∂μ ≤ SB * (SB * M) :=
+          mul_le_mul_of_nonneg_left h1 hSB0
+      _ = SB ^ 2 * M := by ring
+      _ ≤ (∑' n, B n) ^ 2 * M := by
+          gcongr
+  have hZ0 : ∀ ω, 0 ≤ SB * ∑ n ∈ F, B n * ‖A n ω‖ ^ 2 := fun ω =>
+    mul_nonneg hSB0 (Finset.sum_nonneg fun n _ => mul_nonneg (hB0 n) (by positivity))
+  have hmarkov := mul_meas_ge_le_integral_of_nonneg (μ := μ)
+    (Eventually.of_forall hZ0) hZi (t ^ 2)
+  have hsub : {ω | t + τ < ‖(∑ k ∈ Finset.range N, f ((u k ω : ℝ) : AddCircle (1 : ℝ))) / N -
+        fourierCoeff f 0‖} ⊆ {ω | t ^ 2 ≤ SB * ∑ n ∈ F, B n * ‖A n ω‖ ^ 2} := by
+    intro ω hω
+    simp only [Set.mem_setOf_eq] at hω ⊢
+    have h1 := mean_sub_coeff_le f B hB0 hB hBs (fun k => u k ω) N hN
+    have h2 := hXY ω
+    have h3 : t < Y ω := by
+      have : t + τ < Y ω + τ := lt_of_lt_of_le hω (h1.trans h2)
+      linarith
+    have h4 : t ^ 2 ≤ Y ω ^ 2 := pow_le_pow_left₀ ht.le h3.le 2
+    exact h4.trans (hY2 ω)
+  calc _ ≤ μ.real {ω | t ^ 2 ≤ SB * ∑ n ∈ F, B n * ‖A n ω‖ ^ 2} :=
+        measureReal_mono hsub (measure_ne_top _ _)
+    _ ≤ (∫ ω, SB * ∑ n ∈ F, B n * ‖A n ω‖ ^ 2 ∂μ) / t ^ 2 := by
+        rw [le_div_iff₀ (by positivity), mul_comm]; exact hmarkov
+    _ ≤ _ := by gcongr
+
+open VisitDeviation in
+
+/-- Tail of the plateau majorant beyond `|n| > H`. -/
+
+theorem tsum_plB_tail (ρ : ℝ) (hρ : 0 < ρ) (H : ℕ) :
+    ∑' n : ℤ, (if n.natAbs ≤ H then 0 else plB ρ n) ≤
+      2 / (ρ * Real.pi ^ 2) * (4 / ((H : ℝ) + 1)) := by
+  set c : ℝ := 2 / (ρ * Real.pi ^ 2) with hc
+  have hc0 : 0 ≤ c := by positivity
+  set Bt : ℤ → ℝ := fun n => if n.natAbs ≤ H then 0 else plB ρ n with hBt
+  have hplB : ∀ n : ℤ, plB ρ n = c * ((n : ℝ) ^ 2)⁻¹ := by
+    intro n; simp only [plB, hc]; field_simp
+  set g1 : ℕ → ℝ := fun m => if m ≤ H then 0 else c * ((m : ℝ) ^ 2)⁻¹ with hg1
+  have hg10 : ∀ m, 0 ≤ g1 m := fun m => by simp only [g1]; split_ifs <;> positivity
+  have hg1s : ∀ n, ∑ m ∈ Finset.range n, g1 m ≤ c * (2 / ((H : ℝ) + 1)) := by
+    intro n
+    have : ∑ m ∈ Finset.range n, g1 m = c * ∑ m ∈ Finset.Ioo H n, ((m : ℝ) ^ 2)⁻¹ := by
+      rw [Finset.mul_sum]
+      have e : ∀ m, g1 m = if H < m then c * ((m : ℝ) ^ 2)⁻¹ else 0 := fun m => by
+        simp only [g1]; split_ifs <;> first | rfl | omega
+      simp_rw [e]
+      rw [← Finset.sum_filter]
+      congr 1
+      ext m; simp only [Finset.mem_filter, Finset.mem_range, Finset.mem_Ioo]; omega
+    rw [this]
+    have := sum_Ioo_inv_sq_le (α := ℝ) H n
+    exact mul_le_mul_of_nonneg_left this hc0
+  have h1 : ∀ m : ℕ, Bt (m : ℤ) = g1 m := by
+    intro m; simp only [Bt, g1, Int.natAbs_natCast, hplB, Int.cast_natCast]
+  have h2 : ∀ m : ℕ, Bt (-((m : ℤ) + 1)) ≤ g1 (m + 1) := by
+    intro m
+    simp only [Bt, g1]
+    have : (-((m : ℤ) + 1)).natAbs = m + 1 := by omega
+    rw [this, hplB]
+    split_ifs <;> push_cast <;> first | exact le_rfl | omega | (apply le_of_eq; congr 2; ring)
+  have hg2s : ∀ n, ∑ m ∈ Finset.range n, Bt (-((m : ℤ) + 1)) ≤ c * (2 / ((H : ℝ) + 1)) := by
+    intro n
+    calc _ ≤ ∑ m ∈ Finset.range n, g1 (m + 1) := Finset.sum_le_sum fun m _ => h2 m
+      _ ≤ ∑ m ∈ Finset.range (n + 1), g1 m := by
+          rw [Finset.sum_range_succ']; linarith [hg10 0]
+      _ ≤ _ := hg1s _
+  have hBt0 : ∀ n, 0 ≤ Bt n := fun n => by
+    simp only [Bt]; split_ifs; exact le_rfl; rw [hplB]; positivity
+  have hs1 : Summable fun m : ℕ => Bt (m : ℤ) :=
+    summable_of_sum_range_le (fun m => hBt0 _) (fun n => by simp_rw [h1]; exact hg1s n)
+  have hs2 : Summable fun m : ℕ => Bt (-((m : ℤ) + 1)) :=
+    summable_of_sum_range_le (fun m => hBt0 _) hg2s
+  have hHS := HasSum.of_nat_of_neg_add_one hs1.hasSum hs2.hasSum
+  rw [hHS.tsum_eq]
+  have e1 : ∑' m : ℕ, Bt (m : ℤ) ≤ c * (2 / ((H : ℝ) + 1)) :=
+    Real.tsum_le_of_sum_range_le (fun m => hBt0 _) (fun n => by simp_rw [h1]; exact hg1s n)
+  have e2 := Real.tsum_le_of_sum_range_le (fun m => hBt0 _) hg2s
+  have : c * (4 / ((H : ℝ) + 1)) = c * (2 / ((H : ℝ) + 1)) + c * (2 / ((H : ℝ) + 1)) := by ring
+  linarith
+
+open VisitDeviation in
+
+/-- **Visit-count deviation, Chebyshev form**, base `b`, short arcs. -/
+
+theorem visit_dev_cheb {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω) [IsProbabilityMeasure μ]
+    (b : ℕ) (G : Ω → ℝ) (hG : Measurable G)
+    (a c ρ t : ℝ) (ha : 0 ≤ a) (hac : a ≤ c) (hc : c ≤ 1) (hlen : c - a ≤ 1 / 2)
+    (hρ : 0 < ρ) (hρ4 : ρ ≤ 1 / 4) (ht : 0 < t) (N : ℕ) (hN : 1 ≤ N) (H : ℕ) (M τ : ℝ)
+    (hM : 0 ≤ M)
+    (hmom : ∀ n : ℤ, n ≠ 0 → n.natAbs ≤ H →
+      ∫ ω, ‖(∑ k ∈ Finset.range N, ee (n * ((b : ℝ) ^ k * G ω))) / (N : ℂ)‖ ^ 2 ∂μ ≤ M)
+    (hτ : ∑' n, (if n.natAbs ≤ H then 0 else plB ρ n) ≤ τ) :
+    μ.real {ω | 2 * ρ + (t + τ) < |(visitCount (orbit b (G ω)) a c N : ℝ) / N - (c - a)|} ≤
+      2 * ((2 / (3 * ρ)) ^ 2 * M / t ^ 2) := by
+  set fU := HatFourier.plateau ((c - a) / 2 + ρ) ρ ((a + c) / 2)
+  set fL := HatFourier.plateau ((c - a) / 2) ρ ((a + c) / 2)
+  have hBU : ∀ n, n ≠ 0 → ‖fourierCoeff fU n‖ ≤ plB ρ n := fun n hn =>
+    HatFourier.norm_plateau_coeff_le _ ρ _ hρ (by linarith) n hn
+  have hBL : ∀ n, n ≠ 0 → ‖fourierCoeff fL n‖ ≤ plB ρ n := fun n hn =>
+    HatFourier.norm_plateau_coeff_le _ ρ _ hρ (by linarith) n hn
+  have hB0 : ∀ n, 0 ≤ plB ρ n := fun n => by unfold plB; positivity
+  have hdU := prob_mean_dev_cheb μ (fun k ω => (b : ℝ) ^ k * G ω) (fun k => hG.const_mul _) fU (plB ρ) hB0 hBU (hasSum_plB ρ hρ).summable N hN H M τ t ht hM hmom hτ
+  have hdL := prob_mean_dev_cheb μ (fun k ω => (b : ℝ) ^ k * G ω) (fun k => hG.const_mul _) fL (plB ρ) hB0 hBL (hasSum_plB ρ hρ).summable N hN H M τ t ht hM hmom hτ
+  rw [(hasSum_plB ρ hρ).tsum_eq] at hdU hdL
+  have hNR : (0 : ℝ) < N := by exact_mod_cast (by omega : 0 < N)
+  have hIU := integral_trapUp_le a c ρ ha hac hc hρ
+  have hIL := le_integral_trapLo a c ρ ha hac hc hρ
+  have hcU : fourierCoeff fU 0 = ((∫ x in (0 : ℝ)..1, trapUp a c ρ ((x : ℝ) : AddCircle (1 : ℝ)) : ℝ) : ℂ) :=
+    coeff_zero_real _ _ (plateau_coe_trapUp a c ρ)
+  have hcL : fourierCoeff fL 0 = ((∫ x in (0 : ℝ)..1, trapLo a c ρ ((x : ℝ) : AddCircle (1 : ℝ)) : ℝ) : ℂ) :=
+    coeff_zero_real _ _ (plateau_coe_trapLo a c ρ)
+  have hsub : {ω | 2 * ρ + (t + τ) < |(visitCount (orbit b (G ω)) a c N : ℝ) / N - (c - a)|} ⊆
+      {ω | t + τ < ‖(∑ k ∈ Finset.range N, fU (((b : ℝ) ^ k * G ω : ℝ) : AddCircle (1 : ℝ))) / N -
+        fourierCoeff fU 0‖} ∪
+      {ω | t + τ < ‖(∑ k ∈ Finset.range N, fL (((b : ℝ) ^ k * G ω : ℝ) : AddCircle (1 : ℝ))) / N -
+        fourierCoeff fL 0‖} := by
+    intro ω hω
+    simp only [Set.mem_setOf_eq] at hω
+    set u := orbit b (G ω)
+    have hu : ∀ k, u k ∈ Set.Ico (0 : ℝ) 1 := fun k => ⟨Int.fract_nonneg _, Int.fract_lt_one _⟩
+    have hcoe : ∀ k, ((u k : ℝ) : AddCircle (1 : ℝ)) = (((b : ℝ) ^ k * G ω : ℝ) : AddCircle (1 : ℝ)) := by
+      intro k
+      simp only [u, orbit, AddCircle.coe_fract]
+      push_cast; ring_nf
+    have hcard : (visitCount u a c N : ℝ)
+        = ∑ k ∈ Finset.range N, (if (a ≤ u k ∧ u k < c) then (1:ℝ) else 0) := by
+      rw [visitCount, Finset.card_filter]
+      push_cast
+      refine Finset.sum_congr rfl fun k _ => ?_
+      by_cases h : a ≤ u k ∧ u k < c
+      · simp [Set.mem_Ico, h.1, h.2]
+      · simp [Set.mem_Ico, h]
+    have hUp : (visitCount u a c N : ℝ)
+        ≤ ∑ k ∈ Finset.range N, trapUp a c ρ ((u k : ℝ) : AddCircle (1 : ℝ)) := by
+      rw [hcard]
+      refine Finset.sum_le_sum fun k _ => ?_
+      by_cases h : a ≤ u k ∧ u k < c
+      · rw [if_pos h]; exact trapUp_ge_indicator a c ρ (u k) hρ h
+      · rw [if_neg h]; exact trapUp_nonneg a c ρ hρ _
+    have hLo : (∑ k ∈ Finset.range N, trapLo a c ρ ((u k : ℝ) : AddCircle (1 : ℝ)))
+        ≤ (visitCount u a c N : ℝ) := by
+      rw [hcard]
+      refine Finset.sum_le_sum fun k _ => ?_
+      by_cases h : a ≤ u k ∧ u k < c
+      · rw [if_pos h]; exact trapLo_le_one a c ρ _
+      · rw [if_neg h]
+        have hk := hu k
+        rw [trapLo_eq_zero_outside a c ρ (u k) ha hac hc hk.1 hk.2 h hρ]
+    set SU := ∑ k ∈ Finset.range N, trapUp a c ρ ((u k : ℝ) : AddCircle (1 : ℝ))
+    set SL := ∑ k ∈ Finset.range N, trapLo a c ρ ((u k : ℝ) : AddCircle (1 : ℝ))
+    set IU := ∫ x in (0 : ℝ)..1, trapUp a c ρ ((x : ℝ) : AddCircle (1 : ℝ))
+    set IL := ∫ x in (0 : ℝ)..1, trapLo a c ρ ((x : ℝ) : AddCircle (1 : ℝ))
+    have heU : (∑ k ∈ Finset.range N, fU (((b : ℝ) ^ k * G ω : ℝ) : AddCircle (1 : ℝ))) / N -
+        fourierCoeff fU 0 = ((SU / N - IU : ℝ) : ℂ) := by
+      rw [hcU]; simp only [SU, ← hcoe, plateau_coe_trapUp, fU]; push_cast; rfl
+    have heL : (∑ k ∈ Finset.range N, fL (((b : ℝ) ^ k * G ω : ℝ) : AddCircle (1 : ℝ))) / N -
+        fourierCoeff fL 0 = ((SL / N - IL : ℝ) : ℂ) := by
+      rw [hcL]; simp only [SL, ← hcoe, plateau_coe_trapLo, fL]; push_cast; rfl
+    simp only [Set.mem_union, Set.mem_setOf_eq, heU, heL, Complex.norm_real, Real.norm_eq_abs]
+    have hdU' : (visitCount u a c N : ℝ) / N ≤ SU / N := div_le_div_of_nonneg_right hUp hNR.le
+    have hdL' : SL / N ≤ (visitCount u a c N : ℝ) / N := div_le_div_of_nonneg_right hLo hNR.le
+    rcases lt_abs.1 hω with h | h
+    · left; rw [lt_abs]; left; linarith
+    · right; rw [lt_abs]; right; linarith
+  refine (measureReal_mono hsub (measure_ne_top _ _)).trans ?_
+  refine (measureReal_union_le _ _).trans ?_
+  linarith
+
+theorem visitCount_three (u : ℕ → ℝ) (hu : ∀ k, u k ∈ Set.Ico (0 : ℝ) 1) (a c : ℝ) (ha : 0 ≤ a)
+    (hac : a ≤ c) (hc : c ≤ 1) (N : ℕ) :
+    (visitCount u a c N : ℝ) = N - visitCount u 0 a N - visitCount u c 1 N := by
+  have e : ∀ x y : ℝ, (visitCount u x y N : ℝ) =
+      ∑ k ∈ Finset.range N, (if u k ∈ Set.Ico x y then (1 : ℝ) else 0) := by
+    intro x y
+    rw [visitCount, Finset.card_filter]; push_cast; rfl
+  rw [e, e, e]
+  have : ∀ k ∈ Finset.range N, (if u k ∈ Set.Ico a c then (1 : ℝ) else 0) =
+      1 - (if u k ∈ Set.Ico 0 a then (1 : ℝ) else 0) - (if u k ∈ Set.Ico c 1 then (1 : ℝ) else 0) := by
+    intro k _
+    obtain ⟨h0, h1⟩ := hu k
+    simp only [Set.mem_Ico]
+    by_cases h2 : u k < a
+    · rw [if_neg (by intro h; linarith [h.1]), if_pos ⟨h0, h2⟩, if_neg (by intro h; linarith [h.1])]
+      ring
+    · by_cases h3 : u k < c
+      · rw [if_pos ⟨by linarith, h3⟩, if_neg (by intro h; exact h2 h.2), if_neg (by intro h; linarith [h.1])]
+        ring
+      · rw [if_neg (by intro h; exact h3 h.2), if_neg (by intro h; exact h2 h.2), if_pos ⟨by linarith, h1⟩]
+        ring
+  rw [Finset.sum_congr rfl this, Finset.sum_sub_distrib, Finset.sum_sub_distrib]
+  simp
+
+theorem abs_dev_le_one (u : ℕ → ℝ) (a c : ℝ) (ha : 0 ≤ a) (hac : a ≤ c) (hc : c ≤ 1) (N : ℕ) :
+    |(visitCount u a c N : ℝ) / N - (c - a)| ≤ 1 := by
+  rcases Nat.eq_zero_or_pos N with rfl | hN
+  · simp; rw [abs_le]; constructor <;> linarith
+  have hNR : (0 : ℝ) < N := by exact_mod_cast hN
+  have h1 : (visitCount u a c N : ℝ) ≤ N := by
+    have : visitCount u a c N ≤ N := by
+      unfold visitCount
+      exact (Finset.card_filter_le _ _).trans (by simp)
+    exact_mod_cast this
+  have h2 : (visitCount u a c N : ℝ) / N ≤ 1 := (div_le_one hNR).2 h1
+  have h3 : 0 ≤ (visitCount u a c N : ℝ) / N := by positivity
+  rw [abs_le]; constructor <;> linarith
+
+open VisitDeviation in
+
+/-- Short-arc deviation bound for the sparse translate, any `η' ≥ 4/s`. -/
+
+theorem prob_visit_short (hL5 : Literature.BLDLemma5) {S : Set ℕ} {ρ : ℝ} (hS : Sparse S ρ)
+    (α : ℝ) (C s₀ : ℕ)
+    (hC : ∀ s : ℕ, s₀ ≤ s → ∀ r : ℕ, 3 ≤ r → r ≤ s → Odd r → ∀ h : ℤ, h ≠ 0 →
+      |h| ≤ (s : ℤ) ^ 2 → ∀ N : ℕ, 2 ^ s ≤ N →
+        (∑ p ∈ Finset.range N, ∑ q ∈ Finset.range N,
+            rieszTail S 0 ((h : ℝ) * ((r : ℝ) ^ p - (r : ℝ) ^ q))) / (N : ℝ) ^ 2 ≤
+          C * (r : ℝ) ^ 4 / (s : ℝ) ^ (1.005 : ℝ))
+    (s : ℕ) (hs : s₀ ≤ s) (hs1 : 1 ≤ s) (r : ℕ) (hr3 : 3 ≤ r) (hrs : r ≤ s) (hr : Odd r)
+    (a c : ℝ) (ha : 0 ≤ a) (hac : a ≤ c) (hc : c ≤ 1) (hlen : c - a ≤ 1 / 2)
+    (η : ℝ) (hη : 4 / (s : ℝ) ≤ η) (N : ℕ) (hN : 2 ^ s ≤ N) :
+    coinMeasure.real {ω | η < |(visitCount (orbit r (α + bldPoint S ω)) a c N : ℝ) / N - (c - a)|}
+      ≤ 3641 * (C * (r : ℝ) ^ 4 / (s : ℝ) ^ (1.005 : ℝ)) / η ^ 4 := by
+  have hsR : (1 : ℝ) ≤ s := by exact_mod_cast hs1
+  have hη0 : 0 < η := lt_of_lt_of_le (by positivity) hη
+  set M := C * (r : ℝ) ^ 4 / (s : ℝ) ^ (1.005 : ℝ) with hMdef
+  have hM : 0 ≤ M := by positivity
+  by_cases hη1 : 1 ≤ η
+  · have : {ω | η < |(visitCount (orbit r (α + bldPoint S ω)) a c N : ℝ) / N - (c - a)|} = ∅ := by
+      ext ω; simp only [Set.mem_setOf_eq, Set.mem_empty_iff_false, iff_false, not_lt]
+      exact (abs_dev_le_one _ a c ha hac hc N).trans hη1
+    rw [this]; simp; positivity
+  push Not at hη1
+  have hN1 : 1 ≤ N := le_trans (Nat.one_le_two_pow) hN
+  set ρ' := η / 8
+  set τ := 2 / (ρ' * Real.pi ^ 2) * (4 / (((s ^ 2 : ℕ) : ℝ) + 1))
+  have hτ := tsum_plB_tail ρ' (by positivity) (s ^ 2)
+  have hmom : ∀ n : ℤ, n ≠ 0 → n.natAbs ≤ s ^ 2 →
+      ∫ ω, ‖(∑ k ∈ Finset.range N, ee (n * ((r : ℝ) ^ k * (α + bldPoint S ω)))) / (N : ℂ)‖ ^ 2
+        ∂coinMeasure ≤ M := by
+    intro n hn hnH
+    have h1 := secondMoment_translate_le S hS.1 α n r N
+    have h2 := hC s hs r hr3 hrs hr n hn (by
+      have : (n.natAbs : ℤ) ≤ ((s ^ 2 : ℕ) : ℤ) := by exact_mod_cast hnH
+      rw [Int.natCast_natAbs] at this; push_cast at this; exact this) N hN
+    refine le_trans (le_of_eq ?_) (h1.trans h2)
+    congr 1; ext ω; congr 3
+    refine Finset.sum_congr rfl fun k _ => by ring_nf
+  have hdev := visit_dev_cheb coinMeasure r (fun ω => α + bldPoint S ω)
+    ((measurable_bldPoint S).const_add α) a c ρ' ρ' ha hac hc hlen (by positivity)
+    (by simp only [ρ']; linarith) (by positivity) N hN1 (s ^ 2) M τ hM hmom hτ
+  have hτle : τ ≤ 5 * η / 8 := by
+    have hpi := Real.pi_gt_three
+    have hs2 : (16 : ℝ) ≤ η ^ 2 * (s : ℝ) ^ 2 := by
+      have : (4 : ℝ) ≤ η * s := by rwa [div_le_iff₀ (by positivity)] at hη
+      nlinarith
+    simp only [τ, ρ']
+    push_cast
+    rw [div_mul_div_comm, div_le_div_iff₀ (by positivity) (by positivity)]
+    nlinarith [sq_nonneg (η * s), mul_pos hη0 hη0]
+  have hsub : {ω | η < |(visitCount (orbit r (α + bldPoint S ω)) a c N : ℝ) / N - (c - a)|} ⊆
+      {ω | 2 * ρ' + (ρ' + τ) < |(visitCount (orbit r (α + bldPoint S ω)) a c N : ℝ) / N - (c - a)|} := by
+    intro ω hω
+    simp only [Set.mem_setOf_eq] at hω ⊢
+    have : 2 * ρ' + (ρ' + τ) ≤ η := by simp only [ρ'] at *; linarith
+    linarith
+  refine (measureReal_mono hsub (measure_ne_top _ _)).trans (hdev.trans (le_of_eq_of_le rfl ?_))
+  simp only [ρ']
+  have e : 2 * ((2 / (3 * (η / 8))) ^ 2 * M / (η / 8) ^ 2) = 32768 / 9 * M / η ^ 4 := by
+    field_simp; ring
+  rw [e]
+  gcongr
+  norm_num
+
 /-- **Effective, frequency-uniform form of `bld_doubleSum_le`** on octaves: one constant `C` and one
 start `s₀` (both depending only on `S`, via BLD's `K` and `ρ`) serve every odd base `r ≤ s` and
 every frequency `0 < |h| ≤ s²` at every `N ≥ 2^s`.
@@ -1833,7 +2333,97 @@ theorem bld_doubleSum_eff (hL5 : Literature.BLDLemma5) {S : Set ℕ} {ρ : ℝ} 
         (∑ p ∈ Finset.range N, ∑ q ∈ Finset.range N,
             rieszTail S 0 ((h : ℝ) * ((r : ℝ) ^ p - (r : ℝ) ^ q))) / (N : ℝ) ^ 2 ≤
           C * (r : ℝ) ^ 4 / (s : ℝ) ^ (1.005 : ℝ) := by
-  sorry
+  obtain ⟨K, hK, hL5'⟩ := hL5 S ρ hS
+  have hρ : 0 < ρ := hS.2.2.1
+  obtain ⟨L₀, hL₀⟩ := eventually_threshold4 K ρ hK hρ
+  refine ⟨60, L₀ + 3, fun s hs r hr3 hrs hr h hh hhs N hN => ?_⟩
+  have hs3 : 3 ≤ s := by omega
+  have h2s : 8 ≤ 2 ^ s := by
+    calc 8 = 2 ^ 3 := by norm_num
+      _ ≤ 2 ^ s := Nat.pow_le_pow_right (by norm_num) hs3
+  have hN3 : 3 ≤ N := by omega
+  set L := Nat.log 2 N with hLdef
+  have hsL : s ≤ L := Nat.le_log_of_pow_le one_lt_two hN
+  set lam := Nat.log 2 L with hlam
+  set c := padicValNat 2 (r ^ 2 - 1) with hc
+  have hNpos : (0 : ℝ) < N := by exact_mod_cast (show 0 < N by omega)
+  -- valuation of h
+  have hhn : h.natAbs ≠ 0 := Int.natAbs_ne_zero.2 hh
+  have hv : padicValNat 2 h.natAbs ≤ 2 * lam + 1 := by
+    have h1 : padicValNat 2 h.natAbs ≤ Nat.log 2 h.natAbs :=
+      Nat.le_log_of_pow_le one_lt_two (Nat.le_of_dvd (Nat.pos_of_ne_zero hhn) pow_padicValNat_dvd)
+    have h2 : h.natAbs ≤ L ^ 2 := by
+      have : (h.natAbs : ℤ) ≤ (L : ℤ) ^ 2 := by
+        rw [Int.natCast_natAbs]
+        calc |h| ≤ (s : ℤ) ^ 2 := hhs
+          _ ≤ (L : ℤ) ^ 2 := by
+            have : (s : ℤ) ≤ L := by exact_mod_cast hsL
+            exact pow_le_pow_left₀ (by positivity) this 2
+      exact_mod_cast this
+    have hL0 : L ≠ 0 := by omega
+    have h3 : L ^ 2 < 2 ^ (2 * lam + 2) := by
+      have := Nat.lt_pow_succ_log_self one_lt_two L
+      calc L ^ 2 < (2 ^ (lam + 1)) ^ 2 := Nat.pow_lt_pow_left this (by norm_num)
+        _ = 2 ^ (2 * lam + 2) := by rw [← pow_mul]; ring_nf
+    have h4 : Nat.log 2 h.natAbs < 2 * lam + 2 :=
+      Nat.log_lt_of_lt_pow hhn (lt_of_le_of_lt h2 h3)
+    omega
+  have hthr : ∀ a : ℕ, a ≤ padicValNat 2 h.natAbs + (2 * Nat.log 2 (Nat.log 2 N) + 2) →
+      (2 : ℝ) ^ (K * ((a : ℝ) + 1) ^ (1 / ρ) + 10 ^ 30) ≤ N := by
+    intro a ha
+    have ha' : a + 1 ≤ 4 * lam + 4 := by rw [← hLdef, ← hlam] at ha; omega
+    have haR : (a : ℝ) + 1 ≤ 4 * (lam : ℝ) + 4 := by exact_mod_cast ha'
+    have h1 : K * ((a : ℝ) + 1) ^ (1 / ρ) + 10 ^ 30 ≤ L := by
+      have := hL₀ L (by omega)
+      have hm : ((a : ℝ) + 1) ^ (1 / ρ) ≤ (4 * (lam : ℝ) + 4) ^ (1 / ρ) :=
+        Real.rpow_le_rpow (by positivity) haR (by positivity)
+      nlinarith
+    calc (2 : ℝ) ^ (K * ((a : ℝ) + 1) ^ (1 / ρ) + 10 ^ 30) ≤ (2 : ℝ) ^ (L : ℝ) :=
+          Real.rpow_le_rpow_of_exponent_le (by norm_num) h1
+      _ = ((2 ^ L : ℕ) : ℝ) := by rw [Real.rpow_natCast]; push_cast; rfl
+      _ ≤ N := by exact_mod_cast Nat.pow_log_le_self 2 (by omega)
+  have hcore := bld_doubleSum_core hL5' r hr hr3 h hh N hN3 hthr
+  refine hcore.trans ?_
+  -- constants
+  have hr2 : 1 ≤ r ^ 2 - 1 := by
+    have : 9 ≤ r ^ 2 := by nlinarith
+    omega
+  have h2c : (2 : ℝ) ^ c ≤ (r : ℝ) ^ 4 := by
+    have h1 : 2 ^ c ≤ r ^ 2 - 1 := Nat.le_of_dvd (by omega) pow_padicValNat_dvd
+    have h2 : r ^ 2 - 1 ≤ r ^ 4 := by
+      have : r ^ 2 ≤ r ^ 4 := Nat.pow_le_pow_right (by omega) (by norm_num)
+      omega
+    exact_mod_cast h1.trans h2
+  have hr4 : (81 : ℝ) ≤ (r : ℝ) ^ 4 := by
+    have : (3 : ℝ) ≤ r := by exact_mod_cast hr3
+    nlinarith [pow_le_pow_left₀ (by norm_num : (0:ℝ) ≤ 3) this 4]
+  have hnum : (4 + 2 ^ (c + 3) + 2 ^ c : ℝ) ≤ 15 * (r : ℝ) ^ 4 := by
+    have : (2 : ℝ) ^ (c + 3) = 8 * 2 ^ c := by ring
+    nlinarith
+  have hsR : (3 : ℝ) ≤ s := by exact_mod_cast hs3
+  have hlogN : (s : ℝ) / 2 ≤ Real.log N := by
+    have hp : (2 : ℝ) ^ L ≤ N := by exact_mod_cast Nat.pow_log_le_self 2 (by omega : N ≠ 0)
+    have := Real.log_le_log (by positivity) hp
+    rw [Real.log_pow] at this
+    have hl2 := Real.log_two_gt_d9
+    have : (s : ℝ) ≤ L := by exact_mod_cast hsL
+    nlinarith
+  have hpow : (s : ℝ) ^ (1.005 : ℝ) / 4 ≤ Real.log N ^ (1.005 : ℝ) := by
+    have h1 : ((s : ℝ) / 2) ^ (1.005 : ℝ) ≤ Real.log N ^ (1.005 : ℝ) :=
+      Real.rpow_le_rpow (by positivity) hlogN (by norm_num)
+    rw [Real.div_rpow (by positivity) (by norm_num)] at h1
+    have h2 : (2 : ℝ) ^ (1.005 : ℝ) ≤ 4 := by
+      calc (2 : ℝ) ^ (1.005 : ℝ) ≤ (2 : ℝ) ^ (2 : ℝ) :=
+            Real.rpow_le_rpow_of_exponent_le (by norm_num) (by norm_num)
+        _ = 4 := by norm_num
+    have hsp : 0 < (s : ℝ) ^ (1.005 : ℝ) := by positivity
+    calc (s : ℝ) ^ (1.005 : ℝ) / 4 ≤ (s : ℝ) ^ (1.005 : ℝ) / (2 : ℝ) ^ (1.005 : ℝ) :=
+          div_le_div_of_nonneg_left hsp.le (by positivity) h2
+      _ ≤ _ := h1
+  have hsp : 0 < (s : ℝ) ^ (1.005 : ℝ) := by positivity
+  rw [div_le_div_iff₀ (by linarith) hsp]
+  push_cast
+  nlinarith [pow_pos (two_pos : (0:ℝ) < 2) c]
 
 /-- **Visit deviation of the translate, Chebyshev form.**  For the sparse measure, the probability
 that the base-`r` visit frequency of `[a, c)` at time `N ∈ [2^s, ∞)` deviates by more than `η` is
@@ -1850,7 +2440,59 @@ theorem prob_visit_dev_odd (hL5 : Literature.BLDLemma5) {S : Set ℕ} {ρ : ℝ}
       c ≤ 1 → ∀ η : ℝ, 8 / (s : ℝ) ≤ η → ∀ N : ℕ, 2 ^ s ≤ N →
         coinMeasure.real {ω | η < |(visitCount (orbit r (α + bldPoint S ω)) a c N : ℝ) / N - (c - a)|}
           ≤ K * (r : ℝ) ^ 4 / (η ^ 4 * (s : ℝ) ^ (1.005 : ℝ)) := by
-  sorry
+  obtain ⟨C, s₀, hC⟩ := bld_doubleSum_eff hL5 hS
+  refine ⟨120000 * C, s₀ + 1, fun s hs r hr3 hrs hr a c ha hac hc η hη N hN => ?_⟩
+  have hs1 : 1 ≤ s := by omega
+  have hsR : (1 : ℝ) ≤ s := by exact_mod_cast hs1
+  have hη0 : 0 < η := lt_of_lt_of_le (by positivity) hη
+  set M := C * (r : ℝ) ^ 4 / (s : ℝ) ^ (1.005 : ℝ) with hMdef
+  have hM : 0 ≤ M := by positivity
+  have hgoal : (120000 * C : ℕ) * (r : ℝ) ^ 4 / (η ^ 4 * (s : ℝ) ^ (1.005 : ℝ)) =
+      120000 * M / η ^ 4 := by
+    simp only [hMdef]; push_cast; field_simp
+  rw [hgoal]
+  have h4 : 4 / (s : ℝ) ≤ η / 2 := by
+    have : 4 / (s : ℝ) = 8 / (s : ℝ) / 2 := by ring
+    linarith
+  by_cases hlen : c - a ≤ 1 / 2
+  · have := prob_visit_short hL5 hS α C s₀ hC s (by omega) hs1 r hr3 hrs hr a c ha hac hc hlen η
+      (by linarith [show 4 / (s : ℝ) ≤ 8 / (s : ℝ) from by gcongr; norm_num]) N hN
+    refine this.trans ?_
+    gcongr; norm_num
+  · push Not at hlen
+    have hA := prob_visit_short hL5 hS α C s₀ hC s (by omega) hs1 r hr3 hrs hr 0 a le_rfl ha
+      (by linarith) (by linarith) (η / 2) h4 N hN
+    have hB := prob_visit_short hL5 hS α C s₀ hC s (by omega) hs1 r hr3 hrs hr c 1 (by linarith)
+      hc le_rfl (by linarith) (η / 2) h4 N hN
+    have hsub : {ω | η < |(visitCount (orbit r (α + bldPoint S ω)) a c N : ℝ) / N - (c - a)|} ⊆
+        {ω | η / 2 < |(visitCount (orbit r (α + bldPoint S ω)) 0 a N : ℝ) / N - (a - 0)|} ∪
+        {ω | η / 2 < |(visitCount (orbit r (α + bldPoint S ω)) c 1 N : ℝ) / N - (1 - c)|} := by
+      intro ω hω
+      simp only [Set.mem_setOf_eq, Set.mem_union] at hω ⊢
+      have hu : ∀ k, orbit r (α + bldPoint S ω) k ∈ Set.Ico (0 : ℝ) 1 :=
+        fun k => ⟨Int.fract_nonneg _, Int.fract_lt_one _⟩
+      have e := visitCount_three _ hu a c ha hac hc N
+      have hN0 : (N : ℝ) ≠ 0 := by
+        have : 1 ≤ N := le_trans Nat.one_le_two_pow hN
+        exact_mod_cast (by omega : N ≠ 0)
+      have hsplit : (visitCount (orbit r (α + bldPoint S ω)) a c N : ℝ) / N - (c - a) =
+          -((visitCount (orbit r (α + bldPoint S ω)) 0 a N : ℝ) / N - (a - 0)) -
+          ((visitCount (orbit r (α + bldPoint S ω)) c 1 N : ℝ) / N - (1 - c)) := by
+        rw [e]; field_simp; ring
+      rw [hsplit] at hω
+      by_contra hcon
+      push Not at hcon
+      have := abs_sub (-((visitCount (orbit r (α + bldPoint S ω)) 0 a N : ℝ) / N - (a - 0)))
+        ((visitCount (orbit r (α + bldPoint S ω)) c 1 N : ℝ) / N - (1 - c))
+      rw [abs_neg] at this
+      linarith [hcon.1, hcon.2]
+    refine (measureReal_mono hsub (measure_ne_top _ _)).trans
+      ((measureReal_union_le _ _).trans ?_)
+    have e2 : 3641 * M / (η / 2) ^ 4 = 58256 * M / η ^ 4 := by field_simp; ring
+    rw [e2] at hA hB
+    have : 58256 * M / η ^ 4 + 58256 * M / η ^ 4 ≤ 120000 * M / η ^ 4 := by
+      rw [← add_div]; gcongr; linarith
+    linarith
 
 /-- **The odd-base test family** for `α + bldPoint expSet e`: finite-prefix tests (decided from
 `d j` coins and the oracle value `o j = ⌊α 2^{d j}⌋₊`), with the avoider's mass and computable-tail
