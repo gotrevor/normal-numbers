@@ -259,6 +259,80 @@ theorem discLe_fract_add (u δ : ℕ → ℝ) (N : ℕ) (D η : ℝ) (B : Finset
   · refine le_of_mul_le_mul_right ?_ hNR
     nlinarith
 
+theorem not_isNormal_two_zero_aux : ¬ IsNormal 2 0 := by
+  intro h
+  have hcount : ∀ l : List ℕ, (∀ d ∈ l, d = 0) → countOccurrences [1] l = 0 := by
+    intro l hl
+    induction l with
+    | nil => rfl
+    | cons a l ih =>
+      have ha : a = 0 := hl a (List.mem_cons_self ..)
+      have ih' := ih fun d hd => hl d (List.mem_cons_of_mem _ hd)
+      unfold countOccurrences at ih' ⊢
+      rw [List.tails_cons, List.countP_cons, ih', ha]
+      rfl
+  have hdig : ∀ i, digitOf 2 (Int.fract (0 : ℝ)) i = 0 := by
+    intro i; simp [digitOf]
+  have ht := h [1] (by simp) (by simp)
+  have h0 : (fun n : ℕ => (countOccurrences [1] ((List.range n).map
+      (digitOf 2 (Int.fract (0 : ℝ)))) : ℝ) / n) = fun _ => 0 := by
+    funext n
+    rw [hcount _ (fun d hd => by
+      obtain ⟨i, _, rfl⟩ := List.mem_map.1 hd; exact hdig i)]
+    simp
+  rw [h0] at ht
+  have := tendsto_nhds_unique ht tendsto_const_nhds
+  norm_num at this
+
+/-- Binary expansion: `z ∈ [0,1)` is the sum of its digits. -/
+
+theorem hasSum_digitOf_two (z : ℝ) (hz0 : 0 ≤ z) (hz1 : z < 1) :
+    HasSum (fun i => (digitOf 2 z i : ℝ) / 2 ^ (i + 1)) z := by
+  set F : ℕ → ℤ := fun n => ⌊z * 2 ^ n⌋ with hF
+  have hstep : ∀ n, (digitOf 2 z n : ℝ) = F (n + 1) - 2 * F n := by
+    intro n
+    have h1 : (2 : ℝ) * F n ≤ z * 2 ^ (n + 1) := by
+      have := Int.floor_le (z * 2 ^ n); rw [pow_succ]; simp only [hF]; linarith
+    have h2 : z * 2 ^ (n + 1) < 2 * F n + 2 := by
+      have := Int.lt_floor_add_one (z * 2 ^ n); rw [pow_succ]; simp only [hF]; linarith
+    have hlo : 2 * F n ≤ F (n + 1) := by
+      simp only [hF]; rw [Int.le_floor]; push_cast; simpa [hF] using h1
+    have hhi : F (n + 1) < 2 * F n + 2 := by
+      simp only [hF]; rw [Int.floor_lt]; push_cast; simpa [hF] using h2
+    have hF0 : 0 ≤ F n := by simp only [hF]; exact Int.floor_nonneg.2 (by positivity)
+    unfold digitOf
+    have : (⌊z * ((2 : ℕ) : ℝ) ^ (n + 1)⌋) = F (n + 1) := by simp [hF]
+    rw [this]
+    rcases (show F (n + 1) = 2 * F n ∨ F (n + 1) = 2 * F n + 1 by omega) with h | h
+    · rw [h]
+      have : (2 * F n).toNat % 2 = 0 := by omega
+      rw [this]; push_cast; ring
+    · rw [h]
+      have : (2 * F n + 1).toNat % 2 = 1 := by omega
+      rw [this]; push_cast; ring
+  have hpart : ∀ n, ∑ i ∈ Finset.range n, (digitOf 2 z i : ℝ) / 2 ^ (i + 1) = F n / 2 ^ n := by
+    intro n
+    induction n with
+    | zero => simp [hF, Int.floor_eq_zero_iff.2 ⟨hz0, hz1⟩]
+    | succ n ih =>
+      rw [Finset.sum_range_succ, ih, hstep, pow_succ]
+      field_simp
+      ring
+  rw [hasSum_iff_tendsto_nat_of_nonneg (fun i => by positivity)]
+  simp_rw [hpart]
+  have hlo : ∀ n : ℕ, z - (1 / 2) ^ n ≤ (F n : ℝ) / 2 ^ n := by
+    intro n
+    have := Int.lt_floor_add_one (z * 2 ^ n)
+    rw [one_div_pow, le_div_iff₀ (by positivity), sub_mul, div_mul_cancel₀ _ (by positivity)]
+    simp only [hF]; linarith
+  have hhi : ∀ n : ℕ, (F n : ℝ) / 2 ^ n ≤ z := by
+    intro n
+    rw [div_le_iff₀ (by positivity)]; exact Int.floor_le _
+  have hg : Tendsto (fun n : ℕ => z - (1 / 2 : ℝ) ^ n) atTop (𝓝 z) := by
+    simpa using tendsto_const_nhds.sub (tendsto_pow_atTop_nhds_zero_of_lt_one (r := (1/2 : ℝ))
+      (by norm_num) (by norm_num))
+  exact tendsto_of_tendsto_of_tendsto_of_le_of_le hg tendsto_const_nhds hlo hhi
+
 /-- **Digit tail of a sparse point.**  `{2ⁿy} ≤ 2/N` except for at most
 `(log₂N + 2)·S(1, N + log₂N + 2)` indices `n < N`.
 
@@ -269,7 +343,91 @@ of `y` at positions `n+1, …, n+L` vanish, so `{2ⁿy} = Σ_{k∈S, k>n+L} b_k 
 theorem fract_bldPoint_small (S : Set ℕ) (hS0 : 0 ∉ S) (ω : ℕ → Bool) (N : ℕ) (hN : 2 ≤ N) :
     ∃ B : Finset ℕ, (B.card : ℝ) ≤ (Nat.log 2 N + 2) * sIcc S 1 (N + Nat.log 2 N + 2) ∧
       ∀ n < N, n ∉ B → Int.fract (bldPoint S ω * 2 ^ n) ≤ 2 / N := by
-  sorry
+  classical
+  set L := Nat.log 2 N + 1 with hL
+  set c : ℕ → ℝ := fun k => if k ∈ S ∧ ω k = true then 1 else 0 with hc
+  have hc0 : ∀ k, 0 ≤ c k := fun k => by simp only [hc]; split_ifs <;> norm_num
+  have hc1 : ∀ k, c k ≤ 1 := fun k => by simp only [hc]; split_ifs <;> norm_num
+  have hy : bldPoint S ω = ∑' k, c k / 2 ^ k := by
+    unfold bldPoint; simp only [hc]
+  set B := (Finset.range N).filter (fun n => ∃ k ∈ S, n < k ∧ k ≤ n + L) with hB
+  refine ⟨B, ?_, ?_⟩
+  · set T := (Finset.Icc 1 (N + Nat.log 2 N + 2)).filter (· ∈ S) with hT
+    have hsub : B ⊆ T.biUnion (fun k => Finset.Ico (k - L) k) := by
+      intro n hn
+      simp only [hB, Finset.mem_filter, Finset.mem_range] at hn
+      obtain ⟨hnN, k, hkS, hnk, hkn⟩ := hn
+      simp only [Finset.mem_biUnion, hT, Finset.mem_filter, Finset.mem_Icc, Finset.mem_Ico]
+      exact ⟨k, ⟨⟨by omega, by omega⟩, hkS⟩, by omega, hnk⟩
+    have hcard : B.card ≤ T.card * L := by
+      refine (Finset.card_le_card hsub).trans ((Finset.card_biUnion_le).trans ?_)
+      rw [Finset.card_eq_sum_ones T, Finset.sum_mul]
+      refine Finset.sum_le_sum fun k _ => ?_
+      simp; omega
+    have hTs : sIcc S 1 (N + Nat.log 2 N + 2) = T.card := by
+      unfold sIcc; simp only [hT]
+    rw [hTs]
+    have : (B.card : ℝ) ≤ (T.card : ℝ) * L := by exact_mod_cast hcard
+    have hL2 : (L : ℝ) ≤ Nat.log 2 N + 2 := by simp only [hL]; push_cast; linarith
+    nlinarith [(Nat.cast_nonneg T.card : (0:ℝ) ≤ _)]
+  · intro n hn hnB
+    have hgap : ∀ k, n < k → k ≤ n + L → c k = 0 := by
+      intro k h1 h2
+      simp only [hc]
+      rw [if_neg]
+      rintro ⟨hkS, -⟩
+      exact hnB (by simp only [hB, Finset.mem_filter, Finset.mem_range]; exact ⟨hn, k, hkS, h1, h2⟩)
+    have hgs : Summable fun k => c k / (2 : ℝ) ^ k := by
+      refine Summable.of_nonneg_of_le (fun k => by have := hc0 k; positivity) (fun k => ?_)
+        (summable_geometric_two)
+      rw [one_div_pow]; exact div_le_div_of_nonneg_right (hc1 k) (by positivity)
+    set m := n + 1 with hm
+    have hsplit := (hgs.sum_add_tsum_nat_add (m + L)).symm
+    set t : ℝ := (∑' k, c (k + (m + L)) / (2 : ℝ) ^ (k + (m + L))) * 2 ^ n with ht
+    have hmid : ∑ k ∈ Finset.range (m + L), c k / (2 : ℝ) ^ k = ∑ k ∈ Finset.range m, c k / 2 ^ k := by
+      rw [Finset.sum_range_add, add_eq_left]
+      refine Finset.sum_eq_zero fun j hj => ?_
+      rw [Finset.mem_range] at hj
+      rw [hgap (m + j) (by omega) (by omega), zero_div]
+    set I : ℕ := ∑ k ∈ Finset.range m, (if k ∈ S ∧ ω k = true then 2 ^ (n - k) else 0) with hI
+    have hhead : (∑ k ∈ Finset.range m, c k / (2 : ℝ) ^ k) * 2 ^ n = (I : ℝ) := by
+      rw [Finset.sum_mul, hI]; push_cast
+      refine Finset.sum_congr rfl fun k hk => ?_
+      rw [Finset.mem_range] at hk
+      simp only [hc]
+      split_ifs
+      · rw [show (2 : ℝ) ^ n = 2 ^ (n - k) * 2 ^ k by rw [← pow_add]; congr 1; omega]
+        field_simp
+      · simp
+    have hyn : bldPoint S ω * 2 ^ n = t + I := by
+      rw [hy, hsplit, hmid, add_mul, hhead, ht]; ring
+    have ht0 : 0 ≤ t := by
+      rw [ht]; exact mul_nonneg (tsum_nonneg fun k => by have := hc0 (k + (m + L)); positivity) (by positivity)
+    have hgeo : Summable fun k : ℕ => (1 / 2 : ℝ) ^ (k + (m + L)) :=
+      (summable_nat_add_iff (f := fun k : ℕ => (1 / 2 : ℝ) ^ k) (m + L)).2 summable_geometric_two
+    have ht1 : t ≤ (1 / 2 : ℝ) ^ L := by
+      have hle : ∑' k, c (k + (m + L)) / (2 : ℝ) ^ (k + (m + L)) ≤ ∑' k : ℕ, (1 / 2 : ℝ) ^ (k + (m + L)) := by
+        refine Summable.tsum_le_tsum (fun k => ?_) ((summable_nat_add_iff (f := fun k => c k / (2 : ℝ) ^ k) (m + L)).2 hgs) hgeo
+        rw [one_div_pow]; exact div_le_div_of_nonneg_right (hc1 _) (by positivity)
+      have heq : (∑' k : ℕ, (1 / 2 : ℝ) ^ (k + (m + L))) * 2 ^ n = (1 / 2) ^ L := by
+        simp_rw [pow_add]
+        rw [tsum_mul_right, tsum_geometric_two, hm, pow_add, pow_add]
+        ring_nf
+        have h1 : (1/2 : ℝ) ^ n * 2 ^ n = 1 := by rw [← mul_pow]; norm_num
+        linear_combination ((1 / 2 : ℝ) ^ Nat.log 2 N * (1 / 2)) * h1
+      rw [ht, ← heq]
+      exact mul_le_mul_of_nonneg_right hle (by positivity)
+    have hLN : (N : ℝ) < 2 ^ L := by exact_mod_cast Nat.lt_pow_succ_log_self (by norm_num) N
+    have hNpos : (0 : ℝ) < N := by exact_mod_cast (show 0 < N by omega)
+    have hpow : (1 / 2 : ℝ) ^ L ≤ 2 / N := by
+      rw [one_div_pow, div_le_div_iff₀ (by positivity) hNpos]; linarith
+    have hlt : t < 1 := by
+      have : (2 : ℝ) / N ≤ 1 := by
+        rw [div_le_one hNpos]; exact_mod_cast hN
+      have : (1 / 2 : ℝ) ^ L < 1 := pow_lt_one₀ (by norm_num) (by norm_num) (by omega)
+      linarith
+    rw [hyn, Int.fract_add_natCast, Int.fract_eq_self.2 ⟨ht0, hlt⟩]
+    linarith
 
 theorem bldPoint_nonneg (S : Set ℕ) (ω : ℕ → Bool) : 0 ≤ bldPoint S ω := by
   unfold bldPoint
@@ -1094,7 +1252,34 @@ then `bldPoint denseSet ω = fract(−α)` (proper expansion, `Bridge.digitOf_re
 `α + fract(−α) ∈ ℤ`, all base-2 digits of `fract 0 = 0` are `0`. -/
 theorem exists_not_isNormal_two_dense (α : ℝ) :
     ∃ ω : ℕ → Bool, ¬ IsNormal 2 (α + bldPoint denseSet ω) := by
-  sorry
+  classical
+  set z := Int.fract (-α) with hz
+  refine ⟨fun k => decide (1 ≤ k ∧ digitOf 2 z (k - 1) = 1), ?_⟩
+  have hd : ∀ i, digitOf 2 z i < 2 := fun i => Nat.mod_lt _ (by norm_num)
+  have hsum : HasSum (fun k : ℕ => (if k ∈ denseSet ∧ decide (1 ≤ k ∧ digitOf 2 z (k - 1) = 1) = true
+      then (1 : ℝ) else 0) / 2 ^ k) z := by
+    rw [← hasSum_nat_add_iff' 1]
+    simp only [Finset.sum_range_one, pow_zero, div_one]
+    have h0 : ¬ (0 ∈ denseSet) := by simp [denseSet]
+    simp only [h0, false_and, if_false, sub_zero]
+    refine (hasSum_digitOf_two z (Int.fract_nonneg _) (Int.fract_lt_one _)).congr_fun fun i => ?_
+    have hm : i + 1 ∈ denseSet := by simp [denseSet]
+    simp only [hm, true_and, Nat.add_sub_cancel, decide_eq_true_eq]
+    have := hd i
+    by_cases h1 : digitOf 2 z i = 1
+    · simp [h1]
+    · have h0 : digitOf 2 z i = 0 := by omega
+      simp [h0]
+  have hb : bldPoint denseSet (fun k => decide (1 ≤ k ∧ digitOf 2 z (k - 1) = 1)) = z := by
+    unfold bldPoint; exact hsum.tsum_eq
+  rw [hb]
+  intro h
+  apply not_isNormal_two_zero_aux
+  have : Int.fract (α + z) = Int.fract (0 : ℝ) := by
+    rw [Int.fract_zero, hz, show α + Int.fract (-α) = ((-⌊-α⌋ : ℤ) : ℝ) by
+      rw [Int.fract]; push_cast; ring, Int.fract_intCast]
+  unfold IsNormal at h ⊢
+  rwa [this] at h
 
 /-- **Open upgrade (not claimed; 20%).**  An absolutely normal `x` with base-2 star discrepancy
 `o(N^{-1/2})`.  Route: a denser sparse set (BLD exponent `1 < ρ < 2`, e.g. the primes, with
