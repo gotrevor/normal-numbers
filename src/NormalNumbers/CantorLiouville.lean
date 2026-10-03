@@ -8,6 +8,8 @@ import NormalNumbers.DecayAeNormal
 import NormalNumbers.CantorSelfSimilar
 import Mathlib.Topology.Instances.CantorSet
 import Mathlib.NumberTheory.Transcendental.Liouville.Basic
+import NormalNumbers.SchedDerandomize
+import NormalNumbers.SqrtFloor
 
 /-!
 # Bugeaud 10.37: a Liouville number in the middle-third Cantor set, normal to base 2
@@ -1339,15 +1341,12 @@ Altogether `≤ N + 2(C_h N² (3^{−F/2} + ρ^{F/4−1}) + N^{3/2}) ≤ C N² (
 
 Degenerate checks: `free ≡ false` makes the right side `≥ C N²`, trivially true (`pt = 0`,
 `𝔼‖S_N‖² = N²`, so `C ≥ 1` is forced and allowed); `free ≡ true` is Cassels 1959. -/
-theorem secondMoment_le (free : ℕ → Bool) (h : ℤ) (hh : h ≠ 0) :
-    ∃ C c : ℝ, 0 < C ∧ 0 < c ∧ ∀ N : ℕ, 1 ≤ N →
+theorem secondMoment_le_explicit (free : ℕ → Bool) (h : ℤ) (hh : h ≠ 0) (N : ℕ) (hN : 1 ≤ N) :
       ∫ ω, ‖∑ k ∈ Finset.range N, ee (h * 2 ^ k * pt free ω)‖ ^ 2 ∂coinMeasure ≤
-        C * (N : ℝ) ^ 2 *
-          (Real.exp (-c * freeCount free (Nat.log 3 N / 2)) + (N : ℝ) ^ (-(1 / 2 : ℝ))) := by
+        (1 + 3 * (3 ^ (padicValNat 3 h.natAbs + 1) + 2)) * (N : ℝ) ^ 2 *
+          (Real.exp (-(Real.log (3 / 2) / 2) * freeCount free (Nat.log 3 N / 2)) +
+            (N : ℝ) ^ (-(1 / 2 : ℝ))) := by
   set e := padicValNat 3 h.natAbs
-  have hl : 0 < Real.log (3 / 2) := Real.log_pos (by norm_num)
-  refine ⟨1 + 3 * (3 ^ (e + 1) + 2), Real.log (3 / 2) / 2, by positivity, by positivity,
-    fun N hN => ?_⟩
   set M := Nat.log 3 N / 2
   set F := freeCount free M
   set W := F / 2
@@ -1447,6 +1446,14 @@ theorem secondMoment_le (free : ℕ → Bool) (h : ℤ) (hh : h ≠ 0) :
     _ ≤ _ := by
         have hN2 : (0 : ℝ) ≤ (N : ℝ) ^ 2 := by positivity
         nlinarith [mul_nonneg hN2 hE, mul_nonneg hN2 hR, mul_nonneg (mul_nonneg hN2 hR) (by positivity : (0:ℝ) ≤ 3 ^ (e + 1) + 2)]
+
+theorem secondMoment_le (free : ℕ → Bool) (h : ℤ) (hh : h ≠ 0) :
+    ∃ C c : ℝ, 0 < C ∧ 0 < c ∧ ∀ N : ℕ, 1 ≤ N →
+      ∫ ω, ‖∑ k ∈ Finset.range N, ee (h * 2 ^ k * pt free ω)‖ ^ 2 ∂coinMeasure ≤
+        C * (N : ℝ) ^ 2 *
+          (Real.exp (-c * freeCount free (Nat.log 3 N / 2)) + (N : ℝ) ^ (-(1 / 2 : ℝ))) := by
+  have hl : 0 < Real.log (3 / 2) := Real.log_pos (by norm_num)
+  exact ⟨_, _, by positivity, by positivity, secondMoment_le_explicit free h hh⟩
 
 /-! ## Davenport–Erdős–LeVeque along a slow schedule -/
 
@@ -1857,6 +1864,113 @@ theorem exists_liouville_mem_cantorSet_isNormal_two :
   obtain ⟨ω, hn, hf⟩ := (ae_isNormal_two.and ae_frequently_free).exists
   exact ⟨_, pt_mem_cantorSet _ _, liouville_cantorLiouvilleReal ω hf, hn⟩
 
+
+/-! ## The computable version: data for `SchedDerandomize.exists_computable_normal_sched` -/
+
+section Computable
+
+open Derandomize SchedDerandomize
+
+/-- Ternary digit `i` read from a coin prefix. -/
+def clDig (p : List Bool) (i : ℕ) : ℕ := bif isFree i && p.getD i false then 2 else 0
+
+/-- `3^{|p|} ·` (the point's head on the prefix `p`). -/
+def clNum (p : List Bool) : ℕ :=
+  ((List.range p.length).map fun i => clDig p i * 3 ^ (p.length - 1 - i)).sum
+
+/-- Lower approximation from a prefix. -/
+noncomputable def clA (p : List Bool) : ℝ := (clNum p : ℝ) / 3 ^ p.length
+
+/-- Its base-`b` floors. -/
+def clΨ (b m : ℕ) (p : List Bool) : ℕ := clNum p * b ^ m / 3 ^ p.length
+
+/-- Second-moment decay profile. -/
+noncomputable def clW (N : ℕ) : ℝ :=
+  Real.exp (-(Real.log (3 / 2) / 2) * freeCount isFree (Nat.log 3 N / 2)) +
+    ((max N 1 : ℕ) : ℝ) ^ (-(1 / 2 : ℝ))
+
+/-- The schedule `4^s (4s + 6t + 4)`, `j = s² + t`, `0 ≤ t ≤ 2s`. -/
+def clNs (j : ℕ) : ℕ := 4 ^ Nat.sqrt j * (4 * Nat.sqrt j + 6 * (j - Nat.sqrt j * Nat.sqrt j) + 4)
+
+/-- The resolution. -/
+def clNr (j : ℕ) : ℕ := Nat.sqrt j + 8
+
+/-- Start of the `J`-th free test window `[(J+2) a_J, (J+2) a_J + J + 2)`. -/
+def winStart (J : ℕ) : ℕ := (J + 2) * runStart J
+
+/-- The Liouville test: no `true` coin in the `J`-th window. -/
+def clBad (J : ℕ) (p : List Bool) : Bool :=
+  (List.range (J + 2)).all fun i => !(p.getD (winStart J + i) false)
+
+def clD (J : ℕ) : ℕ := winStart J + J + 2
+
+theorem clΨ_eq (b m : ℕ) (p : List Bool) : clΨ b m p = ⌊clA p * (b : ℝ) ^ m⌋₊ := by
+  sorry
+
+theorem clA_nonneg (p : List Bool) : 0 ≤ clA p := by unfold clA; positivity
+
+theorem clA_bounds (ω : ℕ → Bool) (D : ℕ) :
+    clA (pre ω D) ≤ cantorLiouvilleReal ω ∧
+      cantorLiouvilleReal ω ≤ clA (pre ω D) + (1 / 2 : ℝ) ^ D := by
+  sorry
+
+theorem primrec_runStart : Primrec runStart := by
+  sorry
+
+theorem primrec_isFree : Primrec isFree := by
+  sorry
+
+theorem primrec_clΨ : Primrec fun x : ℕ × ℕ × List Bool => clΨ x.1 x.2.1 x.2.2 := by
+  sorry
+
+theorem clW_nonneg (N : ℕ) : 0 ≤ clW N := by unfold clW; positivity
+
+theorem clW_antitone : Antitone clW := by
+  sorry
+
+theorem cl_secondMoment (h : ℤ) (hh : h ≠ 0) (N : ℕ) (hN : 1 ≤ N) :
+    ∫ ω, ‖∑ k ∈ Finset.range N, ee (h * 2 ^ k * cantorLiouvilleReal ω)‖ ^ 2 ∂coins ≤
+      16 * |(h : ℝ)| * N ^ 2 * clW N := by
+  sorry
+
+theorem primrec_clNs : Primrec clNs := by
+  sorry
+
+theorem primrec_clNr : Primrec clNr :=
+  Primrec.nat_add.comp SqrtFloor.primrec_sqrt (Primrec.const 8)
+
+theorem tendsto_clNs : Tendsto clNs atTop atTop := by
+  sorry
+
+theorem clNs_ratio (a : ℝ) (ha : 1 < a) : ∀ᶠ j in atTop, (clNs (j + 1) : ℝ) ≤ a * clNs j := by
+  sorry
+
+theorem tendsto_clNr : Tendsto clNr atTop atTop := by
+  sorry
+
+theorem cl_ev : ∀ᶠ j in atTop, 8 ≤ clNr j ∧ clNr j ≤ clNs j ∧
+    (clNr j : ℝ) ^ 6 * clW (clNs j) ≤ 1 / ((j : ℝ) + 1) ^ 4 := by
+  sorry
+
+theorem primrec_clBad : Primrec₂ clBad := by
+  sorry
+
+theorem primrec_clD : Primrec clD := by
+  sorry
+
+theorem clBad_mass (J : ℕ) :
+    coins.real {ω | clBad J (pre ω (clD J)) = true} ≤ 1 / ((J : ℝ) + 1) ^ 2 := by
+  sorry
+
+theorem frequently_free_of_clBad (e : ℕ → Bool) (j₁ : ℕ)
+    (h : ∀ J, j₁ ≤ J → clBad J (pre e (clD J)) = false) :
+    ∀ n, ∃ i, n ≤ i ∧ isFree i = true ∧ e i = true := by
+  sorry
+
+theorem measurable_cantorLiouvilleReal : Measurable cantorLiouvilleReal := measurable_pt isFree
+
+end Computable
+
 /-- **Computable strengthening.**  Confidence 60%.
 
 English proof (plan).  Derandomize with `Derandomize.exists_primrec_avoid`.  Test `j`
@@ -1872,6 +1986,12 @@ the rate-generic replacement for `ComputableNormal`'s `n^{10}` schedule; see `HA
 theorem exists_computable_liouville_mem_cantorSet_isNormal_two :
     ∃ e : ℕ → Bool, Computable e ∧ cantorLiouvilleReal e ∈ cantorSet ∧
       Liouville (cantorLiouvilleReal e) ∧ IsNormal 2 (cantorLiouvilleReal e) := by
-  sorry
+  obtain ⟨e, hce, hn, j₁, hj⟩ := SchedDerandomize.exists_computable_normal_sched clΨ primrec_clΨ clA
+    clΨ_eq clA_nonneg cantorLiouvilleReal measurable_cantorLiouvilleReal clA_bounds
+    (by norm_num : (0 : ℝ) ≤ 16) clW clW_nonneg clW_antitone cl_secondMoment clNs clNr primrec_clNs
+    primrec_clNr tendsto_clNs clNs_ratio tendsto_clNr cl_ev clBad primrec_clBad clD primrec_clD
+    clBad_mass
+  exact ⟨e, hce, pt_mem_cantorSet _ _,
+    liouville_cantorLiouvilleReal e (frequently_free_of_clBad e j₁ hj), hn⟩
 
 end NormalNumbers.CantorLiouville
