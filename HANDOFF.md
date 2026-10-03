@@ -38,3 +38,11 @@ flag is cleared: continue with N3-N8 against the dyadic Prop (N6 now consumes it
 - **Need from operator:** relaunch/stop with `--done-when` scoped to `src/NormalNumbers/Erdos257Base2.lean`
   (or accept done).  Details: `HANDOFF-2026-10-02-erdos257b2-lap5.md`.
 Re-confirmed 2026-10-02 (fresh lap): build green, axioms trust-base only; stuck strike 2 recorded.
+
+## STUCK-BAIL (2026-10-03, dimh run, strike 1)
+- **What:** this run's operator target, `ExplicitOmegaK.dimH_Omega_eq_one`, is PROVED (b2c7ac2f).
+  Verify: `#print axioms` = `[propext, Classical.choice, Quot.sound]`. The optional
+  `bakerBanajiAnalyticQuarterCantor_of_general` is proved too.
+- **Why stuck:** the repo-wide self-stop gate counts sorries in other lanes, outside this run's scope.
+- **Need from operator:** accept done, or relaunch with `--done-when` scoped to this lane.
+  Details: `HANDOFF-2026-10-03-dimh-lap1.md`.
