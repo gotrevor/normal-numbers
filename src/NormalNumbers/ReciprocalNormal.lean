@@ -238,7 +238,59 @@ proper (`ProperDigits`: infinitely many digits `< b − 1`, e.g. every `3k+1`), 
 at least `2(n − 3)/3` are `0`, so the frequency of `0` has `liminf ≥ 2/3 > 1/2 ≥ 1/b`. -/
 theorem not_isSimplyNormal_ySparse (b : ℕ) (hb : 2 ≤ b) (e : ℕ → Bool) :
     ¬ IsSimplyNormal b (ySparse b e) := by
-  sorry
+  intro h
+  have hlt : ∀ i, sparseDigits b e i < b := by
+    intro i; unfold sparseDigits; split_ifs <;> omega
+  have hp : ProperDigits b (sparseDigits b e) := by
+    intro N
+    refine ⟨3 * N + 1, by omega, ?_⟩
+    have : sparseDigits b e (3 * N + 1) = 0 := by
+      have h1 : (3 * N + 1) % 3 = 1 := by omega
+      simp [sparseDigits, h1]
+    omega
+  have hmem := realOfDigits_mem_Ico b hb _ hlt hp
+  rw [Set.mem_Ico] at hmem
+  have ht := h 0 (by omega)
+  unfold ySparse at ht
+  rw [Int.fract_eq_self.mpr hmem, digitOf_realOfDigits b hb _ hlt hp] at ht
+  -- lower bound on the count of `0`
+  have hcnt : ∀ n, n - 1 - n / 3 ≤
+      countOccurrences [0] ((List.range n).map (sparseDigits b e)) := by
+    intro n
+    have hf : ∀ n, ((Finset.range n).filter (fun i => i ≠ 0 ∧ i % 3 ≠ 2)).card =
+        n - 1 - n / 3 := by
+      intro n
+      induction n with
+      | zero => rfl
+      | succ k ih =>
+        rw [Finset.range_add_one, Finset.filter_insert]
+        split_ifs with hk
+        · rw [Finset.card_insert_of_notMem (by simp), ih]; omega
+        · rw [ih]; omega
+    rw [countOccurrences_eq, ← hf n]
+    refine Finset.card_le_card fun i hi => ?_
+    simp only [Finset.mem_filter, Finset.mem_range, List.length_singleton, List.range'_one,
+      List.map_cons, List.map_nil, List.cons.injEq, and_true] at hi ⊢
+    refine ⟨by omega, by omega, ?_⟩
+    simp [sparseDigits, hi.2.1, hi.2.2]
+  have hb' : ((b : ℝ))⁻¹ < 3 / 5 := by
+    rw [inv_lt_comm₀ (by positivity) (by norm_num)]
+    have : (2 : ℝ) ≤ b := by exact_mod_cast hb
+    linarith
+  have hev := (ht.eventually (gt_mem_nhds hb'))
+  obtain ⟨N, hN⟩ := eventually_atTop.1 hev
+  set n := max N 60
+  have h1 := hN n (le_max_left _ _)
+  have hn60 : 60 ≤ n := le_max_right _ _
+  have hc := hcnt n
+  have hnpos : (0 : ℝ) < n := by exact_mod_cast (show 0 < n by omega)
+  rw [div_lt_iff₀ hnpos] at h1
+  have : ((n - 1 - n / 3 : ℕ) : ℝ) ≤
+      (countOccurrences [0] ((List.range n).map (sparseDigits b e)) : ℝ) := by exact_mod_cast hc
+  have h3 : 3 * (n - 1 - n / 3) + 5 ≥ 2 * n := by omega
+  have h3' : (3 : ℝ) * ((n - 1 - n / 3 : ℕ) : ℝ) + 5 ≥ 2 * n := by exact_mod_cast h3
+  have : (60 : ℝ) ≤ n := by exact_mod_cast hn60
+  linarith
 
 /-- **Leaf: engine inputs for `1/ySparse b`** (measurability and exact lower approximations).
 
