@@ -190,6 +190,92 @@ theorem not_isNormal_three_cantorLiouvilleReal (ω : ℕ → Bool) :
   not_isNormal_three_pt isFree ω fun N =>
     ⟨runStart N, (lt_runStart N).le, isFree_runStart N⟩
 
+/-! ## Free gaps between the runs -/
+
+theorem isFree_of_not_mem_run {i : ℕ} (h : ∀ k, ¬ (runStart k ≤ i ∧ i < (k + 2) * runStart k)) :
+    isFree i = true := by
+  unfold isFree isForced
+  simp only [Bool.not_eq_true', List.any_eq_false, List.mem_range, Bool.and_eq_true,
+    decide_eq_true_eq]
+  intro k _ hk
+  exact h k hk
+
+theorem runStart_succ_eq (k : ℕ) : runStart (k + 1) = 2 * (k + 2) * runStart k := rfl
+
+theorem runStart_mono : Monotone runStart := by
+  refine monotone_nat_of_le_succ fun k => ?_
+  rw [runStart_succ_eq]; nlinarith
+
+theorem runEnd_mono : Monotone fun k => (k + 2) * runStart k := by
+  refine monotone_nat_of_le_succ fun k => ?_
+  show (k + 2) * runStart k ≤ (k + 1 + 2) * runStart (k + 1)
+  rw [runStart_succ_eq]
+  have : (k + 2) * runStart k ≤ (k + 2) * runStart k * (2 * (k + 3)) :=
+    Nat.le_mul_of_pos_right _ (by positivity)
+  calc _ ≤ (k + 2) * runStart k * (2 * (k + 3)) := this
+    _ = _ := by ring
+
+/-- Lower end of the free gap before run `k`. -/
+def gapStart : ℕ → ℕ
+  | 0 => 0
+  | k + 1 => (k + 2) * runStart k
+
+theorem isFree_gap {k i : ℕ} (h1 : gapStart k ≤ i) (h2 : i < runStart k) : isFree i = true := by
+  refine isFree_of_not_mem_run fun j ⟨hj1, hj2⟩ => ?_
+  rcases Nat.lt_or_ge j k with hjk | hjk
+  · cases k with
+    | zero => omega
+    | succ k =>
+      have := runEnd_mono (show j ≤ k by omega)
+      simp only [gapStart] at h1
+      simp only at this; omega
+  · have := runStart_mono hjk; omega
+
+theorem isFree_after {k i : ℕ} (h1 : (k + 2) * runStart k ≤ i) (h2 : i < runStart (k + 1)) :
+    isFree i = true := isFree_gap (k := k + 1) h1 h2
+
+theorem gap_size (k : ℕ) : runStart k ≤ 2 * (runStart k - gapStart k) := by
+  cases k with
+  | zero => simp [gapStart]; omega
+  | succ k =>
+    simp only [gapStart, runStart_succ_eq]
+    have : 2 * (k + 2) * runStart k = 2 * ((k + 2) * runStart k) := by ring
+    rw [this]; omega
+
+theorem two_pow_le_runStart (k : ℕ) : 2 ^ k ≤ runStart k := by
+  induction k with
+  | zero => simp [runStart]
+  | succ k ih => rw [runStart_succ_eq, pow_succ]; nlinarith
+
+theorem card_le_freeCount {s e M : ℕ} (he : e ≤ M) (hf : ∀ i, s ≤ i → i < e → isFree i = true) :
+    e - s ≤ freeCount isFree M := by
+  unfold freeCount
+  rw [← Nat.card_Ico]
+  refine Finset.card_le_card fun i hi => ?_
+  simp only [Finset.mem_Ico] at hi
+  simp only [Finset.mem_filter, Finset.mem_range]
+  exact ⟨by omega, hf i hi.1 hi.2⟩
+
+theorem card_le_freeCount₂ {s e s' M : ℕ} (hes : e ≤ s') (heM : e ≤ M)
+    (hf : ∀ i, s ≤ i → i < e → isFree i = true) (hf' : ∀ i, s' ≤ i → i < M → isFree i = true) :
+    (e - s) + (M - s') ≤ freeCount isFree M := by
+  unfold freeCount
+  rcases Nat.lt_or_ge M s' with hM | hM
+  · have := card_le_freeCount heM hf
+    unfold freeCount at this
+    omega
+  rw [← Nat.card_Ico, ← Nat.card_Ico, ← Finset.card_union_of_disjoint]
+  · refine Finset.card_le_card fun i hi => ?_
+    simp only [Finset.mem_union, Finset.mem_Ico] at hi
+    simp only [Finset.mem_filter, Finset.mem_range]
+    rcases hi with hi | hi
+    · exact ⟨by omega, hf i hi.1 hi.2⟩
+    · exact ⟨by omega, hf' i hi.1 hi.2⟩
+  · rw [Finset.disjoint_left]; intro i h1 h2; simp only [Finset.mem_Ico] at h1 h2; omega
+
+theorem isFree_runEnd (k : ℕ) : isFree ((k + 2) * runStart k) = true :=
+  isFree_after le_rfl (by rw [runStart_succ_eq]; have := lt_runStart k; nlinarith)
+
 /-! ## Liouville -/
 
 /-- **Liouville property.**  Confidence 93%.
@@ -213,7 +299,41 @@ English proof.  Free positions are infinite (`[(k+2) a k, a (k+1))` is free and 
 countable union over `n`. -/
 theorem ae_frequently_free :
     ∀ᵐ ω ∂coinMeasure, ∀ n, ∃ i, n ≤ i ∧ isFree i = true ∧ ω i = true := by
-  sorry
+  rw [ae_all_iff]
+  intro n
+  set p : ℕ → ℕ := fun k => (k + 2) * runStart k
+  have hp : StrictMono p := by
+    refine strictMono_nat_of_lt_succ fun k => ?_
+    show (k + 2) * runStart k < (k + 1 + 2) * runStart (k + 1)
+    rw [runStart_succ_eq]
+    have ha : 0 < runStart k := by have := lt_runStart k; omega
+    calc (k + 2) * runStart k < (k + 2) * runStart k * (2 * (k + 3)) :=
+          lt_mul_of_one_lt_right (by positivity) (by omega)
+      _ = _ := by ring
+  have hpn : ∀ k, k ≤ p k := fun k => by
+    have := lt_runStart k; show k ≤ (k + 2) * runStart k; nlinarith
+  rw [ae_iff]
+  set E := {ω : ℕ → Bool | ¬∃ i, n ≤ i ∧ isFree i = true ∧ ω i = true}
+  have hle : ∀ L : ℕ, coinMeasure E ≤ (2⁻¹ : ENNReal) ^ L := by
+    intro L
+    set S := (Finset.Ico n (n + L)).image p
+    have hsub : E ⊆ Set.pi (S : Set ℕ) (fun _ => {false}) := by
+      intro ω hω i hi
+      simp only [S, Finset.coe_image, Set.mem_image, Finset.mem_coe, Finset.mem_Ico] at hi
+      obtain ⟨k, hk, rfl⟩ := hi
+      simp only [E, Set.mem_setOf_eq, not_exists, not_and] at hω
+      simp only [Set.mem_singleton_iff]
+      have := hω (p k) ((hpn k).trans' hk.1 |>.trans (le_refl _)) (isFree_runEnd k)
+      simpa using this
+    refine (measure_mono hsub).trans (le_of_eq ?_)
+    unfold coinMeasure
+    rw [Measure.infinitePi_pi _ (fun _ _ => measurableSet_singleton _)]
+    rw [Finset.prod_congr rfl (fun i _ => by rw [uniform_apply])]
+    rw [Finset.prod_const, Finset.card_image_of_injective _ hp.injective, Nat.card_Ico]
+    simp
+  have ht : Tendsto (fun L : ℕ => (2⁻¹ : ENNReal) ^ L) atTop (𝓝 0) :=
+    ENNReal.tendsto_pow_atTop_nhds_zero_of_lt_one (by norm_num)
+  exact le_antisymm (ge_of_tendsto' ht hle) bot_le
 
 /-! ## The Cassels lemma -/
 
@@ -1191,87 +1311,6 @@ theorem sched_ratio :
       _ ≤ q * ((E - 1 + j) * (1 + 2 / j)) := by gcongr
       _ ≤ q * ((sched j : ℝ) * (1 + 2 / j)) := by gcongr
       _ = _ := by ring
-
-theorem isFree_of_not_mem_run {i : ℕ} (h : ∀ k, ¬ (runStart k ≤ i ∧ i < (k + 2) * runStart k)) :
-    isFree i = true := by
-  unfold isFree isForced
-  simp only [Bool.not_eq_true', List.any_eq_false, List.mem_range, Bool.and_eq_true,
-    decide_eq_true_eq]
-  intro k _ hk
-  exact h k hk
-
-theorem runStart_succ_eq (k : ℕ) : runStart (k + 1) = 2 * (k + 2) * runStart k := rfl
-
-theorem runStart_mono : Monotone runStart := by
-  refine monotone_nat_of_le_succ fun k => ?_
-  rw [runStart_succ_eq]; nlinarith
-
-theorem runEnd_mono : Monotone fun k => (k + 2) * runStart k := by
-  refine monotone_nat_of_le_succ fun k => ?_
-  show (k + 2) * runStart k ≤ (k + 1 + 2) * runStart (k + 1)
-  rw [runStart_succ_eq]
-  have : (k + 2) * runStart k ≤ (k + 2) * runStart k * (2 * (k + 3)) :=
-    Nat.le_mul_of_pos_right _ (by positivity)
-  calc _ ≤ (k + 2) * runStart k * (2 * (k + 3)) := this
-    _ = _ := by ring
-
-/-- Lower end of the free gap before run `k`. -/
-def gapStart : ℕ → ℕ
-  | 0 => 0
-  | k + 1 => (k + 2) * runStart k
-
-theorem isFree_gap {k i : ℕ} (h1 : gapStart k ≤ i) (h2 : i < runStart k) : isFree i = true := by
-  refine isFree_of_not_mem_run fun j ⟨hj1, hj2⟩ => ?_
-  rcases Nat.lt_or_ge j k with hjk | hjk
-  · cases k with
-    | zero => omega
-    | succ k =>
-      have := runEnd_mono (show j ≤ k by omega)
-      simp only [gapStart] at h1
-      simp only at this; omega
-  · have := runStart_mono hjk; omega
-
-theorem isFree_after {k i : ℕ} (h1 : (k + 2) * runStart k ≤ i) (h2 : i < runStart (k + 1)) :
-    isFree i = true := isFree_gap (k := k + 1) h1 h2
-
-theorem gap_size (k : ℕ) : runStart k ≤ 2 * (runStart k - gapStart k) := by
-  cases k with
-  | zero => simp [gapStart]; omega
-  | succ k =>
-    simp only [gapStart, runStart_succ_eq]
-    have : 2 * (k + 2) * runStart k = 2 * ((k + 2) * runStart k) := by ring
-    rw [this]; omega
-
-theorem two_pow_le_runStart (k : ℕ) : 2 ^ k ≤ runStart k := by
-  induction k with
-  | zero => simp [runStart]
-  | succ k ih => rw [runStart_succ_eq, pow_succ]; nlinarith
-
-theorem card_le_freeCount {s e M : ℕ} (he : e ≤ M) (hf : ∀ i, s ≤ i → i < e → isFree i = true) :
-    e - s ≤ freeCount isFree M := by
-  unfold freeCount
-  rw [← Nat.card_Ico]
-  refine Finset.card_le_card fun i hi => ?_
-  simp only [Finset.mem_Ico] at hi
-  simp only [Finset.mem_filter, Finset.mem_range]
-  exact ⟨by omega, hf i hi.1 hi.2⟩
-
-theorem card_le_freeCount₂ {s e s' M : ℕ} (hes : e ≤ s') (heM : e ≤ M)
-    (hf : ∀ i, s ≤ i → i < e → isFree i = true) (hf' : ∀ i, s' ≤ i → i < M → isFree i = true) :
-    (e - s) + (M - s') ≤ freeCount isFree M := by
-  unfold freeCount
-  rcases Nat.lt_or_ge M s' with hM | hM
-  · have := card_le_freeCount heM hf
-    unfold freeCount at this
-    omega
-  rw [← Nat.card_Ico, ← Nat.card_Ico, ← Finset.card_union_of_disjoint]
-  · refine Finset.card_le_card fun i hi => ?_
-    simp only [Finset.mem_union, Finset.mem_Ico] at hi
-    simp only [Finset.mem_filter, Finset.mem_range]
-    rcases hi with hi | hi
-    · exact ⟨by omega, hf i hi.1 hi.2⟩
-    · exact ⟨by omega, hf' i hi.1 hi.2⟩
-  · rw [Finset.disjoint_left]; intro i h1 h2; simp only [Finset.mem_Ico] at h1 h2; omega
 
 /-- **The runs keep a `1/log` fraction of free positions.**  Confidence 95%.
 
