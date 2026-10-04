@@ -569,7 +569,50 @@ expansions with digits in `{0,2}` are unique).  The denominators `3^a → ∞`, 
 theorem liouvilleWith_cantorExpReal (μ₀ : ℚ) (hμ : 1 < μ₀) (ω : ℕ → Bool)
     (hf : ∀ N, ∃ i, N ≤ i ∧ expFree μ₀ i = true ∧ ω i = true) :
     LiouvilleWith μ₀ (cantorExpReal μ₀ ω) := by
-  sorry
+  classical
+  refine ⟨2, Filter.frequently_atTop.2 fun N => ?_⟩
+  set a := expRunStart μ₀ N
+  set E := expRunEnd μ₀ a
+  set f : ℕ → ℝ := fun i => (ptDigit (expFree μ₀) ω i : ℝ) / 3 ^ (i + 1)
+  have haN := lt_expRunStart μ₀ hμ N
+  have haE : a ≤ E := (lt_expRunEnd μ₀ hμ (a := a) (by omega)).le
+  obtain ⟨T, hT0, hT1, hx⟩ := pt_split (expFree μ₀) ω E
+  have hrun : ∑ i ∈ Finset.Ico a E, f i = 0 := Finset.sum_eq_zero fun i hi => by
+    simp only [Finset.mem_Ico] at hi
+    simp [f, ptDigit, expFree_run μ₀ (k := N) hi.1 hi.2 hμ]
+  have hsplit : ∑ i ∈ Finset.range E, f i = ∑ i ∈ Finset.range a, f i := by
+    rw [← Finset.sum_range_add_sum_Ico _ haE, hrun, add_zero]
+  set H := headNum a (((Finset.range a).filter fun i => expFree μ₀ i = true).filter
+    fun i => ω i = true)
+  have hhead := head_eq (expFree μ₀) ω a
+  have hxe : cantorExpReal μ₀ ω = (H : ℝ) / 3 ^ a + T := by
+    unfold cantorExpReal; rw [hx]; simp only [f] at hsplit; rw [hsplit, hhead]
+  -- the tail is positive
+  obtain ⟨i, hiE, hfi, hωi⟩ := hf E
+  have hTpos : 0 < T := by
+    obtain ⟨T', hT0', -, hx'⟩ := pt_split (expFree μ₀) ω (i + 1)
+    have h1 : ∑ j ∈ Finset.range (i + 1), f j = ∑ j ∈ Finset.range E, f j +
+        ∑ j ∈ Finset.Ico E (i + 1), f j := (Finset.sum_range_add_sum_Ico _ (by omega)).symm
+    have h2 : f i ≤ ∑ j ∈ Finset.Ico E (i + 1), f j :=
+      Finset.single_le_sum (f := f) (fun j _ => by positivity)
+        (Finset.mem_Ico.2 ⟨hiE, Nat.lt_succ_self i⟩)
+    have h3 : 0 < f i := by simp [f, ptDigit, hfi, hωi]
+    simp only [f] at h1 h2 h3
+    linarith
+  refine ⟨3 ^ a, ?_, (H : ℤ), ?_, ?_⟩
+  · have : N < 3 ^ a := haN.trans (Nat.lt_pow_self (by norm_num))
+    omega
+  · push_cast; rw [hxe]; intro h; linarith
+  · push_cast
+    rw [hxe, add_sub_cancel_left, abs_of_pos hTpos]
+    have hpow : ((3 : ℝ) ^ a) ^ (μ₀ : ℝ) ≤ 3 ^ E := by
+      rw [← Real.rpow_natCast, ← Real.rpow_mul (by norm_num), ← Real.rpow_natCast 3 E]
+      exact Real.rpow_le_rpow_of_exponent_le (by norm_num)
+        (by rw [mul_comm]; exact le_expRunEnd μ₀ hμ a)
+    have hp0 : (0 : ℝ) < ((3 : ℝ) ^ a) ^ (μ₀ : ℝ) := by positivity
+    calc T ≤ 1 / 3 ^ E := hT1
+      _ ≤ 1 / ((3 : ℝ) ^ a) ^ (μ₀ : ℝ) := one_div_le_one_div_of_le hp0 hpow
+      _ < 2 / ((3 : ℝ) ^ a) ^ (μ₀ : ℝ) := by gcongr; norm_num
 
 /-- Almost surely free `2`-digits recur.  Confidence 95%.
 
@@ -578,7 +621,36 @@ form infinitely many disjoint nonempty blocks, so by Borel–Cantelli (or indepe
 infinitely many carry a coin `true`. -/
 theorem ae_frequently_two (μ₀ : ℚ) (hμ : 1 < μ₀) :
     ∀ᵐ ω ∂coins, ∀ N, ∃ i, N ≤ i ∧ expFree μ₀ i = true ∧ ω i = true := by
-  sorry
+  rw [ae_all_iff]
+  intro n
+  set p : ℕ → ℕ := fun k => expRunEnd μ₀ (expRunStart μ₀ k)
+  have hp : StrictMono p := expRunEnd_strictMono μ₀ hμ
+  have hpn : ∀ k, k ≤ p k := fun k => hp.id_le k
+  have hpfree : ∀ k, expFree μ₀ (p k) = true := fun k =>
+    expFree_gap μ₀ hμ le_rfl (expRunEnd_lt_next μ₀ hμ k)
+  rw [ae_iff]
+  set E := {ω : ℕ → Bool | ¬∃ i, n ≤ i ∧ expFree μ₀ i = true ∧ ω i = true}
+  have hle : ∀ L : ℕ, coins E ≤ (2⁻¹ : ENNReal) ^ L := by
+    intro L
+    set S := (Finset.Ico n (n + L)).image p
+    have hsub : E ⊆ Set.pi (S : Set ℕ) (fun _ => {false}) := by
+      intro ω hω i hi
+      simp only [S, Finset.coe_image, Set.mem_image, Finset.mem_coe, Finset.mem_Ico] at hi
+      obtain ⟨k, hk, rfl⟩ := hi
+      simp only [E, Set.mem_setOf_eq, not_exists, not_and] at hω
+      simp only [Set.mem_singleton_iff]
+      have := hω (p k) ((hpn k).trans' hk.1) (hpfree k)
+      simpa using this
+    refine (measure_mono hsub).trans (le_of_eq ?_)
+    show ExplicitSquare.coinMeasure _ = _
+    unfold ExplicitSquare.coinMeasure
+    rw [Measure.infinitePi_pi _ (fun _ _ => measurableSet_singleton _)]
+    rw [Finset.prod_congr rfl (fun i _ => by rw [CantorSelfSimilar.uniform_apply])]
+    rw [Finset.prod_const, Finset.card_image_of_injective _ hp.injective, Nat.card_Ico]
+    simp
+  have ht : Tendsto (fun L : ℕ => (2⁻¹ : ENNReal) ^ L) atTop (𝓝 0) :=
+    ENNReal.tendsto_pow_atTop_nhds_zero_of_lt_one (by norm_num)
+  exact le_antisymm (ge_of_tendsto' ht hle) bot_le
 
 /-! ## Upper bound on the exponent: the leaves -/
 
@@ -591,7 +663,28 @@ theorem abs_sub_ge_of_near (x : ℝ) (P a E q : ℕ) (p : ℤ) (hq : 0 < q)
     (hx : |x - P / 3 ^ a| ≤ 1 / 3 ^ E) (hne : (p : ℝ) / q ≠ P / 3 ^ a)
     (hqE : 2 * q * 3 ^ a ≤ 3 ^ E) :
     1 / (2 * (q : ℝ) * 3 ^ a) ≤ |x - p / q| := by
-  sorry
+  have hqR : (0 : ℝ) < q := by exact_mod_cast hq
+  have h3 : (0 : ℝ) < 3 ^ a := by positivity
+  set z : ℤ := p * 3 ^ a - P * q
+  have e : (p : ℝ) / q - P / 3 ^ a = (z : ℝ) / ((q : ℝ) * 3 ^ a) := by
+    simp only [z]; push_cast; field_simp
+  have hz : z ≠ 0 := by
+    intro h0; apply hne
+    have : (p : ℝ) / q - P / 3 ^ a = 0 := by rw [e, h0]; simp
+    linarith
+  have hz1 : (1 : ℝ) ≤ |(z : ℝ)| := by rw [← Int.cast_abs]; exact_mod_cast Int.one_le_abs hz
+  have hD : (0 : ℝ) < (q : ℝ) * 3 ^ a := by positivity
+  have hfar : 1 / ((q : ℝ) * 3 ^ a) ≤ |(p : ℝ) / q - P / 3 ^ a| := by
+    rw [e, abs_div, abs_of_pos hD]; exact div_le_div_of_nonneg_right hz1 hD.le
+  have hE : (1 : ℝ) / 3 ^ E ≤ 1 / (2 * q * 3 ^ a) := by
+    apply one_div_le_one_div_of_le (by positivity); exact_mod_cast hqE
+  have htri : |(p : ℝ) / q - P / 3 ^ a| ≤ |x - p / q| + |x - P / 3 ^ a| := by
+    calc |(p : ℝ) / q - P / 3 ^ a| = |(x - P / 3 ^ a) - (x - p / q)| := by ring_nf
+      _ ≤ |x - P / 3 ^ a| + |x - p / q| := abs_sub _ _
+      _ = _ := add_comm _ _
+  have e2 : 1 / (2 * (q : ℝ) * 3 ^ a) = 1 / ((q : ℝ) * 3 ^ a) / 2 := by field_simp
+  rw [e2]; rw [e2] at hE
+  linarith
 
 /-- **Ball mass (Frostman bound for the coin point).**  Confidence 90%.
 
