@@ -950,3 +950,10 @@ import NormalNumbers.CantorLiouvilleAll
 import NormalNumbers.SchedFamily
 import NormalNumbers.UniformBad
 import NormalNumbers.Hertling
+import NormalNumbers.Barriers
+import NormalNumbers.BarrierAudit
+
+/-! Every open `sorry` of the build is a crux linked to a barrier, a waiver, or a frozen barrier
+(`BarrierAudit.lean`).  This run sees every module above. -/
+#barrier_audit NormalNumbers.Barriers.allBarriers, NormalNumbers.Barriers.cruxLinks,
+  NormalNumbers.Barriers.waivers
