@@ -320,6 +320,20 @@ real numbers which are rich to every base from `R` but not rich to every base fr
     enumerates `R` only.
 - **Lean cost:** engine 1 plus the forcing lemma, 4–6 laps.
 
+### 3.3a Audit, 2026-10-03 (branch `audit/hertling`)
+
+Verdict: not run, lap estimate 12% (truth about 85%).  The record is `src/NormalNumbers/Hertling.lean`.
+- **Proved there**: the reduction `richExactly_of_blockForcing` (10.31 follows from the single
+  node `blockForcing`).  Also the guards `not_exists_richExactly_two` and
+  `depClosed_of_blockForcing`, the corners `richExactly_empty` / `richExactly_univ`, and the
+  wired edge `richExactly_singleClass_of_hertling`.
+- **Crux**: inside a forced block of length `L` there are about `L log_s r − 24` fatal base-`s`
+  levels.  The union bound dies once `L ≳ s^{24}`, and the joint bound needs a Schmidt-lemma
+  (`×r ×s`) equidistribution of the placements' low digits at every scale, uniformly in `s`.
+- **Becher–Slaman Thm 5 does not cover it**: its base-`s` constraint is active only during the
+  stages devoted to `s` (digit `s − 1` omitted).  `exists_rich_and_not_normal_everywhere`
+  shows not-normal does not imply not-rich.
+
 ### 3.4 Draft Lean statement
 
 ```lean
