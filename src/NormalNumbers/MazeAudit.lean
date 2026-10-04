@@ -7,6 +7,8 @@ import NormalNumbers.Maze
 import NormalNumbers.CPrimeSiteFactorization
 import LeanLedger.MazeLinks
 import NormalNumbers.MasterMaze
+import NormalNumbers.StonehamBase6
+import NormalNumbers.LinearFormsScalesStretch
 
 /-!
 # Maze audit: every closed route cites declarations
@@ -34,6 +36,19 @@ def mazeRows : List RowInfo :=
 
 /-- Each linked row and the declarations it rests on. -/
 def mazeLinks : List Link := [
+  ⟨"linear forms in logarithms as the avoidance input",
+   [``LinearFormsScales.band_unique_u, ``LinearFormsScales.gap_of_scaleSeparation,
+    ``LinearFormsScales.not_scaleSeparation_two_four, ``LinearFormsScales.Literature.BakerScaleSeparation],
+   []⟩,
+  ⟨"Stoneham profile beyond the Bailey-Borwein region",
+   [``Failures.not_isNormal_six_stoneham23, ``stoneham_base6_readout,
+    ``LinearFormsScales.StonehamBase3Normal, ``LinearFormsScales.StonehamBase18Normal],
+   [``LinearFormsScales.ShortPowerOrbitEquidist]⟩,
+  ⟨"log-rate avoidance along Furstenberg's semigroup",
+   [``LinearFormsScales.furstenbergLogAvoid_holds, ``LinearFormsScales.moshchevitinPeresSchlag_of_logAvoid,
+    ``LinearFormsScales.badziahinHarrap_of_logAvoid, ``LinearFormsScales.not_constAvoid_of_furstenberg,
+    ``LinearFormsScales.constAvoid_powersOfTwo],
+   [``LinearFormsScales.FurstenbergLogAvoid]⟩,
   ⟨"CRT freezing for density of the binary words of E",
    [``EDensity.eCount_power, ``JointLambert.jointWords_quantitative, ``EDensity.RungPolylog,
     ``EDensity.RungRich], [``EDensity.ResidualSmallPolylog]⟩,
@@ -199,7 +214,7 @@ def mazeLegacy : List String := [
   "Diophantine good-denominator detour for the tail cell",
   "route B's unweighted cover of the state-dependent target"]
 
-/-- info: maze audit: 147 rows, 40 cite declarations, 107 legacy (prose only) -/
+/-- info: maze audit: 150 rows, 43 cite declarations, 107 legacy (prose only) -/
 #guard_msgs in
 #maze_audit mazeRows, mazeLinks, mazeLegacy
 
