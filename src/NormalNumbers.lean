@@ -950,3 +950,5 @@ import NormalNumbers.CantorLiouvilleAll
 import NormalNumbers.SchedFamily
 import NormalNumbers.UniformBad
 import NormalNumbers.Hertling
+import NormalNumbers.SchmidtGames
+import NormalNumbers.SchmidtGamesStretch
