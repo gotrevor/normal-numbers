@@ -1390,7 +1390,22 @@ def register : List Hall := [
    "Present log-averaged word frequencies of an arithmetically defined constant as the first positive-frequency statement about a constant defined without a construction",
    .priorArt, .cited,
    "Tao-Teravainen 2019 already give the log density 1/8 of every Liouville sign pattern of length 3, i.e. log 3-word frequencies of the carry-free binary constant sum [lambda(n)=1] 2^-n; and log Chowla is exactly log-normality of lambda (Sarnak's framing). The rung itself is genuinely weaker than normality (dyadicBit), so the novelty must come from a constant WITH carries, which is the wall row above",
-   "alias hall_log_rung_distinct; LogCastingOut.lean: TaoTeravainen2019LiouvilleThree, tendsto_logFreq_dyadicBit, not_tendsto_natFreq_dyadicBit; docs/LOG-AVERAGE-AUDIT-2026-10-04.md", "2026-10-04"⟩
+   "alias hall_log_rung_distinct; LogCastingOut.lean: TaoTeravainen2019LiouvilleThree, tendsto_logFreq_dyadicBit, not_tendsto_natFreq_dyadicBit; docs/LOG-AVERAGE-AUDIT-2026-10-04.md", "2026-10-04"⟩,
+  ⟨"linear forms in logarithms as the avoidance input",
+   "Feed Baker / Matveev separation of 2^m from 3^n into UniformBad-type avoidance along {2^u 3^v} to get a rate the potential engine cannot",
+   .vacuous, .cited,
+   "The engine consumes the per-stage obstacle COUNT, which is elementary (band_unique_u: one u per v in a dyadic band); separation only bounds near-coincident scales, which neither add nor remove obstacles (overlap only helps avoidance). Its one honest consumer is Tijdeman's gap principle (gap_of_scaleSeparation), which no avoidance step uses; the dependent sibling (2,4) has no separation at all (not_scaleSeparation_two_four)",
+   "LinearFormsScales.lean: band_unique_u, gap_of_scaleSeparation, not_scaleSeparation_two_four, Literature.BakerScaleSeparation; docs/LINEAR-FORMS-AUDIT-2026-10-04.md §2", "2026-10-04"⟩,
+  ⟨"Stoneham profile beyond the Bailey-Borwein region",
+   "Decide normality of alpha_{2,3} in bases outside 6 | B, B < 8^(v_2 B) (3, 5, 10, 18, ...) with scale separation as the new input",
+   .wall, .cited,
+   "Outside the region no Stoneham term becomes integral before the next one is live: in base 3 every earlier term stays a nonzero fraction with a power-of-2 denominator, in base 18 two terms are live at every position and the later one is a high-bit readout of 9^x mod 2^(Theta(3^m)). Both need equidistribution of 3^n mod 2^c over a window exponentially shorter than its period (Korobov / Erdos #406 regime), which separation of scales does not touch. REOPEN IF: ShortPowerOrbitEquidist",
+   "LinearFormsScalesStretch.lean: StonehamBase3Normal, StonehamBase18Normal, ShortPowerOrbitEquidist; region facts Failures.not_isNormal_six_stoneham23, stoneham_base6_readout; Bailey-Borwein, Ramanujan J. 29 (2012) Thm 2 and Sec. 5; docs/LINEAR-FORMS-AUDIT-2026-10-04.md C1", "2026-10-04"⟩,
+  ⟨"log-rate avoidance along Furstenberg's semigroup",
+   "Remove the log log loss from the Moshchevitin / Peres-Schlag bound inf log q log log q ||q alpha|| > 0 over q = 2^u 3^v (frozen as furstenbergLogAvoid_holds, 7%)",
+   .parked, .frozen,
+   "Each K-adic stage carries about k obstacles of relative size c/k with total length O(c), but every known carrying rule pays: square-root potential (log q)^-2, exponent-gamma potential (log q)^(-1/gamma) (Badziahin-Harrap strength), local lemma log q log log q. Homogeneity is the only extra lever and no mechanism uses it; Moshchevitin expects the inhomogeneous order may be optimal, so a homogeneity-blind mechanism is suspect. Constant rate is false for an independent pair (Furstenberg) and true for a dependent one",
+   "LinearFormsScales.lean: FurstenbergLogAvoid, furstenbergLogAvoid_holds (sorry), moshchevitinPeresSchlag_of_logAvoid, badziahinHarrap_of_logAvoid, not_constAvoid_of_furstenberg, constAvoid_powersOfTwo; docs/LINEAR-FORMS-AUDIT-2026-10-04.md C2", "2026-10-04"⟩
 ]
 
 /-- Rows whose verdict is machine-checked in this build. -/

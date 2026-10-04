@@ -951,4 +951,6 @@ import NormalNumbers.CantorLiouville
 import NormalNumbers.CantorLiouvilleAll
 import NormalNumbers.SchedFamily
 import NormalNumbers.UniformBad
+import NormalNumbers.LinearFormsScales
+import NormalNumbers.LinearFormsScalesStretch
 import NormalNumbers.Hertling
