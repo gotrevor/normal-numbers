@@ -11,6 +11,7 @@ import NormalNumbers.LogCastingOutStretch
 import NormalNumbers.PairDecoupleProve
 import NormalNumbers.StonehamBase6
 import NormalNumbers.LinearFormsScalesStretch
+import NormalNumbers.EntropyProfiles
 
 /-!
 # Maze audit: every closed route cites declarations
@@ -59,6 +60,9 @@ def mazeLinks : List Link := [
     ``LinearFormsScales.badziahinHarrap_of_logAvoid, ``LinearFormsScales.not_constAvoid_of_furstenberg,
     ``LinearFormsScales.constAvoid_powersOfTwo],
    [``LinearFormsScales.FurstenbergLogAvoid]⟩,
+  ⟨"bi-Lipschitz stability of Hochman-Shmerkin as new",
+   [``EntropyProfiles.exists_strictMono_biLipschitz_cantorSet_not_isNormal_two,
+    ``EntropyProfiles.not_biLipschitz_stable, ``EntropyProfiles.HochmanShmerkinCantorDiff1], []⟩,
   ⟨"CRT freezing for density of the binary words of E",
    [``EDensity.eCount_power, ``JointLambert.jointWords_quantitative, ``EDensity.RungPolylog,
     ``EDensity.RungRich], [``EDensity.ResidualSmallPolylog]⟩,
@@ -224,7 +228,7 @@ def mazeLegacy : List String := [
   "Diophantine good-denominator detour for the tail cell",
   "route B's unweighted cover of the state-dependent target"]
 
-/-- info: maze audit: 152 rows, 45 cite declarations, 107 legacy (prose only) -/
+/-- info: maze audit: 153 rows, 46 cite declarations, 107 legacy (prose only) -/
 #guard_msgs in
 #maze_audit mazeRows, mazeLinks, mazeLegacy
 

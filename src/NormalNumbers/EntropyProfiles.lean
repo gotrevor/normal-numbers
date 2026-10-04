@@ -210,7 +210,14 @@ theorem ae_isNormal_iff_not_multDep (hCS : CasselsSchmidtCantor) {b : ℕ} (hb :
 /-! ## Frozen headline: the bi-Lipschitz question -/
 
 /-- **Headline (frozen, `sorry`).  Hochman–Shmerkin's bi-Lipschitz question has a negative
-answer.**
+answer, known in substance (sharpness guard, not a new result).**
+
+*Status (referee, docs/ENTROPY-REFEREE-2026-10-04.md).*  The question is read faithfully (85%), but
+the embedding of `K` into a missing-digit set of larger dimension is in print before HS: Mattila–
+Saaranen 2009 (`s`-regular into `t`-regular, `t > s`) and Deng–Wen–Xiong–Xi 2011 Thm 1 (SSC
+self-similar into self-similar of larger dimension).  Only monotonicity (to extend to `ℝ`) is extra.
+Kept as the bi-Lipschitz sharpness guard for `HochmanShmerkinCantorDiff1`; see the Maze row
+"bi-Lipschitz stability of Hochman-Shmerkin as new".
 
 *Problem* (Hochman–Shmerkin, Invent. Math. 202 (2015), §1.2.1, after Corollary 1.8, arXiv:1302.5792):
 "Bugeaud, Fishman, Kleinbock and Weiss have shown that for many fractal sets, including
@@ -227,17 +234,15 @@ Cantor set `K`.  So `g μ` is not pointwise `2`-normal although `2 ≁ 3`, and `
 
 *English proof.*  Let `F = {y ∈ [0,1] : no hexadecimal digit of y equals 15}`; every point of `F`
 misses a base-16 digit, so is not 16-normal, hence not 2-normal.  `F` is closed and
-`dim F = log 15 / log 16 > log 2 / log 3 = dim K`.  Gap estimate: if `e ∈ F` is a *left-type* point
-`0.w000…` (resp. *right-type* `0.wEEE…`), every complementary gap of `F` at distance `D` to its
-right (resp. left) has length `≤ 1.15 D`; hence every window `e + [A r, B r]` (resp. `e − [B r, A r]`)
-with `B / A ≥ 2.3` meets `F`, in fact contains points of both types.  Fix `L` with
-`(3/2)^L > 40` and work with the level-`nL` intervals `I_u` of `K` (length `3^{-nL}`, `2^L` children
-each).  Build nested closed intervals `J_u` with endpoints in `F` (left end left-type, right end
-right-type), `diam J_u ∈ [A 3^{-nL}, B 3^{-nL}]` with `B = 2.3 A`, by placing the `2^L` children
-of `J_u` in order, each child's endpoints chosen in windows of ratio `≥ 2.3` positioned at the
-affine image of the child's position in `I_u`; the budget `2^L · B < 3^L · A / 2` leaves gaps
-`≍ 3^{-nL}` between consecutive children and the intermediate `K`-levels inside one block are
-handled with constants depending only on `L`.  Set `g(x) = ⋂ J_{u(x)}` on `K` and extend affinely
+`dim F = log 15 / log 16 > log 2 / log 3 = dim K`.  Tree embedding (the earlier "gap estimate"
+draft was false: from `0.0ED000…` a gap of length `1/240` sits at distance `≈ 8.8 D`).  Fix `L`
+large and let `m(n) = ⌈n L log 3 / log 16⌉`.  Make each `J_u` (for `u` a level-`nL` word of `K`)
+the closed hull of a level-`m(n)` hexadecimal cylinder meeting `F`, and assign the `2^L` children of
+`I_u` in order to every other admissible descendant cylinder of `J_u` at level `m(n+1)` (there are
+`≈ 15^{m(n+1)-m(n)} ≈ 2^{1.55 L}` of them against the `2^L` needed, so skipping alternate ones leaves
+a gap `≍ 3^{-(n+1)L}` between consecutive images).  Lengths: `diam J_u ≍ 3^{-nL}` with constants
+depending only on `L`; consecutive images are separated at the same scale; the intermediate `K`-levels
+inside one block are handled with constants depending only on `L`.  Set `g(x) = ⋂ J_{u(x)}` on `K` and extend affinely
 on each gap of `K` (and outside `[0,1]`).  For `x, y ∈ K` splitting at level `n`, `|g x − g y| ≍
 3^{-n}`; each gap of `K` of length `ℓ` maps to a gap of length `≍ ℓ`; since `K` and `g(K)` are
 Lebesgue-null, `g(t) − g(s) ≍ t − s` for all `s < t`.  Endpoints lie in the closed set `F`, so
@@ -247,8 +252,8 @@ Lebesgue-null, `g(t) − g(s) ≍ t − s` for all `s < t`.  Endpoints lie in th
 `|J_u| / |I_u|` wanders in `[A, B]` with no limit, which is exactly the freedom a `C¹` map lacks
 (their argument transports sceneries of `μ` at `x` to `f μ` at `f x` through `f′(x)`).
 
-*Confidence.*  Mathematics 85%; not already answered in print 65% (searches logged in the audit);
-Lean proof in a few laps 55%. -/
+*Confidence.*  Mathematics 90% (tree embedding); written down as an answer to HS: 90% not in print,
+but known in substance (70%); Lean proof in a few laps 55%. -/
 theorem exists_strictMono_biLipschitz_cantorSet_not_isNormal_two :
     ∃ g : ℝ → ℝ, StrictMono g ∧ IsBiLipschitz g ∧ ∀ x ∈ cantorSet, ¬ IsNormal 2 (g x) := by
   sorry

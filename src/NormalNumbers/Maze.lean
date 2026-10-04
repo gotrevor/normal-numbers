@@ -1405,7 +1405,12 @@ def register : List Hall := [
    "Remove the log log loss from the Moshchevitin / Peres-Schlag bound inf log q log log q ||q alpha|| > 0 over q = 2^u 3^v (frozen as furstenbergLogAvoid_holds, 7%)",
    .parked, .frozen,
    "Each K-adic stage carries about k obstacles of relative size c/k with total length O(c), but every known carrying rule pays: square-root potential (log q)^-2, exponent-gamma potential (log q)^(-1/gamma) (Badziahin-Harrap strength), local lemma log q log log q. Homogeneity is the only extra lever and no mechanism uses it; Moshchevitin expects the inhomogeneous order may be optimal, so a homogeneity-blind mechanism is suspect. Constant rate is false for an independent pair (Furstenberg) and true for a dependent one",
-   "LinearFormsScales.lean: FurstenbergLogAvoid, furstenbergLogAvoid_holds (sorry), moshchevitinPeresSchlag_of_logAvoid, badziahinHarrap_of_logAvoid, not_constAvoid_of_furstenberg, constAvoid_powersOfTwo; docs/LINEAR-FORMS-AUDIT-2026-10-04.md C2", "2026-10-04"⟩
+   "LinearFormsScales.lean: FurstenbergLogAvoid, furstenbergLogAvoid_holds (sorry), moshchevitinPeresSchlag_of_logAvoid, badziahinHarrap_of_logAvoid, not_constAvoid_of_furstenberg, constAvoid_powersOfTwo; docs/LINEAR-FORMS-AUDIT-2026-10-04.md C2", "2026-10-04"⟩,
+  ⟨"bi-Lipschitz stability of Hochman-Shmerkin as new",
+   "Present a strictly increasing bi-Lipschitz map sending the middle-third Cantor set into non-2-normal numbers as a new negative answer to Hochman-Shmerkin (Invent. 2015, 1.2.1) 'stability under bi-Lipschitz transformations remains open'",
+   .priorArt, .cited,
+   "The reading is faithful (their Thm 1.4/1.5 give pointwise normality for every C^1 diffeomorphism), but the mechanism is a bi-Lipschitz embedding of K into the no-hex-digit-15 set F, which Mattila-Saaranen 2009 and Deng-Wen-Xiong-Xi 2011 Thm 1 already provide; only monotonicity is extra. Kept as the C^1 sharpness guard, not as outreach",
+   "EntropyProfiles.lean: exists_strictMono_biLipschitz_cantorSet_not_isNormal_two (sorry), not_biLipschitz_stable, HochmanShmerkinCantorDiff1; docs/ENTROPY-REFEREE-2026-10-04.md", "2026-10-04"⟩
 ]
 
 /-- Rows whose verdict is machine-checked in this build. -/
