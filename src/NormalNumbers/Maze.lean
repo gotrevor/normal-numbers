@@ -15,6 +15,7 @@ import NormalNumbers.G4RowMassOptimal
 import NormalNumbers.G4WiringSparse
 import NormalNumbers.StonehamSixFailure
 import NormalNumbers.CastingOut
+import NormalNumbers.LogCastingOut
 import NormalNumbers.C3MrtTTDefect
 import NormalNumbers.LiteratureTTEquidistributedDefect
 import NormalNumbers.C3MrtBlockDefect
@@ -622,6 +623,18 @@ the digit character at the indicator index `kOf L S`, and every `k : Fin L → F
 an indicator.  Recorded so the question "do the two files agree at `b = 2`?" is never
 re-litigated. -/
 alias walsh_two_files_agree := NormalNumbers.WalshBase.parityMean_criterion_iff_digitMean_criterion
+
+/-- **HALL: log-averaged casting-out via the Elliott ledger (E2)** (`wall`, 2026-10-04).
+Given the ledger's single input, the log twin of the C1 pair leaf is EQUIVALENT to the log
+decoupling, so consuming `TwoPointElliottLog` removes none of the crux: it all sits in
+`WeightDecoupleLog`, growing-depth Elliott with trivial product.  The 2026-09-24 swing
+(`SwingC1Log`) reached the same verdict in a docstring only; this row makes it findable. -/
+alias hall_logavg_casting_out :=
+  NormalNumbers.LogCastingOut.twoPointWeightedLog_iff_weightDecoupleLog_of_zetaExponent
+
+/-- **HALL: the log rung is a natural-average statement in disguise** (`refuted`, 2026-10-04).
+It is not: `dyadicBit` has log digit frequency `1/2` and no natural digit frequency. -/
+alias hall_log_rung_distinct := NormalNumbers.LogCastingOut.not_tendsto_natFreq_dyadicBit
 
 /-! ## 4. The register
 
@@ -1367,7 +1380,37 @@ def register : List Hall := [
    "Use 2^omega_odd(m) | tau(m) to kill positions j <= (1-eps) log log n for free and force-kill only the band, to reach R1 for the binary words of E",
    .wall, .cited,
    "The free kill is real (two_pow_oddExpCount_dvd_card_divisors) but leaves the band j = log log n +- O(sqrt(log log n)), whose positions carry O(1) random fractions. Force-killing the band needs >> log log N log log log N distinct primes, a primorial of size (log N)^(c (log log log N)^2), so only N/(log N)^(C (log log log N)^2). The statistical alternative is a sieve in dimension ~ log log N with a per-position margin ~ log log log N, giving at best (log log N)^(-C) for the all-zero word, and a general word also needs one exactly prescribed tau (a parity-sensitive joint local Erdos-Kac input). Sibling control: tau mod 2 alone reads only squares, <= sqrt N + 1 ones (card_odd_card_divisors_le). REOPEN IF: ResidualSmallOften or ResidualSmallPolylog is proved, plus a writer input for general words",
-   "EDensityAudit.lean: two_pow_oddExpCount_dvd_card_divisors, fract_card_divisors_div_two_pow_eq_zero, card_odd_card_divisors_le, ResidualSmallOften, ResidualSmallPolylog; Erdos257Squarefree.SqfreeBinaryDisjunctive; docs/EDENSITY-AUDIT-2026-10-03.md", "2026-10-03"⟩
+   "EDensityAudit.lean: two_pow_oddExpCount_dvd_card_divisors, fract_card_divisors_div_two_pow_eq_zero, card_odd_card_divisors_le, ResidualSmallOften, ResidualSmallPolylog; Erdos257Squarefree.SqfreeBinaryDisjunctive; docs/EDENSITY-AUDIT-2026-10-03.md", "2026-10-03"⟩,
+  ⟨"log-averaged casting-out via the Elliott ledger",
+   "Consume TwoPointElliottLog (ledger: one zeta-exponent input) through a log-weighted casting-out / Katai route to get log-averaged 1- or 2-word frequencies of G4_b = sum omega(n)/b^n, or of the #257 / Erdos-Borwein Lambert sums",
+   .wall, .kernel,
+   "Log weighting survives every averaging step (partial summation and the two-point split, proved; Katai by the same linear argument) but not the carries: the digit reads omega(n+1) plus a floor of the whole tail, and the tail's mass b^-K log log X forces depth K -> infinity whatever the weights (carry_correction_unbounded). On the pair route the split is an equivalence given the ledger, so the crux is WeightDecoupleLog = log growing-depth Elliott with trivial product, open already at fixed K = 2. On the direct digit route each fixed depth is Tao-Teravainen 2019 (product a nontrivial root of unity to the omega), so the exact gap is uniformity in K. The #257 sums are worse (divisor tails, mass log X). REOPEN IF: GrowingDepthLogElliott (then simplyNormalLog_of_growingDepth is the wiring)",
+   "alias hall_logavg_casting_out; LogCastingOut.lean: twoPointWeightedLog_iff_weightDecoupleLog_of_zetaExponent, TaoTeravainen2019FixedDepth, GrowingDepthLogElliott; SwingC1LogCarry.carry_correction_unbounded; SwingC1Log.castLawLog_one_iff; PairDecoupleProve.multiElliott_all; docs/LOG-AVERAGE-AUDIT-2026-10-04.md", "2026-10-04"⟩,
+  ⟨"log-averaged word frequencies of an unconstructed constant as new",
+   "Present log-averaged word frequencies of an arithmetically defined constant as the first positive-frequency statement about a constant defined without a construction",
+   .priorArt, .cited,
+   "Tao-Teravainen 2019 already give the log density 1/8 of every Liouville sign pattern of length 3, i.e. log 3-word frequencies of the carry-free binary constant sum [lambda(n)=1] 2^-n; and log Chowla is exactly log-normality of lambda (Sarnak's framing). The rung itself is genuinely weaker than normality (dyadicBit), so the novelty must come from a constant WITH carries, which is the wall row above",
+   "alias hall_log_rung_distinct; LogCastingOut.lean: TaoTeravainen2019LiouvilleThree, tendsto_logFreq_dyadicBit, not_tendsto_natFreq_dyadicBit; docs/LOG-AVERAGE-AUDIT-2026-10-04.md", "2026-10-04"⟩,
+  ⟨"linear forms in logarithms as the avoidance input",
+   "Feed Baker / Matveev separation of 2^m from 3^n into UniformBad-type avoidance along {2^u 3^v} to get a rate the potential engine cannot",
+   .vacuous, .cited,
+   "The engine consumes the per-stage obstacle COUNT, which is elementary (band_unique_u: one u per v in a dyadic band); separation only bounds near-coincident scales, which neither add nor remove obstacles (overlap only helps avoidance). Its one honest consumer is Tijdeman's gap principle (gap_of_scaleSeparation), which no avoidance step uses; the dependent sibling (2,4) has no separation at all (not_scaleSeparation_two_four)",
+   "LinearFormsScales.lean: band_unique_u, gap_of_scaleSeparation, not_scaleSeparation_two_four, Literature.BakerScaleSeparation; docs/LINEAR-FORMS-AUDIT-2026-10-04.md §2", "2026-10-04"⟩,
+  ⟨"Stoneham profile beyond the Bailey-Borwein region",
+   "Decide normality of alpha_{2,3} in bases outside 6 | B, B < 8^(v_2 B) (3, 5, 10, 18, ...) with scale separation as the new input",
+   .wall, .cited,
+   "Outside the region no Stoneham term becomes integral before the next one is live: in base 3 every earlier term stays a nonzero fraction with a power-of-2 denominator, in base 18 two terms are live at every position and the later one is a high-bit readout of 9^x mod 2^(Theta(3^m)). Both need equidistribution of 3^n mod 2^c over a window exponentially shorter than its period (Korobov / Erdos #406 regime), which separation of scales does not touch. REOPEN IF: ShortPowerOrbitEquidist",
+   "LinearFormsScalesStretch.lean: StonehamBase3Normal, StonehamBase18Normal, ShortPowerOrbitEquidist; region facts Failures.not_isNormal_six_stoneham23, stoneham_base6_readout; Bailey-Borwein, Ramanujan J. 29 (2012) Thm 2 and Sec. 5; docs/LINEAR-FORMS-AUDIT-2026-10-04.md C1", "2026-10-04"⟩,
+  ⟨"log-rate avoidance along Furstenberg's semigroup",
+   "Remove the log log loss from the Moshchevitin / Peres-Schlag bound inf log q log log q ||q alpha|| > 0 over q = 2^u 3^v (frozen as furstenbergLogAvoid_holds, 7%)",
+   .parked, .frozen,
+   "Each K-adic stage carries about k obstacles of relative size c/k with total length O(c), but every known carrying rule pays: square-root potential (log q)^-2, exponent-gamma potential (log q)^(-1/gamma) (Badziahin-Harrap strength), local lemma log q log log q. Homogeneity is the only extra lever and no mechanism uses it; Moshchevitin expects the inhomogeneous order may be optimal, so a homogeneity-blind mechanism is suspect. Constant rate is false for an independent pair (Furstenberg) and true for a dependent one",
+   "LinearFormsScales.lean: FurstenbergLogAvoid, furstenbergLogAvoid_holds (sorry), moshchevitinPeresSchlag_of_logAvoid, badziahinHarrap_of_logAvoid, not_constAvoid_of_furstenberg, constAvoid_powersOfTwo; docs/LINEAR-FORMS-AUDIT-2026-10-04.md C2", "2026-10-04"⟩,
+  ⟨"bi-Lipschitz stability of Hochman-Shmerkin as new",
+   "Present a strictly increasing bi-Lipschitz map sending the middle-third Cantor set into non-2-normal numbers as a new negative answer to Hochman-Shmerkin (Invent. 2015, 1.2.1) 'stability under bi-Lipschitz transformations remains open'",
+   .priorArt, .cited,
+   "The reading is faithful (their Thm 1.4/1.5 give pointwise normality for every C^1 diffeomorphism), but the mechanism is a bi-Lipschitz embedding of K into the no-hex-digit-15 set F, which Mattila-Saaranen 2009 and Deng-Wen-Xiong-Xi 2011 Thm 1 already provide; only monotonicity is extra. Kept as the C^1 sharpness guard, not as outreach",
+   "EntropyProfiles.lean: exists_strictMono_biLipschitz_cantorSet_not_isNormal_two (sorry), not_biLipschitz_stable, HochmanShmerkinCantorDiff1; docs/ENTROPY-REFEREE-2026-10-04.md", "2026-10-04"⟩
 ]
 
 /-- Rows whose verdict is machine-checked in this build. -/

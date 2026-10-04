@@ -2841,3 +2841,11 @@ Note: Bridge edit forces rebuild of whole-Mathlib importers; parallel `lake buil
   `not_isNormal_of_three_dvd` (frequency of `[0,1/b)` ≥ 7/8 at `n = log_b 3^T`).
 * New module `SchedFamily.lean`: base-`b` visit deviation / level tests, and the multi-base derandomizer
   (resolution `nr J / H b` makes total per-stage mass ≤ 3/(J+1)²).
+
+## Finite-state lane E3 (proof/finstate), 2026-10-04 — leaves DONE
+* All leaves in `FiniteStateSelection.lean` proved; `#print axioms` of `pulariDPDTQuestion_of_lit`,
+  `pulariWeakening_of_lit`, `mirror_not_mealy` = propext, Classical.choice, Quot.sound (plus the
+  cited `Literature.*` Props as hypotheses).
+* New: `pulariDPDTQuestion_of_lit_three` (Q-DPDT for `k ≥ 3`) from `cpPrefix_count`.
+* Next: base 2 (`PulariDPDTBaseTwo`) needs a different coder; stretch nodes in
+  `FiniteStateSelectionStretch.lean` were out of scope this run (operator: do not touch).

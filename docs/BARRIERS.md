@@ -47,6 +47,17 @@ This library makes that a build check, as `MazeAudit.lean` did for Maze rows (pr
 * **A leaf `sorry`:** add a `Waiver` with the reason.
 * **A sibling gets proved:** change `.frozen` to `.proved`; the audit demands it.
 
+## Merging a lane
+
+A lane merged into the main line owes the audit its bookkeeping in the same merge commit.  Every
+new `sorry` the lane brings gets tagged in `BarrierAudit.lean` (importing its module): a crux with
+the sibling its mechanism must fail on (registering that sibling in `Barriers.lean` if the lane
+proved or cited it), or a waiver with the reason, never a blanket waiver to get green.  Every
+`sorry` the lane proved has its `CruxLink` or `Waiver` removed, since the audit fails on a tag
+whose `sorry` is gone.  Keep the root's `#barrier_audit` as the last command of
+`src/NormalNumbers.lean`, below every new import, and read its failure list from one full
+`lake build NormalNumbers`: it names exactly the untagged and stale entries.
+
 ## Open work for a treadmill
 
 The four siblings first frozen in `Barriers/Siblings.lean` (`exists_rat_isNormalUpTo_not_isNormal`,

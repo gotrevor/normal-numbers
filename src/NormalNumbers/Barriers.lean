@@ -21,6 +21,8 @@ import NormalNumbers.C3MrtTTDefect
 import NormalNumbers.VandeheyS7QuadDigit
 import NormalNumbers.EDensityAudit
 import NormalNumbers.Erdos257Squarefree
+import NormalNumbers.LinearFormsScales
+import NormalNumbers.EntropyProfiles
 
 /-!
 # Barrier library: the registry
@@ -224,6 +226,30 @@ def driftOne_fails_at_71 : Barrier :=
     [``Siblings.not_exists_prime_nonresidue_71]
     "a short-interval nonresidue argument that does not use p ≥ 73"
 
+/-! ## Avoidance along `{2ᵘ3ᵛ}` and self-similar measures -/
+
+/-- Furstenberg: an irrational point cannot avoid `0` at a constant rate along `{2ᵘ3ᵛ}`. -/
+def furstenberg_constAvoid_false : Barrier :=
+  .cited "irrational α with ‖qα‖ ≥ c > 0 for every q = 2ᵘ3ᵛ: none exists (Furstenberg 1967)"
+    LinearFormsScales.Literature.Furstenberg1967 LinearFormsScales.not_constAvoid_of_furstenberg
+    [``LinearFormsScales.not_constAvoid_of_furstenberg]
+    "avoidance along {2ᵘ3ᵛ} at a rate bounded below, with no decay in q"
+
+/-- The dependent pair: along `{2ᵏ}` the point `1/3` avoids `ℤ` at the constant rate `1/3`. -/
+def powersOfTwo_constAvoid : Barrier :=
+  .proved "dependent pair {2ᵏ}: ‖2ᵏ/3‖ ≥ 1/3 for every k, a constant avoidance rate"
+    LinearFormsScales.constAvoid_powersOfTwo
+    [``LinearFormsScales.constAvoid_powersOfTwo]
+    "avoidance arguments blind to the independence of 2 and 3 (lacunarity or scale counting \
+     alone), which would give the constant rate Furstenberg forbids"
+
+/-- Cantor points fail every base `3ᵏ`: a `×3`-invariant measure is not normal in its own base. -/
+def cantor_not_normal_three_pow : Barrier :=
+  .proved "every middle-third Cantor point is not normal in any base 3ᵏ"
+    @EntropyProfiles.not_isNormal_three_pow_cantorPt
+    [``EntropyProfiles.not_isNormal_three_pow_cantorPt]
+    "normality of a ×p-invariant measure in the dependent base p without a nonlinear input"
+
 /-- Every registered barrier, for `#barrier_audit`. -/
 def allBarriers : List Lean.Name := [
   ``stoneham_two_not_six, ``cantorLiouville_three_dvd, ``cassels_cantor_ae_normal,
@@ -234,6 +260,7 @@ def allBarriers : List Lean.Name := [
   ``normal_prefix_limit, ``uniformBad_base_two, ``approxGPfam_false,
   ``richExactly_two_impossible, ``reciprocal_question_false, ``deterministic_products_null,
   ``tau_parity_sibling, ``squarefree_powTwo_encoding, ``hypE_logRate,
-  ``fermat_lambert_rational, ``driftOne_fails_at_71]
+  ``fermat_lambert_rational, ``driftOne_fails_at_71, ``furstenberg_constAvoid_false,
+  ``powersOfTwo_constAvoid, ``cantor_not_normal_three_pow]
 
 end NormalNumbers.Barriers

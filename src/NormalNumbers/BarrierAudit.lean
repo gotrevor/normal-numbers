@@ -22,6 +22,10 @@ import NormalNumbers.LevinSparse
 import NormalNumbers.DeterministicBD
 import NormalNumbers.PrimeLambertOscillation
 import NormalNumbers.SwingC3Rotation
+import NormalNumbers.LinearFormsScales
+import NormalNumbers.LogCastingOutStretch
+import NormalNumbers.EntropyProfilesStretch
+import NormalNumbers.FiniteStateSelectionStretch
 
 /-!
 # Barrier audit: every open crux names a sibling it must fail on
@@ -86,7 +90,18 @@ def cruxLinks : List CruxLink := [
    "squares give ~√n free digits, above Barrier 2's log n; power decay is impossible (Barrier 1), \
     so the proof must land on a logarithmic rate"⟩,
   ⟨``Adder.Background.exists_prime_nonresidue, [``driftOne_fails_at_71],
-   "the statement is false at p = 71, so the argument must use p ≥ 73"⟩]
+   "the statement is false at p = 71, so the argument must use p ≥ 73"⟩,
+  ⟨``LinearFormsScales.furstenbergLogAvoid_holds,
+   [``furstenberg_constAvoid_false, ``powersOfTwo_constAvoid],
+   "the rate c / log q must tend to 0 (a constant rate is false by Furstenberg), and the \
+    argument must use the independence of 2 and 3: for the dependent pair {2ᵏ} a constant rate \
+    holds, so a lacunarity-only avoidance argument would prove the false constant rate for Σ"⟩,
+  ⟨``LogCastingOut.simplyNormalLog_of_growingDepth, [``log_normal_not_simply_normal],
+   "the log Weyl criterion yields log equidistribution only; the conclusion must stay on the log \
+    rung, since a log-normal number need not be simply normal"⟩,
+  ⟨``EntropyProfiles.ae_isNormal_self_base_sq_of_timesP_ergodic, [``cantor_not_normal_three_pow],
+   "with x in place of (x + 1)² the claim is false (the Cantor measure is ×3-ergodic and no Cantor \
+    point is 3-normal), so the mechanism must use the curvature of the map"⟩]
 
 /-- Open `sorry`s that are not cruxes, and why no barrier applies. -/
 def waivers : List Waiver := [
@@ -122,7 +137,26 @@ def waivers : List Waiver := [
    "known theorem (Davenport–Erdős–LeVeque) transcribed; no new mechanism"⟩,
   ⟨``ExplicitSquare.oneFreqZero_sparseReal_squares, "a leaf of the squares construction"⟩,
   ⟨``ExplicitSquare.sparseReal_pos, "a leaf of the squares construction"⟩,
-  ⟨``Deterministic.quadraticLogWitness_of_cor14, "wiring from cited Manai 2026 Cor 1.4"⟩]
+  ⟨``Deterministic.quadraticLogWitness_of_cor14, "wiring from cited Manai 2026 Cor 1.4"⟩,
+  ⟨``LogCastingOut.omegaModDigit_logTwoWord_of_zetaExponent,
+   "corollary of Tao 2016 log Elliott (proved in the repo) plus the ledger's zeta input, for the \
+    carry-free sibling of G4_b; low novelty, English proof in the docstring"⟩,
+  ⟨``EntropyProfiles.exists_strictMono_biLipschitz_cantorSet_not_isNormal_two,
+   "construction lemma (known embedding, Mattila–Saaranen 2009 / Deng–Wen–Xiong–Xi 2011); a \
+    sharpness guard for HochmanShmerkinCantorDiff1, not a new mechanism"⟩,
+  ⟨``EntropyProfiles.exists_strictMono_biLipschitz_cantorSet_absAbnormal,
+   "construction: the headline's tree embedding with scale-dependent digit targets; extends the \
+    sharpness guard, no new mechanism"⟩,
+  ⟨``FiniteState.isNormal_cpSeq,
+   "believed literature-strength leaf: Champernowne counting (Becher–Carton 2018 Thm 7.7.1); \
+    Carton–Perifel is cited for k ≥ 7 (Literature.cartonPerifel_normal), needed for k ≤ 6"⟩,
+  ⟨``FiniteState.not_isNormal_of_zeroFreqHalf,
+   "a leaf: zero-frequency 1/2 ≠ 1/k contradicts simple normality"⟩,
+  ⟨``FiniteState.k_dvd_scaled_delayEnum, "a leaf: arithmetic of the one-letter delay relabeling"⟩,
+  ⟨``FiniteState.not_kAdicEquidist_delayEnum,
+   "a leaf: residue 1 mod k is never hit, from k_dvd_scaled_delayEnum"⟩,
+  ⟨``FiniteState.isFNormal_delayEnum_of_normal,
+   "a leaf: O(1) cost of composing with the delay transducer and its finite-state right inverse"⟩]
 
 #barrier_audit allBarriers, cruxLinks, waivers
 

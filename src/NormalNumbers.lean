@@ -539,6 +539,8 @@ import NormalNumbers.MazeAudit
 import NormalNumbers.StonehamSixFailure
 import NormalNumbers.CastingOut
 import NormalNumbers.SwingC1Log
+import NormalNumbers.LogCastingOut
+import NormalNumbers.LogCastingOutStretch
 import NormalNumbers.SwingC2
 import NormalNumbers.SwingC2Moment
 import NormalNumbers.SwingC3
@@ -949,9 +951,15 @@ import NormalNumbers.CantorLiouville
 import NormalNumbers.CantorLiouvilleAll
 import NormalNumbers.SchedFamily
 import NormalNumbers.UniformBad
+import NormalNumbers.LinearFormsScales
+import NormalNumbers.LinearFormsScalesStretch
 import NormalNumbers.Hertling
 import NormalNumbers.Barriers
 import NormalNumbers.BarrierAudit
+import NormalNumbers.FiniteStateSelection
+import NormalNumbers.FiniteStateSelectionStretch
+import NormalNumbers.EntropyProfiles
+import NormalNumbers.EntropyProfilesStretch
 
 /-! Every open `sorry` of the build is a crux linked to a barrier, a waiver, or a frozen barrier
 (`BarrierAudit.lean`).  This run sees every module above. -/
