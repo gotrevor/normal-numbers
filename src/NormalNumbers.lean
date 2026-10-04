@@ -539,6 +539,8 @@ import NormalNumbers.MazeAudit
 import NormalNumbers.StonehamSixFailure
 import NormalNumbers.CastingOut
 import NormalNumbers.SwingC1Log
+import NormalNumbers.LogCastingOut
+import NormalNumbers.LogCastingOutStretch
 import NormalNumbers.SwingC2
 import NormalNumbers.SwingC2Moment
 import NormalNumbers.SwingC3
@@ -949,6 +951,10 @@ import NormalNumbers.CantorLiouville
 import NormalNumbers.CantorLiouvilleAll
 import NormalNumbers.SchedFamily
 import NormalNumbers.UniformBad
+import NormalNumbers.LinearFormsScales
+import NormalNumbers.LinearFormsScalesStretch
 import NormalNumbers.Hertling
 import NormalNumbers.FiniteStateSelection
 import NormalNumbers.FiniteStateSelectionStretch
+import NormalNumbers.EntropyProfiles
+import NormalNumbers.EntropyProfilesStretch
