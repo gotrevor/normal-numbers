@@ -947,6 +947,7 @@ import NormalNumbers.ReciprocalNormal
 import NormalNumbers.LevinSparse
 import NormalNumbers.CantorLiouville
 import NormalNumbers.CantorLiouvilleAll
+import NormalNumbers.CantorExpGeneric
 import NormalNumbers.CantorExactExponent
 import NormalNumbers.CantorExactExponentStretch
 import NormalNumbers.SchedFamily

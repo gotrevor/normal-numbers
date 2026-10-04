@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
 import NormalNumbers.CantorLiouvilleAll
+import NormalNumbers.CantorExpGeneric
 
 /-!
 # A computable point of the Cantor set with exact irrationality exponent `μ₀`, normal to every base prime to 3
@@ -134,14 +135,120 @@ theorem expRun_anchor_four :
 theorem mem_cantorSet (μ₀ : ℚ) (ω : ℕ → Bool) : cantorExpReal μ₀ ω ∈ cantorSet :=
   pt_mem_cantorSet _ _
 
+/-! ## Schedule facts -/
+
+section Schedule
+
+variable {μ₀ : ℚ}
+
+theorem expRunEnd_ge_q (μ₀ : ℚ) (a : ℕ) : μ₀ * a ≤ (expRunEnd μ₀ a : ℚ) := Nat.le_ceil _
+
+theorem expRunEnd_lt_q (hμ : 1 < μ₀) (a : ℕ) : (expRunEnd μ₀ a : ℚ) < μ₀ * a + 1 :=
+  Nat.ceil_lt_add_one (by positivity)
+
+theorem expRunEnd_ge_r (μ₀ : ℚ) (a : ℕ) : (μ₀ : ℝ) * a ≤ (expRunEnd μ₀ a : ℝ) := by
+  have := expRunEnd_ge_q μ₀ a; exact_mod_cast this
+
+theorem expRunEnd_lt_r (hμ : 1 < μ₀) (a : ℕ) : (expRunEnd μ₀ a : ℝ) < (μ₀ : ℝ) * a + 1 := by
+  have := expRunEnd_lt_q hμ a; exact_mod_cast this
+
+theorem le_expRunEnd (hμ : 1 < μ₀) (a : ℕ) : a ≤ expRunEnd μ₀ a := by
+  have h := expRunEnd_ge_q μ₀ a
+  have : (a : ℚ) ≤ expRunEnd μ₀ a := by nlinarith [(Nat.cast_nonneg a : (0:ℚ) ≤ a)]
+  exact_mod_cast this
+
+theorem lt_expRunEnd (hμ : 1 < μ₀) {a : ℕ} (ha : 1 ≤ a) : a < expRunEnd μ₀ a := by
+  have h := expRunEnd_ge_q μ₀ a
+  have ha' : (1 : ℚ) ≤ a := by exact_mod_cast ha
+  have : (a : ℚ) < expRunEnd μ₀ a := by nlinarith
+  exact_mod_cast this
+
+theorem expRunStart_succ (μ₀ : ℚ) (k : ℕ) :
+    expRunStart μ₀ (k + 1) = (k + 2) * expRunEnd μ₀ (expRunStart μ₀ k) := rfl
+
+theorem four_le_expRunStart (hμ : 1 < μ₀) (k : ℕ) : 4 ≤ expRunStart μ₀ k := by
+  induction k with
+  | zero => simp [expRunStart]
+  | succ k ih =>
+    rw [expRunStart_succ]
+    have := le_expRunEnd hμ (expRunStart μ₀ k)
+    nlinarith
+
+theorem start_lt_end (hμ : 1 < μ₀) (k : ℕ) :
+    expRunStart μ₀ k < expRunEnd μ₀ (expRunStart μ₀ k) :=
+  lt_expRunEnd hμ (by have := four_le_expRunStart hμ k; omega)
+
+theorem end_lt_start_succ (hμ : 1 < μ₀) (k : ℕ) :
+    expRunEnd μ₀ (expRunStart μ₀ k) < expRunStart μ₀ (k + 1) := by
+  rw [expRunStart_succ]
+  have := start_lt_end hμ k
+  nlinarith
+
+theorem two_mul_end_le_start_succ (μ₀ : ℚ) (k : ℕ) :
+    2 * expRunEnd μ₀ (expRunStart μ₀ k) ≤ expRunStart μ₀ (k + 1) := by
+  rw [expRunStart_succ]; exact Nat.mul_le_mul_right _ (by omega)
+
+theorem lt_expRunStart (hμ : 1 < μ₀) (k : ℕ) : k < expRunStart μ₀ k := by
+  induction k with
+  | zero => simp [expRunStart]
+  | succ k ih =>
+    have := end_lt_start_succ hμ k
+    have := start_lt_end hμ k
+    omega
+
+theorem expRunStart_strictMono (hμ : 1 < μ₀) : StrictMono (expRunStart μ₀) :=
+  strictMono_nat_of_lt_succ fun k => (start_lt_end hμ k).trans (end_lt_start_succ hμ k)
+
+theorem expRunEnd_strictMono (hμ : 1 < μ₀) :
+    StrictMono fun k => expRunEnd μ₀ (expRunStart μ₀ k) :=
+  strictMono_nat_of_lt_succ fun k => (end_lt_start_succ hμ k).trans (start_lt_end hμ (k + 1))
+
+theorem expForced_iff (hμ : 1 < μ₀) (i : ℕ) :
+    expForced μ₀ i = true ↔
+      ∃ k, expRunStart μ₀ k ≤ i ∧ i < expRunEnd μ₀ (expRunStart μ₀ k) := by
+  unfold expForced
+  simp only [List.any_eq_true, List.mem_range, Bool.and_eq_true, decide_eq_true_eq]
+  constructor
+  · rintro ⟨k, -, h⟩; exact ⟨k, h⟩
+  · rintro ⟨k, h⟩
+    exact ⟨k, by have := lt_expRunStart hμ k; omega, h⟩
+
+theorem expFree_of_run (hμ : 1 < μ₀) {k i : ℕ} (h1 : expRunStart μ₀ k ≤ i)
+    (h2 : i < expRunEnd μ₀ (expRunStart μ₀ k)) : expFree μ₀ i = false := by
+  unfold expFree; rw [(expForced_iff hμ i).2 ⟨k, h1, h2⟩]; rfl
+
+theorem expFree_of_gap (hμ : 1 < μ₀) {k i : ℕ} (h1 : expRunEnd μ₀ (expRunStart μ₀ k) ≤ i)
+    (h2 : i < expRunStart μ₀ (k + 1)) : expFree μ₀ i = true := by
+  unfold expFree
+  rw [Bool.not_eq_true']
+  by_contra hc
+  rw [Bool.not_eq_false, expForced_iff hμ] at hc
+  obtain ⟨j, hj1, hj2⟩ := hc
+  rcases le_or_gt j k with hjk | hjk
+  · have := (expRunEnd_strictMono hμ).monotone hjk
+    omega
+  · have := (expRunStart_strictMono hμ).monotone (show k + 1 ≤ j by omega)
+    omega
+
+theorem expFree_of_lt_four (hμ : 1 < μ₀) {i : ℕ} (h : i < 4) : expFree μ₀ i = true := by
+  unfold expFree
+  rw [Bool.not_eq_true']
+  by_contra hc
+  rw [Bool.not_eq_false, expForced_iff hμ] at hc
+  obtain ⟨j, hj1, -⟩ := hc
+  have := four_le_expRunStart hμ j
+  omega
+
+end Schedule
+
 /-- Forced positions recur (each run start is forced).  Confidence 95%.
 
 English proof.  `k < expRunStart μ₀ k` (induction; the factor `k+2` and `⌈μ₀ a⌉ ≥ a`), and
 `expRunStart μ₀ k < ⌈μ₀ · expRunStart μ₀ k⌉` as `μ₀ > 1` and `a ≥ 4`, so `i = expRunStart μ₀ N`
 is forced, with `N ≤ i`. -/
 theorem expForced_recur (μ₀ : ℚ) (hμ : 1 < μ₀) (N : ℕ) :
-    ∃ i, N ≤ i ∧ expFree μ₀ i = false := by
-  sorry
+    ∃ i, N ≤ i ∧ expFree μ₀ i = false :=
+  ⟨expRunStart μ₀ N, (lt_expRunStart hμ N).le, expFree_of_run hμ le_rfl (start_lt_end hμ N)⟩
 
 /-- **Base 3 fails, for every `ω`** (wiring from `CantorLiouville.not_isNormal_three_pt`). -/
 theorem not_isNormal_three_cantorExpReal (μ₀ : ℚ) (hμ : 1 < μ₀) (ω : ℕ → Bool) :
@@ -149,6 +256,61 @@ theorem not_isNormal_three_cantorExpReal (μ₀ : ℚ) (hμ : 1 < μ₀) (ω : �
   not_isNormal_three_pt _ ω (expForced_recur μ₀ hμ)
 
 /-! ## Lower bound on the exponent -/
+
+/-! ## The truncations `P_k / 3^{a_k}` -/
+
+section Trunc
+
+open CantorExpGeneric
+
+variable {μ₀ : ℚ}
+
+theorem ptDigit_run_zero (hμ : 1 < μ₀) (ω : ℕ → Bool) (k : ℕ) :
+    ∀ i, expRunStart μ₀ k ≤ i → i < expRunEnd μ₀ (expRunStart μ₀ k) →
+      ptDigit (expFree μ₀) ω i = 0 := fun i h1 h2 => by
+  simp [ptDigit, expFree_of_run hμ h1 h2]
+
+/-- `x = P/3^a + tail beyond E` along run `k`. -/
+theorem cantorExpReal_trunc (hμ : 1 < μ₀) (ω : ℕ → Bool) (k : ℕ) :
+    cantorExpReal μ₀ ω = (hd (expFree μ₀) ω (expRunStart μ₀ k) : ℝ) / 3 ^ expRunStart μ₀ k +
+      tl (expFree μ₀) ω (expRunEnd μ₀ (expRunStart μ₀ k)) := by
+  set a := expRunStart μ₀ k
+  set E := expRunEnd μ₀ a
+  have hE := hd_zero_ext (expFree μ₀) ω a E (le_expRunEnd hμ a) (ptDigit_run_zero hμ ω k)
+  rw [cantorExpReal, pt_split (expFree μ₀) ω E, hE]
+  push_cast
+  rw [show (3 : ℝ) ^ E = 3 ^ (E - a) * 3 ^ a by
+    rw [← pow_add]; congr 1; have := le_expRunEnd hμ a; omega]
+  congr 1
+  field_simp
+
+/-- Truncations that miss `x` infinitely often give `LiouvilleWith μ₀`. -/
+theorem liouvilleWith_of_ne (hμ : 1 < μ₀) (ω : ℕ → Bool)
+    (h : ∀ N, ∃ k, N ≤ k ∧ cantorExpReal μ₀ ω ≠
+      (hd (expFree μ₀) ω (expRunStart μ₀ k) : ℝ) / 3 ^ expRunStart μ₀ k) :
+    LiouvilleWith μ₀ (cantorExpReal μ₀ ω) := by
+  refine ⟨2, frequently_atTop.2 fun N => ?_⟩
+  obtain ⟨k, hk, hne⟩ := h N
+  set a := expRunStart μ₀ k
+  set E := expRunEnd μ₀ a
+  refine ⟨3 ^ a, ?_, (hd (expFree μ₀) ω a : ℤ), ?_, ?_⟩
+  · have := lt_expRunStart hμ k
+    have := Nat.lt_pow_self (n := a) (by norm_num : 1 < 3)
+    omega
+  · push_cast; exact hne
+  · push_cast
+    rw [cantorExpReal_trunc hμ ω k, add_sub_cancel_left, abs_of_nonneg (tl_nonneg _ _ _)]
+    have h1 := tl_le (expFree μ₀) ω E
+    have h2 : ((3 : ℝ) ^ a) ^ (μ₀ : ℝ) ≤ 3 ^ E := by
+      rw [← Real.rpow_natCast, ← Real.rpow_mul (by norm_num), ← Real.rpow_natCast]
+      exact Real.rpow_le_rpow_of_exponent_le (by norm_num)
+        (by rw [mul_comm]; exact expRunEnd_ge_r μ₀ a)
+    have h3 : 1 / (3 : ℝ) ^ E < 2 / ((3 : ℝ) ^ a) ^ (μ₀ : ℝ) := by
+      have hp : (0 : ℝ) < ((3 : ℝ) ^ a) ^ (μ₀ : ℝ) := by positivity
+      rw [div_lt_div_iff₀ (by positivity) hp]; linarith
+    linarith
+
+end Trunc
 
 /-- **Lower bound: `x` is `μ₀`-approximable.**  Confidence 90%.
 
@@ -160,7 +322,13 @@ expansions with digits in `{0,2}` are unique).  The denominators `3^a → ∞`, 
 theorem liouvilleWith_cantorExpReal (μ₀ : ℚ) (hμ : 1 < μ₀) (ω : ℕ → Bool)
     (hf : ∀ N, ∃ i, N ≤ i ∧ expFree μ₀ i = true ∧ ω i = true) :
     LiouvilleWith μ₀ (cantorExpReal μ₀ ω) := by
-  sorry
+  refine liouvilleWith_of_ne hμ ω fun N => ⟨N, le_rfl, fun heq => ?_⟩
+  obtain ⟨i, hi, hfi, hωi⟩ := hf (expRunEnd μ₀ (expRunStart μ₀ N))
+  have h2 : ptDigit (expFree μ₀) ω i = 2 := by simp [ptDigit, hfi, hωi]
+  have := CantorExpGeneric.tl_ge (expFree μ₀) ω _ i hi h2
+  rw [cantorExpReal_trunc hμ ω N] at heq
+  have : (0 : ℝ) < 2 / 3 ^ (i + 1) := by positivity
+  linarith
 
 /-- Almost surely free `2`-digits recur.  Confidence 95%.
 
@@ -169,7 +337,32 @@ form infinitely many disjoint nonempty blocks, so by Borel–Cantelli (or indepe
 infinitely many carry a coin `true`. -/
 theorem ae_frequently_two (μ₀ : ℚ) (hμ : 1 < μ₀) :
     ∀ᵐ ω ∂coins, ∀ N, ∃ i, N ≤ i ∧ expFree μ₀ i = true ∧ ω i = true := by
-  sorry
+  rw [ae_all_iff]
+  intro N
+  set p : ℕ → ℕ := fun k => expRunEnd μ₀ (expRunStart μ₀ k)
+  have hp : StrictMono p := expRunEnd_strictMono hμ
+  have hpn : ∀ k, k ≤ p k := fun k => by
+    have := lt_expRunStart hμ k; have := le_expRunEnd hμ (expRunStart μ₀ k); simp only [p]; omega
+  have hpf : ∀ k, expFree μ₀ (p k) = true := fun k =>
+    expFree_of_gap hμ le_rfl (end_lt_start_succ hμ k)
+  rw [ae_iff]
+  set E := {ω : ℕ → Bool | ¬∃ i, N ≤ i ∧ expFree μ₀ i = true ∧ ω i = true}
+  have hle : ∀ L : ℕ, coins E ≤ (2⁻¹ : ENNReal) ^ L := by
+    intro L
+    set S := (Finset.Ico N (N + L)).image p
+    have hsub : E ⊆ {ω | ∀ i ∈ S, ω i = (fun _ => false) i} := by
+      intro ω hω i hi
+      simp only [S, Finset.mem_image, Finset.mem_Ico] at hi
+      obtain ⟨k, hk, rfl⟩ := hi
+      simp only [E, Set.mem_setOf_eq, not_exists, not_and] at hω
+      have := hω (p k) ((hpn k).trans' hk.1) (hpf k)
+      simpa using this
+    refine (measure_mono hsub).trans (le_of_eq ?_)
+    rw [CantorExpGeneric.coins_cyl, Finset.card_image_of_injective _ hp.injective, Nat.card_Ico]
+    simp
+  have ht : Tendsto (fun L : ℕ => (2⁻¹ : ENNReal) ^ L) atTop (𝓝 0) :=
+    ENNReal.tendsto_pow_atTop_nhds_zero_of_lt_one (by norm_num)
+  exact le_antisymm (ge_of_tendsto' ht hle) bot_le
 
 /-! ## Upper bound on the exponent: the leaves -/
 
@@ -182,7 +375,31 @@ theorem abs_sub_ge_of_near (x : ℝ) (P a E q : ℕ) (p : ℤ) (hq : 0 < q)
     (hx : |x - P / 3 ^ a| ≤ 1 / 3 ^ E) (hne : (p : ℝ) / q ≠ P / 3 ^ a)
     (hqE : 2 * q * 3 ^ a ≤ 3 ^ E) :
     1 / (2 * (q : ℝ) * 3 ^ a) ≤ |x - p / q| := by
-  sorry
+  have hqR : (0 : ℝ) < q := by exact_mod_cast hq
+  have h3 : (0 : ℝ) < 3 ^ a := by positivity
+  set n : ℤ := p * 3 ^ a - P * q with hn
+  have hn0 : n ≠ 0 := by
+    intro h0
+    apply hne
+    have : (p : ℝ) * 3 ^ a = P * q := by
+      have := congrArg (fun z : ℤ => (z : ℝ)) h0
+      simp only [hn] at this; push_cast at this; linarith
+    field_simp; linarith
+  have hn1 : (1 : ℝ) ≤ |(n : ℝ)| := by
+    rw [← Int.cast_abs]; exact_mod_cast Int.one_le_abs hn0
+  have hdiff : (p : ℝ) / q - P / 3 ^ a = n / (q * 3 ^ a) := by
+    simp only [hn]; push_cast; field_simp
+  have hge : 1 / ((q : ℝ) * 3 ^ a) ≤ |(p : ℝ) / q - P / 3 ^ a| := by
+    rw [hdiff, abs_div, abs_of_pos (by positivity : (0:ℝ) < q * 3 ^ a)]
+    exact div_le_div_of_nonneg_right hn1 (by positivity)
+  have hE : 1 / (3 : ℝ) ^ E ≤ 1 / (2 * q * 3 ^ a) := by
+    apply one_div_le_one_div_of_le (by positivity)
+    exact_mod_cast hqE
+  have htri : |(p : ℝ) / q - P / 3 ^ a| ≤ |x - p / q| + |x - P / 3 ^ a| := by
+    rw [abs_sub_comm x]; exact abs_sub_le _ _ _
+  have : 1 / ((q : ℝ) * 3 ^ a) = 2 * (1 / (2 * q * 3 ^ a)) := by field_simp
+  linarith
+
 
 /-- **Ball mass (Frostman bound for the coin point).**  Confidence 90%.
 
@@ -192,7 +409,9 @@ separated by a gap `≥ 3^{−n}`.  An open interval of length `2r ≤ 2·3^{−
 most one of them, and each has coin mass `2^{−F(n)}` (or `0`). -/
 theorem coins_ball_le (free : ℕ → Bool) (y r : ℝ) (n : ℕ) (hr : r ≤ 1 / 3 ^ (n + 1)) :
     coins.real {ω | |pt free ω - y| < r} ≤ 2 * (1 / 2 : ℝ) ^ freeCount free n := by
-  sorry
+  have := CantorExpGeneric.ball_le free y r n hr
+  have h0 : (0 : ℝ) ≤ (1 / 2 : ℝ) ^ freeCount free n := by positivity
+  linarith
 
 open Classical in
 /-- **Trivial count of numerators near the support.**  Confidence 90%.
@@ -204,7 +423,8 @@ theorem card_near_le (free : ℕ → Bool) (q m : ℕ) (hq : 0 < q) (hqm : q ≤
     (hr : r ≤ 1 / q) :
     ((Finset.range (q + 1)).filter fun p : ℕ => ∃ ω, |pt free ω - p / q| < r).card ≤
       4 * 2 ^ freeCount free m := by
-  sorry
+  have := CantorExpGeneric.card_near_le' free q m hq hqm r hr
+  omega
 
 /-- **Window free count on the Borel–Cantelli range.**  Confidence 85%.
 
@@ -224,13 +444,21 @@ theorem window_freeCount_ge (μ₀ : ℚ) (hμ : 2 < μ₀) (τ : ℝ) (hτ : (�
         (freeCount (expFree μ₀) ⌈τ * m⌉₊ : ℝ) - freeCount (expFree μ₀) m + C := by
   sorry
 
+theorem rho_lt_one (μ₀ : ℝ) (hμ : threshold < μ₀) : 3 * (2 : ℝ) ^ (-(μ₀ - 2)) < 1 := by
+  have h1 : (3 : ℝ) = 2 ^ Real.logb 2 3 := (Real.rpow_logb (by norm_num) (by norm_num) (by norm_num)).symm
+  rw [h1, ← Real.rpow_add (by norm_num)]
+  apply Real.rpow_lt_one_of_one_lt_of_neg (by norm_num)
+  unfold threshold at hμ; linarith
 /-- **Where the threshold enters.**  The trivial-count block costs `3ᵐ 2^{−(μ₀−2)m}` are summable
 exactly above `2 + log₂ 3`.  Confidence 95%.
 
 English proof.  `3 · 2^{−(μ₀−2)} < 1 ⇔ μ₀ − 2 > log₂ 3`; geometric series. -/
 theorem summable_bc_of_threshold_lt (μ₀ : ℝ) (hμ : threshold < μ₀) :
     Summable fun m : ℕ => (3 : ℝ) ^ m * (2 : ℝ) ^ (-((μ₀ - 2) * m)) := by
-  sorry
+  have hρ := rho_lt_one μ₀ hμ
+  refine (summable_geometric_of_lt_one (by positivity) hρ).congr fun m => ?_
+  rw [mul_pow, ← Real.rpow_natCast ((2 : ℝ) ^ (-(μ₀ - 2))), ← Real.rpow_mul (by norm_num)]
+  ring_nf
 
 /-! ## The sibling the mechanism must refuse -/
 
@@ -241,7 +469,34 @@ English proof.  Places in `[a', n)` are forced; `freeCount` counts places `< n`.
 theorem freeCount_window_le_of_run (μ₀ : ℚ) (k m n : ℕ) (hm : m ≤ expRunStart μ₀ k)
     (hn : n ≤ expRunEnd μ₀ (expRunStart μ₀ k)) :
     freeCount (expFree μ₀) n - freeCount (expFree μ₀) m ≤ expRunStart μ₀ k - m := by
-  sorry
+  rcases le_total n m with hnm | hmn
+  · have : freeCount (expFree μ₀) n ≤ freeCount (expFree μ₀) m := by
+      unfold freeCount
+      exact Finset.card_le_card (Finset.filter_subset_filter _ (Finset.range_mono hnm))
+    omega
+  rw [CantorExpGeneric.freeCount_sub _ hmn, Nat.add_sub_cancel_left]
+  by_cases hμ : 1 < μ₀
+  · rcases le_total n (expRunStart μ₀ k) with h | h
+    · exact (CantorExpGeneric.fc_le _ m n).trans (by omega)
+    · rw [CantorExpGeneric.fc_add _ hm h]
+      have h0 : CantorExpGeneric.fc (expFree μ₀) (expRunStart μ₀ k) n = 0 := by
+        unfold CantorExpGeneric.fc
+        rw [Finset.card_eq_zero, Finset.filter_eq_empty_iff]
+        intro i hi
+        rw [Finset.mem_Ico] at hi
+        rw [expFree_of_run hμ hi.1 (lt_of_lt_of_le hi.2 hn)]; simp
+      rw [h0, add_zero]; exact CantorExpGeneric.fc_le _ _ _
+  · -- `μ₀ ≤ 1`: the run `[a, ⌈μ₀ a⌉)` lies inside `[0, a]`, so `n ≤ a`
+    push Not at hμ
+    have hE : expRunEnd μ₀ (expRunStart μ₀ k) ≤ expRunStart μ₀ k := by
+      unfold expRunEnd
+      rcases le_or_gt μ₀ 0 with h0 | h0
+      · have : μ₀ * (expRunStart μ₀ k : ℚ) ≤ 0 := mul_nonpos_of_nonpos_of_nonneg h0 (by positivity)
+        rw [Nat.ceil_eq_zero.2 this]; exact Nat.zero_le _
+      · refine Nat.ceil_le.2 ?_
+        calc μ₀ * (expRunStart μ₀ k : ℚ) ≤ 1 * expRunStart μ₀ k := by gcongr
+          _ = _ := one_mul _
+    exact (CantorExpGeneric.fc_le _ m n).trans (by omega)
 
 /-- **Red control (below the threshold).**  `μ₀ = τ = 3 < 2 + log₂ 3`: run `2` starts at
 `a₂ = 216`, and at `m = a₂/(τ−1) = 108` the window `[108, 324)` holds `108` free places, so the
