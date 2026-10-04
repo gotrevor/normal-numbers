@@ -801,7 +801,47 @@ visit frequency of `orbit b x` to `[0, 1/b)` tends to `1/b ≤ 1/3`.  Let `a = r
 frequency along `N_k` tends to `1 ≠ 1/b`. -/
 theorem not_isNormal_of_three_dvd (ω : ℕ → Bool) {b : ℕ} (hb : 2 ≤ b) (h3 : 3 ∣ b) :
     ¬ IsNormal b (cantorLiouvilleReal ω) := by
-  sorry
+  intro hn
+  rw [isNormal_iff_equidistributed_orbit b hb] at hn
+  have hbR : (2 : ℝ) ≤ b := by exact_mod_cast hb
+  have ht := hn 0 (1 / b) le_rfl (by positivity) (by rw [div_le_one (by linarith)]; linarith)
+  rw [sub_zero] at ht
+  have hlt : (1 : ℝ) / b < 3 / 4 := by rw [div_lt_iff₀ (by linarith)]; linarith
+  obtain ⟨N0, hN0⟩ := eventually_atTop.1 (ht.eventually (gt_mem_nhds hlt))
+  set k := N0 + 8 * b
+  set A := runStart k
+  set T := (k + 2) * A
+  set n := Nat.log b (3 ^ T)
+  have hkA := lt_runStart k
+  have hlog : 3 ^ T < b ^ (n + 1) := Nat.lt_pow_succ_log_self (by omega) _
+  have hb3 : b ^ (n + 1) < 3 ^ (b * (n + 1)) := by
+    rw [pow_mul]; exact Nat.pow_lt_pow_left (Nat.lt_pow_self (by norm_num)) (by omega)
+  have hT : T < b * (n + 1) := (Nat.pow_lt_pow_iff_right (by norm_num)).1 (hlog.trans hb3)
+  have hTA : 8 * b * A ≤ T := Nat.mul_le_mul_right A (by omega)
+  have hn8 : 8 * A ≤ n := by
+    by_contra hc
+    have : b * (n + 1) ≤ b * (8 * A) := Nat.mul_le_mul_left _ (by omega)
+    nlinarith
+  have hpow : b ^ n ≤ 3 ^ T := Nat.pow_log_le_self b (by positivity)
+  have hvis : n - A ≤ visitCount (orbit b (cantorLiouvilleReal ω)) 0 (1 / b) n := by
+    unfold visitCount
+    have : Finset.Ico A n ⊆ (Finset.range n).filter
+        (fun j => orbit b (cantorLiouvilleReal ω) j ∈ Set.Ico 0 (1 / (b : ℝ))) := by
+      intro j hj
+      simp only [Finset.mem_Ico] at hj
+      simp only [Finset.mem_filter, Finset.mem_range, Set.mem_Ico, orbit]
+      refine ⟨hj.2, Int.fract_nonneg _, fract_lt_of_mem_run ω hb h3 hj.1 ?_⟩
+      exact (Nat.pow_le_pow_right (by omega) (by omega)).trans hpow
+    simpa using Finset.card_le_card this
+  have hnpos : (0 : ℝ) < n := by have : 0 < n := by omega
+                                 exact_mod_cast this
+  have := hN0 n (by omega)
+  rw [div_lt_iff₀ hnpos] at this
+  have h1 : ((n - A : ℕ) : ℝ) ≤ visitCount (orbit b (cantorLiouvilleReal ω)) 0 (1 / b) n := by
+    exact_mod_cast hvis
+  have h2 : ((n - A : ℕ) : ℝ) = n - A := by push_cast [show A ≤ n by omega]; ring
+  have h3' : (8 * A : ℝ) ≤ n := by exact_mod_cast hn8
+  linarith
 
 /-- **The separating base.**  Cassels (`Literature.Cassels1959`) makes `μ_K`-a.e. point normal
 to base 6; no Cantor–Liouville point is. -/
