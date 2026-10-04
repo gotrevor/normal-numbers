@@ -7,6 +7,8 @@ import NormalNumbers.Maze
 import NormalNumbers.CPrimeSiteFactorization
 import LeanLedger.MazeLinks
 import NormalNumbers.MasterMaze
+import NormalNumbers.LogCastingOutStretch
+import NormalNumbers.PairDecoupleProve
 
 /-!
 # Maze audit: every closed route cites declarations
@@ -34,6 +36,14 @@ def mazeRows : List RowInfo :=
 
 /-- Each linked row and the declarations it rests on. -/
 def mazeLinks : List Link := [
+  ⟨"log-averaged casting-out via the Elliott ledger",
+   [``hall_logavg_casting_out, ``LogCastingOut.TaoTeravainen2019FixedDepth,
+    ``CastingOut.carry_correction_unbounded, ``CastingOut.castLawLog_one_iff,
+    ``CastingOut.multiElliott_all, ``LogCastingOut.simplyNormalLog_of_growingDepth],
+   [``LogCastingOut.GrowingDepthLogElliott]⟩,
+  ⟨"log-averaged word frequencies of an unconstructed constant as new",
+   [``hall_log_rung_distinct, ``LogCastingOut.tendsto_logFreq_dyadicBit,
+    ``LogCastingOut.TaoTeravainen2019LiouvilleThree], []⟩,
   ⟨"CRT freezing for density of the binary words of E",
    [``EDensity.eCount_power, ``JointLambert.jointWords_quantitative, ``EDensity.RungPolylog,
     ``EDensity.RungRich], [``EDensity.ResidualSmallPolylog]⟩,
@@ -199,7 +209,7 @@ def mazeLegacy : List String := [
   "Diophantine good-denominator detour for the tail cell",
   "route B's unweighted cover of the state-dependent target"]
 
-/-- info: maze audit: 147 rows, 40 cite declarations, 107 legacy (prose only) -/
+/-- info: maze audit: 149 rows, 42 cite declarations, 107 legacy (prose only) -/
 #guard_msgs in
 #maze_audit mazeRows, mazeLinks, mazeLegacy
 

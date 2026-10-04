@@ -15,6 +15,7 @@ import NormalNumbers.G4RowMassOptimal
 import NormalNumbers.G4WiringSparse
 import NormalNumbers.StonehamSixFailure
 import NormalNumbers.CastingOut
+import NormalNumbers.LogCastingOut
 import NormalNumbers.C3MrtTTDefect
 import NormalNumbers.LiteratureTTEquidistributedDefect
 import NormalNumbers.C3MrtBlockDefect
@@ -622,6 +623,18 @@ the digit character at the indicator index `kOf L S`, and every `k : Fin L → F
 an indicator.  Recorded so the question "do the two files agree at `b = 2`?" is never
 re-litigated. -/
 alias walsh_two_files_agree := NormalNumbers.WalshBase.parityMean_criterion_iff_digitMean_criterion
+
+/-- **HALL: log-averaged casting-out via the Elliott ledger (E2)** (`wall`, 2026-10-04).
+Given the ledger's single input, the log twin of the C1 pair leaf is EQUIVALENT to the log
+decoupling, so consuming `TwoPointElliottLog` removes none of the crux: it all sits in
+`WeightDecoupleLog`, growing-depth Elliott with trivial product.  The 2026-09-24 swing
+(`SwingC1Log`) reached the same verdict in a docstring only; this row makes it findable. -/
+alias hall_logavg_casting_out :=
+  NormalNumbers.LogCastingOut.twoPointWeightedLog_iff_weightDecoupleLog_of_zetaExponent
+
+/-- **HALL: the log rung is a natural-average statement in disguise** (`refuted`, 2026-10-04).
+It is not: `dyadicBit` has log digit frequency `1/2` and no natural digit frequency. -/
+alias hall_log_rung_distinct := NormalNumbers.LogCastingOut.not_tendsto_natFreq_dyadicBit
 
 /-! ## 4. The register
 
@@ -1367,7 +1380,17 @@ def register : List Hall := [
    "Use 2^omega_odd(m) | tau(m) to kill positions j <= (1-eps) log log n for free and force-kill only the band, to reach R1 for the binary words of E",
    .wall, .cited,
    "The free kill is real (two_pow_oddExpCount_dvd_card_divisors) but leaves the band j = log log n +- O(sqrt(log log n)), whose positions carry O(1) random fractions. Force-killing the band needs >> log log N log log log N distinct primes, a primorial of size (log N)^(c (log log log N)^2), so only N/(log N)^(C (log log log N)^2). The statistical alternative is a sieve in dimension ~ log log N with a per-position margin ~ log log log N, giving at best (log log N)^(-C) for the all-zero word, and a general word also needs one exactly prescribed tau (a parity-sensitive joint local Erdos-Kac input). Sibling control: tau mod 2 alone reads only squares, <= sqrt N + 1 ones (card_odd_card_divisors_le). REOPEN IF: ResidualSmallOften or ResidualSmallPolylog is proved, plus a writer input for general words",
-   "EDensityAudit.lean: two_pow_oddExpCount_dvd_card_divisors, fract_card_divisors_div_two_pow_eq_zero, card_odd_card_divisors_le, ResidualSmallOften, ResidualSmallPolylog; Erdos257Squarefree.SqfreeBinaryDisjunctive; docs/EDENSITY-AUDIT-2026-10-03.md", "2026-10-03"⟩
+   "EDensityAudit.lean: two_pow_oddExpCount_dvd_card_divisors, fract_card_divisors_div_two_pow_eq_zero, card_odd_card_divisors_le, ResidualSmallOften, ResidualSmallPolylog; Erdos257Squarefree.SqfreeBinaryDisjunctive; docs/EDENSITY-AUDIT-2026-10-03.md", "2026-10-03"⟩,
+  ⟨"log-averaged casting-out via the Elliott ledger",
+   "Consume TwoPointElliottLog (ledger: one zeta-exponent input) through a log-weighted casting-out / Katai route to get log-averaged 1- or 2-word frequencies of G4_b = sum omega(n)/b^n, or of the #257 / Erdos-Borwein Lambert sums",
+   .wall, .kernel,
+   "Log weighting survives every averaging step (partial summation and the two-point split, proved; Katai by the same linear argument) but not the carries: the digit reads omega(n+1) plus a floor of the whole tail, and the tail's mass b^-K log log X forces depth K -> infinity whatever the weights (carry_correction_unbounded). On the pair route the split is an equivalence given the ledger, so the crux is WeightDecoupleLog = log growing-depth Elliott with trivial product, open already at fixed K = 2. On the direct digit route each fixed depth is Tao-Teravainen 2019 (product a nontrivial root of unity to the omega), so the exact gap is uniformity in K. The #257 sums are worse (divisor tails, mass log X). REOPEN IF: GrowingDepthLogElliott (then simplyNormalLog_of_growingDepth is the wiring)",
+   "alias hall_logavg_casting_out; LogCastingOut.lean: twoPointWeightedLog_iff_weightDecoupleLog_of_zetaExponent, TaoTeravainen2019FixedDepth, GrowingDepthLogElliott; SwingC1LogCarry.carry_correction_unbounded; SwingC1Log.castLawLog_one_iff; PairDecoupleProve.multiElliott_all; docs/LOG-AVERAGE-AUDIT-2026-10-04.md", "2026-10-04"⟩,
+  ⟨"log-averaged word frequencies of an unconstructed constant as new",
+   "Present log-averaged word frequencies of an arithmetically defined constant as the first positive-frequency statement about a constant defined without a construction",
+   .priorArt, .cited,
+   "Tao-Teravainen 2019 already give the log density 1/8 of every Liouville sign pattern of length 3, i.e. log 3-word frequencies of the carry-free binary constant sum [lambda(n)=1] 2^-n; and log Chowla is exactly log-normality of lambda (Sarnak's framing). The rung itself is genuinely weaker than normality (dyadicBit), so the novelty must come from a constant WITH carries, which is the wall row above",
+   "alias hall_log_rung_distinct; LogCastingOut.lean: TaoTeravainen2019LiouvilleThree, tendsto_logFreq_dyadicBit, not_tendsto_natFreq_dyadicBit; docs/LOG-AVERAGE-AUDIT-2026-10-04.md", "2026-10-04"⟩
 ]
 
 /-- Rows whose verdict is machine-checked in this build. -/

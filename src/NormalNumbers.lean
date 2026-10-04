@@ -539,6 +539,8 @@ import NormalNumbers.MazeAudit
 import NormalNumbers.StonehamSixFailure
 import NormalNumbers.CastingOut
 import NormalNumbers.SwingC1Log
+import NormalNumbers.LogCastingOut
+import NormalNumbers.LogCastingOutStretch
 import NormalNumbers.SwingC2
 import NormalNumbers.SwingC2Moment
 import NormalNumbers.SwingC3
