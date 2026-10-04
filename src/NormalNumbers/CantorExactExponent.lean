@@ -928,6 +928,41 @@ theorem le_freeCount_exp (μ₀ : ℚ) (hμ : 1 < μ₀) :
     have hMR : (E : ℝ) ≤ M := by exact_mod_cast hME
     nlinarith
 
+theorem summable_exp_neg_sqrt {α : ℝ} (hα : 0 < α) :
+    Summable fun j : ℕ => Real.exp (-α * Real.sqrt j) := by
+  have hB := (tendsto_natCast_atTop_atTop (R := ℝ)).eventually (ev_log_le (r := 1 / 2)
+    (ε := α / 2) (by norm_num) (by positivity))
+  refine Summable.of_norm_bounded_eventually summable_inv_sq_nat ?_
+  rw [Nat.cofinite_eq_atTop]
+  filter_upwards [hB, eventually_ge_atTop 1] with j hjB hj1
+  rw [Real.norm_of_nonneg (Real.exp_pos _).le, ← exp_neg_two_log j hj1]
+  apply Real.exp_le_exp.2
+  rw [Real.sqrt_eq_rpow]; nlinarith
+
+/-- The Cassels bound is summable along `sched` for the exponent schedule. -/
+theorem summable_sched_bound_exp (μ₀ : ℚ) (hμ : 1 < μ₀) (C c : ℝ) (hc : 0 < c) :
+    Summable fun j => C * (Real.exp (-c * freeCount (expFree μ₀) (Nat.log 3 (sched j) / 2)) +
+      (sched j : ℝ) ^ (-(1 / 2 : ℝ))) := by
+  obtain ⟨c', hc', hF⟩ := le_freeCount_exp μ₀ hμ
+  refine Summable.mul_left C (Summable.add ?_ ?_)
+  · have hs := (summable_exp_neg_sqrt (α := c * c' / 4) (by positivity)).mul_left
+      (Real.exp (4 * c))
+    refine Summable.of_norm_bounded_eventually hs ?_
+    rw [Nat.cofinite_eq_atTop]
+    filter_upwards [ev_M_ge] with j hj
+    set L := Nat.log 3 (sched j) / 2
+    rw [Real.norm_of_nonneg (Real.exp_pos _).le, ← Real.exp_add]
+    apply Real.exp_le_exp.2
+    have h1 := hF L
+    have h2 : c' * (Real.sqrt j / 4) ≤ c' * L := mul_le_mul_of_nonneg_left hj hc'.le
+    have h3 : c * (c' * (Real.sqrt j / 4)) ≤ c * (freeCount (expFree μ₀) L + 4) :=
+      mul_le_mul_of_nonneg_left (h2.trans h1) hc.le
+    nlinarith
+  · have := (summable_sched_bound 1 1 one_pos one_pos)
+    refine this.of_nonneg_of_le (fun j => by positivity) fun j => ?_
+    have : 0 ≤ Real.exp (-1 * (freeCount isFree (Nat.log 3 (sched j) / 2) : ℝ)) := by positivity
+    linarith
+
 /-- **Normal to every base prime to 3, a.e.**  Confidence 90%.
 
 English proof.  `CantorLiouvilleAll.ae_isNormal_of_coprime_three` verbatim with `isFree`
@@ -936,7 +971,31 @@ replaced by `expFree μ₀`: `secondMoment_le_b (expFree μ₀)` with the linear
 `CantorLiouville.sched`, and `ae_isNormal_of_secondMoment` concludes. -/
 theorem ae_isNormal_of_coprime_three (μ₀ : ℚ) (hμ : 1 < μ₀) :
     ∀ᵐ ω ∂coins, ∀ b : ℕ, 2 ≤ b → ¬ 3 ∣ b → IsNormal b (cantorExpReal μ₀ ω) := by
-  sorry
+  have hone : ∀ b : ℕ, 2 ≤ b → ¬ 3 ∣ b → ∀ᵐ ω ∂coins, IsNormal b (cantorExpReal μ₀ ω) := by
+    intro b hb h3
+    refine CantorLiouvilleAll.ae_isNormal_of_secondMoment coins hb _ (measurable_pt _) sched
+      sched_strictMono sched_ratio ?_
+    intro h hh
+    have hC : (0 : ℝ) < 16 * (b : ℝ) ^ 6 * |(h : ℝ)| := by
+      have : (h : ℝ) ≠ 0 := by exact_mod_cast hh
+      positivity
+    have hl : 0 < Real.log (3 / 2) / 2 := by
+      have := Real.log_pos (by norm_num : (1:ℝ) < 3 / 2); linarith
+    refine (summable_sched_bound_exp μ₀ hμ (16 * (b : ℝ) ^ 6 * |(h : ℝ)|) _ hl).of_nonneg_of_le
+      (fun j => div_nonneg (integral_nonneg fun ω => by positivity) (by positivity))
+      (fun j => ?_)
+    have hN : (0 : ℝ) < sched j := by exact_mod_cast one_le_sched j
+    rw [div_le_iff₀ (by positivity)]
+    calc _ ≤ _ := CantorLiouvilleAll.secondMoment_le_b (expFree μ₀) hb h3 h hh (sched j)
+          (one_le_sched j)
+      _ = _ := by ring
+  rw [ae_all_iff]
+  intro b
+  by_cases hb : 2 ≤ b
+  · by_cases h3 : 3 ∣ b
+    · exact Eventually.of_forall fun ω _ h => absurd h3 h
+    · filter_upwards [hone b hb h3] with ω hω _ _ using hω
+  · exact Eventually.of_forall fun ω h => absurd h hb
 
 /-- **Existence form.**  Wiring (proved). -/
 theorem exists_mem_cantorSet_irrExponent_normal (μ₀ : ℚ) (hμ : threshold < μ₀) :
