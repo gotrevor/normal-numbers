@@ -1,6 +1,6 @@
 # HANDOFF 2026-10-04 — Schmidt-games lane (E1), lap 1 (DONE)
 
-Branch `proof/games`.
+Branch `proof/games`, HEAD c6afda29 (before this doc edit).
 - `potentialWinning_E` proved: stateless early-charging strategy (`charge`), budget lemmas
   `tsum_int_near_le`, `tsum_level_le`, `exists_tsum_base_le`, `tsum_charge_le`.
 - `dimH_E₂_le` proved: run-free bit words `runFree`, recursion `card_runFree_le_sum`,
