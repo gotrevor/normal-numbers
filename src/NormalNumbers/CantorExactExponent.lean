@@ -866,6 +866,23 @@ theorem ae_hasIrrExponent (μ₀ : ℚ) (hμ : threshold < μ₀) :
 
 /-! ## Normality -/
 
+theorem expRunStart_le_two_freeCount (μ₀ : ℚ) (hμ : 1 < μ₀) (k : ℕ) :
+    (expRunStart μ₀ k : ℝ) ≤ 2 * freeCount (expFree μ₀) (expRunStart μ₀ k) := by
+  have hF0 : freeCount (expFree μ₀) 0 = 0 := by simp [freeCount]
+  rcases k with _ | k
+  · have h := le_freeCount_sub (expFree μ₀) (m := 0) (n := expRunStart μ₀ 0) (s := 0)
+      (e := expRunStart μ₀ 0) (Nat.zero_le _) le_rfl le_rfl
+      (fun i _ hi => expFree_init μ₀ hμ hi)
+    rw [hF0] at h; push_cast at h; linarith
+  · have h := le_freeCount_sub (expFree μ₀) (m := 0) (n := expRunStart μ₀ (k + 1))
+      (s := expRunEnd μ₀ (expRunStart μ₀ k)) (e := expRunStart μ₀ (k + 1)) (Nat.zero_le _)
+      (Nat.zero_le _) le_rfl (fun i h1 h2 => expFree_gap μ₀ hμ h1 h2)
+    rw [hF0] at h
+    have e : (expRunStart μ₀ (k + 1) : ℝ) = (k + 2) * expRunEnd μ₀ (expRunStart μ₀ k) := by
+      rw [expRunStart_succ]; push_cast; ring
+    have hk : (0 : ℝ) ≤ k * expRunEnd μ₀ (expRunStart μ₀ k) := by positivity
+    push_cast at h; rw [e] at h ⊢; nlinarith
+
 /-- **Linear free count.**  Confidence 90%.
 
 English proof.  Below `M`, the forced places lie in runs `[a_j, E_j)` with `E_j ≤ μ₀ a_j + 1`
@@ -873,7 +890,43 @@ and `a_{j+1} ≥ (j+2) E_j`; the free places `[E_{j}, a_{j+1})` before the last 
 outnumber all earlier forced places by the factor `j+1`, so `F(M) ≥ M/(2μ₀ + 4) − 4`. -/
 theorem le_freeCount_exp (μ₀ : ℚ) (hμ : 1 < μ₀) :
     ∃ c : ℝ, 0 < c ∧ ∀ M : ℕ, c * M ≤ freeCount (expFree μ₀) M + 4 := by
-  sorry
+  classical
+  have hμR : (1 : ℝ) < μ₀ := by exact_mod_cast hμ
+  refine ⟨1 / (2 * μ₀), by positivity, fun M => ?_⟩
+  have hF0 : (0 : ℝ) ≤ freeCount (expFree μ₀) M := by positivity
+  have hc : 1 / (2 * (μ₀ : ℝ)) * M = (M : ℝ) / (2 * μ₀) := by ring
+  rw [hc]
+  rcases Nat.lt_or_ge M (expRunStart μ₀ 0) with hM | hM
+  · have hM4 : M < 4 := by simpa [expRunStart] using hM
+    have : (M : ℝ) < 4 := by exact_mod_cast hM4
+    rw [div_le_iff₀ (by positivity)]; nlinarith
+  have hex : ∃ k, M < expRunStart μ₀ (k + 1) :=
+    ⟨M, lt_of_lt_of_le (lt_expRunStart μ₀ hμ (M + 1)) le_rfl |>.trans' (by omega)⟩
+  set k := Nat.find hex
+  have hk1 : M < expRunStart μ₀ (k + 1) := Nat.find_spec hex
+  have hk0 : expRunStart μ₀ k ≤ M := by
+    rcases Nat.eq_zero_or_pos k with h0 | hpos
+    · rw [h0]; exact hM
+    · have hm : ¬ M < expRunStart μ₀ (k - 1 + 1) := Nat.find_min hex (by omega)
+      rw [Nat.sub_add_cancel hpos] at hm; omega
+  set a := expRunStart μ₀ k
+  set E := expRunEnd μ₀ a
+  have hEa2 := expRunEnd_le μ₀ hμ a
+  have hga := expRunStart_le_two_freeCount μ₀ hμ k
+  have hmono : ∀ {x y : ℕ}, x ≤ y → (freeCount (expFree μ₀) x : ℝ) ≤ freeCount (expFree μ₀) y :=
+    fun h => by exact_mod_cast freeCount_mono _ h
+  have h2μ : (0 : ℝ) < 2 * μ₀ := by positivity
+  rw [div_le_iff₀ h2μ]
+  rcases le_total M E with hME | hME
+  · have h1 := hmono hk0
+    have hMR : (M : ℝ) ≤ E := by exact_mod_cast hME
+    nlinarith
+  · have h1 := le_freeCount_sub (expFree μ₀) hME le_rfl le_rfl
+      (fun i h1 h2 => expFree_gap μ₀ hμ (k := k) h1 (lt_of_lt_of_le h2 hk1.le))
+    have h2 := hmono (show a ≤ E from (lt_expRunEnd μ₀ hμ (a := a)
+      (by have := four_le_expRunStart μ₀ hμ k; omega)).le)
+    have hMR : (E : ℝ) ≤ M := by exact_mod_cast hME
+    nlinarith
 
 /-- **Normal to every base prime to 3, a.e.**  Confidence 90%.
 
