@@ -17,6 +17,16 @@ Direction: `docs/ENGINE-PROPOSALS-2026-10-04.md` §E1.  Frozen as `src/NormalNum
 
 Freshness of the headline content: about 55%.  Nobody states the size of `U`.  But once the early-charging count from `UniformBad` is played inside the Broderick–Fishman–Simmons potential game, the rest is their machinery, and experts could call it routine.
 
+## Referee (2026-10-04)
+
+Full report: `docs/SCHMIDT-GAMES-REFEREE-2026-10-04.md`.
+
+- **`BFSPotentialDim` was false as first frozen** (ρ unrestricted).  Counterexample: `S = [0,1]ᶜ`, `ρ = 1/α`; Alice deletes `closedBall (1/2) (1/2)` at turn 0.  Now in the kernel: `not_BFSPotentialDimUnrestricted` (any nonempty `J ⊆ [0,1]`, `δ > 1/2`), instances `not_BFSDimInterval_unrestricted`, `not_BFSDimCantor_unrestricted`, against the frozen old form `Literature.BFSPotentialDimUnrestricted`.
+- **Fix:** `BFSPotentialDim` takes `ρ ≤ 1` (BFS §2 convention, implicit in their proof).  Ripple: `le_dimH_of_potentialWinning` gains `(hr1 : r ≤ 1)`; `not_potentialWinning_E_small` gains `(hC : 0 ≤ C)` (`E C = ∅` for `C ≤ 1`, nothing lost).  All headline conclusions unchanged.
+- **`BFSBadPotential`:** implied by source (95%); cite Lemma 3.11 in print = Lemma 3.10 in arXiv v3.
+- **`PotentialWinning`, `E`, `U`, `E₂`, `BA`, `Bad`:** faithful.
+- **Novelty:** not stated in the literature checked, ~65%; but ~75% an expert calls it a direct corollary of BFS (per-base `M_ε` lemma giving `α_b ≍ b^{−C}·polylog`, Prop 4.4 at `c = 1/2`, Thm 5.5).  This supersedes the 55% freshness figure below.
+
 ## Negative inventory read
 
 - `Maze.lean`: no row on games, winning sets or `U`.  The only `uniform` rows concern Vandehey `BlockForget` and casting out, which are unrelated.
@@ -55,7 +65,7 @@ Freshness of the headline content: about 55%.  Nobody states the size of `U`.  B
 | Prop | Source | Faithfulness note |
 |---|---|---|
 | `Literature.BFSPotentialDim J δ`, instances `BFSDimInterval` (`[0,1]`, δ = 1) and `BFSDimCantor` (`C₃`, δ = log 2/log 3) | Broderick–Fishman–Simmons, Acta Arith. 188 (2019) 289–316, arXiv:1703.09015, **Thm 5.5** (`theorempotentialHD`) | `X = ℝ`, `H` = singletons, `η = δ` by their Example 5.2 (Ahlfors δ-regular ⟹ absolutely (δ, singletons)-decaying).  Their `dim_A` (Ahlfors dimension) is ≤ `dim_H`, so the `dim_H` form is weaker.  The referee should check two things.  (a) Theorem numbering in the published version (the arXiv counter gives 5.5; sweep 10-03c also called it "BFS Thm 5.5").  (b) That `[0,1]` Lebesgue and the Cantor measure satisfy "Ahlfors regular for sufficiently small balls centered in the support". |
-| `Literature.BFSBadPotential` | BFS **Lemma 3.10** + **Remark 4.2** + **Prop 4.5** | Lemma 3.10 is absolute winning with `(α,β,ρ) = (2ε/((1−2ε)β), β, β/2)`.  Remark 4.2 says the proofs show `c = 0` potential winning, and one deletion of radius ≤ αρ meets every `c > 0` budget.  The referee should check that the composite reading is faithful. |
+| `Literature.BFSBadPotential` | BFS **Lemma 3.11** (print; arXiv v3: 3.10) + **Remark 4.2** + **Prop 4.5** | Lemma 3.11 is absolute winning with `(α,β,ρ) = (2ε/((1−2ε)β), β, β/2)`.  Remark 4.2 says the proofs show `c = 0` potential winning, and one deletion of radius ≤ αρ meets every `c > 0` budget.  The referee should check that the composite reading is faithful. |
 
 The intersection property (BFS Prop 4.4) is **proved** for two sets (`PotentialWinning.inter`), and so are monotonicity in the set, in `α` and in `ρ`.
 

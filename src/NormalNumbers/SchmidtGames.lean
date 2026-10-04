@@ -48,8 +48,11 @@ item 3 is the stretch conjecture in `SchmidtGamesStretch.lean`.
   to `X = ℝ`, `H` = singletons, `J` = `[0,1]` (Lebesgue, `δ = η = 1`) or the middle-third Cantor
   set (`δ = η = log 2/log 3`).  Ahlfors `δ`-regular measures are absolutely `(δ, singletons)`-
   decaying (their Example 5.2).  BFS bound the Ahlfors dimension, which is `≤ dim_H`; the Prop
-  uses `dim_H`, so it is weaker.
-* `Literature.BFSBadPotential`: BFS Lemma 3.10 (`BA₁(ε)` is `(2ε/((1−2ε)β), β, β/2)`-absolute
+  uses `dim_H`, so it is weaker.  It carries `ρ ≤ 1`, implicit in BFS's proof and their §2
+  convention; the unrestricted form is refuted in the kernel (`not_BFSPotentialDimUnrestricted`,
+  referee 2026-10-04).
+* `Literature.BFSBadPotential`: BFS Lemma 3.11 in print = Lemma 3.10 in arXiv v3 (`BA₁(ε)` is
+  `(2ε/((1−2ε)β), β, β/2)`-absolute
   winning), read through their Remark 4.2 (the proof deletes, so it is `c = 0` potential
   winning) and Proposition 4.5 (monotone in `c`: one deletion of radius `≤ αρ` meets every
   `c > 0` budget).
@@ -59,7 +62,7 @@ item 3 is the stretch conjecture in `SchmidtGamesStretch.lean`.
 ## Difficulty check
 
 * **Proved implications.**  Everything in item 3 from items 1, 2 and the cited Props.
-* **Unproved premise.**  Item 1, and the routine item 2.  Mechanism for item 1: the
+* **Premise (proved 2026-10-04).**  Item 1, and the routine item 2.  Mechanism for item 1: the
   `UniformBad` early charging, now played against Bob.  Charge obstacle
   `N(a/bⁿ, b^{−C−n})` on the first turn `k` with `ρ_k ≤ b^{−n}`.  Its centres are `b^{−n} ≥ ρ_k`
   apart, so at most 4 meet `B_k`; at most `1 + log_b(1/β)` levels `n` per base land on one turn;
@@ -74,9 +77,15 @@ item 3 is the stretch conjecture in `SchmidtGamesStretch.lean`.
     normality.
   - Exponent `≤ 1` fails even for large bases (`UniformBad.not_uniformBad_largeBases_of_le_one`);
     the mechanism needs `Σ_b b^{−C c} < ∞` with `c < 1`, so `C > 1`, and agrees.
-* **Confidence.**  Item 1: mathematics 90%, Lean 65% (2–4 laps).  Item 2: mathematics 97%, Lean
-  55%.  Freshness of item 3 (that nobody has written it): about 55%; experts in potential games
-  could call it routine once the early-charging count is in hand.
+  - The cited BFS 5.5 without `ρ ≤ 1` is false (`not_BFSDimInterval_unrestricted`,
+    `not_BFSDimCantor_unrestricted`): at `ρ = 1/α` Alice deletes all of `[0,1]` at turn 0.
+* **Status.**  Items 1 and 2 are proved; item 3 is sorry-free given the two cited Props.
+* **Novelty (referee verdict, 2026-10-04,** `docs/SCHMIDT-GAMES-REFEREE-2026-10-04.md`**).**  Not
+  stated in the literature checked (BFS v3 and print, Bugeaud 2012, whose Thm 7.8 is
+  `b`-exponential and lists 10.36 as open): ~65%.  But ~75% that an expert calls item 3 a direct
+  corollary of BFS: a per-base analogue of their Lemma 3.10 (print numbering: the `M_ε` lemma) giving
+  `α_b ≍ b^{−C}·polylog`, then the countable intersection Prop 4.4 at `c = 1/2`, then Thm 5.5.
+  A modest, note-sized strengthening of 10.36, not a deep result.
 
 Audit: `docs/SCHMIDT-GAMES-AUDIT-2026-10-04.md`.
 -/
@@ -240,8 +249,24 @@ an Ahlfors `δ`-regular measure (which is absolutely `(δ, H)`-decaying, their E
 `dim_A(S ∩ J ∩ B₀) ≥ δ − K₁ α^η/|log β| > 0` if `α^c ≤ (1 − β^{η−c})/K₂`, where `K₁, K₂` are
 large constants independent of `α, β, c, ρ`."  `dim_A` (Ahlfors dimension) is `≤ dim_H`, so this
 `dim_H` form is weaker.  Instances used: `J = [0,1]`, `δ = 1`; `J = cantorSet`,
-`δ = log 2/log 3`. -/
+`δ = log 2/log 3`.
+
+**The hypothesis `ρ ≤ 1` is implicit in BFS's proof** (referee 2026-10-04,
+`docs/SCHMIDT-GAMES-REFEREE-2026-10-04.md`).  Ahlfors regularity (their Def 5.1) holds only for
+sufficiently small balls, and the proof applies it at the scales `β^n ρ`, starting at `n = 0`.
+`0 < ρ ≤ 1` is BFS's own convention for compact Ahlfors-regular `J ⊂ ℝ` (published §2, before
+Thm 2.5), and both instances are regular with uniform constants at every scale `≤ 1`.  Without
+it the statement is false: `not_BFSPotentialDimUnrestricted`. -/
 def BFSPotentialDim (J : Set ℝ) (δ : ℝ) : Prop :=
+  ∃ K₁ K₂ : ℝ, 0 < K₁ ∧ 0 < K₂ ∧
+    ∀ (S : Set ℝ) (α β c ρ : ℝ), 0 < α → 0 < β → β ≤ 1 / 4 → 0 < c → c < δ → 0 < ρ → ρ ≤ 1 →
+      α ^ c ≤ (1 - β ^ (δ - c)) / K₂ → PotentialWinning S α β c ρ →
+      ∀ x₀ ∈ J, ∀ r₀ : ℝ, ρ ≤ r₀ →
+        ENNReal.ofReal (δ - K₁ * α ^ δ / |Real.log β|) ≤ dimH (S ∩ J ∩ closedBall x₀ r₀)
+
+/-- **Known false** (`not_BFSPotentialDimUnrestricted`): `BFSPotentialDim` with the scale `ρ`
+unrestricted, as first frozen on 2026-10-04.  Kept only as the refuted sibling. -/
+def BFSPotentialDimUnrestricted (J : Set ℝ) (δ : ℝ) : Prop :=
   ∃ K₁ K₂ : ℝ, 0 < K₁ ∧ 0 < K₂ ∧
     ∀ (S : Set ℝ) (α β c ρ : ℝ), 0 < α → 0 < β → β ≤ 1 / 4 → 0 < c → c < δ → 0 < ρ →
       α ^ c ≤ (1 - β ^ (δ - c)) / K₂ → PotentialWinning S α β c ρ →
@@ -255,10 +280,13 @@ def BFSDimInterval : Prop := BFSPotentialDim (Icc 0 1) 1
 Cantor measure. -/
 def BFSDimCantor : Prop := BFSPotentialDim cantorSet (Real.log 2 / Real.log 3)
 
-/-- **BFS Lemma 3.10** (`BA₁(ε)` is `(2ε/((1−2ε)β), β, β/2)`-absolute winning for
-`0 < ε < 1/2`, `(ε/(1−ε))² ≤ β < 1`), read as potential winning for every `c > 0`: their
-Remark 4.2 notes the proof only uses that the outcome avoids the deleted set (so `c = 0`
-potential winning), and one deletion of radius `≤ αρ_k` meets every `c`-budget (Prop. 4.5). -/
+/-- **BFS Lemma 3.11 (print) = Lemma 3.10 (arXiv v3)** (`BA₁(ε)` is
+`(2ε/((1−2ε)β), β, β/2)`-absolute winning for `0 < ε < 1/2`, `(ε/(1−ε))² ≤ β < 1`), read as
+potential winning for every `c > 0`: their Remark 4.2 notes the proof only uses that the outcome
+avoids the deleted set (so `c = 0` potential winning), and one deletion of radius `≤ αρ_k` meets
+every `c`-budget (Prop. 4.5).  The print edition inserts Remark 3.9, so its Lemma 3.10 is the
+`M_ε` lemma; Remark 4.2, Props 4.4–4.5, Example 5.2 and Thm 5.5 keep their numbers.  Referee
+2026-10-04: implied by the source, proof re-derived against this game (95%). -/
 def BFSBadPotential : Prop :=
   ∀ ε β c : ℝ, 0 < ε → ε < 1 / 2 → (ε / (1 - ε)) ^ 2 ≤ β → β < 1 → 0 < c →
     PotentialWinning (BA ε) (2 * ε / ((1 - 2 * ε) * β)) β c (β / 2)
@@ -983,7 +1011,7 @@ theorem half_lt_log2_div_log3 : (1 / 2 : ℝ) < Real.log 2 / Real.log 3 := by
 /-- The generic step: if `S` is `(α, 1/4, 1/2, r)`-potential winning for arbitrarily small `α`,
 then `dim_H (S ∩ J) ≥ δ`, given BFS Theorem 5.5 on `J`. -/
 theorem le_dimH_of_potentialWinning {J : Set ℝ} {δ : ℝ} (hJ : Literature.BFSPotentialDim J δ)
-    (hδ : 1 / 2 < δ) {S : Set ℝ} {x₀ r : ℝ} (hx₀ : x₀ ∈ J) (hr : 0 < r)
+    (hδ : 1 / 2 < δ) {S : Set ℝ} {x₀ r : ℝ} (hx₀ : x₀ ∈ J) (hr : 0 < r) (hr1 : r ≤ 1)
     (hS : ∀ η : ℝ, 0 < η → ∃ α, 0 < α ∧ α < η ∧ PotentialWinning S α (1 / 4) (1 / 2) r) :
     ENNReal.ofReal δ ≤ dimH (S ∩ J) := by
   obtain ⟨K₁, K₂, hK₁, hK₂, hBFS⟩ := hJ
@@ -1021,7 +1049,7 @@ theorem le_dimH_of_potentialWinning {J : Set ℝ} {δ : ℝ} (hJ : Literature.BF
     calc K₁ * α ^ δ < K₁ * (g * Real.log 4 / (2 * K₁)) := mul_lt_mul_of_pos_left h1 hK₁
       _ = g * Real.log 4 / 2 := by field_simp
       _ < g * Real.log 4 := by linarith [mul_pos hg hL]
-  have hdim := hBFS S α (1 / 4) (1 / 2) r hα (by norm_num) le_rfl (by norm_num) hδ hr hcond hPW
+  have hdim := hBFS S α (1 / 4) (1 / 2) r hα (by norm_num) le_rfl (by norm_num) hδ hr hr1 hcond hPW
     x₀ hx₀ r le_rfl
   calc t = ENNReal.ofReal t' := (ENNReal.ofReal_toReal htop).symm
     _ < ENNReal.ofReal (δ - K₁ * α ^ δ / |Real.log (1 / 4)|) :=
@@ -1043,7 +1071,8 @@ theorem codim_E_asymp (hE : EPotentialWinning) (hJ : Literature.BFSDimInterval) 
   · have hC3 : 3 ≤ C := hC₀3.trans hC
     have hα : 0 < K * (2 : ℝ) ^ (-C) := mul_pos hK (by positivity)
     have hdim := hBFS (E C) _ (1 / 4) (1 / 2) (1 / 2) hα (by norm_num) le_rfl (by norm_num)
-      (by norm_num) (by norm_num) (cond_interval hK₂ hα.le (hC₀ C hC)) (hPW C hC3) (1 / 2)
+      (by norm_num) (by norm_num) (by norm_num) (cond_interval hK₂ hα.le (hC₀ C hC)) (hPW C hC3)
+      (1 / 2)
       ⟨by norm_num, by norm_num⟩ (1 / 2) le_rfl
     rw [Real.rpow_one, abs_log_quarter] at hdim
     calc ENNReal.ofReal (1 - K₁ * K / Real.log 4 * 2 ^ (-C))
@@ -1067,7 +1096,7 @@ theorem dimH_U_eq_one_of (hE : EPotentialWinning) (hJ : Literature.BFSDimInterva
   refine le_antisymm (dimH_le_one U) ?_
   have h := le_dimH_of_potentialWinning hJ (by norm_num : (1 / 2 : ℝ) < 1)
     (⟨by norm_num, by norm_num⟩ : (1 / 2 : ℝ) ∈ Icc (0 : ℝ) 1) (by norm_num : (0 : ℝ) < 1 / 2)
-    (smallPW_U hE (by norm_num : (0 : ℝ) < 1 / 2))
+    (by norm_num) (smallPW_U hE (by norm_num : (0 : ℝ) < 1 / 2))
   rw [ENNReal.ofReal_one] at h
   exact h.trans (dimH_mono inter_subset_left)
 
@@ -1076,7 +1105,7 @@ Cantor set). -/
 theorem le_dimH_U_inter_cantor_of (hE : EPotentialWinning) (hJ : Literature.BFSDimCantor) :
     ENNReal.ofReal (Real.log 2 / Real.log 3) ≤ dimH (U ∩ cantorSet) :=
   le_dimH_of_potentialWinning hJ half_lt_log2_div_log3 zero_mem_cantorSet
-    (by norm_num : (0 : ℝ) < 1 / 2) (smallPW_U hE (by norm_num))
+    (by norm_num : (0 : ℝ) < 1 / 2) (by norm_num) (smallPW_U hE (by norm_num))
 
 /-- `U ∩ Bad` is `(α, 1/4, 1/2, 1/8)`-potential winning for arbitrarily small `α`. -/
 theorem smallPW_U_Bad (hE : EPotentialWinning) (hB : Literature.BFSBadPotential) :
@@ -1112,12 +1141,12 @@ theorem smallPW_U_Bad (hE : EPotentialWinning) (hB : Literature.BFSBadPotential)
     exact ⟨E_subset_U C₀ hx1, mem_iUnion₂.2 ⟨ε, hε, hx2⟩⟩
 
 /-- **`dim_H (U ∩ BAD ∩ cantorSet) ≥ log 2/log 3`** (conditional on headline 1, BFS 5.5 on the
-Cantor set, and BFS Lemma 3.10). -/
+Cantor set, and BFS Lemma 3.11 (print) = 3.10 (arXiv v3)). -/
 theorem le_dimH_U_inter_Bad_inter_cantor_of (hE : EPotentialWinning)
     (hJ : Literature.BFSDimCantor) (hB : Literature.BFSBadPotential) :
     ENNReal.ofReal (Real.log 2 / Real.log 3) ≤ dimH (U ∩ Bad ∩ cantorSet) :=
   le_dimH_of_potentialWinning hJ half_lt_log2_div_log3 zero_mem_cantorSet
-    (by norm_num : (0 : ℝ) < 1 / 8) (smallPW_U_Bad hE hB)
+    (by norm_num : (0 : ℝ) < 1 / 8) (by norm_num) (smallPW_U_Bad hE hB)
 
 /-! ## Guards (known-false siblings) -/
 
@@ -1133,8 +1162,9 @@ theorem E_disjoint_gap (C : ℝ) : Disjoint (E C) (Ioo (-(2 : ℝ) ^ (-C)) ((2 :
   linarith
 
 /-- **Guard: one fixed exponent is not winning.**  For each `C`, `E C` is not
-`(α, 1/4, 1/2, 2^{−C}/2)`-potential winning for small `α`: Bob opens inside the gap. -/
-theorem not_potentialWinning_E_small (hJ : Literature.BFSDimInterval) (C : ℝ) :
+`(α, 1/4, 1/2, 2^{−C}/2)`-potential winning for small `α`: Bob opens inside the gap.
+`0 ≤ C` keeps the scale `≤ 1` (`BFSPotentialDim`); it loses nothing, as `E C = ∅` for `C ≤ 1`. -/
+theorem not_potentialWinning_E_small (hJ : Literature.BFSDimInterval) (C : ℝ) (hC : 0 ≤ C) :
     ∃ α₀ : ℝ, 0 < α₀ ∧ ∀ α : ℝ, 0 < α → α < α₀ →
       ¬ PotentialWinning (E C) α (1 / 4) (1 / 2) ((2 : ℝ) ^ (-C) / 2) := by
   obtain ⟨K₁, K₂, hK₁, hK₂, hBFS⟩ := hJ
@@ -1142,8 +1172,11 @@ theorem not_potentialWinning_E_small (hJ : Literature.BFSDimInterval) (C : ℝ) 
   refine ⟨min (1 / (4 * K₂ ^ 2)) (Real.log 4 / K₁), lt_min (by positivity) (div_pos hL hK₁),
     fun α hα hα₀ hPW => ?_⟩
   have hr : 0 < (2 : ℝ) ^ (-C) / 2 := by positivity
+  have hr1 : (2 : ℝ) ^ (-C) / 2 ≤ 1 := by
+    have : (2 : ℝ) ^ (-C) ≤ 1 := Real.rpow_le_one_of_one_le_of_nonpos (by norm_num) (by linarith)
+    linarith
   have hdim := hBFS (E C) α (1 / 4) (1 / 2) _ hα (by norm_num) le_rfl (by norm_num)
-    (by norm_num) hr (cond_interval hK₂ hα.le (hα₀.le.trans (min_le_left _ _))) hPW 0
+    (by norm_num) hr hr1 (cond_interval hK₂ hα.le (hα₀.le.trans (min_le_left _ _))) hPW 0
     ⟨le_rfl, zero_le_one⟩ _ le_rfl
   have hempty : E C ∩ Icc 0 1 ∩ closedBall 0 ((2 : ℝ) ^ (-C) / 2) = ∅ := by
     ext ξ
@@ -1181,8 +1214,96 @@ theorem not_potentialWinning_isNormal (hE : EPotentialWinning) (hJ : Literature.
     exact ⟨_, sum_sqrt_rpow_pos hα₁ (by positivity), sum_sqrt_rpow_lt hα₁.le (by positivity)
       (by linarith), hI⟩
   have h := le_dimH_of_potentialWinning hJ (by norm_num : (1 / 2 : ℝ) < 1)
-    (⟨by norm_num, by norm_num⟩ : (1 / 2 : ℝ) ∈ Icc (0 : ℝ) 1) (by norm_num : (0 : ℝ) < 1 / 2) hS
+    (⟨by norm_num, by norm_num⟩ : (1 / 2 : ℝ) ∈ Icc (0 : ℝ) 1) (by norm_num : (0 : ℝ) < 1 / 2)
+    (by norm_num) hS
   rw [hempty, empty_inter, dimH_empty, ENNReal.ofReal_one] at h
   exact one_ne_zero (le_antisymm h bot_le)
+
+/-! ## Guard on the cited input: BFS 5.5 needs `ρ ≤ 1` -/
+
+/-- At scale `ρ = 1/α`, the complement of `[0,1]` is `(α, β, c, 1/α)`-potential winning: Alice
+deletes `closedBall (1/2) (1/2) = [0,1]` at turn 0, which is legal because `αρ₀ ≥ 1`. -/
+theorem potentialWinning_compl_Icc {α β c : ℝ} (hα : 0 < α) (hc : 0 < c) :
+    PotentialWinning (Icc (0 : ℝ) 1)ᶜ α β c α⁻¹ := by
+  classical
+  let σ : Strategy := fun k h i =>
+    if k = 0 ∧ i = 0 ∧ α⁻¹ ≤ (h (Fin.last k)).2 then some (1 / 2, 1 / 2) else none
+  refine ⟨σ, fun k h hpos => ⟨?_, ?_⟩, ?_⟩
+  · intro i p hp
+    simp only [σ] at hp
+    split_ifs at hp
+    cases hp
+    norm_num
+  · rw [tsum_eq_single 0 fun i hi => by simp [σ, hi, budgetTerm]]
+    simp only [σ, true_and]
+    split_ifs with hk
+    · simp only [budgetTerm]
+      apply ENNReal.ofReal_le_ofReal
+      apply Real.rpow_le_rpow (by norm_num) _ hc.le
+      have : α * α⁻¹ ≤ α * (h (Fin.last k)).2 := mul_le_mul_of_nonneg_left hk.2 hα.le
+      rw [mul_inv_cancel₀ hα.ne'] at this
+      linarith
+    · simp [budgetTerm]
+  · intro B hB _ x hx
+    by_cases hxI : x ∈ Icc (0 : ℝ) 1
+    · right
+      refine ⟨0, 0, (1 / 2, 1 / 2), ?_, ?_⟩
+      · simp only [σ, true_and]
+        rw [if_pos]
+        exact hB.1
+      · rw [Real.dist_eq, abs_le]
+        constructor <;> linarith [hxI.1, hxI.2]
+    · exact Or.inl hxI
+
+/-- **`BFSPotentialDim` with `ρ` unrestricted is false** for every nonempty `J ⊆ [0,1]` and
+`δ > 1/2` (referee 2026-10-04).  `S = [0,1]ᶜ` is potential winning at `ρ = 1/α`
+(`potentialWinning_compl_Icc`), so the unrestricted Prop predicts
+`dim_H (S ∩ J ∩ B) ≥ δ − K₁α^δ/log 4 > 0` for a set that is empty. -/
+theorem not_BFSPotentialDimUnrestricted {J : Set ℝ} {δ : ℝ} (hJ : J ⊆ Icc 0 1)
+    (hne : J.Nonempty) (hδ : 1 / 2 < δ) : ¬ Literature.BFSPotentialDimUnrestricted J δ := by
+  rintro ⟨K₁, K₂, hK₁, hK₂, hBFS⟩
+  obtain ⟨x₀, hx₀⟩ := hne
+  have hδ0 : 0 < δ := by linarith
+  set M : ℝ := (1 - (1 / 4 : ℝ) ^ (δ - 1 / 2)) / K₂ with hM
+  have hq : (1 / 4 : ℝ) ^ (δ - 1 / 2) < 1 :=
+    Real.rpow_lt_one (by norm_num) (by norm_num) (by linarith)
+  have hMpos : 0 < M := div_pos (by linarith) hK₂
+  have hL : 0 < Real.log 4 := Real.log_pos (by norm_num)
+  have hX : 0 < δ * Real.log 4 / (2 * K₁) := by positivity
+  set α := min (M ^ 2) ((δ * Real.log 4 / (2 * K₁)) ^ δ⁻¹) with hαdef
+  have hα : 0 < α := lt_min (by positivity) (Real.rpow_pos_of_pos hX _)
+  have hcond : α ^ (1 / 2 : ℝ) ≤ (1 - (1 / 4 : ℝ) ^ (δ - 1 / 2)) / K₂ := by
+    rw [← Real.sqrt_eq_rpow, ← hM]
+    calc √α ≤ √(M ^ 2) := Real.sqrt_le_sqrt (min_le_left _ _)
+      _ = M := Real.sqrt_sq hMpos.le
+  have hsmall : K₁ * α ^ δ / |Real.log (1 / 4)| < δ := by
+    rw [abs_log_quarter]
+    have h1 : α ^ δ ≤ δ * Real.log 4 / (2 * K₁) := by
+      calc α ^ δ ≤ ((δ * Real.log 4 / (2 * K₁)) ^ δ⁻¹) ^ δ :=
+            Real.rpow_le_rpow hα.le (min_le_right _ _) hδ0.le
+        _ = _ := Real.rpow_inv_rpow hX.le hδ0.ne'
+    rw [div_lt_iff₀ hL]
+    calc K₁ * α ^ δ ≤ K₁ * (δ * Real.log 4 / (2 * K₁)) := mul_le_mul_of_nonneg_left h1 hK₁.le
+      _ = δ * Real.log 4 / 2 := by field_simp
+      _ < δ * Real.log 4 := by linarith [mul_pos hδ0 hL]
+  have hdim := hBFS (Icc (0 : ℝ) 1)ᶜ α (1 / 4) (1 / 2) α⁻¹ hα (by norm_num) le_rfl (by norm_num)
+    hδ (inv_pos.2 hα) hcond (potentialWinning_compl_Icc hα (by norm_num)) x₀ hx₀ α⁻¹ le_rfl
+  have hempty : (Icc (0 : ℝ) 1)ᶜ ∩ J ∩ closedBall x₀ α⁻¹ = ∅ := by
+    ext ξ
+    simp only [mem_inter_iff, mem_compl_iff, mem_empty_iff_false, iff_false, not_and]
+    exact fun h _ => h.1 (hJ h.2)
+  rw [hempty, dimH_empty, nonpos_iff_eq_zero, ENNReal.ofReal_eq_zero] at hdim
+  linarith
+
+/-- The `[0,1]` instance of the referee's counterexample. -/
+theorem not_BFSDimInterval_unrestricted :
+    ¬ Literature.BFSPotentialDimUnrestricted (Icc 0 1) 1 :=
+  not_BFSPotentialDimUnrestricted subset_rfl ⟨0, by norm_num, by norm_num⟩ (by norm_num)
+
+/-- The Cantor instance of the referee's counterexample. -/
+theorem not_BFSDimCantor_unrestricted :
+    ¬ Literature.BFSPotentialDimUnrestricted cantorSet (Real.log 2 / Real.log 3) :=
+  not_BFSPotentialDimUnrestricted cantorSet_subset_unitInterval ⟨0, zero_mem_cantorSet⟩
+    half_lt_log2_div_log3
 
 end NormalNumbers.SchmidtGames

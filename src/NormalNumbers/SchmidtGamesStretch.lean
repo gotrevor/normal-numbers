@@ -23,7 +23,7 @@ approximable, Cantor, and computable at once.
 
 **Mechanism.**  Play the BFS potential game with a computable Bob: Bob descends through triadic
 Cantor intervals and picks a child whose potential (Alice's deletions from `potentialWinning_E`
-and BFS Lemma 3.10, weighted as in BFS §5) stays below threshold.  The potentials are infinite
+and BFS Lemma 3.11 (print; arXiv v3: 3.10), weighted as in BFS §5) stays below threshold.  The potentials are infinite
 sums over bases, computable to any precision from explicit tails `Σ_{b > B} b^{−C/2}`.  So Bob
 compares rational over-approximations with a margin; the averaging step in BFS Theorem 5.5
 leaves room for that margin.  Known-false sibling it must fail on: the same descent with
