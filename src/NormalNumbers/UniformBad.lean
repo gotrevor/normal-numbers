@@ -146,6 +146,37 @@ theorem term_le_potential (c r : ι → ℝ) (st : ι → ℕ) (ℓ₀ : ℝ) (K
   ENNReal.le_tsum (f := fun j : {i : ι // P (st i) ∧ (obstacle c r i ∩ window ℓ₀ K k x).Nonempty} =>
     ENNReal.ofReal (Real.sqrt (r j / (ℓ₀ / (K : ℝ) ^ k)))) ⟨i, hP, y, hy, hyw⟩
 
+/-- The set of obstacles counted by `potential`. -/
+def potSet (c r : ι → ℝ) (st : ι → ℕ) (ℓ₀ : ℝ) (K : ℕ) (P : ℕ → Prop) (k : ℕ) (x : ℝ) :
+    Set ι := {i | P (st i) ∧ (obstacle c r i ∩ window ℓ₀ K k x).Nonempty}
+
+theorem potential_eq_tsum (c r : ι → ℝ) (st : ι → ℕ) (ℓ₀ : ℝ) (K : ℕ) (P : ℕ → Prop)
+    (k : ℕ) (x : ℝ) :
+    potential c r st ℓ₀ K P k x = ∑' i, (potSet c r st ℓ₀ K P k x).indicator
+      (fun i => ENNReal.ofReal (Real.sqrt (r i / (ℓ₀ / (K : ℝ) ^ k)))) i :=
+  tsum_subtype (potSet c r st ℓ₀ K P k x)
+    (fun i => ENNReal.ofReal (Real.sqrt (r i / (ℓ₀ / (K : ℝ) ^ k))))
+
+open Classical in
+/-- A closed interval of length `< ℓ` meets at most two of the closed children. -/
+theorem card_children_le (c r x ℓ : ℝ) (hr : 2 * r < ℓ) (K : ℕ) :
+    ((Finset.range K).filter (fun j : ℕ =>
+      (Set.Icc (c - r) (c + r) ∩ Set.Icc (x + j * ℓ) (x + j * ℓ + ℓ)).Nonempty)).card ≤ 2 := by
+  have key : ∀ p q : ℕ, (Set.Icc (c - r) (c + r) ∩ Set.Icc (x + p * ℓ) (x + p * ℓ + ℓ)).Nonempty →
+      (Set.Icc (c - r) (c + r) ∩ Set.Icc (x + q * ℓ) (x + q * ℓ + ℓ)).Nonempty → p ≤ q + 1 := by
+    rintro p q ⟨y, ⟨hy1, hy2⟩, hy3, hy4⟩ ⟨z, ⟨hz1, hz2⟩, hz3, hz4⟩
+    by_contra h
+    have : (q : ℝ) + 2 ≤ p := by exact_mod_cast (by omega : q + 2 ≤ p)
+    nlinarith
+  by_contra h
+  push Not at h
+  obtain ⟨a, ha, b, hb, d, hd, hab, had, hbd⟩ := Finset.two_lt_card.1 h
+  simp only [Finset.mem_filter] at ha hb hd
+  have := key a b ha.2 hb.2; have := key b a hb.2 ha.2
+  have := key a d ha.2 hd.2; have := key d a hd.2 ha.2
+  have := key b d hb.2 hd.2; have := key d b hd.2 hb.2
+  omega
+
 /-- **Engine step.**  If the carried potential of a stage-`k` window is below `θ`, some child
 window has carried potential below `θ`.
 
@@ -162,7 +193,136 @@ theorem potential_step (c r : ι → ℝ) (st : ι → ℕ) {K : ℕ} (hK : 5 �
     {k : ℕ} {x : ℝ} (hk : potential c r st ℓ₀ K (· ≤ k) k x < theta K) :
     ∃ j : ℕ, j < K ∧
       potential c r st ℓ₀ K (· ≤ k + 1) (k + 1) (x + j * (ℓ₀ / (K : ℝ) ^ (k + 1))) < theta K := by
-  sorry
+  classical
+  have hKpos : (0 : ℝ) < K := by exact_mod_cast (by omega : 0 < K)
+  set ℓ := ℓ₀ / (K : ℝ) ^ k with hℓ
+  set ℓ' := ℓ₀ / (K : ℝ) ^ (k + 1) with hℓ'
+  have hℓpos : 0 < ℓ := div_pos hℓ₀ (pow_pos hKpos k)
+  have hℓ'pos : 0 < ℓ' := div_pos hℓ₀ (pow_pos hKpos (k + 1))
+  have hℓK : ℓ = K * ℓ' := by simp only [hℓ, hℓ', pow_succ]; field_simp
+  set f : ι → ℝ≥0∞ := fun i => ENNReal.ofReal (Real.sqrt (r i / ℓ)) with hf
+  set f' : ι → ℝ≥0∞ := fun i => ENNReal.ofReal (Real.sqrt (r i / ℓ')) with hf'
+  have hff' : ∀ i, f' i = ENNReal.ofReal (Real.sqrt K) * f i := by
+    intro i
+    simp only [hf, hf']
+    rw [← ENNReal.ofReal_mul (Real.sqrt_nonneg _), ← Real.sqrt_mul hKpos.le, hℓK]
+    congr 2
+    field_simp
+  set Φ := potential c r st ℓ₀ K (· ≤ k) k x with hΦ
+  set S : ℕ → Set ι := fun j => potSet c r st ℓ₀ K (· ≤ k) (k + 1) (x + j * ℓ') with hS
+  set old : ℕ → ℝ≥0∞ := fun j => ∑' i, (S j).indicator f' i with hold
+  -- split the child potential
+  have hsplit : ∀ j : ℕ, potential c r st ℓ₀ K (· ≤ k + 1) (k + 1) (x + j * ℓ') ≤
+      old j + potential c r st ℓ₀ K (· = k + 1) (k + 1) (x + j * ℓ') := by
+    intro j
+    rw [potential_eq_tsum, potential_eq_tsum, hold, ← ENNReal.tsum_add]
+    refine ENNReal.tsum_le_tsum fun i => ?_
+    simp only [Set.indicator_apply, potSet, hS, Set.mem_ofPred_eq]
+    by_cases h1 : st i ≤ k + 1 ∧ (obstacle c r i ∩ window ℓ₀ K (k + 1) (x + j * ℓ')).Nonempty
+    · rw [if_pos h1]
+      rcases Nat.lt_or_ge (st i) (k + 1) with h | h
+      · rw [if_pos ⟨by omega, h1.2⟩]; exact le_self_add
+      · rw [if_neg (fun h' => by omega), if_pos ⟨by omega, h1.2⟩, zero_add]
+    · rw [if_neg h1]; exact zero_le
+  -- pointwise bound for the sum over children
+  have hpt : ∀ i, ∑ j ∈ Finset.range K, (S j).indicator f' i ≤
+      ENNReal.ofReal (2 * Real.sqrt K) * (potSet c r st ℓ₀ K (· ≤ k) k x).indicator f i := by
+    intro i
+    by_cases hi : i ∈ potSet c r st ℓ₀ K (· ≤ k) k x
+    · rw [Set.indicator_of_mem hi]
+      have hfi : f i < theta K := lt_of_le_of_lt
+        (by obtain ⟨hP, y, hy, hyw⟩ := hi; exact term_le_potential c r st ℓ₀ K i hP hy hyw) hk
+      have hθ : (0 : ℝ) < 1 / Real.sqrt (2 * K) := by positivity
+      rw [hf, theta, ENNReal.ofReal_lt_ofReal_iff hθ, Real.sqrt_lt' hθ, div_pow, Real.sq_sqrt
+        (by positivity), one_pow, div_lt_div_iff₀ hℓpos (by positivity), one_mul] at hfi
+      have hr2 : 2 * r i < ℓ' := by
+        rw [hℓK] at hfi
+        have : 0 < (K : ℝ) := hKpos
+        nlinarith
+      have hcard := card_children_le (c i) (r i) x ℓ' hr2 K
+      calc ∑ j ∈ Finset.range K, (S j).indicator f' i
+          ≤ ∑ j ∈ Finset.range K, (if (Set.Icc (c i - r i) (c i + r i) ∩
+              Set.Icc (x + j * ℓ') (x + j * ℓ' + ℓ')).Nonempty then f' i else 0) := by
+            refine Finset.sum_le_sum fun j _ => ?_
+            rw [Set.indicator_apply]
+            split_ifs with h1 h2
+            · exact le_rfl
+            · exact absurd h1.2 h2
+            · exact zero_le
+            · exact le_rfl
+        _ = ((Finset.range K).filter (fun j : ℕ => (Set.Icc (c i - r i) (c i + r i) ∩
+              Set.Icc (x + j * ℓ') (x + j * ℓ' + ℓ')).Nonempty)).card * f' i := by
+            rw [← Finset.sum_filter, Finset.sum_const, nsmul_eq_mul]
+        _ ≤ 2 * f' i := by
+            gcongr
+            exact_mod_cast hcard
+        _ = ENNReal.ofReal (2 * Real.sqrt K) * f i := by
+            rw [hff', ENNReal.ofReal_mul (by norm_num), ENNReal.ofReal_ofNat, mul_assoc]
+    · rw [Set.indicator_of_notMem hi, mul_zero]
+      refine le_of_eq (Finset.sum_eq_zero fun j hj => Set.indicator_of_notMem ?_ _)
+      rintro ⟨h1, y, hy, hy1, hy2⟩
+      apply hi
+      refine ⟨h1, y, hy, hy1.trans' ?_, hy2.trans ?_⟩
+      · have := mul_nonneg (Nat.cast_nonneg j : (0:ℝ) ≤ j) hℓ'pos.le; linarith
+      · have hj : (j : ℝ) + 1 ≤ K := by exact_mod_cast Finset.mem_range.1 hj
+        show x + j * ℓ' + ℓ₀ / (K:ℝ) ^ (k+1) ≤ x + ℓ₀ / (K:ℝ) ^ k
+        rw [← hℓ, ← hℓ', hℓK]; nlinarith
+  have hsum : ∑ j ∈ Finset.range K, old j ≤ ENNReal.ofReal (2 * Real.sqrt K) * Φ := by
+    simp only [hold]
+    rw [← Summable.tsum_finsetSum (fun _ _ => ENNReal.summable), hΦ, potential_eq_tsum,
+      ← ENNReal.tsum_mul_left]
+    exact ENNReal.tsum_le_tsum hpt
+  have hKne : (Finset.range K).Nonempty := ⟨0, Finset.mem_range.2 (by omega)⟩
+  obtain ⟨j, hj, hjle⟩ := ENNReal.exists_le_of_sum_le hKne
+    (f := fun j => ENNReal.ofReal K * old j)
+    (g := fun _ => ENNReal.ofReal (2 * Real.sqrt K) * Φ) (by
+      rw [← Finset.mul_sum, Finset.sum_const, Finset.card_range, nsmul_eq_mul,
+        ← ENNReal.ofReal_natCast]
+      gcongr)
+  refine ⟨j, Finset.mem_range.1 hj, lt_of_le_of_lt (hsplit j) ?_⟩
+  -- arithmetic
+  have hθpos : (0 : ℝ) < 1 / Real.sqrt (2 * K) := by positivity
+  have hΦtop : Φ ≠ ⊤ := ne_top_of_lt hk
+  have holdtop : old j ≠ ⊤ := by
+    intro h
+    rw [h, ENNReal.mul_top (by simp; omega)] at hjle
+    exact (ENNReal.mul_ne_top ENNReal.ofReal_ne_top hΦtop) (top_le_iff.1 hjle)
+  set φ := Φ.toReal
+  set o := (old j).toReal
+  have hφ : Φ = ENNReal.ofReal φ := (ENNReal.ofReal_toReal hΦtop).symm
+  have ho : old j = ENNReal.ofReal o := (ENNReal.ofReal_toReal holdtop).symm
+  have hφ0 : 0 ≤ φ := ENNReal.toReal_nonneg
+  have ho0 : 0 ≤ o := ENNReal.toReal_nonneg
+  rw [hφ, ho, ← ENNReal.ofReal_mul hKpos.le, ← ENNReal.ofReal_mul (by positivity),
+    ENNReal.ofReal_le_ofReal_iff (by positivity)] at hjle
+  rw [hφ, theta, ENNReal.ofReal_lt_ofReal_iff hθpos] at hk
+  set A' := max A 0
+  have hsK : 2 < Real.sqrt K := by
+    rw [Real.lt_sqrt (by norm_num)]; exact_mod_cast (by omega : 4 < K)
+  have hA' : A' ≤ (1 - 2 / Real.sqrt K) / Real.sqrt (2 * K) := by
+    refine max_le hA (div_nonneg ?_ (Real.sqrt_nonneg _))
+    rw [sub_nonneg, div_le_one (by positivity)]; exact hsK.le
+  calc old j + potential c r st ℓ₀ K (· = k + 1) (k + 1) (x + j * ℓ')
+      ≤ ENNReal.ofReal o + ENNReal.ofReal A' := by
+        rw [← ho]; gcongr; exact (hnew _ _).trans (ENNReal.ofReal_le_ofReal (le_max_left _ _))
+    _ = ENNReal.ofReal (o + A') := (ENNReal.ofReal_add ho0 (le_max_right _ _)).symm
+    _ < theta K := by
+      rw [theta, ENNReal.ofReal_lt_ofReal_iff hθpos]
+      set s := Real.sqrt K
+      set t := Real.sqrt (2 * K)
+      have hs : 0 < s := by positivity
+      have ht : 0 < t := by positivity
+      have hss : s * s = K := Real.mul_self_sqrt hKpos.le
+      -- o ≤ 2 φ / s
+      have ho' : o * s ≤ 2 * φ := by
+        have : (s * s) * o ≤ 2 * s * φ := by rw [hss]; linarith
+        nlinarith
+      have hφt : φ * t < 1 := by rwa [lt_div_iff₀ ht] at hk
+      have hA't : A' * t ≤ 1 - 2 / s := by rwa [le_div_iff₀ ht] at hA'
+      rw [lt_div_iff₀ ht]
+      have h1 : o * t * s < 2 := by nlinarith
+      have h2 : o * t < 2 / s := by rw [lt_div_iff₀ hs]; linarith
+      linarith
 
 /-- **Generic avoidance engine.**  A family of closed intervals with a stage map, whose
 newly charged square-root potential on every stage-`k` window is at most
