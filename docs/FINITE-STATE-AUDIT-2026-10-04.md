@@ -133,3 +133,15 @@ normality-preserving operations for Cantor series; journal-only versions of 2602
 ## Required declarations
 
 `src/NormalNumbers/FiniteStateSelection.lean:pulariDPDTQuestion_of_lit,pulariWeakening_of_lit,mirror_not_mealy,mirrorEnum_cpReal_facts_of_not_normal,PulariDPDTQuestion,PulariWeakening,cartonPerifel_normal,fsDim_one_isNormal,pulari_coherent_eqchar`
+
+## Update 2026-10-04 (later): leaves discharged
+
+All ten leaves of `FiniteStateSelection.lean` are proved; `pulariDPDTQuestion_of_lit`,
+`pulariWeakening_of_lit` and `mirror_not_mealy` now rest only on the three cited `Literature.*`
+hypotheses.  The counting core went through a sharper invariant than the audit planned:
+`count_inv` (`|s| + |w| ≤ 2·#0 + |stack|` for any coder run) plus the mirror-return lemma
+`encStk_reverse` (on a reduced stack, reading `w` then `w̃` restores the stack) give
+`block_count` (`#0 ≥ |w|` on `w w̃`) and `cpPrefix_count` (`#0 ≥ |prefix|/2` at every block end).
+Consequence, new: `not_isNormal_encSeq_cpSeq_of_three` and `pulariDPDTQuestion_of_lit_three`
+answer Q-DPDT for every base `k ≥ 3`, bypassing the open `ZeroFreqHalf` node.  Base 2
+(`PulariDPDTBaseTwo`) is still open: the `1/2` lower bound does not separate from `1/2`.

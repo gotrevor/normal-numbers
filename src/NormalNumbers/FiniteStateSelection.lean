@@ -37,7 +37,7 @@ Mayordomo's relativized normality (`f`-normality, `dim^f_FS(x) = 1`, Mayordomo a
   invertibility, and a non-injective (e.g. bounded-to-one) synchronous relabeling is never a
   separator enumerator at all.
 
-Both are proved here as WIRING from named leaves (`sorry` with confidence) and three cited
+Both are proved here from elementary leaves (all proved; see `## Leaves`) and three cited
 hypotheses in `NormalNumbers.Literature` (Carton–Perifel normality, "FS-dimension one ⇒ normal",
 Pulari's Theorem 3).
 
@@ -556,7 +556,223 @@ theorem countOcc_single (a : ℕ) (l : List ℕ) : countOccurrences [a] l = l.co
 
 end Coder
 
-/-! ## Leaves (frozen, `sorry` with confidence) -/
+/-! ## Grid toolkit, Mealy runs, prefixes of digit expansions -/
+
+/-- The integer value of a word, most significant letter first. -/
+def wval : List (Fin k) → ℕ
+  | [] => 0
+  | a :: u => (a : ℕ) * k ^ u.length + wval u
+
+theorem wval_append (u v : List (Fin k)) : wval (u ++ v) = wval u * k ^ v.length + wval v := by
+  induction u with
+  | nil => simp [wval]
+  | cons a u ih => simp only [List.cons_append, wval, ih, List.length_append, pow_add]; ring
+
+theorem wval_lt (hk : 0 < k) (u : List (Fin k)) : wval u < k ^ u.length := by
+  induction u with
+  | nil => simp [wval]
+  | cons a u ih =>
+    simp only [wval, List.length_cons, pow_succ]
+    have : (a : ℕ) + 1 ≤ k := a.isLt
+    nlinarith
+
+theorem grid_cons (hk : 0 < k) (a : Fin k) (u : List (Fin k)) :
+    grid k (a :: u) = ((a : ℝ) + grid k u) / k := by
+  simp only [grid, List.length_cons, Fin.sum_univ_succ]
+  simp [List.get, pow_succ, Finset.sum_div, div_div, add_div]
+
+theorem grid_eq (hk : 0 < k) (u : List (Fin k)) : grid k u = (wval u : ℝ) / (k : ℝ) ^ u.length := by
+  have hk' : (k : ℝ) ≠ 0 := by exact_mod_cast hk.ne'
+  induction u with
+  | nil => simp [grid, wval]
+  | cons a u ih =>
+    rw [grid_cons hk, ih]
+    simp only [wval, List.length_cons, pow_succ]
+    push_cast
+    field_simp
+
+theorem grid_mul_pow (hk : 0 < k) (u : List (Fin k)) :
+    grid k u * (k : ℝ) ^ u.length = wval u := by
+  have : (0 : ℝ) < (k : ℝ) ^ u.length := by positivity
+  rw [grid_eq hk]; field_simp
+
+theorem wval_inj (hk : 0 < k) : ∀ (u v : List (Fin k)), u.length = v.length → wval u = wval v → u = v
+  | [], [], _, _ => rfl
+  | a :: u, b :: v, hl, he => by
+    simp only [List.length_cons, Nat.add_right_cancel_iff] at hl
+    simp only [wval, hl] at he
+    have hu := wval_lt hk u
+    have hv := wval_lt hk v
+    rw [hl] at hu
+    have hab : (a : ℕ) = b := by
+      have h1 : ((a : ℕ) * k ^ v.length + wval u) / k ^ v.length = a := by
+        rw [Nat.add_comm, Nat.add_mul_div_right _ _ (by positivity), Nat.div_eq_of_lt hu, zero_add]
+      have h2 : ((b : ℕ) * k ^ v.length + wval v) / k ^ v.length = b := by
+        rw [Nat.add_comm, Nat.add_mul_div_right _ _ (by positivity), Nat.div_eq_of_lt hv, zero_add]
+      rw [← h1, ← h2, he]
+    rw [Fin.ext hab, wval_inj hk u v hl (by rw [hab] at he; omega)]
+
+/-- The length-`n` word of value `j mod k^n`. -/
+def toWord (hk : 0 < k) : ℕ → ℕ → List (Fin k)
+  | 0, _ => []
+  | n + 1, j => ⟨j / k ^ n % k, Nat.mod_lt _ hk⟩ :: toWord hk n j
+
+theorem length_toWord (hk : 0 < k) (n j : ℕ) : (toWord hk n j).length = n := by
+  induction n with
+  | zero => rfl
+  | succ n ih => simp [toWord, ih]
+
+theorem wval_toWord (hk : 0 < k) (n j : ℕ) : wval (toWord hk n j) = j % k ^ n := by
+  induction n with
+  | zero => simp [toWord, wval, Nat.mod_one]
+  | succ n ih =>
+    simp only [toWord, wval, length_toWord, ih]
+    rw [Nat.mod_pow_succ]; ring
+
+/-- Every level grid point `j/k^n`, `j < k^n`, is the grid value of a length-`n` word. -/
+theorem exists_grid_eq (hk : 0 < k) (n j : ℕ) (hj : j < k ^ n) :
+    ∃ u : List (Fin k), u.length = n ∧ grid k u = (j : ℝ) / (k : ℝ) ^ n :=
+  ⟨toWord hk n j, length_toWord hk n j, by
+    rw [grid_eq hk, wval_toWord, Nat.mod_eq_of_lt hj, length_toWord]⟩
+
+theorem grid_mem_Ico (hk : 0 < k) (u : List (Fin k)) : grid k u ∈ Set.Ico (0 : ℝ) 1 := by
+  rw [grid_eq hk]
+  have hp : (0 : ℝ) < (k : ℝ) ^ u.length := by positivity
+  refine ⟨by positivity, ?_⟩
+  rw [div_lt_one hp]
+  exact_mod_cast wval_lt hk u
+
+
+def copyFST (k : ℕ) : FST k where
+  m := 0
+  δ := fun _ _ => 0
+  ν := fun _ a => [a]
+
+theorem copyFST_run (w : List (Fin k)) : (copyFST k).run w = w := by
+  unfold FST.run
+  induction w with
+  | nil => rfl
+  | cons a w ih => simp [FST.runFrom, copyFST] at ih ⊢; exact ih
+
+
+/-- State reached after reading `w`. -/
+def Mealy.stateFrom (M : Mealy k) : M.Q → List (Fin k) → M.Q
+  | q, [] => q
+  | q, a :: w => M.stateFrom (M.δ q a) w
+
+theorem Mealy.runFrom_append (M : Mealy k) (q : M.Q) (u v : List (Fin k)) :
+    M.runFrom q (u ++ v) = M.runFrom q u ++ M.runFrom (M.stateFrom q u) v := by
+  induction u generalizing q with
+  | nil => rfl
+  | cons a u ih => simp [Mealy.runFrom, Mealy.stateFrom, ih]
+
+theorem Mealy.stateFrom_append (M : Mealy k) (q : M.Q) (u v : List (Fin k)) :
+    M.stateFrom q (u ++ v) = M.stateFrom (M.stateFrom q u) v := by
+  induction u generalizing q with
+  | nil => rfl
+  | cons a u ih => simp [Mealy.stateFrom, ih]
+
+theorem Mealy.length_runFrom (M : Mealy k) (q : M.Q) (u : List (Fin k)) :
+    (M.runFrom q u).length = u.length := by
+  induction u generalizing q with
+  | nil => rfl
+  | cons a u ih => simp [Mealy.runFrom, ih]
+
+
+theorem grid_append (hk : 0 < k) (u v : List (Fin k)) :
+    grid k (u ++ v) = grid k u + grid k v / (k : ℝ) ^ u.length := by
+  have hk' : (k : ℝ) ≠ 0 := by exact_mod_cast hk.ne'
+  rw [grid_eq hk, grid_eq hk, grid_eq hk, wval_append, List.length_append, pow_add]
+  push_cast
+  field_simp
+
+theorem grid_mul_pow_le (hk : 0 < k) (u : List (Fin k)) (n : ℕ) (hu : u.length ≤ n) :
+    grid k u * (k : ℝ) ^ n = ((wval u * k ^ (n - u.length) : ℕ) : ℝ) := by
+  have : (k : ℝ) ^ n = (k : ℝ) ^ u.length * (k : ℝ) ^ (n - u.length) := by
+    rw [← pow_add]; congr 1; omega
+  rw [this, ← mul_assoc, grid_mul_pow hk]; push_cast; ring
+
+
+
+theorem pre_succ' (S : ℕ → Fin k) (n : ℕ) : pre S (n + 1) = pre S n ++ [S n] := by
+  simp only [pre]; rw [List.ofFn_succ_last]; simp
+
+theorem wval_pre_succ (S : ℕ → Fin k) (i : ℕ) :
+    wval (pre S (i + 1)) = ∑ t ∈ Finset.range (i + 1), (S t : ℕ) * k ^ (i - t) := by
+  induction i with
+  | zero => simp [pre, wval]
+  | succ i ih =>
+    rw [pre_succ', wval_append, ih, Finset.sum_range_succ (n := i + 1)]
+    simp only [List.length_singleton, pow_one, wval, List.length_nil, pow_zero, mul_one, add_zero,
+      Nat.sub_self]
+    rw [Finset.sum_mul]
+    congr 1
+    refine Finset.sum_congr rfl fun t ht => ?_
+    rw [Finset.mem_range] at ht
+    rw [mul_assoc, ← pow_succ]; congr 2; omega
+
+/-- With proper digits, `⌊x k^n⌋` is the value of the length-`n` prefix. -/
+theorem floor_mul_pow_eq_wval (hk : 2 ≤ k) (S : ℕ → Fin k)
+    (hp : ProperDigits k fun i => (S i : ℕ)) (n : ℕ) :
+    ⌊realOfDigits k (fun i => (S i : ℕ)) * (k : ℝ) ^ n⌋ = (wval (pre S n) : ℤ) := by
+  cases n with
+  | zero =>
+    have hx := realOfDigits_mem_Ico k hk _ (fun i => (S i).isLt) hp
+    simp only [pow_zero, mul_one, pre, List.ofFn_zero, wval, Nat.cast_zero]
+    exact Int.floor_eq_zero_iff.mpr hx
+  | succ i =>
+    rw [floor_realOfDigits_mul_pow k hk _ (fun i => (S i).isLt) hp i, wval_pre_succ]
+
+theorem abs_grid_pre_sub_lt (hk : 2 ≤ k) (S : ℕ → Fin k)
+    (hp : ProperDigits k fun i => (S i : ℕ)) (n : ℕ) :
+    |grid k (pre S n) - realOfDigits k (fun i => (S i : ℕ))| < ((k : ℝ) ^ n)⁻¹ := by
+  have hk0 : 0 < k := by omega
+  set x := realOfDigits k (fun i => (S i : ℕ))
+  have hp' : (0 : ℝ) < (k : ℝ) ^ n := by positivity
+  have hF := floor_mul_pow_eq_wval hk S hp n
+  have h1 := Int.floor_le (x * (k : ℝ) ^ n)
+  have h2 := Int.lt_floor_add_one (x * (k : ℝ) ^ n)
+  rw [hF] at h1 h2
+  push_cast at h1 h2
+  have hg : grid k (pre S n) * (k : ℝ) ^ n = wval (pre S n) := by
+    have := grid_mul_pow hk0 (pre S n); rwa [show (pre S n).length = n by simp [pre]] at this
+  rw [abs_lt]
+  constructor
+  · rw [neg_lt_sub_iff_lt_add, ← sub_lt_iff_lt_add']
+    rw [← mul_lt_mul_iff_of_pos_right hp', sub_mul, inv_mul_cancel₀ hp'.ne', hg]; linarith
+  · have : (grid k (pre S n) - x) * (k : ℝ) ^ n ≤ 0 := by rw [sub_mul, hg]; linarith
+    have h3 : grid k (pre S n) - x ≤ 0 := by
+      by_contra hc; push_neg at hc; nlinarith
+    have : (0 : ℝ) < ((k : ℝ) ^ n)⁻¹ := by positivity
+    linarith
+
+
+theorem tendsto_div_of_two_sided {A B : ℕ → ℕ} {C : ℕ} {L : ℝ}
+    (hAB : ∀ n, A n ≤ B n + C) (hBA : ∀ n, B n ≤ A n + C)
+    (h : Tendsto (fun n => (A n : ℝ) / n) atTop (𝓝 L)) :
+    Tendsto (fun n => (B n : ℝ) / n) atTop (𝓝 L) := by
+  have hC : Tendsto (fun n : ℕ => (C : ℝ) / n) atTop (𝓝 0) :=
+    tendsto_const_div_atTop_nhds_zero_nat _
+  refine tendsto_of_tendsto_of_tendsto_of_le_of_le (by simpa using h.sub hC)
+    (by simpa using h.add hC) (fun n => ?_) (fun n => ?_)
+  · dsimp only; rw [← sub_div]
+    have : (A n : ℝ) ≤ B n + C := by exact_mod_cast hAB n
+    gcongr; linarith
+  · dsimp only; rw [← add_div]
+    have : (B n : ℝ) ≤ A n + C := by exact_mod_cast hBA n
+    gcongr
+
+theorem pre_split (S : ℕ → Fin k) (n m : ℕ) (h : m ≤ n) :
+    pre S n = pre S (n - m) ++ List.ofFn fun j : Fin m => S (n - m + j) := by
+  apply List.ext_getElem (by simp [pre]; omega)
+  intro i h1 h2
+  simp only [pre, List.getElem_ofFn]
+  rw [List.getElem_append]
+  split_ifs with hi
+  · simp
+  · simp only [List.getElem_ofFn]; congr 1; simp only [List.length_ofFn] at hi ⊢; omega
+
+/-! ## Leaves (frozen statements; all proved — the percentages are the pre-proof confidences) -/
 
 /-- **Leaf (92%).**  A length-preserving naming map that is surjective on every level gives a
 separator enumerator.  Proof: `grid` maps `Σ^n` onto `{j/k^n}`, which lies in `[0,1)`, and the
@@ -565,7 +781,42 @@ theorem isSepEnum_grid_of_levelSurj (hk : 2 ≤ k) (g : List (Fin k) → List (F
     (hlen : ∀ w, (g w).length = w.length)
     (hsurj : ∀ u : List (Fin k), ∃ w, w.length = u.length ∧ g w = u) :
     IsSepEnum fun w => grid k (g w) := by
-  sorry
+  have hk0 : 0 < k := by omega
+  refine ⟨fun w => grid_mem_Ico hk0 _, fun a c ha hac hc => ?_⟩
+  have hk1 : (1 : ℝ) < k := by exact_mod_cast hk
+  obtain ⟨n, hn⟩ := exists_pow_lt_of_lt_one (sub_pos.mpr hac) (inv_lt_one_of_one_lt₀ hk1)
+  rw [inv_pow] at hn
+  have hp : (0 : ℝ) < (k : ℝ) ^ n := by positivity
+  set j : ℕ := ⌊a * (k : ℝ) ^ n⌋.toNat + 1
+  have hj1 : a * (k : ℝ) ^ n < j := by
+    have := Int.lt_floor_add_one (a * (k : ℝ) ^ n)
+    have h0 : (0 : ℤ) ≤ ⌊a * (k : ℝ) ^ n⌋ := Int.floor_nonneg.mpr (by positivity)
+    simp only [j]; push_cast
+    rw [show ((⌊a * (k : ℝ) ^ n⌋.toNat : ℕ) : ℝ) = ((⌊a * (k : ℝ) ^ n⌋ : ℤ) : ℝ) by
+      exact_mod_cast Int.toNat_of_nonneg h0]
+    linarith
+  have hj2 : (j : ℝ) ≤ a * (k : ℝ) ^ n + 1 := by
+    have := Int.floor_le (a * (k : ℝ) ^ n)
+    have h0 : (0 : ℤ) ≤ ⌊a * (k : ℝ) ^ n⌋ := Int.floor_nonneg.mpr (by positivity)
+    simp only [j]; push_cast
+    rw [show ((⌊a * (k : ℝ) ^ n⌋.toNat : ℕ) : ℝ) = ((⌊a * (k : ℝ) ^ n⌋ : ℤ) : ℝ) by
+      exact_mod_cast Int.toNat_of_nonneg h0]
+    linarith
+  have hlt : (j : ℝ) / (k : ℝ) ^ n < c := by
+    rw [div_lt_iff₀ hp]
+    have : 1 < (c - a) * (k : ℝ) ^ n := by rwa [← div_lt_iff₀ hp, one_div]
+    linarith
+  have hjk : j < k ^ n := by
+    have : (j : ℝ) < (k : ℝ) ^ n := by
+      have := (div_lt_iff₀ hp).mp (lt_of_lt_of_le hlt hc); linarith
+    exact_mod_cast this
+  obtain ⟨u, hu, hgu⟩ := exists_grid_eq hk0 n j hjk
+  obtain ⟨w, -, hw⟩ := hsurj u
+  refine ⟨w, ?_, ?_⟩
+  · show a < grid k (g w)
+    rw [hw, hgu, lt_div_iff₀ hp]; exact hj1
+  · show grid k (g w) < c
+    rw [hw, hgu]; exact hlt
 
 /-- **Leaf (92%).**  Pulari Lemma 6 for any levelwise-surjective length-preserving relabeling:
 `k^n a_n^f(x) = ⌊k^n x⌋`.  Proof: the values at lengths `≤ n` are exactly the grid points of
@@ -575,7 +826,30 @@ theorem bestBelow_grid_of_levelSurj (hk : 2 ≤ k) (g : List (Fin k) → List (F
     (hsurj : ∀ u : List (Fin k), ∃ w, w.length = u.length ∧ g w = u)
     (x : ℝ) (hx : x ∈ Set.Ico (0 : ℝ) 1) (n : ℕ) :
     (k : ℝ) ^ n * bestBelow (fun w => grid k (g w)) x n = ⌊(k : ℝ) ^ n * x⌋ := by
-  sorry
+  have hk0 : 0 < k := by omega
+  have hp : (0 : ℝ) < (k : ℝ) ^ n := by positivity
+  set F := ⌊(k : ℝ) ^ n * x⌋ with hFdef
+  have hF0 : 0 ≤ F := Int.floor_nonneg.mpr (mul_nonneg hp.le hx.1)
+  have hFlt : F < ((k ^ n : ℕ) : ℤ) := by
+    rw [Int.floor_lt]; push_cast
+    have := mul_lt_mul_of_pos_left hx.2 hp; linarith
+  have hG : IsGreatest {y | ∃ w : List (Fin k), w.length ≤ n ∧ grid k (g w) = y ∧ y ≤ x}
+      ((F : ℝ) / (k : ℝ) ^ n) := by
+    constructor
+    · obtain ⟨u, hu, hgu⟩ := exists_grid_eq hk0 n F.toNat (by omega)
+      obtain ⟨w, hw, hgw⟩ := hsurj u
+      have hc : ((F.toNat : ℕ) : ℝ) = (F : ℝ) := by exact_mod_cast Int.toNat_of_nonneg hF0
+      refine ⟨w, by omega, by rw [hgw, hgu, hc], ?_⟩
+      rw [div_le_iff₀ hp, mul_comm]; exact Int.floor_le _
+    · rintro y ⟨w, hw, rfl, hy⟩
+      have h := grid_mul_pow_le hk0 (g w) n (by rw [hlen]; exact hw)
+      have hN : (((wval (g w) * k ^ (n - (g w).length) : ℕ) : ℤ)) ≤ F := by
+        rw [Int.le_floor]; push_cast
+        have := mul_le_mul_of_nonneg_right hy hp.le
+        push_cast at h; linarith
+      rw [le_div_iff₀ hp, h]; exact_mod_cast hN
+  have : bestBelow (fun w => grid k (g w)) x n = (F : ℝ) / (k : ℝ) ^ n := hG.csSup_eq
+  rw [this]; field_simp
 
 /-- **Leaf (92%).**  Normal digits give `k`-adically equidistributed `⌊k^n x⌋` (Pulari Thm 2,
 Kuipers–Niederreiter).  Proof: for `n ≥ m`, `⌊k^n x⌋ mod k^m` is the value of the digit block
@@ -584,7 +858,101 @@ word of `r` in the first `N` digits, up to `m`. -/
 theorem kAdicEquidist_floor_of_normal (hk : 2 ≤ k) (S : ℕ → Fin k)
     (hn : IsNormalSequence k fun i => (S i : ℕ)) :
     KAdicEquidist k fun n => ⌊(k : ℝ) ^ n * realOfDigits k (fun i => (S i : ℕ))⌋ := by
-  sorry
+  classical
+  have hk0 : 0 < k := by omega
+  have hp := properDigits_of_isNormalSequence hk hn
+  set s : ℕ → ℕ := fun i => (S i : ℕ) with hs
+  intro m hm r hr
+  set w : List ℕ := (toWord hk0 m r).map Fin.val with hwdef
+  have hwlen : w.length = m := by simp [w, length_toWord]
+  have hw0 : w ≠ [] := by intro h; rw [h] at hwlen; simp at hwlen; omega
+  have hwd : ∀ d ∈ w, d < k := by
+    intro d hd; simp only [w, List.mem_map] at hd; obtain ⟨a, -, rfl⟩ := hd; exact a.isLt
+  have hA := tendsto_div_of_bounded_diff (C := w.length)
+    (fun n => (card_filter_matchesAt_le s w hw0 n).1)
+    (fun n => (card_filter_matchesAt_le s w hw0 n).2) (hn w hw0 hwd)
+  rw [hwlen] at hA
+  have hkm : (0 : ℤ) < (k : ℤ) ^ m := by positivity
+  have key : ∀ n, m ≤ n → ((⌊(k : ℝ) ^ n * realOfDigits k s⌋ ≡ (r : ℤ) [ZMOD (k : ℤ) ^ m]) ↔
+      MatchesAt s w (n - m)) := by
+    intro n hmn
+    set L : List (Fin k) := List.ofFn fun j : Fin m => S (n - m + j) with hL
+    have hLlen : L.length = m := by simp [L]
+    rw [mul_comm, floor_mul_pow_eq_wval hk S hp n, pre_split S n m hmn, wval_append, hLlen]
+    have hLlt := wval_lt hk0 L
+    rw [hLlen] at hLlt
+    have e1 : Int.ModEq ((k : ℤ) ^ m) (((wval (pre S (n - m)) * k ^ m + wval L : ℕ) : ℤ)) (r : ℤ)
+        ↔ wval L = r := by
+      unfold Int.ModEq
+      push_cast
+      rw [add_comm, Int.add_mul_emod_self_right, Int.emod_eq_of_lt (by positivity)
+        (by exact_mod_cast hLlt), Int.emod_eq_of_lt (by positivity) (by exact_mod_cast hr)]
+      exact_mod_cast Iff.rfl
+    rw [e1]
+    have e2 : wval L = r ↔ L = toWord hk0 m r := by
+      constructor
+      · intro h
+        exact wval_inj hk0 _ _ (by rw [hLlen, length_toWord])
+          (by rw [h, wval_toWord, Nat.mod_eq_of_lt hr])
+      · intro h; rw [h, wval_toWord, Nat.mod_eq_of_lt hr]
+    rw [e2]
+    constructor
+    · intro h j hj
+      rw [hwlen] at hj
+      have : L[j]'(by omega) = (toWord hk0 m r)[j]'(by rw [length_toWord]; omega) := by
+        simp only [h]
+      simp only [L, List.getElem_ofFn] at this
+      simp only [s, w, List.getD_eq_getElem?_getD, List.getElem?_map]
+      rw [List.getElem?_eq_getElem (by rw [length_toWord]; omega)]
+      simp [this]
+    · intro h
+      apply List.ext_getElem (by rw [hLlen, length_toWord])
+      intro j h1 h2
+      have := h j (by omega)
+      simp only [s, w, List.getD_eq_getElem?_getD, List.getElem?_map,
+        List.getElem?_eq_getElem h2] at this
+      simp only [L, List.getElem_ofFn]
+      exact Fin.ext (by simpa using this)
+  rw [one_div]
+  refine tendsto_div_of_two_sided (C := m) (fun N => ?_) (fun N => ?_) hA
+  · beta_reduce
+    calc ((Finset.range N).filter (MatchesAt s w)).card
+        ≤ ((((Finset.Icc 1 N).filter fun n =>
+              ⌊(k : ℝ) ^ n * realOfDigits k s⌋ ≡ (r : ℤ) [ZMOD (k : ℤ) ^ m]).image
+              (· - m)) ∪ Finset.Ico (N - m) N).card := by
+          apply Finset.card_le_card
+          intro i hi
+          simp only [Finset.mem_filter, Finset.mem_range] at hi
+          simp only [Finset.mem_union, Finset.mem_image, Finset.mem_filter, Finset.mem_Icc,
+            Finset.mem_Ico]
+          by_cases hfit : i + m ≤ N
+          · left
+            refine ⟨i + m, ⟨⟨by omega, hfit⟩, ?_⟩, by omega⟩
+            rw [key (i + m) (by omega), show i + m - m = i by omega]; exact hi.2
+          · right; omega
+      _ ≤ _ := by
+          refine le_trans (Finset.card_union_le _ _) ?_
+          rw [Nat.card_Ico]
+          have := Finset.card_image_le (s := (Finset.Icc 1 N).filter fun n =>
+              ⌊(k : ℝ) ^ n * realOfDigits k s⌋ ≡ (r : ℤ) [ZMOD (k : ℤ) ^ m]) (f := (· - m))
+          omega
+  · beta_reduce
+    calc ((Finset.Icc 1 N).filter fun n =>
+            ⌊(k : ℝ) ^ n * realOfDigits k s⌋ ≡ (r : ℤ) [ZMOD (k : ℤ) ^ m]).card
+        ≤ ((((Finset.range N).filter (MatchesAt s w)).image (· + m)) ∪ Finset.range m).card := by
+          apply Finset.card_le_card
+          intro n hn'
+          simp only [Finset.mem_filter, Finset.mem_Icc] at hn'
+          simp only [Finset.mem_union, Finset.mem_image, Finset.mem_filter, Finset.mem_range]
+          by_cases hmn : m ≤ n
+          · left
+            exact ⟨n - m, ⟨by omega, (key n hmn).mp hn'.2⟩, by omega⟩
+          · right; omega
+      _ ≤ _ := by
+          refine le_trans (Finset.card_union_le _ _) ?_
+          rw [Finset.card_range]
+          have := Finset.card_image_le (s := (Finset.range N).filter (MatchesAt s w)) (f := (· + m))
+          omega
 
 /-- **Leaf (88%).**  A synchronous decoder `g` that maps the prefixes of a name sequence `N` to the
 prefixes of `S` transfers compression: `dim^g(x) ≤ dim_FS(N)` at `x = 0.S`.  Proof: at `δ = k^{-n}`
@@ -594,11 +962,42 @@ theorem fDim_le_fsDim_of_decode (hk : 2 ≤ k) (g : List (Fin k) → List (Fin k
     (N S : ℕ → Fin k) (hg : ∀ n, g (pre N n) = pre S n)
     (hp : ProperDigits k fun i => (S i : ℕ)) :
     fDim (fun w => grid k (g w)) (realOfDigits k fun i => (S i : ℕ)) ≤ fsDim N := by
-  sorry
+  set x := realOfDigits k fun i => (S i : ℕ)
+  have hk1 : (1 : ℝ) < k := by exact_mod_cast hk
+  have hk0 : (0 : ℝ) < k := by linarith
+  refine iInf_mono fun T => ?_
+  set δ : ℕ → ℝ := fun n => ((k : ℝ) ^ n)⁻¹
+  have hδ : Tendsto δ atTop (𝓝[>] 0) := by
+    refine tendsto_nhdsWithin_iff.mpr ⟨?_, Eventually.of_forall fun n => ?_⟩
+    · simp only [δ, ← inv_pow]
+      exact tendsto_pow_atTop_nhds_zero_of_lt_one (by positivity) (inv_lt_one_of_one_lt₀ hk1)
+    · show 0 < δ n; positivity
+  refine le_trans (hδ.liminf_le_liminf_comp) (liminf_le_liminf ?_)
+  filter_upwards [eventually_ge_atTop 1] with n hn
+  simp only [Function.comp]
+  have hlog : Real.logb k (1 / δ n) = n := by
+    simp only [δ, one_div, inv_inv, Real.logb_pow, Real.logb_self_eq_one hk1, mul_one]
+  rw [hlog, ENNReal.ofReal_natCast]
+  gcongr
+  have : approxK T (fun w => grid k (g w)) (δ n) x ≤ infoK T (pre N n) := by
+    refine iInf_le_of_le (pre N n) (iInf_le_of_le ?_ le_rfl)
+    simp only [hg]; exact abs_grid_pre_sub_lt hk S hp n
+  exact_mod_cast this
 
 /-- **Leaf (95%).**  The one-state copying FST gives `K^T(S↾n) ≤ n`. -/
 theorem fsDim_le_one (hk : 2 ≤ k) (S : ℕ → Fin k) : fsDim S ≤ 1 := by
-  sorry
+  refine le_trans (iInf_le _ (copyFST k)) ?_
+  refine le_trans (liminf_le_limsup (by isBoundedDefault) (by isBoundedDefault)) ?_
+  refine limsup_le_of_le (by isBoundedDefault) (Eventually.of_forall fun n => ?_)
+  have h : infoK (copyFST k) (pre S n) ≤ n := by
+    unfold infoK
+    exact iInf_le_of_le (pre S n) (iInf_le_of_le (copyFST_run _) (by simp [pre]))
+  rcases Nat.eq_zero_or_pos n with rfl | hn
+  · have h0 : infoK (copyFST k) (pre S 0) = 0 := by simpa using h
+    simp [h0]
+  · refine ENNReal.div_le_of_le_mul ?_
+    rw [one_mul]
+    exact_mod_cast h
 
 /-- **Leaf (97%).**  The coder is online: the names of `S↾n` are the prefix of `encSeq S`. -/
 theorem pre_encSeq [NeZero k] (S : ℕ → Fin k) (n : ℕ) :
@@ -661,6 +1060,46 @@ theorem not_isNormal_encSeq_cpSeq [NeZero k] (hk : 5 ≤ k) :
   have : (k : ℝ)⁻¹ ≤ 1 / 5 := by rw [one_div]; exact inv_anti₀ (by norm_num) hk'
   linarith
 
+
+/-- **New (proved): base `≥ 3`.**  The block bound `cpPrefix_count` (`#0 ≥ |prefix|/2` at every
+block end, sharper than the frozen `1/4` leaf) separates from `1/k` already for `k ≥ 3`, so the
+names of the Carton–Perifel sequence are not normal for every `k ≥ 3`.  This settles the
+`ZeroFreqHalf` route of `FiniteStateSelectionStretch` without needing the exact frequency. -/
+theorem not_isNormal_encSeq_cpSeq_of_three [NeZero k] (hk : 3 ≤ k) :
+    ¬ IsNormalSequence k fun i => (encSeq (cpSeq k) i : ℕ) := by
+  intro hn
+  have h := hn [0] (by simp) (by simp; omega)
+  set L : ℕ → ℕ := fun N => (cpPrefix k (N + 1)).length
+  have hL : Tendsto L atTop atTop :=
+    tendsto_atTop_mono (fun N => le_trans (Nat.le_succ N) (le_length_cpPrefix (N + 1)))
+      tendsto_id
+  have h2 := h.comp hL
+  have hbound : ∀ N, (1 : ℝ) / 2 ≤ ((fun n => (countOccurrences [0]
+      ((List.range n).map fun i => (encSeq (cpSeq k) i : ℕ)) : ℝ) / n) ∘ L) N := by
+    intro N
+    simp only [Function.comp, countOcc_single]
+    have hmap : (List.range (L N)).map (fun i => (encSeq (cpSeq k) i : ℕ))
+        = (pre (encSeq (cpSeq k)) (L N)).map (fun a : Fin k => (a : ℕ)) := by
+      apply List.ext_getElem (by simp [pre])
+      intro i h1 h2
+      simp [pre]
+    have hcm := List.count_map_of_injective (pre (encSeq (cpSeq k)) (L N)) Fin.val
+      Fin.val_injective (0 : Fin k)
+    simp only [Fin.val_zero] at hcm
+    rw [hmap, hcm, pre_encSeq]
+    have hc := (cpPrefix_count (k := k) (N + 1)).1
+    have hpos : 0 < L N := lt_of_lt_of_le (Nat.succ_pos N) (le_length_cpPrefix (N + 1))
+    simp only [L, pre_cpSeq] at hc hpos ⊢
+    rw [div_le_div_iff₀ (by norm_num) (by exact_mod_cast hpos)]
+    have : ((cpPrefix k (N + 1)).length : ℝ) ≤ 2 * ((encRun [] (cpPrefix k (N + 1))).count 0 : ℝ) := by
+      exact_mod_cast hc
+    simpa [Fin.val_zero] using (by linarith : (1:ℝ) * ((cpPrefix k (N + 1)).length : ℝ) ≤ ((encRun [] (cpPrefix k (N + 1))).count 0 : ℝ) * 2)
+  have hle := ge_of_tendsto h2 (Eventually.of_forall hbound)
+  have hk' : (3 : ℝ) ≤ k := by exact_mod_cast hk
+  simp at hle
+  have : (k : ℝ)⁻¹ ≤ 1 / 3 := by rw [one_div]; exact inv_anti₀ (by norm_num) hk'
+  linarith
+
 /-- **Leaf (95%).**  A synchronous Mealy relabeling that is a separator enumerator is surjective
 on every level.  Proof: if `u ∈ Σ^n` is missed, the open interval `(grid u, grid u + k^{-n})`
 contains no value — a value from a word of length `≤ n` is a multiple of `k^{-n}`, and a value from
@@ -668,7 +1107,53 @@ a longer word `w` lies in it only if `M(w)↾n = M(w↾n) = u` (synchronicity). 
 theorem mealy_levelSurj_of_isSepEnum (hk : 2 ≤ k) (M : Mealy k)
     (hM : IsSepEnum (mealyEnum M)) :
     ∀ u : List (Fin k), ∃ w, w.length = u.length ∧ M.run w = u := by
-  sorry
+  have hk0 : 0 < k := by omega
+  intro u
+  by_contra hne
+  push_neg at hne
+  set n := u.length with hn
+  have hp : (0 : ℝ) < (k : ℝ) ^ n := by positivity
+  have hU := wval_lt hk0 u
+  have hgu := grid_mul_pow hk0 u
+  rw [← hn] at hgu
+  have hle : grid k u + 1 / (k : ℝ) ^ n ≤ 1 := by
+    rw [grid_eq hk0, ← hn, ← add_div, div_le_one hp]
+    exact_mod_cast hU
+  obtain ⟨w, hw1, hw2⟩ := hM.2 (grid k u) (grid k u + 1 / (k : ℝ) ^ n) (grid_mem_Ico hk0 u).1
+    (by have : 0 < 1 / (k : ℝ) ^ n := by positivity
+        linarith) hle
+  simp only [mealyEnum] at hw1 hw2
+  have hlo : (wval u : ℝ) < grid k (M.run w) * (k : ℝ) ^ n := by
+    rw [← hgu]; exact mul_lt_mul_of_pos_right hw1 hp
+  have hhi : grid k (M.run w) * (k : ℝ) ^ n < (wval u : ℝ) + 1 := by
+    have := mul_lt_mul_of_pos_right hw2 hp
+    rw [add_mul, hgu, one_div, inv_mul_cancel₀ hp.ne'] at this; exact this
+  have hlenw : (M.run w).length = w.length := Mealy.length_runFrom M _ w
+  rcases le_or_gt w.length n with hm | hm
+  · rw [grid_mul_pow_le hk0 _ n (by omega)] at hlo hhi
+    have h1 : wval u < wval (M.run w) * k ^ (n - (M.run w).length) := by exact_mod_cast hlo
+    have h2 : wval (M.run w) * k ^ (n - (M.run w).length) < wval u + 1 := by exact_mod_cast hhi
+    omega
+  · have hsplit : M.run w = M.run (w.take n) ++ M.runFrom (M.stateFrom M.q0 (w.take n)) (w.drop n) := by
+      conv_lhs => rw [← List.take_append_drop n w]
+      exact Mealy.runFrom_append M _ _ _
+    have hl1 : (M.run (w.take n)).length = n := by
+      rw [Mealy.run, Mealy.length_runFrom, List.length_take]; omega
+    set v1 := M.run (w.take n)
+    set v2 := M.runFrom (M.stateFrom M.q0 (w.take n)) (w.drop n)
+    have hg : grid k (M.run w) * (k : ℝ) ^ n = wval v1 + grid k v2 := by
+      rw [hsplit, grid_append hk0, hl1, add_mul, ← hl1, grid_mul_pow hk0, hl1,
+        div_mul_cancel₀ _ hp.ne']
+    rw [hg] at hlo hhi
+    have h2 := grid_mem_Ico hk0 v2
+    have e1 : wval u < wval v1 + 1 := by
+      have : (wval u : ℝ) < wval v1 + 1 := by linarith [h2.2]
+      exact_mod_cast this
+    have e2 : wval v1 < wval u + 1 := by
+      have : (wval v1 : ℝ) < wval u + 1 := by linarith [h2.1]
+      exact_mod_cast this
+    have : v1 = u := wval_inj hk0 _ _ (by rw [hl1]) (by omega)
+    exact hne (w.take n) (by rw [List.length_take]; omega) this
 
 /-- **Leaf (93%).**  A levelwise-surjective synchronous Mealy machine agrees with an invertible
 one.  Proof: surjectivity on `Σ^{n+1}` forces `out q` to be a permutation at every state `q`
@@ -677,7 +1162,49 @@ replace `out` by the identity at unreachable states. -/
 theorem exists_invertible_of_levelSurj (M : Mealy k)
     (hM : ∀ u : List (Fin k), ∃ w, w.length = u.length ∧ M.run w = u) :
     ∃ M' : Mealy k, M'.IsInvertible ∧ ∀ w, M'.run w = M.run w := by
-  sorry
+  classical
+  -- injectivity of `M.run` on each level
+  have hinj : ∀ n (w₁ w₂ : List (Fin k)), w₁.length = n → w₂.length = n →
+      M.run w₁ = M.run w₂ → w₁ = w₂ := by
+    intro n
+    let F : List.Vector (Fin k) n → List.Vector (Fin k) n := fun v =>
+      ⟨M.run v.1, by rw [Mealy.run, Mealy.length_runFrom, v.2]⟩
+    have hs : Function.Surjective F := by
+      intro v
+      obtain ⟨w, hw, hw'⟩ := hM v.1
+      exact ⟨⟨w, hw.trans v.2⟩, Subtype.ext hw'⟩
+    have hi := Finite.injective_iff_surjective.mpr hs
+    intro w₁ w₂ h₁ h₂ he
+    have := @hi ⟨w₁, h₁⟩ ⟨w₂, h₂⟩ (Subtype.ext he)
+    exact congrArg Subtype.val this
+  let R : M.Q → Prop := fun q => ∃ w, M.stateFrom M.q0 w = q
+  have hbij : ∀ q, R q → Function.Bijective (M.out q) := by
+    rintro q ⟨w, rfl⟩
+    rw [← Finite.injective_iff_bijective]
+    intro a b hab
+    have := hinj (w.length + 1) (w ++ [a]) (w ++ [b]) (by simp) (by simp)
+      (by simp [Mealy.run, Mealy.runFrom_append, Mealy.runFrom, hab])
+    simpa using this
+  let M' : Mealy k :=
+    { Q := M.Q, fintype := M.fintype, q0 := M.q0, δ := M.δ,
+      out := fun q => if R q then M.out q else id }
+  refine ⟨M', fun q => ?_, fun w => ?_⟩
+  · show Function.Bijective (if R q then M.out q else id)
+    split_ifs with h
+    · exact hbij q h
+    · exact Function.bijective_id
+  · have key : ∀ (u w : List (Fin k)),
+        M'.runFrom (M.stateFrom M.q0 u) w = M.runFrom (M.stateFrom M.q0 u) w := by
+      intro u w
+      induction w generalizing u with
+      | nil => rfl
+      | cons a w ih =>
+        have hR : R (M.stateFrom M.q0 u) := ⟨u, rfl⟩
+        have := ih (u ++ [a])
+        simp only [Mealy.stateFrom_append, Mealy.stateFrom] at this
+        simp only [Mealy.runFrom]
+        exact congrArg₂ _ (by simp [M', hR]) this
+    exact key [] w
 
 /-! ## Wiring (proved) -/
 
@@ -735,13 +1262,23 @@ has frequency `≥ 1/4 > 1/k` along the block ends, the name sequence is not nor
 finite-state dimension is `< 1`, and the decoder transfers that bound to `dim^f(x)`.
 
 Cited inputs: `Literature.cartonPerifel_normal`, `Literature.fsDim_one_isNormal`.
-Leaves: the `sorry`s above (elementary).  `k ∈ {2,3,4}` is in
+Leaves: the (proved) leaf theorems above.  `k ∈ {2,3,4}` is in
 `FiniteStateSelectionStretch` (the `1/4` bound does not separate there). -/
 theorem pulariDPDTQuestion_of_lit [NeZero k] (hk : 5 ≤ k)
     (hCP : Literature.cartonPerifel_normal) (hFS : Literature.fsDim_one_isNormal) :
     PulariDPDTQuestion k := by
   obtain ⟨hse, hx, hint, hkad, hdim⟩ :=
     mirrorEnum_cpReal_facts_of_not_normal (by omega) (not_isNormal_encSeq_cpSeq hk) hCP hFS
+  exact ⟨mirrorEnum k, hse, isDPDTEnum_mirror, cpReal k, hx, hint, hkad, hdim⟩
+
+/-- **Q-DPDT for every base `k ≥ 3`** (conditional on the same two cited inputs): the mirror
+enumerator at the Carton–Perifel point answers Pulari's question already from base `3`, via
+`not_isNormal_encSeq_cpSeq_of_three`.  Base `2` remains open (`PulariDPDTBaseTwo`). -/
+theorem pulariDPDTQuestion_of_lit_three [NeZero k] (hk : 3 ≤ k)
+    (hCP : Literature.cartonPerifel_normal) (hFS : Literature.fsDim_one_isNormal) :
+    PulariDPDTQuestion k := by
+  obtain ⟨hse, hx, hint, hkad, hdim⟩ :=
+    mirrorEnum_cpReal_facts_of_not_normal (by omega) (not_isNormal_encSeq_cpSeq_of_three hk) hCP hFS
   exact ⟨mirrorEnum k, hse, isDPDTEnum_mirror, cpReal k, hx, hint, hkad, hdim⟩
 
 /-- **HEADLINE (answer to Pulari's Q-weak for synchronous relabelings, conditional on Pulari's
