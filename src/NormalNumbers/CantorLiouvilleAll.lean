@@ -77,6 +77,19 @@ end Literature
 /-- The 3-adic defect `t = v₃(b² − 1)` of a base coprime to 3 (`t = 1` for `b = 2`). -/
 def tb (b : ℕ) : ℕ := padicValNat 3 (b ^ 2 - 1)
 
+theorem three_dvd_sq_sub_one {b : ℕ} (h3 : ¬ 3 ∣ b) : 3 ∣ b ^ 2 - 1 := by
+  have : b % 3 = 1 ∨ b % 3 = 2 := by omega
+  apply Nat.dvd_of_mod_eq_zero
+  apply Nat.sub_mod_eq_zero_of_mod_eq
+  rw [Nat.pow_mod]; rcases this with h | h <;> rw [h]
+
+theorem padicValNat_sq_pow_sub_one {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) {d : ℕ} (hd : d ≠ 0) :
+    padicValNat 3 ((b ^ 2) ^ d - 1) = tb b + padicValNat 3 d := by
+  have := padicValNat.pow_sub_pow (p := 3) (x := b ^ 2) (y := 1) (by decide) (by nlinarith)
+    (by simpa using three_dvd_sq_sub_one h3)
+    (fun h => h3 (Nat.prime_three.dvd_of_dvd_pow h)) (n := d) hd
+  simpa [tb] using this
+
 /-- **LTE bound.**  Confidence 95%.
 
 English proof.  `b² ≡ 1 mod 3`.  If `b ≡ 1 mod 3`: Mathlib's `padicValNat.pow_sub_pow`
@@ -85,7 +98,15 @@ English proof.  `b² ≡ 1 mod 3`.  If `b ≡ 1 mod 3`: Mathlib's `padicValNat.p
 `d = 2d'`, apply LTE to `(b²)^{d'} − 1`: `v₃ = v₃(b² − 1) + v₃(d') ≤ t + v₃(d)`. -/
 theorem padicValNat_pow_sub_one_le {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) {d : ℕ} (hd : d ≠ 0) :
     padicValNat 3 (b ^ d - 1) ≤ tb b + padicValNat 3 d := by
-  sorry
+  rw [← padicValNat_sq_pow_sub_one hb h3 hd]
+  have hne : (b ^ 2) ^ d - 1 ≠ 0 := by
+    have : 2 ≤ (b ^ 2) ^ d := le_trans (by nlinarith) (Nat.le_self_pow hd _)
+    omega
+  rw [← padicValNat_dvd_iff_le hne]
+  refine (pow_padicValNat_dvd).trans ?_
+  have := Nat.sub_dvd_pow_sub_pow (x := b ^ d) (y := 1) (n := 2)
+  rwa [one_pow, ← pow_mul, mul_comm, pow_mul] at this
+
 
 /-- `3ᵗ < b²`, so every constant `3^{O(t)}` is `b^{O(1)}`. -/
 theorem three_pow_tb_lt {b : ℕ} (hb : 2 ≤ b) : 3 ^ tb b < b ^ 2 := by
@@ -95,6 +116,178 @@ theorem three_pow_tb_lt {b : ℕ} (hb : 2 ≤ b) : 3 ^ tb b < b ^ 2 := by
   have h1 : 3 ^ tb b ≤ b ^ 2 - 1 := Nat.le_of_dvd (by omega) pow_padicValNat_dvd
   have : 1 ≤ b ^ 2 := by nlinarith
   omega
+
+theorem posSet_card_succ (free : ℕ → Bool) (v k : ℕ) (hk : 1 ≤ k) :
+    (posSet free v (k + 1)).card =
+        (posSet free v k).card + (if free (v + k) = true then 1 else 0) := by
+  unfold posSet
+  rw [show v + (k + 1) = (v + k) + 1 by ring, Finset.range_add_one, Finset.filter_insert]
+  by_cases hf : free (v + k) = true
+  · rw [if_pos ⟨by omega, hf⟩, Finset.card_insert_of_notMem (by simp), if_pos hf]
+  · rw [if_neg (fun h => hf h.2), if_neg hf, add_zero]
+
+theorem posSet_card_le (free : ℕ → Bool) (v k : ℕ) : (posSet free v k).card ≤ k - 1 := by
+  unfold posSet
+  have : (Finset.range (v + k)).filter (fun p => v + 1 ≤ p ∧ free p = true) ⊆ Finset.Ico (v + 1) (v + k) := by
+    intro p hp; simp only [Finset.mem_filter, Finset.mem_range, Finset.mem_Ico] at hp ⊢; omega
+  have := Finset.card_le_card this
+  rw [Nat.card_Ico] at this; omega
+
+/-- Residue bound from level `t`. -/
+theorem residue_sum_from (free : ℕ → Bool) (v t : ℕ) (ht : 1 ≤ t) : ∀ n r : ℕ,
+    ∑ w ∈ Finset.range (3 ^ n), Hf free v (t + n) ((3 ^ t * w + r : ℕ) : ℝ) ≤
+      3 ^ n * (2 / 3 : ℝ) ^ (posSet free v (t + n)).card * (3 / 2 : ℝ) ^ (posSet free v t).card := by
+  intro n
+  induction n with
+  | zero =>
+    intro r
+    simp only [pow_zero, Finset.range_one, Finset.sum_singleton, add_zero, one_mul]
+    rw [← mul_pow, show (2 / 3 : ℝ) * (3 / 2) = 1 by norm_num, one_pow]
+    exact Hf_le_one _ _ _ _
+  | succ n ih =>
+    intro r
+    set k := t + n
+    have hk : 1 ≤ k := by omega
+    rw [show t + (n + 1) = k + 1 by omega, pow_succ, sum_range_mul_eq, Finset.sum_comm]
+    have hstep : ∀ w ∈ Finset.range (3 ^ n),
+        ∑ s ∈ Finset.range 3, Hf free v (k + 1) ((3 ^ t * (3 ^ n * s + w) + r : ℕ) : ℝ) ≤
+        (if free (v + k) = true then 2 else 3) * Hf free v k ((3 ^ t * w + r : ℕ) : ℝ) := by
+      intro w _
+      have hrw : ∀ s : ℕ, ((3 ^ t * (3 ^ n * s + w) + r : ℕ) : ℝ) =
+          ((3 ^ t * w + r : ℕ) : ℝ) + 3 ^ k * (s : ℤ) := by
+        intro s; push_cast; simp only [k]; rw [pow_add]; ring
+      have hper : ∀ s : ℕ, Hf free v k ((3 ^ t * (3 ^ n * s + w) + r : ℕ) : ℝ) =
+          Hf free v k ((3 ^ t * w + r : ℕ) : ℝ) := by
+        intro s; rw [hrw, Hf_periodic]
+      simp_rw [Hf_succ free v k hk, hper, ← Finset.mul_sum]
+      rw [mul_comm]
+      gcongr
+      · exact Hf_nonneg _ _ _ _
+      by_cases hf : free (v + k) = true
+      · simp only [hf, if_true]
+        have := three_point (2 * Real.pi * (3 ^ v * ((3 ^ t * w + r : ℕ) : ℝ)) / 3 ^ (v + k + 1))
+        refine le_of_eq_of_le (Finset.sum_congr rfl fun s _ => ?_) this
+        congr 2
+        rw [hrw]
+        push_cast
+        field_simp
+        ring
+      · simp [hf]
+    refine (Finset.sum_le_sum hstep).trans ?_
+    rw [← Finset.mul_sum, posSet_card_succ free v k hk]
+    have := ih r
+    by_cases hf : free (v + k) = true
+    · simp only [hf, if_true]
+      calc (2 : ℝ) * _ ≤ 2 * (3 ^ n * (2 / 3 : ℝ) ^ (posSet free v k).card *
+            (3 / 2 : ℝ) ^ (posSet free v t).card) := by gcongr
+        _ = _ := by rw [pow_succ, pow_succ]; ring
+    · simp only [hf, if_false, Bool.false_eq_true, add_zero]
+      calc (3 : ℝ) * _ ≤ 3 * (3 ^ n * (2 / 3 : ℝ) ^ (posSet free v k).card *
+            (3 / 2 : ℝ) ^ (posSet free v t).card) := by gcongr
+        _ = _ := by rw [pow_succ]; ring
+
+/-- Partial periods of a periodic nonnegative sequence. -/
+theorem sum_periodic_le (g : ℕ → ℝ) (hg : ∀ m, 0 ≤ g m) (P : ℕ) (hP : 0 < P)
+    (hper : ∀ m, g (m + P) = g m) (B : ℝ) (hB : ∑ m ∈ Finset.range P, g m ≤ P * B) (K : ℕ) :
+    ∑ m ∈ Finset.range K, g m ≤ (K + P) * B := by
+  have hper' : ∀ q m, g (P * q + m) = g m := by
+    intro q m
+    induction q with
+    | zero => simp
+    | succ q ih => rw [show P * (q + 1) + m = (P * q + m) + P by ring, hper, ih]
+  have hB0 : 0 ≤ B := by
+    have : 0 ≤ ∑ m ∈ Finset.range P, g m := Finset.sum_nonneg fun m _ => hg m
+    have hPr : (0 : ℝ) < P := by exact_mod_cast hP
+    nlinarith
+  set q := K / P + 1
+  have hKq : K ≤ P * q := by
+    have := Nat.lt_div_mul_add (a := K) hP
+    simp only [q]; nlinarith [Nat.div_add_mod K P, Nat.mod_lt K hP]
+  calc ∑ m ∈ Finset.range K, g m ≤ ∑ m ∈ Finset.range (P * q), g m :=
+        Finset.sum_le_sum_of_subset_of_nonneg (Finset.range_subset_range.2 hKq) (fun m _ _ => hg m)
+    _ = q * ∑ m ∈ Finset.range P, g m := by
+        rw [sum_range_mul_eq]; simp_rw [hper']; simp
+    _ ≤ q * (P * B) := by gcongr
+    _ ≤ _ := by
+        rw [← mul_assoc]
+        gcongr
+        have h1 : (K / P) * P ≤ K := Nat.div_mul_le_self K P
+        have : ((K / P : ℕ) : ℝ) * P ≤ K := by exact_mod_cast h1
+        simp only [q]; push_cast; linarith
+
+theorem one_le_tb {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) : 1 ≤ tb b := by
+  have hne : b ^ 2 - 1 ≠ 0 := by have : 4 ≤ b ^ 2 := by nlinarith
+                                 omega
+  exact one_le_padicValNat_of_dvd hne (three_dvd_sq_sub_one h3)
+
+theorem coprime_three_pow {x : ℕ} (hx : ¬ 3 ∣ x) (k : ℕ) : Nat.Coprime x (3 ^ k) :=
+  Nat.Coprime.pow_right _ ((Nat.Prime.coprime_iff_not_dvd Nat.prime_three).2 hx).symm
+
+theorem three_pow_dvd_sq_pow_sub_one {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) {k d : ℕ} (hd : d ≠ 0) :
+    3 ^ k ∣ (b ^ 2) ^ d - 1 ↔ k ≤ tb b + padicValNat 3 d := by
+  have hne : (b ^ 2) ^ d - 1 ≠ 0 := by
+    have : 2 ≤ (b ^ 2) ^ d := le_trans (by nlinarith) (Nat.le_self_pow hd _)
+    omega
+  rw [padicValNat_dvd_iff_le hne, padicValNat_sq_pow_sub_one hb h3 hd]
+
+theorem sq_pow_modEq_one {b : ℕ} (m : ℕ) : (b ^ 2) ^ m ≡ 1 [MOD 3 ^ tb b] := by
+  have h1 : b ^ 2 ≡ 1 [MOD 3 ^ tb b] := by
+    rcases Nat.eq_zero_or_pos b with rfl | hb
+    · simp [tb, Nat.modEq_one]
+    refine ((Nat.modEq_iff_dvd' (Nat.one_le_pow _ _ hb)).2 pow_padicValNat_dvd).symm
+  simpa using h1.pow m
+
+theorem orbit_sum_eq (free : ℕ → Bool) {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) (v n x : ℕ)
+    (hx : ¬ 3 ∣ x) :
+    ∑ m ∈ Finset.range (3 ^ n), Hf free v (tb b + n) ((x * (b ^ 2) ^ m : ℕ) : ℝ) =
+      ∑ w ∈ Finset.range (3 ^ n), Hf free v (tb b + n) ((3 ^ tb b * w + x % 3 ^ tb b : ℕ) : ℝ) := by
+  set t := tb b
+  set k := t + n
+  set Q := 3 ^ k
+  have hQ : Q = 3 ^ t * 3 ^ n := pow_add _ _ _
+  have htQ : 3 ^ t ∣ Q := ⟨_, hQ⟩
+  set φ : ℕ → ℕ := fun m => (x * (b ^ 2) ^ m % Q) / 3 ^ t
+  have hmod : ∀ m, (x * (b ^ 2) ^ m % Q) % 3 ^ t = x % 3 ^ t := by
+    intro m
+    rw [Nat.mod_mod_of_dvd _ htQ]
+    have := (sq_pow_modEq_one (b := b) m).mul_left x
+    rw [mul_one] at this
+    exact this
+  have hrec : ∀ m, x * (b ^ 2) ^ m % Q = 3 ^ t * φ m + x % 3 ^ t := by
+    intro m; rw [← hmod m]; exact (Nat.div_add_mod _ _).symm
+  have hmaps : ∀ m ∈ Finset.range (3 ^ n), φ m ∈ Finset.range (3 ^ n) := by
+    intro m _
+    simp only [Finset.mem_range, φ]
+    rw [Nat.div_lt_iff_lt_mul (by positivity)]
+    calc _ < Q := Nat.mod_lt _ (by positivity)
+      _ = _ := by rw [hQ, mul_comm]
+  have hinj : Set.InjOn φ (Finset.range (3 ^ n) : Set ℕ) := by
+    have key : ∀ m m', m < m' → m' < 3 ^ n → φ m ≠ φ m' := by
+      intro m m' hmm' hm' heq
+      have h1 : x * (b ^ 2) ^ m ≡ x * (b ^ 2) ^ m * (b ^ 2) ^ (m' - m) [MOD Q] := by
+        rw [mul_assoc, ← pow_add, Nat.add_sub_cancel' hmm'.le]
+        unfold Nat.ModEq; rw [hrec, hrec, heq]
+      have hcop : Nat.Coprime Q (x * (b ^ 2) ^ m) :=
+        (Nat.Coprime.mul_left (coprime_three_pow hx k)
+          (Nat.Coprime.pow_left _ (Nat.Coprime.pow_left _ (coprime_three_pow h3 k)))).symm
+      have h2 : 1 ≡ (b ^ 2) ^ (m' - m) [MOD Q] :=
+        Nat.ModEq.cancel_left_of_coprime hcop (by simpa using h1)
+      have hd : m' - m ≠ 0 := by omega
+      have h4 := (three_pow_dvd_sq_pow_sub_one hb h3 hd).1
+        ((Nat.modEq_iff_dvd' (Nat.one_le_pow _ _ (by positivity))).1 h2)
+      have h5 : 3 ^ padicValNat 3 (m' - m) ≤ m' - m := Nat.le_of_dvd (by omega) pow_padicValNat_dvd
+      have h6 : 3 ^ n ≤ 3 ^ padicValNat 3 (m' - m) := Nat.pow_le_pow_right (by norm_num) (by omega)
+      omega
+    intro m hm m' hm' heq
+    simp only [Finset.coe_range, Set.mem_Iio] at hm hm'
+    by_contra hne
+    rcases lt_or_gt_of_ne hne with h | h
+    · exact key m m' h hm' heq
+    · exact key m' m h hm heq.symm
+  refine Finset.sum_nbij φ hmaps hinj
+    (Finset.surjOn_of_injOn_of_card_le _ hmaps hinj le_rfl) ?_
+  intro m _
+  rw [← hrec, Hf_mod]
 
 /-- **Coset version of `sum_Hf_le`.**  Confidence 85%.
 
@@ -112,7 +305,81 @@ theorem sum_Hf_le_b (free : ℕ → Bool) {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 �
     (hc : ¬ 3 ∣ c) (N : ℕ) :
     ∑ m ∈ Finset.range N, Hf free v (j + 1) ((c * b ^ m : ℕ) : ℝ) ≤
       (N + 2 * 3 ^ j) * (3 / 2 : ℝ) ^ tb b * (2 / 3 : ℝ) ^ (posSet free v (j + 1)).card := by
-  sorry
+  set t := tb b
+  have ht := one_le_tb hb h3
+  set ck := (posSet free v (j + 1)).card
+  have hck := posSet_card_le free v (j + 1)
+  have hf0 : ∀ u, 0 ≤ Hf free v (j + 1) u := fun u => Hf_nonneg _ _ _ _
+  by_cases hjt : j + 1 < t
+  · have h1 : ∑ m ∈ Finset.range N, Hf free v (j + 1) ((c * b ^ m : ℕ) : ℝ) ≤ N := by
+      refine (Finset.sum_le_sum fun m _ => Hf_le_one free v (j + 1) _).trans ?_
+      simp
+    have h2 : (1 : ℝ) ≤ (3 / 2 : ℝ) ^ t * (2 / 3 : ℝ) ^ ck := by
+      have : (2 / 3 : ℝ) ^ t ≤ (2 / 3 : ℝ) ^ ck :=
+        pow_le_pow_of_le_one (by norm_num) (by norm_num) (by omega)
+      have e : (3 / 2 : ℝ) ^ t * (2 / 3 : ℝ) ^ t = 1 := by rw [← mul_pow]; norm_num
+      nlinarith [pow_pos (by norm_num : (0:ℝ) < 3 / 2) t]
+    have h3' : (0 : ℝ) ≤ 2 * 3 ^ j := by positivity
+    rw [mul_assoc]
+    nlinarith
+  push Not at hjt
+  obtain ⟨n, hn⟩ : ∃ n, j + 1 = t + n := ⟨j + 1 - t, by omega⟩
+  set P := 3 ^ n
+  set B : ℝ := (2 / 3 : ℝ) ^ ck * (3 / 2 : ℝ) ^ (posSet free v t).card
+  have hB0 : 0 ≤ B := by positivity
+  set g : ℕ → ℕ → ℝ := fun x m => Hf free v (j + 1) ((x * (b ^ 2) ^ m : ℕ) : ℝ)
+  have hgK : ∀ x, ¬ 3 ∣ x → ∀ K, ∑ m ∈ Finset.range K, g x m ≤ (K + P) * B := by
+    intro x hx K
+    refine sum_periodic_le (g x) (fun m => hf0 _) P (by positivity) ?_ B ?_ K
+    · intro m
+      obtain ⟨s, hs⟩ := (three_pow_dvd_sq_pow_sub_one hb h3 (k := j + 1) (d := P)
+        (by positivity)).2 (by simp [P]; omega)
+      have hP1 : 1 ≤ (b ^ 2) ^ P := Nat.one_le_pow _ _ (by positivity)
+      have : x * (b ^ 2) ^ (m + P) = x * (b ^ 2) ^ m + 3 ^ (j + 1) * (x * (b ^ 2) ^ m * s) := by
+        rw [pow_add, show (b ^ 2) ^ P = 3 ^ (j + 1) * s + 1 by omega]; ring
+      simp only [g]
+      rw [this]
+      have := Hf_periodic free v (j + 1) ((x * (b ^ 2) ^ m : ℕ) : ℝ) ((x * (b ^ 2) ^ m * s : ℕ) : ℤ)
+      rw [← this]; congr 1; push_cast; ring
+    · simp only [g]
+      rw [hn, orbit_sum_eq free hb h3 v n x hx, ← hn]
+      have := residue_sum_from free v t ht n (x % 3 ^ t)
+      rw [← hn] at this
+      refine this.trans (le_of_eq ?_)
+      simp only [B, P]; push_cast; ring
+  set N' := (N + 1) / 2
+  have hNN : N ≤ 2 * N' := by omega
+  have hsplit : ∑ m ∈ Finset.range N, Hf free v (j + 1) ((c * b ^ m : ℕ) : ℝ) ≤
+      ∑ m ∈ Finset.range N', g c m + ∑ m ∈ Finset.range N', g (c * b) m := by
+    refine (Finset.sum_le_sum_of_subset_of_nonneg (Finset.range_subset_range.2 hNN)
+      (fun m _ _ => hf0 _)).trans (le_of_eq ?_)
+    rw [sum_range_mul_eq, ← Finset.sum_add_distrib]
+    refine Finset.sum_congr rfl fun m _ => ?_
+    simp only [Finset.sum_range_succ, Finset.sum_range_zero, zero_add, g]
+    congr 3 <;> ring
+  have hcb : ¬ 3 ∣ c * b := fun h => ((Nat.Prime.dvd_mul Nat.prime_three).1 h).elim hc h3
+  have hct := posSet_card_le free v t
+  have hBle : B ≤ (2 / 3 : ℝ) ^ ck * (3 / 2 : ℝ) ^ (t - 1) := by
+    simp only [B]; gcongr; norm_num
+  have hPj : (P : ℝ) ≤ 3 ^ j := by
+    have : P ≤ 3 ^ j := Nat.pow_le_pow_right (by norm_num) (by omega)
+    exact_mod_cast this
+  have hN' : (2 * N' : ℝ) ≤ N + 1 := by
+    have : 2 * N' ≤ N + 1 := by omega
+    exact_mod_cast this
+  have h3j : (1 : ℝ) ≤ 3 ^ j := one_le_pow₀ (by norm_num)
+  have ht' : (3 / 2 : ℝ) ^ t = (3 / 2 : ℝ) ^ (t - 1) * (3 / 2) := by
+    rw [← pow_succ]; congr 1; omega
+  refine hsplit.trans ((add_le_add (hgK c hc N') (hgK (c * b) hcb N')).trans ?_)
+  rw [ht']
+  have hX : (0 : ℝ) ≤ (2 / 3 : ℝ) ^ ck * (3 / 2 : ℝ) ^ (t - 1) := by positivity
+  have hN0 : (0 : ℝ) ≤ N := by positivity
+  calc ((N' : ℝ) + P) * B + ((N' : ℝ) + P) * B = (2 * N' + 2 * P) * B := by ring
+    _ ≤ (2 * N' + 2 * P) * ((2 / 3 : ℝ) ^ ck * (3 / 2 : ℝ) ^ (t - 1)) := by gcongr
+    _ ≤ (N + 2 * 3 ^ j) * (3 / 2) * ((2 / 3 : ℝ) ^ ck * (3 / 2 : ℝ) ^ (t - 1)) := by
+        gcongr; linarith
+    _ = _ := by ring
+
 
 /-- **Cassels second moment, base `b` coprime to 3.**  Confidence 80%.
 
