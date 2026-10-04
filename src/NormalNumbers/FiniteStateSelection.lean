@@ -390,6 +390,172 @@ def PulariWeakening (k : ℕ) : Prop :=
   ∀ M : Mealy k, IsSepEnum (mealyEnum M) → ∀ x ∈ Set.Ico (0 : ℝ) 1,
     (IsFNormal (mealyEnum M) x ↔ KAdicEquidist k (scaled (mealyEnum M) x))
 
+/-! ## Coder combinatorics (free reduction, mirror return, zero count) -/
+
+section Coder
+
+variable [NeZero k]
+
+def encStk : List (Fin k) → List (Fin k) → List (Fin k)
+  | s, [] => s
+  | s, a :: w => encStk (encStep s a).1 w
+
+theorem encRun_append (s p q : List (Fin k)) :
+    encRun s (p ++ q) = encRun s p ++ encRun (encStk s p) q := by
+  induction p generalizing s with
+  | nil => rfl
+  | cons a p ih => simp [encRun, encStk, ih]
+
+theorem encStk_append (s p q : List (Fin k)) :
+    encStk s (p ++ q) = encStk (encStk s p) q := by
+  induction p generalizing s with
+  | nil => rfl
+  | cons a p ih => simp [encStk, ih]
+
+theorem count_inv (s w : List (Fin k)) :
+    s.length + w.length ≤ 2 * (encRun s w).count 0 + (encStk s w).length := by
+  induction w generalizing s with
+  | nil => simp [encStk, encRun]
+  | cons a w ih =>
+    have h1 := ih (encStep s a).1
+    have h2 : (encRun (encStep s a).1 w).count 0 ≤ (encRun s (a :: w)).count 0 := by
+      simp only [encRun]; exact List.count_le_count_cons ..
+    cases s with
+    | nil => simp [encStk, encStep] at h1 h2 ⊢; omega
+    | cons t s =>
+      by_cases h : a = t
+      · subst h; simp [encRun, encStk, encStep] at h1 ⊢; omega
+      · simp [encStk, encStep, h] at h1 h2 ⊢; omega
+
+/-- Reduced stacks: no two adjacent equal letters. -/
+def Red : List (Fin k) → Prop
+  | [] => True
+  | [_] => True
+  | a :: b :: s => a ≠ b ∧ Red (b :: s)
+
+theorem red_tail {t : Fin k} {s : List (Fin k)} (h : Red (t :: s)) : Red s := by
+  match s, h with
+  | [], _ => trivial
+  | _ :: _, h => exact h.2
+
+theorem red_encStep (s : List (Fin k)) (a : Fin k) (h : Red s) : Red (encStep s a).1 := by
+  cases s with
+  | nil => trivial
+  | cons t s =>
+    by_cases ha : a = t
+    · simp [encStep, ha]; exact red_tail h
+    · simp [encStep, ha]; exact ⟨ha, h⟩
+
+theorem encStep_encStep (s : List (Fin k)) (a : Fin k) (h : Red s) :
+    (encStep (encStep s a).1 a).1 = s := by
+  cases s with
+  | nil => simp [encStep]
+  | cons t s =>
+    by_cases ha : a = t
+    · subst ha
+      cases s with
+      | nil => simp [encStep]
+      | cons u s =>
+        simp [encStep, h.1]
+    · simp [encStep, ha]
+
+theorem red_encStk (s w : List (Fin k)) (h : Red s) : Red (encStk s w) := by
+  induction w generalizing s with
+  | nil => exact h
+  | cons a w ih => exact ih _ (red_encStep s a h)
+
+theorem encStk_reverse (s w : List (Fin k)) (h : Red s) :
+    encStk (encStk s w) w.reverse = s := by
+  induction w generalizing s with
+  | nil => rfl
+  | cons a w ih =>
+    simp only [encStk, List.reverse_cons, encStk_append]
+    rw [ih _ (red_encStep s a h)]
+    exact encStep_encStep s a h
+
+theorem block_count (w : List (Fin k)) :
+    w.length ≤ (encRun [] (w ++ w.reverse)).count 0 ∧ encStk [] (w ++ w.reverse) = [] := by
+  have hr := encStk_reverse ([] : List (Fin k)) w trivial
+  refine ⟨?_, by rw [encStk_append, hr]⟩
+  have h1 := count_inv ([] : List (Fin k)) w
+  have h2 := count_inv (encStk [] w) w.reverse
+  rw [hr] at h2
+  rw [encRun_append, List.count_append]
+  simp at h1 h2
+  omega
+
+theorem cpPrefix_succ (N : ℕ) : cpPrefix k (N + 1) = cpPrefix k N ++ cpBlock k (N + 1) := by
+  simp [cpPrefix, List.range_succ, List.flatMap_append]
+
+theorem cpPrefix_count (N : ℕ) :
+    (cpPrefix k N).length ≤ 2 * (encRun [] (cpPrefix k N)).count 0 ∧
+      encStk [] (cpPrefix k N) = [] := by
+  induction N with
+  | zero => simp [cpPrefix, encRun, encStk]
+  | succ N ih =>
+    obtain ⟨h1, h2⟩ := ih
+    obtain ⟨h3, h4⟩ := block_count (champBlock k (N + 1))
+    rw [cpPrefix_succ, encRun_append, encStk_append, h2, List.count_append, List.length_append]
+    refine ⟨?_, h4⟩
+    have : (cpBlock k (N+1)).length = 2 * (champBlock k (N+1)).length := by
+      simp [cpBlock]; ring
+    unfold cpBlock at this ⊢
+    omega
+
+
+theorem pre_succ (S : ℕ → Fin k) (n : ℕ) : pre S (n + 1) = pre S n ++ [S n] := by
+  simp only [pre]; rw [List.ofFn_succ_last]; simp
+
+theorem length_pre (S : ℕ → Fin k) (n : ℕ) : (pre S n).length = n := by simp [pre]
+
+
+theorem cpPrefix_add (N M : ℕ) : ∃ t, cpPrefix k (N + M) = cpPrefix k N ++ t := by
+  induction M with
+  | zero => exact ⟨[], by simp⟩
+  | succ M ih =>
+    obtain ⟨t, ht⟩ := ih
+    exact ⟨t ++ cpBlock k (N + M + 1), by rw [← add_assoc, cpPrefix_succ, ht, List.append_assoc]⟩
+
+theorem le_length_cpPrefix (N : ℕ) : N ≤ (cpPrefix k N).length := by
+  induction N with
+  | zero => simp
+  | succ N ih =>
+    rw [cpPrefix_succ, List.length_append]
+    have : 1 ≤ (cpBlock k (N + 1)).length := by
+      simp [cpBlock, champBlock, lexWord]
+      have : 0 < k ^ (N + 1) := pow_pos (Nat.pos_of_neZero k) _
+      nlinarith
+    omega
+
+theorem cpSeq_eq (N i : ℕ) (hi : i < (cpPrefix k N).length) :
+    cpSeq k i = (cpPrefix k N).getD i 0 := by
+  unfold cpSeq
+  have h1 := le_length_cpPrefix (k := k) (i + 1)
+  rcases le_total N (i + 1) with h | h
+  · obtain ⟨t, ht⟩ := cpPrefix_add (k := k) N (i + 1 - N)
+    rw [show N + (i + 1 - N) = i + 1 by omega] at ht
+    rw [ht, List.getD_append _ _ _ _ hi]
+  · obtain ⟨t, ht⟩ := cpPrefix_add (k := k) (i + 1) (N - (i + 1))
+    rw [show i + 1 + (N - (i + 1)) = N by omega] at ht
+    rw [ht, List.getD_append _ _ _ _ (by omega)]
+
+theorem pre_cpSeq (N : ℕ) : pre (cpSeq k) (cpPrefix k N).length = cpPrefix k N := by
+  apply List.ext_getElem (by simp [pre])
+  intro i h1 h2
+  simp only [pre, List.getElem_ofFn]
+  rw [cpSeq_eq N i h2, List.getD_eq_getElem]
+
+
+theorem countOcc_single (a : ℕ) (l : List ℕ) : countOccurrences [a] l = l.count a := by
+  induction l with
+  | nil => rfl
+  | cons b l ih =>
+    simp only [countOccurrences, List.tails, List.countP_cons] at ih ⊢
+    rw [ih, List.count_cons]
+    by_cases h : b = a <;> simp [List.isPrefixOf, h, Ne.symm]
+
+end Coder
+
 /-! ## Leaves (frozen, `sorry` with confidence) -/
 
 /-- **Leaf (92%).**  A length-preserving naming map that is surjective on every level gives a
@@ -437,7 +603,15 @@ theorem fsDim_le_one (hk : 2 ≤ k) (S : ℕ → Fin k) : fsDim S ≤ 1 := by
 /-- **Leaf (97%).**  The coder is online: the names of `S↾n` are the prefix of `encSeq S`. -/
 theorem pre_encSeq [NeZero k] (S : ℕ → Fin k) (n : ℕ) :
     pre (encSeq S) n = encRun [] (pre S n) := by
-  sorry
+  induction n with
+  | zero => rfl
+  | succ n ih =>
+    have hl : (encRun [] (pre S n)).length = n := by rw [length_encRun, length_pre]
+    rw [pre_succ, ih, pre_succ, encRun_append]
+    congr 1
+    simp only [encSeq, pre_succ, encRun_append, encRun]
+    rw [List.getD_append_right _ _ _ _ (by omega)]
+    simp [hl]
 
 /-- **Leaf (92%), the counting core.**  On `w₁ w̃₁ ⋯ w_N w̃_N` the coder emits at least a quarter
 zeros.  Proof: the coder's stack after a prefix `p` is the free reduction `red(p)` under `aa → ε`,
@@ -447,14 +621,45 @@ stack from `red(wₙ)` (length `r`) back to empty, so its pops `C` and pushes `P
 `#0 ≥ Σ|wₙ|/2 = |prefix|/4`.  (Numerics, `probe` in the audit doc: the true frequency is ≈ 1/2.) -/
 theorem length_le_four_mul_count_zero [NeZero k] (N : ℕ) :
     (cpPrefix k N).length ≤ 4 * (encRun [] (cpPrefix k N)).count 0 := by
-  sorry
+  have := (cpPrefix_count (k := k) N).1; omega
 
 /-- **Leaf (90%).**  For `k ≥ 5` the names of the Carton–Perifel sequence are not normal: the digit
 `0` has frequency `≥ 1/4 > 1/k` along the block ends `|cpPrefix k N|` (from
 `length_le_four_mul_count_zero` and `pre_encSeq`). -/
 theorem not_isNormal_encSeq_cpSeq [NeZero k] (hk : 5 ≤ k) :
     ¬ IsNormalSequence k fun i => (encSeq (cpSeq k) i : ℕ) := by
-  sorry
+  intro hn
+  have h := hn [0] (by simp) (by simp; omega)
+  set L : ℕ → ℕ := fun N => (cpPrefix k (N + 1)).length
+  have hL : Tendsto L atTop atTop :=
+    tendsto_atTop_mono (fun N => le_trans (Nat.le_succ N) (le_length_cpPrefix (N + 1)))
+      tendsto_id
+  have h2 := h.comp hL
+  have hbound : ∀ N, (1 : ℝ) / 4 ≤ ((fun n => (countOccurrences [0]
+      ((List.range n).map fun i => (encSeq (cpSeq k) i : ℕ)) : ℝ) / n) ∘ L) N := by
+    intro N
+    simp only [Function.comp, countOcc_single]
+    have hmap : (List.range (L N)).map (fun i => (encSeq (cpSeq k) i : ℕ))
+        = (pre (encSeq (cpSeq k)) (L N)).map (fun a : Fin k => (a : ℕ)) := by
+      apply List.ext_getElem (by simp [pre])
+      intro i h1 h2
+      simp [pre]
+    have hcm := List.count_map_of_injective (pre (encSeq (cpSeq k)) (L N)) Fin.val
+      Fin.val_injective (0 : Fin k)
+    simp only [Fin.val_zero] at hcm
+    rw [hmap, hcm, pre_encSeq]
+    have hc := length_le_four_mul_count_zero (k := k) (N + 1)
+    have hpos : 0 < L N := lt_of_lt_of_le (Nat.succ_pos N) (le_length_cpPrefix (N + 1))
+    simp only [L, pre_cpSeq] at hc hpos ⊢
+    rw [div_le_div_iff₀ (by norm_num) (by exact_mod_cast hpos)]
+    have : ((cpPrefix k (N + 1)).length : ℝ) ≤ 4 * ((encRun [] (cpPrefix k (N + 1))).count 0 : ℝ) := by
+      exact_mod_cast hc
+    simpa [Fin.val_zero] using (by linarith : (1:ℝ) * ((cpPrefix k (N + 1)).length : ℝ) ≤ ((encRun [] (cpPrefix k (N + 1))).count 0 : ℝ) * 4)
+  have hle := ge_of_tendsto h2 (Eventually.of_forall hbound)
+  have hk' : (5 : ℝ) ≤ k := by exact_mod_cast hk
+  simp at hle
+  have : (k : ℝ)⁻¹ ≤ 1 / 5 := by rw [one_div]; exact inv_anti₀ (by norm_num) hk'
+  linarith
 
 /-- **Leaf (95%).**  A synchronous Mealy relabeling that is a separator enumerator is surjective
 on every level.  Proof: if `u ∈ Σ^n` is missed, the open interval `(grid u, grid u + k^{-n})`
