@@ -949,3 +949,4 @@ import NormalNumbers.CantorLiouville
 import NormalNumbers.CantorLiouvilleAll
 import NormalNumbers.SchedFamily
 import NormalNumbers.UniformBad
+import NormalNumbers.Hertling
