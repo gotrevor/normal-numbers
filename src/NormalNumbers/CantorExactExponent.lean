@@ -134,6 +134,414 @@ theorem expRun_anchor_four :
 theorem mem_cantorSet (μ₀ : ℚ) (ω : ℕ → Bool) : cantorExpReal μ₀ ω ∈ cantorSet :=
   pt_mem_cantorSet _ _
 
+/-! ## Schedule structure, window counts, cylinders (helpers) -/
+
+theorem le_expRunEnd (μ₀ : ℚ) (_hμ : 1 < μ₀) (a : ℕ) : (μ₀ : ℝ) * a ≤ expRunEnd μ₀ a := by
+  unfold expRunEnd
+  have := Nat.le_ceil (μ₀ * a)
+  exact_mod_cast this
+
+theorem expRunEnd_le (μ₀ : ℚ) (hμ : 1 < μ₀) (a : ℕ) : (expRunEnd μ₀ a : ℝ) < μ₀ * a + 1 := by
+  unfold expRunEnd
+  have := Nat.ceil_lt_add_one (show (0:ℚ) ≤ μ₀ * a by positivity)
+  exact_mod_cast this
+
+theorem lt_expRunEnd (μ₀ : ℚ) (hμ : 1 < μ₀) {a : ℕ} (ha : 1 ≤ a) : a < expRunEnd μ₀ a := by
+  have h := le_expRunEnd μ₀ hμ a
+  have : (a : ℝ) < μ₀ * a := by
+    have : (1:ℝ) < μ₀ := by exact_mod_cast hμ
+    have : (1:ℝ) ≤ a := by exact_mod_cast ha
+    nlinarith
+  exact_mod_cast this.trans_le h
+
+theorem four_le_expRunStart (μ₀ : ℚ) (hμ : 1 < μ₀) (k : ℕ) : 4 ≤ expRunStart μ₀ k := by
+  induction k with
+  | zero => simp [expRunStart]
+  | succ k ih =>
+    simp only [expRunStart]
+    have := lt_expRunEnd μ₀ hμ (a := expRunStart μ₀ k) (by omega)
+    nlinarith
+
+theorem expRunStart_succ (μ₀ : ℚ) (k : ℕ) :
+    expRunStart μ₀ (k + 1) = (k + 2) * expRunEnd μ₀ (expRunStart μ₀ k) := rfl
+
+theorem expRunEnd_lt_next (μ₀ : ℚ) (hμ : 1 < μ₀) (k : ℕ) :
+    expRunEnd μ₀ (expRunStart μ₀ k) < expRunStart μ₀ (k + 1) := by
+  rw [expRunStart_succ]
+  have := lt_expRunEnd μ₀ hμ (a := expRunStart μ₀ k) (by have := four_le_expRunStart μ₀ hμ k; omega)
+  nlinarith
+
+theorem expRunStart_strictMono (μ₀ : ℚ) (hμ : 1 < μ₀) : StrictMono (expRunStart μ₀) := by
+  refine strictMono_nat_of_lt_succ fun k => ?_
+  have := lt_expRunEnd μ₀ hμ (a := expRunStart μ₀ k) (by have := four_le_expRunStart μ₀ hμ k; omega)
+  exact this.trans (expRunEnd_lt_next μ₀ hμ k)
+
+theorem lt_expRunStart (μ₀ : ℚ) (hμ : 1 < μ₀) (k : ℕ) : k < expRunStart μ₀ k := by
+  induction k with
+  | zero => have h4 := four_le_expRunStart μ₀ hμ 0; omega
+  | succ k ih =>
+    have := expRunStart_strictMono μ₀ hμ (Nat.lt_succ_self k)
+    simp only [Nat.succ_eq_add_one] at this ⊢; omega
+
+theorem expRunEnd_mono (μ₀ : ℚ) (hμ : 1 < μ₀) {a b : ℕ} (h : a ≤ b) :
+    expRunEnd μ₀ a ≤ expRunEnd μ₀ b := by
+  unfold expRunEnd
+  apply Nat.ceil_mono
+  have : (0:ℚ) ≤ μ₀ := by linarith
+  gcongr
+
+/-- Forced iff inside a run. -/
+theorem expFree_eq_false_iff (μ₀ : ℚ) (hμ : 1 < μ₀) (i : ℕ) :
+    expFree μ₀ i = false ↔ ∃ k, expRunStart μ₀ k ≤ i ∧ i < expRunEnd μ₀ (expRunStart μ₀ k) := by
+  unfold expFree expForced
+  simp only [Bool.not_eq_false', List.any_eq_true, List.mem_range, Bool.and_eq_true,
+    decide_eq_true_eq]
+  constructor
+  · rintro ⟨k, -, h⟩; exact ⟨k, h⟩
+  · rintro ⟨k, h⟩
+    exact ⟨k, by have := lt_expRunStart μ₀ hμ k; omega, h⟩
+
+theorem expFree_of_not_run (μ₀ : ℚ) (hμ : 1 < μ₀) {i : ℕ}
+    (h : ∀ k, ¬ (expRunStart μ₀ k ≤ i ∧ i < expRunEnd μ₀ (expRunStart μ₀ k))) :
+    expFree μ₀ i = true := by
+  by_contra hc
+  rw [Bool.not_eq_true, expFree_eq_false_iff μ₀ hμ] at hc
+  obtain ⟨k, hk⟩ := hc
+  exact h k hk
+
+theorem expRunEnd_strictMono (μ₀ : ℚ) (hμ : 1 < μ₀) :
+    StrictMono fun k => expRunEnd μ₀ (expRunStart μ₀ k) := by
+  refine strictMono_nat_of_lt_succ fun k => ?_
+  have h1 := expRunEnd_lt_next μ₀ hμ k
+  have h2 := lt_expRunEnd μ₀ hμ (a := expRunStart μ₀ (k + 1))
+    (by have := four_le_expRunStart μ₀ hμ (k+1); omega)
+  exact h1.trans h2
+
+/-- The gap `[E_k, a_{k+1})` is free. -/
+theorem expFree_gap (μ₀ : ℚ) (hμ : 1 < μ₀) {k i : ℕ}
+    (h1 : expRunEnd μ₀ (expRunStart μ₀ k) ≤ i) (h2 : i < expRunStart μ₀ (k + 1)) :
+    expFree μ₀ i = true := by
+  refine expFree_of_not_run μ₀ hμ fun j ⟨hj1, hj2⟩ => ?_
+  rcases Nat.lt_or_ge k j with hjk | hjk
+  · have := (expRunStart_strictMono μ₀ hμ).monotone (show k + 1 ≤ j by omega); omega
+  · have := (expRunEnd_strictMono μ₀ hμ).monotone hjk; omega
+
+theorem expFree_init (μ₀ : ℚ) (hμ : 1 < μ₀) {i : ℕ} (h : i < expRunStart μ₀ 0) :
+    expFree μ₀ i = true := by
+  refine expFree_of_not_run μ₀ hμ fun j ⟨hj1, _⟩ => ?_
+  have := (expRunStart_strictMono μ₀ hμ).monotone (Nat.zero_le j); omega
+
+theorem expFree_run (μ₀ : ℚ) {k i : ℕ}
+    (h1 : expRunStart μ₀ k ≤ i) (h2 : i < expRunEnd μ₀ (expRunStart μ₀ k)) (hμ : 1 < μ₀) :
+    expFree μ₀ i = false := (expFree_eq_false_iff μ₀ hμ i).2 ⟨k, h1, h2⟩
+
+theorem freeCount_mono (free : ℕ → Bool) {m n : ℕ} (h : m ≤ n) :
+    freeCount free m ≤ freeCount free n := by
+  unfold freeCount
+  exact Finset.card_le_card (Finset.filter_subset_filter _ (Finset.range_mono h))
+
+theorem freeCount_succ_le (free : ℕ → Bool) (n : ℕ) :
+    freeCount free (n + 1) ≤ freeCount free n + 1 := by
+  unfold freeCount
+  rw [Finset.range_add_one, Finset.filter_insert]
+  split_ifs
+  · exact (Finset.card_insert_le _ _)
+  · omega
+
+theorem freeCount_add_le (free : ℕ → Bool) (n d : ℕ) :
+    freeCount free (n + d) ≤ freeCount free n + d := by
+  induction d with
+  | zero => simp
+  | succ d ih => have := freeCount_succ_le free (n + d); rw [← add_assoc]; omega
+
+/-- A free interval `[s, e)` inside `[m, n)` contributes `e − s` to the window count. -/
+theorem le_freeCount_sub (free : ℕ → Bool) {m n s e : ℕ} (hmn : m ≤ n) (hms : m ≤ s)
+    (hen : e ≤ n) (hf : ∀ i, s ≤ i → i < e → free i = true) :
+    (e : ℝ) - s ≤ (freeCount free n : ℝ) - freeCount free m := by
+  have hFm := freeCount_mono free hmn
+  rcases Nat.lt_or_ge s e with hse | hse
+  · have : freeCount free m + (e - s) ≤ freeCount free n := by
+      unfold freeCount
+      rw [← Nat.card_Ico s e, ← Finset.card_union_of_disjoint]
+      · refine Finset.card_le_card fun i hi => ?_
+        simp only [Finset.mem_union, Finset.mem_filter, Finset.mem_range, Finset.mem_Ico] at hi ⊢
+        rcases hi with hi | hi
+        · exact ⟨by omega, hi.2⟩
+        · exact ⟨by omega, hf i hi.1 hi.2⟩
+      · rw [Finset.disjoint_left]; intro i h1 h2
+        simp only [Finset.mem_filter, Finset.mem_range, Finset.mem_Ico] at h1 h2; omega
+    have : ((freeCount free m + (e - s) : ℕ) : ℝ) ≤ freeCount free n := by exact_mod_cast this
+    push_cast [hse.le] at this; linarith
+  · have : (e : ℝ) ≤ s := by exact_mod_cast hse
+    have : (freeCount free m : ℝ) ≤ freeCount free n := by exact_mod_cast hFm
+    linarith
+
+/-- **Window count, general form**: for `m` in the Borel–Cantelli range of run `k` (with `μ₀`)
+and any window end `n ∈ [μ₀ m, Λ m + 1]`. -/
+theorem window_ge_gen (μ₀ : ℚ) (hμ : 2 < μ₀) (Λ : ℝ) (hΛ : 0 ≤ Λ) :
+    ∃ C : ℝ, ∀ k m n : ℕ, expRunEnd μ₀ (expRunStart μ₀ k) ≤ m + expRunStart μ₀ k + 2 →
+      ((μ₀ : ℝ) - 1) * m ≤ expRunStart μ₀ (k + 1) + 2 → (μ₀ : ℝ) * m ≤ n → (n : ℝ) ≤ Λ * m + 1 →
+      ((μ₀ : ℝ) - 2) * m ≤ (freeCount (expFree μ₀) n : ℝ) - freeCount (expFree μ₀) m + C := by
+  have hμ1 : (1 : ℚ) < μ₀ := by linarith
+  have hμR : (2 : ℝ) < μ₀ := by exact_mod_cast hμ
+  set K := ⌈Λ⌉₊
+  set Ssum : ℝ := ∑ j ∈ Finset.range (K + 1), (expRunEnd μ₀ (expRunStart μ₀ j) : ℝ)
+  have hS0 : 0 ≤ Ssum := Finset.sum_nonneg fun _ _ => by positivity
+  refine ⟨4 + μ₀ * Ssum, fun k m n hlo hhi hn1 hn2 => ?_⟩
+  set a := expRunStart μ₀ k
+  set E := expRunEnd μ₀ a
+  set a' := expRunStart μ₀ (k + 1)
+  have ha' : a' = (k + 2) * E := expRunStart_succ μ₀ k
+  have hEa := le_expRunEnd μ₀ hμ1 a
+  have hEa2 := expRunEnd_le μ₀ hμ1 a
+  have hm0 : (0 : ℝ) ≤ m := by positivity
+  have hmn : m ≤ n := by
+    have : (m : ℝ) ≤ n := by nlinarith
+    exact_mod_cast this
+  have hW0 : (0 : ℝ) ≤ (freeCount (expFree μ₀) n : ℝ) - freeCount (expFree μ₀) m := by
+    have : (freeCount (expFree μ₀) m : ℝ) ≤ freeCount (expFree μ₀) n := by
+      exact_mod_cast freeCount_mono _ hmn
+    linarith
+  have hloR : (E : ℝ) ≤ m + a + 2 := by exact_mod_cast hlo
+  have hμ0 : (0 : ℝ) ≤ μ₀ := by linarith
+  have hμS : 0 ≤ (μ₀ : ℝ) * Ssum := mul_nonneg hμ0 hS0
+  have e1 : ((μ₀ : ℝ) - 2) * m = μ₀ * m - 2 * m := by ring
+  rcases Nat.lt_or_ge m a with hma | hma
+  · -- `m` below the run start: bounded
+    have hmaR : (m : ℝ) < a := by exact_mod_cast hma
+    have h1 := mul_le_mul_of_nonneg_left hmaR.le (sub_nonneg.2 hμR.le)
+    have e2 : ((μ₀ : ℝ) - 2) * a = μ₀ * a - 2 * a := by ring
+    linarith
+  have hmaR : (a : ℝ) ≤ m := by exact_mod_cast hma
+  -- the free interval `[max m E, min n a')`
+  have hfree : ∀ i, max m E ≤ i → i < min n a' → expFree μ₀ i = true := fun i h1 h2 =>
+    expFree_gap μ₀ hμ1 (k := k) (le_of_max_le_right h1) (lt_of_lt_of_le h2 (min_le_right _ _))
+  have hW := le_freeCount_sub (expFree μ₀) hmn (le_max_left m E) (min_le_left n a') hfree
+  rcases le_total n a' with hna | hna <;> rcases le_total E m with hEm | hEm
+  · rw [min_eq_left hna, max_eq_left hEm] at hW
+    linarith
+  · rw [min_eq_left hna, max_eq_right hEm] at hW
+    linarith
+  · rw [min_eq_right hna, max_eq_left hEm] at hW
+    have e3 : ((μ₀ : ℝ) - 2) * m = (μ₀ - 1) * m - m := by ring
+    linarith
+  · -- window enters run `k+1` from inside run `k`: only `k < K`
+    have hEmR : (m : ℝ) ≤ E := by exact_mod_cast hEm
+    have hE1 : (1 : ℝ) ≤ E := by
+      have := four_le_expRunStart μ₀ hμ1 k
+      have : (4 : ℝ) ≤ a := by exact_mod_cast this
+      nlinarith
+    have hkK : k < K + 1 := by
+      by_contra hc
+      have hk : (K : ℝ) ≤ k := by exact_mod_cast (show K ≤ k by omega)
+      have hΛK : Λ ≤ K := Nat.le_ceil Λ
+      have hnaR : (a' : ℝ) ≤ n := by exact_mod_cast hna
+      have ha'R : (a' : ℝ) = k * E + 2 * E := by rw [ha']; push_cast; ring
+      have p1 := mul_le_mul_of_nonneg_left hEmR hΛ
+      have p2 := mul_le_mul_of_nonneg_right hΛK (show (0:ℝ) ≤ E by linarith)
+      have p3 := mul_le_mul_of_nonneg_right hk (show (0:ℝ) ≤ E by linarith)
+      linarith
+    have hES : (E : ℝ) ≤ Ssum :=
+      Finset.single_le_sum (f := fun j => (expRunEnd μ₀ (expRunStart μ₀ j) : ℝ))
+        (fun _ _ => by positivity) (Finset.mem_range.2 hkK)
+    have p1 := mul_le_mul_of_nonneg_left hEmR hμ0
+    have p2 := mul_le_mul_of_nonneg_left hES hμ0
+    linarith
+
+/-! ## Generic digit splitting and cylinders (any free set) -/
+
+theorem ptDigit_le_two (free : ℕ → Bool) (ω : ℕ → Bool) (i : ℕ) : (ptDigit free ω i : ℝ) ≤ 2 := by
+  have : ptDigit free ω i ≤ 2 := by unfold ptDigit; split_ifs <;> norm_num
+  exact_mod_cast this
+
+theorem geom_tail (n : ℕ) : ∑' i : ℕ, (2 : ℝ) / 3 ^ (i + n + 1) = 1 / 3 ^ n := by
+  have : (fun i : ℕ => (2 : ℝ) / 3 ^ (i + n + 1)) = fun i => 2 / 3 ^ (n + 1) * (1 / 3) ^ i := by
+    funext i; rw [one_div_pow, show i + n + 1 = i + (n + 1) by ring, pow_add]; field_simp
+  rw [this, tsum_mul_left, tsum_geometric_of_lt_one (by norm_num) (by norm_num), pow_succ]
+  field_simp; norm_num
+
+theorem summable_geom_tail (n : ℕ) : Summable fun i : ℕ => (2 : ℝ) / 3 ^ (i + n + 1) := by
+  have := (summable_geometric_of_lt_one (r := (1 / 3 : ℝ)) (by norm_num) (by norm_num)).mul_left
+    (2 / 3 ^ (n + 1))
+  refine this.congr fun i => ?_
+  rw [one_div_pow]; field_simp; ring
+
+/-- **Split at depth `n`**: head sum plus a tail in `[0, 3^{-n}]`. -/
+theorem pt_split (free : ℕ → Bool) (ω : ℕ → Bool) (n : ℕ) :
+    ∃ T : ℝ, 0 ≤ T ∧ T ≤ 1 / 3 ^ n ∧
+      pt free ω = ∑ i ∈ Finset.range n, (ptDigit free ω i : ℝ) / 3 ^ (i + 1) + T := by
+  have hs := summable_ptDigit free ω
+  refine ⟨∑' k, (ptDigit free ω (k + n) : ℝ) / (3 : ℝ) ^ (k + n + 1),
+    tsum_nonneg fun k => by positivity, ?_, ?_⟩
+  · rw [← geom_tail n]
+    refine (hs.comp_injective (add_left_injective n)).tsum_le_tsum (fun k => ?_)
+      (summable_geom_tail n)
+    exact div_le_div_of_nonneg_right (ptDigit_le_two _ _ _) (by positivity)
+  · unfold pt realOfDigits
+    simp only [Nat.cast_ofNat]
+    exact (hs.sum_add_tsum_nat_add n).symm
+
+/-- **Separation**: digits agreeing below `i` and differing at `i` put the points `≥ 3^{-(i+1)}`
+apart. -/
+theorem abs_pt_sub_ge (free : ℕ → Bool) (ω ω' : ℕ → Bool) (i : ℕ)
+    (hlt : ∀ j < i, ptDigit free ω j = ptDigit free ω' j)
+    (hne : ptDigit free ω i ≠ ptDigit free ω' i) :
+    1 / (3 : ℝ) ^ (i + 1) ≤ |pt free ω - pt free ω'| := by
+  obtain ⟨T, hT0, hT1, hx⟩ := pt_split free ω (i + 1)
+  obtain ⟨T', hT0', hT1', hx'⟩ := pt_split free ω' (i + 1)
+  rw [Finset.sum_range_succ] at hx hx'
+  have hsum : ∑ j ∈ Finset.range i, (ptDigit free ω j : ℝ) / 3 ^ (j + 1) =
+      ∑ j ∈ Finset.range i, (ptDigit free ω' j : ℝ) / 3 ^ (j + 1) :=
+    Finset.sum_congr rfl fun j hj => by rw [hlt j (Finset.mem_range.1 hj)]
+  have hd : ∀ (w : ℕ → Bool), ptDigit free w i = 0 ∨ ptDigit free w i = 2 := fun w => by
+    unfold ptDigit; split_ifs <;> simp
+  set u : ℝ := 1 / 3 ^ (i + 1)
+  have hkey : pt free ω - pt free ω' =
+      ((ptDigit free ω i : ℝ) - ptDigit free ω' i) * u + (T - T') := by
+    rw [hx, hx', hsum]; simp only [u]; ring
+  rw [hkey]
+  rcases hd ω with h | h <;> rcases hd ω' with h' | h'
+  · exact absurd (h.trans h'.symm) hne
+  · rw [h, h']; push_cast; exact le_abs.2 (Or.inr (by linarith))
+  · rw [h, h']; push_cast; exact le_abs.2 (Or.inl (by linarith))
+  · exact absurd (h.trans h'.symm) hne
+
+/-- Mass of a finite-coordinate cylinder. -/
+theorem coins_cyl (S : Finset ℕ) (c : ℕ → Bool) :
+    coins.real (Set.pi (S : Set ℕ) fun i => {c i}) = (1 / 2 : ℝ) ^ S.card := by
+  rw [measureReal_def]
+  have hm : coins (Set.pi (S : Set ℕ) fun i => {c i}) = (2⁻¹ : ENNReal) ^ S.card := by
+    show ExplicitSquare.coinMeasure _ = _
+    unfold ExplicitSquare.coinMeasure
+    rw [Measure.infinitePi_pi _ (fun _ _ => measurableSet_singleton _)]
+    refine Finset.prod_eq_pow_card fun i _ => ?_
+    rw [CantorSelfSimilar.uniform_apply]
+    cases c i <;> simp
+  rw [hm, ENNReal.toReal_pow, ENNReal.toReal_inv]
+  simp
+
+/-- **Ball mass** (generic form of `coins_ball_le`). -/
+theorem coins_ball_le_gen (free : ℕ → Bool) (y r : ℝ) (n : ℕ) (hr : r ≤ 1 / 3 ^ (n + 1)) :
+    coins.real {ω | |pt free ω - y| < r} ≤ (1 / 2 : ℝ) ^ freeCount free n := by
+  classical
+  set B := {ω | |pt free ω - y| < r}
+  rcases Set.eq_empty_or_nonempty B with hB | ⟨ω₀, hω₀⟩
+  · rw [hB]; simp
+  set S := (Finset.range n).filter fun i => free i = true
+  have hsub : B ⊆ Set.pi (S : Set ℕ) (fun i => {ω₀ i}) := by
+    intro ω hω i hi
+    simp only [Set.mem_singleton_iff]
+    by_contra hne
+    have hex : ∃ j, j ∈ S ∧ ω j ≠ ω₀ j := ⟨i, hi, hne⟩
+    obtain ⟨j, ⟨hjS, hjne⟩, hjmin'⟩ : ∃ j, (j ∈ S ∧ ω j ≠ ω₀ j) ∧
+        ∀ l < j, ¬ (l ∈ S ∧ ω l ≠ ω₀ l) :=
+      ⟨Nat.find hex, Nat.find_spec hex, fun l hl => Nat.find_min hex hl⟩
+    have hjmin : ∀ l < j, l ∈ S → ω l = ω₀ l := fun l hl hlS => by
+      by_contra h; exact hjmin' l hl ⟨hlS, h⟩
+    have hjS' := hjS
+    simp only [S, Finset.mem_filter, Finset.mem_range] at hjS'
+    have hlt : ∀ l < j, ptDigit free ω l = ptDigit free ω₀ l := by
+      intro l hl
+      unfold ptDigit
+      by_cases hf : free l = true
+      · have hjn : j < n := hjS'.1
+        rw [hjmin l hl (by simp only [S, Finset.mem_filter, Finset.mem_range]; exact ⟨by omega, hf⟩)]
+      · simp [hf]
+    have hneD : ptDigit free ω j ≠ ptDigit free ω₀ j := by
+      have hfj : free j = true := hjS'.2
+      unfold ptDigit; rw [hfj]
+      revert hjne; cases ω j <;> cases ω₀ j <;> simp
+    have h1 := abs_pt_sub_ge free ω ω₀ j hlt hneD
+    have hB1 : |pt free ω - y| < r := hω
+    have hB2 : |pt free ω₀ - y| < r := hω₀
+    have h2 : |pt free ω - pt free ω₀| < 2 * r := by
+      calc |pt free ω - pt free ω₀| ≤ |pt free ω - y| + |y - pt free ω₀| := abs_sub_le _ _ _
+        _ < r + r := by rw [abs_sub_comm y]; linarith
+        _ = 2 * r := by ring
+    have h3 : (1 : ℝ) / 3 ^ n ≤ 1 / 3 ^ (j + 1) :=
+      one_div_le_one_div_of_le (by positivity) (pow_le_pow_right₀ (by norm_num) (by
+        have : j < n := hjS'.1
+        omega))
+    have h4 : (1 : ℝ) / 3 ^ (n + 1) * 3 = 1 / 3 ^ n := by rw [pow_succ]; field_simp
+    have h5 : (0 : ℝ) < 1 / 3 ^ (n + 1) := by positivity
+    linarith
+  have hcard : S.card = freeCount free n := rfl
+  calc coins.real B ≤ coins.real (Set.pi (S : Set ℕ) (fun i => {ω₀ i})) := measureReal_mono hsub
+    _ = _ := by rw [coins_cyl, hcard]
+
+/-- The depth-`m` numerator of a set `U` of `2`-digits. -/
+def headNum (m : ℕ) (U : Finset ℕ) : ℕ := ∑ i ∈ U, 2 * 3 ^ (m - 1 - i)
+
+theorem head_eq (free : ℕ → Bool) (ω : ℕ → Bool) (m : ℕ) :
+    ∑ i ∈ Finset.range m, (ptDigit free ω i : ℝ) / 3 ^ (i + 1) =
+      (headNum m (((Finset.range m).filter fun i => free i = true).filter fun i => ω i = true) : ℝ)
+        / 3 ^ m := by
+  classical
+  unfold headNum
+  rw [Finset.filter_filter, Nat.cast_sum, Finset.sum_div, Finset.sum_filter]
+  refine Finset.sum_congr rfl fun i hi => ?_
+  have hi' := Finset.mem_range.1 hi
+  unfold ptDigit
+  by_cases h : free i = true ∧ ω i = true
+  · rw [if_pos h, if_pos (by simp [h.1, h.2])]
+    push_cast
+    have : (3 : ℝ) ^ m = 3 ^ (m - 1 - i) * 3 ^ (i + 1) := by rw [← pow_add]; congr 1; omega
+    rw [this]; field_simp
+  · rw [if_neg h, if_neg (by simpa using h)]; simp
+
+open Classical in
+/-- **Numerator count** (generic form of `card_near_le`). -/
+theorem card_near_le_gen (free : ℕ → Bool) (q m : ℕ) (hq : 0 < q) (hqm : q ≤ 3 ^ m) (r : ℝ)
+    (hr : r ≤ 1 / q) :
+    ((Finset.range (q + 1)).filter fun p : ℕ => ∃ ω, |pt free ω - p / q| < r).card ≤
+      3 * 2 ^ freeCount free m := by
+  classical
+  set S := (Finset.range m).filter fun i => free i = true
+  set c : Finset ℕ → ℕ := fun U => ⌊(q : ℝ) * ((headNum m U : ℝ) / 3 ^ m)⌋₊
+  have hqR : (0 : ℝ) < q := by exact_mod_cast hq
+  have hqmR : (q : ℝ) ≤ 3 ^ m := by exact_mod_cast hqm
+  have hsub : ((Finset.range (q + 1)).filter fun p : ℕ => ∃ ω, |pt free ω - p / q| < r) ⊆
+      S.powerset.biUnion fun U => Finset.Icc (c U) (c U + 2) := by
+    intro p hp
+    simp only [Finset.mem_filter, Finset.mem_range] at hp
+    obtain ⟨-, ω, hω⟩ := hp
+    rw [Finset.mem_biUnion]
+    refine ⟨S.filter fun i => ω i = true, Finset.mem_powerset.2 (Finset.filter_subset _ _), ?_⟩
+    obtain ⟨T, hT0, hT1, hx⟩ := pt_split free ω m
+    rw [head_eq] at hx
+    set H : ℝ := (headNum m (S.filter fun i => ω i = true) : ℝ) / 3 ^ m
+    have hH0 : 0 ≤ H := by positivity
+    set z := (q : ℝ) * H
+    have hz0 : 0 ≤ z := by positivity
+    have hab := abs_lt.1 hω
+    have hqT : (q : ℝ) * T ≤ 1 := by
+      calc (q : ℝ) * T ≤ q * (1 / 3 ^ m) := by gcongr
+        _ ≤ 1 := by rw [mul_one_div, div_le_one (by positivity)]; exact hqmR
+    have hqT0 : 0 ≤ (q : ℝ) * T := by positivity
+    have hp1 : (p : ℝ) / q < H + T + 1 / q := by rw [hx] at hab; linarith
+    have hp2 : H + T - 1 / q < (p : ℝ) / q := by rw [hx] at hab; linarith
+    have e1 : (q : ℝ) * ((p : ℝ) / q) = p := by field_simp
+    have e2 : (q : ℝ) * (1 / q) = 1 := by field_simp
+    have hp1' := mul_lt_mul_of_pos_left hp1 hqR
+    have hp2' := mul_lt_mul_of_pos_left hp2 hqR
+    rw [e1, mul_add, mul_add, e2] at hp1'
+    rw [e1, mul_sub, mul_add, e2] at hp2'
+    have hfl := Nat.floor_le hz0
+    have hfl2 := Nat.lt_floor_add_one z
+    rw [Finset.mem_Icc]
+    constructor
+    · have : (⌊z⌋₊ : ℝ) < p + 1 := by linarith
+      have : ⌊z⌋₊ < p + 1 := by exact_mod_cast this
+      show ⌊z⌋₊ ≤ p; omega
+    · have : (p : ℝ) < ⌊z⌋₊ + 3 := by linarith
+      have : p < ⌊z⌋₊ + 3 := by exact_mod_cast this
+      show p ≤ ⌊z⌋₊ + 2; omega
+  calc _ ≤ (S.powerset.biUnion fun U => Finset.Icc (c U) (c U + 2)).card := Finset.card_le_card hsub
+    _ ≤ ∑ U ∈ S.powerset, (Finset.Icc (c U) (c U + 2)).card := Finset.card_biUnion_le
+    _ = ∑ U ∈ S.powerset, 3 := Finset.sum_congr rfl fun U _ => by rw [Nat.card_Icc]; omega
+    _ = 3 * 2 ^ freeCount free m := by
+      rw [Finset.sum_const, Finset.card_powerset, smul_eq_mul, mul_comm]; rfl
+
 /-- Forced positions recur (each run start is forced).  Confidence 95%.
 
 English proof.  `k < expRunStart μ₀ k` (induction; the factor `k+2` and `⌈μ₀ a⌉ ≥ a`), and
@@ -141,7 +549,8 @@ English proof.  `k < expRunStart μ₀ k` (induction; the factor `k+2` and `⌈�
 is forced, with `N ≤ i`. -/
 theorem expForced_recur (μ₀ : ℚ) (hμ : 1 < μ₀) (N : ℕ) :
     ∃ i, N ≤ i ∧ expFree μ₀ i = false := by
-  sorry
+  exact ⟨expRunStart μ₀ N, (lt_expRunStart μ₀ hμ N).le, expFree_run μ₀ le_rfl
+    (lt_expRunEnd μ₀ hμ (by have := four_le_expRunStart μ₀ hμ N; omega)) hμ⟩
 
 /-- **Base 3 fails, for every `ω`** (wiring from `CantorLiouville.not_isNormal_three_pt`). -/
 theorem not_isNormal_three_cantorExpReal (μ₀ : ℚ) (hμ : 1 < μ₀) (ω : ℕ → Bool) :
@@ -192,7 +601,9 @@ separated by a gap `≥ 3^{−n}`.  An open interval of length `2r ≤ 2·3^{−
 most one of them, and each has coin mass `2^{−F(n)}` (or `0`). -/
 theorem coins_ball_le (free : ℕ → Bool) (y r : ℝ) (n : ℕ) (hr : r ≤ 1 / 3 ^ (n + 1)) :
     coins.real {ω | |pt free ω - y| < r} ≤ 2 * (1 / 2 : ℝ) ^ freeCount free n := by
-  sorry
+  have := coins_ball_le_gen free y r n hr
+  have h0 : (0 : ℝ) ≤ (1 / 2 : ℝ) ^ freeCount free n := by positivity
+  linarith
 
 open Classical in
 /-- **Trivial count of numerators near the support.**  Confidence 90%.
@@ -204,7 +615,9 @@ theorem card_near_le (free : ℕ → Bool) (q m : ℕ) (hq : 0 < q) (hqm : q ≤
     (hr : r ≤ 1 / q) :
     ((Finset.range (q + 1)).filter fun p : ℕ => ∃ ω, |pt free ω - p / q| < r).card ≤
       4 * 2 ^ freeCount free m := by
-  sorry
+  have := card_near_le_gen free q m hq hqm r hr
+  have h0 := Nat.mul_le_mul_right (2 ^ freeCount free m) (show 3 ≤ 4 by norm_num)
+  convert this.trans h0
 
 /-- **Window free count on the Borel–Cantelli range.**  Confidence 85%.
 
@@ -222,7 +635,18 @@ theorem window_freeCount_ge (μ₀ : ℚ) (hμ : 2 < μ₀) (τ : ℝ) (hτ : (�
       (τ - 1) * m ≤ expRunStart μ₀ (k + 1) + 2 →
       ((μ₀ : ℝ) - 2) * m ≤
         (freeCount (expFree μ₀) ⌈τ * m⌉₊ : ℝ) - freeCount (expFree μ₀) m + C := by
-  sorry
+  have hμR : (2 : ℝ) < μ₀ := by exact_mod_cast hμ
+  obtain ⟨C, hC⟩ := window_ge_gen μ₀ hμ τ (by linarith)
+  refine ⟨C, fun k m h1 h2 => hC k m _ h1 ?_ ?_ ?_⟩
+  · have : ((μ₀ : ℝ) - 1) * m ≤ (τ - 1) * m :=
+      mul_le_mul_of_nonneg_right (by linarith) (by positivity)
+    linarith
+  · have h1 : (μ₀ : ℝ) * m ≤ τ * m := mul_le_mul_of_nonneg_right hτ.le (by positivity)
+    exact h1.trans (Nat.le_ceil _)
+  · have := Nat.ceil_lt_add_one (show 0 ≤ τ * (m : ℝ) by
+      have : (0:ℝ) ≤ m := by positivity
+      nlinarith)
+    exact this.le
 
 /-- **Where the threshold enters.**  The trivial-count block costs `3ᵐ 2^{−(μ₀−2)m}` are summable
 exactly above `2 + log₂ 3`.  Confidence 95%.
@@ -230,7 +654,19 @@ exactly above `2 + log₂ 3`.  Confidence 95%.
 English proof.  `3 · 2^{−(μ₀−2)} < 1 ⇔ μ₀ − 2 > log₂ 3`; geometric series. -/
 theorem summable_bc_of_threshold_lt (μ₀ : ℝ) (hμ : threshold < μ₀) :
     Summable fun m : ℕ => (3 : ℝ) ^ m * (2 : ℝ) ^ (-((μ₀ - 2) * m)) := by
-  sorry
+  have hlog : Real.logb 2 3 < μ₀ - 2 := by unfold threshold at hμ; linarith
+  have h3 : (3 : ℝ) < 2 ^ (μ₀ - 2) := by
+    have := Real.rpow_lt_rpow_of_exponent_lt (by norm_num : (1:ℝ) < 2) hlog
+    rwa [Real.rpow_logb (by norm_num) (by norm_num) (by norm_num)] at this
+  have hpos : (0 : ℝ) < 2 ^ (μ₀ - 2) := by positivity
+  set ρ : ℝ := 3 * (2 : ℝ) ^ (-(μ₀ - 2))
+  have hρ : ρ < 1 := by
+    simp only [ρ]; rw [Real.rpow_neg (by norm_num), ← div_eq_mul_inv, div_lt_one hpos]; exact h3
+  have hρ0 : 0 ≤ ρ := by positivity
+  refine (summable_geometric_of_lt_one hρ0 hρ).congr fun m => ?_
+  simp only [ρ]
+  rw [mul_pow, ← Real.rpow_natCast ((2:ℝ) ^ (-(μ₀ - 2))), ← Real.rpow_mul (by norm_num)]
+  ring_nf
 
 /-! ## The sibling the mechanism must refuse -/
 
@@ -241,7 +677,42 @@ English proof.  Places in `[a', n)` are forced; `freeCount` counts places `< n`.
 theorem freeCount_window_le_of_run (μ₀ : ℚ) (k m n : ℕ) (hm : m ≤ expRunStart μ₀ k)
     (hn : n ≤ expRunEnd μ₀ (expRunStart μ₀ k)) :
     freeCount (expFree μ₀) n - freeCount (expFree μ₀) m ≤ expRunStart μ₀ k - m := by
-  sorry
+  classical
+  set a := expRunStart μ₀ k
+  have hka : ∀ i, a ≤ i → i < n → expFree μ₀ i = false := by
+    intro i h1 h2
+    have hiE : i < expRunEnd μ₀ a := lt_of_lt_of_le h2 hn
+    unfold expFree expForced
+    simp only [Bool.not_eq_false', List.any_eq_true, List.mem_range, Bool.and_eq_true,
+      decide_eq_true_eq]
+    refine ⟨k, ?_, h1, hiE⟩
+    rcases k with _ | k
+    · omega
+    · have ha0 : a ≠ 0 := by
+        intro h0
+        simp only [expRunEnd, h0, Nat.cast_zero, mul_zero, Nat.ceil_zero] at hiE
+        omega
+      have : a = (k + 2) * expRunEnd μ₀ (expRunStart μ₀ k) := rfl
+      have hE : 1 ≤ expRunEnd μ₀ (expRunStart μ₀ k) := by
+        rcases Nat.eq_zero_or_pos (expRunEnd μ₀ (expRunStart μ₀ k)) with h | h
+        · rw [h, mul_zero] at this; exact absurd this ha0
+        · exact h
+      have : k + 2 ≤ a := by rw [this]; nlinarith
+      omega
+  have : freeCount (expFree μ₀) n ≤ freeCount (expFree μ₀) m + (a - m) := by
+    unfold freeCount
+    rw [← Nat.card_Ico m a]
+    refine (Finset.card_le_card ?_).trans (Finset.card_union_le _ _)
+    intro i hi
+    simp only [Finset.mem_filter, Finset.mem_range] at hi
+    simp only [Finset.mem_union, Finset.mem_filter, Finset.mem_range, Finset.mem_Ico]
+    rcases Nat.lt_or_ge i m with him | him
+    · exact Or.inl ⟨him, hi.2⟩
+    · right; refine ⟨him, ?_⟩
+      by_contra hc
+      have := hka i (by omega) hi.1
+      rw [hi.2] at this; exact absurd this (by decide)
+  omega
 
 /-- **Red control (below the threshold).**  `μ₀ = τ = 3 < 2 + log₂ 3`: run `2` starts at
 `a₂ = 216`, and at `m = a₂/(τ−1) = 108` the window `[108, 324)` holds `108` free places, so the
