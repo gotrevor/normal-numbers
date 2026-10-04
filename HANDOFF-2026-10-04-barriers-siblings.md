@@ -18,3 +18,9 @@ unconditional normal number in every base `b ≥ 2` (previously only `3 ∤ b`).
 Build: the host file table (virtiofs) runs out under parallel `lake build`
 ("Too many open files in system", also surfacing as ENOENT / "bad import").  Workaround used:
 loop `lake build`, rebuilding each failed module alone, until green (see the lap journal).
+
+## Checkpoint
+* Branch `proof/barriers`, proof commit `23ef5773` (not pushed).  `box done --green` issued.
+* Next steps: none in scope.  Optional: move `LogNormalWitness.exists_isNormal` (Borel normal
+  number in every base) to a shared module for other lanes; state the next barriers named by
+  waivers (`weylLambertTwist_holds`, C′-quantitative at ρ = log 2), per docs/BARRIERS.md.
