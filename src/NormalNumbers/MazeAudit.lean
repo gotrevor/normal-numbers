@@ -7,6 +7,10 @@ import NormalNumbers.Maze
 import NormalNumbers.CPrimeSiteFactorization
 import LeanLedger.MazeLinks
 import NormalNumbers.MasterMaze
+import NormalNumbers.LogCastingOutStretch
+import NormalNumbers.PairDecoupleProve
+import NormalNumbers.StonehamBase6
+import NormalNumbers.LinearFormsScalesStretch
 
 /-!
 # Maze audit: every closed route cites declarations
@@ -34,6 +38,27 @@ def mazeRows : List RowInfo :=
 
 /-- Each linked row and the declarations it rests on. -/
 def mazeLinks : List Link := [
+  ⟨"log-averaged casting-out via the Elliott ledger",
+   [``hall_logavg_casting_out, ``LogCastingOut.TaoTeravainen2019FixedDepth,
+    ``CastingOut.carry_correction_unbounded, ``CastingOut.castLawLog_one_iff,
+    ``CastingOut.multiElliott_all, ``LogCastingOut.simplyNormalLog_of_growingDepth],
+   [``LogCastingOut.GrowingDepthLogElliott]⟩,
+  ⟨"log-averaged word frequencies of an unconstructed constant as new",
+   [``hall_log_rung_distinct, ``LogCastingOut.tendsto_logFreq_dyadicBit,
+    ``LogCastingOut.TaoTeravainen2019LiouvilleThree], []⟩,
+  ⟨"linear forms in logarithms as the avoidance input",
+   [``LinearFormsScales.band_unique_u, ``LinearFormsScales.gap_of_scaleSeparation,
+    ``LinearFormsScales.not_scaleSeparation_two_four, ``LinearFormsScales.Literature.BakerScaleSeparation],
+   []⟩,
+  ⟨"Stoneham profile beyond the Bailey-Borwein region",
+   [``Failures.not_isNormal_six_stoneham23, ``stoneham_base6_readout,
+    ``LinearFormsScales.StonehamBase3Normal, ``LinearFormsScales.StonehamBase18Normal],
+   [``LinearFormsScales.ShortPowerOrbitEquidist]⟩,
+  ⟨"log-rate avoidance along Furstenberg's semigroup",
+   [``LinearFormsScales.furstenbergLogAvoid_holds, ``LinearFormsScales.moshchevitinPeresSchlag_of_logAvoid,
+    ``LinearFormsScales.badziahinHarrap_of_logAvoid, ``LinearFormsScales.not_constAvoid_of_furstenberg,
+    ``LinearFormsScales.constAvoid_powersOfTwo],
+   [``LinearFormsScales.FurstenbergLogAvoid]⟩,
   ⟨"CRT freezing for density of the binary words of E",
    [``EDensity.eCount_power, ``JointLambert.jointWords_quantitative, ``EDensity.RungPolylog,
     ``EDensity.RungRich], [``EDensity.ResidualSmallPolylog]⟩,
@@ -199,7 +224,7 @@ def mazeLegacy : List String := [
   "Diophantine good-denominator detour for the tail cell",
   "route B's unweighted cover of the state-dependent target"]
 
-/-- info: maze audit: 147 rows, 40 cite declarations, 107 legacy (prose only) -/
+/-- info: maze audit: 152 rows, 45 cite declarations, 107 legacy (prose only) -/
 #guard_msgs in
 #maze_audit mazeRows, mazeLinks, mazeLegacy
 
