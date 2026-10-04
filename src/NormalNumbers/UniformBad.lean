@@ -8,6 +8,8 @@ import Mathlib.Algebra.Order.Round
 import Mathlib.Analysis.SpecialFunctions.Pow.Real
 import Mathlib.Analysis.SpecialFunctions.Log.Basic
 import Mathlib.Data.Set.Card
+import Mathlib.NumberTheory.ZetaValues
+import Mathlib.Analysis.Real.Pi.Bounds
 
 /-!
 # Bugeaud 10.36: one number, uniformly badly approximable to every integer base
@@ -180,7 +182,7 @@ theorem card_children_le (c r x ℓ : ℝ) (hr : 2 * r < ℓ) (K : ℕ) :
 /-- **Engine step.**  If the carried potential of a stage-`k` window is below `θ`, some child
 window has carried potential below `θ`.
 
-Confidence 92%.  Proof: write `Φ'_j` for the potential of child `j` (window at
+Proved.  Proof: write `Φ'_j` for the potential of child `j` (window at
 `x + j ℓ_{k+1}`).  Split it as `old_j` (stage `≤ k`) plus `new_j` (stage `= k+1`); `new_j ≤ A`
 by `hnew`.  An obstacle in `old_j` meets `J_k`, so its term `√(r/ℓ_k) ≤ Φ_k < θ`, i.e.
 `r < ℓ_k/(2K) = ℓ_{k+1}/2`; a closed interval of length `< ℓ_{k+1}` meets at most 2 of the
@@ -466,7 +468,7 @@ theorem rad_div_stageLen_le (p : Idx) :
 /-- **Per-base count.**  At most 7 obstacles of one base are charged to stage `k` and meet a
 given stage-`k` window (`K = 64`, `ℓ₀ = 1/2`).
 
-Confidence 93%.  Proof: stage `k` means `64^{k−1} ≤ bⁿ < 64^k`, and at most `6` (`b = 2`) and
+Proved.  Proof: stage `k` means `64^{k−1} ≤ bⁿ < 64^k`, and at most `6` (`b = 2`) and
 in general `⌈log_b 64⌉ ≤ 6` exponents `n` satisfy it.  For each `n`, the obstacle meets
 `[x, x + ℓ_k]` (`ℓ_k = 64^{−k}/2`) only if `a/bⁿ ∈ [x − r, x + ℓ_k + r]` with
 `r = b^{−n−24} ≤ 64^{1−k} b^{−24}`, a window of length `ℓ_k + 2r < 2ℓ_k = 64^{−k} < b^{−n}`,
@@ -543,17 +545,114 @@ theorem encard_stage_meet_le (b : ℕ) (hb : 2 ≤ b) (k : ℕ) (x : ℝ) :
     _ ≤ 6 := hNle
     _ ≤ 7 := by norm_num
 
+/-- The base-weight sum: `Σ_{b≥2} 7·12/b¹² ≤ 1/40` (the `b = 2` term plus `ζ(2)` for `b ≥ 3`). -/
+theorem tsum_base_weight_le :
+    ∑' b : ℕ, (if 2 ≤ b then 7 * ENNReal.ofReal (12 / (b : ℝ) ^ 12) else 0) ≤
+      ENNReal.ofReal (1 / 40) := by
+  have hpt : ∀ b : ℕ, (if 2 ≤ b then 7 * ENNReal.ofReal (12 / (b : ℝ) ^ 12) else 0) ≤
+      (if b = 2 then ENNReal.ofReal (84 / 4096) else 0) +
+        ENNReal.ofReal (84 / 3 ^ 10 * (1 / (b : ℝ) ^ 2)) := by
+    intro b
+    split_ifs with h1 h2
+    · subst h2; norm_num
+      rw [← ENNReal.ofReal_ofNat 7, ← ENNReal.ofReal_mul (by norm_num)]; norm_num
+    · have hb3 : (3 : ℝ) ≤ b := by exact_mod_cast (by omega : 3 ≤ b)
+      rw [zero_add, ← ENNReal.ofReal_ofNat 7, ← ENNReal.ofReal_mul (by norm_num)]
+      apply ENNReal.ofReal_le_ofReal
+      have hb : (0 : ℝ) < b := by linarith
+      have h10 : (3 : ℝ) ^ 10 ≤ (b : ℝ) ^ 10 := pow_le_pow_left₀ (by norm_num) hb3 10
+      rw [show (b : ℝ) ^ 12 = (b : ℝ) ^ 10 * (b : ℝ) ^ 2 by ring]
+      rw [show 7 * (12 / ((b : ℝ) ^ 10 * (b : ℝ) ^ 2)) = 84 / (b : ℝ) ^ 10 * (1 / (b : ℝ) ^ 2) by
+        field_simp; norm_num]
+      gcongr
+    · exact zero_le
+    · exact zero_le
+  have hz : ∑' b : ℕ, ENNReal.ofReal (84 / 3 ^ 10 * (1 / (b : ℝ) ^ 2)) =
+      ENNReal.ofReal (84 / 3 ^ 10 * (Real.pi ^ 2 / 6)) := by
+    rw [← ENNReal.ofReal_tsum_of_nonneg (fun b => by positivity)
+      ((hasSum_zeta_two.mul_left _).summable), (hasSum_zeta_two.mul_left _).tsum_eq]
+  calc _ ≤ ∑' b : ℕ, ((if b = 2 then ENNReal.ofReal (84 / 4096) else 0) +
+        ENNReal.ofReal (84 / 3 ^ 10 * (1 / (b : ℝ) ^ 2))) := ENNReal.tsum_le_tsum hpt
+    _ = ENNReal.ofReal (84 / 4096) + ENNReal.ofReal (84 / 3 ^ 10 * (Real.pi ^ 2 / 6)) := by
+        rw [ENNReal.tsum_add, tsum_ite_eq, hz]
+    _ = ENNReal.ofReal (84 / 4096 + 84 / 3 ^ 10 * (Real.pi ^ 2 / 6)) :=
+        (ENNReal.ofReal_add (by norm_num) (by positivity)).symm
+    _ ≤ ENNReal.ofReal (1 / 40) := by
+        apply ENNReal.ofReal_le_ofReal
+        have := Real.pi_lt_d2
+        have := Real.pi_pos
+        nlinarith
+
 /-- **Stage potential.**  The newly charged obstacles of the all-bases family have square-root
 potential `≤ 1/40` on every stage-`k` window.
 
-Confidence 88%.  Proof: an obstacle `(b, n, a)` charged at stage `k` has
+Proved.  Proof: an obstacle `(b, n, a)` charged at stage `k` has
 `rad/ℓ_k ≤ 128 b^{−24}` (`rad_div_stageLen_le`, proved), so its term is `≤ √128·b^{−12}`.  Split the tsum by
 base (`Idx ≃ Σ b, ...`); by `encard_stage_meet_le` base `b` contributes at most 7 terms.  So
 the potential is `≤ 7√128 Σ_{b≥2} b^{−12} ≤ 7·11.32·2^{−12}(1 + 2/11) < 0.023 < 1/40`, using
 `Σ_{b≥3} b^{−12} ≤ ∫_2^∞ t^{−12} dt = 2^{−11}/11`. -/
 theorem newPotential_le (k : ℕ) (x : ℝ) :
     potential ctr rad stage (1 / 2) 64 (· = k) k x ≤ ENNReal.ofReal (1 / 40) := by
-  sorry
+  classical
+  set T := potSet ctr rad stage (1 / 2) 64 (· = k) k x with hT
+  set g : Idx → ℝ≥0∞ := fun i =>
+    ENNReal.ofReal (Real.sqrt (rad i / (1 / 2 / ((64 : ℕ) : ℝ) ^ k))) with hg
+  set w : ℕ → ℝ≥0∞ := fun b => ENNReal.ofReal (12 / (b : ℝ) ^ 12) with hw
+  have hgw : ∀ t : T, g t ≤ w t.1.1.1 := by
+    rintro ⟨i, hik, -⟩
+    have h := rad_div_stageLen_le i
+    change stage i = k at hik
+    rw [hik] at h
+    apply ENNReal.ofReal_le_ofReal
+    have hb : (0 : ℝ) < i.1.1 := by have := i.2; exact_mod_cast (by omega : 0 < i.1.1)
+    rw [Real.sqrt_le_iff]
+    refine ⟨by positivity, ?_⟩
+    push_cast
+    refine h.trans ?_
+    rw [div_pow, ← pow_mul]
+    gcongr; norm_num
+  have hfib : ∀ b : ℕ, ((fun t : T => t.1.1.1) ⁻¹' {b}).encard ≤ if 2 ≤ b then 7 else 0 := by
+    intro b
+    split_ifs with hb
+    · set F := {q : ℕ × ℤ | stage ⟨(b, q.1, q.2), hb⟩ = k ∧
+        (obstacle ctr rad ⟨(b, q.1, q.2), hb⟩ ∩ window (1 / 2) 64 k x).Nonempty}
+      have hinj : Set.InjOn (fun t : T => (t.1.1.2.1, t.1.1.2.2))
+          ((fun t : T => t.1.1.1) ⁻¹' {b}) := by
+        rintro ⟨⟨⟨b1, n1, a1⟩, h1⟩, _⟩ hb1 ⟨⟨⟨b2, n2, a2⟩, h2⟩, _⟩ hb2 he
+        change b1 = b at hb1; change b2 = b at hb2
+        simp only [Prod.mk.injEq] at he
+        subst hb1 hb2; obtain ⟨rfl, rfl⟩ := he; rfl
+      have himg : (fun t : T => (t.1.1.2.1, t.1.1.2.2)) ''
+          ((fun t : T => t.1.1.1) ⁻¹' {b}) ⊆ F := by
+        rintro _ ⟨⟨⟨⟨b1, n1, a1⟩, h1⟩, ht⟩, hb1, rfl⟩
+        change b1 = b at hb1
+        subst hb1
+        exact ht
+      calc _ = _ := (hinj.encard_image).symm
+        _ ≤ F.encard := Set.encard_le_encard himg
+        _ ≤ 7 := encard_stage_meet_le b hb k x
+    · rw [nonpos_iff_eq_zero, Set.encard_eq_zero, Set.eq_empty_iff_forall_notMem]
+      rintro ⟨⟨⟨b1, n1, a1⟩, h1⟩, _⟩ hb1
+      change b1 = b at hb1
+      omega
+  show ∑' t : T, g t ≤ _
+  rw [← ENNReal.tsum_fiberwise _ (fun t : T => t.1.1.1)]
+  calc ∑' b, ∑' t : (fun t : T => t.1.1.1) ⁻¹' {b}, g t
+      ≤ ∑' b, ∑' t : (fun t : T => t.1.1.1) ⁻¹' {b}, w b := by
+        refine ENNReal.tsum_le_tsum fun b => ENNReal.tsum_le_tsum fun t => ?_
+        have := hgw t.1; have h2 : (t.1.1.1.1 : ℕ) = b := t.2; rwa [h2] at this
+    _ = ∑' b, ((fun t : T => t.1.1.1) ⁻¹' {b}).encard * w b := by
+        simp_rw [ENNReal.tsum_set_const]
+    _ ≤ ∑' b : ℕ, (if 2 ≤ b then 7 * w b else 0) := by
+        refine ENNReal.tsum_le_tsum fun b => ?_
+        have h := hfib b
+        split_ifs with hb
+        · rw [if_pos hb] at h
+          gcongr
+          exact_mod_cast h
+        · rw [if_neg hb, nonpos_iff_eq_zero] at h
+          simp [h]
+    _ ≤ _ := tsum_base_weight_le
 
 /-- The engine threshold for `K = 64` clears `1/40`. -/
 theorem one_fortieth_le_threshold :

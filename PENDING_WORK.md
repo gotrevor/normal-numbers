@@ -1,3 +1,10 @@
+## Bugeaud 10.36 lane (2026-10-04) — DONE
+* `UniformBad.lean` sorry-free: `bugeaud_10_36` (uniform `‖bⁿξ‖ > b^{−24}`, all `b ≥ 2`, `n ≥ 0`),
+  `#print axioms` = propext, Classical.choice, Quot.sound.  Leaves closed: `potential_step`
+  (indicator tsums, `card_children_le`), `encard_stage_meet_le` (actually ≤ 6), `newPotential_le`
+  (fiberwise by base + `tsum_base_weight_le` via `hasSum_zeta_two`, sum ≈ 0.023 < 1/40).
+* Open: the true threshold for `c` lies in `[log₂ 3, 24]`.
+
 ## LevinSparse lane (2026-10-03) — headline + computable DONE
 * `exists_levinRate_oddNormal` and `exists_computable_bld_odd_add`: `#print axioms` = propext,
   Classical.choice, Quot.sound (conditional only via hypotheses Levin1999, BLDLemma5).
