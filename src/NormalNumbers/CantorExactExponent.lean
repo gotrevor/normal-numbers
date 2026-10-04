@@ -826,6 +826,115 @@ theorem bcTerm_green_mu_four :
       3 ^ 128 < 2 ^ (freeCount (expFree 4) 512 - freeCount (expFree 4) 128) := by
   decide +kernel
 
+/-! ## Prefix tests for the exponent
+
+One family of Borel–Cantelli tests `T1 m` (depth `⌈μ₀ m⌉ + √m + 3`, on the Borel–Cantelli range
+of `μ₀`) serves every exponent `τ > μ₀` at once; `T2 k` excludes the forced approximation
+`P/3^{a_k}` itself (with trailing zeros of `P`); `T3 k` gives the free `2`s. -/
+
+section Tests
+
+variable (μ₀ : ℚ)
+
+/-- Ternary digit `i` read from a coin prefix. -/
+def dgt (p : List Bool) (i : ℕ) : ℕ := bif expFree μ₀ i && p.getD i false then 2 else 0
+
+/-- `3ⁿ ·` (head of the point on the first `n` digits). -/
+def pnum (p : List Bool) (n : ℕ) : ℕ :=
+  ((List.range n).map fun i => dgt μ₀ p i * 3 ^ (n - 1 - i)).sum
+
+/-- Depth of the `m`-th Borel–Cantelli test. -/
+def depth (m : ℕ) : ℕ := ⌈μ₀ * m⌉₊ + Nat.sqrt m + 3
+
+/-- Some `r/q`, `q ∈ [3^m, 3^{m+1})`, lies within `2·3^{-n}` of the depth-`n` head. -/
+def hitP (m : ℕ) (p : List Bool) : Prop :=
+  ∃ q ∈ Finset.Ico (3 ^ m) (3 ^ (m + 1)), ∃ r ∈ Finset.range (q + 1),
+    pnum μ₀ p (depth μ₀ m) * q ≤ r * 3 ^ depth μ₀ m + 2 * q ∧
+      r * 3 ^ depth μ₀ m ≤ pnum μ₀ p (depth μ₀ m) * q + 2 * q
+
+theorem dgt_pre (ω : ℕ → Bool) {D i : ℕ} (hi : i < D) :
+    dgt μ₀ (pre ω D) i = ptDigit (expFree μ₀) ω i := by
+  unfold dgt ptDigit; rw [getD_pre ω hi]; cases expFree μ₀ i && ω i <;> rfl
+
+theorem pnum_pre (ω : ℕ → Bool) {D n : ℕ} (hn : n ≤ D) :
+    (pnum μ₀ (pre ω D) n : ℝ) / 3 ^ n =
+      ∑ i ∈ Finset.range n, (ptDigit (expFree μ₀) ω i : ℝ) / 3 ^ (i + 1) := by
+  rw [pnum, ComputableNormalB.list_sum_range_map, Nat.cast_sum, Finset.sum_div]
+  refine Finset.sum_congr rfl fun i hi => ?_
+  have hi' := Finset.mem_range.1 hi
+  rw [dgt_pre μ₀ ω (by omega)]; push_cast
+  rw [div_eq_div_iff (by positivity) (by positivity), mul_assoc, ← pow_add,
+    show n - 1 - i + (i + 1) = n by omega]
+
+theorem pt_le_one (free : ℕ → Bool) (ω : ℕ → Bool) : pt free ω ≤ 1 := by
+  obtain ⟨T, -, hT, hx⟩ := pt_split free ω 0
+  simp at hx hT; linarith
+
+theorem pt_nonneg (free : ℕ → Bool) (ω : ℕ → Bool) : 0 ≤ pt free ω := by
+  obtain ⟨T, hT, -, hx⟩ := pt_split free ω 0
+  simp at hx; linarith
+
+theorem le_depth (m : ℕ) (hμ : 1 < μ₀) : m + 3 ≤ depth μ₀ m := by
+  have : (m : ℚ) ≤ μ₀ * m := by
+    have : (0 : ℚ) ≤ m := by positivity
+    nlinarith
+  have : m ≤ ⌈μ₀ * m⌉₊ := by exact_mod_cast this.trans (Nat.le_ceil _)
+  unfold depth; omega
+
+/-- **A close rational fires the test.** -/
+theorem hitP_of_close (hμ : 1 < μ₀) (ω : ℕ → Bool) (m D : ℕ) (hD : depth μ₀ m ≤ D) (q : ℕ)
+    (hq : q ∈ Finset.Ico (3 ^ m) (3 ^ (m + 1))) (r : ℤ)
+    (h : |cantorExpReal μ₀ ω - r / q| < 1 / 3 ^ depth μ₀ m) : hitP μ₀ m (pre ω D) := by
+  set n := depth μ₀ m
+  set N := pnum μ₀ (pre ω D) n
+  obtain ⟨hq1, hq2⟩ := Finset.mem_Ico.1 hq
+  have hq0 : 0 < q := lt_of_lt_of_le (by positivity) hq1
+  have hqR : (0 : ℝ) < q := by exact_mod_cast hq0
+  have hn := le_depth μ₀ m hμ
+  have hqn : q ≤ 3 ^ n := hq2.le.trans (Nat.pow_le_pow_right (by norm_num) (by omega))
+  have hqnR : (q : ℝ) ≤ 3 ^ n := by exact_mod_cast hqn
+  have h3n : (0 : ℝ) < 3 ^ n := by positivity
+  obtain ⟨T, hT0, hT1, hx⟩ := pt_split (expFree μ₀) ω n
+  rw [← pnum_pre μ₀ ω hD] at hx
+  have hx' : cantorExpReal μ₀ ω = N / 3 ^ n + T := hx
+  have hx0 := pt_nonneg (expFree μ₀) ω
+  have hx1 := pt_le_one (expFree μ₀) ω
+  have hxe : cantorExpReal μ₀ ω = pt (expFree μ₀) ω := rfl
+  have hab := abs_lt.1 h
+  have hinv : 1 / (3 : ℝ) ^ n ≤ 1 / q := one_div_le_one_div_of_le hqR hqnR
+  -- `0 ≤ r ≤ q`
+  have e1 : (q : ℝ) * ((r : ℝ) / q) = r := by field_simp
+  have hr0 : 0 ≤ r := by
+    have : -(1 / (q : ℝ)) < r / q := by linarith
+    have := mul_lt_mul_of_pos_left this hqR
+    rw [e1, mul_neg, mul_one_div_cancel hqR.ne'] at this
+    have : (-1 : ℤ) < r := by exact_mod_cast this
+    omega
+  have hrq : r ≤ q := by
+    have : (r : ℝ) / q < 1 + 1 / q := by linarith
+    have := mul_lt_mul_of_pos_left this hqR
+    rw [e1, mul_add, mul_one, mul_one_div_cancel hqR.ne'] at this
+    have : r < (q : ℤ) + 1 := by exact_mod_cast this
+    omega
+  obtain ⟨r', rfl⟩ := Int.eq_ofNat_of_zero_le hr0
+  have e2n : (2 : ℝ) / 3 ^ n = 2 * (1 / 3 ^ n) := by ring
+  refine ⟨q, hq, r', Finset.mem_range.2 (by omega), ?_, ?_⟩
+  · -- `N q ≤ r 3ⁿ + 2q`
+    have : (N : ℝ) / 3 ^ n < r' / q + 2 / 3 ^ n := by push_cast at hab; linarith
+    have e2 : (N : ℝ) * q = (q * 3 ^ n) * (N / 3 ^ n) := by field_simp
+    have e3 : (q * 3 ^ n : ℝ) * (r' / q + 2 / 3 ^ n) = r' * 3 ^ n + 2 * q := by field_simp
+    have := mul_lt_mul_of_pos_left this (by positivity : (0:ℝ) < q * 3 ^ n)
+    rw [← e2, e3] at this
+    exact_mod_cast this.le
+  · have : (r' : ℝ) / q < N / 3 ^ n + 2 / 3 ^ n := by push_cast at hab; linarith
+    have e2 : (r' : ℝ) * 3 ^ n = (q * 3 ^ n) * (r' / q) := by field_simp
+    have e3 : (q * 3 ^ n : ℝ) * (N / 3 ^ n + 2 / 3 ^ n) = N * q + 2 * q := by field_simp
+    have := mul_lt_mul_of_pos_left this (by positivity : (0:ℝ) < q * 3 ^ n)
+    rw [← e2, e3] at this
+    exact_mod_cast this.le
+
+end Tests
+
 /-! ## Upper bound: assembly -/
 
 /-- **The crux: the exponent is at most `μ₀`, almost surely.**  Confidence 80%.
