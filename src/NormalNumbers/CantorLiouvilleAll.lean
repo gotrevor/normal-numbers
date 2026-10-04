@@ -698,6 +698,67 @@ theorem ae_isNormal_of_coprime_three {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) 
 
 /-! ## Bases divisible by 3 fail for every coin sequence -/
 
+/-- Split of the point at a run: integer part over `3^A` plus a tail `< 3^{-T}`. -/
+theorem run_split (ω : ℕ → Bool) (n : ℕ) : ∃ a : ℤ, ∃ t : ℝ, 0 ≤ t ∧
+    t < 1 / 3 ^ ((n + 2) * runStart n) ∧
+    cantorLiouvilleReal ω = a / 3 ^ runStart n + t := by
+  set A := runStart n
+  set T := (n + 2) * A
+  set d := ptDigit isFree ω
+  set f : ℕ → ℝ := fun i => (d i : ℝ) / 3 ^ (i + 1)
+  have hf : Summable f := summable_ptDigit isFree ω
+  have hd2 : ∀ i, (d i : ℝ) ≤ 2 := fun i => by
+    have : d i ≤ 2 := by simp only [d, ptDigit]; split_ifs <;> norm_num
+    exact_mod_cast this
+  have hf0 : ∀ i, 0 ≤ f i := fun i => by positivity
+  have hrun : ∀ i, A ≤ i → i < T → d i = 0 := by
+    intro i h1 h2
+    have := isForced_of_mem_run (k := n) h1 h2
+    simp [d, ptDigit, isFree, this]
+  set a : ℤ := ∑ i ∈ Finset.range A, ((d i * 3 ^ (A - 1 - i) : ℕ) : ℤ)
+  have hx : cantorLiouvilleReal ω = ∑ i ∈ Finset.range T, f i + ∑' i, f (i + T) := by
+    unfold cantorLiouvilleReal pt realOfDigits
+    simp only [Nat.cast_ofNat]
+    exact (hf.sum_add_tsum_nat_add T).symm
+  have hpart : ∑ i ∈ Finset.range T, f i = a / 3 ^ A := by
+    have hT : T = A + (T - A) := by have : A ≤ T := by simp only [T]; nlinarith
+                                    omega
+    rw [hT, Finset.sum_range_add]
+    have hz : ∑ x ∈ Finset.range (T - A), f (A + x) = 0 :=
+      Finset.sum_eq_zero fun x hx => by
+        simp only [Finset.mem_range] at hx
+        simp [f, hrun (A + x) (by omega) (by omega)]
+    rw [hz, add_zero]
+    simp only [a]; push_cast
+    rw [Finset.sum_div]
+    refine Finset.sum_congr rfl fun i hi => ?_
+    simp only [Finset.mem_range] at hi
+    simp only [f]
+    have : (3 : ℝ) ^ A = 3 ^ (A - 1 - i) * 3 ^ (i + 1) := by rw [← pow_add]; congr 1; omega
+    rw [this]; field_simp
+  set t := ∑' i, f (i + T)
+  have hg : Summable fun i : ℕ => (2 : ℝ) / 3 ^ (i + T + 1) := by
+    have := (summable_geometric_of_lt_one (r := (1 / 3 : ℝ)) (by norm_num) (by norm_num)).mul_left
+      (2 / 3 ^ (T + 1))
+    refine this.congr fun i => ?_
+    rw [one_div_pow]; field_simp; ring
+  have hgsum : ∑' i : ℕ, (2 : ℝ) / 3 ^ (i + T + 1) = 1 / 3 ^ T := by
+    have : (fun i : ℕ => (2 : ℝ) / 3 ^ (i + T + 1)) = fun i => 2 / 3 ^ (T + 1) * (1 / 3) ^ i := by
+      funext i; rw [one_div_pow, show i + T + 1 = i + (T + 1) by ring, pow_add, pow_succ]; field_simp
+    rw [this, tsum_mul_left, tsum_geometric_of_lt_one (by norm_num) (by norm_num), pow_succ]
+    field_simp; norm_num
+  have hnext : T ≤ runStart (n + 1) := by
+    simp only [T, A, runStart_succ_eq]; nlinarith
+  have hzero : d (runStart (n + 1)) = 0 := by
+    simp [d, ptDigit, isFree_runStart]
+  have htlt : t < 1 / 3 ^ T := by
+    rw [← hgsum]
+    refine Summable.tsum_lt_tsum_of_nonneg (i := runStart (n + 1) - T) (fun i => hf0 _)
+      (fun i => ?_) ?_ hg
+    · simp only [f]; gcongr; exact hd2 _
+    · simp only [f, Nat.sub_add_cancel hnext, hzero, Nat.cast_zero, zero_div]; positivity
+  exact ⟨a, t, tsum_nonneg fun i => hf0 _, htlt, by rw [hx, hpart]⟩
+
 /-- **Near-integers on a run.**  Confidence 90%.
 
 English proof.  Split `x = cantorLiouvilleReal ω = P + θ` at place `a = runStart k`:
@@ -709,7 +770,25 @@ next run forces a `0`, so the geometric bound is not attained).  Since `3 ∣ b`
 theorem fract_lt_of_mem_run (ω : ℕ → Bool) {b : ℕ} (hb : 2 ≤ b) (h3 : 3 ∣ b) {k j : ℕ}
     (hj1 : runStart k ≤ j) (hj2 : b ^ (j + 1) ≤ 3 ^ ((k + 2) * runStart k)) :
     Int.fract (cantorLiouvilleReal ω * (b : ℝ) ^ j) < 1 / b := by
-  sorry
+  obtain ⟨a, t, ht0, ht1, hx⟩ := run_split ω k
+  set A := runStart k
+  set T := (k + 2) * A
+  obtain ⟨q, hq⟩ : 3 ^ A ∣ b ^ j := (pow_dvd_pow 3 hj1).trans (pow_dvd_pow_of_dvd h3 j)
+  have hbR : (0 : ℝ) < b := by exact_mod_cast (by omega : 0 < b)
+  have hbj : (b : ℝ) ^ j = 3 ^ A * q := by exact_mod_cast hq
+  have heq : cantorLiouvilleReal ω * (b : ℝ) ^ j = ((a * q : ℤ) : ℝ) + t * (b : ℝ) ^ j := by
+    rw [hx, add_mul, hbj]; push_cast; field_simp
+  have hT : (b : ℝ) ^ (j + 1) ≤ 3 ^ T := by exact_mod_cast hj2
+  have hlt : t * (b : ℝ) ^ j < 1 / b := by
+    have h3T : (0 : ℝ) < 3 ^ T := by positivity
+    calc t * (b : ℝ) ^ j ≤ t * (3 ^ T / b) := by
+          gcongr; rw [le_div_iff₀ hbR, ← pow_succ]; exact hT
+      _ < 1 / 3 ^ T * (3 ^ T / b) := by gcongr
+      _ = 1 / b := by field_simp
+  have h0 : 0 ≤ t * (b : ℝ) ^ j := by positivity
+  rw [heq, Int.fract_intCast_add, Int.fract_eq_self.2 ⟨h0, hlt.trans_le ?_⟩]
+  · exact hlt
+  · rw [div_le_one hbR]; exact_mod_cast (by omega : 1 ≤ b)
 
 /-- **Every base divisible by 3 fails, for every `ω`.**  Confidence 85%.
 
