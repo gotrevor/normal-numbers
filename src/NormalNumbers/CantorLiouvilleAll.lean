@@ -381,6 +381,184 @@ theorem sum_Hf_le_b (free : ℕ → Bool) {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 �
     _ = _ := by ring
 
 
+theorem good_shift_b (free : ℕ → Bool) {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) (M N : ℕ)
+    (hMN : 3 ^ M ≤ N) (c : ℕ) (hc : c ≠ 0)
+    (hv : padicValNat 3 c + 1 ≤ freeCount free M / 2) :
+    ∑ m ∈ Finset.range N, Bf free M ((c * b ^ m : ℕ) : ℝ) ≤
+      2 * N * (3 / 2 : ℝ) ^ tb b * (2 / 3 : ℝ) ^ (freeCount free M / 2) := by
+  obtain ⟨v, c', hc', hcc⟩ := Nat.exists_eq_pow_mul_and_not_dvd hc 3 (by norm_num)
+  have hvv : padicValNat 3 c = v := by
+    rw [hcc, padicValNat.mul (by positivity) (by rintro rfl; simp at hc'),
+      padicValNat.prime_pow, padicValNat.eq_zero_of_not_dvd hc', add_zero]
+  rw [hvv] at hv
+  have hFM : freeCount free M ≤ M := by
+    unfold freeCount; exact (Finset.card_filter_le _ _).trans (by simp)
+  obtain ⟨j, hj⟩ : ∃ j, M = v + (j + 1) := ⟨M - v - 1, by omega⟩
+  have hterm : ∀ m, Bf free M ((c * b ^ m : ℕ) : ℝ) ≤ Hf free v (j + 1) ((c' * b ^ m : ℕ) : ℝ) := by
+    intro m
+    have := Bf_le_Hf free v (j + 1) ((c' * b ^ m : ℕ) : ℝ)
+    rw [← hj] at this
+    refine le_of_eq_of_le ?_ this
+    congr 1; rw [hcc]; push_cast; ring
+  have hcard := freeCount_le free v (j + 1)
+  rw [← hj] at hcard
+  have hL : (2 * 3 ^ j : ℝ) ≤ N := by
+    have : 2 * 3 ^ j ≤ 3 ^ M := by
+      rw [hj, pow_add, pow_succ]; nlinarith [Nat.one_le_pow v 3 (by norm_num), Nat.one_le_pow j 3 (by norm_num)]
+    exact_mod_cast this.trans hMN
+  calc _ ≤ ∑ m ∈ Finset.range N, Hf free v (j + 1) ((c' * b ^ m : ℕ) : ℝ) :=
+        Finset.sum_le_sum fun m _ => hterm m
+    _ ≤ (N + 2 * 3 ^ j) * (3 / 2 : ℝ) ^ tb b * (2 / 3 : ℝ) ^ (posSet free v (j + 1)).card :=
+        sum_Hf_le_b free hb h3 v j c' hc' N
+    _ ≤ (2 * N) * (3 / 2 : ℝ) ^ tb b * (2 / 3 : ℝ) ^ (freeCount free M / 2) := by
+        gcongr ?_ * _ * ?_
+        · linarith
+        · exact pow_le_pow_of_le_one (by norm_num) (by norm_num) (by omega)
+
+theorem bad_count_b {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) (e W N : ℕ) :
+    ((Finset.Ico 1 N).filter (fun m => W ≤ e + padicValNat 3 (b ^ m - 1))).card ≤
+      N / 3 ^ (W - e - tb b) := by
+  rw [← Nat.Ioc_filter_dvd_card_eq_div]
+  refine Finset.card_le_card ?_
+  intro m hm
+  simp only [Finset.mem_filter, Finset.mem_Ico, Finset.mem_Ioc] at hm ⊢
+  refine ⟨⟨by omega, by omega⟩, ?_⟩
+  have h1 := padicValNat_pow_sub_one_le hb h3 (d := m) (by omega)
+  exact (padicValNat_dvd_iff_le (by omega)).2 (by omega)
+
+theorem secondMoment_expand_b (free : ℕ → Bool) (b : ℕ) (h : ℤ) (M N : ℕ) :
+    ∫ ω, ‖∑ k ∈ Finset.range N, ee (h * (b : ℝ) ^ k * pt free ω)‖ ^ 2 ∂coinMeasure ≤
+      ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N, Bf free M (h * ((b : ℝ) ^ n - (b : ℝ) ^ m)) := by
+  have hG := measurable_pt free
+  have hint : ∀ ξ : ℝ, Integrable (fun ω => ee (ξ * pt free ω)) coinMeasure := fun ξ =>
+    Integrable.of_bound ((measurable_ee.comp (hG.const_mul ξ)).aestronglyMeasurable) 1
+      (Eventually.of_forall fun ω => (norm_ee _).le)
+  have hexp : ∀ ω, ((‖∑ k ∈ Finset.range N, ee (h * (b : ℝ) ^ k * pt free ω)‖ ^ 2 : ℝ) : ℂ) =
+      ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N,
+        ee ((h * ((b : ℝ) ^ n - (b : ℝ) ^ m)) * pt free ω) := by
+    intro ω
+    rw [sq_norm_sum_ee (fun k => h * (b : ℝ) ^ k * pt free ω)]
+    refine Finset.sum_congr rfl fun n _ => Finset.sum_congr rfl fun m _ => ?_
+    congr 1; ring
+  have hI : ((∫ ω, ‖∑ k ∈ Finset.range N, ee (h * (b : ℝ) ^ k * pt free ω)‖ ^ 2 ∂coinMeasure : ℝ) : ℂ) =
+      ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N,
+        ∫ ω, ee ((h * ((b : ℝ) ^ n - (b : ℝ) ^ m)) * pt free ω) ∂coinMeasure := by
+    rw [← integral_complex_ofReal]
+    simp_rw [hexp]
+    rw [integral_finsetSum _ fun n _ => integrable_finsetSum _ fun m _ => hint _]
+    refine Finset.sum_congr rfl fun n _ => ?_
+    rw [integral_finsetSum _ fun m _ => hint _]
+  have := congrArg Complex.re hI
+  rw [Complex.ofReal_re] at this
+  rw [this]
+  refine (Complex.re_le_norm _).trans ((norm_sum_le _ _).trans ?_)
+  refine Finset.sum_le_sum fun n _ => (norm_sum_le _ _).trans ?_
+  exact Finset.sum_le_sum fun m _ => charFun_real M free _
+
+theorem secondMoment_le_explicit_b (free : ℕ → Bool) {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) (h : ℤ)
+    (hh : h ≠ 0) (N : ℕ) (hN : 1 ≤ N) :
+    ∫ ω, ‖∑ k ∈ Finset.range N, ee (h * (b : ℝ) ^ k * pt free ω)‖ ^ 2 ∂coinMeasure ≤
+      (N : ℝ) ^ 2 * (N : ℝ) ^ (-(1 / 2 : ℝ)) +
+        3 * (3 ^ (padicValNat 3 h.natAbs + tb b) + 2 * (3 / 2 : ℝ) ^ tb b) * (N : ℝ) ^ 2 *
+          Real.exp (-(Real.log (3 / 2) / 2) * freeCount free (Nat.log 3 N / 2)) := by
+  set e := padicValNat 3 h.natAbs
+  set t := tb b
+  set M := Nat.log 3 N / 2
+  set F := freeCount free M
+  set W := F / 2
+  have hb1 : (1 : ℝ) ≤ b := by exact_mod_cast (by omega : 1 ≤ b)
+  have hMN : 3 ^ M ≤ N :=
+    (Nat.pow_le_pow_right (by norm_num) (Nat.div_le_self _ _)).trans
+      (Nat.pow_log_le_self 3 (by omega))
+  set G : ℕ → ℕ → ℝ := fun d m => Bf free M (h * ((b : ℝ) ^ d - 1) * (b : ℝ) ^ m)
+  have hpair := pair_sum_le (fun n m => Bf free M (h * ((b : ℝ) ^ n - (b : ℝ) ^ m))) G
+    (fun d m => Bf_nonneg _ _ _) (fun n => Bf_le_one _ _ _)
+    (fun n m hmn => le_of_eq (by
+      simp only [G]; congr 1
+      rw [show (b : ℝ) ^ n = (b : ℝ) ^ (n - m) * (b : ℝ) ^ m by rw [← pow_add]; congr 1; omega]; ring))
+    (fun n m hmn => le_of_eq (by
+      simp only [G]; rw [← Bf_neg]; congr 1
+      rw [show (b : ℝ) ^ m = (b : ℝ) ^ (m - n) * (b : ℝ) ^ n by rw [← pow_add]; congr 1; omega]; ring)) N
+  set P := (2 / 3 : ℝ) ^ W
+  set T := (3 / 2 : ℝ) ^ t
+  have hT : 0 ≤ T := by positivity
+  have hshift : ∀ d ∈ Finset.Ico 1 N, ∑ m ∈ Finset.range N, G d m ≤
+      (if W ≤ e + padicValNat 3 (b ^ d - 1) then (N : ℝ) else 0) + 2 * N * T * P := by
+    intro d hd
+    simp only [Finset.mem_Ico] at hd
+    have hd1 : 1 ≤ b ^ d - 1 := by
+      have : 2 ≤ b ^ d := le_trans hb (Nat.le_self_pow (by omega) b)
+      omega
+    split_ifs with hbad
+    · refine (Finset.sum_le_sum fun m _ => Bf_le_one free M _).trans ?_
+      have : (0 : ℝ) ≤ 2 * N * T * P := by positivity
+      simp; linarith
+    · rw [zero_add]
+      set c := h.natAbs * (b ^ d - 1)
+      have hc : c ≠ 0 := Nat.mul_ne_zero (Int.natAbs_ne_zero.2 hh) (by omega)
+      have hv : padicValNat 3 c = e + padicValNat 3 (b ^ d - 1) :=
+        padicValNat.mul (Int.natAbs_ne_zero.2 hh) (by omega)
+      refine le_of_eq_of_le (Finset.sum_congr rfl fun m _ => ?_)
+        (good_shift_b free hb h3 M N hMN c hc (by omega))
+      simp only [G]
+      rw [← Bf_abs]
+      congr 1
+      have hd2 : (0 : ℝ) ≤ (b : ℝ) ^ d - 1 := by
+        have : (1:ℝ) ≤ (b : ℝ) ^ d := one_le_pow₀ hb1; linarith
+      simp only [c]
+      push_cast [Nat.cast_sub (Nat.one_le_pow _ _ (by omega : 0 < b))]
+      rw [abs_mul, abs_mul, abs_of_pos (by positivity : (0:ℝ) < (b : ℝ) ^ m),
+        abs_of_nonneg hd2, Nat.cast_natAbs, Int.cast_abs]
+  have hsumd : ∑ d ∈ Finset.Ico 1 N, ∑ m ∈ Finset.range N, G d m ≤
+      N * ((N / 3 ^ (W - e - t) : ℕ) : ℝ) + N * (2 * N * T * P) := by
+    refine (Finset.sum_le_sum hshift).trans ?_
+    rw [Finset.sum_add_distrib, ← Finset.sum_filter, Finset.sum_const, Finset.sum_const,
+      nsmul_eq_mul, nsmul_eq_mul, Nat.card_Ico]
+    have hbc := bad_count_b hb h3 e W N
+    have : (((Finset.Ico 1 N).filter (fun m => W ≤ e + padicValNat 3 (b ^ m - 1))).card : ℝ) ≤
+        ((N / 3 ^ (W - e - t) : ℕ) : ℝ) := by exact_mod_cast hbc
+    have hN1 : ((N - 1 : ℕ) : ℝ) ≤ N := by exact_mod_cast Nat.sub_le N 1
+    have : (0 : ℝ) ≤ 2 * N * T * P := by positivity
+    nlinarith
+  have hdiv : ((N / 3 ^ (W - e - t) : ℕ) : ℝ) ≤ N * 3 ^ (e + t) * P := by
+    have h1 : (N / 3 ^ (W - e - t)) * 3 ^ W ≤ N * 3 ^ (e + t) := by
+      calc (N / 3 ^ (W - e - t)) * 3 ^ W ≤ (N / 3 ^ (W - e - t)) * (3 ^ (W - e - t) * 3 ^ (e + t)) := by
+            gcongr; rw [← pow_add]; exact Nat.pow_le_pow_right (by norm_num) (by omega)
+        _ = (N / 3 ^ (W - e - t)) * 3 ^ (W - e - t) * 3 ^ (e + t) := by ring
+        _ ≤ N * 3 ^ (e + t) := by gcongr; exact Nat.div_mul_le_self _ _
+    have h2 : ((N / 3 ^ (W - e - t) : ℕ) : ℝ) * 3 ^ W ≤ N * 3 ^ (e + t) := by exact_mod_cast h1
+    have h3' : (2 / 3 : ℝ) ^ W * 3 ^ W = 2 ^ W := by rw [← mul_pow]; norm_num
+    have h4 : (1 : ℝ) ≤ 2 ^ W := one_le_pow₀ (by norm_num)
+    have h5 : (0 : ℝ) < 3 ^ W := by positivity
+    rw [← mul_le_mul_iff_of_pos_right h5]
+    calc _ ≤ (N : ℝ) * 3 ^ (e + t) := h2
+      _ ≤ (N : ℝ) * 3 ^ (e + t) * 2 ^ W := le_mul_of_one_le_right (by positivity) h4
+      _ = _ := by rw [mul_assoc _ ((2 / 3 : ℝ) ^ W), h3']
+  have hexp := pow_two_sub_le W F rfl
+  have hNr : (N : ℝ) ≤ (N : ℝ) ^ 2 * (N : ℝ) ^ (-(1 / 2 : ℝ)) := by
+    have hN0 : (1 : ℝ) ≤ N := by exact_mod_cast hN
+    have : (N : ℝ) ^ 2 * (N : ℝ) ^ (-(1 / 2 : ℝ)) = N * (N : ℝ) ^ (1 / 2 : ℝ) := by
+      rw [show (N : ℝ) ^ 2 = N * N ^ (1 : ℝ) by rw [Real.rpow_one]; ring, mul_assoc,
+        ← Real.rpow_add (by positivity)]
+      norm_num
+    rw [this]
+    have : (1 : ℝ) ≤ (N : ℝ) ^ (1 / 2 : ℝ) := Real.one_le_rpow hN0 (by norm_num)
+    nlinarith
+  have hI := (secondMoment_expand_b free b h M N).trans hpair
+  set E := Real.exp (-(Real.log (3 / 2) / 2) * F)
+  have hE : 0 ≤ E := (Real.exp_pos _).le
+  have hP : 0 ≤ P := by positivity
+  have hN0 : (0 : ℝ) ≤ N := by positivity
+  have hfin : ∫ ω, ‖∑ k ∈ Finset.range N, ee (h * (b : ℝ) ^ k * pt free ω)‖ ^ 2 ∂coinMeasure ≤
+      N + 2 * ((N : ℝ) ^ 2 * (3 ^ (e + t) + 2 * T) * P) := by
+    have := mul_le_mul_of_nonneg_left hdiv hN0
+    nlinarith
+  have hK : (0 : ℝ) ≤ 3 ^ (e + t) + 2 * T := by positivity
+  calc _ ≤ N + 2 * ((N : ℝ) ^ 2 * (3 ^ (e + t) + 2 * T) * P) := hfin
+    _ ≤ (N : ℝ) ^ 2 * (N : ℝ) ^ (-(1 / 2 : ℝ)) + 2 * ((N : ℝ) ^ 2 * (3 ^ (e + t) + 2 * T) * (3 / 2 * E)) := by
+        gcongr
+    _ = _ := by simp only [T, E, F, M]; ring
+
 /-- **Cassels second moment, base `b` coprime to 3.**  Confidence 80%.
 
 English proof.  `secondMoment_le_explicit` verbatim with `2 → b`: `secondMoment_expand` (base-free
@@ -396,7 +574,35 @@ theorem secondMoment_le_b (free : ℕ → Bool) {b : ℕ} (hb : 2 ≤ b) (h3 : �
       16 * (b : ℝ) ^ 6 * |(h : ℝ)| * (N : ℝ) ^ 2 *
         (Real.exp (-(Real.log (3 / 2) / 2) * freeCount free (Nat.log 3 N / 2)) +
           (N : ℝ) ^ (-(1 / 2 : ℝ))) := by
-  sorry
+  refine (secondMoment_le_explicit_b free hb h3 h hh N hN).trans ?_
+  set e := padicValNat 3 h.natAbs
+  set t := tb b
+  set E := Real.exp (-(Real.log (3 / 2) / 2) * freeCount free (Nat.log 3 N / 2))
+  set R := (N : ℝ) ^ (-(1 / 2 : ℝ))
+  have hE : 0 ≤ E := (Real.exp_pos _).le
+  have hR : 0 ≤ R := by positivity
+  have hN2 : (0 : ℝ) ≤ (N : ℝ) ^ 2 := by positivity
+  have he : (3 : ℝ) ^ e ≤ |(h : ℝ)| := by
+    have : 3 ^ e ≤ h.natAbs := Nat.le_of_dvd (Int.natAbs_pos.2 hh) pow_padicValNat_dvd
+    rw [← Int.cast_abs, ← Int.natCast_natAbs]; exact_mod_cast this
+  have ht : (3 : ℝ) ^ t ≤ (b : ℝ) ^ 2 := by exact_mod_cast (three_pow_tb_lt hb).le
+  have hT : (3 / 2 : ℝ) ^ t ≤ 3 ^ t := pow_le_pow_left₀ (by norm_num) (by norm_num) t
+  have hb1 : (1 : ℝ) ≤ b := by exact_mod_cast (by omega : 1 ≤ b)
+  have hh1 : (1 : ℝ) ≤ |(h : ℝ)| := le_trans (one_le_pow₀ (by norm_num)) he
+  have hb2 : (b : ℝ) ^ 2 ≤ (b : ℝ) ^ 6 := pow_le_pow_right₀ hb1 (by norm_num)
+  have hb6 : (1 : ℝ) ≤ (b : ℝ) ^ 6 := one_le_pow₀ hb1
+  have h3t : (0 : ℝ) ≤ 3 ^ t := by positivity
+  have hK : 3 * ((3 : ℝ) ^ (e + t) + 2 * (3 / 2 : ℝ) ^ t) ≤ 16 * (b : ℝ) ^ 6 * |(h : ℝ)| := by
+    rw [pow_add]
+    have : (3 : ℝ) ^ e * 3 ^ t ≤ |(h : ℝ)| * 3 ^ t := by gcongr
+    have : |(h : ℝ)| * 3 ^ t ≤ |(h : ℝ)| * (b : ℝ) ^ 6 := by gcongr; linarith
+    have : (1 : ℝ) * 3 ^ t ≤ |(h : ℝ)| * 3 ^ t := by gcongr
+    nlinarith
+  have h16 : (1 : ℝ) ≤ 16 * (b : ℝ) ^ 6 * |(h : ℝ)| := by nlinarith
+  have := mul_le_mul_of_nonneg_right hK (mul_nonneg hN2 hE)
+  have := mul_le_mul_of_nonneg_right h16 (mul_nonneg hN2 hR)
+  nlinarith
+
 
 /-! ## Davenport–Erdős–LeVeque, base `b` (copy of `ae_isNormal_two_of_secondMoment`) -/
 
