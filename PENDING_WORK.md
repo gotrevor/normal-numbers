@@ -1,3 +1,12 @@
+## Schmidt-games lane E1 (2026-10-04) — DONE
+* `SchmidtGames.lean` sorry-free.  `potentialWinning_E`, `dimH_E₂_le`, `codim_E_asymp`:
+  `#print axioms` = propext, Classical.choice, Quot.sound (wiring conditional only via the cited
+  `Literature.BFS*` Props as hypotheses).
+* Headline 1 via a stateless strategy `charge` (levels `ρ_k ≤ b^{-n} ≤ (1/β+1/ρ)ρ_k`, centres
+  within 2), budget `tsum_charge_le`.  Headline 2 via `runFree` words, `card_runFree_le`
+  (`≤ 2·(2−2^{1−m})^N`), `floor_mem_runFree`, `dimH_E₂_Ico_le`.
+* Open: stretch `SchmidtGamesStretch.lean` (untouched); referee the BFS Props.
+
 ## Bugeaud 10.36 lane (2026-10-04) — DONE
 * `UniformBad.lean` sorry-free: `bugeaud_10_36` (uniform `‖bⁿξ‖ > b^{−24}`, all `b ≥ 2`, `n ≥ 0`),
   `#print axioms` = propext, Classical.choice, Quot.sound.  Leaves closed: `potential_step`

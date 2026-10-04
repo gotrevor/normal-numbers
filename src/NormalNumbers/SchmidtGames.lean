@@ -21,10 +21,10 @@ Bugeaud's problem asks only that `U` be nonempty, and we know of no paper statin
 
 ## Headlines (frozen 2026-10-04)
 
-1. **`potentialWinning_E`** (`sorry`, the new combinatorial core).  For all `0 < β < 1`, `ρ > 0`
+1. **`potentialWinning_E`** (proved 2026-10-04, the new combinatorial core).  For all `0 < β < 1`, `ρ > 0`
    there is `K` with `E C` `(K·2^{−C}, β, 1/2, ρ)`-potential winning for every `C ≥ 3`, in the
    potential game of Fishman–Simmons–Urbański / Broderick–Fishman–Simmons (`PotentialWinning`).
-2. **`dimH_E₂_le`** (`sorry`, a base-2 covering count).
+2. **`dimH_E₂_le`** (proved 2026-10-04, a base-2 covering count).
    `dim_H {ξ : ‖2ⁿξ‖ > 2^{−C} ∀ n} ≤ 1 − 2^{−(C+1)}` for `C ≥ 1`.
 3. Wired from 1 and 2 (proved here, sorry-free, with headline 1 as the hypothesis
    `EPotentialWinning` and the cited dimension theorem):
@@ -586,6 +586,302 @@ theorem potentialWinning_E : EPotentialWinning := by
 
 /-! ## Headline 2: the base-2 upper bound -/
 
+/-! ### Proof of headline 2: run-free words and a dyadic cover -/
+
+/-- Indices `a < 2^N` whose `N`-bit word has no window of `m` equal bits. -/
+def runFree (m N : ℕ) : Finset ℕ :=
+  (Finset.range (2 ^ N)).filter fun a =>
+    ∀ i < N + 1, i + m ≤ N → (a / 2 ^ i) % 2 ^ m ≠ 0 ∧ (a / 2 ^ i) % 2 ^ m ≠ 2 ^ m - 1
+
+/-- Append a run of `j` bits opposite to the last bit of `a'`. -/
+def appendRun (j a' : ℕ) : ℕ := a' * 2 ^ j + if a' % 2 = 0 then 2 ^ j - 1 else 0
+
+theorem div_mem_runFree {m N j a : ℕ} (ha : a ∈ runFree m N) (hj : j ≤ N) :
+    a / 2 ^ j ∈ runFree m (N - j) := by
+  simp only [runFree, Finset.mem_filter, Finset.mem_range] at ha ⊢
+  refine ⟨?_, fun i _ hi => ?_⟩
+  · rw [Nat.div_lt_iff_lt_mul (by positivity), ← pow_add, Nat.sub_add_cancel hj]; exact ha.1
+  · rw [Nat.div_div_eq_div_mul, ← pow_add]
+    exact ha.2 (j + i) (by omega) (by omega)
+
+theorem runFree_subset {m N : ℕ} (hN : m ≤ N) :
+    runFree m N ⊆ (Finset.Ico 1 m).biUnion fun j => (runFree m (N - j)).image (appendRun j) := by
+  intro a ha
+  have hw := (Finset.mem_filter.1 ha).2 0 (by omega) (by omega)
+  simp only [pow_zero, Nat.div_one] at hw
+  have hm : 1 ≤ m := by
+    rcases Nat.eq_zero_or_pos m with h | h
+    · subst h; have := hw.1; simp [Nat.mod_one] at this
+    · exact h
+  simp only [Finset.mem_biUnion, Finset.mem_Ico, Finset.mem_image]
+  rcases Nat.mod_two_eq_zero_or_one a with h2 | h2
+  · -- trailing run of zeros
+    have hex : ∃ j, a % 2 ^ (j + 1) ≠ 0 := ⟨m - 1, by rw [Nat.sub_add_cancel hm]; exact hw.1⟩
+    classical
+    set j := Nat.find hex
+    have hspec : a % 2 ^ (j + 1) ≠ 0 := Nat.find_spec hex
+    have hj1 : 1 ≤ j := by
+      by_contra h0
+      have : j = 0 := by omega
+      rw [this] at hspec; exact hspec (by simpa using h2)
+    have hjm : j < m := by
+      have := Nat.find_min' hex (show a % 2 ^ (m - 1 + 1) ≠ 0 by
+        rw [Nat.sub_add_cancel hm]; exact hw.1)
+      omega
+    have hz : a % 2 ^ j = 0 := by
+      have := Nat.find_min hex (show j - 1 < j by omega)
+      rw [Nat.sub_add_cancel hj1] at this; push Not at this; exact this
+    have hodd : (a / 2 ^ j) % 2 = 1 := by
+      have := hspec
+      rw [Nat.mod_pow_succ, hz, zero_add] at this
+      rcases Nat.mod_two_eq_zero_or_one (a / 2 ^ j) with h | h
+      · rw [h, mul_zero] at this; exact absurd rfl this
+      · exact h
+    refine ⟨j, ⟨hj1, hjm⟩, a / 2 ^ j, div_mem_runFree ha (by omega), ?_⟩
+    simp only [appendRun, hodd, one_ne_zero, if_false, add_zero]
+    have := Nat.div_add_mod a (2 ^ j)
+    rw [hz] at this; linarith
+  · -- trailing run of ones
+    have hex : ∃ j, a % 2 ^ (j + 1) ≠ 2 ^ (j + 1) - 1 :=
+      ⟨m - 1, by rw [Nat.sub_add_cancel hm]; exact hw.2⟩
+    classical
+    set j := Nat.find hex
+    have hspec : a % 2 ^ (j + 1) ≠ 2 ^ (j + 1) - 1 := Nat.find_spec hex
+    have hj1 : 1 ≤ j := by
+      by_contra h0
+      have : j = 0 := by omega
+      rw [this] at hspec; exact hspec (by simpa using h2)
+    have hjm : j < m := by
+      have := Nat.find_min' hex (show a % 2 ^ (m - 1 + 1) ≠ 2 ^ (m - 1 + 1) - 1 by
+        rw [Nat.sub_add_cancel hm]; exact hw.2)
+      omega
+    have hz : a % 2 ^ j = 2 ^ j - 1 := by
+      have := Nat.find_min hex (show j - 1 < j by omega)
+      rw [Nat.sub_add_cancel hj1] at this; push Not at this; exact this
+    have hp : 1 ≤ 2 ^ j := Nat.one_le_two_pow
+    have heven : (a / 2 ^ j) % 2 = 0 := by
+      have := hspec
+      rw [Nat.mod_pow_succ, hz, pow_succ] at this
+      rcases Nat.mod_two_eq_zero_or_one (a / 2 ^ j) with h | h
+      · exact h
+      · rw [h] at this; omega
+    refine ⟨j, ⟨hj1, hjm⟩, a / 2 ^ j, div_mem_runFree ha (by omega), ?_⟩
+    simp only [appendRun, heven, if_true]
+    have := Nat.div_add_mod a (2 ^ j)
+    rw [hz] at this; linarith
+
+theorem card_runFree_le_sum {m N : ℕ} (hN : m ≤ N) :
+    (runFree m N).card ≤ ∑ j ∈ Finset.Ico 1 m, (runFree m (N - j)).card :=
+  (Finset.card_le_card (runFree_subset hN)).trans
+    (Finset.card_biUnion_le.trans (Finset.sum_le_sum fun _ _ => Finset.card_image_le))
+
+theorem geom_telescope (ν : ℝ) {m N : ℕ} (h1 : 1 ≤ m) (h : m ≤ N) :
+    (ν - 1) * ∑ j ∈ Finset.Ico 1 m, ν ^ (N - j) = ν ^ N - ν ^ (N + 1 - m) := by
+  induction m, h1 using Nat.le_induction with
+  | base => simp
+  | succ m hm ih =>
+    rw [Finset.sum_Ico_succ_top hm, mul_add, ih (by omega),
+      show N + 1 - m = N - m + 1 by omega, show N + 1 - (m + 1) = N - m by omega, pow_succ]
+    ring
+
+/-- The growth rate `μ = 2 − 2^{1−m}`. -/
+noncomputable def runRate (m : ℕ) : ℝ := 2 - 2 / 2 ^ m
+
+theorem runRate_key {m : ℕ} (hm : 1 ≤ m) : runRate m ^ (m - 1) * (2 - runRate m) ≤ 1 := by
+  have hε : runRate m = 2 * (1 - 1 / 2 ^ m) := by unfold runRate; ring
+  have h0 : 0 ≤ 1 - 1 / (2 : ℝ) ^ m := by
+    rw [sub_nonneg, div_le_one (by positivity)]; exact one_le_pow₀ (by norm_num)
+  have h1 : 1 - 1 / (2 : ℝ) ^ m ≤ 1 := by
+    have : 0 ≤ 1 / (2 : ℝ) ^ m := by positivity
+    linarith
+  calc runRate m ^ (m - 1) * (2 - runRate m)
+      = (1 - 1 / 2 ^ m) ^ (m - 1) * (2 ^ (m - 1) * 2 / 2 ^ m) := by
+        rw [hε, mul_pow]; ring
+    _ = (1 - 1 / 2 ^ m) ^ (m - 1) := by
+        rw [← pow_succ, Nat.sub_add_cancel hm, div_self (by positivity), mul_one]
+    _ ≤ 1 := pow_le_one₀ h0 h1
+
+theorem card_runFree_le {m : ℕ} (hm : 1 ≤ m) (N : ℕ) :
+    ((runFree m N).card : ℝ) ≤ 2 * runRate m ^ N := by
+  have hν1 : 1 ≤ runRate m := by
+    unfold runRate
+    have : (2 : ℝ) / 2 ^ m ≤ 1 := by
+      rw [div_le_one (by positivity)]
+      calc (2 : ℝ) = 2 ^ 1 := by norm_num
+        _ ≤ 2 ^ m := pow_le_pow_right₀ (by norm_num) hm
+    linarith
+  induction N using Nat.strong_induction_on with
+  | _ N ih =>
+  rcases lt_or_ge N m with hN | hN
+  · have hc : ((runFree m N).card : ℝ) ≤ 2 ^ N := by
+      have : (runFree m N).card ≤ 2 ^ N :=
+        (Finset.card_filter_le _ _).trans_eq (Finset.card_range _)
+      exact_mod_cast this
+    refine hc.trans ?_
+    have hε : runRate m = 2 * (1 + (-(1 / 2 ^ m))) := by unfold runRate; ring
+    rw [hε, mul_pow]
+    have hb := one_add_mul_le_pow (show (-2 : ℝ) ≤ -(1 / 2 ^ m) by
+      have : 1 / (2 : ℝ) ^ m ≤ 1 := by
+        rw [div_le_one (by positivity)]; exact one_le_pow₀ (by norm_num)
+      linarith) N
+    have hN2 : (N : ℝ) * (1 / 2 ^ m) ≤ 1 / 2 := by
+      have : (N : ℝ) + 1 ≤ 2 ^ (m - 1) := by
+        have := Nat.lt_two_pow_self (n := m - 1)
+        exact_mod_cast (show N + 1 ≤ 2 ^ (m - 1) by omega)
+      have e : (2 : ℝ) ^ m = 2 ^ (m - 1) * 2 := by rw [← pow_succ, Nat.sub_add_cancel hm]
+      rw [e, mul_one_div, div_le_iff₀ (by positivity)]
+      nlinarith [pow_pos (show (0:ℝ) < 2 by norm_num) (m - 1)]
+    have : (0 : ℝ) < 2 ^ N := by positivity
+    nlinarith
+  · have hrec := card_runFree_le_sum hN
+    have hsum : (∑ j ∈ Finset.Ico 1 m, ((runFree m (N - j)).card : ℝ)) ≤
+        2 * ∑ j ∈ Finset.Ico 1 m, runRate m ^ (N - j) := by
+      rw [Finset.mul_sum]
+      exact Finset.sum_le_sum fun j hj => ih _ (by simp at hj; omega)
+    have hcast : ((runFree m N).card : ℝ) ≤ ∑ j ∈ Finset.Ico 1 m, ((runFree m (N - j)).card : ℝ) := by
+      exact_mod_cast hrec
+    refine hcast.trans (hsum.trans ?_)
+    gcongr
+    rcases Nat.lt_or_ge m 2 with hm2 | hm2
+    · have : m = 1 := by omega
+      subst this; simp; positivity
+    have hν : 1 < runRate m := by
+      unfold runRate
+      have : (2 : ℝ) / 2 ^ m < 1 := by
+        rw [div_lt_one (by positivity)]
+        calc (2 : ℝ) < 2 ^ 2 := by norm_num
+          _ ≤ 2 ^ m := pow_le_pow_right₀ (by norm_num) hm2
+      linarith
+    refine le_of_mul_le_mul_left ?_ (sub_pos.2 hν)
+    rw [geom_telescope _ hm hN]
+    set ν := runRate m
+    set P := ν ^ (N + 1 - m)
+    have hP : 0 ≤ P := by positivity
+    have e1 : ν ^ N = P * ν ^ (m - 1) := by
+      rw [← pow_add]; congr 1; omega
+    have hk := mul_le_mul_of_nonneg_left (runRate_key hm) hP
+    rw [e1]
+    nlinarith
+
+open NormalNumbers.UniformBad (dnear dnear_le_abs_sub) in
+theorem floor_mem_runFree {C : ℝ} {m : ℕ} (hCm : C ≤ m) {ξ : ℝ} (hξ : ξ ∈ E₂ C) {z : ℤ}
+    (hz : (z : ℝ) ≤ ξ) (hz1 : ξ < z + 1) (N : ℕ) :
+    ⌊(2 : ℝ) ^ N * (ξ - z)⌋₊ ∈ runFree m N := by
+  have hx0 : 0 ≤ ξ - z := by linarith
+  have hεC : 1 / (2 : ℝ) ^ m ≤ (2 : ℝ) ^ (-C) := by
+    rw [one_div, ← Real.rpow_natCast, ← Real.rpow_neg (by norm_num)]
+    exact Real.rpow_le_rpow_of_exponent_le (by norm_num) (by linarith)
+  simp only [runFree, Finset.mem_filter, Finset.mem_range]
+  refine ⟨?_, fun i _ hi => ?_⟩
+  · rw [Nat.floor_lt (by positivity)]
+    push_cast
+    have : (0 : ℝ) < 2 ^ N := by positivity
+    nlinarith
+  set n := N - i - m
+  set y := (2 : ℝ) ^ n * (ξ - z) with hy
+  have hy0 : 0 ≤ y := by positivity
+  have hN : (2 : ℝ) ^ N * (ξ - z) / (2 ^ i : ℕ) = (2 : ℝ) ^ m * y := by
+    rw [hy]; push_cast
+    rw [show N = n + m + i by omega, pow_add, pow_add]; field_simp
+  set u := ⌊(2 : ℝ) ^ m * y⌋₊
+  have hu : ⌊(2 : ℝ) ^ N * (ξ - z)⌋₊ / 2 ^ i = u := by
+    rw [← Nat.floor_div_natCast, hN]
+  have hq : u / 2 ^ m = ⌊y⌋₊ := by
+    simp only [u]
+    rw [← Nat.floor_div_natCast]; push_cast; congr 1; field_simp
+  rw [hu]
+  set q := ⌊y⌋₊
+  have hdecomp : (u : ℝ) = 2 ^ m * q + (u % 2 ^ m : ℕ) := by
+    have := Nat.div_add_mod u (2 ^ m)
+    rw [hq] at this
+    exact_mod_cast this.symm
+  have hfl1 : (u : ℝ) ≤ 2 ^ m * y := Nat.floor_le (by positivity)
+  have hfl2 : 2 ^ m * y < u + 1 := Nat.lt_floor_add_one _
+  have hpm : (0 : ℝ) < 2 ^ m := by positivity
+  have hE := hξ n
+  have hint : (2 : ℝ) ^ n * ξ - (((2 : ℤ) ^ n * z + q : ℤ) : ℝ) = y - q := by
+    push_cast; rw [hy]; ring
+  have hint1 : (((2 : ℤ) ^ n * z + q + 1 : ℤ) : ℝ) - (2 : ℝ) ^ n * ξ = q + 1 - y := by
+    push_cast; rw [hy]; ring
+  constructor
+  · intro h0
+    rw [h0] at hdecomp
+    push_cast at hdecomp
+    have h1 : y - q < 1 / 2 ^ m := by
+      rw [lt_div_iff₀ hpm]; nlinarith
+    have := dnear_le_abs_sub ((2 : ℝ) ^ n * ξ) ((2 : ℤ) ^ n * z + q)
+    rw [hint, abs_of_nonneg (by nlinarith)] at this
+    linarith
+  · intro h1
+    rw [h1] at hdecomp
+    have hp1 : 1 ≤ 2 ^ m := Nat.one_le_two_pow
+    push_cast [hp1] at hdecomp
+    have h2 : q + 1 - y ≤ 1 / 2 ^ m := by
+      rw [le_div_iff₀ hpm]; nlinarith
+    have := dnear_le_abs_sub ((2 : ℝ) ^ n * ξ) ((2 : ℤ) ^ n * z + q + 1)
+    rw [abs_sub_comm, hint1, abs_of_nonneg (by nlinarith)] at this
+    linarith
+
+theorem one_le_runRate {m : ℕ} (hm : 1 ≤ m) : 1 ≤ runRate m := by
+  unfold runRate
+  have : (2 : ℝ) / 2 ^ m ≤ 1 := by
+    rw [div_le_one (by positivity)]
+    calc (2 : ℝ) = 2 ^ 1 := by norm_num
+      _ ≤ 2 ^ m := pow_le_pow_right₀ (by norm_num) hm
+  linarith
+
+theorem dimH_E₂_Ico_le {C : ℝ} {m : ℕ} (hm : 1 ≤ m) (hCm : C ≤ m) (z : ℤ) :
+    dimH (E₂ C ∩ Ico (z : ℝ) (z + 1)) ≤ ENNReal.ofReal (Real.logb 2 (runRate m)) := by
+  set ν := runRate m
+  have hν1 := one_le_runRate hm
+  set d := Real.logb 2 ν
+  have hd0 : 0 ≤ d := Real.logb_nonneg (by norm_num) hν1
+  have h2d : (2 : ℝ) ^ d = ν := Real.rpow_logb (by norm_num) (by norm_num) (by linarith)
+  rw [show ENNReal.ofReal d = ((d.toNNReal : NNReal) : ℝ≥0∞) from rfl]
+  apply dimH_le_of_hausdorffMeasure_ne_top
+  rw [Real.coe_toNNReal _ hd0]
+  refine ne_top_of_le_ne_top (b := 2) ENNReal.ofNat_ne_top ?_
+  refine (MeasureTheory.Measure.hausdorffMeasure_le_liminf_sum (ι := fun N => ↥(runFree m N)) (l := atTop) d _
+    (fun N => ENNReal.ofReal ((1 / 2 : ℝ) ^ N)) ?_
+    (fun N a => Icc ((z : ℝ) + (a : ℕ) / 2 ^ N) (z + ((a : ℕ) + 1) / 2 ^ N)) ?_ ?_).trans ?_
+  · rw [← ENNReal.ofReal_zero]
+    exact ENNReal.tendsto_ofReal (tendsto_pow_atTop_nhds_zero_of_lt_one (by norm_num) (by norm_num))
+  · refine Eventually.of_forall fun N a => ?_
+    rw [Real.ediam_Icc]
+    refine le_of_eq (congrArg _ ?_)
+    rw [one_div_pow]; ring
+  · refine Eventually.of_forall fun N ξ hξ => ?_
+    simp only [mem_iUnion]
+    have hz : (z : ℝ) ≤ ξ := hξ.2.1
+    have hx0 : 0 ≤ ξ - z := by linarith
+    have hpos : (0 : ℝ) < 2 ^ N := by positivity
+    refine ⟨⟨_, floor_mem_runFree hCm hξ.1 hξ.2.1 hξ.2.2 N⟩, ?_, ?_⟩
+    · have := Nat.floor_le (show 0 ≤ (2 : ℝ) ^ N * (ξ - z) by positivity)
+      simp only
+      rw [← le_sub_iff_add_le', div_le_iff₀ hpos]; linarith
+    · have := Nat.lt_floor_add_one ((2 : ℝ) ^ N * (ξ - z))
+      simp only
+      rw [← sub_le_iff_le_add', le_div_iff₀ hpos]; linarith
+  · refine (liminf_le_liminf (Eventually.of_forall fun N => ?_)).trans_eq (liminf_const (2 : ℝ≥0∞))
+    calc ∑ a : ↥(runFree m N), ediam (Icc ((z : ℝ) + (a : ℕ) / 2 ^ N) (z + ((a : ℕ) + 1) / 2 ^ N)) ^ d
+        = ∑ _a : ↥(runFree m N), ENNReal.ofReal (1 / ν ^ N) := by
+          refine Finset.sum_congr rfl fun a _ => ?_
+          rw [Real.ediam_Icc, show (z : ℝ) + ((a : ℕ) + 1) / 2 ^ N - (z + (a : ℕ) / 2 ^ N) =
+            (1 / 2) ^ N by rw [one_div_pow]; ring,
+            ENNReal.ofReal_rpow_of_nonneg (by positivity) hd0]
+          congr 1
+          rw [← Real.rpow_natCast, ← Real.rpow_mul (by norm_num), mul_comm, Real.rpow_mul (by norm_num),
+            Real.div_rpow (by norm_num) (by norm_num), Real.one_rpow, h2d, Real.rpow_natCast, one_div_pow]
+      _ = (runFree m N).card * ENNReal.ofReal (1 / ν ^ N) := by
+          rw [Finset.sum_const, Finset.card_univ, Fintype.card_coe, nsmul_eq_mul]
+      _ ≤ 2 := by
+          have hc := card_runFree_le hm N
+          have hνN : 0 < ν ^ N := by positivity
+          rw [← ENNReal.ofReal_natCast, ← ENNReal.ofReal_mul (by positivity)]
+          rw [show (2 : ℝ≥0∞) = ENNReal.ofReal 2 by simp]
+          refine ENNReal.ofReal_le_ofReal ?_
+          rw [mul_one_div, div_le_iff₀ hνN]; linarith
+
 /-- **Headline 2.**  `dim_H {ξ : ‖2ⁿξ‖ > 2^{−C} ∀ n} ≤ 1 − 2^{−(C+1)}` for `C ≥ 1`.
 
 *Proof sketch.*  With `m = ⌈C⌉`, such `ξ` has no run of `m` equal binary digits (a run of `m`
@@ -595,10 +891,38 @@ with `μ^{m−1}(2 − μ) ≤ 1`; `μ = 2 − 2^{1−m}` qualifies.  Covering `
 dyadic intervals gives `dim_H ≤ log₂ μ = 1 + log₂(1 − 2^{−m}) ≤ 1 − 2^{−m} ≤ 1 − 2^{−(C+1)}`,
 and `E₂ C` is a countable union of translates.
 
-Confidence: mathematics 97%, Lean 55%. -/
+*Proved* (`card_runFree_le`, `floor_mem_runFree`, `dimH_E₂_Ico_le`). -/
 theorem dimH_E₂_le {C : ℝ} (hC : 1 ≤ C) :
     dimH (E₂ C) ≤ ENNReal.ofReal (1 - 2 ^ (-(C + 1))) := by
-  sorry
+  set m := ⌈C⌉₊
+  have hCm : C ≤ m := Nat.le_ceil C
+  have hm1 : 1 ≤ m := by
+    have : (1 : ℝ) ≤ m := hC.trans hCm
+    exact_mod_cast this
+  have hmC : (m : ℝ) < C + 1 := Nat.ceil_lt_add_one (by linarith)
+  have hcov : E₂ C ⊆ ⋃ z : ℤ, (E₂ C ∩ Ico (z : ℝ) (z + 1)) := fun ξ hξ =>
+    mem_iUnion.2 ⟨⌊ξ⌋, hξ, Int.floor_le ξ, Int.lt_floor_add_one ξ⟩
+  refine (dimH_mono hcov).trans ?_
+  rw [dimH_iUnion]
+  refine iSup_le fun z => (dimH_E₂_Ico_le hm1 hCm z).trans (ENNReal.ofReal_le_ofReal ?_)
+  -- logb 2 (2 (1 - ε)) ≤ 1 - ε ≤ 1 - 2^{-(C+1)}
+  set ε : ℝ := 1 / 2 ^ m
+  have hε0 : 0 < ε := by positivity
+  have hε1 : ε ≤ 1 / 2 := by
+    simp only [ε]
+    rw [div_le_div_iff₀ (by positivity) (by norm_num)]
+    have : (2 : ℝ) ^ 1 ≤ 2 ^ m := pow_le_pow_right₀ (by norm_num) hm1
+    linarith
+  have hεC : (2 : ℝ) ^ (-(C + 1)) ≤ ε := by
+    simp only [ε]
+    rw [one_div, ← Real.rpow_natCast, ← Real.rpow_neg (by norm_num)]
+    exact Real.rpow_le_rpow_of_exponent_le (by norm_num) (by linarith)
+  have hν : runRate m = 2 * (1 - ε) := by unfold runRate; simp only [ε]; ring
+  have hl2 : 0 < Real.log 2 := Real.log_pos (by norm_num)
+  have hl21 : Real.log 2 < 1 := by have := Real.log_two_lt_d9; linarith
+  rw [hν, Real.logb, Real.log_mul (by norm_num) (by linarith), div_le_iff₀ hl2]
+  have := Real.log_le_sub_one_of_pos (show 0 < 1 - ε by linarith)
+  nlinarith
 
 /-! ## Wiring -/
 
