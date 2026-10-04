@@ -946,3 +946,4 @@ import NormalNumbers.BadNormal
 import NormalNumbers.ReciprocalNormal
 import NormalNumbers.LevinSparse
 import NormalNumbers.CantorLiouville
+import NormalNumbers.UniformBad

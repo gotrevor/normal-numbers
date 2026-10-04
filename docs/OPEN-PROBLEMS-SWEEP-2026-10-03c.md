@@ -165,6 +165,8 @@ explicit BFS Thm 5.5), gives `dim_H(⋂_b Bad_b(C) ∩ B) > 0` once
 
 ### 1.4 Draft Lean statement (to freeze)
 
+**Frozen 2026-10-03** as `NormalNumbers.UniformBad` (`src/NormalNumbers/UniformBad.lean`, branch `proof/avoid`): headline `bugeaud_10_36`, engine `exists_avoid_of_stagePotential` (proved from `potential_step`), guards, prior-art note in the module docstring (Falconer–Yavicoli 2022 thickness route).
+
 ```lean
 import Mathlib
 
