@@ -935,6 +935,132 @@ theorem hitP_of_close (hμ : 1 < μ₀) (ω : ℕ → Bool) (m D : ℕ) (hD : de
 
 end Tests
 
+
+section Tests2
+
+variable (μ₀ : ℚ)
+
+/-- `m` lies in the Borel–Cantelli range of some run `k ≤ m` (for the exponent `μ₀`). -/
+def inBC (m : ℕ) : Prop :=
+  ∃ k ∈ Finset.range (m + 1), expRunEnd μ₀ (expRunStart μ₀ k) ≤ m + expRunStart μ₀ k + 2 ∧
+    (μ₀ - 1) * m ≤ (expRunStart μ₀ (k + 1) : ℚ) + 2
+
+theorem rpow_two_window (a b : ℕ) :
+    (1 / 2 : ℝ) ^ a * 2 ^ b = (2 : ℝ) ^ ((b : ℝ) - a) := by
+  rw [Real.rpow_sub (by norm_num), Real.rpow_natCast, Real.rpow_natCast, one_div_pow]
+  field_simp
+
+open Classical in
+/-- **Mass of the Borel–Cantelli test.** -/
+theorem mass_hitP (hμ : 2 < μ₀) : ∃ K : ℝ, 0 ≤ K ∧ ∀ m D : ℕ, depth μ₀ m ≤ D → inBC μ₀ m →
+    coins.real {ω | hitP μ₀ m (pre ω D)} ≤
+      K * ((3 : ℝ) ^ m * (2 : ℝ) ^ (-(((μ₀ : ℝ) - 2) * m))) := by
+  have hμ1 : (1 : ℚ) < μ₀ := by linarith
+  have hμR : (2 : ℝ) < μ₀ := by exact_mod_cast hμ
+  obtain ⟨C, hC⟩ := window_ge_gen μ₀ hμ ((μ₀ : ℝ) + 1) (by linarith)
+  refine ⟨12 * (2 : ℝ) ^ C, by positivity, fun m D hD hbc => ?_⟩
+  set n := depth μ₀ m
+  have hn := le_depth μ₀ m hμ1
+  set nW := n - 3
+  have hnW : nW = ⌈μ₀ * m⌉₊ + Nat.sqrt m := by simp only [nW, n, depth]; omega
+  set ρ : ℝ := 4 / 3 ^ n
+  set near : ℕ → Finset ℕ := fun q =>
+    (Finset.range (q + 1)).filter fun r : ℕ => ∃ ω, |pt (expFree μ₀) ω - r / q| < ρ
+  set ball : ℕ → ℕ → Set (ℕ → Bool) := fun q r => {ω | |pt (expFree μ₀) ω - r / q| < ρ}
+  have h3n : (0 : ℝ) < 3 ^ n := by positivity
+  have hsub : {ω | hitP μ₀ m (pre ω D)} ⊆
+      ⋃ q ∈ Finset.Ico (3 ^ m) (3 ^ (m + 1)), ⋃ r ∈ near q, ball q r := by
+    intro ω hω
+    obtain ⟨q, hq, r, hr, h1, h2⟩ := hω
+    obtain ⟨hq1, -⟩ := Finset.mem_Ico.1 hq
+    have hq0 : 0 < q := lt_of_lt_of_le (by positivity) hq1
+    have hqR : (0 : ℝ) < q := by exact_mod_cast hq0
+    obtain ⟨T, hT0, hT1, hx⟩ := pt_split (expFree μ₀) ω n
+    rw [← pnum_pre μ₀ ω hD] at hx
+    set N := pnum μ₀ (pre ω D) n
+    have h1R : (N : ℝ) * q ≤ r * 3 ^ n + 2 * q := by exact_mod_cast h1
+    have h2R : (r : ℝ) * 3 ^ n ≤ N * q + 2 * q := by exact_mod_cast h2
+    have hclose : |pt (expFree μ₀) ω - r / q| < ρ := by
+      rw [hx, abs_lt]
+      have ea : (N : ℝ) / 3 ^ n - r / q = (N * q - r * 3 ^ n) / (q * 3 ^ n) := by field_simp
+      have hb1 : (N * q - r * 3 ^ n : ℝ) / (q * 3 ^ n) ≤ 2 / 3 ^ n := by
+        rw [div_le_div_iff₀ (by positivity) h3n]; nlinarith
+      have hb2 : -(2 / 3 ^ n) ≤ (N * q - r * 3 ^ n : ℝ) / (q * 3 ^ n) := by
+        rw [neg_le, ← neg_div, div_le_div_iff₀ (by positivity) (by positivity)]; nlinarith
+      have e4 : ρ = 2 / 3 ^ n + 2 / 3 ^ n := by simp only [ρ]; ring
+      have e5 : (1 : ℝ) / 3 ^ n < 2 / 3 ^ n := by gcongr; norm_num
+      constructor <;> linarith
+    simp only [Set.mem_iUnion]
+    exact ⟨q, hq, r, Finset.mem_filter.2 ⟨hr, ω, hclose⟩, hclose⟩
+  set FM := freeCount (expFree μ₀) m
+  set F1 := freeCount (expFree μ₀) (m + 1)
+  set FW := freeCount (expFree μ₀) nW
+  have hball : ∀ q r, coins.real (ball q r) ≤ (1 / 2 : ℝ) ^ FW := fun q r =>
+    coins_ball_le_gen (expFree μ₀) _ ρ nW (by
+      simp only [ρ]
+      have e : n = nW + 1 + 2 := by omega
+      rw [e, pow_add, div_le_div_iff₀ (by positivity) (by positivity)]
+      nlinarith [pow_pos (by norm_num : (0:ℝ) < 3) (nW + 1)])
+  have hnear : ∀ q ∈ Finset.Ico (3 ^ m) (3 ^ (m + 1)), (near q).card ≤ 3 * 2 ^ F1 := by
+    intro q hq
+    obtain ⟨hq1, hq2⟩ := Finset.mem_Ico.1 hq
+    have hq0 : 0 < q := lt_of_lt_of_le (by positivity) hq1
+    refine card_near_le_gen (expFree μ₀) q (m + 1) hq0 hq2.le ρ ?_
+    have hqR : (0 : ℝ) < q := by exact_mod_cast hq0
+    have : (4 : ℝ) * q ≤ 3 ^ n := by
+      have h1 : 4 * q ≤ 3 ^ (m + 3) := by
+        have : 3 ^ (m + 3) = 9 * 3 ^ (m + 1) := by ring
+        omega
+      have h2 : 3 ^ (m + 3) ≤ 3 ^ n := Nat.pow_le_pow_right (by norm_num) hn
+      exact_mod_cast h1.trans h2
+    simp only [ρ]; rw [div_le_div_iff₀ (by positivity) hqR]; linarith
+  have hmeas : coins.real {ω | hitP μ₀ m (pre ω D)} ≤
+      ∑ q ∈ Finset.Ico (3 ^ m) (3 ^ (m + 1)), ((3 * 2 ^ F1 : ℕ) : ℝ) * (1 / 2 : ℝ) ^ FW := by
+    refine (measureReal_mono hsub (measure_ne_top _ _)).trans ((measureReal_biUnion_finset_le _ _).trans ?_)
+    refine Finset.sum_le_sum fun q hq => ?_
+    refine (measureReal_biUnion_finset_le _ _).trans ?_
+    calc ∑ r ∈ near q, coins.real (ball q r) ≤ ∑ r ∈ near q, (1 / 2 : ℝ) ^ FW :=
+          Finset.sum_le_sum fun r _ => hball q r
+      _ = (near q).card * (1 / 2 : ℝ) ^ FW := by rw [Finset.sum_const, nsmul_eq_mul]
+      _ ≤ _ := by gcongr; exact_mod_cast hnear q hq
+  rw [Finset.sum_const, Nat.card_Ico, nsmul_eq_mul] at hmeas
+  have hcard : 3 ^ (m + 1) - 3 ^ m = 2 * 3 ^ m := by rw [pow_succ]; omega
+  rw [hcard] at hmeas
+  -- the window
+  obtain ⟨k, -, hk1, hk2⟩ := hbc
+  have hk2R : ((μ₀ : ℝ) - 1) * m ≤ expRunStart μ₀ (k + 1) + 2 := by exact_mod_cast hk2
+  have hm0 : (0 : ℝ) ≤ m := by positivity
+  have hW1 : (μ₀ : ℝ) * m ≤ nW := by
+    rw [hnW]; push_cast
+    have : ((μ₀ * m : ℚ) : ℝ) ≤ ⌈μ₀ * m⌉₊ := by exact_mod_cast Nat.le_ceil (μ₀ * (m : ℚ))
+    push_cast at this; linarith [(Nat.cast_nonneg (Nat.sqrt m) : (0:ℝ) ≤ _)]
+  have hW2 : (nW : ℝ) ≤ ((μ₀ : ℝ) + 1) * m + 1 := by
+    rw [hnW]; push_cast
+    have h1 : ((⌈μ₀ * m⌉₊ : ℕ) : ℝ) < ((μ₀ * m : ℚ) : ℝ) + 1 := by
+      exact_mod_cast Nat.ceil_lt_add_one (show (0 : ℚ) ≤ μ₀ * m by positivity)
+    have h2 : ((Nat.sqrt m : ℕ) : ℝ) ≤ m := by exact_mod_cast Nat.sqrt_le_self m
+    push_cast at h1; linarith
+  have hwin := hC k m nW hk1 hk2R hW1 hW2
+  have hF1 : (2 : ℝ) ^ F1 ≤ 2 * 2 ^ FM := by
+    have : F1 ≤ FM + 1 := freeCount_succ_le _ m
+    calc (2 : ℝ) ^ F1 ≤ 2 ^ (FM + 1) := pow_le_pow_right₀ (by norm_num) this
+      _ = 2 * 2 ^ FM := by ring
+  have hexp : (1 / 2 : ℝ) ^ FW * 2 ^ FM ≤ 2 ^ C * 2 ^ (-(((μ₀ : ℝ) - 2) * m)) := by
+    rw [rpow_two_window, ← Real.rpow_add (by norm_num)]
+    exact Real.rpow_le_rpow_of_exponent_le (by norm_num) (by linarith)
+  refine hmeas.trans ?_
+  rw [show ((2 * 3 ^ m : ℕ) : ℝ) = 2 * 3 ^ m by push_cast; ring,
+    show ((3 * 2 ^ F1 : ℕ) : ℝ) = 3 * 2 ^ F1 by push_cast; ring]
+  have h0 : (0 : ℝ) ≤ (1 / 2 : ℝ) ^ FW := by positivity
+  have h3m : (0 : ℝ) ≤ 3 ^ m := by positivity
+  calc (2 * 3 ^ m : ℝ) * (3 * 2 ^ F1 * (1 / 2) ^ FW)
+      ≤ (2 * 3 ^ m : ℝ) * (3 * (2 * 2 ^ FM) * (1 / 2) ^ FW) := by gcongr
+    _ = 12 * 3 ^ m * ((1 / 2 : ℝ) ^ FW * 2 ^ FM) := by ring
+    _ ≤ 12 * 3 ^ m * (2 ^ C * 2 ^ (-(((μ₀ : ℝ) - 2) * m))) := by gcongr
+    _ = 12 * (2 : ℝ) ^ C * ((3 : ℝ) ^ m * (2 : ℝ) ^ (-(((μ₀ : ℝ) - 2) * m))) := by ring
+
+end Tests2
+
 /-! ## Upper bound: assembly -/
 
 /-- **The crux: the exponent is at most `μ₀`, almost surely.**  Confidence 80%.
