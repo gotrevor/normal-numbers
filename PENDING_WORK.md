@@ -5,7 +5,16 @@
 * Headline 1 via a stateless strategy `charge` (levels `ρ_k ≤ b^{-n} ≤ (1/β+1/ρ)ρ_k`, centres
   within 2), budget `tsum_charge_le`.  Headline 2 via `runFree` words, `card_runFree_le`
   (`≤ 2·(2−2^{1−m})^N`), `floor_mem_runFree`, `dimH_E₂_Ico_le`.
-* Open: stretch `SchmidtGamesStretch.lean` (untouched); referee the BFS Props.
+* Refereed 2026-10-04 (`docs/SCHMIDT-GAMES-REFEREE-2026-10-04.md`): `BFSPotentialDim` now takes
+  `ρ ≤ 1`; the unrestricted form is refuted (`not_BFSPotentialDimUnrestricted`).
+* Open: stretch `exists_computable_cantorPoint_mem_U_inter_Bad` (crux in `BarrierAudit.lean`).
+
+## Barrier siblings lane (2026-10-04) — DONE
+* `Barriers/Siblings.lean` sorry-free; (a)–(d) promoted to `.proved`.  `#print axioms` on each =
+  propext, Classical.choice, Quot.sound.  See `HANDOFF-2026-10-04-barriers-siblings.md`.
+* By-product: `Barriers.Siblings.LogNormalWitness.exists_isNormal` — a normal number in every base
+  `b ≥ 2` (Borel via DEL, Lebesgue measure).  Candidate to move to a shared module if other lanes
+  need base-`b` normal numbers for `3 ∣ b`.
 
 ## Bugeaud 10.36 lane (2026-10-04) — DONE
 * `UniformBad.lean` sorry-free: `bugeaud_10_36` (uniform `‖bⁿξ‖ > b^{−24}`, all `b ≥ 2`, `n ≥ 0`),
@@ -2843,3 +2852,11 @@ Note: Bridge edit forces rebuild of whole-Mathlib importers; parallel `lake buil
   `not_isNormal_of_three_dvd` (frequency of `[0,1/b)` ≥ 7/8 at `n = log_b 3^T`).
 * New module `SchedFamily.lean`: base-`b` visit deviation / level tests, and the multi-base derandomizer
   (resolution `nr J / H b` makes total per-stage mass ≤ 3/(J+1)²).
+
+## Finite-state lane E3 (proof/finstate), 2026-10-04 — leaves DONE
+* All leaves in `FiniteStateSelection.lean` proved; `#print axioms` of `pulariDPDTQuestion_of_lit`,
+  `pulariWeakening_of_lit`, `mirror_not_mealy` = propext, Classical.choice, Quot.sound (plus the
+  cited `Literature.*` Props as hypotheses).
+* New: `pulariDPDTQuestion_of_lit_three` (Q-DPDT for `k ≥ 3`) from `cpPrefix_count`.
+* Next: base 2 (`PulariDPDTBaseTwo`) needs a different coder; stretch nodes in
+  `FiniteStateSelectionStretch.lean` were out of scope this run (operator: do not touch).
