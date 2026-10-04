@@ -474,7 +474,74 @@ the spacing of the centres; so at most one `a`. -/
 theorem encard_stage_meet_le (b : ℕ) (hb : 2 ≤ b) (k : ℕ) (x : ℝ) :
     {q : ℕ × ℤ | stage ⟨(b, q.1, q.2), hb⟩ = k ∧
       (obstacle ctr rad ⟨(b, q.1, q.2), hb⟩ ∩ window (1 / 2) 64 k x).Nonempty}.encard ≤ 7 := by
-  sorry
+  set S := {q : ℕ × ℤ | stage ⟨(b, q.1, q.2), hb⟩ = k ∧
+      (obstacle ctr rad ⟨(b, q.1, q.2), hb⟩ ∩ window (1 / 2) 64 k x).Nonempty} with hS
+  set N := {n : ℕ | Nat.log 64 (b ^ n) + 1 = k} with hN
+  have hbpos : (0 : ℝ) < b := by exact_mod_cast (by omega : 0 < b)
+  -- level bound
+  have hNle : N.encard ≤ 6 := by
+    rcases N.eq_empty_or_nonempty with h | h
+    · simp [h]
+    set m := sInf N
+    have hm : m ∈ N := Nat.sInf_mem h
+    have hsub : N ⊆ (Finset.Ico m (m + 6) : Set ℕ) := by
+      intro n hn
+      simp only [Finset.coe_Ico, Set.mem_Ico]
+      refine ⟨Nat.sInf_le hn, ?_⟩
+      by_contra hlt
+      push Not at hlt
+      have hm' : Nat.log 64 (b ^ m) + 1 = k := hm
+      have hn' : Nat.log 64 (b ^ n) + 1 = k := hn
+      have h1 : 64 ^ Nat.log 64 (b ^ m) ≤ b ^ m := Nat.pow_log_le_self 64 (by positivity)
+      have h2 : b ^ n < 64 ^ (Nat.log 64 (b ^ n) + 1) := Nat.lt_pow_succ_log_self (by norm_num) _
+      have h3 : b ^ (m + 6) ≤ b ^ n := Nat.pow_le_pow_right (by omega) hlt
+      have h4 : 2 ^ 6 ≤ b ^ 6 := Nat.pow_le_pow_left hb 6
+      rw [hn', ← hm', pow_succ] at h2
+      rw [pow_add] at h3
+      have h5 := Nat.mul_le_mul h1 h4
+      norm_num at h5
+      linarith
+    calc N.encard ≤ ((Finset.Ico m (m + 6) : Finset ℕ) : Set ℕ).encard := Set.encard_le_encard hsub
+      _ = 6 := by rw [Set.encard_coe_eq_coe_finsetCard]; simp
+  have hinj : Set.InjOn Prod.fst S := by
+    rintro ⟨n, a⟩ ⟨hst, y, ⟨hy1, hy2⟩, hy3, hy4⟩ ⟨n', a'⟩ ⟨hst', y', ⟨hy1', hy2'⟩, hy3', hy4'⟩ hnn
+    change n = n' at hnn
+    subst hnn
+    change Nat.log 64 (b ^ n) + 1 = k at hst
+    simp only [ctr, rad, Nat.cast_ofNat] at hy1 hy2 hy1' hy2' hy4 hy4'
+    have hlt : b ^ n < 64 ^ k := by
+      rw [← hst]; exact Nat.lt_pow_succ_log_self (by norm_num) _
+    have hlt' : ((b : ℝ) ^ n) < (64 : ℝ) ^ k := by exact_mod_cast hlt
+    have hbn : (0 : ℝ) < (b : ℝ) ^ n := pow_pos hbpos n
+    have h24 : (16 : ℝ) ≤ (b : ℝ) ^ 24 := by
+      have : (2 : ℝ) ^ 24 ≤ (b : ℝ) ^ 24 := pow_le_pow_left₀ (by norm_num) (by exact_mod_cast hb) 24
+      norm_num at this; linarith
+    set u := (b : ℝ) ^ n
+    -- r ≤ 1/(16 u)
+    have hr : ((b : ℝ) ^ (n + 24))⁻¹ * u ≤ 1 / 16 := by
+      rw [pow_add, mul_inv, mul_comm, ← mul_assoc, mul_inv_cancel₀ hbn.ne', one_mul]
+      rw [inv_le_comm₀ (by positivity) (by norm_num)]; linarith
+    -- ℓ u < 1/2
+    have hℓ : 1 / 2 / (64 : ℝ) ^ k * u < 1 / 2 := by
+      rw [div_mul_eq_mul_div, div_lt_iff₀ (by positivity)]; nlinarith
+    have hd : |(a : ℝ) - a'| < 1 := by
+      have e : (a : ℝ) - a' = (a / u - a' / u) * u := by field_simp
+      rw [e, abs_mul, abs_of_pos hbn]
+      have : |(a : ℝ) / u - a' / u| ≤ 1 / 2 / (64 : ℝ) ^ k + 2 * ((b : ℝ) ^ (n + 24))⁻¹ := by
+        rw [abs_le]; constructor <;> linarith
+      nlinarith [abs_nonneg ((a : ℝ) / u - a' / u)]
+    have : a = a' := by
+      have := abs_lt.1 hd
+      have h1 : a - a' < 1 := by exact_mod_cast (by push_cast; linarith : ((a - a' : ℤ) : ℝ) < 1)
+      have h2 : -1 < a - a' := by exact_mod_cast (by push_cast; linarith : (-1 : ℝ) < ((a - a' : ℤ) : ℝ))
+      omega
+    rw [this]
+  have himg : Prod.fst '' S ⊆ N := by
+    rintro _ ⟨q, hq, rfl⟩; exact hq.1
+  calc S.encard = (Prod.fst '' S).encard := (hinj.encard_image).symm
+    _ ≤ N.encard := Set.encard_le_encard himg
+    _ ≤ 6 := hNle
+    _ ≤ 7 := by norm_num
 
 /-- **Stage potential.**  The newly charged obstacles of the all-bases family have square-root
 potential `≤ 1/40` on every stage-`k` window.
