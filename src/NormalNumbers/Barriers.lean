@@ -89,14 +89,14 @@ def irrational_not_disjunctive : Barrier :=
 
 /-- Sibling (a): order-`k` statistics. -/
 def order_k_normal_not_normal : Barrier :=
-  .frozen "a rational with correct frequencies for all words of length ≤ k (de Bruijn period)"
+  .proved "a rational with correct frequencies for all words of length ≤ k (de Bruijn period)"
     Siblings.exists_rat_isNormalUpTo_not_isNormal
     [``Siblings.exists_rat_isNormalUpTo_not_isNormal]
     "mechanisms that verify finitely many orders (fixed L or word length), then conclude normality"
 
 /-- Sibling (b): log rung versus natural rung. -/
 def log_normal_not_simply_normal : Barrier :=
-  .frozen "a number normal under logarithmic averaging, not simply normal"
+  .proved "a number normal under logarithmic averaging, not simply normal"
     Siblings.exists_isLogNormal_not_isSimplyNormal
     [``Siblings.exists_isLogNormal_not_isSimplyNormal]
     "log-averaged inputs (log-Elliott, log-Chowla) yielding natural-average digit frequencies"
@@ -147,7 +147,7 @@ def sqrt_normal_square_not : Barrier :=
 
 /-- Sibling (c): limits of normal numbers. -/
 def normal_prefix_limit : Barrier :=
-  .frozen "normal numbers agreeing with 0 on prefixes of every length"
+  .proved "normal numbers agreeing with 0 on prefixes of every length"
     Siblings.exists_normal_prefix_limit_not_normal
     [``Siblings.exists_normal_prefix_limit_not_normal]
     "diagonal or limit arguments that match prefixes of normal stages without window control"
@@ -212,7 +212,7 @@ def hypE_logRate : Barrier :=
 
 /-- Sibling (d): a rational Lambert-type series. -/
 def fermat_lambert_rational : Barrier :=
-  .frozen "Σ_k 2^k/(2^{2^k}+1) = 1: a rational Lambert-type series"
+  .proved "Σ_k 2^k/(2^{2^k}+1) = 1: a rational Lambert-type series"
     Siblings.tsum_two_pow_div_fermat
     [``Siblings.tsum_two_pow_div_fermat]
     "irrationality of Lambert sums from the series shape alone (sparse index set, phase averages)"

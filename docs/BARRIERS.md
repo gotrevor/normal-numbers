@@ -9,7 +9,7 @@ This library makes that a build check, as `MazeAudit.lean` did for Maze rows (pr
 | File | Holds |
 |---|---|
 | `src/NormalNumbers/Barriers/Core.lean` | `Barrier`, `Evidence`, `Tier`, `CruxLink`, `Waiver`, and the `#barrier_audit` command |
-| `src/NormalNumbers/Barriers/Siblings.lean` | New sibling statements the repo lacked (frozen `sorry`s, plus one proved) |
+| `src/NormalNumbers/Barriers/Siblings.lean` | New sibling statements the repo lacked (all proved) |
 | `src/NormalNumbers/Barriers.lean` | The registry: one `def … : Barrier` per sibling, and `allBarriers` |
 | `src/NormalNumbers/BarrierAudit.lean` | `cruxLinks` and `waivers`, and a local audit run |
 | `src/NormalNumbers.lean` (last lines) | The authoritative audit run, over every module |
@@ -49,9 +49,8 @@ This library makes that a build check, as `MazeAudit.lean` did for Maze rows (pr
 
 ## Open work for a treadmill
 
-The frozen siblings in `Barriers/Siblings.lean` (`exists_rat_isNormalUpTo_not_isNormal`,
+The four siblings first frozen in `Barriers/Siblings.lean` (`exists_rat_isNormalUpTo_not_isNormal`,
 `exists_isLogNormal_not_isSimplyNormal`, `exists_normal_prefix_limit_not_normal`,
-`tsum_two_pow_div_fermat`) are each known results with an English construction in the
-docstring.  Proving one flips its barrier to `proved`.  The waivers that name a candidate sibling
+`tsum_two_pow_div_fermat`) are proved (2026-10-04) and registered as `proved`.  The waivers that name a candidate sibling
 (`weylLambertTwist_holds`, the C′-quantitative chain at `ρ = log 2`) are the next barriers to
 state.

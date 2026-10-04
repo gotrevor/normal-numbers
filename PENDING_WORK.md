@@ -1,3 +1,10 @@
+## Barrier siblings lane (2026-10-04) — DONE
+* `Barriers/Siblings.lean` sorry-free; (a)–(d) promoted to `.proved`.  `#print axioms` on each =
+  propext, Classical.choice, Quot.sound.  See `HANDOFF-2026-10-04-barriers-siblings.md`.
+* By-product: `Barriers.Siblings.LogNormalWitness.exists_isNormal` — a normal number in every base
+  `b ≥ 2` (Borel via DEL, Lebesgue measure).  Candidate to move to a shared module if other lanes
+  need base-`b` normal numbers for `3 ∣ b`.
+
 ## Bugeaud 10.36 lane (2026-10-04) — DONE
 * `UniformBad.lean` sorry-free: `bugeaud_10_36` (uniform `‖bⁿξ‖ > b^{−24}`, all `b ≥ 2`, `n ≥ 0`),
   `#print axioms` = propext, Classical.choice, Quot.sound.  Leaves closed: `potential_step`
