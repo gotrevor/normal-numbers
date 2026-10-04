@@ -535,4 +535,290 @@ theorem sprimrec_levelBadB {fb fn fN : α → ℕ} {fp : α → List Bool}
 
 end Primrec
 
+/-! ## Assembly over a family of bases -/
+
+open ComputableNormal (tsum_tail_le visitCount_mono_n primrec_pow)
+
+theorem sqrt_le_add_one {x : ℝ} (hx : 0 ≤ x) : Real.sqrt x ≤ x + 1 := by
+  rw [Real.sqrt_le_iff]; constructor <;> nlinarith
+
+/-- The resolution bound used per base: `n³ √W ≤ (J+1)^{-2}` from `n⁶ W ≤ (J+1)^{-4}`. -/
+theorem cube_sqrt_le {n : ℕ} {W : ℝ} {J : ℕ} (hW : 0 ≤ W)
+    (h : (n : ℝ) ^ 6 * W ≤ 1 / ((J : ℝ) + 1) ^ 4) :
+    (n : ℝ) ^ 3 * Real.sqrt W ≤ 1 / ((J : ℝ) + 1) ^ 2 := by
+  have e1 : (n : ℝ) ^ 3 * Real.sqrt W = Real.sqrt ((n : ℝ) ^ 6 * W) := by
+    rw [Real.sqrt_mul (by positivity), show (n : ℝ) ^ 6 = ((n : ℝ) ^ 3) ^ 2 by ring,
+      Real.sqrt_sq (by positivity)]
+  have e2 : Real.sqrt (1 / ((J : ℝ) + 1) ^ 4) = 1 / ((J : ℝ) + 1) ^ 2 := by
+    rw [show 1 / ((J : ℝ) + 1) ^ 4 = (1 / ((J : ℝ) + 1) ^ 2) ^ 2 by rw [div_pow, one_pow, ← pow_mul],
+      Real.sqrt_sq (by positivity)]
+  rw [e1, ← e2]; exact Real.sqrt_le_sqrt h
+
+/-- Per-base level mass at reduced resolution `n' ≤ n / H`. -/
+theorem mass_reduce {n n' H : ℕ} (hH : 1 ≤ H) (hnH : n' * H ≤ n) {W κ Z : ℝ} (hW : 0 ≤ W)
+    (hκ : 0 ≤ κ) (hZ : 0 ≤ Z) {J b : ℕ}
+    (hHge : 74016 * (κ + 1) * (Z + 1) * 2 ^ b ≤ (H : ℝ))
+    (hev : (n : ℝ) ^ 6 * W ≤ 1 / ((J : ℝ) + 1) ^ 4) :
+    74016 * (n' : ℝ) ^ 3 * Real.sqrt (κ * W) * Z ≤ (1 / 2 : ℝ) ^ b / ((J : ℝ) + 1) ^ 2 := by
+  have hc := cube_sqrt_le hW hev
+  have hHR : (1 : ℝ) ≤ H := by exact_mod_cast hH
+  have hnH' : (n' : ℝ) * H ≤ n := by exact_mod_cast hnH
+  have hsW := Real.sqrt_nonneg W
+  have h1 : (n' : ℝ) ^ 3 * Real.sqrt W * H ≤ 1 / ((J : ℝ) + 1) ^ 2 := by
+    have : (n' : ℝ) ^ 3 * H ≤ (n : ℝ) ^ 3 := by
+      calc (n' : ℝ) ^ 3 * H ≤ (n' : ℝ) ^ 3 * H ^ 3 := by
+            gcongr; exact le_self_pow₀ hHR (by norm_num)
+        _ = ((n' : ℝ) * H) ^ 3 := by ring
+        _ ≤ _ := by gcongr
+    calc (n' : ℝ) ^ 3 * Real.sqrt W * H = ((n' : ℝ) ^ 3 * H) * Real.sqrt W := by ring
+      _ ≤ (n : ℝ) ^ 3 * Real.sqrt W := by gcongr
+      _ ≤ _ := hc
+  have hsk := sqrt_le_add_one hκ
+  have h2b : (0 : ℝ) < 2 ^ b := by positivity
+  have hX : 0 ≤ (n' : ℝ) ^ 3 * Real.sqrt W := by positivity
+  rw [Real.sqrt_mul hκ]
+  have hstep : 74016 * (n' : ℝ) ^ 3 * (Real.sqrt κ * Real.sqrt W) * Z ≤
+      74016 * (κ + 1) * (Z + 1) * ((n' : ℝ) ^ 3 * Real.sqrt W) := by
+    have : Real.sqrt κ * Z ≤ (κ + 1) * (Z + 1) := by
+      have := Real.sqrt_nonneg κ
+      nlinarith
+    nlinarith
+  refine hstep.trans ?_
+  rw [one_div_pow, div_div, le_div_iff₀ (by positivity)]
+  have h3 : 74016 * (κ + 1) * (Z + 1) * ((n' : ℝ) ^ 3 * Real.sqrt W) * 2 ^ b ≤
+      (n' : ℝ) ^ 3 * Real.sqrt W * H := by nlinarith
+  have hJ : (0 : ℝ) < ((J : ℝ) + 1) ^ 2 := by positivity
+  rw [le_div_iff₀ hJ] at h1
+  calc 74016 * (κ + 1) * (Z + 1) * ((n' : ℝ) ^ 3 * Real.sqrt W) * (2 ^ b * ((J : ℝ) + 1) ^ 2)
+      = (74016 * (κ + 1) * (Z + 1) * ((n' : ℝ) ^ 3 * Real.sqrt W) * 2 ^ b) * ((J : ℝ) + 1) ^ 2 := by ring
+    _ ≤ ((n' : ℝ) ^ 3 * Real.sqrt W * H) * ((J : ℝ) + 1) ^ 2 := by gcongr
+    _ ≤ 1 := h1
+
+/-- **Family derandomization** (statement of
+`CantorLiouvilleAll.exists_computable_normal_sched_family`). -/
+theorem exists_computable_normal_sched_family' (Ψ : ℕ → ℕ → List Bool → ℕ)
+    (hΨp : Primrec fun x : ℕ × ℕ × List Bool => Ψ x.1 x.2.1 x.2.2) (A : List Bool → ℝ)
+    (hΨ : ∀ b m p, Ψ b m p = ⌊A p * (b : ℝ) ^ m⌋₊) (hA0 : ∀ p, 0 ≤ A p)
+    (G : (ℕ → Bool) → ℝ) (hGm : Measurable G)
+    (hAG : ∀ ω D, A (pre ω D) ≤ G ω ∧ G ω ≤ A (pre ω D) + (1 / 2 : ℝ) ^ D)
+    (S : ℕ → Prop) [DecidablePred S] (hS : PrimrecPred S) (κ : ℕ → ℕ) (hκ : Primrec κ)
+    (W : ℕ → ℝ) (hW0 : ∀ N, 0 ≤ W N) (hWa : Antitone W)
+    (hsm : ∀ b, 2 ≤ b → S b → ∀ h : ℤ, h ≠ 0 → ∀ N : ℕ, 1 ≤ N →
+      ∫ ω, ‖∑ k ∈ Finset.range N, ee (h * (b : ℝ) ^ k * G ω)‖ ^ 2 ∂coins ≤
+        κ b * |(h : ℝ)| * N ^ 2 * W N)
+    (Ns nr : ℕ → ℕ) (hNs : Primrec Ns) (hnr : Primrec nr) (hNtop : Tendsto Ns atTop atTop)
+    (hrat : ∀ a : ℝ, 1 < a → ∀ᶠ j in atTop, (Ns (j + 1) : ℝ) ≤ a * Ns j)
+    (hnrtop : Tendsto nr atTop atTop)
+    (hev : ∀ᶠ j in atTop, 8 ≤ nr j ∧ nr j ≤ Ns j ∧
+      (nr j : ℝ) ^ 6 * W (Ns j) ≤ 1 / ((j : ℝ) + 1) ^ 4)
+    (bad' : ℕ → List Bool → Bool) (hbad' : Primrec₂ bad') (d' : ℕ → ℕ) (hd' : Primrec d')
+    (hmass : ∀ j, coins.real {ω | bad' j (pre ω (d' j)) = true} ≤ 1 / ((j : ℝ) + 1) ^ 2) :
+    ∃ e : ℕ → Bool, Computable e ∧ (∀ b, 2 ≤ b → S b → IsNormal b (G e)) ∧
+      ∃ j₁, ∀ j, j₁ ≤ j → bad' j (pre e (d' j)) = false := by
+  obtain ⟨j₀, hj₀⟩ := eventually_atTop.1 hev
+  obtain ⟨z, hz⟩ := exists_nat_ge Zc
+  set B : ℝ := 3 with hBdef
+  have hB0 : 0 < B := by norm_num
+  set j₁ : ℕ := j₀ + 14 with hj₁def
+  set H : ℕ → ℕ := fun b => 74016 * (κ b + 1) * (z + 1) * 2 ^ b with hHdef
+  have hH1 : ∀ b, 1 ≤ H b := fun b => by
+    simp only [hHdef]; exact Nat.one_le_iff_ne_zero.2 (by positivity)
+  have hHp : Primrec H :=
+    Primrec.nat_mul.comp (Primrec.nat_mul.comp (Primrec.nat_mul.comp (Primrec.const _)
+      (Primrec.succ.comp hκ)) (Primrec.const _)) (primrec_pow.comp (Primrec.const 2) Primrec.id)
+  set res : ℕ → ℕ → ℕ := fun b J => nr J / H b with hresdef
+  set D1 : ℕ → ℕ := fun J => (J + 1) * (Ns J + 2 * nr J) with hD1
+  set act : ℕ → ℕ → Prop := fun J b => 2 ≤ b ∧ S b ∧ 8 ≤ res b J with hactdef
+  have hactd : ∀ J b, Decidable (act J b) := fun J b => by simp only [hactdef]; infer_instance
+  set cnt : ℕ → List Bool → ℕ := fun J p => ((List.range (J + 1)).map fun b =>
+    if act J b then levelBadB Ψ b (res b J) (Ns J) (p.take (D1 J)) else 0).sum with hcnt
+  set bad : ℕ → List Bool → Bool := fun j p =>
+    decide (0 < cnt (j + j₁) p) || bad' (j + j₁) (p.take (d' (j + j₁))) with hbaddef
+  set d : ℕ → ℕ := fun j => max (D1 (j + j₁)) (d' (j + j₁)) with hddef
+  have hJ1 : Primrec fun j : ℕ => j + j₁ := Primrec.nat_add.comp Primrec.id (Primrec.const _)
+  have hD1p : Primrec D1 := Primrec.nat_mul.comp Primrec.succ
+    (Primrec.nat_add.comp hNs (Primrec.nat_mul.comp (Primrec.const 2) hnr))
+  have hresp : Primrec₂ res := (Primrec.nat_div.comp (hnr.comp Primrec.snd) (hHp.comp Primrec.fst))
+  have hcntp : Primrec₂ cnt := by
+    have hact : PrimrecPred fun y : (ℕ × List Bool) × ℕ => act y.1.1 y.2 := by
+      simp only [hactdef]
+      exact PrimrecPred.and (Primrec.nat_le.comp (Primrec.const 2) Primrec.snd)
+        (PrimrecPred.and (hS.comp Primrec.snd)
+          (Primrec.nat_le.comp (Primrec.const 8) (hresp.comp Primrec.snd (Primrec.fst.comp Primrec.fst))))
+    have hlev : Primrec fun y : (ℕ × List Bool) × ℕ =>
+        levelBadB Ψ y.2 (res y.2 y.1.1) (Ns y.1.1) (y.1.2.take (D1 y.1.1)) :=
+      sprimrec_levelBadB Ψ hΨp Primrec.snd (hresp.comp Primrec.snd (Primrec.fst.comp Primrec.fst))
+        (hNs.comp (Primrec.fst.comp Primrec.fst))
+        (Primrec.list_take.comp (hD1p.comp (Primrec.fst.comp Primrec.fst))
+          (Primrec.snd.comp Primrec.fst))
+    have hf : Primrec₂ fun (x : ℕ × List Bool) (b : ℕ) =>
+        if act x.1 b then levelBadB Ψ b (res b x.1) (Ns x.1) (x.2.take (D1 x.1)) else 0 :=
+      (Primrec.ite hact hlev (Primrec.const 0)).to₂
+    exact (primrec_sum_map (Primrec.list_range.comp (Primrec.succ.comp Primrec.fst)) hf).to₂
+  have hbad : Primrec₂ bad := by
+    have h1 : PrimrecPred fun x : ℕ × List Bool => 0 < cnt (x.1 + j₁) x.2 :=
+      Primrec.nat_lt.comp (Primrec.const 0) (hcntp.comp (hJ1.comp Primrec.fst) Primrec.snd)
+    have h2 : Primrec fun x : ℕ × List Bool => bad' (x.1 + j₁) (x.2.take (d' (x.1 + j₁))) :=
+      hbad'.comp (hJ1.comp Primrec.fst)
+        (Primrec.list_take.comp (hd'.comp (hJ1.comp Primrec.fst)) Primrec.snd)
+    exact (Primrec.or.comp h1.decide h2).to₂
+  have hd : Primrec d := Primrec.nat_max.comp (hD1p.comp hJ1) (hd'.comp hJ1)
+  -- unfolding the count on a prefix
+  have hcnt_pre : ∀ J ω D, D1 J ≤ D → cnt J (pre ω D) = ((List.range (J + 1)).map fun b =>
+      if act J b then levelBadB Ψ b (res b J) (Ns J) (pre ω (D1 J)) else 0).sum := by
+    intro J ω D hD
+    simp only [hcnt, pre_take' ω hD]
+  have hdj : ∀ j, dens bad d j [] ≤ B / ((j : ℝ) + ((j₁ + 1 : ℕ) : ℝ)) ^ 2 := by
+    intro j
+    set J := j + j₁ with hJ
+    obtain ⟨hn8, hnN, hW6⟩ := hj₀ J (by omega)
+    rw [dens_eq_real]
+    set Lv : ℕ → Set (ℕ → Bool) := fun b =>
+      if act J b then {ω | 0 < levelBadB Ψ b (res b J) (Ns J) (pre ω (D1 J))} else ∅ with hLv
+    have hsub : {ω | bad j (pre ω (d j)) = true} ⊆
+        (⋃ b ∈ Finset.range (J + 1), Lv b) ∪ {ω | bad' J (pre ω (d' J)) = true} := by
+      intro ω hω
+      simp only [Set.mem_setOf_eq, hbaddef, Bool.or_eq_true, decide_eq_true_eq] at hω
+      rw [pre_take' ω (le_max_right _ _), hcnt_pre J ω _ (le_max_left _ _)] at hω
+      rcases hω with h | h
+      · left
+        rw [list_sum_range_map] at h
+        obtain ⟨b, hb, hpos⟩ := exists_pos_of_sum_pos h
+        simp only [Set.mem_iUnion]
+        refine ⟨b, hb, ?_⟩
+        simp only [hLv]
+        split_ifs at hpos ⊢ with ha
+        · exact hpos
+        · exact absurd hpos (lt_irrefl 0)
+      · right; exact h
+    have hN1 : 1 ≤ Ns J := by omega
+    have hW := hW0 (Ns J)
+    have hJ0 : (0 : ℝ) < (J : ℝ) + 1 := by positivity
+    have hLb : ∀ b ∈ Finset.range (J + 1), coins.real (Lv b) ≤ (1 / 2 : ℝ) ^ b / ((J : ℝ) + 1) ^ 2 := by
+      intro b hb
+      simp only [hLv]
+      split_ifs with ha
+      · obtain ⟨hb2, hSb, h8⟩ := ha
+        have hresN : res b J ≤ Ns J := (Nat.div_le_self _ _).trans hnN
+        have hbJ : b ≤ J + 1 := by have := Finset.mem_range.1 hb; omega
+        have hD : b ^ (Ns J + 2 * res b J) ≤ 2 ^ D1 J := by
+          calc b ^ (Ns J + 2 * res b J) ≤ (2 ^ b) ^ (Ns J + 2 * res b J) :=
+                Nat.pow_le_pow_left (Nat.lt_two_pow_self).le _
+            _ = 2 ^ (b * (Ns J + 2 * res b J)) := by rw [← pow_mul]
+            _ ≤ 2 ^ D1 J := Nat.pow_le_pow_right (by norm_num) (by
+                simp only [hD1]
+                exact Nat.mul_le_mul hbJ (by
+                  have : res b J ≤ nr J := Nat.div_le_self _ _
+                  omega))
+        have hκ0 : (0 : ℝ) ≤ κ b := by positivity
+        have hL := level_bound_wb Ψ A hΨ hA0 G hGm hAG hκ0 hW hb2 h8 hresN hD
+          (fun h hh => hsm b hb2 hSb h hh _ hN1)
+          (fun h hh => (hsm b hb2 hSb h hh _ (by omega)).trans (by
+            have : 0 ≤ (κ b : ℝ) * |(h : ℝ)| * ((Ns J + res b J : ℕ) : ℝ) ^ 2 := by positivity
+            exact mul_le_mul_of_nonneg_left (hWa (by omega)) this))
+        refine hL.trans ?_
+        refine mass_reduce (hH1 b) (Nat.div_mul_le_self _ _) hW hκ0 Zc_nonneg ?_ hW6
+        simp only [hHdef]; push_cast
+        have : Zc + 1 ≤ (z : ℝ) + 1 := by linarith
+        gcongr
+      · simp only [measureReal_empty]; positivity
+    refine (measureReal_mono hsub (measure_ne_top _ _)).trans
+      ((measureReal_union_le _ _).trans ?_)
+    have hU : coins.real (⋃ b ∈ Finset.range (J + 1), Lv b) ≤ 2 / ((J : ℝ) + 1) ^ 2 := by
+      refine (measureReal_biUnion_finset_le _ _).trans ((Finset.sum_le_sum hLb).trans ?_)
+      rw [← Finset.sum_div]
+      gcongr
+      have := sum_geometric_two_le (J + 1)
+      simpa [one_div] using this
+    have hm := hmass J
+    have hJR : ((j : ℝ) + ((j₁ + 1 : ℕ) : ℝ)) = (J : ℝ) + 1 := by rw [hJ]; push_cast; ring
+    rw [hJR]
+    calc _ ≤ 2 / ((J : ℝ) + 1) ^ 2 + 1 / ((J : ℝ) + 1) ^ 2 := add_le_add hU hm
+      _ = B / ((J : ℝ) + 1) ^ 2 := by rw [hBdef]; ring
+  have hnn : ∀ j, 0 ≤ dens bad d j [] := fun j => dens_nonneg j []
+  obtain ⟨hs0, ht0⟩ := tsum_tail_le _ hnn B hB0.le 0 (j₁ + 1) (by omega) (fun j _ => hdj j)
+  simp only [zero_le, if_true, Nat.cast_zero, zero_add] at hs0 ht0
+  have hj₁pos : (0 : ℝ) < j₁ := by have : 0 < j₁ := by omega
+                                   exact_mod_cast this
+  have hj₁B : 4 * B ≤ (j₁ : ℝ) := by
+    rw [hj₁def, hBdef]; push_cast; have : (0 : ℝ) ≤ j₀ := by positivity
+    linarith
+  have htot : ∑' j, dens bad d j [] ≤ 1 / 4 := by
+    refine ht0.trans ?_
+    push_cast
+    rw [show (j₁ : ℝ) + 1 - 1 = j₁ by ring, div_le_div_iff₀ hj₁pos (by norm_num)]
+    linarith
+  set c : ℕ := ⌈B⌉₊ + 1 with hcdef
+  have hcB : B ≤ (c : ℝ) := by rw [hcdef]; push_cast; linarith [Nat.le_ceil B]
+  set Jk : ℕ → ℕ := fun k => c * 8 ^ (k + 1) with hJdef
+  have hJp : Primrec Jk :=
+    Primrec.nat_mul.comp (Primrec.const _) (primrec_pow.comp (Primrec.const 8) Primrec.succ)
+  have htail : ∀ k, ∑' j, (if Jk k < j then dens bad d j [] else 0) ≤ (1 / 8 : ℝ) ^ (k + 1) := by
+    intro k
+    obtain ⟨_, ht⟩ := tsum_tail_le _ hnn B hB0.le (Jk k + 1) (j₁ + 1) (by omega) (fun j _ => hdj j)
+    have e : (fun j => if Jk k < j then dens bad d j [] else 0) =
+        fun j => if Jk k + 1 ≤ j then dens bad d j [] else 0 := by
+      funext j; simp only [Nat.lt_iff_add_one_le]
+    rw [e]
+    refine ht.trans ?_
+    have h8 : (0 : ℝ) < 8 ^ (k + 1) := by positivity
+    have hJR : ((Jk k : ℕ) : ℝ) = c * 8 ^ (k + 1) := by simp [hJdef]
+    have hden : (0 : ℝ) < ((Jk k + 1 : ℕ) : ℝ) + ((j₁ + 1 : ℕ) : ℝ) - 1 := by
+      push_cast; rw [hJR]
+      have : (0 : ℝ) ≤ c * 8 ^ (k + 1) := by positivity
+      linarith
+    rw [div_pow, one_pow, div_le_div_iff₀ hden h8]
+    push_cast; rw [hJR]
+    have : (1 : ℝ) ≤ 8 ^ (k + 1) := one_le_pow₀ (by norm_num)
+    nlinarith
+  obtain ⟨e, hce, hav⟩ := exists_primrec_avoid bad hbad d hd Jk hJp hs0 htot htail
+  have hpass : ∀ J', j₁ ≤ J' → cnt J' (pre e (D1 J')) = 0 ∧
+      bad' J' (pre e (d' J')) = false := by
+    intro J' hJ'
+    have h := hav (J' - j₁)
+    simp only [hbaddef, hddef, Nat.sub_add_cancel hJ', Bool.or_eq_false_iff,
+      decide_eq_false_iff_not, not_lt, Nat.le_zero] at h
+    rw [pre_take' e (le_max_right _ _), hcnt_pre J' e _ (le_max_left _ _)] at h
+    rw [hcnt_pre J' e _ le_rfl]
+    exact h
+  refine ⟨e, hce, ?_, j₁, fun j hj => (hpass j hj).2⟩
+  intro b hb hSb
+  have hrestop : Tendsto (fun J => res b J) atTop atTop := by
+    refine tendsto_atTop.2 fun M => ?_
+    filter_upwards [hnrtop.eventually_ge_atTop (M * H b)] with J hJ
+    exact (Nat.le_div_iff_mul_le (hH1 b)).2 hJ
+  rw [isNormal_iff_equidistributed_orbit b hb]
+  refine equidistributed_of_badic b hb _ fun ℓ hℓ v hv => ?_
+  refine tendsto_div_of_monotone_of_exists_subseq_tendsto_div _ _
+    (fun m n h => by exact_mod_cast visitCount_mono_n _ _ _ h) fun a ha =>
+      ⟨Ns, hrat a ha, hNtop, ?_⟩
+  rw [tendsto_iff_norm_sub_tendsto_zero]
+  refine squeeze_zero_norm' ?_ (tendsto_one_div_atTop_nhds_zero_nat.comp hrestop)
+  filter_upwards [eventually_ge_atTop (max (max j₀ j₁) b),
+    hrestop.eventually_ge_atTop (max 8 (b ^ ℓ))] with J' hJ' hℓn
+  obtain ⟨hn8, hnN, -⟩ := hj₀ J' (by omega)
+  obtain ⟨hcnt0, -⟩ := hpass J' (by omega)
+  have hact : act J' b := ⟨hb, hSb, by omega⟩
+  have hlev : levelBadB Ψ b (res b J') (Ns J') (pre e (D1 J')) = 0 := by
+    simp only [hcnt] at hcnt0
+    rw [pre_take' e le_rfl, list_sum_range_map, Finset.sum_eq_zero_iff] at hcnt0
+    have := hcnt0 b (Finset.mem_range.2 (by omega))
+    rwa [if_pos hact] at this
+  obtain ⟨htop, hp⟩ := pass_of_levelBadB_zero Ψ hb hlev
+  have hℓle : ℓ ≤ res b J' := (Nat.lt_pow_self (by omega : 1 < b)).le.trans (by omega)
+  have hresN : res b J' ≤ Ns J' := (Nat.div_le_self _ _).trans hnN
+  have hD : b ^ (Ns J' + 2 * res b J') ≤ 2 ^ D1 J' := by
+    calc b ^ (Ns J' + 2 * res b J') ≤ (2 ^ b) ^ (Ns J' + 2 * res b J') :=
+          Nat.pow_le_pow_left (Nat.lt_two_pow_self).le _
+      _ = 2 ^ (b * (Ns J' + 2 * res b J')) := by rw [← pow_mul]
+      _ ≤ 2 ^ D1 J' := Nat.pow_le_pow_right (by norm_num) (by
+          simp only [hD1]
+          exact Nat.mul_le_mul (by omega) (by
+            have : res b J' ≤ nr J' := Nat.div_le_self _ _
+            omega))
+  have hax := (hAG e (D1 J')).1
+  simp only [Real.norm_eq_abs, abs_abs, Function.comp]
+  exact good_of_pass Ψ A hΨ hb (by omega) (by omega) hℓle (G e) _ (hA0 _) hax
+    (eta_le_b A hD (G e) _ hax (hAG e _).2) htop (hp ℓ hℓ (by omega) v hv)
+
 end NormalNumbers.SchedFamily

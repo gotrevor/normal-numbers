@@ -5,6 +5,7 @@ Authors: Trevor Morris
 -/
 import NormalNumbers.CantorLiouville
 import NormalNumbers.LevinSparse
+import NormalNumbers.SchedFamily
 
 /-!
 # The exact normality profile of the Cantor–Liouville points: `IsNormal b x ↔ ¬ 3 ∣ b`
@@ -44,11 +45,12 @@ absorbed by `3ᵗ < b²`, giving the constant `16 b⁶ |h|` in `secondMoment_le_
 * `b = 4, 16`: covered both directly and via base 2.  `b = 10, 28` (`b ≡ 1 mod 9`, small orbit
   mod `3ᴹ`): `t = 2, 3`; only the constant changes.
 
-## Leaves (sorry, with confidence)
+## Status
 
-`padicValNat_pow_sub_one_le` (95%), `sum_Hf_le_b` (85%), `secondMoment_le_b` (80%),
-`fract_lt_of_mem_run` (90%), `not_isNormal_of_three_dvd` (85%),
-`exists_computable_normal_sched_family` (70%).  Everything else is proved wiring.
+All leaves proved; the computable headline uses only `propext`, `Classical.choice`,
+`Quot.sound`.  The family derandomizer is `SchedFamily.exists_computable_normal_sched_family'`
+(base `b` runs at resolution `n / H b`, `H b ≥ 74016 (κ b + 1)(Zc + 1) 2ᵇ`, so all bases at one
+stage cost `O((J+1)^{-2})`).
 -/
 
 open MeasureTheory Filter Topology
@@ -904,8 +906,9 @@ theorem exists_computable_normal_sched_family (Ψ : ℕ → ℕ → List Bool �
     (bad' : ℕ → List Bool → Bool) (hbad' : Primrec₂ bad') (d' : ℕ → ℕ) (hd' : Primrec d')
     (hmass : ∀ j, coins.real {ω | bad' j (pre ω (d' j)) = true} ≤ 1 / ((j : ℝ) + 1) ^ 2) :
     ∃ e : ℕ → Bool, Computable e ∧ (∀ b, 2 ≤ b → S b → IsNormal b (G e)) ∧
-      ∃ j₁, ∀ j, j₁ ≤ j → bad' j (pre e (d' j)) = false := by
-  sorry
+      ∃ j₁, ∀ j, j₁ ≤ j → bad' j (pre e (d' j)) = false :=
+  SchedFamily.exists_computable_normal_sched_family' Ψ hΨp A hΨ hA0 G hGm hAG S hS κ hκ W hW0 hWa
+    hsm Ns nr hNs hnr hNtop hrat hnrtop hev bad' hbad' d' hd' hmass
 
 /-- The base-`b` second moment in `clW` form (wiring from `secondMoment_le_b`). -/
 theorem cl_secondMoment_b {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) (h : ℤ) (hh : h ≠ 0) (N : ℕ)

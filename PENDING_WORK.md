@@ -2824,3 +2824,13 @@ propext / Classical.choice / Quot.sound.  It takes `BakerBanajiQuarterCantor` as
 Remaining in the file: row 5 only (operator: no mechanism, leave).
 Note: Bridge edit forces rebuild of whole-Mathlib importers; parallel `lake build` hits
 "Too many open files" here — build those modules one at a time, then the full build.
+
+## Bugeaud 10.37 strengthened: normality profile (2026-10-04) — DONE
+* `CantorLiouvilleAll.exists_computable_liouville_mem_cantorSet_normalProfile`: computable Liouville
+  `x ∈ K` with `IsNormal b x ↔ ¬ 3 ∣ b` for all `b ≥ 2`.  `#print axioms` = propext, Classical.choice,
+  Quot.sound.  CantorLiouvilleAll.lean sorry-free.
+* Mechanism: `sum_Hf_le_b` (orbit of `b²` mod `3^{t+n}` fills residue classes mod `3^t`, `t = v₃(b²−1)`,
+  via exact LTE `padicValNat_sq_pow_sub_one`), `secondMoment_le_b`, `run_split`/`fract_lt_of_mem_run`,
+  `not_isNormal_of_three_dvd` (frequency of `[0,1/b)` ≥ 7/8 at `n = log_b 3^T`).
+* New module `SchedFamily.lean`: base-`b` visit deviation / level tests, and the multi-base derandomizer
+  (resolution `nr J / H b` makes total per-stage mass ≤ 3/(J+1)²).
