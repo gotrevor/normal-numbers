@@ -52,10 +52,11 @@ theorem not_isNormal_of_zeroFreqHalf [NeZero k] (hk : 3 ≤ k) (h : ZeroFreqHalf
 
 /-- Wiring: `ZeroFreqHalf` answers Pulari's Q-DPDT in every base `k ≥ 3`. -/
 theorem pulariDPDTQuestion_of_zeroFreqHalf [NeZero k] (hk : 3 ≤ k) (h : ZeroFreqHalf k)
-    (hCP : Literature.cartonPerifel_normal) (hFS : Literature.fsDim_one_isNormal) :
+    (hFS : Literature.fsDim_one_isNormal) :
     PulariDPDTQuestion k := by
   obtain ⟨hse, hx, hint, hkad, hdim⟩ :=
-    mirrorEnum_cpReal_facts_of_not_normal (by omega) (not_isNormal_of_zeroFreqHalf hk h) hCP hFS
+    mirrorEnum_cpReal_facts_of_not_normal (by omega) (not_isNormal_of_zeroFreqHalf hk h)
+      (isNormal_cpSeq (by omega)) hFS
   exact ⟨mirrorEnum k, hse, isDPDTEnum_mirror, cpReal k, hx, hint, hkad, hdim⟩
 
 /-- **Open node.**  Pulari's Q-DPDT in base 2, where the free-reduction mechanism does not

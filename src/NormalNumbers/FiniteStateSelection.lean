@@ -342,15 +342,18 @@ sequences*, Log. Methods Comput. Sci. 20(3) (2024) 15:1–15:8, arXiv:2205.00734
 (`pro:formal`): the sequence `x = w₁ w̃₁ w₂ w̃₂ ⋯`, `wₙ` the lexicographic concatenation of all
 length-`n` words, is normal ("The proof that the sequence `x` is normal is an easy adaptation that
 the Champernowne sequence is normal [Becher–Carton 2018, Thm 7.7.1]").  Their proposition is stated
-for "large enough" alphabets because of the COMPRESSION claim; the normality assertion is made for
-the sequence as defined, and we transcribe it for every `k ≥ 2`.  Referee: the base range. -/
+"for some large enough integer `k`", and the paper notes that `k ⩾ 7` is sufficient; the `k ⩾ 5`
+remark there concerns compression experiments, not normality.  So we transcribe it for `k ≥ 7`
+only (referee, docs/FINITE-STATE-REFEREE-2026-10-04.md); smaller `k` is the believed leaf
+`FiniteState.isNormal_cpSeq`. -/
 def cartonPerifel_normal : Prop :=
-  ∀ (k : ℕ) [NeZero k], 2 ≤ k → IsNormalSequence k fun i => (cpSeq k i : ℕ)
+  ∀ (k : ℕ) [NeZero k], 7 ≤ k → IsNormalSequence k fun i => (cpSeq k i : ℕ)
 
 /-- **Finite-state dimension one implies normal**, in decompression form: Bourke–Hitchcock–
 Vinodchandran, *Entropy rates and finite-state dimension*, Theoret. Comput. Sci. 349 (2005)
 (a sequence is normal iff its finite-state dimension is `1`), composed with Doty–Moser,
-*Finite-state dimension and lossy decompressors*, arXiv:cs/0609096, Theorem 3.11
+*Finite-state dimension and lossy decompressors*, arXiv:cs/0609096, Theorem 3.12 (the direction `fsDim ≤ dim_FS`; Thm 3.11 is the converse per-prefix form;
+Mayordomo arXiv:2208.00157 Thm 3.2 states the fixed-transducer form directly)
 (`dim_FS(S) = inf_T liminf K^T(S↾n)/n`), exactly as Pulari 2602.01199 Lemma 1 combines them.
 Only the direction "dimension one ⇒ normal" (Schnorr–Stimm's direction) is transcribed.
 Referee: that the `FST` model here (outputs in `Σ*`, no injectivity) is the Doty–Moser
@@ -1218,13 +1221,12 @@ theorem fsDim_lt_one_of_not_normal (hFS : Literature.fsDim_one_isNormal) [NeZero
 the coder's names of `cpSeq k` are not normal. -/
 theorem mirrorEnum_cpReal_facts_of_not_normal [NeZero k] (hk2 : 2 ≤ k)
     (hnn : ¬ IsNormalSequence k fun i => (encSeq (cpSeq k) i : ℕ))
-    (hCP : Literature.cartonPerifel_normal) (hFS : Literature.fsDim_one_isNormal) :
+    (hn : IsNormalSequence k fun i => (cpSeq k i : ℕ)) (hFS : Literature.fsDim_one_isNormal) :
     IsSepEnum (mirrorEnum k) ∧ cpReal k ∈ Set.Ico (0 : ℝ) 1 ∧
       (∀ n, ((scaled (mirrorEnum k) (cpReal k) n : ℤ) : ℝ)
         = (k : ℝ) ^ n * bestBelow (mirrorEnum k) (cpReal k) n) ∧
       KAdicEquidist k (scaled (mirrorEnum k) (cpReal k)) ∧
       fDim (mirrorEnum k) (cpReal k) < 1 := by
-  have hn : IsNormalSequence k fun i => (cpSeq k i : ℕ) := hCP k hk2
   have hp : ProperDigits k fun i => (cpSeq k i : ℕ) := properDigits_of_isNormalSequence hk2 hn
   have hs : ∀ i, (cpSeq k i : ℕ) < k := fun i => (cpSeq k i).isLt
   have hx : cpReal k ∈ Set.Ico (0 : ℝ) 1 := realOfDigits_mem_Ico k hk2 _ hs hp
@@ -1243,6 +1245,16 @@ theorem mirrorEnum_cpReal_facts_of_not_normal [NeZero k] (hk2 : 2 ≤ k)
     exact lt_of_le_of_lt (fDim_le_fsDim_of_decode hk2 (decRun (k := k) []) _ _ hg hp)
       (fsDim_lt_one_of_not_normal hFS hk2 _ hnn)
 
+/-- **Believed leaf (90%): the Carton–Perifel sequence is normal in every base `k ≥ 2`.**
+Carton–Perifel cite only `k ⩾ 7` (`Literature.cartonPerifel_normal`); their normality proof is a
+one-line pointer to the Champernowne argument [Becher–Carton 2018, Thm 7.7.1], which does not use
+the size of `k`: the block `wₙ w̃ₙ` is the lexicographic list of all length-`n` words followed by its
+mirror, and both halves have the Champernowne word counts up to `O(n kⁿ)` boundary terms.  Numeric
+probe `probes/finite_state_cp_normality_probe.py` (k = 2, 3, 5 against a normal and a non-normal
+control) agrees.  Needed only for `k ∈ {2, …, 6}`. -/
+theorem isNormal_cpSeq [NeZero k] (hk : 2 ≤ k) : IsNormalSequence k fun i => (cpSeq k i : ℕ) := by
+  sorry
+
 /-- **HEADLINE (answer to Pulari's Q-DPDT, conditional on two cited inputs; confidence 85%).**
 
 Problem (Pulari, arXiv:2602.01199v2, §5 "Discussion and open questions"): "One concrete setting is
@@ -1250,7 +1262,8 @@ when the naming map is computable by a deterministic pushdown transducer.  In pa
 exist such a separator enumerator `f` and a point `x ∈ [0,1)` for which the integer sequence
 `(k^n a_n^f(x))_{n≥1}` is `k`-adically equidistributed while `dim^f_FS(x) < 1`?"
 
-Answer: **yes**, for every base `k ≥ 5`, and with a real-time (letter-to-letter) DPDT.  `f` is the
+Answer: **yes**, for every base `k ≥ 7` on the cited inputs alone (bases `3 ≤ k ≤ 6`:
+`pulariDPDTQuestion_three`, via the believed leaf `isNormal_cpSeq`), and with a real-time (letter-to-letter) DPDT.  `f` is the
 mirror enumerator `grid ∘ decRun`, `x` is the Carton–Perifel normal number `0.w₁w̃₁w₂w̃₂⋯`.
 
 English proof.  The decoder applies, at each step, a permutation of the input letter depending on
@@ -1264,21 +1277,24 @@ finite-state dimension is `< 1`, and the decoder transfers that bound to `dim^f(
 Cited inputs: `Literature.cartonPerifel_normal`, `Literature.fsDim_one_isNormal`.
 Leaves: the (proved) leaf theorems above.  `k ∈ {2,3,4}` is in
 `FiniteStateSelectionStretch` (the `1/4` bound does not separate there). -/
-theorem pulariDPDTQuestion_of_lit [NeZero k] (hk : 5 ≤ k)
+theorem pulariDPDTQuestion_of_lit [NeZero k] (hk : 7 ≤ k)
     (hCP : Literature.cartonPerifel_normal) (hFS : Literature.fsDim_one_isNormal) :
     PulariDPDTQuestion k := by
   obtain ⟨hse, hx, hint, hkad, hdim⟩ :=
-    mirrorEnum_cpReal_facts_of_not_normal (by omega) (not_isNormal_encSeq_cpSeq hk) hCP hFS
+    mirrorEnum_cpReal_facts_of_not_normal (by omega) (not_isNormal_encSeq_cpSeq (by omega))
+      (hCP k hk) hFS
   exact ⟨mirrorEnum k, hse, isDPDTEnum_mirror, cpReal k, hx, hint, hkad, hdim⟩
 
-/-- **Q-DPDT for every base `k ≥ 3`** (conditional on the same two cited inputs): the mirror
-enumerator at the Carton–Perifel point answers Pulari's question already from base `3`, via
-`not_isNormal_encSeq_cpSeq_of_three`.  Base `2` remains open (`PulariDPDTBaseTwo`). -/
-theorem pulariDPDTQuestion_of_lit_three [NeZero k] (hk : 3 ≤ k)
-    (hCP : Literature.cartonPerifel_normal) (hFS : Literature.fsDim_one_isNormal) :
+/-- **Q-DPDT for every base `k ≥ 3`** (conditional on `fsDim_one_isNormal` and the believed leaf
+`isNormal_cpSeq`): the mirror enumerator at the Carton–Perifel point answers Pulari's question
+already from base `3`, via `not_isNormal_encSeq_cpSeq_of_three`.  Base `2` remains open
+(`PulariDPDTBaseTwo`). -/
+theorem pulariDPDTQuestion_three [NeZero k] (hk : 3 ≤ k)
+    (hFS : Literature.fsDim_one_isNormal) :
     PulariDPDTQuestion k := by
   obtain ⟨hse, hx, hint, hkad, hdim⟩ :=
-    mirrorEnum_cpReal_facts_of_not_normal (by omega) (not_isNormal_encSeq_cpSeq_of_three hk) hCP hFS
+    mirrorEnum_cpReal_facts_of_not_normal (by omega) (not_isNormal_encSeq_cpSeq_of_three hk)
+      (isNormal_cpSeq (by omega)) hFS
   exact ⟨mirrorEnum k, hse, isDPDTEnum_mirror, cpReal k, hx, hint, hkad, hdim⟩
 
 /-- **HEADLINE (answer to Pulari's Q-weak for synchronous relabelings, conditional on Pulari's
@@ -1310,12 +1326,13 @@ decoder: otherwise the mirror enumerator would be a synchronous finite-state rel
 separator enumerator, `pulariWeakening_of_lit` would make `cpReal k` mirror-normal (its scaled
 sequence is `k`-adically equidistributed), contradicting `dim < 1`.  This is the known-true control
 for the mechanism: on the finite-state class the same construction must fail, and it does. -/
-theorem mirror_not_mealy [NeZero k] (hk : 5 ≤ k) (hCP : Literature.cartonPerifel_normal)
+theorem mirror_not_mealy [NeZero k] (hk : 7 ≤ k) (hCP : Literature.cartonPerifel_normal)
     (hFS : Literature.fsDim_one_isNormal) (hP : Literature.pulari_coherent_eqchar) :
     ¬ ∃ M : Mealy k, ∀ w, M.run w = decRun [] w := by
   rintro ⟨M, hM⟩
   obtain ⟨hse, hx, -, hkad, hdim⟩ :=
-    mirrorEnum_cpReal_facts_of_not_normal (by omega) (not_isNormal_encSeq_cpSeq hk) hCP hFS
+    mirrorEnum_cpReal_facts_of_not_normal (by omega) (not_isNormal_encSeq_cpSeq (by omega))
+      (hCP k hk) hFS
   have he : mealyEnum M = mirrorEnum k := funext fun w => by simp only [mealyEnum, mirrorEnum, hM]
   have hW := pulariWeakening_of_lit (by omega) hP M (he ▸ hse) (cpReal k) hx
   rw [he] at hW
