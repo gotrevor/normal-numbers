@@ -426,6 +426,104 @@ theorem card_near_le (free : ℕ → Bool) (q m : ℕ) (hq : 0 < q) (hqm : q ≤
   have := CantorExpGeneric.card_near_le' free q m hq hqm r hr
   omega
 
+/-! ## The window count -/
+
+section Window
+
+open CantorExpGeneric
+
+variable {μ₀ : ℚ}
+
+theorem cast_expRunStart_succ (μ₀ : ℚ) (k : ℕ) :
+    (expRunStart μ₀ (k + 1) : ℝ) = ((k : ℝ) + 2) * expRunEnd μ₀ (expRunStart μ₀ k) := by
+  rw [expRunStart_succ]; push_cast; ring
+
+/-- Free count of `[m, n)` against the gap `[E_k, a_{k+1})`, from any `x ≥ max(m, E_k)`. -/
+theorem fc_gap_ge (hμ : 1 < μ₀) (k x m n : ℕ) (hx : expRunEnd μ₀ (expRunStart μ₀ k) ≤ x)
+    (hmx : m ≤ x) :
+    (min n (expRunStart μ₀ (k + 1)) : ℝ) - x ≤ fc (expFree μ₀) m n := by
+  rcases le_total (min n (expRunStart μ₀ (k + 1))) x with h | h
+  · have : (min n (expRunStart μ₀ (k + 1)) : ℝ) ≤ x := by exact_mod_cast h
+    have : (0 : ℝ) ≤ fc (expFree μ₀) m n := by positivity
+    linarith
+  · have h1 := fc_mono (expFree μ₀) hmx (min_le_left n (expRunStart μ₀ (k + 1)))
+    have h2 : fc (expFree μ₀) x (min n (expRunStart μ₀ (k + 1))) =
+        min n (expRunStart μ₀ (k + 1)) - x :=
+      fc_of_free _ fun i hi1 hi2 => expFree_of_gap hμ (hx.trans hi1)
+        (lt_of_lt_of_le hi2 (min_le_right _ _))
+    rw [h2] at h1
+    have : ((min n (expRunStart μ₀ (k + 1)) - x : ℕ) : ℝ) = (min n (expRunStart μ₀ (k + 1)) : ℝ) - x := by
+      rw [Nat.cast_sub h, Nat.cast_min]
+    have h1' : ((min n (expRunStart μ₀ (k + 1)) - x : ℕ) : ℝ) ≤ fc (expFree μ₀) m n := by
+      exact_mod_cast h1
+    linarith
+
+/-- **Core window lemma**, uniform in the exponent `σ ∈ [μ₀, μ₀+1]`. -/
+theorem window_core (hμ : 2 < μ₀) : ∃ C : ℝ, ∀ σ : ℝ, (μ₀ : ℝ) ≤ σ → σ ≤ μ₀ + 1 →
+    ∀ k m n : ℕ, (expRunEnd μ₀ (expRunStart μ₀ k) : ℝ) ≤ m + expRunStart μ₀ k + 2 →
+      (σ - 1) * m ≤ expRunStart μ₀ (k + 1) + 4 → σ * m - 4 ≤ n →
+      ((μ₀ : ℝ) - 2) * m ≤ fc (expFree μ₀) m n + C := by
+  have hμ1 : (1 : ℚ) < μ₀ := by linarith
+  set μ : ℝ := (μ₀ : ℝ) with hμdef
+  have hμR : (2 : ℝ) < μ := by rw [hμdef]; exact_mod_cast hμ
+  set K₀ : ℕ := ⌈μ₀⌉₊
+  set A : ℝ := (expRunStart μ₀ K₀ : ℝ)
+  set B₁ : ℝ := (A + 4) / (μ - 1)
+  have hB₁ : 0 ≤ B₁ := div_nonneg (by positivity) (by linarith)
+  refine ⟨(μ - 2) * B₁ + 3 * μ + 12, fun σ hσ1 hσ2 k m n h1 h2 h3 => ?_⟩
+  have hfc0 : (0 : ℝ) ≤ fc (expFree μ₀) m n := by positivity
+  have hm0 : (0 : ℝ) ≤ m := by positivity
+  set a : ℝ := (expRunStart μ₀ k : ℝ) with ha
+  set E : ℝ := (expRunEnd μ₀ (expRunStart μ₀ k) : ℝ) with hE
+  set a' : ℝ := (expRunStart μ₀ (k + 1) : ℝ) with ha'
+  have hEa : μ * a ≤ E := expRunEnd_ge_r μ₀ _
+  have hEa1 : E < μ * a + 1 := expRunEnd_lt_r hμ1 _
+  have ha0 : 0 ≤ a := by positivity
+  have hstep : a' = ((k : ℝ) + 2) * E := cast_expRunStart_succ μ₀ k
+  rcases lt_or_ge k K₀ with hk | hk
+  · -- small `k`: `m` is bounded
+    have hmono : a' ≤ A := by
+      simp only [ha', A]; exact_mod_cast (expRunStart_strictMono hμ1).monotone (by omega)
+    have hm : m ≤ B₁ := by
+      rw [le_div_iff₀ (by linarith)]
+      nlinarith
+    nlinarith
+  · have hkμ : μ ≤ k := by
+      have : (μ₀ : ℝ) ≤ (K₀ : ℝ) := by exact_mod_cast Nat.le_ceil μ₀
+      have : (K₀ : ℝ) ≤ k := by exact_mod_cast hk
+      linarith
+    rcases le_or_gt (expRunEnd μ₀ (expRunStart μ₀ k)) m with hmE | hmE
+    · have g := fc_gap_ge hμ1 k m m n hmE le_rfl
+      have hmin : (σ - 1) * m - 4 ≤ (min n (expRunStart μ₀ (k + 1)) : ℝ) := by
+        push_cast; refine le_min ?_ ?_ <;> [nlinarith; linarith]
+      nlinarith
+    · have g := fc_gap_ge hμ1 k _ m n le_rfl hmE.le
+      have hmE' : (m : ℝ) < E := by rw [hE]; exact_mod_cast hmE
+      rcases le_or_gt E (n : ℝ) with hnE | hnE
+      · have hmin : min ((μ - 2) * m - 8) ((k + 1) * E) ≤ (min n (expRunStart μ₀ (k + 1)) : ℝ) - E := by
+          push_cast
+          rcases le_total (n : ℝ) a' with hn | hn
+          · rw [min_eq_left hn]
+            refine (min_le_left _ _).trans ?_
+            nlinarith
+          · rw [min_eq_right hn]
+            refine (min_le_right _ _).trans ?_
+            rw [hstep]; linarith
+        rcases le_total ((μ - 2) * m - 8) ((k + 1) * E) with hh | hh
+        · rw [min_eq_left hh] at hmin; nlinarith
+        · rw [min_eq_right hh] at hmin
+          have : (μ - 2) * m ≤ (k + 1) * E := by nlinarith
+          nlinarith
+      · -- `n < E`: then `a` and `m` are bounded
+        have h4 : (σ - 1) * E < σ * a + 2 * σ + 4 := by nlinarith
+        have h5 : (σ - 1) * (μ * a) ≤ (σ - 1) * E := mul_le_mul_of_nonneg_left hEa (by linarith)
+        have h6 : a * (μ * (μ - 2)) ≤ 2 * μ + 6 := by nlinarith
+        have h7 : (μ - 2) * m ≤ (μ - 2) * (μ * a + 1) := by
+          apply mul_le_mul_of_nonneg_left _ (by linarith); linarith
+        nlinarith
+
+end Window
+
 /-- **Window free count on the Borel–Cantelli range.**  Confidence 85%.
 
 English proof.  Write `a = a_k`, `E = ⌈μ₀ a⌉`, `a' = a_{k+1}`, window `W(m) = F(⌈τm⌉) − F(m)`.
@@ -442,7 +540,24 @@ theorem window_freeCount_ge (μ₀ : ℚ) (hμ : 2 < μ₀) (τ : ℝ) (hτ : (�
       (τ - 1) * m ≤ expRunStart μ₀ (k + 1) + 2 →
       ((μ₀ : ℝ) - 2) * m ≤
         (freeCount (expFree μ₀) ⌈τ * m⌉₊ : ℝ) - freeCount (expFree μ₀) m + C := by
-  sorry
+  obtain ⟨C, hC⟩ := window_core hμ
+  refine ⟨C, fun k m h1 h2 => ?_⟩
+  have hτ2 : (2 : ℝ) < τ := lt_trans (by exact_mod_cast hμ) hτ
+  have hm0 : (0 : ℝ) ≤ m := by positivity
+  have hmn : m ≤ ⌈τ * m⌉₊ := by
+    have : (m : ℝ) ≤ τ * m := by nlinarith
+    exact_mod_cast this.trans (Nat.le_ceil _)
+  rw [CantorExpGeneric.freeCount_sub _ hmn]
+  push_cast
+  have hσ := hC (min τ ((μ₀ : ℝ) + 1)) (le_min hτ.le (by linarith)) (min_le_right _ _) k m ⌈τ * m⌉₊
+    (by exact_mod_cast h1)
+    (by have : (min τ ((μ₀ : ℝ) + 1) - 1) * m ≤ (τ - 1) * m :=
+          mul_le_mul_of_nonneg_right (by linarith [min_le_left τ ((μ₀ : ℝ) + 1)]) hm0
+        linarith)
+    (by have : min τ ((μ₀ : ℝ) + 1) * m ≤ τ * m :=
+          mul_le_mul_of_nonneg_right (min_le_left _ _) hm0
+        linarith [Nat.le_ceil (τ * m)])
+  linarith
 
 theorem rho_lt_one (μ₀ : ℝ) (hμ : threshold < μ₀) : 3 * (2 : ℝ) ^ (-(μ₀ - 2)) < 1 := by
   have h1 : (3 : ℝ) = 2 ^ Real.logb 2 3 := (Real.rpow_logb (by norm_num) (by norm_num) (by norm_num)).symm
@@ -564,7 +679,81 @@ and `a_{j+1} ≥ (j+2) E_j`; the free places `[E_{j}, a_{j+1})` before the last 
 outnumber all earlier forced places by the factor `j+1`, so `F(M) ≥ M/(2μ₀ + 4) − 4`. -/
 theorem le_freeCount_exp (μ₀ : ℚ) (hμ : 1 < μ₀) :
     ∃ c : ℝ, 0 < c ∧ ∀ M : ℕ, c * M ≤ freeCount (expFree μ₀) M + 4 := by
-  sorry
+  open CantorExpGeneric in
+  have hF_mono : ∀ x y, x ≤ y → freeCount (expFree μ₀) x ≤ freeCount (expFree μ₀) y := fun x y h => by
+    rw [freeCount_sub _ h]; omega
+  have hA : ∀ k, expRunStart μ₀ k ≤ 2 * freeCount (expFree μ₀) (expRunStart μ₀ k) := by
+    intro k
+    cases k with
+    | zero =>
+      rw [show expRunStart μ₀ 0 = 4 from rfl, freeCount_eq_fc,
+        fc_of_free _ fun i _ hi => expFree_of_lt_four hμ hi]; norm_num
+    | succ k =>
+      have h1 := freeCount_sub (expFree μ₀) (end_lt_start_succ hμ k).le
+      rw [fc_of_free _ fun i hi1 hi2 => expFree_of_gap hμ hi1 hi2] at h1
+      rw [h1, expRunStart_succ]
+      have : (k + 2) * expRunEnd μ₀ (expRunStart μ₀ k) - expRunEnd μ₀ (expRunStart μ₀ k) =
+          (k + 1) * expRunEnd μ₀ (expRunStart μ₀ k) := by
+        rw [show k + 2 = (k + 1) + 1 by ring, add_mul, one_mul, Nat.add_sub_cancel]
+      rw [this]; nlinarith
+  have hμR : (1 : ℝ) < (μ₀ : ℝ) := by exact_mod_cast hμ
+  set μ : ℝ := (μ₀ : ℝ)
+  refine ⟨1 / (2 * μ + 2), by positivity, fun M => ?_⟩
+  have hc : (1 / (2 * μ + 2)) * (2 * μ + 2) = 1 := by field_simp
+  have hF0 : (0 : ℝ) ≤ freeCount (expFree μ₀) M := by positivity
+  rcases lt_or_ge M 4 with hM | hM
+  · have : (M : ℝ) ≤ 4 := by exact_mod_cast hM.le
+    have : 1 / (2 * μ + 2) ≤ 1 := by rw [div_le_one (by linarith)]; linarith
+    nlinarith
+  have hex : ∃ j, M < expRunStart μ₀ j := ⟨M, lt_expRunStart hμ M⟩
+  set j := Nat.find hex
+  have hj : M < expRunStart μ₀ j := Nat.find_spec hex
+  have hj0 : j ≠ 0 := by
+    intro h; rw [h] at hj; simp [expRunStart] at hj; omega
+  obtain ⟨k, hk1⟩ : ∃ k, j = k + 1 := ⟨j - 1, by omega⟩
+  rw [hk1] at hj
+  have hk : expRunStart μ₀ k ≤ M := by
+    by_contra h; exact Nat.find_min hex (show k < Nat.find hex by omega) (by omega)
+  have hAk := hA k
+  have hAkR : (expRunStart μ₀ k : ℝ) ≤ 2 * freeCount (expFree μ₀) (expRunStart μ₀ k) := by
+    exact_mod_cast hAk
+  have hEa1 := expRunEnd_lt_r hμ (expRunStart μ₀ k)
+  rcases lt_or_ge M (expRunEnd μ₀ (expRunStart μ₀ k)) with hME | hME
+  · have hFm : (freeCount (expFree μ₀) (expRunStart μ₀ k) : ℝ) ≤ freeCount (expFree μ₀) M := by
+      exact_mod_cast hF_mono _ _ hk
+    have hMR : (M : ℝ) < μ * expRunStart μ₀ k + 1 := by
+      have : (M : ℝ) < expRunEnd μ₀ (expRunStart μ₀ k) := by exact_mod_cast hME
+      linarith
+    have key : 1 / (2 * μ + 2) * M ≤ 1 / (2 * μ + 2) * (μ * expRunStart μ₀ k + 1) :=
+      mul_le_mul_of_nonneg_left hMR.le (by positivity)
+    have hA0 : (0 : ℝ) ≤ expRunStart μ₀ k := by positivity
+    have : 1 / (2 * μ + 2) * (μ * expRunStart μ₀ k + 1) ≤ expRunStart μ₀ k / 2 + 1 := by
+      rw [div_mul_eq_mul_div, one_mul, div_le_iff₀ (by linarith)]; nlinarith
+    linarith
+  · have h1 := freeCount_sub (expFree μ₀) hME
+    rw [fc_of_free _ fun i hi1 hi2 => expFree_of_gap hμ hi1 (lt_of_lt_of_le hi2 hj.le)] at h1
+    have h2 : (freeCount (expFree μ₀) (expRunStart μ₀ k) : ℝ) ≤
+        freeCount (expFree μ₀) (expRunEnd μ₀ (expRunStart μ₀ k)) := by
+      exact_mod_cast hF_mono _ _ (le_expRunEnd hμ _)
+    have h1R : (freeCount (expFree μ₀) M : ℝ) =
+        freeCount (expFree μ₀) (expRunEnd μ₀ (expRunStart μ₀ k)) + M - expRunEnd μ₀ (expRunStart μ₀ k) := by
+      rw [h1]; push_cast [Nat.cast_sub hME]; ring
+    have hMR : (M : ℝ) - expRunEnd μ₀ (expRunStart μ₀ k) ≥ 0 := by
+      have : (expRunEnd μ₀ (expRunStart μ₀ k) : ℝ) ≤ M := by exact_mod_cast hME
+      linarith
+    have hA0 : (0 : ℝ) ≤ expRunStart μ₀ k := by positivity
+    have hc1 : 1 / (2 * μ + 2) ≤ 1 := by rw [div_le_one (by linarith)]; linarith
+    have k1 : 1 / (2 * μ + 2) * (expRunEnd μ₀ (expRunStart μ₀ k) : ℝ) ≤ expRunStart μ₀ k / 2 + 1 := by
+      have : 1 / (2 * μ + 2) * (expRunEnd μ₀ (expRunStart μ₀ k) : ℝ) ≤
+          1 / (2 * μ + 2) * (μ * expRunStart μ₀ k + 1) :=
+        mul_le_mul_of_nonneg_left hEa1.le (by positivity)
+      have : 1 / (2 * μ + 2) * (μ * expRunStart μ₀ k + 1) ≤ expRunStart μ₀ k / 2 + 1 := by
+        rw [div_mul_eq_mul_div, one_mul, div_le_iff₀ (by linarith)]; nlinarith
+      linarith
+    have k2 : 1 / (2 * μ + 2) * ((M : ℝ) - expRunEnd μ₀ (expRunStart μ₀ k)) ≤
+        (M : ℝ) - expRunEnd μ₀ (expRunStart μ₀ k) := by
+      nlinarith
+    nlinarith
 
 /-- **Normal to every base prime to 3, a.e.**  Confidence 90%.
 
