@@ -947,4 +947,5 @@ import NormalNumbers.ReciprocalNormal
 import NormalNumbers.LevinSparse
 import NormalNumbers.CantorLiouville
 import NormalNumbers.CantorLiouvilleAll
+import NormalNumbers.SchedFamily
 import NormalNumbers.UniformBad
