@@ -29,7 +29,13 @@ compares rational over-approximations with a margin; the averaging step in BFS T
 leaves room for that margin.  Known-false sibling it must fail on: the same descent with
 target "normal in base 2" (`not_potentialWinning_isNormal`).
 
-Confidence: true 75%; Lean 25% (several laps, after headline 1).
+**Status: PROVED** (2026-10-05), by a different mechanism than the BFS game sketched above: the
+decidable dyadic-potential descent below (`Stretch`), with explicit constants.  The point lies in
+`E 40 ∩ BA 9⁻⁵` (`Stretch.cantorPoint_eBob_mem_E`, `Stretch.cantorPoint_eBob_mem_BA`), i.e.
+`‖bⁿξ‖ > b^{−40}` for every base `b ≥ 2` and `n ≥ 0`, against Temur's `154^{−2^b}`; Bob's choice
+is a primitive recursive comparison of natural numbers (`Stretch.primrec_goodNat`).  No literature
+hypothesis is used: the badly-approximable half is handled directly (one rational per window, by the
+simplex lemma `Stretch.bad_unique`), not via `Literature.BFSBadPotential`.
 -/
 
 namespace NormalNumbers.SchmidtGames
@@ -892,8 +898,203 @@ theorem goodNat_iff (k X : ℕ) : goodNat k X = true ↔ pot FF ctr rad lev k X 
   · intro h; nlinarith [pow_pos (by norm_num : (0 : ℝ) < 2) (9 * k + 8)]
   · intro h; nlinarith [pow_pos (by norm_num : (0 : ℝ) < 2) (9 * k + 8)]
 
+/-! ### Bob's test is primitive recursive -/
+
+theorem primrec_pow : Primrec₂ ((· ^ ·) : ℕ → ℕ → ℕ) := Primrec₂.unpaired'.1 Nat.Primrec.pow
+
+theorem log_eq_findGreatest {b : ℕ} (hb : 1 < b) (x : ℕ) :
+    Nat.log b x = Nat.findGreatest (fun t => b ^ t ≤ x) x := by
+  symm
+  rw [Nat.findGreatest_eq_iff]
+  refine ⟨?_, fun h => ?_, fun n hn _ hle => ?_⟩
+  · rcases Nat.eq_zero_or_pos x with rfl | hx
+    · simp
+    · exact (Nat.log_lt_self b hx.ne').le
+  · have hx : x ≠ 0 := by intro h0; subst h0; simp at h
+    exact Nat.pow_log_le_self b hx
+  · exact absurd hle (not_le.mpr (Nat.lt_pow_of_log_lt hb hn))
+
+theorem primrec_log {b : ℕ} (hb : 1 < b) : Primrec (Nat.log b) := by
+  have hp : PrimrecRel fun x t : ℕ => b ^ t ≤ x :=
+    Primrec.nat_le.comp (primrec_pow.comp (Primrec.const b) Primrec.snd) Primrec.fst
+  exact (Primrec.nat_findGreatest Primrec.id hp).of_eq fun x => (log_eq_findGreatest hb x).symm
+
+theorem primrec_sum {α : Type*} [Primcodable α] {N : α → ℕ} {f : α → ℕ → ℕ} (hN : Primrec N)
+    (hf : Primrec₂ f) : Primrec fun a => ∑ i ∈ range (N a), f a i := by
+  have hh : Primrec₂ fun (a : α) (p : ℕ × ℕ) => p.2 + f a p.1 :=
+    (Primrec.nat_add.comp (Primrec.snd.comp Primrec.snd)
+      (hf.comp Primrec.fst (Primrec.fst.comp Primrec.snd))).to₂
+  refine (Primrec.nat_rec' hN (Primrec.const 0) hh).of_eq fun a => ?_
+  generalize N a = m
+  induction m with
+  | zero => rfl
+  | succ m ih => rw [Finset.sum_range_succ, ← ih]
+
+theorem coprime_iff_bounded {p q : ℕ} (hq : 1 ≤ q) :
+    Nat.Coprime p q ↔ ∀ d < q + 1, ¬ p % d = 0 ∨ ¬ q % d = 0 ∨ d = 1 := by
+  constructor
+  · intro h d _
+    by_cases hp : p % d = 0
+    · by_cases hq' : q % d = 0
+      · right; right
+        exact Nat.eq_one_of_dvd_coprimes h (Nat.dvd_of_mod_eq_zero hp) (Nat.dvd_of_mod_eq_zero hq')
+      · right; left; exact hq'
+    · left; exact hp
+  · intro h
+    have hg : Nat.gcd p q < q + 1 := Nat.lt_succ_of_le (Nat.le_of_dvd hq (Nat.gcd_dvd_right p q))
+    rcases h _ hg with h1 | h1 | h1
+    · exact absurd (Nat.mod_eq_zero_of_dvd (Nat.gcd_dvd_left p q)) h1
+    · exact absurd (Nat.mod_eq_zero_of_dvd (Nat.gcd_dvd_right p q)) h1
+    · exact h1
+
+/-- The base-part term of Bob's sum. -/
+def TU (k X b n a : ℕ) : ℕ :=
+  if (ValidU (b, n, a) ∧ stU b n ≤ k) ∧ MeetsNat (Sum.inl (b, n, a)) k X then
+    2 ^ (10 * k + 8 - lev (Sum.inl (b, n, a))) else 0
+
+/-- The rational-part term of Bob's sum. -/
+def TB (k X p q : ℕ) : ℕ :=
+  if (ValidB (p, q) ∧ stB q ≤ k) ∧ MeetsNat (Sum.inr (p, q)) k X then
+    2 ^ (10 * k + 8 - lev (Sum.inr (p, q))) else 0
+
+theorem goodSum_eq (k X : ℕ) :
+    (∑ i ∈ (FF k).filter (fun i => MeetsNat i k X), 2 ^ (10 * k + 8 - lev i)) =
+      (∑ b ∈ range (9 ^ k), ∑ n ∈ range (4 * k + 1), ∑ a ∈ range (9 ^ k + 1), TU k X b n a) +
+      ∑ p ∈ range (3 ^ k), ∑ q ∈ range (3 ^ k), TB k X p q := by
+  rw [Finset.sum_filter, FF, Finset.sum_disjSum, Finset.sum_filter, Finset.sum_filter,
+    Finset.sum_product, Finset.sum_product]
+  congr 1
+  · refine Finset.sum_congr rfl fun b _ => ?_
+    rw [Finset.sum_product]
+    refine Finset.sum_congr rfl fun n _ => Finset.sum_congr rfl fun a _ => ?_
+    unfold TU; simp only [ite_and]
+  · refine Finset.sum_congr rfl fun p _ => Finset.sum_congr rfl fun q _ => ?_
+    unfold TB; simp only [ite_and]
+
+theorem primrec_TU : Primrec fun t : (((ℕ × ℕ) × ℕ) × ℕ) × ℕ =>
+    TU t.1.1.1.1 t.1.1.1.2 t.1.1.2 t.1.2 t.2 := by
+  have hk : Primrec fun t : (((ℕ × ℕ) × ℕ) × ℕ) × ℕ => t.1.1.1.1 :=
+    Primrec.fst.comp (Primrec.fst.comp (Primrec.fst.comp Primrec.fst))
+  have hX : Primrec fun t : (((ℕ × ℕ) × ℕ) × ℕ) × ℕ => t.1.1.1.2 :=
+    Primrec.snd.comp (Primrec.fst.comp (Primrec.fst.comp Primrec.fst))
+  have hb : Primrec fun t : (((ℕ × ℕ) × ℕ) × ℕ) × ℕ => t.1.1.2 :=
+    Primrec.snd.comp (Primrec.fst.comp Primrec.fst)
+  have hn : Primrec fun t : (((ℕ × ℕ) × ℕ) × ℕ) × ℕ => t.1.2 := Primrec.snd.comp Primrec.fst
+  have ha : Primrec fun t : (((ℕ × ℕ) × ℕ) × ℕ) × ℕ => t.2 := Primrec.snd
+  have hbn := primrec_pow.comp hb hn
+  have hb40 := primrec_pow.comp hb (Primrec.const 40)
+  have hbn40 := primrec_pow.comp hb (Primrec.nat_add.comp hn (Primrec.const 40))
+  have h9k := primrec_pow.comp (Primrec.const 9) hk
+  have hst := Primrec.succ.comp ((primrec_log (by norm_num : 1 < 9)).comp hbn)
+  have hlev := Primrec.nat_add.comp hst (Primrec.nat_add.comp (Primrec.const 8)
+    (Primrec.nat_mul.comp (Primrec.const 2) ((primrec_log (by norm_num : 1 < 2)).comp hb)))
+  have hc : PrimrecPred fun t : (((ℕ × ℕ) × ℕ) × ℕ) × ℕ =>
+      ((2 ≤ t.1.1.2 ∧ (1 ≤ t.1.2 ∨ t.1.1.2 = 2) ∧ t.2 ≤ t.1.1.2 ^ t.1.2) ∧
+        Nat.log 9 (t.1.1.2 ^ t.1.2) + 1 ≤ t.1.1.1.1) ∧
+      ((t.2 * t.1.1.2 ^ 40 - 1) * 9 ^ t.1.1.1.1 ≤ (t.1.1.1.2 + 1) * t.1.1.2 ^ (t.1.2 + 40) ∧
+        t.1.1.1.2 * t.1.1.2 ^ (t.1.2 + 40) ≤ (t.2 * t.1.1.2 ^ 40 + 1) * 9 ^ t.1.1.1.1) :=
+    PrimrecPred.and
+      (PrimrecPred.and
+        (PrimrecPred.and (Primrec.nat_le.comp (Primrec.const 2) hb)
+          (PrimrecPred.and
+            (PrimrecPred.or (Primrec.nat_le.comp (Primrec.const 1) hn)
+              (Primrec.eq.comp hb (Primrec.const 2)))
+            (Primrec.nat_le.comp ha hbn)))
+        (Primrec.nat_le.comp hst hk))
+      (PrimrecPred.and
+        (Primrec.nat_le.comp
+          (Primrec.nat_mul.comp (Primrec.nat_sub.comp (Primrec.nat_mul.comp ha hb40)
+            (Primrec.const 1)) h9k)
+          (Primrec.nat_mul.comp (Primrec.succ.comp hX) hbn40))
+        (Primrec.nat_le.comp (Primrec.nat_mul.comp hX hbn40)
+          (Primrec.nat_mul.comp (Primrec.succ.comp (Primrec.nat_mul.comp ha hb40)) h9k)))
+  have hw := primrec_pow.comp (Primrec.const 2)
+    (Primrec.nat_sub.comp (Primrec.nat_add.comp (Primrec.nat_mul.comp (Primrec.const 10) hk)
+      (Primrec.const 8)) hlev)
+  exact (Primrec.ite hc hw (Primrec.const 0)).of_eq fun t => by
+    unfold TU; exact if_congr Iff.rfl rfl rfl
+
+theorem primrec_TB : Primrec fun t : ((ℕ × ℕ) × ℕ) × ℕ => TB t.1.1.1 t.1.1.2 t.1.2 t.2 := by
+  have hk : Primrec fun t : ((ℕ × ℕ) × ℕ) × ℕ => t.1.1.1 :=
+    Primrec.fst.comp (Primrec.fst.comp Primrec.fst)
+  have hX : Primrec fun t : ((ℕ × ℕ) × ℕ) × ℕ => t.1.1.2 :=
+    Primrec.snd.comp (Primrec.fst.comp Primrec.fst)
+  have hp : Primrec fun t : ((ℕ × ℕ) × ℕ) × ℕ => t.1.2 := Primrec.snd.comp Primrec.fst
+  have hq : Primrec fun t : ((ℕ × ℕ) × ℕ) × ℕ => t.2 := Primrec.snd
+  have hq2 := primrec_pow.comp hq (Primrec.const 2)
+  have h9k := primrec_pow.comp (Primrec.const 9) hk
+  have hst := Primrec.nat_add.comp ((primrec_log (by norm_num : 1 < 9)).comp hq2) (Primrec.const 2)
+  have hpq := Primrec.nat_mul.comp (Primrec.nat_mul.comp (Primrec.const (9 ^ 5)) hp) hq
+  have hD := Primrec.nat_mul.comp (Primrec.const (9 ^ 5)) hq2
+  have hR : PrimrecRel fun (d : ℕ) (y : ℕ × ℕ) => ¬ y.1 % d = 0 ∨ ¬ y.2 % d = 0 ∨ d = 1 :=
+    PrimrecPred.or (PrimrecPred.not (Primrec.eq.comp
+        (Primrec.nat_mod.comp (Primrec.fst.comp Primrec.snd) Primrec.fst) (Primrec.const 0)))
+      (PrimrecPred.or (PrimrecPred.not (Primrec.eq.comp
+        (Primrec.nat_mod.comp (Primrec.snd.comp Primrec.snd) Primrec.fst) (Primrec.const 0)))
+        (Primrec.eq.comp Primrec.fst (Primrec.const 1)))
+  have hcop : PrimrecPred fun t : ((ℕ × ℕ) × ℕ) × ℕ =>
+      ∀ d < t.2 + 1, ¬ t.1.2 % d = 0 ∨ ¬ t.2 % d = 0 ∨ d = 1 :=
+    have h0 := PrimrecRel.comp (PrimrecRel.forall_mem_list hR)
+      (Primrec.list_range.comp (Primrec.succ.comp hq)) (Primrec.pair hp hq)
+    h0.of_eq fun t => by simp only [List.mem_range]
+  have hc : PrimrecPred fun t : ((ℕ × ℕ) × ℕ) × ℕ =>
+      ((1 ≤ t.2 ∧ t.1.2 ≤ t.2 ∧ ∀ d < t.2 + 1, ¬ t.1.2 % d = 0 ∨ ¬ t.2 % d = 0 ∨ d = 1) ∧
+        Nat.log 9 (t.2 ^ 2) + 2 ≤ t.1.1.1) ∧
+      ((9 ^ 5 * t.1.2 * t.2 - 1) * 9 ^ t.1.1.1 ≤ (t.1.1.2 + 1) * (9 ^ 5 * t.2 ^ 2) ∧
+        t.1.1.2 * (9 ^ 5 * t.2 ^ 2) ≤ (9 ^ 5 * t.1.2 * t.2 + 1) * 9 ^ t.1.1.1) :=
+    PrimrecPred.and
+      (PrimrecPred.and
+        (PrimrecPred.and (Primrec.nat_le.comp (Primrec.const 1) hq)
+          (PrimrecPred.and (Primrec.nat_le.comp hp hq) hcop))
+        (Primrec.nat_le.comp hst hk))
+      (PrimrecPred.and
+        (Primrec.nat_le.comp
+          (Primrec.nat_mul.comp (Primrec.nat_sub.comp hpq (Primrec.const 1)) h9k)
+          (Primrec.nat_mul.comp (Primrec.succ.comp hX) hD))
+        (Primrec.nat_le.comp (Primrec.nat_mul.comp hX hD)
+          (Primrec.nat_mul.comp (Primrec.succ.comp hpq) h9k)))
+  have hw := primrec_pow.comp (Primrec.const 2)
+    (Primrec.nat_sub.comp (Primrec.nat_add.comp (Primrec.nat_mul.comp (Primrec.const 10) hk)
+      (Primrec.const 8)) (Primrec.nat_add.comp hst (Primrec.const 2)))
+  refine (Primrec.ite hc hw (Primrec.const 0)).of_eq fun t => ?_
+  unfold TB
+  refine if_congr ?_ rfl rfl
+  show ((1 ≤ t.2 ∧ t.1.2 ≤ t.2 ∧ _) ∧ _) ∧ _ ↔ ((1 ≤ t.2 ∧ t.1.2 ≤ t.2 ∧ Nat.Coprime t.1.2 t.2) ∧ _) ∧ _
+  constructor
+  · rintro ⟨⟨⟨h1, h2, h3⟩, h4⟩, h5⟩; exact ⟨⟨⟨h1, h2, (coprime_iff_bounded h1).mpr h3⟩, h4⟩, h5⟩
+  · rintro ⟨⟨⟨h1, h2, h3⟩, h4⟩, h5⟩; exact ⟨⟨⟨h1, h2, (coprime_iff_bounded h1).mp h3⟩, h4⟩, h5⟩
+
 theorem primrec_goodNat : Primrec₂ goodNat := by
-  sorry
+  have hU3 : Primrec fun y : ((ℕ × ℕ) × ℕ) × ℕ =>
+      ∑ a ∈ range (9 ^ y.1.1.1 + 1), TU y.1.1.1 y.1.1.2 y.1.2 y.2 a :=
+    primrec_sum (N := fun y : ((ℕ × ℕ) × ℕ) × ℕ => 9 ^ y.1.1.1 + 1)
+      (f := fun y a => TU y.1.1.1 y.1.1.2 y.1.2 y.2 a)
+      (Primrec.succ.comp (primrec_pow.comp (Primrec.const 9)
+        (Primrec.fst.comp (Primrec.fst.comp Primrec.fst)))) primrec_TU
+  have hU2 : Primrec fun y : (ℕ × ℕ) × ℕ => ∑ n ∈ range (4 * y.1.1 + 1),
+      ∑ a ∈ range (9 ^ y.1.1 + 1), TU y.1.1 y.1.2 y.2 n a :=
+    primrec_sum (N := fun y : (ℕ × ℕ) × ℕ => 4 * y.1.1 + 1)
+      (f := fun y n => ∑ a ∈ range (9 ^ y.1.1 + 1), TU y.1.1 y.1.2 y.2 n a)
+      (Primrec.succ.comp (Primrec.nat_mul.comp (Primrec.const 4) (Primrec.fst.comp Primrec.fst)))
+      hU3
+  have hU : Primrec fun x : ℕ × ℕ => ∑ b ∈ range (9 ^ x.1), ∑ n ∈ range (4 * x.1 + 1),
+      ∑ a ∈ range (9 ^ x.1 + 1), TU x.1 x.2 b n a :=
+    primrec_sum (N := fun x : ℕ × ℕ => 9 ^ x.1)
+      (f := fun x b => ∑ n ∈ range (4 * x.1 + 1), ∑ a ∈ range (9 ^ x.1 + 1), TU x.1 x.2 b n a)
+      (primrec_pow.comp (Primrec.const 9) Primrec.fst) hU2
+  have hB2 : Primrec fun y : (ℕ × ℕ) × ℕ => ∑ q ∈ range (3 ^ y.1.1), TB y.1.1 y.1.2 y.2 q :=
+    primrec_sum (N := fun y : (ℕ × ℕ) × ℕ => 3 ^ y.1.1)
+      (f := fun y q => TB y.1.1 y.1.2 y.2 q)
+      (primrec_pow.comp (Primrec.const 3) (Primrec.fst.comp Primrec.fst)) primrec_TB
+  have hB : Primrec fun x : ℕ × ℕ => ∑ p ∈ range (3 ^ x.1), ∑ q ∈ range (3 ^ x.1),
+      TB x.1 x.2 p q :=
+    primrec_sum (N := fun x : ℕ × ℕ => 3 ^ x.1)
+      (f := fun x p => ∑ q ∈ range (3 ^ x.1), TB x.1 x.2 p q)
+      (primrec_pow.comp (Primrec.const 3) Primrec.fst) hB2
+  have h := PrimrecPred.decide (Primrec.nat_lt.comp (Primrec.nat_add.comp hU hB)
+    (primrec_pow.comp (Primrec.const 2) (Primrec.nat_add.comp (Primrec.nat_mul.comp
+      (Primrec.const 9) Primrec.fst) (Primrec.const 8))))
+  exact h.of_eq fun x => by simp only [goodNat, goodSum_eq]
 
 /-- The descent's digits. -/
 def eBob : ℕ → Bool := bits goodNat
