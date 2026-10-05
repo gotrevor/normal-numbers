@@ -172,10 +172,36 @@ children.  `2(3⁵ + 2) = 490 < 1024`. -/
 theorem exists_alive (w : List Bool) : ∃ u : List Bool, u.length = 2 * 5 ∧ Alive 5 c₀ w u := by
   sorry
 
-/-- **Leaf: the Cantor point lies in the cylinder of each prefix.**  Confidence 95%: the tail
+/-- **The Cantor point lies in the cylinder of each prefix.**  Proved: the tail
 `Σ_{i ≥ n} σᵢ · 2 · 3^{−i−1}` lies in `[0, 3^{−n}]`. -/
 theorem cpt_mem_cyl (σ : ℕ → Bool) (n : ℕ) : cpt σ ∈ cyl (List.ofFn fun i : Fin n => σ i) := by
-  sorry
+  set f : ℕ → ℝ := fun i => (ptDigit (fun _ => true) σ i : ℝ) / (3 : ℝ) ^ (i + 1) with hf
+  have hf0 : ∀ i, 0 ≤ f i := fun i => by positivity
+  have hfle : ∀ i, f i ≤ 2 * (1/3 : ℝ) ^ (i + 1) := fun i => by
+    simp only [hf, ptDigit]; rw [one_div_pow]; split_ifs <;> simp [div_eq_mul_inv]
+  have hg : Summable fun i : ℕ => 2 * (1/3 : ℝ) ^ (i + 1) :=
+    (((summable_geometric_of_lt_one (r := (1/3 : ℝ)) (by norm_num) (by norm_num)).mul_left (1/3)).mul_left 2).congr
+      fun i => by rw [pow_succ]; ring
+  have hs : Summable f := hg.of_nonneg_of_le hf0 hfle
+  have hcpt : cpt σ = ∑' i, f i := rfl
+  have hsplit := (hs.sum_add_tsum_nat_add n).symm
+  have hhead : ∑ i ∈ Finset.range n, f i = cylLeft (List.ofFn fun i : Fin n => σ i) := by
+    unfold cylLeft; rw [List.length_ofFn]
+    refine Finset.sum_congr rfl fun i hi => ?_
+    rw [Finset.mem_range] at hi
+    simp [hf, ptDigit, List.getD_eq_getElem?_getD, hi]
+  have htail0 : 0 ≤ ∑' k, f (k + n) := tsum_nonneg fun k => hf0 _
+  have htail1 : ∑' k, f (k + n) ≤ 1 / 3 ^ n := by
+    have hgn : Summable fun k : ℕ => 2 * (1/3 : ℝ) ^ (k + n + 1) := (summable_nat_add_iff n).2 hg
+    calc ∑' k, f (k + n) ≤ ∑' k : ℕ, 2 * (1/3 : ℝ) ^ (k + n + 1) :=
+          ((summable_nat_add_iff n).2 hs).tsum_le_tsum (fun k => hfle _) hgn
+      _ = ∑' k : ℕ, (2 * (1/3 : ℝ) ^ (n + 1)) * (1/3) ^ k := tsum_congr fun k => by ring
+      _ = 1 / 3 ^ n := by
+          rw [tsum_mul_left, tsum_geometric_of_lt_one (by norm_num) (by norm_num)]
+          rw [pow_succ, one_div_pow]; norm_num; field_simp
+  rw [hcpt, hsplit, hhead]
+  unfold cyl; rw [List.length_ofFn]
+  exact ⟨by linarith, by linarith⟩
 
 /-- **Leaf: the descent point is badly approximable.**  Confidence 90%.
 

@@ -205,8 +205,6 @@ def waivers : List Waiver := [
     ae_not_liouvilleWith; no mechanism of its own"⟩,
   ⟨``CantorBadNormal.exists_alive,
    "a leaf (game half): counting charged obstacles against 2¹⁰ separated children, 490 < 1024"⟩,
-  ⟨``CantorBadNormal.cpt_mem_cyl,
-   "a leaf: the ternary tail lies in [0, 3^{−n}]"⟩,
   ⟨``CantorBadNormal.descent_bad,
    "a leaf: wiring of exists_alive and cpt_mem_cyl through the stage window of q"⟩,
   ⟨``FiniteState.isFNormal_delayEnum_of_normal,
