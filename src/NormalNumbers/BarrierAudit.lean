@@ -28,6 +28,7 @@ import NormalNumbers.LogCastingOutStretch
 import NormalNumbers.EntropyProfilesStretch
 import NormalNumbers.FiniteStateSelectionStretch
 import NormalNumbers.SchmidtGamesStretch
+import NormalNumbers.CantorBadNormal
 import NormalNumbers.CantorExactExponentStretch
 import NormalNumbers.ComputableReal
 import NormalNumbers.KurtzRandom
@@ -108,6 +109,10 @@ def cruxLinks : List CruxLink := [
   ⟨``EntropyProfiles.ae_isNormal_self_base_sq_of_timesP_ergodic, [``cantor_not_normal_three_pow],
    "with x in place of (x + 1)² the claim is false (the Cantor measure is ×3-ergodic and no Cantor \
     point is 3-normal), so the mechanism must use the curvature of the map"⟩,
+  ⟨``CantorBadNormal.exists_mem_cantorSet_bad_isNormal_coprime_three,
+   [``cantor_not_normal_three_pow, ``schmidt_normal_not_winning],
+   "the second moment must use 3 ∤ b (no Cantor point is 3ᵏ-normal), and the normality half \
+    must come from the measure, not the deletion game (normality is not potential winning)"⟩,
   ⟨``SchmidtGames.exists_computable_cantorPoint_mem_U_inter_Bad,
    [``schmidt_normal_not_winning, ``schmidt_fixedC_not_winning],
    "the computable descent must use the uniform-bad target (the same potential-guided descent \
