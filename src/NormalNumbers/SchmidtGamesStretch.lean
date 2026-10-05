@@ -898,8 +898,44 @@ theorem primrec_goodNat : Primrec₂ goodNat := by
 /-- The descent's digits. -/
 def eBob : ℕ → Bool := bits goodNat
 
-theorem computable_eBob : Computable eBob := by
-  sorry
+theorem primrec_dig : Primrec dig :=
+  Primrec.nat_add.comp (Primrec.nat_mul.comp (Primrec.const 6)
+    (Primrec.nat_div.comp Primrec.id (Primrec.const 2)))
+    (Primrec.nat_mul.comp (Primrec.const 2) (Primrec.nat_mod.comp Primrec.id (Primrec.const 2)))
+
+theorem primrec_pick {good : ℕ → ℕ → Bool} (hg : Primrec₂ good) :
+    Primrec₂ (pick good) := by
+  have hc : ∀ j, PrimrecPred fun p : ℕ × ℕ => good (p.1 + 1) (9 * p.2 + dig j) = true := fun j =>
+    Primrec.eq.comp (hg.comp (Primrec.succ.comp Primrec.fst)
+      (Primrec.nat_add.comp (Primrec.nat_mul.comp (Primrec.const 9) Primrec.snd)
+        (Primrec.const _))) (Primrec.const true)
+  have h := Primrec.ite (hc 0) (Primrec.const 0) (Primrec.ite (hc 1) (Primrec.const 1)
+    (Primrec.ite (hc 2) (Primrec.const 2) (Primrec.const 3)))
+  exact h.of_eq fun p => rfl
+
+theorem primrec_path {good : ℕ → ℕ → Bool} (hg : Primrec₂ good) : Primrec (path good) := by
+  have h : Primrec (Nat.rec (motive := fun _ => ℕ) 0
+      (fun k X => 9 * X + dig (pick good k X))) :=
+    Primrec.nat_rec₁ 0 (Primrec.nat_add.comp (Primrec.nat_mul.comp (Primrec.const 9) Primrec.snd)
+      (primrec_dig.comp (primrec_pick hg))).to₂
+  refine h.of_eq fun k => ?_
+  induction k with
+  | zero => rfl
+  | succ k ih => simp only [path, ← ih]
+
+theorem primrec_bits {good : ℕ → ℕ → Bool} (hg : Primrec₂ good) : Primrec (bits good) := by
+  have hj : Primrec fun n : ℕ => pick good (n / 2) (path good (n / 2)) :=
+    (primrec_pick hg).comp (Primrec.nat_div.comp Primrec.id (Primrec.const 2))
+      ((primrec_path hg).comp (Primrec.nat_div.comp Primrec.id (Primrec.const 2)))
+  have h := Primrec.ite (Primrec.eq.comp (Primrec.nat_mod.comp Primrec.id (Primrec.const 2))
+      (Primrec.const 0))
+    (PrimrecPred.decide (Primrec.nat_le.comp (Primrec.const 2) hj))
+    (PrimrecPred.decide (Primrec.eq.comp (Primrec.nat_mod.comp hj (Primrec.const 2))
+      (Primrec.const 1)))
+  exact h.of_eq fun n => rfl
+
+theorem computable_eBob : Computable eBob :=
+  (primrec_bits primrec_goodNat).to_comp
 
 theorem cantorPoint_eBob_avoid {i : Idx} {k : ℕ} (hi : i ∈ FF k) :
     cantorPoint eBob ∉ Set.Icc (ctr i - rad i) (ctr i + rad i) :=
