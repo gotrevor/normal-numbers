@@ -5,6 +5,7 @@ Authors: Trevor Morris
 -/
 import NormalNumbers.MasterConjectures
 import NormalNumbers.WallRational
+import NormalNumbers.FiniteStateSelection
 
 /-!
 # A normal number in the ℚ-span of `√2, √3`?
@@ -26,11 +27,30 @@ algebraicity.
 The quantifier swap is where the difficulty sits: `∀ w, ∃ m, w occurs infinitely often in m·α`
 holds for every irrational (Mahler 1973, Berend–Boshernitzan 1994, `MahlerMultiplier.lean`);
 `∃ c, ∀ w` is the open statement.
+
+## The entropy budget (Ren, 2026-10-05)
+
+A rational combination is computed from the joint digit stream of `(x, y)` by bounded carries and
+a finite division state, so its block entropy is at most the joint block entropy, which is at most
+the sum of the two marginals at the same time `N`.  Normality is full entropy at every scale,
+hence `1 ≤ dim_FS(x) + Dim_FS(y)` (`span_dimension_budget`): one lower dimension, one upper.
+Both lower is false: split a normal number's digits into alternating sparse blocks.  Corollary
+(`qSpanNormal_sqrt_upperDim`): if the span of `√2, √3` holds a normal number, one of `√2, √3` has
+upper finite-state dimension at least `1/2`.  That is open (no algebraic irrational is known to
+have positive digit entropy), so the open node implies an open, strictly weaker-looking node.
+
+The budget also explains the Liouville sibling, and gives a second one with no Liouville
+behaviour: a pair drawn from the product of `{0,1}`-digit Cantor measures has joint dimension
+`log 4 / log 10 < 1` in base 10, so no span element is normal, yet every span element is a.e.
+not very well approximable (Bénard–He–Zhang for the self-similar pushforwards).  So Roth-type
+(exponent-2) information about the span cannot force normality either; the missing input is
+entropy, nothing Diophantine.
 -/
 
 namespace NormalNumbers.QSpan
 
-open MasterConjectures
+open MasterConjectures FiniteState Filter
+open scoped ENNReal
 
 /-- Some nonzero rational combination `c₁x + c₂y` is normal in base `b`. -/
 def QSpanNormal (b : ℕ) (x y : ℝ) : Prop :=
@@ -97,5 +117,48 @@ theorem exists_pair_qSpan_not_normal (b : ℕ) (hb : 2 ≤ b) :
     ∃ x y : ℝ, (∀ c₀ c₁ c₂ : ℚ, (c₁ : ℝ) * x + c₂ * y = c₀ → c₁ = 0 ∧ c₂ = 0) ∧
       ¬ QSpanNormal b x y := by
   sorry
+
+/-- Base-`b` digit sequence of `x` (of its fractional part), as letters of `Fin b`. -/
+noncomputable def digitSeq (b : ℕ) (hb : 0 < b) (x : ℝ) : ℕ → Fin b :=
+  fun i => ⟨digitOf b (Int.fract x) i, Nat.mod_lt _ hb⟩
+
+/-- Upper (strong) finite-state dimension in decompression form: `fsDim` with `limsup`.  The
+analogue of Doty–Moser's characterization for `Dim_FS`; that the two agree is not checked. -/
+noncomputable def fsDimUpper {k : ℕ} (S : ℕ → Fin k) : ℝ≥0∞ :=
+  ⨅ T : FST k, limsup (fun n : ℕ => ((infoK T (pre S n) : ℕ∞) : ℝ≥0∞) / (n : ℝ≥0∞)) atTop
+
+theorem fsDim_le_fsDimUpper {k : ℕ} (S : ℕ → Fin k) : fsDim S ≤ fsDimUpper S :=
+  iInf_mono fun _ => Filter.liminf_le_limsup
+
+/-- **Entropy budget for a rational combination.**  Confidence 85%.
+
+English proof.  Write `c₁x + c₂y = (a x + a' y)/q` with integers.  A length-`ℓ` block of the
+combination at position `i` is a function of the length-`ℓ` blocks of `x` and `y` at `i`, the
+carry into `i + ℓ` (at most `|a| + |a'| + 1` values) and the division remainder (`q` values).
+So, for the empirical block laws up to time `N`, `H_ℓ(z) ≤ H_ℓ(x, y) + O(1) ≤ H_ℓ(x) + H_ℓ(y) +
+O(1)`.  Normality makes `H_ℓ(z)/(ℓ log b) → 1` along every `N`; take liminf in `N` with the `y`
+term bounded by its limsup, divide by `ℓ log b`, let `ℓ → ∞`, and use the block-entropy
+characterization of `dim_FS`/`Dim_FS` (Bourke–Hitchcock–Vinodchandran 2005; decompression forms
+Doty–Moser 2006).  The lower/upper split is needed: digits of a normal number split into
+alternating sparse blocks give `x + y` normal with `dim_FS x = dim_FS y = 0`. -/
+theorem span_dimension_budget (b : ℕ) (hb : 2 ≤ b) (x y : ℝ) (c₁ c₂ : ℚ)
+    (hz : IsNormal b ((c₁ : ℝ) * x + c₂ * y)) :
+    1 ≤ fsDim (digitSeq b (by omega) x) + fsDimUpper (digitSeq b (by omega) y) := by
+  sorry
+
+/-- **The open node implies an entropy node.**  If some nonzero rational combination of `√2` and
+`√3` is normal, one of them has upper finite-state dimension at least `1/2`. -/
+theorem qSpanNormal_sqrt_upperDim (b : ℕ) (hb : 2 ≤ b)
+    (h : QSpanNormal b (Real.sqrt 2) (Real.sqrt 3)) :
+    1 / 2 ≤ fsDimUpper (digitSeq b (by omega) (Real.sqrt 2)) ∨
+      1 / 2 ≤ fsDimUpper (digitSeq b (by omega) (Real.sqrt 3)) := by
+  obtain ⟨c₁, c₂, -, hz⟩ := h
+  have h1 := span_dimension_budget b hb _ _ c₁ c₂ hz
+  have h2 := h1.trans (add_le_add_left (fsDim_le_fsDimUpper (digitSeq b (by omega) (Real.sqrt 2))) _)
+  by_contra hc
+  push Not at hc
+  have := ENNReal.add_lt_add hc.1 hc.2
+  rw [ENNReal.add_halves] at this
+  exact absurd (h2.trans_lt this) (lt_irrefl _)
 
 end NormalNumbers.QSpan

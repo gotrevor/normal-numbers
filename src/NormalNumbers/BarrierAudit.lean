@@ -180,6 +180,10 @@ def waivers : List Waiver := [
   ⟨``Literature.DigitsOfPowers.persistence_bounded_of_smoothDigitOmission,
    "wiring lemma (a leaf): digit-product arithmetic from the open node SmoothDigitOmission; \
     English proof in the docstring"⟩,
+  ⟨``QSpan.span_dimension_budget,
+   "a leaf: block-entropy subadditivity through bounded carries, plus the block-entropy \
+    characterization of dim_FS/Dim_FS (BHV 2005); possibly literature-adjacent (Doty–Lutz–Nandakumar \
+    2007 treat one number and rational arithmetic)"⟩,
   ⟨``CantorExactExponentStretch.exists_mem_cantorSet_irrExponent_two_of_literature,
    "literature control at μ₀ = 2: wiring from cited Weiss 2001 and Cassels 1959 (a leaf)"⟩,
   ⟨``CantorExactExponentStretch.exists_computable_mem_cantorSet_irrExponent_normal_all,
