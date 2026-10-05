@@ -79,3 +79,31 @@ def test_complement_symmetry():
         S = rng.sample([1, 2, 3, 4, 6, 7, 8, 9, 11], 3)
         ds = [rng.randrange(5) for _ in S]
         assert collapses(5, list(zip(S, ds))) == collapses(5, [(m, 4 - d) for m, d in zip(S, ds)])
+
+
+# --- The compiled port (experiments/mahler_block_rs) must reach the same hand verdicts. ---
+import subprocess  # noqa: E402
+
+RS = os.path.join(HERE, "mahler_block_rs")
+
+
+def rs_failing(g, S, *flags):
+    subprocess.run(["cargo", "build", "--release", "-q"], cwd=RS, check=True)
+    out = subprocess.run([os.path.join(RS, "target", "release", "mahler_block"), "failing",
+                          str(g), ",".join(map(str, S)), *flags],
+                         capture_output=True, text=True, check=True).stdout
+    return int(out.split()[1])
+
+
+def test_rust_hand_verdicts():
+    assert rs_failing(2, [1]) == 0                      # base 2: {1} is a block
+    assert rs_failing(3, [1], "--nosym") > 0            # base 3: {1} is not
+    assert rs_failing(3, [1, 2], "--nosym") > 0         # Liouville B = 1 kills {1, 2}
+    assert rs_failing(3, [2, 11]) == 0                  # Lean c2_product_block
+    assert rs_failing(3, [4, 22]) == 0                  # Lean image_mul
+
+
+def test_rust_matches_python_counts():
+    # Agreement between two implementations (not a hand value): the port is a port.
+    for g, S in ((5, [1, 2, 3, 4, 8]), (5, [1, 2, 3, 4, 8, 16]), (3, [1, 2])):
+        assert rs_failing(g, S) == len(failing(g, S))
