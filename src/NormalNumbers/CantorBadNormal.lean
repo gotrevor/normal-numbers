@@ -454,16 +454,67 @@ theorem descent_bad (ω : ℕ → Bool) : cpt (descent 5 c₀ ω) ∈ Bad := by
 /-- The descent law. -/
 noncomputable def descentLaw : Law := ⟨descent 5 c₀, measurable_descent 5 c₀, descent_bad⟩
 
-/-- **The crux: Cassels' second moment for the descent law.**  Believed, confidence 55%.
+/-- `|ν̂_L(ξ)|`: the modulus of the Fourier coefficient of the law `L`. -/
+noncomputable def fourierAbs (L : Law) (ξ : ℝ) : ℝ :=
+  ‖∫ ω, ee (ξ * cpt (L.φ ω)) ∂coinMeasure‖
+
+/-- **Second-moment expansion for any law.**  Proved (copy of `secondMoment_expand_b`). -/
+theorem secondMoment_le_fourier (L : Law) (b : ℕ) (h : ℤ) (N : ℕ) :
+    ∫ ω, ‖∑ k ∈ Finset.range N, ee (h * (b : ℝ) ^ k * cpt (L.φ ω))‖ ^ 2 ∂coinMeasure ≤
+      ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N, fourierAbs L (h * ((b : ℝ) ^ n - (b : ℝ) ^ m)) := by
+  have hG : Measurable fun ω => cpt (L.φ ω) := measurable_cpt.comp L.meas
+  have hint : ∀ ξ : ℝ, Integrable (fun ω => ee (ξ * cpt (L.φ ω))) coinMeasure := fun ξ =>
+    Integrable.of_bound ((measurable_ee.comp (hG.const_mul ξ)).aestronglyMeasurable) 1
+      (Eventually.of_forall fun ω => (norm_ee _).le)
+  have hexp : ∀ ω, ((‖∑ k ∈ Finset.range N, ee (h * (b : ℝ) ^ k * cpt (L.φ ω))‖ ^ 2 : ℝ) : ℂ) =
+      ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N,
+        ee ((h * ((b : ℝ) ^ n - (b : ℝ) ^ m)) * cpt (L.φ ω)) := by
+    intro ω
+    rw [sq_norm_sum_ee (fun k => h * (b : ℝ) ^ k * cpt (L.φ ω))]
+    refine Finset.sum_congr rfl fun n _ => Finset.sum_congr rfl fun m _ => ?_
+    congr 1; ring
+  have hI : ((∫ ω, ‖∑ k ∈ Finset.range N, ee (h * (b : ℝ) ^ k * cpt (L.φ ω))‖ ^ 2 ∂coinMeasure : ℝ) : ℂ) =
+      ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N,
+        ∫ ω, ee ((h * ((b : ℝ) ^ n - (b : ℝ) ^ m)) * cpt (L.φ ω)) ∂coinMeasure := by
+    rw [← integral_complex_ofReal]
+    simp_rw [hexp]
+    rw [integral_finsetSum _ fun n _ => integrable_finsetSum _ fun m _ => hint _]
+    refine Finset.sum_congr rfl fun n _ => ?_
+    rw [integral_finsetSum _ fun m _ => hint _]
+  have := congrArg Complex.re hI
+  rw [Complex.ofReal_re] at this
+  rw [this]
+  refine (Complex.re_le_norm _).trans ((norm_sum_le _ _).trans ?_)
+  exact Finset.sum_le_sum fun n _ => norm_sum_le _ _
+
+/-- **Fourier pair-sum power saving**: the averaged `|ν̂|` over the Cassels frequencies
+`h(bⁿ − bᵐ)`, `n, m < N`, is `O(N^{2−δ})`. -/
+def FourierPairPower (L : Law) (b : ℕ) : Prop :=
+  ∀ h : ℤ, h ≠ 0 → ∃ C δ : ℝ, 0 < δ ∧ ∀ N : ℕ, 1 ≤ N →
+    ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N, fourierAbs L (h * ((b : ℝ) ^ n - (b : ℝ) ^ m)) ≤
+      C * (N : ℝ) ^ 2 * (N : ℝ) ^ (-δ)
+
+/-- Proved: the pair-sum saving gives the Cassels power saving. -/
+theorem casselsPower_of_fourierPairPower {L : Law} {b : ℕ} (hL : FourierPairPower L b) :
+    CasselsPower L b := fun h hh => by
+  obtain ⟨C, δ, hδ, hC⟩ := hL h hh
+  exact ⟨C, δ, hδ, fun N hN => (secondMoment_le_fourier L b h N).trans (hC N hN)⟩
+
+/-- **The crux: the Fourier pair-sum saving for the descent law.**  Believed, confidence 55%.
 
 The sweep's guard (`docs/OPEN-PROBLEMS-SWEEP-2026-10-04.md` §2.3) applies: a proof that uses
 only that each block's dead fraction is small also proves base-2 normality of a descent
 against `B(a/2ⁿ, 2^{−n−C})`, which is false.  So a proof must use the arithmetic of the
 obstacle centres `p/q`.  Known-false sibling inside the mechanism: `b = 3`
 (`cantor_not_normal_three_pow`). -/
-theorem casselsPower_descent {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) :
-    CasselsPower descentLaw b := by
+theorem fourierPairPower_descent {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) :
+    FourierPairPower descentLaw b := by
   sorry
+
+/-- Cassels' second moment for the descent law (wiring from the crux). -/
+theorem casselsPower_descent {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) :
+    CasselsPower descentLaw b :=
+  casselsPower_of_fourierPairPower (fourierPairPower_descent hb h3)
 
 /-- **A badly approximable point of the middle-third Cantor set, normal to every base prime to 3.**
 
