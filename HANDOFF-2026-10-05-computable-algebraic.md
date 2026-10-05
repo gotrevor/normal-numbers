@@ -10,3 +10,13 @@ Route (leaves in `src/NormalNumbers/ComputableAlgebraic.lean`):
 - `primrec_int_sub`: `ℕ - ℕ → ℤ` Primrec via `Primrec.encode_iff` and ℤ's Denumerable encoding.
 
 Out of scope and untouched: `KurtzRandom.lean`.
+
+## Final state
+- Branch: proof/computable-algebraic; proof at a4a23d23, handoff at 9d63505d.
+- Scoped target (sorry-free ComputableReal.lean) met; ✅ stop signalled (source=lap) → /Users/gotrevor/src/.treadmill/nn-computable.stop
+   reason: box reported its assigned task complete
+
+→ The host will re-run `lake build` to verify GREEN (and that no file got sorry'd away)
+  before halting. Checkpoint the handoff, commit, and end your lap. signalled; build green.
+- Next steps: none on this scope. Remaining src/ sorries are outside it (designated-open); KurtzRandom.lean's
+  `not_isKurtzRandom_of_isComputableReal` is the natural next target if a future run scopes it.
