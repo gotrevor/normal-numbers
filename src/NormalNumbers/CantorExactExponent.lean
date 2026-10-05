@@ -810,6 +810,199 @@ English proof.  `expFree μ₀` is (indicator-sum over the primitive recursive `
 theorem primrec_expTest (μ₀ : ℚ) : Primrec₂ (expTest μ₀) := by
   sorry
 
+section MassLeaves
+
+open CantorExpGeneric
+
+variable {μ₀ : ℚ}
+
+/-- End of the previous run (`0` before run `0`). -/
+def prevEnd (μ₀ : ℚ) : ℕ → ℕ
+  | 0 => 0
+  | k + 1 => expRunEnd μ₀ (expRunStart μ₀ k)
+
+theorem fc_prev (hμ : 1 < μ₀) (k x : ℕ) (hx : prevEnd μ₀ k ≤ x) :
+    fc (expFree μ₀) x (expRunStart μ₀ k) = expRunStart μ₀ k - x := by
+  refine fc_of_free _ fun i hi1 hi2 => ?_
+  cases k with
+  | zero => exact expFree_of_lt_four hμ (by simpa [expRunStart] using hi2)
+  | succ j => exact expFree_of_gap hμ (by simpa [prevEnd] using hx.trans hi1) hi2
+
+theorem two_prev_le (μ₀ : ℚ) (k : ℕ) : 2 * prevEnd μ₀ k ≤ expRunStart μ₀ k := by
+  cases k with
+  | zero => simp [prevEnd]
+  | succ j => exact two_mul_end_le_start_succ μ₀ j
+
+/-- **Triangle-case free count.** -/
+theorem fc_tri_ge (hμ : 1 < μ₀) (k m L : ℕ) (s : ℝ)
+    (h1 : expRunStart μ₀ k + m + 3 ≤ L)
+    (htri : m + expRunStart μ₀ k + 4 ≤ expRunEnd μ₀ (expRunStart μ₀ k))
+    (hL : (μ₀ : ℝ) * m - 1 + s ≤ L) (hs0 : 0 ≤ s) (hs : 2 * s ≤ m) :
+    (s - 2) / μ₀ ≤ fc (expFree μ₀) m L := by
+  set μ : ℝ := (μ₀ : ℝ)
+  have hμR : (1 : ℝ) < μ := by simp only [μ]; exact_mod_cast hμ
+  set a := expRunStart μ₀ k
+  set E := expRunEnd μ₀ a
+  set a' := expRunStart μ₀ (k + 1)
+  have hEa1 : (E : ℝ) < μ * a + 1 := expRunEnd_lt_r hμ a
+  have hstep : (a' : ℝ) = ((k : ℝ) + 2) * E := cast_expRunStart_succ μ₀ k
+  have hk0 : (0 : ℝ) ≤ k := by positivity
+  have hEge : (m : ℝ) + a + 4 ≤ E := by exact_mod_cast htri
+  have hfc0 : (0 : ℝ) ≤ fc (expFree μ₀) m L := by positivity
+  have hgoal_le : ∀ t : ℝ, s ≤ t → (s - 2) / μ ≤ t := fun t ht => by
+    rw [div_le_iff₀ (by linarith)]; nlinarith
+  -- the gap piece
+  have hmE : m ≤ E := by omega
+  have g := fc_gap_ge hμ k E m L le_rfl hmE
+  rcases le_or_gt a' L with haL | haL
+  · rw [min_eq_right (by exact_mod_cast haL)] at g
+    apply hgoal_le
+    have : (s : ℝ) ≤ m := by linarith
+    nlinarith
+  rw [min_eq_left (by exact_mod_cast haL.le)] at g
+  have hLR : (L : ℝ) < a' := by exact_mod_cast haL
+  rcases le_or_gt m a with hma | hma
+  · -- window starts before the run
+    have hsplit := fc_add (expFree μ₀) hma (show a ≤ L by omega)
+    have g2 := fc_gap_ge hμ k E a L le_rfl (by omega)
+    rw [min_eq_left (by exact_mod_cast haL.le)] at g2
+    have hmono := fc_mono (expFree μ₀) (le_max_left m (prevEnd μ₀ k)) (le_refl a)
+    have hpa : max m (prevEnd μ₀ k) ≤ a := max_le hma (by have := two_prev_le μ₀ k; omega)
+    rw [fc_prev hμ k _ (le_max_right _ _)] at hmono
+    have hfcL : (fc (expFree μ₀) m L : ℝ) = fc (expFree μ₀) m a + fc (expFree μ₀) a L := by
+      rw [hsplit]; push_cast; ring
+    rcases le_total m (prevEnd μ₀ k) with hmp | hmp
+    · rw [max_eq_right hmp] at hmono hpa
+      have h2p := two_prev_le μ₀ k
+      have hR : (a : ℝ) ≤ 2 * (a - prevEnd μ₀ k : ℕ) := by
+        rw [Nat.cast_sub hpa]
+        have : (2 * prevEnd μ₀ k : ℝ) ≤ a := by exact_mod_cast h2p
+        linarith
+      have hm1 : (fc (expFree μ₀) m a : ℝ) ≥ (a - prevEnd μ₀ k : ℕ) := by exact_mod_cast hmono
+      have g2' : (0 : ℝ) ≤ fc (expFree μ₀) a L := by positivity
+      -- a ≥ (m+3)/(μ-1)
+      have ha : (m : ℝ) + 3 < (μ - 1) * a := by linarith
+      rw [div_le_iff₀ (by linarith)]
+      nlinarith
+    · rw [max_eq_left hmp] at hmono
+      have hm1 : (fc (expFree μ₀) m a : ℝ) ≥ (a : ℝ) - m := by
+        have : ((a - m : ℕ) : ℝ) = (a : ℝ) - m := by rw [Nat.cast_sub hma]
+        rw [← this]; exact_mod_cast hmono
+      rw [div_le_iff₀ (by linarith)]
+      rcases le_total ((s - 2) / μ) ((a : ℝ) - m) with hc | hc
+      · rw [div_le_iff₀ (by linarith)] at hc; nlinarith
+      · rw [le_div_iff₀ (by linarith)] at hc; nlinarith
+  · -- window starts inside the run
+    have hmaR : (a : ℝ) < m := by exact_mod_cast hma
+    rcases le_or_gt s 2 with hs2 | hs2
+    · have : (s - 2) / μ ≤ 0 := div_nonpos_of_nonpos_of_nonneg (by linarith) (by linarith)
+      linarith
+    · rw [div_le_iff₀ (by linarith)]
+      nlinarith
+
+theorem expL_bounds (hμ : 0 < μ₀) (m : ℕ) :
+    (μ₀ : ℝ) * m - 1 + Nat.sqrt m ≤ expL μ₀ m ∧ (expL μ₀ m : ℝ) ≤ μ₀ * m + Nat.sqrt m := by
+  have hnum : ((μ₀.num.toNat : ℕ) : ℝ) = μ₀.num := by
+    have : 0 ≤ μ₀.num := (Rat.num_pos.2 hμ).le
+    exact_mod_cast Int.toNat_of_nonneg this
+  have hD : (0 : ℝ) < μ₀.den := by exact_mod_cast μ₀.den_pos
+  have hq : (μ₀ : ℝ) * m = (μ₀.num.toNat * m : ℕ) / μ₀.den := by
+    push_cast; rw [hnum]
+    have : (μ₀ : ℝ) = μ₀.num / μ₀.den := by
+      rw [← Rat.cast_intCast, ← Rat.cast_natCast, ← Rat.cast_div, Rat.num_div_den]
+    rw [this]; ring
+  set N := μ₀.num.toNat * m
+  set D := μ₀.den
+  have h1 := Nat.div_mul_le_self N D
+  have h2 := Nat.lt_div_mul_add (a := N) (b := D) μ₀.den_pos
+  have h1R : ((N / D : ℕ) : ℝ) * D ≤ N := by exact_mod_cast h1
+  have h2R : (N : ℝ) < (N / D : ℕ) * D + D := by exact_mod_cast h2
+  unfold expL
+  push_cast
+  rw [hq]
+  constructor
+  · have : (N : ℝ) / D - 1 ≤ ((N / D : ℕ) : ℝ) := by
+      rw [div_sub_one hD.ne', div_le_iff₀ hD]; linarith
+    linarith
+  · have : ((N / D : ℕ) : ℝ) ≤ (N : ℝ) / D := by rw [le_div_iff₀ hD]; exact h1R
+    linarith
+
+theorem half_pow_le (n : ℕ) (t : ℝ) (h : t ≤ n) : (1 / 2 : ℝ) ^ n ≤ (2 : ℝ) ^ (-t) := by
+  rw [one_div, inv_pow, ← Real.rpow_natCast, ← Real.rpow_neg (by norm_num)]
+  exact Real.rpow_le_rpow_of_exponent_le (by norm_num) (by linarith)
+
+/-- **Deterministic mass bound of the scale-`m` test.** -/
+theorem expTest_mass_le (hμ : 2 < μ₀) : ∃ C : ℝ, ∀ m : ℕ, (μ₀ : ℝ) ≤ Nat.sqrt m →
+    2 ≤ Nat.sqrt m →
+    coins.real {ω | expTest μ₀ m (pre ω (expL μ₀ m + 1)) = true} ≤
+      6 * 2 ^ C * (3 * (2 : ℝ) ^ (-((μ₀ : ℝ) - 2))) ^ m +
+        (2 : ℝ) ^ (-(((Nat.sqrt m : ℝ) - 2) / μ₀)) := by
+  have hμ1 : (1 : ℚ) < μ₀ := by linarith
+  obtain ⟨C, hC⟩ := window_core hμ
+  refine ⟨C, fun m hsμ hs2 => ?_⟩
+  set μ : ℝ := (μ₀ : ℝ)
+  have hμR : (2 : ℝ) < μ := by simp only [μ]; exact_mod_cast hμ
+  set s := Nat.sqrt m
+  set L := expL μ₀ m
+  have hsm : s * s ≤ m := Nat.sqrt_le m
+  have hs2m : 2 * s ≤ m := le_trans (Nat.mul_le_mul_right s hs2) hsm |>.trans' (by simp)
+  obtain ⟨hL1, -⟩ := expL_bounds (by linarith : (0 : ℚ) < μ₀) m
+  replace hL1 : μ * m - 1 + s ≤ L := hL1
+  have hsR : (s : ℝ) ≥ μ := hsμ
+  have hmR : (2 * s : ℝ) ≤ m := by exact_mod_cast hs2m
+  have hs3 : (3 : ℝ) ≤ s := by
+    have : 2 < s := by
+      have : (2 : ℝ) < s := lt_of_lt_of_le hμR hsR
+      exact_mod_cast this
+    exact_mod_cast this
+  have hm7 : m + 7 ≤ L := by
+    have : (m : ℝ) + 7 ≤ L := by nlinarith
+    exact_mod_cast this
+  have hex : ∃ k, L < expRunStart μ₀ (k + 1) + m + 3 :=
+    ⟨L, by have := lt_expRunStart hμ1 (L + 1); omega⟩
+  set k := Nat.find hex
+  have hk2 : L < expRunStart μ₀ (k + 1) + m + 3 := Nat.find_spec hex
+  have hk1 : expRunStart μ₀ k + m + 3 ≤ L := by
+    rcases Nat.eq_zero_or_eq_succ_pred k with h0 | hj
+    · rw [h0]; simp [expRunStart]; omega
+    · have := Nat.find_min hex (show k - 1 < k by omega)
+      rw [show k - 1 + 1 = k by omega] at this; omega
+  have hmass0 : (0 : ℝ) ≤ 6 * 2 ^ C * (3 * (2 : ℝ) ^ (-(μ - 2))) ^ m := by positivity
+  have hmass1 : (0 : ℝ) ≤ (2 : ℝ) ^ (-(((s : ℝ) - 2) / μ)) := by positivity
+  unfold expTest
+  rcases le_or_gt (expRunEnd μ₀ (expRunStart μ₀ k)) (m + expRunStart μ₀ k + 3) with hbc | htri
+  · -- Borel–Cantelli case
+    have hw := hC μ le_rfl (by linarith) k (m + 1) (L - 2) (by push_cast; exact_mod_cast (by omega : expRunEnd μ₀ (expRunStart μ₀ k) ≤ m + 1 + expRunStart μ₀ k + 2))
+      (by
+        have : (L : ℝ) ≤ expRunStart μ₀ (k + 1) + m + 2 := by exact_mod_cast (by omega : L ≤ _)
+        push_cast; nlinarith)
+      (by rw [Nat.cast_sub (by omega)]; push_cast; nlinarith)
+    have hb := hit_mass_bc (expFree μ₀) m L (by omega)
+    refine hb.trans (le_add_of_le_of_nonneg ?_ hmass1)
+    have hp := half_pow_le (fc (expFree μ₀) (m + 1) (L - 2)) ((μ - 2) * m - C)
+      (by push_cast at hw; nlinarith)
+    have e : (3 * (2 : ℝ) ^ (-(μ - 2))) ^ m = 3 ^ m * 2 ^ (-((μ - 2) * m)) := by
+      rw [mul_pow, ← Real.rpow_natCast ((2 : ℝ) ^ (-(μ - 2))), ← Real.rpow_mul (by norm_num)]
+      ring_nf
+    rw [e]
+    have e2 : (2 : ℝ) ^ (-((μ - 2) * m - C)) = 2 ^ C * 2 ^ (-((μ - 2) * m)) := by
+      rw [← Real.rpow_add (by norm_num)]; ring_nf
+    rw [e2] at hp
+    calc 6 * 3 ^ m * (1 / 2 : ℝ) ^ fc (expFree μ₀) (m + 1) (L - 2)
+        ≤ 6 * 3 ^ m * (2 ^ C * 2 ^ (-((μ - 2) * m))) := by gcongr
+      _ = _ := by ring
+  · -- triangle case
+    have ht := hit_mass_tri (expFree μ₀) m L (expRunStart μ₀ k) (expRunEnd μ₀ (expRunStart μ₀ k))
+      (fun i h1 h2 => expFree_of_run hμ1 h1 h2) (by omega) (by omega)
+    refine ht.trans (le_add_of_nonneg_of_le hmass0 ?_)
+    exact half_pow_le _ _ (fc_tri_ge hμ1 k m L s hk1 (by omega) hL1 (by positivity) hmR)
+
+
+theorem tendsto_nat_sqrt : Tendsto Nat.sqrt atTop atTop :=
+  tendsto_atTop_atTop.2 fun b => ⟨b * b, fun _ h => Nat.le_sqrt.2 h⟩
+
+end MassLeaves
+
 /-- **The crux: mass of the scale-`m` test.**  Confidence 80%.
 
 English proof.  Let `L = expL μ₀ m ≥ μ₀ m − 1 + ⌊√m⌋`, `k` maximal with `a_k + m + 3 ≤ L`, so
@@ -821,7 +1014,68 @@ English proof.  Let `L = expL μ₀ m ≥ μ₀ m − 1 + ⌊√m⌋`, `k` maxim
 theorem ev_expTest_mass (μ₀ : ℚ) (hμ : threshold < μ₀) :
     ∀ᶠ m : ℕ in atTop, coins.real {ω | expTest μ₀ m (pre ω (expL μ₀ m + 1)) = true} ≤
       1 / ((m : ℝ) + 1) ^ 2 := by
-  sorry
+  have h2 : (2 : ℚ) < μ₀ := by
+    have : (2 : ℝ) < μ₀ := lt_trans (by have := Real.logb_pos (b := 2) (x := 3) (by norm_num) (by norm_num); unfold threshold; linarith) hμ
+    exact_mod_cast this
+  obtain ⟨C, hC⟩ := expTest_mass_le h2
+  set μ : ℝ := (μ₀ : ℝ)
+  have hμR : (2 : ℝ) < μ := by simp only [μ]; exact_mod_cast h2
+  set ρ : ℝ := 3 * (2 : ℝ) ^ (-(μ - 2))
+  have hρ1 : ρ < 1 := rho_lt_one μ hμ
+  have hρ0 : 0 < ρ := by positivity
+  set r : ℝ := (2 : ℝ) ^ (-(1 / μ))
+  have hr0 : 0 < r := by positivity
+  have hr1 : r < 1 := Real.rpow_lt_one_of_one_lt_of_neg (by norm_num) (by
+    have : 0 < 1 / μ := by positivity
+    linarith)
+  have hB : ∀ᶠ m : ℕ in atTop, (m : ℝ) ^ 2 * ρ ^ m < 1 / (48 * 2 ^ C) :=
+    (tendsto_pow_const_mul_const_pow_of_abs_lt_one 2 (by rw [abs_of_pos hρ0]; exact hρ1)).eventually
+      (gt_mem_nhds (by positivity))
+  have hD : ∀ᶠ s : ℕ in atTop, (s : ℝ) ^ 4 * r ^ s < 1 / (32 * 2 ^ (2 / μ)) :=
+    (tendsto_pow_const_mul_const_pow_of_abs_lt_one 4 (by rw [abs_of_pos hr0]; exact hr1)).eventually
+      (gt_mem_nhds (by positivity))
+  have hD' := tendsto_nat_sqrt.eventually (hD.and (eventually_ge_atTop (⌈μ⌉₊ + 2)))
+  filter_upwards [hB, hD', eventually_ge_atTop 1] with m hBm ⟨hDm, hsm⟩ hm1
+  set s := Nat.sqrt m
+  have hsμ : μ ≤ s := by
+    have : (⌈μ⌉₊ : ℝ) + 2 ≤ s := by exact_mod_cast hsm
+    linarith [Nat.le_ceil μ]
+  have hs1 : (1 : ℝ) ≤ s := by linarith
+  refine (hC m hsμ (by omega)).trans ?_
+  have hm1R : (1 : ℝ) ≤ m := by exact_mod_cast hm1
+  have hM : (0 : ℝ) < ((m : ℝ) + 1) ^ 2 := by positivity
+  -- first term
+  have t1 : 6 * 2 ^ C * ρ ^ m ≤ 1 / (2 * ((m : ℝ) + 1) ^ 2) := by
+    rw [le_div_iff₀ (by positivity)]
+    have : ((m : ℝ) + 1) ^ 2 ≤ 4 * m ^ 2 := by nlinarith
+    have hC0 : (0 : ℝ) < 2 ^ C := by positivity
+    have hρm : 0 ≤ ρ ^ m := by positivity
+    have := (lt_div_iff₀ (by positivity)).1 hBm
+    nlinarith
+  -- second term
+  have t2 : (2 : ℝ) ^ (-(((s : ℝ) - 2) / μ)) ≤ 1 / (2 * ((m : ℝ) + 1) ^ 2) := by
+    have e : (2 : ℝ) ^ (-(((s : ℝ) - 2) / μ)) = 2 ^ (2 / μ) * r ^ s := by
+      rw [← Real.rpow_natCast r, ← Real.rpow_mul (by norm_num), ← Real.rpow_add (by norm_num)]
+      congr 1; field_simp; ring
+    rw [e, le_div_iff₀ (by positivity)]
+    have hms : (m : ℝ) + 1 ≤ ((s : ℝ) + 1) ^ 2 := by
+      have h := Nat.lt_succ_sqrt m
+      have : m + 1 ≤ (s + 1) * (s + 1) := h
+      have : (m : ℝ) + 1 ≤ (s + 1) * (s + 1) := by exact_mod_cast this
+      nlinarith
+    have h4 : ((m : ℝ) + 1) ^ 2 ≤ 16 * (s : ℝ) ^ 4 := by
+      have : ((s : ℝ) + 1) ^ 2 ≤ 4 * s ^ 2 := by nlinarith
+      have h0 : (0 : ℝ) ≤ (m : ℝ) + 1 := by positivity
+      calc ((m : ℝ) + 1) ^ 2 ≤ (((s : ℝ) + 1) ^ 2) ^ 2 := pow_le_pow_left₀ h0 hms 2
+        _ ≤ (4 * s ^ 2) ^ 2 := pow_le_pow_left₀ (by positivity) this 2
+        _ = 16 * (s : ℝ) ^ 4 := by ring
+    have hC0 : (0 : ℝ) < 2 ^ (2 / μ) := by positivity
+    have hrs : 0 ≤ r ^ s := by positivity
+    have := (lt_div_iff₀ (by positivity)).1 hDm
+    nlinarith
+  have : 1 / (2 * ((m : ℝ) + 1) ^ 2) + 1 / (2 * ((m : ℝ) + 1) ^ 2) = 1 / ((m : ℝ) + 1) ^ 2 := by
+    field_simp; ring
+  linarith
 
 /-- **Avoidance gives the exact exponent.**  Confidence 85%.
 
