@@ -28,6 +28,7 @@ import NormalNumbers.LogCastingOutStretch
 import NormalNumbers.EntropyProfilesStretch
 import NormalNumbers.FiniteStateSelectionStretch
 import NormalNumbers.SchmidtGamesStretch
+import NormalNumbers.ComputableReal
 
 /-!
 # Barrier audit: every open crux names a sibling it must fail on
@@ -140,6 +141,8 @@ def waivers : List Waiver := [
   ⟨``Erdos257.towerGapPrimes_gapSet, "Mertens with error term per block (a leaf)"⟩,
   ⟨``Erdos257.squareBlockPrimes_weakRate, "Mertens with error term per block (a leaf)"⟩,
   ⟨``Erdos257.squareBlockPrimes_not_mertensRate, "Mertens with error term per block (a leaf)"⟩,
+  ⟨``ComputableReal.isComputableReal_of_isAlgebraic,
+   "known theorem (Turing 1936 §10: algebraic ⇒ computable); Primrec bookkeeping, no new mechanism"⟩,
   ⟨``ExplicitSquare.ae_isNormal_of_logDecay,
    "known theorem (Davenport–Erdős–LeVeque) transcribed; no new mechanism"⟩,
   ⟨``ExplicitSquare.oneFreqZero_sparseReal_squares, "a leaf of the squares construction"⟩,
