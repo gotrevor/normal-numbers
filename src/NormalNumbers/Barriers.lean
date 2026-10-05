@@ -24,6 +24,7 @@ import NormalNumbers.Erdos257Squarefree
 import NormalNumbers.LinearFormsScales
 import NormalNumbers.EntropyProfiles
 import NormalNumbers.SchmidtGames
+import NormalNumbers.CantorExactExponent
 
 /-!
 # Barrier library: the registry
@@ -280,6 +281,16 @@ def bfs_unrestricted_scale_false : Barrier :=
     "dimension transfers from a potential game whose opening scale exceeds the regularity scale \
      of the support measure"
 
+/-! ## Rationals near the Cantor set -/
+
+/-- The trivial numerator count fails below `2 + log₂ 3` on the real forced-run schedule. -/
+def cantorExp_trivialCount_mu_three : Barrier :=
+  .proved "μ₀ = 3 forced-run schedule: 108 free places in the window [108, 324), 2^108 < 3^108"
+    CantorExactExponent.bcTerm_red_mu_three
+    [``CantorExactExponent.bcTerm_red_mu_three]
+    "Borel–Cantelli with the trivial count (2^F numerators per denominator) in windows that \
+     enter a forced run"
+
 /-- Every registered barrier, for `#barrier_audit`. -/
 def allBarriers : List Lean.Name := [
   ``stoneham_two_not_six, ``cantorLiouville_three_dvd, ``cassels_cantor_ae_normal,
@@ -292,6 +303,6 @@ def allBarriers : List Lean.Name := [
   ``tau_parity_sibling, ``squarefree_powTwo_encoding, ``hypE_logRate,
   ``fermat_lambert_rational, ``driftOne_fails_at_71, ``furstenberg_constAvoid_false,
   ``powersOfTwo_constAvoid, ``cantor_not_normal_three_pow, ``schmidt_normal_not_winning,
-  ``schmidt_fixedC_not_winning, ``bfs_unrestricted_scale_false]
+  ``schmidt_fixedC_not_winning, ``bfs_unrestricted_scale_false, ``cantorExp_trivialCount_mu_three]
 
 end NormalNumbers.Barriers

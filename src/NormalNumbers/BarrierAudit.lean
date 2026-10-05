@@ -28,6 +28,7 @@ import NormalNumbers.LogCastingOutStretch
 import NormalNumbers.EntropyProfilesStretch
 import NormalNumbers.FiniteStateSelectionStretch
 import NormalNumbers.SchmidtGamesStretch
+import NormalNumbers.CantorExactExponentStretch
 
 /-!
 # Barrier audit: every open crux names a sibling it must fail on
@@ -108,7 +109,12 @@ def cruxLinks : List CruxLink := [
    [``schmidt_normal_not_winning, ``schmidt_fixedC_not_winning],
    "the computable descent must use the uniform-bad target (the same potential-guided descent \
     aimed at base-2 normality must fail, since normality is not winning) and must open at a \
-    scale well above 2^{−C} (one fixed E C is not winning below it)"⟩]
+    scale well above 2^{−C} (one fixed E C is not winning below it)"⟩,
+  ⟨``CantorExactExponentStretch.ae_not_liouvilleWith_all, [``cantorExp_trivialCount_mu_three],
+   "the count must beat 2^F numerators per denominator in run-entering windows (the trivial \
+    count diverges at μ₀ = 3), and must see the depth-b endpoints below the cylinder scale: a \
+    measure-level count thickened to 3^{−b} costs 3^{2m−b} ≥ 1 for μ₀ ≤ 3 \
+    (thickening_cost_ge_one), so He–Liao-type equidistribution cannot carry it"⟩]
 
 /-- Open `sorry`s that are not cruxes, and why no barrier applies. -/
 def waivers : List Waiver := [
@@ -165,6 +171,11 @@ def waivers : List Waiver := [
   ⟨``Literature.DigitsOfPowers.persistence_bounded_of_smoothDigitOmission,
    "wiring lemma (a leaf): digit-product arithmetic from the open node SmoothDigitOmission; \
     English proof in the docstring"⟩,
+  ⟨``CantorExactExponentStretch.exists_mem_cantorSet_irrExponent_two_of_literature,
+   "literature control at μ₀ = 2: wiring from cited Weiss 2001 and Cassels 1959 (a leaf)"⟩,
+  ⟨``CantorExactExponentStretch.exists_computable_mem_cantorSet_irrExponent_normal_all,
+   "assembly: the main file's wiring with ae_not_liouvilleWith_all (the crux) in place of \
+    ae_not_liouvilleWith; no mechanism of its own"⟩,
   ⟨``FiniteState.isFNormal_delayEnum_of_normal,
    "a leaf: O(1) cost of composing with the delay transducer and its finite-state right inverse"⟩]
 

@@ -12,6 +12,7 @@ import NormalNumbers.PairDecoupleProve
 import NormalNumbers.StonehamBase6
 import NormalNumbers.LinearFormsScalesStretch
 import NormalNumbers.EntropyProfiles
+import NormalNumbers.CantorExactExponentStretch
 
 /-!
 # Maze audit: every closed route cites declarations
@@ -39,6 +40,11 @@ def mazeRows : List RowInfo :=
 
 /-- Each linked row and the declarations it rests on. -/
 def mazeLinks : List Link := [
+  ⟨"He-Liao local count on the forced-run measure",
+   [``CantorExactExponentStretch.endpoint_sep, ``CantorExactExponentStretch.thickening_cost_ge_one,
+    ``CantorExactExponentStretch.Literature.HeLiao2026Cor65,
+    ``CantorExactExponent.bcTerm_red_mu_three],
+   [``CantorExactExponentStretch.EndpointRationalCount]⟩,
   ⟨"log-averaged casting-out via the Elliott ledger",
    [``hall_logavg_casting_out, ``LogCastingOut.TaoTeravainen2019FixedDepth,
     ``CastingOut.carry_correction_unbounded, ``CastingOut.castLawLog_one_iff,
@@ -228,7 +234,7 @@ def mazeLegacy : List String := [
   "Diophantine good-denominator detour for the tail cell",
   "route B's unweighted cover of the state-dependent target"]
 
-/-- info: maze audit: 153 rows, 46 cite declarations, 107 legacy (prose only) -/
+/-- info: maze audit: 154 rows, 47 cite declarations, 107 legacy (prose only) -/
 #guard_msgs in
 #maze_audit mazeRows, mazeLinks, mazeLegacy
 

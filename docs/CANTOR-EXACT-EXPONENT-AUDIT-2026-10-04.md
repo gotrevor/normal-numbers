@@ -121,3 +121,21 @@ Headline 65%: mathematics about 85% (the B-C bound above `3.585` is a routine co
 window lemma is right; the window lemma was checked case by case), Lean cost the rest.  Laps:
 3 to 5 (ball mass + count: 1; window + summability: 1; a.e. assembly: 1; prefix tests and
 derandomizer wiring: 1 to 2).
+
+## Addendum 2026-10-05: He–Liao transfer checked, wall
+
+Lap 2 closed the main file (both headlines `propext, Classical.choice, Quot.sound`, re-checked
+on the Mac).  The open question from this audit, whether He–Liao 2602.01307 Cor. 6.5 transfers
+from the Cantor measure to the forced-run measure, is answered no, for two reasons recorded in
+Lean in `CantorExactExponentStretch.lean`:
+
+* the trivial count fails only in run-entering windows, where the event concerns the discrete
+  endpoint `P/3^b` below the cylinder scale (`endpoint_sep`); thickening costs `3^{2m−b} ≥ 1`
+  for `μ₀ ≤ 3` (`thickening_cost_ge_one`), so even a Bugeaud–Durand-strength measure count
+  reaches at best `μ₀ > 3`;
+* Cor. 6.5's main term needs `α ≥ τ − 2 > 1` in those windows, and its `α − 1` is small and
+  not explicit.
+
+Reopen condition: `EndpointRationalCount` (a count on the discrete endpoints at the heuristic
+density).  Maze row "He-Liao local count on the forced-run measure"; crux link for
+`ae_not_liouvilleWith_all` with the new barrier `cantorExp_trivialCount_mu_three`.

@@ -1410,7 +1410,12 @@ def register : List Hall := [
    "Present a strictly increasing bi-Lipschitz map sending the middle-third Cantor set into non-2-normal numbers as a new negative answer to Hochman-Shmerkin (Invent. 2015, 1.2.1) 'stability under bi-Lipschitz transformations remains open'",
    .priorArt, .cited,
    "The reading is faithful (their Thm 1.4/1.5 give pointwise normality for every C^1 diffeomorphism), but the mechanism is a bi-Lipschitz embedding of K into the no-hex-digit-15 set F, which Mattila-Saaranen 2009 and Deng-Wen-Xiong-Xi 2011 Thm 1 already provide; only monotonicity is extra. Kept as the C^1 sharpness guard, not as outreach",
-   "EntropyProfiles.lean: exists_strictMono_biLipschitz_cantorSet_not_isNormal_two (sorry), not_biLipschitz_stable, HochmanShmerkinCantorDiff1; docs/ENTROPY-REFEREE-2026-10-04.md", "2026-10-04"⟩
+   "EntropyProfiles.lean: exists_strictMono_biLipschitz_cantorSet_not_isNormal_two (sorry), not_biLipschitz_stable, HochmanShmerkinCantorDiff1; docs/ENTROPY-REFEREE-2026-10-04.md", "2026-10-04"⟩,
+  ⟨"He-Liao local count on the forced-run measure",
+   "Transfer He-Liao 2602.01307 Cor. 6.5 (local equidistribution of rationals against Cantor-measure cylinders) to the forced-run measure, to push the exact-exponent triple below mu0 = 2 + log2 3",
+   .wall, .cited,
+   "The transfer to branches is fine, but the trivial count only fails in run-entering windows, where the event concerns the discrete endpoint P/3^b below the cylinder scale (endpoint_sep); thickening to 3^-b costs 3^(2m-b) >= 1 for mu0 <= 3 (thickening_cost_ge_one), and Cor. 6.5's main term needs alpha >= tau - 2 > 1 there while its alpha - 1 is small and non-explicit. A Bugeaud-Durand-strength measure count would reach at best mu0 > 3. REOPEN IF: EndpointRationalCount",
+   "CantorExactExponentStretch.lean: endpoint_sep, thickening_cost_ge_one, Literature.HeLiao2026Cor65, EndpointRationalCount; CantorExactExponent.bcTerm_red_mu_three; docs/CANTOR-EXACT-EXPONENT-AUDIT-2026-10-04.md", "2026-10-05"⟩
 ]
 
 /-- Rows whose verdict is machine-checked in this build. -/
