@@ -484,8 +484,104 @@ instance (i : Idx) (k X : ℕ) : Decidable (MeetsNat i k X) := by
 def goodNat (k X : ℕ) : Bool :=
   decide ((∑ i ∈ (FF k).filter (fun i => MeetsNat i k X), 2 ^ (10 * k + 8 - lev i)) < 2 ^ (9 * k + 8))
 
+theorem cross_left (a B D N Y : ℕ) (hB : 0 < B) (hD : 0 < D) (hN : 0 < N) :
+    (a : ℝ) / B - 1 / (B * D) ≤ Y / N ↔ (a * D - 1) * N ≤ Y * (B * D) := by
+  have hB' : (0 : ℝ) < B := by exact_mod_cast hB
+  have hD' : (0 : ℝ) < D := by exact_mod_cast hD
+  have hN' : (0 : ℝ) < N := by exact_mod_cast hN
+  have e : (a : ℝ) / B - 1 / (B * D) = ((a : ℝ) * D - 1) / (B * D) := by field_simp
+  rw [e, div_le_div_iff₀ (by positivity) hN']
+  rcases Nat.eq_zero_or_pos (a * D) with h0 | h0
+  · rw [h0]
+    have : (a : ℝ) * D = 0 := by exact_mod_cast h0
+    rw [this]; simp only [zero_tsub, zero_mul, zero_le, iff_true]
+    have : (0 : ℝ) ≤ Y * (B * D) := by positivity
+    nlinarith
+  · have hc : ((a * D - 1 : ℕ) : ℝ) = (a : ℝ) * D - 1 := by
+      rw [Nat.cast_sub h0]; push_cast; ring
+    rw [← hc, ← Nat.cast_mul, ← Nat.cast_mul, ← Nat.cast_mul, Nat.cast_le]
+
+theorem cross_right (a B D N X : ℕ) (hB : 0 < B) (hD : 0 < D) (hN : 0 < N) :
+    (X : ℝ) / N ≤ a / B + 1 / (B * D) ↔ X * (B * D) ≤ (a * D + 1) * N := by
+  have hB' : (0 : ℝ) < B := by exact_mod_cast hB
+  have hD' : (0 : ℝ) < D := by exact_mod_cast hD
+  have hN' : (0 : ℝ) < N := by exact_mod_cast hN
+  have e : (a : ℝ) / B + 1 / (B * D) = ((a : ℝ) * D + 1) / (B * D) := by field_simp
+  rw [e, div_le_div_iff₀ hN' (by positivity)]
+  constructor
+  · intro h; exact_mod_cast (by linarith : (X : ℝ) * (B * D) ≤ (a * D + 1) * N)
+  · intro h; have : ((X * (B * D) : ℕ) : ℝ) ≤ ((a * D + 1) * N : ℕ) := by exact_mod_cast h
+    push_cast at this; linarith
+
+theorem meets_iff {i : Idx} {k : ℕ} (hi : i ∈ FF k) (X : ℕ) :
+    MeetsNat i k X ↔ Meets ctr rad i k X := by
+  have h9 : 0 < 9 ^ k := by positivity
+  rcases i with ⟨b, n, a⟩ | ⟨p, q⟩
+  · obtain ⟨⟨hb, -, -⟩, -⟩ := mem_FF_inl.mp hi
+    simp only at hb
+    have hbn : 0 < b ^ n := by positivity
+    have hb40 : 0 < b ^ 40 := by positivity
+    have e : (1 : ℝ) / (b : ℝ) ^ (n + 40) = 1 / (((b ^ n : ℕ) : ℝ) * ((b ^ 40 : ℕ) : ℝ)) := by
+      push_cast; rw [pow_add]
+    simp only [MeetsNat, Meets, ctr, rad, e]
+    have e2 : ((a : ℝ) / (b : ℝ) ^ n) = (a : ℝ) / ((b ^ n : ℕ) : ℝ) := by push_cast; rfl
+    have eX : ((X : ℝ) + 1) = ((X + 1 : ℕ) : ℝ) := by push_cast; rfl
+    have e9 : ((9 : ℝ) ^ k) = ((9 ^ k : ℕ) : ℝ) := by push_cast; rfl
+    rw [e2, eX, e9, cross_left a _ _ _ _ hbn hb40 h9, cross_right a _ _ _ _ hbn hb40 h9,
+      ← pow_add]
+  · obtain ⟨⟨hq, -, -⟩, -⟩ := mem_FF_inr.mp hi
+    simp only at hq
+    have hq0 : 0 < q := hq
+    have hD : 0 < 9 ^ 5 * q := by positivity
+    have e : (1 : ℝ) / (9 ^ 5 * (q : ℝ) ^ 2) = 1 / ((q : ℝ) * ((9 ^ 5 * q : ℕ) : ℝ)) := by
+      push_cast; ring_nf
+    simp only [MeetsNat, Meets, ctr, rad, e]
+    have eX : ((X : ℝ) + 1) = ((X + 1 : ℕ) : ℝ) := by push_cast; rfl
+    have e9 : ((9 : ℝ) ^ k) = ((9 ^ k : ℕ) : ℝ) := by push_cast; rfl
+    rw [eX, e9, cross_left p _ _ _ _ hq0 hD h9, cross_right p _ _ _ _ hq0 hD h9,
+      show q * (9 ^ 5 * q) = 9 ^ 5 * q ^ 2 by ring, show p * (9 ^ 5 * q) = 9 ^ 5 * p * q by ring]
+
+theorem lev_le {i : Idx} {k : ℕ} (hi : i ∈ FF k) : lev i ≤ 9 * k + 8 := by
+  rcases i with ⟨b, n, a⟩ | ⟨p, q⟩
+  · have hbox := hi
+    simp only [FF, Finset.inl_mem_disjSum, Finset.mem_filter, Finset.mem_product,
+      Finset.mem_range] at hbox
+    obtain ⟨⟨hb9, -, -⟩, ⟨hb, -, -⟩, hs⟩ := hbox
+    simp only at hb9 hb hs
+    have h16 : b < 2 ^ (4 * k) := by
+      calc b < 9 ^ k := hb9
+        _ ≤ 16 ^ k := Nat.pow_le_pow_left (by norm_num) k
+        _ = 2 ^ (4 * k) := by rw [pow_mul]; norm_num
+    have hlog : Nat.log 2 b < 4 * k := Nat.log_lt_of_lt_pow (by omega) h16
+    simp only [lev]; omega
+  · have := (mem_FF_inr.mp hi).2
+    simp only at this
+    simp only [lev]; omega
+
 theorem goodNat_iff (k X : ℕ) : goodNat k X = true ↔ pot FF ctr rad lev k X < 1 := by
-  sorry
+  classical
+  unfold goodNat pot
+  rw [decide_eq_true_iff]
+  have hfil : (FF k).filter (fun i => MeetsNat i k X) =
+      (FF k).filter (fun i => Meets ctr rad i k X) :=
+    Finset.filter_congr fun i hi => meets_iff hi X
+  rw [hfil]
+  have hsum : (((∑ i ∈ (FF k).filter (fun i => Meets ctr rad i k X), 2 ^ (10 * k + 8 - lev i) : ℕ))
+      : ℝ) = 2 ^ (9 * k + 8) * ∑ i ∈ (FF k).filter (fun i => Meets ctr rad i k X),
+        (2 : ℝ) ^ ((k : ℤ) - lev i) := by
+    push_cast
+    rw [Finset.mul_sum]
+    refine Finset.sum_congr rfl fun i hi => ?_
+    have hl := lev_le (Finset.mem_filter.mp hi).1
+    rw [← zpow_natCast, ← zpow_natCast, ← zpow_add₀ (by norm_num)]
+    congr 1
+    push_cast [show lev i ≤ 10 * k + 8 by omega]
+    ring
+  rw [← Nat.cast_lt (α := ℝ), hsum]
+  push_cast
+  constructor
+  · intro h; nlinarith [pow_pos (by norm_num : (0 : ℝ) < 2) (9 * k + 8)]
+  · intro h; nlinarith [pow_pos (by norm_num : (0 : ℝ) < 2) (9 * k + 8)]
 
 theorem primrec_goodNat : Primrec₂ goodNat := by
   sorry
