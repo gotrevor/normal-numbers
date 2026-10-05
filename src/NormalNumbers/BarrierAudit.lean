@@ -30,6 +30,7 @@ import NormalNumbers.FiniteStateSelectionStretch
 import NormalNumbers.SchmidtGamesStretch
 import NormalNumbers.CantorExactExponentStretch
 import NormalNumbers.ComputableReal
+import NormalNumbers.MahlerProductBlock
 
 /-!
 # Barrier audit: every open crux names a sibling it must fail on
@@ -123,6 +124,11 @@ def cruxLinks : List CruxLink := [
 
 /-- Open `sorry`s that are not cruxes, and why no barrier applies. -/
 def waivers : List Waiver := [
+  ⟨``Adder.IsProductBlock.liouville_cover,
+   "a leaf: the B–B 1994 Thm 3.1 Liouville witness with 'digit d absent from m·B' in place of a \
+    run of g−1 (orbit_liouvilleMul_lt's argument)"⟩,
+  ⟨``Adder.IsProductBlock.base5_card_ge_five,
+   "a finite computation: liouville_cover over B ≤ 300 plus an exact set cover (ILP optimum 5)"⟩,
   ⟨``CastingOut.not_pairDecouple_all,
    "refutation bet against the C1 swing's input; if proved it becomes a barrier itself"⟩,
   ⟨``CastingOut.weylLambertTwist_holds,
