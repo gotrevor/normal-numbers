@@ -124,7 +124,7 @@ theorem pot_split (hF : ∀ k, F k ⊆ F (k + 1)) (k Y : ℕ) :
   rw [Finset.sum_filter, Finset.sum_filter, ← Finset.sum_sdiff (hF k), add_comm]
 
 /-- **Engine step.** -/
-theorem pot_step (hF : ∀ k, F k ⊆ F (k + 1)) (hr : ∀ i, 2 * r i < 1 / 9 ^ L i)
+theorem pot_step (hF : ∀ k, F k ⊆ F (k + 1)) (hr : ∀ k, ∀ i ∈ F k, 2 * r i < 1 / 9 ^ L i)
     (hnew : ∀ k X, newPot F c r L k X ≤ 1 / 2) {k X : ℕ} (h : pot F c r L k X < 1) :
     ∃ j < 4, pot F c r L (k + 1) (9 * X + dig j) < 1 := by
   classical
@@ -151,7 +151,7 @@ theorem pot_step (hF : ∀ k, F k ⊆ F (k + 1)) (hr : ∀ i, 2 * r i < 1 / 9 ^ 
         have : (0 : ℤ) ≤ (k : ℤ) - L i := by omega
         have := one_le_zpow₀ (by norm_num : (1 : ℝ) ≤ 2) this
         linarith
-      have hri : 2 * r i < 1 / 9 ^ (k + 1) := lt_of_lt_of_le (hr i)
+      have hri : 2 * r i < 1 / 9 ^ (k + 1) := lt_of_lt_of_le (hr k i hi)
         (one_div_le_one_div_of_le (by positivity) (pow_le_pow_right₀ (by norm_num) hL))
       have hcard : ((range 4).filter (fun j => Meets c r i (k + 1) (9 * X + dig j))).card ≤ 1 :=
         Finset.card_le_one.mpr fun a ha b hb => by
@@ -279,7 +279,7 @@ theorem cantorPoint_bits_mem (k : ℕ) :
 
 /-- **Avoidance.**  If `good` decides `pot < 1`, the descent point misses every obstacle. -/
 theorem cantorPoint_bits_avoid {ι : Type*} (F : ℕ → Finset ι) (c r : ι → ℝ) (L : ι → ℕ)
-    (hF : ∀ k, F k ⊆ F (k + 1)) (hr : ∀ i, 2 * r i < 1 / 9 ^ L i)
+    (hF : ∀ k, F k ⊆ F (k + 1)) (hr : ∀ k, ∀ i ∈ F k, 2 * r i < 1 / 9 ^ L i)
     (hnew : ∀ k X, newPot F c r L k X ≤ 1 / 2) (h0 : pot F c r L 0 0 < 1)
     (hgood : ∀ k X, good k X = true ↔ pot F c r L k X < 1) {k : ℕ} {i : ι} (hi : i ∈ F k) :
     cantorPoint (bits good) ∉ Set.Icc (c i - r i) (c i + r i) := by
@@ -353,25 +353,119 @@ def FF (k : ℕ) : Finset Idx :=
       (fun x => ValidU x ∧ stU x.1 x.2.1 ≤ k)).disjSum
     ((range (3 ^ k) ×ˢ range (3 ^ k)).filter (fun x => ValidB x ∧ stB x.2 ≤ k))
 
+theorem pow_lt_of_stU {b n k : ℕ} (hb : 2 ≤ b) (h : stU b n ≤ k) : b ^ n < 9 ^ k :=
+  lt_of_lt_of_le (Nat.lt_pow_succ_log_self (by norm_num) _)
+    (Nat.pow_le_pow_right (by norm_num) h)
+
+theorem sq_lt_of_stB {q k : ℕ} (h : stB q ≤ k) : q ^ 2 < 9 ^ (k - 1) :=
+  lt_of_lt_of_le (Nat.lt_pow_succ_log_self (by norm_num) _)
+    (Nat.pow_le_pow_right (by norm_num) (by unfold stB at h; omega))
+
 theorem mem_FF_inl {k : ℕ} {x : ℕ × ℕ × ℕ} : Sum.inl x ∈ FF k ↔ ValidU x ∧ stU x.1 x.2.1 ≤ k := by
-  sorry
+  obtain ⟨b, n, a⟩ := x
+  simp only [FF, Finset.inl_mem_disjSum, Finset.mem_filter, Finset.mem_product, Finset.mem_range]
+  constructor
+  · exact fun h => h.2
+  · rintro ⟨hv, hs⟩
+    obtain ⟨hb, hn, ha⟩ := hv
+    simp only at hb hn ha hs ⊢
+    have hlt := pow_lt_of_stU hb hs
+    have hk : 1 ≤ k := le_trans (by unfold stU; omega) hs
+    refine ⟨⟨?_, ?_, by omega⟩, ⟨hb, hn, ha⟩, hs⟩
+    · rcases hn with hn | hn
+      · exact lt_of_le_of_lt (Nat.le_self_pow (by omega) b) hlt
+      · subst hn; calc 2 < 9 ^ 1 := by norm_num
+          _ ≤ 9 ^ k := Nat.pow_le_pow_right (by norm_num) hk
+    · have h1 : 2 ^ n < 2 ^ (4 * k) := by
+        calc 2 ^ n ≤ b ^ n := Nat.pow_le_pow_left hb n
+          _ < 9 ^ k := hlt
+          _ ≤ 16 ^ k := Nat.pow_le_pow_left (by norm_num) k
+          _ = 2 ^ (4 * k) := by rw [pow_mul]; norm_num
+      have := (Nat.pow_lt_pow_iff_right (by norm_num)).mp h1
+      omega
 
 theorem mem_FF_inr {k : ℕ} {x : ℕ × ℕ} : Sum.inr x ∈ FF k ↔ ValidB x ∧ stB x.2 ≤ k := by
-  sorry
+  obtain ⟨p, q⟩ := x
+  simp only [FF, Finset.inr_mem_disjSum, Finset.mem_filter, Finset.mem_product, Finset.mem_range]
+  constructor
+  · exact fun h => h.2
+  · rintro ⟨hv, hs⟩
+    have h1 := sq_lt_of_stB hs
+    have h2 : q ^ 2 < (3 ^ k) ^ 2 := by
+      calc q ^ 2 < 9 ^ (k - 1) := h1
+        _ ≤ 9 ^ k := Nat.pow_le_pow_right (by norm_num) (by omega)
+        _ = (3 ^ k) ^ 2 := by rw [← pow_mul, mul_comm, pow_mul]; norm_num
+    have hq := (Nat.pow_lt_pow_iff_left (by norm_num)).mp h2
+    exact ⟨⟨by have := hv.2.1; simp only at this; omega, hq⟩, hv, hs⟩
 
 theorem FF_mono (k : ℕ) : FF k ⊆ FF (k + 1) := by
-  sorry
+  intro i hi
+  rcases i with x | x
+  · rw [mem_FF_inl] at hi ⊢; exact ⟨hi.1, by omega⟩
+  · rw [mem_FF_inr] at hi ⊢; exact ⟨hi.1, by omega⟩
 
-theorem rad_lt (i : Idx) : 2 * rad i < 1 / 9 ^ lev i := by
-  sorry
+theorem nat_rad_inl {b n : ℕ} (hb : 2 ≤ b) :
+    2 * 9 ^ (stU b n + (8 + 2 * Nat.log 2 b)) < b ^ (n + 40) := by
+  have h1 : 9 ^ stU b n ≤ 9 * b ^ n := by
+    unfold stU; rw [pow_succ, mul_comm]
+    exact Nat.mul_le_mul_left _ (Nat.pow_log_le_self 9 (by positivity))
+  have h2 : 9 ^ (2 * Nat.log 2 b) ≤ b ^ 7 := by
+    calc 9 ^ (2 * Nat.log 2 b) = 81 ^ Nat.log 2 b := by rw [pow_mul]; norm_num
+      _ ≤ 128 ^ Nat.log 2 b := Nat.pow_le_pow_left (by norm_num) _
+      _ = (2 ^ Nat.log 2 b) ^ 7 := by rw [← pow_mul, mul_comm, pow_mul]; norm_num
+      _ ≤ b ^ 7 := Nat.pow_le_pow_left (Nat.pow_log_le_self 2 (by omega)) 7
+  have h3 : 2 ^ 33 ≤ b ^ 33 := Nat.pow_le_pow_left hb 33
+  have hbn : 0 < b ^ n := by positivity
+  have hb7 : 0 < b ^ 7 := by positivity
+  calc 2 * 9 ^ (stU b n + (8 + 2 * Nat.log 2 b))
+      = 2 * 9 ^ 8 * (9 ^ stU b n * 9 ^ (2 * Nat.log 2 b)) := by ring
+    _ ≤ 2 * 9 ^ 8 * (9 * b ^ n * b ^ 7) := by gcongr
+    _ = (18 * 9 ^ 8) * (b ^ n * b ^ 7) := by ring
+    _ < 2 ^ 33 * (b ^ n * b ^ 7) := by
+        apply Nat.mul_lt_mul_of_pos_right (by norm_num) (by positivity)
+    _ ≤ b ^ 33 * (b ^ n * b ^ 7) := by gcongr
+    _ = b ^ (n + 40) := by ring
+
+theorem nat_rad_inr (q : ℕ) (hq : 1 ≤ q) : 2 * 9 ^ (stB q + 2) < 9 ^ 5 * q ^ 2 := by
+  have h1 : 9 ^ Nat.log 9 (q ^ 2) ≤ q ^ 2 := Nat.pow_log_le_self 9 (by positivity)
+  have hq2 : 0 < q ^ 2 := by positivity
+  unfold stB
+  calc 2 * 9 ^ (Nat.log 9 (q ^ 2) + 2 + 2) = 2 * 9 ^ 4 * 9 ^ Nat.log 9 (q ^ 2) := by ring
+    _ ≤ 2 * 9 ^ 4 * q ^ 2 := by gcongr
+    _ < 9 ^ 5 * q ^ 2 := by apply Nat.mul_lt_mul_of_pos_right (by norm_num) hq2
+
+/-- The radius-level inequality holds for valid obstacles (all others are never charged). -/
+theorem rad_lt_of_mem {i : Idx} {k : ℕ} (hi : i ∈ FF k) : 2 * rad i < 1 / 9 ^ lev i := by
+  rcases i with ⟨b, n, a⟩ | ⟨p, q⟩
+  · obtain ⟨⟨hb, -, -⟩, -⟩ := mem_FF_inl.mp hi
+    have h := nat_rad_inl (n := n) hb
+    have hR : (2 : ℝ) * 9 ^ (stU b n + (8 + 2 * Nat.log 2 b)) < (b : ℝ) ^ (n + 40) := by
+      exact_mod_cast h
+    simp only [rad, lev]
+    rw [mul_one_div, div_lt_div_iff₀ (by positivity) (by positivity)]
+    linarith
+  · obtain ⟨⟨hq, -, -⟩, -⟩ := mem_FF_inr.mp hi
+    have h := nat_rad_inr q hq
+    have hR : (2 : ℝ) * 9 ^ (stB q + 2) < 9 ^ 5 * (q : ℝ) ^ 2 := by exact_mod_cast h
+    simp only [rad, lev]
+    rw [mul_one_div, div_lt_div_iff₀ (by positivity) (by positivity)]
+    linarith
 
 /-- **The counting lemma**: newly charged potential of any window is `≤ 1/2`
 (`≤ 1/8` from all bases, `≤ 1/4` from the one possible rational). -/
 theorem newPot_FF_le (k X : ℕ) : newPot FF ctr rad lev k X ≤ 1 / 2 := by
   sorry
 
+theorem FF_zero : FF 0 = ∅ := by
+  ext i
+  simp only [Finset.notMem_empty, iff_false]
+  intro hi
+  rcases i with x | x
+  · have := (mem_FF_inl.mp hi).2; unfold stU at this; omega
+  · have := (mem_FF_inr.mp hi).2; unfold stB at this; omega
+
 theorem pot_FF_zero : pot FF ctr rad lev 0 0 < 1 := by
-  sorry
+  simp [pot, FF_zero]
 
 /-! ### Bob's test in natural numbers -/
 
@@ -404,14 +498,125 @@ theorem computable_eBob : Computable eBob := by
 
 theorem cantorPoint_eBob_avoid {i : Idx} {k : ℕ} (hi : i ∈ FF k) :
     cantorPoint eBob ∉ Set.Icc (ctr i - rad i) (ctr i + rad i) :=
-  cantorPoint_bits_avoid goodNat FF ctr rad lev FF_mono rad_lt newPot_FF_le pot_FF_zero
+  cantorPoint_bits_avoid goodNat FF ctr rad lev FF_mono (fun _ _ hi => rad_lt_of_mem hi) newPot_FF_le pot_FF_zero
     goodNat_iff hi
 
+theorem cantorPoint_eBob_mem_Icc : cantorPoint eBob ∈ Set.Icc 0 1 := by
+  simpa [path, eBob] using cantorPoint_bits_mem goodNat 0
+
+theorem cantorPoint_eBob_dnear {b n : ℕ} (hb : 2 ≤ b) (hn : 1 ≤ n ∨ b = 2) :
+    1 / (b : ℝ) ^ 40 < UniformBad.dnear ((b : ℝ) ^ n * cantorPoint eBob) := by
+  set ξ := cantorPoint eBob
+  obtain ⟨hξ0, hξ1⟩ := cantorPoint_eBob_mem_Icc
+  by_contra hcon
+  push Not at hcon
+  set z := round ((b : ℝ) ^ n * ξ)
+  have hz : |(b : ℝ) ^ n * ξ - z| ≤ 1 / (b : ℝ) ^ 40 := hcon
+  have hbR : (2 : ℝ) ≤ b := by exact_mod_cast hb
+  have hB : (1 : ℝ) / (b : ℝ) ^ 40 < 1 := by
+    rw [div_lt_one (by positivity)]
+    calc (1 : ℝ) < 2 ^ 40 := by norm_num
+      _ ≤ (b : ℝ) ^ 40 := by gcongr
+  have hbn : (0 : ℝ) < (b : ℝ) ^ n := by positivity
+  have hz' := abs_le.mp hz
+  have hz0 : (0 : ℤ) ≤ z := by
+    have : (-1 : ℝ) < z := by nlinarith
+    exact_mod_cast (show (-1 : ℤ) < z by exact_mod_cast this)
+  have hzb : z ≤ ((b ^ n : ℕ) : ℤ) := by
+    have : (z : ℝ) < (b : ℝ) ^ n + 1 := by nlinarith
+    have : z < ((b ^ n : ℕ) : ℤ) + 1 := by push_cast; exact_mod_cast this
+    omega
+  set a := z.toNat
+  have ha : (a : ℝ) = z := by
+    have : (a : ℤ) = z := Int.toNat_of_nonneg hz0
+    exact_mod_cast this
+  have hmem : Sum.inl (b, n, a) ∈ FF (stU b n) :=
+    mem_FF_inl.mpr ⟨⟨hb, hn, by simp only; omega⟩, le_rfl⟩
+  apply cantorPoint_eBob_avoid hmem
+  simp only [ctr, rad]
+  have key : |ξ - a / (b : ℝ) ^ n| ≤ 1 / (b : ℝ) ^ (n + 40) := by
+    rw [ha, show ξ - z / (b : ℝ) ^ n = ((b : ℝ) ^ n * ξ - z) / (b : ℝ) ^ n by field_simp,
+      abs_div, abs_of_pos hbn, pow_add, div_le_iff₀ hbn]
+    calc |(b : ℝ) ^ n * ξ - z| ≤ 1 / (b : ℝ) ^ 40 := hz
+      _ = 1 / ((b : ℝ) ^ n * (b : ℝ) ^ 40) * (b : ℝ) ^ n := by field_simp
+  rw [abs_le] at key
+  constructor <;> linarith [key.1, key.2]
+
 theorem cantorPoint_eBob_mem_E : cantorPoint eBob ∈ E 40 := by
-  sorry
+  intro b hb n
+  have hbR : (2 : ℝ) ≤ b := by exact_mod_cast hb
+  have hr : (b : ℝ) ^ (-(40 : ℝ)) = 1 / (b : ℝ) ^ 40 := by
+    rw [Real.rpow_neg (by positivity), one_div]; norm_cast
+  rw [hr]
+  by_cases h : 1 ≤ n ∨ b = 2
+  · exact cantorPoint_eBob_dnear hb h
+  · push Not at h
+    obtain ⟨hn, -⟩ := h
+    have hn0 : n = 0 := by omega
+    subst hn0
+    have := cantorPoint_eBob_dnear (b := 2) (n := 0) le_rfl (Or.inr rfl)
+    simp only [pow_zero, one_mul, Nat.cast_ofNat] at this ⊢
+    exact lt_of_le_of_lt (by gcongr) this
 
 theorem cantorPoint_eBob_mem_BA : cantorPoint eBob ∈ BA (1 / 9 ^ 5) := by
-  sorry
+  intro p q hq
+  set ξ := cantorPoint eBob
+  obtain ⟨hξ0, hξ1⟩ := cantorPoint_eBob_mem_Icc
+  have hqR : (1 : ℝ) ≤ q := by exact_mod_cast hq
+  have hq0 : (0 : ℝ) < q := by linarith
+  have hsmall : (1 / 9 ^ 5 : ℝ) / (q : ℝ) ^ 2 < 1 / q := by
+    rw [div_lt_div_iff₀ (by positivity) hq0]; nlinarith
+  by_cases hp0 : p < 0
+  · have hp1 : p ≤ -1 := by omega
+    have hp1R : (p : ℝ) ≤ -1 := by exact_mod_cast hp1
+    have : (p : ℝ) / q ≤ -1 / q := div_le_div_of_nonneg_right hp1R hq0.le
+    rw [abs_of_pos (by have := div_neg_of_neg_of_pos (by norm_num : (-1 : ℝ) < 0) hq0; linarith)]
+    have : -1 / (q : ℝ) = -(1 / q) := by ring
+    linarith
+  by_cases hpq : (q : ℤ) < p
+  · have hp1 : (q : ℝ) + 1 ≤ p := by exact_mod_cast hpq
+    have : (1 : ℝ) + 1 / q ≤ p / q := by
+      rw [le_div_iff₀ hq0]; field_simp; linarith
+    have : (0 : ℝ) < 1 / q := by positivity
+    rw [abs_of_neg (by linarith)]
+    linarith
+  push Not at hp0 hpq
+  -- reduce to lowest terms
+  set m := p.toNat
+  have hm : (m : ℤ) = p := Int.toNat_of_nonneg hp0
+  have hmq : m ≤ q := by omega
+  set g := Nat.gcd m q
+  have hg : 0 < g := Nat.gcd_pos_of_pos_right _ hq
+  set m₀ := m / g
+  set q₀ := q / g
+  have hcop : Nat.Coprime m₀ q₀ := Nat.coprime_div_gcd_div_gcd hg
+  have hmg : m₀ * g = m := Nat.div_mul_cancel (Nat.gcd_dvd_left m q)
+  have hqg : q₀ * g = q := Nat.div_mul_cancel (Nat.gcd_dvd_right m q)
+  have hq₀ : 1 ≤ q₀ := by
+    rcases Nat.eq_zero_or_pos q₀ with h | h
+    · rw [h, zero_mul] at hqg; omega
+    · exact h
+  have hm₀ : m₀ ≤ q₀ := by
+    by_contra h; push Not at h
+    have := Nat.mul_lt_mul_of_pos_right h hg; omega
+  have hmem : Sum.inr (m₀, q₀) ∈ FF (stB q₀) :=
+    mem_FF_inr.mpr ⟨⟨hq₀, hm₀, hcop⟩, le_rfl⟩
+  have hav := cantorPoint_eBob_avoid hmem
+  simp only [ctr, rad, Set.mem_Icc, not_and_or, not_le] at hav
+  have hgR : (0 : ℝ) < g := by exact_mod_cast hg
+  have hq₀R : (1 : ℝ) ≤ q₀ := by exact_mod_cast hq₀
+  have hval : (p : ℝ) / q = (m₀ : ℝ) / q₀ := by
+    rw [← hm, ← hmg, ← hqg]; push_cast; field_simp
+  have hle : (1 / 9 ^ 5 : ℝ) / (q : ℝ) ^ 2 ≤ 1 / (9 ^ 5 * (q₀ : ℝ) ^ 2) := by
+    rw [div_div, one_div_le_one_div (by positivity) (by positivity)]
+    have hg1 : (1 : ℝ) ≤ g := by exact_mod_cast hg
+    have : (q₀ : ℝ) ≤ q := by rw [← hqg]; push_cast; nlinarith
+    gcongr
+  rw [hval]
+  have hpos : (0 : ℝ) < 1 / (9 ^ 5 * (q₀ : ℝ) ^ 2) := by positivity
+  rcases hav with h | h
+  · rw [abs_of_neg (by linarith)]; linarith
+  · rw [abs_of_pos (by linarith)]; linarith
 
 end Stretch
 
