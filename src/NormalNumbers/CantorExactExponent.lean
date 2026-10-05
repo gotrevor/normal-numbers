@@ -632,164 +632,6 @@ theorem bcTerm_green_mu_four :
       3 ^ 128 < 2 ^ (freeCount (expFree 4) 512 - freeCount (expFree 4) 128) := by
   decide +kernel
 
-/-! ## Upper bound: assembly -/
-
-/-- **The crux: the exponent is at most `μ₀`, almost surely.**  Confidence 80%.
-
-English proof.  Fix `τ > μ₀`.  It suffices that a.s. only finitely many `p/q` satisfy
-`|x − p/q| < q^{−τ'}` for some fixed `τ' ∈ (μ₀, τ)` (then `C/q^τ < q^{−τ'}` eventually).
-Split `q ≈ 3ᵐ` by the run index `k` with `⌈μ₀ a_k⌉ − a_k − 2 ≤ m ≤ (a_{k+1}+2)/(τ'−1)` (BC range)
-or `a_{k}/(τ'−1) − 1 ≤ m ≤ ⌈μ₀ a_k⌉ − a_k − 2` (triangle range).
-* Triangle range: `abs_sub_ge_of_near` with `P/3^{a_k}` disposes of every `p/q ≠ P/3^{a_k}`;
-  the rational `P/3^{a_k}` itself is excluded once a free `2` occurs in `[E_k, τ' a_k − 1)`,
-  which fails with probability `2^{−(τ'−μ₀)a_k + O(1)}`, summable.
-* BC range: by `card_near_le` (depth `m+1`) and `coins_ball_le` (depth `⌈τ'm⌉ − 1`) the
-  probability of a hit with `q ∈ [3ᵐ, 3^{m+1})` is `≤ 2·3ᵐ · 4·2^{F(m+1)} · 2·2^{−F(⌈τ'm⌉−1)}
-  ≤ 64 · 3ᵐ 2^{−W(m)}`, `≤ 64·2^C·3ᵐ 2^{−(μ₀−2)m}` by `window_freeCount_ge`; summable over `m` by
-  `summable_bc_of_threshold_lt`.
-Borel–Cantelli (`measure_limsup_atTop_eq_zero`) gives finitely many hits a.s. -/
-theorem ae_not_liouvilleWith (μ₀ : ℚ) (hμ : threshold < μ₀) (τ : ℝ) (hτ : (μ₀ : ℝ) < τ) :
-    ∀ᵐ ω ∂coins, ¬ LiouvilleWith τ (cantorExpReal μ₀ ω) := by
-  sorry
-
-/-- **Exact exponent, a.e.**  Wiring (proved): lower bound from `liouvilleWith_cantorExpReal`
-plus `ae_frequently_two`; upper bound from `ae_not_liouvilleWith` along `μ₀ + 1/(n+1)`. -/
-theorem ae_hasIrrExponent (μ₀ : ℚ) (hμ : threshold < μ₀) :
-    ∀ᵐ ω ∂coins, HasIrrExponent (cantorExpReal μ₀ ω) μ₀ := by
-  have h1 : (1 : ℚ) < μ₀ := by
-    have := one_lt_threshold
-    exact_mod_cast this.trans hμ
-  have hup : ∀ᵐ ω ∂coins, ∀ n : ℕ,
-      ¬ LiouvilleWith ((μ₀ : ℝ) + 1 / ((n : ℝ) + 1)) (cantorExpReal μ₀ ω) := by
-    rw [ae_all_iff]
-    intro n
-    exact ae_not_liouvilleWith μ₀ hμ _ (by have : (0 : ℝ) < 1 / ((n : ℝ) + 1) := by positivity
-                                           linarith)
-  filter_upwards [hup, ae_frequently_two μ₀ h1] with ω hω hf
-  refine ⟨fun p hp => (liouvilleWith_cantorExpReal μ₀ h1 ω hf).mono hp.le, fun p hp hL => ?_⟩
-  obtain ⟨n, hn⟩ := exists_nat_one_div_lt (sub_pos.2 hp)
-  exact hω n (hL.mono (by linarith))
-
-/-! ## Normality -/
-
-/-- **Linear free count.**  Confidence 90%.
-
-English proof.  Below `M`, the forced places lie in runs `[a_j, E_j)` with `E_j ≤ μ₀ a_j + 1`
-and `a_{j+1} ≥ (j+2) E_j`; the free places `[E_{j}, a_{j+1})` before the last run reached
-outnumber all earlier forced places by the factor `j+1`, so `F(M) ≥ M/(2μ₀ + 4) − 4`. -/
-theorem le_freeCount_exp (μ₀ : ℚ) (hμ : 1 < μ₀) :
-    ∃ c : ℝ, 0 < c ∧ ∀ M : ℕ, c * M ≤ freeCount (expFree μ₀) M + 4 := by
-  open CantorExpGeneric in
-  have hF_mono : ∀ x y, x ≤ y → freeCount (expFree μ₀) x ≤ freeCount (expFree μ₀) y := fun x y h => by
-    rw [freeCount_sub _ h]; omega
-  have hA : ∀ k, expRunStart μ₀ k ≤ 2 * freeCount (expFree μ₀) (expRunStart μ₀ k) := by
-    intro k
-    cases k with
-    | zero =>
-      rw [show expRunStart μ₀ 0 = 4 from rfl, freeCount_eq_fc,
-        fc_of_free _ fun i _ hi => expFree_of_lt_four hμ hi]; norm_num
-    | succ k =>
-      have h1 := freeCount_sub (expFree μ₀) (end_lt_start_succ hμ k).le
-      rw [fc_of_free _ fun i hi1 hi2 => expFree_of_gap hμ hi1 hi2] at h1
-      rw [h1, expRunStart_succ]
-      have : (k + 2) * expRunEnd μ₀ (expRunStart μ₀ k) - expRunEnd μ₀ (expRunStart μ₀ k) =
-          (k + 1) * expRunEnd μ₀ (expRunStart μ₀ k) := by
-        rw [show k + 2 = (k + 1) + 1 by ring, add_mul, one_mul, Nat.add_sub_cancel]
-      rw [this]; nlinarith
-  have hμR : (1 : ℝ) < (μ₀ : ℝ) := by exact_mod_cast hμ
-  set μ : ℝ := (μ₀ : ℝ)
-  refine ⟨1 / (2 * μ + 2), by positivity, fun M => ?_⟩
-  have hc : (1 / (2 * μ + 2)) * (2 * μ + 2) = 1 := by field_simp
-  have hF0 : (0 : ℝ) ≤ freeCount (expFree μ₀) M := by positivity
-  rcases lt_or_ge M 4 with hM | hM
-  · have : (M : ℝ) ≤ 4 := by exact_mod_cast hM.le
-    have : 1 / (2 * μ + 2) ≤ 1 := by rw [div_le_one (by linarith)]; linarith
-    nlinarith
-  have hex : ∃ j, M < expRunStart μ₀ j := ⟨M, lt_expRunStart hμ M⟩
-  set j := Nat.find hex
-  have hj : M < expRunStart μ₀ j := Nat.find_spec hex
-  have hj0 : j ≠ 0 := by
-    intro h; rw [h] at hj; simp [expRunStart] at hj; omega
-  obtain ⟨k, hk1⟩ : ∃ k, j = k + 1 := ⟨j - 1, by omega⟩
-  rw [hk1] at hj
-  have hk : expRunStart μ₀ k ≤ M := by
-    by_contra h; exact Nat.find_min hex (show k < Nat.find hex by omega) (by omega)
-  have hAk := hA k
-  have hAkR : (expRunStart μ₀ k : ℝ) ≤ 2 * freeCount (expFree μ₀) (expRunStart μ₀ k) := by
-    exact_mod_cast hAk
-  have hEa1 := expRunEnd_lt_r hμ (expRunStart μ₀ k)
-  rcases lt_or_ge M (expRunEnd μ₀ (expRunStart μ₀ k)) with hME | hME
-  · have hFm : (freeCount (expFree μ₀) (expRunStart μ₀ k) : ℝ) ≤ freeCount (expFree μ₀) M := by
-      exact_mod_cast hF_mono _ _ hk
-    have hMR : (M : ℝ) < μ * expRunStart μ₀ k + 1 := by
-      have : (M : ℝ) < expRunEnd μ₀ (expRunStart μ₀ k) := by exact_mod_cast hME
-      linarith
-    have key : 1 / (2 * μ + 2) * M ≤ 1 / (2 * μ + 2) * (μ * expRunStart μ₀ k + 1) :=
-      mul_le_mul_of_nonneg_left hMR.le (by positivity)
-    have hA0 : (0 : ℝ) ≤ expRunStart μ₀ k := by positivity
-    have : 1 / (2 * μ + 2) * (μ * expRunStart μ₀ k + 1) ≤ expRunStart μ₀ k / 2 + 1 := by
-      rw [div_mul_eq_mul_div, one_mul, div_le_iff₀ (by linarith)]; nlinarith
-    linarith
-  · have h1 := freeCount_sub (expFree μ₀) hME
-    rw [fc_of_free _ fun i hi1 hi2 => expFree_of_gap hμ hi1 (lt_of_lt_of_le hi2 hj.le)] at h1
-    have h2 : (freeCount (expFree μ₀) (expRunStart μ₀ k) : ℝ) ≤
-        freeCount (expFree μ₀) (expRunEnd μ₀ (expRunStart μ₀ k)) := by
-      exact_mod_cast hF_mono _ _ (le_expRunEnd hμ _)
-    have h1R : (freeCount (expFree μ₀) M : ℝ) =
-        freeCount (expFree μ₀) (expRunEnd μ₀ (expRunStart μ₀ k)) + M - expRunEnd μ₀ (expRunStart μ₀ k) := by
-      rw [h1]; push_cast [Nat.cast_sub hME]; ring
-    have hMR : (M : ℝ) - expRunEnd μ₀ (expRunStart μ₀ k) ≥ 0 := by
-      have : (expRunEnd μ₀ (expRunStart μ₀ k) : ℝ) ≤ M := by exact_mod_cast hME
-      linarith
-    have hA0 : (0 : ℝ) ≤ expRunStart μ₀ k := by positivity
-    have hc1 : 1 / (2 * μ + 2) ≤ 1 := by rw [div_le_one (by linarith)]; linarith
-    have k1 : 1 / (2 * μ + 2) * (expRunEnd μ₀ (expRunStart μ₀ k) : ℝ) ≤ expRunStart μ₀ k / 2 + 1 := by
-      have : 1 / (2 * μ + 2) * (expRunEnd μ₀ (expRunStart μ₀ k) : ℝ) ≤
-          1 / (2 * μ + 2) * (μ * expRunStart μ₀ k + 1) :=
-        mul_le_mul_of_nonneg_left hEa1.le (by positivity)
-      have : 1 / (2 * μ + 2) * (μ * expRunStart μ₀ k + 1) ≤ expRunStart μ₀ k / 2 + 1 := by
-        rw [div_mul_eq_mul_div, one_mul, div_le_iff₀ (by linarith)]; nlinarith
-      linarith
-    have k2 : 1 / (2 * μ + 2) * ((M : ℝ) - expRunEnd μ₀ (expRunStart μ₀ k)) ≤
-        (M : ℝ) - expRunEnd μ₀ (expRunStart μ₀ k) := by
-      nlinarith
-    nlinarith
-
-/-- **Normal to every base prime to 3, a.e.**  Confidence 90%.
-
-English proof.  `CantorLiouvilleAll.ae_isNormal_of_coprime_three` verbatim with `isFree`
-replaced by `expFree μ₀`: `secondMoment_le_b (expFree μ₀)` with the linear free count of
-`le_freeCount_exp` (stronger than `CantorLiouville.le_freeCount`) makes the bound summable along
-`CantorLiouville.sched`, and `ae_isNormal_of_secondMoment` concludes. -/
-theorem ae_isNormal_of_coprime_three (μ₀ : ℚ) (hμ : 1 < μ₀) :
-    ∀ᵐ ω ∂coins, ∀ b : ℕ, 2 ≤ b → ¬ 3 ∣ b → IsNormal b (cantorExpReal μ₀ ω) := by
-  sorry
-
-/-- **Existence form.**  Wiring (proved). -/
-theorem exists_mem_cantorSet_irrExponent_normal (μ₀ : ℚ) (hμ : threshold < μ₀) :
-    ∃ x : ℝ, x ∈ cantorSet ∧ HasIrrExponent x μ₀ ∧
-      (∀ b : ℕ, 2 ≤ b → ¬ 3 ∣ b → IsNormal b x) ∧ ¬ IsNormal 3 x := by
-  have h1 : (1 : ℚ) < μ₀ := by
-    have := one_lt_threshold
-    exact_mod_cast this.trans hμ
-  have : NeZero coins := by unfold coins; infer_instance
-  obtain ⟨ω, he, hn⟩ := ((ae_hasIrrExponent μ₀ hμ).and (ae_isNormal_of_coprime_three μ₀ h1)).exists
-  exact ⟨_, mem_cantorSet μ₀ ω, he, hn, not_isNormal_three_cantorExpReal μ₀ h1 ω⟩
-
-/-- **Bases divisible by 3 with short logarithm fail, for every `ω`.**  Confidence 80%.
-
-English proof.  Along run `k` (`a = a_k`, `E = ⌈μ₀ a⌉`), for `j` with `a ≤ v₃(b)·j` and
-`b^{j+1} ≤ 3^E`, `bʲ P/3^a ∈ ℤ` and `{bʲ x} < 1/b` (`CantorLiouvilleAll.fract_lt_of_mem_run`'s
-argument).  These `j` fill a fraction `≥ 1 − log₃ b / μ₀ − o(1) > 1/2 ≥ 1/b` of
-`[0, E / log₃ b)`, contradicting Wall's criterion.  For `3 ∣ b` with `2 log₃ b ≥ μ₀` nothing is
-claimed. -/
-theorem not_isNormal_of_three_dvd_of_small (μ₀ : ℚ) (hμ : 1 < μ₀) (ω : ℕ → Bool) {b : ℕ}
-    (hb : 2 ≤ b) (h3 : 3 ∣ b) (hsmall : 2 * Real.logb 3 b < μ₀) :
-    ¬ IsNormal b (cantorExpReal μ₀ ω) := by
-  sorry
-
-/-! ## Computable form -/
-
 /-! ## The exponent tests: leaves -/
 
 /-- Test depth at scale `m`: `⌊μ₀ m⌋ + ⌊√m⌋` (for `μ₀ ≥ 0`), written in integer arithmetic. -/
@@ -1337,6 +1179,185 @@ theorem hasIrrExponent_of_avoid (μ₀ : ℚ) (hμ : threshold < μ₀) (e : ℕ
       _ = (3 * C' * r ^ m) * (3 : ℝ) ^ (p * m) := by ring
       _ ≤ 2 * (3 : ℝ) ^ (p * m) := by gcongr
       _ ≤ 2 * (n : ℝ) ^ p := by gcongr
+
+/-! ## Upper bound: assembly -/
+
+/-- **The crux: the exponent is at most `μ₀`, almost surely.**  Confidence 80%.
+
+English proof.  Fix `τ > μ₀`.  It suffices that a.s. only finitely many `p/q` satisfy
+`|x − p/q| < q^{−τ'}` for some fixed `τ' ∈ (μ₀, τ)` (then `C/q^τ < q^{−τ'}` eventually).
+Split `q ≈ 3ᵐ` by the run index `k` with `⌈μ₀ a_k⌉ − a_k − 2 ≤ m ≤ (a_{k+1}+2)/(τ'−1)` (BC range)
+or `a_{k}/(τ'−1) − 1 ≤ m ≤ ⌈μ₀ a_k⌉ − a_k − 2` (triangle range).
+* Triangle range: `abs_sub_ge_of_near` with `P/3^{a_k}` disposes of every `p/q ≠ P/3^{a_k}`;
+  the rational `P/3^{a_k}` itself is excluded once a free `2` occurs in `[E_k, τ' a_k − 1)`,
+  which fails with probability `2^{−(τ'−μ₀)a_k + O(1)}`, summable.
+* BC range: by `card_near_le` (depth `m+1`) and `coins_ball_le` (depth `⌈τ'm⌉ − 1`) the
+  probability of a hit with `q ∈ [3ᵐ, 3^{m+1})` is `≤ 2·3ᵐ · 4·2^{F(m+1)} · 2·2^{−F(⌈τ'm⌉−1)}
+  ≤ 64 · 3ᵐ 2^{−W(m)}`, `≤ 64·2^C·3ᵐ 2^{−(μ₀−2)m}` by `window_freeCount_ge`; summable over `m` by
+  `summable_bc_of_threshold_lt`.
+Borel–Cantelli (`measure_limsup_atTop_eq_zero`) gives finitely many hits a.s. -/
+theorem ae_not_liouvilleWith (μ₀ : ℚ) (hμ : threshold < μ₀) (τ : ℝ) (hτ : (μ₀ : ℝ) < τ) :
+    ∀ᵐ ω ∂coins, ¬ LiouvilleWith τ (cantorExpReal μ₀ ω) := by
+  obtain ⟨J₀, hJ₀⟩ := eventually_atTop.1 (ev_expTest_mass μ₀ hμ)
+  have hfin : ∑' m : ℕ, coins {ω | J₀ ≤ m ∧ expTest μ₀ m (pre ω (expL μ₀ m + 1)) = true} ≠ ⊤ := by
+    have hs : Summable fun m : ℕ => 1 / ((m : ℝ) + 1) ^ 2 := by
+      have := (summable_nat_add_iff 1).2 (Real.summable_one_div_nat_pow.2 (by norm_num : 1 < 2))
+      simpa using this
+    refine ne_top_of_le_ne_top (ENNReal.ofReal_tsum_of_nonneg (fun _ => by positivity) hs ▸
+      ENNReal.ofReal_ne_top) (ENNReal.tsum_le_tsum fun m => ?_)
+    by_cases hm : J₀ ≤ m
+    · simp only [hm, true_and]
+      rw [← ofReal_measureReal]
+      exact ENNReal.ofReal_le_ofReal (hJ₀ m hm)
+    · simp [hm]
+  have h0 := measure_setOf_frequently_eq_zero hfin
+  have hae : ∀ᵐ ω ∂coins, ¬ ∃ᶠ m in atTop, J₀ ≤ m ∧ expTest μ₀ m (pre ω (expL μ₀ m + 1)) = true :=
+    measure_eq_zero_iff_ae_notMem.1 h0
+  filter_upwards [hae] with ω hω
+  rw [not_frequently] at hω
+  obtain ⟨m₁, hm₁⟩ := eventually_atTop.1 hω
+  have hex := hasIrrExponent_of_avoid μ₀ hμ ω ⟨max m₁ J₀, fun m hm => by
+    have := hm₁ m (le_of_max_le_left hm)
+    simpa [le_of_max_le_right hm] using this⟩
+  exact hex.2 τ hτ
+
+/-- **Exact exponent, a.e.**  Wiring (proved): lower bound from `liouvilleWith_cantorExpReal`
+plus `ae_frequently_two`; upper bound from `ae_not_liouvilleWith` along `μ₀ + 1/(n+1)`. -/
+theorem ae_hasIrrExponent (μ₀ : ℚ) (hμ : threshold < μ₀) :
+    ∀ᵐ ω ∂coins, HasIrrExponent (cantorExpReal μ₀ ω) μ₀ := by
+  have h1 : (1 : ℚ) < μ₀ := by
+    have := one_lt_threshold
+    exact_mod_cast this.trans hμ
+  have hup : ∀ᵐ ω ∂coins, ∀ n : ℕ,
+      ¬ LiouvilleWith ((μ₀ : ℝ) + 1 / ((n : ℝ) + 1)) (cantorExpReal μ₀ ω) := by
+    rw [ae_all_iff]
+    intro n
+    exact ae_not_liouvilleWith μ₀ hμ _ (by have : (0 : ℝ) < 1 / ((n : ℝ) + 1) := by positivity
+                                           linarith)
+  filter_upwards [hup, ae_frequently_two μ₀ h1] with ω hω hf
+  refine ⟨fun p hp => (liouvilleWith_cantorExpReal μ₀ h1 ω hf).mono hp.le, fun p hp hL => ?_⟩
+  obtain ⟨n, hn⟩ := exists_nat_one_div_lt (sub_pos.2 hp)
+  exact hω n (hL.mono (by linarith))
+
+/-! ## Normality -/
+
+/-- **Linear free count.**  Confidence 90%.
+
+English proof.  Below `M`, the forced places lie in runs `[a_j, E_j)` with `E_j ≤ μ₀ a_j + 1`
+and `a_{j+1} ≥ (j+2) E_j`; the free places `[E_{j}, a_{j+1})` before the last run reached
+outnumber all earlier forced places by the factor `j+1`, so `F(M) ≥ M/(2μ₀ + 4) − 4`. -/
+theorem le_freeCount_exp (μ₀ : ℚ) (hμ : 1 < μ₀) :
+    ∃ c : ℝ, 0 < c ∧ ∀ M : ℕ, c * M ≤ freeCount (expFree μ₀) M + 4 := by
+  open CantorExpGeneric in
+  have hF_mono : ∀ x y, x ≤ y → freeCount (expFree μ₀) x ≤ freeCount (expFree μ₀) y := fun x y h => by
+    rw [freeCount_sub _ h]; omega
+  have hA : ∀ k, expRunStart μ₀ k ≤ 2 * freeCount (expFree μ₀) (expRunStart μ₀ k) := by
+    intro k
+    cases k with
+    | zero =>
+      rw [show expRunStart μ₀ 0 = 4 from rfl, freeCount_eq_fc,
+        fc_of_free _ fun i _ hi => expFree_of_lt_four hμ hi]; norm_num
+    | succ k =>
+      have h1 := freeCount_sub (expFree μ₀) (end_lt_start_succ hμ k).le
+      rw [fc_of_free _ fun i hi1 hi2 => expFree_of_gap hμ hi1 hi2] at h1
+      rw [h1, expRunStart_succ]
+      have : (k + 2) * expRunEnd μ₀ (expRunStart μ₀ k) - expRunEnd μ₀ (expRunStart μ₀ k) =
+          (k + 1) * expRunEnd μ₀ (expRunStart μ₀ k) := by
+        rw [show k + 2 = (k + 1) + 1 by ring, add_mul, one_mul, Nat.add_sub_cancel]
+      rw [this]; nlinarith
+  have hμR : (1 : ℝ) < (μ₀ : ℝ) := by exact_mod_cast hμ
+  set μ : ℝ := (μ₀ : ℝ)
+  refine ⟨1 / (2 * μ + 2), by positivity, fun M => ?_⟩
+  have hc : (1 / (2 * μ + 2)) * (2 * μ + 2) = 1 := by field_simp
+  have hF0 : (0 : ℝ) ≤ freeCount (expFree μ₀) M := by positivity
+  rcases lt_or_ge M 4 with hM | hM
+  · have : (M : ℝ) ≤ 4 := by exact_mod_cast hM.le
+    have : 1 / (2 * μ + 2) ≤ 1 := by rw [div_le_one (by linarith)]; linarith
+    nlinarith
+  have hex : ∃ j, M < expRunStart μ₀ j := ⟨M, lt_expRunStart hμ M⟩
+  set j := Nat.find hex
+  have hj : M < expRunStart μ₀ j := Nat.find_spec hex
+  have hj0 : j ≠ 0 := by
+    intro h; rw [h] at hj; simp [expRunStart] at hj; omega
+  obtain ⟨k, hk1⟩ : ∃ k, j = k + 1 := ⟨j - 1, by omega⟩
+  rw [hk1] at hj
+  have hk : expRunStart μ₀ k ≤ M := by
+    by_contra h; exact Nat.find_min hex (show k < Nat.find hex by omega) (by omega)
+  have hAk := hA k
+  have hAkR : (expRunStart μ₀ k : ℝ) ≤ 2 * freeCount (expFree μ₀) (expRunStart μ₀ k) := by
+    exact_mod_cast hAk
+  have hEa1 := expRunEnd_lt_r hμ (expRunStart μ₀ k)
+  rcases lt_or_ge M (expRunEnd μ₀ (expRunStart μ₀ k)) with hME | hME
+  · have hFm : (freeCount (expFree μ₀) (expRunStart μ₀ k) : ℝ) ≤ freeCount (expFree μ₀) M := by
+      exact_mod_cast hF_mono _ _ hk
+    have hMR : (M : ℝ) < μ * expRunStart μ₀ k + 1 := by
+      have : (M : ℝ) < expRunEnd μ₀ (expRunStart μ₀ k) := by exact_mod_cast hME
+      linarith
+    have key : 1 / (2 * μ + 2) * M ≤ 1 / (2 * μ + 2) * (μ * expRunStart μ₀ k + 1) :=
+      mul_le_mul_of_nonneg_left hMR.le (by positivity)
+    have hA0 : (0 : ℝ) ≤ expRunStart μ₀ k := by positivity
+    have : 1 / (2 * μ + 2) * (μ * expRunStart μ₀ k + 1) ≤ expRunStart μ₀ k / 2 + 1 := by
+      rw [div_mul_eq_mul_div, one_mul, div_le_iff₀ (by linarith)]; nlinarith
+    linarith
+  · have h1 := freeCount_sub (expFree μ₀) hME
+    rw [fc_of_free _ fun i hi1 hi2 => expFree_of_gap hμ hi1 (lt_of_lt_of_le hi2 hj.le)] at h1
+    have h2 : (freeCount (expFree μ₀) (expRunStart μ₀ k) : ℝ) ≤
+        freeCount (expFree μ₀) (expRunEnd μ₀ (expRunStart μ₀ k)) := by
+      exact_mod_cast hF_mono _ _ (le_expRunEnd hμ _)
+    have h1R : (freeCount (expFree μ₀) M : ℝ) =
+        freeCount (expFree μ₀) (expRunEnd μ₀ (expRunStart μ₀ k)) + M - expRunEnd μ₀ (expRunStart μ₀ k) := by
+      rw [h1]; push_cast [Nat.cast_sub hME]; ring
+    have hMR : (M : ℝ) - expRunEnd μ₀ (expRunStart μ₀ k) ≥ 0 := by
+      have : (expRunEnd μ₀ (expRunStart μ₀ k) : ℝ) ≤ M := by exact_mod_cast hME
+      linarith
+    have hA0 : (0 : ℝ) ≤ expRunStart μ₀ k := by positivity
+    have hc1 : 1 / (2 * μ + 2) ≤ 1 := by rw [div_le_one (by linarith)]; linarith
+    have k1 : 1 / (2 * μ + 2) * (expRunEnd μ₀ (expRunStart μ₀ k) : ℝ) ≤ expRunStart μ₀ k / 2 + 1 := by
+      have : 1 / (2 * μ + 2) * (expRunEnd μ₀ (expRunStart μ₀ k) : ℝ) ≤
+          1 / (2 * μ + 2) * (μ * expRunStart μ₀ k + 1) :=
+        mul_le_mul_of_nonneg_left hEa1.le (by positivity)
+      have : 1 / (2 * μ + 2) * (μ * expRunStart μ₀ k + 1) ≤ expRunStart μ₀ k / 2 + 1 := by
+        rw [div_mul_eq_mul_div, one_mul, div_le_iff₀ (by linarith)]; nlinarith
+      linarith
+    have k2 : 1 / (2 * μ + 2) * ((M : ℝ) - expRunEnd μ₀ (expRunStart μ₀ k)) ≤
+        (M : ℝ) - expRunEnd μ₀ (expRunStart μ₀ k) := by
+      nlinarith
+    nlinarith
+
+/-- **Normal to every base prime to 3, a.e.**  Confidence 90%.
+
+English proof.  `CantorLiouvilleAll.ae_isNormal_of_coprime_three` verbatim with `isFree`
+replaced by `expFree μ₀`: `secondMoment_le_b (expFree μ₀)` with the linear free count of
+`le_freeCount_exp` (stronger than `CantorLiouville.le_freeCount`) makes the bound summable along
+`CantorLiouville.sched`, and `ae_isNormal_of_secondMoment` concludes. -/
+theorem ae_isNormal_of_coprime_three (μ₀ : ℚ) (hμ : 1 < μ₀) :
+    ∀ᵐ ω ∂coins, ∀ b : ℕ, 2 ≤ b → ¬ 3 ∣ b → IsNormal b (cantorExpReal μ₀ ω) := by
+  sorry
+
+/-- **Existence form.**  Wiring (proved). -/
+theorem exists_mem_cantorSet_irrExponent_normal (μ₀ : ℚ) (hμ : threshold < μ₀) :
+    ∃ x : ℝ, x ∈ cantorSet ∧ HasIrrExponent x μ₀ ∧
+      (∀ b : ℕ, 2 ≤ b → ¬ 3 ∣ b → IsNormal b x) ∧ ¬ IsNormal 3 x := by
+  have h1 : (1 : ℚ) < μ₀ := by
+    have := one_lt_threshold
+    exact_mod_cast this.trans hμ
+  have : NeZero coins := by unfold coins; infer_instance
+  obtain ⟨ω, he, hn⟩ := ((ae_hasIrrExponent μ₀ hμ).and (ae_isNormal_of_coprime_three μ₀ h1)).exists
+  exact ⟨_, mem_cantorSet μ₀ ω, he, hn, not_isNormal_three_cantorExpReal μ₀ h1 ω⟩
+
+/-- **Bases divisible by 3 with short logarithm fail, for every `ω`.**  Confidence 80%.
+
+English proof.  Along run `k` (`a = a_k`, `E = ⌈μ₀ a⌉`), for `j` with `a ≤ v₃(b)·j` and
+`b^{j+1} ≤ 3^E`, `bʲ P/3^a ∈ ℤ` and `{bʲ x} < 1/b` (`CantorLiouvilleAll.fract_lt_of_mem_run`'s
+argument).  These `j` fill a fraction `≥ 1 − log₃ b / μ₀ − o(1) > 1/2 ≥ 1/b` of
+`[0, E / log₃ b)`, contradicting Wall's criterion.  For `3 ∣ b` with `2 log₃ b ≥ μ₀` nothing is
+claimed. -/
+theorem not_isNormal_of_three_dvd_of_small (μ₀ : ℚ) (hμ : 1 < μ₀) (ω : ℕ → Bool) {b : ℕ}
+    (hb : 2 ≤ b) (h3 : 3 ∣ b) (hsmall : 2 * Real.logb 3 b < μ₀) :
+    ¬ IsNormal b (cantorExpReal μ₀ ω) := by
+  sorry
+
+/-! ## Computable form -/
 
 /-- **The exponent tests.**  Confidence 70%.
 
