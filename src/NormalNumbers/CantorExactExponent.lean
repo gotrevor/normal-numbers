@@ -799,16 +799,136 @@ def expL (μ₀ : ℚ) (m : ℕ) : ℕ := μ₀.num.toNat * m / μ₀.den + Nat.
 def expTest (μ₀ : ℚ) (m : ℕ) (p : List Bool) : Bool :=
   CantorExpGeneric.hitB (expFree μ₀) m (expL μ₀ m) p
 
+section PrimrecLeaves
+
+open CantorExpGeneric
+
+theorem expRunEnd_eq (μ₀ : ℚ) (a : ℕ) :
+    expRunEnd μ₀ a = (μ₀.num.toNat * a + μ₀.den - 1) / μ₀.den := by
+  have hD := μ₀.den_pos
+  set D := μ₀.den
+  set N := μ₀.num.toNat
+  rcases le_or_gt μ₀.num 0 with hn | hn
+  · have hN : N = 0 := Int.toNat_eq_zero.2 hn
+    have : μ₀ ≤ 0 := Rat.num_nonpos.1 hn
+    unfold expRunEnd
+    rw [Nat.ceil_eq_zero.2 (mul_nonpos_of_nonpos_of_nonneg this (by positivity)), hN, zero_mul,
+      zero_add, Nat.div_eq_of_lt (by omega)]
+  have hq : μ₀ * a = ((N * a : ℕ) : ℚ) / D := by
+    have h1 : ((N : ℕ) : ℚ) = μ₀.num := by exact_mod_cast Int.toNat_of_nonneg hn.le
+    push_cast; rw [h1]
+    nth_rw 1 [← Rat.num_div_den μ₀]; ring
+  unfold expRunEnd
+  rw [hq]
+  have hDQ : (0 : ℚ) < D := by exact_mod_cast hD
+  apply le_antisymm
+  · apply Nat.ceil_le.2
+    rw [div_le_iff₀ hDQ]
+    have h := Nat.lt_div_mul_add (a := N * a + D - 1) hD
+    have : N * a ≤ (N * a + D - 1) / D * D := by omega
+    exact_mod_cast this
+  · set c := ⌈((N * a : ℕ) : ℚ) / D⌉₊
+    have hc : ((N * a : ℕ) : ℚ) / D ≤ c := Nat.le_ceil _
+    rw [div_le_iff₀ hDQ] at hc
+    have hc' : N * a ≤ c * D := by exact_mod_cast hc
+    apply Nat.lt_succ_iff.1
+    rw [Nat.div_lt_iff_lt_mul hD]
+    rw [Nat.succ_mul]; omega
+
+theorem primrec_expRunEnd (μ₀ : ℚ) : Primrec (expRunEnd μ₀) :=
+  (Primrec.nat_div.comp (Primrec.nat_sub.comp (Primrec.nat_add.comp
+    (Primrec.nat_mul.comp (Primrec.const _) Primrec.id) (Primrec.const _)) (Primrec.const 1))
+    (Primrec.const _)).of_eq fun a => (expRunEnd_eq μ₀ a).symm
+
+theorem primrec_expRunStart (μ₀ : ℚ) : Primrec (expRunStart μ₀) := by
+  have h : Primrec (Nat.rec (motive := fun _ => ℕ) 4 fun k ih => (k + 2) * expRunEnd μ₀ ih) :=
+    Primrec.nat_rec₁ 4 (Primrec.nat_mul.comp (Primrec.nat_add.comp Primrec.fst (Primrec.const 2))
+      ((primrec_expRunEnd μ₀).comp Primrec.snd)).to₂
+  refine h.of_eq fun k => ?_
+  induction k with
+  | zero => rfl
+  | succ k ih => simp only [expRunStart] at *; rw [← ih]
+
+theorem expFree_eq (μ₀ : ℚ) (i : ℕ) : expFree μ₀ i = decide (((List.range (i + 1)).map fun k =>
+    if expRunStart μ₀ k ≤ i ∧ i < expRunEnd μ₀ (expRunStart μ₀ k) then 1 else 0).sum = 0) := by
+  rw [Bool.eq_iff_iff, decide_eq_true_eq, ComputableNormalB.list_sum_range_map,
+    Finset.sum_eq_zero_iff]
+  simp only [expFree, expForced, Bool.not_eq_true', List.any_eq_false, List.mem_range,
+    Finset.mem_range, Bool.and_eq_true, decide_eq_true_eq, ite_eq_right_iff, one_ne_zero,
+    imp_false]
+
+theorem primrec_expFree (μ₀ : ℚ) : Primrec (expFree μ₀) := by
+  have hr := primrec_expRunStart μ₀
+  have he := primrec_expRunEnd μ₀
+  have hg : Primrec₂ fun (i k : ℕ) =>
+      if expRunStart μ₀ k ≤ i ∧ i < expRunEnd μ₀ (expRunStart μ₀ k) then 1 else 0 :=
+    (Primrec.ite (PrimrecPred.and (Primrec.nat_le.comp (hr.comp Primrec.snd) Primrec.fst)
+      (Primrec.nat_lt.comp Primrec.fst (he.comp (hr.comp Primrec.snd))))
+      (Primrec.const 1) (Primrec.const 0)).to₂
+  have hs := primrec_sum_map (Primrec.list_range.comp Primrec.succ) hg
+  exact (Primrec.eq.comp hs (Primrec.const 0)).decide.of_eq fun i => (expFree_eq μ₀ i).symm
+
+
+theorem primrec_tNum {free : ℕ → Bool} (hf : Primrec free) :
+    Primrec₂ fun (N : ℕ) (p : List Bool) => tNum free N p := by
+  have hd : Primrec₂ fun (p : List Bool) (i : ℕ) => tDig free p i :=
+    (Primrec.cond (Primrec.and.comp (hf.comp Primrec.snd)
+      ((Primrec.list_getD false).comp Primrec.fst Primrec.snd)) (Primrec.const 2)
+      (Primrec.const 0)).to₂
+  have hg : Primrec₂ fun (x : ℕ × List Bool) (i : ℕ) => tDig free x.2 i * 3 ^ (x.1 - 1 - i) :=
+    (Primrec.nat_mul.comp (hd.comp (Primrec.snd.comp Primrec.fst) Primrec.snd)
+      (ComputableNormal.primrec_pow.comp (Primrec.const 3)
+        (Primrec.nat_sub.comp (Primrec.nat_sub.comp (Primrec.fst.comp Primrec.fst)
+          (Primrec.const 1)) Primrec.snd))).to₂
+  exact ((primrec_sum_map (Primrec.list_range.comp Primrec.fst) hg).of_eq fun x => rfl).to₂
+
+theorem primrec_hitB {free : ℕ → Bool} (hf : Primrec free) :
+    Primrec fun x : ℕ × ℕ × List Bool => hitB free x.1 x.2.1 x.2.2 := by
+  classical
+  have hT : Primrec fun x : ℕ × ℕ × List Bool => tNum free (x.2.1 + 1) x.2.2 :=
+    (primrec_tNum hf).comp (Primrec.succ.comp (Primrec.fst.comp Primrec.snd))
+      (Primrec.snd.comp Primrec.snd)
+  have h3L : Primrec fun x : ℕ × ℕ × List Bool => 3 ^ (x.2.1 + 1) :=
+    ComputableNormal.primrec_pow.comp (Primrec.const 3) (Primrec.succ.comp (Primrec.fst.comp Primrec.snd))
+  -- inner: variables `((x, q), pp)`
+  have ha : Primrec fun y : ((ℕ × ℕ × List Bool) × ℕ) × ℕ => y.1.1 := Primrec.fst.comp Primrec.fst
+  have hq : Primrec fun y : ((ℕ × ℕ × List Bool) × ℕ) × ℕ => y.1.2 := Primrec.snd.comp Primrec.fst
+  have hpp : Primrec fun y : ((ℕ × ℕ × List Bool) × ℕ) × ℕ => y.2 := Primrec.snd
+  have hc : PrimrecPred fun y : ((ℕ × ℕ × List Bool) × ℕ) × ℕ =>
+      hitCond free y.1.1.1 y.1.1.2.1 y.1.1.2.2 y.1.2 y.2 := by
+    unfold hitCond
+    refine PrimrecPred.and (Primrec.nat_le.comp
+      (ComputableNormal.primrec_pow.comp (Primrec.const 3) (Primrec.fst.comp ha)) hq)
+      (PrimrecPred.and ?_ ?_)
+    · exact Primrec.nat_le.comp (Primrec.nat_mul.comp (hT.comp ha) hq)
+        (Primrec.nat_add.comp (Primrec.nat_mul.comp hpp (h3L.comp ha))
+          (Primrec.nat_mul.comp (Primrec.const 3) hq))
+    · exact Primrec.nat_le.comp (Primrec.nat_mul.comp hpp (h3L.comp ha))
+        (Primrec.nat_add.comp (Primrec.nat_mul.comp (hT.comp ha) hq)
+          (Primrec.nat_mul.comp (Primrec.const 3) hq))
+  have hin : Primrec₂ fun (y : (ℕ × ℕ × List Bool) × ℕ) (pp : ℕ) =>
+      if hitCond free y.1.1 y.1.2.1 y.1.2.2 y.2 pp then 1 else 0 :=
+    (Primrec.ite hc (Primrec.const 1) (Primrec.const 0)).to₂
+  have hinner := primrec_sum_map (Primrec.list_range.comp (Primrec.succ.comp Primrec.snd)) hin
+  have hout := primrec_sum_map (Primrec.list_range.comp (ComputableNormal.primrec_pow.comp
+    (Primrec.const 3) (Primrec.succ.comp (Primrec.fst : Primrec fun x : ℕ × ℕ × List Bool => x.1))))
+    hinner.to₂
+  exact (Primrec.nat_lt.comp (Primrec.const 0) hout).decide.of_eq fun x => rfl
+
+end PrimrecLeaves
+
 /-- `expL` is primitive recursive.  Confidence 95%. -/
-theorem primrec_expL (μ₀ : ℚ) : Primrec (expL μ₀) := by
-  sorry
+theorem primrec_expL (μ₀ : ℚ) : Primrec (expL μ₀) :=
+  Primrec.nat_add.comp (Primrec.nat_div.comp (Primrec.nat_mul.comp (Primrec.const _) Primrec.id)
+    (Primrec.const _)) Primrec.nat_sqrt
 
 /-- The exponent test is primitive recursive.  Confidence 90%.
 
 English proof.  `expFree μ₀` is (indicator-sum over the primitive recursive `expRunStart`, as
 `CantorLiouville.primrec_isFree`), `tNum`/`hitCnt` are bounded nested list sums. -/
-theorem primrec_expTest (μ₀ : ℚ) : Primrec₂ (expTest μ₀) := by
-  sorry
+theorem primrec_expTest (μ₀ : ℚ) : Primrec₂ (expTest μ₀) :=
+  ((primrec_hitB (primrec_expFree μ₀)).comp (Primrec.pair Primrec.fst
+    (Primrec.pair ((primrec_expL μ₀).comp Primrec.fst) Primrec.snd))).to₂
 
 section MassLeaves
 
