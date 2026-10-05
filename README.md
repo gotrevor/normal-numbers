@@ -15,7 +15,7 @@ Almost every real number is normal in every base (Borel 1909), yet no
 normal in any base.  This repo formalizes the definitions, the classical
 equivalences, and the two known bridges toward that open problem.
 
-**Illustrated map: [How Irregular Is a Number?](https://claude.ai/code/artifact/b539ebd7-b4cd-4522-9588-8509f2b24e50)** places
+**Illustrated map: [How Irregular Is a Number?](https://gotrevor.github.io/normal-numbers/how-irregular-is-a-number.html)** places
 normality next to irrationality, transcendence and computability, works out how the axes relate,
 and ends in a status board of every claim on the map with what is proved and what is
 machine-checked, each linked to its source.  Start there if you want the landscape before the
@@ -99,7 +99,7 @@ target 2 is exactly what upgrades such a result to the *real number*.
 
 ## Background
 
-[**How Irregular Is a Number?**](https://claude.ai/code/artifact/b539ebd7-b4cd-4522-9588-8509f2b24e50) is the illustrated
+[**How Irregular Is a Number?**](https://gotrevor.github.io/normal-numbers/how-irregular-is-a-number.html) is the illustrated
 version: three nested expansion regions crossed with the algebraic/transcendental split, the
 computability axis underneath both (`uncomputable ⇒ transcendental`, and the ceiling that stops
 every computable real at absolute normality), the implication lattice from `Irrational` up to
