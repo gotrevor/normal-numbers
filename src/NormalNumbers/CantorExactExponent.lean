@@ -790,6 +790,51 @@ theorem not_isNormal_of_three_dvd_of_small (μ₀ : ℚ) (hμ : 1 < μ₀) (ω :
 
 /-! ## Computable form -/
 
+/-! ## The exponent tests: leaves -/
+
+/-- Test depth at scale `m`: `⌊μ₀ m⌋ + ⌊√m⌋` (for `μ₀ ≥ 0`), written in integer arithmetic. -/
+def expL (μ₀ : ℚ) (m : ℕ) : ℕ := μ₀.num.toNat * m / μ₀.den + Nat.sqrt m
+
+/-- The scale-`m` exponent test on a coin prefix of length `expL μ₀ m + 1`. -/
+def expTest (μ₀ : ℚ) (m : ℕ) (p : List Bool) : Bool :=
+  CantorExpGeneric.hitB (expFree μ₀) m (expL μ₀ m) p
+
+/-- `expL` is primitive recursive.  Confidence 95%. -/
+theorem primrec_expL (μ₀ : ℚ) : Primrec (expL μ₀) := by
+  sorry
+
+/-- The exponent test is primitive recursive.  Confidence 90%.
+
+English proof.  `expFree μ₀` is (indicator-sum over the primitive recursive `expRunStart`, as
+`CantorLiouville.primrec_isFree`), `tNum`/`hitCnt` are bounded nested list sums. -/
+theorem primrec_expTest (μ₀ : ℚ) : Primrec₂ (expTest μ₀) := by
+  sorry
+
+/-- **The crux: mass of the scale-`m` test.**  Confidence 80%.
+
+English proof.  Let `L = expL μ₀ m ≥ μ₀ m − 1 + ⌊√m⌋`, `k` maximal with `a_k + m + 3 ≤ L`, so
+`a_{k+1} + 4 > (μ₀−1)(m+1)`.  If `E_k ≤ m + a_k + 3` (BC case), `hit_mass_bc` and `window_core`
+(σ = μ₀, window `(m+1, L−2)`) bound the mass by `6·2^C·(3·2^{−(μ₀−2)})^m`, geometric
+(`rho_lt_one`).  Otherwise (triangle case) `hit_mass_tri` bounds it by `2^{−fc(m,L)}`, and
+`fc(m, L) ≥ max(a_k − m, L − E_k) ≥ (√m − 2)/μ₀` once `k` exceeds `⌈μ₀⌉` (then `[m, a_k)` and
+`[E_k, L)` are free).  Both are eventually `≤ 1/(m+1)²`. -/
+theorem ev_expTest_mass (μ₀ : ℚ) (hμ : threshold < μ₀) :
+    ∀ᶠ m : ℕ in atTop, coins.real {ω | expTest μ₀ m (pre ω (expL μ₀ m + 1)) = true} ≤
+      1 / ((m : ℝ) + 1) ^ 2 := by
+  sorry
+
+/-- **Avoidance gives the exact exponent.**  Confidence 85%.
+
+English proof.  Upper: if `LiouvilleWith τ x` (`τ > μ₀`), frequently `|x − p/n| < C n^{−τ}`;
+with `3^m ≤ n < 3^{m+1}` and `0 ≤ p ≤ n` (else `|x − p/n| ≥ 1/n`), `C n^{−τ} ≤ 2·3^{−(L+1)}`
+for large `m` since `L ≤ μ₀ m + √m`, so `hitB_of_near` fires at infinitely many `m`.  Lower:
+if free `2`s stop at `N`, every tail beyond `N` vanishes and `hitB_of_near` (`q = 3^m`) fires at
+every `m ≥ N`; so free `2`s recur and `liouvilleWith_cantorExpReal` applies. -/
+theorem hasIrrExponent_of_avoid (μ₀ : ℚ) (hμ : threshold < μ₀) (e : ℕ → Bool)
+    (h : ∃ m₁, ∀ m, m₁ ≤ m → expTest μ₀ m (pre e (expL μ₀ m + 1)) = false) :
+    HasIrrExponent (cantorExpReal μ₀ e) μ₀ := by
+  sorry
+
 /-- **The exponent tests.**  Confidence 70%.
 
 English proof.  For rational `τ_n = μ₀ + 1/(n+1)` (rational, so `|x − p/q| < q^{−τ_n}` is
@@ -806,7 +851,19 @@ theorem exists_exponent_tests (μ₀ : ℚ) (hμ : threshold < μ₀) :
       (∀ j, coins.real {ω | bad' j (pre ω (d' j)) = true} ≤ 1 / ((j : ℝ) + 1) ^ 2) ∧
       ∀ e : ℕ → Bool, (∃ j₁, ∀ j, j₁ ≤ j → bad' j (pre e (d' j)) = false) →
         HasIrrExponent (cantorExpReal μ₀ e) μ₀ := by
-  sorry
+  obtain ⟨J₀, hJ₀⟩ := eventually_atTop.1 (ev_expTest_mass μ₀ hμ)
+  refine ⟨fun j p => decide (J₀ ≤ j) && expTest μ₀ j p, fun j => expL μ₀ j + 1,
+    Primrec.and.comp (Primrec.nat_le.comp (Primrec.const J₀) Primrec.fst).decide
+      (primrec_expTest μ₀), Primrec.succ.comp (primrec_expL μ₀), fun j => ?_, ?_⟩
+  · by_cases hj : J₀ ≤ j
+    · simpa [hj] using hJ₀ j hj
+    · simp only [hj, decide_false, Bool.false_and, Bool.false_eq_true, Set.setOf_false,
+        measureReal_empty]
+      positivity
+  · rintro e ⟨j₁, hj₁⟩
+    refine hasIrrExponent_of_avoid μ₀ hμ e ⟨max j₁ J₀, fun m hm => ?_⟩
+    have := hj₁ m (le_of_max_le_left hm)
+    simpa [le_of_max_le_right hm] using this
 
 /-- **Family derandomization for the exponent schedule.**  Confidence 85%.
 
