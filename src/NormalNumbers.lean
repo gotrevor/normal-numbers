@@ -944,6 +944,7 @@ import NormalNumbers.ComputableNormal
 import NormalNumbers.ComputableReal
 import NormalNumbers.KurtzRandom
 import NormalNumbers.QSpanNormal
+import NormalNumbers.QSpanCriterion
 import NormalNumbers.SqrtFloor
 import NormalNumbers.ExplicitSquareNonNormal
 import NormalNumbers.ExplicitOmegaK
