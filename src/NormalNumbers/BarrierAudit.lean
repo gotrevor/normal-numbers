@@ -186,6 +186,10 @@ def waivers : List Waiver := [
   ⟨``Literature.DigitsOfPowers.persistence_bounded_of_smoothDigitOmission,
    "wiring lemma (a leaf): digit-product arithmetic from the open node SmoothDigitOmission; \
     English proof in the docstring"⟩,
+  ⟨``QSpan.exists_pair_exponentTwo_qSpan_not_normal,
+   "a sibling, stated for the Maze row on Diophantine inputs (registered as a Maze witness, not a \
+    barrier: it refutes a route, no open crux uses it); proof from span_dimension_budget plus \
+    Bénard–He–Zhang"⟩,
   ⟨``QSpan.span_dimension_budget,
    "a leaf: block-entropy subadditivity through bounded carries, plus the block-entropy \
     characterization of dim_FS/Dim_FS (BHV 2005); possibly literature-adjacent (Doty–Lutz–Nandakumar \

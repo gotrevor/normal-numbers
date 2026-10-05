@@ -6,6 +6,7 @@ Authors: Trevor Morris
 import NormalNumbers.MasterConjectures
 import NormalNumbers.WallRational
 import NormalNumbers.FiniteStateSelection
+import NormalNumbers.CantorExactExponent
 
 /-!
 # A normal number in the ℚ-span of `√2, √3`?
@@ -42,14 +43,14 @@ have positive digit entropy), so the open node implies an open, strictly weaker-
 The budget also explains the Liouville sibling, and gives a second one with no Liouville
 behaviour: a pair drawn from the product of `{0,1}`-digit Cantor measures has joint dimension
 `log 4 / log 10 < 1` in base 10, so no span element is normal, yet every span element is a.e.
-not very well approximable (Bénard–He–Zhang for the self-similar pushforwards).  So Roth-type
+not very well approximable (Bénard–He–Zhang for the self-similar pushforwards); `exists_pair_exponentTwo_qSpan_not_normal`.  So Roth-type
 (exponent-2) information about the span cannot force normality either; the missing input is
 entropy, nothing Diophantine.
 -/
 
 namespace NormalNumbers.QSpan
 
-open MasterConjectures FiniteState Filter
+open MasterConjectures FiniteState Filter CantorExactExponent
 open scoped ENNReal
 
 /-- Some nonzero rational combination `c₁x + c₂y` is normal in base `b`. -/
@@ -160,5 +161,23 @@ theorem qSpanNormal_sqrt_upperDim (b : ℕ) (hb : 2 ≤ b)
   have := ENNReal.add_lt_add hc.1 hc.2
   rw [ENNReal.add_halves] at this
   exact absurd (h2.trans_lt this) (lt_irrefl _)
+
+/-- **Sibling: exponent-2 information does not force a normal span element.**  Confidence 80%.
+
+English construction.  Let `μ` be the law of `Σ dᵢ 10^{−i−1}` with independent fair digits
+`dᵢ ∈ {0, 1}`, and draw `(x, y)` from `μ × μ`.  (1) ℚ-independence of `1, x, y`: each relation
+`c₀ + c₁x + c₂y = 0` with `(c₁, c₂) ≠ 0` cuts out a `μ × μ`-null set (a line meets the product of
+two non-atomic measures in a null set), and there are countably many.  (2) Exponent 2: for
+`(c₁, c₂) ≠ 0`, the pushforward of `μ × μ` under `c₁x + c₂y` is a self-similar measure with ratio
+`1/10` and finitely many rational translations (an affine image of one when the IFS overlaps), so
+Bénard–He–Zhang (Khintchine convergence for self-similar measures) gives exponent exactly 2 a.e.
+(Dirichlet gives `≥ 2`); countably many combinations.  (3) No normal element:
+`span_dimension_budget` with `dim_FS x, Dim_FS y ≤ log 2 / log 10` a.e., so the sum is
+`log 4 / log 10 < 1`. -/
+theorem exists_pair_exponentTwo_qSpan_not_normal :
+    ∃ x y : ℝ, (∀ c₀ c₁ c₂ : ℚ, (c₁ : ℝ) * x + c₂ * y = c₀ → c₁ = 0 ∧ c₂ = 0) ∧
+      (∀ c₁ c₂ : ℚ, (c₁ ≠ 0 ∨ c₂ ≠ 0) → HasIrrExponent ((c₁ : ℝ) * x + c₂ * y) 2) ∧
+      ¬ QSpanNormal 10 x y := by
+  sorry
 
 end NormalNumbers.QSpan

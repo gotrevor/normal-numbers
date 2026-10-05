@@ -13,6 +13,8 @@ import NormalNumbers.StonehamBase6
 import NormalNumbers.LinearFormsScalesStretch
 import NormalNumbers.EntropyProfiles
 import NormalNumbers.CantorExactExponentStretch
+import NormalNumbers.QSpanNormal
+import NormalNumbers.Barriers
 
 /-!
 # Maze audit: every closed route cites declarations
@@ -40,6 +42,12 @@ def mazeRows : List RowInfo :=
 
 /-- Each linked row and the declarations it rests on. -/
 def mazeLinks : List Link := [
+  ⟨"pair-universal mechanism for a normal element of a Q-span",
+   [``QSpan.exists_pair_qSpan_not_normal, ``QSpan.qSpanNormal_sqrt_two_sqrt_three,
+    ``Barriers.liouville_pair_qSpan], []⟩,
+  ⟨"Diophantine (exponent-2) input for a normal element of a Q-span",
+   [``QSpan.exists_pair_exponentTwo_qSpan_not_normal, ``QSpan.span_dimension_budget,
+    ``QSpan.qSpanNormal_sqrt_upperDim], []⟩,
   ⟨"He-Liao local count on the forced-run measure",
    [``CantorExactExponentStretch.endpoint_sep, ``CantorExactExponentStretch.thickening_cost_ge_one,
     ``CantorExactExponentStretch.Literature.HeLiao2026Cor65,
@@ -234,7 +242,7 @@ def mazeLegacy : List String := [
   "Diophantine good-denominator detour for the tail cell",
   "route B's unweighted cover of the state-dependent target"]
 
-/-- info: maze audit: 154 rows, 47 cite declarations, 107 legacy (prose only) -/
+/-- info: maze audit: 156 rows, 49 cite declarations, 107 legacy (prose only) -/
 #guard_msgs in
 #maze_audit mazeRows, mazeLinks, mazeLegacy
 
