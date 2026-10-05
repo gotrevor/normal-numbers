@@ -1462,6 +1462,40 @@ theorem exists_mem_cantorSet_irrExponent_normal (μ₀ : ℚ) (hμ : threshold <
   obtain ⟨ω, he, hn⟩ := ((ae_hasIrrExponent μ₀ hμ).and (ae_isNormal_of_coprime_three μ₀ h1)).exists
   exact ⟨_, mem_cantorSet μ₀ ω, he, hn, not_isNormal_three_cantorExpReal μ₀ h1 ω⟩
 
+open CantorExpGeneric in
+theorem fract_lt_of_mem_run_exp {μ₀ : ℚ} (hμ : 1 < μ₀) (ω : ℕ → Bool) {b : ℕ} (hb : 2 ≤ b) (h3 : 3 ∣ b)
+    {k j : ℕ} (hj1 : expRunStart μ₀ k ≤ j)
+    (hj2 : b ^ (j + 2) ≤ 3 ^ expRunEnd μ₀ (expRunStart μ₀ k)) :
+    Int.fract (cantorExpReal μ₀ ω * (b : ℝ) ^ j) < 1 / b := by
+  set A := expRunStart μ₀ k
+  set T := expRunEnd μ₀ A
+  set t := tl (expFree μ₀) ω T
+  have hx : cantorExpReal μ₀ ω = (hd (expFree μ₀) ω A : ℝ) / 3 ^ A + t :=
+    cantorExpReal_trunc hμ ω k
+  have ht0 : 0 ≤ t := tl_nonneg _ _ _
+  have ht1 : t ≤ 1 / 3 ^ T := tl_le _ _ _
+  obtain ⟨q, hq⟩ : 3 ^ A ∣ b ^ j := (pow_dvd_pow 3 hj1).trans (pow_dvd_pow_of_dvd h3 j)
+  have hbR : (2 : ℝ) ≤ b := by exact_mod_cast hb
+  have hbj : (b : ℝ) ^ j = 3 ^ A * q := by exact_mod_cast hq
+  have heq : cantorExpReal μ₀ ω * (b : ℝ) ^ j =
+      (((hd (expFree μ₀) ω A * q : ℕ) : ℤ) : ℝ) + t * (b : ℝ) ^ j := by
+    rw [hx, add_mul, hbj]; push_cast; field_simp
+  have hT : (b : ℝ) ^ (j + 2) ≤ 3 ^ T := by exact_mod_cast hj2
+  have h3T : (0 : ℝ) < 3 ^ T := by positivity
+  have hlt : t * (b : ℝ) ^ j < 1 / b := by
+    have hbj2 : (b : ℝ) ^ j * (b * b) ≤ 3 ^ T := by rw [← pow_two, ← pow_add]; exact hT
+    have hbj0 : (0 : ℝ) ≤ (b : ℝ) ^ j := by positivity
+    calc t * (b : ℝ) ^ j ≤ 1 / 3 ^ T * (b : ℝ) ^ j := by gcongr
+      _ ≤ 1 / 3 ^ T * (3 ^ T / (b * b)) := by
+          gcongr; rw [le_div_iff₀ (by positivity)]; exact hbj2
+      _ = 1 / (b * b) := by field_simp
+      _ < 1 / b := by
+          apply one_div_lt_one_div_of_lt (by positivity); nlinarith
+  have h0 : 0 ≤ t * (b : ℝ) ^ j := by positivity
+  rw [heq, Int.fract_intCast_add, Int.fract_eq_self.2 ⟨h0, hlt.trans_le ?_⟩]
+  · exact hlt
+  · rw [div_le_one (by linarith)]; linarith
+
 /-- **Bases divisible by 3 with short logarithm fail, for every `ω`.**  Confidence 80%.
 
 English proof.  Along run `k` (`a = a_k`, `E = ⌈μ₀ a⌉`), for `j` with `a ≤ v₃(b)·j` and
@@ -1472,7 +1506,61 @@ claimed. -/
 theorem not_isNormal_of_three_dvd_of_small (μ₀ : ℚ) (hμ : 1 < μ₀) (ω : ℕ → Bool) {b : ℕ}
     (hb : 2 ≤ b) (h3 : 3 ∣ b) (hsmall : 2 * Real.logb 3 b < μ₀) :
     ¬ IsNormal b (cantorExpReal μ₀ ω) := by
-  sorry
+  intro hn
+  rw [isNormal_iff_equidistributed_orbit b hb] at hn
+  have hb3 : 3 ≤ b := by have := Nat.le_of_dvd (by omega) h3; omega
+  have hbR : (3 : ℝ) ≤ b := by exact_mod_cast hb3
+  have ht := hn 0 (1 / b) le_rfl (by positivity) (by rw [div_le_one (by linarith)]; linarith)
+  rw [sub_zero] at ht
+  have hlt : (1 : ℝ) / b < 5 / 12 := by rw [div_lt_iff₀ (by linarith)]; linarith
+  obtain ⟨N0, hN0⟩ := eventually_atTop.1 (ht.eventually (gt_mem_nhds hlt))
+  set k := N0 + 12
+  set A := expRunStart μ₀ k
+  set T := expRunEnd μ₀ A
+  set n := Nat.log b (3 ^ T)
+  have hkA := lt_expRunStart hμ k
+  have hlog : 3 ^ T < b ^ (n + 1) := Nat.lt_pow_succ_log_self (by omega) _
+  -- `n ≥ 2A`
+  have hn2 : 2 * A ≤ n := by
+    have hl3 : 0 < Real.log 3 := Real.log_pos (by norm_num)
+    have hlb : 0 < Real.log b := Real.log_pos (by linarith)
+    have h1 : (T : ℝ) * Real.log 3 < (n + 1) * Real.log b := by
+      have : ((3 ^ T : ℕ) : ℝ) < ((b ^ (n + 1) : ℕ) : ℝ) := by exact_mod_cast hlog
+      have := Real.log_lt_log (by positivity) this
+      push_cast at this; rw [Real.log_pow, Real.log_pow] at this; push_cast at this; linarith
+    have h2 : (μ₀ : ℝ) * A ≤ T := expRunEnd_ge_r μ₀ A
+    have h4 : 2 * Real.log b < μ₀ * Real.log 3 := by
+      rw [Real.logb, mul_div_assoc'] at hsmall
+      rwa [div_lt_iff₀ hl3] at hsmall
+    have hA0 : (0 : ℝ) ≤ A := by positivity
+    have : (2 * A : ℝ) < n + 1 := by
+      by_contra hc; push Not at hc
+      nlinarith
+    have : 2 * A < n + 1 := by exact_mod_cast this
+    omega
+  have hpow : b ^ n ≤ 3 ^ T := Nat.pow_log_le_self b (by positivity)
+  have hvis : n - 1 - A ≤ visitCount (orbit b (cantorExpReal μ₀ ω)) 0 (1 / b) n := by
+    unfold visitCount
+    have : Finset.Ico A (n - 1) ⊆ (Finset.range n).filter
+        (fun j => orbit b (cantorExpReal μ₀ ω) j ∈ Set.Ico 0 (1 / (b : ℝ))) := by
+      intro j hj
+      simp only [Finset.mem_Ico] at hj
+      simp only [Finset.mem_filter, Finset.mem_range, Set.mem_Ico, orbit]
+      refine ⟨by omega, Int.fract_nonneg _, fract_lt_of_mem_run_exp hμ ω hb h3 hj.1 ?_⟩
+      exact (Nat.pow_le_pow_right (by omega) (by omega)).trans hpow
+    simpa using Finset.card_le_card this
+  have hn12 : 12 ≤ n := by omega
+  have hnpos : (0 : ℝ) < n := by have : 0 < n := by omega
+                                 exact_mod_cast this
+  have := hN0 n (by omega)
+  rw [div_lt_iff₀ hnpos] at this
+  have h1 : ((n - 1 - A : ℕ) : ℝ) ≤ visitCount (orbit b (cantorExpReal μ₀ ω)) 0 (1 / b) n := by
+    exact_mod_cast hvis
+  have h2 : ((n - 1 - A : ℕ) : ℝ) = n - 1 - A := by
+    rw [Nat.cast_sub (by omega), Nat.cast_sub (by omega)]; push_cast; ring
+  have h3' : (2 * A : ℝ) ≤ n := by exact_mod_cast hn2
+  have h12 : (12 : ℝ) ≤ n := by exact_mod_cast hn12
+  linarith
 
 /-! ## Computable form -/
 
