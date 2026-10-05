@@ -30,6 +30,7 @@ import NormalNumbers.FiniteStateSelectionStretch
 import NormalNumbers.SchmidtGamesStretch
 import NormalNumbers.CantorExactExponentStretch
 import NormalNumbers.ComputableReal
+import NormalNumbers.KurtzRandom
 import NormalNumbers.MahlerProductBlock
 
 /-!
