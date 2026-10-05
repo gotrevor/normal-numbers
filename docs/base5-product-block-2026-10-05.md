@@ -52,9 +52,10 @@ affordable.  A collapse is a proof; a failing assignment is only "no certificate
 - Greedy from `{1,2,3,4,8}` (the best small 5-set): failing assignments 1400 → 4611 at
   `+16`; the multiplicative growth per channel is falling (5 → 4 → 3.3) but has not turned.
   Mixed small+large greedy (`{1,2,3,4,8}` seed, candidates `m ≤ 40` plus the 60 best
-  Liouville-covering `m ≤ 1000`): `+16` 4611, `+9` 12501, `+29` 25418, `+34` 44813 failing.
-  Per-step growth 3.3 → 2.7 → 2.0 → 1.8, still above 1, and it has not yet taken a large
-  multiplier, which the cover bound says it eventually must.
+  Liouville-covering `m ≤ 1000`): `+16` 4611, `+9` 12501, `+29` 25418, `+34` 44813, `+919` 71497 failing.
+  Per-step growth 3.3 → 2.7 → 2.0 → 1.8 → 1.6, still above 1.  `919 = 12134₅` is the first
+  large pick, and it uses all four nonzero digits, as the cover bound says some member must.
+  Steps now cost an hour in pure Python; the next lever is a compiled checker, not more time.
 
 ## Status
 
