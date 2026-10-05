@@ -8,7 +8,7 @@ and the natural next question was where normality goes on the same page.*
 Companion: `docs/how-irregular-is-a-number.html` (the same material with the diagrams, including
 the full digit-side implication lattice from `Irrational` up to 2-randomness).
 Prior art worth knowing: Numberphile's *All the Numbers* draws the same crossing by hand
-(<https://www.youtube.com/watch?v=5TkIe60y2GI>, at 8:23), and gets the key detail right, that the
+(<https://www.youtube.com/watch?v=5TkIe60y2GI&t=503s>, at 8:23), and gets the key detail right, that the
 normal circle overlaps algebraic and computable but never meets the rationals.
 
 ## 1.  Four claims, three subjects
