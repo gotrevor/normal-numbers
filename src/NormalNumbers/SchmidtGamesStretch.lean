@@ -206,11 +206,76 @@ def bits (n : ℕ) : Bool :=
 
 theorem pick_good {k X : ℕ} (h : ∃ j < 4, good (k + 1) (9 * X + dig j) = true) :
     good (k + 1) (9 * X + dig (pick good k X)) = true := by
-  sorry
+  obtain ⟨j, hj, hg⟩ := h
+  unfold pick
+  interval_cases j <;> split_ifs <;> simp_all
+
+theorem pick_lt (k X : ℕ) : pick good k X < 4 := by
+  unfold pick; split_ifs <;> norm_num
+
+/-- The `n`-th term of `cantorPoint`. -/
+noncomputable def term (e : ℕ → Bool) (n : ℕ) : ℝ := (if e n then (2 : ℝ) else 0) / 3 ^ (n + 1)
+
+theorem term_nonneg (e : ℕ → Bool) (n : ℕ) : 0 ≤ term e n := by
+  unfold term; split_ifs <;> positivity
+
+theorem term_le (e : ℕ → Bool) (n : ℕ) : term e n ≤ 2 * (1 / 3) ^ (n + 1) := by
+  unfold term; rw [one_div_pow, ← div_eq_mul_one_div]
+  exact div_le_div_of_nonneg_right (by split_ifs <;> norm_num) (by positivity)
+
+theorem summable_term (e : ℕ → Bool) : Summable (term e) :=
+  Summable.of_nonneg_of_le (term_nonneg e) (term_le e)
+    ((summable_geometric_of_lt_one (by norm_num) (by norm_num)).comp_injective
+      (add_left_injective 1) |>.mul_left 2)
+
+theorem sum_term_bits (k : ℕ) :
+    ∑ n ∈ range (2 * k), term (bits good) n = (path good k : ℝ) / 9 ^ k := by
+  induction k with
+  | zero => simp [path]
+  | succ k ih =>
+    rw [show 2 * (k + 1) = 2 * k + 1 + 1 by ring, Finset.sum_range_succ, Finset.sum_range_succ, ih]
+    have h0 : (2 * k) % 2 = 0 := by omega
+    have h1 : (2 * k + 1) % 2 = 1 := by omega
+    have d0 : 2 * k / 2 = k := by omega
+    have d1 : (2 * k + 1) / 2 = k := by omega
+    have hp := pick_lt good k (path good k)
+    simp only [term, bits, h0, h1, d0, d1, path]
+    generalize pick good k (path good k) = j at hp ⊢
+    push_cast
+    have e3 : (3 : ℝ) ^ (2 * k + 1 + 1) = 9 ^ (k + 1) := by
+      rw [show (9 : ℝ) = 3 ^ 2 by norm_num, ← pow_mul]; ring_nf
+    have e2 : (3 : ℝ) ^ (2 * k + 1) = 9 ^ (k + 1) / 3 := by
+      rw [← e3]; ring
+    rw [e3, e2]
+    interval_cases j <;> simp [dig] <;> field_simp <;> ring
+
+theorem cantorPoint_eq (e : ℕ → Bool) (m : ℕ) :
+    cantorPoint e = ∑ n ∈ range m, term e n + ∑' n, term e (n + m) :=
+  ((summable_term e).sum_add_tsum_nat_add m).symm
+
+theorem tail_le (e : ℕ → Bool) (m : ℕ) : ∑' n, term e (n + m) ≤ 1 / 3 ^ m := by
+  have hs : Summable fun n : ℕ => 2 * (1 / 3 : ℝ) ^ (n + m + 1) :=
+    ((summable_geometric_of_lt_one (r := (1 / 3 : ℝ)) (by norm_num) (by norm_num)).mul_left
+      (2 * (1 / 3 : ℝ) ^ (m + 1))).congr fun n => by ring
+  calc ∑' n, term e (n + m) ≤ ∑' n : ℕ, 2 * (1 / 3 : ℝ) ^ (n + m + 1) :=
+        Summable.tsum_le_tsum (fun n => term_le e _)
+          ((summable_term e).comp_injective (add_left_injective m)) hs
+    _ = 1 / 3 ^ m := by
+      rw [show (fun n : ℕ => 2 * (1 / 3 : ℝ) ^ (n + m + 1)) =
+          fun n => (2 * (1 / 3) ^ (m + 1)) * (1 / 3 : ℝ) ^ n from funext fun n => by ring,
+        tsum_mul_left, tsum_geometric_of_lt_one (r := (1 / 3 : ℝ)) (by norm_num) (by norm_num)]
+      rw [one_div_pow]; field_simp; ring
 
 theorem cantorPoint_bits_mem (k : ℕ) :
     cantorPoint (bits good) ∈ Set.Icc ((path good k : ℝ) / 9 ^ k) (((path good k : ℝ) + 1) / 9 ^ k) := by
-  sorry
+  rw [cantorPoint_eq _ (2 * k), sum_term_bits]
+  have h1 := tail_le (bits good) (2 * k)
+  have h2 : 0 ≤ ∑' n, term (bits good) (n + 2 * k) := tsum_nonneg fun n => term_nonneg _ _
+  have h3 : (3 : ℝ) ^ (2 * k) = 9 ^ k := by rw [pow_mul]; norm_num
+  rw [h3] at h1
+  constructor
+  · linarith
+  · rw [add_div]; linarith
 
 /-- **Avoidance.**  If `good` decides `pot < 1`, the descent point misses every obstacle. -/
 theorem cantorPoint_bits_avoid {ι : Type*} (F : ℕ → Finset ι) (c r : ι → ℝ) (L : ι → ℕ)
@@ -218,7 +283,33 @@ theorem cantorPoint_bits_avoid {ι : Type*} (F : ℕ → Finset ι) (c r : ι �
     (hnew : ∀ k X, newPot F c r L k X ≤ 1 / 2) (h0 : pot F c r L 0 0 < 1)
     (hgood : ∀ k X, good k X = true ↔ pot F c r L k X < 1) {k : ℕ} {i : ι} (hi : i ∈ F k) :
     cantorPoint (bits good) ∉ Set.Icc (c i - r i) (c i + r i) := by
-  sorry
+  classical
+  have inv : ∀ k, pot F c r L k (path good k) < 1 := by
+    intro k
+    induction k with
+    | zero => simpa [path] using h0
+    | succ k ih =>
+      obtain ⟨j, hj, hpj⟩ := pot_step F c r L hF hr hnew ih
+      have := pick_good good ⟨j, hj, (hgood _ _).mpr hpj⟩
+      exact (hgood _ _).mp this
+  have hmono : ∀ m, F k ⊆ F (k + m) := by
+    intro m
+    induction m with
+    | zero => simp
+    | succ m ih => exact ih.trans (hF _)
+  intro hx
+  set K := k + L i
+  have hiK : i ∈ F K := hmono _ hi
+  have hm : Meets c r i K (path good K) := by
+    have := cantorPoint_bits_mem good K
+    exact ⟨hx.1.trans this.2, this.1.trans hx.2⟩
+  have hge : (2 : ℝ) ^ ((K : ℤ) - L i) ≤ pot F c r L K (path good K) := by
+    unfold pot
+    exact Finset.single_le_sum (f := fun i => (2 : ℝ) ^ ((K : ℤ) - L i))
+      (fun _ _ => by positivity) (Finset.mem_filter.mpr ⟨hiK, hm⟩)
+  have h1 : (1 : ℝ) ≤ 2 ^ ((K : ℤ) - L i) :=
+    one_le_zpow₀ (by norm_num) (by simp [K])
+  linarith [inv K]
 
 end Descent
 
