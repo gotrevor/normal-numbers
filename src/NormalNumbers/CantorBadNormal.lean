@@ -106,7 +106,7 @@ theorem exists_of_law (L : Law) (hL : ∀ b : ℕ, 2 ≤ b → ¬ 3 ∣ b → Ca
 Blocks of `2r` ternary digits (selectors in `{0, 2}`).  At the stage whose prefix `w` has length
 `L = 2rs`, a child `w ++ u` is *alive* when its cylinder avoids every obstacle `B(p/q, 2c/q²)`
 charged to this stage, `3^{L−r} ≤ q² < 3^{L+r}`.  The coin block picks the child; a dead pick is
-replaced by an alive one.  Constants: `r = 5`, `c = 3⁻¹⁵/2` (`descentLaw`). -/
+replaced by an alive one.  Constants: `r = 5`, `c = 3⁻¹⁶/4` (`descentLaw`). -/
 
 /-- Left endpoint of the ternary cylinder with digit selectors `w`. -/
 noncomputable def cylLeft (w : List Bool) : ℝ :=
@@ -159,18 +159,192 @@ theorem measurable_descent (r : ℕ) (c : ℝ) : Measurable (descent r c) := by
 
 end Meas
 
-/-- The descent constants: `r = 5`, `c = 3⁻¹⁵ / 2`. -/
-noncomputable def c₀ : ℝ := 1 / (2 * 3 ^ 15)
+/-- The descent constants: `r = 5`, `c = 3⁻¹⁶ / 4`. -/
+noncomputable def c₀ : ℝ := 1 / (4 * 3 ^ 16)
 
-/-- **Leaf (game half): an alive child always exists.**  Believed, confidence 85%.
+/-- Child index of a 10-digit selector block. -/
+def J (f : Fin 10 → Bool) : ℕ := ∑ i : Fin 10, (if f i then 2 else 0) * 3 ^ (9 - (i : ℕ))
+
+theorem J_lt (f : Fin 10 → Bool) : J f < 3 ^ 10 := by
+  revert f; unfold J; native_decide
+
+theorem J_inj : ∀ f g : Fin 10 → Bool, J f = J g → f = g := by
+  unfold J; native_decide
+
+theorem cylLeft_append (w u : List Bool) :
+    cylLeft (w ++ u) = cylLeft w +
+      ∑ i ∈ Finset.range u.length, (if u.getD i false then 2 else 0) / (3 : ℝ) ^ (w.length + i + 1) := by
+  unfold cylLeft
+  rw [List.length_append, Finset.sum_range_add]
+  congr 1
+  · refine Finset.sum_congr rfl fun i hi => ?_
+    rw [Finset.mem_range] at hi
+    rw [List.getD_append _ _ _ _ hi]
+  · refine Finset.sum_congr rfl fun i _ => ?_
+    rw [List.getD_append_right _ _ _ _ (by omega)]
+    simp
+
+theorem cylLeft_child (w : List Bool) (f : Fin 10 → Bool) :
+    cylLeft (w ++ List.ofFn f) = cylLeft w + (J f : ℝ) * (1 / 3 ^ (w.length + 10)) := by
+  rw [cylLeft_append]
+  congr 1
+  simp only [List.length_ofFn, J, Finset.sum_range_succ, Finset.sum_range_zero, Fin.sum_univ_succ,
+    Fin.sum_univ_zero]
+  simp [List.getD_eq_getElem?_getD, Fin.succ]
+  have h : ∀ (b : Bool) (c : ℝ), (if b = true then c else 0) = c * (b.toNat : ℝ) := by
+    intro b c; cases b <;> simp
+  simp only [h]
+  field_simp
+  ring
+
+theorem sep_rat {p p' : ℤ} {q q' : ℕ} (hq : 0 < q) (hq' : 0 < q')
+    (hne : (p : ℝ) / q ≠ p' / q') : 1 / ((q : ℝ) * q') ≤ |(p : ℝ) / q - p' / q'| := by
+  have hq0 : (0 : ℝ) < q := by exact_mod_cast hq
+  have hq0' : (0 : ℝ) < q' := by exact_mod_cast hq'
+  have heq : (p : ℝ) / q - p' / q' = ((p * q' - p' * q : ℤ) : ℝ) / ((q : ℝ) * q') := by
+    push_cast; field_simp
+  rw [heq, abs_div, abs_of_pos (by positivity : (0:ℝ) < q * q')]
+  apply div_le_div_of_nonneg_right _ (by positivity)
+  have hz : p * q' - p' * q ≠ 0 := by
+    intro h; apply hne
+    rw [div_eq_div_iff hq0.ne' hq0'.ne']
+    have : ((p * q' - p' * q : ℤ) : ℝ) = 0 := by exact_mod_cast h
+    push_cast at this; linarith
+  rw [← Int.cast_abs]
+  exact_mod_cast Int.one_le_abs hz
+
+open UniformBad in
+/-- **Game half: an alive child always exists.**  Proved.
 
 English proof.  Fix `w`, `L = |w|`.  Charged rationals have `q² < 3^{L+5}`, so distinct ones are
-`3^{−L−5}`-separated; those whose obstacle (radius `2c₀/q² ≤ 3^{−L−10}`) meets the parent
-cylinder (length `3^{−L}`) number at most `3⁵ + 2`.  Children are `2¹⁰` cylinders of length
+`3^{−L−5}`-separated; those whose obstacle (radius `2c₀/q² ≤ 3^{−L−10}/6`) meets the parent
+cylinder (length `3^{−L}`) fall in 244 buckets of width `3^{−L−5}`, one centre each.  Children are `2¹⁰` cylinders of length
 `3^{−L−10}`, pairwise separated by gaps at least their length, so each obstacle meets at most 2
-children.  `2(3⁵ + 2) = 490 < 1024`. -/
+children (`card_children_le`).  `2 · 244 = 488 < 1024`. -/
 theorem exists_alive (w : List Bool) : ∃ u : List Bool, u.length = 2 * 5 ∧ Alive 5 c₀ w u := by
-  sorry
+  classical
+  by_contra hcon
+  push Not at hcon
+  have hdead : ∀ f : Fin 10 → Bool, ∃ pq : ℤ × ℕ, 0 < pq.2 ∧
+      (3 : ℝ) ^ w.length ≤ (pq.2 : ℝ) ^ 2 * 3 ^ 5 ∧ (pq.2 : ℝ) ^ 2 * 3 ^ 5 < 3 ^ (w.length + 2 * 5) ∧
+      ∃ y ∈ cyl (w ++ List.ofFn f), |y - pq.1 / pq.2| < 2 * c₀ / (pq.2 : ℝ) ^ 2 := by
+    intro f
+    have := hcon (List.ofFn f) (by simp)
+    unfold Alive at this; push Not at this
+    obtain ⟨p, q, hq, h1, h2, y, hy, hlt⟩ := this
+    exact ⟨(p, q), hq, h1, h2, y, hy, hlt⟩
+  choose pq hpq using hdead
+  set L := w.length
+  set a := cylLeft w
+  set T : ℝ := (3 : ℝ) ^ L with hT
+  have hTpos : 0 < T := by positivity
+  set ℓ : ℝ := 1 / (T * 3 ^ 10) with hℓ
+  set sp : ℝ := 1 / (T * 3 ^ 5) with hsp
+  have hℓpos : 0 < ℓ := by positivity
+  have hsppos : 0 < sp := by positivity
+  set v : (Fin 10 → Bool) → ℝ := fun f => ((pq f).1 : ℝ) / (pq f).2 with hv
+  set lo := a - ℓ / 6
+  set β : (Fin 10 → Bool) → ℕ := fun f => ⌊(v f - lo) / sp⌋₊ with hβ
+  -- the radius is at most ℓ / 6
+  have hrad : ∀ f, 2 * c₀ / ((pq f).2 : ℝ) ^ 2 ≤ ℓ / 6 := by
+    intro f
+    obtain ⟨hq, h1, -, -⟩ := hpq f
+    have hq0 : (0:ℝ) < (pq f).2 := by exact_mod_cast hq
+    have hq2 : (0 : ℝ) < ((pq f).2 : ℝ) ^ 2 := by positivity
+    rw [hℓ, c₀, div_le_iff₀ hq2]
+    field_simp
+    nlinarith
+  -- the child interval
+  have hchild : ∀ f, cyl (w ++ List.ofFn f) = Set.Icc (a + (J f : ℝ) * ℓ) (a + (J f : ℝ) * ℓ + ℓ) := by
+    intro f
+    unfold cyl
+    rw [cylLeft_child, List.length_append, List.length_ofFn, pow_add, ← hT]
+  -- every witness y sits within ℓ/6 of v f
+  have hnear : ∀ f, ∃ y ∈ Set.Icc (a + (J f : ℝ) * ℓ) (a + (J f : ℝ) * ℓ + ℓ),
+      y ∈ Set.Icc (v f - ℓ / 6) (v f + ℓ / 6) := by
+    intro f
+    obtain ⟨-, -, -, y, hy, hlt⟩ := hpq f
+    rw [hchild] at hy
+    have := (hlt.trans_le (hrad f)).le
+    rw [abs_le] at this
+    exact ⟨y, hy, ⟨by simp only [hv]; linarith [this.1, this.2], by simp only [hv]; linarith [this.1, this.2]⟩⟩
+  have hJle : ∀ f, (J f : ℝ) + 1 ≤ 3 ^ 10 := fun f => by
+    have := J_lt f; exact_mod_cast (by omega : J f + 1 ≤ 3 ^ 10)
+  have hJ0 : ∀ f, (0 : ℝ) ≤ J f := fun f => by positivity
+  have hℓT : (3 : ℝ) ^ 10 * ℓ = 1 / T := by rw [hℓ]; field_simp
+  -- bucket bound
+  have hβlt : ∀ f, β f < 244 := by
+    intro f
+    obtain ⟨y, ⟨hy1, hy2⟩, hy3, hy4⟩ := hnear f
+    have hup : v f - lo ≤ 1 / T + ℓ / 3 := by
+      have := hJle f
+      have : (J f : ℝ) * ℓ + ℓ ≤ 3 ^ 10 * ℓ := by nlinarith
+      simp only [lo]; linarith
+    have hfl : (v f - lo) / sp < 244 := by
+      rw [div_lt_iff₀ hsppos]
+      have : 1 / T + ℓ / 3 < 244 * sp := by
+        rw [hℓ, hsp]; field_simp; norm_num
+      linarith
+    exact (Nat.floor_lt' (by norm_num)).2 (by exact_mod_cast hfl)
+  have hvlo : ∀ f, 0 ≤ v f - lo := by
+    intro f
+    obtain ⟨y, ⟨hy1, hy2⟩, hy3, hy4⟩ := hnear f
+    have := hJ0 f; have : 0 ≤ (J f : ℝ) * ℓ := by positivity
+    simp only [lo]; linarith
+  -- same bucket ⇒ same centre
+  have hsame : ∀ f g, β f = β g → v f = v g := by
+    intro f g hfg
+    by_contra hne
+    have hsep := sep_rat (hpq f).1 (hpq g).1 hne
+    have hlt : |v f - v g| < sp := by
+      have h1 := Nat.floor_le (div_nonneg (hvlo f) hsppos.le)
+      have h2 := Nat.lt_floor_add_one ((v f - lo) / sp)
+      have h3 := Nat.floor_le (div_nonneg (hvlo g) hsppos.le)
+      have h4 := Nat.lt_floor_add_one ((v g - lo) / sp)
+      simp only [hβ] at hfg
+      rw [hfg] at h1 h2
+      have : |(v f - lo) / sp - (v g - lo) / sp| < 1 := by rw [abs_lt]; constructor <;> linarith
+      rw [← sub_div, abs_div, abs_of_pos hsppos, div_lt_one hsppos] at this
+      simpa using this
+    have hqq : ((pq f).2 : ℝ) * (pq g).2 < T * 3 ^ 5 := by
+      have hf2 := (hpq f).2.2.1; have hg2 := (hpq g).2.2.1
+      rw [pow_add, ← hT] at hf2 hg2
+      norm_num at hf2 hg2
+      have hf0 : (0:ℝ) < (pq f).2 := by exact_mod_cast (hpq f).1
+      have hg0 : (0:ℝ) < (pq g).2 := by exact_mod_cast (hpq g).1
+      have ha : ((pq f).2 : ℝ) ^ 2 < T * 3 ^ 5 := by nlinarith
+      have hb : ((pq g).2 : ℝ) ^ 2 < T * 3 ^ 5 := by nlinarith
+      nlinarith [sq_nonneg (((pq f).2 : ℝ) - (pq g).2)]
+    have : sp < 1 / (((pq f).2 : ℝ) * (pq g).2) := by
+      have hf0 : (0:ℝ) < (pq f).2 := by exact_mod_cast (hpq f).1
+      have hg0 : (0:ℝ) < (pq g).2 := by exact_mod_cast (hpq g).1
+      rw [hsp]; exact one_div_lt_one_div_of_lt (by positivity) hqq
+    simp only [hv] at hlt
+    linarith
+  -- fibres have at most two elements
+  have hfib : ∀ t ∈ (Finset.univ : Finset (Fin 10 → Bool)).image β,
+      ((Finset.univ : Finset (Fin 10 → Bool)).filter fun x => β x = t).card ≤ 2 := by
+    intro t ht
+    obtain ⟨f₀, -, hf₀⟩ := Finset.mem_image.1 ht
+    set F := (Finset.univ : Finset (Fin 10 → Bool)).filter fun x => β x = t
+    rw [← Finset.card_image_of_injective F (fun f g h => J_inj f g h)]
+    refine le_trans (Finset.card_le_card ?_) (card_children_le (v f₀) (ℓ / 6) a ℓ (by linarith) (3 ^ 10))
+    intro j hj
+    obtain ⟨f, hfF, rfl⟩ := Finset.mem_image.1 hj
+    have hfv : v f = v f₀ := hsame f f₀ (by rw [(Finset.mem_filter.1 hfF).2, hf₀])
+    obtain ⟨y, hy1, hy2⟩ := hnear f
+    rw [hfv] at hy2
+    refine Finset.mem_filter.2 ⟨Finset.mem_range.2 (J_lt f), y, hy2, ?_⟩
+    push_cast; exact hy1
+  have hcard := Finset.card_le_mul_card_image (Finset.univ : Finset (Fin 10 → Bool)) 2 hfib
+  have himg : ((Finset.univ : Finset (Fin 10 → Bool)).image β).card ≤ 244 := by
+    refine le_trans (Finset.card_le_card ?_) (le_of_eq (Finset.card_range 244))
+    intro t ht
+    obtain ⟨f, -, rfl⟩ := Finset.mem_image.1 ht
+    exact Finset.mem_range.2 (hβlt f)
+  have : (Finset.univ : Finset (Fin 10 → Bool)).card = 1024 := by simp
+  omega
+
 
 /-- **The Cantor point lies in the cylinder of each prefix.**  Proved: the tail
 `Σ_{i ≥ n} σᵢ · 2 · 3^{−i−1}` lies in `[0, 3^{−n}]`. -/

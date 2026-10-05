@@ -203,8 +203,6 @@ def waivers : List Waiver := [
   ⟨``CantorExactExponentStretch.exists_computable_mem_cantorSet_irrExponent_normal_all,
    "assembly: the main file's wiring with ae_not_liouvilleWith_all (the crux) in place of \
     ae_not_liouvilleWith; no mechanism of its own"⟩,
-  ⟨``CantorBadNormal.exists_alive,
-   "a leaf (game half): counting charged obstacles against 2¹⁰ separated children, 490 < 1024"⟩,
   ⟨``FiniteState.isFNormal_delayEnum_of_normal,
    "a leaf: O(1) cost of composing with the delay transducer and its finite-state right inverse"⟩]
 
