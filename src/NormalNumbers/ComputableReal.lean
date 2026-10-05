@@ -56,8 +56,15 @@ computed by splitting `p` into its positive and negative coefficient parts and c
 `[a/2ᵏ, (a+1)/2ᵏ]` makes it `x`, so the left endpoint `gₙ/2ⁿ` is within `2⁻ⁿ` of `x`; for
 `n < k` output `⌊2ⁿ·a/2ᵏ⌋`, a fixed finite table.
 
-Evidence: the standard literature proof; no new mechanism.  Estimated 300-600 lines, mostly
-`Primrec` combinators. -/
+Flatter route (no recursion): with `s` the sign of `p` at the left end of the isolating interval,
+a dyadic `d` in it satisfies `d ≤ x ↔ sign p(d) ∈ {s, 0}`, so `gₙ` is a bounded `nat_findGreatest`
+over offsets.  Hard-code a shift `c` with `x + c > 0` and use the shifted polynomial so every test
+is a `nat_le` between two `ℕ` evaluations; the only `ℤ` step left is the final `- c·2ⁿ`.  Mathlib
+proves `Primrec` for `ℕ` arithmetic only (`nat_add`/`nat_sub`/`nat_mul`/`nat_le`/
+`nat_findGreatest`), not for `ℤ`, so that last subtraction is the step that needs plumbing.
+
+Evidence: the standard literature proof; no new mechanism.  Estimated 200-400 lines via the flat
+route, 300-600 via bisection, mostly `Primrec` combinators. -/
 theorem isComputableReal_of_isAlgebraic {x : ℝ} (hx : IsAlgebraic ℤ x) : IsComputableReal x := by
   sorry
 
