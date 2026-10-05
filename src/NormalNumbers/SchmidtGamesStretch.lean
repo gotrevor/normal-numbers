@@ -453,8 +453,317 @@ theorem rad_lt_of_mem {i : Idx} {k : ℕ} (hi : i ∈ FF k) : 2 * rad i < 1 / 9 
 
 /-- **The counting lemma**: newly charged potential of any window is `≤ 1/2`
 (`≤ 1/8` from all bases, `≤ 1/4` from the one possible rational). -/
+theorem card_le_of_spread (T : Finset ℕ) (d : ℕ) (h : ∀ x ∈ T, ∀ y ∈ T, x ≤ y → y ≤ x + d) :
+    T.card ≤ d + 1 := by
+  rcases T.eq_empty_or_nonempty with hT | hT
+  · simp [hT]
+  · have hsub : T ⊆ Finset.Icc (T.min' hT) (T.min' hT + d) := fun y hy =>
+      Finset.mem_Icc.mpr ⟨T.min'_le y hy, h _ (T.min'_mem hT) y hy (T.min'_le y hy)⟩
+    have := Finset.card_le_card hsub
+    simp at this; omega
+
+/-- Stage facts for a base-`b` obstacle charged exactly at stage `s`. -/
+theorem stU_bounds {b n s : ℕ} (hb : 2 ≤ b) (h : stU b n = s) :
+    b ^ n < 9 ^ s ∧ 9 ^ s ≤ 9 * b ^ n := by
+  refine ⟨pow_lt_of_stU hb h.le, ?_⟩
+  rw [← h]; unfold stU; rw [pow_succ, mul_comm]
+  exact Nat.mul_le_mul_left _ (Nat.pow_log_le_self 9 (by positivity))
+
+theorem stB_bounds {q s : ℕ} (hq : 1 ≤ q) (h : stB q = s) :
+    9 * q ^ 2 < 9 ^ s ∧ 9 ^ s ≤ 81 * q ^ 2 := by
+  rw [← h]; unfold stB
+  set t := Nat.log 9 (q ^ 2)
+  have h1 : q ^ 2 < 9 ^ (t + 1) := Nat.lt_pow_succ_log_self (by norm_num) _
+  have h2 : 9 ^ t ≤ q ^ 2 := Nat.pow_log_le_self 9 (by positivity)
+  have e1 : 9 ^ (t + 2) = 9 ^ (t + 1) * 9 := pow_succ _ _
+  have e2 : 9 ^ (t + 2) = 9 ^ t * 81 := by rw [pow_add]; norm_num
+  constructor <;> omega
+
+theorem n_spread {b n n' s : ℕ} (hb : 2 ≤ b) (h : stU b n = s) (h' : stU b n' = s)
+    (hle : n ≤ n') : n' ≤ n + 3 := by
+  by_contra hc
+  push Not at hc
+  obtain ⟨h1, h2⟩ := stU_bounds hb h
+  obtain ⟨h1', -⟩ := stU_bounds hb h'
+  have : b ^ n * 16 ≤ b ^ n' := by
+    calc b ^ n * 16 ≤ b ^ n * b ^ 4 := by
+          gcongr; calc 16 = 2 ^ 4 := by norm_num
+            _ ≤ b ^ 4 := Nat.pow_le_pow_left hb 4
+      _ = b ^ (n + 4) := by ring
+      _ ≤ b ^ n' := Nat.pow_le_pow_right (by omega) (by omega)
+  omega
+
+theorem a_spread {b n a a' s X : ℕ} (hb : 2 ≤ b) (h : stU b n = s) (hle : a ≤ a')
+    (hm : Meets ctr rad (Sum.inl (b, n, a)) s X) (hm' : Meets ctr rad (Sum.inl (b, n, a')) s X) :
+    a' ≤ a + 1 := by
+  by_contra hc
+  push Not at hc
+  have hc' : (a : ℝ) + 2 ≤ a' := by exact_mod_cast hc
+  obtain ⟨h1, -⟩ := stU_bounds hb h
+  have hBN : ((b : ℝ) ^ n) < 9 ^ s := by exact_mod_cast h1
+  have hbR : (2 : ℝ) ≤ b := by exact_mod_cast hb
+  have hB : (0 : ℝ) < (b : ℝ) ^ n := by positivity
+  have h40 : (2 : ℝ) ≤ (b : ℝ) ^ 40 := by
+    calc (2 : ℝ) ≤ 2 ^ 40 := by norm_num
+      _ ≤ (b : ℝ) ^ 40 := by gcongr
+  simp only [Meets, ctr, rad] at hm hm'
+  obtain ⟨-, hA⟩ := hm
+  obtain ⟨hA', -⟩ := hm'
+  -- a'/B − r ≤ (X+1)/N and X/N ≤ a/B + r
+  have hr : 1 / (b : ℝ) ^ (n + 40) ≤ 1 / (2 * (b : ℝ) ^ n) := by
+    rw [pow_add]; apply one_div_le_one_div_of_le (by positivity); nlinarith
+  have hN : 1 / (9 : ℝ) ^ s < 1 / (b : ℝ) ^ n := one_div_lt_one_div_of_lt hB hBN
+  have : ((a' : ℝ) - a) / (b : ℝ) ^ n ≤ 1 / 9 ^ s + 2 * (1 / (b : ℝ) ^ (n + 40)) := by
+    rw [sub_div]
+    have e : ((X : ℝ) + 1) / 9 ^ s = X / 9 ^ s + 1 / 9 ^ s := by ring
+    linarith
+  have h2 : (2 : ℝ) / (b : ℝ) ^ n ≤ ((a' : ℝ) - a) / (b : ℝ) ^ n :=
+    div_le_div_of_nonneg_right (by linarith) hB.le
+  have e2 : 2 * (1 / (2 * (b : ℝ) ^ n)) = 1 / (b : ℝ) ^ n := by field_simp
+  have e3 : (2 : ℝ) / (b : ℝ) ^ n = 1 / (b : ℝ) ^ n + 1 / (b : ℝ) ^ n := by ring
+  linarith
+
+theorem bad_unique {p q p' q' s X : ℕ} (hv : ValidB (p, q)) (hv' : ValidB (p', q'))
+    (h : stB q = s) (h' : stB q' = s) (hm : Meets ctr rad (Sum.inr (p, q)) s X)
+    (hm' : Meets ctr rad (Sum.inr (p', q')) s X) : (p, q) = (p', q') := by
+  obtain ⟨hq, -, hc⟩ := hv
+  obtain ⟨hq', -, hc'⟩ := hv'
+  simp only at hq hc hq' hc'
+  obtain ⟨b1, b2⟩ := stB_bounds hq h
+  obtain ⟨b1', b2'⟩ := stB_bounds hq' h'
+  by_cases hpq : p * q' = p' * q
+  · have d1 : q ∣ q' := (Nat.Coprime.symm hc).dvd_of_dvd_mul_left ⟨p', by rw [hpq]; ring⟩
+    have d2 : q' ∣ q := (Nat.Coprime.symm hc').dvd_of_dvd_mul_left ⟨p, by rw [← hpq]; ring⟩
+    have hqq := Nat.dvd_antisymm d1 d2
+    subst hqq
+    have : p = p' := Nat.eq_of_mul_eq_mul_right (by omega) hpq
+    rw [this]
+  exfalso
+  have hN := (show (0 : ℝ) < 9 ^ s by positivity)
+  have qR : (1 : ℝ) ≤ q := by exact_mod_cast hq
+  have qR' : (1 : ℝ) ≤ q' := by exact_mod_cast hq'
+  have B1 : 9 * (q : ℝ) ^ 2 < 9 ^ s := by exact_mod_cast b1
+  have B1' : 9 * (q' : ℝ) ^ 2 < 9 ^ s := by exact_mod_cast b1'
+  have B2 : (9 : ℝ) ^ s ≤ 81 * (q : ℝ) ^ 2 := by exact_mod_cast b2
+  have B2' : (9 : ℝ) ^ s ≤ 81 * (q' : ℝ) ^ 2 := by exact_mod_cast b2'
+  have hqq : 9 * ((q : ℝ) * q') < 9 ^ s := by
+    have : (9 * ((q : ℝ) * q')) ^ 2 < (9 ^ s) ^ 2 := by nlinarith
+    exact lt_of_pow_lt_pow_left₀ 2 hN.le this
+  have hr : 1 / (9 ^ 5 * (q : ℝ) ^ 2) ≤ 1 / (729 * 9 ^ s) :=
+    one_div_le_one_div_of_le (by positivity) (by nlinarith)
+  have hr' : 1 / (9 ^ 5 * (q' : ℝ) ^ 2) ≤ 1 / (729 * 9 ^ s) :=
+    one_div_le_one_div_of_le (by positivity) (by nlinarith)
+  have hD : (1 : ℝ) ≤ |(p : ℝ) * q' - p' * q| := by
+    have : (p : ℤ) * q' - p' * q ≠ 0 := by
+      intro h0; apply hpq; exact_mod_cast (sub_eq_zero.mp h0)
+    have := Int.one_le_abs this
+    exact_mod_cast this
+  have hdiff : |(p : ℝ) / q - p' / q'| = |(p : ℝ) * q' - p' * q| / (q * q') := by
+    rw [div_sub_div _ _ (by positivity) (by positivity), abs_div,
+      abs_of_pos (show (0 : ℝ) < q * q' by positivity)]
+    ring_nf
+  have hlow : 9 / (9 : ℝ) ^ s < |(p : ℝ) / q - p' / q'| := by
+    rw [hdiff, div_lt_div_iff₀ hN (by positivity)]; nlinarith
+  simp only [Meets, ctr, rad] at hm hm'
+  have hup : |(p : ℝ) / q - p' / q'| ≤ 1 / 9 ^ s + 2 * (1 / (729 * 9 ^ s)) := by
+    have e : ((X : ℝ) + 1) / 9 ^ s = X / 9 ^ s + 1 / 9 ^ s := by ring
+    rw [abs_le]; constructor <;> linarith [hm.1, hm.2, hm'.1, hm'.2]
+  have : 1 / (9 : ℝ) ^ s + 2 * (1 / (729 * 9 ^ s)) < 9 / 9 ^ s := by
+    rw [show 1 / (9 : ℝ) ^ s + 2 * (1 / (729 * 9 ^ s)) = (731 / 729) / 9 ^ s by field_simp; ring]
+    exact div_lt_div_of_pos_right (by norm_num) hN
+  linarith
+
+/-- Projections of an index (garbage `0` on the wrong summand). -/
+def bOf : Idx → ℕ | .inl x => x.1 | .inr _ => 0
+def nOf : Idx → ℕ | .inl x => x.2.1 | .inr _ => 0
+def aOf : Idx → ℕ | .inl x => x.2.2 | .inr _ => 0
+
+theorem weight_inl_le {b n a s : ℕ} (hb : 2 ≤ b) (h : stU b n = s) :
+    (2 : ℝ) ^ ((s : ℤ) - lev (Sum.inl (b, n, a))) ≤ 1 / (64 * (b : ℝ) ^ 2) := by
+  simp only [lev, h]
+  set m := Nat.log 2 b
+  have hb2 : b < 2 ^ (m + 1) := Nat.lt_pow_succ_log_self (by norm_num) b
+  have hbR : (b : ℝ) < 2 ^ (m + 1) := by exact_mod_cast hb2
+  rw [show ((s : ℤ) - ((s + (8 + 2 * m) : ℕ) : ℤ)) = -((8 + 2 * m : ℕ) : ℤ) by push_cast; ring,
+    zpow_neg, zpow_natCast, ← one_div]
+  apply one_div_le_one_div_of_le (by positivity)
+  have : (b : ℝ) ^ 2 < (2 ^ (m + 1)) ^ 2 := by
+    have : (0 : ℝ) ≤ b := by positivity
+    gcongr
+  calc 64 * (b : ℝ) ^ 2 ≤ 64 * (2 ^ (m + 1)) ^ 2 := by linarith
+    _ = 2 ^ (8 + 2 * m) := by ring
+
+theorem sum_inv_sq_le (M : ℕ) : ∑ b ∈ Finset.Ico 2 M, 1 / ((b : ℝ) ^ 2) ≤ 1 := by
+  have key : ∀ M : ℕ, 2 ≤ M → ∑ b ∈ Finset.Ico 2 M, 1 / ((b : ℝ) ^ 2) ≤ 1 - 1 / (M - 1 : ℝ) := by
+    intro M hM
+    induction M, hM using Nat.le_induction with
+    | base => norm_num
+    | succ M hM ih =>
+      rw [Finset.sum_Ico_succ_top (by omega)]
+      have hMR : (2 : ℝ) ≤ M := by exact_mod_cast hM
+      have : 1 / ((M : ℝ) ^ 2) ≤ 1 / (M - 1 : ℝ) - 1 / M := by
+        rw [div_sub_div _ _ (by linarith) (by linarith), div_le_div_iff₀ (by positivity)
+          (by nlinarith)]
+        nlinarith
+      push_cast
+      rw [show (M : ℝ) + 1 - 1 = M by ring]
+      linarith
+  rcases Nat.lt_or_ge M 2 with hM | hM
+  · rw [Finset.Ico_eq_empty (by omega)]; simp
+  · have := key M hM
+    have hMR : (2 : ℝ) ≤ M := by exact_mod_cast hM
+    have : 0 ≤ 1 / (M - 1 : ℝ) := by apply div_nonneg <;> linarith
+    linarith
+
+open Classical in
 theorem newPot_FF_le (k X : ℕ) : newPot FF ctr rad lev k X ≤ 1 / 2 := by
-  sorry
+  have hN : newPot FF ctr rad lev k X = ∑ i ∈ (FF (k + 1) \ FF k).filter
+      (fun i => Meets ctr rad i (k + 1) X), (2 : ℝ) ^ (((k + 1 : ℕ) : ℤ) - lev i) := by
+    unfold newPot; congr; funext a b; exact Subsingleton.elim _ _
+  generalize hs : k + 1 = s at hN
+  set N := (FF s \ FF k).filter (fun i => Meets ctr rad i s X) with hNdef
+  -- membership facts
+  have memL : ∀ i ∈ N, ∀ x : ℕ × ℕ × ℕ, i = Sum.inl x → ValidU x ∧ stU x.1 x.2.1 = s ∧
+      Meets ctr rad i s X := by
+    intro i hi x hx
+    subst hx
+    simp only [hNdef, Finset.mem_filter, Finset.mem_sdiff] at hi
+    obtain ⟨⟨h1, h2⟩, hm⟩ := hi
+    rw [mem_FF_inl] at h1 h2
+    refine ⟨h1.1, ?_, hm⟩
+    by_contra hne
+    exact h2 ⟨h1.1, by omega⟩
+  have memR : ∀ i ∈ N, ∀ x : ℕ × ℕ, i = Sum.inr x → ValidB x ∧ stB x.2 = s ∧
+      Meets ctr rad i s X := by
+    intro i hi x hx
+    subst hx
+    simp only [hNdef, Finset.mem_filter, Finset.mem_sdiff] at hi
+    obtain ⟨⟨h1, h2⟩, hm⟩ := hi
+    rw [mem_FF_inr] at h1 h2
+    refine ⟨h1.1, ?_, hm⟩
+    by_contra hne
+    exact h2 ⟨h1.1, by omega⟩
+  rw [hN, ← Finset.sum_filter_add_sum_filter_not N (fun i => i.isLeft = true)]
+  set NL := N.filter (fun i => i.isLeft = true)
+  set NR := N.filter (fun i => ¬ i.isLeft = true)
+  -- the rational part: at most one obstacle, weight 1/4
+  have hR : ∑ i ∈ NR, (2 : ℝ) ^ ((s : ℤ) - lev i) ≤ 1 / 4 := by
+    have hw : ∀ i ∈ NR, (2 : ℝ) ^ ((s : ℤ) - lev i) = 1 / 4 := by
+      intro i hi
+      obtain ⟨hi, hl⟩ := Finset.mem_filter.mp hi
+      rcases i with x | ⟨p, q⟩
+      · simp at hl
+      · obtain ⟨-, hs, -⟩ := memR _ hi (p, q) rfl
+        simp only [lev, hs]
+        rw [show ((s : ℤ) - ((s + 2 : ℕ) : ℤ)) = -2 by push_cast; ring]; norm_num
+    have hcard : NR.card ≤ 1 := by
+      refine Finset.card_le_one.mpr fun i hi j hj => ?_
+      obtain ⟨hi, hil⟩ := Finset.mem_filter.mp hi
+      obtain ⟨hj, hjl⟩ := Finset.mem_filter.mp hj
+      rcases i with x | ⟨p, q⟩
+      · simp at hil
+      rcases j with y | ⟨p', q'⟩
+      · simp at hjl
+      obtain ⟨v, hs, hm⟩ := memR _ hi (p, q) rfl
+      obtain ⟨v', hs', hm'⟩ := memR _ hj (p', q') rfl
+      rw [bad_unique v v' hs hs' hm hm']
+    rw [Finset.sum_congr rfl hw, Finset.sum_const, nsmul_eq_mul]
+    have : (NR.card : ℝ) ≤ 1 := by exact_mod_cast hcard
+    linarith
+  -- the base part
+  have hL : ∑ i ∈ NL, (2 : ℝ) ^ ((s : ℤ) - lev i) ≤ 1 / 8 := by
+    have memL' : ∀ i ∈ NL, ∃ x : ℕ × ℕ × ℕ, i = Sum.inl x ∧ ValidU x ∧ stU x.1 x.2.1 = s ∧
+        Meets ctr rad i s X := by
+      intro i hi
+      obtain ⟨hi, hl⟩ := Finset.mem_filter.mp hi
+      rcases i with x | x
+      · exact ⟨x, rfl, memL _ hi x rfl⟩
+      · simp at hl
+    -- each weight is at most f (bOf i)
+    have hw : ∀ i ∈ NL, (2 : ℝ) ^ ((s : ℤ) - lev i) ≤ 1 / (64 * ((bOf i : ℕ) : ℝ) ^ 2) := by
+      intro i hi
+      obtain ⟨⟨b, n, a⟩, rfl, ⟨hb, -, -⟩, hs, -⟩ := memL' i hi
+      exact weight_inl_le hb hs
+    refine (Finset.sum_le_sum hw).trans ?_
+    rw [← Finset.sum_fiberwise_of_maps_to (g := bOf) (t := NL.image bOf)
+      (fun i hi => Finset.mem_image_of_mem _ hi)]
+    -- fibers have at most 8 elements
+    have hfib : ∀ b ∈ NL.image bOf, (NL.filter (fun i => bOf i = b)).card ≤ 8 := by
+      intro b _
+      set Fb := NL.filter (fun i => bOf i = b)
+      have hnimg : (Fb.image nOf).card ≤ 4 := by
+        apply card_le_of_spread _ 3
+        intro x hx y hy hxy
+        obtain ⟨i, hi, rfl⟩ := Finset.mem_image.mp hx
+        obtain ⟨j, hj, rfl⟩ := Finset.mem_image.mp hy
+        obtain ⟨hi, hib⟩ := Finset.mem_filter.mp hi
+        obtain ⟨hj, hjb⟩ := Finset.mem_filter.mp hj
+        obtain ⟨⟨b1, n1, a1⟩, rfl, ⟨hb1, -, -⟩, hs1, -⟩ := memL' i hi
+        obtain ⟨⟨b2, n2, a2⟩, rfl, ⟨hb2, -, -⟩, hs2, -⟩ := memL' j hj
+        simp only [bOf, nOf] at hib hjb hxy ⊢
+        subst hib hjb
+        exact n_spread hb1 hs1 hs2 hxy
+      have hper : ∀ n ∈ Fb.image nOf, (Fb.filter (fun i => nOf i = n)).card ≤ 2 := by
+        intro n _
+        set Fn := Fb.filter (fun i => nOf i = n)
+        have hinj : Set.InjOn aOf Fn := by
+          intro i hi j hj hij
+          obtain ⟨hi, hin⟩ := Finset.mem_filter.mp hi
+          obtain ⟨hj, hjn⟩ := Finset.mem_filter.mp hj
+          obtain ⟨hi, hib⟩ := Finset.mem_filter.mp hi
+          obtain ⟨hj, hjb⟩ := Finset.mem_filter.mp hj
+          obtain ⟨⟨b1, n1, a1⟩, rfl, -⟩ := memL' i hi
+          obtain ⟨⟨b2, n2, a2⟩, rfl, -⟩ := memL' j hj
+          simp only [bOf, nOf, aOf] at hib hjb hin hjn hij
+          subst hib hjb hin hjn hij
+          rfl
+        rw [← Finset.card_image_of_injOn hinj]
+        apply card_le_of_spread _ 1
+        intro x hx y hy hxy
+        obtain ⟨i, hi, rfl⟩ := Finset.mem_image.mp hx
+        obtain ⟨j, hj, rfl⟩ := Finset.mem_image.mp hy
+        obtain ⟨hi, hin⟩ := Finset.mem_filter.mp hi
+        obtain ⟨hj, hjn⟩ := Finset.mem_filter.mp hj
+        obtain ⟨hi, hib⟩ := Finset.mem_filter.mp hi
+        obtain ⟨hj, hjb⟩ := Finset.mem_filter.mp hj
+        obtain ⟨⟨b1, n1, a1⟩, rfl, ⟨hb1, -, -⟩, hs1, hm1⟩ := memL' i hi
+        obtain ⟨⟨b2, n2, a2⟩, rfl, -, -, hm2⟩ := memL' j hj
+        simp only [bOf, nOf, aOf] at hib hjb hin hjn hxy ⊢
+        subst hib hjb hin hjn
+        exact a_spread hb1 hs1 hxy hm1 hm2
+      calc Fb.card ≤ 2 * (Fb.image nOf).card :=
+            Finset.card_le_mul_card_image Fb 2 hper
+        _ ≤ 2 * 4 := by gcongr
+        _ = 8 := by norm_num
+    have hsub : NL.image bOf ⊆ Finset.Ico (2 : ℕ) (9 ^ s) := by
+      intro b hb
+      obtain ⟨i, hi, rfl⟩ := Finset.mem_image.mp hb
+      obtain ⟨⟨b, n, a⟩, rfl, hv, hs, -⟩ := memL' i hi
+      have hmem : Sum.inl (b, n, a) ∈ FF s := mem_FF_inl.mpr ⟨hv, hs.le⟩
+      simp only [FF, Finset.inl_mem_disjSum, Finset.mem_filter, Finset.mem_product,
+        Finset.mem_range] at hmem
+      simp only [bOf, Finset.mem_Ico]
+      exact ⟨hv.1, hmem.1.1⟩
+    calc ∑ b ∈ NL.image bOf, ∑ i ∈ NL.filter (fun i => bOf i = b),
+          1 / (64 * ((bOf i : ℕ) : ℝ) ^ 2)
+        = ∑ b ∈ NL.image bOf, ((NL.filter (fun i => bOf i = b)).card : ℝ) *
+            (1 / (64 * (b : ℝ) ^ 2)) := by
+          refine Finset.sum_congr rfl fun b _ => ?_
+          rw [Finset.sum_congr rfl (g := fun _ => 1 / (64 * (b : ℝ) ^ 2))
+            (fun i hi => by rw [(Finset.mem_filter.mp hi).2]), Finset.sum_const, nsmul_eq_mul]
+      _ ≤ ∑ b ∈ NL.image bOf, 8 * (1 / (64 * (b : ℝ) ^ 2)) := by
+          refine Finset.sum_le_sum fun b hb => ?_
+          have : ((NL.filter (fun i => bOf i = b)).card : ℝ) ≤ 8 := by exact_mod_cast hfib b hb
+          have : (0 : ℝ) ≤ 1 / (64 * (b : ℝ) ^ 2) := by positivity
+          nlinarith
+      _ ≤ ∑ b ∈ Finset.Ico (2 : ℕ) (9 ^ s), 8 * (1 / (64 * (b : ℝ) ^ 2)) :=
+          Finset.sum_le_sum_of_subset_of_nonneg hsub fun _ _ _ => by positivity
+      _ = (1 / 8) * ∑ b ∈ Finset.Ico (2 : ℕ) (9 ^ s), 1 / ((b : ℝ) ^ 2) := by
+          rw [Finset.mul_sum]; refine Finset.sum_congr rfl fun b _ => ?_; field_simp; ring
+      _ ≤ 1 / 8 := by
+          have := sum_inv_sq_le (9 ^ s)
+          nlinarith
+  linarith
 
 theorem FF_zero : FF 0 = ∅ := by
   ext i
