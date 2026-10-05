@@ -72,6 +72,34 @@ theorem summable_sched_rpow {δ : ℝ} (hδ : 0 < δ) :
         apply Real.exp_le_exp.2
         rw [Real.sqrt_eq_rpow]; nlinarith
 
+/-- **Cassels rate** for `L` in base `b`: the second moment is `C N² W(N)` for a rate `W` that is
+summable along `CantorLiouville.sched` (`sched j ≈ e^{√j}`, so `W = (log N)^{−1−ε}·…` such as
+`(log N)^{−3}` already suffices).  Weaker than `CasselsPower`. -/
+def CasselsRate (L : Law) (b : ℕ) : Prop :=
+  ∀ h : ℤ, h ≠ 0 → ∃ (C : ℝ) (W : ℕ → ℝ), Summable (fun j => W (sched j)) ∧ ∀ N : ℕ, 1 ≤ N →
+    ∫ ω, ‖∑ k ∈ Finset.range N, ee (h * (b : ℝ) ^ k * cpt (L.φ ω))‖ ^ 2 ∂coinMeasure ≤
+      C * (N : ℝ) ^ 2 * W N
+
+theorem casselsRate_of_casselsPower {L : Law} {b : ℕ} (hL : CasselsPower L b) : CasselsRate L b :=
+  fun h hh => by
+    obtain ⟨C, δ, hδ, hC⟩ := hL h hh
+    exact ⟨C, fun N => (N : ℝ) ^ (-δ), summable_sched_rpow hδ, hC⟩
+
+/-- **Rate ⇒ a.e. normal.**  Proved (DEL along `sched`). -/
+theorem ae_isNormal_of_casselsRate (L : Law) {b : ℕ} (hb : 2 ≤ b) (hL : CasselsRate L b) :
+    ∀ᵐ ω ∂coinMeasure, IsNormal b (cpt (L.φ ω)) := by
+  refine ae_isNormal_of_secondMoment coinMeasure hb _ (measurable_cpt.comp L.meas) sched
+    sched_strictMono sched_ratio ?_
+  intro h hh
+  obtain ⟨C, W, hW, hC⟩ := hL h hh
+  refine (hW.mul_left C).of_nonneg_of_le
+    (fun j => div_nonneg (integral_nonneg fun ω => by positivity) (by positivity))
+    (fun j => ?_)
+  have hN : (0 : ℝ) < sched j := by exact_mod_cast one_le_sched j
+  rw [div_le_iff₀ (by positivity)]
+  calc _ ≤ _ := hC (sched j) (one_le_sched j)
+    _ = _ := by ring
+
 /-- **Power saving ⇒ a.e. normal.**  Proved (DEL along `sched`). -/
 theorem ae_isNormal_of_casselsPower (L : Law) {b : ℕ} (hb : 2 ≤ b) (hL : CasselsPower L b) :
     ∀ᵐ ω ∂coinMeasure, IsNormal b (cpt (L.φ ω)) := by
@@ -87,16 +115,16 @@ theorem ae_isNormal_of_casselsPower (L : Law) {b : ℕ} (hb : 2 ≤ b) (hL : Cas
   calc _ ≤ _ := hC (sched j) (one_le_sched j)
     _ = _ := by ring
 
-/-- **The reduction.**  Proved: a law on `K ∩ Bad` with a Cassels power saving in every base
+/-- **The reduction.**  Proved: a law on `K ∩ Bad` with a Cassels rate in every base
 prime to 3 has a point with all three properties. -/
-theorem exists_of_law (L : Law) (hL : ∀ b : ℕ, 2 ≤ b → ¬ 3 ∣ b → CasselsPower L b) :
+theorem exists_of_law (L : Law) (hL : ∀ b : ℕ, 2 ≤ b → ¬ 3 ∣ b → CasselsRate L b) :
     ∃ x : ℝ, x ∈ cantorSet ∧ x ∈ Bad ∧ ∀ b : ℕ, 2 ≤ b → ¬ 3 ∣ b → IsNormal b x := by
   have hall : ∀ᵐ ω ∂coinMeasure, ∀ b : ℕ, 2 ≤ b → ¬ 3 ∣ b → IsNormal b (cpt (L.φ ω)) := by
     rw [ae_all_iff]; intro b
     by_cases hb : 2 ≤ b
     · by_cases h3 : 3 ∣ b
       · exact Eventually.of_forall fun _ _ h => absurd h3 h
-      · filter_upwards [ae_isNormal_of_casselsPower L hb (hL b hb h3)] with ω hω _ _ using hω
+      · filter_upwards [ae_isNormal_of_casselsRate L hb (hL b hb h3)] with ω hω _ _ using hω
     · exact Eventually.of_forall fun _ h => absurd h hb
   obtain ⟨ω, hω⟩ := hall.exists
   exact ⟨_, cpt_mem_cantorSet _, L.bad ω, hω⟩
@@ -494,27 +522,41 @@ def FourierPairPower (L : Law) (b : ℕ) : Prop :=
     ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N, fourierAbs L (h * ((b : ℝ) ^ n - (b : ℝ) ^ m)) ≤
       C * (N : ℝ) ^ 2 * (N : ℝ) ^ (-δ)
 
+/-- **Fourier pair-sum rate**: `Σ_{n,m<N} |ν̂(h(bⁿ − bᵐ))| ≤ C N² W(N)` with `W` summable along
+`sched`. -/
+def FourierPairRate (L : Law) (b : ℕ) : Prop :=
+  ∀ h : ℤ, h ≠ 0 → ∃ (C : ℝ) (W : ℕ → ℝ), Summable (fun j => W (sched j)) ∧ ∀ N : ℕ, 1 ≤ N →
+    ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N, fourierAbs L (h * ((b : ℝ) ^ n - (b : ℝ) ^ m)) ≤
+      C * (N : ℝ) ^ 2 * W N
+
+/-- Proved: the pair-sum rate gives the Cassels rate. -/
+theorem casselsRate_of_fourierPairRate {L : Law} {b : ℕ} (hL : FourierPairRate L b) :
+    CasselsRate L b := fun h hh => by
+  obtain ⟨C, W, hW, hC⟩ := hL h hh
+  exact ⟨C, W, hW, fun N hN => (secondMoment_le_fourier L b h N).trans (hC N hN)⟩
+
 /-- Proved: the pair-sum saving gives the Cassels power saving. -/
 theorem casselsPower_of_fourierPairPower {L : Law} {b : ℕ} (hL : FourierPairPower L b) :
     CasselsPower L b := fun h hh => by
   obtain ⟨C, δ, hδ, hC⟩ := hL h hh
   exact ⟨C, δ, hδ, fun N hN => (secondMoment_le_fourier L b h N).trans (hC N hN)⟩
 
-/-- **The crux: the Fourier pair-sum saving for the descent law.**  Believed, confidence 55%.
+/-- **The crux: the Fourier pair-sum rate for the descent law.**  Any `W` summable along
+`sched` suffices, e.g. `(log N)^{−3}`; a power saving is not needed.  Believed, confidence 55%.
 
 The sweep's guard (`docs/OPEN-PROBLEMS-SWEEP-2026-10-04.md` §2.3) applies: a proof that uses
 only that each block's dead fraction is small also proves base-2 normality of a descent
 against `B(a/2ⁿ, 2^{−n−C})`, which is false.  So a proof must use the arithmetic of the
 obstacle centres `p/q`.  Known-false sibling inside the mechanism: `b = 3`
 (`cantor_not_normal_three_pow`). -/
-theorem fourierPairPower_descent {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) :
-    FourierPairPower descentLaw b := by
+theorem fourierPairRate_descent {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) :
+    FourierPairRate descentLaw b := by
   sorry
 
 /-- Cassels' second moment for the descent law (wiring from the crux). -/
-theorem casselsPower_descent {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) :
-    CasselsPower descentLaw b :=
-  casselsPower_of_fourierPairPower (fourierPairPower_descent hb h3)
+theorem casselsRate_descent {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) :
+    CasselsRate descentLaw b :=
+  casselsRate_of_fourierPairRate (fourierPairRate_descent hb h3)
 
 /-- **A badly approximable point of the middle-third Cantor set, normal to every base prime to 3.**
 
@@ -543,6 +585,6 @@ Evidence: each pair of the three sets meets, with full-dimensional `K ∩ BAD`; 
 and Cassels give normality to bases prime to 3 for many non-product measures on `K`. -/
 theorem exists_mem_cantorSet_bad_isNormal_coprime_three :
     ∃ x : ℝ, x ∈ cantorSet ∧ x ∈ Bad ∧ ∀ b : ℕ, 2 ≤ b → ¬ 3 ∣ b → IsNormal b x :=
-  exists_of_law descentLaw fun _ hb h3 => casselsPower_descent hb h3
+  exists_of_law descentLaw fun _ hb h3 => casselsRate_descent hb h3
 
 end NormalNumbers.CantorBadNormal
