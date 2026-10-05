@@ -2865,3 +2865,16 @@ Note: Bridge edit forces rebuild of whole-Mathlib importers; parallel `lake buil
 Advance: headline reduced (proved) to `casselsPower_descent` + three tractable leaves for a concrete
 deletion descent (`descentLaw`). Next: decompose the crux via the dead-pick correction measure; see
 HANDOFF-2026-10-05-cantorbad-lap1.md.
+
+## 2026-10-05 cantorbad lap 1 (cont.)
+Proved `cpt_mem_cyl`, `descent_bad`, `exists_alive` (19361c3c): the K ∩ BAD half is sorry-free; the
+only open obligation in CantorBadNormal.lean is the crux `casselsPower_descent`.
+Crux analysis (to be stated in Lean next lap, not yet recorded as declarations):
+- Martingale peel: |ν̂(ξ)| ≤ ρ_s|ν̂_{s-1}(ξ)| + 2δ_s per block (ρ = uniform-block character, δ = dead
+  fraction) gives only a floor O(δ/(1−ρ)); with fixed c, δ is heuristically bounded below (μ_K-typical
+  cylinders meet ≍ 2^R rationals per stage, the EFS mechanism), so no decay from this alone.
+- Error term per block is (1/2^R)Σ_dead (e(ξ y_repl) − e(ξ y_dead)), y_dead ≈ p/q, so the needed
+  saving is cancellation of Σ_m e(h bᵐ(bᵈ−1) p/q) over the orbit of b mod q — next sub-leaf to state.
+- Free-digit variant: control digits must be ≥ log 3/(2 log 2) ≈ 79% of each stage, so ≤ 21% of
+  positions can be pure coins; freeCount would still grow linearly (enough for Cassels), but control
+  digits depend on earlier free digits, so the product structure is still lost.
