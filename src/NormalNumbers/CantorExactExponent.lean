@@ -1324,6 +1324,99 @@ theorem le_freeCount_exp (μ₀ : ℚ) (hμ : 1 < μ₀) :
       nlinarith
     nlinarith
 
+section NormalLeaves
+
+open CantorLiouvilleAll
+
+theorem summable_sched_bound_gen (free : ℕ → Bool)
+    (hFree : ∀ᶠ M : ℝ in atTop, ∀ n : ℕ, (n : ℝ) = M → Real.sqrt M / 2 ≤ freeCount free n)
+    (C c : ℝ) (hC : 0 < C) (hc : 0 < c) :
+    Summable fun j => C * (Real.exp (-c * freeCount free (Nat.log 3 (sched j) / 2)) +
+      (sched j : ℝ) ^ (-(1 / 2 : ℝ))) := by
+  refine Summable.mul_left C (Summable.add ?_ ?_)
+  · -- first term
+    have hMt : Tendsto (fun j : ℕ => ((Nat.log 3 (sched j) / 2 : ℕ) : ℝ)) atTop atTop := by
+      refine tendsto_atTop_mono' atTop ev_M_ge ?_
+      exact (Real.tendsto_sqrt_atTop.comp tendsto_natCast_atTop_atTop).atTop_div_const (by norm_num)
+    have hA : ∀ᶠ x : ℝ in atTop, (Real.log x ≤ Real.log 2 / 2 * x ^ (1 / 2 : ℝ) ∧ 16 ≤ x) ∧
+        ∀ n : ℕ, (n : ℝ) = x → Real.sqrt x / 2 ≤ freeCount free n :=
+      ((ev_log_le (by norm_num) (by positivity)).and (eventually_ge_atTop 16)).and hFree
+    have hA' := hMt.eventually hA
+    have hB := (tendsto_natCast_atTop_atTop (R := ℝ)).eventually (ev_log_le (r := 1 / 4) (ε := c / 8)
+      (by norm_num) (by positivity))
+    refine Summable.of_norm_bounded_eventually summable_inv_sq_nat ?_
+    rw [Nat.cofinite_eq_atTop]
+    filter_upwards [hA', hB, ev_M_ge, eventually_ge_atTop 1] with j hjA hjB hjM hj1
+    set M := Nat.log 3 (sched j) / 2
+    set F := freeCount free M
+    obtain ⟨⟨hlogM, hM16⟩, hFM⟩ := hjA
+    have hMpos : (0 : ℝ) < M := by linarith
+    have hsM : Real.sqrt M = (M : ℝ) ^ (1 / 2 : ℝ) := Real.sqrt_eq_rpow _
+    -- Nat.log 2 M + 2 ≤ √M
+    have hl2 : (Nat.log 2 M : ℝ) * Real.log 2 ≤ Real.log M := by
+      have : ((2 ^ Nat.log 2 M : ℕ) : ℝ) ≤ M := by
+        exact_mod_cast Nat.pow_log_le_self 2 (by intro h; rw [h] at hMpos; simp at hMpos)
+      have := Real.log_le_log (by positivity) this
+      push_cast at this; rw [Real.log_pow] at this; exact this
+    have hlog2 : 0 < Real.log 2 := Real.log_pos (by norm_num)
+    have hsq4 : 4 ≤ Real.sqrt M := by
+      rw [show (4 : ℝ) = Real.sqrt 16 by rw [show (16:ℝ) = 4 ^ 2 by norm_num, Real.sqrt_sq (by norm_num)]]
+      exact Real.sqrt_le_sqrt hM16
+    have hden : (Nat.log 2 M : ℝ) + 2 ≤ Real.sqrt M := by
+      have : (Nat.log 2 M : ℝ) * Real.log 2 ≤ Real.log 2 / 2 * Real.sqrt M := by
+        rw [hsM]; linarith
+      have : (Nat.log 2 M : ℝ) ≤ Real.sqrt M / 2 := by nlinarith
+      linarith
+    have hF : Real.sqrt M / 2 ≤ F := hFM M rfl
+    have hj0 : (0 : ℝ) ≤ j := by positivity
+    have hsqM : Real.sqrt (Real.sqrt j) / 2 ≤ Real.sqrt M := by
+      have := Real.sqrt_le_sqrt hjM
+      rw [Real.sqrt_div' _ (by norm_num), show Real.sqrt 4 = 2 by
+        rw [show (4:ℝ) = 2 ^ 2 by norm_num, Real.sqrt_sq (by norm_num)]] at this
+      exact this
+    rw [sqrt_sqrt_eq _ hj0] at hsqM
+    have hkey : 2 * Real.log j ≤ c * F := by
+      have : c * ((j : ℝ) ^ (1 / 4 : ℝ) / 4) ≤ c * F := by
+        apply mul_le_mul_of_nonneg_left _ hc.le; linarith
+      linarith
+    rw [Real.norm_of_nonneg (Real.exp_pos _).le, ← exp_neg_two_log j hj1]
+    apply Real.exp_le_exp.2; linarith
+  · -- second term
+    have hB := (tendsto_natCast_atTop_atTop (R := ℝ)).eventually (ev_log_le (r := 1 / 2) (ε := 1 / 4)
+      (by norm_num) (by norm_num))
+    refine Summable.of_norm_bounded_eventually summable_inv_sq_nat ?_
+    rw [Nat.cofinite_eq_atTop]
+    filter_upwards [hB, eventually_ge_atTop 1] with j hjB hj1
+    have hs : (0 : ℝ) < sched j := by exact_mod_cast one_le_sched j
+    rw [Real.norm_of_nonneg (Real.rpow_nonneg hs.le _), ← exp_neg_two_log j hj1]
+    calc (sched j : ℝ) ^ (-(1 / 2 : ℝ)) ≤ (Real.exp (Real.sqrt j)) ^ (-(1 / 2 : ℝ)) :=
+          Real.rpow_le_rpow_of_nonpos (Real.exp_pos _) (exp_sqrt_le_sched j hj1) (by norm_num)
+      _ = Real.exp (-(Real.sqrt j / 2)) := by rw [← Real.exp_mul]; ring_nf
+      _ ≤ _ := by
+          apply Real.exp_le_exp.2
+          rw [Real.sqrt_eq_rpow]; linarith
+
+
+theorem coins_eq_coinMeasure : coins = ExplicitSquare.coinMeasure := rfl
+
+theorem ev_sqrt_le_freeCount_exp (μ₀ : ℚ) (hμ : 1 < μ₀) :
+    ∀ᶠ M : ℝ in atTop, ∀ n : ℕ, (n : ℝ) = M → Real.sqrt M / 2 ≤ freeCount (expFree μ₀) n := by
+  obtain ⟨c, hc, hcF⟩ := le_freeCount_exp μ₀ hμ
+  filter_upwards [eventually_ge_atTop (16 : ℝ), eventually_ge_atTop ((3 / (2 * c)) ^ 2)] with M h16 hMc n hn
+  have h := hcF n
+  rw [hn] at h
+  have hs4 : 4 ≤ Real.sqrt M := by
+    rw [show (4 : ℝ) = Real.sqrt 16 by rw [show (16:ℝ) = 4 ^ 2 by norm_num, Real.sqrt_sq (by norm_num)]]
+    exact Real.sqrt_le_sqrt h16
+  have hsc : 3 / (2 * c) ≤ Real.sqrt M := by
+    rw [← Real.sqrt_sq (by positivity : (0:ℝ) ≤ 3 / (2 * c))]; exact Real.sqrt_le_sqrt hMc
+  have hsM : Real.sqrt M * Real.sqrt M = M := Real.mul_self_sqrt (by linarith)
+  have : 3 / 2 ≤ c * Real.sqrt M := by
+    rw [div_le_iff₀ (by positivity)] at hsc; linarith
+  nlinarith
+
+end NormalLeaves
+
 /-- **Normal to every base prime to 3, a.e.**  Confidence 90%.
 
 English proof.  `CantorLiouvilleAll.ae_isNormal_of_coprime_three` verbatim with `isFree`
@@ -1332,7 +1425,31 @@ replaced by `expFree μ₀`: `secondMoment_le_b (expFree μ₀)` with the linear
 `CantorLiouville.sched`, and `ae_isNormal_of_secondMoment` concludes. -/
 theorem ae_isNormal_of_coprime_three (μ₀ : ℚ) (hμ : 1 < μ₀) :
     ∀ᵐ ω ∂coins, ∀ b : ℕ, 2 ≤ b → ¬ 3 ∣ b → IsNormal b (cantorExpReal μ₀ ω) := by
-  sorry
+  open CantorLiouvilleAll in
+  rw [ae_all_iff]
+  intro b
+  by_cases hb : 2 ≤ b
+  · by_cases h3 : 3 ∣ b
+    · exact Eventually.of_forall fun _ _ h => absurd h3 h
+    · have : ∀ᵐ ω ∂coins, IsNormal b (cantorExpReal μ₀ ω) := by
+        rw [coins_eq_coinMeasure]
+        refine ae_isNormal_of_secondMoment ExplicitSquare.coinMeasure hb _ (measurable_pt (expFree μ₀)) sched
+          sched_strictMono sched_ratio ?_
+        intro h hh
+        have hC : (0 : ℝ) < 16 * (b : ℝ) ^ 6 * |(h : ℝ)| := by
+          have : (h : ℝ) ≠ 0 := by exact_mod_cast hh
+          positivity
+        have hl : 0 < Real.log (3 / 2) / 2 := by
+          have := Real.log_pos (by norm_num : (1:ℝ) < 3 / 2); linarith
+        refine (summable_sched_bound_gen (expFree μ₀) (ev_sqrt_le_freeCount_exp μ₀ hμ) _ _ hC hl).of_nonneg_of_le
+          (fun j => div_nonneg (integral_nonneg fun ω => by positivity) (by positivity))
+          (fun j => ?_)
+        have hN : (0 : ℝ) < sched j := by exact_mod_cast one_le_sched j
+        rw [div_le_iff₀ (by positivity)]
+        calc _ ≤ _ := secondMoment_le_b (expFree μ₀) hb h3 h hh (sched j) (one_le_sched j)
+          _ = _ := by ring
+      exact this.mono fun _ h _ _ => h
+  · exact Eventually.of_forall fun _ h => absurd h hb
 
 /-- **Existence form.**  Wiring (proved). -/
 theorem exists_mem_cantorSet_irrExponent_normal (μ₀ : ℚ) (hμ : threshold < μ₀) :
