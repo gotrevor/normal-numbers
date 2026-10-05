@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
 import NormalNumbers.Barriers
+import NormalNumbers.LiteratureDigitsOfPowers
 import NormalNumbers.PairDecoupleProve
 import NormalNumbers.PairDecoupleRefute
 import NormalNumbers.SwingC1Log
@@ -161,6 +162,9 @@ def waivers : List Waiver := [
   ⟨``FiniteState.k_dvd_scaled_delayEnum, "a leaf: arithmetic of the one-letter delay relabeling"⟩,
   ⟨``FiniteState.not_kAdicEquidist_delayEnum,
    "a leaf: residue 1 mod k is never hit, from k_dvd_scaled_delayEnum"⟩,
+  ⟨``Literature.DigitsOfPowers.persistence_bounded_of_smoothDigitOmission,
+   "wiring lemma (a leaf): digit-product arithmetic from the open node SmoothDigitOmission; \
+    English proof in the docstring"⟩,
   ⟨``FiniteState.isFNormal_delayEnum_of_normal,
    "a leaf: O(1) cost of composing with the delay transducer and its finite-state right inverse"⟩]
 

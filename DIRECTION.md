@@ -7,6 +7,10 @@ Follow `KICKOFF-2026-10-02-master-conjectures.md`: prove the three planted conse
 consequence graph, then run the Maze test.  Frozen statements stay byte-identical.  The run is done
 only when all three phases are, not when the file is sorry-free.
 
+🅿️ **Parked node, not a directive (2026-10-05):** `LiteratureDigitsOfPowers.SmoothDigitOmission`, the
+integer-digit crux under Erdős #406, zeroless `2ⁿ`, and persistence ≤ 11 (Numberphile sweep).  Open
+question for the consequence graph: does any repo master conjecture imply it?  No link is claimed.
+
 ## Completed runs 🏁
 
 **Joint Lambert, unconditional + quantitative (closed 2026-09-30, merged 2026-10-02).**  Simultaneous
