@@ -108,11 +108,6 @@ def cruxLinks : List CruxLink := [
   ⟨``EntropyProfiles.ae_isNormal_self_base_sq_of_timesP_ergodic, [``cantor_not_normal_three_pow],
    "with x in place of (x + 1)² the claim is false (the Cantor measure is ×3-ergodic and no Cantor \
     point is 3-normal), so the mechanism must use the curvature of the map"⟩,
-  ⟨``SchmidtGames.exists_computable_cantorPoint_mem_U_inter_Bad,
-   [``schmidt_normal_not_winning, ``schmidt_fixedC_not_winning],
-   "the computable descent must use the uniform-bad target (the same potential-guided descent \
-    aimed at base-2 normality must fail, since normality is not winning) and must open at a \
-    scale well above 2^{−C} (one fixed E C is not winning below it)"⟩,
   ⟨``CantorExactExponentStretch.ae_not_liouvilleWith_all, [``cantorExp_trivialCount_mu_three],
    "the count must beat 2^F numerators per denominator in run-entering windows (the trivial \
     count diverges at μ₀ = 3), and must see the depth-b endpoints below the cylinder scale: a \
