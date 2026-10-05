@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
 import NormalNumbers.QSpanNormal
+import NormalNumbers.DecayAeNormal
 
 /-!
 # What the digits of a rational combination can look like
@@ -70,6 +71,71 @@ noncomputable def realY {m : ℕ} (b : ℕ) (dY : Fin m → ℕ) (ω : ℕ → F
 noncomputable def digitPoly {m : ℕ} (d : Fin m → ℕ) (t : ℝ) : ℂ :=
   (∑ j, Complex.exp (2 * Real.pi * Complex.I * (t * d j))) / m
 
+
+/-! ### Leaves of the Fourier-zero criterion
+
+The proof runs through one fixed law: `bᵏ · combo ω ≡ combo (shift^k ω) (mod 1)` (integer
+coefficients), the Weyl means of the orbit converge a.e. to `nuHat h = 𝔼 e(h · combo)`
+(`ae_tendsto_nuHat`), and `nuHat h` is the product of the digit polynomials, which vanishes iff a
+factor does (`nuHat_eq_zero_iff`).  Weyl's criterion in both directions closes the loop. -/
+
+open DecayAeNormal in
+/-- The integer combination `a X + c Y`. -/
+noncomputable def combo {m : ℕ} (b : ℕ) (dX dY : Fin m → ℕ) (a c : ℤ)
+    (ω : ℕ → Fin m × Fin m) : ℝ :=
+  a * realX b dX ω + c * realY b dY ω
+
+open DecayAeNormal in
+/-- The `h`-th Fourier coefficient of the law of `combo`. -/
+noncomputable def nuHat {m : ℕ} [NeZero m] (b : ℕ) (dX dY : Fin m → ℕ) (a c : ℤ) (h : ℤ) : ℂ :=
+  ∫ ω, ee (h * combo b dX dY a c ω) ∂pairs m
+
+open DecayAeNormal in
+/-- The Weyl mean of the `×b` orbit at frequency `h`, raw phases. -/
+noncomputable def weylAvg (b : ℕ) (z : ℝ) (h : ℤ) (N : ℕ) : ℂ :=
+  (∑ k ∈ Finset.range N, ee (h * (b : ℝ) ^ k * z)) / N
+
+/-- **Leaf (Weyl, easy direction).**  A normal number has vanishing Weyl means.  Confidence 99%
+(equidistribution ⇒ Riemann sums of `e(h·)` against step functions). -/
+theorem weylAvg_tendsto_zero_of_isNormal (b : ℕ) (hb : 2 ≤ b) (z : ℝ) (hz : IsNormal b z)
+    (h : ℤ) (hh : h ≠ 0) : Tendsto (weylAvg b z h) atTop (nhds 0) := by
+  sorry
+
+/-- **Leaf (Weyl, wired direction).**  From `equidistributed_of_weyl` and Wall.  Confidence 99%. -/
+theorem isNormal_of_weylAvg (b : ℕ) (hb : 2 ≤ b) (z : ℝ)
+    (hW : ∀ h : ℤ, h ≠ 0 → Tendsto (weylAvg b z h) atTop (nhds 0)) : IsNormal b z := by
+  sorry
+
+/-- **Leaf (crux: genericity).**  A.e. orbit has Weyl means tending to the coefficient of the
+stationary law.  Confidence 90%.  English proof: `ee(h bᵏ combo ω) = ee(h combo(σᵏω))`; the
+correlation of `ee(h combo ∘ σᵏ)` and `ee(h combo ∘ σˡ)` is within `O(b^{-|k-l|})` of
+`|nuHat h|²` (truncate the tail, independence of disjoint coordinates); so the second moment of
+`Σ_{k<N} (ee(..) - nuHat)` is `O(N)`; `j²` subsequence and interpolation as in
+`DecayAeNormal.ae_tendsto_weyl`. -/
+theorem ae_tendsto_nuHat (b m : ℕ) [NeZero m] (hb : 2 ≤ b) (dX dY : Fin m → ℕ)
+    (hX : ∀ j, dX j < b) (hY : ∀ j, dY j < b) (a c : ℤ) (h : ℤ) :
+    ∀ᵐ ω ∂pairs m, Tendsto (weylAvg b (combo b dX dY a c ω) h) atTop
+      (nhds (nuHat b dX dY a c h)) := by
+  sorry
+
+/-- **Leaf (product formula).**  `nuHat h = 0` iff some digit-polynomial factor vanishes.
+Confidence 95%: `nuHat h = ∏_{i≥1} φ_X(a h/bⁱ) φ_Y(c h/bⁱ)` by independence of coordinates and
+dominated convergence; `|1 - φ(t)| ≤ 2π b |t|` makes the tail product converge to a nonzero
+limit. -/
+theorem nuHat_eq_zero_iff (b m : ℕ) [NeZero m] (hb : 2 ≤ b) (dX dY : Fin m → ℕ)
+    (hX : ∀ j, dX j < b) (hY : ∀ j, dY j < b) (a c : ℤ) (h : ℤ) :
+    nuHat b dX dY a c h = 0 ↔ ∃ i : ℕ, 1 ≤ i ∧
+      digitPoly dX (a * h / (b : ℝ) ^ i) * digitPoly dY (c * h / (b : ℝ) ^ i) = 0 := by
+  sorry
+
+/-- A.e. not normal at a frequency with nonzero coefficient. -/
+theorem ae_not_isNormal_of_nuHat_ne (b m : ℕ) [NeZero m] (hb : 2 ≤ b) (dX dY : Fin m → ℕ)
+    (hX : ∀ j, dX j < b) (hY : ∀ j, dY j < b) (a c : ℤ) (h : ℤ) (hh : h ≠ 0)
+    (hne : nuHat b dX dY a c h ≠ 0) :
+    ∀ᵐ ω ∂pairs m, ¬ IsNormal b (a * realX b dX ω + c * realY b dY ω) := by
+  filter_upwards [ae_tendsto_nuHat b m hb dX dY hX hY a c h] with ω hω hN
+  exact hne (tendsto_nhds_unique hω (weylAvg_tendsto_zero_of_isNormal b hb _ hN h hh))
+
 /-- **The Fourier-zero criterion.**  Confidence 80%.  English proof in the module doc: the
 residue-free stationary law of `bⁿ(a x + c y) mod 1` is the law of `a X + c Y mod 1` with `X, Y`
 independent self-similar; its `h`-th coefficient is the convergent product
@@ -81,7 +147,31 @@ theorem ae_isNormal_combo_iff (b m : ℕ) [NeZero m] (hb : 2 ≤ b) (dX dY : Fin
     (∀ᵐ ω ∂pairs m, IsNormal b (a * realX b dX ω + c * realY b dY ω)) ↔
       ∀ h : ℤ, h ≠ 0 → ∃ i : ℕ, 1 ≤ i ∧
         digitPoly dX (a * h / (b : ℝ) ^ i) * digitPoly dY (c * h / (b : ℝ) ^ i) = 0 := by
-  sorry
+  constructor
+  · intro hae h hh
+    by_contra hcon
+    push Not at hcon
+    have hne : nuHat b dX dY a c h ≠ 0 := fun h0 => by
+      obtain ⟨i, hi, hz⟩ := (nuHat_eq_zero_iff b m hb dX dY hX hY a c h).1 h0
+      exact hcon i hi hz
+    have hbad := ae_not_isNormal_of_nuHat_ne b m hb dX dY hX hY a c h hh hne
+    have : ∀ᵐ ω ∂pairs m, False := by
+      filter_upwards [hae, hbad] with ω h1 h2 using h2 h1
+    have hP : IsProbabilityMeasure (pairs m) := by unfold pairs; infer_instance
+    rw [ae_iff] at this
+    simp at this
+  · intro hall
+    have hW : ∀ᵐ ω ∂pairs m, ∀ h : ℤ, h ≠ 0 →
+        Tendsto (weylAvg b (combo b dX dY a c ω) h) atTop (nhds 0) := by
+      rw [ae_all_iff]
+      intro h
+      by_cases hh : h = 0
+      · exact Eventually.of_forall fun ω hne => absurd hh hne
+      · have h0 := (nuHat_eq_zero_iff b m hb dX dY hX hY a c h).2 (hall h hh)
+        filter_upwards [ae_tendsto_nuHat b m hb dX dY hX hY a c h] with ω hω _
+        rwa [h0] at hω
+    filter_upwards [hW] with ω hω
+    exact isNormal_of_weylAvg b hb _ hω
 
 /-- The 0–1 law beside the criterion: if the a.e. statement fails, a.e. point is not normal.
 Confidence 85% (same proof: a.e. orbits are generic for one fixed law). -/
@@ -90,7 +180,10 @@ theorem ae_not_isNormal_combo_of_not (b m : ℕ) [NeZero m] (hb : 2 ≤ b) (dX d
     (hbad : ∃ h : ℤ, h ≠ 0 ∧ ∀ i : ℕ, 1 ≤ i →
         digitPoly dX (a * h / (b : ℝ) ^ i) * digitPoly dY (c * h / (b : ℝ) ^ i) ≠ 0) :
     ∀ᵐ ω ∂pairs m, ¬ IsNormal b (a * realX b dX ω + c * realY b dY ω) := by
-  sorry
+  obtain ⟨h, hh, hall⟩ := hbad
+  refine ae_not_isNormal_of_nuHat_ne b m hb dX dY hX hY a c h hh fun h0 => ?_
+  obtain ⟨i, hi, hz⟩ := (nuHat_eq_zero_iff b m hb dX dY hX hY a c h).1 h0
+  exact hall i hi hz
 
 /-- Digits `0, …, 4`. -/
 def five : Fin 5 → ℕ := fun j => j
