@@ -32,6 +32,8 @@ Hence (`IsProductBlock.liouville_cover`, `sorry`, 95%, English proof in the docs
 - **Every search before this note capped `m` at 60, so none could have found a base-5 block.**
 - Set cover over `B ≤ 300` (exact ILP, HiGHS, dual bound = optimum): minimum `|S| = 5` for
   `S ⊆ [1, 625]` (`IsProductBlock.base5_card_ge_five`, `sorry`, 93%).  Base-3 control: optimum 2.
+  Raising to `B ≤ 1500` (20-min limit): best cover found has 6 (`[298, 312, 537, 574, 588, 621]`),
+  proved floor still 5.
 - The filter is necessary, not sufficient: in base 3, 87 pairs `≤ 40` pass it for `B ≤ 3000`,
   and the exact checker accepts only `{2, 11}` and `{4, 22} = 2·{2, 11}` (`image_mul`).
 
