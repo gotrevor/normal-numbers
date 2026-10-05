@@ -1087,7 +1087,136 @@ every `m ≥ N`; so free `2`s recur and `liouvilleWith_cantorExpReal` applies. -
 theorem hasIrrExponent_of_avoid (μ₀ : ℚ) (hμ : threshold < μ₀) (e : ℕ → Bool)
     (h : ∃ m₁, ∀ m, m₁ ≤ m → expTest μ₀ m (pre e (expL μ₀ m + 1)) = false) :
     HasIrrExponent (cantorExpReal μ₀ e) μ₀ := by
-  sorry
+  open CantorExpGeneric in
+  obtain ⟨m₁, hm₁⟩ := h
+  have h2 : (2 : ℚ) < μ₀ := by
+    have : (2 : ℝ) < μ₀ := lt_trans (by have := Real.logb_pos (b := 2) (x := 3) (by norm_num) (by norm_num); unfold threshold; linarith) hμ
+    exact_mod_cast this
+  have hμ1 : (1 : ℚ) < μ₀ := by linarith
+  set x := cantorExpReal μ₀ e with hxdef
+  have fire : ∀ m q pp : ℕ, m₁ ≤ m → 3 ^ m ≤ q → q < 3 ^ (m + 1) → pp ≤ q →
+      |x - pp / q| ≤ 2 / 3 ^ (expL μ₀ m + 1) → False := fun m q pp hm hq1 hq2 hpp hx => by
+    have := hitB_of_near (expFree μ₀) e m (expL μ₀ m) q pp hq1 hq2 hpp hx
+    have h' := hm₁ m hm
+    unfold expTest at h'
+    rw [h'] at this; exact Bool.false_ne_true this
+  have hx0 : 0 ≤ x := by have := hd_div_le_pt (expFree μ₀) e 0; simpa [hd, hxdef, cantorExpReal] using this
+  have hx1 : x ≤ 1 := by have := pt_le_hd_div (expFree μ₀) e 0; simpa [hd, hxdef, cantorExpReal] using this
+  refine ⟨fun p hp => (liouvilleWith_cantorExpReal μ₀ hμ1 e ?_).mono hp.le, fun p hp hL => ?_⟩
+  · intro N
+    by_contra hne
+    push Not at hne
+    set m := max m₁ N
+    have hz : tl (expFree μ₀) e m = 0 := by
+      unfold tl
+      have : ∀ k, (ptDigit (expFree μ₀) e (k + m) : ℝ) / (3 : ℝ) ^ (k + m + 1) = 0 := by
+        intro k
+        have hk : N ≤ k + m := le_trans (le_max_right _ _) (Nat.le_add_left _ _)
+        unfold ptDigit
+        by_cases hf : expFree μ₀ (k + m) = true
+        · have := hne (k + m) hk hf
+          simp [hf, this]
+        · simp [hf]
+      simp [this]
+    refine fire m (3 ^ m) (hd (expFree μ₀) e m) (le_max_left _ _) le_rfl
+      (Nat.pow_lt_pow_right (by norm_num) (by omega)) (hd_lt _ _ _).le ?_
+    rw [hxdef, cantorExpReal, pt_split _ e m, hz]
+    push_cast
+    simp only [add_zero, sub_self, abs_zero]
+    positivity
+  · obtain ⟨C, hC⟩ := hL
+    set C' := max C 1
+    set μ : ℝ := (μ₀ : ℝ)
+    have hμR : (2 : ℝ) < μ := by simp only [μ]; exact_mod_cast h2
+    set δ := p - μ
+    have hδ : 0 < δ := by simp only [δ]; linarith
+    set r : ℝ := (3 : ℝ) ^ (-(δ / 2))
+    have hr0 : 0 < r := by positivity
+    have hr1 : r < 1 := Real.rpow_lt_one_of_one_lt_of_neg (by norm_num) (by linarith)
+    have hev : ∀ᶠ m : ℕ in atTop, (3 * C' * r ^ m ≤ 2 ∧ m₁ ≤ m) ∧ 2 / δ ≤ Nat.sqrt m := by
+      refine Eventually.and ?_ ?_
+      · refine Eventually.and ?_ (eventually_ge_atTop m₁)
+        have ht : Tendsto (fun m : ℕ => 3 * C' * r ^ m) atTop (𝓝 0) := by
+          simpa using (tendsto_pow_atTop_nhds_zero_of_lt_one hr0.le hr1).const_mul (3 * C')
+        exact (ht.eventually (gt_mem_nhds (by norm_num : (0 : ℝ) < 2))).mono fun _ h => h.le
+      · exact tendsto_nat_sqrt.eventually (tendsto_natCast_atTop_atTop.eventually_ge_atTop (2 / δ))
+    obtain ⟨M₀, hM₀⟩ := eventually_atTop.1 hev
+    have hC1 : (1 : ℝ) ≤ C' := le_max_right _ _
+    obtain ⟨n, ⟨z, hne, hlt⟩, hn⟩ :=
+      (hC.and_eventually (eventually_ge_atTop (3 ^ M₀ + ⌈C'⌉₊ + 1))).exists
+    have hK : 3 ^ M₀ ≤ n := le_trans (Nat.le_add_right _ _) (le_trans (Nat.le_add_right _ 1) hn)
+    have hCn : ⌈C'⌉₊ + 1 ≤ n := le_trans (by rw [add_assoc]; exact Nat.le_add_left _ _) hn
+    have hn0 : n ≠ 0 := by omega
+    have hnR : (1 : ℝ) ≤ n := by exact_mod_cast Nat.one_le_iff_ne_zero.2 hn0
+    have hnC : C' ≤ n := by
+      have : (⌈C'⌉₊ : ℝ) ≤ n := by exact_mod_cast (by omega : ⌈C'⌉₊ ≤ n)
+      linarith [Nat.le_ceil C']
+    have hlt' : |x - z / n| < C' / (n : ℝ) ^ p := lt_of_lt_of_le hlt (by
+      gcongr; exact le_max_left _ _)
+    have hnp : (n : ℝ) ^ (2 : ℝ) ≤ (n : ℝ) ^ p :=
+      Real.rpow_le_rpow_of_exponent_le hnR (by linarith)
+    have hnp0 : (0 : ℝ) < (n : ℝ) ^ p := by positivity
+    have hsmall : C' / (n : ℝ) ^ p ≤ 1 / n := by
+      rw [div_le_div_iff₀ hnp0 (by linarith)]
+      rw [show (2 : ℝ) = ((2 : ℕ) : ℝ) by norm_num, Real.rpow_natCast] at hnp
+      nlinarith
+    set m := Nat.log 3 n
+    have hq1 : 3 ^ m ≤ n := Nat.pow_log_le_self 3 hn0
+    have hq2 : n < 3 ^ (m + 1) := Nat.lt_pow_succ_log_self (by norm_num) n
+    have hmM : M₀ ≤ m := Nat.le_log_of_pow_le (by norm_num) hK
+    obtain ⟨⟨hrm, hm1⟩, hsq⟩ := hM₀ m hmM
+    -- `0 ≤ z ≤ n`
+    have hz0 : 0 ≤ z := by
+      by_contra hz
+      have : (z : ℝ) ≤ -1 := by exact_mod_cast (by omega : z ≤ -1)
+      have : 1 / (n : ℝ) ≤ |x - z / n| := by
+        rw [abs_of_nonneg (by have : (z : ℝ) / n ≤ 0 := div_nonpos_of_nonpos_of_nonneg (by linarith) (by linarith); linarith)]
+        have : (z : ℝ) / n ≤ -1 / n := div_le_div_of_nonneg_right this (by linarith)
+        rw [neg_div] at this; linarith
+      linarith
+    have hzn : z ≤ n := by
+      by_contra hz
+      have : (n : ℝ) + 1 ≤ z := by exact_mod_cast (by omega : (n : ℤ) + 1 ≤ z)
+      have : 1 / (n : ℝ) ≤ |x - z / n| := by
+        have e1 : (z : ℝ) / n ≥ ((n : ℝ) + 1) / n := div_le_div_of_nonneg_right this (by linarith)
+        have e2 : ((n : ℝ) + 1) / n = 1 + 1 / n := by field_simp
+        have e3 : (0 : ℝ) ≤ 1 / n := by positivity
+        rw [abs_sub_comm, abs_of_nonneg (by linarith)]
+        linarith
+      linarith
+    lift z to ℕ using hz0
+    have hzn' : z ≤ n := by exact_mod_cast hzn
+    refine fire m n z hm1 hq1 hq2 hzn' ?_
+    have hlt'' : |x - z / n| < C' / (n : ℝ) ^ p := by simpa using hlt'
+    refine hlt''.le.trans ?_
+    -- `C'/n^p ≤ 2/3^{L+1}`
+    set s := Nat.sqrt m
+    obtain ⟨-, hLup⟩ := expL_bounds (by linarith : (0 : ℚ) < μ₀) m
+    replace hLup : (expL μ₀ m : ℝ) ≤ μ * m + s := hLup
+    have hss : (s : ℝ) * s ≤ m := by exact_mod_cast Nat.sqrt_le m
+    have hs0 : (0 : ℝ) ≤ s := by positivity
+    have hsδ : (s : ℝ) ≤ δ * m / 2 := by
+      have : 2 / δ * s ≤ s * s := by nlinarith
+      rw [div_mul_eq_mul_div, div_le_iff₀ hδ] at this
+      nlinarith
+    have h3L : (3 : ℝ) ^ (expL μ₀ m + 1) ≤ 3 * (3 : ℝ) ^ (p * m) * r ^ m := by
+      rw [← Real.rpow_natCast, ← Real.rpow_natCast r, ← Real.rpow_mul (by norm_num)]
+      have : (3 : ℝ) * 3 ^ (p * m) * 3 ^ (-(δ / 2) * m) = 3 ^ (1 + p * m + (-(δ / 2) * m)) := by
+        rw [Real.rpow_add (by norm_num), Real.rpow_add (by norm_num), Real.rpow_one]
+      rw [this]
+      apply Real.rpow_le_rpow_of_exponent_le (by norm_num)
+      push_cast
+      simp only [δ] at hsδ ⊢
+      nlinarith
+    have hnp3 : (3 : ℝ) ^ (p * m) ≤ (n : ℝ) ^ p := by
+      rw [mul_comm, Real.rpow_mul (by norm_num), Real.rpow_natCast]
+      apply Real.rpow_le_rpow (by positivity) (by exact_mod_cast hq1) (by linarith)
+    rw [div_le_div_iff₀ hnp0 (by positivity)]
+    have : (0 : ℝ) < (3 : ℝ) ^ (p * m) := by positivity
+    calc C' * (3 : ℝ) ^ (expL μ₀ m + 1) ≤ C' * (3 * (3 : ℝ) ^ (p * m) * r ^ m) := by gcongr
+      _ = (3 * C' * r ^ m) * (3 : ℝ) ^ (p * m) := by ring
+      _ ≤ 2 * (3 : ℝ) ^ (p * m) := by gcongr
+      _ ≤ 2 * (n : ℝ) ^ p := by gcongr
 
 /-- **The exponent tests.**  Confidence 70%.
 
