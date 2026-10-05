@@ -939,6 +939,7 @@ import NormalNumbers.DecayAeNormal
 import NormalNumbers.Derandomize
 import NormalNumbers.HatFourier
 import NormalNumbers.VisitDeviation
+import NormalNumbers.ComputableAlgebraic
 import NormalNumbers.ComputableNormal
 import NormalNumbers.ComputableReal
 import NormalNumbers.KurtzRandom

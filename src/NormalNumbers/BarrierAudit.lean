@@ -158,8 +158,6 @@ def waivers : List Waiver := [
   ⟨``Erdos257.towerGapPrimes_gapSet, "Mertens with error term per block (a leaf)"⟩,
   ⟨``Erdos257.squareBlockPrimes_weakRate, "Mertens with error term per block (a leaf)"⟩,
   ⟨``Erdos257.squareBlockPrimes_not_mertensRate, "Mertens with error term per block (a leaf)"⟩,
-  ⟨``ComputableReal.isComputableReal_of_isAlgebraic,
-   "known theorem (Turing 1936 §10: algebraic ⇒ computable); Primrec bookkeeping, no new mechanism"⟩,
   ⟨``ComputableReal.not_isKurtzRandom_of_isComputableReal,
    "known theorem (Kurtz 1981: computable ⇒ not Kurtz random); Primrec bookkeeping, no new mechanism"⟩,
   ⟨``ExplicitSquare.ae_isNormal_of_logDecay,

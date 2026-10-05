@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
 import Mathlib.Computability.Partrec
+import NormalNumbers.ComputableAlgebraic
 import Mathlib.RingTheory.Algebraic.Defs
 import Mathlib.Analysis.SpecialFunctions.Pow.Real
 
@@ -36,9 +37,11 @@ theorem isComputableReal_zero : IsComputableReal 0 :=
 
 /-- **Every algebraic real is computable.**
 
-Believed, confidence 99%: a textbook result (Turing 1936 §10 lists the real algebraic numbers
-among the computable numbers).  Not yet proved here; the obstacle is the `Primrec` bookkeeping,
-not the mathematics.
+A textbook result (Turing 1936 §10 lists the real algebraic numbers among the computable
+numbers), proved here by the flat route below; the leaf lemmas are in
+`NormalNumbers.ComputableAlgebraic`.  The proof uses `x` as a simple root of the
+`(r-1)`-st derivative of an annihilating polynomial (`r` the root multiplicity) rather than
+the minimal polynomial, and local strict monotonicity in place of the IVT.
 
 English proof.  Let `p ∈ ℤ[X]` be the minimal polynomial of `x` over `ℚ` with denominators
 cleared.  It is irreducible over a field of characteristic 0, so separable, so `x` is a simple
@@ -62,7 +65,25 @@ proves `Primrec` for `ℕ` arithmetic only (`nat_add`/`nat_sub`/`nat_mul`/`nat_l
 Evidence: the standard literature proof; no new mechanism.  Estimated 200-400 lines via the flat
 route, 300-600 via bisection, mostly `Primrec` combinators. -/
 theorem isComputableReal_of_isAlgebraic {x : ℝ} (hx : IsAlgebraic ℤ x) : IsComputableReal x := by
-  sorry
+  obtain ⟨q, hroot, hder⟩ := ComputableAlgebraic.exists_simple_root hx
+  obtain ⟨c, hc⟩ := exists_nat_ge (-x)
+  obtain ⟨hroot', hder'⟩ := ComputableAlgebraic.exists_shifted_root q c hroot hder
+  obtain ⟨F, hF, hFeq⟩ := ComputableAlgebraic.exists_primrec_floor _ (by linarith) hroot' hder'
+  refine ⟨fun n => (F n : ℤ) - (c * 2 ^ n : ℕ),
+    (ComputableAlgebraic.primrec_int_sub hF
+      (Primrec.nat_mul.comp (Primrec.const c) ComputableAlgebraic.primrec_two_pow)).to_comp,
+    fun n => ?_⟩
+  have hpn : (0 : ℝ) < 2 ^ n := by positivity
+  have hy : 0 ≤ 2 ^ n * (x + c) := mul_nonneg hpn.le (by linarith)
+  have h1 := Nat.floor_le hy
+  have h2 := Nat.lt_floor_add_one (2 ^ n * (x + c))
+  show |x - (((F n : ℤ) - ((c * 2 ^ n : ℕ) : ℤ) : ℤ) : ℝ) / 2 ^ n| ≤ 1 / 2 ^ n
+  rw [hFeq]
+  push_cast
+  rw [show x - ((⌊2 ^ n * (x + c)⌋₊ : ℝ) - c * 2 ^ n) / 2 ^ n =
+      (2 ^ n * (x + c) - ⌊2 ^ n * (x + c)⌋₊) / 2 ^ n by field_simp; ring,
+    abs_div, abs_of_pos hpn, div_le_div_iff_of_pos_right hpn, abs_le]
+  constructor <;> linarith
 
 /-- **Uncomputable ⇒ transcendental**: the contrapositive of `isComputableReal_of_isAlgebraic`. -/
 theorem transcendental_of_not_isComputableReal {x : ℝ} (hx : ¬ IsComputableReal x) :
