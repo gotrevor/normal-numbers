@@ -25,7 +25,180 @@ Cantor measure that carries the Cassels argument gives zero mass to the target s
 
 namespace NormalNumbers.CantorBadNormal
 
-open SchmidtGames
+open SchmidtGames MeasureTheory Filter Topology
+open CantorLiouville CantorLiouvilleAll DecayAeNormal ExplicitSquare
+
+/-! ## Reduction: a law on `K ∩ Bad` with a Cassels power saving
+
+Everything in this section is proved.  The headline follows from one law (`Law`) and the
+power-saving second moment (`CasselsPower`) for each base prime to 3
+(`exists_of_law`). -/
+
+/-- The Cantor point with ternary digit `2` exactly where the selector `σ` is `true`. -/
+noncomputable def cpt (σ : ℕ → Bool) : ℝ := pt (fun _ => true) σ
+
+theorem cpt_mem_cantorSet (σ : ℕ → Bool) : cpt σ ∈ cantorSet := pt_mem_cantorSet _ _
+
+theorem measurable_cpt : Measurable cpt := measurable_pt _
+
+/-- A law on `K ∩ Bad`: fair coins pushed through a measurable digit selector `φ` whose points
+are all badly approximable. -/
+structure Law where
+  φ : (ℕ → Bool) → (ℕ → Bool)
+  meas : Measurable φ
+  bad : ∀ ω, cpt (φ ω) ∈ Bad
+
+/-- **Cassels power saving** for the law `L` in base `b`: for each frequency `h ≠ 0`, the
+second moment of the Weyl sum of `h bᵏ x` is `O(N^{2−δ})`. -/
+def CasselsPower (L : Law) (b : ℕ) : Prop :=
+  ∀ h : ℤ, h ≠ 0 → ∃ C δ : ℝ, 0 < δ ∧ ∀ N : ℕ, 1 ≤ N →
+    ∫ ω, ‖∑ k ∈ Finset.range N, ee (h * (b : ℝ) ^ k * cpt (L.φ ω))‖ ^ 2 ∂coinMeasure ≤
+      C * (N : ℝ) ^ 2 * (N : ℝ) ^ (-δ)
+
+/-- Any power saving is summable along `CantorLiouville.sched`. -/
+theorem summable_sched_rpow {δ : ℝ} (hδ : 0 < δ) :
+    Summable fun j => (sched j : ℝ) ^ (-δ) := by
+  have hB := (tendsto_natCast_atTop_atTop (R := ℝ)).eventually (ev_log_le (r := 1 / 2)
+    (ε := δ / 2) (by norm_num) (by positivity))
+  refine Summable.of_norm_bounded_eventually summable_inv_sq_nat ?_
+  rw [Nat.cofinite_eq_atTop]
+  filter_upwards [hB, eventually_ge_atTop 1] with j hjB hj1
+  have hs : (0 : ℝ) < sched j := by exact_mod_cast one_le_sched j
+  rw [Real.norm_of_nonneg (Real.rpow_nonneg hs.le _), ← exp_neg_two_log j hj1]
+  calc (sched j : ℝ) ^ (-δ) ≤ (Real.exp (Real.sqrt j)) ^ (-δ) :=
+        Real.rpow_le_rpow_of_nonpos (Real.exp_pos _) (exp_sqrt_le_sched j hj1) (by linarith)
+    _ = Real.exp (-(δ * Real.sqrt j)) := by rw [← Real.exp_mul]; ring_nf
+    _ ≤ _ := by
+        apply Real.exp_le_exp.2
+        rw [Real.sqrt_eq_rpow]; nlinarith
+
+/-- **Power saving ⇒ a.e. normal.**  Proved (DEL along `sched`). -/
+theorem ae_isNormal_of_casselsPower (L : Law) {b : ℕ} (hb : 2 ≤ b) (hL : CasselsPower L b) :
+    ∀ᵐ ω ∂coinMeasure, IsNormal b (cpt (L.φ ω)) := by
+  refine ae_isNormal_of_secondMoment coinMeasure hb _ (measurable_cpt.comp L.meas) sched
+    sched_strictMono sched_ratio ?_
+  intro h hh
+  obtain ⟨C, δ, hδ, hC⟩ := hL h hh
+  refine ((summable_sched_rpow hδ).mul_left C).of_nonneg_of_le
+    (fun j => div_nonneg (integral_nonneg fun ω => by positivity) (by positivity))
+    (fun j => ?_)
+  have hN : (0 : ℝ) < sched j := by exact_mod_cast one_le_sched j
+  rw [div_le_iff₀ (by positivity)]
+  calc _ ≤ _ := hC (sched j) (one_le_sched j)
+    _ = _ := by ring
+
+/-- **The reduction.**  Proved: a law on `K ∩ Bad` with a Cassels power saving in every base
+prime to 3 has a point with all three properties. -/
+theorem exists_of_law (L : Law) (hL : ∀ b : ℕ, 2 ≤ b → ¬ 3 ∣ b → CasselsPower L b) :
+    ∃ x : ℝ, x ∈ cantorSet ∧ x ∈ Bad ∧ ∀ b : ℕ, 2 ≤ b → ¬ 3 ∣ b → IsNormal b x := by
+  have hall : ∀ᵐ ω ∂coinMeasure, ∀ b : ℕ, 2 ≤ b → ¬ 3 ∣ b → IsNormal b (cpt (L.φ ω)) := by
+    rw [ae_all_iff]; intro b
+    by_cases hb : 2 ≤ b
+    · by_cases h3 : 3 ∣ b
+      · exact Eventually.of_forall fun _ _ h => absurd h3 h
+      · filter_upwards [ae_isNormal_of_casselsPower L hb (hL b hb h3)] with ω hω _ _ using hω
+    · exact Eventually.of_forall fun _ h => absurd h hb
+  obtain ⟨ω, hω⟩ := hall.exists
+  exact ⟨_, cpt_mem_cantorSet _, L.bad ω, hω⟩
+
+/-! ## The deletion descent
+
+Blocks of `2r` ternary digits (selectors in `{0, 2}`).  At the stage whose prefix `w` has length
+`L = 2rs`, a child `w ++ u` is *alive* when its cylinder avoids every obstacle `B(p/q, 2c/q²)`
+charged to this stage, `3^{L−r} ≤ q² < 3^{L+r}`.  The coin block picks the child; a dead pick is
+replaced by an alive one.  Constants: `r = 5`, `c = 3⁻¹⁵/2` (`descentLaw`). -/
+
+/-- Left endpoint of the ternary cylinder with digit selectors `w`. -/
+noncomputable def cylLeft (w : List Bool) : ℝ :=
+  ∑ i ∈ Finset.range w.length, (if w.getD i false then 2 else 0) / (3 : ℝ) ^ (i + 1)
+
+/-- The closed cylinder of `w`. -/
+def cyl (w : List Bool) : Set ℝ := Set.Icc (cylLeft w) (cylLeft w + 1 / 3 ^ w.length)
+
+/-- The child `w ++ u` avoids every obstacle charged to the stage with prefix `w`. -/
+def Alive (r : ℕ) (c : ℝ) (w u : List Bool) : Prop :=
+  ∀ (p : ℤ) (q : ℕ), 0 < q → (3 : ℝ) ^ w.length ≤ (q : ℝ) ^ 2 * 3 ^ r →
+    (q : ℝ) ^ 2 * 3 ^ r < 3 ^ (w.length + 2 * r) →
+      ∀ y ∈ cyl (w ++ u), 2 * c / (q : ℝ) ^ 2 ≤ |y - p / q|
+
+open Classical in
+/-- The child selector: keep the coin block if alive, else some alive block (if any). -/
+noncomputable def sel (r : ℕ) (c : ℝ) (w u : List Bool) : List Bool :=
+  if Alive r c w u then u else
+    if h : ∃ v : List Bool, v.length = 2 * r ∧ Alive r c w v then h.choose else u
+
+/-- The descent prefix after `s` stages, from coins `ω`. -/
+noncomputable def build (r : ℕ) (c : ℝ) : ℕ → (ℕ → Bool) → List Bool
+  | 0, _ => []
+  | s + 1, ω => build r c s ω ++ sel r c (build r c s ω) (List.ofFn fun i : Fin (2 * r) => ω (2 * r * s + i))
+
+/-- The digit selector of the descent point. -/
+noncomputable def descent (r : ℕ) (c : ℝ) (ω : ℕ → Bool) (i : ℕ) : Bool :=
+  (build r c (i + 1) ω).getD i false
+
+section Meas
+
+local instance : MeasurableSpace (List Bool) := ⊤
+
+local instance : MeasurableSingletonClass (List Bool) := ⟨fun _ => trivial⟩
+
+theorem measurable_build (r : ℕ) (c : ℝ) (s : ℕ) : Measurable (build r c s) := by
+  induction s with
+  | zero => exact measurable_const
+  | succ s ih =>
+    have hb : Measurable fun ω : ℕ → Bool => (fun i : Fin (2 * r) => ω (2 * r * s + i)) :=
+      measurable_pi_lambda _ fun i => measurable_pi_apply _
+    have hg : Measurable fun x : List Bool × (Fin (2 * r) → Bool) =>
+        x.1 ++ sel r c x.1 (List.ofFn x.2) := measurable_of_countable _
+    exact hg.comp (ih.prodMk hb)
+
+theorem measurable_descent (r : ℕ) (c : ℝ) : Measurable (descent r c) := by
+  refine measurable_pi_lambda _ fun i => ?_
+  exact (measurable_from_top (f := fun l : List Bool => l.getD i false)).comp
+    (measurable_build r c (i + 1))
+
+end Meas
+
+/-- The descent constants: `r = 5`, `c = 3⁻¹⁵ / 2`. -/
+noncomputable def c₀ : ℝ := 1 / (2 * 3 ^ 15)
+
+/-- **Leaf (game half): an alive child always exists.**  Believed, confidence 85%.
+
+English proof.  Fix `w`, `L = |w|`.  Charged rationals have `q² < 3^{L+5}`, so distinct ones are
+`3^{−L−5}`-separated; those whose obstacle (radius `2c₀/q² ≤ 3^{−L−10}`) meets the parent
+cylinder (length `3^{−L}`) number at most `3⁵ + 2`.  Children are `2¹⁰` cylinders of length
+`3^{−L−10}`, pairwise separated by gaps at least their length, so each obstacle meets at most 2
+children.  `2(3⁵ + 2) = 490 < 1024`. -/
+theorem exists_alive (w : List Bool) : ∃ u : List Bool, u.length = 2 * 5 ∧ Alive 5 c₀ w u := by
+  sorry
+
+/-- **Leaf: the Cantor point lies in the cylinder of each prefix.**  Confidence 95%: the tail
+`Σ_{i ≥ n} σᵢ · 2 · 3^{−i−1}` lies in `[0, 3^{−n}]`. -/
+theorem cpt_mem_cyl (σ : ℕ → Bool) (n : ℕ) : cpt σ ∈ cyl (List.ofFn fun i : Fin n => σ i) := by
+  sorry
+
+/-- **Leaf: the descent point is badly approximable.**  Confidence 90%.
+
+English proof.  For `p/q`, take the stage `s` with `3^{10s} ≤ q² 3⁵ < 3^{10s+10}`.  By
+`exists_alive` the selected block `u` of stage `s` is alive, and `build (s+1)` is a prefix of
+`descent ω` (`build` only appends), so `cpt_mem_cyl` puts `x` in `cyl (build (s+1) ω)`, whence
+`|x − p/q| ≥ 2c₀/q² > c₀/q²`.  So `x ∈ BA c₀`. -/
+theorem descent_bad (ω : ℕ → Bool) : cpt (descent 5 c₀ ω) ∈ Bad := by
+  sorry
+
+/-- The descent law. -/
+noncomputable def descentLaw : Law := ⟨descent 5 c₀, measurable_descent 5 c₀, descent_bad⟩
+
+/-- **The crux: Cassels' second moment for the descent law.**  Believed, confidence 55%.
+
+The sweep's guard (`docs/OPEN-PROBLEMS-SWEEP-2026-10-04.md` §2.3) applies: a proof that uses
+only that each block's dead fraction is small also proves base-2 normality of a descent
+against `B(a/2ⁿ, 2^{−n−C})`, which is false.  So a proof must use the arithmetic of the
+obstacle centres `p/q`.  Known-false sibling inside the mechanism: `b = 3`
+(`cantor_not_normal_three_pow`). -/
+theorem casselsPower_descent {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) :
+    CasselsPower descentLaw b := by
+  sorry
 
 /-- **A badly approximable point of the middle-third Cantor set, normal to every base prime to 3.**
 
@@ -53,7 +226,7 @@ Known-false siblings the mechanism must fail on:
 Evidence: each pair of the three sets meets, with full-dimensional `K ∩ BAD`; Hochman–Shmerkin
 and Cassels give normality to bases prime to 3 for many non-product measures on `K`. -/
 theorem exists_mem_cantorSet_bad_isNormal_coprime_three :
-    ∃ x : ℝ, x ∈ cantorSet ∧ x ∈ Bad ∧ ∀ b : ℕ, 2 ≤ b → ¬ 3 ∣ b → IsNormal b x := by
-  sorry
+    ∃ x : ℝ, x ∈ cantorSet ∧ x ∈ Bad ∧ ∀ b : ℕ, 2 ≤ b → ¬ 3 ∣ b → IsNormal b x :=
+  exists_of_law descentLaw fun _ hb h3 => casselsPower_descent hb h3
 
 end NormalNumbers.CantorBadNormal

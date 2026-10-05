@@ -109,7 +109,7 @@ def cruxLinks : List CruxLink := [
   ⟨``EntropyProfiles.ae_isNormal_self_base_sq_of_timesP_ergodic, [``cantor_not_normal_three_pow],
    "with x in place of (x + 1)² the claim is false (the Cantor measure is ×3-ergodic and no Cantor \
     point is 3-normal), so the mechanism must use the curvature of the map"⟩,
-  ⟨``CantorBadNormal.exists_mem_cantorSet_bad_isNormal_coprime_three,
+  ⟨``CantorBadNormal.casselsPower_descent,
    [``cantor_not_normal_three_pow, ``schmidt_normal_not_winning],
    "the second moment must use 3 ∤ b (no Cantor point is 3ᵏ-normal), and the normality half \
     must come from the measure, not the deletion game (normality is not potential winning)"⟩,
@@ -203,6 +203,12 @@ def waivers : List Waiver := [
   ⟨``CantorExactExponentStretch.exists_computable_mem_cantorSet_irrExponent_normal_all,
    "assembly: the main file's wiring with ae_not_liouvilleWith_all (the crux) in place of \
     ae_not_liouvilleWith; no mechanism of its own"⟩,
+  ⟨``CantorBadNormal.exists_alive,
+   "a leaf (game half): counting charged obstacles against 2¹⁰ separated children, 490 < 1024"⟩,
+  ⟨``CantorBadNormal.cpt_mem_cyl,
+   "a leaf: the ternary tail lies in [0, 3^{−n}]"⟩,
+  ⟨``CantorBadNormal.descent_bad,
+   "a leaf: wiring of exists_alive and cpt_mem_cyl through the stage window of q"⟩,
   ⟨``FiniteState.isFNormal_delayEnum_of_normal,
    "a leaf: O(1) cost of composing with the delay transducer and its finite-state right inverse"⟩]
 
