@@ -2860,3 +2860,8 @@ Note: Bridge edit forces rebuild of whole-Mathlib importers; parallel `lake buil
 * New: `pulariDPDTQuestion_of_lit_three` (Q-DPDT for `k ≥ 3`) from `cpPrefix_count`.
 * Next: base 2 (`PulariDPDTBaseTwo`) needs a different coder; stretch nodes in
   `FiniteStateSelectionStretch.lean` were out of scope this run (operator: do not touch).
+
+## 2026-10-05 cantorbad lap 1
+Advance: headline reduced (proved) to `casselsPower_descent` + three tractable leaves for a concrete
+deletion descent (`descentLaw`). Next: decompose the crux via the dead-pick correction measure; see
+HANDOFF-2026-10-05-cantorbad-lap1.md.
