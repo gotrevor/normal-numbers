@@ -34,6 +34,9 @@ Hence (`IsProductBlock.liouville_cover`, `sorry`, 95%, English proof in the docs
   `S ⊆ [1, 625]` (`IsProductBlock.base5_card_ge_five`, `sorry`, 93%).  Base-3 control: optimum 2.
   Raising to `B ≤ 1500` (20-min limit): best cover found has 6 (`[298, 312, 537, 574, 588, 621]`),
   proved floor still 5.
+- Allowing `m ≤ 3125` (`B ≤ 600`, 20-min limit) trades size for magnitude: a 4-cover exists
+  (`[1161, 2926, 3094, 3121]`), proved floor 3; at `B ≤ 2000` the best found is 5
+  (`[1646, 2497, 2906, 3043, 3121]`), floor still 3.  So "≥ 5" is a statement about `[1, 625]` only.
 - The filter is necessary, not sufficient: in base 3, 87 pairs `≤ 40` pass it for `B ≤ 3000`,
   and the exact checker accepts only `{2, 11}` and `{4, 22} = 2·{2, 11}` (`image_mul`).
 
@@ -48,7 +51,10 @@ affordable.  A collapse is a proof; a failing assignment is only "no certificate
   small end).  A block has to mix both.
 - Greedy from `{1,2,3,4,8}` (the best small 5-set): failing assignments 1400 → 4611 at
   `+16`; the multiplicative growth per channel is falling (5 → 4 → 3.3) but has not turned.
-  Mixed small+large greedy: see "Status" below.
+  Mixed small+large greedy (`{1,2,3,4,8}` seed, candidates `m ≤ 40` plus the 60 best
+  Liouville-covering `m ≤ 1000`): `+16` 4611, `+9` 12501, `+29` 25418, `+34` 44813 failing.
+  Per-step growth 3.3 → 2.7 → 2.0 → 1.8, still above 1, and it has not yet taken a large
+  multiplier, which the cover bound says it eventually must.
 
 ## Status
 
