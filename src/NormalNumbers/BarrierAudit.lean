@@ -115,7 +115,11 @@ def cruxLinks : List CruxLink := [
    "the count must beat 2^F numerators per denominator in run-entering windows (the trivial \
     count diverges at μ₀ = 3), and must see the depth-b endpoints below the cylinder scale: a \
     measure-level count thickened to 3^{−b} costs 3^{2m−b} ≥ 1 for μ₀ ≤ 3 \
-    (thickening_cost_ge_one), so He–Liao-type equidistribution cannot carry it"⟩]
+    (thickening_cost_ge_one), so He–Liao-type equidistribution cannot carry it"⟩,
+  ⟨``QSpan.qSpanNormal_sqrt_two_sqrt_three, [``liouville_pair_qSpan],
+   "the argument must use something √2, √3 have and the sparse Liouville pair lacks (algebraicity, \
+    bounded partial quotients, …): a pair-universal argument would put a normal number in the \
+    Liouville pair's span"⟩]
 
 /-- Open `sorry`s that are not cruxes, and why no barrier applies. -/
 def waivers : List Waiver := [

@@ -940,6 +940,7 @@ import NormalNumbers.HatFourier
 import NormalNumbers.VisitDeviation
 import NormalNumbers.ComputableNormal
 import NormalNumbers.ComputableReal
+import NormalNumbers.QSpanNormal
 import NormalNumbers.SqrtFloor
 import NormalNumbers.ExplicitSquareNonNormal
 import NormalNumbers.ExplicitOmegaK

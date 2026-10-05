@@ -25,6 +25,7 @@ import NormalNumbers.LinearFormsScales
 import NormalNumbers.EntropyProfiles
 import NormalNumbers.SchmidtGames
 import NormalNumbers.CantorExactExponent
+import NormalNumbers.QSpanNormal
 
 /-!
 # Barrier library: the registry
@@ -291,6 +292,14 @@ def cantorExp_trivialCount_mu_three : Barrier :=
     "Borel–Cantelli with the trivial count (2^F numerators per denominator) in windows that \
      enter a forced run"
 
+/-- A ℚ-independent Liouville-type pair whose ℚ-span holds no normal number. -/
+def liouville_pair_qSpan : Barrier :=
+  .frozen "sparse Liouville pair x, y (1, x, y ℚ-independent): no c₁x + c₂y is normal"
+    @QSpan.exists_pair_qSpan_not_normal
+    [``QSpan.exists_pair_qSpan_not_normal]
+    "pair-universal mechanisms (carry coupling, ℚ-span or Wall-type closure arguments) aimed at \
+     normality of some element of a ℚ-span"
+
 /-- Every registered barrier, for `#barrier_audit`. -/
 def allBarriers : List Lean.Name := [
   ``stoneham_two_not_six, ``cantorLiouville_three_dvd, ``cassels_cantor_ae_normal,
@@ -303,6 +312,7 @@ def allBarriers : List Lean.Name := [
   ``tau_parity_sibling, ``squarefree_powTwo_encoding, ``hypE_logRate,
   ``fermat_lambert_rational, ``driftOne_fails_at_71, ``furstenberg_constAvoid_false,
   ``powersOfTwo_constAvoid, ``cantor_not_normal_three_pow, ``schmidt_normal_not_winning,
-  ``schmidt_fixedC_not_winning, ``bfs_unrestricted_scale_false, ``cantorExp_trivialCount_mu_three]
+  ``schmidt_fixedC_not_winning, ``bfs_unrestricted_scale_false, ``cantorExp_trivialCount_mu_three,
+  ``liouville_pair_qSpan]
 
 end NormalNumbers.Barriers
