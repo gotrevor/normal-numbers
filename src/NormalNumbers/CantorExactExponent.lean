@@ -1506,6 +1506,172 @@ theorem exists_exponent_tests (μ₀ : ℚ) (hμ : threshold < μ₀) :
     have := hj₁ m (le_of_max_le_left hm)
     simpa [le_of_max_le_right hm] using this
 
+section ComputableLeaves
+
+open CantorExpGeneric DecayAeNormal CantorLiouvilleAll
+
+/-- Lower approximation of the point from a coin prefix. -/
+noncomputable def eA (μ₀ : ℚ) (p : List Bool) : ℝ := (tNum (expFree μ₀) p.length p : ℝ) / 3 ^ p.length
+
+/-- Its base-`b` floors. -/
+def eΨ (μ₀ : ℚ) (b m : ℕ) (p : List Bool) : ℕ := tNum (expFree μ₀) p.length p * b ^ m / 3 ^ p.length
+
+/-- Second-moment decay profile. -/
+noncomputable def eW (μ₀ : ℚ) (N : ℕ) : ℝ :=
+  Real.exp (-(Real.log (3 / 2) / 2) * freeCount (expFree μ₀) (Nat.log 3 N / 2)) +
+    ((max N 1 : ℕ) : ℝ) ^ (-(1 / 2 : ℝ))
+
+theorem eΨ_eq (μ₀ : ℚ) (b m : ℕ) (p : List Bool) : eΨ μ₀ b m p = ⌊eA μ₀ p * (b : ℝ) ^ m⌋₊ := by
+  rw [eA, show (tNum (expFree μ₀) p.length p : ℝ) / 3 ^ p.length * (b : ℝ) ^ m =
+    ((tNum (expFree μ₀) p.length p * b ^ m : ℕ) : ℝ) / ((3 ^ p.length : ℕ) : ℝ) by push_cast; ring,
+    Nat.floor_div_eq_div, eΨ]
+
+theorem eA_nonneg (μ₀ : ℚ) (p : List Bool) : 0 ≤ eA μ₀ p := by unfold eA; positivity
+
+theorem eW_nonneg (μ₀ : ℚ) (N : ℕ) : 0 ≤ eW μ₀ N := by unfold eW; positivity
+
+theorem eW_antitone (μ₀ : ℚ) : Antitone (eW μ₀) := by
+  intro m n hmn
+  unfold eW
+  have hF : freeCount (expFree μ₀) (Nat.log 3 m / 2) ≤ freeCount (expFree μ₀) (Nat.log 3 n / 2) := by
+    unfold freeCount
+    exact Finset.card_le_card (Finset.filter_subset_filter _ (Finset.range_mono
+      (Nat.div_le_div_right (Nat.log_mono_right hmn))))
+  have hl : 0 < Real.log (3 / 2) := Real.log_pos (by norm_num)
+  have hFR : (freeCount (expFree μ₀) (Nat.log 3 m / 2) : ℝ) ≤ freeCount (expFree μ₀) (Nat.log 3 n / 2) := by
+    exact_mod_cast hF
+  gcongr ?_ + ?_
+  · exact Real.exp_le_exp.2 (by nlinarith)
+  · apply Real.rpow_le_rpow_of_nonpos (by positivity) _ (by norm_num)
+    exact_mod_cast max_le_max hmn le_rfl
+
+theorem eA_bounds (μ₀ : ℚ) (ω : ℕ → Bool) (D : ℕ) :
+    eA μ₀ (pre ω D) ≤ cantorExpReal μ₀ ω ∧
+      cantorExpReal μ₀ ω ≤ eA μ₀ (pre ω D) + (1 / 2 : ℝ) ^ D := by
+  have hA : eA μ₀ (pre ω D) = (hd (expFree μ₀) ω D : ℝ) / 3 ^ D := by
+    rw [eA, length_pre, tNum_pre]
+  rw [hA, cantorExpReal, pt_split (expFree μ₀) ω D]
+  have h0 := tl_nonneg (expFree μ₀) ω D
+  have h1 := tl_le (expFree μ₀) ω D
+  have h32 : 1 / (3 : ℝ) ^ D ≤ (1 / 2 : ℝ) ^ D := by
+    rw [one_div_pow]; exact one_div_le_one_div_of_le (by positivity)
+      (pow_le_pow_left₀ (by norm_num) (by norm_num) D)
+  constructor <;> linarith
+
+theorem primrec_eΨ (μ₀ : ℚ) : Primrec fun x : ℕ × ℕ × List Bool => eΨ μ₀ x.1 x.2.1 x.2.2 := by
+  have hp : Primrec fun x : ℕ × ℕ × List Bool => x.2.2 := Primrec.snd.comp Primrec.snd
+  exact Primrec.nat_div.comp (Primrec.nat_mul.comp
+    ((primrec_tNum (primrec_expFree μ₀)).comp (Primrec.list_length.comp hp) hp)
+    (ComputableNormal.primrec_pow.comp Primrec.fst (Primrec.fst.comp Primrec.snd)))
+    (ComputableNormal.primrec_pow.comp (Primrec.const 3) (Primrec.list_length.comp hp))
+
+theorem e_secondMoment_b (μ₀ : ℚ) {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) (h : ℤ) (hh : h ≠ 0) (N : ℕ)
+    (hN : 1 ≤ N) :
+    ∫ ω, ‖∑ k ∈ Finset.range N, ee (h * (b : ℝ) ^ k * cantorExpReal μ₀ ω)‖ ^ 2 ∂coins ≤
+      ((16 * b ^ 6 : ℕ) : ℝ) * |(h : ℝ)| * N ^ 2 * eW μ₀ N := by
+  have hW : eW μ₀ N = Real.exp (-(Real.log (3 / 2) / 2) * freeCount (expFree μ₀) (Nat.log 3 N / 2)) +
+      (N : ℝ) ^ (-(1 / 2 : ℝ)) := by
+    rw [eW, max_eq_left hN]
+  rw [hW]
+  refine (secondMoment_le_b (expFree μ₀) hb h3 h hh N hN).trans (le_of_eq ?_)
+  push_cast; ring
+
+theorem e_ev (μ₀ : ℚ) (hμ : 1 < μ₀) : ∀ᶠ j in atTop, 8 ≤ clNr j ∧ clNr j ≤ clNs j ∧
+    (clNr j : ℝ) ^ 6 * eW μ₀ (clNs j) ≤ 1 / ((j : ℝ) + 1) ^ 4 := by
+  set c : ℝ := Real.log (3 / 2) / 2 with hcdef
+  have hc : 0 < c := by have := Real.log_pos (by norm_num : (1:ℝ) < 3 / 2); positivity
+  have hc1 : c ≤ 1 := by
+    have := Real.log_le_sub_one_of_pos (by norm_num : (0:ℝ) < 3 / 2); rw [hcdef]; linarith
+  have hNs1 : ∀ j, 1 ≤ clNs j := fun j => by
+    have := exp_sqrt_le_clNs j
+    have h1 : (1 : ℝ) ≤ clNs j := (Real.one_le_exp (Real.sqrt_nonneg _)).trans this
+    exact_mod_cast h1
+  have hMev : ∀ᶠ j : ℕ in atTop, Real.sqrt j / 4 ≤ ((Nat.log 3 (clNs j) / 2 : ℕ) : ℝ) := by
+    filter_upwards [eventually_ge_atTop 100] with j hj
+    exact M_ge j _ hj (hNs1 j) (exp_sqrt_le_clNs j)
+  have hMt : Tendsto (fun j : ℕ => ((Nat.log 3 (clNs j) / 2 : ℕ) : ℝ)) atTop atTop := by
+    refine tendsto_atTop_mono' atTop hMev ?_
+    exact (Real.tendsto_sqrt_atTop.comp tendsto_natCast_atTop_atTop).atTop_div_const (by norm_num)
+  have hA := ev_sqrt_le_freeCount_exp μ₀ hμ
+  have hA' := hMt.eventually hA
+  have hB := (tendsto_natCast_atTop_atTop (R := ℝ)).eventually (ev_log_le (r := 1 / 4) (ε := c / 84)
+    (by norm_num) (by positivity))
+  filter_upwards [hA', hB, hMev, eventually_ge_atTop 100] with j hjA hjB hjM hj100
+  set s := Nat.sqrt j
+  set M := Nat.log 3 (clNs j) / 2
+  set F := freeCount (expFree μ₀) M
+  set q : ℝ := (j : ℝ) ^ (1 / 4 : ℝ)
+  have hjR : (100 : ℝ) ≤ j := by exact_mod_cast hj100
+  have hj0 : (0 : ℝ) ≤ j := by positivity
+  have hs1 : s * s ≤ j := Nat.sqrt_le j
+  have hs4 : 4 ≤ s := Nat.le_sqrt.2 (by omega)
+  have hsj : s ≤ j := by nlinarith
+  refine ⟨by unfold clNr; omega, ?_, ?_⟩
+  · unfold clNr clNs
+    have : s + 1 ≤ 4 ^ s := Nat.lt_pow_self (n := s) (by norm_num : 1 < 4)
+    nlinarith
+  -- free-count bound
+  have hF : Real.sqrt M / 2 ≤ F := hjA M rfl
+  have hsqM : q / 2 ≤ Real.sqrt M := by
+    have := Real.sqrt_le_sqrt hjM
+    rw [Real.sqrt_div' _ (by norm_num), show Real.sqrt 4 = 2 by
+      rw [show (4:ℝ) = 2 ^ 2 by norm_num, Real.sqrt_sq (by norm_num)], sqrt_sqrt_eq _ hj0] at this
+    exact this
+  set E := Real.exp (-(c * q / 4)) with hE
+  have hE1 : Real.exp (-(Real.log (3 / 2) / 2) * F) ≤ E := by
+    apply Real.exp_le_exp.2
+    have : c * (q / 4) ≤ c * F := mul_le_mul_of_nonneg_left (by linarith) hc.le
+    rw [← hcdef]; linarith
+  have hq : q ≤ Real.sqrt j := by
+    rw [Real.sqrt_eq_rpow]
+    exact Real.rpow_le_rpow_of_exponent_le (by linarith) (by norm_num)
+  have hq0 : 0 ≤ q := by positivity
+  have hE2 : ((max (clNs j) 1 : ℕ) : ℝ) ^ (-(1 / 2 : ℝ)) ≤ E := by
+    rw [max_eq_left (hNs1 j)]
+    calc ((clNs j : ℕ) : ℝ) ^ (-(1 / 2 : ℝ)) ≤ (Real.exp (Real.sqrt j)) ^ (-(1 / 2 : ℝ)) :=
+          Real.rpow_le_rpow_of_nonpos (Real.exp_pos _) (exp_sqrt_le_clNs j) (by norm_num)
+      _ = Real.exp (-(Real.sqrt j / 2)) := by rw [← Real.exp_mul]; ring_nf
+      _ ≤ E := by
+          apply Real.exp_le_exp.2
+          have : c * q ≤ 1 * Real.sqrt j := mul_le_mul hc1 hq hq0 (by norm_num)
+          linarith
+  have hW : eW μ₀ (clNs j) ≤ 2 * E := by unfold eW; linarith
+  -- polynomial vs E
+  have hlogj : 21 * Real.log j ≤ c * q / 4 := by
+    have := hjB
+    linarith
+  have hpow : (j : ℝ) ^ 21 ≤ Real.exp (c * q / 4) := by
+    rw [← Real.exp_log (by positivity : (0:ℝ) < (j : ℝ) ^ 21), Real.log_pow]
+    exact Real.exp_le_exp.2 (by push_cast; linarith)
+  have hEm : E * Real.exp (c * q / 4) = 1 := by rw [hE, ← Real.exp_add]; simp
+  have h2j : (2 : ℝ) * (2 * j) ^ 10 ≤ (j : ℝ) ^ 21 := by
+    have : (2 : ℝ) ^ 11 ≤ (j : ℝ) ^ 11 := pow_le_pow_left₀ (by norm_num) (by linarith) 11
+    calc (2 : ℝ) * (2 * j) ^ 10 = 2 ^ 11 * (j : ℝ) ^ 10 := by ring
+      _ ≤ (j : ℝ) ^ 11 * (j : ℝ) ^ 10 := by gcongr
+      _ = _ := by ring
+  have hE0 : 0 ≤ E := (Real.exp_pos _).le
+  have hkey : (2 : ℝ) * (2 * j) ^ 10 * E ≤ 1 := by
+    calc (2 : ℝ) * (2 * j) ^ 10 * E ≤ Real.exp (c * q / 4) * E :=
+          mul_le_mul_of_nonneg_right (h2j.trans hpow) hE0
+      _ = 1 := by rw [mul_comm]; exact hEm
+  have hnr : (clNr j : ℝ) ≤ 2 * j := by
+    unfold clNr; push_cast
+    have : (s : ℝ) ≤ j := by exact_mod_cast hsj
+    linarith
+  have hj1 : (j : ℝ) + 1 ≤ 2 * j := by linarith
+  have hJ0 : (0 : ℝ) < (j : ℝ) + 1 := by positivity
+  rw [le_div_iff₀ (by positivity)]
+  calc (clNr j : ℝ) ^ 6 * eW μ₀ (clNs j) * ((j : ℝ) + 1) ^ 4
+      ≤ (2 * j) ^ 6 * (2 * E) * (2 * j) ^ 4 := by
+        gcongr
+        exact eW_nonneg μ₀ _
+    _ = 2 * (2 * j) ^ 10 * E := by ring
+    _ ≤ 1 := hkey
+
+
+
+end ComputableLeaves
+
 /-- **Family derandomization for the exponent schedule.**  Confidence 85%.
 
 English proof.  `CantorLiouvilleAll.exists_computable_normal_sched_family` with the
@@ -1519,7 +1685,15 @@ theorem exists_computable_normal_avoid (μ₀ : ℚ) (hμ : 1 < μ₀)
     ∃ e : ℕ → Bool, Computable e ∧
       (∀ b : ℕ, 2 ≤ b → ¬ 3 ∣ b → IsNormal b (cantorExpReal μ₀ e)) ∧
       ∃ j₁, ∀ j, j₁ ≤ j → bad' j (pre e (d' j)) = false := by
-  sorry
+  open CantorLiouvilleAll in
+  obtain ⟨e, hce, hn, j₁, hj⟩ := exists_computable_normal_sched_family (eΨ μ₀) (primrec_eΨ μ₀)
+    (eA μ₀) (eΨ_eq μ₀) (eA_nonneg μ₀) (cantorExpReal μ₀) (measurable_pt (expFree μ₀)) (eA_bounds μ₀)
+    (fun b => ¬ 3 ∣ b) primrec_notThreeDvd (fun b => 16 * b ^ 6) primrec_kappa
+    (eW μ₀) (eW_nonneg μ₀) (eW_antitone μ₀)
+    (fun b hb h3 h hh N hN => e_secondMoment_b μ₀ hb h3 h hh N hN)
+    clNs clNr primrec_clNs primrec_clNr tendsto_clNs clNs_ratio tendsto_clNr (e_ev μ₀ hμ) bad'
+    hbad' d' hd' hmass
+  exact ⟨e, hce, fun b hb h3 => hn b hb h3, j₁, hj⟩
 
 /-- **Headline.**  For every rational `μ₀ > 2 + log₂ 3 ≈ 3.585` there is a computable coin
 sequence `e` such that `x = cantorExpReal μ₀ e` lies in the middle-third Cantor set, has
