@@ -203,14 +203,79 @@ theorem cpt_mem_cyl (σ : ℕ → Bool) (n : ℕ) : cpt σ ∈ cyl (List.ofFn fu
   unfold cyl; rw [List.length_ofFn]
   exact ⟨by linarith, by linarith⟩
 
-/-- **Leaf: the descent point is badly approximable.**  Confidence 90%.
+
+theorem length_sel {r : ℕ} {c : ℝ} {w u : List Bool} (hu : u.length = 2 * r) :
+    (sel r c w u).length = 2 * r := by
+  unfold sel; split_ifs with h1 h2
+  · exact hu
+  · exact h2.choose_spec.1
+  · exact hu
+
+theorem length_build (r : ℕ) (c : ℝ) (ω : ℕ → Bool) (s : ℕ) :
+    (build r c s ω).length = 2 * r * s := by
+  induction s with
+  | zero => rfl
+  | succ s ih => simp [build, ih, length_sel, List.length_ofFn]; ring
+
+theorem build_prefix (r : ℕ) (c : ℝ) (ω : ℕ → Bool) {s t : ℕ} (h : s ≤ t) :
+    build r c s ω <+: build r c t ω := by
+  induction h with
+  | refl => exact List.prefix_refl _
+  | step _ ih => exact ih.trans (List.prefix_append _ _)
+
+theorem getD_build (r : ℕ) (hr : 0 < r) (c : ℝ) (ω : ℕ → Bool) {s i : ℕ} (hi : i < 2 * r * s) :
+    descent r c ω i = (build r c s ω).getD i false := by
+  unfold descent
+  have key : ∀ {a b : ℕ}, a ≤ b → i < 2 * r * a →
+      (build r c a ω).getD i false = (build r c b ω).getD i false := by
+    intro a b hab hia
+    obtain ⟨l, hl⟩ := build_prefix r c ω hab
+    rw [← hl, List.getD_append _ _ _ _ (by rw [length_build]; exact hia)]
+  have h1 : i < 2 * r * (i + 1) := by nlinarith
+  rw [key (le_max_left (i+1) s) h1, key (le_max_right (i+1) s) hi]
+
+theorem ofFn_descent (r : ℕ) (hr : 0 < r) (c : ℝ) (ω : ℕ → Bool) (s : ℕ) :
+    (List.ofFn fun i : Fin (2 * r * s) => descent r c ω i) = build r c s ω := by
+  apply List.ext_getElem
+  · simp [length_build]
+  · intro i h1 h2
+    simp only [List.getElem_ofFn]
+    rw [getD_build r hr c ω (by simpa using h1), List.getD_eq_getElem _ _ h2]
+
+theorem sel_alive (w u : List Bool) : Alive 5 c₀ w (sel 5 c₀ w u) := by
+  unfold sel; split_ifs with h1 h2
+  · exact h1
+  · exact h2.choose_spec.2
+  · exact absurd (exists_alive w) h2
+
+/-- **The descent point is badly approximable** (given `exists_alive`).  Proved.
 
 English proof.  For `p/q`, take the stage `s` with `3^{10s} ≤ q² 3⁵ < 3^{10s+10}`.  By
 `exists_alive` the selected block `u` of stage `s` is alive, and `build (s+1)` is a prefix of
 `descent ω` (`build` only appends), so `cpt_mem_cyl` puts `x` in `cyl (build (s+1) ω)`, whence
 `|x − p/q| ≥ 2c₀/q² > c₀/q²`.  So `x ∈ BA c₀`. -/
 theorem descent_bad (ω : ℕ → Bool) : cpt (descent 5 c₀ ω) ∈ Bad := by
-  sorry
+  have hc : (0 : ℝ) < c₀ := by unfold c₀; positivity
+  refine Set.mem_iUnion.2 ⟨c₀, Set.mem_iUnion.2 ⟨hc, ?_⟩⟩
+  intro p q hq
+  set s := Nat.log 3 (q ^ 2 * 3 ^ 5) / 10
+  have hne : q ^ 2 * 3 ^ 5 ≠ 0 := by positivity
+  have hlo : 3 ^ (10 * s) ≤ q ^ 2 * 3 ^ 5 :=
+    le_trans (Nat.pow_le_pow_right (by norm_num) (Nat.mul_div_le _ _)) (Nat.pow_log_le_self 3 hne)
+  have hhi : q ^ 2 * 3 ^ 5 < 3 ^ (10 * s + 10) :=
+    lt_of_lt_of_le (Nat.lt_pow_succ_log_self (by norm_num) _)
+      (Nat.pow_le_pow_right (by norm_num) (by omega))
+  have hmem := cpt_mem_cyl (descent 5 c₀ ω) (2 * 5 * (s + 1))
+  rw [ofFn_descent 5 (by norm_num)] at hmem
+  have hal := sel_alive (build 5 c₀ s ω)
+    (List.ofFn fun i : Fin (2 * 5) => ω (2 * 5 * s + i))
+  have hlen := length_build 5 c₀ ω s
+  have := hal p q hq (by rw [hlen]; exact_mod_cast (by simpa [mul_comm] using hlo))
+    (by rw [hlen]; exact_mod_cast (by simpa [mul_comm] using hhi)) _ hmem
+  have hq2 : (0 : ℝ) < (q : ℝ) ^ 2 := by positivity
+  have : c₀ / (q : ℝ) ^ 2 < 2 * c₀ / (q : ℝ) ^ 2 := by
+    rw [div_lt_div_iff_of_pos_right hq2]; linarith
+  linarith
 
 /-- The descent law. -/
 noncomputable def descentLaw : Law := ⟨descent 5 c₀, measurable_descent 5 c₀, descent_bad⟩
