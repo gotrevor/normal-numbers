@@ -3079,3 +3079,7 @@ Next: (1) prove the reduction (needs pair-averaged partial Cantor products, Cass
   bᵐ folded mod 3^ℓ−1); constant in m for b = 3.  ~2^ℓ members against ~4^ℓ obstacles: lower order.
   Next: state `ObstaclePairCorrelation` as a Lean node over `Alive`'s rationals; prove the periodic-family
   facts (obstacle membership, Riesz factorization, b = 3 coherence) as theorems.
+* (lap 8) PROVED `perNum`, `riesz`, `periodic_phase_sum` (periodic-family phase sum = Riesz product),
+  `ee_add_int`, `riesz_three_shift` (invariant under x ↦ 3x at x = a/(3^ℓ−1): base-3 coherence).
+  Still to prove: `perNum d/(3^ℓ−1) ∈ cantorSet` and that it is an obstacle for the stages with
+  `3^{L−5} ≤ (3^ℓ−1)² < 3^{L+5}`.  Then state `ObstaclePairCorrelation`.

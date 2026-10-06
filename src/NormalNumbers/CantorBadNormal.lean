@@ -4540,6 +4540,71 @@ theorem condMean_cExt_telescope (s : ℕ) (w : List Bool) (k : ℕ) :
     rw [Finset.sum_congr rfl e, show s + (k + 1) - 1 - 0 = s + k by omega]
     ring
 
+/-! ### The periodic obstacles: a Riesz-product sub-family
+
+The periodic points `P/(3^ℓ−1)` of `K` (digits of `P` in `{0,2}`) lie on `K`, so they are
+obstacles at every stage whose denominator range contains `3^ℓ − 1`.  Their phase sum at a
+frequency `ξ` is a Riesz product (`periodic_phase_sum`), and for `ξ = h·3ᵐ` it does not depend on
+`m` (`riesz_three_shift`): the obstacle phases of this family are coherent in base 3, consistent
+with `not_casselsRate_three`.  The family has about `2^ℓ` members against about `4^ℓ` obstacles
+at that scale, so it is lower order in the crux. -/
+
+/-- The integer with ternary digits `2·d i` (`i < ℓ`, least significant first). -/
+def perNum {ℓ : ℕ} (d : Fin ℓ → Bool) : ℕ := ∑ i : Fin ℓ, (if d i then 2 else 0) * 3 ^ (i : ℕ)
+
+/-- The Riesz product `∏_{i<ℓ} (1 + e(2x3^i))`. -/
+noncomputable def riesz (ℓ : ℕ) (x : ℝ) : ℂ := ∏ i ∈ Finset.range ℓ, (1 + ee (2 * x * 3 ^ i))
+
+/-- **The periodic phase sum is a Riesz product.** -/
+theorem periodic_phase_sum (ℓ : ℕ) (x : ℝ) :
+    ∑ d : Fin ℓ → Bool, ee (x * perNum d) = riesz ℓ x := by
+  unfold riesz perNum
+  rw [← Fin.prod_univ_eq_prod_range (fun i => 1 + ee (2 * x * 3 ^ i))]
+  have : ∀ d : Fin ℓ → Bool, ee (x * ((∑ i : Fin ℓ, (if d i then 2 else 0) * 3 ^ (i : ℕ) : ℕ) : ℝ)) =
+      ∏ i : Fin ℓ, (if d i then ee (2 * x * 3 ^ (i : ℕ)) else 1) := by
+    intro d
+    push_cast
+    rw [Finset.mul_sum]
+    induction (Finset.univ : Finset (Fin ℓ)) using Finset.induction_on with
+    | empty => simp [ee]
+    | insert a s ha ih =>
+      rw [Finset.sum_insert ha, Finset.prod_insert ha, ee_add, ih]
+      congr 1
+      split_ifs <;> simp [ee] <;> ring_nf
+  simp_rw [this]
+  rw [← Fintype.prod_sum (fun (i : Fin ℓ) (c : Bool) => if c then ee (2 * x * 3 ^ (i : ℕ)) else 1)]
+  refine Finset.prod_congr rfl fun i _ => ?_
+  simp [add_comm]
+
+theorem ee_add_int (x : ℝ) (k : ℤ) : ee (x + k) = ee x := by
+  rw [ee_add]
+  have : ee (k : ℝ) = 1 := by
+    have := ee_int_mul_fract k 1
+    simpa [ee] using this.symm
+  rw [this, mul_one]
+
+/-- **Base-3 coherence of the periodic family**: at `x = a/(3^ℓ−1)` the Riesz product is invariant
+under `x ↦ 3x`, so at the frequencies `h·3ᵐ` it does not decay in `m`. -/
+theorem riesz_three_shift (ℓ : ℕ) (a : ℤ) :
+    riesz ℓ (3 * (a / (3 ^ ℓ - 1))) = riesz ℓ (a / (3 ^ ℓ - 1)) := by
+  rcases Nat.eq_zero_or_pos ℓ with rfl | hℓ
+  · simp [riesz]
+  set x : ℝ := a / (3 ^ ℓ - 1)
+  have hd : (3 : ℝ) ^ ℓ - 1 ≠ 0 := by
+    have : (3 : ℝ) ≤ 3 ^ ℓ := by simpa using pow_le_pow_right₀ (by norm_num : (1 : ℝ) ≤ 3) hℓ
+    linarith
+  have hx : 2 * x * 3 ^ ℓ = 2 * x + ((2 * a : ℤ) : ℝ) := by
+    have : x * (3 ^ ℓ - 1) = a := by unfold x; field_simp
+    push_cast; linear_combination 2 * this
+  unfold riesz
+  obtain ⟨k, rfl⟩ : ∃ k, ℓ = k + 1 := ⟨ℓ - 1, by omega⟩
+  rw [Finset.prod_range_succ, Finset.prod_range_succ']
+  have e1 : ∀ i ∈ Finset.range k, (1 + ee (2 * (3 * x) * 3 ^ i)) = (1 + ee (2 * x * 3 ^ (i + 1))) :=
+    fun i _ => by congr 2; ring
+  rw [Finset.prod_congr rfl e1, show 2 * (3 * x) * 3 ^ k = 2 * x * 3 ^ (k + 1) by ring, hx,
+    ee_add_int]
+  simp
+
 /-- **The crux, near-scale obstacle-phase form** (open; believed 50%).  `resLaw` satisfies
 `NearObstaclePhaseMixing` in every base `b ≥ 2` prime to 3.  A proof must use `3 ∤ b` and the
 uniformity of the resampled blocks between `s_n` and `t` (the conditional law of `w_t` given
