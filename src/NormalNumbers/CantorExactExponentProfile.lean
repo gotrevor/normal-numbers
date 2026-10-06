@@ -2496,6 +2496,25 @@ theorem exists_computable_normalProfile_of_baker (hB : Literature.BakerLogDiscre
   · by_contra hP
     exact not_isNormal_of_not_profileOK μ₀ h1 e hb hP hN
 
+/-- **Sub-exponential two-logarithm bound (Gelfond-type).**  For `t ≥ 2` prime to 3, eventually
+`|k log t − j log 3| ≥ exp(−k^{2/5})` for all `j`.  Much weaker than Baker–Wüstholz; Gelfond
+(1935) proved bounds of this strength for two logarithms. -/
+def GelfondTwoLog : Prop :=
+  ∀ t : ℕ, 2 ≤ t → ¬ 3 ∣ t → ∃ k₀ : ℕ, ∀ k : ℕ, k₀ ≤ k → ∀ j : ℕ,
+    Real.exp (-((k : ℝ) ^ (2 / 5 : ℝ))) ≤ |(k : ℝ) * Real.log t - j * Real.log 3|
+
+/-- **A Gelfond-strength input suffices** (lap 2's analysis, 2026-10-06).  Confidence 55%.
+
+English proof (sketch).  The power saving of `Literature.BakerLogDiscrepancyEff` is used only
+on the top window of each run shadow.  A Davenport–Erdős–LeVeque sum over the shadows
+(`log a_k ≍ k log k`) converges as soon as the top-window saving is
+`exp(−o(log a_k))`-uniform, which a sub-exponential two-log bound gives through Erdős–Turán with
+`H = exp((log N)^{1/2})`.  The purely elementary rate (from `tᵏ ≠ 3ʲ` alone) gives only
+`(log N)^{−log₃(3/2)}`, and that diverges on the shadows.  Not checked in Lean. -/
+theorem ae_isNormal_of_profileOK_of_gelfond (hG : GelfondTwoLog) (μ₀ : ℚ) (hμ : 2 < μ₀) :
+    ∀ᵐ ω ∂coins, ∀ b : ℕ, 2 ≤ b → ProfileOK μ₀ b → IsNormal b (cantorExpReal μ₀ ω) := by
+  sorry
+
 /-- **Headline: the exponent sets the normal profile.**  For every rational `μ₀ > 2` there is a
 computable `x ∈ K` with irrationality exponent exactly `μ₀` such that, for every base `b ≥ 2`,
 `x` is normal to `b` iff `b = 3ˢt` with `t > 3^{s(μ₀−1)}`.  Confidence 65% (the node above, plus

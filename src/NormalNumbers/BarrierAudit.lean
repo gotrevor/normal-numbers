@@ -243,7 +243,11 @@ def waivers : List Waiver := [
    "open node; the elementary orbit port is blocked in the run shadow (Maze row 'elementary orbit \
     port to 3 | b'); live route via the Baker discrepancy input"⟩,
   ⟨``CantorExactExponentProfile.exists_computable_mem_cantorSet_irrExponent_normalProfile,
-   "wiring: the two profile lemmas plus the stretch derandomizer with the 3 ∣ b tests added"⟩,
+   "the unconditional form of exists_computable_normalProfile_of_baker (proved); open only for \
+    the cited Baker–Wüstholz + Erdős–Turán input Literature.BakerLogDiscrepancyEff"⟩,
+  ⟨``CantorExactExponentProfile.ae_isNormal_of_profileOK_of_gelfond,
+   "believed implication (55%): a Gelfond-strength two-log bound suffices for the run shadows; \
+    the elementary t^k ≠ 3^j rate does not"⟩,
   ⟨``FiniteState.isFNormal_delayEnum_of_normal,
    "a leaf: O(1) cost of composing with the delay transducer and its finite-state right inverse"⟩]
 
