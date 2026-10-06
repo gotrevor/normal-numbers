@@ -5161,7 +5161,15 @@ theorem stageOf_gap {b : ℕ} (hb : 2 ≤ b) (C : ℕ) {n m : ℕ} (hnm : n ≤ 
 /-- **Off-diagonal node.**  Believed 45% for `3 ∤ b`.  The `resLaw`-averaged same-cylinder obstacle
 pair sums `E‖obstOff‖` have near-scale root sum `O(N² W(N))`.  This is the irreducible core of the
 first-order crux: a pair correlation of the obstacle phases `e(hbᵐ(p/q − p'/q'))` over pairs in one
-coarse cylinder, under `resLaw`.  Must fail for `b = 3` (`riesz_three_shift`). -/
+coarse cylinder, under `resLaw`.
+
+Base 3.  The first-order probe (`scripts/cantorbad_deadmix.py first`, `t = 12`, 200 × 400, lags
+1–5) gives `R = .067 → .056` for b = 2, `.069 → .057` for b = 5, and `.066 → .059` for b = 3, all
+near the floor `.05`.  So the cylinder-level first-order cancellation shows no base-3 coherence, and
+this node is not expected to fail for `b = 3`.  The base-3 failure of the headline lives in the
+Cantor main term (`cesaro_contChar_small` uses `3 ∤ b`; `not_casselsRate_three`), not here.  A proof
+of this node therefore need not use `3 ∤ b`.  The Riesz sub-family (`riesz_three_shift`) is coherent
+along `h·3ᵐ` but has about `2^ℓ` of the `4^ℓ` obstacles, so it is lower order. -/
 def ResLawObstOff (b : ℕ) : Prop :=
   ∀ h : ℤ, h ≠ 0 → ∀ C : ℕ, ∃ (K : ℝ) (W : ℕ → ℝ), Summable (fun j => W (sched j)) ∧
     ∀ N : ℕ, 1 ≤ N →
