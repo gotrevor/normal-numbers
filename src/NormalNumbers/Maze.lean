@@ -1425,7 +1425,27 @@ def register : List Hall := [
    "Transfer He-Liao 2602.01307 Cor. 6.5 (local equidistribution of rationals against Cantor-measure cylinders) to the forced-run measure, to push the exact-exponent triple below mu0 = 2 + log2 3",
    .wall, .cited,
    "The transfer to branches is fine, but the trivial count only fails in run-entering windows, where the event concerns the discrete endpoint P/3^b below the cylinder scale (endpoint_sep); thickening to 3^-b costs 3^(2m-b) >= 1 for mu0 <= 3 (thickening_cost_ge_one), and Cor. 6.5's main term needs alpha >= tau - 2 > 1 there while its alpha - 1 is small and non-explicit. A Bugeaud-Durand-strength measure count would reach at best mu0 > 3. REOPEN IF: EndpointRationalCount",
-   "CantorExactExponentStretch.lean: endpoint_sep, thickening_cost_ge_one, Literature.HeLiao2026Cor65, EndpointRationalCount; CantorExactExponent.bcTerm_red_mu_three; docs/CANTOR-EXACT-EXPONENT-AUDIT-2026-10-04.md", "2026-10-05"⟩
+   "CantorExactExponentStretch.lean: endpoint_sep, thickening_cost_ge_one, Literature.HeLiao2026Cor65, EndpointRationalCount; CantorExactExponent.bcTerm_red_mu_three; docs/CANTOR-EXACT-EXPONENT-AUDIT-2026-10-04.md", "2026-10-05"⟩,
+  ⟨"Independence-relative product blocks",
+   "Use independence-relative certificates (fail only on rational lines) to get a small two-track all-digits block: for every Q-independent pair, some combination aX + bY with small (a, b) has every ternary digit i.o., beating the single-track {2, 11}",
+   .refuted, .frozen,
+   "Every small direction set has an avoided-digit assignment whose live automaton keeps a component not certified degenerate. Product-block counterexamples vary X and Y separately (two-dimensional); a relative certificate only discards one-dimensional failure loci, so the gain is confined to tightly coupled single-word families like ternary_line. Binary 2-word blocks (|coef| <= 3, up to 3 directions) also all fail. REOPEN IF: a complete degeneracy test, or larger coefficients",
+   "IndependenceRelative.lean: not_isRelativeBlock_small (sorry, 65%), IsRelativeBlock, ternary_line; experiments/independence_relative.py blocksearch", "2026-10-05"⟩,
+  ⟨"Effective dimension as the currency for one-of statements",
+   "Measure digit complexity by effective (Kolmogorov) dimension, which is invariant under every computable map (x ^ y, exp, powers), to get one-of theorems through nonlinear transformations",
+   .vacuous, .cited,
+   "Every computable real has effective dimension 0 (the constant map to it is computable), so pi, e, sqrt 2 and phi are all simple in that currency and no one-of statement about them can hold. The currency must be one the constant cannot be built in: finite-state dimension, which respects only finite-state maps",
+   "ConjugateEntropy.lean: invariant_vanishes_of_const_mem", "2026-10-05"⟩,
+  ⟨"Entropy budget through squaring",
+   "Carry the finite-state entropy budget through x |-> x^k, to get one-of statements from polynomial relations such as (x+y)^2 or Galois power sums used multiplicatively",
+   .refuted, .frozen,
+   "Squaring is not finite-state and moves entropy both ways: Manai's deterministic X has X^2 normal, so no inequality links h(x) and h(x^2). Powers enter only linearly, through the integer power sums of a Galois orbit (ConjugateDet)",
+   "DeterministicBD.lean: detSqNotDet_of_manai, Literature.Manai2026.Cor14; ConjugateDet.lean: not_exactly_one_nondet", "2026-10-05"⟩,
+  ⟨"Diophantine input to a carry-automaton certificate",
+   "Upgrade a non-collapsing carry-automaton family to a theorem about specific constants using their irrationality measures (Roth for algebraics, known bounds for pi, e, ln 2)",
+   .refuted, .frozen,
+   "The escape set of an automaton family is omega-regular: either all rational, or it holds two distinct cycles and so a self-similar Cantor set, which contains exponent-2 irrationals. Simplest witness: the escape set of 'X avoids ternary 1' is the middle-thirds Cantor set, which has an exponent-2 point. The only fact about specific constants an automaton can use is a rational linear relation (independence-relative certificates)",
+   "CantorExactExponentStretch.lean: exists_mem_cantorSet_irrExponent_two_of_literature (Literature.Weiss2001); IndependenceRelative.lean: ternary_line", "2026-10-05"⟩
 ]
 
 /-- Rows whose verdict is machine-checked in this build. -/
