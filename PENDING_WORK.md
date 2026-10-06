@@ -2969,3 +2969,7 @@ Next: (1) prove the reduction (needs pair-averaged partial Cantor products, Cass
   length (Khintchine-on-fractals heuristic), which costs ≈ e^{c} per digit and caps ε at ≈ √c, so it does
   not reach normality.  Same floor as DeadRateDecay.  The only way through is decorrelation under μ_K of
   "good rational approximation p/q, q≈Q" from the base-b sums up to 2·log_b Q (joint CF / ×b mixing, open).
+- Low stages DISCHARGED: `cassels_tail` (Cassels with free digits ≥ p₀, via the general-`free`
+  `pairSum_Bf_le_explicit_b`) gives `hybridCassels_low` (a with 20a ≤ ⌊log₃N⌋/2).  `hybridCassels`
+  is now PROVED from it and the new open leaf `midStages`, the signed dead-char sum over the stages
+  S' ∈ [⌊log₃N⌋/40, min S (Nb+|h|)).  Only the scales N^{1/40} ≲ 3^{10S'} ≲ b^N remain.

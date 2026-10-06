@@ -2029,7 +2029,137 @@ theorem stage_telescope (ξ : ℝ) {a S : ℕ} (haS : a ≤ S) :
       rw [rhoProd, rhoProd, Finset.prod_eq_prod_Ico_succ_bot (by omega)]
     rw [this]; ring
 
-/-- **The hybrid-law Cassels bound** (open; the crux restated).  Believed 55%.  The pair sum of
+/-- `exp(−c ⌊log₃N⌋/2) ≤ e^c N^{−c/(2 log 3)}`.  Proved (from the `cassels_Bf` bookkeeping). -/
+theorem exp_neg_log3_le {c : ℝ} (hc : 0 ≤ c) {N : ℕ} (hN : 1 ≤ N) :
+    Real.exp (-c * ((Nat.log 3 N / 2 : ℕ) : ℝ)) ≤ Real.exp c * (N : ℝ) ^ (-(c / (2 * Real.log 3))) := by
+  have hl3 : 0 < Real.log 3 := Real.log_pos (by norm_num)
+  have hN0 : (0 : ℝ) < N := by exact_mod_cast hN
+  set k := Nat.log 3 N
+  have hlt : N < 3 ^ (k + 1) := Nat.lt_pow_succ_log_self (by norm_num) _
+  have hlog : Real.log N < (k + 1) * Real.log 3 := by
+    have : (N : ℝ) < (3 : ℝ) ^ (k + 1) := by exact_mod_cast hlt
+    have := Real.log_lt_log hN0 this
+    rwa [Real.log_pow, Nat.cast_add, Nat.cast_one] at this
+  have hk2 : (k : ℝ) - 1 ≤ 2 * ((k / 2 : ℕ) : ℝ) := by
+    have : k ≤ 2 * (k / 2) + 1 := by omega
+    have : (k : ℝ) ≤ 2 * ((k / 2 : ℕ) : ℝ) + 1 := by exact_mod_cast this
+    linarith
+  rw [Real.rpow_def_of_pos hN0, ← Real.exp_add]
+  apply Real.exp_le_exp.2
+  have : Real.log N * (1 / Real.log 3) < k + 1 := by
+    rw [← div_eq_mul_one_div, div_lt_iff₀ hl3]; linarith
+  have hδ : Real.log N * -(c / (2 * Real.log 3)) = -(c / 2) * (Real.log N * (1 / Real.log 3)) := by
+    field_simp
+  rw [hδ]
+  nlinarith
+
+/-- **Cassels for the Cantor digits above position `p₀`** (proved).  If `2p₀ ≤ ⌊log₃N⌋/2`, the
+pair sum of the digit products over positions `p₀ ≤ p < ⌊log₃N⌋/2` has a power saving, uniformly
+in `p₀`. -/
+theorem cassels_tail {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) (h : ℤ) (hh : h ≠ 0) :
+    ∃ (C : ℝ) (W : ℕ → ℝ), Summable (fun j => W (sched j)) ∧ ∀ N : ℕ, 1 ≤ N → ∀ p₀ : ℕ,
+      2 * p₀ ≤ Nat.log 3 N / 2 →
+      ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N,
+        tailProd (h * ((b : ℝ) ^ n - (b : ℝ) ^ m)) p₀ (Nat.log 3 N / 2) ≤ C * (N : ℝ) ^ 2 * W N := by
+  set e := padicValNat 3 h.natAbs
+  set t := CantorLiouvilleAll.tb b
+  set c : ℝ := Real.log (3 / 2) / 2
+  have hc : 0 < c := by unfold c; have := Real.log_pos (by norm_num : (1:ℝ) < 3 / 2); positivity
+  set c' : ℝ := c / 2
+  have hc' : 0 < c' := by positivity
+  set δ : ℝ := c' / (2 * Real.log 3)
+  have hl3 : 0 < Real.log 3 := Real.log_pos (by norm_num)
+  set K : ℝ := 3 * (3 ^ (e + t) + 2 * (3 / 2 : ℝ) ^ t)
+  have hK : 0 ≤ K := by positivity
+  refine ⟨K * Real.exp c' * Real.exp c' + 1,
+    fun N => (N : ℝ) ^ (-(1 / 2 : ℝ)) + (N : ℝ) ^ (-δ),
+    (summable_sched_rpow (by norm_num)).add (summable_sched_rpow (by positivity)),
+    fun N hN p₀ hp => ?_⟩
+  set M := Nat.log 3 N / 2
+  set free : ℕ → Bool := fun p => decide (p₀ ≤ p)
+  have hB := pairSum_Bf_le_explicit_b free hb h3 h hh N hN
+  have hBf : ∀ ξ : ℝ, CantorLiouville.Bf free M ξ = tailProd ξ p₀ M := by
+    intro ξ
+    unfold CantorLiouville.Bf tailProd
+    congr 1
+    ext p; simp [free, Finset.mem_filter, Finset.mem_range, Finset.mem_Ico]; omega
+  rw [Finset.sum_congr rfl fun n _ => Finset.sum_congr rfl fun m _ => hBf _] at hB
+  have hF : (M : ℝ) - 1 ≤ 2 * (CantorLiouville.freeCount free M : ℝ) := by
+    have : M - p₀ ≤ CantorLiouville.freeCount free M := by
+      unfold CantorLiouville.freeCount
+      rw [← Nat.card_Ico]
+      refine Finset.card_le_card fun i hi => ?_
+      simp only [Finset.mem_Ico] at hi
+      simp only [Finset.mem_filter, Finset.mem_range, free]
+      exact ⟨hi.2, by simpa using hi.1⟩
+    have h2 : M ≤ 2 * CantorLiouville.freeCount free M + 1 := by omega
+    have : (M : ℝ) ≤ 2 * (CantorLiouville.freeCount free M : ℝ) + 1 := by exact_mod_cast h2
+    linarith
+  have hexp : Real.exp (-c * CantorLiouville.freeCount free M) ≤
+      Real.exp c' * (Real.exp c' * (N : ℝ) ^ (-δ)) := by
+    refine le_trans ?_ (mul_le_mul_of_nonneg_left (exp_neg_log3_le hc'.le hN) (Real.exp_pos _).le)
+    rw [← Real.exp_add]
+    apply Real.exp_le_exp.2
+    simp only [c']; nlinarith
+  have hN2 : (0 : ℝ) ≤ (N : ℝ) ^ 2 := by positivity
+  have hr : (0 : ℝ) ≤ (N : ℝ) ^ (-(1 / 2 : ℝ)) := by positivity
+  have hr2 : (0 : ℝ) ≤ (N : ℝ) ^ (-δ) := by positivity
+  have hE2 : 0 ≤ Real.exp c' * Real.exp c' := by positivity
+  calc _ ≤ _ := hB
+    _ ≤ (N : ℝ) ^ 2 * (N : ℝ) ^ (-(1 / 2 : ℝ)) +
+          K * (N : ℝ) ^ 2 * (Real.exp c' * (Real.exp c' * (N : ℝ) ^ (-δ))) := by
+        have := mul_le_mul_of_nonneg_left hexp (mul_nonneg hK hN2)
+        simp only [K, c] at this ⊢
+        linarith
+    _ ≤ _ := by
+        have h1 := mul_nonneg (mul_nonneg hK hE2) (mul_nonneg hN2 hr)
+        nlinarith [mul_nonneg hN2 hr, mul_nonneg hN2 hr2, mul_nonneg (mul_nonneg hK hN2) hr]
+
+/-- **The hybrid Cassels bound for few `resLaw` stages** (proved; special case of
+`hybridCassels`).  If `20a ≤ ⌊log₃N⌋/2 ≤ 10S`, the hybrid law (`a` stages of `resLaw`, then
+uniform digits) has the Cassels power saving, uniformly in `a` and `S`. -/
+theorem hybridCassels_low {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) (h : ℤ) (hh : h ≠ 0) :
+    ∃ (C : ℝ) (W : ℕ → ℝ), Summable (fun j => W (sched j)) ∧ ∀ N : ℕ, 1 ≤ N → ∀ a S : ℕ,
+      2 * (10 * a) ≤ Nat.log 3 N / 2 → Nat.log 3 N / 2 ≤ 10 * S →
+      ‖∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N,
+        prefChar (h * ((b : ℝ) ^ n - (b : ℝ) ^ m)) a *
+          rhoProd (h * ((b : ℝ) ^ n - (b : ℝ) ^ m)) a S‖ ≤ C * (N : ℝ) ^ 2 * W N := by
+  obtain ⟨C, W, hW, hC⟩ := cassels_tail hb h3 h hh
+  refine ⟨C, W, hW, fun N hN a S ha hS => ?_⟩
+  refine le_trans ?_ (hC N hN (10 * a) ha)
+  refine (norm_sum_le _ _).trans (Finset.sum_le_sum fun n _ => (norm_sum_le _ _).trans
+    (Finset.sum_le_sum fun m _ => ?_))
+  set ξ : ℝ := h * ((b : ℝ) ^ n - (b : ℝ) ^ m)
+  have haS : a ≤ S := by omega
+  have hpc : ‖prefChar ξ a‖ ≤ 1 := by
+    unfold prefChar
+    refine (norm_integral_le_of_norm_le_const (C := 1) (Eventually.of_forall fun ω => ?_)).trans
+      (by simp)
+    rw [norm_ee]
+  rw [norm_mul, norm_rhoProd _ haS]
+  calc ‖prefChar ξ a‖ * tailProd ξ (10 * a) (10 * S) ≤ 1 * tailProd ξ (10 * a) (10 * S) :=
+        mul_le_mul_of_nonneg_right hpc (tailProd_nonneg _ _ _)
+    _ = tailProd ξ (10 * a) (Nat.log 3 N / 2) * tailProd ξ (Nat.log 3 N / 2) (10 * S) := by
+        rw [one_mul, tailProd_mul ξ (by omega) hS]
+    _ ≤ _ := mul_le_of_le_one_right (tailProd_nonneg _ _ _) (tailProd_le_one _ _ _)
+
+/-- **The crux, middle stages only** (open; believed 55%).  The signed dead-character sum over the
+stages `a₁ ≤ S' < a`, where `a₁ = min a (⌊log₃N⌋/2/20)` and `a = min S (N b + |h|)`, is
+`O(N² W(N))`.  The low stages `S' < a₁` are free (`hybridCassels_low`) and the high ones are
+local (`deadChar_tail_le`).  What remains is exactly the stages whose scale `3^{10S'}` lies
+between `N^{1/40}` and the frequency scale `b^N`.  This is where the decorrelation of dead events
+(rationals near `K`) from the lacunary sums is needed. -/
+theorem midStages {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) (h : ℤ) (hh : h ≠ 0) :
+    ∃ (C : ℝ) (W : ℕ → ℝ), Summable (fun j => W (sched j)) ∧ ∀ N : ℕ, 1 ≤ N → ∀ S : ℕ,
+      Nat.log 3 N / 2 ≤ 10 * S →
+      ‖∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N,
+        ∑ S' ∈ Finset.Ico (min (min S (N * b + h.natAbs)) (Nat.log 3 N / 2 / 20))
+            (min S (N * b + h.natAbs)),
+          deadChar (h * ((b : ℝ) ^ n - (b : ℝ) ^ m)) S' *
+            rhoProd (h * ((b : ℝ) ^ n - (b : ℝ) ^ m)) (S' + 1) S‖ ≤ C * (N : ℝ) ^ 2 * W N := by
+  sorry
+
+/-- **The hybrid-law Cassels bound.**  Proved from `hybridCassels_low` and `midStages` (open).  The pair sum of
 the hybrid characters `T_a(ξ) Π_{a≤s<S} ρ_s(ξ)`, which is `E|S_N|²` under `resLaw` for `a`
 stages followed by uniform Cantor digits, is `O(N² W(N))` for `a = min S (N b + |h|)`.  It
 implies `deadCharSigned_core`, because the uniform part is
@@ -2040,7 +2170,43 @@ theorem hybridCassels {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) (h : ℤ) (hh :
         prefChar (h * ((b : ℝ) ^ n - (b : ℝ) ^ m)) (min S (N * b + h.natAbs)) *
           rhoProd (h * ((b : ℝ) ^ n - (b : ℝ) ^ m)) (min S (N * b + h.natAbs)) S‖ ≤
         C * (N : ℝ) ^ 2 * W N := by
-  sorry
+  obtain ⟨C₁, W₁, hW₁, h₁⟩ := hybridCassels_low hb h3 h hh
+  obtain ⟨C₂, W₂, hW₂, h₂⟩ := midStages hb h3 h hh
+  refine ⟨|C₁| + |C₂|, fun N => |W₁ N| + |W₂ N|, hW₁.abs.add hW₂.abs, fun N hN S hS => ?_⟩
+  set a := min S (N * b + h.natAbs)
+  set a₁ := min a (Nat.log 3 N / 2 / 20)
+  set ξ : ℕ → ℕ → ℝ := fun n m => h * ((b : ℝ) ^ n - (b : ℝ) ^ m)
+  have haS : a ≤ S := min_le_left _ _
+  have ha₁ : a₁ ≤ a := min_le_left _ _
+  have hH : ∀ n m, prefChar (ξ n m) a * rhoProd (ξ n m) a S =
+      prefChar (ξ n m) a₁ * rhoProd (ξ n m) a₁ S -
+        ∑ S' ∈ Finset.Ico a₁ a, deadChar (ξ n m) S' * rhoProd (ξ n m) (S' + 1) S := by
+    intro n m
+    have e1 := stage_telescope (ξ n m) haS
+    have e2 := stage_telescope (ξ n m) (ha₁.trans haS)
+    rw [← Finset.sum_range_add_sum_Ico _ ha₁] at e1
+    rw [e2] at e1
+    linear_combination e1
+  have hlow := h₁ N hN a₁ S (by omega) hS
+  have hmid := h₂ N hN S hS
+  have hN2 : (0 : ℝ) ≤ (N : ℝ) ^ 2 := by positivity
+  have k : ∀ C W : ℝ, C * (N : ℝ) ^ 2 * W ≤ |C| * (N : ℝ) ^ 2 * |W| := fun C W =>
+    (le_abs_self _).trans (by rw [abs_mul, abs_mul, abs_of_nonneg hN2])
+  calc _ = ‖∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N, prefChar (ξ n m) a₁ * rhoProd (ξ n m) a₁ S -
+        ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N,
+          ∑ S' ∈ Finset.Ico a₁ a, deadChar (ξ n m) S' * rhoProd (ξ n m) (S' + 1) S‖ := by
+        rw [← Finset.sum_sub_distrib]
+        congr 1
+        refine Finset.sum_congr rfl fun n _ => ?_
+        rw [← Finset.sum_sub_distrib]
+        exact Finset.sum_congr rfl fun m _ => hH n m
+    _ ≤ _ := norm_sub_le _ _
+    _ ≤ C₁ * (N : ℝ) ^ 2 * W₁ N + C₂ * (N : ℝ) ^ 2 * W₂ N := add_le_add hlow hmid
+    _ ≤ _ := by
+        have := k C₁ (W₁ N); have := k C₂ (W₂ N)
+        have a1 := abs_nonneg C₁; have a2 := abs_nonneg C₂
+        have b1 := abs_nonneg (W₁ N); have b2 := abs_nonneg (W₂ N)
+        nlinarith [mul_nonneg (mul_nonneg a1 hN2) b2, mul_nonneg (mul_nonneg a2 hN2) b1]
 
 /-- **The crux, localized to the first `S₀ = N b + |h|` stages.**  Proved from `hybridCassels`
 (via `stage_telescope`) and `cassels_Bf`.  The analysis below is of the open input.
