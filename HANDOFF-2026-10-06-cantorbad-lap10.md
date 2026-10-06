@@ -18,8 +18,13 @@ Branch `proof/cantor-bad-normal`.  Headline unchanged; build green.  Crux still 
   grows ×5 per ΔL=2.  All L ≤ 16 evidence (paircorr, mscan, famshare) mostly measures the in-K family.
 - Junction probe: difference frequencies give no advantage at depth S.
 
+- PROVED `ee_nat_mul`, `sum_ee_mod` (Σ_{p<q} e(ξp/q) = q·[q∣ξ]).
+- μ_K Monte Carlo (`cantorbad_mcobst.py`): no dead hits for L∈[20,128] in 3e5 samples (<~1e-7/L).
+- HEAD at checkpoint: d98ecd5c; no uncommitted edits.  File sorries unchanged (crux + 2 off-path).
+
 ## Next
-0. Build a probe that samples generic off-K obstacles at L ≳ 22 (Monte Carlo over μ_K points + continued
+0'. State the divisor-sum identity for obstacle phase sums from `sum_ee_mod`.
+0. Build a probe (importance sampling near obstacles) that samples generic off-K obstacles at L ≳ 22 (Monte Carlo over μ_K points + continued
    fractions to find p/q near them), mass-weighted, and redo the pair-correlation/AliveOffMix evidence.
 1. Prove shallow case of `ThreeAdicWindowAvg` (3^j ≤ N: bᵐ equidistributed in its subgroup mod 3^j over full periods).
 2. Wire: preperiodic-family obstacle pair sums ≤ (q'-part) × ThreeAdicWindowAvg, toward ObstaclePairCorrelation/AliveOffMix.
