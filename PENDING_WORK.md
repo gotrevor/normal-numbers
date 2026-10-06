@@ -3208,3 +3208,7 @@ Candidates 2,4 proved (`StretchBFR.card_cantor_hyperbola_le`, `eq_of_hyperbola_l
   `pair_sum_le`, per pair pick the case; sum low cases by `sum_hf_true_le` (c = h'(bᵈ−1), base t),
   top cases by `sum_topProd_le` (β = log₃|h(bᵈ−1)| resp. log₃|h|); m < A·W + B trivially;
   W = K = ⌊ε log₃ N⌋, ε = κ/4.
+- Lap 1g: PROVED `pair_bound` (each pair coefficient ≤ low majorant + two top products + [m small]),
+  with `profile_data`, `hf_neg`. NEXT: sum it in `secondMoment_le_profile` (expand_b + pair_sum_le
+  with G d m := Bf (expFree μ₀) M (h(bᵈ−1)bᵐ), M as in pair_bound; Σ_m via `sum_hf_true_le` with
+  c = h'(bᵈ−1) (3∤c: 3∣b ⇒ bᵈ−1 ≡ −1), and `sum_topProd_le` twice; choose W = ⌊ε log₃ N⌋).

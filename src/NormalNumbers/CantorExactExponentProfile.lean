@@ -898,6 +898,245 @@ theorem pair_classify {μ₀ : ℚ} (hμ : 2 < μ₀) {s : ℕ} (hs : 1 ≤ s) {
       linarith
     have hd0 : (0 : ℝ) ≤ d := by positivity
     exact hwin nξ (by nlinarith) hξup
+/-- The structure of `b = 3ˢt` under `ProfileOK`. -/
+theorem profile_data {μ₀ : ℚ} (hμ : 1 < μ₀) {b : ℕ} (hb : 2 ≤ b) (h3 : 3 ∣ b)
+    (hP : ProfileOK μ₀ b) :
+    1 ≤ padicValNat 3 b ∧ b = 3 ^ padicValNat 3 b * (b / 3 ^ padicValNat 3 b) ∧
+      ¬ 3 ∣ b / 3 ^ padicValNat 3 b ∧ 2 ≤ b / 3 ^ padicValNat 3 b ∧
+      (padicValNat 3 b : ℝ) * (μ₀ - 1) < Real.logb 3 (b / 3 ^ padicValNat 3 b : ℕ) ∧
+      Real.logb 3 b = padicValNat 3 b + Real.logb 3 (b / 3 ^ padicValNat 3 b : ℕ) := by
+  have : Fact (Nat.Prime 3) := ⟨Nat.prime_three⟩
+  set s := padicValNat 3 b
+  set t := b / 3 ^ s
+  have hs1 : 1 ≤ s := one_le_padicValNat_of_dvd (by omega) h3
+  have hsd : 3 ^ s ∣ b := pow_padicValNat_dvd
+  have hbt : b = 3 ^ s * t := (Nat.mul_div_cancel' hsd).symm
+  have ht3 : ¬ 3 ∣ t := by
+    intro h
+    have h' : 3 ^ (s + 1) ∣ 3 ^ s * t := by rw [pow_succ]; exact Nat.mul_dvd_mul_left (3 ^ s) h
+    rw [← hbt] at h'
+    exact pow_succ_padicValNat_not_dvd (by omega) h'
+  have hP' : (3 : ℝ) ^ ((s : ℝ) * ((μ₀ : ℝ) - 1)) < t := hP
+  have hμR : (1 : ℝ) < μ₀ := by exact_mod_cast hμ
+  have hsR : (1 : ℝ) ≤ s := by exact_mod_cast hs1
+  have h1 : (1 : ℝ) < (3 : ℝ) ^ ((s : ℝ) * ((μ₀ : ℝ) - 1)) :=
+    Real.one_lt_rpow (by norm_num) (by nlinarith)
+  have htpos : (0 : ℝ) < t := by linarith
+  have ht2 : 2 ≤ t := by
+    have : (1 : ℝ) < t := by linarith
+    have : 1 < t := by exact_mod_cast this
+    omega
+  refine ⟨hs1, hbt, ht3, ht2, (Real.lt_logb_iff_rpow_lt (by norm_num) htpos).2 hP', ?_⟩
+  conv_lhs => rw [hbt]
+  push_cast
+  rw [Real.logb_mul (by positivity) htpos.ne', Real.logb_pow, Real.logb_self_eq_one (by norm_num),
+    mul_one]
+
+theorem hf_neg (v k : ℕ) (u : ℝ) : Hf (fun _ => true) v k (-u) = Hf (fun _ => true) v k u := by
+  unfold Hf
+  refine Finset.prod_congr rfl fun p _ => ?_
+  rw [mul_neg, mul_neg, neg_div, Real.cos_neg]
+
+set_option maxHeartbeats 4000000 in
+/-- **Per-pair bound.**  Every pair coefficient is bounded by the low-window majorant, the two
+top-window products, or (for small `m`) by `1`. -/
+theorem pair_bound {μ₀ : ℚ} (hμ : 2 < μ₀) {b : ℕ} (hb : 2 ≤ b) (h3 : 3 ∣ b)
+    (hP : ProfileOK μ₀ b) (h : ℤ) (hh : h ≠ 0) :
+    ∃ A B : ℕ, ∀ W N d m : ℕ, 1 ≤ d → d < N → m < N →
+      Bf (expFree μ₀) (2 * b * N + ⌈Real.logb 3 |(h : ℝ)|⌉₊ + W + 1)
+          (h * ((b : ℝ) ^ d - 1) * (b : ℝ) ^ m) ≤
+        Hf (fun _ => true) 0 W
+            (((h.natAbs / 3 ^ padicValNat 3 h.natAbs) * (b ^ d - 1) *
+              (b / 3 ^ padicValNat 3 b) ^ m : ℕ) : ℝ) +
+          topProd W (Int.fract (m * Real.logb 3 (b / 3 ^ padicValNat 3 b : ℕ) +
+            Real.logb 3 (|(h : ℝ)| * ((b : ℝ) ^ d - 1)))) +
+          topProd W (Int.fract (m * Real.logb 3 (b / 3 ^ padicValNat 3 b : ℕ) +
+            Real.logb 3 |(h : ℝ)|)) +
+          (if m < A * W + B then 1 else 0) := by
+  have hμ1 : (1 : ℚ) < μ₀ := by linarith
+  obtain ⟨hs1, hbt, ht3, ht2, hL, hlogb⟩ := profile_data hμ1 hb h3 hP
+  set s := padicValNat 3 b
+  set t := b / 3 ^ s
+  set L := Real.logb 3 (t : ℝ)
+  set H := Real.logb 3 |(h : ℝ)|
+  have hhR : (1 : ℝ) ≤ |(h : ℝ)| := by
+    rw [← Int.cast_abs]; exact_mod_cast Int.one_le_abs hh
+  have hH0 : 0 ≤ H := Real.logb_nonneg (by norm_num) hhR
+  obtain ⟨A, B, hAB⟩ := pair_classify hμ hs1 (L := L) hL hH0
+  refine ⟨A, B, fun W N d m hd hdN hmN => ?_⟩
+  set e := padicValNat 3 h.natAbs
+  set h' := h.natAbs / 3 ^ e
+  set c := h' * (b ^ d - 1)
+  set M := 2 * b * N + ⌈H⌉₊ + W + 1
+  set ξ : ℝ := h * ((b : ℝ) ^ d - 1) * (b : ℝ) ^ m
+  -- nonnegativity of the right side
+  have hT : ∀ y, 0 ≤ topProd W y := fun y => Finset.prod_nonneg fun _ _ => abs_nonneg _
+  have hHf : ∀ u, 0 ≤ Hf (fun _ => true) 0 W u := fun u => Hf_nonneg _ _ _ _
+  have hBf1 : Bf (expFree μ₀) M ξ ≤ 1 := Bf_le_one _ _ _
+  have : Fact (Nat.Prime 3) := ⟨Nat.prime_three⟩
+  have hb1 : (1 : ℝ) ≤ b := by exact_mod_cast (by omega : 1 ≤ b)
+  have hb3 : (3 : ℝ) ≤ b := by
+    have := Nat.le_of_dvd (by omega) h3; exact_mod_cast this
+  have hsR : (1 : ℝ) ≤ s := by exact_mod_cast hs1
+  have hL0 : 0 ≤ L := Real.logb_nonneg (by norm_num) (by exact_mod_cast (by omega : 1 ≤ t))
+  -- `|h| = 3^e h'`
+  have hna : h.natAbs ≠ 0 := Int.natAbs_ne_zero.2 hh
+  have hhe : h.natAbs = 3 ^ e * h' := (Nat.mul_div_cancel' pow_padicValNat_dvd).symm
+  have he : (e : ℝ) ≤ H := by
+    rw [Real.le_logb_iff_rpow_le (by norm_num) (by linarith), Real.rpow_natCast]
+    have : 3 ^ e ≤ h.natAbs := Nat.le_of_dvd (by omega) pow_padicValNat_dvd
+    rw [← Int.cast_abs, ← Int.natCast_natAbs]; exact_mod_cast this
+  have hbpos : (0 : ℝ) < b := by linarith
+  have hbm : (0 : ℝ) < (b : ℝ) ^ m := pow_pos hbpos m
+  have hhpos : (0 : ℝ) < |(h : ℝ)| := by linarith
+  have hbd : (1 : ℝ) ≤ (b : ℝ) ^ d := one_le_pow₀ hb1
+  have hbd3 : (3 : ℝ) ≤ (b : ℝ) ^ d := hb3.trans (le_self_pow₀ hb1 (by omega))
+  -- logarithms
+  have hlb : Real.logb 3 (b : ℝ) = s + L := hlogb
+  have hlogbm : ∀ k : ℕ, Real.logb 3 ((b : ℝ) ^ k) = k * (s + L) := by
+    intro k; rw [Real.logb_pow, hlb]
+  have hbd1 : (0 : ℝ) < (b : ℝ) ^ d - 1 := by linarith
+  have hlogd1 : Real.logb 3 ((b : ℝ) ^ d - 1) ≤ d * (s + L) := by
+    rw [← hlogbm]; exact Real.logb_le_logb_of_le (by norm_num) hbd1 (by linarith)
+  have hlogd2 : d * (s + L) - 1 ≤ Real.logb 3 ((b : ℝ) ^ d - 1) := by
+    rw [← hlogbm]
+    have : (b : ℝ) ^ d / 3 ≤ (b : ℝ) ^ d - 1 := by linarith
+    have h1 := Real.logb_le_logb_of_le (b := 3) (by norm_num) (by positivity) this
+    rw [Real.logb_div (by positivity) (by norm_num), Real.logb_self_eq_one (by norm_num)] at h1
+    exact h1
+  have hξabs : |ξ| = |(h : ℝ)| * ((b : ℝ) ^ d - 1) * (b : ℝ) ^ m := by
+    simp only [ξ]; rw [abs_mul, abs_mul, abs_of_pos hbd1, abs_of_pos hbm]
+  have hξ1 : 1 ≤ |ξ| := by
+    rw [hξabs]
+    have h1 : (1 : ℝ) ≤ ((b : ℝ) ^ d - 1) := by linarith
+    have h2 : (1 : ℝ) ≤ (b : ℝ) ^ m := one_le_pow₀ hb1
+    exact one_le_mul_of_one_le_of_one_le (one_le_mul_of_one_le_of_one_le hhR h1) h2
+  have hlogξ : Real.logb 3 |ξ| = (m * L + Real.logb 3 (|(h : ℝ)| * ((b : ℝ) ^ d - 1))) + (s * m : ℕ) := by
+    rw [hξabs, Real.logb_mul (mul_pos hhpos hbd1).ne' hbm.ne', hlogbm]; push_cast; ring
+  have hlogξ' : Real.logb 3 |ξ| = H + Real.logb 3 ((b : ℝ) ^ d - 1) + m * (s + L) := by
+    rw [hξabs, Real.logb_mul (mul_pos hhpos hbd1).ne' hbm.ne', hlogbm,
+      Real.logb_mul hhpos.ne' hbd1.ne']
+  set Y : ℤ := h * (b : ℤ) ^ m
+  have hYabs : |(Y : ℝ)| = |(h : ℝ)| * (b : ℝ) ^ m := by
+    simp only [Y]; push_cast; rw [abs_mul, abs_of_pos hbm]
+  have hY1 : 1 ≤ |(Y : ℝ)| := by
+    rw [hYabs]; exact one_le_mul_of_one_le_of_one_le hhR (one_le_pow₀ hb1)
+  have hlogY : Real.logb 3 |(Y : ℝ)| = H + m * (s + L) := by
+    rw [hYabs, Real.logb_mul hhpos.ne' hbm.ne', hlogbm]
+  set v := s * m + e
+  set nY := ⌊Real.logb 3 |(Y : ℝ)|⌋₊
+  set nξ := ⌊Real.logb 3 |ξ|⌋₊
+  have hmL : (0 : ℝ) ≤ m * (s + L) := by positivity
+  have hlY0 : 0 ≤ Real.logb 3 |(Y : ℝ)| := Real.logb_nonneg (by norm_num) hY1
+  have hlξ0 : 0 ≤ Real.logb 3 |ξ| := Real.logb_nonneg (by norm_num) hξ1
+  have hnY1 : H + m * (s + L) - 1 ≤ (nY : ℝ) := by
+    rw [← hlogY]; linarith [Nat.lt_floor_add_one (Real.logb 3 |(Y : ℝ)|)]
+  have hnY2 : (nY : ℝ) ≤ H + m * (s + L) := (Nat.floor_le hlY0).trans (le_of_eq hlogY)
+  have hnξ1 : H + Real.logb 3 ((b : ℝ) ^ d - 1) + m * (s + L) - 1 ≤ (nξ : ℝ) := by
+    rw [← hlogξ']; linarith [Nat.lt_floor_add_one (Real.logb 3 |ξ|)]
+  have hnξ2 : (nξ : ℝ) ≤ H + Real.logb 3 ((b : ℝ) ^ d - 1) + m * (s + L) :=
+    (Nat.floor_le hlξ0).trans (le_of_eq hlogξ')
+  -- the M-bounds
+  have hsLb : s + L ≤ (b : ℝ) := by
+    rw [← hlb]
+    have := Real.logb_le_logb_of_le (b := 3) (by norm_num) (by linarith)
+      (show (b : ℝ) ≤ 3 ^ (b : ℝ) by
+        have := Real.add_one_le_exp ((b : ℝ) * Real.log 3)
+        rw [Real.rpow_def_of_pos (by norm_num)]
+        have hl : 1 ≤ Real.log 3 := by
+          rw [Real.le_log_iff_exp_le (by norm_num)]
+          have : Real.exp 1 < 2.7182818286 := Real.exp_one_lt_d9
+          linarith
+        have : (b : ℝ) ≤ b * Real.log 3 := le_mul_of_one_le_right hbpos.le hl
+        rw [mul_comm (Real.log 3)]; linarith)
+    rwa [Real.logb_rpow (by norm_num) (by norm_num)] at this
+  have hNR : (m : ℝ) + 1 ≤ N ∧ (d : ℝ) + 1 ≤ N := by
+    constructor <;> [exact_mod_cast hmN; exact_mod_cast hdN]
+  have hHc : H ≤ ⌈H⌉₊ := Nat.le_ceil H
+  have hMR : (M : ℝ) = 2 * b * N + ⌈H⌉₊ + W + 1 := by simp only [M]; push_cast; ring
+  have hmd : (s + L) * (m + d) ≤ 2 * b * N := by
+    have h1 : (m : ℝ) + d ≤ 2 * N := by linarith [hNR.1, hNR.2]
+    have h2 : (0 : ℝ) ≤ m + d := by positivity
+    have h3 : (0 : ℝ) ≤ s + L := by linarith
+    calc (s + L) * (m + d) ≤ b * (m + d) := mul_le_mul_of_nonneg_right hsLb h2
+      _ ≤ b * (2 * N) := mul_le_mul_of_nonneg_left h1 hbpos.le
+      _ = _ := by ring
+  have hnξM : nξ ≤ M := by
+    have : (nξ : ℝ) ≤ M := by
+      rw [hMR]
+      have : (d : ℝ) * (s + L) + m * (s + L) = (s + L) * (m + d) := by ring
+      have : (0 : ℝ) ≤ W := by positivity
+      linarith
+    exact_mod_cast this
+  have hnYM : nY ≤ M := by
+    have : (nY : ℝ) ≤ M := by
+      rw [hMR]
+      have : (m : ℝ) * (s + L) ≤ (s + L) * (m + d) := by
+        have : (0 : ℝ) ≤ (s + L) * d := by positivity
+        nlinarith
+      have : (0 : ℝ) ≤ W := by positivity
+      linarith
+    exact_mod_cast this
+  have hvM : v + W ≤ M := by
+    have : (v : ℝ) + W ≤ M := by
+      rw [hMR]; simp only [v]; push_cast
+      have : (s : ℝ) * m ≤ (s + L) * (m + d) := by
+        have : (0 : ℝ) ≤ L * m + (s + L) * d := by positivity
+        nlinarith
+      linarith
+    exact_mod_cast this
+  by_cases hsmall : m < A * W + B
+  · rw [if_pos hsmall]
+    have := hT (Int.fract (m * L + Real.logb 3 (|(h : ℝ)| * ((b : ℝ) ^ d - 1))))
+    have := hT (Int.fract (m * L + H))
+    have := hHf ((c * t ^ m : ℕ) : ℝ)
+    linarith
+  rw [if_neg hsmall, add_zero]
+  push Not at hsmall
+  have hcl := hAB W m d v nY nξ hsmall (by simp only [v]; push_cast; linarith)
+    (by simp only [v]; push_cast; linarith) (by linarith) (by linarith)
+    (by push_cast; linarith) (by push_cast; linarith)
+  rcases hcl with hlow | ⟨hWY, hYd, hYfree⟩ | ⟨hWξ, hξfree⟩
+  · -- low window
+    have hct : |ξ| = 3 ^ v * ((c * t ^ m : ℕ) : ℝ) := by
+      rw [hξabs]
+      have h1 : |(h : ℝ)| = 3 ^ e * h' := by
+        rw [← Int.cast_abs, ← Int.natCast_natAbs, hhe]; push_cast; ring
+      have h2 : ((b ^ d - 1 : ℕ) : ℝ) = (b : ℝ) ^ d - 1 := by
+        rw [Nat.cast_sub (Nat.one_le_pow _ _ (by omega))]; push_cast; ring
+      have h4 : (b : ℝ) ^ m = 3 ^ (s * m) * (t : ℝ) ^ m := by
+        have : (b : ℝ) = 3 ^ s * t := by exact_mod_cast hbt
+        rw [this, mul_pow, pow_mul]
+      simp only [c, v]; push_cast; rw [h1, ← h2, h4, pow_add]; push_cast; ring
+    have := bf_le_hf_true (expFree μ₀) hvM hlow ((c * t ^ m : ℕ) : ℝ)
+    rw [← hct, Bf_abs] at this
+    have := hT (Int.fract (m * L + Real.logb 3 (|(h : ℝ)| * ((b : ℝ) ^ d - 1))))
+    have := hT (Int.fract (m * L + H))
+    linarith
+  · -- top of the lower term
+    have hdvd : (3 : ℤ) ^ nY ∣ h * ((b : ℤ) ^ d - 1) * (b : ℤ) ^ m + Y := by
+      have e1 : h * ((b : ℤ) ^ d - 1) * (b : ℤ) ^ m + Y = h * (b : ℤ) ^ (m + d) := by
+        simp only [Y]; ring
+      rw [e1]
+      refine Dvd.dvd.mul_left ?_ h
+      have : (3 : ℤ) ^ s ∣ (b : ℤ) := by exact_mod_cast (pow_padicValNat_dvd : 3 ^ s ∣ b)
+      exact (pow_dvd_pow 3 hYd).trans (by rw [pow_mul]; exact pow_dvd_pow_of_dvd this _)
+    have := bf_le_topProd_of_dvd (expFree μ₀) M W _ Y hY1 hWY hYfree hnYM hdvd
+    have hcast : (((h * ((b : ℤ) ^ d - 1) * (b : ℤ) ^ m : ℤ)) : ℝ) = ξ := by
+      simp only [ξ]; push_cast; ring
+    rw [hcast] at this
+    have hl : Real.logb 3 |(Y : ℝ)| = (m * L + H) + (s * m : ℕ) := by
+      rw [hlogY]; push_cast; ring
+    rw [hl, Int.fract_add_natCast] at this
+    have := hT (Int.fract (m * L + Real.logb 3 (|(h : ℝ)| * ((b : ℝ) ^ d - 1))))
+    have := hHf ((c * t ^ m : ℕ) : ℝ)
+    linarith
+  · -- top of the pair frequency
+    have := bf_le_topProd (expFree μ₀) M W ξ hξ1 hWξ hξfree hnξM
+    rw [hlogξ, Int.fract_add_natCast] at this
+    have := hT (Int.fract (m * L + H))
+    have := hHf ((c * t ^ m : ℕ) : ℝ)
+    linarith
 /-- **Power-saving second moment for `3 ∣ b` below the threshold**, given the Baker input.
 Confidence 60%.  This is the analytic core of `ae_isNormal_of_profileOK_of_baker`; the English
 proof is in that docstring (non-shadow `m` by the orbit of `t`, shadow `m` by top digits). -/
