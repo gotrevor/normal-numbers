@@ -3203,3 +3203,8 @@ Candidates 2,4 proved (`StretchBFR.card_cantor_hyperbola_le`, `eq_of_hyperbola_l
   low window of m is hit by run k (k large), then the top window of Y = h bᵐ lies in the gap
   (E_k, a_{k+1}); if n_Y ≤ s(m+d) use it, else d < Lm/s + O(1) and the top window of ξ lies in the
   same gap. Bad pairs only for m ≤ A·W + B ⇒ O(N log N). No 1/log N loss.
+- Lap 1f: PROVED `pair_classify` (m ≥ A·W + B ⇒ low window free ∨ top-of-Y window free with
+  n_Y ≤ s(m+d) ∨ top-of-ξ window free). NEXT: assemble `secondMoment_le_profile`: expand,
+  `pair_sum_le`, per pair pick the case; sum low cases by `sum_hf_true_le` (c = h'(bᵈ−1), base t),
+  top cases by `sum_topProd_le` (β = log₃|h(bᵈ−1)| resp. log₃|h|); m < A·W + B trivially;
+  W = K = ⌊ε log₃ N⌋, ε = κ/4.

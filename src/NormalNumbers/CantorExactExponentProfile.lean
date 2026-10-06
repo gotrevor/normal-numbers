@@ -762,6 +762,142 @@ theorem sum_topProd_le {t : ℕ} (hD : LogDiscrepancy t) : ∃ C κ : ℝ, 0 < �
         linarith
     _ ≤ _ := by rw [mul_add, h1]; linarith
 
+set_option maxHeartbeats 2000000 in
+/-- **Pair classification.**  Below the threshold, for `m ≥ A·W + B` every pair `(m, d)` has a
+free window of length `W`: the low window `[v+1, v+W)` (`v ≈ sm`), or the top window of
+`Y = h bᵐ` (when `n_Y ≤ s(m+d)`), or the top window of `ξ = h bᵐ(bᵈ−1)`.  The last two lie in
+the gap after the run that hits the low window. -/
+theorem pair_classify {μ₀ : ℚ} (hμ : 2 < μ₀) {s : ℕ} (hs : 1 ≤ s) {L H : ℝ}
+    (hL : (s : ℝ) * (μ₀ - 1) < L) (hH : 0 ≤ H) :
+    ∃ A B : ℕ, ∀ W m d v nY nξ : ℕ, A * W + B ≤ m →
+      (s * m : ℝ) ≤ v → (v : ℝ) ≤ s * m + H →
+      (s + L) * m - 1 ≤ nY → (nY : ℝ) ≤ (s + L) * m + H →
+      (s + L) * (m + d) - 2 ≤ nξ → (nξ : ℝ) ≤ (s + L) * (m + d) + H →
+      (∀ p, v + 1 ≤ p → p < v + W → expFree μ₀ p = true) ∨
+      (W ≤ nY ∧ nY ≤ s * (m + d) ∧ ∀ k < W, expFree μ₀ (nY - 1 - k) = true) ∨
+      (W ≤ nξ ∧ ∀ k < W, expFree μ₀ (nξ - 1 - k) = true) := by
+  have hμ1 : (1 : ℚ) < μ₀ := by linarith
+  have hμR : (2 : ℝ) < μ₀ := by exact_mod_cast hμ
+  have hsR : (1 : ℝ) ≤ s := by exact_mod_cast hs
+  set g : ℝ := s + L - μ₀ * s
+  have hg : 0 < g := by simp only [g]; nlinarith
+  have hL0 : 0 ≤ L := by nlinarith
+  set c1 : ℝ := (s + L) * H / s + H
+  set k1 : ℕ := ⌈((s + L) ^ 2 / s + c1) / s⌉₊
+  set Ek1 : ℕ := expRunEnd μ₀ (expRunStart μ₀ k1)
+  refine ⟨⌈((μ₀ : ℝ) + 1) / g⌉₊, Ek1 + ⌈((μ₀ : ℝ) * H + 4) / g⌉₊ + 1, ?_⟩
+  intro W m d v nY nξ hm hv1 hv2 hY1 hY2 hξ1 hξ2
+  by_cases hlow : ∀ p, v + 1 ≤ p → p < v + W → expFree μ₀ p = true
+  · exact Or.inl hlow
+  right
+  push Not at hlow
+  obtain ⟨p, hp1, hp2, hpf⟩ := hlow
+  have hpf' : expForced μ₀ p = true := by
+    unfold expFree at hpf; simpa using hpf
+  obtain ⟨k, hk1, hk2⟩ := (expForced_iff hμ1 p).1 hpf'
+  set a := expRunStart μ₀ k
+  set E := expRunEnd μ₀ a
+  -- real facts
+  have hmR : ((⌈((μ₀ : ℝ) + 1) / g⌉₊ * W + (Ek1 + ⌈((μ₀ : ℝ) * H + 4) / g⌉₊ + 1) : ℕ) : ℝ) ≤ m := by
+    exact_mod_cast hm
+  push_cast at hmR
+  have hA := Nat.le_ceil (((μ₀ : ℝ) + 1) / g)
+  have hB := Nat.le_ceil (((μ₀ : ℝ) * H + 4) / g)
+  have hW0 : (0 : ℝ) ≤ W := by positivity
+  have hgm : (μ₀ + 1) * W + (μ₀ * H + 4) ≤ g * m := by
+    have h1 : (μ₀ + 1 : ℝ) * W ≤ g * (⌈((μ₀ : ℝ) + 1) / g⌉₊ * W) := by
+      have := mul_le_mul_of_nonneg_right hA hW0
+      rw [div_mul_eq_mul_div, div_le_iff₀ hg] at this; linarith
+    have h2 : (μ₀ * H + 4 : ℝ) ≤ g * ⌈((μ₀ : ℝ) * H + 4) / g⌉₊ := by
+      rw [div_le_iff₀ hg] at hB; linarith
+    have h3 : (0 : ℝ) ≤ Ek1 + 1 := by positivity
+    nlinarith
+  -- the run index is large
+  have hkk : k1 ≤ k := by
+    by_contra hc; push Not at hc
+    have : E ≤ Ek1 := (expRunEnd_strictMono hμ1).monotone hc.le
+    have h0 : (0:ℝ) ≤ ⌈((μ₀ : ℝ) * H + 4) / g⌉₊ := by positivity
+    have h00 : (0:ℝ) ≤ ⌈((μ₀ : ℝ) + 1) / g⌉₊ * W := by positivity
+    have hEm : (Ek1 : ℝ) ≤ m := by linarith
+    have hpR : (p : ℝ) < E := by exact_mod_cast hk2
+    have hEk : (E : ℝ) ≤ Ek1 := by exact_mod_cast this
+    have : (v : ℝ) + 1 ≤ p := by exact_mod_cast hp1
+    nlinarith
+  have hpR1 : (v : ℝ) + 1 ≤ p := by exact_mod_cast hp1
+  have hpR2 : (p : ℝ) < v + W := by exact_mod_cast hp2
+  have haR : (a : ℝ) ≤ p := by exact_mod_cast hk1
+  have hER : (p : ℝ) < E := by exact_mod_cast hk2
+  have hEup : (E : ℝ) < μ₀ * a + 1 := expRunEnd_lt_r hμ1 a
+  have ha0 : (0 : ℝ) ≤ a := by positivity
+  -- lower edges clear the run
+  have hEW : (E : ℝ) + W + 2 ≤ (s + L) * m - 1 := by
+    have hμ0 : (0 : ℝ) ≤ μ₀ := by linarith
+    have e1 : (μ₀ : ℝ) * a ≤ μ₀ * p := mul_le_mul_of_nonneg_left haR hμ0
+    have e2 : (μ₀ : ℝ) * p ≤ μ₀ * (v + W) := mul_le_mul_of_nonneg_left hpR2.le hμ0
+    have e3 : (μ₀ : ℝ) * v ≤ μ₀ * (s * m + H) := mul_le_mul_of_nonneg_left hv2 hμ0
+    have : g * m = (s + L) * m - μ₀ * (s * m) := by simp only [g]; ring
+    nlinarith
+  -- upper edges stay below the next run
+  have hnext : (expRunStart μ₀ (k + 1) : ℝ) = (k + 2) * E := by
+    rw [expRunStart_succ]; push_cast; ring
+  have hm1 : (1 : ℝ) ≤ m := by
+    have : 1 ≤ m := by omega
+    exact_mod_cast this
+  have hk1R : ((s + L) ^ 2 / s + c1) / s ≤ k := by
+    have := Nat.le_ceil (((s + L) ^ 2 / s + c1) / s)
+    have : (k1 : ℝ) ≤ k := by exact_mod_cast hkk
+    linarith
+  have hsm : (s : ℝ) * m < E := by linarith
+  have hbig : (s + L) ^ 2 / s * m + c1 < (k + 2) * E := by
+    have h1 : (s + L) ^ 2 / s + c1 ≤ k * s := by rwa [div_le_iff₀ (by linarith)] at hk1R
+    have hc1 : 0 ≤ c1 := by positivity
+    have hq : 0 ≤ (s + L) ^ 2 / s := by positivity
+    have hm0 : (0 : ℝ) ≤ m := by positivity
+    have hk0 : (0 : ℝ) ≤ k := by positivity
+    have e1 : ((s + L) ^ 2 / s + c1) * m ≤ k * s * m := mul_le_mul_of_nonneg_right h1 hm0
+    have e2 : c1 ≤ c1 * m := le_mul_of_one_le_right hc1 hm1
+    have e3 : (k : ℝ) * (s * m) ≤ k * E := mul_le_mul_of_nonneg_left hsm.le hk0
+    have hE0 : (0 : ℝ) < E := by linarith [mul_pos (by linarith : (0:ℝ) < s) (by linarith : (0:ℝ) < m)]
+    have e4 : ((s + L) ^ 2 / s + c1) * m = (s + L) ^ 2 / s * m + c1 * m := by ring
+    have e5 : (k : ℝ) * s * m = k * (s * m) := by ring
+    linarith
+  have hYup : (nY : ℝ) < (k + 2) * E := by
+    have : (s + L) * m ≤ (s + L) ^ 2 / s * m := by
+      have : (s + L) ≤ (s + L) ^ 2 / s := by
+        rw [le_div_iff₀ (by linarith)]; nlinarith
+      nlinarith
+    have hc : 0 ≤ (s + L) * H / s := by positivity
+    have : H ≤ c1 := by simp only [c1]; linarith
+    linarith
+  -- freeness of a top window below `n`
+  have hwin : ∀ n : ℕ, (E : ℝ) + W ≤ n → (n : ℝ) < (k + 2) * E →
+      W ≤ n ∧ ∀ j < W, expFree μ₀ (n - 1 - j) = true := by
+    intro n h1 h2
+    have hn : E + W ≤ n := by exact_mod_cast h1
+    have hn2 : n < expRunStart μ₀ (k + 1) := by
+      have : (n : ℝ) < expRunStart μ₀ (k + 1) := by rw [hnext]; exact h2
+      exact_mod_cast this
+    refine ⟨by omega, fun j hj => expFree_of_gap hμ1 (k := k) (show E ≤ n - 1 - j by omega) (by omega)⟩
+  by_cases hd : nY ≤ s * (m + d)
+  · left
+    obtain ⟨h1, h2⟩ := hwin nY (by linarith) hYup
+    exact ⟨h1, hd, h2⟩
+  · right
+    push Not at hd
+    have hdR : (s : ℝ) * (m + d) < nY := by exact_mod_cast hd
+    have hξup : (nξ : ℝ) < (k + 2) * E := by
+      have hsd : (s : ℝ) * d < L * m + H := by nlinarith
+      have hd' : (d : ℝ) < (L * m + H) / s := by rw [lt_div_iff₀ (by linarith)]; linarith
+      have : (s + L) * (m + d) + H ≤ (s + L) ^ 2 / s * m + c1 := by
+        have e : (s + L) ^ 2 / s * m + c1 = (s + L) * (m + (L * m + H) / s) + H := by
+          simp only [c1]; field_simp; ring
+        rw [e]
+        have : (s + L) * d ≤ (s + L) * ((L * m + H) / s) := by
+          apply mul_le_mul_of_nonneg_left hd'.le; linarith
+        linarith
+      linarith
+    have hd0 : (0 : ℝ) ≤ d := by positivity
+    exact hwin nξ (by nlinarith) hξup
 /-- **Power-saving second moment for `3 ∣ b` below the threshold**, given the Baker input.
 Confidence 60%.  This is the analytic core of `ae_isNormal_of_profileOK_of_baker`; the English
 proof is in that docstring (non-shadow `m` by the orbit of `t`, shadow `m` by top digits). -/
