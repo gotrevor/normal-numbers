@@ -66,3 +66,6 @@ Directive says stop when BFR confidence < 1% with every route in the Maze. Verif
 `StretchBFR.lean` module doc (confidence line), Maze rows "3-adic Farey separation as a BFR count"
 and "power saving for N_K(Q, delta) from separation", `#print axioms StretchBFR.card_cantor_hyperbola_le` clean.
 Ask: operator's next directive. Detail in HANDOFF-2026-10-06-bfr-lap1.md.
+WHAT is blocked: further BFR-directive work; the directive's own stop rule ("stop when < 1% with every route in the Maze") has fired.
+WHY operator-gated: continuing would mean picking a new objective (e.g. transcribing Chow–Varjú–Yu, or another campaign's sorries), which the directive reserves to the operator; the remaining StretchBFR sorries are off-bet.
+NEED from operator: a next directive, or a rejection of the <1% verdict saying which candidate to reopen.
