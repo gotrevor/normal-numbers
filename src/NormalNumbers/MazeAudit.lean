@@ -13,7 +13,10 @@ import NormalNumbers.StonehamBase6
 import NormalNumbers.LinearFormsScalesStretch
 import NormalNumbers.EntropyProfiles
 import NormalNumbers.CantorExactExponentStretch
+import NormalNumbers.StretchBFR
 import NormalNumbers.QSpanNormal
+import NormalNumbers.IndependenceRelative
+import NormalNumbers.ConjugateEntropy
 import NormalNumbers.Barriers
 import NormalNumbers.CantorBadNormal
 
@@ -46,12 +49,38 @@ def mazeLinks : List Link := [
   ⟨"x3-invariant measure on K cap BAD",
    [``CantorBadNormal.not_exists_timesThree_law_on_bad,
     ``CantorBadNormal.Literature.EFSTimesThreeNotBad], []⟩,
+  ⟨"exact residue count as a BFR input",
+   [``StretchBFR.card_near_cantor_le, ``CantorExactExponentStretch.card_lowResidue_le], []⟩,
+  ⟨"Bugeaud-Durand count as the stretch input",
+   [``CantorExactExponentStretch.RunEnteringCount, ``CantorExactExponentStretch.endpoint_sep], []⟩,
+  ⟨"single-sum inverse cancellation for the run-entering count",
+   [``StretchBFR.singleSum_insufficient, ``StretchBFR.windowCount_of_inverseSum,
+    ``StretchBFR.InverseCantorSumBound], []⟩,
+  ⟨"Effective dimension as the currency for one-of statements",
+   [``ConjugateEntropy.invariant_vanishes_of_const_mem], []⟩,
+  ⟨"Entropy budget through squaring",
+   [``Deterministic.detSqNotDet_of_manai, ``Deterministic.not_exactly_one_nondet], []⟩,
+  ⟨"Diophantine input to a carry-automaton certificate",
+   [``CantorExactExponentStretch.exists_mem_cantorSet_irrExponent_two_of_literature,
+    ``IndependenceRelative.ternary_line], []⟩,
+  ⟨"Independence-relative product blocks",
+   [``IndependenceRelative.not_isRelativeBlock_small, ``IndependenceRelative.ternary_line], []⟩,
   ⟨"pair-universal mechanism for a normal element of a Q-span",
    [``QSpan.exists_pair_qSpan_not_normal, ``QSpan.qSpanNormal_sqrt_two_sqrt_three,
     ``Barriers.liouville_pair_qSpan], []⟩,
   ⟨"Diophantine (exponent-2) input for a normal element of a Q-span",
    [``QSpan.exists_pair_exponentTwo_qSpan_not_normal, ``QSpan.span_dimension_budget,
     ``QSpan.qSpanNormal_sqrt_upperDim], []⟩,
+  ⟨"3-adic Farey separation as a BFR count",
+   [``StretchBFR.card_cantor_hyperbola_le, ``StretchBFR.eq_of_hyperbola_low,
+    ``StretchBFR.card_near_cantor_le], []⟩,
+  ⟨"power saving for N_K(Q, delta) from separation",
+   [``StretchBFR.card_cantor_hyperbola_le], [``StretchBFR.NKPowerSaving]⟩,
+  ⟨"schedule redesign for the trivial count",
+   [``CantorExactExponentStretch.trivial_count_barrier], []⟩,
+  ⟨"per-q residue counting below 1 + log2 3",
+   [``CantorExactExponentStretch.card_lowResidue_le, ``CantorExactExponentStretch.exactCount_rho_ge_one],
+   [``CantorExactExponentStretch.RunEnteringCount]⟩,
   ⟨"He-Liao local count on the forced-run measure",
    [``CantorExactExponentStretch.endpoint_sep, ``CantorExactExponentStretch.thickening_cost_ge_one,
     ``CantorExactExponentStretch.Literature.HeLiao2026Cor65,
@@ -246,7 +275,7 @@ def mazeLegacy : List String := [
   "Diophantine good-denominator detour for the tail cell",
   "route B's unweighted cover of the state-dependent target"]
 
-/-- info: maze audit: 157 rows, 50 cite declarations, 107 legacy (prose only) -/
+/-- info: maze audit: 168 rows, 61 cite declarations, 107 legacy (prose only) -/
 #guard_msgs in
 #maze_audit mazeRows, mazeLinks, mazeLegacy
 

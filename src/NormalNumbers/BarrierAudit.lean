@@ -21,6 +21,8 @@ import NormalNumbers.Erdos257AllPrimes
 import NormalNumbers.MahlerDriftOne
 import NormalNumbers.LevinSparse
 import NormalNumbers.DeterministicBD
+import NormalNumbers.ConjugateEntropy
+import NormalNumbers.IndependenceRelative
 import NormalNumbers.PrimeLambertOscillation
 import NormalNumbers.SwingC3Rotation
 import NormalNumbers.LinearFormsScales
@@ -30,6 +32,8 @@ import NormalNumbers.FiniteStateSelectionStretch
 import NormalNumbers.SchmidtGamesStretch
 import NormalNumbers.CantorBadNormal
 import NormalNumbers.CantorExactExponentStretch
+import NormalNumbers.StretchBFR
+import NormalNumbers.QSpanCriterion
 import NormalNumbers.ComputableReal
 import NormalNumbers.KurtzRandom
 import NormalNumbers.MahlerProductBlock
@@ -127,16 +131,6 @@ def cruxLinks : List CruxLink := [
    [``cantor_not_normal_three_pow, ``perStage_dead_not_enough],
    "the pair-averaged Cantor products must use 3 ∤ b, and the dead-stage hypothesis must be a \
     probability decay, not a per-stage dead count (counts alone admit a never 2-normal descent)"⟩,
-  ⟨``SchmidtGames.exists_computable_cantorPoint_mem_U_inter_Bad,
-   [``schmidt_normal_not_winning, ``schmidt_fixedC_not_winning],
-   "the computable descent must use the uniform-bad target (the same potential-guided descent \
-    aimed at base-2 normality must fail, since normality is not winning) and must open at a \
-    scale well above 2^{−C} (one fixed E C is not winning below it)"⟩,
-  ⟨``CantorExactExponentStretch.ae_not_liouvilleWith_all, [``cantorExp_trivialCount_mu_three],
-   "the count must beat 2^F numerators per denominator in run-entering windows (the trivial \
-    count diverges at μ₀ = 3), and must see the depth-b endpoints below the cylinder scale: a \
-    measure-level count thickened to 3^{−b} costs 3^{2m−b} ≥ 1 for μ₀ ≤ 3 \
-    (thickening_cost_ge_one), so He–Liao-type equidistribution cannot carry it"⟩,
   ⟨``QSpan.qSpanNormal_sqrt_two_sqrt_three, [``liouville_pair_qSpan],
    "the argument must use something √2, √3 have and the sparse Liouville pair lacks (algebraicity, \
     bounded partial quotients, …): a pair-universal argument would put a normal number in the \
@@ -144,9 +138,35 @@ def cruxLinks : List CruxLink := [
 
 /-- Open `sorry`s that are not cruxes, and why no barrier applies. -/
 def waivers : List Waiver := [
+  ⟨``IndependenceRelative.not_isRelativeBlock_small,
+   "a finite computation stated as a sibling: the blocksearch probe's non-certification over \
+    small direction sets; it closes a route, no open crux uses it"⟩,
+  ⟨``IndependenceRelative.ternary_line,
+   "a leaf: a borrow-propagation case split with a full English proof in the docstring; the \
+    independence-relative probe agrees (witness 2X - Y)"⟩,
+  ⟨``IndependenceRelative.exists_counterexample_on_line,
+   "a sibling: X = sum 3^(-k!), Y = 2X shows the line obstruction is real; no open crux uses it"⟩,
+  ⟨``ConjugateEntropy.fsDimUpper_le_of_sum_rat,
+   "a leaf: the span_dimension_budget block-entropy argument with both terms upper (Fekete in ℓ); \
+    B–D 2506.12929 Prop. 4.9(d) for point entropy, bridge to Dim_FS not formalized"⟩,
+  ⟨``ConjugateEntropy.fsDim_le_of_sum_rat,
+   "a leaf: the span_dimension_budget argument itself with a rational third term; B–D Prop. 4.9(b)"⟩,
+  ⟨``ConjugateEntropy.exists_sum_zero_normal_half,
+   "a sibling: the base-4 digit split showing the 1/2 in half_of_normal_of_sum_rat is sharp for \
+    abstract triples; no open crux uses it"⟩,
   ⟨``Adder.IsProductBlock.liouville_cover,
    "a leaf: the B–B 1994 Thm 3.1 Liouville witness with 'digit d absent from m·B' in place of a \
     run of g−1 (orbit_liouvilleMul_lt's argument)"⟩,
+  ⟨``Adder.isProductBlock_five_twelve,
+   "a finite computation: carry-automaton collapse certificates, needs a sparse checker"⟩,
+  ⟨``Adder.isProductBlock_five_thirteen,
+   "a finite computation: carry-automaton collapse certificates, needs a sparse checker"⟩,
+  ⟨``Adder.isProductBlock_five_fourteen,
+   "a finite computation: carry-automaton collapse certificates, needs a sparse checker"⟩,
+  ⟨``Adder.isProductBlock_five_fifteen,
+   "a finite computation: carry-automaton collapse certificates, needs a sparse checker"⟩,
+  ⟨``Adder.isProductBlock_five_seventeen,
+   "a finite computation: carry-automaton collapse certificates, needs a sparse checker"⟩,
   ⟨``Adder.IsProductBlock.base5_card_ge_five,
    "a finite computation: liouville_cover over B ≤ 300 plus an exact set cover (ILP optimum 5)"⟩,
   ⟨``CastingOut.not_pairDecouple_all,
@@ -212,11 +232,10 @@ def waivers : List Waiver := [
    "a leaf: block-entropy subadditivity through bounded carries, plus the block-entropy \
     characterization of dim_FS/Dim_FS (BHV 2005); possibly literature-adjacent (Doty–Lutz–Nandakumar \
     2007 treat one number and rational arithmetic)"⟩,
-  ⟨``CantorExactExponentStretch.exists_mem_cantorSet_irrExponent_two_of_literature,
-   "literature control at μ₀ = 2: wiring from cited Weiss 2001 and Cassels 1959 (a leaf)"⟩,
-  ⟨``CantorExactExponentStretch.exists_computable_mem_cantorSet_irrExponent_normal_all,
-   "assembly: the main file's wiring with ae_not_liouvilleWith_all (the crux) in place of \
-    ae_not_liouvilleWith; no mechanism of its own"⟩,
+  ⟨``StretchBFR.windowCount_of_inverseSum,
+   "conditional wiring (Fourier expansion over the q-interval); records that single-sum \
+    cancellation reaches only m > b − δ b' (singleSum_insufficient)"⟩,
+  ⟨``StretchBFR.card_near_cantor_le, "a leaf: the classical covering count of rationals near K"⟩,
   ⟨``FiniteState.isFNormal_delayEnum_of_normal,
    "a leaf: O(1) cost of composing with the delay transducer and its finite-state right inverse"⟩]
 

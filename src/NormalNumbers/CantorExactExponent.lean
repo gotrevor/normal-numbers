@@ -1039,21 +1039,13 @@ theorem ev_expTest_mass (μ₀ : ℚ) (hμ : threshold < μ₀) :
     field_simp; ring
   linarith
 
-/-- **Avoidance gives the exact exponent.**  Confidence 85%.
-
-English proof.  Upper: if `LiouvilleWith τ x` (`τ > μ₀`), frequently `|x − p/n| < C n^{−τ}`;
-with `3^m ≤ n < 3^{m+1}` and `0 ≤ p ≤ n` (else `|x − p/n| ≥ 1/n`), `C n^{−τ} ≤ 2·3^{−(L+1)}`
-for large `m` since `L ≤ μ₀ m + √m`, so `hitB_of_near` fires at infinitely many `m`.  Lower:
-if free `2`s stop at `N`, every tail beyond `N` vanishes and `hitB_of_near` (`q = 3^m`) fires at
-every `m ≥ N`; so free `2`s recur and `liouvilleWith_cantorExpReal` applies. -/
-theorem hasIrrExponent_of_avoid (μ₀ : ℚ) (hμ : threshold < μ₀) (e : ℕ → Bool)
+/-- `hasIrrExponent_of_avoid` for every `μ₀ > 2`: the threshold is used only through the
+scale-test masses, not here. -/
+theorem hasIrrExponent_of_avoid_two (μ₀ : ℚ) (h2 : (2 : ℚ) < μ₀) (e : ℕ → Bool)
     (h : ∃ m₁, ∀ m, m₁ ≤ m → expTest μ₀ m (pre e (expL μ₀ m + 1)) = false) :
     HasIrrExponent (cantorExpReal μ₀ e) μ₀ := by
   open CantorExpGeneric in
   obtain ⟨m₁, hm₁⟩ := h
-  have h2 : (2 : ℚ) < μ₀ := by
-    have : (2 : ℝ) < μ₀ := lt_trans (by have := Real.logb_pos (b := 2) (x := 3) (by norm_num) (by norm_num); unfold threshold; linarith) hμ
-    exact_mod_cast this
   have hμ1 : (1 : ℚ) < μ₀ := by linarith
   set x := cantorExpReal μ₀ e with hxdef
   have fire : ∀ m q pp : ℕ, m₁ ≤ m → 3 ^ m ≤ q → q < 3 ^ (m + 1) → pp ≤ q →
@@ -1179,6 +1171,21 @@ theorem hasIrrExponent_of_avoid (μ₀ : ℚ) (hμ : threshold < μ₀) (e : ℕ
       _ = (3 * C' * r ^ m) * (3 : ℝ) ^ (p * m) := by ring
       _ ≤ 2 * (3 : ℝ) ^ (p * m) := by gcongr
       _ ≤ 2 * (n : ℝ) ^ p := by gcongr
+
+/-- **Avoidance gives the exact exponent.**  Confidence 85%.
+
+English proof.  Upper: if `LiouvilleWith τ x` (`τ > μ₀`), frequently `|x − p/n| < C n^{−τ}`;
+with `3^m ≤ n < 3^{m+1}` and `0 ≤ p ≤ n` (else `|x − p/n| ≥ 1/n`), `C n^{−τ} ≤ 2·3^{−(L+1)}`
+for large `m` since `L ≤ μ₀ m + √m`, so `hitB_of_near` fires at infinitely many `m`.  Lower:
+if free `2`s stop at `N`, every tail beyond `N` vanishes and `hitB_of_near` (`q = 3^m`) fires at
+every `m ≥ N`; so free `2`s recur and `liouvilleWith_cantorExpReal` applies. -/
+theorem hasIrrExponent_of_avoid (μ₀ : ℚ) (hμ : threshold < μ₀) (e : ℕ → Bool)
+    (h : ∃ m₁, ∀ m, m₁ ≤ m → expTest μ₀ m (pre e (expL μ₀ m + 1)) = false) :
+    HasIrrExponent (cantorExpReal μ₀ e) μ₀ := by
+  have h2 : (2 : ℚ) < μ₀ := by
+    have : (2 : ℝ) < μ₀ := lt_trans (by have := Real.logb_pos (b := 2) (x := 3) (by norm_num) (by norm_num); unfold threshold; linarith) hμ
+    exact_mod_cast this
+  exact hasIrrExponent_of_avoid_two μ₀ h2 e h
 
 /-! ## Upper bound: assembly -/
 

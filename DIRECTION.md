@@ -1,6 +1,6 @@
 # DIRECTION — normal-numbers 🧭
 
-## CURRENT DIRECTIVE (2026-10-06, cantorbad lap 6): `K ∩ BAD ∩ normal` via the local route 🎯
+## Branch directive (2026-10-06, `proof/cantor-bad-normal`, cantorbad lap 6): `K ∩ BAD ∩ normal` via the local route 🎯
 
 Branch `proof/cantor-bad-normal`.  Target `CantorBadNormal.exists_mem_cantorSet_bad_isNormal_coprime_three`,
 never restated.  The headline now runs `exists_of_law_ae resLaw ← ae_isNormal_resLaw_of_localDeadBias`, whose
@@ -20,7 +20,22 @@ Directive history:
 - 2026-10-06 (cantorbad lap 6): local route adopted; `midStages` off-path.
 - 2026-10-02: normality's master conjectures (below, superseded on this branch).
 
-## Earlier directive (2026-10-02): normality's master conjectures
+## CURRENT DIRECTIVE (2026-10-06, branch `proof/cantorexp-stretch`): land the stretch node 🎯
+
+**Objective:** prove `ev_expTest_mass_all` (`CantorExactExponentStretch.lean`), which closes the
+frozen node `ae_not_liouvilleWith_all` and the stretch headline (both already wired).
+**Mandated next move:** the crux leaf `hit_mass_padic` first (with `padic_sep`,
+`card_image_mod_HS_le`), then `farey_sep` / `hit_mass_farey`, then the case split.
+**Forbidden drift:** no more pricing of Kloosterman / inverse-sum / BFR routes for this node
+(the 3-adic Farey separation supersedes them); no edits to frozen signatures.
+**Why:** the review lap found the crux elementary (count `≲ (|r|q)^{log₃2}`); what remains is
+formalization of six elementary leaves.
+
+## Directive history
+- 2026-10-06: stretch lane → prove the six Farey-separation leaves (supersedes the 2026-10-02
+  directive on this branch only).
+
+## PREVIOUS DIRECTIVE (2026-10-02): normality's master conjectures 🎯
 
 Follow `KICKOFF-2026-10-02-master-conjectures.md`: prove the three planted consequences of
 `BorelConjecture` / `BaileyCrandallHypA` (`src/NormalNumbers/MasterConjectures.lean`), grow the

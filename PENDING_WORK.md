@@ -1,3 +1,42 @@
+## Cantor exact-exponent stretch (2026-10-05, KICKOFF-2026-10-05-stretch-poke) — DONE
+* **2026-10-06 lap 3:** all six leaves proved (`padic_sep`, `card_image_mod_HS_le`, `farey_sep`,
+  `hit_mass_padic` via `grp`/`hit_classify`/`group_sep`, `hit_mass_farey`, `ev_expTest_mass_all`
+  via `expTest_mass_le_all`).  Node and stretch headline axiom-clean.  Leftovers (off the node):
+  literature control now proved (module sorry-free);
+  `RunEnteringCount` now provable by a card version of `hit_mass_padic` (update its Maze row).
+* **2026-10-06 lap 2 (review + crux):** the crux `RunEnteringCount` is NOT a Kloosterman wall.
+  3-adic Farey separation: hits `P q ≡ r (mod 3^b)` with `|r| q < 3^j` that agree mod `3^j`
+  have equal `r/q` (`padic_sep`), so hitting numerators are fixed by `≈ log₃(|r|q)` low digits
+  plus `v₃(q)` top digits: count `≲ (RQ)^{log₃2}`, a power saving for EVERY `τ > 2`.  Real Farey
+  separation (`hit_mass_farey`) handles non-entering windows for every `μ₀ > 2`.  Statements
+  frozen with sorry leaves; `ae_not_liouvilleWith_all` and the stretch headline are now WIRED
+  from `ev_expTest_mass_all`.  Next: prove `padic_sep`, `card_image_mod_HS_le`,
+  `hit_mass_padic` (crux), `farey_sep`, `hit_mass_farey`, then `ev_expTest_mass_all`.
+  Probe: `experiments/stretch_farey_perr.py` (+ tests, run by hand).
+Branch `proof/cantorexp-stretch`.  Node `ae_not_liouvilleWith_all` 10% (restated in module doc).
+* **Advance:** exact residue count `card_lowResidue_le` (proved): per `q`, ≤ 2^{k+1} Cantor
+  numerators with `P q mod 3^b` within `3^k` of 0.  Beats the cylinder count in run-entering
+  windows; elementary range becomes `μ₀ > 1 + log₂ 3` (`ae_not_liouvilleWith_mid`, sorry, 65%).
+* Seeds: H0 `trivial_count_barrier`, H2 `abs_sub_lt_iff_residue`, H3 `inv_linearize` proved
+  (H3 unneeded).  H1 superseded.  H4/H5: Riesz L1 Λ ≤ 4/3 (≈1.2966) only reaches m < 0.394b.
+* Crux below 2.585: `RunEnteringCount` (def Prop); Maze row "per-q residue counting below 1 + log2 3".
+* DONE: `card_residue_le_gen`, `runEnteringCountAt_of_lt` (proved).  **Next:** generalize
+  `hasIrrExponent_of_avoid` to `2 < μ₀` (wrapper keeps old statement), add leaf `hit_mass_runEntering`
+  (T = P·3^{L+1−b}: residue count at modulus 3^b with k = m+1+b−L), `ev_expTest_mass_mid`, then wire
+  v₃(q) and top digits, prefix offset A·3^{b'}); then decompose `ae_not_liouvilleWith_mid` into
+  window-case leaves (interior / run-entering / void / post-run).
+* Note: DIRECTION.md's current directive (2026-10-02 master conjectures) predates this operator
+  kickoff; this run follows the operator's 2026-10-05 stretch campaign.
+## QSpan campaign (KICKOFF-2026-10-05-qspan.md, branch proof/qspan)
+* DONE: `ae_isNormal_combo_iff` and `ae_not_isNormal_combo_of_not` — `#print axioms` = propext,
+  Classical.choice, Quot.sound.  Route: Weyl both ways; genericity on the Bernoulli shift by
+  `K`-truncation + `K`-dependent second moment + `j²` interpolation (no Birkhoff); product formula
+  via `iIndepFun_infinitePi`, nonvanishing via `norm_prod_ge` (`‖∏F‖ ≥ 1 − Σ‖1−F‖`).
+* Open (QSpanCriterion.lean): `span_jointDim_budget`, `isNormal_span_of_jointNormal`,
+  `ae_not_qSpanNormal_fiveDigits` (next: Wall reduction to integer (a,c), h = 5^N, then
+  `ae_not_isNormal_combo_of_not` over countably many (a,c)), `ae_jointDim_fiveDigits`.
+* Host note: `lake` intermittently hits EMFILE; retry loop works.  Pre-commit full build skipped.
+
 ## Schmidt-games lane E1 (2026-10-04) — DONE
 * `SchmidtGames.lean` sorry-free.  `potentialWinning_E`, `dimH_E₂_le`, `codim_E_asymp`:
   `#print axioms` = propext, Classical.choice, Quot.sound (wiring conditional only via the cited
@@ -3123,3 +3162,9 @@ Next: (1) prove the reduction (needs pair-averaged partial Cantor products, Cass
   The bootstrap needs a weighted form (dead count against the iterated first-order factors) — not yet stated.
 * (lap 8) PROVED `cExt_unifAvg`, `cExt_eq_sum`: cExt G k w = 1024^{−k} Σ_F G(catB w k F) — the first-order
   term is an explicit uniform average over completions (prerequisite for writing it as an obstacle sum).
+## 2026-10-06 qspan lap 2
+QSpanCriterion.lean sorry-free; all six frozen headlines axiom-clean (see HANDOFF-2026-10-06-qspan-lap2.md).
+Next (outside this campaign's scope): subadditivity leaf for `QSpan.span_dimension_budget`.
+
+## 2026-10-06 BFR directive lap 1
+Candidates 2,4 proved (`StretchBFR.card_cantor_hyperbola_le`, `eq_of_hyperbola_low`); 1,3 → `NKPowerSaving` node, prior art Chow–Varjú–Yu 2402.18395. Confidence < 1%; stop condition met. Next (if reopened): read CVY and transcribe their count as a Literature Prop.

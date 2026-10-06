@@ -81,6 +81,17 @@ theorem IsProductBlock.base5_exists_ge {S : Finset ℕ} (hS : IsProductBlock 5 S
   obtain ⟨m, hm, hd⟩ := hS.liouville_cover (by norm_num) 1 le_rfl
   exact ⟨m, hm, base5_full_digits_ge m (by simpa using hd)⟩
 
+/-- **The joint reading of `B(b,k) = bᵏ(b+1)` is false**: `{1, …, 30}` is *not* a base-5
+product block.  Bugeaud–Coons, *A Mahler miscellany* (Doc. Math. Extra Vol. Mahler Selecta,
+2019), Thm 7.1 states Mahler's theorem in the joint form (one `m ≤ B` with every `k`-block i.o.)
+and adds, citing Bugeaud's book §8.6, that one may take `B(b,k) = bᵏ(b+1)`; at `b = 5, k = 1`
+that is `30`.  The bound is a per-block statement; jointly it needs some `m ≥ 194`. -/
+theorem not_isProductBlock_five_Icc_thirty : ¬ IsProductBlock 5 (Finset.Icc 1 30) := by
+  intro h
+  obtain ⟨m, hm, h194⟩ := h.base5_exists_ge
+  simp only [Finset.mem_Icc] at hm
+  omega
+
 /-- **Card lower bound from the Liouville family** (computational; confidence 93%).  A base-5
 product block inside `[1, 625]` has at least five multipliers.
 
@@ -91,6 +102,49 @@ instance over the 500 multipliers `m ≤ 625`, `5 ∤ m` (a multiple `5m'` cover
 the cover table, which is large; the statement is recorded so the bound has a Lean name. -/
 theorem IsProductBlock.base5_card_ge_five {S : Finset ℕ} (hS : IsProductBlock 5 S)
     (hS625 : ∀ m ∈ S, m ≤ 625) : 5 ≤ S.card := by
+  sorry
+
+/-- **An explicit base-5 product block** (computational; confidence 95%: full re-check without
+the symmetry reduction found no failing assignment).  For every irrational `X`, one of these 17 multiples of `X` has every base-5
+digit infinitely often.  Compare the classical block `[1, 15624]` (`mahler_multiplier_lt` on the
+word `01234`), and `base5_exists_ge` (every block needs a member `≥ 194`; here `2832 = 42312₅`).
+
+Evidence: exact carry-automaton collapse of every assignment `S → digits` on some prefix (the
+C2 method), found by `experiments/mahler_block_rs` (greedy) and recorded in
+`docs/base5-product-block-2026-10-05.md`.  The formal route needs a sparse certificate checker:
+`checkCertA` enumerates the ambient carry product, here about `10⁴⁰` states. -/
+theorem isProductBlock_five_seventeen :
+    IsProductBlock 5 {1, 2, 3, 4, 8, 16, 17, 23, 29, 1251, 1254, 1838, 2188, 2272, 2439, 2832,
+      3028} := by
+  sorry
+
+/-- **The base-5 block, minimized to 15** (computational; confidence 95%): `isProductBlock_five_seventeen`
+without `3` and `4`, each deletion re-verified by a full collapse search
+(`mahler_block minimize`).  Inclusion-minimal: removing any one member leaves an assignment
+with no collapse certificate. -/
+theorem isProductBlock_five_fifteen :
+    IsProductBlock 5 {1, 2, 8, 16, 17, 23, 29, 1251, 1254, 1838, 2188, 2272, 2439, 2832, 3028} := by
+  sorry
+
+/-- **The base-5 block at 14** (computational; confidence 95%): from `isProductBlock_five_fifteen`,
+drop `1` and `8`, add `2428 = 34203₅` (`mahler_block swap21`, accepted by a full collapse
+search).  Note `1 ∉ S`: no member is `x` itself. -/
+theorem isProductBlock_five_fourteen :
+    IsProductBlock 5 {2, 16, 17, 23, 29, 1251, 1254, 1838, 2188, 2272, 2428, 2439, 2832, 3028} := by
+  sorry
+
+/-- **The base-5 block at 13** (computational; confidence 95%): from `isProductBlock_five_fourteen`,
+drop `29` and `1251`, add `2753 = 42003₅` (`mahler_block swap21`, accepted by a full collapse
+search). -/
+theorem isProductBlock_five_thirteen :
+    IsProductBlock 5 {2, 16, 17, 23, 1254, 1838, 2188, 2272, 2428, 2439, 2753, 2832, 3028} := by
+  sorry
+
+/-- **The base-5 block at 12** (computational; confidence 95%): from `isProductBlock_five_thirteen`,
+drop `2` and `16`, add `1562 = 22222₅` (`mahler_block swap21`, accepted by a full collapse
+search). -/
+theorem isProductBlock_five_twelve :
+    IsProductBlock 5 {17, 23, 1254, 1562, 1838, 2188, 2272, 2428, 2439, 2753, 2832, 3028} := by
   sorry
 
 end NormalNumbers.Adder
