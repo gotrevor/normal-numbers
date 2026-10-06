@@ -389,6 +389,74 @@ theorem bf_le_topProd (free : ℕ → Bool) (M K : ℕ) (ξ : ℝ) (hξ : 1 ≤ 
   nlinarith [Finset.prod_nonneg (s := (Finset.range M).filter (fun p => free p = true) \ S)
     (f := fun p => |Real.cos (2 * Real.pi * ξ / 3 ^ (p + 1))|) (fun _ _ => abs_nonneg _)]
 
+/-- **Top window of a shadow term.**  If `3^{n_Y} ∣ Ξ + Y` (`n_Y` the top place of `Y`), the
+places below `n_Y` see `Ξ` exactly as they see `Y`.  For a pair frequency
+`Ξ = h bᵐ⁺ᵈ − h bᵐ` with `Y = h bᵐ` this holds once `n_Y ≤ s(m+d)`: the top digits of the
+lower term `h bᵐ` are visible through the difference. -/
+theorem bf_le_topProd_of_dvd (free : ℕ → Bool) (M K : ℕ) (Ξ Y : ℤ) (hξ : 1 ≤ |(Y : ℝ)|)
+    (hK : K ≤ ⌊Real.logb 3 |(Y : ℝ)|⌋₊)
+    (hfree : ∀ k < K, free (⌊Real.logb 3 |(Y : ℝ)|⌋₊ - 1 - k) = true)
+    (hM : ⌊Real.logb 3 |(Y : ℝ)|⌋₊ ≤ M)
+    (hdvd : (3 : ℤ) ^ ⌊Real.logb 3 |(Y : ℝ)|⌋₊ ∣ Ξ + Y) :
+    Bf free M Ξ ≤ topProd K (Int.fract (Real.logb 3 |(Y : ℝ)|)) := by
+  set ξ : ℝ := (Y : ℝ) with hξdef
+  set n := ⌊Real.logb 3 |ξ|⌋₊
+  set y := Int.fract (Real.logb 3 |ξ|)
+  have hl0 : 0 ≤ Real.logb 3 |ξ| := Real.logb_nonneg (by norm_num) hξ
+  have hny : Real.logb 3 |ξ| = n + y := by
+    have : ((n : ℤ) : ℝ) = (⌊Real.logb 3 |ξ|⌋ : ℝ) := by
+      rw [Int.natCast_floor_eq_floor hl0]
+    simp only [y, Int.fract]; push_cast at this; rw [this]; ring
+  set S := (Finset.range K).image (fun k => n - 1 - k)
+  have hS : S ⊆ (Finset.range M).filter (fun p => free p = true) := by
+    intro p hp
+    simp only [S, Finset.mem_image, Finset.mem_range] at hp
+    obtain ⟨k, hk, rfl⟩ := hp
+    simp only [Finset.mem_filter, Finset.mem_range]
+    exact ⟨by omega, hfree k hk⟩
+  obtain ⟨j, hj⟩ := hdvd
+  have hfac : ∀ p ∈ S, |Real.cos (2 * Real.pi * (Ξ : ℝ) / 3 ^ (p + 1))| =
+      |Real.cos (2 * Real.pi * ξ / 3 ^ (p + 1))| := by
+    intro p hp
+    simp only [S, Finset.mem_image, Finset.mem_range] at hp
+    obtain ⟨k, hk, rfl⟩ := hp
+    have hΞ : (Ξ : ℝ) = 3 ^ n * j - ξ := by
+      have : ((Ξ + Y : ℤ) : ℝ) = ((3 ^ n * j : ℤ) : ℝ) := by rw [hj]
+      push_cast at this; simp only [ξ]; linarith
+    have he : (3 : ℝ) ^ n = 3 ^ (n - 1 - k + 1) * 3 ^ (k) := by
+      rw [← pow_add]; congr 1; omega
+    have : 2 * Real.pi * (Ξ : ℝ) / 3 ^ (n - 1 - k + 1) =
+        -(2 * Real.pi * ξ / 3 ^ (n - 1 - k + 1)) + ((j * 3 ^ k : ℤ) : ℝ) * (2 * Real.pi) := by
+      rw [hΞ, he]; push_cast; field_simp; ring
+    rw [this, Real.cos_add_int_mul_two_pi, Real.cos_neg]
+  unfold Bf
+  rw [← Finset.prod_sdiff hS, Finset.prod_congr rfl hfac]
+  have h1 : ∏ p ∈ (Finset.range M).filter (fun p => free p = true) \ S,
+      |Real.cos (2 * Real.pi * (Ξ : ℝ) / 3 ^ (p + 1))| ≤ 1 :=
+    Finset.prod_le_one (fun _ _ => abs_nonneg _) fun _ _ => Real.abs_cos_le_one _
+  have h2 : ∏ p ∈ S, |Real.cos (2 * Real.pi * ξ / 3 ^ (p + 1))| = topProd K y := by
+    simp only [S]
+    rw [Finset.prod_image]
+    · unfold topProd
+      refine Finset.prod_congr rfl fun k hk => ?_
+      simp only [Finset.mem_range] at hk
+      have hp : ((n - 1 - k + 1 : ℕ) : ℝ) = n - k := by
+        rw [show n - 1 - k + 1 = n - k by omega, Nat.cast_sub (by omega)]
+      have habs : |ξ| = (3 : ℝ) ^ ((n : ℝ) + y) := by
+        rw [← hny, Real.rpow_logb (by norm_num) (by norm_num) (by linarith)]
+      have key : |ξ| / 3 ^ (n - 1 - k + 1) = (3 : ℝ) ^ ((k : ℝ) + y) := by
+        rw [← Real.rpow_natCast, hp, habs, ← Real.rpow_sub (by norm_num)]; congr 1; ring
+      rcases abs_cases ξ with ⟨h, _⟩ | ⟨h, _⟩
+      · rw [mul_div_assoc, ← key, h]
+      · rw [mul_div_assoc, ← key, h, neg_div, mul_neg, Real.cos_neg]
+    · intro a ha b hb hab
+      simp only [Finset.coe_range, Set.mem_Iio] at ha hb
+      simp only at hab; omega
+  rw [h2]
+  have : 0 ≤ topProd K y := Finset.prod_nonneg fun _ _ => abs_nonneg _
+  nlinarith [Finset.prod_nonneg (s := (Finset.range M).filter (fun p => free p = true) \ S)
+    (f := fun p => |Real.cos (2 * Real.pi * (Ξ : ℝ) / 3 ^ (p + 1))|) (fun _ _ => abs_nonneg _)]
+
 theorem bf_mono (free : ℕ → Bool) {M M' : ℕ} (h : M ≤ M') (ξ : ℝ) :
     Bf free M' ξ ≤ Bf free M ξ := by
   unfold Bf
