@@ -3212,3 +3212,12 @@ Candidates 2,4 proved (`StretchBFR.card_cantor_hyperbola_le`, `eq_of_hyperbola_l
   with `profile_data`, `hf_neg`. NEXT: sum it in `secondMoment_le_profile` (expand_b + pair_sum_le
   with G d m := Bf (expFree μ₀) M (h(bᵈ−1)bᵐ), M as in pair_bound; Σ_m via `sum_hf_true_le` with
   c = h'(bᵈ−1) (3∤c: 3∣b ⇒ bᵈ−1 ≡ −1), and `sum_topProd_le` twice; choose W = ⌊ε log₃ N⌋).
+
+## 2026-10-06 profile lap 2
+- PROVED `secondMoment_le_profile` (+ `three_pow_div_log_bounds`). So
+  `ae_isNormal_of_profileOK_of_baker` is now unconditional modulo only the cited hypothesis
+  `Literature.BakerLogDiscrepancy` (`#print axioms`: propext, choice, Quot.sound).
+- Open in scope: `ae_isNormal_of_profileOK` (= prove `LogDiscrepancy t` for 3∤t, Baker-level),
+  and the headline wiring (derandomizer test family for 3 ∣ b, kickoff step 3).
+- Next attack: kickoff step 3 can be done conditionally now (headline_of_baker), which isolates
+  `LogDiscrepancy` as the single remaining input.

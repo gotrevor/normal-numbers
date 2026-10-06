@@ -1137,15 +1137,222 @@ theorem pair_bound {μ₀ : ℚ} (hμ : 2 < μ₀) {b : ℕ} (hb : 2 ≤ b) (h3 
     have := hT (Int.fract (m * L + H))
     have := hHf ((c * t ^ m : ℕ) : ℝ)
     linarith
+/-- Scale bookkeeping: with `r = ⌊log₃ N⌋ / q` and `x = N^{1/q}`, `3^r ≤ x ≤ 3·3^r`. -/
+theorem three_pow_div_log_bounds (q N : ℕ) (hq : 1 ≤ q) (hN : 1 ≤ N) :
+    (3 : ℝ) ^ (Nat.log 3 N / q) ≤ (N : ℝ) ^ (1 / q : ℝ) ∧
+      (N : ℝ) ^ (1 / q : ℝ) ≤ 3 * 3 ^ (Nat.log 3 N / q) := by
+  set r := Nat.log 3 N / q
+  have hqR : (0 : ℝ) < q := by exact_mod_cast hq
+  have key : ∀ k : ℕ, ((3 : ℝ) ^ (k * q)) ^ (1 / q : ℝ) = 3 ^ k := by
+    intro k
+    rw [← Real.rpow_natCast, ← Real.rpow_mul (by norm_num)]
+    push_cast
+    rw [show (k : ℝ) * q * (1 / q) = k by field_simp, Real.rpow_natCast]
+  constructor
+  · have h1 : 3 ^ (r * q) ≤ N :=
+      (Nat.pow_le_pow_right (by norm_num) (Nat.div_mul_le_self _ _)).trans
+        (Nat.pow_log_le_self 3 (by omega))
+    rw [← key r]
+    exact Real.rpow_le_rpow (by positivity) (by exact_mod_cast h1) (by positivity)
+  · have h1 : N < 3 ^ ((r + 1) * q) := by
+      refine (Nat.lt_pow_succ_log_self (by norm_num) N).trans_le
+        (Nat.pow_le_pow_right (by norm_num) ?_)
+      have := Nat.lt_div_mul_add (a := Nat.log 3 N) hq
+      simp only [r]; nlinarith
+    rw [show (3 : ℝ) * 3 ^ r = 3 ^ (r + 1) by ring, ← key (r + 1)]
+    exact Real.rpow_le_rpow (by positivity) (by exact_mod_cast h1.le) (by positivity)
+
+set_option maxHeartbeats 4000000 in
 /-- **Power-saving second moment for `3 ∣ b` below the threshold**, given the Baker input.
-Confidence 60%.  This is the analytic core of `ae_isNormal_of_profileOK_of_baker`; the English
+Proved: `pair_bound` per pair with window `W = 3⌊log₃ N / q⌋ + 1`, `q = ⌈6/κ⌉ + 7`; the low window
+by `sum_hf_true_le`, both top windows by `sum_topProd_le`, giving `N^{2−δ}` with
+`δ = min(1/q, κ − 6/q)`.  This is the analytic core of `ae_isNormal_of_profileOK_of_baker`; the English
 proof is in that docstring (non-shadow `m` by the orbit of `t`, shadow `m` by top digits). -/
 theorem secondMoment_le_profile (hB : Literature.BakerLogDiscrepancy) (μ₀ : ℚ) (hμ : 2 < μ₀)
     {b : ℕ} (hb : 2 ≤ b) (h3 : 3 ∣ b) (hP : ProfileOK μ₀ b) (h : ℤ) (hh : h ≠ 0) :
     ∃ C δ : ℝ, 0 < δ ∧ ∀ N : ℕ, 1 ≤ N →
       ∫ ω, ‖∑ k ∈ Finset.range N, DecayAeNormal.ee (h * (b : ℝ) ^ k * pt (expFree μ₀) ω)‖ ^ 2
         ∂ExplicitSquare.coinMeasure ≤ C * (N : ℝ) ^ (2 - δ) := by
-  sorry
+  have hμ1 : (1 : ℚ) < μ₀ := by linarith
+  obtain ⟨hs1, hbt, ht3, ht2, -, -⟩ := profile_data hμ1 hb h3 hP
+  set s := padicValNat 3 b
+  set t := b / 3 ^ s
+  obtain ⟨A, B, hAB⟩ := pair_bound hμ hb h3 hP h hh
+  obtain ⟨C, κ, hκ, hC⟩ := sum_topProd_le (hB t ht2 ht3)
+  set q : ℕ := ⌈6 / κ⌉₊ + 7
+  have hq7 : 7 ≤ q := by omega
+  have hqR : (7 : ℝ) ≤ q := by exact_mod_cast hq7
+  have hq0 : (0 : ℝ) < q := by linarith
+  have hqκ : 6 / (q : ℝ) < κ := by
+    have h1 : 6 / κ < (q : ℝ) := by
+      have := Nat.le_ceil (6 / κ)
+      have : ((⌈6 / κ⌉₊ + 7 : ℕ) : ℝ) = ⌈6 / κ⌉₊ + 7 := by push_cast; ring
+      simp only [q]; linarith
+    rw [div_lt_iff₀ hκ] at h1
+    rw [div_lt_iff₀ hq0]; linarith
+  set δ : ℝ := min (1 / q) (κ - 6 / q)
+  have hδ1 : δ ≤ 1 / q := min_le_left _ _
+  have hδ2 : δ ≤ κ - 6 / q := min_le_right _ _
+  have hδ : 0 < δ := lt_min (by positivity) (by linarith)
+  have h1q : 1 / (q : ℝ) ≤ 1 / 7 := by gcongr
+  set Tt : ℝ := (3 / 2 : ℝ) ^ CantorLiouvilleAll.tb t
+  set K : ℝ := 9 * Tt + 42 + 18 * |C| + 9 * (A + B)
+  refine ⟨1 + 2 * K, δ, hδ, fun N hN => ?_⟩
+  have hN1 : (1 : ℝ) ≤ N := by exact_mod_cast hN
+  have hN0 : (0 : ℝ) < N := by linarith
+  set r := Nat.log 3 N / q
+  set W := 3 * r + 1
+  set x : ℝ := (N : ℝ) ^ (1 / q : ℝ)
+  set y : ℝ := (3 : ℝ) ^ r
+  obtain ⟨hyx, hxy⟩ := three_pow_div_log_bounds q N (by omega) hN
+  have hy1 : 1 ≤ y := one_le_pow₀ (by norm_num)
+  have hx0 : 0 < x := by positivity
+  have hxpow : ∀ k : ℕ, x ^ k = (N : ℝ) ^ ((k : ℝ) / q) := by
+    intro k
+    rw [← Real.rpow_natCast, ← Real.rpow_mul hN0.le]; congr 1; ring
+  set Z : ℝ := (N : ℝ) ^ (1 - δ)
+  have hle : ∀ a : ℝ, a ≤ 1 - δ → (N : ℝ) ^ a ≤ Z := fun a ha =>
+    Real.rpow_le_rpow_of_exponent_le hN1 ha
+  have hNx : (N : ℝ) / x ≤ Z := by
+    have : (N : ℝ) / x = (N : ℝ) ^ (1 - 1 / q : ℝ) := by
+      rw [Real.rpow_sub hN0, Real.rpow_one]
+    rw [this]; exact hle _ (by linarith)
+  have hx6 : x ^ 6 ≤ Z := by
+    rw [hxpow]; apply hle
+    have : (6 : ℝ) / q = 6 * (1 / q) := by ring
+    push_cast; linarith
+  have hx6κ : x ^ 6 * (N : ℝ) ^ (1 - κ) ≤ Z := by
+    rw [hxpow, ← Real.rpow_add hN0]; apply hle; push_cast; linarith
+  have hx3 : x ^ 3 ≤ N := by
+    rw [hxpow]
+    calc (N : ℝ) ^ ((3 : ℕ) / (q : ℝ)) ≤ (N : ℝ) ^ (1 : ℝ) := by
+          apply Real.rpow_le_rpow_of_exponent_le hN1
+          have : (3 : ℝ) / q = 3 * (1 / q) := by ring
+          push_cast; linarith
+      _ = N := Real.rpow_one _
+  -- the small powers
+  have hP3 : (2 / 3 : ℝ) ^ (3 * r) ≤ 3 / x := by
+    have h1 : (2 / 3 : ℝ) ^ (3 * r) ≤ 1 / y := by
+      rw [pow_mul, one_div, ← inv_pow]
+      exact pow_le_pow_left₀ (by norm_num) (by norm_num) r
+    calc _ ≤ 1 / y := h1
+      _ ≤ 3 / x := by rw [div_le_div_iff₀ (by linarith) hx0]; linarith
+  have hPW : (2 / 3 : ℝ) ^ W ≤ 3 / x :=
+    (pow_le_pow_of_le_one (by norm_num) (by norm_num) (by omega : 3 * r ≤ W)).trans hP3
+  have hQW : (1 / 3 : ℝ) ^ W ≤ 3 / x :=
+    (pow_le_pow_left₀ (by norm_num) (by norm_num) W).trans hPW
+  have hy3 : (3 : ℝ) ^ (3 * r) ≤ x ^ 3 := by
+    rw [show (3 : ℝ) ^ (3 * r) = y ^ 3 by simp only [y]; rw [← pow_mul, mul_comm]]
+    exact pow_le_pow_left₀ (by positivity) hyx 3
+  have h9W : (9 : ℝ) ^ W ≤ 9 * x ^ 6 := by
+    have : (9 : ℝ) ^ W = 9 * y ^ 6 := by
+      simp only [W, y]; rw [pow_succ, ← pow_mul, show (9 : ℝ) = 3 ^ 2 by norm_num, ← pow_mul]; ring
+    rw [this]; gcongr
+  have hWR : (W : ℝ) ≤ 9 * x ^ 6 := by
+    have hr0 : r < 3 ^ r := Nat.lt_pow_self (by norm_num)
+    have hr : (r : ℝ) < y := by simp only [y]; exact_mod_cast hr0
+    have : y ≤ y ^ 6 := le_self_pow₀ hy1 (by norm_num)
+    have : y ^ 6 ≤ x ^ 6 := pow_le_pow_left₀ (by positivity) hyx 6
+    simp only [W]; push_cast; nlinarith
+  -- per-difference bound
+  set M := 2 * b * N + ⌈Real.logb 3 |(h : ℝ)|⌉₊ + W + 1
+  set G : ℕ → ℕ → ℝ := fun d m => Bf (expFree μ₀) M (h * ((b : ℝ) ^ d - 1) * (b : ℝ) ^ m)
+  have hTN : ∀ β : ℝ, ∑ m ∈ Finset.range N, topProd W (Int.fract (m * Real.logb 3 t + β)) ≤
+      (21 + 9 * |C|) * Z := by
+    intro β
+    refine (hC N hN W β).trans ?_
+    have hN3 : 3 * (N : ℝ) * (2 / 3) ^ W ≤ 9 * Z := by
+      calc 3 * (N : ℝ) * (2 / 3) ^ W ≤ 3 * N * (3 / x) := by gcongr
+        _ = 9 * (N / x) := by ring
+        _ ≤ 9 * Z := by gcongr
+    have hN4 : 4 * (N : ℝ) * (1 / 3) ^ W ≤ 12 * Z := by
+      calc 4 * (N : ℝ) * (1 / 3) ^ W ≤ 4 * N * (3 / x) := by gcongr
+        _ = 12 * (N / x) := by ring
+        _ ≤ 12 * Z := by gcongr
+    have hCC : C * 9 ^ W * (N : ℝ) ^ (1 - κ) ≤ 9 * |C| * Z := by
+      have hNk : (0 : ℝ) ≤ (N : ℝ) ^ (1 - κ) := by positivity
+      calc C * 9 ^ W * (N : ℝ) ^ (1 - κ) ≤ |C| * (9 * x ^ 6) * (N : ℝ) ^ (1 - κ) := by
+            gcongr; exact le_abs_self C
+        _ = 9 * |C| * (x ^ 6 * (N : ℝ) ^ (1 - κ)) := by ring
+        _ ≤ 9 * |C| * Z := by gcongr
+    linarith
+  have hd : ∀ d ∈ Finset.Ico 1 N, ∑ m ∈ Finset.range N, G d m ≤ K * Z := by
+    intro d hd
+    simp only [Finset.mem_Ico] at hd
+    set e := padicValNat 3 h.natAbs
+    set h' := h.natAbs / 3 ^ e
+    have hc : ¬ 3 ∣ h' * (b ^ d - 1) := by
+      have : Fact (Nat.Prime 3) := ⟨Nat.prime_three⟩
+      have hna : h.natAbs ≠ 0 := Int.natAbs_ne_zero.2 hh
+      have hh' : ¬ 3 ∣ h' := by
+        intro hd3
+        have hhe : h.natAbs = 3 ^ e * h' := (Nat.mul_div_cancel' pow_padicValNat_dvd).symm
+        have : 3 ^ (e + 1) ∣ h.natAbs := by
+          rw [hhe, pow_succ]; exact Nat.mul_dvd_mul_left _ hd3
+        exact pow_succ_padicValNat_not_dvd hna this
+      have hbd : ¬ 3 ∣ b ^ d - 1 := by
+        have h1 : 3 ∣ b ^ d := dvd_pow h3 (by omega)
+        have h2 : 1 ≤ b ^ d := Nat.one_le_pow _ _ (by omega)
+        omega
+      exact fun h3' => (Nat.Prime.dvd_mul Nat.prime_three).1 h3' |>.elim hh' hbd
+    have hS1 := sum_hf_true_le ht2 ht3 (3 * r) (h' * (b ^ d - 1)) hc N
+    have hS3 : ∑ m ∈ Finset.range N, (if m < A * W + B then (1 : ℝ) else 0) ≤ A * W + B := by
+      rw [Finset.sum_boole]
+      have : (Finset.range N).filter (· < A * W + B) ⊆ Finset.range (A * W + B) := by
+        intro m; simp
+      have := Finset.card_le_card this
+      simp only [Finset.card_range] at this
+      exact_mod_cast this
+    refine (Finset.sum_le_sum fun m hm =>
+      hAB W N d m hd.1 hd.2 (Finset.mem_range.1 hm)).trans ?_
+    rw [Finset.sum_add_distrib, Finset.sum_add_distrib, Finset.sum_add_distrib]
+    have e1 := hTN (Real.logb 3 (|(h : ℝ)| * ((b : ℝ) ^ d - 1)))
+    have e2 := hTN (Real.logb 3 |(h : ℝ)|)
+    have hS1' : ∑ m ∈ Finset.range N, Hf (fun _ => true) 0 W
+        (((h' * (b ^ d - 1) * t ^ m : ℕ)) : ℝ) ≤ 9 * Tt * Z := by
+      refine hS1.trans ?_
+      have hTt : 0 ≤ Tt := by positivity
+      calc ((N : ℝ) + 2 * 3 ^ (3 * r)) * Tt * (2 / 3) ^ (3 * r) ≤ (3 * N) * Tt * (3 / x) := by
+            gcongr; linarith
+        _ = 9 * Tt * (N / x) := by ring
+        _ ≤ 9 * Tt * Z := by gcongr
+    have hS3' : (A * W + B : ℕ) ≤ 9 * (A + B) * Z := by
+      have hW1 : (1 : ℝ) ≤ W := by simp only [W]; push_cast; linarith [(r.cast_nonneg : (0:ℝ) ≤ r)]
+      push_cast
+      have hAB0 : (0 : ℝ) ≤ A + B := by positivity
+      calc (A : ℝ) * W + B ≤ (A + B) * W := by nlinarith [(B.cast_nonneg : (0:ℝ) ≤ B)]
+        _ ≤ (A + B) * (9 * x ^ 6) := by gcongr
+        _ ≤ (A + B) * (9 * Z) := by gcongr
+        _ = _ := by ring
+    have : ((A * W + B : ℕ) : ℝ) = (A : ℝ) * W + B := by push_cast; ring
+    simp only [K]; nlinarith [abs_nonneg C, hS3, this]
+  -- assemble
+  have hpair := pair_sum_le (fun n m => Bf (expFree μ₀) M (h * ((b : ℝ) ^ n - (b : ℝ) ^ m))) G
+    (fun d m => Bf_nonneg _ _ _) (fun n => Bf_le_one _ _ _)
+    (fun n m hmn => le_of_eq (by
+      simp only [G]; congr 1
+      rw [show (b : ℝ) ^ n = (b : ℝ) ^ (n - m) * (b : ℝ) ^ m by rw [← pow_add]; congr 1; omega]; ring))
+    (fun n m hmn => le_of_eq (by
+      simp only [G]; rw [← Bf_neg]; congr 1
+      rw [show (b : ℝ) ^ m = (b : ℝ) ^ (m - n) * (b : ℝ) ^ n by rw [← pow_add]; congr 1; omega]; ring)) N
+  have hI := (CantorLiouvilleAll.secondMoment_expand_b (expFree μ₀) b h M N).trans hpair
+  have hsum : ∑ d ∈ Finset.Ico 1 N, ∑ m ∈ Finset.range N, G d m ≤ N * (K * Z) := by
+    refine (Finset.sum_le_sum hd).trans ?_
+    rw [Finset.sum_const, Nat.card_Ico, nsmul_eq_mul]
+    have hK : 0 ≤ K * Z := by
+      have : 0 ≤ K := by simp only [K]; positivity
+      positivity
+    have : ((N - 1 : ℕ) : ℝ) ≤ N := by exact_mod_cast Nat.sub_le N 1
+    nlinarith
+  have hNZ : (N : ℝ) * Z = (N : ℝ) ^ (2 - δ) := by
+    rw [show (2 - δ) = 1 + (1 - δ) by ring, Real.rpow_add hN0, Real.rpow_one]
+  have hNle : (N : ℝ) ≤ (N : ℝ) ^ (2 - δ) := by
+    calc (N : ℝ) = (N : ℝ) ^ (1 : ℝ) := (Real.rpow_one _).symm
+      _ ≤ _ := Real.rpow_le_rpow_of_exponent_le hN1 (by linarith)
+  calc _ ≤ (N : ℝ) + 2 * ∑ d ∈ Finset.Ico 1 N, ∑ m ∈ Finset.range N, G d m := hI
+    _ ≤ (N : ℝ) + 2 * (N * (K * Z)) := by gcongr
+    _ = (N : ℝ) + 2 * K * (N * Z) := by ring
+    _ ≤ _ := by rw [hNZ]; nlinarith
 
 /-- **The crux, conditional on the top-digit input.**  Confidence 60%.  English proof: split the
 pair sum by `m`.  Outside every shadow, the window `[sm, sm + log₃N/2)` is free and the orbit
