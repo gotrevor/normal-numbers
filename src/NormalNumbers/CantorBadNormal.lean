@@ -3737,6 +3737,86 @@ theorem integral_comp_mul_condMean (s : ℕ) (G : List Bool → ℂ) {F : (ℕ �
   simp only [map_mul, Complex.conj_ofReal, Complex.real_smul]
   ring
 
+theorem buildU_take {s S : ℕ} (hsS : s ≤ S) (ω : ℕ → Bool) :
+    (buildU S ω).take (10 * s) = buildU s ω := by
+  have := List.prefix_iff_eq_take.1 (buildU_prefix ω hsS)
+  rw [length_buildU] at this; exact this.symm
+
+/-- **Tower property across stages.**  For `s ≤ S`, the stage-`s` conditional mean of the
+stage-`S` conditional mean is the stage-`s` conditional mean. -/
+theorem condMean_condMean {s S : ℕ} (hsS : s ≤ S) {F : (ℕ → Bool) → ℂ} (hFm : Measurable F)
+    {B : ℝ} (hB0 : 0 ≤ B) (hFb : ∀ ω, ‖F ω‖ ≤ B) (w : List Bool) :
+    condMean (fun ω => condMean F S (buildU S ω)) s w = condMean F s w := by
+  suffices h : ∫ ω in {ω | buildU s ω = w}, condMean F S (buildU S ω) ∂coinMeasure =
+      ∫ ω in {ω | buildU s ω = w}, F ω ∂coinMeasure by
+    rw [condMean, h, condMean]
+  set ind : List Bool → ℂ := fun v => if v.take (10 * s) = w then 1 else 0
+  have hind : ∀ ω, {ω | buildU s ω = w}.indicator (fun _ => (1 : ℂ)) ω = ind (buildU S ω) := by
+    intro ω
+    simp only [Set.indicator, Set.mem_setOf_eq, ind, buildU_take hsS]
+  have hFi : Integrable F coinMeasure := integrable_of_bdd hFm.aestronglyMeasurable B hFb
+  have hGm : Measurable fun ω => condMean F S (buildU S ω) := measurable_comp_buildU S _
+  have hGi : Integrable (fun ω => condMean F S (buildU S ω)) coinMeasure :=
+    integrable_of_bdd hGm.aestronglyMeasurable B fun ω => norm_condMean_le hB0 hFb S _
+  rw [← integral_indicator (mset_buildU' s w), ← integral_indicator (mset_buildU' s w)]
+  have e1 : ∀ X : (ℕ → Bool) → ℂ, {ω | buildU s ω = w}.indicator X =
+      fun ω => ind (buildU S ω) * X ω := by
+    intro X; funext ω
+    rw [← hind]; simp only [Set.indicator]; split_ifs <;> simp
+  rw [e1, e1]
+  have hi1 : Integrable (fun ω => ind (buildU S ω) * condMean F S (buildU S ω)) coinMeasure :=
+    hGi.bdd_mul (measurable_comp_buildU S ind).aestronglyMeasurable
+      (Eventually.of_forall fun ω => (show ‖ind (buildU S ω)‖ ≤ 1 by
+        simp only [ind]; split_ifs <;> simp))
+  have hi2 : Integrable (fun ω => ind (buildU S ω) * F ω) coinMeasure :=
+    hFi.bdd_mul (measurable_comp_buildU S ind).aestronglyMeasurable
+      (Eventually.of_forall fun ω => (show ‖ind (buildU S ω)‖ ≤ 1 by
+        simp only [ind]; split_ifs <;> simp))
+  rw [integral_eq_sum_atoms S _ hi1, integral_eq_sum_atoms S _ hi2]
+  refine Finset.sum_congr rfl fun v _ => ?_
+  have eL : ∫ ω in {ω | buildU S ω = v}, ind (buildU S ω) * condMean F S (buildU S ω) ∂coinMeasure =
+      coinMeasure.real {ω | buildU S ω = v} • (ind v * condMean F S v) := by
+    rw [setIntegral_congr_fun (mset_buildU' S v) (g := fun _ => ind v * condMean F S v)
+      (fun ω hω => by simp only [Set.mem_setOf_eq] at hω; simp only [hω]), setIntegral_const]
+  have eR : ∫ ω in {ω | buildU S ω = v}, ind (buildU S ω) * F ω ∂coinMeasure =
+      ind v * ∫ ω in {ω | buildU S ω = v}, F ω ∂coinMeasure := by
+    rw [setIntegral_congr_fun (mset_buildU' S v) (g := fun ω => ind v * F ω)
+      (fun ω hω => by simp only [Set.mem_setOf_eq] at hω; simp only [hω]), integral_const_mul]
+  rw [eL, eR, ← condMean_mul, Complex.real_smul]
+  ring
+
+
+theorem condMean_sub {F G : (ℕ → Bool) → ℂ} (hF : Integrable F coinMeasure)
+    (hG : Integrable G coinMeasure) (s : ℕ) (w : List Bool) :
+    condMean (fun ω => F ω - G ω) s w = condMean F s w - condMean G s w := by
+  unfold condMean
+  rw [integral_sub hF.integrableOn hG.integrableOn, sub_div]
+
+/-- **The conditional local bias on an earlier atom** is the difference, at `ξ = hbᵐ`, between the
+conditional character of `resLaw` and the conditional mean of the Cantor-continued character at
+stage `s_m`. -/
+theorem condMean_localBias (b C : ℕ) (h : ℤ) (m : ℕ) {s : ℕ} (hs : s ≤ stageOf b C m)
+    (w : List Bool) :
+    condMean (localBias b C h m) s w = condChar (h * (b : ℝ) ^ m) s w -
+      condMean (fun ω => contChar (h * (b : ℝ) ^ m) (buildU (stageOf b C m) ω)) s w := by
+  set ξ : ℝ := h * (b : ℝ) ^ m
+  set S := stageOf b C m
+  have hE : Measurable fun ω => ee (ξ * cpt (descentU ω)) := measurable_ee_descentU ξ
+  have hEb : ∀ ω, ‖ee (ξ * cpt (descentU ω))‖ ≤ 1 := fun ω => (norm_ee _).le
+  have hc : condChar ξ S = condMean (fun ω => ee (ξ * cpt (descentU ω))) S := rfl
+  have hc' : condChar ξ s = condMean (fun ω => ee (ξ * cpt (descentU ω))) s := rfl
+  have hLB : localBias b C h m = fun ω =>
+      condMean (fun ω => ee (ξ * cpt (descentU ω))) S (buildU S ω) - contChar ξ (buildU S ω) := by
+    funext ω; simp only [localBias, hc, ξ, S]
+  have hi1 : Integrable (fun ω => condMean (fun ω => ee (ξ * cpt (descentU ω))) S (buildU S ω))
+      coinMeasure :=
+    integrable_of_bdd (measurable_comp_buildU S _).aestronglyMeasurable 1
+      fun ω => norm_condMean_le zero_le_one hEb S _
+  have hi2 : Integrable (fun ω => contChar ξ (buildU S ω)) coinMeasure :=
+    integrable_of_bdd (measurable_comp_buildU S _).aestronglyMeasurable 1 fun ω => by
+      rw [norm_contChar]; exact norm_muK_le _
+  rw [hLB, condMean_sub hi1 hi2, condMean_condMean hs hE zero_le_one hEb, hc']
+
 /-- The averaged conditional bias: `E ‖E[B_m | w_{s_n}]‖`. -/
 noncomputable def biasMix (b C : ℕ) (h : ℤ) (n m : ℕ) : ℝ :=
   ∫ ω, ‖condMean (localBias b C h m) (stageOf b C n) (buildU (stageOf b C n) ω)‖ ∂coinMeasure

@@ -3017,3 +3017,12 @@ Next: (1) prove the reduction (needs pair-averaged partial Cantor products, Cass
   (sorry, believed 60%).  Next: express `E[B_m | w_s]` via the tower property as a difference of
   two conditional characters at `ξ = hbᵐ` and telescope over stages `t ∈ [s_m, s_m + C/10 + O(1)]`
   (`stage_telescope`), isolating the obstacle-phase sum.
+* (lap 7, later) Proved `condMean_condMean` (tower across stages), `condMean_sub`,
+  `condMean_localBias`: for `s ≤ s_m`, `E[B_m | w_s] = condChar(hbᵐ, s, w) −
+  E[contChar(hbᵐ, w_{s_m}) | w_s]`.  Next: telescope the second term stage by stage
+  (`E[contChar(ξ, w_{t+1}) | w_t] − contChar(ξ, w_t)` = dead correction, as in `prefChar_succ`),
+  giving `E[B_m | w_s] = Σ_{t ≥ s_m} E[dead correction_t | w_s]`; then state the
+  obstacle-phase node on those conditional dead corrections.
+  Difficulty note: summed over cylinders, the dead correction at stage `t` is ≈ `Σ_{p/q near K,
+  q ≈ 3^{5t}} e(hbᵐ p/q)` — an exponential sum over rationals near the Cantor set at frequency
+  `≈ q²`; the coherent part comes from `q | hbᵐ` (b-adic obstacles, fraction ≈ `Q^{-1}` of all).
