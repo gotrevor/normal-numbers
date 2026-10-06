@@ -822,10 +822,154 @@ theorem descentU_bad (ω : ℕ → Bool) : cpt (descentU ω) ∈ Bad :=
 /-- The resampling law. -/
 noncomputable def resLaw : Law := ⟨descentU, measurable_descentU, descentU_bad⟩
 
+/-! ### Independence of the coin blocks
+
+`MS P` is the σ-algebra of the coins whose block key `unpair (j / 10)` satisfies `P`. -/
+
+/-- The σ-algebra of coin `j`. -/
+def mcoord (j : ℕ) : MeasurableSpace (ℕ → Bool) :=
+  MeasurableSpace.comap (fun ω : ℕ → Bool => ω j) inferInstance
+
+/-- The σ-algebra of the coins in the blocks with key satisfying `P`. -/
+def MS (P : ℕ × ℕ → Prop) : MeasurableSpace (ℕ → Bool) :=
+  ⨆ j ∈ {j : ℕ | P (Nat.unpair (j / 10))}, mcoord j
+
+theorem idx_key (s t : ℕ) (i : Fin 10) : Nat.unpair ((10 * Nat.pair s t + i) / 10) = (s, t) := by
+  rw [show (10 * Nat.pair s t + i) / 10 = Nat.pair s t by omega]; simp
+
+theorem mset_coord {P : ℕ × ℕ → Prop} {s t : ℕ} (hP : P (s, t)) (i : Fin 10) (b : Bool) :
+    MeasurableSet[MS P] {ω : ℕ → Bool | ω (10 * Nat.pair s t + i) = b} :=
+  le_iSup₂ (f := fun j (_ : j ∈ {j : ℕ | P (Nat.unpair (j / 10))}) => mcoord j)
+    (10 * Nat.pair s t + i) (by simp only [Set.mem_setOf_eq, idx_key]; exact hP) _ ⟨{b}, trivial, rfl⟩
+
+theorem mset_blk {P : ℕ × ℕ → Prop} {s t : ℕ} (hP : P (s, t)) (X : Set (List Bool)) :
+    MeasurableSet[MS P] {ω : ℕ → Bool | blk ω s t ∈ X} := by
+  have : {ω : ℕ → Bool | blk ω s t ∈ X} =
+      ⋃ (f : Fin 10 → Bool) (_ : List.ofFn f ∈ X), ⋂ i : Fin 10,
+        {ω : ℕ → Bool | ω (10 * Nat.pair s t + i) = f i} := by
+    ext ω
+    simp only [Set.mem_setOf_eq, Set.mem_iUnion, Set.mem_iInter, exists_prop]
+    constructor
+    · intro h; exact ⟨fun i => ω (10 * Nat.pair s t + i), h, fun i => rfl⟩
+    · rintro ⟨f, hf, hω⟩
+      have : blk ω s t = List.ofFn f := by unfold blk; congr 1; funext i; exact hω i
+      rw [this]; exact hf
+  rw [this]
+  exact MeasurableSet.iUnion fun f => MeasurableSet.iUnion fun _ =>
+    MeasurableSet.iInter fun i => mset_coord hP i (f i)
+
+theorem MS_mono {P Q : ℕ × ℕ → Prop} (h : ∀ x, P x → Q x) : MS P ≤ MS Q :=
+  iSup₂_le fun j hj => le_iSup₂ (f := fun j (_ : j ∈ {j : ℕ | Q (Nat.unpair (j / 10))}) => mcoord j)
+    j (h _ hj)
+
+theorem MS_le (P : ℕ × ℕ → Prop) : MS P ≤ (inferInstance : MeasurableSpace (ℕ → Bool)) :=
+  iSup₂_le fun j _ => (measurable_pi_apply j).comap_le
+
+theorem indep_MS {P Q : ℕ × ℕ → Prop} (h : ∀ x, P x → ¬ Q x) {A B : Set (ℕ → Bool)}
+    (hA : MeasurableSet[MS P] A) (hB : MeasurableSet[MS Q] B) :
+    coinMeasure (A ∩ B) = coinMeasure A * coinMeasure B := by
+  have hind : ProbabilityTheory.iIndep mcoord coinMeasure := by
+    have := ProbabilityTheory.iIndepFun_infinitePi
+      (P := fun _ : ℕ => (PMF.uniformOfFintype Bool).toMeasure) (X := fun _ (b : Bool) => b)
+      (fun _ => measurable_id)
+    exact (ProbabilityTheory.iIndepFun_iff_iIndep _ _ _).1 this
+  have hI := ProbabilityTheory.indep_iSup_of_disjoint (fun j => (measurable_pi_apply j).comap_le)
+    hind (S := {j : ℕ | P (Nat.unpair (j / 10))}) (T := {j : ℕ | Q (Nat.unpair (j / 10))})
+    (Set.disjoint_left.2 fun j hP hQ => h _ hP hQ)
+  exact (ProbabilityTheory.Indep_iff _ _ _).1 hI A B hA hB
+
 open Classical in
 /-- The alive children of `w`, as a finset of selector blocks. -/
 noncomputable def aliveSet (w : List Bool) : Finset (Fin 10 → Bool) :=
   Finset.univ.filter fun f => Alive 5 c₀ w (List.ofFn f)
+
+
+/-- The `t`-th stage-`s` coin block as a vector. -/
+def blkVec (ω : ℕ → Bool) (s t : ℕ) : Fin 10 → Bool := fun i => ω (10 * Nat.pair s t + i)
+
+theorem coin_blkVec (s t : ℕ) (F : Finset (Fin 10 → Bool)) :
+    coinMeasure {ω | blkVec ω s t ∈ F} = F.card / 1024 := by
+  have hm : Measurable fun ω => blkVec ω s t := measurable_pi_lambda _ fun i => measurable_pi_apply _
+  have hinj : Function.Injective fun i : Fin 10 => 10 * Nat.pair s t + (i : ℕ) :=
+    fun a b h => Fin.ext (by simpa using h)
+  have hmap := Measure.map_infinitePi_infinitePi_of_inj
+    (P := fun _ : ℕ => (PMF.uniformOfFintype Bool).toMeasure) hinj
+  have h1 : coinMeasure {ω | blkVec ω s t ∈ F} = (coinMeasure.map fun ω => blkVec ω s t) ↑F := by
+    rw [Measure.map_apply hm F.finite_toSet.measurableSet]; rfl
+  rw [h1]
+  unfold coinMeasure
+  rw [show (fun ω : ℕ → Bool => blkVec ω s t) = fun ω i => ω (10 * Nat.pair s t + (i : ℕ)) from rfl,
+    hmap, ← MeasureTheory.sum_measure_singleton]
+  have hs : ∀ f : Fin 10 → Bool,
+      Measure.infinitePi (fun _ : Fin 10 => (PMF.uniformOfFintype Bool).toMeasure) {f} = 1 / 1024 := by
+    intro f
+    rw [Measure.infinitePi_singleton_of_fintype]
+    simp only [PMF.toMeasure_apply_singleton _ _ (measurableSet_singleton _),
+      PMF.uniformOfFintype_apply, Fintype.card_bool, Finset.prod_const, Finset.card_univ,
+      Fintype.card_fin]
+    rw [← ENNReal.inv_pow]; norm_num
+  simp only [hs, Finset.sum_const, nsmul_eq_mul]
+  rw [mul_one_div]
+
+theorem coin_blk_eq (s t : ℕ) (f : Fin 10 → Bool) :
+    coinMeasure {ω | blk ω s t = List.ofFn f} = 1 / 1024 := by
+  have := coin_blkVec s t {f}
+  rw [Finset.card_singleton, Nat.cast_one] at this
+  rw [← this]; congr 1; ext ω
+  simp only [Set.mem_setOf_eq, Finset.mem_singleton, blk]
+  exact ⟨fun h => List.ofFn_injective h, fun h => by rw [← h]; rfl⟩
+
+theorem coin_dead (w : List Bool) (s t : ℕ) :
+    coinMeasure {ω | ¬ Alive 5 c₀ w (blk ω s t)} = ((1024 - (aliveSet w).card : ℕ) : ENNReal) / 1024 := by
+  classical
+  have := coin_blkVec s t (Finset.univ \ aliveSet w)
+  rw [Finset.card_sdiff_of_subset (Finset.subset_univ _), Finset.card_univ] at this
+  rw [show Fintype.card (Fin 10 → Bool) = 1024 by simp] at this
+  rw [← this]; congr 1; ext ω
+  simp [aliveSet, blk, blkVec]
+
+theorem card_aliveSet_pos (w : List Bool) : 0 < (aliveSet w).card := by
+  classical
+  obtain ⟨u, hu, hal⟩ := exists_alive w
+  refine Finset.card_pos.2 ⟨fun i => u[i]'(by omega), ?_⟩
+  simp only [aliveSet, Finset.mem_filter, Finset.mem_univ, true_and]
+  convert hal
+  apply List.ext_getElem (by simp [hu]); intro i h1 h2; rw [List.getElem_ofFn]; rfl
+
+theorem card_aliveSet_le (w : List Bool) : (aliveSet w).card ≤ 1024 := by
+  have := Finset.card_le_univ (aliveSet w); simpa using this
+
+open Classical in
+theorem selU_eq_iff {w v : List Bool} (hv : Alive 5 c₀ w v) (ω : ℕ → Bool) (s : ℕ) :
+    selU w ω s = v ↔ (∃ t, (∀ t' < t, ¬ Alive 5 c₀ w (blk ω s t')) ∧ blk ω s t = v) ∨
+      ((∀ t, ¬ Alive 5 c₀ w (blk ω s t)) ∧ repC w = v) := by
+  by_cases hex : ∃ t, Alive 5 c₀ w (blk ω s t)
+  · have hspec := Nat.find_spec (p := fun t => Alive 5 c₀ w (blk ω s t) ∨
+        ¬ ∃ t', Alive 5 c₀ w (blk ω s t')) (firstAlive._proof_1 w ω s)
+    have hT : Alive 5 c₀ w (blk ω s (firstAlive w ω s)) := hspec.resolve_right (not_not.2 hex)
+    have hsel : selU w ω s = blk ω s (firstAlive w ω s) := by unfold selU; rw [if_pos hT]
+    have hmin : ∀ t' < firstAlive w ω s, ¬ Alive 5 c₀ w (blk ω s t') := fun t' ht' h =>
+      Nat.find_min (firstAlive._proof_1 w ω s) ht' (Or.inl h)
+    rw [hsel]
+    constructor
+    · intro h; exact Or.inl ⟨_, hmin, h⟩
+    · rintro (⟨t, ht, hb⟩ | ⟨hn, _⟩)
+      · have hat : Alive 5 c₀ w (blk ω s t) := hb ▸ hv
+        have : firstAlive w ω s = t := by
+          rcases lt_trichotomy (firstAlive w ω s) t with h | h | h
+          · exact absurd hT (ht _ h)
+          · exact h
+          · exact absurd hat (hmin _ h)
+        rw [this, hb]
+      · exact absurd hex (by push Not; exact hn)
+  · push Not at hex
+    have hsel : selU w ω s = repC w := by unfold selU; rw [if_neg (hex _)]
+    rw [hsel]
+    constructor
+    · intro h; exact Or.inr ⟨hex, h⟩
+    · rintro (⟨t, _, hb⟩ | ⟨_, h⟩)
+      · exact absurd (hb ▸ hv) (hex t)
+      · exact h
 
 /-- **Conditional uniformity of the resampled block** (open leaf, believed 97%; standard
 rejection sampling).  Given the prefix `w` after `s` stages, each alive child `v` is the next
