@@ -4635,7 +4635,13 @@ The implication to `NearObstaclePhaseMixing` is not proved: the second-order (tw
 terms and the μ_K weights are not controlled.  Phase gaps are multiples of `ξ/(qq') ≳ 3^C`, so
 this is Farey-scale pair correlation near a fractal; for all rationals in an interval it is known
 (Boca–Cobeli–Zaharescu), near `K` it is open.  Base-3 control: the periodic points of `K` are a
-sub-family whose phase sum is a Riesz product constant along `h·3ᵐ` (`riesz_three_shift`). -/
+sub-family whose phase sum is a Riesz product constant along `h·3ᵐ` (`riesz_three_shift`).
+
+Evidence (`scripts/cantorbad_paircorr.py`, 2026-10-06).  `L = 12`, `C = 3`, all 7796 obstacles
+(pruned Stern–Brocot enumeration), `h = 1`: ratio `|Σ|/#pairs` at `S = 4, 8, 12` is
+`.002, .006, .061` (b = 2), `.000, .003, .053` (b = 5), `.000, .001, .020` (b = 7), i.e. square-root
+size (`#pairs = 1.9·10⁶, 1.2·10⁵, 6274`).  Known-coherent control `b = 3`: `.163, .167, .134`, flat in
+`S`.  So the probe separates the bases prime to 3 from base 3 by two orders of magnitude. -/
 def ObstaclePairCorrelation (b : ℕ) : Prop :=
   ∀ h : ℤ, h ≠ 0 → ∀ C : ℕ, ∀ ε : ℝ, 0 < ε → ∃ G : ℕ, ∀ m S : ℕ, S + G ≤ 10 * stageOf b C m →
     ‖∑ xy ∈ obstPairs (10 * stageOf b C m) S, ee (h * (b : ℝ) ^ m * (oval xy.1 - oval xy.2))‖ ≤
