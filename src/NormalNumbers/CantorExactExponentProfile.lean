@@ -1420,6 +1420,155 @@ theorem ae_isNormal_of_profileOK (μ₀ : ℚ) (hμ : 2 < μ₀) :
     ∀ᵐ ω ∂coins, ∀ b : ℕ, 2 ≤ b → ProfileOK μ₀ b → IsNormal b (cantorExpReal μ₀ ω) := by
   sorry
 
+/-! ### Wiring the headline through the family derandomizer
+
+The family derandomizer `CantorLiouvilleAll.exists_computable_normal_sched_family` needs, for each
+admitted base, a second moment `κ b · |h| · N² · W N` with ONE `W` and a PRIMITIVE RECURSIVE `κ`.
+`secondMoment_le_profile` gives `C_{b,h} N^{2−δ_b}` with `C, δ` inside an `∃`, which cannot be
+made computable.  Two changes fix this:
+* the Baker input is taken in effective form (`Literature.BakerLogDiscrepancyEff`, one `K` for
+  all `t`), so every constant is an explicit function of `b` and `K`;
+* `W` decays only polylogarithmically (`profW`).  The small-`m` constant of `pair_classify`
+  grows like `a_{k}` with `k ≍ log |h|`, faster than any power of `|h|`; it is absorbed because
+  `N² profW N ≥ N²·|h|^{−o(1)}` once `N ≤ B_h²`, and by the `N^{−δ}` saving beyond. -/
+
+/-- **Literature, effective form (Baker 1966 / Baker–Wüstholz 1993 with Erdős–Turán).**  For
+`t ≥ 2` prime to 3, `|q log t − p log 3| ≥ q^{−C log t}` with an absolute effective `C`, so the
+discrepancy of `{m log₃ t + β}` is `≪ t^{O(1)} N^{1 − c/log t}` uniformly in `β`.  Transcribed
+weaker: one `K` with constant `t^K` and saving `1/(K t)` (`1/(K t) ≤ c/log t`). -/
+def Literature.BakerLogDiscrepancyEff : Prop :=
+  ∃ K : ℕ, 1 ≤ K ∧ ∀ t : ℕ, 2 ≤ t → ¬ 3 ∣ t → ∀ N : ℕ, 1 ≤ N → ∀ β u v : ℝ, 0 ≤ u → u ≤ v →
+    v ≤ 1 → |(visitCount (fun m => Int.fract (m * Real.logb 3 t + β)) u v N : ℝ) - N * (v - u)| ≤
+      (t : ℝ) ^ K * (N : ℝ) ^ (1 - 1 / ((K : ℝ) * t))
+
+theorem bakerLogDiscrepancy_of_eff (hB : Literature.BakerLogDiscrepancyEff) :
+    Literature.BakerLogDiscrepancy := by
+  obtain ⟨K, hK, hD⟩ := hB
+  intro t ht h3
+  have hK0 : (0 : ℝ) < K := by exact_mod_cast hK
+  have ht0 : (0 : ℝ) < t := by exact_mod_cast (by omega : 0 < t)
+  exact ⟨(t : ℝ) ^ K, 1 / ((K : ℝ) * t), by positivity, hD t ht h3⟩
+
+/-- The uniform weight: polylogarithmic decay. -/
+noncomputable def profW (N : ℕ) : ℝ := 1 / ((Nat.log 2 N + 1 : ℕ) : ℝ) ^ 16
+
+theorem profW_nonneg (N : ℕ) : 0 ≤ profW N := by unfold profW; positivity
+
+theorem profW_antitone : Antitone profW := by
+  intro a b hab
+  unfold profW
+  have h1 : Nat.log 2 a + 1 ≤ Nat.log 2 b + 1 := by
+    have := Nat.log_mono_right (b := 2) hab; omega
+  apply one_div_le_one_div_of_le (by positivity)
+  exact pow_le_pow_left₀ (by positivity) (by exact_mod_cast h1) 16
+
+/-- **Uniform second moment for the profile bases.**  Open; confidence 75%.  English proof: the
+proof of `secondMoment_le_profile` with every constant explicit (`K` from the effective
+hypothesis, `g_b = log₃ t − s(μ₀−1) ≥ 3^{−s(p−q)}/(3q)` for `μ₀ = p/q`, `A, B` of
+`pair_classify` bounded through `expRunStart k ≤ 4 (k+1)! ⌈μ₀+1⌉^k`), the trivial bound `N²`
+for `N ≤ B_h²`, and `(log N)^{16} ≤ c(δ) N^δ`. -/
+theorem secondMoment_profile_uniform (hB : Literature.BakerLogDiscrepancyEff) (μ₀ : ℚ)
+    (hμ : 2 < μ₀) :
+    ∃ κ : ℕ → ℕ, Primrec κ ∧ ∀ b : ℕ, 2 ≤ b → 3 ∣ b → ProfileOK μ₀ b → ∀ h : ℤ, h ≠ 0 →
+      ∀ N : ℕ, 1 ≤ N →
+        ∫ ω, ‖∑ k ∈ Finset.range N, DecayAeNormal.ee (h * (b : ℝ) ^ k * cantorExpReal μ₀ ω)‖ ^ 2
+          ∂coins ≤ κ b * |(h : ℝ)| * N ^ 2 * profW N := by
+  sorry
+
+/-- `ProfileOK` is primitive recursive (`3^{s(p−q)} < t^q` for `μ₀ = p/q`).  Open; 95%. -/
+theorem primrecPred_profileOK (μ₀ : ℚ) (hμ : 1 < μ₀) : PrimrecPred (ProfileOK μ₀) := by
+  sorry
+
+/-- The schedule condition for the combined weight.  Open; 95% (`clNs j ≥ 4^{√j}`, `profW` at
+`4^{√j}` is `≤ (2√j+1)^{−16}`). -/
+theorem profile_ev (μ₀ : ℚ) (hμ : 1 < μ₀) : ∀ᶠ j in atTop, 8 ≤ clNr j ∧ clNr j ≤ clNs j ∧
+    (clNr j : ℝ) ^ 6 * ((eW μ₀ (clNs j) + profW (clNs j)) / 2) ≤ 1 / ((j : ℝ) + 1) ^ 4 := by
+  sorry
+
+/-- **Family derandomization with the profile bases.**  Wiring (proved from the three leaves). -/
+theorem exists_computable_normal_avoid_profile (hB : Literature.BakerLogDiscrepancyEff) (μ₀ : ℚ)
+    (hμ : 2 < μ₀)
+    (bad' : ℕ → List Bool → Bool) (hbad' : Primrec₂ bad') (d' : ℕ → ℕ) (hd' : Primrec d')
+    (hmass : ∀ j, coins.real {ω | bad' j (pre ω (d' j)) = true} ≤ 1 / ((j : ℝ) + 1) ^ 2) :
+    ∃ e : ℕ → Bool, Computable e ∧
+      (∀ b : ℕ, 2 ≤ b → ProfileOK μ₀ b → IsNormal b (cantorExpReal μ₀ e)) ∧
+      ∃ j₁, ∀ j, j₁ ≤ j → bad' j (pre e (d' j)) = false := by
+  have h1 : (1 : ℚ) < μ₀ := by linarith
+  obtain ⟨κP, hκP, hP⟩ := secondMoment_profile_uniform hB μ₀ hμ
+  classical
+  have hS := primrecPred_profileOK μ₀ h1
+  have hκ : Primrec fun b : ℕ => 2 * (16 * b ^ 6 + κP b) :=
+    Primrec.nat_mul.comp (Primrec.const 2) (Primrec.nat_add.comp CantorLiouvilleAll.primrec_kappa hκP)
+  set W : ℕ → ℝ := fun N => (eW μ₀ N + profW N) / 2
+  have hW0 : ∀ N, 0 ≤ W N := fun N => by
+    have := eW_nonneg μ₀ N; have := profW_nonneg N; simp only [W]; positivity
+  have hWa : Antitone W := fun m n hmn => by
+    have := eW_antitone μ₀ hmn; have := profW_antitone hmn; simp only [W]; linarith
+  have hsm : ∀ b, 2 ≤ b → ProfileOK μ₀ b → ∀ h : ℤ, h ≠ 0 → ∀ N : ℕ, 1 ≤ N →
+      ∫ ω, ‖∑ k ∈ Finset.range N, DecayAeNormal.ee (h * (b : ℝ) ^ k * cantorExpReal μ₀ ω)‖ ^ 2
+        ∂coins ≤ ((2 * (16 * b ^ 6 + κP b) : ℕ) : ℝ) * |(h : ℝ)| * N ^ 2 * W N := by
+    intro b hb hPb h hh N hN
+    have hh0 : (0 : ℝ) ≤ |(h : ℝ)| * N ^ 2 := by positivity
+    have he := eW_nonneg μ₀ N
+    have hp := profW_nonneg N
+    have hcast : ((2 * (16 * b ^ 6 + κP b) : ℕ) : ℝ) * |(h : ℝ)| * N ^ 2 * W N =
+        ((16 * b ^ 6 : ℕ) + (κP b : ℝ)) * (|(h : ℝ)| * N ^ 2) * (eW μ₀ N + profW N) := by
+      simp only [W]; push_cast; ring
+    rw [hcast]
+    have hk0 : (0 : ℝ) ≤ (κP b : ℝ) := by positivity
+    have hb0 : (0 : ℝ) ≤ ((16 * b ^ 6 : ℕ) : ℝ) := by positivity
+    by_cases h3 : 3 ∣ b
+    · refine (hP b hb h3 hPb h hh N hN).trans ?_
+      have : (κP b : ℝ) * |(h : ℝ)| * N ^ 2 * profW N = (κP b : ℝ) * (|(h : ℝ)| * N ^ 2) * profW N := by
+        ring
+      rw [this]
+      have := mul_nonneg (mul_nonneg hb0 hh0) (add_nonneg he hp)
+      have := mul_nonneg (mul_nonneg hk0 hh0) he
+      nlinarith
+    · refine (e_secondMoment_b μ₀ hb h3 h hh N hN).trans ?_
+      have : ((16 * b ^ 6 : ℕ) : ℝ) * |(h : ℝ)| * N ^ 2 * eW μ₀ N =
+          ((16 * b ^ 6 : ℕ) : ℝ) * (|(h : ℝ)| * N ^ 2) * eW μ₀ N := by ring
+      rw [this]
+      have := mul_nonneg (mul_nonneg hb0 hh0) hp
+      have := mul_nonneg (mul_nonneg hk0 hh0) (add_nonneg he hp)
+      nlinarith
+  obtain ⟨e, hce, hn, j₁, hj⟩ := CantorLiouvilleAll.exists_computable_normal_sched_family
+    (eΨ μ₀) (primrec_eΨ μ₀) (eA μ₀) (eΨ_eq μ₀) (eA_nonneg μ₀) (cantorExpReal μ₀)
+    (measurable_pt (expFree μ₀)) (eA_bounds μ₀) (ProfileOK μ₀) hS
+    (fun b => 2 * (16 * b ^ 6 + κP b)) hκ W hW0 hWa hsm
+    clNs clNr primrec_clNs primrec_clNr tendsto_clNs clNs_ratio tendsto_clNr (profile_ev μ₀ h1) bad'
+    hbad' d' hd' hmass
+  exact ⟨e, hce, hn, j₁, hj⟩
+
+/-- **The headline, given the effective Baker input.**  Wiring (proved from the leaves above,
+`not_isNormal_of_not_profileOK`, and the stretch exponent tests). -/
+theorem exists_computable_normalProfile_of_baker (hB : Literature.BakerLogDiscrepancyEff)
+    (μ₀ : ℚ) (hμ : 2 < μ₀) :
+    ∃ e : ℕ → Bool, Computable e ∧ cantorExpReal μ₀ e ∈ cantorSet ∧
+      HasIrrExponent (cantorExpReal μ₀ e) μ₀ ∧
+      ∀ b : ℕ, 2 ≤ b → (IsNormal b (cantorExpReal μ₀ e) ↔ ProfileOK μ₀ b) := by
+  have h1 : (1 : ℚ) < μ₀ := by linarith
+  obtain ⟨J₀, hJ₀⟩ := eventually_atTop.1 (ev_expTest_mass_all μ₀ hμ)
+  have hmass : ∀ j, coins.real {ω | (fun j p => decide (J₀ ≤ j) && expTest μ₀ j p) j
+      (pre ω ((fun j => expL μ₀ j + 1) j)) = true} ≤ 1 / ((j : ℝ) + 1) ^ 2 := by
+    intro j
+    by_cases hj : J₀ ≤ j
+    · simpa [hj] using hJ₀ j hj
+    · simp only [hj, decide_false, Bool.false_and, Bool.false_eq_true, Set.ofPred_false,
+        measureReal_empty]
+      positivity
+  have hbad : Primrec₂ fun j p => decide (J₀ ≤ j) && expTest μ₀ j p :=
+    Primrec.and.comp (Primrec.nat_le.comp (Primrec.const J₀) Primrec.fst).decide
+      (primrec_expTest μ₀)
+  obtain ⟨e, hce, hn, j₁, hj⟩ := exists_computable_normal_avoid_profile hB μ₀ hμ _ hbad
+    (fun j => expL μ₀ j + 1) (Primrec.succ.comp (primrec_expL μ₀)) hmass
+  refine ⟨e, hce, mem_cantorSet μ₀ e,
+    hasIrrExponent_of_avoid_two μ₀ hμ e ⟨max j₁ J₀, fun m hm => ?_⟩, fun b hb => ⟨fun hN => ?_, hn b hb⟩⟩
+  · have := hj m (le_of_max_le_left hm)
+    simpa [le_of_max_le_right hm] using this
+  · by_contra hP
+    exact not_isNormal_of_not_profileOK μ₀ h1 e hb hP hN
+
 /-- **Headline: the exponent sets the normal profile.**  For every rational `μ₀ > 2` there is a
 computable `x ∈ K` with irrationality exponent exactly `μ₀` such that, for every base `b ≥ 2`,
 `x` is normal to `b` iff `b = 3ˢt` with `t > 3^{s(μ₀−1)}`.  Confidence 65% (the node above, plus
