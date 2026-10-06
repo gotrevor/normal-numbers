@@ -2909,3 +2909,15 @@ Peeling bound: only O(1) stages near scale log₃|ξ| contribute a floor, of siz
 for EVERY admissible replacement. With AdversarialReplacement this pins the crux to dead-stage decay.
 Next: (1) prove the reduction (needs pair-averaged partial Cantor products, Cassels-style);
 (2) attack DeadRateDecay vs. flat η: count rationals p/q, q² ≍ 3^L, within c₀/q² of K (He–Liao).
+
+## cantorbad lap 4 (2026-10-06): operator resolution carried out
+- New law `resLaw` (`descentU`/`buildU`/`selU`): stage s takes the first alive block among fresh
+  coin blocks `blk ω s t` (`Nat.pair`), proved measurable and Bad (`cpt_bad_of_alive`).
+  Headline now `exists_of_law resLaw`.  Old crux is the node `FourierPairRateChoose`.
+- Crux decomposed (`fourierPairRate_resLaw` proved from leaves):
+  `buildU_succ_uniform` (rejection sampling), `resLaw_fourier_telescope` (exact identity:
+  only dead-children characters appear, uniformity is used here), `cassels_muK` (classical,
+  inside CantorLiouvilleAll), and the real crux `deadCharCancel` (exponential sums
+  e(h bⁿ p/q) over obstacle centres near K).
+- Next: prove `cassels_muK` from `secondMoment_le_explicit_b` internals; then
+  `buildU_succ_uniform`; then attack `deadCharCancel` (first: bound |deadErr| ≤ 4π|ξ|3^{-10S}).
