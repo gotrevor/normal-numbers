@@ -76,3 +76,20 @@ problem.  The single-track one closes at three members.
 The genre (Mahler 1973, Berend–Boshernitzan 1994, Szüsz–Volkmann 1983) gives existence and
 size bounds for the multiplier.  Explicit joint word blocks were not found in the 2026-10-05
 sweep.  Estimated novelty: about 60% as stated.
+
+## The joint multiplier is doubly exponential (later, 2026-10-06)
+
+The Liouville witness plus a window count gives the lower side that Szüsz–Volkmann lacked.
+`0^∞ m 0^∞` has at most `len(m) + k` distinct `k`-windows, so a `k`-word block needs a member
+with `len(m) ≥ g^k − k`, that is `m ≥ g^(g^k − k − 1)` (`IsWordBlock.exists_ge`).  With
+Szüsz–Volkmann's `12·g^(g^k + k)` (`Literature.SzuszVolkmann1983`), the exponent of the joint
+multiplier is `g^k ± O(k)` (`wordBlock_exponent_pinned`).  Bugeaud–Coons's joint
+`B(b,k) = b^k(b+1)` therefore fails whenever `b^k(b+1) < b^(b^k − k − 1)`, for example binary
+`k = 4` (48 against 2048) and every base at `k = 2` from `b = 3` on
+(`not_isWordBlock_Icc_bugeaudCoons`).  At small cases the Liouville bound is close to the
+truth: 125 vs 194 (base 5, digits), 16 vs 23 (binary 3-words), 2048 vs 2479 (binary 4-words).
+
+**Magnitude is pinned; block SIZE is not.**  Binary sizes run 1, 3, at most 12 for
+`k = 1, 2, 3`.  No finite S works for every k at once (pigeonhole: some member would work for
+infinitely many k, so its multiple would be disjunctive, and the Liouville number kills that).
+Whether the minimum size stays bounded as k grows is open here.
