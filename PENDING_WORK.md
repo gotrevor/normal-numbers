@@ -3177,3 +3177,6 @@ error never arises), `firstOrderObstacleMix_of_cyl`.  Crux sorry moved to
 `ObstaclePairCorrelation` is stated as node `PairCorrToCylinder` (boundary smoothing, resLaw→μ_K, C–S).
 Next: probe numerically whether obstMix decays in t − s_n for b=2,5 vs b=3 control; then prove
 the Cauchy–Schwarz step obstMix² ≤ E|obstSum|² as a lemma toward PairCorrToCylinder.
+- lap 9 probe: `deadmix.py first` vs `nu` vs b=3 all at MC floor (lags 1–3, t=8): inconclusive, no
+  working control.  A decisive probe needs lags where b=3 is coherent (large m relative to C) or exact
+  enumeration of obstMix instead of Monte Carlo.
