@@ -18,3 +18,9 @@ resampling) was already in place (b17cc398).  This lap changed the route on top 
 1. Prove `ae_cesaro_condDiff` (plan in PENDING_WORK, cantorbad lap 6).
 2. Prove `cesaro_contChar_small`.
 3. Crux: second split of `localBias` at a coarser prefix; state the obstacle-phase equidistribution node.
+
+## State at wind-down
+Branch `proof/cantor-bad-normal`, HEAD after this commit (code at 32682ed0, docs 05cfc5bf).  No uncommitted edits.
+Build green.  Headline `#print axioms`: trust base + `sorryAx` + `J_lt`/`J_inj` native_decide artifacts.
+Open sorries in CantorBadNormal.lean: on-path `localDeadBias_resLaw` (crux), `ae_cesaro_condDiff`,
+`cesaro_contChar_small`; off-path `midStages`, `fourierPairRate_descent_of_deadRateDecay`.
