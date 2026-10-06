@@ -33,6 +33,7 @@ import NormalNumbers.SchmidtGamesStretch
 import NormalNumbers.CantorBadNormal
 import NormalNumbers.CantorExactExponentStretch
 import NormalNumbers.StretchBFR
+import NormalNumbers.CantorExactExponentProfile
 import NormalNumbers.QSpanCriterion
 import NormalNumbers.ComputableReal
 import NormalNumbers.KurtzRandom
@@ -236,6 +237,13 @@ def waivers : List Waiver := [
    "conditional wiring (Fourier expansion over the q-interval); records that single-sum \
     cancellation reaches only m > b − δ b' (singleSum_insufficient)"⟩,
   ⟨``StretchBFR.card_near_cantor_le, "a leaf: the classical covering count of rationals near K"⟩,
+  ⟨``CantorExactExponentProfile.not_isNormal_of_not_profileOK,
+   "a leaf: elementary base-b zero run along each forced ternary run; English proof in the docstring"⟩,
+  ⟨``CantorExactExponentProfile.ae_isNormal_of_profileOK,
+   "open node with a stated mechanism (Cassels–Schmidt second moment over the orbit of t mod 3^k, \
+    window free count linear below the threshold); no registered barrier applies"⟩,
+  ⟨``CantorExactExponentProfile.exists_computable_mem_cantorSet_irrExponent_normalProfile,
+   "wiring: the two profile lemmas plus the stretch derandomizer with the 3 ∣ b tests added"⟩,
   ⟨``FiniteState.isFNormal_delayEnum_of_normal,
    "a leaf: O(1) cost of composing with the delay transducer and its finite-state right inverse"⟩]
 
