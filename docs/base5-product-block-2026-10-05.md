@@ -18,6 +18,16 @@ A **product block** in base `g` is a finite `S` with: for every irrational `x`, 
 Mahler sets (`M(5,1) = 6`, `mahler_M_five_eq_six`), where the multiplier may depend on the
 digit.  `{2, 11}` is a ternary block (`isProductBlock_three_two_eleven`, from C2).
 
+## Prior art: Berend-Boshernitzan 1995 (Acta Math. Hungar. 66, 113-126) 📚
+
+Read 2026-10-05 (the 08-30 citation sweep had not).  §3 defines **M_g-sets**: `A ⊆ ℕ` such that
+for every irrational α and every base-g block B, some `m ∈ A` has B i.o. in `mα`.  Remark 3.1 is
+the JOINT form (one `m` with every length-k block i.o.), and Lemma 3.1 is the `g^n` rescaling
+(our "multiples of 5 are redundant").  An M_g-set must handle blocks of every length, so it is
+necessarily infinite (their examples are lacunary sequences).  A product block is the finite,
+`k = 1` object: same notion family, a different and explicit statement.  Novelty status of an
+explicit finite joint set: still not found; zbMATH "cited by" for B-B 1994 is the open check.
+
 ## The lower side: the Liouville cover 🎯
 
 Take `x = B · Σ g^(−i!)`.  Past a point, the base-`g` tail of `m·x` is the digit string of
