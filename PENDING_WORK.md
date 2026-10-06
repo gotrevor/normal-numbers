@@ -3200,3 +3200,4 @@ the Cauchy–Schwarz step obstMix² ≤ E|obstSum|² as a lemma toward PairCorrT
 - lap 9: `sibSum`, `norm_aliveExt_sq_le_sib`: ‖aliveExt G k‖² ≤ 2048²/536^k + sibSum (depth-weighted sibling correlations).  Next: AliveSibMix node on E sibSum ⇒ AliveObstacleMix (same assembly as aliveObstacleMix_of_off).
 - lap 9: `AliveSibMix` node + `aliveObstacleMix_of_sib` proved (alternative to AliveOffMix; stronger: triangle across depths).  Crux kept at the weaker AliveOffMix.
 - lap 9: dyad2 control ALSO at floor in deadmix probe ⇒ single-pair R probes are non-evidence (recorded in AliveOffMix docstring).  Next probe must measure the summed near-scale quantity.
+- lap 9: deadmix probe FIXED (offset arg; ξ ≥ 3^{L+8}): dyad2 control R=.977; resLaw b=2,3 near floor .058–.076.  Evidence for AliveOffMix (b=2) with working control; b=3 not separated at single-pair level.

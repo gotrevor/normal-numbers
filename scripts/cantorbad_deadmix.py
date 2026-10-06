@@ -16,7 +16,8 @@ def main():
     rng = random.Random(seed)
     Lt = 10 * ts
     xi = 1
-    while xi < 3 ** (Lt + 3):
+    off = int(sys.argv[7]) if len(sys.argv) > 7 else 3
+    while xi < 3 ** (Lt + off):
         xi *= b
     dl = law if law == 'dyad2' else 'q'
     if law == 'first': pass

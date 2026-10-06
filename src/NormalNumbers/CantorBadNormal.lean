@@ -5165,8 +5165,8 @@ coarse cylinder, under `resLaw`.
 
 Base 3.  The first-order probe (`scripts/cantorbad_deadmix.py first`, `t = 12`, 200 × 400, lags
 1–5) gives `R = .067 → .056` for b = 2, `.069 → .057` for b = 5, and `.066 → .059` for b = 3, all
-near the floor `.05`.  WITHDRAWN as evidence: the dyadic control also sits at the floor (see
-`AliveOffMix`), so this probe cannot see coherence; whether this node fails for `b = 3` is open.  The base-3 failure of the headline may live in the
+near the floor `.05`.  That configuration had no working control; the controlled probe is
+recorded at `AliveOffMix` (b = 3 near the floor there too).  The base-3 failure of the headline may live in the
 Cantor main term (`cesaro_contChar_small` uses `3 ∤ b`) rather than here; undecided.  The Riesz sub-family (`riesz_three_shift`) is coherent
 along `h·3ᵐ` but has about `2^ℓ` of the `4^ℓ` obstacles, so it is lower order. -/
 def ResLawObstOff (b : ℕ) : Prop :=
@@ -5612,12 +5612,14 @@ root sums of `E‖aliveOff D_t‖` are `O(N² W(N))`.  This pair correlation is 
 defects are built in and there is no separate defect node.  Implies `AliveObstacleMix b`
 (`aliveObstacleMix_of_off`), hence `NearObstaclePhaseMixing b`.
 
-Control failure (lap 9).  The Monte Carlo ratio `R = E|E[D_t | w_s]| / E|D_t|` of
-`scripts/cantorbad_deadmix.py` stays at its floor `.05` for the known-coherent dyadic sibling too
-(`dyad2`, b = 2, t = 12, lags 3–8: `.051 … .048`).  So that probe cannot detect the coherence this
-node must exclude, and its readings for b = 2, 3, 5 (also at floor) are not evidence for or
-against this node.  A usable probe needs the near-scale sum over `(n, m)` (where the dyadic
-coherence accumulates), not a single-pair ratio. -/
+Probe with a working control (lap 9, `scripts/cantorbad_deadmix.py LAW b 7 150 300 10 8`, i.e.
+t = 10 and `ξ = bᵐ ≥ 3^{L_t+8}`; ratio `R = E|E[D_t | w_s]| / E|D_t|`, floor `.058`, lags 1–5):
+known-coherent dyadic sibling `dyad2`: `R = .977` flat (control detects coherence);
+`resLaw` b = 2: `.076, .066, .064, .067, .065`; b = 3: `.073, .066, .063, .069, .069`.  So b = 2 sits
+near the floor, consistent with this node.  b = 3 is also near the floor, so at this single-pair
+level the base-3 barrier does not show; it may bind only the Cantor main term.  (With
+`ξ ≥ 3^{L_t+3}` the dyadic control was at the floor, because its obstacles `p/2^m` had
+`2^m > ξ`; that earlier configuration is not evidence.) -/
 def AliveOffMix (b : ℕ) : Prop :=
   ∀ h : ℤ, h ≠ 0 → ∀ C : ℕ, ∃ (K : ℝ) (W : ℕ → ℝ), Summable (fun j => W (sched j)) ∧
     ∀ N : ℕ, 1 ≤ N →
@@ -5757,8 +5759,8 @@ correlation of the stage dead corrections over distinct `resLaw` completions of 
 This single node replaces the former first-order (`ResLawObstOff`) and defect
 (`DefectObstacleMix`) nodes of the split route (`nearObstaclePhaseMixing_of_split`, whose proved
 reductions are kept above): the `resLaw` path weights already contain the alive defects.  Whether the
-base-3 barrier binds this node or only the Cantor main term is undecided (the t = 12 probe has no
-working control). -/
+base-3 barrier binds this node or only the Cantor main term is undecided; the controlled probe at
+`AliveOffMix` shows no base-3 coherence at the single-pair level. -/
 theorem aliveOffMix_resLaw {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) :
     AliveOffMix b := by
   sorry
