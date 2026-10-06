@@ -82,3 +82,14 @@ Accepted, with the headline `exists_mem_cantorSet_bad_isNormal_coprime_three` un
   (believed false), so it must use the uniformity of the resampled block.  The base-2 sibling
   `perStage_deadCount_not_enough` and `b = 3` still apply; update the BarrierAudit crux link to the new crux.
 Stuck flag cleared.
+
+## cantorbad BLOCKER (2026-10-06, lap 5, box stuck strike 1)
+- Blocked: headline rests only on `midStages` (CantorBadNormal.lean): the signed dead-character sum over the stages
+  with N^{1/40} ≲ 3^{10S'} ≲ b^N.  The low and high stages are proved (`hybridCassels_low`, `deadChar_tail_le`).
+- Why: it needs decorrelation, under μ_K, between being near a rational p/q (q ≈ 3^{5S'}) and the size of the lacunary
+  sums Σ e(h bⁿ x).  That input is research-level and unproved in the literature.  Absolute and per-stage forms are
+  recorded as too strong (`DeadCharCancelAbs`, `StageSaving`), and the Cauchy–Schwarz bootstrap and derandomization
+  only reach a floor (`cs_bootstrap_floor`; PENDING_WORK).
+- Ask: (a) accept a conditional headline from a decorrelation node, (b) keep narrowing on the treadmill, or (c) retarget.
+- Verify fast: `grep -n "sorry" src/NormalNumbers/CantorBadNormal.lean` shows `midStages` plus the off-path old-law
+  sorry; read the docstrings of `midStages` and `deadCharSigned_core`.
