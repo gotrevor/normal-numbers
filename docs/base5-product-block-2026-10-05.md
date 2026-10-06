@@ -56,6 +56,11 @@ affordable.  A collapse is a proof; a failing assignment is only "no certificate
   Per-step growth 3.3 → 2.7 → 2.0 → 1.8 → 1.6, still above 1.  `919 = 12134₅` is the first
   large pick, and it uses all four nonzero digits, as the cover bound says some member must.
   Steps now cost an hour in pure Python; the next lever is a compiled checker, not more time.
+- **Rust port** (`experiments/mahler_block_rs`, ~115x over CPython; PyPy only 1.3x), same seed,
+  candidates `m ≤ 40` plus the 200 best Liouville-covering `m ≤ 3125`, 2000-leaf sampled scoring:
+  `+16` 4611, `+29` 12186, `+23` 25161, `+17` 42032, `+1838` 57622, `+2832` 50180 (first
+  decline; `2832 = 42312₅` has all four nonzero digits), `+3028` 21890, `+2272` 8353.
+  Growth factors 3.3, 2.6, 2.1, 1.7, 1.4, 0.87, 0.44, 0.38 at ~5 min/step.
 
 ## Status
 
