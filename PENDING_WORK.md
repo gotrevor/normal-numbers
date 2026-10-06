@@ -3113,3 +3113,9 @@ Next: (1) prove the reduction (needs pair-averaged partial Cantor products, Cass
   ≤ Σ_r E_res[ 2·(#dead_r/1024)·max_f |H_r(w_r f)| | w_s ] — absolute values here lose the outer phase
   averaging, so for r near t this is NOT small; keep the phase: aliveDefect(H_r)(w_r) = e(ξ cylLeft w_r)·g_r(w_r)
   with |g_r| ≤ 2(#dead_r/1024)·sup-decay(t−r−1), and recurse (contraction factor ≈ averaged dead density).
+* (lap 8) PROVED generic `gMix`, `gMix_le` (bootstrap recursion for any stage function).  Iterating it
+  expands the defect part over chains of dead stages; each link costs ≤ 2·(#dead/1024) (`norm_aliveDefect_le`).
+  Worst case 2·488/1024 per link ⇒ chain sum ~1.95^g diverges; with the averaged dead density (≈2·10⁻³)
+  it converges.  So `DefectObstacleMix` reduces to: (i) first-order decay for the iterated defect functions
+  (same pair-correlation mechanism), (ii) an averaged-dead-density bound along resLaw paths
+  (E[#dead_r · positive functional] ≲ E[#dead]·E[functional]).  Next: state (ii) as a node.

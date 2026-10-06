@@ -4776,6 +4776,41 @@ theorem norm_aliveDefect_le (H : List Bool → ℂ) (w : List Bool) {M : ℝ}
         gcongr
     _ = 2 * (((1024 - c : ℕ) : ℝ) / 1024) * M := by field_simp; ring
 
+/-- The averaged conditional mean of a stage-`t` function given the stage-`s` prefix. -/
+noncomputable def gMix (G : List Bool → ℂ) (t s : ℕ) : ℝ :=
+  ∫ ω, ‖condMean (fun ω' => G (buildU t ω')) s (buildU s ω)‖ ∂coinMeasure
+
+/-- **The bootstrap recursion.**  For any stage function `G`, the resLaw mix splits into the
+uniform-continuation term plus the mixes of the defect functions `aliveDefect (cExt G j)` at the
+earlier stages `t − 1 − j`.  Iterating it expands `gMix` over chains of dead stages, each link
+weighted by a dead fraction (`norm_aliveDefect_le`); the expansion converges only with an
+averaged dead density (worst case `2·488/1024` per link).  Proved. -/
+theorem gMix_le (G : List Bool → ℂ) {s t : ℕ} (ht : s ≤ t) :
+    gMix G t s ≤ ∫ ω, ‖condMean (fun ω' => cExt G (t - s) (buildU s ω')) s (buildU s ω)‖ ∂coinMeasure +
+      ∑ j ∈ Finset.range (t - s), gMix (aliveDefect (cExt G j)) (t - 1 - j) s := by
+  set k := t - s
+  have hk : s + k = t := by omega
+  set A : List Bool → ℂ := fun w => condMean (fun ω' => cExt G k (buildU s ω')) s w
+  set B : ℕ → List Bool → ℂ := fun j w =>
+    condMean (fun ω' => aliveDefect (cExt G j) (buildU (s + k - 1 - j) ω')) s w
+  have hpt : ∀ ω, ‖condMean (fun ω' => G (buildU t ω')) s (buildU s ω)‖ ≤
+      ‖A (buildU s ω)‖ + ∑ j ∈ Finset.range k, ‖B j (buildU s ω)‖ := by
+    intro ω
+    have tel := condMean_cExt_telescope s (buildU s ω) k G
+    rw [← hk, tel]
+    exact (norm_sub_le _ _).trans (add_le_add le_rfl (norm_sum_le _ _))
+  have hA : Integrable (fun ω => ‖A (buildU s ω)‖) coinMeasure := (integrable_comp_buildU s A).norm
+  have hB : ∀ j, Integrable (fun ω => ‖B j (buildU s ω)‖) coinMeasure := fun j =>
+    (integrable_comp_buildU s (B j)).norm
+  have hsum : Integrable (fun ω => ‖A (buildU s ω)‖ + ∑ j ∈ Finset.range k, ‖B j (buildU s ω)‖)
+      coinMeasure := hA.add (integrable_finset_sum _ fun j _ => hB j)
+  unfold gMix
+  refine (integral_mono (integrable_comp_buildU s _).norm hsum hpt).trans (le_of_eq ?_)
+  rw [integral_add hA (integrable_finset_sum _ fun j _ => hB j),
+    integral_finset_sum _ fun j _ => hB j]
+  refine congrArg _ (Finset.sum_congr rfl fun j _ => ?_)
+  simp only [B, show s + k - 1 - j = t - 1 - j by omega]
+
 /-- Append `k` blocks to `w`. -/
 def catB (w : List Bool) : (k : ℕ) → (Fin k → (Fin 10 → Bool)) → List Bool
   | 0, _ => w
