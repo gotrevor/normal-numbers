@@ -81,6 +81,17 @@ theorem IsProductBlock.base5_exists_ge {S : Finset ℕ} (hS : IsProductBlock 5 S
   obtain ⟨m, hm, hd⟩ := hS.liouville_cover (by norm_num) 1 le_rfl
   exact ⟨m, hm, base5_full_digits_ge m (by simpa using hd)⟩
 
+/-- **The joint reading of `B(b,k) = bᵏ(b+1)` is false**: `{1, …, 30}` is *not* a base-5
+product block.  Bugeaud–Coons, *A Mahler miscellany* (Doc. Math. Extra Vol. Mahler Selecta,
+2019), Thm 7.1 states Mahler's theorem in the joint form (one `m ≤ B` with every `k`-block i.o.)
+and adds, citing Bugeaud's book §8.6, that one may take `B(b,k) = bᵏ(b+1)`; at `b = 5, k = 1`
+that is `30`.  The bound is a per-block statement; jointly it needs some `m ≥ 194`. -/
+theorem not_isProductBlock_five_Icc_thirty : ¬ IsProductBlock 5 (Finset.Icc 1 30) := by
+  intro h
+  obtain ⟨m, hm, h194⟩ := h.base5_exists_ge
+  simp only [Finset.mem_Icc] at hm
+  omega
+
 /-- **Card lower bound from the Liouville family** (computational; confidence 93%).  A base-5
 product block inside `[1, 625]` has at least five multipliers.
 

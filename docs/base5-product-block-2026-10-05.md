@@ -28,6 +28,19 @@ necessarily infinite (their examples are lacunary sequences).  A product block i
 `k = 1` object: same notion family, a different and explicit statement.  Novelty status of an
 explicit finite joint set: still not found; zbMATH "cited by" for B-B 1994 is the open check.
 
+### zbMATH forward citations (2026-10-05, Trevor's browser)
+
+- B-B 1994 is cited by: Thangadurai-Tripathi 2025, Meher-Kumar-Thangadurai 2017, B-B 1995.
+- Mahler 1973 is cited by: the same three, Bugeaud-Coons 2019, Alon-Peres 1992, Mahler 1982
+  (memoir); reviews also cite Szüsz-Volkmann 1983 (not yet read).
+- **Bugeaud-Coons 2019, *A Mahler miscellany*, Thm 7.1** states Mahler's theorem JOINTLY and
+  adds "one can take `B(b,k) = bᵏ(b+1)`" (citing Bugeaud's book §8.6).  Jointly that is false:
+  `b = 5, k = 1` gives `{1..30}`, and the Liouville cover needs some `m ≥ 194`
+  (`not_isProductBlock_five_Icc_thirty`).  The bound is per-block.  Whether the slip is the
+  survey's paraphrase or the book's own statement is unchecked (no Cornell route to Cambridge
+  books).  Base 3 hides it: `B(3,1) = 12 ≥ 11 = 102₃`.
+- No explicit finite joint set found anywhere in this graph.
+
 ## The lower side: the Liouville cover 🎯
 
 Take `x = B · Σ g^(−i!)`.  Past a point, the base-`g` tail of `m·x` is the digit string of
