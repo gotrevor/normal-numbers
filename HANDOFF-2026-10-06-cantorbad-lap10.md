@@ -9,8 +9,11 @@ Branch `proof/cantor-bad-normal`.  Headline unchanged; build green.  Crux still 
 - Probe `scripts/cantorbad_mscan.py` (+ `_groups`): L=12,S=4,b=2: median .003, outliers m=184 (.128),
   185, 111, driven by denominators 244, 364, 730, 1093.  Recorded in `ObstaclePairCorrelation` docstring.
 
+- PROVED `obstacle_phase_crt` (CRT split: q'-part × 3-adic part).
+- Node `PeriodicFamilyShare` (believed false: preperiodic families' pair share .18–.56 at L=12).
+- Node `ThreeAdicWindowAvg` (70%): averaged Riesz product of hbᵐ's low-digit windows; probe b=2,5,7 ≈ (2/π)^M, b=3 ≡ 1.
+
 ## Next
-1. State as a node: share of bounded-period families in obstPairs / dead mass → 0 (heuristic 2^{-L/2}).
-2. Poisson over p mod q: μ_K-weighted obstacle Fourier sum at ξ ≈ Σ_n μ̂_K(n)·τ_Q(n+ξ); state and test
-   whether Cassels + divisor averaging over ξ = h(bᵐ−bᵐ') controls AliveOffMix.
-3. Per-depth AliveOffMix decomposition (lap 9 Next 1) remains open.
+1. Prove shallow case of `ThreeAdicWindowAvg` (3^j ≤ N: bᵐ equidistributed in its subgroup mod 3^j over full periods).
+2. Wire: preperiodic-family obstacle pair sums ≤ (q'-part) × ThreeAdicWindowAvg, toward ObstaclePairCorrelation/AliveOffMix.
+3. Poisson/divisor reformulation (Σ_n μ̂_K(n) τ_Q(n+ξ)) still unstated.
