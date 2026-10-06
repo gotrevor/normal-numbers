@@ -4605,6 +4605,50 @@ theorem riesz_three_shift (ℓ : ℕ) (a : ℤ) :
     ee_add_int]
   simp
 
+/-- **Every obstacle phase family recurs in `m`.**  For any modulus `n > 0`, the phases
+`e(a bᵐ / n)` (`a ∈ ℤ`) are eventually periodic in `m`.  Proved (pigeonhole on `bᵐ mod n`).
+
+Consequence for `ObstaclePairCorrelation` (lap 10).  Take `n = 3^ℓ − 1`: the purely periodic
+Cantor rationals `perNum d / (3^ℓ − 1)` are obstacles, their phase sum is the Riesz product
+(`periodic_phase_sum`), and along the residue class of `m` where `bᵐ ≡ 3ᵏ (mod n)` that phase sum
+equals its base-3 value (`riesz_three_shift`).  So for `3 ∤ b` the base-3 coherence does not
+vanish: it recurs on a positive density of `m`, carried by each bounded-period family.  A proof of
+`ObstaclePairCorrelation` (uniform in `m`) must therefore show the share of such families in
+`obstPairs` tends to 0, not that each family cancels.  Evidence (`L = 12`, `S = 4`, `b = 2`,
+`h = 1`, `m ∈ [5, 200)`): median ratio `.003`; outliers `m = 184, 185, 111` at `.128, .106, .080`,
+the leading contributions from obstacles whose 3-free denominator is `244 = 3⁵+1`,
+`364 = (3⁶−1)/2`, `730 = 3⁶+1`, `205 | 3⁸−1`, `1093 = (3⁷−1)/2`; at the typical `m = 60` no class
+exceeds `.001`.  The 3-free share of such families in the dead mass decays like `2^{−L/2}`
+(prefix of length `≈ L/2` must follow a periodic tail), so the averaged crux `AliveOffMix` is not
+threatened by them. -/
+theorem pow_phase_recur (b n : ℕ) (hn : 0 < n) : ∃ m₀ T : ℕ, 0 < T ∧ ∀ m, m₀ ≤ m → ∀ a : ℤ,
+    ee (a * (b : ℝ) ^ (m + T) / n) = ee (a * (b : ℝ) ^ m / n) := by
+  obtain ⟨i, j, hij, he⟩ := Fintype.exists_ne_map_eq_of_card_lt
+    (fun i : Fin (n + 1) => (⟨b ^ (i : ℕ) % n, Nat.mod_lt _ hn⟩ : Fin n)) (by simp)
+  simp only [Fin.mk.injEq] at he
+  have key : ∀ i j : ℕ, i < j → b ^ i % n = b ^ j % n → ∃ m₀ T : ℕ, 0 < T ∧ ∀ m, m₀ ≤ m →
+      ∀ a : ℤ, ee (a * (b : ℝ) ^ (m + T) / n) = ee (a * (b : ℝ) ^ m / n) := by
+    intro i j hij he
+    refine ⟨i, j - i, by omega, fun m hm a => ?_⟩
+    have hmod : ((b ^ (m + (j - i)) : ℕ) : ℤ) ≡ ((b ^ m : ℕ) : ℤ) [ZMOD n] := by
+      have h1 : b ^ (m + (j - i)) = b ^ (m - i) * b ^ j := by
+        rw [← pow_add]; congr 1; omega
+      have h2 : b ^ m = b ^ (m - i) * b ^ i := by rw [← pow_add]; congr 1; omega
+      rw [h1, h2]
+      exact Int.natCast_modEq_iff.mpr
+        (Nat.ModEq.mul_left (b ^ (m - i)) (show b ^ j ≡ b ^ i [MOD n] from he.symm))
+    obtain ⟨k, hk⟩ := (Int.modEq_iff_dvd.mp hmod.symm)
+    have hn' : (n : ℝ) ≠ 0 := by exact_mod_cast hn.ne'
+    have : a * (b : ℝ) ^ (m + (j - i)) / n = a * (b : ℝ) ^ m / n + ((a * k : ℤ) : ℝ) := by
+      have hk' : ((b ^ (m + (j - i)) : ℕ) : ℝ) - ((b ^ m : ℕ) : ℝ) = n * k := by exact_mod_cast hk
+      push_cast at hk' ⊢
+      field_simp
+      linear_combination a * hk'
+    rw [this, ee_add_int]
+  rcases lt_or_gt_of_ne (Fin.val_injective.ne hij) with h | h
+  · exact key _ _ h he
+  · exact key _ _ h he.symm
+
 open Classical in
 /-- The obstacle rationals charged to a prefix of length `L` (as in `Alive` with `r = 5`):
 `p/q ∈ [0, 1]`, `3^L ≤ q²3⁵ < 3^{L+10}`, within `2c₀/q²` of `K`. -/
@@ -4643,7 +4687,11 @@ Evidence (`scripts/cantorbad_paircorr.py`, 2026-10-06).  `L = 12`, `C = 3`, all 
 size (`#pairs = 1.9·10⁶, 1.2·10⁵, 6274`).  Known-coherent control `b = 3`: `.163, .167, .134`, flat in
 `S`.  So the probe separates the bases prime to 3 from base 3 by two orders of magnitude.
 `L = 16` (43572 obstacles), `S = 8, 12, 16`: `.000, .005, .016` (b = 2), `.002, .013, .045` (b = 5),
-`.002, .009, .087` (b = 7); control `b = 3`: `.167, .172, .160`.  Same picture one scale up. -/
+`.002, .009, .087` (b = 7); control `b = 3`: `.167, .172, .160`.  Same picture one scale up.
+
+Uniformity in `m` (lap 10): bounded-period obstacle families regain base-3 coherence on a
+positive density of `m` (`pow_phase_recur`); the node can hold only because their pair share
+vanishes as `L → ∞`. -/
 def ObstaclePairCorrelation (b : ℕ) : Prop :=
   ∀ h : ℤ, h ≠ 0 → ∀ C : ℕ, ∀ ε : ℝ, 0 < ε → ∃ G : ℕ, ∀ m S : ℕ, S + G ≤ 10 * stageOf b C m →
     ‖∑ xy ∈ obstPairs (10 * stageOf b C m) S, ee (h * (b : ℝ) ^ m * (oval xy.1 - oval xy.2))‖ ≤
