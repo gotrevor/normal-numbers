@@ -5393,6 +5393,54 @@ theorem aliveExt_eq_sum (G : List Bool → ℂ) (k : ℕ) : ∀ w : List Bool,
     refine Finset.sum_congr rfl fun F _ => ?_
     simp only [hf, if_true]
     push_cast; ring
+
+open Classical in
+theorem card_aliveSet_ge (w : List Bool) : 536 ≤ (aliveSet w).card := by
+  have h := Finset.card_filter_add_card_filter_not
+    (s := (Finset.univ : Finset (Fin 10 → Bool))) (fun f => Alive 5 c₀ w (List.ofFn f))
+  have hd := card_dead_le w
+  simp only [Finset.card_univ, Fintype.card_fun, Fintype.card_bool, Fintype.card_fin] at h
+  have : (aliveSet w).card =
+      ((Finset.univ : Finset (Fin 10 → Bool)).filter fun f => Alive 5 c₀ w (List.ofFn f)).card := by
+    unfold aliveSet; congr
+  rw [show (2 : ℕ) ^ 10 = 1024 from rfl] at h
+  omega
+
+open Classical in
+theorem pathW_nonneg (k : ℕ) : ∀ (w : List Bool) (F : Fin k → (Fin 10 → Bool)), 0 ≤ pathW w k F := by
+  induction k with
+  | zero => intro w F; simp [pathW]
+  | succ k ih =>
+    intro w F; simp only [pathW]
+    exact mul_nonneg (by split_ifs <;> positivity) (ih _ _)
+
+open Classical in
+theorem pathW_le (k : ℕ) : ∀ (w : List Bool) (F : Fin k → (Fin 10 → Bool)),
+    pathW w k F ≤ (1 / 536 : ℝ) ^ k := by
+  induction k with
+  | zero => intro w F; simp [pathW]
+  | succ k ih =>
+    intro w F; simp only [pathW, pow_succ']
+    have h536 : (536 : ℝ) ≤ (aliveSet w).card := by exact_mod_cast card_aliveSet_ge w
+    have hfac : (if F 0 ∈ aliveSet w then 1 / ((aliveSet w).card : ℝ) else 0) ≤ 1 / 536 := by
+      split_ifs
+      · exact one_div_le_one_div_of_le (by norm_num) h536
+      · norm_num
+    exact mul_le_mul hfac (ih _ _) (pathW_nonneg _ _ _) (by norm_num)
+
+open Classical in
+theorem sum_pathW (k : ℕ) : ∀ w : List Bool, ∑ F : Fin k → (Fin 10 → Bool), pathW w k F = 1 := by
+  induction k with
+  | zero => intro w; simp [pathW]
+  | succ k ih =>
+    intro w
+    rw [← (Fin.consEquiv (fun _ : Fin (k + 1) => Fin 10 → Bool)).sum_comp, Fintype.sum_prod_type]
+    simp only [Fin.consEquiv, Equiv.coe_fn_mk, pathW, Fin.cons_zero, Fin.cons_succ]
+    simp_rw [← Finset.mul_sum, ih, mul_one]
+    rw [Finset.sum_ite, Finset.sum_const_zero, add_zero, Finset.sum_const, nsmul_eq_mul]
+    simp only [Finset.filter_mem_eq_inter, Finset.univ_inter]
+    have : (0 : ℝ) < (aliveSet w).card := by exact_mod_cast card_aliveSet_pos w
+    field_simp
 /-- The `resLaw`-native mix: `E‖aliveExt D_t (t − s_n) (w_{s_n})‖`. -/
 noncomputable def aliveMix (b C : ℕ) (h : ℤ) (n m t : ℕ) : ℝ :=
   ∫ ω, ‖aliveExt (deadCorr (h * (b : ℝ) ^ m)) (t - stageOf b C n) (buildU (stageOf b C n) ω)‖

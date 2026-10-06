@@ -3194,3 +3194,4 @@ the Cauchy–Schwarz step obstMix² ≤ E|obstSum|² as a lemma toward PairCorrT
 - lap 9: `cExt_sub`, `cExt_aliveDefect` proved.
 - lap 9 probe t=12 lags 1–5: first-order R at floor for b=2,5 AND b=3 ⇒ ResLawObstOff not expected to need 3∤b (base-3 failure lives in cesaro_contChar_small).  BarrierAudit text for this crux mentions b=3; revisit.
 - lap 9: resLaw-native route: `aliveExt`, `condMean_aliveExt`, `deadMix_le_aliveMix`, `aliveExt_eq_sum` (pathW-weighted), `nearObstaclePhaseMixing_of_alive`.  AliveObstacleMix ≈ NearObstaclePhaseMixing (restatement) but explicit; plan: replicate C–S/diag/off for pathW weights (diag via pathW ≤ 536^{-k}, card_dead_le) ⇒ one off-diagonal crux, no defect sorry.
+- lap 9: `card_aliveSet_ge` (≥536), `pathW_nonneg`, `pathW_le` (≤536^{-k}), `sum_pathW` (=1).  Next: ‖aliveExt‖² ≤ 2048²/536^k + ‖aliveOff‖, then AliveObstacleMix from an aliveOff node (single crux).
