@@ -4447,6 +4447,76 @@ theorem obstaclePhaseMixing_of_near {b : ℕ} (hb : 2 ≤ b) (hO : NearObstacleP
         rw [Finset.sum_const, Finset.card_range, nsmul_eq_mul, Real.rpow_neg_one]
         field_simp
 
+/-! ### Generic re-telescope against the uniform continuation
+
+For any function `G` of the stage-`(s+k)` prefix, `E_res[G(w_{s+k}) | w_s]` is the uniform
+(Cantor) continuation average `cExt G k (w_s)` minus the alive defects of the intermediate
+stages.  Applied to `G = D_t` this splits the near-scale crux into a pure Cantor-measure term
+and defect terms at the stages between `s_n` and `t`. -/
+
+/-- Uniform average over the next block. -/
+noncomputable def unifAvg (H : List Bool → ℂ) (w : List Bool) : ℂ :=
+  (1 / 1024 : ℂ) * ∑ f : Fin 10 → Bool, H (w ++ List.ofFn f)
+
+/-- Average over the alive next blocks (the `resLaw` transition). -/
+noncomputable def aliveAvg (H : List Bool → ℂ) (w : List Bool) : ℂ :=
+  (1 / ((aliveSet w).card : ℂ)) * ∑ f ∈ aliveSet w, H (w ++ List.ofFn f)
+
+/-- The alive defect: uniform minus alive average of the next block. -/
+noncomputable def aliveDefect (H : List Bool → ℂ) (w : List Bool) : ℂ :=
+  unifAvg H w - aliveAvg H w
+
+/-- The uniform continuation by `k` blocks. -/
+noncomputable def cExt (G : List Bool → ℂ) : ℕ → List Bool → ℂ
+  | 0 => G
+  | k + 1 => cExt (unifAvg G) k
+
+/-- **One `resLaw` transition** (uniform resampling: `real_child`). -/
+theorem condMean_succ_alive (H : List Bool → ℂ) {s r : ℕ} (hsr : s ≤ r) (w : List Bool) :
+    condMean (fun ω => H (buildU (r + 1) ω)) s w =
+      condMean (fun ω => aliveAvg H (buildU r ω)) s w := by
+  classical
+  unfold condMean
+  congr 1
+  refine setIntegral_eq_of_atoms (S := r) hsr (integrable_comp_buildU (r + 1) _)
+    (integrable_comp_buildU r _) (fun v hv => ?_) w
+  rw [setIntegral_buildU_succ r hv]
+  rw [setIntegral_congr_fun (mset_buildU' r v) (g := fun _ => aliveAvg H v)
+    (fun ω hω => by simp only [Set.mem_setOf_eq] at hω; simp only [hω]), setIntegral_const]
+  simp only [real_child r v (length_of_mem_LS hv), ite_smul, zero_smul]
+  rw [Finset.sum_ite_mem, Finset.univ_inter]
+  unfold aliveAvg
+  rw [Finset.mul_sum, Finset.smul_sum]
+  refine Finset.sum_congr rfl fun f _ => ?_
+  simp only [Complex.real_smul]
+  push_cast
+  ring
+
+/-- **The generic re-telescope.** -/
+theorem condMean_cExt_telescope (s : ℕ) (w : List Bool) (k : ℕ) :
+    ∀ G : List Bool → ℂ, condMean (fun ω => G (buildU (s + k) ω)) s w =
+      condMean (fun ω => cExt G k (buildU s ω)) s w -
+        ∑ j ∈ Finset.range k,
+          condMean (fun ω => aliveDefect (cExt G j) (buildU (s + k - 1 - j) ω)) s w := by
+  induction k with
+  | zero => intro G; simp [cExt]
+  | succ k ih =>
+    intro G
+    have hstep : condMean (fun ω => G (buildU (s + (k + 1)) ω)) s w =
+        condMean (fun ω => unifAvg G (buildU (s + k) ω)) s w -
+          condMean (fun ω => aliveDefect G (buildU (s + k) ω)) s w := by
+      rw [show s + (k + 1) = s + k + 1 from rfl, condMean_succ_alive G (Nat.le_add_right s k),
+        ← condMean_sub (integrable_comp_buildU _ _) (integrable_comp_buildU _ _)]
+      congr 1; funext ω; simp [aliveDefect]
+    rw [hstep, ih (unifAvg G), Finset.sum_range_succ']
+    simp only [cExt]
+    have e : ∀ j ∈ Finset.range k, condMean (fun ω => aliveDefect (cExt (unifAvg G) j)
+        (buildU (s + k - 1 - j) ω)) s w = condMean (fun ω => aliveDefect (cExt (unifAvg G) j)
+        (buildU (s + (k + 1) - 1 - (j + 1)) ω)) s w := fun j _ => by
+      rw [show s + (k + 1) - 1 - (j + 1) = s + k - 1 - j by omega]
+    rw [Finset.sum_congr rfl e, show s + (k + 1) - 1 - 0 = s + k by omega]
+    ring
+
 /-- **The crux, near-scale obstacle-phase form** (open; believed 50%).  `resLaw` satisfies
 `NearObstaclePhaseMixing` in every base `b ≥ 2` prime to 3.  A proof must use `3 ∤ b` and the
 uniformity of the resampled blocks between `s_n` and `t` (the conditional law of `w_t` given

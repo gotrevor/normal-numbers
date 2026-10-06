@@ -3045,3 +3045,10 @@ Next: (1) prove the reduction (needs pair-averaged partial Cantor products, Cass
 * (lap 8, later) Stage tail cut PROVED: `deadMix_le` (geometric, `pow_le_stage`), `obstaclePhaseMixing_of_near`.
   Crux now `nearObstaclePhaseMixing_resLaw` (node `NearObstaclePhaseMixing`: only the `⌊log₃N⌋+1` stages at
   and above the scale of `bᵐ`).  Next: item (2) above (first-order Cantor node by re-telescoping `E_res[D_t|w_s]`).
+* (lap 8, later) Generic re-telescope PROVED: `unifAvg`, `aliveAvg`, `aliveDefect`, `cExt`,
+  `condMean_succ_alive` (one resLaw transition = alive average, via `real_child`), `condMean_cExt_telescope`:
+  `E[G(w_{s+k})|w_s] = E[cExt G k (w_s)|w_s] − Σ_j E[aliveDefect(cExt G j)(w_{s+k−1−j})|w_s]`.
+  Next: apply with `G = deadCorr ξ` at `t = s_m + i`, `s = s_n`; state the first-order Cantor node on
+  `cExt (deadCorr ξ) (t − s_n)` (pure μ_K exponential sum over obstacle rationals in the cylinder) and the
+  defect remainder as a separate node; check numerically whether the remainder is genuinely smaller
+  (it is second order in the dead density but has no N-decay a priori).
