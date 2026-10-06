@@ -1069,6 +1069,82 @@ theorem ae_not_isNormal_combo_of_not (b m : ℕ) [NeZero m] (hb : 2 ≤ b) (dX d
 /-- Digits `0, …, 4`. -/
 def five : Fin 5 → ℕ := fun j => j
 
+/-- `e(s) = 1` iff `s ∈ ℤ`. -/
+theorem exp_eq_one_iff_int (s : ℝ) :
+    Complex.exp (2 * Real.pi * Complex.I * s) = 1 ↔ ∃ n : ℤ, s = n := by
+  rw [Complex.exp_eq_one_iff]
+  constructor
+  · rintro ⟨n, hn⟩
+    refine ⟨n, ?_⟩
+    have h2 : (2 * Real.pi * Complex.I : ℂ) ≠ 0 := by simp [Real.pi_ne_zero]
+    have : (s : ℂ) = n := by
+      apply mul_left_cancel₀ h2; rw [hn]; ring
+    exact_mod_cast this
+  · rintro ⟨n, rfl⟩; exact ⟨n, by push_cast; ring⟩
+
+/-- `φ_five(t) ≠ 0` unless `5t ∈ ℤ` and `t ∉ ℤ`. -/
+theorem digitPoly_five_ne_zero (t : ℝ) (ht : ∀ k : ℤ, 5 * t = k → ∃ n : ℤ, t = n) :
+    digitPoly five t ≠ 0 := by
+  unfold digitPoly five
+  rw [Fin.sum_univ_eq_sum_range (fun d => Complex.exp (2 * Real.pi * Complex.I * (t * (d : ℂ)))) 5]
+  set z : ℂ := Complex.exp (2 * Real.pi * Complex.I * t) with hz
+  have hpow : ∀ d : ℕ, Complex.exp (2 * Real.pi * Complex.I * (t * (d : ℂ))) = z ^ d := by
+    intro d; rw [hz, ← Complex.exp_nat_mul]; congr 1; ring
+  simp_rw [hpow]
+  refine div_ne_zero ?_ (by norm_num)
+  by_cases hint : ∃ n : ℤ, t = n
+  · have : z = 1 := (exp_eq_one_iff_int t).2 hint
+    rw [this]; norm_num
+  · have hz1 : z ≠ 1 := fun h => hint ((exp_eq_one_iff_int t).1 h)
+    have hz5 : z ^ 5 ≠ 1 := by
+      intro h
+      rw [hz, ← Complex.exp_nat_mul] at h
+      have : Complex.exp (2 * Real.pi * Complex.I * ((5 * t : ℝ) : ℂ)) = 1 := by
+        rw [← h]; congr 1; push_cast; ring
+      obtain ⟨k, hk⟩ := (exp_eq_one_iff_int _).1 this
+      exact hint (ht k hk)
+    rw [geom_sum_eq hz1]
+    exact div_ne_zero (sub_ne_zero.2 hz5) (sub_ne_zero.2 hz1)
+
+/-- For `h = 5^N` with `2^N > |a|`, no factor `φ_five(a h / 10^i)` vanishes. -/
+theorem five_int_cond (a : ℤ) (N : ℕ) (hN : a.natAbs < 2 ^ N) (i : ℕ) (k : ℤ)
+    (hk : 5 * ((a : ℝ) * ((5 ^ N : ℤ) : ℝ) / (10 : ℝ) ^ i) = k) :
+    ∃ n : ℤ, (a : ℝ) * ((5 ^ N : ℤ) : ℝ) / (10 : ℝ) ^ i = n := by
+  have h10 : (0:ℝ) < 10 ^ i := by positivity
+  have hk' : (a * 5 ^ (N + 1) : ℤ) = k * 2 ^ i * 5 ^ i := by
+    have : (5:ℝ) * (a * (5:ℝ) ^ N) = k * (10:ℝ) ^ i := by
+      rw [← hk]; push_cast; field_simp
+    have h' : ((a * 5 ^ (N + 1) : ℤ) : ℝ) = ((k * 2 ^ i * 5 ^ i : ℤ) : ℝ) := by
+      push_cast; rw [show (10:ℝ)^i = 2^i * 5^i by rw [← mul_pow]; norm_num] at this
+      linear_combination this
+    exact_mod_cast h'
+  have h2 : (2 : ℤ) ^ i ∣ a := by
+    have : (2:ℤ) ^ i ∣ a * 5 ^ (N + 1) := ⟨k * 5 ^ i, by rw [hk']; ring⟩
+    have hc : IsCoprime ((2:ℤ) ^ i) ((5:ℤ) ^ (N + 1)) :=
+      IsCoprime.pow (Int.isCoprime_iff_gcd_eq_one.2 (by norm_num))
+    exact hc.dvd_of_dvd_mul_right this
+  obtain ⟨q, rfl⟩ := h2
+  by_cases hq : q = 0
+  · exact ⟨0, by simp [hq]⟩
+  have hi : i < N := by
+    have h1 : 2 ^ i ≤ (2 ^ i * q).natAbs := by
+      rw [Int.natAbs_mul, Int.natAbs_pow]
+      exact Nat.le_mul_of_pos_right _ (Int.natAbs_pos.2 hq)
+    have : 2 ^ i < 2 ^ N := lt_of_le_of_lt h1 hN
+    exact (Nat.pow_lt_pow_iff_right (by norm_num)).1 this
+  refine ⟨q * 5 ^ (N - i), ?_⟩
+  have hNi : N = (N - i) + i := by omega
+  push_cast
+  rw [hNi, pow_add, show (10:ℝ)^i = 2^i * 5^i by rw [← mul_pow]; norm_num]
+  rw [show N - i + i - i = N - i by omega]
+  field_simp
+
+theorem factor_five_ne (a : ℤ) (N : ℕ) (hN : a.natAbs < 2 ^ N) (i : ℕ) :
+    digitPoly five ((a : ℝ) * ((5 ^ N : ℤ) : ℝ) / ((10 : ℕ) : ℝ) ^ i) ≠ 0 := by
+  have := digitPoly_five_ne_zero ((a : ℝ) * ((5 ^ N : ℤ) : ℝ) / (10 : ℝ) ^ i)
+    (fun k hk => five_int_cond a N hN i k hk)
+  simpa using this
+
 /-- **Necessary, not sufficient: enough joint entropy, no normal combination.**  Confidence 85%.
 English proof: by Wall reduce to integer `(a, c) ≠ 0`; take `h = 5^N` with `N > v₅(a), v₅(c)`
 (or the one nonzero coefficient's valuation).  `φ_five(t) = 0` iff `5t ∈ ℤ`, `t ∉ ℤ`; at
@@ -1076,7 +1152,39 @@ English proof: by Wall reduce to integer `(a, c) ≠ 0`; take `h = 5^N` with `N 
 vanishes; `ae_not_isNormal_combo_of_not`, countably many `(a, c)`. -/
 theorem ae_not_qSpanNormal_fiveDigits :
     ∀ᵐ ω ∂pairs 5, ¬ QSpanNormal 10 (realX 10 five ω) (realY 10 five ω) := by
-  sorry
+  have hfive : ∀ j, five j < 10 := fun j => by unfold five; omega
+  have hall : ∀ᵐ ω ∂pairs 5, ∀ p : ℤ × ℤ, p ≠ 0 →
+      ¬ IsNormal 10 (p.1 * realX 10 five ω + p.2 * realY 10 five ω) := by
+    rw [ae_all_iff]; intro p
+    by_cases hp : p = 0
+    · exact Eventually.of_forall fun _ h => absurd hp h
+    · set N := p.1.natAbs + p.2.natAbs
+      have h1 : p.1.natAbs < 2 ^ N := lt_of_le_of_lt (by omega) (Nat.lt_two_pow_self)
+      have h2 : p.2.natAbs < 2 ^ N := lt_of_le_of_lt (by omega) (Nat.lt_two_pow_self)
+      have := ae_not_isNormal_combo_of_not 10 5 (by norm_num) five five hfive hfive p.1 p.2
+        ⟨5 ^ N, by positivity, fun i _ => mul_ne_zero (factor_five_ne p.1 N h1 i)
+          (factor_five_ne p.2 N h2 i)⟩
+      filter_upwards [this] with ω hω _ using hω
+  filter_upwards [hall] with ω hω
+  rintro ⟨c₁, c₂, hne, hN⟩
+  set q : ℚ := ((c₁.den * c₂.den : ℕ) : ℚ) with hqdef
+  have hq : q ≠ 0 := by
+    rw [hqdef]; exact_mod_cast Nat.mul_ne_zero c₁.den_nz c₂.den_nz
+  have hW := isNormal_rat_mul_add 10 (by norm_num) _ q 0 hq hN
+  apply hω (c₁.num * c₂.den, c₂.num * c₁.den)
+  · intro h0
+    simp only [Prod.mk_eq_zero, mul_eq_zero, Int.natCast_eq_zero, Rat.num_eq_zero] at h0
+    rcases hne with h | h
+    · exact h (h0.1.resolve_right c₂.den_nz)
+    · exact h (h0.2.resolve_right c₁.den_nz)
+  · convert hW using 1
+    have e1 : ((c₁.num : ℝ)) = (c₁ : ℝ) * c₁.den := by
+      exact_mod_cast (Rat.mul_den_eq_num c₁).symm
+    have e2 : ((c₂.num : ℝ)) = (c₂ : ℝ) * c₂.den := by
+      exact_mod_cast (Rat.mul_den_eq_num c₂).symm
+    simp only [hqdef]
+    push_cast
+    rw [e1, e2]; ring
 
 /-- The same pair has joint finite-state dimension above the budget `1/2`
 (`log 25 / log 100 ≈ 0.70`).  Confidence 85% (Bernoulli entropy rate; the digits of `realX` are
