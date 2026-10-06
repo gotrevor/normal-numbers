@@ -5134,11 +5134,85 @@ weighted second moment; the missing pieces are listed at `CylObstacleCancellatio
 def PairCorrToCylinder (b : ℕ) : Prop :=
   ObstaclePairCorrelation b → CylObstacleCancellation b
 
-/-- **The crux, first-order part, second-moment form** (open; believed 45%).
-See `ResLawObstSecondMoment`; expand with `norm_obstSum_sq`. -/
-theorem resLawObstSecondMoment_resLaw {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) :
+
+/-- **Off-diagonal node.**  Believed 45% for `3 ∤ b`.  The `resLaw`-averaged same-cylinder obstacle
+pair sums `E‖obstOff‖` have near-scale root sum `O(N² W(N))`.  This is the irreducible core of the
+first-order crux: a pair correlation of the obstacle phases `e(hbᵐ(p/q − p'/q'))` over pairs in one
+coarse cylinder, under `resLaw`.  Must fail for `b = 3` (`riesz_three_shift`). -/
+def ResLawObstOff (b : ℕ) : Prop :=
+  ∀ h : ℤ, h ≠ 0 → ∀ C : ℕ, ∃ (K : ℝ) (W : ℕ → ℝ), Summable (fun j => W (sched j)) ∧
+    ∀ N : ℕ, 1 ≤ N →
+      ∑ m ∈ Finset.range N, ∑ n ∈ Finset.range m,
+        ∑ t ∈ Finset.Ico (stageOf b C m) (stageOf b C m + (Nat.log 3 N + 1)),
+          Real.sqrt (∫ ω, ‖obstOff (h * (b : ℝ) ^ m) (t - stageOf b C n)
+            (buildU (stageOf b C n) ω)‖ ∂coinMeasure) ≤ K * (N : ℝ) ^ 2 * W N
+
+/-- **Diagonal leaf.**  The geometric diagonal has near-scale root sum `O(N² W(N))`.  Elementary
+(`k ≥ s_m − s_n`, so the sum is `O(N log N)`, and `W(N) = log N/N` is summable along `sched`);
+believed 95%, open. -/
+def DiagSmall (b : ℕ) : Prop :=
+  ∀ C : ℕ, ∃ (K : ℝ) (W : ℕ → ℝ), Summable (fun j => W (sched j)) ∧
+    ∀ N : ℕ, 1 ≤ N →
+      ∑ m ∈ Finset.range N, ∑ n ∈ Finset.range m,
+        ∑ t ∈ Finset.Ico (stageOf b C m) (stageOf b C m + (Nat.log 3 N + 1)),
+          Real.sqrt (2048 ^ 2 / 1024 ^ (t - stageOf b C n)) ≤ K * (N : ℝ) ^ 2 * W N
+
+theorem sqrt_secondMoment_le (ξ : ℝ) (k s : ℕ) :
+    Real.sqrt (∫ ω, ‖obstSum ξ k (buildU s ω)‖ ^ 2 ∂coinMeasure) ≤
+      Real.sqrt (2048 ^ 2 / 1024 ^ k) + Real.sqrt (∫ ω, ‖obstOff ξ k (buildU s ω)‖ ∂coinMeasure) := by
+  have hO : Integrable (fun ω => ‖obstOff ξ k (buildU s ω)‖) coinMeasure :=
+    (integrable_comp_buildU s _).norm
+  have hle : ∫ ω, ‖obstSum ξ k (buildU s ω)‖ ^ 2 ∂coinMeasure ≤
+      2048 ^ 2 / 1024 ^ k + ∫ ω, ‖obstOff ξ k (buildU s ω)‖ ∂coinMeasure := by
+    have hc := integral_mono_of_nonneg (μ := coinMeasure)
+      (Eventually.of_forall fun ω => sq_nonneg ‖obstSum ξ k (buildU s ω)‖)
+      ((integrable_const (2048 ^ 2 / 1024 ^ k : ℝ)).add hO)
+      (Eventually.of_forall fun ω => norm_obstSum_sq_le ξ k (buildU s ω))
+    refine hc.trans (le_of_eq ?_)
+    simp only [Pi.add_apply]
+    rw [integral_add (integrable_const _) hO, integral_const, probReal_univ, one_smul]
+  calc _ ≤ Real.sqrt (2048 ^ 2 / 1024 ^ k + ∫ ω, ‖obstOff ξ k (buildU s ω)‖ ∂coinMeasure) :=
+        Real.sqrt_le_sqrt hle
+    _ ≤ _ := by
+      have ha : (0 : ℝ) ≤ 2048 ^ 2 / 1024 ^ k := by positivity
+      have hb : (0 : ℝ) ≤ ∫ ω, ‖obstOff ξ k (buildU s ω)‖ ∂coinMeasure :=
+        integral_nonneg fun _ => norm_nonneg _
+      rw [Real.sqrt_le_left (by positivity)]
+      nlinarith [Real.sq_sqrt ha, Real.sq_sqrt hb, Real.sqrt_nonneg (2048 ^ 2 / 1024 ^ k : ℝ),
+        Real.sqrt_nonneg (∫ ω, ‖obstOff ξ k (buildU s ω)‖ ∂coinMeasure)]
+
+/-- **Off-diagonal node + diagonal leaf ⇒ second-moment node.**  Proved. -/
+theorem resLawObstSecondMoment_of_off {b : ℕ} (hD : DiagSmall b) (hO : ResLawObstOff b) :
     ResLawObstSecondMoment b := by
+  intro h hh C
+  obtain ⟨K₁, W₁, hW₁, hK₁⟩ := hD C
+  obtain ⟨K₂, W₂, hW₂, hK₂⟩ := hO h hh C
+  refine ⟨1, fun N => K₁ * W₁ N + K₂ * W₂ N, (hW₁.mul_left K₁).add (hW₂.mul_left K₂),
+    fun N hN => ?_⟩
+  calc _ ≤ ∑ m ∈ Finset.range N, ∑ n ∈ Finset.range m,
+        ∑ t ∈ Finset.Ico (stageOf b C m) (stageOf b C m + (Nat.log 3 N + 1)),
+          (Real.sqrt (2048 ^ 2 / 1024 ^ (t - stageOf b C n)) +
+            Real.sqrt (∫ ω, ‖obstOff (h * (b : ℝ) ^ m) (t - stageOf b C n)
+              (buildU (stageOf b C n) ω)‖ ∂coinMeasure)) :=
+        Finset.sum_le_sum fun m _ => Finset.sum_le_sum fun n _ =>
+          Finset.sum_le_sum fun t _ => sqrt_secondMoment_le _ _ _
+    _ = _ + _ := by simp only [Finset.sum_add_distrib]
+    _ ≤ K₁ * (N : ℝ) ^ 2 * W₁ N + K₂ * (N : ℝ) ^ 2 * W₂ N := add_le_add (hK₁ N hN) (hK₂ N hN)
+    _ = _ := by ring
+/-- **The crux, first-order part, off-diagonal form** (open; believed 45%).
+See `ResLawObstOff`. -/
+theorem resLawObstOff_resLaw {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) :
+    ResLawObstOff b := by
   sorry
+
+/-- The diagonal leaf (elementary; open, believed 95%). -/
+theorem diagSmall_of_two_le {b : ℕ} (hb : 2 ≤ b) : DiagSmall b := by
+  sorry
+
+/-- The second-moment node for `resLaw` (diagonal leaf + off-diagonal crux). -/
+theorem resLawObstSecondMoment_resLaw {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) :
+    ResLawObstSecondMoment b :=
+  resLawObstSecondMoment_of_off (diagSmall_of_two_le hb) (resLawObstOff_resLaw hb h3)
 
 /-- The cylinder-local first-order node for `resLaw` (from the second-moment form of the crux). -/
 theorem cylObstacleCancellation_resLaw {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) :

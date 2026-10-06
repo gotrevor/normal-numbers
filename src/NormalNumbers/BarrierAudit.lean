@@ -122,7 +122,7 @@ def cruxLinks : List CruxLink := [
    [``cantor_not_normal_three_pow, ``perStage_dead_not_enough],
    "the defect terms must cancel by the arithmetic of the centres p/q and 3 ∤ b, not by a per-stage \
     dead count (counts alone admit a never 2-normal descent) and not for b = 3"⟩,
-  ⟨``CantorBadNormal.resLawObstSecondMoment_resLaw,
+  ⟨``CantorBadNormal.resLawObstOff_resLaw,
    [``cantor_not_normal_three_pow, ``perStage_dead_not_enough],
    "the local dead excesses must average out by the arithmetic of the centres p/q and 3 ∤ b: for \
     b = 3 the Cantor part itself does not average (log₃ b rational), and for dyadic centres every \
@@ -138,6 +138,9 @@ def cruxLinks : List CruxLink := [
 
 /-- Open `sorry`s that are not cruxes, and why no barrier applies. -/
 def waivers : List Waiver := [
+  ⟨``CantorBadNormal.diagSmall_of_two_le,
+   "a leaf: the diagonal is geometric in t − s_n ≥ s_m − s_n, so the sum is O(N log N), and \
+    W(N) = log N/N is summable along sched j ≈ e^{√j}"⟩,
   ⟨``IndependenceRelative.not_isRelativeBlock_small,
    "a finite computation stated as a sibling: the blocksearch probe's non-certification over \
     small direction sets; it closes a route, no open crux uses it"⟩,
