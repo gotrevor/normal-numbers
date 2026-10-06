@@ -2870,3 +2870,7 @@ Note: Bridge edit forces rebuild of whole-Mathlib importers; parallel `lake buil
 * New: `pulariDPDTQuestion_of_lit_three` (Q-DPDT for `k ≥ 3`) from `cpPrefix_count`.
 * Next: base 2 (`PulariDPDTBaseTwo`) needs a different coder; stretch nodes in
   `FiniteStateSelectionStretch.lean` were out of scope this run (operator: do not touch).
+
+## 2026-10-06 qspan lap 2
+QSpanCriterion.lean sorry-free; all six frozen headlines axiom-clean (see HANDOFF-2026-10-06-qspan-lap2.md).
+Next (outside this campaign's scope): subadditivity leaf for `QSpan.span_dimension_budget`.

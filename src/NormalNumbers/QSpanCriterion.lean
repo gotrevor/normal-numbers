@@ -241,12 +241,347 @@ theorem run_chunks {k : ℕ} (T : FST k) (L : ℕ) (hL : 0 < L) (q : Fin (T.m + 
       · conv_lhs => rw [← List.take_append_drop L π]
         rw [runFrom_append, h3]; simp
 
+/-- Starts of the `P`-chunks of a concatenation. -/
+theorem flatten_cover {α γ : Type*} [Inhabited α] [Inhabited γ] (out : γ → List α) (P : γ → Prop)
+    [DecidablePred P] (hP : ∀ c, P c → 0 < (out c).length) (cs : List γ) (p0 : ℕ) :
+    ∃ (I : Finset ℕ) (g : ℕ → γ),
+      (∀ p ∈ I, p0 ≤ p ∧ g p ∈ cs ∧ P (g p) ∧
+        p + (out (g p)).length ≤ p0 + ((cs.map out).flatten).length ∧
+        ∀ j < (out (g p)).length,
+          ((cs.map out).flatten).getD (p - p0 + j) default = (out (g p)).getD j default) ∧
+      ((cs.map out).flatten).length ≤ (∑ p ∈ I, (out (g p)).length) +
+        ((cs.filter fun c => ¬ P c).map fun c => (out c).length).sum := by
+  classical
+  induction cs generalizing p0 with
+  | nil => exact ⟨∅, fun _ => default, by simp, by simp⟩
+  | cons c cs ih =>
+    obtain ⟨I, g, hI, hlen⟩ := ih (p0 + (out c).length)
+    simp only [List.map_cons, List.flatten_cons, List.length_append] at hI hlen ⊢
+    have hmem : ∀ p ∈ I, p0 + (out c).length ≤ p := fun p hp => (hI p hp).1
+    by_cases hc : P c
+    · have hnot : p0 ∉ I := fun h => by have := hmem p0 h; have := hP c hc; omega
+      refine ⟨insert p0 I, fun p => if p = p0 then c else g p, ?_, ?_⟩
+      · intro p hp
+        rcases Finset.mem_insert.mp hp with rfl | hp
+        · simp only [if_true]
+          refine ⟨le_rfl, List.mem_cons_self, hc, by omega, fun j hj => ?_⟩
+          rw [Nat.sub_self, zero_add, List.getD_append _ _ _ _ hj]
+        · have hne : p ≠ p0 := fun h => hnot (h ▸ hp)
+          simp only [hne, if_false]
+          obtain ⟨h1, h2, h3, h4, h5⟩ := hI p hp
+          refine ⟨by omega, List.mem_cons_of_mem _ h2, h3, by omega, fun j hj => ?_⟩
+          rw [List.getD_append_right _ _ _ _ (by omega)]
+          rw [← h5 j hj]; congr 1; omega
+      · rw [Finset.sum_insert hnot, List.filter_cons_of_neg (by simpa using hc)]
+        simp only [if_true]
+        rw [Finset.sum_congr rfl fun p hp => by
+          rw [if_neg (fun h : p = p0 => hnot (h ▸ hp))]]
+        omega
+    · refine ⟨I, g, ?_, ?_⟩
+      · intro p hp
+        obtain ⟨h1, h2, h3, h4, h5⟩ := hI p hp
+        refine ⟨by omega, List.mem_cons_of_mem _ h2, h3, by omega, fun j hj => ?_⟩
+        rw [List.getD_append_right _ _ _ _ (by omega)]
+        rw [← h5 j hj]; congr 1; omega
+      · rw [List.filter_cons_of_pos (by simpa using hc)]
+        simp only [List.map_cons, List.sum_cons]
+        omega
+
+
+/-- `x`-window value read off a word of pair letters. -/
+def wX (b : ℕ) {k : ℕ} (u : List (Fin k)) : ℕ :=
+  winVal b (fun j => (u.map fun e : Fin k => e.val / b).getD j 0) 0 u.length
+
+/-- `y`-window value read off a word of pair letters. -/
+def wY (b : ℕ) {k : ℕ} (u : List (Fin k)) : ℕ :=
+  winVal b (fun j => (u.map fun e : Fin k => e.val % b).getD j 0) 0 u.length
+
+theorem winVal_xy_of_window (b : ℕ) (hb : 2 ≤ b) (x y : ℝ) (p : ℕ) (u : List (Fin (b * b)))
+    (d : Fin (b * b)) (hu : ∀ j < u.length, u.getD j d = digitPair b (by omega) x y (p + j)) :
+    winVal b (digitOf b (Int.fract x)) p u.length = wX b u ∧
+      winVal b (digitOf b (Int.fract y)) p u.length = wY b u := by
+  constructor <;>
+  · refine Finset.sum_congr rfl fun j hj => ?_
+    rw [Finset.mem_range] at hj
+    have h := hu j hj
+    rw [List.getD_eq_getElem _ _ hj] at h
+    have hv : (u[j] : ℕ) = digitOf b (Int.fract y) (p + j) + b * digitOf b (Int.fract x) (p + j) := by
+      rw [h]; rfl
+    have hy := digitOf_lt b hb (Int.fract y) (p + j)
+    simp only [zero_add]
+    rw [List.getD_eq_getElem _ _ (by simpa using hj), List.getElem_map, hv]
+    congr 1
+    first
+    | (rw [Nat.add_mul_div_left _ _ (by omega), Nat.div_eq_of_lt hy, zero_add])
+    | (rw [Nat.add_mul_mod_self_left, Nat.mod_eq_of_lt hy])
+
+/-- Input words of length `≤ L`. -/
+def wordsLe (k L : ℕ) : Finset (List (Fin k)) :=
+  (Finset.range (L + 1)).biUnion fun l => Finset.univ.image fun v : Fin l → Fin k => List.ofFn v
+
+theorem mem_wordsLe {k L : ℕ} (β : List (Fin k)) (h : β.length ≤ L) : β ∈ wordsLe k L := by
+  simp only [wordsLe, Finset.mem_biUnion, Finset.mem_range, Finset.mem_image, Finset.mem_univ,
+    true_and]
+  exact ⟨β.length, by omega, fun i => β.get i, List.ofFn_get β⟩
+
+theorem card_wordsLe (k L : ℕ) (hk : 1 ≤ k) : (wordsLe k L).card ≤ (L + 1) * k ^ L := by
+  refine Finset.card_biUnion_le.trans ?_
+  calc ∑ l ∈ Finset.range (L + 1), (Finset.univ.image fun v : Fin l → Fin k => List.ofFn v).card
+      ≤ ∑ l ∈ Finset.range (L + 1), k ^ L := by
+        refine Finset.sum_le_sum fun l hl => ?_
+        refine Finset.card_image_le.trans ?_
+        rw [Finset.card_univ, Fintype.card_fun, Fintype.card_fin, Fintype.card_fin]
+        exact Nat.pow_le_pow_right hk (by simpa [Nat.lt_succ_iff] using hl)
+    _ = _ := by simp
+
+/-- The `z`-window dictionary of an FST at block length `L`. -/
+noncomputable def zDict {k : ℕ} (T : FST k) (b : ℕ) (a c : ℤ) (L t : ℕ) : Finset ℕ :=
+  ((Finset.univ : Finset (Fin (T.m + 1))) ×ˢ (wordsLe k L) ×ˢ
+      (Finset.Icc (-(|a| + |c|)) (|a| + |c|))).image fun e =>
+    ((a * wX b (T.runFrom e.1 e.2.1) + c * wY b (T.runFrom e.1 e.2.1) + e.2.2) %
+      ((b ^ t : ℕ) : ℤ)).toNat
+
+theorem card_zDict {k : ℕ} (hk : 1 ≤ k) (T : FST k) (b : ℕ) (a c : ℤ) (L t : ℕ) :
+    (zDict T b a c L t).card ≤ (T.m + 1) * ((L + 1) * k ^ L) * (2 * (|a| + |c|).toNat + 1) := by
+  refine Finset.card_image_le.trans ?_
+  rw [Finset.card_product, Finset.card_product, Finset.card_univ, Fintype.card_fin, Int.card_Icc]
+  have h1 := abs_nonneg a; have h2 := abs_nonneg c
+  have e : (|a| + |c| + 1 - -(|a| + |c|)).toNat = 2 * (|a| + |c|).toNat + 1 := by omega
+  rw [e, ← mul_assoc]
+  exact Nat.mul_le_mul_right _ (Nat.mul_le_mul_left _ (card_wordsLe k L hk))
+
+/-- Total output budget of an FST. -/
+def outMax {k : ℕ} (T : FST k) : ℕ := ∑ q, ∑ e, (T.ν q e).length
+
+theorem length_runFrom_le {k : ℕ} (T : FST k) (q : Fin (T.m + 1)) (β : List (Fin k)) :
+    (T.runFrom q β).length ≤ β.length * outMax T := by
+  classical
+  induction β generalizing q with
+  | nil => simp [FST.runFrom]
+  | cons e β ih =>
+    simp only [FST.runFrom, List.length_append, List.length_cons]
+    have h1 : (T.ν q e).length ≤ outMax T :=
+      (Finset.single_le_sum (f := fun e => (T.ν q e).length) (fun _ _ => Nat.zero_le _)
+        (Finset.mem_univ e)).trans
+        (Finset.single_le_sum (f := fun q => ∑ e, (T.ν q e).length) (fun _ _ => Nat.zero_le _)
+          (Finset.mem_univ q))
+    have := ih (T.δ q e)
+    nlinarith
+
+theorem exists_cube_lt_four_pow (C : ℕ) : ∃ L : ℕ, 1 ≤ L ∧ C * L ^ 3 < 4 ^ L := by
+  have h := tendsto_pow_const_div_const_pow_of_one_lt 3 (r := (4 : ℝ)) (by norm_num)
+  have h2 := (h.const_mul ((C : ℝ) + 1)).eventually (gt_mem_nhds (by simp : ((C : ℝ) + 1) * 0 < 1))
+  obtain ⟨L, hL⟩ := (h2.and (eventually_ge_atTop 1)).exists
+  refine ⟨L, hL.2, ?_⟩
+  have h4 : (0 : ℝ) < 4 ^ L := by positivity
+  have h5 : ((C : ℝ) + 1) * ((L : ℝ) ^ 3 / 4 ^ L) < 1 := hL.1
+  rw [mul_div_assoc', div_lt_one h4] at h5
+  have : (C : ℝ) * L ^ 3 < 4 ^ L := by nlinarith [pow_nonneg (Nat.cast_nonneg L : (0:ℝ) ≤ L) 3]
+  exact_mod_cast this
+
+theorem dict_nat_bound {k : ℕ} (T : FST k) (b : ℕ) (hb : 2 ≤ b) (hk : k = b * b) (a c : ℤ)
+    (r L' : ℕ) (hL' : 1 ≤ L')
+    (hC : ((r * outMax T + 1) * (r * outMax T) * (T.m + 1) * (r + 1) *
+      (2 * (|a| + |c|).toNat + 1) * (2 * r)) * L' ^ 3 < 4 ^ L') :
+    (r * L' * outMax T + 1) * (r * L' * outMax T) *
+      ((T.m + 1) * ((r * L' + 1) * k ^ (r * L')) * (2 * (|a| + |c|).toNat + 1)) * (2 * r)
+      < b ^ (2 * L' * (r + 1)) := by
+  set M := outMax T; set K := 2 * (|a| + |c|).toNat + 1; set m := T.m + 1
+  have e1 : b ^ (2 * L' * (r + 1)) = k ^ (r * L') * b ^ (2 * L') := by
+    rw [hk, ← pow_two, ← pow_mul, ← pow_add]; congr 1; ring
+  rw [e1]
+  have h4 : 4 ^ L' ≤ b ^ (2 * L') := by
+    rw [pow_mul]; exact Nat.pow_le_pow_left (by nlinarith) _
+  have hkpos : 0 < k ^ (r * L') := by subst hk; positivity
+  have hA : (r * L' * M + 1) * (r * L' * M) * (m * (r * L' + 1) * K) * (2 * r)
+      ≤ ((r * M + 1) * (r * M) * m * (r + 1) * K * (2 * r)) * L' ^ 3 := by
+    have a1 : r * L' * M + 1 ≤ (r * M + 1) * L' := by nlinarith
+    have a2 : r * L' + 1 ≤ (r + 1) * L' := by nlinarith
+    calc (r * L' * M + 1) * (r * L' * M) * (m * (r * L' + 1) * K) * (2 * r)
+        ≤ ((r * M + 1) * L') * (r * L' * M) * (m * ((r + 1) * L') * K) * (2 * r) := by gcongr
+      _ = _ := by ring
+  calc (r * L' * M + 1) * (r * L' * M) * (m * ((r * L' + 1) * k ^ (r * L')) * K) * (2 * r)
+      = ((r * L' * M + 1) * (r * L' * M) * (m * (r * L' + 1) * K) * (2 * r)) * k ^ (r * L') := by
+        ring
+    _ < 4 ^ L' * k ^ (r * L') := Nat.mul_lt_mul_of_pos_right (lt_of_le_of_lt hA hC) hkpos
+    _ ≤ b ^ (2 * L') * k ^ (r * L') := Nat.mul_le_mul_right _ h4
+    _ = _ := mul_comm _ _
+
+theorem dict_sum_small {k : ℕ} (hk1 : 1 ≤ k) (T : FST k) (b : ℕ) (hb : 2 ≤ b) (a c : ℤ)
+    (r L t₀ t₁ : ℕ) (hr : 1 ≤ r)
+    (hN : (t₁ + 1) * t₁ * ((T.m + 1) * ((L + 1) * k ^ L) * (2 * (|a| + |c|).toNat + 1)) * (2 * r)
+      < b ^ t₀) :
+    ∑ t ∈ Finset.Icc t₀ t₁, (t : ℝ) * (zDict T b a c L t).card / (b : ℝ) ^ t < 1 / (2 * r) := by
+  set A := (T.m + 1) * ((L + 1) * k ^ L) * (2 * (|a| + |c|).toNat + 1)
+  have hbpos : (0 : ℝ) < b := by exact_mod_cast (by omega : 0 < b)
+  have hterm : ∀ t ∈ Finset.Icc t₀ t₁,
+      (t : ℝ) * (zDict T b a c L t).card / (b : ℝ) ^ t ≤ (t₁ : ℝ) * A / (b : ℝ) ^ t₀ := by
+    intro t ht
+    rw [Finset.mem_Icc] at ht
+    have h1 : (t : ℝ) ≤ t₁ := by exact_mod_cast ht.2
+    have h2 : ((zDict T b a c L t).card : ℝ) ≤ A := by exact_mod_cast card_zDict hk1 T b a c L t
+    have h3 : (b : ℝ) ^ t₀ ≤ (b : ℝ) ^ t := pow_le_pow_right₀ (by exact_mod_cast (by omega : 1 ≤ b)) ht.1
+    calc (t : ℝ) * (zDict T b a c L t).card / (b : ℝ) ^ t ≤ (t₁ : ℝ) * A / (b : ℝ) ^ t := by
+          gcongr
+      _ ≤ _ := by gcongr
+  refine lt_of_le_of_lt (Finset.sum_le_sum hterm) ?_
+  rw [Finset.sum_const, nsmul_eq_mul, Nat.card_Icc]
+  have hc : ((t₁ + 1 - t₀ : ℕ) : ℝ) ≤ t₁ + 1 := by exact_mod_cast (by omega : t₁ + 1 - t₀ ≤ t₁ + 1)
+  have hNr : ((t₁ + 1) * t₁ * A * (2 * r) : ℝ) < (b : ℝ) ^ t₀ := by exact_mod_cast hN
+  have hp : (0 : ℝ) < (b : ℝ) ^ t₀ := by positivity
+  have hr' : (0 : ℝ) < 2 * r := by have : (1 : ℝ) ≤ r := by exact_mod_cast hr
+                                   linarith
+  rw [mul_div_assoc', div_lt_div_iff₀ hp hr', one_mul]
+  calc ((t₁ + 1 - t₀ : ℕ) : ℝ) * (t₁ * A) * (2 * r) ≤ (t₁ + 1) * (t₁ * A) * (2 * r) := by
+        gcongr
+    _ < _ := by linarith
+
+theorem core_bound (b : ℕ) (hb : 2 ≤ b) (x y : ℝ) (a c : ℤ) (hz : IsNormal b (a * x + c * y))
+    (T : FST (b * b)) (r : ℕ) (hr : 4 ≤ r) :
+    ∀ᶠ n in atTop, ∀ π, T.run π = pre (digitPair b (by omega) x y) n →
+      (r - 2) * n ≤ 2 * r * π.length := by
+  classical
+  have : NeZero (b * b) := ⟨by positivity⟩
+  set S := digitPair b (by omega) x y with hSdef
+  set M := outMax T
+  set K := 2 * (|a| + |c|).toNat + 1
+  obtain ⟨L', hL', hC⟩ := exists_cube_lt_four_pow
+    ((r * M + 1) * (r * M) * (T.m + 1) * (r + 1) * K * (2 * r))
+  set L := r * L'
+  set t₀ := 2 * L' * (r + 1)
+  set t₁ := r * L' * M
+  have hN := dict_nat_bound T b hb rfl a c r L' hL' hC
+  have hδ := dict_sum_small (k := b * b) (by nlinarith) T b hb a c r L t₀ t₁ (by omega) hN
+  set sz := digitOf b (Int.fract ((a : ℝ) * x + c * y))
+  have hsb : ∀ i, sz i < b := fun i => digitOf_lt b hb _ i
+  have hthin := normal_thin_cover b hb sz hsb hz t₀ t₁ (zDict T b a c L) _ hδ
+  filter_upwards [hthin, eventually_gt_atTop (2 * (r + 1) * r ^ 2 * L')] with n hn hbig π hπ
+  by_contra hlt
+  push Not at hlt
+  have hLpos : 0 < L := by positivity
+  obtain ⟨cs, hcs, hβ, hrun⟩ := run_chunks T L hLpos 0 π
+  set out : Fin (T.m + 1) × List (Fin (b * b)) → List (Fin (b * b)) := fun e => T.runFrom e.1 e.2
+  have hflat : (cs.map out).flatten = pre S n := by rw [← hπ]; exact hrun.symm
+  have ht0 : 0 < t₀ := by positivity
+  obtain ⟨I, g, hI, hcover⟩ := flatten_cover out (fun e => t₀ ≤ (out e).length)
+    (fun e he => lt_of_lt_of_le ht0 he) cs 0
+  rw [hflat] at hI hcover
+  have hpre_len : (pre S n).length = n := by simp [pre]
+  rw [hpre_len] at hI hcover
+  -- the long chunks are a thin cover
+  have hlong := hn I (fun p => (out (g p)).length) (by
+    intro p hp
+    obtain ⟨-, hgmem, hP, hend, hwin⟩ := hI p hp
+    have hβL : (g p).2.length ≤ L := hβ _ hgmem
+    refine ⟨by omega, Finset.mem_Icc.mpr ⟨hP, ?_⟩, ?_⟩
+    · exact (length_runFrom_le T _ _).trans (Nat.mul_le_mul_right _ hβL)
+    · obtain ⟨κ, hκ, hwz⟩ := window_combo b hb a c x y p (out (g p)).length
+      have hu : ∀ j < (out (g p)).length, (out (g p)).getD j default = S (p + j) := by
+        intro j hj
+        rw [← hwin j hj, Nat.sub_zero]
+        have : p + j < n := by omega
+        simp [pre, List.getD_eq_getElem, this]
+      obtain ⟨hx, hy⟩ := winVal_xy_of_window b hb x y p _ default hu
+      rw [hx, hy] at hwz
+      simp only [zDict, Finset.mem_image, Finset.mem_product, Finset.mem_univ, true_and,
+        Finset.mem_Icc]
+      refine ⟨⟨(g p).1, (g p).2, κ⟩, ⟨mem_wordsLe _ hβL, ?_⟩, ?_⟩
+      · have := abs_le.mp hκ; constructor <;> linarith [this.1, this.2]
+      · show ((a * wX b (out (g p)) + c * wY b (out (g p)) + κ) % ((b ^ _ : ℕ) : ℤ)).toNat = _
+        rw [← hwz, Int.toNat_natCast])
+  set Sh := ((cs.filter fun e => ¬ t₀ ≤ (out e).length).map fun e => (out e).length).sum
+  set Lg := ∑ p ∈ I, (out (g p)).length
+  have hSh : Sh ≤ cs.length * t₀ := by
+    have := List.sum_le_card_nsmul ((cs.filter fun e => ¬ t₀ ≤ (out e).length).map
+      fun e => (out e).length) t₀ (by
+        intro v hv
+        obtain ⟨e, he, rfl⟩ := List.mem_map.mp hv
+        have := (List.mem_filter.mp he).2
+        simp at this
+        exact this.le)
+    rw [smul_eq_mul, List.length_map] at this
+    exact this.trans (Nat.mul_le_mul_right _ (List.length_filter_le _ _))
+  have hcsL : cs.length * L ≤ π.length + L := by
+    have := Nat.div_mul_le_self π.length L
+    nlinarith
+  have hLg : (Lg : ℝ) ≤ 1 / (2 * r) * n := by simpa [Lg] using hlong
+  have hrR : (4 : ℝ) ≤ r := by exact_mod_cast hr
+  have hLg2 : 2 * (r : ℝ) * Lg ≤ n := by
+    rw [mul_comm (1 / (2 * (r : ℝ))), mul_one_div, le_div_iff₀ (by linarith)] at hLg; linarith
+  -- naturals: short·r ≤ 2(r+1)(|π| + r L')
+  have g1 : Sh * r ≤ 2 * (r + 1) * (π.length + r * L') := by
+    have e : Sh * r * L' ≤ 2 * (r + 1) * (π.length + r * L') * L' := by
+      calc Sh * r * L' ≤ cs.length * t₀ * r * L' := by gcongr
+        _ = 2 * (r + 1) * (cs.length * L) * L' := by simp only [t₀, L]; ring
+        _ ≤ 2 * (r + 1) * (π.length + L) * L' := by gcongr
+        _ = _ := by simp only [L]
+    exact Nat.le_of_mul_le_mul_right e (by omega)
+  have hcov : (n : ℝ) ≤ Lg + Sh := by exact_mod_cast hcover
+  have g1' : (Sh : ℝ) * r ≤ 2 * (r + 1) * (π.length + r * L') := by exact_mod_cast g1
+  have hlt' : 2 * (r : ℝ) * π.length < (r - 2) * n := by
+    have : ((r - 2 : ℕ) : ℝ) = r - 2 := by rw [Nat.cast_sub (by omega)]; norm_num
+    have h := (show ((2 * r * π.length : ℕ) : ℝ) < (((r - 2) * n : ℕ) : ℝ) by exact_mod_cast hlt)
+    push_cast [Nat.cast_sub (by omega : 2 ≤ r)] at h; linarith
+  have hbig' : 2 * ((r : ℝ) + 1) * r ^ 2 * L' < n := by exact_mod_cast hbig
+  have hP0 : (0 : ℝ) ≤ π.length := Nat.cast_nonneg _
+  have hn0 : (0 : ℝ) ≤ n := Nat.cast_nonneg _
+  have hSh0 : (0 : ℝ) ≤ Sh := Nat.cast_nonneg _
+  nlinarith [mul_le_mul_of_nonneg_left g1' (by linarith : (0 : ℝ) ≤ r),
+    mul_le_mul_of_nonneg_left hcov (by positivity : (0 : ℝ) ≤ (r : ℝ) ^ 2),
+    mul_lt_mul_of_pos_left hlt' (by linarith : (0 : ℝ) < r + 1),
+    mul_le_mul_of_nonneg_left hLg2 (by linarith : (0 : ℝ) ≤ r)]
+
 /-- **Integer-coefficient budget.**  The assembly: `run_chunks`, `window_combo` and
 `normal_thin_cover` with `L → ∞`.  Confidence 85%. -/
 theorem span_jointDim_budget_int (b : ℕ) (hb : 2 ≤ b) (x y : ℝ) (a c : ℤ)
     (hz : IsNormal b (a * x + c * y)) :
     1 / 2 ≤ fsDim (digitPair b (by omega) x y) := by
-  sorry
+  refine le_iInf fun T => ?_
+  set f := fun n : ℕ => ((infoK T (pre (digitPair b (by omega) x y) n) : ℕ∞) : ℝ≥0∞) / (n : ℝ≥0∞)
+  have hstep : ∀ r : ℕ, 4 ≤ r → ENNReal.ofReal (1 / 2 - 1 / r) ≤ liminf f atTop := by
+    intro r hr
+    refine le_liminf_of_le (by isBoundedDefault) ?_
+    filter_upwards [core_bound b hb x y a c hz T r hr, eventually_ge_atTop 1] with n hn hn1
+    obtain ⟨c', hc'def⟩ : ∃ c', c' = ((r - 2) * n + (2 * r - 1)) / (2 * r) := ⟨_, rfl⟩
+    have hdm := Nat.div_add_mod ((r - 2) * n + (2 * r - 1)) (2 * r)
+    have hml := Nat.mod_lt ((r - 2) * n + (2 * r - 1)) (show 0 < 2 * r by omega)
+    rw [← hc'def] at hdm
+    have hc : (c' : ℕ∞) ≤ infoK T (pre (digitPair b (by omega) x y) n) := by
+      refine le_iInf₂ fun π hπ => ?_
+      have := hn π hπ
+      have : c' ≤ π.length := by
+        rw [hc'def]
+        refine Nat.lt_succ_iff.mp ((Nat.div_lt_iff_lt_mul (by omega)).mpr ?_)
+        have h4 : 2 * r - 1 < 2 * r := by omega
+        calc (r - 2) * n + (2 * r - 1) < 2 * r * π.length + 2 * r := by omega
+          _ = (π.length + 1) * (2 * r) := by ring
+      exact_mod_cast this
+    have hc' : ((c' : ℕ) : ℝ≥0∞) ≤ ((infoK T (pre (digitPair b (by omega) x y) n) : ℕ∞) : ℝ≥0∞) := by
+      exact_mod_cast ENat.toENNReal_le.mpr hc
+    refine le_trans ?_ (ENNReal.div_le_div_right hc' _)
+    rw [ENNReal.le_div_iff_mul_le (by left; exact_mod_cast (by omega : n ≠ 0)) (by left; simp)]
+    have hreal : (1 / 2 - 1 / (r : ℝ)) * n ≤ c' := by
+      have h2 : (r - 2) * n ≤ 2 * r * c' := by
+        omega
+      have hr' : (0 : ℝ) < r := by exact_mod_cast (by omega : 0 < r)
+      have h2' : ((r : ℝ) - 2) * n ≤ 2 * r * c' := by
+        have := (show (((r - 2) * n : ℕ) : ℝ) ≤ ((2 * r * c' : ℕ) : ℝ) by exact_mod_cast h2)
+        push_cast [Nat.cast_sub (by omega : 2 ≤ r)] at this; linarith
+      rw [show (1 / 2 - 1 / (r : ℝ)) * n = ((r - 2) * n) / (2 * r) by field_simp,
+        div_le_iff₀ (by linarith)]
+      linarith
+    calc ENNReal.ofReal (1 / 2 - 1 / r) * n = ENNReal.ofReal ((1 / 2 - 1 / r) * n) := by
+          rw [ENNReal.ofReal_mul' (Nat.cast_nonneg n), ENNReal.ofReal_natCast]
+      _ ≤ ENNReal.ofReal c' := ENNReal.ofReal_le_ofReal hreal
+      _ = c' := ENNReal.ofReal_natCast _
+  have hlim : Tendsto (fun r : ℕ => ENNReal.ofReal (1 / 2 - 1 / r)) atTop (𝓝 (1 / 2)) := by
+    have : Tendsto (fun r : ℕ => (1 / 2 : ℝ) - 1 / r) atTop (𝓝 (1 / 2 - 0)) :=
+      tendsto_const_nhds.sub tendsto_one_div_atTop_nhds_zero_nat
+    rw [sub_zero] at this
+    have h := ENNReal.tendsto_ofReal this
+    rwa [show ENNReal.ofReal (1 / 2) = 1 / 2 by
+      rw [ENNReal.ofReal_div_of_pos (by norm_num)]; simp] at h
+  exact le_of_tendsto hlim ((eventually_ge_atTop 4).mono hstep)
 
 /-- **Joint entropy budget.**  Confidence 85%.  English proof: `QSpan.span_dimension_budget`,
 stopped before the subadditivity step. -/
