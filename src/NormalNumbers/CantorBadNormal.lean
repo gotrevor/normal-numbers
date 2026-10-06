@@ -4780,8 +4780,10 @@ the `μ_K`-mass of the dead balls `B(p/q, 2c₀/q²)` (obstacles at length `L`) 
 at `L = 8, 10, 12, 14`, but the complement grows `≈ 5×` per `ΔL = 2` (`7.5·10⁻⁵, 4.4·10⁻⁴,
 2.3·10⁻³`): the in-`K` mass falls like `2^{−L/2}` (`2^{L/2}` points, mass `≍ 2^{−L}` each; total
 dead mass `1.9, 1.2, .88, .58 ·10⁻⁵`) while the off-`K` mass grows toward the constant per-stage
-dead density.  Extrapolated crossover near `L ≈ 22`.  So at the scales of the crux the generic
-obstacles dominate, and the rational points of `K` are a small-`L` artefact of the probes.  Heuristic:
+dead density.  Extrapolated crossover near `L ≈ 22` (untested: the `μ_K` Monte Carlo
+`scripts/cantorbad_mcobst.py 300000 1`, 140 digits, finds hits only for `L ≤ 18` and none for
+`L ∈ [20, 128]`, so the per-stage dead probability there is below `~10⁻⁷`; which family
+dominates at the crux scales is not decided by the probes).  Heuristic:
 a ball centred on `K` has mass `≍ r^{log 2/log 3}`, one centred at distance `≍ r` from `K` much less.
 Had it held, `AliveOffMix` would reduce to phase cancellation over rational points of `K`
 (`kRational_phase_sum`), whose prefix factor is a middle-digit window of `hbᵐ` in base 3. -/
