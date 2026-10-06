@@ -940,6 +940,109 @@ theorem card_image_mod_HS_le (free : ℕ → Bool) (j n : ℕ) (hj : j ≤ n) :
             exact ⟨_, ⟨h, hh, rfl⟩, by simpa using (key h 0 (by norm_num)).symm⟩
         _ ≤ _ := Finset.card_image_le.trans (by simpa using ih')
 
+/-- Group-`v` hit predicate on a depth-`b` numerator. -/
+def grp (m L b v P : ℕ) : Prop := ∃ q₀ pp : ℕ, Nat.Coprime q₀ 3 ∧ q₀ < 3 ^ (m + 1 - v) ∧
+  (3 : ℤ) ^ (L + 1 - b) * |(P : ℤ) * q₀ - pp * 3 ^ (b - v)| ≤ 3 * q₀
+
+theorem hit_classify (free : ℕ → Bool) (m L b : ℕ) (hmb : m ≤ b) (hbn : b ≤ L + 1)
+    (hforced : ∀ i, b ≤ i → i < L + 1 → free i = false) (ω : ℕ → Bool)
+    (hω : hitB free m L (pre ω (L + 1)) = true) :
+    (∀ i, m ≤ i → i < b → free i = true → ω i = false) ∨
+      ∃ v < m + 2 + b - (L + 1), grp m L b v (hd free ω b) := by
+  set n := L + 1 with hn
+  obtain ⟨q, pp, hq2, hpp, hq1, hc⟩ := (hitB_iff free m L _).1 hω
+  rw [tNum_pre] at hc
+  have hq0 : 0 < q := lt_of_lt_of_le (by positivity) hq1
+  have hT : hd free ω n = 3 ^ (n - b) * hd free ω b :=
+    hd_zero_ext free ω b n hbn (fun i h1 h2 => by simp [ptDigit, hforced i h1 h2])
+  set P' := hd free ω b with hP'
+  rw [hT] at hc
+  obtain ⟨hc1, hc2⟩ := hc
+  set r : ℤ := (P' : ℤ) * q - pp * 3 ^ b with hr
+  have h3nb : (3 : ℤ) ^ n = 3 ^ (n - b) * 3 ^ b := by rw [← pow_add]; congr 1; omega
+  have habs : (3 : ℤ) ^ (n - b) * |r| ≤ 3 * q := by
+    have e : (3 : ℤ) ^ (n - b) * r = ((3 ^ (n - b) * P' : ℕ) : ℤ) * q - pp * 3 ^ n := by
+      rw [h3nb, hr]; push_cast; ring
+    rw [← abs_of_pos (by positivity : (0:ℤ) < 3 ^ (n - b)), ← abs_mul, e, abs_le]
+    constructor
+    · have : ((pp * 3 ^ n : ℕ) : ℤ) ≤ ((3 ^ (n - b) * P' * q + 3 * q : ℕ) : ℤ) := by exact_mod_cast hc2
+      push_cast at this ⊢; linarith
+    · have : ((3 ^ (n - b) * P' * q : ℕ) : ℤ) ≤ ((pp * 3 ^ n + 3 * q : ℕ) : ℤ) := by exact_mod_cast hc1
+      push_cast at this ⊢; linarith
+  by_cases hr0 : r = 0
+  · left
+    have heq : pp * 3 ^ b = P' * q := by
+      have : (pp : ℤ) * 3 ^ b = (P' : ℤ) * q := by linarith
+      exact_mod_cast this
+    have hdvd := pow_dvd_of_eq hq0.ne' hq2 heq
+    have hz := digits_zero_of_dvd free ω (b - m) b (by omega) hdvd
+    intro i h1 h2 hf
+    have := hz i (by omega) h2
+    simp only [ptDigit, hf, Bool.true_and] at this
+    cases hw : ω i <;> simp_all
+  · right
+    obtain ⟨v, q₀, hndvd, rfl⟩ := Nat.exists_eq_pow_mul_and_not_dvd hq0.ne' 3 (by norm_num)
+    have hcop : Nat.Coprime q₀ 3 :=
+      ((Nat.Prime.coprime_iff_not_dvd Nat.prime_three).mpr hndvd).symm
+    have hq₀ : 0 < q₀ := Nat.pos_of_ne_zero (by rintro rfl; simp at hq0)
+    have hvm : v ≤ m := by
+      by_contra hc
+      have : 3 ^ (m + 1) ≤ 3 ^ v * q₀ :=
+        (Nat.pow_le_pow_right (by norm_num) (by omega)).trans (Nat.le_mul_of_pos_right _ hq₀)
+      omega
+    have hq₀M : q₀ < 3 ^ (m + 1 - v) := by
+      have : 3 ^ v * q₀ < 3 ^ v * 3 ^ (m + 1 - v) := by
+        rw [← pow_add, show v + (m + 1 - v) = m + 1 by omega]; exact hq2
+      exact lt_of_mul_lt_mul_left this (Nat.zero_le _)
+    set r₀ : ℤ := (P' : ℤ) * q₀ - pp * 3 ^ (b - v) with hr₀
+    have hrr : r = 3 ^ v * r₀ := by
+      rw [hr, hr₀, mul_sub, show (3 : ℤ) ^ b = 3 ^ v * 3 ^ (b - v) by rw [← pow_add]; congr 1; omega]
+      push_cast; ring
+    have hpv : (0 : ℤ) < 3 ^ v := by positivity
+    have hb0 : (3 : ℤ) ^ (n - b) * |r₀| ≤ 3 * q₀ := by
+      rw [hrr, abs_mul, abs_of_pos hpv] at habs
+      push_cast at habs
+      have : (3 : ℤ) ^ v * ((3 : ℤ) ^ (n - b) * |r₀|) ≤ 3 ^ v * (3 * q₀) := by linarith
+      exact le_of_mul_le_mul_left this hpv
+    refine ⟨v, ?_, q₀, pp, hcop, hq₀M, hb0⟩
+    have hr₀0 : r₀ ≠ 0 := by rintro h; apply hr0; rw [hrr, h, mul_zero]
+    have h1 : (1 : ℤ) ≤ |r₀| := Int.one_le_abs hr₀0
+    have h2 : (3 : ℤ) ^ (n - b) < 3 ^ (m + 2 - v) := by
+      have : (3 * q₀ : ℤ) < 3 * 3 ^ (m + 1 - v) := by
+        have : (q₀ : ℤ) < 3 ^ (m + 1 - v) := by exact_mod_cast hq₀M
+        linarith
+      rw [show m + 2 - v = (m + 1 - v) + 1 by omega, pow_succ]
+      nlinarith [show (0 : ℤ) < 3 ^ (n - b) by positivity]
+    have := (pow_lt_pow_iff_right₀ (by norm_num : (1 : ℤ) < 3)).1 h2
+    omega
+
+theorem group_sep (c j e P P' q₀ q₀' pp pp' M : ℕ) (hj : j ≤ c) (hq : Nat.Coprime q₀ 3)
+    (hq' : Nat.Coprime q₀' 3) (hqM : q₀ < M) (hqM' : q₀' < M) (hej : 3 ^ (e + j) = 9 * M ^ 2)
+    (hr : (3 : ℤ) ^ e * |(P : ℤ) * q₀ - pp * 3 ^ c| ≤ 3 * q₀)
+    (hr' : (3 : ℤ) ^ e * |(P' : ℤ) * q₀' - pp' * 3 ^ c| ≤ 3 * q₀')
+    (hlow : P % 3 ^ j = P' % 3 ^ j) : P % 3 ^ c = P' % 3 ^ c := by
+  apply padic_sep c j P P' q₀ q₀' pp pp' hj hq hq' hlow
+  set r := (P : ℤ) * q₀ - pp * 3 ^ c
+  set r' := (P' : ℤ) * q₀' - pp' * 3 ^ c
+  have h0 : (0 : ℤ) ≤ q₀ := by positivity
+  have h0' : (0 : ℤ) ≤ q₀' := by positivity
+  have hX : (3 : ℤ) ^ e * |r * q₀' - r' * q₀| ≤ 6 * q₀ * q₀' := by
+    calc (3 : ℤ) ^ e * |r * q₀' - r' * q₀| ≤ 3 ^ e * (|r| * q₀' + |r'| * q₀) := by
+          gcongr
+          refine (abs_sub _ _).trans ?_
+          rw [abs_mul, abs_mul, abs_of_nonneg h0, abs_of_nonneg h0']
+      _ = (3 ^ e * |r|) * q₀' + (3 ^ e * |r'|) * q₀ := by ring
+      _ ≤ (3 * q₀) * q₀' + (3 * q₀') * q₀ := by gcongr
+      _ = _ := by ring
+  have hM : (6 : ℤ) * q₀ * q₀' < 3 ^ e * 3 ^ j := by
+    rw [← pow_add]
+    have : ((3 ^ (e + j) : ℕ) : ℤ) = ((9 * M ^ 2 : ℕ) : ℤ) := by rw [hej]
+    push_cast at this; rw [this]
+    have a : (q₀ : ℤ) < M := by exact_mod_cast hqM
+    have b : (q₀' : ℤ) < M := by exact_mod_cast hqM'
+    nlinarith
+  exact lt_of_mul_lt_mul_left (hX.trans_lt hM) (by positivity)
+
 /-- **3-adic Farey mass of a run-entering scale-`m` test.**  Digits `[b, L]` forced, so the
 truncated numerator is `3^{L+1−b} P` with `P = hd b`.  An exact hit (`pp/q = P/3^b`) forces zero
 digits on `[m, b)`.  Otherwise group by `v = v₃(q)`, `q = 3^v q₀`: two hits in group `v` with the
@@ -950,7 +1053,69 @@ theorem hit_mass_padic (free : ℕ → Bool) (m L b : ℕ) (hmb : m ≤ b) (hbn 
     coins.real {ω | hitB free m L (pre ω (L + 1)) = true} ≤
       ∑ v ∈ Finset.range (m + 2 + b - (L + 1)), (1 / 2 : ℝ) ^ fc free v (L - 2 * m - 3 + 2 * v) +
         (1 / 2 : ℝ) ^ fc free m b := by
-  sorry
+  classical
+  set K := m + 2 + b - (L + 1) with hK
+  let j : ℕ → ℕ := fun v => 2 * m + 3 + b - L - 2 * v
+  let T : ℕ → Finset ℕ := fun v =>
+    (HS free b).filter fun P => grp m L b v P ∧ ∃ ω, hd free ω b = P
+  have hsub : {ω | hitB free m L (pre ω (L + 1)) = true} ⊆
+      (⋃ v ∈ Finset.range K, {ω | hd free ω b ∈ T v}) ∪
+        {ω | ∀ i, m ≤ i → i < b → free i = true → ω i = false} := by
+    intro ω hω
+    rcases hit_classify free m L b hmb hbn hforced ω hω with h | ⟨v, hv, hg⟩
+    · exact Or.inr h
+    · left
+      simp only [Set.mem_iUnion, Set.mem_ofPred_eq, Finset.mem_range]
+      exact ⟨v, hv, Finset.mem_filter.2 ⟨hd_mem_HS free ω b, hg, ω, rfl⟩⟩
+  have hmass : ∀ v ∈ Finset.range K, coins.real {ω | hd free ω b ∈ T v} ≤
+      (1 / 2 : ℝ) ^ fc free v (L - 2 * m - 3 + 2 * v) := by
+    intro v hv
+    rw [Finset.mem_range] at hv
+    have hjb : b - j v = L - 2 * m - 3 + 2 * v := by simp only [j]; omega
+    have hvj : v ≤ b - j v := by omega
+    have hjb' : j v ≤ b := by simp only [j]; omega
+    have hcard : (T v).card ≤ 2 ^ freeCount free v * 2 ^ fc free (b - j v) b := by
+      calc (T v).card ≤ (HS free v ×ˢ (HS free b).image (· % 3 ^ j v)).card := by
+            refine Finset.card_le_card_of_injOn (fun P => (P / 3 ^ (b - v), P % 3 ^ j v)) ?_ ?_
+            · intro P hP
+              simp only [T, Finset.coe_filter, Set.mem_ofPred_eq] at hP
+              obtain ⟨hPH, -, ω, rfl⟩ := hP
+              simp only [Finset.coe_product, Set.mem_prod, Finset.mem_coe, Finset.mem_image]
+              refine ⟨?_, _, hPH, rfl⟩
+              have := hd_add_div free ω v (b - v)
+              rw [show v + (b - v) = b by omega] at this
+              rw [this]; exact hd_mem_HS free ω v
+            · intro P hP P' hP' he
+              simp only [T, Finset.coe_filter, Set.mem_ofPred_eq] at hP hP'
+              simp only [Prod.mk.injEq] at he
+              obtain ⟨-, ⟨q₀, pp, hc, hqM, hr⟩, -⟩ := hP
+              obtain ⟨-, ⟨q₀', pp', hc', hqM', hr'⟩, -⟩ := hP'
+              have hlow := group_sep (b - v) (j v) (L + 1 - b) P P' q₀ q₀' pp pp' (3 ^ (m + 1 - v))
+                (by simp only [j]; omega) hc hc' hqM hqM'
+                (by rw [← pow_mul, show (9 : ℕ) = 3 ^ 2 by rfl, ← pow_add]; congr 1; simp only [j]; omega)
+                hr hr' he.2
+              rw [← Nat.div_add_mod P (3 ^ (b - v)), ← Nat.div_add_mod P' (3 ^ (b - v)), he.1, hlow]
+        _ ≤ _ := by
+            rw [Finset.card_product]
+            exact Nat.mul_le_mul (card_HS free v) (card_image_mod_HS_le free (j v) b hjb')
+    have hF : freeCount free b = freeCount free v + fc free v (b - j v) + fc free (b - j v) b := by
+      rw [freeCount_sub free (show v ≤ b by omega), fc_add free hvj (by omega), add_assoc]
+    refine (coins_hd_mem_le free b (T v)).trans ?_
+    rw [hF, ← hjb, pow_add, pow_add]
+    have hc : ((T v).card : ℝ) ≤ 2 ^ freeCount free v * 2 ^ fc free (b - j v) b := by exact_mod_cast hcard
+    have e1 : (2 : ℝ) ^ freeCount free v * (1 / 2) ^ freeCount free v = 1 := by rw [← mul_pow]; norm_num
+    have e2 : (2 : ℝ) ^ fc free (b - j v) b * (1 / 2) ^ fc free (b - j v) b = 1 := by rw [← mul_pow]; norm_num
+    calc ((T v).card : ℝ) * ((1 / 2) ^ freeCount free v * (1 / 2) ^ fc free v (b - j v) *
+          (1 / 2) ^ fc free (b - j v) b)
+        ≤ (2 ^ freeCount free v * 2 ^ fc free (b - j v) b) * ((1 / 2) ^ freeCount free v *
+          (1 / 2) ^ fc free v (b - j v) * (1 / 2) ^ fc free (b - j v) b) := by gcongr
+      _ = (2 ^ freeCount free v * (1 / 2) ^ freeCount free v) *
+          (2 ^ fc free (b - j v) b * (1 / 2) ^ fc free (b - j v) b) * (1 / 2) ^ fc free v (b - j v) := by ring
+      _ = _ := by rw [e1, e2, one_mul, one_mul]
+  refine (measureReal_mono hsub (measure_ne_top _ _)).trans ((measureReal_union_le _ _).trans ?_)
+  rw [coins_zero_window]
+  gcongr
+  exact (measureReal_biUnion_finset_le _ _).trans (Finset.sum_le_sum hmass)
 
 /-- **Scale-test masses for every `μ₀ > 2`.**  As `CantorExactExponent.ev_expTest_mass`, with the
 Borel–Cantelli case split by whether the window enters the next run: if not, `hit_mass_farey`

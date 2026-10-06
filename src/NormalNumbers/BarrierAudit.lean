@@ -114,7 +114,7 @@ def cruxLinks : List CruxLink := [
    "the computable descent must use the uniform-bad target (the same potential-guided descent \
     aimed at base-2 normality must fail, since normality is not winning) and must open at a \
     scale well above 2^{−C} (one fixed E C is not winning below it)"⟩,
-  ⟨``CantorExactExponentStretch.hit_mass_padic, [``cantorExp_trivialCount_mu_three],
+  ⟨``CantorExactExponentStretch.ev_expTest_mass_all, [``cantorExp_trivialCount_mu_three],
    "the count must beat 2^F numerators per denominator in run-entering windows (the trivial \
     count diverges at μ₀ = 3), and must see the depth-b endpoints below the cylinder scale: a \
     measure-level count thickened to 3^{−b} costs 3^{2m−b} ≥ 1 for μ₀ ≤ 3 \
@@ -197,9 +197,6 @@ def waivers : List Waiver := [
   ⟨``CantorExactExponentStretch.hit_mass_farey,
    "a leaf: Farey-disjointness mass bound (Weiss / Kleinbock–Lindenstrauss–Weiss type), elementary \
     from farey_sep and agree_of_close"⟩,
-  ⟨``CantorExactExponentStretch.ev_expTest_mass_all,
-   "wiring: the case split of CantorExactExponent.expTest_mass_le with hit_mass_farey and \
-    hit_mass_padic in the Borel–Cantelli case"⟩,
   ⟨``StretchBFR.windowCount_of_inverseSum,
    "conditional wiring (Fourier expansion over the q-interval); records that single-sum \
     cancellation reaches only m > b − δ b' (singleSum_insufficient)"⟩,
