@@ -3,7 +3,7 @@ Copyright (c) 2026 Trevor Morris. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
-import NormalNumbers.CantorExactExponent
+import NormalNumbers.CantorFiveNormal
 
 /-!
 # The middle-fifth set `K₅`: a computable point with exact irrationality exponent `μ₀`
@@ -43,7 +43,7 @@ open MeasureTheory Filter Topology
 
 namespace NormalNumbers.CantorExactExponentFive
 
-open CantorLiouville Derandomize CantorExactExponent
+open CantorLiouville Derandomize CantorExactExponent CantorFiveMoment CantorFiveNormal
 
 /-! ## Vocabulary -/
 
@@ -58,19 +58,8 @@ theorem one_lt_thresholdFive : 1 < thresholdFive := by
   have : 0 < Real.logb 4 5 := Real.logb_pos (by norm_num) (by norm_num)
   unfold thresholdFive; linarith
 
-/-- Free position `i` carries the base-5 digit `3·ω(2i) + ω(2i+1) ∈ {0,1,3,4}`; forced ones `0`. -/
-def ptDigitF (free : ℕ → Bool) (ω : ℕ → Bool) (i : ℕ) : ℕ :=
-  if free i then 3 * (ω (2 * i)).toNat + (ω (2 * i + 1)).toNat else 0
-
-/-- The point coded by coins `ω`. -/
-noncomputable def ptF (free : ℕ → Bool) (ω : ℕ → Bool) : ℝ := realOfDigits 5 (ptDigitF free ω)
-
 /-- The base-5 exponent point: forced zero runs `[a k, ⌈μ₀ a k⌉)` of the base-3 schedule. -/
 noncomputable def cantorFiveExpReal (μ₀ : ℚ) (ω : ℕ → Bool) : ℝ := ptF (expFree μ₀) ω
-
-theorem ptDigitF_lt (free : ℕ → Bool) (ω : ℕ → Bool) (i : ℕ) :
-    ptDigitF free ω i < 5 ∧ ptDigitF free ω i ≠ 2 := by
-  unfold ptDigitF; split_ifs <;> cases ω (2 * i) <;> cases ω (2 * i + 1) <;> simp
 
 theorem ptF_mem_cantorFive (free : ℕ → Bool) (ω : ℕ → Bool) : ptF free ω ∈ cantorFive :=
   ⟨_, ptDigitF_lt free ω, rfl⟩
@@ -170,8 +159,9 @@ theorem exists_computable_normal_avoid_five (μ₀ : ℚ) (hμ : 1 < μ₀)
     (hmass : ∀ j, coins.real {ω | bad' j (pre ω (d' j)) = true} ≤ 1 / ((j : ℝ) + 1) ^ 2) :
     ∃ e : ℕ → Bool, Computable e ∧
       (∀ b : ℕ, 2 ≤ b → ¬ 5 ∣ b → IsNormal b (cantorFiveExpReal μ₀ e)) ∧
-      ∃ j₁, ∀ j, j₁ ≤ j → bad' j (pre e (d' j)) = false := by
-  sorry
+      ∃ j₁, ∀ j, j₁ ≤ j → bad' j (pre e (d' j)) = false :=
+  exists_computable_normal_avoid_F (expFree μ₀) (primrec_expFree μ₀)
+    (ev_sqrt_le_freeCount_exp μ₀ hμ) bad' hbad' d' hd' hmass
 
 /-! ## Headlines -/
 
