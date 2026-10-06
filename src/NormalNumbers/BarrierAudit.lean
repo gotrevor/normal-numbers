@@ -139,9 +139,6 @@ def waivers : List Waiver := [
    "a leaf: rejection sampling from i.i.d. fresh coin blocks is uniform on the alive set"⟩,
   ⟨``CantorBadNormal.resLaw_fourier_telescope,
    "a leaf: an exact telescoping identity for a Markov block law against the product law"⟩,
-  ⟨``CantorBadNormal.cassels_muK,
-   "a leaf: Cassels' pair-sum bound for the Cantor measure, already inside \
-    CantorLiouvilleAll.secondMoment_le_explicit_b"⟩,
   ⟨``Adder.IsProductBlock.liouville_cover,
    "a leaf: the B–B 1994 Thm 3.1 Liouville witness with 'digit d absent from m·B' in place of a \
     run of g−1 (orbit_liouvilleMul_lt's argument)"⟩,

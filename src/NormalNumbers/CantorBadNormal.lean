@@ -876,6 +876,115 @@ theorem resLaw_fourier_telescope (ξ : ℝ) :
       Summable fun S => ‖deadChar ξ S‖ * ‖muK (ξ / 3 ^ (10 * S + 10))‖ := by
   sorry
 
+open CantorLiouvilleAll CantorLiouville in
+/-- The pair sum of the Riesz majorants `Bf` behind `CantorLiouvilleAll.secondMoment_le_explicit_b`
+(its proof, without the second-moment expansion).  Proved. -/
+theorem pairSum_Bf_le_explicit_b (free : ℕ → Bool) {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) (h : ℤ)
+    (hh : h ≠ 0) (N : ℕ) (hN : 1 ≤ N) :
+    ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N,
+        Bf free (Nat.log 3 N / 2) (h * ((b : ℝ) ^ n - (b : ℝ) ^ m)) ≤
+      (N : ℝ) ^ 2 * (N : ℝ) ^ (-(1 / 2 : ℝ)) +
+        3 * (3 ^ (padicValNat 3 h.natAbs + tb b) + 2 * (3 / 2 : ℝ) ^ tb b) * (N : ℝ) ^ 2 *
+          Real.exp (-(Real.log (3 / 2) / 2) * freeCount free (Nat.log 3 N / 2)) := by
+  set e := padicValNat 3 h.natAbs
+  set t := tb b
+  set M := Nat.log 3 N / 2
+  set F := freeCount free M
+  set W := F / 2
+  have hb1 : (1 : ℝ) ≤ b := by exact_mod_cast (by omega : 1 ≤ b)
+  have hMN : 3 ^ M ≤ N :=
+    (Nat.pow_le_pow_right (by norm_num) (Nat.div_le_self _ _)).trans
+      (Nat.pow_log_le_self 3 (by omega))
+  set G : ℕ → ℕ → ℝ := fun d m => Bf free M (h * ((b : ℝ) ^ d - 1) * (b : ℝ) ^ m)
+  have hpair := pair_sum_le (fun n m => Bf free M (h * ((b : ℝ) ^ n - (b : ℝ) ^ m))) G
+    (fun d m => Bf_nonneg _ _ _) (fun n => Bf_le_one _ _ _)
+    (fun n m hmn => le_of_eq (by
+      simp only [G]; congr 1
+      rw [show (b : ℝ) ^ n = (b : ℝ) ^ (n - m) * (b : ℝ) ^ m by rw [← pow_add]; congr 1; omega]; ring))
+    (fun n m hmn => le_of_eq (by
+      simp only [G]; rw [← Bf_neg]; congr 1
+      rw [show (b : ℝ) ^ m = (b : ℝ) ^ (m - n) * (b : ℝ) ^ n by rw [← pow_add]; congr 1; omega]; ring)) N
+  set P := (2 / 3 : ℝ) ^ W
+  set T := (3 / 2 : ℝ) ^ t
+  have hT : 0 ≤ T := by positivity
+  have hshift : ∀ d ∈ Finset.Ico 1 N, ∑ m ∈ Finset.range N, G d m ≤
+      (if W ≤ e + padicValNat 3 (b ^ d - 1) then (N : ℝ) else 0) + 2 * N * T * P := by
+    intro d hd
+    simp only [Finset.mem_Ico] at hd
+    have hd1 : 1 ≤ b ^ d - 1 := by
+      have : 2 ≤ b ^ d := le_trans hb (Nat.le_self_pow (by omega) b)
+      omega
+    split_ifs with hbad
+    · refine (Finset.sum_le_sum fun m _ => Bf_le_one free M _).trans ?_
+      have : (0 : ℝ) ≤ 2 * N * T * P := by positivity
+      simp; linarith
+    · rw [zero_add]
+      set c := h.natAbs * (b ^ d - 1)
+      have hc : c ≠ 0 := Nat.mul_ne_zero (Int.natAbs_ne_zero.2 hh) (by omega)
+      have hv : padicValNat 3 c = e + padicValNat 3 (b ^ d - 1) :=
+        padicValNat.mul (Int.natAbs_ne_zero.2 hh) (by omega)
+      refine le_of_eq_of_le (Finset.sum_congr rfl fun m _ => ?_)
+        (good_shift_b free hb h3 M N hMN c hc (by omega))
+      simp only [G]
+      rw [← Bf_abs]
+      congr 1
+      have hd2 : (0 : ℝ) ≤ (b : ℝ) ^ d - 1 := by
+        have : (1:ℝ) ≤ (b : ℝ) ^ d := one_le_pow₀ hb1; linarith
+      simp only [c]
+      push_cast [Nat.cast_sub (Nat.one_le_pow _ _ (by omega : 0 < b))]
+      rw [abs_mul, abs_mul, abs_of_pos (by positivity : (0:ℝ) < (b : ℝ) ^ m),
+        abs_of_nonneg hd2, Nat.cast_natAbs, Int.cast_abs]
+  have hsumd : ∑ d ∈ Finset.Ico 1 N, ∑ m ∈ Finset.range N, G d m ≤
+      N * ((N / 3 ^ (W - e - t) : ℕ) : ℝ) + N * (2 * N * T * P) := by
+    refine (Finset.sum_le_sum hshift).trans ?_
+    rw [Finset.sum_add_distrib, ← Finset.sum_filter, Finset.sum_const, Finset.sum_const,
+      nsmul_eq_mul, nsmul_eq_mul, Nat.card_Ico]
+    have hbc := bad_count_b hb h3 e W N
+    have : (((Finset.Ico 1 N).filter (fun m => W ≤ e + padicValNat 3 (b ^ m - 1))).card : ℝ) ≤
+        ((N / 3 ^ (W - e - t) : ℕ) : ℝ) := by exact_mod_cast hbc
+    have hN1 : ((N - 1 : ℕ) : ℝ) ≤ N := by exact_mod_cast Nat.sub_le N 1
+    have : (0 : ℝ) ≤ 2 * N * T * P := by positivity
+    nlinarith
+  have hdiv : ((N / 3 ^ (W - e - t) : ℕ) : ℝ) ≤ N * 3 ^ (e + t) * P := by
+    have h1 : (N / 3 ^ (W - e - t)) * 3 ^ W ≤ N * 3 ^ (e + t) := by
+      calc (N / 3 ^ (W - e - t)) * 3 ^ W ≤ (N / 3 ^ (W - e - t)) * (3 ^ (W - e - t) * 3 ^ (e + t)) := by
+            gcongr; rw [← pow_add]; exact Nat.pow_le_pow_right (by norm_num) (by omega)
+        _ = (N / 3 ^ (W - e - t)) * 3 ^ (W - e - t) * 3 ^ (e + t) := by ring
+        _ ≤ N * 3 ^ (e + t) := by gcongr; exact Nat.div_mul_le_self _ _
+    have h2 : ((N / 3 ^ (W - e - t) : ℕ) : ℝ) * 3 ^ W ≤ N * 3 ^ (e + t) := by exact_mod_cast h1
+    have h3' : (2 / 3 : ℝ) ^ W * 3 ^ W = 2 ^ W := by rw [← mul_pow]; norm_num
+    have h4 : (1 : ℝ) ≤ 2 ^ W := one_le_pow₀ (by norm_num)
+    have h5 : (0 : ℝ) < 3 ^ W := by positivity
+    rw [← mul_le_mul_iff_of_pos_right h5]
+    calc _ ≤ (N : ℝ) * 3 ^ (e + t) := h2
+      _ ≤ (N : ℝ) * 3 ^ (e + t) * 2 ^ W := le_mul_of_one_le_right (by positivity) h4
+      _ = _ := by rw [mul_assoc _ ((2 / 3 : ℝ) ^ W), h3']
+  have hexp := pow_two_sub_le W F rfl
+  have hNr : (N : ℝ) ≤ (N : ℝ) ^ 2 * (N : ℝ) ^ (-(1 / 2 : ℝ)) := by
+    have hN0 : (1 : ℝ) ≤ N := by exact_mod_cast hN
+    have : (N : ℝ) ^ 2 * (N : ℝ) ^ (-(1 / 2 : ℝ)) = N * (N : ℝ) ^ (1 / 2 : ℝ) := by
+      rw [show (N : ℝ) ^ 2 = N * N ^ (1 : ℝ) by rw [Real.rpow_one]; ring, mul_assoc,
+        ← Real.rpow_add (by positivity)]
+      norm_num
+    rw [this]
+    have : (1 : ℝ) ≤ (N : ℝ) ^ (1 / 2 : ℝ) := Real.one_le_rpow hN0 (by norm_num)
+    nlinarith
+  have hI := hpair
+  set E := Real.exp (-(Real.log (3 / 2) / 2) * F)
+  have hE : 0 ≤ E := (Real.exp_pos _).le
+  have hP : 0 ≤ P := by positivity
+  have hN0 : (0 : ℝ) ≤ N := by positivity
+  have hfin : ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N,
+        Bf free M (h * ((b : ℝ) ^ n - (b : ℝ) ^ m)) ≤
+      N + 2 * ((N : ℝ) ^ 2 * (3 ^ (e + t) + 2 * T) * P) := by
+    have := mul_le_mul_of_nonneg_left hdiv hN0
+    nlinarith
+  have hK : (0 : ℝ) ≤ 3 ^ (e + t) + 2 * T := by positivity
+  calc _ ≤ N + 2 * ((N : ℝ) ^ 2 * (3 ^ (e + t) + 2 * T) * P) := hfin
+    _ ≤ (N : ℝ) ^ 2 * (N : ℝ) ^ (-(1 / 2 : ℝ)) + 2 * ((N : ℝ) ^ 2 * (3 ^ (e + t) + 2 * T) * (3 / 2 * E)) := by
+        gcongr
+    _ = _ := by simp only [T, E, F, M]; ring
+
 /-- **Cassels for `μ_K`** (open leaf, believed 99%): the pair sum of `|μ̂_K|` over the
 frequencies `h(bⁿ − bᵐ)` has a power saving.  This is the bound inside
 `CantorLiouvilleAll.secondMoment_le_explicit_b` with `free = fun _ => true` (there it is applied
@@ -884,7 +993,57 @@ theorem cassels_muK {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) (h : ℤ) (hh : h
     ∃ (C : ℝ) (W : ℕ → ℝ), Summable (fun j => W (sched j)) ∧ ∀ N : ℕ, 1 ≤ N →
       ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N, ‖muK (h * ((b : ℝ) ^ n - (b : ℝ) ^ m))‖ ≤
         C * (N : ℝ) ^ 2 * W N := by
-  sorry
+  set e := padicValNat 3 h.natAbs
+  set t := CantorLiouvilleAll.tb b
+  set c : ℝ := Real.log (3 / 2) / 2
+  have hc : 0 ≤ c := by unfold c; have := Real.log_nonneg (by norm_num : (1:ℝ) ≤ 3 / 2); positivity
+  set δ : ℝ := c / (2 * Real.log 3)
+  set K : ℝ := 3 * (3 ^ (e + t) + 2 * (3 / 2 : ℝ) ^ t)
+  have hK : 0 ≤ K := by positivity
+  have hl3 : 0 < Real.log 3 := Real.log_pos (by norm_num)
+  have hE : ∀ N : ℕ, 1 ≤ N → Real.exp (-c * ((Nat.log 3 N / 2 : ℕ) : ℝ)) ≤
+      Real.exp c * (N : ℝ) ^ (-δ) := by
+    intro N hN
+    have hN0 : (0 : ℝ) < N := by exact_mod_cast hN
+    set k := Nat.log 3 N
+    have hlt : N < 3 ^ (k + 1) := Nat.lt_pow_succ_log_self (by norm_num) _
+    have hlog : Real.log N < (k + 1) * Real.log 3 := by
+      have : (N : ℝ) < (3 : ℝ) ^ (k + 1) := by exact_mod_cast hlt
+      have := Real.log_lt_log hN0 this
+      rwa [Real.log_pow, Nat.cast_add, Nat.cast_one] at this
+    have hk2 : (k : ℝ) - 1 ≤ 2 * ((k / 2 : ℕ) : ℝ) := by
+      have : k ≤ 2 * (k / 2) + 1 := by omega
+      have : (k : ℝ) ≤ 2 * ((k / 2 : ℕ) : ℝ) + 1 := by exact_mod_cast this
+      linarith
+    rw [Real.rpow_def_of_pos hN0, ← Real.exp_add]
+    apply Real.exp_le_exp.2
+    have : Real.log N * (1 / Real.log 3) < k + 1 := by
+      rw [← div_eq_mul_one_div, div_lt_iff₀ hl3]; linarith
+    have hδ : Real.log N * -δ = -(c / 2) * (Real.log N * (1 / Real.log 3)) := by
+      unfold δ; field_simp
+    rw [hδ]
+    nlinarith
+  refine ⟨K + 1, fun N => (N : ℝ) ^ (-(1 / 2 : ℝ)) + Real.exp c * (N : ℝ) ^ (-δ),
+    (summable_sched_rpow (by norm_num)).add ((summable_sched_rpow (by
+      unfold δ; have : 0 < c := by unfold c; have := Real.log_pos (by norm_num : (1:ℝ) < 3 / 2); positivity
+      positivity)).mul_left _), fun N hN => ?_⟩
+  have hB := pairSum_Bf_le_explicit_b (fun _ => true) hb h3 h hh N hN
+  have hfc : ∀ M, CantorLiouville.freeCount (fun _ => true) M = M := by
+    intro M; simp [CantorLiouville.freeCount]
+  rw [hfc] at hB
+  have hmu : ∀ ξ : ℝ, ‖muK ξ‖ ≤ CantorLiouville.Bf (fun _ => true) (Nat.log 3 N / 2) ξ :=
+    fun ξ => CantorLiouville.charFun_real _ _ ξ
+  have hN2 : (0 : ℝ) ≤ (N : ℝ) ^ 2 := by positivity
+  have hr : (0 : ℝ) ≤ (N : ℝ) ^ (-(1 / 2 : ℝ)) := by positivity
+  have hr2 : (0 : ℝ) ≤ Real.exp c * (N : ℝ) ^ (-δ) := by positivity
+  have hEN := hE N hN
+  calc _ ≤ _ := Finset.sum_le_sum fun n _ => Finset.sum_le_sum fun m _ => hmu _
+    _ ≤ _ := hB
+    _ ≤ (N : ℝ) ^ 2 * (N : ℝ) ^ (-(1 / 2 : ℝ)) + K * (N : ℝ) ^ 2 * (Real.exp c * (N : ℝ) ^ (-δ)) := by
+        have := mul_le_mul_of_nonneg_left hEN (mul_nonneg hK hN2)
+        simp only [K] at this ⊢
+        linarith
+    _ ≤ _ := by nlinarith [mul_nonneg hN2 hr, mul_nonneg hN2 hr2, mul_nonneg (mul_nonneg hK hN2) hr]
 
 /-- **The crux: cancellation in the dead-children characters.**  Believed, confidence 55%.
 

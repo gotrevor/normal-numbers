@@ -2919,5 +2919,6 @@ Next: (1) prove the reduction (needs pair-averaged partial Cantor products, Cass
   only dead-children characters appear, uniformity is used here), `cassels_muK` (classical,
   inside CantorLiouvilleAll), and the real crux `deadCharCancel` (exponential sums
   e(h bⁿ p/q) over obstacle centres near K).
-- Next: prove `cassels_muK` from `secondMoment_le_explicit_b` internals; then
+- DONE: `cassels_muK` proved (axiom-clean) via copied `pairSum_Bf_le_explicit_b`.
+- Next:
   `buildU_succ_uniform`; then attack `deadCharCancel` (first: bound |deadErr| ≤ 4π|ξ|3^{-10S}).
