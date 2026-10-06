@@ -630,11 +630,11 @@ theorem cell_bounds (K : ℕ) {y : ℝ} (hy0 : 0 ≤ y) (hy1 : y < 1) :
 /-- **Top-window sum from the discrepancy input.**  Proved: sample `z = 3^y` on the grid of mesh
 `3^{−(2K+1)}` (Lipschitz error `π 3^K` per unit), count each cell with `LogDiscrepancy`, and sum
 the grid values by the Riesz residue sum (`sum_cantorProd_grid`). -/
-theorem sum_topProd_le {t : ℕ} (hD : LogDiscrepancy t) : ∃ C κ : ℝ, 0 < κ ∧ ∀ N : ℕ, 1 ≤ N →
-    ∀ (K : ℕ) (β : ℝ), ∑ m ∈ Finset.range N, topProd K (Int.fract (m * Real.logb 3 t + β)) ≤
-      3 * N * (2 / 3 : ℝ) ^ K + 4 * N * (1 / 3 : ℝ) ^ K + C * 9 ^ K * (N : ℝ) ^ (1 - κ) := by
-  obtain ⟨C, κ, hκ, hC⟩ := hD
-  refine ⟨9 * |C|, κ, hκ, fun N hN K β => ?_⟩
+theorem sum_topProd_le_of {t : ℕ} (C κ : ℝ) (hC : ∀ N : ℕ, 1 ≤ N → ∀ β u v : ℝ, 0 ≤ u → u ≤ v →
+    v ≤ 1 → |(visitCount (fun m => Int.fract (m * Real.logb 3 t + β)) u v N : ℝ) - N * (v - u)| ≤
+      C * (N : ℝ) ^ (1 - κ)) (N : ℕ) (hN : 1 ≤ N) (K : ℕ) (β : ℝ) :
+    ∑ m ∈ Finset.range N, topProd K (Int.fract (m * Real.logb 3 t + β)) ≤
+      3 * N * (2 / 3 : ℝ) ^ K + 4 * N * (1 / 3 : ℝ) ^ K + 9 * |C| * 9 ^ K * (N : ℝ) ^ (1 - κ) := by
   set y : ℕ → ℝ := fun m => Int.fract (m * Real.logb 3 t + β)
   set Q : ℝ := 3 ^ (2 * K + 1)
   set Qn : ℕ := 3 ^ (2 * K + 1)
@@ -762,14 +762,22 @@ theorem sum_topProd_le {t : ℕ} (hD : LogDiscrepancy t) : ∃ C κ : ℝ, 0 < �
         linarith
     _ ≤ _ := by rw [mul_add, h1]; linarith
 
+theorem sum_topProd_le {t : ℕ} (hD : LogDiscrepancy t) : ∃ C κ : ℝ, 0 < κ ∧ ∀ N : ℕ, 1 ≤ N →
+    ∀ (K : ℕ) (β : ℝ), ∑ m ∈ Finset.range N, topProd K (Int.fract (m * Real.logb 3 t + β)) ≤
+      3 * N * (2 / 3 : ℝ) ^ K + 4 * N * (1 / 3 : ℝ) ^ K + C * 9 ^ K * (N : ℝ) ^ (1 - κ) := by
+  obtain ⟨C, κ, hκ, hC⟩ := hD
+  exact ⟨9 * |C|, κ, hκ, sum_topProd_le_of C κ hC⟩
+
 set_option maxHeartbeats 2000000 in
 /-- **Pair classification.**  Below the threshold, for `m ≥ A·W + B` every pair `(m, d)` has a
 free window of length `W`: the low window `[v+1, v+W)` (`v ≈ sm`), or the top window of
 `Y = h bᵐ` (when `n_Y ≤ s(m+d)`), or the top window of `ξ = h bᵐ(bᵈ−1)`.  The last two lie in
 the gap after the run that hits the low window. -/
-theorem pair_classify {μ₀ : ℚ} (hμ : 2 < μ₀) {s : ℕ} (hs : 1 ≤ s) {L H : ℝ}
+theorem pair_classify_expl {μ₀ : ℚ} (hμ : 2 < μ₀) {s : ℕ} (hs : 1 ≤ s) {L H : ℝ}
     (hL : (s : ℝ) * (μ₀ - 1) < L) (hH : 0 ≤ H) :
-    ∃ A B : ℕ, ∀ W m d v nY nξ : ℕ, A * W + B ≤ m →
+    ∀ W m d v nY nξ : ℕ, ⌈((μ₀ : ℝ) + 1) / (s + L - μ₀ * s)⌉₊ * W +
+        (expRunEnd μ₀ (expRunStart μ₀ ⌈((s + L) ^ 2 / s + ((s + L) * H / s + H)) / s⌉₊) +
+          ⌈((μ₀ : ℝ) * H + 4) / (s + L - μ₀ * s)⌉₊ + 1) ≤ m →
       (s * m : ℝ) ≤ v → (v : ℝ) ≤ s * m + H →
       (s + L) * m - 1 ≤ nY → (nY : ℝ) ≤ (s + L) * m + H →
       (s + L) * (m + d) - 2 ≤ nξ → (nξ : ℝ) ≤ (s + L) * (m + d) + H →
@@ -785,7 +793,6 @@ theorem pair_classify {μ₀ : ℚ} (hμ : 2 < μ₀) {s : ℕ} (hs : 1 ≤ s) {
   set c1 : ℝ := (s + L) * H / s + H
   set k1 : ℕ := ⌈((s + L) ^ 2 / s + c1) / s⌉₊
   set Ek1 : ℕ := expRunEnd μ₀ (expRunStart μ₀ k1)
-  refine ⟨⌈((μ₀ : ℝ) + 1) / g⌉₊, Ek1 + ⌈((μ₀ : ℝ) * H + 4) / g⌉₊ + 1, ?_⟩
   intro W m d v nY nξ hm hv1 hv2 hY1 hY2 hξ1 hξ2
   by_cases hlow : ∀ p, v + 1 ≤ p → p < v + W → expFree μ₀ p = true
   · exact Or.inl hlow
@@ -898,6 +905,24 @@ theorem pair_classify {μ₀ : ℚ} (hμ : 2 < μ₀) {s : ℕ} (hs : 1 ≤ s) {
       linarith
     have hd0 : (0 : ℝ) ≤ d := by positivity
     exact hwin nξ (by nlinarith) hξup
+theorem pair_classify {μ₀ : ℚ} (hμ : 2 < μ₀) {s : ℕ} (hs : 1 ≤ s) {L H : ℝ}
+    (hL : (s : ℝ) * (μ₀ - 1) < L) (hH : 0 ≤ H) :
+    ∃ A B : ℕ, ∀ W m d v nY nξ : ℕ, A * W + B ≤ m →
+      (s * m : ℝ) ≤ v → (v : ℝ) ≤ s * m + H →
+      (s + L) * m - 1 ≤ nY → (nY : ℝ) ≤ (s + L) * m + H →
+      (s + L) * (m + d) - 2 ≤ nξ → (nξ : ℝ) ≤ (s + L) * (m + d) + H →
+      (∀ p, v + 1 ≤ p → p < v + W → expFree μ₀ p = true) ∨
+      (W ≤ nY ∧ nY ≤ s * (m + d) ∧ ∀ k < W, expFree μ₀ (nY - 1 - k) = true) ∨
+      (W ≤ nξ ∧ ∀ k < W, expFree μ₀ (nξ - 1 - k) = true) :=
+  ⟨_, _, pair_classify_expl hμ hs hL hH⟩
+
+/-- The explicit constants of `pair_classify_expl`. -/
+noncomputable def pcA (μ₀ : ℚ) (s : ℕ) (L : ℝ) : ℕ := ⌈((μ₀ : ℝ) + 1) / (s + L - μ₀ * s)⌉₊
+
+noncomputable def pcB (μ₀ : ℚ) (s : ℕ) (L H : ℝ) : ℕ :=
+  expRunEnd μ₀ (expRunStart μ₀ ⌈((s + L) ^ 2 / s + ((s + L) * H / s + H)) / s⌉₊) +
+    ⌈((μ₀ : ℝ) * H + 4) / (s + L - μ₀ * s)⌉₊ + 1
+
 /-- The structure of `b = 3ˢt` under `ProfileOK`. -/
 theorem profile_data {μ₀ : ℚ} (hμ : 1 < μ₀) {b : ℕ} (hb : 2 ≤ b) (h3 : 3 ∣ b)
     (hP : ProfileOK μ₀ b) :
@@ -940,9 +965,9 @@ theorem hf_neg (v k : ℕ) (u : ℝ) : Hf (fun _ => true) v k (-u) = Hf (fun _ =
 set_option maxHeartbeats 4000000 in
 /-- **Per-pair bound.**  Every pair coefficient is bounded by the low-window majorant, the two
 top-window products, or (for small `m`) by `1`. -/
-theorem pair_bound {μ₀ : ℚ} (hμ : 2 < μ₀) {b : ℕ} (hb : 2 ≤ b) (h3 : 3 ∣ b)
+theorem pair_bound_expl {μ₀ : ℚ} (hμ : 2 < μ₀) {b : ℕ} (hb : 2 ≤ b) (h3 : 3 ∣ b)
     (hP : ProfileOK μ₀ b) (h : ℤ) (hh : h ≠ 0) :
-    ∃ A B : ℕ, ∀ W N d m : ℕ, 1 ≤ d → d < N → m < N →
+    ∀ W N d m : ℕ, 1 ≤ d → d < N → m < N →
       Bf (expFree μ₀) (2 * b * N + ⌈Real.logb 3 |(h : ℝ)|⌉₊ + W + 1)
           (h * ((b : ℝ) ^ d - 1) * (b : ℝ) ^ m) ≤
         Hf (fun _ => true) 0 W
@@ -952,7 +977,9 @@ theorem pair_bound {μ₀ : ℚ} (hμ : 2 < μ₀) {b : ℕ} (hb : 2 ≤ b) (h3 
             Real.logb 3 (|(h : ℝ)| * ((b : ℝ) ^ d - 1)))) +
           topProd W (Int.fract (m * Real.logb 3 (b / 3 ^ padicValNat 3 b : ℕ) +
             Real.logb 3 |(h : ℝ)|)) +
-          (if m < A * W + B then 1 else 0) := by
+          (if m < pcA μ₀ (padicValNat 3 b) (Real.logb 3 (b / 3 ^ padicValNat 3 b : ℕ)) * W +
+            pcB μ₀ (padicValNat 3 b) (Real.logb 3 (b / 3 ^ padicValNat 3 b : ℕ))
+              (Real.logb 3 |(h : ℝ)|) then 1 else 0) := by
   have hμ1 : (1 : ℚ) < μ₀ := by linarith
   obtain ⟨hs1, hbt, ht3, ht2, hL, hlogb⟩ := profile_data hμ1 hb h3 hP
   set s := padicValNat 3 b
@@ -962,8 +989,10 @@ theorem pair_bound {μ₀ : ℚ} (hμ : 2 < μ₀) {b : ℕ} (hb : 2 ≤ b) (h3 
   have hhR : (1 : ℝ) ≤ |(h : ℝ)| := by
     rw [← Int.cast_abs]; exact_mod_cast Int.one_le_abs hh
   have hH0 : 0 ≤ H := Real.logb_nonneg (by norm_num) hhR
-  obtain ⟨A, B, hAB⟩ := pair_classify hμ hs1 (L := L) hL hH0
-  refine ⟨A, B, fun W N d m hd hdN hmN => ?_⟩
+  have hAB := pair_classify_expl hμ hs1 (L := L) hL hH0
+  set A := pcA μ₀ s L
+  set B := pcB μ₀ s L H
+  intro W N d m hd hdN hmN
   set e := padicValNat 3 h.natAbs
   set h' := h.natAbs / 3 ^ e
   set c := h' * (b ^ d - 1)
@@ -1137,6 +1166,21 @@ theorem pair_bound {μ₀ : ℚ} (hμ : 2 < μ₀) {b : ℕ} (hb : 2 ≤ b) (h3 
     have := hT (Int.fract (m * L + H))
     have := hHf ((c * t ^ m : ℕ) : ℝ)
     linarith
+theorem pair_bound {μ₀ : ℚ} (hμ : 2 < μ₀) {b : ℕ} (hb : 2 ≤ b) (h3 : 3 ∣ b)
+    (hP : ProfileOK μ₀ b) (h : ℤ) (hh : h ≠ 0) :
+    ∃ A B : ℕ, ∀ W N d m : ℕ, 1 ≤ d → d < N → m < N →
+      Bf (expFree μ₀) (2 * b * N + ⌈Real.logb 3 |(h : ℝ)|⌉₊ + W + 1)
+          (h * ((b : ℝ) ^ d - 1) * (b : ℝ) ^ m) ≤
+        Hf (fun _ => true) 0 W
+            (((h.natAbs / 3 ^ padicValNat 3 h.natAbs) * (b ^ d - 1) *
+              (b / 3 ^ padicValNat 3 b) ^ m : ℕ) : ℝ) +
+          topProd W (Int.fract (m * Real.logb 3 (b / 3 ^ padicValNat 3 b : ℕ) +
+            Real.logb 3 (|(h : ℝ)| * ((b : ℝ) ^ d - 1)))) +
+          topProd W (Int.fract (m * Real.logb 3 (b / 3 ^ padicValNat 3 b : ℕ) +
+            Real.logb 3 |(h : ℝ)|)) +
+          (if m < A * W + B then 1 else 0) :=
+  ⟨_, _, pair_bound_expl hμ hb h3 hP h hh⟩
+
 /-- Scale bookkeeping: with `r = ⌊log₃ N⌋ / q` and `x = N^{1/q}`, `3^r ≤ x ≤ 3·3^r`. -/
 theorem three_pow_div_log_bounds (q N : ℕ) (hq : 1 ≤ q) (hN : 1 ≤ N) :
     (3 : ℝ) ^ (Nat.log 3 N / q) ≤ (N : ℝ) ^ (1 / q : ℝ) ∧
@@ -1161,6 +1205,169 @@ theorem three_pow_div_log_bounds (q N : ℕ) (hq : 1 ≤ q) (hN : 1 ≤ N) :
       simp only [r]; nlinarith
     rw [show (3 : ℝ) * 3 ^ r = 3 ^ (r + 1) by ring, ← key (r + 1)]
     exact Real.rpow_le_rpow (by positivity) (by exact_mod_cast h1.le) (by positivity)
+
+set_option maxHeartbeats 4000000 in
+/-- **Explicit second moment.**  The proof of `secondMoment_le_profile` with the discrepancy
+constants `C, κ`, the scale `q` and the saving `δ` as parameters, stopped before the small-`m`
+term is absorbed; `pcA, pcB` are the explicit constants of `pair_classify_expl`. -/
+theorem secondMoment_profile_core (μ₀ : ℚ) (hμ : 2 < μ₀) {b : ℕ} (hb : 2 ≤ b) (h3 : 3 ∣ b)
+    (hP : ProfileOK μ₀ b) (h : ℤ) (hh : h ≠ 0) (C κ : ℝ)
+    (hC : ∀ N : ℕ, 1 ≤ N → ∀ β u v : ℝ, 0 ≤ u → u ≤ v → v ≤ 1 →
+      |(visitCount (fun m => Int.fract (m * Real.logb 3 (b / 3 ^ padicValNat 3 b : ℕ) + β)) u v N
+        : ℝ) - N * (v - u)| ≤ C * (N : ℝ) ^ (1 - κ))
+    (q : ℕ) (hq7 : 7 ≤ q) (δ : ℝ) (hδ1 : δ ≤ 1 / q) (hδ2 : δ ≤ κ - 6 / q)
+    (N : ℕ) (hN : 1 ≤ N) :
+    ∫ ω, ‖∑ k ∈ Finset.range N, DecayAeNormal.ee (h * (b : ℝ) ^ k * pt (expFree μ₀) ω)‖ ^ 2
+        ∂ExplicitSquare.coinMeasure ≤
+      N + 2 * N * ((9 * (3 / 2 : ℝ) ^ CantorLiouvilleAll.tb (b / 3 ^ padicValNat 3 b) + 42 +
+          162 * |C|) * (N : ℝ) ^ (1 - δ) +
+        ((pcA μ₀ (padicValNat 3 b) (Real.logb 3 (b / 3 ^ padicValNat 3 b : ℕ)) *
+            (3 * (Nat.log 3 N / q) + 1) +
+          pcB μ₀ (padicValNat 3 b) (Real.logb 3 (b / 3 ^ padicValNat 3 b : ℕ))
+            (Real.logb 3 |(h : ℝ)|) : ℕ) : ℝ)) := by
+  have hμ1 : (1 : ℚ) < μ₀ := by linarith
+  obtain ⟨hs1, hbt, ht3, ht2, -, -⟩ := profile_data hμ1 hb h3 hP
+  set s := padicValNat 3 b
+  set t := b / 3 ^ s
+  have hAB := pair_bound_expl hμ hb h3 hP h hh
+  set A := pcA μ₀ s (Real.logb 3 (t : ℕ))
+  set B := pcB μ₀ s (Real.logb 3 (t : ℕ)) (Real.logb 3 |(h : ℝ)|)
+  have hqR : (7 : ℝ) ≤ q := by exact_mod_cast hq7
+  have hq0 : (0 : ℝ) < q := by linarith
+  have h1q : 1 / (q : ℝ) ≤ 1 / 7 := by gcongr
+  set Tt : ℝ := (3 / 2 : ℝ) ^ CantorLiouvilleAll.tb t
+  set K : ℝ := 9 * Tt + 42 + 162 * |C|
+  have hN1 : (1 : ℝ) ≤ N := by exact_mod_cast hN
+  have hN0 : (0 : ℝ) < N := by linarith
+  set r := Nat.log 3 N / q
+  set W := 3 * r + 1
+  set x : ℝ := (N : ℝ) ^ (1 / q : ℝ)
+  set y : ℝ := (3 : ℝ) ^ r
+  obtain ⟨hyx, hxy⟩ := three_pow_div_log_bounds q N (by omega) hN
+  have hy1 : 1 ≤ y := one_le_pow₀ (by norm_num)
+  have hx0 : 0 < x := by positivity
+  have hxpow : ∀ k : ℕ, x ^ k = (N : ℝ) ^ ((k : ℝ) / q) := by
+    intro k
+    rw [← Real.rpow_natCast, ← Real.rpow_mul hN0.le]; congr 1; ring
+  set Z : ℝ := (N : ℝ) ^ (1 - δ)
+  have hle : ∀ a : ℝ, a ≤ 1 - δ → (N : ℝ) ^ a ≤ Z := fun a ha =>
+    Real.rpow_le_rpow_of_exponent_le hN1 ha
+  have hNx : (N : ℝ) / x ≤ Z := by
+    have : (N : ℝ) / x = (N : ℝ) ^ (1 - 1 / q : ℝ) := by
+      rw [Real.rpow_sub hN0, Real.rpow_one]
+    rw [this]; exact hle _ (by linarith)
+  have hx6κ : x ^ 6 * (N : ℝ) ^ (1 - κ) ≤ Z := by
+    rw [hxpow, ← Real.rpow_add hN0]; apply hle; push_cast; linarith
+  have hx3 : x ^ 3 ≤ N := by
+    rw [hxpow]
+    calc (N : ℝ) ^ ((3 : ℕ) / (q : ℝ)) ≤ (N : ℝ) ^ (1 : ℝ) := by
+          apply Real.rpow_le_rpow_of_exponent_le hN1
+          have : (3 : ℝ) / q = 3 * (1 / q) := by ring
+          push_cast; linarith
+      _ = N := Real.rpow_one _
+  have hP3 : (2 / 3 : ℝ) ^ (3 * r) ≤ 3 / x := by
+    have h1 : (2 / 3 : ℝ) ^ (3 * r) ≤ 1 / y := by
+      rw [pow_mul, one_div, ← inv_pow]
+      exact pow_le_pow_left₀ (by norm_num) (by norm_num) r
+    calc _ ≤ 1 / y := h1
+      _ ≤ 3 / x := by rw [div_le_div_iff₀ (by linarith) hx0]; linarith
+  have hPW : (2 / 3 : ℝ) ^ W ≤ 3 / x :=
+    (pow_le_pow_of_le_one (by norm_num) (by norm_num) (by omega : 3 * r ≤ W)).trans hP3
+  have hQW : (1 / 3 : ℝ) ^ W ≤ 3 / x :=
+    (pow_le_pow_left₀ (by norm_num) (by norm_num) W).trans hPW
+  have h9W : (9 : ℝ) ^ W ≤ 9 * x ^ 6 := by
+    have : (9 : ℝ) ^ W = 9 * y ^ 6 := by
+      simp only [W, y]; rw [pow_succ, ← pow_mul, show (9 : ℝ) = 3 ^ 2 by norm_num, ← pow_mul]; ring
+    rw [this]; gcongr
+  set M := 2 * b * N + ⌈Real.logb 3 |(h : ℝ)|⌉₊ + W + 1
+  set G : ℕ → ℕ → ℝ := fun d m => Bf (expFree μ₀) M (h * ((b : ℝ) ^ d - 1) * (b : ℝ) ^ m)
+  have hTN : ∀ β : ℝ, ∑ m ∈ Finset.range N, topProd W (Int.fract (m * Real.logb 3 t + β)) ≤
+      (21 + 81 * |C|) * Z := by
+    intro β
+    refine (sum_topProd_le_of C κ hC N hN W β).trans ?_
+    have hN3 : 3 * (N : ℝ) * (2 / 3) ^ W ≤ 9 * Z := by
+      calc 3 * (N : ℝ) * (2 / 3) ^ W ≤ 3 * N * (3 / x) := by gcongr
+        _ = 9 * (N / x) := by ring
+        _ ≤ 9 * Z := by gcongr
+    have hN4 : 4 * (N : ℝ) * (1 / 3) ^ W ≤ 12 * Z := by
+      calc 4 * (N : ℝ) * (1 / 3) ^ W ≤ 4 * N * (3 / x) := by gcongr
+        _ = 12 * (N / x) := by ring
+        _ ≤ 12 * Z := by gcongr
+    have hCC : 9 * |C| * 9 ^ W * (N : ℝ) ^ (1 - κ) ≤ 81 * |C| * Z := by
+      have hNk : (0 : ℝ) ≤ (N : ℝ) ^ (1 - κ) := by positivity
+      calc 9 * |C| * 9 ^ W * (N : ℝ) ^ (1 - κ) ≤ 9 * |C| * (9 * x ^ 6) * (N : ℝ) ^ (1 - κ) := by
+            gcongr
+        _ = 81 * |C| * (x ^ 6 * (N : ℝ) ^ (1 - κ)) := by ring
+        _ ≤ 81 * |C| * Z := by gcongr
+    linarith
+  have hd : ∀ d ∈ Finset.Ico 1 N, ∑ m ∈ Finset.range N, G d m ≤
+      K * Z + ((A * W + B : ℕ) : ℝ) := by
+    intro d hd
+    simp only [Finset.mem_Ico] at hd
+    set e := padicValNat 3 h.natAbs
+    set h' := h.natAbs / 3 ^ e
+    have hc : ¬ 3 ∣ h' * (b ^ d - 1) := by
+      have : Fact (Nat.Prime 3) := ⟨Nat.prime_three⟩
+      have hna : h.natAbs ≠ 0 := Int.natAbs_ne_zero.2 hh
+      have hh' : ¬ 3 ∣ h' := by
+        intro hd3
+        have hhe : h.natAbs = 3 ^ e * h' := (Nat.mul_div_cancel' pow_padicValNat_dvd).symm
+        have : 3 ^ (e + 1) ∣ h.natAbs := by
+          rw [hhe, pow_succ]; exact Nat.mul_dvd_mul_left _ hd3
+        exact pow_succ_padicValNat_not_dvd hna this
+      have hbd : ¬ 3 ∣ b ^ d - 1 := by
+        have h1 : 3 ∣ b ^ d := dvd_pow h3 (by omega)
+        have h2 : 1 ≤ b ^ d := Nat.one_le_pow _ _ (by omega)
+        omega
+      exact fun h3' => (Nat.Prime.dvd_mul Nat.prime_three).1 h3' |>.elim hh' hbd
+    have hS1 := sum_hf_true_le ht2 ht3 (3 * r) (h' * (b ^ d - 1)) hc N
+    have hS3 : ∑ m ∈ Finset.range N, (if m < A * W + B then (1 : ℝ) else 0) ≤
+        ((A * W + B : ℕ) : ℝ) := by
+      rw [Finset.sum_boole]
+      have : (Finset.range N).filter (· < A * W + B) ⊆ Finset.range (A * W + B) := by
+        intro m; simp
+      have := Finset.card_le_card this
+      simp only [Finset.card_range] at this
+      exact_mod_cast this
+    refine (Finset.sum_le_sum fun m hm =>
+      hAB W N d m hd.1 hd.2 (Finset.mem_range.1 hm)).trans ?_
+    rw [Finset.sum_add_distrib, Finset.sum_add_distrib, Finset.sum_add_distrib]
+    have e1 := hTN (Real.logb 3 (|(h : ℝ)| * ((b : ℝ) ^ d - 1)))
+    have e2 := hTN (Real.logb 3 |(h : ℝ)|)
+    have hS1' : ∑ m ∈ Finset.range N, Hf (fun _ => true) 0 W
+        (((h' * (b ^ d - 1) * t ^ m : ℕ)) : ℝ) ≤ 9 * Tt * Z := by
+      refine hS1.trans ?_
+      have hTt : 0 ≤ Tt := by positivity
+      calc ((N : ℝ) + 2 * 3 ^ (3 * r)) * Tt * (2 / 3) ^ (3 * r) ≤ (3 * N) * Tt * (3 / x) := by
+            gcongr
+            have hy3 : (3 : ℝ) ^ (3 * r) ≤ x ^ 3 := by
+              rw [show (3 : ℝ) ^ (3 * r) = y ^ 3 by simp only [y]; rw [← pow_mul, mul_comm]]
+              exact pow_le_pow_left₀ (by positivity) hyx 3
+            linarith
+        _ = 9 * Tt * (N / x) := by ring
+        _ ≤ 9 * Tt * Z := by gcongr
+    simp only [K]; nlinarith [abs_nonneg C, hS3]
+  have hpair := pair_sum_le (fun n m => Bf (expFree μ₀) M (h * ((b : ℝ) ^ n - (b : ℝ) ^ m))) G
+    (fun d m => Bf_nonneg _ _ _) (fun n => Bf_le_one _ _ _)
+    (fun n m hmn => le_of_eq (by
+      simp only [G]; congr 1
+      rw [show (b : ℝ) ^ n = (b : ℝ) ^ (n - m) * (b : ℝ) ^ m by rw [← pow_add]; congr 1; omega]; ring))
+    (fun n m hmn => le_of_eq (by
+      simp only [G]; rw [← Bf_neg]; congr 1
+      rw [show (b : ℝ) ^ m = (b : ℝ) ^ (m - n) * (b : ℝ) ^ n by rw [← pow_add]; congr 1; omega]; ring)) N
+  have hI := (CantorLiouvilleAll.secondMoment_expand_b (expFree μ₀) b h M N).trans hpair
+  have hX : 0 ≤ K * Z + ((A * W + B : ℕ) : ℝ) := by
+    have : 0 ≤ K := by simp only [K]; positivity
+    positivity
+  have hsum : ∑ d ∈ Finset.Ico 1 N, ∑ m ∈ Finset.range N, G d m ≤
+      N * (K * Z + ((A * W + B : ℕ) : ℝ)) := by
+    refine (Finset.sum_le_sum hd).trans ?_
+    rw [Finset.sum_const, Nat.card_Ico, nsmul_eq_mul]
+    have : ((N - 1 : ℕ) : ℝ) ≤ N := by exact_mod_cast Nat.sub_le N 1
+    nlinarith
+  calc _ ≤ (N : ℝ) + 2 * ∑ d ∈ Finset.Ico 1 N, ∑ m ∈ Finset.range N, G d m := hI
+    _ ≤ (N : ℝ) + 2 * (N * (K * Z + ((A * W + B : ℕ) : ℝ))) := by gcongr
+    _ = _ := by simp only [K, Z, Tt, W, r]; ring
 
 set_option maxHeartbeats 4000000 in
 /-- **Power-saving second moment for `3 ∣ b` below the threshold**, given the Baker input.
