@@ -1,5 +1,7 @@
 # HANDOFF 2026-10-06 — qspan lap 2 (branch proof/qspan) — CAMPAIGN DONE
 
+HEAD at handoff: 4ffa5683 (plus this note).  Next steps: none in scope; optional follow-up is the
+subadditivity leaf for `QSpan.span_dimension_budget` in QSpanNormal.lean.
 Target `src/NormalNumbers/QSpanCriterion.lean` is sorry-free.  `#print axioms` on all six frozen
 headlines (`span_jointDim_budget`, `isNormal_span_of_jointNormal`, `ae_isNormal_combo_iff`,
 `ae_not_isNormal_combo_of_not`, `ae_not_qSpanNormal_fiveDigits`, `ae_jointDim_fiveDigits`):
