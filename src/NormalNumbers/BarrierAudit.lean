@@ -190,18 +190,6 @@ def waivers : List Waiver := [
    "a sibling, stated for the Maze row on Diophantine inputs (registered as a Maze witness, not a \
     barrier: it refutes a route, no open crux uses it); proof from span_dimension_budget plus \
     Bénard–He–Zhang"⟩,
-  ⟨``QSpanCriterion.span_jointDim_budget,
-   "QSpan campaign leaf (KICKOFF-2026-10-05-qspan.md); believed, English proof in the docstring"⟩,
-  ⟨``QSpanCriterion.isNormal_span_of_jointNormal,
-   "QSpan campaign leaf (KICKOFF-2026-10-05-qspan.md); believed, English proof in the docstring"⟩,
-  ⟨``QSpanCriterion.ae_isNormal_combo_iff,
-   "QSpan campaign leaf (KICKOFF-2026-10-05-qspan.md); believed, English proof in the docstring"⟩,
-  ⟨``QSpanCriterion.ae_not_isNormal_combo_of_not,
-   "QSpan campaign leaf (KICKOFF-2026-10-05-qspan.md); believed, English proof in the docstring"⟩,
-  ⟨``QSpanCriterion.ae_not_qSpanNormal_fiveDigits,
-   "QSpan campaign leaf (KICKOFF-2026-10-05-qspan.md); believed, English proof in the docstring"⟩,
-  ⟨``QSpanCriterion.ae_jointDim_fiveDigits,
-   "QSpan campaign leaf (KICKOFF-2026-10-05-qspan.md); believed, English proof in the docstring"⟩,
   ⟨``QSpan.span_dimension_budget,
    "a leaf: block-entropy subadditivity through bounded carries, plus the block-entropy \
     characterization of dim_FS/Dim_FS (BHV 2005); possibly literature-adjacent (Doty–Lutz–Nandakumar \
