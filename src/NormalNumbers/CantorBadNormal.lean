@@ -4832,6 +4832,27 @@ def catB (w : List Bool) : (k : ℕ) → (Fin k → (Fin 10 → Bool)) → List 
   | 0, _ => w
   | k + 1, F => catB (w ++ List.ofFn (F 0)) k (fun i => F i.succ)
 
+theorem cExt_unifAvg (k : ℕ) : ∀ G : List Bool → ℂ, cExt (unifAvg G) k = unifAvg (cExt G k) := by
+  induction k with
+  | zero => intro G; rfl
+  | succ k ih => intro G; show cExt (unifAvg (unifAvg G)) k = _; rw [ih]; rfl
+
+/-- **The uniform continuation is the uniform average over the `k`-block completions.** -/
+theorem cExt_eq_sum (G : List Bool → ℂ) (k : ℕ) : ∀ w : List Bool,
+    cExt G k w = (1 / 1024 ^ k : ℂ) * ∑ F : Fin k → (Fin 10 → Bool), G (catB w k F) := by
+  induction k with
+  | zero => intro w; simp [cExt, catB]
+  | succ k ih =>
+    intro w
+    rw [show cExt G (k + 1) = cExt (unifAvg G) k from rfl, cExt_unifAvg, unifAvg]
+    simp_rw [ih]
+    rw [← (Fin.consEquiv (fun _ : Fin (k + 1) => Fin 10 → Bool)).sum_comp
+      (fun F => G (catB w (k + 1) F)), Fintype.sum_prod_type]
+    simp only [Fin.consEquiv, Equiv.coe_fn_mk, catB, Fin.cons_zero, Fin.cons_succ]
+    rw [Finset.mul_sum, Finset.mul_sum]
+    refine Finset.sum_congr rfl fun f _ => ?_
+    rw [pow_succ]; ring
+
 open Classical in
 /-- The `resLaw` path weight of `k` blocks after `w`: `∏ 1_{alive}/|A|` along the path. -/
 noncomputable def pathW (w : List Bool) : (k : ℕ) → (Fin k → (Fin 10 → Bool)) → ℝ

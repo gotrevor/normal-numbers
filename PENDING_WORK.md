@@ -3121,3 +3121,5 @@ Next: (1) prove the reduction (needs pair-averaged partial Cantor products, Cass
   (E[#dead_r · positive functional] ≲ E[#dead]·E[functional]).  Next: state (ii) as a node.
 * (lap 8) Stated node `AvgDeadDensity` (70%): conditional expected dead count ≤ 8 after R stages, uniformly.
   The bootstrap needs a weighted form (dead count against the iterated first-order factors) — not yet stated.
+* (lap 8) PROVED `cExt_unifAvg`, `cExt_eq_sum`: cExt G k w = 1024^{−k} Σ_F G(catB w k F) — the first-order
+  term is an explicit uniform average over completions (prerequisite for writing it as an obstacle sum).
