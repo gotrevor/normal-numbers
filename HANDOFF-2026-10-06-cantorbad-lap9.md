@@ -11,15 +11,19 @@ Branch `proof/cantor-bad-normal`.  Headline unchanged; build green.
 - Diagonal leaf `diagSmall_of_two_le` (via `stageOf_gap`).
 - `cExt_sub`, `cExt_aliveDefect`.
 
-## Crux now
-- First-order: `resLawObstOff_resLaw` (node `ResLawObstOff`: resLaw-averaged same-cylinder obstacle
-  pair sums).  BarrierAudit link points here.
-- Defect: `defectObstacleMix_resLaw` (docstring: norm-inside bound provably insufficient in shape;
-  needs the same cylinder cancellation recursively).
-- `PairCorrToCylinder`: open; change of measure μ_K→resLaw expected to cost e^{c s_n} (docstring
-  of `ResLawObstSecondMoment`), so `ObstaclePairCorrelation` is the wrong (μ_K, global) form.
+## Crux now (rerouted late in lap 9)
+- Single crux `aliveOffMix_resLaw` (node `AliveOffMix`): resLaw path-weighted off-diagonal pair sum of
+  `deadCorr` over distinct completions of the coarse prefix.  Route: `deadMix_le_aliveMix`
+  (`condMean_aliveExt`), `aliveExt_eq_sum` (pathW), `norm_aliveExt_sq_le` (diag ≤ 2048²/536^k via
+  `pathW_le`, `sum_pathW`), `aliveObstacleMix_of_off` (diag by `geomNear_le`, c = 16),
+  `nearObstaclePhaseMixing_of_alive`.  BarrierAudit link points here.
+- The split route (first-order `ResLawObstOff` + `DefectObstacleMix`) is retired as a crux; its proved
+  reductions stay.  Defect analysis in the `DefectObstacleMix` docstring.
+- Probe t = 12: no base-3 coherence at the first-order level; base-3 barrier binds the Cantor main term.
+- Other file sorries (`fourierPairRate_descent_of_deadRateDecay`, `midStages`) are off-path / forbidden
+  drift per the branch directive.
 
 ## Next
-1. Probe `obstOff` at larger lags with b=3 control (Monte Carlo probe at lags 1–3 was at floor).
-2. State one uniform cylinder-cancellation node covering the family generated from `deadCorr` by
-   `aliveDefect`/`cExt`, and derive both `ResLawObstOff` and `DefectObstacleMix` from it.
+1. Decompose `AliveOffMix` by divergence depth: pairs of completions agreeing for j blocks then
+   splitting at an alive node u; the pair sum becomes Σ_j Σ_u pathW(u)² |A(u)|⁻² Σ_{f≠f'} X(uf) conj X(uf'),
+   X = aliveExt D (k−j−1).  State the per-depth node; exact (non-Monte-Carlo) probe at k = 1, 2.
