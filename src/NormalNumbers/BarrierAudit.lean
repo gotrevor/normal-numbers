@@ -119,15 +119,12 @@ def cruxLinks : List CruxLink := [
    "the cancellation must use 3 ∤ b (3ⁿp/q does not cancel for q | 3ᵏ) and the arithmetic of \
     the centres p/q (dyadic centres give e(2ⁿp/2ᵏ) = 1, and per-stage dead counts alone admit a \
     never 2-normal descent)"⟩,
-  ⟨``CantorBadNormal.defectObstacleMix_resLaw,
+  ⟨``CantorBadNormal.aliveOffMix_resLaw,
    [``cantor_not_normal_three_pow, ``perStage_dead_not_enough],
-   "the defect terms must cancel by the arithmetic of the centres p/q and 3 ∤ b, not by a per-stage \
-    dead count (counts alone admit a never 2-normal descent) and not for b = 3"⟩,
-  ⟨``CantorBadNormal.firstOrderObstacleMix_resLaw,
-   [``cantor_not_normal_three_pow, ``perStage_dead_not_enough],
-   "the local dead excesses must average out by the arithmetic of the centres p/q and 3 ∤ b: for \
-    b = 3 the Cantor part itself does not average (log₃ b rational), and for dyadic centres every \
-    dead child sits on a binary zero run, so the excess phase is coherent (probe: coherence 0.96)"⟩,
+   "the same-cylinder obstacle pairs must cancel by the arithmetic of the centres p/q: for dyadic \
+    centres every dead child sits on a binary zero run, so the excess phase is coherent (probe: \
+    coherence 0.96); per-stage dead counts alone do not suffice.  Whether the b = 3 barrier \
+    binds this node or only the Cantor main term is undecided"⟩,
   ⟨``CantorBadNormal.fourierPairRate_descent_of_deadRateDecay,
    [``cantor_not_normal_three_pow, ``perStage_dead_not_enough],
    "the pair-averaged Cantor products must use 3 ∤ b, and the dead-stage hypothesis must be a \
@@ -158,6 +155,30 @@ def waivers : List Waiver := [
   ⟨``Adder.IsProductBlock.liouville_cover,
    "a leaf: the B–B 1994 Thm 3.1 Liouville witness with 'digit d absent from m·B' in place of a \
     run of g−1 (orbit_liouvilleMul_lt's argument)"⟩,
+  ⟨``Adder.isRung_five_two_three,
+   "a finite computation: rung checker (carry automaton, label-filtered SCCs)"⟩,
+  ⟨``Adder.not_isRung_five_four_five_small,
+   "a finite computation: an avoided-digit-set assignment with a live SCC for each small T"⟩,
+  ⟨``Adder.IsWordSetBlock.runs_liouville_cover,
+   "a leaf: liouville_cover's argument for runs of ones"⟩,
+  ⟨``Adder.not_isWordSetBlock_runs_three_small,
+   "a finite computation: word-channel carry automaton (mahler_block among/runs)"⟩,
+  ⟨``Adder.isWordSetBlock_runs_three_nine,
+   "a finite computation: word-channel carry automaton (mahler_block among/runs)"⟩,
+  ⟨``Adder.not_isWordSetBlock_extremeDigits,
+   "a finite computation: word-channel carry automaton (mahler_block among/runs)"⟩,
+  ⟨``Adder.isWordSetBlock_four_extreme,
+   "a finite computation: word-channel carry automaton (mahler_block among/runs)"⟩,
+  ⟨``Adder.IsWordBlock.liouville_cover,
+   "a leaf: liouville_cover's argument with words for digits"⟩,
+  ⟨``Adder.IsWordBlock.exists_ge,
+   "a leaf: liouville_cover at B = 1 plus a window count on 0^k m 0^k"⟩,
+  ⟨``Adder.isWordBlock_two_three_thirteen,
+   "a finite computation: word-channel carry automaton collapse"⟩,
+  ⟨``Adder.isWordBlock_two_two_one_three_five,
+   "a finite computation: word-channel carry automaton collapse"⟩,
+  ⟨``Adder.not_isWordBlock_two_two_pair,
+   "a finite computation: a non-collapsing word-channel SCC for each pair"⟩,
   ⟨``Adder.not_isProductBlock_five_twelve_erase,
    "a finite computation: 12 non-collapsing carry-automaton core cycles, each an irrational witness"⟩,
   ⟨``Adder.isProductBlock_five_twelve,

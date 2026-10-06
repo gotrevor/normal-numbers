@@ -1,5 +1,17 @@
 # HANDOFF — pointer
 
+**STUCK (2026-10-06, branch `proof/cantor-bad-normal`, cantorbad lap 9):** scope
+`sorry-free:src/NormalNumbers/CantorBadNormal.lean` cannot be met under the branch directive.
+- Blocked: `midStages` (line ~2209) and `fourierPairRate_descent_of_deadRateDecay` (~724) are
+  forbidden drift per DIRECTION.md "Branch directive" (midStages; any-rule / DeadRateDecay route).
+  Verify: `grep -n "  sorry" src/NormalNumbers/CantorBadNormal.lean` → 3 hits; the third is the crux.
+- Crux `aliveOffMix_resLaw` (headline path; `#print axioms` headline shows sorryAx only via it):
+  open research (equidistribution of h·bᵐ·p/q over obstacle rationals near K).  Lap 9 reduced it
+  to a single node, proved diagonal/assembly, and probed it with a working dyadic control
+  (HANDOFF-2026-10-06-cantorbad-lap9.md).
+- Ask (operator): either rescope to the headline (`#print axioms` free of sorryAx) and accept a
+  multi-lap research crux, or authorize retiring/moving the two forbidden-route sorries.
+
 **STUCK (2026-10-06, branch `proof/cantorexp-stretch`):** the CURRENT DIRECTIVE's objective is
 met — `CantorExactExponentStretch.ae_not_liouvilleWith_all` and the stretch headline are proved
 (standard axioms; verify: `#print axioms` in a scratch file importing the module), and the module
@@ -119,3 +131,6 @@ WHAT is blocked: further BFR-directive work; the directive's own stop rule ("sto
 WHY operator-gated: continuing would mean picking a new objective (e.g. transcribing Chow–Varjú–Yu, or another campaign's sorries), which the directive reserves to the operator; the remaining StretchBFR sorries are off-bet.
 NEED from operator: a next directive, or a rejection of the <1% verdict saying which candidate to reopen.
 Re-confirmed 2026-10-06 (fresh lap): StretchBFR doc still states <1%, no new directive; stuck strike 2 recorded.
+
+## cantorbad lap 10 (2026-10-06)
+`pow_phase_recur` + m-scan: uniform-in-m obstacle cancellation must come from family share → 0.  See `HANDOFF-2026-10-06-cantorbad-lap10.md`.

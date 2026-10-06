@@ -4605,6 +4605,201 @@ theorem riesz_three_shift (ℓ : ℕ) (a : ℤ) :
     ee_add_int]
   simp
 
+/-- **Every obstacle phase family recurs in `m`.**  For any modulus `n > 0`, the phases
+`e(a bᵐ / n)` (`a ∈ ℤ`) are eventually periodic in `m`.  Proved (pigeonhole on `bᵐ mod n`).
+
+Use for `ObstaclePairCorrelation` (lap 10).  The `m`-scan (`L = 12`, `S = 4`, `b = 2`, `h = 1`,
+`m ∈ [5, 200)`, `scripts/cantorbad_mscan.py`) has median ratio `.003` and outliers `m = 184, 185,
+111` at `.128, .106, .080`, led by obstacles whose 3-free denominator is `244 = 3⁵+1`,
+`364 = (3⁶−1)/2`, `730 = 3⁶+1`, `205 | 3⁸−1`, `1093 = (3⁷−1)/2` (at the typical `m = 60` no class
+exceeds `.001`).  These are preperiodic `p/(q'3^j)`: their phase is fixed by `hbᵐ mod q'` (eventually
+periodic in `m`, this lemma) and by the low ternary digits `hbᵐ mod 3^j`.  Purely periodic
+obstacles of bounded period do not occur at large `L` (`q² ≥ 3^{L−5}`), so any recurrent coherence
+must pass through the 3-adic factor, which is where `3 ∤ b` enters. -/
+theorem pow_phase_recur (b n : ℕ) (hn : 0 < n) : ∃ m₀ T : ℕ, 0 < T ∧ ∀ m, m₀ ≤ m → ∀ a : ℤ,
+    ee (a * (b : ℝ) ^ (m + T) / n) = ee (a * (b : ℝ) ^ m / n) := by
+  obtain ⟨i, j, hij, he⟩ := Fintype.exists_ne_map_eq_of_card_lt
+    (fun i : Fin (n + 1) => (⟨b ^ (i : ℕ) % n, Nat.mod_lt _ hn⟩ : Fin n)) (by simp)
+  simp only [Fin.mk.injEq] at he
+  have key : ∀ i j : ℕ, i < j → b ^ i % n = b ^ j % n → ∃ m₀ T : ℕ, 0 < T ∧ ∀ m, m₀ ≤ m →
+      ∀ a : ℤ, ee (a * (b : ℝ) ^ (m + T) / n) = ee (a * (b : ℝ) ^ m / n) := by
+    intro i j hij he
+    refine ⟨i, j - i, by omega, fun m hm a => ?_⟩
+    have hmod : ((b ^ (m + (j - i)) : ℕ) : ℤ) ≡ ((b ^ m : ℕ) : ℤ) [ZMOD n] := by
+      have h1 : b ^ (m + (j - i)) = b ^ (m - i) * b ^ j := by
+        rw [← pow_add]; congr 1; omega
+      have h2 : b ^ m = b ^ (m - i) * b ^ i := by rw [← pow_add]; congr 1; omega
+      rw [h1, h2]
+      exact Int.natCast_modEq_iff.mpr
+        (Nat.ModEq.mul_left (b ^ (m - i)) (show b ^ j ≡ b ^ i [MOD n] from he.symm))
+    obtain ⟨k, hk⟩ := (Int.modEq_iff_dvd.mp hmod.symm)
+    have hn' : (n : ℝ) ≠ 0 := by exact_mod_cast hn.ne'
+    have : a * (b : ℝ) ^ (m + (j - i)) / n = a * (b : ℝ) ^ m / n + ((a * k : ℤ) : ℝ) := by
+      have hk' : ((b ^ (m + (j - i)) : ℕ) : ℝ) - ((b ^ m : ℕ) : ℝ) = n * k := by exact_mod_cast hk
+      push_cast at hk' ⊢
+      field_simp
+      linear_combination a * hk'
+    rw [this, ee_add_int]
+  rcases lt_or_gt_of_ne (Fin.val_injective.ne hij) with h | h
+  · exact key _ _ h he
+  · exact key _ _ h he.symm
+
+/-- **CRT split of an obstacle phase.**  For `q'` prime to 3 the phase of `p/(q'3^j)` factors as a
+`q'`-part times a 3-adic part: `e(B p/(q'3^j)) = e(B a/q')·e(B c/3^j)`, with `a, c` independent of
+`B`.  The `q'`-part is eventually periodic in `B = hbᵐ` (`pow_phase_recur`); the 3-adic part is a
+character of the low ternary digits of `hbᵐ`, the factor that must supply the cancellation for the
+preperiodic families (`PeriodicFamilyShare`).  Proved (Bézout). -/
+theorem obstacle_phase_crt (p : ℤ) {q' : ℕ} (j : ℕ) (hq : Nat.Coprime q' 3) (hq0 : 0 < q') :
+    ∃ a c : ℤ, ∀ B : ℝ, ee (B * (p / ((q' : ℝ) * 3 ^ j))) = ee (B * (a / q')) * ee (B * (c / 3 ^ j)) := by
+  have hc : IsCoprime (q' : ℤ) ((3 : ℤ) ^ j) := by
+    have : Nat.Coprime q' (3 ^ j) := Nat.Coprime.pow_right _ hq
+    have h := Nat.isCoprime_iff_coprime.mpr this
+    simpa using h
+  obtain ⟨u, v, huv⟩ := hc
+  refine ⟨p * v, p * u, fun B => ?_⟩
+  rw [← ee_add]
+  congr 1
+  have h1 : (u : ℝ) * q' + v * 3 ^ j = 1 := by exact_mod_cast huv
+  have hq' : (q' : ℝ) ≠ 0 := by exact_mod_cast hq0.ne'
+  push_cast
+  field_simp
+  linear_combination (-(B * p)) * h1
+
+/-- **Conjecture node: 3-adic window cancellation along `hbᵐ`.**  Believed 70% for `3 ∤ b`.  For
+every depth `j` below the top of `hbᵐ`, the Riesz majorant of the `M = ⌊log₃ N⌋/2` ternary digits of
+`hbᵐ` just below position `j` is small on average over `m < N`.  This is the 3-adic factor of
+`obstacle_phase_crt` for the preperiodic obstacle families (`PeriodicFamilyShare`); a single-sum
+analogue of `cassels_Bf`.  Fails for `b = 3` (`hbᵐ ≡ 0 mod 3^j` for `m ≥ j`, every factor is 1).
+Shallow depths (`3^j ≤ N`, period of `b mod 3^j` at most `N`) reduce to exact equidistribution of
+`bᵐ` in its subgroup mod `3^j`; deep `j` is an Erdős-ternary-type digit statement (open).
+Literature route (lap 10, not yet read in full): the windows are Korobov-type sums
+`Σ_{m<N} e(a bᵐ/3^k)`, `k ≤ j`; modulo a power of a fixed prime, Postnikov (1956) turns `bᵐ` into a
+3-adic polynomial in `m` and Vinogradov's mean value theorem gives nontrivial bounds for `N` much
+shorter than `3^k` (cf. arXiv:1606.07911, arXiv:1605.07553).  Whether the admissible range reaches
+`k ≍ N log₃ b` (the depth of the obstacle families) is the question to check; it plausibly covers
+only `k ≲ (log N)^{O(1)}`.
+The depth the crux needs is `j ≈ (m log₃ b)/2` (preperiodic obstacles have `q ≈ 3^{L/2}`): the
+*middle* ternary digits of `hbᵐ`.  Average non-degeneracy of middle digits of `2ᵐ` in base 3 is,
+as far as lap 10 knows, open (Senge–Straus/Stewart only count nonzero digits); so through these
+families the crux carries a digits-of-powers statement unless their phases cancel by another route.
+Evidence (`scripts/cantorbad_3adicwin.py`, `N = 3⁸`, `M = 4`, `h = 1`, `j = 4..64`): means `.13–.18`
+for `b = 2, 5, 7`, matching the random-digit value `(2/π)⁴ ≈ .164` (a power saving `N^{−c}`); control
+`b = 3`: `1.0` at every `j`. -/
+def ThreeAdicWindowAvg (b : ℕ) : Prop :=
+  ∀ h : ℤ, h ≠ 0 → ∃ (C : ℝ) (W : ℕ → ℝ), Summable (fun j => W (sched j)) ∧
+    ∀ N j : ℕ, 1 ≤ N → Nat.log 3 N / 2 ≤ j →
+      ∑ m ∈ (Finset.range N).filter (fun m => j + 1 ≤ Nat.log 3 (b ^ m)),
+        CantorLiouville.Bf (fun _ => true) (Nat.log 3 N / 2)
+          (h * (b : ℝ) ^ m / 3 ^ (j - Nat.log 3 N / 2)) ≤ C * N * W N
+
+/-- **Base-3 control for `ThreeAdicWindowAvg`.**  Refuted for `b = 3`: every window of `3ᵐ` below
+its top is zero, so each Riesz factor is 1 and the sum is `≍ N`.  Proved. -/
+theorem not_threeAdicWindowAvg_three : ¬ ThreeAdicWindowAvg 3 := by
+  intro H
+  obtain ⟨C, W, hW, hC⟩ := H 1 one_ne_zero
+  have key : ∀ N : ℕ, 3 ≤ N → (1 : ℝ) / 3 ≤ C * W N := by
+    intro N hN
+    obtain ⟨M, hM⟩ : ∃ M, M = Nat.log 3 N / 2 := ⟨_, rfl⟩
+    have h1 := hC N M (by omega) (by omega)
+    rw [← hM] at h1
+    simp only [Nat.cast_ofNat] at h1
+    have hterm : ∀ m ∈ (Finset.range N).filter (fun m => M + 1 ≤ Nat.log 3 (3 ^ m)),
+        CantorLiouville.Bf (fun _ => true) M (((1 : ℤ) : ℝ) * (3 : ℝ) ^ m / 3 ^ (M - M)) = 1 := by
+      intro m hm
+      simp only [Finset.mem_filter, Finset.mem_range, Nat.log_pow (by norm_num : 1 < 3)] at hm
+      unfold CantorLiouville.Bf
+      refine Finset.prod_eq_one fun p hp => ?_
+      simp only [Finset.mem_filter, Finset.mem_range] at hp
+      have hpm : p + 1 ≤ m := by omega
+      have : 2 * Real.pi * (((1 : ℤ) : ℝ) * (3 : ℝ) ^ m / 3 ^ (M - M)) / 3 ^ (p + 1) =
+          ((3 ^ (m - (p + 1)) : ℕ) : ℝ) * (2 * Real.pi) := by
+        rw [Nat.sub_self, pow_zero, div_one, Int.cast_one, one_mul]
+        have : (3 : ℝ) ^ m = 3 ^ (m - (p + 1)) * 3 ^ (p + 1) := by
+          rw [← pow_add]; congr 1; omega
+        rw [this]; push_cast; field_simp
+      rw [this, Real.cos_nat_mul_two_pi, abs_one]
+    have hfil : (Finset.range N).filter (fun m => M + 1 ≤ Nat.log 3 (3 ^ m)) =
+        Finset.Ico (M + 1) N := by
+      ext m; simp [Nat.log_pow (by norm_num : 1 < 3)]; omega
+    rw [Finset.sum_congr rfl hterm, Finset.sum_const, hfil, Nat.card_Ico, nsmul_eq_mul,
+      mul_one] at h1
+    have hl : Nat.log 3 N < N := Nat.log_lt_self 3 (by omega)
+    have hc : (N : ℝ) / 3 ≤ ((N - (M + 1) : ℕ) : ℝ) := by
+      rw [div_le_iff₀ (by norm_num)]
+      exact_mod_cast (show N ≤ (N - (M + 1)) * 3 by omega)
+    have hN0 : (0 : ℝ) < N := by exact_mod_cast (show 0 < N by omega)
+    have : (N : ℝ) / 3 ≤ C * N * W N := hc.trans h1
+    have : (N : ℝ) * (1 / 3) ≤ (N : ℝ) * (C * W N) := by linarith
+    exact le_of_mul_le_mul_left this hN0
+  have ht := (hW.mul_left C).tendsto_atTop_zero
+  have hev : ∀ᶠ k in atTop, (1 : ℝ) / 3 ≤ C * W (sched k) := by
+    filter_upwards [(CantorLiouville.sched_strictMono.tendsto_atTop).eventually_ge_atTop 3] with k hk
+    exact key _ hk
+  have := ge_of_tendsto ht hev
+  norm_num at this
+
+/-- **Phase sum over the rational points of `K` of type `(j, ℓ)`** (prefix of `j` Cantor digits,
+then a period-`ℓ` Cantor block): it factors as the prefix Cantor sum times the Riesz product of
+the period.  Proved.
+
+Role (lap 10).  Probe `scripts/cantorbad_massshare.py L inK`: the share of the per-stage dead
+`μ_K`-mass carried by obstacles that lie *in* `K` is `1.0, .99992, .99956` at `L = 8, 10, 12`
+(node `DeadMassInK`), but the complement grows geometrically in `L`, so this dominance is a
+small-`L` effect.  For the in-`K` part, this factorization is its phase structure: inside a depth-`S` cylinder the prefix factor
+is a Riesz product over levels `(S, j]`, i.e. a window of the ternary digits of `hbᵐ` at depth `S`
+(`ThreeAdicWindowAvg`), and the period factor reads `hbᵐ mod 3^j(3^ℓ − 1)`. -/
+theorem kRational_phase_sum (ξ : ℝ) (j ℓ : ℕ) :
+    ∑ a : Fin j → Bool, ∑ d : Fin ℓ → Bool,
+      ee (ξ * (cylLeft (List.ofFn a) + perNum d / (3 ^ j * (3 ^ ℓ - 1)))) =
+    (∑ a : Fin j → Bool, ee (ξ * cylLeft (List.ofFn a))) * riesz ℓ (ξ / (3 ^ j * (3 ^ ℓ - 1))) := by
+  rw [← periodic_phase_sum, Finset.sum_mul_sum]
+  refine Finset.sum_congr rfl fun a _ => Finset.sum_congr rfl fun d _ => ?_
+  rw [← ee_add]; congr 1; ring
+
+theorem ee_nat_mul (n : ℕ) (t : ℝ) : ee (n * t) = ee t ^ n := by
+  induction n with
+  | zero => simp [ee]
+  | succ n ih => rw [pow_succ, ← ih, ← ee_add]; congr 1; push_cast; ring
+
+/-- **Complete exponential sum over `p mod q`** (the Ramanujan-sum base of the Poisson/divisor
+reformulation of the obstacle phase sums, lap 10 Next): `Σ_{p<q} e(ξp/q) = q·[q ∣ ξ]`.  Summing it
+over the obstacle denominators turns `μ_K`-weighted obstacle phase sums at integer frequency `ξ`
+into divisor sums `Σ_n μ̂_K(n)·#{q ∈ [Q, 2Q] : q ∣ n + ξ}` (that step is not yet stated).
+Proved. -/
+theorem sum_ee_mod (q : ℕ) (hq : 0 < q) (ξ : ℤ) :
+    ∑ p ∈ Finset.range q, ee (ξ * p / q) = if (q : ℤ) ∣ ξ then (q : ℂ) else 0 := by
+  have hq' : (q : ℝ) ≠ 0 := by exact_mod_cast hq.ne'
+  set ζ := ee (ξ / q)
+  have hp : ∀ p : ℕ, ee (ξ * p / q) = ζ ^ p := fun p => by
+    rw [← ee_nat_mul]; congr 1; ring
+  simp_rw [hp]
+  have hζq : ζ ^ q = 1 := by
+    rw [← ee_nat_mul, show (q : ℝ) * (ξ / q) = 0 + ((ξ : ℤ) : ℝ) by field_simp; ring, ee_add_int]
+    simp [ee]
+  split_ifs with hd
+  · obtain ⟨k, hk⟩ := hd
+    have : ζ = 1 := by
+      simp only [ζ]
+      rw [show ((ξ : ℝ) / q) = 0 + ((k : ℤ) : ℝ) by rw [hk]; push_cast; field_simp; ring, ee_add_int]
+      simp [ee]
+    simp [this]
+  · have hne : ζ ≠ 1 := by
+      intro h1
+      simp only [ζ, ee] at h1
+      obtain ⟨n, hn⟩ := Complex.exp_eq_one_iff.mp h1
+      have hpi : (2 * Real.pi * Complex.I : ℂ) ≠ 0 := by
+        simp [Real.pi_ne_zero, Complex.I_ne_zero]
+      have : ((ξ / q : ℝ) : ℂ) = (n : ℂ) := by
+        have := hn; rw [show (2 * Real.pi * Complex.I * ((ξ / q : ℝ) : ℂ)) =
+          ((ξ / q : ℝ) : ℂ) * (2 * Real.pi * Complex.I) by ring] at this
+        exact mul_right_cancel₀ hpi this
+      have hr : (ξ : ℝ) / q = n := by exact_mod_cast this
+      apply hd
+      refine ⟨n, ?_⟩
+      have : (ξ : ℝ) = q * n := by field_simp at hr; linarith
+      exact_mod_cast this
+    rw [geom_sum_eq hne, hζq, sub_self, zero_div]
+
 open Classical in
 /-- The obstacle rationals charged to a prefix of length `L` (as in `Alive` with `r = 5`):
 `p/q ∈ [0, 1]`, `3^L ≤ q²3⁵ < 3^{L+10}`, within `2c₀/q²` of `K`. -/
@@ -4621,6 +4816,27 @@ open Classical in
 /-- Pairs of distinct obstacles at length `L` within `3^{−S}` of each other. -/
 noncomputable def obstPairs (L S : ℕ) : Finset ((ℤ × ℕ) × (ℤ × ℕ)) :=
   (obst L ×ˢ obst L).filter fun xy => oval xy.1 ≠ oval xy.2 ∧ |oval xy.1 - oval xy.2| ≤ 1 / 3 ^ S
+
+open Classical in
+/-- **Conjecture node (believed false, 10%): the dead mass sits on rational points of `K`.**  The share of
+the `μ_K`-mass of the dead balls `B(p/q, 2c₀/q²)` (obstacles at length `L`) carried by obstacles
+`p/q ∈ K` tends to 1.  Evidence (`scripts/cantorbad_massshare.py L inK`): share `1.0, .99992, .99956, .99772`
+at `L = 8, 10, 12, 14`, but the complement grows `≈ 5×` per `ΔL = 2` (`7.5·10⁻⁵, 4.4·10⁻⁴,
+2.3·10⁻³`): the in-`K` mass falls like `2^{−L/2}` (`2^{L/2}` points, mass `≍ 2^{−L}` each; total
+dead mass `1.9, 1.2, .88, .58 ·10⁻⁵`) while the off-`K` mass grows toward the constant per-stage
+dead density.  Extrapolated crossover near `L ≈ 22` (untested: the `μ_K` Monte Carlo
+`scripts/cantorbad_mcobst.py 300000 1`, 140 digits, finds hits only for `L ≤ 18` and none for
+`L ∈ [20, 128]`, so the per-stage dead probability there is below `~10⁻⁷`; which family
+dominates at the crux scales is not decided by the probes).  Heuristic:
+a ball centred on `K` has mass `≍ r^{log 2/log 3}`, one centred at distance `≍ r` from `K` much less.
+Had it held, `AliveOffMix` would reduce to phase cancellation over rational points of `K`
+(`kRational_phase_sum`), whose prefix factor is a middle-digit window of `hbᵐ` in base 3. -/
+def DeadMassInK : Prop :=
+  ∀ ε : ℝ, 0 < ε → ∃ L₀ : ℕ, ∀ L : ℕ, L₀ ≤ L →
+    ∑ x ∈ (obst L).filter (fun x => oval x ∉ cantorSet),
+        (coinMeasure (cpt ⁻¹' Set.Icc (oval x - 2 * c₀ / (x.2 : ℝ) ^ 2) (oval x + 2 * c₀ / (x.2 : ℝ) ^ 2))).toReal ≤
+      ε * ∑ x ∈ obst L,
+        (coinMeasure (cpt ⁻¹' Set.Icc (oval x - 2 * c₀ / (x.2 : ℝ) ^ 2) (oval x + 2 * c₀ / (x.2 : ℝ) ^ 2))).toReal
 
 /-- **Conjecture node: twisted pair correlation of the rationals near `K`.**  Believed 45% for
 `3 ∤ b`.  At the frequency `ξ = hbᵐ` and the obstacle length `L = 10 s_m` (the scale of `bᵐ`),
@@ -4643,11 +4859,38 @@ Evidence (`scripts/cantorbad_paircorr.py`, 2026-10-06).  `L = 12`, `C = 3`, all 
 size (`#pairs = 1.9·10⁶, 1.2·10⁵, 6274`).  Known-coherent control `b = 3`: `.163, .167, .134`, flat in
 `S`.  So the probe separates the bases prime to 3 from base 3 by two orders of magnitude.
 `L = 16` (43572 obstacles), `S = 8, 12, 16`: `.000, .005, .016` (b = 2), `.002, .013, .045` (b = 5),
-`.002, .009, .087` (b = 7); control `b = 3`: `.167, .172, .160`.  Same picture one scale up. -/
+`.002, .009, .087` (b = 7); control `b = 3`: `.167, .172, .160`.  Same picture one scale up.
+
+Uniformity in `m` (lap 10): sporadic outliers (`m = 184`: `.128`) come from preperiodic
+obstacles `p/(q'3^j)`, `q' | 3^ℓ ± 1` (`pow_phase_recur`); their pair share is large
+(`PeriodicFamilyShare`, believed false), so the node needs their 3-adic phase to cancel.
+Caveat (lap 10, `DeadMassInK`): at `L ≤ 16` the dead mass is almost all on rational points of
+`K`, which are a vanishing share at the crux scales (crossover `L ≈ 22`), so the evidence above
+probes mainly the in-`K` family; the generic off-`K` obstacles are untested. -/
 def ObstaclePairCorrelation (b : ℕ) : Prop :=
   ∀ h : ℤ, h ≠ 0 → ∀ C : ℕ, ∀ ε : ℝ, 0 < ε → ∃ G : ℕ, ∀ m S : ℕ, S + G ≤ 10 * stageOf b C m →
     ‖∑ xy ∈ obstPairs (10 * stageOf b C m) S, ee (h * (b : ℝ) ^ m * (oval xy.1 - oval xy.2))‖ ≤
       ε * (obstPairs (10 * stageOf b C m) S).card
+
+open Classical in
+/-- The obstacle pairs at length `L`, window `S`, with an endpoint whose reduced denominator has
+3-free part dividing `3^ℓ − 1` or `3^ℓ + 1` (the period-`ℓ` families of `pow_phase_recur`). -/
+noncomputable def periodicPairs (ℓ L S : ℕ) : Finset ((ℤ × ℕ) × (ℤ × ℕ)) :=
+  (obstPairs L S).filter fun xy => ∃ x ∈ ({xy.1, xy.2} : Finset (ℤ × ℕ)),
+    let r : ℚ := (x.1 : ℚ) / x.2
+    let d := r.den / 3 ^ padicValNat 3 r.den
+    d ∣ 3 ^ ℓ - 1 ∨ d ∣ 3 ^ ℓ + 1
+
+/-- **Conjecture node (believed false, 15%): the preperiodic families have vanishing pair share.**
+For each `ℓ`, the share of `obstPairs L S` touching an obstacle whose 3-free denominator divides
+`3^ℓ ± 1` tends to 0 as `L → ∞`.  Evidence against (`scripts/cantorbad_famshare.py`, lap 10):
+`L = 12, S = 8` shares `.18, .24, .31, .35, .34, .51, .35, .56` for `ℓ = 1..8`.  So
+`ObstaclePairCorrelation` cannot discard these families by counting; their cancellation must come
+from the 3-adic phase factor `e(hbᵐ p / 3^j)` (a Riesz product over the low ternary digits of
+`hbᵐ`), averaged over `m` — the Cassels mechanism, which fails for `b = 3`. -/
+def PeriodicFamilyShare : Prop :=
+  ∀ ℓ : ℕ, ∀ ε : ℝ, 0 < ε → ∃ L₀ : ℕ, ∀ L S : ℕ, L₀ ≤ L → S ≤ L →
+    ((periodicPairs ℓ L S).card : ℝ) ≤ ε * (obstPairs L S).card
 
 /-- First-order (uniform continuation) part of `deadMix`. -/
 noncomputable def firstMix (b C : ℕ) (h : ℤ) (n m t : ℕ) : ℝ :=
@@ -4701,7 +4944,16 @@ def FirstOrderObstacleMix (b : ℕ) : Prop :=
 
 /-- **Alive-defect node.**  Believed 45% for `3 ∤ b`.  The defect part: each term is localized at a
 stage between `s_n` and `t` that has dead children, applied to the uniform continuation of the
-stage-`t` dead correction.  Second order in the dead density, but with no decay in `N` proved. -/
+stage-`t` dead correction.  Second order in the dead density, but with no decay in `N` proved.
+
+Lap 9 analysis (not a theorem).  The norm-inside bound (`norm_aliveDefect_le` + `AvgDeadDensity`)
+cannot prove this node: the `j = 0` term is then `≈ E[#dead_{t−1}·#dead_t]/1024²` per triple
+`(n, m, t)`, with no decay in `m − n`, so the triple sum is `≍ N² log N`, not `O(N² W(N))`.  The
+defect terms need phase cancellation in the conditional mean given `w_{s_n}`, exactly as the
+first-order term does: each `gMix (aliveDefect (cExt G j)) (t−1−j) s_n` has the same shape as
+`deadMix` and re-telescopes by `gMix_le` into its own first-order cylinder average plus deeper
+defects.  So the natural route is one uniform cylinder-cancellation statement for the whole family
+of phased stage functions generated by `aliveDefect` and `cExt` from `deadCorr`. -/
 def DefectObstacleMix (b : ℕ) : Prop :=
   ∀ h : ℤ, h ≠ 0 → ∀ C : ℕ, ∃ (K : ℝ) (W : ℕ → ℝ), Summable (fun j => W (sched j)) ∧
     ∀ N : ℕ, 1 ≤ N →
@@ -4878,26 +5130,888 @@ theorem real_buildU_catB (k : ℕ) : ∀ (s : ℕ) (w : List Bool) (F : Fin k �
     rw [show s + (k + 1) = s + 1 + k by ring, ih (s + 1) _ _ hl', real_child s w hl]
     split_ifs <;> ring
 
-/-- **The crux, first-order part** (open; believed 50%).  `resLaw` satisfies
-`FirstOrderObstacleMix`; formerly stated as `NearObstaclePhaseMixing`, which now follows from the
-first-order and defect parts (`nearObstaclePhaseMixing_of_split`).  Original guard:
-`NearObstaclePhaseMixing` in every base `b ≥ 2` prime to 3.  A proof must use `3 ∤ b` and the
-uniformity of the resampled blocks between `s_n` and `t` (the conditional law of `w_t` given
-`w_{s_n}`); the uniformity at stage `t` itself is already spent in the telescope. -/
-theorem firstOrderObstacleMix_resLaw {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) :
+
+/-! ### The first-order term as an obstacle sum -/
+
+/-- The normalized Cantor character of the cylinder `v`: `e(ξ cylLeft v) μ̂_K(ξ/3^{|v|})`
+(the `μ_K`-average of `e(ξx)` over the cylinder). -/
+noncomputable def cylChar (ξ : ℝ) (v : List Bool) : ℂ :=
+  ee (ξ * cylLeft v) * muK (ξ / 3 ^ v.length)
+
+/-- **The dead correction is a sum over the dead children.**  Each dead child `f` contributes
+its cylinder character minus the parent's: `D(ξ, v) = |A(v)|⁻¹ Σ_{f dead} (χ(vf) − χ(v))`.
+Proved (`muK_stage`). -/
+theorem deadCorr_eq_cylChar (ξ : ℝ) (v : List Bool) :
+    deadCorr ξ v = (1 / ((aliveSet v).card : ℂ)) *
+      ∑ f ∈ Finset.univ \ aliveSet v, (cylChar ξ (v ++ List.ofFn f) - cylChar ξ v) := by
+  have hpar : cylChar ξ v = ee (ξ * cylLeft v) * rhoS ξ v.length *
+      muK (ξ / 3 ^ (v.length + 10)) := by
+    rw [cylChar, muK_stage]; ring
+  have hch : ∀ f : Fin 10 → Bool, cylChar ξ (v ++ List.ofFn f) =
+      ee (ξ * cylLeft v) * ee (ξ * J f / 3 ^ (v.length + 10)) * muK (ξ / 3 ^ (v.length + 10)) := by
+    intro f
+    rw [cylChar, cylLeft_child, ← ee_add, List.length_append, List.length_ofFn]
+    congr 2; ring
+  unfold deadCorr deadErr
+  simp only [hch, hpar]
+  rw [Finset.mul_sum, Finset.mul_sum, Finset.sum_mul, Finset.mul_sum]
+  refine Finset.sum_congr rfl fun f _ => ?_
+  ring
+
+/-- The conditional mean of a stage-`s` function on a stage-`s` atom is at most its value. -/
+theorem norm_condMean_self_le (s : ℕ) (G : List Bool → ℂ) (w : List Bool) :
+    ‖condMean (fun ω => G (buildU s ω)) s w‖ ≤ ‖G w‖ := by
+  have hI : ∫ ω in {ω | buildU s ω = w}, G (buildU s ω) ∂coinMeasure =
+      ∫ ω in {ω | buildU s ω = w}, G w ∂coinMeasure :=
+    setIntegral_congr_fun (mset_buildU' s w) fun ω hω => by
+      simp only [Set.mem_setOf_eq] at hω; simp only [hω]
+  unfold condMean
+  rw [hI, setIntegral_const, norm_div, Complex.norm_real, Real.norm_of_nonneg measureReal_nonneg]
+  rcases eq_or_lt_of_le (measureReal_nonneg (μ := coinMeasure) (s := {ω | buildU s ω = w}))
+    with h0 | hpos
+  · rw [← h0, div_zero]; exact norm_nonneg _
+  · rw [norm_smul, Real.norm_of_nonneg hpos.le, mul_div_cancel_left₀ _ hpos.ne']
+
+/-- The cylinder-local obstacle sum at the completion `v`: `|A(v)|⁻¹ Σ_{f dead} (χ(vf) − χ(v))`
+(`= deadCorr`, `deadCorr_eq_cylChar`). -/
+noncomputable def obstLocal (ξ : ℝ) (v : List Bool) : ℂ :=
+  (1 / ((aliveSet v).card : ℂ)) *
+    ∑ f ∈ Finset.univ \ aliveSet v, (cylChar ξ (v ++ List.ofFn f) - cylChar ξ v)
+
+/-- The `μ_K`-averaged obstacle phase sum below the prefix `w`, `k` blocks down. -/
+noncomputable def obstSum (ξ : ℝ) (k : ℕ) (w : List Bool) : ℂ :=
+  (1 / 1024 ^ k : ℂ) * ∑ F : Fin k → (Fin 10 → Bool), obstLocal ξ (catB w k F)
+
+/-- The `resLaw` expectation of `‖obstSum‖` over the stage-`s_n` prefix. -/
+noncomputable def obstMix (b C : ℕ) (h : ℤ) (n m t : ℕ) : ℝ :=
+  ∫ ω, ‖obstSum (h * (b : ℝ) ^ m) (t - stageOf b C n) (buildU (stageOf b C n) ω)‖ ∂coinMeasure
+
+/-- **The first-order mix is an explicit obstacle sum.**  `firstMix ≤ obstMix`: the `resLaw`
+expectation over the coarse prefix `w = w_{s_n}` of the norm of the uniform (Cantor) average,
+over the `k = t − s_n` block completions `v` of `w`, of `|A(v)|⁻¹ Σ_{f dead at v} (χ(vf) − χ(v))`.
+The dead children at `v` sit at the obstacles `p/q` charged to `v`, and `χ(vf) ≈ e(ξ p/q)`.
+The weights are exact (`1/|A(v)|`, not `1/1024`), so no second-order error arises here.  Proved. -/
+theorem firstMix_le_obstMix (b C : ℕ) (h : ℤ) (n m t : ℕ) :
+    firstMix b C h n m t ≤ obstMix b C h n m t := by
+  unfold firstMix obstMix
+  refine integral_mono (integrable_comp_buildU _ _).norm
+    (integrable_comp_buildU (stageOf b C n) (obstSum (h * (b : ℝ) ^ m) _)).norm fun ω => ?_
+  refine (norm_condMean_self_le _ _ _).trans (le_of_eq ?_)
+  simp only [cExt_eq_sum, deadCorr_eq_cylChar, obstSum, obstLocal]
+
+
+/-- **Cauchy–Schwarz on a stage function.**  `(E‖G(w_s)‖)² ≤ E‖G(w_s)‖²` under `resLaw`.  Proved. -/
+theorem sq_integral_norm_comp_buildU_le (s : ℕ) (G : List Bool → ℂ) :
+    (∫ ω, ‖G (buildU s ω)‖ ∂coinMeasure) ^ 2 ≤ ∫ ω, ‖G (buildU s ω)‖ ^ 2 ∂coinMeasure := by
+  set g : (ℕ → Bool) → ℝ := fun ω => ‖G (buildU s ω)‖
+  have hg : Integrable g coinMeasure := (integrable_comp_buildU s G).norm
+  have hg2 : Integrable (fun ω => g ω ^ 2) coinMeasure := by
+    refine ((integrable_comp_buildU s (fun w => G w * G w)).norm).congr
+      (Eventually.of_forall fun ω => ?_)
+    simp [g, norm_mul, sq]
+  set c := ∫ ω, g ω ∂coinMeasure
+  have h0 : 0 ≤ ∫ ω, (g ω - c) ^ 2 ∂coinMeasure := integral_nonneg fun ω => sq_nonneg _
+  have hexp : ∀ ω, (g ω - c) ^ 2 = g ω ^ 2 + ((-2 * c) * g ω + c ^ 2) := fun ω => by ring
+  simp_rw [hexp] at h0
+  have hlin : Integrable (fun ω => (-2 * c) * g ω + c ^ 2) coinMeasure :=
+    (hg.const_mul _).add (integrable_const _)
+  rw [integral_add hg2 hlin, integral_add (hg.const_mul _) (integrable_const _),
+    integral_const_mul, integral_const] at h0
+  simp only [probReal_univ, smul_eq_mul, one_mul] at h0
+  nlinarith
+
+/-- **`obstMix` is controlled by the second moment of the cylinder obstacle sum**, the first step
+from `CylObstacleCancellation` toward a pair-correlation statement.  Proved. -/
+theorem obstMix_sq_le (b C : ℕ) (h : ℤ) (n m t : ℕ) :
+    obstMix b C h n m t ^ 2 ≤ ∫ ω, ‖obstSum (h * (b : ℝ) ^ m) (t - stageOf b C n)
+      (buildU (stageOf b C n) ω)‖ ^ 2 ∂coinMeasure :=
+  sq_integral_norm_comp_buildU_le _ _
+
+/-- **Pair expansion of the cylinder obstacle sum.**  `‖obstSum‖²` is the `1024^{−2k}`-weighted sum,
+over pairs of completions `(v, v')` of `w`, of `obstLocal v · conj (obstLocal v')`; the diagonal
+`v = v'` is the obstacle count, the off-diagonal pairs are the same-cylinder obstacle pairs.  Proved. -/
+theorem norm_obstSum_sq (ξ : ℝ) (k : ℕ) (w : List Bool) :
+    (‖obstSum ξ k w‖ ^ 2 : ℂ) = (1 / 1024 ^ k : ℂ) ^ 2 *
+      ∑ F : Fin k → (Fin 10 → Bool), ∑ F' : Fin k → (Fin 10 → Bool),
+        obstLocal ξ (catB w k F) * (starRingEnd ℂ) (obstLocal ξ (catB w k F')) := by
+  rw [← Complex.mul_conj', obstSum, map_mul, map_sum]
+  have hc : (starRingEnd ℂ) (1 / 1024 ^ k : ℂ) = 1 / 1024 ^ k := by
+    simp only [one_div, map_inv₀, map_pow]; rw [show (starRingEnd ℂ) 1024 = 1024 from Complex.conj_ofNat 1024]
+  rw [hc, mul_mul_mul_comm, ← sq, Finset.sum_mul_sum]
+/-- **Cylinder-local obstacle cancellation node.**  Believed 50% for `3 ∤ b`.  The near-scale sum
+of `obstMix` over `n < m < N` is `O(N² W(N))`.  Implies `FirstOrderObstacleMix b`
+(`firstOrderObstacleMix_of_cyl`).  This is the honest form of the first-order crux: the
+cancellation needed is among the obstacles inside one coarse cylinder `w_{s_n}`, `μ_K`-weighted
+along the uniform completions, with the exact weights `1/|A(v)|`.  `ObstaclePairCorrelation` is a
+global, unweighted pair statement; passing from it to this node needs Cauchy–Schwarz over the
+cylinders, a smoothing of the cylinder boundaries (pairs within `3^{−S}` that straddle two
+cylinders), and the passage from the `resLaw` law of `w_{s_n}` to `μ_K` (`PairCorrToCylinder`).
+
+Probe (`scripts/cantorbad_deadmix.py`, law `first` = resLaw prefix + uniform continuation, i.e.
+`obstMix / E|D_t|`; 300 × 200, `t = 8`, lag `g = t − s`): `R = .087, .081, .077` (b = 2) against the
+full `deadMix` ratio `.092, .080, .082`; the control `b = 3` gives `.090, .080, .078`.  All are at the
+Monte Carlo floor `.071`, and the `b = 3` control does not separate at these lags, so the probe
+is inconclusive (no working control): it neither supports nor refutes this node, and it does not
+decide whether the defect part is lower order (first and full differ by less than the noise). -/
+def CylObstacleCancellation (b : ℕ) : Prop :=
+  ∀ h : ℤ, h ≠ 0 → ∀ C : ℕ, ∃ (K : ℝ) (W : ℕ → ℝ), Summable (fun j => W (sched j)) ∧
+    ∀ N : ℕ, 1 ≤ N →
+      ∑ m ∈ Finset.range N, ∑ n ∈ Finset.range m,
+        ∑ t ∈ Finset.Ico (stageOf b C m) (stageOf b C m + (Nat.log 3 N + 1)), obstMix b C h n m t ≤
+          K * (N : ℝ) ^ 2 * W N
+
+/-- **Cylinder-local cancellation ⇒ first-order node.**  Proved. -/
+theorem firstOrderObstacleMix_of_cyl {b : ℕ} (hO : CylObstacleCancellation b) :
     FirstOrderObstacleMix b := by
+  intro h hh C
+  obtain ⟨K, W, hW, hK⟩ := hO h hh C
+  refine ⟨K, W, hW, fun N hN => le_trans ?_ (hK N hN)⟩
+  exact Finset.sum_le_sum fun m _ => Finset.sum_le_sum fun n _ =>
+    Finset.sum_le_sum fun t _ => firstMix_le_obstMix b C h n m t
+
+
+
+theorem norm_cylChar_le (ξ : ℝ) (v : List Bool) : ‖cylChar ξ v‖ ≤ 1 := by
+  rw [cylChar, norm_mul, norm_ee, one_mul]; exact norm_muK_le _
+
+/-- **The local obstacle term is bounded by the dead count.**  `‖obstLocal ξ v‖ ≤ 2·#dead/|A|`.
+So the diagonal of `secondMoment_obstSum_eq` is `1024^{−k}` times an averaged squared dead
+ratio: it decays geometrically in `k = t − s_n`, and only the off-diagonal pairs carry the crux.
+Proved. -/
+theorem norm_obstLocal_le (ξ : ℝ) (v : List Bool) :
+    ‖obstLocal ξ v‖ ≤ 2 * ((1024 - (aliveSet v).card : ℕ) : ℝ) / (aliveSet v).card := by
+  classical
+  have hc0 : (0 : ℝ) < (aliveSet v).card := by exact_mod_cast card_aliveSet_pos v
+  have hD : (Finset.univ \ aliveSet v).card = 1024 - (aliveSet v).card := by
+    rw [Finset.card_sdiff_of_subset (Finset.subset_univ _), Finset.card_univ]; simp
+  rw [obstLocal, norm_mul]
+  have hs : ‖∑ f ∈ Finset.univ \ aliveSet v, (cylChar ξ (v ++ List.ofFn f) - cylChar ξ v)‖ ≤
+      ((1024 - (aliveSet v).card : ℕ) : ℝ) * 2 := by
+    refine (norm_sum_le _ _).trans ?_
+    calc _ ≤ ∑ f ∈ Finset.univ \ aliveSet v, (2 : ℝ) := Finset.sum_le_sum fun f _ =>
+          (norm_sub_le _ _).trans (add_le_add (norm_cylChar_le _ _) (norm_cylChar_le _ _) |>.trans
+            (by norm_num))
+      _ = _ := by rw [Finset.sum_const, hD, nsmul_eq_mul]
+  have hn : ‖(1 / ((aliveSet v).card : ℂ))‖ = 1 / (aliveSet v).card := by
+    rw [norm_div, norm_one, Complex.norm_natCast]
+  rw [hn]
+  calc 1 / ((aliveSet v).card : ℝ) * _ ≤ 1 / (aliveSet v).card * (((1024 - (aliveSet v).card : ℕ) : ℝ) * 2) :=
+        mul_le_mul_of_nonneg_left hs (by positivity)
+    _ = _ := by ring
+
+/-- The off-diagonal (distinct completions) part of `‖obstSum‖²`: same-cylinder obstacle pairs. -/
+noncomputable def obstOff (ξ : ℝ) (k : ℕ) (w : List Bool) : ℂ :=
+  (1 / 1024 ^ k : ℂ) ^ 2 * ∑ F : Fin k → (Fin 10 → Bool),
+    ∑ F' ∈ Finset.univ.erase F, obstLocal ξ (catB w k F) * (starRingEnd ℂ) (obstLocal ξ (catB w k F'))
+
+/-- **Diagonal + off-diagonal split of `‖obstSum‖²`.**  Proved. -/
+theorem norm_obstSum_sq_split (ξ : ℝ) (k : ℕ) (w : List Bool) :
+    (‖obstSum ξ k w‖ ^ 2 : ℂ) = (1 / 1024 ^ k : ℂ) ^ 2 *
+      ∑ F : Fin k → (Fin 10 → Bool), (‖obstLocal ξ (catB w k F)‖ ^ 2 : ℂ) + obstOff ξ k w := by
+  rw [norm_obstSum_sq, obstOff, ← mul_add, ← Finset.sum_add_distrib]
+  congr 1
+  refine Finset.sum_congr rfl fun F _ => ?_
+  rw [← Finset.add_sum_erase _ _ (Finset.mem_univ F), Complex.mul_conj']
+
+theorem norm_obstLocal_le_const (ξ : ℝ) (v : List Bool) : ‖obstLocal ξ v‖ ≤ 2048 := by
+  refine (norm_obstLocal_le ξ v).trans ?_
+  have hc : (1 : ℝ) ≤ (aliveSet v).card := by exact_mod_cast card_aliveSet_pos v
+  rw [div_le_iff₀ (by linarith)]
+  have : ((1024 - (aliveSet v).card : ℕ) : ℝ) ≤ 1024 := by exact_mod_cast Nat.sub_le _ _
+  nlinarith
+
+/-- **Pointwise second-moment bound: geometric diagonal + off-diagonal.**
+`‖obstSum‖² ≤ 2048²·1024^{−k} + ‖obstOff‖`.  Proved (crude constant). -/
+theorem norm_obstSum_sq_le (ξ : ℝ) (k : ℕ) (w : List Bool) :
+    ‖obstSum ξ k w‖ ^ 2 ≤ 2048 ^ 2 / 1024 ^ k + ‖obstOff ξ k w‖ := by
+  have h := congrArg norm (norm_obstSum_sq_split ξ k w)
+  rw [show ‖(‖obstSum ξ k w‖ ^ 2 : ℂ)‖ = ‖obstSum ξ k w‖ ^ 2 by
+    rw [norm_pow, Complex.norm_real, Real.norm_of_nonneg (norm_nonneg _)]] at h
+  rw [h]
+  refine (norm_add_le _ _).trans (add_le_add ?_ le_rfl)
+  rw [norm_mul, norm_pow, norm_div, norm_one, norm_pow, Complex.norm_ofNat]
+  have hs : ‖∑ F : Fin k → (Fin 10 → Bool), (‖obstLocal ξ (catB w k F)‖ ^ 2 : ℂ)‖ ≤
+      (1024 : ℝ) ^ k * 2048 ^ 2 := by
+    refine (norm_sum_le _ _).trans ?_
+    calc _ ≤ ∑ _F : Fin k → (Fin 10 → Bool), (2048 : ℝ) ^ 2 := Finset.sum_le_sum fun F _ => by
+          rw [show ‖(‖obstLocal ξ (catB w k F)‖ ^ 2 : ℂ)‖ = ‖obstLocal ξ (catB w k F)‖ ^ 2 by
+            rw [norm_pow, Complex.norm_real, Real.norm_of_nonneg (norm_nonneg _)]]
+          exact pow_le_pow_left₀ (norm_nonneg _) (norm_obstLocal_le_const _ _) 2
+      _ = _ := by simp [Finset.card_univ, Fintype.card_fun, Fintype.card_fin]
+  have hp : (0 : ℝ) < 1024 ^ k := by positivity
+  calc (1 / 1024 ^ k) ^ 2 * _ ≤ (1 / (1024 : ℝ) ^ k) ^ 2 * ((1024 : ℝ) ^ k * 2048 ^ 2) :=
+        mul_le_mul_of_nonneg_left hs (by positivity)
+    _ = _ := by field_simp
+/-- **The `resLaw` second moment as an explicit pair sum.**  `E‖obstSum‖²` is the sum over stage-`s`
+prefixes `w`, weighted by their `resLaw` mass, of the same-cylinder pair sums of
+`norm_obstSum_sq`.  Proved. -/
+theorem secondMoment_obstSum_eq (ξ : ℝ) (k s : ℕ) :
+    ((∫ ω, ‖obstSum ξ k (buildU s ω)‖ ^ 2 ∂coinMeasure : ℝ) : ℂ) =
+      ∑ w ∈ LS s, coinMeasure.real {ω | buildU s ω = w} • ((1 / 1024 ^ k : ℂ) ^ 2 *
+        ∑ F : Fin k → (Fin 10 → Bool), ∑ F' : Fin k → (Fin 10 → Bool),
+          obstLocal ξ (catB w k F) * (starRingEnd ℂ) (obstLocal ξ (catB w k F'))) := by
+  rw [← integral_complex_ofReal]
+  push_cast
+  rw [integral_buildU s (fun w => (‖obstSum ξ k w‖ ^ 2 : ℂ))]
+  exact Finset.sum_congr rfl fun w _ => by rw [norm_obstSum_sq]
+/-- **Conjecture node (resLaw-native second moment).**  Believed 45% for `3 ∤ b`.  The near-scale
+sum of the `resLaw` root-mean-squares `√E‖obstSum‖²` is `O(N² W(N))`.  Implies
+`CylObstacleCancellation b` (`cylObstacleCancellation_of_secondMoment`, via `obstMix_sq_le`).  Stated natively under `resLaw` because the
+change of measure to `μ_K` is expected to fail: the likelihood ratio of `w_s` is
+`∏ 1_alive·1024/|A|` (`real_buildU_catB`), a mean-one `μ_K`-martingale whose second moment is
+`∏ E[1024/|A|] ≈ (1 + 1.3/1024)^s` (`AvgDeadDensity` evidence), exponential in `s = s_n`; so
+Hölder transfer from a `μ_K` pair statement such as `ObstaclePairCorrelation` loses `e^{c s_n}`.
+(Heuristic, 70%; not a theorem.) -/
+def ResLawObstSecondMoment (b : ℕ) : Prop :=
+  ∀ h : ℤ, h ≠ 0 → ∀ C : ℕ, ∃ (K : ℝ) (W : ℕ → ℝ), Summable (fun j => W (sched j)) ∧
+    ∀ N : ℕ, 1 ≤ N →
+      ∑ m ∈ Finset.range N, ∑ n ∈ Finset.range m,
+        ∑ t ∈ Finset.Ico (stageOf b C m) (stageOf b C m + (Nat.log 3 N + 1)),
+          Real.sqrt (∫ ω, ‖obstSum (h * (b : ℝ) ^ m) (t - stageOf b C n)
+            (buildU (stageOf b C n) ω)‖ ^ 2 ∂coinMeasure) ≤ K * (N : ℝ) ^ 2 * W N
+
+/-- **Second-moment node ⇒ cylinder-local cancellation.**  Proved. -/
+theorem cylObstacleCancellation_of_secondMoment {b : ℕ} (hO : ResLawObstSecondMoment b) :
+    CylObstacleCancellation b := by
+  intro h hh C
+  obtain ⟨K, W, hW, hK⟩ := hO h hh C
+  refine ⟨K, W, hW, fun N hN => le_trans ?_ (hK N hN)⟩
+  refine Finset.sum_le_sum fun m _ => Finset.sum_le_sum fun n _ =>
+    Finset.sum_le_sum fun t _ => ?_
+  exact Real.le_sqrt_of_sq_le (obstMix_sq_le b C h n m t)
+
+/-- **Open implication node: global pair correlation ⇒ cylinder-local cancellation.**  Believed
+40% as stated (the global unweighted pair sum need not control the cylinder-restricted, `resLaw`-
+weighted second moment; the missing pieces are listed at `CylObstacleCancellation`). -/
+def PairCorrToCylinder (b : ℕ) : Prop :=
+  ObstaclePairCorrelation b → CylObstacleCancellation b
+
+
+
+/-- Stages grow linearly: `s_m + C ≥ s_n + (m − n)/20`. -/
+theorem stageOf_gap {b : ℕ} (hb : 2 ≤ b) (C : ℕ) {n m : ℕ} (hnm : n ≤ m) :
+    stageOf b C n + (m - n) / 20 ≤ stageOf b C m + C := by
+  unfold stageOf
+  have hb0 : 0 < b := by omega
+  have hlog : Nat.log 3 (b ^ n) + (m - n) / 2 ≤ Nat.log 3 (b ^ m) := by
+    refine Nat.le_log_of_pow_le (by norm_num) ?_
+    rw [pow_add, show m = n + (m - n) by omega, pow_add]
+    refine Nat.mul_le_mul (Nat.pow_log_le_self 3 (pow_pos hb0 n).ne') ?_
+    rw [show n + (m - n) - n = m - n by omega]
+    exact (Nat.pow_le_pow_right (by norm_num) (le_log_of_two_mul hb (Nat.mul_div_le _ _))).trans
+      (Nat.pow_log_le_self 3 (pow_pos hb0 _).ne')
+  omega
+/-- **Off-diagonal node.**  Believed 45% for `3 ∤ b`.  The `resLaw`-averaged same-cylinder obstacle
+pair sums `E‖obstOff‖` have near-scale root sum `O(N² W(N))`.  This is the irreducible core of the
+first-order crux: a pair correlation of the obstacle phases `e(hbᵐ(p/q − p'/q'))` over pairs in one
+coarse cylinder, under `resLaw`.
+
+Base 3.  The first-order probe (`scripts/cantorbad_deadmix.py first`, `t = 12`, 200 × 400, lags
+1–5) gives `R = .067 → .056` for b = 2, `.069 → .057` for b = 5, and `.066 → .059` for b = 3, all
+near the floor `.05`.  That configuration had no working control; the controlled probe is
+recorded at `AliveOffMix` (b = 3 near the floor there too).  The base-3 failure of the headline may live in the
+Cantor main term (`cesaro_contChar_small` uses `3 ∤ b`) rather than here; undecided.  The Riesz sub-family (`riesz_three_shift`) is coherent
+along `h·3ᵐ` but has about `2^ℓ` of the `4^ℓ` obstacles, so it is lower order. -/
+def ResLawObstOff (b : ℕ) : Prop :=
+  ∀ h : ℤ, h ≠ 0 → ∀ C : ℕ, ∃ (K : ℝ) (W : ℕ → ℝ), Summable (fun j => W (sched j)) ∧
+    ∀ N : ℕ, 1 ≤ N →
+      ∑ m ∈ Finset.range N, ∑ n ∈ Finset.range m,
+        ∑ t ∈ Finset.Ico (stageOf b C m) (stageOf b C m + (Nat.log 3 N + 1)),
+          Real.sqrt (∫ ω, ‖obstOff (h * (b : ℝ) ^ m) (t - stageOf b C n)
+            (buildU (stageOf b C n) ω)‖ ∂coinMeasure) ≤ K * (N : ℝ) ^ 2 * W N
+
+/-- **Diagonal leaf.**  The geometric diagonal has near-scale root sum `O(N² W(N))`.  Proved
+(`s_m ≥ s_n + (m − n)/20 − C`, `stageOf_gap`, so the sum is `O(N)`; `W(N) = 1/N` is summable along `sched`)
+(`diagSmall_of_two_le`). -/
+def DiagSmall (b : ℕ) : Prop :=
+  ∀ C : ℕ, ∃ (K : ℝ) (W : ℕ → ℝ), Summable (fun j => W (sched j)) ∧
+    ∀ N : ℕ, 1 ≤ N →
+      ∑ m ∈ Finset.range N, ∑ n ∈ Finset.range m,
+        ∑ t ∈ Finset.Ico (stageOf b C m) (stageOf b C m + (Nat.log 3 N + 1)),
+          Real.sqrt (2048 ^ 2 / 1024 ^ (t - stageOf b C n)) ≤ K * (N : ℝ) ^ 2 * W N
+
+theorem sqrt_diag_eq (k : ℕ) : Real.sqrt (2048 ^ 2 / 1024 ^ k) = 2048 * (1 / 32 : ℝ) ^ k := by
+  rw [show (2048 : ℝ) ^ 2 / 1024 ^ k = (2048 * (1 / 32 : ℝ) ^ k) ^ 2 by
+    rw [mul_pow, ← pow_mul, mul_comm k 2, pow_mul]; norm_num [one_div, inv_pow, div_eq_mul_inv]; ring_nf; simp [one_div]]
+  exact Real.sqrt_sq (by positivity)
+
+theorem inv_pow_div20_le {c : ℝ} (hc : 2 ≤ c) (j : ℕ) :
+    (1 / c) ^ (j / 20) ≤ c * (31 / 32 : ℝ) ^ j := by
+  have hc0 : 0 < c := by linarith
+  have hj : j ≤ 20 * (j / 20 + 1) := by omega
+  have h1 : (31 / 32 : ℝ) ^ (20 * (j / 20 + 1)) ≤ (31 / 32 : ℝ) ^ j :=
+    pow_le_pow_of_le_one (by norm_num) (by norm_num) hj
+  have hb : 1 / c ≤ (31 / 32 : ℝ) ^ 20 := by
+    rw [div_le_iff₀ hc0]; nlinarith [show (1 : ℝ) / 2 ≤ (31 / 32 : ℝ) ^ 20 by norm_num]
+  have h2 : (1 / c) ^ (j / 20 + 1) ≤ (31 / 32 : ℝ) ^ (20 * (j / 20 + 1)) := by
+    rw [pow_mul]; exact pow_le_pow_left₀ (by positivity) hb _
+  have h3 := h2.trans h1
+  rw [pow_succ] at h3
+  have e : (1 / c) ^ (j / 20) = ((1 / c) ^ (j / 20) * (1 / c)) * c := by field_simp
+  rw [e]; nlinarith [pow_nonneg (show (0 : ℝ) ≤ 1 / c by positivity) (j / 20)]
+
+theorem diag_term_le {b : ℕ} (hb : 2 ≤ b) (C : ℕ) {c : ℝ} (hc : 2 ≤ c) {n m t : ℕ} (hnm : n < m)
+    (ht : stageOf b C m ≤ t) :
+    (1 / c) ^ (t - stageOf b C n) ≤
+      c ^ C * c * (1 / c) ^ (t - stageOf b C m) * (31 / 32 : ℝ) ^ (m - 1 - n) := by
+  have hc0 : 0 < c := by linarith
+  have hr1 : 1 / c ≤ 1 := by rw [div_le_one hc0]; linarith
+  have hr0 : 0 ≤ 1 / c := by positivity
+  have hg := stageOf_gap hb C hnm.le
+  have hmo := stageOf_mono b C (by omega) hnm.le
+  set a := (m - n) / 20
+  have hexp : t - stageOf b C m + (a - C) ≤ t - stageOf b C n := by omega
+  have r1 : (1 / c) ^ (t - stageOf b C n) ≤ (1 / c) ^ (t - stageOf b C m + (a - C)) :=
+    pow_le_pow_of_le_one hr0 hr1 hexp
+  have r2 : (1 / c) ^ (a - C) ≤ c ^ C * (1 / c) ^ a := by
+    have : (1 / c) ^ a ≥ (1 / c) ^ (a - C + C) := pow_le_pow_of_le_one hr0 hr1 (by omega)
+    rw [pow_add] at this
+    have e : c ^ C * (1 / c) ^ C = 1 := by rw [← mul_pow]; field_simp; simp
+    nlinarith [pow_nonneg hr0 (a - C), pow_nonneg hc0.le C]
+  have r3 : (1 / c) ^ a ≤ c * (31 / 32 : ℝ) ^ (m - 1 - n) :=
+    (inv_pow_div20_le hc _).trans (mul_le_mul_of_nonneg_left
+      (pow_le_pow_of_le_one (by norm_num) (by norm_num) (by omega)) hc0.le)
+  rw [pow_add] at r1
+  have p0 : (0 : ℝ) ≤ (1 / c) ^ (t - stageOf b C m) := pow_nonneg hr0 _
+  calc _ ≤ _ := r1
+    _ ≤ (1 / c) ^ (t - stageOf b C m) * (c ^ C * (c * (31 / 32 : ℝ) ^ (m - 1 - n))) :=
+        mul_le_mul_of_nonneg_left (r2.trans (mul_le_mul_of_nonneg_left r3 (by positivity))) p0
+    _ = _ := by ring
+
+/-- **Geometric near-scale sums are `O(N)`.**  For `c ≥ 2`, the near-scale sum of
+`(1/c)^{t − s_n}` is at most `K N`.  Proved. -/
+theorem geomNear_le {b : ℕ} (hb : 2 ≤ b) (C : ℕ) {c : ℝ} (hc : 2 ≤ c) (N : ℕ) :
+    ∑ m ∈ Finset.range N, ∑ n ∈ Finset.range m,
+      ∑ t ∈ Finset.Ico (stageOf b C m) (stageOf b C m + (Nat.log 3 N + 1)), (1 / c) ^ (t - stageOf b C n) ≤
+        c ^ C * c * 2 * 32 * N := by
+  have hc0 : 0 < c := by linarith
+  have inner : ∀ m n, n < m → ∑ t ∈ Finset.Ico (stageOf b C m) (stageOf b C m + (Nat.log 3 N + 1)),
+      (1 / c) ^ (t - stageOf b C n) ≤ c ^ C * c * 2 * (31 / 32 : ℝ) ^ (m - 1 - n) := by
+    intro m n hnm
+    calc _ ≤ ∑ t ∈ Finset.Ico (stageOf b C m) (stageOf b C m + (Nat.log 3 N + 1)),
+          (c ^ C * c * (31 / 32 : ℝ) ^ (m - 1 - n)) * (1 / c) ^ (t - stageOf b C m) :=
+          Finset.sum_le_sum fun t ht => by
+            have := diag_term_le hb C hc hnm (Finset.mem_Ico.1 ht).1
+            linarith
+      _ = (c ^ C * c * (31 / 32 : ℝ) ^ (m - 1 - n)) *
+          ∑ i ∈ Finset.Ico 0 (Nat.log 3 N + 1), (1 / c) ^ i := by
+          rw [← Finset.mul_sum, Finset.sum_Ico_eq_sum_range, Finset.sum_Ico_eq_sum_range]
+          simp
+      _ ≤ (c ^ C * c * (31 / 32 : ℝ) ^ (m - 1 - n)) * 2 := by
+          refine mul_le_mul_of_nonneg_left ((geom_sum_Ico_le_of_lt_one (by positivity)
+            (by rw [div_lt_one hc0]; linarith)).trans ?_) (by positivity)
+          rw [pow_zero, div_le_iff₀ (by rw [sub_pos, div_lt_one hc0]; linarith)]
+          have : 1 / c ≤ 1 / 2 := one_div_le_one_div_of_le (by norm_num) hc
+          linarith
+      _ = _ := by ring
+  have mid : ∀ m, ∑ n ∈ Finset.range m, (31 / 32 : ℝ) ^ (m - 1 - n) ≤ 32 := by
+    intro m
+    rw [Finset.sum_range_reflect (fun i => (31 / 32 : ℝ) ^ i) m]
+    have h := geom_sum_Ico_le_of_lt_one (m := 0) (n := m) (x := (31 / 32 : ℝ)) (by norm_num) (by norm_num)
+    rw [← Finset.range_eq_Ico] at h
+    exact h.trans (by norm_num)
+  calc _ ≤ ∑ m ∈ Finset.range N, ∑ n ∈ Finset.range m,
+        c ^ C * c * 2 * (31 / 32 : ℝ) ^ (m - 1 - n) :=
+        Finset.sum_le_sum fun m _ => Finset.sum_le_sum fun n hn =>
+          inner m n (Finset.mem_range.1 hn)
+    _ ≤ ∑ m ∈ Finset.range N, (c ^ C * c * 2 * 32 : ℝ) := Finset.sum_le_sum fun m _ => by
+        rw [← Finset.mul_sum]
+        exact mul_le_mul_of_nonneg_left (mid m) (by positivity)
+    _ = _ := by rw [Finset.sum_const, Finset.card_range, nsmul_eq_mul]; ring
+
+/-- **The diagonal leaf.**  Proved: the near-scale diagonal sum is `O(N)`. -/
+theorem diagSmall_of_two_le {b : ℕ} (hb : 2 ≤ b) : DiagSmall b := by
+  intro C
+  refine ⟨2048 * ((32 : ℝ) ^ C * 32 * 2 * 32), fun N => (N : ℝ) ^ (-(1 : ℝ)),
+    summable_sched_rpow one_pos, fun N hN => ?_⟩
+  have hN0 : (0 : ℝ) < N := by exact_mod_cast hN
+  simp_rw [sqrt_diag_eq, ← Finset.mul_sum]
+  calc _ ≤ 2048 * ((32 : ℝ) ^ C * 32 * 2 * 32 * N) :=
+        mul_le_mul_of_nonneg_left (geomNear_le hb C (c := 32) (by norm_num) N) (by norm_num)
+    _ = _ := by simp only [Real.rpow_neg_one]; field_simp
+
+theorem sqrt_secondMoment_le (ξ : ℝ) (k s : ℕ) :
+    Real.sqrt (∫ ω, ‖obstSum ξ k (buildU s ω)‖ ^ 2 ∂coinMeasure) ≤
+      Real.sqrt (2048 ^ 2 / 1024 ^ k) + Real.sqrt (∫ ω, ‖obstOff ξ k (buildU s ω)‖ ∂coinMeasure) := by
+  have hO : Integrable (fun ω => ‖obstOff ξ k (buildU s ω)‖) coinMeasure :=
+    (integrable_comp_buildU s _).norm
+  have hle : ∫ ω, ‖obstSum ξ k (buildU s ω)‖ ^ 2 ∂coinMeasure ≤
+      2048 ^ 2 / 1024 ^ k + ∫ ω, ‖obstOff ξ k (buildU s ω)‖ ∂coinMeasure := by
+    have hc := integral_mono_of_nonneg (μ := coinMeasure)
+      (Eventually.of_forall fun ω => sq_nonneg ‖obstSum ξ k (buildU s ω)‖)
+      ((integrable_const (2048 ^ 2 / 1024 ^ k : ℝ)).add hO)
+      (Eventually.of_forall fun ω => norm_obstSum_sq_le ξ k (buildU s ω))
+    refine hc.trans (le_of_eq ?_)
+    simp only [Pi.add_apply]
+    rw [integral_add (integrable_const _) hO, integral_const, probReal_univ, one_smul]
+  calc _ ≤ Real.sqrt (2048 ^ 2 / 1024 ^ k + ∫ ω, ‖obstOff ξ k (buildU s ω)‖ ∂coinMeasure) :=
+        Real.sqrt_le_sqrt hle
+    _ ≤ _ := by
+      have ha : (0 : ℝ) ≤ 2048 ^ 2 / 1024 ^ k := by positivity
+      have hb : (0 : ℝ) ≤ ∫ ω, ‖obstOff ξ k (buildU s ω)‖ ∂coinMeasure :=
+        integral_nonneg fun _ => norm_nonneg _
+      rw [Real.sqrt_le_left (by positivity)]
+      nlinarith [Real.sq_sqrt ha, Real.sq_sqrt hb, Real.sqrt_nonneg (2048 ^ 2 / 1024 ^ k : ℝ),
+        Real.sqrt_nonneg (∫ ω, ‖obstOff ξ k (buildU s ω)‖ ∂coinMeasure)]
+
+/-- **Off-diagonal node + diagonal leaf ⇒ second-moment node.**  Proved. -/
+theorem resLawObstSecondMoment_of_off {b : ℕ} (hD : DiagSmall b) (hO : ResLawObstOff b) :
+    ResLawObstSecondMoment b := by
+  intro h hh C
+  obtain ⟨K₁, W₁, hW₁, hK₁⟩ := hD C
+  obtain ⟨K₂, W₂, hW₂, hK₂⟩ := hO h hh C
+  refine ⟨1, fun N => K₁ * W₁ N + K₂ * W₂ N, (hW₁.mul_left K₁).add (hW₂.mul_left K₂),
+    fun N hN => ?_⟩
+  calc _ ≤ ∑ m ∈ Finset.range N, ∑ n ∈ Finset.range m,
+        ∑ t ∈ Finset.Ico (stageOf b C m) (stageOf b C m + (Nat.log 3 N + 1)),
+          (Real.sqrt (2048 ^ 2 / 1024 ^ (t - stageOf b C n)) +
+            Real.sqrt (∫ ω, ‖obstOff (h * (b : ℝ) ^ m) (t - stageOf b C n)
+              (buildU (stageOf b C n) ω)‖ ∂coinMeasure)) :=
+        Finset.sum_le_sum fun m _ => Finset.sum_le_sum fun n _ =>
+          Finset.sum_le_sum fun t _ => sqrt_secondMoment_le _ _ _
+    _ = _ + _ := by simp only [Finset.sum_add_distrib]
+    _ ≤ K₁ * (N : ℝ) ^ 2 * W₁ N + K₂ * (N : ℝ) ^ 2 * W₂ N := add_le_add (hK₁ N hN) (hK₂ N hN)
+    _ = _ := by ring
+
+theorem unifAvg_sub (H₁ H₂ : List Bool → ℂ) : unifAvg (H₁ - H₂) = unifAvg H₁ - unifAvg H₂ := by
+  funext w; simp only [unifAvg, Pi.sub_apply, Finset.sum_sub_distrib]; ring
+
+theorem cExt_sub (k : ℕ) : ∀ H₁ H₂ : List Bool → ℂ, cExt (H₁ - H₂) k = cExt H₁ k - cExt H₂ k := by
+  induction k with
+  | zero => intro H₁ H₂; rfl
+  | succ k ih => intro H₁ H₂; show cExt (unifAvg (H₁ - H₂)) k = _; rw [unifAvg_sub, ih]; rfl
+
+/-- **The uniform continuation of a defect.**  `cExt (aliveDefect H) k = cExt H (k+1) − cExt (aliveAvg H) k`:
+the first-order part of each defect term is a difference of two cylinder averages, one of the
+uniform and one of the alive next-block average of `H`.  Proved. -/
+theorem cExt_aliveDefect (H : List Bool → ℂ) (k : ℕ) :
+    cExt (aliveDefect H) k = cExt H (k + 1) - cExt (aliveAvg H) k := by
+  rw [show aliveDefect H = unifAvg H - aliveAvg H from rfl, cExt_sub]; rfl
+
+/-! ### The `resLaw`-native route (no defect split) -/
+
+/-- The `resLaw` continuation by `k` blocks: iterated alive averages. -/
+noncomputable def aliveExt (G : List Bool → ℂ) : ℕ → List Bool → ℂ
+  | 0 => G
+  | k + 1 => aliveExt (aliveAvg G) k
+
+/-- **The `resLaw` conditional mean is the alive continuation.**  Proved (`condMean_succ_alive`). -/
+theorem condMean_aliveExt (s : ℕ) (w : List Bool) (k : ℕ) :
+    ∀ G : List Bool → ℂ, condMean (fun ω => G (buildU (s + k) ω)) s w =
+      condMean (fun ω => aliveExt G k (buildU s ω)) s w := by
+  induction k with
+  | zero => intro G; rfl
+  | succ k ih =>
+    intro G
+    rw [show s + (k + 1) = s + k + 1 from rfl, condMean_succ_alive G (Nat.le_add_right s k), ih]
+    rfl
+
+
+theorem aliveExt_succ' (k : ℕ) : ∀ G : List Bool → ℂ, aliveExt G (k + 1) = aliveAvg (aliveExt G k) := by
+  induction k with
+  | zero => intro G; rfl
+  | succ k ih => intro G; show aliveExt (aliveAvg G) (k + 1) = _; rw [ih]; rfl
+
+open Classical in
+/-- **The `resLaw` continuation as a path-weighted sum.**  Proved. -/
+theorem aliveExt_eq_sum (G : List Bool → ℂ) (k : ℕ) : ∀ w : List Bool,
+    aliveExt G k w = ∑ F : Fin k → (Fin 10 → Bool), (pathW w k F : ℂ) * G (catB w k F) := by
+  induction k with
+  | zero => intro w; simp [aliveExt, catB, pathW]
+  | succ k ih =>
+    intro w
+    rw [aliveExt_succ', aliveAvg]
+    simp_rw [ih]
+    rw [← (Fin.consEquiv (fun _ : Fin (k + 1) => Fin 10 → Bool)).sum_comp
+      (fun F => (pathW w (k + 1) F : ℂ) * G (catB w (k + 1) F)), Fintype.sum_prod_type]
+    simp only [Fin.consEquiv, Equiv.coe_fn_mk, catB, pathW, Fin.cons_zero, Fin.cons_succ]
+    rw [Finset.mul_sum, ← Finset.sum_filter_add_sum_filter_not Finset.univ (· ∈ aliveSet w)]
+    simp only [Finset.filter_mem_eq_inter, Finset.univ_inter]
+    rw [Finset.sum_eq_zero (s := Finset.univ.filter fun f => f ∉ aliveSet w) (fun f hf => by
+      simp only [Finset.mem_filter] at hf
+      simp [hf.2]), add_zero]
+    refine Finset.sum_congr rfl fun f hf => ?_
+    rw [Finset.mul_sum]
+    refine Finset.sum_congr rfl fun F _ => ?_
+    simp only [hf, if_true]
+    push_cast; ring
+
+open Classical in
+theorem card_aliveSet_ge (w : List Bool) : 536 ≤ (aliveSet w).card := by
+  have h := Finset.card_filter_add_card_filter_not
+    (s := (Finset.univ : Finset (Fin 10 → Bool))) (fun f => Alive 5 c₀ w (List.ofFn f))
+  have hd := card_dead_le w
+  simp only [Finset.card_univ, Fintype.card_fun, Fintype.card_bool, Fintype.card_fin] at h
+  have : (aliveSet w).card =
+      ((Finset.univ : Finset (Fin 10 → Bool)).filter fun f => Alive 5 c₀ w (List.ofFn f)).card := by
+    unfold aliveSet; congr
+  rw [show (2 : ℕ) ^ 10 = 1024 from rfl] at h
+  omega
+
+open Classical in
+theorem pathW_nonneg (k : ℕ) : ∀ (w : List Bool) (F : Fin k → (Fin 10 → Bool)), 0 ≤ pathW w k F := by
+  induction k with
+  | zero => intro w F; simp [pathW]
+  | succ k ih =>
+    intro w F; simp only [pathW]
+    exact mul_nonneg (by split_ifs <;> positivity) (ih _ _)
+
+open Classical in
+theorem pathW_le (k : ℕ) : ∀ (w : List Bool) (F : Fin k → (Fin 10 → Bool)),
+    pathW w k F ≤ (1 / 536 : ℝ) ^ k := by
+  induction k with
+  | zero => intro w F; simp [pathW]
+  | succ k ih =>
+    intro w F; simp only [pathW, pow_succ']
+    have h536 : (536 : ℝ) ≤ (aliveSet w).card := by exact_mod_cast card_aliveSet_ge w
+    have hfac : (if F 0 ∈ aliveSet w then 1 / ((aliveSet w).card : ℝ) else 0) ≤ 1 / 536 := by
+      split_ifs
+      · exact one_div_le_one_div_of_le (by norm_num) h536
+      · norm_num
+    exact mul_le_mul hfac (ih _ _) (pathW_nonneg _ _ _) (by norm_num)
+
+open Classical in
+theorem sum_pathW (k : ℕ) : ∀ w : List Bool, ∑ F : Fin k → (Fin 10 → Bool), pathW w k F = 1 := by
+  induction k with
+  | zero => intro w; simp [pathW]
+  | succ k ih =>
+    intro w
+    rw [← (Fin.consEquiv (fun _ : Fin (k + 1) => Fin 10 → Bool)).sum_comp, Fintype.sum_prod_type]
+    simp only [Fin.consEquiv, Equiv.coe_fn_mk, pathW, Fin.cons_zero, Fin.cons_succ]
+    simp_rw [← Finset.mul_sum, ih, mul_one]
+    rw [Finset.sum_ite, Finset.sum_const_zero, add_zero, Finset.sum_const, nsmul_eq_mul]
+    simp only [Finset.filter_mem_eq_inter, Finset.univ_inter]
+    have : (0 : ℝ) < (aliveSet w).card := by exact_mod_cast card_aliveSet_pos w
+    field_simp
+/-- The `resLaw`-native mix: `E‖aliveExt D_t (t − s_n) (w_{s_n})‖`. -/
+noncomputable def aliveMix (b C : ℕ) (h : ℤ) (n m t : ℕ) : ℝ :=
+  ∫ ω, ‖aliveExt (deadCorr (h * (b : ℝ) ^ m)) (t - stageOf b C n) (buildU (stageOf b C n) ω)‖
+    ∂coinMeasure
+
+/-- **`deadMix ≤ aliveMix`**, with no first-order/defect split.  Proved. -/
+theorem deadMix_le_aliveMix (b C : ℕ) (h : ℤ) (n m t : ℕ) (ht : stageOf b C n ≤ t) :
+    deadMix b C h n m t ≤ aliveMix b C h n m t := by
+  unfold deadMix aliveMix
+  refine integral_mono (integrable_comp_buildU _ _).norm (integrable_comp_buildU _ _).norm
+    fun ω => ?_
+  have e := condMean_aliveExt (stageOf b C n) (buildU (stageOf b C n) ω) (t - stageOf b C n)
+    (deadCorr (h * (b : ℝ) ^ m))
+  rw [show stageOf b C n + (t - stageOf b C n) = t by omega] at e
+  rw [e]
+  exact norm_condMean_self_le _ _ _
+
+/-- **`resLaw`-native node.**  Believed 45% for `3 ∤ b`.  Implies `NearObstaclePhaseMixing b`
+(`nearObstaclePhaseMixing_of_alive`) directly, with no defect part: the `resLaw` continuation
+weights `pathW` already contain the alive defects. -/
+def AliveObstacleMix (b : ℕ) : Prop :=
+  ∀ h : ℤ, h ≠ 0 → ∀ C : ℕ, ∃ (K : ℝ) (W : ℕ → ℝ), Summable (fun j => W (sched j)) ∧
+    ∀ N : ℕ, 1 ≤ N →
+      ∑ m ∈ Finset.range N, ∑ n ∈ Finset.range m,
+        ∑ t ∈ Finset.Ico (stageOf b C m) (stageOf b C m + (Nat.log 3 N + 1)), aliveMix b C h n m t ≤
+          K * (N : ℝ) ^ 2 * W N
+
+/-- **`resLaw`-native node ⇒ near-scale node.**  Proved. -/
+theorem nearObstaclePhaseMixing_of_alive {b : ℕ} (hb : 1 ≤ b) (hA : AliveObstacleMix b) :
+    NearObstaclePhaseMixing b := by
+  intro h hh C
+  obtain ⟨K, W, hW, hK⟩ := hA h hh C
+  refine ⟨K, W, hW, fun N hN => le_trans ?_ (hK N hN)⟩
+  exact Finset.sum_le_sum fun m hm => Finset.sum_le_sum fun n hn =>
+    Finset.sum_le_sum fun t ht => deadMix_le_aliveMix b C h n m t
+      ((stageOf_mono b C hb (Finset.mem_range.1 hn).le).trans (Finset.mem_Ico.1 ht).1)
+
+theorem norm_deadCorr_le_const (ξ : ℝ) (v : List Bool) : ‖deadCorr ξ v‖ ≤ 2048 := by
+  rw [deadCorr_eq_cylChar]; exact norm_obstLocal_le_const ξ v
+
+open Classical in
+/-- The off-diagonal part of `‖aliveExt‖²`: pairs of distinct `resLaw` completions. -/
+noncomputable def aliveOff (G : List Bool → ℂ) (k : ℕ) (w : List Bool) : ℂ :=
+  ∑ F : Fin k → (Fin 10 → Bool), ∑ F' ∈ Finset.univ.erase F,
+    ((pathW w k F : ℂ) * G (catB w k F)) * (starRingEnd ℂ) ((pathW w k F' : ℂ) * G (catB w k F'))
+
+open Classical in
+/-- **Pointwise: geometric diagonal + off-diagonal**, for `resLaw` continuations of a function
+bounded by `2048`.  Proved (`pathW_le`, `sum_pathW`). -/
+theorem norm_aliveExt_sq_le (G : List Bool → ℂ) (hG : ∀ v, ‖G v‖ ≤ 2048) (k : ℕ) (w : List Bool) :
+    ‖aliveExt G k w‖ ^ 2 ≤ 2048 ^ 2 * (1 / 536 : ℝ) ^ k + ‖aliveOff G k w‖ := by
+  set a : (Fin k → (Fin 10 → Bool)) → ℂ := fun F => (pathW w k F : ℂ) * G (catB w k F)
+  have hsq : (‖aliveExt G k w‖ ^ 2 : ℂ) = ∑ F, (‖a F‖ ^ 2 : ℂ) + aliveOff G k w := by
+    rw [← Complex.mul_conj', aliveExt_eq_sum, map_sum, Finset.sum_mul_sum, aliveOff,
+      ← Finset.sum_add_distrib]
+    refine Finset.sum_congr rfl fun F _ => ?_
+    rw [← Finset.add_sum_erase _ _ (Finset.mem_univ F), Complex.mul_conj']
+  have h := congrArg norm hsq
+  rw [show ‖(‖aliveExt G k w‖ ^ 2 : ℂ)‖ = ‖aliveExt G k w‖ ^ 2 by
+    rw [norm_pow, Complex.norm_real, Real.norm_of_nonneg (norm_nonneg _)]] at h
+  rw [h]
+  refine (norm_add_le _ _).trans (add_le_add ?_ le_rfl)
+  refine (norm_sum_le _ _).trans ?_
+  have hterm : ∀ F, ‖(‖a F‖ ^ 2 : ℂ)‖ ≤ 2048 ^ 2 * (1 / 536 : ℝ) ^ k * pathW w k F := by
+    intro F
+    rw [norm_pow, Complex.norm_real, Real.norm_of_nonneg (norm_nonneg _)]
+    have hp := pathW_nonneg k w F
+    have hpl := pathW_le k w F
+    have ha : ‖a F‖ = pathW w k F * ‖G (catB w k F)‖ := by
+      simp only [a, norm_mul, Complex.norm_real, Real.norm_of_nonneg hp]
+    rw [ha, mul_pow]
+    have hg := hG (catB w k F)
+    have hg2 : ‖G (catB w k F)‖ ^ 2 ≤ 2048 ^ 2 := pow_le_pow_left₀ (norm_nonneg _) hg 2
+    have hp2 : pathW w k F ^ 2 ≤ (1 / 536 : ℝ) ^ k * pathW w k F := by
+      rw [sq]; exact mul_le_mul_of_nonneg_right hpl hp
+    calc pathW w k F ^ 2 * ‖G (catB w k F)‖ ^ 2 ≤ ((1 / 536 : ℝ) ^ k * pathW w k F) * 2048 ^ 2 :=
+          mul_le_mul hp2 hg2 (sq_nonneg _) (by positivity)
+      _ = _ := by ring
+  calc _ ≤ ∑ F, 2048 ^ 2 * (1 / 536 : ℝ) ^ k * pathW w k F := Finset.sum_le_sum fun F _ => hterm F
+    _ = _ := by rw [← Finset.mul_sum, sum_pathW, mul_one]
+
+
+/-- The sibling (one-step off-diagonal) correlation of `X` among the alive children of `w`. -/
+noncomputable def sibCorr (X : List Bool → ℂ) (w : List Bool) : ℂ :=
+  (1 / ((aliveSet w).card : ℂ)) ^ 2 * ∑ f ∈ aliveSet w, ∑ f' ∈ (aliveSet w).erase f,
+    X (w ++ List.ofFn f) * (starRingEnd ℂ) (X (w ++ List.ofFn f'))
+
+/-- **One-step divergence decomposition.**  `‖aliveAvg X w‖²` is the alive average of `‖X‖²`
+scaled by `1/|A|`, plus the sibling correlation.  Iterating it along `aliveExt_succ'` splits
+`‖aliveExt D k‖²` by the depth at which two completions diverge.  Proved. -/
+theorem norm_aliveAvg_sq (X : List Bool → ℂ) (w : List Bool) :
+    (‖aliveAvg X w‖ ^ 2 : ℂ) = (1 / ((aliveSet w).card : ℂ)) *
+      aliveAvg (fun v => (‖X v‖ ^ 2 : ℂ)) w + sibCorr X w := by
+  have hc : (starRingEnd ℂ) (1 / ((aliveSet w).card : ℂ)) = 1 / ((aliveSet w).card : ℂ) := by
+    simp [map_div₀]
+  rw [← Complex.mul_conj', aliveAvg, sibCorr, map_mul, map_sum, hc, mul_mul_mul_comm,
+    Finset.sum_mul_sum, aliveAvg]
+  have e : ∀ f ∈ aliveSet w, ∑ f' ∈ aliveSet w, X (w ++ List.ofFn f) *
+      (starRingEnd ℂ) (X (w ++ List.ofFn f')) = (‖X (w ++ List.ofFn f)‖ ^ 2 : ℂ) +
+      ∑ f' ∈ (aliveSet w).erase f, X (w ++ List.ofFn f) * (starRingEnd ℂ) (X (w ++ List.ofFn f')) :=
+    fun f hf => by rw [← Finset.add_sum_erase _ _ hf, Complex.mul_conj']
+  rw [Finset.sum_congr rfl e, Finset.sum_add_distrib]
+  ring
+
+/-- Real alive average. -/
+noncomputable def rAvg (Y : List Bool → ℝ) (w : List Bool) : ℝ :=
+  (1 / ((aliveSet w).card : ℝ)) * ∑ f ∈ aliveSet w, Y (w ++ List.ofFn f)
+
+/-- The depth-weighted sibling sum: the sibling correlations at every divergence depth, each
+damped by `1/|A|` per level above it. -/
+noncomputable def sibSum (G : List Bool → ℂ) : ℕ → List Bool → ℝ
+  | 0 => fun _ => 0
+  | k + 1 => fun w => (1 / ((aliveSet w).card : ℝ)) * rAvg (sibSum G k) w +
+      ‖sibCorr (aliveExt G k) w‖
+
+theorem rAvg_mono {Y Z : List Bool → ℝ} (h : ∀ v, Y v ≤ Z v) (w : List Bool) : rAvg Y w ≤ rAvg Z w :=
+  mul_le_mul_of_nonneg_left (Finset.sum_le_sum fun f _ => h _) (by positivity)
+
+theorem rAvg_const_add (c : ℝ) (Y : List Bool → ℝ) (w : List Bool) :
+    rAvg (fun v => c + Y v) w = c + rAvg Y w := by
+  have : (0 : ℝ) < (aliveSet w).card := by exact_mod_cast card_aliveSet_pos w
+  unfold rAvg; rw [Finset.sum_add_distrib, Finset.sum_const, nsmul_eq_mul]; field_simp
+
+/-- **Divergence-depth expansion.**  `‖aliveExt G k w‖² ≤ 2048²·536^{−k} + sibSum G k w`.  Proved. -/
+theorem norm_aliveExt_sq_le_sib (G : List Bool → ℂ) (hG : ∀ v, ‖G v‖ ≤ 2048) (k : ℕ) :
+    ∀ w, ‖aliveExt G k w‖ ^ 2 ≤ 2048 ^ 2 * (1 / 536 : ℝ) ^ k + sibSum G k w := by
+  induction k with
+  | zero => intro w; simp only [aliveExt, sibSum, pow_zero, mul_one, add_zero]
+            exact pow_le_pow_left₀ (norm_nonneg _) (hG w) 2
+  | succ k ih =>
+    intro w
+    have hA : (0 : ℝ) < (aliveSet w).card := by exact_mod_cast card_aliveSet_pos w
+    have hA5 : (536 : ℝ) ≤ (aliveSet w).card := by exact_mod_cast card_aliveSet_ge w
+    have key := norm_aliveAvg_sq (aliveExt G k) w
+    rw [← aliveExt_succ'] at key
+    have hre := congrArg Complex.re key
+    have h1 : (‖aliveExt G (k + 1) w‖ ^ 2 : ℂ).re = ‖aliveExt G (k + 1) w‖ ^ 2 := by
+      norm_cast
+    have h2 : ((1 / ((aliveSet w).card : ℂ)) * aliveAvg (fun v => (‖aliveExt G k v‖ ^ 2 : ℂ)) w).re
+        = (1 / ((aliveSet w).card : ℝ)) * rAvg (fun v => ‖aliveExt G k v‖ ^ 2) w := by
+      unfold aliveAvg rAvg
+      rw [show (1 / ((aliveSet w).card : ℂ)) = ((1 / ((aliveSet w).card : ℝ) : ℝ) : ℂ) by push_cast; rfl]
+      rw [Complex.re_ofReal_mul, Complex.re_ofReal_mul, Complex.re_sum]
+      congr 2
+      refine Finset.sum_congr rfl fun f _ => ?_
+      norm_cast
+    rw [h1, Complex.add_re, h2] at hre
+    have h3 : (sibCorr (aliveExt G k) w).re ≤ ‖sibCorr (aliveExt G k) w‖ := Complex.re_le_norm _
+    have h4 : rAvg (fun v => ‖aliveExt G k v‖ ^ 2) w ≤
+        2048 ^ 2 * (1 / 536 : ℝ) ^ k + rAvg (sibSum G k) w := by
+      rw [← rAvg_const_add]; exact rAvg_mono ih w
+    have h5 : 1 / ((aliveSet w).card : ℝ) ≤ 1 / 536 := one_div_le_one_div_of_le (by norm_num) hA5
+    have hS0 : 0 ≤ 2048 ^ 2 * (1 / 536 : ℝ) ^ k := by positivity
+    have hp : (0 : ℝ) ≤ 1 / ((aliveSet w).card : ℝ) := by positivity
+    have e1 := mul_le_mul_of_nonneg_left h4 hp
+    have e2 := mul_le_mul_of_nonneg_right h5 hS0
+    simp only [sibSum]
+    calc ‖aliveExt G (k + 1) w‖ ^ 2 = _ := hre
+      _ ≤ 1 / ((aliveSet w).card : ℝ) * (2048 ^ 2 * (1 / 536 : ℝ) ^ k + rAvg (sibSum G k) w) +
+          ‖sibCorr (aliveExt G k) w‖ := by linarith
+      _ = 1 / ((aliveSet w).card : ℝ) * (2048 ^ 2 * (1 / 536 : ℝ) ^ k) +
+          (1 / ((aliveSet w).card : ℝ) * rAvg (sibSum G k) w + ‖sibCorr (aliveExt G k) w‖) := by ring
+      _ ≤ 1 / 536 * (2048 ^ 2 * (1 / 536 : ℝ) ^ k) +
+          (1 / ((aliveSet w).card : ℝ) * rAvg (sibSum G k) w + ‖sibCorr (aliveExt G k) w‖) := by
+          linarith
+      _ = _ := by ring
+/-- **`resLaw`-native off-diagonal node** (single crux).  Believed 45% for `3 ∤ b`.  The near-scale
+root sums of `E‖aliveOff D_t‖` are `O(N² W(N))`.  This pair correlation is over pairs of distinct
+`resLaw` completions of the coarse prefix, weighted by their path probabilities, so the alive
+defects are built in and there is no separate defect node.  Implies `AliveObstacleMix b`
+(`aliveObstacleMix_of_off`), hence `NearObstaclePhaseMixing b`.
+
+Probe with a working control (lap 9, `scripts/cantorbad_deadmix.py LAW b 7 150 300 10 8`, i.e.
+t = 10 and `ξ = bᵐ ≥ 3^{L_t+8}`; ratio `R = E|E[D_t | w_s]| / E|D_t|`, floor `.058`, lags 1–5):
+known-coherent dyadic sibling `dyad2`: `R = .977` flat (control detects coherence);
+`resLaw` b = 2: `.076, .066, .064, .067, .065`; b = 3: `.073, .066, .063, .069, .069`.  So b = 2 sits
+near the floor, consistent with this node.  b = 3 is also near the floor, so at this single-pair
+level the base-3 barrier does not show; it may bind only the Cantor main term.  (With
+`ξ ≥ 3^{L_t+3}` the dyadic control was at the floor, because its obstacles `p/2^m` had
+`2^m > ξ`; that earlier configuration is not evidence.) -/
+def AliveOffMix (b : ℕ) : Prop :=
+  ∀ h : ℤ, h ≠ 0 → ∀ C : ℕ, ∃ (K : ℝ) (W : ℕ → ℝ), Summable (fun j => W (sched j)) ∧
+    ∀ N : ℕ, 1 ≤ N →
+      ∑ m ∈ Finset.range N, ∑ n ∈ Finset.range m,
+        ∑ t ∈ Finset.Ico (stageOf b C m) (stageOf b C m + (Nat.log 3 N + 1)),
+          Real.sqrt (∫ ω, ‖aliveOff (deadCorr (h * (b : ℝ) ^ m)) (t - stageOf b C n)
+            (buildU (stageOf b C n) ω)‖ ∂coinMeasure) ≤ K * (N : ℝ) ^ 2 * W N
+
+theorem sqrt_aliveSecond_le (G : List Bool → ℂ) (hG : ∀ v, ‖G v‖ ≤ 2048) (k s : ℕ) :
+    ∫ ω, ‖aliveExt G k (buildU s ω)‖ ∂coinMeasure ≤
+      2048 * (1 / 16 : ℝ) ^ k + Real.sqrt (∫ ω, ‖aliveOff G k (buildU s ω)‖ ∂coinMeasure) := by
+  have hO : Integrable (fun ω => ‖aliveOff G k (buildU s ω)‖) coinMeasure :=
+    (integrable_comp_buildU s _).norm
+  have hle : ∫ ω, ‖aliveExt G k (buildU s ω)‖ ^ 2 ∂coinMeasure ≤
+      2048 ^ 2 * (1 / 536 : ℝ) ^ k + ∫ ω, ‖aliveOff G k (buildU s ω)‖ ∂coinMeasure := by
+    have hc := integral_mono_of_nonneg (μ := coinMeasure)
+      (Eventually.of_forall fun ω => sq_nonneg ‖aliveExt G k (buildU s ω)‖)
+      ((integrable_const (2048 ^ 2 * (1 / 536 : ℝ) ^ k)).add hO)
+      (Eventually.of_forall fun ω => norm_aliveExt_sq_le G hG k (buildU s ω))
+    refine hc.trans (le_of_eq ?_)
+    simp only [Pi.add_apply]
+    rw [integral_add (integrable_const _) hO, integral_const, probReal_univ, one_smul]
+  have h536 : 2048 ^ 2 * (1 / 536 : ℝ) ^ k ≤ (2048 * (1 / 16 : ℝ) ^ k) ^ 2 := by
+    rw [mul_pow, ← pow_mul, mul_comm k 2, pow_mul]
+    exact mul_le_mul_of_nonneg_left (pow_le_pow_left₀ (by norm_num) (by norm_num) k) (by norm_num)
+  have hb : (0 : ℝ) ≤ ∫ ω, ‖aliveOff G k (buildU s ω)‖ ∂coinMeasure :=
+    integral_nonneg fun _ => norm_nonneg _
+  have hX : (0 : ℝ) ≤ 2048 * (1 / 16 : ℝ) ^ k := by positivity
+  have hcs := sq_integral_norm_comp_buildU_le s (aliveExt G k)
+  have hI : (0 : ℝ) ≤ ∫ ω, ‖aliveExt G k (buildU s ω)‖ ∂coinMeasure :=
+    integral_nonneg fun _ => norm_nonneg _
+  have hsq := Real.sq_sqrt hb
+  have hsn := Real.sqrt_nonneg (∫ ω, ‖aliveOff G k (buildU s ω)‖ ∂coinMeasure)
+  nlinarith
+
+set_option maxHeartbeats 1000000 in
+/-- **Off-diagonal node ⇒ `resLaw`-native node.**  Proved (diagonal by `geomNear_le`). -/
+theorem aliveObstacleMix_of_off {b : ℕ} (hb : 2 ≤ b) (hO : AliveOffMix b) : AliveObstacleMix b := by
+  intro h hh C
+  obtain ⟨K, W, hW, hK⟩ := hO h hh C
+  refine ⟨1, fun N => 2048 * ((16 : ℝ) ^ C * 16 * 2 * 32) * (N : ℝ) ^ (-(1 : ℝ)) + K * W N,
+    ((summable_sched_rpow one_pos).mul_left _).add (hW.mul_left K), fun N hN => ?_⟩
+  have hN0 : (0 : ℝ) < N := by exact_mod_cast hN
+  calc _ ≤ ∑ m ∈ Finset.range N, ∑ n ∈ Finset.range m,
+        ∑ t ∈ Finset.Ico (stageOf b C m) (stageOf b C m + (Nat.log 3 N + 1)),
+          (2048 * (1 / 16 : ℝ) ^ (t - stageOf b C n) +
+            Real.sqrt (∫ ω, ‖aliveOff (deadCorr (h * (b : ℝ) ^ m)) (t - stageOf b C n)
+              (buildU (stageOf b C n) ω)‖ ∂coinMeasure)) :=
+        Finset.sum_le_sum fun m _ => Finset.sum_le_sum fun n _ =>
+          Finset.sum_le_sum fun t _ => sqrt_aliveSecond_le _ (norm_deadCorr_le_const _) _ _
+    _ = 2048 * (∑ m ∈ Finset.range N, ∑ n ∈ Finset.range m,
+          ∑ t ∈ Finset.Ico (stageOf b C m) (stageOf b C m + (Nat.log 3 N + 1)),
+            (1 / 16 : ℝ) ^ (t - stageOf b C n)) +
+        ∑ m ∈ Finset.range N, ∑ n ∈ Finset.range m,
+          ∑ t ∈ Finset.Ico (stageOf b C m) (stageOf b C m + (Nat.log 3 N + 1)),
+            Real.sqrt (∫ ω, ‖aliveOff (deadCorr (h * (b : ℝ) ^ m)) (t - stageOf b C n)
+              (buildU (stageOf b C n) ω)‖ ∂coinMeasure) := by
+        simp only [Finset.sum_add_distrib, Finset.mul_sum]
+    _ ≤ 2048 * ((16 : ℝ) ^ C * 16 * 2 * 32 * N) + K * (N : ℝ) ^ 2 * W N :=
+        add_le_add (mul_le_mul_of_nonneg_left (geomNear_le hb C (c := 16) (by norm_num) N)
+          (by norm_num)) (hK N hN)
+    _ = _ := by simp only [Real.rpow_neg_one]; field_simp
+
+theorem sqrt_aliveSib_le (G : List Bool → ℂ) (hG : ∀ v, ‖G v‖ ≤ 2048) (k s : ℕ) :
+    ∫ ω, ‖aliveExt G k (buildU s ω)‖ ∂coinMeasure ≤
+      2048 * (1 / 16 : ℝ) ^ k +
+        Real.sqrt (∫ ω, ‖((sibSum G k (buildU s ω) : ℝ) : ℂ)‖ ∂coinMeasure) := by
+  have hO : Integrable (fun ω => ‖((sibSum G k (buildU s ω) : ℝ) : ℂ)‖) coinMeasure :=
+    (integrable_comp_buildU s (fun w => ((sibSum G k w : ℝ) : ℂ))).norm
+  have hpt : ∀ ω, ‖aliveExt G k (buildU s ω)‖ ^ 2 ≤
+      2048 ^ 2 * (1 / 536 : ℝ) ^ k + ‖((sibSum G k (buildU s ω) : ℝ) : ℂ)‖ := fun ω => by
+    refine (norm_aliveExt_sq_le_sib G hG k _).trans (add_le_add le_rfl ?_)
+    rw [Complex.norm_real, Real.norm_eq_abs]; exact le_abs_self _
+  have hle : ∫ ω, ‖aliveExt G k (buildU s ω)‖ ^ 2 ∂coinMeasure ≤
+      2048 ^ 2 * (1 / 536 : ℝ) ^ k + ∫ ω, ‖((sibSum G k (buildU s ω) : ℝ) : ℂ)‖ ∂coinMeasure := by
+    have hc := integral_mono_of_nonneg (μ := coinMeasure)
+      (Eventually.of_forall fun ω => sq_nonneg ‖aliveExt G k (buildU s ω)‖)
+      ((integrable_const (2048 ^ 2 * (1 / 536 : ℝ) ^ k)).add hO) (Eventually.of_forall hpt)
+    refine hc.trans (le_of_eq ?_)
+    simp only [Pi.add_apply]
+    rw [integral_add (integrable_const _) hO, integral_const, probReal_univ, one_smul]
+  have h536 : 2048 ^ 2 * (1 / 536 : ℝ) ^ k ≤ (2048 * (1 / 16 : ℝ) ^ k) ^ 2 := by
+    rw [mul_pow, ← pow_mul, mul_comm k 2, pow_mul]
+    exact mul_le_mul_of_nonneg_left (pow_le_pow_left₀ (by norm_num) (by norm_num) k) (by norm_num)
+  have hb : (0 : ℝ) ≤ ∫ ω, ‖((sibSum G k (buildU s ω) : ℝ) : ℂ)‖ ∂coinMeasure :=
+    integral_nonneg fun _ => norm_nonneg _
+  have hX : (0 : ℝ) ≤ 2048 * (1 / 16 : ℝ) ^ k := by positivity
+  have hcs := sq_integral_norm_comp_buildU_le s (aliveExt G k)
+  have hI : (0 : ℝ) ≤ ∫ ω, ‖aliveExt G k (buildU s ω)‖ ∂coinMeasure :=
+    integral_nonneg fun _ => norm_nonneg _
+  have hsq := Real.sq_sqrt hb
+  have hsn := Real.sqrt_nonneg (∫ ω, ‖((sibSum G k (buildU s ω) : ℝ) : ℂ)‖ ∂coinMeasure)
+  nlinarith
+
+/-- **Sibling node** (refines `AliveOffMix`).  Believed 45% for `3 ∤ b`.  The near-scale root sums of
+the `resLaw` expectation of the depth-weighted sibling correlations `sibSum` of the stage dead
+corrections are `O(N² W(N))`.  Each sibling term compares the continuations below two distinct alive
+children of one node, so this is a one-step decorrelation statement, applied at every depth between
+`s_n` and `t`.  Implies `AliveObstacleMix b` (`aliveObstacleMix_of_sib`). -/
+def AliveSibMix (b : ℕ) : Prop :=
+  ∀ h : ℤ, h ≠ 0 → ∀ C : ℕ, ∃ (K : ℝ) (W : ℕ → ℝ), Summable (fun j => W (sched j)) ∧
+    ∀ N : ℕ, 1 ≤ N →
+      ∑ m ∈ Finset.range N, ∑ n ∈ Finset.range m,
+        ∑ t ∈ Finset.Ico (stageOf b C m) (stageOf b C m + (Nat.log 3 N + 1)),
+          Real.sqrt (∫ ω, ‖((sibSum (deadCorr (h * (b : ℝ) ^ m)) (t - stageOf b C n)
+            (buildU (stageOf b C n) ω) : ℝ) : ℂ)‖ ∂coinMeasure) ≤ K * (N : ℝ) ^ 2 * W N
+
+set_option maxHeartbeats 1000000 in
+/-- **Sibling node ⇒ `resLaw`-native node.**  Proved. -/
+theorem aliveObstacleMix_of_sib {b : ℕ} (hb : 2 ≤ b) (hO : AliveSibMix b) : AliveObstacleMix b := by
+  intro h hh C
+  obtain ⟨K, W, hW, hK⟩ := hO h hh C
+  refine ⟨1, fun N => 2048 * ((16 : ℝ) ^ C * 16 * 2 * 32) * (N : ℝ) ^ (-(1 : ℝ)) + K * W N,
+    ((summable_sched_rpow one_pos).mul_left _).add (hW.mul_left K), fun N hN => ?_⟩
+  have hN0 : (0 : ℝ) < N := by exact_mod_cast hN
+  calc _ ≤ ∑ m ∈ Finset.range N, ∑ n ∈ Finset.range m,
+        ∑ t ∈ Finset.Ico (stageOf b C m) (stageOf b C m + (Nat.log 3 N + 1)),
+          (2048 * (1 / 16 : ℝ) ^ (t - stageOf b C n) +
+            Real.sqrt (∫ ω, ‖((sibSum (deadCorr (h * (b : ℝ) ^ m)) (t - stageOf b C n)
+              (buildU (stageOf b C n) ω) : ℝ) : ℂ)‖ ∂coinMeasure)) :=
+        Finset.sum_le_sum fun m _ => Finset.sum_le_sum fun n _ =>
+          Finset.sum_le_sum fun t _ => sqrt_aliveSib_le _ (norm_deadCorr_le_const _) _ _
+    _ = 2048 * (∑ m ∈ Finset.range N, ∑ n ∈ Finset.range m,
+          ∑ t ∈ Finset.Ico (stageOf b C m) (stageOf b C m + (Nat.log 3 N + 1)),
+            (1 / 16 : ℝ) ^ (t - stageOf b C n)) +
+        ∑ m ∈ Finset.range N, ∑ n ∈ Finset.range m,
+          ∑ t ∈ Finset.Ico (stageOf b C m) (stageOf b C m + (Nat.log 3 N + 1)),
+            Real.sqrt (∫ ω, ‖((sibSum (deadCorr (h * (b : ℝ) ^ m)) (t - stageOf b C n)
+              (buildU (stageOf b C n) ω) : ℝ) : ℂ)‖ ∂coinMeasure) := by
+        simp only [Finset.sum_add_distrib, Finset.mul_sum]
+    _ ≤ 2048 * ((16 : ℝ) ^ C * 16 * 2 * 32 * N) + K * (N : ℝ) ^ 2 * W N :=
+        add_le_add (mul_le_mul_of_nonneg_left (geomNear_le hb C (c := 16) (by norm_num) N)
+          (by norm_num)) (hK N hN)
+    _ = _ := by simp only [Real.rpow_neg_one]; field_simp
+/-- **The crux** (open; believed 45%).  `resLaw` satisfies `AliveOffMix`: the path-weighted pair
+correlation of the stage dead corrections over distinct `resLaw` completions of the coarse prefix.
+This single node replaces the former first-order (`ResLawObstOff`) and defect
+(`DefectObstacleMix`) nodes of the split route (`nearObstaclePhaseMixing_of_split`, whose proved
+reductions are kept above): the `resLaw` path weights already contain the alive defects.  Whether the
+base-3 barrier binds this node or only the Cantor main term is undecided; the controlled probe at
+`AliveOffMix` shows no base-3 coherence at the single-pair level. -/
+theorem aliveOffMix_resLaw {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) :
+    AliveOffMix b := by
   sorry
 
-/-- **The crux, defect part** (open; believed 45%).  See `DefectObstacleMix`. -/
-theorem defectObstacleMix_resLaw {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) :
-    DefectObstacleMix b := by
-  sorry
-
-/-- The near-scale node for `resLaw` (proved from the two parts of the crux). -/
+/-- The near-scale node for `resLaw` (from the single crux, by the `resLaw`-native route). -/
 theorem nearObstaclePhaseMixing_resLaw {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) :
     NearObstaclePhaseMixing b :=
-  nearObstaclePhaseMixing_of_split (by omega) (firstOrderObstacleMix_resLaw hb h3)
-    (defectObstacleMix_resLaw hb h3)
+  nearObstaclePhaseMixing_of_alive (by omega) (aliveObstacleMix_of_off hb (aliveOffMix_resLaw hb h3))
 
 /-- The obstacle-phase node for `resLaw` (proved from the near-scale crux). -/
 theorem obstaclePhaseMixing_resLaw {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) :

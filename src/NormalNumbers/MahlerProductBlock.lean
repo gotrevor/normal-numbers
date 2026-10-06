@@ -157,4 +157,211 @@ theorem not_isProductBlock_five_twelve_erase :
         (({17, 23, 1254, 1562, 1838, 2188, 2272, 2428, 2439, 2753, 2832, 3028} : Finset ℕ).erase m) := by
   sorry
 
+/-! ## Rungs: blocks that only grow the digit count (2026-10-06)
+
+A **rung** `(a → b)` lifts every irrational with at least `a` digits occurring infinitely often to
+a multiple with at least `b`.  Rungs compose by multiplying the sets (`IsRung.mul`), so a ladder
+`2 → 3 → ⋯ → g` would be a product block built from small pieces.  It does not pay in base 5:
+the first rung is a pair, but the top rung `4 → 5` is nearly the whole problem (a 4-digit `y`
+already has dimension `log 4 / log 5 ≈ 0.86`) and has no small witness
+(`not_isRung_five_four_five_small`).  Probe: `mahler_block lift` / `rung`. -/
+
+/-- The digits occurring infinitely often in the base-`g` expansion of `y`. -/
+def ioDigits (g : ℕ) (y : ℝ) : Set ℕ :=
+  {d | d < g ∧ ∀ N, ∃ n, N ≤ n ∧ OccursAt g y [d] n}
+
+/-- `T` is a base-`g` **rung** `(a → b)`. -/
+def IsRung (g a b : ℕ) (T : Finset ℕ) : Prop :=
+  ∀ X : ℝ, Irrational X → a ≤ (ioDigits g X).ncard → ∃ m ∈ T, b ≤ (ioDigits g ((m : ℝ) * X)).ncard
+
+/-- **Rungs compose**: `(a → b)` then `(b → c)` is `(a → c)` on the product set. -/
+theorem IsRung.mul {g a b c : ℕ} {S T : Finset ℕ} (hS : IsRung g a b S) (hT : IsRung g b c T)
+    (hS0 : 0 ∉ S) : IsRung g a c (Finset.image₂ (· * ·) S T) := by
+  intro X hX ha
+  obtain ⟨m, hm, hb⟩ := hS X hX ha
+  have hm0 : m ≠ 0 := fun h => hS0 (h ▸ hm)
+  obtain ⟨n, hn, hc⟩ := hT ((m : ℝ) * X) (hX.natCast_mul hm0) hb
+  refine ⟨m * n, Finset.mem_image₂_of_mem hm hn, ?_⟩
+  rwa [show ((m * n : ℕ) : ℝ) * X = (n : ℝ) * ((m : ℝ) * X) by push_cast; ring]
+
+/-- **Base 5, first rung** (computational; confidence 95%): `{2, 11}`, the ternary block, also
+lifts every irrational to a multiple with three base-5 digits i.o. (`mahler_block lift 5 2 3
+2,11`: no surviving SCC).  Not special: 709 of the 1081 pairs in `[2, 60]` are rungs `2 → 3`. -/
+theorem isRung_five_two_three : IsRung 5 2 3 {2, 11} := by
+  sorry
+
+/-- **The top base-5 rung has no small witness** (computational; confidence 90%): no `T ⊆ [2, 60]`
+of at most 3 non-multiples of 5 is a rung `4 → 5` (`mahler_block rung 5 4 5 60 3`, also size 2
+up to 400). -/
+theorem not_isRung_five_four_five_small :
+    ∀ T ⊆ Finset.Icc 2 60, T.card ≤ 3 → (∀ m ∈ T, ¬ 5 ∣ m) → ¬ IsRung 5 4 5 T := by
+  sorry
+
+/-! ## Word blocks: the binary rung below digits (2026-10-06)
+
+A **`k`-word block**: some `m ∈ S` has every length-`k` base-`g` word infinitely often in `m·X`.
+Base 2 has no digit question (an irrational binary expansion has both bits), so words are the
+binary analogue of `{2, 11}`. -/
+
+/-- `S` is a base-`g` **`k`-word block**. -/
+def IsWordBlock (g k : ℕ) (S : Finset ℕ) : Prop :=
+  ∀ X : ℝ, Irrational X → ∃ m ∈ S, ∀ w : List ℕ, w.length = k → (∀ d ∈ w, d < g) →
+    ∀ N, ∃ n, N ≤ n ∧ OccursAt g ((m : ℝ) * X) w n
+
+/-- **Binary 2-words: `x`, `3x` or `5x`** (hand proof below, confidence 98%; also
+`mahler_block wfail 2 2 1,3,5`: collapse): for every irrational `x`, one of `x, 3x, 5x` has
+both `00` and `11` infinitely often in binary.
+
+English proof.  Suppose not.  An irrational binary tail has `00` or `11` infinitely often
+(otherwise it alternates), so `x` has exactly one of them i.o.  Replacing `x` by `−x`
+complements every bit of `x, 3x, 5x` and swaps `00` with `11`, so assume `x` eventually avoids
+`11`: its tail is isolated `1`s at positions `n₁ < n₂ < ⋯` with gaps `≥ 2`.
+* `3x`: `3·2^(−n) = 2^(−(n−1)) + 2^(−n)`, and the pairs `{nᵢ − 1, nᵢ}` are disjoint, so the
+  tail of `3x` is `x` with each `1` widened to `11`, with no carries.  It has `11` i.o., so it
+  avoids `00`, which forces every gap to be 2 or 3 eventually.  So the tail of `x` is a word in
+  the tokens `A = 01` and `B = 001`, and both occur i.o. (else `x` is eventually periodic).
+* `5x = x + 4x`: at an occurrence `1 · A · B` (bits `y_p … y_{p+5} = 1 0 1 0 0 1`, then
+  `y_{p+6} = 0`), the carry into `p+5` is 0 when `y_{p+7} = 1` (the tail after `p+5` is then
+  `0.01 0 …` plus `0.0 …`, under 1), so the column sum at `p+5` is 1 or 2.  Going left, the
+  columns `y_n + y_{n+2} + carry` give `z_{p+4} ∈ {0,1}`, then `z_{p+3} = 1`, `z_{p+2} = 1`,
+  `z_{p+1} = 0`, `z_p = 0`.  So `5x` shows `0011` at every `1AB`, which happens i.o.
+Both `00` and `11` then occur i.o. in `5x`, a contradiction.  `{1, 3}` alone fails (any
+irrational `A`/`B` word), and so does every pair up to 40. -/
+theorem isWordBlock_two_two_one_three_five : IsWordBlock 2 2 {1, 3, 5} := by
+  sorry
+
+/-- **No binary 2-word pair** (computational; confidence 90%): no pair of multipliers up to 40
+is a 2-word block (`mahler_block wsearch 2 2 40 2`, odd members; `2m` adds nothing).  `{3, 5}`
+fails with `3x` avoiding `00` and `5x` avoiding `11`. -/
+theorem not_isWordBlock_two_two_pair :
+    ∀ a ≤ 40, ∀ b ≤ 40, ¬ IsWordBlock 2 2 {a, b} := by
+  sorry
+
+/-- **Binary 3-words: a 13-member block** (computational; confidence 95%): for every irrational
+`x`, one of these multiples has all eight 3-bit words infinitely often (`mahler_block wgreedy`
+over odd `m < 256`, then `wminimize`; `wfail` re-verifies in 38 s).  The Liouville count forces
+a member `≥ 23 = 10111₂`; no block of size `≤ 5` lies in `[1, 48]`. -/
+theorem isWordBlock_two_three_thirteen :
+    IsWordBlock 2 3 {1, 5, 19, 29, 97, 103, 133, 175, 197, 205, 209, 211, 239} := by
+  sorry
+
+/-! ## The joint multiplier is doubly exponential, and Szüsz–Volkmann's exponent is sharp
+
+Szüsz–Volkmann 1983 put a joint `k`-word block inside `[1, 12·g^(g^k + k)]`.  The Liouville
+witness gives the matching lower side: `X = Σ g^(−i!)` shows each `m·X` as copies of the digits
+of `m` between zero gaps, and `0^∞ m 0^∞` has at most `len(m) + k` distinct `k`-windows.  So a
+block needs `len(m) ≥ g^k − k`, i.e. a member `≥ g^(g^k − k − 1)`.  The exponent of the joint
+multiplier is `g^k ± O(k)`, and Bugeaud–Coons 2019's joint `B(b,k) = b^k(b+1)` is off by a
+whole exponential level once `k ≥ 2` and `b^k ≥ 16`. -/
+
+/-- **Szüsz–Volkmann 1983** (Crelle 339, 199–206; `papers/szusz-volkmann-1983-each-block-infinitely-often.pdf`):
+for every irrational `a` and every `N`, some `X ≤ 12·g^(g^N + N)` has every length-`N` block
+infinitely often in `X·a`.  Stated as a word block on the interval (faithful). -/
+def Literature.SzuszVolkmann1983 : Prop :=
+  ∀ g N : ℕ, 2 ≤ g → 1 ≤ N → IsWordBlock g N (Finset.Icc 1 (12 * g ^ (g ^ N + N)))
+
+/-- **Liouville cover for words** (confidence 95%): for every `B ≥ 1`, a `k`-word block has a
+member `m` such that every length-`k` word is a window of `0^k (m·B) 0^k`.  English proof: as
+`IsProductBlock.liouville_cover`, with "word" for "digit"; past position `(K+2)!` the expansion
+of `m·B·Σ g^(−i!)` is copies of the digits of `m·B` separated by zero runs longer than `k`. -/
+theorem IsWordBlock.liouville_cover {g k : ℕ} (hg : 2 ≤ g) {S : Finset ℕ}
+    (hS : IsWordBlock g k S) (B : ℕ) (hB : 1 ≤ B) :
+    ∃ m ∈ S, ∀ w : List ℕ, w.length = k → (∀ d ∈ w, d < g) →
+      w <:+: List.replicate k 0 ++ (Nat.digits g (m * B)).reverse ++ List.replicate k 0 := by
+  sorry
+
+/-- **Doubly exponential lower side** (confidence 95%): every base-`g` `k`-word block has a
+member `≥ g^(g^k − k − 1)`.  English proof: `liouville_cover` at `B = 1`; the padded list
+`0^k m 0^k` has `len(m) + k + 1` windows, of which the first and last are both `0^k`, so at
+most `len(m) + k` distinct ones; all `g^k` words occur, so `len(m) ≥ g^k − k`, and
+`m ≥ g^(len(m) − 1)`.  Sharp at small cases: base 5, `k = 1` gives 125 (truth 194); binary
+`k = 3` gives 16 (truth 23), `k = 4` gives 2048 (truth 2479). -/
+theorem IsWordBlock.exists_ge {g k : ℕ} (hg : 2 ≤ g) (hk : 1 ≤ k) {S : Finset ℕ}
+    (hS : IsWordBlock g k S) : ∃ m ∈ S, g ^ (g ^ k - k - 1) ≤ m := by
+  sorry
+
+/-- **Bugeaud–Coons's joint bound fails wherever the Liouville bound passes it**: if
+`g^k·(g+1) < g^(g^k − k − 1)` (e.g. `g = 2, k = 4`: `48 < 2048`; `g = 5, k = 2`:
+`150 < 5^22`), the interval `[1, g^k·(g+1)]` is not a `k`-word block. -/
+theorem not_isWordBlock_Icc_bugeaudCoons {g k : ℕ} (hg : 2 ≤ g) (hk : 1 ≤ k)
+    (h : g ^ k * (g + 1) < g ^ (g ^ k - k - 1)) :
+    ¬ IsWordBlock g k (Finset.Icc 1 (g ^ k * (g + 1))) := by
+  intro hS
+  obtain ⟨m, hm, hge⟩ := hS.exists_ge hg hk
+  have := (Finset.mem_Icc.mp hm).2
+  omega
+
+/-- **The exponent is pinned** (from the literature input): a `k`-word block exists inside
+`[1, 12·g^(g^k + k)]`, and every one has a member `≥ g^(g^k − k − 1)`. -/
+theorem wordBlock_exponent_pinned (hSV : Literature.SzuszVolkmann1983) {g k : ℕ} (hg : 2 ≤ g)
+    (hk : 1 ≤ k) :
+    IsWordBlock g k (Finset.Icc 1 (12 * g ^ (g ^ k + k))) ∧
+      ∀ S, IsWordBlock g k S → ∃ m ∈ S, g ^ (g ^ k - k - 1) ≤ m :=
+  ⟨hSV g k hg hk, fun _ hS => hS.exists_ge hg hk⟩
+
+/-! ## Does `x, 3x, 5x` start a family?  (2026-10-06)
+
+`{1, 3, 5}` is `{1, 2²−1, 2²+1}`, and "both `00` and `11`" is "both runs of length 2".  Two
+natural families extend it, and both break at the next step.  The minimal sizes grow instead
+(runs: 1, 3, then at least 5), so `x, 3x, 5x` is a small case rather than the first member of
+a uniform family. -/
+
+/-- `S` is a base-`g` block for the word set `W`: some `m ∈ S` has every word of `W`
+infinitely often in `m·X`. -/
+def IsWordSetBlock (g : ℕ) (W : Set (List ℕ)) (S : Finset ℕ) : Prop :=
+  ∀ X : ℝ, Irrational X → ∃ m ∈ S, ∀ w ∈ W, ∀ N, ∃ n, N ≤ n ∧ OccursAt g ((m : ℝ) * X) w n
+
+/-- Binary runs of length `k`: both `0^k` and `1^k`. -/
+def binaryRuns (k : ℕ) : Set (List ℕ) := {List.replicate k 0, List.replicate k 1}
+
+/-- **Liouville cover for runs** (confidence 95%): for every `B ≥ 1`, a run-`k` block has a
+member `m` whose binary expansion of `m·B` contains `k` consecutive ones.  English proof: as
+`IsProductBlock.liouville_cover`; `m·B·Σ 2^(−i!)` shows copies of `m·B` between zero runs, so
+`0^k` is free and `1^k` occurs i.o. iff it occurs in `m·B` (`Nat.digits` is little-endian, and a
+run reads the same either way). -/
+theorem IsWordSetBlock.runs_liouville_cover {k : ℕ} {S : Finset ℕ}
+    (hS : IsWordSetBlock 2 (binaryRuns k) S) (B : ℕ) (hB : 1 ≤ B) :
+    ∃ m ∈ S, List.replicate k 1 <:+: Nat.digits 2 (m * B) := by
+  sorry
+
+/-- **The run family breaks at `k = 3`**: `{1, 7, 9}` is not a run-3 block.  The witness is the
+Liouville number `3·Σ 2^(−i!)`: its multiples by 1, 7, 9 show `11`, `10101`, `11011` between zero
+gaps, none with `111`.  (Complemented, these are the tokens `1`, `1110011` that
+`mahler_block witness 2 3 1,7,9 0,0,0` extracts.)  The same `B = 3` kills `{1, 2^k−1, 2^k+1}` for
+every `k ≥ 3`: `3·(2^k−1) = 10 1^(k−2) 01₂` and `3·(2^k+1) = 11 0^(k−2) 11₂`. -/
+theorem not_isWordSetBlock_runs_three_one_seven_nine :
+    ¬ IsWordSetBlock 2 (binaryRuns 3) {1, 7, 9} := by
+  intro h
+  obtain ⟨m, hm, hrun⟩ := h.runs_liouville_cover 3 (by norm_num)
+  simp only [Finset.mem_insert, Finset.mem_singleton] at hm
+  rcases hm with rfl | rfl | rfl <;> revert hrun <;> decide +kernel
+
+/-- **Run-3 blocks need at least 5 members** among odd multipliers up to 64 (computational;
+confidence 90%; `mahler_block asearch 2 3 64 4 0,7`, and no 3-set up to 128).  Doubling is a
+shift, so odd members are no restriction. -/
+theorem not_isWordSetBlock_runs_three_small :
+    ∀ S ⊆ Finset.Icc 1 64, S.card ≤ 4 → (∀ m ∈ S, Odd m) → ¬ IsWordSetBlock 2 (binaryRuns 3) S := by
+  sorry
+
+/-- **A run-3 block of 9** (computational; confidence 95%; `mahler_block rgreedy 3`). -/
+theorem isWordSetBlock_runs_three_nine :
+    IsWordSetBlock 2 (binaryRuns 3) {1, 3, 5, 7, 15, 41, 49, 345, 353} := by
+  sorry
+
+/-- **The extreme-digit family breaks at base 4** (computational; confidence 95%): for
+`g ∈ {4, …, 13, 16}`, `{1, g−1, g+1}` is not a block for "both digit 0 and digit `g−1`"
+(`mahler_block among`; every member can avoid digit 0).  Base 3 (`{1, 2, 4}`) is the one
+success. -/
+theorem not_isWordSetBlock_extremeDigits :
+    ∀ g ∈ ({4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 16} : Finset ℕ),
+      ¬ IsWordSetBlock g {[0], [g - 1]} {1, g - 1, g + 1} := by
+  sorry
+
+/-- **Base 4, digits 0 and 3: four members** (computational; confidence 95%): `{1, 3, 6, 9}` works
+(330 of the 27,405 four-sets in `[1, 40]` do), and no set of at most 3 non-multiples of 4 in
+`[1, 16]` does.  A base-4 `{0, 3}` block is also a binary 2-word block (aligned digits), so
+binary's `{1, 3, 5}` is the stronger result. -/
+theorem isWordSetBlock_four_extreme : IsWordSetBlock 4 {[0], [3]} {1, 3, 6, 9} := by
+  sorry
+
 end NormalNumbers.Adder

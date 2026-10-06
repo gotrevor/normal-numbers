@@ -15,8 +15,19 @@ open leaves are the two standard leaves `ae_cesaro_condDiff` (martingale part) a
 - **Why:** the probe `scripts/cantorbad_localbias.py` finds no coherent dead bias for `resLaw` (bases 2, 5, 7;
   inflation 1.00 ± 0.01) while the dyadic control shows coherence 0.96, and the local route needs only
   irrationality of `log₃ b`.
+- **Operator answer to the lap-9 STUCK note (2026-10-06 13:50, Ren):** rescope accepted.  The scope is the
+  **headline path**: done means `#print axioms` of the headline is free of `sorryAx`, and the multi-lap research
+  crux `aliveOffMix_resLaw` is the accepted work, so an unreachable `sorry-free:` file gate is **not** a reason
+  to call `box stuck`.  Mandated mechanical move (first thing the next lap does, one commit): move the two
+  off-path open nodes `midStages` and `fourierPairRate_descent_of_deadRateDecay`, with the declarations only
+  they use, verbatim into a new sibling file `src/NormalNumbers/CantorBadNormalRetired.lean` (imports
+  `CantorBadNormal`; statements, docstrings and confidences unchanged; BarrierAudit waivers/links repointed).
+  That makes the host gate `sorry-free:CantorBadNormal.lean` mean exactly "headline proved".  Then back to
+  `AliveOffMix`: the large sieve is closed (PENDING lap 9); the live mechanism is the arithmetic of `bᵐ mod q`
+  over obstacle denominators, tested against the working dyadic control (`R = .977`).
 
 Directive history:
+- 2026-10-06 13:50: operator rescope to the headline path; off-path sorries move to `CantorBadNormalRetired.lean`.
 - 2026-10-06 (cantorbad lap 6): local route adopted; `midStages` off-path.
 - 2026-10-02: normality's master conjectures (below, superseded on this branch).
 
