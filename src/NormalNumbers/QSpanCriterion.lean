@@ -39,12 +39,78 @@ open QSpan FiniteState
 noncomputable def digitPair (b : ℕ) (hb : 0 < b) (x y : ℝ) : ℕ → Fin (b * b) :=
   fun i => finProdFinEquiv (digitSeq b hb x i, digitSeq b hb y i)
 
+/-! ### Leaves of the joint entropy budget
+
+Route (no block-entropy characterization needed).  Reduce to integer `(a, c)` by Wall.  Suppose an
+FST `T` describes `S↾n` in `ℓ ≤ (1/2 − ε) n` letters.  Cut the description into blocks of `L`
+letters (`run_chunks`): `S↾n` is a concatenation of `≤ ℓ/L + 1` chunks, each the output of
+(state, block).  A chunk of length `t` at position `p` pins the `z`-window at `p` of length `t` up
+to a carry `|k| ≤ |a| + |c|` (`window_combo`), so long chunks (`t ≥ 2L(1 + ε')`) have `z`-windows
+in a dictionary of size `≤ (m+1)(L+1) b^{2L} (2K+1) ≤ b^{t − 2Lε'}·poly(L)`.  Average chunk
+length `≥ 2L/(1 − 2ε)`, so long chunks cover `≥ ε n` positions; `normal_thin_cover` caps that by
+`δ n` with `δ → 0` as `L → ∞`. -/
+
+/-- Value of the length-`t` window of a digit stream at position `p`. -/
+def winVal (b : ℕ) (s : ℕ → ℕ) (p t : ℕ) : ℕ :=
+  ∑ j ∈ Finset.range t, s (p + j) * b ^ (t - 1 - j)
+
+/-- **Bounded carry.**  The `z`-window of `z = a x + c y` is the combination of the `x`- and
+`y`-windows, up to an integer carry `|k| ≤ |a| + |c|`, reduced mod `bᵗ`.  Confidence 95%:
+`⌊b^{p+t} z⌋ = a⌊b^{p+t}x⌋ + c⌊b^{p+t}y⌋ + ⌊a {b^{p+t}x} + c {b^{p+t}y}⌋` and each window value is
+`⌊b^{p+t}·⌋ mod bᵗ`. -/
+theorem window_combo (b : ℕ) (hb : 2 ≤ b) (a c : ℤ) (x y : ℝ) (p t : ℕ) :
+    ∃ k : ℤ, |k| ≤ |a| + |c| ∧
+      (winVal b (digitOf b (Int.fract (a * x + c * y))) p t : ℤ) =
+        (a * winVal b (digitOf b (Int.fract x)) p t + c * winVal b (digitOf b (Int.fract y)) p t
+          + k) % ((b ^ t : ℕ) : ℤ) := by
+  sorry
+
+/-- **Normal sequences admit no thin covers.**  Windows starting in `[0, n)` whose values lie in
+thin dictionaries `V t` (lengths `t ∈ [t₀, t₁]`) cover at most `δ n` positions, once
+`Σ t |V t| / bᵗ < δ`.  Distinct starts suffice; no disjointness.  Confidence 95%: each window value
+has frequency `b^{-t}` by normality, and the sum is finite. -/
+theorem normal_thin_cover (b : ℕ) (hb : 2 ≤ b) (s : ℕ → ℕ) (hs : IsNormalSequence b s)
+    (t₀ t₁ : ℕ) (V : ℕ → Finset ℕ) (δ : ℝ)
+    (hδ : ∑ t ∈ Finset.Icc t₀ t₁, (t : ℝ) * (V t).card / (b : ℝ) ^ t < δ) :
+    ∀ᶠ n in atTop, ∀ (I : Finset ℕ) (ℓ : ℕ → ℕ),
+      (∀ p ∈ I, p < n ∧ ℓ p ∈ Finset.Icc t₀ t₁ ∧ winVal b s p (ℓ p) ∈ V (ℓ p)) →
+        (∑ p ∈ I, (ℓ p : ℝ)) ≤ δ * n := by
+  sorry
+
+/-- **Chunking an FST run.**  The output of `T` on `π` is the concatenation of `≤ |π|/L + 1`
+outputs of (state, input block of length `≤ L`).  Confidence 99%. -/
+theorem run_chunks {k : ℕ} (T : FST k) (L : ℕ) (hL : 0 < L) (q : Fin (T.m + 1))
+    (π : List (Fin k)) :
+    ∃ cs : List (Fin (T.m + 1) × List (Fin k)), cs.length ≤ π.length / L + 1 ∧
+      (∀ c ∈ cs, c.2.length ≤ L) ∧
+      T.runFrom q π = (cs.map fun c => T.runFrom c.1 c.2).flatten := by
+  sorry
+
+/-- **Integer-coefficient budget.**  The assembly: `run_chunks`, `window_combo` and
+`normal_thin_cover` with `L → ∞`.  Confidence 85%. -/
+theorem span_jointDim_budget_int (b : ℕ) (hb : 2 ≤ b) (x y : ℝ) (a c : ℤ)
+    (hz : IsNormal b (a * x + c * y)) :
+    1 / 2 ≤ fsDim (digitPair b (by omega) x y) := by
+  sorry
+
 /-- **Joint entropy budget.**  Confidence 85%.  English proof: `QSpan.span_dimension_budget`,
 stopped before the subadditivity step. -/
 theorem span_jointDim_budget (b : ℕ) (hb : 2 ≤ b) (x y : ℝ) (c₁ c₂ : ℚ)
     (hz : IsNormal b ((c₁ : ℝ) * x + c₂ * y)) :
     1 / 2 ≤ fsDim (digitPair b (by omega) x y) := by
-  sorry
+  set q : ℚ := ((c₁.den * c₂.den : ℕ) : ℚ) with hqdef
+  have hq : q ≠ 0 := by
+    rw [hqdef]; exact_mod_cast Nat.mul_ne_zero c₁.den_nz c₂.den_nz
+  have hW := isNormal_rat_mul_add b hb _ q 0 hq hz
+  refine span_jointDim_budget_int b hb x y (c₁.num * c₂.den) (c₂.num * c₁.den) ?_
+  convert hW using 1
+  have e1 : ((c₁.num : ℝ)) = (c₁ : ℝ) * c₁.den := by
+    exact_mod_cast (Rat.mul_den_eq_num c₁).symm
+  have e2 : ((c₂.num : ℝ)) = (c₂ : ℝ) * c₂.den := by
+    exact_mod_cast (Rat.mul_den_eq_num c₂).symm
+  simp only [hqdef]
+  push_cast
+  rw [e1, e2]; ring
 
 
 /-- Independent uniform letters of `Fin m × Fin m`. -/
