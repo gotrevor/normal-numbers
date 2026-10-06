@@ -5,6 +5,7 @@ Authors: Trevor Morris
 -/
 import NormalNumbers.QSpanNormal
 import NormalNumbers.DecayAeNormal
+import NormalNumbers.PowerBaseLimit
 
 /-!
 # What the digits of a rational combination can look like
@@ -133,17 +134,80 @@ theorem window_combo (b : ℕ) (hb : 2 ≤ b) (a c : ℤ) (x y : ℝ) (p t : ℕ
       push_cast; linear_combination -hsum
     rw [hq, Int.add_mul_emod_self_left, Int.emod_eq_of_lt (by positivity) (by exact_mod_cast hlt)]
 
+theorem winVal_digit (b : ℕ) (hb : 0 < b) (s : ℕ → ℕ) (hs : ∀ i, s i < b) (p t : ℕ) :
+    ∀ j < t, winVal b s p t / b ^ (t - 1 - j) % b = s (p + j) := by
+  induction t with
+  | zero => intro j hj; omega
+  | succ t ih =>
+    intro j hj
+    rw [winVal_succ]
+    rcases Nat.lt_succ_iff_lt_or_eq.mp hj with hj | rfl
+    · rw [show t + 1 - 1 - j = (t - 1 - j) + 1 by omega, pow_succ', ← Nat.div_div_eq_div_mul,
+        show (b * winVal b s p t + s (p + t)) / b = winVal b s p t by
+          rw [Nat.mul_add_div hb, Nat.div_eq_of_lt (hs _), add_zero]]
+      exact ih j hj
+    · simp [Nat.mod_eq_of_lt (hs _)]
+
+theorem matches_of_winVal (b : ℕ) (hb : 0 < b) (s : ℕ → ℕ) (hs : ∀ i, s i < b) (p t : ℕ) :
+    MatchesAt s (PowerBase.wordOf b t (winVal b s p t)) p := by
+  intro j hj
+  simp only [PowerBase.length_wordOf] at hj
+  rw [List.getD_eq_getElem _ _ (by simpa using hj)]
+  simp [PowerBase.wordOf, winVal_digit b hb s hs p t j hj]
+
+
 /-- **Normal sequences admit no thin covers.**  Windows starting in `[0, n)` whose values lie in
 thin dictionaries `V t` (lengths `t ∈ [t₀, t₁]`) cover at most `δ n` positions, once
-`Σ t |V t| / bᵗ < δ`.  Distinct starts suffice; no disjointness.  Confidence 95%: each window value
+`Σ t |V t| / bᵗ < δ` (digits `< b`).  Distinct starts suffice; no disjointness.  Confidence 95%: each window value
 has frequency `b^{-t}` by normality, and the sum is finite. -/
-theorem normal_thin_cover (b : ℕ) (hb : 2 ≤ b) (s : ℕ → ℕ) (hs : IsNormalSequence b s)
+theorem normal_thin_cover (b : ℕ) (hb : 2 ≤ b) (s : ℕ → ℕ) (hsb : ∀ i, s i < b)
+    (hs : IsNormalSequence b s)
     (t₀ t₁ : ℕ) (V : ℕ → Finset ℕ) (δ : ℝ)
     (hδ : ∑ t ∈ Finset.Icc t₀ t₁, (t : ℝ) * (V t).card / (b : ℝ) ^ t < δ) :
     ∀ᶠ n in atTop, ∀ (I : Finset ℕ) (ℓ : ℕ → ℕ),
       (∀ p ∈ I, p < n ∧ ℓ p ∈ Finset.Icc t₀ t₁ ∧ winVal b s p (ℓ p) ∈ V (ℓ p)) →
         (∑ p ∈ I, (ℓ p : ℝ)) ≤ δ * n := by
-  sorry
+  classical
+  set F : ℕ → ℝ := fun n => ∑ t ∈ Finset.Icc t₀ t₁, ∑ v ∈ V t,
+    (t : ℝ) * winCount s (PowerBase.wordOf b t v) n
+  have hlim : Tendsto (fun n : ℕ => F n / n) atTop
+      (𝓝 (∑ t ∈ Finset.Icc t₀ t₁, (t : ℝ) * (V t).card / (b : ℝ) ^ t)) := by
+    have : (fun n : ℕ => F n / n) = fun n : ℕ => ∑ t ∈ Finset.Icc t₀ t₁, ∑ v ∈ V t,
+        (t : ℝ) * ((winCount s (PowerBase.wordOf b t v) n : ℝ) / n) := by
+      funext n; simp only [F, Finset.sum_div, mul_div_assoc]
+    rw [this]
+    have e : ∀ t : ℕ, (t : ℝ) * (V t).card / (b : ℝ) ^ t = ∑ v ∈ V t, (t : ℝ) * ((b : ℝ) ^ t)⁻¹ := by
+      intro t; rw [Finset.sum_const, nsmul_eq_mul]; ring
+    simp_rw [e]
+    refine tendsto_finset_sum _ fun t _ => tendsto_finset_sum _ fun v _ => ?_
+    exact (PowerBase.tendsto_winCount_wordOf (by omega) hs t v).const_mul _
+  filter_upwards [hlim.eventually (gt_mem_nhds hδ), eventually_gt_atTop 0] with n hn hn0 I ℓ hI
+  have hnpos : (0 : ℝ) < n := by exact_mod_cast hn0
+  have hF : F n < δ * n := by rwa [div_lt_iff₀ hnpos] at hn
+  refine le_trans ?_ hF.le
+  -- fiber by length
+  have hfib : (∑ p ∈ I, (ℓ p : ℝ)) = ∑ t ∈ Finset.Icc t₀ t₁, ∑ p ∈ I.filter (fun p => ℓ p = t), (ℓ p : ℝ) :=
+    (Finset.sum_fiberwise_of_maps_to (fun p hp => (hI p hp).2.1) _).symm
+  rw [hfib]
+  refine Finset.sum_le_sum fun t _ => ?_
+  have hcard : ((I.filter fun p => ℓ p = t).card : ℝ) ≤ ∑ v ∈ V t, (winCount s (PowerBase.wordOf b t v) n : ℝ) := by
+    have hsub : I.filter (fun p => ℓ p = t) ⊆ (V t).biUnion fun v =>
+        (Finset.range n).filter (MatchesAt s (PowerBase.wordOf b t v)) := by
+      intro p hp
+      rw [Finset.mem_filter] at hp
+      obtain ⟨hpn, -, hv⟩ := hI p hp.1
+      rw [hp.2] at hv
+      rw [Finset.mem_biUnion]
+      exact ⟨_, hv, Finset.mem_filter.mpr ⟨Finset.mem_range.mpr hpn, matches_of_winVal b (by omega) s hsb p t⟩⟩
+    have := (Finset.card_le_card hsub).trans Finset.card_biUnion_le
+    exact_mod_cast this
+  calc ∑ p ∈ I.filter (fun p => ℓ p = t), (ℓ p : ℝ)
+      = ∑ p ∈ I.filter (fun p => ℓ p = t), (t : ℝ) :=
+        Finset.sum_congr rfl fun p hp => by rw [(Finset.mem_filter.mp hp).2]
+    _ = (t : ℝ) * (I.filter fun p => ℓ p = t).card := by rw [Finset.sum_const, nsmul_eq_mul]; ring
+    _ ≤ (t : ℝ) * ∑ v ∈ V t, (winCount s (PowerBase.wordOf b t v) n : ℝ) :=
+        mul_le_mul_of_nonneg_left hcard (by positivity)
+    _ = _ := by rw [Finset.mul_sum]
 
 /-- Output of an FST on a concatenation. -/
 theorem runFrom_append {k : ℕ} (T : FST k) (q : Fin (T.m + 1)) (u v : List (Fin k)) :
