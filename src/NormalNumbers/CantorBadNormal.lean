@@ -73,6 +73,29 @@ theorem summable_sched_rpow {δ : ℝ} (hδ : 0 < δ) :
         apply Real.exp_le_exp.2
         rw [Real.sqrt_eq_rpow]; nlinarith
 
+/-- A logarithmic saving `(log N)^{−δ}`, `δ > 2`, is summable along `sched` (`log sched j ≥ √j`). -/
+theorem summable_sched_log_rpow {δ : ℝ} (hδ : 2 < δ) :
+    Summable fun j => (Real.log (sched j : ℝ)) ^ (-δ) := by
+  have hs : Summable fun j : ℕ => (j : ℝ) ^ (-(δ / 2)) :=
+    Real.summable_nat_rpow.2 (by linarith)
+  refine Summable.of_nonneg_of_le (fun j => ?_) (fun j => ?_) hs
+  · rcases Nat.eq_zero_or_pos j with rfl | hj
+    · simp [sched]; exact Real.rpow_nonneg le_rfl _
+    · have hn : (0 : ℝ) < sched j := by exact_mod_cast one_le_sched j
+      have := (Real.le_log_iff_exp_le hn).2 (exp_sqrt_le_sched j hj)
+      exact Real.rpow_nonneg ((Real.sqrt_nonneg _).trans this) _
+  · rcases Nat.eq_zero_or_pos j with rfl | hj
+    · simp [sched]
+      rw [Real.zero_rpow (by linarith)]
+      exact Real.rpow_nonneg le_rfl _
+    · have hn : (0 : ℝ) < sched j := by exact_mod_cast one_le_sched j
+      have hl := (Real.le_log_iff_exp_le hn).2 (exp_sqrt_le_sched j hj)
+      have hsq : 0 < Real.sqrt j := Real.sqrt_pos.2 (by exact_mod_cast hj)
+      calc Real.log (sched j : ℝ) ^ (-δ) ≤ (Real.sqrt j) ^ (-δ) :=
+            Real.rpow_le_rpow_of_nonpos hsq hl (by linarith)
+        _ = (j : ℝ) ^ (-(δ / 2)) := by
+            rw [Real.sqrt_eq_rpow, ← Real.rpow_mul (Nat.cast_nonneg _)]; ring_nf
+
 /-- **Cassels rate** for `L` in base `b`: the second moment is `C N² W(N)` for a rate `W` that is
 summable along `CantorLiouville.sched` (`sched j ≈ e^{√j}`, so `W = (log N)^{−1−ε}·…` such as
 `(log N)^{−3}` already suffices).  Weaker than `CasselsPower`. -/

@@ -3052,3 +3052,13 @@ Next: (1) prove the reduction (needs pair-averaged partial Cantor products, Cass
   `cExt (deadCorr ξ) (t − s_n)` (pure μ_K exponential sum over obstacle rationals in the cylinder) and the
   defect remainder as a separate node; check numerically whether the remainder is genuinely smaller
   (it is second order in the dead density but has no N-decay a priori).
+* (lap 8, later) `summable_sched_log_rpow` PROVED: any `(log N)^{−δ}`, `δ > 2`, is an admissible `W`.  So the
+  near-scale node needs only a log-power saving over the pairs `n < m < N`, not a power rate.
+  Decay mechanism for `deadMix(n,m,t)` (analysis, not yet Lean): averaging each uniform block at stage `r`
+  multiplies by `|ρ_r(hbᵐ)|` (ternary digits of `hbᵐ` at positions `10r..10r+10`); the defect terms of
+  `condMean_cExt_telescope` are localized at dead stages and still see the uniform stages on both sides,
+  so the remainder decays like the first-order term (earlier "no N-decay" worry withdrawn).  Both reduce
+  to: Σ_{n<m<N} E_path ∏_{r∈[s_n,s_m)} |ρ_r(hbᵐ)| = O(N²(log N)^{−3}) — a pair-averaged partial Cantor
+  product over the window of digits between the scales of bⁿ and bᵐ.  Next: state that as a node and
+  check against `cassels_tail` / `pairSum_Bf_le_explicit_b` (they bound full products; a window version may follow
+  from the same Riesz-majorant argument with free digits outside the window).
