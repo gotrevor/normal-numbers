@@ -1479,11 +1479,45 @@ theorem secondMoment_profile_uniform (hB : Literature.BakerLogDiscrepancyEff) (�
 theorem primrecPred_profileOK (μ₀ : ℚ) (hμ : 1 < μ₀) : PrimrecPred (ProfileOK μ₀) := by
   sorry
 
-/-- The schedule condition for the combined weight.  Open; 95% (`clNs j ≥ 4^{√j}`, `profW` at
+/-- The schedule condition for the combined weight.  Proved (`clNs j ≥ 4^{√j}`, `profW` at
 `4^{√j}` is `≤ (2√j+1)^{−16}`). -/
 theorem profile_ev (μ₀ : ℚ) (hμ : 1 < μ₀) : ∀ᶠ j in atTop, 8 ≤ clNr j ∧ clNr j ≤ clNs j ∧
     (clNr j : ℝ) ^ 6 * ((eW μ₀ (clNs j) + profW (clNs j)) / 2) ≤ 1 / ((j : ℝ) + 1) ^ 4 := by
-  sorry
+  have hpw : ∀ᶠ j in atTop, (clNr j : ℝ) ^ 6 * profW (clNs j) ≤ 1 / ((j : ℝ) + 1) ^ 4 := by
+    filter_upwards [eventually_ge_atTop 64] with j hj
+    set s := Nat.sqrt j
+    have hs8 : 8 ≤ s := by
+      have : Nat.sqrt 64 ≤ Nat.sqrt j := Nat.sqrt_le_sqrt hj
+      have h64 : Nat.sqrt 64 = 8 := by
+        rw [show 64 = 8 * 8 by rfl, Nat.sqrt_eq]
+      omega
+    have hlog : 2 * s ≤ Nat.log 2 (clNs j) := by
+      apply Nat.le_log_of_pow_le (by norm_num)
+      unfold clNs
+      rw [pow_mul]; norm_num
+      exact Nat.le_mul_of_pos_right _ (by omega)
+    have hj1 : j + 1 ≤ (s + 1) ^ 2 := by
+      have := Nat.lt_succ_sqrt j; nlinarith
+    have hnat : (clNr j) ^ 6 * (j + 1) ^ 4 ≤ (Nat.log 2 (clNs j) + 1) ^ 16 := by
+      unfold clNr
+      have h1 : (Nat.sqrt j + 8) ^ 6 ≤ (2 * s + 1) ^ 6 := Nat.pow_le_pow_left (by omega) 6
+      have h2 : (j + 1) ^ 4 ≤ (2 * s + 1) ^ 8 := by
+        calc (j + 1) ^ 4 ≤ ((s + 1) ^ 2) ^ 4 := Nat.pow_le_pow_left hj1 4
+          _ = (s + 1) ^ 8 := by ring
+          _ ≤ (2 * s + 1) ^ 8 := Nat.pow_le_pow_left (by omega) 8
+      have h3 : (2 * s + 1) ^ 16 ≤ (Nat.log 2 (clNs j) + 1) ^ 16 := Nat.pow_le_pow_left (by omega) 16
+      have h4 : (2 * s + 1) ^ 6 * (2 * s + 1) ^ 8 ≤ (2 * s + 1) ^ 16 := by
+        rw [← pow_add]; exact Nat.pow_le_pow_right (by omega) (by norm_num)
+      calc _ ≤ (2 * s + 1) ^ 6 * (2 * s + 1) ^ 8 := Nat.mul_le_mul h1 h2
+        _ ≤ _ := h4.trans h3
+    have hR : ((clNr j : ℝ)) ^ 6 * ((j : ℝ) + 1) ^ 4 ≤ ((Nat.log 2 (clNs j) + 1 : ℕ) : ℝ) ^ 16 := by
+      exact_mod_cast hnat
+    unfold profW
+    have hp : (0 : ℝ) < ((Nat.log 2 (clNs j) + 1 : ℕ) : ℝ) ^ 16 := by positivity
+    have hj0 : (0 : ℝ) < ((j : ℝ) + 1) ^ 4 := by positivity
+    rw [mul_one_div, div_le_div_iff₀ hp hj0]; linarith
+  filter_upwards [e_ev μ₀ hμ, hpw] with j ⟨h1, h2, h3⟩ h4
+  exact ⟨h1, h2, by linarith⟩
 
 /-- **Family derandomization with the profile bases.**  Wiring (proved from the three leaves). -/
 theorem exists_computable_normal_avoid_profile (hB : Literature.BakerLogDiscrepancyEff) (μ₀ : ℚ)
