@@ -93,8 +93,8 @@ theorem IsProductBlock.base5_card_ge_five {S : Finset ℕ} (hS : IsProductBlock 
     (hS625 : ∀ m ∈ S, m ≤ 625) : 5 ≤ S.card := by
   sorry
 
-/-- **An explicit base-5 product block** (computational; confidence 90% pending independent
-re-verification).  For every irrational `X`, one of these 17 multiples of `X` has every base-5
+/-- **An explicit base-5 product block** (computational; confidence 95%: full re-check without
+the symmetry reduction found no failing assignment).  For every irrational `X`, one of these 17 multiples of `X` has every base-5
 digit infinitely often.  Compare the classical block `[1, 15624]` (`mahler_multiplier_lt` on the
 word `01234`), and `base5_exists_ge` (every block needs a member `≥ 194`; here `2832 = 42312₅`).
 

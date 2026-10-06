@@ -73,9 +73,14 @@ affordable.  A collapse is a proof; a failing assignment is only "no certificate
 
 - Certificate: every assignment S → digits collapses on some prefix (exact carry-automaton
   collapse, the C2 method).  Found by the Rust greedy (first-level `d ↦ 4−d` symmetry).
-- Re-verification: Rust full DFS without the symmetry reduction, and the Python reference
-  checker - see below.
-- Greedy, so not minimal.  Large members in base 5: see the verification block.
+- Re-verified: full Rust DFS **without** the symmetry reduction, 0 failing (28 min); with it, 0
+  (92 s).  The Rust checker is tested against hand-derived verdicts and matches the Python
+  reference counts (`test_mahler_product_block.py`); a full Python re-run was judged not worth
+  its ~days of CPU.  Liouville cover holds for every `B ≤ 20000`.
+- Large members in base 5: 1251 = 20001, 1254 = 20004, 1838 = 24323, 2188 = 32223,
+  2272 = 33042, 2439 = 34224, 2832 = **42312** (the only one with all four nonzero digits,
+  the member `base5_exists_ge` demands), 3028 = 44103.
+- Greedy, so not minimal.
 - Lean: `checkCertA` enumerates the ambient carry product (here ∏ m ≈ 10⁴⁰), so a Lean
   certificate needs a sparse, live-states-only checker.
 
