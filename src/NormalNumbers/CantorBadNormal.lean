@@ -1978,6 +1978,16 @@ theorem deadChar_tail_le {b : ℕ} (hb : 2 ≤ b) (h : ℤ) {N n m : ℕ} (hN : 
     _ ≤ Y * (3 / 2) := mul_le_mul_of_nonneg_left hgeo hY
     _ ≤ _ := hfin
 
+/-- **Refuted route: the Cauchy–Schwarz bootstrap.**  The recurrence
+`f(N) ≤ f_K(N) + c √(η f(N))` that it produces for `f = E|S_N|²/N²` does not force decay: with
+`f_K ≡ 0` (the best possible Cantor input), the constant `f ≡ c² η` satisfies it and stays bounded away from `0`.
+So `deadCharSigned_core` cannot follow from Cauchy–Schwarz on dead events.  Proved. -/
+theorem cs_bootstrap_floor {c η : ℝ} (hc : 0 < c) (hη : 0 < η) :
+    ∃ f : ℕ → ℝ, (∀ N, f N ≤ 0 + c * Real.sqrt (η * f N)) ∧ ∀ N, f N = c ^ 2 * η ∧ 0 < f N := by
+  refine ⟨fun _ => c ^ 2 * η, fun N => ?_, fun N => ⟨rfl, by positivity⟩⟩
+  have : η * (c ^ 2 * η) = (c * η) ^ 2 := by ring
+  rw [this, Real.sqrt_sq (by positivity)]; nlinarith
+
 /-- **The crux, localized to the first `S₀ = N b + |h|` stages.**  Believed, 55%.  Open.
 
 This is `deadCharSigned` with the stage sum cut at `S₀(N) = N b + |h|`.  The cut loses
@@ -1991,7 +2001,7 @@ terms randomized by the Cantor tail.  Changing the stage-`S'` block moves only `
 `A`, so that stage changes `|A|²` by `O(P(dead at S') · E[|A| | dead at S'])`.
 
 Two routes are recorded as insufficient here.
-(1) Cauchy–Schwarz bootstrap.  Bounding `E[1_dead |A|] ≤ √(η E|A|²)` gives
+(1) Cauchy–Schwarz bootstrap (`cs_bootstrap_floor`).  Bounding `E[1_dead |A|] ≤ √(η E|A|²)` gives
 `f(N) ≤ f_K(N) + c√(η f(N))` for `f = E|S_N|²/N²`.  That recurrence has the constant solution
 `f ≍ η`, so it gives only a floor, never decay.
 (2) Large sieve over the obstacle centres `p/q`, `q² ≍ 3^{10S'}`.  This bounds the average of
