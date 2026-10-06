@@ -126,4 +126,11 @@ theorem isProductBlock_five_fifteen :
     IsProductBlock 5 {1, 2, 8, 16, 17, 23, 29, 1251, 1254, 1838, 2188, 2272, 2439, 2832, 3028} := by
   sorry
 
+/-- **The base-5 block at 14** (computational; confidence 95%): from `isProductBlock_five_fifteen`,
+drop `1` and `8`, add `2428 = 34203₅` (`mahler_block swap21`, accepted by a full collapse
+search).  Note `1 ∉ S`: no member is `x` itself. -/
+theorem isProductBlock_five_fourteen :
+    IsProductBlock 5 {2, 16, 17, 23, 29, 1251, 1254, 1838, 2188, 2272, 2428, 2439, 2832, 3028} := by
+  sorry
+
 end NormalNumbers.Adder

@@ -11,6 +11,7 @@
 //!   mahler_block failing G m1,m2,... [--nosym] [--limit N]   count failing assignments
 //!   mahler_block greedy G seed1,... SMALL_MAX BIG_LIST SAMPLE  greedy block search
 //!       BIG_LIST: comma list of large candidate multipliers (e.g. Liouville-filter picks)
+//!   mahler_block swap21 G m1,m2,... CANDS                     try S - {a,b} + {c}; first block wins
 //!   mahler_block minimize G m1,m2,...                         drop redundant members
 //!       (tests every single deletion in parallel; drops the largest removable member; repeats)
 
@@ -288,6 +289,37 @@ fn minimize(g: u32, mut s: Vec<u32>) {
     println!("MINIMAL (no single deletion) {:?} size {}", s, s.len());
 }
 
+fn swap21(g: u32, s: Vec<u32>, cands: Vec<u32>) {
+    let mut moves: Vec<(u32, u32, u32)> = Vec::new();
+    for i in 0..s.len() {
+        for j in i + 1..s.len() {
+            for &c in &cands {
+                if c % g != 0 && !s.contains(&c) {
+                    moves.push((s[i], s[j], c));
+                }
+            }
+        }
+    }
+    println!("{} moves", moves.len());
+    let t = std::time::Instant::now();
+    let hit = moves.par_iter().find_any(|&&(a, b, c)| {
+        // keep the greedy order; the new member goes where its size puts it among the large ones
+        let mut rest: Vec<u32> = s.iter().copied().filter(|&x| x != a && x != b).collect();
+        let pos = rest.iter().position(|&x| x > 40 && c <= 40).unwrap_or(rest.len());
+        rest.insert(pos, c);
+        is_block(g, &rest)
+    });
+    match hit {
+        Some(&(a, b, c)) => {
+            let mut r: Vec<u32> = s.iter().copied().filter(|&x| x != a && x != b).collect();
+            r.push(c);
+            r.sort();
+            println!("SWAP -{} -{} +{} -> {:?} size {} ({:.0}s)", a, b, c, r, r.len(), t.elapsed().as_secs_f64());
+        }
+        None => println!("NO 2-for-1 swap ({:.0}s)", t.elapsed().as_secs_f64()),
+    }
+}
+
 fn main() {
     let a: Vec<String> = env::args().collect();
     let g: u32 = a[2].parse().unwrap();
@@ -303,6 +335,7 @@ fn main() {
         "greedy" => greedy(g, parse_list(&a[3]), a[4].parse().unwrap(), parse_list(&a[5]),
                            a[6].parse().unwrap()),
         "minimize" => minimize(g, parse_list(&a[3])),
+        "swap21" => swap21(g, parse_list(&a[3]), parse_list(&a[4])),
         _ => panic!("unknown command"),
     }
 }

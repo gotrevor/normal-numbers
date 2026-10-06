@@ -138,6 +138,8 @@ def waivers : List Waiver := [
   ⟨``Adder.IsProductBlock.liouville_cover,
    "a leaf: the B–B 1994 Thm 3.1 Liouville witness with 'digit d absent from m·B' in place of a \
     run of g−1 (orbit_liouvilleMul_lt's argument)"⟩,
+  ⟨``Adder.isProductBlock_five_fourteen,
+   "a finite computation: carry-automaton collapse certificates, needs a sparse checker"⟩,
   ⟨``Adder.isProductBlock_five_fifteen,
    "a finite computation: carry-automaton collapse certificates, needs a sparse checker"⟩,
   ⟨``Adder.isProductBlock_five_seventeen,
