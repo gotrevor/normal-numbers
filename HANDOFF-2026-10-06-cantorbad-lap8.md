@@ -17,6 +17,8 @@ Operator resolution (2026-10-05 22:55) was already done in lap 4 (`resLaw`, node
   `gMix`/`gMix_le` (generic recursion); crux split `deadMix_le_first_add_defect`,
   `nearObstaclePhaseMixing_of_split`.
 
+- `cExt_unifAvg`, `cExt_eq_sum` (first-order term = explicit uniform average over completions).
+
 ## Open
 - On-path crux: `firstOrderObstacleMix_resLaw` (50%) + `defectObstacleMix_resLaw` (45%), split proved.
 - Nodes (not wired): `AvgDeadDensity` (70%).
@@ -25,6 +27,10 @@ Operator resolution (2026-10-05 22:55) was already done in lap 4 (`resLaw`, node
 - Off-path: `midStages`, `fourierPairRate_descent_of_deadRateDecay`.
 
 ## Next
+0. HEAD at handoff: see `git log -1`; no uncommitted edits.  Immediate next step: write `cExt (deadCorr ξ) k w`
+   via `cExt_eq_sum` as a sum over obstacles (each dead child at stage t ≈ e(hbᵐ p/q)), bounding the errors,
+   to connect `FirstOrderObstacleMix` to `ObstaclePairCorrelation`.  Then the weighted `AvgDeadDensity` for
+   the bootstrap (`gMix_le`).
 1. (done) L=16 paircorr recorded in the node docstring: same separation.
 2. Implication `ObstaclePairCorrelation → NearObstaclePhaseMixing`: needs (a) 1/|A| vs 1/1024 error,
    (b) the second-order defect terms of `condMean_cExt_telescope`, (c) μ_K weights of obstacles in a cylinder.
