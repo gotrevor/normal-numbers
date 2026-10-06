@@ -2964,3 +2964,8 @@ Next: (1) prove the reduction (needs pair-averaged partial Cantor products, Cass
   PROVED from `hybridCassels` (sorry, 55%) + `cassels_Bf`.  `hybridCassels` says E|S_N|² = O(N² W) under the
   hybrid law (resLaw for a = min S (Nb+|h|) stages, then uniform digits to depth S); depth hypothesis
   log₃N/2 ≤ 10S was added along the chain (casselsRate_resLaw supplies it).  This is the crux in its cleanest form.
+- Route checked, FAILS (prose; Lean node pending): derandomized greedy (pick the alive child minimizing a
+  conditional-expectation/MGF potential).  The dead density per ternary digit is ≈ c whatever the block
+  length (Khintchine-on-fractals heuristic), which costs ≈ e^{c} per digit and caps ε at ≈ √c, so it does
+  not reach normality.  Same floor as DeadRateDecay.  The only way through is decorrelation under μ_K of
+  "good rational approximation p/q, q≈Q" from the base-b sums up to 2·log_b Q (joint CF / ×b mixing, open).
