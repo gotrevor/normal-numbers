@@ -3221,3 +3221,6 @@ Candidates 2,4 proved (`StretchBFR.card_cantor_hyperbola_le`, `eq_of_hyperbola_l
   and the headline wiring (derandomizer test family for 3 ∣ b, kickoff step 3).
 - Next attack: kickoff step 3 can be done conditionally now (headline_of_baker), which isolates
   `LogDiscrepancy` as the single remaining input.
+- (lap 2 cont.) Headline PROVED conditional on `Literature.BakerLogDiscrepancyEff`
+  (`exists_computable_normalProfile_of_baker`, axiom-clean).  Remaining scope sorries are exactly
+  the Baker wall; see HANDOFF-2026-10-06-profile-lap2.md for the elementary-rate obstruction.

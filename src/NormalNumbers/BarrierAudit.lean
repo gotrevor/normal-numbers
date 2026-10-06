@@ -242,8 +242,6 @@ def waivers : List Waiver := [
   ⟨``CantorExactExponentProfile.ae_isNormal_of_profileOK,
    "open node; the elementary orbit port is blocked in the run shadow (Maze row 'elementary orbit \
     port to 3 | b'); live route via the Baker discrepancy input"⟩,
-  ⟨``CantorExactExponentProfile.secondMoment_profile_uniform,
-   "a leaf: secondMoment_le_profile with every constant explicit (effective Baker input)"⟩,
   ⟨``CantorExactExponentProfile.exists_computable_mem_cantorSet_irrExponent_normalProfile,
    "wiring: the two profile lemmas plus the stretch derandomizer with the 3 ∣ b tests added"⟩,
   ⟨``FiniteState.isFNormal_delayEnum_of_normal,
