@@ -3063,3 +3063,19 @@ Next: (1) prove the reduction (needs pair-averaged partial Cantor products, Cass
   `R(g) = E|E[D_t|w_{t−g}]| / E|D_t|`): first run (b=2, 30 outer × 400 inner, t = 8 stages) gives `R(1)` at the
   noise floor 0.05 for resLaw, the uniform-path control, AND the dyad2 control — so at this resolution the
   probe does not discriminate; needs larger inner samples before it counts as evidence.
+* (lap 8) deadMix probe, full first run (b=2, 30×400, t=8): R(g) for g=1..4 = nu .086 .064 .061 .052,
+  mu .077 .057 .052 .054, dyad2 .068 .047 .059 .049; noise floor ≈ .05.  Non-discriminating: every law is at
+  the floor from g≈2.  One-stage averaging already cancels the phase e(ξ W_t/3^{L_t}) generically.
+* (lap 8) Precise form of the crux (analysis).  To first order (`cExt` term of `condMean_cExt_telescope`,
+  `1/|A| ≈ 1/1024`), `E[D_t | w_s] ≈ Σ_{p/q ∈ Obst_t ∩ cyl(w_s)} μ_K-weight · (e(ξ p/q) − ρ·e(ξ·parent))`:
+  each obstacle (radius 2c₀/q² < child width/3) kills ≤ 2 children and contributes its own phase.
+  By Cauchy–Schwarz over the coarse cylinders, the needed decay in `t − s` follows from square-root
+  cancellation, i.e. from the off-diagonal **twisted pair correlation of the rationals near K**:
+  Σ_{p/q ≠ p'/q', |p/q − p'/q'| ≤ 3^{−L_s}} e(hbᵐ(p/q − p'/q')) = o(diagonal), q, q' ≈ 3^{L_t/2},
+  hbᵐ ≈ 3^{L_t + C}.  Phase gaps are multiples of hbᵐ/(qq') ≳ 3^C: Farey-scale pair correlation near a
+  fractal (known for all rationals, Boca–Cobeli–Zaharescu; open near K).
+  Sub-family: periodic points of K (p/q = P/(3^ℓ−1), digits of P in {0,2}, ℓ ≈ L_t/2) are obstacles at every
+  stage; their phase sum is the Riesz product ∏_{i<ℓ}(1 + e(2hbᵐ3^i/(3^ℓ−1))) (ternary digits of
+  bᵐ folded mod 3^ℓ−1); constant in m for b = 3.  ~2^ℓ members against ~4^ℓ obstacles: lower order.
+  Next: state `ObstaclePairCorrelation` as a Lean node over `Alive`'s rationals; prove the periodic-family
+  facts (obstacle membership, Riesz factorization, b = 3 coherence) as theorems.

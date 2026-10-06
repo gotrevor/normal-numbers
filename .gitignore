@@ -9,3 +9,4 @@ CLAUDE.local.md
 
 # Session scratch (probe scripts get promoted to experiments/ when they matter)
 /scratch
+scripts/__pycache__/
