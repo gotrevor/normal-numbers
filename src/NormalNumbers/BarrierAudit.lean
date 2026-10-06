@@ -33,6 +33,7 @@ import NormalNumbers.SchmidtGamesStretch
 import NormalNumbers.CantorBadNormal
 import NormalNumbers.CantorExactExponentStretch
 import NormalNumbers.StretchBFR
+import NormalNumbers.CantorExactExponentProfile
 import NormalNumbers.QSpanCriterion
 import NormalNumbers.ComputableReal
 import NormalNumbers.KurtzRandom
@@ -154,6 +155,32 @@ def waivers : List Waiver := [
   ⟨``Adder.IsProductBlock.liouville_cover,
    "a leaf: the B–B 1994 Thm 3.1 Liouville witness with 'digit d absent from m·B' in place of a \
     run of g−1 (orbit_liouvilleMul_lt's argument)"⟩,
+  ⟨``Adder.isRung_five_two_three,
+   "a finite computation: rung checker (carry automaton, label-filtered SCCs)"⟩,
+  ⟨``Adder.not_isRung_five_four_five_small,
+   "a finite computation: an avoided-digit-set assignment with a live SCC for each small T"⟩,
+  ⟨``Adder.not_isWordSetBlock_runs_three_one_seven_nine,
+   "a finite computation: word-channel carry automaton (mahler_block among/runs)"⟩,
+  ⟨``Adder.not_isWordSetBlock_runs_three_small,
+   "a finite computation: word-channel carry automaton (mahler_block among/runs)"⟩,
+  ⟨``Adder.isWordSetBlock_runs_three_nine,
+   "a finite computation: word-channel carry automaton (mahler_block among/runs)"⟩,
+  ⟨``Adder.not_isWordSetBlock_extremeDigits,
+   "a finite computation: word-channel carry automaton (mahler_block among/runs)"⟩,
+  ⟨``Adder.isWordSetBlock_four_extreme,
+   "a finite computation: word-channel carry automaton (mahler_block among/runs)"⟩,
+  ⟨``Adder.IsWordBlock.liouville_cover,
+   "a leaf: liouville_cover's argument with words for digits"⟩,
+  ⟨``Adder.IsWordBlock.exists_ge,
+   "a leaf: liouville_cover at B = 1 plus a window count on 0^k m 0^k"⟩,
+  ⟨``Adder.isWordBlock_two_three_thirteen,
+   "a finite computation: word-channel carry automaton collapse"⟩,
+  ⟨``Adder.isWordBlock_two_two_one_three_five,
+   "a finite computation: word-channel carry automaton collapse"⟩,
+  ⟨``Adder.not_isWordBlock_two_two_pair,
+   "a finite computation: a non-collapsing word-channel SCC for each pair"⟩,
+  ⟨``Adder.not_isProductBlock_five_twelve_erase,
+   "a finite computation: 12 non-collapsing carry-automaton core cycles, each an irrational witness"⟩,
   ⟨``Adder.isProductBlock_five_twelve,
    "a finite computation: carry-automaton collapse certificates, needs a sparse checker"⟩,
   ⟨``Adder.isProductBlock_five_thirteen,
@@ -233,6 +260,13 @@ def waivers : List Waiver := [
    "conditional wiring (Fourier expansion over the q-interval); records that single-sum \
     cancellation reaches only m > b − δ b' (singleSum_insufficient)"⟩,
   ⟨``StretchBFR.card_near_cantor_le, "a leaf: the classical covering count of rationals near K"⟩,
+  ⟨``CantorExactExponentProfile.not_isNormal_of_not_profileOK,
+   "a leaf: elementary base-b zero run along each forced ternary run; English proof in the docstring"⟩,
+  ⟨``CantorExactExponentProfile.ae_isNormal_of_profileOK,
+   "open node with a stated mechanism (Cassels–Schmidt second moment over the orbit of t mod 3^k, \
+    window free count linear below the threshold); no registered barrier applies"⟩,
+  ⟨``CantorExactExponentProfile.exists_computable_mem_cantorSet_irrExponent_normalProfile,
+   "wiring: the two profile lemmas plus the stretch derandomizer with the 3 ∣ b tests added"⟩,
   ⟨``FiniteState.isFNormal_delayEnum_of_normal,
    "a leaf: O(1) cost of composing with the delay transducer and its finite-state right inverse"⟩]
 

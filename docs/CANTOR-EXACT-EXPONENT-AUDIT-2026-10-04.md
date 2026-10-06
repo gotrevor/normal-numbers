@@ -139,3 +139,11 @@ Lean in `CantorExactExponentStretch.lean`:
 Reopen condition: `EndpointRationalCount` (a count on the discrete endpoints at the heuristic
 density).  Maze row "He-Liao local count on the forced-run measure"; crux link for
 `ae_not_liouvilleWith_all` with the new barrier `cantorExp_trivialCount_mu_three`.
+
+## Addendum 2026-10-06: stretch proved, refereed
+
+The stretch headline (every rational `μ₀ > 2`) is proved by the 3-adic count `hit_mass_padic`
+and was refereed in `CANTOREXP-STRETCH-REFEREE-2026-10-06.md` (accept; docs fixed).  A prior-art
+correction to this audit: the "computable, in `K`, exact `μ₀`" part alone is known (Bugeaud 2008
+plus Becher–Bugeaud–Slaman 2016 Thm 1; Lean `bugeaud2008_rational_of_stretch`), so the novelty
+is the normality clause.
