@@ -1399,6 +1399,92 @@ theorem tailProd_zero_eq_Bf (ξ : ℝ) (M : ℕ) :
   unfold tailProd CantorLiouville.Bf
   rw [Finset.filter_true_of_mem (fun _ _ => rfl), Finset.range_eq_Ico]
 
+/-- The possible prefixes after `S` stages. -/
+noncomputable def LS (S : ℕ) : Finset (List Bool) :=
+  Finset.univ.image fun g : Fin (10 * S) → Bool => List.ofFn g
+
+theorem buildU_mem_LS (ω : ℕ → Bool) (S : ℕ) : buildU S ω ∈ LS S :=
+  Finset.mem_image.2 ⟨_, Finset.mem_univ _, ofFn_descentU ω S⟩
+
+theorem length_of_mem_LS {S : ℕ} {w : List Bool} (hw : w ∈ LS S) : w.length = 10 * S := by
+  obtain ⟨g, _, rfl⟩ := Finset.mem_image.1 hw; simp
+
+theorem mset_buildU' (S : ℕ) (w : List Bool) : MeasurableSet {ω | buildU S ω = w} :=
+  MS_le _ _ (mset_buildU S w)
+
+theorem integral_buildU (S : ℕ) (G : List Bool → ℂ) :
+    ∫ ω, G (buildU S ω) ∂coinMeasure =
+      ∑ w ∈ LS S, coinMeasure.real {ω | buildU S ω = w} • G w := by
+  have hpt : ∀ ω, G (buildU S ω) =
+      ∑ w ∈ LS S, {ω | buildU S ω = w}.indicator (fun _ => G w) ω := by
+    intro ω
+    rw [Finset.sum_eq_single (buildU S ω)]
+    · simp [Set.indicator]
+    · intro w _ hw; simp [Set.indicator, Ne.symm hw]
+    · intro h; exact absurd (buildU_mem_LS ω S) h
+  simp_rw [hpt]
+  rw [integral_finset_sum _ fun w _ => (integrable_const _).indicator (mset_buildU' S w)]
+  exact Finset.sum_congr rfl fun w _ => integral_indicator_const _ (mset_buildU' S w)
+
+theorem integral_buildU_succ (S : ℕ) (G : List Bool → ℂ) :
+    ∫ ω, G (buildU (S + 1) ω) ∂coinMeasure =
+      ∑ w ∈ LS S, ∑ f : Fin 10 → Bool,
+        coinMeasure.real {ω | buildU (S + 1) ω = w ++ List.ofFn f} • G (w ++ List.ofFn f) := by
+  have hpt : ∀ ω, G (buildU (S + 1) ω) = ∑ w ∈ LS S, ∑ f : Fin 10 → Bool,
+      {ω | buildU (S + 1) ω = w ++ List.ofFn f}.indicator (fun _ => G (w ++ List.ofFn f)) ω := by
+    intro ω
+    set w0 := buildU S ω
+    have hlen := (selU_alive w0 ω S).1
+    set f0 : Fin 10 → Bool := fun i => (selU w0 ω S)[i]'(by omega)
+    have hsel : selU w0 ω S = List.ofFn f0 := by
+      apply List.ext_getElem (by simp [hlen]); intro i h1 h2; rw [List.getElem_ofFn]; rfl
+    have hb : buildU (S + 1) ω = w0 ++ List.ofFn f0 := by
+      show buildU S ω ++ selU (buildU S ω) ω S = _; rw [hsel]
+    rw [Finset.sum_eq_single w0, Finset.sum_eq_single f0]
+    · simp [Set.indicator, hb]
+    · intro f _ hf
+      simp only [Set.indicator, Set.mem_setOf_eq, hb]
+      rw [if_neg]; intro h
+      exact hf (List.ofFn_injective (List.append_cancel_left h)).symm
+    · intro h; exact absurd (Finset.mem_univ _) h
+    · intro w hw hne
+      refine Finset.sum_eq_zero fun f _ => ?_
+      simp only [Set.indicator, Set.mem_setOf_eq, hb]
+      rw [if_neg]; intro h
+      exact hne (List.append_inj h (by rw [length_buildU, length_of_mem_LS hw])).1.symm
+    · intro h; exact absurd (buildU_mem_LS ω S) h
+  simp_rw [hpt]
+  have hm : ∀ (w : List Bool) (f : Fin 10 → Bool),
+      MeasurableSet {ω | buildU (S + 1) ω = w ++ List.ofFn f} := fun w f =>
+    mset_buildU' _ _
+  rw [integral_finset_sum _ fun w _ => integrable_finset_sum _ fun f _ =>
+    (integrable_const _).indicator (hm w f)]
+  refine Finset.sum_congr rfl fun w _ => ?_
+  rw [integral_finset_sum _ fun f _ => (integrable_const _).indicator (hm w f)]
+  exact Finset.sum_congr rfl fun f _ => integral_indicator_const _ (hm w f)
+
+/-- The alive average of the child characters is `ρ − deadErr`.  Proved. -/
+theorem alive_avg (ξ : ℝ) (w : List Bool) :
+    (1 / ((aliveSet w).card : ℂ)) * ∑ f ∈ aliveSet w, ee (ξ * J f / 3 ^ (w.length + 10)) =
+      rhoS ξ w.length - deadErr ξ w := by
+  classical
+  set e : (Fin 10 → Bool) → ℂ := fun f => ee (ξ * J f / 3 ^ (w.length + 10))
+  have hc : ((aliveSet w).card : ℂ) ≠ 0 := by exact_mod_cast (card_aliveSet_pos w).ne'
+  have hsplit := Finset.sum_sdiff (f := e) (Finset.subset_univ (aliveSet w))
+  have hD : ((Finset.univ \ aliveSet w).card : ℂ) = 1024 - (aliveSet w).card := by
+    rw [Finset.card_sdiff_of_subset (Finset.subset_univ _), Finset.card_univ,
+      show Fintype.card (Fin 10 → Bool) = 1024 by simp,
+      Nat.cast_sub (card_aliveSet_le w)]; norm_num
+  unfold deadErr rhoS
+  rw [Finset.sum_sub_distrib, Finset.sum_const, nsmul_eq_mul, hD]
+  change (1 / ((aliveSet w).card : ℂ)) * ∑ f ∈ aliveSet w, e f =
+    1 / 1024 * ∑ f, e f - 1 / ((aliveSet w).card : ℂ) *
+      (∑ f ∈ Finset.univ \ aliveSet w, e f - (1024 - ((aliveSet w).card : ℂ)) *
+        (1 / 1024 * ∑ f, e f))
+  rw [← hsplit]
+  field_simp
+  ring
+
 /-- **Stage recursion** (open leaf, believed 97%):
 `T_{S+1} = ρ_S T_S − deadChar(ξ, S)`.  English proof: condition on `buildU S = w`; by
 `buildU_succ_uniform` the next block is uniform on `A(w)`, so the conditional character is
