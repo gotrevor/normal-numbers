@@ -2927,3 +2927,6 @@ Next: (1) prove the reduction (needs pair-averaged partial Cantor products, Cass
   `fourierAbs_resLaw_le`, `fourierPairRate_resLaw` proved from leaves `prefChar_succ`,
   `norm_rhoS`, `norm_fourier_sub_prefChar` (all routine) and crux `deadCharCancel`
   (now uniform in depth S, with cosine-product tails `tailProd`).
+- All routine leaves PROVED (buildU_succ_uniform, prefChar_succ, norm_rhoS,
+  norm_fourier_sub_prefChar, cassels_Bf).  The headline now rests on exactly one sorry:
+  the crux `deadCharCancel`.  (Off-path: `fourierPairRate_descent_of_deadRateDecay`.)

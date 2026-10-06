@@ -1492,7 +1492,53 @@ theorem alive_avg (ξ : ℝ) (w : List Bool) :
 `|A|⁻¹ Σ_{f∈A} e_f = ρ − deadErr` since `Σ_f e_f = 1024 ρ`. -/
 theorem prefChar_succ (ξ : ℝ) (S : ℕ) :
     prefChar ξ (S + 1) = rhoS ξ (10 * S) * prefChar ξ S - deadChar ξ S := by
-  sorry
+  classical
+  unfold prefChar deadChar
+  rw [integral_buildU_succ S (fun w' => ee (ξ * cylLeft w')),
+    integral_buildU S (fun w => ee (ξ * cylLeft w)),
+    integral_buildU S (fun w => ee (ξ * cylLeft w) * deadErr ξ w),
+    Finset.mul_sum, ← Finset.sum_sub_distrib]
+  refine Finset.sum_congr rfl fun w hw => ?_
+  have hl := length_of_mem_LS hw
+  set m := coinMeasure.real {ω | buildU S ω = w}
+  set c := (aliveSet w).card
+  have hc : (c : ℝ) ≠ 0 := by exact_mod_cast (card_aliveSet_pos w).ne'
+  have hE : ∀ f : Fin 10 → Bool, coinMeasure.real {ω | buildU (S + 1) ω = w ++ List.ofFn f} =
+      if f ∈ aliveSet w then m / c else 0 := by
+    intro f
+    split_ifs with hf
+    · have h1 := buildU_succ_uniform S w (List.ofFn f) ⟨by simp, (Finset.mem_filter.1 hf).2⟩
+      have h2 := congrArg ENNReal.toReal h1
+      rw [ENNReal.toReal_mul, ENNReal.toReal_natCast] at h2
+      rw [eq_div_iff hc]; exact h2
+    · have : {ω | buildU (S + 1) ω = w ++ List.ofFn f} = ∅ := by
+        ext ω
+        simp only [Set.mem_setOf_eq, Set.mem_empty_iff_false, iff_false]
+        intro h
+        change buildU S ω ++ selU (buildU S ω) ω S = w ++ List.ofFn f at h
+        have h1 := (List.append_inj h (by rw [length_buildU, hl])).1
+        rw [h1] at h
+        have h2 := List.append_cancel_left h
+        apply hf
+        simp only [aliveSet, Finset.mem_filter, Finset.mem_univ, true_and]
+        rw [← h2, ← h1]; exact (selU_alive _ ω S).2
+      rw [this]; simp
+  have hch : ∀ f : Fin 10 → Bool, ee (ξ * cylLeft (w ++ List.ofFn f)) =
+      ee (ξ * cylLeft w) * ee (ξ * J f / 3 ^ (w.length + 10)) := by
+    intro f; rw [cylLeft_child, ← ee_add]; congr 1; ring
+  simp only [hE, hch, ite_smul, zero_smul]
+  rw [Finset.sum_ite_mem, Finset.univ_inter, show 10 * S = w.length from hl.symm]
+  have avg := alive_avg ξ w
+  have hsum : ∑ f ∈ aliveSet w, (m / c) • (ee (ξ * cylLeft w) * ee (ξ * J f / 3 ^ (w.length + 10))) =
+      (m : ℂ) * ee (ξ * cylLeft w) *
+        ((1 / (c : ℂ)) * ∑ f ∈ aliveSet w, ee (ξ * J f / 3 ^ (w.length + 10))) := by
+    rw [Finset.mul_sum, Finset.mul_sum]
+    refine Finset.sum_congr rfl fun f _ => ?_
+    rw [Complex.real_smul]; push_cast
+    have hc' : (c : ℂ) ≠ 0 := by exact_mod_cast hc
+    field_simp
+  rw [hsum, avg, Complex.real_smul, Complex.real_smul]
+  ring
 
 /-- **The block character is a cosine product** (open leaf, believed 99%):
 `|ρ_L(ξ)| = Π_{L ≤ p < L+10} |cos(2πξ/3^{p+1})|`, since
