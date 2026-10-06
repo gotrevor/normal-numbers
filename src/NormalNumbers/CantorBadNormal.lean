@@ -4954,7 +4954,14 @@ cancellation needed is among the obstacles inside one coarse cylinder `w_{s_n}`,
 along the uniform completions, with the exact weights `1/|A(v)|`.  `ObstaclePairCorrelation` is a
 global, unweighted pair statement; passing from it to this node needs Cauchy–Schwarz over the
 cylinders, a smoothing of the cylinder boundaries (pairs within `3^{−S}` that straddle two
-cylinders), and the passage from the `resLaw` law of `w_{s_n}` to `μ_K` (`PairCorrToCylinder`). -/
+cylinders), and the passage from the `resLaw` law of `w_{s_n}` to `μ_K` (`PairCorrToCylinder`).
+
+Probe (`scripts/cantorbad_deadmix.py`, law `first` = resLaw prefix + uniform continuation, i.e.
+`obstMix / E|D_t|`; 300 × 200, `t = 8`, lag `g = t − s`): `R = .087, .081, .077` (b = 2) against the
+full `deadMix` ratio `.092, .080, .082`; the control `b = 3` gives `.090, .080, .078`.  All are at the
+Monte Carlo floor `.071`, and the `b = 3` control does not separate at these lags, so the probe
+is inconclusive (no working control): it neither supports nor refutes this node, and it does not
+decide whether the defect part is lower order (first and full differ by less than the noise). -/
 def CylObstacleCancellation (b : ℕ) : Prop :=
   ∀ h : ℤ, h ≠ 0 → ∀ C : ℕ, ∃ (K : ℝ) (W : ℕ → ℝ), Summable (fun j => W (sched j)) ∧
     ∀ N : ℕ, 1 ≤ N →
