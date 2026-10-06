@@ -210,7 +210,49 @@ def single_combo_trivial(channels, witnesses):
     return all(w in dirs for w in witnesses)
 
 
+def block_verdict(g, k, dirs, cmax=3):
+    """Product-block test: for EVERY assignment of one avoided length-k word per channel,
+    classify the family.  Returns ('universal'|'relative'|'fail', witnesses, first_failure).
+    'relative' = every assignment collapses, dies or is degenerate, and at least one is
+    degenerate: then for every pair off the witness lines, some channel shows ALL length-k
+    words infinitely often (transversal lemma, as for C2)."""
+    words = [list(w) for w in itertools.product(range(g), repeat=k)]
+    wit = set()
+    for assign in itertools.product(range(len(words)), repeat=len(dirs)):
+        chans = [(a, b, words[i]) for (a, b), i in zip(dirs, assign)]
+        verdict, detail = classify(g, chans, cmax)
+        if verdict == "open":
+            return "fail", None, [words[i] for i in assign]
+        if verdict == "indep":
+            wit.update(detail)
+    return ("relative" if wit else "universal"), sorted(wit), None
+
+
+def block_search(g, k, cmax_dir, sizes):
+    pool = [(a, b) for a in range(-cmax_dir, cmax_dir + 1)
+            for b in range(-cmax_dir, cmax_dir + 1)
+            if max(a, 0) + max(b, 0) >= 1]
+    tally = {}
+    for m in sizes:
+        for dirs in itertools.combinations(pool, m):
+            v, wit, fail = block_verdict(g, k, list(dirs))
+            tally[(m, v)] = tally.get((m, v), 0) + 1
+            if v != "fail":
+                print(f"{v.upper()} m={m} {dirs} witnesses={wit}", flush=True)
+    print("tally", tally)
+
+
 def main():
+    if sys.argv[1] == "block":
+        g, k = int(sys.argv[2]), int(sys.argv[3])
+        dirs = [tuple(int(c) for c in t.split(",")) for t in sys.argv[4].split()]
+        print(block_verdict(g, k, dirs))
+        return
+    if sys.argv[1] == "blocksearch":
+        g, k, cm = int(sys.argv[2]), int(sys.argv[3]), int(sys.argv[4])
+        sizes = [int(s) for s in sys.argv[5].split(",")]
+        block_search(g, k, cm, sizes)
+        return
     if sys.argv[1] == "check":
         g = int(sys.argv[2])
         print(classify(g, parse(sys.argv[3])))

@@ -43,3 +43,20 @@ def test_ternary_line_family():
     # Hand proof in IndependenceRelative.ternary_line: X avoids 2, Y avoids 1, Y - X avoids 2
     # forces the tails of Y and 2X to agree, i.e. 2X - Y rational.  Witness (2, -1).
     assert check(3, "1,0,2 0,1,1 -1,1,2") == "('indep', [(2, -1)])"
+
+
+def block(g, k, dirs):
+    return subprocess.run([sys.executable, str(TOOL), "block", str(g), str(k), dirs],
+                          capture_output=True, text=True, check=True).stdout.strip()
+
+
+def test_block_two_eleven_is_a_block():
+    # C2 (c2_product_block): {2X, 11X} is a ternary all-digits block for irrational X.  In two
+    # tracks Y is free, so the only witness line is X rational, direction (1, 0).
+    assert block(3, 1, "2,0 11,0") == "('relative', [(1, 0)], None)"
+
+
+def test_block_one_two_fails():
+    # Liouville cover (IsProductBlock.liouville_cover) at B = 1: some multiplier needs both
+    # nonzero ternary digits, so m >= 12_3 = 5; {1, 2} cannot be a block.
+    assert block(3, 1, "1,0 2,0").startswith("('fail'")

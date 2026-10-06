@@ -14,6 +14,7 @@ import NormalNumbers.LinearFormsScalesStretch
 import NormalNumbers.EntropyProfiles
 import NormalNumbers.CantorExactExponentStretch
 import NormalNumbers.QSpanNormal
+import NormalNumbers.IndependenceRelative
 import NormalNumbers.Barriers
 
 /-!
@@ -42,6 +43,8 @@ def mazeRows : List RowInfo :=
 
 /-- Each linked row and the declarations it rests on. -/
 def mazeLinks : List Link := [
+  ⟨"Independence-relative product blocks",
+   [``IndependenceRelative.not_isRelativeBlock_small, ``IndependenceRelative.ternary_line], []⟩,
   ⟨"pair-universal mechanism for a normal element of a Q-span",
    [``QSpan.exists_pair_qSpan_not_normal, ``QSpan.qSpanNormal_sqrt_two_sqrt_three,
     ``Barriers.liouville_pair_qSpan], []⟩,
@@ -242,7 +245,7 @@ def mazeLegacy : List String := [
   "Diophantine good-denominator detour for the tail cell",
   "route B's unweighted cover of the state-dependent target"]
 
-/-- info: maze audit: 156 rows, 49 cite declarations, 107 legacy (prose only) -/
+/-- info: maze audit: 157 rows, 50 cite declarations, 107 legacy (prose only) -/
 #guard_msgs in
 #maze_audit mazeRows, mazeLinks, mazeLegacy
 

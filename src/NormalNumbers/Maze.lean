@@ -1425,7 +1425,12 @@ def register : List Hall := [
    "Transfer He-Liao 2602.01307 Cor. 6.5 (local equidistribution of rationals against Cantor-measure cylinders) to the forced-run measure, to push the exact-exponent triple below mu0 = 2 + log2 3",
    .wall, .cited,
    "The transfer to branches is fine, but the trivial count only fails in run-entering windows, where the event concerns the discrete endpoint P/3^b below the cylinder scale (endpoint_sep); thickening to 3^-b costs 3^(2m-b) >= 1 for mu0 <= 3 (thickening_cost_ge_one), and Cor. 6.5's main term needs alpha >= tau - 2 > 1 there while its alpha - 1 is small and non-explicit. A Bugeaud-Durand-strength measure count would reach at best mu0 > 3. REOPEN IF: EndpointRationalCount",
-   "CantorExactExponentStretch.lean: endpoint_sep, thickening_cost_ge_one, Literature.HeLiao2026Cor65, EndpointRationalCount; CantorExactExponent.bcTerm_red_mu_three; docs/CANTOR-EXACT-EXPONENT-AUDIT-2026-10-04.md", "2026-10-05"⟩
+   "CantorExactExponentStretch.lean: endpoint_sep, thickening_cost_ge_one, Literature.HeLiao2026Cor65, EndpointRationalCount; CantorExactExponent.bcTerm_red_mu_three; docs/CANTOR-EXACT-EXPONENT-AUDIT-2026-10-04.md", "2026-10-05"⟩,
+  ⟨"Independence-relative product blocks",
+   "Use independence-relative certificates (fail only on rational lines) to get a small two-track all-digits block: for every Q-independent pair, some combination aX + bY with small (a, b) has every ternary digit i.o., beating the single-track {2, 11}",
+   .refuted, .frozen,
+   "Every small direction set has an avoided-digit assignment whose live automaton keeps a component not certified degenerate. Product-block counterexamples vary X and Y separately (two-dimensional); a relative certificate only discards one-dimensional failure loci, so the gain is confined to tightly coupled single-word families like ternary_line. Binary 2-word blocks (|coef| <= 3, up to 3 directions) also all fail. REOPEN IF: a complete degeneracy test, or larger coefficients",
+   "IndependenceRelative.lean: not_isRelativeBlock_small (sorry, 65%), IsRelativeBlock, ternary_line; experiments/independence_relative.py blocksearch", "2026-10-05"⟩
 ]
 
 /-- Rows whose verdict is machine-checked in this build. -/

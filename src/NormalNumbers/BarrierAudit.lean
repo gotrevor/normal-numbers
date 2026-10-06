@@ -122,6 +122,9 @@ def cruxLinks : List CruxLink := [
 
 /-- Open `sorry`s that are not cruxes, and why no barrier applies. -/
 def waivers : List Waiver := [
+  ⟨``IndependenceRelative.not_isRelativeBlock_small,
+   "a finite computation stated as a sibling: the blocksearch probe's non-certification over \
+    small direction sets; it closes a route, no open crux uses it"⟩,
   ⟨``IndependenceRelative.ternary_line,
    "a leaf: a borrow-propagation case split with a full English proof in the docstring; the \
     independence-relative probe agrees (witness 2X - Y)"⟩,

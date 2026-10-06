@@ -81,4 +81,27 @@ theorem pi_e_disjunction :
     obtain ⟨q, hq⟩ := h
     exact ⟨q, hq.symm⟩
 
+/-- `S` is a **relative product block** in base `g`: for every pair with `1, X, Y` linearly
+independent over `ℚ`, some combination `aX + bY`, `(a, b) ∈ S`, has every digit infinitely
+often.  The two-track, independence-relative analogue of `Adder.IsProductBlock` (C2's `{2, 11}`
+is a single-track block). -/
+def IsRelativeBlock (g : ℕ) (S : List (ℤ × ℤ)) : Prop :=
+  ∀ X Y : ℝ, (∀ c₀ c₁ c₂ : ℚ, (c₁ : ℝ) * X + c₂ * Y = c₀ → c₁ = 0 ∧ c₂ = 0) →
+    ∃ p ∈ S, ∀ d < g, DigitIO g ((p.1 : ℝ) * X + p.2 * Y) d
+
+/-- **No small relative block in base 3.**  Confidence 65%.
+
+Evidence (`independence_relative.py blocksearch`, 2026-10-05): every direction set with at most
+four directions and coefficients in `[-2, 2]` (2500 sets), at most three with coefficients in
+`[-3, 3]` (5984), and every pair with coefficients in `[-6, 6]` (7140) has an assignment of
+avoided digits whose live automaton keeps a component not certified degenerate.  Negating a
+direction complements digits, so all-nonpositive directions add nothing.  Why it is only 65%: a
+live component is a set of real avoiding pairs, but "not certified degenerate" is a failure of a
+sound, incomplete phase test with witness coefficients up to 3, not a proof of positive
+dimension off every line.  Reading: product-block counterexamples are two-dimensional (X and Y
+vary separately), and a relative certificate only discards one-dimensional failure loci. -/
+theorem not_isRelativeBlock_small (S : List (ℤ × ℤ)) (hlen : S.length ≤ 4)
+    (hco : ∀ p ∈ S, |p.1| ≤ 2 ∧ |p.2| ≤ 2) : ¬ IsRelativeBlock 3 S := by
+  sorry
+
 end NormalNumbers.IndependenceRelative
