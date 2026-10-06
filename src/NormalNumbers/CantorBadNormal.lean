@@ -4817,7 +4817,10 @@ the conditioning prefix.  This is input (ii) of the bootstrap (`gMix_le`, `norm_
 with it, each link of the defect expansion costs about `2κ/1024` on average instead of the worst
 case `2·488/1024`.  (The bootstrap also needs this weighted by the iterated first-order factors;
 that weighted form is not stated yet.)  Evidence: the lap-6 probe saw about 200,000 dead children in
-about 156,000 `resLaw` stages (s ≥ 4; bases 2, 5, 7), i.e. roughly 1.3 per stage on average.  Heuristic: obstacles at
+about 156,000 `resLaw` stages (s ≥ 4; bases 2, 5, 7), i.e. roughly 1.3 per stage on average.  `scripts/cantorbad_deadcount.py` (1500 paths × 25 stages):
+stage 0 has 22 dead children (small denominators), stage 1 averages 3.55, stages 2–24 average
+1.21–1.33 each; the largest count seen after stage 0 is 9 (once in 36000).  So `R = 2`, `κ ≈ 1.3`
+on average; the uniform-in-`w` form is the unverified part.  Heuristic: obstacles at
 length `L` within a cylinder of length `L_s ≪ L` number about `c₀·3^{(L−L_s)·log₃2}` children's worth,
 and distinct obstacles are separated by `≥ 1/(qq') ≈ 3^{−L}`, so no prefix keeps a large dead count. -/
 def AvgDeadDensity : Prop :=
