@@ -3005,3 +3005,9 @@ Next: (1) prove the reduction (needs pair-averaged partial Cantor products, Cass
 * (lap 7, later) `condDiff_secondMoment_le` PROVED (`integral_orth` on stage atoms,
   `norm_integral_cross` geometric decay `4π|h|3^{C+10} bⁿ/bᵐ`, induction on `N`).  Martingale part closed.
   Next: `cesaro_contChar_small` (Weyl via `WeylCriterion.cgood_real`, `CantorLiouville.charFun_real`).
+* (lap 7, later) `cesaro_contChar_small` PROVED: Weyl for `nβ + c` (`tendsto_fourierMean_linear`,
+  `irrational_logb_three`), circle function by `AddCircle.liftIco` of `v ↦ G_C(3^{10v})`,
+  `∫₀¹ G_C → 0` by dominated convergence (`tendsto_GC`: off a countable set infinitely many factors
+  `≤ cos(π/10)`, via the tripling argument `int_of_close`).  Both standard leaves now closed.
+  Only open on-path obligation: crux `localBiasRate_resLaw` (line ~2975).  Off-path: `midStages`,
+  `fourierPairRate_descent_of_deadRateDecay`.

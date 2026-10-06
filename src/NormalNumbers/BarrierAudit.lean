@@ -213,9 +213,6 @@ def waivers : List Waiver := [
   ⟨``CantorExactExponentStretch.exists_computable_mem_cantorSet_irrExponent_normal_all,
    "assembly: the main file's wiring with ae_not_liouvilleWith_all (the crux) in place of \
     ae_not_liouvilleWith; no mechanism of its own"⟩,
-  ⟨``CantorBadNormal.cesaro_contChar_small,
-   "a leaf: Weyl equidistribution of n log₃ b (irrationality only) and ∫₀¹ Π cos²(2π3ᵏy) = 2^{−C}; \
-    standard Cantor Fourier analysis, the b = 3 failure is carried by the crux link"⟩,
   ⟨``FiniteState.isFNormal_delayEnum_of_normal,
    "a leaf: O(1) cost of composing with the delay transducer and its finite-state right inverse"⟩]
 

@@ -3279,7 +3279,387 @@ theorem ae_cesaro_condDiff {b : ℕ} (hb : 2 ≤ b) (h : ℤ) (C : ℕ) :
     have hN0 : (0 : ℝ) < N := by exact_mod_cast hN
     rw [Real.rpow_neg_one]; field_simp
 
-/-- **The Cantor-continuation part is small on average** (open; believed 97%, standard).  For
+
+
+/-! ### The Cantor-continuation part: Weyl along `n log₃ b` and a vanishing Cantor product -/
+
+/-- Tripling the remainder `t − round t` when both remainders are below `1/10`. -/
+theorem three_mul_rem {t : ℝ} (h1 : |t - round t| < 1 / 10) (h2 : |3 * t - round (3 * t)| < 1 / 10) :
+    3 * t - round (3 * t) = 3 * (t - round t) := by
+  have hint : (3 * t - round (3 * t)) - 3 * (t - round t) = ((3 * round t - round (3 * t) : ℤ) : ℝ) := by
+    push_cast; ring
+  have hlt : |((3 * round t - round (3 * t) : ℤ) : ℝ)| < 1 := by
+    rw [← hint]
+    calc _ ≤ |3 * t - round (3 * t)| + |3 * (t - round t)| := abs_sub _ _
+      _ < 1 := by rw [abs_mul]; norm_num; linarith
+  have : (3 * round t - round (3 * t) : ℤ) = 0 := by
+    have := hlt; rw [← Int.cast_abs] at this
+    have : |3 * round t - round (3 * t)| < 1 := by exact_mod_cast this
+    rw [abs_lt] at this; omega
+  rw [this, Int.cast_zero, sub_eq_zero] at hint
+  exact hint
+
+/-- If `3^k y` stays within `1/10` of an integer for all `k ≥ K`, then `3^K y` is an integer. -/
+theorem int_of_close {y : ℝ} {K : ℕ}
+    (h : ∀ k, K ≤ k → |3 ^ k * y - round (3 ^ k * y)| < 1 / 10) :
+    3 ^ K * y = round (3 ^ K * y) := by
+  set r : ℕ → ℝ := fun j => 3 ^ (K + j) * y - round (3 ^ (K + j) * y)
+  have hr : ∀ j, r j = 3 ^ j * r 0 := by
+    intro j
+    induction j with
+    | zero => simp
+    | succ j ih =>
+      have e : (3 : ℝ) ^ (K + (j + 1)) * y = 3 * (3 ^ (K + j) * y) := by ring
+      have := three_mul_rem (h (K + j) (by omega)) (by rw [← e]; exact h _ (by omega))
+      simp only [r] at ih ⊢
+      rw [e, this, ih]; ring
+  have hb : ∀ j, |r 0| * 3 ^ j < 1 / 10 := by
+    intro j
+    have := h (K + j) (by omega)
+    have e := hr j
+    simp only [r] at e this
+    rw [e, abs_mul, abs_of_pos (by positivity)] at this
+    simpa [r, mul_comm] using this
+  by_contra hne
+  have hpos : 0 < |r 0| := by
+    simp only [r, add_zero]; exact abs_pos.2 (sub_ne_zero.2 hne)
+  obtain ⟨j, hj⟩ := pow_unbounded_of_one_lt (1 / 10 / |r 0|) (by norm_num : (1 : ℝ) < 3)
+  have := hb j
+  rw [div_lt_iff₀ hpos] at hj
+  linarith
+
+/-- A factor `|cos(2πx)|` above `cos(π/10)` forces `2x` within `1/10` of an integer. -/
+theorem close_of_cos {x : ℝ} (h : Real.cos (Real.pi / 10) < |Real.cos (2 * Real.pi * x)|) :
+    |2 * x - round (2 * x)| < 1 / 10 := by
+  set t := 2 * x
+  set r := t - round t
+  have hr : |r| ≤ 1 / 2 := abs_sub_round t
+  have hc : |Real.cos (2 * Real.pi * x)| = Real.cos (Real.pi * |r|) := by
+    have : 2 * Real.pi * x = Real.pi * r + (round t : ℤ) * Real.pi := by simp only [r, t]; ring
+    rw [this, Real.cos_add_int_mul_pi, abs_mul, show |((-1 : ℝ)) ^ round t| = 1 by simp, one_mul]
+    rw [show Real.pi * |r| = |Real.pi * r| by rw [abs_mul, abs_of_pos Real.pi_pos], Real.cos_abs]
+    refine abs_of_nonneg (Real.cos_nonneg_of_mem_Icc ⟨?_, ?_⟩)
+    · have := neg_abs_le r; nlinarith [Real.pi_pos]
+    · have := le_abs_self r; nlinarith [Real.pi_pos]
+  rw [hc] at h
+  by_contra hge
+  push Not at hge
+  have := Real.cos_le_cos_of_nonneg_of_le_pi (x := Real.pi / 10) (y := Real.pi * |r|)
+    (by positivity) (by nlinarith [Real.pi_pos]) (by nlinarith [Real.pi_pos])
+  linarith
+
+/-- The Cantor product `Π_{k<C} |cos(2π h 3^k Y)|`. -/
+noncomputable def GC (h : ℤ) (C : ℕ) (Y : ℝ) : ℝ := ∏ k ∈ Finset.range C, |Real.cos (2 * Real.pi * (h * 3 ^ k * Y))|
+
+theorem GC_nonneg (h : ℤ) (C : ℕ) (Y : ℝ) : 0 ≤ GC h C Y := Finset.prod_nonneg fun _ _ => abs_nonneg _
+
+theorem GC_le_one (h : ℤ) (C : ℕ) (Y : ℝ) : GC h C Y ≤ 1 :=
+  Finset.prod_le_one (fun _ _ => abs_nonneg _) fun _ _ => Real.abs_cos_le_one _
+
+theorem tendsto_GC {h : ℤ} {Y : ℝ} (hY : ∀ K : ℕ, (2 * h * 3 ^ K * Y : ℝ) ≠ round (2 * h * 3 ^ K * Y)) :
+    Tendsto (fun C => GC h C Y) atTop (𝓝 0) := by
+  set θ := Real.cos (Real.pi / 10)
+  have hθ0 : 0 ≤ θ := Real.cos_nonneg_of_mem_Icc ⟨by linarith [Real.pi_pos], by linarith [Real.pi_pos]⟩
+  have hθ1 : θ < 1 := by
+    rw [← Real.cos_zero]
+    exact Real.cos_lt_cos_of_nonneg_of_le_pi le_rfl (by linarith [Real.pi_pos]) (by positivity)
+  -- infinitely many small factors
+  have hbad : ∀ K : ℕ, ∃ k, K ≤ k ∧ |Real.cos (2 * Real.pi * (h * 3 ^ k * Y))| ≤ θ := by
+    intro K
+    by_contra hcon
+    push Not at hcon
+    apply hY K
+    have := int_of_close (y := 2 * h * Y) (K := K) fun k hk => by
+      have := close_of_cos (hcon k hk)
+      rwa [show 2 * ((h : ℝ) * 3 ^ k * Y) = 3 ^ k * (2 * h * Y) by ring] at this
+    rwa [show (3 : ℝ) ^ K * (2 * h * Y) = 2 * h * 3 ^ K * Y by ring] at this
+  have hstep : ∀ j : ℕ, ∃ Cj, ∀ C, Cj ≤ C → GC h C Y ≤ θ ^ j := by
+    intro j
+    induction j with
+    | zero => exact ⟨0, fun C _ => by simpa using GC_le_one h C Y⟩
+    | succ j ih =>
+      obtain ⟨Cj, hCj⟩ := ih
+      obtain ⟨k, hk, hkθ⟩ := hbad Cj
+      refine ⟨k + 1, fun C hC => ?_⟩
+      have hsplit := Finset.prod_range_mul_prod_Ico
+        (fun i => |Real.cos (2 * Real.pi * (h * 3 ^ i * Y))|) (show Cj ≤ C by omega)
+      have hmem : k ∈ Finset.Ico Cj C := Finset.mem_Ico.2 ⟨hk, by omega⟩
+      have hIco : ∏ i ∈ Finset.Ico Cj C, |Real.cos (2 * Real.pi * (h * 3 ^ i * Y))| ≤ θ := by
+        rw [← Finset.mul_prod_erase _ _ hmem]
+        have : ∏ i ∈ (Finset.Ico Cj C).erase k, |Real.cos (2 * Real.pi * (h * 3 ^ i * Y))| ≤ 1 :=
+          Finset.prod_le_one (fun _ _ => abs_nonneg _) fun _ _ => Real.abs_cos_le_one _
+        have h0 : 0 ≤ ∏ i ∈ (Finset.Ico Cj C).erase k, |Real.cos (2 * Real.pi * (h * 3 ^ i * Y))| :=
+          Finset.prod_nonneg fun _ _ => abs_nonneg _
+        nlinarith [abs_nonneg (Real.cos (2 * Real.pi * (h * 3 ^ k * Y)))]
+      have hG : GC h C Y = GC h Cj Y * ∏ i ∈ Finset.Ico Cj C,
+          |Real.cos (2 * Real.pi * (h * 3 ^ i * Y))| := by rw [GC, GC, hsplit]
+      rw [hG, pow_succ]
+      have h1 := hCj Cj le_rfl
+      have h2 : 0 ≤ ∏ i ∈ Finset.Ico Cj C, |Real.cos (2 * Real.pi * (h * 3 ^ i * Y))| :=
+        Finset.prod_nonneg fun _ _ => abs_nonneg _
+      exact mul_le_mul h1 hIco h2 (pow_nonneg hθ0 _)
+  rw [Metric.tendsto_atTop]
+  intro ε hε
+  obtain ⟨j, hj⟩ := exists_pow_lt_of_lt_one hε hθ1
+  obtain ⟨Cj, hCj⟩ := hstep j
+  refine ⟨Cj, fun C hC => ?_⟩
+  rw [Real.dist_eq, sub_zero, abs_of_nonneg (GC_nonneg h C Y)]
+  exact lt_of_le_of_lt (hCj C hC) hj
+
+
+theorem continuous_GC (h : ℤ) (C : ℕ) : Continuous (GC h C) := by
+  unfold GC; fun_prop
+
+/-- The exceptional set is countable. -/
+theorem countable_exc {h : ℤ} (hh : h ≠ 0) :
+    {v : ℝ | ∃ K : ℕ, (2 * h * 3 ^ K * (3 : ℝ) ^ (10 * v) : ℝ) =
+      round (2 * h * 3 ^ K * (3 : ℝ) ^ (10 * v))}.Countable := by
+  have : {v : ℝ | ∃ K : ℕ, (2 * h * 3 ^ K * (3 : ℝ) ^ (10 * v) : ℝ) =
+      round (2 * h * 3 ^ K * (3 : ℝ) ^ (10 * v))} ⊆
+      ⋃ K : ℕ, ⋃ m : ℤ, {v : ℝ | (2 * h * 3 ^ K * (3 : ℝ) ^ (10 * v) : ℝ) = m} := by
+    rintro v ⟨K, hK⟩
+    exact Set.mem_iUnion.2 ⟨K, Set.mem_iUnion.2 ⟨_, hK⟩⟩
+  refine Set.Countable.mono this (Set.countable_iUnion fun K => Set.countable_iUnion fun m => ?_)
+  refine Set.Subsingleton.countable fun v₁ h₁ v₂ h₂ => ?_
+  simp only [Set.mem_setOf_eq] at h₁ h₂
+  have hc : (2 * h * 3 ^ K : ℝ) ≠ 0 := by
+    have : (h : ℝ) ≠ 0 := by exact_mod_cast hh
+    positivity
+  have e : (3 : ℝ) ^ (10 * v₁) = (3 : ℝ) ^ (10 * v₂) := by
+    have := h₁.trans h₂.symm
+    rwa [mul_right_inj' hc] at this
+  have := congrArg (Real.logb 3) e
+  rw [Real.logb_rpow (by norm_num) (by norm_num), Real.logb_rpow (by norm_num) (by norm_num)] at this
+  linarith
+
+/-- The integral of the Cantor product over one period tends to zero. -/
+theorem tendsto_integral_GC {h : ℤ} (hh : h ≠ 0) :
+    Tendsto (fun C => ∫ v in (0 : ℝ)..1, GC h C ((3 : ℝ) ^ (10 * v))) atTop (𝓝 0) := by
+  have hcont : ∀ C, Continuous fun v : ℝ => GC h C ((3 : ℝ) ^ (10 * v)) := fun C =>
+    (continuous_GC h C).comp ((Real.continuous_const_rpow (by norm_num : (3:ℝ) ≠ 0)).comp
+      (continuous_const.mul continuous_id))
+  have := intervalIntegral.tendsto_integral_filter_of_dominated_convergence (μ := volume)
+    (a := 0) (b := 1) (l := atTop) (F := fun C v => GC h C ((3 : ℝ) ^ (10 * v))) (f := fun _ => 0)
+    (fun _ => 1) (Eventually.of_forall fun C => (hcont C).aestronglyMeasurable)
+    (Eventually.of_forall fun C => Eventually.of_forall fun v _ => by
+      rw [Real.norm_of_nonneg (GC_nonneg _ _ _)]; exact GC_le_one _ _ _)
+    intervalIntegrable_const ?_
+  · simpa using this
+  have hnull := (countable_exc hh).measure_zero volume
+  rw [ae_iff]
+  refine measure_mono_null (fun v hv => ?_) hnull
+  simp only [Set.mem_setOf_eq] at hv ⊢
+  by_contra hcon
+  push Not at hcon
+  exact hv fun _ => tendsto_GC hcon
+
+
+theorem irrational_logb_three {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) : Irrational (Real.logb 3 b) := by
+  rintro ⟨q, hq⟩
+  have hb1 : (1 : ℝ) < b := by exact_mod_cast (by omega : 1 < b)
+  have hpos : 0 < Real.logb 3 b := Real.logb_pos (by norm_num) hb1
+  have hnum : 0 < q.num := Rat.num_pos.2 (by rw [← hq] at hpos; exact_mod_cast hpos)
+  have hmul : (q : ℝ) * q.den = q.num := by exact_mod_cast Rat.mul_den_eq_num q
+  have key : (b : ℝ) ^ q.den = 3 ^ q.num.toNat := by
+    have e1 : (b : ℝ) = (3 : ℝ) ^ (q : ℝ) := by
+      rw [hq, Real.rpow_logb (by norm_num) (by norm_num) (by linarith)]
+    rw [e1, ← Real.rpow_natCast, ← Real.rpow_mul (by norm_num), hmul, ← Real.rpow_natCast]
+    congr 1
+    have : ((q.num.toNat : ℤ) : ℝ) = (q.num : ℝ) := by
+      exact_mod_cast Int.toNat_of_nonneg hnum.le
+    rw [← this]; norm_cast
+  have kn : b ^ q.den = 3 ^ q.num.toNat := by exact_mod_cast key
+  have h3d : 3 ∣ b ^ q.den := by
+    rw [kn]; exact dvd_pow_self 3 (by omega)
+  exact h3 (Nat.prime_three.dvd_of_dvd_pow h3d)
+
+theorem tendsto_fourierMean_linear {β : ℝ} (hβ : Irrational β) (c : ℝ) (k : ℤ) (hk : k ≠ 0) :
+    Tendsto (NormalNumbers.fourierMean (fun n => n * β + c) k) atTop (𝓝 0) := by
+  set z : ℂ := Complex.exp (2 * Real.pi * Complex.I * k * β)
+  set a : ℂ := Complex.exp (2 * Real.pi * Complex.I * k * c)
+  have hz1 : z ≠ 1 := by
+    intro hz
+    obtain ⟨n, hn⟩ := Complex.exp_eq_one_iff.1 hz
+    have hI : (2 * Real.pi * Complex.I : ℂ) ≠ 0 := by
+      simp [Real.pi_ne_zero, Complex.I_ne_zero]
+    have : ((k * β : ℝ) : ℂ) = (n : ℂ) := by
+      have := hn; push_cast
+      apply mul_left_cancel₀ hI
+      linear_combination this
+    have : (k : ℝ) * β = n := by exact_mod_cast this
+    exact (hβ.intCast_mul hk).ne_int n this
+  have hterm : ∀ n : ℕ, Complex.exp (2 * Real.pi * Complex.I * (k : ℂ) * (((n : ℝ) * β + c : ℝ) : ℂ))
+      = a * z ^ n := by
+    intro n
+    rw [← Complex.exp_nat_mul, ← Complex.exp_add]; congr 1; push_cast; ring
+  have hnz : ‖z‖ = 1 := by
+    rw [Complex.norm_exp]; simp
+  have hna : ‖a‖ = 1 := by
+    rw [Complex.norm_exp]; simp
+  have hbound : ∀ N : ℕ, ‖NormalNumbers.fourierMean (fun n => n * β + c) k N‖ ≤
+      2 / ‖z - 1‖ * (1 / (N : ℝ)) := by
+    intro N
+    unfold NormalNumbers.fourierMean
+    simp_rw [hterm]
+    rw [← Finset.mul_sum, geom_sum_eq hz1, norm_div, norm_mul, hna, one_mul, norm_div,
+      Complex.norm_natCast]
+    have hn : ‖z ^ N - 1‖ ≤ 2 := by
+      refine (norm_sub_le _ _).trans ?_; rw [norm_pow, hnz]; norm_num
+    have hz0 : 0 < ‖z - 1‖ := norm_pos_iff.2 (sub_ne_zero.2 hz1)
+    rcases Nat.eq_zero_or_pos N with h0 | hN
+    · simp [h0]
+    · have : (0 : ℝ) < N := by exact_mod_cast hN
+      rw [div_div, div_le_iff₀ (by positivity)]
+      calc ‖z ^ N - 1‖ ≤ 2 := hn
+        _ = _ := by field_simp
+  rw [tendsto_zero_iff_norm_tendsto_zero]
+  refine squeeze_zero (fun _ => norm_nonneg _) hbound ?_
+  simpa using (tendsto_one_div_atTop_nhds_zero_nat (𝕜 := ℝ)).const_mul (2 / ‖z - 1‖)
+
+
+theorem norm_muK_le_GC {b : ℕ} (hb : 2 ≤ b) (h : ℤ) (C n : ℕ) (hC : C ≤ Nat.log 3 (b ^ n)) :
+    ‖muK (h * (b : ℝ) ^ n / 3 ^ (10 * stageOf b C n))‖ ≤
+      GC h C ((3 : ℝ) ^ (10 * Int.fract (n * (Real.logb 3 b / 10) + -(C / 10 : ℝ)))) := by
+  set L := Nat.log 3 (b ^ n)
+  set s := stageOf b C n
+  set x : ℝ := n * Real.logb 3 b
+  set u : ℝ := n * (Real.logb 3 b / 10) + -(C / 10 : ℝ)
+  have hb0 : (0 : ℝ) < b := by exact_mod_cast (by omega : 0 < b)
+  have hxL : x = Real.logb 3 ((b ^ n : ℕ) : ℝ) := by
+    simp only [x]; push_cast; rw [Real.logb_pow]
+  have hL : (⌊x⌋₊ : ℕ) = L := by rw [hxL]; exact_mod_cast Real.natFloor_logb_natCast 3 (b ^ n)
+  have hx0 : 0 ≤ x := by
+    have : 0 ≤ Real.logb 3 b := Real.logb_nonneg (by norm_num) (by exact_mod_cast (by omega : 1 ≤ b))
+    positivity
+  have hLx : (L : ℝ) ≤ x := by rw [← hL]; exact Nat.floor_le hx0
+  have hxL1 : x < L + 1 := by rw [← hL]; exact Nat.lt_floor_add_one x
+  have hs1 : 10 * s ≤ L - C := Nat.mul_div_le _ _
+  have hs2 : L - C < 10 * s + 10 := by simp only [s, stageOf, L]; omega
+  have hs1' : (10 * s : ℝ) + C ≤ L := by
+    have : 10 * s + C ≤ L := by omega
+    exact_mod_cast this
+  have hs2' : (L : ℝ) + 1 ≤ 10 * s + 10 + C := by
+    have : L + 1 ≤ 10 * s + 10 + C := by omega
+    exact_mod_cast this
+  have hux : u = (x - C) / 10 := by simp only [u, x]; ring
+  have hfl : ⌊u⌋ = (s : ℤ) := by
+    rw [Int.floor_eq_iff]; push_cast
+    rw [hux]
+    constructor <;> linarith
+  have hfr : 10 * Int.fract u = x - C - 10 * s := by
+    rw [Int.fract, hfl]; push_cast; simp only [u, x]; ring
+  set Y : ℝ := (3 : ℝ) ^ (10 * Int.fract u)
+  have hbn : (b : ℝ) ^ n = 3 ^ C * 3 ^ (10 * s) * Y := by
+    have e1 : (b : ℝ) ^ n = (3 : ℝ) ^ x := by
+      simp only [x]
+      rw [mul_comm, Real.rpow_mul (by norm_num), Real.rpow_logb (by norm_num) (by norm_num) hb0,
+        Real.rpow_natCast]
+    rw [e1, show x = (C : ℝ) + (10 * s : ℕ) + 10 * Int.fract u by rw [hfr]; push_cast; ring,
+      Real.rpow_add (by norm_num), Real.rpow_add (by norm_num), Real.rpow_natCast,
+      Real.rpow_natCast]
+  have hξ : (h : ℝ) * (b : ℝ) ^ n / 3 ^ (10 * s) = h * 3 ^ C * Y := by
+    rw [hbn]; field_simp
+  rw [hξ]
+  have hc := NormalNumbers.CantorLiouville.charFun_real C (fun _ => true) (h * 3 ^ C * Y)
+  rw [Finset.filter_true_of_mem (fun _ _ => rfl)] at hc
+  refine le_of_le_of_eq hc ?_
+  unfold GC
+  rw [← Finset.prod_range_reflect]
+  refine Finset.prod_congr rfl fun k hk => ?_
+  have hk := Finset.mem_range.1 hk
+  congr 2
+  have e : (3 : ℝ) ^ C = 3 ^ (C - 1 - k + 1) * 3 ^ k := by rw [← pow_add]; congr 1; omega
+  rw [e]; field_simp
+
+theorem GC_int (h : ℤ) (C m : ℕ) : GC h C ((3 : ℝ) ^ (10 * (m : ℝ))) = 1 := by
+  unfold GC
+  refine Finset.prod_eq_one fun k _ => ?_
+  have e : (2 * Real.pi * ((h : ℝ) * 3 ^ k * (3 : ℝ) ^ (10 * (m : ℝ)))) =
+      ((h * 3 ^ k * 3 ^ (10 * m) : ℤ) : ℝ) * (2 * Real.pi) := by
+    rw [show (10 * (m : ℝ)) = ((10 * m : ℕ) : ℝ) by push_cast; ring, Real.rpow_natCast]
+    push_cast; ring
+  rw [e, Real.cos_int_mul_two_pi, abs_one]
+
+theorem le_log_of_two_mul {b : ℕ} (hb : 2 ≤ b) {C n : ℕ} (hn : 2 * C ≤ n) : C ≤ Nat.log 3 (b ^ n) := by
+  refine Nat.le_log_of_pow_le (by norm_num) ?_
+  calc 3 ^ C ≤ 4 ^ C := Nat.pow_le_pow_left (by norm_num) C
+    _ = 2 ^ (2 * C) := by rw [pow_mul]; norm_num
+    _ ≤ 2 ^ n := Nat.pow_le_pow_right (by norm_num) hn
+    _ ≤ b ^ n := Nat.pow_le_pow_left hb n
+
+/-- The proof of `cesaro_contChar_small`. -/
+theorem cesaro_contChar_small_aux {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) (h : ℤ) (hh : h ≠ 0) {ε : ℝ}
+    (hε : 0 < ε) : ∃ C : ℕ, ∀ᶠ N : ℕ in atTop,
+      (∑ n ∈ Finset.range N, ‖muK (h * (b : ℝ) ^ n / 3 ^ (10 * stageOf b C n))‖) / (N : ℝ) ≤ ε := by
+  obtain ⟨C, hC⟩ := ((tendsto_integral_GC hh).eventually (gt_mem_nhds (half_pos hε))).exists
+  refine ⟨C, ?_⟩
+  set β : ℝ := Real.logb 3 b / 10
+  set c : ℝ := -(C / 10 : ℝ)
+  set u : ℕ → ℝ := fun n => n * β + c
+  have hβ : Irrational β := by
+    simpa using (irrational_logb_three hb h3).div_natCast (m := 10) (by norm_num)
+  have hW : ∀ k : ℤ, k ≠ 0 → Tendsto (NormalNumbers.fourierMean u k) atTop (𝓝 0) :=
+    fun k hk => tendsto_fourierMean_linear hβ c k hk
+  set f : ℝ → ℝ := fun v => GC h C ((3 : ℝ) ^ (10 * v))
+  have hfc : Continuous f := (continuous_GC h C).comp
+    ((Real.continuous_const_rpow (by norm_num : (3:ℝ) ≠ 0)).comp (continuous_const.mul continuous_id))
+  have hf01 : f 0 = f (0 + 1) := by
+    simp only [f]
+    have h0 := GC_int h C 0
+    have h1 := GC_int h C 1
+    push_cast at h0 h1
+    rw [h0, zero_add, h1]
+  let g : C(AddCircle (1 : ℝ), ℝ) :=
+    ⟨AddCircle.liftIco 1 0 f, AddCircle.liftIco_continuous hf01 hfc.continuousOn⟩
+  have hg : ∀ y : ℝ, g (y : AddCircle (1 : ℝ)) = f (Int.fract y) := by
+    intro y
+    rw [← AddCircle.coe_fract]
+    show AddCircle.liftIco 1 0 f _ = _
+    rw [AddCircle.liftIco_coe_apply]
+    exact ⟨Int.fract_nonneg y, by rw [zero_add]; exact Int.fract_lt_one y⟩
+  have hint : ∫ x in (0 : ℝ)..1, g (x : AddCircle (1 : ℝ)) = ∫ x in (0 : ℝ)..1, f x := by
+    refine intervalIntegral.integral_congr fun x hx => ?_
+    rw [Set.uIcc_of_le zero_le_one] at hx
+    rw [hg]
+    rcases eq_or_lt_of_le hx.2 with h1 | h1
+    · rw [h1, Int.fract_one, hf01, zero_add]
+    · rw [Int.fract_eq_self.2 ⟨hx.1, h1⟩]
+  have hlim := NormalNumbers.cgood_real u hW g
+  rw [hint] at hlim
+  have hev := hlim.eventually (gt_mem_nhds hC)
+  have hg0 : ∀ y, 0 ≤ g y := fun y => by
+    obtain ⟨t, rfl⟩ := QuotientAddGroup.mk_surjective y
+    show 0 ≤ g ((t : ℝ) : AddCircle (1 : ℝ))
+    rw [hg]; exact GC_nonneg _ _ _
+  filter_upwards [hev, eventually_ge_atTop (max 1 ⌈4 * C / ε⌉₊)] with N hN hN2
+  have hN1 : (1 : ℝ) ≤ N := by exact_mod_cast le_of_max_le_left hN2
+  have hNC : 4 * C / ε ≤ N := (Nat.le_ceil _).trans (by exact_mod_cast le_of_max_le_right hN2)
+  have hterm : ∀ n ∈ Finset.range N, ‖muK (h * (b : ℝ) ^ n / 3 ^ (10 * stageOf b C n))‖ ≤
+      g ((u n : ℝ) : AddCircle (1 : ℝ)) + (if n < 2 * C then 1 else 0) := by
+    intro n _
+    split_ifs with hn
+    · have := hg0 ((u n : ℝ) : AddCircle (1 : ℝ))
+      linarith [norm_muK_le (h * (b : ℝ) ^ n / 3 ^ (10 * stageOf b C n))]
+    · rw [add_zero, hg]
+      exact norm_muK_le_GC hb h C n (le_log_of_two_mul hb (by omega))
+  have hcnt : ∑ n ∈ Finset.range N, (if n < 2 * C then (1 : ℝ) else 0) ≤ 2 * C := by
+    rw [Finset.sum_ite, Finset.sum_const_zero, add_zero, Finset.sum_const, nsmul_eq_mul, mul_one]
+    have : ((Finset.range N).filter (· < 2 * C)).card ≤ 2 * C := by
+      calc _ ≤ (Finset.range (2 * C)).card := Finset.card_le_card fun n hn => by
+            simp only [Finset.mem_filter, Finset.mem_range] at hn ⊢; exact hn.2
+        _ = 2 * C := Finset.card_range _
+    exact_mod_cast this
+  have hsum := (Finset.sum_le_sum hterm).trans_eq (Finset.sum_add_distrib)
+  have hN0 : (0 : ℝ) < N := by linarith
+  rw [div_le_iff₀ hN0]
+  have h1 : (∑ k ∈ Finset.range N, g ((u k : ℝ) : AddCircle (1 : ℝ))) < ε / 2 * N := by
+    have := hN; rwa [div_lt_iff₀ hN0] at this
+  have h2 : (2 * C : ℝ) ≤ ε / 2 * N := by
+    rw [div_le_iff₀ hε] at hNC; nlinarith
+  linarith
+
+
+/-- **The Cantor-continuation part is small on average** Proved (`cesaro_contChar_small_aux`).  For
 every `ε > 0` some conditioning depth `C` makes the Cesàro means of `|μ̂_K(hbⁿ / 3^{10 s_n})|`
 eventually at most `ε`.
 
@@ -3294,7 +3674,7 @@ and `log₃ b` is irrational for `3 ∤ b`, so `(1/N) Σ g_C(frac v_n) → ∫�
 theorem cesaro_contChar_small {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) (h : ℤ) (hh : h ≠ 0) {ε : ℝ}
     (hε : 0 < ε) : ∃ C : ℕ, ∀ᶠ N : ℕ in atTop,
       (∑ n ∈ Finset.range N, ‖muK (h * (b : ℝ) ^ n / 3 ^ (10 * stageOf b C n))‖) / (N : ℝ) ≤ ε := by
-  sorry
+  exact cesaro_contChar_small_aux hb h3 h hh hε
 
 /-- Weyl's criterion along the orbit `bᵏ x`.  Proved (the closing step of
 `CantorLiouvilleAll.ae_isNormal_of_secondMoment`). -/
