@@ -195,4 +195,309 @@ theorem charFun_realF (M : ℕ) : ∀ (free : ℕ → Bool) (ξ : ℝ),
       rw [this]
       exact hI'
 
+/-! ## The five-point bound -/
+
+theorem ee_pow (t : ℝ) (n : ℕ) : ee t ^ n = ee (n * t) := by
+  unfold ee
+  rw [← Complex.exp_nat_mul]; congr 1; push_cast; ring
+
+theorem ee_ne_one_of_not_dvd (k : ℤ) (hk : ¬ (5 : ℤ) ∣ k) : ee ((k : ℝ) / 5) ≠ 1 := by
+  intro h
+  unfold ee at h
+  obtain ⟨n, hn⟩ := Complex.exp_eq_one_iff.1 h
+  have hpi : (2 * Real.pi * Complex.I : ℂ) ≠ 0 := by
+    simp [Real.pi_ne_zero, Complex.I_ne_zero]
+  have h2 : ((k : ℝ) / 5 : ℂ) = n := by
+    have : 2 * Real.pi * Complex.I * (((k : ℝ) / 5 : ℝ) : ℂ) = 2 * Real.pi * Complex.I * n := by
+      rw [hn]; ring
+    exact_mod_cast mul_left_cancel₀ hpi this
+  have h3 : (k : ℂ) = ((5 * n : ℤ) : ℂ) := by
+    push_cast at h2 ⊢
+    field_simp at h2
+    linear_combination h2
+  exact hk ⟨n, by exact_mod_cast h3⟩
+
+/-- Five equally spaced characters sum to zero. -/
+theorem sum_five_ee (k : ℤ) (hk : ¬ (5 : ℤ) ∣ k) (x : ℝ) :
+    ∑ s ∈ Finset.range 5, ee (k * (x + s / 5)) = 0 := by
+  set ζ := ee ((k : ℝ) / 5)
+  have hs : ∀ s : ℕ, ee (k * (x + s / 5)) = ee (k * x) * ζ ^ s := by
+    intro s
+    rw [ee_pow, ← ee_add]; congr 1; ring
+  simp_rw [hs, ← Finset.mul_sum]
+  have h5 : ζ ^ 5 = 1 := by
+    rw [ee_pow]; push_cast
+    rw [show (5 : ℝ) * (k / 5) = ((k : ℤ) : ℝ) by ring, ee_int]
+  have hg := geom_sum_mul ζ 5
+  rw [h5, sub_self] at hg
+  have : ∑ i ∈ Finset.range 5, ζ ^ i = 0 :=
+    (mul_eq_zero.1 hg).resolve_right (sub_ne_zero.2 (ee_ne_one_of_not_dvd k hk))
+  rw [this, mul_zero]
+
+theorem phiF_sq_sum (x : ℝ) : ∑ s ∈ Finset.range 5, phiF (x + s / 5) ^ 2 = 5 / 4 := by
+  have key : ∀ t : ℝ, ((phiF t : ℝ) : ℂ) ^ 2 =
+      (1 / 16 : ℂ) * (4 + ee (1 * t) + ee (-1 * t) + ee (3 * t) + ee (-3 * t) + ee (4 * t) +
+        ee (-4 * t) + ee (2 * t) + ee (-2 * t) + ee (3 * t) + ee (-3 * t) + ee (1 * t) +
+        ee (-1 * t)) := by
+    intro t
+    rw [← Complex.ofReal_pow]
+    simp only [one_mul, neg_mul]
+    unfold phiF
+    rw [← Complex.normSq_eq_norm_sq, ← Complex.mul_conj]
+    simp only [map_div₀, map_add, map_one, conj_ee, map_ofNat]
+    have e : ∀ a b : ℝ, ee a * ee b = ee (a + b) := fun a b => (ee_add a b).symm
+    have e0 : ee 0 = 1 := by simpa using ee_int 0
+    ring_nf
+    simp only [e]
+    ring_nf
+    rw [e0]
+    ring_nf
+  have hsum : ∀ k : ℤ, ¬ (5 : ℤ) ∣ k →
+      ∑ s ∈ Finset.range 5, ee (k * (x + (s : ℝ) / 5)) = 0 := fun k hk => sum_five_ee k hk x
+  have h1 := hsum 1 (by decide)
+  have h2 := hsum 2 (by decide)
+  have h3 := hsum 3 (by decide)
+  have h4 := hsum 4 (by decide)
+  have hm1 := hsum (-1) (by decide)
+  have hm2 := hsum (-2) (by decide)
+  have hm3 := hsum (-3) (by decide)
+  have hm4 := hsum (-4) (by decide)
+  push_cast at h1 h2 h3 h4 hm1 hm2 hm3 hm4
+  apply Complex.ofReal_injective
+  push_cast
+  simp_rw [key]
+  rw [← Finset.mul_sum]
+  simp only [Finset.sum_add_distrib, Finset.sum_const, Finset.card_range]
+  rw [h1, h2, h3, h4, hm1, hm2, hm3, hm4]
+  norm_num
+
+/-- **Five-point bound** (Cassels' three-point bound, base 5). -/
+theorem five_point (x : ℝ) : ∑ s ∈ Finset.range 5, phiF (x + s / 5) ≤ 5 / 2 := by
+  have hcs := sq_sum_le_card_mul_sum_sq (s := Finset.range 5) (f := fun s : ℕ => phiF (x + s / 5))
+  rw [phiF_sq_sum, Finset.card_range] at hcs
+  have h0 : 0 ≤ ∑ s ∈ Finset.range 5, phiF (x + s / 5) :=
+    Finset.sum_nonneg fun _ _ => phiF_nonneg _
+  nlinarith
+
+/-! ## Riesz majorants -/
+
+open CantorLiouvilleAll
+
+/-- The Riesz majorant at offset `v`, base 5. -/
+noncomputable def HfF (free : ℕ → Bool) (v k : ℕ) (u : ℝ) : ℝ :=
+  ∏ p ∈ posSet free v k, phiF (5 ^ v * u / 5 ^ (p + 1))
+
+theorem HfF_nonneg (free : ℕ → Bool) (v k : ℕ) (u : ℝ) : 0 ≤ HfF free v k u :=
+  Finset.prod_nonneg fun _ _ => phiF_nonneg _
+
+theorem HfF_le_one (free : ℕ → Bool) (v k : ℕ) (u : ℝ) : HfF free v k u ≤ 1 :=
+  Finset.prod_le_one (fun _ _ => phiF_nonneg _) fun _ _ => phiF_le_one _
+
+theorem HfF_periodic (free : ℕ → Bool) (v k : ℕ) (u : ℝ) (s : ℤ) :
+    HfF free v k (u + 5 ^ k * s) = HfF free v k u := by
+  unfold HfF
+  refine Finset.prod_congr rfl fun p hp => ?_
+  simp only [posSet, Finset.mem_filter, Finset.mem_range] at hp
+  have he : (5 : ℝ) ^ v * 5 ^ k = 5 ^ (p + 1) * 5 ^ (v + k - (p + 1)) := by
+    rw [← pow_add, ← pow_add]; congr 1; omega
+  have : 5 ^ v * (u + 5 ^ k * s) / 5 ^ (p + 1) =
+      5 ^ v * u / 5 ^ (p + 1) + ((s * 5 ^ (v + k - (p + 1)) : ℤ) : ℝ) := by
+    have h5 : (5 : ℝ) ^ (p + 1) ≠ 0 := by positivity
+    field_simp
+    push_cast
+    linear_combination (s : ℝ) * he
+  rw [this, phiF_add_int]
+
+theorem HfF_succ (free : ℕ → Bool) (v k : ℕ) (hk : 1 ≤ k) (u : ℝ) :
+    HfF free v (k + 1) u = HfF free v k u *
+      (if free (v + k) = true then phiF (5 ^ v * u / 5 ^ (v + k + 1)) else 1) := by
+  unfold HfF posSet
+  rw [show v + (k + 1) = (v + k) + 1 by ring, Finset.range_add_one, Finset.filter_insert]
+  by_cases hf : free (v + k) = true
+  · rw [if_pos ⟨by omega, hf⟩, Finset.prod_insert (by simp), if_pos hf, mul_comm]
+  · rw [if_neg (fun h => hf h.2), if_neg hf, mul_one]
+
+theorem HfF_mod (free : ℕ → Bool) (v k n : ℕ) :
+    HfF free v k ((n % 5 ^ k : ℕ) : ℝ) = HfF free v k n := by
+  have := HfF_periodic free v k ((n % 5 ^ k : ℕ) : ℝ) ((n / 5 ^ k : ℕ) : ℤ)
+  rw [← this]; congr 1
+  have h := Nat.mod_add_div n (5 ^ k)
+  have h' : ((n % 5 ^ k : ℕ) : ℝ) + ((5 ^ k * (n / 5 ^ k) : ℕ) : ℝ) = n := by
+    rw [← Nat.cast_add, h]
+  push_cast at h'
+  rw [Int.cast_natCast]; linarith
+
+/-- Residue bound from level `t`, base 5. -/
+theorem residue_sum_fromF (free : ℕ → Bool) (v t : ℕ) (ht : 1 ≤ t) : ∀ n r : ℕ,
+    ∑ w ∈ Finset.range (5 ^ n), HfF free v (t + n) ((5 ^ t * w + r : ℕ) : ℝ) ≤
+      5 ^ n * (1 / 2 : ℝ) ^ (posSet free v (t + n)).card * 2 ^ (posSet free v t).card := by
+  intro n
+  induction n with
+  | zero =>
+    intro r
+    simp only [pow_zero, Finset.range_one, Finset.sum_singleton, add_zero, one_mul]
+    rw [← mul_pow, show (1 / 2 : ℝ) * 2 = 1 by norm_num, one_pow]
+    exact HfF_le_one _ _ _ _
+  | succ n ih =>
+    intro r
+    set k := t + n
+    have hk : 1 ≤ k := by omega
+    rw [show t + (n + 1) = k + 1 by omega, pow_succ, sum_range_mul_eq, Finset.sum_comm]
+    have hstep : ∀ w ∈ Finset.range (5 ^ n),
+        ∑ s ∈ Finset.range 5, HfF free v (k + 1) ((5 ^ t * (5 ^ n * s + w) + r : ℕ) : ℝ) ≤
+        (if free (v + k) = true then 5 / 2 else 5) * HfF free v k ((5 ^ t * w + r : ℕ) : ℝ) := by
+      intro w _
+      have hrw : ∀ s : ℕ, ((5 ^ t * (5 ^ n * s + w) + r : ℕ) : ℝ) =
+          ((5 ^ t * w + r : ℕ) : ℝ) + 5 ^ k * (s : ℤ) := by
+        intro s; push_cast; simp only [k]; rw [pow_add]; ring
+      have hper : ∀ s : ℕ, HfF free v k ((5 ^ t * (5 ^ n * s + w) + r : ℕ) : ℝ) =
+          HfF free v k ((5 ^ t * w + r : ℕ) : ℝ) := by
+        intro s; rw [hrw, HfF_periodic]
+      simp_rw [HfF_succ free v k hk, hper, ← Finset.mul_sum]
+      rw [mul_comm]
+      gcongr
+      · exact HfF_nonneg _ _ _ _
+      by_cases hf : free (v + k) = true
+      · simp only [hf, if_true]
+        have := five_point (5 ^ v * ((5 ^ t * w + r : ℕ) : ℝ) / 5 ^ (v + k + 1))
+        refine le_of_eq_of_le (Finset.sum_congr rfl fun s _ => ?_) this
+        congr 1
+        rw [hrw]
+        push_cast
+        field_simp
+        ring
+      · simp [hf]
+    refine (Finset.sum_le_sum hstep).trans ?_
+    rw [← Finset.mul_sum, posSet_card_succ free v k hk]
+    have := ih r
+    by_cases hf : free (v + k) = true
+    · simp only [hf, if_true]
+      calc (5 / 2 : ℝ) * _ ≤ 5 / 2 * (5 ^ n * (1 / 2 : ℝ) ^ (posSet free v k).card *
+            2 ^ (posSet free v t).card) := by gcongr
+        _ = _ := by rw [pow_succ, pow_succ]; ring
+    · simp only [hf, if_false, Bool.false_eq_true, add_zero]
+      calc (5 : ℝ) * _ ≤ 5 * (5 ^ n * (1 / 2 : ℝ) ^ (posSet free v k).card *
+            2 ^ (posSet free v t).card) := by gcongr
+        _ = _ := by rw [pow_succ]; ring
+
+/-! ## Arithmetic: bases coprime to 5 -/
+
+instance : Fact (Nat.Prime 5) := ⟨by norm_num⟩
+
+/-- The 5-adic defect `t = v₅(b⁴ − 1)` of a base coprime to 5. -/
+def tbF (b : ℕ) : ℕ := padicValNat 5 (b ^ 4 - 1)
+
+theorem five_dvd_four_sub_one {b : ℕ} (h5 : ¬ 5 ∣ b) : 5 ∣ b ^ 4 - 1 := by
+  have : b % 5 = 1 ∨ b % 5 = 2 ∨ b % 5 = 3 ∨ b % 5 = 4 := by omega
+  apply Nat.dvd_of_mod_eq_zero
+  apply Nat.sub_mod_eq_zero_of_mod_eq
+  rw [Nat.pow_mod]; rcases this with h | h | h | h <;> rw [h]
+
+theorem padicValNat_four_pow_sub_oneF {b : ℕ} (hb : 2 ≤ b) (h5 : ¬ 5 ∣ b) {d : ℕ} (hd : d ≠ 0) :
+    padicValNat 5 ((b ^ 4) ^ d - 1) = tbF b + padicValNat 5 d := by
+  have := padicValNat.pow_sub_pow (p := 5) (x := b ^ 4) (y := 1) (by decide)
+    (by have := Nat.pow_le_pow_left hb 4; norm_num at this; omega)
+    (by simpa using five_dvd_four_sub_one h5)
+    (fun h => h5 (Nat.Prime.dvd_of_dvd_pow (by norm_num) h)) (n := d) hd
+  simpa [tbF] using this
+
+theorem padicValNat_pow_sub_one_leF {b : ℕ} (hb : 2 ≤ b) (h5 : ¬ 5 ∣ b) {d : ℕ} (hd : d ≠ 0) :
+    padicValNat 5 (b ^ d - 1) ≤ tbF b + padicValNat 5 d := by
+  have h4 : padicValNat 5 ((b ^ 4) ^ d - 1) = tbF b + padicValNat 5 d :=
+    padicValNat_four_pow_sub_oneF hb h5 hd
+  rw [← h4]
+  have hne : (b ^ 4) ^ d - 1 ≠ 0 := by
+    have : 2 ≤ (b ^ 4) ^ d := le_trans (by nlinarith [Nat.one_le_pow 3 b (by omega)])
+      (Nat.le_self_pow hd _)
+    omega
+  rw [← padicValNat_dvd_iff_le hne]
+  refine (pow_padicValNat_dvd).trans ?_
+  have := Nat.sub_dvd_pow_sub_pow (x := b ^ d) (y := 1) (n := 4)
+  rwa [one_pow, ← pow_mul, mul_comm, pow_mul] at this
+
+theorem five_pow_tbF_lt {b : ℕ} (hb : 2 ≤ b) : 5 ^ tbF b < b ^ 4 := by
+  have h16 : 16 ≤ b ^ 4 := by
+    calc 16 = 2 ^ 4 := by norm_num
+      _ ≤ b ^ 4 := Nat.pow_le_pow_left hb 4
+  have hne : b ^ 4 - 1 ≠ 0 := by omega
+  have h1 : 5 ^ tbF b ≤ b ^ 4 - 1 := Nat.le_of_dvd (by omega) pow_padicValNat_dvd
+  omega
+
+theorem one_le_tbF {b : ℕ} (hb : 2 ≤ b) (h5 : ¬ 5 ∣ b) : 1 ≤ tbF b := by
+  have h16 : 16 ≤ b ^ 4 := by
+    calc 16 = 2 ^ 4 := by norm_num
+      _ ≤ b ^ 4 := Nat.pow_le_pow_left hb 4
+  have hne : b ^ 4 - 1 ≠ 0 := by omega
+  exact one_le_padicValNat_of_dvd hne (five_dvd_four_sub_one h5)
+
+theorem coprime_five_pow {x : ℕ} (hx : ¬ 5 ∣ x) (k : ℕ) : Nat.Coprime x (5 ^ k) :=
+  Nat.Coprime.pow_right _ ((Nat.Prime.coprime_iff_not_dvd (by norm_num)).2 hx).symm
+
+theorem five_pow_dvd_four_pow_sub_one {b : ℕ} (hb : 2 ≤ b) (h5 : ¬ 5 ∣ b) {k d : ℕ} (hd : d ≠ 0) :
+    5 ^ k ∣ (b ^ 4) ^ d - 1 ↔ k ≤ tbF b + padicValNat 5 d := by
+  have hne : (b ^ 4) ^ d - 1 ≠ 0 := by
+    have : 2 ≤ (b ^ 4) ^ d := le_trans (by nlinarith [Nat.one_le_pow 3 b (by omega)])
+      (Nat.le_self_pow hd _)
+    omega
+  rw [padicValNat_dvd_iff_le hne, padicValNat_four_pow_sub_oneF hb h5 hd]
+
+theorem four_pow_modEq_one {b : ℕ} (m : ℕ) : (b ^ 4) ^ m ≡ 1 [MOD 5 ^ tbF b] := by
+  have h1 : b ^ 4 ≡ 1 [MOD 5 ^ tbF b] := by
+    rcases Nat.eq_zero_or_pos b with rfl | hb
+    · simp [tbF, Nat.modEq_one]
+    refine ((Nat.modEq_iff_dvd' (Nat.one_le_pow _ _ hb)).2 pow_padicValNat_dvd).symm
+  simpa using h1.pow m
+
+theorem orbit_sum_eqF (free : ℕ → Bool) {b : ℕ} (hb : 2 ≤ b) (h5 : ¬ 5 ∣ b) (v n x : ℕ)
+    (hx : ¬ 5 ∣ x) :
+    ∑ m ∈ Finset.range (5 ^ n), HfF free v (tbF b + n) ((x * (b ^ 4) ^ m : ℕ) : ℝ) =
+      ∑ w ∈ Finset.range (5 ^ n), HfF free v (tbF b + n) ((5 ^ tbF b * w + x % 5 ^ tbF b : ℕ) : ℝ) := by
+  set t := tbF b
+  set k := t + n
+  set Q := 5 ^ k
+  have hQ : Q = 5 ^ t * 5 ^ n := pow_add _ _ _
+  have htQ : 5 ^ t ∣ Q := ⟨_, hQ⟩
+  set φ : ℕ → ℕ := fun m => (x * (b ^ 4) ^ m % Q) / 5 ^ t
+  have hmod : ∀ m, (x * (b ^ 4) ^ m % Q) % 5 ^ t = x % 5 ^ t := by
+    intro m
+    rw [Nat.mod_mod_of_dvd _ htQ]
+    have := (four_pow_modEq_one (b := b) m).mul_left x
+    rw [mul_one] at this
+    exact this
+  have hrec : ∀ m, x * (b ^ 4) ^ m % Q = 5 ^ t * φ m + x % 5 ^ t := by
+    intro m; rw [← hmod m]; exact (Nat.div_add_mod _ _).symm
+  have hmaps : ∀ m ∈ Finset.range (5 ^ n), φ m ∈ Finset.range (5 ^ n) := by
+    intro m _
+    simp only [Finset.mem_range, φ]
+    rw [Nat.div_lt_iff_lt_mul (by positivity)]
+    calc _ < Q := Nat.mod_lt _ (by positivity)
+      _ = _ := by rw [hQ, mul_comm]
+  have hinj : Set.InjOn φ (Finset.range (5 ^ n) : Set ℕ) := by
+    have key : ∀ m m', m < m' → m' < 5 ^ n → φ m ≠ φ m' := by
+      intro m m' hmm' hm' heq
+      have h1 : x * (b ^ 4) ^ m ≡ x * (b ^ 4) ^ m * (b ^ 4) ^ (m' - m) [MOD Q] := by
+        rw [mul_assoc, ← pow_add, Nat.add_sub_cancel' hmm'.le]
+        unfold Nat.ModEq; rw [hrec, hrec, heq]
+      have hcop : Nat.Coprime Q (x * (b ^ 4) ^ m) :=
+        (Nat.Coprime.mul_left (coprime_five_pow hx k)
+          (Nat.Coprime.pow_left _ (Nat.Coprime.pow_left _ (coprime_five_pow h5 k)))).symm
+      have h2 : 1 ≡ (b ^ 4) ^ (m' - m) [MOD Q] :=
+        Nat.ModEq.cancel_left_of_coprime hcop (by simpa using h1)
+      have hd : m' - m ≠ 0 := by omega
+      have h4 := (five_pow_dvd_four_pow_sub_one hb h5 hd).1
+        ((Nat.modEq_iff_dvd' (Nat.one_le_pow _ _ (by positivity))).1 h2)
+      have h5' : 5 ^ padicValNat 5 (m' - m) ≤ m' - m := Nat.le_of_dvd (by omega) pow_padicValNat_dvd
+      have h6 : 5 ^ n ≤ 5 ^ padicValNat 5 (m' - m) := Nat.pow_le_pow_right (by norm_num) (by omega)
+      omega
+    intro m hm m' hm' heq
+    simp only [Finset.coe_range, Set.mem_Iio] at hm hm'
+    by_contra hne
+    rcases lt_or_gt_of_ne hne with h | h
+    · exact key m m' h hm' heq
+    · exact key m' m h hm heq.symm
+  refine Finset.sum_nbij φ hmaps hinj
+    (Finset.surjOn_of_injOn_of_card_le _ hmaps hinj le_rfl) ?_
+  intro m _
+  rw [← hrec, HfF_mod]
+
 end NormalNumbers.CantorFiveMoment
