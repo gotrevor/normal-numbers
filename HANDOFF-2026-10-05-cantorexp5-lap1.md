@@ -25,3 +25,23 @@ Instead: **keep the Boolean coin space**, one base-5 digit = `3·ω(2i) + ω(2i+
 1. `exists_exponent_tests_five` — port of base-3 §§ Trunc/window/BC/primrec with 3→5, 2→4.
 2. `exists_computable_normal_avoid_five` — needs a base-5 second moment for `5 ∤ b`.  Per digit
    φ(t) = ((1+e(3t))/2)((1+e(t))/2); crux is the analogue of `secondMoment_le_b`.
+
+## Update (same run, later laps)
+New files (all base-5 ports; base-3 files untouched):
+* `CantorFiveMoment.lean` — `ptF`, `charFun_realF`, `five_point` (Σφ₅² = 5/4 via roots of unity +
+  Cauchy–Schwarz), base-5 Riesz majorants, orbit via `b⁴ ≡ 1 (mod 5)` + LTE, `secondMoment_le_bF`.
+* `CantorFiveNormal.lean` — heads/tails `hdF`/`tlF`, prefix approximants `fA_bounds` (odd prefix
+  lengths: half-known last digit), `f_ev`, `exists_computable_normal_avoid_F`.
+* `CantorFiveExpGeneric.lean` — Frostman bound via heads (`hdF_close`, `ball_leF`, mass `3·4^{-F}`;
+  base-5 cylinders touch, so no gap), `card_near_leF`, tests `hitBF`, `hit_mass_bcF`, `hit_mass_triF`.
+* `CantorFiveExp.lean` — lower bound `liouvilleWith_ptF`, `expTestF_mass_le`, `ev_expTestF_mass`,
+  `hasIrrExponentF_of_avoid`, `exists_exponent_testsF`.
+Both leaves of `CantorExactExponentFive.lean` now wired to these.
+
+## Checkpoint (lap end)
+Uncommitted-then-committed as WIP: last `omega` fix in `CantorFiveExp.lean` (`hCn`) and the wiring of
+`exists_exponent_tests_five` to `CantorFiveExp.exists_exponent_testsF` are NOT yet compile-verified
+(box hit system-wide "Too many open files").  `CantorExactExponentFive.lean` has no `sorry` text left.
+Next: `lake env lean src/NormalNumbers/CantorFiveExp.lean`; fix any errors; then
+`lake build NormalNumbers.CantorExactExponentFive` and `#print axioms` on both headlines
+(expect propext, Classical.choice, Quot.sound); commit; `box done`.

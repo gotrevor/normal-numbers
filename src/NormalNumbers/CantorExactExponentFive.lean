@@ -3,7 +3,7 @@ Copyright (c) 2026 Trevor Morris. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
-import NormalNumbers.CantorFiveNormal
+import NormalNumbers.CantorFiveExp
 
 /-!
 # The middle-fifth set `K₅`: a computable point with exact irrationality exponent `μ₀`
@@ -145,8 +145,8 @@ theorem exists_exponent_tests_five (μ₀ : ℚ) (hμ : thresholdFive < μ₀) :
     ∃ (bad' : ℕ → List Bool → Bool) (d' : ℕ → ℕ), Primrec₂ bad' ∧ Primrec d' ∧
       (∀ j, coins.real {ω | bad' j (pre ω (d' j)) = true} ≤ 1 / ((j : ℝ) + 1) ^ 2) ∧
       ∀ e : ℕ → Bool, (∃ j₁, ∀ j, j₁ ≤ j → bad' j (pre e (d' j)) = false) →
-        HasIrrExponent (cantorFiveExpReal μ₀ e) μ₀ := by
-  sorry
+        HasIrrExponent (cantorFiveExpReal μ₀ e) μ₀ :=
+  CantorFiveExp.exists_exponent_testsF (μ₀ := μ₀) hμ
 
 /-- **Family derandomization, base 5.**  Confidence 75%.
 

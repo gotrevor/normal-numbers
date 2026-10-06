@@ -232,4 +232,192 @@ theorem ev_expTestF_mass (hμ : thresholdF < μ₀) :
     field_simp; ring
   linarith
 
+/-! ## Avoidance gives the exact exponent -/
+
+theorem hasIrrExponentF_of_avoid (hμ : thresholdF < μ₀) (e : ℕ → Bool)
+    (h : ∃ m₁, ∀ m, m₁ ≤ m → expTestF μ₀ m (pre e (2 * (expL μ₀ m + 1))) = false) :
+    HasIrrExponent (ptF (expFree μ₀) e) μ₀ := by
+  obtain ⟨m₁, hm₁⟩ := h
+  have h2 : (2 : ℚ) < μ₀ := by exact_mod_cast two_lt_of_thresholdF hμ
+  have hμ1 : (1 : ℚ) < μ₀ := by linarith
+  set x := ptF (expFree μ₀) e with hxdef
+  have fire : ∀ m q pp : ℕ, m₁ ≤ m → 5 ^ m ≤ q → q < 5 ^ (m + 1) → pp ≤ q →
+      |x - pp / q| ≤ 2 / 5 ^ (expL μ₀ m + 1) → False := fun m q pp hm hq1 hq2 hpp hx => by
+    have := hitBF_of_near (expFree μ₀) e m (expL μ₀ m) q pp hq1 hq2 hpp hx
+    have h' := hm₁ m hm
+    unfold expTestF at h'
+    rw [h'] at this; exact Bool.false_ne_true this
+  refine ⟨fun p hp => (liouvilleWith_ptF hμ1 e ?_).mono hp.le, fun p hp hL => ?_⟩
+  · intro N
+    by_contra hne
+    push Not at hne
+    set m := max m₁ N
+    have hz : tlF (expFree μ₀) e m = 0 := by
+      unfold tlF
+      have : ∀ k, (ptDigitF (expFree μ₀) e (k + m) : ℝ) / (5 : ℝ) ^ (k + m + 1) = 0 := by
+        intro k
+        have hk : N ≤ k + m := le_trans (le_max_right _ _) (Nat.le_add_left _ _)
+        rw [hne (k + m) hk]; simp
+      simp [this]
+    refine fire m (5 ^ m) (hdF (expFree μ₀) e m) (le_max_left _ _) le_rfl
+      (Nat.pow_lt_pow_right (by norm_num) (by omega)) (hdF_lt _ _ _).le ?_
+    rw [hxdef, ptF_split _ e m, hz]
+    push_cast
+    simp only [add_zero, sub_self, abs_zero]
+    positivity
+  · obtain ⟨C, hC⟩ := hL
+    set C' := max C 1
+    set μ : ℝ := (μ₀ : ℝ)
+    have hμR : (2 : ℝ) < μ := by simp only [μ]; exact_mod_cast h2
+    set δ := p - μ
+    have hδ : 0 < δ := by simp only [δ]; linarith
+    set r : ℝ := (5 : ℝ) ^ (-(δ / 2))
+    have hr0 : 0 < r := by positivity
+    have hr1 : r < 1 := Real.rpow_lt_one_of_one_lt_of_neg (by norm_num) (by linarith)
+    have hev : ∀ᶠ m : ℕ in atTop, (5 * C' * r ^ m ≤ 2 ∧ m₁ ≤ m) ∧ 2 / δ ≤ Nat.sqrt m := by
+      refine Eventually.and ?_ ?_
+      · refine Eventually.and ?_ (eventually_ge_atTop m₁)
+        have ht : Tendsto (fun m : ℕ => 5 * C' * r ^ m) atTop (𝓝 0) := by
+          simpa using (tendsto_pow_atTop_nhds_zero_of_lt_one hr0.le hr1).const_mul (5 * C')
+        exact (ht.eventually (gt_mem_nhds (by norm_num : (0 : ℝ) < 2))).mono fun _ h => h.le
+      · exact tendsto_nat_sqrt.eventually (tendsto_natCast_atTop_atTop.eventually_ge_atTop (2 / δ))
+    obtain ⟨M₀, hM₀⟩ := eventually_atTop.1 hev
+    have hC1 : (1 : ℝ) ≤ C' := le_max_right _ _
+    obtain ⟨n, ⟨z, hne, hlt⟩, hn⟩ :=
+      (hC.and_eventually (eventually_ge_atTop (5 ^ M₀ + ⌈C'⌉₊ + 1))).exists
+    have hK : 5 ^ M₀ ≤ n := le_trans (Nat.le_add_right _ _) (le_trans (Nat.le_add_right _ 1) hn)
+    have hCn : ⌈C'⌉₊ + 1 ≤ n := le_trans (by rw [add_assoc]; exact Nat.le_add_left _ _) hn
+    have hn0 : n ≠ 0 := by omega
+    have hnR : (1 : ℝ) ≤ n := by exact_mod_cast Nat.one_le_iff_ne_zero.2 hn0
+    have hnC : C' ≤ n := by
+      have : (⌈C'⌉₊ : ℝ) ≤ n := by exact_mod_cast (by omega : ⌈C'⌉₊ ≤ n)
+      linarith [Nat.le_ceil C']
+    have hlt' : |x - z / n| < C' / (n : ℝ) ^ p := lt_of_lt_of_le hlt (by
+      gcongr; exact le_max_left _ _)
+    have hnp : (n : ℝ) ^ (2 : ℝ) ≤ (n : ℝ) ^ p :=
+      Real.rpow_le_rpow_of_exponent_le hnR (by linarith)
+    have hnp0 : (0 : ℝ) < (n : ℝ) ^ p := by positivity
+    have hsmall : C' / (n : ℝ) ^ p ≤ 1 / n := by
+      rw [div_le_div_iff₀ hnp0 (by linarith)]
+      rw [show (2 : ℝ) = ((2 : ℕ) : ℝ) by norm_num, Real.rpow_natCast] at hnp
+      nlinarith
+    have hx0 : 0 ≤ x := by
+      have := hdF_div_le_ptF (expFree μ₀) e 0; simpa [hdF, hxdef] using this
+    have hx1 : x ≤ 1 := by
+      have := ptF_le_hdF_div (expFree μ₀) e 0; simpa [hdF, hxdef] using this
+    set m := Nat.log 5 n
+    have hq1 : 5 ^ m ≤ n := Nat.pow_log_le_self 5 hn0
+    have hq2 : n < 5 ^ (m + 1) := Nat.lt_pow_succ_log_self (by norm_num) n
+    have hmM : M₀ ≤ m := Nat.le_log_of_pow_le (by norm_num) hK
+    obtain ⟨⟨hrm, hm1⟩, hsq⟩ := hM₀ m hmM
+    have hz0 : 0 ≤ z := by
+      by_contra hz
+      have : (z : ℝ) ≤ -1 := by exact_mod_cast (by omega : z ≤ -1)
+      have : 1 / (n : ℝ) ≤ |x - z / n| := by
+        rw [abs_of_nonneg (by have : (z : ℝ) / n ≤ 0 := div_nonpos_of_nonpos_of_nonneg (by linarith) (by linarith); linarith)]
+        have : (z : ℝ) / n ≤ -1 / n := div_le_div_of_nonneg_right this (by linarith)
+        rw [neg_div] at this; linarith
+      linarith
+    have hzn : z ≤ n := by
+      by_contra hz
+      have : (n : ℝ) + 1 ≤ z := by exact_mod_cast (by omega : (n : ℤ) + 1 ≤ z)
+      have : 1 / (n : ℝ) ≤ |x - z / n| := by
+        have e1 : (z : ℝ) / n ≥ ((n : ℝ) + 1) / n := div_le_div_of_nonneg_right this (by linarith)
+        have e2 : ((n : ℝ) + 1) / n = 1 + 1 / n := by field_simp
+        have e3 : (0 : ℝ) ≤ 1 / n := by positivity
+        rw [abs_sub_comm, abs_of_nonneg (by linarith)]
+        linarith
+      linarith
+    lift z to ℕ using hz0
+    have hzn' : z ≤ n := by exact_mod_cast hzn
+    refine fire m n z hm1 hq1 hq2 hzn' ?_
+    have hlt'' : |x - z / n| < C' / (n : ℝ) ^ p := by simpa using hlt'
+    refine hlt''.le.trans ?_
+    set s := Nat.sqrt m
+    obtain ⟨-, hLup⟩ := expL_bounds (by linarith : (0 : ℚ) < μ₀) m
+    replace hLup : (expL μ₀ m : ℝ) ≤ μ * m + s := hLup
+    have hss : (s : ℝ) * s ≤ m := by exact_mod_cast Nat.sqrt_le m
+    have hs0 : (0 : ℝ) ≤ s := by positivity
+    have hsδ : (s : ℝ) ≤ δ * m / 2 := by
+      have : 2 / δ * s ≤ s * s := by nlinarith
+      rw [div_mul_eq_mul_div, div_le_iff₀ hδ] at this
+      nlinarith
+    have h3L : (5 : ℝ) ^ (expL μ₀ m + 1) ≤ 5 * (5 : ℝ) ^ (p * m) * r ^ m := by
+      rw [← Real.rpow_natCast, ← Real.rpow_natCast r, ← Real.rpow_mul (by norm_num)]
+      have : (5 : ℝ) * 5 ^ (p * m) * 5 ^ (-(δ / 2) * m) = 5 ^ (1 + p * m + (-(δ / 2) * m)) := by
+        rw [Real.rpow_add (by norm_num), Real.rpow_add (by norm_num), Real.rpow_one]
+      rw [this]
+      apply Real.rpow_le_rpow_of_exponent_le (by norm_num)
+      push_cast
+      simp only [δ] at hsδ ⊢
+      nlinarith
+    have hnp3 : (5 : ℝ) ^ (p * m) ≤ (n : ℝ) ^ p := by
+      rw [mul_comm, Real.rpow_mul (by norm_num), Real.rpow_natCast]
+      apply Real.rpow_le_rpow (by positivity) (by exact_mod_cast hq1) (by linarith)
+    rw [div_le_div_iff₀ hnp0 (by positivity)]
+    have : (0 : ℝ) < (5 : ℝ) ^ (p * m) := by positivity
+    calc C' * (5 : ℝ) ^ (expL μ₀ m + 1) ≤ C' * (5 * (5 : ℝ) ^ (p * m) * r ^ m) := by gcongr
+      _ = (5 * C' * r ^ m) * (5 : ℝ) ^ (p * m) := by ring
+      _ ≤ 2 * (5 : ℝ) ^ (p * m) := by gcongr
+      _ ≤ 2 * (n : ℝ) ^ p := by gcongr
+
+/-! ## Primitive recursion -/
+
+theorem primrec_hitBF {free : ℕ → Bool} (hf : Primrec free) :
+    Primrec fun x : ℕ × ℕ × List Bool => hitBF free x.1 x.2.1 x.2.2 := by
+  classical
+  have hT : Primrec fun x : ℕ × ℕ × List Bool => fNum free (x.2.1 + 1) x.2.2 :=
+    (primrec_fNum hf).comp (Primrec.succ.comp (Primrec.fst.comp Primrec.snd))
+      (Primrec.snd.comp Primrec.snd)
+  have h5L : Primrec fun x : ℕ × ℕ × List Bool => 5 ^ (x.2.1 + 1) :=
+    ComputableNormal.primrec_pow.comp (Primrec.const 5) (Primrec.succ.comp (Primrec.fst.comp Primrec.snd))
+  have ha : Primrec fun y : ((ℕ × ℕ × List Bool) × ℕ) × ℕ => y.1.1 := Primrec.fst.comp Primrec.fst
+  have hq : Primrec fun y : ((ℕ × ℕ × List Bool) × ℕ) × ℕ => y.1.2 := Primrec.snd.comp Primrec.fst
+  have hpp : Primrec fun y : ((ℕ × ℕ × List Bool) × ℕ) × ℕ => y.2 := Primrec.snd
+  have hc : PrimrecPred fun y : ((ℕ × ℕ × List Bool) × ℕ) × ℕ =>
+      hitCondF free y.1.1.1 y.1.1.2.1 y.1.1.2.2 y.1.2 y.2 := by
+    unfold hitCondF
+    refine PrimrecPred.and (Primrec.nat_le.comp
+      (ComputableNormal.primrec_pow.comp (Primrec.const 5) (Primrec.fst.comp ha)) hq)
+      (PrimrecPred.and ?_ ?_)
+    · exact Primrec.nat_le.comp (Primrec.nat_mul.comp (hT.comp ha) hq)
+        (Primrec.nat_add.comp (Primrec.nat_mul.comp hpp (h5L.comp ha))
+          (Primrec.nat_mul.comp (Primrec.const 3) hq))
+    · exact Primrec.nat_le.comp (Primrec.nat_mul.comp hpp (h5L.comp ha))
+        (Primrec.nat_add.comp (Primrec.nat_mul.comp (hT.comp ha) hq)
+          (Primrec.nat_mul.comp (Primrec.const 3) hq))
+  have hin : Primrec₂ fun (y : (ℕ × ℕ × List Bool) × ℕ) (pp : ℕ) =>
+      if hitCondF free y.1.1 y.1.2.1 y.1.2.2 y.2 pp then 1 else 0 :=
+    (Primrec.ite hc (Primrec.const 1) (Primrec.const 0)).to₂
+  have hinner := primrec_sum_map (Primrec.list_range.comp (Primrec.succ.comp Primrec.snd)) hin
+  have hout := primrec_sum_map (Primrec.list_range.comp (ComputableNormal.primrec_pow.comp
+    (Primrec.const 5) (Primrec.succ.comp (Primrec.fst : Primrec fun x : ℕ × ℕ × List Bool => x.1))))
+    hinner.to₂
+  exact (Primrec.nat_lt.comp (Primrec.const 0) hout).decide.of_eq fun x => rfl
+
+theorem primrec_expTestF (μ₀ : ℚ) : Primrec₂ (expTestF μ₀) :=
+  ((primrec_hitBF (primrec_expFree μ₀)).comp (Primrec.pair Primrec.fst
+    (Primrec.pair ((primrec_expL μ₀).comp Primrec.fst) Primrec.snd))).to₂
+
+/-- **The exponent tests, base 5.** -/
+theorem exists_exponent_testsF (hμ : thresholdF < μ₀) :
+    ∃ (bad' : ℕ → List Bool → Bool) (d' : ℕ → ℕ), Primrec₂ bad' ∧ Primrec d' ∧
+      (∀ j, coins.real {ω | bad' j (pre ω (d' j)) = true} ≤ 1 / ((j : ℝ) + 1) ^ 2) ∧
+      ∀ e : ℕ → Bool, (∃ j₁, ∀ j, j₁ ≤ j → bad' j (pre e (d' j)) = false) →
+        HasIrrExponent (ptF (expFree μ₀) e) μ₀ := by
+  obtain ⟨J₀, hJ₀⟩ := eventually_atTop.1 (ev_expTestF_mass hμ)
+  refine ⟨fun j p => decide (J₀ ≤ j) && expTestF μ₀ j p, fun j => 2 * (expL μ₀ j + 1),
+    Primrec.and.comp (Primrec.nat_le.comp (Primrec.const J₀) Primrec.fst).decide
+      (primrec_expTestF μ₀),
+    Primrec.nat_mul.comp (Primrec.const 2) (Primrec.succ.comp (primrec_expL μ₀)), fun j => ?_, ?_⟩
+  · by_cases hj : J₀ ≤ j
+    · simpa [hj] using hJ₀ j hj
+    · simp only [hj, decide_false, Bool.false_and, Bool.false_eq_true, Set.setOf_false,
+        measureReal_empty]
+      positivity
+  · rintro e ⟨j₁, hj₁⟩
+    refine hasIrrExponentF_of_avoid hμ e ⟨max j₁ J₀, fun m hm => ?_⟩
+    have := hj₁ m (le_of_max_le_left hm)
+    simpa [le_of_max_le_right hm] using this
+
 end NormalNumbers.CantorFiveExp
