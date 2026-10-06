@@ -2890,3 +2890,12 @@ Crux analysis (to be stated in Lean next lap, not yet recorded as declarations):
   term is Σ_dead e(h(bᵏ−bˡ)p/q): needs the first ~L base-b digits of rationals p/q (q ≈ 3^{L/2}) lying
   near the path to be equidistributed. Candidate literature input: He–Liao 2602.01307 Cor 6.5 (rationals
   equidistribute against Cantor cylinders) — transcribe as a Literature Prop and test.
+
+## 2026-10-06 cantorbad lap 3: replacement-rule obstruction (Lean)
+- `descent_eq_descentR`, `repC_ok` (proved): descentLaw = descentR repC, with repC the `Classical.choose`
+  replacement. A proof of the crux therefore uses only `RepOK repC`, so in effect it covers every admissible rule.
+- `AdversarialReplacement` (conjecture node, 60%): some admissible rule steers `2ᵏx mod 1` on dead stages and
+  breaks base-2 normality. If true, the frozen crux cannot be proved from `choose_spec`, which is route-decisive.
+  Doubtful step: a lower bound η>0 on the density of dead stages.
+- Next: (a) attack η (rationals near K: He–Liao 2602.01307 as a Literature Prop); (b) if the obstruction holds,
+  ask the operator to sanction an alternative law with canonical replacement (uniform resampling) for the headline.

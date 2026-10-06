@@ -576,6 +576,69 @@ theorem casselsRate_descent {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) :
     CasselsRate descentLaw b :=
   casselsRate_of_fourierPairRate (fourierPairRate_descent hb h3)
 
+/-! ## Obstruction: the crux sees the replacement rule only through `Classical.choose`
+
+`sel` replaces a dead coin block by `h.choose`, an alive block about which nothing but
+`Alive` is known.  So a proof of `fourierPairRate_descent` is in effect a proof for *every*
+alive-valued replacement rule `rep` (`descent_eq_descentR`, `repC_ok`).  The conjecture node
+`AdversarialReplacement` says some such rule destroys base-2 normality; if it holds, the crux is
+true or false according to the unspecified choice and is not provable from `choose_spec`. -/
+
+open Classical in
+/-- The selector with an explicit replacement rule `rep`. -/
+noncomputable def selR (rep : List Bool → List Bool) (w u : List Bool) : List Bool :=
+  if Alive 5 c₀ w u then u else rep w
+
+/-- The descent prefix with replacement rule `rep`. -/
+noncomputable def buildR (rep : List Bool → List Bool) : ℕ → (ℕ → Bool) → List Bool
+  | 0, _ => []
+  | s + 1, ω => buildR rep s ω ++ selR rep (buildR rep s ω) (List.ofFn fun i : Fin (2 * 5) => ω (2 * 5 * s + i))
+
+/-- The digit selector with replacement rule `rep`. -/
+noncomputable def descentR (rep : List Bool → List Bool) (ω : ℕ → Bool) (i : ℕ) : Bool :=
+  (buildR rep (i + 1) ω).getD i false
+
+/-- A replacement rule is admissible when it always returns an alive block of the right length. -/
+def RepOK (rep : List Bool → List Bool) : Prop :=
+  ∀ w, (rep w).length = 2 * 5 ∧ Alive 5 c₀ w (rep w)
+
+open Classical in
+/-- The replacement rule hidden in `sel`. -/
+noncomputable def repC (w : List Bool) : List Bool :=
+  if h : ∃ v : List Bool, v.length = 2 * 5 ∧ Alive 5 c₀ w v then h.choose else []
+
+theorem repC_ok : RepOK repC := fun w => by
+  unfold repC; rw [dif_pos (exists_alive w)]; exact (exists_alive w).choose_spec
+
+theorem sel_eq_selR (w u : List Bool) : sel 5 c₀ w u = selR repC w u := by
+  unfold sel selR repC; split_ifs with h1 h2 <;> first | rfl | exact absurd (exists_alive w) h2
+
+theorem build_eq_buildR (s : ℕ) (ω : ℕ → Bool) : build 5 c₀ s ω = buildR repC s ω := by
+  induction s with
+  | zero => rfl
+  | succ s ih => simp only [build, buildR, ih, sel_eq_selR]
+
+/-- `descentLaw` is the replacement-rule descent for `repC`.  Proved. -/
+theorem descent_eq_descentR : descent 5 c₀ = descentR repC := by
+  funext ω i; simp only [descent, descentR, build_eq_buildR]
+
+/-- **Conjecture node (believed, 60%): an adversarial replacement rule breaks base-2 normality.**
+
+Heuristic.  Along a typical path a stage has a dead coin block with probability bounded below
+by some `η > 0` (an obstacle `p/q`, `q² ≍ 3^{10s}`, lies within `c₀/q²` of a surviving child
+with probability `≍ c₀`, if rationals near `K` behave like random points; cf. He–Liao on
+rationals against Cantor cylinders).  On a dead stage the rule sees the whole prefix `w` and
+chooses among `≥ 536` alive blocks; ten ternary digits fix `2ᵏ x mod 1` to within `3⁻⁵` for the
+`k` with `2ᵏ ≈ 3^{10s+5}`, so it can force `2ᵏ x mod 1 < 1/2`.  That shifts the frequency of
+the binary digit `0` by `≍ η / (20 log₂ 3) > 0` compared with the coin choice.
+
+Evidence: none numerical yet; the step most in doubt is the lower bound on `η` (a Diophantine
+count of rationals near `K`).  Implication: if true, `fourierPairRate_descent` can only be
+proved by a law whose replacement is canonical (e.g. uniform resampling among alive blocks),
+not by `Classical.choose`. -/
+def AdversarialReplacement : Prop :=
+  ∃ rep, RepOK rep ∧ ¬ ∀ᵐ ω ∂coinMeasure, IsNormal 2 (cpt (descentR rep ω))
+
 /-! ## Known-false sibling: the same descent against base-2 obstacles -/
 
 /-- The child `w ++ u` avoids every dyadic obstacle `B(p/2ⁿ, 2·2^{−n−36})` charged to the stage
