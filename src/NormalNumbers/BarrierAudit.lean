@@ -29,6 +29,7 @@ import NormalNumbers.EntropyProfilesStretch
 import NormalNumbers.FiniteStateSelectionStretch
 import NormalNumbers.SchmidtGamesStretch
 import NormalNumbers.CantorExactExponentStretch
+import NormalNumbers.StretchBFR
 import NormalNumbers.ComputableReal
 import NormalNumbers.KurtzRandom
 import NormalNumbers.MahlerProductBlock
@@ -193,6 +194,12 @@ def waivers : List Waiver := [
    "a leaf: block-entropy subadditivity through bounded carries, plus the block-entropy \
     characterization of dim_FS/Dim_FS (BHV 2005); possibly literature-adjacent (Doty–Lutz–Nandakumar \
     2007 treat one number and rational arithmetic)"⟩,
+  ⟨``CantorExactExponentStretch.ev_expTest_mass_mid,
+   "stretch-lane leaf for the mid range (two cases by hand, English proof in the docstring)"⟩,
+  ⟨``StretchBFR.windowCount_of_inverseSum,
+   "conditional wiring (Fourier expansion over the q-interval); records that single-sum \
+    cancellation reaches only m > b − δ b' (singleSum_insufficient)"⟩,
+  ⟨``StretchBFR.card_near_cantor_le, "a leaf: the classical covering count of rationals near K"⟩,
   ⟨``CantorExactExponentStretch.exists_mem_cantorSet_irrExponent_two_of_literature,
    "literature control at μ₀ = 2: wiring from cited Weiss 2001 and Cassels 1959 (a leaf)"⟩,
   ⟨``CantorExactExponentStretch.exists_computable_mem_cantorSet_irrExponent_normal_all,
