@@ -2878,3 +2878,15 @@ Crux analysis (to be stated in Lean next lap, not yet recorded as declarations):
 - Free-digit variant: control digits must be ≥ log 3/(2 log 2) ≈ 79% of each stage, so ≤ 21% of
   positions can be pure coins; freeCount would still grow linearly (enough for Cassels), but control
   digits depend on earlier free digits, so the product structure is still lost.
+
+## 2026-10-06 cantorbad: crux structure (prose; Lean statements pending)
+- Crux is `fourierPairRate_descent` (any W summable along sched; (log N)^{-3} enough).
+- ×3-invariant route closed in Lean: `not_exists_timesThree_law_on_bad` (from cited EFS), Maze row.
+- Sharper window: charge q² ∈ [3^{L−R}, 3^L) per R-digit stage → ≤ 2 obstacles per parent, ≤ 4 dead of 2^R
+  (needs c ≤ 3^{-2R}/12). Fixed c forces bounded R, so the per-stage dead fraction δ is a fixed constant.
+- Entanglement: adaptive digits at stage s depend on all earlier free digits, so only the LAST block
+  before scale log₃|ξ| gives a clean factor; martingale peel gives |ν̂| ≤ Πρ + O(δ) (floor).
+- The floor is real in the Bad₂ sibling (phases e(ξ a/2ⁿ) = 1 coherently); for BAD obstacles the floor
+  term is Σ_dead e(h(bᵏ−bˡ)p/q): needs the first ~L base-b digits of rationals p/q (q ≈ 3^{L/2}) lying
+  near the path to be equidistributed. Candidate literature input: He–Liao 2602.01307 Cor 6.5 (rationals
+  equidistribute against Cantor cylinders) — transcribe as a Literature Prop and test.
