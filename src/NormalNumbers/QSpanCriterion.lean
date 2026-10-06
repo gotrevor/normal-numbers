@@ -330,7 +330,89 @@ theorem ae_tendsto_of_second_moment {Ω : Type*} [MeasurableSpace Ω] (μ : Meas
     (hz1 : ∀ k ω, ‖z k ω‖ ≤ 1) (c : ℂ) (hc1 : ‖c‖ ≤ 1) (C : ℝ)
     (hm : ∀ N, ∫ ω, ‖∑ k ∈ Finset.range N, (z k ω - c)‖ ^ 2 ∂μ ≤ C * N) :
     ∀ᵐ ω ∂μ, Tendsto (fun N : ℕ => (∑ k ∈ Finset.range N, z k ω) / N) atTop (𝓝 c) := by
-  sorry
+  set K : ℝ := |C| with hKdef
+  have hK : 0 ≤ K := abs_nonneg _
+  set S : ℕ → Ω → ℂ := fun N ω => ∑ k ∈ Finset.range N, (z k ω - c) with hSdef
+  have hSm : ∀ N, Measurable (S N) := fun N =>
+    Finset.measurable_sum _ fun k _ => (hzm k).sub_const _
+  have hSb : ∀ N ω, ‖S N ω‖ ≤ 2 * N := fun N ω => by
+    refine (norm_sum_le _ _).trans ?_
+    refine (Finset.sum_le_sum fun k _ => (norm_sub_le _ _).trans (add_le_add (hz1 k ω) hc1)).trans ?_
+    simp; linarith
+  set f : ℕ → Ω → ℝ := fun j ω => ‖S ((j + 1) ^ 2) ω‖ ^ 2 / (((j + 1) ^ 2 : ℕ) : ℝ) ^ 2
+    with hfdef
+  have hf0 : ∀ j ω, 0 ≤ f j ω := fun j ω => by positivity
+  have hfm : ∀ j, Measurable (f j) := fun j =>
+    (((hSm _).norm.pow_const 2).div_const _)
+  have hfi : ∀ j, Integrable (f j) μ := fun j =>
+    Integrable.of_bound (hfm j).aestronglyMeasurable 4 (Eventually.of_forall fun ω => by
+      rw [Real.norm_of_nonneg (hf0 j ω)]
+      have hpos : (0 : ℝ) < (((j + 1) ^ 2 : ℕ) : ℝ) := by positivity
+      rw [div_le_iff₀ (by positivity)]
+      have := pow_le_pow_left₀ (norm_nonneg _) (hSb ((j + 1) ^ 2) ω) 2
+      nlinarith)
+  have hfI : ∀ j, ∫ ω, f j ω ∂μ ≤ K * (1 / ((j : ℝ) + 1) ^ 2) := by
+    intro j
+    have hM := hm ((j + 1) ^ 2)
+    simp only [hfdef]
+    rw [integral_div]
+    set M : ℝ := (((j + 1) ^ 2 : ℕ) : ℝ)
+    have hM1 : (1 : ℝ) ≤ M := by simp only [M]; exact_mod_cast Nat.one_le_pow _ _ (by omega)
+    have hMe : M = ((j : ℝ) + 1) ^ 2 := by simp [M]
+    rw [div_le_iff₀ (by positivity)]
+    calc ∫ ω, ‖S ((j + 1) ^ 2) ω‖ ^ 2 ∂μ ≤ C * M := hM
+      _ ≤ K * M := by gcongr; exact le_abs_self C
+      _ = K * (1 / M) * M ^ 2 := by field_simp
+      _ = _ := by rw [hMe]
+  have hsumm : Summable fun j : ℕ => K * (1 / ((j : ℝ) + 1) ^ 2) := by
+    refine Summable.mul_left _ ?_
+    have := (summable_nat_add_iff 1).2 (Real.summable_one_div_nat_pow.2 (by norm_num : 1 < 2))
+    simpa using this
+  have hlin : ∫⁻ ω, ∑' j, ENNReal.ofReal (f j ω) ∂μ ≠ ⊤ := by
+    rw [lintegral_tsum fun j => (hfm j).ennreal_ofReal.aemeasurable]
+    refine ne_top_of_le_ne_top (ENNReal.ofReal_ne_top
+      (r := ∑' j : ℕ, K * (1 / ((j : ℝ) + 1) ^ 2))) ?_
+    rw [ENNReal.ofReal_tsum_of_nonneg (fun j => by positivity) hsumm]
+    refine ENNReal.tsum_le_tsum fun j => ?_
+    rw [← ofReal_integral_eq_lintegral_ofReal (hfi j) (Eventually.of_forall (hf0 j))]
+    exact ENNReal.ofReal_le_ofReal (hfI j)
+  have hae := ae_lt_top' (AEMeasurable.tsum fun j =>
+    (hfm j).ennreal_ofReal.aemeasurable) hlin
+  filter_upwards [hae] with ω hω
+  have h1 : Tendsto (fun j => ENNReal.ofReal (f j ω)) atTop (𝓝 0) :=
+    ENNReal.tendsto_atTop_zero_of_tsum_ne_top hω.ne
+  have h2 : Tendsto (fun j => f j ω) atTop (𝓝 0) := by
+    have := (ENNReal.tendsto_toReal ENNReal.zero_ne_top).comp h1
+    simpa [Function.comp_def, ENNReal.toReal_ofReal (hf0 _ ω)] using this
+  have h3 : Tendsto (fun j : ℕ => S ((j + 1) ^ 2) ω / (((j + 1) ^ 2 : ℕ) : ℂ)) atTop (𝓝 0) := by
+    rw [tendsto_zero_iff_norm_tendsto_zero]
+    have := h2.sqrt
+    rw [Real.sqrt_zero] at this
+    refine this.congr fun j => ?_
+    simp only [hfdef]
+    rw [Real.sqrt_div' _ (by positivity), Real.sqrt_sq (norm_nonneg _), Real.sqrt_sq (by positivity),
+      norm_div, Complex.norm_natCast]
+  have h4 : Tendsto (fun j : ℕ => S (j ^ 2) ω / ((j ^ 2 : ℕ) : ℂ)) atTop (𝓝 0) :=
+    (tendsto_add_atTop_iff_nat 1).1 h3
+  have h5 := DecayAeNormal.tendsto_of_tendsto_sq (fun k => (z k ω - c) / 2)
+    (fun k => by
+      rw [norm_div]; simp
+      linarith [(norm_sub_le (z k ω) c), hz1 k ω])
+    (by
+      have := h4.div_const 2
+      rw [zero_div] at this
+      refine this.congr fun j => ?_
+      simp only [hSdef]; rw [← Finset.sum_div]; ring)
+  have h6 := (h5.const_mul 2).add_const c
+  rw [mul_zero, zero_add] at h6
+  refine h6.congr' ?_
+  filter_upwards [eventually_ge_atTop 1] with N hN
+  have hN0 : (N : ℂ) ≠ 0 := by exact_mod_cast (show N ≠ 0 by omega)
+  rw [← Finset.sum_div, Finset.sum_sub_distrib]
+  simp only [Finset.sum_const, Finset.card_range, nsmul_eq_mul]
+  field_simp
+  ring
+
 
 section Generic
 variable {α : Type*} [Fintype α] [MeasurableSpace α] [DiscreteMeasurableSpace α]
