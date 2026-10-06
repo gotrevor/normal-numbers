@@ -109,7 +109,7 @@ def cruxLinks : List CruxLink := [
   ⟨``EntropyProfiles.ae_isNormal_self_base_sq_of_timesP_ergodic, [``cantor_not_normal_three_pow],
    "with x in place of (x + 1)² the claim is false (the Cantor measure is ×3-ergodic and no Cantor \
     point is 3-normal), so the mechanism must use the curvature of the map"⟩,
-  ⟨``CantorBadNormal.deadCharSigned_core,
+  ⟨``CantorBadNormal.hybridCassels,
    [``cantor_not_normal_three_pow, ``perStage_dead_not_enough],
    "the cancellation must use 3 ∤ b (3ⁿp/q does not cancel for q | 3ᵏ) and the arithmetic of \
     the centres p/q (dyadic centres give e(2ⁿp/2ᵏ) = 1, and per-stage dead counts alone admit a \

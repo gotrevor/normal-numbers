@@ -2015,7 +2015,35 @@ def StageSaving (b : ℕ) : Prop :=
           deadChar (h * ((b : ℝ) ^ n - (b : ℝ) ^ m)) S' *
             rhoProd (h * ((b : ℝ) ^ n - (b : ℝ) ^ m)) (S' + 1) S‖ ≤ C * N * W N
 
-/-- **The crux, localized to the first `S₀ = N b + |h|` stages.**  Believed, 55%.  Open.
+/-- **Hybrid telescope.**  Proved from `prefChar_succ`.  The dead-character stage sum is
+`Π_{s<S} ρ_s − T_a · Π_{a≤s<S} ρ_s`, the character of uniform digits minus that of the hybrid law
+(`resLaw` for `a` stages, then uniform digits to depth `S`). -/
+theorem stage_telescope (ξ : ℝ) {a S : ℕ} (haS : a ≤ S) :
+    ∑ S' ∈ Finset.range a, deadChar ξ S' * rhoProd ξ (S' + 1) S =
+      rhoProd ξ 0 S - prefChar ξ a * rhoProd ξ a S := by
+  induction a with
+  | zero => simp [prefChar_zero, rhoProd]
+  | succ a ih =>
+    rw [Finset.sum_range_succ, ih (by omega), prefChar_succ]
+    have : rhoProd ξ a S = rhoS ξ (10 * a) * rhoProd ξ (a + 1) S := by
+      rw [rhoProd, rhoProd, Finset.prod_eq_prod_Ico_succ_bot (by omega)]
+    rw [this]; ring
+
+/-- **The hybrid-law Cassels bound** (open; the crux restated).  Believed 55%.  The pair sum of
+the hybrid characters `T_a(ξ) Π_{a≤s<S} ρ_s(ξ)`, which is `E|S_N|²` under `resLaw` for `a`
+stages followed by uniform Cantor digits, is `O(N² W(N))` for `a = min S (N b + |h|)`.  It
+implies `deadCharSigned_core`, because the uniform part is
+`cassels_Bf`. -/
+theorem hybridCassels {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) (h : ℤ) (hh : h ≠ 0) :
+    ∃ (C : ℝ) (W : ℕ → ℝ), Summable (fun j => W (sched j)) ∧ ∀ N : ℕ, 1 ≤ N → ∀ S : ℕ, Nat.log 3 N / 2 ≤ 10 * S →
+      ‖∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N,
+        prefChar (h * ((b : ℝ) ^ n - (b : ℝ) ^ m)) (min S (N * b + h.natAbs)) *
+          rhoProd (h * ((b : ℝ) ^ n - (b : ℝ) ^ m)) (min S (N * b + h.natAbs)) S‖ ≤
+        C * (N : ℝ) ^ 2 * W N := by
+  sorry
+
+/-- **The crux, localized to the first `S₀ = N b + |h|` stages.**  Proved from `hybridCassels`
+(via `stage_telescope`) and `cassels_Bf`.  The analysis below is of the open input.
 
 This is `deadCharSigned` with the stage sum cut at `S₀(N) = N b + |h|`.  The cut loses
 nothing, since later stages contribute `≤ 1/N` per pair (`deadChar_tail_le`).  So only the
@@ -2041,23 +2069,54 @@ Bénard–He–Zhang) together with Cassels decay of `μ̂_K` at the reduced fre
 `h(bⁿ − bᵐ) mod q`.  Guards: it fails for `b = 3` and for dyadic centres
 (`perStage_deadCount_not_enough`). -/
 theorem deadCharSigned_core {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) (h : ℤ) (hh : h ≠ 0) :
-    ∃ (C : ℝ) (W : ℕ → ℝ), Summable (fun j => W (sched j)) ∧ ∀ N : ℕ, 1 ≤ N → ∀ S : ℕ,
+    ∃ (C : ℝ) (W : ℕ → ℝ), Summable (fun j => W (sched j)) ∧ ∀ N : ℕ, 1 ≤ N → ∀ S : ℕ, Nat.log 3 N / 2 ≤ 10 * S →
       ‖∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N,
         ∑ S' ∈ Finset.range (min S (N * b + h.natAbs)),
           deadChar (h * ((b : ℝ) ^ n - (b : ℝ) ^ m)) S' *
             rhoProd (h * ((b : ℝ) ^ n - (b : ℝ) ^ m)) (S' + 1) S‖ ≤ C * (N : ℝ) ^ 2 * W N := by
-  sorry
+  obtain ⟨C₁, W₁, hW₁, h₁⟩ := cassels_Bf hb h3 h hh
+  obtain ⟨C₂, W₂, hW₂, h₂⟩ := hybridCassels hb h3 h hh
+  refine ⟨|C₁| + |C₂|, fun N => |W₁ N| + |W₂ N|, hW₁.abs.add hW₂.abs, fun N hN S hS => ?_⟩
+  set a := min S (N * b + h.natAbs)
+  set ξ : ℕ → ℕ → ℝ := fun n m => h * ((b : ℝ) ^ n - (b : ℝ) ^ m)
+  have hA : ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N, ‖rhoProd (ξ n m) 0 S‖ ≤
+      C₁ * (N : ℝ) ^ 2 * W₁ N := by
+    refine le_trans (Finset.sum_le_sum fun n _ => Finset.sum_le_sum fun m _ => ?_) (h₁ N hN)
+    rw [norm_rhoProd _ (Nat.zero_le _), mul_zero, ← tailProd_zero_eq_Bf,
+      ← tailProd_mul (ξ n m) (Nat.zero_le _) hS]
+    exact mul_le_of_le_one_right (tailProd_nonneg _ _ _) (tailProd_le_one _ _ _)
+  have hB := h₂ N hN S hS
+  have hN2 : (0 : ℝ) ≤ (N : ℝ) ^ 2 := by positivity
+  have k : ∀ C W : ℝ, C * (N : ℝ) ^ 2 * W ≤ |C| * (N : ℝ) ^ 2 * |W| := fun C W =>
+    (le_abs_self _).trans (by rw [abs_mul, abs_mul, abs_of_nonneg hN2])
+  calc _ = ‖∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N, rhoProd (ξ n m) 0 S -
+        ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N, prefChar (ξ n m) a * rhoProd (ξ n m) a S‖ := by
+        rw [← Finset.sum_sub_distrib]
+        congr 1
+        refine Finset.sum_congr rfl fun n _ => ?_
+        rw [← Finset.sum_sub_distrib]
+        exact Finset.sum_congr rfl fun m _ => stage_telescope _ (min_le_left _ _)
+    _ ≤ ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N, ‖rhoProd (ξ n m) 0 S‖ +
+        ‖∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N, prefChar (ξ n m) a * rhoProd (ξ n m) a S‖ :=
+        (norm_sub_le _ _).trans (add_le_add ((norm_sum_le _ _).trans
+          (Finset.sum_le_sum fun n _ => norm_sum_le _ _)) le_rfl)
+    _ ≤ C₁ * (N : ℝ) ^ 2 * W₁ N + C₂ * (N : ℝ) ^ 2 * W₂ N := add_le_add hA hB
+    _ ≤ _ := by
+        have := k C₁ (W₁ N); have := k C₂ (W₂ N)
+        have a1 := abs_nonneg C₁; have a2 := abs_nonneg C₂
+        have b1 := abs_nonneg (W₁ N); have b2 := abs_nonneg (W₂ N)
+        nlinarith [mul_nonneg (mul_nonneg a1 hN2) b2, mul_nonneg (mul_nonneg a2 hN2) b1]
 
 /-- The node `StageSaving` implies the localized crux.  Proved, by summing over the at most
 `(b + |h|) N` stages. -/
 theorem deadCharSigned_core_of_stageSaving {b : ℕ} (hS : StageSaving b) (h : ℤ) (hh : h ≠ 0) :
-    ∃ (C : ℝ) (W : ℕ → ℝ), Summable (fun j => W (sched j)) ∧ ∀ N : ℕ, 1 ≤ N → ∀ S : ℕ,
+    ∃ (C : ℝ) (W : ℕ → ℝ), Summable (fun j => W (sched j)) ∧ ∀ N : ℕ, 1 ≤ N → ∀ S : ℕ, Nat.log 3 N / 2 ≤ 10 * S →
       ‖∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N,
         ∑ S' ∈ Finset.range (min S (N * b + h.natAbs)),
           deadChar (h * ((b : ℝ) ^ n - (b : ℝ) ^ m)) S' *
             rhoProd (h * ((b : ℝ) ^ n - (b : ℝ) ^ m)) (S' + 1) S‖ ≤ C * (N : ℝ) ^ 2 * W N := by
   obtain ⟨C, W, hW, hC⟩ := hS h hh
-  refine ⟨|C| * (b + h.natAbs), fun N => |W N|, hW.abs, fun N hN S => ?_⟩
+  refine ⟨|C| * (b + h.natAbs), fun N => |W N|, hW.abs, fun N hN S _ => ?_⟩
   set a := min S (N * b + h.natAbs)
   have hswap : ∀ F : ℕ → ℕ → ℕ → ℂ, ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N,
       ∑ S' ∈ Finset.range a, F n m S' =
@@ -2098,13 +2157,13 @@ Guards: `b = 3` is false (`cantor_not_normal_three_pow`), and the base-2 dyadic 
 (`perStage_deadCount_not_enough`) must fail: its dead children sit at `p/2ᵏ`, where
 `|S_N|²` is maximal, so `∫ |S_N|² dτ` has a sign and does not cancel. -/
 theorem deadCharSigned {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) (h : ℤ) (hh : h ≠ 0) :
-    ∃ (C : ℝ) (W : ℕ → ℝ), Summable (fun j => W (sched j)) ∧ ∀ N : ℕ, 1 ≤ N → ∀ S : ℕ,
+    ∃ (C : ℝ) (W : ℕ → ℝ), Summable (fun j => W (sched j)) ∧ ∀ N : ℕ, 1 ≤ N → ∀ S : ℕ, Nat.log 3 N / 2 ≤ 10 * S →
       ‖∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N,
         ∑ S' ∈ Finset.range S, deadChar (h * ((b : ℝ) ^ n - (b : ℝ) ^ m)) S' *
           rhoProd (h * ((b : ℝ) ^ n - (b : ℝ) ^ m)) (S' + 1) S‖ ≤ C * (N : ℝ) ^ 2 * W N := by
   obtain ⟨C, W, hW, hC⟩ := deadCharSigned_core hb h3 h hh
   refine ⟨|C| + 1, fun N => |W N| + (N : ℝ) ^ (-(1 / 2 : ℝ)),
-    hW.abs.add (summable_sched_rpow (by norm_num)), fun N hN S => ?_⟩
+    hW.abs.add (summable_sched_rpow (by norm_num)), fun N hN S hS => ?_⟩
   set S₀ := N * b + h.natAbs
   set F : ℕ → ℕ → ℕ → ℂ := fun n m S' => deadChar (h * ((b : ℝ) ^ n - (b : ℝ) ^ m)) S' *
     rhoProd (h * ((b : ℝ) ^ n - (b : ℝ) ^ m)) (S' + 1) S
@@ -2119,7 +2178,7 @@ theorem deadCharSigned {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) (h : ℤ) (hh 
     by_cases hS : S₀ ≤ S
     · rw [min_eq_right hS]; exact deadChar_tail_le hb h hN hn.le hm.le S
     · rw [min_eq_left (by omega), Finset.Ico_self, Finset.sum_empty, norm_zero]; positivity
-  have hC' := hC N hN S
+  have hC' := hC N hN S hS
   have hT : ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N,
       ‖∑ S' ∈ Finset.Ico (min S S₀) S, F n m S'‖ ≤ N := by
     calc _ ≤ ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N, (1 / N : ℝ) :=
@@ -2150,12 +2209,12 @@ theorem deadCharSigned {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) (h : ℤ) (hh 
 
 /-- The absolute crux implies the signed one.  Proved. -/
 theorem deadCharSigned_of_abs {b : ℕ} (hD : DeadCharCancelAbs b) (h : ℤ) (hh : h ≠ 0) :
-    ∃ (C : ℝ) (W : ℕ → ℝ), Summable (fun j => W (sched j)) ∧ ∀ N : ℕ, 1 ≤ N → ∀ S : ℕ,
+    ∃ (C : ℝ) (W : ℕ → ℝ), Summable (fun j => W (sched j)) ∧ ∀ N : ℕ, 1 ≤ N → ∀ S : ℕ, Nat.log 3 N / 2 ≤ 10 * S →
       ‖∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N,
         ∑ S' ∈ Finset.range S, deadChar (h * ((b : ℝ) ^ n - (b : ℝ) ^ m)) S' *
           rhoProd (h * ((b : ℝ) ^ n - (b : ℝ) ^ m)) (S' + 1) S‖ ≤ C * (N : ℝ) ^ 2 * W N := by
   obtain ⟨C, W, hW, hC⟩ := hD h hh
-  refine ⟨C, W, hW, fun N hN S => le_trans ?_ (hC N hN S)⟩
+  refine ⟨C, W, hW, fun N hN S _ => le_trans ?_ (hC N hN S)⟩
   refine (norm_sum_le _ _).trans (Finset.sum_le_sum fun n _ => (norm_sum_le _ _).trans
     (Finset.sum_le_sum fun m _ => (norm_sum_le _ _).trans (Finset.sum_le_sum fun S' hS' => ?_)))
   rw [Finset.mem_range] at hS'
@@ -2170,7 +2229,7 @@ theorem casselsRate_resLaw {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) : CasselsR
   refine ⟨|C₁| + |C₂| + 1, fun N => |W₁ N| + |W₂ N| + (N : ℝ) ^ (-(1 / 2 : ℝ)),
     (hW₁.abs.add hW₂.abs).add (summable_sched_rpow (by norm_num)), fun N hN => ?_⟩
   set ξ : ℕ → ℕ → ℝ := fun n m => h * ((b : ℝ) ^ n - (b : ℝ) ^ m) with hξ
-  have h₂' : ∀ N : ℕ, 1 ≤ N → ∀ S : ℕ, ‖∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N,
+  have h₂' : ∀ N : ℕ, 1 ≤ N → ∀ S : ℕ, Nat.log 3 N / 2 ≤ 10 * S → ‖∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N,
       ∑ S' ∈ Finset.range S, deadChar (ξ n m) S' * rhoProd (ξ n m) (S' + 1) S‖ ≤
         C₂ * (N : ℝ) ^ 2 * W₂ N := h₂
   set K : ℝ := ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N, 16 * |ξ n m|
@@ -2223,7 +2282,7 @@ theorem casselsRate_resLaw {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) : CasselsR
   calc _ ≤ _ := secondMoment_le_norm_sum resLaw b h N
     _ ≤ _ := hsum
     _ ≤ (N : ℝ) ^ 2 * (N : ℝ) ^ (-(1 / 2 : ℝ)) + C₁ * (N : ℝ) ^ 2 * W₁ N +
-          C₂ * (N : ℝ) ^ 2 * W₂ N := add_le_add (add_le_add hC hA) (h₂' N hN S)
+          C₂ * (N : ℝ) ^ 2 * W₂ N := add_le_add (add_le_add hC hA) (h₂' N hN S hM)
     _ ≤ (N : ℝ) ^ 2 * (N : ℝ) ^ (-(1 / 2 : ℝ)) + |C₁| * (N : ℝ) ^ 2 * |W₁ N| +
           |C₂| * (N : ℝ) ^ 2 * |W₂ N| := by linarith [k C₁ (W₁ N), k C₂ (W₂ N)]
     _ ≤ _ := by

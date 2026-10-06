@@ -2960,3 +2960,7 @@ Next: (1) prove the reduction (needs pair-averaged partial Cantor products, Cass
   The implication `deadCharSigned_core_of_stageSaving` is kept.  The open sorry is back on
   `deadCharSigned_core`.  Lesson: per-stage triangle inequalities are lossy; any decomposition must
   keep the sum over stages signed (the telescope sum = E_ν|S_N|² − E_μK|S_N|²).
+- `stage_telescope` (proved): the signed stage sum = Πρ − T_a·Π_{s≥a}ρ.  So `deadCharSigned_core` is now
+  PROVED from `hybridCassels` (sorry, 55%) + `cassels_Bf`.  `hybridCassels` says E|S_N|² = O(N² W) under the
+  hybrid law (resLaw for a = min S (Nb+|h|) stages, then uniform digits to depth S); depth hypothesis
+  log₃N/2 ≤ 10S was added along the chain (casselsRate_resLaw supplies it).  This is the crux in its cleanest form.
