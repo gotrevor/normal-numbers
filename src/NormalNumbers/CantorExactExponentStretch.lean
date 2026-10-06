@@ -1015,7 +1015,9 @@ theorem hit_mass_farey (free : ℕ → Bool) (m L : ℕ) (hL : 2 * m + 5 ≤ L) 
 /-- **3-adic Farey separation.**  With `r₀ = P q₀ − pp·3^c` and `r₀' = P' q₀' − pp'·3^c`
 (`q₀, q₀'` prime to 3): if `P ≡ P' (mod 3^j)`, `j ≤ c`, and `|r₀ q₀' − r₀' q₀| < 3^j`, then
 `P ≡ P' (mod 3^c)`.  The cross product is `≡ (P − P') q₀ q₀' ≡ 0 (mod 3^j)`, hence `0`, hence
-`3^c ∣ (P − P') q₀ q₀'`. -/
+`3^c ∣ (P − P') q₀ q₀'`.  The principle is the standard non-archimedean gap argument (cf.
+Bugeaud, *Explicit examples of p-adic numbers with prescribed irrationality exponent*, INTEGERS
+18 (2018), Lemma 1); the new step is applying it to Cantor numerators at forced-run windows. -/
 theorem padic_sep (c j P P' q₀ q₀' pp pp' : ℕ) (hj : j ≤ c) (hq : Nat.Coprime q₀ 3)
     (hq' : Nat.Coprime q₀' 3) (hPP : P % 3 ^ j = P' % 3 ^ j)
     (hb : |((P : ℤ) * q₀ - pp * 3 ^ c) * q₀' - ((P' : ℤ) * q₀' - pp' * 3 ^ c) * q₀| < 3 ^ j) :
@@ -1608,5 +1610,14 @@ theorem exists_computable_mem_cantorSet_irrExponent_normal_all (μ₀ : ℚ) (h�
     hn, not_isNormal_three_cantorExpReal μ₀ h1 e⟩
   have := hj m (le_of_max_le_left hm)
   simpa [le_of_max_le_right hm] using this
+
+/-- **The exponent-in-`K` half is the known part** (referee pass, 2026-10-06).  Dropping
+normality, the headline is the rational, `μ₀ > 2` case of `Literature.Bugeaud2008Thm721`, which
+Becher–Bugeaud–Slaman (Proc. AMS 144 (2016), Thm 1 with Bugeaud's lacunary class) already make
+computable.  So the new content of the headline is the normality clause. -/
+theorem bugeaud2008_rational_of_stretch (μ₀ : ℚ) (hμ : 2 < μ₀) :
+    ∃ x ∈ cantorSet, HasIrrExponent x μ₀ := by
+  obtain ⟨e, -, hK, hE, -⟩ := exists_computable_mem_cantorSet_irrExponent_normal_all μ₀ hμ
+  exact ⟨_, hK, hE⟩
 
 end NormalNumbers.CantorExactExponentStretch
