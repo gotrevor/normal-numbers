@@ -2903,3 +2903,6 @@ Note: Bridge edit forces rebuild of whole-Mathlib importers; parallel `lake buil
 ## 2026-10-06 qspan lap 2
 QSpanCriterion.lean sorry-free; all six frozen headlines axiom-clean (see HANDOFF-2026-10-06-qspan-lap2.md).
 Next (outside this campaign's scope): subadditivity leaf for `QSpan.span_dimension_budget`.
+
+## 2026-10-06 BFR directive lap 1
+Candidates 2,4 proved (`StretchBFR.card_cantor_hyperbola_le`, `eq_of_hyperbola_low`); 1,3 → `NKPowerSaving` node, prior art Chow–Varjú–Yu 2402.18395. Confidence < 1%; stop condition met. Next (if reopened): read CVY and transcribe their count as a Literature Prop.

@@ -67,6 +67,11 @@ def mazeLinks : List Link := [
   ⟨"Diophantine (exponent-2) input for a normal element of a Q-span",
    [``QSpan.exists_pair_exponentTwo_qSpan_not_normal, ``QSpan.span_dimension_budget,
     ``QSpan.qSpanNormal_sqrt_upperDim], []⟩,
+  ⟨"3-adic Farey separation as a BFR count",
+   [``StretchBFR.card_cantor_hyperbola_le, ``StretchBFR.eq_of_hyperbola_low,
+    ``StretchBFR.card_near_cantor_le], []⟩,
+  ⟨"power saving for N_K(Q, delta) from separation",
+   [``StretchBFR.card_cantor_hyperbola_le], [``StretchBFR.NKPowerSaving]⟩,
   ⟨"schedule redesign for the trivial count",
    [``CantorExactExponentStretch.trivial_count_barrier], []⟩,
   ⟨"per-q residue counting below 1 + log2 3",
@@ -266,7 +271,7 @@ def mazeLegacy : List String := [
   "Diophantine good-denominator detour for the tail cell",
   "route B's unweighted cover of the state-dependent target"]
 
-/-- info: maze audit: 165 rows, 58 cite declarations, 107 legacy (prose only) -/
+/-- info: maze audit: 167 rows, 60 cite declarations, 107 legacy (prose only) -/
 #guard_msgs in
 #maze_audit mazeRows, mazeLinks, mazeLegacy
 

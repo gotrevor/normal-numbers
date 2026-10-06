@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
 import NormalNumbers.CantorExactExponentStretch
+import Architect
 
 /-!
 # The BFR bet: does the stretch count say anything about rationals near `K`?
@@ -35,6 +36,12 @@ declaration here, so the stretch lane can grind them:
    separation (`CantorExactExponentStretch.padic_sep`, `hit_mass_padic`) pins each hitting
    numerator by about `log₃(|r| q)` low digits plus `v₃(q)` top digits, which proved the stretch
    node for every `μ₀ > 2` (lap 3 of the stretch lane).
+
+**BFR bet, 2026-10-06 (BFR directive lap 1): confidence < 1%.**  Candidate 2 is proved
+(`card_cantor_hyperbola_le`, `≲ (RQ)^{log₃ 2}`) and candidate 4 with it (`eq_of_hyperbola_low`,
+any base, `q` prime to the base); both are the 3-adic covering bound.  Candidates 1 and 3 reduce,
+through `R = δQ3^b`, to the archimedean covering count; a saving (`NKPowerSaving`) needs a Fourier
+input, which is Chow–Varjú–Yu (arXiv:2402.18395).  Every route has a Maze row.
 -/
 
 open MeasureTheory Filter
@@ -98,5 +105,122 @@ theorem card_near_cantor_le (q n : ℕ) (hq : 0 < q) (hn : q ≤ 3 ^ n) :
     ((Finset.range (q + 1)).filter fun p : ℕ =>
         ∃ x ∈ cantorSet, |x - (p : ℝ) / q| < 1 / q).card ≤ 4 * 2 ^ n := by
   sorry
+
+/-! ### BFR directive (2026-10-06): candidates 2 and 4 -/
+
+/-- **`B`-adic Farey separation for numerators** (candidate 4: any base).  If `P q ≡ r` and
+`P' q' ≡ r'` mod `B^b` with `q, q'` prime to `B`, `|r|, |r'| ≤ R`, `q, q' ≤ Q`, and `P, P'` share
+their low `j` base-`B` digits where `2RQ < B^j`, then `P = P'`.  No primality of `B` is used:
+only `gcd(q q', B) = 1`.  What a composite base loses is the reduction of a general `q` to its
+`B`-free part (`q = 3^v q₀` in `hit_mass_padic`), which needs `B` prime (or `q` restricted). -/
+theorem eq_of_hyperbola_low (B b j R Q P P' q q' : ℕ) (r r' : ℤ) (hj : j ≤ b)
+    (hq : Nat.Coprime q B) (hq' : Nat.Coprime q' B) (hqQ : q ≤ Q) (hq'Q : q' ≤ Q)
+    (hr : |r| ≤ R) (hr' : |r'| ≤ R) (hRQ : 2 * R * Q < B ^ j)
+    (hP : P < B ^ b) (hP' : P' < B ^ b)
+    (h : (P * q : ℤ) ≡ r [ZMOD (B : ℤ) ^ b]) (h' : (P' * q' : ℤ) ≡ r' [ZMOD (B : ℤ) ^ b])
+    (hlow : P % B ^ j = P' % B ^ j) : P = P' := by
+  have hdj : ((B : ℤ) ^ j) ∣ (P' : ℤ) - P := by
+    have := Nat.modEq_iff_dvd.mp hlow; exact_mod_cast this
+  have hjb : ((B : ℤ) ^ j) ∣ (B : ℤ) ^ b := pow_dvd_pow _ hj
+  set X : ℤ := r * q' - r' * q with hX
+  have hXc : (B : ℤ) ^ b ∣ ((P : ℤ) - P') * q * q' - X := by
+    have e1 := (Int.ModEq.mul_right (q' : ℤ) h).symm.dvd
+    have e2 := (Int.ModEq.mul_right (q : ℤ) h').symm.dvd
+    have key : ((P : ℤ) - P') * q * q' - X =
+        (P * q * q' - r * q') - (P' * q' * q - r' * q) := by rw [hX]; ring
+    rw [key]; exact dvd_sub e1 e2
+  have hXd : (B : ℤ) ^ j ∣ X := by
+    have h1 : (B : ℤ) ^ j ∣ ((P : ℤ) - P') * q * q' := by
+      rw [← dvd_neg] at hdj
+      exact Dvd.dvd.mul_right (Dvd.dvd.mul_right (by simpa using hdj) _) _
+    have := dvd_sub h1 (hjb.trans hXc)
+    simpa using this
+  have hXb : |X| < (B : ℤ) ^ j := by
+    have hq0 : (0 : ℤ) ≤ q := by positivity
+    have hq0' : (0 : ℤ) ≤ q' := by positivity
+    have hQ : (q : ℤ) ≤ Q := by exact_mod_cast hqQ
+    have hQ' : (q' : ℤ) ≤ Q := by exact_mod_cast hq'Q
+    have hR0 : (0 : ℤ) ≤ R := by positivity
+    calc |X| ≤ |r| * q' + |r'| * q := by
+          rw [hX]; refine (abs_sub _ _).trans ?_
+          rw [abs_mul, abs_mul, abs_of_nonneg hq0, abs_of_nonneg hq0']
+      _ ≤ R * Q + R * Q := by gcongr
+      _ = ((2 * R * Q : ℕ) : ℤ) := by push_cast; ring
+      _ < (B : ℤ) ^ j := by exact_mod_cast hRQ
+  have hX0 : X = 0 := by
+    by_contra hne
+    obtain ⟨c, hc⟩ := hXd
+    have hc0 : c ≠ 0 := by rintro rfl; simp at hc; exact hne hc
+    have : (B : ℤ) ^ j ≤ |X| := by
+      rw [hc, abs_mul]
+      have hBj : (0 : ℤ) ≤ (B : ℤ) ^ j := by positivity
+      rw [abs_of_nonneg hBj]
+      exact le_mul_of_one_le_right hBj (Int.one_le_abs hc0)
+    linarith
+  rw [hX0, sub_zero] at hXc
+  have hcop : IsCoprime ((B : ℤ) ^ b) ((q : ℤ) * q') := by
+    apply IsCoprime.pow_left
+    apply IsCoprime.mul_right
+    · exact (Int.isCoprime_iff_gcd_eq_one.mpr (by simpa [Int.gcd_natCast_natCast] using hq.symm))
+    · exact (Int.isCoprime_iff_gcd_eq_one.mpr (by simpa [Int.gcd_natCast_natCast] using hq'.symm))
+  have hd : (B : ℤ) ^ b ∣ (P : ℤ) - P' := by
+    rw [mul_assoc] at hXc; exact hcop.dvd_of_dvd_mul_right hXc
+  obtain ⟨c, hc⟩ := hd
+  have hPr : ((P : ℤ)) < (B : ℤ) ^ b := by exact_mod_cast hP
+  have hPr' : ((P' : ℤ)) < (B : ℤ) ^ b := by exact_mod_cast hP'
+  have hBpos : (0 : ℤ) < (B : ℤ) ^ b := by
+    have : 0 < B ^ b := lt_of_le_of_lt (Nat.zero_le _) hP
+    exact_mod_cast this
+  have hc0 : c = 0 := by
+    by_contra hne
+    have : (B : ℤ) ^ b ≤ |(P : ℤ) - P'| := by
+      rw [hc, abs_mul, abs_of_pos hBpos]
+      exact le_mul_of_one_le_right hBpos.le (Int.one_le_abs hne)
+    rw [abs_le] at *; rcases abs_cases ((P : ℤ) - P') with ⟨h1, -⟩ | ⟨h1, -⟩ <;> omega
+  rw [hc0, mul_zero, sub_eq_zero] at hc; exact_mod_cast hc
+
+open Classical in
+/-- **Restricted-digit modular hyperbola count** (candidate 2, proved).  The Cantor numerators
+`P ∈ C_b` with `P q ≡ r (mod 3^b)` for some `q ≤ Q` prime to 3 and `|r| ≤ R` number at most
+`2^j` whenever `2RQ < 3^j ≤ 3^b`; that is, `≲ (RQ)^{log₃ 2}`, independent of `b`.
+
+Verdict: this is the 3-adic covering bound.  As 3-adic numbers, the fractions `r/q` with `|r| ≤ R`,
+`q ≤ Q` are `(2RQ)^{-1}`-separated, and `C_b` meets each 3-adic ball of radius `3^{-j}` in at most
+one point near such a fraction; the archimedean twin is `card_near_cantor_le`.  The lower bound
+`R^{log₃ 2}` (take `q = 1`) shows the exponent of `R` is sharp. -/
+@[blueprint (title := "Restricted-digit modular hyperbola count")]
+theorem card_cantor_hyperbola_le (b j R Q : ℕ) (hj : j ≤ b) (hRQ : 2 * R * Q < 3 ^ j) :
+    ((cantorInts b).filter fun P : ℕ => ∃ q : ℕ, q ≤ Q ∧ Nat.Coprime q 3 ∧ ∃ r : ℤ, |r| ≤ R ∧
+        (((P : ℤ) * q) ≡ r [ZMOD 3 ^ b])).card ≤ 2 ^ j := by
+  set S := (cantorInts b).filter fun P : ℕ => ∃ q : ℕ, q ≤ Q ∧ Nat.Coprime q 3 ∧ ∃ r : ℤ, |r| ≤ R ∧
+        (((P : ℤ) * q) ≡ r [ZMOD 3 ^ b])
+  have hinj : Set.InjOn (· % 3 ^ j) (S : Set ℕ) := by
+    intro P hP P' hP' heq
+    simp only [S, Finset.coe_filter, Set.mem_ofPred_eq, cantorInts, Finset.mem_filter,
+      Finset.mem_range] at hP hP'
+    obtain ⟨⟨hPb, -⟩, q, hqQ, hq, r, hr, h⟩ := hP
+    obtain ⟨⟨hPb', -⟩, q', hqQ', hq', r', hr', h'⟩ := hP'
+    exact eq_of_hyperbola_low 3 b j R Q P P' q q' r r' hj hq hq' hqQ hqQ' hr hr' hRQ hPb hPb'
+      (by exact_mod_cast h) (by exact_mod_cast h') heq
+  calc S.card = (S.image (· % 3 ^ j)).card := (Finset.card_image_of_injOn hinj).symm
+    _ ≤ (cantorInts j).card := Finset.card_le_card (by
+        intro x hx; obtain ⟨P, hP, rfl⟩ := Finset.mem_image.1 hx
+        exact mod_mem_cantorInts hj (Finset.mem_filter.1 hP).1)
+    _ ≤ 2 ^ j := card_cantorInts_le j
+
+open Classical in
+/-- **Candidate 3 (open node, prior art dominates).**  A power saving over the trivial covering
+bound `N_K(Q, δ) ≲ Q δ^{-dim K}` in the regime `Q^{-2} < δ < Q^{-1}`, for rationals `p/q`,
+`q ≤ Q`, within `δ` of the middle-third Cantor set.  The 3-adic route gives nothing here: through
+`P q ≡ r (mod 3^b)` with `R = δ Q 3^b`, `card_cantor_hyperbola_le` returns `(δ Q² 3^b)^{dim K}`
+endpoints, the archimedean covering count again.  Upper bounds of this kind for missing-digit
+sets are the subject of Chow–Varjú–Yu, *Counting rationals and diophantine approximation in
+missing-digit Cantor sets* (arXiv:2402.18395), via Fourier `ℓ¹` dimension, a mechanism the
+separation argument does not contain. -/
+def NKPowerSaving : Prop :=
+  ∃ ε : ℝ, 0 < ε ∧ ∃ C : ℝ, ∀ Q : ℕ, ∀ δ : ℝ, (Q : ℝ) ^ (-(2 : ℝ)) ≤ δ → δ ≤ (Q : ℝ) ^ (-(1 : ℝ)) →
+    (((Finset.Icc 1 Q ×ˢ Finset.range (Q + 1)).filter fun x : ℕ × ℕ =>
+        x.2 ≤ x.1 ∧ ∃ y ∈ cantorSet, |y - (x.2 : ℝ) / x.1| < δ).card : ℝ) ≤
+      C * Q * δ ^ (-Real.logb 3 2) * (Q : ℝ) ^ (-ε)
 
 end NormalNumbers.StretchBFR
