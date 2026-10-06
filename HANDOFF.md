@@ -97,3 +97,6 @@ Stuck flag cleared.
 ## cantorbad lap 6 (2026-10-06): blocker strike 1 superseded
 The operator's session instruction (keep attacking the resLaw crux) answers the lap-5 ask.  The headline now goes
 through the local almost-sure route; crux `localDeadBias_resLaw`.  See `HANDOFF-2026-10-06-cantorbad-lap6.md`.
+
+## cantorbad lap 7 (2026-10-06)
+Both standard leaves proved; crux now `localBiasMixing_resLaw`.  See `HANDOFF-2026-10-06-cantorbad-lap7.md`.
