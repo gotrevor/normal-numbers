@@ -1988,14 +1988,22 @@ theorem cs_bootstrap_floor {c η : ℝ} (hc : 0 < c) (hη : 0 < η) :
   have : η * (c ^ 2 * η) = (c * η) ^ 2 := by ring
   rw [this, Real.sqrt_sq (by positivity)]; nlinarith
 
-/-- **Per-stage power saving** (open leaf, believed 45%).  Each stage `S'` contributes to the
+/-- **Per-stage power saving** (open leaf, believed 35%).  Each stage `S'` contributes to the
 signed pair sum at most `C N^{1−δ}`, uniformly in `S'` and in the depth `S`.
 
 Heuristic: the stage changes only `O(1)` frozen terms of `S_N` (see `deadCharSigned_core`), so it
 contributes `≈ P(dead at S') · E[|A| | dead]`.  That is `O(η √n₀)` if the lacunary sums
 `Σ_{n<n₀} e(h bⁿ p/q)` at the obstacle centres near `K` have square-root size on average.  The
 per-stage form is stronger than needed (only the sum over the `O(N)` stages matters), but it isolates
-the decorrelation input at a single scale `3^{10S'}`.  The trivial bound is `2N²`, from
+the decorrelation input at a single scale `3^{10S'}`.
+
+Test case `S' = 0` (no dead history, deterministic prefix `[]`): the term is
+`E_{τ₁}|S_N|² − E_{τ₀}|S_N|²` for two scaled Cantor copies (the dead-child mix and the uniform mix).
+Both are `N + o(N)`, since off-diagonal lags `d` have limit `∫ e(h(b^d − 1)x) dx = 0`.  So the leaf at
+`S' = 0` asks for an `N^{1−δ}` rate in that limit, which is Schmidt-type power saving
+(Schmidt 1960, *On normal numbers*, the cosine-product lemma: `Σ_{n<N} Π_k |cos(π h rⁿ/s^k)| ≤ 2N^{1−δ}`).
+That rate is known for the frequencies `h bⁿ`, but not uniformly for the differences
+`h(bⁿ − bᵐ)` that appear here.  This is why the confidence is below the core's.  The trivial bound is `2N²`, from
 `|deadChar| ≤ 2`, and `cs_bootstrap_floor` shows that Cauchy–Schwarz cannot improve the exponent. -/
 theorem stageSaving {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) (h : ℤ) (hh : h ≠ 0) :
     ∃ δ C : ℝ, 0 < δ ∧ ∀ N : ℕ, 1 ≤ N → ∀ S S' : ℕ,
