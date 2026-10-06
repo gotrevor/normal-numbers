@@ -114,6 +114,11 @@ def cruxLinks : List CruxLink := [
    "the cancellation must use 3 ∤ b (3ⁿp/q does not cancel for q | 3ᵏ) and the arithmetic of \
     the centres p/q (dyadic centres give e(2ⁿp/2ᵏ) = 1, and per-stage dead counts alone admit a \
     never 2-normal descent)"⟩,
+  ⟨``CantorBadNormal.localDeadBias_resLaw,
+   [``cantor_not_normal_three_pow, ``perStage_dead_not_enough],
+   "the local dead excesses must average out by the arithmetic of the centres p/q and 3 ∤ b: for \
+    b = 3 the Cantor part itself does not average (log₃ b rational), and for dyadic centres every \
+    dead child sits on a binary zero run, so the excess phase is coherent (probe: coherence 0.96)"⟩,
   ⟨``CantorBadNormal.fourierPairRate_descent_of_deadRateDecay,
    [``cantor_not_normal_three_pow, ``perStage_dead_not_enough],
    "the pair-averaged Cantor products must use 3 ∤ b, and the dead-stage hypothesis must be a \
@@ -208,6 +213,12 @@ def waivers : List Waiver := [
   ⟨``CantorExactExponentStretch.exists_computable_mem_cantorSet_irrExponent_normal_all,
    "assembly: the main file's wiring with ae_not_liouvilleWith_all (the crux) in place of \
     ae_not_liouvilleWith; no mechanism of its own"⟩,
+  ⟨``CantorBadNormal.ae_cesaro_condDiff,
+   "a leaf: approximate martingale differences, second moment O(N), then Davenport–Erdős–LeVeque \
+    along squares; no number theory"⟩,
+  ⟨``CantorBadNormal.cesaro_contChar_small,
+   "a leaf: Weyl equidistribution of n log₃ b (irrationality only) and ∫₀¹ Π cos²(2π3ᵏy) = 2^{−C}; \
+    standard Cantor Fourier analysis, the b = 3 failure is carried by the crux link"⟩,
   ⟨``FiniteState.isFNormal_delayEnum_of_normal,
    "a leaf: O(1) cost of composing with the delay transducer and its finite-state right inverse"⟩]
 

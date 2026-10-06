@@ -2163,7 +2163,14 @@ stages `a₁ ≤ S' < a`, where `a₁ = min a (⌊log₃N⌋/2/20)` and `a = min
 `O(N² W(N))`.  The low stages `S' < a₁` are free (`hybridCassels_low`) and the high ones are
 local (`deadChar_tail_le`).  What remains is exactly the stages whose scale `3^{10S'}` lies
 between `N^{1/40}` and the frequency scale `b^N`.  This is where the decorrelation of dead events
-(rationals near `K`) from the lacunary sums is needed. -/
+(rationals near `K`) from the lacunary sums is needed.
+
+Off the headline path since lap 6 (the headline now goes through the local route,
+`localDeadBias_resLaw`).  Reason: this is a Cassels *rate* for `resLaw`, and any stage-by-stage
+bound of it multiplies each dead correction by `rhoProd ξ (S' + 1) S`, whose modulus lives on the
+middle and leading ternary digits of `bⁿ`.  Granting the decorrelation, a rate still needs
+quantitative equidistribution of `n log₃ b` (Baker-type input).  The local route needs only its
+irrationality. -/
 theorem midStages {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) (h : ℤ) (hh : h ≠ 0) :
     ∃ (C : ℝ) (W : ℕ → ℝ), Summable (fun j => W (sched j)) ∧ ∀ N : ℕ, 1 ≤ N → ∀ S : ℕ,
       Nat.log 3 N / 2 ≤ 10 * S →
@@ -2736,6 +2743,216 @@ theorem not_exists_timesThree_law_on_bad (hEFS : Literature.EFSTimesThreeNotBad)
   have : μ (Bad ∪ Badᶜ) = 0 := le_antisymm ((measure_union_le _ _).trans (by simp [h0, hB])) bot_le
   simp at this
 
+/-! ## The local route (lap 6): almost-sure normality from local dead biases
+
+`midStages` asks for a Cassels *rate* for `resLaw`.  Every stage-by-stage bound of it multiplies
+the dead correction at depth `10S'` by the Cantor-tail character `rhoProd ξ (S' + 1) S`, whose
+modulus `tailProd ξ (10S' + 10) (10S)` (`norm_rhoProd`) lives on the ternary digits of
+`ξ = h(bⁿ − bᵐ)` above position `10S'`: the middle and leading digits of `bⁿ`.  With a rate, that
+needs quantitative equidistribution of `n log₃ b` (Baker-type input), on top of the arithmetic
+decorrelation of the dead events.
+
+The local route needs no rate.  Condition the `n`-th Weyl term on the stage prefix `C` ternary
+digits above the scale of `bⁿ` (`stageOf`) and split
+`e(hbⁿx) = (e(hbⁿx) − condChar) + localBias + contChar`.
+* The first part is an approximate martingale-difference array: its partial sums have second
+  moment `O(N)`, so its Cesàro means vanish almost surely (`ae_cesaro_condDiff`).
+* `contChar` has modulus `|μ̂_K(h 3^{C + u_n})| ≤ Π_{k<C} |cos(2π h 3^{u_n + k})|`, where
+  `u_n = 10 frac((n log₃ b − C)/10)`.  Weyl equidistribution of `n log₃ b / 10` and
+  `∫₀¹ Π_{k<C} cos²(2π 3^k y) dy = 2^{−C}` make its Cesàro mean small for large `C`
+  (`cesaro_contChar_small`).  Only irrationality of `log₃ b` is used.
+* The middle part, `localBias`, is the dead correction.  By the uniformity of the resampled block
+  (`buildU_succ_uniform`) only the dead children of the stages near the scale of `bⁿ` appear in
+  it.  The crux is now that its Cesàro means vanish (`LocalDeadBias`, `localDeadBias_resLaw`). -/
+
+/-- The conditioning stage of the `n`-th Weyl term: `C` ternary digits above the scale
+`3^{⌊log₃ bⁿ⌋}` of `bⁿ`, rounded down to a whole stage. -/
+def stageOf (b C n : ℕ) : ℕ := (Nat.log 3 (b ^ n) - C) / 10
+
+/-- The conditional character of `resLaw` at frequency `ξ`, given the stage-`s` prefix `w`
+(`0` on a null prefix). -/
+noncomputable def condChar (ξ : ℝ) (s : ℕ) (w : List Bool) : ℂ :=
+  (∫ ω in {ω | buildU s ω = w}, ee (ξ * cpt (descentU ω)) ∂coinMeasure) /
+    ((coinMeasure.real {ω | buildU s ω = w} : ℝ) : ℂ)
+
+/-- The character of the Cantor continuation of the prefix `w`:
+`e(ξ cylLeft w) · μ̂_K(ξ / 3^{|w|})`. -/
+noncomputable def contChar (ξ : ℝ) (w : List Bool) : ℂ :=
+  ee (ξ * cylLeft w) * muK (ξ / 3 ^ w.length)
+
+/-- The local dead bias of the `n`-th Weyl term: conditional character of `resLaw` minus that
+of the Cantor continuation, given the prefix at `stageOf b C n`. -/
+noncomputable def localBias (b C : ℕ) (h : ℤ) (n : ℕ) (ω : ℕ → Bool) : ℂ :=
+  condChar (h * (b : ℝ) ^ n) (stageOf b C n) (buildU (stageOf b C n) ω) -
+    contChar (h * (b : ℝ) ^ n) (buildU (stageOf b C n) ω)
+
+/-- **Conjecture node: the local dead biases of `resLaw` average out.**  Believed 75% for
+`3 ∤ b`.  For each nonzero `h` and conditioning depth `C`, the Cesàro means of
+`localBias b C h n ω` vanish for almost every coin sequence.
+
+What it says.  Given the prefix at `stageOf b C n`, the conditional character of `e(hbⁿx)` under
+`resLaw` differs from the Cantor continuation's only through the dead children of the later
+stages, each weighted `1/|A(w)|` (uniform resampling, `alive_avg`, `prefChar_succ`).  Stages far
+above the scale of `bⁿ` contribute at most `2π|h|bⁿ3^{−10s}` (`norm_deadErr_le`), and those far
+below it are damped by the Cantor tail.  So `localBias` is the excess character of the dead
+children near the scale of `bⁿ`.  The dead children at depth `L` are the ones near rationals
+`p/q` with `q² ≈ 3^L`, and their excess at `bⁿ ≈ 3^L` is about `e(hbⁿ p/q)`.  So the node is an
+equidistribution statement for the phases `bⁿ p/q` of the obstacle rationals met along the path:
+asymptotic independence of the `×b` orbit from the Farey (geodesic) structure near `K`.  Under an
+arbitrary replacement rule the replacement's own character would enter `localBias`; that is how
+`AdversarialReplacement` steers, and why the node is stated for `resLaw` only.
+
+Strength.  With `ae_cesaro_condDiff` and `cesaro_contChar_small`, almost-sure normality of
+`resLaw` in base `b` is equivalent to this node with `→ 0` weakened to `limsup ≤ ε(C)`,
+`ε(C) → 0`.  So the node is the problem, isolated in local form, and carries no rate (unlike
+`midStages`).  It fails for the dyadic sibling (`perStage_deadCount_not_enough`): there every
+dead child sits on a binary zero run, so the excess has a coherent phase.
+
+Evidence (`scripts/cantorbad_localbias.py`, 2026-10-06).  Along 6000 `resLaw` paths of 30
+stages (depth 300), for each dead child `f` at stage `s ≥ 4` the probe records the excess
+`Z_f = Σ_{n ∈ window} (⟨e(bⁿx)⟩_{wf} − ⟨e(bⁿx)⟩_w)`, window `3^L ≤ b^{n+2}`, `bⁿ < 3^{L+15}`,
+`⟨·⟩_v` the Cantor-continuation average.  About 200,000 dead children per base:
+`|mean Z| / mean |Z| ≤ 0.009` for `b = 2, 5, 7`, every mean within about `1σ` of `0`
+(`σ ≈ 0.018, 0.012, 0.011`, against `mean |Z| ≈ 3.5, 2.3, 2.1`).  The past Weyl sum is not
+inflated on dead stages: `E[|D| |A|²/n₀] / (E|D| · E[|A|²/n₀]) = 1.00 ± 0.01`, and `Re(Ā Z)` has
+coherence below `0.008`.  The control (Cantor paths, same dead sets, no rejection) gives the
+same.  Known-biased control (`dyad2`: kill the child containing a dyadic `p/2^m`,
+`m = ⌊(L + 5) log₂ 3⌋`): `mean Z = 7.36 ± 0.01`, coherence `0.96`.  So the probe sees a
+coherent dead bias when one is present, and sees none for `resLaw`. -/
+def LocalDeadBias (b : ℕ) : Prop :=
+  ∀ h : ℤ, h ≠ 0 → ∀ C : ℕ, ∀ᵐ ω ∂coinMeasure,
+    Tendsto (fun N : ℕ => (∑ n ∈ Finset.range N, localBias b C h n ω) / (N : ℂ)) atTop (𝓝 0)
+
+/-- **The crux, local form** (open; believed 75%).  `resLaw` satisfies `LocalDeadBias` in every
+base `b ≥ 2` prime to 3.  See `LocalDeadBias` for the content, the evidence and the controls.
+A proof must use the uniformity of the resampled block (any-rule arguments reduce to
+`DeadRateDecay`, believed false) and `3 ∤ b` (`not_casselsRate_three`). -/
+theorem localDeadBias_resLaw {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) : LocalDeadBias b := by
+  sorry
+
+/-- **The martingale part** (open; believed 97%, standard).  The Cesàro means of
+`e(hbⁿx) − condChar` vanish almost surely.
+
+English proof.  Write `Y_n = e(hbⁿx) − condChar(hbⁿ, s_n, w_{s_n})`, `s_n = stageOf b C n`
+(monotone in `n`).  `|Y_n| ≤ 2`.  For `n < m`, `E[G(w_{s_m}) · conj Y_m] = 0` for every function
+`G` of the stage-`s_m` prefix (definition of `condChar` on the atoms of `buildU s_m`,
+`integral_buildU`), and `Y_n = G(w_{s_m}) + R` with `|R| ≤ 2π|h|bⁿ3^{−10 s_m}`
+(`|x − cylLeft w_{s_m}| ≤ 3^{−10 s_m}`, `norm_ee_sub_ee`).  Since `10 s_m ≥ m log₃ b − C − 10`,
+`Σ_{m>n} |E Y_n conj Y_m| ≤ 8π|h| 3^{C+10}/(b − 1)`, so `E|Σ_{n<N} Y_n|² ≤ K N`.  Then
+Davenport–Erdős–LeVeque along `(j+1)²` (as in `DecayAeNormal.ae_tendsto_weyl`) and
+`tendsto_of_tendsto_sched`. -/
+theorem ae_cesaro_condDiff {b : ℕ} (hb : 2 ≤ b) (h : ℤ) (C : ℕ) :
+    ∀ᵐ ω ∂coinMeasure, Tendsto (fun N : ℕ => (∑ n ∈ Finset.range N,
+      (ee (h * (b : ℝ) ^ n * cpt (descentU ω)) -
+        condChar (h * (b : ℝ) ^ n) (stageOf b C n) (buildU (stageOf b C n) ω))) / (N : ℂ))
+      atTop (𝓝 0) := by
+  sorry
+
+/-- **The Cantor-continuation part is small on average** (open; believed 97%, standard).  For
+every `ε > 0` some conditioning depth `C` makes the Cesàro means of `|μ̂_K(hbⁿ / 3^{10 s_n})|`
+eventually at most `ε`.
+
+English proof.  `‖muK η‖ ≤ Π_{p<M} |cos(2πη/3^{p+1})|` (`charFun_real`).  With
+`η = hbⁿ/3^{10 s_n} = h 3^{C + u_n}`, `u_n = 10 frac((n log₃ b − C)/10)`, keep the factors
+`p < C`: `‖muK η‖ ≤ g_C(frac v_n)`, `g_C(v) = Π_{k<C} |cos(2π h 3^{10v + k})|`, `v_n = n log₃ b/10 −
+C/10`.  `g_C` is continuous on `[0,1]` with `g_C(0) = g_C(1) = 1`, so continuous on the circle,
+and `log₃ b` is irrational for `3 ∤ b`, so `(1/N) Σ g_C(frac v_n) → ∫₀¹ g_C` (Weyl,
+`WeylCriterion.cgood_all`).  Finally `∫₀¹ g_C ≤ (∫₀¹ g_C²)^{1/2}` and, substituting
+`y = |h| 3^{10v}`, `∫₀¹ g_C² ≤ (3^{10}/(10 ln 3)) ∫₀¹ Π_{k<C} cos²(2π 3^k y) dy =
+(3^{10}/(10 ln 3)) 2^{−C}` (induction on `C`: `Σ_{j<3} cos²(θ + 2πj/3) = 3/2`). -/
+theorem cesaro_contChar_small {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) (h : ℤ) (hh : h ≠ 0) {ε : ℝ}
+    (hε : 0 < ε) : ∃ C : ℕ, ∀ᶠ N : ℕ in atTop,
+      (∑ n ∈ Finset.range N, ‖muK (h * (b : ℝ) ^ n / 3 ^ (10 * stageOf b C n))‖) / (N : ℝ) ≤ ε := by
+  sorry
+
+/-- Weyl's criterion along the orbit `bᵏ x`.  Proved (the closing step of
+`CantorLiouvilleAll.ae_isNormal_of_secondMoment`). -/
+theorem isNormal_of_weylMeans {b : ℕ} (hb : 2 ≤ b) (x : ℝ)
+    (hx : ∀ h : ℤ, h ≠ 0 → Tendsto (fun N : ℕ =>
+      (∑ k ∈ Finset.range N, ee (h * (b : ℝ) ^ k * x)) / (N : ℂ)) atTop (𝓝 0)) :
+    IsNormal b x := by
+  rw [isNormal_iff_equidistributed_orbit b hb]
+  refine equidistributed_of_weyl _ (fun k => ⟨Int.fract_nonneg _, Int.fract_lt_one _⟩) ?_
+  intro h hh
+  refine (hx h hh).congr fun N => ?_
+  rw [LevinSparse.fourierMean_orbit]
+
+theorem norm_contChar (ξ : ℝ) (w : List Bool) : ‖contChar ξ w‖ = ‖muK (ξ / 3 ^ w.length)‖ := by
+  rw [contChar, norm_mul, norm_ee, one_mul]
+
+/-- **The local reduction.**  Proved from `ae_cesaro_condDiff`, `cesaro_contChar_small` and
+Weyl's criterion: `LocalDeadBias` gives almost-sure normality of `resLaw`, with no rate. -/
+theorem ae_isNormal_resLaw_of_localDeadBias {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b)
+    (hL : LocalDeadBias b) : ∀ᵐ ω ∂coinMeasure, IsNormal b (cpt (descentU ω)) := by
+  have key : ∀ h : ℤ, h ≠ 0 → ∀ᵐ ω ∂coinMeasure, Tendsto (fun N : ℕ =>
+      (∑ k ∈ Finset.range N, ee (h * (b : ℝ) ^ k * cpt (descentU ω))) / (N : ℂ))
+      atTop (𝓝 0) := by
+    intro h hh
+    have hM := ae_all_iff.2 fun C : ℕ => ae_cesaro_condDiff hb h C
+    have hB := ae_all_iff.2 fun C : ℕ => hL h hh C
+    filter_upwards [hM, hB] with ω hMω hBω
+    rw [Metric.tendsto_atTop]
+    intro ε hε
+    obtain ⟨C, hC⟩ := cesaro_contChar_small hb h3 h hh (ε := ε / 3) (by positivity)
+    obtain ⟨N₁, hN₁⟩ := Metric.tendsto_atTop.1 (hMω C) (ε / 3) (by positivity)
+    obtain ⟨N₂, hN₂⟩ := Metric.tendsto_atTop.1 (hBω C) (ε / 3) (by positivity)
+    obtain ⟨N₃, hN₃⟩ := eventually_atTop.1 hC
+    refine ⟨max (max N₁ N₂) N₃, fun N hN => ?_⟩
+    have h1 := hN₁ N (le_trans (le_max_left _ _) (le_trans (le_max_left _ _) hN))
+    have h2 := hN₂ N (le_trans (le_max_right _ _) (le_trans (le_max_left _ _) hN))
+    have h3' := hN₃ N (le_trans (le_max_right _ _) hN)
+    rw [dist_zero_right] at h1 h2 ⊢
+    set s : ℕ → ℕ := fun n => stageOf b C n
+    set Y : ℕ → ℂ := fun n => ee (h * (b : ℝ) ^ n * cpt (descentU ω)) -
+      condChar (h * (b : ℝ) ^ n) (s n) (buildU (s n) ω)
+    set B : ℕ → ℂ := fun n => localBias b C h n ω
+    set K : ℕ → ℂ := fun n => contChar (h * (b : ℝ) ^ n) (buildU (s n) ω)
+    have hdec : ∀ n, ee (h * (b : ℝ) ^ n * cpt (descentU ω)) = Y n + B n + K n := by
+      intro n; simp only [Y, B, K, localBias, s]; ring
+    have hK : ‖(∑ n ∈ Finset.range N, K n) / (N : ℂ)‖ ≤ ε / 3 := by
+      rw [norm_div, Complex.norm_natCast]
+      refine le_trans ?_ h3'
+      gcongr
+      refine (norm_sum_le _ _).trans (le_of_eq (Finset.sum_congr rfl fun n _ => ?_))
+      simp only [K, norm_contChar, length_buildU, s]
+    have hsplit : (∑ k ∈ Finset.range N, ee (h * (b : ℝ) ^ k * cpt (descentU ω))) / (N : ℂ) =
+        (∑ n ∈ Finset.range N, Y n) / (N : ℂ) + (∑ n ∈ Finset.range N, B n) / (N : ℂ) +
+          (∑ n ∈ Finset.range N, K n) / (N : ℂ) := by
+      simp_rw [hdec, Finset.sum_add_distrib, add_div]
+    rw [hsplit]
+    calc _ ≤ ‖(∑ n ∈ Finset.range N, Y n) / (N : ℂ)‖ + ‖(∑ n ∈ Finset.range N, B n) / (N : ℂ)‖ +
+          ‖(∑ n ∈ Finset.range N, K n) / (N : ℂ)‖ := norm_add₃_le
+      _ < ε / 3 + ε / 3 + ε / 3 := by
+          have e1 : ‖(∑ n ∈ Finset.range N, Y n) / (N : ℂ)‖ < ε / 3 := h1
+          have e2 : ‖(∑ n ∈ Finset.range N, B n) / (N : ℂ)‖ < ε / 3 := h2
+          linarith
+      _ = ε := by ring
+  have hall : ∀ᵐ ω ∂coinMeasure, ∀ h : ℤ, h ≠ 0 → Tendsto (fun N : ℕ =>
+      (∑ k ∈ Finset.range N, ee (h * (b : ℝ) ^ k * cpt (descentU ω))) / (N : ℂ))
+      atTop (𝓝 0) := by
+    rw [ae_all_iff]
+    intro h
+    by_cases hh : h = 0
+    · exact Eventually.of_forall fun ω hne => absurd hh hne
+    · filter_upwards [key h hh] with ω hω _ using hω
+  filter_upwards [hall] with ω hω
+  exact isNormal_of_weylMeans hb _ hω
+
+/-- **The reduction, almost-sure form.**  Proved: a law on `K ∩ Bad` that is almost surely
+normal in every base prime to 3 has a point with all three properties. -/
+theorem exists_of_law_ae (L : Law)
+    (hL : ∀ b : ℕ, 2 ≤ b → ¬ 3 ∣ b → ∀ᵐ ω ∂coinMeasure, IsNormal b (cpt (L.φ ω))) :
+    ∃ x : ℝ, x ∈ cantorSet ∧ x ∈ Bad ∧ ∀ b : ℕ, 2 ≤ b → ¬ 3 ∣ b → IsNormal b x := by
+  have hall : ∀ᵐ ω ∂coinMeasure, ∀ b : ℕ, 2 ≤ b → ¬ 3 ∣ b → IsNormal b (cpt (L.φ ω)) := by
+    rw [ae_all_iff]; intro b
+    by_cases hb : 2 ≤ b
+    · by_cases h3 : 3 ∣ b
+      · exact Eventually.of_forall fun _ _ h => absurd h3 h
+      · filter_upwards [hL b hb h3] with ω hω _ _ using hω
+    · exact Eventually.of_forall fun _ h => absurd h hb
+  obtain ⟨ω, hω⟩ := hall.exists
+  exact ⟨_, cpt_mem_cantorSet _, L.bad ω, hω⟩
+
 /-- **A badly approximable point of the middle-third Cantor set, normal to every base prime to 3.**
 
 Believed true, confidence 90%; Lean 15%.
@@ -2760,9 +2977,15 @@ Known-false siblings the mechanism must fail on:
   normality half cannot come from the deletion game and must come from the measure.
 
 Evidence: each pair of the three sets meets, with full-dimensional `K ∩ BAD`; Hochman–Shmerkin
-and Cassels give normality to bases prime to 3 for many non-product measures on `K`. -/
+and Cassels give normality to bases prime to 3 for many non-product measures on `K`.
+
+Lean route (lap 6).  `ν = resLaw` (dead blocks resampled uniformly from fresh coins), then
+`exists_of_law_ae` and the local reduction `ae_isNormal_resLaw_of_localDeadBias`.  The open
+leaves are `localDeadBias_resLaw` (the crux) and the two standard leaves `ae_cesaro_condDiff`,
+`cesaro_contChar_small`. -/
 theorem exists_mem_cantorSet_bad_isNormal_coprime_three :
     ∃ x : ℝ, x ∈ cantorSet ∧ x ∈ Bad ∧ ∀ b : ℕ, 2 ≤ b → ¬ 3 ∣ b → IsNormal b x :=
-  exists_of_law resLaw fun _ hb h3 => casselsRate_resLaw hb h3
+  exists_of_law_ae resLaw fun _ hb h3 =>
+    ae_isNormal_resLaw_of_localDeadBias hb h3 (localDeadBias_resLaw hb h3)
 
 end NormalNumbers.CantorBadNormal
