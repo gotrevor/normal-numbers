@@ -1468,11 +1468,186 @@ theorem ae_not_qSpanNormal_fiveDigits :
     push_cast
     rw [e1, e2]; ring
 
+/-- Letters of `Fin 5 × Fin 5` as letters of `Fin 100`. -/
+def emb5 (p : Fin 5 × Fin 5) : Fin (10 * 10) :=
+  finProdFinEquiv (Fin.castLE (by norm_num) p.1, Fin.castLE (by norm_num) p.2)
+
+theorem emb5_injective : Function.Injective emb5 := by
+  intro p q h
+  have := finProdFinEquiv.injective h
+  simp only [Prod.mk.injEq] at this
+  exact Prod.ext (Fin.castLE_injective _ this.1) (Fin.castLE_injective _ this.2)
+
+theorem digitOf_realX_five (ω : ℕ → Fin 5 × Fin 5) (i : ℕ) :
+    digitOf 10 (Int.fract (realX 10 five ω)) i = (ω i).1 := by
+  have hs : ∀ i, five (ω i).1 < 10 := fun i => by unfold five; omega
+  have hp : ProperDigits 10 fun i => five (ω i).1 := fun N => ⟨N, le_rfl, by have := (ω N).1.isLt; show five (ω N).1 ≠ 10 - 1; unfold five; omega⟩
+  have hx : realX 10 five ω = realOfDigits 10 fun i => five (ω i).1 := rfl
+  rw [hx, Int.fract_eq_self.mpr (realOfDigits_mem_Ico 10 (by norm_num) _ hs hp),
+    digitOf_realOfDigits 10 (by norm_num) _ hs hp]
+  rfl
+
+theorem digitOf_realY_five (ω : ℕ → Fin 5 × Fin 5) (i : ℕ) :
+    digitOf 10 (Int.fract (realY 10 five ω)) i = (ω i).2 := by
+  have hs : ∀ i, five (ω i).2 < 10 := fun i => by unfold five; omega
+  have hp : ProperDigits 10 fun i => five (ω i).2 := fun N => ⟨N, le_rfl, by have := (ω N).2.isLt; show five (ω N).2 ≠ 10 - 1; unfold five; omega⟩
+  have hx : realY 10 five ω = realOfDigits 10 fun i => five (ω i).2 := rfl
+  rw [hx, Int.fract_eq_self.mpr (realOfDigits_mem_Ico 10 (by norm_num) _ hs hp),
+    digitOf_realOfDigits 10 (by norm_num) _ hs hp]
+  rfl
+
+theorem digitPair_five (ω : ℕ → Fin 5 × Fin 5) (i : ℕ) :
+    digitPair 10 (by norm_num) (realX 10 five ω) (realY 10 five ω) i = emb5 (ω i) := by
+  unfold digitPair emb5 digitSeq
+  congr 2 <;> ext <;> simp [digitOf_realX_five, digitOf_realY_five]
+
+/-- A fixed word of length `n` is a prefix with probability at most `25⁻ⁿ`. -/
+theorem pairs_prefix_le (n : ℕ) (w : List (Fin (10 * 10))) :
+    pairs 5 {ω | pre (fun i => emb5 (ω i)) n = w} ≤ (25 : ℝ≥0∞)⁻¹ ^ n := by
+  classical
+  let t : ℕ → Set (Fin 5 × Fin 5) := fun i => emb5 ⁻¹' {w.getD i 0}
+  have hsub : {ω | pre (fun i => emb5 (ω i)) n = w} ⊆ Set.pi (Finset.range n : Set ℕ) t := by
+    intro ω hω i hi
+    simp only [Set.mem_setOf_eq] at hω
+    simp only [Finset.coe_range, Set.mem_Iio] at hi
+    subst hω
+    simp [t, pre, hi]
+  refine (measure_mono hsub).trans ?_
+  rw [pairs, Measure.infinitePi_pi (μ := fun _ : ℕ => (PMF.uniformOfFintype (Fin 5 × Fin 5)).toMeasure)
+    (fun i _ => MeasurableSet.of_discrete)]
+  refine (Finset.prod_le_prod' (s := Finset.range n) (g := fun _ => (25 : ℝ≥0∞)⁻¹)
+    fun i _ => ?_).trans (by simp)
+  by_cases h : ∃ p, emb5 p = w.getD i 0
+  · obtain ⟨p, hp⟩ := h
+    have : t i = {p} := by
+      ext q; simp only [t, Set.mem_preimage, Set.mem_singleton_iff]
+      exact ⟨fun hq => emb5_injective (hq.trans hp.symm), fun hq => hq ▸ hp⟩
+    rw [this, PMF.toMeasure_apply_singleton _ _ MeasurableSet.of_discrete,
+      PMF.uniformOfFintype_apply]
+    simp
+  · have : t i = ∅ := by
+      ext q; simp only [t, Set.mem_preimage, Set.mem_singleton_iff, Set.mem_empty_iff_false,
+        iff_false]
+      exact fun hq => h ⟨q, hq⟩
+    simp [this]
+
+theorem nat_key (l n : ℕ) (h : 5 * l < 3 * n) : 100 ^ l * 3 ^ n ≤ 50 ^ n := by
+  have h1 : (100 ^ l * 3 ^ n) ^ 5 ≤ (50 ^ n) ^ 5 := by
+    rw [mul_pow, ← pow_mul, ← pow_mul, ← pow_mul]
+    have : 100 ^ (l * 5) ≤ 10 ^ (6 * n) := by
+      rw [show (100 : ℕ) = 10 ^ 2 by norm_num, ← pow_mul]
+      exact Nat.pow_le_pow_right (by norm_num) (by omega)
+    calc 100 ^ (l * 5) * 3 ^ (n * 5) ≤ 10 ^ (6 * n) * 3 ^ (n * 5) := Nat.mul_le_mul_right _ this
+      _ = (10 ^ 6 * 3 ^ 5) ^ n := by rw [mul_pow, ← pow_mul, ← pow_mul, mul_comm 5 n]
+      _ ≤ (50 ^ 5) ^ n := Nat.pow_le_pow_left (by norm_num) _
+      _ = 50 ^ (n * 5) := by rw [← pow_mul, mul_comm]
+  exact (Nat.pow_le_pow_iff_left (by norm_num)).mp h1
+
+
+instance countable_FST (k : ℕ) : Countable (FST k) := by
+  let f : FST k → Σ m : ℕ, (Fin (m + 1) → Fin k → Fin (m + 1)) × (Fin (m + 1) → Fin k → List (Fin k)) :=
+    fun T => ⟨T.m, T.δ, T.ν⟩
+  refine Function.Injective.countable (f := f) ?_
+  rintro ⟨m, δ, ν⟩ ⟨m', δ', ν'⟩ h
+  simp only [f, Sigma.mk.inj_iff] at h
+  obtain ⟨rfl, h⟩ := h
+  simp only [heq_eq_eq, Prod.mk.injEq] at h
+  obtain ⟨rfl, rfl⟩ := h
+  rfl
+
+theorem term_le (l n : ℕ) (h : 5 * l < 3 * n) :
+    (100 : ℝ≥0∞) ^ l * (25 : ℝ≥0∞)⁻¹ ^ n ≤ (((2 / 3 : NNReal) ^ n : NNReal) : ℝ≥0∞) := by
+  have hk := nat_key l n h
+  have h2 : ((100 : NNReal) ^ l * 3 ^ n) ≤ 25 ^ n * 2 ^ n := by
+    rw [← mul_pow]; exact_mod_cast hk
+  have h3 : (100 : NNReal) ^ l * (25 : NNReal)⁻¹ ^ n ≤ (2 / 3) ^ n := by
+    rw [inv_pow, div_pow, ← div_eq_mul_inv, div_le_div_iff₀ (by positivity) (by positivity)]
+    calc 100 ^ l * 3 ^ n ≤ 25 ^ n * 2 ^ n := h2
+      _ = 2 ^ n * 25 ^ n := mul_comm _ _
+  calc (100 : ℝ≥0∞) ^ l * (25 : ℝ≥0∞)⁻¹ ^ n
+      = (((100 : NNReal) ^ l * (25 : NNReal)⁻¹ ^ n : NNReal) : ℝ≥0∞) := by
+        push_cast [ENNReal.coe_inv (by norm_num : (25 : NNReal) ≠ 0)]; rfl
+    _ ≤ _ := by exact_mod_cast h3
+
+/-- The bad event: a description shorter than `3n/5` letters. -/
+def shortEv (T : FST (10 * 10)) (n : ℕ) : Set (ℕ → Fin 5 × Fin 5) :=
+  {ω | ∃ π : List (Fin (10 * 10)), 5 * π.length < 3 * n ∧ T.run π = pre (fun i => emb5 (ω i)) n}
+
+theorem shortEv_le (T : FST (10 * 10)) (n : ℕ) :
+    pairs 5 (shortEv T n) ≤ ((n * (2 / 3 : NNReal) ^ n : NNReal) : ℝ≥0∞) := by
+  classical
+  have hsub : shortEv T n ⊆ ⋃ l ∈ (Finset.range n).filter (fun l => 5 * l < 3 * n),
+      ⋃ v : Fin l → Fin (10 * 10), {ω | pre (fun i => emb5 (ω i)) n = T.run (List.ofFn v)} := by
+    rintro ω ⟨π, hπ, hrun⟩
+    simp only [Set.mem_iUnion, Finset.mem_filter, Finset.mem_range]
+    refine ⟨π.length, ⟨by omega, hπ⟩, fun i => π.get i, ?_⟩
+    simp only [Set.mem_setOf_eq, List.ofFn_get]; exact hrun.symm
+  refine (measure_mono hsub).trans ((measure_biUnion_finset_le _ _).trans ?_)
+  calc ∑ l ∈ (Finset.range n).filter (fun l => 5 * l < 3 * n), pairs 5 (⋃ v : Fin l → Fin (10 * 10),
+        {ω | pre (fun i => emb5 (ω i)) n = T.run (List.ofFn v)})
+      ≤ ∑ l ∈ (Finset.range n).filter (fun l => 5 * l < 3 * n),
+          (((2 / 3 : NNReal) ^ n : NNReal) : ℝ≥0∞) := by
+        refine Finset.sum_le_sum fun l hl => ?_
+        rw [Finset.mem_filter] at hl
+        refine (measure_iUnion_fintype_le _ _).trans ?_
+        refine (Finset.sum_le_sum fun v _ => pairs_prefix_le n _).trans ?_
+        rw [Finset.sum_const, Finset.card_univ, Fintype.card_fun, Fintype.card_fin,
+          Fintype.card_fin, nsmul_eq_mul]
+        refine le_trans (le_of_eq ?_) (term_le l n hl.2)
+        push_cast; ring
+    _ ≤ ∑ l ∈ Finset.range n, (((2 / 3 : NNReal) ^ n : NNReal) : ℝ≥0∞) :=
+        Finset.sum_le_sum_of_subset (Finset.filter_subset _ _)
+    _ = _ := by simp
+
+theorem ae_eventually_not_shortEv (T : FST (10 * 10)) :
+    ∀ᵐ ω ∂pairs 5, ∀ᶠ n in atTop, ω ∉ shortEv T n := by
+  have hsum : ∑' n, pairs 5 (shortEv T n) ≠ ∞ := by
+    refine ne_top_of_le_ne_top ?_ (ENNReal.tsum_le_tsum (shortEv_le T))
+    rw [← ENNReal.coe_tsum]
+    · exact ENNReal.coe_ne_top
+    · rw [← NNReal.summable_coe]
+      push_cast
+      have := summable_pow_mul_geometric_of_norm_lt_one 1 (r := (2 / 3 : ℝ))
+        (by rw [Real.norm_eq_abs, abs_of_pos (by norm_num)]; norm_num)
+      simpa using this
+  exact ae_eventually_notMem hsum
+
+theorem liminf_ge_of_eventually (T : FST (10 * 10)) (ω : ℕ → Fin 5 × Fin 5)
+    (h : ∀ᶠ n in atTop, ω ∉ shortEv T n) :
+    (3 / 5 : ℝ≥0∞) ≤ liminf (fun n : ℕ =>
+      ((infoK T (pre (fun i => emb5 (ω i)) n) : ℕ∞) : ℝ≥0∞) / (n : ℝ≥0∞)) atTop := by
+  refine le_liminf_of_le (by isBoundedDefault) ?_
+  filter_upwards [h, eventually_ge_atTop 1] with n hn hn1
+  set c := (3 * n + 4) / 5
+  have hc : (c : ℕ∞) ≤ infoK T (pre (fun i => emb5 (ω i)) n) := by
+    refine le_iInf₂ fun π hπ => ?_
+    have : ¬ 5 * π.length < 3 * n := fun h' => hn ⟨π, h', hπ⟩
+    exact_mod_cast (by omega : c ≤ π.length)
+  have hc' : ((c : ℕ) : ℝ≥0∞) ≤ ((infoK T (pre (fun i => emb5 (ω i)) n) : ℕ∞) : ℝ≥0∞) := by
+    exact_mod_cast ENat.toENNReal_le.mpr hc
+  refine le_trans ?_ (ENNReal.div_le_div_right hc' _)
+  rw [ENNReal.le_div_iff_mul_le (by left; exact_mod_cast (by omega : n ≠ 0)) (by left; simp)]
+  rw [div_eq_mul_inv, mul_comm, ← mul_assoc, ← div_eq_mul_inv,
+    ENNReal.div_le_iff (by norm_num) (by norm_num)]
+  exact_mod_cast (by omega : n * 3 ≤ c * 5)
+
+
 /-- The same pair has joint finite-state dimension above the budget `1/2`
 (`log 25 / log 100 ≈ 0.70`).  Confidence 85% (Bernoulli entropy rate; the digits of `realX` are
 the letters, no `9`-tails since digits are `≤ 4`). -/
 theorem ae_jointDim_fiveDigits :
     ∀ᵐ ω ∂pairs 5, 1 / 2 < fsDim (digitPair 10 (by norm_num) (realX 10 five ω) (realY 10 five ω)) := by
-  sorry
+  have hall : ∀ᵐ ω ∂pairs 5, ∀ T : FST (10 * 10), ∀ᶠ n in atTop, ω ∉ shortEv T n :=
+    ae_all_iff.mpr ae_eventually_not_shortEv
+  filter_upwards [hall] with ω hω
+  have hS : digitPair 10 (by norm_num) (realX 10 five ω) (realY 10 five ω) =
+      fun i => emb5 (ω i) := funext (digitPair_five ω)
+  rw [hS]
+  refine lt_of_lt_of_le ?_ (le_iInf fun T => liminf_ge_of_eventually T ω (hω T))
+  rw [ENNReal.div_lt_iff (by norm_num) (by norm_num), div_eq_mul_inv, mul_assoc,
+    mul_comm _ (2 : ℝ≥0∞), ← mul_assoc, ← div_eq_mul_inv,
+    ENNReal.lt_div_iff_mul_lt (by norm_num) (by norm_num)]
+  norm_num
+
 
 end NormalNumbers.QSpanCriterion
