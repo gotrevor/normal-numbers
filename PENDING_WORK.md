@@ -3105,3 +3105,6 @@ Next: (1) prove the reduction (needs pair-averaged partial Cantor products, Cass
   functional) than the crux itself; typical #dead ≈ 1 (probe: ~200k dead children / 180k stages).
   Next: state the bootstrap inequality and the averaged-density hypothesis as Lean nodes; test
   `E[#dead · |A_n|²]` correlation (the lap-6 probe already measured inflation 1.00 ± 0.01 for a related X).
+* (lap 8) PROVED `catB`, `pathW`, `real_buildU_catB`: exact resLaw path likelihood
+  `mass(catB w k F) = mass(w)·∏ 1_{alive}/|A|` — the likelihood-ratio handle (vs uniform `1024^{−k}`) for the
+  bootstrap: `E_res[G(w_t)|w_s] = E_unif[G·∏ 1_alive·1024/|A| | w_s]`.

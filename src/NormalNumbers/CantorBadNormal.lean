@@ -4731,6 +4731,36 @@ theorem nearObstaclePhaseMixing_of_split {b : ℕ} (hb : 1 ≤ b) (h1 : FirstOrd
     _ ≤ K₁ * (N : ℝ) ^ 2 * W₁ N + K₂ * (N : ℝ) ^ 2 * W₂ N := add_le_add (hK₁ N hN) (hK₂ N hN)
     _ = _ := by ring
 
+/-- Append `k` blocks to `w`. -/
+def catB (w : List Bool) : (k : ℕ) → (Fin k → (Fin 10 → Bool)) → List Bool
+  | 0, _ => w
+  | k + 1, F => catB (w ++ List.ofFn (F 0)) k (fun i => F i.succ)
+
+open Classical in
+/-- The `resLaw` path weight of `k` blocks after `w`: `∏ 1_{alive}/|A|` along the path. -/
+noncomputable def pathW (w : List Bool) : (k : ℕ) → (Fin k → (Fin 10 → Bool)) → ℝ
+  | 0, _ => 1
+  | k + 1, F => (if F 0 ∈ aliveSet w then 1 / ((aliveSet w).card : ℝ) else 0) *
+      pathW (w ++ List.ofFn (F 0)) k (fun i => F i.succ)
+
+/-- **The `resLaw` likelihood of a path**: the atom of `catB w k F` has mass
+`mass(w) · pathW w k F`.  Against the uniform (Cantor) law, whose weight is `1024^{−k}`, the
+likelihood ratio is `∏ 1_{alive}·1024/|A|`.  Proved (iterated `real_child`). -/
+theorem real_buildU_catB (k : ℕ) : ∀ (s : ℕ) (w : List Bool) (F : Fin k → (Fin 10 → Bool)),
+    w.length = 10 * s →
+    coinMeasure.real {ω | buildU (s + k) ω = catB w k F} =
+      coinMeasure.real {ω | buildU s ω = w} * pathW w k F := by
+  classical
+  induction k with
+  | zero => intro s w F _; simp [catB, pathW]
+  | succ k ih =>
+    intro s w F hl
+    have hl' : (w ++ List.ofFn (F 0)).length = 10 * (s + 1) := by
+      rw [List.length_append, List.length_ofFn, hl]; ring
+    simp only [catB, pathW]
+    rw [show s + (k + 1) = s + 1 + k by ring, ih (s + 1) _ _ hl', real_child s w hl]
+    split_ifs <;> ring
+
 /-- **The crux, first-order part** (open; believed 50%).  `resLaw` satisfies
 `FirstOrderObstacleMix`; formerly stated as `NearObstaclePhaseMixing`, which now follows from the
 first-order and defect parts (`nearObstaclePhaseMixing_of_split`).  Original guard:
