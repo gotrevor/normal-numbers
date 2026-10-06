@@ -15,6 +15,7 @@ import NormalNumbers.EntropyProfiles
 import NormalNumbers.CantorExactExponentStretch
 import NormalNumbers.QSpanNormal
 import NormalNumbers.IndependenceRelative
+import NormalNumbers.ConjugateEntropy
 import NormalNumbers.Barriers
 
 /-!
@@ -43,6 +44,13 @@ def mazeRows : List RowInfo :=
 
 /-- Each linked row and the declarations it rests on. -/
 def mazeLinks : List Link := [
+  ⟨"Effective dimension as the currency for one-of statements",
+   [``ConjugateEntropy.invariant_vanishes_of_const_mem], []⟩,
+  ⟨"Entropy budget through squaring",
+   [``Deterministic.detSqNotDet_of_manai, ``Deterministic.not_exactly_one_nondet], []⟩,
+  ⟨"Diophantine input to a carry-automaton certificate",
+   [``CantorExactExponentStretch.exists_mem_cantorSet_irrExponent_two_of_literature,
+    ``IndependenceRelative.ternary_line], []⟩,
   ⟨"Independence-relative product blocks",
    [``IndependenceRelative.not_isRelativeBlock_small, ``IndependenceRelative.ternary_line], []⟩,
   ⟨"pair-universal mechanism for a normal element of a Q-span",
@@ -245,7 +253,7 @@ def mazeLegacy : List String := [
   "Diophantine good-denominator detour for the tail cell",
   "route B's unweighted cover of the state-dependent target"]
 
-/-- info: maze audit: 157 rows, 50 cite declarations, 107 legacy (prose only) -/
+/-- info: maze audit: 160 rows, 53 cite declarations, 107 legacy (prose only) -/
 #guard_msgs in
 #maze_audit mazeRows, mazeLinks, mazeLegacy
 

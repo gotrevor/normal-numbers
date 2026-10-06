@@ -113,7 +113,9 @@ affordable.  A collapse is a proof; a failing assignment is only "no certificate
 - **2-for-1 swap → 14** (`mahler_block swap21`, 22,785 moves, first hit after 910 s): drop `1`
   and `8`, add `2428 = 34203₅`:
   `{2, 16, 17, 23, 29, 1251, 1254, 1838, 2188, 2272, 2428, 2439, 2832, 3028}`.  It no longer
-  contains `x` itself.
+  contains `x` itself.  No single deletion from the 14.
+- **Swap again → 13** (2374 s): drop `29` and `1251`, add `2753 = 42003₅`:
+  `{2, 16, 17, 23, 1254, 1838, 2188, 2272, 2428, 2439, 2753, 2832, 3028}`.
 - Lean: `checkCertA` enumerates the ambient carry product (here ∏ m ≈ 10⁴⁰), so a Lean
   certificate needs a sparse, live-states-only checker.
 

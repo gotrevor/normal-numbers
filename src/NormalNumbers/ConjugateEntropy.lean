@@ -101,4 +101,17 @@ theorem exists_sum_zero_normal_half :
       fsDimUpper (digitSeq 4 (by omega) z) = 1 / 2 := by
   sorry
 
+/-- **Why a currency must be weak: anything invariant under the maps that build a constant is
+zero on it.**  Let `D` never increase under the maps in `𝓕`, vanish at `0`, and let `𝓕` contain
+the constant map to `x`.  Then `D x = 0`.  Reading: take `𝓕` = computable maps and `D` =
+effective (Kolmogorov) dimension, which respects `x ^ y`, `exp`, `x ^ k` and every other
+computable operation.  Every computable real (`π`, `e`, `√2`, `φ`) then has `D = 0`, so that
+currency cannot tell natural constants apart, and "one of these is complex" statements are
+false in it.  Finite-state dimension escapes because constant maps to irrationals are not
+finite-state, at the price of respecting only finite-state operations. -/
+theorem invariant_vanishes_of_const_mem {D : ℝ → ℝ≥0∞} (𝓕 : Set (ℝ → ℝ))
+    (hmono : ∀ f ∈ 𝓕, ∀ y, D (f y) ≤ D y) (h0 : D 0 = 0) {x : ℝ}
+    (hx : (fun _ => x) ∈ 𝓕) : D x = 0 :=
+  le_antisymm (by simpa [h0] using hmono _ hx 0) bot_le
+
 end NormalNumbers.ConjugateEntropy
