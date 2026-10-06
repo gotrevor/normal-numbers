@@ -60,3 +60,9 @@ Re-confirmed 2026-10-03 (fresh lap): `#print axioms dimH_Omega_eq_one` = trust b
   a FROZEN statement of an open problem (absolutely normal x with base-2 discrepancy O(N^-θ), θ>1/2; ABSS 1707.02628 barrier).
 - **Operator ask:** convert `exists_absNormal_base2_fast` to a `def … : Prop` conjecture node, or rescope `--done-when` to exclude it.
   Details: `HANDOFF-2026-10-03-levinsparse-lap1.md`.
+
+## STUCK 2026-10-06 (BFR directive lap 1) — stop condition met
+Directive says stop when BFR confidence < 1% with every route in the Maze. Verify fast:
+`StretchBFR.lean` module doc (confidence line), Maze rows "3-adic Farey separation as a BFR count"
+and "power saving for N_K(Q, delta) from separation", `#print axioms StretchBFR.card_cantor_hyperbola_le` clean.
+Ask: operator's next directive. Detail in HANDOFF-2026-10-06-bfr-lap1.md.
