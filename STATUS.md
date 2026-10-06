@@ -2,10 +2,12 @@
 
 ## Cantor exact-exponent stretch update, 6 October 2026 (branch `proof/cantorexp-stretch`)
 
-The stretch headline (computable `x ∈ K`, exponent exactly `μ₀` for every rational `μ₀ > 2`,
-normal to all bases prime to 3) is wired from one open leaf, `ev_expTest_mass_all`, whose crux is
-an elementary 3-adic Farey count (`hit_mass_padic`); six elementary leaves remain (sorry).
-Node confidence 80%.  See `HANDOFF-2026-10-06-stretch-lap2.md`.
+**PROVED** (lap 3): `CantorExactExponentStretch.exists_computable_mem_cantorSet_irrExponent_normal_all`
+— for every rational `μ₀ > 2`, a computable point of the middle-third Cantor set with
+irrationality exponent exactly `μ₀`, normal to every base prime to 3, not normal to base 3.
+Node `ae_not_liouvilleWith_all` proved; standard axioms only.  Mechanism: 3-adic Farey
+separation (`padic_sep`, `group_sep`, `hit_mass_padic`) in run-entering windows, real Farey
+separation (`hit_mass_farey`) elsewhere.  See `HANDOFF-2026-10-06-stretch-lap3.md`.
 
 ## Joint Lambert update, 29 September 2026
 
