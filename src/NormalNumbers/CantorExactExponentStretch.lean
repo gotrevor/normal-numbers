@@ -852,7 +852,75 @@ theorem farey_sep (m q q' pp pp' : ℕ) (hq : 0 < q) (hq' : 0 < q') (hq3 : q < 3
 theorem hit_mass_farey (free : ℕ → Bool) (m L : ℕ) (hL : 2 * m + 5 ≤ L) :
     coins.real {ω | hitB free m L (pre ω (L + 1)) = true} ≤
       (1 / 2 : ℝ) ^ fc free (2 * m + 3) (L - 2) := by
-  sorry
+  classical
+  set n := 2 * m + 3 with hn
+  set C : ℕ → Set (ℕ → Bool) := fun t => {ω | hitB free m L (pre ω (L + 1)) = true ∧ hd free ω n = t}
+  have hsub : {ω | hitB free m L (pre ω (L + 1)) = true} ⊆ ⋃ t ∈ HS free n, C t := by
+    intro ω hω
+    simp only [Set.mem_iUnion, Set.mem_ofPred_eq, C] at hω ⊢
+    exact ⟨_, hd_mem_HS free ω n, hω, rfl⟩
+  have h3L : (3 : ℝ) ^ L = 3 ^ (L - 2) * 9 := by
+    rw [show (9 : ℝ) = 3 ^ 2 by norm_num, ← pow_add]; congr 1; omega
+  have h3n : (3 : ℝ) ^ L = 3 ^ n * 3 ^ (L - n) := by rw [← pow_add]; congr 1; omega
+  have h9 : (9 : ℝ) ≤ 3 ^ (L - n) := by
+    calc (9 : ℝ) = 3 ^ 2 := by norm_num
+      _ ≤ _ := pow_le_pow_right₀ (by norm_num) (by omega)
+  have hclose : ∀ ω ω', ω ∈ C (hd free ω n) → ω' ∈ C (hd free ω n) →
+      ∀ i < L - 2, free i = true → ω i = ω' i := by
+    intro ω ω' hω hω'
+    simp only [C, Set.mem_ofPred_eq] at hω hω'
+    obtain ⟨q, pp, hq1, hq2, -, h1⟩ := near_of_hitB free ω m L hω.1
+    obtain ⟨q', pp', hq1', hq2', -, h1'⟩ := near_of_hitB free ω' m L hω'.1
+    have a1 := hd_div_le_pt free ω n
+    have a2 := pt_le_hd_div free ω n
+    have a3 := hd_div_le_pt free ω' n
+    have a4 := pt_le_hd_div free ω' n
+    rw [hω'.2] at a3 a4
+    have hpos : (0 : ℝ) < 3 ^ (L - n) := by positivity
+    have hpos' : (0 : ℝ) < 3 ^ n := by positivity
+    have heq : (pp : ℝ) / q = pp' / q' := by
+      by_contra hne
+      have := farey_sep m q q' pp pp' (lt_of_lt_of_le (by positivity) hq1)
+        (lt_of_lt_of_le (by positivity) hq1') hq2 hq2' hne
+      rw [abs_lt] at h1 h1'
+      have e : 1 / (3 : ℝ) ^ (2 * m + 2) = 3 * (1 / 3 ^ n) := by
+        rw [hn]; field_simp; ring
+      have f : 2 / (3 : ℝ) ^ L ≤ (2 / 9) * (1 / 3 ^ n) := by
+        rw [h3n, div_le_iff₀ (by positivity)]
+        field_simp; nlinarith
+      have k2 : (hd free ω n : ℝ) / 3 ^ n + 1 / 3 ^ n = (hd free ω n : ℝ) / 3 ^ n + 1 * (1 / 3 ^ n) := by ring
+      have hD : |(pp : ℝ) / q - pp' / q'| < 3 * (1 / 3 ^ n) := by
+        rw [abs_lt]; constructor <;> linarith
+      linarith
+    apply agree_of_close free ω ω' (L - 2)
+    rw [heq] at h1
+    calc |pt free ω - pt free ω'| < 4 / 3 ^ L := by
+          have e4 : 4 / (3 : ℝ) ^ L = 2 / 3 ^ L + 2 / 3 ^ L := by ring
+          rw [abs_lt] at h1 h1' ⊢; rw [e4]; constructor <;> linarith
+      _ ≤ 1 / 3 ^ (L - 2) := by rw [h3L, div_le_div_iff₀ (by positivity) (by positivity)]; nlinarith [pow_pos (by norm_num : (0:ℝ) < 3) (L - 2)]
+  have hmass : ∀ t ∈ HS free n, coins.real (C t) ≤ (1 / 2 : ℝ) ^ freeCount free (L - 2) := by
+    intro t _
+    by_cases hE : ∃ ω₀, ω₀ ∈ C t
+    · obtain ⟨ω₀, h₀⟩ := hE
+      have ht : hd free ω₀ n = t := h₀.2
+      have hs : C t ⊆ {ω | ∀ i ∈ (Finset.range (L - 2)).filter fun i => free i = true, ω i = ω₀ i} := by
+        intro ω hω i hi
+        simp only [Finset.mem_filter, Finset.mem_range] at hi
+        rw [← ht] at hω h₀
+        exact (hclose ω₀ ω h₀ hω i hi.1 hi.2).symm
+      refine (measureReal_mono hs).trans (le_of_eq ?_)
+      rw [coins_real_cyl]; rfl
+    · push Not at hE
+      have : C t = ∅ := Set.eq_empty_iff_forall_notMem.2 hE
+      rw [this, measureReal_empty]; positivity
+  refine (measureReal_mono hsub (measure_ne_top _ _)).trans
+    ((measureReal_biUnion_finset_le _ _).trans ((Finset.sum_le_sum hmass).trans ?_))
+  rw [Finset.sum_const, nsmul_eq_mul, freeCount_sub free (show n ≤ L - 2 by omega), pow_add]
+  have hc : ((HS free n).card : ℝ) ≤ 2 ^ freeCount free n := by exact_mod_cast card_HS free n
+  have e1 : (2 : ℝ) ^ freeCount free n * (1 / 2) ^ freeCount free n = 1 := by rw [← mul_pow]; norm_num
+  calc ((HS free n).card : ℝ) * ((1 / 2) ^ freeCount free n * (1 / 2) ^ fc free n (L - 2))
+      ≤ 2 ^ freeCount free n * ((1 / 2) ^ freeCount free n * (1 / 2) ^ fc free n (L - 2)) := by gcongr
+    _ = _ := by rw [← mul_assoc, e1, one_mul]
 
 /-- **3-adic Farey separation.**  With `r₀ = P q₀ − pp·3^c` and `r₀' = P' q₀' − pp'·3^c`
 (`q₀, q₀'` prime to 3): if `P ≡ P' (mod 3^j)`, `j ≤ c`, and `|r₀ q₀' − r₀' q₀| < 3^j`, then
