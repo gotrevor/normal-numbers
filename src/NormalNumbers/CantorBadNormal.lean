@@ -4641,7 +4641,9 @@ Evidence (`scripts/cantorbad_paircorr.py`, 2026-10-06).  `L = 12`, `C = 3`, all 
 (pruned Stern–Brocot enumeration), `h = 1`: ratio `|Σ|/#pairs` at `S = 4, 8, 12` is
 `.002, .006, .061` (b = 2), `.000, .003, .053` (b = 5), `.000, .001, .020` (b = 7), i.e. square-root
 size (`#pairs = 1.9·10⁶, 1.2·10⁵, 6274`).  Known-coherent control `b = 3`: `.163, .167, .134`, flat in
-`S`.  So the probe separates the bases prime to 3 from base 3 by two orders of magnitude. -/
+`S`.  So the probe separates the bases prime to 3 from base 3 by two orders of magnitude.
+`L = 16` (43572 obstacles), `S = 8, 12, 16`: `.000, .005, .016` (b = 2), `.002, .013, .045` (b = 5),
+`.002, .009, .087` (b = 7); control `b = 3`: `.167, .172, .160`.  Same picture one scale up. -/
 def ObstaclePairCorrelation (b : ℕ) : Prop :=
   ∀ h : ℤ, h ≠ 0 → ∀ C : ℕ, ∀ ε : ℝ, 0 < ε → ∃ G : ℕ, ∀ m S : ℕ, S + G ≤ 10 * stageOf b C m →
     ‖∑ xy ∈ obstPairs (10 * stageOf b C m) S, ee (h * (b : ℝ) ^ m * (oval xy.1 - oval xy.2))‖ ≤

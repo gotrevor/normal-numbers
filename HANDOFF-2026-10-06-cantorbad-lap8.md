@@ -20,7 +20,7 @@ Operator resolution (2026-10-05 22:55) was already done in lap 4 (`resLaw`, node
 - Off-path: `midStages`, `fourierPairRate_descent_of_deadRateDecay`.
 
 ## Next
-1. Record the L=16 paircorr run (in flight at handoff time, `scripts/cantorbad_paircorr.py 16 3`).
+1. (done) L=16 paircorr recorded in the node docstring: same separation.
 2. Implication `ObstaclePairCorrelation → NearObstaclePhaseMixing`: needs (a) 1/|A| vs 1/1024 error,
    (b) the second-order defect terms of `condMean_cExt_telescope`, (c) μ_K weights of obstacles in a cylinder.
    State (b) as its own node; decide by numerics whether it is genuinely lower order.
