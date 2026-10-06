@@ -5306,6 +5306,21 @@ theorem resLawObstSecondMoment_of_off {b : ℕ} (hD : DiagSmall b) (hO : ResLawO
     _ = _ + _ := by simp only [Finset.sum_add_distrib]
     _ ≤ K₁ * (N : ℝ) ^ 2 * W₁ N + K₂ * (N : ℝ) ^ 2 * W₂ N := add_le_add (hK₁ N hN) (hK₂ N hN)
     _ = _ := by ring
+
+theorem unifAvg_sub (H₁ H₂ : List Bool → ℂ) : unifAvg (H₁ - H₂) = unifAvg H₁ - unifAvg H₂ := by
+  funext w; simp only [unifAvg, Pi.sub_apply, Finset.sum_sub_distrib]; ring
+
+theorem cExt_sub (k : ℕ) : ∀ H₁ H₂ : List Bool → ℂ, cExt (H₁ - H₂) k = cExt H₁ k - cExt H₂ k := by
+  induction k with
+  | zero => intro H₁ H₂; rfl
+  | succ k ih => intro H₁ H₂; show cExt (unifAvg (H₁ - H₂)) k = _; rw [unifAvg_sub, ih]; rfl
+
+/-- **The uniform continuation of a defect.**  `cExt (aliveDefect H) k = cExt H (k+1) − cExt (aliveAvg H) k`:
+the first-order part of each defect term is a difference of two cylinder averages, one of the
+uniform and one of the alive next-block average of `H`.  Proved. -/
+theorem cExt_aliveDefect (H : List Bool → ℂ) (k : ℕ) :
+    cExt (aliveDefect H) k = cExt H (k + 1) - cExt (aliveAvg H) k := by
+  rw [show aliveDefect H = unifAvg H - aliveAvg H from rfl, cExt_sub]; rfl
 /-- **The crux, first-order part, off-diagonal form** (open; believed 45%).
 See `ResLawObstOff`. -/
 theorem resLawObstOff_resLaw {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) :
