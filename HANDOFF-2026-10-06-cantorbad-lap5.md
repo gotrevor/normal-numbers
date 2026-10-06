@@ -14,3 +14,12 @@ now `deadCharSigned_core` (`StageSaving` was demoted to a 20% node: at S'=0 it i
 State Schmidt-1960 cosine-product power saving as a `Literature` Prop and try the S'=0 case of
 `stageSaving` from it (known-answer probe).  The obstacle: Schmidt covers h bⁿ, not h(bⁿ−bᵐ).
 The general-S' case needs decorrelation of lacunary sums at rationals p/q near K.
+
+## Update (end of lap 5)
+- Only on-path sorry: `hybridCassels` (E|S_N|² = O(N²W) for the hybrid law: resLaw for
+  a = min S (Nb+|h|) stages, then uniform digits).  Chain proved: `stage_telescope` →
+  `deadCharSigned_core` → `deadCharSigned` → `casselsRate_resLaw` → headline.
+- `StageSaving` was demoted to a node: per-stage bounds are lossy and open-strength at S'=0.
+- For a = Nb+|h| the hybrid law is resLaw up to the scale of ξ, so `hybridCassels` is the real
+  problem, truncated.  The needed input is decorrelation of lacunary sums from rationals near K
+  (Khalil–Lüthi / Bénard–He–Zhang counting plus Cassels at h(bⁿ−bᵐ) mod q).
