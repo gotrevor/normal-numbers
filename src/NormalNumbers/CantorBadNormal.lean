@@ -4665,6 +4665,23 @@ theorem obstacle_phase_crt (p : ℤ) {q' : ℕ} (j : ℕ) (hq : Nat.Coprime q' 3
   field_simp
   linear_combination (-(B * p)) * h1
 
+/-- **Conjecture node: 3-adic window cancellation along `hbᵐ`.**  Believed 70% for `3 ∤ b`.  For
+every depth `j` below the top of `hbᵐ`, the Riesz majorant of the `M = ⌊log₃ N⌋/2` ternary digits of
+`hbᵐ` just below position `j` is small on average over `m < N`.  This is the 3-adic factor of
+`obstacle_phase_crt` for the preperiodic obstacle families (`PeriodicFamilyShare`); a single-sum
+analogue of `cassels_Bf`.  Fails for `b = 3` (`hbᵐ ≡ 0 mod 3^j` for `m ≥ j`, every factor is 1).
+Shallow depths (`3^j ≤ N`, period of `b mod 3^j` at most `N`) reduce to exact equidistribution of
+`bᵐ` in its subgroup mod `3^j`; deep `j` is an Erdős-ternary-type digit statement (open).
+Evidence (`scripts/cantorbad_3adicwin.py`, `N = 3⁸`, `M = 4`, `h = 1`, `j = 4..64`): means `.13–.18`
+for `b = 2, 5, 7`, matching the random-digit value `(2/π)⁴ ≈ .164` (a power saving `N^{−c}`); control
+`b = 3`: `1.0` at every `j`. -/
+def ThreeAdicWindowAvg (b : ℕ) : Prop :=
+  ∀ h : ℤ, h ≠ 0 → ∃ (C : ℝ) (W : ℕ → ℝ), Summable (fun j => W (sched j)) ∧
+    ∀ N j : ℕ, 1 ≤ N → Nat.log 3 N / 2 ≤ j →
+      ∑ m ∈ (Finset.range N).filter (fun m => j + 1 ≤ Nat.log 3 (b ^ m)),
+        CantorLiouville.Bf (fun _ => true) (Nat.log 3 N / 2)
+          (h * (b : ℝ) ^ m / 3 ^ (j - Nat.log 3 N / 2)) ≤ C * N * W N
+
 open Classical in
 /-- The obstacle rationals charged to a prefix of length `L` (as in `Alive` with `r = 5`):
 `p/q ∈ [0, 1]`, `3^L ≤ q²3⁵ < 3^{L+10}`, within `2c₀/q²` of `K`. -/
