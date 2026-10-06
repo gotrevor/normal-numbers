@@ -23,6 +23,12 @@ Branch `proof/cantor-bad-normal`.  Headline unchanged; build green.
 - Other file sorries (`fourierPairRate_descent_of_deadRateDecay`, `midStages`) are off-path / forbidden
   drift per the branch directive.
 
+## Late lap 9
+- `sibCorr`, `norm_aliveAvg_sq`, `sibSum`, `norm_aliveExt_sq_le_sib`, `AliveSibMix`, `aliveObstacleMix_of_sib`
+  (stronger alternative node; crux kept at `AliveOffMix`).
+- Probe fixed (`deadmix.py ... 10 8`, ξ ≥ 3^{L+8}): dyadic control R = .977; resLaw b=2,3 ≈ floor.
+  Evidence for `AliveOffMix`; base-3 barrier not visible at single-pair level.
+
 ## Next
 1. Decompose `AliveOffMix` by divergence depth: pairs of completions agreeing for j blocks then
    splitting at an alive node u; the pair sum becomes Σ_j Σ_u pathW(u)² |A(u)|⁻² Σ_{f≠f'} X(uf) conj X(uf'),
