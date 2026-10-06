@@ -3191,3 +3191,9 @@ Candidates 2,4 proved (`StretchBFR.card_cantor_hyperbola_le`, `eq_of_hyperbola_l
   intervals of z = 3^y; |cos| ≤ cos(2π/9) when the digit pair at k+1,k+2 differs; count strings
   with few changes), then the pair classification (low-free / top-free / O(log N) exceptional;
   top-in-later-run impossible for large k since a_{k+1} ≥ (k+2)E_k).
+- Lap 1d: PROVED `sum_topProd_le` (top-window sum from `LogDiscrepancy`: grid of mesh 3^{-(2K+1)}
+  in z = 3^y, Lipschitz `cantorProd_lip`, Riesz grid sum `sum_cantorProd_grid` via
+  `residue_sum_from`). Both analytic halves of `secondMoment_le_profile` now exist; what remains is
+  the pair classification + assembly (choose W = K = ⌊ε log₃ N⌋; low-free pairs via
+  `bf_le_hf_true`/`sum_hf_true_le`, top-free pairs via `bf_le_topProd`/`sum_topProd_le`, rest
+  O(N log N)).

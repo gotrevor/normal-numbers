@@ -447,6 +447,253 @@ theorem sum_hf_true_le {t : ℕ} (ht : 2 ≤ t) (h3 : ¬ 3 ∣ t) (j c : ℕ) (h
     rw [this]; simp
   rwa [hcard] at this
 
+theorem abs_prod_sub_prod_le (s : Finset ℕ) (f g : ℕ → ℝ) (hf : ∀ k, 0 ≤ f k ∧ f k ≤ 1)
+    (hg : ∀ k, 0 ≤ g k ∧ g k ≤ 1) :
+    |∏ k ∈ s, f k - ∏ k ∈ s, g k| ≤ ∑ k ∈ s, |f k - g k| := by
+  induction s using Finset.induction_on with
+  | empty => simp
+  | insert a s ha ih =>
+    rw [Finset.prod_insert ha, Finset.prod_insert ha, Finset.sum_insert ha]
+    have hF0 : 0 ≤ ∏ k ∈ s, f k := Finset.prod_nonneg fun k _ => (hf k).1
+    have hF1 : ∏ k ∈ s, f k ≤ 1 := Finset.prod_le_one (fun k _ => (hf k).1) fun k _ => (hf k).2
+    have hG0 : 0 ≤ ∏ k ∈ s, g k := Finset.prod_nonneg fun k _ => (hg k).1
+    have e : f a * ∏ k ∈ s, f k - g a * ∏ k ∈ s, g k =
+        (f a - g a) * ∏ k ∈ s, f k + g a * (∏ k ∈ s, f k - ∏ k ∈ s, g k) := by ring
+    rw [e]
+    refine (abs_add_le _ _).trans (add_le_add ?_ ?_)
+    · rw [abs_mul, abs_of_nonneg hF0]; nlinarith [abs_nonneg (f a - g a)]
+    · rw [abs_mul, abs_of_nonneg (hg a).1]; nlinarith [abs_nonneg (∏ k ∈ s, f k - ∏ k ∈ s, g k), (hg a).2]
+
+/-- `F_K(z) = ∏_{k<K} |cos(2π 3^k z)|`. -/
+noncomputable def cantorProd (K : ℕ) (z : ℝ) : ℝ :=
+  ∏ k ∈ Finset.range K, |Real.cos (2 * Real.pi * (3 ^ k * z))|
+
+theorem cantorProd_lip (K : ℕ) (z z' : ℝ) :
+    |cantorProd K z - cantorProd K z'| ≤ Real.pi * 3 ^ K * |z - z'| := by
+  unfold cantorProd
+  have hb : ∀ x : ℝ, 0 ≤ |Real.cos x| ∧ |Real.cos x| ≤ 1 := fun x => ⟨abs_nonneg _, Real.abs_cos_le_one _⟩
+  refine (abs_prod_sub_prod_le _ _ _ (fun k => hb _) (fun k => hb _)).trans ?_
+  have hterm : ∀ k ∈ Finset.range K, abs (|Real.cos (2 * Real.pi * (3 ^ k * z))| -
+      |Real.cos (2 * Real.pi * (3 ^ k * z'))|) ≤ 2 * Real.pi * 3 ^ k * |z - z'| := by
+    intro k _
+    refine (abs_abs_sub_abs_le_abs_sub _ _).trans ((Real.abs_cos_sub_cos_le _ _).trans (le_of_eq ?_))
+    rw [show 2 * Real.pi * (3 ^ k * z) - 2 * Real.pi * (3 ^ k * z') =
+      (2 * Real.pi * 3 ^ k) * (z - z') by ring, abs_mul, abs_of_pos (by positivity)]
+  refine (Finset.sum_le_sum hterm).trans ?_
+  have e : ∑ k ∈ Finset.range K, 2 * Real.pi * 3 ^ k * |z - z'| =
+      (∑ k ∈ Finset.range K, (3 : ℝ) ^ k) * (2 * Real.pi * |z - z'|) := by
+    rw [Finset.sum_mul]; exact Finset.sum_congr rfl fun k _ => by ring
+  rw [e]
+  have hgeom : (∑ k ∈ Finset.range K, (3 : ℝ) ^ k) * 2 = 3 ^ K - 1 := by
+    have := geom_sum_mul (3 : ℝ) K; norm_num at this; linarith
+  have : 0 ≤ Real.pi * |z - z'| := by positivity
+  nlinarith
+
+theorem topProd_eq (K : ℕ) (y : ℝ) : topProd K y = cantorProd K ((3 : ℝ) ^ y) := by
+  unfold topProd cantorProd
+  refine Finset.prod_congr rfl fun k _ => ?_
+  rw [Real.rpow_add (by norm_num), Real.rpow_natCast]
+
+/-- The window of places `[K+1, 2K]`. -/
+def winFree (K : ℕ) (p : ℕ) : Bool := decide (K + 1 ≤ p ∧ p ≤ 2 * K)
+
+theorem posSet_winFree (K : ℕ) :
+    posSet (winFree K) 0 (2 * K + 2) = Finset.Icc (K + 1) (2 * K) := by
+  ext p; simp only [posSet, winFree, Finset.mem_filter, Finset.mem_range, Finset.mem_Icc,
+    decide_eq_true_eq]; omega
+
+theorem cantorProd_grid (K i : ℕ) :
+    cantorProd K ((i : ℝ) / 3 ^ (2 * K + 1)) = Hf (winFree K) 0 (2 * K + 2) i := by
+  unfold cantorProd Hf
+  rw [posSet_winFree]
+  refine Finset.prod_nbij' (fun k => 2 * K - k) (fun p => 2 * K - p) ?_ ?_ ?_ ?_ ?_
+  · intro k hk; simp only [Finset.mem_range, Finset.mem_Icc] at *; omega
+  · intro p hp; simp only [Finset.mem_range, Finset.mem_Icc] at *; omega
+  · intro k hk; simp only [Finset.mem_range, Finset.mem_Icc] at *; omega
+  · intro p hp; simp only [Finset.mem_range, Finset.mem_Icc] at *; omega
+  · intro k hk
+    simp only [Finset.mem_range] at hk
+    congr 2
+    have : (3 : ℝ) ^ (2 * K + 1) = 3 ^ k * 3 ^ (2 * K - k + 1) := by
+      rw [← pow_add]; congr 1; omega
+    rw [pow_zero, one_mul, this]; field_simp
+
+theorem sum_cantorProd_grid (K : ℕ) :
+    ∑ i ∈ Finset.range (3 * 3 ^ (2 * K + 1)), cantorProd K ((i : ℝ) / 3 ^ (2 * K + 1)) ≤
+      3 * 3 ^ (2 * K + 1) * (2 / 3 : ℝ) ^ K := by
+  simp_rw [cantorProd_grid]
+  rw [CantorLiouville.sum_range_mul_eq _ 3 (3 ^ (2 * K + 1)), Finset.sum_comm]
+  have hc1 : (posSet (winFree K) 0 1).card = 0 := by
+    rw [Finset.card_eq_zero]; ext p; simp [posSet]; omega
+  have hcK : (posSet (winFree K) 0 (1 + (2 * K + 1))).card = K := by
+    rw [show 1 + (2 * K + 1) = 2 * K + 2 by ring, posSet_winFree]; simp; omega
+  calc _ ≤ ∑ u ∈ Finset.range 3, (3 : ℝ) ^ (2 * K + 1) * (2 / 3 : ℝ) ^ K := by
+        refine Finset.sum_le_sum fun u _ => ?_
+        have := CantorLiouvilleAll.residue_sum_from (winFree K) 0 1 le_rfl (2 * K + 1) u
+        rw [hc1, hcK, pow_zero, mul_one, show 1 + (2 * K + 1) = 2 * K + 2 by ring] at this
+        simpa [pow_one] using this
+    _ = _ := by simp; ring
+
+/-- Cell index of `y ∈ [0,1)` on the grid `i/Q`, `Q = 3^{2K+1}`, in the variable `z = 3^y`. -/
+theorem cell_bounds (K : ℕ) {y : ℝ} (hy0 : 0 ≤ y) (hy1 : y < 1) :
+    let Q : ℝ := 3 ^ (2 * K + 1)
+    let i := ⌊(3 : ℝ) ^ y * Q⌋₊
+    (3 : ℕ) ^ (2 * K + 1) ≤ i ∧ i < 3 * 3 ^ (2 * K + 1) ∧
+      (i : ℝ) / Q ≤ (3 : ℝ) ^ y ∧ (3 : ℝ) ^ y - i / Q < 1 / Q := by
+  intro Q i
+  have hQ : (0 : ℝ) < Q := by positivity
+  have hz1 : (1 : ℝ) ≤ (3 : ℝ) ^ y := Real.one_le_rpow (by norm_num) hy0
+  have hz3 : (3 : ℝ) ^ y < 3 := by
+    have := Real.rpow_lt_rpow_of_exponent_lt (by norm_num : (1 : ℝ) < 3) hy1
+    simpa using this
+  have hzQ : 0 ≤ (3 : ℝ) ^ y * Q := by positivity
+  have hfl := Nat.floor_le hzQ
+  have hlt := Nat.lt_floor_add_one ((3 : ℝ) ^ y * Q)
+  refine ⟨?_, ?_, ?_, ?_⟩
+  · apply Nat.le_floor; push_cast; simp only [Q]; nlinarith
+  · have : (i : ℝ) < 3 * 3 ^ (2 * K + 1) := by
+      calc (i : ℝ) ≤ (3 : ℝ) ^ y * Q := hfl
+        _ < 3 * Q := by nlinarith
+        _ = _ := rfl
+    exact_mod_cast this
+  · rw [div_le_iff₀ hQ]; exact hfl
+  · rw [sub_lt_iff_lt_add, ← add_div, lt_div_iff₀ hQ]; linarith
+
+/-- **Top-window sum from the discrepancy input.**  Proved: sample `z = 3^y` on the grid of mesh
+`3^{−(2K+1)}` (Lipschitz error `π 3^K` per unit), count each cell with `LogDiscrepancy`, and sum
+the grid values by the Riesz residue sum (`sum_cantorProd_grid`). -/
+theorem sum_topProd_le {t : ℕ} (hD : LogDiscrepancy t) : ∃ C κ : ℝ, 0 < κ ∧ ∀ N : ℕ, 1 ≤ N →
+    ∀ (K : ℕ) (β : ℝ), ∑ m ∈ Finset.range N, topProd K (Int.fract (m * Real.logb 3 t + β)) ≤
+      3 * N * (2 / 3 : ℝ) ^ K + 4 * N * (1 / 3 : ℝ) ^ K + C * 9 ^ K * (N : ℝ) ^ (1 - κ) := by
+  obtain ⟨C, κ, hκ, hC⟩ := hD
+  refine ⟨9 * |C|, κ, hκ, fun N hN K β => ?_⟩
+  set y : ℕ → ℝ := fun m => Int.fract (m * Real.logb 3 t + β)
+  set Q : ℝ := 3 ^ (2 * K + 1)
+  set Qn : ℕ := 3 ^ (2 * K + 1)
+  have hQ : (0 : ℝ) < Q := by positivity
+  have hQn : (Qn : ℝ) = Q := by simp [Qn, Q]
+  set idx : ℕ → ℕ := fun m => ⌊(3 : ℝ) ^ y m * Q⌋₊
+  have hcell := fun m : ℕ => cell_bounds K (Int.fract_nonneg (m * Real.logb 3 t + β))
+    (Int.fract_lt_one (m * Real.logb 3 t + β))
+  have hpt : ∀ m, topProd K (y m) ≤ cantorProd K ((idx m : ℝ) / Q) + Real.pi * 3 ^ K / Q := by
+    intro m
+    obtain ⟨-, -, h1, h2⟩ := hcell m
+    rw [topProd_eq]
+    have hl := cantorProd_lip K ((3 : ℝ) ^ y m) ((idx m : ℝ) / Q)
+    have : |(3 : ℝ) ^ y m - (idx m : ℝ) / Q| ≤ 1 / Q := by
+      rw [abs_of_nonneg (by linarith)]; exact h2.le
+    have : Real.pi * 3 ^ K * |(3 : ℝ) ^ y m - (idx m : ℝ) / Q| ≤ Real.pi * 3 ^ K / Q := by
+      calc _ ≤ Real.pi * 3 ^ K * (1 / Q) := by gcongr
+        _ = _ := by ring
+    have := (abs_le.1 hl).2
+    linarith
+  have hcount : ∀ i ∈ Finset.range (3 * Qn),
+      (((Finset.range N).filter (fun m => idx m = i)).card : ℝ) ≤ N / Q + |C| * (N : ℝ) ^ (1 - κ) := by
+    intro i _
+    by_cases hi : Qn ≤ i ∧ i < 3 * Qn
+    swap
+    · have : (Finset.range N).filter (fun m => idx m = i) = ∅ := by
+        rw [Finset.filter_eq_empty_iff]
+        intro m _ hm
+        obtain ⟨h1, h2, -, -⟩ := hcell m
+        exact hi ⟨hm ▸ h1, hm ▸ h2⟩
+      rw [this]; simp; positivity
+    have hiR : (1 : ℝ) ≤ i := by
+      have : 1 ≤ i := le_trans (Nat.one_le_pow _ _ (by norm_num)) hi.1
+      exact_mod_cast this
+    set u := Real.logb 3 ((i : ℝ) / Q)
+    set v := Real.logb 3 (((i : ℝ) + 1) / Q)
+    have hiQ : Q ≤ i := by rw [← hQn]; exact_mod_cast hi.1
+    have hi3 : (i : ℝ) + 1 ≤ 3 * Q := by
+      rw [← hQn]; have : i + 1 ≤ 3 * Qn := hi.2; exact_mod_cast this
+    have hu0 : 0 ≤ u := Real.logb_nonneg (by norm_num) (by rw [le_div_iff₀ hQ]; linarith)
+    have huv : u ≤ v := Real.logb_le_logb_of_le (by norm_num) (by positivity) (by gcongr; linarith)
+    have hv1 : v ≤ 1 := by
+      rw [Real.logb_le_iff_le_rpow (by norm_num) (by positivity), Real.rpow_one, div_le_iff₀ hQ]
+      linarith
+    have hsub : (Finset.range N).filter (fun m => idx m = i) ⊆
+        (Finset.range N).filter (fun m => y m ∈ Set.Ico u v) := by
+      intro m hm
+      simp only [Finset.mem_filter] at hm ⊢
+      refine ⟨hm.1, ?_, ?_⟩
+      · obtain ⟨-, -, h1, -⟩ := hcell m
+        have h1' : (i : ℝ) / Q ≤ (3 : ℝ) ^ y m := by rw [← hm.2]; exact h1
+        rw [Real.logb_le_iff_le_rpow (by norm_num) (by positivity)]; exact h1'
+      · obtain ⟨-, -, -, h2⟩ := hcell m
+        have h2' : (3 : ℝ) ^ y m < ((i : ℝ) + 1) / Q := by
+          rw [add_div, ← hm.2]; linarith
+        rw [Real.lt_logb_iff_rpow_lt (by norm_num) (by positivity)]; exact h2'
+    have hvc := hC N hN β u v hu0 huv hv1
+    have hcard : (((Finset.range N).filter (fun m => idx m = i)).card : ℝ) ≤
+        visitCount y u v N := by exact_mod_cast Finset.card_le_card hsub
+    have hvu : v - u ≤ 1 / Q := by
+      have e : v - u = Real.log (((i : ℝ) + 1) / i) / Real.log 3 := by
+        simp only [u, v, Real.logb]
+        rw [← sub_div, ← Real.log_div (by positivity) (by positivity)]
+        congr 1; field_simp
+      rw [e, div_le_iff₀ (Real.log_pos (by norm_num))]
+      have h1 : Real.log (((i : ℝ) + 1) / i) ≤ ((i : ℝ) + 1) / i - 1 :=
+        Real.log_le_sub_one_of_pos (by positivity)
+      have h2 : ((i : ℝ) + 1) / i - 1 = 1 / i := by field_simp; ring
+      have h3 : (1 : ℝ) / i ≤ 1 / Q := one_div_le_one_div_of_le hQ hiQ
+      have h4 : (1 : ℝ) < Real.log 3 := by
+        rw [Real.lt_log_iff_exp_lt (by norm_num)]
+        have : Real.exp 1 < 2.7182818286 := Real.exp_one_lt_d9
+        linarith
+      have h5 : (0 : ℝ) ≤ 1 / Q := by positivity
+      nlinarith
+    have hN0 : (0 : ℝ) ≤ N := by positivity
+    have := (abs_le.1 hvc).2
+    have hCN : C * (N : ℝ) ^ (1 - κ) ≤ |C| * (N : ℝ) ^ (1 - κ) := by
+      gcongr; exact le_abs_self C
+    calc _ ≤ (visitCount y u v N : ℝ) := hcard
+      _ ≤ N * (v - u) + C * (N : ℝ) ^ (1 - κ) := by linarith
+      _ ≤ N * (1 / Q) + |C| * (N : ℝ) ^ (1 - κ) := by gcongr
+      _ = _ := by ring
+  have hmaps : ∀ m ∈ Finset.range N, idx m ∈ Finset.range (3 * Qn) := by
+    intro m _; simp only [Finset.mem_range]; exact (hcell m).2.1
+  have hgrid := sum_cantorProd_grid K
+  have hF0 : ∀ i, 0 ≤ cantorProd K ((i : ℝ) / Q) := fun i => Finset.prod_nonneg fun _ _ => abs_nonneg _
+  have hsum1 : ∑ m ∈ Finset.range N, cantorProd K ((idx m : ℝ) / Q) ≤
+      ∑ i ∈ Finset.range (3 * Qn), cantorProd K ((i : ℝ) / Q) * (N / Q + |C| * (N : ℝ) ^ (1 - κ)) := by
+    rw [← Finset.sum_fiberwise_of_maps_to hmaps]
+    refine Finset.sum_le_sum fun i hi => ?_
+    have : ∑ m ∈ (Finset.range N).filter (fun m => idx m = i), cantorProd K ((idx m : ℝ) / Q) =
+        ((Finset.range N).filter (fun m => idx m = i)).card * cantorProd K ((i : ℝ) / Q) := by
+      rw [Finset.sum_congr rfl (g := fun _ => cantorProd K ((i : ℝ) / Q)), Finset.sum_const,
+        nsmul_eq_mul]
+      intro m hm; simp only [Finset.mem_filter] at hm; rw [hm.2]
+    rw [this, mul_comm]
+    exact mul_le_mul_of_nonneg_left (hcount i hi) (hF0 i)
+  have hgrid' : ∑ i ∈ Finset.range (3 * Qn), cantorProd K ((i : ℝ) / Q) ≤ 3 * Q * (2 / 3 : ℝ) ^ K := by
+    simpa [Qn, Q] using hgrid
+  have hB0 : (0 : ℝ) ≤ N / Q + |C| * (N : ℝ) ^ (1 - κ) := by positivity
+  rw [← Finset.sum_mul] at hsum1
+  have hsum2 := hsum1.trans (mul_le_mul_of_nonneg_right hgrid' hB0)
+  have hpts : ∑ m ∈ Finset.range N, topProd K (y m) ≤
+      ∑ m ∈ Finset.range N, cantorProd K ((idx m : ℝ) / Q) + N * (Real.pi * 3 ^ K / Q) := by
+    refine (Finset.sum_le_sum fun m _ => hpt m).trans (le_of_eq ?_)
+    rw [Finset.sum_add_distrib]; simp
+  have hQe : Q = 3 * 9 ^ K := by simp only [Q]; rw [pow_succ, pow_mul]; norm_num; ring
+  have h1 : 3 * Q * (2 / 3 : ℝ) ^ K * (N / Q) = 3 * N * (2 / 3 : ℝ) ^ K := by field_simp
+  have h2 : N * (Real.pi * 3 ^ K / Q) ≤ 4 * N * (1 / 3 : ℝ) ^ K := by
+    rw [hQe, show (9 : ℝ) ^ K = 3 ^ K * 3 ^ K by rw [← mul_pow]; norm_num]
+    have : Real.pi * 3 ^ K / (3 * (3 ^ K * 3 ^ K)) = Real.pi / 3 * (1 / 3 : ℝ) ^ K := by
+      field_simp; rw [← mul_pow]; norm_num
+    rw [this]
+    have := Real.pi_lt_four
+    have : (0 : ℝ) ≤ N * (1 / 3 : ℝ) ^ K := by positivity
+    nlinarith
+  have h3 : 3 * Q * (2 / 3 : ℝ) ^ K * (|C| * (N : ℝ) ^ (1 - κ)) ≤ 9 * |C| * 9 ^ K * (N : ℝ) ^ (1 - κ) := by
+    rw [hQe]
+    have : (2 / 3 : ℝ) ^ K ≤ 1 := pow_le_one₀ (by norm_num) (by norm_num)
+    have : 0 ≤ |C| * (N : ℝ) ^ (1 - κ) * 9 ^ K := by positivity
+    nlinarith
+  calc _ ≤ _ := hpts
+    _ ≤ 3 * Q * (2 / 3 : ℝ) ^ K * (N / Q + |C| * (N : ℝ) ^ (1 - κ)) + N * (Real.pi * 3 ^ K / Q) := by
+        linarith
+    _ ≤ _ := by rw [mul_add, h1]; linarith
+
 /-- **Power-saving second moment for `3 ∣ b` below the threshold**, given the Baker input.
 Confidence 60%.  This is the analytic core of `ae_isNormal_of_profileOK_of_baker`; the English
 proof is in that docstring (non-shadow `m` by the orbit of `t`, shadow `m` by top digits). -/
