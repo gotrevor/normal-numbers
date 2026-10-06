@@ -1555,10 +1555,9 @@ theorem prefChar_succ (ξ : ℝ) (S : ℕ) :
   rw [hsum, avg, Complex.real_smul, Complex.real_smul]
   ring
 
-/-- **The block character is a cosine product** (open leaf, believed 99%):
-`|ρ_L(ξ)| = Π_{L ≤ p < L+10} |cos(2πξ/3^{p+1})|`, since
-`ρ_L = Π_{i<10} (1 + e(2ξ/3^{L+i+1}))/2`. -/
-theorem norm_rhoS (ξ : ℝ) (L : ℕ) : ‖rhoS ξ L‖ = tailProd ξ L (L + 10) := by
+/-- The block character as a product of digit factors. -/
+theorem rhoS_eq_prod (ξ : ℝ) (L : ℕ) :
+    rhoS ξ L = ∏ i : Fin 10, (1 + ee (2 * ξ / 3 ^ (L + (i : ℕ) + 1))) / 2 := by
   have hterm : ∀ (f : Fin 10 → Bool) (i : Fin 10),
       ξ * (((if f i then 2 else 0 : ℕ) : ℝ) * (3 : ℝ) ^ (9 - (i : ℕ))) / 3 ^ (L + 10) =
         if f i then 2 * ξ / 3 ^ (L + (i : ℕ) + 1) else 0 := by
@@ -1582,15 +1581,20 @@ theorem norm_rhoS (ξ : ℝ) (L : ℕ) : ‖rhoS ξ L‖ = tailProd ξ L (L + 10
     rw [this, hee_sum]
     refine Finset.prod_congr rfl fun i _ => ?_
     split_ifs <;> simp [ee]
-  have hρ : rhoS ξ L = ∏ i : Fin 10, (1 + ee (2 * ξ / 3 ^ (L + (i : ℕ) + 1))) / 2 := by
-    unfold rhoS
-    simp only [key]
-    rw [← Fintype.prod_sum (fun (i : Fin 10) (b : Bool) =>
-      if b then ee (2 * ξ / 3 ^ (L + (i : ℕ) + 1)) else 1)]
-    simp only [Fintype.sum_bool, if_true, Bool.false_eq_true, if_false]
-    rw [Finset.prod_div_distrib, Finset.prod_const, Finset.card_univ, Fintype.card_fin]
-    simp only [add_comm (1 : ℂ)]
-    norm_num [div_eq_inv_mul]
+  unfold rhoS
+  simp only [key]
+  rw [← Fintype.prod_sum (fun (i : Fin 10) (b : Bool) =>
+    if b then ee (2 * ξ / 3 ^ (L + (i : ℕ) + 1)) else 1)]
+  simp only [Fintype.sum_bool, if_true, Bool.false_eq_true, if_false]
+  rw [Finset.prod_div_distrib, Finset.prod_const, Finset.card_univ, Fintype.card_fin]
+  simp only [add_comm (1 : ℂ)]
+  norm_num [div_eq_inv_mul]
+
+/-- **The block character is a cosine product** (proved):
+`|ρ_L(ξ)| = Π_{L ≤ p < L+10} |cos(2πξ/3^{p+1})|`, since
+`ρ_L = Π_{i<10} (1 + e(2ξ/3^{L+i+1}))/2`. -/
+theorem norm_rhoS (ξ : ℝ) (L : ℕ) : ‖rhoS ξ L‖ = tailProd ξ L (L + 10) := by
+  have hρ := rhoS_eq_prod ξ L
   rw [hρ, norm_prod]
   simp only [CantorLiouville.norm_one_add_ee_div_two]
   unfold tailProd
@@ -3816,6 +3820,54 @@ theorem condMean_localBias (b C : ℕ) (h : ℤ) (m : ℕ) {s : ℕ} (hs : s ≤
     integrable_of_bdd (measurable_comp_buildU S _).aestronglyMeasurable 1 fun ω => by
       rw [norm_contChar]; exact norm_muK_le _
   rw [hLB, condMean_sub hi1 hi2, condMean_condMean hs hE zero_le_one hEb, hc']
+
+
+/-- **One-digit self-similarity of `μ̂_K`.** -/
+theorem muK_succ (ξ : ℝ) : muK ξ = (1 + ee (2 * ξ / 3)) / 2 * muK (ξ / 3) := by
+  set g : (ℕ → Bool) → ℂ := fun ω => ee (ξ * cpt ω)
+  have hgm : Measurable g := measurable_ee.comp (measurable_cpt.const_mul ξ)
+  have hgi : ∀ μ : Measure (ℕ → Bool), IsFiniteMeasure μ → Integrable g μ := fun μ _ =>
+    Integrable.of_bound hgm.aestronglyMeasurable 1 (Eventually.of_forall fun ω => (norm_ee _).le)
+  have hc : ∀ c, ∫ ω, g (CantorSelfSimilar.consB c ω) ∂coinMeasure =
+      ee (ξ * ((if c then 2 else 0) / 3)) * muK (ξ / 3) := by
+    intro c
+    unfold muK
+    rw [← integral_const_mul]
+    refine integral_congr_ae (Eventually.of_forall fun ω => ?_)
+    simp only [g, cpt, pt_consB, ← ee_add, Bool.true_and]
+    congr 1; ring
+  have hsplit : ∫ ω, g ω ∂coinMeasure =
+      2⁻¹ * ∫ ω, g (CantorSelfSimilar.consB true ω) ∂coinMeasure +
+        2⁻¹ * ∫ ω, g (CantorSelfSimilar.consB false ω) ∂coinMeasure := by
+    conv_lhs => rw [CantorSelfSimilar.coinMeasure_eq]
+    rw [integral_add_measure ((hgi _ inferInstance).smul_measure (by simp))
+        ((hgi _ inferInstance).smul_measure (by simp)),
+      integral_smul_measure, integral_smul_measure,
+      integral_map (CantorSelfSimilar.measurable_consB true).aemeasurable hgm.aestronglyMeasurable,
+      integral_map (CantorSelfSimilar.measurable_consB false).aemeasurable hgm.aestronglyMeasurable]
+    simp [ENNReal.toReal_inv]
+  change ∫ ω, g ω ∂coinMeasure = _
+  rw [hsplit, hc, hc]
+  simp only [if_true, Bool.false_eq_true, if_false]
+  rw [show ξ * (0 / 3) = 0 by ring, show ξ * (2 / 3) = 2 * ξ / 3 by ring]
+  simp [ee]; ring
+
+theorem muK_iter (ξ : ℝ) (L k : ℕ) : muK (ξ / 3 ^ L) =
+    (∏ i ∈ Finset.range k, (1 + ee (2 * ξ / 3 ^ (L + i + 1))) / 2) * muK (ξ / 3 ^ (L + k)) := by
+  induction k with
+  | zero => simp
+  | succ k ih =>
+    rw [ih, Finset.prod_range_succ, muK_succ (ξ / 3 ^ (L + k))]
+    have e1 : 2 * (ξ / 3 ^ (L + k)) / 3 = 2 * ξ / 3 ^ (L + k + 1) := by
+      rw [pow_succ]; field_simp
+    have e2 : ξ / 3 ^ (L + k) / 3 = ξ / 3 ^ (L + (k + 1)) := by
+      rw [← add_assoc, pow_succ]; field_simp
+    rw [e1, e2]; ring
+
+/-- **Stage self-similarity of `μ̂_K`.** -/
+theorem muK_stage (ξ : ℝ) (L : ℕ) : muK (ξ / 3 ^ L) = rhoS ξ L * muK (ξ / 3 ^ (L + 10)) := by
+  rw [muK_iter ξ L 10, rhoS_eq_prod, Fin.prod_univ_eq_prod_range
+    (fun i => (1 + ee (2 * ξ / 3 ^ (L + i + 1))) / 2)]
 
 /-- The averaged conditional bias: `E ‖E[B_m | w_{s_n}]‖`. -/
 noncomputable def biasMix (b C : ℕ) (h : ℤ) (n m : ℕ) : ℝ :=
