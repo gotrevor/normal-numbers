@@ -93,4 +93,18 @@ theorem IsProductBlock.base5_card_ge_five {S : Finset ℕ} (hS : IsProductBlock 
     (hS625 : ∀ m ∈ S, m ≤ 625) : 5 ≤ S.card := by
   sorry
 
+/-- **An explicit base-5 product block** (computational; confidence 95%: full re-check without
+the symmetry reduction found no failing assignment).  For every irrational `X`, one of these 17 multiples of `X` has every base-5
+digit infinitely often.  Compare the classical block `[1, 15624]` (`mahler_multiplier_lt` on the
+word `01234`), and `base5_exists_ge` (every block needs a member `≥ 194`; here `2832 = 42312₅`).
+
+Evidence: exact carry-automaton collapse of every assignment `S → digits` on some prefix (the
+C2 method), found by `experiments/mahler_block_rs` (greedy) and recorded in
+`docs/base5-product-block-2026-10-05.md`.  The formal route needs a sparse certificate checker:
+`checkCertA` enumerates the ambient carry product, here about `10⁴⁰` states. -/
+theorem isProductBlock_five_seventeen :
+    IsProductBlock 5 {1, 2, 3, 4, 8, 16, 17, 23, 29, 1251, 1254, 1838, 2188, 2272, 2439, 2832,
+      3028} := by
+  sorry
+
 end NormalNumbers.Adder
