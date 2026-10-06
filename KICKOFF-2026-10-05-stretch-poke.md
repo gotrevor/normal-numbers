@@ -57,3 +57,7 @@ Cantor-digit integer `P` (digits `0, 2`).
 
 Rules: commit a compiling state with named `sorry` leaves early in each lap; scoped builds
 (`lake build NormalNumbers.CantorExactExponentStretch`); frozen statements byte-identical.
+
+## ➕ Addendum
+
+Read `KICKOFF-2026-10-05-stretch-poke-ADDENDUM-bfr.md` next: it reprioritizes the lane toward the BFR bet.
