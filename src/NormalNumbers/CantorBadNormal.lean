@@ -1841,7 +1841,179 @@ theorem secondMoment_le_norm_sum (L : Law) (b : ℕ) (h : ℤ) (N : ℕ) :
   rw [this]
   exact Complex.re_le_norm _
 
-/-- **The crux (signed form): cancellation in the dead-children terms.**  Believed, 60%.
+/-- **Each child character is within `2π|ξ|/3^L` of the stage average.**  Proved. -/
+theorem norm_ee_sub_rhoS_le (ξ : ℝ) (L : ℕ) (f : Fin 10 → Bool) :
+    ‖ee (ξ * J f / 3 ^ (L + 10)) - rhoS ξ L‖ ≤ 2 * Real.pi * |ξ| / 3 ^ L := by
+  have h3 : (0 : ℝ) < 3 ^ L := by positivity
+  have hrw : ee (ξ * J f / 3 ^ (L + 10)) - rhoS ξ L =
+      (1 / 1024 : ℂ) * ∑ g : Fin 10 → Bool, (ee (ξ * J f / 3 ^ (L + 10)) - ee (ξ * J g / 3 ^ (L + 10))) := by
+    rw [Finset.sum_sub_distrib, Finset.sum_const, Finset.card_univ,
+      show Fintype.card (Fin 10 → Bool) = 1024 by simp, rhoS]
+    simp only [nsmul_eq_mul]; push_cast; ring
+  have hterm : ∀ g : Fin 10 → Bool,
+      ‖ee (ξ * J f / 3 ^ (L + 10)) - ee (ξ * J g / 3 ^ (L + 10))‖ ≤ 2 * Real.pi * |ξ| / 3 ^ L := by
+    intro g
+    refine (norm_ee_sub_ee _ _).trans ?_
+    have hJ : |(J f : ℝ) - J g| ≤ 3 ^ 10 := by
+      have a := J_lt f; have b := J_lt g
+      rw [abs_le]; constructor <;> [skip; skip] <;>
+        · have : ((J f : ℕ) : ℝ) < 3 ^ 10 := by exact_mod_cast a
+          have : ((J g : ℕ) : ℝ) < 3 ^ 10 := by exact_mod_cast b
+          have := (Nat.cast_nonneg (α := ℝ) (J f)); have := (Nat.cast_nonneg (α := ℝ) (J g))
+          linarith
+    have : ξ * J f / 3 ^ (L + 10) - ξ * J g / 3 ^ (L + 10) = ξ * ((J f : ℝ) - J g) / (3 ^ L * 3 ^ 10) := by
+      rw [pow_add]; ring
+    rw [this, abs_div, abs_mul, abs_of_pos (by positivity : (0 : ℝ) < 3 ^ L * 3 ^ 10)]
+    have hp : 0 ≤ 2 * Real.pi := by positivity
+    rw [mul_div_assoc', div_le_div_iff₀ (by positivity) h3]
+    have := mul_le_mul_of_nonneg_left hJ (abs_nonneg ξ)
+    nlinarith [mul_le_mul_of_nonneg_left this (le_of_lt h3), abs_nonneg ξ, Real.pi_pos]
+  rw [hrw, norm_mul]
+  calc ‖(1 / 1024 : ℂ)‖ * ‖∑ g : Fin 10 → Bool, _‖
+      ≤ (1 / 1024) * ∑ g : Fin 10 → Bool, 2 * Real.pi * |ξ| / 3 ^ L := by
+        rw [show ‖(1 / 1024 : ℂ)‖ = 1 / 1024 by norm_num]
+        gcongr
+        exact (norm_sum_le _ _).trans (Finset.sum_le_sum fun g _ => hterm g)
+    _ = _ := by
+        rw [Finset.sum_const, Finset.card_univ, show Fintype.card (Fin 10 → Bool) = 1024 by simp]
+        simp only [nsmul_eq_mul]; push_cast; ring
+
+/-- **The dead-children error is `O(|ξ| 3^{−L})`.**  Proved. -/
+theorem norm_deadErr_le (ξ : ℝ) (w : List Bool) :
+    ‖deadErr ξ w‖ ≤ 1024 * (2 * Real.pi * |ξ| / 3 ^ w.length) := by
+  unfold deadErr
+  have hA : (1 : ℝ) ≤ (aliveSet w).card := by exact_mod_cast card_aliveSet_pos w
+  rw [norm_mul]
+  calc ‖1 / ((aliveSet w).card : ℂ)‖ * ‖∑ f ∈ Finset.univ \ aliveSet w, _‖
+      ≤ 1 * ∑ f ∈ Finset.univ \ aliveSet w, 2 * Real.pi * |ξ| / 3 ^ w.length := by
+        gcongr
+        · rw [norm_div, norm_one, Complex.norm_natCast]
+          exact div_le_one_of_le₀ hA (by positivity)
+        · exact (norm_sum_le _ _).trans (Finset.sum_le_sum fun f _ => norm_ee_sub_rhoS_le _ _ _)
+    _ ≤ _ := by
+        rw [one_mul, Finset.sum_const, nsmul_eq_mul]
+        gcongr
+        have : (Finset.univ \ aliveSet w).card ≤ 1024 := (Finset.card_le_univ _).trans (by simp)
+        exact_mod_cast this
+
+/-- **The stage-`S'` dead character is `O(|ξ| 3^{−10S'})`.**  Proved. -/
+theorem norm_deadChar_le (ξ : ℝ) (S : ℕ) :
+    ‖deadChar ξ S‖ ≤ 1024 * (2 * Real.pi * |ξ| / 3 ^ (10 * S)) := by
+  unfold deadChar
+  have := norm_integral_le_of_norm_le_const (μ := coinMeasure)
+    (f := fun ω => ee (ξ * cylLeft (buildU S ω)) * deadErr ξ (buildU S ω))
+    (C := 1024 * (2 * Real.pi * |ξ| / 3 ^ (10 * S))) (Eventually.of_forall fun ω => by
+      rw [norm_mul, norm_ee, one_mul, ← length_buildU ω S]; exact norm_deadErr_le _ _)
+  simpa using this
+theorem nat_tail_ineq {b N k : ℕ} (hb : 2 ≤ b) (hN : 1 ≤ N) :
+    3 ^ 10 * k * b ^ N * N ≤ 3 ^ (9 * (N * b + k)) := by
+  have h1 : k ≤ 3 ^ k := (Nat.lt_pow_self (by norm_num)).le
+  have h2 : b ^ N ≤ 3 ^ (b * N) := by
+    rw [pow_mul]; exact Nat.pow_le_pow_left (Nat.lt_pow_self (by norm_num)).le _
+  have h3 : N ≤ 3 ^ (b * N) :=
+    (Nat.lt_pow_self (by norm_num)).le.trans (Nat.pow_le_pow_right (by norm_num) (by nlinarith))
+  have h4 : 3 ^ 10 ≤ 3 ^ (5 * (b * N)) := Nat.pow_le_pow_right (by norm_num) (by nlinarith)
+  calc 3 ^ 10 * k * b ^ N * N ≤ 3 ^ (5 * (b * N)) * 3 ^ k * 3 ^ (b * N) * 3 ^ (b * N) := by gcongr
+    _ = 3 ^ (7 * (b * N) + k) := by rw [← pow_add, ← pow_add, ← pow_add]; ring_nf
+    _ ≤ _ := Nat.pow_le_pow_right (by norm_num) (by nlinarith)
+
+/-- **Stages beyond `S₀ = N b + |h|` are negligible** (locality, from `norm_deadChar_le`).
+Proved: the tail of the signed stage sum is at most `1/N` for each pair `(n, m)`. -/
+theorem deadChar_tail_le {b : ℕ} (hb : 2 ≤ b) (h : ℤ) {N n m : ℕ} (hN : 1 ≤ N) (hn : n ≤ N)
+    (hm : m ≤ N) (S : ℕ) :
+    ‖∑ S' ∈ Finset.Ico (N * b + h.natAbs) S, deadChar (h * ((b : ℝ) ^ n - (b : ℝ) ^ m)) S' *
+        rhoProd (h * ((b : ℝ) ^ n - (b : ℝ) ^ m)) (S' + 1) S‖ ≤ 1 / N := by
+  set ξ : ℝ := h * ((b : ℝ) ^ n - (b : ℝ) ^ m)
+  set S₀ := N * b + h.natAbs
+  have hb1 : (1 : ℝ) ≤ b := by exact_mod_cast (by omega : 1 ≤ b)
+  have hξ : |ξ| ≤ 2 * h.natAbs * (b : ℝ) ^ N := by
+    have e1 : (b : ℝ) ^ n ≤ (b : ℝ) ^ N := pow_le_pow_right₀ hb1 hn
+    have e2 : (b : ℝ) ^ m ≤ (b : ℝ) ^ N := pow_le_pow_right₀ hb1 hm
+    have p1 : (0 : ℝ) ≤ (b : ℝ) ^ n := by positivity
+    have p2 : (0 : ℝ) ≤ (b : ℝ) ^ m := by positivity
+    have hna : ((h.natAbs : ℕ) : ℝ) = |(h : ℝ)| := by rw [Nat.cast_natAbs, Int.cast_abs]
+    rw [abs_mul, hna]
+    have : |(b : ℝ) ^ n - (b : ℝ) ^ m| ≤ 2 * (b : ℝ) ^ N := by rw [abs_le]; constructor <;> linarith
+    calc |(h : ℝ)| * |(b : ℝ) ^ n - (b : ℝ) ^ m| ≤ |(h : ℝ)| * (2 * (b : ℝ) ^ N) := by gcongr
+      _ = _ := by ring
+  set Y : ℝ := 1024 * (2 * Real.pi * |ξ|) / 3 ^ (9 * S₀)
+  have hterm : ∀ S' ∈ Finset.Ico S₀ S, ‖deadChar ξ S' * rhoProd ξ (S' + 1) S‖ ≤ Y * (1 / 3) ^ S' := by
+    intro S' hS'
+    rw [Finset.mem_Ico] at hS'
+    have hp : (3 : ℝ) ^ (9 * S₀) * 3 ^ S' ≤ 3 ^ (10 * S') := by
+      rw [← pow_add]; exact pow_le_pow_right₀ (by norm_num) (by omega)
+    rw [norm_mul, norm_rhoProd _ (by omega)]
+    calc ‖deadChar ξ S'‖ * tailProd ξ (10 * (S' + 1)) (10 * S) ≤ ‖deadChar ξ S'‖ :=
+          mul_le_of_le_one_right (norm_nonneg _) (tailProd_le_one _ _ _)
+      _ ≤ 1024 * (2 * Real.pi * |ξ| / 3 ^ (10 * S')) := norm_deadChar_le ξ S'
+      _ = 1024 * (2 * Real.pi * |ξ|) / 3 ^ (10 * S') := by ring
+      _ ≤ 1024 * (2 * Real.pi * |ξ|) / (3 ^ (9 * S₀) * 3 ^ S') :=
+          div_le_div_of_nonneg_left (by positivity) (by positivity) hp
+      _ = Y * (1 / 3) ^ S' := by simp only [Y]; rw [one_div_pow]; field_simp
+  have hgeo : ∑ S' ∈ Finset.Ico S₀ S, (1 / 3 : ℝ) ^ S' ≤ 3 / 2 :=
+    (geom_sum_Ico_le_of_lt_one (by norm_num) (by norm_num)).trans (by
+      rw [div_le_iff₀ (by norm_num)]
+      have : (1 / 3 : ℝ) ^ S₀ ≤ 1 := pow_le_one₀ (by norm_num) (by norm_num)
+      linarith)
+  have hY : 0 ≤ Y := by positivity
+  have hfin : Y * (3 / 2) ≤ 1 / N := by
+    have hNpos : (0 : ℝ) < N := by exact_mod_cast hN
+    have key : ((3 ^ 10 * h.natAbs * b ^ N * N : ℕ) : ℝ) ≤ ((3 ^ (9 * S₀) : ℕ) : ℝ) := by
+      exact_mod_cast nat_tail_ineq hb hN
+    push_cast at key
+    rw [le_div_iff₀ hNpos]
+    have hpi := Real.pi_lt_four
+    have h1 : 1024 * (2 * Real.pi * |ξ|) * (3 / 2) * N ≤ 3 ^ 10 * h.natAbs * (b : ℝ) ^ N * N := by
+      have : 1024 * (2 * Real.pi * |ξ|) * (3 / 2) ≤ 3 ^ 10 * h.natAbs * (b : ℝ) ^ N := by
+        have hh0 : (0 : ℝ) ≤ h.natAbs * (b : ℝ) ^ N := by positivity
+        nlinarith [abs_nonneg ξ, Real.pi_pos]
+      exact mul_le_mul_of_nonneg_right this hNpos.le
+    have h3 : (0 : ℝ) < 3 ^ (9 * S₀) := by positivity
+    calc Y * (3 / 2) * N = 1024 * (2 * Real.pi * |ξ|) * (3 / 2) * N / 3 ^ (9 * S₀) := by
+          simp only [Y]; ring
+      _ ≤ 1 := by rw [div_le_one h3]; exact h1.trans (by norm_num at key ⊢; linarith)
+  calc _ ≤ ∑ S' ∈ Finset.Ico S₀ S, ‖deadChar ξ S' * rhoProd ξ (S' + 1) S‖ := norm_sum_le _ _
+    _ ≤ ∑ S' ∈ Finset.Ico S₀ S, Y * (1 / 3) ^ S' := Finset.sum_le_sum hterm
+    _ = Y * ∑ S' ∈ Finset.Ico S₀ S, (1 / 3 : ℝ) ^ S' := by rw [Finset.mul_sum]
+    _ ≤ Y * (3 / 2) := mul_le_mul_of_nonneg_left hgeo hY
+    _ ≤ _ := hfin
+
+/-- **The crux, localized to the first `S₀ = N b + |h|` stages.**  Believed, 55%.  Open.
+
+This is `deadCharSigned` with the stage sum cut at `S₀(N) = N b + |h|`.  The cut loses
+nothing, since later stages contribute `≤ 1/N` per pair (`deadChar_tail_le`).  So only the
+`O(N)` stages whose scale `3^{10S'}` is at most about `b^N` remain.
+
+What a proof must supply.  The `S'`-term equals `E_{ν_{S'+1}}|S_N|² − E_{ν_{S'}}|S_N|²` for the
+hybrid laws `ν_{S'}` (`resLaw` for `S'` stages, then Cantor coins).  Write
+`S_N = A + B`, where `A` holds the terms with `bⁿ < 3^{10S'}` (frozen by the prefix) and `B` the
+terms randomized by the Cantor tail.  Changing the stage-`S'` block moves only `O(1)` terms of
+`A`, so that stage changes `|A|²` by `O(P(dead at S') · E[|A| | dead at S'])`.
+
+Two routes are recorded as insufficient here.
+(1) Cauchy–Schwarz bootstrap.  Bounding `E[1_dead |A|] ≤ √(η E|A|²)` gives
+`f(N) ≤ f_K(N) + c√(η f(N))` for `f = E|S_N|²/N²`.  That recurrence has the constant solution
+`f ≍ η`, so it gives only a floor, never decay.
+(2) Large sieve over the obstacle centres `p/q`, `q² ≍ 3^{10S'}`.  This bounds the average of
+`|A(p/q)|²` over all Farey fractions by `O(n₀)`.  The centres near `K` are a sparse subset, and
+restricting to them loses the factor `(3/2)^{10S'}`.
+What is needed is the decorrelation `E_ν[1_{dead at S'} |A|²] ≲ P(dead at S') · n₀^{2−δ}`: the
+lacunary sums `Σ_{n<n₀} e(h bⁿ p/q)` are not inflated at the centres `p/q` near `K`.
+Heuristically this follows from the equidistribution of rationals near `K` (Khalil–Lüthi;
+Bénard–He–Zhang) together with Cassels decay of `μ̂_K` at the reduced frequencies
+`h(bⁿ − bᵐ) mod q`.  Guards: it fails for `b = 3` and for dyadic centres
+(`perStage_deadCount_not_enough`). -/
+theorem deadCharSigned_core {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) (h : ℤ) (hh : h ≠ 0) :
+    ∃ (C : ℝ) (W : ℕ → ℝ), Summable (fun j => W (sched j)) ∧ ∀ N : ℕ, 1 ≤ N → ∀ S : ℕ,
+      ‖∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N,
+        ∑ S' ∈ Finset.range (min S (N * b + h.natAbs)),
+          deadChar (h * ((b : ℝ) ^ n - (b : ℝ) ^ m)) S' *
+            rhoProd (h * ((b : ℝ) ^ n - (b : ℝ) ^ m)) (S' + 1) S‖ ≤ C * (N : ℝ) ^ 2 * W N := by
+  sorry
+
+/-- **The crux (signed form): cancellation in the dead-children terms.**  Proved from the
+localized crux `deadCharSigned_core` (stages `< N b + |h|`, open) and the tail bound
+`deadChar_tail_le`.
 
 Uniformly in the depth `S`, `‖Σ_{n,m<N} Σ_{S'<S} deadChar(ξ, S')·Π_{S'<s<S} ρ_s(ξ)‖ = O(N² W(N))`,
 `ξ = h(bⁿ − bᵐ)`.  For each `S'` the inner pair sum is `∫ |S_N|² dτ_{S'}` for the signed measure
@@ -1860,7 +2032,51 @@ theorem deadCharSigned {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) (h : ℤ) (hh 
       ‖∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N,
         ∑ S' ∈ Finset.range S, deadChar (h * ((b : ℝ) ^ n - (b : ℝ) ^ m)) S' *
           rhoProd (h * ((b : ℝ) ^ n - (b : ℝ) ^ m)) (S' + 1) S‖ ≤ C * (N : ℝ) ^ 2 * W N := by
-  sorry
+  obtain ⟨C, W, hW, hC⟩ := deadCharSigned_core hb h3 h hh
+  refine ⟨|C| + 1, fun N => |W N| + (N : ℝ) ^ (-(1 / 2 : ℝ)),
+    hW.abs.add (summable_sched_rpow (by norm_num)), fun N hN S => ?_⟩
+  set S₀ := N * b + h.natAbs
+  set F : ℕ → ℕ → ℕ → ℂ := fun n m S' => deadChar (h * ((b : ℝ) ^ n - (b : ℝ) ^ m)) S' *
+    rhoProd (h * ((b : ℝ) ^ n - (b : ℝ) ^ m)) (S' + 1) S
+  have hNpos : (0 : ℝ) < N := by exact_mod_cast hN
+  have hsplit : ∀ n m, ∑ S' ∈ Finset.range S, F n m S' =
+      ∑ S' ∈ Finset.range (min S S₀), F n m S' + ∑ S' ∈ Finset.Ico (min S S₀) S, F n m S' :=
+    fun n m => (Finset.sum_range_add_sum_Ico _ (min_le_left _ _)).symm
+  have htail : ∀ n ∈ Finset.range N, ∀ m ∈ Finset.range N,
+      ‖∑ S' ∈ Finset.Ico (min S S₀) S, F n m S'‖ ≤ 1 / N := by
+    intro n hn m hm
+    rw [Finset.mem_range] at hn hm
+    by_cases hS : S₀ ≤ S
+    · rw [min_eq_right hS]; exact deadChar_tail_le hb h hN hn.le hm.le S
+    · rw [min_eq_left (by omega), Finset.Ico_self, Finset.sum_empty, norm_zero]; positivity
+  have hC' := hC N hN S
+  have hT : ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N,
+      ‖∑ S' ∈ Finset.Ico (min S S₀) S, F n m S'‖ ≤ N := by
+    calc _ ≤ ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N, (1 / N : ℝ) :=
+          Finset.sum_le_sum fun n hn => Finset.sum_le_sum fun m hm => htail n hn m hm
+      _ = N := by simp; field_simp
+  have hN2 : (0 : ℝ) ≤ (N : ℝ) ^ 2 := by positivity
+  have hr : (0 : ℝ) ≤ (N : ℝ) ^ (-(1 / 2 : ℝ)) := by positivity
+  have hrN : (N : ℝ) ≤ (N : ℝ) ^ 2 * (N : ℝ) ^ (-(1 / 2 : ℝ)) := by
+    have : (N : ℝ) ^ 2 * (N : ℝ) ^ (-(1 / 2 : ℝ)) = N * (N : ℝ) ^ (1 / 2 : ℝ) := by
+      rw [show (N : ℝ) ^ 2 = (N : ℝ) ^ (1 : ℝ) * (N : ℝ) ^ (1 : ℝ) by
+        rw [← Real.rpow_add hNpos]; norm_num, mul_assoc, ← Real.rpow_add hNpos, Real.rpow_one]
+      norm_num
+    rw [this]
+    exact le_mul_of_one_le_right hNpos.le (Real.one_le_rpow (by exact_mod_cast hN) (by norm_num))
+  calc ‖∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N, ∑ S' ∈ Finset.range S, F n m S'‖
+      ≤ ‖∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N, ∑ S' ∈ Finset.range (min S S₀), F n m S'‖ +
+        ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N,
+          ‖∑ S' ∈ Finset.Ico (min S S₀) S, F n m S'‖ := by
+        simp_rw [hsplit, Finset.sum_add_distrib]
+        exact (norm_add_le _ _).trans (add_le_add le_rfl ((norm_sum_le _ _).trans
+          (Finset.sum_le_sum fun n _ => norm_sum_le _ _)))
+    _ ≤ C * (N : ℝ) ^ 2 * W N + N := add_le_add hC' hT
+    _ ≤ _ := by
+        have k : C * (N : ℝ) ^ 2 * W N ≤ |C| * (N : ℝ) ^ 2 * |W N| :=
+          (le_abs_self _).trans (by rw [abs_mul, abs_mul, abs_of_nonneg hN2])
+        have a1 := abs_nonneg C; have b1 := abs_nonneg (W N)
+        nlinarith [mul_nonneg (mul_nonneg a1 hN2) hr, mul_nonneg hN2 b1]
 
 /-- The absolute crux implies the signed one.  Proved. -/
 theorem deadCharSigned_of_abs {b : ℕ} (hD : DeadCharCancelAbs b) (h : ℤ) (hh : h ≠ 0) :

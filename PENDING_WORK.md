@@ -2938,3 +2938,15 @@ Next: (1) prove the reduction (needs pair-averaged partial Cantor products, Cass
   exactly; heuristic O(η N^{3/2}).  Next attack: express the S'-term as ∫|S_N|²dτ_{S'} in Lean,
   split S_N into low terms (bⁿ < 3^{10S'}, O(1) change) and high terms; the high part under the
   Cantor tail is where a bootstrap over ν-hybrid laws (induction on number of ν-stages) is needed.
+
+## cantorbad lap 5 (2026-10-06): crux localized
+- Proved locality: `norm_ee_sub_rhoS_le`, `norm_deadErr_le`, `norm_deadChar_le`
+  (|deadChar(ξ,S')| ≤ 2048π|ξ|3^{-10S'}), `nat_tail_ineq`, `deadChar_tail_le`
+  (stages ≥ N b + |h| contribute ≤ 1/N per pair).
+- `deadCharSigned` is now PROVED from the localized crux `deadCharSigned_core` (sorry, 55%):
+  the same signed sum cut at S' < min S (N b + |h|).  It is the headline's only on-path sorry.
+- Its docstring records two insufficient routes: the Cauchy–Schwarz bootstrap gives only a floor
+  f ≍ η, and the large sieve over Farey centres loses (3/2)^{10S'} on the sparse subset near K.
+- Needed input: E_ν[1_dead(S') |A|²] ≲ P(dead) n₀^{2−δ}, i.e. lacunary sums at rationals near K
+  are not inflated.  Next: state the hybrid-law identity (S'-term = E_{ν_{S'+1}}|S_N|² −
+  E_{ν_{S'}}|S_N|²) and the A/B split as named Lean leaves; then state the decorrelation as a node.
