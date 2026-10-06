@@ -28,7 +28,7 @@ Evidence: `experiments/qspan_digit_probe.py` (exact `ν̂` product and empirical
 `4x + 5y` has `|ν̂(25)| ≈ 0.0113` measured, `≈ 0.012` by hand).
 -/
 
-open MeasureTheory Filter
+open MeasureTheory Filter Topology
 open scoped ENNReal
 
 namespace NormalNumbers.QSpanCriterion
@@ -95,16 +95,175 @@ open DecayAeNormal in
 noncomputable def weylAvg (b : ℕ) (z : ℝ) (h : ℤ) (N : ℕ) : ℂ :=
   (∑ k ∈ Finset.range N, ee (h * (b : ℝ) ^ k * z)) / N
 
+open DecayAeNormal in
+/-- The Fourier mean of the orbit is the raw-phase Weyl mean. -/
+theorem fourierMean_orbit_eq (b : ℕ) (z : ℝ) (h : ℤ) (N : ℕ) :
+    fourierMean (orbit b z) h N = weylAvg b z h N := by
+  unfold fourierMean weylAvg
+  congr 1
+  refine Finset.sum_congr rfl fun k _ => ?_
+  have := ee_int_mul_fract h (z * (b : ℝ) ^ k)
+  unfold ee at this
+  unfold orbit
+  push_cast at this ⊢
+  rw [show 2 * (Real.pi : ℂ) * Complex.I * (h : ℂ) * ((Int.fract (z * (b : ℝ) ^ k) : ℝ) : ℂ)
+      = 2 * Real.pi * Complex.I * ((h : ℂ) * ((Int.fract (z * (b : ℝ) ^ k) : ℝ) : ℂ)) by ring, this]
+  unfold ee; push_cast; ring_nf
+
+open DecayAeNormal in
+/-- Lipschitz bound for `e(·)`. -/
+theorem norm_ee_sub_le (s t : ℝ) : ‖ee s - ee t‖ ≤ 2 * Real.pi * |s - t| := by
+  have : ee s - ee t = ee t * (Complex.exp (Complex.I * ((2 * Real.pi * (s - t) : ℝ) : ℂ)) - 1) := by
+    unfold ee; rw [mul_sub, mul_one, ← Complex.exp_add]; congr 2; push_cast; ring
+  rw [this, norm_mul, norm_ee, one_mul]
+  refine Real.norm_exp_I_mul_ofReal_sub_one_le.trans (le_of_eq ?_)
+  rw [Real.norm_eq_abs, abs_mul, abs_of_pos (by positivity : (0:ℝ) < 2 * Real.pi)]
+
+open DecayAeNormal in
+/-- Roots of unity `e(h j / M)` sum to zero when `M > |h| > 0`. -/
+theorem sum_ee_root (h : ℤ) (hh : h ≠ 0) (M : ℕ) (hM : (h.natAbs : ℕ) < M) :
+    ∑ j ∈ Finset.range M, ee (h * j / M) = 0 := by
+  have hMc : (M : ℂ) ≠ 0 := by exact_mod_cast (show M ≠ 0 by omega)
+  set z : ℂ := Complex.exp (2 * Real.pi * Complex.I * h / M) with hz
+  have hpow : ∀ j : ℕ, ee (h * j / M) = z ^ j := fun j => by
+    rw [hz, ← Complex.exp_nat_mul]; unfold ee; congr 1; push_cast; ring
+  have hzM : z ^ M = 1 := by
+    rw [hz, ← Complex.exp_nat_mul]
+    rw [show (M : ℂ) * (2 * Real.pi * Complex.I * h / M) = h * (2 * Real.pi * Complex.I) by
+      field_simp]
+    exact Complex.exp_int_mul_two_pi_mul_I h
+  have hz1 : z ≠ 1 := by
+    intro h1
+    rw [hz, Complex.exp_eq_one_iff] at h1
+    obtain ⟨n, hn⟩ := h1
+    have hn' : (h : ℂ) = n * M := by
+      have h2 : (2 * Real.pi * Complex.I : ℂ) ≠ 0 := by simp [Real.pi_ne_zero]
+      field_simp at hn
+      rw [hn]; ring
+    have : h = n * M := by exact_mod_cast hn'
+    have : h.natAbs = n.natAbs * M := by rw [this, Int.natAbs_mul]; simp
+    rcases Nat.eq_zero_or_pos n.natAbs with h0 | h0
+    · rw [h0, zero_mul] at this; omega
+    · have : M ≤ n.natAbs * M := Nat.le_mul_of_pos_left M h0
+      omega
+  rw [Finset.sum_congr rfl fun j _ => hpow j, geom_sum_eq hz1, hzM, sub_self, zero_div]
+
+open DecayAeNormal in
+/-- Equidistribution ⇒ vanishing Weyl means of `u`. -/
+theorem weyl_of_equidistributed (u : ℕ → ℝ) (hu : ∀ k, u k ∈ Set.Ico (0 : ℝ) 1)
+    (he : Equidistributed u) (h : ℤ) (hh : h ≠ 0) :
+    Tendsto (fun N : ℕ => (∑ k ∈ Finset.range N, ee (h * u k)) / N) atTop (𝓝 0) := by
+  rw [Metric.tendsto_atTop]
+  intro ε hε
+  set M : ℕ := ⌈4 * Real.pi * |(h : ℝ)| / ε⌉₊ + h.natAbs + 1 with hMdef
+  have hMh : h.natAbs < M := by omega
+  have hMpos : 0 < M := by omega
+  have hMR : (0 : ℝ) < M := by exact_mod_cast hMpos
+  have hMerr : 2 * Real.pi * |(h : ℝ)| / M ≤ ε / 2 := by
+    rw [div_le_iff₀ hMR]
+    have h1 : 4 * Real.pi * |(h : ℝ)| / ε ≤ M := by
+      refine (Nat.le_ceil _).trans ?_
+      rw [hMdef]; push_cast; linarith [(Nat.cast_nonneg h.natAbs : (0:ℝ) ≤ h.natAbs)]
+    rw [div_le_iff₀ hε] at h1
+    linarith
+  -- block index of a point
+  set g : ℕ → ℕ := fun k => ⌊(M : ℝ) * u k⌋₊ with hg
+  have hgM : ∀ k, g k < M := fun k => by
+    have : (M : ℝ) * u k < M := by nlinarith [(hu k).2]
+    exact_mod_cast (Nat.floor_lt (by nlinarith [(hu k).1])).2 this
+  have hmem : ∀ k (j : ℕ), u k ∈ Set.Ico ((j : ℝ) / M) (((j : ℝ) + 1) / M) ↔ g k = j := fun k j => by
+    show _ ↔ ⌊(M : ℝ) * u k⌋₊ = j
+    rw [Set.mem_Ico, div_le_iff₀ hMR, lt_div_iff₀ hMR, Nat.floor_eq_iff (by nlinarith [(hu k).1])]
+    constructor
+    · rintro ⟨h1, h2⟩; exact ⟨by linarith, by linarith⟩
+    · rintro ⟨h1, h2⟩; exact ⟨by linarith, by linarith⟩
+  -- the main term
+  set A : ℕ → ℂ := fun N => ∑ j ∈ Finset.range M,
+    ((visitCount u (j / M) ((j + 1) / M) N : ℝ) / N : ℝ) * ee (h * j / M) with hA
+  have hAlim : Tendsto A atTop (𝓝 0) := by
+    have : Tendsto A atTop (𝓝 (∑ j ∈ Finset.range M, ((1 / M : ℝ) : ℂ) * ee (h * j / M))) := by
+      refine tendsto_finsetSum _ fun j hj => ?_
+      refine Tendsto.mul_const _ ?_
+      refine (Complex.continuous_ofReal.tendsto _).comp ?_
+      have hj' : j < M := Finset.mem_range.1 hj
+      have := he (j / M) ((j + 1) / M) (by positivity)
+        (by rw [div_le_div_iff_of_pos_right hMR]; linarith)
+        (by rw [div_le_one hMR]; exact_mod_cast hj')
+      convert this using 2
+      field_simp; ring
+    rwa [← Finset.mul_sum, sum_ee_root h hh M hMh, mul_zero] at this
+  have hfib : ∀ N : ℕ, (∑ k ∈ Finset.range N, ee (h * (g k : ℝ) / M))
+      = ∑ j ∈ Finset.range M, (visitCount u (j / M) ((j + 1) / M) N : ℂ) * ee (h * j / M) := by
+    intro N
+    rw [← Finset.sum_fiberwise_of_maps_to (s := Finset.range N) (t := Finset.range M) (g := g)
+      (fun k _ => Finset.mem_range.2 (hgM k))]
+    refine Finset.sum_congr rfl fun j _ => ?_
+    rw [Finset.sum_congr rfl (fun k hk => by rw [(Finset.mem_filter.1 hk).2]),
+      Finset.sum_const, nsmul_eq_mul, visitCount]
+    congr 3
+    exact Finset.filter_congr fun k _ => (hmem k j).symm
+  rcases (Metric.tendsto_atTop.1 hAlim) (ε / 2) (by linarith) with ⟨N₀, hN₀⟩
+  refine ⟨max N₀ 1, fun N hN => ?_⟩
+  have hN1 : (1 : ℝ) ≤ N := by exact_mod_cast le_of_max_le_right hN
+  have hNpos : (0 : ℝ) < N := by linarith
+  have hAN := hN₀ N (le_of_max_le_left hN)
+  rw [dist_zero_right] at hAN ⊢
+  have hAN' : A N = (∑ k ∈ Finset.range N, ee (h * (g k : ℝ) / M)) / N := by
+    rw [hfib, Finset.sum_div, hA]
+    refine Finset.sum_congr rfl fun j _ => ?_
+    push_cast; ring
+  have hdiff : ∀ k, ‖ee (h * u k) - ee (h * (g k : ℝ) / M)‖ ≤ 2 * Real.pi * |(h : ℝ)| / M := by
+    intro k
+    refine (norm_ee_sub_le _ _).trans ?_
+    have hfl := (hmem k (g k)).2 rfl
+    rw [Set.mem_Ico, div_le_iff₀ hMR, lt_div_iff₀ hMR] at hfl
+    have h1 : |u k - (g k : ℝ) / M| ≤ 1 / M := by
+      rw [abs_le]; constructor
+      · have : (g k : ℝ) / M ≤ u k := by rw [div_le_iff₀ hMR]; linarith
+        have : 0 ≤ 1 / (M : ℝ) := by positivity
+        linarith
+      · rw [sub_le_iff_le_add, ← add_div, le_div_iff₀ hMR]; linarith
+    rw [show (h : ℝ) * u k - h * (g k : ℝ) / M = h * (u k - (g k : ℝ) / M) by ring, abs_mul,
+      mul_div_assoc]
+    have := mul_le_mul_of_nonneg_left h1 (abs_nonneg (h : ℝ))
+    rw [mul_one_div] at this
+    have hp : 0 ≤ 2 * Real.pi := by positivity
+    nlinarith
+  have hsum : ‖∑ k ∈ Finset.range N, (ee (h * u k) - ee (h * (g k : ℝ) / M))‖
+      ≤ N * (2 * Real.pi * |(h : ℝ)| / M) := by
+    refine (norm_sum_le _ _).trans ?_
+    refine (Finset.sum_le_sum fun k _ => hdiff k).trans ?_
+    simp
+  have hsplit : (∑ k ∈ Finset.range N, ee (h * u k)) / N
+      = (∑ k ∈ Finset.range N, (ee (h * u k) - ee (h * (g k : ℝ) / M))) / N + A N := by
+    rw [hAN', Finset.sum_sub_distrib]; ring
+  rw [hsplit]
+  refine (norm_add_le _ _).trans_lt ?_
+  have : ‖(∑ k ∈ Finset.range N, (ee (h * u k) - ee (h * (g k : ℝ) / M))) / (N : ℂ)‖
+      ≤ 2 * Real.pi * |(h : ℝ)| / M := by
+    rw [norm_div, Complex.norm_natCast, div_le_iff₀ hNpos]
+    linarith
+  linarith
+
 /-- **Leaf (Weyl, easy direction).**  A normal number has vanishing Weyl means.  Confidence 99%
 (equidistribution ⇒ Riemann sums of `e(h·)` against step functions). -/
 theorem weylAvg_tendsto_zero_of_isNormal (b : ℕ) (hb : 2 ≤ b) (z : ℝ) (hz : IsNormal b z)
     (h : ℤ) (hh : h ≠ 0) : Tendsto (weylAvg b z h) atTop (nhds 0) := by
-  sorry
+  rw [isNormal_iff_equidistributed_orbit b hb] at hz
+  refine (weyl_of_equidistributed _ (fun k => ⟨Int.fract_nonneg _, Int.fract_lt_one _⟩) hz h
+    hh).congr fun N => ?_
+  rw [← fourierMean_orbit_eq, fourierMean]
+  congr 1
+  refine Finset.sum_congr rfl fun k _ => ?_
+  unfold DecayAeNormal.ee orbit; push_cast; ring_nf
 
 /-- **Leaf (Weyl, wired direction).**  From `equidistributed_of_weyl` and Wall.  Confidence 99%. -/
 theorem isNormal_of_weylAvg (b : ℕ) (hb : 2 ≤ b) (z : ℝ)
     (hW : ∀ h : ℤ, h ≠ 0 → Tendsto (weylAvg b z h) atTop (nhds 0)) : IsNormal b z := by
-  sorry
+  rw [isNormal_iff_equidistributed_orbit b hb]
+  refine equidistributed_of_weyl _ (fun k => ⟨Int.fract_nonneg _, Int.fract_lt_one _⟩) ?_
+  intro h hh
+  exact (hW h hh).congr fun N => (fourierMean_orbit_eq b z h N).symm
 
 /-- **Leaf (crux: genericity).**  A.e. orbit has Weyl means tending to the coefficient of the
 stationary law.  Confidence 90%.  English proof: `ee(h bᵏ combo ω) = ee(h combo(σᵏω))`; the
