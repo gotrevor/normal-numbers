@@ -4644,6 +4644,27 @@ theorem pow_phase_recur (b n : ℕ) (hn : 0 < n) : ∃ m₀ T : ℕ, 0 < T ∧ �
   · exact key _ _ h he
   · exact key _ _ h he.symm
 
+/-- **CRT split of an obstacle phase.**  For `q'` prime to 3 the phase of `p/(q'3^j)` factors as a
+`q'`-part times a 3-adic part: `e(B p/(q'3^j)) = e(B a/q')·e(B c/3^j)`, with `a, c` independent of
+`B`.  The `q'`-part is eventually periodic in `B = hbᵐ` (`pow_phase_recur`); the 3-adic part is a
+character of the low ternary digits of `hbᵐ`, the factor that must supply the cancellation for the
+preperiodic families (`PeriodicFamilyShare`).  Proved (Bézout). -/
+theorem obstacle_phase_crt (p : ℤ) {q' : ℕ} (j : ℕ) (hq : Nat.Coprime q' 3) (hq0 : 0 < q') :
+    ∃ a c : ℤ, ∀ B : ℝ, ee (B * (p / ((q' : ℝ) * 3 ^ j))) = ee (B * (a / q')) * ee (B * (c / 3 ^ j)) := by
+  have hc : IsCoprime (q' : ℤ) ((3 : ℤ) ^ j) := by
+    have : Nat.Coprime q' (3 ^ j) := Nat.Coprime.pow_right _ hq
+    have h := Nat.isCoprime_iff_coprime.mpr this
+    simpa using h
+  obtain ⟨u, v, huv⟩ := hc
+  refine ⟨p * v, p * u, fun B => ?_⟩
+  rw [← ee_add]
+  congr 1
+  have h1 : (u : ℝ) * q' + v * 3 ^ j = 1 := by exact_mod_cast huv
+  have hq' : (q' : ℝ) ≠ 0 := by exact_mod_cast hq0.ne'
+  push_cast
+  field_simp
+  linear_combination (-(B * p)) * h1
+
 open Classical in
 /-- The obstacle rationals charged to a prefix of length `L` (as in `Alive` with `r = 5`):
 `p/q ∈ [0, 1]`, `3^L ≤ q²3⁵ < 3^{L+10}`, within `2c₀/q²` of `K`. -/
