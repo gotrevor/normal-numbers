@@ -654,6 +654,18 @@ theorem runEnteringCountAt_of_lt (τ : ℝ) (hτ : 1 + Real.logb 2 3 < τ) :
     _ = 2 * (3 : ℝ) ^ m * 2 ^ (b - K + 1) := by push_cast; rfl
     _ ≤ _ := runEntering_real_bound τ b b' m hb' hKb
 
+/-- **Mid-range scale-test masses** (leaf of `ae_not_liouvilleWith_mid`).  Confidence 65%.
+As `CantorExactExponent.ev_expTest_mass`, for `μ₀ > 1 + log₂ 3`.  English proof: in
+`expTest_mass_le` replace the run-entering BC case (`hit_mass_bc`, cost `3ᵐ 2^{−(μ₀−2)m}`) by the
+exact residue count: the truncated numerator is `P·3^{L+1−b}` (run zeros at the bottom), so a hit
+gives `P q ≡ r (mod 3^b)` with `|r| ≤ 3^{m+2−(L+1−b)}`, and `card_residue_le_gen` prices it at
+`3ᵐ 2^{m−L+E_k}`, with `E_k = o(m)`; `r = 0` needs `≈ b − m` trailing zero digits of `P`.
+The interior and triangle cases are unchanged, the post-run case is `hit_mass_tri`. -/
+theorem ev_expTest_mass_mid (μ₀ : ℚ) (hμ : 1 + Real.logb 2 3 < μ₀) :
+    ∀ᶠ m : ℕ in atTop, coins.real {ω | expTest μ₀ m (pre ω (expL μ₀ m + 1)) = true} ≤
+      1 / ((m : ℝ) + 1) ^ 2 := by
+  sorry
+
 /-- **Mid range: the exponent upper bound for `1 + log₂ 3 < μ₀`.**  Confidence 65%.
 
 English proof.  Borel–Cantelli over windows `q ∈ [3ᵐ, 3^{m+1})`, with `b = a_{k+1}` the run
@@ -667,11 +679,39 @@ start following the window (units of `b`, `u = m/b`; earlier runs are `O(b/k)` d
   `#{(P, q, r) : P q ≡ r}` is exact, and the tail `y` past the run must hit a ball of radius
   `3^{(μ₀−τu)b}`: cost exponent `2u − μ₀ − log₃2·(τu − μ₀)`, negative on the range when
   `τ > 1 + log₂ 3`.
-The last two cases are by hand only. -/
+Wiring proved from `ev_expTest_mass_mid` (the one open leaf). -/
 theorem ae_not_liouvilleWith_mid (μ₀ : ℚ) (hμ : 1 + Real.logb 2 3 < μ₀) (τ : ℝ)
     (hτ : (μ₀ : ℝ) < τ) :
     ∀ᵐ ω ∂coins, ¬ LiouvilleWith τ (cantorExpReal μ₀ ω) := by
-  sorry
+  have h2 : (2 : ℚ) < μ₀ := by
+    have : (2 : ℝ) < μ₀ := by
+      have := Real.logb_pos (b := 2) (x := 3) (by norm_num) (by norm_num)
+      have h1 : (1 : ℝ) < Real.logb 2 3 := by
+        rw [Real.lt_logb_iff_rpow_lt (by norm_num) (by norm_num)]; norm_num
+      linarith
+    exact_mod_cast this
+  obtain ⟨J₀, hJ₀⟩ := eventually_atTop.1 (ev_expTest_mass_mid μ₀ hμ)
+  have hfin : ∑' m : ℕ, coins {ω | J₀ ≤ m ∧ expTest μ₀ m (pre ω (expL μ₀ m + 1)) = true} ≠ ⊤ := by
+    have hs : Summable fun m : ℕ => 1 / ((m : ℝ) + 1) ^ 2 := by
+      have := (summable_nat_add_iff 1).2 (Real.summable_one_div_nat_pow.2 (by norm_num : 1 < 2))
+      simpa using this
+    refine ne_top_of_le_ne_top (ENNReal.ofReal_tsum_of_nonneg (fun _ => by positivity) hs ▸
+      ENNReal.ofReal_ne_top) (ENNReal.tsum_le_tsum fun m => ?_)
+    by_cases hm : J₀ ≤ m
+    · simp only [hm, true_and]
+      rw [← ofReal_measureReal]
+      exact ENNReal.ofReal_le_ofReal (hJ₀ m hm)
+    · simp [hm]
+  have h0 := measure_setOfPred_frequently_eq_zero hfin
+  have hae : ∀ᵐ ω ∂coins, ¬ ∃ᶠ m in atTop, J₀ ≤ m ∧ expTest μ₀ m (pre ω (expL μ₀ m + 1)) = true :=
+    measure_eq_zero_iff_ae_notMem.1 h0
+  filter_upwards [hae] with ω hω
+  rw [not_frequently] at hω
+  obtain ⟨m₁, hm₁⟩ := eventually_atTop.1 hω
+  have hex := hasIrrExponent_of_avoid_two μ₀ h2 ω ⟨max m₁ J₀, fun m hm => by
+    have := hm₁ m (le_of_max_le_left hm)
+    simpa [le_of_max_le_right hm] using this⟩
+  exact hex.2 τ hτ
 
 
 end NormalNumbers.CantorExactExponentStretch
