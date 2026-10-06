@@ -5018,6 +5018,34 @@ theorem firstOrderObstacleMix_of_cyl {b : ℕ} (hO : CylObstacleCancellation b) 
     Finset.sum_le_sum fun t _ => firstMix_le_obstMix b C h n m t
 
 
+
+theorem norm_cylChar_le (ξ : ℝ) (v : List Bool) : ‖cylChar ξ v‖ ≤ 1 := by
+  rw [cylChar, norm_mul, norm_ee, one_mul]; exact norm_muK_le _
+
+/-- **The local obstacle term is bounded by the dead count.**  `‖obstLocal ξ v‖ ≤ 2·#dead/|A|`.
+So the diagonal of `secondMoment_obstSum_eq` is `1024^{−k}` times an averaged squared dead
+ratio: it decays geometrically in `k = t − s_n`, and only the off-diagonal pairs carry the crux.
+Proved. -/
+theorem norm_obstLocal_le (ξ : ℝ) (v : List Bool) :
+    ‖obstLocal ξ v‖ ≤ 2 * ((1024 - (aliveSet v).card : ℕ) : ℝ) / (aliveSet v).card := by
+  classical
+  have hc0 : (0 : ℝ) < (aliveSet v).card := by exact_mod_cast card_aliveSet_pos v
+  have hD : (Finset.univ \ aliveSet v).card = 1024 - (aliveSet v).card := by
+    rw [Finset.card_sdiff_of_subset (Finset.subset_univ _), Finset.card_univ]; simp
+  rw [obstLocal, norm_mul]
+  have hs : ‖∑ f ∈ Finset.univ \ aliveSet v, (cylChar ξ (v ++ List.ofFn f) - cylChar ξ v)‖ ≤
+      ((1024 - (aliveSet v).card : ℕ) : ℝ) * 2 := by
+    refine (norm_sum_le _ _).trans ?_
+    calc _ ≤ ∑ f ∈ Finset.univ \ aliveSet v, (2 : ℝ) := Finset.sum_le_sum fun f _ =>
+          (norm_sub_le _ _).trans (add_le_add (norm_cylChar_le _ _) (norm_cylChar_le _ _) |>.trans
+            (by norm_num))
+      _ = _ := by rw [Finset.sum_const, hD, nsmul_eq_mul]
+  have hn : ‖(1 / ((aliveSet v).card : ℂ))‖ = 1 / (aliveSet v).card := by
+    rw [norm_div, norm_one, Complex.norm_natCast]
+  rw [hn]
+  calc 1 / ((aliveSet v).card : ℝ) * _ ≤ 1 / (aliveSet v).card * (((1024 - (aliveSet v).card : ℕ) : ℝ) * 2) :=
+        mul_le_mul_of_nonneg_left hs (by positivity)
+    _ = _ := by ring
 /-- **The `resLaw` second moment as an explicit pair sum.**  `E‖obstSum‖²` is the sum over stage-`s`
 prefixes `w`, weighted by their `resLaw` mass, of the same-cylinder pair sums of
 `norm_obstSum_sq`.  Proved. -/
