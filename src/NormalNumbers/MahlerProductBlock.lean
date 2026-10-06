@@ -229,4 +229,58 @@ theorem isWordBlock_two_three_thirteen :
     IsWordBlock 2 3 {1, 5, 19, 29, 97, 103, 133, 175, 197, 205, 209, 211, 239} := by
   sorry
 
+/-! ## The joint multiplier is doubly exponential, and Szüsz–Volkmann's exponent is sharp
+
+Szüsz–Volkmann 1983 put a joint `k`-word block inside `[1, 12·g^(g^k + k)]`.  The Liouville
+witness gives the matching lower side: `X = Σ g^(−i!)` shows each `m·X` as copies of the digits
+of `m` between zero gaps, and `0^∞ m 0^∞` has at most `len(m) + k` distinct `k`-windows.  So a
+block needs `len(m) ≥ g^k − k`, i.e. a member `≥ g^(g^k − k − 1)`.  The exponent of the joint
+multiplier is `g^k ± O(k)`, and Bugeaud–Coons 2019's joint `B(b,k) = b^k(b+1)` is off by a
+whole exponential level once `k ≥ 2` and `b^k ≥ 16`. -/
+
+/-- **Szüsz–Volkmann 1983** (Crelle 339, 199–206; `papers/szusz-volkmann-1983-each-block-infinitely-often.pdf`):
+for every irrational `a` and every `N`, some `X ≤ 12·g^(g^N + N)` has every length-`N` block
+infinitely often in `X·a`.  Stated as a word block on the interval (faithful). -/
+def Literature.SzuszVolkmann1983 : Prop :=
+  ∀ g N : ℕ, 2 ≤ g → 1 ≤ N → IsWordBlock g N (Finset.Icc 1 (12 * g ^ (g ^ N + N)))
+
+/-- **Liouville cover for words** (confidence 95%): for every `B ≥ 1`, a `k`-word block has a
+member `m` such that every length-`k` word is a window of `0^k (m·B) 0^k`.  English proof: as
+`IsProductBlock.liouville_cover`, with "word" for "digit"; past position `(K+2)!` the expansion
+of `m·B·Σ g^(−i!)` is copies of the digits of `m·B` separated by zero runs longer than `k`. -/
+theorem IsWordBlock.liouville_cover {g k : ℕ} (hg : 2 ≤ g) {S : Finset ℕ}
+    (hS : IsWordBlock g k S) (B : ℕ) (hB : 1 ≤ B) :
+    ∃ m ∈ S, ∀ w : List ℕ, w.length = k → (∀ d ∈ w, d < g) →
+      w <:+: List.replicate k 0 ++ (Nat.digits g (m * B)).reverse ++ List.replicate k 0 := by
+  sorry
+
+/-- **Doubly exponential lower side** (confidence 95%): every base-`g` `k`-word block has a
+member `≥ g^(g^k − k − 1)`.  English proof: `liouville_cover` at `B = 1`; the padded list
+`0^k m 0^k` has `len(m) + k + 1` windows, of which the first and last are both `0^k`, so at
+most `len(m) + k` distinct ones; all `g^k` words occur, so `len(m) ≥ g^k − k`, and
+`m ≥ g^(len(m) − 1)`.  Sharp at small cases: base 5, `k = 1` gives 125 (truth 194); binary
+`k = 3` gives 16 (truth 23), `k = 4` gives 2048 (truth 2479). -/
+theorem IsWordBlock.exists_ge {g k : ℕ} (hg : 2 ≤ g) (hk : 1 ≤ k) {S : Finset ℕ}
+    (hS : IsWordBlock g k S) : ∃ m ∈ S, g ^ (g ^ k - k - 1) ≤ m := by
+  sorry
+
+/-- **Bugeaud–Coons's joint bound fails wherever the Liouville bound passes it**: if
+`g^k·(g+1) < g^(g^k − k − 1)` (e.g. `g = 2, k = 4`: `48 < 2048`; `g = 5, k = 2`:
+`150 < 5^22`), the interval `[1, g^k·(g+1)]` is not a `k`-word block. -/
+theorem not_isWordBlock_Icc_bugeaudCoons {g k : ℕ} (hg : 2 ≤ g) (hk : 1 ≤ k)
+    (h : g ^ k * (g + 1) < g ^ (g ^ k - k - 1)) :
+    ¬ IsWordBlock g k (Finset.Icc 1 (g ^ k * (g + 1))) := by
+  intro hS
+  obtain ⟨m, hm, hge⟩ := hS.exists_ge hg hk
+  have := (Finset.mem_Icc.mp hm).2
+  omega
+
+/-- **The exponent is pinned** (from the literature input): a `k`-word block exists inside
+`[1, 12·g^(g^k + k)]`, and every one has a member `≥ g^(g^k − k − 1)`. -/
+theorem wordBlock_exponent_pinned (hSV : Literature.SzuszVolkmann1983) {g k : ℕ} (hg : 2 ≤ g)
+    (hk : 1 ≤ k) :
+    IsWordBlock g k (Finset.Icc 1 (12 * g ^ (g ^ k + k))) ∧
+      ∀ S, IsWordBlock g k S → ∃ m ∈ S, g ^ (g ^ k - k - 1) ≤ m :=
+  ⟨hSV g k hg hk, fun _ hS => hS.exists_ge hg hk⟩
+
 end NormalNumbers.Adder
