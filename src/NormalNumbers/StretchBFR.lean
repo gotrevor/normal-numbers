@@ -27,7 +27,14 @@ declaration here, so the stretch lane can grind them:
 4. **Single-sum cancellation is not enough.**  `windowCount_of_inverseSum` gives the window count
    only when `m > b − δ b'`, and `singleSum_insufficient` shows that even square-root saving
    misses every window with `m ≤ b/2`, which is where the binding windows sit (`m ≈ b/τ`).  So
-   `RunEnteringCount` needs a bilinear estimate (Maze, `refuted`).
+   single-sum cancellation is the wrong tool (Maze, `refuted`).
+   ⚠️ **Corrected 2026-10-06:** Ren's conclusion here, "so `RunEnteringCount` needs a bilinear
+   estimate", was wrong.  It treated the window as an incidence count (pairs `(P, q)`, which would
+   need Kloosterman-type cancellation), but `windowCount` and Borel–Cantelli only need the
+   *union* of hitting numerators.  The union is small for an elementary reason: 3-adic Farey
+   separation (`CantorExactExponentStretch.padic_sep`, `hit_mass_padic`) pins each hitting
+   numerator by about `log₃(|r| q)` low digits plus `v₃(q)` top digits, which proved the stretch
+   node for every `μ₀ > 2` (lap 3 of the stretch lane).
 -/
 
 open MeasureTheory Filter

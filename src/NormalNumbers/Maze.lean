@@ -1444,7 +1444,7 @@ def register : List Hall := [
   ⟨"single-sum inverse cancellation for the run-entering count",
    "Prove RunEnteringCount from a power saving for exponential sums over inverses of Cantor numerators mod 3^b (numerically square-root-like)",
    .refuted, .kernel,
-   "The Fourier expansion over the q-interval converts the count into inverse sums with error R 2^b' 3^(-delta b'), which beats the main term only for m > b - delta b'; with at most square-root saving that misses every window m <= b/2, where the binding windows sit. A bilinear estimate is needed",
+   "The Fourier expansion over the q-interval converts the count into inverse sums with error R 2^b' 3^(-delta b'), which beats the main term only for m > b - delta b'; with at most square-root saving that misses every window m <= b/2, where the binding windows sit. (Corrected 2026-10-06: the conclusion 'a bilinear estimate is needed' was wrong; the union of hitting numerators is bounded elementarily by 3-adic Farey separation, padic_sep / hit_mass_padic, which proved the stretch node)",
    "StretchBFR.lean: singleSum_insufficient (proved), windowCount_of_inverseSum (sorry, 80%), InverseCantorSumBound; experiments/cantor_inverse_sums.py", "2026-10-05"⟩,
   ⟨"He-Liao local count on the forced-run measure",
    "Transfer He-Liao 2602.01307 Cor. 6.5 (local equidistribution of rationals against Cantor-measure cylinders) to the forced-run measure, to push the exact-exponent triple below mu0 = 2 + log2 3",
