@@ -54,6 +54,38 @@ length `≥ 2L/(1 − 2ε)`, so long chunks cover `≥ ε n` positions; `normal_
 def winVal (b : ℕ) (s : ℕ → ℕ) (p t : ℕ) : ℕ :=
   ∑ j ∈ Finset.range t, s (p + j) * b ^ (t - 1 - j)
 
+theorem winVal_succ (b : ℕ) (s : ℕ → ℕ) (p t : ℕ) :
+    winVal b s p (t + 1) = b * winVal b s p t + s (p + t) := by
+  unfold winVal
+  rw [Finset.sum_range_succ, Finset.mul_sum, show t + 1 - 1 - t = 0 by omega, pow_zero, mul_one]
+  congr 1
+  refine Finset.sum_congr rfl fun j hj => ?_
+  rw [Finset.mem_range] at hj
+  rw [show t + 1 - 1 - j = (t - 1 - j) + 1 by omega, pow_succ]; ring
+
+theorem floor_window (b : ℕ) (hb : 2 ≤ b) (y : ℝ) (hy : 0 ≤ y) (p t : ℕ) :
+    ⌊y * (b : ℝ) ^ (p + t)⌋ = (b : ℤ) ^ t * ⌊y * (b : ℝ) ^ p⌋ + winVal b (digitOf b y) p t ∧
+      winVal b (digitOf b y) p t < b ^ t := by
+  induction t with
+  | zero => simp [winVal]
+  | succ t ih =>
+    obtain ⟨h1, h2⟩ := ih
+    have hd := digitOf_lt b hb y (p + t)
+    refine ⟨?_, ?_⟩
+    · rw [← add_assoc, floor_mul_pow_succ b hb y hy, h1, winVal_succ]; push_cast; ring
+    · rw [winVal_succ, pow_succ]
+      have : winVal b (digitOf b y) p t + 1 ≤ b ^ t := h2
+      nlinarith
+
+theorem floor_full (b : ℕ) (hb : 2 ≤ b) (z : ℝ) (p t : ℕ) :
+    ⌊z * (b : ℝ) ^ (p + t)⌋ = (b : ℤ) ^ t * (⌊z⌋ * (b : ℤ) ^ p + ⌊Int.fract z * (b : ℝ) ^ p⌋)
+      + winVal b (digitOf b (Int.fract z)) p t := by
+  have e : z * (b : ℝ) ^ (p + t) = Int.fract z * (b : ℝ) ^ (p + t) + ((⌊z⌋ * (b : ℤ) ^ (p + t) : ℤ) : ℝ) := by
+    push_cast; rw [← Int.fract_add_floor z]; simp only [Int.fract_add_floor]; ring_nf
+    rw [Int.fract]; ring
+  rw [e, Int.floor_add_intCast, (floor_window b hb _ (Int.fract_nonneg z) p t).1]
+  ring
+
 /-- **Bounded carry.**  The `z`-window of `z = a x + c y` is the combination of the `x`- and
 `y`-windows, up to an integer carry `|k| ≤ |a| + |c|`, reduced mod `bᵗ`.  Confidence 95%:
 `⌊b^{p+t} z⌋ = a⌊b^{p+t}x⌋ + c⌊b^{p+t}y⌋ + ⌊a {b^{p+t}x} + c {b^{p+t}y}⌋` and each window value is
@@ -63,7 +95,43 @@ theorem window_combo (b : ℕ) (hb : 2 ≤ b) (a c : ℤ) (x y : ℝ) (p t : ℕ
       (winVal b (digitOf b (Int.fract (a * x + c * y))) p t : ℤ) =
         (a * winVal b (digitOf b (Int.fract x)) p t + c * winVal b (digitOf b (Int.fract y)) p t
           + k) % ((b ^ t : ℕ) : ℤ) := by
-  sorry
+  set N := p + t
+  set B : ℝ := (b : ℝ) ^ N
+  set fx := Int.fract (x * B); set fy := Int.fract (y * B)
+  refine ⟨⌊a * fx + c * fy⌋, ?_, ?_⟩
+  · have hfx := Int.fract_nonneg (x * B); have hfx' := Int.fract_lt_one (x * B)
+    have hfy := Int.fract_nonneg (y * B); have hfy' := Int.fract_lt_one (y * B)
+    have ha : |(a : ℝ) * fx| ≤ |(a : ℝ)| := by
+      rw [abs_mul, abs_of_nonneg hfx]; exact mul_le_of_le_one_right (abs_nonneg _) hfx'.le
+    have hc : |(c : ℝ) * fy| ≤ |(c : ℝ)| := by
+      rw [abs_mul, abs_of_nonneg hfy]; exact mul_le_of_le_one_right (abs_nonneg _) hfy'.le
+    rw [abs_le]; constructor
+    · rw [Int.le_floor]; push_cast
+      have := abs_le.mp ha; have := abs_le.mp hc; linarith
+    · have := Int.floor_le ((a : ℝ) * fx + c * fy)
+      have h3 : ((⌊(a : ℝ) * fx + c * fy⌋ : ℤ) : ℝ) ≤ |(a : ℝ)| + |(c : ℝ)| := by
+        have := abs_le.mp ha; have := abs_le.mp hc; linarith
+      exact_mod_cast h3
+  · have hbt : (0 : ℤ) < ((b ^ t : ℕ) : ℤ) := by positivity
+    have hz := floor_full b hb (a * x + c * y) p t
+    have hx := floor_full b hb x p t
+    have hy := floor_full b hb y p t
+    have hsum : ⌊(a * x + c * y) * B⌋ = a * ⌊x * B⌋ + c * ⌊y * B⌋ + ⌊a * fx + c * fy⌋ := by
+      have : (a * x + c * y) * B = (a * fx + c * fy) + ((a * ⌊x * B⌋ + c * ⌊y * B⌋ : ℤ) : ℝ) := by
+        simp only [fx, fy, Int.fract]; push_cast; ring
+      rw [this, Int.floor_add_intCast]; ring
+    have hlt := (floor_window b hb _ (Int.fract_nonneg (a * x + c * y)) p t).2
+    rw [hz, hx, hy] at hsum
+    set Wz := winVal b (digitOf b (Int.fract (a * x + c * y))) p t
+    set Wx := winVal b (digitOf b (Int.fract x)) p t
+    set Wy := winVal b (digitOf b (Int.fract y)) p t
+    set Az := ⌊(a * x + c * y : ℝ)⌋ * (b : ℤ) ^ p + ⌊Int.fract (a * x + c * y : ℝ) * (b : ℝ) ^ p⌋
+    set Ax := ⌊x⌋ * (b : ℤ) ^ p + ⌊Int.fract x * (b : ℝ) ^ p⌋
+    set Ay := ⌊y⌋ * (b : ℤ) ^ p + ⌊Int.fract y * (b : ℝ) ^ p⌋
+    have hq : a * (Wx : ℤ) + c * Wy + ⌊a * fx + c * fy⌋ =
+        (Wz : ℤ) + ((b ^ t : ℕ) : ℤ) * (Az - a * Ax - c * Ay) := by
+      push_cast; linear_combination -hsum
+    rw [hq, Int.add_mul_emod_self_left, Int.emod_eq_of_lt (by positivity) (by exact_mod_cast hlt)]
 
 /-- **Normal sequences admit no thin covers.**  Windows starting in `[0, n)` whose values lie in
 thin dictionaries `V t` (lengths `t ∈ [t₀, t₁]`) cover at most `δ n` positions, once
