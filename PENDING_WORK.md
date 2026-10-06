@@ -2930,3 +2930,11 @@ Next: (1) prove the reduction (needs pair-averaged partial Cantor products, Cass
 - All routine leaves PROVED (buildU_succ_uniform, prefChar_succ, norm_rhoS,
   norm_fourier_sub_prefChar, cassels_Bf).  The headline now rests on exactly one sorry:
   the crux `deadCharCancel`.  (Off-path: `fourierPairRate_descent_of_deadRateDecay`.)
+- Crux WEAKENED to signed form `deadCharSigned` (headline via `casselsRate_resLaw`, using the
+  exact unrolled recursion `prefChar_eq` and `secondMoment_le_norm_sum`).  The absolute form is
+  now the node `DeadCharCancelAbs` (40%): for stages with log₃N < 10S' < log₃|ξ| it needs
+  Fourier decay at middle ternary digits of bⁿ (open-problem strength).  The signed form
+  = Σ_{S'} ∫|S_N|² dτ_{S'} with τ_{S'} signed (dead child − uniform share); diagonal cancels
+  exactly; heuristic O(η N^{3/2}).  Next attack: express the S'-term as ∫|S_N|²dτ_{S'} in Lean,
+  split S_N into low terms (bⁿ < 3^{10S'}, O(1) change) and high terms; the high part under the
+  Cantor tail is where a bootstrap over ν-hybrid laws (induction on number of ν-stages) is needed.

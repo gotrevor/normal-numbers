@@ -1680,7 +1680,11 @@ theorem fourierAbs_resLaw_le (ξ : ℝ) (S : ℕ) :
   rw [sub_add_cancel] at h3
   linarith
 
-/-- **The crux: cancellation in the dead-children characters.**  Believed, confidence 55%.
+/-- **Conjecture node (formerly the crux; absolute form).**  Believed, confidence 40%.
+Superseded by the weaker signed crux `deadCharSigned` (`deadCharSigned_of_abs`).  The step most
+in doubt: for stages `S'` with `log₃ N < 10S' < log₃|ξ|` the Cassels averaging over `(n, m)`
+(which reaches only ternary positions `< log₃ N`) does not apply, so this form needs Fourier
+decay at the middle ternary digits of `bⁿ`, an open-problem-strength input.
 
 Uniformly in the depth `S`,
 `Σ_{n,m<N} Σ_{S'<S} |deadChar(ξ, S')|·Π_{10S'+10 ≤ p < 10S}|cos(2πξ/3^{p+1})| = O(N² W(N))`,
@@ -1695,13 +1699,12 @@ is tiny.  At the surviving stages a dead child sits within `c₀/q²` of an obst
 Guards: `b = 3` is false (`cantor_not_normal_three_pow`; `3ⁿ p/q` with `q | 3^k` does not
 cancel), and the base-2 dyadic sibling (`perStage_deadCount_not_enough`) has centres `p/2ᵏ`,
 for which `e(2ⁿ p/2ᵏ) = 1` once `n ≥ k`: no cancellation, as required. -/
-theorem deadCharCancel {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) (h : ℤ) (hh : h ≠ 0) :
-    ∃ (C : ℝ) (W : ℕ → ℝ), Summable (fun j => W (sched j)) ∧ ∀ N : ℕ, 1 ≤ N → ∀ S : ℕ,
+def DeadCharCancelAbs (b : ℕ) : Prop :=
+  ∀ h : ℤ, h ≠ 0 → ∃ (C : ℝ) (W : ℕ → ℝ), Summable (fun j => W (sched j)) ∧ ∀ N : ℕ, 1 ≤ N → ∀ S : ℕ,
       ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N,
         ∑ S' ∈ Finset.range S, ‖deadChar (h * ((b : ℝ) ^ n - (b : ℝ) ^ m)) S'‖ *
           tailProd (h * ((b : ℝ) ^ n - (b : ℝ) ^ m)) (10 * S' + 10) (10 * S) ≤
-        C * (N : ℝ) ^ 2 * W N := by
-  sorry
+        C * (N : ℝ) ^ 2 * W N
 
 /-- **The crux for the resampling law**, from the decomposition.  Proved modulo the leaves
 `prefChar_succ`, `norm_rhoS`, `norm_fourier_sub_prefChar` and the crux `deadCharCancel`.
@@ -1711,11 +1714,11 @@ block is alive (any admissible rule) reduces to `DeadRateDecay` (believed false)
 dead counts alone are refuted by `perStage_deadCount_not_enough` (whose sibling with uniform
 resampling is still never 2-normal).  So `deadCharCancel` must use the arithmetic of the
 centres `p/q`.  Known-false sibling: `b = 3` (`cantor_not_normal_three_pow`). -/
-theorem fourierPairRate_resLaw {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) :
+theorem fourierPairRate_resLaw {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) (hD : DeadCharCancelAbs b) :
     FourierPairRate resLaw b := by
   intro h hh
   obtain ⟨C₁, W₁, hW₁, h₁⟩ := cassels_Bf hb h3 h hh
-  obtain ⟨C₂, W₂, hW₂, h₂⟩ := deadCharCancel hb h3 h hh
+  obtain ⟨C₂, W₂, hW₂, h₂⟩ := hD h hh
   refine ⟨|C₁| + |C₂| + 1, fun N => |W₁ N| + |W₂ N| + (N : ℝ) ^ (-(1 / 2 : ℝ)),
     (hW₁.abs.add hW₂.abs).add (summable_sched_rpow (by norm_num)), fun N hN => ?_⟩
   set ξ : ℕ → ℕ → ℝ := fun n m => h * ((b : ℝ) ^ n - (b : ℝ) ^ m) with hξ
@@ -1761,6 +1764,182 @@ theorem fourierPairRate_resLaw {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) :
           (N : ℝ) ^ 2 * (N : ℝ) ^ (-(1 / 2 : ℝ)) := add_le_add (add_le_add hA (h₂' N hN S)) hC
     _ ≤ |C₁| * (N : ℝ) ^ 2 * |W₁ N| + |C₂| * (N : ℝ) ^ 2 * |W₂ N| +
           (N : ℝ) ^ 2 * (N : ℝ) ^ (-(1 / 2 : ℝ)) := by linarith [k C₁ (W₁ N), k C₂ (W₂ N)]
+    _ ≤ _ := by
+        have a1 := abs_nonneg C₁; have a2 := abs_nonneg C₂
+        have b1 := abs_nonneg (W₁ N); have b2 := abs_nonneg (W₂ N)
+        nlinarith [mul_nonneg (mul_nonneg a1 hN2) b2, mul_nonneg (mul_nonneg a2 hN2) b1,
+          mul_nonneg (mul_nonneg a1 hN2) hr, mul_nonneg (mul_nonneg a2 hN2) hr,
+          mul_nonneg hN2 b1, mul_nonneg hN2 b2]
+
+
+/-! ### The signed route: the crux without absolute values
+
+`prefChar_eq` unrolls the stage recursion exactly, with signs.  The second moment is a *signed*
+sum of Fourier coefficients (`secondMoment_le_norm_sum`), so the crux only needs the signed
+pair sum of the dead-children terms (`deadCharSigned`), which is weaker than the absolute form
+`DeadCharCancelAbs` (`deadCharSigned_of_abs`). -/
+
+/-- `Π_{a ≤ s < S} ρ_s(ξ)`. -/
+noncomputable def rhoProd (ξ : ℝ) (a S : ℕ) : ℂ := ∏ s ∈ Finset.Ico a S, rhoS ξ (10 * s)
+
+theorem norm_rhoProd (ξ : ℝ) {a S : ℕ} (h : a ≤ S) : ‖rhoProd ξ a S‖ = tailProd ξ (10 * a) (10 * S) := by
+  induction S, h using Nat.le_induction with
+  | base => simp [rhoProd, tailProd_self]
+  | succ S haS ih =>
+    rw [rhoProd, Finset.prod_Ico_succ_top haS, norm_mul, ← rhoProd, ih, norm_rhoS,
+      show 10 * (S + 1) = 10 * S + 10 by ring, tailProd_mul ξ (by omega) (by omega)]
+
+/-- **Exact unrolled recursion.**  Proved from `prefChar_succ`. -/
+theorem prefChar_eq (ξ : ℝ) (S : ℕ) :
+    prefChar ξ S = rhoProd ξ 0 S - ∑ S' ∈ Finset.range S, deadChar ξ S' * rhoProd ξ (S' + 1) S := by
+  induction S with
+  | zero => simp [prefChar_zero, rhoProd]
+  | succ S ih =>
+    rw [prefChar_succ, ih, Finset.sum_range_succ]
+    have h1 : rhoProd ξ 0 (S + 1) = rhoProd ξ 0 S * rhoS ξ (10 * S) := by
+      rw [rhoProd, Finset.prod_Ico_succ_top (Nat.zero_le _)]; rfl
+    have h2 : ∀ S' ∈ Finset.range S, rhoProd ξ (S' + 1) (S + 1) =
+        rhoProd ξ (S' + 1) S * rhoS ξ (10 * S) := by
+      intro S' hS'
+      rw [Finset.mem_range] at hS'
+      rw [rhoProd, Finset.prod_Ico_succ_top (by omega)]; rfl
+    have h3 : rhoProd ξ (S + 1) (S + 1) = 1 := by simp [rhoProd]
+    have hs : ∑ S' ∈ Finset.range S, deadChar ξ S' * rhoProd ξ (S' + 1) (S + 1) =
+        rhoS ξ (10 * S) * ∑ S' ∈ Finset.range S, deadChar ξ S' * rhoProd ξ (S' + 1) S := by
+      rw [Finset.mul_sum]
+      refine Finset.sum_congr rfl fun S' hS' => ?_
+      rw [h2 S' hS']; ring
+    rw [h1, h3, hs]
+    ring
+
+/-- The second moment is the real part of a signed pair sum of Fourier coefficients.  Proved. -/
+theorem secondMoment_le_norm_sum (L : Law) (b : ℕ) (h : ℤ) (N : ℕ) :
+    ∫ ω, ‖∑ k ∈ Finset.range N, ee (h * (b : ℝ) ^ k * cpt (L.φ ω))‖ ^ 2 ∂coinMeasure ≤
+      ‖∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N,
+        ∫ ω, ee ((h * ((b : ℝ) ^ n - (b : ℝ) ^ m)) * cpt (L.φ ω)) ∂coinMeasure‖ := by
+  have hG : Measurable fun ω => cpt (L.φ ω) := measurable_cpt.comp L.meas
+  have hint : ∀ ξ : ℝ, Integrable (fun ω => ee (ξ * cpt (L.φ ω))) coinMeasure := fun ξ =>
+    Integrable.of_bound ((measurable_ee.comp (hG.const_mul ξ)).aestronglyMeasurable) 1
+      (Eventually.of_forall fun ω => (norm_ee _).le)
+  have hexp : ∀ ω, ((‖∑ k ∈ Finset.range N, ee (h * (b : ℝ) ^ k * cpt (L.φ ω))‖ ^ 2 : ℝ) : ℂ) =
+      ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N,
+        ee ((h * ((b : ℝ) ^ n - (b : ℝ) ^ m)) * cpt (L.φ ω)) := by
+    intro ω
+    rw [sq_norm_sum_ee (fun k => h * (b : ℝ) ^ k * cpt (L.φ ω))]
+    refine Finset.sum_congr rfl fun n _ => Finset.sum_congr rfl fun m _ => ?_
+    congr 1; ring
+  have hI : ((∫ ω, ‖∑ k ∈ Finset.range N, ee (h * (b : ℝ) ^ k * cpt (L.φ ω))‖ ^ 2 ∂coinMeasure : ℝ) : ℂ) =
+      ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N,
+        ∫ ω, ee ((h * ((b : ℝ) ^ n - (b : ℝ) ^ m)) * cpt (L.φ ω)) ∂coinMeasure := by
+    rw [← integral_complex_ofReal]
+    simp_rw [hexp]
+    rw [integral_finsetSum _ fun n _ => integrable_finsetSum _ fun m _ => hint _]
+    refine Finset.sum_congr rfl fun n _ => ?_
+    rw [integral_finsetSum _ fun m _ => hint _]
+  have := congrArg Complex.re hI
+  rw [Complex.ofReal_re] at this
+  rw [this]
+  exact Complex.re_le_norm _
+
+/-- **The crux (signed form): cancellation in the dead-children terms.**  Believed, 60%.
+
+Uniformly in the depth `S`, `‖Σ_{n,m<N} Σ_{S'<S} deadChar(ξ, S')·Π_{S'<s<S} ρ_s(ξ)‖ = O(N² W(N))`,
+`ξ = h(bⁿ − bᵐ)`.  For each `S'` the inner pair sum is `∫ |S_N|² dτ_{S'}` for the signed measure
+`τ_{S'}` = (`resLaw` to stage `S'`) ⊗ (dead child minus its share of a uniform child) ⊗ (Cantor
+tail): the diagonal `n = m` cancels exactly (equal masses), terms with `bⁿ ≪ 3^{10S'}` change by
+`O(1)` in total between the two parts, so heuristically each stage contributes
+`O(P(dead at S')·N^{1/2}·N)` and the sum is `O(η N^{3/2})`.  This is weaker than
+`DeadCharCancelAbs` (`deadCharSigned_of_abs`), whose triangle inequality over `(n, m)` forfeits
+this cancellation and needs Fourier decay at the middle ternary digits of `bⁿ`.
+
+Guards: `b = 3` is false (`cantor_not_normal_three_pow`), and the base-2 dyadic sibling
+(`perStage_deadCount_not_enough`) must fail: its dead children sit at `p/2ᵏ`, where
+`|S_N|²` is maximal, so `∫ |S_N|² dτ` has a sign and does not cancel. -/
+theorem deadCharSigned {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) (h : ℤ) (hh : h ≠ 0) :
+    ∃ (C : ℝ) (W : ℕ → ℝ), Summable (fun j => W (sched j)) ∧ ∀ N : ℕ, 1 ≤ N → ∀ S : ℕ,
+      ‖∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N,
+        ∑ S' ∈ Finset.range S, deadChar (h * ((b : ℝ) ^ n - (b : ℝ) ^ m)) S' *
+          rhoProd (h * ((b : ℝ) ^ n - (b : ℝ) ^ m)) (S' + 1) S‖ ≤ C * (N : ℝ) ^ 2 * W N := by
+  sorry
+
+/-- The absolute crux implies the signed one.  Proved. -/
+theorem deadCharSigned_of_abs {b : ℕ} (hD : DeadCharCancelAbs b) (h : ℤ) (hh : h ≠ 0) :
+    ∃ (C : ℝ) (W : ℕ → ℝ), Summable (fun j => W (sched j)) ∧ ∀ N : ℕ, 1 ≤ N → ∀ S : ℕ,
+      ‖∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N,
+        ∑ S' ∈ Finset.range S, deadChar (h * ((b : ℝ) ^ n - (b : ℝ) ^ m)) S' *
+          rhoProd (h * ((b : ℝ) ^ n - (b : ℝ) ^ m)) (S' + 1) S‖ ≤ C * (N : ℝ) ^ 2 * W N := by
+  obtain ⟨C, W, hW, hC⟩ := hD h hh
+  refine ⟨C, W, hW, fun N hN S => le_trans ?_ (hC N hN S)⟩
+  refine (norm_sum_le _ _).trans (Finset.sum_le_sum fun n _ => (norm_sum_le _ _).trans
+    (Finset.sum_le_sum fun m _ => (norm_sum_le _ _).trans (Finset.sum_le_sum fun S' hS' => ?_)))
+  rw [Finset.mem_range] at hS'
+  rw [norm_mul, norm_rhoProd _ (by omega), show 10 * (S' + 1) = 10 * S' + 10 by ring]
+
+/-- **Cassels rate for the resampling law**, from the signed crux.  Proved modulo
+`deadCharSigned`. -/
+theorem casselsRate_resLaw {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) : CasselsRate resLaw b := by
+  intro h hh
+  obtain ⟨C₁, W₁, hW₁, h₁⟩ := cassels_Bf hb h3 h hh
+  obtain ⟨C₂, W₂, hW₂, h₂⟩ := deadCharSigned hb h3 h hh
+  refine ⟨|C₁| + |C₂| + 1, fun N => |W₁ N| + |W₂ N| + (N : ℝ) ^ (-(1 / 2 : ℝ)),
+    (hW₁.abs.add hW₂.abs).add (summable_sched_rpow (by norm_num)), fun N hN => ?_⟩
+  set ξ : ℕ → ℕ → ℝ := fun n m => h * ((b : ℝ) ^ n - (b : ℝ) ^ m) with hξ
+  have h₂' : ∀ N : ℕ, 1 ≤ N → ∀ S : ℕ, ‖∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N,
+      ∑ S' ∈ Finset.range S, deadChar (ξ n m) S' * rhoProd (ξ n m) (S' + 1) S‖ ≤
+        C₂ * (N : ℝ) ^ 2 * W₂ N := h₂
+  set K : ℝ := ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N, 16 * |ξ n m|
+  set S : ℕ := ⌈K⌉₊ + Nat.log 3 N
+  have hK : K ≤ 3 ^ (10 * S) := by
+    have h1 : K ≤ (S : ℝ) := (Nat.le_ceil K).trans (by exact_mod_cast Nat.le_add_right _ _)
+    have h2 : S < 3 ^ (10 * S) := (Nat.lt_pow_self (by norm_num)).trans_le
+      (Nat.pow_le_pow_right (by norm_num) (by omega))
+    exact h1.trans (by exact_mod_cast h2.le)
+  have hM : Nat.log 3 N / 2 ≤ 10 * S := by omega
+  have hN1 : (1 : ℝ) ≤ N := by exact_mod_cast hN
+  have hN2 : (0 : ℝ) ≤ (N : ℝ) ^ 2 := by positivity
+  have hr : (0 : ℝ) ≤ (N : ℝ) ^ (-(1 / 2 : ℝ)) := by positivity
+  have hrN : (1 : ℝ) ≤ (N : ℝ) ^ 2 * (N : ℝ) ^ (-(1 / 2 : ℝ)) := by
+    have : (N : ℝ) ^ 2 * (N : ℝ) ^ (-(1 / 2 : ℝ)) = (N : ℝ) ^ (3 / 2 : ℝ) := by
+      rw [show (N : ℝ) ^ 2 = (N : ℝ) ^ (2 : ℝ) by norm_cast, ← Real.rpow_add (by positivity)]
+      norm_num
+    rw [this]; exact Real.one_le_rpow hN1 (by norm_num)
+  have h3S : (0 : ℝ) < 3 ^ (10 * S) := by positivity
+  have hA : ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N, ‖rhoProd (ξ n m) 0 S‖ ≤
+      C₁ * (N : ℝ) ^ 2 * W₁ N := by
+    refine le_trans (Finset.sum_le_sum fun n _ => Finset.sum_le_sum fun m _ => ?_) (h₁ N hN)
+    rw [norm_rhoProd _ (Nat.zero_le _), mul_zero, ← tailProd_zero_eq_Bf,
+      ← tailProd_mul (ξ n m) (Nat.zero_le _) hM]
+    exact mul_le_of_le_one_right (tailProd_nonneg _ _ _) (tailProd_le_one _ _ _)
+  have hC : ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N, 16 * |ξ n m| / 3 ^ (10 * S) ≤
+      (N : ℝ) ^ 2 * (N : ℝ) ^ (-(1 / 2 : ℝ)) := by
+    simp only [← Finset.sum_div]
+    rw [div_le_iff₀ h3S]
+    nlinarith
+  have k : ∀ C W : ℝ, C * (N : ℝ) ^ 2 * W ≤ |C| * (N : ℝ) ^ 2 * |W| := fun C W =>
+    (le_abs_self _).trans (by rw [abs_mul, abs_mul, abs_of_nonneg hN2])
+  -- ν̂ = (ν̂ − T_S) + Πρ − Σ deadChar·Πρ
+  set ν : ℝ → ℂ := fun x => ∫ ω, ee (x * cpt (resLaw.φ ω)) ∂coinMeasure
+  have hsplit : ∀ n m, ν (ξ n m) = (ν (ξ n m) - prefChar (ξ n m) S) + rhoProd (ξ n m) 0 S -
+      ∑ S' ∈ Finset.range S, deadChar (ξ n m) S' * rhoProd (ξ n m) (S' + 1) S := by
+    intro n m; rw [prefChar_eq]; ring
+  have hsum : ‖∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N, ν (ξ n m)‖ ≤
+      ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N, 16 * |ξ n m| / 3 ^ (10 * S) +
+      ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N, ‖rhoProd (ξ n m) 0 S‖ +
+      ‖∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N,
+        ∑ S' ∈ Finset.range S, deadChar (ξ n m) S' * rhoProd (ξ n m) (S' + 1) S‖ := by
+    rw [Finset.sum_congr rfl fun n _ => Finset.sum_congr rfl fun m _ => hsplit n m]
+    simp only [Finset.sum_sub_distrib, Finset.sum_add_distrib]
+    refine (norm_sub_le _ _).trans (add_le_add ((norm_add_le _ _).trans (add_le_add ?_ ?_)) le_rfl)
+    · simp only [← Finset.sum_sub_distrib]
+      exact (norm_sum_le _ _).trans (Finset.sum_le_sum fun n _ => (norm_sum_le _ _).trans
+        (Finset.sum_le_sum fun m _ => norm_fourier_sub_prefChar _ _))
+    · exact (norm_sum_le _ _).trans (Finset.sum_le_sum fun n _ => norm_sum_le _ _)
+  calc _ ≤ _ := secondMoment_le_norm_sum resLaw b h N
+    _ ≤ _ := hsum
+    _ ≤ (N : ℝ) ^ 2 * (N : ℝ) ^ (-(1 / 2 : ℝ)) + C₁ * (N : ℝ) ^ 2 * W₁ N +
+          C₂ * (N : ℝ) ^ 2 * W₂ N := add_le_add (add_le_add hC hA) (h₂' N hN S)
+    _ ≤ (N : ℝ) ^ 2 * (N : ℝ) ^ (-(1 / 2 : ℝ)) + |C₁| * (N : ℝ) ^ 2 * |W₁ N| +
+          |C₂| * (N : ℝ) ^ 2 * |W₂ N| := by linarith [k C₁ (W₁ N), k C₂ (W₂ N)]
     _ ≤ _ := by
         have a1 := abs_nonneg C₁; have a2 := abs_nonneg C₂
         have b1 := abs_nonneg (W₁ N); have b2 := abs_nonneg (W₂ N)
@@ -2058,6 +2237,6 @@ Evidence: each pair of the three sets meets, with full-dimensional `K ∩ BAD`; 
 and Cassels give normality to bases prime to 3 for many non-product measures on `K`. -/
 theorem exists_mem_cantorSet_bad_isNormal_coprime_three :
     ∃ x : ℝ, x ∈ cantorSet ∧ x ∈ Bad ∧ ∀ b : ℕ, 2 ≤ b → ¬ 3 ∣ b → IsNormal b x :=
-  exists_of_law resLaw fun _ hb h3 => casselsRate_of_fourierPairRate (fourierPairRate_resLaw hb h3)
+  exists_of_law resLaw fun _ hb h3 => casselsRate_resLaw hb h3
 
 end NormalNumbers.CantorBadNormal
