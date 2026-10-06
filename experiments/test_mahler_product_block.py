@@ -107,3 +107,34 @@ def test_rust_matches_python_counts():
     # Agreement between two implementations (not a hand value): the port is a port.
     for g, S in ((5, [1, 2, 3, 4, 8]), (5, [1, 2, 3, 4, 8, 16]), (3, [1, 2])):
         assert rs_failing(g, S) == len(failing(g, S))
+
+
+def rs_count(*args):
+    """First integer after the leading word of a Rust subcommand's output."""
+    subprocess.run(["cargo", "build", "--release", "-q"], cwd=RS, check=True)
+    out = subprocess.run([os.path.join(RS, "target", "release", "mahler_block"),
+                          *map(str, args)], capture_output=True, text=True, check=True).stdout
+    return int(out.split()[1])
+
+
+def test_rust_rung_verdicts():
+    # A rung 2 -> g is a product block: base 3 has 3 digits, so {2, 11} is a rung 2 -> 3.
+    assert rs_count("lift", 3, 2, 3, "2,11") == 0
+    assert rs_count("lift", 3, 2, 3, "2") > 0
+    # KIN = 1 keeps every non-cycle SCC, which is exactly the block checker's collapse test.
+    for S in ("2,3,7", "3,4,6,7"):
+        assert rs_count("lift", 5, 1, 5, S) == rs_count("failing", 5, S)
+
+
+def test_rust_word_verdicts():
+    # K = 1 is the digit checker.
+    assert rs_count("wfail", 3, 1, "2,11") == 0
+    assert rs_count("wfail", 2, 1, "1") == 0
+    # Binary 2-words, S = {1}, by hand: up to complement the avoided word is 00 or 01.  Avoiding
+    # 01 forces 1^a 0^inf (rational); avoiding 00 leaves the golden-mean shift (irrational
+    # points).  So exactly one failing assignment, ["00"].
+    assert rs_count("wfail", 2, 2, "1") == 1
+    # Binary 3-words, Liouville X = sum 2^-(i!): m X shows the bits of m between zero gaps, and
+    # no m < 23 = 10111_2 has all eight 3-words in 0^3 m 0^3 (a 22-row enumeration; 2m adds
+    # nothing), so every S of odd m < 23 fails.
+    assert rs_count("wfail", 2, 3, ",".join(map(str, range(1, 23, 2)))) > 0

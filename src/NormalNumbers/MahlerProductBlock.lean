@@ -157,4 +157,68 @@ theorem not_isProductBlock_five_twelve_erase :
         (({17, 23, 1254, 1562, 1838, 2188, 2272, 2428, 2439, 2753, 2832, 3028} : Finset ℕ).erase m) := by
   sorry
 
+/-! ## Rungs: blocks that only grow the digit count (2026-10-06)
+
+A **rung** `(a → b)` lifts every irrational with at least `a` digits occurring infinitely often to
+a multiple with at least `b`.  Rungs compose by multiplying the sets (`IsRung.mul`), so a ladder
+`2 → 3 → ⋯ → g` would be a product block built from small pieces.  It does not pay in base 5:
+the first rung is a pair, but the top rung `4 → 5` is nearly the whole problem (a 4-digit `y`
+already has dimension `log 4 / log 5 ≈ 0.86`) and has no small witness
+(`not_isRung_five_four_five_small`).  Probe: `mahler_block lift` / `rung`. -/
+
+/-- The digits occurring infinitely often in the base-`g` expansion of `y`. -/
+def ioDigits (g : ℕ) (y : ℝ) : Set ℕ :=
+  {d | d < g ∧ ∀ N, ∃ n, N ≤ n ∧ OccursAt g y [d] n}
+
+/-- `T` is a base-`g` **rung** `(a → b)`. -/
+def IsRung (g a b : ℕ) (T : Finset ℕ) : Prop :=
+  ∀ X : ℝ, Irrational X → a ≤ (ioDigits g X).ncard → ∃ m ∈ T, b ≤ (ioDigits g ((m : ℝ) * X)).ncard
+
+/-- **Rungs compose**: `(a → b)` then `(b → c)` is `(a → c)` on the product set. -/
+theorem IsRung.mul {g a b c : ℕ} {S T : Finset ℕ} (hS : IsRung g a b S) (hT : IsRung g b c T)
+    (hS0 : 0 ∉ S) : IsRung g a c (Finset.image₂ (· * ·) S T) := by
+  intro X hX ha
+  obtain ⟨m, hm, hb⟩ := hS X hX ha
+  have hm0 : m ≠ 0 := fun h => hS0 (h ▸ hm)
+  obtain ⟨n, hn, hc⟩ := hT ((m : ℝ) * X) (hX.natCast_mul hm0) hb
+  refine ⟨m * n, Finset.mem_image₂_of_mem hm hn, ?_⟩
+  rwa [show ((m * n : ℕ) : ℝ) * X = (n : ℝ) * ((m : ℝ) * X) by push_cast; ring]
+
+/-- **Base 5, first rung** (computational; confidence 95%): `{2, 11}`, the ternary block, also
+lifts every irrational to a multiple with three base-5 digits i.o. (`mahler_block lift 5 2 3
+2,11`: no surviving SCC).  Not special: 709 of the 1081 pairs in `[2, 60]` are rungs `2 → 3`. -/
+theorem isRung_five_two_three : IsRung 5 2 3 {2, 11} := by
+  sorry
+
+/-- **The top base-5 rung has no small witness** (computational; confidence 90%): no `T ⊆ [2, 60]`
+of at most 3 non-multiples of 5 is a rung `4 → 5` (`mahler_block rung 5 4 5 60 3`, also size 2
+up to 400). -/
+theorem not_isRung_five_four_five_small :
+    ∀ T ⊆ Finset.Icc 2 60, T.card ≤ 3 → (∀ m ∈ T, ¬ 5 ∣ m) → ¬ IsRung 5 4 5 T := by
+  sorry
+
+/-! ## Word blocks: the binary rung below digits (2026-10-06)
+
+A **`k`-word block**: some `m ∈ S` has every length-`k` base-`g` word infinitely often in `m·X`.
+Base 2 has no digit question (an irrational binary expansion has both bits), so words are the
+binary analogue of `{2, 11}`. -/
+
+/-- `S` is a base-`g` **`k`-word block**. -/
+def IsWordBlock (g k : ℕ) (S : Finset ℕ) : Prop :=
+  ∀ X : ℝ, Irrational X → ∃ m ∈ S, ∀ w : List ℕ, w.length = k → (∀ d ∈ w, d < g) →
+    ∀ N, ∃ n, N ≤ n ∧ OccursAt g ((m : ℝ) * X) w n
+
+/-- **Binary 2-words: `x`, `3x` or `5x`** (computational; confidence 95%): for every irrational
+`x`, one of `x, 3x, 5x` has both `00` and `11` infinitely often in binary
+(`mahler_block wfail 2 2 1,3,5`: collapse; 240 of the 1140 triples in `[1, 40]` work). -/
+theorem isWordBlock_two_two_one_three_five : IsWordBlock 2 2 {1, 3, 5} := by
+  sorry
+
+/-- **No binary 2-word pair** (computational; confidence 90%): no pair of multipliers up to 40
+is a 2-word block (`mahler_block wsearch 2 2 40 2`, odd members; `2m` adds nothing).  `{3, 5}`
+fails with `3x` avoiding `00` and `5x` avoiding `11`. -/
+theorem not_isWordBlock_two_two_pair :
+    ∀ a ≤ 40, ∀ b ≤ 40, ¬ IsWordBlock 2 2 {a, b} := by
+  sorry
+
 end NormalNumbers.Adder

@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
 import NormalNumbers.Maze
+import NormalNumbers.MahlerProductBlock
 import NormalNumbers.CPrimeSiteFactorization
 import LeanLedger.MazeLinks
 import NormalNumbers.MasterMaze
@@ -46,6 +47,11 @@ def mazeRows : List RowInfo :=
 
 /-- Each linked row and the declarations it rests on. -/
 def mazeLinks : List Link := [
+  ⟨"Digit-count ladder for product blocks",
+   [``Adder.IsRung.mul, ``Adder.isRung_five_two_three, ``Adder.not_isRung_five_four_five_small],
+   []⟩,
+  ⟨"Dimension count as a block-size lower bound",
+   [``Adder.isProductBlock_three_two_eleven], []⟩,
   ⟨"x3-invariant measure on K cap BAD",
    [``CantorBadNormal.not_exists_timesThree_law_on_bad,
     ``CantorBadNormal.Literature.EFSTimesThreeNotBad], []⟩,
@@ -275,7 +281,7 @@ def mazeLegacy : List String := [
   "Diophantine good-denominator detour for the tail cell",
   "route B's unweighted cover of the state-dependent target"]
 
-/-- info: maze audit: 168 rows, 61 cite declarations, 107 legacy (prose only) -/
+/-- info: maze audit: 170 rows, 63 cite declarations, 107 legacy (prose only) -/
 #guard_msgs in
 #maze_audit mazeRows, mazeLinks, mazeLegacy
 

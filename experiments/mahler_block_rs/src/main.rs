@@ -14,6 +14,25 @@
 //!   mahler_block swap21 G m1,m2,... CANDS                     try S - {a,b} + {c}; first block wins
 //!   mahler_block minimize G m1,m2,...                         drop redundant members
 //!       (tests every single deletion in parallel; drops the largest removable member; repeats)
+//!   mahler_block lift G KIN KOUT m1,m2,... [--limit N]           failing assignments of a RUNG
+//!   mahler_block rung G KIN KOUT MAXM SIZE                       all rungs T in [2,MAXM], |T|=SIZE
+//!   mahler_block wfail G K m1,m2,... [--limit N]                 failing assignments, K-WORD block
+//!   mahler_block wsearch G K MAXM SIZE                           all K-word blocks in [1,MAXM]
+//!   mahler_block wgreedy G K CANDS SAMPLE                        greedy K-word block
+//!   mahler_block wminimize G K m1,m2,...                         drop redundant members
+//!   mahler_block wswap21 G K m1,m2,... CANDS                     repeated 2-for-1 swaps
+//!
+//! A K-WORD BLOCK: for every irrational x some m in S has every length-K base-G word i.o. in m*x
+//! (K = 1 is a product block).  Channel (m, w): state (carry, last K-1 emitted digits), emitted
+//! window != w.
+//!
+//! A RUNG (KIN -> KOUT): for every irrational y with at least KIN digits occurring i.o., some
+//! n in T has at least KOUT digits i.o. in n*y.  Rungs compose: if S is a rung (a -> b) and T a
+//! rung (b -> c) then S*T is a rung (a -> c), and a rung (2 -> g) is a product block.  The rung
+//! checker refines with "n*y has digits only in M" (|M| = KOUT-1) and keeps only SCCs that could
+//! carry an irrational y with >= KIN digits: not a simple cycle, and >= KIN input labels.  A path
+//! is eventually inside one SCC, so dropping the others is sound; the carry automaton is a
+//! superset of the true carries, so "no SCC survives" proves the rung.
 
 use rayon::prelude::*;
 use std::env;
@@ -320,6 +339,357 @@ fn swap21(g: u32, s: Vec<u32>, cands: Vec<u32>) {
     }
 }
 
+/// Refine `core` by channel (m, allowed emitted digits `allow`), keeping only SCCs that are not a
+/// simple cycle and carry at least `kin` distinct input labels.  None when nothing survives.
+fn refine_mask(g: u32, core: &Adj, m: u32, allow: u32, kin: u32) -> Option<Adj> {
+    let n = core.len();
+    let mu = m as usize;
+    let mut nadj: Adj = vec![Vec::new(); n * mu];
+    for v in 0..n {
+        for s in 0..m {
+            let lst = &mut nadj[v * mu + s as usize];
+            for &(x, w) in &core[v] {
+                let base = (g * s) as i64 - (m as i64) * (x as i64);
+                for r in 0..g {
+                    if allow >> r & 1 == 0 {
+                        continue;
+                    }
+                    let s2 = base + r as i64;
+                    if s2 >= 0 && s2 < m as i64 {
+                        lst.push((x, w * m + s2 as u32));
+                    }
+                }
+            }
+        }
+    }
+    let (comp, nc) = scc(&nadj);
+    let mut verts = vec![0u32; nc];
+    let mut edges = vec![0u32; nc];
+    let mut labels = vec![0u32; nc];
+    for v in 0..nadj.len() {
+        let c = comp[v] as usize;
+        verts[c] += 1;
+        for &(x, w) in &nadj[v] {
+            if comp[w as usize] as usize == c {
+                edges[c] += 1;
+                labels[c] |= 1 << x;
+            }
+        }
+    }
+    let live: Vec<bool> = (0..nc)
+        .map(|c| edges[c] > verts[c] && labels[c].count_ones() >= kin)
+        .collect();
+    let mut keep = vec![u32::MAX; nadj.len()];
+    let mut k = 0u32;
+    for v in 0..nadj.len() {
+        if live[comp[v] as usize] {
+            keep[v] = k;
+            k += 1;
+        }
+    }
+    if k == 0 {
+        return None;
+    }
+    let mut out: Adj = Vec::with_capacity(k as usize);
+    for v in 0..nadj.len() {
+        if keep[v] != u32::MAX {
+            let c = comp[v];
+            out.push(
+                nadj[v]
+                    .iter()
+                    .filter(|&&(_, w)| comp[w as usize] == c)
+                    .map(|&(x, w)| (x, keep[w as usize]))
+                    .collect(),
+            );
+        }
+    }
+    Some(out)
+}
+
+/// Digit masks of size `k`; with `sym`, one representative per reflection pair d -> g-1-d
+/// (y -> -y reflects every channel at once and preserves digit counts).
+fn masks(g: u32, k: u32, sym: bool) -> Vec<u32> {
+    let refl = |m: u32| (0..g).filter(|&d| m >> d & 1 == 1).fold(0u32, |a, d| a | 1 << (g - 1 - d));
+    (0u32..1 << g)
+        .filter(|&m| m.count_ones() == k && (!sym || m <= refl(m)))
+        .collect()
+}
+
+/// Failing assignments of the rung (kin -> kout) for T: per member, the digit set M
+/// (|M| = kout - 1) that n*y stays inside.
+fn lift_failing(g: u32, kin: u32, kout: u32, t: &[u32], limit: usize) -> Vec<Vec<u32>> {
+    fn rec(g: u32, kin: u32, kout: u32, t: &[u32], limit: usize, j: usize, core: &Adj,
+           ms: &mut Vec<u32>, bad: &mut Vec<Vec<u32>>) {
+        if bad.len() >= limit {
+            return;
+        }
+        if j == t.len() {
+            bad.push(ms.clone());
+            return;
+        }
+        for m in masks(g, kout - 1, j == 0) {
+            if let Some(nc) = refine_mask(g, core, t[j], m, kin) {
+                ms.push(m);
+                rec(g, kin, kout, t, limit, j + 1, &nc, ms, bad);
+                ms.pop();
+            }
+        }
+    }
+    let mut bad = Vec::new();
+    rec(g, kin, kout, t, limit, 0, &root(g), &mut Vec::new(), &mut bad);
+    bad
+}
+
+fn is_rung(g: u32, kin: u32, kout: u32, t: &[u32]) -> bool {
+    lift_failing(g, kin, kout, t, 1).is_empty()
+}
+
+/// Every rung T of the given size inside [2, maxm] (no multiples of g: n*g*y has n*y's digits).
+fn rung_search(g: u32, kin: u32, kout: u32, maxm: u32, size: usize) {
+    let cands: Vec<u32> = (2..=maxm).filter(|m| m % g != 0).collect();
+    let mut sets: Vec<Vec<u32>> = vec![vec![]];
+    for _ in 0..size {
+        let mut nx = Vec::new();
+        for s in &sets {
+            for &c in &cands {
+                if s.last().map_or(true, |&l| c > l) {
+                    let mut e = s.clone();
+                    e.push(c);
+                    nx.push(e);
+                }
+            }
+        }
+        sets = nx;
+    }
+    let t = std::time::Instant::now();
+    // largest member first: it prunes hardest
+    let hits: Vec<Vec<u32>> = sets
+        .par_iter()
+        .filter(|s| {
+            let r: Vec<u32> = s.iter().rev().copied().collect();
+            is_rung(g, kin, kout, &r)
+        })
+        .cloned()
+        .collect();
+    println!("rung {}->{} base {} size {} in [2,{}]: {} of {} sets ({:.0}s)", kin, kout, g, size,
+             maxm, hits.len(), sets.len(), t.elapsed().as_secs_f64());
+    for h in hits.iter().take(40) {
+        println!("  {:?}", h);
+    }
+}
+
+/// Refine `core` by channel (m, avoided word w of length k), keeping only non-cycle SCCs.
+fn refine_word(g: u32, core: &Adj, m: u32, k: u32, w: u32) -> Option<Adj> {
+    let n = core.len();
+    let h = g.pow(k - 1); // histories
+    let per = (m * h) as usize;
+    let mut nadj: Adj = vec![Vec::new(); n * per];
+    for v in 0..n {
+        for s in 0..m {
+            for hist in 0..h {
+                let lst = &mut nadj[v * per + (s * h + hist) as usize];
+                for &(x, t) in &core[v] {
+                    let base = (g * s) as i64 - (m as i64) * (x as i64);
+                    for r in 0..g {
+                        let s2 = base + r as i64;
+                        if s2 < 0 || s2 >= m as i64 {
+                            continue;
+                        }
+                        let win = hist * g + r;
+                        if win == w {
+                            continue;
+                        }
+                        let h2 = win % h;
+                        lst.push((x, t * (m * h) + s2 as u32 * h + h2));
+                    }
+                }
+            }
+        }
+    }
+    let (comp, nc) = scc(&nadj);
+    let mut verts = vec![0u32; nc];
+    let mut edges = vec![0u32; nc];
+    for v in 0..nadj.len() {
+        let c = comp[v] as usize;
+        verts[c] += 1;
+        for &(_, t) in &nadj[v] {
+            if comp[t as usize] as usize == c {
+                edges[c] += 1;
+            }
+        }
+    }
+    let mut keep = vec![u32::MAX; nadj.len()];
+    let mut kk = 0u32;
+    for v in 0..nadj.len() {
+        let c = comp[v] as usize;
+        if edges[c] > verts[c] {
+            keep[v] = kk;
+            kk += 1;
+        }
+    }
+    if kk == 0 {
+        return None;
+    }
+    let mut out: Adj = Vec::with_capacity(kk as usize);
+    for v in 0..nadj.len() {
+        if keep[v] != u32::MAX {
+            let c = comp[v];
+            out.push(nadj[v].iter().filter(|&&(_, t)| comp[t as usize] == c)
+                .map(|&(x, t)| (x, keep[t as usize])).collect());
+        }
+    }
+    Some(out)
+}
+
+/// Words of length k; with `sym`, one per digit-complement pair (x -> -x complements every
+/// emitted digit at once).
+fn words(g: u32, k: u32, sym: bool) -> Vec<u32> {
+    let comp = |w: u32| {
+        let (mut a, mut c, mut p) = (w, 0u32, 1u32);
+        for _ in 0..k {
+            c += (g - 1 - a % g) * p;
+            a /= g;
+            p *= g;
+        }
+        c
+    };
+    (0..g.pow(k)).filter(|&w| !sym || w <= comp(w)).collect()
+}
+
+fn word_failing(g: u32, k: u32, t: &[u32], limit: usize) -> Vec<Vec<u32>> {
+    fn rec(g: u32, k: u32, t: &[u32], limit: usize, j: usize, core: &Adj, ws: &mut Vec<u32>,
+           bad: &mut Vec<Vec<u32>>) {
+        if bad.len() >= limit {
+            return;
+        }
+        if j == t.len() {
+            bad.push(ws.clone());
+            return;
+        }
+        for w in words(g, k, j == 0) {
+            if let Some(nc) = refine_word(g, core, t[j], k, w) {
+                ws.push(w);
+                rec(g, k, t, limit, j + 1, &nc, ws, bad);
+                ws.pop();
+            }
+        }
+    }
+    let mut bad = Vec::new();
+    rec(g, k, t, limit, 0, &root(g), &mut Vec::new(), &mut bad);
+    bad
+}
+
+fn word_search(g: u32, k: u32, maxm: u32, size: usize) {
+    let cands: Vec<u32> = (1..=maxm).filter(|m| m % g != 0).collect();
+    let mut sets: Vec<Vec<u32>> = vec![vec![]];
+    for _ in 0..size {
+        let mut nx = Vec::new();
+        for s in &sets {
+            for &c in &cands {
+                if s.last().map_or(true, |&l| c > l) {
+                    let mut e = s.clone();
+                    e.push(c);
+                    nx.push(e);
+                }
+            }
+        }
+        sets = nx;
+    }
+    let t = std::time::Instant::now();
+    let hits: Vec<Vec<u32>> = sets.par_iter()
+        .filter(|s| {
+            let r: Vec<u32> = s.iter().rev().copied().collect();
+            word_failing(g, k, &r, 1).is_empty()
+        })
+        .cloned().collect();
+    println!("{}-word blocks base {} size {} in [1,{}]: {} of {} ({:.0}s)", k, g, size, maxm,
+             hits.len(), sets.len(), t.elapsed().as_secs_f64());
+    for h in hits.iter().take(40) {
+        println!("  {:?}", h);
+    }
+}
+
+/// Greedy K-word block: add the candidate leaving the fewest live (assignment, core) leaves.
+fn word_greedy(g: u32, k: u32, cands: Vec<u32>, samp: usize) {
+    let mut leaves: Vec<Adj> = vec![root(g)];
+    let mut s: Vec<u32> = Vec::new();
+    let mut rng = 0x5eed_u64;
+    while !leaves.is_empty() {
+        let t = std::time::Instant::now();
+        let first = s.is_empty();
+        let idx = sample(leaves.len(), samp, &mut rng);
+        let mut scores: Vec<(usize, u32)> = cands.par_iter().filter(|m| !s.contains(m))
+            .map(|&m| {
+                let n: usize = idx.iter().map(|&i| words(g, k, first).into_iter()
+                    .filter(|&w| refine_word(g, &leaves[i], m, k, w).is_some()).count()).sum();
+                (n, m)
+            }).collect();
+        scores.sort();
+        let m = scores[0].1;
+        leaves = leaves.par_iter().flat_map_iter(|c| words(g, k, first).into_iter()
+            .filter_map(move |w| refine_word(g, c, m, k, w))).collect();
+        s.push(m);
+        let mx = leaves.iter().map(|c| c.len()).max().unwrap_or(0);
+        println!("add {} -> {:?} failing {} maxcore {} runners-up {:?} ({:.0}s)", m, s,
+                 leaves.len(), mx, &scores[1..scores.len().min(4)], t.elapsed().as_secs_f64());
+    }
+    println!("WORD BLOCK {:?}", s);
+}
+
+fn word_minimize(g: u32, k: u32, mut s: Vec<u32>) {
+    loop {
+        let t = std::time::Instant::now();
+        let removable: Vec<u32> = s.par_iter().filter(|&&m| {
+            let rest: Vec<u32> = s.iter().copied().filter(|&x| x != m).collect();
+            word_failing(g, k, &rest, 1).is_empty()
+        }).copied().collect();
+        println!("|S|={} removable {:?} ({:.0}s)", s.len(), removable, t.elapsed().as_secs_f64());
+        match removable.iter().max() {
+            None => break,
+            Some(&m) => s.retain(|&x| x != m),
+        }
+    }
+    s.sort();
+    println!("MINIMAL (no single deletion) {:?} size {}", s, s.len());
+}
+
+/// Repeated 2-for-1 swaps on a K-word block until none works.
+fn word_swap21(g: u32, k: u32, mut s: Vec<u32>, cands: Vec<u32>) {
+    loop {
+        let mut moves: Vec<(u32, u32, u32)> = Vec::new();
+        for i in 0..s.len() {
+            for j in i + 1..s.len() {
+                for &c in &cands {
+                    if c % g != 0 && !s.contains(&c) {
+                        moves.push((s[i], s[j], c));
+                    }
+                }
+            }
+        }
+        let t = std::time::Instant::now();
+        let hit = moves.par_iter().find_any(|&&(a, b, c)| {
+            let mut rest: Vec<u32> = s.iter().copied().filter(|&x| x != a && x != b).collect();
+            rest.push(c);
+            rest.sort_by(|x, y| y.cmp(x));
+            word_failing(g, k, &rest, 1).is_empty()
+        });
+        match hit {
+            Some(&(a, b, c)) => {
+                s.retain(|&x| x != a && x != b);
+                s.push(c);
+                s.sort();
+                println!("SWAP -{} -{} +{} -> {:?} size {} ({:.0}s)", a, b, c, s, s.len(),
+                         t.elapsed().as_secs_f64());
+            }
+            None => {
+                println!("NO 2-for-1 swap from {:?} size {} ({:.0}s)", s, s.len(),
+                         t.elapsed().as_secs_f64());
+                break;
+            }
+        }
+    }
+}
+
 fn main() {
     let a: Vec<String> = env::args().collect();
     let g: u32 = a[2].parse().unwrap();
@@ -336,6 +706,32 @@ fn main() {
                            a[6].parse().unwrap()),
         "minimize" => minimize(g, parse_list(&a[3])),
         "swap21" => swap21(g, parse_list(&a[3]), parse_list(&a[4])),
+        "lift" => {
+            let limit = a.iter().position(|x| x == "--limit")
+                .map(|i| a[i + 1].parse().unwrap()).unwrap_or(usize::MAX);
+            let b = lift_failing(g, a[3].parse().unwrap(), a[4].parse().unwrap(),
+                                 &parse_list(&a[5]), limit);
+            println!("failing {} first {:?}", b.len(), b.first().map(|v| v.iter()
+                .map(|m| format!("{:b}", m)).collect::<Vec<_>>()));
+        }
+        "rung" => rung_search(g, a[3].parse().unwrap(), a[4].parse().unwrap(),
+                              a[5].parse().unwrap(), a[6].parse().unwrap()),
+        "wfail" => {
+            let limit = a.iter().position(|x| x == "--limit")
+                .map(|i| a[i + 1].parse().unwrap()).unwrap_or(usize::MAX);
+            let k: u32 = a[3].parse().unwrap();
+            let b = word_failing(g, k, &parse_list(&a[4]), limit);
+            let fmt = |w: u32| (0..k).rev().map(|i| char::from_digit(w / g.pow(i) % g, 36).unwrap())
+                .collect::<String>();
+            println!("failing {} first {:?}", b.len(),
+                     b.first().map(|v| v.iter().map(|&w| fmt(w)).collect::<Vec<_>>()));
+        }
+        "wsearch" => word_search(g, a[3].parse().unwrap(), a[4].parse().unwrap(),
+                                 a[5].parse().unwrap()),
+        "wgreedy" => word_greedy(g, a[3].parse().unwrap(), parse_list(&a[4]),
+                                 a[5].parse().unwrap()),
+        "wminimize" => word_minimize(g, a[3].parse().unwrap(), parse_list(&a[4])),
+        "wswap21" => word_swap21(g, a[3].parse().unwrap(), parse_list(&a[4]), parse_list(&a[5])),
         _ => panic!("unknown command"),
     }
 }

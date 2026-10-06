@@ -1485,7 +1485,17 @@ def register : List Hall := [
    "Upgrade a non-collapsing carry-automaton family to a theorem about specific constants using their irrationality measures (Roth for algebraics, known bounds for pi, e, ln 2)",
    .refuted, .frozen,
    "The escape set of an automaton family is omega-regular: either all rational, or it holds two distinct cycles and so a self-similar Cantor set, which contains exponent-2 irrationals. Simplest witness: the escape set of 'X avoids ternary 1' is the middle-thirds Cantor set, which has an exponent-2 point. The only fact about specific constants an automaton can use is a rational linear relation (independence-relative certificates)",
-   "CantorExactExponentStretch.lean: exists_mem_cantorSet_irrExponent_two_of_literature (Literature.Weiss2001); IndependenceRelative.lean: ternary_line", "2026-10-05"⟩
+   "CantorExactExponentStretch.lean: exists_mem_cantorSet_irrExponent_two_of_literature (Literature.Weiss2001); IndependenceRelative.lean: ternary_line", "2026-10-05"⟩,
+  ⟨"Digit-count ladder for product blocks",
+   "Build product blocks in base 5, 7 and up from cheap rungs a -> a+1 (each lifts every irrational with a digits i.o. to a multiple with a+1), composed by multiplying the sets",
+   .refuted, .frozen,
+   "Rungs do compose (IsRung.mul), and the first base-5 rung is a pair ({2, 11}), but the top rung g-1 -> g is nearly the whole block problem: an irrational avoiding one digit already has dimension log(g-1)/log g, and no T of at most 3 members in [2, 60] (or 2 in [2, 400]) is a base-5 rung 4 -> 5. The ladder costs more than a direct block. REOPEN IF: rungs keyed on WHICH digit is missing whose top step is cheaper than a block",
+   "MahlerProductBlock.lean: IsRung.mul, isRung_five_two_three, not_isRung_five_four_five_small; mahler_block lift/rung", "2026-10-06"⟩,
+  ⟨"Dimension count as a block-size lower bound",
+   "Predict the minimal product-block size from codimensions: each 'm x avoids d' costs 1 - log(g-1)/log g, so a block needs about log g / -log(1 - 1/g) ~ g ln g members (8 in base 5)",
+   .refuted, .cited,
+   "Base 3 predicts at least 3 (codimension 0.369 each, two constraints leave dimension 0.26), yet {2, 11} is a block: the constraint sets share one base, so their product automaton can have zero entropy while the codimensions sum below 1. The heuristic is not a lower bound, and base 5 may have blocks below 8",
+   "MahlerProductBlock.lean: isProductBlock_three_two_eleven", "2026-10-06"⟩
 ]
 
 /-- Rows whose verdict is machine-checked in this build. -/
