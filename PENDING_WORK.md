@@ -1,15 +1,12 @@
-## QSpan campaign (KICKOFF-2026-10-05-qspan.md, branch proof/qspan) — lap 1
-* Headlines 3–4 (`ae_isNormal_combo_iff`, `ae_not_isNormal_combo_of_not`) proved from leaves.
-* Proved: both Weyl directions (`weylAvg_tendsto_zero_of_isNormal`, `isNormal_of_weylAvg`),
-  `combo_eq_digS`, and the genericity assembly `ae_tendsto_digS` (truncate to `K` digits,
-  `K`-dependent second moment, diagonal over `K`).
-* Open leaves (QSpanCriterion.lean): G1 `ee_pow_mul_digS`, G2 `abs_digS_sub_digSK`,
-  G3 `measurePreserving_shiftK` (via `Measure.eq_infinitePi`), G4 `integral_ee_digSK_indep`
-  (`iIndepFun_infinitePi` + `indepFun_finset`), G5a `second_moment_le_of_indep`,
-  G5b `ae_tendsto_of_second_moment` (copy `DecayAeNormal.ae_tendsto_weyl`), `nuHat_eq_zero_iff`
-  (finite products via `integral_infinitePi_of_piFinset`; nonvanishing via `Π(1-xᵢ) ≥ 1-Σxᵢ`).
-* Untouched: `span_jointDim_budget`, `isNormal_span_of_jointNormal`, five-digit pair.
-* Host note: pre-commit full build hits EMFILE; use `ulimit -n 65536` and scoped builds.
+## QSpan campaign (KICKOFF-2026-10-05-qspan.md, branch proof/qspan)
+* DONE: `ae_isNormal_combo_iff` and `ae_not_isNormal_combo_of_not` — `#print axioms` = propext,
+  Classical.choice, Quot.sound.  Route: Weyl both ways; genericity on the Bernoulli shift by
+  `K`-truncation + `K`-dependent second moment + `j²` interpolation (no Birkhoff); product formula
+  via `iIndepFun_infinitePi`, nonvanishing via `norm_prod_ge` (`‖∏F‖ ≥ 1 − Σ‖1−F‖`).
+* Open (QSpanCriterion.lean): `span_jointDim_budget`, `isNormal_span_of_jointNormal`,
+  `ae_not_qSpanNormal_fiveDigits` (next: Wall reduction to integer (a,c), h = 5^N, then
+  `ae_not_isNormal_combo_of_not` over countably many (a,c)), `ae_jointDim_fiveDigits`.
+* Host note: `lake` intermittently hits EMFILE; retry loop works.  Pre-commit full build skipped.
 
 ## Schmidt-games lane E1 (2026-10-04) — DONE
 * `SchmidtGames.lean` sorry-free.  `potentialWinning_E`, `dimH_E₂_le`, `codim_E_asymp`:

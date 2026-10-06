@@ -763,6 +763,194 @@ theorem ae_tendsto_digS (P : Measure α) [IsProbabilityMeasure P] (b : ℕ) (hb 
 
 end Generic
 
+section Product
+variable {α : Type*} [Fintype α] [MeasurableSpace α] [DiscreteMeasurableSpace α]
+
+open DecayAeNormal ProbabilityTheory in
+/-- Product-formula step `ee_finset_sum`. -/
+theorem ee_finset_sum {ι : Type*} (s : Finset ι) (f : ι → ℝ) :
+    ee (∑ i ∈ s, f i) = ∏ i ∈ s, ee (f i) := by
+  unfold ee; push_cast; rw [Finset.mul_sum, Complex.exp_sum]
+
+open DecayAeNormal ProbabilityTheory in
+/-- Product-formula step `integral_ee_digSK`. -/
+theorem integral_ee_digSK (P : Measure α) [IsProbabilityMeasure P] (b : ℕ) (T : α → ℤ)
+    (h : ℤ) (K : ℕ) :
+    ∫ ω, ee (h * digSK b T K ω) ∂Measure.infinitePi (fun _ : ℕ => P) =
+      ∏ j ∈ Finset.range K, ∫ a, ee (h * ((T a : ℝ) / (b : ℝ) ^ (j + 1))) ∂P := by
+  set G : ℕ → α → ℂ := fun j a => ee (h * ((T a : ℝ) / (b : ℝ) ^ (j + 1)))
+  have hG : ∀ j, Measurable (G j) := fun j => measurable_of_countable _
+  have hI := (iIndepFun_infinitePi (P := fun _ : ℕ => P) (X := G) hG).precomp
+    (g := fun j : Fin K => (j : ℕ)) Fin.val_injective
+  have e1 : ∀ ω : ℕ → α, ee (h * digSK b T K ω) = ∏ j : Fin K, G j (ω j) := by
+    intro ω
+    unfold digSK
+    rw [Finset.mul_sum, ee_finset_sum, ← Fin.prod_univ_eq_prod_range]
+  simp_rw [e1]
+  rw [hI.integral_fun_prod_eq_prod_integral (fun j => ((hG j).comp (measurable_pi_apply _)).aestronglyMeasurable),
+    ← Fin.prod_univ_eq_prod_range (fun j => ∫ a, G j a ∂P)]
+  refine Finset.prod_congr rfl fun j _ => ?_
+  have hmp := measurePreserving_eval_infinitePi (fun _ : ℕ => P) (j : ℕ)
+  have := integral_map (μ := Measure.infinitePi (fun _ : ℕ => P)) hmp.measurable.aemeasurable
+    (hG j).aestronglyMeasurable
+  rw [hmp.map_eq] at this
+  exact this.symm
+
+open DecayAeNormal ProbabilityTheory in
+/-- Product-formula step `norm_prod_ge`. -/
+theorem norm_prod_ge {ι : Type*} (s : Finset ι) (F : ι → ℂ) (hF : ∀ i, ‖F i‖ ≤ 1) :
+    1 - ∑ i ∈ s, ‖1 - F i‖ ≤ ‖∏ i ∈ s, F i‖ := by
+  classical
+  induction s using Finset.induction_on with
+  | empty => simp
+  | insert i s hi ih =>
+    rw [Finset.prod_insert hi, Finset.sum_insert hi, norm_mul]
+    have h1 : 1 - ‖1 - F i‖ ≤ ‖F i‖ := by
+      have := norm_sub_norm_le (1 : ℂ) (1 - F i)
+      simp at this; linarith
+    have hp : 0 ≤ ‖∏ i ∈ s, F i‖ := norm_nonneg _
+    have hq : 0 ≤ ‖F i‖ := norm_nonneg _
+    have he : 0 ≤ ‖1 - F i‖ := norm_nonneg _
+    have hS : 0 ≤ ∑ i ∈ s, ‖1 - F i‖ := Finset.sum_nonneg fun _ _ => norm_nonneg _
+    by_cases hA : 1 - ‖1 - F i‖ ≤ 0
+    · nlinarith
+    by_cases hB : 1 - ∑ i ∈ s, ‖1 - F i‖ ≤ 0
+    · nlinarith
+    push Not at hA hB
+    nlinarith [mul_le_mul h1 ih hB.le hq]
+
+open DecayAeNormal ProbabilityTheory in
+/-- Product-formula step `tendsto_integral_ee_digSK`. -/
+theorem tendsto_integral_ee_digSK (P : Measure α) [IsProbabilityMeasure P] (b : ℕ) (hb : 2 ≤ b)
+    (T : α → ℤ) (h : ℤ) :
+    Tendsto (fun K => ∫ ω, ee (h * digSK b T K ω) ∂Measure.infinitePi (fun _ : ℕ => P)) atTop
+      (𝓝 (∫ ω, ee (h * digS b T ω) ∂Measure.infinitePi (fun _ : ℕ => P))) := by
+  set μ := Measure.infinitePi (fun _ : ℕ => P)
+  have hb' : (1 : ℝ) < b := by exact_mod_cast hb
+  set B : ℝ := ∑ a, |(T a : ℝ)|
+  have hmK : ∀ K, Measurable fun ω => ee (h * digSK b T K ω) := fun K =>
+    measurable_ee.comp ((measurable_digSK b T K).const_mul _)
+  have hbound : ∀ K, ‖(∫ ω, ee (h * digSK b T K ω) ∂μ) - ∫ ω, ee (h * digS b T ω) ∂μ‖
+      ≤ 2 * Real.pi * |(h : ℝ)| * (B / (b : ℝ) ^ K) := by
+    intro K
+    rw [← integral_sub]
+    · refine (norm_integral_le_of_norm_le_const (C := 2 * Real.pi * |(h : ℝ)| * (B / (b : ℝ) ^ K)) (Eventually.of_forall fun ω => ?_)).trans ?_
+      · refine (norm_ee_sub_le _ _).trans ?_
+        rw [← mul_sub, abs_mul, abs_sub_comm]
+        have := abs_digS_sub_digSK b hb T K ω
+        have hp : 0 ≤ 2 * Real.pi * |(h : ℝ)| := by positivity
+        have := mul_le_mul_of_nonneg_left this hp
+        linarith
+      · simp
+    · exact Integrable.of_bound (hmK K).aestronglyMeasurable 1 (Eventually.of_forall fun ω => (norm_ee _).le)
+    · exact Integrable.of_bound (measurable_ee.comp ((measurable_digS b hb T).const_mul _)).aestronglyMeasurable 1 (Eventually.of_forall fun ω => (norm_ee _).le)
+  rw [tendsto_iff_norm_sub_tendsto_zero]
+  refine squeeze_zero (fun K => norm_nonneg _) hbound ?_
+  have : Tendsto (fun K : ℕ => B / (b : ℝ) ^ K) atTop (𝓝 0) := by
+    simp_rw [div_eq_mul_inv, ← inv_pow]
+    have := tendsto_pow_atTop_nhds_zero_of_lt_one (by positivity) (inv_lt_one_of_one_lt₀ hb')
+    simpa using this.const_mul B
+  simpa using this.const_mul (2 * Real.pi * |(h : ℝ)|)
+
+open DecayAeNormal ProbabilityTheory in
+/-- Product-formula step `integral_ee_digS_eq_zero_iff`. -/
+theorem integral_ee_digS_eq_zero_iff (P : Measure α) [IsProbabilityMeasure P] (b : ℕ) (hb : 2 ≤ b)
+    (T : α → ℤ) (h : ℤ) :
+    ∫ ω, ee (h * digS b T ω) ∂Measure.infinitePi (fun _ : ℕ => P) = 0 ↔
+      ∃ j, ∫ a, ee (h * ((T a : ℝ) / (b : ℝ) ^ (j + 1))) ∂P = 0 := by
+  set F : ℕ → ℂ := fun j => ∫ a, ee (h * ((T a : ℝ) / (b : ℝ) ^ (j + 1))) ∂P with hFdef
+  have hlim := tendsto_integral_ee_digSK P b hb T h
+  simp_rw [integral_ee_digSK] at hlim
+  have hF1 : ∀ j, ‖F j‖ ≤ 1 := fun j =>
+    (norm_integral_le_of_norm_le_const (C := 1) (Eventually.of_forall fun a => (norm_ee _).le)).trans
+      (by simp)
+  constructor
+  · intro h0
+    by_contra hne
+    push Not at hne
+    -- tail bound
+    have hb' : (1 : ℝ) < b := by exact_mod_cast hb
+    set B : ℝ := ∑ a, |(T a : ℝ)|
+    have hB : 0 ≤ B := Finset.sum_nonneg fun _ _ => abs_nonneg _
+    set C : ℝ := 2 * Real.pi * |(h : ℝ)| * B
+    have hC : 0 ≤ C := by positivity
+    have he : ∀ j, ‖1 - F j‖ ≤ C * ((b : ℝ)⁻¹ ^ (j + 1)) := by
+      intro j
+      have : (1 : ℂ) - F j = ∫ a, (ee 0 - ee (h * ((T a : ℝ) / (b : ℝ) ^ (j + 1)))) ∂P := by
+        rw [integral_sub (integrable_const _), integral_const]
+        · simp [ee, hFdef]
+        · exact Integrable.of_bound (measurable_of_countable _).aestronglyMeasurable 1
+            (Eventually.of_forall fun a => (norm_ee _).le)
+      rw [this]
+      refine (norm_integral_le_of_norm_le_const (C := C * ((b : ℝ)⁻¹ ^ (j + 1)))
+        (Eventually.of_forall fun a => ?_)).trans (by simp)
+      refine (norm_ee_sub_le _ _).trans ?_
+      rw [zero_sub, abs_neg, abs_mul, abs_div, abs_of_pos (by positivity : (0:ℝ) < (b:ℝ)^(j+1)),
+        inv_pow, ← div_eq_mul_inv]
+      have := abs_T_le T a
+      have : |(h:ℝ)| * (|(T a : ℝ)| / (b:ℝ)^(j+1)) ≤ |(h:ℝ)| * (B / (b:ℝ)^(j+1)) := by gcongr
+      calc 2 * Real.pi * (|(h:ℝ)| * (|(T a : ℝ)| / (b:ℝ)^(j+1)))
+          ≤ 2 * Real.pi * (|(h:ℝ)| * (B / (b:ℝ)^(j+1))) := by gcongr
+        _ = C / (b:ℝ)^(j+1) := by ring
+    have hsum : Summable fun j : ℕ => C * ((b : ℝ)⁻¹ ^ (j + 1)) :=
+      ((summable_nat_add_iff 1).2 (summable_geometric_of_lt_one (by positivity)
+        (inv_lt_one_of_one_lt₀ hb'))).mul_left C
+    obtain ⟨J, hJ⟩ : ∃ J, ∑' j, C * ((b : ℝ)⁻¹ ^ (j + J + 1)) ≤ 1 / 2 := by
+      have := tendsto_sum_nat_add (fun j => C * ((b : ℝ)⁻¹ ^ (j + 1)))
+      obtain ⟨J, hJ⟩ := (this.eventually (ge_mem_nhds (by norm_num : (0:ℝ) < 1 / 2))).exists
+      exact ⟨J, by simpa [add_right_comm] using hJ⟩
+    set c0 := ‖∏ j ∈ Finset.range J, F j‖
+    have hc0 : 0 < c0 := norm_pos_iff.2 (Finset.prod_ne_zero_iff.2 fun j _ => hne j)
+    have hlow : ∀ K, J ≤ K → c0 / 2 ≤ ‖∏ j ∈ Finset.range K, F j‖ := by
+      intro K hK
+      rw [← Finset.prod_range_mul_prod_Ico _ hK, norm_mul]
+      have h2 := norm_prod_ge (Finset.Ico J K) F hF1
+      have h3 : ∑ i ∈ Finset.Ico J K, ‖1 - F i‖ ≤ 1 / 2 := by
+        refine (Finset.sum_le_sum fun i _ => he i).trans ?_
+        rw [Finset.sum_Ico_eq_sum_range]
+        refine le_trans ?_ hJ
+        have hs2 : Summable fun j => C * ((b : ℝ)⁻¹ ^ (j + J + 1)) := by
+          have := (summable_nat_add_iff J).2 hsum
+          simpa [add_right_comm] using this
+        refine (Summable.sum_le_tsum (Finset.range (K - J)) (fun j _ => by positivity) hs2).trans_eq' ?_
+        refine Finset.sum_congr rfl fun j _ => ?_
+        ring_nf
+      have : 1 / 2 ≤ ‖∏ i ∈ Finset.Ico J K, F i‖ := by linarith
+      nlinarith
+    have := (continuous_norm.tendsto _).comp hlim
+    rw [h0, norm_zero] at this
+    have hev : ∀ᶠ K in atTop, c0 / 2 ≤ ‖∏ j ∈ Finset.range K, F j‖ :=
+      eventually_atTop.2 ⟨J, hlow⟩
+    have := ge_of_tendsto this hev
+    linarith
+  · rintro ⟨j, hj⟩
+    refine tendsto_nhds_unique hlim (tendsto_const_nhds.congr' ?_)
+    filter_upwards [eventually_gt_atTop j] with K hK
+    exact (Finset.prod_eq_zero (Finset.mem_range.2 hK) hj).symm
+
+end Product
+
+open DecayAeNormal in
+/-- One factor of the product: the digit polynomials. -/
+theorem integral_ee_pair_factor {m : ℕ} [NeZero m] (b : ℕ) (dX dY : Fin m → ℕ) (a c h : ℤ) (j : ℕ) :
+    ∫ p, ee (h * ((((fun p : Fin m × Fin m => a * dX p.1 + c * dY p.2) p : ℤ) : ℝ) / (b : ℝ) ^ (j + 1)))
+        ∂(PMF.uniformOfFintype (Fin m × Fin m)).toMeasure =
+      digitPoly dX (a * h / (b : ℝ) ^ (j + 1)) * digitPoly dY (c * h / (b : ℝ) ^ (j + 1)) := by
+  rw [PMF.integral_eq_sum]
+  simp only [PMF.uniformOfFintype_apply, Fintype.card_prod, Fintype.card_fin]
+  unfold digitPoly
+  rw [div_mul_div_comm, Finset.sum_mul_sum, Fintype.sum_prod_type, Finset.sum_div]
+  refine Finset.sum_congr rfl fun x _ => ?_
+  rw [Finset.sum_div]
+  refine Finset.sum_congr rfl fun y _ => ?_
+  have hm : (m : ℂ) ≠ 0 := by exact_mod_cast NeZero.ne m
+  rw [← Complex.exp_add]
+  unfold ee
+  simp only [ENNReal.toReal_inv, ENNReal.toReal_natCast, Complex.real_smul]
+  push_cast
+  field_simp
+
+
 theorem combo_eq_digS {m : ℕ} (b : ℕ) (hb : 2 ≤ b) (dX dY : Fin m → ℕ) (a c : ℤ) (ω : ℕ → Fin m × Fin m) :
     combo b dX dY a c ω = digS b (fun p => a * dX p.1 + c * dY p.2) ω := by
   have hb' : (1 : ℝ) < b := by exact_mod_cast hb
@@ -806,7 +994,20 @@ theorem nuHat_eq_zero_iff (b m : ℕ) [NeZero m] (hb : 2 ≤ b) (dX dY : Fin m �
     (hX : ∀ j, dX j < b) (hY : ∀ j, dY j < b) (a c : ℤ) (h : ℤ) :
     nuHat b dX dY a c h = 0 ↔ ∃ i : ℕ, 1 ≤ i ∧
       digitPoly dX (a * h / (b : ℝ) ^ i) * digitPoly dY (c * h / (b : ℝ) ^ i) = 0 := by
-  sorry
+  have key := integral_ee_digS_eq_zero_iff (PMF.uniformOfFintype (Fin m × Fin m)).toMeasure b hb
+    (fun p => a * dX p.1 + c * dY p.2) h
+  simp only [integral_ee_pair_factor] at key
+  have hn : nuHat b dX dY a c h = ∫ ω, DecayAeNormal.ee (h * digS b (fun p : Fin m × Fin m =>
+      a * dX p.1 + c * dY p.2) ω) ∂Measure.infinitePi
+        (fun _ : ℕ => (PMF.uniformOfFintype (Fin m × Fin m)).toMeasure) := by
+    simp only [nuHat, combo_eq_digS b hb]; rfl
+  rw [hn, key]
+  constructor
+  · rintro ⟨j, hj⟩
+    exact ⟨j + 1, by omega, hj⟩
+  · rintro ⟨i, hi, hz⟩
+    obtain ⟨j, rfl⟩ : ∃ j, i = j + 1 := ⟨i - 1, by omega⟩
+    exact ⟨j, hz⟩
 
 /-- A.e. not normal at a frequency with nonzero coefficient. -/
 theorem ae_not_isNormal_of_nuHat_ne (b m : ℕ) [NeZero m] (hb : 2 ≤ b) (dX dY : Fin m → ℕ)
