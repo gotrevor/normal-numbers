@@ -46,14 +46,6 @@ theorem span_jointDim_budget (b : ℕ) (hb : 2 ≤ b) (x y : ℝ) (c₁ c₂ : �
     1 / 2 ≤ fsDim (digitPair b (by omega) x y) := by
   sorry
 
-/-- **Jointly normal ⇒ the whole span is normal.**  Confidence 95%.  English proof: joint
-normality is equidistribution of `(bⁿx, bⁿy)` in `𝕋²` (b-adic boxes); `bⁿ(a x + c y) mod 1` is the
-image under `(u, v) ↦ a u + c v`, which pushes Lebesgue to Lebesgue for `(a, c) ≠ 0`; rational
-coefficients by Wall. -/
-theorem isNormal_span_of_jointNormal (b : ℕ) (hb : 2 ≤ b) (x y : ℝ)
-    (hJ : IsNormalSequence (b * b) (fun i => (digitPair b (by omega) x y i : ℕ)))
-    (c₁ c₂ : ℚ) (hne : c₁ ≠ 0 ∨ c₂ ≠ 0) : IsNormal b ((c₁ : ℝ) * x + c₂ * y) := by
-  sorry
 
 /-- Independent uniform letters of `Fin m × Fin m`. -/
 noncomputable def pairs (m : ℕ) [NeZero m] : Measure (ℕ → Fin m × Fin m) :=
@@ -267,6 +259,296 @@ theorem isNormal_of_weylAvg (b : ℕ) (hb : 2 ≤ b) (z : ℝ)
 
 section Generic
 variable {α : Type*} [Fintype α] [MeasurableSpace α] [DiscreteMeasurableSpace α]
+
+open DecayAeNormal in
+/-- Joint-normality step `weyl2_of_boxFreq`. -/
+theorem weyl2_of_boxFreq (b : ℕ) (hb : 2 ≤ b) (u v : ℕ → ℝ)
+    (hu : ∀ n, u n ∈ Set.Ico (0 : ℝ) 1) (hv : ∀ n, v n ∈ Set.Ico (0 : ℝ) 1)
+    (hbox : ∀ L : ℕ, 1 ≤ L → ∀ j₁ < b ^ L, ∀ j₂ < b ^ L, Tendsto (fun N : ℕ =>
+      (((Finset.range N).filter fun n => ⌊((b ^ L : ℕ) : ℝ) * u n⌋₊ = j₁ ∧
+        ⌊((b ^ L : ℕ) : ℝ) * v n⌋₊ = j₂).card : ℝ) / N) atTop
+        (𝓝 ((((b ^ L : ℕ) : ℝ) ^ 2)⁻¹)))
+    (a c h : ℤ) (hac : a ≠ 0 ∨ c ≠ 0) (hh : h ≠ 0) :
+    Tendsto (fun N : ℕ => (∑ n ∈ Finset.range N, ee (h * (a * u n + c * v n))) / N) atTop
+      (𝓝 0) := by
+  classical
+  rw [Metric.tendsto_atTop]
+  intro ε hε
+  set A : ℝ := 2 * Real.pi * |(h : ℝ)| * (|(a : ℝ)| + |(c : ℝ)|) with hA
+  have hA0 : 0 ≤ A := by positivity
+  set L : ℕ := (h * a).natAbs + (h * c).natAbs + ⌈2 * A / ε⌉₊ with hLdef
+  set M : ℕ := b ^ L with hMdef
+  have hLM : L < M := Nat.lt_pow_self (by omega)
+  have hL1 : 1 ≤ L := by
+    have : 0 < (h * a).natAbs ∨ 0 < (h * c).natAbs := by
+      rcases hac with ha | hc
+      · exact Or.inl (Int.natAbs_pos.2 (mul_ne_zero hh ha))
+      · exact Or.inr (Int.natAbs_pos.2 (mul_ne_zero hh hc))
+    omega
+  have hMpos : 0 < M := by omega
+  have hMR : (0 : ℝ) < M := by exact_mod_cast hMpos
+  have hMh : (h * a).natAbs + (h * c).natAbs < M := by omega
+  have hMerr : A / M ≤ ε / 2 := by
+    rw [div_le_iff₀ hMR]
+    have h1 : 2 * A / ε ≤ M := by
+      refine (Nat.le_ceil _).trans ?_
+      have : ⌈2 * A / ε⌉₊ ≤ M := by omega
+      exact_mod_cast this
+    rw [div_le_iff₀ hε] at h1
+    linarith
+  set g : ℕ → ℕ := fun n => ⌊(M : ℝ) * u n⌋₊ with hg
+  set g' : ℕ → ℕ := fun n => ⌊(M : ℝ) * v n⌋₊ with hg'
+  have hfl : ∀ (w : ℕ → ℝ), (∀ n, w n ∈ Set.Ico (0 : ℝ) 1) → ∀ n,
+      ⌊(M : ℝ) * w n⌋₊ < M ∧ |w n - (⌊(M : ℝ) * w n⌋₊ : ℝ) / M| ≤ 1 / M := by
+    intro w hw n
+    have h0 : 0 ≤ (M : ℝ) * w n := by nlinarith [(hw n).1]
+    refine ⟨?_, ?_⟩
+    · have : (M : ℝ) * w n < M := by nlinarith [(hw n).2]
+      exact_mod_cast (Nat.floor_lt h0).2 this
+    · have h1 := Nat.floor_le h0
+      have h2 := Nat.lt_floor_add_one ((M : ℝ) * w n)
+      rw [abs_le]; constructor
+      · have : (⌊(M : ℝ) * w n⌋₊ : ℝ) / M ≤ w n := by rw [div_le_iff₀ hMR]; linarith
+        have : 0 ≤ 1 / (M : ℝ) := by positivity
+        linarith
+      · rw [sub_le_iff_le_add, ← add_div, le_div_iff₀ hMR]; linarith
+  -- main term
+  set P : ℕ → ℂ := fun N => ∑ j₁ ∈ Finset.range M, ∑ j₂ ∈ Finset.range M,
+    ((((Finset.range N).filter fun n => g n = j₁ ∧ g' n = j₂).card : ℝ) / N : ℝ) *
+      ee (h * (a * j₁ + c * j₂) / M) with hP
+  have hPlim : Tendsto P atTop (𝓝 0) := by
+    have : Tendsto P atTop (𝓝 (∑ j₁ ∈ Finset.range M, ∑ j₂ ∈ Finset.range M,
+        ((((M : ℝ) ^ 2)⁻¹ : ℝ) : ℂ) * ee (h * (a * j₁ + c * j₂) / M))) := by
+      refine tendsto_finsetSum _ fun j₁ hj₁ => tendsto_finsetSum _ fun j₂ hj₂ => ?_
+      refine Tendsto.mul_const _ ((Complex.continuous_ofReal.tendsto _).comp ?_)
+      exact hbox L hL1 j₁ (Finset.mem_range.1 hj₁) j₂ (Finset.mem_range.1 hj₂)
+    convert this using 1
+    have hsplit : ∀ j₁ j₂ : ℕ, ee (h * (a * j₁ + c * j₂) / M)
+        = ee (((h * a : ℤ) : ℝ) * j₁ / M) * ee (((h * c : ℤ) : ℝ) * j₂ / M) := by
+      intro j₁ j₂; rw [← ee_add]; congr 1; push_cast; ring
+    simp_rw [hsplit]
+    have hfac : ∑ j₁ ∈ Finset.range M, ∑ j₂ ∈ Finset.range M,
+        ((((M : ℝ) ^ 2)⁻¹ : ℝ) : ℂ) * (ee (((h * a : ℤ) : ℝ) * j₁ / M) * ee (((h * c : ℤ) : ℝ) * j₂ / M))
+        = ((((M : ℝ) ^ 2)⁻¹ : ℝ) : ℂ) * ((∑ j₁ ∈ Finset.range M, ee (((h * a : ℤ) : ℝ) * j₁ / M))
+          * (∑ j₂ ∈ Finset.range M, ee (((h * c : ℤ) : ℝ) * j₂ / M))) := by
+      rw [Finset.sum_mul_sum, Finset.mul_sum]
+      simp_rw [Finset.mul_sum]
+    rw [hfac]
+    rcases hac with ha | hc
+    · rw [sum_ee_root (h * a) (mul_ne_zero hh ha) M (by omega)]; simp
+    · rw [sum_ee_root (h * c) (mul_ne_zero hh hc) M (by omega)]; simp
+  have hfib : ∀ N : ℕ, (∑ n ∈ Finset.range N, ee (h * (a * g n + c * g' n) / M))
+      = ∑ j₁ ∈ Finset.range M, ∑ j₂ ∈ Finset.range M,
+        ((((Finset.range N).filter fun n => g n = j₁ ∧ g' n = j₂).card : ℕ) : ℂ) *
+          ee (h * (a * j₁ + c * j₂) / M) := by
+    intro N
+    rw [← Finset.sum_fiberwise_of_maps_to (s := Finset.range N)
+      (t := Finset.range M ×ˢ Finset.range M) (g := fun n => (g n, g' n))
+      (fun n _ => Finset.mem_product.2 ⟨Finset.mem_range.2 (hfl u hu n).1,
+        Finset.mem_range.2 (hfl v hv n).1⟩), Finset.sum_product]
+    refine Finset.sum_congr rfl fun j₁ _ => Finset.sum_congr rfl fun j₂ _ => ?_
+    rw [Finset.sum_congr rfl (fun n hn => by
+        have := (Finset.mem_filter.1 hn).2
+        simp only [Prod.mk.injEq] at this
+        rw [this.1, this.2]),
+      Finset.sum_const, nsmul_eq_mul]
+    congr 3
+    exact Finset.filter_congr fun n _ => by simp only [Prod.mk.injEq]
+  rcases (Metric.tendsto_atTop.1 hPlim) (ε / 2) (by linarith) with ⟨N₀, hN₀⟩
+  refine ⟨max N₀ 1, fun N hN => ?_⟩
+  have hN1 : (1 : ℝ) ≤ N := by exact_mod_cast le_of_max_le_right hN
+  have hNpos : (0 : ℝ) < N := by linarith
+  have hPN := hN₀ N (le_of_max_le_left hN)
+  rw [dist_zero_right] at hPN ⊢
+  have hPN' : P N = (∑ n ∈ Finset.range N, ee (h * (a * g n + c * g' n) / M)) / N := by
+    rw [hfib, Finset.sum_div, hP]
+    refine Finset.sum_congr rfl fun j₁ _ => ?_
+    rw [Finset.sum_div]
+    refine Finset.sum_congr rfl fun j₂ _ => ?_
+    push_cast; ring
+  have hdiff : ∀ n, ‖ee (h * (a * u n + c * v n)) - ee (h * (a * g n + c * g' n) / M)‖ ≤ A / M := by
+    intro n
+    refine (norm_ee_sub_le _ _).trans ?_
+    have e : (h : ℝ) * (a * u n + c * v n) - h * (a * g n + c * g' n) / M
+        = h * (a * (u n - g n / M) + c * (v n - g' n / M)) := by ring
+    rw [e, abs_mul]
+    have h1 := (hfl u hu n).2
+    have h2 := (hfl v hv n).2
+    have h3 : |(a : ℝ) * (u n - g n / M) + c * (v n - g' n / M)| ≤ (|(a:ℝ)| + |(c:ℝ)|) / M := by
+      refine (abs_add_le _ _).trans ?_
+      rw [abs_mul, abs_mul, add_div]
+      have := mul_le_mul_of_nonneg_left h1 (abs_nonneg (a : ℝ))
+      have := mul_le_mul_of_nonneg_left h2 (abs_nonneg (c : ℝ))
+      simp only [mul_one_div] at *
+      linarith
+    rw [hA, mul_div_assoc]
+    have hp : 0 ≤ 2 * Real.pi * |(h : ℝ)| := by positivity
+    calc 2 * Real.pi * (|(h:ℝ)| * |(a : ℝ) * (u n - g n / M) + c * (v n - g' n / M)|)
+        = 2 * Real.pi * |(h:ℝ)| * |(a : ℝ) * (u n - g n / M) + c * (v n - g' n / M)| := by ring
+      _ ≤ _ := mul_le_mul_of_nonneg_left h3 hp
+  have hsum : ‖∑ n ∈ Finset.range N, (ee (h * (a * u n + c * v n)) - ee (h * (a * g n + c * g' n) / M))‖
+      ≤ N * (A / M) := by
+    refine (norm_sum_le _ _).trans ?_
+    refine (Finset.sum_le_sum fun n _ => hdiff n).trans ?_
+    simp
+  have hsplit : (∑ n ∈ Finset.range N, ee (h * (a * u n + c * v n))) / N
+      = (∑ n ∈ Finset.range N, (ee (h * (a * u n + c * v n)) - ee (h * (a * g n + c * g' n) / M))) / N
+        + P N := by
+    rw [hPN', Finset.sum_sub_distrib]; ring
+  rw [hsplit]
+  refine (norm_add_le _ _).trans_lt ?_
+  have : ‖(∑ n ∈ Finset.range N, (ee (h * (a * u n + c * v n)) - ee (h * (a * g n + c * g' n) / M))) / (N : ℂ)‖
+      ≤ A / M := by
+    rw [norm_div, Complex.norm_natCast, div_le_iff₀ hNpos]
+    linarith
+  linarith
+
+open DecayAeNormal in
+/-- Joint-normality step `floor_orbit_iff_matchesAt`. -/
+theorem floor_orbit_iff_matchesAt (b : ℕ) (hb : 2 ≤ b) (x : ℝ) (L j : ℕ) (hj : j < b ^ L)
+    (n : ℕ) :
+    ⌊((b ^ L : ℕ) : ℝ) * orbit b x n⌋₊ = j ↔
+      MatchesAt (digitOf b (Int.fract x)) (padWord b L j) n := by
+  have hw := padWord_digits_lt hb L j
+  have hlen := length_padWord hb hj
+  have hmo : MatchesAt (digitOf b (Int.fract x)) (padWord b L j) n ↔ OccursAt b x (padWord b L j) n := by
+    unfold MatchesAt OccursAt
+    constructor
+    · intro h t ht; have := h t ht; rwa [List.getD_eq_getElem _ 0 ht] at this
+    · intro h t ht; have := h t ht; rwa [← List.getD_eq_getElem _ 0 ht] at this
+  rw [hmo, occursAt_iff_orbit_mem b hb x _ hw n,
+    blockNatVal_padWord hb, hlen]
+  have := mem_Ico_div_pow_iff_floor_eq b hb (orbit b x n) L (j : ℤ)
+  push_cast at this
+  rw [this]
+  have h0 : 0 ≤ orbit b x n := Int.fract_nonneg _
+  have h0' : 0 ≤ ((b ^ L : ℕ) : ℝ) * orbit b x n := by positivity
+  have e : orbit b x n * (b : ℝ) ^ L = ((b ^ L : ℕ) : ℝ) * orbit b x n := by push_cast; ring
+  rw [e, ← Int.natCast_floor_eq_floor h0', Nat.cast_inj]
+
+open DecayAeNormal in
+/-- Joint-normality step `pair_val`. -/
+theorem pair_val (b : ℕ) (hb : 0 < b) (x y : ℝ) (i : ℕ) :
+    ((digitPair b hb x y i : Fin (b * b)) : ℕ)
+      = digitOf b (Int.fract y) i + b * digitOf b (Int.fract x) i := rfl
+
+open DecayAeNormal in
+/-- Joint-normality step `matchesAt_pair_iff`. -/
+theorem matchesAt_pair_iff (b : ℕ) (hb : 2 ≤ b) (x y : ℝ) (L j₁ j₂ : ℕ)
+    (h₁ : j₁ < b ^ L) (h₂ : j₂ < b ^ L) (n : ℕ) :
+    MatchesAt (fun i => ((digitPair b (by omega) x y i : Fin (b * b)) : ℕ))
+        (List.zipWith (fun d e => e + b * d) (padWord b L j₁) (padWord b L j₂)) n ↔
+      MatchesAt (digitOf b (Int.fract x)) (padWord b L j₁) n ∧
+        MatchesAt (digitOf b (Int.fract y)) (padWord b L j₂) n := by
+  have l1 := length_padWord hb h₁
+  have l2 := length_padWord hb h₂
+  have d1 := padWord_digits_lt hb L j₁
+  have d2 := padWord_digits_lt hb L j₂
+  unfold MatchesAt
+  simp only [pair_val, List.length_zipWith, l1, l2, min_self]
+  have key : ∀ t < L, (List.zipWith (fun d e => e + b * d) (padWord b L j₁) (padWord b L j₂)).getD t 0
+      = (padWord b L j₂).getD t 0 + b * (padWord b L j₁).getD t 0 := by
+    intro t ht
+    rw [List.getD_eq_getElem _ _ (by simp; omega), List.getElem_zipWith,
+      List.getD_eq_getElem _ _ (by omega), List.getD_eq_getElem _ _ (by omega)]
+  have hb0 : 0 < b := by omega
+  constructor
+  · intro h
+    refine ⟨fun t ht => ?_, fun t ht => ?_⟩
+    · have e := h t ht
+      rw [key t ht] at e
+      have ha := digitOf_lt b hb (Int.fract y) (n + t)
+      have hc : (padWord b L j₂).getD t 0 < b := by
+        rw [List.getD_eq_getElem _ _ (by omega)]; exact d2 _ (List.getElem_mem _)
+      have := congrArg (· / b) e
+      beta_reduce at this
+      rwa [Nat.add_mul_div_left _ _ hb0, Nat.add_mul_div_left _ _ hb0, Nat.div_eq_of_lt ha,
+        Nat.div_eq_of_lt hc, zero_add, zero_add] at this
+    · have e := h t ht
+      rw [key t ht] at e
+      have ha := digitOf_lt b hb (Int.fract y) (n + t)
+      have hc : (padWord b L j₂).getD t 0 < b := by
+        rw [List.getD_eq_getElem _ _ (by omega)]; exact d2 _ (List.getElem_mem _)
+      have := congrArg (· % b) e
+      beta_reduce at this
+      rwa [Nat.add_mul_mod_self_left, Nat.add_mul_mod_self_left, Nat.mod_eq_of_lt ha,
+        Nat.mod_eq_of_lt hc] at this
+  · rintro ⟨h1, h2⟩ t ht
+    rw [key t ht, h1 t ht, h2 t ht]
+
+open DecayAeNormal in
+/-- **Jointly normal ⇒ the whole span is normal.**  Confidence 95%.  English proof: joint
+normality is equidistribution of `(bⁿx, bⁿy)` in `𝕋²` (b-adic boxes); `bⁿ(a x + c y) mod 1` is the
+image under `(u, v) ↦ a u + c v`, which pushes Lebesgue to Lebesgue for `(a, c) ≠ 0`; rational
+coefficients by Wall. -/
+theorem isNormal_span_of_jointNormal (b : ℕ) (hb : 2 ≤ b) (x y : ℝ)
+    (hJ : IsNormalSequence (b * b) (fun i => (digitPair b (by omega) x y i : ℕ)))
+    (c₁ c₂ : ℚ) (hne : c₁ ≠ 0 ∨ c₂ ≠ 0) : IsNormal b ((c₁ : ℝ) * x + c₂ * y) := by
+  have hint : ∀ a c : ℤ, (a ≠ 0 ∨ c ≠ 0) → IsNormal b (a * x + c * y) := by
+    intro a c hac
+    apply isNormal_of_weylAvg b hb
+    intro h hh
+    have hbox : ∀ L : ℕ, 1 ≤ L → ∀ j₁ < b ^ L, ∀ j₂ < b ^ L, Tendsto (fun N : ℕ =>
+        (((Finset.range N).filter fun n => ⌊((b ^ L : ℕ) : ℝ) * orbit b x n⌋₊ = j₁ ∧
+          ⌊((b ^ L : ℕ) : ℝ) * orbit b y n⌋₊ = j₂).card : ℝ) / N) atTop
+          (𝓝 ((((b ^ L : ℕ) : ℝ) ^ 2)⁻¹)) := by
+      intro L hL j₁ h₁ j₂ h₂
+      set wp := List.zipWith (fun d e => e + b * d) (padWord b L j₁) (padWord b L j₂) with hwp
+      have l1 := length_padWord hb h₁
+      have l2 := length_padWord hb h₂
+      have hlen : wp.length = L := by rw [hwp, List.length_zipWith, l1, l2, min_self]
+      have hne : wp ≠ [] := by
+        intro h0; rw [h0] at hlen; simp at hlen; omega
+      have hlt : ∀ d ∈ wp, d < b * b := by
+        intro d hd
+        obtain ⟨t, ht, rfl⟩ := List.getElem_of_mem hd
+        simp only [hwp, List.getElem_zipWith]
+        have e1 := padWord_digits_lt hb L j₁ _ (List.getElem_mem (show t < (padWord b L j₁).length by omega))
+        have e2 := padWord_digits_lt hb L j₂ _ (List.getElem_mem (show t < (padWord b L j₂).length by omega))
+        nlinarith
+      have hc := hJ wp hne hlt
+      have hle := fun n => card_filter_matchesAt_le
+        (fun i => ((digitPair b (by omega) x y i : Fin (b * b)) : ℕ)) wp hne n
+      have ht := tendsto_div_of_bounded_diff (fun n => (hle n).1) (fun n => (hle n).2) hc
+      rw [hlen] at ht
+      convert ht using 3
+      · congr 2
+        refine Finset.filter_congr fun n _ => ?_
+        rw [floor_orbit_iff_matchesAt b hb x L j₁ h₁, floor_orbit_iff_matchesAt b hb y L j₂ h₂,
+          hwp, matchesAt_pair_iff b hb x y L j₁ j₂ h₁ h₂]
+      · push_cast; ring
+    have := weyl2_of_boxFreq b hb (orbit b x) (orbit b y)
+      (fun n => ⟨Int.fract_nonneg _, Int.fract_lt_one _⟩)
+      (fun n => ⟨Int.fract_nonneg _, Int.fract_lt_one _⟩) hbox a c h hac hh
+    refine this.congr fun N => ?_
+    unfold weylAvg
+    congr 1
+    refine Finset.sum_congr rfl fun n _ => ?_
+    unfold orbit
+    rw [show (h : ℝ) * (a * Int.fract (x * b ^ n) + c * Int.fract (y * b ^ n))
+        = ((h * a : ℤ) : ℝ) * Int.fract (x * b ^ n) + ((h * c : ℤ) : ℝ) * Int.fract (y * b ^ n) by
+          push_cast; ring, ee_add, ee_int_mul_fract, ee_int_mul_fract, ← ee_add]
+    congr 1; push_cast; ring
+  set q : ℚ := ((c₁.den * c₂.den : ℕ) : ℚ) with hqdef
+  have hq : q ≠ 0 := by
+    rw [hqdef]; exact_mod_cast Nat.mul_ne_zero c₁.den_nz c₂.den_nz
+  have hN := hint (c₁.num * c₂.den) (c₂.num * c₁.den) (by
+    rcases hne with h | h
+    · left; exact mul_ne_zero (Rat.num_ne_zero.2 h) (by exact_mod_cast c₂.den_nz)
+    · right; exact mul_ne_zero (Rat.num_ne_zero.2 h) (by exact_mod_cast c₁.den_nz))
+  have hW := isNormal_rat_mul_add b hb _ q⁻¹ 0 (inv_ne_zero hq) hN
+  convert hW using 1
+  have e1 : ((c₁.num : ℝ)) = (c₁ : ℝ) * c₁.den := by
+    exact_mod_cast (Rat.mul_den_eq_num c₁).symm
+  have e2 : ((c₂.num : ℝ)) = (c₂ : ℝ) * c₂.den := by
+    exact_mod_cast (Rat.mul_den_eq_num c₂).symm
+  have hd1 : (c₁.den : ℝ) ≠ 0 := by exact_mod_cast c₁.den_nz
+  have hd2 : (c₂.den : ℝ) ≠ 0 := by exact_mod_cast c₂.den_nz
+  simp only [hqdef]
+  push_cast
+  rw [e1, e2]
+  field_simp
+  ring
 
 /-! ### Genericity for integer-digit expansions on a Bernoulli shift -/
 
