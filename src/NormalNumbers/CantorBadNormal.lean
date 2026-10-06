@@ -4947,6 +4947,33 @@ theorem firstMix_le_obstMix (b C : ℕ) (h : ℤ) (n m t : ℕ) :
   refine (norm_condMean_self_le _ _ _).trans (le_of_eq ?_)
   simp only [cExt_eq_sum, deadCorr_eq_cylChar, obstSum, obstLocal]
 
+
+/-- **Cauchy–Schwarz on a stage function.**  `(E‖G(w_s)‖)² ≤ E‖G(w_s)‖²` under `resLaw`.  Proved. -/
+theorem sq_integral_norm_comp_buildU_le (s : ℕ) (G : List Bool → ℂ) :
+    (∫ ω, ‖G (buildU s ω)‖ ∂coinMeasure) ^ 2 ≤ ∫ ω, ‖G (buildU s ω)‖ ^ 2 ∂coinMeasure := by
+  set g : (ℕ → Bool) → ℝ := fun ω => ‖G (buildU s ω)‖
+  have hg : Integrable g coinMeasure := (integrable_comp_buildU s G).norm
+  have hg2 : Integrable (fun ω => g ω ^ 2) coinMeasure := by
+    refine ((integrable_comp_buildU s (fun w => G w * G w)).norm).congr
+      (Eventually.of_forall fun ω => ?_)
+    simp [g, norm_mul, sq]
+  set c := ∫ ω, g ω ∂coinMeasure
+  have h0 : 0 ≤ ∫ ω, (g ω - c) ^ 2 ∂coinMeasure := integral_nonneg fun ω => sq_nonneg _
+  have hexp : ∀ ω, (g ω - c) ^ 2 = g ω ^ 2 + ((-2 * c) * g ω + c ^ 2) := fun ω => by ring
+  simp_rw [hexp] at h0
+  have hlin : Integrable (fun ω => (-2 * c) * g ω + c ^ 2) coinMeasure :=
+    (hg.const_mul _).add (integrable_const _)
+  rw [integral_add hg2 hlin, integral_add (hg.const_mul _) (integrable_const _),
+    integral_const_mul, integral_const] at h0
+  simp only [probReal_univ, smul_eq_mul, one_mul] at h0
+  nlinarith
+
+/-- **`obstMix` is controlled by the second moment of the cylinder obstacle sum**, the first step
+from `CylObstacleCancellation` toward a pair-correlation statement.  Proved. -/
+theorem obstMix_sq_le (b C : ℕ) (h : ℤ) (n m t : ℕ) :
+    obstMix b C h n m t ^ 2 ≤ ∫ ω, ‖obstSum (h * (b : ℝ) ^ m) (t - stageOf b C n)
+      (buildU (stageOf b C n) ω)‖ ^ 2 ∂coinMeasure :=
+  sq_integral_norm_comp_buildU_le _ _
 /-- **Cylinder-local obstacle cancellation node.**  Believed 50% for `3 ∤ b`.  The near-scale sum
 of `obstMix` over `n < m < N` is `O(N² W(N))`.  Implies `FirstOrderObstacleMix b`
 (`firstOrderObstacleMix_of_cyl`).  This is the honest form of the first-order crux: the

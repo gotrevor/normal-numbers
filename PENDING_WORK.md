@@ -3180,3 +3180,4 @@ the Cauchy–Schwarz step obstMix² ≤ E|obstSum|² as a lemma toward PairCorrT
 - lap 9 probe: `deadmix.py first` vs `nu` vs b=3 all at MC floor (lags 1–3, t=8): inconclusive, no
   working control.  A decisive probe needs lags where b=3 is coherent (large m relative to C) or exact
   enumeration of obstMix instead of Monte Carlo.
+- lap 9: Cauchy–Schwarz step proved (`sq_integral_norm_comp_buildU_le`, `obstMix_sq_le`).  Next: expand E‖obstSum‖² into diagonal + same-cylinder obstacle pairs.
