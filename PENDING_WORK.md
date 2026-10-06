@@ -2899,3 +2899,5 @@ Crux analysis (to be stated in Lean next lap, not yet recorded as declarations):
   Doubtful step: a lower bound η>0 on the density of dead stages.
 - Next: (a) attack η (rationals near K: He–Liao 2602.01307 as a Literature Prop); (b) if the obstruction holds,
   ask the operator to sanction an alternative law with canonical replacement (uniform resampling) for the headline.
+- Deeper η numerics: flat ≈1e-3 over stages 2–9 → `FinitelyManyDead` node (believed false 85%; would bypass Fourier via
+  Cassels + rational shift). AdversarialReplacement back to 55%.

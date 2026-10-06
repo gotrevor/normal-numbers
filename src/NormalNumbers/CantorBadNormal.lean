@@ -622,7 +622,7 @@ theorem build_eq_buildR (s : ℕ) (ω : ℕ → Bool) : build 5 c₀ s ω = buil
 theorem descent_eq_descentR : descent 5 c₀ = descentR repC := by
   funext ω i; simp only [descent, descentR, build_eq_buildR]
 
-/-- **Conjecture node (believed, 50%): an adversarial replacement rule breaks base-2 normality.**
+/-- **Conjecture node (believed, 55%): an adversarial replacement rule breaks base-2 normality.**
 
 Heuristic.  Along a typical path a stage has a dead coin block with probability bounded below
 by some `η > 0` (an obstacle `p/q`, `q² ≍ 3^{10s}`, lies within `c₀/q²` of a surviving child
@@ -635,12 +635,26 @@ the binary digit `0` by `≍ η / (20 log₂ 3) > 0` compared with the coin choi
 Evidence (`scripts/cantorbad_eta.py`, exact rationals, 600 coin paths × 7 stages, seed 2): dead
 coin blocks per stage `7, 2, 0, 0, 0, 1, 0` of 600.  Stages 0–1 are dominated by rationals of `K`
 itself (`1/4, 3/4`); at stages 2–6 the rate is `1/3000`, consistent with a small constant `η` but
-too few events to separate it from slow decay.  So confidence is lowered to 50%.  The step most in doubt is the lower bound on `η` (a Diophantine
+too few events to separate it from slow decay.  Deeper run (seeds 3–6, 1600 paths × 10 stages):
+stages 2–5 give `7/6400`, stages 6–9 give `4/6400`, flat within noise at `η ≈ 10⁻³`; the count
+heuristic (rationals equidistributed against `μ_K`) also predicts a constant `≍ 3⁻⁵`-order rate.
+Confidence 55%.  The step most in doubt is the lower bound on `η` (a Diophantine
 count of rationals near `K`).  Implication: if true, `fourierPairRate_descent` can only be
 proved by a law whose replacement is canonical (e.g. uniform resampling among alive blocks),
 not by `Classical.choose`. -/
 def AdversarialReplacement : Prop :=
   ∃ rep, RepOK rep ∧ ¬ ∀ᵐ ω ∂coinMeasure, IsNormal 2 (cpt (descentR rep ω))
+
+/-- **Conjecture node (believed false, 85%): almost surely only finitely many stages are dead.**
+
+If true, the descent point differs from the coin point `cpt ω` by a ternary rational, so the
+headline would follow from Cassels (`μ_K`-a.e. normality to bases prime to 3) and invariance of
+normality under rational translation, with no Fourier estimate.  Evidence against: the
+dead-stage rate is flat at `≈ 10⁻³` over stages 2–9 (see `AdversarialReplacement`), and the
+count heuristic gives a constant rate, so `Σ_s P(dead at s) = ∞`. -/
+def FinitelyManyDead : Prop :=
+  ∀ᵐ ω ∂coinMeasure, ∀ᶠ s in atTop,
+    Alive 5 c₀ (build 5 c₀ s ω) (List.ofFn fun i : Fin (2 * 5) => ω (2 * 5 * s + i))
 
 /-! ## Known-false sibling: the same descent against base-2 obstacles -/
 
