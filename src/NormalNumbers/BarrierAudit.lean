@@ -137,8 +137,6 @@ def cruxLinks : List CruxLink := [
 def waivers : List Waiver := [
   ⟨``CantorBadNormal.prefChar_succ,
    "a leaf: one-stage conditioning on the prefix, from buildU_succ_uniform"⟩,
-  ⟨``CantorBadNormal.norm_rhoS,
-   "a leaf: a uniform ternary block character is a product of cosines"⟩,
   ⟨``Adder.IsProductBlock.liouville_cover,
    "a leaf: the B–B 1994 Thm 3.1 Liouville witness with 'digit d absent from m·B' in place of a \
     run of g−1 (orbit_liouvilleMul_lt's argument)"⟩,

@@ -1412,7 +1412,44 @@ theorem prefChar_succ (ξ : ℝ) (S : ℕ) :
 `|ρ_L(ξ)| = Π_{L ≤ p < L+10} |cos(2πξ/3^{p+1})|`, since
 `ρ_L = Π_{i<10} (1 + e(2ξ/3^{L+i+1}))/2`. -/
 theorem norm_rhoS (ξ : ℝ) (L : ℕ) : ‖rhoS ξ L‖ = tailProd ξ L (L + 10) := by
-  sorry
+  have hterm : ∀ (f : Fin 10 → Bool) (i : Fin 10),
+      ξ * (((if f i then 2 else 0 : ℕ) : ℝ) * (3 : ℝ) ^ (9 - (i : ℕ))) / 3 ^ (L + 10) =
+        if f i then 2 * ξ / 3 ^ (L + (i : ℕ) + 1) else 0 := by
+    intro f i
+    have hp : (3 : ℝ) ^ (L + 10) = 3 ^ (9 - (i : ℕ)) * 3 ^ (L + (i : ℕ) + 1) := by
+      rw [← pow_add]; congr 1; omega
+    cases f i
+    · simp
+    · simp only [if_true, Nat.cast_ofNat]
+      rw [hp]; field_simp
+  have hee_sum : ∀ a : Fin 10 → ℝ, ee (∑ i, a i) = ∏ i, ee (a i) := by
+    intro a; unfold ee
+    rw [← Complex.exp_sum]; congr 1; push_cast; rw [Finset.mul_sum]
+  have key : ∀ f : Fin 10 → Bool, ee (ξ * J f / 3 ^ (L + 10)) =
+      ∏ i, (if f i then ee (2 * ξ / 3 ^ (L + (i : ℕ) + 1)) else 1) := by
+    intro f
+    have : ξ * (J f : ℝ) / 3 ^ (L + 10) = ∑ i, (if f i then 2 * ξ / 3 ^ (L + (i : ℕ) + 1) else 0) := by
+      unfold J; push_cast
+      rw [Finset.mul_sum, Finset.sum_div]
+      exact Finset.sum_congr rfl fun i _ => by rw [← hterm f i]; push_cast; ring
+    rw [this, hee_sum]
+    refine Finset.prod_congr rfl fun i _ => ?_
+    split_ifs <;> simp [ee]
+  have hρ : rhoS ξ L = ∏ i : Fin 10, (1 + ee (2 * ξ / 3 ^ (L + (i : ℕ) + 1))) / 2 := by
+    unfold rhoS
+    simp only [key]
+    rw [← Fintype.prod_sum (fun (i : Fin 10) (b : Bool) =>
+      if b then ee (2 * ξ / 3 ^ (L + (i : ℕ) + 1)) else 1)]
+    simp only [Fintype.sum_bool, if_true, Bool.false_eq_true, if_false]
+    rw [Finset.prod_div_distrib, Finset.prod_const, Finset.card_univ, Fintype.card_fin]
+    simp only [add_comm (1 : ℂ)]
+    norm_num [div_eq_inv_mul]
+  rw [hρ, norm_prod]
+  simp only [CantorLiouville.norm_one_add_ee_div_two]
+  unfold tailProd
+  rw [Finset.prod_Ico_eq_prod_range, show L + 10 - L = 10 by omega, ← Fin.prod_univ_eq_prod_range]
+  refine Finset.prod_congr rfl fun i _ => ?_
+  congr 2; field_simp
 
 theorem norm_ee_sub_ee (a b : ℝ) : ‖ee a - ee b‖ ≤ 2 * Real.pi * |a - b| := by
   have h : ee a = ee b * ee (a - b) := by rw [← ee_add]; congr 1; ring
