@@ -1414,12 +1414,59 @@ theorem prefChar_succ (ξ : ℝ) (S : ℕ) :
 theorem norm_rhoS (ξ : ℝ) (L : ℕ) : ‖rhoS ξ L‖ = tailProd ξ L (L + 10) := by
   sorry
 
+theorem norm_ee_sub_ee (a b : ℝ) : ‖ee a - ee b‖ ≤ 2 * Real.pi * |a - b| := by
+  have h : ee a = ee b * ee (a - b) := by rw [← ee_add]; congr 1; ring
+  rw [h, ← mul_sub_one, norm_mul, norm_ee, one_mul]
+  have : ee (a - b) = Complex.exp (Complex.I * ((2 * Real.pi * (a - b) : ℝ) : ℂ)) := by
+    unfold ee; congr 1; push_cast; ring
+  rw [this]
+  refine Real.norm_exp_I_mul_ofReal_sub_one_le.trans (le_of_eq ?_)
+  rw [Real.norm_eq_abs, abs_mul, abs_of_pos (by positivity : (0 : ℝ) < 2 * Real.pi)]
+
+section MeasP
+local instance : MeasurableSpace (List Bool) := ⊤
+
+theorem integrable_ee_prefix (ξ : ℝ) (S : ℕ) :
+    Integrable (fun ω => ee (ξ * cylLeft (buildU S ω))) coinMeasure :=
+  Integrable.of_bound ((measurable_ee.comp ((measurable_from_top (f := cylLeft)).comp
+    (measurable_buildU S) |>.const_mul ξ)).aestronglyMeasurable) 1
+    (Eventually.of_forall fun ω => (norm_ee _).le)
+end MeasP
+
+theorem integrable_ee_cpt (ξ : ℝ) :
+    Integrable (fun ω => ee (ξ * cpt (resLaw.φ ω))) coinMeasure :=
+  Integrable.of_bound ((measurable_ee.comp ((measurable_cpt.comp resLaw.meas).const_mul ξ)).aestronglyMeasurable) 1
+    (Eventually.of_forall fun ω => (norm_ee _).le)
+
 /-- **The prefix determines the point to `3^{−10S}`** (open leaf, believed 99%):
 `cpt (descentU ω) ∈ cyl (buildU S ω)` (`cpt_mem_cyl`, `ofFn_descentU`), and `e` is
 `2π`-Lipschitz. -/
 theorem norm_fourier_sub_prefChar (ξ : ℝ) (S : ℕ) :
     ‖(∫ ω, ee (ξ * cpt (resLaw.φ ω)) ∂coinMeasure) - prefChar ξ S‖ ≤ 16 * |ξ| / 3 ^ (10 * S) := by
-  sorry
+  have hS : ∀ ω, ‖ee (ξ * cpt (resLaw.φ ω)) - ee (ξ * cylLeft (buildU S ω))‖ ≤
+      16 * |ξ| / 3 ^ (10 * S) := by
+    intro ω
+    have hmem := cpt_mem_cyl (descentU ω) (10 * S)
+    rw [ofFn_descentU] at hmem
+    unfold cyl at hmem
+    rw [length_buildU] at hmem
+    have h0 : (0 : ℝ) < 3 ^ (10 * S) := by positivity
+    have e : resLaw.φ ω = descentU ω := rfl
+    have hd : |cpt (resLaw.φ ω) - cylLeft (buildU S ω)| ≤ 1 / 3 ^ (10 * S) := by
+      rw [e, abs_le]
+      have h1 := hmem.1; have h2 := hmem.2
+      constructor <;> linarith
+    refine (norm_ee_sub_ee _ _).trans ?_
+    rw [← mul_sub, abs_mul]
+    calc 2 * Real.pi * (|ξ| * |cpt (resLaw.φ ω) - cylLeft (buildU S ω)|)
+        ≤ 2 * Real.pi * (|ξ| * (1 / 3 ^ (10 * S))) := by gcongr
+      _ ≤ 8 * (|ξ| * (1 / 3 ^ (10 * S))) := by gcongr; linarith [Real.pi_lt_four]
+      _ ≤ 16 * |ξ| / 3 ^ (10 * S) := by
+          rw [mul_one_div, mul_div_assoc']; gcongr; norm_num
+  unfold prefChar
+  rw [← integral_sub (integrable_ee_cpt ξ) (integrable_ee_prefix ξ S)]
+  refine (norm_integral_le_of_norm_le_const (Eventually.of_forall hS)).trans ?_
+  simp
 
 theorem prefChar_zero (ξ : ℝ) : prefChar ξ 0 = 1 := by
   simp [prefChar, buildU, cylLeft, ee]
