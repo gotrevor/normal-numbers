@@ -559,27 +559,30 @@ theorem casselsPower_of_fourierPairPower {L : Law} {b : ℕ} (hL : FourierPairPo
   obtain ⟨C, δ, hδ, hC⟩ := hL h hh
   exact ⟨C, δ, hδ, fun N hN => (secondMoment_le_fourier L b h N).trans (hC N hN)⟩
 
-/-- **The crux: the Fourier pair-sum rate for the descent law.**  Any `W` summable along
-`sched` suffices, e.g. `(log N)^{−3}`; a power saving is not needed.  Believed, confidence 55%.
+/-- **Conjecture node (formerly the crux): the Fourier pair-sum rate for the choose-based
+descent law.**  Any `W` summable along `sched` suffices, e.g. `(log N)^{−3}`.  Retired as a
+blocking obligation by the 2026-10-05 operator resolution: `descentLaw` replaces dead blocks by
+`Classical.choose` (`descent_eq_descentR`, `repC_ok`), so a proof could only use `RepOK repC`,
+and `AdversarialReplacement` (55%) says some admissible rule breaks base-2 normality.  The
+headline now runs through `resLaw` (`fourierPairRate_resLaw`).  Confidence that this node is
+true for the actual `repC`: 50% (it depends on an unspecified choice).
 
 The sweep's guard (`docs/OPEN-PROBLEMS-SWEEP-2026-10-04.md` §2.3) applies: a proof that uses
 only that each block's dead fraction is small also proves base-2 normality of a descent
-against `B(a/2ⁿ, 2^{−n−C})`, which is false.  So a proof must use the arithmetic of the
-obstacle centres `p/q`.  Known-false sibling inside the mechanism: `b = 3`
-(`cantor_not_normal_three_pow`). -/
-theorem fourierPairRate_descent {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) :
-    FourierPairRate descentLaw b := by
-  sorry
+against `B(a/2ⁿ, 2^{−n−C})`, which is false (`perStage_deadCount_not_enough`).  Known-false
+sibling inside the mechanism: `b = 3` (`cantor_not_normal_three_pow`). -/
+def FourierPairRateChoose : Prop :=
+  ∀ b : ℕ, 2 ≤ b → ¬ 3 ∣ b → FourierPairRate descentLaw b
 
-/-- Cassels' second moment for the descent law (wiring from the crux). -/
-theorem casselsRate_descent {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) :
+/-- Cassels' second moment for the descent law, from the conjecture node. -/
+theorem casselsRate_descent (hC : FourierPairRateChoose) {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) :
     CasselsRate descentLaw b :=
-  casselsRate_of_fourierPairRate (fourierPairRate_descent hb h3)
+  casselsRate_of_fourierPairRate (hC b hb h3)
 
 /-! ## Obstruction: the crux sees the replacement rule only through `Classical.choose`
 
 `sel` replaces a dead coin block by `h.choose`, an alive block about which nothing but
-`Alive` is known.  So a proof of `fourierPairRate_descent` is in effect a proof for *every*
+`Alive` is known.  So a proof of `FourierPairRateChoose` is in effect a proof for *every*
 alive-valued replacement rule `rep` (`descent_eq_descentR`, `repC_ok`).  The conjecture node
 `AdversarialReplacement` says some such rule destroys base-2 normality; if it holds, the crux is
 true or false according to the unspecified choice and is not provable from `choose_spec`. -/
@@ -639,7 +642,7 @@ too few events to separate it from slow decay.  Deeper run (seeds 3–6, 1600 pa
 stages 2–5 give `7/6400`, stages 6–9 give `4/6400`, flat within noise at `η ≈ 10⁻³`; the count
 heuristic (rationals equidistributed against `μ_K`) also predicts a constant `≍ 3⁻⁵`-order rate.
 Confidence 55%.  The step most in doubt is the lower bound on `η` (a Diophantine
-count of rationals near `K`).  Implication: if true, `fourierPairRate_descent` can only be
+count of rationals near `K`).  Implication: if true, `FourierPairRateChoose` can only be
 proved by a law whose replacement is canonical (e.g. uniform resampling among alive blocks),
 not by `Classical.choose`. -/
 def AdversarialReplacement : Prop :=
@@ -681,6 +684,274 @@ Consequence: with `AdversarialReplacement`, the crux is essentially equivalent t
 theorem fourierPairRate_descent_of_deadRateDecay (hD : DeadRateDecay) {b : ℕ} (hb : 2 ≤ b)
     (h3 : ¬ 3 ∣ b) : FourierPairRate descentLaw b := by
   sorry
+
+/-! ## The resampling law: dead blocks replaced uniformly from fresh coins
+
+Stage `s` reads the coin blocks `blk ω s t`, `t = 0, 1, 2, …` (disjoint, via `Nat.pair`), and
+keeps the first alive one.  So, given the prefix, the stage block is uniform on the alive
+children (rejection sampling), not an unspecified choice.  The fallback `repC` is used only on
+the null event that no block is alive. -/
+
+/-- The `t`-th coin block of stage `s`: ten fresh coins at `10 · pair(s, t) + i`. -/
+def blk (ω : ℕ → Bool) (s t : ℕ) : List Bool :=
+  List.ofFn fun i : Fin 10 => ω (10 * Nat.pair s t + i)
+
+open Classical in
+/-- The first attempt index `t` whose block is alive (`0` if none is). -/
+noncomputable def firstAlive (w : List Bool) (ω : ℕ → Bool) (s : ℕ) : ℕ :=
+  Nat.find (p := fun t => Alive 5 c₀ w (blk ω s t) ∨ ¬ ∃ t', Alive 5 c₀ w (blk ω s t'))
+    (by by_cases h : ∃ t', Alive 5 c₀ w (blk ω s t')
+        · obtain ⟨t, ht⟩ := h; exact ⟨t, Or.inl ht⟩
+        · exact ⟨0, Or.inr h⟩)
+
+open Classical in
+/-- The resampled stage block: the first alive coin block, else `repC`. -/
+noncomputable def selU (w : List Bool) (ω : ℕ → Bool) (s : ℕ) : List Bool :=
+  if Alive 5 c₀ w (blk ω s (firstAlive w ω s)) then blk ω s (firstAlive w ω s) else repC w
+
+/-- The resampling descent prefix after `s` stages. -/
+noncomputable def buildU : ℕ → (ℕ → Bool) → List Bool
+  | 0, _ => []
+  | s + 1, ω => buildU s ω ++ selU (buildU s ω) ω s
+
+/-- The resampling descent selector. -/
+noncomputable def descentU (ω : ℕ → Bool) (i : ℕ) : Bool := (buildU (i + 1) ω).getD i false
+
+theorem selU_alive (w : List Bool) (ω : ℕ → Bool) (s : ℕ) :
+    (selU w ω s).length = 10 ∧ Alive 5 c₀ w (selU w ω s) := by
+  unfold selU; split_ifs with h
+  · exact ⟨by simp [blk], h⟩
+  · exact repC_ok w
+
+theorem length_buildU (ω : ℕ → Bool) (s : ℕ) : (buildU s ω).length = 10 * s := by
+  induction s with
+  | zero => rfl
+  | succ s ih => simp [buildU, ih, (selU_alive _ ω s).1]; ring
+
+theorem buildU_prefix (ω : ℕ → Bool) {s t : ℕ} (h : s ≤ t) : buildU s ω <+: buildU t ω := by
+  induction h with
+  | refl => exact List.prefix_refl _
+  | step _ ih => exact ih.trans (List.prefix_append _ _)
+
+theorem ofFn_descentU (ω : ℕ → Bool) (s : ℕ) :
+    (List.ofFn fun i : Fin (10 * s) => descentU ω i) = buildU s ω := by
+  have key : ∀ {i a b : ℕ}, a ≤ b → i < 10 * a →
+      (buildU a ω).getD i false = (buildU b ω).getD i false := by
+    intro i a b hab hia
+    obtain ⟨l, hl⟩ := buildU_prefix ω hab
+    rw [← hl, List.getD_append _ _ _ _ (by rw [length_buildU]; exact hia)]
+  apply List.ext_getElem
+  · simp [length_buildU]
+  · intro i h1 h2
+    simp only [List.getElem_ofFn]
+    have hi : i < 10 * s := by simpa using h1
+    have h1' : i < 10 * (i + 1) := by omega
+    unfold descentU
+    rw [key (le_max_left (i+1) s) h1', ← key (le_max_right (i+1) s) hi,
+      List.getD_eq_getElem _ _ h2]
+
+section MeasU
+local instance : MeasurableSpace (List Bool) := ⊤
+local instance : MeasurableSingletonClass (List Bool) := ⟨fun _ => trivial⟩
+
+theorem measurable_blk (s t : ℕ) : Measurable fun ω : ℕ → Bool => blk ω s t := by
+  have hb : Measurable fun ω : ℕ → Bool => (fun i : Fin 10 => ω (10 * Nat.pair s t + i)) :=
+    measurable_pi_lambda _ fun i => measurable_pi_apply _
+  exact (measurable_of_countable (fun f : Fin 10 → Bool => List.ofFn f)).comp hb
+
+theorem measurable_selU (w : List Bool) (s : ℕ) : Measurable fun ω => selU w ω s := by
+  classical
+  have hset : ∀ t, MeasurableSet {ω : ℕ → Bool | Alive 5 c₀ w (blk ω s t) ∨
+      ¬ ∃ t', Alive 5 c₀ w (blk ω s t')} := by
+    intro t
+    refine (measurable_blk s t (MeasurableSpace.measurableSet_top (s := {v | Alive 5 c₀ w v}))).union ?_
+    have : {ω : ℕ → Bool | ¬ ∃ t', Alive 5 c₀ w (blk ω s t')} =
+        ⋂ t', (fun ω => blk ω s t') ⁻¹' {v | Alive 5 c₀ w v}ᶜ := by ext; simp
+    change MeasurableSet {ω : ℕ → Bool | ¬ ∃ t', Alive 5 c₀ w (blk ω s t')}
+    rw [this]
+    exact MeasurableSet.iInter fun t' => measurable_blk s t' MeasurableSpace.measurableSet_top
+  have hT : Measurable fun ω => firstAlive w ω s := measurable_find _ hset
+  have hB : Measurable fun ω => blk ω s (firstAlive w ω s) := by
+    have h2 : Measurable fun x : (ℕ → Bool) × ℕ => blk x.1 s x.2 :=
+      measurable_from_prod_countable_left fun t => measurable_blk s t
+    exact h2.comp (measurable_id.prodMk hT)
+  exact (measurable_from_top (f := fun v : List Bool => if Alive 5 c₀ w v then v else repC w)).comp hB
+
+theorem measurable_buildU (s : ℕ) : Measurable (buildU s) := by
+  induction s with
+  | zero => exact measurable_const
+  | succ s ih =>
+    have h2 : Measurable fun x : (ℕ → Bool) × List Bool => x.2 ++ selU x.2 x.1 s :=
+      measurable_from_prod_countable_left fun w =>
+        (measurable_from_top (f := fun v : List Bool => w ++ v)).comp (measurable_selU w s)
+    exact h2.comp (measurable_id.prodMk ih)
+
+theorem measurable_descentU : Measurable descentU := by
+  refine measurable_pi_lambda _ fun i => ?_
+  exact (measurable_from_top (f := fun l : List Bool => l.getD i false)).comp (measurable_buildU (i + 1))
+end MeasU
+
+/-- **Every selector whose stage blocks are alive gives a badly approximable point.**  Proved
+(the argument of `descent_bad`, abstracted over how the blocks were chosen). -/
+theorem cpt_bad_of_alive (σ : ℕ → Bool) (hσ : ∀ s, ∃ w u : List Bool, w.length = 10 * s ∧
+    Alive 5 c₀ w u ∧ w ++ u = List.ofFn fun i : Fin (10 * (s + 1)) => σ i) : cpt σ ∈ Bad := by
+  have hc : (0 : ℝ) < c₀ := by unfold c₀; positivity
+  refine Set.mem_iUnion.2 ⟨c₀, Set.mem_iUnion.2 ⟨hc, ?_⟩⟩
+  intro p q hq
+  set s := Nat.log 3 (q ^ 2 * 3 ^ 5) / 10
+  have hne : q ^ 2 * 3 ^ 5 ≠ 0 := by positivity
+  have hlo : 3 ^ (10 * s) ≤ q ^ 2 * 3 ^ 5 :=
+    le_trans (Nat.pow_le_pow_right (by norm_num) (Nat.mul_div_le _ _)) (Nat.pow_log_le_self 3 hne)
+  have hhi : q ^ 2 * 3 ^ 5 < 3 ^ (10 * s + 10) :=
+    lt_of_lt_of_le (Nat.lt_pow_succ_log_self (by norm_num) _)
+      (Nat.pow_le_pow_right (by norm_num) (by omega))
+  obtain ⟨w, u, hlen, hal, hwu⟩ := hσ s
+  have hmem := cpt_mem_cyl σ (10 * (s + 1))
+  rw [← hwu] at hmem
+  have := hal p q hq (by rw [hlen]; exact_mod_cast (by simpa [mul_comm] using hlo))
+    (by rw [hlen]; exact_mod_cast (by simpa [mul_comm] using hhi)) _ hmem
+  have hq2 : (0 : ℝ) < (q : ℝ) ^ 2 := by positivity
+  have : c₀ / (q : ℝ) ^ 2 < 2 * c₀ / (q : ℝ) ^ 2 := by
+    rw [div_lt_div_iff_of_pos_right hq2]; linarith
+  linarith
+
+theorem descentU_bad (ω : ℕ → Bool) : cpt (descentU ω) ∈ Bad :=
+  cpt_bad_of_alive _ fun s => ⟨buildU s ω, selU (buildU s ω) ω s, length_buildU ω s,
+    (selU_alive _ ω s).2, by rw [ofFn_descentU]; rfl⟩
+
+/-- The resampling law. -/
+noncomputable def resLaw : Law := ⟨descentU, measurable_descentU, descentU_bad⟩
+
+open Classical in
+/-- The alive children of `w`, as a finset of selector blocks. -/
+noncomputable def aliveSet (w : List Bool) : Finset (Fin 10 → Bool) :=
+  Finset.univ.filter fun f => Alive 5 c₀ w (List.ofFn f)
+
+/-- **Conditional uniformity of the resampled block** (open leaf, believed 97%; standard
+rejection sampling).  Given the prefix `w` after `s` stages, each alive child `v` is the next
+block with probability `1/|A(w)|`.  English proof: the stage-`s` coin blocks `blk ω s t` are
+i.i.d. uniform and independent of `buildU s` (which reads only blocks `pair(s', t)`, `s' < s`);
+the first alive one among i.i.d. uniform draws is uniform on `A(w)`, and `|A(w)| ≥ 536 > 0`
+(`card_dead_le`) so one exists a.s. -/
+theorem buildU_succ_uniform (s : ℕ) (w v : List Bool) (hv : v.length = 10 ∧ Alive 5 c₀ w v) :
+    coinMeasure {ω | buildU (s + 1) ω = w ++ v} * (aliveSet w).card =
+      coinMeasure {ω | buildU s ω = w} := by
+  sorry
+
+/-! ### Decomposition of the crux: Cantor part plus dead-children characters
+
+Let `ν_S` follow `resLaw` for stages `< S` and the Cantor coin measure after.  Then `ν_0 = μ_K`,
+`ν_S → ν`, and by uniformity on `A(w)` the stage-`S` conditional character of `ν` minus that of
+`μ_K` is `−|A(w)|⁻¹ Σ_{f dead} (e(ξ J f 3^{−L−10}) − ρ_S(ξ))`: only the dead children appear, not
+the replacement (`deadErr`).  Under an arbitrary rule the replacement's own character would
+appear here, which is how `AdversarialReplacement` steers. -/
+
+/-- `μ̂_K(ξ)`: the Fourier coefficient of the Cantor measure. -/
+noncomputable def muK (ξ : ℝ) : ℂ := ∫ ω, ee (ξ * cpt ω) ∂coinMeasure
+
+/-- The stage character `ρ(ξ) = 2⁻¹⁰ Σ_f e(ξ J f / 3^{L+10})` of a uniform ten-digit block. -/
+noncomputable def rhoS (ξ : ℝ) (L : ℕ) : ℂ :=
+  (1 / 1024 : ℂ) * ∑ f : Fin 10 → Bool, ee (ξ * J f / 3 ^ (L + 10))
+
+/-- The dead-children error of the stage after prefix `w`. -/
+noncomputable def deadErr (ξ : ℝ) (w : List Bool) : ℂ :=
+  (1 / ((aliveSet w).card : ℂ)) *
+    ∑ f ∈ Finset.univ \ aliveSet w, (ee (ξ * J f / 3 ^ (w.length + 10)) - rhoS ξ w.length)
+
+/-- The stage-`S` dead-children character of `resLaw`. -/
+noncomputable def deadChar (ξ : ℝ) (S : ℕ) : ℂ :=
+  ∫ ω, ee (ξ * cylLeft (buildU S ω)) * deadErr ξ (buildU S ω) ∂coinMeasure
+
+/-- **Telescoping identity for `resLaw`** (open leaf, believed 90%).
+`μ̂_K(ξ) − ν̂(ξ) = Σ_S deadChar(ξ, S) · μ̂_K(ξ 3^{−10S−10})`, absolutely convergent.
+
+English proof.  `ν̂_{S+1}(ξ) − ν̂_S(ξ) = E_ν[e(ξ·cylLeft w_S)(ψ_S(w_S) − ρ_S)]·μ̂_K(ξ3^{−10S−10})`,
+where `ψ_S(w) = |A(w)|⁻¹ Σ_{f∈A(w)} e(ξ J f 3^{−10S−10})` is the conditional block character
+(`buildU_succ_uniform`) and the tail after stage `S` is an independent rescaled Cantor point.
+`ψ − ρ = −deadErr`.  Absolute convergence: `|deadErr| ≤ 4π|ξ|3^{−10S}` (each `e_f − ρ` is),
+and `ν̂_S → ν̂` since `cpt` of `ν_S` and of `ν` agree on `10S` digits. -/
+theorem resLaw_fourier_telescope (ξ : ℝ) :
+    HasSum (fun S => deadChar ξ S * muK (ξ / 3 ^ (10 * S + 10)))
+        (muK ξ - ∫ ω, ee (ξ * cpt (resLaw.φ ω)) ∂coinMeasure) ∧
+      Summable fun S => ‖deadChar ξ S‖ * ‖muK (ξ / 3 ^ (10 * S + 10))‖ := by
+  sorry
+
+/-- **Cassels for `μ_K`** (open leaf, believed 99%): the pair sum of `|μ̂_K|` over the
+frequencies `h(bⁿ − bᵐ)` has a power saving.  This is the bound inside
+`CantorLiouvilleAll.secondMoment_le_explicit_b` with `free = fun _ => true` (there it is applied
+to the second moment; `charFun_real` bounds `|μ̂|` by the truncated product `Bf`). -/
+theorem cassels_muK {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) (h : ℤ) (hh : h ≠ 0) :
+    ∃ (C : ℝ) (W : ℕ → ℝ), Summable (fun j => W (sched j)) ∧ ∀ N : ℕ, 1 ≤ N →
+      ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N, ‖muK (h * ((b : ℝ) ^ n - (b : ℝ) ^ m))‖ ≤
+        C * (N : ℝ) ^ 2 * W N := by
+  sorry
+
+/-- **The crux: cancellation in the dead-children characters.**  Believed, confidence 55%.
+
+`Σ_{n,m<N} Σ_S |deadChar(ξ, S)|·|μ̂_K(ξ3^{−10S−10})| = O(N² W(N))`, `ξ = h(bⁿ − bᵐ)`.  The
+Cantor tail factor localizes `S` to `O(1)` stages near `log₃|ξ|/10` on average over `(n, m)`
+(as in `cassels_muK`).  At those stages a dead child sits within `c₀/q²` of an obstacle `p/q`,
+`q² ≍ 3^{10S}`, so `deadChar ≈ E_ν Σ_{p/q near w} e(ξ p/q)·(…)`: an exponential sum of
+`h bⁿ p/q` over rationals near `K`, weighted by `ν`.  The bound needs cancellation in `n` of
+`e(h bⁿ p / q)`, i.e. `b` generating a large subgroup mod most `q` near `K`.  The trivial bound
+`|deadChar| ≤ 2·P(dead at S)` is the `DeadRateDecay` route (believed false).
+
+Guards: `b = 3` is false (`cantor_not_normal_three_pow`; `3ⁿ p/q` with `q | 3^k` does not
+cancel), and the base-2 dyadic sibling (`perStage_deadCount_not_enough`) has centres `p/2ᵏ`,
+for which `e(2ⁿ p/2ᵏ) = 1` once `n ≥ k`: no cancellation, as required. -/
+theorem deadCharCancel {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) (h : ℤ) (hh : h ≠ 0) :
+    ∃ (C : ℝ) (W : ℕ → ℝ), Summable (fun j => W (sched j)) ∧ ∀ N : ℕ, 1 ≤ N →
+      ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N,
+        ∑' S, ‖deadChar (h * ((b : ℝ) ^ n - (b : ℝ) ^ m)) S‖ *
+          ‖muK (h * ((b : ℝ) ^ n - (b : ℝ) ^ m) / 3 ^ (10 * S + 10))‖ ≤ C * (N : ℝ) ^ 2 * W N := by
+  sorry
+
+/-- Pointwise: `|ν̂| ≤ |μ̂_K| + Σ_S |deadChar|·|μ̂_K(·/3^{10S+10})|`.  Proved from the telescope. -/
+theorem fourierAbs_resLaw_le (ξ : ℝ) :
+    fourierAbs resLaw ξ ≤ ‖muK ξ‖ +
+      ∑' S, ‖deadChar ξ S‖ * ‖muK (ξ / 3 ^ (10 * S + 10))‖ := by
+  obtain ⟨hS, hN⟩ := resLaw_fourier_telescope ξ
+  have heq : (∫ ω, ee (ξ * cpt (resLaw.φ ω)) ∂coinMeasure) =
+      muK ξ - ∑' S, deadChar ξ S * muK (ξ / 3 ^ (10 * S + 10)) := by
+    rw [hS.tsum_eq]; ring
+  unfold fourierAbs
+  rw [heq]
+  refine (norm_sub_le _ _).trans (add_le_add le_rfl ?_)
+  refine (norm_tsum_le_tsum_norm ?_).trans (le_of_eq (tsum_congr fun S => norm_mul _ _))
+  exact hN.congr fun S => (norm_mul _ _).symm
+
+/-- **The crux for the resampling law**, from the decomposition.  Proved modulo the leaves
+`resLaw_fourier_telescope`, `cassels_muK` and `deadCharCancel`.
+
+The mechanism uses uniformity through `resLaw_fourier_telescope`: a proof that uses only that
+the stage block is alive (any admissible rule) reduces to `DeadRateDecay` (believed false), and
+per-stage dead counts alone are refuted by `perStage_deadCount_not_enough` (whose sibling with
+uniform resampling is still never 2-normal).  So `deadCharCancel` must use the arithmetic of
+the centres `p/q`.  Known-false sibling: `b = 3` (`cantor_not_normal_three_pow`). -/
+theorem fourierPairRate_resLaw {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) :
+    FourierPairRate resLaw b := by
+  intro h hh
+  obtain ⟨C₁, W₁, hW₁, h₁⟩ := cassels_muK hb h3 h hh
+  obtain ⟨C₂, W₂, hW₂, h₂⟩ := deadCharCancel hb h3 h hh
+  refine ⟨|C₁| + |C₂|, fun N => |W₁ N| + |W₂ N|, hW₁.abs.add hW₂.abs, fun N hN => ?_⟩
+  have hN2 : (0 : ℝ) ≤ (N : ℝ) ^ 2 := by positivity
+  calc _ ≤ ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N,
+          (‖muK (h * ((b : ℝ) ^ n - (b : ℝ) ^ m))‖ +
+            ∑' S, ‖deadChar (h * ((b : ℝ) ^ n - (b : ℝ) ^ m)) S‖ *
+              ‖muK (h * ((b : ℝ) ^ n - (b : ℝ) ^ m) / 3 ^ (10 * S + 10))‖) :=
+        Finset.sum_le_sum fun n _ => Finset.sum_le_sum fun m _ => fourierAbs_resLaw_le _
+    _ = _ + _ := by simp only [Finset.sum_add_distrib]
+    _ ≤ C₁ * (N : ℝ) ^ 2 * W₁ N + C₂ * (N : ℝ) ^ 2 * W₂ N := add_le_add (h₁ N hN) (h₂ N hN)
+    _ ≤ |C₁| * (N : ℝ) ^ 2 * |W₁ N| + |C₂| * (N : ℝ) ^ 2 * |W₂ N| := by
+        have k : ∀ C W : ℝ, C * (N : ℝ) ^ 2 * W ≤ |C| * (N : ℝ) ^ 2 * |W| := fun C W =>
+          (le_abs_self _).trans (by rw [abs_mul, abs_mul, abs_of_nonneg hN2])
+        exact add_le_add (k _ _) (k _ _)
+    _ ≤ _ := by
+        have := abs_nonneg C₁; have := abs_nonneg C₂
+        have := abs_nonneg (W₁ N); have := abs_nonneg (W₂ N)
+        nlinarith [mul_nonneg (mul_nonneg (abs_nonneg C₁) hN2) (abs_nonneg (W₂ N)),
+          mul_nonneg (mul_nonneg (abs_nonneg C₂) hN2) (abs_nonneg (W₁ N))]
+
 
 /-! ## Known-false sibling: the same descent against base-2 obstacles -/
 
@@ -899,7 +1170,7 @@ open Classical in
 /-- **Refuted: per-stage dead counts do not give normality.**  The same descent run against the
 dyadic obstacles `B(p/2ⁿ, 2·2^{−n−36})` kills at most 4 of the 1024 children at every stage
 (fewer than `descentLaw`'s 488, `card_dead_le`), yet every point it produces lies in `K` and is
-normal to the base 2, prime to 3, for no coin sequence.  So the crux `fourierPairRate_descent`
+normal to the base 2, prime to 3, for no coin sequence.  So the crux `fourierPairRate_resLaw`
 cannot follow from per-stage closeness to the product measure; it must use the arithmetic of
 the centres `p/q`. -/
 theorem perStage_deadCount_not_enough :
@@ -972,6 +1243,6 @@ Evidence: each pair of the three sets meets, with full-dimensional `K ∩ BAD`; 
 and Cassels give normality to bases prime to 3 for many non-product measures on `K`. -/
 theorem exists_mem_cantorSet_bad_isNormal_coprime_three :
     ∃ x : ℝ, x ∈ cantorSet ∧ x ∈ Bad ∧ ∀ b : ℕ, 2 ≤ b → ¬ 3 ∣ b → IsNormal b x :=
-  exists_of_law descentLaw fun _ hb h3 => casselsRate_descent hb h3
+  exists_of_law resLaw fun _ hb h3 => casselsRate_of_fourierPairRate (fourierPairRate_resLaw hb h3)
 
 end NormalNumbers.CantorBadNormal

@@ -109,12 +109,11 @@ def cruxLinks : List CruxLink := [
   ⟨``EntropyProfiles.ae_isNormal_self_base_sq_of_timesP_ergodic, [``cantor_not_normal_three_pow],
    "with x in place of (x + 1)² the claim is false (the Cantor measure is ×3-ergodic and no Cantor \
     point is 3-normal), so the mechanism must use the curvature of the map"⟩,
-  ⟨``CantorBadNormal.fourierPairRate_descent,
-   [``cantor_not_normal_three_pow, ``schmidt_normal_not_winning, ``perStage_dead_not_enough],
-   "the second moment must use 3 ∤ b (no Cantor point is 3ᵏ-normal), and the normality half \
-    must come from the measure, not the deletion game (normality is not potential winning), and \
-    it must use the arithmetic of the centres p/q (per-stage dead counts alone admit a never \
-    2-normal descent)"⟩,
+  ⟨``CantorBadNormal.deadCharCancel,
+   [``cantor_not_normal_three_pow, ``perStage_dead_not_enough],
+   "the cancellation must use 3 ∤ b (3ⁿp/q does not cancel for q | 3ᵏ) and the arithmetic of \
+    the centres p/q (dyadic centres give e(2ⁿp/2ᵏ) = 1, and per-stage dead counts alone admit a \
+    never 2-normal descent)"⟩,
   ⟨``CantorBadNormal.fourierPairRate_descent_of_deadRateDecay,
    [``cantor_not_normal_three_pow, ``perStage_dead_not_enough],
    "the pair-averaged Cantor products must use 3 ∤ b, and the dead-stage hypothesis must be a \
@@ -136,6 +135,13 @@ def cruxLinks : List CruxLink := [
 
 /-- Open `sorry`s that are not cruxes, and why no barrier applies. -/
 def waivers : List Waiver := [
+  ⟨``CantorBadNormal.buildU_succ_uniform,
+   "a leaf: rejection sampling from i.i.d. fresh coin blocks is uniform on the alive set"⟩,
+  ⟨``CantorBadNormal.resLaw_fourier_telescope,
+   "a leaf: an exact telescoping identity for a Markov block law against the product law"⟩,
+  ⟨``CantorBadNormal.cassels_muK,
+   "a leaf: Cassels' pair-sum bound for the Cantor measure, already inside \
+    CantorLiouvilleAll.secondMoment_le_explicit_b"⟩,
   ⟨``Adder.IsProductBlock.liouville_cover,
    "a leaf: the B–B 1994 Thm 3.1 Liouville witness with 'digit d absent from m·B' in place of a \
     run of g−1 (orbit_liouvilleMul_lt's argument)"⟩,

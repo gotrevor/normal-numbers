@@ -1425,7 +1425,7 @@ def register : List Hall := [
    "Get a point of K cap BAD normal to every base prime to 3 from Host / Hochman-Shmerkin, by a x3-ergodic positive-dimension measure carried by BAD",
    .refuted, .frozen,
    "Einsiedler-Fishman-Shapira: such a measure gives BAD zero mass, so the measure on K cap BAD must be non-invariant (the deletion descent) and normality must come from a Cassels-type second moment",
-   "CantorBadNormal.lean: not_exists_timesThree_law_on_bad, Literature.EFSTimesThreeNotBad, fourierPairRate_descent (the open crux)", "2026-10-06"⟩,
+   "CantorBadNormal.lean: not_exists_timesThree_law_on_bad, Literature.EFSTimesThreeNotBad, fourierPairRate_resLaw (the open crux; old choose-based crux now the node FourierPairRateChoose)", "2026-10-06"⟩,
   ⟨"He-Liao local count on the forced-run measure",
    "Transfer He-Liao 2602.01307 Cor. 6.5 (local equidistribution of rationals against Cantor-measure cylinders) to the forced-run measure, to push the exact-exponent triple below mu0 = 2 + log2 3",
    .wall, .cited,
