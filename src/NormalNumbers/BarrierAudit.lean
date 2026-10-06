@@ -193,8 +193,6 @@ def waivers : List Waiver := [
    "conditional wiring (Fourier expansion over the q-interval); records that single-sum \
     cancellation reaches only m > b − δ b' (singleSum_insufficient)"⟩,
   ⟨``StretchBFR.card_near_cantor_le, "a leaf: the classical covering count of rationals near K"⟩,
-  ⟨``CantorExactExponentStretch.exists_mem_cantorSet_irrExponent_two_of_literature,
-   "literature control at μ₀ = 2: wiring from cited Weiss 2001 and Cassels 1959 (a leaf)"⟩,
   ⟨``FiniteState.isFNormal_delayEnum_of_normal,
    "a leaf: O(1) cost of composing with the delay transducer and its finite-state right inverse"⟩]
 

@@ -160,7 +160,79 @@ def EndpointRationalCount : Prop :=
         |(hd (fun _ => true) ω b : ℝ) / 3 ^ b - p / q| < (q : ℝ) ^ (-τ)} ≤
       C * (3 : ℝ) ^ ((2 - τ) * m) * coins.real {ω | ∀ i < a, ω i = w i}
 
-/-- **Control at `μ₀ = 2`: the triple is literature.**  Confidence 90%.
+/-- Dirichlet: an irrational is `LiouvilleWith 2`. -/
+theorem liouvilleWith_two_of_irrational {x : ℝ} (hx : Irrational x) : LiouvilleWith 2 x := by
+  set S := {q : ℚ | |x - q| < 1 / (q.den : ℝ) ^ 2}
+  have hS : S.Infinite := Real.infinite_rat_abs_sub_lt_one_div_den_sq_of_irrational hx
+  have hnb : ¬ BddAbove ((fun q : ℚ => q.den) '' S) := by
+    rintro ⟨N, hN⟩
+    apply hS
+    set M : ℤ := ⌈(|x| + 1) * N⌉
+    refine ((Finset.Icc (-M) M ×ˢ Finset.Icc 0 N).image
+      (fun p : ℤ × ℕ => (p.1 : ℚ) / p.2)).finite_toSet.subset ?_
+    intro q hq
+    have hd : q.den ≤ N := hN ⟨q, hq, rfl⟩
+    have hq' : |x - q| < 1 / (q.den : ℝ) ^ 2 := hq
+    have hd1 : (1 : ℝ) ≤ q.den := by exact_mod_cast q.den_pos
+    have h1 : |(q : ℝ)| ≤ |x| + 1 := by
+      have : 1 / (q.den : ℝ) ^ 2 ≤ 1 := by
+        rw [div_le_one (by positivity)]; nlinarith
+      have := abs_sub_abs_le_abs_sub (q : ℝ) x
+      rw [abs_sub_comm] at this; linarith
+    simp only [Finset.coe_image, Set.mem_image, Finset.mem_coe, Finset.mem_product, Finset.mem_Icc]
+    refine ⟨(q.num, q.den), ⟨⟨?_, ?_⟩, Nat.zero_le _, hd⟩, Rat.num_div_den q⟩
+    all_goals
+      have hnum : |(q.num : ℝ)| = |(q : ℝ)| * q.den := by
+        rw [Rat.cast_def, abs_div, Nat.abs_cast, div_mul_cancel₀ _ (by positivity)]
+      have hb : |(q.num : ℝ)| ≤ (|x| + 1) * N := by
+        rw [hnum]
+        have : (q.den : ℝ) ≤ N := by exact_mod_cast hd
+        have h0 : 0 ≤ |(q : ℝ)| := abs_nonneg _
+        nlinarith
+      have hc := (Int.le_ceil ((|x| + 1) * N))
+      have : |(q.num : ℝ)| ≤ M := hb.trans hc
+      have : |q.num| ≤ M := by rw [← Int.cast_abs] at this; exact_mod_cast this
+      rw [abs_le] at this
+    · exact this.1
+    · exact this.2
+  refine ⟨1, ?_⟩
+  rw [Nat.frequently_atTop_iff_infinite]
+  refine Set.infinite_of_not_bddAbove fun hb => hnb ?_
+  refine hb.mono ?_
+  rintro _ ⟨q, hq, rfl⟩
+  refine ⟨q.num, ?_, ?_⟩
+  · intro h; apply hx; refine ⟨q, ?_⟩
+    rw [h, Rat.cast_def]
+  · have e : ((q.num : ℝ) / (q.den : ℕ)) = (q : ℝ) := by rw [Rat.cast_def]
+    rw [e, Real.rpow_two]; exact hq
+
+/-- Zero is not normal in base 2 (as `ExplicitPQ.not_isNormal_two_zero`). -/
+theorem not_isNormal_two_zero' : ¬ IsNormal 2 0 := by
+  intro h
+  have hcount : ∀ l : List ℕ, (∀ d ∈ l, d = 0) → countOccurrences [1] l = 0 := by
+    intro l hl
+    induction l with
+    | nil => rfl
+    | cons a l ih =>
+      have ha : a = 0 := hl a (List.mem_cons_self ..)
+      have ih' := ih fun d hd => hl d (List.mem_cons_of_mem _ hd)
+      unfold countOccurrences at ih' ⊢
+      rw [List.tails_cons, List.countP_cons, ih', ha]
+      rfl
+  have hdig : ∀ i, digitOf 2 (Int.fract (0 : ℝ)) i = 0 := by
+    intro i; simp [digitOf]
+  have ht := h [1] (by simp) (by simp)
+  have h0 : (fun n : ℕ => (countOccurrences [1] ((List.range n).map
+      (digitOf 2 (Int.fract (0 : ℝ)))) : ℝ) / n) = fun _ => 0 := by
+    funext n
+    rw [hcount _ (fun d hd => by
+      obtain ⟨i, _, rfl⟩ := List.mem_map.1 hd; exact hdig i)]
+    simp
+  rw [h0] at ht
+  have := tendsto_nhds_unique ht tendsto_const_nhds
+  norm_num at this
+
+/-- **Control at `μ₀ = 2`: the triple is literature.**  Proved from the two cited hypotheses.
 
 English proof.  Weiss 2001 gives `¬ LiouvilleWith τ` for `τ > 2`, a.e.; Cassels 1959
 (`CantorLiouvilleAll.Literature.Cassels1959`) gives normality to base 2 a.e., hence
@@ -170,7 +242,19 @@ by `LiouvilleWith.mono`.  Intersect the two full-measure sets. -/
 theorem exists_mem_cantorSet_irrExponent_two_of_literature (hW : Literature.Weiss2001)
     (hC : CantorLiouvilleAll.Literature.Cassels1959) :
     ∃ x ∈ cantorSet, HasIrrExponent x 2 ∧ IsNormal 2 x := by
-  sorry
+  obtain ⟨ω, hWω, hCω⟩ := (hW.and hC).exists
+  set x := pt (fun _ => true) ω
+  have hN : IsNormal 2 x := hCω 2 le_rfl (fun k h => by
+    have : Odd (3 ^ k) := Odd.pow (by decide)
+    rw [← h] at this; exact absurd this (by decide))
+  have hirr : Irrational x := by
+    rintro ⟨β, hβ⟩
+    apply not_isNormal_two_zero'
+    have := isNormal_rat_mul_add 2 le_rfl x 1 (-β) one_ne_zero hN
+    convert this using 1
+    rw [← hβ]; push_cast; ring
+  refine ⟨x, pt_mem_cantorSet _ ω, ⟨fun p hp => (liouvilleWith_two_of_irrational hirr).mono hp.le,
+    fun p hp => hWω p hp⟩, hN⟩
 
 /-! ## Lap 2026-10-05: the exact residue count
 
