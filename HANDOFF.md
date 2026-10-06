@@ -1,5 +1,11 @@
 # HANDOFF — pointer
 
+**STUCK (2026-10-06, branch `proof/cantorexp-stretch`):** the CURRENT DIRECTIVE's objective is
+met — `CantorExactExponentStretch.ae_not_liouvilleWith_all` and the stretch headline are proved
+(standard axioms; verify: `#print axioms` in a scratch file importing the module), and the module
+is sorry-free.  Remaining `src/` sorries belong to other campaigns; `StretchBFR` is forbidden
+drift.  Ask: an altitude lap sets the next directive.  See `HANDOFF-2026-10-06-stretch-lap3.md`.
+
 This is a thin pointer, not an overview.  Newest lap: `HANDOFF-2026-10-03-levinsparse-lap1.md` (BLOCKED, operator-gated).  Read, in order:
 
 1. **`DIRECTION.md` → CURRENT DIRECTIVE** — binding, altitude-owned, outranks every baton.
