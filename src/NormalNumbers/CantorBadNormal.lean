@@ -5329,6 +5329,90 @@ uniform and one of the alive next-block average of `H`.  Proved. -/
 theorem cExt_aliveDefect (H : List Bool → ℂ) (k : ℕ) :
     cExt (aliveDefect H) k = cExt H (k + 1) - cExt (aliveAvg H) k := by
   rw [show aliveDefect H = unifAvg H - aliveAvg H from rfl, cExt_sub]; rfl
+
+/-! ### The `resLaw`-native route (no defect split) -/
+
+/-- The `resLaw` continuation by `k` blocks: iterated alive averages. -/
+noncomputable def aliveExt (G : List Bool → ℂ) : ℕ → List Bool → ℂ
+  | 0 => G
+  | k + 1 => aliveExt (aliveAvg G) k
+
+/-- **The `resLaw` conditional mean is the alive continuation.**  Proved (`condMean_succ_alive`). -/
+theorem condMean_aliveExt (s : ℕ) (w : List Bool) (k : ℕ) :
+    ∀ G : List Bool → ℂ, condMean (fun ω => G (buildU (s + k) ω)) s w =
+      condMean (fun ω => aliveExt G k (buildU s ω)) s w := by
+  induction k with
+  | zero => intro G; rfl
+  | succ k ih =>
+    intro G
+    rw [show s + (k + 1) = s + k + 1 from rfl, condMean_succ_alive G (Nat.le_add_right s k), ih]
+    rfl
+
+
+theorem aliveExt_succ' (k : ℕ) : ∀ G : List Bool → ℂ, aliveExt G (k + 1) = aliveAvg (aliveExt G k) := by
+  induction k with
+  | zero => intro G; rfl
+  | succ k ih => intro G; show aliveExt (aliveAvg G) (k + 1) = _; rw [ih]; rfl
+
+open Classical in
+/-- **The `resLaw` continuation as a path-weighted sum.**  Proved. -/
+theorem aliveExt_eq_sum (G : List Bool → ℂ) (k : ℕ) : ∀ w : List Bool,
+    aliveExt G k w = ∑ F : Fin k → (Fin 10 → Bool), (pathW w k F : ℂ) * G (catB w k F) := by
+  induction k with
+  | zero => intro w; simp [aliveExt, catB, pathW]
+  | succ k ih =>
+    intro w
+    rw [aliveExt_succ', aliveAvg]
+    simp_rw [ih]
+    rw [← (Fin.consEquiv (fun _ : Fin (k + 1) => Fin 10 → Bool)).sum_comp
+      (fun F => (pathW w (k + 1) F : ℂ) * G (catB w (k + 1) F)), Fintype.sum_prod_type]
+    simp only [Fin.consEquiv, Equiv.coe_fn_mk, catB, pathW, Fin.cons_zero, Fin.cons_succ]
+    rw [Finset.mul_sum, ← Finset.sum_filter_add_sum_filter_not Finset.univ (· ∈ aliveSet w)]
+    simp only [Finset.filter_mem_eq_inter, Finset.univ_inter]
+    rw [Finset.sum_eq_zero (s := Finset.univ.filter fun f => f ∉ aliveSet w) (fun f hf => by
+      simp only [Finset.mem_filter] at hf
+      simp [hf.2]), add_zero]
+    refine Finset.sum_congr rfl fun f hf => ?_
+    rw [Finset.mul_sum]
+    refine Finset.sum_congr rfl fun F _ => ?_
+    simp only [hf, if_true]
+    push_cast; ring
+/-- The `resLaw`-native mix: `E‖aliveExt D_t (t − s_n) (w_{s_n})‖`. -/
+noncomputable def aliveMix (b C : ℕ) (h : ℤ) (n m t : ℕ) : ℝ :=
+  ∫ ω, ‖aliveExt (deadCorr (h * (b : ℝ) ^ m)) (t - stageOf b C n) (buildU (stageOf b C n) ω)‖
+    ∂coinMeasure
+
+/-- **`deadMix ≤ aliveMix`**, with no first-order/defect split.  Proved. -/
+theorem deadMix_le_aliveMix (b C : ℕ) (h : ℤ) (n m t : ℕ) (ht : stageOf b C n ≤ t) :
+    deadMix b C h n m t ≤ aliveMix b C h n m t := by
+  unfold deadMix aliveMix
+  refine integral_mono (integrable_comp_buildU _ _).norm (integrable_comp_buildU _ _).norm
+    fun ω => ?_
+  have e := condMean_aliveExt (stageOf b C n) (buildU (stageOf b C n) ω) (t - stageOf b C n)
+    (deadCorr (h * (b : ℝ) ^ m))
+  rw [show stageOf b C n + (t - stageOf b C n) = t by omega] at e
+  rw [e]
+  exact norm_condMean_self_le _ _ _
+
+/-- **`resLaw`-native node.**  Believed 45% for `3 ∤ b`.  Implies `NearObstaclePhaseMixing b`
+(`nearObstaclePhaseMixing_of_alive`) directly, with no defect part: the `resLaw` continuation
+weights `pathW` already contain the alive defects. -/
+def AliveObstacleMix (b : ℕ) : Prop :=
+  ∀ h : ℤ, h ≠ 0 → ∀ C : ℕ, ∃ (K : ℝ) (W : ℕ → ℝ), Summable (fun j => W (sched j)) ∧
+    ∀ N : ℕ, 1 ≤ N →
+      ∑ m ∈ Finset.range N, ∑ n ∈ Finset.range m,
+        ∑ t ∈ Finset.Ico (stageOf b C m) (stageOf b C m + (Nat.log 3 N + 1)), aliveMix b C h n m t ≤
+          K * (N : ℝ) ^ 2 * W N
+
+/-- **`resLaw`-native node ⇒ near-scale node.**  Proved. -/
+theorem nearObstaclePhaseMixing_of_alive {b : ℕ} (hb : 1 ≤ b) (hA : AliveObstacleMix b) :
+    NearObstaclePhaseMixing b := by
+  intro h hh C
+  obtain ⟨K, W, hW, hK⟩ := hA h hh C
+  refine ⟨K, W, hW, fun N hN => le_trans ?_ (hK N hN)⟩
+  exact Finset.sum_le_sum fun m hm => Finset.sum_le_sum fun n hn =>
+    Finset.sum_le_sum fun t ht => deadMix_le_aliveMix b C h n m t
+      ((stageOf_mono b C hb (Finset.mem_range.1 hn).le).trans (Finset.mem_Ico.1 ht).1)
 /-- **The crux, first-order part, off-diagonal form** (open; believed 45%).
 See `ResLawObstOff`. -/
 theorem resLawObstOff_resLaw {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) :
