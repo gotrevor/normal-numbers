@@ -110,9 +110,11 @@ def cruxLinks : List CruxLink := [
    "with x in place of (x + 1)² the claim is false (the Cantor measure is ×3-ergodic and no Cantor \
     point is 3-normal), so the mechanism must use the curvature of the map"⟩,
   ⟨``CantorBadNormal.fourierPairRate_descent,
-   [``cantor_not_normal_three_pow, ``schmidt_normal_not_winning],
+   [``cantor_not_normal_three_pow, ``schmidt_normal_not_winning, ``perStage_dead_not_enough],
    "the second moment must use 3 ∤ b (no Cantor point is 3ᵏ-normal), and the normality half \
-    must come from the measure, not the deletion game (normality is not potential winning)"⟩,
+    must come from the measure, not the deletion game (normality is not potential winning), and \
+    it must use the arithmetic of the centres p/q (per-stage dead counts alone admit a never \
+    2-normal descent)"⟩,
   ⟨``SchmidtGames.exists_computable_cantorPoint_mem_U_inter_Bad,
    [``schmidt_normal_not_winning, ``schmidt_fixedC_not_winning],
    "the computable descent must use the uniform-bad target (the same potential-guided descent \

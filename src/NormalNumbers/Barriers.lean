@@ -9,6 +9,7 @@ import NormalNumbers.Stoneham
 import NormalNumbers.StonehamBoundary
 import NormalNumbers.StonehamSixFailure
 import NormalNumbers.CantorLiouvilleAll
+import NormalNumbers.CantorBadNormal
 import NormalNumbers.UniformBad
 import NormalNumbers.ExplicitPQ
 import NormalNumbers.ExplicitSquareNonNormal
@@ -300,6 +301,16 @@ def liouville_pair_qSpan : Barrier :=
     "pair-universal mechanisms (carry coupling, ℚ-span or Wall-type closure arguments) aimed at \
      normality of some element of a ℚ-span"
 
+/-- Per-stage closeness of a deletion descent on `K` to the product measure does not give
+normality to a base prime to 3: the dyadic-obstacle descent kills ≤ 4/1024 per stage and is
+never 2-normal. -/
+def perStage_dead_not_enough : Barrier :=
+  .proved "descent on K against dyadic obstacles: ≤ 4 of 1024 children dead per stage, no point 2-normal"
+    CantorBadNormal.perStage_deadCount_not_enough
+    [``CantorBadNormal.perStage_deadCount_not_enough]
+    "second-moment / Fourier arguments for a deletion descent that use only per-stage dead counts \
+     (total-variation closeness to the Cantor measure), not the arithmetic of the obstacle centres"
+
 /-- Every registered barrier, for `#barrier_audit`. -/
 def allBarriers : List Lean.Name := [
   ``stoneham_two_not_six, ``cantorLiouville_three_dvd, ``cassels_cantor_ae_normal,
@@ -313,6 +324,6 @@ def allBarriers : List Lean.Name := [
   ``fermat_lambert_rational, ``driftOne_fails_at_71, ``furstenberg_constAvoid_false,
   ``powersOfTwo_constAvoid, ``cantor_not_normal_three_pow, ``schmidt_normal_not_winning,
   ``schmidt_fixedC_not_winning, ``bfs_unrestricted_scale_false, ``cantorExp_trivialCount_mu_three,
-  ``liouville_pair_qSpan]
+  ``liouville_pair_qSpan, ``perStage_dead_not_enough]
 
 end NormalNumbers.Barriers

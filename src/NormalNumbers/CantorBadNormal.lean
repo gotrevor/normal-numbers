@@ -242,7 +242,140 @@ theorem sep_rat {p p' : ℤ} {q q' : ℕ} (hq : 0 < q) (hq' : 0 < q')
   rw [← Int.cast_abs]
   exact_mod_cast Int.one_le_abs hz
 
+
 open UniformBad in
+/-- **Bucket count.**  Dead children each carry a centre `v f` within `ℓ/6` of their cylinder;
+centres lie in `B` buckets of width `sp` above `a − ℓ/6` and distinct centres are `sp`-separated.
+Then at most `2B` children are dead. -/
+theorem card_le_of_buckets (a ℓ sp : ℝ) (hℓ : 0 < ℓ) (hsp : 0 < sp) (B : ℕ)
+    (D : Finset (Fin 10 → Bool)) (v : (Fin 10 → Bool) → ℝ)
+    (hnear : ∀ f ∈ D, ∃ y ∈ Set.Icc (a + (J f : ℝ) * ℓ) (a + (J f : ℝ) * ℓ + ℓ),
+      y ∈ Set.Icc (v f - ℓ / 6) (v f + ℓ / 6))
+    (hrange : ∀ f ∈ D, (v f - (a - ℓ / 6)) / sp < B)
+    (hsep : ∀ f ∈ D, ∀ g ∈ D, v f ≠ v g → sp ≤ |v f - v g|) :
+    D.card ≤ 2 * B := by
+  classical
+  set lo := a - ℓ / 6
+  set β : (Fin 10 → Bool) → ℕ := fun f => ⌊(v f - lo) / sp⌋₊ with hβ
+  have hvlo : ∀ f ∈ D, 0 ≤ v f - lo := by
+    intro f hf
+    obtain ⟨y, ⟨hy1, hy2⟩, hy3, hy4⟩ := hnear f hf
+    have : (0 : ℝ) ≤ J f := by positivity
+    have : 0 ≤ (J f : ℝ) * ℓ := by positivity
+    simp only [lo]; linarith
+  have hsame : ∀ f ∈ D, ∀ g ∈ D, β f = β g → v f = v g := by
+    intro f hf g hg hfg
+    by_contra hne
+    have h1 := Nat.floor_le (div_nonneg (hvlo f hf) hsp.le)
+    have h2 := Nat.lt_floor_add_one ((v f - lo) / sp)
+    have h3 := Nat.floor_le (div_nonneg (hvlo g hg) hsp.le)
+    have h4 := Nat.lt_floor_add_one ((v g - lo) / sp)
+    simp only [hβ] at hfg
+    rw [hfg] at h1 h2
+    have : |(v f - lo) / sp - (v g - lo) / sp| < 1 := by rw [abs_lt]; constructor <;> linarith
+    rw [← sub_div, abs_div, abs_of_pos hsp, div_lt_one hsp] at this
+    have := hsep f hf g hg hne
+    simp at *; linarith
+  have hfib : ∀ t ∈ D.image β, (D.filter fun x => β x = t).card ≤ 2 := by
+    intro t ht
+    obtain ⟨f₀, hf₀D, hf₀⟩ := Finset.mem_image.1 ht
+    set F := D.filter fun x => β x = t
+    rw [← Finset.card_image_of_injective F (fun f g h => J_inj f g h)]
+    refine le_trans (Finset.card_le_card ?_) (card_children_le (v f₀) (ℓ / 6) a ℓ (by linarith) (3 ^ 10))
+    intro j hj
+    obtain ⟨f, hfF, rfl⟩ := Finset.mem_image.1 hj
+    have hfD := (Finset.mem_filter.1 hfF).1
+    have hfv : v f = v f₀ := hsame f hfD f₀ hf₀D (by rw [(Finset.mem_filter.1 hfF).2, hf₀])
+    obtain ⟨y, hy1, hy2⟩ := hnear f hfD
+    rw [hfv] at hy2
+    refine Finset.mem_filter.2 ⟨Finset.mem_range.2 (J_lt f), y, hy2, ?_⟩
+    push_cast; exact hy1
+  have hcard := Finset.card_le_mul_card_image D 2 hfib
+  have himg : (D.image β).card ≤ B := by
+    refine le_trans (Finset.card_le_card ?_) (le_of_eq (Finset.card_range B))
+    intro t ht
+    obtain ⟨f, hf, rfl⟩ := Finset.mem_image.1 ht
+    exact Finset.mem_range.2 ((Nat.floor_lt' (by
+      rintro rfl; have := hrange f hf; have := div_nonneg (hvlo f hf) hsp.le; simp at *; linarith)).2
+      (by exact_mod_cast hrange f hf))
+  omega
+
+open Classical in
+/-- **Dead children at a stage: at most 488 of 1024.** -/
+theorem card_dead_le (w : List Bool) :
+    ((Finset.univ : Finset (Fin 10 → Bool)).filter fun f => ¬ Alive 5 c₀ w (List.ofFn f)).card ≤ 488 := by
+  classical
+  set D := (Finset.univ : Finset (Fin 10 → Bool)).filter fun f => ¬ Alive 5 c₀ w (List.ofFn f)
+  have hdead : ∀ f : Fin 10 → Bool, ∃ pq : ℤ × ℕ, f ∈ D → (0 < pq.2 ∧
+      (3 : ℝ) ^ w.length ≤ (pq.2 : ℝ) ^ 2 * 3 ^ 5 ∧ (pq.2 : ℝ) ^ 2 * 3 ^ 5 < 3 ^ (w.length + 2 * 5) ∧
+      ∃ y ∈ cyl (w ++ List.ofFn f), |y - pq.1 / pq.2| < 2 * c₀ / (pq.2 : ℝ) ^ 2) := by
+    intro f
+    by_cases hf : f ∈ D
+    · have := (Finset.mem_filter.1 hf).2
+      unfold Alive at this; push Not at this
+      obtain ⟨p, q, hq, h1, h2, y, hy, hlt⟩ := this
+      exact ⟨(p, q), fun _ => ⟨hq, h1, h2, y, hy, hlt⟩⟩
+    · exact ⟨(0, 1), fun h => absurd h hf⟩
+  choose pq hpq using hdead
+  set L := w.length
+  set a := cylLeft w
+  set T : ℝ := (3 : ℝ) ^ L with hT
+  have hTpos : 0 < T := by positivity
+  set ℓ : ℝ := 1 / (T * 3 ^ 10) with hℓ
+  set sp : ℝ := 1 / (T * 3 ^ 5) with hsp
+  have hℓpos : 0 < ℓ := by positivity
+  have hsppos : 0 < sp := by positivity
+  set v : (Fin 10 → Bool) → ℝ := fun f => ((pq f).1 : ℝ) / (pq f).2 with hv
+  have hrad : ∀ f ∈ D, 2 * c₀ / ((pq f).2 : ℝ) ^ 2 ≤ ℓ / 6 := by
+    intro f hf
+    obtain ⟨hq, h1, -, -⟩ := hpq f hf
+    have hq0 : (0:ℝ) < (pq f).2 := by exact_mod_cast hq
+    have hq2 : (0 : ℝ) < ((pq f).2 : ℝ) ^ 2 := by positivity
+    rw [hℓ, c₀, div_le_iff₀ hq2]
+    field_simp
+    nlinarith
+  have hchild : ∀ f, cyl (w ++ List.ofFn f) = Set.Icc (a + (J f : ℝ) * ℓ) (a + (J f : ℝ) * ℓ + ℓ) := by
+    intro f
+    unfold cyl
+    rw [cylLeft_child, List.length_append, List.length_ofFn, pow_add, ← hT]
+  have hnear : ∀ f ∈ D, ∃ y ∈ Set.Icc (a + (J f : ℝ) * ℓ) (a + (J f : ℝ) * ℓ + ℓ),
+      y ∈ Set.Icc (v f - ℓ / 6) (v f + ℓ / 6) := by
+    intro f hf
+    obtain ⟨-, -, -, y, hy, hlt⟩ := hpq f hf
+    rw [hchild] at hy
+    have := (hlt.trans_le (hrad f hf)).le
+    rw [abs_le] at this
+    exact ⟨y, hy, ⟨by simp only [hv]; linarith [this.1, this.2], by simp only [hv]; linarith [this.1, this.2]⟩⟩
+  have hrange : ∀ f ∈ D, (v f - (a - ℓ / 6)) / sp < (244 : ℕ) := by
+    intro f hf
+    obtain ⟨y, ⟨hy1, hy2⟩, hy3, hy4⟩ := hnear f hf
+    have hJ : (J f : ℝ) + 1 ≤ 3 ^ 10 := by
+      have := J_lt f; exact_mod_cast (by omega : J f + 1 ≤ 3 ^ 10)
+    have hℓT : (3 : ℝ) ^ 10 * ℓ = 1 / T := by rw [hℓ]; field_simp
+    have hup : v f - (a - ℓ / 6) ≤ 1 / T + ℓ / 3 := by
+      have : (J f : ℝ) * ℓ + ℓ ≤ 3 ^ 10 * ℓ := by nlinarith
+      linarith
+    rw [div_lt_iff₀ hsppos]
+    have : 1 / T + ℓ / 3 < 244 * sp := by
+      rw [hℓ, hsp]; field_simp; norm_num
+    push_cast; linarith
+  have hsep : ∀ f ∈ D, ∀ g ∈ D, v f ≠ v g → sp ≤ |v f - v g| := by
+    intro f hf g hg hne
+    have hsep := sep_rat (hpq f hf).1 (hpq g hg).1 hne
+    have hf0 : (0:ℝ) < (pq f).2 := by exact_mod_cast (hpq f hf).1
+    have hg0 : (0:ℝ) < (pq g).2 := by exact_mod_cast (hpq g hg).1
+    have hqq : ((pq f).2 : ℝ) * (pq g).2 < T * 3 ^ 5 := by
+      have hf2 := (hpq f hf).2.2.1; have hg2 := (hpq g hg).2.2.1
+      rw [pow_add, ← hT] at hf2 hg2
+      norm_num at hf2 hg2
+      have ha : ((pq f).2 : ℝ) ^ 2 < T * 3 ^ 5 := by nlinarith
+      have hb : ((pq g).2 : ℝ) ^ 2 < T * 3 ^ 5 := by nlinarith
+      nlinarith [sq_nonneg (((pq f).2 : ℝ) - (pq g).2)]
+    have : sp < 1 / (((pq f).2 : ℝ) * (pq g).2) := by
+      rw [hsp]; exact one_div_lt_one_div_of_lt (by positivity) hqq
+    simp only [hv]; linarith
+  exact card_le_of_buckets a ℓ sp hℓpos hsppos 244 D v hnear hrange hsep
+
 /-- **Game half: an alive child always exists.**  Proved.
 
 English proof.  Fix `w`, `L = |w|`.  Charged rationals have `q² < 3^{L+5}`, so distinct ones are
@@ -254,125 +387,9 @@ theorem exists_alive (w : List Bool) : ∃ u : List Bool, u.length = 2 * 5 ∧ A
   classical
   by_contra hcon
   push Not at hcon
-  have hdead : ∀ f : Fin 10 → Bool, ∃ pq : ℤ × ℕ, 0 < pq.2 ∧
-      (3 : ℝ) ^ w.length ≤ (pq.2 : ℝ) ^ 2 * 3 ^ 5 ∧ (pq.2 : ℝ) ^ 2 * 3 ^ 5 < 3 ^ (w.length + 2 * 5) ∧
-      ∃ y ∈ cyl (w ++ List.ofFn f), |y - pq.1 / pq.2| < 2 * c₀ / (pq.2 : ℝ) ^ 2 := by
-    intro f
-    have := hcon (List.ofFn f) (by simp)
-    unfold Alive at this; push Not at this
-    obtain ⟨p, q, hq, h1, h2, y, hy, hlt⟩ := this
-    exact ⟨(p, q), hq, h1, h2, y, hy, hlt⟩
-  choose pq hpq using hdead
-  set L := w.length
-  set a := cylLeft w
-  set T : ℝ := (3 : ℝ) ^ L with hT
-  have hTpos : 0 < T := by positivity
-  set ℓ : ℝ := 1 / (T * 3 ^ 10) with hℓ
-  set sp : ℝ := 1 / (T * 3 ^ 5) with hsp
-  have hℓpos : 0 < ℓ := by positivity
-  have hsppos : 0 < sp := by positivity
-  set v : (Fin 10 → Bool) → ℝ := fun f => ((pq f).1 : ℝ) / (pq f).2 with hv
-  set lo := a - ℓ / 6
-  set β : (Fin 10 → Bool) → ℕ := fun f => ⌊(v f - lo) / sp⌋₊ with hβ
-  -- the radius is at most ℓ / 6
-  have hrad : ∀ f, 2 * c₀ / ((pq f).2 : ℝ) ^ 2 ≤ ℓ / 6 := by
-    intro f
-    obtain ⟨hq, h1, -, -⟩ := hpq f
-    have hq0 : (0:ℝ) < (pq f).2 := by exact_mod_cast hq
-    have hq2 : (0 : ℝ) < ((pq f).2 : ℝ) ^ 2 := by positivity
-    rw [hℓ, c₀, div_le_iff₀ hq2]
-    field_simp
-    nlinarith
-  -- the child interval
-  have hchild : ∀ f, cyl (w ++ List.ofFn f) = Set.Icc (a + (J f : ℝ) * ℓ) (a + (J f : ℝ) * ℓ + ℓ) := by
-    intro f
-    unfold cyl
-    rw [cylLeft_child, List.length_append, List.length_ofFn, pow_add, ← hT]
-  -- every witness y sits within ℓ/6 of v f
-  have hnear : ∀ f, ∃ y ∈ Set.Icc (a + (J f : ℝ) * ℓ) (a + (J f : ℝ) * ℓ + ℓ),
-      y ∈ Set.Icc (v f - ℓ / 6) (v f + ℓ / 6) := by
-    intro f
-    obtain ⟨-, -, -, y, hy, hlt⟩ := hpq f
-    rw [hchild] at hy
-    have := (hlt.trans_le (hrad f)).le
-    rw [abs_le] at this
-    exact ⟨y, hy, ⟨by simp only [hv]; linarith [this.1, this.2], by simp only [hv]; linarith [this.1, this.2]⟩⟩
-  have hJle : ∀ f, (J f : ℝ) + 1 ≤ 3 ^ 10 := fun f => by
-    have := J_lt f; exact_mod_cast (by omega : J f + 1 ≤ 3 ^ 10)
-  have hJ0 : ∀ f, (0 : ℝ) ≤ J f := fun f => by positivity
-  have hℓT : (3 : ℝ) ^ 10 * ℓ = 1 / T := by rw [hℓ]; field_simp
-  -- bucket bound
-  have hβlt : ∀ f, β f < 244 := by
-    intro f
-    obtain ⟨y, ⟨hy1, hy2⟩, hy3, hy4⟩ := hnear f
-    have hup : v f - lo ≤ 1 / T + ℓ / 3 := by
-      have := hJle f
-      have : (J f : ℝ) * ℓ + ℓ ≤ 3 ^ 10 * ℓ := by nlinarith
-      simp only [lo]; linarith
-    have hfl : (v f - lo) / sp < 244 := by
-      rw [div_lt_iff₀ hsppos]
-      have : 1 / T + ℓ / 3 < 244 * sp := by
-        rw [hℓ, hsp]; field_simp; norm_num
-      linarith
-    exact (Nat.floor_lt' (by norm_num)).2 (by exact_mod_cast hfl)
-  have hvlo : ∀ f, 0 ≤ v f - lo := by
-    intro f
-    obtain ⟨y, ⟨hy1, hy2⟩, hy3, hy4⟩ := hnear f
-    have := hJ0 f; have : 0 ≤ (J f : ℝ) * ℓ := by positivity
-    simp only [lo]; linarith
-  -- same bucket ⇒ same centre
-  have hsame : ∀ f g, β f = β g → v f = v g := by
-    intro f g hfg
-    by_contra hne
-    have hsep := sep_rat (hpq f).1 (hpq g).1 hne
-    have hlt : |v f - v g| < sp := by
-      have h1 := Nat.floor_le (div_nonneg (hvlo f) hsppos.le)
-      have h2 := Nat.lt_floor_add_one ((v f - lo) / sp)
-      have h3 := Nat.floor_le (div_nonneg (hvlo g) hsppos.le)
-      have h4 := Nat.lt_floor_add_one ((v g - lo) / sp)
-      simp only [hβ] at hfg
-      rw [hfg] at h1 h2
-      have : |(v f - lo) / sp - (v g - lo) / sp| < 1 := by rw [abs_lt]; constructor <;> linarith
-      rw [← sub_div, abs_div, abs_of_pos hsppos, div_lt_one hsppos] at this
-      simpa using this
-    have hqq : ((pq f).2 : ℝ) * (pq g).2 < T * 3 ^ 5 := by
-      have hf2 := (hpq f).2.2.1; have hg2 := (hpq g).2.2.1
-      rw [pow_add, ← hT] at hf2 hg2
-      norm_num at hf2 hg2
-      have hf0 : (0:ℝ) < (pq f).2 := by exact_mod_cast (hpq f).1
-      have hg0 : (0:ℝ) < (pq g).2 := by exact_mod_cast (hpq g).1
-      have ha : ((pq f).2 : ℝ) ^ 2 < T * 3 ^ 5 := by nlinarith
-      have hb : ((pq g).2 : ℝ) ^ 2 < T * 3 ^ 5 := by nlinarith
-      nlinarith [sq_nonneg (((pq f).2 : ℝ) - (pq g).2)]
-    have : sp < 1 / (((pq f).2 : ℝ) * (pq g).2) := by
-      have hf0 : (0:ℝ) < (pq f).2 := by exact_mod_cast (hpq f).1
-      have hg0 : (0:ℝ) < (pq g).2 := by exact_mod_cast (hpq g).1
-      rw [hsp]; exact one_div_lt_one_div_of_lt (by positivity) hqq
-    simp only [hv] at hlt
-    linarith
-  -- fibres have at most two elements
-  have hfib : ∀ t ∈ (Finset.univ : Finset (Fin 10 → Bool)).image β,
-      ((Finset.univ : Finset (Fin 10 → Bool)).filter fun x => β x = t).card ≤ 2 := by
-    intro t ht
-    obtain ⟨f₀, -, hf₀⟩ := Finset.mem_image.1 ht
-    set F := (Finset.univ : Finset (Fin 10 → Bool)).filter fun x => β x = t
-    rw [← Finset.card_image_of_injective F (fun f g h => J_inj f g h)]
-    refine le_trans (Finset.card_le_card ?_) (card_children_le (v f₀) (ℓ / 6) a ℓ (by linarith) (3 ^ 10))
-    intro j hj
-    obtain ⟨f, hfF, rfl⟩ := Finset.mem_image.1 hj
-    have hfv : v f = v f₀ := hsame f f₀ (by rw [(Finset.mem_filter.1 hfF).2, hf₀])
-    obtain ⟨y, hy1, hy2⟩ := hnear f
-    rw [hfv] at hy2
-    refine Finset.mem_filter.2 ⟨Finset.mem_range.2 (J_lt f), y, hy2, ?_⟩
-    push_cast; exact hy1
-  have hcard := Finset.card_le_mul_card_image (Finset.univ : Finset (Fin 10 → Bool)) 2 hfib
-  have himg : ((Finset.univ : Finset (Fin 10 → Bool)).image β).card ≤ 244 := by
-    refine le_trans (Finset.card_le_card ?_) (le_of_eq (Finset.card_range 244))
-    intro t ht
-    obtain ⟨f, -, rfl⟩ := Finset.mem_image.1 ht
-    exact Finset.mem_range.2 (hβlt f)
-  have : (Finset.univ : Finset (Fin 10 → Bool)).card = 1024 := by simp
-  omega
+  have h := card_dead_le w
+  rw [Finset.filter_true_of_mem fun f _ => hcon (List.ofFn f) (by simp)] at h
+  simp at h
 
 
 /-- **The Cantor point lies in the cylinder of each prefix.**  Proved: the tail
@@ -558,6 +575,233 @@ theorem fourierPairRate_descent {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) :
 theorem casselsRate_descent {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) :
     CasselsRate descentLaw b :=
   casselsRate_of_fourierPairRate (fourierPairRate_descent hb h3)
+
+/-! ## Known-false sibling: the same descent against base-2 obstacles -/
+
+/-- The child `w ++ u` avoids every dyadic obstacle `B(p/2ⁿ, 2·2^{−n−36})` charged to the stage
+with prefix `w` (`3^{|w|−10} ≤ 2ⁿ < 3^{|w|}`). -/
+def Alive₂ (w u : List Bool) : Prop :=
+  ∀ (n : ℕ) (p : ℤ), (3 : ℝ) ^ w.length ≤ (2 : ℝ) ^ n * 3 ^ 10 → (2 : ℝ) ^ n < 3 ^ w.length →
+    ∀ y ∈ cyl (w ++ u), 2 / ((2 : ℝ) ^ n * 2 ^ 36) ≤ |y - p / 2 ^ n|
+
+theorem sep_dyadic {p p' : ℤ} {n m : ℕ} (hne : (p : ℝ) / 2 ^ n ≠ p' / 2 ^ m) :
+    1 / (2 : ℝ) ^ (max n m) ≤ |(p : ℝ) / 2 ^ n - p' / 2 ^ m| := by
+  set M := max n m
+  have hn : (2 : ℝ) ^ M = 2 ^ n * 2 ^ (M - n) := by rw [← pow_add]; congr 1; omega
+  have hm : (2 : ℝ) ^ M = 2 ^ m * 2 ^ (M - m) := by rw [← pow_add]; congr 1; omega
+  have heq : (p : ℝ) / 2 ^ n - p' / 2 ^ m = ((p * 2 ^ (M - n) - p' * 2 ^ (M - m) : ℤ) : ℝ) / 2 ^ M := by
+    push_cast
+    rw [sub_div, hn, mul_div_mul_right _ _ (by positivity), ← hn, hm,
+      mul_div_mul_right _ _ (by positivity)]
+  rw [heq, abs_div, abs_of_pos (by positivity : (0:ℝ) < 2 ^ M)]
+  apply div_le_div_of_nonneg_right _ (by positivity)
+  have hz : p * 2 ^ (M - n) - p' * 2 ^ (M - m) ≠ 0 := by
+    intro h; apply hne
+    have : (p : ℝ) / 2 ^ n - p' / 2 ^ m = 0 := by rw [heq]; simp [h]
+    linarith
+  rw [← Int.cast_abs]
+  exact_mod_cast Int.one_le_abs hz
+
+open Classical in
+/-- **Dead children against the dyadic obstacles: at most 4 of 1024.** -/
+theorem card_dead₂_le (w : List Bool) :
+    ((Finset.univ : Finset (Fin 10 → Bool)).filter fun f => ¬ Alive₂ w (List.ofFn f)).card ≤ 4 := by
+  classical
+  set D := (Finset.univ : Finset (Fin 10 → Bool)).filter fun f => ¬ Alive₂ w (List.ofFn f)
+  have hdead : ∀ f : Fin 10 → Bool, ∃ np : ℕ × ℤ, f ∈ D → (
+      (3 : ℝ) ^ w.length ≤ (2 : ℝ) ^ np.1 * 3 ^ 10 ∧ (2 : ℝ) ^ np.1 < 3 ^ w.length ∧
+      ∃ y ∈ cyl (w ++ List.ofFn f), |y - np.2 / 2 ^ np.1| < 2 / ((2 : ℝ) ^ np.1 * 2 ^ 36)) := by
+    intro f
+    by_cases hf : f ∈ D
+    · have := (Finset.mem_filter.1 hf).2
+      unfold Alive₂ at this; push Not at this
+      obtain ⟨n, p, h1, h2, y, hy, hlt⟩ := this
+      exact ⟨(n, p), fun _ => ⟨h1, h2, y, hy, hlt⟩⟩
+    · exact ⟨(0, 0), fun h => absurd h hf⟩
+  choose np hnp using hdead
+  set L := w.length
+  set a := cylLeft w
+  set T : ℝ := (3 : ℝ) ^ L with hT
+  have hTpos : 0 < T := by positivity
+  set ℓ : ℝ := 1 / (T * 3 ^ 10) with hℓ
+  set sp : ℝ := 1 / T with hsp
+  have hℓpos : 0 < ℓ := by positivity
+  have hsppos : 0 < sp := by positivity
+  set v : (Fin 10 → Bool) → ℝ := fun f => ((np f).2 : ℝ) / 2 ^ (np f).1 with hv
+  have hrad : ∀ f ∈ D, 2 / ((2 : ℝ) ^ (np f).1 * 2 ^ 36) ≤ ℓ / 6 := by
+    intro f hf
+    obtain ⟨h1, -, -⟩ := hnp f hf
+    have h2n : (0 : ℝ) < 2 ^ (np f).1 := by positivity
+    rw [hℓ, div_le_iff₀ (by positivity)]
+    field_simp
+    nlinarith
+  have hchild : ∀ f, cyl (w ++ List.ofFn f) = Set.Icc (a + (J f : ℝ) * ℓ) (a + (J f : ℝ) * ℓ + ℓ) := by
+    intro f
+    unfold cyl
+    rw [cylLeft_child, List.length_append, List.length_ofFn, pow_add, ← hT]
+  have hnear : ∀ f ∈ D, ∃ y ∈ Set.Icc (a + (J f : ℝ) * ℓ) (a + (J f : ℝ) * ℓ + ℓ),
+      y ∈ Set.Icc (v f - ℓ / 6) (v f + ℓ / 6) := by
+    intro f hf
+    obtain ⟨-, -, y, hy, hlt⟩ := hnp f hf
+    rw [hchild] at hy
+    have := (hlt.trans_le (hrad f hf)).le
+    rw [abs_le] at this
+    exact ⟨y, hy, ⟨by simp only [hv]; linarith [this.1, this.2], by simp only [hv]; linarith [this.1, this.2]⟩⟩
+  have hrange : ∀ f ∈ D, (v f - (a - ℓ / 6)) / sp < (2 : ℕ) := by
+    intro f hf
+    obtain ⟨y, ⟨hy1, hy2⟩, hy3, hy4⟩ := hnear f hf
+    have hJ : (J f : ℝ) + 1 ≤ 3 ^ 10 := by
+      have := J_lt f; exact_mod_cast (by omega : J f + 1 ≤ 3 ^ 10)
+    have hℓT : (3 : ℝ) ^ 10 * ℓ = 1 / T := by rw [hℓ]; field_simp
+    have hup : v f - (a - ℓ / 6) ≤ 1 / T + ℓ / 3 := by
+      have : (J f : ℝ) * ℓ + ℓ ≤ 3 ^ 10 * ℓ := by nlinarith
+      linarith
+    rw [div_lt_iff₀ hsppos]
+    have : 1 / T + ℓ / 3 < 2 * sp := by
+      rw [hℓ, hsp]; field_simp; norm_num
+    push_cast; linarith
+  have hsep : ∀ f ∈ D, ∀ g ∈ D, v f ≠ v g → sp ≤ |v f - v g| := by
+    intro f hf g hg hne
+    have h := sep_dyadic hne
+    have hM : (2 : ℝ) ^ (max (np f).1 (np g).1) < T := by
+      rcases le_total (np f).1 (np g).1 with hle | hle
+      · rw [max_eq_right hle]; exact (hnp g hg).2.1
+      · rw [max_eq_left hle]; exact (hnp f hf).2.1
+    have : sp ≤ 1 / (2 : ℝ) ^ (max (np f).1 (np g).1) := by
+      rw [hsp]; exact one_div_le_one_div_of_le (by positivity) hM.le
+    simp only [hv]; linarith
+  exact card_le_of_buckets a ℓ sp hℓpos hsppos 2 D v hnear hrange hsep
+
+open Classical in
+/-- Generic selector: keep an alive block, else some alive block. -/
+noncomputable def selG (A : List Bool → List Bool → Prop) (R : ℕ) (w u : List Bool) : List Bool :=
+  if A w u then u else if h : ∃ v : List Bool, v.length = R ∧ A w v then h.choose else u
+
+/-- Generic descent prefix. -/
+noncomputable def buildG (A : List Bool → List Bool → Prop) (R : ℕ) : ℕ → (ℕ → Bool) → List Bool
+  | 0, _ => []
+  | s + 1, ω => buildG A R s ω ++ selG A R (buildG A R s ω) (List.ofFn fun i : Fin R => ω (R * s + i))
+
+/-- Generic descent selector sequence. -/
+noncomputable def descentG (A : List Bool → List Bool → Prop) (R : ℕ) (ω : ℕ → Bool) (i : ℕ) : Bool :=
+  (buildG A R (i + 1) ω).getD i false
+
+theorem length_buildG (A : List Bool → List Bool → Prop) (R : ℕ) (ω : ℕ → Bool) (s : ℕ) :
+    (buildG A R s ω).length = R * s := by
+  induction s with
+  | zero => rfl
+  | succ s ih =>
+    have : ∀ w u : List Bool, u.length = R → (selG A R w u).length = R := by
+      intro w u hu; unfold selG; split_ifs with h1 h2
+      · exact hu
+      · exact h2.choose_spec.1
+      · exact hu
+    simp [buildG, ih, this, List.length_ofFn]; ring
+
+theorem buildG_prefix (A : List Bool → List Bool → Prop) (R : ℕ) (ω : ℕ → Bool) {s t : ℕ}
+    (h : s ≤ t) : buildG A R s ω <+: buildG A R t ω := by
+  induction h with
+  | refl => exact List.prefix_refl _
+  | step _ ih => exact ih.trans (List.prefix_append _ _)
+
+theorem ofFn_descentG (A : List Bool → List Bool → Prop) {R : ℕ} (hR : 0 < R) (ω : ℕ → Bool) (s : ℕ) :
+    (List.ofFn fun i : Fin (R * s) => descentG A R ω i) = buildG A R s ω := by
+  have key : ∀ {i a b : ℕ}, a ≤ b → i < R * a →
+      (buildG A R a ω).getD i false = (buildG A R b ω).getD i false := by
+    intro i a b hab hia
+    obtain ⟨l, hl⟩ := buildG_prefix A R ω hab
+    rw [← hl, List.getD_append _ _ _ _ (by rw [length_buildG]; exact hia)]
+  apply List.ext_getElem
+  · simp [length_buildG]
+  · intro i h1 h2
+    simp only [List.getElem_ofFn]
+    have hi : i < R * s := by simpa using h1
+    have h1' : i < R * (i + 1) := by nlinarith
+    unfold descentG
+    rw [key (le_max_left (i+1) s) h1', ← key (le_max_right (i+1) s) hi,
+      List.getD_eq_getElem _ _ h2]
+
+section MeasG
+local instance : MeasurableSpace (List Bool) := ⊤
+local instance : MeasurableSingletonClass (List Bool) := ⟨fun _ => trivial⟩
+
+theorem measurable_descentG (A : List Bool → List Bool → Prop) (R : ℕ) : Measurable (descentG A R) := by
+  have hb : ∀ s, Measurable (buildG A R s) := by
+    intro s
+    induction s with
+    | zero => exact measurable_const
+    | succ s ih =>
+      have hb : Measurable fun ω : ℕ → Bool => (fun i : Fin R => ω (R * s + i)) :=
+        measurable_pi_lambda _ fun i => measurable_pi_apply _
+      have hg : Measurable fun x : List Bool × (Fin R → Bool) =>
+          x.1 ++ selG A R x.1 (List.ofFn x.2) := measurable_of_countable _
+      exact hg.comp (ih.prodMk hb)
+  refine measurable_pi_lambda _ fun i => ?_
+  exact (measurable_from_top (f := fun l : List Bool => l.getD i false)).comp (hb (i + 1))
+end MeasG
+
+theorem exists_alive₂ (w : List Bool) : ∃ u : List Bool, u.length = 10 ∧ Alive₂ w u := by
+  classical
+  by_contra hcon
+  push Not at hcon
+  have h := card_dead₂_le w
+  rw [Finset.filter_true_of_mem fun f _ => hcon (List.ofFn f) (by simp)] at h
+  simp at h
+
+/-- **The sibling's points avoid every dyadic obstacle**: `2^{−36} < ‖2ⁿ x‖`. -/
+theorem descent₂_dnear (ω : ℕ → Bool) (n : ℕ) :
+    (2 : ℝ) ^ (-(36 : ℝ)) < UniformBad.dnear ((2 : ℝ) ^ n * cpt (descentG Alive₂ 10 ω)) := by
+  set x := cpt (descentG Alive₂ 10 ω)
+  set s := Nat.log 3 (2 ^ n) / 10
+  have hne : 2 ^ n ≠ 0 := by positivity
+  have hlo : 3 ^ (10 * s) ≤ 2 ^ n :=
+    le_trans (Nat.pow_le_pow_right (by norm_num) (Nat.mul_div_le _ _)) (Nat.pow_log_le_self 3 hne)
+  have hhi : 2 ^ n < 3 ^ (10 * (s + 1)) :=
+    lt_of_lt_of_le (Nat.lt_pow_succ_log_self (by norm_num) _)
+      (Nat.pow_le_pow_right (by norm_num) (by omega))
+  have hmem := cpt_mem_cyl (descentG Alive₂ 10 ω) (10 * (s + 1 + 1))
+  rw [ofFn_descentG Alive₂ (by norm_num)] at hmem
+  -- the stage `s + 1` block is alive
+  have hal : Alive₂ (buildG Alive₂ 10 (s + 1) ω)
+      (selG Alive₂ 10 (buildG Alive₂ 10 (s + 1) ω)
+        (List.ofFn fun i : Fin 10 => ω (10 * (s + 1) + i))) := by
+    unfold selG; split_ifs with h1 h2
+    · exact h1
+    · exact h2.choose_spec.2
+    · exact absurd (exists_alive₂ _) h2
+  have hlen := length_buildG Alive₂ 10 ω (s + 1)
+  set p : ℤ := round ((2 : ℝ) ^ n * x)
+  have key := hal n p (by
+      rw [hlen, show 10 * (s + 1) = 10 * s + 10 by ring, pow_add]
+      gcongr; exact_mod_cast hlo)
+    (by rw [hlen]; exact_mod_cast hhi) x hmem
+  have h2n : (0 : ℝ) < 2 ^ n := by positivity
+  have hd : UniformBad.dnear ((2 : ℝ) ^ n * x) = (2 : ℝ) ^ n * |x - p / 2 ^ n| := by
+    unfold UniformBad.dnear
+    rw [← abs_of_pos h2n, ← abs_mul, abs_of_pos h2n]
+    congr 1; rw [mul_sub, mul_div_cancel₀ _ h2n.ne']
+  rw [hd]
+  have : (2 : ℝ) ^ (-(36 : ℝ)) = 1 / 2 ^ 36 := by
+    rw [Real.rpow_neg (by norm_num)]; norm_num
+  rw [this]
+  calc 1 / (2 : ℝ) ^ 36 < 2 / 2 ^ 36 := by norm_num
+    _ = (2 : ℝ) ^ n * (2 / ((2 : ℝ) ^ n * 2 ^ 36)) := by field_simp
+    _ ≤ _ := by gcongr
+
+
+open Classical in
+/-- **Refuted: per-stage dead counts do not give normality.**  The same descent run against the
+dyadic obstacles `B(p/2ⁿ, 2·2^{−n−36})` kills at most 4 of the 1024 children at every stage
+(fewer than `descentLaw`'s 488, `card_dead_le`), yet every point it produces lies in `K` and is
+normal to the base 2, prime to 3, for no coin sequence.  So the crux `fourierPairRate_descent`
+cannot follow from per-stage closeness to the product measure; it must use the arithmetic of
+the centres `p/q`. -/
+theorem perStage_deadCount_not_enough :
+    (∀ w : List Bool, ((Finset.univ : Finset (Fin 10 → Bool)).filter
+        fun f => ¬ Alive₂ w (List.ofFn f)).card ≤ 4) ∧
+      ∀ ω, cpt (descentG Alive₂ 10 ω) ∈ cantorSet ∧ ¬ IsNormal 2 (cpt (descentG Alive₂ 10 ω)) :=
+  ⟨card_dead₂_le, fun ω => ⟨cpt_mem_cantorSet _,
+    UniformBad.not_isNormal_of_uniformBad (c := 36) le_rfl (fun n => descent₂_dnear ω n)⟩⟩
 
 /-! ## Closed route: a `×3`-invariant measure on `K ∩ Bad`
 
