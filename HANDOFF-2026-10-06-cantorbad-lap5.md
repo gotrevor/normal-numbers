@@ -30,3 +30,12 @@ The general-S' case needs decorrelation of lacunary sums at rationals p/q near K
 - Cheap moves are exhausted: the window is exactly the ternary positions in [log₃N, N log₃b], beyond the
   reach of Cassels averaging (M = log₃N/2).  Next: state the decorrelation node (μ_K: good rational
   approximation at scale Q vs base-b sums up to 2 log_b Q) and derive `midStages` from it.
+
+## Stuck assessment (end of lap 5)
+Only on-path sorry: `midStages` (stages with N^{1/40} ≲ 3^{10S'} ≲ b^N).  Every cheap route has been tried and
+recorded: absolute/per-stage forms (`DeadCharCancelAbs`, `StageSaving`, `cs_bootstrap_floor`), derandomization
+(floor ≈ √c), Kaufman-style Fourier decay (K has Fourier dimension 0), Hochman–Shmerkin (multi-year
+formalization).  Closing it needs research-level input: decorrelation of rationals near K from lacunary
+sums (Khalil–Lüthi / Bénard–He–Zhang-strength), with no known proof.
+Operator options: (a) accept a conditional headline from a decorrelation node; (b) keep the treadmill
+narrowing it; (c) retarget.
