@@ -4672,6 +4672,12 @@ every depth `j` below the top of `hbᵐ`, the Riesz majorant of the `M = ⌊log�
 analogue of `cassels_Bf`.  Fails for `b = 3` (`hbᵐ ≡ 0 mod 3^j` for `m ≥ j`, every factor is 1).
 Shallow depths (`3^j ≤ N`, period of `b mod 3^j` at most `N`) reduce to exact equidistribution of
 `bᵐ` in its subgroup mod `3^j`; deep `j` is an Erdős-ternary-type digit statement (open).
+Literature route (lap 10, not yet read in full): the windows are Korobov-type sums
+`Σ_{m<N} e(a bᵐ/3^k)`, `k ≤ j`; modulo a power of a fixed prime, Postnikov (1956) turns `bᵐ` into a
+3-adic polynomial in `m` and Vinogradov's mean value theorem gives nontrivial bounds for `N` much
+shorter than `3^k` (cf. arXiv:1606.07911, arXiv:1605.07553).  Whether the admissible range reaches
+`k ≍ N log₃ b` (the depth of the obstacle families) is the question to check; it plausibly covers
+only `k ≲ (log N)^{O(1)}`.
 Evidence (`scripts/cantorbad_3adicwin.py`, `N = 3⁸`, `M = 4`, `h = 1`, `j = 4..64`): means `.13–.18`
 for `b = 2, 5, 7`, matching the random-digit value `(2/π)⁴ ≈ .164` (a power saving `N^{−c}`); control
 `b = 3`: `1.0` at every `j`. -/
