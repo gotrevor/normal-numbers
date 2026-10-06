@@ -4678,6 +4678,10 @@ Literature route (lap 10, not yet read in full): the windows are Korobov-type su
 shorter than `3^k` (cf. arXiv:1606.07911, arXiv:1605.07553).  Whether the admissible range reaches
 `k ≍ N log₃ b` (the depth of the obstacle families) is the question to check; it plausibly covers
 only `k ≲ (log N)^{O(1)}`.
+The depth the crux needs is `j ≈ (m log₃ b)/2` (preperiodic obstacles have `q ≈ 3^{L/2}`): the
+*middle* ternary digits of `hbᵐ`.  Average non-degeneracy of middle digits of `2ᵐ` in base 3 is,
+as far as lap 10 knows, open (Senge–Straus/Stewart only count nonzero digits); so through these
+families the crux carries a digits-of-powers statement unless their phases cancel by another route.
 Evidence (`scripts/cantorbad_3adicwin.py`, `N = 3⁸`, `M = 4`, `h = 1`, `j = 4..64`): means `.13–.18`
 for `b = 2, 5, 7`, matching the random-digit value `(2/π)⁴ ≈ .164` (a power saving `N^{−c}`); control
 `b = 3`: `1.0` at every `j`. -/
