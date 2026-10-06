@@ -263,7 +263,75 @@ theorem not_isNormal_of_not_profileOK (μ₀ : ℚ) (hμ : 1 < μ₀) (ω : ℕ 
     linarith
   nlinarith
 
-/-- **Normal below the threshold, a.e.**  Open node; confidence 70% (true), Lean cost a few laps.
+/-! ## The crux: what the window sees (2026-10-06 lap 1)
+
+The kickoff's port of `CantorLiouvilleAll.secondMoment_le_b` controls the ternary digits of
+`h(bᵈ−1)tᵐ` mod `3ʲ` with `3ʲ ≤ N`, i.e. the *low* `O(log N)` digits, through the orbit of `t`.
+For `m` in the **shadow** of a run (`a ≤ sm < E`), the places `[sm, E)` are forced, so the
+Fourier coefficient sees only digits of `h(bᵈ−1)tᵐ` at relative positions `≥ E − sm`, which is
+linear in `N` for most shadow `m`.  No orbit mod `3ʲ` with `3ʲ ≤ N` reaches them
+(`t^{m₀+3^{r−v}i}` moves digit `r` only along steps `3^{r−v} ≫ N`).  The shadow is a positive
+fraction of `[0, E/s)` (`shadow_card_ge`), so the trivial bound on it contributes `O(1)` per run
+to the Davenport–Erdős–LeVeque sum, which diverges.  The digits that remain controllable are
+the *top* ones, set by `{m log₃ t}`; with a power discrepancy bound (`LogDiscrepancy`, from
+Baker's theorem) the top `ε log N` digits suffice, and they are free because
+`(s+L)m > μ₀ a` below the threshold (`window_covered_imp`). -/
+
+/-- **Window lemma.**  A run `[a, μ₀a]` covers the frequency window `[sm, (s+L)m]` only past
+the threshold `μ₀ ≥ 1 + L/s`. -/
+theorem window_covered_imp {s m a L μ₀ : ℝ} (hs : 0 < s) (hm : 0 < m) (hL : 0 ≤ L) (ha : 0 < a)
+    (h1 : a ≤ s * m) (h2 : (s + L) * m ≤ μ₀ * a) : 1 + L / s ≤ μ₀ := by
+  have hμ : 0 ≤ μ₀ := by
+    by_contra h; push Not at h; nlinarith
+  have : (s + L) * m ≤ μ₀ * (s * m) := h2.trans (mul_le_mul_of_nonneg_left h1 hμ)
+  rw [show 1 + L / s = (s + L) / s by field_simp, div_le_iff₀ hs]
+  nlinarith
+
+/-- **The shadow is a positive fraction.**  Among `m < E/s` (where the frequencies `bᵐ` reach the
+run end), those with `a ≤ sm` (window start inside or past the run start) number at least
+`E/s − a/s − 1`; with `E ≥ μ₀ a` this is `≥ (1 − 1/μ₀)·E/s − 1`. -/
+theorem shadow_card_ge (s a E : ℕ) (hs : 0 < s) :
+    E / s - a / s - 1 ≤ ((Finset.range (E / s)).filter (fun m => a ≤ s * m)).card := by
+  have : Finset.Ico (a / s + 1) (E / s) ⊆ (Finset.range (E / s)).filter (fun m => a ≤ s * m) := by
+    intro m hm
+    simp only [Finset.mem_Ico] at hm
+    simp only [Finset.mem_filter, Finset.mem_range]
+    refine ⟨hm.2, ?_⟩
+    have := Nat.lt_div_mul_add (a := a) hs
+    have h2 : s * (a / s + 1) ≤ s * m := Nat.mul_le_mul_left _ hm.1
+    have h3 : s * (a / s + 1) = a / s * s + s := by rw [mul_add, mul_one, mul_comm]
+    omega
+  have := Finset.card_le_card this
+  simp at this; omega
+
+/-- **Reopen condition: power discrepancy of `{m log₃ t + β}`**, uniformly in the shift `β`. -/
+def LogDiscrepancy (t : ℕ) : Prop :=
+  ∃ C κ : ℝ, 0 < κ ∧ ∀ N : ℕ, 1 ≤ N → ∀ β u v : ℝ, 0 ≤ u → u ≤ v → v ≤ 1 →
+    |(visitCount (fun m => Int.fract (m * Real.logb 3 t + β)) u v N : ℝ) - N * (v - u)| ≤
+      C * (N : ℝ) ^ (1 - κ)
+
+/-- **Literature (Baker 1966; Baker–Wüstholz 1993, with Erdős–Turán).**  For `t ≥ 2` prime to 3,
+`|q log t − p log 3| ≥ q^{−C}` (effective linear forms in two logarithms), hence a power
+discrepancy bound for `{m log₃ t + β}`, uniform in `β` (Erdős–Turán with `H = N^κ`).  Faithful
+or weaker: the transcription asks only for some `κ > 0`. -/
+def Literature.BakerLogDiscrepancy : Prop :=
+  ∀ t : ℕ, 2 ≤ t → ¬ 3 ∣ t → LogDiscrepancy t
+
+/-- **The crux, conditional on the top-digit input.**  Confidence 60%.  English proof: split the
+pair sum by `m`.  Outside every shadow, the window `[sm, sm + log₃N/2)` is free and the orbit
+count of `sum_Hf_le_b` (with `t`) applies.  In the shadow, use the top `ε log N` digits of
+`h(bᵈ−1)tᵐ`, which sit at free places because `(s+L)m > μ₀a` (`window_covered_imp`) and are
+fixed by `{(m+d) log₃ t + β_{h,d}}`; `LogDiscrepancy` bounds the number of `m` whose top digits
+are degenerate by `N(2/3)^{εlog N} + C N^{1−κ} 3^{ε log N}`, a power saving for small `ε`.
+Then `ae_isNormal_of_secondMoment` along `CantorLiouville.sched`. -/
+theorem ae_isNormal_of_profileOK_of_baker (hB : Literature.BakerLogDiscrepancy) (μ₀ : ℚ)
+    (hμ : 2 < μ₀) :
+    ∀ᵐ ω ∂coins, ∀ b : ℕ, 2 ≤ b → ProfileOK μ₀ b → IsNormal b (cantorExpReal μ₀ ω) := by
+  sorry
+
+/-- **Normal below the threshold, a.e.**  Open node; confidence 70% true, but the elementary route
+below is BLOCKED in the shadow (see `shadow_card_ge`, Maze row "elementary orbit port to 3 ∣ b");
+the live route is `ae_isNormal_of_profileOK_of_baker` plus a proof of `LogDiscrepancy`.
 
 English proof (sketch).  For `3 ∤ b` this is `ae_isNormal_of_coprime_three`.  Let `b = 3ˢt` with
 `s ≥ 1`, `t > 3^{s(μ₀−1)}`, `L = log₃ t`.

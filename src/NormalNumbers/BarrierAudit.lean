@@ -240,8 +240,10 @@ def waivers : List Waiver := [
     cancellation reaches only m > b − δ b' (singleSum_insufficient)"⟩,
   ⟨``StretchBFR.card_near_cantor_le, "a leaf: the classical covering count of rationals near K"⟩,
   ⟨``CantorExactExponentProfile.ae_isNormal_of_profileOK,
-   "open node with a stated mechanism (Cassels–Schmidt second moment over the orbit of t mod 3^k, \
-    window free count linear below the threshold); no registered barrier applies"⟩,
+   "open node; the elementary orbit port is blocked in the run shadow (Maze row 'elementary orbit \
+    port to 3 | b'); live route via the Baker discrepancy input"⟩,
+  ⟨``CantorExactExponentProfile.ae_isNormal_of_profileOK_of_baker,
+   "conditional crux: shadow pairs via top digits from LogDiscrepancy, others via the orbit of t"⟩,
   ⟨``CantorExactExponentProfile.exists_computable_mem_cantorSet_irrExponent_normalProfile,
    "wiring: the two profile lemmas plus the stretch derandomizer with the 3 ∣ b tests added"⟩,
   ⟨``FiniteState.isFNormal_delayEnum_of_normal,

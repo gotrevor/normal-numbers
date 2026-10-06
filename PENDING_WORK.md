@@ -3168,3 +3168,15 @@ Next (outside this campaign's scope): subadditivity leaf for `QSpan.span_dimensi
 
 ## 2026-10-06 BFR directive lap 1
 Candidates 2,4 proved (`StretchBFR.card_cantor_hyperbola_le`, `eq_of_hyperbola_low`); 1,3 → `NKPowerSaving` node, prior art Chow–Varjú–Yu 2402.18395. Confidence < 1%; stop condition met. Next (if reopened): read CVY and transcribe their count as a Literature Prop.
+
+## 2026-10-06 profile lap 1 (proof/cantorexp-profile)
+- PROVED `not_isNormal_of_not_profileOK` (step 1; helpers `fract_lt_of_run_block`, `ne_rpow_of_not_dvd`).
+- CRUX ADVANCE (step 2): the kickoff's elementary port is blocked in the run shadow
+  (`shadow_card_ge`, `window_covered_imp`; Maze row "elementary orbit port to 3 | b", verdict wall).
+  Shadow frequencies expose only digits at linear depth, out of reach of orbits mod 3^k ≤ N.
+  Live route: top digits via `LogDiscrepancy` (Baker, `Literature.BakerLogDiscrepancy`) →
+  `ae_isNormal_of_profileOK_of_baker` (sorry, 60%).
+- NEXT: (a) decompose `ae_isNormal_of_profileOK_of_baker` into the non-shadow orbit bound and the
+  shadow top-digit bound; (b) look for an elementary power-discrepancy proof for {m log₃ t}
+  (unlikely: it is the irrationality measure of log t/log 3); (c) the frozen headline cannot
+  close unconditionally without (b) — consider a conditional headline sibling.
