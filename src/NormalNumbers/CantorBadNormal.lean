@@ -5018,8 +5018,8 @@ theorem firstOrderObstacleMix_of_cyl {b : ℕ} (hO : CylObstacleCancellation b) 
     Finset.sum_le_sum fun t _ => firstMix_le_obstMix b C h n m t
 
 /-- **Conjecture node (resLaw-native second moment).**  Believed 45% for `3 ∤ b`.  The near-scale
-sum of the `resLaw` second moments `E‖obstSum‖²` is `O(N² W(N))`.  Implies `CylObstacleCancellation b`
-via `obstMix_sq_le` (not yet wired: needs `√` summation).  Stated natively under `resLaw` because the
+sum of the `resLaw` root-mean-squares `√E‖obstSum‖²` is `O(N² W(N))`.  Implies
+`CylObstacleCancellation b` (`cylObstacleCancellation_of_secondMoment`, via `obstMix_sq_le`).  Stated natively under `resLaw` because the
 change of measure to `μ_K` is expected to fail: the likelihood ratio of `w_s` is
 `∏ 1_alive·1024/|A|` (`real_buildU_catB`), a mean-one `μ_K`-martingale whose second moment is
 `∏ E[1024/|A|] ≈ (1 + 1.3/1024)^s` (`AvgDeadDensity` evidence), exponential in `s = s_n`; so
@@ -5030,8 +5030,18 @@ def ResLawObstSecondMoment (b : ℕ) : Prop :=
     ∀ N : ℕ, 1 ≤ N →
       ∑ m ∈ Finset.range N, ∑ n ∈ Finset.range m,
         ∑ t ∈ Finset.Ico (stageOf b C m) (stageOf b C m + (Nat.log 3 N + 1)),
-          ∫ ω, ‖obstSum (h * (b : ℝ) ^ m) (t - stageOf b C n) (buildU (stageOf b C n) ω)‖ ^ 2
-            ∂coinMeasure ≤ K * (N : ℝ) ^ 2 * W N
+          Real.sqrt (∫ ω, ‖obstSum (h * (b : ℝ) ^ m) (t - stageOf b C n)
+            (buildU (stageOf b C n) ω)‖ ^ 2 ∂coinMeasure) ≤ K * (N : ℝ) ^ 2 * W N
+
+/-- **Second-moment node ⇒ cylinder-local cancellation.**  Proved. -/
+theorem cylObstacleCancellation_of_secondMoment {b : ℕ} (hO : ResLawObstSecondMoment b) :
+    CylObstacleCancellation b := by
+  intro h hh C
+  obtain ⟨K, W, hW, hK⟩ := hO h hh C
+  refine ⟨K, W, hW, fun N hN => le_trans ?_ (hK N hN)⟩
+  refine Finset.sum_le_sum fun m _ => Finset.sum_le_sum fun n _ =>
+    Finset.sum_le_sum fun t _ => ?_
+  exact Real.le_sqrt_of_sq_le (obstMix_sq_le b C h n m t)
 
 /-- **Open implication node: global pair correlation ⇒ cylinder-local cancellation.**  Believed
 40% as stated (the global unweighted pair sum need not control the cylinder-restricted, `resLaw`-
@@ -5039,11 +5049,16 @@ weighted second moment; the missing pieces are listed at `CylObstacleCancellatio
 def PairCorrToCylinder (b : ℕ) : Prop :=
   ObstaclePairCorrelation b → CylObstacleCancellation b
 
-/-- **The crux, first-order part, cylinder-local form** (open; believed 50%).
-See `CylObstacleCancellation`. -/
-theorem cylObstacleCancellation_resLaw {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) :
-    CylObstacleCancellation b := by
+/-- **The crux, first-order part, second-moment form** (open; believed 45%).
+See `ResLawObstSecondMoment`; expand with `norm_obstSum_sq`. -/
+theorem resLawObstSecondMoment_resLaw {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) :
+    ResLawObstSecondMoment b := by
   sorry
+
+/-- The cylinder-local first-order node for `resLaw` (from the second-moment form of the crux). -/
+theorem cylObstacleCancellation_resLaw {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) :
+    CylObstacleCancellation b :=
+  cylObstacleCancellation_of_secondMoment (resLawObstSecondMoment_resLaw hb h3)
 
 /-- **The crux, first-order part** (open; believed 50%).  `resLaw` satisfies
 `FirstOrderObstacleMix`; formerly stated as `NearObstaclePhaseMixing`, which now follows from the
