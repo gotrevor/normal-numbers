@@ -299,4 +299,54 @@ theorem wordBlock_exponent_pinned (hSV : Literature.SzuszVolkmann1983) {g k : �
       ∀ S, IsWordBlock g k S → ∃ m ∈ S, g ^ (g ^ k - k - 1) ≤ m :=
   ⟨hSV g k hg hk, fun _ hS => hS.exists_ge hg hk⟩
 
+/-! ## Does `x, 3x, 5x` start a family?  (2026-10-06)
+
+`{1, 3, 5}` is `{1, 2²−1, 2²+1}`, and "both `00` and `11`" is "both runs of length 2".  Two
+natural families extend it, and both break at the next step.  The minimal sizes grow instead
+(runs: 1, 3, then at least 5), so `x, 3x, 5x` is a small case rather than the first member of
+a uniform family. -/
+
+/-- `S` is a base-`g` block for the word set `W`: some `m ∈ S` has every word of `W`
+infinitely often in `m·X`. -/
+def IsWordSetBlock (g : ℕ) (W : Set (List ℕ)) (S : Finset ℕ) : Prop :=
+  ∀ X : ℝ, Irrational X → ∃ m ∈ S, ∀ w ∈ W, ∀ N, ∃ n, N ≤ n ∧ OccursAt g ((m : ℝ) * X) w n
+
+/-- Binary runs of length `k`: both `0^k` and `1^k`. -/
+def binaryRuns (k : ℕ) : Set (List ℕ) := {List.replicate k 0, List.replicate k 1}
+
+/-- **The run family breaks at `k = 3`** (computational; confidence 95%): `{1, 7, 9}` is not a
+run-3 block.  An irrational `x` has `x, 7x, 9x` all avoiding `000` (`mahler_block runs 7 1,A,B`;
+it fails at every `k` from 3 to 7). -/
+theorem not_isWordSetBlock_runs_three_one_seven_nine :
+    ¬ IsWordSetBlock 2 (binaryRuns 3) {1, 7, 9} := by
+  sorry
+
+/-- **Run-3 blocks need at least 5 members** among odd multipliers up to 64 (computational;
+confidence 90%; `mahler_block asearch 2 3 64 4 0,7`, and no 3-set up to 128).  Doubling is a
+shift, so odd members are no restriction. -/
+theorem not_isWordSetBlock_runs_three_small :
+    ∀ S ⊆ Finset.Icc 1 64, S.card ≤ 4 → (∀ m ∈ S, Odd m) → ¬ IsWordSetBlock 2 (binaryRuns 3) S := by
+  sorry
+
+/-- **A run-3 block of 9** (computational; confidence 95%; `mahler_block rgreedy 3`). -/
+theorem isWordSetBlock_runs_three_nine :
+    IsWordSetBlock 2 (binaryRuns 3) {1, 3, 5, 7, 15, 41, 49, 345, 353} := by
+  sorry
+
+/-- **The extreme-digit family breaks at base 4** (computational; confidence 95%): for
+`g ∈ {4, …, 13, 16}`, `{1, g−1, g+1}` is not a block for "both digit 0 and digit `g−1`"
+(`mahler_block among`; every member can avoid digit 0).  Base 3 (`{1, 2, 4}`) is the one
+success. -/
+theorem not_isWordSetBlock_extremeDigits :
+    ∀ g ∈ ({4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 16} : Finset ℕ),
+      ¬ IsWordSetBlock g {[0], [g - 1]} {1, g - 1, g + 1} := by
+  sorry
+
+/-- **Base 4, digits 0 and 3: four members** (computational; confidence 95%): `{1, 3, 6, 9}` works
+(330 of the 27,405 four-sets in `[1, 40]` do), and no set of at most 3 non-multiples of 4 in
+`[1, 16]` does.  A base-4 `{0, 3}` block is also a binary 2-word block (aligned digits), so
+binary's `{1, 3, 5}` is the stronger result. -/
+theorem isWordSetBlock_four_extreme : IsWordSetBlock 4 {[0], [3]} {1, 3, 6, 9} := by
+  sorry
+
 end NormalNumbers.Adder

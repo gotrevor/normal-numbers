@@ -47,6 +47,9 @@ def mazeRows : List RowInfo :=
 
 /-- Each linked row and the declarations it rests on. -/
 def mazeLinks : List Link := [
+  ⟨"x, 3x, 5x as the first member of a family",
+   [``Adder.not_isWordSetBlock_runs_three_one_seven_nine,
+    ``Adder.not_isWordSetBlock_runs_three_small, ``Adder.not_isWordSetBlock_extremeDigits], []⟩,
   ⟨"Digit-count ladder for product blocks",
    [``Adder.IsRung.mul, ``Adder.isRung_five_two_three, ``Adder.not_isRung_five_four_five_small],
    []⟩,
@@ -281,7 +284,7 @@ def mazeLegacy : List String := [
   "Diophantine good-denominator detour for the tail cell",
   "route B's unweighted cover of the state-dependent target"]
 
-/-- info: maze audit: 170 rows, 63 cite declarations, 107 legacy (prose only) -/
+/-- info: maze audit: 171 rows, 64 cite declarations, 107 legacy (prose only) -/
 #guard_msgs in
 #maze_audit mazeRows, mazeLinks, mazeLegacy
 

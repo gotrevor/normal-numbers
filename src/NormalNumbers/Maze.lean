@@ -1495,7 +1495,12 @@ def register : List Hall := [
    "Predict the minimal product-block size from codimensions: each 'm x avoids d' costs 1 - log(g-1)/log g, so a block needs about log g / -log(1 - 1/g) ~ g ln g members (8 in base 5)",
    .refuted, .cited,
    "Base 3 predicts at least 3 (codimension 0.369 each, two constraints leave dimension 0.26), yet {2, 11} is a block: the constraint sets share one base, so their product automaton can have zero entropy while the codimensions sum below 1. The heuristic is not a lower bound, and base 5 may have blocks below 8",
-   "MahlerProductBlock.lean: isProductBlock_three_two_eleven", "2026-10-06"⟩
+   "MahlerProductBlock.lean: isProductBlock_three_two_eleven", "2026-10-06"⟩,
+  ⟨"x, 3x, 5x as the first member of a family",
+   "Extend the binary theorem 'x, 3x or 5x has both 00 and 11' along {1, 2^k-1, 2^k+1} for runs 0^k and 1^k, or along {1, g-1, g+1} for digits 0 and g-1 in base g",
+   .refuted, .frozen,
+   "Both break at the next step: {1, 7, 9} lets x, 7x, 9x all avoid 000 (the dense side, which the k = 2 proof never meets because x avoiding 11 makes x sparse), and {1, g-1, g+1} lets every member avoid digit 0 for g = 4..13, 16. Minimal run-block sizes go 1, 3, then at least 5. REOPEN IF: a family whose members widen a sparse x carry-free and a detector that reads token boundaries, as 3 and 5 do at k = 2",
+   "MahlerProductBlock.lean: not_isWordSetBlock_runs_three_one_seven_nine, not_isWordSetBlock_runs_three_small, not_isWordSetBlock_extremeDigits", "2026-10-06"⟩
 ]
 
 /-- Rows whose verdict is machine-checked in this build. -/

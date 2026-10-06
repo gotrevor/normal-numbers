@@ -21,6 +21,12 @@
 //!   mahler_block wgreedy G K CANDS SAMPLE                        greedy K-word block
 //!   mahler_block wminimize G K m1,m2,...                         drop redundant members
 //!   mahler_block wswap21 G K m1,m2,... CANDS                     repeated 2-for-1 swaps
+//!   mahler_block runs KMAX SET   binary: some member has both 0^k and 1^k i.o., k = 1..KMAX;
+//!       SET may use A = 2^k - 1 and B = 2^k + 1 (e.g. 1,A,B)
+//!   mahler_block among G K m1,... w1,w2,...   members may avoid only the listed words
+//!   mahler_block asearch G K MAXM SIZE w1,w2,...   all such blocks of a size
+//!   mahler_block rgreedy K CANDS SAMPLE   greedy run-block
+//!   mahler_block rsearch K MAXM SIZE   all odd run-blocks (0^K and 1^K) of a size in [1,MAXM]
 //!
 //! A K-WORD BLOCK: for every irrational x some m in S has every length-K base-G word i.o. in m*x
 //! (K = 1 is a product block).  Channel (m, w): state (carry, last K-1 emitted digits), emitted
@@ -611,6 +617,17 @@ fn word_search(g: u32, k: u32, maxm: u32, size: usize) {
 
 /// Greedy K-word block: add the candidate leaving the fewest live (assignment, core) leaves.
 fn word_greedy(g: u32, k: u32, cands: Vec<u32>, samp: usize) {
+    word_greedy_among(g, k, cands, samp, None)
+}
+
+/// Greedy with the avoided words restricted to `only` (None: every word, symmetry-reduced).
+fn word_greedy_among(g: u32, k: u32, cands: Vec<u32>, samp: usize, only: Option<Vec<u32>>) {
+    let words = |g: u32, k: u32, first: bool| -> Vec<u32> {
+        match &only {
+            Some(v) => if first { vec![v[0]] } else { v.clone() },
+            None => words(g, k, first),
+        }
+    };
     let mut leaves: Vec<Adj> = vec![root(g)];
     let mut s: Vec<u32> = Vec::new();
     let mut rng = 0x5eed_u64;
@@ -690,6 +707,100 @@ fn word_swap21(g: u32, k: u32, mut s: Vec<u32>, cands: Vec<u32>) {
     }
 }
 
+/// Failing assignments when each member avoids one of the given words (e.g. 0^k and 1^k).
+fn word_failing_among(g: u32, k: u32, t: &[u32], ws: &[u32], limit: usize) -> Vec<Vec<u32>> {
+    fn rec(g: u32, k: u32, t: &[u32], ws: &[u32], limit: usize, j: usize, core: &Adj,
+           cur: &mut Vec<u32>, bad: &mut Vec<Vec<u32>>) {
+        if bad.len() >= limit {
+            return;
+        }
+        if j == t.len() {
+            bad.push(cur.clone());
+            return;
+        }
+        for &w in ws {
+            if let Some(nc) = refine_word(g, core, t[j], k, w) {
+                cur.push(w);
+                rec(g, k, t, ws, limit, j + 1, &nc, cur, bad);
+                cur.pop();
+            }
+        }
+    }
+    let mut bad = Vec::new();
+    rec(g, k, t, ws, limit, 0, &root(g), &mut Vec::new(), &mut bad);
+    bad
+}
+
+/// Binary runs: does some member have both 0^k and 1^k i.o.?  Prints failing count per k.
+fn runs(kmax: u32, sets: &str) {
+    for k in 1..=kmax {
+        let ones = (1u32 << k) - 1;
+        let s: Vec<u32> = sets.replace("A", &((1u32 << k) - 1).to_string())
+            .replace("B", &((1u32 << k) + 1).to_string())
+            .split(',').map(|x| x.parse().unwrap()).collect();
+        let t = std::time::Instant::now();
+        let b = word_failing_among(2, k, &s, &[0, ones], 1);
+        println!("k={} S={:?} {} ({:.1}s)", k, s, if b.is_empty() { "BLOCK".to_string() } else {
+                 format!("fails, avoided {:?}", b[0].iter().map(|&w| if w == 0 { "0^k" } else { "1^k" }).collect::<Vec<_>>()) },
+                 t.elapsed().as_secs_f64());
+    }
+}
+
+fn runs_search(k: u32, maxm: u32, size: usize) {
+    let cands: Vec<u32> = (1..=maxm).filter(|m| m % 2 == 1).collect();
+    let mut sets: Vec<Vec<u32>> = vec![vec![]];
+    for _ in 0..size {
+        let mut nx = Vec::new();
+        for s in &sets {
+            for &c in &cands {
+                if s.last().map_or(true, |&l| c > l) {
+                    let mut e = s.clone();
+                    e.push(c);
+                    nx.push(e);
+                }
+            }
+        }
+        sets = nx;
+    }
+    let ones = (1u32 << k) - 1;
+    let hits: Vec<Vec<u32>> = sets.par_iter().filter(|s| {
+        let r: Vec<u32> = s.iter().rev().copied().collect();
+        word_failing_among(2, k, &r, &[0, ones], 1).is_empty()
+    }).cloned().collect();
+    println!("runs k={} size {} in [1,{}]: {} of {}", k, size, maxm, hits.len(), sets.len());
+    for h in hits.iter().take(30) {
+        println!("  {:?}", h);
+    }
+}
+
+/// All blocks of a size in [1, maxm] (no multiples of g) where members may avoid only `ws`.
+fn among_search(g: u32, k: u32, maxm: u32, size: usize, ws: &[u32]) {
+    let cands: Vec<u32> = (1..=maxm).filter(|m| m % g != 0).collect();
+    let mut sets: Vec<Vec<u32>> = vec![vec![]];
+    for _ in 0..size {
+        let mut nx = Vec::new();
+        for s in &sets {
+            for &c in &cands {
+                if s.last().map_or(true, |&l| c > l) {
+                    let mut e = s.clone();
+                    e.push(c);
+                    nx.push(e);
+                }
+            }
+        }
+        sets = nx;
+    }
+    let hits: Vec<Vec<u32>> = sets.par_iter().filter(|s| {
+        let r: Vec<u32> = s.iter().rev().copied().collect();
+        word_failing_among(g, k, &r, ws, 1).is_empty()
+    }).cloned().collect();
+    println!("base {} k={} words {:?} size {} in [1,{}]: {} of {}", g, k, ws, size, maxm,
+             hits.len(), sets.len());
+    for h in hits.iter().take(12) {
+        println!("  {:?}", h);
+    }
+}
+
 fn main() {
     let a: Vec<String> = env::args().collect();
     let g: u32 = a[2].parse().unwrap();
@@ -732,6 +843,22 @@ fn main() {
                                  a[5].parse().unwrap()),
         "wminimize" => word_minimize(g, a[3].parse().unwrap(), parse_list(&a[4])),
         "wswap21" => word_swap21(g, a[3].parse().unwrap(), parse_list(&a[4]), parse_list(&a[5])),
+        "rsearch" => runs_search(a[2].parse().unwrap(), a[3].parse().unwrap(),
+                                 a[4].parse().unwrap()),
+        "rgreedy" => {
+            let k: u32 = a[2].parse().unwrap();
+            word_greedy_among(2, k, parse_list(&a[3]), a[4].parse().unwrap(),
+                              Some(vec![0, (1 << k) - 1]))
+        }
+        "among" => {
+            // among G K m1,... w1,w2,...: each member may avoid only one of the listed words
+            let k: u32 = a[3].parse().unwrap();
+            let b = word_failing_among(g, k, &parse_list(&a[4]), &parse_list(&a[5]), 1);
+            println!("{} {:?}", if b.is_empty() { "BLOCK" } else { "fails" }, b.first());
+        }
+        "asearch" => among_search(g, a[3].parse().unwrap(), a[4].parse().unwrap(),
+                                  a[5].parse().unwrap(), &parse_list(&a[6])),
+        "runs" => runs(a[2].parse().unwrap(), &a[3]),
         _ => panic!("unknown command"),
     }
 }
