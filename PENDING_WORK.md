@@ -2943,6 +2943,7 @@ Next: (1) prove the reduction (needs pair-averaged partial Cantor products, Cass
 - Proved locality: `norm_ee_sub_rhoS_le`, `norm_deadErr_le`, `norm_deadChar_le`
   (|deadChar(ξ,S')| ≤ 2048π|ξ|3^{-10S'}), `nat_tail_ineq`, `deadChar_tail_le`
   (stages ≥ N b + |h| contribute ≤ 1/N per pair).
+- (later) core now PROVED from per-stage leaf `stageSaving` (45%, open; N^{1-δ} per stage).
 - `deadCharSigned` is now PROVED from the localized crux `deadCharSigned_core` (sorry, 55%):
   the same signed sum cut at S' < min S (N b + |h|).  It is the headline's only on-path sorry.
 - Its docstring records two insufficient routes: the Cauchy–Schwarz bootstrap gives only a floor
