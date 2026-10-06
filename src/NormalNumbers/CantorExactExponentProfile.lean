@@ -67,6 +67,67 @@ theorem not_profileOK_three_pow (μ₀ : ℚ) (hμ : 1 ≤ μ₀) (s : ℕ) : ¬
     positivity
   simpa using Real.one_le_rpow (by norm_num : (1 : ℝ) ≤ 3) this
 
+/-- **Block lemma.**  On a run, once `3^a ∣ bʲ`, the orbit point `{bʲx}` lies in `[0, b^{−ℓ})`. -/
+theorem fract_lt_of_run_block {μ₀ : ℚ} (hμ : 1 < μ₀) (ω : ℕ → Bool) {b s : ℕ} (hb : 2 ≤ b)
+    (hs : 3 ^ s ∣ b) {k j ℓ : ℕ} (hj1 : expRunStart μ₀ k ≤ s * j)
+    (hj2 : b ^ (j + ℓ + 1) ≤ 3 ^ expRunEnd μ₀ (expRunStart μ₀ k)) :
+    Int.fract (cantorExpReal μ₀ ω * (b : ℝ) ^ j) < 1 / (b : ℝ) ^ ℓ := by
+  set A := expRunStart μ₀ k
+  set T := expRunEnd μ₀ A
+  set t := tl (expFree μ₀) ω T
+  have hx : cantorExpReal μ₀ ω = (hd (expFree μ₀) ω A : ℝ) / 3 ^ A + t :=
+    cantorExpReal_trunc hμ ω k
+  have ht0 : 0 ≤ t := tl_nonneg _ _ _
+  have ht1 : t ≤ 1 / 3 ^ T := tl_le _ _ _
+  obtain ⟨q, hq⟩ : 3 ^ A ∣ b ^ j := by
+    refine (pow_dvd_pow 3 hj1).trans ?_
+    rw [pow_mul]; exact pow_dvd_pow_of_dvd hs j
+  have hbR : (2 : ℝ) ≤ b := by exact_mod_cast hb
+  have hbj : (b : ℝ) ^ j = 3 ^ A * q := by exact_mod_cast hq
+  have heq : cantorExpReal μ₀ ω * (b : ℝ) ^ j =
+      (((hd (expFree μ₀) ω A * q : ℕ) : ℤ) : ℝ) + t * (b : ℝ) ^ j := by
+    rw [hx, add_mul, hbj]; push_cast; field_simp
+  have hT : (b : ℝ) ^ (j + ℓ + 1) ≤ 3 ^ T := by exact_mod_cast hj2
+  have h3T : (0 : ℝ) < 3 ^ T := by positivity
+  have hbl : (0 : ℝ) < (b : ℝ) ^ ℓ := by positivity
+  have hlt : t * (b : ℝ) ^ j < 1 / (b : ℝ) ^ ℓ := by
+    have hbj2 : (b : ℝ) ^ j * ((b : ℝ) ^ ℓ * b) ≤ 3 ^ T := by
+      rw [← pow_succ, ← pow_add, ← add_assoc]; exact hT
+    have hbj0 : (0 : ℝ) ≤ (b : ℝ) ^ j := by positivity
+    calc t * (b : ℝ) ^ j ≤ 1 / 3 ^ T * (b : ℝ) ^ j := by gcongr
+      _ ≤ 1 / 3 ^ T * (3 ^ T / ((b : ℝ) ^ ℓ * b)) := by
+          gcongr; rw [le_div_iff₀ (by positivity)]; exact hbj2
+      _ = 1 / ((b : ℝ) ^ ℓ * b) := by field_simp
+      _ < 1 / (b : ℝ) ^ ℓ := by
+          apply one_div_lt_one_div_of_lt hbl; nlinarith
+  have h0 : 0 ≤ t * (b : ℝ) ^ j := by positivity
+  rw [heq, Int.fract_intCast_add, Int.fract_eq_self.2 ⟨h0, hlt.trans_le ?_⟩]
+  · exact hlt
+  · rw [div_le_one hbl]; exact one_le_pow₀ (by linarith)
+
+/-- `3^{s(μ₀−1)}` is never an integer prime to 3 when `s ≥ 1`, `μ₀ > 1`. -/
+theorem ne_rpow_of_not_dvd {μ₀ : ℚ} (hμ : 1 < μ₀) {s t : ℕ} (hs : 1 ≤ s) (ht : ¬ 3 ∣ t) :
+    (t : ℝ) ≠ (3 : ℝ) ^ ((s : ℝ) * ((μ₀ : ℝ) - 1)) := by
+  intro h
+  set q := μ₀.den
+  have hq : (μ₀ : ℝ) * q = μ₀.num := by exact_mod_cast Rat.mul_den_eq_num μ₀
+  have hnum : (q : ℤ) < μ₀.num := by
+    have h1 : (1 : ℚ) * q < μ₀ * q := by
+      exact mul_lt_mul_of_pos_right hμ (by exact_mod_cast μ₀.den_pos)
+    rw [Rat.mul_den_eq_num, one_mul] at h1; exact_mod_cast h1
+  set p : ℕ := s * (μ₀.num - q).toNat
+  have hp : ((s : ℝ) * ((μ₀ : ℝ) - 1)) * q = (p : ℝ) := by
+    have : ((μ₀.num - q).toNat : ℤ) = μ₀.num - q := Int.toNat_of_nonneg (by omega)
+    have : (((μ₀.num - q).toNat : ℕ) : ℝ) = (μ₀.num : ℝ) - q := by exact_mod_cast this
+    simp only [p]; push_cast; rw [this, ← hq]; ring
+  have hpow : (t : ℝ) ^ q = (3 : ℝ) ^ p := by
+    rw [h, ← Real.rpow_mul_natCast (by norm_num), hp, Real.rpow_natCast]
+  have hN : t ^ q = 3 ^ p := by exact_mod_cast hpow
+  have hp1 : 1 ≤ p := Nat.one_le_iff_ne_zero.2 (by
+    simp only [p]; apply mul_ne_zero (by omega); omega)
+  have : 3 ∣ t ^ q := by rw [hN]; exact dvd_pow_self 3 (by omega)
+  exact ht (Nat.prime_three.dvd_of_dvd_pow this)
+
 /-- **Not normal past the threshold, for every `ω`.**  Confidence 90%.
 
 English proof.  Let `s = v₃ b ≥ 1` (if `s = 0` then `ProfileOK` holds), `b = 3ˢt`, and
@@ -79,7 +140,128 @@ with `b^{−ℓ} < c/2`, the block `0^ℓ` then has frequency `≥ c/2` at `N`, 
 contradicting normality.  The `ℓ = 1` case of this argument is `not_isNormal_of_three_dvd_of_small`. -/
 theorem not_isNormal_of_not_profileOK (μ₀ : ℚ) (hμ : 1 < μ₀) (ω : ℕ → Bool) {b : ℕ}
     (hb : 2 ≤ b) (hP : ¬ ProfileOK μ₀ b) : ¬ IsNormal b (cantorExpReal μ₀ ω) := by
-  sorry
+  intro hn
+  rw [isNormal_iff_equidistributed_orbit b hb] at hn
+  by_cases h3 : 3 ∣ b
+  swap; · exact hP (profileOK_of_not_dvd μ₀ hb h3)
+  have : Fact (Nat.Prime 3) := ⟨Nat.prime_three⟩
+  set s := padicValNat 3 b with hs_def
+  set t := b / 3 ^ s with ht_def
+  have hs1 : 1 ≤ s := one_le_padicValNat_of_dvd (by omega) h3
+  have hsd : 3 ^ s ∣ b := pow_padicValNat_dvd
+  have hbt : b = 3 ^ s * t := (Nat.mul_div_cancel' hsd).symm
+  have ht3 : ¬ 3 ∣ t := by
+    intro h
+    have h' : 3 ^ (s + 1) ∣ 3 ^ s * t := by rw [pow_succ]; exact Nat.mul_dvd_mul_left (3 ^ s) h
+    rw [← hbt] at h'
+    exact pow_succ_padicValNat_not_dvd (by omega) h'
+  have htpos : 0 < t := by
+    rcases Nat.eq_zero_or_pos t with h | h
+    · rw [h, mul_zero] at hbt; omega
+    · exact h
+  have hμR : (1 : ℝ) < μ₀ := by exact_mod_cast hμ
+  have hsR : (1 : ℝ) ≤ s := by exact_mod_cast hs1
+  have htlt : (t : ℝ) < (3 : ℝ) ^ ((s : ℝ) * ((μ₀ : ℝ) - 1)) := by
+    unfold ProfileOK at hP; push Not at hP
+    exact lt_of_le_of_ne hP (ne_rpow_of_not_dvd hμ hs1 ht3)
+  set L := Real.logb 3 b with hL_def
+  have hbR : (2 : ℝ) ≤ b := by exact_mod_cast hb
+  have hl3 : 0 < Real.log 3 := Real.log_pos (by norm_num)
+  have hlb : 0 < Real.log b := Real.log_pos (by linarith)
+  have hL0 : 0 < L := Real.logb_pos (by norm_num) (by linarith)
+  have hLlt : L < s * μ₀ := by
+    have h1 : Real.logb 3 t < (s : ℝ) * ((μ₀ : ℝ) - 1) :=
+      (Real.logb_lt_iff_lt_rpow (by norm_num) (by exact_mod_cast htpos)).2 htlt
+    have h2 : L = s + Real.logb 3 t := by
+      rw [hL_def, hbt]; push_cast
+      rw [Real.logb_mul (by positivity) (by exact_mod_cast htpos.ne'), Real.logb_pow,
+        Real.logb_self_eq_one (by norm_num), mul_one]
+    rw [h2]; nlinarith
+  set c := 1 - L / (s * μ₀) with hc_def
+  have hsμ : 0 < (s : ℝ) * μ₀ := by positivity
+  have hc0 : 0 < c := by rw [hc_def, sub_pos, div_lt_one hsμ]; exact hLlt
+  obtain ⟨ℓ, hℓ⟩ := exists_pow_lt_of_lt_one (half_pos hc0)
+    (show (1 : ℝ) / b < 1 by rw [div_lt_one (by linarith)]; linarith)
+  rw [one_div_pow] at hℓ
+  have hbl : (0 : ℝ) < (b : ℝ) ^ ℓ := by positivity
+  have hI := hn 0 (1 / (b : ℝ) ^ ℓ) le_rfl (by positivity)
+    (by rw [div_le_one hbl]; exact one_le_pow₀ (by linarith))
+  rw [sub_zero] at hI
+  have hlt : 1 / (b : ℝ) ^ ℓ < 3 * c / 4 := by linarith
+  obtain ⟨N0, hN0⟩ := eventually_atTop.1 (hI.eventually (gt_mem_nhds hlt))
+  obtain ⟨K, hK⟩ := exists_nat_gt (L * (4 * (ℓ + 3) / c + N0 + 1))
+  set k := K
+  set A := expRunStart μ₀ k
+  set T := expRunEnd μ₀ A
+  set n := Nat.log b (3 ^ T)
+  have hkA := lt_expRunStart hμ k
+  have hlog : 3 ^ T < b ^ (n + 1) := Nat.lt_pow_succ_log_self (by omega) _
+  have hpow : b ^ n ≤ 3 ^ T := Nat.pow_log_le_self b (by positivity)
+  have hTn : (T : ℝ) < (n + 1) * L := by
+    have h1 : (T : ℝ) * Real.log 3 < (n + 1) * Real.log b := by
+      have : ((3 ^ T : ℕ) : ℝ) < ((b ^ (n + 1) : ℕ) : ℝ) := by exact_mod_cast hlog
+      have := Real.log_lt_log (by positivity) this
+      push_cast at this; rw [Real.log_pow, Real.log_pow] at this; push_cast at this; linarith
+    rw [hL_def, Real.logb, mul_div_assoc', lt_div_iff₀ hl3]; exact h1
+  have hTA : (μ₀ : ℝ) * A ≤ T := expRunEnd_ge_r μ₀ A
+  have hkAR : (k : ℝ) < A := by exact_mod_cast hkA
+  have hA0 : (0 : ℝ) ≤ A := by positivity
+  -- `A / s ≤ (n+1)(1-c)`
+  have hAs : (A : ℝ) / s ≤ (n + 1) * (1 - c) := by
+    rw [hc_def, sub_sub_cancel, div_le_iff₀ (by linarith)]
+    have : (n + 1) * (L / (s * μ₀)) * s = (n + 1) * L / μ₀ := by field_simp
+    rw [this, le_div_iff₀ (by linarith)]; nlinarith
+  -- `n` is large
+  have hnbig : 4 * (ℓ + 3) / c + N0 < n := by
+    have : (k : ℝ) < (n + 1) * L := by nlinarith
+    have h2 : L * (4 * (ℓ + 3) / c + N0 + 1) < (n + 1) * L := by
+      have : (K : ℝ) = k := rfl
+      linarith
+    nlinarith
+  have hnN0 : N0 ≤ n := by
+    have : (N0 : ℝ) < n := by
+      have : 0 ≤ 4 * (ℓ + 3) / c := by positivity
+      linarith
+    exact_mod_cast this.le
+  have hcn : 4 * (ℓ + 3) < c * n := by
+    have : 4 * (ℓ + 3) / c < n := by
+      have : (0 : ℝ) ≤ N0 := by positivity
+      linarith
+    rw [div_lt_iff₀ hc0] at this; linarith
+  set J0 := A / s + 1
+  have hJ0 : (J0 : ℝ) ≤ A / s + 1 := by
+    simp only [J0]; push_cast; gcongr; exact Nat.cast_div_le
+  have hvis : n - ℓ - 1 - J0 ≤ visitCount (orbit b (cantorExpReal μ₀ ω)) 0 (1 / (b : ℝ) ^ ℓ) n := by
+    unfold visitCount
+    have : Finset.Ico J0 (n - ℓ - 1) ⊆ (Finset.range n).filter
+        (fun j => orbit b (cantorExpReal μ₀ ω) j ∈ Set.Ico 0 (1 / (b : ℝ) ^ ℓ)) := by
+      intro j hj
+      simp only [Finset.mem_Ico] at hj
+      simp only [Finset.mem_filter, Finset.mem_range, Set.mem_Ico, orbit]
+      refine ⟨by omega, Int.fract_nonneg _, fract_lt_of_run_block (k := k) hμ ω hb hsd ?_ ?_⟩
+      · have := Nat.lt_div_mul_add (a := A) (show 0 < s by omega)
+        have h2 : s * J0 ≤ s * j := Nat.mul_le_mul_left _ hj.1
+        have h3 : s * J0 = A / s * s + s := by rw [mul_add, mul_one, mul_comm]
+        omega
+      · exact (Nat.pow_le_pow_right (by omega) (by omega)).trans hpow
+    simpa using Finset.card_le_card this
+  have hcnt : (n : ℝ) - ℓ - 1 - J0 ≤ visitCount (orbit b (cantorExpReal μ₀ ω)) 0 (1 / (b : ℝ) ^ ℓ) n := by
+    have h1 : ((n - ℓ - 1 - J0 : ℕ) : ℝ) ≤ visitCount (orbit b (cantorExpReal μ₀ ω)) 0 (1 / (b : ℝ) ^ ℓ) n := by
+      exact_mod_cast hvis
+    have h2 : (n : ℝ) ≤ ((n - ℓ - 1 - J0 : ℕ) : ℝ) + ℓ + 1 + J0 := by
+      have : n ≤ (n - ℓ - 1 - J0) + ℓ + 1 + J0 := by omega
+      exact_mod_cast this
+    linarith
+  have hnpos : (0 : ℝ) < n := by
+    have : (0 : ℝ) ≤ 4 * (ℓ + 3) / c := by positivity
+    have : (0 : ℝ) ≤ N0 := by positivity
+    linarith
+  have := hN0 n hnN0
+  rw [div_lt_iff₀ hnpos] at this
+  have hc1 : c ≤ 1 := by
+    rw [hc_def]; have : 0 ≤ L / (s * μ₀) := by positivity
+    linarith
+  nlinarith
 
 /-- **Normal below the threshold, a.e.**  Open node; confidence 70% (true), Lean cost a few laps.
 

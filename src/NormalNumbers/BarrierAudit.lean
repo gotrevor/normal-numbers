@@ -239,8 +239,6 @@ def waivers : List Waiver := [
    "conditional wiring (Fourier expansion over the q-interval); records that single-sum \
     cancellation reaches only m > b − δ b' (singleSum_insufficient)"⟩,
   ⟨``StretchBFR.card_near_cantor_le, "a leaf: the classical covering count of rationals near K"⟩,
-  ⟨``CantorExactExponentProfile.not_isNormal_of_not_profileOK,
-   "a leaf: elementary base-b zero run along each forced ternary run; English proof in the docstring"⟩,
   ⟨``CantorExactExponentProfile.ae_isNormal_of_profileOK,
    "open node with a stated mechanism (Cassels–Schmidt second moment over the orbit of t mod 3^k, \
     window free count linear below the threshold); no registered barrier applies"⟩,
