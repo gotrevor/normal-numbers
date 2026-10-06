@@ -162,6 +162,8 @@ def waivers : List Waiver := [
    "a finite computation: rung checker (carry automaton, label-filtered SCCs)"⟩,
   ⟨``Adder.not_isRung_five_four_five_small,
    "a finite computation: an avoided-digit-set assignment with a live SCC for each small T"⟩,
+  ⟨``Adder.isWordBlock_two_three_thirteen,
+   "a finite computation: word-channel carry automaton collapse"⟩,
   ⟨``Adder.isWordBlock_two_two_one_three_five,
    "a finite computation: word-channel carry automaton collapse"⟩,
   ⟨``Adder.not_isWordBlock_two_two_pair,

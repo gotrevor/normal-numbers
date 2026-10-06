@@ -221,4 +221,12 @@ theorem not_isWordBlock_two_two_pair :
     ∀ a ≤ 40, ∀ b ≤ 40, ¬ IsWordBlock 2 2 {a, b} := by
   sorry
 
+/-- **Binary 3-words: a 13-member block** (computational; confidence 95%): for every irrational
+`x`, one of these multiples has all eight 3-bit words infinitely often (`mahler_block wgreedy`
+over odd `m < 256`, then `wminimize`; `wfail` re-verifies in 38 s).  The Liouville count forces
+a member `≥ 23 = 10111₂`; no block of size `≤ 5` lies in `[1, 48]`. -/
+theorem isWordBlock_two_three_thirteen :
+    IsWordBlock 2 3 {1, 5, 19, 29, 97, 103, 133, 175, 197, 205, 209, 211, 239} := by
+  sorry
+
 end NormalNumbers.Adder
