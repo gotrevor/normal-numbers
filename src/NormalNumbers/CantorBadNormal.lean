@@ -5017,6 +5017,19 @@ theorem firstOrderObstacleMix_of_cyl {b : ℕ} (hO : CylObstacleCancellation b) 
   exact Finset.sum_le_sum fun m _ => Finset.sum_le_sum fun n _ =>
     Finset.sum_le_sum fun t _ => firstMix_le_obstMix b C h n m t
 
+
+/-- **The `resLaw` second moment as an explicit pair sum.**  `E‖obstSum‖²` is the sum over stage-`s`
+prefixes `w`, weighted by their `resLaw` mass, of the same-cylinder pair sums of
+`norm_obstSum_sq`.  Proved. -/
+theorem secondMoment_obstSum_eq (ξ : ℝ) (k s : ℕ) :
+    ((∫ ω, ‖obstSum ξ k (buildU s ω)‖ ^ 2 ∂coinMeasure : ℝ) : ℂ) =
+      ∑ w ∈ LS s, coinMeasure.real {ω | buildU s ω = w} • ((1 / 1024 ^ k : ℂ) ^ 2 *
+        ∑ F : Fin k → (Fin 10 → Bool), ∑ F' : Fin k → (Fin 10 → Bool),
+          obstLocal ξ (catB w k F) * (starRingEnd ℂ) (obstLocal ξ (catB w k F'))) := by
+  rw [← integral_complex_ofReal]
+  push_cast
+  rw [integral_buildU s (fun w => (‖obstSum ξ k w‖ ^ 2 : ℂ))]
+  exact Finset.sum_congr rfl fun w _ => by rw [norm_obstSum_sq]
 /-- **Conjecture node (resLaw-native second moment).**  Believed 45% for `3 ∤ b`.  The near-scale
 sum of the `resLaw` root-mean-squares `√E‖obstSum‖²` is `O(N² W(N))`.  Implies
 `CylObstacleCancellation b` (`cylObstacleCancellation_of_secondMoment`, via `obstMix_sq_le`).  Stated natively under `resLaw` because the
