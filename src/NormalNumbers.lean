@@ -958,6 +958,7 @@ import NormalNumbers.CantorLiouvilleAll
 import NormalNumbers.CantorExpGeneric
 import NormalNumbers.CantorExactExponent
 import NormalNumbers.CantorExactExponentStretch
+import NormalNumbers.CantorExactExponentFive
 import NormalNumbers.SchedFamily
 import NormalNumbers.UniformBad
 import NormalNumbers.LinearFormsScales
