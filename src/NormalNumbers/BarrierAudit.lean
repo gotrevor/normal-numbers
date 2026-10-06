@@ -138,9 +138,6 @@ def cruxLinks : List CruxLink := [
 
 /-- Open `sorry`s that are not cruxes, and why no barrier applies. -/
 def waivers : List Waiver := [
-  ⟨``CantorBadNormal.diagSmall_of_two_le,
-   "a leaf: the diagonal is geometric in t − s_n ≥ s_m − s_n, so the sum is O(N log N), and \
-    W(N) = log N/N is summable along sched j ≈ e^{√j}"⟩,
   ⟨``IndependenceRelative.not_isRelativeBlock_small,
    "a finite computation stated as a sibling: the blocksearch probe's non-certification over \
     small direction sets; it closes a route, no open crux uses it"⟩,

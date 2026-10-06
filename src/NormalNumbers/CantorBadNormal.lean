@@ -5135,6 +5135,20 @@ def PairCorrToCylinder (b : ℕ) : Prop :=
   ObstaclePairCorrelation b → CylObstacleCancellation b
 
 
+
+/-- Stages grow linearly: `s_m + C ≥ s_n + (m − n)/20`. -/
+theorem stageOf_gap {b : ℕ} (hb : 2 ≤ b) (C : ℕ) {n m : ℕ} (hnm : n ≤ m) :
+    stageOf b C n + (m - n) / 20 ≤ stageOf b C m + C := by
+  unfold stageOf
+  have hb0 : 0 < b := by omega
+  have hlog : Nat.log 3 (b ^ n) + (m - n) / 2 ≤ Nat.log 3 (b ^ m) := by
+    refine Nat.le_log_of_pow_le (by norm_num) ?_
+    rw [pow_add, show m = n + (m - n) by omega, pow_add]
+    refine Nat.mul_le_mul (Nat.pow_log_le_self 3 (pow_pos hb0 n).ne') ?_
+    rw [show n + (m - n) - n = m - n by omega]
+    exact (Nat.pow_le_pow_right (by norm_num) (le_log_of_two_mul hb (Nat.mul_div_le _ _))).trans
+      (Nat.pow_log_le_self 3 (pow_pos hb0 _).ne')
+  omega
 /-- **Off-diagonal node.**  Believed 45% for `3 ∤ b`.  The `resLaw`-averaged same-cylinder obstacle
 pair sums `E‖obstOff‖` have near-scale root sum `O(N² W(N))`.  This is the irreducible core of the
 first-order crux: a pair correlation of the obstacle phases `e(hbᵐ(p/q − p'/q'))` over pairs in one
@@ -5147,15 +5161,99 @@ def ResLawObstOff (b : ℕ) : Prop :=
           Real.sqrt (∫ ω, ‖obstOff (h * (b : ℝ) ^ m) (t - stageOf b C n)
             (buildU (stageOf b C n) ω)‖ ∂coinMeasure) ≤ K * (N : ℝ) ^ 2 * W N
 
-/-- **Diagonal leaf.**  The geometric diagonal has near-scale root sum `O(N² W(N))`.  Elementary
-(`k ≥ s_m − s_n`, so the sum is `O(N log N)`, and `W(N) = log N/N` is summable along `sched`);
-believed 95%, open. -/
+/-- **Diagonal leaf.**  The geometric diagonal has near-scale root sum `O(N² W(N))`.  Proved
+(`s_m ≥ s_n + (m − n)/20 − C`, `stageOf_gap`, so the sum is `O(N)`; `W(N) = 1/N` is summable along `sched`)
+(`diagSmall_of_two_le`). -/
 def DiagSmall (b : ℕ) : Prop :=
   ∀ C : ℕ, ∃ (K : ℝ) (W : ℕ → ℝ), Summable (fun j => W (sched j)) ∧
     ∀ N : ℕ, 1 ≤ N →
       ∑ m ∈ Finset.range N, ∑ n ∈ Finset.range m,
         ∑ t ∈ Finset.Ico (stageOf b C m) (stageOf b C m + (Nat.log 3 N + 1)),
           Real.sqrt (2048 ^ 2 / 1024 ^ (t - stageOf b C n)) ≤ K * (N : ℝ) ^ 2 * W N
+
+theorem sqrt_diag_eq (k : ℕ) : Real.sqrt (2048 ^ 2 / 1024 ^ k) = 2048 * (1 / 32 : ℝ) ^ k := by
+  rw [show (2048 : ℝ) ^ 2 / 1024 ^ k = (2048 * (1 / 32 : ℝ) ^ k) ^ 2 by
+    rw [mul_pow, ← pow_mul, mul_comm k 2, pow_mul]; norm_num [one_div, inv_pow, div_eq_mul_inv]; ring_nf; simp [one_div]]
+  exact Real.sqrt_sq (by positivity)
+
+theorem one_div_32_pow_div20_le (j : ℕ) : (1 / 32 : ℝ) ^ (j / 20) ≤ 32 * (31 / 32 : ℝ) ^ j := by
+  have hj : j ≤ 20 * (j / 20 + 1) := by omega
+  have h1 : (31 / 32 : ℝ) ^ (20 * (j / 20 + 1)) ≤ (31 / 32 : ℝ) ^ j :=
+    pow_le_pow_of_le_one (by norm_num) (by norm_num) hj
+  have h2 : (1 / 32 : ℝ) ^ (j / 20 + 1) ≤ (31 / 32 : ℝ) ^ (20 * (j / 20 + 1)) := by
+    rw [pow_mul]; exact pow_le_pow_left₀ (by norm_num) (by norm_num) _
+  have h3 := h2.trans h1
+  rw [pow_succ] at h3
+  linarith
+
+theorem diag_term_le {b : ℕ} (hb : 2 ≤ b) (C : ℕ) {n m t : ℕ} (hnm : n < m)
+    (ht : stageOf b C m ≤ t) :
+    (1 / 32 : ℝ) ^ (t - stageOf b C n) ≤
+      32 ^ C * 32 * (1 / 32 : ℝ) ^ (t - stageOf b C m) * (31 / 32 : ℝ) ^ (m - 1 - n) := by
+  have hg := stageOf_gap hb C hnm.le
+  have hmo := stageOf_mono b C (by omega) hnm.le
+  set a := (m - n) / 20
+  have hexp : t - stageOf b C m + (a - C) ≤ t - stageOf b C n := by omega
+  have r1 : (1 / 32 : ℝ) ^ (t - stageOf b C n) ≤ (1 / 32 : ℝ) ^ (t - stageOf b C m + (a - C)) :=
+    pow_le_pow_of_le_one (by norm_num) (by norm_num) hexp
+  have r2 : (1 / 32 : ℝ) ^ (a - C) ≤ 32 ^ C * (1 / 32 : ℝ) ^ a := by
+    have : (1 / 32 : ℝ) ^ a ≥ (1 / 32 : ℝ) ^ (a - C + C) :=
+      pow_le_pow_of_le_one (by norm_num) (by norm_num) (by omega)
+    rw [pow_add] at this
+    have e : (32 : ℝ) ^ C * (1 / 32) ^ C = 1 := by rw [← mul_pow]; norm_num
+    nlinarith [pow_nonneg (show (0 : ℝ) ≤ 1 / 32 by norm_num) (a - C),
+      pow_nonneg (show (0 : ℝ) ≤ 32 by norm_num) C]
+  have r3 : (1 / 32 : ℝ) ^ a ≤ 32 * (31 / 32 : ℝ) ^ (m - 1 - n) :=
+    (one_div_32_pow_div20_le _).trans (mul_le_mul_of_nonneg_left
+      (pow_le_pow_of_le_one (by norm_num) (by norm_num) (by omega)) (by norm_num))
+  rw [pow_add] at r1
+  have p0 : (0 : ℝ) ≤ (1 / 32 : ℝ) ^ (t - stageOf b C m) := by positivity
+  calc _ ≤ _ := r1
+    _ ≤ (1 / 32 : ℝ) ^ (t - stageOf b C m) * (32 ^ C * (32 * (31 / 32 : ℝ) ^ (m - 1 - n))) :=
+        mul_le_mul_of_nonneg_left (r2.trans (mul_le_mul_of_nonneg_left r3 (by positivity))) p0
+    _ = _ := by ring
+
+/-- **The diagonal leaf.**  Proved: the near-scale diagonal sum is `O(N)`. -/
+theorem diagSmall_of_two_le {b : ℕ} (hb : 2 ≤ b) : DiagSmall b := by
+  intro C
+  refine ⟨2048 * 32 ^ C * 32 * 32 * 32, fun N => (N : ℝ) ^ (-(1 : ℝ)),
+    summable_sched_rpow one_pos, fun N hN => ?_⟩
+  have hN0 : (0 : ℝ) < N := by exact_mod_cast hN
+  have inner : ∀ m n, n < m → ∑ t ∈ Finset.Ico (stageOf b C m) (stageOf b C m + (Nat.log 3 N + 1)),
+      Real.sqrt (2048 ^ 2 / 1024 ^ (t - stageOf b C n)) ≤
+        2048 * 32 ^ C * 32 * 32 * (31 / 32 : ℝ) ^ (m - 1 - n) := by
+    intro m n hnm
+    simp_rw [sqrt_diag_eq]
+    calc _ ≤ ∑ t ∈ Finset.Ico (stageOf b C m) (stageOf b C m + (Nat.log 3 N + 1)),
+          2048 * (32 ^ C * 32 * (31 / 32 : ℝ) ^ (m - 1 - n)) * (1 / 32 : ℝ) ^ (t - stageOf b C m) :=
+          Finset.sum_le_sum fun t ht => by
+            have := diag_term_le hb C hnm (Finset.mem_Ico.1 ht).1
+            nlinarith [pow_nonneg (show (0 : ℝ) ≤ 1 / 32 by norm_num) (t - stageOf b C m)]
+      _ = 2048 * (32 ^ C * 32 * (31 / 32 : ℝ) ^ (m - 1 - n)) *
+          ∑ i ∈ Finset.Ico 0 (Nat.log 3 N + 1), (1 / 32 : ℝ) ^ i := by
+          rw [← Finset.mul_sum, Finset.sum_Ico_eq_sum_range, Finset.sum_Ico_eq_sum_range]
+          simp
+      _ ≤ 2048 * (32 ^ C * 32 * (31 / 32 : ℝ) ^ (m - 1 - n)) * 32 := by
+          refine mul_le_mul_of_nonneg_left ((geom_sum_Ico_le_of_lt_one (by norm_num)
+            (by norm_num)).trans (by norm_num)) (by positivity)
+      _ = _ := by ring
+  have mid : ∀ m, ∑ n ∈ Finset.range m, (31 / 32 : ℝ) ^ (m - 1 - n) ≤ 32 := by
+    intro m
+    rw [Finset.sum_range_reflect (fun i => (31 / 32 : ℝ) ^ i) m]
+    have h := geom_sum_Ico_le_of_lt_one (m := 0) (n := m) (x := (31 / 32 : ℝ)) (by norm_num) (by norm_num)
+    rw [← Finset.range_eq_Ico] at h
+    exact h.trans (by norm_num)
+  calc _ ≤ ∑ m ∈ Finset.range N, ∑ n ∈ Finset.range m,
+        2048 * 32 ^ C * 32 * 32 * (31 / 32 : ℝ) ^ (m - 1 - n) :=
+        Finset.sum_le_sum fun m _ => Finset.sum_le_sum fun n hn =>
+          inner m n (Finset.mem_range.1 hn)
+    _ ≤ ∑ m ∈ Finset.range N, (2048 * 32 ^ C * 32 * 32 * 32 : ℝ) := Finset.sum_le_sum fun m _ => by
+        rw [← Finset.mul_sum]
+        exact (mul_le_mul_of_nonneg_left (mid m) (by positivity)).trans (le_of_eq (by ring))
+    _ = _ := by
+        dsimp only
+        simp only [Finset.sum_const, Finset.card_range, nsmul_eq_mul, Real.rpow_neg_one]
+        field_simp
 
 theorem sqrt_secondMoment_le (ξ : ℝ) (k s : ℕ) :
     Real.sqrt (∫ ω, ‖obstSum ξ k (buildU s ω)‖ ^ 2 ∂coinMeasure) ≤
@@ -5203,10 +5301,6 @@ theorem resLawObstSecondMoment_of_off {b : ℕ} (hD : DiagSmall b) (hO : ResLawO
 See `ResLawObstOff`. -/
 theorem resLawObstOff_resLaw {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) :
     ResLawObstOff b := by
-  sorry
-
-/-- The diagonal leaf (elementary; open, believed 95%). -/
-theorem diagSmall_of_two_le {b : ℕ} (hb : 2 ≤ b) : DiagSmall b := by
   sorry
 
 /-- The second-moment node for `resLaw` (diagonal leaf + off-diagonal crux). -/
