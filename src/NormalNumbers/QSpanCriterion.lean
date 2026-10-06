@@ -286,16 +286,91 @@ variable {α : Type*} [Fintype α] [MeasurableSpace α] [DiscreteMeasurableSpace
 noncomputable def digSK (b : ℕ) (T : α → ℤ) (K : ℕ) (ω : ℕ → α) : ℝ :=
   ∑ j ∈ Finset.range K, (T (ω j) : ℝ) / (b : ℝ) ^ (j + 1)
 
+/-- A digit is bounded by the total digit mass. -/
+theorem abs_T_le (T : α → ℤ) (a : α) : |(T a : ℝ)| ≤ ∑ a, |(T a : ℝ)| :=
+  Finset.single_le_sum (f := fun a => |(T a : ℝ)|) (fun _ _ => abs_nonneg _) (Finset.mem_univ a)
+
+/-- The expansion converges. -/
+theorem summable_digS (b : ℕ) (hb : 2 ≤ b) (T : α → ℤ) (ω : ℕ → α) :
+    Summable fun j => (T (ω j) : ℝ) / (b : ℝ) ^ (j + 1) := by
+  have hb' : (1 : ℝ) < b := by exact_mod_cast hb
+  refine Summable.of_norm_bounded (g := fun j => (∑ a, |(T a : ℝ)|) * ((b : ℝ)⁻¹ ^ j)) ?_ ?_
+  · exact (summable_geometric_of_lt_one (by positivity) (inv_lt_one_of_one_lt₀ hb')).mul_left _
+  · intro j
+    rw [Real.norm_eq_abs, abs_div, abs_of_pos (by positivity : (0:ℝ) < (b:ℝ) ^ (j+1)),
+      div_le_iff₀ (by positivity), pow_succ, inv_pow]
+    have := abs_T_le T (ω j)
+    have hbj : (0:ℝ) < (b:ℝ)^j := by positivity
+    calc |(T (ω j) : ℝ)| ≤ (∑ a, |(T a : ℝ)|) * 1 := by linarith
+      _ ≤ (∑ a, |(T a : ℝ)|) * b := by
+        gcongr
+      _ = (∑ a, |(T a : ℝ)|) * ((b:ℝ) ^ j)⁻¹ * ((b:ℝ) ^ j * b) := by field_simp
+
 open DecayAeNormal in
 /-- **Leaf G1.**  Integer digits: `e(h bᵏ S(ω)) = e(h S(σᵏ ω))`. -/
 theorem ee_pow_mul_digS (b : ℕ) (hb : 2 ≤ b) (T : α → ℤ) (h : ℤ) (k : ℕ) (ω : ℕ → α) :
     ee (h * (b : ℝ) ^ k * digS b T ω) = ee (h * digS b T (shiftK k ω)) := by
-  sorry
+  have hs := summable_digS b hb T ω
+  have hb0 : (b:ℝ) ≠ 0 := by positivity
+  have key : (b : ℝ) ^ k * digS b T ω
+      = ((∑ j ∈ Finset.range k, T (ω j) * (b : ℤ) ^ (k - 1 - j) : ℤ) : ℝ) + digS b T (shiftK k ω) := by
+    unfold digS
+    rw [← hs.sum_add_tsum_nat_add k, mul_add, Finset.mul_sum, ← tsum_mul_left]
+    push_cast
+    congr 1
+    · refine Finset.sum_congr rfl fun j hj => ?_
+      have hj := Finset.mem_range.1 hj
+      have hk : (b:ℝ)^k = (b:ℝ)^(k-1-j) * (b:ℝ)^(j+1) := by rw [← pow_add]; congr 1; omega
+      rw [hk]; field_simp
+    · congr 1; funext j
+      simp only [shiftK]
+      rw [show j + k + 1 = k + (j + 1) by ring, pow_add, add_comm j k]
+      field_simp
+  rw [mul_assoc, key, mul_add, ee_add]
+  have : ee (h * ((∑ j ∈ Finset.range k, T (ω j) * (b : ℤ) ^ (k - 1 - j) : ℤ) : ℝ)) = 1 := by
+    unfold ee
+    rw [show 2 * (Real.pi : ℂ) * Complex.I * (((h * ((∑ j ∈ Finset.range k, T (ω j) * (b : ℤ) ^ (k - 1 - j) : ℤ) : ℝ)) : ℝ) : ℂ)
+        = ((h * ∑ j ∈ Finset.range k, T (ω j) * (b : ℤ) ^ (k - 1 - j) : ℤ) : ℂ) * (2 * Real.pi * Complex.I) by push_cast; ring]
+    exact Complex.exp_int_mul_two_pi_mul_I _
+  rw [this, one_mul]
 
 /-- **Leaf G2.**  Truncation error. -/
 theorem abs_digS_sub_digSK (b : ℕ) (hb : 2 ≤ b) (T : α → ℤ) (K : ℕ) (ω : ℕ → α) :
     |digS b T ω - digSK b T K ω| ≤ (∑ a, |(T a : ℝ)|) / (b : ℝ) ^ K := by
-  sorry
+  have hb' : (1 : ℝ) < b := by exact_mod_cast hb
+  set B := ∑ a, |(T a : ℝ)|
+  have hs := summable_digS b hb T ω
+  unfold digS digSK
+  rw [← hs.sum_add_tsum_nat_add K, add_sub_cancel_left]
+  have hs2 : Summable fun j => B / (b:ℝ) ^ (j + K + 1) := by
+    have : (fun j => B / (b:ℝ) ^ (j + K + 1)) = fun j => (B / (b:ℝ)^(K+1)) * ((b:ℝ)⁻¹ ^ j) := by
+      funext j; rw [inv_pow, pow_add, pow_add]; field_simp; ring
+    rw [this]
+    exact (summable_geometric_of_lt_one (by positivity) (inv_lt_one_of_one_lt₀ hb')).mul_left _
+  calc |∑' j, (T (ω (j + K)) : ℝ) / (b:ℝ) ^ (j + K + 1)|
+      ≤ ∑' j, B / (b:ℝ) ^ (j + K + 1) := by
+        refine (norm_tsum_le_tsum_norm ((summable_nat_add_iff K).2 hs).norm).trans ?_
+        refine Summable.tsum_le_tsum (fun j => ?_) ((summable_nat_add_iff K).2 hs).norm hs2
+        rw [Real.norm_eq_abs, abs_div, abs_of_pos (by positivity : (0:ℝ) < (b:ℝ) ^ (j + K + 1))]
+        gcongr
+        exact abs_T_le T _
+    _ = B / (b:ℝ)^(K+1) * (1 - (b:ℝ)⁻¹)⁻¹ := by
+        have : (fun j => B / (b:ℝ) ^ (j + K + 1)) = fun j => (B / (b:ℝ)^(K+1)) * ((b:ℝ)⁻¹ ^ j) := by
+          funext j; rw [inv_pow, pow_add, pow_add]; field_simp; ring
+        rw [this, tsum_mul_left, tsum_geometric_of_lt_one (by positivity) (inv_lt_one_of_one_lt₀ hb')]
+    _ ≤ B / (b:ℝ) ^ K := by
+        have hB : 0 ≤ B := Finset.sum_nonneg fun _ _ => abs_nonneg _
+        rw [show (1 - (b:ℝ)⁻¹)⁻¹ = b / (b - 1) by field_simp, pow_succ]
+        rw [div_mul_div_comm, div_le_div_iff₀ (by have : (0:ℝ) < b - 1 := by linarith
+                                                  positivity) (by positivity)]
+        have hbK : (0:ℝ) < (b:ℝ)^K := by positivity
+        have : B * b * (b:ℝ)^K ≤ B * ((b:ℝ)^K * b * (b - 1)) := by
+          have hb2 : (2:ℝ) ≤ b := by exact_mod_cast hb
+          have : (b:ℝ) ≤ b * (b - 1) := by nlinarith
+          calc B * b * (b:ℝ)^K = B * (b:ℝ)^K * b := by ring
+            _ ≤ B * (b:ℝ)^K * (b * (b-1)) := by gcongr
+            _ = _ := by ring
+        linarith
 
 /-- **Leaf G3.**  The shift preserves the product measure. -/
 theorem measurePreserving_shiftK (P : Measure α) [IsProbabilityMeasure P] (k : ℕ) :
