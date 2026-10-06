@@ -3091,3 +3091,17 @@ Next: (1) prove the reduction (needs pair-averaged partial Cantor products, Cass
   part, linked to `ObstaclePairCorrelation`) and `defectObstacleMix_resLaw` (45%).  BarrierAudit links both.
   Next: numerics of `defectMix` vs `firstMix` (is the defect part genuinely lower order?); then the
   implication `ObstaclePairCorrelation → FirstOrderObstacleMix` (Cauchy–Schwarz over cylinders + μ_K weights).
+* (lap 8) Analysis of the defect part (not yet Lean).  The j-th defect is
+  `E_res[aliveDefect(cExt D_t j)(w_r) | w_s]`, `r = t−1−j`.  For large j, `cExt D_t j (w_r f)` is the local
+  obstacle sum at stage t inside the child `w_r f`, which decays in j like the first-order term (same
+  pair correlation, smaller cylinder).  For small j (r near t) the decay must come from the OUTER resLaw
+  average from s to r, and `aliveDefect(H)(w_r)` is again "phase × dead-local function at stage r" — the
+  same type as `D_r`.  So the defect node is not lower order in kind: it is the original object one level
+  down, times a dead-density factor.  Plan: a BOOTSTRAP.  Define the class of functions
+  `G(w) = e(ξ cylLeft w)·g(w)` with g supported on prefixes with dead children; show
+  `Mix(G, gap) ≤ First(G, gap) + κ·sup_{gap' < gap} Mix(G', gap')` with κ < 1.  Worst case κ fails
+  (|aliveDefect H| ≤ 2·#dead/|A|·sup|H|, #dead ≤ 488, |A| ≥ 536), so κ must be an AVERAGED dead density:
+  needs `E[#dead(w_r)·X(w_r)] ≲ E[#dead]·E[X]` — a weaker decorrelation (dead count vs a positive
+  functional) than the crux itself; typical #dead ≈ 1 (probe: ~200k dead children / 180k stages).
+  Next: state the bootstrap inequality and the averaged-density hypothesis as Lean nodes; test
+  `E[#dead · |A_n|²]` correlation (the lap-6 probe already measured inflation 1.00 ± 0.01 for a related X).
