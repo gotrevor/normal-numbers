@@ -1,6 +1,26 @@
 # DIRECTION — normal-numbers 🧭
 
-## CURRENT DIRECTIVE (2026-10-02): normality's master conjectures 🎯
+## CURRENT DIRECTIVE (2026-10-06, cantorbad lap 6): `K ∩ BAD ∩ normal` via the local route 🎯
+
+Branch `proof/cantor-bad-normal`.  Target `CantorBadNormal.exists_mem_cantorSet_bad_isNormal_coprime_three`,
+never restated.  The headline now runs `exists_of_law_ae resLaw ← ae_isNormal_resLaw_of_localDeadBias`, whose
+open leaves are the two standard leaves `ae_cesaro_condDiff` (martingale part) and `cesaro_contChar_small`
+(Weyl + `∫ Π cos² = 2^{−C}`), and the crux `localDeadBias_resLaw`.
+- **Mandated next move:** prove the two standard leaves (martingale part first), then attack the crux scale by
+  scale: a second martingale split at a coarser prefix leaves the phases `e(hbⁿ p/q)` of the obstacle rationals
+  in a coarse cylinder; state that equidistribution as the next node.
+- **Forbidden drift:** `midStages`, `StageSaving` and every per-stage μ_K-tail bound (a rate there needs
+  Baker-type equidistribution of `n log₃ b`); any-rule arguments (they reduce to `DeadRateDecay`, believed
+  false); restating the headline or the law.
+- **Why:** the probe `scripts/cantorbad_localbias.py` finds no coherent dead bias for `resLaw` (bases 2, 5, 7;
+  inflation 1.00 ± 0.01) while the dyadic control shows coherence 0.96, and the local route needs only
+  irrationality of `log₃ b`.
+
+Directive history:
+- 2026-10-06 (cantorbad lap 6): local route adopted; `midStages` off-path.
+- 2026-10-02: normality's master conjectures (below, superseded on this branch).
+
+## Earlier directive (2026-10-02): normality's master conjectures
 
 Follow `KICKOFF-2026-10-02-master-conjectures.md`: prove the three planted consequences of
 `BorelConjecture` / `BaileyCrandallHypA` (`src/NormalNumbers/MasterConjectures.lean`), grow the

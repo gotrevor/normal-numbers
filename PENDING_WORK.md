@@ -2973,3 +2973,21 @@ Next: (1) prove the reduction (needs pair-averaged partial Cantor products, Cass
   `pairSum_Bf_le_explicit_b`) gives `hybridCassels_low` (a with 20a ≤ ⌊log₃N⌋/2).  `hybridCassels`
   is now PROVED from it and the new open leaf `midStages`, the signed dead-char sum over the stages
   S' ∈ [⌊log₃N⌋/40, min S (Nb+|h|)).  Only the scales N^{1/40} ≲ 3^{10S'} ≲ b^N remain.
+
+## cantorbad lap 6 (2026-10-06): local route; headline rewired
+- Review finding: `midStages` is a Cassels *rate* for `resLaw`.  Every stage-by-stage bound multiplies a dead
+  correction by `rhoProd ξ (S'+1) S`, i.e. Cantor factors at the middle and leading ternary digits of `bⁿ`;
+  even granting decorrelation, a rate needs quantitative equidistribution of `n log₃ b` (Baker).  Off-path now.
+- New decomposition (proved wiring, `ae_isNormal_resLaw_of_localDeadBias`): condition the `n`-th Weyl term on
+  the prefix `C` digits above the scale of `bⁿ` (`stageOf`); `e(hbⁿx) = (e − condChar) + localBias + contChar`.
+  Leaves: `ae_cesaro_condDiff` (martingale, `E|Σ Y|² ≤ K N`, DEL on squares), `cesaro_contChar_small`
+  (`|contChar| ≤ Π_{k<C}|cos(2πh3^{u_n+k})|`, `u_n = 10 frac((n log₃ b − C)/10)`, endpoint values 1 so the
+  function is continuous on the circle; Weyl via `WeylCriterion.cgood_all`; `∫₀¹Π cos²(2π3^k y) = 2^{−C}` by
+  induction using `Σ_{j<3} cos²(θ+2πj/3) = 3/2`), crux `localDeadBias_resLaw` (node `LocalDeadBias`).
+- Probe `scripts/cantorbad_localbias.py` (6000 paths × 30 stages per law): `resLaw` dead-child excess
+  `Z` has coherence ≤ 0.009 (bases 2, 5, 7; means within 1σ of 0); inflation of the past Weyl sum on dead
+  stages 1.00 ± 0.01; Cantor-path control identical; known-biased dyadic control coherence 0.96.
+- Next: (1) `ae_cesaro_condDiff` (atom orthogonality `∫ G(buildU s)·conj(e − condChar) = 0`, then the
+  `r^{|n−m|}` bound, then DEL on squares via `tendsto_of_tendsto_sq`); (2) `cesaro_contChar_small`;
+  (3) crux: split `localBias` again at a coarser prefix; the predictable part is the average of `e(hbⁿp/q)` over
+  the ~2^{C'} obstacle rationals in K-children of the coarse cylinder: state that as the next node.

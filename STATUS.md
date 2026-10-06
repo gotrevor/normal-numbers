@@ -93,6 +93,13 @@ against the paper plan: `HANDOFF-2026-09-29-joint-lambert-count-DONE.md`.
 
 ## What's happened (newest first)
 
+- **2026-10-06 (cantorbad lap 6, review).**  ROUTE CHANGE for `K ∩ BAD ∩ normal`
+  (`CantorBadNormal.lean`, branch `proof/cantor-bad-normal`).  The headline now goes through the local
+  almost-sure route (`exists_of_law_ae`, `ae_isNormal_resLaw_of_localDeadBias`, proved from three leaves).
+  The crux is `localDeadBias_resLaw` (node `LocalDeadBias`): the Cesàro means of the dead correction to the
+  conditional character of `e(hbⁿx)` vanish.  `midStages` is off-path (a rate there needs Baker-type input).
+  Probe `scripts/cantorbad_localbias.py`: no coherent dead bias for `resLaw`; the dyadic control shows 0.96.
+
 - **2026-09-29 (lap 88, review).**  ROUTE CHANGE, recorded in `DIRECTION.md`.  Fact (ε): route B's
   finite-cover instrument cannot give a `w`-uniform constant (state-blind covering has mass `1`; a
   `ρ`-net needs `ρ ≲ γ(I_w)`, giving cover mass `≍γ(I_w)^{-3}`), so route B's residual is
@@ -199,6 +206,12 @@ against the paper plan: `HANDOFF-2026-09-29-joint-lambert-count-DONE.md`.
 - **2026-09-27.**  Every campaign branch merged into one checkout (`f5034b6`).
 
 ## Open fronts
+
+### `K ∩ BAD ∩ normal` (cantorbad): a badly approximable Cantor point normal to every base prime to 3
+`CantorBadNormal.exists_mem_cantorSet_bad_isNormal_coprime_three`.  Law `resLaw` (dead blocks resampled
+uniformly from fresh coins), reduction `exists_of_law_ae` + `ae_isNormal_resLaw_of_localDeadBias` (proved).
+Open: `ae_cesaro_condDiff`, `cesaro_contChar_small` (standard), `localDeadBias_resLaw` (crux: equidistribution
+of the obstacle phases `bⁿ p/q` along the path).  Latest baton: `HANDOFF-2026-10-06-cantorbad-lap6.md`.
 
 ### Joint Lambert: simultaneous disjunctivity (unconditional)
 
@@ -442,6 +455,7 @@ This repo holds **no `axiom` declarations**: literature inputs are named hypothe
 
 | headline theorem | paper claim | `#print axioms` shows | status |
 | --- | --- | --- | --- |
+| `CantorBadNormal.exists_mem_cantorSet_bad_isNormal_coprime_three` | open (sweep row 2) | trust base + `sorryAx` + 2 `native_decide` artifacts (`J_lt`, `J_inj`) | 🟡 three disclosed leaves: `ae_cesaro_condDiff`, `cesaro_contChar_small` (standard, next prerequisites) and the crux `localDeadBias_resLaw` (2026-10-06, `32682ed0`) |
 | `Literature.vandehey_matrix_action_holds` (`VandeheyCapstone.lean`) | unconditional (Vandehey 2017 Thm 1.1) | trust base | 🟢 **CLEAN, DISCHARGED 2026-09-29** (`6d7a8ad`).  Route: Serret + Smith reduce to `x ↦ D·x` (`D` prime); the concrete Raney `L/R` transducer supplies a monotone RUN clock with an `x`-independent positive rate (`tendsto_runClock_div`, Lemma 6.1) and an `x`-independent Cesàro limit for the image's CF-occurrence count sampled along it (`exists_tendsto_cfCount_runClock`).  Assembled by `mobiusUniformFreq_of_runClock`.  NB the theorem lives downstream of `LiteratureVandehey.lean` (import cycle); the frozen statements stay there. |
 | `VandeheyS7.affineCFN_of_runClock` (`VandeheyS7Clock.lean`) | — (reduction for the OPEN §7 Problem 1) | trust base | 🟡 clean **as a reduction**, and since lap 88 the PRIMARY route: `0 < q` + `RunClock ℓ rate` + `SampledUniformCount q r₀ ℓ` ⊢ `AffineCFN q r₀`, for every real `q, r₀`, with **no cited ergodic input**.  `SampledUniformCount` is the live frontier; next prerequisite = `RefCesaro` (a CF-normality consequence via S7-EQ), and then the crux `BlockForget` |
 | `VandeheyS7.MapState.exists_uniform_slotCountFreq` (`VandeheyS7BlockForget.lean`) | — (route-A architecture, lap 88) | trust base | 🟡 clean as a reduction: `BlockForget w` + `RefCesaro w` + an affordable width floor ⊢ one constant `L` that every CF-normal input's crux frequency converges to.  `BlockForget` is the crux and is `x`-free; `RefCesaro` is a CF-normality consequence (next prerequisite) |
