@@ -1,7 +1,7 @@
 # HANDOFF 2026-10-06 cantorbad lap 5 (branch proof/cantor-bad-normal)
 
 Target unchanged: `exists_mem_cantorSet_bad_isNormal_coprime_three`. The headline's only on-path sorry is
-now `stageSaving` (CantorBadNormal.lean).
+now `deadCharSigned_core` (`StageSaving` was demoted to a 20% node: at S'=0 it is open-strength).
 
 ## Proved this lap
 - Locality: `norm_ee_sub_rhoS_le`, `norm_deadErr_le`, `norm_deadChar_le`, `nat_tail_ineq`,

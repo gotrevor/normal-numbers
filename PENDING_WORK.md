@@ -2955,3 +2955,8 @@ Next: (1) prove the reduction (needs pair-averaged partial Cantor products, Cass
   Stage S'=0 test: needs a power rate for E_τ|S_N|² − N over scaled Cantor copies, i.e. Schmidt-1960
   cosine-product power saving at difference frequencies h(bⁿ−bᵐ) (known only for h bⁿ).
   Next: prove the S'=0 case from a Schmidt-lemma Literature Prop, as the known-answer probe.
+- REVISED: `stageSaving` demoted to node `StageSaving` (20%). At S'=0 it needs CLT-scale variance
+  E|S_N|² = N + O(N W) for ×b on μ_K, which is open-problem strength; Schmidt gives only N^{2−δ}.
+  The implication `deadCharSigned_core_of_stageSaving` is kept.  The open sorry is back on
+  `deadCharSigned_core`.  Lesson: per-stage triangle inequalities are lossy; any decomposition must
+  keep the sum over stages signed (the telescope sum = E_ν|S_N|² − E_μK|S_N|²).

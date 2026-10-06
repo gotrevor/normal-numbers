@@ -1988,7 +1988,7 @@ theorem cs_bootstrap_floor {c η : ℝ} (hc : 0 < c) (hη : 0 < η) :
   have : η * (c ^ 2 * η) = (c * η) ^ 2 := by ring
   rw [this, Real.sqrt_sq (by positivity)]; nlinarith
 
-/-- **Per-stage power saving** (open leaf, believed 35%).  Each stage `S'` contributes to the
+/-- **Conjecture node: per-stage saving.**  Believed 20%, and open-problem strength (see the `S' = 0` analysis below).  Each stage `S'` contributes to the
 signed pair sum at most `C N W(N)` (`W` summable along `sched`; e.g. `N^{−δ}`), uniformly in `S'` and in the depth `S`.
 
 Heuristic: the stage changes only `O(1)` frozen terms of `S_N` (see `deadCharSigned_core`), so it
@@ -2003,14 +2003,17 @@ Both are `N + o(N)`, since off-diagonal lags `d` have limit `∫ e(h(b^d − 1)x
 `S' = 0` asks for an `N W(N)` rate in that limit (for a power `W`), which is Schmidt-type power saving
 (Schmidt 1960, *On normal numbers*, the cosine-product lemma: `Σ_{n<N} Π_k |cos(π h rⁿ/s^k)| ≤ 2N^{1−δ}`).
 That rate is known for the frequencies `h bⁿ`, but not uniformly for the differences
-`h(bⁿ − bᵐ)` that appear here.  This is why the confidence is below the core's.  The trivial bound is `2N²`, from
+`h(bⁿ − bᵐ)` that appear here.  Worse, at `S' = 0` the node asks for `E|S_N|² = N + O(N W(N))` under a scaled Cantor copy.  That is
+variance at CLT scale for `×b` on `μ_K`: Schmidt's bound, uniform in the frequency, sums over the
+`N` lags to only `N^{2−δ}`.  So the per-stage triangle inequality is lossy, and
+`deadCharSigned_core_of_stageSaving` is kept only as a recorded implication.  The trivial bound is `2N²`, from
 `|deadChar| ≤ 2`, and `cs_bootstrap_floor` shows that Cauchy–Schwarz cannot improve the exponent. -/
-theorem stageSaving {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) (h : ℤ) (hh : h ≠ 0) :
+def StageSaving (b : ℕ) : Prop :=
+  ∀ h : ℤ, h ≠ 0 →
     ∃ (C : ℝ) (W : ℕ → ℝ), Summable (fun j => W (sched j)) ∧ ∀ N : ℕ, 1 ≤ N → ∀ S S' : ℕ,
       ‖∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N,
           deadChar (h * ((b : ℝ) ^ n - (b : ℝ) ^ m)) S' *
-            rhoProd (h * ((b : ℝ) ^ n - (b : ℝ) ^ m)) (S' + 1) S‖ ≤ C * N * W N := by
-  sorry
+            rhoProd (h * ((b : ℝ) ^ n - (b : ℝ) ^ m)) (S' + 1) S‖ ≤ C * N * W N
 
 /-- **The crux, localized to the first `S₀ = N b + |h|` stages.**  Believed, 55%.  Open.
 
@@ -2043,7 +2046,17 @@ theorem deadCharSigned_core {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) (h : ℤ)
         ∑ S' ∈ Finset.range (min S (N * b + h.natAbs)),
           deadChar (h * ((b : ℝ) ^ n - (b : ℝ) ^ m)) S' *
             rhoProd (h * ((b : ℝ) ^ n - (b : ℝ) ^ m)) (S' + 1) S‖ ≤ C * (N : ℝ) ^ 2 * W N := by
-  obtain ⟨C, W, hW, hC⟩ := stageSaving hb h3 h hh
+  sorry
+
+/-- The node `StageSaving` implies the localized crux.  Proved, by summing over the at most
+`(b + |h|) N` stages. -/
+theorem deadCharSigned_core_of_stageSaving {b : ℕ} (hS : StageSaving b) (h : ℤ) (hh : h ≠ 0) :
+    ∃ (C : ℝ) (W : ℕ → ℝ), Summable (fun j => W (sched j)) ∧ ∀ N : ℕ, 1 ≤ N → ∀ S : ℕ,
+      ‖∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N,
+        ∑ S' ∈ Finset.range (min S (N * b + h.natAbs)),
+          deadChar (h * ((b : ℝ) ^ n - (b : ℝ) ^ m)) S' *
+            rhoProd (h * ((b : ℝ) ^ n - (b : ℝ) ^ m)) (S' + 1) S‖ ≤ C * (N : ℝ) ^ 2 * W N := by
+  obtain ⟨C, W, hW, hC⟩ := hS h hh
   refine ⟨|C| * (b + h.natAbs), fun N => |W N|, hW.abs, fun N hN S => ?_⟩
   set a := min S (N * b + h.natAbs)
   have hswap : ∀ F : ℕ → ℕ → ℕ → ℂ, ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N,
