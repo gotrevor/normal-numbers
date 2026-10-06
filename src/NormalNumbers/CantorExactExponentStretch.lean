@@ -12,14 +12,17 @@ import NormalNumbers.CantorExactExponent
 `μ₀ > 2 + log₂ 3 ≈ 3.585`.  This file freezes the full range `μ₀ > 2` (Bugeaud's Theorem 7.21
 range, `μ ≥ 2`, minus the endpoint, which is the literature control below).
 
-**Confidence (restated 2026-10-05, end of lap):** node `ae_not_liouvilleWith_all` 10%.  What
-moved: the exact residue count (`card_lowResidue_le`) replaces the cylinder count in run-entering
-windows and plausibly settles `μ₀ > 1 + log₂ 3` (`ae_not_liouvilleWith_mid`, 65%), so the open
-range shrinks to `(2, 1 + log₂ 3]`.  There the crux is `RunEnteringCount`: digits of `r q̄ mod 3^b`
-for `(q, r)` in a box of density `3^{−(τ−2)m}`, a restricted-digit Kloosterman problem with no
-known input (prior-work search 2026-10-05: none found); per-`q` methods stop exactly at
-`1 + log₂ 3` (`exactCount_rho_ge_one`).  The truth of the node is not in doubt (heuristic
-`3^{(2−τ)m}`); its provability below `2.585` is.
+**Confidence (restated 2026-10-06, end of lap 2):** node `ae_not_liouvilleWith_all` 80% (was
+10%).  What moved: `RunEnteringCount` is not a Kloosterman wall.  Fractions `r/q` of small height
+are separated 3-adically (`padic_sep`): two run-entering hits whose numerators agree mod `3^j`,
+`3^j > |r q' − r' q|`, have the same fraction, so the hitting numerators are fixed by
+`≈ log₃(|r| q)` low digits plus `v₃(q)` top digits, a count `≲ (|r| q)^{log₃ 2}`, a power saving
+for every `τ > 2` (`hit_mass_padic`).  Windows that do not enter a run use the real Farey
+separation (`hit_mass_farey`, mass `2^{−F[2m+3, L−2)}`).  The node and the stretch headline are
+wired from the one leaf `ev_expTest_mass_all`; the remaining 20% is formalization risk in the six
+elementary leaves (the case split needs `E_k = o(m)` and `L + 1 ≤ E_{k+1}`).  BFR bet: 5% (the
+3-adic count is the elementary analogue of the trivial `Q^{2 dim K}` bound, not a new count of
+rationals near `K`).
 
 ## Why the main mechanism stops at `2 + log₂ 3`
 
@@ -58,9 +61,8 @@ fine.  It fails for two independent reasons:
 What would reopen it is a count of rationals near the *discrete* endpoints `P/3^b` at the
 heuristic density `Q^{2−τ}`, uniformly over cylinders (`EndpointRationalCount`).  That is a
 Broderick–Fishman–Reich-type count, open for `K`.  He–Liao 2608.15686 (the Bugeaud–Durand
-formula for `τ` near 1) has the same small-`α` regime.
-
-Confidence 10%.
+formula for `τ` near 1) has the same small-`α` regime.  (Superseded 2026-10-06: the endpoint
+count is elementary 3-adically, `hit_mass_padic`; confidence restated above.)
 -/
 
 open MeasureTheory Filter Topology
@@ -936,12 +938,10 @@ theorem ae_not_liouvilleWith_mid (μ₀ : ℚ) (hμ : 1 + Real.logb 2 3 < μ₀)
   exact hex.2 τ hτ
 
 
-/-- **Stretch crux: the exponent upper bound for every `μ₀ > 2`.**  Confidence 15%.
+/-- **Stretch crux: the exponent upper bound for every `μ₀ > 2`.**  Confidence 80%.
 
-English proof (heuristic only).  As `CantorExactExponent.ae_not_liouvilleWith`, with the trivial
-numerator count replaced by an equidistribution count of rationals `p/q`, `q ≈ 3ᵐ`, near the
-prefix rationals `P/3^{a_{k+1}}`: expected hits `≈ q^{1−τ}` per `q`, so `3^{m(2−τ)}` per block,
-summable for `τ > 2`.  No proved count of this strength is known for `K` (see module doc). -/
+Wiring proved from `ev_expTest_mass_all` (Borel–Cantelli and `hasIrrExponent_of_avoid_two`), whose
+run-entering case is the 3-adic Farey count `hit_mass_padic`. -/
 theorem ae_not_liouvilleWith_all (μ₀ : ℚ) (hμ : 2 < μ₀) (τ : ℝ) (hτ : (μ₀ : ℝ) < τ) :
     ∀ᵐ ω ∂coins, ¬ LiouvilleWith τ (cantorExpReal μ₀ ω) := by
   obtain ⟨J₀, hJ₀⟩ := eventually_atTop.1 (ev_expTest_mass_all μ₀ hμ)
@@ -969,7 +969,8 @@ theorem ae_not_liouvilleWith_all (μ₀ : ℚ) (hμ : 2 < μ₀) (τ : ℝ) (hτ
 
 /-- **Stretch headline.**  For every rational `μ₀ > 2` a computable `x ∈ K` with irrationality
 exponent exactly `μ₀`, normal to every base `b ≥ 2` with `3 ∤ b`, not normal to base 3.
-Confidence 10%. -/
+Confidence 80%: wiring proved from `ev_expTest_mass_all` and the main file's
+`exists_computable_normal_avoid`. -/
 theorem exists_computable_mem_cantorSet_irrExponent_normal_all (μ₀ : ℚ) (hμ : 2 < μ₀) :
     ∃ e : ℕ → Bool, Computable e ∧ cantorExpReal μ₀ e ∈ cantorSet ∧
       HasIrrExponent (cantorExpReal μ₀ e) μ₀ ∧

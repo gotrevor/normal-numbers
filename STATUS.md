@@ -1,5 +1,12 @@
 # STATUS — normal-numbers 📊
 
+## Cantor exact-exponent stretch update, 6 October 2026 (branch `proof/cantorexp-stretch`)
+
+The stretch headline (computable `x ∈ K`, exponent exactly `μ₀` for every rational `μ₀ > 2`,
+normal to all bases prime to 3) is wired from one open leaf, `ev_expTest_mass_all`, whose crux is
+an elementary 3-adic Farey count (`hit_mass_padic`); six elementary leaves remain (sorry).
+Node confidence 80%.  See `HANDOFF-2026-10-06-stretch-lap2.md`.
+
 ## Joint Lambert update, 29 September 2026
 
 The synchronized-word theorem is unconditional at proof commit `f6fbf87` on
