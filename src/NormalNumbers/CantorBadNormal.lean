@@ -5060,6 +5060,36 @@ theorem norm_obstSum_sq_split (ξ : ℝ) (k : ℕ) (w : List Bool) :
   congr 1
   refine Finset.sum_congr rfl fun F _ => ?_
   rw [← Finset.add_sum_erase _ _ (Finset.mem_univ F), Complex.mul_conj']
+
+theorem norm_obstLocal_le_const (ξ : ℝ) (v : List Bool) : ‖obstLocal ξ v‖ ≤ 2048 := by
+  refine (norm_obstLocal_le ξ v).trans ?_
+  have hc : (1 : ℝ) ≤ (aliveSet v).card := by exact_mod_cast card_aliveSet_pos v
+  rw [div_le_iff₀ (by linarith)]
+  have : ((1024 - (aliveSet v).card : ℕ) : ℝ) ≤ 1024 := by exact_mod_cast Nat.sub_le _ _
+  nlinarith
+
+/-- **Pointwise second-moment bound: geometric diagonal + off-diagonal.**
+`‖obstSum‖² ≤ 2048²·1024^{−k} + ‖obstOff‖`.  Proved (crude constant). -/
+theorem norm_obstSum_sq_le (ξ : ℝ) (k : ℕ) (w : List Bool) :
+    ‖obstSum ξ k w‖ ^ 2 ≤ 2048 ^ 2 / 1024 ^ k + ‖obstOff ξ k w‖ := by
+  have h := congrArg norm (norm_obstSum_sq_split ξ k w)
+  rw [show ‖(‖obstSum ξ k w‖ ^ 2 : ℂ)‖ = ‖obstSum ξ k w‖ ^ 2 by
+    rw [norm_pow, Complex.norm_real, Real.norm_of_nonneg (norm_nonneg _)]] at h
+  rw [h]
+  refine (norm_add_le _ _).trans (add_le_add ?_ le_rfl)
+  rw [norm_mul, norm_pow, norm_div, norm_one, norm_pow, Complex.norm_ofNat]
+  have hs : ‖∑ F : Fin k → (Fin 10 → Bool), (‖obstLocal ξ (catB w k F)‖ ^ 2 : ℂ)‖ ≤
+      (1024 : ℝ) ^ k * 2048 ^ 2 := by
+    refine (norm_sum_le _ _).trans ?_
+    calc _ ≤ ∑ _F : Fin k → (Fin 10 → Bool), (2048 : ℝ) ^ 2 := Finset.sum_le_sum fun F _ => by
+          rw [show ‖(‖obstLocal ξ (catB w k F)‖ ^ 2 : ℂ)‖ = ‖obstLocal ξ (catB w k F)‖ ^ 2 by
+            rw [norm_pow, Complex.norm_real, Real.norm_of_nonneg (norm_nonneg _)]]
+          exact pow_le_pow_left₀ (norm_nonneg _) (norm_obstLocal_le_const _ _) 2
+      _ = _ := by simp [Finset.card_univ, Fintype.card_fun, Fintype.card_fin]
+  have hp : (0 : ℝ) < 1024 ^ k := by positivity
+  calc (1 / 1024 ^ k) ^ 2 * _ ≤ (1 / (1024 : ℝ) ^ k) ^ 2 * ((1024 : ℝ) ^ k * 2048 ^ 2) :=
+        mul_le_mul_of_nonneg_left hs (by positivity)
+    _ = _ := by field_simp
 /-- **The `resLaw` second moment as an explicit pair sum.**  `E‖obstSum‖²` is the sum over stage-`s`
 prefixes `w`, weighted by their `resLaw` mass, of the same-cylinder pair sums of
 `norm_obstSum_sq`.  Proved. -/
