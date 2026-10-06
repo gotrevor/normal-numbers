@@ -4731,6 +4731,51 @@ theorem nearObstaclePhaseMixing_of_split {b : ℕ} (hb : 1 ≤ b) (h1 : FirstOrd
     _ ≤ K₁ * (N : ℝ) ^ 2 * W₁ N + K₂ * (N : ℝ) ^ 2 * W₂ N := add_le_add (hK₁ N hN) (hK₂ N hN)
     _ = _ := by ring
 
+/-- **The alive defect is bounded by the dead fraction.**  If every child value is at most `M`,
+`|aliveDefect H w| ≤ 2·(#dead/1024)·M`.  Proved.  (So the defect part of the crux carries the
+dead density as a factor; the bootstrap must average it, since `#dead ≤ 488` in the worst case.) -/
+theorem norm_aliveDefect_le (H : List Bool → ℂ) (w : List Bool) {M : ℝ}
+    (hM : ∀ f : Fin 10 → Bool, ‖H (w ++ List.ofFn f)‖ ≤ M) :
+    ‖aliveDefect H w‖ ≤ 2 * ((1024 - (aliveSet w).card : ℕ) / 1024 : ℝ) * M := by
+  classical
+  set A := aliveSet w
+  set c := A.card
+  have hc0 : (0 : ℝ) < c := by exact_mod_cast card_aliveSet_pos w
+  have hc1 : c ≤ 1024 := card_aliveSet_le w
+  have hM0 : 0 ≤ M := (norm_nonneg _).trans (hM fun _ => false)
+  set e : (Fin 10 → Bool) → ℂ := fun f => H (w ++ List.ofFn f)
+  have hsplit := Finset.sum_sdiff (f := e) (Finset.subset_univ A)
+  have hD : (Finset.univ \ A).card = 1024 - c := by
+    rw [Finset.card_sdiff_of_subset (Finset.subset_univ _), Finset.card_univ]; simp [c]
+  have key : aliveDefect H w = (1 / 1024 : ℂ) * ∑ f ∈ Finset.univ \ A, e f -
+      (((1024 - c : ℕ) : ℂ) / (1024 * c)) * ∑ f ∈ A, e f := by
+    unfold aliveDefect unifAvg aliveAvg
+    change (1 / 1024 : ℂ) * ∑ f, e f - (1 / (c : ℂ)) * ∑ f ∈ A, e f = _
+    rw [← hsplit, Nat.cast_sub hc1]
+    have : (c : ℂ) ≠ 0 := by exact_mod_cast hc0.ne'
+    field_simp
+    ring
+  rw [key]
+  have b1 : ‖∑ f ∈ Finset.univ \ A, e f‖ ≤ (1024 - c : ℕ) * M := by
+    refine (norm_sum_le _ _).trans ?_
+    calc ∑ f ∈ Finset.univ \ A, ‖e f‖ ≤ ∑ f ∈ Finset.univ \ A, M := Finset.sum_le_sum fun f _ => hM f
+      _ = _ := by rw [Finset.sum_const, hD, nsmul_eq_mul]
+  have b2 : ‖∑ f ∈ A, e f‖ ≤ c * M := by
+    refine (norm_sum_le _ _).trans ?_
+    calc ∑ f ∈ A, ‖e f‖ ≤ ∑ f ∈ A, M := Finset.sum_le_sum fun f _ => hM f
+      _ = _ := by rw [Finset.sum_const, nsmul_eq_mul]
+  refine (norm_sub_le _ _).trans ?_
+  rw [norm_mul, norm_mul]
+  have n1 : ‖(1 / 1024 : ℂ)‖ = 1 / 1024 := by norm_num
+  have n2 : ‖(((1024 - c : ℕ) : ℂ) / (1024 * c))‖ = ((1024 - c : ℕ) : ℝ) / (1024 * c) := by
+    rw [norm_div, Complex.norm_natCast, norm_mul, Complex.norm_natCast]; norm_num
+  rw [n1, n2]
+  have hd0 : (0 : ℝ) ≤ ((1024 - c : ℕ) : ℝ) := Nat.cast_nonneg _
+  calc 1 / 1024 * ‖∑ f ∈ Finset.univ \ A, e f‖ + ((1024 - c : ℕ) : ℝ) / (1024 * c) * ‖∑ f ∈ A, e f‖
+      ≤ 1 / 1024 * ((1024 - c : ℕ) * M) + ((1024 - c : ℕ) : ℝ) / (1024 * c) * (c * M) := by
+        gcongr
+    _ = 2 * (((1024 - c : ℕ) : ℝ) / 1024) * M := by field_simp; ring
+
 /-- Append `k` blocks to `w`. -/
 def catB (w : List Bool) : (k : ℕ) → (Fin k → (Fin 10 → Bool)) → List Bool
   | 0, _ => w

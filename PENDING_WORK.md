@@ -3108,3 +3108,8 @@ Next: (1) prove the reduction (needs pair-averaged partial Cantor products, Cass
 * (lap 8) PROVED `catB`, `pathW`, `real_buildU_catB`: exact resLaw path likelihood
   `mass(catB w k F) = mass(w)·∏ 1_{alive}/|A|` — the likelihood-ratio handle (vs uniform `1024^{−k}`) for the
   bootstrap: `E_res[G(w_t)|w_s] = E_unif[G·∏ 1_alive·1024/|A| | w_s]`.
+* (lap 8) PROVED `norm_aliveDefect_le`: |aliveDefect H w| ≤ 2·(#dead/1024)·max_f|H(wf)|.
+  Bootstrap outline (next to state in Lean): with `H_r = cExt D_t (t−r−1)`, the defect part is
+  ≤ Σ_r E_res[ 2·(#dead_r/1024)·max_f |H_r(w_r f)| | w_s ] — absolute values here lose the outer phase
+  averaging, so for r near t this is NOT small; keep the phase: aliveDefect(H_r)(w_r) = e(ξ cylLeft w_r)·g_r(w_r)
+  with |g_r| ≤ 2(#dead_r/1024)·sup-decay(t−r−1), and recurse (contraction factor ≈ averaged dead density).
