@@ -332,4 +332,321 @@ theorem card_near_leF (free : ℕ → Bool) (q m : ℕ) (hq : 0 < q) (hqm : q �
     _ = 3 * (HSF free m).card := by rw [Finset.sum_const, smul_eq_mul, mul_comm]
     _ ≤ 3 * 4 ^ freeCount free m := Nat.mul_le_mul_left _ (card_HSF free m)
 
+/-! ## Digit-structure lemmas -/
+
+theorem hdF_zero_ext (free : ℕ → Bool) (ω : ℕ → Bool) (a : ℕ) :
+    ∀ E, a ≤ E → (∀ i, a ≤ i → i < E → ptDigitF free ω i = 0) →
+      hdF free ω E = 5 ^ (E - a) * hdF free ω a := by
+  intro E
+  induction E with
+  | zero => intro h _; obtain rfl : a = 0 := by omega
+            simp
+  | succ E ih =>
+    intro hE hz
+    rcases Nat.eq_or_lt_of_le hE with h | h
+    · subst h; simp
+    · rw [hdF_succ, ih (by omega) (fun i h1 h2 => hz i h1 (by omega)), hz E (by omega) (by omega),
+        show E + 1 - a = (E - a) + 1 by omega, pow_succ]
+      ring
+
+theorem digitsF_zero_of_dvd (free : ℕ → Bool) (ω : ℕ → Bool) :
+    ∀ j a, j ≤ a → 5 ^ j ∣ hdF free ω a → ∀ i, a - j ≤ i → i < a → ptDigitF free ω i = 0 := by
+  intro j
+  induction j with
+  | zero => intro a _ _ i h1 h2; omega
+  | succ j ih =>
+    intro a hja hdvd i h1 h2
+    obtain ⟨a', rfl⟩ : ∃ a', a = a' + 1 := ⟨a - 1, by omega⟩
+    rw [hdF_succ] at hdvd
+    have h3 : 5 ∣ 5 * hdF free ω a' + ptDigitF free ω a' :=
+      (dvd_pow_self 5 (by omega)).trans hdvd
+    have hd0 : ptDigitF free ω a' = 0 := by
+      have := ptDigitF_le_four free ω a'
+      omega
+    rcases Nat.eq_or_lt_of_le (Nat.lt_succ_iff.1 h2) with hi | hi
+    · rw [hi]; exact hd0
+    · rw [hd0, add_zero, pow_succ, mul_comm 5] at hdvd
+      exact ih a' (by omega) (Nat.dvd_of_mul_dvd_mul_right (by norm_num) hdvd) i (by omega) hi
+
+theorem pow_dvd_of_eqF {pp P q a m : ℕ} (hq : q ≠ 0) (hq5 : q < 5 ^ (m + 1))
+    (h : pp * 5 ^ a = P * q) : 5 ^ (a - m) ∣ P := by
+  obtain ⟨v, q', hq', rfl⟩ := Nat.exists_eq_pow_mul_and_not_dvd hq 5 (by norm_num)
+  have hv : v ≤ m := by
+    by_contra hc
+    have : 5 ^ (m + 1) ≤ 5 ^ v * q' :=
+      (Nat.pow_le_pow_right (by norm_num) (by omega)).trans
+        (Nat.le_mul_of_pos_right _ (Nat.pos_of_ne_zero (by rintro rfl; simp at hq)))
+    omega
+  rcases le_or_gt a v with hav | hav
+  · rw [show a - m = 0 by omega]; simp
+  have hdvd : 5 ^ (a - v) * 5 ^ v ∣ P * q' * 5 ^ v := by
+    rw [← pow_add, show a - v + v = a by omega]
+    exact ⟨pp, by rw [mul_comm (P * q')]; linarith [h]⟩
+  have h2 : 5 ^ (a - v) ∣ P * q' := Nat.dvd_of_mul_dvd_mul_right (by positivity) hdvd
+  have hcop : Nat.Coprime (5 ^ (a - v)) q' :=
+    Nat.Coprime.pow_left _ ((Nat.Prime.coprime_iff_not_dvd (by norm_num)).2 hq')
+  exact (Nat.pow_dvd_pow 5 (by omega)).trans (hcop.dvd_of_dvd_mul_right h2)
+
+/-! ## The prefix test at scale `m` -/
+
+/-- `|fNum/5^{L+1} − pp/q| ≤ 3·5^{-(L+1)}` with `q ∈ [5^m, 5^{m+1})`. -/
+def hitCondF (free : ℕ → Bool) (m L : ℕ) (p : List Bool) (q pp : ℕ) : Prop :=
+  5 ^ m ≤ q ∧ fNum free (L + 1) p * q ≤ pp * 5 ^ (L + 1) + 3 * q ∧
+    pp * 5 ^ (L + 1) ≤ fNum free (L + 1) p * q + 3 * q
+
+instance (free : ℕ → Bool) (m L : ℕ) (p : List Bool) (q pp : ℕ) :
+    Decidable (hitCondF free m L p q pp) := by unfold hitCondF; infer_instance
+
+def hitCntF (free : ℕ → Bool) (m L : ℕ) (p : List Bool) : ℕ :=
+  ((List.range (5 ^ (m + 1))).map fun q =>
+    ((List.range (q + 1)).map fun pp => if hitCondF free m L p q pp then 1 else 0).sum).sum
+
+/-- The scale-`m` test, on a prefix of `2(L+1)` coins. -/
+def hitBF (free : ℕ → Bool) (m L : ℕ) (p : List Bool) : Bool := decide (0 < hitCntF free m L p)
+
+theorem fNum_pre (free : ℕ → Bool) (ω : ℕ → Bool) (N : ℕ) :
+    fNum free N (pre ω (2 * N)) = hdF free ω N := by
+  rw [fNum_eq]
+  refine hdF_congr _ _ _ N fun j hj => ?_
+  simp only [ptDigitF, getD_pre' ω, if_pos (show 2 * j < 2 * N by omega),
+    if_pos (show 2 * j + 1 < 2 * N by omega)]
+
+theorem hitBF_iff (free : ℕ → Bool) (m L : ℕ) (p : List Bool) :
+    hitBF free m L p = true ↔ ∃ q pp, q < 5 ^ (m + 1) ∧ pp ≤ q ∧ hitCondF free m L p q pp := by
+  rw [hitBF, decide_eq_true_eq, hitCntF, ComputableNormalB.list_sum_range_map]
+  constructor
+  · intro h
+    obtain ⟨q, hq, hpos⟩ := Finset.exists_ne_zero_of_sum_ne_zero (Nat.pos_iff_ne_zero.1 h)
+    rw [ComputableNormalB.list_sum_range_map] at hpos
+    obtain ⟨pp, hpp, hpos'⟩ := Finset.exists_ne_zero_of_sum_ne_zero hpos
+    simp only [Finset.mem_range] at hq hpp
+    refine ⟨q, pp, hq, by omega, ?_⟩
+    by_contra hc; simp [hc] at hpos'
+  · rintro ⟨q, pp, hq, hpp, hc⟩
+    refine lt_of_lt_of_le ?_ (Finset.single_le_sum (fun _ _ => Nat.zero_le _)
+      (Finset.mem_range.2 hq))
+    rw [ComputableNormalB.list_sum_range_map]
+    refine lt_of_lt_of_le ?_ (Finset.single_le_sum (fun _ _ => Nat.zero_le _)
+      (Finset.mem_range.2 (Nat.lt_succ_of_le hpp)))
+    simp [hc]
+
+theorem hitCondF_pre_iff (free : ℕ → Bool) (ω : ℕ → Bool) (m L q pp : ℕ) (hq : 0 < q) :
+    (|(hdF free ω (L + 1) : ℝ) / 5 ^ (L + 1) - pp / q| ≤ 3 / 5 ^ (L + 1)) ↔
+      (fNum free (L + 1) (pre ω (2 * (L + 1))) * q ≤ pp * 5 ^ (L + 1) + 3 * q ∧
+        pp * 5 ^ (L + 1) ≤ fNum free (L + 1) (pre ω (2 * (L + 1))) * q + 3 * q) := by
+  rw [fNum_pre]
+  set h := hdF free ω (L + 1)
+  have hqR : (0 : ℝ) < q := by exact_mod_cast hq
+  have h3 : (0 : ℝ) < 5 ^ (L + 1) := by positivity
+  have e : (h : ℝ) / 5 ^ (L + 1) - pp / q = ((h : ℝ) * q - pp * 5 ^ (L + 1)) / (q * 5 ^ (L + 1)) := by
+    field_simp
+  have hD : (0:ℝ) < q * 5 ^ (L + 1) := by positivity
+  rw [e, abs_div, abs_of_pos hD, div_le_div_iff₀ hD h3,
+    show (3:ℝ) * (q * 5 ^ (L + 1)) = (3 * q) * 5 ^ (L + 1) by ring]
+  rw [show (|(h : ℝ) * q - pp * 5 ^ (L + 1)| * 5 ^ (L + 1) ≤ (3 * q) * 5 ^ (L + 1)) ↔
+      |(h : ℝ) * q - pp * 5 ^ (L + 1)| ≤ 3 * q from
+    ⟨fun k => le_of_mul_le_mul_right k h3, fun k => mul_le_mul_of_nonneg_right k h3.le⟩, abs_le]
+  constructor
+  · rintro ⟨h1, h2⟩
+    constructor
+    · have : (h : ℝ) * q ≤ pp * 5 ^ (L + 1) + 3 * q := by nlinarith
+      exact_mod_cast this
+    · have : (pp : ℝ) * 5 ^ (L + 1) ≤ h * q + 3 * q := by nlinarith
+      exact_mod_cast this
+  · rintro ⟨h1, h2⟩
+    have h1' : (h : ℝ) * q ≤ pp * 5 ^ (L + 1) + 3 * q := by exact_mod_cast h1
+    have h2' : (pp : ℝ) * 5 ^ (L + 1) ≤ h * q + 3 * q := by exact_mod_cast h2
+    constructor <;> nlinarith
+
+/-- **Firing**: a rational at scale `m` within `2·5^{-(L+1)}` trips the test. -/
+theorem hitBF_of_near (free : ℕ → Bool) (ω : ℕ → Bool) (m L q pp : ℕ) (hq1 : 5 ^ m ≤ q)
+    (hq2 : q < 5 ^ (m + 1)) (hpp : pp ≤ q)
+    (h : |ptF free ω - pp / q| ≤ 2 / 5 ^ (L + 1)) :
+    hitBF free m L (pre ω (2 * (L + 1))) = true := by
+  have hq : 0 < q := lt_of_lt_of_le (by positivity) hq1
+  rw [hitBF_iff]
+  refine ⟨q, pp, hq2, hpp, hq1, (hitCondF_pre_iff free ω m L q pp hq).1 ?_⟩
+  have e1 := hdF_div_le_ptF free ω (L + 1)
+  have e2 := ptF_le_hdF_div free ω (L + 1)
+  have k : (3:ℝ) / 5 ^ (L + 1) = 2 / 5 ^ (L + 1) + 1 / 5 ^ (L + 1) := by ring
+  rw [abs_le] at h ⊢
+  rw [k]
+  constructor <;> linarith [h.1, h.2]
+
+/-- **Soundness**: a tripped test gives a rational at scale `m` within `4·5^{-(L+1)}`. -/
+theorem near_of_hitBF (free : ℕ → Bool) (ω : ℕ → Bool) (m L : ℕ)
+    (h : hitBF free m L (pre ω (2 * (L + 1))) = true) :
+    ∃ q pp : ℕ, 5 ^ m ≤ q ∧ q < 5 ^ (m + 1) ∧ pp ≤ q ∧
+      |ptF free ω - pp / q| ≤ 4 / 5 ^ (L + 1) := by
+  obtain ⟨q, pp, hq2, hpp, hq1, hc⟩ := (hitBF_iff free m L _).1 h
+  have hq : 0 < q := lt_of_lt_of_le (by positivity) hq1
+  refine ⟨q, pp, hq1, hq2, hpp, ?_⟩
+  have h' := (hitCondF_pre_iff free ω m L q pp hq).2 hc
+  have e1 := hdF_div_le_ptF free ω (L + 1)
+  have e2 := ptF_le_hdF_div free ω (L + 1)
+  rw [abs_le] at h' ⊢
+  have k : (4:ℝ) / 5 ^ (L + 1) = 3 / 5 ^ (L + 1) + 1 / 5 ^ (L + 1) := by ring
+  rw [k]
+  constructor <;> linarith [h'.1, h'.2]
+
+/-! ## Masses of the test -/
+
+/-- **Borel–Cantelli mass of the scale-`m` test**: `≤ 36·5^m·4^{-W}`, `W` the free count of
+`[m+1, L-1)`. -/
+theorem hit_mass_bcF (free : ℕ → Bool) (m L : ℕ) (hL : m + 2 ≤ L) :
+    coins.real {ω | hitBF free m L (pre ω (2 * (L + 1))) = true} ≤
+      36 * 5 ^ m * (1 / 4 : ℝ) ^ fc free (m + 1) (L - 1) := by
+  classical
+  set r : ℝ := 5 / 5 ^ (L + 1) with hr
+  set near : ℕ → Finset ℕ := fun q =>
+    (Finset.range (q + 1)).filter fun pp : ℕ => ∃ ω, |ptF free ω - pp / q| < r
+  have hsub : {ω | hitBF free m L (pre ω (2 * (L + 1))) = true} ⊆
+      ⋃ q ∈ Finset.Ico (5 ^ m) (5 ^ (m + 1)), ⋃ pp ∈ near q, {ω | |ptF free ω - pp / q| < r} := by
+    intro ω hω
+    obtain ⟨q, pp, hq1, hq2, hpp, hle⟩ := near_of_hitBF free ω m L hω
+    have hlt : |ptF free ω - pp / q| < r := by
+      rw [hr]; refine lt_of_le_of_lt hle ?_
+      exact div_lt_div_of_pos_right (by norm_num) (by positivity)
+    simp only [Set.mem_iUnion, Finset.mem_Ico, Set.mem_setOf_eq]
+    refine ⟨q, ⟨hq1, hq2⟩, pp, ?_, hlt⟩
+    simp only [near, Finset.mem_filter, Finset.mem_range]
+    exact ⟨by omega, ω, hlt⟩
+  have hball : ∀ q pp : ℕ, coins.real {ω | |ptF free ω - pp / q| < r} ≤
+      3 * (1 / 4 : ℝ) ^ freeCount free (L - 1) := by
+    intro q pp
+    refine ball_leF free _ r (L - 1) ?_
+    rw [show L - 1 + 1 = L by omega, hr, pow_succ]
+    rw [div_le_div_iff₀ (by positivity) (by positivity)]; nlinarith [pow_pos (by norm_num : (0:ℝ) < 5) L]
+  have hcard : ∀ q ∈ Finset.Ico (5 ^ m) (5 ^ (m + 1)), (near q).card ≤ 3 * 4 ^ freeCount free (m + 1) := by
+    intro q hq
+    rw [Finset.mem_Ico] at hq
+    have hq0 : 0 < q := lt_of_lt_of_le (by positivity) hq.1
+    refine card_near_leF free q (m + 1) hq0 hq.2.le r ?_
+    rw [hr, div_le_div_iff₀ (by positivity) (by exact_mod_cast hq0)]
+    have h1 : (q : ℝ) < 5 ^ (m + 1) := by exact_mod_cast hq.2
+    have h2 : (5 : ℝ) ^ (m + 1) * 5 ≤ 5 ^ (L + 1) := by
+      rw [← pow_succ]; exact pow_le_pow_right₀ (by norm_num) (by omega)
+    nlinarith
+  have hF : freeCount free (L - 1) = freeCount free (m + 1) + fc free (m + 1) (L - 1) :=
+    freeCount_sub free (by omega)
+  refine (measureReal_mono hsub (measure_ne_top _ _)).trans ((measureReal_biUnion_finset_le _ _).trans ?_)
+  calc ∑ q ∈ Finset.Ico (5 ^ m) (5 ^ (m + 1)),
+        coins.real (⋃ pp ∈ near q, {ω | |ptF free ω - pp / q| < r})
+      ≤ ∑ q ∈ Finset.Ico (5 ^ m) (5 ^ (m + 1)),
+          (3 * 4 ^ freeCount free (m + 1) : ℝ) * (3 * (1 / 4 : ℝ) ^ freeCount free (L - 1)) := by
+        refine Finset.sum_le_sum fun q hq => (measureReal_biUnion_finset_le _ _).trans ?_
+        refine (Finset.sum_le_sum fun pp _ => hball q pp).trans ?_
+        rw [Finset.sum_const, nsmul_eq_mul]
+        gcongr
+        exact_mod_cast hcard q hq
+    _ = 36 * 5 ^ m * (1 / 4 : ℝ) ^ fc free (m + 1) (L - 1) := by
+        have e : 5 ^ (m + 1) - 5 ^ m = 4 * 5 ^ m := by rw [pow_succ]; omega
+        rw [Finset.sum_const, nsmul_eq_mul, Nat.card_Ico, e, hF, pow_add (1 / 4 : ℝ)]
+        push_cast
+        have : (4 : ℝ) ^ freeCount free (m + 1) * (1 / 4) ^ freeCount free (m + 1) = 1 := by
+          rw [← mul_pow]; norm_num
+        calc (4 * 5 ^ m : ℝ) * (3 * 4 ^ freeCount free (m + 1) * (3 *
+              ((1 / 4) ^ freeCount free (m + 1) * (1 / 4) ^ fc free (m + 1) (L - 1))))
+            = 36 * 5 ^ m * (4 ^ freeCount free (m + 1) * (1 / 4) ^ freeCount free (m + 1)) *
+              (1 / 4) ^ fc free (m + 1) (L - 1) := by ring
+          _ = _ := by rw [this, mul_one]
+
+/-- Triangle inequality at a forced approximation, base 5. -/
+theorem abs_sub_ge_of_nearF (x : ℝ) (P a E q : ℕ) (p : ℤ) (hq : 0 < q)
+    (hx : |x - P / 5 ^ a| ≤ 1 / 5 ^ E) (hne : (p : ℝ) / q ≠ P / 5 ^ a)
+    (hqE : 2 * q * 5 ^ a ≤ 5 ^ E) :
+    1 / (2 * (q : ℝ) * 5 ^ a) ≤ |x - p / q| := by
+  have hqR : (0 : ℝ) < q := by exact_mod_cast hq
+  have h3 : (0 : ℝ) < 5 ^ a := by positivity
+  set n : ℤ := p * 5 ^ a - P * q with hn
+  have hn0 : n ≠ 0 := by
+    intro h0
+    apply hne
+    have : (p : ℝ) * 5 ^ a = P * q := by
+      have := congrArg (fun z : ℤ => (z : ℝ)) h0
+      simp only [hn] at this; push_cast at this; linarith
+    field_simp; linarith
+  have hn1 : (1 : ℝ) ≤ |(n : ℝ)| := by
+    rw [← Int.cast_abs]; exact_mod_cast Int.one_le_abs hn0
+  have hdiff : (p : ℝ) / q - P / 5 ^ a = n / (q * 5 ^ a) := by
+    simp only [hn]; push_cast; field_simp
+  have hge : 1 / ((q : ℝ) * 5 ^ a) ≤ |(p : ℝ) / q - P / 5 ^ a| := by
+    rw [hdiff, abs_div, abs_of_pos (by positivity : (0:ℝ) < q * 5 ^ a)]
+    exact div_le_div_of_nonneg_right hn1 (by positivity)
+  have hE : 1 / (5 : ℝ) ^ E ≤ 1 / (2 * q * 5 ^ a) := by
+    apply one_div_le_one_div_of_le (by positivity)
+    exact_mod_cast hqE
+  have htri : |(p : ℝ) / q - P / 5 ^ a| ≤ |x - p / q| + |x - P / 5 ^ a| := by
+    rw [abs_sub_comm x]; exact abs_sub_le _ _ _
+  have : 1 / ((q : ℝ) * 5 ^ a) = 2 * (1 / (2 * q * 5 ^ a)) := by field_simp
+  linarith
+
+/-- **Triangle-range mass of the scale-`m` test**, base 5. -/
+theorem hit_mass_triF (free : ℕ → Bool) (m L a E : ℕ)
+    (hz : ∀ i, a ≤ i → i < E → free i = false) (haE : m + a + 2 ≤ E) (hL : m + a + 3 ≤ L) :
+    coins.real {ω | hitBF free m L (pre ω (2 * (L + 1))) = true} ≤ (1 / 4 : ℝ) ^ fc free m L := by
+  rw [← coins_zero_windowF free m L (by omega)]
+  refine measureReal_mono fun ω hω => ?_
+  simp only [Set.mem_setOf_eq] at hω ⊢
+  obtain ⟨q, pp, hq1, hq2, hpp, hle⟩ := near_of_hitBF free ω m L hω
+  have hq0 : 0 < q := lt_of_lt_of_le (by positivity) hq1
+  set P := hdF free ω a
+  have hzd : ∀ i, a ≤ i → i < E → ptDigitF free ω i = 0 := fun i h1 h2 => by
+    simp [ptDigitF, hz i h1 h2]
+  have hE := hdF_zero_ext free ω a E (by omega) hzd
+  have hsplitE := ptF_split free ω E
+  have hPE : (hdF free ω E : ℝ) / 5 ^ E = P / 5 ^ a := by
+    rw [hE]; push_cast
+    rw [show (5 : ℝ) ^ E = 5 ^ (E - a) * 5 ^ a by rw [← pow_add]; congr 1; omega]
+    field_simp
+    rfl
+  have hnear : |ptF free ω - P / 5 ^ a| ≤ 1 / 5 ^ E := by
+    rw [hsplitE, hPE, add_sub_cancel_left, abs_of_nonneg (tlF_nonneg _ _ _)]; exact tlF_le _ _ _
+  have heq : (pp : ℝ) / q = P / 5 ^ a := by
+    by_contra hne
+    have hqE : 2 * q * 5 ^ a ≤ 5 ^ E := by
+      have : 2 * q * 5 ^ a ≤ 2 * 5 ^ (m + 1) * 5 ^ a := by gcongr
+      refine this.trans ?_
+      rw [mul_assoc, ← pow_add]
+      calc 2 * 5 ^ (m + 1 + a) ≤ 5 * 5 ^ (m + 1 + a) := by omega
+        _ = 5 ^ (m + a + 2) := by rw [← pow_succ']; congr 1; omega
+        _ ≤ 5 ^ E := Nat.pow_le_pow_right (by norm_num) haE
+    have h1 := abs_sub_ge_of_nearF (ptF free ω) P a E q (pp : ℤ) hq0 hnear (by simpa using hne) hqE
+    simp only [Int.cast_natCast] at h1
+    have h2 : (4 : ℝ) / 5 ^ (L + 1) < 1 / (2 * q * 5 ^ a) := by
+      rw [div_lt_div_iff₀ (by positivity) (by positivity)]
+      have : (q : ℝ) < 5 ^ (m + 1) := by exact_mod_cast hq2
+      have h3 : (5 : ℝ) ^ (m + 1) * 5 ^ a * 25 ≤ 5 ^ (L + 1) := by
+        rw [← pow_add, show (25 : ℝ) = 5 ^ 2 by norm_num, ← pow_add]
+        exact pow_le_pow_right₀ (by norm_num) (by omega)
+      have : (0 : ℝ) < 5 ^ a := by positivity
+      nlinarith
+    linarith
+  have hsplit := ptF_split free ω a
+  have htl : tlF free ω a < 1 / (5 : ℝ) ^ L := by
+    have : ptF free ω - pp / q = tlF free ω a := by rw [heq, hsplit]; ring
+    rw [this, abs_of_nonneg (tlF_nonneg _ _ _)] at hle
+    refine lt_of_le_of_lt hle ?_
+    rw [pow_succ, div_lt_div_iff₀ (by positivity) (by positivity)]
+    nlinarith [pow_pos (by norm_num : (0:ℝ) < 5) L]
+  have hza := ptDigitF_zero_of_tl_lt free ω a L htl
+  have hzm : ∀ i, m ≤ i → i < a → ptDigitF free ω i = 0 := by
+    intro i h1 h2
+    have hnat : pp * 5 ^ a = P * q := by
+      have : (pp : ℝ) * 5 ^ a = P * q := by
+        field_simp at heq; linarith
+      exact_mod_cast this
+    have hdvd := pow_dvd_of_eqF (m := m) hq0.ne' hq2 hnat
+    exact digitsF_zero_of_dvd free ω (a - m) a (by omega) hdvd i (by omega) h2
+  intro i h1 h2 hf
+  have hd0 : ptDigitF free ω i = 0 := by
+    rcases lt_or_ge i a with h | h
+    · exact hzm i h1 h
+    · exact hza i h h2
+  unfold ptDigitF at hd0
+  rw [if_pos hf] at hd0
+  revert hd0
+  generalize ω (2 * i) = x; generalize ω (2 * i + 1) = y
+  cases x <;> cases y <;> simp
+
 end NormalNumbers.CantorFiveExpGeneric
