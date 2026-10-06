@@ -376,7 +376,26 @@ theorem abs_digS_sub_digSK (b : ℕ) (hb : 2 ≤ b) (T : α → ℤ) (K : ℕ) (
 theorem measurePreserving_shiftK (P : Measure α) [IsProbabilityMeasure P] (k : ℕ) :
     MeasurePreserving (shiftK (α := α) k) (Measure.infinitePi fun _ : ℕ => P)
       (Measure.infinitePi fun _ : ℕ => P) := by
-  sorry
+  classical
+  have hm : Measurable (shiftK (α := α) k) :=
+    measurable_pi_lambda _ fun j => measurable_pi_apply (k + j)
+  refine ⟨hm, ?_⟩
+  refine Measure.eq_infinitePi _ fun s t ht => ?_
+  rw [Measure.map_apply hm (MeasurableSet.pi s.countable_toSet fun i _ => ht i)]
+  have hpre : shiftK k ⁻¹' (Set.pi (s : Set ℕ) t)
+      = Set.pi ((s.image (k + ·) : Finset ℕ) : Set ℕ) (fun i => t (i - k)) := by
+    ext ω
+    simp only [Set.mem_preimage, Set.mem_pi, Finset.mem_coe, Finset.mem_image, shiftK]
+    constructor
+    · rintro h i ⟨j, hj, rfl⟩
+      simpa using h j hj
+    · intro h j hj
+      simpa using h (k + j) ⟨j, hj, rfl⟩
+  rw [hpre]
+  have := Measure.infinitePi_pi (μ := fun _ : ℕ => P) (s := s.image (k + ·))
+    (t := fun i => t (i - k)) (fun i _ => ht _)
+  rw [this, Finset.prod_image (fun a _ b _ hab => by simpa using hab)]
+  simp
 
 open DecayAeNormal in
 /-- **Leaf G4.**  Windows `[k, k+K)` and `[l, l+K)` are disjoint for `k + K ≤ l`: independence. -/
