@@ -950,6 +950,7 @@ import NormalNumbers.ExplicitOmegaK
 import NormalNumbers.DeterministicBD
 import NormalNumbers.ConjugateDet
 import NormalNumbers.ConjugateEntropy
+import NormalNumbers.IndependenceRelative
 import NormalNumbers.FamilyDerandomizeVar
 import NormalNumbers.ExplicitPQ
 import NormalNumbers.BadNormal

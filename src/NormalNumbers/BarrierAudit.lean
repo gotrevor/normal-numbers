@@ -22,6 +22,7 @@ import NormalNumbers.MahlerDriftOne
 import NormalNumbers.LevinSparse
 import NormalNumbers.DeterministicBD
 import NormalNumbers.ConjugateEntropy
+import NormalNumbers.IndependenceRelative
 import NormalNumbers.PrimeLambertOscillation
 import NormalNumbers.SwingC3Rotation
 import NormalNumbers.LinearFormsScales
@@ -121,6 +122,11 @@ def cruxLinks : List CruxLink := [
 
 /-- Open `sorry`s that are not cruxes, and why no barrier applies. -/
 def waivers : List Waiver := [
+  ⟨``IndependenceRelative.ternary_line,
+   "a leaf: a borrow-propagation case split with a full English proof in the docstring; the \
+    independence-relative probe agrees (witness 2X - Y)"⟩,
+  ⟨``IndependenceRelative.exists_counterexample_on_line,
+   "a sibling: X = sum 3^(-k!), Y = 2X shows the line obstruction is real; no open crux uses it"⟩,
   ⟨``ConjugateEntropy.fsDimUpper_le_of_sum_rat,
    "a leaf: the span_dimension_budget block-entropy argument with both terms upper (Fekete in ℓ); \
     B–D 2506.12929 Prop. 4.9(d) for point entropy, bridge to Dim_FS not formalized"⟩,
