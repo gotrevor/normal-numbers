@@ -948,6 +948,7 @@ import NormalNumbers.SqrtFloor
 import NormalNumbers.ExplicitSquareNonNormal
 import NormalNumbers.ExplicitOmegaK
 import NormalNumbers.DeterministicBD
+import NormalNumbers.ConjugateDet
 import NormalNumbers.FamilyDerandomizeVar
 import NormalNumbers.ExplicitPQ
 import NormalNumbers.BadNormal
