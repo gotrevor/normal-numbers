@@ -1989,7 +1989,7 @@ theorem cs_bootstrap_floor {c η : ℝ} (hc : 0 < c) (hη : 0 < η) :
   rw [this, Real.sqrt_sq (by positivity)]; nlinarith
 
 /-- **Per-stage power saving** (open leaf, believed 35%).  Each stage `S'` contributes to the
-signed pair sum at most `C N^{1−δ}`, uniformly in `S'` and in the depth `S`.
+signed pair sum at most `C N W(N)` (`W` summable along `sched`; e.g. `N^{−δ}`), uniformly in `S'` and in the depth `S`.
 
 Heuristic: the stage changes only `O(1)` frozen terms of `S_N` (see `deadCharSigned_core`), so it
 contributes `≈ P(dead at S') · E[|A| | dead]`.  That is `O(η √n₀)` if the lacunary sums
@@ -2000,16 +2000,16 @@ the decorrelation input at a single scale `3^{10S'}`.
 Test case `S' = 0` (no dead history, deterministic prefix `[]`): the term is
 `E_{τ₁}|S_N|² − E_{τ₀}|S_N|²` for two scaled Cantor copies (the dead-child mix and the uniform mix).
 Both are `N + o(N)`, since off-diagonal lags `d` have limit `∫ e(h(b^d − 1)x) dx = 0`.  So the leaf at
-`S' = 0` asks for an `N^{1−δ}` rate in that limit, which is Schmidt-type power saving
+`S' = 0` asks for an `N W(N)` rate in that limit (for a power `W`), which is Schmidt-type power saving
 (Schmidt 1960, *On normal numbers*, the cosine-product lemma: `Σ_{n<N} Π_k |cos(π h rⁿ/s^k)| ≤ 2N^{1−δ}`).
 That rate is known for the frequencies `h bⁿ`, but not uniformly for the differences
 `h(bⁿ − bᵐ)` that appear here.  This is why the confidence is below the core's.  The trivial bound is `2N²`, from
 `|deadChar| ≤ 2`, and `cs_bootstrap_floor` shows that Cauchy–Schwarz cannot improve the exponent. -/
 theorem stageSaving {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) (h : ℤ) (hh : h ≠ 0) :
-    ∃ δ C : ℝ, 0 < δ ∧ ∀ N : ℕ, 1 ≤ N → ∀ S S' : ℕ,
+    ∃ (C : ℝ) (W : ℕ → ℝ), Summable (fun j => W (sched j)) ∧ ∀ N : ℕ, 1 ≤ N → ∀ S S' : ℕ,
       ‖∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N,
           deadChar (h * ((b : ℝ) ^ n - (b : ℝ) ^ m)) S' *
-            rhoProd (h * ((b : ℝ) ^ n - (b : ℝ) ^ m)) (S' + 1) S‖ ≤ C * (N : ℝ) ^ (1 - δ) := by
+            rhoProd (h * ((b : ℝ) ^ n - (b : ℝ) ^ m)) (S' + 1) S‖ ≤ C * N * W N := by
   sorry
 
 /-- **The crux, localized to the first `S₀ = N b + |h|` stages.**  Believed, 55%.  Open.
@@ -2043,9 +2043,8 @@ theorem deadCharSigned_core {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) (h : ℤ)
         ∑ S' ∈ Finset.range (min S (N * b + h.natAbs)),
           deadChar (h * ((b : ℝ) ^ n - (b : ℝ) ^ m)) S' *
             rhoProd (h * ((b : ℝ) ^ n - (b : ℝ) ^ m)) (S' + 1) S‖ ≤ C * (N : ℝ) ^ 2 * W N := by
-  obtain ⟨δ, C, hδ, hC⟩ := stageSaving hb h3 h hh
-  refine ⟨|C| * (b + h.natAbs), fun N => (N : ℝ) ^ (-δ), summable_sched_rpow hδ, fun N hN S => ?_⟩
-  have hNpos : (0 : ℝ) < N := by exact_mod_cast hN
+  obtain ⟨C, W, hW, hC⟩ := stageSaving hb h3 h hh
+  refine ⟨|C| * (b + h.natAbs), fun N => |W N|, hW.abs, fun N hN S => ?_⟩
   set a := min S (N * b + h.natAbs)
   have hswap : ∀ F : ℕ → ℕ → ℕ → ℂ, ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N,
       ∑ S' ∈ Finset.range a, F n m S' =
@@ -2060,18 +2059,14 @@ theorem deadCharSigned_core {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) (h : ℤ)
     have : (h.natAbs : ℝ) ≤ h.natAbs * N := le_mul_of_one_le_right (by positivity)
       (by exact_mod_cast hN)
     nlinarith
-  have hpow : (N : ℝ) * (N : ℝ) ^ (1 - δ) = (N : ℝ) ^ 2 * (N : ℝ) ^ (-δ) := by
-    rw [show (N : ℝ) ^ 2 = (N : ℝ) * (N : ℝ) ^ (1 : ℝ) by rw [Real.rpow_one]; ring, mul_assoc,
-      ← Real.rpow_add hNpos]; ring_nf
-  have hr : 0 ≤ (N : ℝ) ^ (1 - δ) := by positivity
-  calc _ ≤ ∑ S' ∈ Finset.range a, |C| * (N : ℝ) ^ (1 - δ) :=
-        (norm_sum_le _ _).trans (Finset.sum_le_sum fun S' _ =>
-          (hC N hN S S').trans (mul_le_mul_of_nonneg_right (le_abs_self _) hr))
-    _ = a * (|C| * (N : ℝ) ^ (1 - δ)) := by simp
-    _ ≤ (b + h.natAbs) * N * (|C| * (N : ℝ) ^ (1 - δ)) :=
-        mul_le_mul_of_nonneg_right ha (by positivity)
-    _ = |C| * (b + h.natAbs) * ((N : ℝ) * (N : ℝ) ^ (1 - δ)) := by ring
-    _ = _ := by rw [hpow]; ring
+  have hk : 0 ≤ |C| * N * |W N| := by positivity
+  calc _ ≤ ∑ S' ∈ Finset.range a, |C| * N * |W N| :=
+        (norm_sum_le _ _).trans (Finset.sum_le_sum fun S' _ => (hC N hN S S').trans (by
+          have := le_abs_self (C * N * W N)
+          rw [abs_mul, abs_mul, Nat.abs_cast] at this; exact this))
+    _ = a * (|C| * N * |W N|) := by simp
+    _ ≤ (b + h.natAbs) * N * (|C| * N * |W N|) := mul_le_mul_of_nonneg_right ha hk
+    _ = _ := by ring
 
 /-- **The crux (signed form): cancellation in the dead-children terms.**  Proved from the
 localized crux `deadCharSigned_core` (stages `< N b + |h|`, open) and the tail bound

@@ -2951,7 +2951,7 @@ Next: (1) prove the reduction (needs pair-averaged partial Cantor products, Cass
 - Needed input: E_ν[1_dead(S') |A|²] ≲ P(dead) n₀^{2−δ}, i.e. lacunary sums at rationals near K
   are not inflated.  Next: state the hybrid-law identity (S'-term = E_{ν_{S'+1}}|S_N|² −
   E_{ν_{S'}}|S_N|²) and the A/B split as named Lean leaves; then state the decorrelation as a node.
-- `deadCharSigned_core` now PROVED from per-stage leaf `stageSaving` (35%, open; ≤ C N^{1-δ} per stage).
+- `deadCharSigned_core` now PROVED from per-stage leaf `stageSaving` (35%, open; ≤ C N W(N) per stage, W summable along sched — weakened from N^{1-δ}).
   Stage S'=0 test: needs a power rate for E_τ|S_N|² − N over scaled Cantor copies, i.e. Schmidt-1960
   cosine-product power saving at difference frequencies h(bⁿ−bᵐ) (known only for h bⁿ).
   Next: prove the S'=0 case from a Schmidt-lemma Literature Prop, as the known-answer probe.
