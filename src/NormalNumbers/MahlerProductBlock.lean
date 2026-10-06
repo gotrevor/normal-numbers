@@ -147,4 +147,14 @@ theorem isProductBlock_five_twelve :
     IsProductBlock 5 {17, 23, 1254, 1562, 1838, 2188, 2272, 2428, 2439, 2753, 2832, 3028} := by
   sorry
 
+/-- **The 12-block is inclusion-minimal** (computational; confidence 95%): for each member `m`,
+`mahler_block failing` finds an irrational-tail witness (a non-collapsing carry-automaton core
+cycle) against `S.erase m` (`mahler_block minimize`, 856 s, "removable []").  Minimal is not
+minimum: the ILP floor is only 3 (5 inside `[1,625]`). -/
+theorem not_isProductBlock_five_twelve_erase :
+    ∀ m ∈ ({17, 23, 1254, 1562, 1838, 2188, 2272, 2428, 2439, 2753, 2832, 3028} : Finset ℕ),
+      ¬ IsProductBlock 5
+        (({17, 23, 1254, 1562, 1838, 2188, 2272, 2428, 2439, 2753, 2832, 3028} : Finset ℕ).erase m) := by
+  sorry
+
 end NormalNumbers.Adder
