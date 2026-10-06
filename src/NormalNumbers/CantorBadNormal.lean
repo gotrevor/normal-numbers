@@ -116,6 +116,21 @@ theorem ae_isNormal_of_casselsPower (L : Law) {b : ℕ} (hb : 2 ≤ b) (hL : Cas
   calc _ ≤ _ := hC (sched j) (one_le_sched j)
     _ = _ := by ring
 
+theorem cpt_eq_cantorPt (σ : ℕ → Bool) :
+    cpt σ = EntropyProfiles.cantorPt (fun i => if σ i then 1 else 0) := by
+  unfold cpt pt EntropyProfiles.cantorPt
+  congr 1; funext i
+  by_cases hσ : σ i <;> simp [ptDigit, hσ]
+
+/-- **Known-false control: no law on `K` has a Cassels rate in base 3.**  Proved: a rate would give a
+3-normal Cantor point (`ae_isNormal_of_casselsRate`), which `not_isNormal_three_pow_cantorPt` forbids.
+So any proof of the crux (`midStages`) must use `3 ∤ b`. -/
+theorem not_casselsRate_three (L : Law) : ¬ CasselsRate L 3 := by
+  intro hL
+  obtain ⟨ω, hω⟩ := (ae_isNormal_of_casselsRate L (by norm_num) hL).exists
+  rw [cpt_eq_cantorPt] at hω
+  exact EntropyProfiles.not_isNormal_three_pow_cantorPt _ (k := 1) one_pos (by simpa using hω)
+
 /-- **The reduction.**  Proved: a law on `K ∩ Bad` with a Cassels rate in every base
 prime to 3 has a point with all three properties. -/
 theorem exists_of_law (L : Law) (hL : ∀ b : ℕ, 2 ≤ b → ¬ 3 ∣ b → CasselsRate L b) :
