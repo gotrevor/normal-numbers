@@ -115,7 +115,11 @@ affordable.  A collapse is a proof; a failing assignment is only "no certificate
   `{2, 16, 17, 23, 29, 1251, 1254, 1838, 2188, 2272, 2428, 2439, 2832, 3028}`.  It no longer
   contains `x` itself.  No single deletion from the 14.
 - **Swap again → 13** (2374 s): drop `29` and `1251`, add `2753 = 42003₅`:
-  `{2, 16, 17, 23, 1254, 1838, 2188, 2272, 2428, 2439, 2753, 2832, 3028}`.
+  `{2, 16, 17, 23, 1254, 1838, 2188, 2272, 2428, 2439, 2753, 2832, 3028}`.  No single deletion.
+- **Swap again → 12** (25,981 s ≈ 7.2 h; each round is slower as near-blocks get rarer): drop
+  `2` and `16`, add `1562 = 22222₅`:
+  `{17, 23, 1254, 1562, 1838, 2188, 2272, 2428, 2439, 2753, 2832, 3028}`.  Only two members are
+  below 1000.
 - Lean: `checkCertA` enumerates the ambient carry product (here ∏ m ≈ 10⁴⁰), so a Lean
   certificate needs a sparse, live-states-only checker.
 
