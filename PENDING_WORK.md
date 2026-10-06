@@ -3054,11 +3054,12 @@ Next: (1) prove the reduction (needs pair-averaged partial Cantor products, Cass
   (it is second order in the dead density but has no N-decay a priori).
 * (lap 8, later) `summable_sched_log_rpow` PROVED: any `(log N)^{−δ}`, `δ > 2`, is an admissible `W`.  So the
   near-scale node needs only a log-power saving over the pairs `n < m < N`, not a power rate.
-  Decay mechanism for `deadMix(n,m,t)` (analysis, not yet Lean): averaging each uniform block at stage `r`
-  multiplies by `|ρ_r(hbᵐ)|` (ternary digits of `hbᵐ` at positions `10r..10r+10`); the defect terms of
-  `condMean_cExt_telescope` are localized at dead stages and still see the uniform stages on both sides,
-  so the remainder decays like the first-order term (earlier "no N-decay" worry withdrawn).  Both reduce
-  to: Σ_{n<m<N} E_path ∏_{r∈[s_n,s_m)} |ρ_r(hbᵐ)| = O(N²(log N)^{−3}) — a pair-averaged partial Cantor
-  product over the window of digits between the scales of bⁿ and bᵐ.  Next: state that as a node and
-  check against `cassels_tail` / `pairSum_Bf_le_explicit_b` (they bound full products; a window version may follow
-  from the same Riesz-majorant argument with free digits outside the window).
+  Decay mechanism for `deadMix(n,m,t)` — CORRECTED (same lap): the naive picture "averaging each uniform
+  block at stage `r` multiplies by `|ρ_r(hbᵐ)|`" is WRONG, because `deadErr(ξ, w_t)` depends on every digit of
+  `w_t` (which rationals lie near the cylinder), so `D_t` does not factor stage by stage.  The decay of
+  `E[D_t | w_s]` in `t − s` is exactly the decorrelation of the obstacle positions from the ternary digits of
+  `hbᵐ`; no window-product reduction is available.  The "no N-decay" worry for the defect remainder stands
+  as open, not withdrawn.  Probe `scripts/cantorbad_deadmix.py` (nested Monte Carlo of
+  `R(g) = E|E[D_t|w_{t−g}]| / E|D_t|`): first run (b=2, 30 outer × 400 inner, t = 8 stages) gives `R(1)` at the
+  noise floor 0.05 for resLaw, the uniform-path control, AND the dyad2 control — so at this resolution the
+  probe does not discriminate; needs larger inner samples before it counts as evidence.
