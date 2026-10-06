@@ -23,3 +23,10 @@ The general-S' case needs decorrelation of lacunary sums at rationals p/q near K
 - For a = Nb+|h| the hybrid law is resLaw up to the scale of ξ, so `hybridCassels` is the real
   problem, truncated.  The needed input is decorrelation of lacunary sums from rationals near K
   (Khalil–Lüthi / Bénard–He–Zhang counting plus Cassels at h(bⁿ−bᵐ) mod q).
+
+## Update 2
+- Crux now `midStages`: signed dead-char sum over S' ∈ [⌊log₃N⌋/40, min S (Nb+|h|)).  Low stages are
+  proved (`cassels_tail`, `hybridCassels_low`), high stages are local (`deadChar_tail_le`).
+- Cheap moves are exhausted: the window is exactly the ternary positions in [log₃N, N log₃b], beyond the
+  reach of Cassels averaging (M = log₃N/2).  Next: state the decorrelation node (μ_K: good rational
+  approximation at scale Q vs base-b sums up to 2 log_b Q) and derive `midStages` from it.
