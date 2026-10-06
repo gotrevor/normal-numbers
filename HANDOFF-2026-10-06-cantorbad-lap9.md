@@ -1,6 +1,6 @@
 # HANDOFF cantorbad lap 9 (2026-10-06)
 
-Branch `proof/cantor-bad-normal`.  Headline unchanged; build green.
+Branch `proof/cantor-bad-normal`, HEAD 3e91f42e at checkpoint.  Headline unchanged; build green; no uncommitted edits.  box stuck strike 1 filed (see HANDOFF.md).
 
 ## Done (all proved, in CantorBadNormal.lean)
 - `deadCorr_eq_cylChar`: D = |A|⁻¹ Σ_dead (χ(vf) − χ(v)), χ = `cylChar`.
