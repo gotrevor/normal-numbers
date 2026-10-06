@@ -194,11 +194,6 @@ def waivers : List Waiver := [
    "a leaf: block-entropy subadditivity through bounded carries, plus the block-entropy \
     characterization of dim_FS/Dim_FS (BHV 2005); possibly literature-adjacent (Doty–Lutz–Nandakumar \
     2007 treat one number and rational arithmetic)"⟩,
-  ⟨``CantorExactExponentStretch.farey_sep, "a leaf: cross-multiplication of two fractions"⟩,
-  ⟨``CantorExactExponentStretch.padic_sep,
-   "a leaf: a cross product divisible by 3^j and below 3^j vanishes"⟩,
-  ⟨``CantorExactExponentStretch.card_image_mod_HS_le,
-   "a leaf: induction on the reachable-numerator tree, one free digit at a time"⟩,
   ⟨``CantorExactExponentStretch.hit_mass_farey,
    "a leaf: Farey-disjointness mass bound (Weiss / Kleinbock–Lindenstrauss–Weiss type), elementary \
     from farey_sep and agree_of_close"⟩,

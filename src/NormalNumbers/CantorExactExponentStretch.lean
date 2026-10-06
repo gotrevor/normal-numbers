@@ -826,7 +826,24 @@ per-`q` count (`card_lowResidue_le`) used the low digits for one `q` at a time a
 theorem farey_sep (m q q' pp pp' : ℕ) (hq : 0 < q) (hq' : 0 < q') (hq3 : q < 3 ^ (m + 1))
     (hq3' : q' < 3 ^ (m + 1)) (hne : (pp : ℝ) / q ≠ pp' / q') :
     1 / (3 : ℝ) ^ (2 * m + 2) < |(pp : ℝ) / q - pp' / q'| := by
-  sorry
+  have hqr : (0 : ℝ) < q := by exact_mod_cast hq
+  have hqr' : (0 : ℝ) < q' := by exact_mod_cast hq'
+  have hcross : ((pp : ℤ) * q' - pp' * q) ≠ 0 := by
+    intro h; apply hne; rw [div_eq_div_iff hqr.ne' hqr'.ne']
+    have : ((pp : ℤ) * q' : ℤ) = pp' * q := by linarith
+    exact_mod_cast this
+  have h1 : (1 : ℝ) ≤ |(pp : ℝ) * q' - pp' * q| := by
+    have := Int.one_le_abs hcross; exact_mod_cast this
+  have heq : (pp : ℝ) / q - pp' / q' = ((pp : ℝ) * q' - pp' * q) / (q * q') := by
+    field_simp
+  have hqq : (q : ℝ) * q' < (3 : ℝ) ^ (2 * m + 2) := by
+    have a : (q : ℝ) < 3 ^ (m + 1) := by exact_mod_cast hq3
+    have b : (q' : ℝ) < 3 ^ (m + 1) := by exact_mod_cast hq3'
+    calc (q : ℝ) * q' < 3 ^ (m + 1) * 3 ^ (m + 1) := mul_lt_mul'' a b hqr.le hqr'.le
+      _ = _ := by rw [← pow_add]; ring_nf
+  rw [heq, abs_div, abs_of_pos (mul_pos hqr hqr')]
+  calc 1 / (3 : ℝ) ^ (2 * m + 2) < 1 / (q * q') := one_div_lt_one_div_of_lt (by positivity) hqq
+    _ ≤ _ := div_le_div_of_nonneg_right h1 (by positivity)
 
 /-- **Farey mass of the scale-`m` test.**  Two hitting points with the same free coins below
 `2m+3` lie within `3^{−(2m+3)}` of each other, so their fractions are within
@@ -845,12 +862,83 @@ theorem padic_sep (c j P P' q₀ q₀' pp pp' : ℕ) (hj : j ≤ c) (hq : Nat.Co
     (hq' : Nat.Coprime q₀' 3) (hPP : P % 3 ^ j = P' % 3 ^ j)
     (hb : |((P : ℤ) * q₀ - pp * 3 ^ c) * q₀' - ((P' : ℤ) * q₀' - pp' * 3 ^ c) * q₀| < 3 ^ j) :
     P % 3 ^ c = P' % 3 ^ c := by
-  sorry
+  have hdj : ((3 ^ j : ℕ) : ℤ) ∣ (P' : ℤ) - P := (Nat.modEq_iff_dvd.mp hPP)
+  have h3c : ((3 : ℤ) ^ j) ∣ (3 : ℤ) ^ c := pow_dvd_pow 3 hj
+  set X : ℤ := ((P : ℤ) * q₀ - pp * 3 ^ c) * q₀' - ((P' : ℤ) * q₀' - pp' * 3 ^ c) * q₀ with hX
+  have hXe : X = ((P : ℤ) - P') * q₀ * q₀' - 3 ^ c * (pp * q₀' - pp' * q₀) := by rw [hX]; ring
+  have hXd : (3 : ℤ) ^ j ∣ X := by
+    rw [hXe]; push_cast at hdj
+    refine dvd_sub (Dvd.dvd.mul_right (Dvd.dvd.mul_right ?_ _) _) (Dvd.dvd.mul_right h3c _)
+    rw [← dvd_neg, neg_sub]; exact hdj
+  have hX0 : X = 0 := by
+    obtain ⟨k, hk⟩ := hXd
+    have hpos : (0 : ℤ) < 3 ^ j := by positivity
+    rw [hk, abs_mul, abs_of_pos hpos] at hb
+    have : |k| < 1 := by nlinarith [abs_nonneg k]
+    have : k = 0 := by rw [abs_lt] at this; omega
+    rw [hk, this, mul_zero]
+  have hdiv : (3 : ℤ) ^ c ∣ ((P' : ℤ) - P) * (q₀ * q₀') := by
+    refine ⟨-(pp * q₀' - pp' * q₀), ?_⟩
+    have := hXe; rw [hX0] at this; linarith
+  have hcop : IsCoprime ((3 : ℤ) ^ c) ((q₀ : ℤ) * q₀') := by
+    apply IsCoprime.pow_left
+    rw [Int.isCoprime_iff_gcd_eq_one]
+    have := Nat.Coprime.mul_left hq hq'
+    rw [Int.gcd_comm]; exact_mod_cast this
+  have := hcop.dvd_of_dvd_mul_right hdiv
+  exact Nat.modEq_iff_dvd.mpr (by push_cast; exact this)
+
+theorem mod3_aux (h d M : ℕ) (hd : d < 3) (hM : 0 < M) : (3 * h + d) % (3 * M) = 3 * (h % M) + d := by
+  conv_lhs => rw [← Nat.div_add_mod h M]
+  rw [show 3 * (M * (h / M) + h % M) + d = (3 * (h % M) + d) + (3 * M) * (h / M) by ring,
+    Nat.add_mul_mod_self_left, Nat.mod_eq_of_lt]
+  have := Nat.mod_lt h hM; omega
+
+theorem fc_succ_self (free : ℕ → Bool) (n : ℕ) : fc free n (n + 1) = if free n then 1 else 0 := by
+  unfold fc; rw [Nat.Ico_succ_singleton, Finset.filter_singleton]; split_ifs <;> simp_all
 
 /-- Low digits of reachable numerators: at most `2^{F[n−j, n)}` residues mod `3^j`. -/
 theorem card_image_mod_HS_le (free : ℕ → Bool) (j n : ℕ) (hj : j ≤ n) :
     ((HS free n).image (· % 3 ^ j)).card ≤ 2 ^ fc free (n - j) n := by
-  sorry
+  classical
+  induction n generalizing j with
+  | zero =>
+    obtain rfl : j = 0 := by omega
+    calc _ ≤ ({0} : Finset ℕ).card := Finset.card_le_card (by
+            intro x hx; simp only [Finset.mem_image] at hx; obtain ⟨y, -, rfl⟩ := hx; simp [Nat.mod_one])
+      _ ≤ _ := by simp; exact Nat.one_le_two_pow
+  | succ n ih =>
+    rcases j with _ | j
+    · calc _ ≤ ({0} : Finset ℕ).card := Finset.card_le_card (by
+            intro x hx; simp only [Finset.mem_image] at hx; obtain ⟨y, -, rfl⟩ := hx; simp [Nat.mod_one])
+        _ ≤ _ := by simp; exact Nat.one_le_two_pow
+    have ih' := ih j (by omega)
+    set I := (HS free n).image (· % 3 ^ j)
+    have hfc : fc free (n + 1 - (j + 1)) (n + 1) = fc free (n - j) n + if free n then 1 else 0 := by
+      rw [show n + 1 - (j + 1) = n - j by omega,
+        fc_add free (show n - j ≤ n by omega) (show n ≤ n + 1 by omega), fc_succ_self]
+    have key : ∀ h d, d < 3 → (3 * h + d) % 3 ^ (j + 1) = 3 * (h % 3 ^ j) + d := fun h d hd => by
+      rw [pow_succ, mul_comm _ 3]; exact mod3_aux h d _ hd (by positivity)
+    rw [hfc]
+    simp only [HS]
+    split_ifs with hf
+    · calc _ ≤ (I.image (3 * ·) ∪ I.image (3 * · + 2)).card := by
+            apply Finset.card_le_card
+            intro x hx
+            simp only [Finset.mem_image, Finset.mem_union, I] at hx ⊢
+            rcases hx with ⟨y, (⟨h, hh, rfl⟩ | ⟨h, hh, rfl⟩), rfl⟩
+            · left; exact ⟨_, ⟨h, hh, rfl⟩, by simpa using (key h 0 (by norm_num)).symm⟩
+            · right; exact ⟨_, ⟨h, hh, rfl⟩, (key h 2 (by norm_num)).symm⟩
+        _ ≤ I.card + I.card := (Finset.card_union_le _ _).trans
+            (add_le_add Finset.card_image_le Finset.card_image_le)
+        _ ≤ _ := by rw [pow_succ]; omega
+    · calc _ ≤ (I.image (3 * ·)).card := by
+            apply Finset.card_le_card
+            intro x hx
+            simp only [Finset.mem_image, I] at hx ⊢
+            obtain ⟨y, ⟨h, hh, rfl⟩, rfl⟩ := hx
+            exact ⟨_, ⟨h, hh, rfl⟩, by simpa using (key h 0 (by norm_num)).symm⟩
+        _ ≤ _ := Finset.card_image_le.trans (by simpa using ih')
 
 /-- **3-adic Farey mass of a run-entering scale-`m` test.**  Digits `[b, L]` forced, so the
 truncated numerator is `3^{L+1−b} P` with `P = hd b`.  An exact hit (`pp/q = P/3^b`) forces zero
