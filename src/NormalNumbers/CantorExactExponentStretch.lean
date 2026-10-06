@@ -12,15 +12,16 @@ import NormalNumbers.CantorExactExponent
 `μ₀ > 2 + log₂ 3 ≈ 3.585`.  This file freezes the full range `μ₀ > 2` (Bugeaud's Theorem 7.21
 range, `μ ≥ 2`, minus the endpoint, which is the literature control below).
 
-**Confidence (restated 2026-10-06, end of lap 2):** node `ae_not_liouvilleWith_all` 80% (was
-10%).  What moved: `RunEnteringCount` is not a Kloosterman wall.  Fractions `r/q` of small height
-are separated 3-adically (`padic_sep`): two run-entering hits whose numerators agree mod `3^j`,
-`3^j > |r q' − r' q|`, have the same fraction, so the hitting numerators are fixed by
+**Status (restated 2026-10-06, end of lap 3):** node `ae_not_liouvilleWith_all` PROVED, and with
+it the stretch headline `exists_computable_mem_cantorSet_irrExponent_normal_all` (every `μ₀ > 2`;
+standard axioms only).  Mechanism: fractions `r/q` of small height
+are separated 3-adically (`padic_sep`, `group_sep`): two run-entering hits whose numerators agree
+mod `3^j`, `3^j > |r q' − r' q|`, have the same fraction, so the hitting numerators are fixed by
 `≈ log₃(|r| q)` low digits plus `v₃(q)` top digits, a count `≲ (|r| q)^{log₃ 2}`, a power saving
 for every `τ > 2` (`hit_mass_padic`).  Windows that do not enter a run use the real Farey
-separation (`hit_mass_farey`, mass `2^{−F[2m+3, L−2)}`).  The node and the stretch headline are
-wired from the one leaf `ev_expTest_mass_all`; the remaining 20% is formalization risk in the six
-elementary leaves (the case split needs `E_k = o(m)` and `L + 1 ≤ E_{k+1}`).  BFR bet: 5% (the
+separation (`hit_mass_farey`, mass `2^{−F[2m+3, L−2)}`).  The case split is
+`expTest_mass_le_all` (`E_k ≤ (μ₀−2)m/2` once `k ≥ 2(μ₀+1)/(μ₀−2)`), giving
+`ev_expTest_mass_all`.  BFR bet: 5% (the
 3-adic count is the elementary analogue of the trivial `Q^{2 dim K}` bound, not a new count of
 rationals near `K`).
 
@@ -1185,6 +1186,151 @@ theorem hit_mass_padic (free : ℕ → Bool) (m L b : ℕ) (hmb : m ≤ b) (hbn 
   gcongr
   exact (measureReal_biUnion_finset_le _ _).trans (Finset.sum_le_sum hmass)
 
+/-- **Deterministic mass bound of the scale-`m` test, every `μ₀ > 2`.**  As
+`CantorExactExponent.expTest_mass_le`, with the Borel–Cantelli case split by `hit_mass_farey` /
+`hit_mass_padic` (the latter needs `E_k ≤ (μ₀−2)m/2`, true once `k ≥ 2(μ₀+1)/(μ₀−2)`, which
+holds for `m` past `a_{K₂} + 4`). -/
+theorem expTest_mass_le_all {μ₀ : ℚ} (hμ : 2 < μ₀) : ∃ M₀ : ℕ, ∀ m : ℕ, M₀ ≤ m →
+    (μ₀ : ℝ) ≤ Nat.sqrt m → 6 ≤ Nat.sqrt m →
+    coins.real {ω | expTest μ₀ m (pre ω (expL μ₀ m + 1)) = true} ≤
+      2 ^ (12 : ℝ) * ((2 : ℝ) ^ (-(((μ₀ : ℝ) - 2) / 2))) ^ m +
+        (2 : ℝ) ^ (-(((Nat.sqrt m : ℝ) - 2) / μ₀)) := by
+  have hμ1 : (1 : ℚ) < μ₀ := by linarith
+  set μ : ℝ := (μ₀ : ℝ)
+  have hμR : (2 : ℝ) < μ := by simp only [μ]; exact_mod_cast hμ
+  set K₂ : ℕ := ⌈2 * (μ + 1) / (μ - 2)⌉₊
+  set A : ℕ := expRunStart μ₀ K₂
+  refine ⟨A + 4, fun m hmA hsμ hs6 => ?_⟩
+  set s := Nat.sqrt m
+  set L := expL μ₀ m
+  set ρ : ℝ := (2 : ℝ) ^ (-((μ - 2) / 2))
+  have hρ : ∀ c : ℝ, (2 : ℝ) ^ (-((μ - 2) / 2 * m - c)) = 2 ^ c * ρ ^ m := fun c => by
+    rw [← Real.rpow_natCast ρ, ← Real.rpow_mul (by norm_num), ← Real.rpow_add (by norm_num)]
+    ring_nf
+  have hsm : s * s ≤ m := Nat.sqrt_le m
+  have hsm' : s ≤ m := le_trans (Nat.le_mul_self s) hsm
+  have hs2m : 2 * s ≤ m := le_trans (Nat.mul_le_mul_right s (show 2 ≤ s by omega)) hsm
+  obtain ⟨hL1, hL2⟩ := expL_bounds (by linarith : (0 : ℚ) < μ₀) m
+  replace hL1 : μ * m - 1 + s ≤ L := hL1
+  replace hL2 : (L : ℝ) ≤ μ * m + s := hL2
+  have hsR : (s : ℝ) ≥ μ := hsμ
+  have hs6R : (6 : ℝ) ≤ s := by exact_mod_cast hs6
+  have hsmR : (s : ℝ) ≤ m := by exact_mod_cast hsm'
+  have hmR : (2 * s : ℝ) ≤ m := by exact_mod_cast hs2m
+  have hm0 : (0 : ℝ) ≤ m := by positivity
+  have hL5 : 2 * m + 5 ≤ L := by
+    have : (2 * m + 5 : ℝ) ≤ L := by nlinarith
+    exact_mod_cast this
+  have hex : ∃ k, L < expRunStart μ₀ (k + 1) + m + 3 :=
+    ⟨L, by have := lt_expRunStart hμ1 (L + 1); omega⟩
+  set k := Nat.find hex
+  have hk2 : L < expRunStart μ₀ (k + 1) + m + 3 := Nat.find_spec hex
+  have hk1 : expRunStart μ₀ k + m + 3 ≤ L := by
+    rcases Nat.eq_zero_or_eq_succ_pred k with h0 | hj
+    · rw [h0]; simp [expRunStart]; omega
+    · have := Nat.find_min hex (show k - 1 < k by omega)
+      rw [show k - 1 + 1 = k by omega] at this; omega
+  have hmass0 : (0 : ℝ) ≤ 2 ^ (12 : ℝ) * ρ ^ m := by positivity
+  have hmass1 : (0 : ℝ) ≤ (2 : ℝ) ^ (-(((s : ℝ) - 2) / μ)) := by positivity
+  unfold expTest
+  set a := expRunStart μ₀ k
+  set E := expRunEnd μ₀ a
+  set a' := expRunStart μ₀ (k + 1)
+  rcases le_or_gt E (m + a + 3) with hbc | htri
+  · -- Borel–Cantelli case: Farey or 3-adic Farey
+    refine le_add_of_le_of_nonneg ?_ hmass1
+    have hEa : μ * a ≤ E := expRunEnd_ge_r μ₀ a
+    have hbcR : (E : ℝ) ≤ m + a + 3 := by exact_mod_cast hbc
+    have ha0 : (0 : ℝ) ≤ a := by positivity
+    have hE2 : E ≤ 2 * m + 6 := by
+      have : (E : ℝ) ≤ 2 * m + 6 := by nlinarith
+      exact_mod_cast this
+    rcases le_or_gt (L - 2) a' with hA | hB
+    · -- window below the next run: real Farey
+      refine (hit_mass_farey (expFree μ₀) m L hL5).trans ?_
+      have g := fc_gap_ge hμ1 k (2 * m + 6) (2 * m + 3) (L - 2) hE2 (by omega)
+      rw [min_eq_left (by exact_mod_cast hA)] at g
+      have hp := half_pow_le (fc (expFree μ₀) (2 * m + 3) (L - 2)) ((μ - 2) / 2 * m - 12) (by
+        rw [Nat.cast_sub (by omega)] at g; push_cast at g; nlinarith)
+      rw [hρ] at hp; exact hp
+    · -- window enters run `k+1`: 3-adic Farey with `b = a'`
+      have hka : (a' : ℝ) = ((k : ℝ) + 2) * E := cast_expRunStart_succ μ₀ k
+      have ha'L : (L : ℝ) - m - 2 ≤ a' := by
+        have : L ≤ a' + m + 2 := by omega
+        have : (L : ℝ) ≤ a' + m + 2 := by exact_mod_cast this
+        linarith
+      have hEsmall : (E : ℝ) ≤ (μ - 2) / 2 * m := by
+        rcases le_or_gt K₂ (k + 2) with hk | hk
+        · have hK : 2 * (μ + 1) / (μ - 2) ≤ (k : ℝ) + 2 := by
+            have := Nat.le_ceil (2 * (μ + 1) / (μ - 2))
+            have : (K₂ : ℝ) ≤ k + 2 := by exact_mod_cast hk
+            linarith
+          rw [div_le_iff₀ (by linarith)] at hK
+          have ha'R : (a' : ℝ) ≤ (μ + 1) * m := by
+            have : (a' : ℝ) ≤ L := by exact_mod_cast (by omega : a' ≤ L)
+            nlinarith
+          have hE0 : (0 : ℝ) ≤ E := by positivity
+          nlinarith
+        · exfalso
+          have hmono : a' ≤ A := (expRunStart_strictMono hμ1).monotone (by omega)
+          have : (a' : ℝ) ≤ A := by exact_mod_cast hmono
+          have hmA' : (A : ℝ) + 4 ≤ m := by exact_mod_cast hmA
+          nlinarith
+      have hforced : ∀ i, a' ≤ i → i < L + 1 → expFree μ₀ i = false := by
+        intro i h1 h2
+        refine expFree_of_run hμ1 h1 (lt_of_lt_of_le h2 ?_)
+        have := expRunEnd_ge_r μ₀ a'
+        have : ((L + 1 : ℕ) : ℝ) ≤ expRunEnd μ₀ a' := by
+          push_cast; nlinarith
+        exact_mod_cast this
+      refine (hit_mass_padic (expFree μ₀) m L a' (by omega) (by omega) (by omega) hforced).trans ?_
+      set D : ℝ := (L : ℝ) - 2 * m - 3 - E
+      have hterm : ∀ v ∈ Finset.range (m + 2 + a' - (L + 1)),
+          (1 / 2 : ℝ) ^ fc (expFree μ₀) v (L - 2 * m - 3 + 2 * v) ≤ 2 ^ (-D) * (1 / 2) ^ v := by
+        intro v hv
+        rw [Finset.mem_range] at hv
+        have g := fc_gap_ge hμ1 k (v + E) v (L - 2 * m - 3 + 2 * v) (Nat.le_add_left _ _)
+          (Nat.le_add_right _ _)
+        rw [min_eq_left (by exact_mod_cast (by omega : L - 2 * m - 3 + 2 * v ≤ a'))] at g
+        have hn : ((L - 2 * m - 3 + 2 * v : ℕ) : ℝ) + 2 * m + 3 = L + 2 * v := by
+          have : L - 2 * m - 3 + 2 * v + 2 * m + 3 = L + 2 * v := by omega
+          exact_mod_cast this
+        have hp := half_pow_le (fc (expFree μ₀) v (L - 2 * m - 3 + 2 * v)) (D + v) (by
+          push_cast at g hn
+          simp only [D]; linarith)
+        refine hp.trans (le_of_eq ?_)
+        rw [Real.rpow_neg (by norm_num), Real.rpow_add (by norm_num), Real.rpow_natCast,
+          Real.rpow_neg (by norm_num)]
+        rw [one_div, inv_pow, mul_inv]
+      have hzero : (1 / 2 : ℝ) ^ fc (expFree μ₀) m a' ≤ 2 ^ (-D) := by
+        have g := fc_gap_ge hμ1 k (m + E) m a' (Nat.le_add_left _ _) (Nat.le_add_right _ _)
+        rw [min_self] at g
+        refine half_pow_le _ _ ?_
+        simp only [D]; push_cast at g; linarith
+      have hgeo : ∑ v ∈ Finset.range (m + 2 + a' - (L + 1)), (1 / 2 : ℝ) ^ v ≤ 2 := by
+        have := sum_geometric_two_le (m + 2 + a' - (L + 1))
+        simpa using this
+      have hD : (μ - 2) / 2 * m - 4 ≤ D := by simp only [D]; nlinarith
+      have hD2 : (2 : ℝ) ^ (-D) ≤ 2 ^ (-((μ - 2) / 2 * m - 4)) :=
+        Real.rpow_le_rpow_of_exponent_le (by norm_num) (by linarith)
+      rw [hρ] at hD2
+      have h2D : (0 : ℝ) ≤ 2 ^ (-D) := by positivity
+      calc _ ≤ ∑ v ∈ Finset.range (m + 2 + a' - (L + 1)), 2 ^ (-D) * (1 / 2 : ℝ) ^ v + 2 ^ (-D) :=
+            add_le_add (Finset.sum_le_sum hterm) hzero
+        _ = 2 ^ (-D) * ∑ v ∈ Finset.range (m + 2 + a' - (L + 1)), (1 / 2 : ℝ) ^ v + 2 ^ (-D) := by
+            rw [Finset.mul_sum]
+        _ ≤ 2 ^ (-D) * 2 + 2 ^ (-D) := by gcongr
+        _ ≤ 3 * (2 ^ (4 : ℝ) * ρ ^ m) := by linarith
+        _ ≤ 2 ^ (12 : ℝ) * ρ ^ m := by
+            have : (3 : ℝ) * 2 ^ (4 : ℝ) ≤ 2 ^ (12 : ℝ) := by norm_num
+            have : (0 : ℝ) ≤ ρ ^ m := by positivity
+            nlinarith
+  · -- triangle case
+    have ht := hit_mass_tri (expFree μ₀) m L a E
+      (fun i h1 h2 => expFree_of_run hμ1 h1 h2) (by omega) (by omega)
+    refine ht.trans (le_add_of_nonneg_of_le hmass0 ?_)
+    exact half_pow_le _ _ (fc_tri_ge hμ1 k m L s hk1 (by have := htri; simp only [E, a] at this ⊢; omega) hL1 (by positivity) hmR)
+
 /-- **Scale-test masses for every `μ₀ > 2`.**  As `CantorExactExponent.ev_expTest_mass`, with the
 Borel–Cantelli case split by whether the window enters the next run: if not, `hit_mass_farey`
 (the free count of `[2m+3, L−2)` is `≥ (μ₀−2)m + √m − 9`); if it does (`a_{k+1} ≤ L − 3`),
@@ -1193,7 +1339,63 @@ Borel–Cantelli case split by whether the window enters the next run: if not, `
 theorem ev_expTest_mass_all (μ₀ : ℚ) (hμ : 2 < μ₀) :
     ∀ᶠ m : ℕ in atTop, coins.real {ω | expTest μ₀ m (pre ω (expL μ₀ m + 1)) = true} ≤
       1 / ((m : ℝ) + 1) ^ 2 := by
-  sorry
+  obtain ⟨M₀, hC⟩ := expTest_mass_le_all hμ
+  set μ : ℝ := (μ₀ : ℝ)
+  have hμR : (2 : ℝ) < μ := by simp only [μ]; exact_mod_cast hμ
+  set ρ : ℝ := (2 : ℝ) ^ (-((μ - 2) / 2))
+  have hρ1 : ρ < 1 := Real.rpow_lt_one_of_one_lt_of_neg (by norm_num) (by linarith)
+  have hρ0 : 0 < ρ := by positivity
+  set r : ℝ := (2 : ℝ) ^ (-(1 / μ))
+  have hr0 : 0 < r := by positivity
+  have hr1 : r < 1 := Real.rpow_lt_one_of_one_lt_of_neg (by norm_num) (by
+    have : 0 < 1 / μ := by positivity
+    linarith)
+  have hB : ∀ᶠ m : ℕ in atTop, (m : ℝ) ^ 2 * ρ ^ m < 1 / (8 * 2 ^ (12 : ℝ)) :=
+    (tendsto_pow_const_mul_const_pow_of_abs_lt_one 2 (by rw [abs_of_pos hρ0]; exact hρ1)).eventually
+      (gt_mem_nhds (by positivity))
+  have hD : ∀ᶠ s : ℕ in atTop, (s : ℝ) ^ 4 * r ^ s < 1 / (32 * 2 ^ (2 / μ)) :=
+    (tendsto_pow_const_mul_const_pow_of_abs_lt_one 4 (by rw [abs_of_pos hr0]; exact hr1)).eventually
+      (gt_mem_nhds (by positivity))
+  have hD' := tendsto_nat_sqrt.eventually (hD.and (eventually_ge_atTop (⌈μ⌉₊ + 6)))
+  filter_upwards [hB, hD', eventually_ge_atTop (max 1 M₀)] with m hBm ⟨hDm, hsm⟩ hm1
+  set s := Nat.sqrt m
+  have hsμ : μ ≤ s := by
+    have : (⌈μ⌉₊ : ℝ) + 6 ≤ s := by exact_mod_cast hsm
+    linarith [Nat.le_ceil μ]
+  have hs1 : (1 : ℝ) ≤ s := by linarith
+  refine (hC m (le_of_max_le_right hm1) hsμ (by omega)).trans ?_
+  have hm1R : (1 : ℝ) ≤ m := by exact_mod_cast le_of_max_le_left hm1
+  have hM : (0 : ℝ) < ((m : ℝ) + 1) ^ 2 := by positivity
+  have t1 : 2 ^ (12 : ℝ) * ρ ^ m ≤ 1 / (2 * ((m : ℝ) + 1) ^ 2) := by
+    rw [le_div_iff₀ (by positivity)]
+    have : ((m : ℝ) + 1) ^ 2 ≤ 4 * m ^ 2 := by nlinarith
+    have hC0 : (0 : ℝ) < 2 ^ (12 : ℝ) := by positivity
+    have hρm : 0 ≤ ρ ^ m := by positivity
+    have := (lt_div_iff₀ (by positivity)).1 hBm
+    nlinarith
+  have t2 : (2 : ℝ) ^ (-(((s : ℝ) - 2) / μ)) ≤ 1 / (2 * ((m : ℝ) + 1) ^ 2) := by
+    have e : (2 : ℝ) ^ (-(((s : ℝ) - 2) / μ)) = 2 ^ (2 / μ) * r ^ s := by
+      rw [← Real.rpow_natCast r, ← Real.rpow_mul (by norm_num), ← Real.rpow_add (by norm_num)]
+      congr 1; field_simp; ring
+    rw [e, le_div_iff₀ (by positivity)]
+    have hms : (m : ℝ) + 1 ≤ ((s : ℝ) + 1) ^ 2 := by
+      have h := Nat.lt_succ_sqrt m
+      have : m + 1 ≤ (s + 1) * (s + 1) := h
+      have : (m : ℝ) + 1 ≤ (s + 1) * (s + 1) := by exact_mod_cast this
+      nlinarith
+    have h4 : ((m : ℝ) + 1) ^ 2 ≤ 16 * (s : ℝ) ^ 4 := by
+      have : ((s : ℝ) + 1) ^ 2 ≤ 4 * s ^ 2 := by nlinarith
+      have h0 : (0 : ℝ) ≤ (m : ℝ) + 1 := by positivity
+      calc ((m : ℝ) + 1) ^ 2 ≤ (((s : ℝ) + 1) ^ 2) ^ 2 := pow_le_pow_left₀ h0 hms 2
+        _ ≤ (4 * s ^ 2) ^ 2 := pow_le_pow_left₀ (by positivity) this 2
+        _ = 16 * (s : ℝ) ^ 4 := by ring
+    have hC0 : (0 : ℝ) < 2 ^ (2 / μ) := by positivity
+    have hrs : 0 ≤ r ^ s := by positivity
+    have := (lt_div_iff₀ (by positivity)).1 hDm
+    nlinarith
+  have : 1 / (2 * ((m : ℝ) + 1) ^ 2) + 1 / (2 * ((m : ℝ) + 1) ^ 2) = 1 / ((m : ℝ) + 1) ^ 2 := by
+    field_simp; ring
+  linarith
 
 /-- **Mid-range scale-test masses** (leaf of `ae_not_liouvilleWith_mid`).  Confidence 65%.
 As `CantorExactExponent.ev_expTest_mass`, for `μ₀ > 1 + log₂ 3`.  English proof: in
@@ -1259,7 +1461,7 @@ theorem ae_not_liouvilleWith_mid (μ₀ : ℚ) (hμ : 1 + Real.logb 2 3 < μ₀)
   exact hex.2 τ hτ
 
 
-/-- **Stretch crux: the exponent upper bound for every `μ₀ > 2`.**  Confidence 80%.
+/-- **Stretch crux: the exponent upper bound for every `μ₀ > 2`.**  Proved.
 
 Wiring proved from `ev_expTest_mass_all` (Borel–Cantelli and `hasIrrExponent_of_avoid_two`), whose
 run-entering case is the 3-adic Farey count `hit_mass_padic`. -/
@@ -1290,7 +1492,7 @@ theorem ae_not_liouvilleWith_all (μ₀ : ℚ) (hμ : 2 < μ₀) (τ : ℝ) (hτ
 
 /-- **Stretch headline.**  For every rational `μ₀ > 2` a computable `x ∈ K` with irrationality
 exponent exactly `μ₀`, normal to every base `b ≥ 2` with `3 ∤ b`, not normal to base 3.
-Confidence 80%: wiring proved from `ev_expTest_mass_all` and the main file's
+Proved: wiring from `ev_expTest_mass_all` and the main file's
 `exists_computable_normal_avoid`. -/
 theorem exists_computable_mem_cantorSet_irrExponent_normal_all (μ₀ : ℚ) (hμ : 2 < μ₀) :
     ∃ e : ℕ → Bool, Computable e ∧ cantorExpReal μ₀ e ∈ cantorSet ∧

@@ -114,11 +114,6 @@ def cruxLinks : List CruxLink := [
    "the computable descent must use the uniform-bad target (the same potential-guided descent \
     aimed at base-2 normality must fail, since normality is not winning) and must open at a \
     scale well above 2^{−C} (one fixed E C is not winning below it)"⟩,
-  ⟨``CantorExactExponentStretch.ev_expTest_mass_all, [``cantorExp_trivialCount_mu_three],
-   "the count must beat 2^F numerators per denominator in run-entering windows (the trivial \
-    count diverges at μ₀ = 3), and must see the depth-b endpoints below the cylinder scale: a \
-    measure-level count thickened to 3^{−b} costs 3^{2m−b} ≥ 1 for μ₀ ≤ 3 \
-    (thickening_cost_ge_one), so He–Liao-type equidistribution cannot carry it"⟩,
   ⟨``QSpan.qSpanNormal_sqrt_two_sqrt_three, [``liouville_pair_qSpan],
    "the argument must use something √2, √3 have and the sparse Liouville pair lacks (algebraicity, \
     bounded partial quotients, …): a pair-universal argument would put a normal number in the \
