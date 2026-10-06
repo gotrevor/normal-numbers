@@ -4756,6 +4756,50 @@ theorem kRational_phase_sum (ξ : ℝ) (j ℓ : ℕ) :
   refine Finset.sum_congr rfl fun a _ => Finset.sum_congr rfl fun d _ => ?_
   rw [← ee_add]; congr 1; ring
 
+theorem ee_nat_mul (n : ℕ) (t : ℝ) : ee (n * t) = ee t ^ n := by
+  induction n with
+  | zero => simp [ee]
+  | succ n ih => rw [pow_succ, ← ih, ← ee_add]; congr 1; push_cast; ring
+
+/-- **Complete exponential sum over `p mod q`** (the Ramanujan-sum base of the Poisson/divisor
+reformulation of the obstacle phase sums, lap 10 Next): `Σ_{p<q} e(ξp/q) = q·[q ∣ ξ]`.  Summing it
+over the obstacle denominators turns `μ_K`-weighted obstacle phase sums at integer frequency `ξ`
+into divisor sums `Σ_n μ̂_K(n)·#{q ∈ [Q, 2Q] : q ∣ n + ξ}` (that step is not yet stated).
+Proved. -/
+theorem sum_ee_mod (q : ℕ) (hq : 0 < q) (ξ : ℤ) :
+    ∑ p ∈ Finset.range q, ee (ξ * p / q) = if (q : ℤ) ∣ ξ then (q : ℂ) else 0 := by
+  have hq' : (q : ℝ) ≠ 0 := by exact_mod_cast hq.ne'
+  set ζ := ee (ξ / q)
+  have hp : ∀ p : ℕ, ee (ξ * p / q) = ζ ^ p := fun p => by
+    rw [← ee_nat_mul]; congr 1; ring
+  simp_rw [hp]
+  have hζq : ζ ^ q = 1 := by
+    rw [← ee_nat_mul, show (q : ℝ) * (ξ / q) = 0 + ((ξ : ℤ) : ℝ) by field_simp; ring, ee_add_int]
+    simp [ee]
+  split_ifs with hd
+  · obtain ⟨k, hk⟩ := hd
+    have : ζ = 1 := by
+      simp only [ζ]
+      rw [show ((ξ : ℝ) / q) = 0 + ((k : ℤ) : ℝ) by rw [hk]; push_cast; field_simp; ring, ee_add_int]
+      simp [ee]
+    simp [this]
+  · have hne : ζ ≠ 1 := by
+      intro h1
+      simp only [ζ, ee] at h1
+      obtain ⟨n, hn⟩ := Complex.exp_eq_one_iff.mp h1
+      have hpi : (2 * Real.pi * Complex.I : ℂ) ≠ 0 := by
+        simp [Real.pi_ne_zero, Complex.I_ne_zero]
+      have : ((ξ / q : ℝ) : ℂ) = (n : ℂ) := by
+        have := hn; rw [show (2 * Real.pi * Complex.I * ((ξ / q : ℝ) : ℂ)) =
+          ((ξ / q : ℝ) : ℂ) * (2 * Real.pi * Complex.I) by ring] at this
+        exact mul_right_cancel₀ hpi this
+      have hr : (ξ : ℝ) / q = n := by exact_mod_cast this
+      apply hd
+      refine ⟨n, ?_⟩
+      have : (ξ : ℝ) = q * n := by field_simp at hr; linarith
+      exact_mod_cast this
+    rw [geom_sum_eq hne, hζq, sub_self, zero_div]
+
 open Classical in
 /-- The obstacle rationals charged to a prefix of length `L` (as in `Alive` with `r = 5`):
 `p/q ∈ [0, 1]`, `3^L ≤ q²3⁵ < 3^{L+10}`, within `2c₀/q²` of `K`. -/
