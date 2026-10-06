@@ -654,6 +654,173 @@ theorem runEnteringCountAt_of_lt (τ : ℝ) (hτ : 1 + Real.logb 2 3 < τ) :
     _ = 2 * (3 : ℝ) ^ m * 2 ^ (b - K + 1) := by push_cast; rfl
     _ ≤ _ := runEntering_real_bound τ b b' m hb' hKb
 
+/-- Equal depth-`n` numerators force equal free coins below `n`. -/
+theorem agree_of_hd_eq (free : ℕ → Bool) (ω ω' : ℕ → Bool) (n : ℕ)
+    (h : hd free ω n = hd free ω' n) : ∀ i < n, free i = true → ω i = ω' i := by
+  induction n with
+  | zero => intro i hi; omega
+  | succ n ih =>
+    rw [hd_succ, hd_succ] at h
+    have hd2 := ptDigit_le_two free ω n
+    have hd2' := ptDigit_le_two free ω' n
+    have h1 : hd free ω n = hd free ω' n := by omega
+    have h2 : ptDigit free ω n = ptDigit free ω' n := by omega
+    intro i hi hf
+    rcases Nat.lt_succ_iff_lt_or_eq.mp hi with hi | rfl
+    · exact ih h1 i hi hf
+    · unfold ptDigit at h2
+      cases hw : ω i <;> cases hw' : ω' i <;> simp_all
+
+/-- **Union bound over numerators**: the coin mass of `hd ∈ S` is at most `|S| · 2^{−F(n)}`. -/
+theorem coins_hd_mem_le (free : ℕ → Bool) (n : ℕ) (S : Finset ℕ) :
+    coins.real {ω | hd free ω n ∈ S} ≤ S.card * (1 / 2 : ℝ) ^ freeCount free n := by
+  classical
+  have hsub : {ω | hd free ω n ∈ S} ⊆ ⋃ t ∈ S, {ω | hd free ω n = t} := by
+    intro ω hω; simp only [Set.mem_iUnion, Set.mem_ofPred_eq] at hω ⊢; exact ⟨_, hω, rfl⟩
+  refine (measureReal_mono hsub (measure_ne_top _ _)).trans ((measureReal_biUnion_finset_le _ _).trans ?_)
+  rw [← nsmul_eq_mul]
+  refine Finset.sum_le_card_nsmul _ _ _ fun t _ => ?_
+  by_cases hE : ∃ ω₀, hd free ω₀ n = t
+  · obtain ⟨ω₀, rfl⟩ := hE
+    have hs : {ω | hd free ω n = hd free ω₀ n} ⊆
+        {ω | ∀ i ∈ (Finset.range n).filter fun i => free i = true, ω i = ω₀ i} := by
+      intro ω hω i hi
+      simp only [Finset.mem_filter, Finset.mem_range] at hi
+      exact agree_of_hd_eq free ω ω₀ n hω i hi.1 hi.2
+    refine (measureReal_mono hs).trans (le_of_eq ?_)
+    rw [coins_real_cyl]; rfl
+  · push Not at hE
+    have : {ω | hd free ω n = t} = ∅ := by ext ω; simpa using hE ω
+    rw [this, measureReal_empty]; positivity
+/-- Dropping the last `j` digits of a depth-`(a+j)` numerator. -/
+theorem hd_add_div (free : ℕ → Bool) (ω : ℕ → Bool) (a j : ℕ) :
+    hd free ω (a + j) / 3 ^ j = hd free ω a := by
+  induction j with
+  | zero => simp
+  | succ j ih =>
+    rw [← add_assoc, hd_succ, pow_succ', ← Nat.div_div_eq_div_mul]
+    have := ptDigit_le_two free ω (a + j)
+    rw [show (3 * hd free ω (a + j) + ptDigit free ω (a + j)) / 3 = hd free ω (a + j) by omega, ih]
+
+/-- Every coin numerator has Cantor digits. -/
+theorem hd_mem_cantorInts (free : ℕ → Bool) (ω : ℕ → Bool) (n : ℕ) :
+    hd free ω n ∈ cantorInts n := by
+  simp only [cantorInts, Finset.mem_filter, Finset.mem_range]
+  refine ⟨hd_lt free ω n, fun i hi => ?_⟩
+  obtain ⟨c, rfl⟩ : ∃ c, n = (c + 1) + i := ⟨n - i - 1, by omega⟩
+  rw [hd_add_div, hd_succ]
+  have := ptDigit_eq_zero_or free ω c
+  omega
+
+open Classical in
+/-- **Run-entering mass by the exact residue count.**  Digits `[a, b)` free, `[b, L]` forced
+(the window enters a run at `b`).  A hit is `P q ≡ r (mod 3^b)` for the depth-`b` numerator `P`
+with `|r| < 3^{m+2+b−(L+1)}`: if `r ≠ 0`, `card_residue_le_gen` per prefix and per `q`, and
+`coins_hd_mem_le`; if `r = 0`, the digits `[m, b)` vanish. -/
+theorem hit_mass_runEntering (free : ℕ → Bool) (m L a b : ℕ) (ham : a ≤ m) (hmb : m ≤ b)
+    (hbn : b ≤ L + 1) (hm2 : m + 2 ≤ L + 1) (hk : L + 1 - b ≤ m + 2)
+    (hfree : ∀ i, a ≤ i → i < b → free i = true)
+    (hforced : ∀ i, b ≤ i → i < L + 1 → free i = false) :
+    coins.real {ω | CantorExpGeneric.hitB free m L (pre ω (L + 1)) = true} ≤
+      2 * 3 ^ m * 2 ^ (m + 3 + b - (L + 1)) * (1 / 2 : ℝ) ^ (b - a) + (1 / 2 : ℝ) ^ (b - m) := by
+  set n := L + 1 with hn
+  set k := m + 2 + b - n with hkdef
+  have hkb : k ≤ b := by omega
+  set S : Finset ℕ := (HS free a).biUnion fun A => (Finset.Ico (3 ^ m : ℕ) (3 ^ (m + 1))).biUnion
+    fun q : ℕ => ((cantorInts (b - a)).filter fun P => ∃ r : ℤ, r ≠ 0 ∧ |r| < 3 ^ k ∧
+      (((A * 3 ^ (b - a) + P : ℕ) : ℤ) * (q : ℤ)) ≡ r [ZMOD 3 ^ b]).image (A * 3 ^ (b - a) + ·)
+    with hS
+  have hsub : {ω | CantorExpGeneric.hitB free m L (pre ω n) = true} ⊆
+      {ω | hd free ω b ∈ S} ∪ {ω | ∀ i, m ≤ i → i < b → free i = true → ω i = false} := by
+    intro ω hω
+    simp only [Set.mem_ofPred_eq] at hω
+    obtain ⟨q, pp, hq2, hpp, hq1, hc⟩ := (hitB_iff free m L _).1 hω
+    rw [tNum_pre] at hc
+    have hq0 : 0 < q := lt_of_lt_of_le (by positivity) hq1
+    have hT : hd free ω n = 3 ^ (n - b) * hd free ω b :=
+      hd_zero_ext free ω b n hbn (fun i h1 h2 => by simp [ptDigit, hforced i h1 h2])
+    set P' := hd free ω b with hP'
+    rw [hT] at hc
+    obtain ⟨hc1, hc2⟩ := hc
+    -- residue
+    set r : ℤ := (P' : ℤ) * q - pp * 3 ^ b with hr
+    have h3nb : (3 : ℤ) ^ n = 3 ^ (n - b) * 3 ^ b := by rw [← pow_add]; congr 1; omega
+    have habs : (3 : ℤ) ^ (n - b) * |r| ≤ 3 * q := by
+      have e : (3 : ℤ) ^ (n - b) * r = ((3 ^ (n - b) * P' : ℕ) : ℤ) * q - pp * 3 ^ n := by
+        rw [h3nb, hr]; push_cast; ring
+      rw [← abs_of_pos (by positivity : (0:ℤ) < 3 ^ (n - b)), ← abs_mul, e, abs_le]
+      constructor
+      · have : ((pp * 3 ^ n : ℕ) : ℤ) ≤ ((3 ^ (n - b) * P' * q + 3 * q : ℕ) : ℤ) := by exact_mod_cast hc2
+        push_cast at this ⊢; linarith
+      · have : ((3 ^ (n - b) * P' * q : ℕ) : ℤ) ≤ ((pp * 3 ^ n + 3 * q : ℕ) : ℤ) := by exact_mod_cast hc1
+        push_cast at this ⊢; linarith
+    have hrk : |r| < 3 ^ k := by
+      have hq3 : (3 : ℤ) * q < 3 ^ (n - b) * 3 ^ k := by
+        rw [← pow_add, show n - b + k = m + 2 by omega, pow_succ', pow_succ']
+        have : (q : ℤ) < 3 ^ (m + 1) := by exact_mod_cast hq2
+        rw [pow_succ'] at this; linarith
+      exact lt_of_mul_lt_mul_left (habs.trans_lt hq3) (by positivity)
+    by_cases hr0 : r = 0
+    · right
+      have heq : pp * 3 ^ b = P' * q := by
+        have : (pp : ℤ) * 3 ^ b = (P' : ℤ) * q := by linarith
+        exact_mod_cast this
+      have hdvd := pow_dvd_of_eq hq0.ne' hq2 heq
+      have hz := digits_zero_of_dvd free ω (b - m) b (by omega) hdvd
+      intro i h1 h2 hf
+      have := hz i (by omega) h2
+      simp only [ptDigit, hf, Bool.true_and] at this
+      cases hw : ω i <;> simp_all
+    · left
+      simp only [Set.mem_ofPred_eq, hS, Finset.mem_biUnion, Finset.mem_image, Finset.mem_Ico,
+        Finset.mem_filter]
+      have hsplit : P' = hd free ω a * 3 ^ (b - a) + P' % 3 ^ (b - a) := by
+        have := hd_add_div free ω a (b - a)
+        rw [show a + (b - a) = b by omega] at this
+        rw [← this, mul_comm]; exact (Nat.div_add_mod _ _).symm
+      refine ⟨hd free ω a, hd_mem_HS free ω a, q, ⟨hq1, hq2⟩, P' % 3 ^ (b - a),
+        ⟨mod_mem_cantorInts (by omega) (hd_mem_cantorInts free ω b), r, hr0, hrk, ?_⟩,
+        hsplit.symm⟩
+      rw [← hsplit]
+      apply Int.modEq_iff_dvd.mpr
+      exact ⟨-pp, by rw [hr]; ring⟩
+  have hcardS : S.card ≤ 2 ^ freeCount free a * (2 * 3 ^ m * 2 ^ (k + 1)) := by
+    calc S.card ≤ ∑ A ∈ HS free a, _ := Finset.card_biUnion_le
+      _ ≤ (HS free a).card * (2 * 3 ^ m * 2 ^ (k + 1)) := by
+        apply Finset.sum_le_card_nsmul
+        intro A _
+        calc _ ≤ ∑ q ∈ Finset.Ico (3 ^ m : ℕ) (3 ^ (m + 1)), _ := Finset.card_biUnion_le
+          _ ≤ (Finset.Ico (3 ^ m : ℕ) (3 ^ (m + 1))).card * 2 ^ (k + 1) := by
+            apply Finset.sum_le_card_nsmul
+            intro q hq
+            refine Finset.card_image_le.trans ?_
+            have hq0 : q ≠ 0 := by
+              simp only [Finset.mem_Ico] at hq; have := Nat.one_le_pow m 3 (by norm_num); omega
+            obtain ⟨v, q', hndvd, rfl⟩ := Nat.exists_eq_pow_mul_and_not_dvd hq0 3 (by norm_num)
+            have hcop : Nat.Coprime q' 3 :=
+              ((Nat.Prime.coprime_iff_not_dvd Nat.prime_three).mpr hndvd).symm
+            have := card_residue_le_gen A b (b - a) k v q' (by omega) hkb hcop
+            convert this using 4
+          _ = 2 * 3 ^ m * 2 ^ (k + 1) := by rw [Nat.card_Ico, pow_succ]; congr 1; omega
+      _ ≤ _ := Nat.mul_le_mul_right _ (card_HS free a)
+  have hFb : freeCount free b = freeCount free a + (b - a) := by
+    rw [freeCount_sub free (by omega : a ≤ b), fc_of_free free hfree]
+  have hz : coins.real {ω | ∀ i, m ≤ i → i < b → free i = true → ω i = false} = (1 / 2 : ℝ) ^ (b - m) := by
+    rw [coins_zero_window, fc_of_free free (fun i h1 h2 => hfree i (by omega) h2)]
+  refine (measureReal_mono hsub (measure_ne_top _ _)).trans ((measureReal_union_le _ _).trans ?_)
+  rw [hz]
+  gcongr
+  refine (coins_hd_mem_le free b S).trans ?_
+  rw [hFb, pow_add]
+  have hc : (S.card : ℝ) ≤ 2 ^ freeCount free a * (2 * 3 ^ m * 2 ^ (k + 1)) := by exact_mod_cast hcardS
+  have e : (2 : ℝ) ^ freeCount free a * (1 / 2) ^ freeCount free a = 1 := by
+    rw [← mul_pow]; norm_num
+  calc (S.card : ℝ) * ((1 / 2) ^ freeCount free a * (1 / 2) ^ (b - a))
+      ≤ 2 ^ freeCount free a * (2 * 3 ^ m * 2 ^ (k + 1)) * ((1 / 2) ^ freeCount free a * (1 / 2) ^ (b - a)) := by
+        gcongr
+    _ = (2 ^ freeCount free a * (1 / 2) ^ freeCount free a) * (2 * 3 ^ m * 2 ^ (k + 1)) * (1 / 2) ^ (b - a) := by ring
+    _ = _ := by rw [e, one_mul, show k + 1 = m + 3 + b - n by omega]
+
 /-- **Mid-range scale-test masses** (leaf of `ae_not_liouvilleWith_mid`).  Confidence 65%.
 As `CantorExactExponent.ev_expTest_mass`, for `μ₀ > 1 + log₂ 3`.  English proof: in
 `expTest_mass_le` replace the run-entering BC case (`hit_mass_bc`, cost `3ᵐ 2^{−(μ₀−2)m}`) by the
