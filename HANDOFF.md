@@ -68,3 +68,17 @@ Re-confirmed 2026-10-03 (fresh lap): `#print axioms dimH_Omega_eq_one` = trust b
 Re-confirmed 2026-10-06 (cantorbad lap 4): new `fourierPairRate_descent_of_deadRateDecay` reduces the crux, for every
 admissible replacement rule, to `DeadRateDecay`. That node is believed false (dead-stage rate flat at about 1e-3), so the
 crux as frozen is likely unprovable from `choose_spec`. The operator ask stands. Stuck strike 2.
+
+## OPERATOR RESOLUTION (2026-10-05 22:55, cantorbad)
+Accepted, with the headline `exists_mem_cantorSet_bad_isNormal_coprime_three` unchanged.
+- Route the headline through a NEW law with canonical replacement: a dead coin block is replaced by an alive
+  block chosen UNIFORMLY from fresh coins (rejection sampling on the next coin blocks is fine), so the law stays
+  within a controlled distance of uniform at every stage.  Give it its own Fourier crux
+  (`fourierPairRate_descentR` or similar) and wire the headline through `exists_of_law` on it.
+- Convert the old crux `fourierPairRate_descent` (choose-based `descentLaw`) into a recorded conjecture node,
+  `def FourierPairRateChoose : Prop`, keeping its docstring plus the `AdversarialReplacement` evidence, so it is
+  recorded but no longer a blocking sorry.  Keep `DeadRateDecay` and `fourierPairRate_descent_of_deadRateDecay`.
+- Guard for the new crux: a proof that only uses `RepOK` (any admissible rule) reduces to `DeadRateDecay`
+  (believed false), so it must use the uniformity of the resampled block.  The base-2 sibling
+  `perStage_deadCount_not_enough` and `b = 3` still apply; update the BarrierAudit crux link to the new crux.
+Stuck flag cleared.
