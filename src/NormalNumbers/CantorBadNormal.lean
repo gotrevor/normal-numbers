@@ -5165,10 +5165,9 @@ coarse cylinder, under `resLaw`.
 
 Base 3.  The first-order probe (`scripts/cantorbad_deadmix.py first`, `t = 12`, 200 × 400, lags
 1–5) gives `R = .067 → .056` for b = 2, `.069 → .057` for b = 5, and `.066 → .059` for b = 3, all
-near the floor `.05`.  So the cylinder-level first-order cancellation shows no base-3 coherence, and
-this node is not expected to fail for `b = 3`.  The base-3 failure of the headline lives in the
-Cantor main term (`cesaro_contChar_small` uses `3 ∤ b`; `not_casselsRate_three`), not here.  A proof
-of this node therefore need not use `3 ∤ b`.  The Riesz sub-family (`riesz_three_shift`) is coherent
+near the floor `.05`.  WITHDRAWN as evidence: the dyadic control also sits at the floor (see
+`AliveOffMix`), so this probe cannot see coherence; whether this node fails for `b = 3` is open.  The base-3 failure of the headline may live in the
+Cantor main term (`cesaro_contChar_small` uses `3 ∤ b`) rather than here; undecided.  The Riesz sub-family (`riesz_three_shift`) is coherent
 along `h·3ᵐ` but has about `2^ℓ` of the `4^ℓ` obstacles, so it is lower order. -/
 def ResLawObstOff (b : ℕ) : Prop :=
   ∀ h : ℤ, h ≠ 0 → ∀ C : ℕ, ∃ (K : ℝ) (W : ℕ → ℝ), Summable (fun j => W (sched j)) ∧
@@ -5757,9 +5756,9 @@ theorem aliveObstacleMix_of_sib {b : ℕ} (hb : 2 ≤ b) (hO : AliveSibMix b) : 
 correlation of the stage dead corrections over distinct `resLaw` completions of the coarse prefix.
 This single node replaces the former first-order (`ResLawObstOff`) and defect
 (`DefectObstacleMix`) nodes of the split route (`nearObstaclePhaseMixing_of_split`, whose proved
-reductions are kept above): the `resLaw` path weights already contain the alive defects.  The
-t = 12 probe saw no base-3 coherence at the first-order level, so the base-3 barrier is expected
-to bind the Cantor main term (`cesaro_contChar_small`), not this node. -/
+reductions are kept above): the `resLaw` path weights already contain the alive defects.  Whether the
+base-3 barrier binds this node or only the Cantor main term is undecided (the t = 12 probe has no
+working control). -/
 theorem aliveOffMix_resLaw {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) :
     AliveOffMix b := by
   sorry
