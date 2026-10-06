@@ -4682,6 +4682,52 @@ def ThreeAdicWindowAvg (b : ℕ) : Prop :=
         CantorLiouville.Bf (fun _ => true) (Nat.log 3 N / 2)
           (h * (b : ℝ) ^ m / 3 ^ (j - Nat.log 3 N / 2)) ≤ C * N * W N
 
+/-- **Base-3 control for `ThreeAdicWindowAvg`.**  Refuted for `b = 3`: every window of `3ᵐ` below
+its top is zero, so each Riesz factor is 1 and the sum is `≍ N`.  Proved. -/
+theorem not_threeAdicWindowAvg_three : ¬ ThreeAdicWindowAvg 3 := by
+  intro H
+  obtain ⟨C, W, hW, hC⟩ := H 1 one_ne_zero
+  have key : ∀ N : ℕ, 3 ≤ N → (1 : ℝ) / 3 ≤ C * W N := by
+    intro N hN
+    obtain ⟨M, hM⟩ : ∃ M, M = Nat.log 3 N / 2 := ⟨_, rfl⟩
+    have h1 := hC N M (by omega) (by omega)
+    rw [← hM] at h1
+    simp only [Nat.cast_ofNat] at h1
+    have hterm : ∀ m ∈ (Finset.range N).filter (fun m => M + 1 ≤ Nat.log 3 (3 ^ m)),
+        CantorLiouville.Bf (fun _ => true) M (((1 : ℤ) : ℝ) * (3 : ℝ) ^ m / 3 ^ (M - M)) = 1 := by
+      intro m hm
+      simp only [Finset.mem_filter, Finset.mem_range, Nat.log_pow (by norm_num : 1 < 3)] at hm
+      unfold CantorLiouville.Bf
+      refine Finset.prod_eq_one fun p hp => ?_
+      simp only [Finset.mem_filter, Finset.mem_range] at hp
+      have hpm : p + 1 ≤ m := by omega
+      have : 2 * Real.pi * (((1 : ℤ) : ℝ) * (3 : ℝ) ^ m / 3 ^ (M - M)) / 3 ^ (p + 1) =
+          ((3 ^ (m - (p + 1)) : ℕ) : ℝ) * (2 * Real.pi) := by
+        rw [Nat.sub_self, pow_zero, div_one, Int.cast_one, one_mul]
+        have : (3 : ℝ) ^ m = 3 ^ (m - (p + 1)) * 3 ^ (p + 1) := by
+          rw [← pow_add]; congr 1; omega
+        rw [this]; push_cast; field_simp
+      rw [this, Real.cos_nat_mul_two_pi, abs_one]
+    have hfil : (Finset.range N).filter (fun m => M + 1 ≤ Nat.log 3 (3 ^ m)) =
+        Finset.Ico (M + 1) N := by
+      ext m; simp [Nat.log_pow (by norm_num : 1 < 3)]; omega
+    rw [Finset.sum_congr rfl hterm, Finset.sum_const, hfil, Nat.card_Ico, nsmul_eq_mul,
+      mul_one] at h1
+    have hl : Nat.log 3 N < N := Nat.log_lt_self 3 (by omega)
+    have hc : (N : ℝ) / 3 ≤ ((N - (M + 1) : ℕ) : ℝ) := by
+      rw [div_le_iff₀ (by norm_num)]
+      exact_mod_cast (show N ≤ (N - (M + 1)) * 3 by omega)
+    have hN0 : (0 : ℝ) < N := by exact_mod_cast (show 0 < N by omega)
+    have : (N : ℝ) / 3 ≤ C * N * W N := hc.trans h1
+    have : (N : ℝ) * (1 / 3) ≤ (N : ℝ) * (C * W N) := by linarith
+    exact le_of_mul_le_mul_left this hN0
+  have ht := (hW.mul_left C).tendsto_atTop_zero
+  have hev : ∀ᶠ k in atTop, (1 : ℝ) / 3 ≤ C * W (sched k) := by
+    filter_upwards [(CantorLiouville.sched_strictMono.tendsto_atTop).eventually_ge_atTop 3] with k hk
+    exact key _ hk
+  have := ge_of_tendsto ht hev
+  norm_num at this
+
 open Classical in
 /-- The obstacle rationals charged to a prefix of length `L` (as in `Alive` with `r = 5`):
 `p/q ∈ [0, 1]`, `3^L ≤ q²3⁵ < 3^{L+10}`, within `2c₀/q²` of `K`. -/
