@@ -124,9 +124,10 @@ def cruxLinks : List CruxLink := [
     dead count (counts alone admit a never 2-normal descent) and not for b = 3"⟩,
   ⟨``CantorBadNormal.resLawObstOff_resLaw,
    [``cantor_not_normal_three_pow, ``perStage_dead_not_enough],
-   "the local dead excesses must average out by the arithmetic of the centres p/q and 3 ∤ b: for \
-    b = 3 the Cantor part itself does not average (log₃ b rational), and for dyadic centres every \
-    dead child sits on a binary zero run, so the excess phase is coherent (probe: coherence 0.96)"⟩,
+   "the same-cylinder obstacle pairs must cancel by the arithmetic of the centres p/q: for dyadic \
+    centres every dead child sits on a binary zero run, so the excess phase is coherent (probe: \
+    coherence 0.96); per-stage dead counts alone do not suffice.  The b = 3 barrier binds the \
+    Cantor main term, not this node (t = 12 probe: no base-3 coherence here)"⟩,
   ⟨``CantorBadNormal.fourierPairRate_descent_of_deadRateDecay,
    [``cantor_not_normal_three_pow, ``perStage_dead_not_enough],
    "the pair-averaged Cantor products must use 3 ∤ b, and the dead-stage hypothesis must be a \
