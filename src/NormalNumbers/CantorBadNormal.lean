@@ -1199,20 +1199,6 @@ noncomputable def deadErr (ξ : ℝ) (w : List Bool) : ℂ :=
 noncomputable def deadChar (ξ : ℝ) (S : ℕ) : ℂ :=
   ∫ ω, ee (ξ * cylLeft (buildU S ω)) * deadErr ξ (buildU S ω) ∂coinMeasure
 
-/-- **Telescoping identity for `resLaw`** (open leaf, believed 90%).
-`μ̂_K(ξ) − ν̂(ξ) = Σ_S deadChar(ξ, S) · μ̂_K(ξ 3^{−10S−10})`, absolutely convergent.
-
-English proof.  `ν̂_{S+1}(ξ) − ν̂_S(ξ) = E_ν[e(ξ·cylLeft w_S)(ψ_S(w_S) − ρ_S)]·μ̂_K(ξ3^{−10S−10})`,
-where `ψ_S(w) = |A(w)|⁻¹ Σ_{f∈A(w)} e(ξ J f 3^{−10S−10})` is the conditional block character
-(`buildU_succ_uniform`) and the tail after stage `S` is an independent rescaled Cantor point.
-`ψ − ρ = −deadErr`.  Absolute convergence: `|deadErr| ≤ 4π|ξ|3^{−10S}` (each `e_f − ρ` is),
-and `ν̂_S → ν̂` since `cpt` of `ν_S` and of `ν` agree on `10S` digits. -/
-theorem resLaw_fourier_telescope (ξ : ℝ) :
-    HasSum (fun S => deadChar ξ S * muK (ξ / 3 ^ (10 * S + 10)))
-        (muK ξ - ∫ ω, ee (ξ * cpt (resLaw.φ ω)) ∂coinMeasure) ∧
-      Summable fun S => ‖deadChar ξ S‖ * ‖muK (ξ / 3 ^ (10 * S + 10))‖ := by
-  sorry
-
 open CantorLiouvilleAll CantorLiouville in
 /-- The pair sum of the Riesz majorants `Bf` behind `CantorLiouvilleAll.secondMoment_le_explicit_b`
 (its proof, without the second-moment expansion).  Proved. -/
@@ -1322,13 +1308,13 @@ theorem pairSum_Bf_le_explicit_b (free : ℕ → Bool) {b : ℕ} (hb : 2 ≤ b) 
         gcongr
     _ = _ := by simp only [T, E, F, M]; ring
 
-/-- **Cassels for `μ_K`** (open leaf, believed 99%): the pair sum of `|μ̂_K|` over the
+/-- **Cassels for the Cantor digit products** (proved): the pair sum of `|μ̂_K|` over the
 frequencies `h(bⁿ − bᵐ)` has a power saving.  This is the bound inside
 `CantorLiouvilleAll.secondMoment_le_explicit_b` with `free = fun _ => true` (there it is applied
 to the second moment; `charFun_real` bounds `|μ̂|` by the truncated product `Bf`). -/
-theorem cassels_muK {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) (h : ℤ) (hh : h ≠ 0) :
+theorem cassels_Bf {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) (h : ℤ) (hh : h ≠ 0) :
     ∃ (C : ℝ) (W : ℕ → ℝ), Summable (fun j => W (sched j)) ∧ ∀ N : ℕ, 1 ≤ N →
-      ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N, ‖muK (h * ((b : ℝ) ^ n - (b : ℝ) ^ m))‖ ≤
+      ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N, CantorLiouville.Bf (fun _ => true) (Nat.log 3 N / 2) (h * ((b : ℝ) ^ n - (b : ℝ) ^ m)) ≤
         C * (N : ℝ) ^ 2 * W N := by
   set e := padicValNat 3 h.natAbs
   set t := CantorLiouvilleAll.tb b
@@ -1368,86 +1354,203 @@ theorem cassels_muK {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) (h : ℤ) (hh : h
   have hfc : ∀ M, CantorLiouville.freeCount (fun _ => true) M = M := by
     intro M; simp [CantorLiouville.freeCount]
   rw [hfc] at hB
-  have hmu : ∀ ξ : ℝ, ‖muK ξ‖ ≤ CantorLiouville.Bf (fun _ => true) (Nat.log 3 N / 2) ξ :=
-    fun ξ => CantorLiouville.charFun_real _ _ ξ
   have hN2 : (0 : ℝ) ≤ (N : ℝ) ^ 2 := by positivity
   have hr : (0 : ℝ) ≤ (N : ℝ) ^ (-(1 / 2 : ℝ)) := by positivity
   have hr2 : (0 : ℝ) ≤ Real.exp c * (N : ℝ) ^ (-δ) := by positivity
   have hEN := hE N hN
-  calc _ ≤ _ := Finset.sum_le_sum fun n _ => Finset.sum_le_sum fun m _ => hmu _
-    _ ≤ _ := hB
+  calc _ ≤ _ := hB
     _ ≤ (N : ℝ) ^ 2 * (N : ℝ) ^ (-(1 / 2 : ℝ)) + K * (N : ℝ) ^ 2 * (Real.exp c * (N : ℝ) ^ (-δ)) := by
         have := mul_le_mul_of_nonneg_left hEN (mul_nonneg hK hN2)
         simp only [K] at this ⊢
         linarith
     _ ≤ _ := by nlinarith [mul_nonneg hN2 hr, mul_nonneg hN2 hr2, mul_nonneg (mul_nonneg hK hN2) hr]
 
+/-- **Cassels for `μ_K`**, proved from `cassels_Bf` and `charFun_real`. -/
+theorem cassels_muK {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) (h : ℤ) (hh : h ≠ 0) :
+    ∃ (C : ℝ) (W : ℕ → ℝ), Summable (fun j => W (sched j)) ∧ ∀ N : ℕ, 1 ≤ N →
+      ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N, ‖muK (h * ((b : ℝ) ^ n - (b : ℝ) ^ m))‖ ≤
+        C * (N : ℝ) ^ 2 * W N := by
+  obtain ⟨C, W, hW, hC⟩ := cassels_Bf hb h3 h hh
+  exact ⟨C, W, hW, fun N hN => le_trans (Finset.sum_le_sum fun n _ => Finset.sum_le_sum
+    fun m _ => CantorLiouville.charFun_real _ _ _) (hC N hN)⟩
+
+/-- The prefix character `T_S(ξ) = E e(ξ · cylLeft(buildU S))` of `resLaw`. -/
+noncomputable def prefChar (ξ : ℝ) (S : ℕ) : ℂ :=
+  ∫ ω, ee (ξ * cylLeft (buildU S ω)) ∂coinMeasure
+
+/-- `Π_{a ≤ p < M} |cos(2πξ/3^{p+1})|`: the Cantor digit factors from `a` to `M`. -/
+noncomputable def tailProd (ξ : ℝ) (a M : ℕ) : ℝ :=
+  ∏ p ∈ Finset.Ico a M, |Real.cos (2 * Real.pi * ξ / 3 ^ (p + 1))|
+
+theorem tailProd_nonneg (ξ : ℝ) (a M : ℕ) : 0 ≤ tailProd ξ a M :=
+  Finset.prod_nonneg fun _ _ => abs_nonneg _
+
+theorem tailProd_le_one (ξ : ℝ) (a M : ℕ) : tailProd ξ a M ≤ 1 :=
+  Finset.prod_le_one (fun _ _ => abs_nonneg _) fun _ _ => Real.abs_cos_le_one _
+
+theorem tailProd_mul (ξ : ℝ) {a b c : ℕ} (hab : a ≤ b) (hbc : b ≤ c) :
+    tailProd ξ a b * tailProd ξ b c = tailProd ξ a c :=
+  Finset.prod_Ico_consecutive _ hab hbc
+
+theorem tailProd_self (ξ : ℝ) (a : ℕ) : tailProd ξ a a = 1 := by simp [tailProd]
+
+theorem tailProd_zero_eq_Bf (ξ : ℝ) (M : ℕ) :
+    tailProd ξ 0 M = CantorLiouville.Bf (fun _ => true) M ξ := by
+  unfold tailProd CantorLiouville.Bf
+  rw [Finset.filter_true_of_mem (fun _ _ => rfl), Finset.range_eq_Ico]
+
+/-- **Stage recursion** (open leaf, believed 97%):
+`T_{S+1} = ρ_S T_S − deadChar(ξ, S)`.  English proof: condition on `buildU S = w`; by
+`buildU_succ_uniform` the next block is uniform on `A(w)`, so the conditional character is
+`e(ξ cylLeft w) · |A|⁻¹ Σ_{f∈A} e(ξ J f/3^{|w|+10})` (`cylLeft_child`), and
+`|A|⁻¹ Σ_{f∈A} e_f = ρ − deadErr` since `Σ_f e_f = 1024 ρ`. -/
+theorem prefChar_succ (ξ : ℝ) (S : ℕ) :
+    prefChar ξ (S + 1) = rhoS ξ (10 * S) * prefChar ξ S - deadChar ξ S := by
+  sorry
+
+/-- **The block character is a cosine product** (open leaf, believed 99%):
+`|ρ_L(ξ)| = Π_{L ≤ p < L+10} |cos(2πξ/3^{p+1})|`, since
+`ρ_L = Π_{i<10} (1 + e(2ξ/3^{L+i+1}))/2`. -/
+theorem norm_rhoS (ξ : ℝ) (L : ℕ) : ‖rhoS ξ L‖ = tailProd ξ L (L + 10) := by
+  sorry
+
+/-- **The prefix determines the point to `3^{−10S}`** (open leaf, believed 99%):
+`cpt (descentU ω) ∈ cyl (buildU S ω)` (`cpt_mem_cyl`, `ofFn_descentU`), and `e` is
+`2π`-Lipschitz. -/
+theorem norm_fourier_sub_prefChar (ξ : ℝ) (S : ℕ) :
+    ‖(∫ ω, ee (ξ * cpt (resLaw.φ ω)) ∂coinMeasure) - prefChar ξ S‖ ≤ 16 * |ξ| / 3 ^ (10 * S) := by
+  sorry
+
+theorem prefChar_zero (ξ : ℝ) : prefChar ξ 0 = 1 := by
+  simp [prefChar, buildU, cylLeft, ee]
+
+/-- **Unrolled recursion.**  Proved from `prefChar_succ` and `norm_rhoS`:
+`|T_S| ≤ Π_{p<10S}|cos| + Σ_{S'<S} |deadChar(ξ,S')| · Π_{10S'+10 ≤ p < 10S}|cos|`. -/
+theorem norm_prefChar_le (ξ : ℝ) (S : ℕ) :
+    ‖prefChar ξ S‖ ≤ tailProd ξ 0 (10 * S) +
+      ∑ S' ∈ Finset.range S, ‖deadChar ξ S'‖ * tailProd ξ (10 * S' + 10) (10 * S) := by
+  induction S with
+  | zero => simp [prefChar_zero, tailProd_self]
+  | succ S ih =>
+    rw [prefChar_succ, show 10 * (S + 1) = 10 * S + 10 by ring]
+    set R := tailProd ξ (10 * S) (10 * S + 10)
+    have hR0 : 0 ≤ R := tailProd_nonneg _ _ _
+    calc ‖rhoS ξ (10 * S) * prefChar ξ S - deadChar ξ S‖
+        ≤ ‖rhoS ξ (10 * S)‖ * ‖prefChar ξ S‖ + ‖deadChar ξ S‖ :=
+          (norm_sub_le _ _).trans (by rw [norm_mul])
+      _ ≤ R * (tailProd ξ 0 (10 * S) +
+            ∑ S' ∈ Finset.range S, ‖deadChar ξ S'‖ * tailProd ξ (10 * S' + 10) (10 * S)) +
+          ‖deadChar ξ S‖ := by rw [norm_rhoS]; gcongr
+      _ = _ := by
+          rw [Finset.sum_range_succ, mul_add, Finset.mul_sum, tailProd_self, mul_one,
+            show R * tailProd ξ 0 (10 * S) = tailProd ξ 0 (10 * S + 10) by
+              rw [mul_comm]; exact tailProd_mul ξ (by omega) (by omega)]
+          have hs : ∑ S' ∈ Finset.range S, R * (‖deadChar ξ S'‖ * tailProd ξ (10 * S' + 10) (10 * S)) =
+              ∑ S' ∈ Finset.range S, ‖deadChar ξ S'‖ * tailProd ξ (10 * S' + 10) (10 * S + 10) := by
+            refine Finset.sum_congr rfl fun S' hS' => ?_
+            rw [Finset.mem_range] at hS'
+            rw [mul_left_comm, mul_comm R, tailProd_mul ξ (by omega) (by omega)]
+          rw [hs, add_assoc]
+
+/-- Pointwise bound for `resLaw`, at any depth `S`.  Proved. -/
+theorem fourierAbs_resLaw_le (ξ : ℝ) (S : ℕ) :
+    fourierAbs resLaw ξ ≤ tailProd ξ 0 (10 * S) +
+      ∑ S' ∈ Finset.range S, ‖deadChar ξ S'‖ * tailProd ξ (10 * S' + 10) (10 * S) +
+        16 * |ξ| / 3 ^ (10 * S) := by
+  unfold fourierAbs
+  have h1 := norm_fourier_sub_prefChar ξ S
+  have h2 := norm_prefChar_le ξ S
+  have h3 := norm_add_le ((∫ ω, ee (ξ * cpt (resLaw.φ ω)) ∂coinMeasure) - prefChar ξ S) (prefChar ξ S)
+  rw [sub_add_cancel] at h3
+  linarith
+
 /-- **The crux: cancellation in the dead-children characters.**  Believed, confidence 55%.
 
-`Σ_{n,m<N} Σ_S |deadChar(ξ, S)|·|μ̂_K(ξ3^{−10S−10})| = O(N² W(N))`, `ξ = h(bⁿ − bᵐ)`.  The
-Cantor tail factor localizes `S` to `O(1)` stages near `log₃|ξ|/10` on average over `(n, m)`
-(as in `cassels_muK`).  At those stages a dead child sits within `c₀/q²` of an obstacle `p/q`,
-`q² ≍ 3^{10S}`, so `deadChar ≈ E_ν Σ_{p/q near w} e(ξ p/q)·(…)`: an exponential sum of
+Uniformly in the depth `S`,
+`Σ_{n,m<N} Σ_{S'<S} |deadChar(ξ, S')|·Π_{10S'+10 ≤ p < 10S}|cos(2πξ/3^{p+1})| = O(N² W(N))`,
+`ξ = h(bⁿ − bᵐ)`.  The Cantor digit factors localize `S'` to `O(1)` stages near `log₃|ξ|/10`
+on average over `(n, m)` (as in `cassels_Bf`); below that scale `|deadErr| ≤ 4π|ξ|3^{−10S'}`
+is tiny.  At the surviving stages a dead child sits within `c₀/q²` of an obstacle `p/q`,
+`q² ≍ 3^{10S'}`, so `deadChar ≈ E_ν Σ_{p/q near w} e(ξ p/q)·(…)`: an exponential sum of
 `h bⁿ p/q` over rationals near `K`, weighted by `ν`.  The bound needs cancellation in `n` of
-`e(h bⁿ p / q)`, i.e. `b` generating a large subgroup mod most `q` near `K`.  The trivial bound
-`|deadChar| ≤ 2·P(dead at S)` is the `DeadRateDecay` route (believed false).
+`e(h bⁿ p / q)`.  The trivial bound `|deadChar| ≤ 2·P(dead at S')` is the `DeadRateDecay` route
+(believed false).
 
 Guards: `b = 3` is false (`cantor_not_normal_three_pow`; `3ⁿ p/q` with `q | 3^k` does not
 cancel), and the base-2 dyadic sibling (`perStage_deadCount_not_enough`) has centres `p/2ᵏ`,
 for which `e(2ⁿ p/2ᵏ) = 1` once `n ≥ k`: no cancellation, as required. -/
 theorem deadCharCancel {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) (h : ℤ) (hh : h ≠ 0) :
-    ∃ (C : ℝ) (W : ℕ → ℝ), Summable (fun j => W (sched j)) ∧ ∀ N : ℕ, 1 ≤ N →
+    ∃ (C : ℝ) (W : ℕ → ℝ), Summable (fun j => W (sched j)) ∧ ∀ N : ℕ, 1 ≤ N → ∀ S : ℕ,
       ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N,
-        ∑' S, ‖deadChar (h * ((b : ℝ) ^ n - (b : ℝ) ^ m)) S‖ *
-          ‖muK (h * ((b : ℝ) ^ n - (b : ℝ) ^ m) / 3 ^ (10 * S + 10))‖ ≤ C * (N : ℝ) ^ 2 * W N := by
+        ∑ S' ∈ Finset.range S, ‖deadChar (h * ((b : ℝ) ^ n - (b : ℝ) ^ m)) S'‖ *
+          tailProd (h * ((b : ℝ) ^ n - (b : ℝ) ^ m)) (10 * S' + 10) (10 * S) ≤
+        C * (N : ℝ) ^ 2 * W N := by
   sorry
 
-/-- Pointwise: `|ν̂| ≤ |μ̂_K| + Σ_S |deadChar|·|μ̂_K(·/3^{10S+10})|`.  Proved from the telescope. -/
-theorem fourierAbs_resLaw_le (ξ : ℝ) :
-    fourierAbs resLaw ξ ≤ ‖muK ξ‖ +
-      ∑' S, ‖deadChar ξ S‖ * ‖muK (ξ / 3 ^ (10 * S + 10))‖ := by
-  obtain ⟨hS, hN⟩ := resLaw_fourier_telescope ξ
-  have heq : (∫ ω, ee (ξ * cpt (resLaw.φ ω)) ∂coinMeasure) =
-      muK ξ - ∑' S, deadChar ξ S * muK (ξ / 3 ^ (10 * S + 10)) := by
-    rw [hS.tsum_eq]; ring
-  unfold fourierAbs
-  rw [heq]
-  refine (norm_sub_le _ _).trans (add_le_add le_rfl ?_)
-  refine (norm_tsum_le_tsum_norm ?_).trans (le_of_eq (tsum_congr fun S => norm_mul _ _))
-  exact hN.congr fun S => (norm_mul _ _).symm
-
 /-- **The crux for the resampling law**, from the decomposition.  Proved modulo the leaves
-`resLaw_fourier_telescope`, `cassels_muK` and `deadCharCancel`.
+`prefChar_succ`, `norm_rhoS`, `norm_fourier_sub_prefChar` and the crux `deadCharCancel`.
 
-The mechanism uses uniformity through `resLaw_fourier_telescope`: a proof that uses only that
-the stage block is alive (any admissible rule) reduces to `DeadRateDecay` (believed false), and
-per-stage dead counts alone are refuted by `perStage_deadCount_not_enough` (whose sibling with
-uniform resampling is still never 2-normal).  So `deadCharCancel` must use the arithmetic of
-the centres `p/q`.  Known-false sibling: `b = 3` (`cantor_not_normal_three_pow`). -/
+The mechanism uses uniformity through `prefChar_succ`: a proof that uses only that the stage
+block is alive (any admissible rule) reduces to `DeadRateDecay` (believed false), and per-stage
+dead counts alone are refuted by `perStage_deadCount_not_enough` (whose sibling with uniform
+resampling is still never 2-normal).  So `deadCharCancel` must use the arithmetic of the
+centres `p/q`.  Known-false sibling: `b = 3` (`cantor_not_normal_three_pow`). -/
 theorem fourierPairRate_resLaw {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) :
     FourierPairRate resLaw b := by
   intro h hh
-  obtain ⟨C₁, W₁, hW₁, h₁⟩ := cassels_muK hb h3 h hh
+  obtain ⟨C₁, W₁, hW₁, h₁⟩ := cassels_Bf hb h3 h hh
   obtain ⟨C₂, W₂, hW₂, h₂⟩ := deadCharCancel hb h3 h hh
-  refine ⟨|C₁| + |C₂|, fun N => |W₁ N| + |W₂ N|, hW₁.abs.add hW₂.abs, fun N hN => ?_⟩
+  refine ⟨|C₁| + |C₂| + 1, fun N => |W₁ N| + |W₂ N| + (N : ℝ) ^ (-(1 / 2 : ℝ)),
+    (hW₁.abs.add hW₂.abs).add (summable_sched_rpow (by norm_num)), fun N hN => ?_⟩
+  set ξ : ℕ → ℕ → ℝ := fun n m => h * ((b : ℝ) ^ n - (b : ℝ) ^ m) with hξ
+  have h₂' : ∀ N : ℕ, 1 ≤ N → ∀ S : ℕ, ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N,
+      ∑ S' ∈ Finset.range S, ‖deadChar (ξ n m) S'‖ * tailProd (ξ n m) (10 * S' + 10) (10 * S) ≤
+        C₂ * (N : ℝ) ^ 2 * W₂ N := h₂
+  set K : ℝ := ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N, 16 * |ξ n m|
+  set S : ℕ := ⌈K⌉₊ + Nat.log 3 N
+  have hK : K ≤ 3 ^ (10 * S) := by
+    have h1 : K ≤ (S : ℝ) := (Nat.le_ceil K).trans (by exact_mod_cast Nat.le_add_right _ _)
+    have h2 : S < 3 ^ (10 * S) := (Nat.lt_pow_self (by norm_num)).trans_le
+      (Nat.pow_le_pow_right (by norm_num) (by omega))
+    exact h1.trans (by exact_mod_cast h2.le)
+  have hM : Nat.log 3 N / 2 ≤ 10 * S := by omega
+  have hN1 : (1 : ℝ) ≤ N := by exact_mod_cast hN
   have hN2 : (0 : ℝ) ≤ (N : ℝ) ^ 2 := by positivity
+  have hr : (0 : ℝ) ≤ (N : ℝ) ^ (-(1 / 2 : ℝ)) := by positivity
+  have hrN : (1 : ℝ) ≤ (N : ℝ) ^ 2 * (N : ℝ) ^ (-(1 / 2 : ℝ)) := by
+    have : (N : ℝ) ^ 2 * (N : ℝ) ^ (-(1 / 2 : ℝ)) = (N : ℝ) ^ (3 / 2 : ℝ) := by
+      rw [show (N : ℝ) ^ 2 = (N : ℝ) ^ (2 : ℝ) by norm_cast, ← Real.rpow_add (by positivity)]
+      norm_num
+    rw [this]; exact Real.one_le_rpow hN1 (by norm_num)
+  have h3S : (0 : ℝ) < 3 ^ (10 * S) := by positivity
+  have hA : ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N, tailProd (ξ n m) 0 (10 * S) ≤
+      C₁ * (N : ℝ) ^ 2 * W₁ N := by
+    refine le_trans (Finset.sum_le_sum fun n _ => Finset.sum_le_sum fun m _ => ?_) (h₁ N hN)
+    rw [← tailProd_zero_eq_Bf, ← tailProd_mul (ξ n m) (Nat.zero_le _) hM]
+    exact mul_le_of_le_one_right (tailProd_nonneg _ _ _) (tailProd_le_one _ _ _)
+  have hC : ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N, 16 * |ξ n m| / 3 ^ (10 * S) ≤
+      (N : ℝ) ^ 2 * (N : ℝ) ^ (-(1 / 2 : ℝ)) := by
+    simp only [← Finset.sum_div]
+    rw [div_le_iff₀ h3S]
+    nlinarith
+  have k : ∀ C W : ℝ, C * (N : ℝ) ^ 2 * W ≤ |C| * (N : ℝ) ^ 2 * |W| := fun C W =>
+    (le_abs_self _).trans (by rw [abs_mul, abs_mul, abs_of_nonneg hN2])
   calc _ ≤ ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N,
-          (‖muK (h * ((b : ℝ) ^ n - (b : ℝ) ^ m))‖ +
-            ∑' S, ‖deadChar (h * ((b : ℝ) ^ n - (b : ℝ) ^ m)) S‖ *
-              ‖muK (h * ((b : ℝ) ^ n - (b : ℝ) ^ m) / 3 ^ (10 * S + 10))‖) :=
-        Finset.sum_le_sum fun n _ => Finset.sum_le_sum fun m _ => fourierAbs_resLaw_le _
-    _ = _ + _ := by simp only [Finset.sum_add_distrib]
-    _ ≤ C₁ * (N : ℝ) ^ 2 * W₁ N + C₂ * (N : ℝ) ^ 2 * W₂ N := add_le_add (h₁ N hN) (h₂ N hN)
-    _ ≤ |C₁| * (N : ℝ) ^ 2 * |W₁ N| + |C₂| * (N : ℝ) ^ 2 * |W₂ N| := by
-        have k : ∀ C W : ℝ, C * (N : ℝ) ^ 2 * W ≤ |C| * (N : ℝ) ^ 2 * |W| := fun C W =>
-          (le_abs_self _).trans (by rw [abs_mul, abs_mul, abs_of_nonneg hN2])
-        exact add_le_add (k _ _) (k _ _)
+          (tailProd (ξ n m) 0 (10 * S) +
+            ∑ S' ∈ Finset.range S, ‖deadChar (ξ n m) S'‖ * tailProd (ξ n m) (10 * S' + 10) (10 * S) +
+              16 * |ξ n m| / 3 ^ (10 * S)) :=
+        Finset.sum_le_sum fun n _ => Finset.sum_le_sum fun m _ => fourierAbs_resLaw_le _ S
+    _ = _ + _ + _ := by simp only [Finset.sum_add_distrib]
+    _ ≤ C₁ * (N : ℝ) ^ 2 * W₁ N + C₂ * (N : ℝ) ^ 2 * W₂ N +
+          (N : ℝ) ^ 2 * (N : ℝ) ^ (-(1 / 2 : ℝ)) := add_le_add (add_le_add hA (h₂' N hN S)) hC
+    _ ≤ |C₁| * (N : ℝ) ^ 2 * |W₁ N| + |C₂| * (N : ℝ) ^ 2 * |W₂ N| +
+          (N : ℝ) ^ 2 * (N : ℝ) ^ (-(1 / 2 : ℝ)) := by linarith [k C₁ (W₁ N), k C₂ (W₂ N)]
     _ ≤ _ := by
-        have := abs_nonneg C₁; have := abs_nonneg C₂
-        have := abs_nonneg (W₁ N); have := abs_nonneg (W₂ N)
-        nlinarith [mul_nonneg (mul_nonneg (abs_nonneg C₁) hN2) (abs_nonneg (W₂ N)),
-          mul_nonneg (mul_nonneg (abs_nonneg C₂) hN2) (abs_nonneg (W₁ N))]
-
+        have a1 := abs_nonneg C₁; have a2 := abs_nonneg C₂
+        have b1 := abs_nonneg (W₁ N); have b2 := abs_nonneg (W₂ N)
+        nlinarith [mul_nonneg (mul_nonneg a1 hN2) b2, mul_nonneg (mul_nonneg a2 hN2) b1,
+          mul_nonneg (mul_nonneg a1 hN2) hr, mul_nonneg (mul_nonneg a2 hN2) hr,
+          mul_nonneg hN2 b1, mul_nonneg hN2 b2]
 
 /-! ## Known-false sibling: the same descent against base-2 obstacles -/
 

@@ -2923,3 +2923,7 @@ Next: (1) prove the reduction (needs pair-averaged partial Cantor products, Cass
 - DONE: `buildU_succ_uniform` proved (block independence via MS/indep_MS).
 - Next:
   `buildU_succ_uniform`; then attack `deadCharCancel` (first: bound |deadErr| ≤ 4π|ξ|3^{-10S}).
+- Telescope restructured to finite depth (no Cantor-tail measure): `norm_prefChar_le`,
+  `fourierAbs_resLaw_le`, `fourierPairRate_resLaw` proved from leaves `prefChar_succ`,
+  `norm_rhoS`, `norm_fourier_sub_prefChar` (all routine) and crux `deadCharCancel`
+  (now uniform in depth S, with cosine-product tails `tailProd`).
