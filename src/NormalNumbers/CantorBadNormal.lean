@@ -2823,15 +2823,166 @@ def LocalDeadBias (b : ℕ) : Prop :=
   ∀ h : ℤ, h ≠ 0 → ∀ C : ℕ, ∀ᵐ ω ∂coinMeasure,
     Tendsto (fun N : ℕ => (∑ n ∈ Finset.range N, localBias b C h n ω) / (N : ℂ)) atTop (𝓝 0)
 
-/-- **The crux, local form** (open; believed 75%).  `resLaw` satisfies `LocalDeadBias` in every
+
+/-! ### The moment reduction of the local route
+
+Every almost-sure Cesàro statement below comes from one generic lemma
+(`ae_cesaro_of_secondMoment`): a bounded array whose partial sums have second moment
+`O(N² W(N))`, with `W` summable along `sched`, has vanishing Cesàro means almost surely. -/
+
+/-- **Second moment with a rate ⇒ almost-sure Cesàro convergence.**  Proved (DEL along `sched`;
+the generic form of `ae_isNormal_of_secondMoment`). -/
+theorem ae_cesaro_of_secondMoment {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω)
+    [IsProbabilityMeasure μ] (Y : ℕ → Ω → ℂ) (hYm : ∀ n, Measurable (Y n))
+    (hYb : ∀ n ω, ‖Y n ω‖ ≤ 1) (K : ℝ) (W : ℕ → ℝ) (hW : Summable fun j => W (sched j))
+    (hmom : ∀ N : ℕ, 1 ≤ N → ∫ ω, ‖∑ k ∈ Finset.range N, Y k ω‖ ^ 2 ∂μ ≤ K * (N : ℝ) ^ 2 * W N) :
+    ∀ᵐ ω ∂μ, Tendsto (fun N : ℕ => (∑ k ∈ Finset.range N, Y k ω) / (N : ℂ)) atTop (𝓝 0) := by
+  set S : ℕ → Ω → ℂ := fun N ω => ∑ k ∈ Finset.range N, Y k ω with hSdef
+  have hSm : ∀ N, Measurable (S N) := fun N => Finset.measurable_sum _ fun k _ => hYm k
+  have hSb : ∀ N ω, ‖S N ω‖ ≤ N := fun N ω =>
+    (norm_sum_le _ _).trans ((Finset.sum_le_sum fun k _ => hYb k ω).trans (by simp))
+  set f : ℕ → Ω → ℝ := fun j ω => ‖S (sched j) ω‖ ^ 2 / ((sched j : ℝ)) ^ 2 with hfdef
+  have hf0 : ∀ j ω, 0 ≤ f j ω := fun j ω => by positivity
+  have hfm : ∀ j, Measurable (f j) := fun j => (((hSm _).norm.pow_const 2).div_const _)
+  have hfi : ∀ j, Integrable (f j) μ := fun j =>
+    Integrable.of_bound (hfm j).aestronglyMeasurable 1 (Eventually.of_forall fun ω => by
+      rw [Real.norm_of_nonneg (hf0 j ω)]
+      have hpos' : (0 : ℝ) < sched j := by exact_mod_cast one_le_sched j
+      rw [div_le_one (by positivity)]
+      exact pow_le_pow_left₀ (norm_nonneg _) (hSb _ ω) 2)
+  have hfI : ∀ j, ∫ ω, f j ω ∂μ ≤ K * W (sched j) := by
+    intro j
+    have hpos' : (0 : ℝ) < sched j := by exact_mod_cast one_le_sched j
+    simp only [f, S]; rw [integral_div, div_le_iff₀ (by positivity)]
+    calc _ ≤ _ := hmom (sched j) (one_le_sched j)
+      _ = _ := by ring
+  have hs : Summable fun j => ∫ ω, f j ω ∂μ :=
+    (hW.mul_left K).of_nonneg_of_le (fun j => integral_nonneg (hf0 j)) hfI
+  have hlin : ∫⁻ ω, ∑' j, ENNReal.ofReal (f j ω) ∂μ ≠ ⊤ := by
+    rw [lintegral_tsum fun j => (hfm j).ennreal_ofReal.aemeasurable]
+    refine ne_top_of_le_ne_top (ENNReal.ofReal_ne_top
+      (r := ∑' j : ℕ, ∫ ω, f j ω ∂μ)) ?_
+    rw [ENNReal.ofReal_tsum_of_nonneg (fun j => integral_nonneg (hf0 j)) hs]
+    refine ENNReal.tsum_le_tsum fun j => ?_
+    rw [← ofReal_integral_eq_lintegral_ofReal (hfi j) (Eventually.of_forall (hf0 j))]
+  have hae := ae_lt_top' (AEMeasurable.tsum fun j =>
+    (hfm j).ennreal_ofReal.aemeasurable) hlin
+  filter_upwards [hae] with ω hω
+  have h1 : Tendsto (fun j => ENNReal.ofReal (f j ω)) atTop (𝓝 0) :=
+    ENNReal.tendsto_atTop_zero_of_tsum_ne_top hω.ne
+  have h2 : Tendsto (fun j => f j ω) atTop (𝓝 0) := by
+    have := (ENNReal.tendsto_toReal ENNReal.zero_ne_top).comp h1
+    simpa [Function.comp_def, ENNReal.toReal_ofReal (hf0 _ ω)] using this
+  have h3 : Tendsto (fun j : ℕ => ‖S (sched j) ω‖ / (sched j : ℝ)) atTop (𝓝 0) := by
+    have := h2.sqrt
+    rw [Real.sqrt_zero] at this
+    refine this.congr fun j => ?_
+    simp only [hfdef]
+    rw [Real.sqrt_div' _ (by positivity), Real.sqrt_sq (norm_nonneg _), Real.sqrt_sq (by positivity)]
+  exact tendsto_of_tendsto_sched (fun k => Y k ω) (fun k => hYb k ω) sched sched_strictMono
+    sched_ratio h3
+
+/-- The bounded form: summands of norm at most `B`. -/
+theorem ae_cesaro_of_secondMoment_bdd {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω)
+    [IsProbabilityMeasure μ] (Y : ℕ → Ω → ℂ) (hYm : ∀ n, Measurable (Y n)) {B : ℝ} (hB : 0 < B)
+    (hYb : ∀ n ω, ‖Y n ω‖ ≤ B) (K : ℝ) (W : ℕ → ℝ) (hW : Summable fun j => W (sched j))
+    (hmom : ∀ N : ℕ, 1 ≤ N → ∫ ω, ‖∑ k ∈ Finset.range N, Y k ω‖ ^ 2 ∂μ ≤ K * (N : ℝ) ^ 2 * W N) :
+    ∀ᵐ ω ∂μ, Tendsto (fun N : ℕ => (∑ k ∈ Finset.range N, Y k ω) / (N : ℂ)) atTop (𝓝 0) := by
+  have hB' : (B : ℂ) ≠ 0 := by exact_mod_cast hB.ne'
+  have key := ae_cesaro_of_secondMoment μ (fun n ω => Y n ω / B)
+    (fun n => (hYm n).div_const _) (fun n ω => by
+      rw [norm_div, Complex.norm_real, Real.norm_of_nonneg hB.le, div_le_one hB]; exact hYb n ω)
+    (K / B ^ 2) W hW (fun N hN => by
+      have : ∀ ω, ‖∑ k ∈ Finset.range N, Y k ω / (B : ℂ)‖ ^ 2 =
+          ‖∑ k ∈ Finset.range N, Y k ω‖ ^ 2 / B ^ 2 := by
+        intro ω
+        rw [← Finset.sum_div, norm_div, Complex.norm_real, Real.norm_of_nonneg hB.le, div_pow]
+      simp_rw [this]; rw [integral_div]
+      calc _ ≤ K * (N : ℝ) ^ 2 * W N / B ^ 2 := by gcongr; exact hmom N hN
+        _ = _ := by ring)
+  filter_upwards [key] with ω hω
+  have := hω.const_mul (B : ℂ)
+  rw [mul_zero] at this
+  refine this.congr fun N => ?_
+  rw [← Finset.sum_div]; field_simp
+
+theorem norm_contChar (ξ : ℝ) (w : List Bool) : ‖contChar ξ w‖ = ‖muK (ξ / 3 ^ w.length)‖ := by
+  rw [contChar, norm_mul, norm_ee, one_mul]
+
+theorem norm_muK_le (ξ : ℝ) : ‖muK ξ‖ ≤ 1 := by
+  unfold muK
+  simpa using norm_integral_le_of_norm_le_const (μ := coinMeasure)
+    (Eventually.of_forall fun ω => (norm_ee (ξ * cpt ω)).le)
+
+theorem norm_condChar_le (ξ : ℝ) (s : ℕ) (w : List Bool) : ‖condChar ξ s w‖ ≤ 1 := by
+  unfold condChar
+  rw [norm_div, Complex.norm_real, Real.norm_of_nonneg measureReal_nonneg]
+  rcases eq_or_lt_of_le (measureReal_nonneg (μ := coinMeasure) (s := {ω | buildU s ω = w}))
+    with h0 | hpos
+  · rw [← h0, div_zero]; exact zero_le_one
+  · rw [div_le_one hpos]
+    simpa using norm_setIntegral_le_of_norm_le_const_ae (μ := coinMeasure)
+      (s := {ω | buildU s ω = w}) (f := fun ω => ee (ξ * cpt (descentU ω))) (C := 1)
+      (measure_lt_top _ _) (Eventually.of_forall fun ω => (norm_ee _).le)
+
+theorem norm_localBias_le (b C : ℕ) (h : ℤ) (n : ℕ) (ω : ℕ → Bool) : ‖localBias b C h n ω‖ ≤ 2 := by
+  unfold localBias
+  refine (norm_sub_le _ _).trans ?_
+  have := norm_condChar_le (h * (b : ℝ) ^ n) (stageOf b C n) (buildU (stageOf b C n) ω)
+  rw [norm_contChar]
+  have := norm_muK_le (h * (b : ℝ) ^ n / 3 ^ (buildU (stageOf b C n) ω).length)
+  linarith
+
+section MeasLB
+local instance : MeasurableSpace (List Bool) := ⊤
+
+theorem measurable_localBias (b C : ℕ) (h : ℤ) (n : ℕ) : Measurable (localBias b C h n) :=
+  (measurable_from_top (f := fun w : List Bool => condChar (h * (b : ℝ) ^ n) (stageOf b C n) w -
+    contChar (h * (b : ℝ) ^ n) w)).comp (measurable_buildU _)
+
+theorem measurable_condDiff (b C : ℕ) (h : ℤ) (n : ℕ) : Measurable fun ω : ℕ → Bool =>
+    ee (h * (b : ℝ) ^ n * cpt (descentU ω)) -
+      condChar (h * (b : ℝ) ^ n) (stageOf b C n) (buildU (stageOf b C n) ω) :=
+  (measurable_ee.comp ((measurable_cpt.comp measurable_descentU).const_mul _)).sub
+    ((measurable_from_top (f := fun w : List Bool => condChar (h * (b : ℝ) ^ n) (stageOf b C n) w)).comp
+      (measurable_buildU _))
+end MeasLB
+
+/-- **Moment node for the crux.**  The partial sums of the local biases have second moment
+`O(N² W(N))` with `W` summable along `sched`.  Implies `LocalDeadBias b`
+(`localDeadBias_of_rate`).  This is the only known mechanism for the a.s. node: expand
+`Σ_{n,m} E[B_n conj B_m]`; the diagonal is `≤ 4N`, and for `n < m`,
+`E[B_n conj B_m] = E[B_n conj E[B_m | w_{s_n}]]`, so the node follows from decay of the
+conditional mean of the stage-`s_m` bias given an earlier prefix (mixing of the dead
+configuration along the resampled path). -/
+def LocalBiasRate (b : ℕ) : Prop :=
+  ∀ h : ℤ, h ≠ 0 → ∀ C : ℕ, ∃ (K : ℝ) (W : ℕ → ℝ), Summable (fun j => W (sched j)) ∧
+    ∀ N : ℕ, 1 ≤ N → ∫ ω, ‖∑ n ∈ Finset.range N, localBias b C h n ω‖ ^ 2 ∂coinMeasure ≤
+      K * (N : ℝ) ^ 2 * W N
+
+/-- **Moment node ⇒ a.s. node.**  Proved. -/
+theorem localDeadBias_of_rate {b : ℕ} (hR : LocalBiasRate b) : LocalDeadBias b := by
+  intro h hh C
+  obtain ⟨K, W, hW, hK⟩ := hR h hh C
+  exact ae_cesaro_of_secondMoment_bdd coinMeasure (fun n => localBias b C h n)
+    (measurable_localBias b C h) (by norm_num) (norm_localBias_le b C h) K W hW hK
+
+/-- **The crux, moment form** (open; believed 65%: stronger than `LocalDeadBias`, which it
+implies via `localDeadBias_of_rate`).  `resLaw` satisfies `LocalBiasRate` in every base `b ≥ 2`
+prime to 3.  Same guards as `localDeadBias_resLaw`: a proof must use the uniformity of the
+resampled block and `3 ∤ b`. -/
+theorem localBiasRate_resLaw {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) : LocalBiasRate b := by
+  sorry
+
+/-- **The local form of the crux** (believed 75%; proved from the moment form `localBiasRate_resLaw`).  `resLaw` satisfies `LocalDeadBias` in every
 base `b ≥ 2` prime to 3.  See `LocalDeadBias` for the content, the evidence and the controls.
 A proof must use the uniformity of the resampled block (any-rule arguments reduce to
 `DeadRateDecay`, believed false) and `3 ∤ b` (`not_casselsRate_three`). -/
-theorem localDeadBias_resLaw {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) : LocalDeadBias b := by
-  sorry
+theorem localDeadBias_resLaw {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) : LocalDeadBias b :=
+  localDeadBias_of_rate (localBiasRate_resLaw hb h3)
 
-/-- **The martingale part** (open; believed 97%, standard).  The Cesàro means of
-`e(hbⁿx) − condChar` vanish almost surely.
+/-- **The martingale part, moment form** (open; believed 97%, standard).  The partial sums of
+`e(hbⁿx) − condChar` have second moment `O(N)`.
 
 English proof.  Write `Y_n = e(hbⁿx) − condChar(hbⁿ, s_n, w_{s_n})`, `s_n = stageOf b C n`
 (monotone in `n`).  `|Y_n| ≤ 2`.  For `n < m`, `E[G(w_{s_m}) · conj Y_m] = 0` for every function
@@ -2841,12 +2992,29 @@ English proof.  Write `Y_n = e(hbⁿx) − condChar(hbⁿ, s_n, w_{s_n})`, `s_n 
 `Σ_{m>n} |E Y_n conj Y_m| ≤ 8π|h| 3^{C+10}/(b − 1)`, so `E|Σ_{n<N} Y_n|² ≤ K N`.  Then
 Davenport–Erdős–LeVeque along `(j+1)²` (as in `DecayAeNormal.ae_tendsto_weyl`) and
 `tendsto_of_tendsto_sched`. -/
+theorem condDiff_secondMoment_le {b : ℕ} (hb : 2 ≤ b) (h : ℤ) (C : ℕ) :
+    ∃ K : ℝ, ∀ N : ℕ, 1 ≤ N → ∫ ω, ‖∑ n ∈ Finset.range N,
+      (ee (h * (b : ℝ) ^ n * cpt (descentU ω)) -
+        condChar (h * (b : ℝ) ^ n) (stageOf b C n) (buildU (stageOf b C n) ω))‖ ^ 2 ∂coinMeasure ≤
+      K * N := by
+  sorry
+
+/-- **The martingale part.**  Proved from the moment form `condDiff_secondMoment_le`. -/
 theorem ae_cesaro_condDiff {b : ℕ} (hb : 2 ≤ b) (h : ℤ) (C : ℕ) :
     ∀ᵐ ω ∂coinMeasure, Tendsto (fun N : ℕ => (∑ n ∈ Finset.range N,
       (ee (h * (b : ℝ) ^ n * cpt (descentU ω)) -
         condChar (h * (b : ℝ) ^ n) (stageOf b C n) (buildU (stageOf b C n) ω))) / (N : ℂ))
       atTop (𝓝 0) := by
-  sorry
+  obtain ⟨K, hK⟩ := condDiff_secondMoment_le hb h C
+  refine ae_cesaro_of_secondMoment_bdd coinMeasure _ (measurable_condDiff b C h) (B := 2)
+    (by norm_num) (fun n ω => ?_) K (fun N => (N : ℝ) ^ (-(1 : ℝ)))
+    (summable_sched_rpow one_pos) (fun N hN => ?_)
+  · refine (norm_sub_le _ _).trans ?_
+    rw [norm_ee]; linarith [norm_condChar_le (h * (b : ℝ) ^ n) (stageOf b C n)
+      (buildU (stageOf b C n) ω)]
+  · refine (hK N hN).trans (le_of_eq ?_)
+    have hN0 : (0 : ℝ) < N := by exact_mod_cast hN
+    rw [Real.rpow_neg_one]; field_simp
 
 /-- **The Cantor-continuation part is small on average** (open; believed 97%, standard).  For
 every `ε > 0` some conditioning depth `C` makes the Cesàro means of `|μ̂_K(hbⁿ / 3^{10 s_n})|`
@@ -2876,9 +3044,6 @@ theorem isNormal_of_weylMeans {b : ℕ} (hb : 2 ≤ b) (x : ℝ)
   intro h hh
   refine (hx h hh).congr fun N => ?_
   rw [LevinSparse.fourierMean_orbit]
-
-theorem norm_contChar (ξ : ℝ) (w : List Bool) : ‖contChar ξ w‖ = ‖muK (ξ / 3 ^ w.length)‖ := by
-  rw [contChar, norm_mul, norm_ee, one_mul]
 
 /-- **The local reduction.**  Proved from `ae_cesaro_condDiff`, `cesaro_contChar_small` and
 Weyl's criterion: `LocalDeadBias` gives almost-sure normality of `resLaw`, with no rate. -/

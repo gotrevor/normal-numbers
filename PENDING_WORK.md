@@ -2991,3 +2991,14 @@ Next: (1) prove the reduction (needs pair-averaged partial Cantor products, Cass
   `r^{|n−m|}` bound, then DEL on squares via `tendsto_of_tendsto_sq`); (2) `cesaro_contChar_small`;
   (3) crux: split `localBias` again at a coarser prefix; the predictable part is the average of `e(hbⁿp/q)` over
   the ~2^{C'} obstacle rationals in K-children of the coarse cylinder: state that as the next node.
+
+## cantorbad lap 7 (2026-10-06)
+* Proved generic `ae_cesaro_of_secondMoment(_bdd)` (bounded array, 2nd moment `O(N² W(N))`, `W`
+  summable along `sched` ⇒ a.s. Cesàro → 0), `norm_condChar_le`, `norm_muK_le`, `norm_localBias_le`,
+  measurability of `localBias` and of the martingale differences.
+* `ae_cesaro_condDiff` now PROVED from the moment leaf `condDiff_secondMoment_le` (sorry, standard).
+* Crux moved to moment form: `localBiasRate_resLaw : LocalBiasRate b` (sorry);
+  `localDeadBias_of_rate` proved, `localDeadBias_resLaw` now proved from it.  BarrierAudit links updated.
+* Next attack on the crux: expand the second moment; state the conditional-mixing node
+  `E|E[B_m | w_s]| ≤ ε(s_m − s)` (conditional average over the stage-`s` atom, as in `condChar`),
+  and prove `LocalBiasRate` from it plus diagonal `≤ 4N`.
