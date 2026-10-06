@@ -2894,7 +2894,7 @@ Crux analysis (to be stated in Lean next lap, not yet recorded as declarations):
 ## 2026-10-06 cantorbad lap 3: replacement-rule obstruction (Lean)
 - `descent_eq_descentR`, `repC_ok` (proved): descentLaw = descentR repC, with repC the `Classical.choose`
   replacement. A proof of the crux therefore uses only `RepOK repC`, so in effect it covers every admissible rule.
-- `AdversarialReplacement` (conjecture node, 60%): some admissible rule steers `2ᵏx mod 1` on dead stages and
+- `AdversarialReplacement` (conjecture node, 50% after numerics: dead rate 1/3000 per stage at stages 2–6): some admissible rule steers `2ᵏx mod 1` on dead stages and
   breaks base-2 normality. If true, the frozen crux cannot be proved from `choose_spec`, which is route-decisive.
   Doubtful step: a lower bound η>0 on the density of dead stages.
 - Next: (a) attack η (rationals near K: He–Liao 2602.01307 as a Literature Prop); (b) if the obstruction holds,

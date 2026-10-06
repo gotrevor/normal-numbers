@@ -622,7 +622,7 @@ theorem build_eq_buildR (s : ℕ) (ω : ℕ → Bool) : build 5 c₀ s ω = buil
 theorem descent_eq_descentR : descent 5 c₀ = descentR repC := by
   funext ω i; simp only [descent, descentR, build_eq_buildR]
 
-/-- **Conjecture node (believed, 60%): an adversarial replacement rule breaks base-2 normality.**
+/-- **Conjecture node (believed, 50%): an adversarial replacement rule breaks base-2 normality.**
 
 Heuristic.  Along a typical path a stage has a dead coin block with probability bounded below
 by some `η > 0` (an obstacle `p/q`, `q² ≍ 3^{10s}`, lies within `c₀/q²` of a surviving child
@@ -632,7 +632,10 @@ chooses among `≥ 536` alive blocks; ten ternary digits fix `2ᵏ x mod 1` to w
 `k` with `2ᵏ ≈ 3^{10s+5}`, so it can force `2ᵏ x mod 1 < 1/2`.  That shifts the frequency of
 the binary digit `0` by `≍ η / (20 log₂ 3) > 0` compared with the coin choice.
 
-Evidence: none numerical yet; the step most in doubt is the lower bound on `η` (a Diophantine
+Evidence (`scripts/cantorbad_eta.py`, exact rationals, 600 coin paths × 7 stages, seed 2): dead
+coin blocks per stage `7, 2, 0, 0, 0, 1, 0` of 600.  Stages 0–1 are dominated by rationals of `K`
+itself (`1/4, 3/4`); at stages 2–6 the rate is `1/3000`, consistent with a small constant `η` but
+too few events to separate it from slow decay.  So confidence is lowered to 50%.  The step most in doubt is the lower bound on `η` (a Diophantine
 count of rationals near `K`).  Implication: if true, `fourierPairRate_descent` can only be
 proved by a law whose replacement is canonical (e.g. uniform resampling among alive blocks),
 not by `Classical.choose`. -/
