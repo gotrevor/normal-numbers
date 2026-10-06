@@ -4817,7 +4817,10 @@ size (`#pairs = 1.9·10⁶, 1.2·10⁵, 6274`).  Known-coherent control `b = 3`:
 
 Uniformity in `m` (lap 10): sporadic outliers (`m = 184`: `.128`) come from preperiodic
 obstacles `p/(q'3^j)`, `q' | 3^ℓ ± 1` (`pow_phase_recur`); their pair share is large
-(`PeriodicFamilyShare`, believed false), so the node needs their 3-adic phase to cancel. -/
+(`PeriodicFamilyShare`, believed false), so the node needs their 3-adic phase to cancel.
+Caveat (lap 10, `DeadMassInK`): at `L ≤ 16` the dead mass is almost all on rational points of
+`K`, which are a vanishing share at the crux scales (crossover `L ≈ 22`), so the evidence above
+probes mainly the in-`K` family; the generic off-`K` obstacles are untested. -/
 def ObstaclePairCorrelation (b : ℕ) : Prop :=
   ∀ h : ℤ, h ≠ 0 → ∀ C : ℕ, ∀ ε : ℝ, 0 < ε → ∃ G : ℕ, ∀ m S : ℕ, S + G ≤ 10 * stageOf b C m →
     ‖∑ xy ∈ obstPairs (10 * stageOf b C m) S, ee (h * (b : ℝ) ^ m * (oval xy.1 - oval xy.2))‖ ≤
