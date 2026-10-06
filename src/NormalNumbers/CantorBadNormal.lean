@@ -4738,6 +4738,24 @@ theorem not_threeAdicWindowAvg_three : ¬ ThreeAdicWindowAvg 3 := by
   have := ge_of_tendsto ht hev
   norm_num at this
 
+/-- **Phase sum over the rational points of `K` of type `(j, ℓ)`** (prefix of `j` Cantor digits,
+then a period-`ℓ` Cantor block): it factors as the prefix Cantor sum times the Riesz product of
+the period.  Proved.
+
+Role (lap 10).  Probe `scripts/cantorbad_massshare.py L inK`: the share of the per-stage dead
+`μ_K`-mass carried by obstacles that lie *in* `K` is `1.0, .99992, .99956` at `L = 8, 10, 12`
+(node `DeadMassInK`), but the complement grows geometrically in `L`, so this dominance is a
+small-`L` effect.  For the in-`K` part, this factorization is its phase structure: inside a depth-`S` cylinder the prefix factor
+is a Riesz product over levels `(S, j]`, i.e. a window of the ternary digits of `hbᵐ` at depth `S`
+(`ThreeAdicWindowAvg`), and the period factor reads `hbᵐ mod 3^j(3^ℓ − 1)`. -/
+theorem kRational_phase_sum (ξ : ℝ) (j ℓ : ℕ) :
+    ∑ a : Fin j → Bool, ∑ d : Fin ℓ → Bool,
+      ee (ξ * (cylLeft (List.ofFn a) + perNum d / (3 ^ j * (3 ^ ℓ - 1)))) =
+    (∑ a : Fin j → Bool, ee (ξ * cylLeft (List.ofFn a))) * riesz ℓ (ξ / (3 ^ j * (3 ^ ℓ - 1))) := by
+  rw [← periodic_phase_sum, Finset.sum_mul_sum]
+  refine Finset.sum_congr rfl fun a _ => Finset.sum_congr rfl fun d _ => ?_
+  rw [← ee_add]; congr 1; ring
+
 open Classical in
 /-- The obstacle rationals charged to a prefix of length `L` (as in `Alive` with `r = 5`):
 `p/q ∈ [0, 1]`, `3^L ≤ q²3⁵ < 3^{L+10}`, within `2c₀/q²` of `K`. -/
@@ -4754,6 +4772,25 @@ open Classical in
 /-- Pairs of distinct obstacles at length `L` within `3^{−S}` of each other. -/
 noncomputable def obstPairs (L S : ℕ) : Finset ((ℤ × ℕ) × (ℤ × ℕ)) :=
   (obst L ×ˢ obst L).filter fun xy => oval xy.1 ≠ oval xy.2 ∧ |oval xy.1 - oval xy.2| ≤ 1 / 3 ^ S
+
+open Classical in
+/-- **Conjecture node (believed false, 10%): the dead mass sits on rational points of `K`.**  The share of
+the `μ_K`-mass of the dead balls `B(p/q, 2c₀/q²)` (obstacles at length `L`) carried by obstacles
+`p/q ∈ K` tends to 1.  Evidence (`scripts/cantorbad_massshare.py L inK`): share `1.0, .99992, .99956, .99772`
+at `L = 8, 10, 12, 14`, but the complement grows `≈ 5×` per `ΔL = 2` (`7.5·10⁻⁵, 4.4·10⁻⁴,
+2.3·10⁻³`): the in-`K` mass falls like `2^{−L/2}` (`2^{L/2}` points, mass `≍ 2^{−L}` each; total
+dead mass `1.9, 1.2, .88, .58 ·10⁻⁵`) while the off-`K` mass grows toward the constant per-stage
+dead density.  Extrapolated crossover near `L ≈ 22`.  So at the scales of the crux the generic
+obstacles dominate, and the rational points of `K` are a small-`L` artefact of the probes.  Heuristic:
+a ball centred on `K` has mass `≍ r^{log 2/log 3}`, one centred at distance `≍ r` from `K` much less.
+Had it held, `AliveOffMix` would reduce to phase cancellation over rational points of `K`
+(`kRational_phase_sum`), whose prefix factor is a middle-digit window of `hbᵐ` in base 3. -/
+def DeadMassInK : Prop :=
+  ∀ ε : ℝ, 0 < ε → ∃ L₀ : ℕ, ∀ L : ℕ, L₀ ≤ L →
+    ∑ x ∈ (obst L).filter (fun x => oval x ∉ cantorSet),
+        (coinMeasure (cpt ⁻¹' Set.Icc (oval x - 2 * c₀ / (x.2 : ℝ) ^ 2) (oval x + 2 * c₀ / (x.2 : ℝ) ^ 2))).toReal ≤
+      ε * ∑ x ∈ obst L,
+        (coinMeasure (cpt ⁻¹' Set.Icc (oval x - 2 * c₀ / (x.2 : ℝ) ^ 2) (oval x + 2 * c₀ / (x.2 : ℝ) ^ 2))).toReal
 
 /-- **Conjecture node: twisted pair correlation of the rationals near `K`.**  Believed 45% for
 `3 ∤ b`.  At the frequency `ξ = hbᵐ` and the obstacle length `L = 10 s_m` (the scale of `bᵐ`),
