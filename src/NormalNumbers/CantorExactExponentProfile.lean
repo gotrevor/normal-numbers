@@ -317,6 +317,33 @@ or weaker: the transcription asks only for some `κ > 0`. -/
 def Literature.BakerLogDiscrepancy : Prop :=
   ∀ t : ℕ, 2 ≤ t → ¬ 3 ∣ t → LogDiscrepancy t
 
+/-- Power savings are summable along `CantorLiouville.sched` (`sched j ≥ e^{√j}`). -/
+theorem summable_sched_rpow {δ : ℝ} (hδ : 0 < δ) :
+    Summable fun j => ((sched j : ℕ) : ℝ) ^ (-δ) := by
+  have hB := (tendsto_natCast_atTop_atTop (R := ℝ)).eventually (ev_log_le (r := 1 / 2) (ε := δ / 2)
+    (by norm_num) (by positivity))
+  refine Summable.of_norm_bounded_eventually summable_inv_sq_nat ?_
+  rw [Nat.cofinite_eq_atTop]
+  filter_upwards [hB, eventually_ge_atTop 1] with j hjB hj1
+  have hs : (0 : ℝ) < sched j := by exact_mod_cast one_le_sched j
+  rw [Real.norm_of_nonneg (Real.rpow_nonneg hs.le _), ← exp_neg_two_log j hj1]
+  calc (sched j : ℝ) ^ (-δ) ≤ (Real.exp (Real.sqrt j)) ^ (-δ) :=
+        Real.rpow_le_rpow_of_nonpos (Real.exp_pos _) (exp_sqrt_le_sched j hj1) (by linarith)
+    _ = Real.exp (-(δ * Real.sqrt j)) := by rw [← Real.exp_mul]; ring_nf
+    _ ≤ _ := by
+        apply Real.exp_le_exp.2
+        rw [Real.sqrt_eq_rpow]; nlinarith
+
+/-- **Power-saving second moment for `3 ∣ b` below the threshold**, given the Baker input.
+Confidence 60%.  This is the analytic core of `ae_isNormal_of_profileOK_of_baker`; the English
+proof is in that docstring (non-shadow `m` by the orbit of `t`, shadow `m` by top digits). -/
+theorem secondMoment_le_profile (hB : Literature.BakerLogDiscrepancy) (μ₀ : ℚ) (hμ : 2 < μ₀)
+    {b : ℕ} (hb : 2 ≤ b) (h3 : 3 ∣ b) (hP : ProfileOK μ₀ b) (h : ℤ) (hh : h ≠ 0) :
+    ∃ C δ : ℝ, 0 < δ ∧ ∀ N : ℕ, 1 ≤ N →
+      ∫ ω, ‖∑ k ∈ Finset.range N, DecayAeNormal.ee (h * (b : ℝ) ^ k * pt (expFree μ₀) ω)‖ ^ 2
+        ∂ExplicitSquare.coinMeasure ≤ C * (N : ℝ) ^ (2 - δ) := by
+  sorry
+
 /-- **The crux, conditional on the top-digit input.**  Confidence 60%.  English proof: split the
 pair sum by `m`.  Outside every shadow, the window `[sm, sm + log₃N/2)` is free and the orbit
 count of `sum_Hf_le_b` (with `t`) applies.  In the shadow, use the top `ε log N` digits of
@@ -327,7 +354,36 @@ Then `ae_isNormal_of_secondMoment` along `CantorLiouville.sched`. -/
 theorem ae_isNormal_of_profileOK_of_baker (hB : Literature.BakerLogDiscrepancy) (μ₀ : ℚ)
     (hμ : 2 < μ₀) :
     ∀ᵐ ω ∂coins, ∀ b : ℕ, 2 ≤ b → ProfileOK μ₀ b → IsNormal b (cantorExpReal μ₀ ω) := by
-  sorry
+  have h1 : (1 : ℚ) < μ₀ := by linarith
+  have hthree : ∀ᵐ ω ∂coins, ∀ b : ℕ, 2 ≤ b → 3 ∣ b →
+      ProfileOK μ₀ b → IsNormal b (cantorExpReal μ₀ ω) := by
+    rw [ae_all_iff]
+    intro b
+    by_cases hb : 2 ≤ b
+    swap; · exact Eventually.of_forall fun _ h => absurd h hb
+    by_cases h3 : 3 ∣ b
+    swap; · exact Eventually.of_forall fun _ _ h => absurd h h3
+    by_cases hPb : ProfileOK μ₀ b
+    swap; · exact Eventually.of_forall fun _ _ _ h => absurd h hPb
+    have : ∀ᵐ ω ∂coins, IsNormal b (cantorExpReal μ₀ ω) := by
+      rw [coins_eq_coinMeasure]
+      refine CantorLiouvilleAll.ae_isNormal_of_secondMoment ExplicitSquare.coinMeasure hb _
+        (measurable_pt (expFree μ₀)) sched sched_strictMono sched_ratio ?_
+      intro h hh
+      obtain ⟨C, δ, hδ, hC⟩ := secondMoment_le_profile hB μ₀ hμ hb h3 hPb h hh
+      refine ((summable_sched_rpow hδ).mul_left (max C 0)).of_nonneg_of_le
+        (fun j => div_nonneg (integral_nonneg fun ω => by positivity) (by positivity)) (fun j => ?_)
+      have hN : (0 : ℝ) < sched j := by exact_mod_cast one_le_sched j
+      rw [div_le_iff₀ (by positivity)]
+      calc _ ≤ C * (sched j : ℝ) ^ (2 - δ) := hC _ (one_le_sched j)
+        _ ≤ max C 0 * (sched j : ℝ) ^ (2 - δ) := by gcongr; exact le_max_left _ _
+        _ = _ := by
+          rw [mul_assoc, ← Real.rpow_natCast _ 2, ← Real.rpow_add hN]; congr 2; push_cast; ring
+    exact this.mono fun _ h _ _ _ => h
+  filter_upwards [ae_isNormal_of_coprime_three μ₀ h1, hthree] with ω hω1 hω2 b hb hPb
+  by_cases h3 : 3 ∣ b
+  · exact hω2 b hb h3 hPb
+  · exact hω1 b hb h3
 
 /-- **Normal below the threshold, a.e.**  Open node; confidence 70% true, but the elementary route
 below is BLOCKED in the shadow (see `shadow_card_ge`, Maze row "elementary orbit port to 3 ∣ b");

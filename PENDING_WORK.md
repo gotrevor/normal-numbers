@@ -3180,3 +3180,8 @@ Candidates 2,4 proved (`StretchBFR.card_cantor_hyperbola_le`, `eq_of_hyperbola_l
   shadow top-digit bound; (b) look for an elementary power-discrepancy proof for {m log₃ t}
   (unlikely: it is the irrationality measure of log t/log 3); (c) the frozen headline cannot
   close unconditionally without (b) — consider a conditional headline sibling.
+- Lap 1b: `ae_isNormal_of_profileOK_of_baker` PROVED from the single leaf `secondMoment_le_profile`
+  (power-saving second moment, sorry 60%) via `summable_sched_rpow` (proved). NEXT: decompose
+  `secondMoment_le_profile` with `secondMoment_expand_b` + `pair_sum_le` into a non-shadow orbit
+  bound (all-free window ⇒ `sum_Hf_le_b` with `free := fun _ => true`, base `t`) and a shadow
+  top-digit bound from `LogDiscrepancy`.
