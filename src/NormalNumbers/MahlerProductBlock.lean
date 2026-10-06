@@ -208,9 +208,25 @@ def IsWordBlock (g k : ℕ) (S : Finset ℕ) : Prop :=
   ∀ X : ℝ, Irrational X → ∃ m ∈ S, ∀ w : List ℕ, w.length = k → (∀ d ∈ w, d < g) →
     ∀ N, ∃ n, N ≤ n ∧ OccursAt g ((m : ℝ) * X) w n
 
-/-- **Binary 2-words: `x`, `3x` or `5x`** (computational; confidence 95%): for every irrational
-`x`, one of `x, 3x, 5x` has both `00` and `11` infinitely often in binary
-(`mahler_block wfail 2 2 1,3,5`: collapse; 240 of the 1140 triples in `[1, 40]` work). -/
+/-- **Binary 2-words: `x`, `3x` or `5x`** (hand proof below, confidence 98%; also
+`mahler_block wfail 2 2 1,3,5`: collapse): for every irrational `x`, one of `x, 3x, 5x` has
+both `00` and `11` infinitely often in binary.
+
+English proof.  Suppose not.  An irrational binary tail has `00` or `11` infinitely often
+(otherwise it alternates), so `x` has exactly one of them i.o.  Replacing `x` by `−x`
+complements every bit of `x, 3x, 5x` and swaps `00` with `11`, so assume `x` eventually avoids
+`11`: its tail is isolated `1`s at positions `n₁ < n₂ < ⋯` with gaps `≥ 2`.
+* `3x`: `3·2^(−n) = 2^(−(n−1)) + 2^(−n)`, and the pairs `{nᵢ − 1, nᵢ}` are disjoint, so the
+  tail of `3x` is `x` with each `1` widened to `11`, with no carries.  It has `11` i.o., so it
+  avoids `00`, which forces every gap to be 2 or 3 eventually.  So the tail of `x` is a word in
+  the tokens `A = 01` and `B = 001`, and both occur i.o. (else `x` is eventually periodic).
+* `5x = x + 4x`: at an occurrence `1 · A · B` (bits `y_p … y_{p+5} = 1 0 1 0 0 1`, then
+  `y_{p+6} = 0`), the carry into `p+5` is 0 when `y_{p+7} = 1` (the tail after `p+5` is then
+  `0.01 0 …` plus `0.0 …`, under 1), so the column sum at `p+5` is 1 or 2.  Going left, the
+  columns `y_n + y_{n+2} + carry` give `z_{p+4} ∈ {0,1}`, then `z_{p+3} = 1`, `z_{p+2} = 1`,
+  `z_{p+1} = 0`, `z_p = 0`.  So `5x` shows `0011` at every `1AB`, which happens i.o.
+Both `00` and `11` then occur i.o. in `5x`, a contradiction.  `{1, 3}` alone fails (any
+irrational `A`/`B` word), and so does every pair up to 40. -/
 theorem isWordBlock_two_two_one_three_five : IsWordBlock 2 2 {1, 3, 5} := by
   sorry
 

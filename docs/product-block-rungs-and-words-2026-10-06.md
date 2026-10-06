@@ -93,3 +93,19 @@ truth: 125 vs 194 (base 5, digits), 16 vs 23 (binary 3-words), 2048 vs 2479 (bin
 `k = 1, 2, 3`.  No finite S works for every k at once (pigeonhole: some member would work for
 infinitely many k, so its multiple would be disjunctive, and the Liouville number kills that).
 Whether the minimum size stays bounded as k grows is open here.
+
+## Hand proof of x, 3x or 5x (later, 2026-10-06)
+
+Suppose x is irrational and none of x, 3x, 5x has both `00` and `11` i.o.  Complementing
+(x ↦ −x) swaps `00` and `11` everywhere, so assume x eventually avoids `11`: isolated 1s.
+
+1. **3x** is x with every 1 widened to `11`, with no carries (the pairs `{n−1, n}` are
+   disjoint).  So 3x has `11` i.o. and must avoid `00`, which forces every gap between 1s to be
+   2 or 3.  The tail of x is a word in `A = 01` and `B = 001`, both i.o.
+2. **5x = x + 4x.**  At each `1·A·B` (bits `1 0 1 0 0 1 0 …`), column sums from the right give
+   `0011`: the incoming carry is at most 1 and cannot pair with a next-token 1, then the
+   columns read `?, 1, 1, 0, 0`.  So 5x has both `00` and `11` i.o.
+
+Contradiction.  The proof also says why 5 is needed: any irrational `A`/`B` word beats
+`{1, 3}`.  It is now in `isWordBlock_two_two_one_three_five`'s docstring, and the test suite
+checks both halves (`test_rust_x_3x_5x_hand_proof`).

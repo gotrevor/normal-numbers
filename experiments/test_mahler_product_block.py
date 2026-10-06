@@ -138,3 +138,10 @@ def test_rust_word_verdicts():
     # no m < 23 = 10111_2 has all eight 3-words in 0^3 m 0^3 (a 22-row enumeration; 2m adds
     # nothing), so every S of odd m < 23 fails.
     assert rs_count("wfail", 2, 3, ",".join(map(str, range(1, 23, 2)))) > 0
+
+
+def test_rust_x_3x_5x_hand_proof():
+    # Hand proof in isWordBlock_two_two_one_three_five's docstring: an irrational word in the
+    # tokens 01 and 001 beats {1, 3} (x avoids 11, 3x avoids 00); adding 5 closes it.
+    assert rs_count("wfail", 2, 2, "1,3") > 0
+    assert rs_count("wfail", 2, 2, "1,3,5") == 0
