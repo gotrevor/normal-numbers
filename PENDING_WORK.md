@@ -1,4 +1,13 @@
 ## Cantor exact-exponent stretch (2026-10-05, KICKOFF-2026-10-05-stretch-poke) — IN PROGRESS
+* **2026-10-06 lap 2 (review + crux):** the crux `RunEnteringCount` is NOT a Kloosterman wall.
+  3-adic Farey separation: hits `P q ≡ r (mod 3^b)` with `|r| q < 3^j` that agree mod `3^j`
+  have equal `r/q` (`padic_sep`), so hitting numerators are fixed by `≈ log₃(|r|q)` low digits
+  plus `v₃(q)` top digits: count `≲ (RQ)^{log₃2}`, a power saving for EVERY `τ > 2`.  Real Farey
+  separation (`hit_mass_farey`) handles non-entering windows for every `μ₀ > 2`.  Statements
+  frozen with sorry leaves; `ae_not_liouvilleWith_all` and the stretch headline are now WIRED
+  from `ev_expTest_mass_all`.  Next: prove `padic_sep`, `card_image_mod_HS_le`,
+  `hit_mass_padic` (crux), `farey_sep`, `hit_mass_farey`, then `ev_expTest_mass_all`.
+  Probe: `experiments/stretch_farey_perr.py` (+ tests, run by hand).
 Branch `proof/cantorexp-stretch`.  Node `ae_not_liouvilleWith_all` 10% (restated in module doc).
 * **Advance:** exact residue count `card_lowResidue_le` (proved): per `q`, ≤ 2^{k+1} Cantor
   numerators with `P q mod 3^b` within `3^k` of 0.  Beats the cylinder count in run-entering

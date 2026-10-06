@@ -114,7 +114,7 @@ def cruxLinks : List CruxLink := [
    "the computable descent must use the uniform-bad target (the same potential-guided descent \
     aimed at base-2 normality must fail, since normality is not winning) and must open at a \
     scale well above 2^{−C} (one fixed E C is not winning below it)"⟩,
-  ⟨``CantorExactExponentStretch.ae_not_liouvilleWith_all, [``cantorExp_trivialCount_mu_three],
+  ⟨``CantorExactExponentStretch.hit_mass_padic, [``cantorExp_trivialCount_mu_three],
    "the count must beat 2^F numerators per denominator in run-entering windows (the trivial \
     count diverges at μ₀ = 3), and must see the depth-b endpoints below the cylinder scale: a \
     measure-level count thickened to 3^{−b} costs 3^{2m−b} ≥ 1 for μ₀ ≤ 3 \
@@ -194,17 +194,23 @@ def waivers : List Waiver := [
    "a leaf: block-entropy subadditivity through bounded carries, plus the block-entropy \
     characterization of dim_FS/Dim_FS (BHV 2005); possibly literature-adjacent (Doty–Lutz–Nandakumar \
     2007 treat one number and rational arithmetic)"⟩,
-  ⟨``CantorExactExponentStretch.ev_expTest_mass_mid,
-   "stretch-lane leaf for the mid range (two cases by hand, English proof in the docstring)"⟩,
+  ⟨``CantorExactExponentStretch.farey_sep, "a leaf: cross-multiplication of two fractions"⟩,
+  ⟨``CantorExactExponentStretch.padic_sep,
+   "a leaf: a cross product divisible by 3^j and below 3^j vanishes"⟩,
+  ⟨``CantorExactExponentStretch.card_image_mod_HS_le,
+   "a leaf: induction on the reachable-numerator tree, one free digit at a time"⟩,
+  ⟨``CantorExactExponentStretch.hit_mass_farey,
+   "a leaf: Farey-disjointness mass bound (Weiss / Kleinbock–Lindenstrauss–Weiss type), elementary \
+    from farey_sep and agree_of_close"⟩,
+  ⟨``CantorExactExponentStretch.ev_expTest_mass_all,
+   "wiring: the case split of CantorExactExponent.expTest_mass_le with hit_mass_farey and \
+    hit_mass_padic in the Borel–Cantelli case"⟩,
   ⟨``StretchBFR.windowCount_of_inverseSum,
    "conditional wiring (Fourier expansion over the q-interval); records that single-sum \
     cancellation reaches only m > b − δ b' (singleSum_insufficient)"⟩,
   ⟨``StretchBFR.card_near_cantor_le, "a leaf: the classical covering count of rationals near K"⟩,
   ⟨``CantorExactExponentStretch.exists_mem_cantorSet_irrExponent_two_of_literature,
    "literature control at μ₀ = 2: wiring from cited Weiss 2001 and Cassels 1959 (a leaf)"⟩,
-  ⟨``CantorExactExponentStretch.exists_computable_mem_cantorSet_irrExponent_normal_all,
-   "assembly: the main file's wiring with ae_not_liouvilleWith_all (the crux) in place of \
-    ae_not_liouvilleWith; no mechanism of its own"⟩,
   ⟨``FiniteState.isFNormal_delayEnum_of_normal,
    "a leaf: O(1) cost of composing with the delay transducer and its finite-state right inverse"⟩]
 

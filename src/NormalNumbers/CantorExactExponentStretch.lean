@@ -169,26 +169,6 @@ theorem exists_mem_cantorSet_irrExponent_two_of_literature (hW : Literature.Weis
     ∃ x ∈ cantorSet, HasIrrExponent x 2 ∧ IsNormal 2 x := by
   sorry
 
-/-- **Stretch crux: the exponent upper bound for every `μ₀ > 2`.**  Confidence 15%.
-
-English proof (heuristic only).  As `CantorExactExponent.ae_not_liouvilleWith`, with the trivial
-numerator count replaced by an equidistribution count of rationals `p/q`, `q ≈ 3ᵐ`, near the
-prefix rationals `P/3^{a_{k+1}}`: expected hits `≈ q^{1−τ}` per `q`, so `3^{m(2−τ)}` per block,
-summable for `τ > 2`.  No proved count of this strength is known for `K` (see module doc). -/
-theorem ae_not_liouvilleWith_all (μ₀ : ℚ) (hμ : 2 < μ₀) (τ : ℝ) (hτ : (μ₀ : ℝ) < τ) :
-    ∀ᵐ ω ∂coins, ¬ LiouvilleWith τ (cantorExpReal μ₀ ω) := by
-  sorry
-
-/-- **Stretch headline.**  For every rational `μ₀ > 2` a computable `x ∈ K` with irrationality
-exponent exactly `μ₀`, normal to every base `b ≥ 2` with `3 ∤ b`, not normal to base 3.
-Confidence 10%. -/
-theorem exists_computable_mem_cantorSet_irrExponent_normal_all (μ₀ : ℚ) (hμ : 2 < μ₀) :
-    ∃ e : ℕ → Bool, Computable e ∧ cantorExpReal μ₀ e ∈ cantorSet ∧
-      HasIrrExponent (cantorExpReal μ₀ e) μ₀ ∧
-      (∀ b : ℕ, 2 ≤ b → ¬ 3 ∣ b → IsNormal b (cantorExpReal μ₀ e)) ∧
-      ¬ IsNormal 3 (cantorExpReal μ₀ e) := by
-  sorry
-
 /-! ## Lap 2026-10-05: the exact residue count
 
 The cylinder count prices a run-entering window at `3ᵐ 2^{m−b}` (`bcTerm_red_mu_three`).  It
@@ -821,6 +801,77 @@ theorem hit_mass_runEntering (free : ℕ → Bool) (m L a b : ℕ) (ham : a ≤ 
     _ = (2 ^ freeCount free a * (1 / 2) ^ freeCount free a) * (2 * 3 ^ m * 2 ^ (k + 1)) * (1 / 2) ^ (b - a) := by ring
     _ = _ := by rw [e, one_mul, show k + 1 = m + 3 + b - n by omega]
 
+/-! ## Lap 2026-10-06: Farey separation, real and 3-adic
+
+Two hitting points that share enough digits must approximate the *same* fraction, because
+fractions of bounded height are separated.
+
+* Real side (`farey_sep`): fractions with denominators below `3^{m+1}` are more than
+  `3^{−(2m+2)}` apart, so the hitting set meets each depth-`(2m+3)` cylinder inside one
+  depth-`(L−2)` cylinder (`hit_mass_farey`, mass `2^{−F[2m+3, L−2)}`).
+* 3-adic side (`padic_sep`): in a run-entering window a hit is `P q ≡ r (mod 3^b)` with
+  `3^{L+1−b} |r| ≤ 3q`, and fractions `r/q` whose cross products `r q' − r' q` are below `3^j`
+  and agree mod `3^j` are equal.  So the hitting numerators are determined by their low
+  `j ≈ log₃(|r| q)` digits and their top `v₃(q)` digits (`hit_mass_padic`, mass
+  `Σ_v 2^{−F[v, L−2m−3+2v)}`).
+
+In both cases the mass is `2^{−(μ₀−2)m + o(m)}`, so every window decays for every `μ₀ > 2`.  The
+per-`q` count (`card_lowResidue_le`) used the low digits for one `q` at a time and stopped at
+`1 + log₂ 3`; the 3-adic separation uses them for all `(q, r)` at once. -/
+
+/-- **Farey separation.**  Distinct fractions with denominators in `(0, 3^{m+1})` are more than
+`3^{−(2m+2)}` apart. -/
+theorem farey_sep (m q q' pp pp' : ℕ) (hq : 0 < q) (hq' : 0 < q') (hq3 : q < 3 ^ (m + 1))
+    (hq3' : q' < 3 ^ (m + 1)) (hne : (pp : ℝ) / q ≠ pp' / q') :
+    1 / (3 : ℝ) ^ (2 * m + 2) < |(pp : ℝ) / q - pp' / q'| := by
+  sorry
+
+/-- **Farey mass of the scale-`m` test.**  Two hitting points with the same free coins below
+`2m+3` lie within `3^{−(2m+3)}` of each other, so their fractions are within
+`3^{−(2m+3)} + 4·3^{−L} < 3^{−(2m+2)}` and coincide (`farey_sep`); then the points are within
+`4·3^{−L} < 3^{−(L−2)}` and share the free coins below `L − 2` (`agree_of_close`). -/
+theorem hit_mass_farey (free : ℕ → Bool) (m L : ℕ) (hL : 2 * m + 5 ≤ L) :
+    coins.real {ω | hitB free m L (pre ω (L + 1)) = true} ≤
+      (1 / 2 : ℝ) ^ fc free (2 * m + 3) (L - 2) := by
+  sorry
+
+/-- **3-adic Farey separation.**  With `r₀ = P q₀ − pp·3^c` and `r₀' = P' q₀' − pp'·3^c`
+(`q₀, q₀'` prime to 3): if `P ≡ P' (mod 3^j)`, `j ≤ c`, and `|r₀ q₀' − r₀' q₀| < 3^j`, then
+`P ≡ P' (mod 3^c)`.  The cross product is `≡ (P − P') q₀ q₀' ≡ 0 (mod 3^j)`, hence `0`, hence
+`3^c ∣ (P − P') q₀ q₀'`. -/
+theorem padic_sep (c j P P' q₀ q₀' pp pp' : ℕ) (hj : j ≤ c) (hq : Nat.Coprime q₀ 3)
+    (hq' : Nat.Coprime q₀' 3) (hPP : P % 3 ^ j = P' % 3 ^ j)
+    (hb : |((P : ℤ) * q₀ - pp * 3 ^ c) * q₀' - ((P' : ℤ) * q₀' - pp' * 3 ^ c) * q₀| < 3 ^ j) :
+    P % 3 ^ c = P' % 3 ^ c := by
+  sorry
+
+/-- Low digits of reachable numerators: at most `2^{F[n−j, n)}` residues mod `3^j`. -/
+theorem card_image_mod_HS_le (free : ℕ → Bool) (j n : ℕ) (hj : j ≤ n) :
+    ((HS free n).image (· % 3 ^ j)).card ≤ 2 ^ fc free (n - j) n := by
+  sorry
+
+/-- **3-adic Farey mass of a run-entering scale-`m` test.**  Digits `[b, L]` forced, so the
+truncated numerator is `3^{L+1−b} P` with `P = hd b`.  An exact hit (`pp/q = P/3^b`) forces zero
+digits on `[m, b)`.  Otherwise group by `v = v₃(q)`, `q = 3^v q₀`: two hits in group `v` with the
+same top `v` digits and the same low `j_v = 2m+3+b−L−2v` digits have equal numerators
+(`padic_sep` with `c = b − v`), so group `v` has mass `2^{−F[v, b−j_v)}`. -/
+theorem hit_mass_padic (free : ℕ → Bool) (m L b : ℕ) (hmb : m ≤ b) (hbn : b ≤ L + 1)
+    (hL : 2 * m + 3 ≤ L) (hforced : ∀ i, b ≤ i → i < L + 1 → free i = false) :
+    coins.real {ω | hitB free m L (pre ω (L + 1)) = true} ≤
+      ∑ v ∈ Finset.range (m + 2 + b - (L + 1)), (1 / 2 : ℝ) ^ fc free v (L - 2 * m - 3 + 2 * v) +
+        (1 / 2 : ℝ) ^ fc free m b := by
+  sorry
+
+/-- **Scale-test masses for every `μ₀ > 2`.**  As `CantorExactExponent.ev_expTest_mass`, with the
+Borel–Cantelli case split by whether the window enters the next run: if not, `hit_mass_farey`
+(the free count of `[2m+3, L−2)` is `≥ (μ₀−2)m + √m − 9`); if it does (`a_{k+1} ≤ L − 3`),
+`hit_mass_padic` with `b = a_{k+1}` (free counts `≥ L − 2m − 3 + v − E_k`, and
+`E_k = a_{k+1}/(k+2) = o(m)`).  The triangle case is unchanged. -/
+theorem ev_expTest_mass_all (μ₀ : ℚ) (hμ : 2 < μ₀) :
+    ∀ᶠ m : ℕ in atTop, coins.real {ω | expTest μ₀ m (pre ω (expL μ₀ m + 1)) = true} ≤
+      1 / ((m : ℝ) + 1) ^ 2 := by
+  sorry
+
 /-- **Mid-range scale-test masses** (leaf of `ae_not_liouvilleWith_mid`).  Confidence 65%.
 As `CantorExactExponent.ev_expTest_mass`, for `μ₀ > 1 + log₂ 3`.  English proof: in
 `expTest_mass_le` replace the run-entering BC case (`hit_mass_bc`, cost `3ᵐ 2^{−(μ₀−2)m}`) by the
@@ -831,7 +882,11 @@ The interior and triangle cases are unchanged, the post-run case is `hit_mass_tr
 theorem ev_expTest_mass_mid (μ₀ : ℚ) (hμ : 1 + Real.logb 2 3 < μ₀) :
     ∀ᶠ m : ℕ in atTop, coins.real {ω | expTest μ₀ m (pre ω (expL μ₀ m + 1)) = true} ≤
       1 / ((m : ℝ) + 1) ^ 2 := by
-  sorry
+  refine ev_expTest_mass_all μ₀ ?_
+  have h1 : (1 : ℝ) < Real.logb 2 3 := by
+    rw [Real.lt_logb_iff_rpow_lt (by norm_num) (by norm_num)]; norm_num
+  have : (2 : ℝ) < μ₀ := by linarith
+  exact_mod_cast this
 
 /-- **Mid range: the exponent upper bound for `1 + log₂ 3 < μ₀`.**  Confidence 65%.
 
@@ -880,5 +935,64 @@ theorem ae_not_liouvilleWith_mid (μ₀ : ℚ) (hμ : 1 + Real.logb 2 3 < μ₀)
     simpa [le_of_max_le_right hm] using this⟩
   exact hex.2 τ hτ
 
+
+/-- **Stretch crux: the exponent upper bound for every `μ₀ > 2`.**  Confidence 15%.
+
+English proof (heuristic only).  As `CantorExactExponent.ae_not_liouvilleWith`, with the trivial
+numerator count replaced by an equidistribution count of rationals `p/q`, `q ≈ 3ᵐ`, near the
+prefix rationals `P/3^{a_{k+1}}`: expected hits `≈ q^{1−τ}` per `q`, so `3^{m(2−τ)}` per block,
+summable for `τ > 2`.  No proved count of this strength is known for `K` (see module doc). -/
+theorem ae_not_liouvilleWith_all (μ₀ : ℚ) (hμ : 2 < μ₀) (τ : ℝ) (hτ : (μ₀ : ℝ) < τ) :
+    ∀ᵐ ω ∂coins, ¬ LiouvilleWith τ (cantorExpReal μ₀ ω) := by
+  obtain ⟨J₀, hJ₀⟩ := eventually_atTop.1 (ev_expTest_mass_all μ₀ hμ)
+  have hfin : ∑' m : ℕ, coins {ω | J₀ ≤ m ∧ expTest μ₀ m (pre ω (expL μ₀ m + 1)) = true} ≠ ⊤ := by
+    have hs : Summable fun m : ℕ => 1 / ((m : ℝ) + 1) ^ 2 := by
+      have := (summable_nat_add_iff 1).2 (Real.summable_one_div_nat_pow.2 (by norm_num : 1 < 2))
+      simpa using this
+    refine ne_top_of_le_ne_top (ENNReal.ofReal_tsum_of_nonneg (fun _ => by positivity) hs ▸
+      ENNReal.ofReal_ne_top) (ENNReal.tsum_le_tsum fun m => ?_)
+    by_cases hm : J₀ ≤ m
+    · simp only [hm, true_and]
+      rw [← ofReal_measureReal]
+      exact ENNReal.ofReal_le_ofReal (hJ₀ m hm)
+    · simp [hm]
+  have h0 := measure_setOfPred_frequently_eq_zero hfin
+  have hae : ∀ᵐ ω ∂coins, ¬ ∃ᶠ m in atTop, J₀ ≤ m ∧ expTest μ₀ m (pre ω (expL μ₀ m + 1)) = true :=
+    measure_eq_zero_iff_ae_notMem.1 h0
+  filter_upwards [hae] with ω hω
+  rw [not_frequently] at hω
+  obtain ⟨m₁, hm₁⟩ := eventually_atTop.1 hω
+  have hex := hasIrrExponent_of_avoid_two μ₀ hμ ω ⟨max m₁ J₀, fun m hm => by
+    have := hm₁ m (le_of_max_le_left hm)
+    simpa [le_of_max_le_right hm] using this⟩
+  exact hex.2 τ hτ
+
+/-- **Stretch headline.**  For every rational `μ₀ > 2` a computable `x ∈ K` with irrationality
+exponent exactly `μ₀`, normal to every base `b ≥ 2` with `3 ∤ b`, not normal to base 3.
+Confidence 10%. -/
+theorem exists_computable_mem_cantorSet_irrExponent_normal_all (μ₀ : ℚ) (hμ : 2 < μ₀) :
+    ∃ e : ℕ → Bool, Computable e ∧ cantorExpReal μ₀ e ∈ cantorSet ∧
+      HasIrrExponent (cantorExpReal μ₀ e) μ₀ ∧
+      (∀ b : ℕ, 2 ≤ b → ¬ 3 ∣ b → IsNormal b (cantorExpReal μ₀ e)) ∧
+      ¬ IsNormal 3 (cantorExpReal μ₀ e) := by
+  have h1 : (1 : ℚ) < μ₀ := by linarith
+  obtain ⟨J₀, hJ₀⟩ := eventually_atTop.1 (ev_expTest_mass_all μ₀ hμ)
+  have hmass : ∀ j, coins.real {ω | (fun j p => decide (J₀ ≤ j) && expTest μ₀ j p) j
+      (pre ω ((fun j => expL μ₀ j + 1) j)) = true} ≤ 1 / ((j : ℝ) + 1) ^ 2 := by
+    intro j
+    by_cases hj : J₀ ≤ j
+    · simpa [hj] using hJ₀ j hj
+    · simp only [hj, decide_false, Bool.false_and, Bool.false_eq_true, Set.ofPred_false,
+        measureReal_empty]
+      positivity
+  have hbad : Primrec₂ fun j p => decide (J₀ ≤ j) && expTest μ₀ j p :=
+    Primrec.and.comp (Primrec.nat_le.comp (Primrec.const J₀) Primrec.fst).decide
+      (primrec_expTest μ₀)
+  obtain ⟨e, hce, hn, j₁, hj⟩ := exists_computable_normal_avoid μ₀ h1 _ hbad
+    (fun j => expL μ₀ j + 1) (Primrec.succ.comp (primrec_expL μ₀)) hmass
+  refine ⟨e, hce, mem_cantorSet μ₀ e, hasIrrExponent_of_avoid_two μ₀ hμ e ⟨max j₁ J₀, fun m hm => ?_⟩,
+    hn, not_isNormal_three_cantorExpReal μ₀ h1 e⟩
+  have := hj m (le_of_max_le_left hm)
+  simpa [le_of_max_le_right hm] using this
 
 end NormalNumbers.CantorExactExponentStretch
