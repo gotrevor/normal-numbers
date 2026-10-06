@@ -5611,7 +5611,14 @@ theorem norm_aliveExt_sq_le_sib (G : List Bool → ℂ) (hG : ∀ v, ‖G v‖ �
 root sums of `E‖aliveOff D_t‖` are `O(N² W(N))`.  This pair correlation is over pairs of distinct
 `resLaw` completions of the coarse prefix, weighted by their path probabilities, so the alive
 defects are built in and there is no separate defect node.  Implies `AliveObstacleMix b`
-(`aliveObstacleMix_of_off`), hence `NearObstaclePhaseMixing b`. -/
+(`aliveObstacleMix_of_off`), hence `NearObstaclePhaseMixing b`.
+
+Control failure (lap 9).  The Monte Carlo ratio `R = E|E[D_t | w_s]| / E|D_t|` of
+`scripts/cantorbad_deadmix.py` stays at its floor `.05` for the known-coherent dyadic sibling too
+(`dyad2`, b = 2, t = 12, lags 3–8: `.051 … .048`).  So that probe cannot detect the coherence this
+node must exclude, and its readings for b = 2, 3, 5 (also at floor) are not evidence for or
+against this node.  A usable probe needs the near-scale sum over `(n, m)` (where the dyadic
+coherence accumulates), not a single-pair ratio. -/
 def AliveOffMix (b : ℕ) : Prop :=
   ∀ h : ℤ, h ≠ 0 → ∀ C : ℕ, ∃ (K : ℝ) (W : ℕ → ℝ), Summable (fun j => W (sched j)) ∧
     ∀ N : ℕ, 1 ≤ N →
