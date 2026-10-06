@@ -27,6 +27,15 @@ Branch `proof/cantorexp-stretch`.  Node `ae_not_liouvilleWith_all` 10% (restated
   window-case leaves (interior / run-entering / void / post-run).
 * Note: DIRECTION.md's current directive (2026-10-02 master conjectures) predates this operator
   kickoff; this run follows the operator's 2026-10-05 stretch campaign.
+## QSpan campaign (KICKOFF-2026-10-05-qspan.md, branch proof/qspan)
+* DONE: `ae_isNormal_combo_iff` and `ae_not_isNormal_combo_of_not` — `#print axioms` = propext,
+  Classical.choice, Quot.sound.  Route: Weyl both ways; genericity on the Bernoulli shift by
+  `K`-truncation + `K`-dependent second moment + `j²` interpolation (no Birkhoff); product formula
+  via `iIndepFun_infinitePi`, nonvanishing via `norm_prod_ge` (`‖∏F‖ ≥ 1 − Σ‖1−F‖`).
+* Open (QSpanCriterion.lean): `span_jointDim_budget`, `isNormal_span_of_jointNormal`,
+  `ae_not_qSpanNormal_fiveDigits` (next: Wall reduction to integer (a,c), h = 5^N, then
+  `ae_not_isNormal_combo_of_not` over countably many (a,c)), `ae_jointDim_fiveDigits`.
+* Host note: `lake` intermittently hits EMFILE; retry loop works.  Pre-commit full build skipped.
 
 ## Schmidt-games lane E1 (2026-10-04) — DONE
 * `SchmidtGames.lean` sorry-free.  `potentialWinning_E`, `dimH_E₂_le`, `codim_E_asymp`:
@@ -2890,3 +2899,7 @@ Note: Bridge edit forces rebuild of whole-Mathlib importers; parallel `lake buil
 * New: `pulariDPDTQuestion_of_lit_three` (Q-DPDT for `k ≥ 3`) from `cpPrefix_count`.
 * Next: base 2 (`PulariDPDTBaseTwo`) needs a different coder; stretch nodes in
   `FiniteStateSelectionStretch.lean` were out of scope this run (operator: do not touch).
+
+## 2026-10-06 qspan lap 2
+QSpanCriterion.lean sorry-free; all six frozen headlines axiom-clean (see HANDOFF-2026-10-06-qspan-lap2.md).
+Next (outside this campaign's scope): subadditivity leaf for `QSpan.span_dimension_budget`.

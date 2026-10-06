@@ -1,0 +1,47 @@
+# HANDOFF 2026-10-05 — cantorexp5 lap 1
+
+Branch `proof/cantorexp5`.  New file `src/NormalNumbers/CantorExactExponentFive.lean`; base-3
+files untouched.
+
+## Done
+* Threshold derived: `thresholdFive = 2 + log₄ 5 ≈ 3.161` (`summable_bc_five`, `rho_five_lt_one`).
+  Kernel controls on the real schedule: `bcTerm_red_five` (μ₀ = 31/10, block cost 5^116·4^-127 > 1),
+  `bcTerm_green_five` (μ₀ = 7/2).
+* Headlines frozen and wired: `exists_computable_mem_cantorFive_irrExponent_normal`,
+  `exists_mem_cantorFive_irrExponent_normal` (the latter from the former).
+* `not_isNormal_five_cantorFiveExpReal` proved (digit 2 never occurs).
+* Open node `StretchFive` (2 < μ₀ ≤ T₅).
+
+## Design decision: copy, not generalize
+The base-3 stack (`CantorLiouville` 2382 l., `CantorLiouvilleAll` 954 l., `CantorExpGeneric`
+711 l., `CantorExactExponent` 1805 l.) hard-codes base 3 and digits {0,2}: `tdig`, `changes`,
+the cos bounds, the `3 ∣ b²−1` orbit count.  Generalizing is well over two laps before payoff.
+Instead: **keep the Boolean coin space**, one base-5 digit = `3·ω(2i) + ω(2i+1)` ∈ {0,1,3,4}
+(`ptDigitF`).  Then `coins`, `pre`, and the derandomizer
+`CantorLiouvilleAll.exists_computable_normal_sched_family` (generic in `G`) and the schedule
+`expRunStart/expRunEnd/expFree` are reused verbatim.
+
+## Open leaves (sorry)
+1. `exists_exponent_tests_five` — port of base-3 §§ Trunc/window/BC/primrec with 3→5, 2→4.
+2. `exists_computable_normal_avoid_five` — needs a base-5 second moment for `5 ∤ b`.  Per digit
+   φ(t) = ((1+e(3t))/2)((1+e(t))/2); crux is the analogue of `secondMoment_le_b`.
+
+## Update (same run, later laps)
+New files (all base-5 ports; base-3 files untouched):
+* `CantorFiveMoment.lean` — `ptF`, `charFun_realF`, `five_point` (Σφ₅² = 5/4 via roots of unity +
+  Cauchy–Schwarz), base-5 Riesz majorants, orbit via `b⁴ ≡ 1 (mod 5)` + LTE, `secondMoment_le_bF`.
+* `CantorFiveNormal.lean` — heads/tails `hdF`/`tlF`, prefix approximants `fA_bounds` (odd prefix
+  lengths: half-known last digit), `f_ev`, `exists_computable_normal_avoid_F`.
+* `CantorFiveExpGeneric.lean` — Frostman bound via heads (`hdF_close`, `ball_leF`, mass `3·4^{-F}`;
+  base-5 cylinders touch, so no gap), `card_near_leF`, tests `hitBF`, `hit_mass_bcF`, `hit_mass_triF`.
+* `CantorFiveExp.lean` — lower bound `liouvilleWith_ptF`, `expTestF_mass_le`, `ev_expTestF_mass`,
+  `hasIrrExponentF_of_avoid`, `exists_exponent_testsF`.
+Both leaves of `CantorExactExponentFive.lean` now wired to these.
+
+## Checkpoint (lap end)
+Uncommitted-then-committed as WIP: last `omega` fix in `CantorFiveExp.lean` (`hCn`) and the wiring of
+`exists_exponent_tests_five` to `CantorFiveExp.exists_exponent_testsF` are NOT yet compile-verified
+(box hit system-wide "Too many open files").  `CantorExactExponentFive.lean` has no `sorry` text left.
+Next: `lake env lean src/NormalNumbers/CantorFiveExp.lean`; fix any errors; then
+`lake build NormalNumbers.CantorExactExponentFive` and `#print axioms` on both headlines
+(expect propext, Classical.choice, Quot.sound); commit; `box done`.

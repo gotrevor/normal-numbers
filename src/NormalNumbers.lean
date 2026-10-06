@@ -944,10 +944,14 @@ import NormalNumbers.ComputableNormal
 import NormalNumbers.ComputableReal
 import NormalNumbers.KurtzRandom
 import NormalNumbers.QSpanNormal
+import NormalNumbers.QSpanCriterion
 import NormalNumbers.SqrtFloor
 import NormalNumbers.ExplicitSquareNonNormal
 import NormalNumbers.ExplicitOmegaK
 import NormalNumbers.DeterministicBD
+import NormalNumbers.ConjugateDet
+import NormalNumbers.ConjugateEntropy
+import NormalNumbers.IndependenceRelative
 import NormalNumbers.FamilyDerandomizeVar
 import NormalNumbers.ExplicitPQ
 import NormalNumbers.BadNormal
@@ -959,6 +963,7 @@ import NormalNumbers.CantorExpGeneric
 import NormalNumbers.CantorExactExponent
 import NormalNumbers.CantorExactExponentStretch
 import NormalNumbers.StretchBFR
+import NormalNumbers.CantorExactExponentFive
 import NormalNumbers.SchedFamily
 import NormalNumbers.UniformBad
 import NormalNumbers.LinearFormsScales
