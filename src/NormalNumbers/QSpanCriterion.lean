@@ -77,6 +77,13 @@ theorem normal_thin_cover (b : ℕ) (hb : 2 ≤ b) (s : ℕ → ℕ) (hs : IsNor
         (∑ p ∈ I, (ℓ p : ℝ)) ≤ δ * n := by
   sorry
 
+/-- Output of an FST on a concatenation. -/
+theorem runFrom_append {k : ℕ} (T : FST k) (q : Fin (T.m + 1)) (u v : List (Fin k)) :
+    T.runFrom q (u ++ v) = T.runFrom q u ++ T.runFrom (u.foldl T.δ q) v := by
+  induction u generalizing q with
+  | nil => simp [FST.runFrom]
+  | cons a u ih => simp [FST.runFrom, ih]
+
 /-- **Chunking an FST run.**  The output of `T` on `π` is the concatenation of `≤ |π|/L + 1`
 outputs of (state, input block of length `≤ L`).  Confidence 99%. -/
 theorem run_chunks {k : ℕ} (T : FST k) (L : ℕ) (hL : 0 < L) (q : Fin (T.m + 1))
@@ -84,7 +91,23 @@ theorem run_chunks {k : ℕ} (T : FST k) (L : ℕ) (hL : 0 < L) (q : Fin (T.m + 
     ∃ cs : List (Fin (T.m + 1) × List (Fin k)), cs.length ≤ π.length / L + 1 ∧
       (∀ c ∈ cs, c.2.length ≤ L) ∧
       T.runFrom q π = (cs.map fun c => T.runFrom c.1 c.2).flatten := by
-  sorry
+  induction h : π.length using Nat.strong_induction_on generalizing π q with
+  | _ n ih =>
+    by_cases hn : n ≤ L
+    · exact ⟨[(q, π)], by simp, by simp; omega, by simp⟩
+    · obtain ⟨cs, h1, h2, h3⟩ := ih (π.drop L).length (by simp; omega) (List.foldl T.δ q (π.take L))
+        (π.drop L) rfl
+      refine ⟨(q, π.take L) :: cs, ?_, ?_, ?_⟩
+      · simp only [List.length_cons, List.length_drop] at h1 ⊢
+        try rw [h] at h1
+        have : (n - L) / L + 1 = n / L := (Nat.div_eq_sub_div hL (by omega)).symm
+        omega
+      · intro c hc
+        rcases List.mem_cons.mp hc with rfl | hc
+        · simp
+        · exact h2 c hc
+      · conv_lhs => rw [← List.take_append_drop L π]
+        rw [runFrom_append, h3]; simp
 
 /-- **Integer-coefficient budget.**  The assembly: `run_chunks`, `window_combo` and
 `normal_thin_cover` with `L → ∞`.  Confidence 85%. -/
