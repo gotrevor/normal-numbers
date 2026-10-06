@@ -6,7 +6,9 @@ Branch `proof/cantorexp-stretch`.  Node `ae_not_liouvilleWith_all` 10% (restated
 * Seeds: H0 `trivial_count_barrier`, H2 `abs_sub_lt_iff_residue`, H3 `inv_linearize` proved
   (H3 unneeded).  H1 superseded.  H4/H5: Riesz L1 Λ ≤ 4/3 (≈1.2966) only reaches m < 0.394b.
 * Crux below 2.585: `RunEnteringCount` (def Prop); Maze row "per-q residue counting below 1 + log2 3".
-* **Next:** prove `runEnteringCountAt_of_lt` (sum `card_lowResidue_le` over q, handle 3 ∣ q via
+* DONE: `card_residue_le_gen`, `runEnteringCountAt_of_lt` (proved).  **Next:** generalize
+  `hasIrrExponent_of_avoid` to `2 < μ₀` (wrapper keeps old statement), add leaf `hit_mass_runEntering`
+  (T = P·3^{L+1−b}: residue count at modulus 3^b with k = m+1+b−L), `ev_expTest_mass_mid`, then wire
   v₃(q) and top digits, prefix offset A·3^{b'}); then decompose `ae_not_liouvilleWith_mid` into
   window-case leaves (interior / run-entering / void / post-run).
 * Note: DIRECTION.md's current directive (2026-10-02 master conjectures) predates this operator

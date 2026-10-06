@@ -48,6 +48,11 @@ def mazeLinks : List Link := [
   ⟨"Diophantine (exponent-2) input for a normal element of a Q-span",
    [``QSpan.exists_pair_exponentTwo_qSpan_not_normal, ``QSpan.span_dimension_budget,
     ``QSpan.qSpanNormal_sqrt_upperDim], []⟩,
+  ⟨"schedule redesign for the trivial count",
+   [``CantorExactExponentStretch.trivial_count_barrier], []⟩,
+  ⟨"per-q residue counting below 1 + log2 3",
+   [``CantorExactExponentStretch.card_lowResidue_le, ``CantorExactExponentStretch.exactCount_rho_ge_one],
+   [``CantorExactExponentStretch.RunEnteringCount]⟩,
   ⟨"He-Liao local count on the forced-run measure",
    [``CantorExactExponentStretch.endpoint_sep, ``CantorExactExponentStretch.thickening_cost_ge_one,
     ``CantorExactExponentStretch.Literature.HeLiao2026Cor65,
@@ -242,7 +247,7 @@ def mazeLegacy : List String := [
   "Diophantine good-denominator detour for the tail cell",
   "route B's unweighted cover of the state-dependent target"]
 
-/-- info: maze audit: 156 rows, 49 cite declarations, 107 legacy (prose only) -/
+/-- info: maze audit: 158 rows, 51 cite declarations, 107 legacy (prose only) -/
 #guard_msgs in
 #maze_audit mazeRows, mazeLinks, mazeLegacy
 

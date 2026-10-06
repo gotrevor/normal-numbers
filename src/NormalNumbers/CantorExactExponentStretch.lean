@@ -552,6 +552,36 @@ bottom `m ≈ b/τ`, so no count that loses the sign of the Riesz product can wo
 `ℤ/3^b`.  Evidence: heuristic density; `experiments/stretch_exact_count.py`. -/
 def RunEnteringCount : Prop := ∀ τ : ℝ, 2 < τ → RunEnteringCountAt τ
 
+/-- Real bookkeeping for `runEnteringCountAt_of_lt`: `2·3ᵐ·2^{b−⌊(τ−1)m⌋+1} ≤ 8·2^{b'}3^{b−b'}ρᵐ`. -/
+theorem runEntering_real_bound (τ : ℝ) (b b' m : ℕ) (hb' : b' ≤ b) (hK : ⌊(τ - 1) * m⌋₊ ≤ b) :
+    2 * (3 : ℝ) ^ m * 2 ^ (b - ⌊(τ - 1) * m⌋₊ + 1) ≤
+      8 * 2 ^ b' * 3 ^ (b - b') * (3 * (2 : ℝ) ^ (-(τ - 1))) ^ m := by
+  set K := ⌊(τ - 1) * m⌋₊
+  have hKlt : (τ - 1) * m < K + 1 := Nat.lt_floor_add_one _
+  have h2b : (2 : ℝ) ^ b ≤ 2 ^ b' * 3 ^ (b - b') := by
+    calc (2 : ℝ) ^ b = 2 ^ b' * 2 ^ (b - b') := by rw [← pow_add]; congr 1; omega
+      _ ≤ 2 ^ b' * 3 ^ (b - b') := by gcongr; norm_num
+  have hsplit : (2 : ℝ) ^ (b - K + 1) * 2 ^ K = 2 * 2 ^ b := by
+    rw [← pow_add, ← pow_succ']; congr 1; omega
+  have hK2 : (2 : ℝ) ^ (-(τ - 1) * m) * 2 ≥ 1 / 2 ^ K := by
+    rw [ge_iff_le, div_le_iff₀ (by positivity), ← Real.rpow_natCast, ← Real.rpow_add_one (by norm_num),
+      ← Real.rpow_add (by norm_num)]
+    apply Real.one_le_rpow (by norm_num); linarith
+  have hρm : (3 * (2 : ℝ) ^ (-(τ - 1))) ^ m = 3 ^ m * 2 ^ (-(τ - 1) * m) := by
+    rw [mul_pow, ← Real.rpow_mul_natCast (by norm_num)]
+  rw [hρm]
+  have h2K : (0 : ℝ) < 2 ^ K := by positivity
+  have e : (2 : ℝ) ^ (b - K + 1) = 2 * 2 ^ b * (1 / 2 ^ K) := by
+    field_simp; linarith [hsplit]
+  rw [e]
+  have h3 : (0 : ℝ) ≤ 3 ^ m := by positivity
+  have hb0 : (0 : ℝ) ≤ 2 ^ b := by positivity
+  calc 2 * (3 : ℝ) ^ m * (2 * 2 ^ b * (1 / 2 ^ K))
+      ≤ 2 * 3 ^ m * (2 * 2 ^ b * (2 ^ (-(τ - 1) * m) * 2)) := by gcongr
+    _ = 8 * 2 ^ b * (3 ^ m * 2 ^ (-(τ - 1) * m)) := by ring
+    _ ≤ 8 * (2 ^ b' * 3 ^ (b - b')) * (3 ^ m * 2 ^ (-(τ - 1) * m)) := by gcongr
+    _ = _ := by ring
+
 /-- **The exact residue count proves the run-entering count above `1 + log₂ 3`.**
 Confidence 90% (English proof: `card_lowResidue_le` per `q` with `k = b − ⌊(τ−1)m⌋`, the
 prefix shifts `P ↦ A·3^{b'} + P` without changing low digits when `k ≤ b'`, and the trivial
@@ -559,7 +589,70 @@ bound `2^{b'}` covers `k > b'`; sum over `2·3ᵐ` denominators, `δ = −log₃
 `q` divisible by `3` reduces to modulus `3^{b−v₃(q)}`). -/
 theorem runEnteringCountAt_of_lt (τ : ℝ) (hτ : 1 + Real.logb 2 3 < τ) :
     RunEnteringCountAt τ := by
-  sorry
+  classical
+  have hlog : 0 < Real.logb 2 3 := Real.logb_pos (by norm_num) (by norm_num)
+  have hτ1 : 1 < τ := by linarith
+  set ρ := 3 * (2 : ℝ) ^ (-(τ - 1)) with hρdef
+  have hρ1 : ρ < 1 := exactCount_rho_lt_one τ hτ
+  have hρ0 : 0 < ρ := by positivity
+  refine ⟨-Real.logb 3 ρ, by linarith [Real.logb_neg (by norm_num : (1 : ℝ) < 3) hρ0 hρ1], 8, ?_⟩
+  intro A b b' m hb' hwin
+  have h3δ : (3 : ℝ) ^ (-(-Real.logb 3 ρ * m)) = ρ ^ m := by
+    rw [neg_mul, neg_neg, Real.rpow_mul_natCast (by norm_num),
+      Real.rpow_logb (by norm_num) (by norm_num) hρ0]
+  rw [h3δ]
+  have hτm : (0 : ℝ) ≤ (τ - 1) * m := by positivity
+  set K := ⌊(τ - 1) * m⌋₊ with hKdef
+  have hKle : (K : ℝ) ≤ (τ - 1) * m := Nat.floor_le hτm
+  have hKb : K ≤ b := by exact_mod_cast hKle.trans hwin
+  set k := b - K with hkdef
+  have hkb : k ≤ b := Nat.sub_le _ _
+  have hsub : ((cantorInts b').filter fun P => ∃ q : ℕ, 3 ^ m ≤ q ∧ q < 3 ^ (m + 1) ∧
+      ∃ r : ℤ, r ≠ 0 ∧ |(r : ℝ)| < 3 ^ b * (q : ℝ) ^ (1 - τ) ∧
+        ((A * 3 ^ b' + P : ℕ) * q : ℤ) ≡ r [ZMOD 3 ^ b]) ⊆
+      (Finset.Ico (3 ^ m : ℕ) (3 ^ (m + 1))).biUnion (fun q : ℕ => (cantorInts b').filter fun P =>
+        ∃ r : ℤ, r ≠ 0 ∧ |r| < 3 ^ k ∧ (((A * 3 ^ b' + P : ℕ) : ℤ) * (q : ℤ)) ≡ r [ZMOD 3 ^ b]) := by
+    intro P hP
+    simp only [Finset.mem_filter] at hP
+    obtain ⟨hPC, q, hq1, hq2, r, hr0, hrq, hr⟩ := hP
+    simp only [Finset.mem_biUnion, Finset.mem_Ico, Finset.mem_filter]
+    refine ⟨q, ⟨hq1, hq2⟩, hPC, r, hr0, ?_, hr⟩
+    have hq0 : (0 : ℝ) < (3 : ℝ) ^ m := by positivity
+    have hqm : (3 : ℝ) ^ m ≤ q := by exact_mod_cast hq1
+    have h1 : (q : ℝ) ^ (1 - τ) ≤ ((3 : ℝ) ^ m) ^ (1 - τ) :=
+      Real.rpow_le_rpow_of_nonpos hq0 hqm (by linarith)
+    have h2 : (3 : ℝ) ^ b * ((3 : ℝ) ^ m) ^ (1 - τ) ≤ (3 : ℝ) ^ k := by
+      rw [← Real.rpow_natCast (3 : ℝ) m, ← Real.rpow_mul (by norm_num), ← Real.rpow_natCast (3 : ℝ) b,
+        ← Real.rpow_add (by norm_num), ← Real.rpow_natCast (3 : ℝ) k]
+      apply Real.rpow_le_rpow_of_exponent_le (by norm_num)
+      rw [hkdef, Nat.cast_sub hKb]
+      nlinarith
+    have h3 : |(r : ℝ)| < (3 : ℝ) ^ k :=
+      lt_of_lt_of_le hrq ((mul_le_mul_of_nonneg_left h1 (by positivity)).trans h2)
+    exact_mod_cast h3
+  have hper : ∀ q ∈ Finset.Ico (3 ^ m : ℕ) (3 ^ (m + 1)), ((cantorInts b').filter fun P =>
+        ∃ r : ℤ, r ≠ 0 ∧ |r| < 3 ^ k ∧
+          (((A * 3 ^ b' + P : ℕ) : ℤ) * (q : ℤ)) ≡ r [ZMOD 3 ^ b]).card ≤ 2 ^ (k + 1) := by
+    intro q hq
+    have hq0 : q ≠ 0 := by
+      simp only [Finset.mem_Ico] at hq; have := Nat.one_le_pow m 3 (by norm_num); omega
+    obtain ⟨v, q', hndvd, rfl⟩ := Nat.exists_eq_pow_mul_and_not_dvd hq0 3 (by norm_num)
+    have hcop : Nat.Coprime q' 3 :=
+      ((Nat.Prime.coprime_iff_not_dvd Nat.prime_three).mpr hndvd).symm
+    exact card_residue_le_gen A b b' k v q' hb' hkb hcop
+  have hcard : (((cantorInts b').filter fun P => ∃ q : ℕ, 3 ^ m ≤ q ∧ q < 3 ^ (m + 1) ∧
+      ∃ r : ℤ, r ≠ 0 ∧ |(r : ℝ)| < 3 ^ b * (q : ℝ) ^ (1 - τ) ∧
+        ((A * 3 ^ b' + P : ℕ) * q : ℤ) ≡ r [ZMOD 3 ^ b]).card) ≤ 2 * 3 ^ m * 2 ^ (k + 1) := by
+    calc _ ≤ _ := Finset.card_le_card hsub
+      _ ≤ ∑ q ∈ Finset.Ico (3 ^ m : ℕ) (3 ^ (m + 1)), ((cantorInts b').filter fun P =>
+        ∃ r : ℤ, r ≠ 0 ∧ |r| < 3 ^ k ∧
+          (((A * 3 ^ b' + P : ℕ) : ℤ) * (q : ℤ)) ≡ r [ZMOD 3 ^ b]).card := Finset.card_biUnion_le
+      _ ≤ (Finset.Ico (3 ^ m : ℕ) (3 ^ (m + 1))).card * 2 ^ (k + 1) := Finset.sum_le_card_nsmul _ _ _ hper
+      _ = 2 * 3 ^ m * 2 ^ (k + 1) := by
+        rw [Nat.card_Ico, pow_succ]; congr 1; omega
+  calc _ ≤ ((2 * 3 ^ m * 2 ^ (k + 1) : ℕ) : ℝ) := by exact_mod_cast hcard
+    _ = 2 * (3 : ℝ) ^ m * 2 ^ (b - K + 1) := by push_cast; rfl
+    _ ≤ _ := runEntering_real_bound τ b b' m hb' hKb
 
 /-- **Mid range: the exponent upper bound for `1 + log₂ 3 < μ₀`.**  Confidence 65%.
 
