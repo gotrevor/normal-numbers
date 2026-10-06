@@ -54,3 +54,14 @@ Re-confirmed 2026-10-03 (fresh lap): `#print axioms dimH_Omega_eq_one` = trust b
   a FROZEN statement of an open problem (absolutely normal x with base-2 discrepancy O(N^-θ), θ>1/2; ABSS 1707.02628 barrier).
 - **Operator ask:** convert `exists_absNormal_base2_fast` to a `def … : Prop` conjecture node, or rescope `--done-when` to exclude it.
   Details: `HANDOFF-2026-10-03-levinsparse-lap1.md`.
+
+## cantorbad BLOCKER (2026-10-06, box stuck strike 1)
+- Blocked: the frozen crux `fourierPairRate_descent` is about `descentLaw`, whose dead-block replacement is
+  `Classical.choose` (`descent_eq_descentR`, `repC_ok`). A proof can use only `RepOK repC`, so in effect it
+  must cover every admissible rule.
+- Why operator-gated: `AdversarialReplacement` (55%) says some admissible rule breaks 2-normality. Dead-stage rate is
+  flat at ≈1e-3 (numerics in its docstring), so an adversary gets infinitely many steers. The operator forbade
+  restating the crux or the law.
+- Exact ask: may the headline be routed through a new law with canonical replacement (e.g. uniform resampling
+  among alive blocks from fresh coins), with its own Fourier crux? The headline statement stays unchanged.
+- Verify fast: read the `AdversarialReplacement` docstring and run `scripts/cantorbad_eta.py 3 10 400`.
