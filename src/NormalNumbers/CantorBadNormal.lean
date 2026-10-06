@@ -5522,6 +5522,28 @@ theorem norm_aliveExt_sq_le (G : List Bool → ℂ) (hG : ∀ v, ‖G v‖ ≤ 2
   calc _ ≤ ∑ F, 2048 ^ 2 * (1 / 536 : ℝ) ^ k * pathW w k F := Finset.sum_le_sum fun F _ => hterm F
     _ = _ := by rw [← Finset.mul_sum, sum_pathW, mul_one]
 
+
+/-- The sibling (one-step off-diagonal) correlation of `X` among the alive children of `w`. -/
+noncomputable def sibCorr (X : List Bool → ℂ) (w : List Bool) : ℂ :=
+  (1 / ((aliveSet w).card : ℂ)) ^ 2 * ∑ f ∈ aliveSet w, ∑ f' ∈ (aliveSet w).erase f,
+    X (w ++ List.ofFn f) * (starRingEnd ℂ) (X (w ++ List.ofFn f'))
+
+/-- **One-step divergence decomposition.**  `‖aliveAvg X w‖²` is the alive average of `‖X‖²`
+scaled by `1/|A|`, plus the sibling correlation.  Iterating it along `aliveExt_succ'` splits
+`‖aliveExt D k‖²` by the depth at which two completions diverge.  Proved. -/
+theorem norm_aliveAvg_sq (X : List Bool → ℂ) (w : List Bool) :
+    (‖aliveAvg X w‖ ^ 2 : ℂ) = (1 / ((aliveSet w).card : ℂ)) *
+      aliveAvg (fun v => (‖X v‖ ^ 2 : ℂ)) w + sibCorr X w := by
+  have hc : (starRingEnd ℂ) (1 / ((aliveSet w).card : ℂ)) = 1 / ((aliveSet w).card : ℂ) := by
+    simp [map_div₀]
+  rw [← Complex.mul_conj', aliveAvg, sibCorr, map_mul, map_sum, hc, mul_mul_mul_comm,
+    Finset.sum_mul_sum, aliveAvg]
+  have e : ∀ f ∈ aliveSet w, ∑ f' ∈ aliveSet w, X (w ++ List.ofFn f) *
+      (starRingEnd ℂ) (X (w ++ List.ofFn f')) = (‖X (w ++ List.ofFn f)‖ ^ 2 : ℂ) +
+      ∑ f' ∈ (aliveSet w).erase f, X (w ++ List.ofFn f) * (starRingEnd ℂ) (X (w ++ List.ofFn f')) :=
+    fun f hf => by rw [← Finset.add_sum_erase _ _ hf, Complex.mul_conj']
+  rw [Finset.sum_congr rfl e, Finset.sum_add_distrib]
+  ring
 /-- **`resLaw`-native off-diagonal node** (single crux).  Believed 45% for `3 ∤ b`.  The near-scale
 root sums of `E‖aliveOff D_t‖` are `O(N² W(N))`.  This pair correlation is over pairs of distinct
 `resLaw` completions of the coarse prefix, weighted by their path probabilities, so the alive
