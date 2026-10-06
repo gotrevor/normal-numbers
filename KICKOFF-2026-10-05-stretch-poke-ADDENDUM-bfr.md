@@ -49,3 +49,7 @@ Restate two numbers at the end of each lap: the node confidence, and the **BFR-b
 (probability that this lane's methods yield a statement about rationals near `K` itself, or a
 restricted-digit Kloosterman bound of independent interest).  Stop the BFR thread when the bet is
 below 1% with every route in the Maze, or when a route survives with frozen statements.
+
+## Frozen 2026-10-05 late: merge `proof/stretch-bfr` first
+
+Items 1-4 above are now declarations in `src/NormalNumbers/StretchBFR.lean` on branch `proof/stretch-bfr` (worktree `~/src/nn-bfr`, built green with root audits), with 3 Maze rows.  At the start of the next lap run `git merge proof/stretch-bfr` and resolve the import/waiver/Maze-list lines (both sides append).  It also waives `ev_expTest_mass_mid`, which the root barrier audit flagged as untagged: replace that waiver if you prefer a crux link.  Then grind `card_near_cantor_le` and `windowCount_of_inverseSum`, and extend the probe to shifted sets (`A ≠ 0`, `b' < b`) before trusting `InverseCantorSumBound`.
