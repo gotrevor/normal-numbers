@@ -3198,3 +3198,4 @@ the Cauchy–Schwarz step obstMix² ≤ E|obstSum|² as a lemma toward PairCorrT
 - lap 9: REROUTED: headline crux is now the single node `aliveOffMix_resLaw` (AliveOffMix, resLaw path-weighted off-diagonal); first-order+defect sorries removed (split-route reductions kept, proved).  BarrierAudit updated.  File sorries: 3 (724, 2209, crux).
 - lap 9: `sibCorr`, `norm_aliveAvg_sq` (one-step divergence decomposition).  Next: iterate along aliveExt_succ' to write ‖aliveExt D k‖² = Σ_depth (resLaw-averaged sibling correlations) + diag; state per-depth sibling node.
 - lap 9: `sibSum`, `norm_aliveExt_sq_le_sib`: ‖aliveExt G k‖² ≤ 2048²/536^k + sibSum (depth-weighted sibling correlations).  Next: AliveSibMix node on E sibSum ⇒ AliveObstacleMix (same assembly as aliveObstacleMix_of_off).
+- lap 9: `AliveSibMix` node + `aliveObstacleMix_of_sib` proved (alternative to AliveOffMix; stronger: triangle across depths).  Crux kept at the weaker AliveOffMix.

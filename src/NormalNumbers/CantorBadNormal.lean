@@ -5674,6 +5674,78 @@ theorem aliveObstacleMix_of_off {b : ℕ} (hb : 2 ≤ b) (hO : AliveOffMix b) : 
         add_le_add (mul_le_mul_of_nonneg_left (geomNear_le hb C (c := 16) (by norm_num) N)
           (by norm_num)) (hK N hN)
     _ = _ := by simp only [Real.rpow_neg_one]; field_simp
+
+theorem sqrt_aliveSib_le (G : List Bool → ℂ) (hG : ∀ v, ‖G v‖ ≤ 2048) (k s : ℕ) :
+    ∫ ω, ‖aliveExt G k (buildU s ω)‖ ∂coinMeasure ≤
+      2048 * (1 / 16 : ℝ) ^ k +
+        Real.sqrt (∫ ω, ‖((sibSum G k (buildU s ω) : ℝ) : ℂ)‖ ∂coinMeasure) := by
+  have hO : Integrable (fun ω => ‖((sibSum G k (buildU s ω) : ℝ) : ℂ)‖) coinMeasure :=
+    (integrable_comp_buildU s (fun w => ((sibSum G k w : ℝ) : ℂ))).norm
+  have hpt : ∀ ω, ‖aliveExt G k (buildU s ω)‖ ^ 2 ≤
+      2048 ^ 2 * (1 / 536 : ℝ) ^ k + ‖((sibSum G k (buildU s ω) : ℝ) : ℂ)‖ := fun ω => by
+    refine (norm_aliveExt_sq_le_sib G hG k _).trans (add_le_add le_rfl ?_)
+    rw [Complex.norm_real, Real.norm_eq_abs]; exact le_abs_self _
+  have hle : ∫ ω, ‖aliveExt G k (buildU s ω)‖ ^ 2 ∂coinMeasure ≤
+      2048 ^ 2 * (1 / 536 : ℝ) ^ k + ∫ ω, ‖((sibSum G k (buildU s ω) : ℝ) : ℂ)‖ ∂coinMeasure := by
+    have hc := integral_mono_of_nonneg (μ := coinMeasure)
+      (Eventually.of_forall fun ω => sq_nonneg ‖aliveExt G k (buildU s ω)‖)
+      ((integrable_const (2048 ^ 2 * (1 / 536 : ℝ) ^ k)).add hO) (Eventually.of_forall hpt)
+    refine hc.trans (le_of_eq ?_)
+    simp only [Pi.add_apply]
+    rw [integral_add (integrable_const _) hO, integral_const, probReal_univ, one_smul]
+  have h536 : 2048 ^ 2 * (1 / 536 : ℝ) ^ k ≤ (2048 * (1 / 16 : ℝ) ^ k) ^ 2 := by
+    rw [mul_pow, ← pow_mul, mul_comm k 2, pow_mul]
+    exact mul_le_mul_of_nonneg_left (pow_le_pow_left₀ (by norm_num) (by norm_num) k) (by norm_num)
+  have hb : (0 : ℝ) ≤ ∫ ω, ‖((sibSum G k (buildU s ω) : ℝ) : ℂ)‖ ∂coinMeasure :=
+    integral_nonneg fun _ => norm_nonneg _
+  have hX : (0 : ℝ) ≤ 2048 * (1 / 16 : ℝ) ^ k := by positivity
+  have hcs := sq_integral_norm_comp_buildU_le s (aliveExt G k)
+  have hI : (0 : ℝ) ≤ ∫ ω, ‖aliveExt G k (buildU s ω)‖ ∂coinMeasure :=
+    integral_nonneg fun _ => norm_nonneg _
+  have hsq := Real.sq_sqrt hb
+  have hsn := Real.sqrt_nonneg (∫ ω, ‖((sibSum G k (buildU s ω) : ℝ) : ℂ)‖ ∂coinMeasure)
+  nlinarith
+
+/-- **Sibling node** (refines `AliveOffMix`).  Believed 45% for `3 ∤ b`.  The near-scale root sums of
+the `resLaw` expectation of the depth-weighted sibling correlations `sibSum` of the stage dead
+corrections are `O(N² W(N))`.  Each sibling term compares the continuations below two distinct alive
+children of one node, so this is a one-step decorrelation statement, applied at every depth between
+`s_n` and `t`.  Implies `AliveObstacleMix b` (`aliveObstacleMix_of_sib`). -/
+def AliveSibMix (b : ℕ) : Prop :=
+  ∀ h : ℤ, h ≠ 0 → ∀ C : ℕ, ∃ (K : ℝ) (W : ℕ → ℝ), Summable (fun j => W (sched j)) ∧
+    ∀ N : ℕ, 1 ≤ N →
+      ∑ m ∈ Finset.range N, ∑ n ∈ Finset.range m,
+        ∑ t ∈ Finset.Ico (stageOf b C m) (stageOf b C m + (Nat.log 3 N + 1)),
+          Real.sqrt (∫ ω, ‖((sibSum (deadCorr (h * (b : ℝ) ^ m)) (t - stageOf b C n)
+            (buildU (stageOf b C n) ω) : ℝ) : ℂ)‖ ∂coinMeasure) ≤ K * (N : ℝ) ^ 2 * W N
+
+set_option maxHeartbeats 1000000 in
+/-- **Sibling node ⇒ `resLaw`-native node.**  Proved. -/
+theorem aliveObstacleMix_of_sib {b : ℕ} (hb : 2 ≤ b) (hO : AliveSibMix b) : AliveObstacleMix b := by
+  intro h hh C
+  obtain ⟨K, W, hW, hK⟩ := hO h hh C
+  refine ⟨1, fun N => 2048 * ((16 : ℝ) ^ C * 16 * 2 * 32) * (N : ℝ) ^ (-(1 : ℝ)) + K * W N,
+    ((summable_sched_rpow one_pos).mul_left _).add (hW.mul_left K), fun N hN => ?_⟩
+  have hN0 : (0 : ℝ) < N := by exact_mod_cast hN
+  calc _ ≤ ∑ m ∈ Finset.range N, ∑ n ∈ Finset.range m,
+        ∑ t ∈ Finset.Ico (stageOf b C m) (stageOf b C m + (Nat.log 3 N + 1)),
+          (2048 * (1 / 16 : ℝ) ^ (t - stageOf b C n) +
+            Real.sqrt (∫ ω, ‖((sibSum (deadCorr (h * (b : ℝ) ^ m)) (t - stageOf b C n)
+              (buildU (stageOf b C n) ω) : ℝ) : ℂ)‖ ∂coinMeasure)) :=
+        Finset.sum_le_sum fun m _ => Finset.sum_le_sum fun n _ =>
+          Finset.sum_le_sum fun t _ => sqrt_aliveSib_le _ (norm_deadCorr_le_const _) _ _
+    _ = 2048 * (∑ m ∈ Finset.range N, ∑ n ∈ Finset.range m,
+          ∑ t ∈ Finset.Ico (stageOf b C m) (stageOf b C m + (Nat.log 3 N + 1)),
+            (1 / 16 : ℝ) ^ (t - stageOf b C n)) +
+        ∑ m ∈ Finset.range N, ∑ n ∈ Finset.range m,
+          ∑ t ∈ Finset.Ico (stageOf b C m) (stageOf b C m + (Nat.log 3 N + 1)),
+            Real.sqrt (∫ ω, ‖((sibSum (deadCorr (h * (b : ℝ) ^ m)) (t - stageOf b C n)
+              (buildU (stageOf b C n) ω) : ℝ) : ℂ)‖ ∂coinMeasure) := by
+        simp only [Finset.sum_add_distrib, Finset.mul_sum]
+    _ ≤ 2048 * ((16 : ℝ) ^ C * 16 * 2 * 32 * N) + K * (N : ℝ) ^ 2 * W N :=
+        add_le_add (mul_le_mul_of_nonneg_left (geomNear_le hb C (c := 16) (by norm_num) N)
+          (by norm_num)) (hK N hN)
+    _ = _ := by simp only [Real.rpow_neg_one]; field_simp
 /-- **The crux** (open; believed 45%).  `resLaw` satisfies `AliveOffMix`: the path-weighted pair
 correlation of the stage dead corrections over distinct `resLaw` completions of the coarse prefix.
 This single node replaces the former first-order (`ResLawObstOff`) and defect
