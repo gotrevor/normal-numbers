@@ -12,6 +12,15 @@ import NormalNumbers.CantorExactExponent
 `μ₀ > 2 + log₂ 3 ≈ 3.585`.  This file freezes the full range `μ₀ > 2` (Bugeaud's Theorem 7.21
 range, `μ ≥ 2`, minus the endpoint, which is the literature control below).
 
+**Confidence (restated 2026-10-05, end of lap):** node `ae_not_liouvilleWith_all` 10%.  What
+moved: the exact residue count (`card_lowResidue_le`) replaces the cylinder count in run-entering
+windows and plausibly settles `μ₀ > 1 + log₂ 3` (`ae_not_liouvilleWith_mid`, 65%), so the open
+range shrinks to `(2, 1 + log₂ 3]`.  There the crux is `RunEnteringCount`: digits of `r q̄ mod 3^b`
+for `(q, r)` in a box of density `3^{−(τ−2)m}`, a restricted-digit Kloosterman problem with no
+known input (prior-work search 2026-10-05: none found); per-`q` methods stop exactly at
+`1 + log₂ 3` (`exactCount_rho_ge_one`).  The truth of the node is not in doubt (heuristic
+`3^{(2−τ)m}`); its provability below `2.585` is.
+
 ## Why the main mechanism stops at `2 + log₂ 3`
 
 The Borel–Cantelli bound counts `O(2^{F(m)})` numerators per denominator `q ≈ 3ᵐ` near the
@@ -304,6 +313,165 @@ theorem card_lowResidue_le (b k q : ℕ) (hk : k ≤ b) (hq : Nat.Coprime q 3) :
         Finset.card_le_card_of_injOn _ hmap hinj
     _ = 2 * (cantorInts k).card := by rw [Finset.card_product, Finset.card_univ, Fintype.card_bool, mul_comm]
 
+/-- Dropping the last `n` digits of a Cantor numerator gives a Cantor numerator. -/
+theorem div_pow_mem_cantorInts {b n P : ℕ} (hP : P ∈ cantorInts b) :
+    P / 3 ^ n ∈ cantorInts (b - n) := by
+  simp only [cantorInts, Finset.mem_filter, Finset.mem_range] at hP ⊢
+  refine ⟨?_, fun i hi => ?_⟩
+  · apply Nat.div_lt_of_lt_mul
+    calc P < 3 ^ b := hP.1
+      _ ≤ 3 ^ (b - n + n) := Nat.pow_le_pow_right (by norm_num) (by omega)
+      _ = 3 ^ n * 3 ^ (b - n) := by rw [pow_add, mul_comm]
+  · have h := hP.2 (n + i) (by omega)
+    rwa [Nat.div_div_eq_div_mul, ← pow_add]
+
+/-- From a small nonzero residue to the side condition mod `3^{b−v}` used by
+`card_residue_le_gen`. -/
+theorem residue_cond_of_exists (A b b' k v q' P : ℕ) (hk : k ≤ b) (hv : v ≤ k)
+    (h : ∃ r : ℤ, r ≠ 0 ∧ |r| < 3 ^ k ∧
+        (((A * 3 ^ b' + P : ℕ) : ℤ) * ((3 ^ v * q' : ℕ) : ℤ)) ≡ r [ZMOD 3 ^ b]) :
+    (A * 3 ^ b' + P) * q' % 3 ^ (b - v) < 3 ^ (k - v) ∨
+      3 ^ (b - v) < (A * 3 ^ b' + P) * q' % 3 ^ (b - v) + 3 ^ (k - v) := by
+  obtain ⟨r, -, hrk, hr⟩ := h
+  have hb : (3 : ℤ) ^ b = 3 ^ v * 3 ^ (b - v) := by rw [← pow_add]; congr 1; omega
+  have hkk : (3 : ℤ) ^ k = 3 ^ v * 3 ^ (k - v) := by rw [← pow_add]; congr 1; omega
+  have hd : (3 : ℤ) ^ b ∣ r - ((A * 3 ^ b' + P : ℕ) : ℤ) * ((3 ^ v * q' : ℕ) : ℤ) :=
+    Int.modEq_iff_dvd.mp hr
+  have hdv : (3 : ℤ) ^ v ∣ r := by
+    have h1 : (3 : ℤ) ^ v ∣ r - ((A * 3 ^ b' + P : ℕ) : ℤ) * ((3 ^ v * q' : ℕ) : ℤ) :=
+      (Dvd.intro _ hb.symm).trans hd
+    have h2 : (3 : ℤ) ^ v ∣ ((A * 3 ^ b' + P : ℕ) : ℤ) * ((3 ^ v * q' : ℕ) : ℤ) := by
+      push_cast; exact Dvd.dvd.mul_left (Dvd.intro _ rfl) _
+    have := dvd_add h1 h2
+    rwa [sub_add_cancel] at this
+  obtain ⟨s, rfl⟩ := hdv
+  have h3v : (0 : ℤ) < 3 ^ v := by positivity
+  have hs : |s| < 3 ^ (k - v) := by
+    rw [abs_mul, abs_of_pos h3v, hkk] at hrk
+    exact lt_of_mul_lt_mul_left hrk h3v.le
+  have hmod : (((A * 3 ^ b' + P) * q' : ℕ) : ℤ) ≡ s [ZMOD 3 ^ (b - v)] := by
+    apply Int.modEq_iff_dvd.mpr
+    rw [hb] at hd
+    have : (3 : ℤ) ^ v * 3 ^ (b - v) ∣ 3 ^ v * (s - (((A * 3 ^ b' + P) * q' : ℕ) : ℤ)) := by
+      convert hd using 1; push_cast; ring
+    exact (mul_dvd_mul_iff_left h3v.ne').mp this
+  have hc : ((((A * 3 ^ b' + P) * q' % 3 ^ (b - v) : ℕ)) : ℤ) = s % 3 ^ (b - v) := by
+    rw [Int.natCast_mod]; push_cast at hmod ⊢; exact hmod
+  have hjn : (3 : ℤ) ^ (k - v) ≤ 3 ^ (b - v) := pow_le_pow_right₀ (by norm_num) (by omega)
+  rw [abs_lt] at hs
+  have key : ((((A * 3 ^ b' + P) * q' % 3 ^ (b - v) : ℕ)) : ℤ) = s ∨
+      ((((A * 3 ^ b' + P) * q' % 3 ^ (b - v) : ℕ)) : ℤ) = s + 3 ^ (b - v) := by
+    rw [hc]
+    rcases le_or_gt 0 s with h0 | h0
+    · left; exact Int.emod_eq_of_lt h0 (by linarith)
+    · right
+      rw [← Int.add_emod_right]
+      exact Int.emod_eq_of_lt (by linarith) (by linarith)
+  clear hrk hr hd hmod hc hb hkk
+  generalize (A * 3 ^ b' + P) * q' % 3 ^ (b - v) = c at key ⊢
+  have e1 : ((3 ^ (k - v) : ℕ) : ℤ) = (3 : ℤ) ^ (k - v) := by push_cast; ring
+  have e2 : ((3 ^ (b - v) : ℕ) : ℤ) = (3 : ℤ) ^ (b - v) := by push_cast; ring
+  rw [← e1] at hs; rw [← e2] at key hjn; rw [← e1] at hjn
+  generalize 3 ^ (k - v) = Y at *
+  generalize 3 ^ (b - v) = Z at *
+  omega
+
+open Classical in
+/-- **Exact residue count, general denominator and prefix.**  For `q = 3^v q'` with `3 ∤ q'`,
+a fixed prefix `A` above digit `b'`, and `k ≤ b`: at most `2^{k+1}` Cantor numerators
+`P` of depth `b'` make `(A·3^{b'} + P) q ≡ r (mod 3^b)` for some `0 < |r| < 3^k`.  Low
+`k − v` digits and a side bit fix the residue mod `3^{b−v}`; the top digits above `b − v` are
+Cantor too, so they cost `2^{v}` at most, not `3^v`. -/
+theorem card_residue_le_gen (A b b' k v q' : ℕ) (hb' : b' ≤ b) (hk : k ≤ b)
+    (hq' : Nat.Coprime q' 3) :
+    ((cantorInts b').filter fun P => ∃ r : ℤ, r ≠ 0 ∧ |r| < 3 ^ k ∧
+        (((A * 3 ^ b' + P : ℕ) : ℤ) * ((3 ^ v * q' : ℕ) : ℤ)) ≡ r [ZMOD 3 ^ b]).card
+      ≤ 2 ^ (k + 1) := by
+  by_cases hv : k < v
+  · refine le_trans (le_of_eq ?_) (Nat.zero_le _)
+    rw [Finset.card_eq_zero, Finset.filter_eq_empty_iff]
+    rintro P - ⟨r, hr0, hrk, hr⟩
+    apply hr0
+    have hd : (3 : ℤ) ^ b ∣ r - ((A * 3 ^ b' + P : ℕ) : ℤ) * ((3 ^ v * q' : ℕ) : ℤ) :=
+      Int.modEq_iff_dvd.mp hr
+    have hw : (3 : ℤ) ^ (min v b) ∣ r := by
+      have h1 := (pow_dvd_pow (3 : ℤ) (min_le_right v b)).trans hd
+      have h2 : (3 : ℤ) ^ (min v b) ∣ ((A * 3 ^ b' + P : ℕ) : ℤ) * ((3 ^ v * q' : ℕ) : ℤ) := by
+        push_cast
+        exact Dvd.dvd.mul_left (Dvd.dvd.mul_right (pow_dvd_pow 3 (min_le_left _ _)) _) _
+      have := dvd_add h1 h2
+      rwa [sub_add_cancel] at this
+    exact Int.eq_zero_of_abs_lt_dvd hw
+      (lt_of_lt_of_le hrk (pow_le_pow_right₀ (by norm_num) (by omega)))
+  push Not at hv
+  by_cases hj : b' < k - v
+  · calc _ ≤ (cantorInts b').card := Finset.card_filter_le _ _
+      _ ≤ 2 ^ b' := card_cantorInts_le _
+      _ ≤ 2 ^ (k + 1) := Nat.pow_le_pow_right (by norm_num) (by omega)
+  push Not at hj
+  set j := k - v with hjdef
+  set n := b - v with hndef
+  have hjn : j ≤ n := by omega
+  have hdj : 3 ^ j ∣ 3 ^ n := pow_dvd_pow 3 hjn
+  have hdj' : 3 ^ j ∣ A * 3 ^ b' := Dvd.dvd.mul_left (pow_dvd_pow 3 hj) _
+  have hmap : Set.MapsTo (fun P => ((P % 3 ^ j, decide ((A * 3 ^ b' + P) * q' % 3 ^ n < 3 ^ j)),
+        P / 3 ^ n))
+      (((cantorInts b').filter fun P => ∃ r : ℤ, r ≠ 0 ∧ |r| < 3 ^ k ∧
+        (((A * 3 ^ b' + P : ℕ) : ℤ) * ((3 ^ v * q' : ℕ) : ℤ)) ≡ r [ZMOD 3 ^ b] : Finset ℕ) : Set ℕ)
+      (((cantorInts j ×ˢ (Finset.univ : Finset Bool)) ×ˢ cantorInts (b' - n) :
+        Finset ((ℕ × Bool) × ℕ)) : Set ((ℕ × Bool) × ℕ)) := by
+    intro P hP
+    simp only [Finset.coe_filter, Set.mem_ofPred_eq] at hP
+    simp only [Finset.coe_product, Finset.coe_univ, Set.prod_univ, Set.mem_prod, Set.mem_preimage,
+      Finset.mem_coe]
+    exact ⟨mod_mem_cantorInts hj hP.1, div_pow_mem_cantorInts hP.1⟩
+  have hinj : Set.InjOn (fun P => ((P % 3 ^ j, decide ((A * 3 ^ b' + P) * q' % 3 ^ n < 3 ^ j)),
+        P / 3 ^ n))
+      (((cantorInts b').filter fun P => ∃ r : ℤ, r ≠ 0 ∧ |r| < 3 ^ k ∧
+        (((A * 3 ^ b' + P : ℕ) : ℤ) * ((3 ^ v * q' : ℕ) : ℤ)) ≡ r [ZMOD 3 ^ b] : Finset ℕ) :
+          Set ℕ) := by
+    intro P hP P' hP' h
+    simp only [Finset.coe_filter, Set.mem_ofPred_eq] at hP hP'
+    simp only [Prod.mk.injEq, decide_eq_decide] at h
+    obtain ⟨⟨hlow, hflag⟩, htop⟩ := h
+    have cP := residue_cond_of_exists A b b' k v q' P hk hv hP.2
+    have cP' := residue_cond_of_exists A b b' k v q' P' hk hv hP'.2
+    have hcm : (A * 3 ^ b' + P) * q' % 3 ^ n ≡ (A * 3 ^ b' + P') * q' % 3 ^ n [MOD 3 ^ j] := by
+      unfold Nat.ModEq
+      rw [Nat.mod_mod_of_dvd _ hdj, Nat.mod_mod_of_dvd _ hdj, Nat.mul_mod, Nat.add_mod, hlow,
+        ← Nat.add_mod, ← Nat.mul_mod]
+    have hc : (A * 3 ^ b' + P) * q' % 3 ^ n = (A * 3 ^ b' + P') * q' % 3 ^ n := by
+      by_cases hlt : (A * 3 ^ b' + P) * q' % 3 ^ n < 3 ^ j
+      · exact hcm.eq_of_lt_of_lt hlt (hflag.mp hlt)
+      · have hlt' : ¬ (A * 3 ^ b' + P') * q' % 3 ^ n < 3 ^ j := fun h' => hlt (hflag.mpr h')
+        have ha := cP.resolve_left hlt
+        have hb := cP'.resolve_left hlt'
+        have h1 : (A * 3 ^ b' + P) * q' % 3 ^ n < 3 ^ n := Nat.mod_lt _ (by positivity)
+        have h2 : (A * 3 ^ b' + P') * q' % 3 ^ n < 3 ^ n := Nat.mod_lt _ (by positivity)
+        apply hcm.eq_of_abs_lt
+        generalize (A * 3 ^ b' + P) * q' % 3 ^ n = c at *
+        generalize (A * 3 ^ b' + P') * q' % 3 ^ n = c' at *
+        generalize (3 : ℕ) ^ n = X at *
+        generalize (3 : ℕ) ^ j = Y at *
+        rw [abs_sub_lt_iff]
+        constructor <;> omega
+    have hcop : Nat.gcd (3 ^ n) q' = 1 := Nat.Coprime.pow_left n hq'.symm
+    have hX := Nat.ModEq.cancel_right_of_coprime hcop
+      (show (A * 3 ^ b' + P) * q' ≡ (A * 3 ^ b' + P') * q' [MOD 3 ^ n] from hc)
+    have hPP : P % 3 ^ n = P' % 3 ^ n := Nat.ModEq.add_left_cancel' _ hX
+    rw [← Nat.div_add_mod P (3 ^ n), ← Nat.div_add_mod P' (3 ^ n), htop, hPP]
+  calc _ ≤ ((cantorInts j ×ˢ (Finset.univ : Finset Bool)) ×ˢ cantorInts (b' - n)).card :=
+        Finset.card_le_card_of_injOn _ hmap hinj
+    _ = (cantorInts j).card * 2 * (cantorInts (b' - n)).card := by
+        rw [Finset.card_product, Finset.card_product, Finset.card_univ, Fintype.card_bool]
+    _ ≤ 2 ^ j * 2 * 2 ^ (b' - n) := by
+        gcongr
+        · exact card_cantorInts_le _
+        · exact card_cantorInts_le _
+    _ ≤ 2 ^ (k + 1) := by
+        rw [← pow_succ, ← pow_add]
+        exact Nat.pow_le_pow_right (by norm_num) (by omega)
+
 /-- **H0, the schedule-free barrier for the trivial (spacing) count** (kickoff seed, verified).
 Write `x = 1/(τ−1)` and `L = log₃ 2`.  Avoiding every rational with `q ≤ 3^{xb}` near a
 cylinder of depth `a = λb` by choosing the `(1−λ)b` free digits deterministically, with the
@@ -351,6 +519,16 @@ theorem exactCount_rho_lt_one (τ : ℝ) (hτ : 1 + Real.logb 2 3 < τ) :
   have := rho_lt_one (τ + 1) (by unfold threshold; linarith)
   convert this using 3
   ring
+
+/-- **The per-`q` method stops at `1 + log₂ 3`.**  For `τ ≤ 1 + log₂ 3` the per-window cost
+`3ᵐ · 2^{−(τ−1)m}` of any bound that is uniform in `q` at the `card_lowResidue_le` rate does
+not decay. -/
+theorem exactCount_rho_ge_one (τ : ℝ) (hτ : τ ≤ 1 + Real.logb 2 3) :
+    1 ≤ 3 * (2 : ℝ) ^ (-(τ - 1)) := by
+  have h1 : (3 : ℝ) = 2 ^ Real.logb 2 3 :=
+    (Real.rpow_logb (by norm_num) (by norm_num) (by norm_num)).symm
+  rw [h1, ← Real.rpow_add (by norm_num)]
+  exact Real.one_le_rpow (by norm_num) (by linarith)
 
 open Classical in
 /-- Run-entering count at exponent `τ`: among Cantor numerators `P` of depth `b'` placed under

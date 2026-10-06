@@ -1,3 +1,17 @@
+## Cantor exact-exponent stretch (2026-10-05, KICKOFF-2026-10-05-stretch-poke) — IN PROGRESS
+Branch `proof/cantorexp-stretch`.  Node `ae_not_liouvilleWith_all` 10% (restated in module doc).
+* **Advance:** exact residue count `card_lowResidue_le` (proved): per `q`, ≤ 2^{k+1} Cantor
+  numerators with `P q mod 3^b` within `3^k` of 0.  Beats the cylinder count in run-entering
+  windows; elementary range becomes `μ₀ > 1 + log₂ 3` (`ae_not_liouvilleWith_mid`, sorry, 65%).
+* Seeds: H0 `trivial_count_barrier`, H2 `abs_sub_lt_iff_residue`, H3 `inv_linearize` proved
+  (H3 unneeded).  H1 superseded.  H4/H5: Riesz L1 Λ ≤ 4/3 (≈1.2966) only reaches m < 0.394b.
+* Crux below 2.585: `RunEnteringCount` (def Prop); Maze row "per-q residue counting below 1 + log2 3".
+* **Next:** prove `runEnteringCountAt_of_lt` (sum `card_lowResidue_le` over q, handle 3 ∣ q via
+  v₃(q) and top digits, prefix offset A·3^{b'}); then decompose `ae_not_liouvilleWith_mid` into
+  window-case leaves (interior / run-entering / void / post-run).
+* Note: DIRECTION.md's current directive (2026-10-02 master conjectures) predates this operator
+  kickoff; this run follows the operator's 2026-10-05 stretch campaign.
+
 ## Schmidt-games lane E1 (2026-10-04) — DONE
 * `SchmidtGames.lean` sorry-free.  `potentialWinning_E`, `dimH_E₂_le`, `codim_E_asymp`:
   `#print axioms` = propext, Classical.choice, Quot.sound (wiring conditional only via the cited
