@@ -396,7 +396,104 @@ theorem second_moment_le_of_indep {Ω : Type*} [MeasurableSpace Ω] (μ : Measur
     (hz1 : ∀ k ω, ‖z k ω‖ ≤ 1) (c : ℂ) (hc : ∀ k, ∫ ω, z k ω ∂μ = c) (K : ℕ)
     (hind : ∀ k l, k + K ≤ l → ∫ ω, z k ω * (starRingEnd ℂ) (z l ω) ∂μ = c * (starRingEnd ℂ) c)
     (N : ℕ) : ∫ ω, ‖∑ k ∈ Finset.range N, (z k ω - c)‖ ^ 2 ∂μ ≤ (8 * K + 4) * N := by
-  sorry
+  set w : ℕ → Ω → ℂ := fun k ω => z k ω - c with hw
+  have hwm : ∀ k, Measurable (w k) := fun k => (hzm k).sub_const _
+  have hc1 : ‖c‖ ≤ 1 := by
+    rw [← hc 0]
+    refine (norm_integral_le_of_norm_le_const (C := 1) (Eventually.of_forall (hz1 0))).trans ?_
+    simp
+  have hw2 : ∀ k ω, ‖w k ω‖ ≤ 2 := fun k ω =>
+    (norm_sub_le _ _).trans (by linarith [hz1 k ω])
+  have hint : ∀ k l, Integrable (fun ω => w k ω * (starRingEnd ℂ) (w l ω)) μ := fun k l =>
+    Integrable.of_bound ((hwm k).mul (Complex.continuous_conj.measurable.comp (hwm l))).aestronglyMeasurable 4
+      (Eventually.of_forall fun ω => by
+        rw [norm_mul, Complex.norm_conj]
+        nlinarith [hw2 k ω, hw2 l ω, norm_nonneg (w k ω), norm_nonneg (w l ω)])
+  have hzint : ∀ k, Integrable (z k) μ := fun k =>
+    Integrable.of_bound (hzm k).aestronglyMeasurable 1 (Eventually.of_forall (hz1 k))
+  -- covariance vanishes far from the diagonal
+  have hfar : ∀ k l, k + K ≤ l → ∫ ω, w k ω * (starRingEnd ℂ) (w l ω) ∂μ = 0 := by
+    intro k l hkl
+    have e : ∀ ω, w k ω * (starRingEnd ℂ) (w l ω)
+        = z k ω * (starRingEnd ℂ) (z l ω) - (starRingEnd ℂ) c * z k ω
+          - c * (starRingEnd ℂ) (z l ω) + c * (starRingEnd ℂ) c := fun ω => by
+      simp only [hw, map_sub]; ring
+    simp_rw [e]
+    have i1 : Integrable (fun ω => z k ω * (starRingEnd ℂ) (z l ω)) μ :=
+      Integrable.of_bound ((hzm k).mul (Complex.continuous_conj.measurable.comp (hzm l))).aestronglyMeasurable 1
+        (Eventually.of_forall fun ω => by
+          rw [norm_mul, Complex.norm_conj]
+          nlinarith [hz1 k ω, hz1 l ω, norm_nonneg (z k ω), norm_nonneg (z l ω)])
+    have i2 : Integrable (fun ω => (starRingEnd ℂ) (z l ω)) μ :=
+      Integrable.of_bound (Complex.continuous_conj.measurable.comp (hzm l)).aestronglyMeasurable 1
+        (Eventually.of_forall fun ω => by rw [Complex.norm_conj]; exact hz1 l ω)
+    have i3 : Integrable (fun ω => (starRingEnd ℂ) c * z k ω) μ := (hzint k).const_mul _
+    have i4 : Integrable (fun ω => c * (starRingEnd ℂ) (z l ω)) μ := i2.const_mul _
+    have i6 : Integrable (fun ω => z k ω * (starRingEnd ℂ) (z l ω) - (starRingEnd ℂ) c * z k ω) μ :=
+      i1.sub i3
+    have i5 : Integrable (fun ω => z k ω * (starRingEnd ℂ) (z l ω) - (starRingEnd ℂ) c * z k ω
+        - c * (starRingEnd ℂ) (z l ω)) μ := i6.sub i4
+    rw [integral_add i5 (integrable_const _),
+      integral_sub i6 i4, integral_sub i1 i3, integral_const_mul, integral_const_mul,
+      integral_conj, hc, hc, hind k l hkl]
+    simp; ring
+  have hfar' : ∀ k l, l + K ≤ k → ∫ ω, w k ω * (starRingEnd ℂ) (w l ω) ∂μ = 0 := by
+    intro k l hkl
+    have := hfar l k hkl
+    have e : (fun ω => w k ω * (starRingEnd ℂ) (w l ω))
+        = fun ω => (starRingEnd ℂ) (w l ω * (starRingEnd ℂ) (w k ω)) := by
+      funext ω; simp [mul_comm]
+    rw [e, integral_conj, this, map_zero]
+  have hnear : ∀ k l, ‖∫ ω, w k ω * (starRingEnd ℂ) (w l ω) ∂μ‖ ≤ 4 := fun k l => by
+    refine (norm_integral_le_of_norm_le_const (C := 4) (Eventually.of_forall fun ω => ?_)).trans ?_
+    · rw [norm_mul, Complex.norm_conj]
+      nlinarith [hw2 k ω, hw2 l ω, norm_nonneg (w k ω), norm_nonneg (w l ω)]
+    · simp
+  -- expand the square
+  have hsq : ∀ ω, ‖∑ k ∈ Finset.range N, w k ω‖ ^ 2
+      = (∑ k ∈ Finset.range N, ∑ l ∈ Finset.range N, w k ω * (starRingEnd ℂ) (w l ω)).re := by
+    intro ω
+    rw [← Finset.sum_mul_sum, ← map_sum, Complex.mul_conj, Complex.ofReal_re,
+      Complex.normSq_eq_norm_sq]
+  have hdi : ∀ ω, (∑ k ∈ Finset.range N, ∑ l ∈ Finset.range N, w k ω * (starRingEnd ℂ) (w l ω))
+      = ∑ k ∈ Finset.range N, ∑ l ∈ Finset.range N, w k ω * (starRingEnd ℂ) (w l ω) := fun _ => rfl
+  have hI : Integrable (fun ω => ∑ k ∈ Finset.range N, ∑ l ∈ Finset.range N,
+      w k ω * (starRingEnd ℂ) (w l ω)) μ :=
+    integrable_finset_sum _ fun k _ => integrable_finset_sum _ fun l _ => hint k l
+  calc ∫ ω, ‖∑ k ∈ Finset.range N, (z k ω - c)‖ ^ 2 ∂μ
+      = ∫ ω, RCLike.re (∑ k ∈ Finset.range N, ∑ l ∈ Finset.range N,
+          w k ω * (starRingEnd ℂ) (w l ω)) ∂μ := integral_congr_ae (Eventually.of_forall fun ω => hsq ω)
+    _ = RCLike.re (∑ k ∈ Finset.range N, ∑ l ∈ Finset.range N,
+          ∫ ω, w k ω * (starRingEnd ℂ) (w l ω) ∂μ) := by
+        rw [integral_re hI, integral_finset_sum _ fun k _ => integrable_finset_sum _ fun l _ => hint k l]
+        congr 1
+        exact Finset.sum_congr rfl fun k _ => integral_finset_sum _ fun l _ => hint k l
+    _ ≤ ∑ k ∈ Finset.range N, ∑ l ∈ Finset.range N, ‖∫ ω, w k ω * (starRingEnd ℂ) (w l ω) ∂μ‖ := by
+        refine (RCLike.re_le_norm _).trans ?_
+        refine (norm_sum_le _ _).trans (Finset.sum_le_sum fun k _ => norm_sum_le _ _)
+    _ ≤ ∑ k ∈ Finset.range N, (8 * K + 4 : ℝ) := by
+        refine Finset.sum_le_sum fun k _ => ?_
+        rw [← Finset.sum_filter_of_ne (p := fun l => l ∈ Finset.Ico (k + 1 - K) (k + K))]
+        · calc _ ≤ ∑ l ∈ (Finset.range N).filter (fun l => l ∈ Finset.Ico (k + 1 - K) (k + K)),
+                  (4 : ℝ) := Finset.sum_le_sum fun l _ => hnear k l
+            _ ≤ ((Finset.Ico (k + 1 - K) (k + K)).card : ℝ) * 4 := by
+                rw [Finset.sum_const, nsmul_eq_mul]
+                gcongr
+                exact fun l hl => (Finset.mem_filter.1 hl).2
+            _ ≤ 8 * K + 4 := by
+                rw [Nat.card_Ico]
+                have : k + K - (k + 1 - K) ≤ 2 * K := by omega
+                have : ((k + K - (k + 1 - K) : ℕ) : ℝ) ≤ 2 * K := by exact_mod_cast this
+                linarith
+        · intro l _ hne
+          by_contra hl
+          apply hl
+          rw [Finset.mem_Ico]
+          by_contra hout
+          rcases not_and_or.1 hout with h1 | h1
+          · exact hne (by rw [hfar' k l (by omega), norm_zero])
+          · exact hne (by rw [hfar k l (by omega), norm_zero])
+    _ = (8 * K + 4) * N := by simp; ring
 
 /-- **Leaf G5b.**  Linear second moment ⇒ a.e. convergence of the means (`j²` subsequence and
 interpolation, as in `DecayAeNormal.ae_tendsto_weyl`). -/
