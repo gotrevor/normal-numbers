@@ -3185,3 +3185,9 @@ Candidates 2,4 proved (`StretchBFR.card_cantor_hyperbola_le`, `eq_of_hyperbola_l
   `secondMoment_le_profile` with `secondMoment_expand_b` + `pair_sum_le` into a non-shadow orbit
   bound (all-free window ⇒ `sum_Hf_le_b` with `free := fun _ => true`, base `t`) and a shadow
   top-digit bound from `LogDiscrepancy`.
+- Lap 1c: proved leaves `bf_le_topProd` (top window ⇒ `topProd K {log₃|ξ|}`), `bf_mono`,
+  `hf_true_eq`, `bf_le_hf_true` (free low window ⇒ offset-free majorant), `sum_hf_true_le`
+  (orbit sum of t). NEXT: `sum_topProd_le` from `LogDiscrepancy` (partition y into ternary
+  intervals of z = 3^y; |cos| ≤ cos(2π/9) when the digit pair at k+1,k+2 differs; count strings
+  with few changes), then the pair classification (low-free / top-free / O(log N) exceptional;
+  top-in-later-run impossible for large k since a_{k+1} ≥ (k+2)E_k).

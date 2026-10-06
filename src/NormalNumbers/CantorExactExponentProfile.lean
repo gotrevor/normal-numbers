@@ -334,6 +334,119 @@ theorem summable_sched_rpow {δ : ℝ} (hδ : 0 < δ) :
         apply Real.exp_le_exp.2
         rw [Real.sqrt_eq_rpow]; nlinarith
 
+/-! ### Leaves of `secondMoment_le_profile` -/
+
+/-- The top-digit product: `∏_{k<K} |cos(2π·3^{k+y})|`. -/
+noncomputable def topProd (K : ℕ) (y : ℝ) : ℝ :=
+  ∏ k ∈ Finset.range K, |Real.cos (2 * Real.pi * (3 : ℝ) ^ ((k : ℝ) + y))|
+
+/-- **Top window.**  If the `K` places just below the top digit of `ξ` are free, the
+coefficient is bounded by `topProd K` at `{log₃|ξ|}`. -/
+theorem bf_le_topProd (free : ℕ → Bool) (M K : ℕ) (ξ : ℝ) (hξ : 1 ≤ |ξ|)
+    (hK : K ≤ ⌊Real.logb 3 |ξ|⌋₊)
+    (hfree : ∀ k < K, free (⌊Real.logb 3 |ξ|⌋₊ - 1 - k) = true)
+    (hM : ⌊Real.logb 3 |ξ|⌋₊ ≤ M) :
+    Bf free M ξ ≤ topProd K (Int.fract (Real.logb 3 |ξ|)) := by
+  set n := ⌊Real.logb 3 |ξ|⌋₊
+  set y := Int.fract (Real.logb 3 |ξ|)
+  have hl0 : 0 ≤ Real.logb 3 |ξ| := Real.logb_nonneg (by norm_num) hξ
+  have hny : Real.logb 3 |ξ| = n + y := by
+    have : ((n : ℤ) : ℝ) = (⌊Real.logb 3 |ξ|⌋ : ℝ) := by
+      rw [Int.natCast_floor_eq_floor hl0]
+    simp only [y, Int.fract]; push_cast at this; rw [this]; ring
+  set S := (Finset.range K).image (fun k => n - 1 - k)
+  have hS : S ⊆ (Finset.range M).filter (fun p => free p = true) := by
+    intro p hp
+    simp only [S, Finset.mem_image, Finset.mem_range] at hp
+    obtain ⟨k, hk, rfl⟩ := hp
+    simp only [Finset.mem_filter, Finset.mem_range]
+    exact ⟨by omega, hfree k hk⟩
+  unfold Bf
+  rw [← Finset.prod_sdiff hS]
+  have h1 : ∏ p ∈ (Finset.range M).filter (fun p => free p = true) \ S,
+      |Real.cos (2 * Real.pi * ξ / 3 ^ (p + 1))| ≤ 1 :=
+    Finset.prod_le_one (fun _ _ => abs_nonneg _) fun _ _ => Real.abs_cos_le_one _
+  have h2 : ∏ p ∈ S, |Real.cos (2 * Real.pi * ξ / 3 ^ (p + 1))| = topProd K y := by
+    simp only [S]
+    rw [Finset.prod_image]
+    · unfold topProd
+      refine Finset.prod_congr rfl fun k hk => ?_
+      simp only [Finset.mem_range] at hk
+      have hp : ((n - 1 - k + 1 : ℕ) : ℝ) = n - k := by
+        rw [show n - 1 - k + 1 = n - k by omega, Nat.cast_sub (by omega)]
+      have habs : |ξ| = (3 : ℝ) ^ ((n : ℝ) + y) := by
+        rw [← hny, Real.rpow_logb (by norm_num) (by norm_num) (by linarith)]
+      have key : |ξ| / 3 ^ (n - 1 - k + 1) = (3 : ℝ) ^ ((k : ℝ) + y) := by
+        rw [← Real.rpow_natCast, hp, habs, ← Real.rpow_sub (by norm_num)]; congr 1; ring
+      rcases abs_cases ξ with ⟨h, _⟩ | ⟨h, _⟩
+      · rw [mul_div_assoc, ← key, h]
+      · rw [mul_div_assoc, ← key, h, neg_div, mul_neg, Real.cos_neg]
+    · intro a ha b hb hab
+      simp only [Finset.coe_range, Set.mem_Iio] at ha hb
+      simp only at hab; omega
+  rw [h2]
+  have : 0 ≤ topProd K y := Finset.prod_nonneg fun _ _ => abs_nonneg _
+  nlinarith [Finset.prod_nonneg (s := (Finset.range M).filter (fun p => free p = true) \ S)
+    (f := fun p => |Real.cos (2 * Real.pi * ξ / 3 ^ (p + 1))|) (fun _ _ => abs_nonneg _)]
+
+theorem bf_mono (free : ℕ → Bool) {M M' : ℕ} (h : M ≤ M') (ξ : ℝ) :
+    Bf free M' ξ ≤ Bf free M ξ := by
+  unfold Bf
+  have hS : (Finset.range M).filter (fun p => free p = true) ⊆
+      (Finset.range M').filter (fun p => free p = true) :=
+    Finset.filter_subset_filter _ (Finset.range_subset_range.2 h)
+  rw [← Finset.prod_sdiff hS]
+  have h1 : ∏ p ∈ (Finset.range M').filter (fun p => free p = true) \
+      (Finset.range M).filter (fun p => free p = true),
+      |Real.cos (2 * Real.pi * ξ / 3 ^ (p + 1))| ≤ 1 :=
+    Finset.prod_le_one (fun _ _ => abs_nonneg _) fun _ _ => Real.abs_cos_le_one _
+  have h0 : 0 ≤ ∏ p ∈ (Finset.range M).filter (fun p => free p = true),
+      |Real.cos (2 * Real.pi * ξ / 3 ^ (p + 1))| := Finset.prod_nonneg fun _ _ => abs_nonneg _
+  nlinarith
+
+/-- The all-free Riesz majorant does not depend on the offset. -/
+theorem hf_true_eq (v k : ℕ) (u : ℝ) :
+    Hf (fun _ => true) v k u = ∏ q ∈ Finset.Ico 1 k, |Real.cos (2 * Real.pi * u / 3 ^ (q + 1))| := by
+  unfold Hf
+  have : posSet (fun _ => true) v k = (Finset.Ico 1 k).map (addLeftEmbedding v) := by
+    ext p
+    simp only [posSet, Finset.mem_filter, Finset.mem_range, Finset.mem_map, Finset.mem_Ico,
+      addLeftEmbedding_apply, and_true]
+    constructor
+    · intro hp; exact ⟨p - v, by omega, by omega⟩
+    · rintro ⟨q, hq, rfl⟩; omega
+  rw [this, Finset.prod_map]
+  refine Finset.prod_congr rfl fun q _ => ?_
+  simp only [addLeftEmbedding_apply]
+  congr 2
+  rw [show v + q + 1 = v + (q + 1) by ring, pow_add]
+  field_simp
+
+/-- **Free low window.**  If the places `[v+1, v+k)` are free and `v + k ≤ M`, the coefficient at
+`3ᵛu` is bounded by the offset-free majorant. -/
+theorem bf_le_hf_true (free : ℕ → Bool) {M v k : ℕ} (hM : v + k ≤ M)
+    (hfree : ∀ p, v + 1 ≤ p → p < v + k → free p = true) (u : ℝ) :
+    Bf free M (3 ^ v * u) ≤ Hf (fun _ => true) 0 k u := by
+  refine (bf_mono free hM _).trans ((Bf_le_Hf free v k u).trans (le_of_eq ?_))
+  have hpos : posSet free v k = posSet (fun _ => true) v k := by
+    ext p; simp only [posSet, Finset.mem_filter, Finset.mem_range, and_true]
+    constructor
+    · rintro ⟨h1, h2, _⟩; exact ⟨h1, h2⟩
+    · rintro ⟨h1, h2⟩; exact ⟨h1, h2, hfree p h2 h1⟩
+  have : Hf free v k u = Hf (fun _ => true) v k u := by unfold Hf; rw [hpos]
+  rw [this, hf_true_eq, hf_true_eq]
+
+/-- **Orbit sum for the all-free majorant**, base `t` prime to 3. -/
+theorem sum_hf_true_le {t : ℕ} (ht : 2 ≤ t) (h3 : ¬ 3 ∣ t) (j c : ℕ) (hc : ¬ 3 ∣ c) (N : ℕ) :
+    ∑ m ∈ Finset.range N, Hf (fun _ => true) 0 (j + 1) ((c * t ^ m : ℕ) : ℝ) ≤
+      (N + 2 * 3 ^ j) * (3 / 2 : ℝ) ^ CantorLiouvilleAll.tb t * (2 / 3 : ℝ) ^ j := by
+  have := CantorLiouvilleAll.sum_Hf_le_b (fun _ => true) ht h3 0 j c hc N
+  have hcard : (posSet (fun _ => true) 0 (j + 1)).card = j := by
+    have : posSet (fun _ => true) 0 (j + 1) = Finset.Ico 1 (j + 1) := by
+      ext p; simp [posSet]; omega
+    rw [this]; simp
+  rwa [hcard] at this
+
 /-- **Power-saving second moment for `3 ∣ b` below the threshold**, given the Baker input.
 Confidence 60%.  This is the analytic core of `ae_isNormal_of_profileOK_of_baker`; the English
 proof is in that docstring (non-shadow `m` by the orbit of `t`, shadow `m` by top digits). -/
