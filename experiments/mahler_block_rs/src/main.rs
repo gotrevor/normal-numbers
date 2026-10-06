@@ -11,6 +11,8 @@
 //!   mahler_block failing G m1,m2,... [--nosym] [--limit N]   count failing assignments
 //!   mahler_block greedy G seed1,... SMALL_MAX BIG_LIST SAMPLE  greedy block search
 //!       BIG_LIST: comma list of large candidate multipliers (e.g. Liouville-filter picks)
+//!   mahler_block minimize G m1,m2,...                         drop redundant members
+//!       (tests every single deletion in parallel; drops the largest removable member; repeats)
 
 use rayon::prelude::*;
 use std::env;
@@ -258,6 +260,34 @@ fn greedy(g: u32, seed: Vec<u32>, small_max: u32, big: Vec<u32>, samp: usize) {
     println!("BLOCK {:?}", s);
 }
 
+/// Is S a block?  DFS in the GIVEN order (a greedy order prunes far better than ascending:
+/// 92 s vs >12 min on the 17-member base-5 block), first failure exits.
+fn is_block(g: u32, s: &[u32]) -> bool {
+    failing(g, s, true, 1).is_empty()
+}
+
+fn minimize(g: u32, mut s: Vec<u32>) {
+    // The input is assumed to be a verified block (checking it again costs a full DFS).
+    loop {
+        let t = std::time::Instant::now();
+        let removable: Vec<u32> = s
+            .par_iter()
+            .filter(|&&m| {
+                let rest: Vec<u32> = s.iter().copied().filter(|&x| x != m).collect();
+                is_block(g, &rest)
+            })
+            .copied()
+            .collect();
+        println!("|S|={} removable {:?} ({:.0}s)", s.len(), removable, t.elapsed().as_secs_f64());
+        match removable.iter().max() {
+            None => break,
+            Some(&m) => s.retain(|&x| x != m),
+        }
+    }
+    s.sort();
+    println!("MINIMAL (no single deletion) {:?} size {}", s, s.len());
+}
+
 fn main() {
     let a: Vec<String> = env::args().collect();
     let g: u32 = a[2].parse().unwrap();
@@ -272,6 +302,7 @@ fn main() {
         }
         "greedy" => greedy(g, parse_list(&a[3]), a[4].parse().unwrap(), parse_list(&a[5]),
                            a[6].parse().unwrap()),
+        "minimize" => minimize(g, parse_list(&a[3])),
         _ => panic!("unknown command"),
     }
 }

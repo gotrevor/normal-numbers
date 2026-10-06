@@ -39,6 +39,9 @@ explicit finite joint set: still not found; zbMATH "cited by" for B-B 1994 is th
   (`not_isProductBlock_five_Icc_thirty`).  The bound is per-block.  Whether the slip is the
   survey's paraphrase or the book's own statement is unchecked (no Cornell route to Cambridge
   books).  Base 3 hides it: `B(3,1) = 12 ≥ 11 = 102₃`.
+- **Szüsz-Volkmann 1983** (Crelle 339, 199-206; read 2026-10-05, PDF in `papers/`): the JOINT
+  bound sharpened to `C₂(N,g) = 12·g^(gᴺ+N)` (`g = 5, N = 1`: 187,500).  No small sets, no
+  lower bounds.
 - No explicit finite joint set found anywhere in this graph.
 
 ## The lower side: the Liouville cover 🎯
