@@ -19,3 +19,14 @@ Target unchanged; one sorry: crux `fourierPairRate_descent`.
    which is a rational shift. Base-b normality IS invariant under rational shifts, and cpt ω is μ_K-a.e. normal (Cassels).
    So **if a.s. only finitely many stages are dead, the headline follows from Cassels plus a rational-shift invariance**,
    bypassing Fourier entirely. This is the most promising lead. Check Borel–Cantelli: Σ_s P(dead at s) < ∞?
+
+## BLOCKER (box stuck, strike 1)
+- Blocked: the frozen crux `fourierPairRate_descent` is about `descentLaw`, whose dead-block replacement is
+  `Classical.choose` (`descent_eq_descentR`, `repC_ok`). A proof can use only `RepOK repC`, so in effect it
+  must cover every admissible rule.
+- Why operator-gated: `AdversarialReplacement` (55%) says some admissible rule breaks 2-normality. Dead-stage rate is
+  flat at ≈1e-3 (numerics in its docstring), so an adversary gets infinitely many steers. The operator forbade
+  restating the crux or the law.
+- Exact ask: may the headline be routed through a new law with canonical replacement (e.g. uniform resampling
+  among alive blocks from fresh coins), with its own Fourier crux? The headline statement stays unchanged.
+- Verify fast: read the `AdversarialReplacement` docstring and run `scripts/cantorbad_eta.py 3 10 400`.
