@@ -3119,3 +3119,5 @@ Next: (1) prove the reduction (needs pair-averaged partial Cantor products, Cass
   it converges.  So `DefectObstacleMix` reduces to: (i) first-order decay for the iterated defect functions
   (same pair-correlation mechanism), (ii) an averaged-dead-density bound along resLaw paths
   (E[#dead_r · positive functional] ≲ E[#dead]·E[functional]).  Next: state (ii) as a node.
+* (lap 8) Stated node `AvgDeadDensity` (70%): conditional expected dead count ≤ 8 after R stages, uniformly.
+  The bootstrap needs a weighted form (dead count against the iterated first-order factors) — not yet stated.

@@ -4811,6 +4811,19 @@ theorem gMix_le (G : List Bool → ℂ) {s t : ℕ} (ht : s ≤ t) :
   refine congrArg _ (Finset.sum_congr rfl fun j _ => ?_)
   simp only [B, show s + k - 1 - j = t - 1 - j by omega]
 
+/-- **Conjecture node: averaged dead density.**  Believed 70%.  After a fixed number `R` of
+stages, the conditional expected number of dead children under `resLaw` is at most `κ`, uniformly in
+the conditioning prefix.  This is input (ii) of the bootstrap (`gMix_le`, `norm_aliveDefect_le`):
+with it, each link of the defect expansion costs about `2κ/1024` on average instead of the worst
+case `2·488/1024`.  (The bootstrap also needs this weighted by the iterated first-order factors;
+that weighted form is not stated yet.)  Evidence: the lap-6 probe saw about 200,000 dead children in
+about 156,000 `resLaw` stages (s ≥ 4; bases 2, 5, 7), i.e. roughly 1.3 per stage on average.  Heuristic: obstacles at
+length `L` within a cylinder of length `L_s ≪ L` number about `c₀·3^{(L−L_s)·log₃2}` children's worth,
+and distinct obstacles are separated by `≥ 1/(qq') ≈ 3^{−L}`, so no prefix keeps a large dead count. -/
+def AvgDeadDensity : Prop :=
+  ∃ (R : ℕ) (κ : ℝ), κ ≤ 8 ∧ ∀ s r : ℕ, s + R ≤ r → ∀ w : List Bool,
+    (condMean (fun ω => ((1024 - (aliveSet (buildU r ω)).card : ℕ) : ℂ)) s w).re ≤ κ
+
 /-- Append `k` blocks to `w`. -/
 def catB (w : List Bool) : (k : ℕ) → (Fin k → (Fin 10 → Bool)) → List Bool
   | 0, _ => w

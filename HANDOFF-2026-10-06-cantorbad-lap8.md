@@ -13,8 +13,13 @@ Operator resolution (2026-10-05 22:55) was already done in lap 4 (`resLaw`, node
 - `summable_sched_log_rpow` ((log N)^{−δ}, δ>2, is an admissible rate).
 - Periodic obstacles: `perNum`, `riesz`, `periodic_phase_sum`, `ee_add_int`, `riesz_three_shift`.
 
+- Bootstrap tools: `norm_aliveDefect_le`, `catB`/`pathW`/`real_buildU_catB` (path likelihood),
+  `gMix`/`gMix_le` (generic recursion); crux split `deadMix_le_first_add_defect`,
+  `nearObstaclePhaseMixing_of_split`.
+
 ## Open
 - On-path crux: `firstOrderObstacleMix_resLaw` (50%) + `defectObstacleMix_resLaw` (45%), split proved.
+- Nodes (not wired): `AvgDeadDensity` (70%).
 - New conjecture node (not wired): `ObstaclePairCorrelation` (45%), twisted pair correlation of the
   obstacle rationals near K; evidence L=12 square-root cancellation for b=2,5,7, b=3 coherent (.16).
 - Off-path: `midStages`, `fourierPairRate_descent_of_deadRateDecay`.
