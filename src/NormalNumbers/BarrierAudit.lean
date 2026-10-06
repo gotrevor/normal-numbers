@@ -135,8 +135,6 @@ def cruxLinks : List CruxLink := [
 
 /-- Open `sorry`s that are not cruxes, and why no barrier applies. -/
 def waivers : List Waiver := [
-  ⟨``CantorBadNormal.buildU_succ_uniform,
-   "a leaf: rejection sampling from i.i.d. fresh coin blocks is uniform on the alive set"⟩,
   ⟨``CantorBadNormal.resLaw_fourier_telescope,
    "a leaf: an exact telescoping identity for a Markov block law against the product law"⟩,
   ⟨``Adder.IsProductBlock.liouville_cover,

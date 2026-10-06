@@ -1083,6 +1083,65 @@ theorem coin_deadRun (w : List Bool) (s t : ℕ) :
     congr 1
     exact coin_dead w s t
 
+
+/-- **The resampled block is uniform on the alive set**: `P(selU = v) · |A(w)| = 1`. -/
+theorem coin_selU (s : ℕ) (w v : List Bool) (hv : v.length = 10 ∧ Alive 5 c₀ w v) :
+    coinMeasure {ω | selU w ω s = v} * (aliveSet w).card = 1 := by
+  set c := (aliveSet w).card with hc
+  set r : ENNReal := ((1024 - c : ℕ) : ENNReal) / 1024 with hr
+  have hc0 := card_aliveSet_pos w
+  have hc1 := card_aliveSet_le w
+  set f : Fin 10 → Bool := fun i => v[i]'(by omega) with hf
+  have hvf : v = List.ofFn f := by
+    apply List.ext_getElem (by simp [hv.1]); intro i h1 h2; rw [List.getElem_ofFn]; rfl
+  set G : ℕ → Set (ℕ → Bool) := fun t => deadRun w s t ∩ {ω | blk ω s t ∈ ({v} : Set (List Bool))}
+  have hGm : ∀ t, MeasurableSet (G t) := fun t =>
+    MS_le _ _ ((MS_mono (fun x (hx : x.1 = s ∧ x.2 < t) => hx.1) _ (mset_deadRun w s t)).inter
+      (mset_blk (P := fun x => x.1 = s) (s := s) (t := t) rfl _))
+  have hGμ : ∀ t, coinMeasure (G t) = r ^ t * (1 / 1024) := by
+    intro t
+    rw [indep_MS (P := fun x => x.1 = s ∧ x.2 < t) (Q := fun x => x.1 = s ∧ x.2 = t)
+      (fun x hP hQ => by omega) (mset_deadRun w s t) (mset_blk ⟨rfl, rfl⟩ _), coin_deadRun]
+    congr 1
+    rw [← coin_blk_eq s t f, hvf]; rfl
+  have hdisj : Pairwise (Function.onFun Disjoint G) := by
+    intro t1 t2 hne
+    refine Set.disjoint_left.2 fun ω h1 h2 => ?_
+    have hb1 : blk ω s t1 = v := h1.2
+    have hb2 : blk ω s t2 = v := h2.2
+    rcases lt_or_gt_of_ne hne with h | h
+    · have := Set.mem_iInter₂.1 h2.1 t1 h
+      exact this (hb1 ▸ hv.2)
+    · have := Set.mem_iInter₂.1 h1.1 t2 h
+      exact this (hb2 ▸ hv.2)
+  set N : Set (ℕ → Bool) := ⋂ t, {ω | blk ω s t ∈ deadL w}
+  have hN : coinMeasure N = 0 := by
+    have hle : ∀ t, coinMeasure N ≤ r ^ t := fun t => by
+      rw [← coin_deadRun]
+      exact measure_mono fun ω hω => Set.mem_iInter₂.2 fun t' _ => Set.mem_iInter.1 hω t'
+    have hr1 : r < 1 := by
+      rw [hr, ENNReal.div_lt_iff (by norm_num) (by norm_num), one_mul]
+      exact_mod_cast (by omega : 1024 - c < 1024)
+    exact le_antisymm (ge_of_tendsto' (ENNReal.tendsto_pow_atTop_nhds_zero_of_lt_one hr1) hle)
+      bot_le
+  have hset : {ω | selU w ω s = v} = (⋃ t, G t) ∪ (N ∩ {_ω | repC w = v}) := by
+    ext ω
+    refine (selU_eq_iff hv.2 ω s).trans ?_
+    simp only [Set.mem_union, Set.mem_iUnion, Set.mem_inter_iff, Set.mem_iInter, G, deadRun, N]
+    rfl
+  have hμ : coinMeasure {ω | selU w ω s = v} = ∑' t, r ^ t * (1 / 1024) := by
+    rw [hset, show (∑' t, r ^ t * (1 / 1024)) = ∑' t, coinMeasure (G t) from
+      tsum_congr fun t => (hGμ t).symm, ← measure_iUnion hdisj hGm]
+    refine le_antisymm ((measure_union_le _ _).trans ?_) (measure_mono Set.subset_union_left)
+    rw [measure_mono_null Set.inter_subset_left hN, add_zero]
+  rw [hμ, ENNReal.tsum_mul_right, ENNReal.tsum_geometric]
+  have h1r : 1 - r = (c : ENNReal) / 1024 := by
+    refine ENNReal.sub_eq_of_eq_add (by rw [hr]; exact ENNReal.div_ne_top (by simp) (by norm_num)) ?_
+    rw [hr, ENNReal.div_add_div_same, ← Nat.cast_add, show c + (1024 - c) = 1024 by omega,
+      Nat.cast_ofNat, ENNReal.div_self (by norm_num) (by norm_num)]
+  rw [h1r, mul_assoc, one_div, mul_comm ((1024 : ENNReal)⁻¹), ← div_eq_mul_inv]
+  exact ENNReal.inv_mul_cancel (by simp; omega) (ENNReal.div_ne_top (by simp) (by norm_num))
+
 /-- **Conditional uniformity of the resampled block** (open leaf, believed 97%; standard
 rejection sampling).  Given the prefix `w` after `s` stages, each alive child `v` is the next
 block with probability `1/|A(w)|`.  English proof: the stage-`s` coin blocks `blk ω s t` are
@@ -1092,7 +1151,29 @@ the first alive one among i.i.d. uniform draws is uniform on `A(w)`, and `|A(w)|
 theorem buildU_succ_uniform (s : ℕ) (w v : List Bool) (hv : v.length = 10 ∧ Alive 5 c₀ w v) :
     coinMeasure {ω | buildU (s + 1) ω = w ++ v} * (aliveSet w).card =
       coinMeasure {ω | buildU s ω = w} := by
-  sorry
+  by_cases hw : w.length = 10 * s
+  · have hset : {ω | buildU (s + 1) ω = w ++ v} =
+        {ω | buildU s ω = w} ∩ {ω | selU w ω s = v} := by
+      ext ω
+      simp only [Set.mem_setOf_eq, Set.mem_inter_iff, buildU]
+      constructor
+      · intro h
+        have h1 := (List.append_inj h (by rw [length_buildU, hw])).1
+        rw [h1] at h
+        exact ⟨h1, List.append_cancel_left h⟩
+      · rintro ⟨h1, h2⟩; rw [h1, h2]
+    rw [hset, indep_MS (P := fun x => x.1 < s) (Q := fun x => x.1 = s) (fun x hP hQ => by omega)
+      (mset_buildU s w) (mset_selU w v s), mul_assoc, coin_selU s w v hv, mul_one]
+  · have h1 : {ω | buildU s ω = w} = ∅ := by
+      ext ω; simp only [Set.mem_setOf_eq, Set.mem_empty_iff_false, iff_false]
+      intro h; exact hw (h ▸ length_buildU ω s)
+    have h2 : {ω | buildU (s + 1) ω = w ++ v} = ∅ := by
+      ext ω; simp only [Set.mem_setOf_eq, Set.mem_empty_iff_false, iff_false]
+      intro h
+      have := congrArg List.length h
+      rw [length_buildU, List.length_append, hv.1] at this
+      exact hw (by omega)
+    rw [h1, h2]; simp
 
 /-! ### Decomposition of the crux: Cantor part plus dead-children characters
 

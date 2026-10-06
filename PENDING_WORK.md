@@ -2920,5 +2920,6 @@ Next: (1) prove the reduction (needs pair-averaged partial Cantor products, Cass
   inside CantorLiouvilleAll), and the real crux `deadCharCancel` (exponential sums
   e(h bⁿ p/q) over obstacle centres near K).
 - DONE: `cassels_muK` proved (axiom-clean) via copied `pairSum_Bf_le_explicit_b`.
+- DONE: `buildU_succ_uniform` proved (block independence via MS/indep_MS).
 - Next:
   `buildU_succ_uniform`; then attack `deadCharCancel` (first: bound |deadErr| ≤ 4π|ξ|3^{-10S}).
