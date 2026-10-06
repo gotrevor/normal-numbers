@@ -3186,3 +3186,4 @@ the Cauchy–Schwarz step obstMix² ≤ E|obstSum|² as a lemma toward PairCorrT
 - lap 9: wired ResLawObstSecondMoment (√-form) ⇒ CylObstacleCancellation; crux sorry now `resLawObstSecondMoment_resLaw` (BarrierAudit updated).  Next: expand via norm_obstSum_sq + condMean/telescope to the resLaw pair sum.
 - lap 9: `secondMoment_obstSum_eq` (resLaw second moment = mass-weighted same-cylinder pair sum).  Next: split diagonal F=F' (obstacle count, needs AvgDeadDensity-type bound 1024^{-k}·O(1)) from off-diagonal; state off-diagonal as resLaw-weighted pair-correlation node.
 - lap 9: `norm_obstLocal_le` (‖obstLocal‖ ≤ 2#dead/|A|): diagonal of the pair sum is 1024^{-k}·O(dead²), geometric in k.  Next: state off-diagonal node and prove second moment ≤ diag + offdiag.
+- lap 9: `obstOff`, `norm_obstSum_sq_split` (diag + off-diagonal).  Next: off-diagonal node (E_resLaw Re obstOff small) + diag bound via AvgDeadDensity-squared; then ResLawObstSecondMoment from both.

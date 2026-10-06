@@ -5046,6 +5046,20 @@ theorem norm_obstLocal_le (ξ : ℝ) (v : List Bool) :
   calc 1 / ((aliveSet v).card : ℝ) * _ ≤ 1 / (aliveSet v).card * (((1024 - (aliveSet v).card : ℕ) : ℝ) * 2) :=
         mul_le_mul_of_nonneg_left hs (by positivity)
     _ = _ := by ring
+
+/-- The off-diagonal (distinct completions) part of `‖obstSum‖²`: same-cylinder obstacle pairs. -/
+noncomputable def obstOff (ξ : ℝ) (k : ℕ) (w : List Bool) : ℂ :=
+  (1 / 1024 ^ k : ℂ) ^ 2 * ∑ F : Fin k → (Fin 10 → Bool),
+    ∑ F' ∈ Finset.univ.erase F, obstLocal ξ (catB w k F) * (starRingEnd ℂ) (obstLocal ξ (catB w k F'))
+
+/-- **Diagonal + off-diagonal split of `‖obstSum‖²`.**  Proved. -/
+theorem norm_obstSum_sq_split (ξ : ℝ) (k : ℕ) (w : List Bool) :
+    (‖obstSum ξ k w‖ ^ 2 : ℂ) = (1 / 1024 ^ k : ℂ) ^ 2 *
+      ∑ F : Fin k → (Fin 10 → Bool), (‖obstLocal ξ (catB w k F)‖ ^ 2 : ℂ) + obstOff ξ k w := by
+  rw [norm_obstSum_sq, obstOff, ← mul_add, ← Finset.sum_add_distrib]
+  congr 1
+  refine Finset.sum_congr rfl fun F _ => ?_
+  rw [← Finset.add_sum_erase _ _ (Finset.mem_univ F), Complex.mul_conj']
 /-- **The `resLaw` second moment as an explicit pair sum.**  `E‖obstSum‖²` is the sum over stage-`s`
 prefixes `w`, weighted by their `resLaw` mass, of the same-cylinder pair sums of
 `norm_obstSum_sq`.  Proved. -/
