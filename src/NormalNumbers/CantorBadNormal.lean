@@ -4649,13 +4649,108 @@ def ObstaclePairCorrelation (b : ℕ) : Prop :=
     ‖∑ xy ∈ obstPairs (10 * stageOf b C m) S, ee (h * (b : ℝ) ^ m * (oval xy.1 - oval xy.2))‖ ≤
       ε * (obstPairs (10 * stageOf b C m) S).card
 
-/-- **The crux, near-scale obstacle-phase form** (open; believed 50%).  `resLaw` satisfies
+/-- First-order (uniform continuation) part of `deadMix`. -/
+noncomputable def firstMix (b C : ℕ) (h : ℤ) (n m t : ℕ) : ℝ :=
+  ∫ ω, ‖condMean (fun ω' => cExt (deadCorr (h * (b : ℝ) ^ m)) (t - stageOf b C n)
+    (buildU (stageOf b C n) ω')) (stageOf b C n) (buildU (stageOf b C n) ω)‖ ∂coinMeasure
+
+/-- Alive-defect part of `deadMix`: the defects of the stages between `s_n` and `t`. -/
+noncomputable def defectMix (b C : ℕ) (h : ℤ) (n m t : ℕ) : ℝ :=
+  ∑ j ∈ Finset.range (t - stageOf b C n),
+    ∫ ω, ‖condMean (fun ω' => aliveDefect (cExt (deadCorr (h * (b : ℝ) ^ m)) j)
+      (buildU (stageOf b C n + (t - stageOf b C n) - 1 - j) ω')) (stageOf b C n)
+      (buildU (stageOf b C n) ω)‖ ∂coinMeasure
+
+/-- **`deadMix` splits into first-order and defect parts.**  Proved (`condMean_cExt_telescope`). -/
+theorem deadMix_le_first_add_defect (b C : ℕ) (h : ℤ) (n m t : ℕ) (ht : stageOf b C n ≤ t) :
+    deadMix b C h n m t ≤ firstMix b C h n m t + defectMix b C h n m t := by
+  set s := stageOf b C n
+  set k := t - s
+  set G := deadCorr (h * (b : ℝ) ^ m)
+  have hk : s + k = t := by omega
+  set A : List Bool → ℂ := fun w => condMean (fun ω' => cExt G k (buildU s ω')) s w
+  set B : ℕ → List Bool → ℂ := fun j w =>
+    condMean (fun ω' => aliveDefect (cExt G j) (buildU (s + k - 1 - j) ω')) s w
+  have hpt : ∀ ω, ‖condMean (fun ω' => G (buildU t ω')) s (buildU s ω)‖ ≤
+      ‖A (buildU s ω)‖ + ∑ j ∈ Finset.range k, ‖B j (buildU s ω)‖ := by
+    intro ω
+    have tel := condMean_cExt_telescope s (buildU s ω) k G
+    rw [← hk, tel]
+    exact (norm_sub_le _ _).trans (add_le_add le_rfl (norm_sum_le _ _))
+  have hA : Integrable (fun ω => ‖A (buildU s ω)‖) coinMeasure := (integrable_comp_buildU s A).norm
+  have hB : ∀ j, Integrable (fun ω => ‖B j (buildU s ω)‖) coinMeasure := fun j =>
+    (integrable_comp_buildU s (B j)).norm
+  have hsum : Integrable (fun ω => ‖A (buildU s ω)‖ + ∑ j ∈ Finset.range k, ‖B j (buildU s ω)‖)
+      coinMeasure := hA.add (integrable_finset_sum _ fun j _ => hB j)
+  unfold deadMix
+  refine (integral_mono (integrable_comp_buildU s _).norm hsum hpt).trans (le_of_eq ?_)
+  rw [integral_add hA (integrable_finset_sum _ fun j _ => hB j),
+    integral_finset_sum _ fun j _ => hB j]
+  rfl
+
+/-- **First-order obstacle node.**  Believed 50% for `3 ∤ b`.  The uniform-continuation part:
+a μ_K average over the cylinder `w_{s_n}` of the phased dead corrections at stage `t`, i.e. (to
+first order) a weighted sum of `e(hbᵐ p/q)` over the obstacles in the cylinder; see
+`ObstaclePairCorrelation` for the pair-correlation form and its evidence. -/
+def FirstOrderObstacleMix (b : ℕ) : Prop :=
+  ∀ h : ℤ, h ≠ 0 → ∀ C : ℕ, ∃ (K : ℝ) (W : ℕ → ℝ), Summable (fun j => W (sched j)) ∧
+    ∀ N : ℕ, 1 ≤ N →
+      ∑ m ∈ Finset.range N, ∑ n ∈ Finset.range m,
+        ∑ t ∈ Finset.Ico (stageOf b C m) (stageOf b C m + (Nat.log 3 N + 1)), firstMix b C h n m t ≤
+          K * (N : ℝ) ^ 2 * W N
+
+/-- **Alive-defect node.**  Believed 45% for `3 ∤ b`.  The defect part: each term is localized at a
+stage between `s_n` and `t` that has dead children, applied to the uniform continuation of the
+stage-`t` dead correction.  Second order in the dead density, but with no decay in `N` proved. -/
+def DefectObstacleMix (b : ℕ) : Prop :=
+  ∀ h : ℤ, h ≠ 0 → ∀ C : ℕ, ∃ (K : ℝ) (W : ℕ → ℝ), Summable (fun j => W (sched j)) ∧
+    ∀ N : ℕ, 1 ≤ N →
+      ∑ m ∈ Finset.range N, ∑ n ∈ Finset.range m,
+        ∑ t ∈ Finset.Ico (stageOf b C m) (stageOf b C m + (Nat.log 3 N + 1)), defectMix b C h n m t ≤
+          K * (N : ℝ) ^ 2 * W N
+
+/-- **First-order and defect nodes ⇒ near-scale node.**  Proved. -/
+theorem nearObstaclePhaseMixing_of_split {b : ℕ} (hb : 1 ≤ b) (h1 : FirstOrderObstacleMix b)
+    (h2 : DefectObstacleMix b) : NearObstaclePhaseMixing b := by
+  intro h hh C
+  obtain ⟨K₁, W₁, hW₁, hK₁⟩ := h1 h hh C
+  obtain ⟨K₂, W₂, hW₂, hK₂⟩ := h2 h hh C
+  refine ⟨1, fun N => K₁ * W₁ N + K₂ * W₂ N, (hW₁.mul_left K₁).add (hW₂.mul_left K₂),
+    fun N hN => ?_⟩
+  have hle : ∀ m ∈ Finset.range N, ∀ n ∈ Finset.range m,
+      ∑ t ∈ Finset.Ico (stageOf b C m) (stageOf b C m + (Nat.log 3 N + 1)), deadMix b C h n m t ≤
+      ∑ t ∈ Finset.Ico (stageOf b C m) (stageOf b C m + (Nat.log 3 N + 1)),
+        (firstMix b C h n m t + defectMix b C h n m t) := fun m hm n hn =>
+    Finset.sum_le_sum fun t ht => deadMix_le_first_add_defect b C h n m t
+      ((stageOf_mono b C hb (Finset.mem_range.1 hn).le).trans (Finset.mem_Ico.1 ht).1)
+  calc _ ≤ ∑ m ∈ Finset.range N, ∑ n ∈ Finset.range m,
+        ∑ t ∈ Finset.Ico (stageOf b C m) (stageOf b C m + (Nat.log 3 N + 1)),
+          (firstMix b C h n m t + defectMix b C h n m t) :=
+        Finset.sum_le_sum fun m hm => Finset.sum_le_sum fun n hn => hle m hm n hn
+    _ = _ + _ := by simp only [Finset.sum_add_distrib]
+    _ ≤ K₁ * (N : ℝ) ^ 2 * W₁ N + K₂ * (N : ℝ) ^ 2 * W₂ N := add_le_add (hK₁ N hN) (hK₂ N hN)
+    _ = _ := by ring
+
+/-- **The crux, first-order part** (open; believed 50%).  `resLaw` satisfies
+`FirstOrderObstacleMix`; formerly stated as `NearObstaclePhaseMixing`, which now follows from the
+first-order and defect parts (`nearObstaclePhaseMixing_of_split`).  Original guard:
 `NearObstaclePhaseMixing` in every base `b ≥ 2` prime to 3.  A proof must use `3 ∤ b` and the
 uniformity of the resampled blocks between `s_n` and `t` (the conditional law of `w_t` given
 `w_{s_n}`); the uniformity at stage `t` itself is already spent in the telescope. -/
-theorem nearObstaclePhaseMixing_resLaw {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) :
-    NearObstaclePhaseMixing b := by
+theorem firstOrderObstacleMix_resLaw {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) :
+    FirstOrderObstacleMix b := by
   sorry
+
+/-- **The crux, defect part** (open; believed 45%).  See `DefectObstacleMix`. -/
+theorem defectObstacleMix_resLaw {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) :
+    DefectObstacleMix b := by
+  sorry
+
+/-- The near-scale node for `resLaw` (proved from the two parts of the crux). -/
+theorem nearObstaclePhaseMixing_resLaw {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) :
+    NearObstaclePhaseMixing b :=
+  nearObstaclePhaseMixing_of_split (by omega) (firstOrderObstacleMix_resLaw hb h3)
+    (defectObstacleMix_resLaw hb h3)
 
 /-- The obstacle-phase node for `resLaw` (proved from the near-scale crux). -/
 theorem obstaclePhaseMixing_resLaw {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) :

@@ -14,7 +14,7 @@ Operator resolution (2026-10-05 22:55) was already done in lap 4 (`resLaw`, node
 - Periodic obstacles: `perNum`, `riesz`, `periodic_phase_sum`, `ee_add_int`, `riesz_three_shift`.
 
 ## Open
-- On-path crux: `nearObstaclePhaseMixing_resLaw` (node `NearObstaclePhaseMixing`, 50%).
+- On-path crux: `firstOrderObstacleMix_resLaw` (50%) + `defectObstacleMix_resLaw` (45%), split proved.
 - New conjecture node (not wired): `ObstaclePairCorrelation` (45%), twisted pair correlation of the
   obstacle rationals near K; evidence L=12 square-root cancellation for b=2,5,7, b=3 coherent (.16).
 - Off-path: `midStages`, `fourierPairRate_descent_of_deadRateDecay`.

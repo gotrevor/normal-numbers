@@ -3086,3 +3086,8 @@ Next: (1) prove the reduction (needs pair-averaged partial Cantor products, Cass
 * (lap 8) Stated node `ObstaclePairCorrelation` (with `obst`, `oval`, `obstPairs`), 45%; implication to
   `NearObstaclePhaseMixing` NOT claimed (second-order terms, μ_K weights).  Next: numeric check of the node
   (enumerate `obst L` for L ≤ 40 with the probe's `enum`, pair sums at ξ = bᵐ, b = 2, 5 vs b = 3 control).
+* (lap 8) Crux SPLIT (proved): `firstMix`, `defectMix`, `deadMix_le_first_add_defect`,
+  `nearObstaclePhaseMixing_of_split`.  Open: `firstOrderObstacleMix_resLaw` (50%, pure uniform-continuation
+  part, linked to `ObstaclePairCorrelation`) and `defectObstacleMix_resLaw` (45%).  BarrierAudit links both.
+  Next: numerics of `defectMix` vs `firstMix` (is the defect part genuinely lower order?); then the
+  implication `ObstaclePairCorrelation → FirstOrderObstacleMix` (Cauchy–Schwarz over cylinders + μ_K weights).
