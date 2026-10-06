@@ -5477,42 +5477,133 @@ theorem nearObstaclePhaseMixing_of_alive {b : ℕ} (hb : 1 ≤ b) (hA : AliveObs
   exact Finset.sum_le_sum fun m hm => Finset.sum_le_sum fun n hn =>
     Finset.sum_le_sum fun t ht => deadMix_le_aliveMix b C h n m t
       ((stageOf_mono b C hb (Finset.mem_range.1 hn).le).trans (Finset.mem_Ico.1 ht).1)
-/-- **The crux, first-order part, off-diagonal form** (open; believed 45%).
-See `ResLawObstOff`. -/
-theorem resLawObstOff_resLaw {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) :
-    ResLawObstOff b := by
+
+theorem norm_deadCorr_le_const (ξ : ℝ) (v : List Bool) : ‖deadCorr ξ v‖ ≤ 2048 := by
+  rw [deadCorr_eq_cylChar]; exact norm_obstLocal_le_const ξ v
+
+open Classical in
+/-- The off-diagonal part of `‖aliveExt‖²`: pairs of distinct `resLaw` completions. -/
+noncomputable def aliveOff (G : List Bool → ℂ) (k : ℕ) (w : List Bool) : ℂ :=
+  ∑ F : Fin k → (Fin 10 → Bool), ∑ F' ∈ Finset.univ.erase F,
+    ((pathW w k F : ℂ) * G (catB w k F)) * (starRingEnd ℂ) ((pathW w k F' : ℂ) * G (catB w k F'))
+
+open Classical in
+/-- **Pointwise: geometric diagonal + off-diagonal**, for `resLaw` continuations of a function
+bounded by `2048`.  Proved (`pathW_le`, `sum_pathW`). -/
+theorem norm_aliveExt_sq_le (G : List Bool → ℂ) (hG : ∀ v, ‖G v‖ ≤ 2048) (k : ℕ) (w : List Bool) :
+    ‖aliveExt G k w‖ ^ 2 ≤ 2048 ^ 2 * (1 / 536 : ℝ) ^ k + ‖aliveOff G k w‖ := by
+  set a : (Fin k → (Fin 10 → Bool)) → ℂ := fun F => (pathW w k F : ℂ) * G (catB w k F)
+  have hsq : (‖aliveExt G k w‖ ^ 2 : ℂ) = ∑ F, (‖a F‖ ^ 2 : ℂ) + aliveOff G k w := by
+    rw [← Complex.mul_conj', aliveExt_eq_sum, map_sum, Finset.sum_mul_sum, aliveOff,
+      ← Finset.sum_add_distrib]
+    refine Finset.sum_congr rfl fun F _ => ?_
+    rw [← Finset.add_sum_erase _ _ (Finset.mem_univ F), Complex.mul_conj']
+  have h := congrArg norm hsq
+  rw [show ‖(‖aliveExt G k w‖ ^ 2 : ℂ)‖ = ‖aliveExt G k w‖ ^ 2 by
+    rw [norm_pow, Complex.norm_real, Real.norm_of_nonneg (norm_nonneg _)]] at h
+  rw [h]
+  refine (norm_add_le _ _).trans (add_le_add ?_ le_rfl)
+  refine (norm_sum_le _ _).trans ?_
+  have hterm : ∀ F, ‖(‖a F‖ ^ 2 : ℂ)‖ ≤ 2048 ^ 2 * (1 / 536 : ℝ) ^ k * pathW w k F := by
+    intro F
+    rw [norm_pow, Complex.norm_real, Real.norm_of_nonneg (norm_nonneg _)]
+    have hp := pathW_nonneg k w F
+    have hpl := pathW_le k w F
+    have ha : ‖a F‖ = pathW w k F * ‖G (catB w k F)‖ := by
+      simp only [a, norm_mul, Complex.norm_real, Real.norm_of_nonneg hp]
+    rw [ha, mul_pow]
+    have hg := hG (catB w k F)
+    have hg2 : ‖G (catB w k F)‖ ^ 2 ≤ 2048 ^ 2 := pow_le_pow_left₀ (norm_nonneg _) hg 2
+    have hp2 : pathW w k F ^ 2 ≤ (1 / 536 : ℝ) ^ k * pathW w k F := by
+      rw [sq]; exact mul_le_mul_of_nonneg_right hpl hp
+    calc pathW w k F ^ 2 * ‖G (catB w k F)‖ ^ 2 ≤ ((1 / 536 : ℝ) ^ k * pathW w k F) * 2048 ^ 2 :=
+          mul_le_mul hp2 hg2 (sq_nonneg _) (by positivity)
+      _ = _ := by ring
+  calc _ ≤ ∑ F, 2048 ^ 2 * (1 / 536 : ℝ) ^ k * pathW w k F := Finset.sum_le_sum fun F _ => hterm F
+    _ = _ := by rw [← Finset.mul_sum, sum_pathW, mul_one]
+
+/-- **`resLaw`-native off-diagonal node** (single crux).  Believed 45% for `3 ∤ b`.  The near-scale
+root sums of `E‖aliveOff D_t‖` are `O(N² W(N))`.  This pair correlation is over pairs of distinct
+`resLaw` completions of the coarse prefix, weighted by their path probabilities, so the alive
+defects are built in and there is no separate defect node.  Implies `AliveObstacleMix b`
+(`aliveObstacleMix_of_off`), hence `NearObstaclePhaseMixing b`. -/
+def AliveOffMix (b : ℕ) : Prop :=
+  ∀ h : ℤ, h ≠ 0 → ∀ C : ℕ, ∃ (K : ℝ) (W : ℕ → ℝ), Summable (fun j => W (sched j)) ∧
+    ∀ N : ℕ, 1 ≤ N →
+      ∑ m ∈ Finset.range N, ∑ n ∈ Finset.range m,
+        ∑ t ∈ Finset.Ico (stageOf b C m) (stageOf b C m + (Nat.log 3 N + 1)),
+          Real.sqrt (∫ ω, ‖aliveOff (deadCorr (h * (b : ℝ) ^ m)) (t - stageOf b C n)
+            (buildU (stageOf b C n) ω)‖ ∂coinMeasure) ≤ K * (N : ℝ) ^ 2 * W N
+
+theorem sqrt_aliveSecond_le (G : List Bool → ℂ) (hG : ∀ v, ‖G v‖ ≤ 2048) (k s : ℕ) :
+    ∫ ω, ‖aliveExt G k (buildU s ω)‖ ∂coinMeasure ≤
+      2048 * (1 / 16 : ℝ) ^ k + Real.sqrt (∫ ω, ‖aliveOff G k (buildU s ω)‖ ∂coinMeasure) := by
+  have hO : Integrable (fun ω => ‖aliveOff G k (buildU s ω)‖) coinMeasure :=
+    (integrable_comp_buildU s _).norm
+  have hle : ∫ ω, ‖aliveExt G k (buildU s ω)‖ ^ 2 ∂coinMeasure ≤
+      2048 ^ 2 * (1 / 536 : ℝ) ^ k + ∫ ω, ‖aliveOff G k (buildU s ω)‖ ∂coinMeasure := by
+    have hc := integral_mono_of_nonneg (μ := coinMeasure)
+      (Eventually.of_forall fun ω => sq_nonneg ‖aliveExt G k (buildU s ω)‖)
+      ((integrable_const (2048 ^ 2 * (1 / 536 : ℝ) ^ k)).add hO)
+      (Eventually.of_forall fun ω => norm_aliveExt_sq_le G hG k (buildU s ω))
+    refine hc.trans (le_of_eq ?_)
+    simp only [Pi.add_apply]
+    rw [integral_add (integrable_const _) hO, integral_const, probReal_univ, one_smul]
+  have h536 : 2048 ^ 2 * (1 / 536 : ℝ) ^ k ≤ (2048 * (1 / 16 : ℝ) ^ k) ^ 2 := by
+    rw [mul_pow, ← pow_mul, mul_comm k 2, pow_mul]
+    exact mul_le_mul_of_nonneg_left (pow_le_pow_left₀ (by norm_num) (by norm_num) k) (by norm_num)
+  have hb : (0 : ℝ) ≤ ∫ ω, ‖aliveOff G k (buildU s ω)‖ ∂coinMeasure :=
+    integral_nonneg fun _ => norm_nonneg _
+  have hX : (0 : ℝ) ≤ 2048 * (1 / 16 : ℝ) ^ k := by positivity
+  have hcs := sq_integral_norm_comp_buildU_le s (aliveExt G k)
+  have hI : (0 : ℝ) ≤ ∫ ω, ‖aliveExt G k (buildU s ω)‖ ∂coinMeasure :=
+    integral_nonneg fun _ => norm_nonneg _
+  have hsq := Real.sq_sqrt hb
+  have hsn := Real.sqrt_nonneg (∫ ω, ‖aliveOff G k (buildU s ω)‖ ∂coinMeasure)
+  nlinarith
+
+set_option maxHeartbeats 1000000 in
+/-- **Off-diagonal node ⇒ `resLaw`-native node.**  Proved (diagonal by `geomNear_le`). -/
+theorem aliveObstacleMix_of_off {b : ℕ} (hb : 2 ≤ b) (hO : AliveOffMix b) : AliveObstacleMix b := by
+  intro h hh C
+  obtain ⟨K, W, hW, hK⟩ := hO h hh C
+  refine ⟨1, fun N => 2048 * ((16 : ℝ) ^ C * 16 * 2 * 32) * (N : ℝ) ^ (-(1 : ℝ)) + K * W N,
+    ((summable_sched_rpow one_pos).mul_left _).add (hW.mul_left K), fun N hN => ?_⟩
+  have hN0 : (0 : ℝ) < N := by exact_mod_cast hN
+  calc _ ≤ ∑ m ∈ Finset.range N, ∑ n ∈ Finset.range m,
+        ∑ t ∈ Finset.Ico (stageOf b C m) (stageOf b C m + (Nat.log 3 N + 1)),
+          (2048 * (1 / 16 : ℝ) ^ (t - stageOf b C n) +
+            Real.sqrt (∫ ω, ‖aliveOff (deadCorr (h * (b : ℝ) ^ m)) (t - stageOf b C n)
+              (buildU (stageOf b C n) ω)‖ ∂coinMeasure)) :=
+        Finset.sum_le_sum fun m _ => Finset.sum_le_sum fun n _ =>
+          Finset.sum_le_sum fun t _ => sqrt_aliveSecond_le _ (norm_deadCorr_le_const _) _ _
+    _ = 2048 * (∑ m ∈ Finset.range N, ∑ n ∈ Finset.range m,
+          ∑ t ∈ Finset.Ico (stageOf b C m) (stageOf b C m + (Nat.log 3 N + 1)),
+            (1 / 16 : ℝ) ^ (t - stageOf b C n)) +
+        ∑ m ∈ Finset.range N, ∑ n ∈ Finset.range m,
+          ∑ t ∈ Finset.Ico (stageOf b C m) (stageOf b C m + (Nat.log 3 N + 1)),
+            Real.sqrt (∫ ω, ‖aliveOff (deadCorr (h * (b : ℝ) ^ m)) (t - stageOf b C n)
+              (buildU (stageOf b C n) ω)‖ ∂coinMeasure) := by
+        simp only [Finset.sum_add_distrib, Finset.mul_sum]
+    _ ≤ 2048 * ((16 : ℝ) ^ C * 16 * 2 * 32 * N) + K * (N : ℝ) ^ 2 * W N :=
+        add_le_add (mul_le_mul_of_nonneg_left (geomNear_le hb C (c := 16) (by norm_num) N)
+          (by norm_num)) (hK N hN)
+    _ = _ := by simp only [Real.rpow_neg_one]; field_simp
+/-- **The crux** (open; believed 45%).  `resLaw` satisfies `AliveOffMix`: the path-weighted pair
+correlation of the stage dead corrections over distinct `resLaw` completions of the coarse prefix.
+This single node replaces the former first-order (`ResLawObstOff`) and defect
+(`DefectObstacleMix`) nodes of the split route (`nearObstaclePhaseMixing_of_split`, whose proved
+reductions are kept above): the `resLaw` path weights already contain the alive defects.  The
+t = 12 probe saw no base-3 coherence at the first-order level, so the base-3 barrier is expected
+to bind the Cantor main term (`cesaro_contChar_small`), not this node. -/
+theorem aliveOffMix_resLaw {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) :
+    AliveOffMix b := by
   sorry
 
-/-- The second-moment node for `resLaw` (diagonal leaf + off-diagonal crux). -/
-theorem resLawObstSecondMoment_resLaw {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) :
-    ResLawObstSecondMoment b :=
-  resLawObstSecondMoment_of_off (diagSmall_of_two_le hb) (resLawObstOff_resLaw hb h3)
-
-/-- The cylinder-local first-order node for `resLaw` (from the second-moment form of the crux). -/
-theorem cylObstacleCancellation_resLaw {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) :
-    CylObstacleCancellation b :=
-  cylObstacleCancellation_of_secondMoment (resLawObstSecondMoment_resLaw hb h3)
-
-/-- **The crux, first-order part** (open; believed 50%).  `resLaw` satisfies
-`FirstOrderObstacleMix`; formerly stated as `NearObstaclePhaseMixing`, which now follows from the
-first-order and defect parts (`nearObstaclePhaseMixing_of_split`).  Original guard:
-`NearObstaclePhaseMixing` in every base `b ≥ 2` prime to 3.  A proof must use `3 ∤ b` and the
-uniformity of the resampled blocks between `s_n` and `t` (the conditional law of `w_t` given
-`w_{s_n}`); the uniformity at stage `t` itself is already spent in the telescope. -/
-theorem firstOrderObstacleMix_resLaw {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) :
-    FirstOrderObstacleMix b :=
-  firstOrderObstacleMix_of_cyl (cylObstacleCancellation_resLaw hb h3)
-
-/-- **The crux, defect part** (open; believed 45%).  See `DefectObstacleMix`. -/
-theorem defectObstacleMix_resLaw {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) :
-    DefectObstacleMix b := by
-  sorry
-
-/-- The near-scale node for `resLaw` (proved from the two parts of the crux). -/
+/-- The near-scale node for `resLaw` (from the single crux, by the `resLaw`-native route). -/
 theorem nearObstaclePhaseMixing_resLaw {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) :
     NearObstaclePhaseMixing b :=
-  nearObstaclePhaseMixing_of_split (by omega) (firstOrderObstacleMix_resLaw hb h3)
-    (defectObstacleMix_resLaw hb h3)
+  nearObstaclePhaseMixing_of_alive (by omega) (aliveObstacleMix_of_off hb (aliveOffMix_resLaw hb h3))
 
 /-- The obstacle-phase node for `resLaw` (proved from the near-scale crux). -/
 theorem obstaclePhaseMixing_resLaw {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) :

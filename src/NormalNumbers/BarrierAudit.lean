@@ -118,11 +118,7 @@ def cruxLinks : List CruxLink := [
    "the cancellation must use 3 ∤ b (3ⁿp/q does not cancel for q | 3ᵏ) and the arithmetic of \
     the centres p/q (dyadic centres give e(2ⁿp/2ᵏ) = 1, and per-stage dead counts alone admit a \
     never 2-normal descent)"⟩,
-  ⟨``CantorBadNormal.defectObstacleMix_resLaw,
-   [``cantor_not_normal_three_pow, ``perStage_dead_not_enough],
-   "the defect terms must cancel by the arithmetic of the centres p/q and 3 ∤ b, not by a per-stage \
-    dead count (counts alone admit a never 2-normal descent) and not for b = 3"⟩,
-  ⟨``CantorBadNormal.resLawObstOff_resLaw,
+  ⟨``CantorBadNormal.aliveOffMix_resLaw,
    [``cantor_not_normal_three_pow, ``perStage_dead_not_enough],
    "the same-cylinder obstacle pairs must cancel by the arithmetic of the centres p/q: for dyadic \
     centres every dead child sits on a binary zero run, so the excess phase is coherent (probe: \
