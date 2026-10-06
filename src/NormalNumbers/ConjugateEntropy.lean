@@ -5,6 +5,7 @@ Authors: Trevor Morris
 -/
 import NormalNumbers.QSpanNormal
 import NormalNumbers.ConjugateDet
+import Architect
 
 /-!
 # The entropy triangle on a Galois orbit
@@ -51,6 +52,7 @@ non-stationarity of empirical laws, which vanishes as `N → ∞`), so the inequ
 `ℓ → ∞`.  Finish with the upper block-entropy characterization of `Dim_FS`
 (Bourke–Hitchcock–Vinodchandran 2005; decompression form Doty–Moser 2006), as in
 `span_dimension_budget`. -/
+@[blueprint (title := "Finite-state dimension triangle on a rational-sum triple")]
 theorem fsDimUpper_le_of_sum_rat (b : ℕ) (hb : 2 ≤ b) {x y z : ℝ} (q : ℚ)
     (hsum : x + y + z = q) :
     fsDimUpper (digitSeq b (by omega) x) ≤
@@ -70,6 +72,7 @@ theorem fsDim_le_of_sum_rat (b : ℕ) (hb : 2 ≤ b) {x y z : ℝ} (q : ℚ)
 /-- **A normal conjugate drags another up to dimension `1/2`.**  If `x + y + z` is rational and
 `x` is normal, then `y + z` is normal (Wall), so the span budget gives
 `1 ≤ dim y + Dim z`, and one of `Dim y, Dim z` is at least `1/2`. -/
+@[blueprint (title := "A normal conjugate forces another to upper FS dimension at least 1/2")]
 theorem half_of_normal_of_sum_rat (b : ℕ) (hb : 2 ≤ b) {x y z : ℝ} (q : ℚ)
     (hsum : x + y + z = q) (hx : IsNormal b x) :
     1 / 2 ≤ fsDimUpper (digitSeq b (by omega) y) ∨

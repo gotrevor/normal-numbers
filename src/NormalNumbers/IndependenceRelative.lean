@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
 import NormalNumbers.Disjunctive
+import Architect
 import Mathlib.Analysis.SpecialFunctions.Exp
 import Mathlib.Analysis.Real.Pi.Bounds
 
@@ -55,6 +56,7 @@ only on `e = −1`.  A `0` borrow therefore propagates to every shallower positi
 eventually `−1`, then `e ≡ −1`, i.e. `x ≡ 1`, `u ≡ 0`, and `X, Y` are rational, so `Y − 2X` is
 too.  Otherwise the borrow is `0` throughout the tail and `eᵢ ∈ {0,1}`, which forces `uᵢ = xᵢ`:
 the tails of `Y` and `2X` agree with no carries, so `Y − 2X` is rational.  Contradiction. -/
+@[blueprint (title := "Ternary line theorem: X has 2, Y has 1, or Y - X has 2, unless Y - 2X is rational")]
 theorem ternary_line (X Y : ℝ) (h : Irrational (Y - 2 * X)) :
     DigitIO 3 X 2 ∨ DigitIO 3 Y 1 ∨ DigitIO 3 (Y - X) 2 := by
   sorry
@@ -70,6 +72,7 @@ theorem exists_counterexample_on_line :
 /-- **The `π + e` shape.**  Either `e − 2π` is rational, or ternary `π` has infinitely many `2`s,
 or ternary `e` has infinitely many `1`s, or ternary `e − π` has infinitely many `2`s.  Every
 disjunct is open.  Proved from `ternary_line`. -/
+@[blueprint (title := "e - 2 pi is rational, or a ternary digit disjunction holds for pi, e")]
 theorem pi_e_disjunction :
     (∃ q : ℚ, Real.exp 1 - 2 * Real.pi = q) ∨
       DigitIO 3 Real.pi 2 ∨ DigitIO 3 (Real.exp 1) 1 ∨ DigitIO 3 (Real.exp 1 - Real.pi) 2 := by

@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
 import NormalNumbers.DeterministicBD
+import Architect
 
 /-!
 # Galois conjugates share their digit complexity
@@ -45,6 +46,7 @@ theorem isDeterministic_of_sum_rat {b : ℕ} (hb : 2 ≤ b) (hsub : DetSub b) {x
 
 /-- **No lone complex conjugate.**  If `x + y + z` is rational, then it is impossible that
 exactly one of `x, y, z` is non-deterministic. -/
+@[blueprint (title := "No lone non-deterministic member of a rational-sum triple (Galois conjugates)")]
 theorem not_exactly_one_nondet {b : ℕ} (hb : 2 ≤ b) (hsub : DetSub b) {x y z : ℝ} (q : ℚ)
     (hsum : x + y + z = q) :
     ¬ (¬ IsDeterministic b x ∧ IsDeterministic b y ∧ IsDeterministic b z) := by
