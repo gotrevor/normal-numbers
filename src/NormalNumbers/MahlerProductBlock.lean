@@ -314,12 +314,27 @@ def IsWordSetBlock (g : ℕ) (W : Set (List ℕ)) (S : Finset ℕ) : Prop :=
 /-- Binary runs of length `k`: both `0^k` and `1^k`. -/
 def binaryRuns (k : ℕ) : Set (List ℕ) := {List.replicate k 0, List.replicate k 1}
 
-/-- **The run family breaks at `k = 3`** (computational; confidence 95%): `{1, 7, 9}` is not a
-run-3 block.  An irrational `x` has `x, 7x, 9x` all avoiding `000` (`mahler_block runs 7 1,A,B`;
-it fails at every `k` from 3 to 7). -/
+/-- **Liouville cover for runs** (confidence 95%): for every `B ≥ 1`, a run-`k` block has a
+member `m` whose binary expansion of `m·B` contains `k` consecutive ones.  English proof: as
+`IsProductBlock.liouville_cover`; `m·B·Σ 2^(−i!)` shows copies of `m·B` between zero runs, so
+`0^k` is free and `1^k` occurs i.o. iff it occurs in `m·B` (`Nat.digits` is little-endian, and a
+run reads the same either way). -/
+theorem IsWordSetBlock.runs_liouville_cover {k : ℕ} {S : Finset ℕ}
+    (hS : IsWordSetBlock 2 (binaryRuns k) S) (B : ℕ) (hB : 1 ≤ B) :
+    ∃ m ∈ S, List.replicate k 1 <:+: Nat.digits 2 (m * B) := by
+  sorry
+
+/-- **The run family breaks at `k = 3`**: `{1, 7, 9}` is not a run-3 block.  The witness is the
+Liouville number `3·Σ 2^(−i!)`: its multiples by 1, 7, 9 show `11`, `10101`, `11011` between zero
+gaps, none with `111`.  (Complemented, these are the tokens `1`, `1110011` that
+`mahler_block witness 2 3 1,7,9 0,0,0` extracts.)  The same `B = 3` kills `{1, 2^k−1, 2^k+1}` for
+every `k ≥ 3`: `3·(2^k−1) = 10 1^(k−2) 01₂` and `3·(2^k+1) = 11 0^(k−2) 11₂`. -/
 theorem not_isWordSetBlock_runs_three_one_seven_nine :
     ¬ IsWordSetBlock 2 (binaryRuns 3) {1, 7, 9} := by
-  sorry
+  intro h
+  obtain ⟨m, hm, hrun⟩ := h.runs_liouville_cover 3 (by norm_num)
+  simp only [Finset.mem_insert, Finset.mem_singleton] at hm
+  rcases hm with rfl | rfl | rfl <;> revert hrun <;> decide +kernel
 
 /-- **Run-3 blocks need at least 5 members** among odd multipliers up to 64 (computational;
 confidence 90%; `mahler_block asearch 2 3 64 4 0,7`, and no 3-set up to 128).  Doubling is a
