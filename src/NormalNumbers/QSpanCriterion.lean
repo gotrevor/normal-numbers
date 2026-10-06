@@ -265,6 +265,207 @@ theorem isNormal_of_weylAvg (b : ℕ) (hb : 2 ≤ b) (z : ℝ)
   intro h hh
   exact (hW h hh).congr fun N => (fourierMean_orbit_eq b z h N).symm
 
+section Generic
+variable {α : Type*} [Fintype α] [MeasurableSpace α] [DiscreteMeasurableSpace α]
+
+/-! ### Genericity for integer-digit expansions on a Bernoulli shift -/
+
+/-- Base-`b` expansion with integer "digits" `T (ω j)`. -/
+noncomputable def digS (b : ℕ) (T : α → ℤ) (ω : ℕ → α) : ℝ :=
+  ∑' j, (T (ω j) : ℝ) / (b : ℝ) ^ (j + 1)
+
+/-- Shift by `k`. -/
+def shiftK (k : ℕ) (ω : ℕ → α) : ℕ → α := fun j => ω (k + j)
+
+end Generic
+
+section Generic
+variable {α : Type*} [Fintype α] [MeasurableSpace α] [DiscreteMeasurableSpace α]
+
+/-- Truncation of `digS` to its first `K` terms. -/
+noncomputable def digSK (b : ℕ) (T : α → ℤ) (K : ℕ) (ω : ℕ → α) : ℝ :=
+  ∑ j ∈ Finset.range K, (T (ω j) : ℝ) / (b : ℝ) ^ (j + 1)
+
+open DecayAeNormal in
+/-- **Leaf G1.**  Integer digits: `e(h bᵏ S(ω)) = e(h S(σᵏ ω))`. -/
+theorem ee_pow_mul_digS (b : ℕ) (hb : 2 ≤ b) (T : α → ℤ) (h : ℤ) (k : ℕ) (ω : ℕ → α) :
+    ee (h * (b : ℝ) ^ k * digS b T ω) = ee (h * digS b T (shiftK k ω)) := by
+  sorry
+
+/-- **Leaf G2.**  Truncation error. -/
+theorem abs_digS_sub_digSK (b : ℕ) (hb : 2 ≤ b) (T : α → ℤ) (K : ℕ) (ω : ℕ → α) :
+    |digS b T ω - digSK b T K ω| ≤ (∑ a, |(T a : ℝ)|) / (b : ℝ) ^ K := by
+  sorry
+
+/-- **Leaf G3.**  The shift preserves the product measure. -/
+theorem measurePreserving_shiftK (P : Measure α) [IsProbabilityMeasure P] (k : ℕ) :
+    MeasurePreserving (shiftK (α := α) k) (Measure.infinitePi fun _ : ℕ => P)
+      (Measure.infinitePi fun _ : ℕ => P) := by
+  sorry
+
+open DecayAeNormal in
+/-- **Leaf G4.**  Windows `[k, k+K)` and `[l, l+K)` are disjoint for `k + K ≤ l`: independence. -/
+theorem integral_ee_digSK_indep (P : Measure α) [IsProbabilityMeasure P] (b : ℕ) (T : α → ℤ)
+    (h : ℤ) (K k l : ℕ) (hkl : k + K ≤ l) :
+    ∫ ω, ee (h * digSK b T K (shiftK k ω)) * (starRingEnd ℂ) (ee (h * digSK b T K (shiftK l ω)))
+        ∂Measure.infinitePi (fun _ : ℕ => P) =
+      (∫ ω, ee (h * digSK b T K ω) ∂Measure.infinitePi (fun _ : ℕ => P)) *
+        (starRingEnd ℂ) (∫ ω, ee (h * digSK b T K ω) ∂Measure.infinitePi (fun _ : ℕ => P)) := by
+  sorry
+
+end Generic
+
+/-- **Leaf G5a.**  `K`-dependent unit-bounded sequence with constant mean: linear second moment. -/
+theorem second_moment_le_of_indep {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω)
+    [IsProbabilityMeasure μ] (z : ℕ → Ω → ℂ) (hzm : ∀ k, Measurable (z k))
+    (hz1 : ∀ k ω, ‖z k ω‖ ≤ 1) (c : ℂ) (hc : ∀ k, ∫ ω, z k ω ∂μ = c) (K : ℕ)
+    (hind : ∀ k l, k + K ≤ l → ∫ ω, z k ω * (starRingEnd ℂ) (z l ω) ∂μ = c * (starRingEnd ℂ) c)
+    (N : ℕ) : ∫ ω, ‖∑ k ∈ Finset.range N, (z k ω - c)‖ ^ 2 ∂μ ≤ (8 * K + 4) * N := by
+  sorry
+
+/-- **Leaf G5b.**  Linear second moment ⇒ a.e. convergence of the means (`j²` subsequence and
+interpolation, as in `DecayAeNormal.ae_tendsto_weyl`). -/
+theorem ae_tendsto_of_second_moment {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω)
+    [IsProbabilityMeasure μ] (z : ℕ → Ω → ℂ) (hzm : ∀ k, Measurable (z k))
+    (hz1 : ∀ k ω, ‖z k ω‖ ≤ 1) (c : ℂ) (hc1 : ‖c‖ ≤ 1) (C : ℝ)
+    (hm : ∀ N, ∫ ω, ‖∑ k ∈ Finset.range N, (z k ω - c)‖ ^ 2 ∂μ ≤ C * N) :
+    ∀ᵐ ω ∂μ, Tendsto (fun N : ℕ => (∑ k ∈ Finset.range N, z k ω) / N) atTop (𝓝 c) := by
+  sorry
+
+section Generic
+variable {α : Type*} [Fintype α] [MeasurableSpace α] [DiscreteMeasurableSpace α]
+
+/-- `digSK` is measurable. -/
+theorem measurable_digSK (b : ℕ) (T : α → ℤ) (K : ℕ) : Measurable (digSK b T K) := by
+  unfold digSK
+  refine Finset.measurable_sum _ fun j _ => ?_
+  exact ((measurable_of_countable (fun a : α => ((T a : ℝ)))).comp (measurable_pi_apply j)).div_const _
+
+/-- `digS` is measurable (limit of the truncations). -/
+theorem measurable_digS (b : ℕ) (hb : 2 ≤ b) (T : α → ℤ) : Measurable (digS b T) := by
+  refine measurable_of_tendsto_metrizable (fun K => measurable_digSK b T K) ?_
+  rw [tendsto_pi_nhds]; intro ω
+  rw [Metric.tendsto_atTop]; intro ε hε
+  have hb' : (1 : ℝ) < b := by exact_mod_cast hb
+  obtain ⟨K, hK⟩ := pow_unbounded_of_one_lt ((∑ a, |(T a : ℝ)|) / ε) hb'
+  refine ⟨K, fun n hn => ?_⟩
+  rw [Real.dist_eq, abs_sub_comm]
+  refine (abs_digS_sub_digSK b hb T n ω).trans_lt ?_
+  have hpos : (0 : ℝ) < (b : ℝ) ^ n := by positivity
+  rw [div_lt_iff₀ hpos]
+  rw [div_lt_iff₀ hε] at hK
+  have : (b : ℝ) ^ K ≤ (b : ℝ) ^ n := pow_le_pow_right₀ hb'.le hn
+  nlinarith
+
+open DecayAeNormal in
+/-- **Generic genericity (crux).**  Assembled from G1–G5. -/
+theorem ae_tendsto_digS (P : Measure α) [IsProbabilityMeasure P] (b : ℕ) (hb : 2 ≤ b)
+    (T : α → ℤ) (h : ℤ) :
+    ∀ᵐ ω ∂Measure.infinitePi (fun _ : ℕ => P),
+      Tendsto (weylAvg b (digS b T ω) h) atTop
+        (𝓝 (∫ ω, ee (h * digS b T ω) ∂Measure.infinitePi (fun _ : ℕ => P))) := by
+  set μ := Measure.infinitePi (fun _ : ℕ => P) with hμ
+  set B : ℝ := ∑ a, |(T a : ℝ)| with hB
+  have hb' : (1 : ℝ) < b := by exact_mod_cast hb
+  set δ : ℕ → ℝ := fun K => 2 * Real.pi * |(h : ℝ)| * (B / (b : ℝ) ^ K) with hδ
+  have hclose : ∀ K ω, ‖ee (h * digS b T ω) - ee (h * digSK b T K ω)‖ ≤ δ K := by
+    intro K ω
+    refine (norm_ee_sub_le _ _).trans ?_
+    rw [← mul_sub, abs_mul]
+    have := abs_digS_sub_digSK b hb T K ω
+    have : 0 ≤ 2 * Real.pi * |(h : ℝ)| := by positivity
+    rw [hδ, ← mul_assoc]
+    exact mul_le_mul_of_nonneg_left (by assumption) this
+  set z : ℕ → ℕ → (ℕ → α) → ℂ := fun K k ω => ee (h * digSK b T K (shiftK k ω)) with hz
+  set c : ℕ → ℂ := fun K => ∫ ω, ee (h * digSK b T K ω) ∂μ with hc
+  have hmK : ∀ K, Measurable fun ω => ee (h * digSK b T K ω) := fun K =>
+    measurable_ee.comp ((measurable_digSK b T K).const_mul _)
+  have hshm : ∀ k, Measurable (shiftK (α := α) k) := fun k =>
+    measurable_pi_lambda _ fun j => measurable_pi_apply (k + j)
+  have hzm : ∀ K k, Measurable (z K k) := fun K k => (hmK K).comp (hshm k)
+  have hz1 : ∀ K k ω, ‖z K k ω‖ ≤ 1 := fun K k ω => (norm_ee _).le
+  have hzc : ∀ K k, ∫ ω, z K k ω ∂μ = c K := by
+    intro K k
+    have hmp := measurePreserving_shiftK P k
+    have := integral_map (μ := μ) (hshm k).aemeasurable (hmK K).aestronglyMeasurable
+    rw [hmp.map_eq] at this
+    exact this.symm
+  have hc1 : ∀ K, ‖c K‖ ≤ 1 := fun K => by
+    refine (norm_integral_le_of_norm_le_const (C := 1) (Eventually.of_forall fun ω => (norm_ee _).le)).trans ?_
+    simp
+  have hae : ∀ K, ∀ᵐ ω ∂μ, Tendsto (fun N : ℕ => (∑ k ∈ Finset.range N, z K k ω) / N) atTop
+      (𝓝 (c K)) := fun K =>
+    ae_tendsto_of_second_moment μ (z K) (hzm K) (hz1 K) (c K) (hc1 K) _
+      (second_moment_le_of_indep μ (z K) (hzm K) (hz1 K) (c K) (hzc K) K
+        (fun k l hkl => by rw [hz, hc]; exact integral_ee_digSK_indep P b T h K k l hkl))
+  rw [← ae_all_iff] at hae
+  filter_upwards [hae] with ω hω
+  set ν := ∫ ω, ee (h * digS b T ω) ∂μ with hν
+  have hνc : ∀ K, ‖ν - c K‖ ≤ δ K := fun K => by
+    rw [hν, hc, ← integral_sub]
+    · refine (norm_integral_le_of_norm_le_const (Eventually.of_forall fun ω => hclose K ω)).trans ?_
+      simp
+    · exact Integrable.of_bound (measurable_ee.comp ((measurable_digS b hb T).const_mul _)).aestronglyMeasurable 1 (Eventually.of_forall fun ω => (norm_ee _).le)
+    · exact Integrable.of_bound (hmK K).aestronglyMeasurable 1 (Eventually.of_forall fun ω => (norm_ee _).le)
+  rw [Metric.tendsto_atTop]
+  intro ε hε
+  obtain ⟨K, hK⟩ := pow_unbounded_of_one_lt (6 * Real.pi * |(h : ℝ)| * B / ε) hb'
+  have hδK : δ K < ε / 3 := by
+    have hpos : (0 : ℝ) < (b : ℝ) ^ K := by positivity
+    rw [div_lt_iff₀ hε] at hK
+    show 2 * Real.pi * |(h : ℝ)| * (B / (b : ℝ) ^ K) < ε / 3
+    rw [mul_div_assoc', div_lt_iff₀ hpos]
+    nlinarith
+  obtain ⟨N₀, hN₀⟩ := Metric.tendsto_atTop.1 (hω K) (ε / 3) (by linarith)
+  refine ⟨max N₀ 1, fun N hN => ?_⟩
+  have hNpos : (0 : ℝ) < N := by
+    have : 1 ≤ N := le_of_max_le_right hN
+    exact_mod_cast this
+  have h1 := hN₀ N (le_of_max_le_left hN)
+  rw [dist_eq_norm] at h1 ⊢
+  have hw : weylAvg b (digS b T ω) h N - (∑ k ∈ Finset.range N, z K k ω) / N
+      = (∑ k ∈ Finset.range N, (ee (h * digS b T (shiftK k ω)) - z K k ω)) / N := by
+    rw [weylAvg, Finset.sum_sub_distrib, sub_div]
+    congr 2
+    exact Finset.sum_congr rfl fun k _ => ee_pow_mul_digS b hb T h k ω
+  have hwb : ‖weylAvg b (digS b T ω) h N - (∑ k ∈ Finset.range N, z K k ω) / N‖ ≤ δ K := by
+    rw [hw, norm_div, Complex.norm_natCast, div_le_iff₀ hNpos]
+    refine (norm_sum_le _ _).trans ?_
+    refine (Finset.sum_le_sum fun k _ => hclose K (shiftK k ω)).trans ?_
+    simp [mul_comm]
+  calc ‖weylAvg b (digS b T ω) h N - ν‖
+      = ‖(weylAvg b (digS b T ω) h N - (∑ k ∈ Finset.range N, z K k ω) / N)
+          + ((∑ k ∈ Finset.range N, z K k ω) / N - c K) + (c K - ν)‖ := by ring_nf
+    _ ≤ ‖weylAvg b (digS b T ω) h N - (∑ k ∈ Finset.range N, z K k ω) / N‖
+          + ‖(∑ k ∈ Finset.range N, z K k ω) / N - c K‖ + ‖c K - ν‖ := norm_add₃_le
+    _ < ε := by
+      have := hνc K
+      rw [norm_sub_rev] at this
+      linarith
+
+
+end Generic
+
+theorem combo_eq_digS {m : ℕ} (b : ℕ) (hb : 2 ≤ b) (dX dY : Fin m → ℕ) (a c : ℤ) (ω : ℕ → Fin m × Fin m) :
+    combo b dX dY a c ω = digS b (fun p => a * dX p.1 + c * dY p.2) ω := by
+  have hb' : (1 : ℝ) < b := by exact_mod_cast hb
+  have hsum : ∀ d : Fin m → ℕ, ∀ hc : Fin m × Fin m → Fin m, Summable fun i => (d (hc (ω i)) : ℝ) / (b : ℝ) ^ (i + 1) := by
+    intro d hc
+    obtain ⟨B, hB⟩ : ∃ B : ℕ, ∀ j, d j ≤ B := ⟨∑ j, d j, fun j => Finset.single_le_sum (fun _ _ => Nat.zero_le _) (Finset.mem_univ j)⟩
+    refine Summable.of_nonneg_of_le (fun i => by positivity) (fun i => ?_)
+      ((summable_geometric_of_lt_one (by positivity) (inv_lt_one_of_one_lt₀ hb')).mul_left (B : ℝ))
+    rw [div_eq_mul_inv, ← inv_pow, pow_succ]
+    have : (d (hc (ω i)) : ℝ) ≤ B := by exact_mod_cast hB _
+    have h1 : (0:ℝ) ≤ (b:ℝ)⁻¹ ^ i := by positivity
+    have h2 : (b:ℝ)⁻¹ ≤ 1 := inv_le_one_of_one_le₀ hb'.le
+    have h3 : (0:ℝ) ≤ (b:ℝ)⁻¹ := by positivity
+    calc (d (hc (ω i)) : ℝ) * ((b:ℝ)⁻¹ ^ i * (b:ℝ)⁻¹) ≤ B * ((b:ℝ)⁻¹ ^ i * 1) := by gcongr
+      _ = B * (b:ℝ)⁻¹ ^ i := by ring
+  unfold combo realX realY digS
+  rw [← tsum_mul_left, ← tsum_mul_left, ← Summable.tsum_add ((hsum dX Prod.fst).mul_left _) ((hsum dY Prod.snd).mul_left _)]
+  congr 1; funext i; push_cast; ring
+
+
 /-- **Leaf (crux: genericity).**  A.e. orbit has Weyl means tending to the coefficient of the
 stationary law.  Confidence 90%.  English proof: `ee(h bᵏ combo ω) = ee(h combo(σᵏω))`; the
 correlation of `ee(h combo ∘ σᵏ)` and `ee(h combo ∘ σˡ)` is within `O(b^{-|k-l|})` of
@@ -275,7 +476,10 @@ theorem ae_tendsto_nuHat (b m : ℕ) [NeZero m] (hb : 2 ≤ b) (dX dY : Fin m �
     (hX : ∀ j, dX j < b) (hY : ∀ j, dY j < b) (a c : ℤ) (h : ℤ) :
     ∀ᵐ ω ∂pairs m, Tendsto (weylAvg b (combo b dX dY a c ω) h) atTop
       (nhds (nuHat b dX dY a c h)) := by
-  sorry
+  have := ae_tendsto_digS (PMF.uniformOfFintype (Fin m × Fin m)).toMeasure b hb
+    (fun p => a * dX p.1 + c * dY p.2) h
+  simp only [nuHat, combo_eq_digS b hb]
+  exact this
 
 /-- **Leaf (product formula).**  `nuHat h = 0` iff some digit-polynomial factor vanishes.
 Confidence 95%: `nuHat h = ∏_{i≥1} φ_X(a h/bⁱ) φ_Y(c h/bⁱ)` by independence of coordinates and
