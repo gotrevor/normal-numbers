@@ -2901,3 +2901,11 @@ Crux analysis (to be stated in Lean next lap, not yet recorded as declarations):
   ask the operator to sanction an alternative law with canonical replacement (uniform resampling) for the headline.
 - Deeper η numerics: flat ≈1e-3 over stages 2–9 → `FinitelyManyDead` node (believed false 85%; would bypass Fourier via
   Cassels + rational shift). AdversarialReplacement back to 55%.
+
+## 2026-10-06 cantorbad lap 4
+Advance: rule-independent reduction stated in Lean, `fourierPairRate_descent_of_deadRateDecay`
+(sorry, 75%), with node `DeadRateDecay` (Cesàro decay of P(DeadAt s); believed false 80%).
+Peeling bound: only O(1) stages near scale log₃|ξ| contribute a floor, of size ≲ P(dead there),
+for EVERY admissible replacement. With AdversarialReplacement this pins the crux to dead-stage decay.
+Next: (1) prove the reduction (needs pair-averaged partial Cantor products, Cassels-style);
+(2) attack DeadRateDecay vs. flat η: count rationals p/q, q² ≍ 3^L, within c₀/q² of K (He–Liao).

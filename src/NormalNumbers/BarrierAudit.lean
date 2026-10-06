@@ -115,6 +115,10 @@ def cruxLinks : List CruxLink := [
     must come from the measure, not the deletion game (normality is not potential winning), and \
     it must use the arithmetic of the centres p/q (per-stage dead counts alone admit a never \
     2-normal descent)"⟩,
+  ⟨``CantorBadNormal.fourierPairRate_descent_of_deadRateDecay,
+   [``cantor_not_normal_three_pow, ``perStage_dead_not_enough],
+   "the pair-averaged Cantor products must use 3 ∤ b, and the dead-stage hypothesis must be a \
+    probability decay, not a per-stage dead count (counts alone admit a never 2-normal descent)"⟩,
   ⟨``SchmidtGames.exists_computable_cantorPoint_mem_U_inter_Bad,
    [``schmidt_normal_not_winning, ``schmidt_fixedC_not_winning],
    "the computable descent must use the uniform-bad target (the same potential-guided descent \

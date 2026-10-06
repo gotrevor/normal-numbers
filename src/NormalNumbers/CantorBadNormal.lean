@@ -656,6 +656,32 @@ def FinitelyManyDead : Prop :=
   ∀ᵐ ω ∂coinMeasure, ∀ᶠ s in atTop,
     Alive 5 c₀ (build 5 c₀ s ω) (List.ofFn fun i : Fin (2 * 5) => ω (2 * 5 * s + i))
 
+/-- The coin block at stage `s` is dead (the descent intervenes there). -/
+def DeadAt (s : ℕ) (ω : ℕ → Bool) : Prop :=
+  ¬ Alive 5 c₀ (build 5 c₀ s ω) (List.ofFn fun i : Fin (2 * 5) => ω (2 * 5 * s + i))
+
+/-- **Open node: Cesàro decay of the dead-stage probability**, at a rate summable along
+`sched`.  Believed false (80%): the numerics in `AdversarialReplacement` show a flat rate
+`η ≈ 10⁻³`.  Recorded because it is exactly what the rule-independent reduction below needs. -/
+def DeadRateDecay : Prop :=
+  ∃ W : ℕ → ℝ, Summable (fun j => W (sched j)) ∧ ∀ S : ℕ, 1 ≤ S →
+    (∑ s ∈ Finset.range S, (coinMeasure {ω | DeadAt s ω}).toReal) ≤ S * W S
+
+/-- **Rule-independent reduction (believed, 75%): dead-stage decay gives the crux.**
+
+English proof.  Write `ν̂(ξ) = E[Π_s X_s]`, `X_s = e(ξ·3^{−10s}·y_s)` for the block digits `y_s`.
+Conditioning on the prefix, `E[X_s | F_{s−1}] = ρ_s(ξ) + ε_s`, `ρ_s` the uniform-block character and
+`|ε_s| ≤ 2·(4/1024)·1{DeadAt s}`-mass, with additionally `|ε_s| ≤ 8π|ξ|3^{−10(s+1)}·1{dead}` for blocks
+finer than `ξ`.  This holds for EVERY admissible replacement rule (only the dead coin mass moves).
+Peeling from the top: `|ν̂(ξ)| ≤ Π|ρ_s| + Σ_S P(DeadAt S)·min(1, |ξ|3^{−10S})·Π_{s>S}|ρ_s|`.  For
+`ξ = h(bⁿ−bᵐ)`, `3 ∤ b`, the Cantor products decay on average over `(n,m)` (Cassels/Feldman–Smorodinsky),
+so only `O(1)` stages near `S ≈ n log₃ b / 10` survive and the pair sum is `O(N² W(N)) + o(N²)` at a
+summable rate.  The step most in doubt: a quantitative pair-average of the partial Cantor products.
+Consequence: with `AdversarialReplacement`, the crux is essentially equivalent to `DeadRateDecay`. -/
+theorem fourierPairRate_descent_of_deadRateDecay (hD : DeadRateDecay) {b : ℕ} (hb : 2 ≤ b)
+    (h3 : ¬ 3 ∣ b) : FourierPairRate descentLaw b := by
+  sorry
+
 /-! ## Known-false sibling: the same descent against base-2 obstacles -/
 
 /-- The child `w ++ u` avoids every dyadic obstacle `B(p/2ⁿ, 2·2^{−n−36})` charged to the stage
