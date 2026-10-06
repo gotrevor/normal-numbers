@@ -5544,6 +5544,69 @@ theorem norm_aliveAvg_sq (X : List Bool → ℂ) (w : List Bool) :
     fun f hf => by rw [← Finset.add_sum_erase _ _ hf, Complex.mul_conj']
   rw [Finset.sum_congr rfl e, Finset.sum_add_distrib]
   ring
+
+/-- Real alive average. -/
+noncomputable def rAvg (Y : List Bool → ℝ) (w : List Bool) : ℝ :=
+  (1 / ((aliveSet w).card : ℝ)) * ∑ f ∈ aliveSet w, Y (w ++ List.ofFn f)
+
+/-- The depth-weighted sibling sum: the sibling correlations at every divergence depth, each
+damped by `1/|A|` per level above it. -/
+noncomputable def sibSum (G : List Bool → ℂ) : ℕ → List Bool → ℝ
+  | 0 => fun _ => 0
+  | k + 1 => fun w => (1 / ((aliveSet w).card : ℝ)) * rAvg (sibSum G k) w +
+      ‖sibCorr (aliveExt G k) w‖
+
+theorem rAvg_mono {Y Z : List Bool → ℝ} (h : ∀ v, Y v ≤ Z v) (w : List Bool) : rAvg Y w ≤ rAvg Z w :=
+  mul_le_mul_of_nonneg_left (Finset.sum_le_sum fun f _ => h _) (by positivity)
+
+theorem rAvg_const_add (c : ℝ) (Y : List Bool → ℝ) (w : List Bool) :
+    rAvg (fun v => c + Y v) w = c + rAvg Y w := by
+  have : (0 : ℝ) < (aliveSet w).card := by exact_mod_cast card_aliveSet_pos w
+  unfold rAvg; rw [Finset.sum_add_distrib, Finset.sum_const, nsmul_eq_mul]; field_simp
+
+/-- **Divergence-depth expansion.**  `‖aliveExt G k w‖² ≤ 2048²·536^{−k} + sibSum G k w`.  Proved. -/
+theorem norm_aliveExt_sq_le_sib (G : List Bool → ℂ) (hG : ∀ v, ‖G v‖ ≤ 2048) (k : ℕ) :
+    ∀ w, ‖aliveExt G k w‖ ^ 2 ≤ 2048 ^ 2 * (1 / 536 : ℝ) ^ k + sibSum G k w := by
+  induction k with
+  | zero => intro w; simp only [aliveExt, sibSum, pow_zero, mul_one, add_zero]
+            exact pow_le_pow_left₀ (norm_nonneg _) (hG w) 2
+  | succ k ih =>
+    intro w
+    have hA : (0 : ℝ) < (aliveSet w).card := by exact_mod_cast card_aliveSet_pos w
+    have hA5 : (536 : ℝ) ≤ (aliveSet w).card := by exact_mod_cast card_aliveSet_ge w
+    have key := norm_aliveAvg_sq (aliveExt G k) w
+    rw [← aliveExt_succ'] at key
+    have hre := congrArg Complex.re key
+    have h1 : (‖aliveExt G (k + 1) w‖ ^ 2 : ℂ).re = ‖aliveExt G (k + 1) w‖ ^ 2 := by
+      norm_cast
+    have h2 : ((1 / ((aliveSet w).card : ℂ)) * aliveAvg (fun v => (‖aliveExt G k v‖ ^ 2 : ℂ)) w).re
+        = (1 / ((aliveSet w).card : ℝ)) * rAvg (fun v => ‖aliveExt G k v‖ ^ 2) w := by
+      unfold aliveAvg rAvg
+      rw [show (1 / ((aliveSet w).card : ℂ)) = ((1 / ((aliveSet w).card : ℝ) : ℝ) : ℂ) by push_cast; rfl]
+      rw [Complex.re_ofReal_mul, Complex.re_ofReal_mul, Complex.re_sum]
+      congr 2
+      refine Finset.sum_congr rfl fun f _ => ?_
+      norm_cast
+    rw [h1, Complex.add_re, h2] at hre
+    have h3 : (sibCorr (aliveExt G k) w).re ≤ ‖sibCorr (aliveExt G k) w‖ := Complex.re_le_norm _
+    have h4 : rAvg (fun v => ‖aliveExt G k v‖ ^ 2) w ≤
+        2048 ^ 2 * (1 / 536 : ℝ) ^ k + rAvg (sibSum G k) w := by
+      rw [← rAvg_const_add]; exact rAvg_mono ih w
+    have h5 : 1 / ((aliveSet w).card : ℝ) ≤ 1 / 536 := one_div_le_one_div_of_le (by norm_num) hA5
+    have hS0 : 0 ≤ 2048 ^ 2 * (1 / 536 : ℝ) ^ k := by positivity
+    have hp : (0 : ℝ) ≤ 1 / ((aliveSet w).card : ℝ) := by positivity
+    have e1 := mul_le_mul_of_nonneg_left h4 hp
+    have e2 := mul_le_mul_of_nonneg_right h5 hS0
+    simp only [sibSum]
+    calc ‖aliveExt G (k + 1) w‖ ^ 2 = _ := hre
+      _ ≤ 1 / ((aliveSet w).card : ℝ) * (2048 ^ 2 * (1 / 536 : ℝ) ^ k + rAvg (sibSum G k) w) +
+          ‖sibCorr (aliveExt G k) w‖ := by linarith
+      _ = 1 / ((aliveSet w).card : ℝ) * (2048 ^ 2 * (1 / 536 : ℝ) ^ k) +
+          (1 / ((aliveSet w).card : ℝ) * rAvg (sibSum G k) w + ‖sibCorr (aliveExt G k) w‖) := by ring
+      _ ≤ 1 / 536 * (2048 ^ 2 * (1 / 536 : ℝ) ^ k) +
+          (1 / ((aliveSet w).card : ℝ) * rAvg (sibSum G k) w + ‖sibCorr (aliveExt G k) w‖) := by
+          linarith
+      _ = _ := by ring
 /-- **`resLaw`-native off-diagonal node** (single crux).  Believed 45% for `3 ∤ b`.  The near-scale
 root sums of `E‖aliveOff D_t‖` are `O(N² W(N))`.  This pair correlation is over pairs of distinct
 `resLaw` completions of the coarse prefix, weighted by their path probabilities, so the alive
