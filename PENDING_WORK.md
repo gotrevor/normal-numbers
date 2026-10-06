@@ -2,7 +2,7 @@
 * **2026-10-06 lap 3:** all six leaves proved (`padic_sep`, `card_image_mod_HS_le`, `farey_sep`,
   `hit_mass_padic` via `grp`/`hit_classify`/`group_sep`, `hit_mass_farey`, `ev_expTest_mass_all`
   via `expTest_mass_le_all`).  Node and stretch headline axiom-clean.  Leftovers (off the node):
-  literature control `exists_mem_cantorSet_irrExponent_two_of_literature` (sorry, waived);
+  literature control now proved (module sorry-free);
   `RunEnteringCount` now provable by a card version of `hit_mass_padic` (update its Maze row).
 * **2026-10-06 lap 2 (review + crux):** the crux `RunEnteringCount` is NOT a Kloosterman wall.
   3-adic Farey separation: hits `P q ≡ r (mod 3^b)` with `|r| q < 3^j` that agree mod `3^j`

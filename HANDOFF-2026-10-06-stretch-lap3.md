@@ -14,7 +14,10 @@ byte-identical to e6b1f282.  Module-doc status restated.
 for `cantorExp_trivialCount_mu_three` was removed with the last sorry.
 
 ## Leftovers (off the node)
-* `exists_mem_cantorSet_irrExponent_two_of_literature` (μ₀ = 2 control, literature, waived).
+* DONE later in lap: `exists_mem_cantorSet_irrExponent_two_of_literature` proved from the cited
+  hypotheses (`liouvilleWith_two_of_irrational`, Wall + `not_isNormal_two_zero'`); module sorry-free.
+* Directive objective met; next directive is for an altitude lap (remaining src sorries are other
+  campaigns, StretchBFR is forbidden drift).
 * `RunEnteringCount` (def Prop) is provable by a card version of `hit_mass_padic`; its Maze row
   "per-q residue counting below 1 + log2 3" should be updated by an altitude lap.
 * `ev_expTest_mass_mid` / `_mid` chain now superseded by `_all`.
