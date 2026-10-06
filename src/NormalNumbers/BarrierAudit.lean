@@ -122,7 +122,7 @@ def cruxLinks : List CruxLink := [
    [``cantor_not_normal_three_pow, ``perStage_dead_not_enough],
    "the defect terms must cancel by the arithmetic of the centres p/q and 3 ∤ b, not by a per-stage \
     dead count (counts alone admit a never 2-normal descent) and not for b = 3"⟩,
-  ⟨``CantorBadNormal.firstOrderObstacleMix_resLaw,
+  ⟨``CantorBadNormal.cylObstacleCancellation_resLaw,
    [``cantor_not_normal_three_pow, ``perStage_dead_not_enough],
    "the local dead excesses must average out by the arithmetic of the centres p/q and 3 ∤ b: for \
     b = 3 the Cantor part itself does not average (log₃ b rational), and for dyadic centres every \

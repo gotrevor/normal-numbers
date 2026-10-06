@@ -3168,3 +3168,12 @@ Next (outside this campaign's scope): subadditivity leaf for `QSpan.span_dimensi
 
 ## 2026-10-06 BFR directive lap 1
 Candidates 2,4 proved (`StretchBFR.card_cantor_hyperbola_le`, `eq_of_hyperbola_low`); 1,3 → `NKPowerSaving` node, prior art Chow–Varjú–Yu 2402.18395. Confidence < 1%; stop condition met. Next (if reopened): read CVY and transcribe their count as a Literature Prop.
+
+## cantorbad lap 9 (2026-10-06)
+Advance: first-order crux made explicit.  `deadCorr_eq_cylChar` (D = |A|⁻¹ Σ_dead (χ(vf) − χ(v)),
+χ = cylinder Cantor character), `firstMix_le_obstMix` (exact 1/|A| weights, so the 1/|A| vs 1/1024
+error never arises), `firstOrderObstacleMix_of_cyl`.  Crux sorry moved to
+`cylObstacleCancellation_resLaw` (BarrierAudit link updated).  The gap from the global
+`ObstaclePairCorrelation` is stated as node `PairCorrToCylinder` (boundary smoothing, resLaw→μ_K, C–S).
+Next: probe numerically whether obstMix decays in t − s_n for b=2,5 vs b=3 control; then prove
+the Cauchy–Schwarz step obstMix² ≤ E|obstSum|² as a lemma toward PairCorrToCylinder.

@@ -4878,6 +4878,111 @@ theorem real_buildU_catB (k : ℕ) : ∀ (s : ℕ) (w : List Bool) (F : Fin k �
     rw [show s + (k + 1) = s + 1 + k by ring, ih (s + 1) _ _ hl', real_child s w hl]
     split_ifs <;> ring
 
+
+/-! ### The first-order term as an obstacle sum -/
+
+/-- The normalized Cantor character of the cylinder `v`: `e(ξ cylLeft v) μ̂_K(ξ/3^{|v|})`
+(the `μ_K`-average of `e(ξx)` over the cylinder). -/
+noncomputable def cylChar (ξ : ℝ) (v : List Bool) : ℂ :=
+  ee (ξ * cylLeft v) * muK (ξ / 3 ^ v.length)
+
+/-- **The dead correction is a sum over the dead children.**  Each dead child `f` contributes
+its cylinder character minus the parent's: `D(ξ, v) = |A(v)|⁻¹ Σ_{f dead} (χ(vf) − χ(v))`.
+Proved (`muK_stage`). -/
+theorem deadCorr_eq_cylChar (ξ : ℝ) (v : List Bool) :
+    deadCorr ξ v = (1 / ((aliveSet v).card : ℂ)) *
+      ∑ f ∈ Finset.univ \ aliveSet v, (cylChar ξ (v ++ List.ofFn f) - cylChar ξ v) := by
+  have hpar : cylChar ξ v = ee (ξ * cylLeft v) * rhoS ξ v.length *
+      muK (ξ / 3 ^ (v.length + 10)) := by
+    rw [cylChar, muK_stage]; ring
+  have hch : ∀ f : Fin 10 → Bool, cylChar ξ (v ++ List.ofFn f) =
+      ee (ξ * cylLeft v) * ee (ξ * J f / 3 ^ (v.length + 10)) * muK (ξ / 3 ^ (v.length + 10)) := by
+    intro f
+    rw [cylChar, cylLeft_child, ← ee_add, List.length_append, List.length_ofFn]
+    congr 2; ring
+  unfold deadCorr deadErr
+  simp only [hch, hpar]
+  rw [Finset.mul_sum, Finset.mul_sum, Finset.sum_mul, Finset.mul_sum]
+  refine Finset.sum_congr rfl fun f _ => ?_
+  ring
+
+/-- The conditional mean of a stage-`s` function on a stage-`s` atom is at most its value. -/
+theorem norm_condMean_self_le (s : ℕ) (G : List Bool → ℂ) (w : List Bool) :
+    ‖condMean (fun ω => G (buildU s ω)) s w‖ ≤ ‖G w‖ := by
+  have hI : ∫ ω in {ω | buildU s ω = w}, G (buildU s ω) ∂coinMeasure =
+      ∫ ω in {ω | buildU s ω = w}, G w ∂coinMeasure :=
+    setIntegral_congr_fun (mset_buildU' s w) fun ω hω => by
+      simp only [Set.mem_setOf_eq] at hω; simp only [hω]
+  unfold condMean
+  rw [hI, setIntegral_const, norm_div, Complex.norm_real, Real.norm_of_nonneg measureReal_nonneg]
+  rcases eq_or_lt_of_le (measureReal_nonneg (μ := coinMeasure) (s := {ω | buildU s ω = w}))
+    with h0 | hpos
+  · rw [← h0, div_zero]; exact norm_nonneg _
+  · rw [norm_smul, Real.norm_of_nonneg hpos.le, mul_div_cancel_left₀ _ hpos.ne']
+
+/-- The cylinder-local obstacle sum at the completion `v`: `|A(v)|⁻¹ Σ_{f dead} (χ(vf) − χ(v))`
+(`= deadCorr`, `deadCorr_eq_cylChar`). -/
+noncomputable def obstLocal (ξ : ℝ) (v : List Bool) : ℂ :=
+  (1 / ((aliveSet v).card : ℂ)) *
+    ∑ f ∈ Finset.univ \ aliveSet v, (cylChar ξ (v ++ List.ofFn f) - cylChar ξ v)
+
+/-- The `μ_K`-averaged obstacle phase sum below the prefix `w`, `k` blocks down. -/
+noncomputable def obstSum (ξ : ℝ) (k : ℕ) (w : List Bool) : ℂ :=
+  (1 / 1024 ^ k : ℂ) * ∑ F : Fin k → (Fin 10 → Bool), obstLocal ξ (catB w k F)
+
+/-- The `resLaw` expectation of `‖obstSum‖` over the stage-`s_n` prefix. -/
+noncomputable def obstMix (b C : ℕ) (h : ℤ) (n m t : ℕ) : ℝ :=
+  ∫ ω, ‖obstSum (h * (b : ℝ) ^ m) (t - stageOf b C n) (buildU (stageOf b C n) ω)‖ ∂coinMeasure
+
+/-- **The first-order mix is an explicit obstacle sum.**  `firstMix ≤ obstMix`: the `resLaw`
+expectation over the coarse prefix `w = w_{s_n}` of the norm of the uniform (Cantor) average,
+over the `k = t − s_n` block completions `v` of `w`, of `|A(v)|⁻¹ Σ_{f dead at v} (χ(vf) − χ(v))`.
+The dead children at `v` sit at the obstacles `p/q` charged to `v`, and `χ(vf) ≈ e(ξ p/q)`.
+The weights are exact (`1/|A(v)|`, not `1/1024`), so no second-order error arises here.  Proved. -/
+theorem firstMix_le_obstMix (b C : ℕ) (h : ℤ) (n m t : ℕ) :
+    firstMix b C h n m t ≤ obstMix b C h n m t := by
+  unfold firstMix obstMix
+  refine integral_mono (integrable_comp_buildU _ _).norm
+    (integrable_comp_buildU (stageOf b C n) (obstSum (h * (b : ℝ) ^ m) _)).norm fun ω => ?_
+  refine (norm_condMean_self_le _ _ _).trans (le_of_eq ?_)
+  simp only [cExt_eq_sum, deadCorr_eq_cylChar, obstSum, obstLocal]
+
+/-- **Cylinder-local obstacle cancellation node.**  Believed 50% for `3 ∤ b`.  The near-scale sum
+of `obstMix` over `n < m < N` is `O(N² W(N))`.  Implies `FirstOrderObstacleMix b`
+(`firstOrderObstacleMix_of_cyl`).  This is the honest form of the first-order crux: the
+cancellation needed is among the obstacles inside one coarse cylinder `w_{s_n}`, `μ_K`-weighted
+along the uniform completions, with the exact weights `1/|A(v)|`.  `ObstaclePairCorrelation` is a
+global, unweighted pair statement; passing from it to this node needs Cauchy–Schwarz over the
+cylinders, a smoothing of the cylinder boundaries (pairs within `3^{−S}` that straddle two
+cylinders), and the passage from the `resLaw` law of `w_{s_n}` to `μ_K` (`PairCorrToCylinder`). -/
+def CylObstacleCancellation (b : ℕ) : Prop :=
+  ∀ h : ℤ, h ≠ 0 → ∀ C : ℕ, ∃ (K : ℝ) (W : ℕ → ℝ), Summable (fun j => W (sched j)) ∧
+    ∀ N : ℕ, 1 ≤ N →
+      ∑ m ∈ Finset.range N, ∑ n ∈ Finset.range m,
+        ∑ t ∈ Finset.Ico (stageOf b C m) (stageOf b C m + (Nat.log 3 N + 1)), obstMix b C h n m t ≤
+          K * (N : ℝ) ^ 2 * W N
+
+/-- **Cylinder-local cancellation ⇒ first-order node.**  Proved. -/
+theorem firstOrderObstacleMix_of_cyl {b : ℕ} (hO : CylObstacleCancellation b) :
+    FirstOrderObstacleMix b := by
+  intro h hh C
+  obtain ⟨K, W, hW, hK⟩ := hO h hh C
+  refine ⟨K, W, hW, fun N hN => le_trans ?_ (hK N hN)⟩
+  exact Finset.sum_le_sum fun m _ => Finset.sum_le_sum fun n _ =>
+    Finset.sum_le_sum fun t _ => firstMix_le_obstMix b C h n m t
+
+/-- **Open implication node: global pair correlation ⇒ cylinder-local cancellation.**  Believed
+40% as stated (the global unweighted pair sum need not control the cylinder-restricted, `resLaw`-
+weighted second moment; the missing pieces are listed at `CylObstacleCancellation`). -/
+def PairCorrToCylinder (b : ℕ) : Prop :=
+  ObstaclePairCorrelation b → CylObstacleCancellation b
+
+/-- **The crux, first-order part, cylinder-local form** (open; believed 50%).
+See `CylObstacleCancellation`. -/
+theorem cylObstacleCancellation_resLaw {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) :
+    CylObstacleCancellation b := by
+  sorry
+
 /-- **The crux, first-order part** (open; believed 50%).  `resLaw` satisfies
 `FirstOrderObstacleMix`; formerly stated as `NearObstaclePhaseMixing`, which now follows from the
 first-order and defect parts (`nearObstaclePhaseMixing_of_split`).  Original guard:
@@ -4885,8 +4990,8 @@ first-order and defect parts (`nearObstaclePhaseMixing_of_split`).  Original gua
 uniformity of the resampled blocks between `s_n` and `t` (the conditional law of `w_t` given
 `w_{s_n}`); the uniformity at stage `t` itself is already spent in the telescope. -/
 theorem firstOrderObstacleMix_resLaw {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) :
-    FirstOrderObstacleMix b := by
-  sorry
+    FirstOrderObstacleMix b :=
+  firstOrderObstacleMix_of_cyl (cylObstacleCancellation_resLaw hb h3)
 
 /-- **The crux, defect part** (open; believed 45%).  See `DefectObstacleMix`. -/
 theorem defectObstacleMix_resLaw {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) :
