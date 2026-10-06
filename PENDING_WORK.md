@@ -3083,3 +3083,6 @@ Next: (1) prove the reduction (needs pair-averaged partial Cantor products, Cass
   `ee_add_int`, `riesz_three_shift` (invariant under x ↦ 3x at x = a/(3^ℓ−1): base-3 coherence).
   Still to prove: `perNum d/(3^ℓ−1) ∈ cantorSet` and that it is an obstacle for the stages with
   `3^{L−5} ≤ (3^ℓ−1)² < 3^{L+5}`.  Then state `ObstaclePairCorrelation`.
+* (lap 8) Stated node `ObstaclePairCorrelation` (with `obst`, `oval`, `obstPairs`), 45%; implication to
+  `NearObstaclePhaseMixing` NOT claimed (second-order terms, μ_K weights).  Next: numeric check of the node
+  (enumerate `obst L` for L ≤ 40 with the probe's `enum`, pair sums at ξ = bᵐ, b = 2, 5 vs b = 3 control).

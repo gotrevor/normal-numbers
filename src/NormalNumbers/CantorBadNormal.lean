@@ -4605,6 +4605,42 @@ theorem riesz_three_shift (ℓ : ℕ) (a : ℤ) :
     ee_add_int]
   simp
 
+open Classical in
+/-- The obstacle rationals charged to a prefix of length `L` (as in `Alive` with `r = 5`):
+`p/q ∈ [0, 1]`, `3^L ≤ q²3⁵ < 3^{L+10}`, within `2c₀/q²` of `K`. -/
+noncomputable def obst (L : ℕ) : Finset (ℤ × ℕ) :=
+  ((Finset.Icc (0 : ℤ) (3 ^ (L + 10))) ×ˢ Finset.range (3 ^ (L + 10) + 1)).filter fun x =>
+    0 < x.2 ∧ x.1 ≤ x.2 ∧ (3 : ℝ) ^ L ≤ (x.2 : ℝ) ^ 2 * 3 ^ 5 ∧
+      (x.2 : ℝ) ^ 2 * 3 ^ 5 < 3 ^ (L + 10) ∧
+      ∃ y ∈ cantorSet, |y - (x.1 : ℝ) / x.2| < 2 * c₀ / (x.2 : ℝ) ^ 2
+
+/-- The value of an obstacle. -/
+noncomputable def oval (x : ℤ × ℕ) : ℝ := (x.1 : ℝ) / x.2
+
+open Classical in
+/-- Pairs of distinct obstacles at length `L` within `3^{−S}` of each other. -/
+noncomputable def obstPairs (L S : ℕ) : Finset ((ℤ × ℕ) × (ℤ × ℕ)) :=
+  (obst L ×ˢ obst L).filter fun xy => oval xy.1 ≠ oval xy.2 ∧ |oval xy.1 - oval xy.2| ≤ 1 / 3 ^ S
+
+/-- **Conjecture node: twisted pair correlation of the rationals near `K`.**  Believed 45% for
+`3 ∤ b`.  At the frequency `ξ = hbᵐ` and the obstacle length `L = 10 s_m` (the scale of `bᵐ`),
+the off-diagonal pair sum `Σ e(ξ(x − y))` over distinct obstacles within `3^{−S}` is `o` of the
+number of such pairs as `L − S → ∞`, uniformly in `m`.
+
+Role.  To first order (the `cExt` term of `condMean_cExt_telescope`, `1/|A| ≈ 1/1024`),
+`E[D_t | w_s]` is a μ_K-weighted sum of `e(ξ p/q)` over the obstacles in the cylinder `w_s`
+(each obstacle has radius below a third of a child width, so it kills at most two children);
+Cauchy–Schwarz over the cylinders bounds `deadMix` by the diagonal plus this off-diagonal sum.
+The implication to `NearObstaclePhaseMixing` is not proved: the second-order (two dead stages)
+terms and the μ_K weights are not controlled.  Phase gaps are multiples of `ξ/(qq') ≳ 3^C`, so
+this is Farey-scale pair correlation near a fractal; for all rationals in an interval it is known
+(Boca–Cobeli–Zaharescu), near `K` it is open.  Base-3 control: the periodic points of `K` are a
+sub-family whose phase sum is a Riesz product constant along `h·3ᵐ` (`riesz_three_shift`). -/
+def ObstaclePairCorrelation (b : ℕ) : Prop :=
+  ∀ h : ℤ, h ≠ 0 → ∀ C : ℕ, ∀ ε : ℝ, 0 < ε → ∃ G : ℕ, ∀ m S : ℕ, S + G ≤ 10 * stageOf b C m →
+    ‖∑ xy ∈ obstPairs (10 * stageOf b C m) S, ee (h * (b : ℝ) ^ m * (oval xy.1 - oval xy.2))‖ ≤
+      ε * (obstPairs (10 * stageOf b C m) S).card
+
 /-- **The crux, near-scale obstacle-phase form** (open; believed 50%).  `resLaw` satisfies
 `NearObstaclePhaseMixing` in every base `b ≥ 2` prime to 3.  A proof must use `3 ∤ b` and the
 uniformity of the resampled blocks between `s_n` and `t` (the conditional law of `w_t` given
