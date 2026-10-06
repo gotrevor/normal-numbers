@@ -65,3 +65,6 @@ Re-confirmed 2026-10-03 (fresh lap): `#print axioms dimH_Omega_eq_one` = trust b
 - Exact ask: may the headline be routed through a new law with canonical replacement (e.g. uniform resampling
   among alive blocks from fresh coins), with its own Fourier crux? The headline statement stays unchanged.
 - Verify fast: read the `AdversarialReplacement` docstring and run `scripts/cantorbad_eta.py 3 10 400`.
+Re-confirmed 2026-10-06 (cantorbad lap 4): new `fourierPairRate_descent_of_deadRateDecay` reduces the crux, for every
+admissible replacement rule, to `DeadRateDecay`. That node is believed false (dead-stage rate flat at about 1e-3), so the
+crux as frozen is likely unprovable from `choose_spec`. The operator ask stands. Stuck strike 2.
