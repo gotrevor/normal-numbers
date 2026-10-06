@@ -21,6 +21,7 @@ import NormalNumbers.Erdos257AllPrimes
 import NormalNumbers.MahlerDriftOne
 import NormalNumbers.LevinSparse
 import NormalNumbers.DeterministicBD
+import NormalNumbers.ConjugateEntropy
 import NormalNumbers.PrimeLambertOscillation
 import NormalNumbers.SwingC3Rotation
 import NormalNumbers.LinearFormsScales
@@ -120,6 +121,14 @@ def cruxLinks : List CruxLink := [
 
 /-- Open `sorry`s that are not cruxes, and why no barrier applies. -/
 def waivers : List Waiver := [
+  ⟨``ConjugateEntropy.fsDimUpper_le_of_sum_rat,
+   "a leaf: the span_dimension_budget block-entropy argument with both terms upper (Fekete in ℓ); \
+    B–D 2506.12929 Prop. 4.9(d) for point entropy, bridge to Dim_FS not formalized"⟩,
+  ⟨``ConjugateEntropy.fsDim_le_of_sum_rat,
+   "a leaf: the span_dimension_budget argument itself with a rational third term; B–D Prop. 4.9(b)"⟩,
+  ⟨``ConjugateEntropy.exists_sum_zero_normal_half,
+   "a sibling: the base-4 digit split showing the 1/2 in half_of_normal_of_sum_rat is sharp for \
+    abstract triples; no open crux uses it"⟩,
   ⟨``Adder.IsProductBlock.liouville_cover,
    "a leaf: the B–B 1994 Thm 3.1 Liouville witness with 'digit d absent from m·B' in place of a \
     run of g−1 (orbit_liouvilleMul_lt's argument)"⟩,
