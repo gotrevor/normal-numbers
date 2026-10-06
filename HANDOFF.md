@@ -131,3 +131,6 @@ WHAT is blocked: further BFR-directive work; the directive's own stop rule ("sto
 WHY operator-gated: continuing would mean picking a new objective (e.g. transcribing Chow–Varjú–Yu, or another campaign's sorries), which the directive reserves to the operator; the remaining StretchBFR sorries are off-bet.
 NEED from operator: a next directive, or a rejection of the <1% verdict saying which candidate to reopen.
 Re-confirmed 2026-10-06 (fresh lap): StretchBFR doc still states <1%, no new directive; stuck strike 2 recorded.
+
+## cantorbad lap 10 (2026-10-06)
+`pow_phase_recur` + m-scan: uniform-in-m obstacle cancellation must come from family share → 0.  See `HANDOFF-2026-10-06-cantorbad-lap10.md`.
