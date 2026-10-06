@@ -59,7 +59,7 @@ fixed relative length `μ₀ − 1` instead of the Liouville runs' growing one.
 
 * **Proved implications:** the normality legs and the derandomizer exist for the 10.37 schedule;
   the 10.37 lower-bound argument transfers.
-* **Unproved premise:** the Borel–Cantelli upper bound on the exponent (step 2), new
+* **Premise (proved since):** the Borel–Cantelli upper bound on the exponent (step 2), new
   infrastructure (rational counting near the support, ball masses, the window count).
 * **Mechanism and its refusal below the threshold:** the count `4·2^{F(m)}` numerators per `q`
   is the trivial one (every depth-`m` cylinder holds `O(1)` fractions `p/q`).  At
@@ -78,8 +78,9 @@ fixed relative length `μ₀ − 1` instead of the Liouville runs' growing one.
 
 ## Confidence
 
-Headline 65% (mathematics about 85%, the rest is Lean cost of the counting and of the prefix
-tests).  No cited result is used by the headline or its leaves.
+Headline proved.  Superseded for every rational `μ₀ > 2` by
+`CantorExactExponentStretch.exists_computable_mem_cantorSet_irrExponent_normal_all`.  No cited
+result is used by the headline or its leaves.
 -/
 
 open MeasureTheory Filter Topology

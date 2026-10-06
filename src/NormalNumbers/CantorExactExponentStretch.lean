@@ -6,14 +6,15 @@ Authors: Trevor Morris
 import NormalNumbers.CantorExactExponent
 
 /-!
-# Stretch: exact exponent `μ₀` for every `μ₀ > 2`, in `K`, normal to every base prime to 3
+# Stretch: exact exponent `μ₀` for every rational `μ₀ > 2`, in `K`, normal to every base prime to 3
 
 `CantorExactExponent.exists_computable_mem_cantorSet_irrExponent_normal` covers
 `μ₀ > 2 + log₂ 3 ≈ 3.585`.  This file freezes the full range `μ₀ > 2` (Bugeaud's Theorem 7.21
 range, `μ ≥ 2`, minus the endpoint, which is the literature control below).
 
 **Status (restated 2026-10-06, end of lap 3):** node `ae_not_liouvilleWith_all` PROVED, and with
-it the stretch headline `exists_computable_mem_cantorSet_irrExponent_normal_all` (every `μ₀ > 2`;
+it the stretch headline `exists_computable_mem_cantorSet_irrExponent_normal_all` (every rational
+`μ₀ > 2`;
 standard axioms only).  Mechanism: fractions `r/q` of small height
 are separated 3-adically (`padic_sep`, `group_sep`): two run-entering hits whose numerators agree
 mod `3^j`, `3^j > |r q' − r' q|`, have the same fraction, so the hitting numerators are fixed by
@@ -21,7 +22,8 @@ mod `3^j`, `3^j > |r q' − r' q|`, have the same fraction, so the hitting numer
 for every `τ > 2` (`hit_mass_padic`).  Windows that do not enter a run use the real Farey
 separation (`hit_mass_farey`, mass `2^{−F[2m+3, L−2)}`).  The case split is
 `expTest_mass_le_all` (`E_k ≤ (μ₀−2)m/2` once `k ≥ 2(μ₀+1)/(μ₀−2)`), giving
-`ev_expTest_mass_all`.  BFR bet: 5% (the
+`ev_expTest_mass_all`.  BFR bet (that these methods give a new count of rationals near `K`):
+below 1%, see `StretchBFR` (the
 3-adic count is the elementary analogue of the trivial `Q^{2 dim K}` bound, not a new count of
 rationals near `K`).
 
@@ -34,7 +36,7 @@ cost `3ᵐ 2^{−(τ−2)m}` does not decay for `τ ≤ 2 + log₂ 3` (kernel co
 `CantorExactExponent.bcTerm_red_mu_three`).  The heuristic count (rationals equidistributed
 against the coin measure) predicts a cost `q^{2−τ}` per dyadic block, summable for every `τ > 2`.
 
-## Candidate mechanism (none known to the repo)
+## Candidate mechanism before the 3-adic count (historical, superseded)
 
 An effective count of rationals near the truncations `P/3^a` of Cantor points.  Best proved
 input found: He–Liao, arXiv 2602.01307, Cor. 6.5 (local equidistribution of `A_Q(η)` against
@@ -150,8 +152,8 @@ theorem thickening_cost_ge_one (τ : ℝ) (hτ : τ ≤ 3) (m b : ℕ) (hb : (b 
 measure").  Rationals `p/q`, `q ∈ [3ᵐ, 2·3ᵐ)`, within `q^{−τ}` of the depth-`b` Cantor endpoint
 `P/3^b` (other than `P/3^b` itself) have conditional probability `O(Q^{2−τ})` on every cylinder
 of depth `a ≤ 2m`: the heuristic density (per endpoint, `Σ_q 2q^{1−τ}`).  A statement, not a
-belief: a Broderick–Fishman–Reich-type count on the discrete endpoints.  That it suffices for
-`ae_not_liouvilleWith_all` is believed, not checked (60%). -/
+belief: a Broderick–Fishman–Reich-type count on the discrete endpoints.  Not needed: the stretch is
+proved without it, by the 3-adic count `hit_mass_padic`. -/
 def EndpointRationalCount : Prop :=
   ∀ τ : ℝ, 2 < τ → ∃ C : ℝ, ∀ (a b m : ℕ) (w : ℕ → Bool), a ≤ b → a ≤ 2 * m →
     (b : ℝ) < τ * m →
@@ -783,7 +785,8 @@ open Classical in
 /-- **Run-entering mass by the exact residue count.**  Digits `[a, b)` free, `[b, L]` forced
 (the window enters a run at `b`).  A hit is `P q ≡ r (mod 3^b)` for the depth-`b` numerator `P`
 with `|r| < 3^{m+2+b−(L+1)}`: if `r ≠ 0`, `card_residue_le_gen` per prefix and per `q`, and
-`coins_hd_mem_le`; if `r = 0`, the digits `[m, b)` vanish. -/
+`coins_hd_mem_le`; if `r = 0`, the digits `[m, b)` vanish.  Superseded by `hit_mass_padic`
+(unused; the per-`q` route). -/
 theorem hit_mass_runEntering (free : ℕ → Bool) (m L a b : ℕ) (ham : a ≤ m) (hmb : m ≤ b)
     (hbn : b ≤ L + 1) (hm2 : m + 2 ≤ L + 1) (hk : L + 1 - b ≤ m + 2)
     (hfree : ∀ i, a ≤ i → i < b → free i = true)
@@ -902,7 +905,9 @@ fractions of bounded height are separated.
   `j ≈ log₃(|r| q)` digits and their top `v₃(q)` digits (`hit_mass_padic`, mass
   `Σ_v 2^{−F[v, L−2m−3+2v)}`).
 
-In both cases the mass is `2^{−(μ₀−2)m + o(m)}`, so every window decays for every `μ₀ > 2`.  The
+The Farey case has mass `2^{−(μ₀−2)m + o(m)}`; the 3-adic case, after the slack
+`E_k ≤ (μ₀−2)m/2`, has `≤ 2^{12} 2^{−(μ₀−2)m/2}` (`expTest_mass_le_all`).  Either way every window
+decays geometrically for every `μ₀ > 2`.  The
 per-`q` count (`card_lowResidue_le`) used the low digits for one `q` at a time and stopped at
 `1 + log₂ 3`; the 3-adic separation uses them for all `(q, r)` at once. -/
 
@@ -1481,8 +1486,8 @@ theorem ev_expTest_mass_all (μ₀ : ℚ) (hμ : 2 < μ₀) :
     field_simp; ring
   linarith
 
-/-- **Mid-range scale-test masses** (leaf of `ae_not_liouvilleWith_mid`).  Confidence 65%.
-As `CantorExactExponent.ev_expTest_mass`, for `μ₀ > 1 + log₂ 3`.  English proof: in
+/-- **Mid-range scale-test masses** (leaf of `ae_not_liouvilleWith_mid`).  Proved, as a corollary
+of `ev_expTest_mass_all`.  The English proof below is the superseded mid-range route.  As `CantorExactExponent.ev_expTest_mass`, for `μ₀ > 1 + log₂ 3`.  English proof: in
 `expTest_mass_le` replace the run-entering BC case (`hit_mass_bc`, cost `3ᵐ 2^{−(μ₀−2)m}`) by the
 exact residue count: the truncated numerator is `P·3^{L+1−b}` (run zeros at the bottom), so a hit
 gives `P q ≡ r (mod 3^b)` with `|r| ≤ 3^{m+2−(L+1−b)}`, and `card_residue_le_gen` prices it at
@@ -1497,7 +1502,8 @@ theorem ev_expTest_mass_mid (μ₀ : ℚ) (hμ : 1 + Real.logb 2 3 < μ₀) :
   have : (2 : ℝ) < μ₀ := by linarith
   exact_mod_cast this
 
-/-- **Mid range: the exponent upper bound for `1 + log₂ 3 < μ₀`.**  Confidence 65%.
+/-- **Mid range: the exponent upper bound for `1 + log₂ 3 < μ₀`.**  Proved.  The English proof
+below is the superseded mid-range route; the proof used is the `ev_expTest_mass_all` wiring.
 
 English proof.  Borel–Cantelli over windows `q ∈ [3ᵐ, 3^{m+1})`, with `b = a_{k+1}` the run
 start following the window (units of `b`, `u = m/b`; earlier runs are `O(b/k)` digits):
@@ -1510,7 +1516,7 @@ start following the window (units of `b`, `u = m/b`; earlier runs are `O(b/k)` d
   `#{(P, q, r) : P q ≡ r}` is exact, and the tail `y` past the run must hit a ball of radius
   `3^{(μ₀−τu)b}`: cost exponent `2u − μ₀ − log₃2·(τu − μ₀)`, negative on the range when
   `τ > 1 + log₂ 3`.
-Wiring proved from `ev_expTest_mass_mid` (the one open leaf). -/
+Wiring proved from `ev_expTest_mass_mid`. -/
 theorem ae_not_liouvilleWith_mid (μ₀ : ℚ) (hμ : 1 + Real.logb 2 3 < μ₀) (τ : ℝ)
     (hτ : (μ₀ : ℝ) < τ) :
     ∀ᵐ ω ∂coins, ¬ LiouvilleWith τ (cantorExpReal μ₀ ω) := by
