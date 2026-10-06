@@ -3026,3 +3026,19 @@ Next: (1) prove the reduction (needs pair-averaged partial Cantor products, Cass
   Difficulty note: summed over cylinders, the dead correction at stage `t` is ≈ `Σ_{p/q near K,
   q ≈ 3^{5t}} e(hbᵐ p/q)` — an exponential sum over rationals near the Cantor set at frequency
   `≈ q²`; the coherent part comes from `q | hbᵐ` (b-adic obstacles, fraction ≈ `Q^{-1}` of all).
+
+## cantorbad lap 8 (2026-10-06)
+* Operator resolution (2026-10-05 22:55) was already carried out in lap 4 (`resLaw`, `FourierPairRateChoose`
+  node, headline via `exists_of_law`-style a.s. route); verified, nothing to redo.
+* Crux advanced: stage telescope of the conditional bias PROVED (`deadCorr`, `setIntegral_eq_of_atoms`,
+  `condMean_contChar_succ`, `condMean_contChar_telescope`, `norm_one_sub_muK`, `norm_ee_sub_contChar`,
+  `norm_condMean_localBias_add_le`: `E[B_m|w_s] = −Σ_{t∈[s_m,T)} E[D_t|w_s] + O(4π|ξ|3^{−10T})`).
+  New node `ObstaclePhaseMixing` (pairs × stages sum of `deadMix = E‖E[D_t|w_{s_n}]‖`), PROVED
+  `localBiasMixing_of_obstaclePhase` (via `biasMix_le_deadMix`, `k → ∞`).  Crux is now
+  `obstaclePhaseMixing_resLaw` (sorry, 50%); BarrierAudit link updated.
+* Next: (1) cut the stage tail `t ≥ s_m + log₃N` (provable, `norm_deadErr_le` + `pow_le_stage`), so the
+  node needs only `O(log N)` stages near `s_m`; (2) re-telescope `E_res[D_t | w_s]` against the Cantor
+  continuation from `w_s` (same `condMean_contChar_succ` pattern with `F = D_t`): first-order term is a
+  pure Cantor statement `E_K[e(ξx) 1_{dead,t}(x) | w_s]` = exponential sum `Σ e(hbᵐ p/q)` over obstacle
+  rationals in the cylinder; state it as a node and test numerically (control: dyadic centres).
+  Caveat: second-order terms (two dead stages) carry no decay in `N`; need a bootstrap, not a triangle bound.

@@ -114,7 +114,7 @@ def cruxLinks : List CruxLink := [
    "the cancellation must use 3 ∤ b (3ⁿp/q does not cancel for q | 3ᵏ) and the arithmetic of \
     the centres p/q (dyadic centres give e(2ⁿp/2ᵏ) = 1, and per-stage dead counts alone admit a \
     never 2-normal descent)"⟩,
-  ⟨``CantorBadNormal.localBiasMixing_resLaw,
+  ⟨``CantorBadNormal.obstaclePhaseMixing_resLaw,
    [``cantor_not_normal_three_pow, ``perStage_dead_not_enough],
    "the local dead excesses must average out by the arithmetic of the centres p/q and 3 ∤ b: for \
     b = 3 the Cantor part itself does not average (log₃ b rational), and for dyadic centres every \

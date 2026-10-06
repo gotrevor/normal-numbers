@@ -4079,11 +4079,268 @@ theorem localBiasRate_of_mixing {b : ℕ} (hM : LocalBiasMixing b) : LocalBiasRa
     field_simp
   rw [e]; linarith
 
-/-- **The crux, mixing form** (open; believed 60%).  `resLaw` satisfies `LocalBiasMixing` in
-every base `b ≥ 2` prime to 3.  A proof must use the uniformity of the resampled blocks between
-`s_n` and `s_m` and `3 ∤ b`. -/
-theorem localBiasMixing_resLaw {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) : LocalBiasMixing b := by
+/-! ### Telescoping the conditional bias over stages
+
+By the tower property and the one-stage identity `setIntegral_contChar_succ` (which is where the
+uniformity of the resampled block enters), `E[B_m | w_s]` is minus the sum over stages
+`t ≥ s_m` of the conditional means of the stage dead corrections `deadCorr`, up to the
+truncation error `4π|ξ|3^{−10T}`. -/
+
+/-- The stage dead correction of the Cantor-continued character:
+`D(ξ, w) = e(ξ cylLeft w) · deadErr ξ w · μ̂_K(ξ / 3^{|w|+10})`. -/
+noncomputable def deadCorr (ξ : ℝ) (w : List Bool) : ℂ :=
+  ee (ξ * cylLeft w) * deadErr ξ w * muK (ξ / 3 ^ (w.length + 10))
+
+theorem integrable_comp_buildU (S : ℕ) (G : List Bool → ℂ) :
+    Integrable (fun ω => G (buildU S ω)) coinMeasure :=
+  integrable_of_bdd (measurable_comp_buildU S G).aestronglyMeasurable _ (norm_comp_buildU_le S G)
+
+/-- Equal integrals on every stage-`S` atom give equal integrals on every coarser atom. -/
+theorem setIntegral_eq_of_atoms {s S : ℕ} (hsS : s ≤ S) {F G : (ℕ → Bool) → ℂ}
+    (hF : Integrable F coinMeasure) (hG : Integrable G coinMeasure)
+    (h : ∀ v ∈ LS S, ∫ ω in {ω | buildU S ω = v}, F ω ∂coinMeasure =
+      ∫ ω in {ω | buildU S ω = v}, G ω ∂coinMeasure) (w : List Bool) :
+    ∫ ω in {ω | buildU s ω = w}, F ω ∂coinMeasure =
+      ∫ ω in {ω | buildU s ω = w}, G ω ∂coinMeasure := by
+  set ind : List Bool → ℂ := fun v => if v.take (10 * s) = w then 1 else 0
+  rw [← integral_indicator (mset_buildU' s w), ← integral_indicator (mset_buildU' s w)]
+  have e1 : ∀ X : (ℕ → Bool) → ℂ, {ω | buildU s ω = w}.indicator X =
+      fun ω => ind (buildU S ω) * X ω := by
+    intro X; funext ω
+    by_cases hb : buildU s ω = w <;> simp [Set.indicator, ind, buildU_take hsS, hb]
+  have hind : ∀ ω, ‖ind (buildU S ω)‖ ≤ 1 := fun ω => by simp only [ind]; split_ifs <;> simp
+  rw [e1, e1]
+  have hi1 : Integrable (fun ω => ind (buildU S ω) * F ω) coinMeasure :=
+    hF.bdd_mul (measurable_comp_buildU S ind).aestronglyMeasurable (Eventually.of_forall hind)
+  have hi2 : Integrable (fun ω => ind (buildU S ω) * G ω) coinMeasure :=
+    hG.bdd_mul (measurable_comp_buildU S ind).aestronglyMeasurable (Eventually.of_forall hind)
+  rw [integral_eq_sum_atoms S _ hi1, integral_eq_sum_atoms S _ hi2]
+  refine Finset.sum_congr rfl fun v hv => ?_
+  have e : ∀ X : (ℕ → Bool) → ℂ, ∫ ω in {ω | buildU S ω = v}, ind (buildU S ω) * X ω ∂coinMeasure =
+      ind v * ∫ ω in {ω | buildU S ω = v}, X ω ∂coinMeasure := by
+    intro X
+    rw [setIntegral_congr_fun (mset_buildU' S v) (g := fun ω => ind v * X ω)
+      (fun ω hω => by simp only [Set.mem_setOf_eq] at hω; simp only [hω]), integral_const_mul]
+  rw [e, e, h v hv]
+
+/-- **One stage of the conditional Cantor-continued character** (uses the uniformity of the
+resampled block through `setIntegral_contChar_succ`). -/
+theorem condMean_contChar_succ (ξ : ℝ) {s t : ℕ} (hst : s ≤ t) (w : List Bool) :
+    condMean (fun ω => contChar ξ (buildU (t + 1) ω)) s w =
+      condMean (fun ω => contChar ξ (buildU t ω)) s w -
+        condMean (fun ω => deadCorr ξ (buildU t ω)) s w := by
+  rw [← condMean_sub (integrable_comp_buildU _ _) (integrable_comp_buildU _ _)]
+  unfold condMean
+  congr 1
+  refine setIntegral_eq_of_atoms (S := t) hst (integrable_comp_buildU (t + 1) _)
+    ((integrable_comp_buildU t _).sub (integrable_comp_buildU t _)) (fun v hv => ?_) w
+  rw [setIntegral_contChar_succ ξ t hv]
+  rw [setIntegral_congr_fun (mset_buildU' t v) (g := fun _ => contChar ξ v - deadCorr ξ v)
+    (fun ω hω => by simp only [Set.mem_setOf_eq] at hω; simp only [Pi.sub_apply, hω]),
+    setIntegral_const,
+    Complex.real_smul]
+  rfl
+
+/-- **The stage telescope of the conditional Cantor-continued character.** -/
+theorem condMean_contChar_telescope (ξ : ℝ) {s a : ℕ} (hsa : s ≤ a) (w : List Bool) (k : ℕ) :
+    condMean (fun ω => contChar ξ (buildU (a + k) ω)) s w =
+      condMean (fun ω => contChar ξ (buildU a ω)) s w -
+        ∑ t ∈ Finset.Ico a (a + k), condMean (fun ω => deadCorr ξ (buildU t ω)) s w := by
+  induction k with
+  | zero => simp
+  | succ k ih =>
+    rw [show a + (k + 1) = a + k + 1 from rfl,
+      condMean_contChar_succ ξ (hsa.trans (Nat.le_add_right a k)), ih,
+      Finset.sum_Ico_succ_top (Nat.le_add_right a k)]
+    ring
+
+theorem norm_one_sub_muK (η : ℝ) : ‖1 - muK η‖ ≤ 2 * Real.pi * |η| := by
+  unfold muK
+  have hi : Integrable (fun ω => ee (η * cpt ω)) coinMeasure :=
+    integrable_of_bdd (measurable_ee.comp (measurable_cpt.const_mul η)).aestronglyMeasurable 1
+      (fun ω => (norm_ee _).le)
+  have h1 : (1 : ℂ) = ∫ _ω, (1 : ℂ) ∂coinMeasure := by simp
+  rw [h1, ← integral_sub (integrable_const _) hi]
+  refine (norm_integral_le_of_norm_le_const (C := 2 * Real.pi * |η|)
+    (Eventually.of_forall fun ω => ?_)).trans (by simp)
+  have hc := cantorSet_subset_unitInterval (cpt_mem_cantorSet ω)
+  have e : (1 : ℂ) = ee 0 := by simp [ee]
+  rw [e]
+  refine (norm_ee_sub_ee _ _).trans ?_
+  rw [zero_sub, abs_neg, abs_mul, abs_of_nonneg hc.1]
+  have := mul_le_of_le_one_right (abs_nonneg η) hc.2
+  have hp := Real.pi_pos
+  nlinarith
+
+theorem norm_ee_sub_contChar (ξ : ℝ) (ω : ℕ → Bool) (T : ℕ) :
+    ‖ee (ξ * cpt (descentU ω)) - contChar ξ (buildU T ω)‖ ≤ 4 * Real.pi * |ξ| / 3 ^ (10 * T) := by
+  unfold contChar
+  rw [length_buildU]
+  have e : ee (ξ * cpt (descentU ω)) - ee (ξ * cylLeft (buildU T ω)) * muK (ξ / 3 ^ (10 * T)) =
+      (ee (ξ * cpt (descentU ω)) - ee (ξ * cylLeft (buildU T ω))) +
+        ee (ξ * cylLeft (buildU T ω)) * (1 - muK (ξ / 3 ^ (10 * T))) := by ring
+  rw [e]
+  refine (norm_add_le _ _).trans ?_
+  rw [norm_mul, norm_ee, one_mul]
+  have h1 := norm_ee_sub_ee (ξ * cpt (descentU ω)) (ξ * cylLeft (buildU T ω))
+  have h2 := norm_one_sub_muK (ξ / 3 ^ (10 * T))
+  have h3 := abs_cpt_sub_cylLeft ω T
+  have hp : (0 : ℝ) < 3 ^ (10 * T) := by positivity
+  rw [← mul_sub, abs_mul] at h1
+  rw [abs_div, abs_of_pos hp] at h2
+  have h4 : 2 * Real.pi * (|ξ| * |cpt (descentU ω) - cylLeft (buildU T ω)|) ≤
+      2 * Real.pi * (|ξ| * (1 / 3 ^ (10 * T))) := by gcongr
+  have a : 2 * Real.pi * (|ξ| * (1 / 3 ^ (10 * T))) = 2 * Real.pi * |ξ| / 3 ^ (10 * T) := by ring
+  have b : 2 * Real.pi * (|ξ| / 3 ^ (10 * T)) = 2 * Real.pi * |ξ| / 3 ^ (10 * T) := by ring
+  have c : 4 * Real.pi * |ξ| / 3 ^ (10 * T) = 2 * (2 * Real.pi * |ξ| / 3 ^ (10 * T)) := by ring
+  linarith
+
+/-- **The telescoped conditional bias.**  For `s ≤ s_m` and any truncation `T = s_m + k`,
+`E[B_m | w_s] = −Σ_{t ∈ [s_m, T)} E[D_t | w_s] + O(4π|ξ| 3^{−10T})`, `ξ = hbᵐ`. -/
+theorem norm_condMean_localBias_add_le (b C : ℕ) (h : ℤ) (m : ℕ) {s : ℕ}
+    (hs : s ≤ stageOf b C m) (w : List Bool) (k : ℕ) :
+    ‖condMean (localBias b C h m) s w + ∑ t ∈ Finset.Ico (stageOf b C m) (stageOf b C m + k),
+        condMean (fun ω => deadCorr (h * (b : ℝ) ^ m) (buildU t ω)) s w‖ ≤
+      4 * Real.pi * |h * (b : ℝ) ^ m| / 3 ^ (10 * (stageOf b C m + k)) := by
+  set ξ : ℝ := h * (b : ℝ) ^ m
+  set a := stageOf b C m
+  rw [condMean_localBias b C h m hs w]
+  have tel := condMean_contChar_telescope ξ hs w k
+  have hie : Integrable (fun ω => ee (ξ * cpt (descentU ω))) coinMeasure :=
+    integrable_of_bdd (measurable_ee_descentU ξ).aestronglyMeasurable 1 fun ω => (norm_ee _).le
+  have key : condChar ξ s w - condMean (fun ω => contChar ξ (buildU a ω)) s w +
+      ∑ t ∈ Finset.Ico a (a + k), condMean (fun ω => deadCorr ξ (buildU t ω)) s w =
+      condMean (fun ω => ee (ξ * cpt (descentU ω)) - contChar ξ (buildU (a + k) ω)) s w := by
+    rw [condMean_sub hie (integrable_comp_buildU _ _), tel]
+    show condMean (fun ω => ee (ξ * cpt (descentU ω))) s w - _ + _ = _
+    ring
+  rw [key]
+  exact norm_condMean_le (by positivity) (fun ω => norm_ee_sub_contChar ξ ω _) s w
+
+/-- The averaged conditional dead correction: `E ‖E[D_t | w_{s_n}]‖` at `ξ = hbᵐ`. -/
+noncomputable def deadMix (b C : ℕ) (h : ℤ) (n m t : ℕ) : ℝ :=
+  ∫ ω, ‖condMean (fun ω' => deadCorr (h * (b : ℝ) ^ m) (buildU t ω')) (stageOf b C n)
+    (buildU (stageOf b C n) ω)‖ ∂coinMeasure
+
+/-- **Obstacle-phase mixing node.**  Believed 50% for `3 ∤ b`.  The conditional means, on the
+stage-`s_n` atoms, of the stage dead corrections `D_t` at the frequency `hbᵐ`, summed over the
+stages `t ≥ s_m` (any truncation) and over the pairs `n < m < N`, are `O(N² W(N))`, `W` summable
+along `sched`.  Implies `LocalBiasMixing b` (`localBiasMixing_of_obstaclePhase`).
+
+Content.  `D_t(ξ, w) = e(ξ cylLeft w) · deadErr ξ w · μ̂_K(ξ/3^{|w|+10})`; the factor
+`deadErr` is supported on the dead children of `w`, which sit at the rationals `p/q`,
+`q ≈ 3^{5t}`, within `c₀/q²` of `K`.  So `E[D_t | w_{s_n}]` averages the phases `e(hbᵐ p/q)` of the
+obstacles met below the coarse cylinder `w_{s_n}`, along the uniformly resampled path.  The
+stages `t ≥ s_m + R` cost `O(|h|3^{C+10−10R})` each (`norm_deadErr_le`), so only `O(1)` stages
+near the scale of `bᵐ` matter.  The triangle inequality over `t` is taken inside the
+expectation; the cancellation that is lost there is between different stages of one path.
+Guards: the identity behind this reduction uses the uniformity of the resampled block
+(`setIntegral_contChar_succ`); under an arbitrary rule the replacement's own character would
+appear in place of `deadErr`.  `b = 3` fails (`not_casselsRate_three`). -/
+def ObstaclePhaseMixing (b : ℕ) : Prop :=
+  ∀ h : ℤ, h ≠ 0 → ∀ C : ℕ, ∃ (K : ℝ) (W : ℕ → ℝ), Summable (fun j => W (sched j)) ∧
+    ∀ N : ℕ, 1 ≤ N → ∀ k : ℕ,
+      ∑ m ∈ Finset.range N, ∑ n ∈ Finset.range m,
+        ∑ t ∈ Finset.Ico (stageOf b C m) (stageOf b C m + k), deadMix b C h n m t ≤
+          K * (N : ℝ) ^ 2 * W N
+
+/-- Pairwise form of the telescope: `E‖E[B_m | w_{s_n}]‖ ≤ Σ_t E‖E[D_t | w_{s_n}]‖ + error`. -/
+theorem biasMix_le_deadMix (b C : ℕ) (hb : 1 ≤ b) (h : ℤ) {n m : ℕ} (hnm : n ≤ m) (k : ℕ) :
+    biasMix b C h n m ≤ ∑ t ∈ Finset.Ico (stageOf b C m) (stageOf b C m + k), deadMix b C h n m t +
+      4 * Real.pi * |h * (b : ℝ) ^ m| / 3 ^ (10 * (stageOf b C m + k)) := by
+  set s := stageOf b C n
+  set E := 4 * Real.pi * |h * (b : ℝ) ^ m| / 3 ^ (10 * (stageOf b C m + k))
+  have hs : s ≤ stageOf b C m := stageOf_mono b C hb hnm
+  set D : ℕ → List Bool → ℂ := fun t w =>
+    condMean (fun ω' => deadCorr (h * (b : ℝ) ^ m) (buildU t ω')) s w
+  have hpt : ∀ ω, ‖condMean (localBias b C h m) s (buildU s ω)‖ ≤
+      ∑ t ∈ Finset.Ico (stageOf b C m) (stageOf b C m + k), ‖D t (buildU s ω)‖ + E := by
+    intro ω
+    have h1 := norm_condMean_localBias_add_le b C h m hs (buildU s ω) k
+    have h2 := norm_sum_le (Finset.Ico (stageOf b C m) (stageOf b C m + k))
+      (fun t => D t (buildU s ω))
+    have h3 := norm_sub_le (condMean (localBias b C h m) s (buildU s ω) +
+      ∑ t ∈ Finset.Ico (stageOf b C m) (stageOf b C m + k), D t (buildU s ω))
+      (∑ t ∈ Finset.Ico (stageOf b C m) (stageOf b C m + k), D t (buildU s ω))
+    rw [add_sub_cancel_right] at h3
+    linarith
+  have hint : ∀ t, Integrable (fun ω => ‖D t (buildU s ω)‖) coinMeasure := fun t =>
+    (integrable_comp_buildU s (D t)).norm
+  have hsum : Integrable (fun ω => ∑ t ∈ Finset.Ico (stageOf b C m) (stageOf b C m + k),
+      ‖D t (buildU s ω)‖ + E) coinMeasure :=
+    (integrable_finset_sum _ fun t _ => hint t).add (integrable_const E)
+  unfold biasMix
+  refine (integral_mono (integrable_comp_buildU s (condMean (localBias b C h m) s)).norm
+    hsum hpt).trans (le_of_eq ?_)
+  rw [integral_add (integrable_finset_sum _ fun t _ => hint t) (integrable_const E),
+    integral_finset_sum _ fun t _ => hint t]
+  simp [deadMix, D, s]
+
+/-- **Obstacle-phase node ⇒ mixing node.**  Proved (telescope, then `k → ∞`). -/
+theorem localBiasMixing_of_obstaclePhase {b : ℕ} (hb : 2 ≤ b) (hO : ObstaclePhaseMixing b) :
+    LocalBiasMixing b := by
+  intro h hh C
+  obtain ⟨K, W, hW, hK⟩ := hO h hh C
+  refine ⟨K, W, hW, fun N hN => ?_⟩
+  set A : ℝ := (N : ℝ) ^ 2 * (4 * Real.pi * (|(h : ℝ)| * (b : ℝ) ^ N)) with hA
+  have hb1 : (1 : ℝ) ≤ b := by exact_mod_cast (by omega : 1 ≤ b)
+  have hbound : ∀ k : ℕ, ∑ m ∈ Finset.range N, ∑ n ∈ Finset.range m, biasMix b C h n m ≤
+      K * (N : ℝ) ^ 2 * W N + A * (1 / 3 ^ 10) ^ k := by
+    intro k
+    have herr : ∀ m ∈ Finset.range N, 4 * Real.pi * |h * (b : ℝ) ^ m| /
+        3 ^ (10 * (stageOf b C m + k)) ≤ 4 * Real.pi * (|(h : ℝ)| * (b : ℝ) ^ N) * (1 / 3 ^ 10) ^ k := by
+      intro m hm
+      have hmN : m ≤ N := (Finset.mem_range.1 hm).le
+      rw [abs_mul, abs_of_nonneg (by positivity : (0 : ℝ) ≤ (b : ℝ) ^ m)]
+      have hbm : (b : ℝ) ^ m ≤ (b : ℝ) ^ N := pow_le_pow_right₀ hb1 hmN
+      have h3 : (3 : ℝ) ^ (10 * k) ≤ 3 ^ (10 * (stageOf b C m + k)) :=
+        pow_le_pow_right₀ (by norm_num) (by omega)
+      have e : (1 / (3 : ℝ) ^ 10) ^ k = 1 / 3 ^ (10 * k) := by rw [one_div_pow, ← pow_mul]
+      rw [e, mul_one_div]
+      have hp : (0 : ℝ) < 3 ^ (10 * k) := by positivity
+      calc 4 * Real.pi * (|(h : ℝ)| * (b : ℝ) ^ m) / 3 ^ (10 * (stageOf b C m + k))
+          ≤ 4 * Real.pi * (|(h : ℝ)| * (b : ℝ) ^ m) / 3 ^ (10 * k) :=
+            div_le_div_of_nonneg_left (by positivity) hp h3
+        _ ≤ 4 * Real.pi * (|(h : ℝ)| * (b : ℝ) ^ N) / 3 ^ (10 * k) := by gcongr
+    set e := 4 * Real.pi * (|(h : ℝ)| * (b : ℝ) ^ N) * (1 / 3 ^ 10) ^ k
+    have he0 : 0 ≤ e := by positivity
+    calc ∑ m ∈ Finset.range N, ∑ n ∈ Finset.range m, biasMix b C h n m
+        ≤ ∑ m ∈ Finset.range N, ∑ n ∈ Finset.range m,
+            (∑ t ∈ Finset.Ico (stageOf b C m) (stageOf b C m + k), deadMix b C h n m t + e) := by
+          refine Finset.sum_le_sum fun m hm => Finset.sum_le_sum fun n hn => ?_
+          exact (biasMix_le_deadMix b C (by omega) h (Finset.mem_range.1 hn).le k).trans
+            (by linarith [herr m hm])
+      _ = ∑ m ∈ Finset.range N, ∑ n ∈ Finset.range m,
+            ∑ t ∈ Finset.Ico (stageOf b C m) (stageOf b C m + k), deadMix b C h n m t +
+            ∑ m ∈ Finset.range N, (m : ℝ) * e := by
+          rw [← Finset.sum_add_distrib]
+          refine Finset.sum_congr rfl fun m _ => ?_
+          rw [Finset.sum_add_distrib, Finset.sum_const, Finset.card_range, nsmul_eq_mul]
+      _ ≤ K * (N : ℝ) ^ 2 * W N + ∑ m ∈ Finset.range N, (N : ℝ) * e := by
+          gcongr with m hm
+          · exact hK N hN k
+          · exact_mod_cast (Finset.mem_range.1 hm).le
+      _ = K * (N : ℝ) ^ 2 * W N + A * (1 / 3 ^ 10) ^ k := by
+          rw [Finset.sum_const, Finset.card_range, nsmul_eq_mul, hA]; ring
+  have ht : Tendsto (fun k : ℕ => K * (N : ℝ) ^ 2 * W N + A * (1 / 3 ^ 10) ^ k) atTop
+      (𝓝 (K * (N : ℝ) ^ 2 * W N)) := by
+    have := (tendsto_pow_atTop_nhds_zero_of_lt_one (by norm_num : (0 : ℝ) ≤ 1 / 3 ^ 10)
+      (by norm_num)).const_mul A
+    simpa using this.const_add (K * (N : ℝ) ^ 2 * W N)
+  exact ge_of_tendsto ht (Eventually.of_forall hbound)
+
+/-- **The crux, obstacle-phase form** (open; believed 50%).  `resLaw` satisfies
+`ObstaclePhaseMixing` in every base `b ≥ 2` prime to 3.  A proof must use `3 ∤ b` and the
+uniformity of the resampled blocks between `s_n` and `t` (the conditional law of `w_t` given
+`w_{s_n}`); the uniformity at stage `t` itself is already spent in the telescope. -/
+theorem obstaclePhaseMixing_resLaw {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) :
+    ObstaclePhaseMixing b := by
   sorry
+
+/-- **The crux, mixing form** (proved from `obstaclePhaseMixing_resLaw`; believed 60%).
+`resLaw` satisfies `LocalBiasMixing` in every base `b ≥ 2` prime to 3. -/
+theorem localBiasMixing_resLaw {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) : LocalBiasMixing b :=
+  localBiasMixing_of_obstaclePhase hb (obstaclePhaseMixing_resLaw hb h3)
 
 /-- **The moment form of the crux** (proved from `localBiasMixing_resLaw`; believed 65%: stronger than `LocalDeadBias`, which it
 implies via `localDeadBias_of_rate`).  `resLaw` satisfies `LocalBiasRate` in every base `b ≥ 2`
