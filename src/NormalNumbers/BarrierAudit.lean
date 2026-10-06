@@ -244,8 +244,6 @@ def waivers : List Waiver := [
     port to 3 | b'); live route via the Baker discrepancy input"⟩,
   ⟨``CantorExactExponentProfile.secondMoment_profile_uniform,
    "a leaf: secondMoment_le_profile with every constant explicit (effective Baker input)"⟩,
-  ⟨``CantorExactExponentProfile.primrecPred_profileOK,
-   "a leaf: ProfileOK is the integer comparison 3^(s(p-q)) < t^q"⟩,
   ⟨``CantorExactExponentProfile.exists_computable_mem_cantorSet_irrExponent_normalProfile,
    "wiring: the two profile lemmas plus the stretch derandomizer with the 3 ∣ b tests added"⟩,
   ⟨``FiniteState.isFNormal_delayEnum_of_normal,

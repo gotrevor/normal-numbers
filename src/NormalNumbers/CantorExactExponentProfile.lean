@@ -1475,9 +1475,100 @@ theorem secondMoment_profile_uniform (hB : Literature.BakerLogDiscrepancyEff) (�
           ∂coins ≤ κ b * |(h : ℝ)| * N ^ 2 * profW N := by
   sorry
 
-/-- `ProfileOK` is primitive recursive (`3^{s(p−q)} < t^q` for `μ₀ = p/q`).  Open; 95%. -/
+/-- One division step of the 3-adic valuation, carrying a counter. -/
+def stepV (x : ℕ × ℕ) : ℕ × ℕ := if x.1 % 3 = 0 ∧ 0 < x.1 then (x.1 / 3, x.2 + 1) else x
+
+theorem primrec_stepV : Primrec stepV := by
+  have hc : PrimrecPred fun x : ℕ × ℕ => x.1 % 3 = 0 ∧ 0 < x.1 :=
+    PrimrecPred.and (Primrec.eq.comp (Primrec.nat_mod.comp Primrec.fst (Primrec.const 3))
+      (Primrec.const 0)) (Primrec.nat_lt.comp (Primrec.const 0) Primrec.fst)
+  exact Primrec.ite hc (Primrec.pair (Primrec.nat_div.comp Primrec.fst (Primrec.const 3))
+    (Primrec.succ.comp Primrec.snd)) Primrec.id
+
+theorem stepV_iter (b n : ℕ) :
+    stepV^[n] (b, 0) = (b / 3 ^ min n (padicValNat 3 b), min n (padicValNat 3 b)) := by
+  have : Fact (Nat.Prime 3) := ⟨Nat.prime_three⟩
+  set v := padicValNat 3 b
+  induction n with
+  | zero => simp
+  | succ n ih =>
+    rw [Function.iterate_succ_apply', ih]
+    by_cases hn : n < v
+    · have hb : b ≠ 0 := by rintro rfl; simp [v] at hn
+      have hd : 3 ^ (n + 1) ∣ b := (pow_dvd_pow 3 hn).trans pow_padicValNat_dvd
+      have hmin : min n v = n := min_eq_left hn.le
+      have hmin' : min (n + 1) v = n + 1 := min_eq_left hn
+      rw [hmin, hmin']
+      have h3 : 3 ∣ b / 3 ^ n := by
+        rw [Nat.dvd_div_iff_mul_dvd ((pow_dvd_pow 3 (Nat.le_succ n)).trans hd), ← pow_succ]
+        exact hd
+      have hpos : 0 < b / 3 ^ n := by
+        apply Nat.div_pos (Nat.le_of_dvd (Nat.pos_of_ne_zero hb) ((pow_dvd_pow 3 (by omega)).trans hd))
+        positivity
+      unfold stepV
+      rw [if_pos ⟨Nat.mod_eq_zero_of_dvd h3, hpos⟩, Nat.div_div_eq_div_mul, ← pow_succ]
+    · push Not at hn
+      have hmin : min n v = v := min_eq_right hn
+      have hmin' : min (n + 1) v = v := min_eq_right (by omega)
+      rw [hmin, hmin']
+      unfold stepV
+      rw [if_neg]
+      rintro ⟨h0, hpos⟩
+      have hb : b ≠ 0 := by rintro rfl; simp at hpos
+      have hd3 : 3 ∣ b / 3 ^ v := Nat.dvd_of_mod_eq_zero h0
+      have : 3 ^ (v + 1) ∣ b := by
+        have hv : 3 ^ v ∣ b := pow_padicValNat_dvd
+        rw [pow_succ]
+        have := Nat.mul_dvd_mul_left (3 ^ v) hd3
+        rwa [Nat.mul_div_cancel' hv] at this
+      exact pow_succ_padicValNat_not_dvd hb this
+
+/-- `ProfileOK` as an integer comparison. -/
+theorem profileOK_iff (μ₀ : ℚ) (hμ : 1 < μ₀) (b : ℕ) :
+    ProfileOK μ₀ b ↔ 3 ^ (padicValNat 3 b * (μ₀.num.toNat - μ₀.den)) <
+      (b / 3 ^ padicValNat 3 b) ^ μ₀.den := by
+  set v := padicValNat 3 b
+  set t := b / 3 ^ v
+  set p := μ₀.num.toNat
+  set q := μ₀.den
+  have hnum : 0 < μ₀.num := Rat.num_pos.2 (by linarith)
+  have hpz : ((p : ℤ)) = μ₀.num := Int.toNat_of_nonneg hnum.le
+  have hpQ : (p : ℚ) = μ₀ * q := by
+    have h1 : ((p : ℤ) : ℚ) = (μ₀.num : ℚ) := by rw [hpz]
+    rw [show ((q : ℕ) : ℚ) = (μ₀.den : ℚ) from rfl, Rat.mul_den_eq_num]
+    exact_mod_cast h1
+  have hq0 : (0 : ℚ) < q := by exact_mod_cast μ₀.den_pos
+  have hqp : q ≤ p := by
+    have : (q : ℚ) ≤ p := by rw [hpQ]; nlinarith
+    exact_mod_cast this
+  have hpR : (p : ℝ) = (μ₀ : ℝ) * q := by exact_mod_cast hpQ
+  unfold ProfileOK
+  rw [← pow_lt_pow_iff_left₀ (n := q) (by positivity) (by positivity) μ₀.den_nz,
+    ← Real.rpow_natCast ((3 : ℝ) ^ _), ← Real.rpow_mul (by norm_num),
+    show (v : ℝ) * ((μ₀ : ℝ) - 1) * (q : ℝ) = ((v * (p - q) : ℕ) : ℝ) by
+      push_cast [Nat.cast_sub hqp]; rw [hpR]; ring, Real.rpow_natCast]
+  exact_mod_cast Iff.rfl
+
+theorem padicValNat_three_le (b : ℕ) : padicValNat 3 b ≤ b := by
+  rcases Nat.eq_zero_or_pos b with rfl | hb
+  · simp
+  · have : 3 ^ padicValNat 3 b ≤ b := Nat.le_of_dvd hb pow_padicValNat_dvd
+    exact (Nat.lt_pow_self (by norm_num)).le.trans this
+
+/-- `ProfileOK` is primitive recursive (`3^{s(p−q)} < t^q` for `μ₀ = p/q`). -/
 theorem primrecPred_profileOK (μ₀ : ℚ) (hμ : 1 < μ₀) : PrimrecPred (ProfileOK μ₀) := by
-  sorry
+  have hit : Primrec fun b : ℕ => stepV^[b] (b, 0) :=
+    Primrec.nat_iterate Primrec.id (Primrec.pair Primrec.id (Primrec.const 0))
+      (primrec_stepV.comp Primrec.snd).to₂
+  have hP : PrimrecPred fun b : ℕ => 3 ^ ((stepV^[b] (b, 0)).2 * (μ₀.num.toNat - μ₀.den)) <
+      ((stepV^[b] (b, 0)).1) ^ μ₀.den :=
+    Primrec.nat_lt.comp
+      (ComputableNormal.primrec_pow.comp (Primrec.const 3)
+        (Primrec.nat_mul.comp (Primrec.snd.comp hit) (Primrec.const _)))
+      (ComputableNormal.primrec_pow.comp (Primrec.fst.comp hit) (Primrec.const _))
+  refine hP.of_eq fun b => ?_
+  rw [stepV_iter, min_eq_right (padicValNat_three_le b)]
+  exact (profileOK_iff μ₀ hμ b).symm
 
 /-- The schedule condition for the combined weight.  Proved (`clNs j ≥ 4^{√j}`, `profW` at
 `4^{√j}` is `≤ (2√j+1)^{−16}`). -/
