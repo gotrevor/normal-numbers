@@ -118,4 +118,12 @@ theorem isProductBlock_five_seventeen :
       3028} := by
   sorry
 
+/-- **The base-5 block, minimized to 15** (computational; confidence 95%): `isProductBlock_five_seventeen`
+without `3` and `4`, each deletion re-verified by a full collapse search
+(`mahler_block minimize`).  Inclusion-minimal: removing any one member leaves an assignment
+with no collapse certificate. -/
+theorem isProductBlock_five_fifteen :
+    IsProductBlock 5 {1, 2, 8, 16, 17, 23, 29, 1251, 1254, 1838, 2188, 2272, 2439, 2832, 3028} := by
+  sorry
+
 end NormalNumbers.Adder

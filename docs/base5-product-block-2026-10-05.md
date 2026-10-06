@@ -106,7 +106,10 @@ affordable.  A collapse is a proof; a failing assignment is only "no certificate
 - Large members in base 5: 1251 = 20001, 1254 = 20004, 1838 = 24323, 2188 = 32223,
   2272 = 33042, 2439 = 34224, 2832 = **42312** (the only one with all four nonzero digits,
   the member `base5_exists_ge` demands), 3028 = 44103.
-- Greedy, so not minimal.
+- **Minimized to 15** (`mahler_block minimize`, each accepted deletion re-verified by a full
+  DFS): `{1, 2, 8, 16, 17, 23, 29, 1251, 1254, 1838, 2188, 2272, 2439, 2832, 3028}`, dropping 4
+  then 3.  No single member of the 15 is removable (inclusion-minimal, not minimum).  Gap to the
+  proved floors: 3 overall, 5 if every member is `≤ 625` (`base5_card_ge_five`).
 - Lean: `checkCertA` enumerates the ambient carry product (here ∏ m ≈ 10⁴⁰), so a Lean
   certificate needs a sparse, live-states-only checker.
 
