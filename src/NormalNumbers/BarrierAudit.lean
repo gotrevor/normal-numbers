@@ -213,9 +213,6 @@ def waivers : List Waiver := [
   ⟨``CantorExactExponentStretch.exists_computable_mem_cantorSet_irrExponent_normal_all,
    "assembly: the main file's wiring with ae_not_liouvilleWith_all (the crux) in place of \
     ae_not_liouvilleWith; no mechanism of its own"⟩,
-  ⟨``CantorBadNormal.condDiff_secondMoment_le,
-   "a leaf: approximate martingale differences have second moment O(N) (a.s. step proved, \
-    ae_cesaro_condDiff); no number theory"⟩,
   ⟨``CantorBadNormal.cesaro_contChar_small,
    "a leaf: Weyl equidistribution of n log₃ b (irrationality only) and ∫₀¹ Π cos²(2π3ᵏy) = 2^{−C}; \
     standard Cantor Fourier analysis, the b = 3 failure is carried by the crux link"⟩,

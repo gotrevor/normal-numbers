@@ -2981,7 +2981,195 @@ A proof must use the uniformity of the resampled block (any-rule arguments reduc
 theorem localDeadBias_resLaw {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) : LocalDeadBias b :=
   localDeadBias_of_rate (localBiasRate_resLaw hb h3)
 
-/-- **The martingale part, moment form** (open; believed 97%, standard).  The partial sums of
+/-! ### The martingale part: orthogonality on the stage atoms -/
+
+/-- The `n`-th approximate martingale difference. -/
+noncomputable def condDiff (b C : ℕ) (h : ℤ) (n : ℕ) (ω : ℕ → Bool) : ℂ :=
+  ee (h * (b : ℝ) ^ n * cpt (descentU ω)) -
+    condChar (h * (b : ℝ) ^ n) (stageOf b C n) (buildU (stageOf b C n) ω)
+
+theorem integrable_of_bdd {E : Type*} [NormedAddCommGroup E] {F : (ℕ → Bool) → E}
+    (hm : AEStronglyMeasurable F coinMeasure) (B : ℝ) (hB : ∀ ω, ‖F ω‖ ≤ B) :
+    Integrable F coinMeasure :=
+  Integrable.of_bound hm B (Eventually.of_forall hB)
+
+section MeasLB2
+local instance : MeasurableSpace (List Bool) := ⊤
+
+theorem measurable_comp_buildU (S : ℕ) (G : List Bool → ℂ) :
+    Measurable fun ω => G (buildU S ω) :=
+  (measurable_from_top (f := G)).comp (measurable_buildU S)
+end MeasLB2
+
+theorem measurable_ee_descentU (ξ : ℝ) : Measurable fun ω => ee (ξ * cpt (descentU ω)) :=
+  measurable_ee.comp ((measurable_cpt.comp measurable_descentU).const_mul _)
+
+theorem norm_comp_buildU_le (S : ℕ) (G : List Bool → ℂ) (ω : ℕ → Bool) :
+    ‖G (buildU S ω)‖ ≤ ∑ w ∈ LS S, ‖G w‖ :=
+  Finset.single_le_sum (f := fun w => ‖G w‖) (fun _ _ => norm_nonneg _) (buildU_mem_LS ω S)
+
+theorem integral_eq_sum_atoms (S : ℕ) (F : (ℕ → Bool) → ℂ) (hF : Integrable F coinMeasure) :
+    ∫ ω, F ω ∂coinMeasure = ∑ w ∈ LS S, ∫ ω in {ω | buildU S ω = w}, F ω ∂coinMeasure := by
+  have hpt : F = fun ω => ∑ w ∈ LS S, {ω | buildU S ω = w}.indicator F ω := by
+    funext ω
+    rw [Finset.sum_eq_single (buildU S ω)]
+    · simp [Set.indicator]
+    · intro w _ hw; simp [Set.indicator, Ne.symm hw]
+    · intro h; exact absurd (buildU_mem_LS ω S) h
+  conv_lhs => rw [hpt]
+  rw [integral_finset_sum _ fun w _ => hF.indicator (mset_buildU' S w)]
+  exact Finset.sum_congr rfl fun w _ => integral_indicator (mset_buildU' S w)
+
+theorem condChar_mul (ξ : ℝ) (s : ℕ) (w : List Bool) :
+    (coinMeasure.real {ω | buildU s ω = w} : ℂ) * condChar ξ s w =
+      ∫ ω in {ω | buildU s ω = w}, ee (ξ * cpt (descentU ω)) ∂coinMeasure := by
+  unfold condChar
+  rcases eq_or_ne (coinMeasure.real {ω | buildU s ω = w}) 0 with h0 | h0
+  · rw [h0]
+    have : coinMeasure {ω | buildU s ω = w} = 0 :=
+      (measureReal_eq_zero_iff (measure_ne_top _ _)).1 h0
+    rw [Measure.restrict_eq_zero.2 this, integral_zero_measure]; simp
+  · have : ((coinMeasure.real {ω | buildU s ω = w} : ℝ) : ℂ) ≠ 0 := by exact_mod_cast h0
+    field_simp
+
+/-- **Orthogonality**: the difference `e(ξx) − condChar` is orthogonal to every function of the
+stage-`S` prefix. -/
+theorem integral_orth (S : ℕ) (ξ : ℝ) (G : List Bool → ℂ) :
+    ∫ ω, G (buildU S ω) * (starRingEnd ℂ) (ee (ξ * cpt (descentU ω)) -
+      condChar ξ S (buildU S ω)) ∂coinMeasure = 0 := by
+  have hie : Integrable (fun ω => ee (ξ * cpt (descentU ω))) coinMeasure :=
+    integrable_of_bdd (measurable_ee_descentU ξ).aestronglyMeasurable 1 fun ω => (norm_ee _).le
+  have hint : Integrable (fun ω => G (buildU S ω) * (starRingEnd ℂ) (ee (ξ * cpt (descentU ω)) -
+      condChar ξ S (buildU S ω))) coinMeasure := by
+    refine integrable_of_bdd (((measurable_comp_buildU S G).mul
+      (Complex.continuous_conj.measurable.comp ((measurable_ee_descentU ξ).sub
+        (measurable_comp_buildU S (condChar ξ S))))).aestronglyMeasurable)
+      ((∑ w ∈ LS S, ‖G w‖) * 2) fun ω => ?_
+    rw [norm_mul, Complex.norm_conj]
+    gcongr
+    · exact norm_comp_buildU_le S G ω
+    · refine (norm_sub_le _ _).trans ?_
+      rw [norm_ee]; linarith [norm_condChar_le ξ S (buildU S ω)]
+  rw [integral_eq_sum_atoms S _ hint]
+  refine Finset.sum_eq_zero fun w _ => ?_
+  rw [setIntegral_congr_fun (mset_buildU' S w)
+    (g := fun ω => G w * (starRingEnd ℂ) (ee (ξ * cpt (descentU ω)) - condChar ξ S w))
+    (fun ω hω => by simp only [Set.mem_setOf_eq] at hω; simp only [hω])]
+  rw [integral_const_mul, integral_conj, integral_sub hie.integrableOn (integrable_const _),
+    setIntegral_const, ← condChar_mul]
+  simp
+
+theorem stageOf_mono (b C : ℕ) (hb : 1 ≤ b) {n m : ℕ} (h : n ≤ m) : stageOf b C n ≤ stageOf b C m := by
+  unfold stageOf
+  have : Nat.log 3 (b ^ n) ≤ Nat.log 3 (b ^ m) :=
+    Nat.log_mono_right (Nat.pow_le_pow_right hb h)
+  exact Nat.div_le_div_right (by omega)
+
+theorem pow_le_stage (b C m : ℕ) (hb : 1 ≤ b) :
+    (b : ℝ) ^ m ≤ 3 ^ (C + 10) * 3 ^ (10 * stageOf b C m) := by
+  have hne : b ^ m ≠ 0 := by positivity
+  have h1 := Nat.lt_pow_succ_log_self (by norm_num : 1 < 3) (b ^ m)
+  have h2 : Nat.log 3 (b ^ m) + 1 ≤ C + 10 + 10 * stageOf b C m := by unfold stageOf; omega
+  have : b ^ m ≤ 3 ^ (C + 10) * 3 ^ (10 * stageOf b C m) := by
+    rw [← pow_add]; exact h1.le.trans (Nat.pow_le_pow_right (by norm_num) h2)
+  exact_mod_cast this
+
+theorem norm_condDiff_le (b C : ℕ) (h : ℤ) (n : ℕ) (ω : ℕ → Bool) : ‖condDiff b C h n ω‖ ≤ 2 := by
+  unfold condDiff
+  refine (norm_sub_le _ _).trans ?_
+  rw [norm_ee]; linarith [norm_condChar_le (h * (b : ℝ) ^ n) (stageOf b C n)
+    (buildU (stageOf b C n) ω)]
+
+theorem abs_cpt_sub_cylLeft (ω : ℕ → Bool) (S : ℕ) :
+    |cpt (descentU ω) - cylLeft (buildU S ω)| ≤ 1 / 3 ^ (10 * S) := by
+  have hmem := cpt_mem_cyl (descentU ω) (10 * S)
+  rw [ofFn_descentU] at hmem
+  have hl := length_buildU ω S
+  unfold cyl at hmem
+  rw [hl] at hmem
+  rw [abs_le]; constructor <;> [skip; skip] <;> nlinarith [hmem.1, hmem.2,
+    (by positivity : (0 : ℝ) < 1 / 3 ^ (10 * S))]
+
+/-- **Cross terms decay geometrically.** -/
+theorem norm_integral_cross {b : ℕ} (hb : 2 ≤ b) (h : ℤ) (C : ℕ) {n m : ℕ} (hnm : n ≤ m) :
+    ‖∫ ω, condDiff b C h n ω * (starRingEnd ℂ) (condDiff b C h m ω) ∂coinMeasure‖ ≤
+      4 * Real.pi * |(h : ℝ)| * 3 ^ (C + 10) * ((b : ℝ) ^ n / (b : ℝ) ^ m) := by
+  set s := stageOf b C m
+  set sn := stageOf b C n
+  set ξ : ℝ := h * (b : ℝ) ^ n
+  have hs : sn ≤ s := stageOf_mono b C (by omega) hnm
+  set G : List Bool → ℂ := fun w => ee (ξ * cylLeft w) - condChar ξ sn (w.take (10 * sn))
+  set R : (ℕ → Bool) → ℂ := fun ω => ee (ξ * cpt (descentU ω)) - ee (ξ * cylLeft (buildU s ω))
+  have htake : ∀ ω, (buildU s ω).take (10 * sn) = buildU sn ω := by
+    intro ω
+    have := List.prefix_iff_eq_take.1 (buildU_prefix ω hs)
+    rw [length_buildU] at this; exact this.symm
+  have hsplit : ∀ ω, condDiff b C h n ω = G (buildU s ω) + R ω := by
+    intro ω; simp only [condDiff, G, R, htake, ξ, sn]; ring
+  have hYm : ∀ k, Measurable (condDiff b C h k) := measurable_condDiff b C h
+  have hRm : Measurable R := (measurable_ee_descentU ξ).sub
+    (measurable_comp_buildU s fun w => ee (ξ * cylLeft w))
+  have hcm : Measurable fun ω => (starRingEnd ℂ) (condDiff b C h m ω) :=
+    Complex.continuous_conj.measurable.comp (hYm m)
+  have hRb : ∀ ω, ‖R ω‖ ≤ 2 * Real.pi * |ξ| * (1 / 3 ^ (10 * s)) := by
+    intro ω
+    refine (norm_ee_sub_ee _ _).trans ?_
+    rw [← mul_sub, abs_mul, ← mul_assoc]
+    gcongr
+    exact abs_cpt_sub_cylLeft ω s
+  have hGi : Integrable (fun ω => G (buildU s ω) * (starRingEnd ℂ) (condDiff b C h m ω))
+      coinMeasure :=
+    integrable_of_bdd ((measurable_comp_buildU s G).mul hcm).aestronglyMeasurable
+      ((∑ w ∈ LS s, ‖G w‖) * 2) fun ω => by
+        rw [norm_mul, Complex.norm_conj]
+        gcongr
+        · exact norm_comp_buildU_le s G ω
+        · exact norm_condDiff_le b C h m ω
+  have hRi : Integrable (fun ω => R ω * (starRingEnd ℂ) (condDiff b C h m ω)) coinMeasure :=
+    integrable_of_bdd (hRm.mul hcm).aestronglyMeasurable
+      (2 * Real.pi * |ξ| * (1 / 3 ^ (10 * s)) * 2) fun ω => by
+        rw [norm_mul, Complex.norm_conj]
+        gcongr
+        · exact hRb ω
+        · exact norm_condDiff_le b C h m ω
+  have hz : ∫ ω, G (buildU s ω) * (starRingEnd ℂ) (condDiff b C h m ω) ∂coinMeasure = 0 :=
+    integral_orth s (h * (b : ℝ) ^ m) G
+  simp_rw [hsplit, add_mul]
+  rw [integral_add hGi hRi, hz, zero_add]
+  have hB : ‖∫ ω, R ω * (starRingEnd ℂ) (condDiff b C h m ω) ∂coinMeasure‖ ≤
+      2 * Real.pi * |ξ| * (1 / 3 ^ (10 * s)) * 2 := by
+    simpa using norm_integral_le_of_norm_le_const (μ := coinMeasure)
+      (Eventually.of_forall fun ω => (by
+        rw [norm_mul, Complex.norm_conj]
+        exact mul_le_mul (hRb ω) (norm_condDiff_le b C h m ω) (norm_nonneg _) (by positivity) :
+        ‖R ω * (starRingEnd ℂ) (condDiff b C h m ω)‖ ≤ 2 * Real.pi * |ξ| * (1 / 3 ^ (10 * s)) * 2))
+  refine hB.trans (le_of_eq_of_le rfl ?_)
+  have hb0 : (0 : ℝ) < b := by exact_mod_cast (by omega : 0 < b)
+  have hbm : (0 : ℝ) < (b : ℝ) ^ m := by positivity
+  have hst := pow_le_stage b C m (by omega)
+  have h3s : (0 : ℝ) < 3 ^ (10 * s) := by positivity
+  have hξ : |ξ| = |(h : ℝ)| * (b : ℝ) ^ n := by
+    simp only [ξ]; rw [abs_mul, abs_of_nonneg (by positivity : (0 : ℝ) ≤ (b : ℝ) ^ n)]
+  rw [hξ, div_eq_mul_inv, div_eq_mul_inv, one_mul]
+  have hinv : ((3 : ℝ) ^ (10 * s))⁻¹ ≤ 3 ^ (C + 10) * ((b : ℝ) ^ m)⁻¹ := by
+    rw [inv_le_iff_one_le_mul₀ h3s]
+    calc (1 : ℝ) = (b : ℝ) ^ m * ((b : ℝ) ^ m)⁻¹ := (mul_inv_cancel₀ hbm.ne').symm
+      _ ≤ 3 ^ (C + 10) * 3 ^ (10 * s) * ((b : ℝ) ^ m)⁻¹ := by gcongr
+      _ = _ := by ring
+  have hp : 0 ≤ 2 * Real.pi * (|(h : ℝ)| * (b : ℝ) ^ n) := by positivity
+  calc 2 * Real.pi * (|(h : ℝ)| * (b : ℝ) ^ n) * ((3 : ℝ) ^ (10 * s))⁻¹ * 2
+      ≤ 2 * Real.pi * (|(h : ℝ)| * (b : ℝ) ^ n) * (3 ^ (C + 10) * ((b : ℝ) ^ m)⁻¹) * 2 := by gcongr
+    _ = _ := by ring
+
+theorem geom_sum_le_pow {b : ℕ} (hb : 2 ≤ b) (N : ℕ) : ∑ n ∈ Finset.range N, (b : ℝ) ^ n ≤ (b : ℝ) ^ N := by
+  induction N with
+  | zero => simp
+  | succ N ih =>
+    rw [Finset.sum_range_succ, pow_succ]
+    have : (2 : ℝ) ≤ b := by exact_mod_cast hb
+    nlinarith [pow_pos (by linarith : (0 : ℝ) < b) N]
+
+/-- **The martingale part, moment form.**  Proved (`norm_integral_cross`, induction on `N`).  The partial sums of
 `e(hbⁿx) − condChar` have second moment `O(N)`.
 
 English proof.  Write `Y_n = e(hbⁿx) − condChar(hbⁿ, s_n, w_{s_n})`, `s_n = stageOf b C n`
@@ -2997,7 +3185,82 @@ theorem condDiff_secondMoment_le {b : ℕ} (hb : 2 ≤ b) (h : ℤ) (C : ℕ) :
       (ee (h * (b : ℝ) ^ n * cpt (descentU ω)) -
         condChar (h * (b : ℝ) ^ n) (stageOf b C n) (buildU (stageOf b C n) ω))‖ ^ 2 ∂coinMeasure ≤
       K * N := by
-  sorry
+  change ∃ K : ℝ, ∀ N : ℕ, 1 ≤ N → ∫ ω, ‖∑ n ∈ Finset.range N, condDiff b C h n ω‖ ^ 2
+    ∂coinMeasure ≤ K * N
+  set D : ℝ := 4 * Real.pi * |(h : ℝ)| * 3 ^ (C + 10) with hD
+  have hD0 : 0 ≤ D := by positivity
+  refine ⟨4 + 2 * D, fun N hN1 => ?_⟩
+  clear hN1
+  have hb0 : (0 : ℝ) < b := by exact_mod_cast (by omega : 0 < b)
+  set S : ℕ → (ℕ → Bool) → ℂ := fun N ω => ∑ n ∈ Finset.range N, condDiff b C h n ω
+  have hYm := measurable_condDiff b C h
+  have hSm : ∀ N, Measurable (S N) := fun N => Finset.measurable_sum _ fun n _ => hYm n
+  have hSb : ∀ N ω, ‖S N ω‖ ≤ 2 * N := fun N ω =>
+    (norm_sum_le _ _).trans ((Finset.sum_le_sum fun n _ => norm_condDiff_le b C h n ω).trans
+      (by simp [mul_comm]))
+  have hsq : ∀ N, Integrable (fun ω => ‖S N ω‖ ^ 2) coinMeasure := fun N =>
+    integrable_of_bdd ((hSm N).norm.pow_const 2).aestronglyMeasurable ((2 * N) ^ 2) fun ω => by
+      rw [Real.norm_of_nonneg (by positivity)]
+      exact pow_le_pow_left₀ (norm_nonneg _) (hSb N ω) 2
+  induction N with
+  | zero => simp
+  | succ N ih =>
+    have hY2 : Integrable (fun ω => ‖condDiff b C h N ω‖ ^ 2) coinMeasure :=
+      integrable_of_bdd ((hYm N).norm.pow_const 2).aestronglyMeasurable (2 ^ 2) fun ω => by
+        rw [Real.norm_of_nonneg (by positivity)]
+        exact pow_le_pow_left₀ (norm_nonneg _) (norm_condDiff_le b C h N ω) 2
+    have hX : Integrable (fun ω => S N ω * (starRingEnd ℂ) (condDiff b C h N ω)) coinMeasure :=
+      integrable_of_bdd ((hSm N).mul (Complex.continuous_conj.measurable.comp (hYm N))).aestronglyMeasurable
+        (2 * N * 2) fun ω => by
+          rw [norm_mul, Complex.norm_conj]
+          exact mul_le_mul (hSb N ω) (norm_condDiff_le b C h N ω) (norm_nonneg _) (by positivity)
+    have hpt : ∀ ω, ‖S (N + 1) ω‖ ^ 2 = ‖S N ω‖ ^ 2 + ‖condDiff b C h N ω‖ ^ 2 +
+        2 * (S N ω * (starRingEnd ℂ) (condDiff b C h N ω)).re := by
+      intro ω
+      rw [show S (N + 1) ω = S N ω + condDiff b C h N ω from Finset.sum_range_succ _ _]
+      rw [Complex.sq_norm, Complex.sq_norm, Complex.sq_norm, Complex.normSq_add]
+    have ih' : ∫ ω, ‖S N ω‖ ^ 2 ∂coinMeasure ≤ (4 + 2 * D) * N := ih
+    rw [show (∫ ω, ‖∑ n ∈ Finset.range (N + 1), condDiff b C h n ω‖ ^ 2 ∂coinMeasure) =
+      ∫ ω, (‖S N ω‖ ^ 2 + ‖condDiff b C h N ω‖ ^ 2 +
+        2 * (S N ω * (starRingEnd ℂ) (condDiff b C h N ω)).re) ∂coinMeasure from
+      integral_congr_ae (Eventually.of_forall hpt)]
+    rw [integral_add (show Integrable (fun ω => ‖S N ω‖ ^ 2 + ‖condDiff b C h N ω‖ ^ 2) coinMeasure
+        from (hsq N).add hY2) (show Integrable (fun ω =>
+        2 * (S N ω * (starRingEnd ℂ) (condDiff b C h N ω)).re) coinMeasure from hX.re.const_mul 2),
+      integral_add (hsq N) hY2, integral_const_mul]
+    have hre : ∫ ω, (S N ω * (starRingEnd ℂ) (condDiff b C h N ω)).re ∂coinMeasure =
+        (∫ ω, S N ω * (starRingEnd ℂ) (condDiff b C h N ω) ∂coinMeasure).re := integral_re hX
+    rw [hre]
+    have h1 : ∫ ω, ‖condDiff b C h N ω‖ ^ 2 ∂coinMeasure ≤ 4 := by
+      refine (le_abs_self _).trans ?_
+      simpa using norm_integral_le_of_norm_le_const (μ := coinMeasure)
+        (Eventually.of_forall fun ω => (by
+          rw [Real.norm_of_nonneg (by positivity)]
+          have := pow_le_pow_left₀ (norm_nonneg _) (norm_condDiff_le b C h N ω) 2
+          norm_num at this ⊢; exact this : ‖‖condDiff b C h N ω‖ ^ 2‖ ≤ 4))
+    have h2 : (∫ ω, S N ω * (starRingEnd ℂ) (condDiff b C h N ω) ∂coinMeasure).re ≤ D := by
+      refine (Complex.re_le_norm _).trans ?_
+      have hsplit : ∫ ω, S N ω * (starRingEnd ℂ) (condDiff b C h N ω) ∂coinMeasure =
+          ∑ n ∈ Finset.range N, ∫ ω, condDiff b C h n ω * (starRingEnd ℂ) (condDiff b C h N ω)
+            ∂coinMeasure := by
+        simp only [S, Finset.sum_mul]
+        refine integral_finset_sum _ fun n _ => ?_
+        exact integrable_of_bdd ((hYm n).mul (Complex.continuous_conj.measurable.comp
+          (hYm N))).aestronglyMeasurable (2 * 2) fun ω => by
+            rw [norm_mul, Complex.norm_conj]
+            exact mul_le_mul (norm_condDiff_le b C h n ω) (norm_condDiff_le b C h N ω)
+              (norm_nonneg _) (by norm_num)
+      rw [hsplit]
+      refine (norm_sum_le _ _).trans ?_
+      refine (Finset.sum_le_sum fun n hn => norm_integral_cross hb h C
+        (le_of_lt (Finset.mem_range.1 hn))).trans ?_
+      rw [← Finset.mul_sum, ← Finset.sum_div]
+      have hbN : (0 : ℝ) < (b : ℝ) ^ N := by positivity
+      calc D * ((∑ n ∈ Finset.range N, (b : ℝ) ^ n) / (b : ℝ) ^ N) ≤ D * 1 := by
+            gcongr; rw [div_le_one hbN]; exact geom_sum_le_pow hb N
+        _ = D := mul_one D
+    push_cast
+    linarith
 
 /-- **The martingale part.**  Proved from the moment form `condDiff_secondMoment_le`. -/
 theorem ae_cesaro_condDiff {b : ℕ} (hb : 2 ≤ b) (h : ℤ) (C : ℕ) :

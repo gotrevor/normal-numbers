@@ -3002,3 +3002,6 @@ Next: (1) prove the reduction (needs pair-averaged partial Cantor products, Cass
 * Next attack on the crux: expand the second moment; state the conditional-mixing node
   `E|E[B_m | w_s]| ≤ ε(s_m − s)` (conditional average over the stage-`s` atom, as in `condChar`),
   and prove `LocalBiasRate` from it plus diagonal `≤ 4N`.
+* (lap 7, later) `condDiff_secondMoment_le` PROVED (`integral_orth` on stage atoms,
+  `norm_integral_cross` geometric decay `4π|h|3^{C+10} bⁿ/bᵐ`, induction on `N`).  Martingale part closed.
+  Next: `cesaro_contChar_small` (Weyl via `WeylCriterion.cgood_real`, `CantorLiouville.charFun_real`).
