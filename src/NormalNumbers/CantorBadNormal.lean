@@ -5,6 +5,7 @@ Authors: Trevor Morris
 -/
 import NormalNumbers.SchmidtGames
 import NormalNumbers.CantorLiouvilleAll
+import NormalNumbers.EntropyProfiles
 
 /-!
 # `K ∩ BAD ∩ normal`: a badly approximable Cantor point normal to every base prime to 3
@@ -557,6 +558,42 @@ theorem fourierPairRate_descent {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) :
 theorem casselsRate_descent {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) :
     CasselsRate descentLaw b :=
   casselsRate_of_fourierPairRate (fourierPairRate_descent hb h3)
+
+/-! ## Closed route: a `×3`-invariant measure on `K ∩ Bad`
+
+Hochman–Shmerkin / Host (`EntropyProfiles.Literature.HochmanShmerkinTimesP`) would give
+normality to every base `≁ 3` for a `×3`-ergodic measure of positive dimension.  Such a measure
+gives `Bad` zero mass (`Literature.EFSTimesThreeNotBad`), so the route cannot reach `K ∩ Bad`:
+the measure on `K ∩ Bad` must be non-invariant, as `descentLaw` is. -/
+
+namespace Literature
+
+/-- **Cited: Einsiedler–Fishman–Shapira**, *Diophantine approximations on fractals*, GAFA 21
+(2011), arXiv 0908.2350.  The abstract states the case of the Cantor measure (almost every point
+of `K` has every finite pattern in its continued fraction, so is not badly approximable); the
+transcription here is the general `×3`-invariant ergodic positive-dimension form, which we
+believe is in the paper's main theorem (confidence 75%; the theorem number is unchecked, and the
+step needing an expert check is whether positive dimension, not the Cantor measure, suffices).
+Faithful-or-weaker in the hypothesis: a Frostman bound replaces positive dimension. -/
+def EFSTimesThreeNotBad : Prop :=
+  ∀ μ : Measure ℝ, IsProbabilityMeasure μ → μ (Set.Ico 0 1)ᶜ = 0 →
+    Ergodic (EntropyProfiles.timesMap 3) μ →
+    (∃ C δ : ℝ, 0 < δ ∧ ∀ x r : ℝ, 0 < r → μ (Metric.closedBall x r) ≤ ENNReal.ofReal (C * r ^ δ)) →
+      μ Bad = 0
+
+end Literature
+
+/-- **The `×3`-invariant route is closed.**  Proved from the cited EFS: no `×3`-ergodic
+Frostman probability measure on `[0,1)` is carried by `Bad`. -/
+theorem not_exists_timesThree_law_on_bad (hEFS : Literature.EFSTimesThreeNotBad) :
+    ¬ ∃ μ : Measure ℝ, IsProbabilityMeasure μ ∧ μ (Set.Ico 0 1)ᶜ = 0 ∧
+      Ergodic (EntropyProfiles.timesMap 3) μ ∧
+      (∃ C δ : ℝ, 0 < δ ∧ ∀ x r : ℝ, 0 < r → μ (Metric.closedBall x r) ≤ ENNReal.ofReal (C * r ^ δ)) ∧
+      μ Badᶜ = 0 := by
+  rintro ⟨μ, hP, h01, herg, hF, hB⟩
+  have h0 := hEFS μ hP h01 herg hF
+  have : μ (Bad ∪ Badᶜ) = 0 := le_antisymm ((measure_union_le _ _).trans (by simp [h0, hB])) bot_le
+  simp at this
 
 /-- **A badly approximable point of the middle-third Cantor set, normal to every base prime to 3.**
 
