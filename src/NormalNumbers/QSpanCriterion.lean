@@ -397,15 +397,6 @@ theorem measurePreserving_shiftK (P : Measure α) [IsProbabilityMeasure P] (k : 
   rw [this, Finset.prod_image (fun a _ b _ hab => by simpa using hab)]
   simp
 
-open DecayAeNormal in
-/-- **Leaf G4.**  Windows `[k, k+K)` and `[l, l+K)` are disjoint for `k + K ≤ l`: independence. -/
-theorem integral_ee_digSK_indep (P : Measure α) [IsProbabilityMeasure P] (b : ℕ) (T : α → ℤ)
-    (h : ℤ) (K k l : ℕ) (hkl : k + K ≤ l) :
-    ∫ ω, ee (h * digSK b T K (shiftK k ω)) * (starRingEnd ℂ) (ee (h * digSK b T K (shiftK l ω)))
-        ∂Measure.infinitePi (fun _ : ℕ => P) =
-      (∫ ω, ee (h * digSK b T K ω) ∂Measure.infinitePi (fun _ : ℕ => P)) *
-        (starRingEnd ℂ) (∫ ω, ee (h * digSK b T K ω) ∂Measure.infinitePi (fun _ : ℕ => P)) := by
-  sorry
 
 end Generic
 
@@ -629,6 +620,59 @@ theorem measurable_digS (b : ℕ) (hb : 2 ≤ b) (T : α → ℤ) : Measurable (
   rw [div_lt_iff₀ hε] at hK
   have : (b : ℝ) ^ K ≤ (b : ℝ) ^ n := pow_le_pow_right₀ hb'.le hn
   nlinarith
+
+open DecayAeNormal in
+/-- The window value read from the coordinates in `[k, k+K)`. -/
+noncomputable def winF (b : ℕ) (T : α → ℤ) (h : ℤ) (k K : ℕ)
+    (y : (Finset.Ico k (k + K)) → α) : ℂ :=
+  ee (h * ∑ i : (Finset.Ico k (k + K)), (T (y i) : ℝ) / (b : ℝ) ^ ((i : ℕ) - k + 1))
+
+omit [Fintype α] [MeasurableSpace α] [DiscreteMeasurableSpace α] in
+open DecayAeNormal in
+/-- `digSK` of the shifted point is the window function of its coordinates. -/
+theorem winF_repr (b : ℕ) (T : α → ℤ) (h : ℤ) (k K : ℕ) (ω : ℕ → α) :
+    ee (h * digSK b T K (shiftK k ω)) = winF b T h k K (fun i => ω i) := by
+  unfold winF digSK shiftK
+  congr 2
+  rw [Finset.sum_coe_sort (Finset.Ico k (k + K)) (fun i => (T (ω i) : ℝ) / (b : ℝ) ^ (i - k + 1)),
+    Finset.sum_Ico_eq_sum_range]
+  simp
+
+open DecayAeNormal ProbabilityTheory in
+/-- **Leaf G4.**  Windows `[k, k+K)` and `[l, l+K)` are disjoint for `k + K ≤ l`: independence. -/
+theorem integral_ee_digSK_indep (P : Measure α) [IsProbabilityMeasure P] (b : ℕ) (T : α → ℤ)
+    (h : ℤ) (K k l : ℕ) (hkl : k + K ≤ l) :
+    ∫ ω, ee (h * digSK b T K (shiftK k ω)) * (starRingEnd ℂ) (ee (h * digSK b T K (shiftK l ω)))
+        ∂Measure.infinitePi (fun _ : ℕ => P) =
+      (∫ ω, ee (h * digSK b T K ω) ∂Measure.infinitePi (fun _ : ℕ => P)) *
+        (starRingEnd ℂ) (∫ ω, ee (h * digSK b T K ω) ∂Measure.infinitePi (fun _ : ℕ => P)) := by
+  set μ := Measure.infinitePi (fun _ : ℕ => P)
+  have hI : iIndepFun (fun i (ω : ℕ → α) => ω i) μ :=
+    iIndepFun_infinitePi (P := fun _ : ℕ => P) (X := fun _ => id) (fun _ => measurable_id)
+  have hD : Disjoint (Finset.Ico k (k + K)) (Finset.Ico l (l + K)) := by
+    rw [Finset.disjoint_left]; intro i hi hi'
+    simp only [Finset.mem_Ico] at hi hi'; omega
+  have hind := (hI.indepFun_finset _ _ hD (fun i => measurable_pi_apply i)).comp
+    (measurable_of_countable (winF b T h k K))
+    (Complex.continuous_conj.measurable.comp (measurable_of_countable (winF b T h l K)))
+  have hmK : Measurable fun ω => ee (h * digSK b T K ω) :=
+    measurable_ee.comp ((measurable_digSK b T K).const_mul _)
+  have hstat : ∀ k, ∫ ω, ee (h * digSK b T K (shiftK k ω)) ∂μ = ∫ ω, ee (h * digSK b T K ω) ∂μ := by
+    intro k
+    have hmp := measurePreserving_shiftK P k
+    have := integral_map (μ := μ) hmp.measurable.aemeasurable hmK.aestronglyMeasurable
+    rw [hmp.map_eq] at this
+    exact this.symm
+  simp_rw [winF_repr]
+  have e := hind.integral_fun_mul_eq_mul_integral
+    ((measurable_of_countable (winF b T h k K)).comp (measurable_pi_lambda _ fun i => measurable_pi_apply _)).aestronglyMeasurable
+    ((Complex.continuous_conj.measurable.comp (measurable_of_countable (winF b T h l K))).comp
+      (measurable_pi_lambda _ fun i => measurable_pi_apply _)).aestronglyMeasurable
+  simp only [Function.comp_def] at e
+  rw [e]
+  rw [integral_conj]
+  simp_rw [← winF_repr]
+  rw [hstat k, hstat l]
 
 open DecayAeNormal in
 /-- **Generic genericity (crux).**  Assembled from G1–G5. -/
