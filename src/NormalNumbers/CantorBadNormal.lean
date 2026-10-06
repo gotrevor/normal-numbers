@@ -4974,6 +4974,18 @@ theorem obstMix_sq_le (b C : ℕ) (h : ℤ) (n m t : ℕ) :
     obstMix b C h n m t ^ 2 ≤ ∫ ω, ‖obstSum (h * (b : ℝ) ^ m) (t - stageOf b C n)
       (buildU (stageOf b C n) ω)‖ ^ 2 ∂coinMeasure :=
   sq_integral_norm_comp_buildU_le _ _
+
+/-- **Pair expansion of the cylinder obstacle sum.**  `‖obstSum‖²` is the `1024^{−2k}`-weighted sum,
+over pairs of completions `(v, v')` of `w`, of `obstLocal v · conj (obstLocal v')`; the diagonal
+`v = v'` is the obstacle count, the off-diagonal pairs are the same-cylinder obstacle pairs.  Proved. -/
+theorem norm_obstSum_sq (ξ : ℝ) (k : ℕ) (w : List Bool) :
+    (‖obstSum ξ k w‖ ^ 2 : ℂ) = (1 / 1024 ^ k : ℂ) ^ 2 *
+      ∑ F : Fin k → (Fin 10 → Bool), ∑ F' : Fin k → (Fin 10 → Bool),
+        obstLocal ξ (catB w k F) * (starRingEnd ℂ) (obstLocal ξ (catB w k F')) := by
+  rw [← Complex.mul_conj', obstSum, map_mul, map_sum]
+  have hc : (starRingEnd ℂ) (1 / 1024 ^ k : ℂ) = 1 / 1024 ^ k := by
+    simp only [one_div, map_inv₀, map_pow]; rw [show (starRingEnd ℂ) 1024 = 1024 from Complex.conj_ofNat 1024]
+  rw [hc, mul_mul_mul_comm, ← sq, Finset.sum_mul_sum]
 /-- **Cylinder-local obstacle cancellation node.**  Believed 50% for `3 ∤ b`.  The near-scale sum
 of `obstMix` over `n < m < N` is `O(N² W(N))`.  Implies `FirstOrderObstacleMix b`
 (`firstOrderObstacleMix_of_cyl`).  This is the honest form of the first-order crux: the

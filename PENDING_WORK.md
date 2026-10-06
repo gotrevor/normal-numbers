@@ -3181,3 +3181,4 @@ the Cauchy–Schwarz step obstMix² ≤ E|obstSum|² as a lemma toward PairCorrT
   working control.  A decisive probe needs lags where b=3 is coherent (large m relative to C) or exact
   enumeration of obstMix instead of Monte Carlo.
 - lap 9: Cauchy–Schwarz step proved (`sq_integral_norm_comp_buildU_le`, `obstMix_sq_le`).  Next: expand E‖obstSum‖² into diagonal + same-cylinder obstacle pairs.
+- lap 9: pair expansion `norm_obstSum_sq` proved.  Next: bound E over resLaw w_s of the off-diagonal same-cylinder pairs by the pair sum (μ_K vs resLaw weight of w_s: likelihood ratio via real_buildU_catB).
