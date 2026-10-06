@@ -971,6 +971,118 @@ theorem selU_eq_iff {w v : List Bool} (hv : Alive 5 c₀ w v) (ω : ℕ → Bool
       · exact absurd (hb ▸ hv) (hex t)
       · exact h
 
+
+open Classical in
+theorem selU_eq_iff' (w v : List Bool) (ω : ℕ → Bool) (s : ℕ) :
+    selU w ω s = v ↔ (∃ t, (∀ t' < t, ¬ Alive 5 c₀ w (blk ω s t')) ∧
+        (Alive 5 c₀ w (blk ω s t) ∧ blk ω s t = v)) ∨
+      ((∀ t, ¬ Alive 5 c₀ w (blk ω s t)) ∧ repC w = v) := by
+  by_cases hex : ∃ t, Alive 5 c₀ w (blk ω s t)
+  · have hspec := Nat.find_spec (p := fun t => Alive 5 c₀ w (blk ω s t) ∨
+        ¬ ∃ t', Alive 5 c₀ w (blk ω s t')) (firstAlive._proof_1 w ω s)
+    have hT : Alive 5 c₀ w (blk ω s (firstAlive w ω s)) := hspec.resolve_right (not_not.2 hex)
+    have hsel : selU w ω s = blk ω s (firstAlive w ω s) := by unfold selU; rw [if_pos hT]
+    have hmin : ∀ t' < firstAlive w ω s, ¬ Alive 5 c₀ w (blk ω s t') := fun t' ht' h =>
+      Nat.find_min (firstAlive._proof_1 w ω s) ht' (Or.inl h)
+    rw [hsel]
+    constructor
+    · intro h; exact Or.inl ⟨_, hmin, hT, h⟩
+    · rintro (⟨t, ht, hat, hb⟩ | ⟨hn, _⟩)
+      · have : firstAlive w ω s = t := by
+          rcases lt_trichotomy (firstAlive w ω s) t with h | h | h
+          · exact absurd hT (ht _ h)
+          · exact h
+          · exact absurd hat (hmin _ h)
+        rw [this, hb]
+      · exact absurd hex (by push Not; exact hn)
+  · push Not at hex
+    have hsel : selU w ω s = repC w := by unfold selU; rw [if_neg (hex _)]
+    rw [hsel]
+    constructor
+    · intro h; exact Or.inr ⟨hex, h⟩
+    · rintro (⟨t, _, hat, _⟩ | ⟨_, h⟩)
+      · exact absurd hat (hex t)
+      · exact h
+
+/-- Dead blocks after prefix `w`. -/
+def deadL (w : List Bool) : Set (List Bool) := {x | ¬ Alive 5 c₀ w x}
+
+/-- Alive blocks equal to `v`. -/
+def hitL (w v : List Bool) : Set (List Bool) := {x | Alive 5 c₀ w x ∧ x = v}
+
+theorem mset_selU (w v : List Bool) (s : ℕ) :
+    MeasurableSet[MS fun x => x.1 = s] {ω | selU w ω s = v} := by
+  have : {ω | selU w ω s = v} =
+      (⋃ t, (⋂ t' ∈ {t' | t' < t}, {ω | blk ω s t' ∈ deadL w}) ∩ {ω | blk ω s t ∈ hitL w v}) ∪
+        ((⋂ t, {ω | blk ω s t ∈ deadL w}) ∩ {_ω | repC w = v}) := by
+    ext ω
+    refine (selU_eq_iff' w v ω s).trans ?_
+    simp only [Set.mem_union, Set.mem_iUnion, Set.mem_inter_iff, Set.mem_iInter]
+    rfl
+  rw [this]
+  refine MeasurableSet.union (MeasurableSet.iUnion fun t => ?_) ?_
+  · exact (MeasurableSet.biInter (Set.to_countable _) fun t' _ =>
+      mset_blk (P := fun x => x.1 = s) (s := s) (t := t') rfl (deadL w)).inter
+      (mset_blk (P := fun x => x.1 = s) (s := s) (t := t) rfl (hitL w v))
+  · refine (MeasurableSet.iInter fun t =>
+      mset_blk (P := fun x => x.1 = s) (s := s) (t := t) rfl (deadL w)).inter ?_
+    by_cases h : repC w = v
+    · simp only [h, Set.setOf_true]; exact @MeasurableSet.univ _ (MS _)
+    · simp only [h, Set.setOf_false]; exact @MeasurableSet.empty _ (MS _)
+
+theorem mset_buildU (s : ℕ) (w : List Bool) :
+    MeasurableSet[MS fun x => x.1 < s] {ω | buildU s ω = w} := by
+  induction s generalizing w with
+  | zero =>
+    show MeasurableSet[MS _] {_ω : ℕ → Bool | ([] : List Bool) = w}
+    by_cases h : ([] : List Bool) = w
+    · simp only [h, Set.setOf_true]; exact @MeasurableSet.univ _ (MS _)
+    · simp only [h, Set.setOf_false]; exact @MeasurableSet.empty _ (MS _)
+  | succ s ih =>
+    by_cases hw : w.length = 10 * (s + 1)
+    · have : {ω | buildU (s + 1) ω = w} =
+          {ω | buildU s ω = w.take (10 * s)} ∩ {ω | selU (w.take (10 * s)) ω s = w.drop (10 * s)} := by
+        ext ω
+        simp only [Set.mem_setOf_eq, Set.mem_inter_iff, buildU]
+        constructor
+        · intro h
+          have hl := length_buildU ω s
+          rw [← h, List.take_left' hl, List.drop_left' hl]; exact ⟨rfl, rfl⟩
+        · rintro ⟨h1, h2⟩; rw [h1, h2, List.take_append_drop]
+      rw [this]
+      exact (MS_mono (fun x (hx : x.1 < s) => by omega) _ (ih _)).inter
+        (MS_mono (fun x (hx : x.1 = s) => by omega) _ (mset_selU _ _ s))
+    · have : {ω | buildU (s + 1) ω = w} = ∅ := by
+        ext ω; simp only [Set.mem_setOf_eq, Set.mem_empty_iff_false, iff_false]
+        intro h; apply hw; rw [← h, length_buildU]
+      rw [this]; exact @MeasurableSet.empty _ (MS _)
+
+/-- The run of dead attempts before attempt `t`. -/
+def deadRun (w : List Bool) (s t : ℕ) : Set (ℕ → Bool) :=
+  ⋂ t' ∈ {t' | t' < t}, {ω | blk ω s t' ∈ deadL w}
+
+theorem mset_deadRun (w : List Bool) (s t : ℕ) :
+    MeasurableSet[MS fun x => x.1 = s ∧ x.2 < t] (deadRun w s t) :=
+  MeasurableSet.biInter (Set.to_countable _) fun t' (ht' : t' < t) => mset_blk ⟨rfl, ht'⟩ _
+
+theorem coin_deadRun (w : List Bool) (s t : ℕ) :
+    coinMeasure (deadRun w s t) = (((1024 - (aliveSet w).card : ℕ) : ENNReal) / 1024) ^ t := by
+  induction t with
+  | zero => simp [deadRun]
+  | succ t ih =>
+    have : deadRun w s (t + 1) = deadRun w s t ∩ {ω | blk ω s t ∈ deadL w} := by
+      ext ω; simp only [deadRun, Set.mem_iInter, Set.mem_inter_iff, Set.mem_setOf_eq]
+      constructor
+      · intro h; exact ⟨fun t' ht' => h t' (by omega), h t (by omega)⟩
+      · rintro ⟨h1, h2⟩ t' ht'
+        rcases Nat.lt_succ_iff_lt_or_eq.1 ht' with h | rfl
+        · exact h1 t' h
+        · exact h2
+    rw [this, indep_MS (P := fun x => x.1 = s ∧ x.2 < t) (Q := fun x => x.1 = s ∧ x.2 = t)
+      (fun x hP hQ => by omega) (mset_deadRun w s t) (mset_blk ⟨rfl, rfl⟩ _), ih, pow_succ]
+    congr 1
+    exact coin_dead w s t
+
 /-- **Conditional uniformity of the resampled block** (open leaf, believed 97%; standard
 rejection sampling).  Given the prefix `w` after `s` stages, each alive child `v` is the next
 block with probability `1/|A(w)|`.  English proof: the stage-`s` coin blocks `blk ω s t` are
