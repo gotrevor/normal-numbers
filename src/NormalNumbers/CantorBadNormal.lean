@@ -4608,19 +4608,14 @@ theorem riesz_three_shift (ℓ : ℕ) (a : ℤ) :
 /-- **Every obstacle phase family recurs in `m`.**  For any modulus `n > 0`, the phases
 `e(a bᵐ / n)` (`a ∈ ℤ`) are eventually periodic in `m`.  Proved (pigeonhole on `bᵐ mod n`).
 
-Consequence for `ObstaclePairCorrelation` (lap 10).  Take `n = 3^ℓ − 1`: the purely periodic
-Cantor rationals `perNum d / (3^ℓ − 1)` are obstacles, their phase sum is the Riesz product
-(`periodic_phase_sum`), and along the residue class of `m` where `bᵐ ≡ 3ᵏ (mod n)` that phase sum
-equals its base-3 value (`riesz_three_shift`).  So for `3 ∤ b` the base-3 coherence does not
-vanish: it recurs on a positive density of `m`, carried by each bounded-period family.  A proof of
-`ObstaclePairCorrelation` (uniform in `m`) must therefore show the share of such families in
-`obstPairs` tends to 0, not that each family cancels.  Evidence (`L = 12`, `S = 4`, `b = 2`,
-`h = 1`, `m ∈ [5, 200)`): median ratio `.003`; outliers `m = 184, 185, 111` at `.128, .106, .080`,
-the leading contributions from obstacles whose 3-free denominator is `244 = 3⁵+1`,
-`364 = (3⁶−1)/2`, `730 = 3⁶+1`, `205 | 3⁸−1`, `1093 = (3⁷−1)/2`; at the typical `m = 60` no class
-exceeds `.001`.  The 3-free share of such families in the dead mass decays like `2^{−L/2}`
-(prefix of length `≈ L/2` must follow a periodic tail), so the averaged crux `AliveOffMix` is not
-threatened by them. -/
+Use for `ObstaclePairCorrelation` (lap 10).  The `m`-scan (`L = 12`, `S = 4`, `b = 2`, `h = 1`,
+`m ∈ [5, 200)`, `scripts/cantorbad_mscan.py`) has median ratio `.003` and outliers `m = 184, 185,
+111` at `.128, .106, .080`, led by obstacles whose 3-free denominator is `244 = 3⁵+1`,
+`364 = (3⁶−1)/2`, `730 = 3⁶+1`, `205 | 3⁸−1`, `1093 = (3⁷−1)/2` (at the typical `m = 60` no class
+exceeds `.001`).  These are preperiodic `p/(q'3^j)`: their phase is fixed by `hbᵐ mod q'` (eventually
+periodic in `m`, this lemma) and by the low ternary digits `hbᵐ mod 3^j`.  Purely periodic
+obstacles of bounded period do not occur at large `L` (`q² ≥ 3^{L−5}`), so any recurrent coherence
+must pass through the 3-adic factor, which is where `3 ∤ b` enters. -/
 theorem pow_phase_recur (b n : ℕ) (hn : 0 < n) : ∃ m₀ T : ℕ, 0 < T ∧ ∀ m, m₀ ≤ m → ∀ a : ℤ,
     ee (a * (b : ℝ) ^ (m + T) / n) = ee (a * (b : ℝ) ^ m / n) := by
   obtain ⟨i, j, hij, he⟩ := Fintype.exists_ne_map_eq_of_card_lt
@@ -4689,13 +4684,33 @@ size (`#pairs = 1.9·10⁶, 1.2·10⁵, 6274`).  Known-coherent control `b = 3`:
 `L = 16` (43572 obstacles), `S = 8, 12, 16`: `.000, .005, .016` (b = 2), `.002, .013, .045` (b = 5),
 `.002, .009, .087` (b = 7); control `b = 3`: `.167, .172, .160`.  Same picture one scale up.
 
-Uniformity in `m` (lap 10): bounded-period obstacle families regain base-3 coherence on a
-positive density of `m` (`pow_phase_recur`); the node can hold only because their pair share
-vanishes as `L → ∞`. -/
+Uniformity in `m` (lap 10): sporadic outliers (`m = 184`: `.128`) come from preperiodic
+obstacles `p/(q'3^j)`, `q' | 3^ℓ ± 1` (`pow_phase_recur`); their pair share is large
+(`PeriodicFamilyShare`, believed false), so the node needs their 3-adic phase to cancel. -/
 def ObstaclePairCorrelation (b : ℕ) : Prop :=
   ∀ h : ℤ, h ≠ 0 → ∀ C : ℕ, ∀ ε : ℝ, 0 < ε → ∃ G : ℕ, ∀ m S : ℕ, S + G ≤ 10 * stageOf b C m →
     ‖∑ xy ∈ obstPairs (10 * stageOf b C m) S, ee (h * (b : ℝ) ^ m * (oval xy.1 - oval xy.2))‖ ≤
       ε * (obstPairs (10 * stageOf b C m) S).card
+
+open Classical in
+/-- The obstacle pairs at length `L`, window `S`, with an endpoint whose reduced denominator has
+3-free part dividing `3^ℓ − 1` or `3^ℓ + 1` (the period-`ℓ` families of `pow_phase_recur`). -/
+noncomputable def periodicPairs (ℓ L S : ℕ) : Finset ((ℤ × ℕ) × (ℤ × ℕ)) :=
+  (obstPairs L S).filter fun xy => ∃ x ∈ ({xy.1, xy.2} : Finset (ℤ × ℕ)),
+    let r : ℚ := (x.1 : ℚ) / x.2
+    let d := r.den / 3 ^ padicValNat 3 r.den
+    d ∣ 3 ^ ℓ - 1 ∨ d ∣ 3 ^ ℓ + 1
+
+/-- **Conjecture node (believed false, 15%): the preperiodic families have vanishing pair share.**
+For each `ℓ`, the share of `obstPairs L S` touching an obstacle whose 3-free denominator divides
+`3^ℓ ± 1` tends to 0 as `L → ∞`.  Evidence against (`scripts/cantorbad_famshare.py`, lap 10):
+`L = 12, S = 8` shares `.18, .24, .31, .35, .34, .51, .35, .56` for `ℓ = 1..8`.  So
+`ObstaclePairCorrelation` cannot discard these families by counting; their cancellation must come
+from the 3-adic phase factor `e(hbᵐ p / 3^j)` (a Riesz product over the low ternary digits of
+`hbᵐ`), averaged over `m` — the Cassels mechanism, which fails for `b = 3`. -/
+def PeriodicFamilyShare : Prop :=
+  ∀ ℓ : ℕ, ∀ ε : ℝ, 0 < ε → ∃ L₀ : ℕ, ∀ L S : ℕ, L₀ ≤ L → S ≤ L →
+    ((periodicPairs ℓ L S).card : ℝ) ≤ ε * (obstPairs L S).card
 
 /-- First-order (uniform continuation) part of `deadMix`. -/
 noncomputable def firstMix (b C : ℕ) (h : ℤ) (n m t : ℕ) : ℝ :=
