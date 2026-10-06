@@ -2967,20 +2967,6 @@ theorem localDeadBias_of_rate {b : ℕ} (hR : LocalBiasRate b) : LocalDeadBias b
   exact ae_cesaro_of_secondMoment_bdd coinMeasure (fun n => localBias b C h n)
     (measurable_localBias b C h) (by norm_num) (norm_localBias_le b C h) K W hW hK
 
-/-- **The crux, moment form** (open; believed 65%: stronger than `LocalDeadBias`, which it
-implies via `localDeadBias_of_rate`).  `resLaw` satisfies `LocalBiasRate` in every base `b ≥ 2`
-prime to 3.  Same guards as `localDeadBias_resLaw`: a proof must use the uniformity of the
-resampled block and `3 ∤ b`. -/
-theorem localBiasRate_resLaw {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) : LocalBiasRate b := by
-  sorry
-
-/-- **The local form of the crux** (believed 75%; proved from the moment form `localBiasRate_resLaw`).  `resLaw` satisfies `LocalDeadBias` in every
-base `b ≥ 2` prime to 3.  See `LocalDeadBias` for the content, the evidence and the controls.
-A proof must use the uniformity of the resampled block (any-rule arguments reduce to
-`DeadRateDecay`, believed false) and `3 ∤ b` (`not_casselsRate_three`). -/
-theorem localDeadBias_resLaw {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) : LocalDeadBias b :=
-  localDeadBias_of_rate (localBiasRate_resLaw hb h3)
-
 /-! ### The martingale part: orthogonality on the stage atoms -/
 
 /-- The `n`-th approximate martingale difference. -/
@@ -3675,6 +3661,232 @@ theorem cesaro_contChar_small {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) (h : �
     (hε : 0 < ε) : ∃ C : ℕ, ∀ᶠ N : ℕ in atTop,
       (∑ n ∈ Finset.range N, ‖muK (h * (b : ℝ) ^ n / 3 ^ (10 * stageOf b C n))‖) / (N : ℝ) ≤ ε := by
   exact cesaro_contChar_small_aux hb h3 h hh hε
+
+/-! ### The crux, second split: conditional means of the local bias on earlier atoms
+
+`E|Σ_{n<N} B_n|²` (`B_n = localBias b C h n`) expands into `E[B_n conj B_m]`.  Since `B_n` is a
+function of the stage-`s_n` prefix, `E[B_n conj B_m] = E[B_n conj E[B_m | w_{s_n}]]`
+(`integral_comp_mul_condMean`), so the moment node `LocalBiasRate` follows from decay of the
+conditional means of later biases on earlier atoms (`LocalBiasMixing`). -/
+
+/-- The conditional mean of `F` on the stage-`s` atom `w` (`0` on a null atom). -/
+noncomputable def condMean (F : (ℕ → Bool) → ℂ) (s : ℕ) (w : List Bool) : ℂ :=
+  (∫ ω in {ω | buildU s ω = w}, F ω ∂coinMeasure) /
+    ((coinMeasure.real {ω | buildU s ω = w} : ℝ) : ℂ)
+
+theorem condMean_mul (F : (ℕ → Bool) → ℂ) (s : ℕ) (w : List Bool) :
+    (coinMeasure.real {ω | buildU s ω = w} : ℂ) * condMean F s w =
+      ∫ ω in {ω | buildU s ω = w}, F ω ∂coinMeasure := by
+  unfold condMean
+  rcases eq_or_ne (coinMeasure.real {ω | buildU s ω = w}) 0 with h0 | h0
+  · rw [h0]
+    have : coinMeasure {ω | buildU s ω = w} = 0 :=
+      (measureReal_eq_zero_iff (measure_ne_top _ _)).1 h0
+    rw [Measure.restrict_eq_zero.2 this, integral_zero_measure]; simp
+  · have : ((coinMeasure.real {ω | buildU s ω = w} : ℝ) : ℂ) ≠ 0 := by exact_mod_cast h0
+    field_simp
+
+theorem norm_condMean_le {F : (ℕ → Bool) → ℂ} {B : ℝ} (hB0 : 0 ≤ B) (hFb : ∀ ω, ‖F ω‖ ≤ B)
+    (s : ℕ) (w : List Bool) : ‖condMean F s w‖ ≤ B := by
+  unfold condMean
+  rw [norm_div, Complex.norm_real, Real.norm_of_nonneg measureReal_nonneg]
+  rcases eq_or_lt_of_le (measureReal_nonneg (μ := coinMeasure) (s := {ω | buildU s ω = w}))
+    with h0 | hpos
+  · rw [← h0, div_zero]; exact hB0
+  · rw [div_le_iff₀ hpos]
+    exact norm_setIntegral_le_of_norm_le_const_ae (measure_lt_top _ _)
+      (Eventually.of_forall fun ω => hFb ω)
+
+/-- **Tower property on the stage atoms.** -/
+theorem integral_comp_mul_condMean (s : ℕ) (G : List Bool → ℂ) {F : (ℕ → Bool) → ℂ}
+    (hFm : Measurable F) {B : ℝ} (hB0 : 0 ≤ B) (hFb : ∀ ω, ‖F ω‖ ≤ B) :
+    ∫ ω, G (buildU s ω) * (starRingEnd ℂ) (F ω) ∂coinMeasure =
+      ∫ ω, G (buildU s ω) * (starRingEnd ℂ) (condMean F s (buildU s ω)) ∂coinMeasure := by
+  have hi1 : Integrable (fun ω => G (buildU s ω) * (starRingEnd ℂ) (F ω)) coinMeasure :=
+    integrable_of_bdd ((measurable_comp_buildU s G).mul
+      (Complex.continuous_conj.measurable.comp hFm)).aestronglyMeasurable
+      ((∑ w ∈ LS s, ‖G w‖) * B) fun ω => by
+        rw [norm_mul, Complex.norm_conj]
+        exact mul_le_mul (norm_comp_buildU_le s G ω) (hFb ω) (norm_nonneg _)
+          (Finset.sum_nonneg fun _ _ => norm_nonneg _)
+  have hi2 : Integrable (fun ω => G (buildU s ω) * (starRingEnd ℂ) (condMean F s (buildU s ω)))
+      coinMeasure :=
+    integrable_of_bdd ((measurable_comp_buildU s G).mul
+      (Complex.continuous_conj.measurable.comp
+        (measurable_comp_buildU s (condMean F s)))).aestronglyMeasurable
+      ((∑ w ∈ LS s, ‖G w‖) * B) fun ω => by
+        rw [norm_mul, Complex.norm_conj]
+        exact mul_le_mul (norm_comp_buildU_le s G ω) (norm_condMean_le hB0 hFb s _) (norm_nonneg _)
+          (Finset.sum_nonneg fun _ _ => norm_nonneg _)
+  have hFi : Integrable F coinMeasure := integrable_of_bdd hFm.aestronglyMeasurable B hFb
+  rw [integral_eq_sum_atoms s _ hi1, integral_eq_sum_atoms s _ hi2]
+  refine Finset.sum_congr rfl fun w _ => ?_
+  have eL : ∫ ω in {ω | buildU s ω = w}, G (buildU s ω) * (starRingEnd ℂ) (F ω) ∂coinMeasure =
+      G w * (starRingEnd ℂ) (∫ ω in {ω | buildU s ω = w}, F ω ∂coinMeasure) := by
+    rw [setIntegral_congr_fun (mset_buildU' s w)
+      (g := fun ω => G w * (starRingEnd ℂ) (F ω))
+      (fun ω hω => by simp only [Set.mem_setOf_eq] at hω; simp only [hω]),
+      integral_const_mul, integral_conj]
+  have eR : ∫ ω in {ω | buildU s ω = w}, G (buildU s ω) *
+      (starRingEnd ℂ) (condMean F s (buildU s ω)) ∂coinMeasure =
+      coinMeasure.real {ω | buildU s ω = w} • (G w * (starRingEnd ℂ) (condMean F s w)) := by
+    rw [setIntegral_congr_fun (mset_buildU' s w)
+      (g := fun _ => G w * (starRingEnd ℂ) (condMean F s w))
+      (fun ω hω => by simp only [Set.mem_setOf_eq] at hω; simp only [hω]), setIntegral_const]
+  rw [eL, eR, ← condMean_mul]
+  simp only [map_mul, Complex.conj_ofReal, Complex.real_smul]
+  ring
+
+/-- The averaged conditional bias: `E ‖E[B_m | w_{s_n}]‖`. -/
+noncomputable def biasMix (b C : ℕ) (h : ℤ) (n m : ℕ) : ℝ :=
+  ∫ ω, ‖condMean (localBias b C h m) (stageOf b C n) (buildU (stageOf b C n) ω)‖ ∂coinMeasure
+
+theorem norm_integral_bias_cross (b C : ℕ) (h : ℤ) (n m : ℕ) :
+    ‖∫ ω, localBias b C h n ω * (starRingEnd ℂ) (localBias b C h m ω) ∂coinMeasure‖ ≤
+      2 * biasMix b C h n m := by
+  set s := stageOf b C n
+  set G : List Bool → ℂ := fun w => condChar (h * (b : ℝ) ^ n) s w - contChar (h * (b : ℝ) ^ n) w
+  have hG : ∀ ω, localBias b C h n ω = G (buildU s ω) := fun ω => rfl
+  simp_rw [hG]
+  rw [integral_comp_mul_condMean s G (measurable_localBias b C h m) (by norm_num)
+    (norm_localBias_le b C h m)]
+  have hGb : ∀ w, ‖G w‖ ≤ 2 := by
+    intro w
+    refine (norm_sub_le _ _).trans ?_
+    rw [norm_contChar]
+    linarith [norm_condChar_le (h * (b : ℝ) ^ n) s w,
+      norm_muK_le (h * (b : ℝ) ^ n / 3 ^ w.length)]
+  have hcm : Measurable fun ω => condMean (localBias b C h m) s (buildU s ω) :=
+    measurable_comp_buildU s _
+  refine (norm_integral_le_integral_norm _).trans ?_
+  unfold biasMix
+  rw [← integral_const_mul]
+  refine integral_mono_of_nonneg (Eventually.of_forall fun _ => norm_nonneg _) ?_
+    (Eventually.of_forall fun ω => ?_)
+  · exact (integrable_of_bdd hcm.norm.aestronglyMeasurable 2 fun ω => by
+      rw [norm_norm]; exact norm_condMean_le (by norm_num) (norm_localBias_le b C h m) s _).const_mul 2
+  · simp only
+    rw [norm_mul, Complex.norm_conj]
+    exact mul_le_mul_of_nonneg_right (hGb _) (norm_nonneg _)
+
+/-- **Mixing node for the crux.**  The conditional means of the later local biases on earlier
+stage atoms are small on average: `Σ_{n<m<N} E‖E[B_m | w_{s_n}]‖ = O(N² W(N))`, `W` summable
+along `sched`.  Implies `LocalBiasRate b` (`localBiasRate_of_mixing`).
+
+Content.  By the tower property `E[B_m | w_s]` (`s = s_n < s_m`) is the difference, at the
+frequency `ξ = hbᵐ`, between the conditional character of `resLaw` given `w_s` and that of
+"`resLaw` to stage `s_m`, then the Cantor continuation"; so only the dead corrections of the
+stages near `s_m` enter, through the phases `e(ξ cylLeft w_t)` of the obstacle rationals
+`p/q` (`q ≈ 3^{5 s_m}`) averaged over the resampled blocks between `s` and `s_m`.  Decay in
+`s_m − s` is therefore equidistribution of the phases `e(hbᵐ p/q)` of the obstacles met in a
+coarse cylinder, averaged over the uniformly resampled path.  Same guards as the crux: an
+any-rule argument reduces to `DeadRateDecay` (believed false), and `b = 3` fails
+(`not_casselsRate_three`). -/
+def LocalBiasMixing (b : ℕ) : Prop :=
+  ∀ h : ℤ, h ≠ 0 → ∀ C : ℕ, ∃ (K : ℝ) (W : ℕ → ℝ), Summable (fun j => W (sched j)) ∧
+    ∀ N : ℕ, 1 ≤ N →
+      ∑ m ∈ Finset.range N, ∑ n ∈ Finset.range m, biasMix b C h n m ≤ K * (N : ℝ) ^ 2 * W N
+
+/-- **Mixing node ⇒ moment node.**  Proved (expansion of the second moment, tower property). -/
+theorem localBiasRate_of_mixing {b : ℕ} (hM : LocalBiasMixing b) : LocalBiasRate b := by
+  intro h hh C
+  obtain ⟨K, W, hW, hK⟩ := hM h hh C
+  set S : ℕ → (ℕ → Bool) → ℂ := fun N ω => ∑ n ∈ Finset.range N, localBias b C h n ω
+  have hYm := measurable_localBias b C h
+  have hYb := norm_localBias_le b C h
+  have hSm : ∀ N, Measurable (S N) := fun N => Finset.measurable_sum _ fun n _ => hYm n
+  have hSb : ∀ N ω, ‖S N ω‖ ≤ 2 * N := fun N ω =>
+    (norm_sum_le _ _).trans ((Finset.sum_le_sum fun n _ => hYb n ω).trans (by simp [mul_comm]))
+  have hsq : ∀ N, Integrable (fun ω => ‖S N ω‖ ^ 2) coinMeasure := fun N =>
+    integrable_of_bdd ((hSm N).norm.pow_const 2).aestronglyMeasurable ((2 * N) ^ 2) fun ω => by
+      rw [Real.norm_of_nonneg (by positivity)]
+      exact pow_le_pow_left₀ (norm_nonneg _) (hSb N ω) 2
+  have key : ∀ N : ℕ, ∫ ω, ‖S N ω‖ ^ 2 ∂coinMeasure ≤
+      4 * N + 4 * ∑ m ∈ Finset.range N, ∑ n ∈ Finset.range m, biasMix b C h n m := by
+    intro N
+    induction N with
+    | zero => simp [S]
+    | succ N ih =>
+      have hY2 : Integrable (fun ω => ‖localBias b C h N ω‖ ^ 2) coinMeasure :=
+        integrable_of_bdd ((hYm N).norm.pow_const 2).aestronglyMeasurable (2 ^ 2) fun ω => by
+          rw [Real.norm_of_nonneg (by positivity)]
+          exact pow_le_pow_left₀ (norm_nonneg _) (hYb N ω) 2
+      have hX : Integrable (fun ω => S N ω * (starRingEnd ℂ) (localBias b C h N ω)) coinMeasure :=
+        integrable_of_bdd ((hSm N).mul (Complex.continuous_conj.measurable.comp
+          (hYm N))).aestronglyMeasurable (2 * N * 2) fun ω => by
+            rw [norm_mul, Complex.norm_conj]
+            exact mul_le_mul (hSb N ω) (hYb N ω) (norm_nonneg _) (by positivity)
+      have hpt : ∀ ω, ‖S (N + 1) ω‖ ^ 2 = ‖S N ω‖ ^ 2 + ‖localBias b C h N ω‖ ^ 2 +
+          2 * (S N ω * (starRingEnd ℂ) (localBias b C h N ω)).re := by
+        intro ω
+        rw [show S (N + 1) ω = S N ω + localBias b C h N ω from Finset.sum_range_succ _ _]
+        rw [Complex.sq_norm, Complex.sq_norm, Complex.sq_norm, Complex.normSq_add]
+      rw [integral_congr_ae (Eventually.of_forall hpt)]
+      rw [integral_add (show Integrable (fun ω => ‖S N ω‖ ^ 2 + ‖localBias b C h N ω‖ ^ 2)
+          coinMeasure from (hsq N).add hY2) (show Integrable (fun ω =>
+          2 * (S N ω * (starRingEnd ℂ) (localBias b C h N ω)).re) coinMeasure from
+          hX.re.const_mul 2),
+        integral_add (hsq N) hY2, integral_const_mul]
+      have hre : ∫ ω, (S N ω * (starRingEnd ℂ) (localBias b C h N ω)).re ∂coinMeasure =
+          (∫ ω, S N ω * (starRingEnd ℂ) (localBias b C h N ω) ∂coinMeasure).re := integral_re hX
+      rw [hre]
+      have h1 : ∫ ω, ‖localBias b C h N ω‖ ^ 2 ∂coinMeasure ≤ 4 := by
+        refine (le_abs_self _).trans ?_
+        simpa using norm_integral_le_of_norm_le_const (μ := coinMeasure)
+          (Eventually.of_forall fun ω => (by
+            rw [Real.norm_of_nonneg (by positivity)]
+            have := pow_le_pow_left₀ (norm_nonneg _) (hYb N ω) 2
+            norm_num at this ⊢; exact this : ‖‖localBias b C h N ω‖ ^ 2‖ ≤ 4))
+      have h2 : (∫ ω, S N ω * (starRingEnd ℂ) (localBias b C h N ω) ∂coinMeasure).re ≤
+          ∑ n ∈ Finset.range N, 2 * biasMix b C h n N := by
+        refine (Complex.re_le_norm _).trans ?_
+        have hsplit : ∫ ω, S N ω * (starRingEnd ℂ) (localBias b C h N ω) ∂coinMeasure =
+            ∑ n ∈ Finset.range N, ∫ ω, localBias b C h n ω * (starRingEnd ℂ) (localBias b C h N ω)
+              ∂coinMeasure := by
+          simp only [S, Finset.sum_mul]
+          refine integral_finset_sum _ fun n _ => ?_
+          exact integrable_of_bdd ((hYm n).mul (Complex.continuous_conj.measurable.comp
+            (hYm N))).aestronglyMeasurable (2 * 2) fun ω => by
+              rw [norm_mul, Complex.norm_conj]
+              exact mul_le_mul (hYb n ω) (hYb N ω) (norm_nonneg _) (by norm_num)
+        rw [hsplit]
+        exact (norm_sum_le _ _).trans (Finset.sum_le_sum fun n _ =>
+          norm_integral_bias_cross b C h n N)
+      have ih' : ∫ ω, ‖S N ω‖ ^ 2 ∂coinMeasure ≤
+          4 * N + 4 * ∑ m ∈ Finset.range N, ∑ n ∈ Finset.range m, biasMix b C h n m := ih
+      rw [Finset.sum_range_succ (fun m => ∑ n ∈ Finset.range m, biasMix b C h n m), ← Finset.mul_sum] at *
+      push_cast
+      linarith
+  refine ⟨1, fun N => 4 * (N : ℝ) ^ (-(1 : ℝ)) + 4 * K * W N,
+    ((summable_sched_rpow one_pos).mul_left 4).add (hW.mul_left (4 * K)), fun N hN => ?_⟩
+  refine (key N).trans ?_
+  have hN0 : (0 : ℝ) < N := by exact_mod_cast hN
+  have := hK N hN
+  show _ ≤ 1 * (N : ℝ) ^ 2 * (4 * (N : ℝ) ^ (-(1 : ℝ)) + 4 * K * W N)
+  rw [Real.rpow_neg_one]
+  have e : (1 : ℝ) * N ^ 2 * (4 * (N : ℝ)⁻¹ + 4 * K * W N) = 4 * N + 4 * (K * N ^ 2 * W N) := by
+    field_simp
+  rw [e]; linarith
+
+/-- **The crux, mixing form** (open; believed 60%).  `resLaw` satisfies `LocalBiasMixing` in
+every base `b ≥ 2` prime to 3.  A proof must use the uniformity of the resampled blocks between
+`s_n` and `s_m` and `3 ∤ b`. -/
+theorem localBiasMixing_resLaw {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) : LocalBiasMixing b := by
+  sorry
+
+/-- **The moment form of the crux** (proved from `localBiasMixing_resLaw`; believed 65%: stronger than `LocalDeadBias`, which it
+implies via `localDeadBias_of_rate`).  `resLaw` satisfies `LocalBiasRate` in every base `b ≥ 2`
+prime to 3.  Same guards as `localDeadBias_resLaw`: a proof must use the uniformity of the
+resampled block and `3 ∤ b`. -/
+theorem localBiasRate_resLaw {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) : LocalBiasRate b :=
+  localBiasRate_of_mixing (localBiasMixing_resLaw hb h3)
+
+/-- **The local form of the crux** (believed 75%; proved from the moment form `localBiasRate_resLaw`).  `resLaw` satisfies `LocalDeadBias` in every
+base `b ≥ 2` prime to 3.  See `LocalDeadBias` for the content, the evidence and the controls.
+A proof must use the uniformity of the resampled block (any-rule arguments reduce to
+`DeadRateDecay`, believed false) and `3 ∤ b` (`not_casselsRate_three`). -/
+theorem localDeadBias_resLaw {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) : LocalDeadBias b :=
+  localDeadBias_of_rate (localBiasRate_resLaw hb h3)
 
 /-- Weyl's criterion along the orbit `bᵏ x`.  Proved (the closing step of
 `CantorLiouvilleAll.ae_isNormal_of_secondMoment`). -/

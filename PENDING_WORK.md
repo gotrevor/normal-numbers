@@ -3011,3 +3011,9 @@ Next: (1) prove the reduction (needs pair-averaged partial Cantor products, Cass
   `≤ cos(π/10)`, via the tripling argument `int_of_close`).  Both standard leaves now closed.
   Only open on-path obligation: crux `localBiasRate_resLaw` (line ~2975).  Off-path: `midStages`,
   `fourierPairRate_descent_of_deadRateDecay`.
+* (lap 7, later) Second split of the crux (DIRECTION mandate): `condMean` (conditional mean on stage
+  atoms), tower property `integral_comp_mul_condMean`, `biasMix`, `norm_integral_bias_cross`,
+  node `LocalBiasMixing`, PROVED `localBiasRate_of_mixing`.  Crux now `localBiasMixing_resLaw`
+  (sorry, believed 60%).  Next: express `E[B_m | w_s]` via the tower property as a difference of
+  two conditional characters at `ξ = hbᵐ` and telescope over stages `t ∈ [s_m, s_m + C/10 + O(1)]`
+  (`stage_telescope`), isolating the obstacle-phase sum.
