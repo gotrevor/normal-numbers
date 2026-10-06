@@ -60,7 +60,24 @@ affordable.  A collapse is a proof; a failing assignment is only "no certificate
   candidates `m ≤ 40` plus the 200 best Liouville-covering `m ≤ 3125`, 2000-leaf sampled scoring:
   `+16` 4611, `+29` 12186, `+23` 25161, `+17` 42032, `+1838` 57622, `+2832` 50180 (first
   decline; `2832 = 42312₅` has all four nonzero digits), `+3028` 21890, `+2272` 8353.
-  Growth factors 3.3, 2.6, 2.1, 1.7, 1.4, 0.87, 0.44, 0.38 at ~5 min/step.
+  Growth factors 3.3, 2.6, 2.1, 1.7, 1.4, 0.87, 0.44, 0.38 at ~5 min/step, then `+2439` 1829,
+  `+2188` 473, `+1251` 32, `+1254` **0**.
+
+## 🎯 A base-5 product block (2026-10-05, ~20:45)
+
+    S = {1, 2, 3, 4, 8, 16, 17, 23, 29, 1251, 1254, 1838, 2188, 2272, 2439, 2832, 3028}
+
+> **For every irrational x, one of these 17 multiples of x has every base-5 digit infinitely
+> often.**  (Classical comparison: ~12,500 multipliers, `[1, 15624] \ 5ℤ`, via
+> `mahler_multiplier_lt` on the word `01234`.)
+
+- Certificate: every assignment S → digits collapses on some prefix (exact carry-automaton
+  collapse, the C2 method).  Found by the Rust greedy (first-level `d ↦ 4−d` symmetry).
+- Re-verification: Rust full DFS without the symmetry reduction, and the Python reference
+  checker - see below.
+- Greedy, so not minimal.  Large members in base 5: see the verification block.
+- Lean: `checkCertA` enumerates the ambient carry product (here ∏ m ≈ 10⁴⁰), so a Lean
+  certificate needs a sparse, live-states-only checker.
 
 ## Status
 
