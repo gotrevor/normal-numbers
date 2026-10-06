@@ -119,3 +119,12 @@ avoided 4-word is a constraint too weak to collapse anything alone, and the leaf
 multiplies by up to 16 per member before collapses start.  Killed.  A 4-word block needs a
 different search: seed with many large members at once, or score on the core's entropy rather
 than its survival.
+
+## Is x, 3x, 5x the first of a family?  No (later, 2026-10-06)
+
+`{1, 2^k−1, 2^k+1}` for "both `0^k` and `1^k`" fails from k = 3 (x, 7x, 9x can all avoid
+`000`); `{1, g−1, g+1}` for "both digit 0 and digit g−1" fails in bases 4 to 13 and 16.  Run-block
+sizes: 1, 3, then at least 5 (none of 4 odd members up to 64; greedy found 9).  Base 4,
+digits {0, 3}: 4 members.  The run greedy stalls from k = 4 the way the 4-word greedy did: k = 4
+reached 11 members with failing leaves still rising (509 → 1013), and k = 5 tied on every
+candidate.  Lean: `not_isWordSetBlock_*`, Maze row "x, 3x, 5x as the first member of a family".
