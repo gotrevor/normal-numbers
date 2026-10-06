@@ -109,3 +109,13 @@ Suppose x is irrational and none of x, 3x, 5x has both `00` and `11` i.o.  Compl
 Contradiction.  The proof also says why 5 is needed: any irrational `A`/`B` word beats
 `{1, 3}`.  It is now in `isWordBlock_two_two_one_three_five`'s docstring, and the test suite
 checks both halves (`test_rust_x_3x_5x_hand_proof`).
+
+## Binary 4-words: the greedy instrument stalls (later, 2026-10-06)
+
+`wgreedy 2 4` over odd `m < 128` plus 150 Liouville-full `m ∈ [2479, 20000)` added
+`1, 3, 5, 7` in 2 hours, with failing leaves 8 → 128 → 2048 → 32,668.  From the third step every
+candidate tied on the sample (960 survivors each), so the score carried no signal.  One
+avoided 4-word is a constraint too weak to collapse anything alone, and the leaf count
+multiplies by up to 16 per member before collapses start.  Killed.  A 4-word block needs a
+different search: seed with many large members at once, or score on the core's entropy rather
+than its survival.
