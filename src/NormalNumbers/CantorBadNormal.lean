@@ -3869,6 +3869,85 @@ theorem muK_stage (ξ : ℝ) (L : ℕ) : muK (ξ / 3 ^ L) = rhoS ξ L * muK (ξ 
   rw [muK_iter ξ L 10, rhoS_eq_prod, Fin.prod_univ_eq_prod_range
     (fun i => (1 + ee (2 * ξ / 3 ^ (L + i + 1))) / 2)]
 
+
+open Classical in
+/-- The child atoms of a stage-`S` atom: uniform on the alive children. -/
+theorem real_child (S : ℕ) (w : List Bool) (hl : w.length = 10 * S) (f : Fin 10 → Bool) :
+    coinMeasure.real {ω | buildU (S + 1) ω = w ++ List.ofFn f} =
+      if f ∈ aliveSet w then coinMeasure.real {ω | buildU S ω = w} / (aliveSet w).card else 0 := by
+  have hc : ((aliveSet w).card : ℝ) ≠ 0 := by exact_mod_cast (card_aliveSet_pos w).ne'
+  split_ifs with hf
+  · have h1 := buildU_succ_uniform S w (List.ofFn f) ⟨by simp, (Finset.mem_filter.1 hf).2⟩
+    have h2 := congrArg ENNReal.toReal h1
+    rw [ENNReal.toReal_mul, ENNReal.toReal_natCast] at h2
+    rw [eq_div_iff hc]; exact h2
+  · have : {ω | buildU (S + 1) ω = w ++ List.ofFn f} = ∅ := by
+      ext ω
+      simp only [Set.mem_setOf_eq, Set.mem_empty_iff_false, iff_false]
+      intro h
+      change buildU S ω ++ selU (buildU S ω) ω S = w ++ List.ofFn f at h
+      have h1 := (List.append_inj h (by rw [length_buildU, hl])).1
+      rw [h1] at h
+      have h2 := List.append_cancel_left h
+      apply hf
+      simp only [aliveSet, Finset.mem_filter, Finset.mem_univ, true_and]
+      rw [← h2, ← h1]; exact (selU_alive _ ω S).2
+    rw [this]; simp
+
+theorem setIntegral_buildU_succ (S : ℕ) {w : List Bool} (hw : w ∈ LS S) (G : List Bool → ℂ) :
+    ∫ ω in {ω | buildU S ω = w}, G (buildU (S + 1) ω) ∂coinMeasure =
+      ∑ f : Fin 10 → Bool, coinMeasure.real {ω | buildU (S + 1) ω = w ++ List.ofFn f} •
+        G (w ++ List.ofFn f) := by
+  classical
+  set H : List Bool → ℂ := fun v => if v.take (10 * S) = w then G v else 0
+  have hind : {ω | buildU S ω = w}.indicator (fun ω => G (buildU (S + 1) ω)) =
+      fun ω => H (buildU (S + 1) ω) := by
+    funext ω
+    simp only [Set.indicator, Set.mem_setOf_eq, H, buildU_take (Nat.le_succ S)]
+  rw [← integral_indicator (mset_buildU' S w), hind, integral_buildU_succ S H]
+  rw [Finset.sum_eq_single w]
+  · refine Finset.sum_congr rfl fun f _ => ?_
+    simp only [H]
+    rw [List.take_left' (by rw [length_of_mem_LS hw])]; simp
+  · intro w' hw' hne
+    refine Finset.sum_eq_zero fun f _ => ?_
+    simp only [H]
+    rw [List.take_left' (by rw [length_of_mem_LS hw']), if_neg hne, smul_zero]
+  · intro h; exact absurd hw h
+
+/-- **One stage of the Cantor-continued character.**  On a stage-`S` atom, the next stage's
+Cantor-continued character averages to the current one minus the dead correction. -/
+theorem setIntegral_contChar_succ (ξ : ℝ) (S : ℕ) {w : List Bool} (hw : w ∈ LS S) :
+    ∫ ω in {ω | buildU S ω = w}, contChar ξ (buildU (S + 1) ω) ∂coinMeasure =
+      (coinMeasure.real {ω | buildU S ω = w} : ℂ) * (contChar ξ w -
+        ee (ξ * cylLeft w) * deadErr ξ w * muK (ξ / 3 ^ (w.length + 10))) := by
+  classical
+  have hl := length_of_mem_LS hw
+  rw [setIntegral_buildU_succ S hw]
+  set m := coinMeasure.real {ω | buildU S ω = w}
+  set c := (aliveSet w).card
+  have hc : (c : ℂ) ≠ 0 := by exact_mod_cast (card_aliveSet_pos w).ne'
+  have hch : ∀ f : Fin 10 → Bool, contChar ξ (w ++ List.ofFn f) =
+      ee (ξ * cylLeft w) * ee (ξ * J f / 3 ^ (w.length + 10)) * muK (ξ / 3 ^ (w.length + 10)) := by
+    intro f
+    unfold contChar
+    rw [cylLeft_child, ← ee_add, List.length_append, List.length_ofFn]
+    congr 2; ring
+  simp only [real_child S w (by rw [hl]) , hch, ite_smul, zero_smul]
+  rw [Finset.sum_ite_mem, Finset.univ_inter]
+  have avg := alive_avg ξ w
+  have hsum : ∑ f ∈ aliveSet w, (m / c) • (ee (ξ * cylLeft w) * ee (ξ * J f / 3 ^ (w.length + 10)) *
+      muK (ξ / 3 ^ (w.length + 10))) = (m : ℂ) * ee (ξ * cylLeft w) * muK (ξ / 3 ^ (w.length + 10)) *
+        ((1 / (c : ℂ)) * ∑ f ∈ aliveSet w, ee (ξ * J f / 3 ^ (w.length + 10))) := by
+    rw [Finset.mul_sum, Finset.mul_sum]
+    refine Finset.sum_congr rfl fun f _ => ?_
+    rw [Complex.real_smul]; push_cast
+    field_simp
+  rw [hsum, avg]
+  unfold contChar
+  rw [muK_stage ξ w.length]
+  ring
+
 /-- The averaged conditional bias: `E ‖E[B_m | w_{s_n}]‖`. -/
 noncomputable def biasMix (b C : ℕ) (h : ℤ) (n m : ℕ) : ℝ :=
   ∫ ω, ‖condMean (localBias b C h m) (stageOf b C n) (buildU (stageOf b C n) ω)‖ ∂coinMeasure
