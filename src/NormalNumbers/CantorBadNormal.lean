@@ -5193,66 +5193,74 @@ theorem sqrt_diag_eq (k : ℕ) : Real.sqrt (2048 ^ 2 / 1024 ^ k) = 2048 * (1 / 3
     rw [mul_pow, ← pow_mul, mul_comm k 2, pow_mul]; norm_num [one_div, inv_pow, div_eq_mul_inv]; ring_nf; simp [one_div]]
   exact Real.sqrt_sq (by positivity)
 
-theorem one_div_32_pow_div20_le (j : ℕ) : (1 / 32 : ℝ) ^ (j / 20) ≤ 32 * (31 / 32 : ℝ) ^ j := by
+theorem inv_pow_div20_le {c : ℝ} (hc : 2 ≤ c) (j : ℕ) :
+    (1 / c) ^ (j / 20) ≤ c * (31 / 32 : ℝ) ^ j := by
+  have hc0 : 0 < c := by linarith
   have hj : j ≤ 20 * (j / 20 + 1) := by omega
   have h1 : (31 / 32 : ℝ) ^ (20 * (j / 20 + 1)) ≤ (31 / 32 : ℝ) ^ j :=
     pow_le_pow_of_le_one (by norm_num) (by norm_num) hj
-  have h2 : (1 / 32 : ℝ) ^ (j / 20 + 1) ≤ (31 / 32 : ℝ) ^ (20 * (j / 20 + 1)) := by
-    rw [pow_mul]; exact pow_le_pow_left₀ (by norm_num) (by norm_num) _
+  have hb : 1 / c ≤ (31 / 32 : ℝ) ^ 20 := by
+    rw [div_le_iff₀ hc0]; nlinarith [show (1 : ℝ) / 2 ≤ (31 / 32 : ℝ) ^ 20 by norm_num]
+  have h2 : (1 / c) ^ (j / 20 + 1) ≤ (31 / 32 : ℝ) ^ (20 * (j / 20 + 1)) := by
+    rw [pow_mul]; exact pow_le_pow_left₀ (by positivity) hb _
   have h3 := h2.trans h1
   rw [pow_succ] at h3
-  linarith
+  have e : (1 / c) ^ (j / 20) = ((1 / c) ^ (j / 20) * (1 / c)) * c := by field_simp
+  rw [e]; nlinarith [pow_nonneg (show (0 : ℝ) ≤ 1 / c by positivity) (j / 20)]
 
-theorem diag_term_le {b : ℕ} (hb : 2 ≤ b) (C : ℕ) {n m t : ℕ} (hnm : n < m)
+theorem diag_term_le {b : ℕ} (hb : 2 ≤ b) (C : ℕ) {c : ℝ} (hc : 2 ≤ c) {n m t : ℕ} (hnm : n < m)
     (ht : stageOf b C m ≤ t) :
-    (1 / 32 : ℝ) ^ (t - stageOf b C n) ≤
-      32 ^ C * 32 * (1 / 32 : ℝ) ^ (t - stageOf b C m) * (31 / 32 : ℝ) ^ (m - 1 - n) := by
+    (1 / c) ^ (t - stageOf b C n) ≤
+      c ^ C * c * (1 / c) ^ (t - stageOf b C m) * (31 / 32 : ℝ) ^ (m - 1 - n) := by
+  have hc0 : 0 < c := by linarith
+  have hr1 : 1 / c ≤ 1 := by rw [div_le_one hc0]; linarith
+  have hr0 : 0 ≤ 1 / c := by positivity
   have hg := stageOf_gap hb C hnm.le
   have hmo := stageOf_mono b C (by omega) hnm.le
   set a := (m - n) / 20
   have hexp : t - stageOf b C m + (a - C) ≤ t - stageOf b C n := by omega
-  have r1 : (1 / 32 : ℝ) ^ (t - stageOf b C n) ≤ (1 / 32 : ℝ) ^ (t - stageOf b C m + (a - C)) :=
-    pow_le_pow_of_le_one (by norm_num) (by norm_num) hexp
-  have r2 : (1 / 32 : ℝ) ^ (a - C) ≤ 32 ^ C * (1 / 32 : ℝ) ^ a := by
-    have : (1 / 32 : ℝ) ^ a ≥ (1 / 32 : ℝ) ^ (a - C + C) :=
-      pow_le_pow_of_le_one (by norm_num) (by norm_num) (by omega)
+  have r1 : (1 / c) ^ (t - stageOf b C n) ≤ (1 / c) ^ (t - stageOf b C m + (a - C)) :=
+    pow_le_pow_of_le_one hr0 hr1 hexp
+  have r2 : (1 / c) ^ (a - C) ≤ c ^ C * (1 / c) ^ a := by
+    have : (1 / c) ^ a ≥ (1 / c) ^ (a - C + C) := pow_le_pow_of_le_one hr0 hr1 (by omega)
     rw [pow_add] at this
-    have e : (32 : ℝ) ^ C * (1 / 32) ^ C = 1 := by rw [← mul_pow]; norm_num
-    nlinarith [pow_nonneg (show (0 : ℝ) ≤ 1 / 32 by norm_num) (a - C),
-      pow_nonneg (show (0 : ℝ) ≤ 32 by norm_num) C]
-  have r3 : (1 / 32 : ℝ) ^ a ≤ 32 * (31 / 32 : ℝ) ^ (m - 1 - n) :=
-    (one_div_32_pow_div20_le _).trans (mul_le_mul_of_nonneg_left
-      (pow_le_pow_of_le_one (by norm_num) (by norm_num) (by omega)) (by norm_num))
+    have e : c ^ C * (1 / c) ^ C = 1 := by rw [← mul_pow]; field_simp; simp
+    nlinarith [pow_nonneg hr0 (a - C), pow_nonneg hc0.le C]
+  have r3 : (1 / c) ^ a ≤ c * (31 / 32 : ℝ) ^ (m - 1 - n) :=
+    (inv_pow_div20_le hc _).trans (mul_le_mul_of_nonneg_left
+      (pow_le_pow_of_le_one (by norm_num) (by norm_num) (by omega)) hc0.le)
   rw [pow_add] at r1
-  have p0 : (0 : ℝ) ≤ (1 / 32 : ℝ) ^ (t - stageOf b C m) := by positivity
+  have p0 : (0 : ℝ) ≤ (1 / c) ^ (t - stageOf b C m) := pow_nonneg hr0 _
   calc _ ≤ _ := r1
-    _ ≤ (1 / 32 : ℝ) ^ (t - stageOf b C m) * (32 ^ C * (32 * (31 / 32 : ℝ) ^ (m - 1 - n))) :=
+    _ ≤ (1 / c) ^ (t - stageOf b C m) * (c ^ C * (c * (31 / 32 : ℝ) ^ (m - 1 - n))) :=
         mul_le_mul_of_nonneg_left (r2.trans (mul_le_mul_of_nonneg_left r3 (by positivity))) p0
     _ = _ := by ring
 
-/-- **The diagonal leaf.**  Proved: the near-scale diagonal sum is `O(N)`. -/
-theorem diagSmall_of_two_le {b : ℕ} (hb : 2 ≤ b) : DiagSmall b := by
-  intro C
-  refine ⟨2048 * 32 ^ C * 32 * 32 * 32, fun N => (N : ℝ) ^ (-(1 : ℝ)),
-    summable_sched_rpow one_pos, fun N hN => ?_⟩
-  have hN0 : (0 : ℝ) < N := by exact_mod_cast hN
+/-- **Geometric near-scale sums are `O(N)`.**  For `c ≥ 2`, the near-scale sum of
+`(1/c)^{t − s_n}` is at most `K N`.  Proved. -/
+theorem geomNear_le {b : ℕ} (hb : 2 ≤ b) (C : ℕ) {c : ℝ} (hc : 2 ≤ c) (N : ℕ) :
+    ∑ m ∈ Finset.range N, ∑ n ∈ Finset.range m,
+      ∑ t ∈ Finset.Ico (stageOf b C m) (stageOf b C m + (Nat.log 3 N + 1)), (1 / c) ^ (t - stageOf b C n) ≤
+        c ^ C * c * 2 * 32 * N := by
+  have hc0 : 0 < c := by linarith
   have inner : ∀ m n, n < m → ∑ t ∈ Finset.Ico (stageOf b C m) (stageOf b C m + (Nat.log 3 N + 1)),
-      Real.sqrt (2048 ^ 2 / 1024 ^ (t - stageOf b C n)) ≤
-        2048 * 32 ^ C * 32 * 32 * (31 / 32 : ℝ) ^ (m - 1 - n) := by
+      (1 / c) ^ (t - stageOf b C n) ≤ c ^ C * c * 2 * (31 / 32 : ℝ) ^ (m - 1 - n) := by
     intro m n hnm
-    simp_rw [sqrt_diag_eq]
     calc _ ≤ ∑ t ∈ Finset.Ico (stageOf b C m) (stageOf b C m + (Nat.log 3 N + 1)),
-          2048 * (32 ^ C * 32 * (31 / 32 : ℝ) ^ (m - 1 - n)) * (1 / 32 : ℝ) ^ (t - stageOf b C m) :=
+          (c ^ C * c * (31 / 32 : ℝ) ^ (m - 1 - n)) * (1 / c) ^ (t - stageOf b C m) :=
           Finset.sum_le_sum fun t ht => by
-            have := diag_term_le hb C hnm (Finset.mem_Ico.1 ht).1
-            nlinarith [pow_nonneg (show (0 : ℝ) ≤ 1 / 32 by norm_num) (t - stageOf b C m)]
-      _ = 2048 * (32 ^ C * 32 * (31 / 32 : ℝ) ^ (m - 1 - n)) *
-          ∑ i ∈ Finset.Ico 0 (Nat.log 3 N + 1), (1 / 32 : ℝ) ^ i := by
+            have := diag_term_le hb C hc hnm (Finset.mem_Ico.1 ht).1
+            linarith
+      _ = (c ^ C * c * (31 / 32 : ℝ) ^ (m - 1 - n)) *
+          ∑ i ∈ Finset.Ico 0 (Nat.log 3 N + 1), (1 / c) ^ i := by
           rw [← Finset.mul_sum, Finset.sum_Ico_eq_sum_range, Finset.sum_Ico_eq_sum_range]
           simp
-      _ ≤ 2048 * (32 ^ C * 32 * (31 / 32 : ℝ) ^ (m - 1 - n)) * 32 := by
-          refine mul_le_mul_of_nonneg_left ((geom_sum_Ico_le_of_lt_one (by norm_num)
-            (by norm_num)).trans (by norm_num)) (by positivity)
+      _ ≤ (c ^ C * c * (31 / 32 : ℝ) ^ (m - 1 - n)) * 2 := by
+          refine mul_le_mul_of_nonneg_left ((geom_sum_Ico_le_of_lt_one (by positivity)
+            (by rw [div_lt_one hc0]; linarith)).trans ?_) (by positivity)
+          rw [pow_zero, div_le_iff₀ (by rw [sub_pos, div_lt_one hc0]; linarith)]
+          have : 1 / c ≤ 1 / 2 := one_div_le_one_div_of_le (by norm_num) hc
+          linarith
       _ = _ := by ring
   have mid : ∀ m, ∑ n ∈ Finset.range m, (31 / 32 : ℝ) ^ (m - 1 - n) ≤ 32 := by
     intro m
@@ -5261,16 +5269,24 @@ theorem diagSmall_of_two_le {b : ℕ} (hb : 2 ≤ b) : DiagSmall b := by
     rw [← Finset.range_eq_Ico] at h
     exact h.trans (by norm_num)
   calc _ ≤ ∑ m ∈ Finset.range N, ∑ n ∈ Finset.range m,
-        2048 * 32 ^ C * 32 * 32 * (31 / 32 : ℝ) ^ (m - 1 - n) :=
+        c ^ C * c * 2 * (31 / 32 : ℝ) ^ (m - 1 - n) :=
         Finset.sum_le_sum fun m _ => Finset.sum_le_sum fun n hn =>
           inner m n (Finset.mem_range.1 hn)
-    _ ≤ ∑ m ∈ Finset.range N, (2048 * 32 ^ C * 32 * 32 * 32 : ℝ) := Finset.sum_le_sum fun m _ => by
+    _ ≤ ∑ m ∈ Finset.range N, (c ^ C * c * 2 * 32 : ℝ) := Finset.sum_le_sum fun m _ => by
         rw [← Finset.mul_sum]
-        exact (mul_le_mul_of_nonneg_left (mid m) (by positivity)).trans (le_of_eq (by ring))
-    _ = _ := by
-        dsimp only
-        simp only [Finset.sum_const, Finset.card_range, nsmul_eq_mul, Real.rpow_neg_one]
-        field_simp
+        exact mul_le_mul_of_nonneg_left (mid m) (by positivity)
+    _ = _ := by rw [Finset.sum_const, Finset.card_range, nsmul_eq_mul]; ring
+
+/-- **The diagonal leaf.**  Proved: the near-scale diagonal sum is `O(N)`. -/
+theorem diagSmall_of_two_le {b : ℕ} (hb : 2 ≤ b) : DiagSmall b := by
+  intro C
+  refine ⟨2048 * ((32 : ℝ) ^ C * 32 * 2 * 32), fun N => (N : ℝ) ^ (-(1 : ℝ)),
+    summable_sched_rpow one_pos, fun N hN => ?_⟩
+  have hN0 : (0 : ℝ) < N := by exact_mod_cast hN
+  simp_rw [sqrt_diag_eq, ← Finset.mul_sum]
+  calc _ ≤ 2048 * ((32 : ℝ) ^ C * 32 * 2 * 32 * N) :=
+        mul_le_mul_of_nonneg_left (geomNear_le hb C (c := 32) (by norm_num) N) (by norm_num)
+    _ = _ := by simp only [Real.rpow_neg_one]; field_simp
 
 theorem sqrt_secondMoment_le (ξ : ℝ) (k s : ℕ) :
     Real.sqrt (∫ ω, ‖obstSum ξ k (buildU s ω)‖ ^ 2 ∂coinMeasure) ≤
