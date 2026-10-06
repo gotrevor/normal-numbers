@@ -4329,13 +4329,136 @@ theorem localBiasMixing_of_obstaclePhase {b : ℕ} (hb : 2 ≤ b) (hO : Obstacle
     simpa using this.const_add (K * (N : ℝ) ^ 2 * W N)
   exact ge_of_tendsto ht (Eventually.of_forall hbound)
 
-/-- **The crux, obstacle-phase form** (open; believed 50%).  `resLaw` satisfies
-`ObstaclePhaseMixing` in every base `b ≥ 2` prime to 3.  A proof must use `3 ∤ b` and the
+/-- **Stages above the scale of `bᵐ` are geometrically negligible.** -/
+theorem deadMix_le (b C : ℕ) (hb : 1 ≤ b) (h : ℤ) (n m t : ℕ) (ht : stageOf b C m ≤ t) :
+    deadMix b C h n m t ≤
+      2048 * Real.pi * |(h : ℝ)| * 3 ^ (C + 10) * (1 / 3 ^ 10) ^ (t - stageOf b C m) := by
+  set a := stageOf b C m
+  set ξ : ℝ := h * (b : ℝ) ^ m
+  have hp : (0 : ℝ) < 3 ^ (10 * t) := by positivity
+  have hξ : |ξ| / 3 ^ (10 * t) ≤ |(h : ℝ)| * 3 ^ (C + 10) * (1 / 3 ^ 10) ^ (t - a) := by
+    have h1 := pow_le_stage b C m hb
+    have e : (1 / (3 : ℝ) ^ 10) ^ (t - a) = 3 ^ (10 * a) / 3 ^ (10 * t) := by
+      rw [one_div_pow, ← pow_mul, eq_div_iff hp.ne', ← pow_sub_mul_pow 3 (by omega : 10 * a ≤ 10 * t)]
+      rw [show 10 * t - 10 * a = 10 * (t - a) by omega]
+      field_simp
+    rw [e, abs_mul, abs_of_nonneg (by positivity : (0 : ℝ) ≤ (b : ℝ) ^ m), div_le_iff₀ hp]
+    rw [show |(h : ℝ)| * 3 ^ (C + 10) * (3 ^ (10 * a) / 3 ^ (10 * t)) * 3 ^ (10 * t) =
+      |(h : ℝ)| * (3 ^ (C + 10) * 3 ^ (10 * a)) by field_simp]
+    exact mul_le_mul_of_nonneg_left h1 (abs_nonneg _)
+  have hB : ∀ ω, ‖deadCorr ξ (buildU t ω)‖ ≤ 1024 * (2 * Real.pi * |ξ| / 3 ^ (10 * t)) := by
+    intro ω
+    unfold deadCorr
+    rw [norm_mul, norm_mul, norm_ee, one_mul]
+    have := norm_deadErr_le ξ (buildU t ω)
+    rw [length_buildU] at this
+    exact (mul_le_of_le_one_right (norm_nonneg _) (norm_muK_le _)).trans this
+  unfold deadMix
+  refine (integral_mono_of_nonneg (Eventually.of_forall fun _ => norm_nonneg _)
+    (integrable_const (1024 * (2 * Real.pi * |ξ| / 3 ^ (10 * t))))
+    (Eventually.of_forall fun ω => norm_condMean_le (by positivity) hB _ _)).trans ?_
+  simp only [integral_const, probReal_univ, one_smul]
+  have e2 : 1024 * (2 * Real.pi * |ξ| / 3 ^ (10 * t)) = 2048 * Real.pi * (|ξ| / 3 ^ (10 * t)) := by
+    ring
+  rw [e2]
+  have := mul_le_mul_of_nonneg_left hξ (by positivity : (0 : ℝ) ≤ 2048 * Real.pi)
+  linarith
+
+/-- **Near-scale obstacle-phase node.**  `ObstaclePhaseMixing` restricted to the
+`⌊log₃ N⌋ + 1` stages at and just above the scale of `bᵐ`; the higher stages are negligible
+(`deadMix_le`).  Implies `ObstaclePhaseMixing b` (`obstaclePhaseMixing_of_near`).  Believed 50%
+for `3 ∤ b`; same content and guards as `ObstaclePhaseMixing`. -/
+def NearObstaclePhaseMixing (b : ℕ) : Prop :=
+  ∀ h : ℤ, h ≠ 0 → ∀ C : ℕ, ∃ (K : ℝ) (W : ℕ → ℝ), Summable (fun j => W (sched j)) ∧
+    ∀ N : ℕ, 1 ≤ N →
+      ∑ m ∈ Finset.range N, ∑ n ∈ Finset.range m,
+        ∑ t ∈ Finset.Ico (stageOf b C m) (stageOf b C m + (Nat.log 3 N + 1)), deadMix b C h n m t ≤
+          K * (N : ℝ) ^ 2 * W N
+
+theorem deadMix_nonneg (b C : ℕ) (h : ℤ) (n m t : ℕ) : 0 ≤ deadMix b C h n m t :=
+  integral_nonneg fun _ => norm_nonneg _
+
+/-- **Near-scale node ⇒ obstacle-phase node.**  Proved (geometric tail). -/
+theorem obstaclePhaseMixing_of_near {b : ℕ} (hb : 2 ≤ b) (hO : NearObstaclePhaseMixing b) :
+    ObstaclePhaseMixing b := by
+  intro h hh C
+  obtain ⟨K, W, hW, hK⟩ := hO h hh C
+  set c : ℝ := 2048 * Real.pi * |(h : ℝ)| * 3 ^ (C + 10) with hc
+  have hc0 : 0 ≤ c := by positivity
+  refine ⟨1, fun N => K * W N + 2 * c * (N : ℝ) ^ (-(1 : ℝ)),
+    hW.mul_left K |>.add ((summable_sched_rpow one_pos).mul_left (2 * c)), fun N hN k => ?_⟩
+  set R := Nat.log 3 N + 1
+  have hN0 : (0 : ℝ) < N := by exact_mod_cast hN
+  -- geometric tail per pair
+  have htail : ∀ m n, ∑ t ∈ Finset.Ico (stageOf b C m + R) (stageOf b C m + max k R),
+      deadMix b C h n m t ≤ 2 * c / N := by
+    intro m n
+    set a := stageOf b C m
+    have hR : (N : ℝ) < 3 ^ R := by exact_mod_cast Nat.lt_pow_succ_log_self (by norm_num) N
+    calc ∑ t ∈ Finset.Ico (a + R) (a + max k R), deadMix b C h n m t
+        ≤ ∑ t ∈ Finset.Ico (a + R) (a + max k R), c * (1 / 3 ^ 10) ^ (t - a) :=
+          Finset.sum_le_sum fun t ht => (deadMix_le b C (by omega) h n m t
+            (by have := (Finset.mem_Ico.1 ht).1; omega)).trans (le_of_eq (by rw [hc]))
+      _ = ∑ j ∈ Finset.range (max k R - R), c * (1 / 3 ^ 10) ^ (R + j) := by
+          rw [Finset.sum_Ico_eq_sum_range]
+          refine Finset.sum_congr (by congr 1; omega) fun j _ => by congr 2; omega
+      _ = c * (1 / 3 ^ 10) ^ R * ∑ j ∈ Finset.range (max k R - R), (1 / 3 ^ 10 : ℝ) ^ j := by
+          rw [Finset.mul_sum]; refine Finset.sum_congr rfl fun j _ => by rw [pow_add]; ring
+      _ ≤ c * (1 / 3 ^ 10) ^ R * 2 := by
+          gcongr
+          rw [geom_sum_eq (by norm_num)]
+          have : (0 : ℝ) ≤ (1 / 3 ^ 10) ^ (max k R - R) := by positivity
+          rw [div_le_iff_of_neg (by norm_num)]
+          nlinarith
+      _ ≤ 2 * c / N := by
+          have h1 : (1 / (3 : ℝ) ^ 10) ^ R ≤ 1 / 3 ^ R := by
+            rw [one_div_pow, ← pow_mul]
+            exact one_div_le_one_div_of_le (by positivity)
+              (pow_le_pow_right₀ (by norm_num) (by nlinarith))
+          have h2 : (1 : ℝ) / 3 ^ R ≤ 1 / N := one_div_le_one_div_of_le hN0 hR.le
+          have := mul_le_mul_of_nonneg_left (h1.trans h2) hc0
+          rw [show 2 * c / N = c * (1 / N) * 2 by ring]
+          nlinarith
+  have hsplit : ∀ m n, ∑ t ∈ Finset.Ico (stageOf b C m) (stageOf b C m + k), deadMix b C h n m t ≤
+      ∑ t ∈ Finset.Ico (stageOf b C m) (stageOf b C m + R), deadMix b C h n m t + 2 * c / N := by
+    intro m n
+    set a := stageOf b C m
+    have hsub : Finset.Ico a (a + k) ⊆ Finset.Ico a (a + max k R) :=
+      Finset.Ico_subset_Ico le_rfl (by omega)
+    refine (Finset.sum_le_sum_of_subset_of_nonneg hsub fun t _ _ => deadMix_nonneg _ _ _ _ _ _).trans ?_
+    rw [← Finset.sum_Ico_consecutive _ (by omega : a ≤ a + R) (by omega : a + R ≤ a + max k R)]
+    linarith [htail m n]
+  calc ∑ m ∈ Finset.range N, ∑ n ∈ Finset.range m,
+        ∑ t ∈ Finset.Ico (stageOf b C m) (stageOf b C m + k), deadMix b C h n m t
+      ≤ ∑ m ∈ Finset.range N, ∑ n ∈ Finset.range m,
+        (∑ t ∈ Finset.Ico (stageOf b C m) (stageOf b C m + R), deadMix b C h n m t + 2 * c / N) :=
+        Finset.sum_le_sum fun m _ => Finset.sum_le_sum fun n _ => hsplit m n
+    _ = ∑ m ∈ Finset.range N, ∑ n ∈ Finset.range m,
+        ∑ t ∈ Finset.Ico (stageOf b C m) (stageOf b C m + R), deadMix b C h n m t +
+        ∑ m ∈ Finset.range N, (m : ℝ) * (2 * c / N) := by
+        rw [← Finset.sum_add_distrib]
+        refine Finset.sum_congr rfl fun m _ => ?_
+        rw [Finset.sum_add_distrib, Finset.sum_const, Finset.card_range, nsmul_eq_mul]
+    _ ≤ K * (N : ℝ) ^ 2 * W N + ∑ m ∈ Finset.range N, (N : ℝ) * (2 * c / N) := by
+        gcongr with m hm
+        · exact hK N hN
+        · exact_mod_cast (Finset.mem_range.1 hm).le
+    _ = 1 * (N : ℝ) ^ 2 * (K * W N + 2 * c * (N : ℝ) ^ (-(1 : ℝ))) := by
+        rw [Finset.sum_const, Finset.card_range, nsmul_eq_mul, Real.rpow_neg_one]
+        field_simp
+
+/-- **The crux, near-scale obstacle-phase form** (open; believed 50%).  `resLaw` satisfies
+`NearObstaclePhaseMixing` in every base `b ≥ 2` prime to 3.  A proof must use `3 ∤ b` and the
 uniformity of the resampled blocks between `s_n` and `t` (the conditional law of `w_t` given
 `w_{s_n}`); the uniformity at stage `t` itself is already spent in the telescope. -/
-theorem obstaclePhaseMixing_resLaw {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) :
-    ObstaclePhaseMixing b := by
+theorem nearObstaclePhaseMixing_resLaw {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) :
+    NearObstaclePhaseMixing b := by
   sorry
+
+/-- The obstacle-phase node for `resLaw` (proved from the near-scale crux). -/
+theorem obstaclePhaseMixing_resLaw {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) :
+    ObstaclePhaseMixing b :=
+  obstaclePhaseMixing_of_near hb (nearObstaclePhaseMixing_resLaw hb h3)
 
 /-- **The crux, mixing form** (proved from `obstaclePhaseMixing_resLaw`; believed 60%).
 `resLaw` satisfies `LocalBiasMixing` in every base `b ≥ 2` prime to 3. -/

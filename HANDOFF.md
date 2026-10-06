@@ -102,5 +102,5 @@ through the local almost-sure route; crux `localDeadBias_resLaw`.  See `HANDOFF-
 Both standard leaves proved; crux now `localBiasMixing_resLaw`.  See `HANDOFF-2026-10-06-cantorbad-lap7.md`.
 
 ## cantorbad lap 8 (2026-10-06)
-Stage telescope proved; crux now `obstaclePhaseMixing_resLaw` (node `ObstaclePhaseMixing`).
+Stage telescope + tail cut proved; crux now `nearObstaclePhaseMixing_resLaw`.
 See PENDING_WORK.md "cantorbad lap 8".

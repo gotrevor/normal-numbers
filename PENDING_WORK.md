@@ -3042,3 +3042,6 @@ Next: (1) prove the reduction (needs pair-averaged partial Cantor products, Cass
   pure Cantor statement `E_K[e(ξx) 1_{dead,t}(x) | w_s]` = exponential sum `Σ e(hbᵐ p/q)` over obstacle
   rationals in the cylinder; state it as a node and test numerically (control: dyadic centres).
   Caveat: second-order terms (two dead stages) carry no decay in `N`; need a bootstrap, not a triangle bound.
+* (lap 8, later) Stage tail cut PROVED: `deadMix_le` (geometric, `pow_le_stage`), `obstaclePhaseMixing_of_near`.
+  Crux now `nearObstaclePhaseMixing_resLaw` (node `NearObstaclePhaseMixing`: only the `⌊log₃N⌋+1` stages at
+  and above the scale of `bᵐ`).  Next: item (2) above (first-order Cantor node by re-telescoping `E_res[D_t|w_s]`).
