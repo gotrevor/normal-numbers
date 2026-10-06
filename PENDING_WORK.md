@@ -3182,3 +3182,4 @@ the Cauchy–Schwarz step obstMix² ≤ E|obstSum|² as a lemma toward PairCorrT
   enumeration of obstMix instead of Monte Carlo.
 - lap 9: Cauchy–Schwarz step proved (`sq_integral_norm_comp_buildU_le`, `obstMix_sq_le`).  Next: expand E‖obstSum‖² into diagonal + same-cylinder obstacle pairs.
 - lap 9: pair expansion `norm_obstSum_sq` proved.  Next: bound E over resLaw w_s of the off-diagonal same-cylinder pairs by the pair sum (μ_K vs resLaw weight of w_s: likelihood ratio via real_buildU_catB).
+- lap 9: change of measure resLaw→μ_K expected to lose e^{c s_n} (likelihood-ratio 2nd moment); stated resLaw-native node `ResLawObstSecondMoment`.  Next: wire it to CylObstacleCancellation (Σ obstMix ≤ via C–S on the triple sum: (Σ x)² ≤ #terms·Σ x²).

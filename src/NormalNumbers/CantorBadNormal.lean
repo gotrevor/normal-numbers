@@ -5017,6 +5017,22 @@ theorem firstOrderObstacleMix_of_cyl {b : ℕ} (hO : CylObstacleCancellation b) 
   exact Finset.sum_le_sum fun m _ => Finset.sum_le_sum fun n _ =>
     Finset.sum_le_sum fun t _ => firstMix_le_obstMix b C h n m t
 
+/-- **Conjecture node (resLaw-native second moment).**  Believed 45% for `3 ∤ b`.  The near-scale
+sum of the `resLaw` second moments `E‖obstSum‖²` is `O(N² W(N))`.  Implies `CylObstacleCancellation b`
+via `obstMix_sq_le` (not yet wired: needs `√` summation).  Stated natively under `resLaw` because the
+change of measure to `μ_K` is expected to fail: the likelihood ratio of `w_s` is
+`∏ 1_alive·1024/|A|` (`real_buildU_catB`), a mean-one `μ_K`-martingale whose second moment is
+`∏ E[1024/|A|] ≈ (1 + 1.3/1024)^s` (`AvgDeadDensity` evidence), exponential in `s = s_n`; so
+Hölder transfer from a `μ_K` pair statement such as `ObstaclePairCorrelation` loses `e^{c s_n}`.
+(Heuristic, 70%; not a theorem.) -/
+def ResLawObstSecondMoment (b : ℕ) : Prop :=
+  ∀ h : ℤ, h ≠ 0 → ∀ C : ℕ, ∃ (K : ℝ) (W : ℕ → ℝ), Summable (fun j => W (sched j)) ∧
+    ∀ N : ℕ, 1 ≤ N →
+      ∑ m ∈ Finset.range N, ∑ n ∈ Finset.range m,
+        ∑ t ∈ Finset.Ico (stageOf b C m) (stageOf b C m + (Nat.log 3 N + 1)),
+          ∫ ω, ‖obstSum (h * (b : ℝ) ^ m) (t - stageOf b C n) (buildU (stageOf b C n) ω)‖ ^ 2
+            ∂coinMeasure ≤ K * (N : ℝ) ^ 2 * W N
+
 /-- **Open implication node: global pair correlation ⇒ cylinder-local cancellation.**  Believed
 40% as stated (the global unweighted pair sum need not control the cylinder-restricted, `resLaw`-
 weighted second moment; the missing pieces are listed at `CylObstacleCancellation`). -/
