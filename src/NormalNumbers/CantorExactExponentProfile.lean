@@ -27,9 +27,10 @@ to 12, 15 and 21, not normal to 6, 18 or 36.  Base 12 switches off at `μ₀ = 1
 * *Normal* when `μ₀ < 1 + L/s`.  The Fourier coefficient of the coin law at `h·bⁿ` sees only the
   ternary places `[sn, (s+L)n]`, where the digits of `h tⁿ` sit.  A run covers that window iff
   `sn ≥ a` and `(s+L)n ≤ μ₀ a`, which is possible iff `μ₀ > 1 + L/s`.  Below the threshold every
-  window keeps `≥ a(1 − μ₀ s/(s+L))` free places, linear in `n`, so the Cassels–Schmidt second moment
-  (`CantorLiouvilleAll.secondMoment_le_b`, with the orbit of `t` mod `3ᵏ` in place of `b`)
-  should go through.  This is `ae_isNormal_of_profileOK` (open node).
+  window keeps `≥ a(1 − μ₀ s/(s+L))` free places, linear in `n`.  The plain orbit port of
+  `CantorLiouvilleAll.secondMoment_le_b` nevertheless fails in the run shadows (see "The crux"
+  below); what is proved is `ae_isNormal_of_profileOK_of_baker`, which reads the top window
+  through a power discrepancy bound for `{m log₃ t}` (Baker–Wüstholz with Erdős–Turán).
 
 So the threshold where the Fourier side breaks is the same threshold where the explicit zero
 runs appear.  Known-false sibling: `t = 1` (powers of 3).  There the frequencies' digits are a fixed
@@ -128,7 +129,7 @@ theorem ne_rpow_of_not_dvd {μ₀ : ℚ} (hμ : 1 < μ₀) {s t : ℕ} (hs : 1 �
   have : 3 ∣ t ^ q := by rw [hN]; exact dvd_pow_self 3 (by omega)
   exact ht (Nat.prime_three.dvd_of_dvd_pow this)
 
-/-- **Not normal past the threshold, for every `ω`.**  Confidence 90%.
+/-- **Not normal past the threshold, for every `ω`.**  Proved.
 
 English proof.  Let `s = v₃ b ≥ 1` (if `s = 0` then `ProfileOK` holds), `b = 3ˢt`, and
 `θ = log₃ b / s`; `¬ ProfileOK` with `t ≠ 3^{s(μ₀−1)}` gives `θ < μ₀`.  Along run `k`
@@ -310,10 +311,9 @@ def LogDiscrepancy (t : ℕ) : Prop :=
     |(visitCount (fun m => Int.fract (m * Real.logb 3 t + β)) u v N : ℝ) - N * (v - u)| ≤
       C * (N : ℝ) ^ (1 - κ)
 
-/-- **Literature (Baker 1966; Baker–Wüstholz 1993, with Erdős–Turán).**  For `t ≥ 2` prime to 3,
-`|q log t − p log 3| ≥ q^{−C}` (effective linear forms in two logarithms), hence a power
-discrepancy bound for `{m log₃ t + β}`, uniform in `β` (Erdős–Turán with `H = N^κ`).  Faithful
-or weaker: the transcription asks only for some `κ > 0`. -/
+/-- **Literature (Baker–Wüstholz 1993 with Erdős–Turán).**  Implied by
+`Literature.BakerLogDiscrepancyEff` (`bakerLogDiscrepancy_of_eff`); see there for the
+derivation.  Faithful or weaker: the transcription asks only for some `κ > 0` per `t`. -/
 def Literature.BakerLogDiscrepancy : Prop :=
   ∀ t : ℕ, 2 ≤ t → ¬ 3 ∣ t → LogDiscrepancy t
 
@@ -1561,11 +1561,12 @@ theorem secondMoment_le_profile (hB : Literature.BakerLogDiscrepancy) (μ₀ : �
     _ = (N : ℝ) + 2 * K * (N * Z) := by ring
     _ ≤ _ := by rw [hNZ]; nlinarith
 
-/-- **The crux, conditional on the top-digit input.**  Confidence 60%.  English proof: split the
-pair sum by `m`.  Outside every shadow, the window `[sm, sm + log₃N/2)` is free and the orbit
-count of `sum_Hf_le_b` (with `t`) applies.  In the shadow, use the top `ε log N` digits of
-`h(bᵈ−1)tᵐ`, which sit at free places because `(s+L)m > μ₀a` (`window_covered_imp`) and are
-fixed by `{(m+d) log₃ t + β_{h,d}}`; `LogDiscrepancy` bounds the number of `m` whose top digits
+/-- **The crux, conditional on the top-digit input.**  Proved.  English proof: split the
+pair sum by `m` (`pair_classify`).  Outside every shadow, the low window of width
+`W ≍ log₃N/q` is free and the orbit count of `sum_Hf_le_b` (with `t`) applies.  In the shadow,
+use the top `W` digits of the pair frequency (or of `h bᵐ`, seen through the pair difference),
+which sit at free places because `(s+L)m > μ₀a` (`window_covered_imp`) and are fixed by the two
+shifts `{mL + log₃|h|}` and `{mL + log₃(|h|(bᵈ−1))}`; `LogDiscrepancy` bounds the number of `m` whose top digits
 are degenerate by `N(2/3)^{εlog N} + C N^{1−κ} 3^{ε log N}`, a power saving for small `ε`.
 Then `ae_isNormal_of_secondMoment` along `CantorLiouville.sched`. -/
 theorem ae_isNormal_of_profileOK_of_baker (hB : Literature.BakerLogDiscrepancy) (μ₀ : ℚ)
@@ -1602,11 +1603,13 @@ theorem ae_isNormal_of_profileOK_of_baker (hB : Literature.BakerLogDiscrepancy) 
   · exact hω2 b hb h3 hPb
   · exact hω1 b hb h3
 
-/-- **Normal below the threshold, a.e.**  Open node; confidence 70% true, but the elementary route
-below is BLOCKED in the shadow (see `shadow_card_ge`, Maze row "elementary orbit port to 3 ∣ b");
-the live route is `ae_isNormal_of_profileOK_of_baker` plus a proof of `LogDiscrepancy`.
+/-- **Normal below the threshold, a.e., unconditionally.**  This is
+`ae_isNormal_of_profileOK_of_baker` applied to `Literature.BakerLogDiscrepancy` (Baker–Wüstholz
+plus Erdős–Turán); open only because that literature input is cited, not proved.  The
+elementary route sketched below is blocked in the run shadow (`shadow_card_ge`, Maze row
+"elementary orbit port to 3 ∣ b"), kept for the record.
 
-English proof (sketch).  For `3 ∤ b` this is `ae_isNormal_of_coprime_three`.  Let `b = 3ˢt` with
+Elementary sketch (blocked at step 3 in the shadow).  For `3 ∤ b` this is `ae_isNormal_of_coprime_three`.  Let `b = 3ˢt` with
 `s ≥ 1`, `t > 3^{s(μ₀−1)}`, `L = log₃ t`.
 1. *Window.*  In the coin law, the Fourier coefficient at `ξ = h·bᵐ·(bᵈ − 1)` (the pair terms
    of the second moment; `bᵈ − 1` is prime to 3) is a product of `|cos(2πξ/3^{p+1})|` over
@@ -1639,10 +1642,15 @@ made computable.  Two changes fix this:
   grows like `a_{k}` with `k ≍ log |h|`, faster than any power of `|h|`; it is absorbed because
   `N² profW N ≥ N²·|h|^{−o(1)}` once `N ≤ B_h²`, and by the `N^{−δ}` saving beyond. -/
 
-/-- **Literature, effective form (Baker 1966 / Baker–Wüstholz 1993 with Erdős–Turán).**  For
-`t ≥ 2` prime to 3, `|q log t − p log 3| ≥ q^{−C log t}` with an absolute effective `C`, so the
-discrepancy of `{m log₃ t + β}` is `≪ t^{O(1)} N^{1 − c/log t}` uniformly in `β`.  Transcribed
-weaker: one `K` with constant `t^K` and saving `1/(K t)` (`1/(K t) ≤ c/log t`). -/
+/-- **Literature, effective form (Baker–Wüstholz 1993 with Erdős–Turán).**  Baker–Wüstholz
+(J. reine angew. Math. 442, 1993), two logarithms: `log|q log t − p log 3| ≥ −C·log t·log 3·log B`
+with `B = max(p, q, e)` and `C` absolute (the form is nonzero since `t^q ≠ 3^p`).  So
+`‖q log₃ t‖ ≫ (q(α+1))^{−γ}` with `α = log₃ t`, `γ = C' log t`.  Erdős–Turán (Kuipers–Niederreiter
+Thm 2.5; shift-invariant, a sup over intervals) with `H = N^{1/(γ+1)}` gives discrepancy
+`N·D_N ≪ (α+1)^γ N^{1−1/(γ+1)}`, uniformly in `β`.  Transcribed weaker: one `K` with constant
+`t^K` and saving `1/(K t)`.  The constant `exp(O(log t log log t))` is absorbed: for
+`N ≤ t^{K²t}` the trivial bound `N ≤ t^K N^{1−1/(Kt)}` holds, and beyond, the extra saving
+`N^{1/(γ+1) − 1/(Kt)}` dominates once `K ≳ C'²`.  (Refereed 2026-10-06.) -/
 def Literature.BakerLogDiscrepancyEff : Prop :=
   ∃ K : ℕ, 1 ≤ K ∧ ∀ t : ℕ, 2 ≤ t → ¬ 3 ∣ t → ∀ N : ℕ, 1 ≤ N → ∀ β u v : ℝ, 0 ≤ u → u ≤ v →
     v ≤ 1 → |(visitCount (fun m => Int.fract (m * Real.logb 3 t + β)) u v N : ℝ) - N * (v - u)| ≤
@@ -2188,8 +2196,8 @@ theorem primrec_profKappa (μ₀ : ℚ) (K : ℕ) : Primrec (profKappa μ₀ K) 
 set_option maxHeartbeats 4000000 in
 /-- **Uniform second moment for the profile bases.**  Proved.  Proof: the
 proof of `secondMoment_le_profile` with every constant explicit (`K` from the effective
-hypothesis, `g_b = log₃ t − s(μ₀−1) ≥ 3^{−s(p−q)}/(3q)` for `μ₀ = p/q`, `A, B` of
-`pair_classify` bounded through `expRunStart k ≤ 4 (k+1)! ⌈μ₀+1⌉^k`), the trivial bound `N²`
+hypothesis, `g_b = log₃ t − s(μ₀−1) ≥ 1/(4q·3^{s(p−q)})` (`margin_ge`) for `μ₀ = p/q`, `A, B` of
+`pair_classify` bounded through `expRunStart k ≤ 4((⌈μ₀⌉+1)(k+1))^k`, `expRunStart_le`), the trivial bound `N²`
 for `N ≤ B_h²`, and `(log N)^{16} ≤ c(δ) N^δ`. -/
 theorem secondMoment_profile_uniform (hB : Literature.BakerLogDiscrepancyEff) (μ₀ : ℚ)
     (hμ : 2 < μ₀) :
@@ -2497,8 +2505,9 @@ theorem exists_computable_normalProfile_of_baker (hB : Literature.BakerLogDiscre
     exact not_isNormal_of_not_profileOK μ₀ h1 e hb hP hN
 
 /-- **Sub-exponential two-logarithm bound (Gelfond-type).**  For `t ≥ 2` prime to 3, eventually
-`|k log t − j log 3| ≥ exp(−k^{2/5})` for all `j`.  Much weaker than Baker–Wüstholz; Gelfond
-(1935) proved bounds of this strength for two logarithms. -/
+`|k log t − j log 3| ≥ exp(−k^{2/5})` for all `j`.  Much weaker than Baker–Wüstholz, and weaker
+than Gelfond's quantitative two-logarithm bounds of the shape `exp(−(log k)^κ)` (1940s; date
+not checked). -/
 def GelfondTwoLog : Prop :=
   ∀ t : ℕ, 2 ≤ t → ¬ 3 ∣ t → ∃ k₀ : ℕ, ∀ k : ℕ, k₀ ≤ k → ∀ j : ℕ,
     Real.exp (-((k : ℝ) ^ (2 / 5 : ℝ))) ≤ |(k : ℝ) * Real.log t - j * Real.log 3|
@@ -2517,9 +2526,9 @@ theorem ae_isNormal_of_profileOK_of_gelfond (hG : GelfondTwoLog) (μ₀ : ℚ) (
 
 /-- **Headline: the exponent sets the normal profile.**  For every rational `μ₀ > 2` there is a
 computable `x ∈ K` with irrationality exponent exactly `μ₀` such that, for every base `b ≥ 2`,
-`x` is normal to `b` iff `b = 3ˢt` with `t > 3^{s(μ₀−1)}`.  Confidence 65% (the node above, plus
-the derandomizer taking the extra bases: `exists_computable_normal_avoid`'s test family must
-include the `3 ∣ b` second moments). -/
+`x` is normal to `b` iff `b = 3ˢt` with `t > 3^{s(μ₀−1)}`.  This is
+`exists_computable_normalProfile_of_baker` (proved) applied to the cited
+`Literature.BakerLogDiscrepancyEff`; open only because that input is cited, not proved. -/
 theorem exists_computable_mem_cantorSet_irrExponent_normalProfile (μ₀ : ℚ) (hμ : 2 < μ₀) :
     ∃ e : ℕ → Bool, Computable e ∧ cantorExpReal μ₀ e ∈ cantorSet ∧
       HasIrrExponent (cantorExpReal μ₀ e) μ₀ ∧
