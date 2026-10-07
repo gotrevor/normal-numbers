@@ -147,3 +147,9 @@ Re-confirmed 2026-10-06 (fresh lap): StretchBFR doc still states <1%, no new dir
 
 ## 2026-10-07 c⋆ lap 8 — STUCK (strike 1)
 See HANDOFF-2026-10-07-cstar-lap8.md. Blocked: scope gate `cStar_le_four` is a research wall (Maze rows; lap-8 counting probe negative). DIRECTION item (2) `cStar_le_five` is outside the scoped target. Ask: rescope the run to `sorry-free:UniformBadFive.lean` (bank c⋆ ≤ 5) or confirm halt.
+
+## 2026-10-07 c⋆ lap 9 — STUCK (strike 2, run halts)
+See HANDOFF-2026-10-07-cstar-lap9.md. Done this lap: `five_halves_le_cStar` proved (5/2 ≤ c⋆).
+Blocked: `cStar_le_four` needs bases 3 and 5 handled exactly. Counting them fails at c = 4 (lap-8 Maze row), and
+no finite certificate is known (the grids sit at irrational offsets). `cStar_le_five` is outside the scoped target.
+ASK: rescope the run to `sorry-free:src/NormalNumbers/UniformBadFive.lean` (bank c⋆ ≤ 5), or supply a mechanism for an exact {2,3,5} core.
