@@ -1197,6 +1197,43 @@ def RepPairDecay (b : ℕ) : Prop :=
       ‖∫ ω, ee ((h * ((b : ℝ) ^ n - (b : ℝ) ^ m)) * repReal ω) ∂coinMeasure‖ ≤
         C * (N : ℝ) ^ (2 - δ)
 
+/-- The two Riesz bounds on the repetition law: the free coins below `M` (`none`) or the block
+coins of run `k` (`some k`, a real-frequency cyclic product). -/
+noncomputable def repBound (M : ℕ) : Option ℕ → ℝ → ℝ
+  | none, ξ => Bf isFree M ξ
+  | some k, ξ => cycProdR (runStart k)
+      (ξ * (1 - (3 : ℝ) ^ (-(((k + 1) * runStart k : ℕ) : ℤ))) / 3 ^ runStart k)
+
+theorem norm_charFun_repReal_le_repBound (M : ℕ) (o : Option ℕ) (ξ : ℝ) :
+    ‖∫ ω, ee (ξ * repReal ω) ∂coinMeasure‖ ≤ repBound M o ξ := by
+  cases o with
+  | none => exact charFun_repReal M ξ
+  | some k =>
+    have h1 := norm_charFun_repReal_le (Finset.Ico (runStart k) (2 * runStart k)) ξ
+    rw [prod_block_eq_cyc] at h1
+    exact h1
+
+/-- **The crux as a deterministic exponential-sum statement (open).**  For each `h ≠ 0` and `N`
+there is a choice, per pair `(n, m)`, of free coins or of one run's block coins whose Riesz
+bound at `ξ = h(bⁿ − bᵐ)` sums to `O(N^{2−δ})`.  No measure theory left: the crux
+`repPairDecay_of_three_dvd` follows (`repPairDecay_of_arith`).  Choices expected: `some k` when
+the window of `h bⁿ` sits in run `k`'s copy stretch (`CopyZoneDecay`), `none` otherwise (free
+gaps: Cassels; shadow: Baker). -/
+def RepPairArith (b : ℕ) : Prop :=
+  ∀ h : ℤ, h ≠ 0 → ∃ C δ : ℝ, 0 < δ ∧ ∀ N : ℕ, 1 ≤ N → ∃ (M : ℕ) (κ : ℕ → ℕ → Option ℕ),
+    ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N,
+      repBound M (κ n m) (h * ((b : ℝ) ^ n - (b : ℝ) ^ m)) ≤ C * (N : ℝ) ^ (2 - δ)
+
+/-- Proved: pointwise `norm_charFun_repReal_le_repBound`. -/
+theorem repPairDecay_of_arith {b : ℕ} (hA : RepPairArith b) : RepPairDecay b := by
+  intro h hh
+  obtain ⟨C, δ, hδ, hC⟩ := hA h hh
+  refine ⟨C, δ, hδ, fun N hN => ?_⟩
+  obtain ⟨M, κ, hκ⟩ := hC N hN
+  refine le_trans ?_ hκ
+  exact Finset.sum_le_sum fun n _ => Finset.sum_le_sum fun m _ =>
+    norm_charFun_repReal_le_repBound M (κ n m) _
+
 /-- **Normality from pair-sum decay.**  Proved: `secondMoment_le_pairs` +
 `summable_sched_rpow` + `ae_isNormal_of_secondMoment`. -/
 theorem ae_isNormal_rep_of_pairDecay {b : ℕ} (hb : 2 ≤ b) (hP : RepPairDecay b) :
@@ -1219,11 +1256,16 @@ theorem ae_isNormal_rep_of_pairDecay {b : ℕ} (hb : 2 ≤ b) (hP : RepPairDecay
 
 /-! ## Bases `3ˢt`, `t > 1`: the crux -/
 
+/-- **The crux, arithmetic form (open leaf).**  See `RepPairArith`. -/
+theorem repPairArith_of_three_dvd {b : ℕ} (hb : 2 ≤ b) (h3 : 3 ∣ b) (hpow : ∀ s : ℕ, b ≠ 3 ^ s) :
+    RepPairArith b := by
+  sorry
+
 /-- **Pair-sum decay at `b = 3ˢt`, `t > 1` (open leaf; the crux in pair form).**  See
 `RepPairDecay` and the zone route in the docstring of `ae_isNormal_rep_of_three_dvd`. -/
 theorem repPairDecay_of_three_dvd {b : ℕ} (hb : 2 ≤ b) (h3 : 3 ∣ b) (hpow : ∀ s : ℕ, b ≠ 3 ^ s) :
-    RepPairDecay b := by
-  sorry
+    RepPairDecay b :=
+  repPairDecay_of_arith (repPairArith_of_three_dvd hb h3 hpow)
 
 /-- **Crux: a.e. normality to `b = 3ˢt`, `t > 1`.**  Open; confidence 50%.
 
