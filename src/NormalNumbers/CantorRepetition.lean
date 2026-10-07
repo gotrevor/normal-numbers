@@ -3367,6 +3367,24 @@ theorem natLog_le_rpow {b : ℕ} (hb : 2 ≤ b) {ε : ℝ} (hε : 0 < ε) (x : �
   calc (Nat.log b x : ℝ) ≤ _ := h1.trans (h2.trans h3)
     _ = _ := by rw [div_div]
 
+/-- `log_b(aN + c) + 2 ≤ A N^ε` for `N ≥ 1`. -/
+theorem natLog_lin_le_rpow {b : ℕ} (hb : 2 ≤ b) {ε : ℝ} (hε : 0 < ε) (a c : ℕ) :
+    ∃ A : ℝ, 0 < A ∧ ∀ N : ℕ, 1 ≤ N → (Nat.log b (a * N + c) : ℝ) + 2 ≤ A * (N : ℝ) ^ ε := by
+  have hl2 : 0 < Real.log 2 := Real.log_pos (by norm_num)
+  refine ⟨((a + c : ℕ) : ℝ) ^ ε / (ε * Real.log 2) + 2, by positivity, fun N hN => ?_⟩
+  have hN1 : (1 : ℝ) ≤ N := by exact_mod_cast hN
+  have h1 := natLog_le_rpow hb hε (a * N + c)
+  have h2 : ((a * N + c : ℕ) : ℝ) ≤ ((a + c : ℕ) : ℝ) * N := by
+    push_cast; nlinarith [(Nat.cast_nonneg c : (0 : ℝ) ≤ c)]
+  have h3 : ((a * N + c : ℕ) : ℝ) ^ ε ≤ ((a + c : ℕ) : ℝ) ^ ε * (N : ℝ) ^ ε := by
+    rw [← Real.mul_rpow (by positivity) (by positivity)]
+    exact Real.rpow_le_rpow (by positivity) h2 hε.le
+  have h4 : (1 : ℝ) ≤ (N : ℝ) ^ ε := Real.one_le_rpow hN1 hε.le
+  have h5 : ((a * N + c : ℕ) : ℝ) ^ ε / (ε * Real.log 2) ≤
+      ((a + c : ℕ) : ℝ) ^ ε / (ε * Real.log 2) * (N : ℝ) ^ ε := by
+    rw [div_mul_eq_mul_div]; exact div_le_div_of_nonneg_right h3 (by positivity)
+  nlinarith
+
 /-- `j = ⌊log₃ N / q⌋`: `3ʲ ≤ N^{1/q} < 3^{j+1}`. -/
 theorem three_pow_logdiv {q N : ℕ} (hq : 1 ≤ q) (hN : 1 ≤ N) :
     (3 : ℝ) ^ (Nat.log 3 N / q) ≤ (N : ℝ) ^ ((q : ℝ)⁻¹) ∧
