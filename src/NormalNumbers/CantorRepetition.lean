@@ -3408,6 +3408,98 @@ theorem pow_logdiv_le {q N : ℕ} (hq : 1 ≤ q) (hN : 1 ≤ N) {α : ℝ} (hα0
     _ ≤ ((N : ℝ) ^ ((q : ℝ)⁻¹)) ^ Real.logb 3 α := Real.rpow_le_rpow_of_nonpos hN0 h.le hc
     _ = _ := by rw [← Real.rpow_mul (by positivity)]; ring_nf
 
+theorem log_le_posBound {s t e h' N y : ℕ} (ht : 1 ≤ t)
+    (hy : y ≤ 3 ^ e * h' * (3 ^ s * t) ^ (2 * N)) :
+    Nat.log 3 y ≤ 3 ^ e * h' + 2 * (s + t) * N + e := by
+  rcases Nat.eq_zero_or_pos y with h0 | hpos
+  · simp [h0]
+  have h1 : 3 ^ e * h' < 3 ^ (3 ^ e * h') := Nat.lt_pow_self (by norm_num)
+  have h2 : 3 ^ s * t ≤ 3 ^ (s + t) := by
+    rw [pow_add]; exact Nat.mul_le_mul_left _ (Nat.lt_pow_self (by norm_num)).le
+  have h3 : (3 ^ s * t) ^ (2 * N) ≤ 3 ^ (2 * (s + t) * N) := by
+    calc (3 ^ s * t) ^ (2 * N) ≤ (3 ^ (s + t)) ^ (2 * N) := Nat.pow_le_pow_left h2 _
+      _ = _ := by rw [← pow_mul]; ring_nf
+  have h4 : y < 3 ^ (3 ^ e * h' + 2 * (s + t) * N) := by
+    rw [pow_add]
+    calc y ≤ _ := hy
+      _ < 3 ^ (3 ^ e * h') * 3 ^ (2 * (s + t) * N) :=
+          Nat.mul_lt_mul_of_lt_of_le h1 h3 (by positivity)
+  have := Nat.log_lt_of_lt_pow (by omega) h4
+  omega
+
+open Classical in
+/-- **Explicit per-`N` bound.**  With `W = K = j + 1`, `ρ = t + 2`, `k₀ = ρ(ρ+1)`, positions
+bounded by `X = 3ᵉh' + 2(s+t)N + e`, small-`m` cut `m₀ = 3ᵉh' + a_{k₀} + (j+1)`: the pair sum is at
+most the explicit majorant below, given a top-window bound `Btop` and a copy-run bound `Copy`. -/
+theorem repPairPos_explicit {s t e h' : ℕ} (hs : 1 ≤ s) (ht : 2 ≤ t) (h3t : ¬ 3 ∣ t)
+    (hh : 1 ≤ h') (hnd : ¬ 3 ∣ h') (j N : ℕ) (Btop Copy : ℝ)
+    (hBtop : ∀ β : ℝ, ∑ m ∈ Finset.range N,
+      CantorExactExponentProfile.topProd (j + 1) (Int.fract (m * Real.logb 3 t + β)) ≤ Btop)
+    (hCopy : ∑ k ∈ (Finset.range (Nat.log 4 (s * (2 * N) + e) + 1)).filter
+          (fun k => runStart k ≤ s * (2 * N) + e),
+        ∑ n ∈ Finset.range ((k + 2) * runStart k + 1),
+          ∑ m ∈ Finset.range ((k + 2) * runStart k + 1),
+            (cycProd (runStart k) ((h' : ℤ) * (((3 ^ s * t : ℕ) : ℤ) ^ n - ((3 ^ s * t : ℕ) : ℤ) ^ m))
+              + cycProd (runStart k) ((h' : ℤ) * (t : ℤ) ^ n)) ≤ Copy) :
+    ∃ (M : ℕ) (κ : ℕ → ℕ → Option ℕ), ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N,
+      repBound M (κ n m) (((3 ^ e * h' : ℕ) : ℝ) * (((3 ^ s * t : ℕ) : ℝ) ^ n -
+        ((3 ^ s * t : ℕ) : ℝ) ^ m)) ≤
+      N + 2 * (N * ((N + 2 * 3 ^ j) * (3 / 2 : ℝ) ^ CantorLiouvilleAll.tb t * (2 / 3 : ℝ) ^ j) +
+        N * ((2 * N + 2 * 3 ^ j) * (3 / 2 : ℝ) ^ CantorLiouvilleAll.tb t * (2 / 3 : ℝ) ^ j) +
+        2 * N * Btop + Copy + N * N * (Real.pi * (8 / 3 ^ (j + 1))) +
+        ((N * ((3 ^ e * h' + runStart ((t + 2) * (t + 3)) + (j + 1)) +
+          4 * (2 * ((j + 1) + 2 * (j + 1) + 1) *
+            (Nat.log 4 ((3 ^ e * h' + 2 * (s + t) * N + e) + (j + 1) + (j + 1)) + 1))) : ℕ) : ℝ)) := by
+  set X := 3 ^ e * h' + 2 * (s + t) * N + e with hXd
+  set W := j + 1 with hWd
+  set ρ := t + 2
+  set k₀ := (t + 2) * (t + 3)
+  set M := X + 2 * s * N + e + W with hMd
+  have hB2 : 1 ≤ 3 ^ s * t := Nat.mul_pos (by positivity) (by omega)
+  have hpos : ∀ m d, m < N → d ≤ N → 3 ^ e * h' * (3 ^ s * t) ^ (m + d) ≤
+      3 ^ e * h' * (3 ^ s * t) ^ (2 * N) := fun m d hm hd =>
+    Nat.mul_le_mul_left _ (Nat.pow_le_pow_right hB2 (by omega))
+  have hpairle : ∀ m d, pairNat s t e h' m d ≤ 3 ^ e * h' * (3 ^ s * t) ^ (m + d) := fun m d =>
+    Nat.mul_le_mul_left _ (Nat.sub_le _ _)
+  have hX : ∀ m < N, ∀ d ≤ N, s * m + e ≤ X ∧ Nat.log 3 (3 ^ e * h' * (3 ^ s * t) ^ m) ≤ X ∧
+      s * (m + d) + e ≤ X ∧ Nat.log 3 (pairNat s t e h' m d) ≤ X := by
+    intro m hm d hd
+    have hsm : s * (m + d) ≤ 2 * (s + t) * N := by nlinarith
+    have : s * m ≤ s * (m + d) := Nat.mul_le_mul_left _ (by omega)
+    refine ⟨by rw [hXd]; omega, log_le_posBound (by omega) ((Nat.mul_le_mul_left _
+      (Nat.pow_le_pow_right hB2 (by omega))).trans (hpos m 0 hm (Nat.zero_le _))), by omega,
+      log_le_posBound (by omega) ((hpairle m d).trans (hpos m d hm hd))⟩
+  have hρ1 : 1 ≤ ρ := by omega
+  have hb : 3 ^ s * t ≤ 3 ^ (s * (ρ - 1)) := by
+    have : ρ - 1 = 1 + t := by omega
+    rw [this, mul_add, mul_one, pow_add, pow_mul]
+    refine Nat.mul_le_mul_left _ ((Nat.lt_pow_self (by norm_num : 1 < 3)).le.trans ?_)
+    exact Nat.pow_le_pow_left (Nat.le_self_pow (by omega) 3) t
+  have hρ : ρ * (ρ + 1) ≤ 4 * (k₀ + 3) := by simp only [ρ, k₀]; nlinarith
+  have hM : ∀ m < N, ∀ d < N, s * (m + d) + e + W ≤ M ∧ Nat.log 3 (pairNat s t e h' m d) ≤ M := by
+    intro m hm d hd
+    have := hX m hm d hd.le
+    have h1 : s * (m + d) ≤ 2 * s * N := by nlinarith
+    refine ⟨by rw [hMd]; omega, by omega⟩
+  obtain ⟨κ, hκ⟩ := exists_kappa_pos (k₀ := k₀) (W := W) (K := W) ht hh hs hρ1 hb hρ hM
+  refine ⟨M, κ, hκ.trans ?_⟩
+  have hmaj := sum_pairMaj_le (e := e) hs ht h3t hh hnd j W N M Btop hBtop
+  have hbad := sum_bad_le (k₀ := k₀) (W := W) (K := W)
+    (m₀ := 3 ^ e * h' + runStart k₀ + W) hs ht hh (fun m hm => by
+      have hm' : m ≤ s * m := Nat.le_mul_of_pos_left _ (by omega)
+      refine ⟨?_, by omega, by omega, by omega⟩
+      calc 3 ^ e * h' ≤ m := by omega
+        _ < 3 ^ m := Nat.lt_pow_self (by norm_num)
+        _ ≤ 3 ^ (s * m) := Nat.pow_le_pow_right (by norm_num) (Nat.le_mul_of_pos_left _ (by omega))) hX
+  have hbadR : ∑ m ∈ Finset.range N, ∑ d ∈ Finset.Ico 1 N,
+      ((if PairGood s t e h' m d k₀ W W then 0 else 1 : ℕ) : ℝ) ≤
+      ((N * ((3 ^ e * h' + runStart k₀ + W) +
+        4 * (2 * (W + 2 * W + 1) * (Nat.log 4 (X + W + W) + 1))) : ℕ) : ℝ) := by
+    exact_mod_cast hbad
+  have := hCopy
+  have h2 : 0 ≤ (2 : ℝ) := by norm_num
+  nlinarith
+
 /-- **Per-`N` assembly, `h = 3ᵉh' > 0`, large `N` (open; believed, 70%).**  The remaining content
 of `repPairPower_of_inputs`.  Route: `exists_kappa_pos` with `ρ, k₀` fixed by `b`, `W = K = j+1`,
 `j = ⌊log₃ N / q⌋` (`2/q < κ_Baker`); `sum_pairMaj_le` (Btop from `sum_class_top_le`, copy totals
