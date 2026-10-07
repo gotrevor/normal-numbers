@@ -144,3 +144,6 @@ Re-confirmed 2026-10-06 (fresh lap): StretchBFR doc still states <1%, no new dir
 
 ## cantorbad lap 10 (2026-10-06)
 `pow_phase_recur` + m-scan: uniform-in-m obstacle cancellation must come from family share → 0.  See `HANDOFF-2026-10-06-cantorbad-lap10.md`.
+
+## 2026-10-07 c⋆ lap 8 — STUCK (strike 1)
+See HANDOFF-2026-10-07-cstar-lap8.md. Blocked: scope gate `cStar_le_four` is a research wall (Maze rows; lap-8 counting probe negative). DIRECTION item (2) `cStar_le_five` is outside the scoped target. Ask: rescope the run to `sorry-free:UniformBadFive.lean` (bank c⋆ ≤ 5) or confirm halt.
