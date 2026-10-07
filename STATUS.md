@@ -1,5 +1,33 @@
 # STATUS — normal-numbers 📊
 
+## Cantor repetition update, 7 October 2026 (branch `proof/cantor-repetition`, review lap 3)
+
+**Is the profile cut forced?** · **Build**: 🟢 green (8868 jobs, module target) · `998c94ca`+review
+
+**Where it stands.**  `CantorRepetition.liouvilleCantorFullProfile` (a Liouville point of `K` normal
+to exactly the bases that are not powers of 3) is wired; `#print axioms` shows `sorryAx` only through
+the crux `repPairArith_of_three_dvd` (bases `3ˢt`, `t > 1`).  Bases prime to 3, powers of 3 and the
+Liouville property are proved.  The crux reduces (assembly `repPairArith_of_inputs`, sorry, 60%) to
+Baker (cited) + `TOrbitCyclicDecay t` + `BadGcdSparseH b`; the review lap found the walls are
+digits-of-powers problems that any Liouville-in-`K` construction must face, so the assembly is the
+provable target.
+
+**What's happened.**
+- 2026-10-07 review: direction kept; classification gaps (separated large-`d` pairs) resolved on paper
+  (classes 3 and 6, PENDING_WORK); CURRENT DIRECTIVE set in DIRECTION.md.
+- 2026-10-07 laps 1–2: construction (even runs copy), copy-zone toolkit, measure-free crux
+  `RepPairArith`, probes at the `1/N` floor for `b = 6, 12` (control `b = 9` flat).
+
+**Outstanding.**  Short: `isFresh` Riesz bound; pair classification lemma; class sums; conditional
+headline.  Long: the walls `TOrbitCyclicDecay` (open, 55%), `BadGcdSparseH` (75%).
+
+| headline | claim | `#print axioms` | open inputs |
+|---|---|---|---|
+| `liouvilleCantorFullProfile` | unconditional (frozen) | propext, choice, Quot.sound, **sorryAx** | crux 🔴-open research via `TOrbitCyclicDecay`; Baker 🟡 cited |
+| `ae_isNormal_rep_of_coprime_three` | bases prime to 3 | trust base | none |
+| `liouville_repReal` | Liouville | trust base | none |
+
+
 ## Cantor exact-exponent stretch update, 6 October 2026 (branch `proof/cantorexp-stretch`)
 
 **PROVED** (lap 3): `CantorExactExponentStretch.exists_computable_mem_cantorSet_irrExponent_normal_all`

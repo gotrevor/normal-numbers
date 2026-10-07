@@ -1594,6 +1594,32 @@ def ExpOrderPeriods (t : ℕ) : Prop :=
     (3 : ℝ) ^ (θ * ℓ) ≤ e ∧ ∀ e' : ℕ, 0 < e' → e' < e →
       ¬ ((3 ^ ℓ - 1) / Nat.gcd (3 ^ ℓ - 1) (t ^ ℓ)) ∣ (t ^ e' - 1)
 
+/-- **The large spectrum of the cyclic Cantor law is polynomial in the period (believed, 90%).**
+For `δ > 0` there is `K` such that at most `3·(2P+1)^K` residues `y mod 3^P − 1` have
+`cycProd P y ≥ δ`.  English proof: at each cyclic ternary digit change of `y mod 3^P − 1` the factor
+of `cycProd` is `≤ cos(π/9)` (the cyclic form of `CantorLiouville.abs_cos_le_of_tdig_ne`), so
+`cycProd P y ≥ δ` forces fewer than `K ≈ 2 log(1/δ)/log(1/cos(π/9))` changes, and a cyclic string of
+length `P` with `< K` changes is fixed by its change positions and run digits.
+Use (review lap 3, 2026-10-07): counting settles the copy zone only when the orbit `c tᵐ mod 3^P − 1`
+has more than `P^K` distinct points, i.e. for SHORT periods with large order
+(`SuperPolyOrderPeriods`); for the long periods of `repReal` the orbit has `≈ kP` points and this
+count is useless (the wrap wall `TOrbitCyclicDecay`). -/
+theorem card_cycProd_ge_le (δ : ℝ) (hδ : 0 < δ) : ∃ K : ℕ, ∀ P : ℕ, 1 ≤ P →
+    (((Finset.range (3 ^ P - 1)).filter fun y : ℕ => δ ≤ cycProd P (y : ℤ)).card : ℝ) ≤
+      3 * (2 * P + 1) ^ K := by
+  sorry
+
+/-- **Superpolynomial order of `t` modulo `3^P − 1` (open conjecture; confidence 95%, no proof
+known).**  For every `C` there are arbitrarily large `P` such that the order of `t` modulo the
+`t`-free part of `3^P − 1` exceeds `P^C`.  Weaker than `ExpOrderPeriods` (exponential order with
+`θ > log₃(3/2)`): with `card_cycProd_ge_le`, a short-period construction (period `P ≈ (log a)^C`,
+copy stretches of length `exp(P^{1/C})`) would have its copy zone bounded by counting alone, up to
+the gcd analogue of `BadGcdSparseH` (review lap 3).  Corvaja–Zannier (`CZGcdPow`) gives only
+`ord/P → ∞`.  Not pursued: the frozen construction uses long periods (DIRECTION, 2026-10-07). -/
+def SuperPolyOrderPeriods (t : ℕ) : Prop :=
+  ∀ C L : ℕ, ∃ P ≥ L, ∀ e : ℕ, 0 < e → e ≤ P ^ C →
+    ¬ ((3 ^ P - 1) / Nat.gcd (3 ^ P - 1) (t ^ P)) ∣ (t ^ e - 1)
+
 /-! ## Bases `3ˢt`, `t > 1`: the crux -/
 
 /-- **Assembly of the crux from its inputs (open; believed, 60%).**  For `b = 3ˢt`, `t > 1`:

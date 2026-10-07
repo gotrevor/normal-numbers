@@ -281,6 +281,9 @@ def waivers : List Waiver := [
    "open crux (2026-10-07) of liouvilleCantorFullProfile, whose wiring, Liouville, K-membership, \
     3 ∤ b and 3^s directions are proved; copy zone needs cyclic digits of h(bⁿ − bᵐ) mod 3^A − 1, \
     shadow zone the Baker input as in the profile thread"⟩,
+  ⟨``CantorRepetition.card_cycProd_ge_le,
+   "a leaf (90%): digit-change counting for cyclic Riesz products; off the headline path, \
+    recorded by the 2026-10-07 review for the short-period route (SuperPolyOrderPeriods)"⟩,
   ⟨``FiniteState.isFNormal_delayEnum_of_normal,
    "a leaf: O(1) cost of composing with the delay transducer and its finite-state right inverse"⟩]
 

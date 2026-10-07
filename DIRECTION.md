@@ -1,5 +1,28 @@
 # DIRECTION — normal-numbers 🧭
 
+## CURRENT DIRECTIVE (2026-10-07, branch `proof/cantor-repetition`, review lap): prove the assembly 🎯
+
+**Objective:** prove `repPairArith_of_inputs` (`CantorRepetition.lean`): Baker + `TOrbitCyclicDecay t`
++ `BadGcdSparseH b` ⇒ `RepPairArith (3ˢt)`.  Then state and prove the conditional headline
+(`LiouvilleCantorFullProfile` from those three inputs), leaving the frozen headline's only `sorry`
+at the walls.
+**Mandated next move:** (1) fresh-coin Riesz bound `Bf isFresh` (`isFresh := isFree ∨ odd run`) and
+switch `repBound none` to it; (2) state the pair classification as a Lean lemma (two windows per pair,
+eight classes, listed in PENDING_WORK "repetition review lap 3") and prove it — it is the
+route-decisive piece of the assembly; (3) the per-class sums, reusing `sum_hf_true_le`,
+`sum_topProd_le`, `bf_le_topProd(_of_dvd)`, `copyRun_sum_le`, `copyZoneDecayH_of`.
+**Forbidden drift:** new copy-zone wall reformulations or construction redesigns (short periods,
+random periods) before the assembly is proved; attacking `TOrbitCyclicDecay` head-on (open
+digits-of-powers problem, wrap regime); edits to frozen statements.
+**Why:** the review lap found every construction of a Liouville point of `K` forces periodic stretches
+that dominate the prefix, so some digits-of-powers input is unavoidable (polylog orbits mod `3^P−1`
+for long periods, superpolynomial order of `t` mod `3^P−1` for short ones; both open).  The provable
+content is the reduction to named walls, and the assembly is its only unproved, uncertain (60%) piece.
+
+Directive history (repetition branch):
+- 2026-10-07 review lap: assembly first; walls stay named nodes.
+
+
 ## Branch directive (2026-10-06, `proof/cantor-bad-normal`, cantorbad lap 6): `K ∩ BAD ∩ normal` via the local route 🎯
 
 Branch `proof/cantor-bad-normal`.  Target `CantorBadNormal.exists_mem_cantorSet_bad_isNormal_coprime_three`,
@@ -48,7 +71,7 @@ Directive history:
 - 2026-10-06 (cantorbad lap 6): local route adopted; `midStages` off-path.
 - 2026-10-02: normality's master conjectures (below, superseded on this branch).
 
-## CURRENT DIRECTIVE (2026-10-06, branch `proof/cantorexp-stretch`): land the stretch node 🎯
+## Branch directive (2026-10-06, `proof/cantorexp-stretch`, DONE): land the stretch node
 
 **Objective:** prove `ev_expTest_mass_all` (`CantorExactExponentStretch.lean`), which closes the
 frozen node `ae_not_liouvilleWith_all` and the stretch headline (both already wired).

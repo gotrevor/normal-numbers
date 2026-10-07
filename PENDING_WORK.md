@@ -3319,3 +3319,34 @@ formalize the copy-zone pair term: the block-coin Riesz product as a function of
 - rep lap 2: FOUND gap in assembly plan: bases with log₃b/s ≥ 2 have windows covering a whole gap (gap ratio 2); recorded in repPairArith_of_inputs docstring.  Fix options: run k+1 copy coins as top window, or redesign with a_{k+1}/E_k → ∞.
 - rep lap 2: probe b=12 N=300,380 (.0034/.0027, floor) covers gap-spanning windows: large-t class is a proof-plan gap only.  Fix to formalize: sparse used runs (gap ratio → ∞).
 - rep lap 2: REDESIGN landed: only even runs copy (src), odd runs fresh; gap ratio 4(k+3)→∞ resolves the large-t class.  All proofs re-checked (Even k hypotheses threaded; repBound some k = 1 for odd k).  Next: isFresh := isFree ∨ odd run, charFun bound Bf isFresh (rest reads only even-run block coins), use it for repBound none.
+
+## repetition review lap 3 (2026-10-07)
+Direction KEPT: prove the assembly `repPairArith_of_inputs`; walls stay nodes (CURRENT DIRECTIVE).
+Review findings (route level):
+- Every Liouville point of `K` has, along a subsequence, a ternary stretch periodic with some period
+  `P` that dominates the prefix (approximant `p/(3^a(3^P−1))`; a `{0,2}`-digit window of length
+  `w·log₃q` forces the period structure for `w ≳ 5.4`).  So copies are forced, and the copy-zone
+  frequencies are `h tᵐ(b^d−1) mod 3^P−1`.  Long periods (`P ≈ a`, ours): polylog orbit, wrap regime
+  forced (windows deep in the stretch are longer than `P`): `TOrbitCyclicDecay` is a middle-digits
+  statement.  Short periods: the large spectrum of the cyclic Cantor law has size `≤ (2P)^{K(δ)}`
+  (digit-change counting), so the short-period route needs only `ord_{(3^P−1)''}(t) ≥ P^{ω(1)}`
+  (weaker than `ExpOrderPeriods`' exponential order), still open (Corvaja–Zannier gives only `ord/P → ∞`).
+  Random periods do not remove the arithmetic either (an `X` bad for many `P` is pinned by CRT, but the
+  exceptional set is polynomial-size and our `X` are a polynomial-size sample).
+- `TOrbitCyclicDecay` demands a power saving; the no-wrap part only has Stewart's rate
+  `exp(−c log N/loglog N)` (enough for the summable form).  A weaker summable-form node would be more
+  faithful; deferred until the assembly is done.
+Pair classification for the assembly (pair `n = m + d ≥ m`, `c = log₃ t`, `v = sm`,
+`yT = top of Y = h bᵐ`, `T = top of ξ`; copy runs `R_k = [a_k, E_k)`, `k` even; everything else fresh;
+fresh stretches between copy runs have ratio `4(k+3) → ∞`):
+- connected (`sn ≤ yT + K'`): one window `[v, T]`, bounded multiplicative length;
+- separated (`sn > yT + K'`): `W1 = [v, yT]` (digits of `−h tᵐ`), 2's, `W2 = [sn, T]` (digits of `h tⁿ`).
+Classes: (1) bottom of `W1` fresh: `sum_hf_true_le`, `c = h'(b^d−1)`; (2) top of `W1` fresh:
+`bf_le_topProd_of_dvd` + `sum_topProd_le` over `m`; (3) bottom of `W2` fresh: `sum_hf_true_le`,
+`c = h'`, over `n` (error `≤ K·3^{−K'}` from `Y/3^{sn}`) — NEW vs the docstring plan; (4) top of `ξ`
+fresh: `sum_topProd_le` over `n`; (5) whole window in one `R_k`: `copyRun_sum_le` + `copyZoneDecayH_of`
+(`c = h(b^d−1)`); (6) `W2 ⊂ R_{k'}`, `yT < a_{k'} − K'`: run-`k'` copy coins see `cycProd(h tⁿ)` up to
+`π·3^{yT+1−a'}` (`TOrbitCyclicDecay` with `c = h`) — NEW; (7) bands (`O(K)` indices per run);
+(8) small `m`.  Informal check: every pair with `m ≥ m₀(b,h,K')` lands in a class (W1 inside `R_k` and
+`W2` straddling `a_{k'}` → (3); straddling `E_{k'}` → (4); inside `R_{k'}` → (6); same run → (5)).
+Next: `isFresh` Riesz bound, then the classification lemma in Lean (route-decisive), then class sums.
