@@ -2102,6 +2102,27 @@ theorem fract_logb_mul_pow {s t : ℕ} (ht : 1 ≤ t) (c : ℝ) (hc : c ≠ 0) (
     ring
   rw [e, Int.fract_add_intCast]
 
+/-- **Class-4 pointwise bound (top window of `ξ`).**  With `ξ = h(b^{m+d} − bᵐ)` and fresh
+places `K` below its top `T = ⌊log₃|ξ|⌋`: `repBound none ξ ≤ topProd K {m log₃t + log₃|h(bᵈ−1)|}`. -/
+theorem repBound_class_top_le {s t M K m d : ℕ} (ht : 1 ≤ t) (h : ℤ)
+    (hξ : 1 ≤ |(h : ℝ) * (((3 ^ s * t : ℕ) : ℝ) ^ (m + d) - ((3 ^ s * t : ℕ) : ℝ) ^ m)|)
+    (hK : K ≤ ⌊Real.logb 3 |(h : ℝ) * (((3 ^ s * t : ℕ) : ℝ) ^ (m + d) -
+      ((3 ^ s * t : ℕ) : ℝ) ^ m)|⌋₊)
+    (hfr : ∀ k < K, isFresh (⌊Real.logb 3 |(h : ℝ) * (((3 ^ s * t : ℕ) : ℝ) ^ (m + d) -
+      ((3 ^ s * t : ℕ) : ℝ) ^ m)|⌋₊ - 1 - k) = true)
+    (hM : ⌊Real.logb 3 |(h : ℝ) * (((3 ^ s * t : ℕ) : ℝ) ^ (m + d) -
+      ((3 ^ s * t : ℕ) : ℝ) ^ m)|⌋₊ ≤ M) :
+    repBound M none ((h : ℝ) * (((3 ^ s * t : ℕ) : ℝ) ^ (m + d) - ((3 ^ s * t : ℕ) : ℝ) ^ m)) ≤
+      CantorExactExponentProfile.topProd K (Int.fract (m * Real.logb 3 t +
+        Real.logb 3 |(h : ℝ) * (((3 ^ s * t : ℕ) : ℝ) ^ d - 1)|)) := by
+  simp only [repBound]
+  refine (CantorExactExponentProfile.bf_le_topProd isFresh M K _ hξ hK hfr hM).trans (le_of_eq ?_)
+  have e : (h : ℝ) * (((3 ^ s * t : ℕ) : ℝ) ^ (m + d) - ((3 ^ s * t : ℕ) : ℝ) ^ m) =
+      ((h : ℝ) * (((3 ^ s * t : ℕ) : ℝ) ^ d - 1)) * ((3 ^ s * t : ℕ) : ℝ) ^ m := by ring
+  have hc : (h : ℝ) * (((3 ^ s * t : ℕ) : ℝ) ^ d - 1) ≠ 0 := by
+    intro h0; rw [e, h0, zero_mul, abs_zero] at hξ; norm_num at hξ
+  rw [e, fract_logb_mul_pow ht _ hc]
+
 /-! ## Bases `3ˢt`, `t > 1`: the crux -/
 
 /-- **Assembly of the crux from its inputs (open; believed, 60%).**  For `b = 3ˢt`, `t > 1`:

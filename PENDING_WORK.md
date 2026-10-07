@@ -3363,4 +3363,5 @@ Next: `isFresh` Riesz bound, then the classification lemma in Lean (route-decisi
 - PROVED `repBound_class_sep_le` (class-3 pointwise; sum = N·sum_hf_true_le + N²π3^{-K}).
 - PROVED `repBound_class_copySep_le` (class-6 pointwise → cycProd a (h tⁿ), sum via TOrbitCyclicDecay).
 - PROVED `fract_logb_mul_pow` (top phases of classes 2/4 are Kronecker orbits → sum_topProd_le).
+- PROVED `repBound_class_top_le` (class-4 pointwise, Kronecker phase).
 - Next: remaining per-class sums (step 3 of lap-4 handoff): κ choice, band/small-m counts, summability.
