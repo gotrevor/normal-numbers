@@ -2018,6 +2018,33 @@ theorem card_nearCopyBdry_le (s W K N : ℕ) (hs : 1 ≤ s) :
   refine (Finset.sum_le_sum hk).trans ?_
   simp; ring_nf; omega
 
+/-- **Class-1 sum (low window).**  For `h` prime to 3, summing the all-free majorant at
+`X = h(bᵈ − 1)tᵐ` over `1 ≤ d < N`, `m < N` gives `N(N + 2·3ʲ)(3/2)^{tb}(2/3)ʲ`. -/
+theorem sum_class_low_le {s t : ℕ} (hs : 1 ≤ s) (ht : 2 ≤ t) (h3 : ¬ 3 ∣ t) (h : ℕ)
+    (hh : ¬ 3 ∣ h) (j N : ℕ) :
+    ∑ d ∈ Finset.Ico 1 N, ∑ m ∈ Finset.range N,
+      CantorLiouville.Hf (fun _ => true) 0 (j + 1) ((h * ((3 ^ s * t) ^ d - 1) * t ^ m : ℕ) : ℝ) ≤
+      N * ((N + 2 * 3 ^ j) * (3 / 2 : ℝ) ^ CantorLiouvilleAll.tb t * (2 / 3 : ℝ) ^ j) := by
+  have hc : ∀ d ∈ Finset.Ico 1 N, ¬ 3 ∣ h * ((3 ^ s * t) ^ d - 1) := by
+    intro d hd h3d
+    have hd1 : 1 ≤ d := (Finset.mem_Ico.1 hd).1
+    rcases (Nat.Prime.dvd_mul Nat.prime_three).1 h3d with h1 | h1
+    · exact hh h1
+    · have h0 : 3 ∣ (3 ^ s * t) ^ d := by
+        exact Dvd.dvd.pow (Dvd.dvd.mul_right (dvd_pow_self 3 (by omega)) _) (by omega)
+      have hpos : 1 ≤ (3 ^ s * t) ^ d := Nat.one_le_iff_ne_zero.2 (by positivity)
+      have := Nat.dvd_sub h0 h1
+      rw [Nat.sub_sub_self hpos] at this
+      norm_num at this
+  calc _ ≤ ∑ d ∈ Finset.Ico 1 N,
+        ((N + 2 * 3 ^ j) * (3 / 2 : ℝ) ^ CantorLiouvilleAll.tb t * (2 / 3 : ℝ) ^ j) :=
+        Finset.sum_le_sum fun d hd =>
+          CantorExactExponentProfile.sum_hf_true_le ht h3 j _ (hc d hd) N
+    _ ≤ _ := by
+        rw [Finset.sum_const, nsmul_eq_mul, Nat.card_Ico]
+        gcongr
+        exact_mod_cast Nat.sub_le _ _
+
 /-! ## Bases `3ˢt`, `t > 1`: the crux -/
 
 /-- **Assembly of the crux from its inputs (open; believed, 60%).**  For `b = 3ˢt`, `t > 1`:
