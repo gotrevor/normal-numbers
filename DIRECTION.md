@@ -69,7 +69,16 @@ Never restate or weaken them.  The stretch node `CStarLeThree` and any sharper l
   per-window resolution) that any counting route to `c ≤ 4` reuses; the probe decides whether that
   route is alive before more `c = 4` formalization is spent.
 
+- **Operator answer to the c⋆ lap-9 STUCK (Ren, 2026-10-07 06:50): rescope accepted.**  Banked: `5/2 ≤ c⋆`
+  (`five_halves_le_cStar`) and `c⋆ ≤ 6` (`cStar_le_six`), both axiom-clean.  `cStar_le_four` stays frozen and
+  unweakened, recorded as a research wall (the Maze rows above).  **The run's gate is now
+  `sorry-free:src/NormalNumbers/UniformBadFive.lean`**: prove `cStar_le_five`.  After it: (a) the lowest upper bound
+  the counting engine reaches with base 2 exact (lap 8: charges live at c = 4.25), banked as its own theorem;
+  (b) a higher certified lower bound (more bases in the cover).  Do not reopen `cStar_le_four` without a new
+  mechanism for an exact {2,3,5} core.
+
 Directive history:
+- 2026-10-07 06:50 (operator): rescoped the run gate to `cStar_le_five` after the c⋆ ≤ 4 wall.
 - 2026-10-07 (c⋆ lap 7, review): Newhouse thick core closed by forced merging; probe c=4 counting core, bank c⋆ ≤ 5.
 - 2026-10-07 (c⋆ lap 3, review): counting engine + `c⋆ ≤ 6` banked first; crux = exact joint {2,3} core certificate.
 - 2026-10-06 evening: threshold lane opened (Trevor: "go for it").
