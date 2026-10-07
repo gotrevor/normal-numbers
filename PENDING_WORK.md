@@ -1,4 +1,5 @@
-## Repetition lap 6 (2026-10-07) — per-N assembly of `repPairPower_of_inputs`
+## Repetition lap 6 (2026-10-07) — ASSEMBLY PROVED: `repPairArith_of_inputs` (Baker + TOrbitCyclicDecay + BadGcdSparseH ⇒ RepPairArith (3ˢt)), #print axioms clean. Next per DIRECTION: state+prove the conditional headline (LiouvilleCantorFullProfile from the three inputs).
+### (history)
 * Proved: `exists_kappa_half` (full square ≤ N + 2·half-sum over (m,d)), `repBound_neg`,
   `pairMaj_nonneg`, `PairGood`, `exists_option_le_pairMaj_bad` (option ≤ pairMaj + [¬PairGood]).
 * `repPairPower_of_inputs` now PROVED from leaf `repPairPos_eventually` (h=3ᵉh'>0, N≥N₀) via `repPairPower_of_pos`, `power_of_eventually`. Proved `exists_kappa_pos` (h=3ᵉh'>0: full sum ≤ N+2(Σpairmaj+#bad)), `pairNat_cast`. Proved `sum_bad_le` (bad count ≤ N(m₀+4·band)). Was next: count `¬PairGood` pairs (small m: O(N·(e+log h'+W+K+a_{k₀})); bands via

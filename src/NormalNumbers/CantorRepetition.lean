@@ -3761,7 +3761,7 @@ theorem repPairPos_explicit {s t e h' : ℕ} (hs : 1 ≤ s) (ht : 2 ≤ t) (h3t 
   have h2 : 0 ≤ (2 : ℝ) := by norm_num
   nlinarith
 
-/-- **Per-`N` assembly, `h = 3ᵉh' > 0`, large `N` (open; believed, 70%).**  The remaining content
+/-- **Per-`N` assembly, `h = 3ᵉh' > 0`, large `N` (proved 2026-10-07).**  The content
 of `repPairPower_of_inputs`.  Route: `exists_kappa_pos` with `ρ, k₀` fixed by `b`, `W = K = j+1`,
 `j = ⌊log₃ N / q⌋` (`2/q < κ_Baker`); `sum_pairMaj_le` (Btop from `sum_class_top_le`, copy totals
 from `copy5_total_le`/`copy6_total_le` with `Ks` the runs `≤ log₄(2sN+e)`), `sum_bad_le`
@@ -3773,7 +3773,86 @@ theorem repPairPos_eventually {s t : ℕ} (hs : 1 ≤ s) (ht : 2 ≤ t) (h3t : �
       ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N,
         repBound M (κ n m) (((3 ^ e * h' : ℕ) : ℝ) * (((3 ^ s * t : ℕ) : ℝ) ^ n -
           ((3 ^ s * t : ℕ) : ℝ) ^ m)) ≤ C * (N : ℝ) ^ (2 - δ) := by
-  sorry
+  obtain ⟨Cb, κb, hκb, hCb⟩ := sum_class_top_le ht h3t hB
+  obtain ⟨Cc, δc, hδc, hCc⟩ := copyTotal_le (e := e) hs hh hT hS
+  set q : ℕ := ⌈4 / κb⌉₊ + 2 with hqd
+  have hq : 1 ≤ q := by omega
+  have hq2 : (2 : ℝ) ≤ q := by simp only [hqd]; push_cast; linarith [Nat.cast_nonneg (α := ℝ) ⌈4 / κb⌉₊]
+  have hqκ : 4 / κb ≤ q := by
+    simp only [hqd]; push_cast; linarith [Nat.le_ceil (4 / κb)]
+  have hq0 : (0 : ℝ) < q := by linarith
+  obtain ⟨Cd, hCd⟩ := badTerm_le hq (3 ^ e * h' + runStart ((t + 2) * (t + 3))) (2 * (s + t))
+    (3 ^ e * h' + e)
+  have hlg : Real.logb 3 (2 / 3) < 0 := Real.logb_neg (by norm_num) (by norm_num) (by norm_num)
+  set η : ℝ := -(Real.logb 3 (2 / 3)) / q
+  have hη : 0 < η := div_pos (by linarith) hq0
+  set δ : ℝ := min (min η (q : ℝ)⁻¹) (min (κb / 2) (min δc (1 / 4)))
+  have hδ0 : 0 < δ := lt_min (lt_min hη (by positivity)) (lt_min (by positivity) (lt_min hδc (by norm_num)))
+  have hδη : δ ≤ η := (min_le_left _ _).trans (min_le_left _ _)
+  have hδq : δ ≤ (q : ℝ)⁻¹ := (min_le_left _ _).trans (min_le_right _ _)
+  have hδκ : δ ≤ κb / 2 := (min_le_right _ _).trans (min_le_left _ _)
+  have hδc' : δ ≤ δc := (min_le_right _ _).trans ((min_le_right _ _).trans (min_le_left _ _))
+  have hδ4 : δ ≤ 1 / 4 := (min_le_right _ _).trans ((min_le_right _ _).trans (min_le_right _ _))
+  have hqinv : (q : ℝ)⁻¹ ≤ 1 / 2 := by rw [inv_le_comm₀ hq0 (by norm_num)]; linarith
+  have h2q : 2 * (q : ℝ)⁻¹ ≤ κb / 2 := by
+    have : 4 ≤ κb * q := by rwa [div_le_iff₀ hκb, mul_comm] at hqκ
+    rw [← div_eq_mul_inv, div_le_iff₀ hq0]; nlinarith
+  set cc : ℝ := (3 / 2 : ℝ) ^ CantorLiouvilleAll.tb t
+  have hcc : 0 ≤ cc := by positivity
+  refine ⟨1 + 2 * (cc * (9 / 2 + 4) + 6 + (8 + 8 * Real.pi) + 18 * |Cb| + |Cc| + |Cd|), δ, hδ0,
+    1, fun N _ hN => ?_⟩
+  have hN1 : (1 : ℝ) ≤ N := by exact_mod_cast hN
+  have mono : ∀ a : ℝ, a ≤ 2 - δ → (N : ℝ) ^ a ≤ (N : ℝ) ^ (2 - δ) :=
+    fun a ha => Real.rpow_le_rpow_of_exponent_le hN1 ha
+  set j := Nat.log 3 N / q
+  set Btop : ℝ := 3 * N * (2 / 3 : ℝ) ^ (j + 1) + 4 * N * (1 / 3 : ℝ) ^ (j + 1) +
+    Cb * 9 ^ (j + 1) * (N : ℝ) ^ (1 - κb)
+  have hBtop : ∀ β : ℝ, ∑ m ∈ Finset.range N,
+      CantorExactExponentProfile.topProd (j + 1) (Int.fract (m * Real.logb 3 t + β)) ≤ Btop := by
+    intro β
+    have := hCb N hN (j + 1) 1 (fun _ => β)
+    simp only [Finset.sum_range_one, Nat.cast_one, one_mul] at this; exact this
+  obtain ⟨M, κ, hMκ⟩ := repPairPos_explicit hs ht h3t hh hnd j N Btop (Cc * (N : ℝ) ^ (2 - δc))
+    hBtop (hCc N hN)
+  refine ⟨M, κ, hMκ.trans ?_⟩
+  have e1 : 3 ^ e * h' + 2 * (s + t) * N + e = 2 * (s + t) * N + (3 ^ e * h' + e) := by ring
+  rw [e1]
+  have hcl := classTerms_le hq hN hcc
+  have htop := topTerms_le hq hN Cb κb
+  have hbad := hCd N hN
+  -- exponents
+  have x1 := mono (2 + Real.logb 3 (2 / 3) / q) (by
+    have : Real.logb 3 (2 / 3) / q = -η := by simp only [η]; ring
+    rw [this]; linarith)
+  have x2 := mono (1 + (q : ℝ)⁻¹) (by linarith)
+  have x3 := mono (2 - (q : ℝ)⁻¹) (by linarith)
+  have x4 := mono (2 + 2 * (q : ℝ)⁻¹ - κb) (by linarith)
+  have x5 := mono (2 - δc) (by linarith)
+  have x6 := mono (3 / 2) (by linarith)
+  have x7 := mono 1 (by linarith)
+  rw [Real.rpow_one] at x7
+  have hP : 0 ≤ (N : ℝ) ^ (2 - δ) := by positivity
+  have hpi : 0 ≤ 8 + 8 * Real.pi := by positivity
+  have y1 : cc * (9 / 2 * (N : ℝ) ^ (2 + Real.logb 3 (2 / 3) / q) + 4 * (N : ℝ) ^ (1 + (q : ℝ)⁻¹)) ≤
+      cc * (9 / 2 + 4) * (N : ℝ) ^ (2 - δ) := by
+    rw [mul_assoc]; apply mul_le_mul_of_nonneg_left _ hcc; linarith
+  have y2 : 6 * (N : ℝ) ^ (2 + Real.logb 3 (2 / 3) / q) + (8 + 8 * Real.pi) * (N : ℝ) ^ (2 - (q : ℝ)⁻¹) +
+      18 * |Cb| * (N : ℝ) ^ (2 + 2 * (q : ℝ)⁻¹ - κb) ≤
+      (6 + (8 + 8 * Real.pi) + 18 * |Cb|) * (N : ℝ) ^ (2 - δ) := by
+    have := mul_le_mul_of_nonneg_left x3 hpi
+    have := mul_le_mul_of_nonneg_left x4 (by positivity : (0 : ℝ) ≤ 18 * |Cb|)
+    nlinarith
+  have y3 : Cc * (N : ℝ) ^ (2 - δc) ≤ |Cc| * (N : ℝ) ^ (2 - δ) :=
+    (mul_le_mul_of_nonneg_right (le_abs_self Cc) (by positivity)).trans
+      (mul_le_mul_of_nonneg_left x5 (abs_nonneg _))
+  have y4 : Cd * (N : ℝ) ^ ((3 : ℝ) / 2) ≤ |Cd| * (N : ℝ) ^ (2 - δ) :=
+    (mul_le_mul_of_nonneg_right (le_abs_self Cd) (by positivity)).trans
+      (mul_le_mul_of_nonneg_left x6 (abs_nonneg _))
+  have htop' : 2 * (N : ℝ) * Btop + N * N * (Real.pi * (8 / 3 ^ (j + 1))) ≤
+      6 * (N : ℝ) ^ (2 + Real.logb 3 (2 / 3) / q) + (8 + 8 * Real.pi) * (N : ℝ) ^ (2 - (q : ℝ)⁻¹) +
+        18 * |Cb| * (N : ℝ) ^ (2 + 2 * (q : ℝ)⁻¹ - κb) := htop
+  clear_value Btop
+  linarith
 
 /-- **Per-`N` assembly (open; believed, 60%; the remaining content of `repPairArith_of_inputs`).**
 Plan: `W = K = ⌈ε log₃ N⌉`; `κ` per `pair_classify_rep` (hypotheses: `le_log_mul_pow`,
@@ -3787,7 +3866,7 @@ theorem repPairPower_of_inputs {s t : ℕ} (hs : 1 ≤ s) (ht : 2 ≤ t) (h3t : 
   repPairPower_of_pos fun e h' h1 hnd =>
     power_of_eventually _ (repPairPos_eventually hs ht h3t hB hT hS e h' h1 hnd)
 
-/-- **Assembly of the crux from its inputs (open; believed, 60%).**  For `b = 3ˢt`, `t > 1`:
+/-- **Assembly of the crux from its inputs (PROVED 2026-10-07; axiom-clean modulo its hypotheses).**  For `b = 3ˢt`, `t > 1`:
 `RepPairArith b` follows from the Baker discrepancy of `m log₃ t` (cited,
 `Literature.BakerLogDiscrepancy`), the copy-zone digit statements `TOrbitCyclicDecay t` and
 `BadGcdSparseH b`.  Plan (per pair `(n, m)`, `v = s·min(n,m)`, window `[v, log₃|ξ|]`):
