@@ -1512,7 +1512,7 @@ def ExpOrderPeriods (t : ℕ) : Prop :=
 /-- **Assembly of the crux from its inputs (open; believed, 60%).**  For `b = 3ˢt`, `t > 1`:
 `RepPairArith b` follows from the Baker discrepancy of `m log₃ t` (cited,
 `Literature.BakerLogDiscrepancy`), the copy-zone digit statements `TOrbitCyclicDecay t` and
-`BadGcdSparse b`.  Plan (per pair `(n, m)`, `v = s·min(n,m)`, window `[v, log₃|ξ|]`):
+`BadGcdSparseH b`.  Plan (per pair `(n, m)`, `v = s·min(n,m)`, window `[v, log₃|ξ|]`):
 * window meets a free gap in `≥ K` places at its bottom: `κ = none`, low-digit Cassels count
   (`cassels_Bf`-type, elementary);
 * window top `≥ K` places into the gap after run `k`: `κ = none`, top window
