@@ -1,25 +1,27 @@
 # DIRECTION — normal-numbers 🧭
 
-## CURRENT DIRECTIVE (2026-10-07, branch `proof/cantor-repetition`, review lap): prove the assembly 🎯
+## CURRENT DIRECTIVE (2026-10-07, branch `proof/cantor-repetition`, review lap 7): the sparse-pair route 🎯
 
-**Objective:** prove `repPairArith_of_inputs` (`CantorRepetition.lean`): Baker + `TOrbitCyclicDecay t`
-+ `BadGcdSparseH b` ⇒ `RepPairArith (3ˢt)`.  Then state and prove the conditional headline
-(`LiouvilleCantorFullProfile` from those three inputs), leaving the frozen headline's only `sorry`
-at the walls.
-**Mandated next move:** (1) fresh-coin Riesz bound `Bf isFresh` (`isFresh := isFree ∨ odd run`) and
-switch `repBound none` to it; (2) state the pair classification as a Lean lemma (two windows per pair,
-eight classes, listed in PENDING_WORK "repetition review lap 3") and prove it — it is the
-route-decisive piece of the assembly; (3) the per-class sums, reusing `sum_hf_true_le`,
-`sum_topProd_le`, `bf_le_topProd(_of_dvd)`, `copyRun_sum_le`, `copyZoneDecayH_of`.
-**Forbidden drift:** new copy-zone wall reformulations or construction redesigns (short periods,
-random periods) before the assembly is proved; attacking `TOrbitCyclicDecay` head-on (open
-digits-of-powers problem, wrap regime); edits to frozen statements.
-**Why:** the review lap found every construction of a Liouville point of `K` forces periodic stretches
-that dominate the prefix, so some digits-of-powers input is unavoidable (polylog orbits mod `3^P−1`
-for long periods, superpolynomial order of `t` mod `3^P−1` for short ones; both open).  The provable
-content is the reduction to named walls, and the assembly is its only unproved, uncertain (60%) piece.
+**Objective:** make the frozen headline `liouvilleCantorFullProfile` rest only on two cited classical
+theorems (`Literature.bakerLogDiscrepancy_cited`, `Literature.matveevThreeLogs_cited`) by proving the
+leaves of the sparse-pair route (`CantorRepetition.lean` "The copy zone through sparse pairs",
+`SparseIdentity.lean`).  Wiring is in place: `repPairArith_of_three_dvd` now goes through
+`repPairArith_of_literature`; conditional headline `liouvilleCantorFullProfile_of_literature`.
+**Mandated next move (in order):** (1) `sparseIdentityBound_of_matveev` (the Diophantine leaf; the only
+new-math leaf left, believed 90%): strong induction on the term count + top-cut gap bounds from
+Matveev; state the gap-step lemma first; (2) `cycSparse_of_cycProd_ge`, `card_cluster_le`,
+`runOrbitDecay_of_sparse`; (3) `card_degRows_le`, `copyRun_psi`; (4) `repPairArith_of_runDecay`
+(ψ-version of the assembly + the sched sum swap).
+**Forbidden drift:** attacking `TOrbitCyclicDecay` / `BadGcdSparseH` (superseded, not needed: the
+assembly needs only a saving summable along `sched`); construction redesigns; edits to frozen statements;
+trying to formalize Baker/Matveev themselves before every other leaf is closed.
+**Why:** two sparse points of one orbit `c tᵐ mod 3^A − 1` at distance `δ ≲ A/(K log t)` force an exact
+identity `tᵟU = V` between `K`-sparse integers (`cyclic_pair_identity`, PROVED), and Matveev bounds
+`δ ≤ exp(O(K log K))`; so sparse points cluster, and the copy-zone saving is `≈ cos(π/9)^{√k}` per run
+`k`, summable.  The previous walls asked for a power saving, which is an open digits-of-powers problem.
 
 Directive history (repetition branch):
+- 2026-10-07 review lap 7: sparse-pair route (cluster lemma + Matveev) replaces the walls.
 - 2026-10-07 review lap: assembly first; walls stay named nodes.
 
 

@@ -1,31 +1,38 @@
 # STATUS — normal-numbers 📊
 
-## Cantor repetition update, 7 October 2026 (branch `proof/cantor-repetition`, review lap 3)
+## Cantor repetition update, 7 October 2026 (branch `proof/cantor-repetition`, review lap 7)
 
-**Is the profile cut forced?** · **Build**: 🟢 green (8868 jobs, module target) · `998c94ca`+review
+**Is the profile cut forced?** · **Build**: 🟢 green (10797 jobs, full default build) · lap 7
 
 **Where it stands.**  `CantorRepetition.liouvilleCantorFullProfile` (a Liouville point of `K` normal
-to exactly the bases that are not powers of 3) is wired; `#print axioms` shows `sorryAx` only through
-the crux `repPairArith_of_three_dvd` (bases `3ˢt`, `t > 1`).  Bases prime to 3, powers of 3 and the
-Liouville property are proved.  The crux reduces (assembly `repPairArith_of_inputs`, sorry, 60%) to
-Baker (cited) + `TOrbitCyclicDecay t` + `BadGcdSparseH b`; the review lap found the walls are
-digits-of-powers problems that any Liouville-in-`K` construction must face, so the assembly is the
-provable target.
+to exactly the bases that are not powers of 3) now runs through the **sparse-pair route**: its
+`sorry` dependence is two cited classical theorems (Baker–Wüstholz discrepancy, Matveev's
+three-logarithm bound) plus named elementary/Diophantine leaves.  The old walls
+(`TOrbitCyclicDecay`, `BadGcdSparseH`, open digits-of-powers problems) are no longer on the path.
+Key new fact, proved: `SparseIdentity.cyclic_pair_identity` (two sparse points of an orbit mod
+`3^A − 1` force an exact sparse identity `tᵟU = V`).
 
 **What's happened.**
-- 2026-10-07 review: direction kept; classification gaps (separated large-`d` pairs) resolved on paper
-  (classes 3 and 6, PENDING_WORK); CURRENT DIRECTIVE set in DIRECTION.md.
-- 2026-10-07 laps 1–2: construction (even runs copy), copy-zone toolkit, measure-free crux
+- 2026-10-07 review lap 7: route change.  The assembly needs only a saving summable along `sched`;
+  pairs of sparse orbit points give `tᵟU = V`, bounded by Matveev (`sparseIdentityBound_of_matveev`,
+  90%), so sparse points cluster.  `repPairArith_of_three_dvd` rewired through
+  `repPairArith_of_literature`; conditional headline `liouvilleCantorFullProfile_of_literature`.
+- 2026-10-07 laps 4–6: assembly `repPairArith_of_inputs` and `liouvilleCantorFullProfile_of_inputs`
+  proved (trust base), `card_cycProd_ge_le` proved.
+- 2026-10-07 laps 1–3: construction (even runs copy), copy-zone toolkit, measure-free crux
   `RepPairArith`, probes at the `1/N` floor for `b = 6, 12` (control `b = 9` flat).
 
-**Outstanding.**  Short: `isFresh` Riesz bound; pair classification lemma; class sums; conditional
-headline.  Long: the walls `TOrbitCyclicDecay` (open, 55%), `BadGcdSparseH` (75%).
+**Outstanding.**  Short (DIRECTION order): `sparseIdentityBound_of_matveev`; `cycSparse_of_cycProd_ge`,
+`card_cluster_le`, `runOrbitDecay_of_sparse`; `card_degRows_le`, `copyRun_psi`;
+`repPairArith_of_runDecay`.  Long: formalizing the two cited inputs (🟠/🟡: Baker theory).
 
 | headline | claim | `#print axioms` | open inputs |
 |---|---|---|---|
-| `liouvilleCantorFullProfile` | unconditional (frozen) | propext, choice, Quot.sound, **sorryAx** | crux 🔴-open research via `TOrbitCyclicDecay`; Baker 🟡 cited |
-| `ae_isNormal_rep_of_coprime_three` | bases prime to 3 | trust base | none |
-| `liouville_repReal` | Liouville | trust base | none |
+| `liouvilleCantorFullProfile` | unconditional (frozen) | propext, choice, Quot.sound, **sorryAx** | 🟡 Baker–Wüstholz (cited), 🟡 Matveev (cited), 7 route leaves (elementary + one Diophantine) |
+| `liouvilleCantorFullProfile_of_literature` | cond. on Baker + Matveev | propext, choice, Quot.sound, **sorryAx** | the 7 route leaves |
+| `liouvilleCantorFullProfile_of_inputs` | cond. on old walls | trust base | `TOrbitCyclicDecay`, `BadGcdSparseH` (superseded) |
+| `SparseIdentity.cyclic_pair_identity` | pair lemma | trust base | none |
+| `ae_isNormal_rep_of_coprime_three`, `liouville_repReal` | `3 ∤ b`; Liouville | trust base | none |
 
 
 ## Cantor exact-exponent stretch update, 6 October 2026 (branch `proof/cantorexp-stretch`)

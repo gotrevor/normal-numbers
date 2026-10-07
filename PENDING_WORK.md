@@ -1,3 +1,28 @@
+## Repetition review lap 7 (2026-10-07) — ROUTE CHANGE: sparse pairs + Matveev replace the walls
+* Insight: `RepPairArith` needs only summability along `sched` (a polylog saving suffices), not the
+  power saving of `TOrbitCyclicDecay`.  Two sparse points `y, tᵟy` of one orbit mod `3^A − 1`,
+  with `tᵟ + 2 ≤ 3^{⌊A/(2K+1)⌋}`, give an exact identity `tᵟU = V` between `K`-sparse integers
+  (`SparseIdentity.cyclic_pair_identity`, PROVED: rotate an empty arc to the wrap point).  Matveev
+  (3 logs of rationals) bounds `δ ≤ exp(O(K log K))` (`sparseIdentityBound_of_matveev`).  So sparse
+  points of an orbit form clusters of diameter `≤ L_K`, separated by `> D ≍ A/(K log t)`:
+  `O(K k L_K)` sparse points per run orbit, independent of `A = a_k`.  With `K = ⌊√k⌋ + 1` the
+  per-run saving is `≈ cos(π/9)^{√k}`, summable with any polynomial weight.  `BadGcdSparseH` is
+  not needed (only fully degenerate rows escape; `card_degRows_le`, LTE).
+* Probe (`scratchpad cluster_probe.py`, recorded in the `sparseIdentityBound_of_matveev`
+  docstring): ≤2 changes, `t = 2`: occurring `δ = {1,2,3}` at `A = 30` and `40`; `t = 5`: `{1}`.
+* Leaves now open (DIRECTION order):
+  1. `SparseIdentity.sparseIdentityBound_of_matveev` (Diophantine; plan in docstring: strong
+     induction on term count; top-cut gap bound from Matveev; spread recursion).  First state the
+     gap-step lemma: for a cut of a non-splitting identity, `gap ≤ c₀ + c₁(1 + log B)(s + 3)`.
+  2. `cycSparse_of_cycProd_ge` (from `card_changes_lt`, `eq_sum_rd`; need `dg P y P = dg P y 0`),
+     `card_cluster_le`, `runOrbitDecay_of_sparse`.
+  3. `card_degRows_le` (LTE: `padicValNat.pow_sub_pow` / `Int.two_pow_sub_pow`), `copyRun_psi`.
+  4. `repPairArith_of_runDecay`: ψ-versions of `power_of_eventually`, `repPairPower_of_pos`,
+     `repPairPos_eventually` + `Copy(N) ≤ C₀ + N² Φ(N)`, `Σ_j Φ(sched j) < ∞` by a sum swap
+     (`Σ_{sched j ≥ X} sched(j)^{-2} ≲ log X/X²`).
+* Cited (sorried, the end state): `Literature.bakerLogDiscrepancy_cited`,
+  `Literature.matveevThreeLogs_cited`.
+
 ## Repetition lap 6 (2026-10-07) — ASSEMBLY PROVED: `repPairArith_of_inputs` (Baker + TOrbitCyclicDecay + BadGcdSparseH ⇒ RepPairArith (3ˢt)), #print axioms clean. Next per DIRECTION: state+prove the conditional headline (LiouvilleCantorFullProfile from the three inputs).
 ### (history)
 * Proved: `exists_kappa_half` (full square ≤ N + 2·half-sum over (m,d)), `repBound_neg`,

@@ -7,6 +7,7 @@ import NormalNumbers.CantorExactExponentProfile
 import NormalNumbers.EntropyProfiles
 import NormalNumbers.ExplicitPQ
 import NormalNumbers.LevinSparse
+import NormalNumbers.SparseIdentity
 
 /-!
 # Is the profile cut forced?  Repetitions instead of zero runs
@@ -4153,10 +4154,147 @@ theorem repPairArith_of_inputs {s t : ℕ} (hs : 1 ≤ s) (ht : 2 ≤ t) (h3t : 
     (hS : BadGcdSparseH (3 ^ s * t)) : RepPairArith (3 ^ s * t) :=
   repPairArith_of_power (repPairPower_of_inputs hs ht h3t hB hT hS)
 
-/-- **The crux, arithmetic form (open leaf).**  See `RepPairArith`. -/
-theorem repPairArith_of_three_dvd {b : ℕ} (hb : 2 ≤ b) (h3 : 3 ∣ b) (hpow : ∀ s : ℕ, b ≠ 3 ^ s) :
-    RepPairArith b := by
+/-! ### The copy zone through sparse pairs (review lap 7, 2026-10-07)
+
+`TOrbitCyclicDecay` asks for a power saving, which is an open digits-of-powers problem; the
+assembly needs only a saving summable along `sched`.  Route (`SparseIdentity`):
+* a residue with large `cycProd` is cyclically sparse (`cycSparse_of_cycProd_ge`, via
+  `card_changes_lt`: `2y = 3y − y ≡ Σ (dg_{i+1} − dg_i) 3^{P−1−i}`);
+* two sparse points `c tᵐ`, `c tᵐ⁺ᵟ` of one orbit with `t^δ + 2 ≤ 3^{⌊A/(2K+1)⌋}` give an exact
+  sparse identity `tᵟ U = V` (`SparseIdentity.cyclic_pair_identity`, proved), hence `δ ≤ L_K`
+  (`SparseIdentity.SparseIdentityBound`, from Matveev);
+* so sparse points of an orbit cluster (`card_cluster_le`) and the run orbit sums are
+  `≤ N θ + (N/D + 1)(L_K + 1)` with `D ≍ A/(K log₃ t)`, `N/D = O(K k log t)` (`RunOrbitDecay`).
+`BadGcdSparseH` is not needed: only fully degenerate rows (`3^A − 1 ∣ 2 c t^N`) escape, and they
+are counted elementarily (`card_degRows_le`). -/
+
+/-- **Large cyclic product forces cyclic sparsity.**  If `cos(π/9)^K < θ ≤ cycProd P η`, then `η`
+is cyclically `K`-sparse modulo `3^P − 1`. -/
+theorem cycSparse_of_cycProd_ge {P K : ℕ} (hP : 1 ≤ P) {θ : ℝ}
+    (hK : Real.cos (Real.pi / 9) ^ K < θ) (η : ℤ) (hη : θ ≤ cycProd P η) :
+    SparseIdentity.CycSparse P K η := by
   sorry
+
+/-- **Cluster count (pure combinatorics).**  A set `B ⊆ [0, N)` any two of whose points within
+distance `D` are within distance `L < D` has at most `(N/D + 1)(L + 1)` points. -/
+theorem card_cluster_le {N D L : ℕ} (hLD : L < D) (B : Finset ℕ) (hB : B ⊆ Finset.range N)
+    (hcl : ∀ m ∈ B, ∀ m' ∈ B, m < m' → m' - m ≤ D → m' - m ≤ L) :
+    B.card ≤ (N / D + 1) * (L + 1) := by
+  sorry
+
+/-- **Run orbit decay (the copy-zone node of the sparse-pair route).**  For the runs
+`A = a_k`, `N_k = (k+2)a_k + 1`, the orbit sums `Σ_{m < N_k} cycProd a_k (c tᵐ)` are `≤ N_k ψ_k`
+for every non-degenerate `c` (`3^{a_k} − 1 ∤ 2 c t^{N_k}`), with `Σ ψ_k (k+3)⁴ < ∞`.  Weaker than
+`TOrbitCyclicDecay` (no power saving, but no gcd hypothesis and no `BadGcdSparseH`). -/
+def RunOrbitDecay (t : ℕ) : Prop :=
+  ∃ ψ : ℕ → ℝ, (∀ k, 0 ≤ ψ k) ∧ Summable (fun k => ψ k * ((k : ℝ) + 3) ^ 4) ∧ ∃ k₁ : ℕ,
+    ∀ k, k₁ ≤ k → ∀ c : ℤ,
+      ¬ ((3 : ℤ) ^ runStart k - 1 ∣ 2 * c * (t : ℤ) ^ ((k + 2) * runStart k + 1)) →
+      ∑ m ∈ Finset.range ((k + 2) * runStart k + 1), cycProd (runStart k) (c * (t : ℤ) ^ m) ≤
+        (((k + 2) * runStart k + 1 : ℕ) : ℝ) * ψ k
+
+/-- **Run orbit decay from sparse identities (believed, 90%).**
+
+English proof.  Fix `k`, `A = a_k`, `N = N_k`, `K = ⌊√k⌋ + 1`, `θ = 2 cos(π/9)^K`, and let `L_K`
+be the bound of `SparseIdentityBound t`, `L_K ≤ exp(C(K+1)²) = exp(O(k))`.  Call `m < N` bad if
+`cycProd A (c tᵐ) ≥ θ`; good terms contribute `≤ Nθ`.  A bad `m` has `c tᵐ` cyclically
+`K`-sparse (`cycSparse_of_cycProd_ge`), and non-degenerate (`2 c tᵐ ≢ 0`, since degeneracy is
+inherited by `m + 1, …, N`).  Let `D` be the largest `δ` with `t^δ + 2 ≤ 3^{⌊A/(2K+1)⌋}`, so
+`D ≥ A/((2K+1) log₃ t) − 2`.  For bad `m < m'` with `δ = m' − m ≤ D`, `c t^{m'} ≡ t^δ · c tᵐ`, and
+`SparseIdentity.cyclic_pair_identity` gives `t^δ U = V` with `U ≠ 0`, so `δ ≤ L_K`.  As
+`L_K < D` for large `k` (`A = a_k ≥ 2^k k!`), `card_cluster_le` bounds the bad `m` by
+`(N/D + 1)(L_K + 1) = O(K k log t · L_K)`.  So `ψ_k = θ + O(K k L_K)/a_k`, and
+`Σ ψ_k (k+3)⁴ < ∞` since `θ = 2cos(π/9)^{⌊√k⌋+1}` and `L_K/a_k ≤ exp(O(k) − k log k)`. -/
+theorem runOrbitDecay_of_sparse {t : ℕ} (ht : 2 ≤ t) (h3 : ¬ 3 ∣ t)
+    (hS : SparseIdentity.SparseIdentityBound t) : RunOrbitDecay t := by
+  sorry
+
+/-- **Degenerate rows are few (believed, 95%; elementary).**  Shifts `d < N_k` whose row
+`tᵐ h'(b^d − 1)` is degenerate modulo `3^{a_k} − 1` number `O(k + 3)`.
+
+English proof.  Degeneracy means `Q ∣ b^d − 1` for `Q = q/gcd(q, 2h' t^{N_k})`, `q = 3^{a_k} − 1`.
+By lifting the exponent, `gcd(q, t^∞) ≤ C_t a_k`, so `Q ≥ q/(2h' C_t a_k) ≥ 3^{a_k/2}` for large
+`k`.  The degenerate `d` are multiples of `ord_Q(b) ≥ log_b Q ≥ a_k/(2 log₃ b)`, so there are
+`≤ N_k·2 log₃ b/a_k + 1 ≤ 2(k+3) log₃ b + 1` of them. -/
+theorem card_degRows_le {s t : ℕ} (hs : 1 ≤ s) (ht : 2 ≤ t) (h3 : ¬ 3 ∣ t) (h' : ℕ)
+    (hh : 1 ≤ h') : ∃ C : ℝ, ∃ k₁ : ℕ, ∀ k, k₁ ≤ k →
+      (((Finset.Ico 1 ((k + 2) * runStart k + 1)).filter fun d =>
+        (3 : ℤ) ^ runStart k - 1 ∣ 2 * ((h' : ℤ) * (((3 ^ s * t : ℕ) : ℤ) ^ d - 1)) *
+          (t : ℤ) ^ ((k + 2) * runStart k + 1)).card : ℝ) ≤ C * ((k : ℝ) + 3) := by
+  sorry
+
+/-- **Per-run copy total (believed, 95%; elementary from the two nodes above).**  The run sums
+of `repPairPos_explicit`'s copy term are `≤ N_k² ψ_k` with `Σ ψ_k (k+3)⁴ < ∞`.
+English proof: `pair_sum_le` (rows `d`, `G d m = cycProd(tᵐ h'(b^d − 1))`, `cycProd_pairH`);
+non-degenerate rows by `RunOrbitDecay`, degenerate rows by `1` and counted by `card_degRows_le`;
+the single orbit `c = h'` is non-degenerate for large `k` (`2h'·gcd(q, t^∞) < q`).  So
+`ψ'_k = 3ψ_k + (1 + 2C(k+3))/a_k`, and `a_k ≥ 4^{k+1}`. -/
+theorem copyRun_psi {s t : ℕ} (hs : 1 ≤ s) (ht : 2 ≤ t) (h3 : ¬ 3 ∣ t) (hR : RunOrbitDecay t)
+    (h' : ℕ) (hh : 1 ≤ h') :
+    ∃ ψ : ℕ → ℝ, (∀ k, 0 ≤ ψ k) ∧ Summable (fun k => ψ k * ((k : ℝ) + 3) ^ 4) ∧ ∃ k₁ : ℕ,
+      ∀ k, k₁ ≤ k →
+        ∑ n ∈ Finset.range ((k + 2) * runStart k + 1),
+          ∑ m ∈ Finset.range ((k + 2) * runStart k + 1),
+            (cycProd (runStart k) ((h' : ℤ) * (((3 ^ s * t : ℕ) : ℤ) ^ n - ((3 ^ s * t : ℕ) : ℤ) ^ m))
+              + cycProd (runStart k) ((h' : ℤ) * (t : ℤ) ^ n)) ≤
+          ((((k + 2) * runStart k + 1 : ℕ) : ℝ)) ^ 2 * ψ k := by
+  sorry
+
+/-- **Assembly through run orbit decay (believed, 90%; plumbing).**  Baker + `RunOrbitDecay t`
+give `RepPairArith (3ˢt)`.
+
+Plan.  As `repPairArith_of_inputs`, but with the copy term of `repPairPos_explicit` bounded by
+`copyRun_psi` run by run: for `N ≥ 1`, `Copy(N) ≤ C₀ + N² Φ(N)` with
+`Φ(N) = Σ_{k : a_k ≤ 2sN+e} (N_k/N)² ψ'_k`.  Summability of `Φ ∘ sched`: swap the sums (all
+terms `≥ 0`); for fixed `k` the `j` with `sched j ≥ X_k = (a_k − e)/(2s)` contribute
+`Σ sched(j)^{−2} ≲ log X_k / X_k²` (`sched j ≥ e^{√j}`), so the double sum is
+`≲ Σ_k ψ'_k (k+2)² s² log a_k ≲ Σ_k ψ'_k (k+3)⁴ < ∞` (`log a_k ≤ (k+1) log(2k+4) + 2`).  The other
+classes keep their power savings, and a power saving is summable along `sched`
+(`summable_sched_rpow`).  The sign / `3`-part reduction is `repPairPower_of_pos` verbatim. -/
+theorem repPairArith_of_runDecay {s t : ℕ} (hs : 1 ≤ s) (ht : 2 ≤ t) (h3t : ¬ 3 ∣ t)
+    (hB : CantorExactExponentProfile.Literature.BakerLogDiscrepancy) (hR : RunOrbitDecay t) :
+    RepPairArith (3 ^ s * t) := by
+  sorry
+
+/-- **The crux from the two cited inputs (proved, modulo the leaves above).**  Baker's discrepancy
+for `m log₃ t` and Matveev's three-logarithm bound give `RepPairArith b` for every `b = 3ˢt`,
+`t > 1`. -/
+theorem repPairArith_of_literature (hB : CantorExactExponentProfile.Literature.BakerLogDiscrepancy)
+    (hM : SparseIdentity.Literature.MatveevThreeLogs) {b : ℕ} (hb : 2 ≤ b) (h3 : 3 ∣ b)
+    (hpow : ∀ s : ℕ, b ≠ 3 ^ s) : RepPairArith b := by
+  obtain ⟨s, t, hnd, rfl⟩ := Nat.exists_eq_pow_mul_and_not_dvd (by omega : b ≠ 0) 3 (by norm_num)
+  have ht0 : t ≠ 0 := by rintro rfl; simp at hnd
+  have ht1 : t ≠ 1 := by rintro rfl; exact hpow s (mul_one _)
+  have hs : 1 ≤ s := by
+    rcases Nat.eq_zero_or_pos s with h | h
+    · subst h; simp at h3; exact absurd h3 hnd
+    · exact h
+  exact repPairArith_of_runDecay hs (by omega) hnd hB
+    (runOrbitDecay_of_sparse (by omega) hnd
+      (SparseIdentity.sparseIdentityBound_of_matveev hM (by omega) hnd))
+
+/-- **Cited, not formalized: Baker–Wüstholz with Erdős–Turán** (`Literature.BakerLogDiscrepancy`;
+see `CantorExactExponentProfile.Literature.BakerLogDiscrepancyEff` for the derivation).  The
+frozen headline's only use of Baker's two-logarithm theory.  Confidence 97% (transcription). -/
+theorem Literature.bakerLogDiscrepancy_cited :
+    CantorExactExponentProfile.Literature.BakerLogDiscrepancy := by
+  sorry
+
+/-- **Cited, not formalized: Matveev, three logarithms of rationals**
+(`SparseIdentity.Literature.MatveevThreeLogs`).  Confidence 95% (transcription; see there). -/
+theorem Literature.matveevThreeLogs_cited : SparseIdentity.Literature.MatveevThreeLogs := by
+  sorry
+
+/-- **The crux, arithmetic form.**  Wired (2026-10-07, review lap 7) through the sparse-pair route:
+`repPairArith_of_literature` applied to the two cited inputs.  Its `sorry` dependence is exactly
+the cited `Literature.bakerLogDiscrepancy_cited`, `Literature.matveevThreeLogs_cited` and the
+open leaves of that route (`SparseIdentity.sparseIdentityBound_of_matveev`,
+`cycSparse_of_cycProd_ge`, `card_cluster_le`, `runOrbitDecay_of_sparse`, `card_degRows_le`,
+`copyRun_psi`, `repPairArith_of_runDecay`). -/
+theorem repPairArith_of_three_dvd {b : ℕ} (hb : 2 ≤ b) (h3 : 3 ∣ b) (hpow : ∀ s : ℕ, b ≠ 3 ^ s) :
+    RepPairArith b :=
+  repPairArith_of_literature Literature.bakerLogDiscrepancy_cited Literature.matveevThreeLogs_cited
+    hb h3 hpow
 
 /-- **Pair-sum decay at `b = 3ˢt`, `t > 1` (open leaf; the crux in pair form).**  See
 `RepPairDecay` and the zone route in the docstring of `ae_isNormal_rep_of_three_dvd`. -/
@@ -4271,5 +4409,20 @@ theorem liouvilleCantorFullProfile_of_inputs (hI : RepInputs) : LiouvilleCantorF
   exact ⟨repReal ω, repReal_mem_cantorSet ω,
     liouville_repReal ω (irrational_of_isNormal_two h2), hω⟩
 
-end NormalNumbers.CantorRepetition
+/-- **Conditional headline from the literature (proved, modulo the sparse-pair leaves).**
+Baker's discrepancy (two logarithms) and Matveev's bound (three logarithms) give a Liouville
+number in `K` normal exactly to the bases that are not powers of 3. -/
+theorem liouvilleCantorFullProfile_of_literature
+    (hB : CantorExactExponentProfile.Literature.BakerLogDiscrepancy)
+    (hM : SparseIdentity.Literature.MatveevThreeLogs) : LiouvilleCantorFullProfile := by
+  obtain ⟨ω, hω⟩ := (ae_repProfile_of fun _ hb h3 hp =>
+    repPairArith_of_literature hB hM hb h3 hp).exists
+  have h2 : IsNormal 2 (repReal ω) := (hω 2 le_rfl).2 fun s hs => by
+    rcases s with _ | s
+    · norm_num at hs
+    · have : 3 ∣ 2 := hs ▸ dvd_pow_self 3 (Nat.succ_ne_zero s)
+      norm_num at this
+  exact ⟨repReal ω, repReal_mem_cantorSet ω,
+    liouville_repReal ω (irrational_of_isNormal_two h2), hω⟩
 
+end NormalNumbers.CantorRepetition
