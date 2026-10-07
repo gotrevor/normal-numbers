@@ -3296,3 +3296,4 @@ formalize the copy-zone pair term: the block-coin Riesz product as a function of
 - rep lap 1: PROVED `copyPairSum_eq_cycProd`, `cycProd_pair` (pair term = cycProd of tᵐ(b^d−1)).
 - rep lap 1: node `TOrbitCyclicDecay` (uniform single-orbit; t=2 bounded N·max, t=1 control flat). Next: prove CopyZoneDecay ⇐ TOrbitCyclicDecay (b^d−1 gcd control: gcd(b^d−1,3^A−1) | 3^{gcd}... needs gcd bound) — or test whether gcd condition fails for some d.
 - rep lap 1: node `BadGcdSparse` (75%); PROVED `copyZoneDecay_of`: CopyZoneDecay(3ˢt) ⇐ TOrbitCyclicDecay t + BadGcdSparse. Next: prove BadGcdSparse (order argument), and connect CopyZoneDecay to the crux (run-end truncation + 3^{-A} twist).
+- rep lap 1: PROVED `integral_ee_flip` (peel one coin: factor (1+e(a))/2). Next: write repReal = Σ_{block j} [ω j]·w_j + Rest with Rest flip-invariant, iterate ⇒ ‖𝔼 e(ξ repReal)‖ ≤ ∏_{j∈block}|cos(π ξ w_j)| (true-law copy-zone bound).

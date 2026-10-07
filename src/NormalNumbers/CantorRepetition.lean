@@ -6,6 +6,7 @@ Authors: Trevor Morris
 import NormalNumbers.CantorExactExponentProfile
 import NormalNumbers.EntropyProfiles
 import NormalNumbers.ExplicitPQ
+import NormalNumbers.LevinSparse
 
 /-!
 # Is the profile cut forced?  Repetitions instead of zero runs
@@ -637,6 +638,46 @@ theorem copyTerm_le (A : ℕ) (hA : 1 ≤ A) (η : ℝ) :
     rw [div_sub' hne, div_left_inj' hne]; ring
   rw [e, abs_div, abs_of_pos (by linarith : (0 : ℝ) < 3 ^ A - 1), ← mul_div_assoc] at this
   linarith [(abs_le.1 this).2]
+
+/-- **Peeling one coin.**  Proved: flipping coin `j` preserves `coinMeasure`
+(`LevinSparse.measurePreserving_flipAt`), so averaging the two values of `ω j` gives the factor
+`(1 + e(a))/2`, of modulus `|cos πa|`.  This factorizes the law of `repReal` over the block coins
+of a run (each block coin enters with weight `w_j = 2 Σ_c 3^{-(j+cA)-1}`). -/
+theorem integral_ee_flip (j : ℕ) (a : ℝ) (Y : (ℕ → Bool) → ℝ) (hY : Measurable Y)
+    (hinv : ∀ ω, Y (LevinSparse.flipAt j ω) = Y ω) :
+    ∫ ω, ee (a * (if ω j then 1 else 0) + Y ω) ∂coinMeasure =
+      (1 + ee a) / 2 * ∫ ω, ee (Y ω) ∂coinMeasure := by
+  have hmp := LevinSparse.measurePreserving_flipAt j
+  have hm : Measurable fun ω : ℕ → Bool => (if ω j then (1 : ℝ) else 0) :=
+    (measurable_of_countable (fun b : Bool => if b then (1 : ℝ) else 0)).comp (measurable_pi_apply j)
+  have hint : ∀ f : (ℕ → Bool) → ℝ, Measurable f → Integrable (fun ω => ee (f ω)) coinMeasure :=
+    fun f hf => Integrable.of_bound ((measurable_ee.comp hf).aestronglyMeasurable) 1
+      (Eventually.of_forall fun ω => (norm_ee _).le)
+  have hflip : ∫ ω, ee (a * (if ω j then 1 else 0) + Y ω) ∂coinMeasure =
+      ∫ ω, ee (a * (if ω j then 0 else 1) + Y ω) ∂coinMeasure := by
+    have hinvol : Function.Involutive (LevinSparse.flipAt j) := fun ω => by
+      funext i; by_cases h : i = j
+      · subst h; simp [LevinSparse.flipAt]
+      · simp [LevinSparse.flipAt, Function.update_of_ne h]
+    have he : MeasurableEmbedding (LevinSparse.flipAt j) :=
+      (MeasurableEquiv.ofInvolutive _ hinvol hmp.measurable).measurableEmbedding
+    rw [← hmp.integral_comp he]
+    refine integral_congr_ae (Eventually.of_forall fun ω => ?_)
+    simp only [hinv]
+    congr 2
+    cases h : ω j <;> simp [LevinSparse.flipAt, h]
+  have hm' : Measurable fun ω : ℕ → Bool => (if ω j then (0 : ℝ) else 1) :=
+    (measurable_of_countable (fun b : Bool => if b then (0 : ℝ) else 1)).comp (measurable_pi_apply j)
+  have hsum := integral_add (hint (fun ω => a * (if ω j then 1 else 0) + Y ω) ((hm.const_mul a).add hY))
+    (hint (fun ω => a * (if ω j then 0 else 1) + Y ω) ((hm'.const_mul a).add hY))
+  have hpt : ∀ ω : ℕ → Bool, ee (a * (if ω j then 1 else 0) + Y ω) +
+      ee (a * (if ω j then 0 else 1) + Y ω) = (1 + ee a) * ee (Y ω) := by
+    intro ω
+    simp only [ee_add]
+    cases ω j <;> simp [ee] <;> ring
+  simp only [hpt] at hsum
+  rw [integral_const_mul, ← hflip] at hsum
+  linear_combination -hsum / 2
 
 /-- The cyclic Riesz product of an integer `η` modulo `3^A − 1` (its cyclic ternary digits). -/
 noncomputable def cycProd (A : ℕ) (η : ℤ) : ℝ :=
