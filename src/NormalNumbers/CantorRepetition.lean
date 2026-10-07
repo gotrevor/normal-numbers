@@ -2211,6 +2211,23 @@ theorem sum_class_sep_le {t : ℕ} (ht : 2 ≤ t) (h3 : ¬ 3 ∣ t) (h : ℤ) (h
   refine Finset.sum_congr rfl fun n _ => ?_
   rw [hf_true_int_mul]; push_cast; rfl
 
+/-- **Class-5 sum.**  Under `TOrbitCyclicDecay t` and `BadGcdSparseH b`: pairs whose window lies in
+copy run `k` (`a = a_k ≤ s·min(n,m)`, `|ξ| ≤ B`, below `N'` with `a ≤ N' ≤ a³`) sum to
+`≤ C N'^{2−δ} + |P| π B / 3^{(k+2)a}`. -/
+theorem sum_class_copy_le {s t : ℕ} (hT : TOrbitCyclicDecay t) (hS : BadGcdSparseH (3 ^ s * t))
+    (h : ℤ) (hh : h ≠ 0) : ∃ C δ : ℝ, 0 < δ ∧ ∀ (M k : ℕ), Even k → 1 ≤ runStart k →
+      ∀ (P : Finset (ℕ × ℕ)) (N' : ℕ) (B : ℝ), runStart k ≤ N' → N' ≤ runStart k ^ 3 →
+      (∀ p ∈ P, p.1 < N' ∧ p.2 < N' ∧ runStart k ≤ s * min p.1 p.2 ∧
+        |h * (((3 ^ s * t : ℕ) : ℝ) ^ p.1 - ((3 ^ s * t : ℕ) : ℝ) ^ p.2)| ≤ B) →
+      ∑ p ∈ P, repBound M (some k) (h * (((3 ^ s * t : ℕ) : ℝ) ^ p.1 - ((3 ^ s * t : ℕ) : ℝ) ^ p.2))
+        ≤ C * (N' : ℝ) ^ (2 - δ) + P.card * (Real.pi * B / 3 ^ ((k + 2) * runStart k)) := by
+  obtain ⟨C, δ, hδ, hC⟩ := copyZoneDecayH_of hT hS h hh
+  refine ⟨C, δ, hδ, fun M k hk ha P N' B h1 h2 hP => ?_⟩
+  refine (copyRun_sum_le M k s t hk h P N' B hP).trans ?_
+  have := hC (runStart k) N' ha h1 h2
+  push_cast at this ⊢
+  linarith
+
 /-! ## Bases `3ˢt`, `t > 1`: the crux -/
 
 /-- **Assembly of the crux from its inputs (open; believed, 60%).**  For `b = 3ˢt`, `t > 1`:

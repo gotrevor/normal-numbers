@@ -3368,4 +3368,5 @@ Next: `isFresh` Riesz bound, then the classification lemma in Lean (route-decisi
 - PROVED `sum_class_copySep_le`, `gcd_sq_le_of_natAbs` (class-6 sum from TOrbitCyclicDecay).
 - PROVED `sum_class_top_le` (classes 2/4 sums under Baker).  Class-6 range note: sum over n in run k ⊆ range((k+2)a/s+1) ∈ [a, a³] for large k.
 - PROVED `sum_class_sep_le`, `hf_true_int_mul` (class-3 sum).
-- Next: class 5 sum (copyRun_sum_le + copyZoneDecayH_of), κ choice (classical, per classification), summability (step 3 of lap-4 handoff): κ choice, band/small-m counts, summability.
+- PROVED `sum_class_copy_le` (class-5 sum). All six class sums now exist.
+- Next: κ choice (classical, per classification), summability (step 3 of lap-4 handoff): κ choice, band/small-m counts, summability.
