@@ -1,3 +1,12 @@
+# STUCK claim, strike 1 (2026-10-07, cantorbad lap 11): read HANDOFF-2026-10-07-cantorbad-lap11.md
+- **What is blocked:** the gate `sorry-free:src/NormalNumbers/CantorBadNormal.lean`.  Its only
+  sorry is the crux `aliveOffMix_resLaw`.
+- **Why a lap can't clear it:** step 4 of the operator run directive in DIRECTION.md said to call
+  `box done` after a clean refutation.  The refutation is done (e4cd2cc6: `PreperiodicNumeratorDispersion`
+  believed false, plus a Maze row), and the host declined the stop.  What remains is the
+  middle-depth `ThreeAdicWindowAvg`: digits of powers in base 3, open and beyond every Korobov range.
+- **Ask the operator:** a new directive, either a route for the crux or an accepted stop.
+
 # HANDOFF — pointer
 
 **STUCK (2026-10-06, branch `proof/cantor-bad-normal`, cantorbad lap 9):** scope
