@@ -3352,6 +3352,62 @@ theorem power_of_eventually (ξ : ℕ → ℕ → ℕ → ℝ)
     rw [hsplit]
     nlinarith [abs_nonneg C]
 
+/-! ### Asymptotic helpers for the per-`N` arithmetic -/
+
+theorem natLog_le_rpow {b : ℕ} (hb : 2 ≤ b) {ε : ℝ} (hε : 0 < ε) (x : ℕ) :
+    (Nat.log b x : ℝ) ≤ (x : ℝ) ^ ε / (ε * Real.log 2) := by
+  have h1 := Real.natLog_le_logb x b
+  have hl2 : 0 < Real.log 2 := Real.log_pos (by norm_num)
+  have hlb : Real.log 2 ≤ Real.log b := Real.log_le_log (by norm_num) (by exact_mod_cast hb)
+  have hx : 0 ≤ Real.log x := Real.log_natCast_nonneg x
+  have h2 : Real.logb b x ≤ Real.log x / Real.log 2 := by
+    rw [Real.logb]; exact div_le_div_of_nonneg_left hx hl2 hlb
+  have h3 : Real.log x / Real.log 2 ≤ ((x : ℝ) ^ ε / ε) / Real.log 2 :=
+    div_le_div_of_nonneg_right (Real.log_le_rpow_div (by positivity) hε) hl2.le
+  calc (Nat.log b x : ℝ) ≤ _ := h1.trans (h2.trans h3)
+    _ = _ := by rw [div_div]
+
+/-- `j = ⌊log₃ N / q⌋`: `3ʲ ≤ N^{1/q} < 3^{j+1}`. -/
+theorem three_pow_logdiv {q N : ℕ} (hq : 1 ≤ q) (hN : 1 ≤ N) :
+    (3 : ℝ) ^ (Nat.log 3 N / q) ≤ (N : ℝ) ^ ((q : ℝ)⁻¹) ∧
+      (N : ℝ) ^ ((q : ℝ)⁻¹) < 3 ^ (Nat.log 3 N / q + 1) := by
+  set L := Nat.log 3 N
+  set j := L / q
+  have hq0 : q ≠ 0 := by omega
+  have hpos : (0 : ℝ) < (q : ℝ)⁻¹ := by positivity
+  constructor
+  · have h1 : 3 ^ (j * q) ≤ N :=
+      (Nat.pow_le_pow_right (by norm_num) (Nat.div_mul_le_self L q)).trans
+        (Nat.pow_log_le_self 3 (by omega))
+    have h2 : ((3 : ℝ) ^ j) ^ q ≤ N := by rw [← pow_mul]; exact_mod_cast h1
+    calc (3 : ℝ) ^ j = (((3 : ℝ) ^ j) ^ q) ^ ((q : ℝ)⁻¹) :=
+          (Real.pow_rpow_inv_natCast (by positivity) hq0).symm
+      _ ≤ _ := Real.rpow_le_rpow (by positivity) h2 hpos.le
+  · have h1 : N < 3 ^ ((j + 1) * q) := by
+      have := Nat.lt_pow_succ_log_self (by norm_num : 1 < 3) N
+      have h3 : L + 1 ≤ (j + 1) * q := by
+        have := Nat.lt_div_mul_add (a := L) (Nat.pos_of_ne_zero hq0)
+        simp only [j]; nlinarith
+      exact this.trans_le (Nat.pow_le_pow_right (by norm_num) h3)
+    have h2 : (N : ℝ) < ((3 : ℝ) ^ (j + 1)) ^ q := by rw [← pow_mul]; exact_mod_cast h1
+    calc (N : ℝ) ^ ((q : ℝ)⁻¹) < (((3 : ℝ) ^ (j + 1)) ^ q) ^ ((q : ℝ)⁻¹) :=
+          Real.rpow_lt_rpow (by positivity) h2 hpos
+      _ = _ := Real.pow_rpow_inv_natCast (by positivity) hq0
+
+/-- Decay `α^{j+1} ≤ N^{log₃α / q}` for `0 < α ≤ 1`, `j = ⌊log₃ N / q⌋`. -/
+theorem pow_logdiv_le {q N : ℕ} (hq : 1 ≤ q) (hN : 1 ≤ N) {α : ℝ} (hα0 : 0 < α) (hα1 : α ≤ 1) :
+    α ^ (Nat.log 3 N / q + 1) ≤ (N : ℝ) ^ (Real.logb 3 α / q) := by
+  have hc : Real.logb 3 α ≤ 0 := Real.logb_nonpos (by norm_num) hα0.le hα1
+  have h := (three_pow_logdiv hq hN).2
+  have hN0 : (0 : ℝ) < (N : ℝ) ^ ((q : ℝ)⁻¹) := by
+    have : (0 : ℝ) < N := by exact_mod_cast hN
+    positivity
+  calc α ^ (Nat.log 3 N / q + 1) = ((3 : ℝ) ^ (Nat.log 3 N / q + 1)) ^ Real.logb 3 α := by
+        rw [← Real.rpow_natCast, ← Real.rpow_natCast, ← Real.rpow_mul (by norm_num), mul_comm,
+          Real.rpow_mul (by norm_num), Real.rpow_logb (by norm_num) (by norm_num) hα0]
+    _ ≤ ((N : ℝ) ^ ((q : ℝ)⁻¹)) ^ Real.logb 3 α := Real.rpow_le_rpow_of_nonpos hN0 h.le hc
+    _ = _ := by rw [← Real.rpow_mul (by positivity)]; ring_nf
+
 /-- **Per-`N` assembly, `h = 3ᵉh' > 0`, large `N` (open; believed, 70%).**  The remaining content
 of `repPairPower_of_inputs`.  Route: `exists_kappa_pos` with `ρ, k₀` fixed by `b`, `W = K = j+1`,
 `j = ⌊log₃ N / q⌋` (`2/q < κ_Baker`); `sum_pairMaj_le` (Btop from `sum_class_top_le`, copy totals
