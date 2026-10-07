@@ -4,7 +4,18 @@
   `linked_descent`.  ALSO `e15_facts` PROVED: E15 = {‖2ⁿx‖ ≥ 1/15} ⊆ E₂(4), gaps are exactly the
   windows (A±1/15)/2ⁿ (`gap_eq_window`, minimal-order window argument), thickness 3 from
   `15k−2ʲ ≥ 1 ⇒ ≥ 7` (2ʲ mod 15 ∈ {1,2,4,8}).  So `cStar_le_four_of_newhouse` is axiom-clean
-  modulo its hypothesis `ThickCore 4 τ` (τ > 1/3): the crux is now the ONLY gap.  Route `cStar_le_four_of_newhouse` now rests on `e2_four_facts` + crux
+  modulo its hypothesis `ThickCore 4 τ` (τ > 1/3): the crux is now the ONLY gap.
+  ALSO `fset_facts` (general b, c: Fset b c = {‖bⁿx‖ ≥ 1/(b^c−1)}, gaps = windows, thickness
+  (b^c−b^{c−1}−2)/2 — F₃(4): 26, F₂(3): 1) and `cStar_le_of_newhouse` (any c ≥ 3) +
+  `cStarLeThree_of_newhouse` (ThickCore 3 τ, τ > 1), all axiom-clean.
+  Crux probe `scripts/cstar_models/clus.js` (components of λ-enlarged exact windows δ_b=1/(b^4−1)):
+  max component length / (largest window, enlarged) = 2.2 (λ=.5) / 2.0 (λ=1), bases 5..60 to 1e-8;
+  2.13 bases 5..100 to 1e-9; 2.49 with bases 3..60.  Cross-base clusters stay bounded — but bounded
+  clusters alone do not give thickness (near-touching components at any fixed threshold); a proof
+  needs hysteresis / adaptive endpoint choice, i.e. local existence of deep-good points.  Analysis:
+  every rigorous version found reduces to a worst-case local Diophantine statement (chains of
+  comparable windows of distinct bases), no elementary bound (Farey/lcm bounds are vacuous at deep
+  scales).  Plan: B ⊆ F₃(4) (τ=26, exact base 3) with b ≥ 5 windows merged; state the merge lemma.  Route `cStar_le_four_of_newhouse` now rests on `e2_four_facts` + crux
   `thickCore_four` only.  Crux probe (scratch mlog.py): the τ<0.4 violations of raw ⋂_{b=3..40}
   are generic cross-base near-coincidences (centres with denominators ~10³, ratios down to 0.016),
   not structured clusters at small-denominator rationals; so a cascade bound must be Diophantine

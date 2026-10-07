@@ -515,6 +515,379 @@ theorem e15_facts :
       norm_num at this ⊢
       linarith
 
+/-! ### The exact base-`b` sets `Fset b c`
+
+`Fset b c = {x ∈ [0, 1] : ‖bⁿx‖ ≥ 1/(b^c − 1) ∀ n} ⊆ E_b(c)` (`E15` is the case `b = 2`, `c = 4`).
+The orbit of `1/(b^c − 1)` under `×b` is periodic, so the gaps are exactly the windows
+`(A ± 1/M)/bⁿ`, `M = b^c − 1` (`Fset_gap_eq_window`), and `Mk − bʲ ≥ 1 ⇒ Mk − bʲ ≥ M − b^{c−1}`
+(`bʲ ≡ b^{j mod c} mod M`) gives thickness `(b^c − b^{c−1} − 2)/2` (`fset_facts`): `3` for `(2, 4)`,
+`26` for `(3, 4)`, `1` for `(2, 3)`, `8` for `(3, 3)`. -/
+
+/-- The exact base-`b` good set at exponent `c`. -/
+def Fset (b c : ℕ) : Set ℝ :=
+  Set.Icc 0 1 ∩ {x | ∀ n : ℕ, ∀ z : ℤ, 1 / ((b : ℝ) ^ c - 1) ≤ |(b : ℝ) ^ n * x - z|}
+
+lemma pow_decomp (b : ℕ) {c : ℕ} (hc : 0 < c) (j : ℕ) :
+    ∃ t : ℤ, (b : ℤ) ^ j = (b : ℤ) ^ (j % c) + ((b : ℤ) ^ c - 1) * t := by
+  obtain ⟨t, ht⟩ := sub_dvd_pow_sub_pow ((b : ℤ) ^ c) 1 (j / c)
+  refine ⟨(b : ℤ) ^ (j % c) * t, ?_⟩
+  rw [one_pow] at ht
+  have e : ((b : ℤ) ^ c) ^ (j / c) = 1 + ((b : ℤ) ^ c - 1) * t := by linarith
+  conv_lhs => rw [← Nat.div_add_mod j c]
+  rw [pow_add, pow_mul, e]
+  ring
+
+lemma Fset_M_pos {b c : ℕ} (hbc : 3 ≤ b ^ c) : (0 : ℤ) < (b : ℤ) ^ c - 1 := by
+  have : (3 : ℤ) ≤ (b : ℤ) ^ c := by exact_mod_cast hbc
+  linarith
+
+lemma Fset_top_lt {b c : ℕ} (hb : 2 ≤ b) (hc : 0 < c) (hbc : 3 ≤ b ^ c) :
+    (b : ℤ) ^ (c - 1) < (b : ℤ) ^ c - 1 := by
+  have key : b ^ (c - 1) + 1 < b ^ c := by
+    obtain ⟨d, rfl⟩ := Nat.exists_eq_add_of_lt hc
+    simp only [zero_add, Nat.add_sub_cancel] at *
+    rw [pow_succ] at hbc ⊢
+    rcases Nat.eq_zero_or_pos d with rfl | hd
+    · simp at hbc ⊢; omega
+    · have : 2 ≤ b ^ d := by
+        calc 2 ≤ b := hb
+          _ = b ^ 1 := (pow_one b).symm
+          _ ≤ b ^ d := Nat.pow_le_pow_right (by omega) hd
+      nlinarith
+  have : ((b ^ (c - 1) + 1 : ℕ) : ℤ) < ((b ^ c : ℕ) : ℤ) := by exact_mod_cast key
+  push_cast at this
+  linarith
+
+lemma Fset_sep {b c : ℕ} (hb : 2 ≤ b) (hc : 0 < c) (hbc : 3 ≤ b ^ c) (j : ℕ) (k : ℤ)
+    (h : 1 ≤ ((b : ℤ) ^ c - 1) * k - (b : ℤ) ^ j) :
+    ((b : ℤ) ^ c - 1) - (b : ℤ) ^ (c - 1) ≤ ((b : ℤ) ^ c - 1) * k - (b : ℤ) ^ j := by
+  obtain ⟨t, ht⟩ := pow_decomp b hc j
+  have hb1 : (1 : ℤ) ≤ b := by exact_mod_cast (by omega : 1 ≤ b)
+  have hr1 : 1 ≤ (b : ℤ) ^ (j % c) := one_le_pow₀ hb1
+  have hr2 : (b : ℤ) ^ (j % c) ≤ (b : ℤ) ^ (c - 1) :=
+    pow_le_pow_right₀ hb1 (by have := Nat.mod_lt j hc; omega)
+  have hM := Fset_M_pos hbc
+  set M := (b : ℤ) ^ c - 1
+  rw [ht] at h ⊢
+  have e : M * k - ((b : ℤ) ^ (j % c) + M * t) = M * (k - t) - (b : ℤ) ^ (j % c) := by ring
+  rw [e] at h ⊢
+  have hkt : 1 ≤ k - t := by
+    by_contra hlt
+    push_neg at hlt
+    have : M * (k - t) ≤ 0 := mul_nonpos_of_nonneg_of_nonpos hM.le (by omega)
+    linarith
+  have : M * 1 ≤ M * (k - t) := mul_le_mul_of_nonneg_left hkt hM.le
+  linarith
+
+lemma Fset_not_dvd {b c : ℕ} (hb : 2 ≤ b) (hc : 0 < c) (hbc : 3 ≤ b ^ c) (i : ℕ) (A e : ℤ)
+    (he : e = 1 ∨ e = -1) : ¬ ((b : ℤ) ^ c - 1) ∣ (b : ℤ) ^ i * (((b : ℤ) ^ c - 1) * A + e) := by
+  intro hd
+  obtain ⟨t, ht⟩ := pow_decomp b hc i
+  have hM := Fset_M_pos hbc
+  have htop := Fset_top_lt hb hc hbc
+  have hb1 : (1 : ℤ) ≤ b := by exact_mod_cast (by omega : 1 ≤ b)
+  have hr1 : 1 ≤ (b : ℤ) ^ (i % c) := one_le_pow₀ hb1
+  have hr2 : (b : ℤ) ^ (i % c) ≤ (b : ℤ) ^ (c - 1) :=
+    pow_le_pow_right₀ hb1 (by have := Nat.mod_lt i hc; omega)
+  set M := (b : ℤ) ^ c - 1
+  have h1 : M ∣ e * (b : ℤ) ^ i := by
+    have e0 : e * (b : ℤ) ^ i = (b : ℤ) ^ i * (M * A + e) - M * ((b : ℤ) ^ i * A) := by ring
+    rw [e0]; exact hd.sub (dvd_mul_right _ _)
+  have h2 : M ∣ (b : ℤ) ^ i := by
+    rcases he with rfl | rfl
+    · simpa using h1
+    · simpa using h1
+  have h3 : M ∣ (b : ℤ) ^ (i % c) := by
+    have e0 : (b : ℤ) ^ (i % c) = (b : ℤ) ^ i - M * t := by rw [ht]; ring
+    rw [e0]; exact h2.sub (dvd_mul_right _ _)
+  have := Int.le_of_dvd (by linarith) h3
+  linarith
+
+lemma Fset_le_abs {M u : ℤ} (hM : 0 < M) (hu : ¬ M ∣ u) (z : ℤ) :
+    1 / (M : ℝ) ≤ |(u : ℝ) / M - z| := by
+  have h1 : u - M * z ≠ 0 := fun h => hu ⟨z, by linarith⟩
+  have h3 : (1 : ℝ) ≤ |(u : ℝ) - M * z| := by exact_mod_cast Int.one_le_abs h1
+  have hMr : (0 : ℝ) < M := by exact_mod_cast hM
+  have : (u : ℝ) / M - z = ((u : ℝ) - M * z) / M := by field_simp
+  rw [this, abs_div, abs_of_pos hMr]
+  exact div_le_div_of_nonneg_right h3 hMr.le
+
+lemma Fset_endpoint_good {b c : ℕ} (hb : 2 ≤ b) (hc : 0 < c) (hbc : 3 ≤ b ^ c) {n k : ℕ}
+    (hnk : n ≤ k) (A e : ℤ) (he : e = 1 ∨ e = -1) (z : ℤ) :
+    1 / ((b : ℝ) ^ c - 1) ≤ |(b : ℝ) ^ k * (((A : ℝ) + e / ((b : ℝ) ^ c - 1)) / (b : ℝ) ^ n) - z| := by
+  obtain ⟨i, rfl⟩ := Nat.exists_eq_add_of_le hnk
+  have hM := Fset_M_pos hbc
+  have := Fset_le_abs hM (Fset_not_dvd hb hc hbc i A e he) z
+  have hMr : (0 : ℝ) < (b : ℝ) ^ c - 1 := by exact_mod_cast hM
+  have hbr : (0 : ℝ) < (b : ℝ) := by exact_mod_cast (by omega : 0 < b)
+  push_cast at this
+  convert this using 3
+  rw [pow_add]
+  field_simp
+
+lemma Fset_subset_Icc {b c : ℕ} : Fset b c ⊆ Set.Icc (1 / ((b : ℝ) ^ c - 1))
+    (1 - 1 / ((b : ℝ) ^ c - 1)) := by
+  intro x hx
+  have h0 := hx.2 0 0
+  have h1 := hx.2 0 1
+  simp only [pow_zero, one_mul, Int.cast_zero, sub_zero, Int.cast_one] at h0 h1
+  have := hx.1
+  constructor
+  · rw [abs_of_nonneg this.1] at h0; exact h0
+  · rw [abs_of_nonpos (by linarith [this.2])] at h1; linarith
+
+/-- **Every gap of `Fset b c` is a window** `((A − 1/M)/bⁿ, (A + 1/M)/bⁿ)`. -/
+lemma Fset_gap_eq_window {b c : ℕ} (hb : 2 ≤ b) (hc : 0 < c) (hbc : 3 ≤ b ^ c) {u v : ℝ}
+    (h : IsGap (Fset b c) u v) :
+    ∃ n : ℕ, ∃ A : ℤ, u = ((A : ℝ) - 1 / ((b : ℝ) ^ c - 1)) / (b : ℝ) ^ n ∧
+      v = ((A : ℝ) + 1 / ((b : ℝ) ^ c - 1)) / (b : ℝ) ^ n := by
+  obtain ⟨huv, huE, hvE, hdis⟩ := h
+  set M : ℝ := (b : ℝ) ^ c - 1 with hMdef
+  have hnot : ∀ w ∈ Set.Ioo u v, w ∉ Fset b c := fun w hw hwE => Set.disjoint_left.1 hdis hw hwE
+  have hbad : ∀ w ∈ Set.Ioo u v, ∃ n : ℕ, ∃ z : ℤ, |(b : ℝ) ^ n * w - z| < 1 / M := by
+    intro w hw
+    by_contra hcon
+    push_neg at hcon
+    exact hnot w hw ⟨⟨huE.1.1.trans hw.1.le, hw.2.le.trans hvE.1.2⟩, hcon⟩
+  have hP : ∃ n : ℕ, ∃ z : ℤ, ∃ w ∈ Set.Ioo u v, |(b : ℝ) ^ n * w - z| < 1 / M := by
+    obtain ⟨n, z, hz⟩ := hbad ((u + v) / 2) ⟨by linarith, by linarith⟩
+    exact ⟨n, z, _, ⟨by linarith, by linarith⟩, hz⟩
+  classical
+  set n := Nat.find hP with hn
+  obtain ⟨A, w, hw, hwA⟩ := Nat.find_spec hP
+  have hpos : (0 : ℝ) < (b : ℝ) ^ n := by
+    have : (0 : ℝ) < b := by exact_mod_cast (by omega : 0 < b)
+    positivity
+  have hwin : ∀ x : ℝ, ((A : ℝ) - 1 / M) / (b : ℝ) ^ n < x → x < ((A : ℝ) + 1 / M) / (b : ℝ) ^ n →
+      x ∉ Fset b c := by
+    intro x h1 h2 hx
+    rw [div_lt_iff₀ hpos] at h1
+    rw [lt_div_iff₀ hpos] at h2
+    have := hx.2 n A
+    exact absurd this (not_le.2 (abs_lt.2 ⟨by linarith, by linarith⟩))
+  rw [abs_lt] at hwA
+  have hw1 : ((A : ℝ) - 1 / M) / (b : ℝ) ^ n < w := by rw [div_lt_iff₀ hpos]; linarith
+  have hw2 : w < ((A : ℝ) + 1 / M) / (b : ℝ) ^ n := by rw [lt_div_iff₀ hpos]; linarith
+  have hend : ∀ e : ℤ, (e = 1 ∨ e = -1) → ((A : ℝ) + e / M) / (b : ℝ) ^ n ∉ Set.Ioo u v := by
+    intro e he hin
+    obtain ⟨k, z, hk⟩ := hbad _ hin
+    rcases lt_or_ge k n with hkn | hkn
+    · exact Nat.find_min hP hkn ⟨z, _, hin, hk⟩
+    · exact absurd hk (not_lt.2 (Fset_endpoint_good hb hc hbc hkn A e he z))
+  refine ⟨n, A, ?_, ?_⟩
+  · rcases lt_trichotomy u (((A : ℝ) - 1 / M) / (b : ℝ) ^ n) with h1 | h1 | h1
+    · exfalso
+      have e1 : ((A : ℝ) + ((-1 : ℤ) : ℝ) / M) = (A : ℝ) - 1 / M := by push_cast; ring
+      refine hend (-1) (Or.inr rfl) ⟨?_, ?_⟩
+      · rw [e1]; exact h1
+      · rw [e1]; linarith [hw.2]
+    · exact h1
+    · exact absurd huE (hwin u h1 (by linarith [hw.1]))
+  · rcases lt_trichotomy v (((A : ℝ) + 1 / M) / (b : ℝ) ^ n) with h1 | h1 | h1
+    · exact absurd hvE (hwin v (by linarith [hw.2]) h1)
+    · exact h1
+    · exfalso
+      have e1 : ((A : ℝ) + ((1 : ℤ) : ℝ) / M) = (A : ℝ) + 1 / M := by push_cast; ring
+      refine hend 1 (Or.inl rfl) ⟨?_, ?_⟩
+      · rw [e1]; linarith [hw.1]
+      · rw [e1]; exact h1
+
+/-- Separation of a window of order `m` (left) from one of order `m + j` (right). -/
+lemma Fset_window_sep_left {b c : ℕ} (hb : 2 ≤ b) (hc : 0 < c) (hbc : 3 ≤ b ^ c) {m j : ℕ}
+    {C A : ℤ}
+    (h : ((C : ℝ) + 1 / ((b : ℝ) ^ c - 1)) / (b : ℝ) ^ m ≤
+      ((A : ℝ) - 1 / ((b : ℝ) ^ c - 1)) / (b : ℝ) ^ (m + j)) :
+    (((b : ℝ) ^ c - 1 - (b : ℝ) ^ (c - 1) - 1) / 2) * (2 / (((b : ℝ) ^ c - 1) * (b : ℝ) ^ (m + j))) ≤
+      ((A : ℝ) - 1 / ((b : ℝ) ^ c - 1)) / (b : ℝ) ^ (m + j) -
+        ((C : ℝ) + 1 / ((b : ℝ) ^ c - 1)) / (b : ℝ) ^ m := by
+  have hMz := Fset_M_pos hbc
+  have hM : (0 : ℝ) < (b : ℝ) ^ c - 1 := by exact_mod_cast hMz
+  have hbr : (0 : ℝ) < (b : ℝ) := by exact_mod_cast (by omega : 0 < b)
+  have hP : (0 : ℝ) < (b : ℝ) ^ m := by positivity
+  have hQ : (0 : ℝ) < (b : ℝ) ^ j := by positivity
+  set M : ℝ := (b : ℝ) ^ c - 1 with hMdef
+  rw [pow_add] at h ⊢
+  rw [div_le_div_iff₀ hP (by positivity)] at h
+  have h' : ((C : ℝ) + 1 / M) * (b : ℝ) ^ j ≤ (A : ℝ) - 1 / M := by
+    rw [show ((C : ℝ) + 1 / M) * ((b : ℝ) ^ m * (b : ℝ) ^ j) =
+      (((C : ℝ) + 1 / M) * (b : ℝ) ^ j) * (b : ℝ) ^ m by ring] at h
+    exact le_of_mul_le_mul_right h hP
+  have h'' : ((C : ℝ) * M + 1) * (b : ℝ) ^ j ≤ (A : ℝ) * M - 1 := by
+    have := mul_le_mul_of_nonneg_right h' hM.le
+    have e1 : ((C : ℝ) + 1 / M) * (b : ℝ) ^ j * M = ((C : ℝ) * M + 1) * (b : ℝ) ^ j := by
+      field_simp
+    have e2 : ((A : ℝ) - 1 / M) * M = (A : ℝ) * M - 1 := by field_simp
+    linarith
+  have hi : (1 : ℤ) ≤ ((b : ℤ) ^ c - 1) * (A - C * (b : ℤ) ^ j) - (b : ℤ) ^ j := by
+    have : (1 : ℝ) ≤ (((b : ℤ) ^ c - 1) * (A - C * (b : ℤ) ^ j) - (b : ℤ) ^ j : ℤ) := by
+      push_cast; rw [← hMdef]; nlinarith
+    exact_mod_cast this
+  have h7 := Fset_sep hb hc hbc j _ hi
+  have h7r : (((b : ℤ) ^ c - 1) - (b : ℤ) ^ (c - 1) : ℤ) ≤
+      ((((b : ℤ) ^ c - 1) * (A - C * (b : ℤ) ^ j) - (b : ℤ) ^ j : ℤ) : ℝ) := by exact_mod_cast h7
+  push_cast at h7r
+  rw [← hMdef] at h7r
+  rw [show ((A : ℝ) - 1 / M) / ((b : ℝ) ^ m * (b : ℝ) ^ j) - ((C : ℝ) + 1 / M) / (b : ℝ) ^ m =
+      (M * (A - C * (b : ℝ) ^ j) - (b : ℝ) ^ j - 1) / (M * ((b : ℝ) ^ m * (b : ℝ) ^ j)) by
+      field_simp; ring]
+  rw [show (M - (b : ℝ) ^ (c - 1) - 1) / 2 * (2 / (M * ((b : ℝ) ^ m * (b : ℝ) ^ j))) =
+      (M - (b : ℝ) ^ (c - 1) - 1) / (M * ((b : ℝ) ^ m * (b : ℝ) ^ j)) by field_simp]
+  rw [div_le_div_iff_of_pos_right (by positivity)]
+  linarith
+
+/-- Separation of a window of order `m + j` (left) from one of order `m` (right). -/
+lemma Fset_window_sep_right {b c : ℕ} (hb : 2 ≤ b) (hc : 0 < c) (hbc : 3 ≤ b ^ c) {m j : ℕ}
+    {C A : ℤ}
+    (h : ((A : ℝ) + 1 / ((b : ℝ) ^ c - 1)) / (b : ℝ) ^ (m + j) ≤
+      ((C : ℝ) - 1 / ((b : ℝ) ^ c - 1)) / (b : ℝ) ^ m) :
+    (((b : ℝ) ^ c - 1 - (b : ℝ) ^ (c - 1) - 1) / 2) * (2 / (((b : ℝ) ^ c - 1) * (b : ℝ) ^ (m + j))) ≤
+      ((C : ℝ) - 1 / ((b : ℝ) ^ c - 1)) / (b : ℝ) ^ m -
+        ((A : ℝ) + 1 / ((b : ℝ) ^ c - 1)) / (b : ℝ) ^ (m + j) := by
+  have hMz := Fset_M_pos hbc
+  have hM : (0 : ℝ) < (b : ℝ) ^ c - 1 := by exact_mod_cast hMz
+  have hbr : (0 : ℝ) < (b : ℝ) := by exact_mod_cast (by omega : 0 < b)
+  have hP : (0 : ℝ) < (b : ℝ) ^ m := by positivity
+  have hQ : (0 : ℝ) < (b : ℝ) ^ j := by positivity
+  set M : ℝ := (b : ℝ) ^ c - 1 with hMdef
+  rw [pow_add] at h ⊢
+  rw [div_le_div_iff₀ (by positivity) hP] at h
+  have h' : (A : ℝ) + 1 / M ≤ ((C : ℝ) - 1 / M) * (b : ℝ) ^ j := by
+    rw [show ((C : ℝ) - 1 / M) * ((b : ℝ) ^ m * (b : ℝ) ^ j) =
+      (((C : ℝ) - 1 / M) * (b : ℝ) ^ j) * (b : ℝ) ^ m by ring] at h
+    exact le_of_mul_le_mul_right h hP
+  have h'' : (A : ℝ) * M + 1 ≤ ((C : ℝ) * M - 1) * (b : ℝ) ^ j := by
+    have := mul_le_mul_of_nonneg_right h' hM.le
+    have e1 : ((C : ℝ) - 1 / M) * (b : ℝ) ^ j * M = ((C : ℝ) * M - 1) * (b : ℝ) ^ j := by
+      field_simp
+    have e2 : ((A : ℝ) + 1 / M) * M = (A : ℝ) * M + 1 := by field_simp
+    linarith
+  have hi : (1 : ℤ) ≤ ((b : ℤ) ^ c - 1) * (C * (b : ℤ) ^ j - A) - (b : ℤ) ^ j := by
+    have : (1 : ℝ) ≤ (((b : ℤ) ^ c - 1) * (C * (b : ℤ) ^ j - A) - (b : ℤ) ^ j : ℤ) := by
+      push_cast; rw [← hMdef]; nlinarith
+    exact_mod_cast this
+  have h7 := Fset_sep hb hc hbc j _ hi
+  have h7r : (((b : ℤ) ^ c - 1) - (b : ℤ) ^ (c - 1) : ℤ) ≤
+      ((((b : ℤ) ^ c - 1) * (C * (b : ℤ) ^ j - A) - (b : ℤ) ^ j : ℤ) : ℝ) := by exact_mod_cast h7
+  push_cast at h7r
+  rw [← hMdef] at h7r
+  rw [show ((C : ℝ) - 1 / M) / (b : ℝ) ^ m - ((A : ℝ) + 1 / M) / ((b : ℝ) ^ m * (b : ℝ) ^ j) =
+      (M * (C * (b : ℝ) ^ j - A) - (b : ℝ) ^ j - 1) / (M * ((b : ℝ) ^ m * (b : ℝ) ^ j)) by
+      field_simp; ring]
+  rw [show (M - (b : ℝ) ^ (c - 1) - 1) / 2 * (2 / (M * ((b : ℝ) ^ m * (b : ℝ) ^ j))) =
+      (M - (b : ℝ) ^ (c - 1) - 1) / (M * ((b : ℝ) ^ m * (b : ℝ) ^ j)) by field_simp]
+  rw [div_le_div_iff_of_pos_right (by positivity)]
+  linarith
+
+lemma Fset_left_mem {b c : ℕ} (hb : 2 ≤ b) (hc : 0 < c) (hbc : 3 ≤ b ^ c) :
+    1 / ((b : ℝ) ^ c - 1) ∈ Fset b c := by
+  have hM : (3 : ℝ) ≤ (b : ℝ) ^ c := by exact_mod_cast hbc
+  refine ⟨⟨by apply div_nonneg <;> linarith, by rw [div_le_one (by linarith)]; linarith⟩,
+    fun n z => ?_⟩
+  have := Fset_endpoint_good hb hc hbc (n := 0) (Nat.zero_le n) 0 1 (Or.inl rfl) z
+  simpa using this
+
+lemma Fset_right_mem {b c : ℕ} (hb : 2 ≤ b) (hc : 0 < c) (hbc : 3 ≤ b ^ c) :
+    1 - 1 / ((b : ℝ) ^ c - 1) ∈ Fset b c := by
+  have hM : (3 : ℝ) ≤ (b : ℝ) ^ c := by exact_mod_cast hbc
+  have h1 : 1 / ((b : ℝ) ^ c - 1) ≤ 1 / 2 := by
+    rw [div_le_div_iff₀ (by linarith) (by norm_num)]; linarith
+  have h0 : 0 ≤ 1 / ((b : ℝ) ^ c - 1) := by apply div_nonneg <;> linarith
+  refine ⟨⟨by linarith, by linarith⟩, fun n z => ?_⟩
+  have := Fset_endpoint_good hb hc hbc (n := 0) (Nat.zero_le n) 1 (-1) (Or.inr rfl) z
+  convert this using 4
+  push_cast; ring
+
+/-- **`Fset` facts** (proved): compact, hull `[1/M, 1 − 1/M]`, gaps of length `≤ 2/(Mb)`, thickness
+`(b^c − b^{c−1} − 2)/2`, inside `E_b(c)` (`M = b^c − 1`). -/
+theorem fset_facts {b c : ℕ} (hb : 2 ≤ b) (hc : 0 < c) (hbc : 3 ≤ b ^ c) :
+    IsCompact (Fset b c) ∧ 1 / ((b : ℝ) ^ c - 1) ∈ Fset b c ∧
+      1 - 1 / ((b : ℝ) ^ c - 1) ∈ Fset b c ∧
+      Fset b c ⊆ Set.Icc (1 / ((b : ℝ) ^ c - 1)) (1 - 1 / ((b : ℝ) ^ c - 1)) ∧
+      (∀ u v, IsGap (Fset b c) u v → v - u ≤ 2 / (((b : ℝ) ^ c - 1) * b)) ∧
+      Thick (Fset b c) (((b : ℝ) ^ c - 1 - (b : ℝ) ^ (c - 1) - 1) / 2) ∧
+      Fset b c ⊆ goodSet c b := by
+  have hMz := Fset_M_pos hbc
+  have hM : (0 : ℝ) < (b : ℝ) ^ c - 1 := by exact_mod_cast hMz
+  have hbr : (2 : ℝ) ≤ (b : ℝ) := by exact_mod_cast hb
+  have hInf : sInf (Fset b c) = 1 / ((b : ℝ) ^ c - 1) :=
+    IsLeast.csInf_eq ⟨Fset_left_mem hb hc hbc, fun x hx => (Fset_subset_Icc hx).1⟩
+  have hSup : sSup (Fset b c) = 1 - 1 / ((b : ℝ) ^ c - 1) :=
+    IsGreatest.csSup_eq ⟨Fset_right_mem hb hc hbc, fun x hx => (Fset_subset_Icc hx).2⟩
+  have len : ∀ (k : ℕ) (B : ℤ), ((B : ℝ) + 1 / ((b : ℝ) ^ c - 1)) / (b : ℝ) ^ k -
+      ((B : ℝ) - 1 / ((b : ℝ) ^ c - 1)) / (b : ℝ) ^ k = 2 / (((b : ℝ) ^ c - 1) * (b : ℝ) ^ k) :=
+    fun k B => by field_simp; ring
+  refine ⟨?_, Fset_left_mem hb hc hbc, Fset_right_mem hb hc hbc, Fset_subset_Icc, ?_, ⟨?_, ?_⟩, ?_⟩
+  · refine isCompact_Icc.inter_right ?_
+    have : {x : ℝ | ∀ n : ℕ, ∀ z : ℤ, 1 / ((b : ℝ) ^ c - 1) ≤ |(b : ℝ) ^ n * x - z|} =
+        ⋂ n : ℕ, ⋂ z : ℤ, {x : ℝ | 1 / ((b : ℝ) ^ c - 1) ≤ |(b : ℝ) ^ n * x - z|} := by
+      ext; simp
+    rw [this]
+    exact isClosed_iInter fun n => isClosed_iInter fun z =>
+      isClosed_le continuous_const ((continuous_const.mul continuous_id).sub continuous_const).abs
+  · intro u v hg
+    obtain ⟨n, A, rfl, rfl⟩ := Fset_gap_eq_window hb hc hbc hg
+    have ha := Fset_subset_Icc hg.2.1
+    have hb' := Fset_subset_Icc hg.2.2.1
+    rw [len]
+    rcases Nat.eq_zero_or_pos n with rfl | hn
+    · exfalso
+      simp only [pow_zero, div_one] at ha hb'
+      have hpos : 0 < 1 / ((b : ℝ) ^ c - 1) := by positivity
+      have h1 : (0 : ℝ) < A := by linarith [ha.1]
+      have h2 : (0 : ℤ) < A := by exact_mod_cast h1
+      have h3 : (1 : ℝ) ≤ A := by exact_mod_cast h2
+      linarith [hb'.2]
+    · have h2 : (b : ℝ) ≤ (b : ℝ) ^ n := by
+        calc (b : ℝ) = (b : ℝ) ^ 1 := (pow_one _).symm
+          _ ≤ (b : ℝ) ^ n := pow_le_pow_right₀ (by linarith) hn
+      apply div_le_div_of_nonneg_left (by norm_num) (by positivity)
+      exact mul_le_mul_of_nonneg_left h2 hM.le
+  · intro u v u' v' hg hg' hle
+    obtain ⟨n, A, rfl, rfl⟩ := Fset_gap_eq_window hb hc hbc hg
+    obtain ⟨n', A', rfl, rfl⟩ := Fset_gap_eq_window hb hc hbc hg'
+    rw [len, len]
+    have htau : 0 ≤ ((b : ℝ) ^ c - 1 - (b : ℝ) ^ (c - 1) - 1) / 2 := by
+      have := Fset_top_lt hb hc hbc
+      have h' : ((b : ℝ) ^ (c - 1)) < (b : ℝ) ^ c - 1 := by exact_mod_cast this
+      have h'' : ((b : ℝ) ^ (c - 1)) + 1 ≤ (b : ℝ) ^ c - 1 := by
+        have : (((b : ℤ) ^ (c - 1) + 1 : ℤ) : ℝ) ≤ (((b : ℤ) ^ c - 1 : ℤ) : ℝ) := by
+          exact_mod_cast this
+        push_cast at this; linarith
+      linarith
+    rcases le_total n n' with h | h
+    · obtain ⟨j, rfl⟩ := Nat.exists_eq_add_of_le h
+      have := Fset_window_sep_left hb hc hbc hle
+      have hm := mul_le_mul_of_nonneg_left (min_le_right
+        (2 / (((b : ℝ) ^ c - 1) * (b : ℝ) ^ n)) (2 / (((b : ℝ) ^ c - 1) * (b : ℝ) ^ (n + j)))) htau
+      linarith
+    · obtain ⟨j, rfl⟩ := Nat.exists_eq_add_of_le h
+      have := Fset_window_sep_right hb hc hbc hle
+      have hm := mul_le_mul_of_nonneg_left (min_le_left
+        (2 / (((b : ℝ) ^ c - 1) * (b : ℝ) ^ (n' + j))) (2 / (((b : ℝ) ^ c - 1) * (b : ℝ) ^ n'))) htau
+      linarith
+  · intro u v hg
+    obtain ⟨n, A, rfl, rfl⟩ := Fset_gap_eq_window hb hc hbc hg
+    have ha := Fset_subset_Icc hg.2.1
+    have hb' := Fset_subset_Icc hg.2.2.1
+    rw [hInf, hSup, len]
+    rw [show n = 0 + n from (zero_add n).symm]
+    constructor
+    · have := Fset_window_sep_left hb hc hbc (m := 0) (j := n) (C := 0) (A := A)
+        (by simpa using ha.1)
+      simpa using this
+    · have := Fset_window_sep_right hb hc hbc (m := 0) (j := n) (C := 1) (A := A) (by
+        simp only [zero_add, pow_zero, div_one, Int.cast_one]; linarith [hb'.2])
+      have e : ((1 : ℤ) : ℝ) - 1 / ((b : ℝ) ^ c - 1) = 1 - 1 / ((b : ℝ) ^ c - 1) := by simp
+      simp only [pow_zero, div_one] at this
+      rw [e] at this
+      exact this
+  · intro x hx n
+    have h := hx.2 n (round ((b : ℝ) ^ n * x))
+    unfold dnear
+    refine le_trans ?_ h
+    rw [one_div]
+    exact inv_anti₀ hM (by linarith)
+
 /-- **Crux node: a thick core for the bases `b ≥ 3`.**  A compact `B` inside every `E_b(c)`,
 `b ≥ 3`, with thickness `τ`, short gaps, and points near both ends of `[0, 1]`.
 
@@ -571,6 +944,71 @@ theorem cStar_le_four_of_newhouse {τ : ℝ} (hτ : 1 / 3 < τ) (h : ThickCore 4
   rw [Real.rpow_natCast] at h1
   rw [Real.rpow_neg (by positivity)]
   exact (inv_lt_inv₀ (by positivity) (by positivity)).2 h1
+
+/-- **The route at any integer exponent `c ≥ 3`** (proved).  `Fset 2 c` has thickness
+`2^{c−2} − 1` (`fset_facts`), so a thick core with `τ (2^{c−2} − 1) > 1` gives `c⋆ ≤ c`.  At `c = 3`
+this needs `ThickCore 3 τ` with `τ > 1` (`cStarLeThree_of_newhouse`). -/
+theorem cStar_le_of_newhouse {c : ℕ} (hc : 3 ≤ c) {τ : ℝ} (hτ0 : 0 < τ)
+    (hτ : 1 < τ * (((2 : ℝ) ^ c - 1 - (2 : ℝ) ^ (c - 1) - 1) / 2)) (h : ThickCore c τ) :
+    cStar ≤ c := by
+  obtain ⟨B, hBc, hBt, hBgood, hBgap, ⟨x, hxB, hx⟩, ⟨y, hyB, hy⟩, hB01⟩ := h
+  have h8 : 8 ≤ 2 ^ c := by
+    calc 8 = 2 ^ 3 := by norm_num
+      _ ≤ 2 ^ c := Nat.pow_le_pow_right (by norm_num) hc
+  obtain ⟨hAc, h1A, h2A, hAsub, hAgap, hAt, hAgood⟩ :=
+    fset_facts (b := 2) (c := c) le_rfl (by omega) (by omega)
+  push_cast at h1A h2A hAsub hAgap hAt hAgood
+  have h8r : (8 : ℝ) ≤ (2 : ℝ) ^ c := by exact_mod_cast h8
+  have hm : 1 / ((2 : ℝ) ^ c - 1) ≤ 1 / 7 := by
+    rw [div_le_div_iff₀ (by linarith) (by norm_num)]; linarith
+  have hm0 : 0 < 1 / ((2 : ℝ) ^ c - 1) := by apply div_pos one_pos; linarith
+  have hτA : 0 < ((2 : ℝ) ^ c - 1 - (2 : ℝ) ^ (c - 1) - 1) / 2 := by
+    by_contra hneg; push_neg at hneg; nlinarith
+  have hBbdd : BddBelow B := hBc.bddBelow
+  have hBbddA : BddAbove B := hBc.bddAbove
+  have hInfA : sInf (Fset 2 c) ≤ 1 / ((2 : ℝ) ^ c - 1) := csInf_le hAc.bddBelow h1A
+  have hSupA : 1 - 1 / ((2 : ℝ) ^ c - 1) ≤ sSup (Fset 2 c) := le_csSup hAc.bddAbove h2A
+  have hInfB : sInf B ≤ 1 / 4 := (csInf_le hBbdd hxB).trans hx
+  have hSupB : 3 / 4 ≤ sSup B := hy.trans (le_csSup hBbddA hyB)
+  obtain ⟨ξ, hξA, hξB⟩ := gap_lemma hAc hBc ⟨_, h1A⟩ ⟨x, hxB⟩ hAt hBt hτA hτ0
+    (by linarith [mul_comm τ (((2 : ℝ) ^ c - 1 - (2 : ℝ) ^ (c - 1) - 1) / 2)])
+    (by linarith) (by linarith)
+    (by
+      rintro ⟨a, b, hab, hsub⟩
+      have h1 := hsub hxB
+      have h2 := hsub hyB
+      have := hAgap a b hab
+      have h7 : 2 / (((2 : ℝ) ^ c - 1) * 2) ≤ 1 / 7 := by
+        rw [show 2 / (((2 : ℝ) ^ c - 1) * 2) = 1 / ((2 : ℝ) ^ c - 1) by field_simp]; exact hm
+      simp only [Set.mem_Ioo] at h1 h2
+      linarith)
+    (by
+      rintro ⟨a, b, hab, hsub⟩
+      have h1 := hsub h1A
+      have h2 := hsub h2A
+      have := hBgap a b hab
+      simp only [Set.mem_Ioo] at h1 h2
+      linarith)
+  have hgood : ∀ b : ℕ, 2 ≤ b → ∀ n : ℕ, ((b : ℝ) ^ c)⁻¹ ≤ dnear ((b : ℝ) ^ n * ξ) := by
+    intro b hb n
+    rcases (by omega : b = 2 ∨ 3 ≤ b) with rfl | hb3
+    · have := hAgood hξA n
+      push_cast at this
+      exact this
+    · exact hBgood b hb3 hξB n
+  refine le_of_forall_gt_imp_ge_of_dense fun c' hc' => csInf_le bddBelow_admissible ?_
+  refine ⟨ξ, fun b hb n => lt_of_lt_of_le ?_ (hgood b hb n)⟩
+  have hb1 : (1 : ℝ) < b := by exact_mod_cast (by omega : 1 < b)
+  have h1 : (b : ℝ) ^ ((c : ℕ) : ℝ) < (b : ℝ) ^ c' :=
+    Real.rpow_lt_rpow_of_exponent_lt hb1 (by exact_mod_cast hc')
+  rw [Real.rpow_natCast] at h1
+  rw [Real.rpow_neg (by positivity)]
+  exact (inv_lt_inv₀ (by positivity) (by positivity)).2 h1
+
+/-- `c⋆ ≤ 3` from a thick core at exponent `3` with thickness `> 1` (`Fset 2 3` has thickness `1`). -/
+theorem cStarLeThree_of_newhouse {τ : ℝ} (hτ : 1 < τ) (h : ThickCore 3 τ) : CStarLeThree := by
+  have := cStar_le_of_newhouse (c := 3) le_rfl (by linarith) (by norm_num; linarith) h
+  exact_mod_cast this
 
 /-- **Crux statement (frozen 2026-10-07).**  Believed 70%: a thick core at `c = 4` with `τ = 2/5`. -/
 theorem thickCore_four : ThickCore 4 (2 / 5) := by
