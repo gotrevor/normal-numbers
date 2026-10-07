@@ -713,6 +713,79 @@ theorem norm_integral_ee_le_prod (S : Finset ℕ) (w : ℕ → ℝ) : ∀ (Y : (
     refine mul_le_mul_of_nonneg_left ?_ (abs_nonneg _)
     exact ih Y hY fun j hj ω => hinv j (Finset.mem_insert_of_mem hj) ω
 
+/-- Total weight of coin `j` in `repReal`: `Σ_{i : src i = j} 2·3^{-(i+1)}`. -/
+noncomputable def srcWeight (j : ℕ) : ℝ :=
+  ∑' i, if src i = j then 2 / (3 : ℝ) ^ (i + 1) else 0
+
+theorem summable_two_div_pow : Summable fun i : ℕ => 2 / (3 : ℝ) ^ (i + 1) :=
+  (CantorExpGeneric.tsum_two_geom 0).1.congr fun i => by simp
+
+theorem summable_ite_le {f : ℕ → ℝ} (hf : ∀ i, 0 ≤ f i ∧ f i ≤ 2 / (3 : ℝ) ^ (i + 1)) :
+    Summable f :=
+  Summable.of_nonneg_of_le (fun i => (hf i).1) (fun i => (hf i).2) summable_two_div_pow
+
+/-- **Coin decomposition of `repReal`.**  Proved: for any finite set `S` of coins,
+`repReal = Σ_{j∈S} [ω j]·srcWeight j + (digits not reading `S`)`. -/
+theorem repReal_eq_sum (S : Finset ℕ) (ω : ℕ → Bool) :
+    repReal ω = ∑ j ∈ S, srcWeight j * (if ω j then 1 else 0) +
+      ∑' i, (if src i ∈ S then 0 else (if ω (src i) then 2 else 0) / (3 : ℝ) ^ (i + 1)) := by
+  have hb : ∀ i, (0 : ℝ) ≤ 2 / (3 : ℝ) ^ (i + 1) := fun i => by positivity
+  have hsj : ∀ j, Summable fun i => if src i = j then 2 / (3 : ℝ) ^ (i + 1) else 0 := fun j =>
+    summable_ite_le fun i => by split_ifs <;> simp [hb i]
+  have hrest : Summable fun i =>
+      (if src i ∈ S then 0 else (if ω (src i) then 2 else 0) / (3 : ℝ) ^ (i + 1)) :=
+    summable_ite_le fun i => by split_ifs <;> simp [hb i]
+  have hfin : ∑ j ∈ S, srcWeight j * (if ω j then 1 else 0) =
+      ∑' i, ∑ j ∈ S, (if src i = j then 2 / (3 : ℝ) ^ (i + 1) else 0) * (if ω j then 1 else 0) := by
+    rw [Summable.tsum_finsetSum (fun j _ => (hsj j).mul_right _)]
+    exact Finset.sum_congr rfl fun j _ => by rw [srcWeight, tsum_mul_right]
+  have hfs : Summable fun i => ∑ j ∈ S,
+      (if src i = j then 2 / (3 : ℝ) ^ (i + 1) else 0) * (if ω j then 1 else 0) :=
+    summable_sum fun j _ => (hsj j).mul_right _
+  rw [hfin, ← hfs.tsum_add hrest]
+  unfold repReal pt realOfDigits
+  simp only [Nat.cast_ofNat]
+  refine tsum_congr fun i => ?_
+  simp only [ptDigit, Bool.true_and]
+  by_cases hS : src i ∈ S
+  · rw [if_pos hS, add_zero, Finset.sum_eq_single (src i)]
+    · simp only [if_true]; split_ifs <;> simp
+    · intro j _ hj; rw [if_neg (Ne.symm hj), zero_mul]
+    · intro h; exact absurd hS h
+  · rw [if_neg hS, Finset.sum_eq_zero, zero_add]
+    · split_ifs <;> simp
+    · intro j hj; rw [if_neg (fun (h : src i = j) => hS (h ▸ hj)), zero_mul]
+
+/-- **Block-coin Riesz bound for the true law.**  Proved: `‖𝔼 e(ξ·repReal)‖ ≤
+∏_{j∈S} |cos(π ξ srcWeight j)|` for any finite set of coins. -/
+theorem norm_charFun_repReal_le (S : Finset ℕ) (ξ : ℝ) :
+    ‖∫ ω, ee (ξ * repReal ω) ∂coinMeasure‖ ≤ ∏ j ∈ S, |Real.cos (Real.pi * (ξ * srcWeight j))| := by
+  set Y : (ℕ → Bool) → ℝ := fun ω => ξ * ∑' i,
+    (if src i ∈ S then 0 else (if ω (src i) then 2 else 0) / (3 : ℝ) ^ (i + 1))
+  have hY : Measurable Y := by
+    refine (Measurable.tsum fun i => ?_).const_mul ξ
+    by_cases h : src i ∈ S
+    · simp only [h, if_true]; exact measurable_const
+    · simp only [h, if_false]
+      exact ((measurable_of_countable (fun b : Bool => if b then (2 : ℝ) else 0)).comp
+        (measurable_pi_apply (src i))).div_const _
+  have hinv : ∀ j ∈ S, ∀ ω, Y (LevinSparse.flipAt j ω) = Y ω := by
+    intro j hj ω
+    simp only [Y]; congr 1
+    refine tsum_congr fun i => ?_
+    by_cases h : src i ∈ S
+    · simp [h]
+    · have : src i ≠ j := fun e => h (e ▸ hj)
+      simp [h, LevinSparse.flipAt, Function.update_of_ne this]
+  have := norm_integral_ee_le_prod S (fun j => ξ * srcWeight j) Y hY hinv
+  refine le_of_eq_of_le ?_ this
+  congr 1
+  refine integral_congr_ae (Eventually.of_forall fun ω => ?_)
+  simp only [Y]
+  rw [repReal_eq_sum S ω, mul_add, Finset.mul_sum]
+  congr 2
+  exact Finset.sum_congr rfl fun j _ => by ring
+
 /-- The cyclic Riesz product of an integer `η` modulo `3^A − 1` (its cyclic ternary digits). -/
 noncomputable def cycProd (A : ℕ) (η : ℤ) : ℝ :=
   ∏ i ∈ Finset.range A, |Real.cos (2 * Real.pi * ((η : ℝ) * 3 ^ i) / (3 ^ A - 1))|
