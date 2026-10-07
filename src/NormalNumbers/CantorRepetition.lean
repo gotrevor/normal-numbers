@@ -685,6 +685,26 @@ theorem cycProd_mul_three (A : ℕ) (η : ℤ) : cycProd A (3 * η) = cycProd A 
   exact Finset.prod_congr rfl fun i hi => by
     rw [Nat.mod_eq_of_lt (by simp at hi; omega)]
 
+theorem cycProd_mul_three_pow (A k : ℕ) (η : ℤ) : cycProd A (3 ^ k * η) = cycProd A η := by
+  induction k with
+  | zero => simp
+  | succ k ih => rw [pow_succ, mul_comm _ (3 : ℤ), mul_assoc, cycProd_mul_three, ih]
+
+theorem copyPairSum_eq_cycProd (b A N : ℕ) :
+    copyPairSum b A N = ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N,
+      cycProd A ((b : ℤ) ^ n - (b : ℤ) ^ m) := by
+  unfold copyPairSum cycProd; push_cast; rfl
+
+/-- **Only the `t`-part matters.**  Proved: for `b = 3ˢt` the pair term at `(m + d, m)` is the
+cyclic product of `tᵐ(b^d − 1)`; the factor `3^{sm}` is a rotation (`cycProd_mul_three_pow`).
+So the copy zone is a statement about `tᵐ mod 3^A − 1`. -/
+theorem cycProd_pair (A s t m d : ℕ) :
+    cycProd A (((3 ^ s * t : ℕ) : ℤ) ^ (m + d) - ((3 ^ s * t : ℕ) : ℤ) ^ m) =
+      cycProd A ((t : ℤ) ^ m * (((3 ^ s * t : ℕ) : ℤ) ^ d - 1)) := by
+  have e : ((3 ^ s * t : ℕ) : ℤ) ^ (m + d) - ((3 ^ s * t : ℕ) : ℤ) ^ m =
+      3 ^ (s * m) * ((t : ℤ) ^ m * (((3 ^ s * t : ℕ) : ℤ) ^ d - 1)) := by push_cast; ring
+  rw [e, cycProd_mul_three_pow]
+
 /-- **Copy-zone decay (open conjecture, the copy-zone leaf of `ae_isNormal_rep_of_three_dvd`).**
 For `b` not a power of 3 there are `C, δ > 0` with `copyPairSum b A N ≤ C N^{2−δ}` for
 `A ≤ N ≤ A^{3}` (runs of polynomially many copies).  Evidence (`scripts/rep_copyzone.py`,
