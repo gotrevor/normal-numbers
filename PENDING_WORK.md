@@ -1,4 +1,8 @@
 ## UniformBad threshold c⋆ (branch proof/uniformbad-threshold, 2026-10-07)
+* **2026-10-07 lap 9b.**  `five_halves_le_cStar` PROVED (29-window cert, bases ≤ 300, n ≤ 14); greedy
+  fails at 2.51 (survivor ≈ 0.30147).  Pruned 5-base core probe (`prune`: keep cells with 12-step growth
+  ≥ g₀^12): CLOSED at levels 14 and 18 for g₀ ∈ {1.4,1.55,1.65} — every kept cell has ≥ 1 kept child,
+  mean kept children 1.804–1.815.  Next: replace lookahead pruning by a local invariant.
 * **2026-10-07 lap 9.**  Exact `{2,3,5,6,7}` tree at `c = 4` (`core5.js`) grows `1.815`/level; bases
   `b ≥ 10` counted against it survive at `4×` charges.  So the lap-8 negative was about base 5 being
   counted; the remaining crux is **weight regularity of the exact 5-base core** (1% quantile 1.59, 1%

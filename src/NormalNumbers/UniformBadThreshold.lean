@@ -23,7 +23,7 @@ Known before this file: `log₂ 3 ≤ c⋆ ≤ 24` (`UniformBad.not_uniformBad_o
 * `twelve_fifths_le_cStar : 12/5 ≤ c⋆` — **proved** (25-window certificate, bases 2, 3, 5, 10).
 * `cStar_le_four : c⋆ ≤ 4` (believed 55%).
 
-Located so far: `12/5 ≤ c⋆ ≤ 6` (`cStar_le_six` in `UniformBadCount`, by a counting engine;
+Located so far: `5/2 ≤ c⋆ ≤ 6` (`five_halves_le_cStar`, 29-window certificate) (`cStar_le_six` in `UniformBadCount`, by a counting engine;
 earlier `cStar_le_twelve` in `UniformBadTwelve`).  Banked next: `cStar_le_five` (`UniformBadFive`,
 frozen node, probe slack `0.019`).
 
@@ -206,6 +206,21 @@ system empties below `c ≈ 2.44`).  Certify by a finite cover of `[0, 1]` by ra
 each lying inside one forbidden window `(k − δ_b, k + δ_b)/bⁿ` with a rational `δ_b ≤ b^{−12/5}`. -/
 theorem twelve_fifths_le_cStar : (12 : ℝ) / 5 ≤ cStar :=
   le_cStar_of_not_admissible not_admissible_twelve_fifths
+
+/-- 29-window certificate at `c = 5/2` (`scripts/uniformbad_cstar_cover.py 5 2 300 14`, greedy,
+exact rationals; bases used are listed in the windows themselves). -/
+def cert52 : List Win :=
+  [(2, 0, 0, 22097/125000), (2, 4, 3, 22097/125000), (5, 1, 1, 559/31250), (2, 6, 13, 22097/125000), (2, 2, 1, 22097/125000), (2, 6, 19, 22097/125000), (2, 10, 307, 22097/125000), (10, 1, 3, 1581/500000), (2, 8, 77, 22097/125000), (2, 4, 5, 22097/125000), (3, 1, 1, 1283/20000), (2, 3, 3, 22097/125000), (5, 1, 2, 559/31250), (2, 5, 13, 22097/125000), (2, 1, 1, 22097/125000), (2, 5, 19, 22097/125000), (5, 1, 3, 559/31250), (2, 3, 5, 22097/125000), (3, 1, 2, 1283/20000), (2, 4, 11, 22097/125000), (2, 8, 179, 22097/125000), (10, 1, 7, 1581/500000), (2, 10, 717, 22097/125000), (2, 6, 45, 22097/125000), (2, 2, 3, 22097/125000), (2, 6, 51, 22097/125000), (5, 1, 4, 559/31250), (2, 4, 13, 22097/125000), (2, 0, 1, 22097/125000)]
+
+theorem not_admissible_five_halves : ¬ Admissible (5 / 2) := by
+  have := not_admissible_of_cert 5 2 (by norm_num) cert52 (by decide +kernel) (by decide +kernel)
+  norm_num at this ⊢; exact this
+
+/-- **Sharper lower bound** (c⋆ lap 9): `c⋆ ≥ 5/2`.  The same greedy search fails at `2.51` (bases
+`≤ 300`, `n ≤ 14`; last survivor near `0.30147`), so `5/2` is near the limit of this mechanism at
+that size. -/
+theorem five_halves_le_cStar : (5 : ℝ) / 2 ≤ cStar :=
+  le_cStar_of_not_admissible not_admissible_five_halves
 
 /-- **Headline (upper bound, frozen 2026-10-06).**  Believed 55%.  `c⋆ ≤ 4`, improving `24`.
 
