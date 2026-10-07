@@ -2247,6 +2247,25 @@ theorem runEnd_succ_le_cube (k : ℕ) :
 
 /-! ## Bases `3ˢt`, `t > 1`: the crux -/
 
+/-- **Choosing the options.**  If every pair has some option bounded by `F n m`, a single choice
+`κ` bounds the pair sum by `Σ F`.  With `F` a sum of nonnegative per-class majorants (each pair
+bounded by the majorant of its class from `pair_classify_rep`, band pairs by `1`), the assembly's
+pair sum is at most the sum of the class sums. -/
+theorem exists_kappa_sum_le (M : ℕ) (ξ : ℕ → ℕ → ℝ) (F : ℕ → ℕ → ℝ)
+    (hF : ∀ n m, ∃ o, repBound M o (ξ n m) ≤ F n m) (N : ℕ) :
+    ∃ κ : ℕ → ℕ → Option ℕ, ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N,
+      repBound M (κ n m) (ξ n m) ≤ ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N, F n m := by
+  choose κ hκ using hF
+  exact ⟨κ, Finset.sum_le_sum fun n _ => Finset.sum_le_sum fun m _ => hκ n m⟩
+
+/-- `repBound` never exceeds `1`, so band / diagonal / small-index pairs cost at most `1`. -/
+theorem repBound_le_one (M : ℕ) (o : Option ℕ) (ξ : ℝ) : repBound M o ξ ≤ 1 := by
+  cases o <;> simp only [repBound]
+  · exact Bf_le_one _ _ _
+  · split_ifs
+    · exact Finset.prod_le_one (fun _ _ => abs_nonneg _) fun _ _ => Real.abs_cos_le_one _
+    · exact le_rfl
+
 /-- **Pair sums with a power saving.**  For each `h ≠ 0` and each `N ≥ 1` some choice of options
 makes the pair sum `≤ C N^{2−δ}`.  This is the per-`N` content of the assembly; summability along
 `sched` is then automatic (`repPairArith_of_power`). -/
