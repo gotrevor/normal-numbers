@@ -3954,8 +3954,9 @@ theorem irrational_of_isNormal_two {x : ℝ} (hx : IsNormal 2 x) : Irrational x 
   rw [one_mul, add_neg_cancel] at this
   exact ExplicitPQ.not_isNormal_two_zero this
 
-/-- **The full profile, almost surely.** -/
-theorem ae_repProfile : ∀ᵐ ω ∂coinMeasure,
+/-- **The full profile, almost surely, from the crux in arithmetic form.** -/
+theorem ae_repProfile_of (hcrux : ∀ b : ℕ, 2 ≤ b → 3 ∣ b → (∀ s : ℕ, b ≠ 3 ^ s) → RepPairArith b) :
+    ∀ᵐ ω ∂coinMeasure,
     ∀ b : ℕ, 2 ≤ b → (IsNormal b (repReal ω) ↔ ∀ s : ℕ, b ≠ 3 ^ s) := by
   have hall : ∀ᵐ ω ∂coinMeasure, ∀ b : ℕ, 2 ≤ b → (∀ s : ℕ, b ≠ 3 ^ s) →
       IsNormal b (repReal ω) := by
@@ -3964,7 +3965,7 @@ theorem ae_repProfile : ∀ᵐ ω ∂coinMeasure,
     by_cases hb : 2 ≤ b
     · by_cases hp : ∀ s : ℕ, b ≠ 3 ^ s
       · by_cases h3 : 3 ∣ b
-        · filter_upwards [ae_isNormal_rep_of_three_dvd hb h3 hp] with ω hω _ _ using hω
+        · filter_upwards [ae_isNormal_rep_of_pairDecay hb (repPairDecay_of_arith (hcrux b hb h3 hp))] with ω hω _ _ using hω
         · filter_upwards [ae_isNormal_rep_of_coprime_three hb h3] with ω hω _ _ using hω
       · exact Eventually.of_forall fun ω _ h => absurd h hp
     · exact Eventually.of_forall fun ω h => absurd h hb
@@ -3974,10 +3975,47 @@ theorem ae_repProfile : ∀ᵐ ω ∂coinMeasure,
   · subst h0; rw [hs] at hb; norm_num at hb
   · exact not_isNormal_rep_three_pow ω h0 (hs ▸ hn)
 
+/-- **The full profile, almost surely.** -/
+theorem ae_repProfile : ∀ᵐ ω ∂coinMeasure,
+    ∀ b : ℕ, 2 ≤ b → (IsNormal b (repReal ω) ↔ ∀ s : ℕ, b ≠ 3 ^ s) :=
+  ae_repProfile_of fun _ hb h3 hp => repPairArith_of_three_dvd hb h3 hp
+
+/-- The three open inputs of the crux: Baker's discrepancy for `m log₃ t` (cited), and the
+copy-zone digit statements for every `b = 3ˢt`, `t > 1`, `3 ∤ t`. -/
+def RepInputs : Prop :=
+  CantorExactExponentProfile.Literature.BakerLogDiscrepancy ∧
+    ∀ s t : ℕ, 1 ≤ s → 2 ≤ t → ¬ 3 ∣ t → TOrbitCyclicDecay t ∧ BadGcdSparseH (3 ^ s * t)
+
+/-- **Crux from the inputs** (proved): `b = 3ˢt` and `repPairArith_of_inputs`. -/
+theorem repPairArith_of_three_dvd_of_inputs (hI : RepInputs) {b : ℕ} (hb : 2 ≤ b) (h3 : 3 ∣ b)
+    (hpow : ∀ s : ℕ, b ≠ 3 ^ s) : RepPairArith b := by
+  obtain ⟨s, t, hnd, rfl⟩ := Nat.exists_eq_pow_mul_and_not_dvd (by omega : b ≠ 0) 3 (by norm_num)
+  have ht0 : t ≠ 0 := by rintro rfl; simp at hnd
+  have ht1 : t ≠ 1 := by rintro rfl; exact hpow s (mul_one _)
+  have hs : 1 ≤ s := by
+    rcases Nat.eq_zero_or_pos s with h | h
+    · subst h; simp at h3; exact absurd h3 hnd
+    · exact h
+  obtain ⟨hT, hS⟩ := hI.2 s t hs (by omega) hnd
+  exact repPairArith_of_inputs hs (by omega) hnd hI.1 hT hS
+
 /-- **The cut is not forced (Liouville case).**  Wiring (proved) from `ae_repProfile`, whose only
 open input is the crux `ae_isNormal_rep_of_three_dvd`. -/
 theorem liouvilleCantorFullProfile : LiouvilleCantorFullProfile := by
   obtain ⟨ω, hω⟩ := ae_repProfile.exists
+  have h2 : IsNormal 2 (repReal ω) := (hω 2 le_rfl).2 fun s hs => by
+    rcases s with _ | s
+    · norm_num at hs
+    · have : 3 ∣ 2 := hs ▸ dvd_pow_self 3 (Nat.succ_ne_zero s)
+      norm_num at this
+  exact ⟨repReal ω, repReal_mem_cantorSet ω,
+    liouville_repReal ω (irrational_of_isNormal_two h2), hω⟩
+
+/-- **Conditional headline (proved).**  The three inputs (`RepInputs`) give a Liouville number in
+`K` normal exactly to the bases that are not powers of 3. -/
+theorem liouvilleCantorFullProfile_of_inputs (hI : RepInputs) : LiouvilleCantorFullProfile := by
+  obtain ⟨ω, hω⟩ := (ae_repProfile_of fun _ hb h3 hp =>
+    repPairArith_of_three_dvd_of_inputs hI hb h3 hp).exists
   have h2 : IsNormal 2 (repReal ω) := (hω 2 le_rfl).2 fun s hs => by
     rcases s with _ | s
     · norm_num at hs
