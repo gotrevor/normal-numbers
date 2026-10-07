@@ -2602,6 +2602,72 @@ theorem exists_option_le_pairMaj {s t e h' m d M W K : ℕ} (ht : 1 ≤ t) (hh :
     have : k ≤ M := by have := lt_runStart k; omega
     exact ⟨some k, (pair_class6 ht hk c1 c2 c3).trans (g6 k this)⟩
 
+/-- **The six-way disjunction at concrete positions.**  `pair_classify_rep` with `ρ' = ρ(ρ+1)`,
+from `b ≤ 3^{s(ρ−1)}`, `3ᵉh' < 3^{sm}` (i.e. `m` large), past run `k₀`, away from the bands. -/
+theorem pair_classes {s t e h' m d ρ k₀ W K : ℕ} (ht : 2 ≤ t) (hh : 1 ≤ h')
+    (hd : 1 ≤ d) (hρ1 : 1 ≤ ρ) (hb : 3 ^ s * t ≤ 3 ^ (s * (ρ - 1)))
+    (hH : 3 ^ e * h' < 3 ^ (s * m)) (hρ : ρ * (ρ + 1) ≤ 4 * (k₀ + 3))
+    (hv0 : runStart k₀ ≤ s * m + e) (hW : W ≤ s * m + e) (hK : K ≤ s * m + e)
+    (hnv : ¬ NearCopyBdry W K (s * m + e))
+    (hny : ¬ NearCopyBdry W K (Nat.log 3 (3 ^ e * h' * (3 ^ s * t) ^ m)))
+    (hnu : ¬ NearCopyBdry W K (s * (m + d) + e))
+    (hnT : ¬ NearCopyBdry W K (Nat.log 3 (pairNat s t e h' m d))) :
+    (∀ p, s * m + e + 1 ≤ p → p < s * m + e + W → isFresh p = true) ∨
+      (W ≤ Nat.log 3 (3 ^ e * h' * (3 ^ s * t) ^ m) ∧
+        Nat.log 3 (3 ^ e * h' * (3 ^ s * t) ^ m) ≤ s * (m + d) + e ∧
+        ∀ j < W, isFresh (Nat.log 3 (3 ^ e * h' * (3 ^ s * t) ^ m) - 1 - j) = true) ∨
+      (Nat.log 3 (3 ^ e * h' * (3 ^ s * t) ^ m) + K ≤ s * (m + d) + e ∧
+        ∀ p, s * (m + d) + e + 1 ≤ p → p < s * (m + d) + e + W → isFresh p = true) ∨
+      (W ≤ Nat.log 3 (pairNat s t e h' m d) ∧
+        ∀ j < W, isFresh (Nat.log 3 (pairNat s t e h' m d) - 1 - j) = true) ∨
+      (∃ k, Even k ∧ runStart k ≤ s * m + e ∧
+        Nat.log 3 (pairNat s t e h' m d) + K < (k + 2) * runStart k) ∨
+      (∃ k, Even k ∧ runStart k ≤ s * (m + d) + e ∧
+        Nat.log 3 (pairNat s t e h' m d) + K < (k + 2) * runStart k ∧
+        Nat.log 3 (3 ^ e * h' * (3 ^ s * t) ^ m) + K ≤ runStart k) := by
+  set B := 3 ^ s * t
+  set v := s * m + e
+  set u := s * (m + d) + e
+  set y := Nat.log 3 (3 ^ e * h' * B ^ m)
+  set T := Nat.log 3 (pairNat s t e h' m d)
+  have hsm : s * m ≤ s * (m + d) := Nat.mul_le_mul_left _ (by omega)
+  have hsm0 : 0 < s * m := by
+    rcases Nat.eq_zero_or_pos (s * m) with h0 | h0
+    · rw [h0, pow_zero] at hH; have : 1 ≤ 3 ^ e * h' := Nat.mul_pos (by positivity) hh; omega
+    · exact h0
+  have hBpos : 1 ≤ B := Nat.mul_pos (by positivity) (by omega)
+  -- v ≤ y
+  have hvy : v ≤ y := by
+    refine Nat.le_log_of_pow_le (by norm_num) ?_
+    calc 3 ^ v = 3 ^ e * 1 * (3 ^ s) ^ m := by simp only [v]; rw [pow_add, ← pow_mul]; ring
+      _ ≤ 3 ^ e * h' * B ^ m := Nat.mul_le_mul (Nat.mul_le_mul_left _ hh)
+          (Nat.pow_le_pow_left (Nat.le_mul_of_pos_right _ (by omega)) m)
+  -- y < ρ v
+  have hyρ : y ≤ ρ * v := by
+    have := log_mul_pow_lt hρ1 hb hH hsm0
+    have : ρ * (s * m) ≤ ρ * v := Nat.mul_le_mul_left _ (by omega)
+    omega
+  -- u ≤ T
+  have huT : u ≤ T := by
+    refine Nat.le_log_of_pow_le (by norm_num) ?_
+    have h1 := three_pow_le_pow_sub_pow (s := s) (m := m) ht hd
+    calc 3 ^ u = 3 ^ e * 1 * 3 ^ (s * (m + d)) := by simp only [u]; rw [pow_add]; ring
+      _ ≤ 3 ^ e * h' * ((3 ^ s * t) ^ (m + d) - (3 ^ s * t) ^ m) :=
+          Nat.mul_le_mul (Nat.mul_le_mul_left _ hh) h1
+  -- T ≤ ρ u
+  have hTρ : T ≤ ρ * u := by
+    have h1 : T ≤ Nat.log 3 (3 ^ e * h' * B ^ (m + d)) := Nat.log_mono_right
+      (Nat.mul_le_mul_left _ (Nat.sub_le _ _))
+    have hH' : 3 ^ e * h' < 3 ^ (s * (m + d)) := lt_of_lt_of_le hH (Nat.pow_le_pow_right (by norm_num) hsm)
+    have h2 := log_mul_pow_lt (m := m + d) hρ1 hb hH' (by omega)
+    have : ρ * (s * (m + d)) ≤ ρ * u := Nat.mul_le_mul_left _ (by omega)
+    omega
+  have hsep := hsep_of (K := K) hTρ hyρ hK
+  have hρρ : ρ ≤ ρ * (ρ + 1) := Nat.le_mul_of_pos_right _ (by omega)
+  refine pair_classify_rep (ρ := ρ * (ρ + 1)) hρ hv0 hW hvy (hyρ.trans (Nat.mul_le_mul_right _ hρρ))
+    (by omega) huT (hTρ.trans (Nat.mul_le_mul_right _ hρρ))
+    (fun h => (hsep h).trans (le_of_eq (by ring))) hnv hny hnu hnT
+
 /-- **Pair sums with a power saving.**  For each `h ≠ 0` and each `N ≥ 1` some choice of options
 makes the pair sum `≤ C N^{2−δ}`.  This is the per-`N` content of the assembly; summability along
 `sched` is then automatic (`repPairArith_of_power`). -/
