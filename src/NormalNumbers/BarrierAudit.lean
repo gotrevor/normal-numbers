@@ -35,6 +35,7 @@ import NormalNumbers.CantorBadNormalRetired
 import NormalNumbers.CantorExactExponentStretch
 import NormalNumbers.StretchBFR
 import NormalNumbers.CantorExactExponentProfile
+import NormalNumbers.CantorRepetition
 import NormalNumbers.QSpanCriterion
 import NormalNumbers.ComputableReal
 import NormalNumbers.KurtzRandom
@@ -163,8 +164,8 @@ def waivers : List Waiver := [
    "a finite computation: rung checker (carry automaton, label-filtered SCCs)"⟩,
   ⟨``Adder.not_isRung_five_four_five_small,
    "a finite computation: an avoided-digit-set assignment with a live SCC for each small T"⟩,
-  ⟨``Adder.not_isWordSetBlock_runs_three_one_seven_nine,
-   "a finite computation: word-channel carry automaton (mahler_block among/runs)"⟩,
+  ⟨``Adder.IsWordSetBlock.runs_liouville_cover,
+   "a leaf: liouville_cover's argument for runs of ones"⟩,
   ⟨``Adder.not_isWordSetBlock_runs_three_small,
    "a finite computation: word-channel carry automaton (mahler_block among/runs)"⟩,
   ⟨``Adder.isWordSetBlock_runs_three_nine,
@@ -264,13 +265,18 @@ def waivers : List Waiver := [
    "conditional wiring (Fourier expansion over the q-interval); records that single-sum \
     cancellation reaches only m > b − δ b' (singleSum_insufficient)"⟩,
   ⟨``StretchBFR.card_near_cantor_le, "a leaf: the classical covering count of rationals near K"⟩,
-  ⟨``CantorExactExponentProfile.not_isNormal_of_not_profileOK,
-   "a leaf: elementary base-b zero run along each forced ternary run; English proof in the docstring"⟩,
   ⟨``CantorExactExponentProfile.ae_isNormal_of_profileOK,
-   "open node with a stated mechanism (Cassels–Schmidt second moment over the orbit of t mod 3^k, \
-    window free count linear below the threshold); no registered barrier applies"⟩,
+   "open node; the elementary orbit port is blocked in the run shadow (Maze row 'elementary orbit \
+    port to 3 | b'); live route via the Baker discrepancy input"⟩,
   ⟨``CantorExactExponentProfile.exists_computable_mem_cantorSet_irrExponent_normalProfile,
-   "wiring: the two profile lemmas plus the stretch derandomizer with the 3 ∣ b tests added"⟩,
+   "the unconditional form of exists_computable_normalProfile_of_baker (proved); open only for \
+    the cited Baker–Wüstholz + Erdős–Turán input Literature.BakerLogDiscrepancyEff"⟩,
+  ⟨``CantorExactExponentProfile.ae_isNormal_of_profileOK_of_gelfond,
+   "believed implication (55%): a Gelfond-strength two-log bound suffices for the run shadows; \
+    the elementary t^k ≠ 3^j rate does not"⟩,
+  ⟨``CantorRepetition.liouvilleCantorFullProfile,
+   "open node (2026-10-06): repetition approximants with denominators prime to 3; mechanism in the \
+    module doc, no registered barrier applies"⟩,
   ⟨``FiniteState.isFNormal_delayEnum_of_normal,
    "a leaf: O(1) cost of composing with the delay transducer and its finite-state right inverse"⟩]
 

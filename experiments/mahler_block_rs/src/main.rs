@@ -25,6 +25,7 @@
 //!       SET may use A = 2^k - 1 and B = 2^k + 1 (e.g. 1,A,B)
 //!   mahler_block among G K m1,... w1,w2,...   members may avoid only the listed words
 //!   mahler_block asearch G K MAXM SIZE w1,w2,...   all such blocks of a size
+//!   mahler_block witness G K m1,... w1,...   explicit tokens U, V for an avoiding tail
 //!   mahler_block rgreedy K CANDS SAMPLE   greedy run-block
 //!   mahler_block rsearch K MAXM SIZE   all odd run-blocks (0^K and 1^K) of a size in [1,MAXM]
 //!
@@ -801,6 +802,75 @@ fn among_search(g: u32, k: u32, maxm: u32, size: usize, ws: &[u32]) {
     }
 }
 
+/// Explicit counterexample: refine by (m_i, w_i), then in the surviving core pick a vertex with
+/// two out-edges and print, for each, the input word of a shortest cycle back to it.  Any
+/// concatenation of those words (from that vertex) is a tail with every channel's word avoided.
+fn witness(g: u32, k: u32, t: &[u32], ws: &[u32]) {
+    let mut core = root(g);
+    for (&m, &w) in t.iter().zip(ws) {
+        match refine_word(g, &core, m, k, w) {
+            Some(c) => core = c,
+            None => {
+                println!("collapses at m = {}", m);
+                return;
+            }
+        }
+    }
+    println!("core {} states", core.len());
+    let shortest_back = |v: usize, first: (u8, u32)| -> Option<Vec<u8>> {
+        // BFS from first.1 back to v, labels recorded
+        let n = core.len();
+        let mut prev: Vec<Option<(usize, u8)>> = vec![None; n];
+        let mut seen = vec![false; n];
+        let start = first.1 as usize;
+        seen[start] = true;
+        let mut q = std::collections::VecDeque::from([start]);
+        while let Some(u) = q.pop_front() {
+            if u == v {
+                let mut word = vec![];
+                let mut c = u;
+                while c != start {
+                    let (p, x) = prev[c].unwrap();
+                    word.push(x);
+                    c = p;
+                }
+                word.push(first.0);
+                word.reverse();
+                return Some(word);
+            }
+            for &(x, w) in &core[u] {
+                let w = w as usize;
+                if !seen[w] {
+                    seen[w] = true;
+                    prev[w] = Some((u, x));
+                    q.push_back(w);
+                }
+            }
+        }
+        None
+    };
+    // vertex whose two shortest return words are shortest in total
+    let mut best: Option<(usize, usize, Vec<u8>, Vec<u8>)> = None;
+    for v in 0..core.len() {
+        let mut cyc: Vec<Vec<u8>> = core[v].iter().filter_map(|&e| shortest_back(v, e)).collect();
+        cyc.sort_by_key(|c| c.len());
+        cyc.dedup();
+        if cyc.len() >= 2 {
+            let tot = cyc[0].len() + cyc[1].len();
+            if best.as_ref().map_or(true, |b| tot < b.0) {
+                best = Some((tot, v, cyc[0].clone(), cyc[1].clone()));
+            }
+        }
+    }
+    match best {
+        Some((_, v, a, b)) => {
+            let f = |c: &Vec<u8>| c.iter().map(|d| char::from_digit(*d as u32, 36).unwrap()).collect::<String>();
+            println!("vertex {} tokens U = {} V = {}", v, f(&a), f(&b));
+        }
+        None => println!("no vertex with two cycles"),
+    }
+}
+
 fn main() {
     let a: Vec<String> = env::args().collect();
     let g: u32 = a[2].parse().unwrap();
@@ -858,6 +928,7 @@ fn main() {
         }
         "asearch" => among_search(g, a[3].parse().unwrap(), a[4].parse().unwrap(),
                                   a[5].parse().unwrap(), &parse_list(&a[6])),
+        "witness" => witness(g, a[3].parse().unwrap(), &parse_list(&a[4]), &parse_list(&a[5])),
         "runs" => runs(a[2].parse().unwrap(), &a[3]),
         _ => panic!("unknown command"),
     }

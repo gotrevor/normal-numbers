@@ -966,6 +966,7 @@ import NormalNumbers.CantorExactExponent
 import NormalNumbers.CantorExactExponentStretch
 import NormalNumbers.StretchBFR
 import NormalNumbers.CantorExactExponentProfile
+import NormalNumbers.CantorRepetition
 import NormalNumbers.CantorExactExponentFive
 import NormalNumbers.SchedFamily
 import NormalNumbers.UniformBad

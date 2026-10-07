@@ -3169,6 +3169,61 @@ Next (outside this campaign's scope): subadditivity leaf for `QSpan.span_dimensi
 ## 2026-10-06 BFR directive lap 1
 Candidates 2,4 proved (`StretchBFR.card_cantor_hyperbola_le`, `eq_of_hyperbola_low`); 1,3 → `NKPowerSaving` node, prior art Chow–Varjú–Yu 2402.18395. Confidence < 1%; stop condition met. Next (if reopened): read CVY and transcribe their count as a Literature Prop.
 
+## 2026-10-06 profile lap 1 (proof/cantorexp-profile)
+- PROVED `not_isNormal_of_not_profileOK` (step 1; helpers `fract_lt_of_run_block`, `ne_rpow_of_not_dvd`).
+- CRUX ADVANCE (step 2): the kickoff's elementary port is blocked in the run shadow
+  (`shadow_card_ge`, `window_covered_imp`; Maze row "elementary orbit port to 3 | b", verdict wall).
+  Shadow frequencies expose only digits at linear depth, out of reach of orbits mod 3^k ≤ N.
+  Live route: top digits via `LogDiscrepancy` (Baker, `Literature.BakerLogDiscrepancy`) →
+  `ae_isNormal_of_profileOK_of_baker` (sorry, 60%).
+- NEXT: (a) decompose `ae_isNormal_of_profileOK_of_baker` into the non-shadow orbit bound and the
+  shadow top-digit bound; (b) look for an elementary power-discrepancy proof for {m log₃ t}
+  (unlikely: it is the irrationality measure of log t/log 3); (c) the frozen headline cannot
+  close unconditionally without (b) — consider a conditional headline sibling.
+- Lap 1b: `ae_isNormal_of_profileOK_of_baker` PROVED from the single leaf `secondMoment_le_profile`
+  (power-saving second moment, sorry 60%) via `summable_sched_rpow` (proved). NEXT: decompose
+  `secondMoment_le_profile` with `secondMoment_expand_b` + `pair_sum_le` into a non-shadow orbit
+  bound (all-free window ⇒ `sum_Hf_le_b` with `free := fun _ => true`, base `t`) and a shadow
+  top-digit bound from `LogDiscrepancy`.
+- Lap 1c: proved leaves `bf_le_topProd` (top window ⇒ `topProd K {log₃|ξ|}`), `bf_mono`,
+  `hf_true_eq`, `bf_le_hf_true` (free low window ⇒ offset-free majorant), `sum_hf_true_le`
+  (orbit sum of t). NEXT: `sum_topProd_le` from `LogDiscrepancy` (partition y into ternary
+  intervals of z = 3^y; |cos| ≤ cos(2π/9) when the digit pair at k+1,k+2 differs; count strings
+  with few changes), then the pair classification (low-free / top-free / O(log N) exceptional;
+  top-in-later-run impossible for large k since a_{k+1} ≥ (k+2)E_k).
+- Lap 1d: PROVED `sum_topProd_le` (top-window sum from `LogDiscrepancy`: grid of mesh 3^{-(2K+1)}
+  in z = 3^y, Lipschitz `cantorProd_lip`, Riesz grid sum `sum_cantorProd_grid` via
+  `residue_sum_from`). Both analytic halves of `secondMoment_le_profile` now exist; what remains is
+  the pair classification + assembly (choose W = K = ⌊ε log₃ N⌋; low-free pairs via
+  `bf_le_hf_true`/`sum_hf_true_le`, top-free pairs via `bf_le_topProd`/`sum_topProd_le`, rest
+  O(N log N)).
+- Lap 1e: KEY INSIGHT + leaf. For places p < s(m+d), the pair frequency h b^{m+d} − h b^m has the
+  same factors as h b^m alone, so the top digits of the LOWER term are visible through the
+  difference (`bf_le_topProd_of_dvd`, proved). Classification (next leaf `pair_classify`): if the
+  low window of m is hit by run k (k large), then the top window of Y = h bᵐ lies in the gap
+  (E_k, a_{k+1}); if n_Y ≤ s(m+d) use it, else d < Lm/s + O(1) and the top window of ξ lies in the
+  same gap. Bad pairs only for m ≤ A·W + B ⇒ O(N log N). No 1/log N loss.
+- Lap 1f: PROVED `pair_classify` (m ≥ A·W + B ⇒ low window free ∨ top-of-Y window free with
+  n_Y ≤ s(m+d) ∨ top-of-ξ window free). NEXT: assemble `secondMoment_le_profile`: expand,
+  `pair_sum_le`, per pair pick the case; sum low cases by `sum_hf_true_le` (c = h'(bᵈ−1), base t),
+  top cases by `sum_topProd_le` (β = log₃|h(bᵈ−1)| resp. log₃|h|); m < A·W + B trivially;
+  W = K = ⌊ε log₃ N⌋, ε = κ/4.
+- Lap 1g: PROVED `pair_bound` (each pair coefficient ≤ low majorant + two top products + [m small]),
+  with `profile_data`, `hf_neg`. NEXT: sum it in `secondMoment_le_profile` (expand_b + pair_sum_le
+  with G d m := Bf (expFree μ₀) M (h(bᵈ−1)bᵐ), M as in pair_bound; Σ_m via `sum_hf_true_le` with
+  c = h'(bᵈ−1) (3∤c: 3∣b ⇒ bᵈ−1 ≡ −1), and `sum_topProd_le` twice; choose W = ⌊ε log₃ N⌋).
+
+## 2026-10-06 profile lap 2
+- PROVED `secondMoment_le_profile` (+ `three_pow_div_log_bounds`). So
+  `ae_isNormal_of_profileOK_of_baker` is now unconditional modulo only the cited hypothesis
+  `Literature.BakerLogDiscrepancy` (`#print axioms`: propext, choice, Quot.sound).
+- Open in scope: `ae_isNormal_of_profileOK` (= prove `LogDiscrepancy t` for 3∤t, Baker-level),
+  and the headline wiring (derandomizer test family for 3 ∣ b, kickoff step 3).
+- Next attack: kickoff step 3 can be done conditionally now (headline_of_baker), which isolates
+  `LogDiscrepancy` as the single remaining input.
+- (lap 2 cont.) Headline PROVED conditional on `Literature.BakerLogDiscrepancyEff`
+  (`exists_computable_normalProfile_of_baker`, axiom-clean).  Remaining scope sorries are exactly
+  the Baker wall; see HANDOFF-2026-10-06-profile-lap2.md for the elementary-rate obstruction.
 ## cantorbad lap 9 (2026-10-06)
 Advance: first-order crux made explicit.  `deadCorr_eq_cylChar` (D = |A|⁻¹ Σ_dead (χ(vf) − χ(v)),
 χ = cylinder Cantor character), `firstMix_le_obstMix` (exact 1/|A| weights, so the 1/|A| vs 1/1024

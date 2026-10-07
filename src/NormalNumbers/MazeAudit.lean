@@ -14,6 +14,7 @@ import NormalNumbers.StonehamBase6
 import NormalNumbers.LinearFormsScalesStretch
 import NormalNumbers.EntropyProfiles
 import NormalNumbers.CantorExactExponentStretch
+import NormalNumbers.CantorExactExponentProfile
 import NormalNumbers.StretchBFR
 import NormalNumbers.QSpanNormal
 import NormalNumbers.IndependenceRelative
@@ -69,6 +70,9 @@ def mazeLinks : List Link := [
   ⟨"single-sum inverse cancellation for the run-entering count",
    [``StretchBFR.singleSum_insufficient, ``StretchBFR.windowCount_of_inverseSum,
     ``StretchBFR.InverseCantorSumBound], []⟩,
+  ⟨"elementary orbit port to 3 | b",
+   [``CantorExactExponentProfile.shadow_card_ge, ``CantorExactExponentProfile.window_covered_imp],
+   [``CantorExactExponentProfile.LogDiscrepancy]⟩,
   ⟨"Effective dimension as the currency for one-of statements",
    [``ConjugateEntropy.invariant_vanishes_of_const_mem], []⟩,
   ⟨"Entropy budget through squaring",

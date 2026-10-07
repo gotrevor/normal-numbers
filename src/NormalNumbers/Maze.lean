@@ -1476,6 +1476,11 @@ def register : List Hall := [
    .refuted, .frozen,
    "Every small direction set has an avoided-digit assignment whose live automaton keeps a component not certified degenerate. Product-block counterexamples vary X and Y separately (two-dimensional); a relative certificate only discards one-dimensional failure loci, so the gain is confined to tightly coupled single-word families like ternary_line. Binary 2-word blocks (|coef| <= 3, up to 3 directions) also all fail. REOPEN IF: a complete degeneracy test, or larger coefficients",
    "IndependenceRelative.lean: not_isRelativeBlock_small (sorry, 65%), IsRelativeBlock, ternary_line; experiments/independence_relative.py blocksearch", "2026-10-05"⟩,
+  ⟨"elementary orbit port to 3 | b",
+   "Prove a.e. normality of the exact-exponent Cantor point to b = 3^s t below the profile threshold by porting secondMoment_le_b, with the orbit of t mod 3^k counting the low ternary digits of h(b^d-1)t^m",
+   .wall, .kernel,
+   "For m in a run's shadow (a <= sm < E) the forced places hide every digit of the frequency below relative position E - sm, linear in N; orbits mod 3^k with 3^k <= N cannot reach them, and the shadow is a positive fraction of [0, E/s) (shadow_card_ge), so the blind bound costs O(1) per run and the DEL sum diverges. The top digits are free below the threshold (window_covered_imp) and are fixed by {m log3 t}. REOPEN IF: LogDiscrepancy (Baker)",
+   "CantorExactExponentProfile.lean: shadow_card_ge, window_covered_imp (proved), LogDiscrepancy, Literature.BakerLogDiscrepancy, ae_isNormal_of_profileOK_of_baker (sorry, 60%)", "2026-10-06"⟩,
   ⟨"Effective dimension as the currency for one-of statements",
    "Measure digit complexity by effective (Kolmogorov) dimension, which is invariant under every computable map (x ^ y, exp, powers), to get one-of theorems through nonlinear transformations",
    .vacuous, .cited,
@@ -1504,7 +1509,7 @@ def register : List Hall := [
   ⟨"x, 3x, 5x as the first member of a family",
    "Extend the binary theorem 'x, 3x or 5x has both 00 and 11' along {1, 2^k-1, 2^k+1} for runs 0^k and 1^k, or along {1, g-1, g+1} for digits 0 and g-1 in base g",
    .refuted, .frozen,
-   "Both break at the next step: {1, 7, 9} lets x, 7x, 9x all avoid 000 (the dense side, which the k = 2 proof never meets because x avoiding 11 makes x sparse), and {1, g-1, g+1} lets every member avoid digit 0 for g = 4..13, 16. Minimal run-block sizes go 1, 3, then at least 5. REOPEN IF: a family whose members widen a sparse x carry-free and a detector that reads token boundaries, as 3 and 5 do at k = 2",
+   "Both break at the next step: the Liouville number 3 * sum 2^-(i!) beats {1, 2^k-1, 2^k+1} for every k >= 3 (3, 3(2^k-1), 3(2^k+1) have no run of k ones), and {1, g-1, g+1} lets every member avoid digit 0 for g = 4..13, 16. Minimal run-block sizes go 1, 3, then at least 5. REOPEN IF: a family whose members widen a sparse x carry-free and a detector that reads token boundaries, as 3 and 5 do at k = 2",
    "MahlerProductBlock.lean: not_isWordSetBlock_runs_three_one_seven_nine, not_isWordSetBlock_runs_three_small, not_isWordSetBlock_extremeDigits", "2026-10-06"⟩
 ]
 
