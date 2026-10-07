@@ -1256,6 +1256,41 @@ theorem norm_charFun_repReal_le_repBound (M : ℕ) (o : Option ℕ) (ξ : ℝ) :
     rw [prod_block_eq_cyc] at h1
     exact h1
 
+theorem cycProdR_add_int (A : ℕ) (η : ℝ) (j : ℤ) :
+    cycProdR A (η + j * (3 ^ A - 1)) = cycProdR A η := by
+  unfold cycProdR
+  refine Finset.prod_congr rfl fun i _ => ?_
+  by_cases hq : (3 : ℝ) ^ A - 1 = 0
+  · simp [hq]
+  · have : 2 * Real.pi * ((η + j * (3 ^ A - 1)) * 3 ^ i) / (3 ^ A - 1) =
+        2 * Real.pi * (η * 3 ^ i) / (3 ^ A - 1) + ((j * 3 ^ i : ℤ) : ℝ) * (2 * Real.pi) := by
+      push_cast; field_simp; try ring
+    rw [this, Real.cos_add_int_mul_two_pi]
+
+/-- **The copy coins never see past the run end.**  Proved: the run-`k` bound `repBound M (some k)`
+at `ξ` and at `ξ + j·3^{(k+2)a}` agree (the period `a` divides the copy length `(k+1)a`).  So in
+the shadow zone (window of `ξ` straddling the run end) the copy coins read only `ξ mod 3^{(k+2)a}`,
+the low digits; the top digits are visible to the free coins only (the Baker input). -/
+theorem repBound_some_add (M k : ℕ) (ξ : ℝ) (j : ℤ) :
+    repBound M (some k) (ξ + j * 3 ^ ((k + 2) * runStart k)) = repBound M (some k) ξ := by
+  simp only [repBound]
+  set a := runStart k
+  have h3 : (0 : ℝ) < 3 ^ a := by positivity
+  set K : ℤ := ∑ c ∈ Finset.range (k + 1), (3 : ℤ) ^ (a * c) with hKdef
+  have hK : (K : ℝ) * (3 ^ a - 1) = 3 ^ ((k + 1) * a) - 1 := by
+    have := geom_sum_mul ((3 : ℝ) ^ a) (k + 1)
+    rw [hKdef]; push_cast
+    simp_rw [pow_mul] at this ⊢
+    rw [this, ← pow_mul, ← pow_mul, mul_comm]
+  have e : (ξ + j * 3 ^ ((k + 2) * a)) * (1 - (3 : ℝ) ^ (-(((k + 1) * a : ℕ) : ℤ))) / 3 ^ a =
+      ξ * (1 - (3 : ℝ) ^ (-(((k + 1) * a : ℕ) : ℤ))) / 3 ^ a + ((j * K : ℤ) : ℝ) * (3 ^ a - 1) := by
+    rw [zpow_neg, zpow_natCast]
+    push_cast
+    rw [mul_assoc (j : ℝ), hK, show (k + 2) * a = a + (k + 1) * a by ring, pow_add]
+    have : (0 : ℝ) < 3 ^ ((k + 1) * a) := by positivity
+    field_simp
+  rw [e, cycProdR_add_int]
+
 /-- **The crux as a deterministic exponential-sum statement (open).**  For each `h ≠ 0` there
 is a choice, per `N = sched j` and pair `(n, m)`, of free coins or of one run's block coins whose
 Riesz bounds at `ξ = h(bⁿ − bᵐ)` sum to `N²·ε_j` with `Σ ε_j < ∞`.
