@@ -2190,6 +2190,27 @@ theorem sum_class_top_le {t : ℕ} (ht : 2 ≤ t) (h3 : ¬ 3 ∣ t)
         Finset.sum_le_sum fun d _ => hC N hN K (β d)
     _ = _ := by rw [Finset.sum_const, Finset.card_range, nsmul_eq_mul]
 
+theorem hf_true_int_mul (W : ℕ) (h : ℤ) (x : ℝ) :
+    Hf (fun _ => true) 0 W ((h : ℝ) * x) = Hf (fun _ => true) 0 W ((h.natAbs : ℝ) * x) := by
+  obtain ⟨n, rfl | rfl⟩ := Int.eq_nat_or_neg h
+  · simp
+  · rw [Int.natAbs_neg, Int.natAbs_natCast]; push_cast
+    rw [neg_mul, CantorExactExponentProfile.hf_neg]
+
+/-- **Class-3 sum.**  For `h` prime to 3, `Σ_{m<N} Σ_{n<N} Hf_true(h tⁿ) ≤ N(N + 2·3ʲ)(3/2)^{tb}(2/3)ʲ`. -/
+theorem sum_class_sep_le {t : ℕ} (ht : 2 ≤ t) (h3 : ¬ 3 ∣ t) (h : ℤ) (hh : ¬ (3 : ℤ) ∣ h)
+    (j N : ℕ) :
+    ∑ _m ∈ Finset.range N, ∑ n ∈ Finset.range N,
+      Hf (fun _ => true) 0 (j + 1) ((h : ℝ) * (t : ℝ) ^ n) ≤
+      N * ((N + 2 * 3 ^ j) * (3 / 2 : ℝ) ^ CantorLiouvilleAll.tb t * (2 / 3 : ℝ) ^ j) := by
+  have hc : ¬ 3 ∣ h.natAbs := by
+    intro hd; exact hh (Int.natAbs_dvd_natAbs.1 (by simpa using hd))
+  rw [Finset.sum_const, Finset.card_range, nsmul_eq_mul]
+  gcongr
+  refine le_of_eq_of_le ?_ (CantorExactExponentProfile.sum_hf_true_le ht h3 j h.natAbs hc N)
+  refine Finset.sum_congr rfl fun n _ => ?_
+  rw [hf_true_int_mul]; push_cast; rfl
+
 /-! ## Bases `3ˢt`, `t > 1`: the crux -/
 
 /-- **Assembly of the crux from its inputs (open; believed, 60%).**  For `b = 3ˢt`, `t > 1`:
