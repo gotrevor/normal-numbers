@@ -2065,6 +2065,28 @@ theorem repBound_class_sep_le {s t M W K n m : ℕ} (h : ℤ) (hM : s * n + W �
   field_simp
   congr 1; omega
 
+/-- **Class-6 pointwise bound.**  Separated pair with the high part in copy run `k`
+(`a = a_k ≤ sn`): `repBound (some k) ≤ cycProd a (h tⁿ) + π(|h bᵐ|/3^a + |ξ|/3^{(k+2)a})`. -/
+theorem repBound_class_copySep_le {s t M k n m : ℕ} (hk : Even k) (h : ℤ)
+    (ha : runStart k ≤ s * n) :
+    repBound M (some k) (h * (((3 ^ s * t : ℕ) : ℝ) ^ n - ((3 ^ s * t : ℕ) : ℝ) ^ m)) ≤
+      cycProd (runStart k) (h * (t : ℤ) ^ n) + Real.pi *
+        (|(h : ℝ) * ((3 ^ s * t : ℕ) : ℝ) ^ m| / 3 ^ runStart k +
+          |h * (((3 ^ s * t : ℕ) : ℝ) ^ n - ((3 ^ s * t : ℕ) : ℝ) ^ m)| /
+            3 ^ ((k + 2) * runStart k)) := by
+  set a := runStart k
+  have := repBound_some_le_cyc M k hk (h * (((3 ^ s * t : ℕ) : ℝ) ^ n - ((3 ^ s * t : ℕ) : ℝ) ^ m))
+    (3 ^ (s * n - a) * (h * (t : ℤ) ^ n))
+  rw [cycProd_mul_three_pow] at this
+  have e : (h : ℝ) * (((3 ^ s * t : ℕ) : ℝ) ^ n - ((3 ^ s * t : ℕ) : ℝ) ^ m) -
+      3 ^ a * (((3 ^ (s * n - a) * (h * (t : ℤ) ^ n) : ℤ)) : ℝ) =
+      -((h : ℝ) * ((3 ^ s * t : ℕ) : ℝ) ^ m) := by
+    push_cast
+    have e3 : (3 : ℝ) ^ a * 3 ^ (s * n - a) = 3 ^ (s * n) := by rw [← pow_add]; congr 1; omega
+    rw [show (3 : ℝ) ^ a * (3 ^ (s * n - a) * (h * t ^ n)) = (3 ^ a * 3 ^ (s * n - a)) * (h * t ^ n)
+      by ring, e3, pow_mul, mul_pow]; ring
+  rwa [e, abs_neg] at this
+
 /-! ## Bases `3ˢt`, `t > 1`: the crux -/
 
 /-- **Assembly of the crux from its inputs (open; believed, 60%).**  For `b = 3ˢt`, `t > 1`:
