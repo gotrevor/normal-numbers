@@ -970,6 +970,7 @@ import NormalNumbers.CantorRepetition
 import NormalNumbers.CantorExactExponentFive
 import NormalNumbers.SchedFamily
 import NormalNumbers.UniformBad
+import NormalNumbers.UniformBadThreshold
 import NormalNumbers.LinearFormsScales
 import NormalNumbers.LinearFormsScalesStretch
 import NormalNumbers.Hertling

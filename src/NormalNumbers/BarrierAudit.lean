@@ -40,6 +40,7 @@ import NormalNumbers.QSpanCriterion
 import NormalNumbers.ComputableReal
 import NormalNumbers.KurtzRandom
 import NormalNumbers.MahlerProductBlock
+import NormalNumbers.UniformBadThreshold
 
 /-!
 # Barrier audit: every open crux names a sibling it must fail on
@@ -70,6 +71,14 @@ namespace NormalNumbers.Barriers
 
 /-- Each frozen headline `sorry` and the barriers its mechanism must fail on. -/
 def cruxLinks : List CruxLink := [
+  ⟨``UniformBadThreshold.twelve_fifths_le_cStar,
+   [``uniformBad_base_two],
+   "a finite exclusion certificate over bases 2..16 must beat the base-2 barrier log₂ 3 and the \
+    two-base barrier log₂ 5 (survivors 1/5, 3/10 are rational, killed only by bases 5, 10)"⟩,
+  ⟨``UniformBadThreshold.cStar_le_four,
+   [``uniformBad_base_two],
+   "the construction must keep the small bases jointly away from the rationals; the base-2 \
+    barrier shows exponent ≤ log₂ 3 is impossible, so any mechanism must use c > log₂ 3 per base"⟩,
   ⟨``LevinSparse.exists_absNormal_base2_fast,
    [``stoneham_two_not_six, ``cantorLiouville_three_dvd],
    "base-2 discrepancy o(N^{-1/2}) does not reach bases 2^a·m: stoneham23 is base-2 normal and \

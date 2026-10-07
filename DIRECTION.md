@@ -1,5 +1,32 @@
 # DIRECTION — normal-numbers 🧭
 
+## Branch directive (2026-10-06, `proof/uniformbad-threshold`): locate the optimal 10.36 exponent `c⋆` 🎯
+
+**This is the directive for branch `proof/uniformbad-threshold`.**  The `proof/cantor-bad-normal` section below
+belongs to that branch (its route is parked at the middle-digit obstruction); do not work it here.
+
+**Objective:** prove the two frozen headlines in `src/NormalNumbers/UniformBadThreshold.lean`:
+`twelve_fifths_le_cStar` (`12/5 ≤ c⋆`, 85%) and `cStar_le_four` (`c⋆ ≤ 4`, 55%), where
+`c⋆ = inf {c : ∃ ξ, ∀ b ≥ 2, ∀ n, ‖bⁿξ‖ > b^{−c}}` (Bugeaud 2012, Problem 10.36; the repo proved `c⋆ ≤ 24`).
+Never restate or weaken them.  The stretch node `CStarLeThree` and any sharper located value are bonuses.
+- **Mandated next move:** probe first (`scripts/uniformbad_cstar_probe.py` is the host's floating-point probe;
+  make an exact-rational version).  (a) For the lower bound, generate an exact finite certificate at `c = 12/5`
+  (a cover of `[0, 1]` by rational intervals, each inside one forbidden window of some `(b, n)`, `b ≤ 16`, with
+  rational `δ_b ≤ b^{−12/5}`) and check it in Lean by `decide`/`norm_num`/`native_decide` (all fine at this tier).
+  (b) For the upper bound, design the construction: small bases `b ≤ B₀` tracked explicitly inside the nested
+  windows of `UniformBad.exists_avoid_of_stagePotential` (or a variant engine), large bases by its stage
+  potential.  State the construction's key lemmas as named nodes with confidences before proving them.
+- **Push the frontier:** once a headline is green, locate `c⋆` more tightly (higher certified lower bound with
+  more bases; `CStarLeThree`).  Record every located bound as a Lean theorem, every failed mechanism as a Maze row.
+- **Forbidden drift:** normality or disjunctiveness of the 10.36 points (impossible, `not_isNormal_of_uniformBad`);
+  re-proving `c⋆ ≤ 24`; literature hunting beyond what a lap needs (the 2026-10-03 freshness audit stands).
+- **Why:** the host probe (`UniformBadThreshold` docstring) puts `c⋆` in about `[2.44, 3]`: bases 2, 3 alone give
+  `log₂ 5` (survivors `1/5`, `3/10`, rational), and bases up to 16 push it to `≈ 2.44`.  Locating an optimal
+  constant in an open Bugeaud problem is new mathematics with a definite, checkable endpoint.
+
+Directive history:
+- 2026-10-06 evening: threshold lane opened (Trevor: "go for it").
+
 ## Branch directive (2026-10-06, `proof/cantor-bad-normal`, cantorbad lap 6): `K ∩ BAD ∩ normal` via the local route 🎯
 
 Branch `proof/cantor-bad-normal`.  Target `CantorBadNormal.exists_mem_cantorSet_bad_isNormal_coprime_three`,
