@@ -1662,6 +1662,86 @@ def ExpOrderPeriods (t : ℕ) : Prop :=
     (3 : ℝ) ^ (θ * ℓ) ≤ e ∧ ∀ e' : ℕ, 0 < e' → e' < e →
       ¬ ((3 ^ ℓ - 1) / Nat.gcd (3 ^ ℓ - 1) (t ^ ℓ)) ∣ (t ^ e' - 1)
 
+/-! ### Cyclic digits via `⌊3·{u}⌋` (for `card_cycProd_ge_le`) -/
+
+/-- Leading ternary digit of the fractional part. -/
+noncomputable def rd (u : ℝ) : ℤ := ⌊3 * Int.fract u⌋
+
+theorem rd_nonneg (u : ℝ) : 0 ≤ rd u :=
+  Int.floor_nonneg.2 (by have := Int.fract_nonneg u; linarith)
+
+theorem rd_lt (u : ℝ) : rd u < 3 := by
+  unfold rd; rw [Int.floor_lt]; push_cast; have := Int.fract_lt_one u; linarith
+
+theorem fract_three_mul (u : ℝ) : Int.fract (3 * u) = 3 * Int.fract u - rd u := by
+  unfold rd
+  have h1 : 3 * u = 3 * Int.fract u + ((3 * ⌊u⌋ : ℤ) : ℝ) := by
+    push_cast; rw [Int.fract]; ring
+  rw [h1, Int.fract_add_intCast, Int.fract]
+
+/-- **A cyclic digit change forces a small factor.** -/
+theorem abs_cos_le_of_rd_ne {u : ℝ} (h : rd u ≠ rd (3 * u)) :
+    |Real.cos (2 * Real.pi * u)| ≤ Real.cos (Real.pi / 9) := by
+  have hw : 2 * Real.pi * u = 2 * Real.pi * Int.fract u + (⌊u⌋ : ℤ) * (2 * Real.pi) := by
+    rw [Int.fract]; ring
+  rw [hw, Real.cos_add_int_mul_two_pi]
+  have hw' := fract_three_mul u
+  have ha1 : ((rd u : ℤ) : ℝ) ≤ 3 * Int.fract u := Int.floor_le _
+  have ha2 : 3 * Int.fract u < (rd u : ℝ) + 1 := Int.lt_floor_add_one _
+  have hb1 : ((rd (3 * u) : ℤ) : ℝ) ≤ 3 * Int.fract (3 * u) := Int.floor_le _
+  have hb2 : 3 * Int.fract (3 * u) < (rd (3 * u) : ℝ) + 1 := Int.lt_floor_add_one _
+  rw [hw'] at hb1 hb2
+  apply abs_cos_le_of_mem
+  have key : ∀ (w : ℝ) (a b : ℤ), a ≠ b → (a : ℝ) ≤ 3 * w → 3 * w < a + 1 →
+      (b : ℝ) ≤ 3 * (3 * w - a) → 3 * (3 * w - a) < b + 1 → 0 ≤ a → a < 3 → 0 ≤ b → b < 3 →
+      (1 / 9 ≤ w ∧ w ≤ 4 / 9) ∨ (5 / 9 ≤ w ∧ w ≤ 8 / 9) := by
+    intro w a b hab ha1 ha2 hb1 hb2 a0 a3 b0 b3
+    have hA : a = 0 ∨ a = 1 ∨ a = 2 := by omega
+    have hB : b = 0 ∨ b = 1 ∨ b = 2 := by omega
+    rcases hA with rfl | rfl | rfl <;> rcases hB with rfl | rfl | rfl <;>
+      simp at hab <;> push_cast at ha1 ha2 hb1 hb2 <;>
+      first | (left; constructor <;> linarith) | (right; constructor <;> linarith)
+  exact key _ _ _ h ha1 ha2 hb1 hb2 (rd_nonneg u) (rd_lt u) (rd_nonneg _) (rd_lt _)
+
+/-- Digit expansion: `{u}·3ⁿ = Σ_{i<n} rd(3ⁱu) 3^{n−1−i} + {3ⁿu}`. -/
+theorem fract_mul_pow_eq (u : ℝ) (n : ℕ) :
+    Int.fract u * 3 ^ n = ∑ i ∈ Finset.range n, (rd (3 ^ i * u) : ℝ) * 3 ^ (n - 1 - i) +
+      Int.fract (3 ^ n * u) := by
+  induction n with
+  | zero => simp
+  | succ n ih =>
+    rw [Finset.sum_range_succ, show (3 : ℝ) ^ (n + 1) * u = 3 * (3 ^ n * u) by ring,
+      fract_three_mul, pow_succ, ← mul_assoc, ih]
+    have : ∀ i ∈ Finset.range n, (rd (3 ^ i * u) : ℝ) * 3 ^ (n + 1 - 1 - i) =
+        (rd (3 ^ i * u) : ℝ) * 3 ^ (n - 1 - i) * 3 := by
+      intro i hi
+      have hi := Finset.mem_range.1 hi
+      rw [mul_assoc, ← pow_succ]; congr 2; omega
+    rw [Finset.sum_congr rfl this, ← Finset.sum_mul]
+    simp
+    ring
+
+/-- **Reconstruction.**  For `y < 3^P − 1`, `y = Σ_{i<P} rd(3ⁱy/(3^P−1)) 3^{P−1−i}`. -/
+theorem eq_sum_rd {P y : ℕ} (hP : 1 ≤ P) (hy : y < 3 ^ P - 1) :
+    (y : ℝ) = ∑ i ∈ Finset.range P, (rd (3 ^ i * ((y : ℝ) / (3 ^ P - 1))) : ℝ) * 3 ^ (P - 1 - i) := by
+  have hq1 : (1 : ℝ) < 3 ^ P := one_lt_pow₀ (by norm_num) (by omega)
+  have hq : (0 : ℝ) < 3 ^ P - 1 := by linarith
+  have hyq : (y : ℝ) < 3 ^ P - 1 := by
+    have : ((y : ℕ) : ℝ) < ((3 ^ P - 1 : ℕ) : ℝ) := by exact_mod_cast hy
+    rwa [Nat.cast_sub (Nat.one_le_pow _ _ (by norm_num)), Nat.cast_pow, Nat.cast_ofNat, Nat.cast_one] at this
+  set u := (y : ℝ) / (3 ^ P - 1)
+  have hu0 : 0 ≤ u := by positivity
+  have hu1 : u < 1 := (div_lt_one hq).2 hyq
+  have hfu : Int.fract u = u := Int.fract_eq_self.2 ⟨hu0, hu1⟩
+  have hfP : Int.fract (3 ^ P * u) = u := by
+    have : 3 ^ P * u = u + ((y : ℤ) : ℝ) := by
+      simp only [u]; field_simp; push_cast; ring
+    rw [this, Int.fract_add_intCast, hfu]
+  have := fract_mul_pow_eq u P
+  rw [hfu, hfP] at this
+  have e : (y : ℝ) = u * 3 ^ P - u := by simp only [u]; field_simp
+  linarith
+
 /-- **The large spectrum of the cyclic Cantor law is polynomial in the period (believed, 90%).**
 For `δ > 0` there is `K` such that at most `3·(2P+1)^K` residues `y mod 3^P − 1` have
 `cycProd P y ≥ δ`.  English proof: at each cyclic ternary digit change of `y mod 3^P − 1` the factor
