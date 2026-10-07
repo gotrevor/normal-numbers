@@ -34,6 +34,7 @@ import NormalNumbers.CantorBadNormal
 import NormalNumbers.CantorExactExponentStretch
 import NormalNumbers.StretchBFR
 import NormalNumbers.CantorExactExponentProfile
+import NormalNumbers.CantorRepetition
 import NormalNumbers.QSpanCriterion
 import NormalNumbers.ComputableReal
 import NormalNumbers.KurtzRandom
@@ -269,6 +270,9 @@ def waivers : List Waiver := [
   ⟨``CantorExactExponentProfile.ae_isNormal_of_profileOK_of_gelfond,
    "believed implication (55%): a Gelfond-strength two-log bound suffices for the run shadows; \
     the elementary t^k ≠ 3^j rate does not"⟩,
+  ⟨``CantorRepetition.liouvilleCantorFullProfile,
+   "open node (2026-10-06): repetition approximants with denominators prime to 3; mechanism in the \
+    module doc, no registered barrier applies"⟩,
   ⟨``FiniteState.isFNormal_delayEnum_of_normal,
    "a leaf: O(1) cost of composing with the delay transducer and its finite-state right inverse"⟩]
 
