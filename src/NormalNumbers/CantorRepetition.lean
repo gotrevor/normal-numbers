@@ -2765,6 +2765,68 @@ theorem strictMono_log_pair {H B m : ℕ} (hH : 1 ≤ H) (hB : 3 ≤ B) :
     calc 3 * (H * (B ^ m * (B ^ (d + 1) - 1))) = H * (B ^ m * (3 * (B ^ (d + 1) - 1))) := by ring
       _ ≤ _ := Nat.mul_le_mul_left _ (Nat.mul_le_mul_left _ h3)
 
+theorem u_le_T {s t e h' m d : ℕ} (ht : 2 ≤ t) (hh : 1 ≤ h') (hd : 1 ≤ d) :
+    s * (m + d) + e ≤ Nat.log 3 (pairNat s t e h' m d) := by
+  refine Nat.le_log_of_pow_le (by norm_num) ?_
+  have h1 := three_pow_le_pow_sub_pow (s := s) (m := m) ht hd
+  calc 3 ^ (s * (m + d) + e) = 3 ^ e * 1 * 3 ^ (s * (m + d)) := by rw [pow_add]; ring
+    _ ≤ 3 ^ e * h' * ((3 ^ s * t) ^ (m + d) - (3 ^ s * t) ^ m) :=
+        Nat.mul_le_mul (Nat.mul_le_mul_left _ hh) h1
+
+/-- **Copy-run bookkeeping.**  Pairs `(m, d)` (`m < N`, `1 ≤ d < N`) with run `k` in
+`copyRuns` have `m < m + d < (k+2)a_k + 1`, and only runs `k ≤ log₄(2sN + e)` occur.  So for any
+nonnegative `g k n m`, the copy-term sum is at most `Σ_{k ≤ L} Σ_{n,m < (k+2)a_k+1} g k n m`. -/
+theorem sum_copyRuns_le {s t e h' : ℕ} (hs : 1 ≤ s) (ht : 2 ≤ t) (hh : 1 ≤ h') (N M : ℕ)
+    (g : ℕ → ℕ → ℕ → ℝ) (hg : ∀ k n m, 0 ≤ g k n m) :
+    ∑ m ∈ Finset.range N, ∑ d ∈ Finset.Ico 1 N, ∑ k ∈ copyRuns s t e h' m d M, g k (m + d) m ≤
+      ∑ k ∈ Finset.range (Nat.log 4 (s * (2 * N) + e) + 1),
+        ∑ n ∈ Finset.range ((k + 2) * runStart k + 1),
+          ∑ m ∈ Finset.range ((k + 2) * runStart k + 1), g k n m := by
+  set L := Nat.log 4 (s * (2 * N) + e)
+  set S : Finset (ℕ × ℕ × ℕ) := ((Finset.range N ×ˢ Finset.Ico 1 N).sigma
+    (fun p => copyRuns s t e h' p.1 p.2 M)).map ⟨fun x => (x.2, x.1.1 + x.1.2, x.1.1), by
+      rintro ⟨⟨a, b⟩, c⟩ ⟨⟨a', b'⟩, c'⟩ h
+      simp only [Prod.mk.injEq] at h
+      obtain ⟨h1, h2, h3⟩ := h
+      subst h1 h3
+      have : b = b' := by omega
+      subst this; rfl⟩
+  have lhs : ∑ m ∈ Finset.range N, ∑ d ∈ Finset.Ico 1 N, ∑ k ∈ copyRuns s t e h' m d M,
+      g k (m + d) m = ∑ x ∈ S, g x.1 x.2.1 x.2.2 := by
+    rw [Finset.sum_map, Finset.sum_sigma, Finset.sum_product]; rfl
+  have rhs : ∑ k ∈ Finset.range (L + 1), ∑ n ∈ Finset.range ((k + 2) * runStart k + 1),
+      ∑ m ∈ Finset.range ((k + 2) * runStart k + 1), g k n m =
+      ∑ x ∈ (Finset.range (L + 1)).sigma (fun k => Finset.range ((k + 2) * runStart k + 1) ×ˢ
+        Finset.range ((k + 2) * runStart k + 1)), g x.1 x.2.1 x.2.2 := by
+    rw [Finset.sum_sigma]
+    refine Finset.sum_congr rfl fun k _ => ?_
+    rw [Finset.sum_product]
+  rw [lhs, rhs]
+  have hsub : S ⊆ ((Finset.range (L + 1)).sigma (fun k => Finset.range ((k + 2) * runStart k + 1) ×ˢ
+        Finset.range ((k + 2) * runStart k + 1))).map (Equiv.sigmaEquivProd ℕ (ℕ × ℕ)).toEmbedding := by
+    intro x hx
+    simp only [S, Finset.mem_map, Finset.mem_sigma, Finset.mem_product, Finset.mem_range,
+      Finset.mem_Ico] at hx
+    obtain ⟨⟨⟨m, d⟩, k⟩, ⟨⟨hm, hd1, hdN⟩, hk⟩, rfl⟩ := hx
+    dsimp only at hm hd1 hdN hk ⊢
+    simp only [copyRuns, Finset.mem_filter, Finset.mem_range] at hk
+    obtain ⟨-, ha, hT⟩ := hk
+    have huT := u_le_T (s := s) (e := e) (m := m) ht hh hd1
+    have hsn : m + d ≤ s * (m + d) := Nat.le_mul_of_pos_left _ hs
+    have h1 : runStart k ≤ s * (2 * N) + e := by
+      have : s * (m + d) ≤ s * (2 * N) := Nat.mul_le_mul_left _ (by omega)
+      omega
+    have hkL := Nat.le_log_of_pow_le (by norm_num) ((four_pow_le_runStart k).trans h1)
+    simp only [Finset.mem_map, Finset.mem_sigma, Finset.mem_product, Finset.mem_range,
+      Equiv.toEmbedding_apply]
+    have hkL' : k < L + 1 := by simp only [L]; omega
+    have hn : m + d < (k + 2) * runStart k + 1 := by omega
+    have hm' : m < (k + 2) * runStart k + 1 := by omega
+    exact ⟨⟨k, (m + d, m)⟩, ⟨hkL', hn, hm'⟩, rfl⟩
+  refine (Finset.sum_le_sum_of_subset_of_nonneg hsub fun x _ _ => hg _ _ _).trans (le_of_eq ?_)
+  rw [Finset.sum_map]
+  rfl
+
 /-- **Pair sums with a power saving.**  For each `h ≠ 0` and each `N ≥ 1` some choice of options
 makes the pair sum `≤ C N^{2−δ}`.  This is the per-`N` content of the assembly; summability along
 `sched` is then automatic (`repPairArith_of_power`). -/
