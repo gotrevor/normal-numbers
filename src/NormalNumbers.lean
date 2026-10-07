@@ -971,6 +971,7 @@ import NormalNumbers.CantorExactExponentFive
 import NormalNumbers.SchedFamily
 import NormalNumbers.UniformBad
 import NormalNumbers.UniformBadThreshold
+import NormalNumbers.UniformBadPowerEngine
 import NormalNumbers.LinearFormsScales
 import NormalNumbers.LinearFormsScalesStretch
 import NormalNumbers.Hertling
