@@ -19,3 +19,11 @@ wide build hits the box's spurious "Too many open files").
 1. Decisive `c = 4` counting probe (exact joint `{2,3}` system, threshold pruning, weight spread,
    worst weight-aware `b ≥ 5` charge).  Record verdict as a node or Maze row.
 2. Formalize `cStar_le_five` (plan in `PENDING_WORK.md` lap 7 entry and the `UniformBadFive` docstring).
+
+## Checkpoint
+* HEAD `c504ec79` (review commit) + this note.  Tree clean apart from the old untracked probes
+  (`scripts/cstar_models/__pycache__/`, `kreg_meet.js`, `mureg.js`, `psi.js`), left as found.
+* Scratch probes for `c = 5` are committed as `scripts/cstar_models/lvl5c.js` (true pattern) and
+  `pess.js` (worst-case counts per window).  Run: `node scripts/cstar_models/pess.js 5 5`.
+* No proof work in flight.  `UniformBadFive.cStar_le_five` is a single disclosed `sorry` (waived in
+  BarrierAudit); the formalization starts from `UniformBadCount`'s `bad6` pipeline.
