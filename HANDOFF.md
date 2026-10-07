@@ -1,3 +1,9 @@
+# STUCK claim (2026-10-07, c⋆ lap 13, fresh review lap after the operator rerun): read HANDOFF-2026-10-07-cstar-lap13.md
+- **Blocked:** run gate `sorry-free:src/NormalNumbers/UniformBadNineHalves.lean` (frozen `cStar_le_nine_halves`).
+- **New this lap:** `not_perStageCert` (per-stage engine has no certificate at 9/2 even with bases 2, 3 only),
+  three local engines stall at 4.55–4.6, box abstractions collapse; lower bound `93/37`; `CStarLeThirteenFifths`.
+- **Ask:** a mechanism for base 3 at 9/2 (non-local), or accept the stop.
+
 # STUCK claim, strike 1 (2026-10-07, c⋆ lap 11): read HANDOFF-2026-10-07-cstar-lap11.md
 Re-confirmed 2026-10-07 (fresh lap 12): axioms re-checked (cStar_le_124_25 clean modulo native_decide; not_nineHalvesBalance clean); strike 2.
 - **Blocked:** run gate `sorry-free:src/NormalNumbers/UniformBadNineHalves.lean` (frozen `cStar_le_nine_halves`).

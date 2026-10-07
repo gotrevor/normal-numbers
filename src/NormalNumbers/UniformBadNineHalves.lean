@@ -25,7 +25,9 @@ Frozen 2026-10-07 by the operator (Ren) after `cStar_le_five` landed.
 
 namespace NormalNumbers.UniformBadThreshold
 
-/-- **Headline (frozen 2026-10-07): `c⋆ ≤ 9/2`.**  Believed 40%.
+/-- **Headline (frozen 2026-10-07): `c⋆ ≤ 9/2`.**  Believed true (95%: the finite systems put `c⋆`
+near `5/2`, `CStarLeThirteenFifths`); no proof mechanism known (c⋆ lap 13: every local engine
+tried stalls near `c ≈ 4.55`, `not_perStageCert`, Maze row "local per-window engines at c = 9/2").
 
 English proof sketch.  Run the two-rate counting engine of `cStar_le_five` at exponent `9/2` with
 base `3` made exact as well as base `2`: the joint `{2, 3}` survivor tree grows at a rate that the
@@ -224,5 +226,122 @@ theorem not_nineHalvesBalance {gA gB : ℝ} (hA : 1 ≤ gA) (hB : 1 ≤ gB) :
     have : y * (2 - gB) = 2 * y - 1 := by rw [mul_sub, ey]; ring
     rw [this] at hk
     nlinarith
+
+
+/-! ## The per-stage engine at `9/2` (c⋆ lap 13)
+
+The two-rate engine fixes one lag and four cells for every base-`3` window.  The **per-stage**
+engine chooses, for each base-`3` stage `n`, the ancestor level `anc3 n` (the largest dyadic cell
+narrower than the gap `3^{−n}(1 − 2/140)` between windows of radius `1/(140·3ⁿ)`, so it meets at
+most one window) and the kill depth `depth3 n ∈ [1, 20]` minimizing `cells3 n m · (4/7)^m`, where
+`cells3 n m = ⌊2^{anc3 n + m + 1}/(140·3ⁿ)⌋ + 2` bounds the cells of level `anc3 n + m` that the
+window touches.  Its Rosenfeld balance at level `k` (`bal`) charges each base-`2` pattern length
+`ℓ ∈ {5, 7, 8, 10, 12, 13}` once against level `k + 1 − ℓ` and each base-`3` window against its
+ancestor; a growth certificate is a rate sequence `g` with `g k ≤ bal g k`.
+
+**Even with only bases `2` and `3`, and the first `40` levels growing at the full rate `2`, no
+certificate reaches level `182`** (`not_perStageCert`): the greedy recursion `Q` (rates rounded
+up, so it dominates every certificate) falls to `Q 181 ≈ 0.705`.  Numerically the same engine with
+all bases `b < 300` survives at `c = 4.6` (min rate `1.59`) and dies at `4.55`; the Lebesgue- and
+Parry-measure precharge variants stall at the same place (`scripts/cstar_models/eng2.py`,
+`leb2.py`, `hyb.py`, `nupre.py`).  Base `3` needs its charge cut by about `30%`
+(`eng5.py`), i.e. information about where its windows fall relative to the alive cells, which is
+the exact joint `{2, 3}` core (`SmallBaseTreeCore`).
+-/
+
+namespace PerStage
+
+/-- Base-`2` pattern lengths at `c = 9/2` (`2^{−9/2} = 0.0000101101010…₂`, cut at `13`). -/
+def pat92 : List ℕ := [5, 7, 8, 10, 12, 13]
+
+/-- The ancestor level of base-`3` stage `n`: least `a` with `138 · 2^a > 140 · 3ⁿ`. -/
+def anc3 (n : ℕ) : ℕ := Nat.log 2 (140 * 3 ^ n / 138) + 1
+
+/-- Cells of level `anc3 n + m` touched by the closed window of width `2/(140·3ⁿ)`. -/
+def cells3 (n m : ℕ) : ℕ := 2 ^ (anc3 n + m + 1) / (140 * 3 ^ n) + 2
+
+/-- The kill depth: the `m ∈ [1, 20]` minimizing `cells3 n m · (4/7)^m` (first minimizer). -/
+def depth3 (n : ℕ) : ℕ :=
+  ((List.range 20).map (· + 1)).foldl
+    (fun best m => if ((cells3 n m * 4 ^ m : ℕ) : ℚ) / 7 ^ m <
+        ((cells3 n best * 4 ^ best : ℕ) : ℚ) / 7 ^ best then m else best) 1
+
+/-- The kill level of base-`3` stage `n`. -/
+def kill3 (n : ℕ) : ℕ := anc3 n + depth3 n
+
+/-- The per-stage balance at level `k`: the largest rate `g k` the engine can certify there. -/
+def bal {F : Type*} [Field F] (g : ℕ → F) (k : ℕ) : F :=
+  2 - (∑ l ∈ pat92.toFinset.filter (· ≤ k + 1), 1 / ∏ j ∈ Finset.Ico (k + 1 - l) k, g j)
+    - ∑ n ∈ (Finset.range 120).filter (fun n => kill3 n = k + 1),
+        (cells3 n (depth3 n) : F) / ∏ j ∈ Finset.Ico (anc3 n) k, g j
+
+/-- A growth certificate of the per-stage engine on the levels `[40, 182)`. -/
+def Cert (g : ℕ → ℝ) : Prop :=
+  (∀ k, 1 ≤ g k ∧ g k ≤ 2) ∧ ∀ k, 40 ≤ k → k < 182 → g k ≤ bal g k
+
+/-- Round up to a multiple of `2^{−40}`. -/
+def roundUp (x : ℚ) : ℚ := ((x.num * 2 ^ 40 + x.den - 1) / x.den : ℤ) / 2 ^ 40
+
+/-- The greedy recursion, rates rounded up: `2` below level `40`, then `bal` rounded up. -/
+def Qarr : Array ℚ :=
+  (List.range 182).foldl
+    (fun acc k => acc.push (if k < 40 then 2 else roundUp (bal (fun j => acc.getD j 2) k))) #[]
+
+def Q (k : ℕ) : ℚ := Qarr.getD k 2
+
+theorem Q_low : ∀ k ∈ List.range 40, Q k = 2 := by native_decide
+
+theorem bal_Q_le : ∀ k ∈ List.range' 40 142, bal Q k ≤ Q k := by native_decide
+
+theorem Q_dies : Q 181 < 1 := by native_decide
+
+theorem cast_bal (q : ℕ → ℚ) (k : ℕ) : ((bal q k : ℚ) : ℝ) = bal (fun j => (q j : ℝ)) k := by
+  simp [bal]
+
+theorem bal_mono {g h : ℕ → ℝ} {k : ℕ} (hpos : ∀ j < k, 0 < g j) (hle : ∀ j < k, g j ≤ h j) :
+    bal g k ≤ bal h k := by
+  unfold bal
+  have hP : ∀ i, (0 : ℝ) < ∏ j ∈ Finset.Ico i k, g j := fun i =>
+    Finset.prod_pos fun j hj => hpos j (Finset.mem_Ico.1 hj).2
+  have hPle : ∀ i, ∏ j ∈ Finset.Ico i k, g j ≤ ∏ j ∈ Finset.Ico i k, h j := fun i =>
+    Finset.prod_le_prod (fun j hj => (hpos j (Finset.mem_Ico.1 hj).2).le)
+      fun j hj => hle j (Finset.mem_Ico.1 hj).2
+  have h1 : ∑ l ∈ pat92.toFinset.filter (· ≤ k + 1), 1 / ∏ j ∈ Finset.Ico (k + 1 - l) k, h j ≤
+      ∑ l ∈ pat92.toFinset.filter (· ≤ k + 1), 1 / ∏ j ∈ Finset.Ico (k + 1 - l) k, g j :=
+    Finset.sum_le_sum fun l _ => one_div_le_one_div_of_le (hP _) (hPle _)
+  have h2 : ∑ n ∈ (Finset.range 120).filter (fun n => kill3 n = k + 1),
+        (cells3 n (depth3 n) : ℝ) / ∏ j ∈ Finset.Ico (anc3 n) k, h j ≤
+      ∑ n ∈ (Finset.range 120).filter (fun n => kill3 n = k + 1),
+        (cells3 n (depth3 n) : ℝ) / ∏ j ∈ Finset.Ico (anc3 n) k, g j :=
+    Finset.sum_le_sum fun n _ => div_le_div_of_nonneg_left (by positivity) (hP _) (hPle _)
+  linarith
+
+end PerStage
+
+open PerStage in
+/-- **The per-stage counting engine has no certificate at `9/2`**, even charging only bases `2`
+and `3` and letting the first `40` levels grow at rate `2`: every certificate `g` stays below the
+greedy recursion `Q` (`bal_mono`), which drops below `1` at level `181`. -/
+@[blueprint (title := "The per-stage counting engine has no certificate at c = 9/2, even with only bases 2 and 3")]
+theorem not_perStageCert : ¬ ∃ g, Cert g := by
+  rintro ⟨g, hb, hbal⟩
+  have key : ∀ k, k < 182 → g k ≤ Q k := by
+    intro k
+    induction k using Nat.strong_induction_on with
+    | _ k ih =>
+      intro hk
+      by_cases h40 : k < 40
+      · rw [Q_low k (List.mem_range.2 h40)]
+        push_cast
+        exact (hb k).2
+      · have hmono : bal g k ≤ bal (fun j => (Q j : ℝ)) k :=
+          bal_mono (fun j _ => by linarith [(hb j).1]) fun j hj => ih j hj (by omega)
+        have hc := bal_Q_le k (List.mem_range'_1.2 ⟨by omega, by omega⟩)
+        have hc' : bal (fun j => (Q j : ℝ)) k ≤ (Q k : ℝ) := by
+          rw [← cast_bal]; exact_mod_cast hc
+        linarith [hbal k (by omega) hk]
+  have h1 := key 181 (by norm_num)
+  have h2 : (Q 181 : ℝ) < 1 := by exact_mod_cast Q_dies
+  linarith [(hb 181).1]
 
 end NormalNumbers.UniformBadThreshold

@@ -1,23 +1,29 @@
 # STATUS — normal-numbers 📊
 
-## Bugeaud 10.36 optimal exponent c⋆ (branch `proof/uniformbad-threshold`) — review lap 7, 7 October 2026
+## Bugeaud 10.36 optimal exponent c⋆ (branch `proof/uniformbad-threshold`) — review lap 13, 7 October 2026
 
-**Located: `12/5 ≤ c⋆ ≤ 6`; `c⋆ ≤ 5` frozen and probe-closed** · **Build**: 🟢 green (10804 jobs) · **Updated**: c⋆ lap 7 · 2026-10-07 · see `git log`
+**Located: `93/37 ≤ c⋆ ≤ 124/25`; gate `c⋆ ≤ 9/2` walled for local engines** · **Build**: 🟢 green (10809 jobs) · **Updated**: c⋆ lap 13 · 2026-10-07 · see `git log`
 
 **Where it stands.**  `c⋆` is the optimal exponent in Bugeaud's Problem 10.36 (`cStar`,
-`UniformBadThreshold.lean`).  The lower headline `twelve_fifths_le_cStar` is proved (25-window exact
-cover).  The upper headline `cStar_le_four` is open and both known mechanisms are now walls: the
-Newhouse route needs `ThickCore`, which `Newhouse.windows_merge_forced` (proved this lap) shows is
-exactly locality of the canonical merge closure of windows of all bases `≥ 3` (cross-base clusters at
-every depth); the counting route needs a weight-regular exact `{2,3}` core with growth `≥ 1.78`.
-Banked: `cStar_le_five` (`UniformBadFive.lean`, proved 2026-10-07).  Next: lowest exponent the engine reaches; higher lower bound.
+`UniformBadThreshold.lean`).  Proved: `93/37 ≤ c⋆` (`ninety_three_thirty_sevenths_le_cStar`, 59-window
+cover) and `c⋆ ≤ 124/25` (`cStar_le_124_25`, two-rate counting).  The run gate `cStar_le_nine_halves`
+is almost certainly true (finite systems put `c⋆` near `5/2`, node `CStarLeThirteenFifths`), but no
+proof mechanism is known: every local per-window engine stalls near `c ≈ 4.55`, proved for the
+per-stage engine even with only bases 2 and 3 (`not_perStageCert`).  Closing the gap needs the exact
+joint `{2,3}` core, i.e. where base-3 windows fall in the alive set (digits of powers of 3 in base 2).
 
 **What's happened (newest first).**
+* 2026-10-07 lap 13 (review): three new engines probed at 9/2 (per-stage depth, Lebesgue precharge,
+  Parry-measure precharge) all stall at 4.55–4.6; `not_perStageCert` proved; box abstractions of the
+  exact core shown to collapse (steering); lower bound raised to `93/37`; finite systems with `b ≤ 3000`
+  stall at `2.514`, survivors near binary-periodic rationals → `CStarLeThirteenFifths` (60%).
+* 2026-10-07 laps 10–12: `cStar_le_five`, then `cStar_le_124_25` (engine floor) and
+  `not_nineHalvesBalance`; stuck strikes 1–2 on the 9/2 gate.
+* 2026-10-07 lap 9: `five_halves_le_cStar` (29-window cover).
 * 2026-10-07 lap 7 (review): forced merging proved (`merge_forced`, `windows_merge_forced`); Maze row
-  closes adaptive thick-core constructions; probe shows `c⋆ ≤ 5` closes in the counting engine with two
-  growth rates (base-3 kill levels) and per-window resolution; `cStar_le_five` frozen; directive revised.
-* 2026-10-07 laps 5–6: Newhouse route — `gap_lemma`, `e15_facts` (E15 thickness 3), `fset_facts`,
-  Cantor schemes are thick, `cStar_le_four_of_newhouse` (wiring) all proved; crux `thickCore_four`.
+  closes adaptive thick-core constructions.
+* 2026-10-07 laps 5–6: Newhouse route — `gap_lemma`, `e15_facts`, `fset_facts`, Cantor schemes thick,
+  `cStar_le_four_of_newhouse` (wiring); crux `thickCore_four`.
 * 2026-10-07 lap 4: exact `{2,3}` containment-kill core lemma; abstraction ratio 1.669; counted `b ≥ 5`
   obstruction (Maze row "counted medium bases").
 * 2026-10-07 lap 3 (review): counting engine `Count.growth` + `cStar_le_six`.
@@ -26,25 +32,28 @@ Banked: `cStar_le_five` (`UniformBadFive.lean`, proved 2026-10-07).  Next: lowes
 * 2026-10-07 lap 1: `twelve_fifths_le_cStar` proved; `cStar_le_twelve` via the power engine.
 
 **Outstanding.**
-*Short-term:* decisive `c = 4` counting probe (exact joint `{2,3}` system, threshold pruning, weight-aware
-`b ≥ 5` charge); formalize `cStar_le_five`.
-*Long-term:* `cStar_le_four` (needs a new mechanism or a regular joint core), then `CStarLeThree`; a
-higher certified lower bound (bases beyond 10; host probe puts the finite-system threshold near 2.44).
-*To completion:* `cStar_le_four` axiom-clean.
+*Short-term:* the 9/2 gate needs a new idea (a base-3 charge at most 0.7 of the per-stage engine's, or a
+regular exact `{2,3}` core); operator decision on stopping (stuck evidence in `HANDOFF-2026-10-07-cstar-lap13.md`).
+*Long-term:* a formal per-stage engine would bank about `c⋆ ≤ 4.6–4.7` (numerics; the two-rate formal
+engine is at its floor `124/25`); `cStar_le_four`, `CStarLeThree`, `CStarLeThirteenFifths`.
+*To completion:* `cStar_le_nine_halves` (gate), then `cStar_le_four`.
 
 **Axiom ledger (this branch).**
 | headline | claim | `#print axioms` | status |
 |---|---|---|---|
-| `twelve_fifths_le_cStar` | `12/5 ≤ c⋆` (uncond.) | propext, choice, Quot.sound | 🟢 proved |
-| `cStar_le_six` (bank) | `c⋆ ≤ 6` (uncond.) | propext, choice, Quot.sound | 🟢 proved |
-| `cStar_le_five` (bank) | `c⋆ ≤ 5` (uncond.) | std + 2 `native_decide` | ✅ proved 2026-10-07 (two-rate counting, `UniformBadFive`) |
-| `cStar_le_four_of_newhouse` | `ThickCore 4 τ → c⋆ ≤ 4` | propext, choice, Quot.sound | 🟢 proved wiring |
-| `cStar_le_four` | `c⋆ ≤ 4` (uncond.) | + `sorryAx` | open crux; both mechanisms walled |
+| `ninety_three_thirty_sevenths_le_cStar` | `93/37 ≤ c⋆` (uncond.) | propext, choice, Quot.sound | 🟢 proved lap 13 |
+| `five_halves_le_cStar`, `twelve_fifths_le_cStar` | `5/2`, `12/5 ≤ c⋆` | propext, choice, Quot.sound | 🟢 proved |
+| `cStar_le_124_25` (bank) | `c⋆ ≤ 124/25` (uncond.) | std + 3 `native_decide` | 🟢 proved (finite tables) |
+| `cStar_le_five`, `cStar_le_six` (banks) | `c⋆ ≤ 5`, `≤ 6` | std (+ `native_decide`) | 🟢 proved |
+| `not_perStageCert`, `not_nineHalvesBalance` | engine obstructions at 9/2 | std (+ 3 `native_decide`) | 🟢 proved |
+| `cStar_le_nine_halves` (gate) | `c⋆ ≤ 9/2` (uncond.) | + `sorryAx` | open; local engines walled |
+| `cStar_le_four` | `c⋆ ≤ 4` (uncond.) | + `sorryAx` | open; both mechanisms walled |
 
-Math-axiom count for the proved headlines: 0 (trust base only).
+Math-axiom count for the proved headlines: 0 (trust base + `native_decide` artifacts only).
 
-Pointers: `DIRECTION.md` (branch CURRENT DIRECTIVE, review lap 7) · newest `HANDOFF-2026-10-07-cstar-lap7.md` ·
-`PENDING_WORK.md` top section · `src/NormalNumbers/Maze.lean` (rows "counted medium bases", "adaptive split cores").
+Pointers: `DIRECTION.md` (branch CURRENT DIRECTIVE, review lap 13) · newest `HANDOFF-2026-10-07-cstar-lap13.md` ·
+`PENDING_WORK.md` top section · `src/NormalNumbers/Maze.lean` (rows "local per-window engines at c = 9/2",
+"two-rate counting engine at c = 9/2", "counted medium bases", "adaptive split cores").
 ## Cantor repetition update, 7 October 2026 (branch `proof/cantor-repetition`, review lap 7)
 
 **Is the profile cut forced?** · **Build**: 🟢 green (10797 jobs, full default build) · lap 7

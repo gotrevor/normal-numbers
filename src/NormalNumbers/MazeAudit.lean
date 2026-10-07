@@ -62,6 +62,10 @@ def mazeLinks : List Link := [
    [``UniformBadThreshold.not_nineHalvesBalance,
     ``UniformBadThreshold.cStar_le_124_25],
    [``UniformBadThreshold.SmallBaseTreeCore]⟩,
+  ⟨"local per-window engines at c = 9/2",
+   [``UniformBadThreshold.not_perStageCert,
+    ``UniformBadThreshold.PerStage.Cert],
+   [``UniformBadThreshold.SmallBaseTreeCore]⟩,
   ⟨"counted medium bases over an exact {2,3} core at c = 4",
    [``UniformBadThreshold.Count.jointCoreSubEigen_four,
     ``UniformBadThreshold.Count.exists_good_of_subEigen],
@@ -317,7 +321,7 @@ def mazeLegacy : List String := [
   "Diophantine good-denominator detour for the tail cell",
   "route B's unweighted cover of the state-dependent target"]
 
-/-- info: maze audit: 179 rows, 72 cite declarations, 107 legacy (prose only) -/
+/-- info: maze audit: 180 rows, 73 cite declarations, 107 legacy (prose only) -/
 #guard_msgs in
 #maze_audit mazeRows, mazeLinks, mazeLegacy
 

@@ -1,4 +1,27 @@
 ## UniformBad threshold c⋆ (branch proof/uniformbad-threshold, 2026-10-07)
+* **2026-10-07 lap 13 (review, operator gate 2 rerun).**  Gate `cStar_le_nine_halves`: **no mechanism;
+  local engines walled, proved for the per-stage engine.**  New probes at 9/2
+  (`scripts/cstar_models/`): (1) per-stage Rosenfeld (`eng2.py`: ancestor = largest dyadic cell below the
+  window gap, kill depth per stage) survives at 4.6 (min rate 1.59), dies at 4.55, and dies at 4.5 even
+  with only bases 2, 3; `not_perStageCert` PROVED (std + native_decide): with bases 2, 3 only and the first
+  40 levels at rate 2, no certificate reaches level 182.  (2) Lebesgue precharge (`leb2.py`, `hyb.py`):
+  window share charged when cells are large, u-weighted counts; the partially covered cells inflate the
+  base-2 charges (cnt/Phi ≈ 1.25) → same 4.55–4.6.  (3) Parry-measure precharge (`meas2.py`, `nupre.py`;
+  base 2 free): forced pattern states make single cells heavy, the excess feeds back through the lag →
+  stable at 5, unstable at 4.5.  (4) box abstractions of the exact {2,3} position with touching kills
+  (`abs3.js`) collapse to value 0: a bin error triples at each ternary stage and the worst case steers
+  every descendant into a window (heuristic, not in Lean).  Rescue threshold: base-3 charges ×0.7 make the
+  full per-stage engine live at 4.5 (`eng5.py`).  Most favourable alignment survives at 4.4 (`eng6.py`),
+  so no closed-form two-rate obstruction exists; the death comes from the alignment sequence.
+  **Lower bound:** `ninety_three_thirty_sevenths_le_cStar` PROVED (59 windows, bases 2,3,5,10,17, n ≤ 18;
+  the old greedy failed at 2.51 only because n ≤ 14).  Finite systems (b ≤ 3000, radius ≥ 1e-13) are
+  nonempty at 2.514; survivors near binary-periodic rationals (`11443/65535` at 2.52–2.55); count grows
+  with resolution at 2.55 → node `CStarLeThirteenFifths` (60%).  So 9/2 is far above the truth: a
+  technique wall.  **Next attack (if reopened):** the exact {2,3} core needs non-local input (where
+  the points k/3ⁿ fall among SFT-alive binary cells: cell index j ≡ −r·3^{−n} mod 2^L for relative
+  position r/3ⁿ), i.e. digits of 3-adic units in base 2 — the cantorbad middle-digit wall in another
+  guise.  A cheaper bank: formal per-stage engine at ≈ 4.6–4.7 (multi-rate products over the
+  alignment classes; the two-rate formal engine is at its floor 124/25, `plan_below5.py`).
 * **2026-10-07 lap 11 (operator gate 2).**  Gate `cStar_le_nine_halves` (9/2): **wall for the counting
   engine, recorded as a theorem.**  Probes: exact joint {2,3} tree at 9/2 (`ex23.js`, containment kills)
   grows **1.879/level** on average but has dead ends (30/9178 at 8-level lookahead, 1% quantile 0.19 of

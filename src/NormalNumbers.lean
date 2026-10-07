@@ -982,6 +982,7 @@ import NormalNumbers.UniformBadNewhouse
 import NormalNumbers.UniformBadFive
 import NormalNumbers.UniformBadBelowFive
 import NormalNumbers.UniformBadNineHalves
+import NormalNumbers.UniformBadLowerBound
 import NormalNumbers.LinearFormsScales
 import NormalNumbers.LinearFormsScalesStretch
 import NormalNumbers.Hertling

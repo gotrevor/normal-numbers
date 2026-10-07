@@ -84,7 +84,24 @@ Never restate or weaken them.  The stretch node `CStarLeThree` and any sharper l
   bank the lowest exponent the current engine certifies (any c < 5) as its own theorem, record the wall in the Maze,
   and stop.  A higher certified lower bound (above 5/2) is a parallel bonus.
 
+- **CURRENT DIRECTIVE for this branch (review lap 13, 2026-10-07) — supersedes lap 7's orders; operator gate 2 still binds.**
+  *Objective* unchanged: the frozen gate `cStar_le_nine_halves`.
+  *Finding:* the statement is almost surely true (finite systems put `c⋆` near `5/2`,
+  `CStarLeThirteenFifths`), but every local per-window engine stalls near `c ≈ 4.55`: proved for the
+  per-stage engine even with only bases 2, 3 (`not_perStageCert`); Lebesgue and Parry-measure precharges
+  and box abstractions fail numerically (Maze row "local per-window engines at c = 9/2").  The base-3
+  charge must fall by about 30%, which needs where base-3 windows sit in the alive set (non-local).
+  *Mandated next move:* operator gate 2's fallback is complete (`cStar_le_124_25` banked, walls in the
+  Maze, lower bound now `93/37`), so the run calls `box stuck` with this evidence.  If reopened: either
+  (a) bank a formal per-stage engine (≈ `4.6–4.7`, multi-rate products over alignment classes), or
+  (b) a non-local input for the exact `{2,3}` core (where `k/3ⁿ` falls among pattern-alive binary cells).
+  *Forbidden drift:* retuning local engines at 9/2 (two-rate, per-stage, precharge) without a 30% cut
+  in the base-3 charge; touching-kill box abstractions of the joint position; re-probing the two-rate engine.
+  *Why:* three independent local mechanisms meet at the same threshold, so the loss is the worst-case
+  placement of base-3 windows, not the bookkeeping.
+
 Directive history:
+- 2026-10-07 (c⋆ lap 13, review): local engines walled at 9/2 (`not_perStageCert`); lower bound 93/37; stuck evidence.
 - 2026-10-07 07:05 (operator): gate moved to `cStar_le_nine_halves` after `cStar_le_five`.
 - 2026-10-07 06:50 (operator): rescoped the run gate to `cStar_le_five` after the c⋆ ≤ 4 wall.
 - 2026-10-07 (c⋆ lap 7, review): Newhouse thick core closed by forced merging; probe c=4 counting core, bank c⋆ ≤ 5.
