@@ -535,6 +535,7 @@ import NormalNumbers.Erdos257Squarefree
 import NormalNumbers.EDensityAudit
 import NormalNumbers.LiteratureCampbell
 import NormalNumbers.LiteratureDigitsOfPowers
+import NormalNumbers.ErdosTriples
 import NormalNumbers.CampbellAnswer
 import NormalNumbers.CPrimeSiteFactorization
 import NormalNumbers.MazeAudit
@@ -966,6 +967,7 @@ import NormalNumbers.CantorExactExponent
 import NormalNumbers.CantorExactExponentStretch
 import NormalNumbers.StretchBFR
 import NormalNumbers.CantorExactExponentProfile
+import NormalNumbers.SparseIdentity
 import NormalNumbers.CantorRepetition
 import NormalNumbers.CantorExactExponentFive
 import NormalNumbers.SchedFamily

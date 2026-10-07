@@ -159,6 +159,38 @@
   h(Q)=μ(Q)/|Q|^s (Perron-style).  The carried factor is then exactly β^{s−α}·(children met), with
   no C; the cost moves to new charges/h(child) and needs an upper bound h ≤ H.  Next: model the
   h-normalised engine on the depth-20 survivor tree (track min h along the greedy path).
+## Repetition review lap 7 (2026-10-07) — ROUTE CHANGE: sparse pairs + Matveev replace the walls
+* Insight: `RepPairArith` needs only summability along `sched` (a polylog saving suffices), not the
+  power saving of `TOrbitCyclicDecay`.  Two sparse points `y, tᵟy` of one orbit mod `3^A − 1`,
+  with `tᵟ + 2 ≤ 3^{⌊A/(2K+1)⌋}`, give an exact identity `tᵟU = V` between `K`-sparse integers
+  (`SparseIdentity.cyclic_pair_identity`, PROVED: rotate an empty arc to the wrap point).  Matveev
+  (3 logs of rationals) bounds `δ ≤ exp(O(K log K))` (`sparseIdentityBound_of_matveev`).  So sparse
+  points of an orbit form clusters of diameter `≤ L_K`, separated by `> D ≍ A/(K log t)`:
+  `O(K k L_K)` sparse points per run orbit, independent of `A = a_k`.  With `K = ⌊√k⌋ + 1` the
+  per-run saving is `≈ cos(π/9)^{√k}`, summable with any polynomial weight.  `BadGcdSparseH` is
+  not needed (only fully degenerate rows escape; `card_degRows_le`, LTE).
+* Probe (`scratchpad cluster_probe.py`, recorded in the `sparseIdentityBound_of_matveev`
+  docstring): ≤2 changes, `t = 2`: occurring `δ = {1,2,3}` at `A = 30` and `40`; `t = 5`: `{1}`.
+* Leaves now open (DIRECTION order):
+  1. `SparseIdentity.sparseIdentityBound_of_matveev` (Diophantine; plan in docstring: strong
+     induction on term count; top-cut gap bound from Matveev; spread recursion).  First state the
+     gap-step lemma: for a cut of a non-splitting identity, `gap ≤ c₀ + c₁(1 + log B)(s + 3)`.
+  2. `cycSparse_of_cycProd_ge` (from `card_changes_lt`, `eq_sum_rd`; need `dg P y P = dg P y 0`),
+     `card_cluster_le`, `runOrbitDecay_of_sparse`.
+  3. `card_degRows_le` (LTE: `padicValNat.pow_sub_pow` / `Int.two_pow_sub_pow`), `copyRun_psi`.
+  4. `repPairArith_of_runDecay`: ψ-versions of `power_of_eventually`, `repPairPower_of_pos`,
+     `repPairPos_eventually` + `Copy(N) ≤ C₀ + N² Φ(N)`, `Σ_j Φ(sched j) < ∞` by a sum swap
+     (`Σ_{sched j ≥ X} sched(j)^{-2} ≲ log X/X²`).
+* Cited (sorried, the end state): `Literature.bakerLogDiscrepancy_cited`,
+  `Literature.matveevThreeLogs_cited`.
+
+## Repetition lap 6 (2026-10-07) — ASSEMBLY PROVED: `repPairArith_of_inputs` (Baker + TOrbitCyclicDecay + BadGcdSparseH ⇒ RepPairArith (3ˢt)), #print axioms clean. Next per DIRECTION: state+prove the conditional headline (LiouvilleCantorFullProfile from the three inputs).
+### (history)
+* Proved: `exists_kappa_half` (full square ≤ N + 2·half-sum over (m,d)), `repBound_neg`,
+  `pairMaj_nonneg`, `PairGood`, `exists_option_le_pairMaj_bad` (option ≤ pairMaj + [¬PairGood]).
+* `repPairPower_of_inputs` now PROVED from leaf `repPairPos_eventually` (h=3ᵉh'>0, N≥N₀) via `repPairPower_of_pos`, `power_of_eventually`. Proved `exists_kappa_pos` (h=3ᵉh'>0: full sum ≤ N+2(Σpairmaj+#bad)), `pairNat_cast`. Proved `sum_bad_le` (bad count ≤ N(m₀+4·band)). Was next: count `¬PairGood` pairs (small m: O(N·(e+log h'+W+K+a_{k₀})); bands via
+  `card_nearCopyBdry_le_of` per fixed m (T injective in d: `strictMono_log_pair`) and per m
+  (`strictMono_log_mul_pow`)); then choose M, W, K and finish the arithmetic.
 
 ## Cantor exact-exponent stretch (2026-10-05, KICKOFF-2026-10-05-stretch-poke) — DONE
 * **2026-10-06 lap 3:** all six leaves proved (`padic_sep`, `card_image_mod_HS_le`, `farey_sep`,
@@ -3435,3 +3467,104 @@ the Cauchy–Schwarz step obstMix² ≤ E|obstSum|² as a lemma toward PairCorrT
 Advance: the numerator-averaging route is closed (`PreperiodicNumeratorDispersion`, believed false,
 plus a Maze row).  `CantorBadNormal.lean` holds only the crux `aliveOffMix_resLaw`.  The remaining
 route for the preperiodic families is middle-digit `ThreeAdicWindowAvg` (open, digits of powers).
+
+## repetition lap 1 (2026-10-07)
+Advance: `liouvilleCantorFullProfile` is now PROVED wiring; its single open input is the crux
+`ae_isNormal_rep_of_three_dvd` (b = 3ˢt, t > 1).  Construction `repReal`: free places of
+`CantorLiouville.isFree`, each forced run `[a_k,(k+2)a_k)` = fresh block `[a_k,2a_k)` repeated.
+Proved (axiom-clean): `repReal_mem_cantorSet`, `liouville_repReal` (given irrationality; approximant
+`(hd 2A − hd A)/(3^{2A} − 3^A)`), `charFun_add` (Riesz bound survives an additive shift reading
+only non-free coins), `ae_isNormal_rep_of_coprime_three`, `not_isNormal_rep_three_pow`,
+`ae_repProfile` (modulo crux).  Probe `scripts/rep_probe.py`: random block copy stretch is
+random-like in base 6 (b=9 control fails).
+Next attack on the crux: split frequencies into free / copy / shadow zones (docstring); first
+formalize the copy-zone pair term: the block-coin Riesz product as a function of
+`η mod (3^A − 1)` (cyclic digits), then test numerically whether
+`Σ_{n,m in run k} ∏_{i<A}|cos(2π η 3ⁱ/(3^A−1))|` has power decay (exact, small A, b=6 vs b=9).
+- rep lap 1 (cont.): `copyPairSum`, node `CopyZoneDecay` (b=2,6,12 at diagonal floor 1/N, b=9 control .20).
+  Next: prove CopyZoneDecay for pairs with b^{n}−b^{m} < 3^A (no wraparound: existing low-digit count),
+  isolate the wraparound pairs as the residual leaf.
+- rep lap 1: PROVED `copyPairSum_eq_Bf` (copy zone = all-free Bf at ξ=(bⁿ−bᵐ)3^A/(3^A−1)). Next: no-wrap pairs via Bf_le_Hf/low-digit count.
+- rep lap 1: PROVED `Bf_lip`, `copyTerm_le` (twist costs π|η|/(3^A−1)). Next: sum over no-wrap pairs (|bⁿ−bᵐ| ≤ 3^{A/2}, i.e. n ≤ A log_b3/2) using secondMoment chain's pair count; wrap pairs = residual leaf.
+- rep lap 1: PROVED `cycProd` with `cycProd_add` (mod 3^A−1) and `cycProd_mul_three` (rotation). So copy-zone pair term depends only on tᵐ(b^d−1) mod 3^A−1: the 3ˢ part is a rotation. Wrap pairs = digits of tᵐ mod 3^A−1 (middle-digit wall, cf. ThreeAdicWindowAvg lap 10). Next: state that residual as node, wire CopyZoneDecay from no-wrap+residual.
+- rep lap 1: PROVED `copyPairSum_eq_cycProd`, `cycProd_pair` (pair term = cycProd of tᵐ(b^d−1)).
+- rep lap 1: node `TOrbitCyclicDecay` (uniform single-orbit; t=2 bounded N·max, t=1 control flat). Next: prove CopyZoneDecay ⇐ TOrbitCyclicDecay (b^d−1 gcd control: gcd(b^d−1,3^A−1) | 3^{gcd}... needs gcd bound) — or test whether gcd condition fails for some d.
+- rep lap 1: node `BadGcdSparse` (75%); PROVED `copyZoneDecay_of`: CopyZoneDecay(3ˢt) ⇐ TOrbitCyclicDecay t + BadGcdSparse. Next: prove BadGcdSparse (order argument), and connect CopyZoneDecay to the crux (run-end truncation + 3^{-A} twist).
+- rep lap 1: PROVED `integral_ee_flip` (peel one coin: factor (1+e(a))/2). Next: write repReal = Σ_{block j} [ω j]·w_j + Rest with Rest flip-invariant, iterate ⇒ ‖𝔼 e(ξ repReal)‖ ≤ ∏_{j∈block}|cos(π ξ w_j)| (true-law copy-zone bound).
+- rep lap 1: PROVED `norm_integral_ee_le_prod` (finite peel). Next: decomposition repReal = Σ_{j∈[A,2A)} [ω j] w_j + Rest (flip-invariant), w_j = 2Σ_{c≤k} 3^{-(j+cA)-1}.
+- rep lap 1: PROVED `srcWeight`, `repReal_eq_sum`, `norm_charFun_repReal_le` (true-law Riesz bound over any finite coin set). Next: compute srcWeight for block coins j∈[A,2A): 2Σ_{c≤k}3^{-(j+cA)-1} (+ copies at later runs? no: later runs copy their own blocks only) and relate ∏ to cycProd.
+- rep lap 2: PROVED `src_eq_iff_block` (readers of block coin j are j + c·a_k, c ≤ k) and `srcWeight_block` (srcWeight j = Σ_{c≤k} 2·3^{-(j+ca_k)-1}).  Next: ∏_{j∈block}|cos(πξ srcWeight j)| = cycProd-type product at ξ·2·3^{-a-1}·(1−3^{-(k+1)a})/(1−3^{-a}); bound true-law copy-zone pair term by cycProd + twist error.
+- rep lap 2: PROVED `prod_block_eq_cyc`: block-coin Riesz product of run k = ∏_{i<a}|cos(2π η 3ⁱ/(3^a−1))|, η = ξ(1−3^{-(k+1)a})/3^a (exact).  With `norm_charFun_repReal_le` this bounds the true-law pair term by a real-frequency cycProd.  Next: real-η cycProd vs integer cycProd at η₀ = h(bⁿ−bᵐ)/3^a·… (Lipschitz, error π|ξ|3^{-(k+2)a}), then the copy-zone piece of the second moment.
+- rep lap 2: PROVED `cycProdR` (real-frequency cyclic product), `cycProdR_intCast`, `cycProdR_lip` (π-Lipschitz).  Next: combine prod_block_eq_cyc + norm_charFun_repReal_le + cycProdR_lip ⇒ ‖𝔼 e(ξ repReal)‖ ≤ cycProd a ⌊ξ/3^a⌉ + π·dist, the true-law copy-zone pair bound.
+- rep lap 2: PROVED `norm_charFun_repReal_le_cyc` (true law: ‖𝔼e(ξ repReal)‖ ≤ cycProd a η₀ + π|ξ(1−ε)/3^a − η₀|, any run k, any integer η₀).  Copy-zone pair term of the actual second moment now reduces to cycProd, i.e. to CopyZoneDecay.  Next: integer choice η₀ = h(bⁿ−bᵐ)/3^a when 3^a | bⁿ, bᵐ (s·m ≥ a): error π|ξ|3^{-(k+2)a}; then frequency-zone split of the second moment.
+- rep lap 2: PROVED `norm_charFun_repReal_le_cyc_int` (z = 3^a η₀: error π|z|3^{-(k+2)a}).  Next: zone split of the second moment along sched.
+- rep lap 2: crux reduced: `ae_isNormal_rep_of_three_dvd` := `ae_isNormal_rep_of_pairDecay` (PROVED, via `secondMoment_le_pairs`) + open leaf `repPairDecay_of_three_dvd` (node `RepPairDecay`).  Next: split the pair sum by zone of n (free / copy run k / shadow) and bound copy pairs by `norm_charFun_repReal_le_cyc_int`.
+- rep lap 2: crux now measure-free: `repPairArith_of_three_dvd` (node `RepPairArith`: per-pair choice of free/run-k Riesz bound `repBound`); `repPairDecay_of_arith` PROVED.  Next: numerics of RepPairArith with greedy κ (min over options) at b=6 vs b=9 control; then split pairs by zone.
+- rep lap 2: probe scripts/rep_arith.py: RepPairArith greedy sums at diagonal floor 1/N for b=6,12 up to N=200 (into run 2 copy stretch); b=9 control flat .25–.30.  Recorded in RepPairArith docstring.
+- rep lap 2: RepPairDecay/RepPairArith reformulated as summability along sched (admits Stewart rate exp(−c log N/loglog N)); route note in RepPairArith docstring: copy coins must carry the bound; no-wrap = digit changes of h tᵐ(b^d−1) (Stewart-type, uniform in multiplier open); wrap = short orbit mod 3^A−1.
+- rep lap 2: CZGcdPow (literature node) + PROVED gcd_small_of_CZ (short shifts not bad).  HANDOFF-2026-10-07-repetition-lap2.md written.
+- rep lap 2: short-period redesign analysed: node `ExpOrderPeriods` (exp. order of t mod 3^ℓ−1, θ>.369) replaces the wrap wall via Parseval; probe scripts/rep_order.py (.56–.90 at prime ℓ). Needs the signed second moment, not RepPairDecay. Shadow (Baker) remains either way.
+- rep lap 2: PROVED `cycProdR_add_int`, `repBound_some_add`: run-k copy bound depends only on ξ mod 3^{(k+2)a} (period | copy length).  So shadow windows: copy coins read low digits of X = h tᵐ(b^d−1) only (X mod 3^{E−v}, folded mod 3^a−1), top digits only via free coins (Baker).  Under short periods the shadow is still a positive fraction of frequencies at N just past a run end, so it cannot be discarded.
+- rep lap 2: stated assembly `repPairArith_of_inputs` (Baker + TOrbitCyclicDecay + BadGcdSparse ⇒ RepPairArith, 60%, BarrierAudit-linked) with the zone plan in its docstring.  Next: prove it zone by zone (start: classify pairs; reuse profile thread pair_classify_expl / bf_le_topProd).
+- rep lap 2: PROVED `repBound_pair_le` (copy-zone pair term ≤ cycProd a (h tᵐ(b^d−1)) + π|ξ|3^{-(k+2)a} when a ≤ sm): the copy case of the assembly, pointwise.  Next: note TOrbitCyclicDecay has no h; extend (h tᵐ c = tᵐ (h c)) — uniform in c so fine; then zone sums.
+- rep lap 2: PROVED `copyZoneDecayH_of` (CopyZoneDecayH b h ⇐ TOrbitCyclicDecay t + BadGcdSparseH b, multiplier h), helpers `cycProd_pairH`, `int_gcd_mul_le`.  Assembly should cite BadGcdSparseH (switch repPairArith_of_inputs hypothesis next).
+- rep lap 2: PROVED `repBound_pair_le'` (symmetric copy pair bound, any n,m with a ≤ s·min), `cycProdR_neg`, `repBound_some_neg`.  Next: run-k copy sum over a Finset P of pairs ⇒ CopyZoneDecayH at N_k + |P|·π·max|ξ|/3^E.
+- rep lap 2: PROVED `copyRun_sum_le` (run-k copy sum over pair set P ≤ cyclic pair sum below N' + |P|πB/3^E).  Next: define the classification κ for a given N (run of s·min, thresholds K), prove each class bound; free classes via Bf.
+- rep lap 2: FOUND gap in assembly plan: bases with log₃b/s ≥ 2 have windows covering a whole gap (gap ratio 2); recorded in repPairArith_of_inputs docstring.  Fix options: run k+1 copy coins as top window, or redesign with a_{k+1}/E_k → ∞.
+- rep lap 2: probe b=12 N=300,380 (.0034/.0027, floor) covers gap-spanning windows: large-t class is a proof-plan gap only.  Fix to formalize: sparse used runs (gap ratio → ∞).
+- rep lap 2: REDESIGN landed: only even runs copy (src), odd runs fresh; gap ratio 4(k+3)→∞ resolves the large-t class.  All proofs re-checked (Even k hypotheses threaded; repBound some k = 1 for odd k).  Next: isFresh := isFree ∨ odd run, charFun bound Bf isFresh (rest reads only even-run block coins), use it for repBound none.
+
+## repetition review lap 3 (2026-10-07)
+Direction KEPT: prove the assembly `repPairArith_of_inputs`; walls stay nodes (CURRENT DIRECTIVE).
+Review findings (route level):
+- Every Liouville point of `K` has, along a subsequence, a ternary stretch periodic with some period
+  `P` that dominates the prefix (approximant `p/(3^a(3^P−1))`; a `{0,2}`-digit window of length
+  `w·log₃q` forces the period structure for `w ≳ 5.4`).  So copies are forced, and the copy-zone
+  frequencies are `h tᵐ(b^d−1) mod 3^P−1`.  Long periods (`P ≈ a`, ours): polylog orbit, wrap regime
+  forced (windows deep in the stretch are longer than `P`): `TOrbitCyclicDecay` is a middle-digits
+  statement.  Short periods: the large spectrum of the cyclic Cantor law has size `≤ (2P)^{K(δ)}`
+  (digit-change counting), so the short-period route needs only `ord_{(3^P−1)''}(t) ≥ P^{ω(1)}`
+  (weaker than `ExpOrderPeriods`' exponential order), still open (Corvaja–Zannier gives only `ord/P → ∞`).
+  Random periods do not remove the arithmetic either (an `X` bad for many `P` is pinned by CRT, but the
+  exceptional set is polynomial-size and our `X` are a polynomial-size sample).
+- `TOrbitCyclicDecay` demands a power saving; the no-wrap part only has Stewart's rate
+  `exp(−c log N/loglog N)` (enough for the summable form).  A weaker summable-form node would be more
+  faithful; deferred until the assembly is done.
+Pair classification for the assembly (pair `n = m + d ≥ m`, `c = log₃ t`, `v = sm`,
+`yT = top of Y = h bᵐ`, `T = top of ξ`; copy runs `R_k = [a_k, E_k)`, `k` even; everything else fresh;
+fresh stretches between copy runs have ratio `4(k+3) → ∞`):
+- connected (`sn ≤ yT + K'`): one window `[v, T]`, bounded multiplicative length;
+- separated (`sn > yT + K'`): `W1 = [v, yT]` (digits of `−h tᵐ`), 2's, `W2 = [sn, T]` (digits of `h tⁿ`).
+Classes: (1) bottom of `W1` fresh: `sum_hf_true_le`, `c = h'(b^d−1)`; (2) top of `W1` fresh:
+`bf_le_topProd_of_dvd` + `sum_topProd_le` over `m`; (3) bottom of `W2` fresh: `sum_hf_true_le`,
+`c = h'`, over `n` (error `≤ K·3^{−K'}` from `Y/3^{sn}`) — NEW vs the docstring plan; (4) top of `ξ`
+fresh: `sum_topProd_le` over `n`; (5) whole window in one `R_k`: `copyRun_sum_le` + `copyZoneDecayH_of`
+(`c = h(b^d−1)`); (6) `W2 ⊂ R_{k'}`, `yT < a_{k'} − K'`: run-`k'` copy coins see `cycProd(h tⁿ)` up to
+`π·3^{yT+1−a'}` (`TOrbitCyclicDecay` with `c = h`) — NEW; (7) bands (`O(K)` indices per run);
+(8) small `m`.  Informal check: every pair with `m ≥ m₀(b,h,K')` lands in a class (W1 inside `R_k` and
+`W2` straddling `a_{k'}` → (3); straddling `E_{k'}` → (4); inside `R_{k'}` → (6); same run → (5)).
+Next: `isFresh` Riesz bound, then the classification lemma in Lean (route-decisive), then class sums.
+
+## repetition lap 5 (2026-10-07)
+- PROVED `bf_le_hf_true_add` (low window with perturbation `|Z| ≤ 3^w ε`: `Bf ≤ Hf_true(X) + πε`),
+  with `hf_true_lip`, `sum_two_div_three_pow`.  Serves classes 1 (w=v, Z=0) and 3 (w=u, Z=−Y).
+- PROVED `repBound_some_le_cyc` (copy run, perturbation; classes 5/6).
+- PROVED `log_mul_pow_lt`, `le_log_mul_pow` (window ratio facts v ≤ y < ρv).
+- PROVED `three_pow_le_pow_sub_pow`, `le_log_pair`, `log_pair_le_log` (u ≤ T ≤ ρu).
+- PROVED `hsep_of` (separation hypothesis, ρ = ρ₁(ρ₀+1)).
+- PROVED `card_nearCopyBdry_le` (band count O((W+K) log N)), `four_pow_le_runStart`.
+- PROVED `sum_class_low_le` (class-1 sum, h prime to 3; general h: pull out 3^{v₃h}).
+- PROVED `repBound_class_sep_le` (class-3 pointwise; sum = N·sum_hf_true_le + N²π3^{-K}).
+- PROVED `repBound_class_copySep_le` (class-6 pointwise → cycProd a (h tⁿ), sum via TOrbitCyclicDecay).
+- PROVED `fract_logb_mul_pow` (top phases of classes 2/4 are Kronecker orbits → sum_topProd_le).
+- PROVED `repBound_class_top_le` (class-4 pointwise, Kronecker phase).
+- PROVED `repBound_class_topY_le` (class-2 pointwise). All six classes now have pointwise bounds.
+- PROVED `sum_class_copySep_le`, `gcd_sq_le_of_natAbs` (class-6 sum from TOrbitCyclicDecay).
+- PROVED `sum_class_top_le` (classes 2/4 sums under Baker).  Class-6 range note: sum over n in run k ⊆ range((k+2)a/s+1) ∈ [a, a³] for large k.
+- PROVED `sum_class_sep_le`, `hf_true_int_mul` (class-3 sum).
+- PROVED `sum_class_copy_le` (class-5 sum). All six class sums now exist.
+- PROVED `runEnd_succ_le_cube` (N' = (k+2)a_k+1 ∈ [a_k, a_k³]: class 5/6 range glue).
+- PROVED `repPairArith_of_power` (+ `RepPairPower`, `one_le_sched`); `repPairArith_of_inputs` now proved from the new open leaf `repPairPower_of_inputs` (per-N power saving; plan in its docstring).
+- PROVED `exists_kappa_sum_le`, `repBound_le_one` (option-choice glue).
+- PROVED `pairNat`, `pairNat_eq`, `pairNat_eq_sub`, `pair_class1`, `pair_class3` (concrete per-pair bounds, h = 3^e h').  PROVED `pair_class2`, `pair_class4`, `pairNat_eq_mul`.  PROVED `pair_class5`, `pair_class6`, `pairNat_lt` (all six concrete).  PROVED `pairMaj`, `pairMaj_ge`, `exists_option_le_pairMaj` (six-way disjunction ⇒ option ≤ pairMaj), `lt_runStart`.  PROVED `pair_classes` (disjunction at concrete positions).  PROVED `card_nearCopyBdry_le_of` (band count for injective positions: y(m), T(m,·)).  PROVED `strictMono_log_mul_pow`, `strictMono_log_pair` (injectivity of y, T).  pairMaj copy terms restricted to `copyRuns` (a_k ≤ u, T < (k+2)a_k), else Σ_k over all k ≤ M ≈ N would kill the power saving.  PROVED `u_le_T`, `sum_copyRuns_le` (copy terms ≤ Σ_{k≤log₄(2sN+e)} full sums below (k+2)a_k+1).  PROVED `runLen_mono`, `copy5_total_le`, `copy6_total_le` (run-by-run copy totals). Fixed: k-range filtered by a_k ≤ 2sN+e (a_L for L = log₄ X is superpolynomial in X — the unfiltered bound was useless); copy totals take any run set Ks with lengths ≤ Nmax. PROVED `sum_shift_le`, `sum_pair_class3_le`. PROVED `sum_pairMaj_le` (total of pairMaj).  Next: excluded pairs (small m, bands) ≤ count; final arithmetic with W=j+1, K ≍ ε log N; assemble repPairPower_of_inputs.  Next: sum pairMaj + band/small counts; combine with pair_classify_rep.
+- Next: κ choice (classical, per classification), summability (step 3 of lap-4 handoff): κ choice, band/small-m counts, summability.

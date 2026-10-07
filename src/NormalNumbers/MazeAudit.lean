@@ -24,6 +24,7 @@ import NormalNumbers.IndependenceRelative
 import NormalNumbers.ConjugateEntropy
 import NormalNumbers.Barriers
 import NormalNumbers.CantorBadNormal
+import NormalNumbers.ErdosTriples
 
 /-!
 # Maze audit: every closed route cites declarations
@@ -60,6 +61,13 @@ def mazeLinks : List Link := [
    [``UniformBadThreshold.Count.jointCoreSubEigen_four,
     ``UniformBadThreshold.Count.exists_good_of_subEigen],
    [``UniformBadThreshold.SmallBaseTreeCore]⟩,
+  ⟨"Archimedean-only mechanisms for Erdős #406",
+   [``ErdosTriples.Literature.LagariasRealSibling], []⟩,
+  ⟨"Exceptional set via all exponent tuples",
+   [``ErdosTriples.not_tripleTrivial_one_three, ``ErdosTriples.not_tripleTrivial_eight_one], []⟩,
+  ⟨"Erdős #406 via gap-two triples",
+   [``ErdosTriples.erdos406_of_gapTriplesEventually, ``ErdosTriples.tripleTrivial_of_sum_le_160],
+   [``ErdosTriples.GapTwoTriples]⟩,
   ⟨"x, 3x, 5x as the first member of a family",
    [``Adder.not_isWordSetBlock_runs_three_one_seven_nine,
     ``Adder.not_isWordSetBlock_runs_three_small, ``Adder.not_isWordSetBlock_extremeDigits], []⟩,
@@ -304,7 +312,7 @@ def mazeLegacy : List String := [
   "Diophantine good-denominator detour for the tail cell",
   "route B's unweighted cover of the state-dependent target"]
 
-/-- info: maze audit: 175 rows, 68 cite declarations, 107 legacy (prose only) -/
+/-- info: maze audit: 178 rows, 71 cite declarations, 107 legacy (prose only) -/
 #guard_msgs in
 #maze_audit mazeRows, mazeLinks, mazeLegacy
 

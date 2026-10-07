@@ -5,6 +5,7 @@ Authors: Trevor Morris
 -/
 import NormalNumbers.Barriers
 import NormalNumbers.LiteratureDigitsOfPowers
+import NormalNumbers.ErdosTriples
 import NormalNumbers.PairDecoupleProve
 import NormalNumbers.PairDecoupleRefute
 import NormalNumbers.SwingC1Log
@@ -150,6 +151,10 @@ def cruxLinks : List CruxLink := [
    [``cantor_not_normal_three_pow, ``perStage_dead_not_enough],
    "the pair-averaged Cantor products must use 3 ∤ b, and the dead-stage hypothesis must be a \
     probability decay, not a per-stage dead count (counts alone admit a never 2-normal descent)"⟩,
+  ⟨``SparseIdentity.sparseIdentityBound_of_matveev, [``cantor_not_normal_three_pow],
+   "the bound must use that t is not a power of 3: 9ᵟ·1 = 3^{2δ} is an unbounded sparse identity \
+    (not_sparseIdentityBound_nine), matching that no point of K is 9-normal; the Matveev input \
+    enters through log t, log 3 being independent"⟩,
   ⟨``QSpan.qSpanNormal_sqrt_two_sqrt_three, [``liouville_pair_qSpan],
    "the argument must use something √2, √3 have and the sparse Liouville pair lacks (algebraicity, \
     bounded partial quotients, …): a pair-universal argument would put a normal number in the \
@@ -162,6 +167,12 @@ def waivers : List Waiver := [
     (base 2 exact, per-window resolution, two growth rates); probe slack 0.019, control c = 6"⟩,
   ⟨``UniformBadThreshold.Newhouse.e2_four_facts,
    "off the route (the wiring uses the proved e15_facts); a computation about the explicit set E₂(4)"⟩,
+  ⟨``ErdosTriples.tripleTrivial_of_sum_le_160,
+   "a finite computation: 12403 exact carry-automaton decisions (experiments/erdos-triples, \
+    known-answer suite test_triple.py); discharge is a Lean automaton with a soundness lemma"⟩,
+  ⟨``ErdosTriples.exceptionalSet_eq_zero_of_gapTriplesEventually,
+   "wiring lemma (a leaf): the proved integer wiring erdos406_of_gapTriplesEventually lifted to \
+    3-adic digits (parity, valuation shift, residues); English proof in the docstring"⟩,
   ⟨``IndependenceRelative.not_isRelativeBlock_small,
    "a finite computation stated as a sibling: the blocksearch probe's non-certification over \
     small direction sets; it closes a route, no open crux uses it"⟩,
@@ -295,9 +306,26 @@ def waivers : List Waiver := [
   ⟨``CantorExactExponentProfile.ae_isNormal_of_profileOK_of_gelfond,
    "believed implication (55%): a Gelfond-strength two-log bound suffices for the run shadows; \
     the elementary t^k ≠ 3^j rate does not"⟩,
-  ⟨``CantorRepetition.liouvilleCantorFullProfile,
-   "open node (2026-10-06): repetition approximants with denominators prime to 3; mechanism in the \
-    module doc, no registered barrier applies"⟩,
+  ⟨``CantorRepetition.cycSparse_of_cycProd_ge,
+   "a leaf: card_changes_lt plus 2y = 3y − y over the cyclic digits dg (eq_sum_rd)"⟩,
+  ⟨``CantorRepetition.card_cluster_le, "a leaf: pure combinatorics of clustered sets"⟩,
+  ⟨``CantorRepetition.runOrbitDecay_of_sparse,
+   "a counting leaf of the sparse-pair route (2026-10-07): cyclic_pair_identity (proved) plus \
+    SparseIdentityBound give clusters, card_cluster_le counts them; English proof in the docstring"⟩,
+  ⟨``CantorRepetition.card_degRows_le,
+   "a leaf: lifting the exponent bounds gcd(3^A − 1, t^∞); degenerate shifts are multiples of an \
+    order ≥ A/(2 log₃ b)"⟩,
+  ⟨``CantorRepetition.copyRun_psi,
+   "a leaf: pair_sum_le rows, RunOrbitDecay on non-degenerate rows, card_degRows_le on the rest"⟩,
+  ⟨``CantorRepetition.repPairArith_of_runDecay,
+   "wiring: repPairPos_explicit with the copy term from copyRun_psi; summability along sched by a \
+    sum swap"⟩,
+  ⟨``CantorRepetition.Literature.bakerLogDiscrepancy_cited,
+   "literature-strength input, cited not formalized: Baker–Wüstholz 1993 with Erdős–Turán \
+    (CantorExactExponentProfile.Literature.BakerLogDiscrepancyEff)"⟩,
+  ⟨``CantorRepetition.Literature.matveevThreeLogs_cited,
+   "literature-strength input, cited not formalized: Matveev 2000 Cor. 2.3, three logarithms of \
+    rationals (SparseIdentity.Literature.MatveevThreeLogs)"⟩,
   ⟨``FiniteState.isFNormal_delayEnum_of_normal,
    "a leaf: O(1) cost of composing with the delay transducer and its finite-state right inverse"⟩]
 

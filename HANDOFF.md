@@ -1,3 +1,6 @@
+# Repetition: STUCK claim (lap 6) RESOLVED 2026-10-07 by review lap 7 — read HANDOFF-2026-10-07-repetition-lap7.md
+- New route (sparse pairs + Matveev) avoids the walls; DIRECTION.md CURRENT DIRECTIVE lists the leaves.
+
 # STUCK claim, strike 1 (2026-10-07, cantorbad lap 11): read HANDOFF-2026-10-07-cantorbad-lap11.md
 - **What is blocked:** the gate `sorry-free:src/NormalNumbers/CantorBadNormal.lean`.  Its only
   sorry is the crux `aliveOffMix_resLaw`.

@@ -45,6 +45,39 @@ Math-axiom count for the proved headlines: 0 (trust base only).
 
 Pointers: `DIRECTION.md` (branch CURRENT DIRECTIVE, review lap 7) · newest `HANDOFF-2026-10-07-cstar-lap7.md` ·
 `PENDING_WORK.md` top section · `src/NormalNumbers/Maze.lean` (rows "counted medium bases", "adaptive split cores").
+## Cantor repetition update, 7 October 2026 (branch `proof/cantor-repetition`, review lap 7)
+
+**Is the profile cut forced?** · **Build**: 🟢 green (10797 jobs, full default build) · lap 7
+
+**Where it stands.**  `CantorRepetition.liouvilleCantorFullProfile` (a Liouville point of `K` normal
+to exactly the bases that are not powers of 3) now runs through the **sparse-pair route**: its
+`sorry` dependence is two cited classical theorems (Baker–Wüstholz discrepancy, Matveev's
+three-logarithm bound) plus named elementary/Diophantine leaves.  The old walls
+(`TOrbitCyclicDecay`, `BadGcdSparseH`, open digits-of-powers problems) are no longer on the path.
+Key new fact, proved: `SparseIdentity.cyclic_pair_identity` (two sparse points of an orbit mod
+`3^A − 1` force an exact sparse identity `tᵟU = V`).
+
+**What's happened.**
+- 2026-10-07 review lap 7: route change.  The assembly needs only a saving summable along `sched`;
+  pairs of sparse orbit points give `tᵟU = V`, bounded by Matveev (`sparseIdentityBound_of_matveev`,
+  90%), so sparse points cluster.  `repPairArith_of_three_dvd` rewired through
+  `repPairArith_of_literature`; conditional headline `liouvilleCantorFullProfile_of_literature`.
+- 2026-10-07 laps 4–6: assembly `repPairArith_of_inputs` and `liouvilleCantorFullProfile_of_inputs`
+  proved (trust base), `card_cycProd_ge_le` proved.
+- 2026-10-07 laps 1–3: construction (even runs copy), copy-zone toolkit, measure-free crux
+  `RepPairArith`, probes at the `1/N` floor for `b = 6, 12` (control `b = 9` flat).
+
+**Outstanding.**  Short (DIRECTION order): `sparseIdentityBound_of_matveev`; `cycSparse_of_cycProd_ge`,
+`card_cluster_le`, `runOrbitDecay_of_sparse`; `card_degRows_le`, `copyRun_psi`;
+`repPairArith_of_runDecay`.  Long: formalizing the two cited inputs (🟠/🟡: Baker theory).
+
+| headline | claim | `#print axioms` | open inputs |
+|---|---|---|---|
+| `liouvilleCantorFullProfile` | unconditional (frozen) | propext, choice, Quot.sound, **sorryAx** | 🟡 Baker–Wüstholz (cited), 🟡 Matveev (cited), 7 route leaves (elementary + one Diophantine) |
+| `liouvilleCantorFullProfile_of_literature` | cond. on Baker + Matveev | propext, choice, Quot.sound, **sorryAx** | the 7 route leaves |
+| `liouvilleCantorFullProfile_of_inputs` | cond. on old walls | trust base | `TOrbitCyclicDecay`, `BadGcdSparseH` (superseded) |
+| `SparseIdentity.cyclic_pair_identity` | pair lemma | trust base | none |
+| `ae_isNormal_rep_of_coprime_three`, `liouville_repReal` | `3 ∤ b`; Liouville | trust base | none |
 
 
 ## Cantor exact-exponent stretch update, 6 October 2026 (branch `proof/cantorexp-stretch`)
@@ -446,6 +479,7 @@ These are the ratified conjecture nodes.  They are open by design, and none is s
   `MasterMaze.lean` (`mazeTestImplied`/`mazeTestNotImplied`; `equidistributed_lnTwoOrbit_iff`,
   `run_sublinear_of_isNormal`).
 - **BFR bet settled below 1% (2026-10-06, 2 laps):** the separation method gives the restricted-digit hyperbola count `StretchBFR.card_cantor_hyperbola_le` (#{P ∈ C_b : ∃ q ≤ Q, |Pq mod 3^b| ≤ R} ≤ 2^j for 3^j > 2RQ, any base via `eq_of_hyperbola_low`), which is the 3-adic covering bound; a saving for rationals near K (`NKPowerSaving`, open node) needs a Fourier input (Chow–Varjú–Yu's ℓ¹ dimension; K's is ≈ 0.39, below what their method needs).  Maze rows for every route.
+- **Is the profile cut forced? Repetition lane (2026-10-06/07, 7 laps): partial.**  `CantorRepetition`: copying a free block (approximants `W/(3^ℓ−1)`, prime to 3) gives a Liouville point of K (`liouville_repReal`, `repReal_mem_cantorSet`) normal to every base prime to 3 (`ae_isNormal_rep_of_coprime_three`) and to no power of 3; all unconditional.  Base 6 and every `3ˢt`, `t > 1`, is OPEN: the copy zone needs a sparse-pair cluster bound (`cyclic_pair_identity` proved; `SparseIdentity.sparseIdentityBound_of_matveev` 90%, plus 6 bookkeeping leaves), resting on cited Baker (two logs) + Matveev (three logs).  The earlier walls (`TOrbitCyclicDecay`, `BadGcdSparseH`) asked for a power saving, an open digits-of-powers problem.  Next: `HANDOFF-2026-10-07-repetition-lap7.md`.
 - **The exponent sets the normal profile (2026-10-06, /create + 2 laps): PROVED given Baker.**  `CantorExactExponentProfile.exists_computable_normalProfile_of_baker`: for every rational μ₀ > 2, a computable x ∈ K with exponent exactly μ₀, normal to base `b = 3ˢt` iff `t > 3^{s(μ₀−1)}` (e.g. μ₀ ∈ (2, 2.26): normal to 12, 15, 21, not to 6, 18, 36).  Cited input `Literature.BakerLogDiscrepancyEff` (Baker–Wüstholz + Erdős–Turán; transcription weaker, the step to check).  Unconditional: the non-normal direction `not_isNormal_of_not_profileOK` and `window_covered_imp`.  The elementary orbit port fails in run shadows (Maze row); a Gelfond-strength bound would suffice (`ae_isNormal_of_profileOK_of_gelfond`, believed 55%).
 - **K ∩ exact exponent μ₀ ∩ normal to every base prime to 3, for EVERY rational μ₀ > 2 (2026-10-06, stretch lane, 3 laps): UNCONDITIONAL.**  `CantorExactExponentStretch.exists_computable_mem_cantorSet_irrExponent_normal_all` (and the node `ae_not_liouvilleWith_all`).  Supersedes the μ₀ > 2 + log₂3 headline's range.  Mechanism: 3-adic Farey separation (`padic_sep`, `hit_mass_padic`): hitting numerators are pinned by ~log₃(|r|q) low digits plus v₃(q) top digits, so the UNION of bad numerators is small for every τ > 2; real Farey separation (`hit_mass_farey`) elsewhere.  Ren's 'Kloosterman wall' reading counted incidences, not the union; corrected in `StretchBFR.lean` and its Maze row.  μ₀ = 2 literature control proved from cited Props.  Refereed 2026-10-06 (accept; `docs/CANTOREXP-STRETCH-REFEREE-2026-10-06.md`): the exponent-in-K half is known (Bugeaud 2008 + Becher–Bugeaud–Slaman 2016, `bugeaud2008_rational_of_stretch`), the novelty is normality.  Note: `docs/notes/cantor-exact-exponent-normal.md`.
 - **ℚ-span digit structure (2026-10-05, freeze + 2 laps): UNCONDITIONAL.**  `QSpanCriterion.lean`: a normal rational combination forces joint FS dimension ≥ 1/2 (`span_jointDim_budget`); a jointly normal pair has every nonzero combination normal (`isNormal_span_of_jointNormal`); for independent i.i.d. digits, `a x + c y` is a.e. normal iff every frequency meets a zero of the digit polynomial, else a.e. not normal (`ae_isNormal_combo_iff`, `ae_not_isNormal_combo_of_not`); digits {0..4}: joint dimension ≈ 0.70 > 1/2 yet no normal combination (`ae_not_qSpanNormal_fiveDigits`, `ae_jointDim_fiveDigits`) — the entropy budget is necessary, not sufficient.  Origin: Trevor's √2/√3 question (`QSpanNormal.lean`).

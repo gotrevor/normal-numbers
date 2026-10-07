@@ -1520,7 +1520,22 @@ def register : List Hall := [
    "Build the thick core B inside every E_b(4), b >= 3 (thickness > 1/3, paired with E15 by the gap lemma) adaptively: local splits with good endpoints (SplitCore), the flipped pairing A = Fset 3 4 against B inside E15 and every E_b(4), b >= 5, or discarding clusters of near-touching windows instead of bounding them",
    .wall, .cited,
    "Adaptivity is illusory: a tau-thick compact B in the good set puts any two windows that are tau-close inside its hull into one gap (windows_merge_forced), so the gaps of every thick core contain the canonical tau-merge closure of the windows, and ThickCore holds iff that closure stays local. Locality needs a bound on merge cascades of windows of distinct bases at every depth; none is known (pair counts of centres A/b^n, A'/b'^m are exact lattice counts, 2 eps q q' + gcd, so clusters of every size are expected at small enough scales), and every pairing of Newhouse sets puts infinitely many bases on one side. REOPEN IF: a locality argument for the canonical closure that tolerates unbounded clusters, i.e. a proof of ThickCore itself",
-   "UniformBadNewhouse.lean: merge_forced, windows_merge_forced, thickCore_of_splitCore, ThickCore, thickCore_four (sorry, 70%)", "2026-10-07"⟩
+   "UniformBadNewhouse.lean: merge_forced, windows_merge_forced, thickCore_of_splitCore, ThickCore, thickCore_four (sorry, 70%)", "2026-10-07"⟩,
+  ⟨"Archimedean-only mechanisms for Erdős #406",
+   "Prove that 2^n eventually has a ternary 2 from the real side alone: equidistribution of n log3 2, Baker discrepancy, leading-digit counts, shrinking targets for the rotation",
+   .refuted, .cited,
+   "Every such input also holds for floor(l 2^n) with any real l, and Lagarias (Thm 1.2) gives uncountably many l with infinitely many omitters. A proof must use that the low digits of 2^n follow 2^n mod 3^k",
+   "ErdosTriples.lean: Literature.LagariasRealSibling", "2026-10-06"⟩,
+  ⟨"Exceptional set via all exponent tuples",
+   "Bound dim E(Z3), and so approach Erdős #406, by the supremum of dim C(1, 2^m1, ..., 2^mk) over every exponent tuple (ABL's nesting constants Gamma, Gamma*, alpha_n)",
+   .refuted, .kernel,
+   "Tuples with a gap of one power of 4 stay nonzero (4 = 1 + 3 gives the golden-mean shift): C(1, 4, 4^4) contains 1 and C(1, 4^8, 4^9) contains 282864854542, so the supremum stalls (ABL: log3 phi). An infinite orbit never has to face those tuples: pass to three exponents with large gaps",
+   "ErdosTriples.lean: not_tripleTrivial_one_three, not_tripleTrivial_eight_one", "2026-10-06"⟩,
+  ⟨"Erdős #406 via gap-two triples",
+   "Reduce Erdős #406, and E(Z3) = {0}, to C(1, 4^a, 4^(a+b)) = {0} for all a, b >= 2, each instance a finite carry-automaton decision",
+   .wall, .frozen,
+   "The wiring is proved and every instance with a + b <= 160 is trivial (largest automaton 388 states), but nothing uniform covers the 3-adic imitators a = 1 + 3^D t, whose automata copy the golden-mean one for D levels. REOPEN IF: a uniform extinction bound for carry automata whose multipliers are 3-adically near 4",
+   "ErdosTriples.lean: erdos406_of_gapTriplesEventually, tripleTrivial_of_sum_le_160, GapTwoTriples", "2026-10-06"⟩
 ]
 
 /-- Rows whose verdict is machine-checked in this build. -/

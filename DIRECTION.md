@@ -73,6 +73,30 @@ Directive history:
 - 2026-10-07 (c⋆ lap 7, review): Newhouse thick core closed by forced merging; probe c=4 counting core, bank c⋆ ≤ 5.
 - 2026-10-07 (c⋆ lap 3, review): counting engine + `c⋆ ≤ 6` banked first; crux = exact joint {2,3} core certificate.
 - 2026-10-06 evening: threshold lane opened (Trevor: "go for it").
+## CURRENT DIRECTIVE (2026-10-07, branch `proof/cantor-repetition`, review lap 7): the sparse-pair route 🎯
+
+**Objective:** make the frozen headline `liouvilleCantorFullProfile` rest only on two cited classical
+theorems (`Literature.bakerLogDiscrepancy_cited`, `Literature.matveevThreeLogs_cited`) by proving the
+leaves of the sparse-pair route (`CantorRepetition.lean` "The copy zone through sparse pairs",
+`SparseIdentity.lean`).  Wiring is in place: `repPairArith_of_three_dvd` now goes through
+`repPairArith_of_literature`; conditional headline `liouvilleCantorFullProfile_of_literature`.
+**Mandated next move (in order):** (1) `sparseIdentityBound_of_matveev` (the Diophantine leaf; the only
+new-math leaf left, believed 90%): strong induction on the term count + top-cut gap bounds from
+Matveev; state the gap-step lemma first; (2) `cycSparse_of_cycProd_ge`, `card_cluster_le`,
+`runOrbitDecay_of_sparse`; (3) `card_degRows_le`, `copyRun_psi`; (4) `repPairArith_of_runDecay`
+(ψ-version of the assembly + the sched sum swap).
+**Forbidden drift:** attacking `TOrbitCyclicDecay` / `BadGcdSparseH` (superseded, not needed: the
+assembly needs only a saving summable along `sched`); construction redesigns; edits to frozen statements;
+trying to formalize Baker/Matveev themselves before every other leaf is closed.
+**Why:** two sparse points of one orbit `c tᵐ mod 3^A − 1` at distance `δ ≲ A/(K log t)` force an exact
+identity `tᵟU = V` between `K`-sparse integers (`cyclic_pair_identity`, PROVED), and Matveev bounds
+`δ ≤ exp(O(K log K))`; so sparse points cluster, and the copy-zone saving is `≈ cos(π/9)^{√k}` per run
+`k`, summable.  The previous walls asked for a power saving, which is an open digits-of-powers problem.
+
+Directive history (repetition branch):
+- 2026-10-07 review lap 7: sparse-pair route (cluster lemma + Matveev) replaces the walls.
+- 2026-10-07 review lap: assembly first; walls stay named nodes.
+
 
 ## Branch directive (2026-10-06, `proof/cantor-bad-normal`, cantorbad lap 6): `K ∩ BAD ∩ normal` via the local route 🎯
 
@@ -122,7 +146,7 @@ Directive history:
 - 2026-10-06 (cantorbad lap 6): local route adopted; `midStages` off-path.
 - 2026-10-02: normality's master conjectures (below, superseded on this branch).
 
-## CURRENT DIRECTIVE (2026-10-06, branch `proof/cantorexp-stretch`): land the stretch node 🎯
+## Branch directive (2026-10-06, `proof/cantorexp-stretch`, DONE): land the stretch node
 
 **Objective:** prove `ev_expTest_mass_all` (`CantorExactExponentStretch.lean`), which closes the
 frozen node `ae_not_liouvilleWith_all` and the stretch headline (both already wired).
@@ -147,6 +171,10 @@ only when all three phases are, not when the file is sorry-free.
 🅿️ **Parked node, not a directive (2026-10-05):** `LiteratureDigitsOfPowers.SmoothDigitOmission`, the
 integer-digit crux under Erdős #406, zeroless `2ⁿ`, and persistence ≤ 11 (Numberphile sweep).  Open
 question for the consequence graph: does any repo master conjecture imply it?  No link is claimed.
+  2026-10-06 `/create`: Erdős #406 now hangs off a sharper, decidable-per-instance node,
+  `ErdosTriples.GapTwoTriples` (`C(1, 4ᵃ, 4ᵃ⁺ᵇ) = {0}` for `a, b ≥ 2`), wired by the proved
+  `erdos406_of_gapTriplesEventually`; it would also give `E(ℤ₃) = {0}`.  Detail and data:
+  `docs/ERDOS-TRIPLES-2026-10-06.md`.  Parked, not a directive.
 
 ## Completed runs 🏁
 
