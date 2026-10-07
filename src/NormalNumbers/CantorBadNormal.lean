@@ -4310,6 +4310,35 @@ def PeriodicFamilyShare : Prop :=
   ∀ ℓ : ℕ, ∀ ε : ℝ, 0 < ε → ∃ L₀ : ℕ, ∀ L S : ℕ, L₀ ≤ L → S ≤ L →
     ((periodicPairs ℓ L S).card : ℝ) ≤ ε * (obstPairs L S).card
 
+open Classical in
+/-- The preperiodic-family pairs whose difference carries no 3-adic content: `oval x − oval y` is a
+3-adic integer.  For such a pair the phase `e(hbᵐ(x − y))` reads only the 3-free part of the
+denominator of `x − y`, so it is eventually periodic in `m` (`pow_phase_recur`) and averaging over
+the 3-adic numerators of the family cannot make it cancel. -/
+noncomputable def numCollPairs (ℓ L S : ℕ) : Finset ((ℤ × ℕ) × (ℤ × ℕ)) :=
+  (periodicPairs ℓ L S).filter fun xy =>
+    0 ≤ padicValRat 3 ((xy.1.1 : ℚ) / xy.1.2 - (xy.2.1 : ℚ) / xy.2.2)
+
+/-- **Conjecture node (believed false, 10%): numerator dispersion of the preperiodic families.**
+The numerator-averaging route (run directive 2026-10-06 evening) needs the 3-adic numerators of
+the preperiodic obstacles in a coarse cylinder to be spread mod `3^j`, so that their phase sum at
+`a = hbᵐ` inherits the full-residue mean square `Σ_a |Σ_c e(ac/3^j)|² = 3^j·#{c}`.  Its floor is
+the collision share: pairs with equal 3-adic numerators (`numCollPairs`) keep a phase that is
+periodic in `m`, whatever `b` is.  This node says that share tends to 0.
+
+Evidence against (`scripts/cantorbad_numdisp.py L S N`, groups = cylinder × 3-adic depth `j ≥ 2`,
+`ℓ ≤ 8`): full-residue mean square `A` (the collision ratio) is `.157` (L = 12, S = 4) and `.144`
+(L = 14, S = 5), flat in `L` against `1/|G| ≈ .02`.  The sparse-set mean `B` over `a = bᵐ`,
+`m ∈ [10, 210)`, is `.091, .097, .093` (b = 2, 5, 7; L = 12) and `.086, .084, .083` (L = 14),
+again flat.  Controls: `b = 3` gives `B = 1.000` exactly; dyadic centres give `B = 1` by
+construction.  So the probe separates `3 ∤ b` from the controls by a constant factor but gives no
+decay in `L`: numerator averaging yields a constant saving, not the summable rate `AliveOffMix`
+needs.  The rest of the cancellation would have to come from the middle ternary digits of `hbᵐ`
+(`ThreeAdicWindowAvg`, open at the needed depth). -/
+def PreperiodicNumeratorDispersion : Prop :=
+  ∀ ℓ : ℕ, ∀ ε : ℝ, 0 < ε → ∃ L₀ : ℕ, ∀ L S : ℕ, L₀ ≤ L → S ≤ L →
+    ((numCollPairs ℓ L S).card : ℝ) ≤ ε * (periodicPairs ℓ L S).card
+
 /-- First-order (uniform continuation) part of `deadMix`. -/
 noncomputable def firstMix (b C : ℕ) (h : ℤ) (n m t : ℕ) : ℝ :=
   ∫ ω, ‖condMean (fun ω' => cExt (deadCorr (h * (b : ℝ) ^ m)) (t - stageOf b C n)

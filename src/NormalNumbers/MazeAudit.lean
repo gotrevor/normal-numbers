@@ -58,6 +58,10 @@ def mazeLinks : List Link := [
   ⟨"x3-invariant measure on K cap BAD",
    [``CantorBadNormal.not_exists_timesThree_law_on_bad,
     ``CantorBadNormal.Literature.EFSTimesThreeNotBad], []⟩,
+  ⟨"numerator averaging for the preperiodic obstacle families",
+   [``CantorBadNormal.pow_phase_recur, ``CantorBadNormal.obstacle_phase_crt,
+    ``CantorBadNormal.not_threeAdicWindowAvg_three],
+   [``CantorBadNormal.PreperiodicNumeratorDispersion, ``CantorBadNormal.ThreeAdicWindowAvg]⟩,
   ⟨"exact residue count as a BFR input",
    [``StretchBFR.card_near_cantor_le, ``CantorExactExponentStretch.card_lowResidue_le], []⟩,
   ⟨"Bugeaud-Durand count as the stretch input",
@@ -284,7 +288,7 @@ def mazeLegacy : List String := [
   "Diophantine good-denominator detour for the tail cell",
   "route B's unweighted cover of the state-dependent target"]
 
-/-- info: maze audit: 171 rows, 64 cite declarations, 107 legacy (prose only) -/
+/-- info: maze audit: 172 rows, 65 cite declarations, 107 legacy (prose only) -/
 #guard_msgs in
 #maze_audit mazeRows, mazeLinks, mazeLegacy
 

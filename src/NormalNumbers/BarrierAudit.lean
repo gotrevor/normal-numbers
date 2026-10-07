@@ -125,7 +125,10 @@ def cruxLinks : List CruxLink := [
    "the same-cylinder obstacle pairs must cancel by the arithmetic of the centres p/q: for dyadic \
     centres every dead child sits on a binary zero run, so the excess phase is coherent (probe: \
     coherence 0.96); per-stage dead counts alone do not suffice.  Whether the b = 3 barrier \
-    binds this node or only the Cantor main term is undecided"⟩,
+    binds this node or only the Cantor main term is undecided.  Averaging over the obstacle \
+    numerators gives only a constant saving on the preperiodic families \
+    (PreperiodicNumeratorDispersion, believed false), so their decay must come from the middle \
+    ternary digits of h b^m"⟩,
   ⟨``CantorBadNormal.fourierPairRate_descent_of_deadRateDecay,
    [``cantor_not_normal_three_pow, ``perStage_dead_not_enough],
    "the pair-averaged Cantor products must use 3 ∤ b, and the dead-stage hypothesis must be a \
