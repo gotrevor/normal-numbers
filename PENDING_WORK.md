@@ -3273,3 +3273,17 @@ the Cauchy–Schwarz step obstMix² ≤ E|obstSum|² as a lemma toward PairCorrT
 Advance: the numerator-averaging route is closed (`PreperiodicNumeratorDispersion`, believed false,
 plus a Maze row).  `CantorBadNormal.lean` holds only the crux `aliveOffMix_resLaw`.  The remaining
 route for the preperiodic families is middle-digit `ThreeAdicWindowAvg` (open, digits of powers).
+
+## repetition lap 1 (2026-10-07)
+Advance: `liouvilleCantorFullProfile` is now PROVED wiring; its single open input is the crux
+`ae_isNormal_rep_of_three_dvd` (b = 3ˢt, t > 1).  Construction `repReal`: free places of
+`CantorLiouville.isFree`, each forced run `[a_k,(k+2)a_k)` = fresh block `[a_k,2a_k)` repeated.
+Proved (axiom-clean): `repReal_mem_cantorSet`, `liouville_repReal` (given irrationality; approximant
+`(hd 2A − hd A)/(3^{2A} − 3^A)`), `charFun_add` (Riesz bound survives an additive shift reading
+only non-free coins), `ae_isNormal_rep_of_coprime_three`, `not_isNormal_rep_three_pow`,
+`ae_repProfile` (modulo crux).  Probe `scripts/rep_probe.py`: random block copy stretch is
+random-like in base 6 (b=9 control fails).
+Next attack on the crux: split frequencies into free / copy / shadow zones (docstring); first
+formalize the copy-zone pair term: the block-coin Riesz product as a function of
+`η mod (3^A − 1)` (cyclic digits), then test numerically whether
+`Σ_{n,m in run k} ∏_{i<A}|cos(2π η 3ⁱ/(3^A−1))|` has power decay (exact, small A, b=6 vs b=9).

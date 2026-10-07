@@ -4,6 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
 import NormalNumbers.CantorExactExponentProfile
+import NormalNumbers.EntropyProfiles
+import NormalNumbers.ExplicitPQ
 
 /-!
 # Is the profile cut forced?  Repetitions instead of zero runs
@@ -65,8 +67,577 @@ def ExponentCantorFullProfile (μ₀ : ℚ) : Prop :=
   ∃ x ∈ cantorSet, CantorExactExponent.HasIrrExponent x μ₀ ∧
     ∀ b : ℕ, 2 ≤ b → (IsNormal b x ↔ ∀ s : ℕ, b ≠ 3 ^ s)
 
-/-- **The cut is not forced (Liouville case).**  Open node; see the module doc for the mechanism. -/
-theorem liouvilleCantorFullProfile : LiouvilleCantorFullProfile := by
+/-! ## The construction: copies on the forced runs
+
+We keep the free positions of `CantorLiouville` (`isFree`; runs `[a_k, (k+2)a_k)`,
+`a_k = runStart k`).  On run `k` the digits are no longer zero: the block `[a_k, 2a_k)` carries
+fresh coins, and the rest of the run repeats that block `k` more times (period `a_k`).  So
+`x ≈ p/q` with `q = 3^{a_k}(3^{a_k} − 1)`, error `≤ 3^{-(k+2)a_k}`: exponent `≥ (k+2)/2`. -/
+
+open CantorLiouville CantorLiouvilleAll DecayAeNormal ExplicitSquare CantorSelfSimilar
+
+/-- The run containing a forced position (the largest `k ≤ i` with `a_k ≤ i`). -/
+noncomputable def runIdx (i : ℕ) : ℕ := Nat.findGreatest (fun k => runStart k ≤ i) i
+
+/-- The coin read at position `i`: itself if free, else the block position
+`a_k + (i − a_k) mod a_k` of its run. -/
+noncomputable def src (i : ℕ) : ℕ :=
+  if isFree i then i else runStart (runIdx i) + (i - runStart (runIdx i)) % runStart (runIdx i)
+
+/-- **The repetition point** coded by the coins `ω`. -/
+noncomputable def repReal (ω : ℕ → Bool) : ℝ := pt (fun _ => true) (fun i => ω (src i))
+
+/-- The copy part: digits on the forced positions only. -/
+noncomputable def repCopy (ω : ℕ → Bool) : ℝ := pt (fun i => !isFree i) (fun i => ω (src i))
+
+theorem runIdx_eq {k i : ℕ} (h1 : runStart k ≤ i) (h2 : i < (k + 2) * runStart k) :
+    runIdx i = k := by
+  unfold runIdx
+  rw [Nat.findGreatest_eq_iff]
+  refine ⟨(lt_runStart k).le.trans h1, fun _ => h1, fun j hj hji hP => ?_⟩
+  have := runStart_mono (show k + 1 ≤ j by omega)
+  rw [runStart_succ_eq] at this
+  have : (k + 2) * runStart k ≤ 2 * (k + 2) * runStart k := by nlinarith
+  omega
+
+theorem exists_run_of_not_free {i : ℕ} (h : isFree i = false) :
+    ∃ k, runStart k ≤ i ∧ i < (k + 2) * runStart k := by
+  by_contra hc
+  push_neg at hc
+  have := isFree_of_not_mem_run (i := i) fun k ⟨h1, h2⟩ => absurd h2 (not_lt.2 (hc k h1))
+  rw [h] at this; exact absurd this (by decide)
+
+theorem src_of_mem_run {k i : ℕ} (h1 : runStart k ≤ i) (h2 : i < (k + 2) * runStart k) :
+    src i = runStart k + (i - runStart k) % runStart k := by
+  have hf : isFree i = false := by simp [isFree, isForced_of_mem_run h1 h2]
+  simp [src, hf, runIdx_eq h1 h2]
+
+theorem src_of_free {i : ℕ} (h : isFree i = true) : src i = i := by simp [src, h]
+
+/-- Forced positions read forced positions (the block lies inside its run). -/
+theorem isFree_src_of_not_free {i : ℕ} (h : isFree i = false) : isFree (src i) = false := by
+  obtain ⟨k, h1, h2⟩ := exists_run_of_not_free h
+  rw [src_of_mem_run h1 h2]
+  have hpos : 0 < runStart k := (Nat.zero_le k).trans_lt (lt_runStart k)
+  have := Nat.mod_lt (i - runStart k) hpos
+  have hf := isForced_of_mem_run (k := k) (i := runStart k + (i - runStart k) % runStart k)
+    (by omega) (by nlinarith)
+  simp [isFree, hf]
+
+theorem measurable_reindex : Measurable fun (ω : ℕ → Bool) (i : ℕ) => ω (src i) :=
+  measurable_pi_lambda _ fun i => measurable_pi_apply (src i)
+
+theorem measurable_repReal : Measurable repReal :=
+  (measurable_pt _).comp measurable_reindex
+
+theorem measurable_repCopy : Measurable repCopy :=
+  (measurable_pt _).comp measurable_reindex
+
+/-- **The point lies in the Cantor set.** -/
+theorem repReal_mem_cantorSet (ω : ℕ → Bool) : repReal ω ∈ cantorSet := pt_mem_cantorSet _ _
+
+theorem pt_true_eq_add (f : ℕ → Bool) (ω : ℕ → Bool) :
+    pt (fun _ => true) ω = pt f ω + pt (fun i => !f i) ω := by
+  unfold pt realOfDigits
+  simp only [Nat.cast_ofNat]
+  rw [← (summable_ptDigit f ω).tsum_add (summable_ptDigit _ ω)]
+  refine tsum_congr fun i => ?_
+  rw [← add_div]; congr 1
+  simp only [ptDigit]
+  rcases Bool.eq_false_or_eq_true (f i) with h | h <;>
+    rcases Bool.eq_false_or_eq_true (ω i) with h' | h' <;> simp [h, h']
+
+/-- **Free part plus copy part.**  The free coins enter exactly as in `cantorLiouvilleReal`. -/
+theorem repReal_eq (ω : ℕ → Bool) : repReal ω = pt isFree ω + repCopy ω := by
+  unfold repReal repCopy
+  rw [pt_true_eq_add isFree]
+  congr 1
+  unfold pt; congr 1; funext i
+  simp only [ptDigit]
+  cases h : isFree i
+  · simp
+  · simp [src_of_free h]
+
+/-- The copy part reads only forced coins. -/
+theorem repCopy_congr {ω ω' : ℕ → Bool} (h : ∀ i, isFree i = false → ω i = ω' i) :
+    repCopy ω = repCopy ω' := by
+  unfold repCopy pt; congr 1; funext i
+  simp only [ptDigit]
+  by_cases hf : isFree i = true
+  · simp [hf]
+  · simp only [Bool.not_eq_true] at hf
+    simp [hf, h _ (isFree_src_of_not_free hf)]
+
+/-! ## Bases coprime to 3: Cassels with an independent shift -/
+
+/-- **Riesz bound survives an independent additive shift.**  If `Z` reads only the non-free
+coins, `‖𝔼 e(ξ(pt free + Z))‖ ≤ Bf free M ξ`.  Proved (the induction of `charFun_real`, carrying
+`Z ∘ consB c` along). -/
+theorem charFun_add (M : ℕ) : ∀ (free : ℕ → Bool) (ξ : ℝ) (Z : (ℕ → Bool) → ℝ), Measurable Z →
+    (∀ ω ω', (∀ i, free i = false → ω i = ω' i) → Z ω = Z ω') →
+    ‖∫ ω, ee (ξ * (pt free ω + Z ω)) ∂coinMeasure‖ ≤ Bf free M ξ := by
+  induction M with
+  | zero =>
+    intro free ξ Z _ _
+    simp only [Bf, Finset.range_zero, Finset.filter_empty, Finset.prod_empty]
+    refine (norm_integral_le_of_norm_le_const (C := 1)
+      (Eventually.of_forall fun ω => (norm_ee _).le)).trans ?_
+    simp
+  | succ M ih =>
+    intro free ξ Z hZm hZ
+    set free' : ℕ → Bool := fun i => free (i + 1)
+    set g : (ℕ → Bool) → ℂ := fun ω => ee (ξ * (pt free ω + Z ω))
+    have hgm : Measurable g := measurable_ee.comp (((measurable_pt free).add hZm).const_mul ξ)
+    have hgi : ∀ μ : Measure (ℕ → Bool), IsFiniteMeasure μ → Integrable g μ := fun μ _ =>
+      Integrable.of_bound hgm.aestronglyMeasurable 1
+        (Eventually.of_forall fun ω => (norm_ee _).le)
+    set Zc : Bool → (ℕ → Bool) → ℝ := fun c ω => 3 * Z (consB c ω)
+    have hZcm : ∀ c, Measurable (Zc c) := fun c => (hZm.comp (measurable_consB c)).const_mul 3
+    have hZc : ∀ c ω ω', (∀ i, free' i = false → ω i = ω' i) → Zc c ω = Zc c ω' := by
+      intro c ω ω' h
+      simp only [Zc]; congr 1
+      refine hZ _ _ fun i hi => ?_
+      cases i with
+      | zero => rfl
+      | succ i => exact h i hi
+    set I' : Bool → ℂ := fun c => ∫ ω, ee (ξ / 3 * (pt free' ω + Zc c ω)) ∂coinMeasure
+    have hc : ∀ c, ∫ ω, g (consB c ω) ∂coinMeasure =
+        ee (ξ * ((if free 0 && c then 2 else 0) / 3)) * I' c := by
+      intro c
+      rw [← integral_const_mul]
+      refine integral_congr_ae (Eventually.of_forall fun ω => ?_)
+      simp only [g, Zc, pt_consB, ← ee_add]
+      congr 1; ring
+    have hsplit : ∫ ω, g ω ∂coinMeasure =
+        2⁻¹ * ∫ ω, g (consB true ω) ∂coinMeasure + 2⁻¹ * ∫ ω, g (consB false ω) ∂coinMeasure := by
+      conv_lhs => rw [coinMeasure_eq]
+      rw [integral_add_measure ((hgi _ inferInstance).smul_measure (by simp))
+          ((hgi _ inferInstance).smul_measure (by simp)),
+        integral_smul_measure, integral_smul_measure,
+        integral_map (measurable_consB true).aemeasurable hgm.aestronglyMeasurable,
+        integral_map (measurable_consB false).aemeasurable hgm.aestronglyMeasurable]
+      simp [ENNReal.toReal_inv]
+    have hI' : ∀ c, ‖I' c‖ ≤ Bf free' M (ξ / 3) := fun c => ih free' (ξ / 3) (Zc c) (hZcm c) (hZc c)
+    change ‖∫ ω, g ω ∂coinMeasure‖ ≤ _
+    rw [hsplit, hc, hc]
+    unfold Bf
+    rw [Finset.prod_filter, Finset.prod_range_succ', ← Finset.prod_filter]
+    have hre : ∏ p ∈ (Finset.range M).filter (fun p => free (p + 1) = true),
+        |Real.cos (2 * Real.pi * ξ / 3 ^ (p + 1 + 1))| = Bf free' M (ξ / 3) := by
+      refine Finset.prod_congr rfl fun p _ => ?_
+      congr 2; rw [pow_succ]; ring
+    rw [hre]
+    by_cases h0 : free 0 = true
+    · have hZtf : I' true = I' false := by
+        have hz : ∀ ω, Z (consB true ω) = Z (consB false ω) := fun ω =>
+          hZ _ _ fun i hi => by
+            cases i with
+            | zero => rw [h0] at hi; exact absurd hi (by decide)
+            | succ i => rfl
+        simp only [I', Zc, hz]
+      simp only [h0, Bool.true_and, if_true, Bool.false_eq_true, if_false]
+      rw [hZtf]
+      have : 2⁻¹ * (ee (ξ * (2 / 3)) * I' false) + 2⁻¹ * (ee (ξ * (0 / 3)) * I' false) =
+          ((1 + ee (2 * ξ / 3)) / 2) * I' false := by
+        rw [show ξ * (0 / 3) = 0 by ring, show ξ * (2 / 3) = 2 * ξ / 3 by ring]
+        simp [ee]; ring
+      rw [this, norm_mul, norm_one_add_ee_div_two, mul_comm,
+        show Real.pi * (2 * ξ / 3) = 2 * Real.pi * ξ / 3 ^ (0 + 1) by ring]
+      exact mul_le_mul_of_nonneg_right (hI' false) (abs_nonneg _)
+    · simp only [Bool.not_eq_true] at h0
+      simp only [h0, Bool.false_and, Bool.false_eq_true, if_false, mul_one]
+      rw [show ξ * (0 / 3) = 0 by ring]
+      simp only [ee, Complex.ofReal_zero, mul_zero, Complex.exp_zero, one_mul]
+      calc ‖2⁻¹ * I' true + 2⁻¹ * I' false‖ ≤ ‖2⁻¹ * I' true‖ + ‖2⁻¹ * I' false‖ := norm_add_le _ _
+        _ = 2⁻¹ * ‖I' true‖ + 2⁻¹ * ‖I' false‖ := by simp
+        _ ≤ 2⁻¹ * Bf free' M (ξ / 3) + 2⁻¹ * Bf free' M (ξ / 3) := by
+            gcongr <;> exact hI' _
+        _ = _ := by ring
+
+theorem charFun_repReal (M : ℕ) (ξ : ℝ) :
+    ‖∫ ω, ee (ξ * repReal ω) ∂coinMeasure‖ ≤ Bf isFree M ξ := by
+  simp_rw [repReal_eq]
+  exact charFun_add M isFree ξ repCopy measurable_repCopy fun ω ω' h => repCopy_congr h
+
+/-! ### The base-`b` second moment for any law with the Riesz bound (copy of
+`CantorLiouvilleAll.secondMoment_le_b`, `pt free` replaced by `G`) -/
+
+theorem secondMoment_expand_of_cf (free : ℕ → Bool) (Φ : (ℕ → Bool) → ℝ)
+    (hGm : Measurable Φ) (hcf : ∀ M ξ, ‖∫ ω, ee (ξ * Φ ω) ∂coinMeasure‖ ≤ Bf free M ξ) (b : ℕ) (h : ℤ) (M N : ℕ) :
+    ∫ ω, ‖∑ k ∈ Finset.range N, ee (h * (b : ℝ) ^ k * Φ ω)‖ ^ 2 ∂coinMeasure ≤
+      ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N, Bf free M (h * ((b : ℝ) ^ n - (b : ℝ) ^ m)) := by
+  have hG := hGm
+  have hint : ∀ ξ : ℝ, Integrable (fun ω => ee (ξ * Φ ω)) coinMeasure := fun ξ =>
+    Integrable.of_bound ((measurable_ee.comp (hG.const_mul ξ)).aestronglyMeasurable) 1
+      (Eventually.of_forall fun ω => (norm_ee _).le)
+  have hexp : ∀ ω, ((‖∑ k ∈ Finset.range N, ee (h * (b : ℝ) ^ k * Φ ω)‖ ^ 2 : ℝ) : ℂ) =
+      ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N,
+        ee ((h * ((b : ℝ) ^ n - (b : ℝ) ^ m)) * Φ ω) := by
+    intro ω
+    rw [sq_norm_sum_ee (fun k => h * (b : ℝ) ^ k * Φ ω)]
+    refine Finset.sum_congr rfl fun n _ => Finset.sum_congr rfl fun m _ => ?_
+    congr 1; ring
+  have hI : ((∫ ω, ‖∑ k ∈ Finset.range N, ee (h * (b : ℝ) ^ k * Φ ω)‖ ^ 2 ∂coinMeasure : ℝ) : ℂ) =
+      ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N,
+        ∫ ω, ee ((h * ((b : ℝ) ^ n - (b : ℝ) ^ m)) * Φ ω) ∂coinMeasure := by
+    rw [← integral_complex_ofReal]
+    simp_rw [hexp]
+    rw [integral_finsetSum _ fun n _ => integrable_finsetSum _ fun m _ => hint _]
+    refine Finset.sum_congr rfl fun n _ => ?_
+    rw [integral_finsetSum _ fun m _ => hint _]
+  have := congrArg Complex.re hI
+  rw [Complex.ofReal_re] at this
+  rw [this]
+  refine (Complex.re_le_norm _).trans ((norm_sum_le _ _).trans ?_)
+  refine Finset.sum_le_sum fun n _ => (norm_sum_le _ _).trans ?_
+  exact Finset.sum_le_sum fun m _ => hcf M _
+
+theorem secondMoment_le_explicit_of_cf (free : ℕ → Bool) (Φ : (ℕ → Bool) → ℝ)
+    (hGm : Measurable Φ) (hcf : ∀ M ξ, ‖∫ ω, ee (ξ * Φ ω) ∂coinMeasure‖ ≤ Bf free M ξ) {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) (h : ℤ)
+    (hh : h ≠ 0) (N : ℕ) (hN : 1 ≤ N) :
+    ∫ ω, ‖∑ k ∈ Finset.range N, ee (h * (b : ℝ) ^ k * Φ ω)‖ ^ 2 ∂coinMeasure ≤
+      (N : ℝ) ^ 2 * (N : ℝ) ^ (-(1 / 2 : ℝ)) +
+        3 * (3 ^ (padicValNat 3 h.natAbs + tb b) + 2 * (3 / 2 : ℝ) ^ tb b) * (N : ℝ) ^ 2 *
+          Real.exp (-(Real.log (3 / 2) / 2) * freeCount free (Nat.log 3 N / 2)) := by
+  set e := padicValNat 3 h.natAbs
+  set t := tb b
+  set M := Nat.log 3 N / 2
+  set F := freeCount free M
+  set W := F / 2
+  have hb1 : (1 : ℝ) ≤ b := by exact_mod_cast (by omega : 1 ≤ b)
+  have hMN : 3 ^ M ≤ N :=
+    (Nat.pow_le_pow_right (by norm_num) (Nat.div_le_self _ _)).trans
+      (Nat.pow_log_le_self 3 (by omega))
+  set G : ℕ → ℕ → ℝ := fun d m => Bf free M (h * ((b : ℝ) ^ d - 1) * (b : ℝ) ^ m)
+  have hpair := pair_sum_le (fun n m => Bf free M (h * ((b : ℝ) ^ n - (b : ℝ) ^ m))) G
+    (fun d m => Bf_nonneg _ _ _) (fun n => Bf_le_one _ _ _)
+    (fun n m hmn => le_of_eq (by
+      simp only [G]; congr 1
+      rw [show (b : ℝ) ^ n = (b : ℝ) ^ (n - m) * (b : ℝ) ^ m by rw [← pow_add]; congr 1; omega]; ring))
+    (fun n m hmn => le_of_eq (by
+      simp only [G]; rw [← Bf_neg]; congr 1
+      rw [show (b : ℝ) ^ m = (b : ℝ) ^ (m - n) * (b : ℝ) ^ n by rw [← pow_add]; congr 1; omega]; ring)) N
+  set P := (2 / 3 : ℝ) ^ W
+  set T := (3 / 2 : ℝ) ^ t
+  have hT : 0 ≤ T := by positivity
+  have hshift : ∀ d ∈ Finset.Ico 1 N, ∑ m ∈ Finset.range N, G d m ≤
+      (if W ≤ e + padicValNat 3 (b ^ d - 1) then (N : ℝ) else 0) + 2 * N * T * P := by
+    intro d hd
+    simp only [Finset.mem_Ico] at hd
+    have hd1 : 1 ≤ b ^ d - 1 := by
+      have : 2 ≤ b ^ d := le_trans hb (Nat.le_self_pow (by omega) b)
+      omega
+    split_ifs with hbad
+    · refine (Finset.sum_le_sum fun m _ => Bf_le_one free M _).trans ?_
+      have : (0 : ℝ) ≤ 2 * N * T * P := by positivity
+      simp; linarith
+    · rw [zero_add]
+      set c := h.natAbs * (b ^ d - 1)
+      have hc : c ≠ 0 := Nat.mul_ne_zero (Int.natAbs_ne_zero.2 hh) (by omega)
+      have hv : padicValNat 3 c = e + padicValNat 3 (b ^ d - 1) :=
+        padicValNat.mul (Int.natAbs_ne_zero.2 hh) (by omega)
+      refine le_of_eq_of_le (Finset.sum_congr rfl fun m _ => ?_)
+        (good_shift_b free hb h3 M N hMN c hc (by omega))
+      simp only [G]
+      rw [← Bf_abs]
+      congr 1
+      have hd2 : (0 : ℝ) ≤ (b : ℝ) ^ d - 1 := by
+        have : (1:ℝ) ≤ (b : ℝ) ^ d := one_le_pow₀ hb1; linarith
+      simp only [c]
+      push_cast [Nat.cast_sub (Nat.one_le_pow _ _ (by omega : 0 < b))]
+      rw [abs_mul, abs_mul, abs_of_pos (by positivity : (0:ℝ) < (b : ℝ) ^ m),
+        abs_of_nonneg hd2, Nat.cast_natAbs, Int.cast_abs]
+  have hsumd : ∑ d ∈ Finset.Ico 1 N, ∑ m ∈ Finset.range N, G d m ≤
+      N * ((N / 3 ^ (W - e - t) : ℕ) : ℝ) + N * (2 * N * T * P) := by
+    refine (Finset.sum_le_sum hshift).trans ?_
+    rw [Finset.sum_add_distrib, ← Finset.sum_filter, Finset.sum_const, Finset.sum_const,
+      nsmul_eq_mul, nsmul_eq_mul, Nat.card_Ico]
+    have hbc := bad_count_b hb h3 e W N
+    have : (((Finset.Ico 1 N).filter (fun m => W ≤ e + padicValNat 3 (b ^ m - 1))).card : ℝ) ≤
+        ((N / 3 ^ (W - e - t) : ℕ) : ℝ) := by exact_mod_cast hbc
+    have hN1 : ((N - 1 : ℕ) : ℝ) ≤ N := by exact_mod_cast Nat.sub_le N 1
+    have : (0 : ℝ) ≤ 2 * N * T * P := by positivity
+    nlinarith
+  have hdiv : ((N / 3 ^ (W - e - t) : ℕ) : ℝ) ≤ N * 3 ^ (e + t) * P := by
+    have h1 : (N / 3 ^ (W - e - t)) * 3 ^ W ≤ N * 3 ^ (e + t) := by
+      calc (N / 3 ^ (W - e - t)) * 3 ^ W ≤ (N / 3 ^ (W - e - t)) * (3 ^ (W - e - t) * 3 ^ (e + t)) := by
+            gcongr; rw [← pow_add]; exact Nat.pow_le_pow_right (by norm_num) (by omega)
+        _ = (N / 3 ^ (W - e - t)) * 3 ^ (W - e - t) * 3 ^ (e + t) := by ring
+        _ ≤ N * 3 ^ (e + t) := by gcongr; exact Nat.div_mul_le_self _ _
+    have h2 : ((N / 3 ^ (W - e - t) : ℕ) : ℝ) * 3 ^ W ≤ N * 3 ^ (e + t) := by exact_mod_cast h1
+    have h3' : (2 / 3 : ℝ) ^ W * 3 ^ W = 2 ^ W := by rw [← mul_pow]; norm_num
+    have h4 : (1 : ℝ) ≤ 2 ^ W := one_le_pow₀ (by norm_num)
+    have h5 : (0 : ℝ) < 3 ^ W := by positivity
+    rw [← mul_le_mul_iff_of_pos_right h5]
+    calc _ ≤ (N : ℝ) * 3 ^ (e + t) := h2
+      _ ≤ (N : ℝ) * 3 ^ (e + t) * 2 ^ W := le_mul_of_one_le_right (by positivity) h4
+      _ = _ := by rw [mul_assoc _ ((2 / 3 : ℝ) ^ W), h3']
+  have hexp := pow_two_sub_le W F rfl
+  have hNr : (N : ℝ) ≤ (N : ℝ) ^ 2 * (N : ℝ) ^ (-(1 / 2 : ℝ)) := by
+    have hN0 : (1 : ℝ) ≤ N := by exact_mod_cast hN
+    have : (N : ℝ) ^ 2 * (N : ℝ) ^ (-(1 / 2 : ℝ)) = N * (N : ℝ) ^ (1 / 2 : ℝ) := by
+      rw [show (N : ℝ) ^ 2 = N * N ^ (1 : ℝ) by rw [Real.rpow_one]; ring, mul_assoc,
+        ← Real.rpow_add (by positivity)]
+      norm_num
+    rw [this]
+    have : (1 : ℝ) ≤ (N : ℝ) ^ (1 / 2 : ℝ) := Real.one_le_rpow hN0 (by norm_num)
+    nlinarith
+  have hI := (secondMoment_expand_of_cf free Φ hGm hcf b h M N).trans hpair
+  set E := Real.exp (-(Real.log (3 / 2) / 2) * F)
+  have hE : 0 ≤ E := (Real.exp_pos _).le
+  have hP : 0 ≤ P := by positivity
+  have hN0 : (0 : ℝ) ≤ N := by positivity
+  have hfin : ∫ ω, ‖∑ k ∈ Finset.range N, ee (h * (b : ℝ) ^ k * Φ ω)‖ ^ 2 ∂coinMeasure ≤
+      N + 2 * ((N : ℝ) ^ 2 * (3 ^ (e + t) + 2 * T) * P) := by
+    have := mul_le_mul_of_nonneg_left hdiv hN0
+    nlinarith
+  have hK : (0 : ℝ) ≤ 3 ^ (e + t) + 2 * T := by positivity
+  calc _ ≤ N + 2 * ((N : ℝ) ^ 2 * (3 ^ (e + t) + 2 * T) * P) := hfin
+    _ ≤ (N : ℝ) ^ 2 * (N : ℝ) ^ (-(1 / 2 : ℝ)) + 2 * ((N : ℝ) ^ 2 * (3 ^ (e + t) + 2 * T) * (3 / 2 * E)) := by
+        gcongr
+    _ = _ := by simp only [T, E, F, M]; ring
+
+/-- **Cassels second moment, base `b` coprime to 3, any law with the Riesz bound.**  Confidence 80%.
+
+English proof.  `secondMoment_le_explicit` verbatim with `2 → b`: `secondMoment_expand` (base-free
+up to `2ᵏ → bᵏ`) gives `Σ_{n,m} Bf free M (h(bⁿ − bᵐ))`; the pair `m < n` has frequency
+`h(bᵈ − 1)·bᵐ`, `d = n − m`.  Good `d` (`e + v₃(bᵈ−1) + 1 ≤ F/2`, `e = v₃ h`): `good_shift` with
+`sum_Hf_le_b` in place of `sum_Hf_le`, an extra `(3/2)ᵗ`.  Bad `d`: by
+`padicValNat_pow_sub_one_le` they have `v₃(d) ≥ W − e − t`, so there are
+`≤ N / 3^{W−e−t−1}` of them (`bad_count` with `3^{t}` more).  The explicit constant becomes
+`(1 + 3(3^{e+t+1} + 2))(3/2)ᵗ ≤ 16·|h|·(9/2)ᵗ ≤ 16·|h|·b⁶` (`3ᵉ ≤ |h|`, `three_pow_tb_lt`). -/
+theorem secondMoment_le_of_cf (free : ℕ → Bool) (Φ : (ℕ → Bool) → ℝ)
+    (hGm : Measurable Φ) (hcf : ∀ M ξ, ‖∫ ω, ee (ξ * Φ ω) ∂coinMeasure‖ ≤ Bf free M ξ) {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) (h : ℤ)
+    (hh : h ≠ 0) (N : ℕ) (hN : 1 ≤ N) :
+    ∫ ω, ‖∑ k ∈ Finset.range N, ee (h * (b : ℝ) ^ k * Φ ω)‖ ^ 2 ∂coinMeasure ≤
+      16 * (b : ℝ) ^ 6 * |(h : ℝ)| * (N : ℝ) ^ 2 *
+        (Real.exp (-(Real.log (3 / 2) / 2) * freeCount free (Nat.log 3 N / 2)) +
+          (N : ℝ) ^ (-(1 / 2 : ℝ))) := by
+  refine (secondMoment_le_explicit_of_cf free Φ hGm hcf hb h3 h hh N hN).trans ?_
+  set e := padicValNat 3 h.natAbs
+  set t := tb b
+  set E := Real.exp (-(Real.log (3 / 2) / 2) * freeCount free (Nat.log 3 N / 2))
+  set R := (N : ℝ) ^ (-(1 / 2 : ℝ))
+  have hE : 0 ≤ E := (Real.exp_pos _).le
+  have hR : 0 ≤ R := by positivity
+  have hN2 : (0 : ℝ) ≤ (N : ℝ) ^ 2 := by positivity
+  have he : (3 : ℝ) ^ e ≤ |(h : ℝ)| := by
+    have : 3 ^ e ≤ h.natAbs := Nat.le_of_dvd (Int.natAbs_pos.2 hh) pow_padicValNat_dvd
+    rw [← Int.cast_abs, ← Int.natCast_natAbs]; exact_mod_cast this
+  have ht : (3 : ℝ) ^ t ≤ (b : ℝ) ^ 2 := by exact_mod_cast (three_pow_tb_lt hb).le
+  have hT : (3 / 2 : ℝ) ^ t ≤ 3 ^ t := pow_le_pow_left₀ (by norm_num) (by norm_num) t
+  have hb1 : (1 : ℝ) ≤ b := by exact_mod_cast (by omega : 1 ≤ b)
+  have hh1 : (1 : ℝ) ≤ |(h : ℝ)| := le_trans (one_le_pow₀ (by norm_num)) he
+  have hb2 : (b : ℝ) ^ 2 ≤ (b : ℝ) ^ 6 := pow_le_pow_right₀ hb1 (by norm_num)
+  have hb6 : (1 : ℝ) ≤ (b : ℝ) ^ 6 := one_le_pow₀ hb1
+  have h3t : (0 : ℝ) ≤ 3 ^ t := by positivity
+  have hK : 3 * ((3 : ℝ) ^ (e + t) + 2 * (3 / 2 : ℝ) ^ t) ≤ 16 * (b : ℝ) ^ 6 * |(h : ℝ)| := by
+    rw [pow_add]
+    have : (3 : ℝ) ^ e * 3 ^ t ≤ |(h : ℝ)| * 3 ^ t := by gcongr
+    have : |(h : ℝ)| * 3 ^ t ≤ |(h : ℝ)| * (b : ℝ) ^ 6 := by gcongr; linarith
+    have : (1 : ℝ) * 3 ^ t ≤ |(h : ℝ)| * 3 ^ t := by gcongr
+    nlinarith
+  have h16 : (1 : ℝ) ≤ 16 * (b : ℝ) ^ 6 * |(h : ℝ)| := by nlinarith
+  have := mul_le_mul_of_nonneg_right hK (mul_nonneg hN2 hE)
+  have := mul_le_mul_of_nonneg_right h16 (mul_nonneg hN2 hR)
+  nlinarith
+
+
+
+/-- **Bases coprime to 3, a.e.**  Proved: `charFun_repReal` feeds the Cassels chain; the free set
+is exactly `isFree`, so the summation is `ae_isNormal_of_coprime_three` verbatim. -/
+theorem ae_isNormal_rep_of_coprime_three {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) :
+    ∀ᵐ ω ∂coinMeasure, IsNormal b (repReal ω) := by
+  refine ae_isNormal_of_secondMoment coinMeasure hb _ measurable_repReal sched
+    sched_strictMono sched_ratio ?_
+  intro h hh
+  have hC : (0 : ℝ) < 16 * (b : ℝ) ^ 6 * |(h : ℝ)| := by
+    have : (h : ℝ) ≠ 0 := by exact_mod_cast hh
+    positivity
+  have hl : 0 < Real.log (3 / 2) / 2 := by have := Real.log_pos (by norm_num : (1:ℝ) < 3 / 2); linarith
+  refine (summable_sched_bound _ _ hC hl).of_nonneg_of_le
+    (fun j => div_nonneg (integral_nonneg fun ω => by positivity) (by positivity))
+    (fun j => ?_)
+  have hN : (0 : ℝ) < sched j := by exact_mod_cast one_le_sched j
+  rw [div_le_iff₀ (by positivity)]
+  calc _ ≤ _ := secondMoment_le_of_cf isFree repReal measurable_repReal charFun_repReal hb h3 h hh
+          (sched j) (one_le_sched j)
+    _ = _ := by ring
+
+/-! ## Powers of 3 (elementary) -/
+
+/-- **Guard: no point of `K` is normal to `3ˢ`.** -/
+theorem not_isNormal_rep_three_pow (ω : ℕ → Bool) {s : ℕ} (hs : 0 < s) :
+    ¬ IsNormal (3 ^ s) (repReal ω) := by
+  have : repReal ω = EntropyProfiles.cantorPt (fun i => if ω (src i) then 1 else 0) := by
+    unfold repReal pt EntropyProfiles.cantorPt
+    congr 1; funext i
+    simp only [ptDigit, Bool.true_and]
+    split_ifs <;> simp
+  rw [this]
+  exact EntropyProfiles.not_isNormal_three_pow_cantorPt _ hs
+
+/-! ## The Liouville property -/
+
+open CantorExpGeneric in
+theorem pow_mul_tl (free ω : ℕ → Bool) (n : ℕ) :
+    (3 : ℝ) ^ n * tl free ω n = ∑' k, (ptDigit free ω (k + n) : ℝ) / 3 ^ (k + 1) := by
+  rw [tl, ← tsum_mul_left]
+  refine tsum_congr fun k => ?_
+  rw [show k + n + 1 = (k + 1) + n by ring, pow_add]
+  field_simp
+
+open CantorExpGeneric in
+/-- **Liouville property.**  Proved.  With `k = 2n`, `A = a_k`, `T = (k+2)A`: the coins
+`ω''` that repeat the block `[A, 2A)` forever agree with `ω ∘ src` below `T`, so
+`|x − r| ≤ 3^{-T}` for `r = pt ω''`; `r (3^{2A} − 3^A) = hd(2A) − hd(A)` by periodicity of the
+tail; and `(3^{2A} − 3^A)^n < 3^{(2n+2)A}`.  Irrationality supplies `x ≠ r`. -/
+theorem liouville_repReal (ω : ℕ → Bool) (hirr : Irrational (repReal ω)) :
+    Liouville (repReal ω) := by
+  intro n
+  set A := runStart (2 * n) with hAdef
+  set T := (2 * n + 2) * A with hTdef
+  have hA1 : 1 ≤ A := by have := lt_runStart (2 * n); omega
+  set ω' : ℕ → Bool := fun i => ω (src i) with hω'
+  set ω'' : ℕ → Bool := fun i => if i < A then ω' i else ω' (A + (i - A) % A) with hω''
+  have hblk : ∀ r, r < A → src (A + r) = A + r := by
+    intro r hr
+    rw [src_of_mem_run (k := 2 * n) (by omega) (by nlinarith), Nat.add_sub_cancel_left,
+      Nat.mod_eq_of_lt hr]
+  have hagree : ∀ i < T, ω'' i = ω' i := by
+    intro i hi
+    simp only [hω'']
+    split_ifs with h
+    · rfl
+    · simp only [hω']
+      rw [hblk _ (Nat.mod_lt _ (by omega)), src_of_mem_run (k := 2 * n) (by omega) (by omega)]
+  have hper : ∀ m, ω'' (m + 2 * A) = ω'' (m + A) := by
+    intro m
+    simp only [hω'', show ¬ m + 2 * A < A by omega, show ¬ m + A < A by omega, if_false]
+    congr 2
+    rw [show m + 2 * A - A = m + A by omega, show m + A - A = m by omega, Nat.add_mod_right]
+  obtain ⟨r, hrdef⟩ : ∃ r, r = pt (fun _ => true) ω'' := ⟨_, rfl⟩
+  have hx := pt_split (fun _ => true) ω' T
+  have hr := pt_split (fun _ => true) ω'' T
+  rw [← hrdef] at hr
+  have hhd : hd (fun _ => true) ω' T = hd (fun _ => true) ω'' T :=
+    hd_congr _ _ _ _ fun j hj => by simp only [ptDigit, hagree j hj]
+  have hclose : |repReal ω - r| ≤ 1 / 3 ^ T := by
+    change |pt (fun _ => true) ω' - r| ≤ _
+    rw [hx, hr, hhd, abs_le]
+    have := tl_nonneg (fun _ => true) ω' T; have := tl_le (fun _ => true) ω' T
+    have := tl_nonneg (fun _ => true) ω'' T; have := tl_le (fun _ => true) ω'' T
+    constructor <;> linarith
+  -- rationality of `r`
+  have hA := pt_split (fun _ => true) ω'' A
+  have h2A := pt_split (fun _ => true) ω'' (2 * A)
+  rw [← hrdef] at hA h2A
+  have htl : (3 : ℝ) ^ (2 * A) * tl (fun _ => true) ω'' (2 * A) =
+      (3 : ℝ) ^ A * tl (fun _ => true) ω'' A := by
+    rw [pow_mul_tl, pow_mul_tl]
+    refine tsum_congr fun k => ?_
+    simp only [ptDigit, hper]
+  set a : ℤ := (hd (fun _ => true) ω'' (2 * A) : ℤ) - hd (fun _ => true) ω'' A
+  set b : ℤ := 3 ^ (2 * A) - 3 ^ A
+  have hb3 : (3 : ℤ) ^ A ≥ 3 := by
+    calc (3 : ℤ) ^ A ≥ 3 ^ 1 := pow_le_pow_right₀ (by norm_num) hA1
+      _ = 3 := by norm_num
+  have hbeq : b = 3 ^ A * (3 ^ A - 1) := by simp only [b]; rw [two_mul, pow_add]; ring
+  have hb1 : 1 < b := by rw [hbeq]; nlinarith
+  have hbR : (b : ℝ) = 3 ^ (2 * A) - 3 ^ A := by simp [b]
+  have hb0 : (0 : ℝ) < b := by exact_mod_cast (by omega : (0 : ℤ) < b)
+  have hrab : r = a / b := by
+    rw [eq_div_iff hb0.ne', hbR]
+    have e1 : r * 3 ^ (2 * A) = hd (fun _ => true) ω'' (2 * A) +
+        3 ^ (2 * A) * tl (fun _ => true) ω'' (2 * A) := by
+      rw [h2A]; field_simp
+    have e2 : r * 3 ^ A = hd (fun _ => true) ω'' A + 3 ^ A * tl (fun _ => true) ω'' A := by
+      rw [hA]; field_simp
+    simp only [a]; push_cast
+    linear_combination e1 - e2 + htl
+  refine ⟨a, b, hb1, ?_, ?_⟩
+  · exact hirr.ne_rational a b
+  · rw [← hrab]
+    refine hclose.trans_lt ?_
+    have hbn : (b : ℝ) ^ n < 3 ^ T := by
+      have h1 : (b : ℝ) < 3 ^ (2 * A) := by rw [hbR]; have : (0 : ℝ) < 3 ^ A := by positivity
+                                            linarith
+      calc (b : ℝ) ^ n ≤ ((3 : ℝ) ^ (2 * A)) ^ n := pow_le_pow_left₀ hb0.le h1.le n
+        _ = 3 ^ (2 * A * n) := by rw [← pow_mul]
+        _ < 3 ^ T := pow_lt_pow_right₀ (by norm_num) (by simp only [hTdef]; nlinarith)
+    rw [one_div_lt_one_div (by positivity) (by positivity)]
+    exact hbn
+
+/-! ## Bases `3ˢt`, `t > 1`: the crux -/
+
+/-- **Crux: a.e. normality to `b = 3ˢt`, `t > 1`.**  Open; confidence 50%.
+
+What is proved around it: bases prime to 3 (`ae_isNormal_rep_of_coprime_three`, the free coins
+alone), powers of 3 fail (`not_isNormal_rep_three_pow`), and the known-false sibling `b = 9` is
+excluded by the hypothesis.  Probe `scripts/rep_probe.py` (b = 6, ℓ = 40, 30 copies): the
+copy stretch of a random block has base-6 digit and pair frequencies at the level of uniform
+random digits; control `b = 9` fails (error .19–.24), and the special block `W = 2` fails at
+3 copies (error .35).
+
+Route (second moment along `sched`, then `CantorLiouvilleAll.ae_isNormal_of_secondMoment`).
+Split the frequencies `bᵐ` by where the window `[sm, sm + m log₃ t]` of `bᵐx mod 1` sits:
+1. *Free zone* (window in a gap of `isFree`): the profile thread's window/Cassels count, with the
+   `t`-orbit mod `3ᵏ` (as in `CantorExactExponentProfile.ae_isNormal_of_profileOK`, step 3).
+2. *Copy zone* (window inside run `k`, `A = a_k`): `bᵐx ≡ bᵐ 3^{-A} W/(3^A − 1) (mod 1)` up to
+   `t^m 3^{sm−(k+2)A}`, with `W` the random block.  The pair term is the Riesz product over the
+   block coins, `∏_{i<A} |cos(2π η 3ⁱ/(3^A−1))|`, `η = h(bⁿ − bᵐ) 3^{-A}` reduced mod `3^A − 1`:
+   the cyclic ternary digits of `η`.  Needed: few pairs have `η` with few cyclic digit changes.
+   This is a digits-of-`bᵐ`-modulo-`3^A − 1` statement; plain counting fails (`A^K` strings
+   with `K` changes against `N ≈ kA` pairs per `n`), and so does the large sieve
+   (`Σ_y |μ̂(y/q)|² = (3/2)^A` against an orbit of length `≈ kA`).  The cyclic structure with
+   the low `3`-adic digits of `h tᵐ (b^d − 1)` (when it is `< 3^A`, the existing count applies)
+   is the expected mechanism.
+3. *Shadow zone* (`m ∈ [(k+2)A/log₃ b, (k+2)A/s]`, window straddling the run end): the free
+   coins after the run read the top digits of `h tᵐ (b^d − 1)`, as in the profile thread's
+   shadow (Baker input `Literature.BakerLogDiscrepancy`, `sum_topProd_le`).
+-/
+theorem ae_isNormal_rep_of_three_dvd {b : ℕ} (hb : 2 ≤ b) (h3 : 3 ∣ b) (hpow : ∀ s : ℕ, b ≠ 3 ^ s) :
+    ∀ᵐ ω ∂coinMeasure, IsNormal b (repReal ω) := by
   sorry
 
+theorem irrational_of_isNormal_two {x : ℝ} (hx : IsNormal 2 x) : Irrational x := by
+  rintro ⟨q, rfl⟩
+  have := isNormal_rat_mul_add 2 le_rfl (q : ℝ) 1 (-q) one_ne_zero hx
+  push_cast at this
+  rw [one_mul, add_neg_cancel] at this
+  exact ExplicitPQ.not_isNormal_two_zero this
+
+/-- **The full profile, almost surely.** -/
+theorem ae_repProfile : ∀ᵐ ω ∂coinMeasure,
+    ∀ b : ℕ, 2 ≤ b → (IsNormal b (repReal ω) ↔ ∀ s : ℕ, b ≠ 3 ^ s) := by
+  have hall : ∀ᵐ ω ∂coinMeasure, ∀ b : ℕ, 2 ≤ b → (∀ s : ℕ, b ≠ 3 ^ s) →
+      IsNormal b (repReal ω) := by
+    rw [ae_all_iff]
+    intro b
+    by_cases hb : 2 ≤ b
+    · by_cases hp : ∀ s : ℕ, b ≠ 3 ^ s
+      · by_cases h3 : 3 ∣ b
+        · filter_upwards [ae_isNormal_rep_of_three_dvd hb h3 hp] with ω hω _ _ using hω
+        · filter_upwards [ae_isNormal_rep_of_coprime_three hb h3] with ω hω _ _ using hω
+      · exact Eventually.of_forall fun ω _ h => absurd h hp
+    · exact Eventually.of_forall fun ω h => absurd h hb
+  filter_upwards [hall] with ω hω b hb
+  refine ⟨fun hn s hs => ?_, hω b hb⟩
+  rcases Nat.eq_zero_or_pos s with h0 | h0
+  · subst h0; rw [hs] at hb; norm_num at hb
+  · exact not_isNormal_rep_three_pow ω h0 (hs ▸ hn)
+
+/-- **The cut is not forced (Liouville case).**  Wiring (proved) from `ae_repProfile`, whose only
+open input is the crux `ae_isNormal_rep_of_three_dvd`. -/
+theorem liouvilleCantorFullProfile : LiouvilleCantorFullProfile := by
+  obtain ⟨ω, hω⟩ := ae_repProfile.exists
+  have h2 : IsNormal 2 (repReal ω) := (hω 2 le_rfl).2 fun s hs => by
+    rcases s with _ | s
+    · norm_num at hs
+    · have : 3 ∣ 2 := hs ▸ dvd_pow_self 3 (Nat.succ_ne_zero s)
+      norm_num at this
+  exact ⟨repReal ω, repReal_mem_cantorSet ω,
+    liouville_repReal ω (irrational_of_isNormal_two h2), hω⟩
+
 end NormalNumbers.CantorRepetition
+
