@@ -31,6 +31,7 @@ import NormalNumbers.EntropyProfilesStretch
 import NormalNumbers.FiniteStateSelectionStretch
 import NormalNumbers.SchmidtGamesStretch
 import NormalNumbers.CantorBadNormal
+import NormalNumbers.CantorBadNormalRetired
 import NormalNumbers.CantorExactExponentStretch
 import NormalNumbers.StretchBFR
 import NormalNumbers.CantorExactExponentProfile
