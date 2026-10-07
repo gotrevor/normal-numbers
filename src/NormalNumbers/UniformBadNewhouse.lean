@@ -888,6 +888,357 @@ theorem fset_facts {b c : ℕ} (hb : 2 ≤ b) (hc : 0 < c) (hbc : 3 ≤ b ^ c) :
     rw [one_div]
     exact inv_anti₀ hM (by linarith)
 
+/-! ### Cantor schemes are thick
+
+A node `J = (p, q)` is split at `r J < s J`, keeping `[p, r J]` and `[s J, q]`, with both kept
+pieces at least `τ` times the removed gap and at most `ρ < 1` times `J`.  The limit set `B` has
+`Thick B τ`, its gaps are exactly the removed `(r J, s J)` (`Scheme.gap_eq`), and if every endpoint
+lies in a closed set `G` then `B ⊆ G`.  This turns the crux into a local, coinductive splitting
+statement (`SplitCore`). -/
+
+namespace Scheme
+
+variable (r s : ℝ × ℝ → ℝ)
+
+/-- The two children of a node. -/
+def child (J : ℝ × ℝ) : Bool → ℝ × ℝ
+  | false => (J.1, r J)
+  | true => (s J, J.2)
+
+/-- Nodes of depth `k` below the root `J₀`. -/
+def level (J₀ : ℝ × ℝ) : ℕ → Set (ℝ × ℝ)
+  | 0 => {J₀}
+  | k + 1 => (fun p : (ℝ × ℝ) × Bool => child r s p.1 p.2) '' (level J₀ k ×ˢ Set.univ)
+
+/-- The admissible-split conditions at a node. -/
+def NodeOk (τ ρ : ℝ) (G : Set ℝ) (J : ℝ × ℝ) : Prop :=
+  J.1 < r J ∧ r J < s J ∧ s J < J.2 ∧ τ * (s J - r J) ≤ r J - J.1 ∧
+    τ * (s J - r J) ≤ J.2 - s J ∧ r J - J.1 ≤ ρ * (J.2 - J.1) ∧ J.2 - s J ≤ ρ * (J.2 - J.1) ∧
+    J.1 ∈ G ∧ J.2 ∈ G
+
+/-- The limit set. -/
+def limit (J₀ : ℝ × ℝ) : Set ℝ := ⋂ k, ⋃ J ∈ level r s J₀ k, Set.Icc J.1 J.2
+
+/-- A set of nodes closed under children, all admissible. -/
+def Closed (τ ρ : ℝ) (G : Set ℝ) (S : Set (ℝ × ℝ)) : Prop :=
+  ∀ J ∈ S, NodeOk r s τ ρ G J ∧ child r s J false ∈ S ∧ child r s J true ∈ S
+
+variable {r s} {τ ρ : ℝ} {G : Set ℝ} {S : Set (ℝ × ℝ)} {J₀ J : ℝ × ℝ}
+
+lemma mem_level_succ {J₀ J : ℝ × ℝ} {k : ℕ} :
+    J ∈ level r s J₀ (k + 1) ↔ ∃ P ∈ level r s J₀ k, ∃ d, J = child r s P d := by
+  show J ∈ (fun p : (ℝ × ℝ) × Bool => child r s p.1 p.2) '' (level r s J₀ k ×ˢ Set.univ) ↔ _
+  constructor
+  · rintro ⟨⟨P, d⟩, ⟨hP, -⟩, rfl⟩; exact ⟨P, hP, d, rfl⟩
+  · rintro ⟨P, hP, d, rfl⟩; exact ⟨(P, d), ⟨hP, trivial⟩, rfl⟩
+
+lemma level_sub (hS : Closed r s τ ρ G S) (h0 : J₀ ∈ S) : ∀ k, ∀ J ∈ level r s J₀ k, J ∈ S
+  | 0, J, hJ => by rw [show J = J₀ from hJ]; exact h0
+  | k + 1, J, hJ => by
+    obtain ⟨P, hP, d, rfl⟩ := mem_level_succ.1 hJ
+    have := hS P (level_sub hS h0 k P hP)
+    cases d
+    · exact this.2.1
+    · exact this.2.2
+
+lemma level_finite : ∀ k, (level r s J₀ k).Finite
+  | 0 => Set.finite_singleton _
+  | k + 1 => ((level_finite k).prod Set.finite_univ).image _
+
+lemma child_sub (hJ : NodeOk r s τ ρ G J) (d : Bool) :
+    Set.Icc (child r s J d).1 (child r s J d).2 ⊆ Set.Icc J.1 J.2 := by
+  obtain ⟨h1, h2, h3, -⟩ := hJ
+  cases d
+  · exact Set.Icc_subset_Icc le_rfl (by simp only [child]; linarith)
+  · exact Set.Icc_subset_Icc (by simp only [child]; linarith) le_rfl
+
+lemma child_len (hJ : NodeOk r s τ ρ G J) (d : Bool) :
+    (child r s J d).1 < (child r s J d).2 ∧
+      (child r s J d).2 - (child r s J d).1 ≤ ρ * (J.2 - J.1) := by
+  obtain ⟨h1, h2, h3, -, -, h6, h7, -⟩ := hJ
+  cases d
+  · exact ⟨h1, h6⟩
+  · exact ⟨h3, h7⟩
+
+lemma level_len (hS : Closed r s τ ρ G S) (h0 : J₀ ∈ S) (hρ : 0 ≤ ρ) :
+    ∀ k, ∀ J ∈ level r s J₀ k, J.2 - J.1 ≤ ρ ^ k * (J₀.2 - J₀.1)
+  | 0, J, hJ => by rw [show J = J₀ from hJ]; simp
+  | k + 1, J, hJ => by
+    obtain ⟨P, hP, d, rfl⟩ := mem_level_succ.1 hJ
+    have hPS := level_sub hS h0 k P hP
+    have := (child_len (hS P hPS).1 d).2
+    have ih := level_len hS h0 hρ k P hP
+    calc _ ≤ ρ * (P.2 - P.1) := this
+      _ ≤ ρ * (ρ ^ k * (J₀.2 - J₀.1)) := mul_le_mul_of_nonneg_left ih hρ
+      _ = ρ ^ (k + 1) * (J₀.2 - J₀.1) := by ring
+
+lemma level_anc (hS : Closed r s τ ρ G S) (h0 : J₀ ∈ S) :
+    ∀ k, ∀ J ∈ level r s J₀ k, ∀ m ≤ k, ∃ A ∈ level r s J₀ m,
+      Set.Icc J.1 J.2 ⊆ Set.Icc A.1 A.2
+  | 0, J, hJ, m, hm => ⟨J, by rw [Nat.le_zero.1 hm]; exact hJ, le_rfl⟩
+  | k + 1, J, hJ, m, hm => by
+    rcases Nat.lt_or_ge m (k + 1) with hlt | hge
+    · obtain ⟨P, hP, d, rfl⟩ := mem_level_succ.1 hJ
+      obtain ⟨A, hA, hsub⟩ := level_anc hS h0 k P hP m (by omega)
+      exact ⟨A, hA, (child_sub (hS P (level_sub hS h0 k P hP)).1 d).trans hsub⟩
+    · exact ⟨J, by rw [show m = k + 1 by omega]; exact hJ, le_rfl⟩
+
+lemma level_disj (hS : Closed r s τ ρ G S) (h0 : J₀ ∈ S) :
+    ∀ k, ∀ J ∈ level r s J₀ k, ∀ J' ∈ level r s J₀ k, J ≠ J' →
+      Disjoint (Set.Icc J.1 J.2) (Set.Icc J'.1 J'.2)
+  | 0, J, hJ, J', hJ', hne => absurd ((show J = J₀ from hJ).trans (show J' = J₀ from hJ').symm) hne
+  | k + 1, J, hJ, J', hJ', hne => by
+    obtain ⟨P, hP, d, rfl⟩ := mem_level_succ.1 hJ
+    obtain ⟨P', hP', d', rfl⟩ := mem_level_succ.1 hJ'
+    have hok := (hS P (level_sub hS h0 k P hP)).1
+    by_cases hPP : P = P'
+    · subst hPP
+      have hdd : d ≠ d' := fun h => hne (by rw [h])
+      obtain ⟨h1, h2, h3, -⟩ := hok
+      rw [Set.disjoint_iff]
+      rintro x ⟨⟨hx1, hx2⟩, ⟨hx3, hx4⟩⟩
+      cases d <;> cases d' <;> simp only [child, ne_eq, not_true_eq_false] at hdd hx1 hx2 hx3 hx4 <;>
+        linarith
+    · exact ((level_disj hS h0 k P hP P' hP' hPP).mono (child_sub hok d)
+        (child_sub (hS P' (level_sub hS h0 k P' hP')).1 d'))
+
+/-- The left (resp. right) endpoint of a node survives in a node of every deeper level. -/
+lemma left_persist (hS : Closed r s τ ρ G S) (h0 : J₀ ∈ S) {k : ℕ} {J : ℝ × ℝ}
+    (hJ : J ∈ level r s J₀ k) : ∀ i, ∃ J' ∈ level r s J₀ (k + i), J'.1 = J.1 ∧ J.1 ≤ J'.2
+  | 0 => ⟨J, hJ, rfl, (hS J (level_sub hS h0 k J hJ)).1.1.le.trans
+      ((hS J (level_sub hS h0 k J hJ)).1.2.1.le.trans (hS J (level_sub hS h0 k J hJ)).1.2.2.1.le)⟩
+  | i + 1 => by
+    obtain ⟨J', hJ', h1, -⟩ := left_persist hS h0 hJ i
+    have hok := (hS J' (level_sub hS h0 _ J' hJ')).1
+    refine ⟨child r s J' false, mem_level_succ.2 ⟨J', hJ', false, rfl⟩, h1, ?_⟩
+    simp only [child]; rw [← h1]; exact hok.1.le
+
+lemma right_persist (hS : Closed r s τ ρ G S) (h0 : J₀ ∈ S) {k : ℕ} {J : ℝ × ℝ}
+    (hJ : J ∈ level r s J₀ k) : ∀ i, ∃ J' ∈ level r s J₀ (k + i), J'.2 = J.2 ∧ J'.1 ≤ J.2
+  | 0 => ⟨J, hJ, rfl, (hS J (level_sub hS h0 k J hJ)).1.1.le.trans
+      ((hS J (level_sub hS h0 k J hJ)).1.2.1.le.trans (hS J (level_sub hS h0 k J hJ)).1.2.2.1.le)⟩
+  | i + 1 => by
+    obtain ⟨J', hJ', h1, -⟩ := right_persist hS h0 hJ i
+    have hok := (hS J' (level_sub hS h0 _ J' hJ')).1
+    refine ⟨child r s J' true, mem_level_succ.2 ⟨J', hJ', true, rfl⟩, h1, ?_⟩
+    simp only [child]; rw [← h1]; exact hok.2.2.1.le
+
+lemma endpoints_mem (hS : Closed r s τ ρ G S) (h0 : J₀ ∈ S) {k : ℕ} {J : ℝ × ℝ}
+    (hJ : J ∈ level r s J₀ k) : J.1 ∈ limit r s J₀ ∧ J.2 ∈ limit r s J₀ := by
+  have hok := (hS J (level_sub hS h0 k J hJ)).1
+  have hJ12 : J.1 ≤ J.2 := hok.1.le.trans (hok.2.1.le.trans hok.2.2.1.le)
+  constructor <;> refine Set.mem_iInter.2 fun m => ?_ <;> rw [Set.mem_iUnion₂]
+  · rcases le_total m k with hm | hm
+    · obtain ⟨A, hA, hsub⟩ := level_anc hS h0 k J hJ m hm
+      exact ⟨A, hA, hsub ⟨le_rfl, hJ12⟩⟩
+    · obtain ⟨J', hJ', h1, h2⟩ := left_persist hS h0 hJ (m - k)
+      rw [show k + (m - k) = m by omega] at hJ'
+      exact ⟨J', hJ', ⟨h1.le, h2⟩⟩
+  · rcases le_total m k with hm | hm
+    · obtain ⟨A, hA, hsub⟩ := level_anc hS h0 k J hJ m hm
+      exact ⟨A, hA, hsub ⟨hJ12, le_rfl⟩⟩
+    · obtain ⟨J', hJ', h1, h2⟩ := right_persist hS h0 hJ (m - k)
+      rw [show k + (m - k) = m by omega] at hJ'
+      exact ⟨J', hJ', ⟨h2, h1.ge⟩⟩
+
+lemma limit_sub : limit r s J₀ ⊆ Set.Icc J₀.1 J₀.2 := by
+  intro x hx
+  have := Set.mem_iInter.1 hx 0
+  rw [Set.mem_iUnion₂] at this
+  obtain ⟨J, hJ, hx⟩ := this
+  rw [show J = J₀ from hJ] at hx
+  exact hx
+
+lemma limit_closed : IsClosed (limit r s J₀) :=
+  isClosed_iInter fun k => (level_finite k).isClosed_biUnion fun _ _ => isClosed_Icc
+
+lemma mem_level_of_mem {x : ℝ} (hx : x ∈ limit r s J₀) (k : ℕ) :
+    ∃ J ∈ level r s J₀ k, x ∈ Set.Icc J.1 J.2 := by
+  have := Set.mem_iInter.1 hx k
+  rw [Set.mem_iUnion₂] at this
+  obtain ⟨J, hJ, hxJ⟩ := this
+  exact ⟨J, hJ, hxJ⟩
+
+/-- The limit set lies in the closed set `G` containing all endpoints. -/
+lemma limit_sub_G (hS : Closed r s τ ρ G S) (h0 : J₀ ∈ S) (hρ0 : 0 ≤ ρ) (hρ1 : ρ < 1)
+    (hG : IsClosed G) : limit r s J₀ ⊆ G := by
+  intro x hx
+  choose J hJ hxJ using mem_level_of_mem hx
+  apply hG.mem_of_tendsto (f := fun k => (J k).1) (b := Filter.atTop)
+  · rw [tendsto_iff_dist_tendsto_zero]
+    apply squeeze_zero (fun _ => dist_nonneg) (g := fun k : ℕ => ρ ^ k * (J₀.2 - J₀.1))
+    · intro k
+      rw [Real.dist_eq, abs_of_nonpos (by linarith [(hxJ k).1])]
+      have := level_len hS h0 hρ0 k (J k) (hJ k)
+      linarith [(hxJ k).2]
+    · rw [show (0 : ℝ) = 0 * (J₀.2 - J₀.1) by ring]
+      exact (tendsto_pow_atTop_nhds_zero_of_lt_one hρ0 hρ1).mul_const _
+  · exact Filter.Eventually.of_forall fun k => (hS (J k) (level_sub hS h0 k (J k) (hJ k))).1.2.2.2.2.2.2.2.1
+
+/-- **Every gap of the limit set is a removed gap.** -/
+lemma gap_eq (hS : Closed r s τ ρ G S) (h0 : J₀ ∈ S) (hρ0 : 0 ≤ ρ) (hρ1 : ρ < 1) {a b : ℝ}
+    (h : IsGap (limit r s J₀) a b) :
+    ∃ k, ∃ J ∈ level r s J₀ k, a = r J ∧ b = s J := by
+  obtain ⟨hab, haB, hbB, hdis⟩ := h
+  let P : ℕ → Prop := fun k => ∃ J ∈ level r s J₀ k, a ∈ Set.Icc J.1 J.2 ∧ b ∈ Set.Icc J.1 J.2
+  have hP0 : P 0 := ⟨J₀, rfl, limit_sub haB, limit_sub hbB⟩
+  have hex : ∃ k, ¬ P k := by
+    obtain ⟨k, hk⟩ := exists_pow_lt_of_lt_one (show 0 < (b - a) / (J₀.2 - J₀.1 + 1) by
+      have := limit_sub haB; have := limit_sub hbB
+      apply div_pos (by linarith); linarith [this.1, this.2]) hρ1
+    refine ⟨k, ?_⟩
+    rintro ⟨J, hJ, ha, hb⟩
+    have hlen := level_len hS h0 hρ0 k J hJ
+    have hJ0 : 0 ≤ J₀.2 - J₀.1 := by have := limit_sub haB; linarith [this.1, this.2]
+    have : ρ ^ k * (J₀.2 - J₀.1) < b - a := by
+      rw [lt_div_iff₀ (by linarith)] at hk
+      nlinarith [pow_nonneg hρ0 k]
+    linarith [ha.1, hb.2]
+  classical
+  have hspec := Nat.find_spec hex
+  have hm0 : Nat.find hex ≠ 0 := fun h => hspec (by rw [h]; exact hP0)
+  obtain ⟨k, hk⟩ : ∃ k, Nat.find hex = k + 1 := ⟨Nat.find hex - 1, by omega⟩
+  have hPk : P k := by
+    by_contra hc
+    exact Nat.find_min hex (show k < Nat.find hex by omega) hc
+  have hnP : ¬ P (k + 1) := by rw [← hk]; exact hspec
+  obtain ⟨J, hJ, haJ, hbJ⟩ := hPk
+  have hok := (hS J (level_sub hS h0 k J hJ)).1
+  -- the level-(k+1) nodes containing `a`, `b` are children of `J`
+  have hchild : ∀ x ∈ limit r s J₀, x ∈ Set.Icc J.1 J.2 →
+      ∃ d, x ∈ Set.Icc (child r s J d).1 (child r s J d).2 := by
+    intro x hx hxJ
+    obtain ⟨J', hJ', hxJ'⟩ := mem_level_of_mem hx (k + 1)
+    obtain ⟨Pp, hPp, d, rfl⟩ := mem_level_succ.1 hJ'
+    have hsub := child_sub (hS Pp (level_sub hS h0 k Pp hPp)).1 d
+    by_cases hPJ : Pp = J
+    · exact ⟨d, hPJ ▸ hxJ'⟩
+    · exact absurd (Set.disjoint_left.1 (level_disj hS h0 k Pp hPp J hJ hPJ) (hsub hxJ') hxJ)
+        id
+  obtain ⟨d1, ha1⟩ := hchild a haB haJ
+  obtain ⟨d2, hb2⟩ := hchild b hbB hbJ
+  have hrB : r J ∈ limit r s J₀ :=
+    (endpoints_mem hS h0 (mem_level_succ.2 ⟨J, hJ, false, rfl⟩)).2
+  have hsB : s J ∈ limit r s J₀ :=
+    (endpoints_mem hS h0 (mem_level_succ.2 ⟨J, hJ, true, rfl⟩)).1
+  obtain ⟨h1, h2, h3, -⟩ := hok
+  have hd : d1 = false ∧ d2 = true := by
+    cases d1 <;> cases d2
+    · exact absurd ⟨child r s J false, mem_level_succ.2 ⟨J, hJ, false, rfl⟩, ha1, hb2⟩ hnP
+    · exact ⟨rfl, rfl⟩
+    · simp only [child] at ha1 hb2; linarith [ha1.1, hb2.2]
+    · exact absurd ⟨child r s J true, mem_level_succ.2 ⟨J, hJ, true, rfl⟩, ha1, hb2⟩ hnP
+  obtain ⟨rfl, rfl⟩ := hd
+  simp only [child] at ha1 hb2
+  refine ⟨k, J, hJ, ?_, ?_⟩
+  · by_contra hne
+    have hlt : a < r J := lt_of_le_of_ne ha1.2 hne
+    exact Set.disjoint_left.1 hdis ⟨hlt, by linarith [hb2.1]⟩ hrB
+  · by_contra hne
+    have hlt : s J < b := lt_of_le_of_ne hb2.1 (Ne.symm hne)
+    exact Set.disjoint_left.1 hdis ⟨by linarith [ha1.2], hlt⟩ hsB
+
+/-- Two removed gaps: one misses the other's node. -/
+lemma gap_node_disj (hS : Closed r s τ ρ G S) (h0 : J₀ ∈ S) {k₁ k₂ : ℕ} {J₁ J₂ : ℝ × ℝ}
+    (hJ₁ : J₁ ∈ level r s J₀ k₁) (hJ₂ : J₂ ∈ level r s J₀ k₂) (hk : k₁ ≤ k₂) :
+    J₁ = J₂ ∨ Disjoint (Set.Ioo (r J₁) (s J₁)) (Set.Icc J₂.1 J₂.2) := by
+  obtain ⟨A, hA, hsubA⟩ := level_anc hS h0 k₂ J₂ hJ₂ k₁ hk
+  have hJ2ne : (Set.Icc J₂.1 J₂.2).Nonempty := by
+    have hok := (hS J₂ (level_sub hS h0 k₂ J₂ hJ₂)).1
+    exact Set.nonempty_Icc.2 (hok.1.le.trans (hok.2.1.le.trans hok.2.2.1.le))
+  have hok1 := (hS J₁ (level_sub hS h0 k₁ J₁ hJ₁)).1
+  have hgap_sub : Set.Ioo (r J₁) (s J₁) ⊆ Set.Icc J₁.1 J₁.2 := fun x hx =>
+    ⟨by linarith [hx.1, hok1.1], by linarith [hx.2, hok1.2.2.1]⟩
+  by_cases hAJ : A = J₁
+  · subst hAJ
+    rcases Nat.eq_or_lt_of_le hk with heq | hlt
+    · subst heq
+      by_contra hc
+      push_neg at hc
+      have hne : J₂ ≠ A := fun h => hc.1 h.symm
+      obtain ⟨x, hx⟩ := hJ2ne
+      exact Set.disjoint_left.1 (level_disj hS h0 k₁ J₂ hJ₂ A hA hne) hx (hsubA hx)
+    · right
+      obtain ⟨A', hA', hsubA'⟩ := level_anc hS h0 k₂ J₂ hJ₂ (k₁ + 1) hlt
+      obtain ⟨Pp, hPp, d, rfl⟩ := mem_level_succ.1 hA'
+      have hsubP := child_sub (hS Pp (level_sub hS h0 k₁ Pp hPp)).1 d
+      have hPA : Pp = A := by
+        by_contra hne
+        obtain ⟨x, hx⟩ := hJ2ne
+        exact Set.disjoint_left.1 (level_disj hS h0 k₁ Pp hPp A hA hne) (hsubP (hsubA' hx))
+          (hsubA hx)
+      subst hPA
+      refine Set.disjoint_of_subset_right hsubA' ?_
+      rw [Set.disjoint_iff]
+      rintro x ⟨⟨hx1, hx2⟩, hx3, hx4⟩
+      cases d <;> simp only [child] at hx3 hx4 <;> linarith
+  · right
+    exact (level_disj hS h0 k₁ A hA J₁ hJ₁ hAJ).symm.mono hgap_sub hsubA
+
+/-- Separation from a gap that misses a node. -/
+lemma sep_of_disj {r₁ s₁ r₂ s₂ P Q : ℝ} (h1 : r₁ < s₁) (hP : P ≤ r₂) (hQ : s₂ ≤ Q)
+    (h2 : r₂ < s₂) (hdis : Disjoint (Set.Ioo r₁ s₁) (Set.Icc P Q)) :
+    (s₁ ≤ r₂ → s₁ ≤ P) ∧ (s₂ ≤ r₁ → Q ≤ r₁) := by
+  constructor
+  · intro hle
+    by_contra hlt
+    push_neg at hlt
+    have hm : max r₁ P < s₁ := max_lt h1 hlt
+    exact Set.disjoint_left.1 hdis (show (max r₁ P + s₁) / 2 ∈ Set.Ioo r₁ s₁ from
+      ⟨by linarith [le_max_left r₁ P], by linarith⟩)
+      ⟨by linarith [le_max_right r₁ P], by linarith⟩
+  · intro hle
+    by_contra hlt
+    push_neg at hlt
+    have hm : r₁ < min s₁ Q := lt_min h1 hlt
+    exact Set.disjoint_left.1 hdis (show (r₁ + min s₁ Q) / 2 ∈ Set.Ioo r₁ s₁ from
+      ⟨by linarith, by linarith [min_le_left s₁ Q]⟩)
+      ⟨by linarith, by linarith [min_le_right s₁ Q]⟩
+
+/-- **Cantor schemes are thick.** -/
+theorem limit_thick (hS : Closed r s τ ρ G S) (h0 : J₀ ∈ S) (hρ0 : 0 ≤ ρ) (hρ1 : ρ < 1)
+    (hτ : 0 ≤ τ) : Thick (limit r s J₀) τ := by
+  have hinf : sInf (limit r s J₀) = J₀.1 :=
+    IsLeast.csInf_eq ⟨(endpoints_mem hS h0 (k := 0) rfl).1, fun x hx => (limit_sub hx).1⟩
+  have hsup : sSup (limit r s J₀) = J₀.2 :=
+    IsGreatest.csSup_eq ⟨(endpoints_mem hS h0 (k := 0) rfl).2, fun x hx => (limit_sub hx).2⟩
+  have ok : ∀ {k J}, J ∈ level r s J₀ k → NodeOk r s τ ρ G J := fun {k J} hJ =>
+    (hS J (level_sub hS h0 k J hJ)).1
+  refine ⟨?_, ?_⟩
+  · intro a b a' b' hg hg' hle
+    obtain ⟨k₁, J₁, hJ₁, rfl, rfl⟩ := gap_eq hS h0 hρ0 hρ1 hg
+    obtain ⟨k₂, J₂, hJ₂, rfl, rfl⟩ := gap_eq hS h0 hρ0 hρ1 hg'
+    obtain ⟨a1, a2, a3, a4, a5, -⟩ := ok hJ₁
+    obtain ⟨b1, b2, b3, b4, b5, -⟩ := ok hJ₂
+    have hm1 := min_le_left (s J₁ - r J₁) (s J₂ - r J₂)
+    have hm2 := min_le_right (s J₁ - r J₁) (s J₂ - r J₂)
+    rcases le_total k₁ k₂ with hk | hk
+    · rcases gap_node_disj hS h0 hJ₁ hJ₂ hk with heq | hdis
+      · subst heq; linarith
+      · have := (sep_of_disj a2 b1.le b3.le b2 hdis).1 hle
+        nlinarith
+    · rcases gap_node_disj hS h0 hJ₂ hJ₁ hk with heq | hdis
+      · subst heq; linarith
+      · have := (sep_of_disj b2 a1.le a3.le a2 hdis).2 hle
+        nlinarith
+  · intro a b hg
+    obtain ⟨k, J, hJ, rfl, rfl⟩ := gap_eq hS h0 hρ0 hρ1 hg
+    obtain ⟨A, hA, hsub⟩ := level_anc hS h0 k J hJ 0 (Nat.zero_le _)
+    rw [show A = J₀ from hA] at hsub
+    obtain ⟨a1, a2, a3, a4, a5, -⟩ := ok hJ
+    have h1 := (hsub ⟨le_rfl, by linarith⟩ : J.1 ∈ Set.Icc J₀.1 J₀.2)
+    have h2 := (hsub ⟨by linarith, le_rfl⟩ : J.2 ∈ Set.Icc J₀.1 J₀.2)
+    rw [hinf, hsup]
+    exact ⟨by linarith [h1.1], by linarith [h2.2]⟩
+
+/-- Gaps of the limit set are removed gaps, so a uniform bound on removed gaps bounds them. -/
+lemma gap_le (hS : Closed r s τ ρ G S) (h0 : J₀ ∈ S) (hρ0 : 0 ≤ ρ) (hρ1 : ρ < 1) {g : ℝ}
+    (hg : ∀ J ∈ S, s J - r J ≤ g) {a b : ℝ} (h : IsGap (limit r s J₀) a b) : b - a ≤ g := by
+  obtain ⟨k, J, hJ, rfl, rfl⟩ := gap_eq hS h0 hρ0 hρ1 h
+  exact hg J (level_sub hS h0 k J hJ)
+
+end Scheme
+
 /-- **Crux node: a thick core for the bases `b ≥ 3`.**  A compact `B` inside every `E_b(c)`,
 `b ≥ 3`, with thickness `τ`, short gaps, and points near both ends of `[0, 1]`.
 
@@ -899,6 +1250,44 @@ def ThickCore (c : ℕ) (τ : ℝ) : Prop :=
   ∃ B : Set ℝ, IsCompact B ∧ Thick B τ ∧ (∀ b : ℕ, 3 ≤ b → B ⊆ goodSet c b) ∧
     (∀ a b, IsGap B a b → b - a ≤ 1 / 10) ∧
     (∃ x ∈ B, x ≤ 1 / 4) ∧ (∃ y ∈ B, 3 / 4 ≤ y) ∧ B ⊆ Set.Icc 0 1
+
+/-- The closed good set for the bases `b ≥ 3` at exponent `c` (inside every `E_b(c)`, `b ≥ 3`). -/
+def goodCore (c : ℕ) : Set ℝ :=
+  Set.Icc 0 1 ∩ {x | ∀ b : ℕ, 3 ≤ b → ∀ n : ℕ, ∀ z : ℤ, ((b : ℝ) ^ c)⁻¹ ≤ |(b : ℝ) ^ n * x - z|}
+
+lemma goodCore_closed (c : ℕ) : IsClosed (goodCore c) := by
+  refine isClosed_Icc.inter ?_
+  have : {x : ℝ | ∀ b : ℕ, 3 ≤ b → ∀ n : ℕ, ∀ z : ℤ, ((b : ℝ) ^ c)⁻¹ ≤ |(b : ℝ) ^ n * x - z|} =
+      ⋂ b : ℕ, ⋂ (_ : 3 ≤ b), ⋂ n : ℕ, ⋂ z : ℤ,
+        {x : ℝ | ((b : ℝ) ^ c)⁻¹ ≤ |(b : ℝ) ^ n * x - z|} := by
+    ext; simp
+  rw [this]
+  exact isClosed_iInter fun b => isClosed_iInter fun _ => isClosed_iInter fun n =>
+    isClosed_iInter fun z =>
+      isClosed_le continuous_const ((continuous_const.mul continuous_id).sub continuous_const).abs
+
+lemma goodCore_sub (c : ℕ) {b : ℕ} (hb : 3 ≤ b) : goodCore c ⊆ goodSet c b :=
+  fun _ hx n => hx.2 b hb n _
+
+/-- **Split core** (a local, coinductive form of `ThickCore`).  A family `S` of intervals with
+endpoints in `goodCore c`, closed under an admissible split (both kept pieces at least `τ` times the
+removed gap, at most `ρ < 1` times the node, removed gap at most `1/10`), containing a root that
+reaches `1/4` and `3/4`. -/
+def SplitCore (c : ℕ) (τ : ℝ) : Prop :=
+  ∃ (r s : ℝ × ℝ → ℝ) (ρ : ℝ) (S : Set (ℝ × ℝ)) (J₀ : ℝ × ℝ), 0 ≤ ρ ∧ ρ < 1 ∧
+    Scheme.Closed r s τ ρ (goodCore c) S ∧ J₀ ∈ S ∧ J₀.1 ≤ 1 / 4 ∧ 3 / 4 ≤ J₀.2 ∧
+    ∀ J ∈ S, s J - r J ≤ 1 / 10
+
+/-- **Reduction** (proved): a split core gives a thick core. -/
+theorem thickCore_of_splitCore {c : ℕ} {τ : ℝ} (hτ : 0 ≤ τ) (h : SplitCore c τ) :
+    ThickCore c τ := by
+  obtain ⟨r, s, ρ, S, J₀, hρ0, hρ1, hS, h0, hl, hr, hg⟩ := h
+  have hG := Scheme.limit_sub_G hS h0 hρ0 hρ1 (goodCore_closed c)
+  have hend := Scheme.endpoints_mem hS h0 (k := 0) rfl
+  refine ⟨Scheme.limit r s J₀, ?_, Scheme.limit_thick hS h0 hρ0 hρ1 hτ,
+    fun b hb => hG.trans (goodCore_sub c hb), fun a b hab => Scheme.gap_le hS h0 hρ0 hρ1 hg hab,
+    ⟨J₀.1, hend.1, hl⟩, ⟨J₀.2, hend.2, hr⟩, fun x hx => (hG hx).1⟩
+  exact (isCompact_Icc.of_isClosed_subset Scheme.limit_closed Scheme.limit_sub)
 
 /-- **The route** (proved, axiom-clean).  A thick core at exponent `4` with `τ > 1/3` gives
 `c⋆ ≤ 4`: `gap_lemma` applied to `E15` (thickness `3`, `e15_facts`) and the core. -/

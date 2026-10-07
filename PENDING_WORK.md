@@ -15,7 +15,16 @@
   needs hysteresis / adaptive endpoint choice, i.e. local existence of deep-good points.  Analysis:
   every rigorous version found reduces to a worst-case local Diophantine statement (chains of
   comparable windows of distinct bases), no elementary bound (Farey/lcm bounds are vacuous at deep
-  scales).  Plan: B ⊆ F₃(4) (τ=26, exact base 3) with b ≥ 5 windows merged; state the merge lemma.  Route `cStar_le_four_of_newhouse` now rests on `e2_four_facts` + crux
+  scales).  Plan: B ⊆ F₃(4) (τ=26, exact base 3) with b ≥ 5 windows merged; state the merge lemma.
+  ALSO `Scheme.limit_thick` + `thickCore_of_splitCore` PROVED: any Cantor scheme (split [p,q] at
+  r<s with both kept pieces ≥ τ·gap, shrink ρ<1) is Thick τ, its gaps are exactly the removed ones,
+  and endpoints in the closed `goodCore c` force B ⊆ goodCore.  Crux is now `SplitCore 4 τ` (τ>1/3):
+  a family of intervals with good endpoints closed under admissible splits — LOCAL & adaptive.
+  Insight for next lap: with the flip A = F₃ (τ=26), B ⊆ E15 needs only τ_B > 1/26, so kept pieces
+  can be 4% of the gap — edge-child deaths no longer propagate (2-out-of-2 death only); a flipped
+  SplitCore (B handles base 2 exactly + b ≥ 5, A handles 3) is the natural next statement.
+  Heuristic caveat: worst-case clusters of near-touching windows of distinct bases DO exist at deep
+  scales (independence heuristic), so any proof must discard clusters adaptively, not bound them.  Route `cStar_le_four_of_newhouse` now rests on `e2_four_facts` + crux
   `thickCore_four` only.  Crux probe (scratch mlog.py): the τ<0.4 violations of raw ⋂_{b=3..40}
   are generic cross-base near-coincidences (centres with denominators ~10³, ratios down to 0.016),
   not structured clusters at small-denominator rationals; so a cascade bound must be Diophantine
