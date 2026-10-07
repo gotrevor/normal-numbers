@@ -12,6 +12,8 @@ import NormalNumbers.LogCastingOutStretch
 import NormalNumbers.PairDecoupleProve
 import NormalNumbers.StonehamBase6
 import NormalNumbers.LinearFormsScalesStretch
+import NormalNumbers.UniformBadJoint
+import NormalNumbers.UniformBadRoute
 import NormalNumbers.EntropyProfiles
 import NormalNumbers.CantorExactExponentStretch
 import NormalNumbers.CantorExactExponentProfile
@@ -48,6 +50,10 @@ def mazeRows : List RowInfo :=
 
 /-- Each linked row and the declarations it rests on. -/
 def mazeLinks : List Link := [
+  ⟨"counted medium bases over an exact {2,3} core at c = 4",
+   [``UniformBadThreshold.Count.jointCoreSubEigen_four,
+    ``UniformBadThreshold.Count.exists_good_of_subEigen],
+   [``UniformBadThreshold.SmallBaseTreeCore]⟩,
   ⟨"x, 3x, 5x as the first member of a family",
    [``Adder.not_isWordSetBlock_runs_three_one_seven_nine,
     ``Adder.not_isWordSetBlock_runs_three_small, ``Adder.not_isWordSetBlock_extremeDigits], []⟩,
@@ -292,7 +298,7 @@ def mazeLegacy : List String := [
   "Diophantine good-denominator detour for the tail cell",
   "route B's unweighted cover of the state-dependent target"]
 
-/-- info: maze audit: 173 rows, 66 cite declarations, 107 legacy (prose only) -/
+/-- info: maze audit: 174 rows, 67 cite declarations, 107 legacy (prose only) -/
 #guard_msgs in
 #maze_audit mazeRows, mazeLinks, mazeLegacy
 

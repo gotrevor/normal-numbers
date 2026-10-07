@@ -1510,7 +1510,12 @@ def register : List Hall := [
    "Extend the binary theorem 'x, 3x or 5x has both 00 and 11' along {1, 2^k-1, 2^k+1} for runs 0^k and 1^k, or along {1, g-1, g+1} for digits 0 and g-1 in base g",
    .refuted, .frozen,
    "Both break at the next step: the Liouville number 3 * sum 2^-(i!) beats {1, 2^k-1, 2^k+1} for every k >= 3 (3, 3(2^k-1), 3(2^k+1) have no run of k ones), and {1, g-1, g+1} lets every member avoid digit 0 for g = 4..13, 16. Minimal run-block sizes go 1, 3, then at least 5. REOPEN IF: a family whose members widen a sparse x carry-free and a detector that reads token boundaries, as 3 and 5 do at k = 2",
-   "MahlerProductBlock.lean: not_isWordSetBlock_runs_three_one_seven_nine, not_isWordSetBlock_runs_three_small, not_isWordSetBlock_extremeDigits", "2026-10-06"⟩
+   "MahlerProductBlock.lean: not_isWordSetBlock_runs_three_one_seven_nine, not_isWordSetBlock_runs_three_small, not_isWordSetBlock_extremeDigits", "2026-10-06"⟩,
+  ⟨"counted medium bases over an exact {2,3} core at c = 4",
+   "Make bases 2, 3 exact (containment-kill core, certificate ratio 1.669) and charge every base b >= 5 by counting kills against alive ancestors, as in cStar_le_six",
+   .wall, .cited,
+   "Counting pays m >= 2 boundary cells per window against g^lag ancestors, i.e. about 3 b^(-4 log2 g) per order instead of the measure 2 b^(-4). Level-averaged, b >= 5 cost 0.09 / 0.049 per level at g = 1.6 / 1.7, so the core needs growth >= 1.78 with near-uniform weights; the abstraction gives 1.67-1.73 and its weights are far from uniform (10% zero, threshold 0.2 collapses it, max-descendant ratio up to 1200). Probes scripts/cstar_models/abs23.js, kreg.js. REOPEN IF: a regular core for S = {2,3,5,6,7} (SmallBaseTreeCore) or a weight-regular {2,3} certificate with growth >= 1.8",
+   "UniformBadJoint.lean: jointCoreSubEigen_four (sorry), exists_good_of_subEigen; UniformBadRoute.lean: SmallBaseTreeCore; PENDING_WORK c-star lap 4", "2026-10-07"⟩
 ]
 
 /-- Rows whose verdict is machine-checked in this build. -/
