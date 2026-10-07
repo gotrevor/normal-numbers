@@ -26,3 +26,7 @@ carry the bound.  Copy pair term = cyclic digits of h tᵐ(b^d−1) mod 3^a−1,
    nodes, so the crux is a conjunction of named leaves.
 2. Look for a construction-level fix (the frozen statement is ∃ x): e.g. vary the period inside a
    run so the cyclic modulus changes along the run.
+
+## Added: short-period route
+`ExpOrderPeriods` node (docstring has the Parseval argument).  If pursued: new construction with
+period ℓ ≈ κ log u, signed second moment.  Still needs Baker for shadows.

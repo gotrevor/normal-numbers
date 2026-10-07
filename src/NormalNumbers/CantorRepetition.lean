@@ -1299,6 +1299,30 @@ theorem ae_isNormal_rep_of_pairDecay {b : ℕ} (hb : 2 ≤ b) (hP : RepPairDecay
     (fun j => div_le_div_of_nonneg_right
       (secondMoment_le_pairs repReal measurable_repReal b h (sched j)) (by positivity))
 
+/-! ### Alternative construction: short periods (route note, statements only) -/
+
+/-- **Exponential order modulo `3^ℓ − 1` along infinitely many periods (open conjecture).**
+For `b` not a power of 3 (unit part `t`): for infinitely many `ℓ`, the order of `t` modulo the
+`t`-free part of `3^ℓ − 1` exceeds `3^{θℓ}` with `θ > log₃(3/2) ≈ .369`.
+
+Why it matters (2026-10-07).  The frozen headline is `∃ x`, so the construction is ours.  Take
+runs `[u, (k+2)u)` periodic with a SHORT period `ℓ ≈ κ log₃ u` (Liouville still holds: the
+approximant has `log q ≈ u + ℓ`).  Then the copy-zone frequencies `bᵐ` run over many full orbits
+modulo `q = 3^ℓ − 1`, and Parseval over the block law `ν` (mass `2^{-ℓ}` on `2^ℓ` residues)
+gives `𝔼_W |Σ_{m<M} e(h bᵐ W/q)|² ≤ (3/2)^ℓ Σ_y f(y)²`, `f(y) = #{m < M : h bᵐ ≡ y}`, i.e.
+normalized second moment `≤ (3/2)^ℓ (1/M + 1/ord_q(b))`.  So the wrapped cyclic-digit wall
+(`TOrbitCyclicDecay`) is replaced by this order statement (the signed second moment is needed:
+`RepPairDecay`, which takes norms per pair, loses the Parseval structure).
+Evidence (`scripts/rep_order.py`, `t = 2`, `ℓ ≤ 60`): `log₃ ord/ℓ` is `.56–.90` at every prime
+`ℓ ≥ 5` (e.g. `ℓ = 59`: `.854`), dips to `.21–.35` at highly composite `ℓ` (`ℓ = 48`: `.206`).
+Corvaja–Zannier (`CZGcdPow`) gives only `ord ≥ ℓ/ε` (superlinear), not exponential.  Confidence
+85% that it is true, but its proof looks out of reach (an Artin-type statement for the moduli
+`3^p − 1`).  The shadow zone (Baker) would remain. -/
+def ExpOrderPeriods (t : ℕ) : Prop :=
+  ∃ θ : ℝ, Real.logb 3 (3 / 2) < θ ∧ ∀ L : ℕ, ∃ ℓ ≥ L, ∃ e : ℕ, 0 < e ∧
+    (3 : ℝ) ^ (θ * ℓ) ≤ e ∧ ∀ e' : ℕ, 0 < e' → e' < e →
+      ¬ ((3 ^ ℓ - 1) / Nat.gcd (3 ^ ℓ - 1) (t ^ ℓ)) ∣ (t ^ e' - 1)
+
 /-! ## Bases `3ˢt`, `t > 1`: the crux -/
 
 /-- **The crux, arithmetic form (open leaf).**  See `RepPairArith`. -/
