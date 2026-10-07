@@ -3317,3 +3317,4 @@ formalize the copy-zone pair term: the block-coin Riesz product as a function of
 - rep lap 2: PROVED `repBound_pair_le'` (symmetric copy pair bound, any n,m with a ≤ s·min), `cycProdR_neg`, `repBound_some_neg`.  Next: run-k copy sum over a Finset P of pairs ⇒ CopyZoneDecayH at N_k + |P|·π·max|ξ|/3^E.
 - rep lap 2: PROVED `copyRun_sum_le` (run-k copy sum over pair set P ≤ cyclic pair sum below N' + |P|πB/3^E).  Next: define the classification κ for a given N (run of s·min, thresholds K), prove each class bound; free classes via Bf.
 - rep lap 2: FOUND gap in assembly plan: bases with log₃b/s ≥ 2 have windows covering a whole gap (gap ratio 2); recorded in repPairArith_of_inputs docstring.  Fix options: run k+1 copy coins as top window, or redesign with a_{k+1}/E_k → ∞.
+- rep lap 2: probe b=12 N=300,380 (.0034/.0027, floor) covers gap-spanning windows: large-t class is a proof-plan gap only.  Fix to formalize: sparse used runs (gap ratio → ∞).

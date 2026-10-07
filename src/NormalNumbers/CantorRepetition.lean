@@ -1602,7 +1602,11 @@ a window starting at `v ∈ [E_k/c·2, E_k − a]` covers the whole gap and tops
   (top-window, Baker-type, unproved shape).
 A positive fraction of `m` falls here, so the assembly as stated needs either the third bullet
 formalized or a construction with `a_{k+1}/E_k → ∞` (gaps eventually longer than every window;
-Liouville unaffected).  The 60% confidence is for the redesigned or extended version. -/
+Liouville unaffected; e.g. use only the runs `k` in a sparse set and free the others).  The 60%
+confidence is for the redesigned or extended version.  Numerically the class is harmless
+(`scripts/rep_arith.py 12 300,380`: `N⁻²Σ = .0034, .0027`, the `1/N` floor, and `N = 380` reaches
+the gap-spanning windows `n ≥ 340` of run 2; `b = 6`, `N = 300`: `.0034`): a proof-plan gap,
+not evidence against `RepPairArith`. -/
 theorem repPairArith_of_inputs {s t : ℕ} (hs : 1 ≤ s) (ht : 2 ≤ t) (h3t : ¬ 3 ∣ t)
     (hB : CantorExactExponentProfile.Literature.BakerLogDiscrepancy) (hT : TOrbitCyclicDecay t)
     (hS : BadGcdSparseH (3 ^ s * t)) : RepPairArith (3 ^ s * t) := by
