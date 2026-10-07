@@ -1027,6 +1027,20 @@ theorem cycProdR_lip (A : ℕ) (η η' : ℝ) :
     have := geom_sum_mul (3 : ℝ) A; linarith
   rw [hg]; field_simp
 
+/-- **True-law copy-zone bound.**  Proved: for every run `k` (`a = a_k`) and every integer
+`η₀`, `‖𝔼 e(ξ·repReal)‖ ≤ cycProd a η₀ + π |ξ(1 − 3^{-(k+1)a})/3^a − η₀|`.  The pair term of
+the second moment at `ξ = h(bⁿ − bᵐ)` is the cyclic product of the nearest integer frequency. -/
+theorem norm_charFun_repReal_le_cyc (k : ℕ) (ξ : ℝ) (η₀ : ℤ) :
+    ‖∫ ω, ee (ξ * repReal ω) ∂coinMeasure‖ ≤ cycProd (runStart k) η₀ + Real.pi *
+      |ξ * (1 - (3 : ℝ) ^ (-(((k + 1) * runStart k : ℕ) : ℤ))) / 3 ^ runStart k - η₀| := by
+  have h1 := norm_charFun_repReal_le (Finset.Ico (runStart k) (2 * runStart k)) ξ
+  rw [prod_block_eq_cyc] at h1
+  have h2 := cycProdR_lip (runStart k)
+    (ξ * (1 - (3 : ℝ) ^ (-(((k + 1) * runStart k : ℕ) : ℤ))) / 3 ^ runStart k) η₀
+  rw [cycProdR_intCast] at h2
+  have := (abs_le.1 h2).2
+  exact h1.trans (by unfold cycProdR at this; linarith)
+
 theorem cycProd_neg (A : ℕ) (η : ℤ) : cycProd A (-η) = cycProd A η := by
   unfold cycProd
   refine Finset.prod_congr rfl fun i _ => ?_
