@@ -3426,6 +3426,95 @@ theorem pow_logdiv_le {q N : ℕ} (hq : 1 ≤ q) (hN : 1 ≤ N) {α : ℝ} (hα0
     _ ≤ ((N : ℝ) ^ ((q : ℝ)⁻¹)) ^ Real.logb 3 α := Real.rpow_le_rpow_of_nonpos hN0 h.le hc
     _ = _ := by rw [← Real.rpow_mul (by positivity)]; ring_nf
 
+theorem rpow_mul_rpow_nat {N : ℕ} (hN : 1 ≤ N) (a b : ℝ) :
+    (N : ℝ) ^ a * (N : ℝ) ^ b = (N : ℝ) ^ (a + b) :=
+  (Real.rpow_add (by exact_mod_cast hN) a b).symm
+
+theorem nat_sq_rpow {N : ℕ} (hN : 1 ≤ N) (a : ℝ) :
+    (N : ℝ) * (N : ℝ) * (N : ℝ) ^ a = (N : ℝ) ^ (2 + a) := by
+  rw [Real.rpow_add (by exact_mod_cast hN), Real.rpow_two]; ring
+
+theorem nat_mul_rpow {N : ℕ} (hN : 1 ≤ N) (a : ℝ) :
+    (N : ℝ) * (N : ℝ) ^ a = (N : ℝ) ^ (1 + a) := by
+  rw [Real.rpow_add (by exact_mod_cast hN), Real.rpow_one]
+
+/-- Class-1/3 terms at `j = ⌊log₃ N/q⌋`. -/
+theorem classTerms_le {q N : ℕ} (hq : 1 ≤ q) (hN : 1 ≤ N) {c : ℝ} (hc : 0 ≤ c) :
+    (N : ℝ) * ((N + 2 * 3 ^ (Nat.log 3 N / q)) * c * (2 / 3 : ℝ) ^ (Nat.log 3 N / q)) +
+      N * ((2 * N + 2 * 3 ^ (Nat.log 3 N / q)) * c * (2 / 3 : ℝ) ^ (Nat.log 3 N / q)) ≤
+      c * (9 / 2 * (N : ℝ) ^ (2 + Real.logb 3 (2 / 3) / q) + 4 * (N : ℝ) ^ (1 + (q : ℝ)⁻¹)) := by
+  set j := Nat.log 3 N / q
+  have h1 := pow_logdiv_le hq hN (α := 2 / 3) (by norm_num) (by norm_num)
+  have h2 := (three_pow_logdiv hq hN).1
+  have e1 : (2 / 3 : ℝ) ^ j = 3 / 2 * (2 / 3 : ℝ) ^ (j + 1) := by rw [pow_succ]; ring
+  have e2 : (3 : ℝ) ^ j * (2 / 3 : ℝ) ^ j = 2 ^ j := by rw [← mul_pow]; norm_num
+  have h3 : (2 : ℝ) ^ j ≤ 3 ^ j := pow_le_pow_left₀ (by norm_num) (by norm_num) j
+  have hN0 : (0 : ℝ) ≤ N := by positivity
+  have hp : 0 ≤ (2 / 3 : ℝ) ^ (j + 1) := by positivity
+  have hA : (N : ℝ) * N * (2 / 3 : ℝ) ^ j ≤ 3 / 2 * (N : ℝ) ^ (2 + Real.logb 3 (2 / 3) / q) := by
+    rw [← nat_sq_rpow hN, e1]
+    have : (0 : ℝ) ≤ N * N := by positivity
+    nlinarith
+  have hB : (N : ℝ) * (3 ^ j * (2 / 3 : ℝ) ^ j) ≤ (N : ℝ) ^ (1 + (q : ℝ)⁻¹) := by
+    rw [← nat_mul_rpow hN, e2]
+    exact mul_le_mul_of_nonneg_left (h3.trans h2) hN0
+  have : (N : ℝ) * ((N + 2 * 3 ^ j) * c * (2 / 3 : ℝ) ^ j) +
+      N * ((2 * N + 2 * 3 ^ j) * c * (2 / 3 : ℝ) ^ j) =
+      c * (3 * ((N : ℝ) * N * (2 / 3 : ℝ) ^ j) + 4 * ((N : ℝ) * (3 ^ j * (2 / 3 : ℝ) ^ j))) := by ring
+  rw [this]
+  apply mul_le_mul_of_nonneg_left _ hc
+  linarith
+
+/-- Top-window and error terms at `W = K = j + 1`. -/
+theorem topTerms_le {q N : ℕ} (hq : 1 ≤ q) (hN : 1 ≤ N) (Cb κ : ℝ) :
+    2 * (N : ℝ) * (3 * N * (2 / 3 : ℝ) ^ (Nat.log 3 N / q + 1) +
+        4 * N * (1 / 3 : ℝ) ^ (Nat.log 3 N / q + 1) +
+        Cb * 9 ^ (Nat.log 3 N / q + 1) * (N : ℝ) ^ (1 - κ)) +
+      N * N * (Real.pi * (8 / 3 ^ (Nat.log 3 N / q + 1))) ≤
+      6 * (N : ℝ) ^ (2 + Real.logb 3 (2 / 3) / q) + (8 + 8 * Real.pi) * (N : ℝ) ^ (2 - (q : ℝ)⁻¹) +
+        18 * |Cb| * (N : ℝ) ^ (2 + 2 * (q : ℝ)⁻¹ - κ) := by
+  set j := Nat.log 3 N / q
+  have h1 := pow_logdiv_le hq hN (α := 2 / 3) (by norm_num) (by norm_num)
+  have h1' := pow_logdiv_le hq hN (α := 1 / 3) (by norm_num) (by norm_num)
+  have hl : Real.logb 3 (1 / 3) = -1 := by
+    rw [one_div, Real.logb_inv, Real.logb_self_eq_one (by norm_num)]
+  rw [hl] at h1'
+  have h2 := (three_pow_logdiv hq hN).1
+  have hN0 : (0 : ℝ) ≤ N := by positivity
+  have hNN : (0 : ℝ) ≤ N * N := by positivity
+  have e3 : (8 : ℝ) / 3 ^ (j + 1) = 8 * (1 / 3 : ℝ) ^ (j + 1) := by rw [one_div_pow]; ring
+  have h9 : (9 : ℝ) ^ (j + 1) ≤ 9 * (N : ℝ) ^ (2 * (q : ℝ)⁻¹) := by
+    have : (9 : ℝ) ^ (j + 1) = 9 * ((3 : ℝ) ^ j) ^ 2 := by
+      rw [pow_succ, show (9 : ℝ) = 3 ^ 2 by norm_num, ← pow_mul, ← pow_mul]; ring
+    rw [this, mul_comm (2 : ℝ), Real.rpow_mul hN0, Real.rpow_two]
+    have : ((3 : ℝ) ^ j) ^ 2 ≤ ((N : ℝ) ^ (q : ℝ)⁻¹) ^ 2 := pow_le_pow_left₀ (by positivity) h2 2
+    nlinarith
+  have hA : (N : ℝ) * N * (2 / 3 : ℝ) ^ (j + 1) ≤ (N : ℝ) ^ (2 + Real.logb 3 (2 / 3) / q) := by
+    rw [← nat_sq_rpow hN]; exact mul_le_mul_of_nonneg_left h1 hNN
+  have hB : (N : ℝ) * N * (1 / 3 : ℝ) ^ (j + 1) ≤ (N : ℝ) ^ (2 - (q : ℝ)⁻¹) := by
+    rw [show (2 : ℝ) - (q : ℝ)⁻¹ = 2 + -1 / q by ring, ← nat_sq_rpow hN]
+    exact mul_le_mul_of_nonneg_left h1' hNN
+  have hC : (N : ℝ) * (Cb * 9 ^ (j + 1) * (N : ℝ) ^ (1 - κ)) ≤
+      9 * |Cb| * (N : ℝ) ^ (2 + 2 * (q : ℝ)⁻¹ - κ) := by
+    have e : (N : ℝ) ^ (2 + 2 * (q : ℝ)⁻¹ - κ) = N * ((N : ℝ) ^ (2 * (q : ℝ)⁻¹) * (N : ℝ) ^ (1 - κ)) := by
+      rw [rpow_mul_rpow_nat hN, nat_mul_rpow hN]; ring_nf
+    rw [e]
+    have hr : (0 : ℝ) ≤ (N : ℝ) ^ (1 - κ) := by positivity
+    have h99 : (0 : ℝ) ≤ 9 ^ (j + 1) := by positivity
+    have : Cb * 9 ^ (j + 1) ≤ |Cb| * (9 * (N : ℝ) ^ (2 * (q : ℝ)⁻¹)) :=
+      (mul_le_mul_of_nonneg_right (le_abs_self Cb) h99).trans
+        (mul_le_mul_of_nonneg_left h9 (abs_nonneg _))
+    have := mul_le_mul_of_nonneg_right this hr
+    have := mul_le_mul_of_nonneg_left this hN0
+    nlinarith
+  have : 2 * (N : ℝ) * (3 * N * (2 / 3 : ℝ) ^ (j + 1) + 4 * N * (1 / 3 : ℝ) ^ (j + 1) +
+        Cb * 9 ^ (j + 1) * (N : ℝ) ^ (1 - κ)) + N * N * (Real.pi * (8 / 3 ^ (j + 1))) =
+      6 * ((N : ℝ) * N * (2 / 3 : ℝ) ^ (j + 1)) + (8 + 8 * Real.pi) * ((N : ℝ) * N * (1 / 3 : ℝ) ^ (j + 1)) +
+        2 * ((N : ℝ) * (Cb * 9 ^ (j + 1) * (N : ℝ) ^ (1 - κ))) := by rw [e3]; ring
+  rw [this]
+  have hpi : 0 ≤ 8 + 8 * Real.pi := by positivity
+  nlinarith [mul_le_mul_of_nonneg_left hB hpi]
+
 theorem log_le_posBound {s t e h' N y : ℕ} (ht : 1 ≤ t)
     (hy : y ≤ 3 ^ e * h' * (3 ^ s * t) ^ (2 * N)) :
     Nat.log 3 y ≤ 3 ^ e * h' + 2 * (s + t) * N + e := by
