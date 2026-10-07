@@ -786,6 +786,61 @@ theorem norm_charFun_repReal_le (S : Finset ℕ) (ξ : ℝ) :
   congr 2
   exact Finset.sum_congr rfl fun j _ => by ring
 
+/-- **Who reads a block coin.**  Proved: for `j` in the block `[a_k, 2a_k)` of run `k`, the
+positions reading coin `j` are exactly its copies `j + c·a_k`, `c ≤ k`. -/
+theorem src_eq_iff_block {k j i : ℕ} (h1 : runStart k ≤ j) (h2 : j < 2 * runStart k) :
+    src i = j ↔ ∃ c ∈ Finset.range (k + 1), i = j + c * runStart k := by
+  have hj2 : j < (k + 2) * runStart k := by nlinarith
+  have hpos : 0 < runStart k := (Nat.zero_le k).trans_lt (lt_runStart k)
+  constructor
+  · intro h
+    by_cases hf : isFree i = true
+    · rw [src_of_free hf] at h
+      subst h
+      have := isForced_of_mem_run h1 hj2
+      simp [isFree, this] at hf
+    · obtain ⟨k', h1', h2'⟩ := exists_run_of_not_free (by simpa using hf)
+      have hpos' : 0 < runStart k' := (Nat.zero_le k').trans_lt (lt_runStart k')
+      rw [src_of_mem_run h1' h2'] at h
+      have hm := Nat.mod_lt (i - runStart k') hpos'
+      have hk : k' = k := by
+        have e1 := runIdx_eq (k := k') (i := j) (by omega) (by nlinarith)
+        rw [runIdx_eq h1 hj2] at e1; exact e1.symm
+      subst hk
+      refine ⟨(i - runStart k') / runStart k', Finset.mem_range.2 ?_, ?_⟩
+      · have : (i - runStart k') / runStart k' < k' + 1 := by
+          rw [Nat.div_lt_iff_lt_mul hpos']
+          have e : (k' + 2) * runStart k' = (k' + 1) * runStart k' + runStart k' := by ring
+          omega
+        exact this
+      · have := Nat.div_add_mod (i - runStart k') (runStart k')
+        rw [mul_comm] at this
+        omega
+  · rintro ⟨c, hc, rfl⟩
+    rw [Finset.mem_range] at hc
+    have hi2 : j + c * runStart k < (k + 2) * runStart k := by nlinarith
+    rw [src_of_mem_run (by omega) hi2]
+    have : j + c * runStart k - runStart k = (j - runStart k) + c * runStart k := by omega
+    rw [this, Nat.add_mul_mod_self_right, Nat.mod_eq_of_lt (by omega)]
+    omega
+
+/-- **Weight of a block coin.**  Proved: `srcWeight j = Σ_{c≤k} 2·3^{-(j+c a_k)-1}`. -/
+theorem srcWeight_block {k j : ℕ} (h1 : runStart k ≤ j) (h2 : j < 2 * runStart k) :
+    srcWeight j = ∑ c ∈ Finset.range (k + 1), 2 / (3 : ℝ) ^ (j + c * runStart k + 1) := by
+  have hpos : 0 < runStart k := (Nat.zero_le k).trans_lt (lt_runStart k)
+  set T := (Finset.range (k + 1)).image fun c => j + c * runStart k
+  have hinj : Set.InjOn (fun c => j + c * runStart k) (Finset.range (k + 1) : Set ℕ) :=
+    fun a _ b _ h => by
+      have : a * runStart k = b * runStart k := by simpa using h
+      exact Nat.eq_of_mul_eq_mul_right hpos this
+  unfold srcWeight
+  rw [tsum_eq_sum (s := T) fun i hi => by
+    rw [if_neg]; intro h; exact hi (Finset.mem_image.2 (by
+      obtain ⟨c, hc, e⟩ := (src_eq_iff_block h1 h2).1 h; exact ⟨c, hc, e.symm⟩))]
+  rw [Finset.sum_image hinj]
+  refine Finset.sum_congr rfl fun c hc => ?_
+  rw [if_pos ((src_eq_iff_block h1 h2).2 ⟨c, hc, rfl⟩)]
+
 /-- The cyclic Riesz product of an integer `η` modulo `3^A − 1` (its cyclic ternary digits). -/
 noncomputable def cycProd (A : ℕ) (η : ℤ) : ℝ :=
   ∏ i ∈ Finset.range A, |Real.cos (2 * Real.pi * ((η : ℝ) * 3 ^ i) / (3 ^ A - 1))|
