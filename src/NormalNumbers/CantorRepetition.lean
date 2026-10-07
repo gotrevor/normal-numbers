@@ -2482,6 +2482,11 @@ theorem lt_runStart (k : ℕ) : k < runStart k := by
       _ < 4 ^ (k + 1) := Nat.lt_pow_self (by norm_num)
   omega
 
+/-- The runs whose copy coins can bound the pair `(m, d)`: `a_k ≤ u` and `T < (k+2)a_k`. -/
+noncomputable def copyRuns (s t e h' m d M : ℕ) : Finset ℕ :=
+  (Finset.range (M + 1)).filter fun k =>
+    runStart k ≤ s * (m + d) + e ∧ Nat.log 3 (pairNat s t e h' m d) < (k + 2) * runStart k
+
 /-- **The per-pair majorant.**  Sum of the six class majorants (`pair_class1`–`pair_class6`),
 the copy terms summed over runs `k ≤ M`. -/
 noncomputable def pairMaj (s t e h' m d M W K : ℕ) : ℝ :=
@@ -2491,7 +2496,7 @@ noncomputable def pairMaj (s t e h' m d M W K : ℕ) : ℝ :=
   Hf (fun _ => true) 0 W ((h' * t ^ (m + d) : ℕ) : ℝ) +
   CantorExactExponentProfile.topProd W (Int.fract (m * Real.logb 3 t +
     Real.logb 3 ((3 ^ e * h' * ((3 ^ s * t) ^ d - 1) : ℕ) : ℝ))) +
-  ∑ k ∈ Finset.range (M + 1),
+  ∑ k ∈ copyRuns s t e h' m d M,
     (cycProd (runStart k) ((h' : ℤ) * (((3 ^ s * t : ℕ) : ℤ) ^ (m + d) - ((3 ^ s * t : ℕ) : ℤ) ^ m))
       + cycProd (runStart k) ((h' : ℤ) * (t : ℤ) ^ (m + d))) +
   Real.pi * (8 / 3 ^ K)
@@ -2507,35 +2512,40 @@ theorem pairMaj_ge {s t e h' m d M W K : ℕ} :
       pairMaj s t e h' m d M W K) ∧
     (CantorExactExponentProfile.topProd W (Int.fract (m * Real.logb 3 t +
       Real.logb 3 ((3 ^ e * h' * ((3 ^ s * t) ^ d - 1) : ℕ) : ℝ))) ≤ pairMaj s t e h' m d M W K) ∧
-    (∀ k ≤ M, cycProd (runStart k) ((h' : ℤ) * (((3 ^ s * t : ℕ) : ℤ) ^ (m + d) -
+    (∀ k ≤ M, runStart k ≤ s * (m + d) + e →
+      Nat.log 3 (pairNat s t e h' m d) < (k + 2) * runStart k →
+      cycProd (runStart k) ((h' : ℤ) * (((3 ^ s * t : ℕ) : ℤ) ^ (m + d) -
       ((3 ^ s * t : ℕ) : ℤ) ^ m)) + Real.pi * (1 / 3 ^ K) ≤ pairMaj s t e h' m d M W K) ∧
-    (∀ k ≤ M, cycProd (runStart k) ((h' : ℤ) * (t : ℤ) ^ (m + d)) + Real.pi * (4 / 3 ^ K) ≤
+    (∀ k ≤ M, runStart k ≤ s * (m + d) + e →
+      Nat.log 3 (pairNat s t e h' m d) < (k + 2) * runStart k →
+      cycProd (runStart k) ((h' : ℤ) * (t : ℤ) ^ (m + d)) + Real.pi * (4 / 3 ^ K) ≤
       pairMaj s t e h' m d M W K) := by
   have h1 := Hf_nonneg (fun _ => true) 0 W ((h' * ((3 ^ s * t) ^ d - 1) * t ^ m : ℕ) : ℝ)
   have h3 := Hf_nonneg (fun _ => true) 0 W ((h' * t ^ (m + d) : ℕ) : ℝ)
   have h2 := topProd_nonneg' W (Int.fract (m * Real.logb 3 t + Real.logb 3 ((3 ^ e * h' : ℕ) : ℝ)))
   have h4 := topProd_nonneg' W (Int.fract (m * Real.logb 3 t +
       Real.logb 3 ((3 ^ e * h' * ((3 ^ s * t) ^ d - 1) : ℕ) : ℝ)))
-  set S := ∑ k ∈ Finset.range (M + 1),
+  set S := ∑ k ∈ copyRuns s t e h' m d M,
     (cycProd (runStart k) ((h' : ℤ) * (((3 ^ s * t : ℕ) : ℤ) ^ (m + d) - ((3 ^ s * t : ℕ) : ℤ) ^ m))
       + cycProd (runStart k) ((h' : ℤ) * (t : ℤ) ^ (m + d))) with hS
   have hS0 : 0 ≤ S := Finset.sum_nonneg fun k _ => add_nonneg (cycProd_nonneg _ _) (cycProd_nonneg _ _)
-  have hk : ∀ k ≤ M, cycProd (runStart k) ((h' : ℤ) * (((3 ^ s * t : ℕ) : ℤ) ^ (m + d) -
+  have hk : ∀ k ≤ M, runStart k ≤ s * (m + d) + e →
+      Nat.log 3 (pairNat s t e h' m d) < (k + 2) * runStart k → cycProd (runStart k) ((h' : ℤ) * (((3 ^ s * t : ℕ) : ℤ) ^ (m + d) -
       ((3 ^ s * t : ℕ) : ℤ) ^ m)) + cycProd (runStart k) ((h' : ℤ) * (t : ℤ) ^ (m + d)) ≤ S :=
-    fun k hk => Finset.single_le_sum (f := fun k => cycProd (runStart k) ((h' : ℤ) *
+    fun k hk ha hT => Finset.single_le_sum (f := fun k => cycProd (runStart k) ((h' : ℤ) *
       (((3 ^ s * t : ℕ) : ℤ) ^ (m + d) - ((3 ^ s * t : ℕ) : ℤ) ^ m)) + cycProd (runStart k)
         ((h' : ℤ) * (t : ℤ) ^ (m + d)))
       (fun k _ => add_nonneg (cycProd_nonneg _ _) (cycProd_nonneg _ _))
-      (Finset.mem_range.2 (by omega))
+      (Finset.mem_filter.2 ⟨Finset.mem_range.2 (by omega), ha, hT⟩)
   have hp : 0 ≤ Real.pi * (1 / 3 ^ K) := by positivity
   have e8 : Real.pi * (8 / 3 ^ K) = 8 * (Real.pi * (1 / 3 ^ K)) := by ring
   have e3 : Real.pi * (3 / 3 ^ K) = 3 * (Real.pi * (1 / 3 ^ K)) := by ring
   have e4 : Real.pi * (4 / 3 ^ K) = 4 * (Real.pi * (1 / 3 ^ K)) := by ring
   unfold pairMaj
   rw [← hS]
-  refine ⟨by linarith, by linarith, by linarith, by linarith, fun k hkM => ?_, fun k hkM => ?_⟩
-  · have := hk k hkM; have := cycProd_nonneg (runStart k) ((h' : ℤ) * (t : ℤ) ^ (m + d)); linarith
-  · have := hk k hkM
+  refine ⟨by linarith, by linarith, by linarith, by linarith, fun k hkM ha hT => ?_, fun k hkM ha hT => ?_⟩
+  · have := hk k hkM ha hT; have := cycProd_nonneg (runStart k) ((h' : ℤ) * (t : ℤ) ^ (m + d)); linarith
+  · have := hk k hkM ha hT
     have := cycProd_nonneg (runStart k) ((h' : ℤ) * (((3 ^ s * t : ℕ) : ℤ) ^ (m + d) -
       ((3 ^ s * t : ℕ) : ℤ) ^ m)); linarith
 
@@ -2597,10 +2607,10 @@ theorem exists_option_le_pairMaj {s t e h' m d M W K : ℕ} (ht : 1 ≤ t) (hh :
     exact ⟨none, (pair_class4 ht hp c1 c2 hMT).trans g4⟩
   · obtain ⟨k, hk, c1, c2⟩ := c
     have : k ≤ M := by have := lt_runStart k; omega
-    exact ⟨some k, (pair_class5 ht hk c1 c2).trans (g5 k this)⟩
+    exact ⟨some k, (pair_class5 ht hk c1 c2).trans (g5 k this (by omega) (by omega))⟩
   · obtain ⟨k, hk, c1, c2, c3⟩ := c
     have : k ≤ M := by have := lt_runStart k; omega
-    exact ⟨some k, (pair_class6 ht hk c1 c2 c3).trans (g6 k this)⟩
+    exact ⟨some k, (pair_class6 ht hk c1 c2 c3).trans (g6 k this c1 (by omega))⟩
 
 /-- **The six-way disjunction at concrete positions.**  `pair_classify_rep` with `ρ' = ρ(ρ+1)`,
 from `b ≤ 3^{s(ρ−1)}`, `3ᵉh' < 3^{sm}` (i.e. `m` large), past run `k₀`, away from the bands. -/
