@@ -15,3 +15,9 @@ repPairArith_of_three_dvd_of_inputs, liouvilleCantorFullProfile_of_inputs.
 - `repPairArith_of_three_dvd`: the walls themselves (TOrbitCyclicDecay, BadGcdSparseH; Baker cited).
   DIRECTION forbids head-on attack on TOrbitCyclicDecay.  Frozen headline's only sorry now sits here.
 - `card_cycProd_ge_le` (off-path, believed 90%, elementary: cyclic digit-change counting).  Next target.
+
+## Update (end of lap 6)
+`card_cycProd_ge_le` PROVED (rd/dg cyclic digits, chCode injective encoding, card_powerset_le_le).
+CantorRepetition.lean now has exactly ONE sorry: `repPairArith_of_three_dvd`, equivalent (given the
+proved assembly) to the open walls TOrbitCyclicDecay / BadGcdSparseH (+ cited Baker).  DIRECTION
+forbids head-on attack on TOrbitCyclicDecay and new wall reformulations; operator decision needed.
