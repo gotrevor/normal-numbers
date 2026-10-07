@@ -2247,6 +2247,51 @@ theorem runEnd_succ_le_cube (k : ℕ) :
 
 /-! ## Bases `3ˢt`, `t > 1`: the crux -/
 
+/-- **Pair sums with a power saving.**  For each `h ≠ 0` and each `N ≥ 1` some choice of options
+makes the pair sum `≤ C N^{2−δ}`.  This is the per-`N` content of the assembly; summability along
+`sched` is then automatic (`repPairArith_of_power`). -/
+def RepPairPower (b : ℕ) : Prop :=
+  ∀ h : ℤ, h ≠ 0 → ∃ C δ : ℝ, 0 < δ ∧ ∀ N : ℕ, 1 ≤ N → ∃ (M : ℕ) (κ : ℕ → ℕ → Option ℕ),
+    ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N,
+      repBound M (κ n m) (h * ((b : ℝ) ^ n - (b : ℝ) ^ m)) ≤ C * (N : ℝ) ^ (2 - δ)
+
+theorem one_le_sched (j : ℕ) : 1 ≤ sched j := by
+  unfold sched
+  have : 1 ≤ ⌊Real.exp (Real.sqrt j)⌋₊ :=
+    Nat.le_floor (by push_cast; exact Real.one_le_exp (Real.sqrt_nonneg _))
+  omega
+
+/-- Proved: a power saving is summable along `sched`. -/
+theorem repPairArith_of_power {b : ℕ} (hP : RepPairPower b) : RepPairArith b := by
+  intro h hh
+  obtain ⟨C, δ, hδ, hC⟩ := hP h hh
+  choose M κ hMκ using fun j => hC (sched j) (one_le_sched j)
+  refine ⟨M, κ, ?_⟩
+  refine ((CantorExactExponentProfile.summable_sched_rpow hδ).mul_left C).of_nonneg_of_le
+    (fun j => div_nonneg (Finset.sum_nonneg fun _ _ => Finset.sum_nonneg fun _ _ => ?_)
+      (by positivity)) (fun j => ?_)
+  · cases κ j _ _ <;> simp only [repBound]
+    · exact Bf_nonneg _ _ _
+    · split_ifs
+      · exact Finset.prod_nonneg fun _ _ => abs_nonneg _
+      · exact zero_le_one
+  · have hN : (0 : ℝ) < sched j := by exact_mod_cast one_le_sched j
+    rw [div_le_iff₀ (by positivity)]
+    refine (hMκ j).trans (le_of_eq ?_)
+    rw [mul_assoc, ← Real.rpow_natCast (sched j : ℝ) 2, ← Real.rpow_add hN]
+    norm_num; ring_nf; simp
+
+/-- **Per-`N` assembly (open; believed, 60%; the remaining content of `repPairArith_of_inputs`).**
+Plan: `W = K = ⌈ε log₃ N⌉`; `κ` per `pair_classify_rep` (hypotheses: `le_log_mul_pow`,
+`log_mul_pow_lt`, `le_log_pair`, `log_pair_le_log`, `hsep_of`); class sums `sum_class_low_le`,
+`sum_class_top_le`, `sum_class_sep_le`, `sum_class_copy_le`, `sum_class_copySep_le` (range glue
+`runEnd_succ_le_cube`, `≤ log₄ N` runs); band pairs `card_nearCopyBdry_le`, small `m` and the
+diagonal bounded by `1`; general `h = 3^e h'` shifts every window by `e`. -/
+theorem repPairPower_of_inputs {s t : ℕ} (hs : 1 ≤ s) (ht : 2 ≤ t) (h3t : ¬ 3 ∣ t)
+    (hB : CantorExactExponentProfile.Literature.BakerLogDiscrepancy) (hT : TOrbitCyclicDecay t)
+    (hS : BadGcdSparseH (3 ^ s * t)) : RepPairPower (3 ^ s * t) := by
+  sorry
+
 /-- **Assembly of the crux from its inputs (open; believed, 60%).**  For `b = 3ˢt`, `t > 1`:
 `RepPairArith b` follows from the Baker discrepancy of `m log₃ t` (cited,
 `Literature.BakerLogDiscrepancy`), the copy-zone digit statements `TOrbitCyclicDecay t` and
@@ -2284,8 +2329,8 @@ the gap-spanning windows `n ≥ 340` of run 2; `b = 6`, `N = 300`: `.0034`): a p
 not evidence against `RepPairArith`. -/
 theorem repPairArith_of_inputs {s t : ℕ} (hs : 1 ≤ s) (ht : 2 ≤ t) (h3t : ¬ 3 ∣ t)
     (hB : CantorExactExponentProfile.Literature.BakerLogDiscrepancy) (hT : TOrbitCyclicDecay t)
-    (hS : BadGcdSparseH (3 ^ s * t)) : RepPairArith (3 ^ s * t) := by
-  sorry
+    (hS : BadGcdSparseH (3 ^ s * t)) : RepPairArith (3 ^ s * t) :=
+  repPairArith_of_power (repPairPower_of_inputs hs ht h3t hB hT hS)
 
 /-- **The crux, arithmetic form (open leaf).**  See `RepPairArith`. -/
 theorem repPairArith_of_three_dvd {b : ℕ} (hb : 2 ≤ b) (h3 : 3 ∣ b) (hpow : ∀ s : ℕ, b ≠ 3 ^ s) :
