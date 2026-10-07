@@ -994,6 +994,39 @@ def BadGcdSparse (b : ℕ) : Prop :=
       ¬ ((Int.gcd ((b : ℤ) ^ d - 1) (3 ^ A - 1) : ℝ) ^ 2 ≤ 3 ^ A - 1)).card : ℝ) ≤
       C * (N : ℝ) ^ (1 - δ)
 
+/-- The cyclic Riesz product at a real frequency. -/
+noncomputable def cycProdR (A : ℕ) (η : ℝ) : ℝ :=
+  ∏ i ∈ Finset.range A, |Real.cos (2 * Real.pi * (η * 3 ^ i) / (3 ^ A - 1))|
+
+theorem cycProdR_intCast (A : ℕ) (η : ℤ) : cycProdR A η = cycProd A η := rfl
+
+/-- **The cyclic product is `π`-Lipschitz.**  Proved (`Σ_{i<A} 3ⁱ = (3^A − 1)/2`). -/
+theorem cycProdR_lip (A : ℕ) (η η' : ℝ) :
+    |cycProdR A η - cycProdR A η'| ≤ Real.pi * |η - η'| := by
+  rcases Nat.eq_zero_or_pos A with rfl | hA
+  · simp [cycProdR]; positivity
+  have h3 : (1 : ℝ) < 3 ^ A := one_lt_pow₀ (by norm_num) (by omega)
+  have hQ : (0 : ℝ) < 3 ^ A - 1 := by linarith
+  have hb : ∀ x : ℝ, 0 ≤ |Real.cos x| ∧ |Real.cos x| ≤ 1 :=
+    fun x => ⟨abs_nonneg _, Real.abs_cos_le_one _⟩
+  unfold cycProdR
+  refine (CantorExactExponentProfile.abs_prod_sub_prod_le _ _ _ (fun k => hb _)
+    (fun k => hb _)).trans ?_
+  have hterm : ∀ i : ℕ, |(|Real.cos (2 * Real.pi * (η * 3 ^ i) / (3 ^ A - 1))| -
+      |Real.cos (2 * Real.pi * (η' * 3 ^ i) / (3 ^ A - 1))|)| ≤
+      2 * Real.pi * |η - η'| / (3 ^ A - 1) * 3 ^ i := by
+    intro i
+    refine (abs_abs_sub_abs_le_abs_sub _ _).trans ((Real.abs_cos_sub_cos_le _ _).trans (le_of_eq ?_))
+    rw [show 2 * Real.pi * (η * 3 ^ i) / (3 ^ A - 1) - 2 * Real.pi * (η' * 3 ^ i) / (3 ^ A - 1) =
+      (2 * Real.pi * 3 ^ i / (3 ^ A - 1)) * (η - η') by ring, abs_mul,
+      abs_of_pos (by positivity : (0 : ℝ) < 2 * Real.pi * 3 ^ i / (3 ^ A - 1))]
+    ring
+  refine (Finset.sum_le_sum fun i _ => hterm i).trans (le_of_eq ?_)
+  rw [← Finset.mul_sum]
+  have hg : ∑ i ∈ Finset.range A, (3 : ℝ) ^ i = (3 ^ A - 1) / 2 := by
+    have := geom_sum_mul (3 : ℝ) A; linarith
+  rw [hg]; field_simp
+
 theorem cycProd_neg (A : ℕ) (η : ℤ) : cycProd A (-η) = cycProd A η := by
   unfold cycProd
   refine Finset.prod_congr rfl fun i _ => ?_
