@@ -3287,3 +3287,6 @@ Next attack on the crux: split frequencies into free / copy / shadow zones (docs
 formalize the copy-zone pair term: the block-coin Riesz product as a function of
 `η mod (3^A − 1)` (cyclic digits), then test numerically whether
 `Σ_{n,m in run k} ∏_{i<A}|cos(2π η 3ⁱ/(3^A−1))|` has power decay (exact, small A, b=6 vs b=9).
+- rep lap 1 (cont.): `copyPairSum`, node `CopyZoneDecay` (b=2,6,12 at diagonal floor 1/N, b=9 control .20).
+  Next: prove CopyZoneDecay for pairs with b^{n}−b^{m} < 3^A (no wraparound: existing low-digit count),
+  isolate the wraparound pairs as the residual leaf.

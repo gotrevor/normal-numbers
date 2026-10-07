@@ -568,6 +568,22 @@ theorem liouville_repReal (ω : ℕ → Bool) (hirr : Irrational (repReal ω)) :
     rw [one_div_lt_one_div (by positivity) (by positivity)]
     exact hbn
 
+/-- **The copy-zone pair sum**: `Σ_{n,m<N} ∏_{i<A} |cos(2π (bⁿ − bᵐ) 3ⁱ/(3^A − 1))|`, the Riesz
+form of `𝔼_W |Σ_{m<N} e(bᵐ W/(3^A−1))|²` over a random Cantor block `W` of length `A`. -/
+noncomputable def copyPairSum (b A N : ℕ) : ℝ :=
+  ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N, ∏ i ∈ Finset.range A,
+    |Real.cos (2 * Real.pi * (((b : ℝ) ^ n - (b : ℝ) ^ m) * 3 ^ i) / (3 ^ A - 1))|
+
+/-- **Copy-zone decay (open conjecture, the copy-zone leaf of `ae_isNormal_rep_of_three_dvd`).**
+For `b` not a power of 3 there are `C, δ > 0` with `copyPairSum b A N ≤ C N^{2−δ}` for
+`A ≤ N ≤ A^{3}` (runs of polynomially many copies).  Evidence (`scripts/rep_copyzone.py`,
+`N = 4A`, `A = 8..24`): `N⁻²·copyPairSum` is `.0116/.0108/.0105` for `b = 2, 6, 12` at `A = 24`,
+which is the diagonal floor `1/N = .0104`; control `b = 9`: `.33 → .20`, no decay.  Would give
+the copy zone of the crux (with the twist `3^{-A}` and the run-end truncation still to add). -/
+def CopyZoneDecay (b : ℕ) : Prop :=
+  ∃ C δ : ℝ, 0 < δ ∧ ∀ A N : ℕ, 1 ≤ A → A ≤ N → N ≤ A ^ 3 →
+    copyPairSum b A N ≤ C * (N : ℝ) ^ (2 - δ)
+
 /-! ## Bases `3ˢt`, `t > 1`: the crux -/
 
 /-- **Crux: a.e. normality to `b = 3ˢt`, `t > 1`.**  Open; confidence 50%.
