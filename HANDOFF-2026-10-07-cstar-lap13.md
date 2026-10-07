@@ -25,3 +25,5 @@ stage).  Gate stays frozen with its sorry.
 (c) the known long continuation: a containment-kill box abstraction of the exact {2,3} core at 9/2
 (lap-4 `abs23.js` style, ternary threshold automaton for 0.0000120120…₃ instead of runs), pruned to
 regular weights, with b ≥ 5 counted (lap 8: the true core plus counted b ≥ 5 already survives at 4.25).
+
+HEAD at handoff: c26c676f (branch proof/uniformbad-threshold). Uncommitted: none (only scripts/cstar_models/__pycache__/, untracked). Stuck bail filed this lap.
