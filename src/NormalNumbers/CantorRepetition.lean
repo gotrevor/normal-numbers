@@ -2774,12 +2774,13 @@ theorem u_le_T {s t e h' m d : ℕ} (ht : 2 ≤ t) (hh : 1 ≤ h') (hd : 1 ≤ d
         Nat.mul_le_mul (Nat.mul_le_mul_left _ hh) h1
 
 /-- **Copy-run bookkeeping.**  Pairs `(m, d)` (`m < N`, `1 ≤ d < N`) with run `k` in
-`copyRuns` have `m < m + d < (k+2)a_k + 1`, and only runs `k ≤ log₄(2sN + e)` occur.  So for any
+`copyRuns` have `m < m + d < (k+2)a_k + 1`, and only runs `k ≤ log₄(2sN + e)` with `a_k ≤ 2sN + e` occur (so `(k+2)a_k + 1 ≤ (L+2)(2sN+e)+1`;
+note `a_L` itself can be superpolynomial in `N`).  So for any
 nonnegative `g k n m`, the copy-term sum is at most `Σ_{k ≤ L} Σ_{n,m < (k+2)a_k+1} g k n m`. -/
 theorem sum_copyRuns_le {s t e h' : ℕ} (hs : 1 ≤ s) (ht : 2 ≤ t) (hh : 1 ≤ h') (N M : ℕ)
     (g : ℕ → ℕ → ℕ → ℝ) (hg : ∀ k n m, 0 ≤ g k n m) :
     ∑ m ∈ Finset.range N, ∑ d ∈ Finset.Ico 1 N, ∑ k ∈ copyRuns s t e h' m d M, g k (m + d) m ≤
-      ∑ k ∈ Finset.range (Nat.log 4 (s * (2 * N) + e) + 1),
+      ∑ k ∈ (Finset.range (Nat.log 4 (s * (2 * N) + e) + 1)).filter (fun k => runStart k ≤ s * (2 * N) + e),
         ∑ n ∈ Finset.range ((k + 2) * runStart k + 1),
           ∑ m ∈ Finset.range ((k + 2) * runStart k + 1), g k n m := by
   set L := Nat.log 4 (s * (2 * N) + e)
@@ -2794,15 +2795,15 @@ theorem sum_copyRuns_le {s t e h' : ℕ} (hs : 1 ≤ s) (ht : 2 ≤ t) (hh : 1 �
   have lhs : ∑ m ∈ Finset.range N, ∑ d ∈ Finset.Ico 1 N, ∑ k ∈ copyRuns s t e h' m d M,
       g k (m + d) m = ∑ x ∈ S, g x.1 x.2.1 x.2.2 := by
     rw [Finset.sum_map, Finset.sum_sigma, Finset.sum_product]; rfl
-  have rhs : ∑ k ∈ Finset.range (L + 1), ∑ n ∈ Finset.range ((k + 2) * runStart k + 1),
+  have rhs : ∑ k ∈ (Finset.range (L + 1)).filter (fun k => runStart k ≤ s * (2 * N) + e), ∑ n ∈ Finset.range ((k + 2) * runStart k + 1),
       ∑ m ∈ Finset.range ((k + 2) * runStart k + 1), g k n m =
-      ∑ x ∈ (Finset.range (L + 1)).sigma (fun k => Finset.range ((k + 2) * runStart k + 1) ×ˢ
+      ∑ x ∈ ((Finset.range (L + 1)).filter (fun k => runStart k ≤ s * (2 * N) + e)).sigma (fun k => Finset.range ((k + 2) * runStart k + 1) ×ˢ
         Finset.range ((k + 2) * runStart k + 1)), g x.1 x.2.1 x.2.2 := by
     rw [Finset.sum_sigma]
     refine Finset.sum_congr rfl fun k _ => ?_
     rw [Finset.sum_product]
   rw [lhs, rhs]
-  have hsub : S ⊆ ((Finset.range (L + 1)).sigma (fun k => Finset.range ((k + 2) * runStart k + 1) ×ˢ
+  have hsub : S ⊆ (((Finset.range (L + 1)).filter (fun k => runStart k ≤ s * (2 * N) + e)).sigma (fun k => Finset.range ((k + 2) * runStart k + 1) ×ˢ
         Finset.range ((k + 2) * runStart k + 1))).map (Equiv.sigmaEquivProd ℕ (ℕ × ℕ)).toEmbedding := by
     intro x hx
     simp only [S, Finset.mem_map, Finset.mem_sigma, Finset.mem_product, Finset.mem_range,
@@ -2818,11 +2819,11 @@ theorem sum_copyRuns_le {s t e h' : ℕ} (hs : 1 ≤ s) (ht : 2 ≤ t) (hh : 1 �
       omega
     have hkL := Nat.le_log_of_pow_le (by norm_num) ((four_pow_le_runStart k).trans h1)
     simp only [Finset.mem_map, Finset.mem_sigma, Finset.mem_product, Finset.mem_range,
-      Equiv.toEmbedding_apply]
+      Finset.mem_filter, Equiv.toEmbedding_apply]
     have hkL' : k < L + 1 := by simp only [L]; omega
     have hn : m + d < (k + 2) * runStart k + 1 := by omega
     have hm' : m < (k + 2) * runStart k + 1 := by omega
-    exact ⟨⟨k, (m + d, m)⟩, ⟨hkL', hn, hm'⟩, rfl⟩
+    exact ⟨⟨k, (m + d, m)⟩, ⟨⟨hkL', h1⟩, hn, hm'⟩, rfl⟩
   refine (Finset.sum_le_sum_of_subset_of_nonneg hsub fun x _ _ => hg _ _ _).trans (le_of_eq ?_)
   rw [Finset.sum_map]
   rfl
@@ -2834,22 +2835,21 @@ theorem runLen_mono {k L : ℕ} (h : k ≤ L) :
   have : (k + 2) * runStart k ≤ (L + 2) * runStart L := Nat.mul_le_mul (by omega) this
   omega
 
-/-- **Class-5 copy total.**  Under `CopyZoneDecayH b h'`, the run-by-run copy sums for runs
-`k ≤ L` are at most `(L+1)|C| N_L^{2−δ}`, `N_L = (L+2)a_L + 1`. -/
+/-- **Class-5 copy total.**  Under `CopyZoneDecayH b h'`, the run-by-run copy sums for any
+set `Ks` of runs with lengths `≤ Nmax` are at most `|Ks|·|C| Nmax^{2−δ}`. -/
 theorem copy5_total_le {b : ℕ} {h' : ℤ} (hC : CopyZoneDecayH b h') :
-    ∃ C δ : ℝ, 0 < δ ∧ ∀ L : ℕ,
-      ∑ k ∈ Finset.range (L + 1), ∑ n ∈ Finset.range ((k + 2) * runStart k + 1),
+    ∃ C δ : ℝ, 0 < δ ∧ ∀ (Ks : Finset ℕ) (Nmax : ℕ), (∀ k ∈ Ks, (k + 2) * runStart k + 1 ≤ Nmax) →
+      ∑ k ∈ Ks, ∑ n ∈ Finset.range ((k + 2) * runStart k + 1),
         ∑ m ∈ Finset.range ((k + 2) * runStart k + 1),
           cycProd (runStart k) (h' * ((b : ℤ) ^ n - (b : ℤ) ^ m)) ≤
-        (L + 1) * (|C| * (((L + 2) * runStart L + 1 : ℕ) : ℝ) ^ (2 - δ)) := by
+        Ks.card * (|C| * (Nmax : ℝ) ^ (2 - δ)) := by
   obtain ⟨C, δ, hδ, hC⟩ := hC
-  refine ⟨C, min δ 1, lt_min hδ one_pos, fun L => ?_⟩
-  have hterm : ∀ k ∈ Finset.range (L + 1), ∑ n ∈ Finset.range ((k + 2) * runStart k + 1),
+  refine ⟨C, min δ 1, lt_min hδ one_pos, fun Ks Nmax hKs => ?_⟩
+  have hterm : ∀ k ∈ Ks, ∑ n ∈ Finset.range ((k + 2) * runStart k + 1),
         ∑ m ∈ Finset.range ((k + 2) * runStart k + 1),
           cycProd (runStart k) (h' * ((b : ℤ) ^ n - (b : ℤ) ^ m)) ≤
-        |C| * (((L + 2) * runStart L + 1 : ℕ) : ℝ) ^ (2 - min δ 1) := by
+        |C| * (Nmax : ℝ) ^ (2 - min δ 1) := by
     intro k hk
-    have hkL : k ≤ L := Nat.lt_succ_iff.1 (Finset.mem_range.1 hk)
     obtain ⟨h1, h2⟩ := runEnd_succ_le_cube k
     have ha : 1 ≤ runStart k := by have := lt_runStart k; have := four_pow_le_runStart k
                                    have : 1 ≤ 4 ^ (k + 1) := Nat.one_le_pow _ _ (by norm_num)
@@ -2857,20 +2857,20 @@ theorem copy5_total_le {b : ℕ} {h' : ℤ} (hC : CopyZoneDecayH b h') :
     refine (hC (runStart k) _ ha h1 h2).trans ?_
     have hN1 : (1 : ℝ) ≤ (((k + 2) * runStart k + 1 : ℕ) : ℝ) := by
       exact_mod_cast Nat.succ_le_succ (Nat.zero_le _)
-    have hmono : (((k + 2) * runStart k + 1 : ℕ) : ℝ) ≤ (((L + 2) * runStart L + 1 : ℕ) : ℝ) := by
-      exact_mod_cast runLen_mono hkL
+    have hmono : (((k + 2) * runStart k + 1 : ℕ) : ℝ) ≤ (Nmax : ℝ) := by
+      exact_mod_cast hKs k hk
     calc C * (((k + 2) * runStart k + 1 : ℕ) : ℝ) ^ (2 - δ)
         ≤ |C| * (((k + 2) * runStart k + 1 : ℕ) : ℝ) ^ (2 - δ) :=
           mul_le_mul_of_nonneg_right (le_abs_self _) (by positivity)
       _ ≤ |C| * (((k + 2) * runStart k + 1 : ℕ) : ℝ) ^ (2 - min δ 1) := by
           gcongr
           exact min_le_left _ _
-      _ ≤ |C| * (((L + 2) * runStart L + 1 : ℕ) : ℝ) ^ (2 - min δ 1) := by
+      _ ≤ |C| * (Nmax : ℝ) ^ (2 - min δ 1) := by
           gcongr
           have : min δ 1 ≤ 1 := min_le_right _ _
           linarith
   refine (Finset.sum_le_sum hterm).trans (le_of_eq ?_)
-  rw [Finset.sum_const, Finset.card_range, nsmul_eq_mul]; push_cast; ring
+  rw [Finset.sum_const, nsmul_eq_mul]
 
 
 /-- **Class-6 copy total.**  Under `TOrbitCyclicDecay t`, with `h'² ≤ 3^{a_k} − 1` for `k ≥ k₁`:
@@ -2878,24 +2878,24 @@ the run-by-run sums of `cycProd a_k (h' tⁿ)` for `k ≤ L` are at most
 `(L+1)|C| N_L^{2−δ} + Σ_{k<k₁} N_k²`. -/
 theorem copy6_total_le {t : ℕ} (hT : TOrbitCyclicDecay t) :
     ∃ C δ : ℝ, 0 < δ ∧ ∀ (h' : ℤ), h' ≠ 0 → ∀ k₁ : ℕ,
-      (∀ k, k₁ ≤ k → (h'.natAbs : ℝ) ^ 2 ≤ 3 ^ runStart k - 1) → ∀ L : ℕ,
-      ∑ k ∈ Finset.range (L + 1), ∑ n ∈ Finset.range ((k + 2) * runStart k + 1),
+      (∀ k, k₁ ≤ k → (h'.natAbs : ℝ) ^ 2 ≤ 3 ^ runStart k - 1) → ∀ (Ks : Finset ℕ) (Nmax : ℕ),
+      (∀ k ∈ Ks, (k + 2) * runStart k + 1 ≤ Nmax) →
+      ∑ k ∈ Ks, ∑ n ∈ Finset.range ((k + 2) * runStart k + 1),
         ∑ _m ∈ Finset.range ((k + 2) * runStart k + 1),
           cycProd (runStart k) (h' * (t : ℤ) ^ n) ≤
-        (L + 1) * (|C| * (((L + 2) * runStart L + 1 : ℕ) : ℝ) ^ (2 - δ)) +
+        Ks.card * (|C| * (Nmax : ℝ) ^ (2 - δ)) +
           ∑ k ∈ Finset.range k₁, ((((k + 2) * runStart k + 1 : ℕ) : ℝ)) ^ 2 := by
   obtain ⟨C, δ, hδ, hC⟩ := hT
-  refine ⟨C, min δ 1, lt_min hδ one_pos, fun h' hh k₁ hk₁ L => ?_⟩
+  refine ⟨C, min δ 1, lt_min hδ one_pos, fun h' hh k₁ hk₁ Ks Nmax hKs => ?_⟩
   set F : ℕ → ℝ := fun k => ∑ n ∈ Finset.range ((k + 2) * runStart k + 1),
         ∑ _m ∈ Finset.range ((k + 2) * runStart k + 1), cycProd (runStart k) (h' * (t : ℤ) ^ n)
-  have hF : ∀ k ∈ Finset.range (L + 1), F k ≤
-      |C| * (((L + 2) * runStart L + 1 : ℕ) : ℝ) ^ (2 - min δ 1) +
+  have hF : ∀ k ∈ Ks, F k ≤
+      |C| * (Nmax : ℝ) ^ (2 - min δ 1) +
         if k < k₁ then ((((k + 2) * runStart k + 1 : ℕ) : ℝ)) ^ 2 else 0 := by
     intro k hk
-    have hkL : k ≤ L := Nat.lt_succ_iff.1 (Finset.mem_range.1 hk)
     set Nk := (k + 2) * runStart k + 1
     have hN1 : (1 : ℝ) ≤ (Nk : ℝ) := by exact_mod_cast Nat.succ_le_succ (Nat.zero_le _)
-    have hpos : 0 ≤ |C| * (((L + 2) * runStart L + 1 : ℕ) : ℝ) ^ (2 - min δ 1) := by positivity
+    have hpos : 0 ≤ |C| * (Nmax : ℝ) ^ (2 - min δ 1) := by positivity
     split_ifs with hlt
     · have : F k ≤ (Nk : ℝ) ^ 2 := by
         simp only [F]
@@ -2915,8 +2915,8 @@ theorem copy6_total_le {t : ℕ} (hT : TOrbitCyclicDecay t) :
         refine Finset.sum_congr rfl fun n _ => ?_
         rw [Finset.sum_const, Finset.card_range, nsmul_eq_mul]
       rw [this, add_zero]
-      have hmono : (Nk : ℝ) ≤ (((L + 2) * runStart L + 1 : ℕ) : ℝ) := by
-        exact_mod_cast runLen_mono hkL
+      have hmono : (Nk : ℝ) ≤ (Nmax : ℝ) := by
+        exact_mod_cast hKs k hk
       calc (Nk : ℝ) * ∑ n ∈ Finset.range Nk, cycProd (runStart k) (h' * (t : ℤ) ^ n)
           ≤ Nk * (|C| * (Nk : ℝ) ^ (1 - δ)) :=
             mul_le_mul_of_nonneg_left (hO.trans (mul_le_mul_of_nonneg_right (le_abs_self _)
@@ -2930,8 +2930,7 @@ theorem copy6_total_le {t : ℕ} (hT : TOrbitCyclicDecay t) :
             have : min δ 1 ≤ 1 := min_le_right _ _
             linarith
   refine (Finset.sum_le_sum hF).trans ?_
-  rw [Finset.sum_add_distrib, Finset.sum_const, Finset.card_range, nsmul_eq_mul]
-  push_cast
+  rw [Finset.sum_add_distrib, Finset.sum_const, nsmul_eq_mul]
   gcongr
   rw [← Finset.sum_filter]
   refine Finset.sum_le_sum_of_subset_of_nonneg (fun k hk => ?_) (fun _ _ _ => by positivity)
