@@ -1187,15 +1187,15 @@ theorem secondMoment_le_pairs (Φ : (ℕ → Bool) → ℝ) (hG : Measurable Φ)
   exact Finset.sum_le_sum fun n _ => norm_sum_le _ _
 
 /-- **Pair-sum decay for the repetition law (open; the crux in pair form).**  For every
-`h ≠ 0`: `Σ_{n,m<N} ‖𝔼 e(h(bⁿ − bᵐ)·repReal)‖ ≤ C N^{2−δ}`.  Confidence 45% for `b = 3ˢt`,
+`h ≠ 0`, `N⁻²·Σ_{n,m<N} ‖𝔼 e(h(bⁿ − bᵐ)·repReal)‖` is summable along `N = sched j`
+(`sched j ≈ e^{√j}`, so a rate `N^{-δ}` or even `exp(−c log N/log log N)` suffices).  Confidence 45% for `b = 3ˢt`,
 `t > 1` (the zone split in the docstring of `ae_isNormal_rep_of_three_dvd`; copy-zone terms are
 `norm_charFun_repReal_le_cyc_int`, i.e. `CopyZoneDecay`).  Power decay is more than needed
-(summability along `sched` suffices) but is what the zone bounds would give. -/
+was the first formulation; the summable form admits Stewart-type rates (see `RepPairArith`). -/
 def RepPairDecay (b : ℕ) : Prop :=
-  ∀ h : ℤ, h ≠ 0 → ∃ C δ : ℝ, 0 < δ ∧ ∀ N : ℕ, 1 ≤ N →
-    ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N,
-      ‖∫ ω, ee ((h * ((b : ℝ) ^ n - (b : ℝ) ^ m)) * repReal ω) ∂coinMeasure‖ ≤
-        C * (N : ℝ) ^ (2 - δ)
+  ∀ h : ℤ, h ≠ 0 → Summable fun j => (∑ n ∈ Finset.range (sched j), ∑ m ∈ Finset.range (sched j),
+      ‖∫ ω, ee ((h * ((b : ℝ) ^ n - (b : ℝ) ^ m)) * repReal ω) ∂coinMeasure‖) /
+        ((sched j : ℝ) ^ 2)
 
 /-- The two Riesz bounds on the repetition law: the free coins below `M` (`none`) or the block
 coins of run `k` (`some k`, a real-frequency cyclic product). -/
@@ -1213,9 +1213,18 @@ theorem norm_charFun_repReal_le_repBound (M : ℕ) (o : Option ℕ) (ξ : ℝ) :
     rw [prod_block_eq_cyc] at h1
     exact h1
 
-/-- **The crux as a deterministic exponential-sum statement (open).**  For each `h ≠ 0` and `N`
-there is a choice, per pair `(n, m)`, of free coins or of one run's block coins whose Riesz
-bound at `ξ = h(bⁿ − bᵐ)` sums to `O(N^{2−δ})`.  No measure theory left: the crux
+/-- **The crux as a deterministic exponential-sum statement (open).**  For each `h ≠ 0` there
+is a choice, per `N = sched j` and pair `(n, m)`, of free coins or of one run's block coins whose
+Riesz bounds at `ξ = h(bⁿ − bᵐ)` sum to `N²·ε_j` with `Σ ε_j < ∞`.
+
+Route note (2026-10-07).  Windows `[P, cP]` (`c = 1 + log₃t/s`) of the frequencies lie inside
+runs (runs have multiplicative length `k+2 → ∞`), so free coins cannot carry the bound; the
+copy coins must.  No-wrap copy pairs (`h tᵐ(b^d − 1) < 3^A`) need only `≳ log A/log log A`
+ternary digit changes of the integer `h tᵐ(b^d−1)`: a Stewart-type digit theorem (Baker;
+Stewart 1980 covers fixed multipliers, uniformity in `b^d − 1` is not known to us), which would give
+the rate `exp(−c log N/log log N)`, summable along `sched`; hence the summable form.  The
+wrap pairs are modular (`tᵐ mod 3^A − 1`, orbit length polylog in the modulus, below
+Bourgain–Glibichuk–Konyagin range).  No measure theory left: the crux
 `repPairDecay_of_three_dvd` follows (`repPairDecay_of_arith`).  Choices expected: `some k` when
 the window of `h bⁿ` sits in run `k`'s copy stretch (`CopyZoneDecay`), `none` otherwise (free
 gaps: Cassels; shadow: Baker).  Evidence (`scripts/rep_arith.py`, `h = 1`, greedy `κ` = min
@@ -1223,19 +1232,17 @@ over all options, `N⁻²·Σ` at `N = 30, 60, 120, 200`; `N = 200` reaches run 
 `b = 6`: `.043/.019/.009/.0052`, `b = 12`: `.037/.018/.009/.0051`, i.e. the diagonal floor `1/N`;
 control `b = 9`: `.30/.30/.28/.25`, no decay. -/
 def RepPairArith (b : ℕ) : Prop :=
-  ∀ h : ℤ, h ≠ 0 → ∃ C δ : ℝ, 0 < δ ∧ ∀ N : ℕ, 1 ≤ N → ∃ (M : ℕ) (κ : ℕ → ℕ → Option ℕ),
-    ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N,
-      repBound M (κ n m) (h * ((b : ℝ) ^ n - (b : ℝ) ^ m)) ≤ C * (N : ℝ) ^ (2 - δ)
+  ∀ h : ℤ, h ≠ 0 → ∃ (M : ℕ → ℕ) (κ : ℕ → ℕ → ℕ → Option ℕ), Summable fun j =>
+    (∑ n ∈ Finset.range (sched j), ∑ m ∈ Finset.range (sched j),
+      repBound (M j) (κ j n m) (h * ((b : ℝ) ^ n - (b : ℝ) ^ m))) / ((sched j : ℝ) ^ 2)
 
 /-- Proved: pointwise `norm_charFun_repReal_le_repBound`. -/
 theorem repPairDecay_of_arith {b : ℕ} (hA : RepPairArith b) : RepPairDecay b := by
   intro h hh
-  obtain ⟨C, δ, hδ, hC⟩ := hA h hh
-  refine ⟨C, δ, hδ, fun N hN => ?_⟩
-  obtain ⟨M, κ, hκ⟩ := hC N hN
-  refine le_trans ?_ hκ
-  exact Finset.sum_le_sum fun n _ => Finset.sum_le_sum fun m _ =>
-    norm_charFun_repReal_le_repBound M (κ n m) _
+  obtain ⟨M, κ, hκ⟩ := hA h hh
+  refine hκ.of_nonneg_of_le (fun j => by positivity) (fun j => ?_)
+  exact div_le_div_of_nonneg_right (Finset.sum_le_sum fun n _ => Finset.sum_le_sum fun m _ =>
+    norm_charFun_repReal_le_repBound (M j) (κ j n m) _) (by positivity)
 
 /-- **Normality from pair-sum decay.**  Proved: `secondMoment_le_pairs` +
 `summable_sched_rpow` + `ae_isNormal_of_secondMoment`. -/
@@ -1244,18 +1251,10 @@ theorem ae_isNormal_rep_of_pairDecay {b : ℕ} (hb : 2 ≤ b) (hP : RepPairDecay
   refine ae_isNormal_of_secondMoment coinMeasure hb _ measurable_repReal sched
     sched_strictMono sched_ratio ?_
   intro h hh
-  obtain ⟨C, δ, hδ, hC⟩ := hP h hh
-  refine ((CantorExactExponentProfile.summable_sched_rpow hδ).mul_left |C|).of_nonneg_of_le
+  refine (hP h hh).of_nonneg_of_le
     (fun j => div_nonneg (integral_nonneg fun ω => by positivity) (by positivity))
-    (fun j => ?_)
-  have hN1 : (1 : ℝ) ≤ sched j := by exact_mod_cast one_le_sched j
-  have hN : (0 : ℝ) < sched j := by linarith
-  rw [div_le_iff₀ (by positivity)]
-  refine (secondMoment_le_pairs repReal measurable_repReal b h (sched j)).trans
-    ((hC _ (one_le_sched j)).trans ?_)
-  rw [show (2 : ℝ) - δ = -δ + 2 by ring, Real.rpow_add hN, Real.rpow_two]
-  have : 0 ≤ (sched j : ℝ) ^ (-δ) * ((sched j : ℝ) ^ 2) := by positivity
-  nlinarith [le_abs_self C]
+    (fun j => div_le_div_of_nonneg_right
+      (secondMoment_le_pairs repReal measurable_repReal b h (sched j)) (by positivity))
 
 /-! ## Bases `3ˢt`, `t > 1`: the crux -/
 
