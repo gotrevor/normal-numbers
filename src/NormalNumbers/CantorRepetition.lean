@@ -1197,6 +1197,116 @@ theorem copyZoneDecay_of {s t : ℕ} (hT : TOrbitCyclicDecay t) (hS : BadGcdSpar
   have hC'a : 0 ≤ |C'| := abs_nonneg _
   nlinarith [mul_le_mul_of_nonneg_left h2 hCa, mul_le_mul_of_nonneg_left h3 hC'a]
 
+/-- Pair term with a multiplier `h`.  Proved (as `cycProd_pair`). -/
+theorem cycProd_pairH (A s t m d : ℕ) (h : ℤ) :
+    cycProd A (h * (((3 ^ s * t : ℕ) : ℤ) ^ (m + d) - ((3 ^ s * t : ℕ) : ℤ) ^ m)) =
+      cycProd A ((t : ℤ) ^ m * (h * (((3 ^ s * t : ℕ) : ℤ) ^ d - 1))) := by
+  have e : h * (((3 ^ s * t : ℕ) : ℤ) ^ (m + d) - ((3 ^ s * t : ℕ) : ℤ) ^ m) =
+      3 ^ (s * m) * ((t : ℤ) ^ m * (h * (((3 ^ s * t : ℕ) : ℤ) ^ d - 1))) := by push_cast; ring
+  rw [e, cycProd_mul_three_pow]
+
+theorem int_gcd_mul_le {h q : ℤ} (hh : h ≠ 0) (hq : q ≠ 0) (c : ℤ) :
+    (Int.gcd (h * c) q : ℝ) ≤ h.natAbs * Int.gcd c q := by
+  have hd : Nat.gcd (h.natAbs * c.natAbs) q.natAbs ∣ h.natAbs * Nat.gcd c.natAbs q.natAbs := by
+    rw [← Nat.gcd_mul_left]
+    exact Nat.dvd_gcd (Nat.gcd_dvd_left _ _) ((Nat.gcd_dvd_right _ _).trans (dvd_mul_left _ _))
+  have hpos : 0 < h.natAbs * Nat.gcd c.natAbs q.natAbs :=
+    Nat.mul_pos (Int.natAbs_pos.2 hh) (Nat.gcd_pos_of_pos_right _ (Int.natAbs_pos.2 hq))
+  have := Nat.le_of_dvd hpos hd
+  rw [Int.gcd, Int.gcd, Int.natAbs_mul]
+  exact_mod_cast this
+
+/-- **Copy-zone decay with a multiplier `h` (open; ⇐ `TOrbitCyclicDecay` + `BadGcdSparseH`).** -/
+def CopyZoneDecayH (b : ℕ) (h : ℤ) : Prop :=
+  ∃ C δ : ℝ, 0 < δ ∧ ∀ A N : ℕ, 1 ≤ A → A ≤ N → N ≤ A ^ 3 →
+    ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N, cycProd A (h * ((b : ℤ) ^ n - (b : ℤ) ^ m)) ≤
+      C * (N : ℝ) ^ (2 - δ)
+
+/-- **`BadGcdSparse` with a multiplier slack `H` (open; believed, 75%).** -/
+def BadGcdSparseH (b : ℕ) : Prop :=
+  ∀ H : ℕ, 1 ≤ H → ∃ C δ : ℝ, 0 < δ ∧ ∀ A N : ℕ, 1 ≤ A → A ≤ N → N ≤ A ^ 3 →
+    (((Finset.Ico 1 N).filter fun d =>
+      ¬ (((H : ℝ) * Int.gcd ((b : ℤ) ^ d - 1) (3 ^ A - 1)) ^ 2 ≤ 3 ^ A - 1)).card : ℝ) ≤
+      C * (N : ℝ) ^ (1 - δ)
+
+theorem copyZoneDecayH_of {s t : ℕ} (hT : TOrbitCyclicDecay t) (hS : BadGcdSparseH (3 ^ s * t))
+    (h : ℤ) (hh : h ≠ 0) : CopyZoneDecayH (3 ^ s * t) h := by
+  obtain ⟨C, δ, hδ, hC⟩ := hT
+  obtain ⟨C', δ', hδ', hC'⟩ := hS h.natAbs (Int.natAbs_pos.2 hh)
+  set b := 3 ^ s * t with hbdef
+  set δ'' := min (min δ δ') 1
+  have hδ''0 : 0 < δ'' := lt_min (lt_min hδ hδ') one_pos
+  refine ⟨1 + 2 * |C| + 2 * |C'|, δ'', hδ''0, fun A N hA hAN hNA => ?_⟩
+  have hN1 : (1 : ℝ) ≤ N := by exact_mod_cast hA.trans hAN
+  have hN0 : (0 : ℝ) < N := by linarith
+  set G : ℕ → ℕ → ℝ := fun d m => cycProd A ((t : ℤ) ^ m * (h * ((b : ℤ) ^ d - 1)))
+  have hpair := pair_sum_le (fun n m => cycProd A (h * ((b : ℤ) ^ n - (b : ℤ) ^ m))) G
+    (fun d m => cycProd_nonneg _ _) (fun n => by simp [cycProd_le_one])
+    (fun n m hmn => le_of_eq (by
+      have := cycProd_pairH A s t m (n - m) h
+      rw [show m + (n - m) = n by omega] at this
+      simpa [G, hbdef] using this))
+    (fun n m hmn => le_of_eq (by
+      have := cycProd_pairH A s t n (m - n) h
+      rw [show n + (m - n) = m by omega] at this
+      rw [← cycProd_neg, ← mul_neg, neg_sub]
+      simpa [G, hbdef] using this)) N
+  refine hpair.trans ?_
+  -- each shift
+  set bad := (Finset.Ico 1 N).filter fun d =>
+      ¬ (((h.natAbs : ℝ) * Int.gcd ((b : ℤ) ^ d - 1) (3 ^ A - 1)) ^ 2 ≤ 3 ^ A - 1)
+  have hrow : ∀ d ∈ Finset.Ico 1 N, ∑ m ∈ Finset.range N, G d m ≤
+      |C| * (N : ℝ) ^ (1 - δ) + (if d ∈ bad then (N : ℝ) else 0) := by
+    intro d hd
+    by_cases hg : (((h.natAbs : ℝ) * Int.gcd ((b : ℤ) ^ d - 1) (3 ^ A - 1)) ^ 2 ≤ 3 ^ A - 1)
+    · have h1 := hC A N hA hAN hNA (h * ((b : ℤ) ^ d - 1)) ((pow_le_pow_left₀ (by positivity)
+        (int_gcd_mul_le hh (by
+          have : (1 : ℤ) < 3 ^ A := one_lt_pow₀ (by norm_num) (by omega)
+          omega) _) 2).trans hg)
+      have : d ∉ bad := fun hm => (Finset.mem_filter.1 hm).2 hg
+      rw [if_neg this, add_zero]
+      refine le_trans (le_of_eq ?_) (h1.trans (mul_le_mul_of_nonneg_right (le_abs_self C)
+        (by positivity)))
+      exact Finset.sum_congr rfl fun m _ => by simp only [G]; ring_nf
+    · have : d ∈ bad := Finset.mem_filter.2 ⟨hd, hg⟩
+      rw [if_pos this]
+      have : ∑ m ∈ Finset.range N, G d m ≤ N := by
+        refine (Finset.sum_le_sum fun m _ => cycProd_le_one A _).trans ?_
+        simp
+      have : 0 ≤ |C| * (N : ℝ) ^ (1 - δ) := by positivity
+      linarith
+  have hsum := Finset.sum_le_sum hrow
+  rw [Finset.sum_add_distrib, Finset.sum_ite_mem, Finset.inter_eq_right.2 (Finset.filter_subset _ _),
+    Finset.sum_const, Finset.sum_const, nsmul_eq_mul, nsmul_eq_mul, Nat.card_Ico] at hsum
+  have hbad := hC' A N hA hAN hNA
+  have hcard : ((N - 1 : ℕ) : ℝ) ≤ N := by
+    have : N - 1 ≤ N := Nat.sub_le _ _
+    exact_mod_cast this
+  -- exponents
+  have hp : ∀ e : ℝ, e ≤ 2 - δ'' → (N : ℝ) ^ e ≤ (N : ℝ) ^ (2 - δ'') := fun e he =>
+    Real.rpow_le_rpow_of_exponent_le hN1 he
+  have e1 : (N : ℝ) * (N : ℝ) ^ (1 - δ) = (N : ℝ) ^ (2 - δ) := by
+    rw [show (2 : ℝ) - δ = 1 + (1 - δ) by ring, Real.rpow_add hN0, Real.rpow_one]
+  have e2 : (N : ℝ) * (N : ℝ) ^ (1 - δ') = (N : ℝ) ^ (2 - δ') := by
+    rw [show (2 : ℝ) - δ' = 1 + (1 - δ') by ring, Real.rpow_add hN0, Real.rpow_one]
+  have hN : (N : ℝ) ≤ (N : ℝ) ^ (2 - δ'') := by
+    have := hp 1 (by have : δ'' ≤ 1 := min_le_right _ _; linarith)
+    rwa [Real.rpow_one] at this
+  have h2 := hp (2 - δ) (by have : δ'' ≤ δ := (min_le_left _ _).trans (min_le_left _ _); linarith)
+  have h3 := hp (2 - δ') (by have : δ'' ≤ δ' := (min_le_left _ _).trans (min_le_right _ _); linarith)
+  have hP : 0 ≤ (N : ℝ) ^ (1 - δ) := by positivity
+  have hbad' : (bad.card : ℝ) * N ≤ |C'| * (N : ℝ) ^ (2 - δ') := by
+    rw [← e2]
+    have := mul_le_mul_of_nonneg_right (hbad.trans (mul_le_mul_of_nonneg_right (le_abs_self C')
+      (by positivity))) hN0.le
+    nlinarith
+  have hrow' : ((N - 1 : ℕ) : ℝ) * (|C| * (N : ℝ) ^ (1 - δ)) ≤ |C| * (N : ℝ) ^ (2 - δ) := by
+    rw [← e1]; have := mul_le_mul_of_nonneg_right hcard (by positivity : 0 ≤ |C| * (N : ℝ) ^ (1 - δ))
+    nlinarith
+  have hCa : 0 ≤ |C| := abs_nonneg _
+  have hC'a : 0 ≤ |C'| := abs_nonneg _
+  nlinarith [mul_le_mul_of_nonneg_left h2 hCa, mul_le_mul_of_nonneg_left h3 hC'a]
+
 /-! ### Reduction of the crux to a pair-sum decay -/
 
 /-- The second moment is at most the sum of the pair characteristic values.  Proved (the
