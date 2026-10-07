@@ -18,7 +18,7 @@
 - Normality is full block normality in base `b`.
 - The almost-everywhere form of the exponent upper bound is [`ae_not_liouvilleWith_all`](https://github.com/gotrevor/normal-numbers/blob/9b3f63619eb52dfae151618bbc0b728432064800/src/NormalNumbers/CantorExactExponentStretch.lean#L1560).
 
-Bases divisible by 3 other than 3 itself (6, 12, …) are not covered.  The forced runs spoil normality only for small such bases.
+Bases divisible by 3 are settled below, given one cited theorem: the exponent decides which of them `x` is normal to.
 
 ## The construction
 
@@ -44,6 +44,26 @@ The case split ([`expTest_mass_le_all`](https://github.com/gotrevor/normal-numbe
 
 Counting numerators one denominator at a time gives at most `O(2^{F})` Cantor numerators near each `p/q`, where `F` is the number of free places.  In a window that enters a run, only `≈ (τ−2)m` places are free.  The block cost `3ᵐ·2^{−(τ−2)m}` then decays only for `τ > 2 + log₂ 3 ≈ 3.585`.  That range is proved separately ([`CantorExactExponent.exists_computable_mem_cantorSet_irrExponent_normal`](https://github.com/gotrevor/normal-numbers/blob/9b3f63619eb52dfae151618bbc0b728432064800/src/NormalNumbers/CantorExactExponent.lean#L1800)).  Measure-level counts of rationals near `K` (Bugeaud–Durand; He–Liao, arXiv:2602.01307, Cor. 6.5) do not reach below `μ₀ = 3` either, because the relevant events lie below the cylinder scale.  The 3-adic step is what closes the range `2 < μ₀ ≤ 3.585`.
 
+## The exponent decides the bases divisible by 3
+
+**Theorem (given Baker's theorem).**  Let `μ₀ > 2` be rational.  There is a computable `e` such that `x = cantorExpReal μ₀ e` lies in `K`, has irrationality exponent exactly `μ₀`, and for every base `b = 3ˢt` with `3 ∤ t`:
+
+`x` is normal to base `b`  ⟺  `t > 3^{s(μ₀−1)}`.
+
+- [`exists_computable_normalProfile_of_baker`](https://github.com/gotrevor/normal-numbers/blob/8fd03703fbd6a516276391d4cd4ce3ec45623533/src/NormalNumbers/CantorExactExponentProfile.lean#L2480), with the condition [`ProfileOK`](https://github.com/gotrevor/normal-numbers/blob/8fd03703fbd6a516276391d4cd4ce3ec45623533/src/NormalNumbers/CantorExactExponentProfile.lean#L51).
+- The case `s = 0` gives every base prime to 3, and the case `t = 1` excludes every power of 3, so the theorem above is contained in this one.
+- Examples: for `μ₀ ∈ (2, 2.26)`, `x` is normal to bases 12, 15 and 21, and not to 6, 18 or 36.  Base 12 switches off at `μ₀ = 1 + log₃ 4`.
+- The threshold is unchanged when `b` is replaced by a power of `b`, as it must be.  It is never attained for rational `μ₀`.
+
+**Cited input.**  [`Literature.BakerLogDiscrepancyEff`](https://github.com/gotrevor/normal-numbers/blob/8fd03703fbd6a516276391d4cd4ce3ec45623533/src/NormalNumbers/CantorExactExponentProfile.lean#L1654) is a power-saving discrepancy bound for `{m log₃ t + β}`, uniform in the shift `β`.  It follows from Baker–Wüstholz (1993) for two logarithms together with the Erdős–Turán inequality.  The Lean statement asks for less than the literature gives; checking that transcription is the step most worth an expert's eye.
+
+**Why the threshold.**  Both directions turn on the same window.
+- *Not normal above the threshold, with no citation.*  Along a forced run, `x` is within `3^{−μ₀a}` of `P/3^a`, and `bʲP/3^a` is an integer once `sj ≥ a`.  So `x` has a base-`b` block of zeros of length proportional to `a`, which rules out normality.  This is [`not_isNormal_of_not_profileOK`](https://github.com/gotrevor/normal-numbers/blob/8fd03703fbd6a516276391d4cd4ce3ec45623533/src/NormalNumbers/CantorExactExponentProfile.lean#L142).
+- *Normal below the threshold.*  The Fourier coefficient of the coin law at `h·bⁿ` sees only the ternary places `[sn, (s+log₃t)n]`.  A forced run can cover that window only above the threshold ([`window_covered_imp`](https://github.com/gotrevor/normal-numbers/blob/8fd03703fbd6a516276391d4cd4ce3ec45623533/src/NormalNumbers/CantorExactExponentProfile.lean#L283)).
+  - Just past a run, the low digits of the frequency are hidden, and the visible top digits are governed by `{m log₃ t}`.  That is where the discrepancy input enters.
+  - The case analysis ([`pair_classify_expl`](https://github.com/gotrevor/normal-numbers/blob/8fd03703fbd6a516276391d4cd4ce3ec45623533/src/NormalNumbers/CantorExactExponentProfile.lean#L776)) shows that in every pair term, either a free low window or a free top window survives.
+- An elementary rate, from `tᵏ ≠ 3ʲ` alone, is too weak in those shadows.  A much weaker two-logarithm bound than Baker's would plausibly suffice, but this is not proved.
+
 ## A base-5 sibling, and open nodes
 
 - **Base 5.**  Let `K₅` be the set of numbers whose base-5 digits lie in `{0,1,3,4}`.  For rational `μ₀ > 2 + log₄ 5 ≈ 3.161` there is a computable `x ∈ K₅` with exponent exactly `μ₀`, normal to every base prime to 5 and not normal to base 5 ([`exists_computable_mem_cantorFive_irrExponent_normal`](https://github.com/gotrevor/normal-numbers/blob/9b3f63619eb52dfae151618bbc0b728432064800/src/NormalNumbers/CantorExactExponentFive.lean#L172)).
@@ -57,15 +77,15 @@ Counting numerators one denominator at a time gives at most `O(2^{F})` Cantor nu
 - **In `K` and normal.**  Known only at exponent 2, for measure-typical points (Cassels, Schmidt, Hochman–Shmerkin, Dayan–Ganguly–Weiss, with Weiss 2001 for the exponent), and at exponent ∞ (the repo's [answer to Bugeaud's Problem 10.37](bugeaud-10-37-cantor-liouville.md)).
 - **The separation principle itself is classical.**  The real case is the one-dimensional simplex lemma (Kristensen–Thorn–Velani 2006).  The 3-adic case is the non-archimedean gap principle (e.g. Bugeaud, INTEGERS 18 (2018), Lemma 1).  What we did not find in the literature is its use to bound the union of Cantor numerators at forced-run windows.
 - **Limits of the search.**  We checked forward citations of Levesley–Salp–Velani, Becher–Bugeaud–Slaman, Allen–Chow–Yu, Dayan–Ganguly–Weiss, Hochman–Shmerkin, Fraser–Wheeler, Tan–Wang–Wu, Fishman–Simmons and Li–Velani–Wang, plus 2025–26 abstracts (He–Liao, Bandi, Lai–Xie, Manai).  Citer lists were screened by title and abstract only.  Slaman's 2019 lecture slides state a Becher–Slaman theorem combining simple normality to a prescribed set of bases with any exponent, but we could not locate its source paper or check whether it reaches `K`.  Corrections are welcome.
-- **Not claimed:** irrational `μ₀`, the endpoint `μ₀ = 2`, bases `b` with `3 ∣ b` other than 3, a discrepancy rate, or an explicit program for `e` (the threshold is extracted non-constructively, though the witness is computable).
+- **Not claimed:** irrational `μ₀`, the endpoint `μ₀ = 2`, the profile for bases divisible by 3 without the cited Baker input, a discrepancy rate, or an explicit program for `e` (the threshold is extracted non-constructively, though the witness is computable).
 
 ## Checking it
 
 ```sh
 git clone https://github.com/gotrevor/normal-numbers && cd normal-numbers
-git checkout 9b3f63619eb52dfae151618bbc0b728432064800
+git checkout 8fd03703fbd6a516276391d4cd4ce3ec45623533
 lake exe cache get
-lake build NormalNumbers.CantorExactExponentStretch NormalNumbers.CantorExactExponentFive NormalNumbers.StretchBFR
+lake build NormalNumbers.CantorExactExponentStretch NormalNumbers.CantorExactExponentFive NormalNumbers.StretchBFR NormalNumbers.CantorExactExponentProfile
 ```
 
 Questions and corrections: please open an issue on this repository.
