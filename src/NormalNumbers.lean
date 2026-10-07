@@ -972,6 +972,7 @@ import NormalNumbers.SchedFamily
 import NormalNumbers.UniformBad
 import NormalNumbers.UniformBadThreshold
 import NormalNumbers.UniformBadPowerEngine
+import NormalNumbers.UniformBadTwelve
 import NormalNumbers.LinearFormsScales
 import NormalNumbers.LinearFormsScalesStretch
 import NormalNumbers.Hertling

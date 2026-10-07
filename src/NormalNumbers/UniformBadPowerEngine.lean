@@ -214,6 +214,54 @@ theorem powPot_step (c r : ι → ℝ) (st : ι → ℕ) {K K' : ℕ} (hK : 0 < 
   exact absurd (lt_of_le_of_lt this htot) (lt_irrefl _)
 
 
+
+/-- **New charges summed over the children.**  Each obstacle charged at stage `k + 1` meeting
+the parent window contributes at most `(2v + 2) v^α`, `v = r/ℓ_{k+1}`. -/
+theorem sum_children_powPot_le (c r : ι → ℝ) (st : ι → ℕ) {K : ℕ} (hK : 0 < K) {ℓ₀ α : ℝ}
+    (hℓ₀ : 0 < ℓ₀) (hr : ∀ i, 0 ≤ r i) (k : ℕ) (x : ℝ) :
+    ∑ j ∈ Finset.range K, powPot c r st ℓ₀ α K (· = k + 1) (k + 1)
+        (x + j * (ℓ₀ / (K : ℝ) ^ (k + 1))) ≤
+      ∑' i, (potSetP c r st ℓ₀ K (· = k + 1) k x).indicator
+        (fun i => ENNReal.ofReal ((2 * (r i / (ℓ₀ / (K : ℝ) ^ (k + 1))) + 2) *
+          (r i / (ℓ₀ / (K : ℝ) ^ (k + 1))) ^ α)) i := by
+  classical
+  have hKpos : (0 : ℝ) < K := by exact_mod_cast hK
+  set ℓ' := ℓ₀ / (K : ℝ) ^ (k + 1) with hℓ'
+  have hℓ'pos : 0 < ℓ' := div_pos hℓ₀ (pow_pos hKpos (k + 1))
+  simp only [powPot]
+  rw [← Summable.tsum_finsetSum (fun _ _ => ENNReal.summable)]
+  refine ENNReal.tsum_le_tsum fun i => ?_
+  by_cases hi : i ∈ potSetP c r st ℓ₀ K (· = k + 1) k x
+  · rw [Set.indicator_of_mem hi]
+    have hcard := card_children_le_real (c i) (r i) x ℓ' (hr i) hℓ'pos K
+    calc ∑ j ∈ Finset.range K, (potSetP c r st ℓ₀ K (· = k + 1) (k + 1) (x + j * ℓ')).indicator
+          (fun i => ENNReal.ofReal ((r i / ℓ') ^ α)) i
+        ≤ ∑ j ∈ Finset.range K, (if (Set.Icc (c i - r i) (c i + r i) ∩
+            Set.Icc (x + j * ℓ') (x + j * ℓ' + ℓ')).Nonempty then
+              ENNReal.ofReal ((r i / ℓ') ^ α) else 0) := by
+          refine Finset.sum_le_sum fun j _ => ?_
+          rw [Set.indicator_apply]
+          split_ifs with h1 h2
+          · exact le_rfl
+          · exact absurd h1.2 h2
+          · exact zero_le
+          · exact le_rfl
+      _ = ((Finset.range K).filter (fun j : ℕ => (Set.Icc (c i - r i) (c i + r i) ∩
+            Set.Icc (x + j * ℓ') (x + j * ℓ' + ℓ')).Nonempty)).card *
+            ENNReal.ofReal ((r i / ℓ') ^ α) := by
+          rw [← Finset.sum_filter, Finset.sum_const, nsmul_eq_mul]
+      _ ≤ ENNReal.ofReal (2 * (r i / ℓ') + 2) * ENNReal.ofReal ((r i / ℓ') ^ α) := by
+          gcongr
+          rw [← ENNReal.ofReal_natCast]
+          refine ENNReal.ofReal_le_ofReal (hcard.trans (le_of_eq ?_))
+          ring
+      _ = _ := by
+          rw [← ENNReal.ofReal_mul (by have := hr i; positivity)]
+  · rw [Set.indicator_of_notMem hi]
+    refine le_of_eq (Finset.sum_eq_zero fun j hj => Set.indicator_of_notMem ?_ _)
+    rintro ⟨h1, y, hy, hyw⟩
+    exact hi ⟨h1, y, hy, child_sub_window hℓ₀ hK k x (Finset.mem_range.1 hj) hyw⟩
+
 open Classical in
 /-- **Power engine.**  Obstacles of positive radius, all charged at stages `≥ 1`, whose new
 charges summed over the `K` children are `≤ g`, with the balance
