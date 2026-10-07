@@ -1360,6 +1360,23 @@ def ExpOrderPeriods (t : ℕ) : Prop :=
 
 /-! ## Bases `3ˢt`, `t > 1`: the crux -/
 
+/-- **Assembly of the crux from its inputs (open; believed, 60%).**  For `b = 3ˢt`, `t > 1`:
+`RepPairArith b` follows from the Baker discrepancy of `m log₃ t` (cited,
+`Literature.BakerLogDiscrepancy`), the copy-zone digit statements `TOrbitCyclicDecay t` and
+`BadGcdSparse b`.  Plan (per pair `(n, m)`, `v = s·min(n,m)`, window `[v, log₃|ξ|]`):
+* window meets a free gap in `≥ K` places at its bottom: `κ = none`, low-digit Cassels count
+  (`cassels_Bf`-type, elementary);
+* window top `≥ K` places into the gap after run `k`: `κ = none`, top window
+  (`CantorExactExponentProfile.bf_le_topProd`, `sum_topProd_le` from Baker);
+* otherwise the window lies in run `k` up to `K` places: `κ = some k`; by `repBound_some_add`
+  only `ξ mod 3^{(k+2)a}` matters and `norm_charFun_repReal_le_cyc_int` reduces to
+  `cycProd a (tᵐ(b^d − 1))` (`cycProd_pair`), summed by `copyZoneDecay_of`.
+The copy-zone ranges match: in run `k`, `N ≈ (k+2)a/s ≤ a³` since `a_k` grows like `2^k k!`. -/
+theorem repPairArith_of_inputs {s t : ℕ} (hs : 1 ≤ s) (ht : 2 ≤ t) (h3t : ¬ 3 ∣ t)
+    (hB : CantorExactExponentProfile.Literature.BakerLogDiscrepancy) (hT : TOrbitCyclicDecay t)
+    (hS : BadGcdSparse (3 ^ s * t)) : RepPairArith (3 ^ s * t) := by
+  sorry
+
 /-- **The crux, arithmetic form (open leaf).**  See `RepPairArith`. -/
 theorem repPairArith_of_three_dvd {b : ℕ} (hb : 2 ≤ b) (h3 : 3 ∣ b) (hpow : ∀ s : ℕ, b ≠ 3 ^ s) :
     RepPairArith b := by

@@ -30,3 +30,9 @@ carry the bound.  Copy pair term = cyclic digits of h tᵐ(b^d−1) mod 3^a−1,
 ## Added: short-period route
 `ExpOrderPeriods` node (docstring has the Parseval argument).  If pursued: new construction with
 period ℓ ≈ κ log u, signed second moment.  Still needs Baker for shadows.
+
+## Added late
+`repBound_some_add` (copy coins read only ξ mod 3^{run end}); assembly node
+`repPairArith_of_inputs` (sorry, 60%): Baker + TOrbitCyclicDecay + BadGcdSparse ⇒ RepPairArith.
+Next lap: prove the assembly zone by zone, reusing CantorExactExponentProfile's
+`pair_classify_expl`, `bf_le_topProd`, `sum_topProd_le`.

@@ -274,6 +274,9 @@ def waivers : List Waiver := [
   ⟨``CantorExactExponentProfile.ae_isNormal_of_profileOK_of_gelfond,
    "believed implication (55%): a Gelfond-strength two-log bound suffices for the run shadows; \
     the elementary t^k ≠ 3^j rate does not"⟩,
+  ⟨``CantorRepetition.repPairArith_of_inputs,
+   "believed implication (60%): assembly of the repetition crux from Baker discrepancy, \
+    TOrbitCyclicDecay and BadGcdSparse (zone split free / top window / copy)"⟩,
   ⟨``CantorRepetition.repPairArith_of_three_dvd,
    "open crux (2026-10-07) of liouvilleCantorFullProfile, whose wiring, Liouville, K-membership, \
     3 ∤ b and 3^s directions are proved; copy zone needs cyclic digits of h(bⁿ − bᵐ) mod 3^A − 1, \
