@@ -1545,7 +1545,12 @@ def register : List Hall := [
    "Reduce Erdős #406, and E(Z3) = {0}, to C(1, 4^a, 4^(a+b)) = {0} for all a, b >= 2, each instance a finite carry-automaton decision",
    .wall, .frozen,
    "The wiring is proved and every instance with a + b <= 160 is trivial (largest automaton 388 states), but nothing uniform covers the 3-adic imitators a = 1 + 3^D t, whose automata copy the golden-mean one for D levels. REOPEN IF: a uniform extinction bound for carry automata whose multipliers are 3-adically near 4",
-   "ErdosTriples.lean: erdos406_of_gapTriplesEventually, tripleTrivial_of_sum_le_160, GapTwoTriples", "2026-10-06"⟩
+   "ErdosTriples.lean: erdos406_of_gapTriplesEventually, tripleTrivial_of_sum_le_160, GapTwoTriples", "2026-10-06"⟩,
+  ⟨"Zeroless powers of two via gap tuples",
+   "Port the Erdős gap-triples move to base 10: low digits of 2^n live in the ideal 2^d | r mod 10^d, so k zeroless powers give a point of the k-tuple set at depth len(2^n1)",
+   .refuted, .kernel,
+   "Two kills. Supercritical: 5 lifts against a 0.9 cost per translate needs k >= 16 translates (measured: triples grow 3.65x per digit, 16 die by depth 13). Truncation: only len(2^n1) digits are available and gaps with phi(5^d) | g act as the identity mod 10^d, so the needed tuple death fails at every size. The survivors are 5-adically super-convergent exponents (NestedZerolessChain). REOPEN IF: a mechanism excluding a zeroless 10-adic integer with infinitely many power-of-two truncations",
+   "ZerolessTuples.lean: not_tupleDeathAtLength, survives10_four_sixteen_thirty, NoNestedZerolessChain", "2026-10-07"⟩
 ]
 
 /-- Rows whose verdict is machine-checked in this build. -/

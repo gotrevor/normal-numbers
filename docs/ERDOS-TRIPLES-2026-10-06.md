@@ -47,3 +47,13 @@ Each instance is decided by `4ᵃ, 4ᵃ⁺ᵇ mod 3ᴰ`, `D` the extinction dept
 automaton copies the golden-mean one for `D` levels before the third constraint bites, and
 there are infinitely many such imitators.  A proof needs a uniform extinction bound for carry
 automata whose multipliers are 3-adically near 4.  No mechanism yet.
+
+## 2026-10-07: the port to zeroless 2ⁿ (base 10) is dead
+
+Lean: `src/NormalNumbers/ZerolessTuples.lean`; probe + tests: `experiments/zeroless-tuples/` (`./test_tuple10.py`, 16 known-answer tests).
+
+- **Ambient.**  For `n ≥ d`, `2ⁿ mod 10ᵈ` lies in the ideal `2ᵈ | r` (10-adically `{0} × ℤ₅`).  Each level-`d` residue has five lifts with forced digit parity, so the zeroless set grows `4, 18, 81, 364, …` (≈ 4.5ᵈ; matches OEIS A181610, the zero-free count in the cycle of `2ⁿ mod 10ᵈ`).  Not a finite carry automaton: survival has no cycle certificate, only death is finitely certified.
+- **Kill 1, supercritical.**  Each translate costs 0.9 against 5 lifts: extinction needs `k ≥ 16` translates (`5·0.9¹⁶ < 1`), not the 22 in my earlier note (that used ambient 10, ignoring the forced 2-adic part).  Measured: pairs grow ≈4.05, triples ≈3.65, 15 critical, 16 die by depth ≤ 13 in all random samples.  `survives10_four_sixteen_thirty`: gaps (2,2) alive at depth 30 (witness digits in {1,2}); base 3 killed the same triple at depth 1.
+- **Kill 2, truncation (proved).**  Base 3 had the full 3-adic expansion of `2^n₁`; base 10 only has `len(2^n₁)` digits, and gaps with `φ(5ᵈ) | g` act as the identity mod `10ᵈ`.  `not_tupleDeathAtLength k`: false for every tuple size and gap floor.
+- **Residual.**  What tuples cannot see is `NestedZerolessChain`: a zeroless 10-adic integer with infinitely many power-of-two truncations (exponents forced 5-adically super-convergent, `φ(5^len) | n' − n`).  Heuristic count is summable (95% none).  Nearest prior art: Wu, arXiv:1902.11198 (greedy 10-adic power of 2 preserving trailing digits, for sparsity, not zerolessness).
+- **What would replace it:** a mechanism using that the exponent is *small* (`n ≈ 3.32·len`) against the cycle length `4·5^(len−1)`: every unit mod `5ᴸ` is some `2ᵐ`, so the 5-adic side alone carries no information; the coupling of exponent size to digit length is the whole problem.
