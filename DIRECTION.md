@@ -46,7 +46,31 @@ Never restate or weaken them.  The stretch node `CStarLeThree` and any sharper l
   **Forbidden drift:** more α-power potential-engine tuning; Frostman-constant cores (`SmallBaseTreeCore` at
   `C ≤ 3/2` is doubtful); thickness theorems (Falconer–Yavicoli constants are hopeless here).
 
+- **CURRENT DIRECTIVE for this branch (review lap 2026-10-07, c⋆ lap 7) — supersedes the lap-3 orders above.**
+  *Objective* unchanged: the frozen headlines (`twelve_fifths_le_cStar` proved; `cStar_le_four` open).
+  *Finding:* the Newhouse crux has no adaptive escape.  Any `τ`-thick `B ⊆ ⋂_{b≥3} E_b(c)` puts every
+  pair of `τ`-close windows inside its hull into one gap (`Newhouse.windows_merge_forced`, proved), so
+  `ThickCore` is exactly locality of the canonical merge closure, i.e. control of cross-base window
+  clusters at every depth (Maze row "adaptive split cores for the Newhouse thick core").  Both known
+  `c ≤ 4` mechanisms are now walls: Newhouse (cluster locality) and counting (a weight-regular exact
+  `{2,3}` core with growth `≥ 1.78`, Maze row "counted medium bases").
+  *Mandated next moves, in order:* (1) **decisive `c = 4` counting probe**: the exact joint `{2,3}`
+  system (true positions, no box abstraction) with threshold pruning of cells mostly inside a base-3
+  window; report growth, weight spread, and the worst per-ancestor weight-aware charge of `b ≥ 5`.
+  Record the verdict as a Lean node or Maze row the same lap.  (2) **bank `c⋆ ≤ 5`**
+  (`UniformBadFive.cStar_le_five`, frozen node): counting engine, base 2 exact (runs, multiplicity 1,
+  lag 5), each window `(b, n)` killed at `lv` (≤ 4 cells) or `lv − 1` when it spans ≥ 3 cells (≤ 3 cells),
+  lag `⌊log₂(¾(b⁵−2))⌋`, perfect powers dropped, growth `181/100` off and `329/200` on the base-3 kill
+  levels, products bounded by `L₃(n+2) ≥ L₃(n)+3`.  Probe (`scripts/cstar_models/lvl5c.js`,
+  `pess.js`): pessimistic slack `0.019` (uniform growth fails, `−0.023`); control `c = 6` slack `0.21`.
+  *Forbidden drift:* building thick cores (adaptive splits, flipped pairings, cluster discarding)
+  without a cross-base locality mechanism; re-proving `c⋆ ≤ 6`; Falconer–Yavicoli.
+  *Why:* `c⋆ ≤ 5` moves the located interval to `[12/5, 5]` with machinery (level-dependent growth,
+  per-window resolution) that any counting route to `c ≤ 4` reuses; the probe decides whether that
+  route is alive before more `c = 4` formalization is spent.
+
 Directive history:
+- 2026-10-07 (c⋆ lap 7, review): Newhouse thick core closed by forced merging; probe c=4 counting core, bank c⋆ ≤ 5.
 - 2026-10-07 (c⋆ lap 3, review): counting engine + `c⋆ ≤ 6` banked first; crux = exact joint {2,3} core certificate.
 - 2026-10-06 evening: threshold lane opened (Trevor: "go for it").
 

@@ -33,7 +33,7 @@ as well (`CStarLeThree`), with a thin margin.
 
 namespace NormalNumbers.UniformBadThreshold
 
-open NormalNumbers.UniformBad (dnear)
+open NormalNumbers.UniformBad (dnear dnear_le_abs_sub)
 
 namespace Newhouse
 
@@ -1269,6 +1269,97 @@ lemma goodCore_closed (c : ℕ) : IsClosed (goodCore c) := by
 lemma goodCore_sub (c : ℕ) {b : ℕ} (hb : 3 ≤ b) : goodCore c ⊆ goodSet c b :=
   fun _ hx n => hx.2 b hb n _
 
+/-! ### Forced merging: a thick core has no adaptive freedom
+
+A `τ`-thick compact `B` cannot put two intervals it misses, both inside its hull and closer than `τ`
+times the shorter one, into different gaps (`merge_forced`).  For a core `B ⊆ ⋂_{b ≥ 3} E_b(c)` the
+windows of the bases `b ≥ 3` are such intervals (`window_disjoint`), so the gaps of every thick core
+contain the `τ`-merge closure of those windows (`windows_merge_forced`; iterate on merged hulls).
+Hence `ThickCore c τ` holds exactly when that canonical closure stays local: it must not reach the
+ends of the hull nor make a gap longer than `1/10`.  Adaptive constructions (`SplitCore`, the
+flipped pairing `A = Fset 3 4`, discarding clusters) can only enlarge gaps, so they add nothing
+beyond the canonical closure.  What a proof of `ThickCore` must supply is a bound on merge cascades
+of windows of distinct bases at every depth (Maze row "adaptive split cores for the Newhouse thick
+core"). -/
+
+/-- A nonempty open interval inside the hull of a compact set and missing it lies in one gap. -/
+lemma exists_gap_of_Ioo {K : Set ℝ} (hK : IsCompact K) (hne : K.Nonempty) {u v : ℝ} (huv : u < v)
+    (hdisj : Disjoint (Set.Ioo u v) K) (hu : sInf K ≤ u) (hv : v ≤ sSup K) :
+    ∃ a b, IsGap K a b ∧ a ≤ u ∧ v ≤ b := by
+  have hxK : (u + v) / 2 ∉ K := fun h =>
+    Set.disjoint_left.1 hdisj ⟨by linarith, by linarith⟩ h
+  obtain ⟨c, d, hg, hc, hd, -, -⟩ := exists_gap_of_not_mem hK (hK.sInf_mem hne)
+    (hK.sSup_mem hne) (by linarith) (by linarith) hxK
+  refine ⟨c, d, hg, ?_, ?_⟩
+  · by_contra h
+    push_neg at h
+    exact Set.disjoint_left.1 hdisj ⟨h, by linarith⟩ hg.2.1
+  · by_contra h
+    push_neg at h
+    exact Set.disjoint_left.1 hdisj ⟨by linarith, h⟩ hg.2.2.1
+
+/-- **Forced merging** (proved).  If a `τ`-thick compact `B` misses the open intervals `(u₁, u₂)` and
+`(v₁, v₂)`, both inside its hull, with `u₂ ≤ v₁ < u₂ + τ · min(u₂ − u₁, v₂ − v₁)`, then a single gap of
+`B` contains `(u₁, v₂)`. -/
+theorem merge_forced {B : Set ℝ} {τ : ℝ} (hB : IsCompact B) (hne : B.Nonempty) (hτ : Thick B τ)
+    {u₁ u₂ v₁ v₂ : ℝ} (hu : u₁ < u₂) (hv : v₁ < v₂) (huv : u₂ ≤ v₁)
+    (hU : Disjoint (Set.Ioo u₁ u₂) B) (hV : Disjoint (Set.Ioo v₁ v₂) B)
+    (h1 : sInf B ≤ u₁) (h2 : v₂ ≤ sSup B) (hclose : v₁ - u₂ < τ * min (u₂ - u₁) (v₂ - v₁)) :
+    ∃ a b, IsGap B a b ∧ a ≤ u₁ ∧ v₂ ≤ b := by
+  obtain ⟨a, b, hg, ha, hb⟩ := exists_gap_of_Ioo hB hne hu hU h1 (by linarith)
+  obtain ⟨a', b', hg', ha', hb'⟩ := exists_gap_of_Ioo hB hne hv hV (by linarith) h2
+  rcases le_or_gt b a' with hba | hab
+  · exfalso
+    have hmin : 0 < min (u₂ - u₁) (v₂ - v₁) := lt_min (by linarith) (by linarith)
+    have hτ0 : 0 < τ := by
+      by_contra h
+      push_neg at h
+      nlinarith
+    have hsep := hτ.1 a b a' b' hg hg' hba
+    have hmono : min (u₂ - u₁) (v₂ - v₁) ≤ min (b - a) (b' - a') :=
+      min_le_min (by linarith) (by linarith)
+    nlinarith
+  · have haa : a = a' := by
+      rcases lt_trichotomy a a' with h | h | h
+      · exact absurd hg'.2.1 (Set.disjoint_left.1 hg.2.2.2 ⟨h, hab⟩)
+      · exact h
+      · exact absurd hg.2.1 (Set.disjoint_left.1 hg'.2.2.2 ⟨h, by linarith⟩)
+    subst haa
+    have hbb := hg.right_unique hg'
+    subst hbb
+    exact ⟨a, b, hg, ha, hb'⟩
+
+/-- The open base-`b` window of order `n` around `z/bⁿ` at exponent `c`. -/
+def window (c b n : ℕ) (z : ℤ) : Set ℝ :=
+  Set.Ioo ((z - ((b : ℝ) ^ c)⁻¹) / (b : ℝ) ^ n) ((z + ((b : ℝ) ^ c)⁻¹) / (b : ℝ) ^ n)
+
+/-- Base-`b` windows miss `E_b(c)`. -/
+lemma window_disjoint {c b : ℕ} (hb : 2 ≤ b) (n : ℕ) (z : ℤ) : Disjoint (window c b n z) (goodSet c b) := by
+  rw [Set.disjoint_left]
+  rintro x ⟨h1, h2⟩ hx
+  have hbn : (0 : ℝ) < (b : ℝ) ^ n := pow_pos (by exact_mod_cast (by omega : 0 < b)) n
+  rw [div_lt_iff₀ hbn] at h1
+  rw [lt_div_iff₀ hbn] at h2
+  have habs : |(b : ℝ) ^ n * x - z| < ((b : ℝ) ^ c)⁻¹ := by
+    rw [abs_lt]; constructor <;> linarith
+  exact absurd (lt_of_le_of_lt (dnear_le_abs_sub _ z) habs) (not_lt.2 (hx n))
+
+/-- **No adaptive freedom** (proved).  In a `τ`-thick compact `B ⊆ ⋂_{b ≥ 3} E_b(c)`, two windows
+(or pieces of windows) of bases `≥ 3` inside the hull of `B`, closer than `τ` times the shorter, lie
+in one gap of `B`. -/
+theorem windows_merge_forced {c : ℕ} {τ : ℝ} {B : Set ℝ} (hB : IsCompact B) (hne : B.Nonempty)
+    (hτ : Thick B τ) (hgood : ∀ b : ℕ, 3 ≤ b → B ⊆ goodSet c b) {u₁ u₂ v₁ v₂ : ℝ}
+    (hu : u₁ < u₂) (hv : v₁ < v₂) (huv : u₂ ≤ v₁)
+    (hU : ∃ b n z, 3 ≤ b ∧ Set.Ioo u₁ u₂ ⊆ window c b n z)
+    (hV : ∃ b n z, 3 ≤ b ∧ Set.Ioo v₁ v₂ ⊆ window c b n z)
+    (h1 : sInf B ≤ u₁) (h2 : v₂ ≤ sSup B) (hclose : v₁ - u₂ < τ * min (u₂ - u₁) (v₂ - v₁)) :
+    ∃ a b, IsGap B a b ∧ a ≤ u₁ ∧ v₂ ≤ b := by
+  have key : ∀ {p q : ℝ}, (∃ b n z, 3 ≤ b ∧ Set.Ioo p q ⊆ window c b n z) →
+      Disjoint (Set.Ioo p q) B := by
+    rintro p q ⟨b, n, z, hb, hsub⟩
+    exact ((window_disjoint (by omega) n z).mono_left hsub).mono_right (hgood b hb)
+  exact merge_forced hB hne hτ hu hv huv (key hU) (key hV) h1 h2 hclose
+
 /-- **Split core** (a local, coinductive form of `ThickCore`).  A family `S` of intervals with
 endpoints in `goodCore c`, closed under an admissible split (both kept pieces at least `τ` times the
 removed gap, at most `ρ < 1` times the node, removed gap at most `1/10`), containing a root that
@@ -1399,7 +1490,14 @@ theorem cStarLeThree_of_newhouse {τ : ℝ} (hτ : 1 < τ) (h : ThickCore 3 τ) 
   have := cStar_le_of_newhouse (c := 3) le_rfl (by linarith) (by norm_num; linarith) h
   exact_mod_cast this
 
-/-- **Crux statement (frozen 2026-10-07).**  Believed 70%: a thick core at `c = 4` with `τ = 2/5`. -/
+/-- **Crux statement (frozen 2026-10-07).**  Believed 70%: a thick core at `c = 4` with `τ = 2/5`.
+
+Review 2026-10-07 (c⋆ lap 7): by `windows_merge_forced` this is equivalent to the canonical
+`2/5`-merge closure of the windows of the bases `b ≥ 3` staying local (no gap longer than `1/10`, none
+reaching the hull ends).  The confidence is about truth (merge cascades should stay local: clusters
+are rare at every scale and must climb across scales to grow); no mechanism for a proof is known,
+since it needs control of clusters of windows of distinct bases at every depth.  Maze row "adaptive
+split cores for the Newhouse thick core". -/
 theorem thickCore_four : ThickCore 4 (2 / 5) := by
   sorry
 

@@ -1,37 +1,50 @@
 # STATUS — normal-numbers 📊
 
-## Bugeaud 10.36 optimal exponent c⋆ (branch `proof/uniformbad-threshold`) — review lap 3, 7 October 2026
+## Bugeaud 10.36 optimal exponent c⋆ (branch `proof/uniformbad-threshold`) — review lap 7, 7 October 2026
 
-**Located: `12/5 ≤ c⋆ ≤ 6`** · **Build**: 🟢 green (10801 jobs) · **Updated**: c⋆ lap 3 · 2026-10-07 · `cccab926`
+**Located: `12/5 ≤ c⋆ ≤ 6`; `c⋆ ≤ 5` frozen and probe-closed** · **Build**: 🟢 green (10804 jobs) · **Updated**: c⋆ lap 7 · 2026-10-07 · see `git log`
 
 **Where it stands.**  `c⋆` is the optimal exponent in Bugeaud's Problem 10.36 (`cStar`,
-`UniformBadThreshold.lean`).  The lower headline `twelve_fifths_le_cStar` is proved by a 25-window
-exact rational cover.  The upper headline `cStar_le_four` is open; this lap banked `cStar_le_six`
-(`UniformBadCount.lean`) with a new counting engine (kills charged to alive ancestors, base 2
-exact).  Probes show that engine cannot reach `c = 4` unless base 3 is handled exactly jointly with
-base 2; the true joint tree grows ≈ 1.80/level at `c = 4` and ≈ 1.49 at `c = 3`, so the gap is a
-proof-technique gap (worst case vs typical), not a doubt about the truth.
+`UniformBadThreshold.lean`).  The lower headline `twelve_fifths_le_cStar` is proved (25-window exact
+cover).  The upper headline `cStar_le_four` is open and both known mechanisms are now walls: the
+Newhouse route needs `ThickCore`, which `Newhouse.windows_merge_forced` (proved this lap) shows is
+exactly locality of the canonical merge closure of windows of all bases `≥ 3` (cross-base clusters at
+every depth); the counting route needs a weight-regular exact `{2,3}` core with growth `≥ 1.78`.
+Banked next: `cStar_le_five` (`UniformBadFive.lean`, frozen, probe slack `0.019`, control `c = 6`).
 
 **What's happened (newest first).**
-* 2026-10-07 lap 3 (review): counting engine `Count.growth` + `cStar_le_six`; crux restated as an
-  exact joint `{2,3}` finite-state core certificate (DIRECTION branch directive updated).
+* 2026-10-07 lap 7 (review): forced merging proved (`merge_forced`, `windows_merge_forced`); Maze row
+  closes adaptive thick-core constructions; probe shows `c⋆ ≤ 5` closes in the counting engine with two
+  growth rates (base-3 kill levels) and per-window resolution; `cStar_le_five` frozen; directive revised.
+* 2026-10-07 laps 5–6: Newhouse route — `gap_lemma`, `e15_facts` (E15 thickness 3), `fset_facts`,
+  Cantor schemes are thick, `cStar_le_four_of_newhouse` (wiring) all proved; crux `thickCore_four`.
+* 2026-10-07 lap 4: exact `{2,3}` containment-kill core lemma; abstraction ratio 1.669; counted `b ≥ 5`
+  obstruction (Maze row "counted medium bases").
+* 2026-10-07 lap 3 (review): counting engine `Count.growth` + `cStar_le_six`.
 * 2026-10-07 lap 2: perfect-power bases free (`admissible_iff_nonPerfectPow`); crux nodes
   `SmallBaseTreeCore` (15%), `TreeEngineSuffices` (50%).
 * 2026-10-07 lap 1: `twelve_fifths_le_cStar` proved; `cStar_le_twelve` via the power engine.
 
-**Outstanding.**  Short-term: crux probe (joint `{2,3}` skew-product abstraction with a computed
-sub-eigenvector); averaged counting engine (level-dependent growth) → `c⋆ ≤ ~4.75`.  Long-term:
-`cStar_le_four`, then `CStarLeThree`; higher certified lower bounds (bases beyond 10 in the cover).
+**Outstanding.**
+*Short-term:* decisive `c = 4` counting probe (exact joint `{2,3}` system, threshold pruning, weight-aware
+`b ≥ 5` charge); formalize `cStar_le_five`.
+*Long-term:* `cStar_le_four` (needs a new mechanism or a regular joint core), then `CStarLeThree`; a
+higher certified lower bound (bases beyond 10; host probe puts the finite-system threshold near 2.44).
+*To completion:* `cStar_le_four` axiom-clean.
 
 **Axiom ledger (this branch).**
 | headline | claim | `#print axioms` | status |
 |---|---|---|---|
 | `twelve_fifths_le_cStar` | `12/5 ≤ c⋆` (uncond.) | propext, choice, Quot.sound | 🟢 proved |
 | `cStar_le_six` (bank) | `c⋆ ≤ 6` (uncond.) | propext, choice, Quot.sound | 🟢 proved |
-| `cStar_le_four` | `c⋆ ≤ 4` (uncond.) | + `sorryAx` | open crux (exact joint {2,3} core) |
+| `cStar_le_five` (bank) | `c⋆ ≤ 5` (uncond.) | + `sorryAx` | 🟡 frozen, probe slack 0.019; formalization in progress |
+| `cStar_le_four_of_newhouse` | `ThickCore 4 τ → c⋆ ≤ 4` | propext, choice, Quot.sound | 🟢 proved wiring |
+| `cStar_le_four` | `c⋆ ≤ 4` (uncond.) | + `sorryAx` | open crux; both mechanisms walled |
 
-Pointers: `DIRECTION.md` (branch directive, review lap 3) · newest `HANDOFF-2026-10-07-cstar-lap3.md` ·
-`PENDING_WORK.md` top section.
+Math-axiom count for the proved headlines: 0 (trust base only).
+
+Pointers: `DIRECTION.md` (branch CURRENT DIRECTIVE, review lap 7) · newest `HANDOFF-2026-10-07-cstar-lap7.md` ·
+`PENDING_WORK.md` top section · `src/NormalNumbers/Maze.lean` (rows "counted medium bases", "adaptive split cores").
 
 
 ## Cantor exact-exponent stretch update, 6 October 2026 (branch `proof/cantorexp-stretch`)

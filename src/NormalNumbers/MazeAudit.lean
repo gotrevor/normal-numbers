@@ -14,6 +14,7 @@ import NormalNumbers.StonehamBase6
 import NormalNumbers.LinearFormsScalesStretch
 import NormalNumbers.UniformBadJoint
 import NormalNumbers.UniformBadRoute
+import NormalNumbers.UniformBadNewhouse
 import NormalNumbers.EntropyProfiles
 import NormalNumbers.CantorExactExponentStretch
 import NormalNumbers.CantorExactExponentProfile
@@ -50,6 +51,11 @@ def mazeRows : List RowInfo :=
 
 /-- Each linked row and the declarations it rests on. -/
 def mazeLinks : List Link := [
+  ⟨"adaptive split cores for the Newhouse thick core",
+   [``UniformBadThreshold.Newhouse.merge_forced,
+    ``UniformBadThreshold.Newhouse.windows_merge_forced,
+    ``UniformBadThreshold.Newhouse.thickCore_of_splitCore],
+   [``UniformBadThreshold.Newhouse.ThickCore]⟩,
   ⟨"counted medium bases over an exact {2,3} core at c = 4",
    [``UniformBadThreshold.Count.jointCoreSubEigen_four,
     ``UniformBadThreshold.Count.exists_good_of_subEigen],
@@ -298,7 +304,7 @@ def mazeLegacy : List String := [
   "Diophantine good-denominator detour for the tail cell",
   "route B's unweighted cover of the state-dependent target"]
 
-/-- info: maze audit: 174 rows, 67 cite declarations, 107 legacy (prose only) -/
+/-- info: maze audit: 175 rows, 68 cite declarations, 107 legacy (prose only) -/
 #guard_msgs in
 #maze_audit mazeRows, mazeLinks, mazeLegacy
 

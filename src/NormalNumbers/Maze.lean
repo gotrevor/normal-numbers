@@ -1515,7 +1515,12 @@ def register : List Hall := [
    "Make bases 2, 3 exact (containment-kill core, certificate ratio 1.669) and charge every base b >= 5 by counting kills against alive ancestors, as in cStar_le_six",
    .wall, .cited,
    "Counting pays m >= 2 boundary cells per window against g^lag ancestors, i.e. about 3 b^(-4 log2 g) per order instead of the measure 2 b^(-4). Level-averaged, b >= 5 cost 0.09 / 0.049 per level at g = 1.6 / 1.7, so the core needs growth >= 1.78 with near-uniform weights; the abstraction gives 1.67-1.73 and its weights are far from uniform (10% zero, threshold 0.2 collapses it, max-descendant ratio up to 1200). Probes scripts/cstar_models/abs23.js, kreg.js. REOPEN IF: a regular core for S = {2,3,5,6,7} (SmallBaseTreeCore) or a weight-regular {2,3} certificate with growth >= 1.8",
-   "UniformBadJoint.lean: jointCoreSubEigen_four (sorry), exists_good_of_subEigen; UniformBadRoute.lean: SmallBaseTreeCore; PENDING_WORK c-star lap 4", "2026-10-07"⟩
+   "UniformBadJoint.lean: jointCoreSubEigen_four (sorry), exists_good_of_subEigen; UniformBadRoute.lean: SmallBaseTreeCore; PENDING_WORK c-star lap 4", "2026-10-07"⟩,
+  ⟨"adaptive split cores for the Newhouse thick core",
+   "Build the thick core B inside every E_b(4), b >= 3 (thickness > 1/3, paired with E15 by the gap lemma) adaptively: local splits with good endpoints (SplitCore), the flipped pairing A = Fset 3 4 against B inside E15 and every E_b(4), b >= 5, or discarding clusters of near-touching windows instead of bounding them",
+   .wall, .cited,
+   "Adaptivity is illusory: a tau-thick compact B in the good set puts any two windows that are tau-close inside its hull into one gap (windows_merge_forced), so the gaps of every thick core contain the canonical tau-merge closure of the windows, and ThickCore holds iff that closure stays local. Locality needs a bound on merge cascades of windows of distinct bases at every depth; none is known (pair counts of centres A/b^n, A'/b'^m are exact lattice counts, 2 eps q q' + gcd, so clusters of every size are expected at small enough scales), and every pairing of Newhouse sets puts infinitely many bases on one side. REOPEN IF: a locality argument for the canonical closure that tolerates unbounded clusters, i.e. a proof of ThickCore itself",
+   "UniformBadNewhouse.lean: merge_forced, windows_merge_forced, thickCore_of_splitCore, ThickCore, thickCore_four (sorry, 70%)", "2026-10-07"⟩
 ]
 
 /-- Rows whose verdict is machine-checked in this build. -/

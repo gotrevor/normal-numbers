@@ -24,7 +24,8 @@ Known before this file: `log₂ 3 ≤ c⋆ ≤ 24` (`UniformBad.not_uniformBad_o
 * `cStar_le_four : c⋆ ≤ 4` (believed 55%).
 
 Located so far: `12/5 ≤ c⋆ ≤ 6` (`cStar_le_six` in `UniformBadCount`, by a counting engine;
-earlier `cStar_le_twelve` in `UniformBadTwelve`).
+earlier `cStar_le_twelve` in `UniformBadTwelve`).  Banked next: `cStar_le_five` (`UniformBadFive`,
+frozen node, probe slack `0.019`).
 
 ## Evidence (Ren, host probe 2026-10-06, exact interval propagation in floating point)
 
@@ -226,6 +227,9 @@ alive ancestors, base 2 exact through its runs) proves `c⋆ ≤ 6` and, per pro
 exact joint `{2, 3}` core: a finite-state certificate for the binary tree carrying the ternary
 state (position in ternary units, run states, phase of `k log₃ 2`), with the other bases counted. -/
 theorem cStar_le_four : cStar ≤ 4 := by
+  -- Review 2026-10-07 (c⋆ lap 7): both known mechanisms are walls.  Newhouse needs `ThickCore`,
+  -- which `Newhouse.windows_merge_forced` reduces to locality of the canonical merge closure;
+  -- counting needs a weight-regular exact `{2, 3}` core with growth `≥ 1.78` (Maze rows).
   sorry
 
 /-- **Stretch node.**  Believed 35%.  `c⋆ ≤ 3`. -/

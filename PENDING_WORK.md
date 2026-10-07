@@ -1,4 +1,27 @@
 ## UniformBad threshold c⋆ (branch proof/uniformbad-threshold, 2026-10-07)
+* **2026-10-07 lap 7 (review).**  **Newhouse thick core: no adaptive escape** (proved):
+  `Newhouse.merge_forced` / `windows_merge_forced` — a `τ`-thick compact `B` in the good set puts any two
+  `τ`-close windows inside its hull into one gap, so every thick core's gaps contain the canonical
+  `τ`-merge closure and `ThickCore c τ` ⟺ that closure stays local.  The lap-6 plan (flipped SplitCore,
+  discard clusters adaptively) is therefore dead: adaptivity only enlarges gaps.  Locality needs
+  control of clusters of windows of distinct bases at every depth (pair counts of centres are exact
+  lattice counts `2εqq' + gcd`, so clusters of all sizes are expected deep down; climbing across scales is
+  what must be ruled out).  Every Newhouse pairing puts infinitely many bases on one side.  Maze row
+  "adaptive split cores for the Newhouse thick core" (wall, reopen = `ThickCore`).
+  **Bank `c⋆ ≤ 5`** (frozen `UniformBadFive.cStar_le_five`, 90%): probe `scripts/cstar_models/lvl5c.js`,
+  `pess.js` — counting engine with base 2 exact (runs, multiplicity 1: the other run digit was killed a
+  level earlier), per-window resolution (kill at `lv` if the window spans `< 3` cells, ≤ 4 cells; at
+  `lv − 1` otherwise, ≤ 3 cells), lag `⌊log₂(¾(b⁵−2))⌋`, perfect powers dropped, growth `181/100` /
+  `329/200` (on base-3 kill levels).  Slack: `0.038` true pattern, `0.028` with all `b ≥ 5` at every level,
+  `0.019` with worst-case base-3 counts per window (`⌊(2ℓ+2)/3⌋`, from `L₃(n+2) ≥ L₃(n)+3`).  Uniform growth
+  fails (`−0.023`); 5 cells/window fails (`−0.011`); control `c = 6` slack `0.21`.
+  Base-3 kill levels: `L(n) = lv(n) − [lv(n+1) = lv(n)+1]` (the shift happens exactly before a gap of 1),
+  so `L` has gaps in {1,2}, never two 1s in a row.
+  **Next (in order):** (1) decisive `c = 4` counting probe: exact joint `{2,3}` system, threshold-pruned
+  cells mostly inside a base-3 window, growth + weight spread + worst weight-aware `b ≥ 5` charge;
+  (2) formalize `cStar_le_five`: `runBad5` + multiplicity-1 `card_runKill5_le`, `kl` + `card_meets5_le`
+  (4/3 cells) + `meets5_unique` (lag condition `2^lag ≤ ¾·2^L(b⁵−2)/bⁿ⁺⁵`… i.e. reuse `meets_unique`
+  shape), `kl3` gap lemmas, product bound, tail sum, `growth` with two-valued `g`.
 * **2026-10-07 lap 6.**  `gap_lemma` PROVED (axiom-clean): linked pairs have both gaps longer than
   dist(K₁,K₂) > 0, so finitely many (`finite_long_gaps`); a minimal-total-length pair contradicts
   `linked_descent`.  ALSO `e15_facts` PROVED: E15 = {‖2ⁿx‖ ≥ 1/15} ⊆ E₂(4), gaps are exactly the

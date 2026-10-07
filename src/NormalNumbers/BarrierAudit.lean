@@ -43,6 +43,7 @@ import NormalNumbers.MahlerProductBlock
 import NormalNumbers.UniformBadThreshold
 import NormalNumbers.UniformBadJoint
 import NormalNumbers.UniformBadNewhouse
+import NormalNumbers.UniformBadFive
 
 /-!
 # Barrier audit: every open crux names a sibling it must fail on
@@ -156,6 +157,9 @@ def cruxLinks : List CruxLink := [
 
 /-- Open `sorry`s that are not cruxes, and why no barrier applies. -/
 def waivers : List Waiver := [
+  ⟨``UniformBadThreshold.cStar_le_five,
+   "a banked bound, not a crux: the counting engine of cStar_le_six with explicit constants \
+    (base 2 exact, per-window resolution, two growth rates); probe slack 0.019, control c = 6"⟩,
   ⟨``UniformBadThreshold.Newhouse.e2_four_facts,
    "off the route (the wiring uses the proved e15_facts); a computation about the explicit set E₂(4)"⟩,
   ⟨``IndependenceRelative.not_isRelativeBlock_small,
