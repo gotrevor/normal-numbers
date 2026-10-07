@@ -26,7 +26,24 @@ open leaves are the two standard leaves `ae_cesaro_condDiff` (martingale part) a
   `AliveOffMix`: the large sieve is closed (PENDING lap 9); the live mechanism is the arithmetic of `bᵐ mod q`
   over obstacle denominators, tested against the working dyadic control (`R = .977`).
 
+- **Run directive (2026-10-06 evening, Ren; Trevor authorized): probe-gated numerator-averaging run.**
+  Lap 10 showed that, through the preperiodic families (3-free denominator | 3^ℓ±1), averaging over m needs the
+  middle ternary digits of hbᵐ (Korobov at length ≍ log modulus; open).  The one live route averages over the
+  obstacle NUMERATORS instead.  Order of work:
+  1. The mechanical move above (`CantorBadNormalRetired.lean`), one commit.
+  2. **Probe first** (`scripts/cantorbad_numdisp.py`): for the preperiodic obstacle families at depth L, measure the
+     resLaw/μ_K-weighted numerator dispersion that the averaging argument needs, i.e. whether
+     `Σ_p w(p) e(a·p/3^k-part)` over the obstacle numerators in a coarse cylinder shows √-cancellation in `a`, and
+     whether the resulting bound on the AliveOffMix pair sums decays in L.  Known-answer controls in the same
+     pipeline: b = 3 and dyadic centres must NOT cancel; b = 2, 5, 7 are the test.  Report only what separates them.
+  3. **If the probe separates:** state the dispersion statement as a Lean node, prove its wiring into
+     `AliveOffMix` (or the preperiodic part of it), then attack it.
+  4. **If it does not:** record the route as closed in `Maze.lean` (a row citing the probe-backed node, believed
+     false, plus `pow_phase_recur` and the middle-digit obstruction), update BarrierAudit, and call `box done`.
+     A clean refutation is a successful run.
+
 Directive history:
+- 2026-10-06 evening: probe-gated numerator-averaging run (Trevor: "of course you should!").
 - 2026-10-06 13:50: operator rescope to the headline path; off-path sorries move to `CantorBadNormalRetired.lean`.
 - 2026-10-06 (cantorbad lap 6): local route adopted; `midStages` off-path.
 - 2026-10-02: normality's master conjectures (below, superseded on this branch).
