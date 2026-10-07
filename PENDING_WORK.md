@@ -3354,5 +3354,5 @@ Next: `isFresh` Riesz bound, then the classification lemma in Lean (route-decisi
 ## repetition lap 5 (2026-10-07)
 - PROVED `bf_le_hf_true_add` (low window with perturbation `|Z| ≤ 3^w ε`: `Bf ≤ Hf_true(X) + πε`),
   with `hf_true_lip`, `sum_two_div_three_pow`.  Serves classes 1 (w=v, Z=0) and 3 (w=u, Z=−Y).
-- Next: copy lemma (classes 5/6) `repBound M (some k) (3^a η₀ + Z) ≤ cycProd a η₀ + π(...)`,
-  then analytic facts for `pair_classify_rep` hypotheses.
+- PROVED `repBound_some_le_cyc` (copy run, perturbation; classes 5/6).
+- Next: analytic facts for `pair_classify_rep` hypotheses, then per-class sums.

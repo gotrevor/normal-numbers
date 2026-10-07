@@ -1867,6 +1867,32 @@ theorem bf_le_hf_true_add (free : ℕ → Bool) {M w W : ℕ} (hM : w + W ≤ M)
   have := abs_le.1 hl
   nlinarith [Real.pi_pos]
 
+/-- **Copy-run bound with a perturbation.**  For even `k`, `a = a_k`, any real `ξ` and integer
+`η₀`: `repBound (some k) ξ ≤ cycProd a η₀ + π(|ξ − 3^a η₀|/3^a + |ξ|/3^{(k+2)a})`.  Classes 5
+(`Z = 0`) and 6 (`Z = −Y`, `Y` below the run). -/
+theorem repBound_some_le_cyc (M k : ℕ) (hk : Even k) (ξ : ℝ) (η₀ : ℤ) :
+    repBound M (some k) ξ ≤ cycProd (runStart k) η₀ + Real.pi *
+      (|ξ - 3 ^ runStart k * η₀| / 3 ^ runStart k + |ξ| / 3 ^ ((k + 2) * runStart k)) := by
+  set a := runStart k
+  simp only [repBound, if_pos hk]
+  have h2 := cycProdR_lip a (ξ * (1 - (3 : ℝ) ^ (-(((k + 1) * a : ℕ) : ℤ))) / 3 ^ a) η₀
+  rw [cycProdR_intCast] at h2
+  have h3 : (0 : ℝ) < 3 ^ a := by positivity
+  have h3' : (0 : ℝ) < 3 ^ ((k + 2) * a) := by positivity
+  have hz : (3 : ℝ) ^ (-(((k + 1) * a : ℕ) : ℤ)) = 3 ^ a / 3 ^ ((k + 2) * a) := by
+    rw [zpow_neg, zpow_natCast, show (k + 2) * a = a + (k + 1) * a by ring, pow_add]
+    field_simp
+  have e : ξ * (1 - (3 : ℝ) ^ (-(((k + 1) * a : ℕ) : ℤ))) / 3 ^ a - η₀ =
+      (ξ - 3 ^ a * η₀) / 3 ^ a - ξ / 3 ^ ((k + 2) * a) := by
+    rw [hz]; field_simp; ring
+  rw [e] at h2
+  have ht : |(ξ - 3 ^ a * η₀) / 3 ^ a - ξ / 3 ^ ((k + 2) * a)| ≤
+      |ξ - 3 ^ a * η₀| / 3 ^ a + |ξ| / 3 ^ ((k + 2) * a) := by
+    refine (abs_sub _ _).trans (le_of_eq ?_)
+    rw [abs_div, abs_div, abs_of_pos h3, abs_of_pos h3']
+  have := (abs_le.1 h2).2
+  nlinarith [Real.pi_pos]
+
 /-! ## Bases `3ˢt`, `t > 1`: the crux -/
 
 /-- **Assembly of the crux from its inputs (open; believed, 60%).**  For `b = 3ˢt`, `t > 1`:
