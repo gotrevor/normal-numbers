@@ -1742,7 +1742,174 @@ theorem eq_sum_rd {P y : ℕ} (hP : 1 ≤ P) (hy : y < 3 ^ P - 1) :
   have e : (y : ℝ) = u * 3 ^ P - u := by simp only [u]; field_simp
   linarith
 
-/-- **The large spectrum of the cyclic Cantor law is polynomial in the period (believed, 90%).**
+
+/-- Cyclic digit `i` of `y` modulo `3^P − 1`. -/
+noncomputable def dg (P y i : ℕ) : ℤ := rd (3 ^ i * ((y : ℝ) / (3 ^ P - 1)))
+
+/-- Change-point code: positions `i < P` where the digit changes from `i − 1` (and `0`), with the
+new digit. -/
+noncomputable def chCode (P y : ℕ) : Finset (ℕ × ℕ) :=
+  ((Finset.range P).filter (fun i => i = 0 ∨ dg P y (i - 1) ≠ dg P y i)).image
+    (fun i => (i, (dg P y i).toNat))
+
+theorem mem_chCode {P y n v : ℕ} : (n, v) ∈ chCode P y ↔
+    n < P ∧ (n = 0 ∨ dg P y (n - 1) ≠ dg P y n) ∧ v = (dg P y n).toNat := by
+  unfold chCode
+  simp only [Finset.mem_image, Finset.mem_filter, Finset.mem_range, Prod.mk.injEq]
+  constructor
+  · rintro ⟨i, ⟨h1, h2⟩, rfl, rfl⟩; exact ⟨h1, h2, rfl⟩
+  · rintro ⟨h1, h2, rfl⟩; exact ⟨n, ⟨h1, h2⟩, rfl, rfl⟩
+
+theorem dg_eq_of_toNat {a b : ℤ} (ha : 0 ≤ a) (hb : 0 ≤ b) (h : a.toNat = b.toNat) : a = b := by
+  omega
+
+theorem dg_eq_of_chCode {P y y' : ℕ} (h : chCode P y = chCode P y') :
+    ∀ n < P, dg P y n = dg P y' n := by
+  intro n
+  induction n with
+  | zero =>
+    intro hP
+    have : (0, (dg P y 0).toNat) ∈ chCode P y' := h ▸ mem_chCode.2 ⟨hP, Or.inl rfl, rfl⟩
+    exact dg_eq_of_toNat (rd_nonneg _) (rd_nonneg _) (mem_chCode.1 this).2.2
+  | succ n ih =>
+    intro hP
+    have ihn := ih (by omega)
+    by_cases h1 : dg P y n ≠ dg P y (n + 1)
+    · have : (n + 1, (dg P y (n + 1)).toNat) ∈ chCode P y' :=
+        h ▸ mem_chCode.2 ⟨hP, Or.inr (by simpa using h1), rfl⟩
+      exact dg_eq_of_toNat (rd_nonneg _) (rd_nonneg _) (mem_chCode.1 this).2.2
+    · by_cases h2 : dg P y' n ≠ dg P y' (n + 1)
+      · have : (n + 1, (dg P y' (n + 1)).toNat) ∈ chCode P y :=
+          h.symm ▸ mem_chCode.2 ⟨hP, Or.inr (by simpa using h2), rfl⟩
+        exact (dg_eq_of_toNat (rd_nonneg _) (rd_nonneg _) (mem_chCode.1 this).2.2).symm
+      · push_neg at h1 h2; rw [← h1, ← h2, ihn]
+
+theorem chCode_injOn (P : ℕ) (hP : 1 ≤ P) :
+    Set.InjOn (chCode P) (Finset.range (3 ^ P - 1) : Set ℕ) := by
+  intro y hy y' hy' h
+  simp only [Finset.coe_range, Set.mem_Iio] at hy hy'
+  have e := eq_sum_rd hP hy
+  have e' := eq_sum_rd hP hy'
+  have hd := dg_eq_of_chCode h
+  have : (y : ℝ) = y' := by
+    rw [e, e']
+    refine Finset.sum_congr rfl fun i hi => ?_
+    have := hd i (Finset.mem_range.1 hi)
+    simp only [dg] at this
+    rw [this]
+  exact_mod_cast this
+
+theorem card_chCode_le (P y : ℕ) :
+    (chCode P y).card ≤ 1 + ((Finset.range P).filter fun i => dg P y i ≠ dg P y (i + 1)).card := by
+  unfold chCode
+  refine Finset.card_image_le.trans ?_
+  calc _ ≤ (insert 0 (((Finset.range P).filter fun i => dg P y i ≠ dg P y (i + 1)).image
+        (· + 1))).card := by
+        refine Finset.card_le_card fun i hi => ?_
+        simp only [Finset.mem_filter, Finset.mem_range] at hi
+        rcases hi.2 with h0 | h1
+        · simp [h0]
+        · refine Finset.mem_insert_of_mem (Finset.mem_image.2 ⟨i - 1, ?_, ?_⟩)
+          · have : i ≠ 0 := by rintro rfl; simp at h1
+            simp only [Finset.mem_filter, Finset.mem_range]
+            refine ⟨by omega, ?_⟩
+            rwa [show i - 1 + 1 = i by omega]
+          · have : i ≠ 0 := by rintro rfl; simp at h1
+            omega
+    _ ≤ _ := (Finset.card_insert_le _ _).trans (by rw [add_comm]; exact Nat.add_le_add_left Finset.card_image_le 1)
+
+theorem card_changes_lt {P y K' : ℕ} {δ : ℝ} (hK : Real.cos (Real.pi / 9) ^ K' < δ)
+    (hy : δ ≤ cycProd P (y : ℤ)) :
+    ((Finset.range P).filter fun i => dg P y i ≠ dg P y (i + 1)).card < K' := by
+  set C := (Finset.range P).filter fun i => dg P y i ≠ dg P y (i + 1)
+  set c := Real.cos (Real.pi / 9)
+  have hc0 : 0 ≤ c := Real.cos_nonneg_of_mem_Icc ⟨by linarith [Real.pi_pos], by linarith [Real.pi_pos]⟩
+  have hc1 : c < 1 := by
+    rw [← Real.cos_zero]
+    exact Real.cos_lt_cos_of_nonneg_of_le_pi le_rfl (by linarith [Real.pi_pos]) (by positivity)
+  have hprod : cycProd P (y : ℤ) ≤ c ^ C.card := by
+    unfold cycProd
+    calc _ ≤ ∏ i ∈ Finset.range P, (if i ∈ C then c else 1) := by
+          refine Finset.prod_le_prod (fun _ _ => abs_nonneg _) fun i hi => ?_
+          split_ifs with hC
+          · have hne := (Finset.mem_filter.1 hC).2
+            have e : 2 * Real.pi * (((y : ℤ) : ℝ) * 3 ^ i) / (3 ^ P - 1) =
+                2 * Real.pi * (3 ^ i * ((y : ℝ) / (3 ^ P - 1))) := by push_cast; ring
+            rw [e]
+            refine abs_cos_le_of_rd_ne ?_
+            simp only [dg] at hne
+            rwa [show (3 : ℝ) * (3 ^ i * ((y : ℝ) / (3 ^ P - 1))) =
+              3 ^ (i + 1) * ((y : ℝ) / (3 ^ P - 1)) by ring]
+          · exact Real.abs_cos_le_one _
+      _ = c ^ C.card := by
+          rw [Finset.prod_ite, Finset.prod_const_one, mul_one, Finset.prod_const]
+          congr 1
+          rw [Finset.filter_mem_eq_inter, Finset.inter_eq_right.2 (Finset.filter_subset _ _)]
+  by_contra hcon
+  push_neg at hcon
+  have : c ^ C.card ≤ c ^ K' := pow_le_pow_of_le_one hc0 hc1.le hcon
+  linarith
+
+theorem card_powerset_le_le (S : Finset (ℕ × ℕ)) (K : ℕ) :
+    ((S.powerset).filter fun Z => Z.card ≤ K).card ≤ (S.card + 1) ^ K := by
+  have hsub : (S.powerset).filter (fun Z => Z.card ≤ K) ⊆
+      (Finset.range (K + 1)).biUnion fun c => S.powersetCard c := by
+    intro Z hZ
+    simp only [Finset.mem_filter, Finset.mem_powerset] at hZ
+    exact Finset.mem_biUnion.2 ⟨Z.card, Finset.mem_range.2 (by omega),
+      Finset.mem_powersetCard.2 ⟨hZ.1, rfl⟩⟩
+  refine (Finset.card_le_card hsub).trans (Finset.card_biUnion_le.trans ?_)
+  simp only [Finset.card_powersetCard]
+  have : ∀ K : ℕ, ∑ c ∈ Finset.range (K + 1), S.card.choose c ≤ (S.card + 1) ^ K := by
+    intro K
+    induction K with
+    | zero => simp
+    | succ K ih =>
+      rw [Finset.sum_range_succ, pow_succ]
+      have h1 := Nat.choose_le_pow S.card (K + 1)
+      have h2 : S.card ^ (K + 1) ≤ (S.card + 1) ^ K * S.card := by
+        rw [pow_succ]; exact Nat.mul_le_mul_right _ (Nat.pow_le_pow_left (by omega) _)
+      nlinarith
+  exact this K
+
+/-- **The large spectrum of the cyclic Cantor law is polynomial in the period (proved).** -/
+theorem card_cycProd_ge_le' (δ : ℝ) (hδ : 0 < δ) : ∃ K : ℕ, ∀ P : ℕ, 1 ≤ P →
+    (((Finset.range (3 ^ P - 1)).filter fun y : ℕ => δ ≤ cycProd P (y : ℤ)).card : ℝ) ≤
+      3 * (2 * P + 1) ^ K := by
+  have hc1 : Real.cos (Real.pi / 9) < 1 := by
+    rw [← Real.cos_zero]
+    exact Real.cos_lt_cos_of_nonneg_of_le_pi le_rfl (by linarith [Real.pi_pos]) (by positivity)
+  obtain ⟨K', hK'⟩ := exists_pow_lt_of_lt_one hδ hc1
+  refine ⟨2 * K', fun P hP => ?_⟩
+  set S := Finset.range P ×ˢ Finset.range 3
+  have hmaps : ∀ y ∈ (Finset.range (3 ^ P - 1)).filter (fun y : ℕ => δ ≤ cycProd P (y : ℤ)),
+      chCode P y ∈ (S.powerset).filter fun Z => Z.card ≤ K' := by
+    intro y hy
+    simp only [Finset.mem_filter] at hy
+    simp only [Finset.mem_filter, Finset.mem_powerset]
+    refine ⟨fun p hp => ?_, ?_⟩
+    · obtain ⟨n, v⟩ := p
+      obtain ⟨h1, -, h3⟩ := mem_chCode.1 hp
+      simp only [S, Finset.mem_product, Finset.mem_range]
+      refine ⟨h1, ?_⟩
+      have := rd_lt (3 ^ n * ((y : ℝ) / (3 ^ P - 1)))
+      have := rd_nonneg (3 ^ n * ((y : ℝ) / (3 ^ P - 1)))
+      simp only [dg] at h3; omega
+    · have := card_chCode_le P y
+      have := card_changes_lt hK' hy.2
+      omega
+  have hcard := Finset.card_le_card_of_injOn (chCode P) hmaps
+    ((chCode_injOn P hP).mono (by intro y hy; simp only [Finset.coe_filter] at hy; exact hy.1))
+  have hS : S.card = 3 * P := by simp [S, mul_comm]
+  have h2 := card_powerset_le_le S K'
+  rw [hS] at h2
+  have h3 : (3 * P + 1) ^ K' ≤ (2 * P + 1) ^ (2 * K') := by
+    rw [pow_mul]; exact Nat.pow_le_pow_left (by nlinarith) _
+  have : ((Finset.range (3 ^ P - 1)).filter (fun y : ℕ => δ ≤ cycProd P (y : ℤ))).card ≤
+      3 * (2 * P + 1) ^ (2 * K') := by omega
+  exact_mod_cast this
+
+/-- **The large spectrum of the cyclic Cantor law is polynomial in the period (proved, `card_cycProd_ge_le'`).**
 For `δ > 0` there is `K` such that at most `3·(2P+1)^K` residues `y mod 3^P − 1` have
 `cycProd P y ≥ δ`.  English proof: at each cyclic ternary digit change of `y mod 3^P − 1` the factor
 of `cycProd` is `≤ cos(π/9)` (the cyclic form of `CantorLiouville.abs_cos_le_of_tdig_ne`), so
@@ -1754,8 +1921,8 @@ has more than `P^K` distinct points, i.e. for SHORT periods with large order
 count is useless (the wrap wall `TOrbitCyclicDecay`). -/
 theorem card_cycProd_ge_le (δ : ℝ) (hδ : 0 < δ) : ∃ K : ℕ, ∀ P : ℕ, 1 ≤ P →
     (((Finset.range (3 ^ P - 1)).filter fun y : ℕ => δ ≤ cycProd P (y : ℤ)).card : ℝ) ≤
-      3 * (2 * P + 1) ^ K := by
-  sorry
+      3 * (2 * P + 1) ^ K :=
+  card_cycProd_ge_le' δ hδ
 
 /-- **Superpolynomial order of `t` modulo `3^P − 1` (open conjecture; confidence 95%, no proof
 known).**  For every `C` there are arbitrarily large `P` such that the order of `t` modulo the
