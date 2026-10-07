@@ -1041,6 +1041,27 @@ theorem norm_charFun_repReal_le_cyc (k : ℕ) (ξ : ℝ) (η₀ : ℤ) :
   have := (abs_le.1 h2).2
   exact h1.trans (by unfold cycProdR at this; linarith)
 
+/-- **Copy-zone bound at an integer frequency divisible by `3^a`.**  Proved: if `z = 3^a η₀`,
+then `‖𝔼 e(z·repReal)‖ ≤ cycProd a η₀ + π |z| 3^{-(k+2)a}`.  For `z = h(bⁿ − bᵐ)` with
+`b = 3ˢt` and `sm ≥ a` this is the copy-zone pair term, error negligible while
+`|z| ≪ 3^{(k+2)a}` (the frequency's window stays inside run `k`). -/
+theorem norm_charFun_repReal_le_cyc_int (k : ℕ) (η₀ : ℤ) :
+    ‖∫ ω, ee (((3 : ℝ) ^ runStart k * η₀) * repReal ω) ∂coinMeasure‖ ≤
+      cycProd (runStart k) η₀ +
+        Real.pi * |(3 : ℝ) ^ runStart k * η₀| / 3 ^ ((k + 2) * runStart k) := by
+  refine (norm_charFun_repReal_le_cyc k _ η₀).trans (le_of_eq ?_)
+  congr 1
+  have h3 : (0 : ℝ) < 3 ^ runStart k := by positivity
+  have hz : (3 : ℝ) ^ (-(((k + 1) * runStart k : ℕ) : ℤ)) =
+      3 ^ runStart k / 3 ^ ((k + 2) * runStart k) := by
+    rw [zpow_neg, zpow_natCast, show (k + 2) * runStart k = runStart k + (k + 1) * runStart k by ring,
+      pow_add]
+    field_simp
+  rw [hz, show (3 : ℝ) ^ runStart k * η₀ * (1 - 3 ^ runStart k / 3 ^ ((k + 2) * runStart k)) /
+      3 ^ runStart k - η₀ = -(3 ^ runStart k * η₀ / 3 ^ ((k + 2) * runStart k)) by
+    field_simp; ring, abs_neg, abs_div, abs_of_pos (by positivity : (0 : ℝ) < 3 ^ ((k + 2) * runStart k))]
+  ring
+
 theorem cycProd_neg (A : ℕ) (η : ℤ) : cycProd A (-η) = cycProd A η := by
   unfold cycProd
   refine Finset.prod_congr rfl fun i _ => ?_
