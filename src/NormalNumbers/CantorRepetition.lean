@@ -593,6 +593,51 @@ theorem copyPairSum_eq_Bf (b A N : ℕ) :
   field_simp
   rw [mul_assoc, mul_assoc, ← pow_add, ← pow_add, show A - 1 - i + (i + 1) = i + (A - 1 - i + 1) by omega]
 
+/-- **`Bf` is `π`-Lipschitz in the frequency.**  Proved (`abs_prod_sub_prod_le`, geometric sum). -/
+theorem Bf_lip (free : ℕ → Bool) (M : ℕ) (ξ ξ' : ℝ) :
+    |Bf free M ξ - Bf free M ξ'| ≤ Real.pi * |ξ - ξ'| := by
+  unfold Bf
+  have hb : ∀ x : ℝ, 0 ≤ |Real.cos x| ∧ |Real.cos x| ≤ 1 :=
+    fun x => ⟨abs_nonneg _, Real.abs_cos_le_one _⟩
+  refine (CantorExactExponentProfile.abs_prod_sub_prod_le _ _ _ (fun k => hb _)
+    (fun k => hb _)).trans ?_
+  have hterm : ∀ p : ℕ, |(|Real.cos (2 * Real.pi * ξ / 3 ^ (p + 1))| -
+      |Real.cos (2 * Real.pi * ξ' / 3 ^ (p + 1))|)| ≤
+      2 * Real.pi * |ξ - ξ'| * (1 / 3) ^ (p + 1) := by
+    intro p
+    refine (abs_abs_sub_abs_le_abs_sub _ _).trans ((Real.abs_cos_sub_cos_le _ _).trans (le_of_eq ?_))
+    rw [show 2 * Real.pi * ξ / 3 ^ (p + 1) - 2 * Real.pi * ξ' / 3 ^ (p + 1) =
+      (2 * Real.pi / 3 ^ (p + 1)) * (ξ - ξ') by ring, abs_mul, abs_of_pos (by positivity)]
+    rw [one_div_pow]; ring
+  have hsub := Finset.sum_le_sum_of_subset_of_nonneg (Finset.filter_subset
+    (fun p => free p = true) (Finset.range M))
+    (f := fun p => 2 * Real.pi * |ξ - ξ'| * (1 / 3 : ℝ) ^ (p + 1)) (fun _ _ _ => by positivity)
+  refine (Finset.sum_le_sum fun p _ => hterm p).trans (hsub.trans ?_)
+  rw [← Finset.mul_sum]
+  have hg : ∑ p ∈ Finset.range M, (1 / 3 : ℝ) ^ (p + 1) ≤ 1 / 2 := by
+    have := geom_sum_mul (1 / 3 : ℝ) M
+    have e : ∑ p ∈ Finset.range M, (1 / 3 : ℝ) ^ (p + 1) =
+        (1 / 3) * ∑ p ∈ Finset.range M, (1 / 3 : ℝ) ^ p := by
+      rw [Finset.mul_sum]; exact Finset.sum_congr rfl fun p _ => by ring
+    have : (0 : ℝ) ≤ (1 / 3) ^ M := by positivity
+    rw [e]; nlinarith
+  have : 0 ≤ 2 * Real.pi * |ξ - ξ'| := by positivity
+  nlinarith
+
+/-- **Copy term vs. untwisted frequency.**  Proved: each pair term is within
+`π|bⁿ − bᵐ|/(3^A − 1)` of the plain Cassels term `Bf A (bⁿ − bᵐ)`; for pairs with
+`|bⁿ − bᵐ| ≤ 3^{A/2}` the twist costs `O(3^{-A/2})`. -/
+theorem copyTerm_le (A : ℕ) (hA : 1 ≤ A) (η : ℝ) :
+    Bf (fun _ => true) A (η * 3 ^ A / (3 ^ A - 1)) ≤
+      Bf (fun _ => true) A η + Real.pi * |η| / (3 ^ A - 1) := by
+  have h3 : (1 : ℝ) < 3 ^ A := one_lt_pow₀ (by norm_num) (by omega)
+  have := Bf_lip (fun _ => true) A (η * 3 ^ A / (3 ^ A - 1)) η
+  have hne : (3 : ℝ) ^ A - 1 ≠ 0 := by linarith
+  have e : η * 3 ^ A / (3 ^ A - 1) - η = η / (3 ^ A - 1) := by
+    rw [div_sub' hne, div_left_inj' hne]; ring
+  rw [e, abs_div, abs_of_pos (by linarith : (0 : ℝ) < 3 ^ A - 1), ← mul_div_assoc] at this
+  linarith [(abs_le.1 this).2]
+
 /-- **Copy-zone decay (open conjecture, the copy-zone leaf of `ae_isNormal_rep_of_three_dvd`).**
 For `b` not a power of 3 there are `C, δ > 0` with `copyPairSum b A N ≤ C N^{2−δ}` for
 `A ≤ N ≤ A^{3}` (runs of polynomially many copies).  Evidence (`scripts/rep_copyzone.py`,

@@ -3291,3 +3291,4 @@ formalize the copy-zone pair term: the block-coin Riesz product as a function of
   Next: prove CopyZoneDecay for pairs with b^{n}−b^{m} < 3^A (no wraparound: existing low-digit count),
   isolate the wraparound pairs as the residual leaf.
 - rep lap 1: PROVED `copyPairSum_eq_Bf` (copy zone = all-free Bf at ξ=(bⁿ−bᵐ)3^A/(3^A−1)). Next: no-wrap pairs via Bf_le_Hf/low-digit count.
+- rep lap 1: PROVED `Bf_lip`, `copyTerm_le` (twist costs π|η|/(3^A−1)). Next: sum over no-wrap pairs (|bⁿ−bᵐ| ≤ 3^{A/2}, i.e. n ≤ A log_b3/2) using secondMoment chain's pair count; wrap pairs = residual leaf.
