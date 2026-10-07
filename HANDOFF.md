@@ -6,6 +6,7 @@
   believed false, plus a Maze row), and the host declined the stop.  What remains is the
   middle-depth `ThreeAdicWindowAvg`: digits of powers in base 3, open and beyond every Korobov range.
 - **Ask the operator:** a new directive, either a route for the crux or an accepted stop.
+Re-confirmed 2026-10-07 (fresh lap): `box done` re-run, host declined again (gate still counts the crux sorry); stuck strike 2 recorded, treadmill should halt for operator.
 
 # HANDOFF — pointer
 
