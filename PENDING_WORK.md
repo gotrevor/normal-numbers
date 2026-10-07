@@ -1,4 +1,13 @@
 ## UniformBad threshold c⋆ (branch proof/uniformbad-threshold, 2026-10-07)
+* **2026-10-07 lap 8.**  **Decisive `c = 4` counting probe: NEGATIVE.**  On the TRUE joint `{2,3}` tree
+  (`scripts/cstar_models/joint23_spread.js`): per-cell 10-step lookahead growth `[1.751, 1.842]`, so the core
+  itself is regular-looking.  But the weight-aware charge of base 5 (killed core mass / ancestor core mass,
+  `joint23_rho.js`) is `0.055` (1.5x regular) already among 220 windows, and the engine recursion
+  `M(k+1) = M(k) − Σ_b ρ_b M(k+1−lag_b)` (`joint23_rec.js`) dies at level 91 at `c = 4`, lives at `c = 4.25`;
+  at `c = 4` it lives only with base 5 also exact (decay 0.975/level; doubled charges die).  The loss is
+  structural: every alive ancestor is charged as if it held a window, and the feedback `(1−η)^{−lag}` turns a
+  0.2%/level true loss into 7%/level.  Maze row "counted medium bases" updated (REOPEN: regular `{2,3,5,6,7}` core).
+  **Next:** formalize `cStar_le_five` (directive item 2).
 * **2026-10-07 lap 7 (review).**  **Newhouse thick core: no adaptive escape** (proved):
   `Newhouse.merge_forced` / `windows_merge_forced` — a `τ`-thick compact `B` in the good set puts any two
   `τ`-close windows inside its hull into one gap, so every thick core's gaps contain the canonical
