@@ -1062,6 +1062,49 @@ theorem norm_charFun_repReal_le_cyc_int (k : ℕ) (η₀ : ℤ) :
     field_simp; ring, abs_neg, abs_div, abs_of_pos (by positivity : (0 : ℝ) < 3 ^ ((k + 2) * runStart k))]
   ring
 
+/-- **Corvaja–Zannier gcd bound, specialized to `u = b^d`, `v = 3^A` (literature hypothesis).**
+Corvaja–Zannier (Monatsh. Math. 144 (2005); see also Bugeaud–Corvaja–Zannier, Math. Z. 243
+(2003)): for a finite set of primes `S` and `ε > 0`, all `S`-unit integers `α, β` satisfy, outside
+a finite exceptional set, either a relation `α^m = β^n` with `1 ≤ max(m,n) ≤ ε⁻¹`, or
+`gcd(α − 1, β − 1) ≤ max(|α|, |β|)^ε`.  This is the instance `α = b^d`, `β = 3^A` (weaker: a
+finite set of `(α, β)` gives a bound `D` on `max(d, A)`).  Transcription checked against the
+statement quoted in arXiv:1505.03957; the source itself not read (no egress). -/
+def CZGcdPow (b : ℕ) : Prop :=
+  ∀ ε : ℝ, 0 < ε → ∃ D : ℕ, ∀ d A : ℕ, D ≤ max d A →
+    (∀ m n : ℕ, 1 ≤ max m n → (max m n : ℝ) ≤ 1 / ε → (b : ℤ) ^ (d * m) ≠ 3 ^ (A * n)) →
+    (Int.gcd ((b : ℤ) ^ d - 1) (3 ^ A - 1) : ℝ) ≤ (max ((b : ℝ) ^ d) (3 ^ A)) ^ ε
+
+theorem eq_three_pow_of_pow_eq {b k j : ℕ} (hk : 1 ≤ k) (h : b ^ k = 3 ^ j) : ∃ s, b = 3 ^ s := by
+  have : b ∣ 3 ^ j := h ▸ dvd_pow_self b (by omega)
+  obtain ⟨i, -, hi⟩ := (Nat.dvd_prime_pow Nat.prime_three).1 this
+  exact ⟨i, hi⟩
+
+/-- **Short shifts have small gcd (from Corvaja–Zannier).**  Proved: if `b` is not a power of 3,
+then for every `ε > 0` and all large `A`, every shift `1 ≤ d` with `b^d ≤ 3^A` has
+`gcd(b^d − 1, 3^A − 1) ≤ 3^{εA}`.  So (for large `A`) `BadGcdSparse`'s bad shifts all have
+`b^d > 3^A`; the open part is the long shifts `d > A log₃ b⁻¹·…`, where the bound
+`max(b^d,3^A)^ε` is too weak.  In the crux, run `k` uses shifts up to `≈ (k+2)a/log₃ b`, so this
+covers bounded `k` only. -/
+theorem gcd_small_of_CZ {b : ℕ} (hb : 2 ≤ b) (hpow : ∀ s : ℕ, b ≠ 3 ^ s) (hCZ : CZGcdPow b)
+    {ε : ℝ} (hε : 0 < ε) : ∃ A₀ : ℕ, ∀ A d : ℕ, A₀ ≤ A → 1 ≤ d → (b : ℝ) ^ d ≤ 3 ^ A →
+      (Int.gcd ((b : ℤ) ^ d - 1) (3 ^ A - 1) : ℝ) ≤ (3 : ℝ) ^ (ε * A) := by
+  obtain ⟨D, hD⟩ := hCZ ε hε
+  refine ⟨max D 1, fun A d hA hd hbd => ?_⟩
+  have hA1 : 1 ≤ A := (le_max_right _ _).trans hA
+  have h := hD d A (le_max_of_le_right ((le_max_left _ _).trans hA)) (fun m n hmn _ heq => by
+    rcases Nat.eq_zero_or_pos m with rfl | hm
+    · have hn0 : n ≠ 0 := by intro h0; subst h0; simp at hmn
+      have : (1 : ℤ) = 3 ^ (A * n) := by simpa using heq
+      have h2 : (3 : ℤ) ^ (A * n) = 1 := this.symm
+      rw [pow_eq_one_iff_of_ne_zero (Nat.mul_ne_zero (by omega) hn0)] at h2
+      norm_num at h2
+    · have heq' : b ^ (d * m) = 3 ^ (A * n) := by exact_mod_cast heq
+      obtain ⟨s, hs⟩ := eq_three_pow_of_pow_eq (Nat.one_le_iff_ne_zero.2
+        (Nat.mul_ne_zero (by omega) (by omega))) heq'
+      exact hpow s hs)
+  refine h.trans (le_of_eq ?_)
+  rw [max_eq_right hbd, ← Real.rpow_natCast, ← Real.rpow_mul (by norm_num), mul_comm]
+
 theorem cycProd_neg (A : ℕ) (η : ℤ) : cycProd A (-η) = cycProd A η := by
   unfold cycProd
   refine Finset.prod_congr rfl fun i _ => ?_
