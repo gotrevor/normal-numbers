@@ -3515,6 +3515,109 @@ theorem topTerms_le {q N : ℕ} (hq : 1 ≤ q) (hN : 1 ≤ N) (Cb κ : ℝ) :
   have hpi : 0 ≤ 8 + 8 * Real.pi := by positivity
   nlinarith [mul_le_mul_of_nonneg_left hB hpi]
 
+/-- **Copy-run total, power form.**  The copy-run sum in `repPairPos_explicit` (runs
+`k ≤ log₄(2sN+e)` with `a_k ≤ 2sN+e`) is `O(N^{2−δ})`: `O(log N)` runs, each of length
+`≤ Nmax = O(N log N)`, each bounded by `copy5_total_le`/`copy6_total_le`. -/
+theorem copyTotal_le {s t e h' : ℕ} (hs : 1 ≤ s) (hh : 1 ≤ h') (hT : TOrbitCyclicDecay t)
+    (hS : BadGcdSparseH (3 ^ s * t)) :
+    ∃ C δ : ℝ, 0 < δ ∧ ∀ N : ℕ, 1 ≤ N →
+      ∑ k ∈ (Finset.range (Nat.log 4 (s * (2 * N) + e) + 1)).filter
+          (fun k => runStart k ≤ s * (2 * N) + e),
+        ∑ n ∈ Finset.range ((k + 2) * runStart k + 1),
+          ∑ m ∈ Finset.range ((k + 2) * runStart k + 1),
+            (cycProd (runStart k) ((h' : ℤ) * (((3 ^ s * t : ℕ) : ℤ) ^ n - ((3 ^ s * t : ℕ) : ℤ) ^ m))
+              + cycProd (runStart k) ((h' : ℤ) * (t : ℤ) ^ n)) ≤ C * (N : ℝ) ^ (2 - δ) := by
+  have hh0 : (h' : ℤ) ≠ 0 := by exact_mod_cast (by omega : h' ≠ 0)
+  obtain ⟨C5, δ5, hδ5, hC5⟩ := copy5_total_le (copyZoneDecayH_of hT hS (h' : ℤ) hh0)
+  obtain ⟨C6, δ6, hδ6, hC6⟩ := copy6_total_le hT
+  set δc := min (min δ5 δ6) 1 with hδc
+  have hδc0 : 0 < δc := lt_min (lt_min hδ5 hδ6) one_pos
+  have hδc1 : δc ≤ 1 := min_le_right _ _
+  set ε := δc / 6
+  have hε : 0 < ε := by positivity
+  obtain ⟨A, hA, hAN⟩ := natLog_lin_le_rpow (b := 4) (by norm_num) hε (2 * s) e
+  set S6 : ℝ := ∑ k ∈ Finset.range (h' ^ 2), ((((k + 2) * runStart k + 1 : ℕ) : ℝ)) ^ 2
+  have hS6 : 0 ≤ S6 := Finset.sum_nonneg fun _ _ => by positivity
+  set B : ℝ := A * (2 * s + e) + 1
+  have hB1 : 1 ≤ B := by simp only [B]; nlinarith [(Nat.cast_nonneg s : (0:ℝ) ≤ s), (Nat.cast_nonneg e : (0:ℝ) ≤ e)]
+  refine ⟨A * (|C5| + |C6|) * B ^ (2 - δc) + S6, δc / 2, by positivity, fun N hN => ?_⟩
+  set L := Nat.log 4 (s * (2 * N) + e)
+  set Ks := (Finset.range (L + 1)).filter (fun k => runStart k ≤ s * (2 * N) + e)
+  set Nmax := (L + 2) * (s * (2 * N) + e) + 1
+  have hN1 : (1 : ℝ) ≤ N := by exact_mod_cast hN
+  have hNε : (1 : ℝ) ≤ (N : ℝ) ^ ε := Real.one_le_rpow hN1 hε.le
+  have hLA : (L : ℝ) + 2 ≤ A * (N : ℝ) ^ ε := by
+    have := hAN N hN; rwa [show 2 * s * N + e = s * (2 * N) + e by ring] at this
+  have hKs : ∀ k ∈ Ks, (k + 2) * runStart k + 1 ≤ Nmax := by
+    intro k hk
+    simp only [Ks, Finset.mem_filter, Finset.mem_range] at hk
+    have : (k + 2) * runStart k ≤ (L + 2) * (s * (2 * N) + e) := Nat.mul_le_mul (by omega) hk.2
+    omega
+  have hcard : (Ks.card : ℝ) ≤ A * (N : ℝ) ^ ε := by
+    have : Ks.card ≤ L + 1 := (Finset.card_filter_le _ _).trans (by simp)
+    have : (Ks.card : ℝ) ≤ L + 1 := by exact_mod_cast this
+    linarith
+  have hNmax1 : (1 : ℝ) ≤ Nmax := by exact_mod_cast (by omega : 1 ≤ Nmax)
+  have hNmax : (Nmax : ℝ) ≤ B * (N : ℝ) ^ (1 + ε) := by
+    rw [← nat_mul_rpow hN]
+    simp only [Nmax, B]; push_cast
+    have h1 : (2 * (s : ℝ) * N + e) ≤ (2 * s + e) * N := by nlinarith [(Nat.cast_nonneg e : (0:ℝ) ≤ e)]
+    have h2 : ((L : ℝ) + 2) * (s * (2 * N) + e) ≤ A * (N : ℝ) ^ ε * ((2 * s + e) * N) :=
+      mul_le_mul hLA (by linarith) (by positivity) (by positivity)
+    have h3 : (1 : ℝ) ≤ N * (N : ℝ) ^ ε := by nlinarith
+    nlinarith
+  -- per-run bound with exponent `2 − δc`
+  have hpow : ∀ δ' : ℝ, δc ≤ δ' → (Nmax : ℝ) ^ (2 - δ') ≤ B ^ (2 - δc) * (N : ℝ) ^ ((1 + ε) * (2 - δc)) := by
+    intro δ' hδ'
+    calc (Nmax : ℝ) ^ (2 - δ') ≤ (Nmax : ℝ) ^ (2 - δc) :=
+          Real.rpow_le_rpow_of_exponent_le hNmax1 (by linarith)
+      _ ≤ (B * (N : ℝ) ^ (1 + ε)) ^ (2 - δc) :=
+          Real.rpow_le_rpow (by positivity) hNmax (by linarith)
+      _ = _ := by rw [Real.mul_rpow (by positivity) (by positivity), ← Real.rpow_mul (by positivity)]
+  have h5 := hC5 Ks Nmax hKs
+  have h6 := hC6 (h' : ℤ) hh0 (h' ^ 2) (fun k hk => by
+    have hk' : h' ^ 2 ≤ runStart k := hk.trans (lt_runStart k).le
+    have : runStart k < 3 ^ runStart k := Nat.lt_pow_self (by norm_num)
+    have h7 : ((h' ^ 2 + 1 : ℕ) : ℝ) ≤ ((3 ^ runStart k : ℕ) : ℝ) := by exact_mod_cast (by omega)
+    push_cast at h7
+    rw [Int.natAbs_natCast]; linarith) Ks Nmax hKs
+  rw [show ∑ k ∈ Ks, ∑ n ∈ Finset.range ((k + 2) * runStart k + 1),
+      ∑ m ∈ Finset.range ((k + 2) * runStart k + 1),
+        (cycProd (runStart k) ((h' : ℤ) * (((3 ^ s * t : ℕ) : ℤ) ^ n - ((3 ^ s * t : ℕ) : ℤ) ^ m))
+          + cycProd (runStart k) ((h' : ℤ) * (t : ℤ) ^ n)) =
+    ∑ k ∈ Ks, ∑ n ∈ Finset.range ((k + 2) * runStart k + 1),
+      ∑ m ∈ Finset.range ((k + 2) * runStart k + 1),
+        cycProd (runStart k) ((h' : ℤ) * (((3 ^ s * t : ℕ) : ℤ) ^ n - ((3 ^ s * t : ℕ) : ℤ) ^ m)) +
+    ∑ k ∈ Ks, ∑ n ∈ Finset.range ((k + 2) * runStart k + 1),
+      ∑ _m ∈ Finset.range ((k + 2) * runStart k + 1), cycProd (runStart k) ((h' : ℤ) * (t : ℤ) ^ n) by
+    simp only [Finset.sum_add_distrib]]
+  have p5 := hpow δ5 (le_trans (min_le_left _ _) (min_le_left _ _))
+  have p6 := hpow δ6 (le_trans (min_le_left _ _) (min_le_right _ _))
+  -- exponent bookkeeping
+  have hexp : (N : ℝ) ^ ε * (N : ℝ) ^ ((1 + ε) * (2 - δc)) ≤ (N : ℝ) ^ (2 - δc / 2) := by
+    rw [rpow_mul_rpow_nat hN]
+    refine Real.rpow_le_rpow_of_exponent_le hN1 ?_
+    simp only [ε]; nlinarith
+  have hc0 : (0 : ℝ) ≤ Ks.card := by positivity
+  have hP : 0 ≤ B ^ (2 - δc) * (N : ℝ) ^ ((1 + ε) * (2 - δc)) := by positivity
+  have k5 : (Ks.card : ℝ) * (|C5| * (Nmax : ℝ) ^ (2 - δ5)) ≤
+      A * |C5| * B ^ (2 - δc) * (N : ℝ) ^ (2 - δc / 2) := by
+    calc (Ks.card : ℝ) * (|C5| * (Nmax : ℝ) ^ (2 - δ5)) ≤
+        (A * (N : ℝ) ^ ε) * (|C5| * (B ^ (2 - δc) * (N : ℝ) ^ ((1 + ε) * (2 - δc)))) :=
+          mul_le_mul hcard (mul_le_mul_of_nonneg_left p5 (abs_nonneg _)) (by positivity) (by positivity)
+      _ = A * |C5| * B ^ (2 - δc) * ((N : ℝ) ^ ε * (N : ℝ) ^ ((1 + ε) * (2 - δc))) := by ring
+      _ ≤ _ := mul_le_mul_of_nonneg_left hexp (by positivity)
+  have k6 : (Ks.card : ℝ) * (|C6| * (Nmax : ℝ) ^ (2 - δ6)) ≤
+      A * |C6| * B ^ (2 - δc) * (N : ℝ) ^ (2 - δc / 2) := by
+    calc (Ks.card : ℝ) * (|C6| * (Nmax : ℝ) ^ (2 - δ6)) ≤
+        (A * (N : ℝ) ^ ε) * (|C6| * (B ^ (2 - δc) * (N : ℝ) ^ ((1 + ε) * (2 - δc)))) :=
+          mul_le_mul hcard (mul_le_mul_of_nonneg_left p6 (abs_nonneg _)) (by positivity) (by positivity)
+      _ = A * |C6| * B ^ (2 - δc) * ((N : ℝ) ^ ε * (N : ℝ) ^ ((1 + ε) * (2 - δc))) := by ring
+      _ ≤ _ := mul_le_mul_of_nonneg_left hexp (by positivity)
+  have hS6N : S6 ≤ S6 * (N : ℝ) ^ (2 - δc / 2) :=
+    le_mul_of_one_le_right hS6 (Real.one_le_rpow hN1 (by linarith))
+  nlinarith
+
 theorem log_le_posBound {s t e h' N y : ℕ} (ht : 1 ≤ t)
     (hy : y ≤ 3 ^ e * h' * (3 ^ s * t) ^ (2 * N)) :
     Nat.log 3 y ≤ 3 ^ e * h' + 2 * (s + t) * N + e := by
