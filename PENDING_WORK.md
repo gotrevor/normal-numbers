@@ -1,4 +1,18 @@
 ## UniformBad threshold c⋆ (branch proof/uniformbad-threshold, 2026-10-07)
+* **2026-10-07 lap 5 (NEW ROUTE: Newhouse gap lemma).**  `UniformBadNewhouse.lean`: pair base 2
+  against all b ≥ 3.  `cStar_le_four_of_newhouse` (PROVED wiring) from three nodes:
+  `gap_lemma` (classical, 95%), `e2_four_facts` (τ(E₂(4)) = 3 exactly, gaps A/2ⁿ ± 2⁻ⁿ/15, 90%),
+  crux `thickCore_four : ThickCore 4 (2/5)` (compact B ⊆ ⋂_{b≥3} E_b(4), thickness 2/5, 70%).
+  Probes `scripts/cstar_models/thick.py`, `merge.py`: raw ⋂_{b≥3} has thickness 0 (cross-base
+  near-touching windows) but merging to thickness 0.4/1/2 costs 26/64/126 merges of ~56.7k gaps
+  (bases 3..40, windows ≥ 3e-7), hull [1/80,79/80] intact.  c=3: τ(E₂(3)) = 1, merged B reaches
+  1.05 (c⋆ ≤ 3 plausible).  Control: c = 2.2, 2.4 collapse.  No dimension deficit: Newhouse is
+  scale-free.  **Crux now:** worst-case control of merge cascades (clusters of windows of distinct
+  bases near rationals with large denominators).  Plan: B = E₃(4) (τ = 26) minus fills of b ≥ 5
+  windows; E₃'s margin 26 vs needed 2/5 lets each gap absorb ~19× its length of nearby smaller
+  windows; need a lemma bounding absorbed length (chains), or a potential-thickness construction.
+  Next: (1) prove `gap_lemma` (Palis–Takens, compactness); (2) prove `e2_four_facts`;
+  (3) attack the cascade bound (state it as a node).
 * **2026-10-07 lap 4 (crux probe: exact {2,3} core).**  New `UniformBadJoint.lean`: containment
   kills `winBad c S` (cell inside a closed window of some b ∈ S), weighted certificate `SubEigen`,
   proved core lemma `exists_good_of_subEigen` (axiom-clean: certificate ⇒ point with

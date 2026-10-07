@@ -42,6 +42,7 @@ import NormalNumbers.KurtzRandom
 import NormalNumbers.MahlerProductBlock
 import NormalNumbers.UniformBadThreshold
 import NormalNumbers.UniformBadJoint
+import NormalNumbers.UniformBadNewhouse
 
 /-!
 # Barrier audit: every open crux names a sibling it must fail on
@@ -76,6 +77,10 @@ def cruxLinks : List CruxLink := [
    [``uniformBad_base_two],
    "the construction must keep the small bases jointly away from the rationals; the base-2 \
     barrier shows exponent ≤ log₂ 3 is impossible, so any mechanism must use c > log₂ 3 per base"⟩,
+  ⟨``UniformBadThreshold.Newhouse.thickCore_four,
+   [``uniformBad_base_two],
+   "the thick core must not contain base 2: E₂ alone has thickness 1 at c = 3 and dies at c ≤ log₂ 3, \
+    so the route must pair base 2 against a core whose thickness beats 1/τ(E₂)"⟩,
   ⟨``UniformBadThreshold.Count.jointCoreSubEigen_four,
    [``uniformBad_base_two],
    "the {2,3} core certificate must respect the single-base floor: base 2 alone at exponent \
@@ -151,6 +156,11 @@ def cruxLinks : List CruxLink := [
 
 /-- Open `sorry`s that are not cruxes, and why no barrier applies. -/
 def waivers : List Waiver := [
+  ⟨``UniformBadThreshold.Newhouse.gap_lemma,
+   "a classical leaf (Newhouse 1979) with the Palis–Takens proof in the docstring; no barrier \
+    applies to a statement about general thick compact sets"⟩,
+  ⟨``UniformBadThreshold.Newhouse.e2_four_facts,
+   "a computation about one explicit set E₂(4) (gaps A/2ⁿ ± 2⁻ⁿ/15), checked by the thick.py probe"⟩,
   ⟨``IndependenceRelative.not_isRelativeBlock_small,
    "a finite computation stated as a sibling: the blocksearch probe's non-certification over \
     small direction sets; it closes a route, no open crux uses it"⟩,
