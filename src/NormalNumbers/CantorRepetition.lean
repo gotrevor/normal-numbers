@@ -2726,6 +2726,35 @@ theorem card_nearCopyBdry_le_of (f : ℕ → ℕ) (W K N X : ℕ)
   refine (Finset.sum_le_sum hk).trans ?_
   simp; ring_nf; omega
 
+theorem log_lt_log_of_three_mul {x y : ℕ} (hx : 1 ≤ x) (hxy : 3 * x ≤ y) :
+    Nat.log 3 x < Nat.log 3 y := by
+  have h1 : Nat.log 3 (x * 3) = Nat.log 3 x + 1 := Nat.log_mul_base (by norm_num) (by omega)
+  have h2 : Nat.log 3 (x * 3) ≤ Nat.log 3 y := Nat.log_mono_right (by omega)
+  omega
+
+/-- The top of `Y = Hbᵐ` is strictly increasing in `m` (`b ≥ 3`, `H ≥ 1`). -/
+theorem strictMono_log_mul_pow {H B : ℕ} (hH : 1 ≤ H) (hB : 3 ≤ B) :
+    StrictMono fun m => Nat.log 3 (H * B ^ m) := by
+  refine strictMono_nat_of_lt_succ fun m => log_lt_log_of_three_mul
+    (Nat.mul_pos hH (by positivity)) ?_
+  rw [pow_succ]; nlinarith [Nat.mul_le_mul_left (H * B ^ m) hB]
+
+/-- The top of `ξ = H(b^{m+d} − bᵐ)` is strictly increasing in `d ≥ 1` (`b ≥ 3`, `H ≥ 1`). -/
+theorem strictMono_log_pair {H B m : ℕ} (hH : 1 ≤ H) (hB : 3 ≤ B) :
+    StrictMono fun d => Nat.log 3 (H * (B ^ (m + (d + 1)) - B ^ m)) := by
+  refine strictMono_nat_of_lt_succ fun d => log_lt_log_of_three_mul ?_ ?_
+  · have : B ^ m < B ^ (m + (d + 1)) := Nat.pow_lt_pow_right (by omega) (by omega)
+    exact Nat.mul_pos hH (by omega)
+  · have e : ∀ j, B ^ (m + j) - B ^ m = B ^ m * (B ^ j - 1) := fun j => by
+      rw [pow_add, Nat.mul_sub_one]
+    rw [e, e]
+    have h1 : 1 ≤ B ^ (d + 1) := Nat.one_le_pow _ _ (by omega)
+    have h2 : B ^ (d + 1 + 1) = B ^ (d + 1) * B := pow_succ _ _
+    have h3 : 3 * (B ^ (d + 1) - 1) ≤ B ^ (d + 1 + 1) - 1 := by
+      rw [h2]; have := Nat.mul_le_mul_left (B ^ (d + 1)) hB; omega
+    calc 3 * (H * (B ^ m * (B ^ (d + 1) - 1))) = H * (B ^ m * (3 * (B ^ (d + 1) - 1))) := by ring
+      _ ≤ _ := Nat.mul_le_mul_left _ (Nat.mul_le_mul_left _ h3)
+
 /-- **Pair sums with a power saving.**  For each `h ≠ 0` and each `N ≥ 1` some choice of options
 makes the pair sum `≤ C N^{2−δ}`.  This is the per-`N` content of the assembly; summability along
 `sched` is then automatic (`repPairArith_of_power`). -/
