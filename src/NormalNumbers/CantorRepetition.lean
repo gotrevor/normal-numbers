@@ -2123,6 +2123,37 @@ theorem repBound_class_top_le {s t M K m d : ℕ} (ht : 1 ≤ t) (h : ℤ)
     intro h0; rw [e, h0, zero_mul, abs_zero] at hξ; norm_num at hξ
   rw [e, fract_logb_mul_pow ht _ hc]
 
+/-- **Class-2 pointwise bound (top window of `Y = h bᵐ`).**  If the top `n_Y = ⌊log₃|Y|⌋` of
+`Y` is at most `sn` and the `K` places below it are fresh, then
+`repBound none (h(bⁿ − bᵐ)) ≤ topProd K {m log₃ t + log₃|h|}`. -/
+theorem repBound_class_topY_le {s t M K n m : ℕ} (ht : 1 ≤ t) (h : ℤ)
+    (hY : 1 ≤ |(((h * ((3 ^ s * t : ℕ) : ℤ) ^ m : ℤ)) : ℝ)|)
+    (hK : K ≤ ⌊Real.logb 3 |(((h * ((3 ^ s * t : ℕ) : ℤ) ^ m : ℤ)) : ℝ)|⌋₊)
+    (hfr : ∀ k < K, isFresh (⌊Real.logb 3 |(((h * ((3 ^ s * t : ℕ) : ℤ) ^ m : ℤ)) : ℝ)|⌋₊
+      - 1 - k) = true)
+    (hM : ⌊Real.logb 3 |(((h * ((3 ^ s * t : ℕ) : ℤ) ^ m : ℤ)) : ℝ)|⌋₊ ≤ M)
+    (hyu : ⌊Real.logb 3 |(((h * ((3 ^ s * t : ℕ) : ℤ) ^ m : ℤ)) : ℝ)|⌋₊ ≤ s * n) :
+    repBound M none ((h : ℝ) * (((3 ^ s * t : ℕ) : ℝ) ^ n - ((3 ^ s * t : ℕ) : ℝ) ^ m)) ≤
+      CantorExactExponentProfile.topProd K (Int.fract (m * Real.logb 3 t +
+        Real.logb 3 |(h : ℝ)|)) := by
+  simp only [repBound]
+  have hdvd : (3 : ℤ) ^ ⌊Real.logb 3 |(((h * ((3 ^ s * t : ℕ) : ℤ) ^ m : ℤ)) : ℝ)|⌋₊ ∣
+      (h * (((3 ^ s * t : ℕ) : ℤ) ^ n - ((3 ^ s * t : ℕ) : ℤ) ^ m)) +
+        h * ((3 ^ s * t : ℕ) : ℤ) ^ m := by
+    rw [show h * (((3 ^ s * t : ℕ) : ℤ) ^ n - ((3 ^ s * t : ℕ) : ℤ) ^ m) +
+        h * ((3 ^ s * t : ℕ) : ℤ) ^ m = h * ((3 ^ s * t : ℕ) : ℤ) ^ n by ring]
+    refine Dvd.dvd.mul_left ((pow_dvd_pow 3 hyu).trans ?_) _
+    push_cast
+    rw [pow_mul, mul_pow]; exact Dvd.intro _ rfl
+  have := CantorExactExponentProfile.bf_le_topProd_of_dvd isFresh M K _ _ hY hK hfr hM hdvd
+  push_cast at this ⊢
+  refine this.trans (le_of_eq ?_)
+  have hh : (h : ℝ) ≠ 0 := by
+    intro h0; push_cast at hY; rw [h0, zero_mul, abs_zero] at hY; norm_num at hY
+  have := fract_logb_mul_pow (s := s) ht (h : ℝ) hh m
+  push_cast at this
+  rw [this]
+
 /-! ## Bases `3ˢt`, `t > 1`: the crux -/
 
 /-- **Assembly of the crux from its inputs (open; believed, 60%).**  For `b = 3ˢt`, `t > 1`:
