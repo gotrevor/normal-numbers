@@ -2228,6 +2228,23 @@ theorem sum_class_copy_le {s t : ℕ} (hT : TOrbitCyclicDecay t) (hS : BadGcdSpa
   push_cast at this ⊢
   linarith
 
+/-- **Run range fits the copy-zone range.**  `N' = (k+2)a_k + 1` satisfies `a_k ≤ N' ≤ a_k³`, so
+the class-5/6 sums over run `k` (all `n` with `sn < (k+2)a_k`) meet the range hypothesis of
+`TOrbitCyclicDecay`/`CopyZoneDecayH`. -/
+theorem runEnd_succ_le_cube (k : ℕ) :
+    runStart k ≤ (k + 2) * runStart k + 1 ∧ (k + 2) * runStart k + 1 ≤ runStart k ^ 3 := by
+  have hk : k + 3 ≤ 4 ^ (k + 1) := by
+    induction k with
+    | zero => norm_num
+    | succ k ih => rw [pow_succ]; omega
+  have h4 := four_pow_le_runStart k
+  refine ⟨by nlinarith, ?_⟩
+  have ha : k + 3 ≤ runStart k := hk.trans h4
+  have : 1 ≤ runStart k := by omega
+  calc (k + 2) * runStart k + 1 ≤ runStart k * runStart k := by nlinarith
+    _ = runStart k ^ 2 := by ring
+    _ ≤ runStart k ^ 3 := Nat.pow_le_pow_right (by omega) (by norm_num)
+
 /-! ## Bases `3ˢt`, `t > 1`: the crux -/
 
 /-- **Assembly of the crux from its inputs (open; believed, 60%).**  For `b = 3ˢt`, `t > 1`:
