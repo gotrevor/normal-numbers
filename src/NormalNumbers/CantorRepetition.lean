@@ -715,6 +715,18 @@ def CopyZoneDecay (b : ℕ) : Prop :=
   ∃ C δ : ℝ, 0 < δ ∧ ∀ A N : ℕ, 1 ≤ A → A ≤ N → N ≤ A ^ 3 →
     copyPairSum b A N ≤ C * (N : ℝ) ^ (2 - δ)
 
+/-- **Uniform orbit decay of cyclic digits (open conjecture; the residual leaf of
+`CopyZoneDecay`, via `cycProd_pair` with `c = b^d − 1`).**  For `t ≥ 2` prime to 3: the orbit
+`c tᵐ` (`m < N`, `A ≤ N ≤ A³`) has cyclic Riesz products summing to `O(N^{1−δ})`, uniformly in
+`c` with `gcd(c, 3^A−1)² ≤ 3^A − 1`.  Evidence (`scripts/rep_single.py`, exhaustive max over `c`,
+`N = 4A`): `t = 2`: `N·max = 2.3, 1.7, 1.6` at `A = 6, 8, 10` (bounded); control `t = 1`: mean
+`.37` flat (`N·max ≍ N`).  Confidence 55%: this is a short-orbit digit statement for `tᵐ` modulo
+`3^A − 1` (middle digits of powers once `tᵐ > 3^A`). -/
+def TOrbitCyclicDecay (t : ℕ) : Prop :=
+  ∃ C δ : ℝ, 0 < δ ∧ ∀ A N : ℕ, 1 ≤ A → A ≤ N → N ≤ A ^ 3 → ∀ c : ℤ,
+    (Int.gcd c (3 ^ A - 1) : ℝ) ^ 2 ≤ 3 ^ A - 1 →
+    ∑ m ∈ Finset.range N, cycProd A (c * (t : ℤ) ^ m) ≤ C * (N : ℝ) ^ (1 - δ)
+
 /-! ## Bases `3ˢt`, `t > 1`: the crux -/
 
 /-- **Crux: a.e. normality to `b = 3ˢt`, `t > 1`.**  Open; confidence 50%.
