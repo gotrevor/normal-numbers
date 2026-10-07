@@ -273,6 +273,73 @@ theorem charFun_repReal (M : ℕ) (ξ : ℝ) :
   simp_rw [repReal_eq]
   exact charFun_add M isFree ξ repCopy measurable_repCopy fun ω ω' h => repCopy_congr h
 
+/-! ### Fresh coins: free places and odd runs -/
+
+/-- **Fresh places**: free places and the places of odd runs.  Each reads its own coin and no
+other place reads it. -/
+noncomputable def isFresh (i : ℕ) : Bool := isFree i || !decide (Even (runIdx i))
+
+theorem src_of_fresh {i : ℕ} (h : isFresh i = true) : src i = i := by
+  unfold isFresh at h
+  cases hf : isFree i
+  · rw [hf] at h
+    simp only [Bool.false_or, Bool.not_eq_true', decide_eq_false_iff_not] at h
+    simp [src, hf, h]
+  · exact src_of_free hf
+
+theorem isFresh_eq_false {i : ℕ} : isFresh i = false ↔
+    ∃ k, Even k ∧ runStart k ≤ i ∧ i < (k + 2) * runStart k := by
+  constructor
+  · intro h
+    unfold isFresh at h
+    simp only [Bool.or_eq_false_iff, Bool.not_eq_false', decide_eq_true_eq] at h
+    obtain ⟨k, h1, h2⟩ := exists_run_of_not_free h.1
+    exact ⟨k, runIdx_eq h1 h2 ▸ h.2, h1, h2⟩
+  · rintro ⟨k, hk, h1, h2⟩
+    have hf : isFree i = false := by simp [isFree, isForced_of_mem_run h1 h2]
+    simp [isFresh, hf, runIdx_eq h1 h2, hk]
+
+/-- Non-fresh places read non-fresh coins (the block of their own even run). -/
+theorem isFresh_src_of_not_fresh {i : ℕ} (h : isFresh i = false) : isFresh (src i) = false := by
+  obtain ⟨k, hk, h1, h2⟩ := isFresh_eq_false.1 h
+  rw [src_of_mem_run hk h1 h2]
+  have hpos : 0 < runStart k := (Nat.zero_le k).trans_lt (lt_runStart k)
+  have := Nat.mod_lt (i - runStart k) hpos
+  exact isFresh_eq_false.2 ⟨k, hk, by omega, by nlinarith⟩
+
+/-- The even-run copy part. -/
+noncomputable def repCopyE (ω : ℕ → Bool) : ℝ := pt (fun i => !isFresh i) (fun i => ω (src i))
+
+theorem measurable_repCopyE : Measurable repCopyE :=
+  (measurable_pt _).comp measurable_reindex
+
+/-- **Fresh part plus even-run copy part.** -/
+theorem repReal_eq_fresh (ω : ℕ → Bool) : repReal ω = pt isFresh ω + repCopyE ω := by
+  unfold repReal repCopyE
+  rw [pt_true_eq_add isFresh]
+  congr 1
+  unfold pt; congr 1; funext i
+  simp only [ptDigit]
+  cases h : isFresh i
+  · simp
+  · simp [src_of_fresh h]
+
+theorem repCopyE_congr {ω ω' : ℕ → Bool} (h : ∀ i, isFresh i = false → ω i = ω' i) :
+    repCopyE ω = repCopyE ω' := by
+  unfold repCopyE pt; congr 1; funext i
+  simp only [ptDigit]
+  by_cases hf : isFresh i = true
+  · simp [hf]
+  · simp only [Bool.not_eq_true] at hf
+    simp [hf, h _ (isFresh_src_of_not_fresh hf)]
+
+/-- **Riesz bound over the fresh coins.**  Proved (`charFun_add` with the even-run copy part as
+the shift). -/
+theorem charFun_repReal_fresh (M : ℕ) (ξ : ℝ) :
+    ‖∫ ω, ee (ξ * repReal ω) ∂coinMeasure‖ ≤ Bf isFresh M ξ := by
+  simp_rw [repReal_eq_fresh]
+  exact charFun_add M isFresh ξ repCopyE measurable_repCopyE fun ω ω' h => repCopyE_congr h
+
 /-! ### The base-`b` second moment for any law with the Riesz bound (copy of
 `CantorLiouvilleAll.secondMoment_le_b`, `pt free` replaced by `G`) -/
 
@@ -1370,16 +1437,17 @@ def RepPairDecay (b : ℕ) : Prop :=
         ((sched j : ℝ) ^ 2)
 
 /-- The two Riesz bounds on the repetition law: the free coins below `M` (`none`) or the block
-coins of run `k` (`some k`, a real-frequency cyclic product). -/
+coins of run `k` (`some k`, a real-frequency cyclic product).  `none` uses the fresh coins (free
+places and odd runs). -/
 noncomputable def repBound (M : ℕ) : Option ℕ → ℝ → ℝ
-  | none, ξ => Bf isFree M ξ
+  | none, ξ => Bf isFresh M ξ
   | some k, ξ => if Even k then cycProdR (runStart k)
       (ξ * (1 - (3 : ℝ) ^ (-(((k + 1) * runStart k : ℕ) : ℤ))) / 3 ^ runStart k) else 1
 
 theorem norm_charFun_repReal_le_repBound (M : ℕ) (o : Option ℕ) (ξ : ℝ) :
     ‖∫ ω, ee (ξ * repReal ω) ∂coinMeasure‖ ≤ repBound M o ξ := by
   cases o with
-  | none => exact charFun_repReal M ξ
+  | none => exact charFun_repReal_fresh M ξ
   | some k =>
     simp only [repBound]
     split_ifs with hk
