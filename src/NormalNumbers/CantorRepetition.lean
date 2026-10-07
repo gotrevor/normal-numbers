@@ -2175,6 +2175,21 @@ theorem sum_class_copySep_le {t : ℕ} (hT : TOrbitCyclicDecay t) :
   gcongr
   exact hC A N' hA h1 h2 h (gcd_sq_le_of_natAbs hh A hg)
 
+/-- **Top-window class sums (classes 2 and 4).**  Under Baker, for any family of shifts `β_d`,
+`Σ_{d<N''} Σ_{m<N} topProd K {m log₃t + β_d} ≤ N''(3N(2/3)^K + 4N(1/3)^K + C 9^K N^{1−κ})`. -/
+theorem sum_class_top_le {t : ℕ} (ht : 2 ≤ t) (h3 : ¬ 3 ∣ t)
+    (hB : CantorExactExponentProfile.Literature.BakerLogDiscrepancy) :
+    ∃ C κ : ℝ, 0 < κ ∧ ∀ N : ℕ, 1 ≤ N → ∀ (K N'' : ℕ) (β : ℕ → ℝ),
+      ∑ d ∈ Finset.range N'', ∑ m ∈ Finset.range N,
+        CantorExactExponentProfile.topProd K (Int.fract (m * Real.logb 3 t + β d)) ≤
+        N'' * (3 * N * (2 / 3 : ℝ) ^ K + 4 * N * (1 / 3 : ℝ) ^ K + C * 9 ^ K * (N : ℝ) ^ (1 - κ)) := by
+  obtain ⟨C, κ, hκ, hC⟩ := CantorExactExponentProfile.sum_topProd_le (hB t ht h3)
+  refine ⟨C, κ, hκ, fun N hN K N'' β => ?_⟩
+  calc _ ≤ ∑ _d ∈ Finset.range N'',
+        (3 * N * (2 / 3 : ℝ) ^ K + 4 * N * (1 / 3 : ℝ) ^ K + C * 9 ^ K * (N : ℝ) ^ (1 - κ)) :=
+        Finset.sum_le_sum fun d _ => hC N hN K (β d)
+    _ = _ := by rw [Finset.sum_const, Finset.card_range, nsmul_eq_mul]
+
 /-! ## Bases `3ˢt`, `t > 1`: the crux -/
 
 /-- **Assembly of the crux from its inputs (open; believed, 60%).**  For `b = 3ˢt`, `t > 1`:
