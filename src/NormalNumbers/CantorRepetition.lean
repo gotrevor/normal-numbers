@@ -1815,6 +1815,58 @@ theorem pair_classify_rep {W K ρ k₀ v y u T : ℕ} (hρ : ρ ≤ 4 * (k₀ + 
   have := runEnd_le_runStart hlt
   exact Or.inr (Or.inr (Or.inr (Or.inr ⟨k', hk', by omega, hT2, by omega⟩)))
 
+/-! ### Per-class Riesz bounds -/
+
+theorem sum_two_div_three_pow (W : ℕ) :
+    ∑ q ∈ Finset.range W, (2 : ℝ) / 3 ^ (q + 1) = 1 - 1 / 3 ^ W := by
+  induction W with
+  | zero => simp
+  | succ n ih => rw [Finset.sum_range_succ, ih]; field_simp; ring
+
+theorem hf_true_lip (W : ℕ) (u X : ℝ) :
+    |Hf (fun _ => true) 0 W u - Hf (fun _ => true) 0 W X| ≤ Real.pi * |u - X| := by
+  rw [CantorExactExponentProfile.hf_true_eq, CantorExactExponentProfile.hf_true_eq]
+  have hb : ∀ x : ℝ, 0 ≤ |Real.cos x| ∧ |Real.cos x| ≤ 1 :=
+    fun x => ⟨abs_nonneg _, Real.abs_cos_le_one _⟩
+  refine (CantorExactExponentProfile.abs_prod_sub_prod_le _ _ _ (fun k => hb _)
+    (fun k => hb _)).trans ?_
+  have hterm : ∀ q ∈ Finset.Ico 1 W, |(|Real.cos (2 * Real.pi * u / 3 ^ (q + 1))| -
+      |Real.cos (2 * Real.pi * X / 3 ^ (q + 1))|)| ≤ Real.pi * |u - X| * (2 / 3 ^ (q + 1)) := by
+    intro q _
+    refine (abs_abs_sub_abs_le_abs_sub _ _).trans ((Real.abs_cos_sub_cos_le _ _).trans
+      (le_of_eq ?_))
+    rw [show 2 * Real.pi * u / 3 ^ (q + 1) - 2 * Real.pi * X / 3 ^ (q + 1) =
+      (u - X) * (2 * Real.pi / 3 ^ (q + 1)) by ring, abs_mul,
+      abs_of_pos (by positivity : (0 : ℝ) < 2 * Real.pi / 3 ^ (q + 1))]
+    ring
+  refine (Finset.sum_le_sum hterm).trans ?_
+  rw [← Finset.mul_sum]
+  have hs : ∑ q ∈ Finset.Ico 1 W, (2 : ℝ) / 3 ^ (q + 1) ≤ 1 := by
+    calc _ ≤ ∑ q ∈ Finset.range W, (2 : ℝ) / 3 ^ (q + 1) :=
+          Finset.sum_le_sum_of_subset_of_nonneg
+            (fun q hq => Finset.mem_range.2 (Finset.mem_Ico.1 hq).2) fun _ _ _ => by positivity
+      _ ≤ 1 := by rw [sum_two_div_three_pow]; have : (0:ℝ) < 1 / 3 ^ W := by positivity
+                  linarith
+  have : 0 ≤ Real.pi * |u - X| := by positivity
+  nlinarith
+
+/-- **Low window with a perturbation.**  Fresh places `[w+1, w+W)` and `ξ = 3^w X + Z` with
+`|Z| ≤ 3^w ε` give `Bf ξ ≤ Hf_true(X) + π ε`. -/
+theorem bf_le_hf_true_add (free : ℕ → Bool) {M w W : ℕ} (hM : w + W ≤ M)
+    (hfree : ∀ p, w + 1 ≤ p → p < w + W → free p = true) (X Z ε : ℝ)
+    (hZ : |Z| ≤ 3 ^ w * ε) :
+    Bf free M (3 ^ w * X + Z) ≤ Hf (fun _ => true) 0 W X + Real.pi * ε := by
+  have h3 : (0 : ℝ) < 3 ^ w := by positivity
+  have e : 3 ^ w * X + Z = 3 ^ w * (X + Z / 3 ^ w) := by field_simp
+  rw [e]
+  refine (CantorExactExponentProfile.bf_le_hf_true free hM hfree _).trans ?_
+  have hl := hf_true_lip W (X + Z / 3 ^ w) X
+  have hd : |X + Z / 3 ^ w - X| ≤ ε := by
+    rw [show X + Z / 3 ^ w - X = Z / 3 ^ w by ring, abs_div, abs_of_pos h3, div_le_iff₀ h3]
+    linarith
+  have := abs_le.1 hl
+  nlinarith [Real.pi_pos]
+
 /-! ## Bases `3ˢt`, `t > 1`: the crux -/
 
 /-- **Assembly of the crux from its inputs (open; believed, 60%).**  For `b = 3ˢt`, `t > 1`:

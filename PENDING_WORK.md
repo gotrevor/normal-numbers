@@ -3350,3 +3350,9 @@ fresh: `sum_topProd_le` over `n`; (5) whole window in one `R_k`: `copyRun_sum_le
 (8) small `m`.  Informal check: every pair with `m ≥ m₀(b,h,K')` lands in a class (W1 inside `R_k` and
 `W2` straddling `a_{k'}` → (3); straddling `E_{k'}` → (4); inside `R_{k'}` → (6); same run → (5)).
 Next: `isFresh` Riesz bound, then the classification lemma in Lean (route-decisive), then class sums.
+
+## repetition lap 5 (2026-10-07)
+- PROVED `bf_le_hf_true_add` (low window with perturbation `|Z| ≤ 3^w ε`: `Bf ≤ Hf_true(X) + πε`),
+  with `hf_true_lip`, `sum_two_div_three_pow`.  Serves classes 1 (w=v, Z=0) and 3 (w=u, Z=−Y).
+- Next: copy lemma (classes 5/6) `repBound M (some k) (3^a η₀ + Z) ≤ cycProd a η₀ + π(...)`,
+  then analytic facts for `pair_classify_rep` hypotheses.
