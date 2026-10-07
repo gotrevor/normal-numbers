@@ -1,4 +1,11 @@
 ## UniformBad threshold c⋆ (branch proof/uniformbad-threshold, 2026-10-07)
+* **2026-10-07 lap 6.**  `gap_lemma` PROVED (axiom-clean): linked pairs have both gaps longer than
+  dist(K₁,K₂) > 0, so finitely many (`finite_long_gaps`); a minimal-total-length pair contradicts
+  `linked_descent`.  Route `cStar_le_four_of_newhouse` now rests on `e2_four_facts` + crux
+  `thickCore_four` only.  Crux probe (scratch mlog.py): the τ<0.4 violations of raw ⋂_{b=3..40}
+  are generic cross-base near-coincidences (centres with denominators ~10³, ratios down to 0.016),
+  not structured clusters at small-denominator rationals; so a cascade bound must be Diophantine
+  (|A/bⁿ − A'/b'ᵐ| ≥ 1/lcm) and cannot rely on finitely many special points.
 * **2026-10-07 lap 5 (NEW ROUTE: Newhouse gap lemma).**  `UniformBadNewhouse.lean`: pair base 2
   against all b ≥ 3.  `cStar_le_four_of_newhouse` (PROVED wiring) from three nodes:
   `gap_lemma` (classical, 95%), `e2_four_facts` (τ(E₂(4)) = 3 exactly, gaps A/2ⁿ ± 2⁻ⁿ/15, 90%),

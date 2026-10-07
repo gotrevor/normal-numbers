@@ -48,16 +48,155 @@ def Thick (K : Set ℝ) (τ : ℝ) : Prop :=
       τ * min (b - a) (b' - a') ≤ a' - b) ∧
     ∀ a b, IsGap K a b → τ * (b - a) ≤ a - sInf K ∧ τ * (b - a) ≤ sSup K - b
 
-/-- **Newhouse gap lemma** (Newhouse 1979; Falconer–Yavicoli 2022, Theorem 2).  Believed 95% for
-this transcription (classical; the separation form of thickness used here is at least as strong as
-the bridge form).  Two compact sets with `τ₁ τ₂ > 1` whose hulls overlap and neither of which lies
+/-- The gaps `(a, b)` of `K` and `(a', b')` of `L` are linked, with the `K`-gap on the left:
+each contains exactly one endpoint of the other. -/
+def Linked (K L : Set ℝ) (a b a' b' : ℝ) : Prop :=
+  IsGap K a b ∧ IsGap L a' b' ∧ a < a' ∧ a' < b ∧ b < b'
+
+/-- A point of the hull of a compact set that misses the set lies in a gap, whose endpoints are the
+nearest points of the set on either side. -/
+lemma exists_gap_of_not_mem {K : Set ℝ} (hK : IsCompact K) {x l r : ℝ} (hl : l ∈ K) (hr : r ∈ K)
+    (hlx : l ≤ x) (hxr : x ≤ r) (hx : x ∉ K) :
+    ∃ c d, IsGap K c d ∧ c < x ∧ x < d ∧ (∀ k ∈ K, k ≤ x → k ≤ c) ∧
+      (∀ k ∈ K, x ≤ k → d ≤ k) := by
+  have hc1 : IsCompact (K ∩ Set.Iic x) := hK.inter_right isClosed_Iic
+  have hc2 : IsCompact (K ∩ Set.Ici x) := hK.inter_right isClosed_Ici
+  obtain ⟨hcK, hcx⟩ := hc1.sSup_mem ⟨l, hl, hlx⟩
+  obtain ⟨hdK, hdx⟩ := hc2.sInf_mem ⟨r, hr, hxr⟩
+  have hle : ∀ k ∈ K, k ≤ x → k ≤ sSup (K ∩ Set.Iic x) := fun k hk hkx =>
+    le_csSup hc1.bddAbove ⟨hk, hkx⟩
+  have hge : ∀ k ∈ K, x ≤ k → sInf (K ∩ Set.Ici x) ≤ k := fun k hk hkx =>
+    csInf_le hc2.bddBelow ⟨hk, hkx⟩
+  have hcx' : sSup (K ∩ Set.Iic x) < x :=
+    lt_of_le_of_ne hcx (fun h => hx (by rw [← h]; exact hcK))
+  have hdx' : x < sInf (K ∩ Set.Ici x) :=
+    lt_of_le_of_ne hdx (fun h => hx (by rw [h]; exact hdK))
+  refine ⟨_, _, ⟨hcx'.trans hdx', hcK, hdK, ?_⟩, hcx', hdx', hle, hge⟩
+  rw [Set.disjoint_left]
+  rintro y ⟨hy1, hy2⟩ hyK
+  rcases le_total y x with h | h
+  · exact absurd (hle y hyK h) (not_le.2 hy1)
+  · exact absurd (hge y hyK h) (not_le.2 hy2)
+
+/-- A gap is determined by its left endpoint. -/
+lemma IsGap.right_unique {K : Set ℝ} {a b b' : ℝ} (h : IsGap K a b) (h' : IsGap K a b') :
+    b = b' := by
+  by_contra hne
+  rcases lt_or_gt_of_ne hne with hlt | hlt
+  · exact Set.disjoint_left.1 h'.2.2.2 ⟨h.1, hlt⟩ h.2.2.1
+  · exact Set.disjoint_left.1 h.2.2.2 ⟨h'.1, hlt⟩ h'.2.2.1
+
+/-- A compact set has only finitely many gaps of length at least `δ > 0`. -/
+lemma finite_long_gaps {K : Set ℝ} (hK : IsCompact K) {δ : ℝ} (hδ : 0 < δ) :
+    {a | ∃ b, IsGap K a b ∧ δ ≤ b - a}.Finite := by
+  obtain ⟨M, hM⟩ := hK.bddAbove
+  obtain ⟨m, hm⟩ := hK.bddBelow
+  have key : ∀ a b a', IsGap K a b → δ ≤ b - a → (∃ b', IsGap K a' b') → a < a' →
+      ⌊a / δ⌋ < ⌊a' / δ⌋ := by
+    rintro a b a' hg hb ⟨b', hg'⟩ h
+    have hba : b ≤ a' := by
+      by_contra hlt
+      push_neg at hlt
+      exact Set.disjoint_left.1 hg.2.2.2 ⟨h, hlt⟩ hg'.2.1
+    have h1 : a / δ + 1 ≤ a' / δ := by
+      rw [div_add_one hδ.ne', div_le_div_iff_of_pos_right hδ]; linarith
+    have h2 := Int.floor_mono h1
+    rw [Int.floor_add_one] at h2
+    omega
+  apply Set.Finite.of_finite_image (f := fun a => ⌊a / δ⌋)
+  · apply (Set.finite_Icc ⌊m / δ⌋ ⌊M / δ⌋).subset
+    rintro _ ⟨a, ⟨b, hg, -⟩, rfl⟩
+    exact ⟨Int.floor_mono (div_le_div_of_nonneg_right (hm hg.2.1) hδ.le),
+      Int.floor_mono (div_le_div_of_nonneg_right (hM hg.2.1) hδ.le)⟩
+  · rintro a ⟨b, hg, hb⟩ a' ⟨b', hg', hb'⟩ heq
+    simp only at heq
+    by_contra hne
+    rcases lt_or_gt_of_ne hne with h | h
+    · have := key a b a' hg hb ⟨b', hg'⟩ h; omega
+    · have := key a' b' a hg' hb' ⟨b, hg⟩ h; omega
+
+/-- **Linked-pair descent** (the heart of the gap lemma).  From a linked pair, either the bridge of
+`K` beyond `b` or the bridge of `L` before `a'` reaches a shorter gap, giving a linked pair (now with
+the `L`-gap on the left) of strictly smaller total length; otherwise the two bridge inequalities
+`τK|U| < |V|`, `τL|V| < |U|` contradict `τK τL > 1`. -/
+lemma linked_descent {K L : Set ℝ} {τK τL : ℝ} (hK : IsCompact K) (hL : IsCompact L)
+    (hKL : Disjoint K L) (htK : Thick K τK) (htL : Thick L τL) (hτK : 0 < τK) (hτL : 0 < τL)
+    (hτ : 1 < τK * τL) {a b a' b' : ℝ} (h : Linked K L a b a' b') :
+    ∃ c d c' d', Linked L K c' d' c d ∧ (d - c) + (d' - c') < (b - a) + (b' - a') := by
+  obtain ⟨hU, hV, h1, h2, h3⟩ := h
+  have hb'K : b' ∉ K := fun hk => Set.disjoint_left.1 hKL hk hV.2.2.1
+  have haL : a ∉ L := fun hl => Set.disjoint_left.1 hKL hU.2.1 hl
+  have hR : (∃ c d, Linked L K a' b' c d ∧ d - c < b - a) ∨ τK * (b - a) < b' - a' := by
+    by_cases hM : b' < sSup K
+    · obtain ⟨c, d, hg, hc, hd, hle, -⟩ := exists_gap_of_not_mem hK hU.2.2.1
+        (hK.sSup_mem ⟨_, hU.2.1⟩) h3.le hM.le hb'K
+      have hbc : b ≤ c := hle b hU.2.2.1 h3.le
+      by_cases hlen : d - c < b - a
+      · exact Or.inl ⟨c, d, ⟨hV, hg, by linarith, hc, hd⟩, hlen⟩
+      · right
+        have := htK.1 a b c d hU hg hbc
+        rw [min_eq_left (by linarith)] at this
+        linarith
+    · right
+      push_neg at hM
+      have := (htK.2 a b hU).2
+      linarith
+  have hL' : (∃ c' d', Linked L K c' d' a b ∧ d' - c' < b' - a') ∨ τL * (b' - a') < b - a := by
+    by_cases hm : sInf L < a
+    · obtain ⟨c', d', hg, hc, hd, -, hge⟩ := exists_gap_of_not_mem hL
+        (hL.sInf_mem ⟨_, hV.2.1⟩) hV.2.1 hm.le h1.le haL
+      have hda : d' ≤ a' := hge a' hV.2.1 h1.le
+      by_cases hlen : d' - c' < b' - a'
+      · exact Or.inl ⟨c', d', ⟨hg, hU, hc, hd, by linarith⟩, hlen⟩
+      · right
+        have := htL.1 c' d' a' b' hg hV hda
+        rw [min_eq_right (by linarith)] at this
+        linarith
+    · right
+      push_neg at hm
+      have := (htL.2 a' b' hV).1
+      linarith
+  rcases hR with ⟨c, d, hl, hlen⟩ | hR
+  · exact ⟨c, d, a', b', hl, by linarith⟩
+  rcases hL' with ⟨c', d', hl, hlen⟩ | hL'
+  · exact ⟨a, b, c', d', hl, by linarith⟩
+  exfalso
+  have hpos : 0 < b - a := by linarith [hU.1]
+  have := mul_lt_mul_of_pos_left hR hτL
+  nlinarith
+
+/-- Existence of a first linked pair, from the hull and no-gap-containment conditions. -/
+lemma exists_linked_init {K L : Set ℝ} (hK : IsCompact K) (hL : IsCompact L) (hKL : Disjoint K L)
+    (hneK : K.Nonempty) (hneL : L.Nonempty) (hle : sInf K ≤ sInf L) (hhull : sInf L ≤ sSup K)
+    (hgap : ¬ ∃ a b, IsGap K a b ∧ L ⊆ Set.Ioo a b) :
+    ∃ a b a' b', Linked K L a b a' b' := by
+  have hmL : sInf L ∈ L := hL.sInf_mem hneL
+  have hmK : sInf L ∉ K := fun h => Set.disjoint_left.1 hKL h hmL
+  obtain ⟨a, b, hg, ha, hb, -, hge⟩ := exists_gap_of_not_mem hK (hK.sInf_mem hneK)
+    (hK.sSup_mem hneK) hle hhull hmK
+  have hbL : b ∉ L := fun h => Set.disjoint_left.1 hKL hg.2.2.1 h
+  have hbM : b ≤ sSup L := by
+    by_contra hlt
+    push_neg at hlt
+    refine hgap ⟨a, b, hg, fun y hy => ⟨?_, ?_⟩⟩
+    · exact ha.trans_le (csInf_le hL.bddBelow hy)
+    · exact (le_csSup hL.bddAbove hy).trans_lt hlt
+  obtain ⟨a', b', hg', ha', hb', hle', -⟩ := exists_gap_of_not_mem hL hmL (hL.sSup_mem hneL)
+    hb.le hbM hbL
+  have hma : sInf L ≤ a' := hle' _ hmL hb.le
+  exact ⟨a, b, a', b', hg, hg', by linarith, ha', hb'⟩
+
+/-- **Newhouse gap lemma** (Newhouse 1979; Falconer–Yavicoli 2022, Theorem 2), proved here for the
+separation form of thickness.  Two compact sets with `τ₁ τ₂ > 1` whose hulls overlap and neither of which lies
 inside a bounded gap of the other intersect.
 
 English proof (Palis–Takens).  If not, the hull condition gives a linked pair of gaps `(U₁, U₂)`
 (each contains exactly one endpoint of the other).  At the endpoints, the bridges `C₁, C₂` satisfy
 `|C₁| ≥ τ₁|U₁|`, `|C₂| ≥ τ₂|U₂|`, so `|C₁| > |U₂|` or `|C₂| > |U₁|`; in the first case the far endpoint
 of `U₂` lies in `C₁`, hence in a gap of `K₁` shorter than `U₁`, linked with `U₂`.  Gap lengths in a
-compact set accumulate only at `0`, so the linked pairs shrink to a common point of `K₁ ∩ K₂`. -/
+compact set accumulate only at `0`; in Lean, linked pairs have both gaps longer than
+`dist(K₁, K₂) > 0` (`finite_long_gaps`), so a linked pair of minimal total length exists and
+`linked_descent` contradicts its minimality. -/
 theorem gap_lemma {K₁ K₂ : Set ℝ} {τ₁ τ₂ : ℝ} (h₁ : IsCompact K₁) (h₂ : IsCompact K₂)
     (hne₁ : K₁.Nonempty) (hne₂ : K₂.Nonempty) (ht₁ : Thick K₁ τ₁) (ht₂ : Thick K₂ τ₂)
     (hτ₁ : 0 < τ₁) (hτ₂ : 0 < τ₂) (hτ : 1 < τ₁ * τ₂)
@@ -65,7 +204,65 @@ theorem gap_lemma {K₁ K₂ : Set ℝ} {τ₁ τ₂ : ℝ} (h₁ : IsCompact K�
     (hgap₁ : ¬ ∃ a b, IsGap K₁ a b ∧ K₂ ⊆ Set.Ioo a b)
     (hgap₂ : ¬ ∃ a b, IsGap K₂ a b ∧ K₁ ⊆ Set.Ioo a b) :
     (K₁ ∩ K₂).Nonempty := by
-  sorry
+  by_contra hempty
+  have hdisj : Disjoint K₁ K₂ :=
+    Set.disjoint_iff_inter_eq_empty.2 (Set.not_nonempty_iff_eq_empty.1 hempty)
+  obtain ⟨p, hp, hpmin⟩ := (h₁.prod h₂).exists_isMinOn (hne₁.prod hne₂)
+    ((continuous_fst.sub continuous_snd).abs.continuousOn)
+  have hδ : 0 < |p.1 - p.2| :=
+    abs_pos.2 (sub_ne_zero.2 fun h => Set.disjoint_left.1 hdisj hp.1 (by rw [h]; exact hp.2))
+  have hsep : ∀ x ∈ K₁, ∀ y ∈ K₂, |p.1 - p.2| ≤ |x - y| := fun x hx y hy => by
+    simpa using hpmin (Set.mk_mem_prod hx hy)
+  set δ := |p.1 - p.2|
+  -- the linked pairs, as `(a₁, b₁, a₂, b₂)` with `(a₁, b₁)` a gap of `K₁`, `(a₂, b₂)` one of `K₂`
+  let P : Set (ℝ × ℝ × ℝ × ℝ) := {q | Linked K₁ K₂ q.1 q.2.1 q.2.2.1 q.2.2.2 ∨
+    Linked K₂ K₁ q.2.2.1 q.2.2.2 q.1 q.2.1}
+  have hP : ∀ q ∈ P, IsGap K₁ q.1 q.2.1 ∧ IsGap K₂ q.2.2.1 q.2.2.2 ∧ δ ≤ q.2.1 - q.1 ∧
+      δ ≤ q.2.2.2 - q.2.2.1 := by
+    rintro ⟨a, b, a', b'⟩ (⟨hU, hV, h1, h2, h3⟩ | ⟨hV, hU, h1, h2, h3⟩)
+    · have := hsep b hU.2.2.1 a' hV.2.1
+      rw [abs_of_pos (by linarith)] at this
+      exact ⟨hU, hV, by simp only; linarith, by simp only; linarith⟩
+    · have := hsep a hU.2.1 b' hV.2.2.1
+      rw [abs_of_neg (by linarith)] at this
+      exact ⟨hU, hV, by simp only; linarith, by simp only; linarith⟩
+  have hfin : P.Finite := by
+    apply Set.Finite.of_finite_image (f := fun q => (q.1, q.2.2.1))
+    · apply ((finite_long_gaps h₁ hδ).prod (finite_long_gaps h₂ hδ)).subset
+      rintro _ ⟨q, hq, rfl⟩
+      obtain ⟨hU, hV, hl1, hl2⟩ := hP q hq
+      exact ⟨⟨_, hU, hl1⟩, ⟨_, hV, hl2⟩⟩
+    · rintro ⟨a, b, a', b'⟩ hq ⟨c, d, c', d'⟩ hq' heq
+      simp only [Prod.mk.injEq] at heq
+      obtain ⟨rfl, rfl⟩ := heq
+      obtain ⟨hU, hV, -⟩ := hP _ hq
+      obtain ⟨hU', hV', -⟩ := hP _ hq'
+      have e1 := hU.right_unique hU'
+      have e2 := hV.right_unique hV'
+      simp only at e1 e2
+      rw [e1, e2]
+  have hne : P.Nonempty := by
+    rcases le_total (sInf K₁) (sInf K₂) with hle | hle
+    · obtain ⟨a, b, a', b', hl⟩ :=
+        exists_linked_init h₁ h₂ hdisj hne₁ hne₂ hle hhull₂ hgap₁
+      exact ⟨(a, b, a', b'), Or.inl hl⟩
+    · obtain ⟨a', b', a, b, hl⟩ :=
+        exists_linked_init h₂ h₁ hdisj.symm hne₂ hne₁ hle hhull₁ hgap₂
+      exact ⟨(a, b, a', b'), Or.inr hl⟩
+  obtain ⟨q, hq, hmin⟩ := Set.exists_min_image P
+    (fun q => (q.2.1 - q.1) + (q.2.2.2 - q.2.2.1)) hfin hne
+  obtain ⟨a, b, a', b'⟩ := q
+  rcases hq with hl | hl
+  · obtain ⟨c, d, c', d', hl', hlt⟩ :=
+      linked_descent h₁ h₂ hdisj ht₁ ht₂ hτ₁ hτ₂ hτ hl
+    have := hmin (c, d, c', d') (Or.inr hl')
+    simp only at this
+    linarith
+  · obtain ⟨c, d, c', d', hl', hlt⟩ :=
+      linked_descent h₂ h₁ hdisj.symm ht₂ ht₁ hτ₂ hτ₁ (by linarith [mul_comm τ₁ τ₂]) hl
+    have := hmin (c', d', c, d) (Or.inl hl')
+    simp only at this
+    linarith
 
 /-- The base-`b` good set at exponent `c`: `‖bⁿx‖ ≥ b^{−c}` for every `n`. -/
 def goodSet (c b : ℕ) : Set ℝ := {x | ∀ n : ℕ, ((b : ℝ) ^ c)⁻¹ ≤ dnear ((b : ℝ) ^ n * x)}

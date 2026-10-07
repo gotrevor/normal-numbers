@@ -156,9 +156,6 @@ def cruxLinks : List CruxLink := [
 
 /-- Open `sorry`s that are not cruxes, and why no barrier applies. -/
 def waivers : List Waiver := [
-  ⟨``UniformBadThreshold.Newhouse.gap_lemma,
-   "a classical leaf (Newhouse 1979) with the Palis–Takens proof in the docstring; no barrier \
-    applies to a statement about general thick compact sets"⟩,
   ⟨``UniformBadThreshold.Newhouse.e2_four_facts,
    "a computation about one explicit set E₂(4) (gaps A/2ⁿ ± 2⁻ⁿ/15), checked by the thick.py probe"⟩,
   ⟨``IndependenceRelative.not_isRelativeBlock_small,
