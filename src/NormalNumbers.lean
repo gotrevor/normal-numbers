@@ -535,6 +535,7 @@ import NormalNumbers.Erdos257Squarefree
 import NormalNumbers.EDensityAudit
 import NormalNumbers.LiteratureCampbell
 import NormalNumbers.LiteratureDigitsOfPowers
+import NormalNumbers.ErdosTriples
 import NormalNumbers.CampbellAnswer
 import NormalNumbers.CPrimeSiteFactorization
 import NormalNumbers.MazeAudit
