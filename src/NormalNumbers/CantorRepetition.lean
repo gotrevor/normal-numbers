@@ -1218,7 +1218,10 @@ there is a choice, per pair `(n, m)`, of free coins or of one run's block coins 
 bound at `ξ = h(bⁿ − bᵐ)` sums to `O(N^{2−δ})`.  No measure theory left: the crux
 `repPairDecay_of_three_dvd` follows (`repPairDecay_of_arith`).  Choices expected: `some k` when
 the window of `h bⁿ` sits in run `k`'s copy stretch (`CopyZoneDecay`), `none` otherwise (free
-gaps: Cassels; shadow: Baker). -/
+gaps: Cassels; shadow: Baker).  Evidence (`scripts/rep_arith.py`, `h = 1`, greedy `κ` = min
+over all options, `N⁻²·Σ` at `N = 30, 60, 120, 200`; `N = 200` reaches run 2's copy stretch):
+`b = 6`: `.043/.019/.009/.0052`, `b = 12`: `.037/.018/.009/.0051`, i.e. the diagonal floor `1/N`;
+control `b = 9`: `.30/.30/.28/.25`, no decay. -/
 def RepPairArith (b : ℕ) : Prop :=
   ∀ h : ℤ, h ≠ 0 → ∃ C δ : ℝ, 0 < δ ∧ ∀ N : ℕ, 1 ≤ N → ∃ (M : ℕ) (κ : ℕ → ℕ → Option ℕ),
     ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N,
