@@ -1291,6 +1291,45 @@ theorem repBound_some_add (M k : ℕ) (ξ : ℝ) (j : ℤ) :
     field_simp
   rw [e, cycProdR_add_int]
 
+/-- **Copy-zone pair term.**  Proved: for `b = 3ˢt`, a pair `(m + d, m)` with `a ≤ sm`
+(`a = a_k`) has run-`k` bound at most `cycProd a (h tᵐ(b^d − 1)) + π|ξ|/3^{(k+2)a}`,
+`ξ = h(b^{m+d} − bᵐ)`. -/
+theorem repBound_pair_le (M k s t m d : ℕ) (h : ℤ) (hsm : runStart k ≤ s * m) :
+    repBound M (some k) (h * (((3 ^ s * t : ℕ) : ℝ) ^ (m + d) - ((3 ^ s * t : ℕ) : ℝ) ^ m)) ≤
+      cycProd (runStart k) (h * ((t : ℤ) ^ m * (((3 ^ s * t : ℕ) : ℤ) ^ d - 1))) +
+        Real.pi * |h * (((3 ^ s * t : ℕ) : ℝ) ^ (m + d) - ((3 ^ s * t : ℕ) : ℝ) ^ m)| /
+          3 ^ ((k + 2) * runStart k) := by
+  set a := runStart k
+  set η₀ : ℤ := 3 ^ (s * m - a) * (h * ((t : ℤ) ^ m * (((3 ^ s * t : ℕ) : ℤ) ^ d - 1)))
+  have hξ : h * (((3 ^ s * t : ℕ) : ℝ) ^ (m + d) - ((3 ^ s * t : ℕ) : ℝ) ^ m) =
+      (3 : ℝ) ^ a * η₀ := by
+    simp only [η₀]; push_cast
+    rw [show (3 : ℝ) ^ a = 3 ^ a * 1 by ring]
+    have e : (3 : ℝ) ^ (s * m) = 3 ^ a * 3 ^ (s * m - a) := by
+      rw [← pow_add]; congr 1; omega
+    have e2 : ((3 : ℝ) ^ s * t) ^ (m + d) - ((3 : ℝ) ^ s * t) ^ m =
+        3 ^ (s * m) * (t ^ m * ((3 ^ s * t) ^ d - 1)) := by
+      rw [pow_mul]; ring
+    rw [e2, e]; ring
+  have hrot : cycProd a η₀ = cycProd a (h * ((t : ℤ) ^ m * (((3 ^ s * t : ℕ) : ℤ) ^ d - 1))) :=
+    cycProd_mul_three_pow _ _ _
+  rw [hξ, ← hrot]
+  simp only [repBound]
+  have h2 := cycProdR_lip a
+    ((3 : ℝ) ^ a * η₀ * (1 - (3 : ℝ) ^ (-(((k + 1) * a : ℕ) : ℤ))) / 3 ^ a) η₀
+  rw [cycProdR_intCast] at h2
+  have h3 : (0 : ℝ) < 3 ^ a := by positivity
+  have hz : (3 : ℝ) ^ (-(((k + 1) * a : ℕ) : ℤ)) = 3 ^ a / 3 ^ ((k + 2) * a) := by
+    rw [zpow_neg, zpow_natCast, show (k + 2) * a = a + (k + 1) * a by ring, pow_add]
+    field_simp
+  have e : (3 : ℝ) ^ a * η₀ * (1 - (3 : ℝ) ^ (-(((k + 1) * a : ℕ) : ℤ))) / 3 ^ a - η₀ =
+      -(3 ^ a * η₀ / 3 ^ ((k + 2) * a)) := by
+    rw [hz]; field_simp; ring
+  rw [e, abs_neg, abs_div, abs_of_pos (by positivity : (0 : ℝ) < 3 ^ ((k + 2) * a))] at h2
+  have := (abs_le.1 h2).2
+  linarith [show Real.pi * (|(3 : ℝ) ^ a * η₀| / 3 ^ ((k + 2) * a)) =
+    Real.pi * |(3 : ℝ) ^ a * η₀| / 3 ^ ((k + 2) * a) by ring]
+
 /-- **The crux as a deterministic exponential-sum statement (open).**  For each `h ≠ 0` there
 is a choice, per `N = sched j` and pair `(n, m)`, of free coins or of one run's block coins whose
 Riesz bounds at `ξ = h(bⁿ − bᵐ)` sum to `N²·ε_j` with `Σ ε_j < ∞`.
