@@ -210,7 +210,12 @@ English proof sketch.  Split the bases at `B₀`.  Bases `b > B₀` go to the st
 `Σ_{b > B₀} b^{−2}·(levels per stage)` is small once `B₀` is large.  Bases `b ≤ B₀` are handled
 inside the same nested-window game by an explicit choice of child windows, using that at `c = 4`
 the small-base forbidden windows have relative size `≤ 2^{−4}` and the host probe leaves positive
-survivor measure (`.135` at `c = 3` with `b ≤ 12`). -/
+survivor measure (`.135` at `c = 3` with `b ≤ 12`).
+
+Route (2026-10-07, `UniformBadRoute`): the base-charging engines stall below `c ≈ 7`, so the bases
+`2, 3, 5, 6, 7` must be exact; the proof is to come from `cStar_le_of_treeCore` with the nodes
+`SmallBaseTreeCore 4 {2,3,5,6,7}` and `TreeEngineSuffices`, perfect powers being free
+(`admissible_iff_nonPerfectPow`). -/
 theorem cStar_le_four : cStar ≤ 4 := by
   sorry
 

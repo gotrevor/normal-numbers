@@ -11,6 +11,28 @@
   Next: (1) push engine to c=11 (margin 25% at K=1024, α=1/5); (2) state the thickness route as
   def-Prop nodes; (3) prove a finite gap lemma for bases {2,3} hybrid.
 
+* **2026-10-07 lap 2 (crux decomposition).**  New `UniformBadRoute.lean`: proved `goodBase_pow`,
+  `admissible_iff_nonPerfectPow` (perfect-power bases free); crux split into def-Prop nodes
+  `SmallBaseTreeCore` (weighted tree on the jointly good set of S={2,3,5,6,7}, cell-relative
+  Frostman (s,C)) and `TreeEngineSuffices`, wired by `cStar_le_of_treeCore` (proved).
+  Scratch models (worst-case upper bounds on each engine's balance, so they refute the *sufficient
+  condition*, not the mechanism): grid power engine fails at c=4..7 for all K,α,ρ even with base 2
+  exact as Good; free-offset (continuum) engine with all bases charged fails at c=4,6,8; it handles
+  bases ≥16 at c=4 (slack .16).  μ-averaged continuum engine with base 2 exact (Parry measure on
+  binary run-free, s=.879): c=4 fails with base 3 charged (base 3 ≈ .5 of budget), closes for
+  b≥5 only at regularity C≈1 (slack .08); c=5 closes with all b≥3 at C=1, fails at C≈1.9 (the Parry
+  eigenvector ratio).  With S={2,3,5,6,7} exact at s=.8: slack .53 (C=1), .30 (C=1.5).
+  Key mechanisms found: (i) obstacles meet only the E₂-cores of dyadic cells (X avoids
+  2^{-j-c}-neighbourhoods of depth-j dyadics) so tiny carried obstacles meet ≤1 child, not 2;
+  (ii) many-obstacle (A) terms need no Frostman constant (per-point multiplicity bound); only
+  carried and proximity (B) terms pay C.  A naive uniform regularity on a Cantor set is FALSE
+  near gap edges, hence the cell-relative formulation.
+  **Next:** (1) derive the exact cell-engine balance inequality (state it as the hypothesis of a
+  general theorem `admissible_of_treeCore_balance`, then prove it — reuse `powPot_step` shape);
+  (2) attack `SmallBaseTreeCore` for S={2,3}: binary run-free cells U inside run-free ternary cells
+  (ternary depth matched to binary depth); bound the worst-case kill by base-3 bad cells per step;
+  (3) only then add 5,6,7.
+
 ## Cantor exact-exponent stretch (2026-10-05, KICKOFF-2026-10-05-stretch-poke) — DONE
 * **2026-10-06 lap 3:** all six leaves proved (`padic_sep`, `card_image_mod_HS_le`, `farey_sep`,
   `hit_mass_padic` via `grp`/`hit_classify`/`group_sep`, `hit_mass_farey`, `ev_expTest_mass_all`
