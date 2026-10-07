@@ -980,6 +980,7 @@ import NormalNumbers.UniformBadCount
 import NormalNumbers.UniformBadJoint
 import NormalNumbers.UniformBadNewhouse
 import NormalNumbers.UniformBadFive
+import NormalNumbers.UniformBadBelowFive
 import NormalNumbers.UniformBadNineHalves
 import NormalNumbers.LinearFormsScales
 import NormalNumbers.LinearFormsScalesStretch

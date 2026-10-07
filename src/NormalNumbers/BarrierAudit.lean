@@ -78,8 +78,9 @@ namespace NormalNumbers.Barriers
 def cruxLinks : List CruxLink := [
   ⟨``UniformBadThreshold.cStar_le_nine_halves,
    [``uniformBad_base_two],
-   "the engine must make base 3 exact alongside base 2: the cStar_le_five engine (base 2 exact, base 3 \
-    counted) has slack 0.013 at c = 5, and base 2 alone refuses any c ≤ log₂ 3"⟩,
+   "the engine must make base 3 exact alongside base 2: the two-rate counting engine (base 2 exact, \
+    base 3 counted) bottoms out at c⋆ ≤ 124/25 and provably has no certificate at 9/2 \
+    (not_nineHalvesBalance); base 2 alone refuses any c ≤ log₂ 3"⟩,
   ⟨``UniformBadThreshold.cStar_le_four,
    [``uniformBad_base_two],
    "the construction must keep the small bases jointly away from the rationals; the base-2 \

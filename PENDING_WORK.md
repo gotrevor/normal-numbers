@@ -1,4 +1,20 @@
 ## UniformBad threshold c⋆ (branch proof/uniformbad-threshold, 2026-10-07)
+* **2026-10-07 lap 11 (operator gate 2).**  Gate `cStar_le_nine_halves` (9/2): **wall for the counting
+  engine, recorded as a theorem.**  Probes: exact joint {2,3} tree at 9/2 (`ex23.js`, containment kills)
+  grows **1.879/level** on average but has dead ends (30/9178 at 8-level lookahead, 1% quantile 0.19 of
+  the mean).  The two-rate engine fails by ≈0.08 at 9/2 (`gen.js`); `not_nineHalvesBalance` (PROVED,
+  axiom-clean) shows no pair of rates balances even with bases b ≥ 5 dropped and optimistic products
+  (base 2 patterns of lengths 5,7,8; base 3 lag 6, 4 cells).  The {2,3}-exact + counted-b≥5 route at
+  9/2 also fails on the lap-4 abstraction weights (abstraction 1.77 at c=5, weights far from uniform).
+  **Banked:** `cStar_le_124_25` (PROVED, `UniformBadBelowFive.lean`; native_decide for the K_b table,
+  lag 3, base sum): base-2 pattern `0000100000` added (threshold 33/1024, multiplicity 1 from level 11),
+  windows `1/(bⁿK_b)` with `K_b = ⌊b^{124/25}⌋` (b<100), `b⁴` beyond; rates 181/100, 33/20 reused.
+  Lean balance `0.1833 ≤ 0.19`, `0.3481 ≤ 0.35` (`bal124.py`).  Engine floor: 4.96 (lower exponents
+  need patterns of length 9, slack < 0.003).  Maze row "two-rate counting engine at c = 9/2" (wall,
+  reopen `SmallBaseTreeCore`).  **Next attack (needs a new mechanism):** a weight-regular core for the
+  exact {2,3} (or {2,3,5,6,7}) tree at 9/2: phase-parametrized local transfer operator (state = base-2
+  pattern state × position θ of the cell in the 3-adic grid × scale phase), sub-eigenvector with
+  threshold pruning, certified by interval arithmetic in θ.
 * **2026-10-07 lap 9b.**  `five_halves_le_cStar` PROVED (29-window cert, bases ≤ 300, n ≤ 14); greedy
   fails at 2.51 (survivor ≈ 0.30147).  Pruned 5-base core probe (`prune`: keep cells with 12-step growth
   ≥ g₀^12): CLOSED at levels 14 and 18 for g₀ ∈ {1.4,1.55,1.65} — every kept cell has ≥ 1 kept child,
