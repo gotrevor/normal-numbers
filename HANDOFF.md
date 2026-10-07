@@ -1,3 +1,13 @@
+# STUCK claim, strike 1 (2026-10-07, repetition lap 6): read HANDOFF-2026-10-07-repetition-lap6.md
+- **What is blocked:** gate `sorry-free:src/NormalNumbers/CantorRepetition.lean`.  Its only sorry is
+  `repPairArith_of_three_dvd` (verify: `grep -n "^  sorry" src/NormalNumbers/CantorRepetition.lean`).
+- **Why a lap can't clear it:** `repPairArith_of_inputs` (proved, axiom-clean) reduces it exactly to
+  `TOrbitCyclicDecay t` + `BadGcdSparseH (3ˢt)` (+ cited Baker); these are open digits-of-powers
+  problems.  DIRECTION.md CURRENT DIRECTIVE forbids attacking `TOrbitCyclicDecay` head-on and new
+  wall reformulations.  Its objective (assembly + conditional headline
+  `liouvilleCantorFullProfile_of_inputs`) is DONE.
+- **Ask:** operator sets the next directive (accept the conditional headline / re-scope the gate).
+
 # STUCK claim, strike 1 (2026-10-07, cantorbad lap 11): read HANDOFF-2026-10-07-cantorbad-lap11.md
 - **What is blocked:** the gate `sorry-free:src/NormalNumbers/CantorBadNormal.lean`.  Its only
   sorry is the crux `aliveOffMix_resLaw`.
