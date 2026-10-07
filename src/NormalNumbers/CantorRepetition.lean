@@ -1688,6 +1688,133 @@ def SuperPolyOrderPeriods (t : ℕ) : Prop :=
   ∀ C L : ℕ, ∃ P ≥ L, ∀ e : ℕ, 0 < e → e ≤ P ^ C →
     ¬ ((3 ^ P - 1) / Nat.gcd (3 ^ P - 1) (t ^ P)) ∣ (t ^ e - 1)
 
+/-! ### Pair classification (combinatorial core of the assembly) -/
+
+/-- `P` lies within the band of a copy-run boundary: within `[a_k − W − K, a_k + K]` or
+`[E_k − K, E_k + W + K]` for an even run `k`. -/
+def NearCopyBdry (W K P : ℕ) : Prop := ∃ k, Even k ∧
+  ((runStart k ≤ P + W + K ∧ P ≤ runStart k + K) ∨
+    ((k + 2) * runStart k ≤ P + K ∧ P ≤ (k + 2) * runStart k + W + K))
+
+theorem runStart_add_two (k : ℕ) :
+    runStart (k + 2) = 4 * (k + 3) * ((k + 2) * runStart k) := by
+  rw [runStart_succ_eq, runStart_succ_eq]; ring
+
+theorem runEnd_le_runStart {k k' : ℕ} (h : k' < k) : (k' + 2) * runStart k' ≤ runStart k := by
+  have h1 : (k' + 2) * runStart k' ≤ runStart (k' + 1) := by
+    rw [runStart_succ_eq]; nlinarith
+  exact h1.trans (runStart_mono (by omega))
+
+/-- **Deep or fresh.**  A place away from every copy-run boundary is deep inside an even run, or
+has a fresh neighbourhood of radius `W + K`. -/
+theorem deep_or_fresh {W K P : ℕ} (hP : ¬ NearCopyBdry W K P) :
+    (∃ k, Even k ∧ runStart k + K < P ∧ P + K < (k + 2) * runStart k) ∨
+      (∀ q, P ≤ q + W + K → q ≤ P + W + K → isFresh q = true) := by
+  unfold NearCopyBdry at hP
+  push Not at hP
+  by_cases hc : ∃ k, Even k ∧ runStart k ≤ P ∧ P < (k + 2) * runStart k
+  · obtain ⟨k, hk, h1, h2⟩ := hc
+    obtain ⟨hA, hE⟩ := hP k hk
+    left
+    refine ⟨k, hk, ?_, ?_⟩
+    · by_contra hh; exact absurd (hA (by omega)) (by omega)
+    · by_contra hh; exact absurd (hE (by omega)) (by omega)
+  · right
+    intro q hq1 hq2
+    by_contra hq
+    rw [Bool.not_eq_true, isFresh_eq_false] at hq
+    obtain ⟨k, hk, h1, h2⟩ := hq
+    obtain ⟨hA, hE⟩ := hP k hk
+    by_cases hlt : P < runStart k
+    · exact absurd (hA (by omega)) (by omega)
+    · by_cases hge : (k + 2) * runStart k ≤ P
+      · exact absurd (hE (by omega)) (by omega)
+      · exact hc ⟨k, hk, by omega, by omega⟩
+
+/-- **One copy run per bounded window.**  If `P` lies in even run `k` and `P ≤ Q ≤ ρP` with
+`ρ ≤ 4(k+3)` (the ratio of the fresh stretch after run `k`), any even run containing `Q` is `k`. -/
+theorem run_unique {k k' ρ P Q : ℕ} (hk : Even k) (hk' : Even k') (hρ : ρ ≤ 4 * (k + 3))
+    (h1 : runStart k ≤ P) (h2 : P < (k + 2) * runStart k)
+    (h1' : runStart k' ≤ Q) (h2' : Q < (k' + 2) * runStart k') (hPQ : P ≤ Q) (hQ : Q ≤ ρ * P) :
+    k' = k := by
+  rcases lt_trichotomy k' k with hlt | heq | hgt
+  · have := runEnd_le_runStart hlt; omega
+  · exact heq
+  · have hk2 : k + 2 ≤ k' := by
+      obtain ⟨i, rfl⟩ := hk; obtain ⟨j, rfl⟩ := hk'; omega
+    have hA := runStart_mono hk2
+    rw [runStart_add_two] at hA
+    have : ρ * P < 4 * (k + 3) * ((k + 2) * runStart k) := by
+      calc ρ * P ≤ 4 * (k + 3) * P := Nat.mul_le_mul_right _ hρ
+        _ < _ := by have : 0 < 4 * (k + 3) := by omega
+                    exact Nat.mul_lt_mul_of_pos_left h2 this
+    omega
+
+theorem run_index_ge {k k₀ P : ℕ} (h0 : runStart k₀ ≤ P) (h2 : P < (k + 2) * runStart k) :
+    k₀ ≤ k := by
+  by_contra h
+  have := runEnd_le_runStart (show k < k₀ by omega)
+  omega
+
+/-- **Pair classification.**  For a pair with low end `v` (of `ξ` and of `Y = h bᵐ`), top `y` of
+`Y`, low end `u` of the high part `h bⁿ` and top `T` of `ξ`, away from copy-run boundaries and
+past run `k₀` (with `ρ ≤ 4(k₀+3)` bounding the window ratios), one of six classes holds:
+(1) low window of `ξ` fresh; (2) top window of `Y` fresh, below `u`; (3) separated, low window of
+the high part fresh; (4) top window of `ξ` fresh; (5) the window of `ξ` inside an even run;
+(6) separated, the high part inside an even run, `Y` far below it.  Proved. -/
+theorem pair_classify_rep {W K ρ k₀ v y u T : ℕ} (hρ : ρ ≤ 4 * (k₀ + 3))
+    (hv0 : runStart k₀ ≤ v) (hW : W ≤ v)
+    (hvy : v ≤ y) (hy : y ≤ ρ * v) (hvu : v ≤ u) (huT : u ≤ T) (hT : T ≤ ρ * u)
+    (hsep : u < y + K → T ≤ ρ * v)
+    (hnv : ¬ NearCopyBdry W K v) (hny : ¬ NearCopyBdry W K y) (hnu : ¬ NearCopyBdry W K u)
+    (hnT : ¬ NearCopyBdry W K T) :
+    (∀ p, v + 1 ≤ p → p < v + W → isFresh p = true) ∨
+    (W ≤ y ∧ y ≤ u ∧ ∀ j < W, isFresh (y - 1 - j) = true) ∨
+    (y + K ≤ u ∧ ∀ p, u + 1 ≤ p → p < u + W → isFresh p = true) ∨
+    (W ≤ T ∧ ∀ j < W, isFresh (T - 1 - j) = true) ∨
+    (∃ k, Even k ∧ runStart k ≤ v ∧ T + K < (k + 2) * runStart k) ∨
+    (∃ k, Even k ∧ runStart k ≤ u ∧ T + K < (k + 2) * runStart k ∧ y + K ≤ runStart k) := by
+  rcases deep_or_fresh hnv with ⟨k, hk, hv1, hv2⟩ | hfv
+  swap
+  · exact Or.inl fun p hp1 hp2 => hfv p (by omega) (by omega)
+  right
+  have hkk₀ : k₀ ≤ k := run_index_ge hv0 (by omega)
+  have hρk : ρ ≤ 4 * (k + 3) := hρ.trans (by omega)
+  rcases deep_or_fresh hnT with ⟨k', hk', hT1, hT2⟩ | hfT
+  swap
+  · exact Or.inr (Or.inr (Or.inl ⟨by omega, fun j hj => hfT _ (by omega) (by omega)⟩))
+  by_cases hkk : k' = k
+  · subst hkk
+    exact Or.inr (Or.inr (Or.inr (Or.inl ⟨k', hk', by omega, hT2⟩)))
+  -- the window of `ξ` meets two copy runs: it is separated
+  have hsep' : y + K ≤ u := by
+    by_contra hc
+    exact hkk (run_unique hk hk' hρk (by omega) (by omega) (by omega) (by omega) (by omega)
+      (hsep (by omega)))
+  rcases deep_or_fresh hny with ⟨ky, hky, hy1, hy2⟩ | hfy
+  swap
+  · exact Or.inl ⟨by omega, by omega, fun j hj => hfy _ (by omega) (by omega)⟩
+  have hkyk : ky = k := run_unique hk hky hρk (by omega) (by omega) (by omega) (by omega)
+    (by omega) hy
+  subst hkyk
+  rcases deep_or_fresh hnu with ⟨ku, hku, hu1, hu2⟩ | hfu
+  swap
+  · exact Or.inr (Or.inl ⟨hsep', fun p hp1 hp2 => hfu p (by omega) (by omega)⟩)
+  have hku0 : k₀ ≤ ku := run_index_ge (k := ku) (hv0.trans hvu) (by omega)
+  have hρu : ρ ≤ 4 * (ku + 3) := hρ.trans (by omega)
+  have hkTu : k' = ku := run_unique hku hk' hρu (by omega) (by omega) (by omega) (by omega)
+    huT hT
+  subst hkTu
+  have hlt : ky < k' := by
+    rcases lt_trichotomy ky k' with h | h | h
+    · exact h
+    · exact absurd h.symm hkk
+    · exfalso
+      have := runEnd_le_runStart h
+      omega
+  have := runEnd_le_runStart hlt
+  exact Or.inr (Or.inr (Or.inr (Or.inr ⟨k', hk', by omega, hT2, by omega⟩)))
+
 /-! ## Bases `3ˢt`, `t > 1`: the crux -/
 
 /-- **Assembly of the crux from its inputs (open; believed, 60%).**  For `b = 3ˢt`, `t > 1`:
