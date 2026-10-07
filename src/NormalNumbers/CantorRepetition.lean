@@ -2475,6 +2475,133 @@ theorem pair_class6 {s t e h' m d M k K : ℕ} (ht : 1 ≤ t) (hk : Even k)
   have : (3 : ℝ) / 3 ^ K + 1 / 3 ^ K = 4 / 3 ^ K := by ring
   nlinarith
 
+theorem lt_runStart (k : ℕ) : k < runStart k := by
+  have h := four_pow_le_runStart k
+  have : k < 4 ^ (k + 1) := by
+    calc k < k + 1 := Nat.lt_succ_self k
+      _ < 4 ^ (k + 1) := Nat.lt_pow_self (by norm_num)
+  omega
+
+/-- **The per-pair majorant.**  Sum of the six class majorants (`pair_class1`–`pair_class6`),
+the copy terms summed over runs `k ≤ M`. -/
+noncomputable def pairMaj (s t e h' m d M W K : ℕ) : ℝ :=
+  Hf (fun _ => true) 0 W ((h' * ((3 ^ s * t) ^ d - 1) * t ^ m : ℕ) : ℝ) +
+  CantorExactExponentProfile.topProd W (Int.fract (m * Real.logb 3 t +
+    Real.logb 3 ((3 ^ e * h' : ℕ) : ℝ))) +
+  Hf (fun _ => true) 0 W ((h' * t ^ (m + d) : ℕ) : ℝ) +
+  CantorExactExponentProfile.topProd W (Int.fract (m * Real.logb 3 t +
+    Real.logb 3 ((3 ^ e * h' * ((3 ^ s * t) ^ d - 1) : ℕ) : ℝ))) +
+  ∑ k ∈ Finset.range (M + 1),
+    (cycProd (runStart k) ((h' : ℤ) * (((3 ^ s * t : ℕ) : ℤ) ^ (m + d) - ((3 ^ s * t : ℕ) : ℤ) ^ m))
+      + cycProd (runStart k) ((h' : ℤ) * (t : ℤ) ^ (m + d))) +
+  Real.pi * (8 / 3 ^ K)
+
+theorem topProd_nonneg' (K : ℕ) (y : ℝ) : 0 ≤ CantorExactExponentProfile.topProd K y :=
+  Finset.prod_nonneg fun _ _ => abs_nonneg _
+
+theorem pairMaj_ge {s t e h' m d M W K : ℕ} :
+    (Hf (fun _ => true) 0 W ((h' * ((3 ^ s * t) ^ d - 1) * t ^ m : ℕ) : ℝ) ≤ pairMaj s t e h' m d M W K) ∧
+    (CantorExactExponentProfile.topProd W (Int.fract (m * Real.logb 3 t +
+      Real.logb 3 ((3 ^ e * h' : ℕ) : ℝ))) ≤ pairMaj s t e h' m d M W K) ∧
+    (Hf (fun _ => true) 0 W ((h' * t ^ (m + d) : ℕ) : ℝ) + Real.pi * (3 / 3 ^ K) ≤
+      pairMaj s t e h' m d M W K) ∧
+    (CantorExactExponentProfile.topProd W (Int.fract (m * Real.logb 3 t +
+      Real.logb 3 ((3 ^ e * h' * ((3 ^ s * t) ^ d - 1) : ℕ) : ℝ))) ≤ pairMaj s t e h' m d M W K) ∧
+    (∀ k ≤ M, cycProd (runStart k) ((h' : ℤ) * (((3 ^ s * t : ℕ) : ℤ) ^ (m + d) -
+      ((3 ^ s * t : ℕ) : ℤ) ^ m)) + Real.pi * (1 / 3 ^ K) ≤ pairMaj s t e h' m d M W K) ∧
+    (∀ k ≤ M, cycProd (runStart k) ((h' : ℤ) * (t : ℤ) ^ (m + d)) + Real.pi * (4 / 3 ^ K) ≤
+      pairMaj s t e h' m d M W K) := by
+  have h1 := Hf_nonneg (fun _ => true) 0 W ((h' * ((3 ^ s * t) ^ d - 1) * t ^ m : ℕ) : ℝ)
+  have h3 := Hf_nonneg (fun _ => true) 0 W ((h' * t ^ (m + d) : ℕ) : ℝ)
+  have h2 := topProd_nonneg' W (Int.fract (m * Real.logb 3 t + Real.logb 3 ((3 ^ e * h' : ℕ) : ℝ)))
+  have h4 := topProd_nonneg' W (Int.fract (m * Real.logb 3 t +
+      Real.logb 3 ((3 ^ e * h' * ((3 ^ s * t) ^ d - 1) : ℕ) : ℝ)))
+  set S := ∑ k ∈ Finset.range (M + 1),
+    (cycProd (runStart k) ((h' : ℤ) * (((3 ^ s * t : ℕ) : ℤ) ^ (m + d) - ((3 ^ s * t : ℕ) : ℤ) ^ m))
+      + cycProd (runStart k) ((h' : ℤ) * (t : ℤ) ^ (m + d))) with hS
+  have hS0 : 0 ≤ S := Finset.sum_nonneg fun k _ => add_nonneg (cycProd_nonneg _ _) (cycProd_nonneg _ _)
+  have hk : ∀ k ≤ M, cycProd (runStart k) ((h' : ℤ) * (((3 ^ s * t : ℕ) : ℤ) ^ (m + d) -
+      ((3 ^ s * t : ℕ) : ℤ) ^ m)) + cycProd (runStart k) ((h' : ℤ) * (t : ℤ) ^ (m + d)) ≤ S :=
+    fun k hk => Finset.single_le_sum (f := fun k => cycProd (runStart k) ((h' : ℤ) *
+      (((3 ^ s * t : ℕ) : ℤ) ^ (m + d) - ((3 ^ s * t : ℕ) : ℤ) ^ m)) + cycProd (runStart k)
+        ((h' : ℤ) * (t : ℤ) ^ (m + d)))
+      (fun k _ => add_nonneg (cycProd_nonneg _ _) (cycProd_nonneg _ _))
+      (Finset.mem_range.2 (by omega))
+  have hp : 0 ≤ Real.pi * (1 / 3 ^ K) := by positivity
+  have e8 : Real.pi * (8 / 3 ^ K) = 8 * (Real.pi * (1 / 3 ^ K)) := by ring
+  have e3 : Real.pi * (3 / 3 ^ K) = 3 * (Real.pi * (1 / 3 ^ K)) := by ring
+  have e4 : Real.pi * (4 / 3 ^ K) = 4 * (Real.pi * (1 / 3 ^ K)) := by ring
+  unfold pairMaj
+  rw [← hS]
+  refine ⟨by linarith, by linarith, by linarith, by linarith, fun k hkM => ?_, fun k hkM => ?_⟩
+  · have := hk k hkM; have := cycProd_nonneg (runStart k) ((h' : ℤ) * (t : ℤ) ^ (m + d)); linarith
+  · have := hk k hkM
+    have := cycProd_nonneg (runStart k) ((h' : ℤ) * (((3 ^ s * t : ℕ) : ℤ) ^ (m + d) -
+      ((3 ^ s * t : ℕ) : ℤ) ^ m)); linarith
+
+
+/-- **Combine.**  If the pair `(m, d)` (positions `v = sm+e`, `y = log₃ Y`, `u = s(m+d)+e`,
+`T = log₃ ξ`) falls into one of the six classes of `pair_classify_rep`, some option bounds its
+term by `pairMaj`.  `M` must dominate every position. -/
+theorem exists_option_le_pairMaj {s t e h' m d M W K : ℕ} (ht : 1 ≤ t) (hh : 1 ≤ h')
+    (hd : 1 ≤ d) (hs : 1 ≤ s) (hMu : s * (m + d) + e + W ≤ M)
+    (hMT : Nat.log 3 (pairNat s t e h' m d) ≤ M)
+    (hcls : (∀ p, s * m + e + 1 ≤ p → p < s * m + e + W → isFresh p = true) ∨
+      (W ≤ Nat.log 3 (3 ^ e * h' * (3 ^ s * t) ^ m) ∧
+        Nat.log 3 (3 ^ e * h' * (3 ^ s * t) ^ m) ≤ s * (m + d) + e ∧
+        ∀ j < W, isFresh (Nat.log 3 (3 ^ e * h' * (3 ^ s * t) ^ m) - 1 - j) = true) ∨
+      (Nat.log 3 (3 ^ e * h' * (3 ^ s * t) ^ m) + K ≤ s * (m + d) + e ∧
+        ∀ p, s * (m + d) + e + 1 ≤ p → p < s * (m + d) + e + W → isFresh p = true) ∨
+      (W ≤ Nat.log 3 (pairNat s t e h' m d) ∧
+        ∀ j < W, isFresh (Nat.log 3 (pairNat s t e h' m d) - 1 - j) = true) ∨
+      (∃ k, Even k ∧ runStart k ≤ s * m + e ∧
+        Nat.log 3 (pairNat s t e h' m d) + K < (k + 2) * runStart k) ∨
+      (∃ k, Even k ∧ runStart k ≤ s * (m + d) + e ∧
+        Nat.log 3 (pairNat s t e h' m d) + K < (k + 2) * runStart k ∧
+        Nat.log 3 (3 ^ e * h' * (3 ^ s * t) ^ m) + K ≤ runStart k)) :
+    ∃ o, repBound M o (pairNat s t e h' m d) ≤ pairMaj s t e h' m d M W K := by
+  obtain ⟨g1, g2, g3, g4, g5, g6⟩ := pairMaj_ge (s := s) (t := t) (e := e) (h' := h') (m := m)
+    (d := d) (M := M) (W := W) (K := K)
+  have hY1 : 1 ≤ 3 ^ e * h' * (3 ^ s * t) ^ m :=
+    Nat.mul_pos (Nat.mul_pos (by positivity) hh) (by positivity)
+  have hYle : Nat.log 3 (3 ^ e * h' * (3 ^ s * t) ^ m) ≤ s * m + e + Nat.log 3 (3 ^ e * h' * (3 ^ s * t) ^ m) := by omega
+  have hsm : s * m ≤ s * (m + d) := Nat.mul_le_mul_left _ (by omega)
+  rcases hcls with c | c | c | c | c | c
+  · exact ⟨none, (pair_class1 (by omega) c).trans g1⟩
+  · obtain ⟨c1, c2, c3⟩ := c
+    exact ⟨none, (pair_class2 ht hY1 c1 c3 (by omega) c2).trans g2⟩
+  · obtain ⟨c1, c2⟩ := c
+    exact ⟨none, (pair_class3 ht hMu c2 c1).trans g3⟩
+  · obtain ⟨c1, c2⟩ := c
+    have hp : 1 ≤ pairNat s t e h' m d := by
+      have h0 := pairNat_eq_mul s t e h' m d
+      have hB : 2 ≤ (3 ^ s * t) ^ d := by
+        calc 2 ≤ 3 ^ s * t := by
+              have : 3 ≤ 3 ^ s := by
+                calc 3 = 3 ^ 1 := by norm_num
+                  _ ≤ 3 ^ s := Nat.pow_le_pow_right (by norm_num) hs
+              nlinarith
+          _ ≤ (3 ^ s * t) ^ d := by
+              calc 3 ^ s * t = (3 ^ s * t) ^ 1 := (pow_one _).symm
+                _ ≤ _ := Nat.pow_le_pow_right (by positivity) hd
+      have : 1 ≤ 3 ^ e * h' * ((3 ^ s * t) ^ d - 1) :=
+        Nat.mul_pos (Nat.mul_pos (by positivity) hh) (by omega)
+      have h2 : (1 : ℝ) ≤ ((3 ^ e * h' * ((3 ^ s * t) ^ d - 1) : ℕ) : ℝ) *
+          ((3 ^ s * t : ℕ) : ℝ) ^ m := by
+        have a1 : (1 : ℝ) ≤ ((3 ^ e * h' * ((3 ^ s * t) ^ d - 1) : ℕ) : ℝ) := by exact_mod_cast this
+        have a2 : (1 : ℝ) ≤ ((3 ^ s * t : ℕ) : ℝ) ^ m := one_le_pow₀ (by
+          have : 1 ≤ 3 ^ s * t := Nat.mul_pos (by positivity) ht
+          exact_mod_cast this)
+        nlinarith
+      rw [← h0] at h2; exact_mod_cast h2
+    exact ⟨none, (pair_class4 ht hp c1 c2 hMT).trans g4⟩
+  · obtain ⟨k, hk, c1, c2⟩ := c
+    have : k ≤ M := by have := lt_runStart k; omega
+    exact ⟨some k, (pair_class5 ht hk c1 c2).trans (g5 k this)⟩
+  · obtain ⟨k, hk, c1, c2, c3⟩ := c
+    have : k ≤ M := by have := lt_runStart k; omega
+    exact ⟨some k, (pair_class6 ht hk c1 c2 c3).trans (g6 k this)⟩
+
 /-- **Pair sums with a power saving.**  For each `h ≠ 0` and each `N ≥ 1` some choice of options
 makes the pair sum `≤ C N^{2−δ}`.  This is the per-`N` content of the assembly; summability along
 `sched` is then automatic (`repPairArith_of_power`). -/
