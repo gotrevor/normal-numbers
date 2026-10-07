@@ -5,6 +5,7 @@ Authors: Trevor Morris
 -/
 import NormalNumbers.Barriers
 import NormalNumbers.LiteratureDigitsOfPowers
+import NormalNumbers.ErdosTriples
 import NormalNumbers.PairDecoupleProve
 import NormalNumbers.PairDecoupleRefute
 import NormalNumbers.SwingC1Log
@@ -145,6 +146,12 @@ def cruxLinks : List CruxLink := [
 
 /-- Open `sorry`s that are not cruxes, and why no barrier applies. -/
 def waivers : List Waiver := [
+  ⟨``ErdosTriples.tripleTrivial_of_sum_le_160,
+   "a finite computation: 12403 exact carry-automaton decisions (experiments/erdos-triples, \
+    known-answer suite test_triple.py); discharge is a Lean automaton with a soundness lemma"⟩,
+  ⟨``ErdosTriples.exceptionalSet_eq_zero_of_gapTriplesEventually,
+   "wiring lemma (a leaf): the proved integer wiring erdos406_of_gapTriplesEventually lifted to \
+    3-adic digits (parity, valuation shift, residues); English proof in the docstring"⟩,
   ⟨``IndependenceRelative.not_isRelativeBlock_small,
    "a finite computation stated as a sibling: the blocksearch probe's non-certification over \
     small direction sets; it closes a route, no open crux uses it"⟩,

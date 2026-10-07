@@ -98,6 +98,10 @@ only when all three phases are, not when the file is sorry-free.
 🅿️ **Parked node, not a directive (2026-10-05):** `LiteratureDigitsOfPowers.SmoothDigitOmission`, the
 integer-digit crux under Erdős #406, zeroless `2ⁿ`, and persistence ≤ 11 (Numberphile sweep).  Open
 question for the consequence graph: does any repo master conjecture imply it?  No link is claimed.
+  2026-10-06 `/create`: Erdős #406 now hangs off a sharper, decidable-per-instance node,
+  `ErdosTriples.GapTwoTriples` (`C(1, 4ᵃ, 4ᵃ⁺ᵇ) = {0}` for `a, b ≥ 2`), wired by the proved
+  `erdos406_of_gapTriplesEventually`; it would also give `E(ℤ₃) = {0}`.  Detail and data:
+  `docs/ERDOS-TRIPLES-2026-10-06.md`.  Parked, not a directive.
 
 ## Completed runs 🏁
 
