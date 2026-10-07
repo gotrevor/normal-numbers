@@ -1154,7 +1154,76 @@ theorem copyZoneDecay_of {s t : ℕ} (hT : TOrbitCyclicDecay t) (hS : BadGcdSpar
   have hC'a : 0 ≤ |C'| := abs_nonneg _
   nlinarith [mul_le_mul_of_nonneg_left h2 hCa, mul_le_mul_of_nonneg_left h3 hC'a]
 
+/-! ### Reduction of the crux to a pair-sum decay -/
+
+/-- The second moment is at most the sum of the pair characteristic values.  Proved (the
+expansion of `secondMoment_expand_of_cf`, stopped before the Riesz bound). -/
+theorem secondMoment_le_pairs (Φ : (ℕ → Bool) → ℝ) (hG : Measurable Φ) (b : ℕ) (h : ℤ) (N : ℕ) :
+    ∫ ω, ‖∑ k ∈ Finset.range N, ee (h * (b : ℝ) ^ k * Φ ω)‖ ^ 2 ∂coinMeasure ≤
+      ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N,
+        ‖∫ ω, ee ((h * ((b : ℝ) ^ n - (b : ℝ) ^ m)) * Φ ω) ∂coinMeasure‖ := by
+  have hint : ∀ ξ : ℝ, Integrable (fun ω => ee (ξ * Φ ω)) coinMeasure := fun ξ =>
+    Integrable.of_bound ((measurable_ee.comp (hG.const_mul ξ)).aestronglyMeasurable) 1
+      (Eventually.of_forall fun ω => (norm_ee _).le)
+  have hexp : ∀ ω, ((‖∑ k ∈ Finset.range N, ee (h * (b : ℝ) ^ k * Φ ω)‖ ^ 2 : ℝ) : ℂ) =
+      ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N,
+        ee ((h * ((b : ℝ) ^ n - (b : ℝ) ^ m)) * Φ ω) := by
+    intro ω
+    rw [sq_norm_sum_ee (fun k => h * (b : ℝ) ^ k * Φ ω)]
+    refine Finset.sum_congr rfl fun n _ => Finset.sum_congr rfl fun m _ => ?_
+    congr 1; ring
+  have hI : ((∫ ω, ‖∑ k ∈ Finset.range N, ee (h * (b : ℝ) ^ k * Φ ω)‖ ^ 2 ∂coinMeasure : ℝ) : ℂ) =
+      ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N,
+        ∫ ω, ee ((h * ((b : ℝ) ^ n - (b : ℝ) ^ m)) * Φ ω) ∂coinMeasure := by
+    rw [← integral_complex_ofReal]
+    simp_rw [hexp]
+    rw [integral_finsetSum _ fun n _ => integrable_finsetSum _ fun m _ => hint _]
+    refine Finset.sum_congr rfl fun n _ => ?_
+    rw [integral_finsetSum _ fun m _ => hint _]
+  have := congrArg Complex.re hI
+  rw [Complex.ofReal_re] at this
+  rw [this]
+  refine (Complex.re_le_norm _).trans ((norm_sum_le _ _).trans ?_)
+  exact Finset.sum_le_sum fun n _ => norm_sum_le _ _
+
+/-- **Pair-sum decay for the repetition law (open; the crux in pair form).**  For every
+`h ≠ 0`: `Σ_{n,m<N} ‖𝔼 e(h(bⁿ − bᵐ)·repReal)‖ ≤ C N^{2−δ}`.  Confidence 45% for `b = 3ˢt`,
+`t > 1` (the zone split in the docstring of `ae_isNormal_rep_of_three_dvd`; copy-zone terms are
+`norm_charFun_repReal_le_cyc_int`, i.e. `CopyZoneDecay`).  Power decay is more than needed
+(summability along `sched` suffices) but is what the zone bounds would give. -/
+def RepPairDecay (b : ℕ) : Prop :=
+  ∀ h : ℤ, h ≠ 0 → ∃ C δ : ℝ, 0 < δ ∧ ∀ N : ℕ, 1 ≤ N →
+    ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N,
+      ‖∫ ω, ee ((h * ((b : ℝ) ^ n - (b : ℝ) ^ m)) * repReal ω) ∂coinMeasure‖ ≤
+        C * (N : ℝ) ^ (2 - δ)
+
+/-- **Normality from pair-sum decay.**  Proved: `secondMoment_le_pairs` +
+`summable_sched_rpow` + `ae_isNormal_of_secondMoment`. -/
+theorem ae_isNormal_rep_of_pairDecay {b : ℕ} (hb : 2 ≤ b) (hP : RepPairDecay b) :
+    ∀ᵐ ω ∂coinMeasure, IsNormal b (repReal ω) := by
+  refine ae_isNormal_of_secondMoment coinMeasure hb _ measurable_repReal sched
+    sched_strictMono sched_ratio ?_
+  intro h hh
+  obtain ⟨C, δ, hδ, hC⟩ := hP h hh
+  refine ((CantorExactExponentProfile.summable_sched_rpow hδ).mul_left |C|).of_nonneg_of_le
+    (fun j => div_nonneg (integral_nonneg fun ω => by positivity) (by positivity))
+    (fun j => ?_)
+  have hN1 : (1 : ℝ) ≤ sched j := by exact_mod_cast one_le_sched j
+  have hN : (0 : ℝ) < sched j := by linarith
+  rw [div_le_iff₀ (by positivity)]
+  refine (secondMoment_le_pairs repReal measurable_repReal b h (sched j)).trans
+    ((hC _ (one_le_sched j)).trans ?_)
+  rw [show (2 : ℝ) - δ = -δ + 2 by ring, Real.rpow_add hN, Real.rpow_two]
+  have : 0 ≤ (sched j : ℝ) ^ (-δ) * ((sched j : ℝ) ^ 2) := by positivity
+  nlinarith [le_abs_self C]
+
 /-! ## Bases `3ˢt`, `t > 1`: the crux -/
+
+/-- **Pair-sum decay at `b = 3ˢt`, `t > 1` (open leaf; the crux in pair form).**  See
+`RepPairDecay` and the zone route in the docstring of `ae_isNormal_rep_of_three_dvd`. -/
+theorem repPairDecay_of_three_dvd {b : ℕ} (hb : 2 ≤ b) (h3 : 3 ∣ b) (hpow : ∀ s : ℕ, b ≠ 3 ^ s) :
+    RepPairDecay b := by
+  sorry
 
 /-- **Crux: a.e. normality to `b = 3ˢt`, `t > 1`.**  Open; confidence 50%.
 
@@ -1183,8 +1252,8 @@ Split the frequencies `bᵐ` by where the window `[sm, sm + m log₃ t]` of `b�
    shadow (Baker input `Literature.BakerLogDiscrepancy`, `sum_topProd_le`).
 -/
 theorem ae_isNormal_rep_of_three_dvd {b : ℕ} (hb : 2 ≤ b) (h3 : 3 ∣ b) (hpow : ∀ s : ℕ, b ≠ 3 ^ s) :
-    ∀ᵐ ω ∂coinMeasure, IsNormal b (repReal ω) := by
-  sorry
+    ∀ᵐ ω ∂coinMeasure, IsNormal b (repReal ω) :=
+  ae_isNormal_rep_of_pairDecay hb (repPairDecay_of_three_dvd hb h3 hpow)
 
 theorem irrational_of_isNormal_two {x : ℝ} (hx : IsNormal 2 x) : Irrational x := by
   rintro ⟨q, rfl⟩
