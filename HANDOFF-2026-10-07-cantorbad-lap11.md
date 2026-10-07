@@ -21,3 +21,13 @@ Branch `proof/cantor-bad-normal`.  Build green.  The headline is unchanged.
 - L = 16 did not finish in this lap.  Groups at L ≤ 14 are all shallow (3^j ≲ N|G|).
 - The crux is unchanged.  Its preperiodic part now rests on `ThreeAdicWindowAvg` at middle depth
   (digits of powers, open).
+
+## STUCK claim (strike 1)
+- Blocked: the gate `sorry-free:src/NormalNumbers/CantorBadNormal.lean`, whose only sorry is `aliveOffMix_resLaw`.
+- Why it needs the operator: step 4 of the run directive in DIRECTION.md said to call `box done`
+  after a clean refutation.  The refutation is done (e4cd2cc6), and the host declined the stop.
+  What remains is the middle-digit `ThreeAdicWindowAvg`: digits of powers, beyond every Korobov
+  range (ON-LINE-FINDINGS korobov-ranges), so no lap can close it.
+- Ask: a new directive, either a route or an accepted stop.
+- How the fresh lap verifies: `grep -n sorry src/NormalNumbers/CantorBadNormal.lean` shows one hit,
+  and the DIRECTION.md run-directive step 4 still reads as above.
