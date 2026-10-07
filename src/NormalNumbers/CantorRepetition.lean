@@ -2266,6 +2266,68 @@ theorem repBound_le_one (M : ℕ) (o : Option ℕ) (ξ : ℝ) : repBound M o ξ 
     · exact Finset.prod_le_one (fun _ _ => abs_nonneg _) fun _ _ => Real.abs_cos_le_one _
     · exact le_rfl
 
+/-! ### Concrete per-pair bounds (`ξ = 3ᵉh'(b^{m+d} − bᵐ)`) -/
+/-- Concrete pair frequency `ξ = 3ᵉh'(b^{m+d} − bᵐ)`, `b = 3ˢt`, as a natural number. -/
+def pairNat (s t e h' m d : ℕ) : ℕ := 3 ^ e * h' * ((3 ^ s * t) ^ (m + d) - (3 ^ s * t) ^ m)
+
+theorem pairNat_eq (s t e h' m d : ℕ) :
+    (pairNat s t e h' m d : ℝ) =
+      3 ^ (s * m + e) * ((h' * ((3 ^ s * t) ^ d - 1) * t ^ m : ℕ) : ℝ) := by
+  unfold pairNat
+  have h1 : 1 ≤ (3 ^ s * t) ^ d ∨ (3 ^ s * t) ^ d = 0 := by
+    rcases Nat.eq_zero_or_pos ((3 ^ s * t) ^ d) with h | h
+    · exact Or.inr h
+    · exact Or.inl h
+  have e1 : (3 ^ s * t) ^ (m + d) - (3 ^ s * t) ^ m = (3 ^ s * t) ^ m * ((3 ^ s * t) ^ d - 1) := by
+    rw [pow_add, Nat.mul_sub_one]
+  rw [e1]
+  push_cast
+  rw [pow_add, pow_mul]
+  ring
+
+/-- **Class 1, concrete.**  Fresh `[v+1, v+W)`, `v = sm + e`: the pair term is at most the
+all-free majorant at `h'(bᵈ − 1)tᵐ`. -/
+theorem pair_class1 {s t e h' m d M W : ℕ} (hM : s * m + e + W ≤ M)
+    (hfr : ∀ p, s * m + e + 1 ≤ p → p < s * m + e + W → isFresh p = true) :
+    repBound M none (pairNat s t e h' m d) ≤
+      Hf (fun _ => true) 0 W ((h' * ((3 ^ s * t) ^ d - 1) * t ^ m : ℕ) : ℝ) := by
+  simp only [repBound]
+  rw [pairNat_eq, ← add_zero (3 ^ (s * m + e) * _)]
+  have := bf_le_hf_true_add isFresh hM hfr ((h' * ((3 ^ s * t) ^ d - 1) * t ^ m : ℕ) : ℝ) 0 0
+    (by simp)
+  simpa using this
+
+theorem pairNat_eq_sub {s t : ℕ} (ht : 1 ≤ t) (e h' m d : ℕ) :
+    (pairNat s t e h' m d : ℝ) = 3 ^ (s * (m + d) + e) * ((h' * t ^ (m + d) : ℕ) : ℝ) +
+      -((3 ^ e * h' * (3 ^ s * t) ^ m : ℕ) : ℝ) := by
+  unfold pairNat
+  have hle : (3 ^ s * t) ^ m ≤ (3 ^ s * t) ^ (m + d) := by
+    exact Nat.pow_le_pow_right (by positivity) (by omega)
+  rw [Nat.mul_sub, Nat.cast_sub (Nat.mul_le_mul_left _ hle)]
+  push_cast
+  rw [pow_add 3, mul_pow, ← pow_mul]
+  ring
+
+/-- **Class 3, concrete.**  Separated (`y + K ≤ u`, `y` the top of `Y = 3ᵉh'bᵐ`, `u = sn + e`),
+fresh `[u+1, u+W)`: the pair term is at most `Hf_true(h' tⁿ) + 3π/3^K`. -/
+theorem pair_class3 {s t e h' m d M W K : ℕ} (ht : 1 ≤ t) (hM : s * (m + d) + e + W ≤ M)
+    (hfr : ∀ p, s * (m + d) + e + 1 ≤ p → p < s * (m + d) + e + W → isFresh p = true)
+    (hsep : Nat.log 3 (3 ^ e * h' * (3 ^ s * t) ^ m) + K ≤ s * (m + d) + e) :
+    repBound M none (pairNat s t e h' m d) ≤
+      Hf (fun _ => true) 0 W ((h' * t ^ (m + d) : ℕ) : ℝ) + Real.pi * (3 / 3 ^ K) := by
+  simp only [repBound]
+  rw [pairNat_eq_sub ht]
+  refine bf_le_hf_true_add isFresh hM hfr _ _ _ ?_
+  rw [abs_neg, Nat.abs_cast]
+  set Y := 3 ^ e * h' * (3 ^ s * t) ^ m
+  have hY : Y < 3 ^ (Nat.log 3 Y + 1) := Nat.lt_pow_succ_log_self (by norm_num) _
+  have hY' : (Y : ℝ) ≤ 3 ^ (Nat.log 3 Y + 1) := by exact_mod_cast hY.le
+  refine hY'.trans (le_of_eq_of_le (by ring) (?_ : (3 : ℝ) ^ (Nat.log 3 Y + 1) ≤ _))
+  rw [show s * (m + d) + e = (s * (m + d) + e - K) + K by omega, pow_add]
+  field_simp
+  rw [← pow_add]
+  exact pow_le_pow_right₀ (by norm_num) (by omega)
+
 /-- **Pair sums with a power saving.**  For each `h ≠ 0` and each `N ≥ 1` some choice of options
 makes the pair sum `≤ C N^{2−δ}`.  This is the per-`N` content of the assembly; summability along
 `sched` is then automatic (`repPairArith_of_power`). -/
