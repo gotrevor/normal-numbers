@@ -2399,6 +2399,82 @@ theorem pair_class2 {s t e h' m d M W : ℕ} (ht : 1 ≤ t) (hY1 : 1 ≤ 3 ^ e *
   rw [show ((Y : ℕ) : ℝ) = 3 ^ e * (h' : ℝ) * (3 ^ s * (t : ℝ)) ^ m by rw [hYdef]; push_cast; ring,
     this, abs_of_nonneg (by positivity : (0 : ℝ) ≤ 3 ^ e * (h' : ℝ))]
 
+theorem pairNat_lt (s t e h' m d : ℕ) :
+    (pairNat s t e h' m d : ℝ) < 3 ^ (Nat.log 3 (pairNat s t e h' m d) + 1) := by
+  exact_mod_cast Nat.lt_pow_succ_log_self (by norm_num) _
+
+/-- **Class 5, concrete (window of `ξ` inside copy run `k`).**  `a = a_k ≤ sm + e` and
+`T + K < (k+2)a`: the pair term is at most `cycProd a (h'(bⁿ − bᵐ)) + π/3^K`. -/
+theorem pair_class5 {s t e h' m d M k K : ℕ} (ht : 1 ≤ t) (hk : Even k)
+    (ha : runStart k ≤ s * m + e)
+    (hT : Nat.log 3 (pairNat s t e h' m d) + K < (k + 2) * runStart k) :
+    repBound M (some k) (pairNat s t e h' m d) ≤
+      cycProd (runStart k) ((h' : ℤ) * (((3 ^ s * t : ℕ) : ℤ) ^ (m + d) - ((3 ^ s * t : ℕ) : ℤ) ^ m))
+        + Real.pi * (1 / 3 ^ K) := by
+  set a := runStart k
+  have hB : 1 ≤ (3 ^ s * t) ^ d := Nat.one_le_pow _ _ (by positivity)
+  set η : ℤ := (t : ℤ) ^ m * ((h' : ℤ) * (((3 ^ s * t : ℕ) : ℤ) ^ d - 1))
+  have := repBound_some_le_cyc M k hk (pairNat s t e h' m d) (3 ^ (s * m + e - a) * η)
+  rw [cycProd_mul_three_pow, ← cycProd_pairH] at this
+  refine this.trans ?_
+  have e0 : (pairNat s t e h' m d : ℝ) - 3 ^ a * (((3 ^ (s * m + e - a) * η : ℤ)) : ℝ) = 0 := by
+    rw [pairNat_eq]
+    simp only [η]
+    push_cast [Nat.cast_sub hB]
+    rw [show (3 : ℝ) ^ (s * m + e) = 3 ^ a * 3 ^ (s * m + e - a) by
+      rw [← pow_add]; congr 1; omega]
+    ring
+  rw [e0, abs_zero, zero_div, zero_add]
+  have key : |(pairNat s t e h' m d : ℝ)| / 3 ^ ((k + 2) * a) ≤ 1 / 3 ^ K := by
+    rw [abs_of_nonneg (by positivity), div_le_div_iff₀ (by positivity) (by positivity), one_mul]
+    refine (mul_le_mul_of_nonneg_right (pairNat_lt s t e h' m d).le (by positivity)).trans ?_
+    rw [← pow_add]
+    exact pow_le_pow_right₀ (by norm_num) (by omega)
+  have := Real.pi_pos
+  nlinarith
+
+/-- **Class 6, concrete (separated, high part in copy run `k`).**  `a = a_k ≤ s(m+d) + e`,
+`T + K < (k+2)a`, `y + K ≤ a` (`y` the top of `Y = 3ᵉh'bᵐ`): the pair term is at most
+`cycProd a (h' t^{m+d}) + 4π/3^K`. -/
+theorem pair_class6 {s t e h' m d M k K : ℕ} (ht : 1 ≤ t) (hk : Even k)
+    (ha : runStart k ≤ s * (m + d) + e)
+    (hT : Nat.log 3 (pairNat s t e h' m d) + K < (k + 2) * runStart k)
+    (hy : Nat.log 3 (3 ^ e * h' * (3 ^ s * t) ^ m) + K ≤ runStart k) :
+    repBound M (some k) (pairNat s t e h' m d) ≤
+      cycProd (runStart k) ((h' : ℤ) * (t : ℤ) ^ (m + d)) + Real.pi * (4 / 3 ^ K) := by
+  set a := runStart k
+  have := repBound_some_le_cyc M k hk (pairNat s t e h' m d)
+    (3 ^ (s * (m + d) + e - a) * ((h' : ℤ) * (t : ℤ) ^ (m + d)))
+  rw [cycProd_mul_three_pow] at this
+  refine this.trans ?_
+  set Y := 3 ^ e * h' * (3 ^ s * t) ^ m
+  have e0 : (pairNat s t e h' m d : ℝ) -
+      3 ^ a * (((3 ^ (s * (m + d) + e - a) * ((h' : ℤ) * (t : ℤ) ^ (m + d)) : ℤ)) : ℝ) =
+      -((Y : ℕ) : ℝ) := by
+    rw [pairNat_eq_sub ht]
+    push_cast
+    rw [show (3 : ℝ) ^ (s * (m + d) + e) = 3 ^ a * 3 ^ (s * (m + d) + e - a) by
+      rw [← pow_add]; congr 1; omega]
+    simp only [Y]; push_cast; rw [mul_pow, ← pow_mul]; ring
+  rw [e0, abs_neg, Nat.abs_cast]
+  have k1 : ((Y : ℕ) : ℝ) / 3 ^ a ≤ 3 / 3 ^ K := by
+    rw [div_le_div_iff₀ (by positivity) (by positivity)]
+    have hY : (Y : ℝ) < 3 ^ (Nat.log 3 Y + 1) := by
+      exact_mod_cast Nat.lt_pow_succ_log_self (by norm_num) _
+    refine (mul_le_mul_of_nonneg_right hY.le (by positivity)).trans ?_
+    have : (3 : ℝ) ^ (Nat.log 3 Y + K) ≤ 3 ^ a := pow_le_pow_right₀ (by norm_num) hy
+    rw [pow_add] at this
+    rw [pow_succ]
+    nlinarith
+  have k2 : |(pairNat s t e h' m d : ℝ)| / 3 ^ ((k + 2) * a) ≤ 1 / 3 ^ K := by
+    rw [abs_of_nonneg (by positivity), div_le_div_iff₀ (by positivity) (by positivity), one_mul]
+    refine (mul_le_mul_of_nonneg_right (pairNat_lt s t e h' m d).le (by positivity)).trans ?_
+    rw [← pow_add]
+    exact pow_le_pow_right₀ (by norm_num) (by omega)
+  have := Real.pi_pos
+  have : (3 : ℝ) / 3 ^ K + 1 / 3 ^ K = 4 / 3 ^ K := by ring
+  nlinarith
+
 /-- **Pair sums with a power saving.**  For each `h ≠ 0` and each `N ≥ 1` some choice of options
 makes the pair sum `≤ C N^{2−δ}`.  This is the per-`N` content of the assembly; summability along
 `sched` is then automatic (`repPairArith_of_power`). -/
