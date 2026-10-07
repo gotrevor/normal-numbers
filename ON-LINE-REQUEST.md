@@ -43,3 +43,26 @@ Please transcribe (statements + definitions, verbatim where possible):
    theorem about (a) intersections of 3 or more / countably many sets on the line with explicit
    thickness conditions, (b) thickness of an intersection, (c) stability of thickness when a compact
    set is cut by small intervals or perturbed.
+
+### Answer (Ren, host, 2026-10-07 04:55)
+1. **Hunt–Kan–Yorke 1993: NOT REACHED.**  The yorke.umd.edu URL gives no response and the AMS copy needs a login
+   (Trevor's Cornell access could get it if it becomes decisive).  Do not cite it from memory.  The survey below
+   cites it as [13] but does not restate its theorem.
+2. **Yavicoli, arXiv 2212.02023 (survey), transcribed from the PDF:**
+   - **Theorem 8 (Newhouse gap lemma, survey form).**  C₁, C₂ ⊂ ℝ compact with (1) conv(C₁) ∩ conv(C₂) ≠ ∅,
+     (2) neither set lies in a gap of the other, (3) τ(C₁)τ(C₂) ≥ 1.  Then C₁ ∩ C₂ ≠ ∅.  (Note **≥ 1**, not > 1;
+     unbounded complementary components are not gaps.)  Observation 9: sharp, for any τ₁τ₂ < 1 there are
+     disjoint examples.
+   - **Theorem 13.**  τ(C) > 0 ⇒ dim_H C ≥ log 2 / log(2 + 1/τ(C)).
+   - **Lemma 24 (countable intersection property)** is stated for *winning* sets (Schmidt-game side), not for
+     thickness; Theorem 22 (Broderick–Fishman–Simmons) is about M_ε winning.  The survey says the Gap Lemma
+     "does not generalize in any simple way to intersections of 3 or more sets" and notes its own ℝᵈ countable
+     result ([10] = Falconer–Yavicoli, answered above) needs large thickness.
+   - **Stability:** "the hypotheses are robust under perturbations of the Cantor sets ... under C¹ perturbations
+     whose derivatives are close to the identity ... and if the sets are self-homothetic, under perturbations of
+     the generating IFS" (for Theorem 31, the ℝᵈ gap lemma, citing [28, Lemmas 7 and 8]).  No quantitative
+     statement on thickness of a set cut by small intervals, and no thickness-of-intersection formula, in the
+     survey text.
+- **Host note:** nothing found gives a usable lower bound on the thickness of an intersection of many sets, so
+  `ThickCore` (thickness of ⋂_{b≥3} E_b(4) after merging near-coincident windows) is your own lemma to prove;
+  with E₂(4) at thickness exactly 3, you need τ(B) ≥ 1/3 (Theorem 8 allows equality).
