@@ -1,5 +1,39 @@
 # STATUS — normal-numbers 📊
 
+## Bugeaud 10.36 optimal exponent c⋆ (branch `proof/uniformbad-threshold`) — review lap 3, 7 October 2026
+
+**Located: `12/5 ≤ c⋆ ≤ 6`** · **Build**: 🟢 green (10801 jobs) · **Updated**: c⋆ lap 3 · 2026-10-07 · `cccab926`
+
+**Where it stands.**  `c⋆` is the optimal exponent in Bugeaud's Problem 10.36 (`cStar`,
+`UniformBadThreshold.lean`).  The lower headline `twelve_fifths_le_cStar` is proved by a 25-window
+exact rational cover.  The upper headline `cStar_le_four` is open; this lap banked `cStar_le_six`
+(`UniformBadCount.lean`) with a new counting engine (kills charged to alive ancestors, base 2
+exact).  Probes show that engine cannot reach `c = 4` unless base 3 is handled exactly jointly with
+base 2; the true joint tree grows ≈ 1.80/level at `c = 4` and ≈ 1.49 at `c = 3`, so the gap is a
+proof-technique gap (worst case vs typical), not a doubt about the truth.
+
+**What's happened (newest first).**
+* 2026-10-07 lap 3 (review): counting engine `Count.growth` + `cStar_le_six`; crux restated as an
+  exact joint `{2,3}` finite-state core certificate (DIRECTION branch directive updated).
+* 2026-10-07 lap 2: perfect-power bases free (`admissible_iff_nonPerfectPow`); crux nodes
+  `SmallBaseTreeCore` (15%), `TreeEngineSuffices` (50%).
+* 2026-10-07 lap 1: `twelve_fifths_le_cStar` proved; `cStar_le_twelve` via the power engine.
+
+**Outstanding.**  Short-term: crux probe (joint `{2,3}` skew-product abstraction with a computed
+sub-eigenvector); averaged counting engine (level-dependent growth) → `c⋆ ≤ ~4.75`.  Long-term:
+`cStar_le_four`, then `CStarLeThree`; higher certified lower bounds (bases beyond 10 in the cover).
+
+**Axiom ledger (this branch).**
+| headline | claim | `#print axioms` | status |
+|---|---|---|---|
+| `twelve_fifths_le_cStar` | `12/5 ≤ c⋆` (uncond.) | propext, choice, Quot.sound | 🟢 proved |
+| `cStar_le_six` (bank) | `c⋆ ≤ 6` (uncond.) | propext, choice, Quot.sound | 🟢 proved |
+| `cStar_le_four` | `c⋆ ≤ 4` (uncond.) | + `sorryAx` | open crux (exact joint {2,3} core) |
+
+Pointers: `DIRECTION.md` (branch directive, review lap 3) · newest `HANDOFF-2026-10-07-cstar-lap3.md` ·
+`PENDING_WORK.md` top section.
+
+
 ## Cantor exact-exponent stretch update, 6 October 2026 (branch `proof/cantorexp-stretch`)
 
 **PROVED** (lap 3): `CantorExactExponentStretch.exists_computable_mem_cantorSet_irrExponent_normal_all`
