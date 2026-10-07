@@ -30,3 +30,16 @@ intersection theorem with Σ 1/(1+τ_i) style condition, if present.
   Theorem 6 as stated will not reach c⋆ ≤ 4 and probably not beat 12.  Newhouse (Theorem 2) is pairwise
   only.  A c ≤ 4 proof needs its own multi-set gap argument for the small bases (that is new math, and
   the place to invent), with Theorem 6-type potential handling only the tail.
+
+## 2026-10-07 (c⋆ lap 5) — thickness-of-intersection results
+Context: a Newhouse route to c⋆ ≤ 4 (A = E₂(4) has thickness exactly 3; need B ⊂ ⋂_{b≥3} E_b(4)
+compact with thickness > 1/3; raw ⋂ has thickness 0 from cross-base near-coincident windows).
+Please transcribe (statements + definitions, verbatim where possible):
+1. Hunt–Kan–Yorke, "When Cantor sets intersect thickly", Trans. AMS 339 (1993) 869–888
+   (https://www.yorke.umd.edu/Yorke_papers_most_cited_and_post2000/1993_11_Hunt_Kan_Trans_AMS_Cantor_sets_intersect_thickly.pdf):
+   the main theorem with the explicit (τ₁,τ₂) curve and the lower bound on the thickness of the Cantor
+   set inside K₁ ∩ K₂ (any formula like τ(K) ≥ f(τ₁,τ₂)).
+2. arXiv 2212.02023 ("A survey on Newhouse thickness, fractal intersections and patterns"): every
+   theorem about (a) intersections of 3 or more / countably many sets on the line with explicit
+   thickness conditions, (b) thickness of an intersection, (c) stability of thickness when a compact
+   set is cut by small intervals or perturbed.
