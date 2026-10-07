@@ -3213,6 +3213,48 @@ theorem exists_kappa_half (M : ℕ) (b h : ℝ) (G : ℕ → ℕ → ℝ) (hG0 :
     Finset.sum_le_sum fun m _ => sum_ite_shift_le (G m) (hG0 m) m N
   linarith
 
+theorem pairNat_cast {s t : ℕ} (e h' m d : ℕ) (ht : 1 ≤ t) :
+    (pairNat s t e h' m d : ℝ) = ((3 ^ e * h' : ℕ) : ℝ) *
+      (((3 ^ s * t : ℕ) : ℝ) ^ (m + d) - ((3 ^ s * t : ℕ) : ℝ) ^ m) := by
+  unfold pairNat
+  have : (3 ^ s * t) ^ m ≤ (3 ^ s * t) ^ (m + d) :=
+    Nat.pow_le_pow_right (Nat.mul_pos (by positivity) ht) (by omega)
+  push_cast [this]
+  ring
+
+open Classical in
+/-- **Per-`N` bound for `h = 3ᵉh' > 0`.**  Combines `exists_kappa_half`,
+`exists_option_le_pairMaj_bad`: the full pair sum is at most `N + 2(Σ pairMaj + #bad)`. -/
+theorem exists_kappa_pos {s t e h' ρ k₀ M W K N : ℕ} (ht : 2 ≤ t) (hh : 1 ≤ h') (hs : 1 ≤ s)
+    (hρ1 : 1 ≤ ρ) (hb : 3 ^ s * t ≤ 3 ^ (s * (ρ - 1))) (hρ : ρ * (ρ + 1) ≤ 4 * (k₀ + 3))
+    (hM : ∀ m < N, ∀ d < N, s * (m + d) + e + W ≤ M ∧ Nat.log 3 (pairNat s t e h' m d) ≤ M) :
+    ∃ κ : ℕ → ℕ → Option ℕ, ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N,
+      repBound M (κ n m) (((3 ^ e * h' : ℕ) : ℝ) * (((3 ^ s * t : ℕ) : ℝ) ^ n -
+        ((3 ^ s * t : ℕ) : ℝ) ^ m)) ≤
+        N + 2 * (∑ m ∈ Finset.range N, ∑ d ∈ Finset.Ico 1 N, pairMaj s t e h' m d M W K +
+          ∑ m ∈ Finset.range N, ∑ d ∈ Finset.Ico 1 N,
+            ((if PairGood s t e h' m d k₀ W K then 0 else 1 : ℕ) : ℝ)) := by
+  set G : ℕ → ℕ → ℝ := fun m d => if m < N ∧ d < N then pairMaj s t e h' m d M W K +
+    ((if PairGood s t e h' m d k₀ W K then 0 else 1 : ℕ) : ℝ) else 1
+  have hG0 : ∀ m d, 0 ≤ G m d := fun m d => by
+    simp only [G]; split_ifs <;> push_cast <;> linarith [pairMaj_nonneg s t e h' m d M W K]
+  obtain ⟨κ, hκ⟩ := exists_kappa_half M ((3 ^ s * t : ℕ) : ℝ) ((3 ^ e * h' : ℕ) : ℝ) G hG0 (fun m d hd => by
+    by_cases hmd : m < N ∧ d < N
+    · obtain ⟨o, ho⟩ := exists_option_le_pairMaj_bad (k₀ := k₀) (K := K) ht hh hd hs hρ1 hb hρ
+        (hM m hmd.1 d hmd.2).1 (hM m hmd.1 d hmd.2).2
+      refine ⟨o, ?_⟩
+      rw [← pairNat_cast e h' m d (by omega)]
+      simp only [G, if_pos hmd]
+      rw [Nat.cast_ite, Nat.cast_zero, Nat.cast_one]; exact ho
+    · exact ⟨none, by simp only [G, if_neg hmd]; exact repBound_le_one _ _ _⟩) N
+  refine ⟨κ, hκ.trans (le_of_eq ?_)⟩
+  rw [← Finset.sum_add_distrib]
+  congr 2
+  refine Finset.sum_congr rfl fun m hm => ?_
+  rw [← Finset.sum_add_distrib]
+  refine Finset.sum_congr rfl fun d hd => ?_
+  simp only [G, if_pos (⟨Finset.mem_range.1 hm, (Finset.mem_Ico.1 hd).2⟩ : m < N ∧ d < N)]
+
 /-- **Pair sums with a power saving.**  For each `h ≠ 0` and each `N ≥ 1` some choice of options
 makes the pair sum `≤ C N^{2−δ}`.  This is the per-`N` content of the assembly; summability along
 `sched` is then automatic (`repPairArith_of_power`). -/
