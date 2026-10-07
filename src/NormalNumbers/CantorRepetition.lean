@@ -1477,6 +1477,33 @@ theorem repBound_pair_le' (M k s t n m : ℕ) (h : ℤ) (hsm : runStart k ≤ s 
     rwa [show h * ((t : ℤ) ^ n * (((3 ^ s * t : ℕ) : ℤ) ^ d - 1)) =
       (t : ℤ) ^ n * (h * (((3 ^ s * t : ℕ) : ℤ) ^ d - 1)) by ring] at this
 
+/-- **Run-`k` copy-zone sum.**  Proved: over any set `P` of pairs below `N'` with
+`a ≤ s·min(n,m)` and `|ξ| ≤ B`, the run-`k` bounds sum to at most the cyclic pair sum below
+`N'` (the `CopyZoneDecayH` quantity) plus `|P|·πB/3^{(k+2)a}`. -/
+theorem copyRun_sum_le (M k s t : ℕ) (h : ℤ) (P : Finset (ℕ × ℕ)) (N' : ℕ) (B : ℝ)
+    (hP : ∀ p ∈ P, p.1 < N' ∧ p.2 < N' ∧ runStart k ≤ s * min p.1 p.2 ∧
+      |h * (((3 ^ s * t : ℕ) : ℝ) ^ p.1 - ((3 ^ s * t : ℕ) : ℝ) ^ p.2)| ≤ B) :
+    ∑ p ∈ P, repBound M (some k) (h * (((3 ^ s * t : ℕ) : ℝ) ^ p.1 - ((3 ^ s * t : ℕ) : ℝ) ^ p.2)) ≤
+      ∑ n ∈ Finset.range N', ∑ m ∈ Finset.range N',
+        cycProd (runStart k) (h * (((3 ^ s * t : ℕ) : ℤ) ^ n - ((3 ^ s * t : ℕ) : ℤ) ^ m)) +
+      P.card * (Real.pi * B / 3 ^ ((k + 2) * runStart k)) := by
+  have hE : (0 : ℝ) < 3 ^ ((k + 2) * runStart k) := by positivity
+  have h1 : ∀ p ∈ P, repBound M (some k)
+      (h * (((3 ^ s * t : ℕ) : ℝ) ^ p.1 - ((3 ^ s * t : ℕ) : ℝ) ^ p.2)) ≤
+      cycProd (runStart k) (h * (((3 ^ s * t : ℕ) : ℤ) ^ p.1 - ((3 ^ s * t : ℕ) : ℤ) ^ p.2)) +
+        Real.pi * B / 3 ^ ((k + 2) * runStart k) := by
+    intro p hp
+    obtain ⟨-, -, hs, hB⟩ := hP p hp
+    refine (repBound_pair_le' M k s t p.1 p.2 h hs).trans ?_
+    gcongr
+  refine (Finset.sum_le_sum h1).trans ?_
+  rw [Finset.sum_add_distrib, Finset.sum_const, nsmul_eq_mul]
+  gcongr
+  rw [← Finset.sum_product']
+  refine Finset.sum_le_sum_of_subset_of_nonneg (fun p hp => ?_) (fun _ _ _ => cycProd_nonneg _ _)
+  obtain ⟨h1, h2, -, -⟩ := hP p hp
+  exact Finset.mem_product.2 ⟨Finset.mem_range.2 h1, Finset.mem_range.2 h2⟩
+
 /-- **The crux as a deterministic exponential-sum statement (open).**  For each `h ≠ 0` there
 is a choice, per `N = sched j` and pair `(n, m)`, of free coins or of one run's block coins whose
 Riesz bounds at `ξ = h(bⁿ − bᵐ)` sum to `N²·ε_j` with `Σ ε_j < ∞`.
