@@ -2827,6 +2827,116 @@ theorem sum_copyRuns_le {s t e h' : ℕ} (hs : 1 ≤ s) (ht : 2 ≤ t) (hh : 1 �
   rw [Finset.sum_map]
   rfl
 
+/-- Run-end lengths are monotone. -/
+theorem runLen_mono {k L : ℕ} (h : k ≤ L) :
+    (k + 2) * runStart k + 1 ≤ (L + 2) * runStart L + 1 := by
+  have := runStart_mono h
+  have : (k + 2) * runStart k ≤ (L + 2) * runStart L := Nat.mul_le_mul (by omega) this
+  omega
+
+/-- **Class-5 copy total.**  Under `CopyZoneDecayH b h'`, the run-by-run copy sums for runs
+`k ≤ L` are at most `(L+1)|C| N_L^{2−δ}`, `N_L = (L+2)a_L + 1`. -/
+theorem copy5_total_le {b : ℕ} {h' : ℤ} (hC : CopyZoneDecayH b h') :
+    ∃ C δ : ℝ, 0 < δ ∧ ∀ L : ℕ,
+      ∑ k ∈ Finset.range (L + 1), ∑ n ∈ Finset.range ((k + 2) * runStart k + 1),
+        ∑ m ∈ Finset.range ((k + 2) * runStart k + 1),
+          cycProd (runStart k) (h' * ((b : ℤ) ^ n - (b : ℤ) ^ m)) ≤
+        (L + 1) * (|C| * (((L + 2) * runStart L + 1 : ℕ) : ℝ) ^ (2 - δ)) := by
+  obtain ⟨C, δ, hδ, hC⟩ := hC
+  refine ⟨C, min δ 1, lt_min hδ one_pos, fun L => ?_⟩
+  have hterm : ∀ k ∈ Finset.range (L + 1), ∑ n ∈ Finset.range ((k + 2) * runStart k + 1),
+        ∑ m ∈ Finset.range ((k + 2) * runStart k + 1),
+          cycProd (runStart k) (h' * ((b : ℤ) ^ n - (b : ℤ) ^ m)) ≤
+        |C| * (((L + 2) * runStart L + 1 : ℕ) : ℝ) ^ (2 - min δ 1) := by
+    intro k hk
+    have hkL : k ≤ L := Nat.lt_succ_iff.1 (Finset.mem_range.1 hk)
+    obtain ⟨h1, h2⟩ := runEnd_succ_le_cube k
+    have ha : 1 ≤ runStart k := by have := lt_runStart k; have := four_pow_le_runStart k
+                                   have : 1 ≤ 4 ^ (k + 1) := Nat.one_le_pow _ _ (by norm_num)
+                                   omega
+    refine (hC (runStart k) _ ha h1 h2).trans ?_
+    have hN1 : (1 : ℝ) ≤ (((k + 2) * runStart k + 1 : ℕ) : ℝ) := by
+      exact_mod_cast Nat.succ_le_succ (Nat.zero_le _)
+    have hmono : (((k + 2) * runStart k + 1 : ℕ) : ℝ) ≤ (((L + 2) * runStart L + 1 : ℕ) : ℝ) := by
+      exact_mod_cast runLen_mono hkL
+    calc C * (((k + 2) * runStart k + 1 : ℕ) : ℝ) ^ (2 - δ)
+        ≤ |C| * (((k + 2) * runStart k + 1 : ℕ) : ℝ) ^ (2 - δ) :=
+          mul_le_mul_of_nonneg_right (le_abs_self _) (by positivity)
+      _ ≤ |C| * (((k + 2) * runStart k + 1 : ℕ) : ℝ) ^ (2 - min δ 1) := by
+          gcongr
+          exact min_le_left _ _
+      _ ≤ |C| * (((L + 2) * runStart L + 1 : ℕ) : ℝ) ^ (2 - min δ 1) := by
+          gcongr
+          have : min δ 1 ≤ 1 := min_le_right _ _
+          linarith
+  refine (Finset.sum_le_sum hterm).trans (le_of_eq ?_)
+  rw [Finset.sum_const, Finset.card_range, nsmul_eq_mul]; push_cast; ring
+
+
+/-- **Class-6 copy total.**  Under `TOrbitCyclicDecay t`, with `h'² ≤ 3^{a_k} − 1` for `k ≥ k₁`:
+the run-by-run sums of `cycProd a_k (h' tⁿ)` for `k ≤ L` are at most
+`(L+1)|C| N_L^{2−δ} + Σ_{k<k₁} N_k²`. -/
+theorem copy6_total_le {t : ℕ} (hT : TOrbitCyclicDecay t) :
+    ∃ C δ : ℝ, 0 < δ ∧ ∀ (h' : ℤ), h' ≠ 0 → ∀ k₁ : ℕ,
+      (∀ k, k₁ ≤ k → (h'.natAbs : ℝ) ^ 2 ≤ 3 ^ runStart k - 1) → ∀ L : ℕ,
+      ∑ k ∈ Finset.range (L + 1), ∑ n ∈ Finset.range ((k + 2) * runStart k + 1),
+        ∑ _m ∈ Finset.range ((k + 2) * runStart k + 1),
+          cycProd (runStart k) (h' * (t : ℤ) ^ n) ≤
+        (L + 1) * (|C| * (((L + 2) * runStart L + 1 : ℕ) : ℝ) ^ (2 - δ)) +
+          ∑ k ∈ Finset.range k₁, ((((k + 2) * runStart k + 1 : ℕ) : ℝ)) ^ 2 := by
+  obtain ⟨C, δ, hδ, hC⟩ := hT
+  refine ⟨C, min δ 1, lt_min hδ one_pos, fun h' hh k₁ hk₁ L => ?_⟩
+  set F : ℕ → ℝ := fun k => ∑ n ∈ Finset.range ((k + 2) * runStart k + 1),
+        ∑ _m ∈ Finset.range ((k + 2) * runStart k + 1), cycProd (runStart k) (h' * (t : ℤ) ^ n)
+  have hF : ∀ k ∈ Finset.range (L + 1), F k ≤
+      |C| * (((L + 2) * runStart L + 1 : ℕ) : ℝ) ^ (2 - min δ 1) +
+        if k < k₁ then ((((k + 2) * runStart k + 1 : ℕ) : ℝ)) ^ 2 else 0 := by
+    intro k hk
+    have hkL : k ≤ L := Nat.lt_succ_iff.1 (Finset.mem_range.1 hk)
+    set Nk := (k + 2) * runStart k + 1
+    have hN1 : (1 : ℝ) ≤ (Nk : ℝ) := by exact_mod_cast Nat.succ_le_succ (Nat.zero_le _)
+    have hpos : 0 ≤ |C| * (((L + 2) * runStart L + 1 : ℕ) : ℝ) ^ (2 - min δ 1) := by positivity
+    split_ifs with hlt
+    · have : F k ≤ (Nk : ℝ) ^ 2 := by
+        simp only [F]
+        calc _ ≤ ∑ _n ∈ Finset.range Nk, ∑ _m ∈ Finset.range Nk, (1 : ℝ) :=
+              Finset.sum_le_sum fun n _ => Finset.sum_le_sum fun m _ => cycProd_le_one _ _
+          _ = _ := by simp; ring
+      linarith
+    · have hg := hk₁ k (by omega)
+      obtain ⟨h1, h2⟩ := runEnd_succ_le_cube k
+      have ha : 1 ≤ runStart k := by
+        have := four_pow_le_runStart k
+        have : 1 ≤ 4 ^ (k + 1) := Nat.one_le_pow _ _ (by norm_num)
+        omega
+      have hO := hC (runStart k) Nk ha h1 h2 h' (gcd_sq_le_of_natAbs hh _ hg)
+      have : F k = Nk * ∑ n ∈ Finset.range Nk, cycProd (runStart k) (h' * (t : ℤ) ^ n) := by
+        simp only [F]; rw [Finset.mul_sum]
+        refine Finset.sum_congr rfl fun n _ => ?_
+        rw [Finset.sum_const, Finset.card_range, nsmul_eq_mul]
+      rw [this, add_zero]
+      have hmono : (Nk : ℝ) ≤ (((L + 2) * runStart L + 1 : ℕ) : ℝ) := by
+        exact_mod_cast runLen_mono hkL
+      calc (Nk : ℝ) * ∑ n ∈ Finset.range Nk, cycProd (runStart k) (h' * (t : ℤ) ^ n)
+          ≤ Nk * (|C| * (Nk : ℝ) ^ (1 - δ)) :=
+            mul_le_mul_of_nonneg_left (hO.trans (mul_le_mul_of_nonneg_right (le_abs_self _)
+              (by positivity))) (by positivity)
+        _ = |C| * (Nk : ℝ) ^ (2 - δ) := by
+            rw [show (2 : ℝ) - δ = 1 + (1 - δ) by ring, Real.rpow_add (by linarith),
+              Real.rpow_one]; ring
+        _ ≤ |C| * (Nk : ℝ) ^ (2 - min δ 1) := by gcongr; exact min_le_left _ _
+        _ ≤ _ := by
+            gcongr
+            have : min δ 1 ≤ 1 := min_le_right _ _
+            linarith
+  refine (Finset.sum_le_sum hF).trans ?_
+  rw [Finset.sum_add_distrib, Finset.sum_const, Finset.card_range, nsmul_eq_mul]
+  push_cast
+  gcongr
+  rw [← Finset.sum_filter]
+  refine Finset.sum_le_sum_of_subset_of_nonneg (fun k hk => ?_) (fun _ _ _ => by positivity)
+  simp only [Finset.mem_filter, Finset.mem_range] at hk ⊢; exact hk.2
+
 /-- **Pair sums with a power saving.**  For each `h ≠ 0` and each `N ≥ 1` some choice of options
 makes the pair sum `≤ C N^{2−δ}`.  This is the per-`N` content of the assembly; summability along
 `sched` is then automatic (`repPairArith_of_power`). -/
