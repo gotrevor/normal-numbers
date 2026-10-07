@@ -71,10 +71,6 @@ namespace NormalNumbers.Barriers
 
 /-- Each frozen headline `sorry` and the barriers its mechanism must fail on. -/
 def cruxLinks : List CruxLink := [
-  ⟨``UniformBadThreshold.twelve_fifths_le_cStar,
-   [``uniformBad_base_two],
-   "a finite exclusion certificate over bases 2..16 must beat the base-2 barrier log₂ 3 and the \
-    two-base barrier log₂ 5 (survivors 1/5, 3/10 are rational, killed only by bases 5, 10)"⟩,
   ⟨``UniformBadThreshold.cStar_le_four,
    [``uniformBad_base_two],
    "the construction must keep the small bases jointly away from the rationals; the base-2 \

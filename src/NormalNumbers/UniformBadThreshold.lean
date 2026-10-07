@@ -20,7 +20,7 @@ Known before this file: `log₂ 3 ≤ c⋆ ≤ 24` (`UniformBad.not_uniformBad_o
 
 ## Headlines (frozen 2026-10-06)
 
-* `twelve_fifths_le_cStar : 12/5 ≤ c⋆` (believed 85%).
+* `twelve_fifths_le_cStar : 12/5 ≤ c⋆` — **proved** (25-window certificate, bases 2, 3, 5, 10).
 * `cStar_le_four : c⋆ ≤ 4` (believed 55%).
 
 ## Evidence (Ren, host probe 2026-10-06, exact interval propagation in floating point)
@@ -101,15 +101,107 @@ theorem logb_two_three_le_cStar : Real.logb 2 3 ≤ cStar := by
   rw [h2, one_div]
   exact inv_anti₀ (by positivity) h3.le
 
-/-- **Headline (lower bound, frozen 2026-10-06).**  Believed 85%.  `c⋆ ≥ 12/5`, beating the
+/-! ## Lower bounds by finite certificates
+
+A window `(b, n, k, δ)` is the closed interval `[(k − δ)/bⁿ, (k + δ)/bⁿ]`, on which
+`‖bⁿξ‖ ≤ δ`.  A chain of windows covering `[0, 1)` with `δ_b ≤ b^{−p/q}` refutes `Admissible (p/q)`.
+The certificates are produced by exact-rational greedy covering
+(`scripts/uniformbad_cstar_cover.py`). -/
+
+open NormalNumbers.UniformBad (dnear_le_abs_sub)
+
+
+abbrev Win := ℕ × ℕ × ℕ × ℚ
+
+def Win.lo (w : Win) : ℚ := ((w.2.2.1 : ℚ) - w.2.2.2) / (w.1 : ℚ) ^ w.2.1
+def Win.hi (w : Win) : ℚ := ((w.2.2.1 : ℚ) + w.2.2.2) / (w.1 : ℚ) ^ w.2.1
+
+def coversFrom : ℚ → List Win → Bool
+  | a, [] => decide (1 ≤ a)
+  | a, w :: t => decide (w.lo ≤ a) && coversFrom w.hi t
+
+theorem exists_win_of_coversFrom : ∀ (l : List Win) (a : ℚ), coversFrom a l = true →
+    ∀ x : ℝ, (a : ℝ) ≤ x → x < 1 → ∃ w ∈ l, (w.lo : ℝ) ≤ x ∧ x ≤ w.hi
+  | [], a, h, x, hax, hx1 => by
+    simp only [coversFrom, decide_eq_true_eq] at h
+    exact absurd (lt_of_le_of_lt ((by exact_mod_cast h : (1:ℝ) ≤ a).trans hax) hx1) (lt_irrefl _)
+  | w :: t, a, h, x, hax, hx1 => by
+    simp only [coversFrom, Bool.and_eq_true, decide_eq_true_eq] at h
+    by_cases hxw : x ≤ w.hi
+    · exact ⟨w, List.mem_cons_self .., ((by exact_mod_cast h.1 : (w.lo:ℝ) ≤ a)).trans hax, hxw⟩
+    · obtain ⟨v, hv, hv'⟩ := exists_win_of_coversFrom t _ h.2 x (not_le.1 hxw).le hx1
+      exact ⟨v, List.mem_cons_of_mem _ hv, hv'⟩
+
+theorem abs_sub_le_of_mem_win (w : Win) (hb : 1 ≤ w.1) (x : ℝ) (h1 : (w.lo : ℝ) ≤ x)
+    (h2 : x ≤ w.hi) : |(w.1 : ℝ) ^ w.2.1 * x - w.2.2.1| ≤ w.2.2.2 := by
+  obtain ⟨b, n, k, d⟩ := w
+  simp only [Win.lo, Win.hi] at h1 h2 ⊢
+  push_cast at h1 h2
+  have hs : (0 : ℝ) < (b : ℝ) ^ n := by positivity
+  rw [div_le_iff₀ hs] at h1
+  rw [le_div_iff₀ hs] at h2
+  rw [abs_le]; constructor <;> nlinarith
+
+theorem le_rpow_of_pow (p q : ℕ) (hq : q ≠ 0) (b : ℕ) (hb : 1 ≤ b) (d : ℚ)
+    (h : d ^ q * (b : ℚ) ^ p ≤ 1) : (d : ℝ) ≤ (b : ℝ) ^ (-(p : ℝ) / q) := by
+  have hb0 : (0 : ℝ) < b := by exact_mod_cast hb
+  have hr : 0 < (b : ℝ) ^ (-(p : ℝ) / q) := Real.rpow_pos_of_pos hb0 _
+  have h5 : ((b : ℝ) ^ (-(p : ℝ) / q)) ^ q = ((b : ℝ) ^ p)⁻¹ := by
+    rw [← Real.rpow_natCast, ← Real.rpow_mul hb0.le, ← Real.rpow_natCast, ← Real.rpow_neg hb0.le]
+    congr 1; field_simp
+  have hd' : (d : ℝ) ^ q * (b : ℝ) ^ p ≤ 1 := by exact_mod_cast h
+  by_contra hc
+  have := pow_lt_pow_left₀ (not_le.1 hc) hr.le hq
+  rw [h5] at this
+  have hb12 : (0:ℝ) < (b : ℝ) ^ p := by positivity
+  have := mul_lt_mul_of_pos_right this hb12
+  rw [inv_mul_cancel₀ hb12.ne'] at this
+  linarith
+
+def winOK (p q : ℕ) (w : Win) : Bool :=
+  decide (2 ≤ w.1) && decide (0 ≤ w.2.2.2) && decide (w.2.2.2 ^ q * (w.1 : ℚ) ^ p ≤ 1)
+
+theorem not_admissible_of_cert (p q : ℕ) (hq : q ≠ 0) (l : List Win)
+    (hc : coversFrom 0 l = true) (hok : l.all (winOK p q) = true) : ¬ Admissible ((p : ℝ) / q) := by
+  rintro ⟨ξ, hξ⟩
+  set x := ξ - ⌊ξ⌋ with hx
+  obtain ⟨w, hw, h1, h2⟩ := exists_win_of_coversFrom l 0 hc x (by simp [hx])
+    (by rw [hx]; linarith [Int.lt_floor_add_one ξ])
+  have hw' := List.all_eq_true.1 hok w hw
+  simp only [winOK, Bool.and_eq_true, decide_eq_true_eq] at hw'
+  obtain ⟨⟨hb, hd⟩, hp⟩ := hw'
+  have habs := abs_sub_le_of_mem_win w (by omega) x h1 h2
+  have hlt := hξ w.1 hb w.2.1
+  have key : dnear ((w.1 : ℝ) ^ w.2.1 * ξ) ≤ w.2.2.2 := by
+    refine (dnear_le_abs_sub _ ((w.2.2.1 : ℤ) + (w.1 : ℤ) ^ w.2.1 * ⌊ξ⌋)).trans ?_
+    have e : (w.1 : ℝ) ^ w.2.1 * ξ - (((w.2.2.1 : ℤ) + (w.1 : ℤ) ^ w.2.1 * ⌊ξ⌋ : ℤ) : ℝ) =
+        (w.1 : ℝ) ^ w.2.1 * x - w.2.2.1 := by push_cast; rw [hx]; ring
+    rw [e]; exact habs
+  have := le_rpow_of_pow p q hq w.1 (by omega) _ hp
+  rw [neg_div] at this
+  linarith
+
+def cert125 : List Win :=
+  [(2, 0, 0, 947/5000), (2, 4, 3, 947/5000), (5, 1, 1, 21/1000), (2, 2, 1, 947/5000), (2, 6, 19, 947/5000), (10, 1, 3, 39/10000), (3, 5, 73, 143/2000), (2, 4, 5, 947/5000), (3, 1, 1, 143/2000), (2, 3, 3, 947/5000), (5, 1, 2, 21/1000), (2, 5, 13, 947/5000), (2, 1, 1, 947/5000), (2, 5, 19, 947/5000), (5, 1, 3, 21/1000), (2, 3, 5, 947/5000), (3, 1, 2, 143/2000), (2, 4, 11, 947/5000), (3, 5, 170, 143/2000), (10, 1, 7, 39/10000), (2, 6, 45, 947/5000), (2, 2, 3, 947/5000), (5, 1, 4, 21/1000), (2, 4, 13, 947/5000), (2, 0, 1, 947/5000)]
+
+theorem not_admissible_twelve_fifths : ¬ Admissible (12 / 5) := by
+  have := not_admissible_of_cert 12 5 (by norm_num) cert125 (by decide +kernel) (by decide +kernel)
+  norm_num at this ⊢; exact this
+
+theorem le_cStar_of_not_admissible {c : ℝ} (h : ¬ Admissible c) : c ≤ cStar := by
+  refine le_csInf ⟨24, admissible_24⟩ fun c' hc' => ?_
+  by_contra hlt
+  exact h (admissible_mono (not_le.1 hlt).le hc')
+
+/-- **Headline (lower bound, frozen 2026-10-06).**  Proved by `cert125`.  `c⋆ ≥ 12/5`, beating the
 base-2 bound `log₂ 3 ≈ 1.585` and the two-base bound `log₂ 5 ≈ 2.322`.
 
 English proof sketch.  By `admissible_mono` it suffices that `12/5` itself is not admissible.  The
 bases `2, …, 16` with `n ≤ 6` already exclude every `ξ ∈ [0, 1]` at `c = 12/5` (host probe: that
 system empties below `c ≈ 2.44`).  Certify by a finite cover of `[0, 1]` by rational intervals,
 each lying inside one forbidden window `(k − δ_b, k + δ_b)/bⁿ` with a rational `δ_b ≤ b^{−12/5}`. -/
-theorem twelve_fifths_le_cStar : (12 : ℝ) / 5 ≤ cStar := by
-  sorry
+theorem twelve_fifths_le_cStar : (12 : ℝ) / 5 ≤ cStar :=
+  le_cStar_of_not_admissible not_admissible_twelve_fifths
 
 /-- **Headline (upper bound, frozen 2026-10-06).**  Believed 55%.  `c⋆ ≤ 4`, improving `24`.
 
