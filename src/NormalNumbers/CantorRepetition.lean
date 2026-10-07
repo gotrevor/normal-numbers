@@ -574,6 +574,25 @@ noncomputable def copyPairSum (b A N : ℕ) : ℝ :=
   ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N, ∏ i ∈ Finset.range A,
     |Real.cos (2 * Real.pi * (((b : ℝ) ^ n - (b : ℝ) ^ m) * 3 ^ i) / (3 ^ A - 1))|
 
+/-- **Copy-zone pair term as a Cassels product.**  Proved: reindex `i ↦ A − 1 − i`; the block
+coin `i` reads the frequency `ξ = (bⁿ − bᵐ)·3^A/(3^A − 1)` at depth `A − i`.  So the copy zone is
+`Bf` with every place free, at the twisted frequency (for `|bⁿ − bᵐ| ≪ 3^A`, `ξ ≈ bⁿ − bᵐ` and
+the low-digit count of `CantorLiouvilleAll` applies). -/
+theorem copyPairSum_eq_Bf (b A N : ℕ) :
+    copyPairSum b A N = ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N,
+      Bf (fun _ => true) A (((b : ℝ) ^ n - (b : ℝ) ^ m) * 3 ^ A / (3 ^ A - 1)) := by
+  unfold copyPairSum Bf
+  refine Finset.sum_congr rfl fun n _ => Finset.sum_congr rfl fun m _ => ?_
+  simp only [Finset.filter_true]
+  rw [← Finset.prod_range_reflect]
+  refine Finset.prod_congr rfl fun i hi => ?_
+  rw [Finset.mem_range] at hi
+  congr 2
+  have h3 : (3 : ℝ) ^ A = 3 ^ i * 3 ^ (A - 1 - i + 1) := by rw [← pow_add]; congr 1; omega
+  rw [h3]
+  field_simp
+  rw [mul_assoc, mul_assoc, ← pow_add, ← pow_add, show A - 1 - i + (i + 1) = i + (A - 1 - i + 1) by omega]
+
 /-- **Copy-zone decay (open conjecture, the copy-zone leaf of `ae_isNormal_rep_of_three_dvd`).**
 For `b` not a power of 3 there are `C, δ > 0` with `copyPairSum b A N ≤ C N^{2−δ}` for
 `A ≤ N ≤ A^{3}` (runs of polynomially many copies).  Evidence (`scripts/rep_copyzone.py`,
