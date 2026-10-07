@@ -2936,6 +2936,35 @@ theorem copy6_total_le {t : ℕ} (hT : TOrbitCyclicDecay t) :
   refine Finset.sum_le_sum_of_subset_of_nonneg (fun k hk => ?_) (fun _ _ _ => by positivity)
   simp only [Finset.mem_filter, Finset.mem_range] at hk ⊢; exact hk.2
 
+theorem sum_shift_le (f : ℕ → ℝ) (hf : ∀ n, 0 ≤ f n) {m N : ℕ} (hm : m < N) :
+    ∑ d ∈ Finset.Ico 1 N, f (m + d) ≤ ∑ n ∈ Finset.range (2 * N), f n := by
+  have : ∑ d ∈ Finset.Ico 1 N, f (m + d) = ∑ n ∈ (Finset.Ico 1 N).map (addLeftEmbedding m), f n := by
+    rw [Finset.sum_map]; rfl
+  rw [this]
+  refine Finset.sum_le_sum_of_subset_of_nonneg (fun n hn => ?_) (fun n _ _ => hf n)
+  simp only [Finset.mem_map, Finset.mem_Ico, addLeftEmbedding_apply] at hn
+  obtain ⟨d, ⟨-, hd⟩, rfl⟩ := hn
+  exact Finset.mem_range.2 (by omega)
+
+/-- **Class-3 sum, concrete.**  For `h'` prime to 3,
+`Σ_{m<N} Σ_{1≤d<N} Hf_true(h' t^{m+d}) ≤ N(2N + 2·3ʲ)(3/2)^{tb}(2/3)ʲ`. -/
+theorem sum_pair_class3_le {t : ℕ} (ht : 2 ≤ t) (h3 : ¬ 3 ∣ t) {h' : ℕ} (hh : ¬ 3 ∣ h')
+    (j N : ℕ) :
+    ∑ m ∈ Finset.range N, ∑ d ∈ Finset.Ico 1 N,
+      Hf (fun _ => true) 0 (j + 1) ((h' * t ^ (m + d) : ℕ) : ℝ) ≤
+      N * ((2 * N + 2 * 3 ^ j) * (3 / 2 : ℝ) ^ CantorLiouvilleAll.tb t * (2 / 3 : ℝ) ^ j) := by
+  have hs := CantorExactExponentProfile.sum_hf_true_le ht h3 j h' hh (2 * N)
+  calc _ ≤ ∑ _m ∈ Finset.range N, ∑ n ∈ Finset.range (2 * N),
+        Hf (fun _ => true) 0 (j + 1) ((h' * t ^ n : ℕ) : ℝ) :=
+        Finset.sum_le_sum fun m hm => sum_shift_le
+          (fun n => Hf (fun _ => true) 0 (j + 1) ((h' * t ^ n : ℕ) : ℝ))
+          (fun n => Hf_nonneg _ _ _ _) (Finset.mem_range.1 hm)
+    _ ≤ _ := by
+        rw [Finset.sum_const, Finset.card_range, nsmul_eq_mul]
+        gcongr
+        push_cast at hs ⊢
+        exact hs
+
 /-- **Pair sums with a power saving.**  For each `h ≠ 0` and each `N ≥ 1` some choice of options
 makes the pair sum `≤ C N^{2−δ}`.  This is the per-`N` content of the assembly; summability along
 `sched` is then automatic (`repPairArith_of_power`). -/
