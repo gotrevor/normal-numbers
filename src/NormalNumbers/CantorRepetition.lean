@@ -727,6 +727,109 @@ def TOrbitCyclicDecay (t : ℕ) : Prop :=
     (Int.gcd c (3 ^ A - 1) : ℝ) ^ 2 ≤ 3 ^ A - 1 →
     ∑ m ∈ Finset.range N, cycProd A (c * (t : ℤ) ^ m) ≤ C * (N : ℝ) ^ (1 - δ)
 
+/-- **Few shifts `d` with a large common factor (open; believed, 75%).**  Shifts `d < N` with
+`gcd(b^d − 1, 3^A − 1)² > 3^A − 1` number `O(N^{1−δ})`.  Evidence (`A ≤ 14`, `N = A³`): for
+`b = 2, 6, 12` the bad `d` are multiples of one order (e.g. `b = 6, A = 12`: `36ℤ`, 47 of 1728),
+at most 66 of 1000.  Mechanism: a bad `d` has `b^d ≡ 1` modulo a divisor `> 3^{A/2}`, so its order
+there is `≥ A log 3/(2 log b)`. -/
+def BadGcdSparse (b : ℕ) : Prop :=
+  ∃ C δ : ℝ, 0 < δ ∧ ∀ A N : ℕ, 1 ≤ A → A ≤ N → N ≤ A ^ 3 →
+    (((Finset.Ico 1 N).filter fun d =>
+      ¬ ((Int.gcd ((b : ℤ) ^ d - 1) (3 ^ A - 1) : ℝ) ^ 2 ≤ 3 ^ A - 1)).card : ℝ) ≤
+      C * (N : ℝ) ^ (1 - δ)
+
+theorem cycProd_neg (A : ℕ) (η : ℤ) : cycProd A (-η) = cycProd A η := by
+  unfold cycProd
+  refine Finset.prod_congr rfl fun i _ => ?_
+  push_cast
+  rw [show 2 * Real.pi * (-(η : ℝ) * 3 ^ i) / (3 ^ A - 1) =
+    -(2 * Real.pi * ((η : ℝ) * 3 ^ i) / (3 ^ A - 1)) by ring, Real.cos_neg]
+
+theorem cycProd_nonneg (A : ℕ) (η : ℤ) : 0 ≤ cycProd A η :=
+  Finset.prod_nonneg fun _ _ => abs_nonneg _
+
+theorem cycProd_le_one (A : ℕ) (η : ℤ) : cycProd A η ≤ 1 :=
+  Finset.prod_le_one (fun _ _ => abs_nonneg _) fun _ _ => Real.abs_cos_le_one _
+
+/-- **Copy-zone decay from the two leaves.**  Proved: `pair_sum_le` with
+`G d m = cycProd(tᵐ(b^d − 1))` (`cycProd_pair`, `cycProd_neg`); good shifts by
+`TOrbitCyclicDecay t`, bad shifts trivially and counted by `BadGcdSparse`. -/
+theorem copyZoneDecay_of {s t : ℕ} (hT : TOrbitCyclicDecay t) (hS : BadGcdSparse (3 ^ s * t)) :
+    CopyZoneDecay (3 ^ s * t) := by
+  obtain ⟨C, δ, hδ, hC⟩ := hT
+  obtain ⟨C', δ', hδ', hC'⟩ := hS
+  set b := 3 ^ s * t with hbdef
+  set δ'' := min (min δ δ') 1
+  have hδ''0 : 0 < δ'' := lt_min (lt_min hδ hδ') one_pos
+  refine ⟨1 + 2 * |C| + 2 * |C'|, δ'', hδ''0, fun A N hA hAN hNA => ?_⟩
+  have hN1 : (1 : ℝ) ≤ N := by exact_mod_cast hA.trans hAN
+  have hN0 : (0 : ℝ) < N := by linarith
+  set G : ℕ → ℕ → ℝ := fun d m => cycProd A ((t : ℤ) ^ m * ((b : ℤ) ^ d - 1))
+  have hpair := pair_sum_le (fun n m => cycProd A ((b : ℤ) ^ n - (b : ℤ) ^ m)) G
+    (fun d m => cycProd_nonneg _ _) (fun n => by simp [cycProd_le_one])
+    (fun n m hmn => le_of_eq (by
+      have := cycProd_pair A s t m (n - m)
+      rw [show m + (n - m) = n by omega] at this
+      simpa [G, hbdef] using this))
+    (fun n m hmn => le_of_eq (by
+      have := cycProd_pair A s t n (m - n)
+      rw [show n + (m - n) = m by omega] at this
+      rw [← cycProd_neg, neg_sub]
+      simpa [G, hbdef] using this)) N
+  rw [copyPairSum_eq_cycProd]
+  refine hpair.trans ?_
+  -- each shift
+  set bad := (Finset.Ico 1 N).filter fun d =>
+      ¬ ((Int.gcd ((b : ℤ) ^ d - 1) (3 ^ A - 1) : ℝ) ^ 2 ≤ 3 ^ A - 1)
+  have hrow : ∀ d ∈ Finset.Ico 1 N, ∑ m ∈ Finset.range N, G d m ≤
+      |C| * (N : ℝ) ^ (1 - δ) + (if d ∈ bad then (N : ℝ) else 0) := by
+    intro d hd
+    by_cases hg : ((Int.gcd ((b : ℤ) ^ d - 1) (3 ^ A - 1) : ℝ) ^ 2 ≤ 3 ^ A - 1)
+    · have h1 := hC A N hA hAN hNA ((b : ℤ) ^ d - 1) hg
+      have : d ∉ bad := by simp [bad, hg]
+      rw [if_neg this, add_zero]
+      refine le_trans (le_of_eq ?_) (h1.trans (mul_le_mul_of_nonneg_right (le_abs_self C)
+        (by positivity)))
+      exact Finset.sum_congr rfl fun m _ => by simp only [G]; ring_nf
+    · have : d ∈ bad := Finset.mem_filter.2 ⟨hd, hg⟩
+      rw [if_pos this]
+      have : ∑ m ∈ Finset.range N, G d m ≤ N := by
+        refine (Finset.sum_le_sum fun m _ => cycProd_le_one A _).trans ?_
+        simp
+      have : 0 ≤ |C| * (N : ℝ) ^ (1 - δ) := by positivity
+      linarith
+  have hsum := Finset.sum_le_sum hrow
+  rw [Finset.sum_add_distrib, Finset.sum_ite_mem, Finset.inter_eq_right.2 (Finset.filter_subset _ _),
+    Finset.sum_const, Finset.sum_const, nsmul_eq_mul, nsmul_eq_mul, Nat.card_Ico] at hsum
+  have hbad := hC' A N hA hAN hNA
+  have hcard : ((N - 1 : ℕ) : ℝ) ≤ N := by
+    have : N - 1 ≤ N := Nat.sub_le _ _
+    exact_mod_cast this
+  -- exponents
+  have hp : ∀ e : ℝ, e ≤ 2 - δ'' → (N : ℝ) ^ e ≤ (N : ℝ) ^ (2 - δ'') := fun e he =>
+    Real.rpow_le_rpow_of_exponent_le hN1 he
+  have e1 : (N : ℝ) * (N : ℝ) ^ (1 - δ) = (N : ℝ) ^ (2 - δ) := by
+    rw [show (2 : ℝ) - δ = 1 + (1 - δ) by ring, Real.rpow_add hN0, Real.rpow_one]
+  have e2 : (N : ℝ) * (N : ℝ) ^ (1 - δ') = (N : ℝ) ^ (2 - δ') := by
+    rw [show (2 : ℝ) - δ' = 1 + (1 - δ') by ring, Real.rpow_add hN0, Real.rpow_one]
+  have hN : (N : ℝ) ≤ (N : ℝ) ^ (2 - δ'') := by
+    have := hp 1 (by have : δ'' ≤ 1 := min_le_right _ _; linarith)
+    rwa [Real.rpow_one] at this
+  have h2 := hp (2 - δ) (by have : δ'' ≤ δ := (min_le_left _ _).trans (min_le_left _ _); linarith)
+  have h3 := hp (2 - δ') (by have : δ'' ≤ δ' := (min_le_left _ _).trans (min_le_right _ _); linarith)
+  have hP : 0 ≤ (N : ℝ) ^ (1 - δ) := by positivity
+  have hbad' : (bad.card : ℝ) * N ≤ |C'| * (N : ℝ) ^ (2 - δ') := by
+    rw [← e2]
+    have := mul_le_mul_of_nonneg_right (hbad.trans (mul_le_mul_of_nonneg_right (le_abs_self C')
+      (by positivity))) hN0.le
+    nlinarith
+  have hrow' : ((N - 1 : ℕ) : ℝ) * (|C| * (N : ℝ) ^ (1 - δ)) ≤ |C| * (N : ℝ) ^ (2 - δ) := by
+    rw [← e1]; have := mul_le_mul_of_nonneg_right hcard (by positivity : 0 ≤ |C| * (N : ℝ) ^ (1 - δ))
+    nlinarith
+  have hCa : 0 ≤ |C| := abs_nonneg _
+  have hC'a : 0 ≤ |C'| := abs_nonneg _
+  nlinarith [mul_le_mul_of_nonneg_left h2 hCa, mul_le_mul_of_nonneg_left h3 hC'a]
+
 /-! ## Bases `3ˢt`, `t > 1`: the crux -/
 
 /-- **Crux: a.e. normality to `b = 3ˢt`, `t > 1`.**  Open; confidence 50%.
