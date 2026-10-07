@@ -1,4 +1,5 @@
 # STUCK claim, strike 1 (2026-10-07, c⋆ lap 11): read HANDOFF-2026-10-07-cstar-lap11.md
+Re-confirmed 2026-10-07 (fresh lap 12): axioms re-checked (cStar_le_124_25 clean modulo native_decide; not_nineHalvesBalance clean); strike 2.
 - **Blocked:** run gate `sorry-free:src/NormalNumbers/UniformBadNineHalves.lean` (frozen `cStar_le_nine_halves`).
 - **Why operator-gated:** operator gate 2 (DIRECTION.md) says: if 9/2 cannot be made uniform, bank the engine's
   lowest exponent, record the wall, stop.  Done: `cStar_le_124_25` proved; `not_nineHalvesBalance` proves the
