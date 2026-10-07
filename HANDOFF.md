@@ -1,3 +1,13 @@
+# STUCK claim, strike 1 (2026-10-07, c⋆ lap 11): read HANDOFF-2026-10-07-cstar-lap11.md
+- **Blocked:** run gate `sorry-free:src/NormalNumbers/UniformBadNineHalves.lean` (frozen `cStar_le_nine_halves`).
+- **Why operator-gated:** operator gate 2 (DIRECTION.md) says: if 9/2 cannot be made uniform, bank the engine's
+  lowest exponent, record the wall, stop.  Done: `cStar_le_124_25` proved; `not_nineHalvesBalance` proves the
+  two-rate engine has no certificate at 9/2 (even without bases b ≥ 5); Maze row "two-rate counting engine at
+  c = 9/2".  The only known continuation is a new mechanism (weight-regular exact {2,3} core), a research wall.
+- **Verify fast:** `#print axioms NormalNumbers.UniformBadThreshold.cStar_le_124_25` and `not_nineHalvesBalance`
+  (scratch file importing `NormalNumbers.UniformBadNineHalves`); `grep -n sorry src/NormalNumbers/UniformBadNineHalves.lean`.
+- **Ask:** a new directive (mechanism for 9/2) or accept the stop.
+
 # Repetition: STUCK claim (lap 6) RESOLVED 2026-10-07 by review lap 7 — read HANDOFF-2026-10-07-repetition-lap7.md
 - New route (sparse pairs + Matveev) avoids the walls; DIRECTION.md CURRENT DIRECTIVE lists the leaves.
 
