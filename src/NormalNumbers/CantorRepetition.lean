@@ -2087,6 +2087,21 @@ theorem repBound_class_copySep_le {s t M k n m : ℕ} (hk : Even k) (h : ℤ)
       by ring, e3, pow_mul, mul_pow]; ring
   rwa [e, abs_neg] at this
 
+/-- **Top phase of `c (3ˢt)ᵐ`.**  `{log₃|c bᵐ|} = {m log₃ t + log₃|c|}`: the top-window phases of
+classes 2 (`c = h`) and 4 (`c = h(bᵈ − 1)`) are a Kronecker orbit, summed by `sum_topProd_le`. -/
+theorem fract_logb_mul_pow {s t : ℕ} (ht : 1 ≤ t) (c : ℝ) (hc : c ≠ 0) (m : ℕ) :
+    Int.fract (Real.logb 3 |c * ((3 ^ s * t : ℕ) : ℝ) ^ m|) =
+      Int.fract (m * Real.logb 3 t + Real.logb 3 |c|) := by
+  have ht0 : (0 : ℝ) < t := by exact_mod_cast ht
+  have e : Real.logb 3 |c * ((3 ^ s * t : ℕ) : ℝ) ^ m| =
+      (m * Real.logb 3 t + Real.logb 3 |c|) + ((s * m : ℕ) : ℤ) := by
+    push_cast
+    rw [abs_mul, abs_pow, abs_of_pos (by positivity : (0 : ℝ) < 3 ^ s * t),
+      Real.logb_mul (by positivity) (by positivity), Real.logb_pow, Real.logb_mul (by positivity)
+      (by positivity), Real.logb_pow, Real.logb_self_eq_one (by norm_num)]
+    ring
+  rw [e, Int.fract_add_intCast]
+
 /-! ## Bases `3ˢt`, `t > 1`: the crux -/
 
 /-- **Assembly of the crux from its inputs (open; believed, 60%).**  For `b = 3ˢt`, `t > 1`:
