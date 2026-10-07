@@ -19,6 +19,8 @@ summing the geometric levels gives `≤ 3886 b^{−3}` per base, and `Σ_b b^{�
 
 namespace NormalNumbers.UniformBadThreshold
 
+open scoped ENNReal
+
 /-! ## Geometric level sums -/
 
 /-- Increasing geometric levels below `T`: `Σ (s₀bⁿ)^p ≤ T^p/(1 − q)` for `b^{−p} ≤ q < 1`. -/
@@ -234,5 +236,259 @@ theorem level_sum_le {b ℓ : ℝ} (hb : 2 ≤ b) (hℓ : 0 < ℓ) (N : Finset �
     norm_num at hS1 e1 e2 ⊢
     linarith
   nlinarith
+
+
+/-- Real base-weight sum: `Σ_{b ≥ 2} 3886/b³ ≤ 3886/4`. -/
+theorem tsum_base_cube_le :
+    ∑' b : ℕ, (if 2 ≤ b then 3886 / (b : ℝ) ^ 3 else 0) ≤ 3886 / 4 ∧
+    Summable (fun b : ℕ => if 2 ≤ b then 3886 / (b : ℝ) ^ 3 else 0) := by
+  set g : ℕ → ℝ := fun b => if 2 ≤ b then 3886 / (b : ℝ) ^ 3 else 0 with hg
+  have hg0 : ∀ b, 0 ≤ g b := fun b => by simp only [hg]; split_ifs <;> positivity
+  have hpart : ∀ n : ℕ, ∑ i ∈ Finset.range (n + 3), g i ≤
+      3886 * (1 / 4 - 1 / (2 * ((n : ℝ) + 2) ^ 2)) := by
+    intro n
+    induction n with
+    | zero => simp [Finset.sum_range_succ, hg]; norm_num
+    | succ n ih =>
+      rw [show n + 1 + 3 = (n + 3) + 1 by ring, Finset.sum_range_succ]
+      have hgn : g (n + 3) = 3886 / ((n : ℝ) + 3) ^ 3 := by
+        simp only [hg, if_pos (by omega : 2 ≤ n + 3)]; push_cast; ring
+      rw [hgn]
+      have hn : (0 : ℝ) ≤ n := Nat.cast_nonneg n
+      have key : 1 / ((n : ℝ) + 3) ^ 3 ≤ 1 / (2 * ((n : ℝ) + 2) ^ 2) -
+          1 / (2 * ((n : ℝ) + 3) ^ 2) := by
+        rw [div_sub_div _ _ (by positivity) (by positivity), div_le_div_iff₀ (by positivity)
+          (by positivity)]
+        nlinarith [sq_nonneg (n : ℝ), mul_nonneg hn (sq_nonneg (n : ℝ))]
+      push_cast
+      have : 3886 / ((n : ℝ) + 3) ^ 3 = 3886 * (1 / ((n : ℝ) + 3) ^ 3) := by ring
+      rw [this, show (n : ℝ) + 1 + 2 = (n : ℝ) + 3 by ring]
+      linarith
+  have hall : ∀ n : ℕ, ∑ i ∈ Finset.range n, g i ≤ 3886 / 4 := by
+    intro n
+    calc ∑ i ∈ Finset.range n, g i ≤ ∑ i ∈ Finset.range (n + 3), g i :=
+          Finset.sum_le_sum_of_subset_of_nonneg (Finset.range_mono (by omega))
+            fun i _ _ => hg0 i
+      _ ≤ 3886 * (1 / 4 - 1 / (2 * ((n : ℝ) + 2) ^ 2)) := hpart n
+      _ ≤ 3886 / 4 := by
+          have : 0 ≤ 1 / (2 * ((n : ℝ) + 2) ^ 2) := by positivity
+          linarith
+  exact ⟨Real.tsum_le_of_sum_range_le hg0 hall, summable_of_sum_range_le hg0 hall⟩
+
+
+/-! ## The obstacle family -/
+
+/-- Obstacle index `(b, n, a)` with `b ≥ 2`, `n ≥ 1`. -/
+abbrev Ix := {p : ℕ × ℕ × ℤ // 2 ≤ p.1 ∧ 1 ≤ p.2.1}
+
+/-- Centre `a/bⁿ`. -/
+noncomputable def ctr12 (p : Ix) : ℝ := (p.1.2.2 : ℝ) / (p.1.1 : ℝ) ^ p.1.2.1
+
+/-- Radius `b^{−(n+12)}`. -/
+noncomputable def rad12 (p : Ix) : ℝ := ((p.1.1 : ℝ) ^ (p.1.2.1 + 12))⁻¹
+
+/-- Charging stage `k + 1` with `4096^k ≤ 8bⁿ < 4096^{k+1}`. -/
+def st12 (p : Ix) : ℕ := Nat.log 4096 (8 * p.1.1 ^ p.1.2.1) + 1
+
+theorem rad12_pos (p : Ix) : 0 < rad12 p := by
+  have : (0 : ℝ) < p.1.1 := by have := p.2.1; positivity
+  exact inv_pos.2 (pow_pos this _)
+
+/-- The level weight (count bound times per-obstacle charge). -/
+noncomputable def W12 (k b n : ℕ) : ℝ :=
+  ((1 / 2 / (4096 : ℝ) ^ k + 2 * ((b : ℝ) ^ (n + 12))⁻¹) * (b : ℝ) ^ n + 1) *
+    (2 * (((b : ℝ) ^ (n + 12))⁻¹ / (1 / 2 / (4096 : ℝ) ^ k / 4096)) + 2) *
+    (((b : ℝ) ^ (n + 12))⁻¹ / (1 / 2 / (4096 : ℝ) ^ k / 4096)) ^ (1/4 : ℝ)
+
+/-- The level facts: a level charged at stage `k + 1` has `t = ℓ_k bⁿ ∈ [1/16, 256]` and
+`n < 12k + 12`. -/
+theorem level_facts {b n k : ℕ} (hb : 2 ≤ b) (hk : Nat.log 4096 (8 * b ^ n) = k) :
+    (1 / 16 ≤ 1 / 2 / (4096 : ℝ) ^ k * (b : ℝ) ^ n ∧
+      1 / 2 / (4096 : ℝ) ^ k * (b : ℝ) ^ n ≤ 256) ∧ n < 12 * k + 12 := by
+  have hpos : 8 * b ^ n ≠ 0 := by positivity
+  have h1 := Nat.pow_log_le_self 4096 hpos
+  have h2 := Nat.lt_pow_succ_log_self (by norm_num : 1 < 4096) (8 * b ^ n)
+  rw [hk] at h1 h2
+  have h1' : (4096 : ℝ) ^ k ≤ 8 * (b : ℝ) ^ n := by exact_mod_cast h1
+  have h2' : 8 * (b : ℝ) ^ n < (4096 : ℝ) ^ (k + 1) := by exact_mod_cast h2
+  have hK : (0 : ℝ) < 4096 ^ k := by positivity
+  refine ⟨⟨?_, ?_⟩, ?_⟩
+  · rw [div_mul_eq_mul_div, le_div_iff₀ hK]; linarith
+  · rw [div_mul_eq_mul_div, div_le_iff₀ hK]; rw [pow_succ] at h2'; linarith
+  · have h3 : 2 ^ n ≤ b ^ n := Nat.pow_le_pow_left hb n
+    have h4 : 2 ^ n < 2 ^ (12 * k + 12) := by
+      have : (4096 : ℕ) ^ (k + 1) = 2 ^ (12 * k + 12) := by
+        rw [show (4096 : ℕ) = 2 ^ 12 by norm_num, ← pow_mul]; ring_nf
+      omega
+    exact (Nat.pow_lt_pow_iff_right (by norm_num)).1 h4
+
+theorem W12_nonneg (k b n : ℕ) : 0 ≤ W12 k b n := by
+  unfold W12; positivity
+
+/-- Per base: the levels charged at stage `k + 1` weigh at most `3886/b³` in total. -/
+theorem tsum_W12_le (k b : ℕ) (hb : 2 ≤ b) :
+    ∑' n : ℕ, (if 1 ≤ n ∧ Nat.log 4096 (8 * b ^ n) = k then ENNReal.ofReal (W12 k b n) else 0)
+      ≤ ENNReal.ofReal (3886 / (b : ℝ) ^ 3) := by
+  classical
+  set N := (Finset.range (12 * k + 12)).filter (fun n => 1 ≤ n ∧ Nat.log 4096 (8 * b ^ n) = k)
+  rw [tsum_eq_sum (s := N) (fun n hn => by
+    rw [if_neg]; intro h; exact hn (Finset.mem_filter.2
+      ⟨Finset.mem_range.2 (level_facts hb h.2).2, h⟩))]
+  rw [Finset.sum_congr rfl (fun n hn => if_pos (Finset.mem_filter.1 hn).2),
+    ← ENNReal.ofReal_sum_of_nonneg (fun n _ => W12_nonneg k b n)]
+  refine ENNReal.ofReal_le_ofReal ?_
+  have hb' : (2 : ℝ) ≤ b := by exact_mod_cast hb
+  exact level_sum_le hb' (by positivity) N fun n hn =>
+    (level_facts hb (Finset.mem_filter.1 hn).2.2).1
+
+
+open NormalNumbers.UniformBad (obstacle window) in
+/-- **The averaged new charge at `c = 12`** is at most `1050`. -/
+theorem newCost12_le (k : ℕ) (x : ℝ) :
+    ∑' i, (potSetP ctr12 rad12 st12 (1 / 2) 4096 (· = k + 1) k x).indicator
+      (fun i => ENNReal.ofReal ((2 * (rad12 i / (1 / 2 / ((4096 : ℕ) : ℝ) ^ (k + 1))) + 2) *
+        (rad12 i / (1 / 2 / ((4096 : ℕ) : ℝ) ^ (k + 1))) ^ (1/4 : ℝ))) i ≤
+      ENNReal.ofReal 1050 := by
+  classical
+  set T := potSetP ctr12 rad12 st12 (1 / 2) 4096 (· = k + 1) k x with hT
+  set ℓ : ℝ := 1 / 2 / (4096 : ℝ) ^ k with hℓ
+  have hℓ' : (1 / 2 / ((4096 : ℕ) : ℝ) ^ (k + 1)) = ℓ / 4096 := by
+    rw [hℓ]; push_cast; rw [pow_succ]; ring
+  set A : ℕ × ℕ → ℝ := fun p => (2 * (((p.1 : ℝ) ^ (p.2 + 12))⁻¹ / (ℓ / 4096)) + 2) *
+      (((p.1 : ℝ) ^ (p.2 + 12))⁻¹ / (ℓ / 4096)) ^ (1/4 : ℝ) with hA
+  set f : Ix → ℝ≥0∞ := fun i => ENNReal.ofReal ((2 * (rad12 i / (1 / 2 / ((4096 : ℕ) : ℝ) ^
+    (k + 1))) + 2) * (rad12 i / (1 / 2 / ((4096 : ℕ) : ℝ) ^ (k + 1))) ^ (1/4 : ℝ)) with hf
+  set π : T → ℕ × ℕ := fun t => (t.1.1.1, t.1.1.2.1) with hπ
+  set φ : ℕ × ℕ → ℝ≥0∞ := fun p =>
+    if 2 ≤ p.1 ∧ 1 ≤ p.2 ∧ Nat.log 4096 (8 * p.1 ^ p.2) = k then
+      ENNReal.ofReal (W12 k p.1 p.2) else 0 with hφ
+  have hfib : ∀ p : ℕ × ℕ, ∑' t : π ⁻¹' {p}, f t.1 ≤ φ p := by
+    rintro ⟨b, n⟩
+    by_cases hc : 2 ≤ b ∧ 1 ≤ n ∧ Nat.log 4096 (8 * b ^ n) = k
+    · have hconst : ∀ t : π ⁻¹' {(b, n)}, f t.1 = ENNReal.ofReal (A (b, n)) := by
+        rintro ⟨⟨⟨⟨b', n', a⟩, hbn⟩, ht⟩, hp⟩
+        simp only [Set.mem_preimage, Set.mem_singleton_iff, hπ, Prod.mk.injEq] at hp
+        obtain ⟨rfl, rfl⟩ := hp
+        simp only [hf, hA, rad12, hℓ']
+      rw [tsum_congr hconst, ENNReal.tsum_set_const]
+      have hbpos : (0 : ℝ) < (b : ℝ) ^ n := by have := hc.1; positivity
+      obtain ⟨F, hFsub, hFcard⟩ := card_int_meet_le (B := (b : ℝ) ^ n)
+        (r := ((b : ℝ) ^ (n + 12))⁻¹) (x := x) (ℓ := ℓ) hbpos (by positivity) (by positivity)
+      have hinj : Set.InjOn (fun t : T => t.1.1.2.2) (π ⁻¹' {(b, n)}) := by
+        rintro ⟨⟨⟨b1, n1, a1⟩, h1⟩, _⟩ hb1 ⟨⟨⟨b2, n2, a2⟩, h2⟩, _⟩ hb2 he
+        simp only [Set.mem_preimage, Set.mem_singleton_iff, hπ, Prod.mk.injEq] at hb1 hb2
+        obtain ⟨rfl, rfl⟩ := hb1; obtain ⟨rfl, rfl⟩ := hb2
+        simp only at he; subst he; rfl
+      have himg : (fun t : T => t.1.1.2.2) '' (π ⁻¹' {(b, n)}) ⊆ (F : Set ℤ) := by
+        rintro _ ⟨⟨⟨⟨b1, n1, a1⟩, h1⟩, ht⟩, hb1, rfl⟩
+        simp only [Set.mem_preimage, Set.mem_singleton_iff, hπ, Prod.mk.injEq] at hb1
+        obtain ⟨rfl, rfl⟩ := hb1
+        apply hFsub
+        obtain ⟨-, y, hy, hyw⟩ := ht
+        exact ⟨y, hy, by simpa [window, hℓ] using hyw⟩
+      have henc : (π ⁻¹' {(b, n)}).encard ≤ F.card := by
+        rw [← hinj.encard_image, ← Set.encard_coe_eq_coe_finsetCard]
+        exact Set.encard_le_encard himg
+      calc ((π ⁻¹' {(b, n)}).encard : ℝ≥0∞) * ENNReal.ofReal (A (b, n))
+          ≤ ENNReal.ofReal ((ℓ + 2 * ((b : ℝ) ^ (n + 12))⁻¹) * (b : ℝ) ^ n + 1) *
+              ENNReal.ofReal (A (b, n)) := by
+            gcongr
+            calc ((π ⁻¹' {(b, n)}).encard : ℝ≥0∞) ≤ ((F.card : ℕ∞) : ℝ≥0∞) := by
+                  exact_mod_cast henc
+              _ = ENNReal.ofReal (F.card : ℝ) := by simp
+              _ ≤ _ := ENNReal.ofReal_le_ofReal hFcard
+        _ = φ (b, n) := by
+            simp only [hφ, if_pos hc]
+            rw [← ENNReal.ofReal_mul (by positivity)]
+            simp only [W12, hA, hℓ]; ring_nf
+    · have hempty : π ⁻¹' {(b, n)} = ∅ := by
+        refine Set.eq_empty_iff_forall_notMem.2 ?_
+        rintro ⟨⟨⟨b1, n1, a1⟩, h1⟩, ht⟩ hb1
+        simp only [Set.mem_preimage, Set.mem_singleton_iff, hπ, Prod.mk.injEq] at hb1
+        obtain ⟨rfl, rfl⟩ := hb1
+        apply hc
+        refine ⟨h1.1, h1.2, ?_⟩
+        have := ht.1; simp only [st12] at this; omega
+      rw [hempty]; simp
+  calc ∑' i, T.indicator f i = ∑' t : T, f t := (tsum_subtype T f).symm
+    _ = ∑' p, ∑' t : π ⁻¹' {p}, f t.1 := (ENNReal.tsum_fiberwise _ π).symm
+    _ ≤ ∑' p, φ p := ENNReal.tsum_le_tsum hfib
+    _ = ∑' b, ∑' n, φ (b, n) := by exact ENNReal.tsum_prod (f := fun b n => φ (b, n))
+    _ ≤ ∑' b : ℕ, ENNReal.ofReal (if 2 ≤ b then 3886 / (b : ℝ) ^ 3 else 0) := by
+        refine ENNReal.tsum_le_tsum fun b => ?_
+        by_cases hb : 2 ≤ b
+        · rw [if_pos hb]
+          refine le_trans (le_of_eq ?_) (tsum_W12_le k b hb)
+          refine tsum_congr fun n => ?_
+          simp only [hφ, hb, true_and]
+        · rw [if_neg hb, ENNReal.ofReal_zero]
+          refine le_of_eq (ENNReal.tsum_eq_zero.2 fun n => ?_)
+          simp only [hφ]; rw [if_neg (fun h => hb h.1)]
+    _ = ENNReal.ofReal (∑' b : ℕ, if 2 ≤ b then 3886 / (b : ℝ) ^ 3 else 0) :=
+        (ENNReal.ofReal_tsum_of_nonneg (fun b => by split_ifs <;> positivity)
+          tsum_base_cube_le.2).symm
+    _ ≤ ENNReal.ofReal 1050 :=
+        ENNReal.ofReal_le_ofReal (tsum_base_cube_le.1.trans (by norm_num))
+
+
+open NormalNumbers.UniformBad (dnear) in
+/-- **`12` is admissible**: some `ξ ∈ [1/4, 3/4]` has `‖bⁿξ‖ > b^{−12}` for all `b ≥ 2`, `n ≥ 0`. -/
+theorem admissible_twelve : Admissible 12 := by
+  have h8 : ((4096 : ℕ) : ℝ) ^ (1/4 : ℝ) = 8 := by
+    rw [show ((4096 : ℕ) : ℝ) = 8 ^ (4 : ℕ) by norm_num,
+      show (1/4 : ℝ) = ((4 : ℕ) : ℝ)⁻¹ by norm_num]
+    exact Real.pow_rpow_inv_natCast (by norm_num) (by norm_num)
+  have h3 : (1 / 81 : ℝ) ^ (1/4 : ℝ) = 1 / 3 := by
+    rw [show (1 / 81 : ℝ) = (1 / 3) ^ (4 : ℕ) by norm_num,
+      show (1/4 : ℝ) = ((4 : ℕ) : ℝ)⁻¹ by norm_num]
+    exact Real.pow_rpow_inv_natCast (by norm_num) (by norm_num)
+  obtain ⟨ξ, hξ, havoid, -⟩ := exists_avoid_powPot ctr12 rad12 st12 (K := 4096) (K' := 4096)
+    (by norm_num) (x₀ := 1 / 4) (ℓ₀ := 1 / 2) (α := 1/4) (ρ := 1 / 81) (g := 1050)
+    (by norm_num) (by norm_num) (by norm_num) rad12_pos (fun i => by simp [st12])
+    (by norm_num) (by rw [h8, h3]; norm_num)
+    (fun k x => (sum_children_powPot_le ctr12 rad12 st12 (by norm_num) (by norm_num)
+      (fun i => (rad12_pos i).le) k x).trans (newCost12_le k x))
+    (fun _ _ => True) trivial (fun k x _ => by simp)
+  refine ⟨ξ, fun b hb n => ?_⟩
+  have hbpos : (0 : ℝ) < b := by positivity
+  have hrpow : (b : ℝ) ^ (-(12 : ℝ)) = ((b : ℝ) ^ 12)⁻¹ := by
+    rw [Real.rpow_neg hbpos.le]; norm_cast
+  rw [hrpow]
+  have hsmall : ((b : ℝ) ^ 12)⁻¹ < 1 / 4 := by
+    have : (2 : ℝ) ^ 12 ≤ (b : ℝ) ^ 12 :=
+      pow_le_pow_left₀ (by norm_num) (by exact_mod_cast hb) 12
+    rw [inv_lt_comm₀ (by positivity) (by norm_num)]; norm_num at this ⊢; linarith
+  rcases Nat.eq_zero_or_pos n with rfl | hn
+  · rw [pow_zero, one_mul, dnear]
+    have : 1 / 4 ≤ |ξ - round ξ| := by
+      rcases le_or_gt (round ξ) 0 with hz | hz
+      · have : ((round ξ : ℤ) : ℝ) ≤ 0 := by exact_mod_cast hz
+        rw [abs_of_nonneg (by linarith [hξ.1])]; linarith [hξ.1]
+      · have : (1 : ℝ) ≤ ((round ξ : ℤ) : ℝ) := by exact_mod_cast hz
+        rw [abs_of_nonpos (by linarith [hξ.2])]; linarith [hξ.2]
+    linarith
+  have hbn : (0 : ℝ) < (b : ℝ) ^ n := pow_pos hbpos n
+  have h := havoid ⟨(b, n, round ((b : ℝ) ^ n * ξ)), hb, hn⟩
+  simp only [NormalNumbers.UniformBad.obstacle, ctr12, rad12, Set.mem_Icc, not_and_or,
+    not_le] at h
+  rw [dnear]
+  set m : ℝ := (round ((b : ℝ) ^ n * ξ) : ℝ)
+  have e1 : (b : ℝ) ^ n * (m / (b : ℝ) ^ n) = m := by field_simp
+  have e2 : (b : ℝ) ^ n * ((b : ℝ) ^ (n + 12))⁻¹ = ((b : ℝ) ^ 12)⁻¹ := by
+    rw [pow_add]; field_simp
+  have hinv : 0 < ((b : ℝ) ^ 12)⁻¹ := by positivity
+  rcases h with h | h
+  · have := mul_lt_mul_of_pos_left h hbn
+    rw [mul_sub, e1, e2] at this
+    rw [abs_sub_comm, abs_of_pos (by linarith)]
+    linarith
+  · have := mul_lt_mul_of_pos_left h hbn
+    rw [mul_add, e1, e2] at this
+    rw [abs_of_pos (by linarith)]
+    linarith
+
+/-- **`c⋆ ≤ 12`**, halving the repo's `24`. -/
+theorem cStar_le_twelve : cStar ≤ 12 :=
+  csInf_le bddBelow_admissible admissible_twelve
 
 end NormalNumbers.UniformBadThreshold

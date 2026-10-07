@@ -1,3 +1,16 @@
+## UniformBad threshold c⋆ (branch proof/uniformbad-threshold, 2026-10-07)
+* DONE `twelve_fifths_le_cStar` (25-window exact cover, bases 2,3,5,10; engine `not_admissible_of_cert` for any p/q).
+* DONE `cStar_le_twelve` (UniformBadTwelve.lean): power engine `exists_avoid_powPot` (α-power weights,
+  child-averaged new charges, Good-children predicate), K=4096, α=1/4, ρ=1/81, per-base 3886/b³.
+* OPEN crux `cStar_le_four`.  Probes (scratch, recorded here): every potential engine with base 2
+  charged stalls near c≈7 (cost of base 2 ≈ 4K·2^{−c} vs threshold); exact-base-2 + engine fails at
+  c=4 since the engine needs ≥60% good children but binary run-avoidance keeps ≤50% per step and
+  base 3 costs ~K/20.  Needed: bases ≤~16 handled exactly and jointly.  Lead: Newhouse thickness
+  τ_b ≈ b^c/2 gives Σ_b 1/(1+τ_b) ≈ 0.165 at c=4; a countable gap lemma (Falconer–Yavicoli 2022,
+  Thm 6, arXiv 2102.01186) might apply — exact statement unread (WebFetch blocked).
+  Next: (1) push engine to c=11 (margin 25% at K=1024, α=1/5); (2) state the thickness route as
+  def-Prop nodes; (3) prove a finite gap lemma for bases {2,3} hybrid.
+
 ## Cantor exact-exponent stretch (2026-10-05, KICKOFF-2026-10-05-stretch-poke) — DONE
 * **2026-10-06 lap 3:** all six leaves proved (`padic_sep`, `card_image_mod_HS_le`, `farey_sep`,
   `hit_mass_padic` via `grp`/`hit_classify`/`group_sep`, `hit_mass_farey`, `ev_expTest_mass_all`
