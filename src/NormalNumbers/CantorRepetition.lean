@@ -1893,6 +1893,32 @@ theorem repBound_some_le_cyc (M k : ℕ) (hk : Even k) (ξ : ℝ) (η₀ : ℤ) 
   have := (abs_le.1 h2).2
   nlinarith [Real.pi_pos]
 
+/-- **Window ratio.**  If `b ≤ 3^{s(ρ−1)}` and `H < 3^{sm}`, the ternary length of `H bᵐ` is
+`< ρ·sm`: the top `y` of `Y = h bᵐ` sits below `ρ v`, `v = sm` (hypothesis `hy` of
+`pair_classify_rep`). -/
+theorem log_mul_pow_lt {b s ρ H m : ℕ} (hρ : 1 ≤ ρ) (hb : b ≤ 3 ^ (s * (ρ - 1)))
+    (hH : H < 3 ^ (s * m)) (hsm : 0 < s * m) : Nat.log 3 (H * b ^ m) < ρ * (s * m) := by
+  rcases Nat.eq_zero_or_pos (H * b ^ m) with h0 | hpos
+  · rw [h0, Nat.log_zero_right]
+    positivity
+  refine Nat.log_lt_of_lt_pow hpos.ne' ?_
+  calc H * b ^ m < 3 ^ (s * m) * (3 ^ (s * (ρ - 1))) ^ m := by
+        have : 0 < b ^ m := Nat.pos_of_ne_zero (fun h => by simp [h] at hpos)
+        calc H * b ^ m < 3 ^ (s * m) * b ^ m := Nat.mul_lt_mul_of_pos_right hH this
+          _ ≤ _ := Nat.mul_le_mul_left _ (Nat.pow_le_pow_left hb m)
+    _ = 3 ^ (ρ * (s * m)) := by
+        rw [← pow_mul, ← pow_add]; congr 1
+        obtain ⟨r, rfl⟩ : ∃ r, ρ = r + 1 := ⟨ρ - 1, by omega⟩
+        simp only [Nat.add_sub_cancel]; ring
+
+/-- The ternary length of `H (3ˢt)ᵐ` is at least `sm` (hypothesis `hvy` of
+`pair_classify_rep`). -/
+theorem le_log_mul_pow {s t H m : ℕ} (hH : 1 ≤ H) (ht : 1 ≤ t) :
+    s * m ≤ Nat.log 3 (H * (3 ^ s * t) ^ m) := by
+  refine Nat.le_log_of_pow_le (by norm_num) ?_
+  calc 3 ^ (s * m) = 1 * (3 ^ s * 1) ^ m := by rw [pow_mul]; ring
+    _ ≤ H * (3 ^ s * t) ^ m := Nat.mul_le_mul hH (Nat.pow_le_pow_left (Nat.mul_le_mul_left _ ht) m)
+
 /-! ## Bases `3ˢt`, `t > 1`: the crux -/
 
 /-- **Assembly of the crux from its inputs (open; believed, 60%).**  For `b = 3ˢt`, `t > 1`:
