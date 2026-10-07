@@ -841,6 +841,59 @@ theorem srcWeight_block {k j : ℕ} (h1 : runStart k ≤ j) (h2 : j < 2 * runSta
   refine Finset.sum_congr rfl fun c hc => ?_
   rw [if_pos ((src_eq_iff_block h1 h2).2 ⟨c, hc, rfl⟩)]
 
+/-- **Block-coin product is a cyclic Riesz product.**  Proved: over the block of run `k`
+(`a = a_k`), `∏_j |cos(π ξ srcWeight j)| = ∏_{i<a} |cos(2π η 3ⁱ/(3^a − 1))|` with the real
+frequency `η = ξ(1 − 3^{-(k+1)a})/3^a` (coin `a + r` is cyclic place `a − 1 − r`). -/
+theorem prod_block_eq_cyc (k : ℕ) (ξ : ℝ) :
+    ∏ j ∈ Finset.Ico (runStart k) (2 * runStart k),
+        |Real.cos (Real.pi * (ξ * srcWeight j))| =
+      ∏ i ∈ Finset.range (runStart k), |Real.cos (2 * Real.pi *
+        ((ξ * (1 - (3 : ℝ) ^ (-(((k + 1) * runStart k : ℕ) : ℤ))) / 3 ^ runStart k) * 3 ^ i) /
+          (3 ^ runStart k - 1))| := by
+  set a := runStart k with ha
+  have hpos : 0 < a := (Nat.zero_le k).trans_lt (lt_runStart k)
+  rw [show 2 * a = a + a by ring, Finset.prod_Ico_eq_prod_range, Nat.add_sub_cancel,
+    ← Finset.prod_range_reflect]
+  refine Finset.prod_congr rfl fun r hr => ?_
+  rw [Finset.mem_range] at hr
+  rw [srcWeight_block (k := k) (j := a + (a - 1 - r)) (by omega) (by omega)]
+  congr 2
+  have h3a : (1 : ℝ) < 3 ^ a := one_lt_pow₀ (by norm_num) (by omega)
+  have hne : (3 : ℝ) ^ a - 1 ≠ 0 := by linarith
+  -- geometric sum
+  have hgeom : ∑ c ∈ Finset.range (k + 1), 2 / (3 : ℝ) ^ (a + (a - 1 - r) + c * a + 1) =
+      2 / 3 ^ (a + (a - 1 - r) + 1) * ∑ c ∈ Finset.range (k + 1), ((3 : ℝ) ^ a)⁻¹ ^ c := by
+    rw [Finset.mul_sum]
+    refine Finset.sum_congr rfl fun c _ => ?_
+    rw [inv_pow, ← pow_mul, show a + (a - 1 - r) + c * a + 1 = (a + (a - 1 - r) + 1) + a * c by ring,
+      pow_add]
+    field_simp
+  have hq : ((3 : ℝ) ^ a)⁻¹ ≠ 1 := by
+    intro h; have := inv_eq_one.1 h; linarith
+  rw [hgeom, geom_sum_eq hq]
+  have hz : (3 : ℝ) ^ (-(((k + 1) * a : ℕ) : ℤ)) = ((3 : ℝ) ^ a)⁻¹ ^ (k + 1) := by
+    rw [zpow_neg, zpow_natCast, inv_pow, ← pow_mul, mul_comm]
+  rw [hz]
+  have hi : (3 : ℝ) ^ (a - 1 - r) * 3 ^ (r + 1) = 3 ^ a := by rw [← pow_add]; congr 1; omega
+  have e1 : (3 : ℝ) ^ (a + (a - 1 - r) + 1) = 3 ^ a * 3 ^ (a - 1 - r) * 3 := by
+    rw [pow_succ, pow_add]
+  rw [e1]
+  have hX : (0 : ℝ) < 3 ^ r := by positivity
+  have hi' : (3 : ℝ) ^ (a - 1 - r) * 3 ^ r * 3 = 3 ^ a := by rw [← hi, pow_succ]; ring
+  have hP0 : (0 : ℝ) < 3 ^ (a - 1 - r) := by positivity
+  clear hi hgeom hz e1
+  generalize ((3 : ℝ) ^ a)⁻¹ ^ (k + 1) = Z
+  generalize (3 : ℝ) ^ a = Q at *
+  generalize (3 : ℝ) ^ (a - 1 - r) = P at *
+  generalize (3 : ℝ) ^ r = X at *
+  subst hi'
+  have hP : P ≠ 0 := hP0.ne'
+  have hX' : X ≠ 0 := hX.ne'
+  have h1 : (P * X * 3)⁻¹ - 1 ≠ 0 := sub_ne_zero.2 hq
+  have h2 : 1 - P * X * 3 ≠ 0 := by linarith
+  field_simp
+  ring
+
 /-- The cyclic Riesz product of an integer `η` modulo `3^A − 1` (its cyclic ternary digits). -/
 noncomputable def cycProd (A : ℕ) (η : ℤ) : ℝ :=
   ∏ i ∈ Finset.range A, |Real.cos (2 * Real.pi * ((η : ℝ) * 3 ^ i) / (3 ^ A - 1))|
