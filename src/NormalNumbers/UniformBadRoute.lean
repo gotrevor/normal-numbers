@@ -98,7 +98,12 @@ cells `T k`, a finite set) carried by the jointly-good set of the bases in `S`:
   `[u, v]` carry weight at most `C · ((v − u)/|q| + β^{j−k})^s · w(q)`;
 * every point lying in a cell of every level is good in every base of `S`.
 
-Believed (with `S = {2, 3, 5, 6, 7}`, `c = 4`, `s = 4/5`, `C = 3/2`, some `β ≤ 2^{−9}`): 30%.  The
+Believed (with `S = {2, 3, 5, 6, 7}`, `c = 4`, `s = 4/5`, `C = 3/2`, some `β ≤ 2^{−9}`): 15%.
+Probe 2026-10-07 (`scripts/cstar_models/fr.js`, `fr2.js`, depth 20): the survivor counting measure
+has cell-relative constant `C ≈ 2.2` for base 2 alone (`s = 0.879`) but `C ≈ 9` once base 3 is
+added (`s = 0.8`), from cells mostly eaten by one base-3 window; splitting cells at the windows
+makes it worse (`≈ 30`, nearly dead components).  So a core with `C ≤ 3/2` must prune such cells,
+and worst-case pruning (`t23.py`) keeps only `≈ 20%` of the children: neither works as is.  The
 base-2 part alone is the binary run-free tree (no four equal consecutive digits) with Parry weights,
 `s = log₂ 1.8393 ≈ 0.879`; the open part is the joint control of `3, 5, 6, 7` against it, whose
 forbidden windows have relative size `≤ 2·3^{−4} ≈ 0.025`. -/

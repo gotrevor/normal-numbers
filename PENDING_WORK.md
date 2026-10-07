@@ -32,6 +32,13 @@
   (2) attack `SmallBaseTreeCore` for S={2,3}: binary run-free cells U inside run-free ternary cells
   (ternary depth matched to binary depth); bound the worst-case kill by base-3 bad cells per step;
   (3) only then add 5,6,7.
+  **Lap 2b probes:** worst-case avoidance of base 3 inside the binary run-free tree keeps ≤ 21% of
+  children (t23.py) ⇒ dimension ~0.5, useless; survivor counting measure has cell-relative
+  Frostman C ≈ 9 with base 3 (fr.js), ≈ 30 on gap-split components (fr2.js).  SmallBaseTreeCore at
+  C=1.5 is doubtful (15%).  Promising fix: normalise the potential by the local density
+  h(Q)=μ(Q)/|Q|^s (Perron-style).  The carried factor is then exactly β^{s−α}·(children met), with
+  no C; the cost moves to new charges/h(child) and needs an upper bound h ≤ H.  Next: model the
+  h-normalised engine on the depth-20 survivor tree (track min h along the greedy path).
 
 ## Cantor exact-exponent stretch (2026-10-05, KICKOFF-2026-10-05-stretch-poke) — DONE
 * **2026-10-06 lap 3:** all six leaves proved (`padic_sep`, `card_image_mod_HS_le`, `farey_sep`,
