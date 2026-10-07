@@ -41,6 +41,7 @@ import NormalNumbers.ComputableReal
 import NormalNumbers.KurtzRandom
 import NormalNumbers.MahlerProductBlock
 import NormalNumbers.UniformBadThreshold
+import NormalNumbers.UniformBadJoint
 
 /-!
 # Barrier audit: every open crux names a sibling it must fail on
@@ -75,6 +76,10 @@ def cruxLinks : List CruxLink := [
    [``uniformBad_base_two],
    "the construction must keep the small bases jointly away from the rationals; the base-2 \
     barrier shows exponent ≤ log₂ 3 is impossible, so any mechanism must use c > log₂ 3 per base"⟩,
+  ⟨``UniformBadThreshold.Count.jointCoreSubEigen_four,
+   [``uniformBad_base_two],
+   "the {2,3} core certificate must respect the single-base floor: base 2 alone at exponent \
+    ≤ log₂ 3 has no survivors, so the certificate's growth comes from c = 4 > log₂ 3"⟩,
   ⟨``LevinSparse.exists_absNormal_base2_fast,
    [``stoneham_two_not_six, ``cantorLiouville_three_dvd],
    "base-2 discrepancy o(N^{-1/2}) does not reach bases 2^a·m: stoneham23 is base-2 normal and \

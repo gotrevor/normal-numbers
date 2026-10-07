@@ -1,4 +1,24 @@
 ## UniformBad threshold c⋆ (branch proof/uniformbad-threshold, 2026-10-07)
+* **2026-10-07 lap 4 (crux probe: exact {2,3} core).**  New `UniformBadJoint.lean`: containment
+  kills `winBad c S` (cell inside a closed window of some b ∈ S), weighted certificate `SubEigen`,
+  proved core lemma `exists_good_of_subEigen` (axiom-clean: certificate ⇒ point with
+  ‖bⁿξ‖ ≥ b^{−c} for all b ∈ S).  Crux node `jointCoreSubEigen_four` (SubEigen (winBad 4 {2,3})
+  (33/20), sorry, 80%).  Probe `scripts/cstar_models/abs23.js` (box abstraction: binary run state,
+  ternary trailing runs of the 1–2 ternary units met, offset u, length ρ∈[1/3,1) in ternary
+  units, worst case over boxes): ratio 1.539 (27 u-bins), **1.669** (81 bins, 8+8 ρ-bins),
+  ≈1.65–1.73 rising (243).  c=5 version: 1.77 at 81 bins.
+  **New obstruction (moved crux):** bases b ≥ 5 charged by counting cost, at c=4 and growth
+  g = 1.5/1.6/1.7, 0.73/0.32/0.17 per level (b=5,6,7 dominate: .11/.07/.04 at g=1.6) — even with
+  uniform weights this exceeds the budget Λ−g; with the certificate's weights (10% zero, any
+  threshold δ ≥ 0.2 collapses it) it is hopeless.  At c=5 counted b≥5 cost .08 at g=1.6 but needs
+  δ ≥ 0.5: also fails.  Probe `/tmp`-style recomputation in `bb2.py` logic (per-order resolution
+  level, m = ⌊2r2^L⌋+2, best lag) — the `+2` boundary cells and (2/g)^lag dominate.  Base-B trees
+  (B = 3..32, all bases counted) are worse (the boundary term costs ≥ 2 per event).
+  **Next:** (1) b = 5, 6, 7 must be exact or charged by a regular measure: try adding base 5 as a
+  third side automaton in abs23.js (state blow-up ×~70·N₅·M₅ — test with coarse bins), or a
+  weight-regularised certificate (cap w(child)/w(parent)) and a Frostman-charged engine for b ≥ 5
+  (ideal cost Σ_b (1/log₂b)·C(4b^{−4})^{0.74} ≈ 0.022·C).  (2) Rational transcription of the
+  abs23 certificate (needed in every route).
 * **2026-10-07 lap 3 (review + bank).**  DONE `cStar_le_six` (`UniformBadCount.lean`, axiom-clean):
   Rosenfeld-style counting engine `Count.growth` (kills charged to alive ancestors; no Frostman
   constant), base 2 exact via `runBad` (lag 6, multiplicity 2), every `b ≥ 3` charged at lag

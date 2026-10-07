@@ -975,6 +975,7 @@ import NormalNumbers.UniformBadPowerEngine
 import NormalNumbers.UniformBadTwelve
 import NormalNumbers.UniformBadRoute
 import NormalNumbers.UniformBadCount
+import NormalNumbers.UniformBadJoint
 import NormalNumbers.LinearFormsScales
 import NormalNumbers.LinearFormsScalesStretch
 import NormalNumbers.Hertling
