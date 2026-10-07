@@ -3289,6 +3289,31 @@ theorem repPairArith_of_power {b : ℕ} (hP : RepPairPower b) : RepPairArith b :
     rw [mul_assoc, ← Real.rpow_natCast (sched j : ℝ) 2, ← Real.rpow_add hN]
     norm_num; ring_nf; simp
 
+
+/-- **Sign and 3-part reduction.**  `RepPairPower b` follows from its case `h = 3ᵉh' > 0`,
+`3 ∤ h'`, by `repBound_neg`. -/
+theorem repPairPower_of_pos {b : ℕ}
+    (hP : ∀ e h' : ℕ, 1 ≤ h' → ¬ 3 ∣ h' → ∃ C δ : ℝ, 0 < δ ∧ ∀ N : ℕ, 1 ≤ N →
+      ∃ (M : ℕ) (κ : ℕ → ℕ → Option ℕ), ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N,
+        repBound M (κ n m) (((3 ^ e * h' : ℕ) : ℝ) * ((b : ℝ) ^ n - (b : ℝ) ^ m)) ≤
+          C * (N : ℝ) ^ (2 - δ)) :
+    RepPairPower b := by
+  intro h hh
+  obtain ⟨e, h', hnd, he⟩ := Nat.exists_eq_pow_mul_and_not_dvd (Int.natAbs_ne_zero.2 hh) 3
+    (by norm_num)
+  have h1 : 1 ≤ h' := Nat.pos_of_ne_zero (by rintro rfl; simp at hnd)
+  obtain ⟨C, δ, hδ, hC⟩ := hP e h' h1 hnd
+  refine ⟨C, δ, hδ, fun N hN => ?_⟩
+  obtain ⟨M, κ, hκ⟩ := hC N hN
+  refine ⟨M, κ, le_of_eq_of_le ?_ hκ⟩
+  have habs : ((3 ^ e * h' : ℕ) : ℝ) = |(h : ℝ)| := by
+    rw [← he, Nat.cast_natAbs, Int.cast_abs]
+  refine Finset.sum_congr rfl fun n _ => Finset.sum_congr rfl fun m _ => ?_
+  rw [habs]
+  rcases abs_choice (h : ℝ) with ha | ha <;> rw [ha]
+  rw [show -(h : ℝ) * ((b : ℝ) ^ n - (b : ℝ) ^ m) = -((h : ℝ) * ((b : ℝ) ^ n - (b : ℝ) ^ m)) by ring,
+    repBound_neg]
+
 /-- **Per-`N` assembly (open; believed, 60%; the remaining content of `repPairArith_of_inputs`).**
 Plan: `W = K = ⌈ε log₃ N⌉`; `κ` per `pair_classify_rep` (hypotheses: `le_log_mul_pow`,
 `log_mul_pow_lt`, `le_log_pair`, `log_pair_le_log`, `hsep_of`); class sums `sum_class_low_le`,
