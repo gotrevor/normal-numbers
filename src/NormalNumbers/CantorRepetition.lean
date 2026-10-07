@@ -1371,6 +1371,10 @@ def ExpOrderPeriods (t : ℕ) : Prop :=
 * otherwise the window lies in run `k` up to `K` places: `κ = some k`; by `repBound_some_add`
   only `ξ mod 3^{(k+2)a}` matters and `norm_charFun_repReal_le_cyc_int` reduces to
   `cycProd a (tᵐ(b^d − 1))` (`cycProd_pair`), summed by `copyZoneDecay_of`.
+* top of `ξ` within `K` places above a run end (band): bound the term by `1`; these pairs have
+  `max(n,m)` in a band of width `K/log₃ b`, so contribute `O(N K)`, negligible for `K ≍ log N`.
+  (Needed: in the band, `repBound_some_add` reduces to `X mod 3^{E−v}`, not to `cycProd` of
+  `tᵐ(b^d−1)`, and the free coins below the top are run positions.)
 The copy-zone ranges match: in run `k`, `N ≈ (k+2)a/s ≤ a³` since `a_k` grows like `2^k k!`. -/
 theorem repPairArith_of_inputs {s t : ℕ} (hs : 1 ≤ s) (ht : 2 ≤ t) (h3t : ¬ 3 ∣ t)
     (hB : CantorExactExponentProfile.Literature.BakerLogDiscrepancy) (hT : TOrbitCyclicDecay t)
