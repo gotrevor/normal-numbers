@@ -3618,6 +3618,57 @@ theorem copyTotal_le {s t e h' : ℕ} (hs : 1 ≤ s) (hh : 1 ≤ h') (hT : TOrbi
     le_mul_of_one_le_right hS6 (Real.one_le_rpow hN1 (by linarith))
   nlinarith
 
+/-- **Bad-pair term, power form.**  `N(c₀ + J + 8(3J+1)(log₄(aN + c + 2J) + 1)) = O(N^{3/2})`,
+`J = ⌊log₃N/q⌋ + 1`. -/
+theorem badTerm_le {q : ℕ} (hq : 1 ≤ q) (c₀ a c : ℕ) :
+    ∃ C : ℝ, ∀ N : ℕ, 1 ≤ N →
+      ((N * (c₀ + (Nat.log 3 N / q + 1) + 4 * (2 * ((Nat.log 3 N / q + 1) +
+        2 * (Nat.log 3 N / q + 1) + 1) * (Nat.log 4 (a * N + c + (Nat.log 3 N / q + 1) +
+          (Nat.log 3 N / q + 1)) + 1))) : ℕ) : ℝ) ≤ C * (N : ℝ) ^ ((3 : ℝ) / 2) := by
+  obtain ⟨A1, hA1, h1⟩ := natLog_lin_le_rpow (b := 3) (by norm_num) (ε := 1 / 4) (by norm_num) 1 0
+  obtain ⟨A2, hA2, h2⟩ := natLog_lin_le_rpow (b := 4) (by norm_num) (ε := 1 / 4) (by norm_num)
+    (a + 4) c
+  refine ⟨c₀ + A1 + 32 * A1 * A2, fun N hN => ?_⟩
+  set j := Nat.log 3 N / q
+  have hN1 : (1 : ℝ) ≤ N := by exact_mod_cast hN
+  have hjN : j ≤ Nat.log 3 N := Nat.div_le_self _ _
+  have hlN : Nat.log 3 N < N := Nat.log_lt_self 3 (by omega)
+  have hJ : ((j + 1 : ℕ) : ℝ) ≤ A1 * (N : ℝ) ^ ((1 : ℝ) / 4) := by
+    have := h1 N hN; simp only [one_mul, add_zero] at this
+    have : ((j + 1 : ℕ) : ℝ) ≤ (Nat.log 3 N : ℝ) + 2 := by push_cast; exact_mod_cast (by omega : j + 1 ≤ Nat.log 3 N + 2)
+    linarith
+  have hLg : ((Nat.log 4 (a * N + c + (j + 1) + (j + 1)) + 1 : ℕ) : ℝ) ≤ A2 * (N : ℝ) ^ ((1 : ℝ) / 4) := by
+    have hmono : Nat.log 4 (a * N + c + (j + 1) + (j + 1)) ≤ Nat.log 4 ((a + 4) * N + c) :=
+      Nat.log_mono_right (by nlinarith)
+    have := h2 N hN
+    have : ((Nat.log 4 (a * N + c + (j + 1) + (j + 1)) + 1 : ℕ) : ℝ) ≤ (Nat.log 4 ((a + 4) * N + c) : ℝ) + 2 := by
+      push_cast; exact_mod_cast (by omega)
+    linarith
+  have hq4 : (1 : ℝ) ≤ (N : ℝ) ^ ((1 : ℝ) / 4) := Real.one_le_rpow hN1 (by norm_num)
+  have hq2 : (N : ℝ) ^ ((1 : ℝ) / 4) * (N : ℝ) ^ ((1 : ℝ) / 4) = (N : ℝ) ^ ((1 : ℝ) / 2) := by
+    rw [rpow_mul_rpow_nat hN]; norm_num
+  have e32 : (N : ℝ) * (N : ℝ) ^ ((1 : ℝ) / 2) = (N : ℝ) ^ ((3 : ℝ) / 2) := by
+    rw [nat_mul_rpow hN]; norm_num
+  set u := (N : ℝ) ^ ((1 : ℝ) / 4)
+  set J : ℝ := ((j + 1 : ℕ) : ℝ)
+  set G : ℝ := ((Nat.log 4 (a * N + c + (j + 1) + (j + 1)) + 1 : ℕ) : ℝ)
+  have hJ0 : 0 ≤ J := by positivity
+  have hG0 : 0 ≤ G := by positivity
+  have hcast : ((N * (c₀ + (j + 1) + 4 * (2 * ((j + 1) + 2 * (j + 1) + 1) *
+      (Nat.log 4 (a * N + c + (j + 1) + (j + 1)) + 1))) : ℕ) : ℝ) =
+      N * (c₀ + J + 8 * (3 * J + 1) * G) := by simp only [J, G]; push_cast; ring
+  rw [hcast, ← e32, ← hq2]
+  have hc0 : (0 : ℝ) ≤ c₀ := by positivity
+  have k1 : J ≤ A1 * (u * u) := by nlinarith
+  have hA1u : 2 ≤ A1 * u := by
+    have := h1 N hN; have := (Nat.cast_nonneg (Nat.log 3 (1 * N + 0)) : (0 : ℝ) ≤ _); linarith
+  have k2 : (3 * J + 1) * G ≤ (4 * A1 * u) * (A2 * u) := by
+    apply mul_le_mul _ hLg hG0 (by positivity); nlinarith
+  have k3 : (c₀ : ℝ) ≤ c₀ * (u * u) := le_mul_of_one_le_right hc0 (by nlinarith)
+  have hN0 : (0 : ℝ) ≤ N := by positivity
+  have : c₀ + J + 8 * (3 * J + 1) * G ≤ (c₀ + A1 + 32 * A1 * A2) * (u * u) := by nlinarith
+  nlinarith
+
 theorem log_le_posBound {s t e h' N y : ℕ} (ht : 1 ≤ t)
     (hy : y ≤ 3 ^ e * h' * (3 ^ s * t) ^ (2 * N)) :
     Nat.log 3 y ≤ 3 ^ e * h' + 2 * (s + t) * N + e := by
