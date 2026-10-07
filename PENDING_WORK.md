@@ -3292,3 +3292,4 @@ formalize the copy-zone pair term: the block-coin Riesz product as a function of
   isolate the wraparound pairs as the residual leaf.
 - rep lap 1: PROVED `copyPairSum_eq_Bf` (copy zone = all-free Bf at ξ=(bⁿ−bᵐ)3^A/(3^A−1)). Next: no-wrap pairs via Bf_le_Hf/low-digit count.
 - rep lap 1: PROVED `Bf_lip`, `copyTerm_le` (twist costs π|η|/(3^A−1)). Next: sum over no-wrap pairs (|bⁿ−bᵐ| ≤ 3^{A/2}, i.e. n ≤ A log_b3/2) using secondMoment chain's pair count; wrap pairs = residual leaf.
+- rep lap 1: PROVED `cycProd` with `cycProd_add` (mod 3^A−1) and `cycProd_mul_three` (rotation). So copy-zone pair term depends only on tᵐ(b^d−1) mod 3^A−1: the 3ˢ part is a rotation. Wrap pairs = digits of tᵐ mod 3^A−1 (middle-digit wall, cf. ThreeAdicWindowAvg lap 10). Next: state that residual as node, wire CopyZoneDecay from no-wrap+residual.

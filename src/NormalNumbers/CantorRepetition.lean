@@ -638,6 +638,53 @@ theorem copyTerm_le (A : ℕ) (hA : 1 ≤ A) (η : ℝ) :
   rw [e, abs_div, abs_of_pos (by linarith : (0 : ℝ) < 3 ^ A - 1), ← mul_div_assoc] at this
   linarith [(abs_le.1 this).2]
 
+/-- The cyclic Riesz product of an integer `η` modulo `3^A − 1` (its cyclic ternary digits). -/
+noncomputable def cycProd (A : ℕ) (η : ℤ) : ℝ :=
+  ∏ i ∈ Finset.range A, |Real.cos (2 * Real.pi * ((η : ℝ) * 3 ^ i) / (3 ^ A - 1))|
+
+theorem cycProd_add (A : ℕ) (η j : ℤ) : cycProd A (η + j * (3 ^ A - 1)) = cycProd A η := by
+  unfold cycProd
+  refine Finset.prod_congr rfl fun i _ => ?_
+  have hq : (3 : ℝ) ^ A - 1 ≠ 0 ∨ (3 : ℝ) ^ A - 1 = 0 := (em _).symm.imp id id |>.symm.elim
+    (fun h => Or.inr h) (fun h => Or.inl h)
+  rcases hq with hq | hq
+  · have : 2 * Real.pi * (((η + j * (3 ^ A - 1) : ℤ) : ℝ) * 3 ^ i) / (3 ^ A - 1) =
+        2 * Real.pi * ((η : ℝ) * 3 ^ i) / (3 ^ A - 1) + ((j * 3 ^ i : ℤ) : ℝ) * (2 * Real.pi) := by
+      push_cast; field_simp; try ring
+    rw [this, Real.cos_add_int_mul_two_pi]
+  · simp [hq]
+
+/-- **Rotation invariance**: multiplying by 3 cycles the digits.  Proved (`3^A ≡ 1`). -/
+theorem cycProd_mul_three (A : ℕ) (η : ℤ) : cycProd A (3 * η) = cycProd A η := by
+  rcases Nat.eq_zero_or_pos A with h0 | hA
+  · subst h0; simp [cycProd]
+  have hq : (3 : ℝ) ^ A - 1 ≠ 0 := by
+    have : (1 : ℝ) < 3 ^ A := one_lt_pow₀ (by norm_num) (by omega)
+    linarith
+  unfold cycProd
+  have hs : ∀ i ∈ Finset.range A, |Real.cos (2 * Real.pi * (((3 * η : ℤ) : ℝ) * 3 ^ i) / (3 ^ A - 1))| =
+      |Real.cos (2 * Real.pi * ((η : ℝ) * 3 ^ ((i + 1) % A)) / (3 ^ A - 1))| := by
+    intro i hi
+    rw [Finset.mem_range] at hi
+    rcases Nat.lt_or_ge (i + 1) A with h | h
+    · rw [Nat.mod_eq_of_lt h]; push_cast; congr 3; ring
+    · have hiA : i + 1 = A := by omega
+      rw [hiA, Nat.mod_self, pow_zero]
+      have : 2 * Real.pi * (((3 * η : ℤ) : ℝ) * 3 ^ i) / (3 ^ A - 1) =
+          2 * Real.pi * ((η : ℝ) * 1) / (3 ^ A - 1) + (η : ℝ) * (2 * Real.pi) := by
+        have k : ((3 * η : ℤ) : ℝ) * 3 ^ i = (η : ℝ) * 1 + η * (3 ^ A - 1) := by
+          rw [← hiA, pow_succ]; push_cast; ring
+        rw [k]; field_simp; try ring
+      rw [this, Real.cos_add_int_mul_two_pi]
+  rw [Finset.prod_congr rfl hs]
+  obtain ⟨A', rfl⟩ : ∃ A', A = A' + 1 := ⟨A - 1, by omega⟩
+  set f : ℕ → ℝ := fun j => |Real.cos (2 * Real.pi * ((η : ℝ) * 3 ^ j) / (3 ^ (A' + 1) - 1))|
+  change ∏ i ∈ Finset.range (A' + 1), f ((i + 1) % (A' + 1)) = ∏ i ∈ Finset.range (A' + 1), f i
+  rw [Finset.prod_range_succ, Finset.prod_range_succ', Nat.mod_self]
+  congr 1
+  exact Finset.prod_congr rfl fun i hi => by
+    rw [Nat.mod_eq_of_lt (by simp at hi; omega)]
+
 /-- **Copy-zone decay (open conjecture, the copy-zone leaf of `ae_isNormal_rep_of_three_dvd`).**
 For `b` not a power of 3 there are `C, δ > 0` with `copyPairSum b A N ≤ C N^{2−δ}` for
 `A ≤ N ≤ A^{3}` (runs of polynomially many copies).  Evidence (`scripts/rep_copyzone.py`,
