@@ -679,6 +679,40 @@ theorem integral_ee_flip (j : ℕ) (a : ℝ) (Y : (ℕ → Bool) → ℝ) (hY : 
   rw [integral_const_mul, ← hflip] at hsum
   linear_combination -hsum / 2
 
+/-- **Peeling a finite set of coins.**  Proved (induction with `integral_ee_flip`). -/
+theorem norm_integral_ee_le_prod (S : Finset ℕ) (w : ℕ → ℝ) : ∀ (Y : (ℕ → Bool) → ℝ),
+    Measurable Y → (∀ j ∈ S, ∀ ω, Y (LevinSparse.flipAt j ω) = Y ω) →
+    ‖∫ ω, ee (∑ j ∈ S, w j * (if ω j then 1 else 0) + Y ω) ∂coinMeasure‖ ≤
+      ∏ j ∈ S, |Real.cos (Real.pi * w j)| := by
+  induction S using Finset.induction_on with
+  | empty =>
+    intro Y _ _
+    simp only [Finset.sum_empty, zero_add, Finset.prod_empty]
+    exact (norm_integral_le_of_norm_le_const (C := 1)
+      (Eventually.of_forall fun ω => (norm_ee _).le)).trans (by simp)
+  | insert a S ha ih =>
+    intro Y hY hinv
+    have hfl : ∀ ω, (LevinSparse.flipAt a ω) a = !ω a := fun ω => by simp [LevinSparse.flipAt]
+    have hfl' : ∀ ω i, i ≠ a → (LevinSparse.flipAt a ω) i = ω i := fun ω i h => by
+      simp [LevinSparse.flipAt, Function.update_of_ne h]
+    set Y' : (ℕ → Bool) → ℝ := fun ω => ∑ j ∈ S, w j * (if ω j then 1 else 0) + Y ω
+    have hY' : Measurable Y' := (Finset.measurable_sum _ fun j _ =>
+      ((measurable_of_countable (fun b : Bool => if b then (1 : ℝ) else 0)).comp
+        (measurable_pi_apply j)).const_mul _).add hY
+    have hinv' : ∀ ω, Y' (LevinSparse.flipAt a ω) = Y' ω := by
+      intro ω
+      simp only [Y', hinv a (Finset.mem_insert_self a S)]
+      congr 1
+      exact Finset.sum_congr rfl fun j hj => by rw [hfl' ω j (fun h => ha (h ▸ hj))]
+    have e := integral_ee_flip a (w a) Y' hY' hinv'
+    have : ∀ ω, ∑ j ∈ insert a S, w j * (if ω j then 1 else 0) + Y ω =
+        w a * (if ω a then 1 else 0) + Y' ω := fun ω => by
+      rw [Finset.sum_insert ha]; simp only [Y']; ring
+    simp_rw [this]
+    rw [e, norm_mul, Finset.prod_insert ha, norm_one_add_ee_div_two]
+    refine mul_le_mul_of_nonneg_left ?_ (abs_nonneg _)
+    exact ih Y hY fun j hj ω => hinv j (Finset.mem_insert_of_mem hj) ω
+
 /-- The cyclic Riesz product of an integer `η` modulo `3^A − 1` (its cyclic ternary digits). -/
 noncomputable def cycProd (A : ℕ) (η : ℤ) : ℝ :=
   ∏ i ∈ Finset.range A, |Real.cos (2 * Real.pi * ((η : ℝ) * 3 ^ i) / (3 ^ A - 1))|
