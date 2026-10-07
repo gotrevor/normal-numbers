@@ -71,8 +71,10 @@ def ExponentCantorFullProfile (μ₀ : ℚ) : Prop :=
 /-! ## The construction: copies on the forced runs
 
 We keep the free positions of `CantorLiouville` (`isFree`; runs `[a_k, (k+2)a_k)`,
-`a_k = runStart k`).  On run `k` the digits are no longer zero: the block `[a_k, 2a_k)` carries
-fresh coins, and the rest of the run repeats that block `k` more times (period `a_k`).  So
+`a_k = runStart k`).  On an even run `k` the digits are no longer zero: the block `[a_k, 2a_k)`
+carries fresh coins, and the rest of the run repeats that block `k` more times (period `a_k`).
+Odd runs carry fresh coins throughout (2026-10-07 redesign: gaps between copy runs then grow
+relative to the runs).  So
 `x ≈ p/q` with `q = 3^{a_k}(3^{a_k} − 1)`, error `≤ 3^{-(k+2)a_k}`: exponent `≥ (k+2)/2`. -/
 
 open CantorLiouville CantorLiouvilleAll DecayAeNormal ExplicitSquare CantorSelfSimilar
@@ -80,10 +82,13 @@ open CantorLiouville CantorLiouvilleAll DecayAeNormal ExplicitSquare CantorSelfS
 /-- The run containing a forced position (the largest `k ≤ i` with `a_k ≤ i`). -/
 noncomputable def runIdx (i : ℕ) : ℕ := Nat.findGreatest (fun k => runStart k ≤ i) i
 
-/-- The coin read at position `i`: itself if free, else the block position
-`a_k + (i − a_k) mod a_k` of its run. -/
+/-- The coin read at position `i`: itself if free or in an odd run, else (even run `k`) the
+block position `a_k + (i − a_k) mod a_k`.  Only even runs copy, so the gap between copy runs
+`k` and `k + 2` has ratio `a_{k+2}/E_k = 4(k+3) → ∞` (every frequency window of a fixed base
+eventually fits: see `repPairArith_of_inputs`). -/
 noncomputable def src (i : ℕ) : ℕ :=
-  if isFree i then i else runStart (runIdx i) + (i - runStart (runIdx i)) % runStart (runIdx i)
+  if isFree i then i else if Even (runIdx i) then
+    runStart (runIdx i) + (i - runStart (runIdx i)) % runStart (runIdx i) else i
 
 /-- **The repetition point** coded by the coins `ω`. -/
 noncomputable def repReal (ω : ℕ → Bool) : ℝ := pt (fun _ => true) (fun i => ω (src i))
@@ -108,17 +113,25 @@ theorem exists_run_of_not_free {i : ℕ} (h : isFree i = false) :
   have := isFree_of_not_mem_run (i := i) fun k ⟨h1, h2⟩ => absurd h2 (not_lt.2 (hc k h1))
   rw [h] at this; exact absurd this (by decide)
 
-theorem src_of_mem_run {k i : ℕ} (h1 : runStart k ≤ i) (h2 : i < (k + 2) * runStart k) :
+theorem src_of_mem_run {k i : ℕ} (hk : Even k) (h1 : runStart k ≤ i)
+    (h2 : i < (k + 2) * runStart k) :
     src i = runStart k + (i - runStart k) % runStart k := by
   have hf : isFree i = false := by simp [isFree, isForced_of_mem_run h1 h2]
-  simp [src, hf, runIdx_eq h1 h2]
+  simp [src, hf, runIdx_eq h1 h2, hk]
+
+theorem src_of_mem_odd_run {k i : ℕ} (hk : ¬ Even k) (h1 : runStart k ≤ i)
+    (h2 : i < (k + 2) * runStart k) : src i = i := by
+  have hf : isFree i = false := by simp [isFree, isForced_of_mem_run h1 h2]
+  simp [src, hf, runIdx_eq h1 h2, hk]
 
 theorem src_of_free {i : ℕ} (h : isFree i = true) : src i = i := by simp [src, h]
 
 /-- Forced positions read forced positions (the block lies inside its run). -/
 theorem isFree_src_of_not_free {i : ℕ} (h : isFree i = false) : isFree (src i) = false := by
   obtain ⟨k, h1, h2⟩ := exists_run_of_not_free h
-  rw [src_of_mem_run h1 h2]
+  by_cases hk : Even k
+  swap; · rw [src_of_mem_odd_run hk h1 h2]; exact h
+  rw [src_of_mem_run hk h1 h2]
   have hpos : 0 < runStart k := (Nat.zero_le k).trans_lt (lt_runStart k)
   have := Nat.mod_lt (i - runStart k) hpos
   have hf := isForced_of_mem_run (k := k) (i := runStart k + (i - runStart k) % runStart k)
@@ -503,7 +516,7 @@ theorem liouville_repReal (ω : ℕ → Bool) (hirr : Irrational (repReal ω)) :
   set ω'' : ℕ → Bool := fun i => if i < A then ω' i else ω' (A + (i - A) % A) with hω''
   have hblk : ∀ r, r < A → src (A + r) = A + r := by
     intro r hr
-    rw [src_of_mem_run (k := 2 * n) (by omega) (by nlinarith), Nat.add_sub_cancel_left,
+    rw [src_of_mem_run (k := 2 * n) (even_two_mul n) (by omega) (by nlinarith), Nat.add_sub_cancel_left,
       Nat.mod_eq_of_lt hr]
   have hagree : ∀ i < T, ω'' i = ω' i := by
     intro i hi
@@ -511,7 +524,7 @@ theorem liouville_repReal (ω : ℕ → Bool) (hirr : Irrational (repReal ω)) :
     split_ifs with h
     · rfl
     · simp only [hω']
-      rw [hblk _ (Nat.mod_lt _ (by omega)), src_of_mem_run (k := 2 * n) (by omega) (by omega)]
+      rw [hblk _ (Nat.mod_lt _ (by omega)), src_of_mem_run (k := 2 * n) (even_two_mul n) (by omega) (by omega)]
   have hper : ∀ m, ω'' (m + 2 * A) = ω'' (m + A) := by
     intro m
     simp only [hω'', show ¬ m + 2 * A < A by omega, show ¬ m + A < A by omega, if_false]
@@ -788,7 +801,7 @@ theorem norm_charFun_repReal_le (S : Finset ℕ) (ξ : ℝ) :
 
 /-- **Who reads a block coin.**  Proved: for `j` in the block `[a_k, 2a_k)` of run `k`, the
 positions reading coin `j` are exactly its copies `j + c·a_k`, `c ≤ k`. -/
-theorem src_eq_iff_block {k j i : ℕ} (h1 : runStart k ≤ j) (h2 : j < 2 * runStart k) :
+theorem src_eq_iff_block {k j i : ℕ} (hk : Even k) (h1 : runStart k ≤ j) (h2 : j < 2 * runStart k) :
     src i = j ↔ ∃ c ∈ Finset.range (k + 1), i = j + c * runStart k := by
   have hj2 : j < (k + 2) * runStart k := by nlinarith
   have hpos : 0 < runStart k := (Nat.zero_le k).trans_lt (lt_runStart k)
@@ -801,12 +814,18 @@ theorem src_eq_iff_block {k j i : ℕ} (h1 : runStart k ≤ j) (h2 : j < 2 * run
       simp [isFree, this] at hf
     · obtain ⟨k', h1', h2'⟩ := exists_run_of_not_free (by simpa using hf)
       have hpos' : 0 < runStart k' := (Nat.zero_le k').trans_lt (lt_runStart k')
-      rw [src_of_mem_run h1' h2'] at h
+      by_cases hk' : Even k'
+      swap
+      · rw [src_of_mem_odd_run hk' h1' h2'] at h
+        subst h
+        have := (runIdx_eq h1' h2').symm.trans (runIdx_eq h1 hj2)
+        exact absurd (this ▸ hk) hk'
+      rw [src_of_mem_run hk' h1' h2'] at h
       have hm := Nat.mod_lt (i - runStart k') hpos'
-      have hk : k' = k := by
+      have hkk : k' = k := by
         have e1 := runIdx_eq (k := k') (i := j) (by omega) (by nlinarith)
         rw [runIdx_eq h1 hj2] at e1; exact e1.symm
-      subst hk
+      subst hkk
       refine ⟨(i - runStart k') / runStart k', Finset.mem_range.2 ?_, ?_⟩
       · have : (i - runStart k') / runStart k' < k' + 1 := by
           rw [Nat.div_lt_iff_lt_mul hpos']
@@ -819,13 +838,13 @@ theorem src_eq_iff_block {k j i : ℕ} (h1 : runStart k ≤ j) (h2 : j < 2 * run
   · rintro ⟨c, hc, rfl⟩
     rw [Finset.mem_range] at hc
     have hi2 : j + c * runStart k < (k + 2) * runStart k := by nlinarith
-    rw [src_of_mem_run (by omega) hi2]
+    rw [src_of_mem_run hk (by omega) hi2]
     have : j + c * runStart k - runStart k = (j - runStart k) + c * runStart k := by omega
     rw [this, Nat.add_mul_mod_self_right, Nat.mod_eq_of_lt (by omega)]
     omega
 
 /-- **Weight of a block coin.**  Proved: `srcWeight j = Σ_{c≤k} 2·3^{-(j+c a_k)-1}`. -/
-theorem srcWeight_block {k j : ℕ} (h1 : runStart k ≤ j) (h2 : j < 2 * runStart k) :
+theorem srcWeight_block {k j : ℕ} (hk : Even k) (h1 : runStart k ≤ j) (h2 : j < 2 * runStart k) :
     srcWeight j = ∑ c ∈ Finset.range (k + 1), 2 / (3 : ℝ) ^ (j + c * runStart k + 1) := by
   have hpos : 0 < runStart k := (Nat.zero_le k).trans_lt (lt_runStart k)
   set T := (Finset.range (k + 1)).image fun c => j + c * runStart k
@@ -836,15 +855,15 @@ theorem srcWeight_block {k j : ℕ} (h1 : runStart k ≤ j) (h2 : j < 2 * runSta
   unfold srcWeight
   rw [tsum_eq_sum (s := T) fun i hi => by
     rw [if_neg]; intro h; exact hi (Finset.mem_image.2 (by
-      obtain ⟨c, hc, e⟩ := (src_eq_iff_block h1 h2).1 h; exact ⟨c, hc, e.symm⟩))]
+      obtain ⟨c, hc, e⟩ := (src_eq_iff_block hk h1 h2).1 h; exact ⟨c, hc, e.symm⟩))]
   rw [Finset.sum_image hinj]
   refine Finset.sum_congr rfl fun c hc => ?_
-  rw [if_pos ((src_eq_iff_block h1 h2).2 ⟨c, hc, rfl⟩)]
+  rw [if_pos ((src_eq_iff_block hk h1 h2).2 ⟨c, hc, rfl⟩)]
 
 /-- **Block-coin product is a cyclic Riesz product.**  Proved: over the block of run `k`
 (`a = a_k`), `∏_j |cos(π ξ srcWeight j)| = ∏_{i<a} |cos(2π η 3ⁱ/(3^a − 1))|` with the real
 frequency `η = ξ(1 − 3^{-(k+1)a})/3^a` (coin `a + r` is cyclic place `a − 1 − r`). -/
-theorem prod_block_eq_cyc (k : ℕ) (ξ : ℝ) :
+theorem prod_block_eq_cyc {k : ℕ} (hk : Even k) (ξ : ℝ) :
     ∏ j ∈ Finset.Ico (runStart k) (2 * runStart k),
         |Real.cos (Real.pi * (ξ * srcWeight j))| =
       ∏ i ∈ Finset.range (runStart k), |Real.cos (2 * Real.pi *
@@ -856,7 +875,7 @@ theorem prod_block_eq_cyc (k : ℕ) (ξ : ℝ) :
     ← Finset.prod_range_reflect]
   refine Finset.prod_congr rfl fun r hr => ?_
   rw [Finset.mem_range] at hr
-  rw [srcWeight_block (k := k) (j := a + (a - 1 - r)) (by omega) (by omega)]
+  rw [srcWeight_block (k := k) hk (j := a + (a - 1 - r)) (by omega) (by omega)]
   congr 2
   have h3a : (1 : ℝ) < 3 ^ a := one_lt_pow₀ (by norm_num) (by omega)
   have hne : (3 : ℝ) ^ a - 1 ≠ 0 := by linarith
@@ -1030,11 +1049,11 @@ theorem cycProdR_lip (A : ℕ) (η η' : ℝ) :
 /-- **True-law copy-zone bound.**  Proved: for every run `k` (`a = a_k`) and every integer
 `η₀`, `‖𝔼 e(ξ·repReal)‖ ≤ cycProd a η₀ + π |ξ(1 − 3^{-(k+1)a})/3^a − η₀|`.  The pair term of
 the second moment at `ξ = h(bⁿ − bᵐ)` is the cyclic product of the nearest integer frequency. -/
-theorem norm_charFun_repReal_le_cyc (k : ℕ) (ξ : ℝ) (η₀ : ℤ) :
+theorem norm_charFun_repReal_le_cyc {k : ℕ} (hk : Even k) (ξ : ℝ) (η₀ : ℤ) :
     ‖∫ ω, ee (ξ * repReal ω) ∂coinMeasure‖ ≤ cycProd (runStart k) η₀ + Real.pi *
       |ξ * (1 - (3 : ℝ) ^ (-(((k + 1) * runStart k : ℕ) : ℤ))) / 3 ^ runStart k - η₀| := by
   have h1 := norm_charFun_repReal_le (Finset.Ico (runStart k) (2 * runStart k)) ξ
-  rw [prod_block_eq_cyc] at h1
+  rw [prod_block_eq_cyc hk] at h1
   have h2 := cycProdR_lip (runStart k)
     (ξ * (1 - (3 : ℝ) ^ (-(((k + 1) * runStart k : ℕ) : ℤ))) / 3 ^ runStart k) η₀
   rw [cycProdR_intCast] at h2
@@ -1045,11 +1064,11 @@ theorem norm_charFun_repReal_le_cyc (k : ℕ) (ξ : ℝ) (η₀ : ℤ) :
 then `‖𝔼 e(z·repReal)‖ ≤ cycProd a η₀ + π |z| 3^{-(k+2)a}`.  For `z = h(bⁿ − bᵐ)` with
 `b = 3ˢt` and `sm ≥ a` this is the copy-zone pair term, error negligible while
 `|z| ≪ 3^{(k+2)a}` (the frequency's window stays inside run `k`). -/
-theorem norm_charFun_repReal_le_cyc_int (k : ℕ) (η₀ : ℤ) :
+theorem norm_charFun_repReal_le_cyc_int {k : ℕ} (hk : Even k) (η₀ : ℤ) :
     ‖∫ ω, ee (((3 : ℝ) ^ runStart k * η₀) * repReal ω) ∂coinMeasure‖ ≤
       cycProd (runStart k) η₀ +
         Real.pi * |(3 : ℝ) ^ runStart k * η₀| / 3 ^ ((k + 2) * runStart k) := by
-  refine (norm_charFun_repReal_le_cyc k _ η₀).trans (le_of_eq ?_)
+  refine (norm_charFun_repReal_le_cyc hk _ η₀).trans (le_of_eq ?_)
   congr 1
   have h3 : (0 : ℝ) < 3 ^ runStart k := by positivity
   have hz : (3 : ℝ) ^ (-(((k + 1) * runStart k : ℕ) : ℤ)) =
@@ -1354,17 +1373,21 @@ def RepPairDecay (b : ℕ) : Prop :=
 coins of run `k` (`some k`, a real-frequency cyclic product). -/
 noncomputable def repBound (M : ℕ) : Option ℕ → ℝ → ℝ
   | none, ξ => Bf isFree M ξ
-  | some k, ξ => cycProdR (runStart k)
-      (ξ * (1 - (3 : ℝ) ^ (-(((k + 1) * runStart k : ℕ) : ℤ))) / 3 ^ runStart k)
+  | some k, ξ => if Even k then cycProdR (runStart k)
+      (ξ * (1 - (3 : ℝ) ^ (-(((k + 1) * runStart k : ℕ) : ℤ))) / 3 ^ runStart k) else 1
 
 theorem norm_charFun_repReal_le_repBound (M : ℕ) (o : Option ℕ) (ξ : ℝ) :
     ‖∫ ω, ee (ξ * repReal ω) ∂coinMeasure‖ ≤ repBound M o ξ := by
   cases o with
   | none => exact charFun_repReal M ξ
   | some k =>
-    have h1 := norm_charFun_repReal_le (Finset.Ico (runStart k) (2 * runStart k)) ξ
-    rw [prod_block_eq_cyc] at h1
-    exact h1
+    simp only [repBound]
+    split_ifs with hk
+    · have h1 := norm_charFun_repReal_le (Finset.Ico (runStart k) (2 * runStart k)) ξ
+      rw [prod_block_eq_cyc hk] at h1
+      exact h1
+    · exact (charFun_repReal 0 ξ).trans (Finset.prod_le_one (fun _ _ => abs_nonneg _)
+        fun _ _ => Real.abs_cos_le_one _)
 
 theorem cycProdR_add_int (A : ℕ) (η : ℝ) (j : ℤ) :
     cycProdR A (η + j * (3 ^ A - 1)) = cycProdR A η := by
@@ -1404,7 +1427,7 @@ theorem repBound_some_add (M k : ℕ) (ξ : ℝ) (j : ℤ) :
 /-- **Copy-zone pair term.**  Proved: for `b = 3ˢt`, a pair `(m + d, m)` with `a ≤ sm`
 (`a = a_k`) has run-`k` bound at most `cycProd a (h tᵐ(b^d − 1)) + π|ξ|/3^{(k+2)a}`,
 `ξ = h(b^{m+d} − bᵐ)`. -/
-theorem repBound_pair_le (M k s t m d : ℕ) (h : ℤ) (hsm : runStart k ≤ s * m) :
+theorem repBound_pair_le (M k s t m d : ℕ) (hk : Even k) (h : ℤ) (hsm : runStart k ≤ s * m) :
     repBound M (some k) (h * (((3 ^ s * t : ℕ) : ℝ) ^ (m + d) - ((3 ^ s * t : ℕ) : ℝ) ^ m)) ≤
       cycProd (runStart k) (h * ((t : ℤ) ^ m * (((3 ^ s * t : ℕ) : ℤ) ^ d - 1))) +
         Real.pi * |h * (((3 ^ s * t : ℕ) : ℝ) ^ (m + d) - ((3 ^ s * t : ℕ) : ℝ) ^ m)| /
@@ -1424,7 +1447,7 @@ theorem repBound_pair_le (M k s t m d : ℕ) (h : ℤ) (hsm : runStart k ≤ s *
   have hrot : cycProd a η₀ = cycProd a (h * ((t : ℤ) ^ m * (((3 ^ s * t : ℕ) : ℤ) ^ d - 1))) :=
     cycProd_mul_three_pow _ _ _
   rw [hξ, ← hrot]
-  simp only [repBound]
+  simp only [repBound, if_pos hk]
   have h2 := cycProdR_lip a
     ((3 : ℝ) ^ a * η₀ * (1 - (3 : ℝ) ^ (-(((k + 1) * a : ℕ) : ℤ))) / 3 ^ a) η₀
   rw [cycProdR_intCast] at h2
@@ -1454,7 +1477,7 @@ theorem repBound_some_neg (M k : ℕ) (ξ : ℝ) : repBound M (some k) (-ξ) = r
 
 /-- **Copy-zone pair term, symmetric form.**  Proved: if `a ≤ s·min(n, m)` then the run-`k` bound
 at `ξ = h(bⁿ − bᵐ)` (`b = 3ˢt`) is at most `cycProd a (h(bⁿ − bᵐ)) + π|ξ|/3^{(k+2)a}`. -/
-theorem repBound_pair_le' (M k s t n m : ℕ) (h : ℤ) (hsm : runStart k ≤ s * min n m) :
+theorem repBound_pair_le' (M k s t n m : ℕ) (hk : Even k) (h : ℤ) (hsm : runStart k ≤ s * min n m) :
     repBound M (some k) (h * (((3 ^ s * t : ℕ) : ℝ) ^ n - ((3 ^ s * t : ℕ) : ℝ) ^ m)) ≤
       cycProd (runStart k) (h * (((3 ^ s * t : ℕ) : ℤ) ^ n - ((3 ^ s * t : ℕ) : ℤ) ^ m)) +
         Real.pi * |h * (((3 ^ s * t : ℕ) : ℝ) ^ n - ((3 ^ s * t : ℕ) : ℝ) ^ m)| /
@@ -1463,7 +1486,7 @@ theorem repBound_pair_le' (M k s t n m : ℕ) (h : ℤ) (hsm : runStart k ≤ s 
   · obtain ⟨d, rfl⟩ := Nat.exists_eq_add_of_le hmn
     rw [min_eq_right (by omega)] at hsm
     rw [cycProd_pairH]
-    have := repBound_pair_le M k s t m d h hsm
+    have := repBound_pair_le M k s t m d hk h hsm
     rwa [show h * ((t : ℤ) ^ m * (((3 ^ s * t : ℕ) : ℤ) ^ d - 1)) =
       (t : ℤ) ^ m * (h * (((3 ^ s * t : ℕ) : ℤ) ^ d - 1)) by ring] at this
   · obtain ⟨d, rfl⟩ := Nat.exists_eq_add_of_le hnm
@@ -1473,14 +1496,14 @@ theorem repBound_pair_le' (M k s t n m : ℕ) (h : ℤ) (hsm : runStart k ≤ s 
     have e2 : h * (((3 ^ s * t : ℕ) : ℤ) ^ n - ((3 ^ s * t : ℕ) : ℤ) ^ (n + d)) =
         -(h * (((3 ^ s * t : ℕ) : ℤ) ^ (n + d) - ((3 ^ s * t : ℕ) : ℤ) ^ n)) := by ring
     rw [e1, e2, repBound_some_neg, cycProd_neg, abs_neg, cycProd_pairH]
-    have := repBound_pair_le M k s t n d h hsm
+    have := repBound_pair_le M k s t n d hk h hsm
     rwa [show h * ((t : ℤ) ^ n * (((3 ^ s * t : ℕ) : ℤ) ^ d - 1)) =
       (t : ℤ) ^ n * (h * (((3 ^ s * t : ℕ) : ℤ) ^ d - 1)) by ring] at this
 
 /-- **Run-`k` copy-zone sum.**  Proved: over any set `P` of pairs below `N'` with
 `a ≤ s·min(n,m)` and `|ξ| ≤ B`, the run-`k` bounds sum to at most the cyclic pair sum below
 `N'` (the `CopyZoneDecayH` quantity) plus `|P|·πB/3^{(k+2)a}`. -/
-theorem copyRun_sum_le (M k s t : ℕ) (h : ℤ) (P : Finset (ℕ × ℕ)) (N' : ℕ) (B : ℝ)
+theorem copyRun_sum_le (M k s t : ℕ) (hk : Even k) (h : ℤ) (P : Finset (ℕ × ℕ)) (N' : ℕ) (B : ℝ)
     (hP : ∀ p ∈ P, p.1 < N' ∧ p.2 < N' ∧ runStart k ≤ s * min p.1 p.2 ∧
       |h * (((3 ^ s * t : ℕ) : ℝ) ^ p.1 - ((3 ^ s * t : ℕ) : ℝ) ^ p.2)| ≤ B) :
     ∑ p ∈ P, repBound M (some k) (h * (((3 ^ s * t : ℕ) : ℝ) ^ p.1 - ((3 ^ s * t : ℕ) : ℝ) ^ p.2)) ≤
@@ -1494,7 +1517,7 @@ theorem copyRun_sum_le (M k s t : ℕ) (h : ℤ) (P : Finset (ℕ × ℕ)) (N' :
         Real.pi * B / 3 ^ ((k + 2) * runStart k) := by
     intro p hp
     obtain ⟨-, -, hs, hB⟩ := hP p hp
-    refine (repBound_pair_le' M k s t p.1 p.2 h hs).trans ?_
+    refine (repBound_pair_le' M k s t p.1 p.2 hk h hs).trans ?_
     gcongr
   refine (Finset.sum_le_sum h1).trans ?_
   rw [Finset.sum_add_distrib, Finset.sum_const, nsmul_eq_mul]
@@ -1600,10 +1623,11 @@ a window starting at `v ∈ [E_k/c·2, E_k − a]` covers the whole gap and tops
 * the gap coins read middle digits of `X` (neither low nor top: no Cassels, no Baker);
 * run `k+1`'s copy coins read the top `T − a_{k+1}` digits of `ξ` unfolded when `c < 4`
   (top-window, Baker-type, unproved shape).
-A positive fraction of `m` falls here, so the assembly as stated needs either the third bullet
-formalized or a construction with `a_{k+1}/E_k → ∞` (gaps eventually longer than every window;
-Liouville unaffected; e.g. use only the runs `k` in a sparse set and free the others).  The 60%
-confidence is for the redesigned or extended version.  Numerically the class is harmless
+A positive fraction of `m` falls here.  RESOLVED by construction (2026-10-07): only even runs
+copy (`src`), so the free stretch after copy run `k` is `[E_k, a_{k+2})`, ratio `4(k+3) → ∞`, and
+for each `b` eventually every window starting in run `k` tops out in that stretch.  (The odd
+run inside the stretch carries fresh coins, but those are not `isFree`; the top-window bound
+must use the fresh-coin set `isFree ∨ odd run`, not `Bf isFree`.)  Numerically the class is harmless
 (`scripts/rep_arith.py 12 300,380`: `N⁻²Σ = .0034, .0027`, the `1/N` floor, and `N = 380` reaches
 the gap-spanning windows `n ≥ 340` of run 2; `b = 6`, `N = 300`: `.0034`): a proof-plan gap,
 not evidence against `RepPairArith`. -/
