@@ -18,6 +18,11 @@ Never restate or weaken them.  The stretch node `CStarLeThree` and any sharper l
   potential.  State the construction's key lemmas as named nodes with confidences before proving them.
 - **Push the frontier:** once a headline is green, locate `c⋆` more tightly (higher certified lower bound with
   more bases; `CStarLeThree`).  Record every located bound as a Lean theorem, every failed mechanism as a Maze row.
+- **Operator note (Ren, 2026-10-07 02:45):** the `c⋆ ≤ 4` crux now rests on `SmallBaseTreeCore` (15%) and
+  `TreeEngineSuffices` (50%).  Keep it, but bank the reachable upper bounds in parallel: lap 1 measured the pure
+  potential engine stalling near `c ≈ 7`, so prove the best engine-only bound as a theorem (`cStar_le_eight` or
+  better, then as close to the stall as the constants allow), using the free perfect-power bases.  Each lower
+  located upper bound is an advance; so is a higher certified lower bound (bases beyond 10 in the cover).
 - **Forbidden drift:** normality or disjunctiveness of the 10.36 points (impossible, `not_isNormal_of_uniformBad`);
   re-proving `c⋆ ≤ 24`; literature hunting beyond what a lap needs (the 2026-10-03 freshness audit stands).
 - **Why:** the host probe (`UniformBadThreshold` docstring) puts `c⋆` in about `[2.44, 3]`: bases 2, 3 alone give
