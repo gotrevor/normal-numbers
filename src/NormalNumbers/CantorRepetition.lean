@@ -3352,6 +3352,20 @@ theorem power_of_eventually (ξ : ℕ → ℕ → ℕ → ℝ)
     rw [hsplit]
     nlinarith [abs_nonneg C]
 
+/-- **Per-`N` assembly, `h = 3ᵉh' > 0`, large `N` (open; believed, 70%).**  The remaining content
+of `repPairPower_of_inputs`.  Route: `exists_kappa_pos` with `ρ, k₀` fixed by `b`, `W = K = j+1`,
+`j = ⌊log₃ N / q⌋` (`2/q < κ_Baker`); `sum_pairMaj_le` (Btop from `sum_class_top_le`, copy totals
+from `copy5_total_le`/`copy6_total_le` with `Ks` the runs `≤ log₄(2sN+e)`), `sum_bad_le`
+(`m₀ = O(log N)`).  Every piece is `O(N^{2−δ})`. -/
+theorem repPairPos_eventually {s t : ℕ} (hs : 1 ≤ s) (ht : 2 ≤ t) (h3t : ¬ 3 ∣ t)
+    (hB : CantorExactExponentProfile.Literature.BakerLogDiscrepancy) (hT : TOrbitCyclicDecay t)
+    (hS : BadGcdSparseH (3 ^ s * t)) (e h' : ℕ) (hh : 1 ≤ h') (hnd : ¬ 3 ∣ h') :
+    ∃ C δ : ℝ, 0 < δ ∧ ∃ N₀ : ℕ, ∀ N : ℕ, N₀ ≤ N → 1 ≤ N → ∃ (M : ℕ) (κ : ℕ → ℕ → Option ℕ),
+      ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N,
+        repBound M (κ n m) (((3 ^ e * h' : ℕ) : ℝ) * (((3 ^ s * t : ℕ) : ℝ) ^ n -
+          ((3 ^ s * t : ℕ) : ℝ) ^ m)) ≤ C * (N : ℝ) ^ (2 - δ) := by
+  sorry
+
 /-- **Per-`N` assembly (open; believed, 60%; the remaining content of `repPairArith_of_inputs`).**
 Plan: `W = K = ⌈ε log₃ N⌉`; `κ` per `pair_classify_rep` (hypotheses: `le_log_mul_pow`,
 `log_mul_pow_lt`, `le_log_pair`, `log_pair_le_log`, `hsep_of`); class sums `sum_class_low_le`,
@@ -3360,8 +3374,9 @@ Plan: `W = K = ⌈ε log₃ N⌉`; `κ` per `pair_classify_rep` (hypotheses: `le
 diagonal bounded by `1`; general `h = 3^e h'` shifts every window by `e`. -/
 theorem repPairPower_of_inputs {s t : ℕ} (hs : 1 ≤ s) (ht : 2 ≤ t) (h3t : ¬ 3 ∣ t)
     (hB : CantorExactExponentProfile.Literature.BakerLogDiscrepancy) (hT : TOrbitCyclicDecay t)
-    (hS : BadGcdSparseH (3 ^ s * t)) : RepPairPower (3 ^ s * t) := by
-  sorry
+    (hS : BadGcdSparseH (3 ^ s * t)) : RepPairPower (3 ^ s * t) :=
+  repPairPower_of_pos fun e h' h1 hnd =>
+    power_of_eventually _ (repPairPos_eventually hs ht h3t hB hT hS e h' h1 hnd)
 
 /-- **Assembly of the crux from its inputs (open; believed, 60%).**  For `b = 3ˢt`, `t > 1`:
 `RepPairArith b` follows from the Baker discrepancy of `m log₃ t` (cited,

@@ -274,7 +274,7 @@ def waivers : List Waiver := [
   ⟨``CantorExactExponentProfile.ae_isNormal_of_profileOK_of_gelfond,
    "believed implication (55%): a Gelfond-strength two-log bound suffices for the run shadows; \
     the elementary t^k ≠ 3^j rate does not"⟩,
-  ⟨``CantorRepetition.repPairPower_of_inputs,
+  ⟨``CantorRepetition.repPairPos_eventually,
    "believed implication (60%): per-N power-saving assembly of the repetition crux from Baker \
     discrepancy, TOrbitCyclicDecay and BadGcdSparse (six class bounds and sums proved)"⟩,
   ⟨``CantorRepetition.repPairArith_of_three_dvd,
