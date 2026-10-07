@@ -106,7 +106,13 @@ makes it worse (`≈ 30`, nearly dead components).  So a core with `C ≤ 3/2` m
 and worst-case pruning (`t23.py`) keeps only `≈ 20%` of the children: neither works as is.  The
 base-2 part alone is the binary run-free tree (no four equal consecutive digits) with Parry weights,
 `s = log₂ 1.8393 ≈ 0.879`; the open part is the joint control of `3, 5, 6, 7` against it, whose
-forbidden windows have relative size `≤ 2·3^{−4} ≈ 0.025`. -/
+forbidden windows have relative size `≤ 2·3^{−4} ≈ 0.025`.
+Probe 2026-10-07 (c⋆ lap 9, `scripts/cstar_models/core5.js`, `core5_spread.js`, containment kill,
+depth 29): the exact `{2, 3, 5, 6, 7}` tree at `c = 4` grows `1.814–1.819` per level (`{2, 3}` alone:
+`1.816–1.823`), so bases `5, 6, 7` cost `≈ 0.004`/level when exact.  Against it, counting the bases
+`b ≥ 10` (`joint23_rec.js` from base `10`) survives even with `4×` the lap-8 charges (decay `0.980`).
+The obstacle stays weight spread: 12-step growth quantiles from level 16 (non-dead cells) are
+`1.38 / 1.59 / 1.75 / 1.82` at `0.1% / 1% / 10% / 50%`, and `≈ 1%` of cells are dead ends. -/
 def SmallBaseTreeCore (c : ℝ) (S : Set ℕ) (s C β : ℝ) : Prop :=
   ∃ (T : ℕ → Finset (ℝ × ℝ)) (w : ℝ × ℝ → ℝ),
     (T 0).Nonempty ∧

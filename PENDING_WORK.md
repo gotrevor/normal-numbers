@@ -1,4 +1,11 @@
 ## UniformBad threshold c⋆ (branch proof/uniformbad-threshold, 2026-10-07)
+* **2026-10-07 lap 9.**  Exact `{2,3,5,6,7}` tree at `c = 4` (`core5.js`) grows `1.815`/level; bases
+  `b ≥ 10` counted against it survive at `4×` charges.  So the lap-8 negative was about base 5 being
+  counted; the remaining crux is **weight regularity of the exact 5-base core** (1% quantile 1.59, 1%
+  dead ends).  Recorded in the `SmallBaseTreeCore` docstring and the Maze row.  **Next:** threshold-pruned
+  sub-core (drop cells whose 12-step growth `< g₀`) and measure whether the pruned core stays closed
+  (children of kept cells mostly kept) with growth `≥ 1.78`; if yes, aim a phase-interval potential
+  certificate (`jointCoreSubEigen_four` shape) at it.
 * **2026-10-07 lap 8.**  **Decisive `c = 4` counting probe: NEGATIVE.**  On the TRUE joint `{2,3}` tree
   (`scripts/cstar_models/joint23_spread.js`): per-cell 10-step lookahead growth `[1.751, 1.842]`, so the core
   itself is regular-looking.  But the weight-aware charge of base 5 (killed core mass / ancestor core mass,
