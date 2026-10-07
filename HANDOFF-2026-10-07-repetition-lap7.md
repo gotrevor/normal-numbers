@@ -26,3 +26,9 @@ The assembly needs only a copy-zone saving summable along `sched`.  Sparse orbit
 1. `sparseIdentityBound_of_matveev` — state the gap-step lemma first (docstring plan).
 2. `cycSparse_of_cycProd_ge`, `card_cluster_le`, `runOrbitDecay_of_sparse`.
 3. `card_degRows_le`, `copyRun_psi`.  4. `repPairArith_of_runDecay`.
+
+## Checkpoint
+Branch `proof/cantor-repetition`, route commit `72ac4834`; tree clean apart from this note.
+Full default build green (10797 jobs).  `#print axioms`: `cyclic_pair_identity`,
+`pow_le_two_of_sparse_one`, `not_sparseIdentityBound_nine` = trust base; both headlines show sorryAx
+only through the leaves listed in DIRECTION.md CURRENT DIRECTIVE.  No new proof work in flight.
