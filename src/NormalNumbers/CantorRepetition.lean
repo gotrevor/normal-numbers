@@ -2045,6 +2045,26 @@ theorem sum_class_low_le {s t : ℕ} (hs : 1 ≤ s) (ht : 2 ≤ t) (h3 : ¬ 3 �
         gcongr
         exact_mod_cast Nat.sub_le _ _
 
+/-- **Class-3 pointwise bound.**  Separated pair: fresh low window `[sn+1, sn+W)` of the high part
+and `|h bᵐ| ≤ 3^{sn−K}` give `repBound none ≤ Hf_true(h tⁿ) + π 3^{−K}`. -/
+theorem repBound_class_sep_le {s t M W K n m : ℕ} (h : ℤ) (hM : s * n + W ≤ M)
+    (hfr : ∀ p, s * n + 1 ≤ p → p < s * n + W → isFresh p = true)
+    (hK : K ≤ s * n)
+    (hY : |(h : ℝ) * ((3 ^ s * t : ℕ) : ℝ) ^ m| ≤ 3 ^ (s * n - K)) :
+    repBound M none (h * (((3 ^ s * t : ℕ) : ℝ) ^ n - ((3 ^ s * t : ℕ) : ℝ) ^ m)) ≤
+      Hf (fun _ => true) 0 W ((h : ℝ) * (t : ℝ) ^ n) + Real.pi * (1 / 3 ^ K) := by
+  simp only [repBound]
+  have e : (h : ℝ) * (((3 ^ s * t : ℕ) : ℝ) ^ n - ((3 ^ s * t : ℕ) : ℝ) ^ m) =
+      3 ^ (s * n) * ((h : ℝ) * (t : ℝ) ^ n) + -((h : ℝ) * ((3 ^ s * t : ℕ) : ℝ) ^ m) := by
+    push_cast; rw [pow_mul, mul_pow]; ring
+  rw [e]
+  refine bf_le_hf_true_add isFresh hM hfr _ _ _ ?_
+  rw [abs_neg]
+  refine hY.trans (le_of_eq ?_)
+  rw [show s * n = (s * n - K) + K by omega, pow_add]
+  field_simp
+  congr 1; omega
+
 /-! ## Bases `3ˢt`, `t > 1`: the crux -/
 
 /-- **Assembly of the crux from its inputs (open; believed, 60%).**  For `b = 3ˢt`, `t > 1`:
