@@ -270,7 +270,9 @@ def goodSet (c b : ℕ) : Set ℝ := {x | ∀ n : ℕ, ((b : ℝ) ^ c)⁻¹ ≤ 
 /-- `E₂(c)` on `[0, 1]`. -/
 def E2 (c : ℕ) : Set ℝ := Set.Icc 0 1 ∩ goodSet c 2
 
-/-- **Node.**  Believed 90%.  `E₂(4)` is compact, its hull is `[1/15, 14/15]`, its gaps have length
+/-- **Node, off the route** (the wiring uses `e15_facts` on `E15 ⊆ E₂(4)` instead; in fact
+`E₂(4) = E15`, by the descent `‖2ⁿx‖ ∈ [1/16, 1/15) ⇒ ‖2ⁿ⁺⁴x‖ − 1/15 = 16(‖2ⁿx‖ − 1/15)`).
+Believed 90%.  `E₂(4)` is compact, its hull is `[1/15, 14/15]`, its gaps have length
 at most `1/15`, and its thickness is `3` (probe: `thick.py 4 1e-7 2` returns exactly `3.000`, at the
 gap `(7/60, 2/15)`).  Proof plan: the gaps are `A/2ⁿ ± 2⁻ⁿ/15` (`A` odd), and the bridge from the
 gap of order `n` to a gap of order `m ≤ n` is `(k − (2^{n−m} + 1)/15)·2⁻ⁿ` for the least admissible
@@ -279,6 +281,239 @@ theorem e2_four_facts :
     IsCompact (E2 4) ∧ (1 / 15 : ℝ) ∈ E2 4 ∧ (14 / 15 : ℝ) ∈ E2 4 ∧ E2 4 ⊆ Set.Icc (1 / 15) (14 / 15) ∧
       (∀ a b, IsGap (E2 4) a b → b - a ≤ 1 / 15) ∧ Thick (E2 4) 3 := by
   sorry
+
+/-! ### `E₂` at the exact scale `1/15`
+
+`E15 = {x ∈ [0, 1] : ‖2ⁿx‖ ≥ 1/15 ∀ n} ⊆ E₂(4)`.  Its gaps are exactly the windows
+`((A − 1/15)/2ⁿ, (A + 1/15)/2ⁿ)` (`gap_eq_window`), and two such windows are separated by three times
+the shorter one, because `15k − 2ʲ ≥ 1` forces `15k − 2ʲ ≥ 7` (`2ʲ mod 15 ∈ {1, 2, 4, 8}`). -/
+
+/-- `E₂` at scale `1/15`, inside `E₂(4)` (`E15_subset_goodSet`). -/
+def E15 : Set ℝ := Set.Icc 0 1 ∩ {x | ∀ n : ℕ, ∀ z : ℤ, 1 / 15 ≤ |(2 : ℝ) ^ n * x - z|}
+
+lemma E15_subset_goodSet : E15 ⊆ goodSet 4 2 := by
+  intro x hx n
+  have := hx.2 n (round ((2 : ℝ) ^ n * x))
+  unfold dnear
+  push_cast
+  norm_num
+  linarith
+
+lemma two_pow_mod_fifteen (j : ℕ) :
+    (2 : ℤ) ^ j % 15 = 1 ∨ (2 : ℤ) ^ j % 15 = 2 ∨ (2 : ℤ) ^ j % 15 = 4 ∨ (2 : ℤ) ^ j % 15 = 8 := by
+  induction j with
+  | zero => norm_num
+  | succ j ih => rw [pow_succ]; omega
+
+lemma two_pow_mul_emod_ne {i : ℕ} {e : ℤ} (he : e % 15 = 1 ∨ e % 15 = 14) :
+    (2 ^ i * e) % 15 ≠ 0 := by
+  rw [Int.mul_emod]
+  rcases two_pow_mod_fifteen i with h | h | h | h <;> rcases he with h' | h' <;> rw [h, h'] <;>
+    norm_num
+
+lemma one_fifteenth_le_abs {u : ℤ} (hu : u % 15 ≠ 0) (z : ℤ) : 1 / 15 ≤ |(u : ℝ) / 15 - z| := by
+  have h1 : u - 15 * z ≠ 0 := by omega
+  have h3 : (1 : ℝ) ≤ |(u : ℝ) - 15 * z| := by exact_mod_cast Int.one_le_abs h1
+  have : (u : ℝ) / 15 - z = ((u : ℝ) - 15 * z) / 15 := by ring
+  rw [this, abs_div, abs_of_pos (by norm_num : (0 : ℝ) < 15)]
+  linarith
+
+lemma sep_seven (j : ℕ) (k : ℤ) (h : 1 ≤ 15 * k - 2 ^ j) : 7 ≤ 15 * k - 2 ^ j := by
+  have := two_pow_mod_fifteen j
+  omega
+
+/-- A window of order `m` to the left of a window of order `n ≥ m` is three of the latter's lengths
+away. -/
+lemma window_sep_left {m j : ℕ} {C A : ℤ}
+    (h : ((C : ℝ) + 1 / 15) / 2 ^ m ≤ ((A : ℝ) - 1 / 15) / 2 ^ (m + j)) :
+    3 * (2 / (15 * 2 ^ (m + j))) ≤ ((A : ℝ) - 1 / 15) / 2 ^ (m + j) - ((C : ℝ) + 1 / 15) / 2 ^ m := by
+  have hP : (0 : ℝ) < 2 ^ m := by positivity
+  have hQ : (0 : ℝ) < 2 ^ j := by positivity
+  rw [pow_add] at h ⊢
+  rw [div_le_div_iff₀ hP (by positivity)] at h
+  have hi : (1 : ℝ) ≤ 15 * ((A - C * 2 ^ j : ℤ) : ℝ) - ((2 ^ j : ℤ) : ℝ) := by
+    push_cast; nlinarith
+  have h7 : (7 : ℝ) ≤ 15 * ((A - C * 2 ^ j : ℤ) : ℝ) - ((2 ^ j : ℤ) : ℝ) := by
+    exact_mod_cast sep_seven j _ (by exact_mod_cast hi)
+  push_cast at h7
+  rw [show ((A : ℝ) - 1 / 15) / (2 ^ m * 2 ^ j) - ((C : ℝ) + 1 / 15) / 2 ^ m =
+      (15 * (A - C * 2 ^ j) - 2 ^ j - 1) / (15 * (2 ^ m * 2 ^ j)) by field_simp; ring]
+  rw [mul_div_assoc', div_le_div_iff_of_pos_right (by positivity)]
+  linarith
+
+/-- A window of order `n ≥ m` to the left of a window of order `m`. -/
+lemma window_sep_right {m j : ℕ} {C A : ℤ}
+    (h : ((A : ℝ) + 1 / 15) / 2 ^ (m + j) ≤ ((C : ℝ) - 1 / 15) / 2 ^ m) :
+    3 * (2 / (15 * 2 ^ (m + j))) ≤ ((C : ℝ) - 1 / 15) / 2 ^ m - ((A : ℝ) + 1 / 15) / 2 ^ (m + j) := by
+  have hP : (0 : ℝ) < 2 ^ m := by positivity
+  have hQ : (0 : ℝ) < 2 ^ j := by positivity
+  rw [pow_add] at h ⊢
+  rw [div_le_div_iff₀ (by positivity) hP] at h
+  have hi : (1 : ℝ) ≤ 15 * ((C * 2 ^ j - A : ℤ) : ℝ) - ((2 ^ j : ℤ) : ℝ) := by
+    push_cast; nlinarith
+  have h7 : (7 : ℝ) ≤ 15 * ((C * 2 ^ j - A : ℤ) : ℝ) - ((2 ^ j : ℤ) : ℝ) := by
+    exact_mod_cast sep_seven j _ (by exact_mod_cast hi)
+  push_cast at h7
+  rw [show ((C : ℝ) - 1 / 15) / 2 ^ m - ((A : ℝ) + 1 / 15) / (2 ^ m * 2 ^ j) =
+      (15 * (C * 2 ^ j - A) - 2 ^ j - 1) / (15 * (2 ^ m * 2 ^ j)) by field_simp; ring]
+  rw [mul_div_assoc', div_le_div_iff_of_pos_right (by positivity)]
+  linarith
+
+lemma E15_subset_Icc : E15 ⊆ Set.Icc (1 / 15) (14 / 15) := by
+  intro x hx
+  have h0 := hx.2 0 0
+  have h1 := hx.2 0 1
+  simp only [pow_zero, one_mul, Int.cast_zero, sub_zero, Int.cast_one] at h0 h1
+  have := hx.1
+  constructor
+  · rw [abs_of_nonneg this.1] at h0; exact h0
+  · rw [abs_of_nonpos (by linarith [this.2])] at h1; linarith
+
+/-- `2ᵏ · (A ± 1/15)/2ⁿ` for `k ≥ n` is `u/15` with `15 ∤ u`. -/
+lemma endpoint_good {n k : ℕ} (hnk : n ≤ k) {A : ℤ} {e : ℤ} (he : (15 * A + e) % 15 = 1 ∨
+    (15 * A + e) % 15 = 14) (z : ℤ) :
+    1 / 15 ≤ |(2 : ℝ) ^ k * (((A : ℝ) + e / 15) / 2 ^ n) - z| := by
+  obtain ⟨i, rfl⟩ := Nat.exists_eq_add_of_le hnk
+  have := one_fifteenth_le_abs (two_pow_mul_emod_ne (i := i) he) z
+  convert this using 3
+  push_cast
+  rw [pow_add]
+  field_simp
+
+/-- **Every gap of `E15` is a window** `((A − 1/15)/2ⁿ, (A + 1/15)/2ⁿ)`. -/
+lemma gap_eq_window {a b : ℝ} (h : IsGap E15 a b) :
+    ∃ n : ℕ, ∃ A : ℤ, a = ((A : ℝ) - 1 / 15) / 2 ^ n ∧ b = ((A : ℝ) + 1 / 15) / 2 ^ n := by
+  obtain ⟨hab, haE, hbE, hdis⟩ := h
+  have hnot : ∀ w ∈ Set.Ioo a b, w ∉ E15 := fun w hw hwE => Set.disjoint_left.1 hdis hw hwE
+  have hbad : ∀ w ∈ Set.Ioo a b, ∃ n : ℕ, ∃ z : ℤ, |(2 : ℝ) ^ n * w - z| < 1 / 15 := by
+    intro w hw
+    by_contra hc
+    push_neg at hc
+    exact hnot w hw ⟨⟨haE.1.1.trans hw.1.le, hw.2.le.trans hbE.1.2⟩, hc⟩
+  have hP : ∃ n : ℕ, ∃ z : ℤ, ∃ w ∈ Set.Ioo a b, |(2 : ℝ) ^ n * w - z| < 1 / 15 := by
+    obtain ⟨n, z, hz⟩ := hbad ((a + b) / 2) ⟨by linarith, by linarith⟩
+    exact ⟨n, z, _, ⟨by linarith, by linarith⟩, hz⟩
+  classical
+  set n := Nat.find hP with hn
+  obtain ⟨A, w, hw, hwA⟩ := Nat.find_spec hP
+  have hpos : (0 : ℝ) < 2 ^ n := by positivity
+  -- membership in the window
+  have hwin : ∀ x : ℝ, ((A : ℝ) - 1 / 15) / 2 ^ n < x → x < ((A : ℝ) + 1 / 15) / 2 ^ n →
+      x ∉ E15 := by
+    intro x h1 h2 hx
+    rw [div_lt_iff₀ hpos] at h1
+    rw [lt_div_iff₀ hpos] at h2
+    have := hx.2 n A
+    exact absurd this (not_le.2 (abs_lt.2 ⟨by linarith, by linarith⟩))
+  rw [abs_lt] at hwA
+  have hw1 : ((A : ℝ) - 1 / 15) / 2 ^ n < w := by rw [div_lt_iff₀ hpos]; linarith
+  have hw2 : w < ((A : ℝ) + 1 / 15) / 2 ^ n := by rw [lt_div_iff₀ hpos]; linarith
+  -- an endpoint of the window lying strictly inside `(a, b)` is impossible
+  have hend : ∀ e : ℤ, ((15 * A + e) % 15 = 1 ∨ (15 * A + e) % 15 = 14) →
+      ((A : ℝ) + e / 15) / 2 ^ n ∉ Set.Ioo a b := by
+    intro e he hin
+    obtain ⟨k, z, hk⟩ := hbad _ hin
+    rcases lt_or_ge k n with hkn | hkn
+    · exact Nat.find_min hP hkn ⟨z, _, hin, hk⟩
+    · exact absurd hk (not_lt.2 (endpoint_good hkn he z))
+  refine ⟨n, A, ?_, ?_⟩
+  · rcases lt_trichotomy a (((A : ℝ) - 1 / 15) / 2 ^ n) with h1 | h1 | h1
+    · exfalso
+      refine hend (-1) (by omega) ⟨?_, ?_⟩ <;> push_cast <;> [skip; skip]
+      · rw [show ((A : ℝ) + -1 / 15) = (A : ℝ) - 1 / 15 by ring]; exact h1
+      · rw [show ((A : ℝ) + -1 / 15) = (A : ℝ) - 1 / 15 by ring]; linarith [hw.2]
+    · exact h1
+    · exact absurd haE (hwin a h1 (by linarith [hw.1]))
+  · rcases lt_trichotomy b (((A : ℝ) + 1 / 15) / 2 ^ n) with h1 | h1 | h1
+    · exact absurd hbE (hwin b (by linarith [hw.2]) h1)
+    · exact h1
+    · exfalso
+      refine hend 1 (by omega) ⟨?_, ?_⟩ <;> push_cast
+      · linarith [hw.1]
+      · exact h1
+
+lemma sInf_E15 : sInf E15 = 1 / 15 := by
+  refine IsLeast.csInf_eq ⟨?_, fun x hx => (E15_subset_Icc hx).1⟩
+  refine ⟨⟨by norm_num, by norm_num⟩, fun n z => ?_⟩
+  have := endpoint_good (n := 0) (Nat.zero_le n) (A := 0) (e := 1) (by norm_num) z
+  simpa using this
+
+lemma one_fifteenth_mem : (1 / 15 : ℝ) ∈ E15 := by
+  refine ⟨⟨by norm_num, by norm_num⟩, fun n z => ?_⟩
+  have := endpoint_good (n := 0) (Nat.zero_le n) (A := 0) (e := 1) (by norm_num) z
+  simpa using this
+
+lemma fourteen_fifteenths_mem : (14 / 15 : ℝ) ∈ E15 := by
+  refine ⟨⟨by norm_num, by norm_num⟩, fun n z => ?_⟩
+  have := endpoint_good (n := 0) (Nat.zero_le n) (A := 1) (e := -1) (by norm_num) z
+  convert this using 4
+  norm_num
+
+/-- **`E15` facts** (proved): compact, hull `[1/15, 14/15]`, gaps of length `≤ 1/15`, thickness `3`. -/
+theorem e15_facts :
+    IsCompact E15 ∧ (1 / 15 : ℝ) ∈ E15 ∧ (14 / 15 : ℝ) ∈ E15 ∧ E15 ⊆ Set.Icc (1 / 15) (14 / 15) ∧
+      (∀ a b, IsGap E15 a b → b - a ≤ 1 / 15) ∧ Thick E15 3 := by
+  have hInf : sInf E15 = 1 / 15 :=
+    IsLeast.csInf_eq ⟨one_fifteenth_mem, fun x hx => (E15_subset_Icc hx).1⟩
+  have hSup : sSup E15 = 14 / 15 :=
+    IsGreatest.csSup_eq ⟨fourteen_fifteenths_mem, fun x hx => (E15_subset_Icc hx).2⟩
+  refine ⟨?_, one_fifteenth_mem, fourteen_fifteenths_mem, E15_subset_Icc, ?_, ?_, ?_⟩
+  · refine isCompact_Icc.inter_right ?_
+    have : {x : ℝ | ∀ n : ℕ, ∀ z : ℤ, 1 / 15 ≤ |(2 : ℝ) ^ n * x - z|} =
+        ⋂ n : ℕ, ⋂ z : ℤ, {x : ℝ | 1 / 15 ≤ |(2 : ℝ) ^ n * x - z|} := by
+      ext; simp
+    rw [this]
+    exact isClosed_iInter fun n => isClosed_iInter fun z =>
+      isClosed_le continuous_const ((continuous_const.mul continuous_id).sub continuous_const).abs
+  · intro a b hg
+    obtain ⟨n, A, rfl, rfl⟩ := gap_eq_window hg
+    have ha := E15_subset_Icc hg.2.1
+    have hb := E15_subset_Icc hg.2.2.1
+    rcases Nat.eq_zero_or_pos n with rfl | hn
+    · exfalso
+      simp only [pow_zero, div_one] at ha hb
+      have h1 : (0 : ℝ) < A := by linarith [ha.1]
+      have h2 : (0 : ℤ) < A := by exact_mod_cast h1
+      have h3 : (1 : ℝ) ≤ A := by exact_mod_cast h2
+      linarith [hb.2]
+    · have h2 : (2 : ℝ) ≤ 2 ^ n := by
+        calc (2 : ℝ) = 2 ^ 1 := by norm_num
+          _ ≤ 2 ^ n := pow_le_pow_right₀ (by norm_num) hn
+      rw [show ((A : ℝ) + 1 / 15) / 2 ^ n - ((A : ℝ) - 1 / 15) / 2 ^ n = 2 / 15 / 2 ^ n by ring]
+      rw [div_le_iff₀ (by positivity)]
+      nlinarith
+  · intro a b a' b' hg hg' hle
+    obtain ⟨n, A, rfl, rfl⟩ := gap_eq_window hg
+    obtain ⟨n', A', rfl, rfl⟩ := gap_eq_window hg'
+    have len : ∀ (k : ℕ) (B : ℤ), ((B : ℝ) + 1 / 15) / 2 ^ k - ((B : ℝ) - 1 / 15) / 2 ^ k =
+        2 / (15 * 2 ^ k) := fun k B => by field_simp; ring
+    rw [len, len]
+    rcases le_total n n' with h | h
+    · obtain ⟨j, rfl⟩ := Nat.exists_eq_add_of_le h
+      have := window_sep_left hle
+      have hm : min (2 / (15 * 2 ^ n) : ℝ) (2 / (15 * 2 ^ (n + j))) ≤ 2 / (15 * 2 ^ (n + j)) :=
+        min_le_right _ _
+      linarith
+    · obtain ⟨j, rfl⟩ := Nat.exists_eq_add_of_le h
+      have := window_sep_right hle
+      have hm : min (2 / (15 * 2 ^ (n' + j)) : ℝ) (2 / (15 * 2 ^ n')) ≤ 2 / (15 * 2 ^ (n' + j)) :=
+        min_le_left _ _
+      linarith
+  · intro a b hg
+    obtain ⟨n, A, rfl, rfl⟩ := gap_eq_window hg
+    have ha := E15_subset_Icc hg.2.1
+    have hb := E15_subset_Icc hg.2.2.1
+    rw [hInf, hSup]
+    have len : ((A : ℝ) + 1 / 15) / 2 ^ n - ((A : ℝ) - 1 / 15) / 2 ^ n = 2 / (15 * 2 ^ (0 + n)) := by
+      rw [zero_add]; field_simp; ring
+    rw [len]
+    constructor
+    · have := window_sep_left (m := 0) (j := n) (C := 0) (A := A) (by simpa using ha.1)
+      simpa using this
+    · have := window_sep_right (m := 0) (j := n) (C := 1) (A := A) (by
+        simp only [zero_add, pow_zero, div_one, Int.cast_one]; linarith [hb.2])
+      norm_num at this ⊢
+      linarith
 
 /-- **Crux node: a thick core for the bases `b ≥ 3`.**  A compact `B` inside every `E_b(c)`,
 `b ≥ 3`, with thickness `τ`, short gaps, and points near both ends of `[0, 1]`.
@@ -292,17 +527,18 @@ def ThickCore (c : ℕ) (τ : ℝ) : Prop :=
     (∀ a b, IsGap B a b → b - a ≤ 1 / 10) ∧
     (∃ x ∈ B, x ≤ 1 / 4) ∧ (∃ y ∈ B, 3 / 4 ≤ y) ∧ B ⊆ Set.Icc 0 1
 
-/-- **The route.**  A thick core at exponent `4` with `τ > 1/3` gives `c⋆ ≤ 4`. -/
+/-- **The route** (proved, axiom-clean).  A thick core at exponent `4` with `τ > 1/3` gives
+`c⋆ ≤ 4`: `gap_lemma` applied to `E15` (thickness `3`, `e15_facts`) and the core. -/
 theorem cStar_le_four_of_newhouse {τ : ℝ} (hτ : 1 / 3 < τ) (h : ThickCore 4 τ) : cStar ≤ 4 := by
   obtain ⟨B, hBc, hBt, hBgood, hBgap, ⟨x, hxB, hx⟩, ⟨y, hyB, hy⟩, hB01⟩ := h
-  obtain ⟨hAc, h1A, h2A, hAsub, hAgap, hAt⟩ := e2_four_facts
+  obtain ⟨hAc, h1A, h2A, hAsub, hAgap, hAt⟩ := e15_facts
   have hτ0 : 0 < τ := lt_trans (by norm_num) hτ
   have hBbdd : BddBelow B := hBc.bddBelow
   have hBbddA : BddAbove B := hBc.bddAbove
-  have hAbdd : BddBelow (E2 4) := hAc.bddBelow
-  have hAbddA : BddAbove (E2 4) := hAc.bddAbove
-  have hInfA : sInf (E2 4) ≤ 1 / 15 := csInf_le hAbdd h1A
-  have hSupA : 14 / 15 ≤ sSup (E2 4) := le_csSup hAbddA h2A
+  have hAbdd : BddBelow E15 := hAc.bddBelow
+  have hAbddA : BddAbove E15 := hAc.bddAbove
+  have hInfA : sInf E15 ≤ 1 / 15 := csInf_le hAbdd h1A
+  have hSupA : 14 / 15 ≤ sSup E15 := le_csSup hAbddA h2A
   have hInfB : sInf B ≤ 1 / 4 := (csInf_le hBbdd hxB).trans hx
   have hSupB : 3 / 4 ≤ sSup B := hy.trans (le_csSup hBbddA hyB)
   obtain ⟨ξ, hξA, hξB⟩ := gap_lemma hAc hBc ⟨_, h1A⟩ ⟨x, hxB⟩ hAt hBt (by norm_num) hτ0
@@ -325,7 +561,7 @@ theorem cStar_le_four_of_newhouse {τ : ℝ} (hτ : 1 / 3 < τ) (h : ThickCore 4
   have hgood : ∀ b : ℕ, 2 ≤ b → ∀ n : ℕ, ((b : ℝ) ^ 4)⁻¹ ≤ dnear ((b : ℝ) ^ n * ξ) := by
     intro b hb n
     rcases (by omega : b = 2 ∨ 3 ≤ b) with rfl | hb3
-    · exact hξA.2 n
+    · exact E15_subset_goodSet hξA n
     · exact hBgood b hb3 hξB n
   refine le_of_forall_gt_imp_ge_of_dense fun c hc => csInf_le bddBelow_admissible ?_
   refine ⟨ξ, fun b hb n => lt_of_lt_of_le ?_ (hgood b hb n)⟩

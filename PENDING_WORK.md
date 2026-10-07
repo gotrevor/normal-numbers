@@ -1,7 +1,10 @@
 ## UniformBad threshold c⋆ (branch proof/uniformbad-threshold, 2026-10-07)
 * **2026-10-07 lap 6.**  `gap_lemma` PROVED (axiom-clean): linked pairs have both gaps longer than
   dist(K₁,K₂) > 0, so finitely many (`finite_long_gaps`); a minimal-total-length pair contradicts
-  `linked_descent`.  Route `cStar_le_four_of_newhouse` now rests on `e2_four_facts` + crux
+  `linked_descent`.  ALSO `e15_facts` PROVED: E15 = {‖2ⁿx‖ ≥ 1/15} ⊆ E₂(4), gaps are exactly the
+  windows (A±1/15)/2ⁿ (`gap_eq_window`, minimal-order window argument), thickness 3 from
+  `15k−2ʲ ≥ 1 ⇒ ≥ 7` (2ʲ mod 15 ∈ {1,2,4,8}).  So `cStar_le_four_of_newhouse` is axiom-clean
+  modulo its hypothesis `ThickCore 4 τ` (τ > 1/3): the crux is now the ONLY gap.  Route `cStar_le_four_of_newhouse` now rests on `e2_four_facts` + crux
   `thickCore_four` only.  Crux probe (scratch mlog.py): the τ<0.4 violations of raw ⋂_{b=3..40}
   are generic cross-base near-coincidences (centres with denominators ~10³, ratios down to 0.016),
   not structured clusters at small-denominator rationals; so a cascade bound must be Diophantine

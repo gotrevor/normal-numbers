@@ -157,7 +157,7 @@ def cruxLinks : List CruxLink := [
 /-- Open `sorry`s that are not cruxes, and why no barrier applies. -/
 def waivers : List Waiver := [
   ⟨``UniformBadThreshold.Newhouse.e2_four_facts,
-   "a computation about one explicit set E₂(4) (gaps A/2ⁿ ± 2⁻ⁿ/15), checked by the thick.py probe"⟩,
+   "off the route (the wiring uses the proved e15_facts); a computation about the explicit set E₂(4)"⟩,
   ⟨``IndependenceRelative.not_isRelativeBlock_small,
    "a finite computation stated as a sibling: the blocksearch probe's non-certification over \
     small direction sets; it closes a route, no open crux uses it"⟩,
