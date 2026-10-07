@@ -14,7 +14,13 @@ Supersedes older HANDOFFs for this worktree (operator kickoff: KICKOFF-2026-10-0
 - `BadGcdSparse b` (75%): naive Σ log gcd counting fails by the ω(3^A−1) factor.
 - `CopyZoneDecay b` ⇐ both (proved).
 
+## Added after first handoff (HEAD 3e7138a3, tree clean)
+Proved: `integral_ee_flip`, `norm_integral_ee_le_prod`, `srcWeight`, `repReal_eq_sum`,
+`norm_charFun_repReal_le` (true-law Riesz bound over any finite coin set).
+
 ## Next
+0. Compute srcWeight on block coins j∈[A,2A) of run k (= 2Σ_{c≤k}3^{-(j+cA)-1}) and relate
+   ∏|cos(πξ srcWeight j)| to cycProd.
 1. Define the zone split of the second moment for repReal at b=3ˢt (free / copy / shadow) and
    prove the crux from: CopyZoneDecay, a free-zone Cassels bound, a shadow (Baker) bound.
    The copy-zone pair term of the true law carries a 3^{-A} twist and run-end truncation;
