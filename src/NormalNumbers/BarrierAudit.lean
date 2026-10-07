@@ -200,6 +200,8 @@ def waivers : List Waiver := [
    "a finite computation: rung checker (carry automaton, label-filtered SCCs)"⟩,
   ⟨``Adder.not_isRung_five_four_five_small,
    "a finite computation: an avoided-digit-set assignment with a live SCC for each small T"⟩,
+  ⟨``Adder.not_runCover_four_small,
+   "a finite computation: exact ILP set cover (HiGHS dual bound)"⟩,
   ⟨``Adder.IsWordSetBlock.runs_liouville_cover,
    "a leaf: liouville_cover's argument for runs of ones"⟩,
   ⟨``Adder.not_isWordSetBlock_runs_three_small,
