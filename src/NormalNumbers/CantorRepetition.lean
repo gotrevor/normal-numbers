@@ -1440,6 +1440,43 @@ theorem repBound_pair_le (M k s t m d : ℕ) (h : ℤ) (hsm : runStart k ≤ s *
   linarith [show Real.pi * (|(3 : ℝ) ^ a * η₀| / 3 ^ ((k + 2) * a)) =
     Real.pi * |(3 : ℝ) ^ a * η₀| / 3 ^ ((k + 2) * a) by ring]
 
+theorem cycProdR_neg (A : ℕ) (η : ℝ) : cycProdR A (-η) = cycProdR A η := by
+  unfold cycProdR
+  refine Finset.prod_congr rfl fun i _ => ?_
+  rw [show 2 * Real.pi * (-η * 3 ^ i) / (3 ^ A - 1) = -(2 * Real.pi * (η * 3 ^ i) / (3 ^ A - 1)) by
+    ring, Real.cos_neg]
+
+theorem repBound_some_neg (M k : ℕ) (ξ : ℝ) : repBound M (some k) (-ξ) = repBound M (some k) ξ := by
+  simp only [repBound]
+  rw [show -ξ * (1 - (3 : ℝ) ^ (-(((k + 1) * runStart k : ℕ) : ℤ))) / 3 ^ runStart k =
+    -(ξ * (1 - (3 : ℝ) ^ (-(((k + 1) * runStart k : ℕ) : ℤ))) / 3 ^ runStart k) by ring,
+    cycProdR_neg]
+
+/-- **Copy-zone pair term, symmetric form.**  Proved: if `a ≤ s·min(n, m)` then the run-`k` bound
+at `ξ = h(bⁿ − bᵐ)` (`b = 3ˢt`) is at most `cycProd a (h(bⁿ − bᵐ)) + π|ξ|/3^{(k+2)a}`. -/
+theorem repBound_pair_le' (M k s t n m : ℕ) (h : ℤ) (hsm : runStart k ≤ s * min n m) :
+    repBound M (some k) (h * (((3 ^ s * t : ℕ) : ℝ) ^ n - ((3 ^ s * t : ℕ) : ℝ) ^ m)) ≤
+      cycProd (runStart k) (h * (((3 ^ s * t : ℕ) : ℤ) ^ n - ((3 ^ s * t : ℕ) : ℤ) ^ m)) +
+        Real.pi * |h * (((3 ^ s * t : ℕ) : ℝ) ^ n - ((3 ^ s * t : ℕ) : ℝ) ^ m)| /
+          3 ^ ((k + 2) * runStart k) := by
+  rcases le_total m n with hmn | hnm
+  · obtain ⟨d, rfl⟩ := Nat.exists_eq_add_of_le hmn
+    rw [min_eq_right (by omega)] at hsm
+    rw [cycProd_pairH]
+    have := repBound_pair_le M k s t m d h hsm
+    rwa [show h * ((t : ℤ) ^ m * (((3 ^ s * t : ℕ) : ℤ) ^ d - 1)) =
+      (t : ℤ) ^ m * (h * (((3 ^ s * t : ℕ) : ℤ) ^ d - 1)) by ring] at this
+  · obtain ⟨d, rfl⟩ := Nat.exists_eq_add_of_le hnm
+    rw [min_eq_left (by omega)] at hsm
+    have e1 : h * (((3 ^ s * t : ℕ) : ℝ) ^ n - ((3 ^ s * t : ℕ) : ℝ) ^ (n + d)) =
+        -(h * (((3 ^ s * t : ℕ) : ℝ) ^ (n + d) - ((3 ^ s * t : ℕ) : ℝ) ^ n)) := by ring
+    have e2 : h * (((3 ^ s * t : ℕ) : ℤ) ^ n - ((3 ^ s * t : ℕ) : ℤ) ^ (n + d)) =
+        -(h * (((3 ^ s * t : ℕ) : ℤ) ^ (n + d) - ((3 ^ s * t : ℕ) : ℤ) ^ n)) := by ring
+    rw [e1, e2, repBound_some_neg, cycProd_neg, abs_neg, cycProd_pairH]
+    have := repBound_pair_le M k s t n d h hsm
+    rwa [show h * ((t : ℤ) ^ n * (((3 ^ s * t : ℕ) : ℤ) ^ d - 1)) =
+      (t : ℤ) ^ n * (h * (((3 ^ s * t : ℕ) : ℤ) ^ d - 1)) by ring] at this
+
 /-- **The crux as a deterministic exponential-sum statement (open).**  For each `h ≠ 0` there
 is a choice, per `N = sched j` and pair `(n, m)`, of free coins or of one run's block coins whose
 Riesz bounds at `ξ = h(bⁿ − bᵐ)` sum to `N²·ε_j` with `Σ ε_j < ∞`.
