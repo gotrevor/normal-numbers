@@ -2965,6 +2965,70 @@ theorem sum_pair_class3_le {t : ℕ} (ht : 2 ≤ t) (h3 : ¬ 3 ∣ t) {h' : ℕ}
         push_cast at hs ⊢
         exact hs
 
+/-- **Total of the pair majorant.**  With `W = j + 1`, `h'` prime to 3 and `t` as usual: the
+sum of `pairMaj` over `m < N`, `1 ≤ d < N` is at most the class-1/3 orbit sums, `2N` top-window
+sums (each bounded by `Btop`), the copy-run totals `Σ_{k ∈ Ks} Σ_{n,m < N_k}` and the error
+`N²·8π/3^K`.  `Btop` is any bound for `Σ_{m<N} topProd W {m log₃ t + β}` uniform in `β`
+(`sum_class_top_le`). -/
+theorem sum_pairMaj_le {s t e h' : ℕ} (hs : 1 ≤ s) (ht : 2 ≤ t) (h3 : ¬ 3 ∣ t) (hh1 : 1 ≤ h')
+    (hh : ¬ 3 ∣ h') (j K N M : ℕ) (Btop : ℝ)
+    (hBtop : ∀ β : ℝ, ∑ m ∈ Finset.range N,
+      CantorExactExponentProfile.topProd (j + 1) (Int.fract (m * Real.logb 3 t + β)) ≤ Btop) :
+    ∑ m ∈ Finset.range N, ∑ d ∈ Finset.Ico 1 N, pairMaj s t e h' m d M (j + 1) K ≤
+      N * ((N + 2 * 3 ^ j) * (3 / 2 : ℝ) ^ CantorLiouvilleAll.tb t * (2 / 3 : ℝ) ^ j) +
+      N * ((2 * N + 2 * 3 ^ j) * (3 / 2 : ℝ) ^ CantorLiouvilleAll.tb t * (2 / 3 : ℝ) ^ j) +
+      2 * N * Btop +
+      ∑ k ∈ (Finset.range (Nat.log 4 (s * (2 * N) + e) + 1)).filter
+          (fun k => runStart k ≤ s * (2 * N) + e),
+        ∑ n ∈ Finset.range ((k + 2) * runStart k + 1),
+          ∑ m ∈ Finset.range ((k + 2) * runStart k + 1),
+            (cycProd (runStart k) ((h' : ℤ) * (((3 ^ s * t : ℕ) : ℤ) ^ n - ((3 ^ s * t : ℕ) : ℤ) ^ m))
+              + cycProd (runStart k) ((h' : ℤ) * (t : ℤ) ^ n)) +
+      N * N * (Real.pi * (8 / 3 ^ K)) := by
+  unfold pairMaj
+  simp only [Finset.sum_add_distrib]
+  -- class 1
+  have c1 : ∑ m ∈ Finset.range N, ∑ d ∈ Finset.Ico 1 N,
+      Hf (fun _ => true) 0 (j + 1) ((h' * ((3 ^ s * t) ^ d - 1) * t ^ m : ℕ) : ℝ) ≤
+      N * ((N + 2 * 3 ^ j) * (3 / 2 : ℝ) ^ CantorLiouvilleAll.tb t * (2 / 3 : ℝ) ^ j) := by
+    rw [Finset.sum_comm]; exact sum_class_low_le hs ht h3 h' hh j N
+  have c3 := sum_pair_class3_le ht h3 hh j N
+  have c2 : ∑ m ∈ Finset.range N, ∑ d ∈ Finset.Ico 1 N,
+      CantorExactExponentProfile.topProd (j + 1) (Int.fract (m * Real.logb 3 t +
+        Real.logb 3 ((3 ^ e * h' : ℕ) : ℝ))) ≤ N * Btop := by
+    rw [Finset.sum_comm]
+    calc _ ≤ ∑ _d ∈ Finset.Ico 1 N, Btop := Finset.sum_le_sum fun d _ => hBtop _
+      _ ≤ _ := by
+        rw [Finset.sum_const, Nat.card_Ico, nsmul_eq_mul]
+        have : 0 ≤ Btop := (Finset.sum_nonneg fun _ _ => topProd_nonneg' _ _).trans (hBtop 0)
+        gcongr; exact_mod_cast Nat.sub_le _ _
+  have c4 : ∑ m ∈ Finset.range N, ∑ d ∈ Finset.Ico 1 N,
+      CantorExactExponentProfile.topProd (j + 1) (Int.fract (m * Real.logb 3 t +
+        Real.logb 3 ((3 ^ e * h' * ((3 ^ s * t) ^ d - 1) : ℕ) : ℝ))) ≤ N * Btop := by
+    rw [Finset.sum_comm]
+    calc _ ≤ ∑ _d ∈ Finset.Ico 1 N, Btop := Finset.sum_le_sum fun d _ => hBtop _
+      _ ≤ _ := by
+        rw [Finset.sum_const, Nat.card_Ico, nsmul_eq_mul]
+        have : 0 ≤ Btop := (Finset.sum_nonneg fun _ _ => topProd_nonneg' _ _).trans (hBtop 0)
+        gcongr; exact_mod_cast Nat.sub_le _ _
+  have c56 := sum_copyRuns_le (t := t) (e := e) (h' := h') hs ht hh1 N M
+    (fun k n m => cycProd (runStart k) ((h' : ℤ) * (((3 ^ s * t : ℕ) : ℤ) ^ n -
+      ((3 ^ s * t : ℕ) : ℤ) ^ m)) + cycProd (runStart k) ((h' : ℤ) * (t : ℤ) ^ n))
+    (fun k n m => add_nonneg (cycProd_nonneg _ _) (cycProd_nonneg _ _))
+  simp only [Finset.sum_add_distrib] at c56
+  have ce : ∑ m ∈ Finset.range N, ∑ d ∈ Finset.Ico 1 N, Real.pi * (8 / 3 ^ K) ≤
+      N * N * (Real.pi * (8 / 3 ^ K)) := by
+    simp only [Finset.sum_const, Finset.card_range, Nat.card_Ico, nsmul_eq_mul]
+    have h1 : 0 ≤ Real.pi * (8 / 3 ^ K) := by positivity
+    have h2 : ((N - 1 : ℕ) : ℝ) ≤ N := by exact_mod_cast Nat.sub_le _ _
+    have h3 : (0 : ℝ) ≤ N := by positivity
+    have := mul_le_mul_of_nonneg_left (mul_le_mul_of_nonneg_right h2 h1) h3
+    calc _ = (N : ℝ) * (((N - 1 : ℕ) : ℝ) * (Real.pi * (8 / 3 ^ K))) := by ring
+      _ ≤ _ := this.trans (le_of_eq (by ring))
+  refine (add_le_add (add_le_add (add_le_add (add_le_add (add_le_add c1 c2) c3) c4) c56) ce).trans
+    (le_of_eq ?_)
+  ring
+
 /-- **Pair sums with a power saving.**  For each `h ≠ 0` and each `N ≥ 1` some choice of options
 makes the pair sum `≤ C N^{2−δ}`.  This is the per-`N` content of the assembly; summability along
 `sched` is then automatic (`repPairArith_of_power`). -/
