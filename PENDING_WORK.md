@@ -3356,4 +3356,5 @@ Next: `isFresh` Riesz bound, then the classification lemma in Lean (route-decisi
   with `hf_true_lip`, `sum_two_div_three_pow`.  Serves classes 1 (w=v, Z=0) and 3 (w=u, Z=−Y).
 - PROVED `repBound_some_le_cyc` (copy run, perturbation; classes 5/6).
 - PROVED `log_mul_pow_lt`, `le_log_mul_pow` (window ratio facts v ≤ y < ρv).
-- Next: u ≤ T ≤ ρu, separation `hsep`, then per-class sums.
+- PROVED `three_pow_le_pow_sub_pow`, `le_log_pair`, `log_pair_le_log` (u ≤ T ≤ ρu).
+- Next: separation `hsep` (u < y+K ⇒ T ≤ ρv: d small), then per-class sums.

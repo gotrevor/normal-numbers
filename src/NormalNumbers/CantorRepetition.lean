@@ -1919,6 +1919,36 @@ theorem le_log_mul_pow {s t H m : ℕ} (hH : 1 ≤ H) (ht : 1 ≤ t) :
   calc 3 ^ (s * m) = 1 * (3 ^ s * 1) ^ m := by rw [pow_mul]; ring
     _ ≤ H * (3 ^ s * t) ^ m := Nat.mul_le_mul hH (Nat.pow_le_pow_left (Nat.mul_le_mul_left _ ht) m)
 
+/-- The difference `(3ˢt)^{m+d} − (3ˢt)^m` (`d ≥ 1`, `t ≥ 2`) is at least `3^{s(m+d)}`. -/
+theorem three_pow_le_pow_sub_pow {s t m d : ℕ} (ht : 2 ≤ t) (hd : 1 ≤ d) :
+    3 ^ (s * (m + d)) ≤ (3 ^ s * t) ^ (m + d) - (3 ^ s * t) ^ m := by
+  have h1 : (3 ^ s * t) ^ m * (3 ^ s * t) ^ d - (3 ^ s * t) ^ m =
+      (3 ^ s * t) ^ m * ((3 ^ s * t) ^ d - 1) := by rw [Nat.mul_sub_one]
+  rw [pow_add, h1]
+  have hA : 3 ^ (s * m) ≤ (3 ^ s * t) ^ m := by
+    rw [pow_mul]; exact Nat.pow_le_pow_left (Nat.le_mul_of_pos_right _ (by omega)) m
+  have hB : 3 ^ (s * d) ≤ (3 ^ s * t) ^ d - 1 := by
+    have : 3 ^ (s * d) * 2 ≤ (3 ^ s * t) ^ d := by
+      rw [mul_pow, pow_mul]
+      exact Nat.mul_le_mul_left _ ((show 2 ≤ 2 ^ d from by
+        calc 2 = 2 ^ 1 := by norm_num
+          _ ≤ 2 ^ d := Nat.pow_le_pow_right (by norm_num) hd).trans (Nat.pow_le_pow_left ht d))
+    have : 1 ≤ 3 ^ (s * d) := Nat.one_le_pow _ _ (by norm_num)
+    omega
+  rw [mul_add, pow_add]
+  exact Nat.mul_le_mul hA hB
+
+/-- The top `T` of `ξ = H((3ˢt)ⁿ − (3ˢt)ᵐ)`, `n > m`, is at least `u = sn` (hypothesis `huT`). -/
+theorem le_log_pair {s t H m d : ℕ} (hH : 1 ≤ H) (ht : 2 ≤ t) (hd : 1 ≤ d) :
+    s * (m + d) ≤ Nat.log 3 (H * ((3 ^ s * t) ^ (m + d) - (3 ^ s * t) ^ m)) :=
+  Nat.le_log_of_pow_le (by norm_num) ((three_pow_le_pow_sub_pow ht hd).trans
+    (Nat.le_mul_of_pos_left _ hH))
+
+/-- The top of `ξ` is at most the top of `H bⁿ` (hypothesis `hT` via `log_mul_pow_lt`). -/
+theorem log_pair_le_log {b H m d : ℕ} :
+    Nat.log 3 (H * (b ^ (m + d) - b ^ m)) ≤ Nat.log 3 (H * b ^ (m + d)) :=
+  Nat.log_mono_right (Nat.mul_le_mul_left _ (Nat.sub_le _ _))
+
 /-! ## Bases `3ˢt`, `t > 1`: the crux -/
 
 /-- **Assembly of the crux from its inputs (open; believed, 60%).**  For `b = 3ˢt`, `t > 1`:
