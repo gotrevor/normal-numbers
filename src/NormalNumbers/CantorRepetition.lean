@@ -3029,6 +3029,46 @@ theorem sum_pairMaj_le {s t e h' : ℕ} (hs : 1 ≤ s) (ht : 2 ≤ t) (h3 : ¬ 3
     (le_of_eq ?_)
   ring
 
+theorem pairMaj_nonneg (s t e h' m d M W K : ℕ) : 0 ≤ pairMaj s t e h' m d M W K := by
+  unfold pairMaj
+  have := Hf_nonneg (fun _ => true) 0 W ((h' * ((3 ^ s * t) ^ d - 1) * t ^ m : ℕ) : ℝ)
+  have := Hf_nonneg (fun _ => true) 0 W ((h' * t ^ (m + d) : ℕ) : ℝ)
+  have := topProd_nonneg' W (Int.fract (m * Real.logb 3 t + Real.logb 3 ((3 ^ e * h' : ℕ) : ℝ)))
+  have := topProd_nonneg' W (Int.fract (m * Real.logb 3 t +
+    Real.logb 3 ((3 ^ e * h' * ((3 ^ s * t) ^ d - 1) : ℕ) : ℝ)))
+  have : 0 ≤ ∑ k ∈ copyRuns s t e h' m d M,
+    (cycProd (runStart k) ((h' : ℤ) * (((3 ^ s * t : ℕ) : ℤ) ^ (m + d) - ((3 ^ s * t : ℕ) : ℤ) ^ m))
+      + cycProd (runStart k) ((h' : ℤ) * (t : ℤ) ^ (m + d))) :=
+    Finset.sum_nonneg fun _ _ => add_nonneg (cycProd_nonneg _ _) (cycProd_nonneg _ _)
+  have : 0 ≤ Real.pi * (8 / 3 ^ K) := by positivity
+  linarith
+
+/-- The pair `(m, d)` is **good** when `pair_classes` applies: `m` large, past run `k₀`, and none
+of the four window ends in a copy-boundary band. -/
+def PairGood (s t e h' m d k₀ W K : ℕ) : Prop :=
+  3 ^ e * h' < 3 ^ (s * m) ∧ runStart k₀ ≤ s * m + e ∧ W ≤ s * m + e ∧ K ≤ s * m + e ∧
+    ¬ NearCopyBdry W K (s * m + e) ∧
+    ¬ NearCopyBdry W K (Nat.log 3 (3 ^ e * h' * (3 ^ s * t) ^ m)) ∧
+    ¬ NearCopyBdry W K (s * (m + d) + e) ∧
+    ¬ NearCopyBdry W K (Nat.log 3 (pairNat s t e h' m d))
+
+open Classical in
+/-- **Every pair has an option bounded by `pairMaj` plus a bad-pair indicator.** -/
+theorem exists_option_le_pairMaj_bad {s t e h' m d ρ k₀ M W K : ℕ} (ht : 2 ≤ t) (hh : 1 ≤ h')
+    (hd : 1 ≤ d) (hs : 1 ≤ s) (hρ1 : 1 ≤ ρ) (hb : 3 ^ s * t ≤ 3 ^ (s * (ρ - 1)))
+    (hρ : ρ * (ρ + 1) ≤ 4 * (k₀ + 3)) (hMu : s * (m + d) + e + W ≤ M)
+    (hMT : Nat.log 3 (pairNat s t e h' m d) ≤ M) :
+    ∃ o, repBound M o (pairNat s t e h' m d) ≤
+      pairMaj s t e h' m d M W K + (if PairGood s t e h' m d k₀ W K then 0 else 1) := by
+  by_cases hg : PairGood s t e h' m d k₀ W K
+  · obtain ⟨g1, g2, g3, g4, g5, g6, g7, g8⟩ := hg
+    obtain ⟨o, ho⟩ := exists_option_le_pairMaj (K := K) (by omega) hh hd hs hMu hMT
+      (pair_classes ht hh hd hρ1 hb g1 hρ g2 g3 g4 g5 g6 g7 g8)
+    exact ⟨o, by rw [if_pos ⟨g1, g2, g3, g4, g5, g6, g7, g8⟩]; linarith⟩
+  · refine ⟨none, ?_⟩
+    rw [if_neg hg]
+    linarith [repBound_le_one M none (pairNat s t e h' m d), pairMaj_nonneg s t e h' m d M W K]
+
 /-- `repBound` is even in `ξ`. -/
 theorem repBound_neg (M : ℕ) (o : Option ℕ) (ξ : ℝ) : repBound M o (-ξ) = repBound M o ξ := by
   cases o with
