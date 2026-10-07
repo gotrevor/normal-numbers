@@ -1588,7 +1588,21 @@ def ExpOrderPeriods (t : ℕ) : Prop :=
   `max(n,m)` in a band of width `K/log₃ b`, so contribute `O(N K)`, negligible for `K ≍ log N`.
   (Needed: in the band, `repBound_some_add` reduces to `X mod 3^{E−v}`, not to `cycProd` of
   `tᵐ(b^d−1)`, and the free coins below the top are run positions.)
-The copy-zone ranges match: in run `k`, `N ≈ (k+2)a/s ≤ a³` since `a_k` grows like `2^k k!`. -/
+The copy-zone ranges match: in run `k`, `N ≈ (k+2)a/s ≤ a³` since `a_k` grows like `2^k k!`.
+
+**Gap in the plan for large `t` (2026-10-07).**  The window has multiplicative length
+`c = log₃ b / s`, while the gap after run `k` is `[E_k, a_{k+1}) = [(k+2)a, 2(k+2)a)`, ratio 2.
+For `c < 2` (e.g. `b = 6`: `c = 1.63`) a window starting in run `k` has its top in that gap or
+in run `k`, and the four classes above cover it.  For `c ≥ 2` (`t ≥ 3^s`, e.g. `b = 12, 15, 24`)
+a window starting at `v ∈ [E_k/c·2, E_k − a]` covers the whole gap and tops out in run `k+1`:
+* run `k`'s copy coins read only `X mod 3^{E_k − v}` folded mod `3^a − 1` (`repBound_some_add`),
+  not `cycProd` of `X`;
+* the gap coins read middle digits of `X` (neither low nor top: no Cassels, no Baker);
+* run `k+1`'s copy coins read the top `T − a_{k+1}` digits of `ξ` unfolded when `c < 4`
+  (top-window, Baker-type, unproved shape).
+A positive fraction of `m` falls here, so the assembly as stated needs either the third bullet
+formalized or a construction with `a_{k+1}/E_k → ∞` (gaps eventually longer than every window;
+Liouville unaffected).  The 60% confidence is for the redesigned or extended version. -/
 theorem repPairArith_of_inputs {s t : ℕ} (hs : 1 ≤ s) (ht : 2 ≤ t) (h3t : ¬ 3 ∣ t)
     (hB : CantorExactExponentProfile.Literature.BakerLogDiscrepancy) (hT : TOrbitCyclicDecay t)
     (hS : BadGcdSparseH (3 ^ s * t)) : RepPairArith (3 ^ s * t) := by
