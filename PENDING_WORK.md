@@ -3358,4 +3358,5 @@ Next: `isFresh` Riesz bound, then the classification lemma in Lean (route-decisi
 - PROVED `log_mul_pow_lt`, `le_log_mul_pow` (window ratio facts v ≤ y < ρv).
 - PROVED `three_pow_le_pow_sub_pow`, `le_log_pair`, `log_pair_le_log` (u ≤ T ≤ ρu).
 - PROVED `hsep_of` (separation hypothesis, ρ = ρ₁(ρ₀+1)).
+- PROVED `card_nearCopyBdry_le` (band count O((W+K) log N)), `four_pow_le_runStart`.
 - Next: per-class sums (step 3 of lap-4 handoff): κ choice, band/small-m counts, summability.

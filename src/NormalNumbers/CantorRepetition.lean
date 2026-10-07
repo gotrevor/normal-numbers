@@ -1959,6 +1959,65 @@ theorem hsep_of {ρ₀ ρ₁ v y u T K : ℕ} (hT : T ≤ ρ₁ * u) (hy : y ≤
     _ ≤ ρ₁ * ((ρ₀ + 1) * v) := Nat.mul_le_mul_left _ this
     _ = _ := by ring
 
+theorem four_pow_le_runStart (k : ℕ) : 4 ^ (k + 1) ≤ runStart k := by
+  induction k with
+  | zero => simp [runStart]
+  | succ k ih => rw [runStart_succ_eq, pow_succ]; nlinarith
+
+theorem card_shift_le (s A L : ℕ) (hs : 1 ≤ s) (S : Finset ℕ)
+    (hS : ∀ n ∈ S, A ≤ s * n + L ∧ s * n ≤ A) : S.card ≤ L + 1 := by
+  have : S.card ≤ (Finset.Icc (A - L) A).card := by
+    refine Finset.card_le_card_of_injOn (fun n => s * n) (fun n hn => ?_) ?_
+    · have := hS n hn; simp only [Finset.coe_Icc, Set.mem_Icc]; omega
+    · intro x _ y _ hxy
+      exact Nat.eq_of_mul_eq_mul_left (by omega) hxy
+  simp at this; omega
+
+open Classical in
+/-- **Band count.**  At most `2(W+2K+1)(log₄(sN+W+K)+1)` of the `n < N` put `sn` in a copy-run
+boundary band: these pairs are bounded by `1` in the assembly. -/
+theorem card_nearCopyBdry_le (s W K N : ℕ) (hs : 1 ≤ s) :
+    ((Finset.range N).filter fun n => NearCopyBdry W K (s * n)).card ≤
+      2 * (W + 2 * K + 1) * (Nat.log 4 (s * N + W + K) + 1) := by
+  set L := Nat.log 4 (s * N + W + K)
+  have hsub : (Finset.range N).filter (fun n => NearCopyBdry W K (s * n)) ⊆
+      (Finset.range (L + 1)).biUnion fun k =>
+        ((Finset.range N).filter fun n => runStart k ≤ s * n + W + K ∧ s * n ≤ runStart k + K) ∪
+        ((Finset.range N).filter fun n => (k + 2) * runStart k ≤ s * n + K ∧
+          s * n ≤ (k + 2) * runStart k + W + K) := by
+    intro n hn
+    simp only [Finset.mem_filter, Finset.mem_range] at hn
+    obtain ⟨hnN, k, -, hk⟩ := hn
+    have hak : runStart k ≤ s * N + W + K := by
+      have : s * n ≤ s * N := Nat.mul_le_mul_left _ hnN.le
+      rcases hk with h | h
+      · omega
+      · have : runStart k ≤ (k + 2) * runStart k := Nat.le_mul_of_pos_left _ (by omega)
+        omega
+    have hkL : k < L + 1 := by
+      have h4 := (four_pow_le_runStart k).trans hak
+      have := Nat.le_log_of_pow_le (by norm_num) h4
+      omega
+    simp only [Finset.mem_biUnion, Finset.mem_range, Finset.mem_union, Finset.mem_filter]
+    exact ⟨k, hkL, hk.imp (fun h => ⟨hnN, h⟩) (fun h => ⟨hnN, h⟩)⟩
+  refine (Finset.card_le_card hsub).trans ((Finset.card_biUnion_le).trans ?_)
+  have hk : ∀ k ∈ Finset.range (L + 1),
+      (((Finset.range N).filter fun n => runStart k ≤ s * n + W + K ∧ s * n ≤ runStart k + K) ∪
+        ((Finset.range N).filter fun n => (k + 2) * runStart k ≤ s * n + K ∧
+          s * n ≤ (k + 2) * runStart k + W + K)).card ≤ 2 * (W + 2 * K + 1) := by
+    intro k _
+    refine (Finset.card_union_le _ _).trans ?_
+    have h1 := card_shift_le s (runStart k + K) (W + 2 * K) hs
+      ((Finset.range N).filter fun n => runStart k ≤ s * n + W + K ∧ s * n ≤ runStart k + K)
+      (fun n hn => by simp only [Finset.mem_filter] at hn; omega)
+    have h2 := card_shift_le s ((k + 2) * runStart k + W + K) (W + 2 * K) hs
+      ((Finset.range N).filter fun n => (k + 2) * runStart k ≤ s * n + K ∧
+          s * n ≤ (k + 2) * runStart k + W + K)
+      (fun n hn => by simp only [Finset.mem_filter] at hn; omega)
+    omega
+  refine (Finset.sum_le_sum hk).trans ?_
+  simp; ring_nf; omega
+
 /-! ## Bases `3ˢt`, `t > 1`: the crux -/
 
 /-- **Assembly of the crux from its inputs (open; believed, 60%).**  For `b = 3ˢt`, `t > 1`:
