@@ -29,7 +29,25 @@ Never restate or weaken them.  The stretch node `CStarLeThree` and any sharper l
   `log₂ 5` (survivors `1/5`, `3/10`, rational), and bases up to 16 push it to `≈ 2.44`.  Locating an optimal
   constant in an open Bugeaud problem is new mathematics with a definite, checkable endpoint.
 
+- **Review lap 2026-10-07 (c⋆ lap 3) — direction revised, binding for this branch:**
+  New mechanism: **Rosenfeld counting** (count alive dyadic cells `N_k`; charge each kill to an alive ancestor at
+  a fixed lag, so `N_{k+1} ≥ 2N_k − Σ m_i N_{k+1−i}` and induct `N_{k+1} ≥ ΛN_k`).  It is exact for base-2 runs
+  (charged at lag 6 with multiplicity ≤ 2) and needs no Frostman constant.  Probe (`scripts/cstar_models/ros*.py`):
+  per-level version closes at `c = 6` (`Λ = 5/3`, all bases, slack ≈ 0.04 after rigorous tails), fails at
+  `c = 5`; with perfect level-averaging it reaches only `c ≈ 4.6`; at `c = 4` binary-exact counting fails even
+  idealized (averaged slack −0.105), so **base 3 must be exact jointly with base 2** (confirms lap 2 by an
+  independent mechanism).  Simulation (`joint.js`): the true joint `{2,3}` tree at `c = 4` grows 1.808/level and a
+  base-3 event costs 2.4% ≈ the Lebesgue share `2/81`, so the crux is a worst-case-vs-typical gap.
+  **Mandated next moves, in order:** (1) formalize the counting engine and `cStar_le_six` (new file
+  `UniformBadCount.lean`; the engine is the `b ≥ 5` half of the eventual `c ≤ 4` proof, so it is on-path);
+  (2) crux probe: a finite-state abstraction of the joint `{2,3}` skew product (binary run state, ternary run
+  state, position in ternary units, phase of `k log₃ 2`) with a computed sub-eigenvector — does it certify
+  `Λ ≥ 1.75`, and with how many states?  State the result as a Lean node (`JointCoreCount`-type) with confidence.
+  **Forbidden drift:** more α-power potential-engine tuning; Frostman-constant cores (`SmallBaseTreeCore` at
+  `C ≤ 3/2` is doubtful); thickness theorems (Falconer–Yavicoli constants are hopeless here).
+
 Directive history:
+- 2026-10-07 (c⋆ lap 3, review): counting engine + `c⋆ ≤ 6` banked first; crux = exact joint {2,3} core certificate.
 - 2026-10-06 evening: threshold lane opened (Trevor: "go for it").
 
 ## Branch directive (2026-10-06, `proof/cantor-bad-normal`, cantorbad lap 6): `K ∩ BAD ∩ normal` via the local route 🎯

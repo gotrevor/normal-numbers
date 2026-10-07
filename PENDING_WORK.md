@@ -1,4 +1,17 @@
 ## UniformBad threshold c⋆ (branch proof/uniformbad-threshold, 2026-10-07)
+* **2026-10-07 lap 3 (review + bank).**  DONE `cStar_le_six` (`UniformBadCount.lean`, axiom-clean):
+  Rosenfeld-style counting engine `Count.growth` (kills charged to alive ancestors; no Frostman
+  constant), base 2 exact via `runBad` (lag 6, multiplicity 2), every `b ≥ 3` charged at lag
+  `⌊log₂(b⁶−2)⌋` with ≤ 5 cells per window; balance `2(3/5)⁵ + 5·(7/200) ≤ 1/3` at `Λ = 5/3`.
+  Probes (`scripts/cstar_models/ros2.py`, `ros3.py`): per-level counting closes at c=6, fails at c=5;
+  perfect level-averaging reaches only c≈4.6; at c=4 binary-exact counting fails even idealized
+  (−0.105).  Joint {2,3} simulation (`joint.js`): true growth 1.808/level, base-3 event costs 2.4%
+  (≈ 2/81), full system at c=4 ≈ 1.80/level, at c=3 ≈ 1.49/level (so c⋆ ≤ 3 very plausible).
+  **Crux restated:** an exact joint {2,3} core = finite-state abstraction of the skew product
+  (binary run state × ternary run state × position u in ternary units × phase of k·log₃2) with a
+  certified sub-eigenvector Λ ≥ ~1.75, then counted b ≥ 5 with level-averaging.
+  **Next:** (1) crux probe: build the abstraction in JS, compute a sub-eigenvector, measure
+  states needed; (2) averaged counting engine (level-dependent g k) → c ≤ ~4.75 bank.
 * DONE `twelve_fifths_le_cStar` (25-window exact cover, bases 2,3,5,10; engine `not_admissible_of_cert` for any p/q).
 * DONE `cStar_le_twelve` (UniformBadTwelve.lean): power engine `exists_avoid_powPot` (α-power weights,
   child-averaged new charges, Good-children predicate), K=4096, α=1/4, ρ=1/81, per-base 3886/b³.

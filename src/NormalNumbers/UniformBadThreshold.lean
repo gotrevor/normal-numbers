@@ -23,6 +23,9 @@ Known before this file: `log₂ 3 ≤ c⋆ ≤ 24` (`UniformBad.not_uniformBad_o
 * `twelve_fifths_le_cStar : 12/5 ≤ c⋆` — **proved** (25-window certificate, bases 2, 3, 5, 10).
 * `cStar_le_four : c⋆ ≤ 4` (believed 55%).
 
+Located so far: `12/5 ≤ c⋆ ≤ 6` (`cStar_le_six` in `UniformBadCount`, by a counting engine;
+earlier `cStar_le_twelve` in `UniformBadTwelve`).
+
 ## Evidence (Ren, host probe 2026-10-06, exact interval propagation in floating point)
 
 Survivors of the finite system `‖bⁿξ‖ > b^{−c}`, `b ≤ B`, `n ≤ N`, bisected in `c`:
@@ -215,7 +218,13 @@ survivor measure (`.135` at `c = 3` with `b ≤ 12`).
 Route (2026-10-07, `UniformBadRoute`): the base-charging engines stall below `c ≈ 7`, so the bases
 `2, 3, 5, 6, 7` must be exact; the proof is to come from `cStar_le_of_treeCore` with the nodes
 `SmallBaseTreeCore 4 {2,3,5,6,7}` and `TreeEngineSuffices`, perfect powers being free
-(`admissible_iff_nonPerfectPow`). -/
+(`admissible_iff_nonPerfectPow`).
+
+Route revision (2026-10-07, c⋆ lap 3): the counting engine of `UniformBadCount` (kills charged to
+alive ancestors, base 2 exact through its runs) proves `c⋆ ≤ 6` and, per probe, cannot pass
+`c ≈ 4.6` even with level-averaging while base 3 is merely counted.  So the remaining gap is an
+exact joint `{2, 3}` core: a finite-state certificate for the binary tree carrying the ternary
+state (position in ternary units, run states, phase of `k log₃ 2`), with the other bases counted. -/
 theorem cStar_le_four : cStar ≤ 4 := by
   sorry
 
