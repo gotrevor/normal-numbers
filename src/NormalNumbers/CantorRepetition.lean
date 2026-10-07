@@ -3069,6 +3069,94 @@ theorem exists_option_le_pairMaj_bad {s t e h' m d ρ k₀ M W K : ℕ} (ht : 2 
     rw [if_neg hg]
     linarith [repBound_le_one M none (pairNat s t e h' m d), pairMaj_nonneg s t e h' m d M W K]
 
+theorem sum_Ico_ite_le (P : ℕ → Prop) [DecidablePred P] (N : ℕ) :
+    ∑ d ∈ Finset.Ico 1 N, (if P d then 1 else 0 : ℕ) ≤
+      ((Finset.range N).filter fun d => P (d + 1)).card := by
+  rw [Finset.sum_Ico_eq_sum_range, Finset.card_filter]
+  simp only [add_comm 1]
+  exact Finset.sum_le_sum_of_subset_of_nonneg (Finset.range_subset_range.2 (Nat.sub_le N 1))
+    (fun _ _ _ => Nat.zero_le _)
+
+open Classical in
+/-- **Bad-pair count.**  Pairs failing `PairGood` number at most `N(m₀ + 4·band)`: `m < m₀` (small
+`m`), or one of four window ends in a copy-boundary band (`card_nearCopyBdry_le_of`, each end
+injective in `m` or in `d`). -/
+theorem sum_bad_le {s t e h' k₀ W K N m₀ X : ℕ} (hs : 1 ≤ s) (ht : 2 ≤ t) (hh : 1 ≤ h')
+    (hm₀ : ∀ m, m₀ ≤ m → 3 ^ e * h' < 3 ^ (s * m) ∧ runStart k₀ ≤ s * m + e ∧ W ≤ s * m + e ∧
+      K ≤ s * m + e)
+    (hX : ∀ m < N, ∀ d ≤ N, s * m + e ≤ X ∧ Nat.log 3 (3 ^ e * h' * (3 ^ s * t) ^ m) ≤ X ∧
+      s * (m + d) + e ≤ X ∧ Nat.log 3 (pairNat s t e h' m d) ≤ X) :
+    ∑ m ∈ Finset.range N, ∑ d ∈ Finset.Ico 1 N,
+        (if PairGood s t e h' m d k₀ W K then 0 else 1 : ℕ) ≤
+      N * (m₀ + 4 * (2 * (W + 2 * K + 1) * (Nat.log 4 (X + W + K) + 1))) := by
+  set Bd := 2 * (W + 2 * K + 1) * (Nat.log 4 (X + W + K) + 1)
+  have hB3 : 3 ≤ 3 ^ s * t := by
+    have : 3 ≤ 3 ^ s := by
+      calc 3 = 3 ^ 1 := by norm_num
+        _ ≤ 3 ^ s := Nat.pow_le_pow_right (by norm_num) hs
+    nlinarith
+  have hpt : ∀ m d, (if PairGood s t e h' m d k₀ W K then 0 else 1 : ℕ) ≤
+      (if m < m₀ then 1 else 0) + (if NearCopyBdry W K (s * m + e) then 1 else 0) +
+      (if NearCopyBdry W K (Nat.log 3 (3 ^ e * h' * (3 ^ s * t) ^ m)) then 1 else 0) +
+      (if NearCopyBdry W K (s * (m + d) + e) then 1 else 0) +
+      (if NearCopyBdry W K (Nat.log 3 (pairNat s t e h' m d)) then 1 else 0) := by
+    intro m d
+    by_cases hg : PairGood s t e h' m d k₀ W K
+    · simp [hg]
+    · rw [if_neg hg]
+      by_contra hc
+      apply hg
+      have h1 : ¬ m < m₀ := fun h => hc (by rw [if_pos h]; omega)
+      obtain ⟨a1, a2, a3, a4⟩ := hm₀ m (by omega)
+      refine ⟨a1, a2, a3, a4, fun h => hc (by rw [if_pos h]; omega),
+        fun h => hc (by rw [if_pos h]; omega),
+        fun h => hc (by rw [if_pos h]; omega), fun h => hc (by rw [if_pos h]; omega)⟩
+  refine (Finset.sum_le_sum fun m _ => Finset.sum_le_sum fun d _ => hpt m d).trans ?_
+  simp only [Finset.sum_add_distrib]
+  -- small m
+  have s1 : ∑ m ∈ Finset.range N, ∑ d ∈ Finset.Ico 1 N, (if m < m₀ then 1 else 0 : ℕ) ≤ N * m₀ := by
+    rw [Finset.sum_comm]
+    calc _ ≤ ∑ _d ∈ Finset.Ico 1 N, m₀ := Finset.sum_le_sum fun d _ => by
+          rw [Finset.sum_boole]; simp only [Nat.cast_id]
+          calc _ ≤ (Finset.range m₀).card := Finset.card_le_card fun x hx => by
+                simp only [Finset.mem_filter, Finset.mem_range] at hx ⊢; exact hx.2
+            _ = m₀ := Finset.card_range _
+      _ ≤ N * m₀ := by simp only [Finset.sum_const, Nat.card_Ico, smul_eq_mul]; nlinarith [Nat.sub_le N 1]
+  have sm : ∀ f : ℕ → ℕ, Set.InjOn f (Finset.range N) → (∀ m < N, f m ≤ X) →
+      ∑ m ∈ Finset.range N, ∑ d ∈ Finset.Ico 1 N, (if NearCopyBdry W K (f m) then 1 else 0 : ℕ) ≤
+        N * Bd := by
+    intro f hf hfX
+    rw [Finset.sum_comm]
+    calc _ ≤ ∑ _d ∈ Finset.Ico 1 N, Bd := Finset.sum_le_sum fun d _ => by
+          rw [Finset.sum_boole]; simp only [Nat.cast_id]
+          exact card_nearCopyBdry_le_of f W K N X hf hfX
+      _ ≤ N * Bd := by simp only [Finset.sum_const, Nat.card_Ico, smul_eq_mul]; nlinarith [Nat.sub_le N 1]
+  have sd : ∀ g : ℕ → ℕ → ℕ, (∀ m < N, Set.InjOn (fun d => g m (d + 1)) (Finset.range N)) →
+      (∀ m < N, ∀ d < N, g m (d + 1) ≤ X) →
+      ∑ m ∈ Finset.range N, ∑ d ∈ Finset.Ico 1 N, (if NearCopyBdry W K (g m d) then 1 else 0 : ℕ) ≤
+        N * Bd := by
+    intro g hg hgX
+    calc _ ≤ ∑ _m ∈ Finset.range N, Bd := Finset.sum_le_sum fun m hm => by
+          have hm := Finset.mem_range.1 hm
+          refine (sum_Ico_ite_le (fun d => NearCopyBdry W K (g m d)) N).trans ?_
+          exact card_nearCopyBdry_le_of (fun d => g m (d + 1)) W K N X (hg m hm) (hgX m hm)
+      _ = N * Bd := by simp
+  have s2 := sm (fun m => s * m + e) (fun a _ b _ hab => by
+    exact Nat.eq_of_mul_eq_mul_left (by omega) (Nat.add_right_cancel hab))
+    (fun m hm => (hX m hm 0 (Nat.zero_le _)).1)
+  have s3 := sm (fun m => Nat.log 3 (3 ^ e * h' * (3 ^ s * t) ^ m))
+    ((strictMono_log_mul_pow (Nat.mul_pos (by positivity) hh) hB3).injective.injOn)
+    (fun m hm => (hX m hm 0 (Nat.zero_le _)).2.1)
+  have s4 := sd (fun m d => s * (m + d) + e) (fun m _ a _ b _ hab => by
+    simp only at hab; have := Nat.eq_of_mul_eq_mul_left (by omega : 0 < s) (by omega : s * (m + (a + 1)) = s * (m + (b + 1))); omega)
+    (fun m hm d hd => (hX m hm (d + 1) (by omega)).2.2.1)
+  have s5 := sd (fun m d => Nat.log 3 (pairNat s t e h' m d))
+    (fun m _ => (strictMono_log_pair (m := m) (Nat.mul_pos (by positivity) hh) hB3).injective.injOn)
+    (fun m hm d hd => (hX m hm (d + 1) (by omega)).2.2.2)
+  have : N * (m₀ + 4 * Bd) = N * m₀ + N * Bd + N * Bd + N * Bd + N * Bd := by ring
+  rw [this]
+  omega
+
 /-- `repBound` is even in `ξ`. -/
 theorem repBound_neg (M : ℕ) (o : Option ℕ) (ξ : ℝ) : repBound M o (-ξ) = repBound M o ξ := by
   cases o with

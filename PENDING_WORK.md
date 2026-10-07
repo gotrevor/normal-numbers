@@ -1,7 +1,7 @@
 ## Repetition lap 6 (2026-10-07) — per-N assembly of `repPairPower_of_inputs`
 * Proved: `exists_kappa_half` (full square ≤ N + 2·half-sum over (m,d)), `repBound_neg`,
   `pairMaj_nonneg`, `PairGood`, `exists_option_le_pairMaj_bad` (option ≤ pairMaj + [¬PairGood]).
-* Next: count `¬PairGood` pairs (small m: O(N·(e+log h'+W+K+a_{k₀})); bands via
+* Proved `sum_bad_le` (bad count ≤ N(m₀+4·band)). Was next: count `¬PairGood` pairs (small m: O(N·(e+log h'+W+K+a_{k₀})); bands via
   `card_nearCopyBdry_le_of` per fixed m (T injective in d: `strictMono_log_pair`) and per m
   (`strictMono_log_mul_pow`)); then choose M, W, K and finish the arithmetic.
 
