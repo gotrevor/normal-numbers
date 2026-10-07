@@ -3029,6 +3029,62 @@ theorem sum_pairMaj_le {s t e h' : ℕ} (hs : 1 ≤ s) (ht : 2 ≤ t) (h3 : ¬ 3
     (le_of_eq ?_)
   ring
 
+/-- `repBound` is even in `ξ`. -/
+theorem repBound_neg (M : ℕ) (o : Option ℕ) (ξ : ℝ) : repBound M o (-ξ) = repBound M o ξ := by
+  cases o with
+  | none => exact Bf_neg _ _ _
+  | some k => exact repBound_some_neg M k ξ
+
+theorem sum_ite_shift_le (G : ℕ → ℝ) (hG : ∀ d, 0 ≤ G d) (m N : ℕ) :
+    ∑ n ∈ Finset.range N, (if m < n then G (n - m) else 0) ≤ ∑ d ∈ Finset.Ico 1 N, G d := by
+  rw [← Finset.sum_filter]
+  rw [← Finset.sum_image (g := fun n => n - m) (f := G) (fun a ha b hb hab => by
+    simp only [Finset.coe_filter, Finset.mem_range, Set.mem_setOf_eq] at ha hb; simp at hab; omega)]
+  refine Finset.sum_le_sum_of_subset_of_nonneg (fun d hd => ?_) (fun d _ _ => hG d)
+  simp only [Finset.mem_image, Finset.mem_filter, Finset.mem_range] at hd
+  obtain ⟨n, ⟨h1, h2⟩, rfl⟩ := hd
+  simp only [Finset.mem_Ico]; omega
+
+/-- **Half-sum reduction.**  Diagonal pairs cost `≤ 1`; by `repBound_neg` the pair `(m+d, m)`
+and `(m, m+d)` share an option; so per-`(m, d)` options bounded by `G m d ≥ 0` give options for
+the full square with sum `≤ N + 2 Σ_{m<N} Σ_{1≤d<N} G m d`. -/
+theorem exists_kappa_half (M : ℕ) (b h : ℝ) (G : ℕ → ℕ → ℝ) (hG0 : ∀ m d, 0 ≤ G m d)
+    (hG : ∀ m d, 1 ≤ d → ∃ o, repBound M o (h * (b ^ (m + d) - b ^ m)) ≤ G m d) (N : ℕ) :
+    ∃ κ : ℕ → ℕ → Option ℕ, ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N,
+      repBound M (κ n m) (h * (b ^ n - b ^ m)) ≤
+        N + 2 * ∑ m ∈ Finset.range N, ∑ d ∈ Finset.Ico 1 N, G m d := by
+  set P : ℕ → ℕ → ℝ := fun m n => if m < n then G m (n - m) else 0
+  have hP0 : ∀ m n, 0 ≤ P m n := fun m n => by simp only [P]; split_ifs <;> simp [hG0]
+  obtain ⟨κ, hκ⟩ := exists_kappa_sum_le M (fun n m => h * (b ^ n - b ^ m))
+    (fun n m => (if n = m then 1 else 0) + P m n + P n m) (fun n m => by
+      rcases lt_trichotomy m n with hl | rfl | hl
+      · obtain ⟨o, ho⟩ := hG m (n - m) (by omega)
+        refine ⟨o, ?_⟩
+        have e : m + (n - m) = n := by omega
+        rw [e] at ho
+        simp only [P, if_pos hl, if_neg (by omega : ¬ n < m), if_neg (by omega : n ≠ m)]
+        linarith
+      · exact ⟨none, by simp only [if_true, P, lt_irrefl, if_false]; linarith [repBound_le_one M none (h * (b ^ m - b ^ m))]⟩
+      · obtain ⟨o, ho⟩ := hG n (m - n) (by omega)
+        refine ⟨o, ?_⟩
+        have e : n + (m - n) = m := by omega
+        rw [e, ← repBound_neg] at ho
+        simp only [P, if_pos hl, if_neg (by omega : ¬ m < n), if_neg (by omega : n ≠ m)]
+        rw [show h * (b ^ n - b ^ m) = -(h * (b ^ m - b ^ n)) by ring]; linarith)
+    N
+  refine ⟨κ, hκ.trans ?_⟩
+  simp only [Finset.sum_add_distrib]
+  have hdiag : ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N, (if n = m then (1 : ℝ) else 0) = N := by
+    simp [Finset.sum_ite_eq, Finset.filter_true_of_mem (fun x hx => Finset.mem_range.1 hx)]
+  have hA : ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N, P m n ≤
+      ∑ m ∈ Finset.range N, ∑ d ∈ Finset.Ico 1 N, G m d := by
+    rw [Finset.sum_comm]
+    exact Finset.sum_le_sum fun m _ => sum_ite_shift_le (G m) (hG0 m) m N
+  have hB : ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N, P n m ≤
+      ∑ m ∈ Finset.range N, ∑ d ∈ Finset.Ico 1 N, G m d :=
+    Finset.sum_le_sum fun m _ => sum_ite_shift_le (G m) (hG0 m) m N
+  linarith
+
 /-- **Pair sums with a power saving.**  For each `h ≠ 0` and each `N ≥ 1` some choice of options
 makes the pair sum `≤ C N^{2−δ}`.  This is the per-`N` content of the assembly; summability along
 `sched` is then automatic (`repPairArith_of_power`). -/
