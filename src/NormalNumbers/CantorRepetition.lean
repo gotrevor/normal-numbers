@@ -2328,6 +2328,77 @@ theorem pair_class3 {s t e h' m d M W K : ℕ} (ht : 1 ≤ t) (hM : s * (m + d) 
   rw [← pow_add]
   exact pow_le_pow_right₀ (by norm_num) (by omega)
 
+theorem pairNat_eq_mul (s t e h' m d : ℕ) :
+    (pairNat s t e h' m d : ℝ) = ((3 ^ e * h' * ((3 ^ s * t) ^ d - 1) : ℕ) : ℝ) *
+      ((3 ^ s * t : ℕ) : ℝ) ^ m := by
+  unfold pairNat
+  have e1 : (3 ^ s * t) ^ (m + d) - (3 ^ s * t) ^ m = (3 ^ s * t) ^ m * ((3 ^ s * t) ^ d - 1) := by
+    rw [pow_add, Nat.mul_sub_one]
+  rw [e1]; push_cast; ring
+
+/-- **Class 4, concrete (top window of `ξ`).**  `T = log₃ ξ` (natural), `W` fresh places below
+it: the pair term is at most `topProd W {m log₃ t + log₃(3ᵉh'(bᵈ−1))}`. -/
+theorem pair_class4 {s t e h' m d M W : ℕ} (ht : 1 ≤ t) (h1 : 1 ≤ pairNat s t e h' m d)
+    (hW : W ≤ Nat.log 3 (pairNat s t e h' m d))
+    (hfr : ∀ k < W, isFresh (Nat.log 3 (pairNat s t e h' m d) - 1 - k) = true)
+    (hM : Nat.log 3 (pairNat s t e h' m d) ≤ M) :
+    repBound M none (pairNat s t e h' m d) ≤
+      CantorExactExponentProfile.topProd W (Int.fract (m * Real.logb 3 t +
+        Real.logb 3 ((3 ^ e * h' * ((3 ^ s * t) ^ d - 1) : ℕ) : ℝ))) := by
+  simp only [repBound]
+  have hT : ⌊Real.logb 3 |((pairNat s t e h' m d : ℕ) : ℝ)|⌋₊ = Nat.log 3 (pairNat s t e h' m d) := by
+    rw [Nat.abs_cast]; exact_mod_cast Real.natFloor_logb_natCast 3 _
+  have h1' : (1 : ℝ) ≤ |((pairNat s t e h' m d : ℕ) : ℝ)| := by
+    rw [Nat.abs_cast]; exact_mod_cast h1
+  refine (CantorExactExponentProfile.bf_le_topProd isFresh M W _ h1' (hT ▸ hW)
+    (hT ▸ hfr) (hT ▸ hM)).trans (le_of_eq ?_)
+  have hc : ((3 ^ e * h' * ((3 ^ s * t) ^ d - 1) : ℕ) : ℝ) ≠ 0 := by
+    intro h0
+    have := pairNat_eq_mul s t e h' m d
+    rw [h0, zero_mul] at this
+    have : (1 : ℝ) ≤ 0 := by rw [← this]; exact_mod_cast h1
+    norm_num at this
+  rw [pairNat_eq_mul, fract_logb_mul_pow ht _ hc, Nat.abs_cast]
+
+/-- **Class 2, concrete (top window of `Y = 3ᵉh'bᵐ`).**  If `y = log₃ Y ≤ s(m+d) + e` and the `W`
+places below `y` are fresh, the pair term is at most `topProd W {m log₃ t + log₃(3ᵉh')}`. -/
+theorem pair_class2 {s t e h' m d M W : ℕ} (ht : 1 ≤ t) (hY1 : 1 ≤ 3 ^ e * h' * (3 ^ s * t) ^ m)
+    (hW : W ≤ Nat.log 3 (3 ^ e * h' * (3 ^ s * t) ^ m))
+    (hfr : ∀ k < W, isFresh (Nat.log 3 (3 ^ e * h' * (3 ^ s * t) ^ m) - 1 - k) = true)
+    (hM : Nat.log 3 (3 ^ e * h' * (3 ^ s * t) ^ m) ≤ M)
+    (hyu : Nat.log 3 (3 ^ e * h' * (3 ^ s * t) ^ m) ≤ s * (m + d) + e) :
+    repBound M none (pairNat s t e h' m d) ≤
+      CantorExactExponentProfile.topProd W (Int.fract (m * Real.logb 3 t +
+        Real.logb 3 ((3 ^ e * h' : ℕ) : ℝ))) := by
+  simp only [repBound]
+  set Y : ℕ := 3 ^ e * h' * (3 ^ s * t) ^ m with hYdef
+  have hT : ⌊Real.logb 3 |((Y : ℤ) : ℝ)|⌋₊ = Nat.log 3 Y := by
+    push_cast; rw [Nat.abs_cast]; exact_mod_cast Real.natFloor_logb_natCast 3 _
+  have h1' : (1 : ℝ) ≤ |((Y : ℤ) : ℝ)| := by push_cast; rw [Nat.abs_cast]; exact_mod_cast hY1
+  have hle : (3 ^ s * t) ^ m ≤ (3 ^ s * t) ^ (m + d) := Nat.pow_le_pow_right (by positivity) (by omega)
+  have hdvd : (3 : ℤ) ^ ⌊Real.logb 3 |((Y : ℤ) : ℝ)|⌋₊ ∣ ((pairNat s t e h' m d : ℕ) : ℤ) + (Y : ℤ) := by
+    rw [hT]
+    have : ((pairNat s t e h' m d : ℕ) : ℤ) + (Y : ℤ) = ((3 ^ e * h' * (3 ^ s * t) ^ (m + d) : ℕ) : ℤ) := by
+      unfold pairNat; rw [hYdef, ← Nat.cast_add, Nat.mul_sub, Nat.sub_add_cancel
+        (Nat.mul_le_mul_left _ hle)]
+    rw [this]
+    refine Int.natCast_dvd_natCast.2 ?_ |> (by push_cast; exact ·)
+    refine (Nat.pow_dvd_pow 3 hyu).trans ?_
+    exact ⟨h' * t ^ (m + d), by rw [mul_pow, ← pow_mul, pow_add]; ring⟩
+  have := CantorExactExponentProfile.bf_le_topProd_of_dvd isFresh M W
+    ((pairNat s t e h' m d : ℕ) : ℤ) (Y : ℤ) h1' (hT ▸ hW) (hT ▸ hfr) (hT ▸ hM) hdvd
+  push_cast at this
+  refine this.trans (le_of_eq ?_)
+  have hc : ((3 ^ e * h' : ℕ) : ℝ) ≠ 0 := by
+    intro h0; push_cast at h0
+    have : ((Y : ℕ) : ℝ) = 0 := by rw [hYdef]; push_cast; rw [h0, zero_mul]
+    have h2 : (1 : ℝ) ≤ Y := by exact_mod_cast hY1
+    linarith
+  have := fract_logb_mul_pow (s := s) ht ((3 ^ e * h' : ℕ) : ℝ) hc m
+  push_cast at this ⊢
+  rw [show ((Y : ℕ) : ℝ) = 3 ^ e * (h' : ℝ) * (3 ^ s * (t : ℝ)) ^ m by rw [hYdef]; push_cast; ring,
+    this, abs_of_nonneg (by positivity : (0 : ℝ) ≤ 3 ^ e * (h' : ℝ))]
+
 /-- **Pair sums with a power saving.**  For each `h ≠ 0` and each `N ≥ 1` some choice of options
 makes the pair sum `≤ C N^{2−δ}`.  This is the per-`N` content of the assembly; summability along
 `sched` is then automatic (`repPairArith_of_power`). -/

@@ -3372,5 +3372,5 @@ Next: `isFresh` Riesz bound, then the classification lemma in Lean (route-decisi
 - PROVED `runEnd_succ_le_cube` (N' = (k+2)a_k+1 ∈ [a_k, a_k³]: class 5/6 range glue).
 - PROVED `repPairArith_of_power` (+ `RepPairPower`, `one_le_sched`); `repPairArith_of_inputs` now proved from the new open leaf `repPairPower_of_inputs` (per-N power saving; plan in its docstring).
 - PROVED `exists_kappa_sum_le`, `repBound_le_one` (option-choice glue).
-- PROVED `pairNat`, `pairNat_eq`, `pairNat_eq_sub`, `pair_class1`, `pair_class3` (concrete per-pair bounds, h = 3^e h').  Next: pair_class2/4/5/6 concrete, then combine with pair_classify_rep.
+- PROVED `pairNat`, `pairNat_eq`, `pairNat_eq_sub`, `pair_class1`, `pair_class3` (concrete per-pair bounds, h = 3^e h').  PROVED `pair_class2`, `pair_class4`, `pairNat_eq_mul`.  Next: pair_class5/6 concrete, then combine with pair_classify_rep.
 - Next: κ choice (classical, per classification), summability (step 3 of lap-4 handoff): κ choice, band/small-m counts, summability.
