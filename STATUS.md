@@ -10,7 +10,7 @@ cover).  The upper headline `cStar_le_four` is open and both known mechanisms ar
 Newhouse route needs `ThickCore`, which `Newhouse.windows_merge_forced` (proved this lap) shows is
 exactly locality of the canonical merge closure of windows of all bases `≥ 3` (cross-base clusters at
 every depth); the counting route needs a weight-regular exact `{2,3}` core with growth `≥ 1.78`.
-Banked next: `cStar_le_five` (`UniformBadFive.lean`, frozen, probe slack `0.019`, control `c = 6`).
+Banked: `cStar_le_five` (`UniformBadFive.lean`, proved 2026-10-07).  Next: lowest exponent the engine reaches; higher lower bound.
 
 **What's happened (newest first).**
 * 2026-10-07 lap 7 (review): forced merging proved (`merge_forced`, `windows_merge_forced`); Maze row
@@ -37,7 +37,7 @@ higher certified lower bound (bases beyond 10; host probe puts the finite-system
 |---|---|---|---|
 | `twelve_fifths_le_cStar` | `12/5 ≤ c⋆` (uncond.) | propext, choice, Quot.sound | 🟢 proved |
 | `cStar_le_six` (bank) | `c⋆ ≤ 6` (uncond.) | propext, choice, Quot.sound | 🟢 proved |
-| `cStar_le_five` (bank) | `c⋆ ≤ 5` (uncond.) | + `sorryAx` | 🟡 frozen, probe slack 0.019; formalization in progress |
+| `cStar_le_five` (bank) | `c⋆ ≤ 5` (uncond.) | std + 2 `native_decide` | ✅ proved 2026-10-07 (two-rate counting, `UniformBadFive`) |
 | `cStar_le_four_of_newhouse` | `ThickCore 4 τ → c⋆ ≤ 4` | propext, choice, Quot.sound | 🟢 proved wiring |
 | `cStar_le_four` | `c⋆ ≤ 4` (uncond.) | + `sorryAx` | open crux; both mechanisms walled |
 

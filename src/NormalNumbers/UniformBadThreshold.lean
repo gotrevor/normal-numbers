@@ -23,9 +23,9 @@ Known before this file: `log₂ 3 ≤ c⋆ ≤ 24` (`UniformBad.not_uniformBad_o
 * `twelve_fifths_le_cStar : 12/5 ≤ c⋆` — **proved** (25-window certificate, bases 2, 3, 5, 10).
 * `cStar_le_four : c⋆ ≤ 4` (believed 55%).
 
-Located so far: `5/2 ≤ c⋆ ≤ 6` (`five_halves_le_cStar`, 29-window certificate) (`cStar_le_six` in `UniformBadCount`, by a counting engine;
-earlier `cStar_le_twelve` in `UniformBadTwelve`).  Banked next: `cStar_le_five` (`UniformBadFive`,
-frozen node, probe slack `0.019`).
+Located so far: `5/2 ≤ c⋆ ≤ 5` (`five_halves_le_cStar`, 29-window certificate; `cStar_le_five` in
+`UniformBadFive`, two-rate counting; earlier `cStar_le_six` in `UniformBadCount` and `cStar_le_twelve`
+in `UniformBadTwelve`).
 
 ## Evidence (Ren, host probe 2026-10-06, exact interval propagation in floating point)
 

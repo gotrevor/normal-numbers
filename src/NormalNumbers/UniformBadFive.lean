@@ -8,29 +8,30 @@ import NormalNumbers.UniformBadCount
 import NormalNumbers.UniformBadRoute
 
 /-!
-# `c⋆ ≤ 5` by level-dependent counting
+# `c⋆ ≤ 5` by two-rate counting
 
-The counting engine of `UniformBadCount` (`Count.growth`, which already allows a growth rate `g k`
-that depends on the level) at exponent `5`, with three changes against `cStar_le_six`:
+The counting engine of `UniformBadCount` (`Count.growth`, with a level-dependent growth rate) at
+exponent `5`:
 
-* **base `2` exact.**  A cell at level `k + 1 ≥ 6` whose last five binary digits agree has a
-  unique charge: its ancestor at level `k − 4` (the other run digit would already have been killed
-  one level earlier).  Multiplicity `1`, so the base-2 balance is the run-free recurrence itself.
-* **per-window resolution.**  The window of order `n` of base `b` has length `r` cells at its
-  resolution level `lv = ⌈log₂ b^{n+5}⌉`, with `r = 2^{lv+1}/b^{n+5} ∈ [2, 4)`.  It is killed at `lv`
-  when `r < 3` (at most `4` cells) and one level earlier when `r ≥ 3` (at most `3` cells), and
-  charged at lag `⌊log₂(¾ (b⁵ − 2))⌋`.  Perfect powers are dropped (`admissible_iff_nonPerfectPow`).
-* **two growth rates.**  `g k = 329/200` when level `k + 1` carries a base-3 kill and `181/100`
-  otherwise.  For base `3` the kill levels satisfy `L(n+2) ≥ L(n) + 3` (no two consecutive gaps of
-  one), so any `ℓ` consecutive levels hold at most `⌊(2ℓ + 2)/3⌋` of them, and every product of
-  growth rates over a charging window is bounded below.
+* **base `2` exact** (`runBad5`): the last five binary digits of an alive cell are not all equal.
+  From level `6` on, such a kill has multiplicity `1` over its ancestor at level `k − 4`
+  (`card_runKill5_le_one`): the parent is alive, so the run digit is the complement of the
+  ancestor's last digit.
+* **kill level** `L5 b n` with `3 b^{n+5} ≤ 4 · 2^L` and `2 · 2^L < 3 b^{n+5}` (`L5_spec`): there a
+  base-`b` window of order `n` spans fewer than `3` cells and meets at most `4`
+  (`card_meets5_le`); it is charged to the ancestor at lag `lag5 b = ⌊log₂(3(b⁵ − 2)/4)⌋`, which
+  meets at most one window of that order (`meets5_unique`).  The perfect powers `4, 8, 9` are not
+  counted (`Base5`); `admissible_iff_nonPerfectPow` recovers them.
+* **two growth rates** (`g5`): `33/20` below a base-`3` kill level, `181/100` otherwise.  Base-`3`
+  kill levels satisfy `L5 3 (n+2) ≥ L5 3 n + 3` (`L5_three`), so no three consecutive levels all
+  carry one (`no_three`), and the growth over `l` levels is at least
+  `F5 l = (181/100 · (33/20)²)^{⌊l/3⌋} (33/20)^{l mod 3}` (`prod_g5_ge`).
 
-Probe (`scripts/cstar_models/lvl5c.js`, `pess.js`, 2026-10-07): the worst per-level slack of this
-scheme is `0.038` along the true kill pattern (`0.028` with every base `b ≥ 5` killing at every
-level), and `0.019` with every charging window given its worst count of base-3 kill levels.  With
-a single growth rate the scheme fails (best slack `−0.023`), as does charging `5` cells per window
-(`−0.011`).  Control: the same pessimistic check at `c = 6` has slack `0.21`, consistent with
-`cStar_le_six`.
+The balance (`card_kill5_le`): at a level of either type the kills are at most
+`(1/F5 4 + [base-3 level] 4/F5 6 + Σ_{b ≥ 4} w5 b) cnt k`, i.e. `0.1230 + 0.0494 ≤ 0.19` and
+`0.1230 + 0.1647 + 0.0494 ≤ 0.35`.  The base series `Σ w5 b ≤ 0.0494` (`sum_w5_le`) is exact
+rational arithmetic for `b ≤ 29` (`sum_w5_small`) plus a telescoping tail.  Probe:
+`scripts/cstar_models/pess.js` and the lap-10 recomputation (slack `0.013` at the base-3 levels).
 -/
 
 namespace NormalNumbers.UniformBadThreshold
@@ -529,13 +530,298 @@ theorem sum_w5_le (M : ℕ) : ∑ b ∈ Finset.Ioc 3 M, ((w5 b : ℚ) : ℝ) ≤
     _ ≤ _ := add_le_add hsmall (htail _ (by omega))
     _ ≤ 494 / 10000 := by norm_num
 
+theorem lag5_three : lag5 3 = 7 := by native_decide
+
+theorem not_K3_lt {m : ℕ} (h : m < 8) : ¬ K3 m := by
+  rintro ⟨n, hn⟩; have := eight_le_L5 (b := 3) le_rfl n; omega
+
+/-! ### The per-level balance -/
+
+open Classical in
+/-- **Per-level kill bound** for exponent `5`. -/
+theorem card_kill5_le (k : ℕ)
+    (hch : ∀ j ≤ k, (cnt bad5 j : ℝ) * ∏ i ∈ Finset.Ico j k, g5 i ≤ cnt bad5 k) :
+    ((killSet bad5 k).card : ℝ) ≤ (2 - g5 k) * cnt bad5 k := by
+  have hF : ∀ j ≤ k, (cnt bad5 j : ℝ) * ((F5 (k - j) : ℚ) : ℝ) ≤ cnt bad5 k := by
+    intro j hj
+    have h := prod_g5_ge (k - j) j
+    rw [show j + (k - j) = k by omega] at h
+    exact le_trans (mul_le_mul_of_nonneg_left h (by positivity)) (hch j hj)
+  have hck : (0 : ℝ) ≤ cnt bad5 k := by positivity
+  have hcard := (Finset.card_le_card (killSet5_subset k)).trans (Finset.card_union_le _ _)
+  have hcard' := hcard.trans (Nat.add_le_add_left Finset.card_biUnion_le _)
+  have hK : ((killSet bad5 k).card : ℝ) ≤
+      (((Finset.range (2 ^ (k + 1))).filter
+        (fun a => Alive bad5 k (a / 2) ∧ runBad5 (k + 1) a)).card : ℝ) +
+      ∑ b ∈ Finset.Ioc 2 (2 ^ (k + 3)), (((Finset.range (2 ^ (k + 1))).filter
+        (fun a => Alive bad5 k (a / 2) ∧ Base5 b ∧
+          ∃ n A, L5 b n = k + 1 ∧ meets5 (k + 1) a b n A)).card : ℝ) := by
+    exact_mod_cast hcard'
+  -- no window kills below level `8`
+  have hW0 : k + 1 < 8 → ∀ b, ((Finset.range (2 ^ (k + 1))).filter
+        (fun a => Alive bad5 k (a / 2) ∧ Base5 b ∧
+          ∃ n A, L5 b n = k + 1 ∧ meets5 (k + 1) a b n A)) = ∅ := by
+    intro hk b
+    refine Finset.filter_eq_empty_iff.2 fun a _ h => ?_
+    obtain ⟨-, hb, n, A, hn, -⟩ := h
+    have := eight_le_L5 hb.1 n
+    omega
+  rcases Nat.lt_or_ge k 5 with hk5 | hk5
+  · -- levels `≤ 5`: only the base-`2` kills at level `5`
+    simp only [hW0 (by omega), Finset.card_empty, Nat.cast_zero, Finset.sum_const_zero,
+      add_zero] at hK
+    have hg : g5 k = 181 / 100 := by
+      unfold g5; rw [if_neg (not_K3_lt (by omega))]
+    rw [hg]
+    rcases Nat.lt_or_ge k 4 with hk4 | hk4
+    · have : (Finset.range (2 ^ (k + 1))).filter
+          (fun a => Alive bad5 k (a / 2) ∧ runBad5 (k + 1) a) = ∅ :=
+        Finset.filter_eq_empty_iff.2 fun a _ h => by have := h.2.1; omega
+      rw [this] at hK
+      simp only [Finset.card_empty, Nat.cast_zero] at hK
+      nlinarith
+    · obtain rfl : k = 4 := by omega
+      have h1 := (Nat.cast_le (α := ℝ)).2 (card_runKill5_le_two 4 le_rfl)
+      push_cast at h1
+      have h2 := hch 0 (by norm_num)
+      have hp : ∏ i ∈ Finset.Ico 0 4, g5 i = (181 / 100 : ℝ) ^ 4 := by
+        have : ∀ i ∈ Finset.Ico 0 4, g5 i = 181 / 100 := fun i hi => by
+          have := (Finset.mem_Ico.1 hi).2
+          unfold g5; rw [if_neg (not_K3_lt (by omega))]
+        rw [Finset.prod_congr rfl this, Finset.prod_const]; simp
+      rw [hp] at h2
+      norm_num at h1 h2 ⊢
+      linarith
+  · -- runs
+    have hrun : (((Finset.range (2 ^ (k + 1))).filter
+        (fun a => Alive bad5 k (a / 2) ∧ runBad5 (k + 1) a)).card : ℝ) ≤ cnt bad5 (k - 4) := by
+      have h1 := (Nat.cast_le (α := ℝ)).2 (card_runKill5_le_one k hk5)
+      push_cast at h1; linarith
+    have hr4 := hF (k - 4) (by omega)
+    rw [show k - (k - 4) = 4 by omega] at hr4
+    have e4 : ((F5 4 : ℚ) : ℝ) = 181 / 100 * (33 / 20) ^ 3 := by norm_num [F5]
+    rw [e4] at hr4
+    -- windows
+    set v : ℕ → ℝ := fun b => if b = 3 then (if K3 (k + 1) then 4 / ((F5 6 : ℚ) : ℝ) else 0)
+      else ((w5 b : ℚ) : ℝ) with hv
+    have hwin : ∀ b ∈ Finset.Ioc 2 (2 ^ (k + 3)), (((Finset.range (2 ^ (k + 1))).filter
+        (fun a => Alive bad5 k (a / 2) ∧ Base5 b ∧
+          ∃ n A, L5 b n = k + 1 ∧ meets5 (k + 1) a b n A)).card : ℝ) ≤ v b * cnt bad5 k := by
+      intro b _
+      set S := (Finset.range (2 ^ (k + 1))).filter
+        (fun a => Alive bad5 k (a / 2) ∧ Base5 b ∧ ∃ n A, L5 b n = k + 1 ∧ meets5 (k + 1) a b n A)
+      rcases S.eq_empty_or_nonempty with hS | ⟨a₀, ha₀⟩
+      · rw [hS, Finset.card_empty, Nat.cast_zero]
+        have : 0 ≤ v b := by
+          simp only [hv]; split_ifs
+          · have := F5_pos 6; positivity
+          · exact le_rfl
+          · unfold w5; split_ifs
+            · simp
+            · have := F5_pos (lag5 b - 1); push_cast; positivity
+        positivity
+      obtain ⟨-, -, hB, n₀, A₀, hn₀, -⟩ := Finset.mem_filter.1 ha₀
+      have hlag := lag5_lt_L5 hB.1 n₀
+      have hlag7 := seven_le_lag5 hB.1
+      rw [hn₀] at hlag
+      have hsub : S ⊆ (Finset.range (2 ^ (k + 1))).filter
+          (fun a => Alive bad5 k (a / 2) ∧ ∃ n A, L5 b n = k + 1 ∧ meets5 (k + 1) a b n A) := by
+        intro a ha
+        obtain ⟨hr, hal, -, h⟩ := Finset.mem_filter.1 ha
+        exact Finset.mem_filter.2 ⟨hr, hal, h⟩
+      have h1 := (Nat.cast_le (α := ℝ)).2 ((Finset.card_le_card hsub).trans (card_winKill5_le k b hB.1))
+      push_cast at h1
+      have h2 := hF (k + 1 - lag5 b) (by omega)
+      rw [show k - (k + 1 - lag5 b) = lag5 b - 1 by omega] at h2
+      have hFp : (0 : ℝ) < ((F5 (lag5 b - 1) : ℚ) : ℝ) := by exact_mod_cast F5_pos _
+      have h3 : 4 * (cnt bad5 (k + 1 - lag5 b) : ℝ) ≤
+          4 / ((F5 (lag5 b - 1) : ℚ) : ℝ) * cnt bad5 k := by
+        rw [div_mul_eq_mul_div, le_div_iff₀ hFp]; linarith
+      have hvb : v b = 4 / ((F5 (lag5 b - 1) : ℚ) : ℝ) := by
+        simp only [hv]
+        by_cases h3b : b = 3
+        · subst h3b
+          rw [if_pos rfl, if_pos ⟨n₀, hn₀⟩, lag5_three]
+        · rw [if_neg h3b]
+          unfold w5
+          rw [if_neg (by have := hB.2; omega)]
+          push_cast; rfl
+      rw [hvb]; linarith
+    have hsum := Finset.sum_le_sum hwin
+    have hsplit : ∑ b ∈ Finset.Ioc 2 (2 ^ (k + 3)), v b * cnt bad5 k =
+        (v 3 + ∑ b ∈ Finset.Ioc 3 (2 ^ (k + 3)), ((w5 b : ℚ) : ℝ)) * cnt bad5 k := by
+      have h8 : 3 ≤ 2 ^ (k + 3) := by
+        calc 3 ≤ 2 ^ 3 := by norm_num
+          _ ≤ 2 ^ (k + 3) := Nat.pow_le_pow_right (by norm_num) (by omega)
+      rw [← Finset.sum_mul, ← Finset.sum_Ioc_consecutive _ (show 2 ≤ 3 by norm_num) h8,
+        show Finset.Ioc 2 3 = {3} by decide, Finset.sum_singleton]
+      congr 2
+      refine Finset.sum_congr rfl fun b hb => ?_
+      have := (Finset.mem_Ioc.1 hb).1
+      simp only [hv, if_neg (show b ≠ 3 by omega)]
+    have hT := sum_w5_le (2 ^ (k + 3))
+    have hT' := mul_le_mul_of_nonneg_right hT hck
+    rw [hsplit, add_mul] at hsum
+    have hc4 : (0 : ℝ) ≤ cnt bad5 (k - 4) := by positivity
+    have hrr : (cnt bad5 (k - 4) : ℝ) ≤ 12299 / 100000 * cnt bad5 k := by
+      norm_num at hr4; linarith
+    have e6 : 4 / ((F5 6 : ℚ) : ℝ) ≤ 16473 / 100000 := by norm_num [F5]
+    unfold g5
+    by_cases hk3 : K3 (k + 1)
+    · have hv3 : v 3 = 4 / ((F5 6 : ℚ) : ℝ) := by simp [hv, hk3]
+      rw [if_pos hk3]
+      have h6 : v 3 * cnt bad5 k ≤ 16473 / 100000 * cnt bad5 k := by
+        rw [hv3]; exact mul_le_mul_of_nonneg_right e6 hck
+      linarith
+    · have hv3 : v 3 = 0 := by simp [hv, hk3]
+      rw [if_neg hk3]
+      have h6 : v 3 * cnt bad5 k = 0 := by rw [hv3, zero_mul]
+      linarith
+
+/-- The exponent-`5` tree grows by `g5 k` at level `k`. -/
+theorem growth_five : ∀ k, g5 k * cnt bad5 k ≤ cnt bad5 (k + 1) :=
+  growth bad5 (fun k => le_trans (by norm_num) (g5_ge k)) fun k hch => card_kill5_le k hch
+
+/-! ### From cells to the Diophantine condition -/
+
+theorem dnear_two_ge5 {ξ : ℝ} {n a : ℕ} (hξ : ξ ∈ cell (n + 5) a) (h : ¬ runBad5 (n + 5) a) :
+    ((2 : ℝ) ^ 5)⁻¹ ≤ dnear ((2 : ℝ) ^ n * ξ) := by
+  have hs : a % 32 ≠ 0 ∧ a % 32 ≠ 31 := by
+    simp only [runBad5, not_and, not_or] at h; exact h (by omega)
+  obtain ⟨h1, h2⟩ := hξ
+  set x := (2 : ℝ) ^ n * ξ with hx
+  have e : (2 : ℝ) ^ (n + 5) = 2 ^ n * 32 := by rw [pow_add]; norm_num
+  have hpos : (0 : ℝ) < 2 ^ n := by positivity
+  have hx1 : (a : ℝ) / 32 ≤ x := by
+    rw [e] at h1
+    calc (a : ℝ) / 32 = 2 ^ n * ((a : ℝ) / (2 ^ n * 32)) := by field_simp
+      _ ≤ x := by rw [hx]; gcongr
+  have hx2 : x ≤ ((a : ℝ) + 1) / 32 := by
+    rw [e] at h2
+    calc x ≤ 2 ^ n * (((a : ℝ) + 1) / (2 ^ n * 32)) := by rw [hx]; gcongr
+      _ = ((a : ℝ) + 1) / 32 := by field_simp
+  have ha : (a : ℝ) = 32 * ((a / 32 : ℕ) : ℝ) + ((a % 32 : ℕ) : ℝ) := by
+    exact_mod_cast (Nat.div_add_mod a 32).symm
+  have hs1 : (1 : ℝ) ≤ ((a % 32 : ℕ) : ℝ) := by exact_mod_cast (by omega : 1 ≤ a % 32)
+  have hs2 : ((a % 32 : ℕ) : ℝ) ≤ 30 := by
+    exact_mod_cast (by have := Nat.mod_lt a (by norm_num : 32 > 0); omega : a % 32 ≤ 30)
+  unfold dnear
+  rcases le_or_gt (round x) ((a / 32 : ℕ) : ℤ) with hm | hm
+  · have hm' : ((round x : ℤ) : ℝ) ≤ ((a / 32 : ℕ) : ℝ) := by
+      have := (Int.cast_le (R := ℝ)).2 hm
+      rwa [Int.cast_natCast] at this
+    rw [abs_of_nonneg (by linarith)]
+    norm_num
+    linarith
+  · have hm' : ((a / 32 : ℕ) : ℝ) + 1 ≤ ((round x : ℤ) : ℝ) := by
+      have hm2 : ((a / 32 : ℕ) : ℤ) + 1 ≤ round x := hm
+      have := (Int.cast_le (R := ℝ)).2 hm2
+      rwa [Int.cast_add, Int.cast_natCast, Int.cast_one] at this
+    rw [abs_of_nonpos (by linarith)]
+    norm_num
+    linarith
+
+theorem dnear_ge_of_cell5 {ξ : ℝ} {b n k a : ℕ} (hb : 2 ≤ b) (hξ : ξ ∈ cell k a)
+    (h : ∀ A, ¬ meets5 k a b n A) : ((b : ℝ) ^ 5)⁻¹ ≤ dnear ((b : ℝ) ^ n * ξ) := by
+  by_contra hlt
+  replace hlt := not_le.1 hlt
+  obtain ⟨h1, h2⟩ := hξ
+  set x := (b : ℝ) ^ n * ξ with hx
+  have hQ : (0 : ℝ) < 2 ^ k := by positivity
+  have hb0 : (0 : ℝ) < b := by exact_mod_cast (by omega : 0 < b)
+  have hB : (0 : ℝ) < (b : ℝ) ^ 5 := by positivity
+  have hBn : (0 : ℝ) < (b : ℝ) ^ n := by positivity
+  have hξ0 : 0 ≤ ξ := le_trans (by positivity) h1
+  have hx0 : 0 ≤ x := by positivity
+  have hd : |x - round x| < ((b : ℝ) ^ 5)⁻¹ := hlt
+  have hB1 : ((b : ℝ) ^ 5)⁻¹ ≤ 1 :=
+    inv_le_one_of_one_le₀ (one_le_pow₀ (by exact_mod_cast (by omega : 1 ≤ b)))
+  have hr0 : 0 ≤ round x := by
+    by_contra hneg
+    replace hneg := not_le.1 hneg
+    have : ((round x : ℤ) : ℝ) ≤ -1 := by exact_mod_cast (by omega : round x ≤ -1)
+    have := (abs_lt.1 hd).2
+    linarith
+  set A := (round x).toNat with hA
+  have hAx : ((A : ℕ) : ℝ) = ((round x : ℤ) : ℝ) := by
+    rw [hA]; exact_mod_cast Int.toNat_of_nonneg hr0
+  obtain ⟨hd1, hd2⟩ := abs_lt.1 hd
+  rw [← hAx] at hd1 hd2
+  have hBx1 : (b : ℝ) ^ 5 * x < (b : ℝ) ^ 5 * A + 1 := by
+    have := mul_lt_mul_of_pos_left hd2 hB
+    rw [mul_sub, mul_inv_cancel₀ hB.ne'] at this; linarith
+  have hBx2 : (b : ℝ) ^ 5 * A < (b : ℝ) ^ 5 * x + 1 := by
+    have := mul_lt_mul_of_pos_left hd1 hB
+    rw [mul_sub, mul_neg, mul_inv_cancel₀ hB.ne'] at this; linarith
+  have ha1 : (a : ℝ) ≤ 2 ^ k * ξ := by rwa [div_le_iff₀ hQ, mul_comm] at h1
+  have ha2 : 2 ^ k * ξ ≤ (a : ℝ) + 1 := by rwa [le_div_iff₀ hQ, mul_comm] at h2
+  refine h A ⟨?_, ?_⟩
+  · have key : (a : ℝ) * (b : ℝ) ^ (n + 5) < 2 ^ k * (A * (b : ℝ) ^ 5 + 1) := by
+      have e1 : (b : ℝ) ^ (n + 5) = (b : ℝ) ^ n * (b : ℝ) ^ 5 := pow_add _ _ _
+      have hP : (0 : ℝ) < (b : ℝ) ^ (n + 5) := by positivity
+      calc (a : ℝ) * (b : ℝ) ^ (n + 5) ≤ 2 ^ k * ξ * (b : ℝ) ^ (n + 5) :=
+            mul_le_mul_of_nonneg_right ha1 hP.le
+        _ = 2 ^ k * ((b : ℝ) ^ 5 * x) := by rw [e1, hx]; ring
+        _ < 2 ^ k * ((b : ℝ) ^ 5 * A + 1) := mul_lt_mul_of_pos_left hBx1 hQ
+        _ = 2 ^ k * (A * (b : ℝ) ^ 5 + 1) := by ring
+    exact_mod_cast key
+  · have key : (2 : ℝ) ^ k * (A * (b : ℝ) ^ 5) < (a + 1) * (b : ℝ) ^ (n + 5) + 2 ^ k := by
+      have e1 : (b : ℝ) ^ (n + 5) = (b : ℝ) ^ n * (b : ℝ) ^ 5 := pow_add _ _ _
+      have hP : (0 : ℝ) < (b : ℝ) ^ (n + 5) := by positivity
+      calc (2 : ℝ) ^ k * (A * (b : ℝ) ^ 5) = 2 ^ k * ((b : ℝ) ^ 5 * A) := by ring
+        _ < 2 ^ k * ((b : ℝ) ^ 5 * x + 1) := mul_lt_mul_of_pos_left hBx2 hQ
+        _ = 2 ^ k * ξ * (b : ℝ) ^ (n + 5) + 2 ^ k := by rw [e1, hx]; ring
+        _ ≤ (a + 1) * (b : ℝ) ^ (n + 5) + 2 ^ k := by gcongr
+    exact_mod_cast key
+
+theorem base5_of_not_perfPow {b : ℕ} (hb : 3 ≤ b) (hp : ¬ IsPerfPow b) : Base5 b := by
+  refine ⟨hb, ?_, ?_, ?_⟩ <;> rintro rfl <;> apply hp
+  · exact ⟨2, 2, le_rfl, by norm_num⟩
+  · exact ⟨2, 3, by norm_num, by norm_num⟩
+  · exact ⟨3, 2, le_rfl, by norm_num⟩
+
+/-- **Exponent `5` is attained (non-strictly) in every base that is not a perfect power.** -/
+@[blueprint (title := "A real number with ‖bⁿξ‖ ≥ b^(-5) in every non-perfect-power base")]
+theorem exists_good_five :
+    ∃ ξ : ℝ, ∀ b : ℕ, 2 ≤ b → ¬ IsPerfPow b → ∀ n : ℕ,
+      ((b : ℝ) ^ 5)⁻¹ ≤ dnear ((b : ℝ) ^ n * ξ) := by
+  have hpos := cnt_pos bad5 (g := g5) (fun k => lt_of_lt_of_le (by norm_num) (g5_ge k))
+    growth_five
+  obtain ⟨ξ, hξ⟩ := exists_mem_cells bad5 hpos
+  refine ⟨ξ, fun b hb hp n => ?_⟩
+  rcases Nat.lt_or_ge b 3 with hb3 | hb3
+  · obtain rfl : b = 2 := by omega
+    obtain ⟨a, ha, hx⟩ := hξ (n + 5)
+    have hnot : ¬ runBad5 (n + 5) a := fun h => ha.2 (Or.inl h)
+    simpa using dnear_two_ge5 hx hnot
+  · obtain ⟨a, ha, hx⟩ := hξ (L5 b n)
+    refine dnear_ge_of_cell5 hb hx fun A hA => ?_
+    have hlv := eight_le_L5 hb3 n
+    obtain ⟨m, hm⟩ : ∃ m, L5 b n = m + 1 := ⟨L5 b n - 1, by omega⟩
+    rw [hm] at ha hA
+    exact ha.2 (Or.inr ⟨b, n, A, base5_of_not_perfPow hb3 hp, hm, hA⟩)
+
 end Five
 
 end Count
 
 
-/-- **`c⋆ ≤ 5`** (frozen 2026-10-07, believed 90%).  Banked bound between the proved `c⋆ ≤ 6` and
-the headline `cStar_le_four`.
+/-- Every exponent `c > 5` is admissible (`Count.exists_good_five`, `admissible_iff_nonPerfectPow`). -/
+theorem admissible_of_five_lt {c : ℝ} (hc : 5 < c) : Admissible c := by
+  obtain ⟨ξ, hξ⟩ := Count.exists_good_five
+  refine (admissible_iff_nonPerfectPow (by linarith)).2 ⟨ξ, fun b hb hp n => ?_⟩
+  refine lt_of_lt_of_le ?_ (hξ b hb hp n)
+  have hb1 : (1 : ℝ) < b := by exact_mod_cast (by omega : 1 < b)
+  have h1 : (b : ℝ) ^ ((5 : ℕ) : ℝ) < (b : ℝ) ^ c :=
+    Real.rpow_lt_rpow_of_exponent_lt hb1 (by exact_mod_cast hc)
+  rw [Real.rpow_natCast] at h1
+  rw [Real.rpow_neg (by positivity)]
+  exact (inv_lt_inv₀ (by positivity) (by positivity)).2 h1
+
+/-- **`c⋆ ≤ 5`** (frozen 2026-10-07, proved 2026-10-07 by `Count.exists_good_five`).  Banked bound
+between `cStar_le_six` and the headline `cStar_le_four`.  The proof as formalized differs from the
+plan below in the details recorded in the module doc (kill level `L5` for every base with `4`
+cells, only `4, 8, 9` excluded, rates `181/100` and `33/20`).
 
 English proof.  Run `Count.growth` with the pruning described in the module doc.  At a level whose
 successor carries no base-3 kill, the kills are at most `cnt (k−4) + Σ_{b ≥ 5} 4 cnt (k+1−lag b)`;
@@ -545,7 +831,9 @@ from below by the worst count of base-3 kill levels in the window, the kills are
 `4 cnt (k − 6)` adds `0.167 cnt k`, and `0.328 ≤ 2 − 329/200`.  So every level has an alive cell,
 the limit point avoids every base-2 run and every window of a base that is not a perfect power,
 and `‖bⁿξ‖ ≥ b^{−5}` for all `b ≥ 2` follows from `goodBase_pow`. -/
-theorem cStar_le_five : cStar ≤ 5 := by
-  sorry
+@[blueprint (title := "Bugeaud 10.36 optimal exponent: c⋆ ≤ 5 by two-rate counting")]
+theorem cStar_le_five : cStar ≤ 5 :=
+  le_of_forall_gt_imp_ge_of_dense fun _ hc =>
+    csInf_le bddBelow_admissible (admissible_of_five_lt hc)
 
 end NormalNumbers.UniformBadThreshold
