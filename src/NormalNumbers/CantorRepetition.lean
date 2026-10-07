@@ -2154,6 +2154,27 @@ theorem repBound_class_topY_le {s t M K n m : ℕ} (ht : 1 ≤ t) (h : ℤ)
   push_cast at this
   rw [this]
 
+theorem gcd_sq_le_of_natAbs {h : ℤ} (hh : h ≠ 0) (A : ℕ) (hA : (h.natAbs : ℝ) ^ 2 ≤ 3 ^ A - 1) :
+    (Int.gcd h (3 ^ A - 1) : ℝ) ^ 2 ≤ 3 ^ A - 1 := by
+  have : Int.gcd h (3 ^ A - 1) ≤ h.natAbs := Nat.le_of_dvd (Int.natAbs_pos.2 hh)
+    (Int.gcd_dvd_natAbs_left _ _)
+  have : (Int.gcd h (3 ^ A - 1) : ℝ) ≤ h.natAbs := by exact_mod_cast this
+  nlinarith [(Int.gcd h (3 ^ A - 1)).cast_nonneg (α := ℝ)]
+
+/-- **Class-6 sum.**  Under `TOrbitCyclicDecay t`, for `|h|² ≤ 3^A − 1` and `A ≤ N' ≤ A³`, the
+copy products `cycProd A (h tⁿ)` summed over `n < N'` and any `N` lower indices are
+`≤ N·C N'^{1−δ}`. -/
+theorem sum_class_copySep_le {t : ℕ} (hT : TOrbitCyclicDecay t) :
+    ∃ C δ : ℝ, 0 < δ ∧ ∀ (h : ℤ), h ≠ 0 → ∀ A N' N : ℕ, 1 ≤ A → A ≤ N' → N' ≤ A ^ 3 →
+      (h.natAbs : ℝ) ^ 2 ≤ 3 ^ A - 1 →
+      ∑ _m ∈ Finset.range N, ∑ n ∈ Finset.range N', cycProd A (h * (t : ℤ) ^ n) ≤
+        N * (C * (N' : ℝ) ^ (1 - δ)) := by
+  obtain ⟨C, δ, hδ, hC⟩ := hT
+  refine ⟨C, δ, hδ, fun h hh A N' N hA h1 h2 hg => ?_⟩
+  rw [Finset.sum_const, Finset.card_range, nsmul_eq_mul]
+  gcongr
+  exact hC A N' hA h1 h2 h (gcd_sq_le_of_natAbs hh A hg)
+
 /-! ## Bases `3ˢt`, `t > 1`: the crux -/
 
 /-- **Assembly of the crux from its inputs (open; believed, 60%).**  For `b = 3ˢt`, `t > 1`:
