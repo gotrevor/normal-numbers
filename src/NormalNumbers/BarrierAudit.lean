@@ -45,6 +45,7 @@ import NormalNumbers.UniformBadThreshold
 import NormalNumbers.UniformBadJoint
 import NormalNumbers.UniformBadNewhouse
 import NormalNumbers.UniformBadFive
+import NormalNumbers.UniformBadNineHalves
 
 /-!
 # Barrier audit: every open crux names a sibling it must fail on
@@ -75,6 +76,10 @@ namespace NormalNumbers.Barriers
 
 /-- Each frozen headline `sorry` and the barriers its mechanism must fail on. -/
 def cruxLinks : List CruxLink := [
+  ⟨``UniformBadThreshold.cStar_le_nine_halves,
+   [``uniformBad_base_two],
+   "the engine must make base 3 exact alongside base 2: the cStar_le_five engine (base 2 exact, base 3 \
+    counted) has slack 0.013 at c = 5, and base 2 alone refuses any c ≤ log₂ 3"⟩,
   ⟨``UniformBadThreshold.cStar_le_four,
    [``uniformBad_base_two],
    "the construction must keep the small bases jointly away from the rationals; the base-2 \

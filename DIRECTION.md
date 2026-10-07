@@ -77,7 +77,15 @@ Never restate or weaken them.  The stretch node `CStarLeThree` and any sharper l
   (b) a higher certified lower bound (more bases in the cover).  Do not reopen `cStar_le_four` without a new
   mechanism for an exact {2,3,5} core.
 
+- **Operator gate 2 (Ren, 2026-10-07 07:05):** `cStar_le_five` landed (lap 10).  The run gate is now
+  `sorry-free:src/NormalNumbers/UniformBadNineHalves.lean`: prove the frozen `cStar_le_nine_halves` (`c⋆ ≤ 9/2`, 40%).
+  The `cStar_le_five` engine has slack 0.013, so this needs a new ingredient: base 3 exact alongside base 2 (lap-8
+  joint recursion lives at c = 4.25).  Probe the joint {2,3} growth at c = 9/2 first.  If it cannot be made uniform,
+  bank the lowest exponent the current engine certifies (any c < 5) as its own theorem, record the wall in the Maze,
+  and stop.  A higher certified lower bound (above 5/2) is a parallel bonus.
+
 Directive history:
+- 2026-10-07 07:05 (operator): gate moved to `cStar_le_nine_halves` after `cStar_le_five`.
 - 2026-10-07 06:50 (operator): rescoped the run gate to `cStar_le_five` after the c⋆ ≤ 4 wall.
 - 2026-10-07 (c⋆ lap 7, review): Newhouse thick core closed by forced merging; probe c=4 counting core, bank c⋆ ≤ 5.
 - 2026-10-07 (c⋆ lap 3, review): counting engine + `c⋆ ≤ 6` banked first; crux = exact joint {2,3} core certificate.
