@@ -3314,6 +3314,44 @@ theorem repPairPower_of_pos {b : ℕ}
   rw [show -(h : ℝ) * ((b : ℝ) ^ n - (b : ℝ) ^ m) = -((h : ℝ) * ((b : ℝ) ^ n - (b : ℝ) ^ m)) by ring,
     repBound_neg]
 
+
+/-- The trivial bound: every pair term is `≤ 1`, so some (any) option choice gives `≤ N²`. -/
+theorem repPair_sum_le_sq (M N : ℕ) (κ : ℕ → ℕ → Option ℕ) (ξ : ℕ → ℕ → ℝ) :
+    ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N, repBound M (κ n m) (ξ n m) ≤ (N : ℝ) ^ 2 := by
+  calc _ ≤ ∑ _n ∈ Finset.range N, ∑ _m ∈ Finset.range N, (1 : ℝ) :=
+        Finset.sum_le_sum fun n _ => Finset.sum_le_sum fun m _ => repBound_le_one _ _ _
+    _ = (N : ℝ) ^ 2 := by simp; ring
+
+/-- **Eventual power bounds suffice.**  A bound `C N^{2−δ}` for `N ≥ N₀` extends to all
+`N ≥ 1` (small `N` by `repPair_sum_le_sq`). -/
+theorem power_of_eventually (ξ : ℕ → ℕ → ℕ → ℝ)
+    (hev : ∃ C δ : ℝ, 0 < δ ∧ ∃ N₀ : ℕ, ∀ N : ℕ, N₀ ≤ N → 1 ≤ N → ∃ (M : ℕ) (κ : ℕ → ℕ → Option ℕ),
+      ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N, repBound M (κ n m) (ξ N n m) ≤
+        C * (N : ℝ) ^ (2 - δ)) :
+    ∃ C δ : ℝ, 0 < δ ∧ ∀ N : ℕ, 1 ≤ N → ∃ (M : ℕ) (κ : ℕ → ℕ → Option ℕ),
+      ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N, repBound M (κ n m) (ξ N n m) ≤
+        C * (N : ℝ) ^ (2 - δ) := by
+  obtain ⟨C, δ, hδ, N₀, hC⟩ := hev
+  refine ⟨|C| + N₀, min δ 1, lt_min hδ one_pos, fun N hN => ?_⟩
+  have hN1 : (1 : ℝ) ≤ N := by exact_mod_cast hN
+  have hpos : (0 : ℝ) ≤ (N : ℝ) ^ (2 - min δ 1) := by positivity
+  by_cases h : N₀ ≤ N
+  · obtain ⟨M, κ, hMκ⟩ := hC N h hN
+    refine ⟨M, κ, hMκ.trans ?_⟩
+    have : (N : ℝ) ^ (2 - δ) ≤ (N : ℝ) ^ (2 - min δ 1) :=
+      Real.rpow_le_rpow_of_exponent_le hN1 (by linarith [min_le_left δ 1])
+    have h0 : (0 : ℝ) ≤ (N : ℝ) ^ (2 - δ) := by positivity
+    nlinarith [le_abs_self C, abs_nonneg C, (Nat.cast_nonneg N₀ : (0 : ℝ) ≤ N₀)]
+  · refine ⟨0, fun _ _ => none, (repPair_sum_le_sq 0 N _ (ξ N)).trans ?_⟩
+    have hsplit : (N : ℝ) ^ 2 = (N : ℝ) ^ (min δ 1) * (N : ℝ) ^ (2 - min δ 1) := by
+      rw [← Real.rpow_add (by linarith), ← Real.rpow_natCast]; norm_num
+    have h1 : (N : ℝ) ^ (min δ 1) ≤ N₀ := by
+      calc (N : ℝ) ^ (min δ 1) ≤ (N : ℝ) ^ (1 : ℝ) :=
+            Real.rpow_le_rpow_of_exponent_le hN1 (min_le_right _ _)
+        _ ≤ N₀ := by rw [Real.rpow_one]; exact_mod_cast (by omega : N ≤ N₀)
+    rw [hsplit]
+    nlinarith [abs_nonneg C]
+
 /-- **Per-`N` assembly (open; believed, 60%; the remaining content of `repPairArith_of_inputs`).**
 Plan: `W = K = ⌈ε log₃ N⌉`; `κ` per `pair_classify_rep` (hypotheses: `le_log_mul_pow`,
 `log_mul_pow_lt`, `le_log_pair`, `log_pair_le_log`, `hsep_of`); class sums `sum_class_low_le`,
