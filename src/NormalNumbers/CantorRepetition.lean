@@ -1949,6 +1949,16 @@ theorem log_pair_le_log {b H m d : ℕ} :
     Nat.log 3 (H * (b ^ (m + d) - b ^ m)) ≤ Nat.log 3 (H * b ^ (m + d)) :=
   Nat.log_mono_right (Nat.mul_le_mul_left _ (Nat.sub_le _ _))
 
+/-- **Separation hypothesis `hsep` of `pair_classify_rep`.**  With `T ≤ ρ₁u`, `y ≤ ρ₀v` and
+`K ≤ v`, an unseparated pair (`u < y + K`) has `T ≤ ρ₁(ρ₀+1)v`. -/
+theorem hsep_of {ρ₀ ρ₁ v y u T K : ℕ} (hT : T ≤ ρ₁ * u) (hy : y ≤ ρ₀ * v) (hK : K ≤ v) :
+    u < y + K → T ≤ ρ₁ * (ρ₀ + 1) * v := by
+  intro hu
+  have : u ≤ (ρ₀ + 1) * v := by nlinarith
+  calc T ≤ ρ₁ * u := hT
+    _ ≤ ρ₁ * ((ρ₀ + 1) * v) := Nat.mul_le_mul_left _ this
+    _ = _ := by ring
+
 /-! ## Bases `3ˢt`, `t > 1`: the crux -/
 
 /-- **Assembly of the crux from its inputs (open; believed, 60%).**  For `b = 3ˢt`, `t > 1`:

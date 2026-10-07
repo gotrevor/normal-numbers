@@ -3357,4 +3357,5 @@ Next: `isFresh` Riesz bound, then the classification lemma in Lean (route-decisi
 - PROVED `repBound_some_le_cyc` (copy run, perturbation; classes 5/6).
 - PROVED `log_mul_pow_lt`, `le_log_mul_pow` (window ratio facts v ≤ y < ρv).
 - PROVED `three_pow_le_pow_sub_pow`, `le_log_pair`, `log_pair_le_log` (u ≤ T ≤ ρu).
-- Next: separation `hsep` (u < y+K ⇒ T ≤ ρv: d small), then per-class sums.
+- PROVED `hsep_of` (separation hypothesis, ρ = ρ₁(ρ₀+1)).
+- Next: per-class sums (step 3 of lap-4 handoff): κ choice, band/small-m counts, summability.
