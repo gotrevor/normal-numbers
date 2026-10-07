@@ -2668,6 +2668,64 @@ theorem pair_classes {s t e h' m d ρ k₀ W K : ℕ} (ht : 2 ≤ t) (hh : 1 ≤
     (by omega) huT (hTρ.trans (Nat.mul_le_mul_right _ hρρ))
     (fun h => (hsep h).trans (le_of_eq (by ring))) hnv hny hnu hnT
 
+theorem card_injOn_window_le (f : ℕ → ℕ) (A L : ℕ) (S : Finset ℕ) (hf : Set.InjOn f S)
+    (hS : ∀ n ∈ S, A ≤ f n + L ∧ f n ≤ A) : S.card ≤ L + 1 := by
+  have : S.card ≤ (Finset.Icc (A - L) A).card := by
+    refine Finset.card_le_card_of_injOn f (fun n hn => ?_) hf
+    have := hS n hn; simp only [Finset.coe_Icc, Set.mem_Icc]; omega
+  simp at this; omega
+
+open Classical in
+/-- **Band count, general positions.**  For `f` injective on `range N` with `f n ≤ X`, at most
+`2(W+2K+1)(log₄(X+W+K)+1)` of the `n < N` put `f n` in a copy-run boundary band.  Used with
+`f m = log₃(3ᵉh'bᵐ)` (top of `Y`) and, for fixed `m`, `f d = log₃ ξ(m, d)` (top of `ξ`). -/
+theorem card_nearCopyBdry_le_of (f : ℕ → ℕ) (W K N X : ℕ)
+    (hf : Set.InjOn f (Finset.range N)) (hX : ∀ n < N, f n ≤ X) :
+    ((Finset.range N).filter fun n => NearCopyBdry W K (f n)).card ≤
+      2 * (W + 2 * K + 1) * (Nat.log 4 (X + W + K) + 1) := by
+  set L := Nat.log 4 (X + W + K)
+  have hsub : (Finset.range N).filter (fun n => NearCopyBdry W K (f n)) ⊆
+      (Finset.range (L + 1)).biUnion fun k =>
+        ((Finset.range N).filter fun n => runStart k ≤ f n + W + K ∧ f n ≤ runStart k + K) ∪
+        ((Finset.range N).filter fun n => (k + 2) * runStart k ≤ f n + K ∧
+          f n ≤ (k + 2) * runStart k + W + K) := by
+    intro n hn
+    simp only [Finset.mem_filter, Finset.mem_range] at hn
+    obtain ⟨hnN, k, -, hk⟩ := hn
+    have hak : runStart k ≤ X + W + K := by
+      have := hX n hnN
+      rcases hk with h | h
+      · omega
+      · have : runStart k ≤ (k + 2) * runStart k := Nat.le_mul_of_pos_left _ (by omega)
+        omega
+    have hkL : k < L + 1 := by
+      have h4 := (four_pow_le_runStart k).trans hak
+      have := Nat.le_log_of_pow_le (by norm_num) h4
+      omega
+    simp only [Finset.mem_biUnion, Finset.mem_range, Finset.mem_union, Finset.mem_filter]
+    exact ⟨k, hkL, hk.imp (fun h => ⟨hnN, h⟩) (fun h => ⟨hnN, h⟩)⟩
+  refine (Finset.card_le_card hsub).trans ((Finset.card_biUnion_le).trans ?_)
+  have hk : ∀ k ∈ Finset.range (L + 1),
+      (((Finset.range N).filter fun n => runStart k ≤ f n + W + K ∧ f n ≤ runStart k + K) ∪
+        ((Finset.range N).filter fun n => (k + 2) * runStart k ≤ f n + K ∧
+          f n ≤ (k + 2) * runStart k + W + K)).card ≤ 2 * (W + 2 * K + 1) := by
+    intro k _
+    refine (Finset.card_union_le _ _).trans ?_
+    have h1 := card_injOn_window_le f (runStart k + K) (W + 2 * K)
+      ((Finset.range N).filter fun n => runStart k ≤ f n + W + K ∧ f n ≤ runStart k + K)
+      (hf.mono (by intro x hx; simp only [Finset.coe_filter, Finset.coe_range, Set.mem_ofPred_eq,
+        Set.mem_Iio] at hx ⊢; exact Finset.mem_range.1 hx.1))
+      (fun n hn => by simp only [Finset.mem_filter] at hn; omega)
+    have h2 := card_injOn_window_le f ((k + 2) * runStart k + W + K) (W + 2 * K)
+      ((Finset.range N).filter fun n => (k + 2) * runStart k ≤ f n + K ∧
+          f n ≤ (k + 2) * runStart k + W + K)
+      (hf.mono (by intro x hx; simp only [Finset.coe_filter, Finset.coe_range, Set.mem_ofPred_eq,
+        Set.mem_Iio] at hx ⊢; exact Finset.mem_range.1 hx.1))
+      (fun n hn => by simp only [Finset.mem_filter] at hn; omega)
+    omega
+  refine (Finset.sum_le_sum hk).trans ?_
+  simp; ring_nf; omega
+
 /-- **Pair sums with a power saving.**  For each `h ≠ 0` and each `N ≥ 1` some choice of options
 makes the pair sum `≤ C N^{2−δ}`.  This is the per-`N` content of the assembly; summability along
 `sched` is then automatic (`repPairArith_of_power`). -/
