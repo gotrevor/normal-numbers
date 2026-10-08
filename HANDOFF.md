@@ -147,3 +147,15 @@ Re-confirmed 2026-10-06 (fresh lap): StretchBFR doc still states <1%, no new dir
 
 ## cantorbad lap 10 (2026-10-06)
 `pow_phase_recur` + m-scan: uniform-in-m obstacle cancellation must come from family share → 0.  See `HANDOFF-2026-10-06-cantorbad-lap10.md`.
+
+# 2026-10-08 lap 9 — BOX STUCK (strike 1). Newest detail: HANDOFF-2026-10-08-repetition-lap9.md
+## BLOCKER (box stuck, strike 1)
+Scope `sorry-free:src/NormalNumbers/CantorRepetition.lean` has exactly one sorry left:
+`repPairArith_of_three_dvd` (line ~5557), the unconditional form of `repPairArith_of_literature`.
+Closing it requires proving `CantorExactExponentProfile.Literature.BakerLogDiscrepancy` and
+`SparseIdentity.Literature.MatveevThreeLogs` (linear forms in logarithms) in Lean.  The operator
+directive admits cited results only as hypothesis Props, and no elementary substitute is known
+(a discrepancy rate for m·log₃t needs an irrationality measure of log t/log 3, i.e. Baker).
+Verify fast: `grep -n "^\s*sorry" src/NormalNumbers/CantorRepetition.lean` (one hit), and
+`#print axioms liouvilleCantorFullProfile_of_literature` (scratch/AxRD.lean) = trust base.
+Ask: operator rescope (e.g. drop that theorem from the scope, or authorize a Baker formalization campaign).
