@@ -175,8 +175,6 @@ def cruxLinks : List CruxLink := [
 
 /-- Open `sorry`s that are not cruxes, and why no barrier applies. -/
 def waivers : List Waiver := [
-  ⟨``UniformBadThreshold.goodBelow_241_1365,
-   "a finite computation: the orbits of 241 mod 1365 (λ = 12) for bases below 18, integrality above"⟩,
   ⟨``UniformBadThreshold.admissible_of_towerFamily,
    "wiring lemma (a leaf): a Cauchy limit keeping finitely many margins; English proof in the docstring"⟩,
   ⟨``UniformBadThreshold.Newhouse.e2_four_facts,

@@ -172,12 +172,82 @@ theorem le_cStar_729_290 : (729 : ℝ) / 290 ≤ cStar :=
 def GoodBelow (c : ℝ) (B : ℕ) (x : ℝ) : Prop :=
   ∀ b : ℕ, 2 ≤ b → b < B → ∀ n : ℕ, (b : ℝ) ^ (-c) < dnear ((b : ℝ) ^ n * x)
 
+/-! ### `241/1365`: orbits mod `1365` have period dividing `12` -/
+
+def m1365 (N : ℕ) : ℕ := min (N % 1365) (1365 - N % 1365)
+
+theorem m1365_le (N : ℕ) (k : ℤ) : ((m1365 N : ℕ) : ℤ) ≤ |(N : ℤ) - 1365 * k| := by
+  unfold m1365; rw [le_abs]; omega
+
+theorem dnear_ge_m1365 (N : ℕ) : (m1365 N : ℝ) / 1365 ≤ dnear ((N : ℝ) / 1365) := by
+  unfold dnear
+  have h := m1365_le N (round ((N : ℝ) / 1365))
+  have e : (N : ℝ) / 1365 - (round ((N : ℝ) / 1365) : ℝ) =
+      (((N : ℤ) - 1365 * round ((N : ℝ) / 1365) : ℤ) : ℝ) / 1365 := by push_cast; ring
+  rw [e, abs_div, abs_of_pos (by norm_num : (0:ℝ) < 1365), div_le_div_iff_of_pos_right (by norm_num)]
+  have : ((m1365 N : ℤ) : ℝ) ≤ ((|(N : ℤ) - 1365 * round ((N : ℝ) / 1365)| : ℤ) : ℝ) := by
+    exact_mod_cast h
+  push_cast at this; simpa using this
+
+theorem pow13_mod (r : ℕ) : r ^ 13 % 1365 = r % 1365 := by
+  have h : ∀ r < 1365, r ^ 13 % 1365 = r % 1365 := by native_decide
+  rw [Nat.pow_mod, h _ (Nat.mod_lt _ (by norm_num)), Nat.mod_mod]
+
+theorem pow_mod_red (b n : ℕ) : ∃ n' ≤ 12, b ^ n % 1365 = b ^ n' % 1365 := by
+  induction n using Nat.strong_induction_on with
+  | _ n ih =>
+    by_cases hn : n ≤ 12
+    · exact ⟨n, hn, rfl⟩
+    · obtain ⟨n', h1, h2⟩ := ih (n - 12) (by omega)
+      refine ⟨n', h1, ?_⟩
+      rw [← h2]
+      obtain ⟨k, rfl⟩ : ∃ k, n = k + 13 := ⟨n - 13, by omega⟩
+      rw [show k + 13 - 12 = k + 1 by omega, pow_add, Nat.mul_mod, pow13_mod, ← Nat.mul_mod,
+        pow_succ]
+
+theorem rpow_lt_of_pow (p q : ℕ) (hq : q ≠ 0) (b : ℕ) (hb : 1 ≤ b) (x : ℝ) (hx : 0 ≤ x)
+    (h : 1 < x ^ q * (b : ℝ) ^ p) : (b : ℝ) ^ (-(p : ℝ) / q) < x := by
+  have hb0 : (0 : ℝ) < b := by exact_mod_cast hb
+  have hr : 0 < (b : ℝ) ^ (-(p : ℝ) / q) := Real.rpow_pos_of_pos hb0 _
+  have h5 : ((b : ℝ) ^ (-(p : ℝ) / q)) ^ q = ((b : ℝ) ^ p)⁻¹ := by
+    rw [← Real.rpow_natCast, ← Real.rpow_mul hb0.le, ← Real.rpow_natCast, ← Real.rpow_neg hb0.le]
+    congr 1; field_simp
+  by_contra hc
+  have := pow_le_pow_left₀ hx (not_lt.1 hc) q
+  rw [h5] at this
+  have hb12 : (0:ℝ) < (b : ℝ) ^ p := by positivity
+  have := mul_le_mul_of_nonneg_right this hb12.le
+  rw [inv_mul_cancel₀ hb12.ne'] at this
+  linarith
+
+theorem check1365 : ∀ b < 1365, 2 ≤ b → ∀ n ≤ 12,
+    1365 ^ 500 < m1365 (b ^ n * 241) ^ 500 * b ^ 1257 := by native_decide
+
 /-- **Frozen (2026-10-08).**  Believed 99%.  The extremal survivor `241/1365` is good at
 `c = 2.514` for every base below `1365` and every `n`.  It is a finite computation: every orbit
 mod `1365` has length dividing `λ(1365) = 12`, and for `b ≥ 18` the bound `1/1365 > b^{−2.514}`
 is automatic, except when `1365 ∣ bⁿ·241`, which needs `1365 ∣ b`. -/
 theorem goodBelow_241_1365 : GoodBelow (2514 / 1000) 1365 (241 / 1365) := by
-  sorry
+  intro b hb2 hb n
+  obtain ⟨n', hn', hm⟩ := pow_mod_red b n
+  have hmeq : m1365 (b ^ n * 241) = m1365 (b ^ n' * 241) := by
+    unfold m1365; rw [Nat.mul_mod, hm, ← Nat.mul_mod]
+  have hc := check1365 b hb hb2 n' hn'
+  rw [← hmeq] at hc
+  have hx := dnear_ge_m1365 (b ^ n * 241)
+  have e : (b : ℝ) ^ n * (241 / 1365) = ((b ^ n * 241 : ℕ) : ℝ) / 1365 := by push_cast; ring
+  rw [e]
+  refine lt_of_lt_of_le ?_ hx
+  generalize m1365 (b ^ n * 241) = M at hc hx ⊢
+  have hc' : ((1365 : ℕ) : ℝ) ^ 500 < (M : ℝ) ^ 500 * (b : ℝ) ^ 1257 := by
+    have := (Nat.cast_lt (α := ℝ)).2 hc
+    simpa only [Nat.cast_pow, Nat.cast_mul] using this
+  have := rpow_lt_of_pow 1257 500 (by norm_num) b (by omega) ((M : ℝ) / ((1365 : ℕ) : ℝ))
+    (by positivity) (by
+      rw [div_pow, div_mul_eq_mul_div, lt_div_iff₀ (by positivity), one_mul]
+      exact hc')
+  have e2 : (-(2514 / 1000 : ℝ)) = -((1257 : ℕ) : ℝ) / ((500 : ℕ) : ℝ) := by norm_num
+  rw [e2]; simpa using this
 
 /-- A **tower family** at exponent `c`: a nonempty set, each of whose members is approximated
 arbitrarily well by members that are good below any prescribed base bound. -/
