@@ -3630,3 +3630,8 @@ Next: `isFresh` Riesz bound, then the classification lemma in Lean (route-decisi
   limit of self-good rationals) + `goodBelow_529_2730`, via `rationalTower_of_selfGoodPerfect`.  Census: 23970
   coprime-base self-good rationals q < 10⁵, nearest-neighbour distances shrink like ~1/q.  NEXT: a structured
   mechanism for SelfGoodPerfect (e.g. y = x + 1/(qM) with M chosen so x's orbits are preserved), or its refutation.
+- gcd budget (gcd_budget.py): optimistic log-margin of joint small-order moduli peaks at 26.5 ((a,b)=(144,432)) and
+  goes negative past scale 4096 ⇒ coset model + CZ predict finitely many self-good rationals ⇒ ¬RationalTower 4.
+  selfGoodPerfect_four lowered to 20%; JointRationalsFinite raised to 75%.  The gate (sorry-free Tower file) rests
+  on a leaf now believed false: operator should decide between refuting (prove ¬RationalTower 4 conditionally) or
+  a non-rational tower mechanism.

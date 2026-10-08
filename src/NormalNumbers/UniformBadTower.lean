@@ -456,7 +456,7 @@ theorem rat_sep (x y : ℚ) (h : y ≠ x) : 1 ≤ |y - x| * (x.den * y.den) := b
   have : (1 : ℤ) ≤ |y.num * x.den - x.num * y.den| := Int.one_le_abs hk
   exact_mod_cast this
 
-/-- **Open conjecture, the crux of `rationalTower_four` at `c = 4` (believed 35%).**  Every
+/-- **Open conjecture, the crux of `rationalTower_four` at `c = 4` (believed 20%).**  Every
 self-good rational (good for every base below its own denominator) is a limit of other self-good
 rationals.  With one self-good rational this gives a rational tower
 (`rationalTower_of_selfGoodPerfect`).
@@ -510,7 +510,8 @@ theorem rationalTower_of_selfGoodPerfect {c : ℝ} (h : SelfGoodPerfect c) (x0 :
       mul_le_mul_of_nonneg_left (mul_le_mul_of_nonneg_left h4 (by positivity)) (abs_nonneg _)
     linarith
 
-/-- **The crux leaf of `rationalTower_four`** (believed 35%; see `SelfGoodPerfect`). -/
+/-- **The crux leaf of `rationalTower_four`** (believed 20%; refuted under the coset model, see
+`JointRationalsFinite`; see `SelfGoodPerfect`). -/
 theorem selfGoodPerfect_four : SelfGoodPerfect 4 := by
   sorry
 
@@ -576,7 +577,7 @@ def SmallOrderModuli : Prop :=
   ∃ C : ℝ, ∀ N : ℕ, ∃ q ≥ N, Nat.Coprime 6 q ∧
     (orderOf (2 : ZMod q) : ℝ) ≤ C * Real.log q ∧ (orderOf (3 : ZMod q) : ℝ) ≤ C * Real.log q
 
-/-- **Open conjecture (believed 50%).**  Only finitely many rationals in `[0, 1)` are good for the
+/-- **Open conjecture (believed 75%).**  Only finitely many rationals in `[0, 1)` are good for the
 two bases `2, 3` at exponent `c`.  By `not_rationalTower_of_jointRationalsFinite` this refutes
 every rational tower at `c`, so it is the decisive question for `rationalTower_four`.
 
@@ -588,7 +589,18 @@ Against, at `c = 4` (`scripts/cstar_models/joint_rationals.js 4 200000 3`, exhau
 `gcd(q, 6) = 1`): the number of denominators with a survivor, by dyadic range `[2^k, 2^{k+1})` for
 `k = 10, …, 17`, is `16, 17, 16, 31, 31, 34, 49, 33`.  The surviving numerators number about
 `10⁴` per range, with orders `10`–`30` times `log q` (e.g. `q = 120211`, `ord(2) = 60`,
-`ord(3) = 330`).  So any collapse is far beyond `q ≈ 2·10⁵`. -/
+`ord(3) = 330`).  So any collapse is far beyond `q ≈ 2·10⁵`.
+
+Budget probe (`scripts/cstar_models/gcd_budget.py`, 2026-10-08), which raises this node to 75%.
+A modulus with `ord(2) = a`, `ord(3) = b` divides `G(a, b) = gcd(2^a − 1, 3^b − 1)`.  So under the
+square-root coset model the expected number of self-good numerators it carries is at most
+`G(a, b)·exp(−κ₂a − κ₃b)`, with `κ₂ = 0.067` and `κ₃ = 0.0125` at `c = 4`.  The bases `≥ 5` are
+ignored, which only makes the bound optimistic.  The best log-margin `log G − κ₂a − κ₃b` is
+`26.5`, at `(a, b) = (144, 432)`.  Taking the best per range of `max(a, b)`, it is
+`21.1, 16.6, 10.4, −14.9, −65.7` at scales `512, …, 8192`.  Corvaja–Zannier
+(`log G(a, b) = o(a + b)`) makes the total over all `(a, b)` converge, so the model predicts
+finitely many self-good rationals, and so finitely many joint ones once the census caveats are
+handled. -/
 def JointRationalsFinite (c : ℝ) : Prop :=
   {y : ℚ | 0 ≤ y ∧ y < 1 ∧ GoodBelow c 4 (y : ℝ)}.Finite
 
