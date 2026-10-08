@@ -135,10 +135,6 @@ def cruxLinks : List CruxLink := [
    [``cantor_not_normal_three_pow, ``perStage_dead_not_enough],
    "the pair-averaged Cantor products must use 3 ∤ b, and the dead-stage hypothesis must be a \
     probability decay, not a per-stage dead count (counts alone admit a never 2-normal descent)"⟩,
-  ⟨``SparseIdentity.sparseIdentityBound_of_matveev, [``cantor_not_normal_three_pow],
-   "the bound must use that t is not a power of 3: 9ᵟ·1 = 3^{2δ} is an unbounded sparse identity \
-    (not_sparseIdentityBound_nine), matching that no point of K is 9-normal; the Matveev input \
-    enters through log t, log 3 being independent"⟩,
   ⟨``QSpan.qSpanNormal_sqrt_two_sqrt_three, [``liouville_pair_qSpan],
    "the argument must use something √2, √3 have and the sparse Liouville pair lacks (algebraicity, \
     bounded partial quotients, …): a pair-universal argument would put a normal number in the \

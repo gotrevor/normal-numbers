@@ -1,3 +1,13 @@
+## Repetition lap 8 (2026-10-08) — `sparseIdentityBound_of_matveev` PROVED (from the cited Matveev Prop)
+* `SparseIdentity.sparseIdentityBound_of_matveev` is now a theorem; `#print axioms` = trust base
+  (Matveev enters only as the hypothesis `Literature.MatveevThreeLogs`).  Route as formalized:
+  `top_lower` (nonzero top-cut difference `≥ 3^θ·exp(−C L (1+(s+1)log 3))`, `L = 1+log(δ+λ+2)`;
+  the normalisation `a = ⌈θ−λ⌉₊`, `b = ⌈θ⌉₊` makes `|b₂| ≤ λ+1`, independent of the cut),
+  `gap_step` (next level within `2 + CL(s+2)`), a chain over the levels down to the *highest*
+  exactly-splitting cut `θ*` (no strong induction needed), `exists_le_of_split` (`λ ≤ span(θ*)` by
+  3-adic divisibility), `endgame` (`κx ≤ 2(3+C+C log((1+κ)x+2))^m ⇒ x ≤ exp(C'(m+1)²)`).
+* BarrierAudit crux link for it removed (closed).  Next: leaf 2 below (`cycSparse_of_cycProd_ge`).
+
 ## Repetition review lap 7 (2026-10-07) — ROUTE CHANGE: sparse pairs + Matveev replace the walls
 * Insight: `RepPairArith` needs only summability along `sched` (a polylog saving suffices), not the
   power saving of `TOrbitCyclicDecay`.  Two sparse points `y, tᵟy` of one orbit mod `3^A − 1`,
