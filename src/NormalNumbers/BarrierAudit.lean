@@ -281,9 +281,6 @@ def waivers : List Waiver := [
   ⟨``CantorExactExponentProfile.ae_isNormal_of_profileOK_of_gelfond,
    "believed implication (55%): a Gelfond-strength two-log bound suffices for the run shadows; \
     the elementary t^k ≠ 3^j rate does not"⟩,
-  ⟨``CantorRepetition.card_degRows_le,
-   "a leaf: lifting the exponent bounds gcd(3^A − 1, t^∞); degenerate shifts are multiples of an \
-    order ≥ A/(2 log₃ b)"⟩,
   ⟨``CantorRepetition.copyRun_psi,
    "a leaf: pair_sum_le rows, RunOrbitDecay on non-degenerate rows, card_degRows_le on the rest"⟩,
   ⟨``CantorRepetition.repPairArith_of_runDecay,

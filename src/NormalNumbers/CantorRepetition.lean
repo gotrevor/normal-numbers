@@ -8,6 +8,8 @@ import NormalNumbers.EntropyProfiles
 import NormalNumbers.ExplicitPQ
 import NormalNumbers.LevinSparse
 import NormalNumbers.SparseIdentity
+import Mathlib.NumberTheory.Multiplicity
+import Mathlib.Analysis.SpecificLimits.Normed
 
 /-!
 # Is the profile cut forced?  Repetitions instead of zero runs
@@ -4587,7 +4589,174 @@ theorem runOrbitDecay_of_sparse {t : ℕ} (ht : 2 ≤ t) (h3 : ¬ 3 ∣ t)
         gcongr
     _ = 24 * Real.exp (8 * C) * t * (((k : ℝ) + 3) ^ 5 * E ^ k / k.factorial) := by ring
 
-/-- **Degenerate rows are few (believed, 95%; elementary).**  Shifts `d < N_k` whose row
+section DegRows
+
+theorem pow_padicVal_le_of_dvd {p a b : ℕ} [Fact p.Prime] (hb : b ≠ 0) (h : a ∣ b) :
+    padicValNat p a ≤ padicValNat p b :=
+  (padicValNat_dvd_iff_le hb).1 ((pow_padicValNat_dvd).trans h)
+
+/-- LTE bound: the `p`-part of `3^A − 1` is at most `2A·3^{2(p−1)}`. -/
+theorem pow_padicVal_three_pow_sub_one_le {p A : ℕ} (hp : p.Prime) (hp3 : p ≠ 3) (hA : 1 ≤ A) :
+    p ^ padicValNat p (3 ^ A - 1) ≤ 2 * A * 3 ^ (2 * (p - 1)) := by
+  have := Fact.mk hp
+  set x := 3 ^ (2 * (p - 1))
+  have hx1 : 1 < x := Nat.one_lt_pow (by have := hp.two_le; omega) (by norm_num)
+  have hq0 : 3 ^ A - 1 ≠ 0 := by have : 3 ≤ 3 ^ A := Nat.le_self_pow (by omega) 3; omega
+  have hdvd : 3 ^ A - 1 ∣ x ^ (2 * A) - 1 := by
+    have : x ^ (2 * A) = (3 ^ A) ^ (4 * (p - 1)) := by
+      simp only [x]; rw [← pow_mul, ← pow_mul]; ring_nf
+    rw [this]
+    simpa using Nat.sub_dvd_pow_sub_pow (x := 3 ^ A) (y := 1) (n := 4 * (p - 1))
+  have hX0 : x ^ (2 * A) - 1 ≠ 0 := by
+    have : 1 < x ^ (2 * A) := Nat.one_lt_pow (by omega) hx1
+    omega
+  have hle := pow_padicVal_le_of_dvd (p := p) hX0 hdvd
+  have h2A : p ^ padicValNat p (2 * A) ≤ 2 * A := Nat.le_of_dvd (by omega) pow_padicValNat_dvd
+  rcases hp.eq_two_or_odd' with rfl | hodd
+  · have hx9 : x = 9 := by simp [x]
+    have h := padicValNat.pow_two_sub_one (x := x) (n := 2 * A) hx1 (by rw [hx9]; decide) (by omega)
+      (by simp)
+    rw [hx9] at h
+    have h10 : padicValNat 2 10 = 1 := by
+      rw [show (10 : ℕ) = 2 * 5 from rfl, padicValNat.mul (by norm_num) (by norm_num),
+        padicValNat.self (by norm_num), padicValNat.eq_zero_of_not_dvd (by norm_num)]
+    have h8 : padicValNat 2 8 = 3 := by
+      rw [show (8 : ℕ) = 2 ^ 3 from rfl, padicValNat.prime_pow]
+    simp only [show 9 + 1 = 10 from rfl, show 9 - 1 = 8 from rfl, h10, h8] at h
+    rw [hx9] at hle
+    calc 2 ^ padicValNat 2 (3 ^ A - 1) ≤ 2 ^ (3 + padicValNat 2 (2 * A)) :=
+          Nat.pow_le_pow_right (by norm_num) (by omega)
+      _ = 8 * 2 ^ padicValNat 2 (2 * A) := by rw [pow_add]; norm_num
+      _ ≤ 8 * (2 * A) := by omega
+      _ ≤ 2 * A * 3 ^ (2 * (2 - 1)) := by norm_num; nlinarith
+  · have hpx : p ∣ x - 1 := by
+      have hc : ¬ p ∣ 3 := fun h => hp3 ((Nat.prime_dvd_prime_iff_eq hp Nat.prime_three).1 h)
+      have hf := Nat.ModEq.pow_totient (n := p) (x := 3) (Nat.Coprime.symm
+        ((Nat.Prime.coprime_iff_not_dvd hp).2 hc))
+      rw [Nat.totient_prime hp] at hf
+      have : x ≡ 1 [MOD p] := by
+        simp only [x]; rw [mul_comm, pow_mul]; simpa using hf.pow 2
+      exact (Nat.modEq_iff_dvd' hx1.le).1 this.symm
+    have h := padicValNat.pow_sub_pow (p := p) hodd (x := x) (y := 1) hx1 hpx
+      (fun h => by
+        have : p ∣ x - (x - 1) := Nat.dvd_sub h hpx
+        rw [show x - (x - 1) = 1 by omega] at this
+        exact hp.one_lt.ne' (Nat.dvd_one.1 this)) (n := 2 * A) (by omega)
+    rw [one_pow] at h
+    have hx' : p ^ padicValNat p (x - 1) ≤ x - 1 := Nat.le_of_dvd (by omega) pow_padicValNat_dvd
+    calc p ^ padicValNat p (3 ^ A - 1) ≤ p ^ (padicValNat p (x - 1) + padicValNat p (2 * A)) :=
+          Nat.pow_le_pow_right hp.pos (by omega)
+      _ = p ^ padicValNat p (x - 1) * p ^ padicValNat p (2 * A) := pow_add _ _ _
+      _ ≤ (x - 1) * (2 * A) := Nat.mul_le_mul hx' h2A
+      _ ≤ 2 * A * x := by rw [mul_comm]; exact Nat.mul_le_mul_left _ (by omega)
+
+theorem gcd_three_pow_sub_one_le {t A N : ℕ} (ht : 1 ≤ t) (h3 : ¬ 3 ∣ t) (hA : 1 ≤ A) :
+    Nat.gcd (3 ^ A - 1) (t ^ N) ≤ (2 * A * 9 ^ t) ^ (t + 1) := by
+  set g := Nat.gcd (3 ^ A - 1) (t ^ N)
+  have hq0 : 3 ^ A - 1 ≠ 0 := by have : 3 ≤ 3 ^ A := Nat.le_self_pow (by omega) 3; omega
+  have hg0 : g ≠ 0 := Nat.gcd_ne_zero_left hq0
+  have hB : 1 ≤ 2 * A * 9 ^ t := by have := Nat.one_le_pow t 9 (by norm_num); nlinarith
+  rw [← Nat.prod_factorization_pow_eq_self hg0]
+  have hsub : g.primeFactors ⊆ Finset.range (t + 1) := by
+    intro p hp
+    have hpd : p ∣ t := (Nat.prime_of_mem_primeFactors hp).dvd_of_dvd_pow
+      ((Nat.dvd_of_mem_primeFactors hp).trans (Nat.gcd_dvd_right _ _))
+    exact Finset.mem_range.2 (Nat.lt_succ_of_le (Nat.le_of_dvd (by omega) hpd))
+  calc g.factorization.prod (fun p k => p ^ k) = ∏ p ∈ g.primeFactors, p ^ g.factorization p := rfl
+    _ ≤ ∏ _p ∈ g.primeFactors, 2 * A * 9 ^ t := by
+      refine Finset.prod_le_prod' fun p hp => ?_
+      have hpp := Nat.prime_of_mem_primeFactors hp
+      have hpd : p ∣ t := hpp.dvd_of_dvd_pow
+        ((Nat.dvd_of_mem_primeFactors hp).trans (Nat.gcd_dvd_right _ _))
+      have hp3 : p ≠ 3 := by rintro rfl; exact h3 hpd
+      have hpt : p ≤ t := Nat.le_of_dvd (by omega) hpd
+      have h1 : g.factorization p ≤ (3 ^ A - 1).factorization p :=
+        (Nat.factorization_le_iff_dvd hg0 hq0).2 (Nat.gcd_dvd_left _ _) p
+      rw [Nat.factorization_def (3 ^ A - 1) hpp] at h1
+      calc p ^ g.factorization p ≤ p ^ padicValNat p (3 ^ A - 1) :=
+            Nat.pow_le_pow_right hpp.pos h1
+        _ ≤ 2 * A * 3 ^ (2 * (p - 1)) := pow_padicVal_three_pow_sub_one_le hpp hp3 hA
+        _ ≤ 2 * A * 9 ^ t := by
+            rw [show (9 : ℕ) ^ t = 3 ^ (2 * t) by rw [pow_mul]; norm_num]
+            exact Nat.mul_le_mul_left _ (Nat.pow_le_pow_right (by norm_num) (by omega))
+    _ = (2 * A * 9 ^ t) ^ g.primeFactors.card := Finset.prod_const _
+    _ ≤ (2 * A * 9 ^ t) ^ (t + 1) := Nat.pow_le_pow_right hB
+        ((Finset.card_le_card hsub).trans (by simp))
+
+theorem dvd_of_dvd_mul_gcd {q X Y : ℕ} (hq : q ≠ 0) (h : q ∣ Y * X) : q / Nat.gcd q Y ∣ X := by
+  have h0 : 0 < Nat.gcd q Y := Nat.gcd_pos_of_pos_left _ (Nat.pos_of_ne_zero hq)
+  have hc := Nat.coprime_div_gcd_div_gcd h0 (m := q) (n := Y)
+  refine hc.dvd_of_dvd_mul_left ?_
+  obtain ⟨u, hu⟩ := h
+  refine ⟨u, ?_⟩
+  have h1 := Nat.div_mul_cancel (Nat.gcd_dvd_left q Y)
+  have h2 := Nat.div_mul_cancel (Nat.gcd_dvd_right q Y)
+  apply Nat.eq_of_mul_eq_mul_right h0
+  calc Y / q.gcd Y * X * q.gcd Y = Y * X := by rw [mul_right_comm, h2]
+    _ = q * u := hu
+    _ = q / q.gcd Y * u * q.gcd Y := by rw [mul_right_comm, h1]
+
+/-- Shifts `d` with `Q ∣ b^d − 1` are more than `log_b Q` apart. -/
+theorem card_deg_le {b Q N : ℕ} (hb : 2 ≤ b) (hQ : 1 ≤ Q) (hD : 1 ≤ Nat.log b Q) (B : Finset ℕ)
+    (hB : B ⊆ Finset.range N) (hdeg : ∀ d ∈ B, Q ∣ b ^ d - 1) :
+    B.card ≤ N / Nat.log b Q + 1 := by
+  have key : ∀ d₁ ∈ B, ∀ d₂ ∈ B, d₁ < d₂ → Nat.log b Q < d₂ - d₁ := by
+    intro d₁ h₁ d₂ h₂ hlt
+    set δ := d₂ - d₁
+    have hb1 : 1 ≤ b ^ d₁ := Nat.one_le_pow _ _ (by omega)
+    have hcop : Nat.Coprime Q (b ^ d₁) := by
+      have h := hdeg d₁ h₁
+      refine Nat.Coprime.coprime_dvd_left h ?_
+      have hc : Nat.Coprime (b ^ d₁ - 1) (b ^ d₁ - 1 + 1) :=
+        Nat.coprime_self_add_right.2 (Nat.coprime_one_right _)
+      rwa [show b ^ d₁ - 1 + 1 = b ^ d₁ by omega] at hc
+    have hdiff : Q ∣ b ^ d₁ * (b ^ δ - 1) := by
+      have e : b ^ d₁ * (b ^ δ - 1) = (b ^ d₂ - 1) - (b ^ d₁ - 1) := by
+        rw [Nat.mul_sub, mul_one, ← pow_add, show d₁ + δ = d₂ by omega]
+        have : b ^ d₁ ≤ b ^ d₂ := Nat.pow_le_pow_right (by omega) hlt.le
+        omega
+      rw [e]; exact Nat.dvd_sub (hdeg d₂ h₂) (hdeg d₁ h₁)
+    have h2 := hcop.dvd_of_dvd_mul_left hdiff
+    have hpos : 1 ≤ b ^ δ - 1 := by
+      have : b ≤ b ^ δ := Nat.le_self_pow (by omega) b
+      omega
+    have hQle := Nat.le_of_dvd (by omega) h2
+    by_contra hcon; push Not at hcon
+    have := Nat.pow_le_pow_right (show 1 ≤ b by omega) hcon
+    have := Nat.pow_log_le_self b (show Q ≠ 0 by omega)
+    omega
+  have := NormalNumbers.CantorRepetition.card_cluster_le (L := 0) hD B hB
+    (fun m hm m' hm' hlt hle => absurd hle (not_le.2 (key m hm m' hm' hlt)))
+  simpa using this
+
+theorem poly_le_three_pow (c e : ℕ) : ∃ A0 : ℕ, ∀ A, A0 ≤ A → c * A ^ e + 1 ≤ 3 ^ (A / 2) := by
+  have ht := tendsto_pow_const_div_const_pow_of_one_lt e (by norm_num : (1 : ℝ) < 3)
+  have hε : (0 : ℝ) < 1 / (2 * ((c : ℝ) * 3 ^ e + 1)) := by positivity
+  obtain ⟨M0, hM0⟩ := Filter.eventually_atTop.1 (ht.eventually (gt_mem_nhds hε))
+  refine ⟨2 * M0 + 2, fun A hA => ?_⟩
+  set m := A / 2
+  have hm : M0 + 1 ≤ m := by omega
+  have hAm : A ≤ 3 * m := by omega
+  have h1 := hM0 m (by omega)
+  have h3m : (0 : ℝ) < 3 ^ m := by positivity
+  have h3m2 : (2 : ℝ) ≤ 3 ^ m := by
+    have : (3 : ℝ) ≤ 3 ^ m := by
+      have := pow_le_pow_right₀ (by norm_num : (1 : ℝ) ≤ 3) (show 1 ≤ m by omega); simpa using this
+    linarith
+  rw [div_lt_div_iff₀ h3m (by positivity)] at h1
+  have hAe : (A : ℝ) ^ e ≤ 3 ^ e * (m : ℝ) ^ e := by
+    rw [← mul_pow]; gcongr; exact_mod_cast hAm
+  have : (c : ℝ) * A ^ e + 1 ≤ 3 ^ m := by
+    have hc : (0 : ℝ) ≤ c := Nat.cast_nonneg _
+    have : (c : ℝ) * A ^ e ≤ c * 3 ^ e * m ^ e := by
+      rw [mul_assoc]; exact mul_le_mul_of_nonneg_left hAe hc
+    have hme : (0 : ℝ) ≤ (m : ℝ) ^ e := by positivity
+    nlinarith
+  exact_mod_cast this
+
+end DegRows
+
+/-- **Degenerate rows are few (PROVED 2026-10-08; elementary, LTE).**  Shifts `d < N_k` whose row
 `tᵐ h'(b^d − 1)` is degenerate modulo `3^{a_k} − 1` number `O(k + 3)`.
 
 English proof.  Degeneracy means `Q ∣ b^d − 1` for `Q = q/gcd(q, 2h' t^{N_k})`, `q = 3^{a_k} − 1`.
@@ -4599,7 +4768,98 @@ theorem card_degRows_le {s t : ℕ} (hs : 1 ≤ s) (ht : 2 ≤ t) (h3 : ¬ 3 ∣
       (((Finset.Ico 1 ((k + 2) * runStart k + 1)).filter fun d =>
         (3 : ℤ) ^ runStart k - 1 ∣ 2 * ((h' : ℤ) * (((3 ^ s * t : ℕ) : ℤ) ^ d - 1)) *
           (t : ℤ) ^ ((k + 2) * runStart k + 1)).card : ℝ) ≤ C * ((k : ℝ) + 3) := by
-  sorry
+  set b := 3 ^ s * t with hbdef
+  have hb : 2 ≤ b := by
+    have : 3 ≤ 3 ^ s := Nat.le_self_pow (by omega) 3
+    nlinarith
+  set c0 := 2 * h' * (2 * 9 ^ t) ^ (t + 1)
+  obtain ⟨A0, hA0⟩ := poly_le_three_pow c0 (t + 1)
+  refine ⟨4 * b + 1, max A0 (4 * b), fun k hk => ?_⟩
+  set A := runStart k
+  have hAk : k < A := lt_runStart k
+  have hAA0 : A0 ≤ A := by omega
+  have hA4 : 4 * b ≤ A := by omega
+  have hA1 : 1 ≤ A := by omega
+  set N := (k + 2) * A + 1
+  set q := 3 ^ A - 1
+  have hq0 : q ≠ 0 := by have : 3 ≤ 3 ^ A := Nat.le_self_pow (by omega) 3; omega
+  set Y := 2 * h' * t ^ N
+  set g := Nat.gcd q Y
+  have hg0 : 0 < g := Nat.gcd_pos_of_pos_left _ (Nat.pos_of_ne_zero hq0)
+  have hgle : g ≤ c0 * A ^ (t + 1) := by
+    have h1 : g ∣ Nat.gcd q (2 * h') * Nat.gcd q (t ^ N) := gcd_mul_dvd_mul_gcd q (2 * h') (t ^ N)
+    have h2 : Nat.gcd q (2 * h') ≤ 2 * h' := Nat.le_of_dvd (by omega) (Nat.gcd_dvd_right _ _)
+    have h3' := gcd_three_pow_sub_one_le (N := N) (by omega) h3 hA1
+    have := Nat.le_of_dvd (by
+      have : 0 < Nat.gcd q (t ^ N) := Nat.gcd_pos_of_pos_left _ (Nat.pos_of_ne_zero hq0)
+      have : 0 < Nat.gcd q (2 * h') := Nat.gcd_pos_of_pos_left _ (Nat.pos_of_ne_zero hq0)
+      positivity) h1
+    calc g ≤ Nat.gcd q (2 * h') * Nat.gcd q (t ^ N) := this
+      _ ≤ 2 * h' * (2 * A * 9 ^ t) ^ (t + 1) := Nat.mul_le_mul h2 h3'
+      _ = c0 * A ^ (t + 1) := by simp only [c0]; ring
+  set Q := q / g
+  have hQ : 3 ^ (A / 2) ≤ Q := by
+    rw [Nat.le_div_iff_mul_le hg0]
+    have h1 := hA0 A hAA0
+    have h2 : 3 ^ (A / 2) * 3 ^ (A / 2) ≤ 3 ^ A := by
+      rw [← pow_add]; exact Nat.pow_le_pow_right (by norm_num) (by omega)
+    have h3p : 1 ≤ 3 ^ (A / 2) := Nat.one_le_pow _ _ (by norm_num)
+    have : 3 ^ (A / 2) * g ≤ 3 ^ (A / 2) * (3 ^ (A / 2) - 1) :=
+      Nat.mul_le_mul_left _ (by omega)
+    rw [Nat.mul_sub, mul_one] at this
+    simp only [q]; omega
+  set m := A / (2 * b)
+  have hm2 : 2 ≤ m := (Nat.le_div_iff_mul_le (by omega)).2 (by linarith)
+  have hbm : b ^ m ≤ Q := by
+    calc b ^ m ≤ (3 ^ b) ^ m := Nat.pow_le_pow_left (Nat.lt_pow_self (by norm_num)).le _
+      _ = 3 ^ (b * m) := by rw [← pow_mul]
+      _ ≤ 3 ^ (A / 2) := Nat.pow_le_pow_right (by norm_num) (by
+          rw [Nat.le_div_iff_mul_le (by norm_num)]
+          have := Nat.div_mul_le_self A (2 * b)
+          simp only [m]; nlinarith)
+      _ ≤ Q := hQ
+  have hQ1 : 1 ≤ Q := le_trans (Nat.one_le_pow _ _ (by omega)) hbm
+  have hmlog : m ≤ Nat.log b Q := Nat.le_log_of_pow_le (by omega) hbm
+  -- the degenerate set
+  set B := (Finset.Ico 1 N).filter fun d =>
+    (3 : ℤ) ^ A - 1 ∣ 2 * ((h' : ℤ) * ((b : ℤ) ^ d - 1)) * (t : ℤ) ^ N
+  have hBsub : B ⊆ Finset.range N := fun d hd =>
+    Finset.mem_range.2 (Finset.mem_Ico.1 (Finset.mem_filter.1 hd).1).2
+  have hdeg : ∀ d ∈ B, Q ∣ b ^ d - 1 := by
+    intro d hd
+    have h := (Finset.mem_filter.1 hd).2
+    have hbd : 1 ≤ b ^ d := Nat.one_le_pow _ _ (by omega)
+    have hcast : ((q : ℕ) : ℤ) ∣ ((Y * (b ^ d - 1) : ℕ) : ℤ) := by
+      have e1 : ((q : ℕ) : ℤ) = (3 : ℤ) ^ A - 1 := by
+        simp only [q]; rw [Nat.cast_sub (Nat.one_le_pow _ _ (by norm_num))]; push_cast; ring
+      have e2 : ((Y * (b ^ d - 1) : ℕ) : ℤ) = 2 * ((h' : ℤ) * ((b : ℤ) ^ d - 1)) * (t : ℤ) ^ N := by
+        simp only [Y]; rw [Nat.cast_mul, Nat.cast_sub hbd]; push_cast; ring
+      rw [e1, e2]; exact h
+    exact dvd_of_dvd_mul_gcd hq0 (Int.natCast_dvd_natCast.1 hcast)
+  have hcard := card_deg_le hb hQ1 (by omega) B hBsub hdeg
+  -- real bound
+  have hN : (N / Nat.log b Q : ℕ) ≤ N / m := Nat.div_le_div_left hmlog (by omega)
+  have hmA : (A : ℝ) ≤ 4 * b * m := by
+    have h1 : A < (m + 1) * (2 * b) := by
+      have := Nat.lt_div_mul_add (a := A) (b := 2 * b) (by omega); simp only [m]; nlinarith
+    have : A ≤ 4 * b * m := by nlinarith
+    exact_mod_cast this
+  have hNm : ((N / m : ℕ) : ℝ) ≤ 4 * b * ((k : ℝ) + 3) := by
+    refine Nat.cast_div_le.trans ?_
+    have hm0 : (0 : ℝ) < m := by exact_mod_cast (show 0 < m by omega)
+    rw [div_le_iff₀ hm0]
+    have hNr : (N : ℝ) = (k + 2) * A + 1 := by simp only [N]; push_cast; ring
+    rw [hNr]
+    have hk0 : (0 : ℝ) ≤ k := Nat.cast_nonneg _
+    have hm1 : (1 : ℝ) ≤ m := by exact_mod_cast (show 1 ≤ m by omega)
+    have hb0 : (1 : ℝ) ≤ b := by exact_mod_cast (show 1 ≤ b by omega)
+    nlinarith
+  have hc : (B.card : ℝ) ≤ ((N / m : ℕ) : ℝ) + 1 := by exact_mod_cast hcard.trans (by omega)
+  have hb0 : (0 : ℝ) ≤ b := Nat.cast_nonneg _
+  have hk0 : (0 : ℝ) ≤ k := Nat.cast_nonneg _
+  push_cast at hbdef
+  calc (B.card : ℝ) ≤ 4 * b * ((k : ℝ) + 3) + 1 := by linarith
+    _ ≤ (4 * b + 1) * ((k : ℝ) + 3) := by nlinarith
 
 /-- **Per-run copy total (believed, 95%; elementary from the two nodes above).**  The run sums
 of `repPairPos_explicit`'s copy term are `≤ N_k² ψ_k` with `Σ ψ_k (k+3)⁴ < ∞`.
