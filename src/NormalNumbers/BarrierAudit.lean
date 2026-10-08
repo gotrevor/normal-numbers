@@ -299,12 +299,10 @@ def waivers : List Waiver := [
   ⟨``CantorRepetition.repPairArith_of_runDecay,
    "wiring: repPairPos_explicit with the copy term from copyRun_psi; summability along sched by a \
     sum swap"⟩,
-  ⟨``CantorRepetition.Literature.bakerLogDiscrepancy_cited,
-   "literature-strength input, cited not formalized: Baker–Wüstholz 1993 with Erdős–Turán \
-    (CantorExactExponentProfile.Literature.BakerLogDiscrepancyEff)"⟩,
-  ⟨``CantorRepetition.Literature.matveevThreeLogs_cited,
-   "literature-strength input, cited not formalized: Matveev 2000 Cor. 2.3, three logarithms of \
-    rationals (SparseIdentity.Literature.MatveevThreeLogs)"⟩,
+  ⟨``CantorRepetition.repPairArith_of_three_dvd,
+   "open crux of liouvilleCantorFullProfile: repPairArith_of_literature applied to cited Baker \
+    (two logs) and Matveev (three logs), which enter only as hypothesis Props; the conditional \
+    liouvilleCantorFullProfile_of_literature carries them honestly"⟩,
   ⟨``FiniteState.isFNormal_delayEnum_of_normal,
    "a leaf: O(1) cost of composing with the delay transducer and its finite-state right inverse"⟩]
 

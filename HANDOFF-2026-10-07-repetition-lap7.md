@@ -17,8 +17,9 @@ The assembly needs only a copy-zone saving summable along `sched`.  Sparse orbit
 - `CantorRepetition.lean` section "The copy zone through sparse pairs": `cycSparse_of_cycProd_ge`,
   `card_cluster_le`, `RunOrbitDecay`, `runOrbitDecay_of_sparse`, `card_degRows_le`, `copyRun_psi`,
   `repPairArith_of_runDecay` (sorry leaves with English proofs), `repPairArith_of_literature`
-  (proved from them), cited `Literature.bakerLogDiscrepancy_cited`, `Literature.matveevThreeLogs_cited`.
-  `repPairArith_of_three_dvd` rewired (no direct sorry).  `liouvilleCantorFullProfile_of_literature`.
+  (proved from them).  Operator note 2026-10-08: the sorry'd `Literature.*_cited` theorems were removed
+  (an axiom in disguise); `repPairArith_of_three_dvd` is a direct waived `sorry` again, and the cited
+  inputs live only as hypotheses of `liouvilleCantorFullProfile_of_literature`.  `liouvilleCantorFullProfile_of_literature`.
 - BarrierAudit updated (crux link for `sparseIdentityBound_of_matveev` with barrier
   `cantor_not_normal_three_pow`; waivers for the leaves).  Root import updated.  Full build green.
 

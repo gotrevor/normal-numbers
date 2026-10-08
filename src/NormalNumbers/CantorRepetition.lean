@@ -4273,28 +4273,17 @@ theorem repPairArith_of_literature (hB : CantorExactExponentProfile.Literature.B
     (runOrbitDecay_of_sparse (by omega) hnd
       (SparseIdentity.sparseIdentityBound_of_matveev hM (by omega) hnd))
 
-/-- **Cited, not formalized: Baker–Wüstholz with Erdős–Turán** (`Literature.BakerLogDiscrepancy`;
-see `CantorExactExponentProfile.Literature.BakerLogDiscrepancyEff` for the derivation).  The
-frozen headline's only use of Baker's two-logarithm theory.  Confidence 97% (transcription). -/
-theorem Literature.bakerLogDiscrepancy_cited :
-    CantorExactExponentProfile.Literature.BakerLogDiscrepancy := by
-  sorry
-
-/-- **Cited, not formalized: Matveev, three logarithms of rationals**
-(`SparseIdentity.Literature.MatveevThreeLogs`).  Confidence 95% (transcription; see there). -/
-theorem Literature.matveevThreeLogs_cited : SparseIdentity.Literature.MatveevThreeLogs := by
-  sorry
-
-/-- **The crux, arithmetic form.**  Wired (2026-10-07, review lap 7) through the sparse-pair route:
-`repPairArith_of_literature` applied to the two cited inputs.  Its `sorry` dependence is exactly
-the cited `Literature.bakerLogDiscrepancy_cited`, `Literature.matveevThreeLogs_cited` and the
-open leaves of that route (`SparseIdentity.sparseIdentityBound_of_matveev`,
-`cycSparse_of_cycProd_ge`, `card_cluster_le`, `runOrbitDecay_of_sparse`, `card_degRows_le`,
-`copyRun_psi`, `repPairArith_of_runDecay`). -/
+/-- **The crux, arithmetic form (open).**  This is `repPairArith_of_literature` applied to the
+two cited inputs, Baker–Wüstholz with Erdős–Turán
+(`CantorExactExponentProfile.Literature.BakerLogDiscrepancy`) and Matveev's three-logarithm bound
+(`SparseIdentity.Literature.MatveevThreeLogs`).  Cited results enter only as hypothesis `Prop`s,
+so this unconditional form stays a direct `sorry`; the honest conditional headline is
+`liouvilleCantorFullProfile_of_literature`.  The open leaves of the route are
+`SparseIdentity.sparseIdentityBound_of_matveev`, `cycSparse_of_cycProd_ge`, `card_cluster_le`,
+`runOrbitDecay_of_sparse`, `card_degRows_le`, `copyRun_psi` and `repPairArith_of_runDecay`. -/
 theorem repPairArith_of_three_dvd {b : ℕ} (hb : 2 ≤ b) (h3 : 3 ∣ b) (hpow : ∀ s : ℕ, b ≠ 3 ^ s) :
-    RepPairArith b :=
-  repPairArith_of_literature Literature.bakerLogDiscrepancy_cited Literature.matveevThreeLogs_cited
-    hb h3 hpow
+    RepPairArith b := by
+  sorry
 
 /-- **Pair-sum decay at `b = 3ˢt`, `t > 1` (open leaf; the crux in pair form).**  See
 `RepPairDecay` and the zone route in the docstring of `ae_isNormal_rep_of_three_dvd`. -/

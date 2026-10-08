@@ -20,8 +20,9 @@
   4. `repPairArith_of_runDecay`: ψ-versions of `power_of_eventually`, `repPairPower_of_pos`,
      `repPairPos_eventually` + `Copy(N) ≤ C₀ + N² Φ(N)`, `Σ_j Φ(sched j) < ∞` by a sum swap
      (`Σ_{sched j ≥ X} sched(j)^{-2} ≲ log X/X²`).
-* Cited (sorried, the end state): `Literature.bakerLogDiscrepancy_cited`,
-  `Literature.matveevThreeLogs_cited`.
+* Cited inputs enter only as hypothesis `Prop`s (`BakerLogDiscrepancy`, `MatveevThreeLogs`) in
+  `liouvilleCantorFullProfile_of_literature`; the unconditional `repPairArith_of_three_dvd` is a
+  direct waived `sorry` (the sorry'd `_cited` theorems were removed 2026-10-08).
 
 ## Repetition lap 6 (2026-10-07) — ASSEMBLY PROVED: `repPairArith_of_inputs` (Baker + TOrbitCyclicDecay + BadGcdSparseH ⇒ RepPairArith (3ˢt)), #print axioms clean. Next per DIRECTION: state+prove the conditional headline (LiouvilleCantorFullProfile from the three inputs).
 ### (history)

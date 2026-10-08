@@ -2,11 +2,13 @@
 
 ## CURRENT DIRECTIVE (2026-10-07, branch `proof/cantor-repetition`, review lap 7): the sparse-pair route 🎯
 
-**Objective:** make the frozen headline `liouvilleCantorFullProfile` rest only on two cited classical
-theorems (`Literature.bakerLogDiscrepancy_cited`, `Literature.matveevThreeLogs_cited`) by proving the
-leaves of the sparse-pair route (`CantorRepetition.lean` "The copy zone through sparse pairs",
-`SparseIdentity.lean`).  Wiring is in place: `repPairArith_of_three_dvd` now goes through
-`repPairArith_of_literature`; conditional headline `liouvilleCantorFullProfile_of_literature`.
+**Objective:** make the conditional headline `liouvilleCantorFullProfile_of_literature (hB) (hM)` rest
+only on two cited classical theorems, entered as hypothesis `Prop`s
+(`CantorExactExponentProfile.Literature.BakerLogDiscrepancy`, `SparseIdentity.Literature.MatveevThreeLogs`;
+never as sorry'd theorems), by proving the leaves of the sparse-pair route (`CantorRepetition.lean` "The copy zone through sparse pairs",
+`SparseIdentity.lean`).  Wiring is in place: `repPairArith_of_literature` (proved from the leaves); the unconditional
+`repPairArith_of_three_dvd` stays a direct waived `sorry` (2026-10-08: the sorry'd `_cited` theorems were
+an axiom in disguise and were removed).
 **Mandated next move (in order):** (1) `sparseIdentityBound_of_matveev` (the Diophantine leaf; the only
 new-math leaf left, believed 90%): strong induction on the term count + top-cut gap bounds from
 Matveev; state the gap-step lemma first; (2) `cycSparse_of_cycProd_ge`, `card_cluster_le`,
