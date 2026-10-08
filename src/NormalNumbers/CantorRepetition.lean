@@ -4168,12 +4168,105 @@ assembly needs only a saving summable along `sched`.  Route (`SparseIdentity`):
 `BadGcdSparseH` is not needed: only fully degenerate rows (`3^A − 1 ∣ 2 c t^N`) escape, and they
 are counted elementarily (`card_degRows_le`). -/
 
+section CycSparse
+open Finset
+
+theorem dg_period {P y : ℕ} (hP : 1 ≤ P) : dg P y P = dg P y 0 := by
+  have hq1 : (1 : ℝ) < 3 ^ P := one_lt_pow₀ (by norm_num) (by omega)
+  have : (3 : ℝ) ^ P * ((y : ℝ) / (3 ^ P - 1)) = (y : ℝ) / (3 ^ P - 1) + ((y : ℤ) : ℝ) := by
+    have hq : (3 : ℝ) ^ P - 1 ≠ 0 := by linarith
+    field_simp; push_cast; ring
+  simp only [dg, rd, this, Int.fract_add_intCast, pow_zero, one_mul]
+
+theorem dg_bounds (P y i : ℕ) : 0 ≤ dg P y i ∧ dg P y i ≤ 2 :=
+  ⟨rd_nonneg _, by have := rd_lt (3 ^ i * ((y : ℝ) / (3 ^ P - 1))); simp only [dg]; omega⟩
+
+theorem two_mul_eq_sum {Q y : ℕ} (hy : y < 3 ^ (Q + 1) - 1) :
+    2 * (y : ℤ) = ∑ j ∈ range (Q + 1), (dg (Q + 1) y (j + 1) - dg (Q + 1) y j) * 3 ^ (Q - j) +
+      dg (Q + 1) y 0 * (3 ^ (Q + 1) - 1) := by
+  have hr := eq_sum_rd (P := Q + 1) (by omega) hy
+  have hz : (y : ℤ) = ∑ i ∈ range (Q + 1), dg (Q + 1) y i * 3 ^ (Q - i) := by
+    have : ((y : ℤ) : ℝ) = ((∑ i ∈ range (Q + 1), dg (Q + 1) y i * 3 ^ (Q - i) : ℤ) : ℝ) := by
+      push_cast; rw [hr]; refine sum_congr rfl fun i _ => ?_; simp [dg]
+    exact_mod_cast this
+  set D := dg (Q + 1) y
+  have hper : D (Q + 1) = D 0 := dg_period (by omega)
+  -- 3y
+  have h3 : 3 * (y : ℤ) = D 0 * 3 ^ (Q + 1) + ∑ j ∈ range Q, D (j + 1) * 3 ^ (Q - j) := by
+    rw [hz, mul_sum, sum_range_succ']
+    simp only [Nat.sub_zero]
+    rw [add_comm, pow_succ]
+    congr 1
+    · ring
+    · refine sum_congr rfl fun j hj => ?_
+      have : Q - j = (Q - (j + 1)) + 1 := by have := mem_range.1 hj; omega
+      rw [this, pow_succ]; ring
+  have h4 : ∑ j ∈ range (Q + 1), D (j + 1) * 3 ^ (Q - j) =
+      ∑ j ∈ range Q, D (j + 1) * 3 ^ (Q - j) + D 0 := by
+    rw [sum_range_succ, Nat.sub_self, pow_zero, mul_one, hper]
+  simp only [sub_mul, sum_sub_distrib, h4, ← hz]
+  linarith
+
 /-- **Large cyclic product forces cyclic sparsity.**  If `cos(π/9)^K < θ ≤ cycProd P η`, then `η`
 is cyclically `K`-sparse modulo `3^P − 1`. -/
 theorem cycSparse_of_cycProd_ge {P K : ℕ} (hP : 1 ≤ P) {θ : ℝ}
     (hK : Real.cos (Real.pi / 9) ^ K < θ) (η : ℤ) (hη : θ ≤ cycProd P η) :
     SparseIdentity.CycSparse P K η := by
-  sorry
+  obtain ⟨Q, rfl⟩ : ∃ Q, P = Q + 1 := ⟨P - 1, by omega⟩
+  set q : ℤ := 3 ^ (Q + 1) - 1 with hqdef
+  have hq : 0 < q := by
+    have : (1 : ℤ) < 3 ^ (Q + 1) := one_lt_pow₀ (by norm_num) (by omega)
+    omega
+  set y : ℕ := (η % q).toNat
+  have hy0 : (y : ℤ) = η % q := Int.toNat_of_nonneg (Int.emod_nonneg _ hq.ne')
+  have hyq : (y : ℤ) < q := hy0 ▸ Int.emod_lt_of_pos _ hq
+  have hy : y < 3 ^ (Q + 1) - 1 := by
+    have : ((3 ^ (Q + 1) - 1 : ℕ) : ℤ) = q := by
+      rw [Nat.cast_sub (Nat.one_le_pow _ _ (by norm_num))]; push_cast; rfl
+    omega
+  have hηy : η = (y : ℤ) + (η / q) * (3 ^ (Q + 1) - 1) := by
+    rw [hy0]; have := Int.emod_def η q; linarith
+  have hcyc : θ ≤ cycProd (Q + 1) (y : ℤ) := by
+    rw [hηy, cycProd_add] at hη; exact hη
+  have hcard := card_changes_lt hK hcyc
+  set C := (range (Q + 1)).filter fun i => dg (Q + 1) y i ≠ dg (Q + 1) y (i + 1)
+  set D := dg (Q + 1) y
+  refine ⟨C.image (fun j => Q - j), fun e => D (Q - e + 1) - D (Q - e), ?_, ?_, ?_, ?_⟩
+  · intro e he
+    obtain ⟨j, -, rfl⟩ := mem_image.1 he
+    exact mem_range.2 (by omega)
+  · exact card_image_le.trans hcard.le
+  · intro e he
+    obtain ⟨j, hj, rfl⟩ := mem_image.1 he
+    have hjr := mem_range.1 (mem_filter.1 hj).1
+    have hjc := (mem_filter.1 hj).2
+    have hQ : Q - (Q - j) = j := by omega
+    dsimp only; rw [hQ]
+    have h1 : 0 ≤ D j ∧ D j ≤ 2 := dg_bounds _ _ _
+    have h2 : 0 ≤ D (j + 1) ∧ D (j + 1) ≤ 2 := dg_bounds _ _ _
+    refine ⟨sub_ne_zero.2 (Ne.symm hjc), abs_le.2 ⟨by omega, by omega⟩⟩
+  · have hinj : Set.InjOn (fun j => Q - j) C := by
+      intro a ha b hb h
+      have := mem_range.1 (mem_filter.1 ha).1; have := mem_range.1 (mem_filter.1 hb).1
+      simp only at h; omega
+    rw [sum_image hinj]
+    have h2 := two_mul_eq_sum hy
+    have hsum : ∑ j ∈ range (Q + 1), (D (j + 1) - D j) * 3 ^ (Q - j) =
+        ∑ j ∈ C, (D (Q - (Q - j) + 1) - D (Q - (Q - j))) * 3 ^ (Q - j) := by
+      rw [sum_filter]
+      refine sum_congr rfl fun j hj => ?_
+      have : Q - (Q - j) = j := by have := mem_range.1 hj; omega
+      rw [this]
+      split_ifs with h
+      · rfl
+      · have h' : D (j + 1) = D j := (not_not.1 h).symm
+        rw [h', sub_self, zero_mul]
+    rw [← hsum]
+    have : 2 * η = 2 * (y : ℤ) + 2 * (η / q) * (3 ^ (Q + 1) - 1) := by linear_combination 2 * hηy
+    rw [this, h2, Int.modEq_iff_dvd]
+    exact ⟨-(D 0 + 2 * (η / q)), by ring⟩
+
+end CycSparse
 
 /-- **Cluster count (pure combinatorics).**  A set `B ⊆ [0, N)` any two of whose points within
 distance `D` are within distance `L < D` has at most `(N/D + 1)(L + 1)` points. -/
