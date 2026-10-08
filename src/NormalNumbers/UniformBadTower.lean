@@ -317,33 +317,6 @@ through the finitely many orbits mod `q`. -/
 def RationalTower (c : ℝ) : Prop :=
   ∃ F : Set ℝ, F ⊆ Set.range ((↑) : ℚ → ℝ) ∧ TowerFamily c F
 
-/-- **Headline (upper-bound route, frozen 2026-10-08).**  Believed 40% true, 15% provable soon.
-
-A tower of rationals at exponent `4`.  With `cStar_le_of_rationalTower` this closes the frozen
-wall `cStar_le_four` by a global mechanism, outside the local engines walled at `9/2`.
-
-Proposed mechanism (Carmichael towers).  Take a chain of moduli `Q_{L₁} ∣ Q_{L₂} ∣ ⋯` with small
-Carmichael exponent, e.g. `Lᵢ` highly composite and `Q_L = ∏_{(p−1) ∣ L} p`.  Inside each, take
-numerators that are self-good at `c = 4`.  The host density (`153, 12, 8` per 3000 at
-`L = 12, 36, 72`) must be turned into a proof that self-good numerators exist in every short
-interval mod `Q_{L_{i+1}}`.  A natural count: a numerator `p` is bad iff for some base
-`b ≤ Q^{1/4}`, some orbit point `p·bⁿ mod Q` lies in a window of size `2Q·b^{−4}`.  This bad set
-is a union of cosets of `⟨b⟩`, which is a finite exact computation per `L` but not a uniform
-proof.  A uniform proof needs the windows' cosets to overlap, or a structured choice of numerators
-(e.g. shadowing the previous level's numerator).
-
-Known-false siblings.  Rationals with a bounded denominator: they die at base `q`
-(`uniformBad_base_two` is the base-2 floor).  The same tower at `c ≤ 93/37` must fail
-(`ninety_three_thirty_sevenths_le_cStar`).  A proof must therefore use `c = 4` quantitatively,
-not just periodicity. -/
-theorem rationalTower_four : RationalTower 4 := by
-  sorry
-
-/-- A rational tower at `c` bounds `c⋆` by `c`. -/
-theorem cStar_le_of_rationalTower {c : ℝ} (h : RationalTower c) : cStar ≤ c := by
-  obtain ⟨F, -, hF⟩ := h
-  exact csInf_le bddBelow_admissible (admissible_of_towerFamily hF)
-
 /-! ## Exact checker for rational goodness, and the Carmichael chain probe -/
 
 /-- Distance of `N` to the nearest multiple of `q`, as a natural number. -/
@@ -466,6 +439,104 @@ theorem goodBelow_tower_step : GoodBelow 4 1919190 (380077 / 1919190) := by
   have := goodBelow_of_check 4 1 1919190 380077 1919190 1 36 (by norm_num) (by norm_num)
     (by norm_num) per_1919190 win_tower_step
   norm_num at this; exact this
+
+/-- Distinct rationals are `1/(den x · den y)` apart. -/
+theorem rat_sep (x y : ℚ) (h : y ≠ x) : 1 ≤ |y - x| * (x.den * y.den) := by
+  have e : (y - x) * (x.den * y.den) = ((y.num * x.den - x.num * y.den : ℤ) : ℚ) := by
+    have hx := Rat.mul_den_eq_num x; have hy := Rat.mul_den_eq_num y
+    push_cast; rw [← hx, ← hy]; ring
+  have hk : (y.num * x.den - x.num * y.den : ℤ) ≠ 0 := by
+    intro h0; apply h
+    have : (y - x) * (x.den * y.den) = 0 := by rw [e, h0]; simp
+    have hd : (x.den * y.den : ℚ) ≠ 0 := by positivity
+    have := (mul_eq_zero.1 this).resolve_right hd
+    linarith
+  have hpos : (0 : ℚ) ≤ x.den * y.den := by positivity
+  rw [← abs_of_nonneg hpos, ← abs_mul, e]
+  have : (1 : ℤ) ≤ |y.num * x.den - x.num * y.den| := Int.one_le_abs hk
+  exact_mod_cast this
+
+/-- **Open conjecture, the crux of `rationalTower_four` at `c = 4` (believed 60%).**  Every
+self-good rational (good for every base below its own denominator) is a limit of other self-good
+rationals.  With one self-good rational this gives a rational tower
+(`rationalTower_of_selfGoodPerfect`).
+
+Evidence at `c = 4` (`LIST=1 node scripts/cstar_models/joint_rationals.js 4 100000 0`: all bases
+`b ≤ q^{1/4}` coprime to `q`, `gcd(q, 6) = 1`, which overcounts slightly since bases sharing a factor
+with `q` are skipped).  There are 23970 such rationals with `q < 10⁵`, and their counts per dyadic
+range of `q` do not decay.  The distance from a small one to the nearest one with `q ∈ [2^k, 2^{k+1})`
+shrinks steadily: for `5/73`, `6.3e-3, 9.5e-4, 3.1e-4, 4.2e-4, 6.6e-5, 4.5e-5, 3.8e-5` for
+`k = 9, …, 15`; similar for `3/41, 19/265, 11/151`.  Against: the coset heuristic and
+Corvaja–Zannier (`JointRationalsFinite`) predict that the count eventually dies. -/
+def SelfGoodPerfect (c : ℝ) : Prop :=
+  ∀ x : ℚ, GoodBelow c x.den (x : ℝ) → ∀ ε > 0,
+    ∃ y : ℚ, y ≠ x ∧ |y - x| < ε ∧ GoodBelow c y.den (y : ℝ)
+
+/-- Goodness below a larger bound implies goodness below a smaller one. -/
+theorem goodBelow_mono' {c : ℝ} {B B' : ℕ} {y : ℝ} (hB : B ≤ B') (h : GoodBelow c B' y) :
+    GoodBelow c B y := fun b hb hbB n => h b hb (by omega) n
+
+/-- **Proved.**  A self-good rational plus `SelfGoodPerfect c` gives a rational tower.  Nearby
+self-good rationals have large denominators (`rat_sep`), so they are good below any bound. -/
+theorem rationalTower_of_selfGoodPerfect {c : ℝ} (h : SelfGoodPerfect c) (x0 : ℚ)
+    (hx0 : GoodBelow c x0.den (x0 : ℝ)) : RationalTower c := by
+  refine ⟨(↑) '' {y : ℚ | GoodBelow c y.den (y : ℝ)}, ?_, ⟨x0, x0, hx0, rfl⟩, ?_⟩
+  · rintro _ ⟨y, -, rfl⟩; exact ⟨y, rfl⟩
+  rintro _ ⟨x, hx, rfl⟩ ε hε B
+  obtain ⟨δ, hδ0, hδε⟩ := exists_rat_btwn hε
+  have hδ0' : (0 : ℚ) < δ := by exact_mod_cast hδ0
+  have hB : (0 : ℚ) < x.den * (B + 1) := by positivity
+  obtain ⟨y, hyx, hyε, hy⟩ := h x hx (min δ (1 / (x.den * (B + 1))))
+    (by exact_mod_cast lt_min hδ0' (by positivity))
+  have hyq : |y - x| < min δ (1 / (x.den * (B + 1))) := by exact_mod_cast hyε
+  refine ⟨y, ⟨y, hy, rfl⟩, ?_, goodBelow_mono' ?_ hy⟩
+  · have h1 : |y - x| < δ := lt_of_lt_of_le hyq (min_le_left _ _)
+    have h2 : ((|y - x| : ℚ) : ℝ) < δ := by exact_mod_cast h1
+    push_cast at h2; linarith
+  · have h1 := rat_sep x y hyx
+    have h3 : |y - x| < 1 / (x.den * (B + 1)) := lt_of_lt_of_le hyq (min_le_right _ _)
+    by_contra hlt
+    push Not at hlt
+    have h4 : (y.den : ℚ) ≤ B + 1 := by exact_mod_cast (by omega : y.den ≤ B + 1)
+    rw [lt_div_iff₀ hB] at h3
+    have h6 : |y - x| * (x.den * y.den) ≤ |y - x| * (x.den * (B + 1)) :=
+      mul_le_mul_of_nonneg_left (mul_le_mul_of_nonneg_left h4 (by positivity)) (abs_nonneg _)
+    linarith
+
+/-- **The crux leaf of `rationalTower_four`** (believed 60%; see `SelfGoodPerfect`). -/
+theorem selfGoodPerfect_four : SelfGoodPerfect 4 := by
+  sorry
+
+/-- **Headline (upper-bound route, frozen 2026-10-08).**  Believed 40% true, 15% provable soon.
+
+A tower of rationals at exponent `4`.  With `cStar_le_of_rationalTower` this closes the frozen
+wall `cStar_le_four` by a global mechanism, outside the local engines walled at `9/2`.
+
+Proposed mechanism (Carmichael towers).  Take a chain of moduli `Q_{L₁} ∣ Q_{L₂} ∣ ⋯` with small
+Carmichael exponent, e.g. `Lᵢ` highly composite and `Q_L = ∏_{(p−1) ∣ L} p`.  Inside each, take
+numerators that are self-good at `c = 4`.  The host density (`153, 12, 8` per 3000 at
+`L = 12, 36, 72`) must be turned into a proof that self-good numerators exist in every short
+interval mod `Q_{L_{i+1}}`.  A natural count: a numerator `p` is bad iff for some base
+`b ≤ Q^{1/4}`, some orbit point `p·bⁿ mod Q` lies in a window of size `2Q·b^{−4}`.  This bad set
+is a union of cosets of `⟨b⟩`, which is a finite exact computation per `L` but not a uniform
+proof.  A uniform proof needs the windows' cosets to overlap, or a structured choice of numerators
+(e.g. shadowing the previous level's numerator).
+
+Known-false siblings.  Rationals with a bounded denominator: they die at base `q`
+(`uniformBad_base_two` is the base-2 floor).  The same tower at `c ≤ 93/37` must fail
+(`ninety_three_thirty_sevenths_le_cStar`).  A proof must therefore use `c = 4` quantitatively,
+not just periodicity. -/
+theorem rationalTower_four : RationalTower 4 := by
+  refine rationalTower_of_selfGoodPerfect selfGoodPerfect_four (529 / 2730) ?_
+  have h : ((529 / 2730 : ℚ)).den = 2730 := by decide +kernel
+  rw [h]
+  have e : (((529 / 2730 : ℚ)) : ℝ) = 529 / 2730 := by push_cast; ring
+  rw [e]; exact goodBelow_529_2730
+
+/-- A rational tower at `c` bounds `c⋆` by `c`. -/
+theorem cStar_le_of_rationalTower {c : ℝ} (h : RationalTower c) : cStar ≤ c := by
+  obtain ⟨F, -, hF⟩ := h
+  exact csInf_le bddBelow_admissible (admissible_of_towerFamily hF)
 
 /-- **Open conjecture (believed 85%): Carmichael chains collapse at `c = 4`.**  Only finitely many
 Carmichael moduli `Q_L` carry a self-good numerator at `c = 4`.

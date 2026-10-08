@@ -77,7 +77,7 @@ namespace NormalNumbers.Barriers
 
 /-- Each frozen headline `sorry` and the barriers its mechanism must fail on. -/
 def cruxLinks : List CruxLink := [
-  ⟨``UniformBadThreshold.rationalTower_four,
+  ⟨``UniformBadThreshold.selfGoodPerfect_four,
    [``uniformBad_base_two],
    "the tower must use the exponent quantitatively: rationals of bounded denominator die at base q \
     and base 2 alone refuses c ≤ log₂ 3, so the denominators must grow with small Carmichael \

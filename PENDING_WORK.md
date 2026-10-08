@@ -3626,3 +3626,7 @@ Next: `isFresh` Riesz bound, then the classification lemma in Lean (route-decisi
   Conjecture node `JointRationalsFinite` (50%): data at c = 4 shows {2,3}-good rationals persist to q = 2·10⁵
   (30–50 denominators per dyadic range), CZ heuristic says finite asymptotically.  NEXT: same census with all
   bases b < q^{1/4} (self-good) — does the per-range count of self-good denominators decay? That decides the route.
+- rationalTower_four now PROVED from the single leaf `selfGoodPerfect_four` (every self-good rational at c = 4 is a
+  limit of self-good rationals) + `goodBelow_529_2730`, via `rationalTower_of_selfGoodPerfect`.  Census: 23970
+  coprime-base self-good rationals q < 10⁵, nearest-neighbour distances shrink like ~1/q.  NEXT: a structured
+  mechanism for SelfGoodPerfect (e.g. y = x + 1/(qM) with M chosen so x's orbits are preserved), or its refutation.
