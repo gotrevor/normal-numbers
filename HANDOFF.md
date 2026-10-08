@@ -176,3 +176,6 @@ ASK: rescope the run to `sorry-free:src/NormalNumbers/UniformBadFive.lean` (bank
 
 ## 2026-10-07 c⋆ lap 10
 `cStar_le_five` proved; scoped gate met. See HANDOFF-2026-10-07-cstar-lap10.md.
+
+## 2026-10-08 c⋆ gate 3 STUCK (strike 1)
+See HANDOFF-2026-10-08-cstar-gate3.md §STUCK: gate leaf `selfGoodPerfect_four` is predicted false (gcd budget plus Corvaja–Zannier); the operator must rescope.
