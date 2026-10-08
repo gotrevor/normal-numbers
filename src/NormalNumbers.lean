@@ -536,6 +536,7 @@ import NormalNumbers.EDensityAudit
 import NormalNumbers.LiteratureCampbell
 import NormalNumbers.LiteratureDigitsOfPowers
 import NormalNumbers.ErdosTriples
+import NormalNumbers.ErdosTripleClasses
 import NormalNumbers.ZerolessTuples
 import NormalNumbers.CampbellAnswer
 import NormalNumbers.CPrimeSiteFactorization

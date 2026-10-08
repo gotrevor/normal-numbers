@@ -1550,7 +1550,12 @@ def register : List Hall := [
    "Port the Erdős gap-triples move to base 10: low digits of 2^n live in the ideal 2^d | r mod 10^d, so k zeroless powers give a point of the k-tuple set at depth len(2^n1)",
    .refuted, .kernel,
    "Two kills. Supercritical: 5 lifts against a 0.9 cost per translate needs k >= 16 translates (measured: triples grow 3.65x per digit, 16 die by depth 13). Truncation: only len(2^n1) digits are available and gaps with phi(5^d) | g act as the identity mod 10^d, so the needed tuple death fails at every size. The survivors are 5-adically super-convergent exponents (NestedZerolessChain). REOPEN IF: a mechanism excluding a zeroless 10-adic integer with infinitely many power-of-two truncations",
-   "ZerolessTuples.lean: not_tupleDeathAtLength, survives10_four_sixteen_thirty, NoNestedZerolessChain", "2026-10-07"⟩
+   "ZerolessTuples.lean: not_tupleDeathAtLength, survives10_four_sixteen_thirty, NoNestedZerolessChain", "2026-10-07"⟩,
+  ⟨"Gap triples via exponent-class certificates",
+   "The depth-d test of C(1, 4^a, 4^(a+b)) reads only (a, b) mod 3^d, so one death certificate settles a residue class; hope: every class off the danger differences {0, +-1} dies, closing GapTwoTriples by a finite computation",
+   .refuted, .kernel,
+   "Class certificates are real (every pair with a, b, a+b not 0, +-1 mod 9 is trivial; alive fraction 25% at depth 7) but the bad exponent set is the fractal {(log4(y/x), log4(z/y)) : x, y, z in the Cantor set} of dimension log3 8, not a union of lines: x = 1, y = 10, z = 28 keeps the class of (1227, 6261) alive at depth 8 off every danger residue. Certificates cover density -> 1, never everything; the residue is GapTwoTriples itself (integer pairs avoiding the fractal). REOPEN IF: a Diophantine reason integer exponent pairs stay off {(log4(y/x), log4(z/y))}",
+   "ErdosTripleClasses.lean: tripleTrivial_of_mod_nine, aliveClasses_three, survives_offLine_eight, AliveClassBound", "2026-10-08"⟩
 ]
 
 /-- Rows whose verdict is machine-checked in this build. -/
