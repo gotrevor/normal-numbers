@@ -175,8 +175,6 @@ def cruxLinks : List CruxLink := [
 
 /-- Open `sorry`s that are not cruxes, and why no barrier applies. -/
 def waivers : List Waiver := [
-  ⟨``UniformBadThreshold.admissible_of_towerFamily,
-   "wiring lemma (a leaf): a Cauchy limit keeping finitely many margins; English proof in the docstring"⟩,
   ⟨``UniformBadThreshold.Newhouse.e2_four_facts,
    "off the route (the wiring uses the proved e15_facts); a computation about the explicit set E₂(4)"⟩,
   ⟨``ErdosTriples.tripleTrivial_of_sum_le_160,

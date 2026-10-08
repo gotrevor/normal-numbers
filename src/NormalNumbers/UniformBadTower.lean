@@ -51,7 +51,7 @@ handles every base at once, which is exactly what the local engines lack.  They 
 
 namespace NormalNumbers.UniformBadThreshold
 
-open NormalNumbers.UniformBad (dnear)
+open NormalNumbers.UniformBad (dnear dnear_le_abs_sub)
 
 /-- 95-window certificate at `c = 729/290` (`scripts/cstar_models/cert_exact.py 729 290 10 1e11 9`:
 exact survivor sweep over bases `b ≤ 10`, `bⁿ ≤ 10¹¹`, then a chain of the windows it used;
@@ -254,6 +254,24 @@ arbitrarily well by members that are good below any prescribed base bound. -/
 def TowerFamily (c : ℝ) (F : Set ℝ) : Prop :=
   F.Nonempty ∧ ∀ x ∈ F, ∀ ε > 0, ∀ B : ℕ, ∃ y ∈ F, |y - x| < ε ∧ GoodBelow c B y
 
+theorem dnear_lipschitz : LipschitzWith 1 dnear := by
+  refine LipschitzWith.of_le_add fun x y => ?_
+  have h := dnear_le_abs_sub x (round y)
+  have : |x - round y| ≤ dist x y + dnear y := by
+    rw [Real.dist_eq]; unfold dnear
+    calc |x - round y| = |(x - y) + (y - round y)| := by ring_nf
+      _ ≤ _ := abs_add_le _ _
+  linarith
+
+/-- The finite good conditions at stage `k`: bases `2 ≤ b < k + 2`, exponents `n ≤ k`. -/
+def stageGood (c : ℝ) (k : ℕ) : Set ℝ :=
+  ⋂ b ∈ Finset.Ico 2 (k + 2), ⋂ n ∈ Finset.range (k + 1),
+    {x | (b : ℝ) ^ (-c) < dnear ((b : ℝ) ^ n * x)}
+
+theorem isOpen_stageGood (c : ℝ) (k : ℕ) : IsOpen (stageGood c k) := by
+  refine isOpen_biInter_finset fun b _ => isOpen_biInter_finset fun n _ => ?_
+  exact isOpen_lt continuous_const (dnear_lipschitz.continuous.comp (continuous_const.mul continuous_id))
+
 /-- **Frozen (2026-10-08).**  Believed 99%.  The tower lemma.
 
 English proof.  Pick `y₀ ∈ F`.  Given `y_k`, which is good below `k + 2`, the finitely many
@@ -262,9 +280,37 @@ good below `k + 3` with `|y_{k+1} − y_k| < ε_k`, where
 `ε_k = min(ε_{k−1}/2, m_k / (4·(k+1)^k))`.  Then `y_k` is Cauchy with a limit `ξ` and
 `|ξ − y_k| ≤ 2ε_k`.  Since `dnear` is `1`-Lipschitz,
 `dnear(bⁿξ) ≥ dnear(bⁿy_k) − bⁿ·2ε_k > b^{−c}` whenever `b ≤ k+1` and `n ≤ k`.  Every `(b, n)`
-is covered by some `k`. -/
+is covered by some `k`.  (The Lean proof packages this as Baire category in the complete space
+`closure F`: each `stageGood c k` is open and dense there.) -/
 theorem admissible_of_towerFamily {c : ℝ} {F : Set ℝ} (h : TowerFamily c F) : Admissible c := by
-  sorry
+  obtain ⟨⟨y0, hy0⟩, hF⟩ := h
+  let X := closure F
+  have : CompleteSpace X := isClosed_closure.completeSpace_coe
+  have : Nonempty X := ⟨⟨y0, subset_closure hy0⟩⟩
+  let V : ℕ → Set X := fun k => (↑) ⁻¹' stageGood c k
+  have hVo : ∀ k, IsOpen (V k) := fun k => (isOpen_stageGood c k).preimage continuous_subtype_val
+  have hVd : ∀ k, Dense (V k) := by
+    intro k
+    rw [Metric.dense_iff]
+    intro x r hr
+    obtain ⟨x', hx'F, hx'⟩ := Metric.mem_closure_iff.1 x.2 (r / 2) (by positivity)
+    obtain ⟨y, hyF, hyx, hyg⟩ := hF x' hx'F (r / 2) (by positivity) (k + 2)
+    refine ⟨⟨y, subset_closure hyF⟩, ?_, ?_⟩
+    · rw [Metric.mem_ball, Subtype.dist_eq, Real.dist_eq]
+      rw [Real.dist_eq] at hx'
+      calc |y - x| ≤ |y - x'| + |x' - x| := by
+            have := abs_sub_le y x' x; exact this
+        _ < r / 2 + r / 2 := by rw [abs_sub_comm x' x]; linarith
+        _ = r := by ring
+    · simp only [V, stageGood, Set.mem_preimage, Set.mem_iInter, Finset.mem_Ico, Set.mem_ofPred_eq]
+      intro b hb n _
+      exact hyg b hb.1 hb.2 n
+  obtain ⟨ξ', hξ⟩ := (dense_iInter_of_isOpen hVo hVd).nonempty
+  refine ⟨ξ'.1, fun b hb n => ?_⟩
+  have := Set.mem_iInter.1 hξ (b + n)
+  simp only [V, stageGood, Set.mem_preimage, Set.mem_iInter, Finset.mem_Ico, Finset.mem_range,
+    Set.mem_ofPred_eq] at this
+  exact this b ⟨hb, by omega⟩ n (by omega)
 
 /-- A tower family made of rationals.  Every `GoodBelow c B (p/q)` with `B ≤ q` is decidable
 through the finitely many orbits mod `q`. -/
