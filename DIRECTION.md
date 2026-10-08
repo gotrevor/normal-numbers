@@ -9,7 +9,8 @@ never as sorry'd theorems), by proving the leaves of the sparse-pair route (`Can
 `SparseIdentity.lean`).  Wiring is in place: `repPairArith_of_literature` (proved from the leaves); the unconditional
 `repPairArith_of_three_dvd` stays a direct waived `sorry` (2026-10-08: the sorry'd `_cited` theorems were
 an axiom in disguise and were removed).
-**Mandated next move (in order):** (1) DONE lap 8: `sparseIdentityBound_of_matveev` PROVED; was (the Diophantine leaf; the only
+**STATUS 2026-10-08 (lap 9): ALL route leaves PROVED; `liouvilleCantorFullProfile_of_literature` is axiom-clean modulo the two cited Props.  Remaining: only the waived unconditional `repPairArith_of_three_dvd` (needs Baker/Matveev themselves).**
+**Mandated next move (was, in order; all done):** (1) `sparseIdentityBound_of_matveev` (the Diophantine leaf; the only
 new-math leaf left, believed 90%): strong induction on the term count + top-cut gap bounds from
 Matveev; state the gap-step lemma first; (2) `cycSparse_of_cycProd_ge`, `card_cluster_le`,
 `runOrbitDecay_of_sparse`; (3) `card_degRows_le`, `copyRun_psi`; (4) `repPairArith_of_runDecay`

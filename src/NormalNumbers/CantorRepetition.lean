@@ -5208,7 +5208,274 @@ theorem sched_tail (X : ℝ) (hX : 1 ≤ X) (n : ℕ) :
 
 end SchedTail
 
-/-- **Assembly through run orbit decay (believed, 90%; plumbing).**  Baker + `RunOrbitDecay t`
+section CopySched
+
+theorem runStart_le_pow (k : ℕ) : runStart k ≤ (2 * k + 4) ^ (k + 1) := by
+  induction k with
+  | zero => simp [runStart]
+  | succ k ih =>
+    rw [runStart_succ_eq]
+    calc 2 * (k + 2) * runStart k ≤ (2 * (k + 1) + 4) * (2 * k + 4) ^ (k + 1) := by
+          apply Nat.mul_le_mul (by omega) ih
+      _ ≤ (2 * (k + 1) + 4) * (2 * (k + 1) + 4) ^ (k + 1) :=
+          Nat.mul_le_mul_left _ (Nat.pow_le_pow_left (by omega) _)
+      _ = _ := by ring
+
+theorem log_runStart_le (k : ℕ) : Real.log (runStart k) ≤ 2 * ((k : ℝ) + 3) ^ 2 - 3 := by
+  have h1 : (runStart k : ℝ) ≤ ((2 * k + 4 : ℕ) : ℝ) ^ (k + 1) := by exact_mod_cast runStart_le_pow k
+  have hpos : (0 : ℝ) < runStart k := by exact_mod_cast (Nat.zero_lt_of_lt (lt_runStart k))
+  have h2 := Real.log_le_log hpos h1
+  rw [Real.log_pow] at h2
+  have h3 : Real.log ((2 * k + 4 : ℕ) : ℝ) ≤ ((2 * k + 4 : ℕ) : ℝ) - 1 :=
+    Real.log_le_sub_one_of_pos (by positivity)
+  push_cast at h2 h3
+  have : ((k + 1 : ℕ) : ℝ) * Real.log (2 * k + 4) ≤ ((k : ℝ) + 1) * (2 * k + 3) := by
+    push_cast; exact mul_le_mul_of_nonneg_left (by linarith) (by positivity)
+  push_cast at this
+  nlinarith
+
+/-- The per-run weight bound: `N_k² · 9(log X_k + 3)/X_k² ≤ 288 s² (k+3)⁴` with `X_k = a_k/(4s)`. -/
+theorem run_tail_weight {s : ℕ} (hs : 1 ≤ s) (k : ℕ) (hX : 1 ≤ (runStart k : ℝ) / (4 * s)) :
+    ((((k + 2) * runStart k + 1 : ℕ) : ℝ)) ^ 2 *
+        (9 * (Real.log ((runStart k : ℝ) / (4 * s)) + 3) / ((runStart k : ℝ) / (4 * s)) ^ 2) ≤
+      288 * (s : ℝ) ^ 2 * ((k : ℝ) + 3) ^ 4 := by
+  set a : ℝ := (runStart k : ℝ) with had
+  have hs' : (1 : ℝ) ≤ s := by exact_mod_cast hs
+  have ha : 4 * (s : ℝ) ≤ a := by rwa [le_div_iff₀ (by positivity), one_mul] at hX
+  have ha0 : 0 < a := by linarith
+  have hN : ((((k + 2) * runStart k + 1 : ℕ) : ℝ)) ≤ ((k : ℝ) + 3) * a := by
+    push_cast; nlinarith
+  have hlog : Real.log (a / (4 * s)) + 3 ≤ 2 * ((k : ℝ) + 3) ^ 2 := by
+    have := log_runStart_le k
+    have : Real.log (a / (4 * s)) ≤ Real.log a :=
+      Real.log_le_log (by positivity) (div_le_self ha0.le (by linarith))
+    linarith
+  have hl0 : 0 ≤ Real.log (a / (4 * s)) := Real.log_nonneg hX
+  rw [div_pow, mul_div_assoc', div_div_eq_mul_div, mul_comm]
+  rw [div_le_iff₀ (by positivity)]
+  have hNsq : ((((k + 2) * runStart k + 1 : ℕ) : ℝ)) ^ 2 ≤ ((k : ℝ) + 3) ^ 2 * a ^ 2 := by
+    rw [← mul_pow]; exact pow_le_pow_left₀ (by positivity) hN 2
+  have hk : (0 : ℝ) ≤ ((k : ℝ) + 3) ^ 2 := by positivity
+  have h1 : ((((k + 2) * runStart k + 1 : ℕ) : ℝ)) ^ 2 * (9 * (Real.log (a / (4 * s)) + 3)) ≤
+      ((k : ℝ) + 3) ^ 2 * a ^ 2 * (9 * (2 * ((k : ℝ) + 3) ^ 2)) :=
+    mul_le_mul hNsq (by linarith) (by positivity) (by positivity)
+  calc (4 * (s : ℝ)) ^ 2 * (((((k + 2) * runStart k + 1 : ℕ) : ℝ)) ^ 2 * (9 * (Real.log (a / (4 * s)) + 3)))
+      ≤ (4 * (s : ℝ)) ^ 2 * (((k : ℝ) + 3) ^ 2 * a ^ 2 * (9 * (2 * ((k : ℝ) + 3) ^ 2))) :=
+        mul_le_mul_of_nonneg_left h1 (by positivity)
+    _ = _ := by ring
+
+/-- The copy-run sum of run `k` (the `hCopy` summand of `repPairPos_explicit`). -/
+noncomputable def runCopy (s t h' k : ℕ) : ℝ :=
+  ∑ n ∈ Finset.range ((k + 2) * runStart k + 1), ∑ m ∈ Finset.range ((k + 2) * runStart k + 1),
+    (cycProd (runStart k) ((h' : ℤ) * (((3 ^ s * t : ℕ) : ℤ) ^ n - ((3 ^ s * t : ℕ) : ℤ) ^ m))
+      + cycProd (runStart k) ((h' : ℤ) * (t : ℤ) ^ n))
+
+theorem runCopy_nonneg (s t h' k : ℕ) : 0 ≤ runCopy s t h' k :=
+  Finset.sum_nonneg fun _ _ => Finset.sum_nonneg fun _ _ =>
+    add_nonneg (cycProd_nonneg _ _) (cycProd_nonneg _ _)
+
+/-- **Copy sums are summable along `sched`** (the sum swap).  From per-run bounds
+`runCopy k ≤ N_k² ψ_k` (`k ≥ k₁`) with `Σ ψ_k (k+3)⁴ < ∞`: for fixed `k` the `j` with
+`a_k ≤ 2s·sched j + e` have `sched j ≥ a_k/(4s)`, and `sched_tail` bounds their weight. -/
+theorem summable_copy_sched {s t e h' : ℕ} (hs : 1 ≤ s) (ψ : ℕ → ℝ) (hψ0 : ∀ k, 0 ≤ ψ k)
+    (hψs : Summable (fun k => ψ k * ((k : ℝ) + 3) ^ 4)) (k₁ : ℕ)
+    (hb : ∀ k, k₁ ≤ k → runCopy s t h' k ≤ ((((k + 2) * runStart k + 1 : ℕ) : ℝ)) ^ 2 * ψ k) :
+    Summable fun j => (∑ k ∈ (Finset.range (Nat.log 4 (s * (2 * sched j) + e) + 1)).filter
+        (fun k => runStart k ≤ s * (2 * sched j) + e), runCopy s t h' k) / ((sched j : ℝ) ^ 2) := by
+  set k₃ := max k₁ (2 * e + 4 * s)
+  set C₀ := ∑ k ∈ Finset.range k₃, runCopy s t h' k
+  have hC₀ : 0 ≤ C₀ := Finset.sum_nonneg fun _ _ => runCopy_nonneg _ _ _ _
+  let F : ℕ → ℕ → ℝ := fun k j => if k₃ ≤ k ∧ runStart k ≤ s * (2 * sched j) + e then
+    ((((k + 2) * runStart k + 1 : ℕ) : ℝ)) ^ 2 * ψ k / (sched j : ℝ) ^ 2 else 0
+  have hF0 : ∀ k j, 0 ≤ F k j := fun k j => by
+    simp only [F]; split_ifs
+    · exact div_nonneg (mul_nonneg (by positivity) (hψ0 k)) (by positivity)
+    · exact le_rfl
+  let G : ℕ → ℝ := fun j => ∑ k ∈ Finset.range (s * (2 * sched j) + e + 1), F k j
+  have hsch : ∀ j, (0 : ℝ) < sched j := fun j => by exact_mod_cast one_le_sched j
+  -- pointwise split
+  have hpt : ∀ j, (∑ k ∈ (Finset.range (Nat.log 4 (s * (2 * sched j) + e) + 1)).filter
+        (fun k => runStart k ≤ s * (2 * sched j) + e), runCopy s t h' k) / ((sched j : ℝ) ^ 2) ≤
+      C₀ * (sched j : ℝ) ^ (-(2 : ℝ)) + G j := by
+    intro j
+    set Ks := (Finset.range (Nat.log 4 (s * (2 * sched j) + e) + 1)).filter
+        (fun k => runStart k ≤ s * (2 * sched j) + e)
+    have hsplit := Finset.sum_filter_add_sum_filter_not Ks (fun k => k < k₃) (runCopy s t h')
+    have h1 : ∑ k ∈ Ks.filter (fun k => k < k₃), runCopy s t h' k ≤ C₀ :=
+      Finset.sum_le_sum_of_subset_of_nonneg (fun k hk => Finset.mem_range.2 (Finset.mem_filter.1 hk).2)
+        fun _ _ _ => runCopy_nonneg _ _ _ _
+    have h2 : ∑ k ∈ Ks.filter (fun k => ¬ k < k₃), runCopy s t h' k ≤
+        ∑ k ∈ Finset.range (s * (2 * sched j) + e + 1), F k j * (sched j : ℝ) ^ 2 := by
+      have hsub : Ks.filter (fun k => ¬ k < k₃) ⊆ Finset.range (s * (2 * sched j) + e + 1) := by
+        intro k hk
+        have := (Finset.mem_filter.1 (Finset.mem_filter.1 hk).1).2
+        have := lt_runStart k
+        exact Finset.mem_range.2 (by omega)
+      refine (Finset.sum_le_sum fun k hk => ?_).trans
+        (Finset.sum_le_sum_of_subset_of_nonneg hsub fun k _ _ => mul_nonneg (hF0 k j) (by positivity))
+      have hk := Finset.mem_filter.1 hk
+      have hk2 := (Finset.mem_filter.1 hk.1).2
+      have hk3 : k₃ ≤ k := by omega
+      simp only [F, if_pos (⟨hk3, hk2⟩ : k₃ ≤ k ∧ _)]
+      rw [div_mul_cancel₀ _ (pow_ne_zero 2 (hsch j).ne')]
+      exact hb k (le_trans (le_max_left _ _) hk3)
+    rw [div_le_iff₀ (pow_pos (hsch j) 2), add_mul, ← hsplit]
+    have e1 : C₀ * (sched j : ℝ) ^ (-(2 : ℝ)) * (sched j : ℝ) ^ 2 = C₀ := by
+      rw [Real.rpow_neg (hsch j).le, mul_assoc, Real.rpow_two, inv_mul_cancel₀ (pow_ne_zero 2 (hsch j).ne'), mul_one]
+    have e2 : G j * (sched j : ℝ) ^ 2 =
+        ∑ k ∈ Finset.range (s * (2 * sched j) + e + 1), F k j * (sched j : ℝ) ^ 2 := by
+      simp only [G]; rw [Finset.sum_mul]
+    rw [e1, e2]; linarith
+  refine Summable.of_nonneg_of_le (fun j => div_nonneg (Finset.sum_nonneg fun _ _ =>
+    runCopy_nonneg _ _ _ _) (by positivity)) hpt
+    (((CantorExactExponentProfile.summable_sched_rpow (by norm_num : (0 : ℝ) < 2)).mul_left C₀).add ?_)
+  -- summability of G by the sum swap
+  refine summable_of_sum_range_le (fun j => Finset.sum_nonneg fun k _ => hF0 k j)
+    (c := 288 * (s : ℝ) ^ 2 * ∑' k, ψ k * ((k : ℝ) + 3) ^ 4) fun n => ?_
+  set B := s * (2 * ∑ j ∈ Finset.range n, sched j) + e + 1
+  have hext : ∀ j ∈ Finset.range n, G j ≤ ∑ k ∈ Finset.range B, F k j := by
+    intro j hj
+    refine Finset.sum_le_sum_of_subset_of_nonneg (Finset.range_subset_range.2 ?_) fun k _ _ => hF0 k j
+    have := Finset.single_le_sum (fun i _ => Nat.zero_le (sched i)) hj
+    have : s * (2 * sched j) ≤ s * (2 * ∑ j ∈ Finset.range n, sched j) := by
+      apply Nat.mul_le_mul_left; omega
+    omega
+  refine (Finset.sum_le_sum hext).trans ?_
+  rw [Finset.sum_comm]
+  have hcol : ∀ k, ∑ j ∈ Finset.range n, F k j ≤ 288 * (s : ℝ) ^ 2 * (ψ k * ((k : ℝ) + 3) ^ 4) := by
+    intro k
+    by_cases hk : k₃ ≤ k
+    · set X : ℝ := (runStart k : ℝ) / (4 * s)
+      have hk' : 2 * e + 4 * s ≤ k := le_trans (le_max_right _ _) hk
+      have hak := lt_runStart k
+      have hs' : (0 : ℝ) < 4 * s := by positivity
+      have hX1 : 1 ≤ X := by
+        rw [le_div_iff₀ hs', one_mul]; exact_mod_cast (by omega : 4 * s ≤ runStart k)
+      have hpt2 : ∀ j ∈ Finset.range n, F k j ≤ ((((k + 2) * runStart k + 1 : ℕ) : ℝ)) ^ 2 * ψ k *
+          (if X ≤ (sched j : ℝ) then 1 / (sched j : ℝ) ^ 2 else 0) := by
+        intro j _
+        simp only [F]
+        split_ifs with h1 h2
+        · rw [mul_one_div]
+        · exfalso; apply h2
+          rw [div_le_iff₀ hs']
+          have e1 : s * (2 * sched j) = 2 * (s * sched j) := by ring
+          have e2 : 4 * s * sched j = 4 * (s * sched j) := by ring
+          have h3 : runStart k ≤ 4 * s * sched j := by have := h1.2; omega
+          calc (runStart k : ℝ) ≤ ((4 * s * sched j : ℕ) : ℝ) := by exact_mod_cast h3
+            _ = _ := by push_cast; ring
+        · exact mul_nonneg (mul_nonneg (by positivity) (hψ0 k)) (by positivity)
+        · simp
+      refine (Finset.sum_le_sum hpt2).trans ?_
+      rw [← Finset.mul_sum]
+      have ht := sched_tail X hX1 n
+      have hw := run_tail_weight hs k hX1
+      have hA : 0 ≤ ((((k + 2) * runStart k + 1 : ℕ) : ℝ)) ^ 2 * ψ k :=
+        mul_nonneg (by positivity) (hψ0 k)
+      calc _ ≤ ((((k + 2) * runStart k + 1 : ℕ) : ℝ)) ^ 2 * ψ k * (9 * (Real.log X + 3) / X ^ 2) :=
+            mul_le_mul_of_nonneg_left ht hA
+        _ = ψ k * (((((k + 2) * runStart k + 1 : ℕ) : ℝ)) ^ 2 * (9 * (Real.log X + 3) / X ^ 2)) := by ring
+        _ ≤ ψ k * (288 * (s : ℝ) ^ 2 * ((k : ℝ) + 3) ^ 4) := mul_le_mul_of_nonneg_left hw (hψ0 k)
+        _ = _ := by ring
+    · have : ∀ j ∈ Finset.range n, F k j = 0 := fun j _ => by
+        simp only [F]; rw [if_neg (fun h => hk h.1)]
+      rw [Finset.sum_eq_zero this]
+      exact mul_nonneg (by positivity) (mul_nonneg (hψ0 k) (by positivity))
+  refine (Finset.sum_le_sum fun k _ => hcol k).trans ?_
+  rw [← Finset.mul_sum]
+  exact mul_le_mul_of_nonneg_left (hψs.sum_le_tsum _ fun k _ => mul_nonneg (hψ0 k) (by positivity))
+    (by positivity)
+/-- **Per-`N` bound with the copy term left explicit.**  `repPairPos_eventually` without the
+copy-zone inputs: every class keeps its power saving except the copy runs, which are carried as
+`2 Σ_k runCopy k` (bounded run by run in `repPairArith_of_runDecay`). -/
+theorem repPairPos_copy {s t : ℕ} (hs : 1 ≤ s) (ht : 2 ≤ t) (h3t : ¬ 3 ∣ t)
+    (hB : CantorExactExponentProfile.Literature.BakerLogDiscrepancy)
+    (e h' : ℕ) (hh : 1 ≤ h') (hnd : ¬ 3 ∣ h') :
+    ∃ C δ : ℝ, 0 < δ ∧ ∀ N : ℕ, 1 ≤ N → ∃ (M : ℕ) (κ : ℕ → ℕ → Option ℕ),
+      ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N,
+        repBound M (κ n m) (((3 ^ e * h' : ℕ) : ℝ) * (((3 ^ s * t : ℕ) : ℝ) ^ n -
+          ((3 ^ s * t : ℕ) : ℝ) ^ m)) ≤ C * (N : ℝ) ^ (2 - δ) +
+          2 * ∑ k ∈ (Finset.range (Nat.log 4 (s * (2 * N) + e) + 1)).filter
+            (fun k => runStart k ≤ s * (2 * N) + e), runCopy s t h' k := by
+  obtain ⟨Cb, κb, hκb, hCb⟩ := sum_class_top_le ht h3t hB
+  set q : ℕ := ⌈4 / κb⌉₊ + 2 with hqd
+  have hq : 1 ≤ q := by omega
+  have hq2 : (2 : ℝ) ≤ q := by simp only [hqd]; push_cast; linarith [Nat.cast_nonneg (α := ℝ) ⌈4 / κb⌉₊]
+  have hqκ : 4 / κb ≤ q := by
+    simp only [hqd]; push_cast; linarith [Nat.le_ceil (4 / κb)]
+  have hq0 : (0 : ℝ) < q := by linarith
+  obtain ⟨Cd, hCd⟩ := badTerm_le hq (3 ^ e * h' + runStart ((t + 2) * (t + 3))) (2 * (s + t))
+    (3 ^ e * h' + e)
+  have hlg : Real.logb 3 (2 / 3) < 0 := Real.logb_neg (by norm_num) (by norm_num) (by norm_num)
+  set η : ℝ := -(Real.logb 3 (2 / 3)) / q
+  have hη : 0 < η := div_pos (by linarith) hq0
+  set δ : ℝ := min (min η (q : ℝ)⁻¹) (min (κb / 2) (min (1 / 4) (1 / 4)))
+  have hδ0 : 0 < δ := lt_min (lt_min hη (by positivity)) (lt_min (by positivity) (lt_min (by norm_num) (by norm_num)))
+  have hδη : δ ≤ η := (min_le_left _ _).trans (min_le_left _ _)
+  have hδq : δ ≤ (q : ℝ)⁻¹ := (min_le_left _ _).trans (min_le_right _ _)
+  have hδκ : δ ≤ κb / 2 := (min_le_right _ _).trans (min_le_left _ _)
+  have hδ4 : δ ≤ 1 / 4 := (min_le_right _ _).trans ((min_le_right _ _).trans (min_le_right _ _))
+  have hqinv : (q : ℝ)⁻¹ ≤ 1 / 2 := by rw [inv_le_comm₀ hq0 (by norm_num)]; linarith
+  have h2q : 2 * (q : ℝ)⁻¹ ≤ κb / 2 := by
+    have : 4 ≤ κb * q := by rwa [div_le_iff₀ hκb, mul_comm] at hqκ
+    rw [← div_eq_mul_inv, div_le_iff₀ hq0]; nlinarith
+  set cc : ℝ := (3 / 2 : ℝ) ^ CantorLiouvilleAll.tb t
+  have hcc : 0 ≤ cc := by positivity
+  refine ⟨1 + 2 * (cc * (9 / 2 + 4) + 6 + (8 + 8 * Real.pi) + 18 * |Cb| + |Cd|), δ, hδ0,
+    fun N hN => ?_⟩
+  have hN1 : (1 : ℝ) ≤ N := by exact_mod_cast hN
+  have mono : ∀ a : ℝ, a ≤ 2 - δ → (N : ℝ) ^ a ≤ (N : ℝ) ^ (2 - δ) :=
+    fun a ha => Real.rpow_le_rpow_of_exponent_le hN1 ha
+  set j := Nat.log 3 N / q
+  set Btop : ℝ := 3 * N * (2 / 3 : ℝ) ^ (j + 1) + 4 * N * (1 / 3 : ℝ) ^ (j + 1) +
+    Cb * 9 ^ (j + 1) * (N : ℝ) ^ (1 - κb)
+  have hBtop : ∀ β : ℝ, ∑ m ∈ Finset.range N,
+      CantorExactExponentProfile.topProd (j + 1) (Int.fract (m * Real.logb 3 t + β)) ≤ Btop := by
+    intro β
+    have := hCb N hN (j + 1) 1 (fun _ => β)
+    simp only [Finset.sum_range_one, Nat.cast_one, one_mul] at this; exact this
+  obtain ⟨M, κ, hMκ⟩ := repPairPos_explicit hs ht h3t hh hnd j N Btop
+    (∑ k ∈ (Finset.range (Nat.log 4 (s * (2 * N) + e) + 1)).filter
+      (fun k => runStart k ≤ s * (2 * N) + e), runCopy s t h' k) hBtop le_rfl
+  refine ⟨M, κ, hMκ.trans ?_⟩
+  have e1 : 3 ^ e * h' + 2 * (s + t) * N + e = 2 * (s + t) * N + (3 ^ e * h' + e) := by ring
+  rw [e1]
+  have hcl := classTerms_le hq hN hcc
+  have htop := topTerms_le hq hN Cb κb
+  have hbad := hCd N hN
+  -- exponents
+  have x1 := mono (2 + Real.logb 3 (2 / 3) / q) (by
+    have : Real.logb 3 (2 / 3) / q = -η := by simp only [η]; ring
+    rw [this]; linarith)
+  have x2 := mono (1 + (q : ℝ)⁻¹) (by linarith)
+  have x3 := mono (2 - (q : ℝ)⁻¹) (by linarith)
+  have x4 := mono (2 + 2 * (q : ℝ)⁻¹ - κb) (by linarith)
+  have x6 := mono (3 / 2) (by linarith)
+  have x7 := mono 1 (by linarith)
+  rw [Real.rpow_one] at x7
+  have hP : 0 ≤ (N : ℝ) ^ (2 - δ) := by positivity
+  have hpi : 0 ≤ 8 + 8 * Real.pi := by positivity
+  have y1 : cc * (9 / 2 * (N : ℝ) ^ (2 + Real.logb 3 (2 / 3) / q) + 4 * (N : ℝ) ^ (1 + (q : ℝ)⁻¹)) ≤
+      cc * (9 / 2 + 4) * (N : ℝ) ^ (2 - δ) := by
+    rw [mul_assoc]; apply mul_le_mul_of_nonneg_left _ hcc; linarith
+  have y2 : 6 * (N : ℝ) ^ (2 + Real.logb 3 (2 / 3) / q) + (8 + 8 * Real.pi) * (N : ℝ) ^ (2 - (q : ℝ)⁻¹) +
+      18 * |Cb| * (N : ℝ) ^ (2 + 2 * (q : ℝ)⁻¹ - κb) ≤
+      (6 + (8 + 8 * Real.pi) + 18 * |Cb|) * (N : ℝ) ^ (2 - δ) := by
+    have := mul_le_mul_of_nonneg_left x3 hpi
+    have := mul_le_mul_of_nonneg_left x4 (by positivity : (0 : ℝ) ≤ 18 * |Cb|)
+    nlinarith
+  have y4 : Cd * (N : ℝ) ^ ((3 : ℝ) / 2) ≤ |Cd| * (N : ℝ) ^ (2 - δ) :=
+    (mul_le_mul_of_nonneg_right (le_abs_self Cd) (by positivity)).trans
+      (mul_le_mul_of_nonneg_left x6 (abs_nonneg _))
+  have htop' : 2 * (N : ℝ) * Btop + N * N * (Real.pi * (8 / 3 ^ (j + 1))) ≤
+      6 * (N : ℝ) ^ (2 + Real.logb 3 (2 / 3) / q) + (8 + 8 * Real.pi) * (N : ℝ) ^ (2 - (q : ℝ)⁻¹) +
+        18 * |Cb| * (N : ℝ) ^ (2 + 2 * (q : ℝ)⁻¹ - κb) := htop
+  clear_value Btop
+  linarith
+
+end CopySched
+
+/-- **Assembly through run orbit decay (PROVED 2026-10-08; `summable_copy_sched`, `repPairPos_copy`).**  Baker + `RunOrbitDecay t`
 give `RepPairArith (3ˢt)`.
 
 Plan.  As `repPairArith_of_inputs`, but with the copy term of `repPairPos_explicit` bounded by
@@ -5222,7 +5489,44 @@ classes keep their power savings, and a power saving is summable along `sched`
 theorem repPairArith_of_runDecay {s t : ℕ} (hs : 1 ≤ s) (ht : 2 ≤ t) (h3t : ¬ 3 ∣ t)
     (hB : CantorExactExponentProfile.Literature.BakerLogDiscrepancy) (hR : RunOrbitDecay t) :
     RepPairArith (3 ^ s * t) := by
-  sorry
+  intro h hh
+  obtain ⟨e, h', hnd, he⟩ := Nat.exists_eq_pow_mul_and_not_dvd (Int.natAbs_ne_zero.2 hh) 3
+    (by norm_num)
+  have h1 : 1 ≤ h' := Nat.pos_of_ne_zero (by rintro rfl; simp at hnd)
+  obtain ⟨ψ, hψ0, hψs, k₁, hψ⟩ := copyRun_psi hs ht h3t hR h' h1
+  have hS := summable_copy_sched (e := e) hs ψ hψ0 hψs k₁ hψ
+  obtain ⟨C, δ, hδ, hC⟩ := repPairPos_copy hs ht h3t hB e h' h1 hnd
+  choose M κ hMκ using fun j => hC (sched j) (one_le_sched j)
+  refine ⟨M, κ, ?_⟩
+  have habs : ((3 ^ e * h' : ℕ) : ℝ) = |(h : ℝ)| := by
+    rw [← he, Nat.cast_natAbs, Int.cast_abs]
+  have hsign : ∀ (Mj : ℕ) (κj : ℕ → ℕ → Option ℕ) (N : ℕ),
+      ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N,
+        repBound Mj (κj n m) ((h : ℝ) * (((3 ^ s * t : ℕ) : ℝ) ^ n - ((3 ^ s * t : ℕ) : ℝ) ^ m)) =
+      ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N,
+        repBound Mj (κj n m) (((3 ^ e * h' : ℕ) : ℝ) * (((3 ^ s * t : ℕ) : ℝ) ^ n -
+          ((3 ^ s * t : ℕ) : ℝ) ^ m)) := by
+    intro Mj κj N
+    refine Finset.sum_congr rfl fun n _ => Finset.sum_congr rfl fun m _ => ?_
+    rw [habs]
+    rcases abs_choice (h : ℝ) with ha | ha <;> rw [ha]
+    rw [show -(h : ℝ) * (((3 ^ s * t : ℕ) : ℝ) ^ n - ((3 ^ s * t : ℕ) : ℝ) ^ m) =
+      -((h : ℝ) * (((3 ^ s * t : ℕ) : ℝ) ^ n - ((3 ^ s * t : ℕ) : ℝ) ^ m)) by ring, repBound_neg]
+  refine (((CantorExactExponentProfile.summable_sched_rpow hδ).mul_left C).add
+    (hS.mul_left 2)).of_nonneg_of_le
+    (fun j => div_nonneg (Finset.sum_nonneg fun _ _ => Finset.sum_nonneg fun _ _ => ?_)
+      (by positivity)) (fun j => ?_)
+  · rcases κ j _ _ with _ | k <;> simp only [repBound]
+    · exact Bf_nonneg _ _ _
+    · split_ifs
+      · exact Finset.prod_nonneg fun _ _ => abs_nonneg _
+      · exact zero_le_one
+  · have hN : (0 : ℝ) < sched j := by exact_mod_cast one_le_sched j
+    rw [hsign, div_le_iff₀ (by positivity)]
+    refine (hMκ j).trans (le_of_eq ?_)
+    rw [add_mul, mul_assoc, mul_div_assoc', div_mul_cancel₀ _ (by positivity),
+      ← Real.rpow_natCast (sched j : ℝ) 2, ← Real.rpow_add hN]
+    norm_num; left; ring_nf
 
 /-- **The crux from the two cited inputs (proved, modulo the leaves above).**  Baker's discrepancy
 for `m log₃ t` and Matveev's three-logarithm bound give `RepPairArith b` for every `b = 3ˢt`,
@@ -5246,9 +5550,8 @@ two cited inputs, Baker–Wüstholz with Erdős–Turán
 (`CantorExactExponentProfile.Literature.BakerLogDiscrepancy`) and Matveev's three-logarithm bound
 (`SparseIdentity.Literature.MatveevThreeLogs`).  Cited results enter only as hypothesis `Prop`s,
 so this unconditional form stays a direct `sorry`; the honest conditional headline is
-`liouvilleCantorFullProfile_of_literature`.  The open leaves of the route are
-`SparseIdentity.sparseIdentityBound_of_matveev`, `cycSparse_of_cycProd_ge`, `card_cluster_le`,
-`runOrbitDecay_of_sparse`, `card_degRows_le`, `copyRun_psi` and `repPairArith_of_runDecay`. -/
+`liouvilleCantorFullProfile_of_literature`, whose every route leaf is proved (2026-10-08), so its
+`#print axioms` is the trust base and only the two cited `Prop`s remain as hypotheses. -/
 theorem repPairArith_of_three_dvd {b : ℕ} (hb : 2 ≤ b) (h3 : 3 ∣ b) (hpow : ∀ s : ℕ, b ≠ 3 ^ s) :
     RepPairArith b := by
   sorry

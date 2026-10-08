@@ -281,9 +281,6 @@ def waivers : List Waiver := [
   ⟨``CantorExactExponentProfile.ae_isNormal_of_profileOK_of_gelfond,
    "believed implication (55%): a Gelfond-strength two-log bound suffices for the run shadows; \
     the elementary t^k ≠ 3^j rate does not"⟩,
-  ⟨``CantorRepetition.repPairArith_of_runDecay,
-   "wiring: repPairPos_explicit with the copy term from copyRun_psi; summability along sched by a \
-    sum swap"⟩,
   ⟨``CantorRepetition.repPairArith_of_three_dvd,
    "open crux of liouvilleCantorFullProfile: repPairArith_of_literature applied to cited Baker \
     (two logs) and Matveev (three logs), which enter only as hypothesis Props; the conditional \

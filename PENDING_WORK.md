@@ -1,3 +1,14 @@
+## Repetition lap 9 (2026-10-08) — `repPairArith_of_runDecay` PROVED; sparse-pair route COMPLETE
+* `repPairArith_of_runDecay` is a theorem.  New: `repPairPos_copy` (`repPairPos_eventually` with the
+  copy term left explicit, no copy-zone inputs), `runCopy`, `summable_copy_sched` (the sum swap:
+  per run `k ≥ max k₁ (2e+4s)`, the `j` with `a_k ≤ 2s·sched j + e` have `sched j ≥ a_k/(4s)`;
+  `sched_tail` + `run_tail_weight` give `≤ 288 s² ψ_k (k+3)⁴`), `runStart_le_pow`
+  (`a_k ≤ (2k+4)^{k+1}`), `log_runStart_le`.
+* `#print axioms liouvilleCantorFullProfile_of_literature` = [propext, Classical.choice, Quot.sound];
+  Baker and Matveev enter only as hypotheses.  BarrierAudit waiver removed.
+* Left: only `repPairArith_of_three_dvd` (designated waived; unconditional form needs proofs of
+  Baker–Wüstholz/Erdős–Turán and Matveev — the forbidden-until-last item; now the only item).
+
 ## Repetition lap 8 (2026-10-08) — `sparseIdentityBound_of_matveev` PROVED (from the cited Matveev Prop)
 * `SparseIdentity.sparseIdentityBound_of_matveev` is now a theorem; `#print axioms` = trust base
   (Matveev enters only as the hypothesis `Literature.MatveevThreeLogs`).  Route as formalized:
