@@ -3611,3 +3611,14 @@ Next: `isFresh` Riesz bound, then the classification lemma in Lean (route-decisi
 - PROVED `exists_kappa_sum_le`, `repBound_le_one` (option-choice glue).
 - PROVED `pairNat`, `pairNat_eq`, `pairNat_eq_sub`, `pair_class1`, `pair_class3` (concrete per-pair bounds, h = 3^e h').  PROVED `pair_class2`, `pair_class4`, `pairNat_eq_mul`.  PROVED `pair_class5`, `pair_class6`, `pairNat_lt` (all six concrete).  PROVED `pairMaj`, `pairMaj_ge`, `exists_option_le_pairMaj` (six-way disjunction ⇒ option ≤ pairMaj), `lt_runStart`.  PROVED `pair_classes` (disjunction at concrete positions).  PROVED `card_nearCopyBdry_le_of` (band count for injective positions: y(m), T(m,·)).  PROVED `strictMono_log_mul_pow`, `strictMono_log_pair` (injectivity of y, T).  pairMaj copy terms restricted to `copyRuns` (a_k ≤ u, T < (k+2)a_k), else Σ_k over all k ≤ M ≈ N would kill the power saving.  PROVED `u_le_T`, `sum_copyRuns_le` (copy terms ≤ Σ_{k≤log₄(2sN+e)} full sums below (k+2)a_k+1).  PROVED `runLen_mono`, `copy5_total_le`, `copy6_total_le` (run-by-run copy totals). Fixed: k-range filtered by a_k ≤ 2sN+e (a_L for L = log₄ X is superpolynomial in X — the unfiltered bound was useless); copy totals take any run set Ks with lengths ≤ Nmax. PROVED `sum_shift_le`, `sum_pair_class3_le`. PROVED `sum_pairMaj_le` (total of pairMaj).  Next: excluded pairs (small m, bands) ≤ count; final arithmetic with W=j+1, K ≍ ε log N; assemble repPairPower_of_inputs.  Next: sum pairMaj + band/small counts; combine with pair_classify_rep.
 - Next: κ choice (classical, per classification), summability (step 3 of lap-4 handoff): κ choice, band/small-m counts, summability.
+
+## c⋆ gate 3 lap (2026-10-08)
+- Proved: `not_admissible_729_290` (95-window cert, `cert_exact.py`), `goodBelow_241_1365`,
+  `admissible_of_towerFamily` (Baire on `closure F`), exact checker `goodBelow_of_check`.
+- Crux `rationalTower_four`: Carmichael-chain mechanism recorded as a wall (Maze row "Carmichael towers
+  for rationalTower_four"; `carmichaelQ_le`, `CarmichaelChainCollapse`, reopen `SmallOrderModuli`).
+  Measured density ≈ sqrt of independent-coset model; expected count `Q_L e^{-κL}` → 0 since
+  `log Q_L = L^{o(1)}`.  Local density near previous numerator = global (no shadowing boost).
+- NEXT attack: the coset heuristic predicts few self-good rationals for ANY denominator family
+  (Corvaja–Zannier).  Either (a) state/prove `¬ RationalTower 4` conditionally on a coset-equidistribution
+  hypothesis, or (b) find moduli beating it (`SmallOrderModuli`); check CZ transcription against source.

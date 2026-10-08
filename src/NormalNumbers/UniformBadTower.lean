@@ -344,6 +344,160 @@ theorem cStar_le_of_rationalTower {c : ℝ} (h : RationalTower c) : cStar ≤ c 
   obtain ⟨F, -, hF⟩ := h
   exact csInf_le bddBelow_admissible (admissible_of_towerFamily hF)
 
+/-! ## Exact checker for rational goodness, and the Carmichael chain probe -/
+
+/-- Distance of `N` to the nearest multiple of `q`, as a natural number. -/
+def mDist (q N : ℕ) : ℕ := min (N % q) (q - N % q)
+
+theorem dnear_ge_mDist (q N : ℕ) (hq : 0 < q) : (mDist q N : ℝ) / q ≤ dnear ((N : ℝ) / q) := by
+  unfold dnear
+  set k := round ((N : ℝ) / q)
+  have h : ((mDist q N : ℕ) : ℤ) ≤ |(N : ℤ) - q * k| := by
+    unfold mDist; rw [le_abs]
+    have h5 : ((q - N % q : ℕ) : ℤ) = q - ((N % q : ℕ) : ℤ) :=
+      Nat.cast_sub (Nat.mod_lt _ hq).le
+    rcases le_or_gt k ((N : ℤ) / q) with hk | hk
+    · left
+      have h1 : (q : ℤ) * k ≤ q * ((N : ℤ) / q) := mul_le_mul_of_nonneg_left hk (by positivity)
+      have h2 := Int.mul_ediv_add_emod (N : ℤ) q
+      have h3 : ((N % q : ℕ) : ℤ) = (N : ℤ) % q := by push_cast; rfl
+      omega
+    · right
+      have h1 : (q : ℤ) * ((N : ℤ) / q + 1) ≤ q * k := mul_le_mul_of_nonneg_left hk (by positivity)
+      rw [mul_add, mul_one] at h1
+      have h2 := Int.mul_ediv_add_emod (N : ℤ) q
+      have h3 : ((N % q : ℕ) : ℤ) = (N : ℤ) % q := by push_cast; rfl
+      have h4 : (N : ℤ) % q < q := Int.emod_lt_of_pos _ (by exact_mod_cast hq)
+      omega
+  have hq' : (0 : ℝ) < q := by exact_mod_cast hq
+  have e : (N : ℝ) / q - (k : ℝ) = (((N : ℤ) - q * k : ℤ) : ℝ) / q := by
+    push_cast; field_simp
+  rw [e, abs_div, abs_of_pos hq', div_le_div_iff_of_pos_right hq']
+  have : ((mDist q N : ℤ) : ℝ) ≤ ((|(N : ℤ) - q * k| : ℤ) : ℝ) := by exact_mod_cast h
+  push_cast at this; simpa using this
+
+theorem pow_mod_red_gen (q n0 lam : ℕ) (hlam : 0 < lam)
+    (hper : ∀ r, r ^ (n0 + lam) % q = r ^ n0 % q) (b n : ℕ) :
+    ∃ n' < n0 + lam, b ^ n % q = b ^ n' % q := by
+  induction n using Nat.strong_induction_on with
+  | _ n ih =>
+    by_cases hn : n < n0 + lam
+    · exact ⟨n, hn, rfl⟩
+    · obtain ⟨n', h1, h2⟩ := ih (n - lam) (by omega)
+      refine ⟨n', h1, ?_⟩
+      rw [← h2]
+      obtain ⟨k, rfl⟩ : ∃ k, n = k + (n0 + lam) := ⟨n - (n0 + lam), by omega⟩
+      rw [show k + (n0 + lam) - lam = k + n0 by omega, pow_add b k (n0 + lam), Nat.mul_mod, hper,
+        ← Nat.mul_mod, ← pow_add]
+
+/-- Every residue satisfies `r^(n0+lam) ≡ r^n0 (mod q)` (checked on residues). -/
+def perCheck (q n0 lam : ℕ) : Bool := (List.range q).all fun r => r ^ (n0 + lam) % q == r ^ n0 % q
+
+theorem perCheck_spec {q n0 lam : ℕ} (hq : 0 < q) (h : perCheck q n0 lam = true) (r : ℕ) :
+    r ^ (n0 + lam) % q = r ^ n0 % q := by
+  have := List.all_eq_true.1 h (r % q) (List.mem_range.2 (Nat.mod_lt _ hq))
+  simp only [beq_iff_eq] at this
+  rw [Nat.pow_mod, this, ← Nat.pow_mod]
+
+/-- The finite window check: for every base `2 ≤ b < B` and every reduced exponent
+`n < n0 + lam`, `q^R < mDist(bⁿp)^R · b^P`, i.e. `‖bⁿ p/q‖ > b^{−P/R}`. -/
+def winCheck (P R q p B n0 lam : ℕ) : Bool :=
+  (List.range B).all fun b => decide (b < 2) ||
+    (List.range (n0 + lam)).all fun n => decide (q ^ R < mDist q (b ^ n % q * p) ^ R * b ^ P)
+
+theorem goodBelow_of_check (P R q p B n0 lam : ℕ) (hR : R ≠ 0) (hq : 0 < q) (hlam : 0 < lam)
+    (hper : perCheck q n0 lam = true) (hw : winCheck P R q p B n0 lam = true) :
+    GoodBelow ((P : ℝ) / R) B ((p : ℝ) / q) := by
+  intro b hb2 hb n
+  obtain ⟨n', hn', hm⟩ := pow_mod_red_gen q n0 lam hlam (perCheck_spec hq hper) b n
+  have hc := List.all_eq_true.1 hw b (List.mem_range.2 hb)
+  simp only [Bool.or_eq_true, decide_eq_true_eq] at hc
+  rcases hc with hc | hc
+  · omega
+  have hc := List.all_eq_true.1 hc n' (List.mem_range.2 hn')
+  simp only [decide_eq_true_eq] at hc
+  have hmeq : mDist q (b ^ n' % q * p) = mDist q (b ^ n * p) := by
+    unfold mDist; rw [← hm, Nat.mod_mul_mod]
+  rw [hmeq] at hc
+  have hx := dnear_ge_mDist q (b ^ n * p) hq
+  have e : (b : ℝ) ^ n * ((p : ℝ) / q) = ((b ^ n * p : ℕ) : ℝ) / q := by push_cast; ring
+  rw [e]
+  refine lt_of_lt_of_le ?_ hx
+  generalize mDist q (b ^ n * p) = M at hc hx ⊢
+  have hq' : (0 : ℝ) < q := by exact_mod_cast hq
+  have hc' : (q : ℝ) ^ R < (M : ℝ) ^ R * (b : ℝ) ^ P := by exact_mod_cast hc
+  have := rpow_lt_of_pow P R hR b (by omega) ((M : ℝ) / q) (by positivity) (by
+      rw [div_pow, div_mul_eq_mul_div, lt_div_iff₀ (by positivity), one_mul]
+      exact hc')
+  rw [← neg_div]; exact this
+
+
+/-- `Q_L = ∏_{(p − 1) ∣ L} p`: every unit mod `Q_L` has order dividing `L`. -/
+def carmichaelQ (L : ℕ) : ℕ := ∏ d ∈ L.divisors.filter (fun d => (d + 1).Prime), (d + 1)
+
+/-- The Carmichael moduli are small: `Q_L ≤ (L + 1)^{τ(L)}`, so `log Q_L ≤ τ(L)·log(L + 1) = L^{o(1)}`.
+This is the rigorous half of `CarmichaelChainCollapse`: the orbit lengths of the bases grow like
+`L`, the modulus only like `exp(L^{o(1)})`. -/
+theorem carmichaelQ_le (L : ℕ) : carmichaelQ L ≤ (L + 1) ^ L.divisors.card := by
+  unfold carmichaelQ
+  calc _ ≤ (L + 1) ^ (L.divisors.filter (fun d => (d + 1).Prime)).card := by
+        apply Finset.prod_le_pow_card
+        intro d hd
+        have := Nat.divisor_le (Finset.mem_filter.1 hd).1
+        omega
+    _ ≤ _ := Nat.pow_le_pow_right (by omega) (Finset.card_filter_le _ _)
+
+theorem carmichaelQ_12 : carmichaelQ 12 = 2730 := by decide +kernel
+
+/-- Level-1 anchor: `529/2730` is self-good at `c = 4` (checked by `goodBelow_of_check`). -/
+theorem goodBelow_529_2730 : GoodBelow 4 2730 (529 / 2730) := by
+  have := goodBelow_of_check 4 1 2730 529 2730 1 12 (by norm_num) (by norm_num) (by norm_num)
+    (by native_decide) (by native_decide)
+  norm_num at this; exact this
+
+/-- One tower step: `y = 529/2730 + 3/703 = 380077/1919190` (`Q_36 = 2730·19·37`) is self-good at
+`c = 4`.  Found by `scripts/cstar_models/tower_local.py 4 12 36 400` (local density near
+`529/2730` is about the global one, `≈ 0.3`–`3%` per numerator; no shadowing boost). -/
+theorem per_1919190 : perCheck 1919190 1 36 = true := by native_decide
+theorem win_tower_step : winCheck 4 1 1919190 380077 1919190 1 36 = true := by native_decide
+
+set_option maxHeartbeats 1000000 in
+theorem goodBelow_tower_step : GoodBelow 4 1919190 (380077 / 1919190) := by
+  have := goodBelow_of_check 4 1 1919190 380077 1919190 1 36 (by norm_num) (by norm_num)
+    (by norm_num) per_1919190 win_tower_step
+  norm_num at this; exact this
+
+/-- **Open conjecture (believed 85%): Carmichael chains collapse at `c = 4`.**  Only finitely many
+Carmichael moduli `Q_L` carry a self-good numerator at `c = 4`.
+
+Evidence (`scripts/cstar_models/tower_model.py`, `tower_local.py`, 2026-10-08).  A numerator `p` is
+killed by base `b` iff its orbit `p·⟨b⟩` (length `ord_{Q_L}(b)`, typically `≍ L`) meets a window of
+relative width `2b^{−4}`.  The independent-coset model predicts density `∏_b (1 − 2b^{−4})^{ord(b)}`;
+the measured density is close to its square root (orbits are closed under `x ↦ −x` and the windows
+are symmetric, which halves the independent events): `L = 36, 72, 120, 144` give measured
+`2.5e-2, 1.8e-2, 6.7e-4, 2.7e-3` against model `2.3e-3, 1.9e-3, 7.3e-6, 5.4e-7`.  Then the expected
+count is `Q_L · exp(−κ L)` with `κ ≈ 0.04`, while `log Q_L ≤ τ(L) log(L+1) = L^{o(1)}`
+(`carmichaelQ_le`), so it tends to `0`.  The square-root model puts the crossover near `L ≈ 10³`;
+`0/20000` were found at `L = 240, …, 1440` (no control there: too few samples to see the
+predicted densities).  The same count applies to `GoodBelow 4 B` for any fixed `B ≥ 4`, and to
+every finite `c` (only `κ` shrinks), so the chain alone cannot prove any upper bound on `c⋆`.
+
+Implication: a proof of `rationalTower_four` must use denominators that are not Carmichael moduli
+of growing `L`, i.e. moduli `q` with `Σ_b 2b^{−4} ord_q(b) ≲ log q` (`SmallOrderModuli`). -/
+def CarmichaelChainCollapse : Prop :=
+  ∃ N₀ : ℕ, ∀ L p : ℕ, N₀ ≤ carmichaelQ L →
+    ¬ GoodBelow 4 (carmichaelQ L) ((p : ℝ) / carmichaelQ L)
+
+/-- **Reopen condition (believed false, 85%).**  Infinitely many moduli on which bases `2` and `3`
+both have order `O(log q)`: what a rational tower needs if the coset model is right (each base
+costs a factor `exp(−κ_b ord_q(b))` in the count of good numerators, and `q` numerators are
+available).  Expected false by the Corvaja–Zannier gcd bound for `S`-units (`gcd(u − 1, v − 1) ≤
+max(|u|, |v|)^ε` for multiplicatively independent `u = 2^m`, `v = 3^n`, outside a finite set;
+transcription not yet checked against the source). -/
+def SmallOrderModuli : Prop :=
+  ∃ C : ℝ, ∀ N : ℕ, ∃ q ≥ N, Nat.Coprime 6 q ∧
+    (orderOf (2 : ZMod q) : ℝ) ≤ C * Real.log q ∧ (orderOf (3 : ZMod q) : ℝ) ≤ C * Real.log q
+
 /-- **Stretch node.**  Believed 25%.  A rational tower at exponent `3`.  Host density at
 `c = 3` is `0/3000` at `Q_36`, `Q_60` and `Q_72`, so it needs structured numerators. -/
 def RationalTowerThree : Prop := RationalTower 3

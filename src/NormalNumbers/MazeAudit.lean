@@ -16,6 +16,7 @@ import NormalNumbers.UniformBadJoint
 import NormalNumbers.UniformBadRoute
 import NormalNumbers.UniformBadNewhouse
 import NormalNumbers.UniformBadNineHalves
+import NormalNumbers.UniformBadTower
 import NormalNumbers.EntropyProfiles
 import NormalNumbers.CantorExactExponentStretch
 import NormalNumbers.CantorExactExponentProfile
@@ -53,6 +54,11 @@ def mazeRows : List RowInfo :=
 
 /-- Each linked row and the declarations it rests on. -/
 def mazeLinks : List Link := [
+  ⟨"Carmichael towers for rationalTower_four",
+   [``UniformBadThreshold.carmichaelQ_le,
+    ``UniformBadThreshold.CarmichaelChainCollapse,
+    ``UniformBadThreshold.goodBelow_tower_step],
+   [``UniformBadThreshold.SmallOrderModuli]⟩,
   ⟨"adaptive split cores for the Newhouse thick core",
    [``UniformBadThreshold.Newhouse.merge_forced,
     ``UniformBadThreshold.Newhouse.windows_merge_forced,
@@ -321,7 +327,7 @@ def mazeLegacy : List String := [
   "Diophantine good-denominator detour for the tail cell",
   "route B's unweighted cover of the state-dependent target"]
 
-/-- info: maze audit: 180 rows, 73 cite declarations, 107 legacy (prose only) -/
+/-- info: maze audit: 181 rows, 74 cite declarations, 107 legacy (prose only) -/
 #guard_msgs in
 #maze_audit mazeRows, mazeLinks, mazeLegacy
 

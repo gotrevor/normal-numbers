@@ -1545,7 +1545,12 @@ def register : List Hall := [
    "Reduce Erdős #406, and E(Z3) = {0}, to C(1, 4^a, 4^(a+b)) = {0} for all a, b >= 2, each instance a finite carry-automaton decision",
    .wall, .frozen,
    "The wiring is proved and every instance with a + b <= 160 is trivial (largest automaton 388 states), but nothing uniform covers the 3-adic imitators a = 1 + 3^D t, whose automata copy the golden-mean one for D levels. REOPEN IF: a uniform extinction bound for carry automata whose multipliers are 3-adically near 4",
-   "ErdosTriples.lean: erdos406_of_gapTriplesEventually, tripleTrivial_of_sum_le_160, GapTwoTriples", "2026-10-06"⟩
+   "ErdosTriples.lean: erdos406_of_gapTriplesEventually, tripleTrivial_of_sum_le_160, GapTwoTriples", "2026-10-06"⟩,
+  ⟨"Carmichael towers for rationalTower_four",
+   "Build the rational tower at c = 4 from self-good numerators mod Q_L = prod of primes p with (p-1) | L, along a chain of growing L, each level's numerator shadowing the previous one",
+   .wall, .frozen,
+   "Each base b kills a numerator whose orbit (length ord(b), typically about L) meets a window of width 2b^-4; measured densities follow the square root of the independent-coset model (orbits are closed under negation), so the expected number of self-good numerators is Q_L exp(-kappa L), kappa about 0.04, while log Q_L <= tau(L) log(L+1) = L^o(1) (carmichaelQ_le). Shadowing gives no boost: the local density near the previous numerator equals the global one (tower_local.py), though single steps exist (goodBelow_tower_step). The count is the same for every finite c, so the chain proves no upper bound at all. REOPEN IF: SmallOrderModuli (moduli where 2 and 3 have order O(log q)), believed false by Corvaja-Zannier",
+   "UniformBadTower.lean: carmichaelQ_le, CarmichaelChainCollapse, SmallOrderModuli, goodBelow_tower_step", "2026-10-08"⟩
 ]
 
 /-- Rows whose verdict is machine-checked in this build. -/
