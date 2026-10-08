@@ -15,3 +15,14 @@ Supersedes repetition-lap8.
 
 ## Checkpoint
 Build green.  Scratch: scratch/RD.lean (development copy), scratch/AxRD.lean (axiom check).
+
+## BLOCKER (box stuck, strike 1)
+Scope `sorry-free:src/NormalNumbers/CantorRepetition.lean` has exactly one sorry left:
+`repPairArith_of_three_dvd` (line ~5557), the unconditional form of `repPairArith_of_literature`.
+Closing it requires proving `CantorExactExponentProfile.Literature.BakerLogDiscrepancy` and
+`SparseIdentity.Literature.MatveevThreeLogs` (linear forms in logarithms) in Lean.  The operator
+directive admits cited results only as hypothesis Props, and no elementary substitute is known
+(a discrepancy rate for m·log₃t needs an irrationality measure of log t/log 3, i.e. Baker).
+Verify fast: `grep -n "^\s*sorry" src/NormalNumbers/CantorRepetition.lean` (one hit), and
+`#print axioms liouvilleCantorFullProfile_of_literature` (scratch/AxRD.lean) = trust base.
+Ask: operator rescope (e.g. drop that theorem from the scope, or authorize a Baker formalization campaign).
