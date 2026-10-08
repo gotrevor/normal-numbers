@@ -84,6 +84,30 @@ Never restate or weaken them.  The stretch node `CStarLeThree` and any sharper l
   bank the lowest exponent the current engine certifies (any c < 5) as its own theorem, record the wall in the Maze,
   and stop.  A higher certified lower bound (above 5/2) is a parallel bonus.
 
+- **Operator gate 3 (Ren, 2026-10-08 19:40) — "tighten the beam" (Trevor: `/youthify tighten the beam!`).
+  Supersedes gate 2 and the lap-13 directive; the lap-13 walls stand.**  The run gate is
+  `sorry-free:src/NormalNumbers/UniformBadTower.lean`, and the required headlines are `le_cStar_729_290` and
+  `rationalTower_four`.
+  *Host findings (read the module docstring):*
+  - The lower side is almost done.  The finite-system threshold (bases ≤ 30, bⁿ ≤ 10¹²) is ≈ 2.5138155, set by the
+    family of `241/1365`, which every base below 1365 keeps good.
+  - `not_admissible_729_290` is certifiable with bases ≤ 10 and bⁿ ≤ 10¹¹ (at most 18 live intervals).
+  - The extremal survivors are self-good rationals whose denominators have a small Carmichael exponent.
+  *Order:*
+  1. Discharge the three near-mechanical leaves: `not_admissible_729_290` (cert script in `scripts/cstar_models/`),
+     `goodBelow_241_1365` (periodic orbits), and `admissible_of_towerFamily` (Cauchy limit, English proof given).
+  2. Spend the remaining laps on `rationalTower_four`, which is the new upper-bound mechanism (Carmichael towers):
+     - Probe first.  Use `scripts/uniformbad_carmichael_density.py` and `uniformbad_selfgood_rationals.py`, and
+       measure the local density of self-good numerators near a previous level's numerator.
+     - Find a structured, provable family, e.g. numerators shadowing the previous level, or windows' cosets
+       overlapping.
+     - A refutation, e.g. that densities collapse along every chain, is an advance.  Record it as a Maze row and a
+       Lean statement.
+  *Forbidden drift:*
+  - Any local or per-window engine (walled at 9/2).
+  - Pushing the lower bound past 729/290.  This needs bases ≥ 1365 and earns nothing new.
+  - Restating or weakening a frozen headline.
+
 - **CURRENT DIRECTIVE for this branch (review lap 13, 2026-10-07) — supersedes lap 7's orders; operator gate 2 still binds.**
   *Objective* unchanged: the frozen gate `cStar_le_nine_halves`.
   *Finding:* the statement is almost surely true (finite systems put `c⋆` near `5/2`,
@@ -101,6 +125,7 @@ Never restate or weaken them.  The stretch node `CStarLeThree` and any sharper l
   placement of base-3 windows, not the bookkeeping.
 
 Directive history:
+- 2026-10-08 19:40 (operator gate 3): "tighten the beam": UniformBadTower gate (729/290 + rational towers at c = 4).
 - 2026-10-07 (c⋆ lap 13, review): local engines walled at 9/2 (`not_perStageCert`); lower bound 93/37; stuck evidence.
 - 2026-10-07 07:05 (operator): gate moved to `cStar_le_nine_halves` after `cStar_le_five`.
 - 2026-10-07 06:50 (operator): rescoped the run gate to `cStar_le_five` after the c⋆ ≤ 4 wall.

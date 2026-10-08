@@ -46,6 +46,7 @@ import NormalNumbers.UniformBadJoint
 import NormalNumbers.UniformBadNewhouse
 import NormalNumbers.UniformBadFive
 import NormalNumbers.UniformBadNineHalves
+import NormalNumbers.UniformBadTower
 
 /-!
 # Barrier audit: every open crux names a sibling it must fail on
@@ -76,6 +77,11 @@ namespace NormalNumbers.Barriers
 
 /-- Each frozen headline `sorry` and the barriers its mechanism must fail on. -/
 def cruxLinks : List CruxLink := [
+  ⟨``UniformBadThreshold.rationalTower_four,
+   [``uniformBad_base_two],
+   "the tower must use the exponent quantitatively: rationals of bounded denominator die at base q \
+    and base 2 alone refuses c ≤ log₂ 3, so the denominators must grow with small Carmichael \
+    exponent and the numerator count must beat the window cosets at c = 4, failing at c ≤ 93/37"⟩,
   ⟨``UniformBadThreshold.cStar_le_nine_halves,
    [``uniformBad_base_two],
    "the engine must make base 3 exact alongside base 2: the two-rate counting engine (base 2 exact, \
@@ -169,6 +175,12 @@ def cruxLinks : List CruxLink := [
 
 /-- Open `sorry`s that are not cruxes, and why no barrier applies. -/
 def waivers : List Waiver := [
+  ⟨``UniformBadThreshold.not_admissible_729_290,
+   "a finite computation: an exact window certificate (bases ≤ 10, bⁿ ≤ 10¹¹) for not_admissible_of_cert"⟩,
+  ⟨``UniformBadThreshold.goodBelow_241_1365,
+   "a finite computation: the orbits of 241 mod 1365 (λ = 12) for bases below 18, integrality above"⟩,
+  ⟨``UniformBadThreshold.admissible_of_towerFamily,
+   "wiring lemma (a leaf): a Cauchy limit keeping finitely many margins; English proof in the docstring"⟩,
   ⟨``UniformBadThreshold.Newhouse.e2_four_facts,
    "off the route (the wiring uses the proved e15_facts); a computation about the explicit set E₂(4)"⟩,
   ⟨``ErdosTriples.tripleTrivial_of_sum_le_160,
