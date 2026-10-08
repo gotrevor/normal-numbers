@@ -281,7 +281,6 @@ def waivers : List Waiver := [
   ⟨``CantorExactExponentProfile.ae_isNormal_of_profileOK_of_gelfond,
    "believed implication (55%): a Gelfond-strength two-log bound suffices for the run shadows; \
     the elementary t^k ≠ 3^j rate does not"⟩,
-  ⟨``CantorRepetition.card_cluster_le, "a leaf: pure combinatorics of clustered sets"⟩,
   ⟨``CantorRepetition.runOrbitDecay_of_sparse,
    "a counting leaf of the sparse-pair route (2026-10-07): cyclic_pair_identity (proved) plus \
     SparseIdentityBound give clusters, card_cluster_le counts them; English proof in the docstring"⟩,

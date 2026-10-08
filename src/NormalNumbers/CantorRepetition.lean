@@ -4273,7 +4273,29 @@ distance `D` are within distance `L < D` has at most `(N/D + 1)(L + 1)` points. 
 theorem card_cluster_le {N D L : ℕ} (hLD : L < D) (B : Finset ℕ) (hB : B ⊆ Finset.range N)
     (hcl : ∀ m ∈ B, ∀ m' ∈ B, m < m' → m' - m ≤ D → m' - m ≤ L) :
     B.card ≤ (N / D + 1) * (L + 1) := by
-  sorry
+  have hD : 0 < D := by omega
+  rw [Finset.card_eq_sum_card_fiberwise (f := fun m => m / D) (t := Finset.range (N / D + 1))
+    (fun m hm => Finset.mem_range.2 (Nat.lt_succ_of_le (Nat.div_le_div_right (Finset.mem_range.1 (hB hm)).le)))]
+  refine (Finset.sum_le_sum fun i _ => ?_).trans (by rw [Finset.sum_const, Finset.card_range, smul_eq_mul])
+  set F := B.filter fun m => m / D = i
+  rcases F.eq_empty_or_nonempty with h | hne
+  · rw [h]; simp
+  set m0 := F.min' hne
+  have hm0 := Finset.mem_filter.1 (F.min'_mem hne)
+  have hsub : F ⊆ Finset.Icc m0 (m0 + L) := by
+    intro m hm
+    have hle : m0 ≤ m := F.min'_le m hm
+    have hmF := Finset.mem_filter.1 hm
+    have hlt : m - m0 < D := by
+      have h1 := Nat.div_add_mod m D; have h2 := Nat.div_add_mod m0 D
+      have := Nat.mod_lt m hD; have := Nat.mod_lt m0 hD
+      rw [hmF.2] at h1; rw [hm0.2] at h2
+      have : D * i ≤ m0 := by omega
+      omega
+    rcases hle.lt_or_eq with h | h
+    · exact Finset.mem_Icc.2 ⟨hle, by have := hcl m0 hm0.1 m hmF.1 h hlt.le; omega⟩
+    · exact Finset.mem_Icc.2 ⟨hle, by omega⟩
+  exact (Finset.card_le_card hsub).trans (by simp; omega)
 
 /-- **Run orbit decay (the copy-zone node of the sparse-pair route).**  For the runs
 `A = a_k`, `N_k = (k+2)a_k + 1`, the orbit sums `Σ_{m < N_k} cycProd a_k (c tᵐ)` are `≤ N_k ψ_k`
