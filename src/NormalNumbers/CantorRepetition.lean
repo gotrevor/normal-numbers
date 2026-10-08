@@ -4861,7 +4861,81 @@ theorem card_degRows_le {s t : ℕ} (hs : 1 ≤ s) (ht : 2 ≤ t) (h3 : ¬ 3 ∣
   calc (B.card : ℝ) ≤ 4 * b * ((k : ℝ) + 3) + 1 := by linarith
     _ ≤ (4 * b + 1) * ((k : ℝ) + 3) := by nlinarith
 
-/-- **Per-run copy total (believed, 95%; elementary from the two nodes above).**  The run sums
+section CopyRun
+open Finset
+
+/-- Folding a symmetric double sum onto rows `d = n − m`. -/
+theorem sum_sym_le_rows (N : ℕ) (F : ℕ → ℕ → ℝ) (G : ℕ → ℕ → ℝ) (hG : ∀ d m, 0 ≤ G d m)
+    (hsym : ∀ n m, F n m = F m n) (hFG : ∀ m d, F (m + d) m = G d m) :
+    ∑ n ∈ range N, ∑ m ∈ range N, F n m ≤ 2 * ∑ d ∈ range N, ∑ m ∈ range N, G d m := by
+  have hF0 : ∀ n m, 0 ≤ F n m := by
+    intro n m
+    rcases le_total m n with h | h
+    · obtain ⟨d, rfl⟩ := Nat.exists_eq_add_of_le h; rw [hFG]; exact hG _ _
+    · obtain ⟨d, rfl⟩ := Nat.exists_eq_add_of_le h; rw [hsym, hFG]; exact hG _ _
+  have hsplit : ∑ n ∈ range N, ∑ m ∈ range N, F n m =
+      ∑ n ∈ range N, ∑ m ∈ range N, (if m ≤ n then F n m else 0) +
+      ∑ n ∈ range N, ∑ m ∈ range N, (if n < m then F n m else 0) := by
+    rw [← sum_add_distrib]; refine sum_congr rfl fun n _ => ?_
+    rw [← sum_add_distrib]; refine sum_congr rfl fun m _ => ?_
+    by_cases h : m ≤ n
+    · rw [if_pos h, if_neg (by omega), add_zero]
+    · rw [if_neg h, if_pos (by omega), zero_add]
+  have hswap : ∑ n ∈ range N, ∑ m ∈ range N, (if n < m then F n m else 0) ≤
+      ∑ n ∈ range N, ∑ m ∈ range N, (if m ≤ n then F n m else 0) := by
+    rw [sum_comm]
+    refine sum_le_sum fun n _ => sum_le_sum fun m _ => ?_
+    by_cases h : m < n
+    · rw [if_pos h, if_pos h.le, hsym]
+    · rw [if_neg h]; split_ifs <;> first | exact hF0 _ _ | exact le_rfl
+  have hrows : ∑ n ∈ range N, ∑ m ∈ range N, (if m ≤ n then F n m else 0) ≤
+      ∑ d ∈ range N, ∑ m ∈ range N, G d m := by
+    rw [sum_comm, sum_comm (s := range N) (t := range N) (f := fun d m => G d m)]
+    refine sum_le_sum fun m hm => ?_
+    have hmN := mem_range.1 hm
+    rw [← sum_filter]
+    have hfil : (range N).filter (fun n => m ≤ n) = Ico m N := by
+      ext n; simp only [mem_filter, mem_range, mem_Ico]; omega
+    rw [hfil, sum_Ico_eq_sum_range]
+    simp only [hFG]
+    exact sum_le_sum_of_subset_of_nonneg (range_subset_range.2 (by omega)) fun d _ _ => hG _ _
+  linarith
+
+
+theorem not_dvd_two_mul_pow {t h' : ℕ} (ht : 1 ≤ t) (h3 : ¬ 3 ∣ t) (hh : 1 ≤ h') :
+    ∃ A0 : ℕ, ∀ A N : ℕ, A0 ≤ A → 1 ≤ A →
+      ¬ ((3 : ℤ) ^ A - 1 ∣ 2 * (h' : ℤ) * (t : ℤ) ^ N) := by
+  obtain ⟨A0, hA0⟩ := poly_le_three_pow (2 * h' * (2 * 9 ^ t) ^ (t + 1)) (t + 1)
+  refine ⟨A0, fun A N hA hA1 hdvd => ?_⟩
+  set q := 3 ^ A - 1
+  have hq0 : q ≠ 0 := by have : 3 ≤ 3 ^ A := Nat.le_self_pow (by omega) 3; omega
+  have hY : q ∣ 2 * h' * t ^ N := by
+    have e1 : ((q : ℕ) : ℤ) = (3 : ℤ) ^ A - 1 := by
+      simp only [q]; rw [Nat.cast_sub (Nat.one_le_pow _ _ (by norm_num))]; push_cast; ring
+    exact Int.natCast_dvd_natCast.1 (by rw [e1]; push_cast; exact hdvd)
+  have hg : Nat.gcd q (2 * h' * t ^ N) = q := Nat.gcd_eq_left hY
+  have h1 : Nat.gcd q (2 * h' * t ^ N) ∣ Nat.gcd q (2 * h') * Nat.gcd q (t ^ N) :=
+    gcd_mul_dvd_mul_gcd q (2 * h') (t ^ N)
+  have h2 : Nat.gcd q (2 * h') ≤ 2 * h' := Nat.le_of_dvd (by omega) (Nat.gcd_dvd_right _ _)
+  have h3' := gcd_three_pow_sub_one_le (N := N) ht h3 hA1
+  have hp1 : 0 < Nat.gcd q (t ^ N) := Nat.gcd_pos_of_pos_left _ (Nat.pos_of_ne_zero hq0)
+  have hp2 : 0 < Nat.gcd q (2 * h') := Nat.gcd_pos_of_pos_left _ (Nat.pos_of_ne_zero hq0)
+  have := Nat.le_of_dvd (by positivity) h1
+  have hle : q ≤ 2 * h' * (2 * 9 ^ t) ^ (t + 1) * A ^ (t + 1) := by
+    calc q = Nat.gcd q (2 * h' * t ^ N) := hg.symm
+      _ ≤ Nat.gcd q (2 * h') * Nat.gcd q (t ^ N) := this
+      _ ≤ 2 * h' * (2 * A * 9 ^ t) ^ (t + 1) := Nat.mul_le_mul h2 h3'
+      _ = _ := by ring
+  have h4 := hA0 A hA
+  have h5 : 3 * 3 ^ (A / 2) ≤ 3 ^ A := by
+    rw [← pow_succ']; exact Nat.pow_le_pow_right (by norm_num) (by omega)
+  simp only [q] at hle
+  generalize 2 * h' * (2 * 9 ^ t) ^ (t + 1) * A ^ (t + 1) = P at hle h4
+  omega
+
+end CopyRun
+
+/-- **Per-run copy total (PROVED 2026-10-08; elementary from the two nodes above).**  The run sums
 of `repPairPos_explicit`'s copy term are `≤ N_k² ψ_k` with `Σ ψ_k (k+3)⁴ < ∞`.
 English proof: `pair_sum_le` (rows `d`, `G d m = cycProd(tᵐ h'(b^d − 1))`, `cycProd_pairH`);
 non-degenerate rows by `RunOrbitDecay`, degenerate rows by `1` and counted by `card_degRows_le`;
@@ -4876,7 +4950,111 @@ theorem copyRun_psi {s t : ℕ} (hs : 1 ≤ s) (ht : 2 ≤ t) (h3 : ¬ 3 ∣ t) 
             (cycProd (runStart k) ((h' : ℤ) * (((3 ^ s * t : ℕ) : ℤ) ^ n - ((3 ^ s * t : ℕ) : ℤ) ^ m))
               + cycProd (runStart k) ((h' : ℤ) * (t : ℤ) ^ n)) ≤
           ((((k + 2) * runStart k + 1 : ℕ) : ℝ)) ^ 2 * ψ k := by
-  sorry
+  open Finset in
+  obtain ⟨ψ, hψ0, hψs, k₁, hRb⟩ := hR
+  obtain ⟨Cd, k₂, hCd⟩ := card_degRows_le hs ht h3 h' hh
+  obtain ⟨A0, hA0⟩ := not_dvd_two_mul_pow (t := t) (by omega) h3 hh
+  let Nk : ℕ → ℝ := fun k => (((k + 2) * runStart k + 1 : ℕ) : ℝ)
+  have hNk : ∀ k, (k.factorial : ℝ) ≤ Nk k := fun k => by
+    have := factorial_le_runStart k
+    have : k.factorial ≤ (k + 2) * runStart k + 1 := by nlinarith
+    simp only [Nk]; exact_mod_cast this
+  have hNk0 : ∀ k, 0 < Nk k := fun k => by simp only [Nk]; positivity
+  let ψ' : ℕ → ℝ := fun k => 3 * ψ k + 2 * (1 + |Cd| * ((k : ℝ) + 3)) / Nk k
+  refine ⟨ψ', fun k => by
+    have := hψ0 k; have := hNk0 k
+    simp only [ψ']; positivity, ?_, max k₁ (max k₂ A0), fun k hk => ?_⟩
+  · -- summability
+    have hs2 := (summable_poly_exp_div_fact 5 (x := 1) zero_le_one).mul_left (2 * (1 + |Cd|))
+    refine Summable.of_nonneg_of_le
+      (fun k => by have := hψ0 k; have := hNk0 k; simp only [ψ']; positivity) (fun k => ?_)
+      ((hψs.mul_left 3).add hs2)
+    simp only [ψ', add_mul]
+    refine add_le_add (le_of_eq (by ring)) ?_
+    have hk : (0 : ℝ) ≤ k := Nat.cast_nonneg _
+    have hf : (0 : ℝ) < k.factorial := by exact_mod_cast Nat.factorial_pos k
+    have h1 : 1 + |Cd| * ((k : ℝ) + 3) ≤ (1 + |Cd|) * ((k : ℝ) + 3) := by
+      nlinarith [abs_nonneg Cd]
+    rw [div_mul_eq_mul_div, one_pow, mul_one, div_le_iff₀ (hNk0 k)]
+    calc 2 * (1 + |Cd| * ((k : ℝ) + 3)) * ((k : ℝ) + 3) ^ 4
+        ≤ 2 * ((1 + |Cd|) * ((k : ℝ) + 3)) * ((k : ℝ) + 3) ^ 4 := by gcongr
+      _ = 2 * (1 + |Cd|) * (((k : ℝ) + 3) ^ 5 / k.factorial) * k.factorial := by
+        field_simp
+      _ ≤ 2 * (1 + |Cd|) * (((k : ℝ) + 3) ^ 5 / k.factorial) * Nk k := by
+        gcongr; exact hNk k
+  -- the bound
+  set A := runStart k
+  set N := (k + 2) * A + 1
+  have hAk : k < A := lt_runStart k
+  have hA1 : 1 ≤ A := by omega
+  have hN : (N : ℝ) = Nk k := rfl
+  set b : ℕ := 3 ^ s * t
+  have hRk := hRb k (by omega)
+  -- the pair part
+  set G : ℕ → ℕ → ℝ := fun d m => cycProd A ((t : ℤ) ^ m * ((h' : ℤ) * ((b : ℤ) ^ d - 1)))
+  have hpair := sum_sym_le_rows N (fun n m => cycProd A ((h' : ℤ) * ((b : ℤ) ^ n - (b : ℤ) ^ m))) G
+    (fun d m => cycProd_nonneg _ _)
+    (fun n m => by
+      rw [show (h' : ℤ) * ((b : ℤ) ^ n - (b : ℤ) ^ m) = -((h' : ℤ) * ((b : ℤ) ^ m - (b : ℤ) ^ n))
+        by ring, cycProd_neg])
+    (fun m d => cycProd_pairH A s t m d h')
+  -- the rows
+  set Dg := insert 0 ((Finset.Ico 1 N).filter fun d =>
+    (3 : ℤ) ^ A - 1 ∣ 2 * ((h' : ℤ) * ((b : ℤ) ^ d - 1)) * (t : ℤ) ^ N)
+  have hrow : ∀ d ∈ range N, ∑ m ∈ range N, G d m ≤ N * ψ k + (if d ∈ Dg then (N : ℝ) else 0) := by
+    intro d hd
+    have hle1 : ∑ m ∈ range N, G d m ≤ N := by
+      have := sum_le_sum (s := range N) fun m _ => cycProd_le_one A
+        ((t : ℤ) ^ m * ((h' : ℤ) * ((b : ℤ) ^ d - 1)))
+      simpa using this
+    have hNψ : 0 ≤ (N : ℝ) * ψ k := mul_nonneg (Nat.cast_nonneg _) (hψ0 k)
+    split_ifs with hDg
+    · linarith
+    · have hd1 : 1 ≤ d := by
+        by_contra h0; apply hDg; rw [show d = 0 by omega]; exact mem_insert_self _ _
+      have hnd : ¬ ((3 : ℤ) ^ A - 1 ∣ 2 * ((h' : ℤ) * ((b : ℤ) ^ d - 1)) * (t : ℤ) ^ N) := by
+        intro hdv; apply hDg
+        exact mem_insert_of_mem (mem_filter.2 ⟨mem_Ico.2 ⟨hd1, mem_range.1 hd⟩, hdv⟩)
+      have := hRk ((h' : ℤ) * ((b : ℤ) ^ d - 1)) hnd
+      have e : ∑ m ∈ range N, G d m = ∑ m ∈ range N,
+          cycProd A ((h' : ℤ) * ((b : ℤ) ^ d - 1) * (t : ℤ) ^ m) :=
+        sum_congr rfl fun m _ => by simp only [G]; rw [mul_comm]
+      rw [e]; linarith
+  have hDgc : (((range N).filter (· ∈ Dg)).card : ℝ) ≤ 1 + Cd * ((k : ℝ) + 3) := by
+    have h1 : (range N).filter (· ∈ Dg) ⊆ Dg := fun x hx => (mem_filter.1 hx).2
+    have h2 := card_le_card h1
+    have h3 := card_insert_le 0 ((Finset.Ico 1 N).filter fun d =>
+      (3 : ℤ) ^ A - 1 ∣ 2 * ((h' : ℤ) * ((b : ℤ) ^ d - 1)) * (t : ℤ) ^ N)
+    have h4 := hCd k (by omega)
+    have : (((range N).filter (· ∈ Dg)).card : ℝ) ≤
+        (((Finset.Ico 1 N).filter fun d =>
+          (3 : ℤ) ^ A - 1 ∣ 2 * ((h' : ℤ) * ((b : ℤ) ^ d - 1)) * (t : ℤ) ^ N).card : ℝ) + 1 := by
+      exact_mod_cast h2.trans h3
+    push_cast [b] at h4 this ⊢
+    linarith
+  have hrows : ∑ d ∈ range N, ∑ m ∈ range N, G d m ≤ N * (N * ψ k) + N * (1 + Cd * ((k : ℝ) + 3)) := by
+    refine (sum_le_sum hrow).trans ?_
+    rw [sum_add_distrib, sum_const, card_range, nsmul_eq_mul, ← sum_filter, sum_const, nsmul_eq_mul]
+    have := mul_le_mul_of_nonneg_right hDgc (Nat.cast_nonneg N)
+    linarith
+  -- the single orbit
+  have hsingle : ∑ n ∈ range N, cycProd A ((h' : ℤ) * (t : ℤ) ^ n) ≤ N * ψ k :=
+    hRk h' (hA0 A N (by omega) hA1 |> fun h hd => h (by simpa [mul_assoc] using hd))
+  -- assemble
+  simp only [sum_add_distrib, sum_const, card_range, nsmul_eq_mul]
+  have hN0 : (0 : ℝ) < N := by positivity
+  have hfin : (N : ℝ) * (1 + Cd * ((k : ℝ) + 3)) ≤ (N : ℝ) ^ 2 * ((1 + |Cd| * ((k : ℝ) + 3)) / N) := by
+    rw [sq, mul_assoc, mul_div_cancel₀ _ hN0.ne']
+    exact mul_le_mul_of_nonneg_left (by nlinarith [le_abs_self Cd, (by positivity : (0:ℝ) ≤ (k:ℝ) + 3)]) hN0.le
+  simp only [ψ', ← hN]
+  have e2 : (N : ℝ) ^ 2 * (3 * ψ k + 2 * (1 + |Cd| * ((k : ℝ) + 3)) / N) =
+      3 * (N * (N * ψ k)) + 2 * ((N : ℝ) ^ 2 * ((1 + |Cd| * ((k : ℝ) + 3)) / N)) := by ring
+  rw [e2]
+  have := mul_le_mul_of_nonneg_left hsingle hN0.le
+  simp only [G] at hpair hrows
+  have e3 : ∑ x ∈ range N, (N : ℝ) * cycProd A ((h' : ℤ) * (t : ℤ) ^ x) =
+      N * ∑ x ∈ range N, cycProd A ((h' : ℤ) * (t : ℤ) ^ x) := (mul_sum _ _ _).symm
+  linarith [hpair, hrows, hfin, e3]
 
 /-- **Assembly through run orbit decay (believed, 90%; plumbing).**  Baker + `RunOrbitDecay t`
 give `RepPairArith (3ˢt)`.
