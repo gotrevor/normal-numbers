@@ -6,7 +6,17 @@
   `gap_step` (next level within `2 + CL(s+2)`), a chain over the levels down to the *highest*
   exactly-splitting cut `θ*` (no strong induction needed), `exists_le_of_split` (`λ ≤ span(θ*)` by
   3-adic divisibility), `endgame` (`κx ≤ 2(3+C+C log((1+κ)x+2))^m ⇒ x ≤ exp(C'(m+1)²)`).
-* BarrierAudit crux link for it removed (closed).  Next: leaf 2 below (`cycSparse_of_cycProd_ge`).
+* BarrierAudit crux link for it removed (closed).
+* Same lap, also PROVED: `cycSparse_of_cycProd_ge`, `card_cluster_le`, `runOrbitDecay_of_sparse`
+  (explicit `K = √k+1`, `θ = 2cos(π/9)^K`, `D = (⌊A/(2K+1)⌋−1)/t`; `orbit_sum_le`), `card_degRows_le`
+  (LTE: `pow_padicVal_three_pow_sub_one_le`, `gcd_three_pow_sub_one_le`), `copyRun_psi`
+  (`sum_sym_le_rows`).  Infrastructure for the last leaf: `sched_tail`
+  (`Σ_{sched j ≥ X} sched(j)⁻² ≤ 9(log X + 3)/X²`, via the telescoping `gT`).
+* OPEN (only remaining route leaf): `repPairArith_of_runDecay`.  Plan: (a) generalize
+  `repPairPos_eventually` to an abstract copy bound `Copy(N) ≤ C₀ + N²Φ(N)`; (b) `Φ(N) =
+  Σ_{k ≥ k₁, a_k ≤ 2sN+e} (N_k/N)² ψ_k`; (c) sum swap: `Σ_j Φ(sched j) ≤ Σ_k ψ_k N_k² · tail(X_k)`,
+  `X_k = (a_k − e)/(2s)`, `sched_tail` gives `≲ ψ_k (k+3)² log a_k ≲ ψ_k (k+3)⁴`; (d) sign/3-part
+  reduction in summable form (as `repPairPower_of_pos`).
 
 ## Repetition review lap 7 (2026-10-07) — ROUTE CHANGE: sparse pairs + Matveev replace the walls
 * Insight: `RepPairArith` needs only summability along `sched` (a polylog saving suffices), not the
