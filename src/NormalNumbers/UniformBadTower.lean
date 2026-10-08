@@ -456,7 +456,7 @@ theorem rat_sep (x y : ℚ) (h : y ≠ x) : 1 ≤ |y - x| * (x.den * y.den) := b
   have : (1 : ℤ) ≤ |y.num * x.den - x.num * y.den| := Int.one_le_abs hk
   exact_mod_cast this
 
-/-- **Open conjecture, the crux of `rationalTower_four` at `c = 4` (believed 60%).**  Every
+/-- **Open conjecture, the crux of `rationalTower_four` at `c = 4` (believed 35%).**  Every
 self-good rational (good for every base below its own denominator) is a limit of other self-good
 rationals.  With one self-good rational this gives a rational tower
 (`rationalTower_of_selfGoodPerfect`).
@@ -467,7 +467,14 @@ with `q` are skipped).  There are 23970 such rationals with `q < 10⁵`, and the
 range of `q` do not decay.  The distance from a small one to the nearest one with `q ∈ [2^k, 2^{k+1})`
 shrinks steadily: for `5/73`, `6.3e-3, 9.5e-4, 3.1e-4, 4.2e-4, 6.6e-5, 4.5e-5, 3.8e-5` for
 `k = 9, …, 15`; similar for `3/41, 19/265, 11/151`.  Against: the coset heuristic and
-Corvaja–Zannier (`JointRationalsFinite`) predict that the count eventually dies. -/
+Corvaja–Zannier (`JointRationalsFinite`) predict that the count eventually dies.
+
+Caveat (same census, nearest neighbours): the close neighbours of `5/73` have denominators
+`94535 = 5·7·37·73`, `90155 = 5·13·19·73`, `52429 = 13·37·109`, `51319 = 19·37·73`, all divisors of
+`2³⁶ − 1 = 3³·5·7·13·19·37·73·109` (or of similar `2^L − 1`, `3^L − 1` with small `L`).  So the
+census below `10⁵` is sampling the small-exponent moduli, the Carmichael-type family whose
+asymptotics `CarmichaelChainCollapse` predicts to die; it does not test the limit.  Confidence
+lowered to 35% on this account. -/
 def SelfGoodPerfect (c : ℝ) : Prop :=
   ∀ x : ℚ, GoodBelow c x.den (x : ℝ) → ∀ ε > 0,
     ∃ y : ℚ, y ≠ x ∧ |y - x| < ε ∧ GoodBelow c y.den (y : ℝ)
@@ -503,7 +510,7 @@ theorem rationalTower_of_selfGoodPerfect {c : ℝ} (h : SelfGoodPerfect c) (x0 :
       mul_le_mul_of_nonneg_left (mul_le_mul_of_nonneg_left h4 (by positivity)) (abs_nonneg _)
     linarith
 
-/-- **The crux leaf of `rationalTower_four`** (believed 60%; see `SelfGoodPerfect`). -/
+/-- **The crux leaf of `rationalTower_four`** (believed 35%; see `SelfGoodPerfect`). -/
 theorem selfGoodPerfect_four : SelfGoodPerfect 4 := by
   sorry
 
