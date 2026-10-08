@@ -3622,3 +3622,7 @@ Next: `isFresh` Riesz bound, then the classification lemma in Lean (route-decisi
 - NEXT attack: the coset heuristic predicts few self-good rationals for ANY denominator family
   (Corvaja–Zannier).  Either (a) state/prove `¬ RationalTower 4` conditionally on a coset-equidistribution
   hypothesis, or (b) find moduli beating it (`SmallOrderModuli`); check CZ transcription against source.
+- Proved `not_rationalTower_of_jointRationalsFinite`: finitely many {2,3}-good rationals in [0,1) at c ⇒ ¬RationalTower c.
+  Conjecture node `JointRationalsFinite` (50%): data at c = 4 shows {2,3}-good rationals persist to q = 2·10⁵
+  (30–50 denominators per dyadic range), CZ heuristic says finite asymptotically.  NEXT: same census with all
+  bases b < q^{1/4} (self-good) — does the per-range count of self-good denominators decay? That decides the route.

@@ -498,6 +498,94 @@ def SmallOrderModuli : Prop :=
   ∃ C : ℝ, ∀ N : ℕ, ∃ q ≥ N, Nat.Coprime 6 q ∧
     (orderOf (2 : ZMod q) : ℝ) ≤ C * Real.log q ∧ (orderOf (3 : ZMod q) : ℝ) ≤ C * Real.log q
 
+/-- **Open conjecture (believed 50%).**  Only finitely many rationals in `[0, 1)` are good for the
+two bases `2, 3` at exponent `c`.  By `not_rationalTower_of_jointRationalsFinite` this refutes
+every rational tower at `c`, so it is the decisive question for `rationalTower_four`.
+
+For: the coset heuristic.  A numerator mod `q` survives base `b` with probability about
+`exp(−κ_b ord_q(b))`, so the expected count is `q·exp(−κ₂ ord_q(2) − κ₃ ord_q(3))`.  This stays
+`≥ 1` only if both orders are `O(log q)`, which the Corvaja–Zannier gcd bound forbids for all
+but finitely many `q` (`SmallOrderModuli`).
+Against, at `c = 4` (`scripts/cstar_models/joint_rationals.js 4 200000 3`, exhaustive over
+`gcd(q, 6) = 1`): the number of denominators with a survivor, by dyadic range `[2^k, 2^{k+1})` for
+`k = 10, …, 17`, is `16, 17, 16, 31, 31, 34, 49, 33`.  The surviving numerators number about
+`10⁴` per range, with orders `10`–`30` times `log q` (e.g. `q = 120211`, `ord(2) = 60`,
+`ord(3) = 330`).  So any collapse is far beyond `q ≈ 2·10⁵`. -/
+def JointRationalsFinite (c : ℝ) : Prop :=
+  {y : ℚ | 0 ≤ y ∧ y < 1 ∧ GoodBelow c 4 (y : ℝ)}.Finite
+
+theorem goodBelow_int_add {c : ℝ} {B : ℕ} {y : ℝ} (k : ℤ) (h : GoodBelow c B y) :
+    GoodBelow c B (y + k) := by
+  intro b hb hbB n
+  have e : (b : ℝ) ^ n * (y + k) = (b : ℝ) ^ n * y + ((b ^ n * k : ℤ) : ℝ) := by push_cast; ring
+  rw [e]; unfold dnear
+  rw [round_add_intCast, Int.cast_add, add_sub_add_right_eq_sub]
+  exact h b hb hbB n
+
+theorem goodBelow_mono {c : ℝ} {B B' : ℕ} {y : ℝ} (hB : B ≤ B') (h : GoodBelow c B' y) :
+    GoodBelow c B y := fun b hb hbB n => h b hb (by omega) n
+
+theorem not_goodBelow_rat (c : ℝ) (y : ℚ) : ¬ GoodBelow c (2 * y.den + 1) (y : ℝ) := by
+  intro h
+  have hd := y.den_pos
+  have := h (2 * y.den) (by omega) (by omega) 1
+  have hle := dnear_le_abs_sub (((2 * y.den : ℕ) : ℝ) ^ 1 * (y : ℝ)) (2 * y.num)
+  have e : ((2 * y.den : ℕ) : ℝ) ^ 1 * (y : ℝ) - ((2 * y.num : ℤ) : ℝ) = 0 := by
+    have hy : (y : ℝ) = (y.num : ℝ) / y.den := by exact_mod_cast (Rat.num_div_den y).symm
+    rw [hy]; push_cast; field_simp; ring
+  rw [e, abs_zero] at hle
+  have hp : (0 : ℝ) < ((2 * y.den : ℕ) : ℝ) ^ (-c) := Real.rpow_pos_of_pos (by positivity) _
+  linarith
+
+/-- **Proved.**  If only finitely many rationals in `[0, 1)` are good for the bases `2, 3` at `c`,
+there is no rational tower at `c`. -/
+theorem not_rationalTower_of_jointRationalsFinite {c : ℝ} (hfin : JointRationalsFinite c) :
+    ¬ RationalTower c := by
+  rintro ⟨F, hFQ, ⟨x0, hx0⟩, hF⟩
+  obtain ⟨r, rfl⟩ := hFQ hx0
+  set S' : Set ℚ := {y : ℚ | |(y : ℝ) - r| ≤ 1 ∧ GoodBelow c 4 (y : ℝ)}
+  have hS' : S'.Finite := by
+    refine ((hfin.prod (Set.finite_Icc (⌊r⌋ - 2) (⌊r⌋ + 2))).image
+      (fun p : ℚ × ℤ => p.1 + p.2)).subset ?_
+    rintro y ⟨hy1, hy2⟩
+    refine ⟨(y - ⌊y⌋, ⌊y⌋), ⟨⟨?_, ?_, ?_⟩, ?_, ?_⟩, by simp⟩
+    · simp
+    · simpa using Int.fract_lt_one y
+    · have := goodBelow_int_add (-⌊y⌋) hy2; push_cast at this ⊢; simpa [sub_eq_add_neg] using this
+    · have h1 : ((r : ℝ) - 1) ≤ y := by linarith [(abs_le.1 hy1).1]
+      have h2 : ((r - 1 : ℚ) : ℝ) ≤ ((y : ℚ) : ℝ) := by push_cast; exact h1
+      have := Int.floor_mono (Rat.cast_le.1 h2)
+      have e : ⌊r - 1⌋ = ⌊r⌋ - 1 := Int.floor_sub_one r
+      simp only at this ⊢; omega
+    · have h1 : (y : ℝ) ≤ r + 1 := by linarith [(abs_le.1 hy1).2]
+      have h2 : ((y : ℚ) : ℝ) ≤ ((r + 1 : ℚ) : ℝ) := by push_cast; exact h1
+      have := Int.floor_mono (Rat.cast_le.1 h2)
+      have e : ⌊r + 1⌋ = ⌊r⌋ + 1 := Int.floor_add_one r
+      simp only at this ⊢; omega
+  -- a positive gap separating `r` from the other members of `S'`
+  obtain ⟨δ, hδ, hgap⟩ : ∃ δ > 0, ∀ s ∈ S', s ≠ r → δ ≤ |(s : ℝ) - r| := by
+    set T := (hS'.sdiff (s := S') (t := {r})).toFinset
+    by_cases hT : T.Nonempty
+    · obtain ⟨s0, hs0, hmin⟩ := T.exists_min_image (fun s : ℚ => |(s : ℝ) - r|) hT
+      have hs0' := (Set.Finite.mem_toFinset _).1 hs0
+      refine ⟨|(s0 : ℝ) - r|, ?_, fun s hs hsr => hmin s ((Set.Finite.mem_toFinset _).2 ⟨hs, hsr⟩)⟩
+      refine abs_pos.2 (sub_ne_zero.2 ?_)
+      exact_mod_cast hs0'.2
+    · refine ⟨1, one_pos, fun s hs hsr => ?_⟩
+      exact absurd ⟨s, (Set.Finite.mem_toFinset _).2 ⟨hs, hsr⟩⟩ hT
+  apply not_goodBelow_rat c r
+  intro b hb hbB n
+  obtain ⟨y, hyF, hyx, hyg⟩ := hF (r : ℝ) hx0 (min δ 1) (lt_min hδ one_pos) (max (2 * r.den + 1) 4)
+  obtain ⟨s, rfl⟩ := hFQ hyF
+  have hsS : s ∈ S' := ⟨(lt_of_lt_of_le hyx (min_le_right _ _)).le,
+    goodBelow_mono (le_max_right _ _) hyg⟩
+  have hsr : s = r := by
+    by_contra hne
+    have := hgap s hsS hne
+    linarith [min_le_left δ 1]
+  subst hsr
+  exact goodBelow_mono (le_max_left _ _) hyg b hb hbB n
+
 /-- **Stretch node.**  Believed 25%.  A rational tower at exponent `3`.  Host density at
 `c = 3` is `0/3000` at `Q_36`, `Q_60` and `Q_72`, so it needs structured numerators. -/
 def RationalTowerThree : Prop := RationalTower 3
