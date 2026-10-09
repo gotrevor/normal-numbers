@@ -4389,6 +4389,112 @@ theorem cycSparse_of_cycProdR_ge {A K : ℕ} (hA : 1 ≤ A) {θ : ℝ}
   rw [hI, ← hsumT, Int.modEq_iff_dvd]
   exact ⟨2 * n, by rw [h2W]; ring⟩
 
+/-- **P1 leaf (ii): large fresh-window product forces a sparse top (proved).**  If
+`cos(π/9)^K < θ ≤ ∏_{q<Q} |cos(2π(Z + f)/3^{q+1})|` with `0 ≤ Z < 3^Q`, `0 ≤ f < 1`, then
+`2Z` is a signed sum of at most `K + 2` distinct powers of 3 with coefficients in `{±1, ±2}`. -/
+theorem isSparse3_of_freeProd_ge {Q K : ℕ} {θ : ℝ} (hK : Real.cos (Real.pi / 9) ^ K < θ)
+    (Z : ℤ) (hZ0 : 0 ≤ Z) (hZ : Z < 3 ^ Q) {f : ℝ} (hf0 : 0 ≤ f) (hf1 : f < 1)
+    (h : θ ≤ ∏ q ∈ range Q, |Real.cos (2 * Real.pi * ((Z : ℝ) + f) / 3 ^ (q + 1))|) :
+    SparseIdentity.IsSparse3 (K + 2) (2 * Z) := by
+  rcases Nat.eq_zero_or_pos Q with rfl | hQ
+  · have : Z = 0 := by simp at hZ; omega
+    exact ⟨∅, fun _ => 0, by simp, by simp, by simp [this]⟩
+  obtain ⟨P, rfl⟩ : ∃ P, Q = P + 1 := ⟨Q - 1, by omega⟩
+  have h3 : (0 : ℝ) < 3 ^ (P + 1) := by positivity
+  set u : ℝ := ((Z : ℝ) + f) / 3 ^ (P + 1)
+  set d : ℕ → ℤ := fun i => rd (3 ^ i * u)
+  have hdb : ∀ i, 0 ≤ d i ∧ d i ≤ 2 := fun i =>
+    ⟨rd_nonneg _, by have := rd_lt (3 ^ i * u); simp only [d]; omega⟩
+  have hprod : ∏ q ∈ range (P + 1), |Real.cos (2 * Real.pi * ((Z : ℝ) + f) / 3 ^ (q + 1))| =
+      ∏ i ∈ range (P + 1), |Real.cos (2 * Real.pi * (3 ^ i * u))| := by
+    rw [← prod_range_reflect]
+    refine prod_congr rfl fun i hi => ?_
+    have hi := mem_range.1 hi
+    congr 2
+    simp only [u]
+    rw [show P + 1 - 1 - i + 1 = (P + 1) - i by omega]
+    have : (3 : ℝ) ^ (P + 1) = 3 ^ i * 3 ^ (P + 1 - i) := by rw [← pow_add]; congr 1; omega
+    rw [this]; field_simp
+  have hC := card_changes_lt_real hK (hprod ▸ h)
+  -- u ∈ [0, 1)
+  have hZ' : (Z : ℝ) + 1 ≤ 3 ^ (P + 1) := by
+    have : Z + 1 ≤ 3 ^ (P + 1) := by omega
+    exact_mod_cast this
+  have hZ0' : (0 : ℝ) ≤ Z := by exact_mod_cast hZ0
+  have hu0 : 0 ≤ u := by positivity
+  have hu1 : u < 1 := by rw [div_lt_one h3]; linarith
+  have hfu : Int.fract u = u := Int.fract_eq_self.2 ⟨hu0, hu1⟩
+  have hfP : Int.fract (3 ^ (P + 1) * u) = f := by
+    have : 3 ^ (P + 1) * u = f + ((Z : ℤ) : ℝ) := by simp only [u]; field_simp; ring
+    rw [this, Int.fract_add_intCast, Int.fract_eq_self.2 ⟨hf0, hf1⟩]
+  set W : ℤ := ∑ i ∈ range (P + 1), d i * 3 ^ (P + 1 - 1 - i)
+  have hexp := fract_mul_pow_eq u (P + 1)
+  rw [hfu, hfP] at hexp
+  have hZW : Z = W := by
+    have h1 : ((W : ℤ) : ℝ) = ∑ i ∈ range (P + 1), (rd (3 ^ i * u) : ℝ) * 3 ^ (P + 1 - 1 - i) := by
+      simp only [W, d]; push_cast; rfl
+    have h2 : u * 3 ^ (P + 1) = Z + f := by simp only [u]; field_simp
+    have : (Z : ℝ) = W := by rw [h1]; linarith
+    exact_mod_cast this
+  have h2W : 2 * W = ∑ i ∈ range P, (d (i + 1) - d i) * 3 ^ (P - i) + d 0 * 3 ^ (P + 1) - d P := by
+    have e1 : 3 * W = ∑ i ∈ range P, d (i + 1) * 3 ^ (P - i) + d 0 * 3 ^ (P + 1) := by
+      simp only [W]; rw [mul_sum, sum_range_succ']
+      congr 1
+      · refine sum_congr rfl fun i hi => ?_
+        have := mem_range.1 hi
+        rw [show P + 1 - 1 - (i + 1) = P - i - 1 by omega, mul_left_comm, ← pow_succ']
+        congr 2; omega
+      · simp; ring
+    have e2 : W = ∑ i ∈ range P, d i * 3 ^ (P - i) + d P := by
+      simp only [W]; rw [sum_range_succ]; simp
+    have : ∑ i ∈ range P, (d (i + 1) - d i) * 3 ^ (P - i) =
+        ∑ i ∈ range P, d (i + 1) * 3 ^ (P - i) - ∑ i ∈ range P, d i * 3 ^ (P - i) := by
+      rw [← sum_sub_distrib]; exact sum_congr rfl fun _ _ => by ring
+    rw [this]; linarith
+  -- the sparse representation
+  set cf : ℕ → ℤ := fun e => if e = P + 1 then d 0 else if e = 0 then -d P else
+    d (P - e + 1) - d (P - e)
+  set T := (range (P + 1)).filter fun i => d i ≠ d (i + 1)
+  refine ⟨(range (P + 2)).filter fun e => cf e ≠ 0, cf, ?_, ?_, ?_⟩
+  · have hsub : (range (P + 2)).filter (fun e => cf e ≠ 0) ⊆
+        insert (P + 1) (insert 0 (((range P).filter fun i => d i ≠ d (i + 1)).image (P - ·))) := by
+      intro e he
+      simp only [mem_filter, mem_range] at he
+      rcases Nat.lt_or_ge e (P + 1) with h1 | h1
+      · rcases Nat.eq_zero_or_pos e with h0 | h0
+        · simp [h0]
+        · refine mem_insert_of_mem (mem_insert_of_mem (mem_image.2 ⟨P - e, ?_, by omega⟩))
+          simp only [mem_filter, mem_range]
+          refine ⟨by omega, fun hh => he.2 ?_⟩
+          simp only [cf, show e ≠ P + 1 by omega, show e ≠ 0 by omega, if_false]
+          rw [show P - e + 1 = P - e + 1 from rfl, ← hh, sub_self]
+      · simp [show e = P + 1 by omega]
+    refine (card_le_card hsub).trans ((card_insert_le _ _).trans ?_)
+    have : ((range P).filter fun i => d i ≠ d (i + 1)).card < K := by
+      refine lt_of_le_of_lt (card_le_card fun i hi => ?_) hC
+      rw [mem_filter, mem_range] at hi; exact mem_filter.2 ⟨mem_range.2 (by omega), hi.2⟩
+    have := (card_insert_le 0 ((((range P).filter fun i => d i ≠ d (i + 1)).image (P - ·))))
+    have := card_image_le (s := (range P).filter fun i => d i ≠ d (i + 1)) (f := (P - ·))
+    omega
+  · intro e he
+    refine ⟨(mem_filter.1 he).2, ?_⟩
+    simp only [cf]
+    have := hdb 0; have := hdb P; have := hdb (P - e + 1); have := hdb (P - e)
+    split_ifs <;> rw [abs_le] <;> constructor <;> omega
+  · rw [hZW, h2W, sum_filter_of_ne (fun e _ h => left_ne_zero_of_mul h)]
+    rw [sum_range_succ, sum_range_succ']
+    have hP1 : cf (P + 1) = d 0 := by simp [cf]
+    have h0 : cf 0 = -d P := by simp [cf]
+    have hmid : ∑ i ∈ range P, cf (i + 1) * 3 ^ (i + 1) =
+        ∑ i ∈ range P, (d (i + 1) - d i) * 3 ^ (P - i) := by
+      rw [← sum_range_reflect]
+      refine sum_congr rfl fun i hi => ?_
+      have := mem_range.1 hi
+      simp only [cf]
+      rw [if_neg (by omega), if_neg (by omega), show P - (P - 1 - i + 1) = i by omega,
+        show P - 1 - i + 1 = P - i by omega]
+    rw [hP1, h0, hmid]; ring
+
 end CycSparseR
 
 /-- **Cluster count (pure combinatorics).**  A set `B ⊆ [0, N)` any two of whose points within
