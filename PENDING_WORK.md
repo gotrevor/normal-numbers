@@ -13,6 +13,17 @@
 * Same lap, PROVED (b): `three_pow_dvd_det_hom` (homogenised integer determinant
   `det[zᵏ t^{lz} b^{ls} V^{(L−1−l)s}]`, `V = a tᵟ`, divisible by `3^{T(KL−(T+K)(T/g+1))}`; via
   `ZMod 3^m`, where `p^m = 0`) and `three_pow_le_of_det_ne_zero` (nonzero ⇒ `3^m ≤ (KL)! X^{KL}`).
+* Same lap, PROVED: `dvd_det_interp_gen` (any column family `φ` with a binomial expansion),
+  `choose_mul_choose_expand` (Gregory–Newton + `fwdDiff_iter_eq_zero_of_degree_lt`),
+  `three_pow_dvd_det_rs` (grid points `(r,s)`, entries `φ_k(r+δs) t^{lr} b^{ls} a^{(L−1−l)s}`:
+  the correct Liouville heights).
+* PARAMETER CHECK (paper, lap 11; to be formalized in (d)): the regime `T < g` suffices.  If
+  `g > KL/3`, take `T = ⌊KL/3⌋`: `m ≥ T(KL − T − K) ≈ 2N²/9` (`N = KL`), while
+  `log|Δ| ≤ N log N + N(K log(e(R+δS)/K) + LR log t + LS B)`.  Choose `L ≈ C(log(δ/B) + 1)`,
+  `K ≈ C²LB`, `R ≈ K/C`, `S ≈ K/(CB)`: zero-lemma counts `RS ≳ KL` and `R ≥ L` hold, and the squeeze
+  fails, so `g ≤ KL/3 ≈ C'(1 + log δ)²·B` — exactly the `PadicTwoLogs` shape.  With columns `z^k`
+  an extra `log K ≈ log B` appears (`B log²B`, still enough for the chain but not the Prop shape),
+  hence the binomial columns.  The two-variable count is NOT needed at this precision.
 * NEXT: (c) zero lemma ⇒ Δ ≠ 0 for points `z = r + δs` (need the transcription check), (d) parameters
   and the assembly `padicTwoLogs`; reduction to `3 ∣ t − 1` (replace t by t², δ by ⌈δ/2⌉ carefully),
   3 ∣ a·b case split.  OLD: (b) Liouville upper bound for `Δ` with `z = r+δs`, `t`, `w = b/(a tᵟ)` (clear denominators:

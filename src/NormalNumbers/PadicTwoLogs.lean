@@ -14,6 +14,9 @@ import Mathlib.Algebra.Ring.GeomSum
 import Mathlib.Data.ZMod.Basic
 import Mathlib.LinearAlgebra.Matrix.AbsoluteValue
 import Mathlib.Tactic.LinearCombination
+import Mathlib.Algebra.Group.ForwardDiff
+import Mathlib.RingTheory.Polynomial.Pochhammer
+import Mathlib.Tactic.FieldSimp
 
 /-!
 # The 3-adic linear form in two logarithms: interpolation-determinant ingredients (P3)
@@ -37,6 +40,7 @@ This file holds (a) (proved) and the statement of (c).
 -/
 
 open Matrix Finset
+open scoped fwdDiff
 
 namespace PadicTwoLogs
 
@@ -209,13 +213,15 @@ with columns `(k, l)` and rows the points `(z_x, s_x)`, entry `z^k t^{lz} w^{ls}
 `p^{(i−K) + gn}`; then `dvd_det_mul` and `sum_weight_ge_shift`.  In the application
 `z = r + δs`, `t ≡ 1`, `w = b/(a tᵟ)` in `ℤ_[3]`, `v₃(w − 1) ≥ g`; the bound is of order
 `(KL)^{3/2} g^{1/2}` when `K ≲ √(gL)`. -/
-theorem dvd_det_interp {R : Type*} [CommRing R] (p t w : R) {g : ℕ} (hg : 1 ≤ g)
+theorem dvd_det_interp_gen {R : Type*} [CommRing R] (φ : ℕ → ℕ → ℤ)
+    (hφ : ∀ k j : ℕ, ∃ c : ℕ → ℤ, (∀ i, k + j < i → c i = 0) ∧ ∀ (z : ℕ) N, k + j < N →
+      φ k z * (z.choose j : ℤ) = ∑ i ∈ range N, c i * (z.choose i : ℤ)) (p t w : R) {g : ℕ} (hg : 1 ≤ g)
     (ht : p ∣ t - 1) (hw : p ^ g ∣ w - 1) (K L : ℕ) (z s : Fin K × Fin L → ℕ) (T : ℕ) :
     p ^ (T * (K * L - (T + K) * (T / g + 1))) ∣
       (Matrix.of fun (x l : Fin K × Fin L) =>
-        (z x : R) ^ (l.1 : ℕ) * t ^ ((l.2 : ℕ) * z x) * w ^ ((l.2 : ℕ) * s x)).det := by
+        (φ l.1 (z x) : R) * t ^ ((l.2 : ℕ) * z x) * w ^ ((l.2 : ℕ) * s x)).det := by
   classical
-  choose c hc0 hc using pow_mul_choose_expand
+  choose c hc0 hc using hφ
   set Z := univ.sup z
   set S := univ.sup s
   have hzZ : ∀ x, z x ≤ Z := fun x => le_sup (f := z) (mem_univ x)
@@ -228,9 +234,9 @@ theorem dvd_det_interp {R : Type*} [CommRing R] (p t w : R) {g : ℕ} (hg : 1 �
   let Q : Matrix ι (Fin K × Fin L) R := Matrix.of fun μ l =>
     ∑ j ∈ range (Z + 1), (c l.1 j μ.1 : R) * X l.2 ^ j * Y l.2 ^ (μ.2 : ℕ)
   have hPQ : (Matrix.of fun (x l : Fin K × Fin L) =>
-      (z x : R) ^ (l.1 : ℕ) * t ^ ((l.2 : ℕ) * z x) * w ^ ((l.2 : ℕ) * s x)) = P * Q := by
+      (φ l.1 (z x) : R) * t ^ ((l.2 : ℕ) * z x) * w ^ ((l.2 : ℕ) * s x)) = P * Q := by
     ext x l
-    have ez : (z x : R) ^ (l.1 : ℕ) * t ^ ((l.2 : ℕ) * z x) =
+    have ez : (φ l.1 (z x) : R) * t ^ ((l.2 : ℕ) * z x) =
         ∑ j ∈ range (Z + 1), X l.2 ^ j *
           ∑ i ∈ range (Z + K + 1), (c l.1 j i : R) * ((z x).choose i : R) := by
       rw [pow_mul, show t ^ (l.2 : ℕ) = 1 + X l.2 by simp [X], one_add_pow_eq_sum _ (hzZ x),
@@ -273,6 +279,16 @@ theorem dvd_det_interp {R : Type*} [CommRing R] (p t w : R) {g : ℕ} (hg : 1 �
   refine dvd_det_mul p Qᵀ Pᵀ (fun μ => (μ : ι).1 - K + g * (μ : ι).2) hdiv _ fun f hf => ?_
   have := sum_weight_ge_shift hg T K (fun a => (((f a).1 : ℕ), ((f a).2 : ℕ)))
     (fun a b h => hf (by simp only [Prod.mk.injEq] at h; exact Prod.ext (Fin.ext h.1) (Fin.ext h.2)))
+  simpa using this
+
+
+/-- The `z^k` instance of `dvd_det_interp_gen`. -/
+theorem dvd_det_interp {R : Type*} [CommRing R] (p t w : R) {g : ℕ} (hg : 1 ≤ g)
+    (ht : p ∣ t - 1) (hw : p ^ g ∣ w - 1) (K L : ℕ) (z s : Fin K × Fin L → ℕ) (T : ℕ) :
+    p ^ (T * (K * L - (T + K) * (T / g + 1))) ∣
+      (Matrix.of fun (x l : Fin K × Fin L) =>
+        (z x : R) ^ (l.1 : ℕ) * t ^ ((l.2 : ℕ) * z x) * w ^ ((l.2 : ℕ) * s x)).det := by
+  have := dvd_det_interp_gen (fun k z => (z : ℤ) ^ k) pow_mul_choose_expand p t w hg ht hw K L z s T
   simpa using this
 
 /-- **(b), homogenised integer form (proved).**  With `V = a tᵟ`, `3 ∤ V`, `3 ∣ t − 1`,
@@ -356,6 +372,151 @@ theorem three_pow_le_of_det_ne_zero (t a b : ℤ) (δ : ℕ) {g : ℕ} (hg : 1 �
     (abv := AbsoluteValue.abs) (fun x l => by simpa using hX x l)
   rw [Fintype.card_prod, Fintype.card_fin, Fintype.card_fin, nsmul_eq_mul] at this
   exact this
+
+/-! ### Binomial columns and the grid form -/
+
+section Newton
+open Polynomial
+
+/-- The polynomial `C(X,k)` over `ℚ`. -/
+noncomputable def chooseP (k : ℕ) : ℚ[X] := C ((k.factorial : ℚ)⁻¹) * descPochhammer ℚ k
+
+theorem chooseP_eval (k n : ℕ) : (chooseP k).eval (n : ℚ) = (n.choose k : ℚ) := by
+  rw [chooseP, eval_mul, eval_C, descPochhammer_eval_eq_descFactorial,
+    Nat.descFactorial_eq_factorial_mul_choose]
+  push_cast
+  field_simp
+
+theorem chooseP_natDegree (k : ℕ) : (chooseP k).natDegree ≤ k :=
+  (natDegree_C_mul_le _ _).trans (descPochhammer_natDegree ℚ k).le
+
+/-- **Binomial-basis expansion of `C(z,k) C(z,j)` (proved).**  Integer coefficients, supported on
+`i ≤ k + j`: Gregory–Newton (`shift_eq_sum_fwdDiff_iter`) with coefficients `Δⁱ f(0) ∈ ℤ`, which
+vanish for `i > k+j` because `f` agrees on `ℕ` with a rational polynomial of degree `≤ k+j`.  This
+lets the interpolation determinant use the columns `C(z,k)` (height `K log(ez/K)`, no `log K!`
+loss), as in Bugeaud–Laurent's `b' = δ/B`. -/
+theorem choose_mul_choose_expand (k j : ℕ) : ∃ c : ℕ → ℤ, (∀ i, k + j < i → c i = 0) ∧
+    ∀ (z : ℕ) N, k + j < N →
+      ((z.choose k : ℤ) * (z.choose j : ℤ)) = ∑ i ∈ range N, c i * (z.choose i : ℤ) := by
+  set f : ℕ → ℤ := fun z => (z.choose k : ℤ) * (z.choose j : ℤ)
+  set P := chooseP k * chooseP j
+  have hP : ∀ n : ℕ, P.eval (n : ℚ) = (f n : ℚ) := by
+    intro n; simp [P, f, chooseP_eval]
+  have hdeg : P.natDegree ≤ k + j :=
+    natDegree_mul_le.trans (add_le_add (chooseP_natDegree k) (chooseP_natDegree j))
+  have hc0 : ∀ i, k + j < i → (fwdDiff 1)^[i] f 0 = 0 := by
+    intro i hi
+    have h1 := fwdDiff_iter_eq_sum_shift (h := (1 : ℕ)) f i 0
+    have h2 := fwdDiff_iter_eq_sum_shift (h := (1 : ℚ)) P.eval i 0
+    rw [Polynomial.fwdDiff_iter_eq_zero_of_degree_lt (by omega)] at h2
+    have : (((fwdDiff 1)^[i] f 0 : ℤ) : ℚ) = 0 := by
+      rw [h1, Pi.zero_apply] at *
+      push_cast
+      rw [h2]
+      refine sum_congr rfl fun m _ => ?_
+      simp only [zsmul_eq_mul, smul_eq_mul, zero_add, nsmul_eq_mul, mul_one, Nat.cast_id]
+      push_cast
+      rw [hP]
+    exact_mod_cast this
+  refine ⟨fun i => (fwdDiff 1)^[i] f 0, hc0, fun z N hN => ?_⟩
+  have h := shift_eq_sum_fwdDiff_iter (h := (1 : ℕ)) f z 0
+  simp only [zero_add, smul_eq_mul, mul_one] at h
+  change f z = _
+  rw [h]
+  have e1 : ∑ i ∈ range (z + 1), z.choose i • (fwdDiff 1)^[i] f 0 =
+      ∑ i ∈ range (max (z + 1) N), z.choose i • (fwdDiff 1)^[i] f 0 :=
+    sum_subset (range_subset_range.2 (le_max_left _ _)) fun i _ hi => by
+      rw [Nat.choose_eq_zero_of_lt (by simpa using hi), zero_smul]
+  have e2 : ∑ i ∈ range N, (fwdDiff 1)^[i] f 0 * (z.choose i : ℤ) =
+      ∑ i ∈ range (max (z + 1) N), (fwdDiff 1)^[i] f 0 * (z.choose i : ℤ) :=
+    sum_subset (range_subset_range.2 (le_max_right _ _)) fun i _ hi => by
+      rw [hc0 i (by simp at hi; omega), zero_mul]
+  rw [e1, e2]
+  refine sum_congr rfl fun i _ => ?_
+  rw [nsmul_eq_mul, mul_comm]
+
+end Newton
+
+/-- **(b), homogenised form over the grid `(r, s)` (proved).**  For any column family `φ` with a
+binomial-basis expansion (`z^k`: `pow_mul_choose_expand`; `C(z,k)`: `choose_mul_choose_expand`),
+`3 ∣ t − 1`, `3 ∤ a`, `3ᵍ ∣ b − a tᵟ`: the integer determinant with entries
+`φ_k(r + δs) · t^{lr} b^{ls} a^{(L−1−l)s}` (heights `log t` and `log max(|a|,|b|)` only) is divisible
+by `3^{T(KL − (T+K)(T/g+1))}`.  In `ZMod 3^m`: the row scaling `a^{(L−1)s}` is a unit and the
+entries become `φ_k(z) t^{lz} w^{ls}`, `z = r + δs`, `w = b/(a tᵟ)`, so `dvd_det_interp_gen`
+applies with `3^m = 0`. -/
+theorem three_pow_dvd_det_rs (φ : ℕ → ℕ → ℤ)
+    (hφ : ∀ k j : ℕ, ∃ c : ℕ → ℤ, (∀ i, k + j < i → c i = 0) ∧ ∀ (z : ℕ) N, k + j < N →
+      φ k z * (z.choose j : ℤ) = ∑ i ∈ range N, c i * (z.choose i : ℤ))
+    (t a b : ℤ) (δ : ℕ) {g : ℕ} (hg : 1 ≤ g) (ht : 3 ∣ t - 1) (ha : ¬ (3 : ℤ) ∣ a)
+    (hab : (3 : ℤ) ^ g ∣ b - a * t ^ δ) (K L : ℕ) (r s : Fin K × Fin L → ℕ) (T : ℕ) :
+    (3 : ℤ) ^ (T * (K * L - (T + K) * (T / g + 1))) ∣
+      (Matrix.of fun (x l : Fin K × Fin L) => φ l.1 (r x + δ * s x) * t ^ ((l.2 : ℕ) * r x) *
+        b ^ ((l.2 : ℕ) * s x) * a ^ ((L - 1 - l.2) * s x)).det := by
+  set m := T * (K * L - (T + K) * (T / g + 1))
+  have h3 : ((3 ^ m : ℕ) : ℤ) = 3 ^ m := by push_cast; rfl
+  rw [← h3, ← ZMod.intCast_zmod_eq_zero_iff_dvd]
+  set R := ZMod (3 ^ m)
+  rw [show ((det _ : ℤ) : R) = (Int.castRingHom R) (det _) from rfl, RingHom.map_det]
+  have hunit : ∀ y : ℤ, ¬ (3 : ℤ) ∣ y → IsUnit (y : R) := by
+    intro y hy
+    have hcop : y.natAbs.Coprime (3 ^ m) := Nat.Coprime.pow_right m
+      ((Nat.Prime.coprime_iff_not_dvd Nat.prime_three).2 (by
+        intro h; exact hy (Int.natCast_dvd.2 h))).symm
+    have := (ZMod.isUnit_iff_coprime _ _).2 hcop
+    rcases Int.natAbs_eq y with h | h <;> rw [h]
+    · rw [Int.cast_natCast]; exact this
+    · rw [Int.cast_neg, Int.cast_natCast]; exact this.neg
+  have ht3 : ¬ (3 : ℤ) ∣ t := fun h => by
+    have := (Int.dvd_sub h ht); simp at this
+  obtain ⟨ua, hua⟩ := hunit a ha
+  obtain ⟨ut, hut⟩ := hunit t ht3
+  have hia : (a : R) * ↑ua⁻¹ = 1 := by rw [← hua]; simp
+  have hit : (t : R) * ↑ut⁻¹ = 1 := by rw [← hut]; simp
+  set w : R := (b : R) * ↑ua⁻¹ * (↑ut⁻¹ : R) ^ δ
+  have hmat : (Int.castRingHom R).mapMatrix (Matrix.of fun (x l : Fin K × Fin L) =>
+      φ l.1 (r x + δ * s x) * t ^ ((l.2 : ℕ) * r x) * b ^ ((l.2 : ℕ) * s x) *
+        a ^ ((L - 1 - l.2) * s x)) = Matrix.of fun x l => (a : R) ^ ((L - 1) * s x) *
+      ((φ l.1 (r x + δ * s x) : R) * (t : R) ^ ((l.2 : ℕ) * (r x + δ * s x)) *
+        w ^ ((l.2 : ℕ) * s x)) := by
+    ext x l
+    rw [RingHom.mapMatrix_apply, Matrix.map_apply, of_apply, of_apply]
+    simp only [map_mul, map_pow, eq_intCast]
+    have hl : (L - 1) * s x = (L - 1 - l.2) * s x + (l.2 : ℕ) * s x := by
+      rw [← add_mul]; congr 1; have := l.2.isLt; omega
+    have e1 : (a : R) ^ ((l.2 : ℕ) * s x) * (↑ua⁻¹ : R) ^ ((l.2 : ℕ) * s x) = 1 := by
+      rw [← mul_pow, hia, one_pow]
+    have e2 : (t : R) ^ (δ * ((l.2 : ℕ) * s x)) * (↑ut⁻¹ : R) ^ (δ * ((l.2 : ℕ) * s x)) = 1 := by
+      rw [← mul_pow, hit, one_pow]
+    rw [hl, pow_add, mul_add, pow_add, show (l.2 : ℕ) * (δ * s x) = δ * ((l.2 : ℕ) * s x) by ring]
+    simp only [w, mul_pow, ← pow_mul]
+    rw [show δ * ((l.2 : ℕ) * s x) = δ * ((l.2 : ℕ) * s x) from rfl]
+    linear_combination (-1 : R) * ((φ l.1 (r x + δ * s x) : R) * (t : R) ^ ((l.2 : ℕ) * r x) *
+      (b : R) ^ ((l.2 : ℕ) * s x) * (a : R) ^ ((L - 1 - l.2) * s x)) *
+      ((t : R) ^ (δ * ((l.2 : ℕ) * s x)) * (↑ut⁻¹ : R) ^ (δ * ((l.2 : ℕ) * s x)) * e1 + e2)
+  have hcol := det_mul_column (fun x : Fin K × Fin L => (a : R) ^ ((L - 1) * s x))
+    (Matrix.of fun (x l : Fin K × Fin L) =>
+      (φ l.1 (r x + δ * s x) : R) * (t : R) ^ ((l.2 : ℕ) * (r x + δ * s x)) * w ^ ((l.2 : ℕ) * s x))
+  simp only [of_apply] at hcol
+  rw [hmat, hcol]
+  have ht' : (3 : R) ∣ (t : R) - 1 := by
+    simpa using (Int.castRingHom R).map_dvd ht
+  have hw' : (3 : R) ^ g ∣ w - 1 := by
+    obtain ⟨c, hc⟩ := hab
+    have h : (3 : R) ^ g ∣ (b : R) - (a : R) * (t : R) ^ δ := ⟨c, by
+      have := congrArg (Int.castRingHom R) hc
+      simp only [map_mul, map_pow, map_sub, eq_intCast, map_ofNat] at this; exact this⟩
+    have : w - 1 = ((b : R) - (a : R) * (t : R) ^ δ) * (↑ua⁻¹ * (↑ut⁻¹ : R) ^ δ) := by
+      simp only [w]
+      have : (a : R) * (t : R) ^ δ * (↑ua⁻¹ * (↑ut⁻¹ : R) ^ δ) = 1 := by
+        rw [show (a : R) * (t : R) ^ δ * (↑ua⁻¹ * (↑ut⁻¹ : R) ^ δ) =
+          ((a : R) * ↑ua⁻¹) * ((t : R) * ↑ut⁻¹) ^ δ by ring, hia, hit]; simp
+      linear_combination this
+    rw [this]; exact h.mul_right _
+  obtain ⟨c, hc⟩ := dvd_det_interp_gen φ hφ (3 : R) (t : R) w hg ht' hw' K L
+    (fun x => r x + δ * s x) s T
+  have h0 : (3 : R) ^ m = 0 := by
+    rw [show (3 : R) ^ m = ((3 ^ m : ℕ) : R) by push_cast; rfl, ZMod.natCast_self]
+  rw [hc, h0, zero_mul, mul_zero]
 
 namespace Literature
 
