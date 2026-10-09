@@ -3635,3 +3635,13 @@ Next: `isFresh` Riesz bound, then the classification lemma in Lean (route-decisi
   selfGoodPerfect_four lowered to 20%; JointRationalsFinite raised to 75%.  The gate (sorry-free Tower file) rests
   on a leaf now believed false: operator should decide between refuting (prove ¬RationalTower 4 conditionally) or
   a non-rational tower mechanism.
+
+## c⋆ gate 3 lap 2 (2026-10-09)
+- PROVED `not_selfGoodPerfect_four_of_coset`: `CosetSurvival 4 κ C` (κ > 0) + cited `CZGcdTwoThree`
+  (Corvaja–Zannier 2005, transcription weaker than source) ⇒ ¬SelfGoodPerfect 4 ∧ ¬RationalTower 4, via
+  `jointRationalsFinite_of_coset` (bounded a+b, then bounded denominator; `finite_rat_Ico_den_le`).
+- The open part of the refutation is now the per-denominator, finitely checkable node `CosetSurvival`
+  (70%); control: holds with κ = 0.0125, C = 1 on all 260 census denominators q ≤ 2e5 (coprime to 6).
+- NEXT: test CosetSurvival on large structured moduli (divisors of gcd(2^a−1, 3^b−1), e.g. (144, 432))
+  and on denominators divisible by 2, 3; a counterexample would reopen rational towers.  The gate leaf
+  `selfGoodPerfect_four` stays a disclosed sorry, believed false.

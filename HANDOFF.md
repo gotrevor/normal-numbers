@@ -1,3 +1,5 @@
+# STUCK strike 2 (2026-10-09, c⋆ gate 3 lap 2): read HANDOFF-2026-10-09-cstar-gate3-lap2.md
+
 # STUCK claim (2026-10-07, c⋆ lap 13, fresh review lap after the operator rerun): read HANDOFF-2026-10-07-cstar-lap13.md
 - **Blocked:** run gate `sorry-free:src/NormalNumbers/UniformBadNineHalves.lean` (frozen `cStar_le_nine_halves`).
 - **New this lap:** `not_perStageCert` (per-stage engine has no certificate at 9/2 even with bases 2, 3 only),

@@ -676,6 +676,121 @@ theorem not_rationalTower_of_jointRationalsFinite {c : ℝ} (hfin : JointRationa
   subst hsr
   exact goodBelow_mono (le_max_left _ _) hyg b hb hbB n
 
+
+/-- **Cited (Corvaja–Zannier, Monatsh. Math. 144 (2005) 203–224, arXiv math/0311030; the
+`ℤ`-case also Bugeaud–Corvaja–Zannier 2003).**  For a finite set `S` of primes and `ε > 0`, all
+`S`-unit integers `α, β` satisfy `gcd(α − 1, β − 1) ≤ max(|α|, |β|)^ε`, outside a finite set and
+outside pairs with `α^m = β^n`, `max(m, n) ≤ 1/ε`.  For `α = 2^a`, `β = 3^b` the second exception
+never occurs, the finite set is absorbed into `C`, and `max(2^a, 3^b)^ε ≤ exp(2ε(a + b))`, so this
+transcription is weaker than the source (after rescaling `ε`). -/
+def CZGcdTwoThree : Prop :=
+  ∀ ε > 0, ∃ C : ℝ, ∀ a b : ℕ, 1 ≤ a → 1 ≤ b →
+    (Nat.gcd (2 ^ a - 1) (3 ^ b - 1) : ℝ) ≤ C * Real.exp (ε * (a + b))
+
+/-- **Conjecture node (believed 70%): coset survival.**  The square-root coset model, as a
+deterministic per-denominator statement.  Write `q = 2^i 3^j m` with `gcd(m, 6) = 1`; let `a, b` be
+the orders of `2` and `3` on the parts prime to them, so `3^j m ∣ 2^a − 1`, `2^i m ∣ 3^b − 1`.  The
+model expects about `m·exp(−κ(a + b))` numerators good for the bases `2, 3` (the `2^i` factor is
+paid for by `ord(3) ≥ 2^{i−2}`, which is why `m` and not `q` appears).  The node asserts the
+consequence: a good rational exists only where this expectation is at least `1/C`.  Unlike
+`JointRationalsFinite`, it is a finite check for each `q`, so it can be refuted denominator by
+denominator (`scripts/cstar_models/coset_survival_check.py` reports the least `C` on the census).
+
+Evidence (`node joint_rationals.js 4 200000 3 | python3 coset_survival_check.py`, 2026-10-09): all
+260 denominators `q ≤ 2·10⁵` with `gcd(q, 6) = 1` carrying a `{2, 3}`-good numerator at `c = 4`
+satisfy it with `κ = 0.0125` (the measured base-3 rate) and `C = 1` (worst `log C = −1.5`); `κ = 0.02`
+needs `log C = 0.05` (`q = 4513`), `κ = 0.067` needs `log C = 20.9`.  Not tested: denominators
+divisible by `2` or `3`. -/
+def CosetSurvival (c κ C : ℝ) : Prop :=
+  ∀ y : ℚ, GoodBelow c 4 (y : ℝ) → ∃ a b i j m : ℕ, 1 ≤ a ∧ 1 ≤ b ∧
+    y.den = 2 ^ i * 3 ^ j * m ∧ 3 ^ j * m ∣ 2 ^ a - 1 ∧ 2 ^ i * m ∣ 3 ^ b - 1 ∧
+    Real.exp (κ * (a + b)) ≤ C * m
+
+/-- Rationals in `[0, 1)` with bounded denominator are finitely many. -/
+theorem finite_rat_Ico_den_le (N : ℕ) :
+    {y : ℚ | 0 ≤ y ∧ y < 1 ∧ y.den ≤ N}.Finite := by
+  refine ((Finset.range (N + 1) ×ˢ Finset.range (N + 1)).finite_toSet.image
+    (fun pq : ℕ × ℕ => (pq.1 : ℚ) / pq.2)).subset ?_
+  rintro y ⟨h0, h1, hN⟩
+  have hnum : 0 ≤ y.num := Rat.num_nonneg.2 h0
+  have hlt : y.num < y.den := by
+    have := Rat.num_lt_succ_floor_mul_den y
+    have hf : ⌊y⌋ = 0 := Int.floor_eq_zero_iff.2 ⟨h0, h1⟩
+    rw [hf] at this; simpa using this
+  refine ⟨(y.num.toNat, y.den), ?_, ?_⟩
+  · simp only [Finset.coe_product, Finset.coe_range, Set.mem_prod, Set.mem_Iio]; omega
+  · simp only
+    have : ((y.num.toNat : ℕ) : ℚ) = (y.num : ℚ) := by exact_mod_cast Int.toNat_of_nonneg hnum
+    rw [this]; exact Rat.num_div_den y
+
+/-- **Proved.**  Coset survival plus Corvaja–Zannier gives `JointRationalsFinite`.  A good rational
+forces `exp(κ(a + b)) ≤ C·m ≤ C·gcd(2^a − 1, 3^b − 1) ≤ C·C'·exp(κ(a + b)/2)`, so `a + b` is
+bounded, and then `q ≤ (2^i m)(3^j m) ≤ 3^b 2^a` is bounded. -/
+theorem jointRationalsFinite_of_coset {c κ C : ℝ} (hκ : 0 < κ) (hcz : CZGcdTwoThree)
+    (hcos : CosetSurvival c κ C) : JointRationalsFinite c := by
+  obtain ⟨C', hC'⟩ := hcz (κ / 2) (by positivity)
+  -- a + b is bounded
+  obtain ⟨A, hA⟩ : ∃ A : ℕ, ∀ s : ℕ, Real.exp (κ * s) ≤ C * (C' * Real.exp (κ / 2 * s)) → s ≤ A := by
+    obtain ⟨A, hA⟩ := exists_nat_gt (2 * Real.log (max (C * C') 1) / κ)
+    refine ⟨A, fun s hs => ?_⟩
+    by_contra hlt; push Not at hlt
+    have e : Real.exp (κ * s) = Real.exp (κ / 2 * s) * Real.exp (κ / 2 * s) := by
+      rw [← Real.exp_add]; ring_nf
+    rw [e, ← mul_assoc] at hs
+    have hp := Real.exp_pos (κ / 2 * s)
+    have h1 : Real.exp (κ / 2 * s) ≤ C * C' := le_of_mul_le_mul_right hs hp
+    have h2 : Real.log (max (C * C') 1) < κ / 2 * s := by
+      have : (A : ℝ) < s := by exact_mod_cast hlt
+      rw [div_lt_iff₀ hκ] at hA; nlinarith
+    have h3 := Real.exp_lt_exp.2 h2
+    rw [Real.exp_log (by positivity)] at h3
+    linarith [le_max_left (C * C') 1]
+  refine (finite_rat_Ico_den_le (36 ^ A)).subset ?_
+  rintro y ⟨h0, h1, hg⟩
+  refine ⟨h0, h1, ?_⟩
+  obtain ⟨a, b, i, j, m, ha, hb, hden, hda, hdb, hexp⟩ := hcos y hg
+  have hm : m ∣ Nat.gcd (2 ^ a - 1) (3 ^ b - 1) :=
+    Nat.dvd_gcd (dvd_trans (Dvd.intro_left _ rfl) hda) (dvd_trans (Dvd.intro_left _ rfl) hdb)
+  have hg0 : 0 < Nat.gcd (2 ^ a - 1) (3 ^ b - 1) :=
+    Nat.gcd_pos_of_pos_left _ (Nat.sub_pos_of_lt (Nat.one_lt_two_pow (by omega)))
+  have hmle : (m : ℝ) ≤ Nat.gcd (2 ^ a - 1) (3 ^ b - 1) := by
+    exact_mod_cast Nat.le_of_dvd hg0 hm
+  have hCpos : 0 ≤ C := by
+    by_contra hC; push Not at hC
+    have : C * m ≤ 0 := mul_nonpos_of_nonpos_of_nonneg hC.le (by positivity)
+    linarith [Real.exp_pos (κ * (a + b))]
+  have hab : a + b ≤ A := by
+    apply hA
+    push_cast
+    calc Real.exp (κ * (a + b)) ≤ C * m := hexp
+      _ ≤ C * (C' * Real.exp (κ / 2 * (a + b))) :=
+        mul_le_mul_of_nonneg_left (hmle.trans (hC' a b ha hb)) hCpos
+  have hpa : 3 ^ j * m ≤ 2 ^ a := (Nat.le_of_dvd (Nat.sub_pos_of_lt (Nat.one_lt_two_pow (by omega))) hda).trans (Nat.sub_le _ _)
+  have hpb : 2 ^ i * m ≤ 3 ^ b := (Nat.le_of_dvd (Nat.sub_pos_of_lt (Nat.one_lt_pow (by omega) (by norm_num))) hdb).trans (Nat.sub_le _ _)
+  have hm1 : 1 ≤ m := by
+    rcases Nat.eq_zero_or_pos m with h | h
+    · subst h; simp at hden
+    · exact h
+  rw [hden]
+  show 2 ^ i * 3 ^ j * m ≤ 36 ^ A
+  calc 2 ^ i * 3 ^ j * m ≤ (2 ^ i * m) * (3 ^ j * m) := by nlinarith [Nat.zero_le (2 ^ i * 3 ^ j)]
+    _ ≤ 3 ^ b * 2 ^ a := Nat.mul_le_mul hpb hpa
+    _ ≤ 6 ^ A * 6 ^ A := Nat.mul_le_mul ((Nat.pow_le_pow_left (by norm_num) b).trans (Nat.pow_le_pow_right (by norm_num) (by omega))) ((Nat.pow_le_pow_left (by norm_num) a).trans (Nat.pow_le_pow_right (by norm_num) (by omega)))
+    _ = 36 ^ A := by rw [← mul_pow]; norm_num
+/-- **Proved: the gate leaf is false under the model.**  Coset survival (any `κ > 0`) and
+Corvaja–Zannier refute `SelfGoodPerfect 4`, hence the crux leaf `selfGoodPerfect_four`: there is a
+self-good rational (`529/2730`), and a perfect set of them would be a rational tower. -/
+@[blueprint (title := "Rational towers at c = 4 are refuted by coset survival plus Corvaja–Zannier")]
+theorem not_selfGoodPerfect_four_of_coset {κ C : ℝ} (hκ : 0 < κ) (hcz : CZGcdTwoThree)
+    (hcos : CosetSurvival 4 κ C) : ¬ SelfGoodPerfect 4 ∧ ¬ RationalTower 4 := by
+  have hT := not_rationalTower_of_jointRationalsFinite (jointRationalsFinite_of_coset hκ hcz hcos)
+  refine ⟨fun h => hT ?_, hT⟩
+  refine rationalTower_of_selfGoodPerfect h (529 / 2730) ?_
+  have h : ((529 / 2730 : ℚ)).den = 2730 := by decide +kernel
+  rw [h]
+  have e : (((529 / 2730 : ℚ)) : ℝ) = 529 / 2730 := by push_cast; ring
+  rw [e]; exact goodBelow_529_2730
+
 /-- **Stretch node.**  Believed 25%.  A rational tower at exponent `3`.  Host density at
 `c = 3` is `0/3000` at `Q_36`, `Q_60` and `Q_72`, so it needs structured numerators. -/
 def RationalTowerThree : Prop := RationalTower 3
