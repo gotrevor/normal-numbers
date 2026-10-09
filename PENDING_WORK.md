@@ -7,6 +7,22 @@
   run vs free (min ≤ θ unless both large), both-large pairs counted per row via
   `card_cluster_le` + SparseIdentityBound as in `runOrbitDecay_of_sparse`.  Then the ψ shape.
 
+* Lap 12 later: `card_sparse_orbit_le`, `RunSparseDecay`/`runSparseDecay_of_sparse`,
+  `CycMerge.cycSparse_of_three_pow_mul` (unrotation), `sched_tail1` (Σ_{sched j≥X} 1/sched j ≲ log X/X).
+* P1 ASSEMBLY DESIGN (next laps):
+  1. Refined classification: re-prove `pair_classify_rep` so classes 2/4 also return the run k
+     (`deep_or_fresh hnv` gives it) — `v` deep in even run k; then derive `E ≤ T < a_{k+2}`
+     (class 4) / `E ≤ y ≤ u`, `y < a_{k+2}` (class 2), all of `[E, top]` fresh, `< M`.
+  2. Per-pair: min(repBound none, repBound (some k)) ≤ θ_k + 1[both ≥ θ_k];
+     both ≥ θ_k ⇒ (`cycSparse_of_copy_free` on ξ (class 4) or on −Y (class 2: copy/free of ξ equal
+     those of −Y since u ≥ E; cos/cycProdR even)) ⇒ unrotate ⇒ `CycSparse A K'' (c tᵐ)`,
+     c = h'(bᵈ−1) (class 4) or c = h' (class 2).  θ_k = 2cos(π/9)^{⌊√k⌋+1}, K'' = 2(6K+16).
+  3. Totals: shadow pairs with v in run k: m ∈ run-k range (≤ N_k), d < N ⇒ shape N·N_k·φ_k
+     (θ part + RunSparseDecay rows + `card_degRows_le`).  Summable along sched via `sched_tail1`
+     (new `summable_shadow_sched`, analog of `summable_copy_sched`).
+  4. New `repPairPos_shadow` (copy of `repPairPos_copy` with pairMaj' = pairMaj minus topProd
+     terms plus shadow terms; no hB) ⇒ `repPairArith_of_sparse`.
+
 ## Repetition lap 11 (2026-10-09) — P3(a) algebraic core PROVED; zero lemma STATED
 * New `src/NormalNumbers/PadicTwoLogs.lean`.  PROVED: `dvd_det_mul` (Cauchy–Binet valuation bound
   via multilinear expansion of rows; non-injective selections vanish by alternation),
