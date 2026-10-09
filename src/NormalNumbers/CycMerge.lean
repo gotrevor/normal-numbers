@@ -254,4 +254,28 @@ theorem cycSparse_add (A : ℕ) (hA : 1 ≤ A) {K₁ K₂ : ℕ} {y₁ y₂ : �
   rw [this, show 2 * (3 ^ i * y₂) = 3 ^ i * (2 * y₂) by ring]
   exact Int.ModEq.add_right _ (Int.ModEq.mul_left _ hy₁.symm)
 
+/-- **Unrotation (proved).**  `CycSparse A K (3ʲ y)` gives `CycSparse A (2K) y`
+(`3^{rA} ≡ 1`, so multiplying by `3^{rA − j}` undoes the shift). -/
+theorem cycSparse_of_three_pow_mul (A : ℕ) (hA : 1 ≤ A) {K : ℕ} {y : ℤ} (j : ℕ)
+    (h : SparseIdentity.CycSparse A K (3 ^ j * y)) : SparseIdentity.CycSparse A (2 * K) y := by
+  obtain ⟨S, c, -, hS, hc, hy⟩ := h
+  obtain ⟨d, hd, hs, hv⟩ := exists_bal_finsum A hA S c (· + (j * A - j)) (fun e he => (hc e he).2)
+  refine cycSparse_of_bal A _ d hd (hs.trans (by omega)) y ?_
+  refine Int.ModEq.symm (hv.trans ?_)
+  have h1 : (3 : ℤ) ^ (j * A) ≡ 1 [ZMOD (3 ^ A - 1)] := by
+    have : (3 : ℤ) ^ A ≡ 1 [ZMOD (3 ^ A - 1)] := by
+      rw [Int.modEq_iff_dvd]; exact ⟨-1, by ring⟩
+    simpa [← pow_mul, mul_comm] using this.pow j
+  have hjA : j ≤ j * A := Nat.le_mul_of_pos_right _ hA
+  have e : ∑ x ∈ S, c x * 3 ^ (x + (j * A - j)) = 3 ^ (j * A - j) * ∑ x ∈ S, c x * 3 ^ x := by
+    rw [mul_sum]; exact sum_congr rfl fun _ _ => by rw [pow_add]; ring
+  rw [e]
+  calc (3 : ℤ) ^ (j * A - j) * ∑ x ∈ S, c x * 3 ^ x
+      ≡ 3 ^ (j * A - j) * (2 * (3 ^ j * y)) [ZMOD (3 ^ A - 1)] := Int.ModEq.mul_left _ hy.symm
+    _ = 3 ^ (j * A) * (2 * y) := by
+        have : (3 : ℤ) ^ (j * A) = 3 ^ (j * A - j) * 3 ^ j := by rw [← pow_add]; congr 1; omega
+        rw [this]; ring
+    _ ≡ 1 * (2 * y) [ZMOD (3 ^ A - 1)] := Int.ModEq.mul_right _ h1
+    _ = 2 * y := one_mul _
+
 end NormalNumbers.CycMerge
