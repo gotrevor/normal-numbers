@@ -1,3 +1,12 @@
+## Repetition lap 12 (2026-10-09) — P3 assembly PROVED; P1 per-pair leaves PROVED
+* `PadicTwoLogsAssembly.padicTwoLogs_of_zeroLemma`: `LaurentZeroLemma → Literature.PadicTwoLogs`.
+* P1 leaves: `CycMerge.cycSparse_of_sum/exists_bal_finsum/cycSparse_add` (carry/merge),
+  `cycSparse_of_cycProdR_ge` (copy ≥ θ), `isSparse3_of_freeProd_ge` (free ≥ θ),
+  `cycSparse_of_copy_free` (both ≥ θ ⇒ `3^{v−A}Z` CycSparse A (6K+16)) — on the real repBound ξ.
+* NEXT (P1 crux): Baker-free `repPairPos_explicit` variant — shadow classes 2/4 choose κ = copy
+  run vs free (min ≤ θ unless both large), both-large pairs counted per row via
+  `card_cluster_le` + SparseIdentityBound as in `runOrbitDecay_of_sparse`.  Then the ψ shape.
+
 ## Repetition lap 11 (2026-10-09) — P3(a) algebraic core PROVED; zero lemma STATED
 * New `src/NormalNumbers/PadicTwoLogs.lean`.  PROVED: `dvd_det_mul` (Cauchy–Binet valuation bound
   via multilinear expansion of rows; non-injective selections vanish by alternation),

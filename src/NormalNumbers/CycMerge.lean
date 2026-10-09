@@ -226,4 +226,32 @@ theorem exists_bal_finsum {ι : Type*} [DecidableEq ι] (A : ℕ) (hA : 1 ≤ A)
     refine ⟨d', hd', by rw [card_insert_of_notMem ha]; omega, hv'.trans ?_⟩
     rw [sum_insert ha, add_comm]; exact Int.ModEq.add_left _ hv
 
+/-- **Sum of a cyclic-sparse and a sparse number (proved).**  `CycSparse A K₁ y₁` and
+`IsSparse3 K₂ (2y₂)` give `CycSparse A (2(K₁ + K₂)) (3ʲ y₁ + 3ⁱ y₂)` for any shifts `i, j`. -/
+theorem cycSparse_add (A : ℕ) (hA : 1 ≤ A) {K₁ K₂ : ℕ} {y₁ y₂ : ℤ} (i j : ℕ)
+    (h₁ : SparseIdentity.CycSparse A K₁ y₁) (h₂ : SparseIdentity.IsSparse3 K₂ (2 * y₂)) :
+    SparseIdentity.CycSparse A (2 * (K₁ + K₂)) (3 ^ j * y₁ + 3 ^ i * y₂) := by
+  obtain ⟨S₁, c₁, -, hS₁, hc₁, hy₁⟩ := h₁
+  obtain ⟨S₂, c₂, hS₂, hc₂, hy₂⟩ := h₂
+  obtain ⟨d, hd, hs, hv⟩ := exists_bal_finsum A hA (S₁.disjSum S₂)
+    (Sum.elim c₁ c₂) (Sum.elim (· + j) (· + i)) (by
+      intro x hx
+      rcases x with x | x
+      · exact (hc₁ x (mem_disjSum.1 hx |>.elim (fun ⟨a, ha, h⟩ => by
+          cases h; exact ha) (fun ⟨_, _, h⟩ => by cases h))).2
+      · exact (hc₂ x (mem_disjSum.1 hx |>.elim (fun ⟨_, _, h⟩ => by cases h)
+          (fun ⟨a, ha, h⟩ => by cases h; exact ha))).2)
+  refine cycSparse_of_bal A _ d hd (hs.trans (by rw [card_disjSum]; omega)) _ ?_
+  refine Int.ModEq.symm (hv.trans ?_)
+  rw [sum_disjSum]
+  simp only [Sum.elim_inl, Sum.elim_inr, pow_add]
+  have e1 : ∑ x ∈ S₁, c₁ x * (3 ^ x * 3 ^ j) = 3 ^ j * ∑ x ∈ S₁, c₁ x * 3 ^ x := by
+    rw [mul_sum]; exact sum_congr rfl fun _ _ => by ring
+  have e2 : ∑ x ∈ S₂, c₂ x * (3 ^ x * 3 ^ i) = 3 ^ i * ∑ x ∈ S₂, c₂ x * 3 ^ x := by
+    rw [mul_sum]; exact sum_congr rfl fun _ _ => by ring
+  rw [e1, e2, ← hy₂, mul_add]
+  have : 2 * (3 ^ j * y₁) = 3 ^ j * (2 * y₁) := by ring
+  rw [this, show 2 * (3 ^ i * y₂) = 3 ^ i * (2 * y₂) by ring]
+  exact Int.ModEq.add_right _ (Int.ModEq.mul_left _ hy₁.symm)
+
 end NormalNumbers.CycMerge

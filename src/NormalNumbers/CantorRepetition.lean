@@ -4495,6 +4495,81 @@ theorem isSparse3_of_freeProd_ge {Q K : ℕ} {θ : ℝ} (hK : Real.cos (Real.pi 
         show P - 1 - i + 1 = P - i by omega]
     rw [hP1, h0, hmid]; ring
 
+/-- **P1 step 3: copy and free options both large ⇒ the pair is cyclically sparse (proved).**
+`ξ = 3ᵛ Z`, `A = a_k` (`k` even), `E = (k+2)A`, `A ≤ v ≤ E`, `Z = Z_top 3^{E−v} + Z_low`,
+`0 ≤ Z_top < 3^Q`.  If the copy option `repBound M (some k) ξ` and the fresh window
+`∏_{q<Q} |cos(2πξ/3^{E+q+1})|` are both `≥ θ > cos(π/9)^K`, then `3^{v−A} Z` is cyclically
+`(6K + 16)`-sparse modulo `3^A − 1`. -/
+theorem cycSparse_of_copy_free {k K Q M : ℕ} (hk : Even k) {θ : ℝ}
+    (hK : Real.cos (Real.pi / 9) ^ K < θ) (v : ℕ) (hvA : runStart k ≤ v)
+    (hvE : v ≤ (k + 2) * runStart k) (Z : ℤ) (hZ0 : 0 ≤ Z)
+    (hZt : Z / 3 ^ ((k + 2) * runStart k - v) < 3 ^ Q)
+    (hcopy : θ ≤ repBound M (some k) ((3 : ℝ) ^ v * Z))
+    (hfree : θ ≤ ∏ q ∈ range Q,
+      |Real.cos (2 * Real.pi * ((3 : ℝ) ^ v * Z) / 3 ^ ((k + 2) * runStart k + q + 1))|) :
+    SparseIdentity.CycSparse (runStart k) (2 * ((2 * K + 6) + (K + 2)))
+      (3 ^ (v - runStart k) * Z) := by
+  set A := runStart k with hA
+  set E := (k + 2) * A
+  set g := E - v
+  have hA1 : 1 ≤ A := by have := lt_runStart k; omega
+  have hEA : E = (k + 1) * A + A := by simp only [E]; ring
+  set Zt := Z / 3 ^ g
+  set Zl := Z % 3 ^ g
+  have h3g : (0 : ℤ) < 3 ^ g := by positivity
+  have hZ : Z = Zt * 3 ^ g + Zl := (Int.ediv_mul_add_emod Z (3 ^ g)).symm
+  have hZl0 : 0 ≤ Zl := Int.emod_nonneg _ h3g.ne'
+  have hZl1 : Zl < 3 ^ g := Int.emod_lt_of_pos _ h3g
+  have hZt0 : 0 ≤ Zt := Int.ediv_nonneg hZ0 h3g.le
+  have h3gR : (0 : ℝ) < 3 ^ g := by positivity
+  set f : ℝ := (Zl : ℝ) / 3 ^ g
+  have hf0 : 0 ≤ f := by positivity
+  have hf1 : f < 1 := by
+    rw [div_lt_one h3gR]; exact_mod_cast hZl1
+  have hvg : v + g = E := by omega
+  -- the copy option is `cycProdR A (I − f)`
+  set I : ℤ := 3 ^ (v - A) * Zl
+  have hcop : repBound M (some k) ((3 : ℝ) ^ v * Z) = cycProdR A ((I : ℝ) - f) := by
+    simp only [repBound, if_pos hk]
+    obtain ⟨w, hw⟩ : ((3 : ℤ) ^ A - 1) ∣ 3 ^ ((k + 1) * A) - 1 := by
+      have := sub_dvd_pow_sub_pow ((3 : ℤ) ^ A) 1 (k + 1)
+      rwa [one_pow, ← pow_mul, mul_comm A] at this
+    have key : (3 : ℝ) ^ v * Z * (1 - (3 : ℝ) ^ (-(((k + 1) * A : ℕ) : ℤ))) / 3 ^ A =
+        ((I : ℝ) - f) + ((Zt * w : ℤ) : ℝ) * (3 ^ A - 1) := by
+      have hw' : ((3 : ℝ) ^ ((k + 1) * A) - 1) = (3 ^ A - 1) * (w : ℝ) := by exact_mod_cast hw
+      have e1 : (3 : ℝ) ^ v = 3 ^ (v - A) * 3 ^ A := by rw [← pow_add]; congr 1; omega
+      have e2 : (3 : ℝ) ^ (-(((k + 1) * A : ℕ) : ℤ)) = 1 / 3 ^ ((k + 1) * A) := by
+        rw [zpow_neg, zpow_natCast, one_div]
+      have e3 : (3 : ℝ) ^ (v - A) * 3 ^ g = 3 ^ ((k + 1) * A) := by
+        rw [← pow_add]; congr 1; omega
+      have hZR : (Z : ℝ) = Zt * 3 ^ g + Zl := by exact_mod_cast hZ
+      rw [e2]
+      simp only [I, f]; push_cast
+      rw [e1, hZR]
+      have h3A : (0 : ℝ) < 3 ^ A := by positivity
+      have h3K : (0 : ℝ) < 3 ^ ((k + 1) * A) := by positivity
+      rw [← e3] at hw' ⊢
+      have hw2 : (Zt : ℝ) * (w : ℝ) * (3 ^ A - 1) = Zt * (3 ^ (v - A) * 3 ^ g - 1) := by
+        rw [hw']; ring
+      rw [hw2]
+      field_simp
+      ring
+    rw [key, cycProdR_add_int]
+  have hI := cycSparse_of_cycProdR_ge hA1 hK I hf0 hf1 (hcop ▸ hcopy)
+  -- the free option
+  have hfree' : θ ≤ ∏ q ∈ range Q, |Real.cos (2 * Real.pi * ((Zt : ℝ) + f) / 3 ^ (q + 1))| := by
+    refine hfree.trans (le_of_eq (prod_congr rfl fun q _ => ?_))
+    congr 2
+    have hZR : (Z : ℝ) = Zt * 3 ^ g + Zl := by exact_mod_cast hZ
+    have : (3 : ℝ) ^ (E + q + 1) = 3 ^ v * 3 ^ g * 3 ^ (q + 1) := by
+      rw [← pow_add, ← pow_add]; congr 1; omega
+    rw [this, hZR]; simp only [f]; field_simp
+  have hT := isSparse3_of_freeProd_ge hK Zt hZt0 hZt hf0 hf1 hfree'
+  have := CycMerge.cycSparse_add A hA1 (E - A) 0 hI hT
+  convert this using 1
+  rw [hZ]; simp only [I]
+  rw [show E - A = v - A + g by omega, pow_add]; ring
+
 end CycSparseR
 
 /-- **Cluster count (pure combinatorics).**  A set `B ⊆ [0, N)` any two of whose points within
