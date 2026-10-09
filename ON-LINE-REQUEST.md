@@ -21,3 +21,10 @@ formalization (DIRECTION.md, P3).  Please fetch and summarize, quoting statement
 
 Also useful: whether any Lean/Isabelle/Coq formalization of a linear-forms-in-logarithms bound
 (any case) exists.
+
+## 2026-10-09 (repetition lap 11): zero-lemma orientation check (high priority)
+`PadicTwoLogs.Literature.LaurentZeroLemma` now reads: `Card{α₁^r α₂^s : r<R₁, s<S₁} ≥ L` and
+`Card{r b₂ + s b₁ : r<R₂, s<S₂} > (K−1)L` ⇒ no nonzero `P = Σ_{l<L} q_l(X) Yˡ`, `deg q_l < K`,
+vanishes on `(r b₂ + s b₁, α₁^r α₂^s)`, `r < R₁+R₂−1`, `s < S₁+S₂−1`.  (The first transcription had
+the conditions swapped and is refuted in Lean.)  Please quote LMN 1995 Lemme 1 / Laurent 1994
+verbatim so the orientation, the `−1`s and any extra hypothesis can be checked.

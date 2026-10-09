@@ -17,6 +17,9 @@ import Mathlib.Tactic.LinearCombination
 import Mathlib.Algebra.Group.ForwardDiff
 import Mathlib.RingTheory.Polynomial.Pochhammer
 import Mathlib.Tactic.FieldSimp
+import Mathlib.LinearAlgebra.Matrix.ToLinearEquiv
+import Mathlib.LinearAlgebra.Matrix.DotProduct
+import Mathlib.NumberTheory.Padics.PadicVal.Basic
 
 /-!
 # The 3-adic linear form in two logarithms: interpolation-determinant ingredients (P3)
@@ -518,9 +521,77 @@ theorem three_pow_dvd_det_rs (φ : ℕ → ℕ → ℤ)
     rw [show (3 : R) ^ m = ((3 ^ m : ℕ) : R) by push_cast; rfl, ZMod.natCast_self]
   rw [hc, h0, zero_mul, mul_zero]
 
+/-- Cauchy–Binet as a sum over column selections (proved). -/
+theorem det_mul_eq_sum {n ι R : Type*} [Fintype n] [DecidableEq n] [Fintype ι] [DecidableEq ι]
+    [CommRing R] (P : Matrix n ι R) (Q : Matrix ι n R) :
+    (P * Q).det = ∑ f : n → ι, (∏ x, Q (f x) x) * (P.submatrix id f).det := by
+  have hrow : (P * Q)ᵀ = fun x => ∑ μ, Q μ x • fun j => P j μ := by
+    ext x j
+    simp only [transpose_apply, mul_apply, Finset.sum_apply, Pi.smul_apply, smul_eq_mul]
+    exact Finset.sum_congr rfl fun μ _ => by ring
+  rw [← det_transpose, hrow]
+  change detRowAlternating (fun x => ∑ μ, Q μ x • fun j => P j μ) = _
+  have hs := (detRowAlternating (R := R) (n := n)).toMultilinearMap.map_sum
+    (fun (x : n) (μ : ι) => Q μ x • fun j => P j μ)
+  simp only [AlternatingMap.coe_multilinearMap] at hs
+  rw [hs]
+  refine Finset.sum_congr rfl fun f _ => ?_
+  change detRowAlternating (fun x => Q (f x) x • fun j => P j (f x)) = _
+  rw [AlternatingMap.map_smul_univ, smul_eq_mul]
+  congr 1
+  rw [← det_transpose]; rfl
+
+/-- **(c), linear-algebra half (proved).**  A rational matrix with trivial kernel has a nonzero
+maximal minor: `det(AᵀA) ≠ 0` (positive definite) and `det_mul_eq_sum`. -/
+theorem exists_det_submatrix_ne_zero {G n : Type*} [Fintype G] [DecidableEq G] [Fintype n]
+    [DecidableEq n] (A : Matrix G n ℚ) (hA : ∀ v, A *ᵥ v = 0 → v = 0) :
+    ∃ f : n → G, (A.submatrix f id).det ≠ 0 := by
+  have hdet : (Aᵀ * A).det ≠ 0 := by
+    intro h
+    obtain ⟨v, hv0, hv⟩ := (exists_mulVec_eq_zero_iff).2 h
+    apply hv0 (hA v _)
+    have : (A *ᵥ v) ⬝ᵥ (A *ᵥ v) = 0 := by
+      rw [← mulVec_mulVec] at hv
+      have := congrArg (v ⬝ᵥ ·) hv
+      simp only [dotProduct_zero] at this
+      rw [dotProduct_mulVec, vecMul_transpose] at this
+      exact this
+    exact dotProduct_self_eq_zero.1 this
+  rw [det_mul_eq_sum] at hdet
+  by_contra hcon
+  push Not at hcon
+  apply hdet
+  refine Finset.sum_eq_zero fun f _ => ?_
+  have : (Aᵀ.submatrix id f) = (A.submatrix f id)ᵀ := rfl
+  rw [this, det_transpose, hcon f, mul_zero]
+
 namespace Literature
 
-/-- **Laurent's zero lemma for two logarithms (cited; transcription from memory, unchecked).**
+/-- **Laurent's zero lemma for two logarithms (cited; transcription from memory, corrected once).**
+M. Laurent, Acta Arith. 66 (1994); Laurent–Mignotte–Nesterenko, J. Number Theory 55 (1995),
+Lemme 1, specialised to rationals: `α₁, α₂ ∈ ℚ` nonzero, multiplicatively independent, `b₁, b₂ ∈ ℤ`.
+If `Card{α₁^r α₂^s : r < R₁, s < S₁} ≥ L` and `Card{r b₂ + s b₁ : r < R₂, s < S₂} > (K−1)L`, then a
+polynomial `P(X, Y) = Σ_{l<L} q_l(X) Yˡ` with `deg q_l < K` vanishing at all
+`(r b₂ + s b₁, α₁^r α₂^s)`, `r < R₁ + R₂ − 1`, `s < S₁ + S₂ − 1`, is zero.  Stated basis-free
+(families `q_l`), so it applies to the binomial columns `C(X, k)` directly.  Sanity: `L = 1` is
+"`< K` roots", `K = 1` is "`< L` roots in `Y`".  Confidence in the transcription: moderate (the first
+attempt swapped the conditions and was refuted, `not_laurentZeroLemmaMisread`); sources requested
+in ON-LINE-REQUEST.md. -/
+def LaurentZeroLemma : Prop :=
+  ∀ (α₁ α₂ : ℚ) (b₁ b₂ : ℤ) (K L R₁ R₂ S₁ S₂ : ℕ),
+    α₁ ≠ 0 → α₂ ≠ 0 → (∀ u v : ℤ, α₁ ^ u * α₂ ^ v = 1 → u = 0 ∧ v = 0) →
+    L ≤ ((range R₁ ×ˢ range S₁).image fun rs : ℕ × ℕ => α₁ ^ rs.1 * α₂ ^ rs.2).card →
+    (K - 1) * L < ((range R₂ ×ˢ range S₂).image fun rs : ℕ × ℕ =>
+      (rs.1 : ℤ) * b₂ + (rs.2 : ℤ) * b₁).card →
+    ∀ q : ℕ → Polynomial ℚ, (∀ l < L, (q l).natDegree < K) →
+      (∀ r < R₁ + R₂ - 1, ∀ s < S₁ + S₂ - 1,
+        ∑ l ∈ range L, (q l).eval ((r : ℚ) * b₂ + (s : ℚ) * b₁) * (α₁ ^ r * α₂ ^ s) ^ l = 0) →
+      ∀ l < L, q l = 0
+
+/-- **REFUTED transcription (kept as a record; see `not_laurentZeroLemmaMisread`).**  The first
+transcription of Laurent's zero lemma, with the two cardinality conditions swapped.  It is false:
+`b₁ = b₂ = 0` makes every `X`-value `0`, and `P = X` vanishes on the grid.  Corrected statement:
+`LaurentZeroLemma`.  Original docstring follows.
 M. Laurent, *Linear forms in two logarithms and interpolation determinants*, Acta Arith. 66
 (1994); in the form of Laurent–Mignotte–Nesterenko, J. Number Theory 55 (1995), Lemme 1.
 Specialised to rationals: `α₁, α₂ ∈ ℚ` nonzero and multiplicatively independent, `b₁, b₂ ∈ ℤ`.
@@ -529,7 +600,7 @@ then no nonzero `P = Σ_{k<K, l<L} p_{kl} Xᵏ Yˡ` vanishes at all points
 `(r b₂ + s b₁, α₁^r α₂^s)`, `r < R₁ + R₂ − 1`, `s < S₁ + S₂ − 1`.  This is what makes the
 interpolation determinant nonzero.  Sources requested (ON-LINE-REQUEST.md, 2026-10-08); the
 step most needing an expert check is the exact form of the two cardinality conditions. -/
-def LaurentZeroLemma : Prop :=
+def LaurentZeroLemmaMisread : Prop :=
   ∀ (α₁ α₂ : ℚ) (b₁ b₂ : ℤ) (K L R₁ R₂ S₁ S₂ : ℕ),
     α₁ ≠ 0 → α₂ ≠ 0 → (∀ u v : ℤ, α₁ ^ u * α₂ ^ v = 1 → u = 0 ∧ v = 0) →
     L ≤ ((range R₁ ×ˢ range S₁).image fun rs : ℕ × ℕ =>
@@ -541,6 +612,31 @@ def LaurentZeroLemma : Prop :=
         ∑ k ∈ range K, ∑ l ∈ range L,
           p k l * ((r : ℚ) * b₂ + (s : ℚ) * b₁) ^ k * (α₁ ^ r * α₂ ^ s) ^ l = 0) →
       ∀ k < K, ∀ l < L, p k l = 0
+
+/-- `2` and `3` are multiplicatively independent. -/
+theorem two_three_indep (u v : ℤ) (h : (2 : ℚ) ^ u * (3 : ℚ) ^ v = 1) : u = 0 ∧ v = 0 := by
+  have h2 := congrArg (padicValRat 2) h
+  have h3 := congrArg (padicValRat 3) h
+  have : Fact (Nat.Prime 3) := ⟨Nat.prime_three⟩
+  rw [padicValRat.mul (zpow_ne_zero _ (by norm_num)) (zpow_ne_zero _ (by norm_num)), padicValRat.zpow, padicValRat.zpow] at h2 h3
+  have a : padicValRat 2 (2 : ℚ) = 1 := by simpa using padicValRat.self (p := 2) (by norm_num)
+  have b : padicValRat 3 (3 : ℚ) = 1 := by simpa using padicValRat.self (p := 3) (by norm_num)
+  have c : padicValRat 2 (3 : ℚ) = 0 := by
+    rw [show (3 : ℚ) = ((3 : ℕ) : ℚ) by norm_num, padicValRat.of_nat]; simp
+  have d : padicValRat 3 (2 : ℚ) = 0 := by
+    rw [show (2 : ℚ) = ((2 : ℕ) : ℚ) by norm_num, padicValRat.of_nat]; simp
+  simp [a, b, c, d] at h2 h3
+  exact ⟨h2, h3⟩
+
+/-- **The swapped transcription is false (proved).** -/
+theorem not_laurentZeroLemmaMisread : ¬ LaurentZeroLemmaMisread := by
+  intro H
+  have := H 2 3 0 0 2 1 1 2 1 2 (by norm_num) (by norm_num) two_three_indep (by decide)
+    (Finset.one_lt_card.2 ⟨1, Finset.mem_image.2 ⟨(0, 0), by simp, by norm_num⟩,
+      2, Finset.mem_image.2 ⟨(1, 0), by simp, by norm_num⟩, by norm_num⟩)
+    (fun k l => if k = 1 then 1 else 0) (fun r _ s _ => by simp) 1
+    (by norm_num) 0 (by norm_num)
+  simp at this
 
 end Literature
 

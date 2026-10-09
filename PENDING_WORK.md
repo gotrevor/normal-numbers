@@ -24,7 +24,15 @@
   fails, so `g ≤ KL/3 ≈ C'(1 + log δ)²·B` — exactly the `PadicTwoLogs` shape.  With columns `z^k`
   an extra `log K ≈ log B` appears (`B log²B`, still enough for the chain but not the Prop shape),
   hence the binomial columns.  The two-variable count is NOT needed at this precision.
-* NEXT: (c) zero lemma ⇒ Δ ≠ 0 for points `z = r + δs` (need the transcription check), (d) parameters
+* Same lap: REFUTED my first zero-lemma transcription (`not_laurentZeroLemmaMisread`: conditions
+  swapped; `b₁=b₂=0`, `P = X`).  Corrected `Literature.LaurentZeroLemma` (polynomial-family form).
+  PROVED (c, linear algebra): `det_mul_eq_sum`, `exists_det_submatrix_ne_zero` (trivial kernel ⇒
+  nonzero maximal minor via `det(AᵀA) ≠ 0`).
+* NEXT (c, wiring): grid matrix `A (r,s) (k,l) = C(r+δs,k)·(tʳ(b/a)ˢ)ˡ` over ℚ; kernel vector ⇒
+  `q_l = Σ_k v_{kl} chooseP k` vanish on the grid ⇒ (zero lemma) `q_l = 0` ⇒ evaluate at `0,1,…`
+  (triangular in `C(n,k)`) ⇒ `v = 0`; then minor ⇒ integer homogenised det ≠ 0.  Then (d).
+  Small-δ regime (`δ < R₂`, values `r+δs` collide): use the trivial bound `3ᵍ ≤ |tᵟa − b|`.
+* OLD NEXT: (c) zero lemma ⇒ Δ ≠ 0 for points `z = r + δs` (need the transcription check), (d) parameters
   and the assembly `padicTwoLogs`; reduction to `3 ∣ t − 1` (replace t by t², δ by ⌈δ/2⌉ carefully),
   3 ∣ a·b case split.  OLD: (b) Liouville upper bound for `Δ` with `z = r+δs`, `t`, `w = b/(a tᵟ)` (clear denominators:
   `(a tᵟ)^{L·S}·Δ ∈ ℤ`, `|Δ| ≤ (KL)!·max|entry|^{KL}`, so `v₃ ≤ log|·|/log 3` if nonzero); (c) zero
