@@ -1,6 +1,61 @@
 # STATUS — normal-numbers 📊
 
 ## Cantor repetition update, 9 October 2026 (branch `proof/cantor-repetition`, lap 13) — HEADLINE PROVED
+## Bugeaud 10.36 optimal exponent c⋆ (branch `proof/uniformbad-threshold`) — review lap 13, 7 October 2026
+
+**Located: `93/37 ≤ c⋆ ≤ 124/25`; gate `c⋆ ≤ 9/2` walled for local engines** · **Build**: 🟢 green (10809 jobs) · **Updated**: c⋆ lap 13 · 2026-10-07 · see `git log`
+
+**Where it stands.**  `c⋆` is the optimal exponent in Bugeaud's Problem 10.36 (`cStar`,
+`UniformBadThreshold.lean`).  Proved: `93/37 ≤ c⋆` (`ninety_three_thirty_sevenths_le_cStar`, 59-window
+cover) and `c⋆ ≤ 124/25` (`cStar_le_124_25`, two-rate counting).  The run gate `cStar_le_nine_halves`
+is almost certainly true (finite systems put `c⋆` near `5/2`, node `CStarLeThirteenFifths`), but no
+proof mechanism is known: every local per-window engine stalls near `c ≈ 4.55`, proved for the
+per-stage engine even with only bases 2 and 3 (`not_perStageCert`).  Closing the gap needs the exact
+joint `{2,3}` core, i.e. where base-3 windows fall in the alive set (digits of powers of 3 in base 2).
+
+**What's happened (newest first).**
+* 2026-10-07 lap 13 (review): three new engines probed at 9/2 (per-stage depth, Lebesgue precharge,
+  Parry-measure precharge) all stall at 4.55–4.6; `not_perStageCert` proved; box abstractions of the
+  exact core shown to collapse (steering); lower bound raised to `93/37`; finite systems with `b ≤ 3000`
+  stall at `2.514`, survivors near binary-periodic rationals → `CStarLeThirteenFifths` (60%).
+* 2026-10-07 laps 10–12: `cStar_le_five`, then `cStar_le_124_25` (engine floor) and
+  `not_nineHalvesBalance`; stuck strikes 1–2 on the 9/2 gate.
+* 2026-10-07 lap 9: `five_halves_le_cStar` (29-window cover).
+* 2026-10-07 lap 7 (review): forced merging proved (`merge_forced`, `windows_merge_forced`); Maze row
+  closes adaptive thick-core constructions.
+* 2026-10-07 laps 5–6: Newhouse route — `gap_lemma`, `e15_facts`, `fset_facts`, Cantor schemes thick,
+  `cStar_le_four_of_newhouse` (wiring); crux `thickCore_four`.
+* 2026-10-07 lap 4: exact `{2,3}` containment-kill core lemma; abstraction ratio 1.669; counted `b ≥ 5`
+  obstruction (Maze row "counted medium bases").
+* 2026-10-07 lap 3 (review): counting engine `Count.growth` + `cStar_le_six`.
+* 2026-10-07 lap 2: perfect-power bases free (`admissible_iff_nonPerfectPow`); crux nodes
+  `SmallBaseTreeCore` (15%), `TreeEngineSuffices` (50%).
+* 2026-10-07 lap 1: `twelve_fifths_le_cStar` proved; `cStar_le_twelve` via the power engine.
+
+**Outstanding.**
+*Short-term:* the 9/2 gate needs a new idea (a base-3 charge at most 0.7 of the per-stage engine's, or a
+regular exact `{2,3}` core); operator decision on stopping (stuck evidence in `HANDOFF-2026-10-07-cstar-lap13.md`).
+*Long-term:* a formal per-stage engine would bank about `c⋆ ≤ 4.6–4.7` (numerics; the two-rate formal
+engine is at its floor `124/25`); `cStar_le_four`, `CStarLeThree`, `CStarLeThirteenFifths`.
+*To completion:* `cStar_le_nine_halves` (gate), then `cStar_le_four`.
+
+**Axiom ledger (this branch).**
+| headline | claim | `#print axioms` | status |
+|---|---|---|---|
+| `ninety_three_thirty_sevenths_le_cStar` | `93/37 ≤ c⋆` (uncond.) | propext, choice, Quot.sound | 🟢 proved lap 13 |
+| `five_halves_le_cStar`, `twelve_fifths_le_cStar` | `5/2`, `12/5 ≤ c⋆` | propext, choice, Quot.sound | 🟢 proved |
+| `cStar_le_124_25` (bank) | `c⋆ ≤ 124/25` (uncond.) | std + 3 `native_decide` | 🟢 proved (finite tables) |
+| `cStar_le_five`, `cStar_le_six` (banks) | `c⋆ ≤ 5`, `≤ 6` | std (+ `native_decide`) | 🟢 proved |
+| `not_perStageCert`, `not_nineHalvesBalance` | engine obstructions at 9/2 | std (+ 3 `native_decide`) | 🟢 proved |
+| `cStar_le_nine_halves` (gate) | `c⋆ ≤ 9/2` (uncond.) | + `sorryAx` | open; local engines walled |
+| `cStar_le_four` | `c⋆ ≤ 4` (uncond.) | + `sorryAx` | open; both mechanisms walled |
+
+Math-axiom count for the proved headlines: 0 (trust base + `native_decide` artifacts only).
+
+Pointers: `DIRECTION.md` (branch CURRENT DIRECTIVE, review lap 13) · newest `HANDOFF-2026-10-07-cstar-lap13.md` ·
+`PENDING_WORK.md` top section · `src/NormalNumbers/Maze.lean` (rows "local per-window engines at c = 9/2",
+"two-rate counting engine at c = 9/2", "counted medium bases", "adaptive split cores").
+## Cantor repetition update, 7 October 2026 (branch `proof/cantor-repetition`, review lap 7)
 
 **Is the profile cut forced? No.** · **Build**: 🟢 green (10802 jobs, full default build) · lap 13
 
@@ -442,6 +497,7 @@ These are the ratified conjecture nodes.  They are open by design, and none is s
   `MasterMaze.lean` (`mazeTestImplied`/`mazeTestNotImplied`; `equidistributed_lnTwoOrbit_iff`,
   `run_sublinear_of_isNormal`).
 - **BFR bet settled below 1% (2026-10-06, 2 laps):** the separation method gives the restricted-digit hyperbola count `StretchBFR.card_cantor_hyperbola_le` (#{P ∈ C_b : ∃ q ≤ Q, |Pq mod 3^b| ≤ R} ≤ 2^j for 3^j > 2RQ, any base via `eq_of_hyperbola_low`), which is the 3-adic covering bound; a saving for rationals near K (`NKPowerSaving`, open node) needs a Fourier input (Chow–Varjú–Yu's ℓ¹ dimension; K's is ≈ 0.39, below what their method needs).  Maze rows for every route.
+- **Is the profile cut forced? Repetition lane (2026-10-06/07, 7 laps): partial.**  `CantorRepetition`: copying a free block (approximants `W/(3^ℓ−1)`, prime to 3) gives a Liouville point of K (`liouville_repReal`, `repReal_mem_cantorSet`) normal to every base prime to 3 (`ae_isNormal_rep_of_coprime_three`) and to no power of 3; all unconditional.  Base 6 and every `3ˢt`, `t > 1`, is OPEN: the copy zone needs a sparse-pair cluster bound (`cyclic_pair_identity` proved; `SparseIdentity.sparseIdentityBound_of_matveev` 90%, plus 6 bookkeeping leaves), resting on cited Baker (two logs) + Matveev (three logs).  The earlier walls (`TOrbitCyclicDecay`, `BadGcdSparseH`) asked for a power saving, an open digits-of-powers problem.  Next: `HANDOFF-2026-10-07-repetition-lap7.md`.
 - **The exponent sets the normal profile (2026-10-06, /create + 2 laps): PROVED given Baker.**  `CantorExactExponentProfile.exists_computable_normalProfile_of_baker`: for every rational μ₀ > 2, a computable x ∈ K with exponent exactly μ₀, normal to base `b = 3ˢt` iff `t > 3^{s(μ₀−1)}` (e.g. μ₀ ∈ (2, 2.26): normal to 12, 15, 21, not to 6, 18, 36).  Cited input `Literature.BakerLogDiscrepancyEff` (Baker–Wüstholz + Erdős–Turán; transcription weaker, the step to check).  Unconditional: the non-normal direction `not_isNormal_of_not_profileOK` and `window_covered_imp`.  The elementary orbit port fails in run shadows (Maze row); a Gelfond-strength bound would suffice (`ae_isNormal_of_profileOK_of_gelfond`, believed 55%).
 - **K ∩ exact exponent μ₀ ∩ normal to every base prime to 3, for EVERY rational μ₀ > 2 (2026-10-06, stretch lane, 3 laps): UNCONDITIONAL.**  `CantorExactExponentStretch.exists_computable_mem_cantorSet_irrExponent_normal_all` (and the node `ae_not_liouvilleWith_all`).  Supersedes the μ₀ > 2 + log₂3 headline's range.  Mechanism: 3-adic Farey separation (`padic_sep`, `hit_mass_padic`): hitting numerators are pinned by ~log₃(|r|q) low digits plus v₃(q) top digits, so the UNION of bad numerators is small for every τ > 2; real Farey separation (`hit_mass_farey`) elsewhere.  Ren's 'Kloosterman wall' reading counted incidences, not the union; corrected in `StretchBFR.lean` and its Maze row.  μ₀ = 2 literature control proved from cited Props.  Refereed 2026-10-06 (accept; `docs/CANTOREXP-STRETCH-REFEREE-2026-10-06.md`): the exponent-in-K half is known (Bugeaud 2008 + Becher–Bugeaud–Slaman 2016, `bugeaud2008_rational_of_stretch`), the novelty is normality.  Note: `docs/notes/cantor-exact-exponent-normal.md`.
 - **ℚ-span digit structure (2026-10-05, freeze + 2 laps): UNCONDITIONAL.**  `QSpanCriterion.lean`: a normal rational combination forces joint FS dimension ≥ 1/2 (`span_jointDim_budget`); a jointly normal pair has every nonzero combination normal (`isNormal_span_of_jointNormal`); for independent i.i.d. digits, `a x + c y` is a.e. normal iff every frequency meets a zero of the digit polynomial, else a.e. not normal (`ae_isNormal_combo_iff`, `ae_not_isNormal_combo_of_not`); digits {0..4}: joint dimension ≈ 0.70 > 1/2 yet no normal combination (`ae_not_qSpanNormal_fiveDigits`, `ae_jointDim_fiveDigits`) — the entropy budget is necessary, not sufficient.  Origin: Trevor's √2/√3 question (`QSpanNormal.lean`).

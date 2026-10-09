@@ -536,6 +536,8 @@ import NormalNumbers.EDensityAudit
 import NormalNumbers.LiteratureCampbell
 import NormalNumbers.LiteratureDigitsOfPowers
 import NormalNumbers.ErdosTriples
+import NormalNumbers.ErdosTripleClasses
+import NormalNumbers.ZerolessTuples
 import NormalNumbers.CampbellAnswer
 import NormalNumbers.CPrimeSiteFactorization
 import NormalNumbers.MazeAudit
@@ -976,6 +978,17 @@ import NormalNumbers.CantorRepetition
 import NormalNumbers.CantorExactExponentFive
 import NormalNumbers.SchedFamily
 import NormalNumbers.UniformBad
+import NormalNumbers.UniformBadThreshold
+import NormalNumbers.UniformBadPowerEngine
+import NormalNumbers.UniformBadTwelve
+import NormalNumbers.UniformBadRoute
+import NormalNumbers.UniformBadCount
+import NormalNumbers.UniformBadJoint
+import NormalNumbers.UniformBadNewhouse
+import NormalNumbers.UniformBadFive
+import NormalNumbers.UniformBadBelowFive
+import NormalNumbers.UniformBadNineHalves
+import NormalNumbers.UniformBadLowerBound
 import NormalNumbers.LinearFormsScales
 import NormalNumbers.LinearFormsScalesStretch
 import NormalNumbers.Hertling

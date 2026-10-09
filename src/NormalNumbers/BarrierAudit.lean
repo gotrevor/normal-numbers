@@ -41,6 +41,11 @@ import NormalNumbers.QSpanCriterion
 import NormalNumbers.ComputableReal
 import NormalNumbers.KurtzRandom
 import NormalNumbers.MahlerProductBlock
+import NormalNumbers.UniformBadThreshold
+import NormalNumbers.UniformBadJoint
+import NormalNumbers.UniformBadNewhouse
+import NormalNumbers.UniformBadFive
+import NormalNumbers.UniformBadNineHalves
 
 /-!
 # Barrier audit: every open crux names a sibling it must fail on
@@ -71,6 +76,24 @@ namespace NormalNumbers.Barriers
 
 /-- Each frozen headline `sorry` and the barriers its mechanism must fail on. -/
 def cruxLinks : List CruxLink := [
+  ⟨``UniformBadThreshold.cStar_le_nine_halves,
+   [``uniformBad_base_two],
+   "the engine must make base 3 exact alongside base 2: the two-rate counting engine (base 2 exact, \
+    base 3 counted) bottoms out at c⋆ ≤ 124/25 and provably has no certificate at 9/2 \
+    (not_nineHalvesBalance), nor does the per-stage engine even with only bases 2 and 3 \
+    (not_perStageCert); base 2 alone refuses any c ≤ log₂ 3"⟩,
+  ⟨``UniformBadThreshold.cStar_le_four,
+   [``uniformBad_base_two],
+   "the construction must keep the small bases jointly away from the rationals; the base-2 \
+    barrier shows exponent ≤ log₂ 3 is impossible, so any mechanism must use c > log₂ 3 per base"⟩,
+  ⟨``UniformBadThreshold.Newhouse.thickCore_four,
+   [``uniformBad_base_two],
+   "the thick core must not contain base 2: E₂ alone has thickness 1 at c = 3 and dies at c ≤ log₂ 3, \
+    so the route must pair base 2 against a core whose thickness beats 1/τ(E₂)"⟩,
+  ⟨``UniformBadThreshold.Count.jointCoreSubEigen_four,
+   [``uniformBad_base_two],
+   "the {2,3} core certificate must respect the single-base floor: base 2 alone at exponent \
+    ≤ log₂ 3 has no survivors, so the certificate's growth comes from c = 4 > log₂ 3"⟩,
   ⟨``LevinSparse.exists_absNormal_base2_fast,
    [``stoneham_two_not_six, ``cantorLiouville_three_dvd],
    "base-2 discrepancy o(N^{-1/2}) does not reach bases 2^a·m: stoneham23 is base-2 normal and \
@@ -142,6 +165,8 @@ def cruxLinks : List CruxLink := [
 
 /-- Open `sorry`s that are not cruxes, and why no barrier applies. -/
 def waivers : List Waiver := [
+  ⟨``UniformBadThreshold.Newhouse.e2_four_facts,
+   "off the route (the wiring uses the proved e15_facts); a computation about the explicit set E₂(4)"⟩,
   ⟨``ErdosTriples.tripleTrivial_of_sum_le_160,
    "a finite computation: 12403 exact carry-automaton decisions (experiments/erdos-triples, \
     known-answer suite test_triple.py); discharge is a Lean automaton with a soundness lemma"⟩,
@@ -171,6 +196,8 @@ def waivers : List Waiver := [
    "a finite computation: rung checker (carry automaton, label-filtered SCCs)"⟩,
   ⟨``Adder.not_isRung_five_four_five_small,
    "a finite computation: an avoided-digit-set assignment with a live SCC for each small T"⟩,
+  ⟨``Adder.not_runCover_four_small,
+   "a finite computation: exact ILP set cover (HiGHS dual bound)"⟩,
   ⟨``Adder.IsWordSetBlock.runs_liouville_cover,
    "a leaf: liouville_cover's argument for runs of ones"⟩,
   ⟨``Adder.not_isWordSetBlock_runs_three_small,

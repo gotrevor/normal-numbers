@@ -1,5 +1,21 @@
 # Repetition: review lap 10 (2026-10-08) WITHDRAWS the lap-9 box-stuck claim — read HANDOFF-2026-10-08-repetition-lap10.md
 - New campaign (DIRECTION.md CURRENT DIRECTIVE): one 3-adic two-log input, then formalize it.
+# STUCK claim (2026-10-07, c⋆ lap 13, fresh review lap after the operator rerun): read HANDOFF-2026-10-07-cstar-lap13.md
+- **Blocked:** run gate `sorry-free:src/NormalNumbers/UniformBadNineHalves.lean` (frozen `cStar_le_nine_halves`).
+- **New this lap:** `not_perStageCert` (per-stage engine has no certificate at 9/2 even with bases 2, 3 only),
+  three local engines stall at 4.55–4.6, box abstractions collapse; lower bound `93/37`; `CStarLeThirteenFifths`.
+- **Ask:** a mechanism for base 3 at 9/2 (non-local), or accept the stop.
+
+# STUCK claim, strike 1 (2026-10-07, c⋆ lap 11): read HANDOFF-2026-10-07-cstar-lap11.md
+Re-confirmed 2026-10-07 (fresh lap 12): axioms re-checked (cStar_le_124_25 clean modulo native_decide; not_nineHalvesBalance clean); strike 2.
+- **Blocked:** run gate `sorry-free:src/NormalNumbers/UniformBadNineHalves.lean` (frozen `cStar_le_nine_halves`).
+- **Why operator-gated:** operator gate 2 (DIRECTION.md) says: if 9/2 cannot be made uniform, bank the engine's
+  lowest exponent, record the wall, stop.  Done: `cStar_le_124_25` proved; `not_nineHalvesBalance` proves the
+  two-rate engine has no certificate at 9/2 (even without bases b ≥ 5); Maze row "two-rate counting engine at
+  c = 9/2".  The only known continuation is a new mechanism (weight-regular exact {2,3} core), a research wall.
+- **Verify fast:** `#print axioms NormalNumbers.UniformBadThreshold.cStar_le_124_25` and `not_nineHalvesBalance`
+  (scratch file importing `NormalNumbers.UniformBadNineHalves`); `grep -n sorry src/NormalNumbers/UniformBadNineHalves.lean`.
+- **Ask:** a new directive (mechanism for 9/2) or accept the stop.
 
 # Repetition: STUCK claim (lap 6) RESOLVED 2026-10-07 by review lap 7 — read HANDOFF-2026-10-07-repetition-lap7.md
 - New route (sparse pairs + Matveev) avoids the walls; DIRECTION.md CURRENT DIRECTIVE lists the leaves.
@@ -162,3 +178,14 @@ directive admits cited results only as hypothesis Props, and no elementary subst
 Verify fast: `grep -n "^\s*sorry" src/NormalNumbers/CantorRepetition.lean` (one hit), and
 `#print axioms liouvilleCantorFullProfile_of_literature` (scratch/AxRD.lean) = trust base.
 Ask: operator rescope (e.g. drop that theorem from the scope, or authorize a Baker formalization campaign).
+## 2026-10-07 c⋆ lap 8 — STUCK (strike 1)
+See HANDOFF-2026-10-07-cstar-lap8.md. Blocked: scope gate `cStar_le_four` is a research wall (Maze rows; lap-8 counting probe negative). DIRECTION item (2) `cStar_le_five` is outside the scoped target. Ask: rescope the run to `sorry-free:UniformBadFive.lean` (bank c⋆ ≤ 5) or confirm halt.
+
+## 2026-10-07 c⋆ lap 9 — STUCK (strike 2, run halts)
+See HANDOFF-2026-10-07-cstar-lap9.md. Done this lap: `five_halves_le_cStar` proved (5/2 ≤ c⋆).
+Blocked: `cStar_le_four` needs bases 3 and 5 handled exactly. Counting them fails at c = 4 (lap-8 Maze row), and
+no finite certificate is known (the grids sit at irrational offsets). `cStar_le_five` is outside the scoped target.
+ASK: rescope the run to `sorry-free:src/NormalNumbers/UniformBadFive.lean` (bank c⋆ ≤ 5), or supply a mechanism for an exact {2,3,5} core.
+
+## 2026-10-07 c⋆ lap 10
+`cStar_le_five` proved; scoped gate met. See HANDOFF-2026-10-07-cstar-lap10.md.

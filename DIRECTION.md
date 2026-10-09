@@ -1,5 +1,113 @@
 # DIRECTION — normal-numbers 🧭
 
+## Branch directive (2026-10-06, `proof/uniformbad-threshold`): locate the optimal 10.36 exponent `c⋆` 🎯
+
+**This is the directive for branch `proof/uniformbad-threshold`.**  The `proof/cantor-bad-normal` section below
+belongs to that branch (its route is parked at the middle-digit obstruction); do not work it here.
+
+**Objective:** prove the two frozen headlines in `src/NormalNumbers/UniformBadThreshold.lean`:
+`twelve_fifths_le_cStar` (`12/5 ≤ c⋆`, 85%) and `cStar_le_four` (`c⋆ ≤ 4`, 55%), where
+`c⋆ = inf {c : ∃ ξ, ∀ b ≥ 2, ∀ n, ‖bⁿξ‖ > b^{−c}}` (Bugeaud 2012, Problem 10.36; the repo proved `c⋆ ≤ 24`).
+Never restate or weaken them.  The stretch node `CStarLeThree` and any sharper located value are bonuses.
+- **Mandated next move:** probe first (`scripts/uniformbad_cstar_probe.py` is the host's floating-point probe;
+  make an exact-rational version).  (a) For the lower bound, generate an exact finite certificate at `c = 12/5`
+  (a cover of `[0, 1]` by rational intervals, each inside one forbidden window of some `(b, n)`, `b ≤ 16`, with
+  rational `δ_b ≤ b^{−12/5}`) and check it in Lean by `decide`/`norm_num`/`native_decide` (all fine at this tier).
+  (b) For the upper bound, design the construction: small bases `b ≤ B₀` tracked explicitly inside the nested
+  windows of `UniformBad.exists_avoid_of_stagePotential` (or a variant engine), large bases by its stage
+  potential.  State the construction's key lemmas as named nodes with confidences before proving them.
+- **Push the frontier:** once a headline is green, locate `c⋆` more tightly (higher certified lower bound with
+  more bases; `CStarLeThree`).  Record every located bound as a Lean theorem, every failed mechanism as a Maze row.
+- **Operator note (Ren, 2026-10-07 02:45):** the `c⋆ ≤ 4` crux now rests on `SmallBaseTreeCore` (15%) and
+  `TreeEngineSuffices` (50%).  Keep it, but bank the reachable upper bounds in parallel: lap 1 measured the pure
+  potential engine stalling near `c ≈ 7`, so prove the best engine-only bound as a theorem (`cStar_le_eight` or
+  better, then as close to the stall as the constants allow), using the free perfect-power bases.  Each lower
+  located upper bound is an advance; so is a higher certified lower bound (bases beyond 10 in the cover).
+- **Forbidden drift:** normality or disjunctiveness of the 10.36 points (impossible, `not_isNormal_of_uniformBad`);
+  re-proving `c⋆ ≤ 24`; literature hunting beyond what a lap needs (the 2026-10-03 freshness audit stands).
+- **Why:** the host probe (`UniformBadThreshold` docstring) puts `c⋆` in about `[2.44, 3]`: bases 2, 3 alone give
+  `log₂ 5` (survivors `1/5`, `3/10`, rational), and bases up to 16 push it to `≈ 2.44`.  Locating an optimal
+  constant in an open Bugeaud problem is new mathematics with a definite, checkable endpoint.
+
+- **Review lap 2026-10-07 (c⋆ lap 3) — direction revised, binding for this branch:**
+  New mechanism: **Rosenfeld counting** (count alive dyadic cells `N_k`; charge each kill to an alive ancestor at
+  a fixed lag, so `N_{k+1} ≥ 2N_k − Σ m_i N_{k+1−i}` and induct `N_{k+1} ≥ ΛN_k`).  It is exact for base-2 runs
+  (charged at lag 6 with multiplicity ≤ 2) and needs no Frostman constant.  Probe (`scripts/cstar_models/ros*.py`):
+  per-level version closes at `c = 6` (`Λ = 5/3`, all bases, slack ≈ 0.04 after rigorous tails), fails at
+  `c = 5`; with perfect level-averaging it reaches only `c ≈ 4.6`; at `c = 4` binary-exact counting fails even
+  idealized (averaged slack −0.105), so **base 3 must be exact jointly with base 2** (confirms lap 2 by an
+  independent mechanism).  Simulation (`joint.js`): the true joint `{2,3}` tree at `c = 4` grows 1.808/level and a
+  base-3 event costs 2.4% ≈ the Lebesgue share `2/81`, so the crux is a worst-case-vs-typical gap.
+  **Mandated next moves, in order:** (1) formalize the counting engine and `cStar_le_six` (new file
+  `UniformBadCount.lean`; the engine is the `b ≥ 5` half of the eventual `c ≤ 4` proof, so it is on-path);
+  (2) crux probe: a finite-state abstraction of the joint `{2,3}` skew product (binary run state, ternary run
+  state, position in ternary units, phase of `k log₃ 2`) with a computed sub-eigenvector — does it certify
+  `Λ ≥ 1.75`, and with how many states?  State the result as a Lean node (`JointCoreCount`-type) with confidence.
+  **Forbidden drift:** more α-power potential-engine tuning; Frostman-constant cores (`SmallBaseTreeCore` at
+  `C ≤ 3/2` is doubtful); thickness theorems (Falconer–Yavicoli constants are hopeless here).
+
+- **CURRENT DIRECTIVE for this branch (review lap 2026-10-07, c⋆ lap 7) — supersedes the lap-3 orders above.**
+  *Objective* unchanged: the frozen headlines (`twelve_fifths_le_cStar` proved; `cStar_le_four` open).
+  *Finding:* the Newhouse crux has no adaptive escape.  Any `τ`-thick `B ⊆ ⋂_{b≥3} E_b(c)` puts every
+  pair of `τ`-close windows inside its hull into one gap (`Newhouse.windows_merge_forced`, proved), so
+  `ThickCore` is exactly locality of the canonical merge closure, i.e. control of cross-base window
+  clusters at every depth (Maze row "adaptive split cores for the Newhouse thick core").  Both known
+  `c ≤ 4` mechanisms are now walls: Newhouse (cluster locality) and counting (a weight-regular exact
+  `{2,3}` core with growth `≥ 1.78`, Maze row "counted medium bases").
+  *Mandated next moves, in order:* (1) **decisive `c = 4` counting probe**: the exact joint `{2,3}`
+  system (true positions, no box abstraction) with threshold pruning of cells mostly inside a base-3
+  window; report growth, weight spread, and the worst per-ancestor weight-aware charge of `b ≥ 5`.
+  Record the verdict as a Lean node or Maze row the same lap.  (2) **bank `c⋆ ≤ 5`**
+  (`UniformBadFive.cStar_le_five`, frozen node): counting engine, base 2 exact (runs, multiplicity 1,
+  lag 5), each window `(b, n)` killed at `lv` (≤ 4 cells) or `lv − 1` when it spans ≥ 3 cells (≤ 3 cells),
+  lag `⌊log₂(¾(b⁵−2))⌋`, perfect powers dropped, growth `181/100` off and `329/200` on the base-3 kill
+  levels, products bounded by `L₃(n+2) ≥ L₃(n)+3`.  Probe (`scripts/cstar_models/lvl5c.js`,
+  `pess.js`): pessimistic slack `0.019` (uniform growth fails, `−0.023`); control `c = 6` slack `0.21`.
+  *Forbidden drift:* building thick cores (adaptive splits, flipped pairings, cluster discarding)
+  without a cross-base locality mechanism; re-proving `c⋆ ≤ 6`; Falconer–Yavicoli.
+  *Why:* `c⋆ ≤ 5` moves the located interval to `[12/5, 5]` with machinery (level-dependent growth,
+  per-window resolution) that any counting route to `c ≤ 4` reuses; the probe decides whether that
+  route is alive before more `c = 4` formalization is spent.
+
+- **Operator answer to the c⋆ lap-9 STUCK (Ren, 2026-10-07 06:50): rescope accepted.**  Banked: `5/2 ≤ c⋆`
+  (`five_halves_le_cStar`) and `c⋆ ≤ 6` (`cStar_le_six`), both axiom-clean.  `cStar_le_four` stays frozen and
+  unweakened, recorded as a research wall (the Maze rows above).  **The run's gate is now
+  `sorry-free:src/NormalNumbers/UniformBadFive.lean`**: prove `cStar_le_five`.  After it: (a) the lowest upper bound
+  the counting engine reaches with base 2 exact (lap 8: charges live at c = 4.25), banked as its own theorem;
+  (b) a higher certified lower bound (more bases in the cover).  Do not reopen `cStar_le_four` without a new
+  mechanism for an exact {2,3,5} core.
+
+- **Operator gate 2 (Ren, 2026-10-07 07:05):** `cStar_le_five` landed (lap 10).  The run gate is now
+  `sorry-free:src/NormalNumbers/UniformBadNineHalves.lean`: prove the frozen `cStar_le_nine_halves` (`c⋆ ≤ 9/2`, 40%).
+  The `cStar_le_five` engine has slack 0.013, so this needs a new ingredient: base 3 exact alongside base 2 (lap-8
+  joint recursion lives at c = 4.25).  Probe the joint {2,3} growth at c = 9/2 first.  If it cannot be made uniform,
+  bank the lowest exponent the current engine certifies (any c < 5) as its own theorem, record the wall in the Maze,
+  and stop.  A higher certified lower bound (above 5/2) is a parallel bonus.
+
+- **CURRENT DIRECTIVE for this branch (review lap 13, 2026-10-07) — supersedes lap 7's orders; operator gate 2 still binds.**
+  *Objective* unchanged: the frozen gate `cStar_le_nine_halves`.
+  *Finding:* the statement is almost surely true (finite systems put `c⋆` near `5/2`,
+  `CStarLeThirteenFifths`), but every local per-window engine stalls near `c ≈ 4.55`: proved for the
+  per-stage engine even with only bases 2, 3 (`not_perStageCert`); Lebesgue and Parry-measure precharges
+  and box abstractions fail numerically (Maze row "local per-window engines at c = 9/2").  The base-3
+  charge must fall by about 30%, which needs where base-3 windows sit in the alive set (non-local).
+  *Mandated next move:* operator gate 2's fallback is complete (`cStar_le_124_25` banked, walls in the
+  Maze, lower bound now `93/37`), so the run calls `box stuck` with this evidence.  If reopened: either
+  (a) bank a formal per-stage engine (≈ `4.6–4.7`, multi-rate products over alignment classes), or
+  (b) a non-local input for the exact `{2,3}` core (where `k/3ⁿ` falls among pattern-alive binary cells).
+  *Forbidden drift:* retuning local engines at 9/2 (two-rate, per-stage, precharge) without a 30% cut
+  in the base-3 charge; touching-kill box abstractions of the joint position; re-probing the two-rate engine.
+  *Why:* three independent local mechanisms meet at the same threshold, so the loss is the worst-case
+  placement of base-3 windows, not the bookkeeping.
+
+Directive history:
+- 2026-10-07 (c⋆ lap 13, review): local engines walled at 9/2 (`not_perStageCert`); lower bound 93/37; stuck evidence.
+- 2026-10-07 07:05 (operator): gate moved to `cStar_le_nine_halves` after `cStar_le_five`.
+- 2026-10-07 06:50 (operator): rescoped the run gate to `cStar_le_five` after the c⋆ ≤ 4 wall.
+- 2026-10-07 (c⋆ lap 7, review): Newhouse thick core closed by forced merging; probe c=4 counting core, bank c⋆ ≤ 5.
+- 2026-10-07 (c⋆ lap 3, review): counting engine + `c⋆ ≤ 6` banked first; crux = exact joint {2,3} core certificate.
+- 2026-10-06 evening: threshold lane opened (Trevor: "go for it").
+
 ## CURRENT DIRECTIVE (2026-10-09, branch `proof/cantor-repetition`, review lap 13): P1 is the last leaf 🎯
 
 **Objective:** prove `repPairArith_of_sparse` (CantorRepetition), the Baker-free shadow dichotomy.

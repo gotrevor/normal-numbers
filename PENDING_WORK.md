@@ -162,6 +162,210 @@
   `X_k = (a_k − e)/(2s)`, `sched_tail` gives `≲ ψ_k (k+3)² log a_k ≲ ψ_k (k+3)⁴`; (d) sign/3-part
   reduction in summable form (as `repPairPower_of_pos`).
 
+## UniformBad threshold c⋆ (branch proof/uniformbad-threshold, 2026-10-07)
+* **2026-10-07 lap 13 (review, operator gate 2 rerun).**  Gate `cStar_le_nine_halves`: **no mechanism;
+  local engines walled, proved for the per-stage engine.**  New probes at 9/2
+  (`scripts/cstar_models/`): (1) per-stage Rosenfeld (`eng2.py`: ancestor = largest dyadic cell below the
+  window gap, kill depth per stage) survives at 4.6 (min rate 1.59), dies at 4.55, and dies at 4.5 even
+  with only bases 2, 3; `not_perStageCert` PROVED (std + native_decide): with bases 2, 3 only and the first
+  40 levels at rate 2, no certificate reaches level 182.  (2) Lebesgue precharge (`leb2.py`, `hyb.py`):
+  window share charged when cells are large, u-weighted counts; the partially covered cells inflate the
+  base-2 charges (cnt/Phi ≈ 1.25) → same 4.55–4.6.  (3) Parry-measure precharge (`meas2.py`, `nupre.py`;
+  base 2 free): forced pattern states make single cells heavy, the excess feeds back through the lag →
+  stable at 5, unstable at 4.5.  (4) box abstractions of the exact {2,3} position with touching kills
+  (`abs3.js`) collapse to value 0: a bin error triples at each ternary stage and the worst case steers
+  every descendant into a window (heuristic, not in Lean).  Rescue threshold: base-3 charges ×0.7 make the
+  full per-stage engine live at 4.5 (`eng5.py`).  Most favourable alignment survives at 4.4 (`eng6.py`),
+  so no closed-form two-rate obstruction exists; the death comes from the alignment sequence.
+  **Lower bound:** `ninety_three_thirty_sevenths_le_cStar` PROVED (59 windows, bases 2,3,5,10,17, n ≤ 18;
+  the old greedy failed at 2.51 only because n ≤ 14).  Finite systems (b ≤ 3000, radius ≥ 1e-13) are
+  nonempty at 2.514; survivors near binary-periodic rationals (`11443/65535` at 2.52–2.55); count grows
+  with resolution at 2.55 → node `CStarLeThirteenFifths` (60%).  So 9/2 is far above the truth: a
+  technique wall.  **Next attack (if reopened):** the exact {2,3} core needs non-local input (where
+  the points k/3ⁿ fall among SFT-alive binary cells: cell index j ≡ −r·3^{−n} mod 2^L for relative
+  position r/3ⁿ), i.e. digits of 3-adic units in base 2 — the cantorbad middle-digit wall in another
+  guise.  A cheaper bank: formal per-stage engine at ≈ 4.6–4.7 (multi-rate products over the
+  alignment classes; the two-rate formal engine is at its floor 124/25, `plan_below5.py`).
+* **2026-10-07 lap 11 (operator gate 2).**  Gate `cStar_le_nine_halves` (9/2): **wall for the counting
+  engine, recorded as a theorem.**  Probes: exact joint {2,3} tree at 9/2 (`ex23.js`, containment kills)
+  grows **1.879/level** on average but has dead ends (30/9178 at 8-level lookahead, 1% quantile 0.19 of
+  the mean).  The two-rate engine fails by ≈0.08 at 9/2 (`gen.js`); `not_nineHalvesBalance` (PROVED,
+  axiom-clean) shows no pair of rates balances even with bases b ≥ 5 dropped and optimistic products
+  (base 2 patterns of lengths 5,7,8; base 3 lag 6, 4 cells).  The {2,3}-exact + counted-b≥5 route at
+  9/2 also fails on the lap-4 abstraction weights (abstraction 1.77 at c=5, weights far from uniform).
+  **Banked:** `cStar_le_124_25` (PROVED, `UniformBadBelowFive.lean`; native_decide for the K_b table,
+  lag 3, base sum): base-2 pattern `0000100000` added (threshold 33/1024, multiplicity 1 from level 11),
+  windows `1/(bⁿK_b)` with `K_b = ⌊b^{124/25}⌋` (b<100), `b⁴` beyond; rates 181/100, 33/20 reused.
+  Lean balance `0.1833 ≤ 0.19`, `0.3481 ≤ 0.35` (`bal124.py`).  Engine floor: 4.96 (lower exponents
+  need patterns of length 9, slack < 0.003).  Maze row "two-rate counting engine at c = 9/2" (wall,
+  reopen `SmallBaseTreeCore`).  **Next attack (needs a new mechanism):** a weight-regular core for the
+  exact {2,3} (or {2,3,5,6,7}) tree at 9/2: phase-parametrized local transfer operator (state = base-2
+  pattern state × position θ of the cell in the 3-adic grid × scale phase), sub-eigenvector with
+  threshold pruning, certified by interval arithmetic in θ.
+* **2026-10-07 lap 9b.**  `five_halves_le_cStar` PROVED (29-window cert, bases ≤ 300, n ≤ 14); greedy
+  fails at 2.51 (survivor ≈ 0.30147).  Pruned 5-base core probe (`prune`: keep cells with 12-step growth
+  ≥ g₀^12): CLOSED at levels 14 and 18 for g₀ ∈ {1.4,1.55,1.65} — every kept cell has ≥ 1 kept child,
+  mean kept children 1.804–1.815; at g₀ = 1.72 (level 18) 4 of 59676 kept cells are orphaned, so closure breaks just above 1.7.  Next: replace lookahead pruning by a local invariant.
+* **2026-10-07 lap 9.**  Exact `{2,3,5,6,7}` tree at `c = 4` (`core5.js`) grows `1.815`/level; bases
+  `b ≥ 10` counted against it survive at `4×` charges.  So the lap-8 negative was about base 5 being
+  counted; the remaining crux is **weight regularity of the exact 5-base core** (1% quantile 1.59, 1%
+  dead ends).  Recorded in the `SmallBaseTreeCore` docstring and the Maze row.  **Next:** threshold-pruned
+  sub-core (drop cells whose 12-step growth `< g₀`) and measure whether the pruned core stays closed
+  (children of kept cells mostly kept) with growth `≥ 1.78`; if yes, aim a phase-interval potential
+  certificate (`jointCoreSubEigen_four` shape) at it.
+* **2026-10-07 lap 8.**  **Decisive `c = 4` counting probe: NEGATIVE.**  On the TRUE joint `{2,3}` tree
+  (`scripts/cstar_models/joint23_spread.js`): per-cell 10-step lookahead growth `[1.751, 1.842]`, so the core
+  itself is regular-looking.  But the weight-aware charge of base 5 (killed core mass / ancestor core mass,
+  `joint23_rho.js`) is `0.055` (1.5x regular) already among 220 windows, and the engine recursion
+  `M(k+1) = M(k) − Σ_b ρ_b M(k+1−lag_b)` (`joint23_rec.js`) dies at level 91 at `c = 4`, lives at `c = 4.25`;
+  at `c = 4` it lives only with base 5 also exact (decay 0.975/level; doubled charges die).  The loss is
+  structural: every alive ancestor is charged as if it held a window, and the feedback `(1−η)^{−lag}` turns a
+  0.2%/level true loss into 7%/level.  Maze row "counted medium bases" updated (REOPEN: regular `{2,3,5,6,7}` core).
+  **Done (c⋆ lap 10):** `cStar_le_five` PROVED (`UniformBadFive`): kill level `L5` (4 cells, every base),
+  rates 181/100 / 33/20 with `no_three` (≤ 2 base-3 kill levels in any 3), base series by exact ℚ
+  (`native_decide`, b ≤ 29) + telescoping tail.  Slack 0.013 at base-3 levels.
+  **Next:** (a) non-integer exponent `c ∈ (4, 5)` with the same engine (needs real windows `b^{-c}`);
+  (b) higher certified lower bound than 5/2.
+* **2026-10-07 lap 7 (review).**  **Newhouse thick core: no adaptive escape** (proved):
+  `Newhouse.merge_forced` / `windows_merge_forced` — a `τ`-thick compact `B` in the good set puts any two
+  `τ`-close windows inside its hull into one gap, so every thick core's gaps contain the canonical
+  `τ`-merge closure and `ThickCore c τ` ⟺ that closure stays local.  The lap-6 plan (flipped SplitCore,
+  discard clusters adaptively) is therefore dead: adaptivity only enlarges gaps.  Locality needs
+  control of clusters of windows of distinct bases at every depth (pair counts of centres are exact
+  lattice counts `2εqq' + gcd`, so clusters of all sizes are expected deep down; climbing across scales is
+  what must be ruled out).  Every Newhouse pairing puts infinitely many bases on one side.  Maze row
+  "adaptive split cores for the Newhouse thick core" (wall, reopen = `ThickCore`).
+  **Bank `c⋆ ≤ 5`** (frozen `UniformBadFive.cStar_le_five`, 90%): probe `scripts/cstar_models/lvl5c.js`,
+  `pess.js` — counting engine with base 2 exact (runs, multiplicity 1: the other run digit was killed a
+  level earlier), per-window resolution (kill at `lv` if the window spans `< 3` cells, ≤ 4 cells; at
+  `lv − 1` otherwise, ≤ 3 cells), lag `⌊log₂(¾(b⁵−2))⌋`, perfect powers dropped, growth `181/100` /
+  `329/200` (on base-3 kill levels).  Slack: `0.038` true pattern, `0.028` with all `b ≥ 5` at every level,
+  `0.019` with worst-case base-3 counts per window (`⌊(2ℓ+2)/3⌋`, from `L₃(n+2) ≥ L₃(n)+3`).  Uniform growth
+  fails (`−0.023`); 5 cells/window fails (`−0.011`); control `c = 6` slack `0.21`.
+  Base-3 kill levels: `L(n) = lv(n) − [lv(n+1) = lv(n)+1]` (the shift happens exactly before a gap of 1),
+  so `L` has gaps in {1,2}, never two 1s in a row.
+  **Next (in order):** (1) decisive `c = 4` counting probe: exact joint `{2,3}` system, threshold-pruned
+  cells mostly inside a base-3 window, growth + weight spread + worst weight-aware `b ≥ 5` charge;
+  (2) formalize `cStar_le_five`: `runBad5` + multiplicity-1 `card_runKill5_le`, `kl` + `card_meets5_le`
+  (4/3 cells) + `meets5_unique` (lag condition `2^lag ≤ ¾·2^L(b⁵−2)/bⁿ⁺⁵`… i.e. reuse `meets_unique`
+  shape), `kl3` gap lemmas, product bound, tail sum, `growth` with two-valued `g`.
+* **2026-10-07 lap 6.**  `gap_lemma` PROVED (axiom-clean): linked pairs have both gaps longer than
+  dist(K₁,K₂) > 0, so finitely many (`finite_long_gaps`); a minimal-total-length pair contradicts
+  `linked_descent`.  ALSO `e15_facts` PROVED: E15 = {‖2ⁿx‖ ≥ 1/15} ⊆ E₂(4), gaps are exactly the
+  windows (A±1/15)/2ⁿ (`gap_eq_window`, minimal-order window argument), thickness 3 from
+  `15k−2ʲ ≥ 1 ⇒ ≥ 7` (2ʲ mod 15 ∈ {1,2,4,8}).  So `cStar_le_four_of_newhouse` is axiom-clean
+  modulo its hypothesis `ThickCore 4 τ` (τ > 1/3): the crux is now the ONLY gap.
+  ALSO `fset_facts` (general b, c: Fset b c = {‖bⁿx‖ ≥ 1/(b^c−1)}, gaps = windows, thickness
+  (b^c−b^{c−1}−2)/2 — F₃(4): 26, F₂(3): 1) and `cStar_le_of_newhouse` (any c ≥ 3) +
+  `cStarLeThree_of_newhouse` (ThickCore 3 τ, τ > 1), all axiom-clean.
+  Crux probe `scripts/cstar_models/clus.js` (components of λ-enlarged exact windows δ_b=1/(b^4−1)):
+  max component length / (largest window, enlarged) = 2.2 (λ=.5) / 2.0 (λ=1), bases 5..60 to 1e-8;
+  2.13 bases 5..100 to 1e-9; 2.49 with bases 3..60.  Cross-base clusters stay bounded — but bounded
+  clusters alone do not give thickness (near-touching components at any fixed threshold); a proof
+  needs hysteresis / adaptive endpoint choice, i.e. local existence of deep-good points.  Analysis:
+  every rigorous version found reduces to a worst-case local Diophantine statement (chains of
+  comparable windows of distinct bases), no elementary bound (Farey/lcm bounds are vacuous at deep
+  scales).  Plan: B ⊆ F₃(4) (τ=26, exact base 3) with b ≥ 5 windows merged; state the merge lemma.
+  ALSO `Scheme.limit_thick` + `thickCore_of_splitCore` PROVED: any Cantor scheme (split [p,q] at
+  r<s with both kept pieces ≥ τ·gap, shrink ρ<1) is Thick τ, its gaps are exactly the removed ones,
+  and endpoints in the closed `goodCore c` force B ⊆ goodCore.  Crux is now `SplitCore 4 τ` (τ>1/3):
+  a family of intervals with good endpoints closed under admissible splits — LOCAL & adaptive.
+  Insight for next lap: with the flip A = F₃ (τ=26), B ⊆ E15 needs only τ_B > 1/26, so kept pieces
+  can be 4% of the gap — edge-child deaths no longer propagate (2-out-of-2 death only); a flipped
+  SplitCore (B handles base 2 exactly + b ≥ 5, A handles 3) is the natural next statement.
+  Heuristic caveat: worst-case clusters of near-touching windows of distinct bases DO exist at deep
+  scales (independence heuristic), so any proof must discard clusters adaptively, not bound them.  Route `cStar_le_four_of_newhouse` now rests on `e2_four_facts` + crux
+  `thickCore_four` only.  Crux probe (scratch mlog.py): the τ<0.4 violations of raw ⋂_{b=3..40}
+  are generic cross-base near-coincidences (centres with denominators ~10³, ratios down to 0.016),
+  not structured clusters at small-denominator rationals; so a cascade bound must be Diophantine
+  (|A/bⁿ − A'/b'ᵐ| ≥ 1/lcm) and cannot rely on finitely many special points.
+* **2026-10-07 lap 5 (NEW ROUTE: Newhouse gap lemma).**  `UniformBadNewhouse.lean`: pair base 2
+  against all b ≥ 3.  `cStar_le_four_of_newhouse` (PROVED wiring) from three nodes:
+  `gap_lemma` (classical, 95%), `e2_four_facts` (τ(E₂(4)) = 3 exactly, gaps A/2ⁿ ± 2⁻ⁿ/15, 90%),
+  crux `thickCore_four : ThickCore 4 (2/5)` (compact B ⊆ ⋂_{b≥3} E_b(4), thickness 2/5, 70%).
+  Probes `scripts/cstar_models/thick.py`, `merge.py`: raw ⋂_{b≥3} has thickness 0 (cross-base
+  near-touching windows) but merging to thickness 0.4/1/2 costs 26/64/126 merges of ~56.7k gaps
+  (bases 3..40, windows ≥ 3e-7), hull [1/80,79/80] intact.  c=3: τ(E₂(3)) = 1, merged B reaches
+  1.05 (c⋆ ≤ 3 plausible).  Control: c = 2.2, 2.4 collapse.  No dimension deficit: Newhouse is
+  scale-free.  **Crux now:** worst-case control of merge cascades (clusters of windows of distinct
+  bases near rationals with large denominators).  Plan: B = E₃(4) (τ = 26) minus fills of b ≥ 5
+  windows; E₃'s margin 26 vs needed 2/5 lets each gap absorb ~19× its length of nearby smaller
+  windows; need a lemma bounding absorbed length (chains), or a potential-thickness construction.
+  Next: (1) prove `gap_lemma` (Palis–Takens, compactness); (2) prove `e2_four_facts`;
+  (3) attack the cascade bound (state it as a node).
+* **2026-10-07 lap 4 (crux probe: exact {2,3} core).**  New `UniformBadJoint.lean`: containment
+  kills `winBad c S` (cell inside a closed window of some b ∈ S), weighted certificate `SubEigen`,
+  proved core lemma `exists_good_of_subEigen` (axiom-clean: certificate ⇒ point with
+  ‖bⁿξ‖ ≥ b^{−c} for all b ∈ S).  Crux node `jointCoreSubEigen_four` (SubEigen (winBad 4 {2,3})
+  (33/20), sorry, 80%).  Probe `scripts/cstar_models/abs23.js` (box abstraction: binary run state,
+  ternary trailing runs of the 1–2 ternary units met, offset u, length ρ∈[1/3,1) in ternary
+  units, worst case over boxes): ratio 1.539 (27 u-bins), **1.669** (81 bins, 8+8 ρ-bins),
+  ≈1.65–1.73 rising (243).  c=5 version: 1.77 at 81 bins.
+  **New obstruction (moved crux):** bases b ≥ 5 charged by counting cost, at c=4 and growth
+  g = 1.5/1.6/1.7, 0.73/0.32/0.17 per level (b=5,6,7 dominate: .11/.07/.04 at g=1.6) — even with
+  uniform weights this exceeds the budget Λ−g; with the certificate's weights (10% zero, any
+  threshold δ ≥ 0.2 collapses it) it is hopeless.  At c=5 counted b≥5 cost .08 at g=1.6 but needs
+  δ ≥ 0.5: also fails.  Probe `/tmp`-style recomputation in `bb2.py` logic (per-order resolution
+  level, m = ⌊2r2^L⌋+2, best lag) — the `+2` boundary cells and (2/g)^lag dominate.  Base-B trees
+  (B = 3..32, all bases counted) are worse (the boundary term costs ≥ 2 per event).
+  **Next:** (1) b = 5, 6, 7 must be exact or charged by a regular measure: try adding base 5 as a
+  third side automaton in abs23.js (state blow-up ×~70·N₅·M₅ — test with coarse bins), or a
+  weight-regularised certificate (cap w(child)/w(parent)) and a Frostman-charged engine for b ≥ 5
+  (ideal cost Σ_b (1/log₂b)·C(4b^{−4})^{0.74} ≈ 0.022·C).  (2) Rational transcription of the
+  abs23 certificate (needed in every route).
+* **2026-10-07 lap 3 (review + bank).**  DONE `cStar_le_six` (`UniformBadCount.lean`, axiom-clean):
+  Rosenfeld-style counting engine `Count.growth` (kills charged to alive ancestors; no Frostman
+  constant), base 2 exact via `runBad` (lag 6, multiplicity 2), every `b ≥ 3` charged at lag
+  `⌊log₂(b⁶−2)⌋` with ≤ 5 cells per window; balance `2(3/5)⁵ + 5·(7/200) ≤ 1/3` at `Λ = 5/3`.
+  Probes (`scripts/cstar_models/ros2.py`, `ros3.py`): per-level counting closes at c=6, fails at c=5;
+  perfect level-averaging reaches only c≈4.6; at c=4 binary-exact counting fails even idealized
+  (−0.105).  Joint {2,3} simulation (`joint.js`): true growth 1.808/level, base-3 event costs 2.4%
+  (≈ 2/81), full system at c=4 ≈ 1.80/level, at c=3 ≈ 1.49/level (so c⋆ ≤ 3 very plausible).
+  **Crux restated:** an exact joint {2,3} core = finite-state abstraction of the skew product
+  (binary run state × ternary run state × position u in ternary units × phase of k·log₃2) with a
+  certified sub-eigenvector Λ ≥ ~1.75, then counted b ≥ 5 with level-averaging.
+  **Next:** (1) crux probe: build the abstraction in JS, compute a sub-eigenvector, measure
+  states needed; (2) averaged counting engine (level-dependent g k) → c ≤ ~4.75 bank.
+* DONE `twelve_fifths_le_cStar` (25-window exact cover, bases 2,3,5,10; engine `not_admissible_of_cert` for any p/q).
+* DONE `cStar_le_twelve` (UniformBadTwelve.lean): power engine `exists_avoid_powPot` (α-power weights,
+  child-averaged new charges, Good-children predicate), K=4096, α=1/4, ρ=1/81, per-base 3886/b³.
+* OPEN crux `cStar_le_four`.  Probes (scratch, recorded here): every potential engine with base 2
+  charged stalls near c≈7 (cost of base 2 ≈ 4K·2^{−c} vs threshold); exact-base-2 + engine fails at
+  c=4 since the engine needs ≥60% good children but binary run-avoidance keeps ≤50% per step and
+  base 3 costs ~K/20.  Needed: bases ≤~16 handled exactly and jointly.  Lead: Newhouse thickness
+  τ_b ≈ b^c/2 gives Σ_b 1/(1+τ_b) ≈ 0.165 at c=4; a countable gap lemma (Falconer–Yavicoli 2022,
+  Thm 6, arXiv 2102.01186) might apply — exact statement unread (WebFetch blocked).
+  Next: (1) push engine to c=11 (margin 25% at K=1024, α=1/5); (2) state the thickness route as
+  def-Prop nodes; (3) prove a finite gap lemma for bases {2,3} hybrid.
+
+* **2026-10-07 lap 2 (crux decomposition).**  New `UniformBadRoute.lean`: proved `goodBase_pow`,
+  `admissible_iff_nonPerfectPow` (perfect-power bases free); crux split into def-Prop nodes
+  `SmallBaseTreeCore` (weighted tree on the jointly good set of S={2,3,5,6,7}, cell-relative
+  Frostman (s,C)) and `TreeEngineSuffices`, wired by `cStar_le_of_treeCore` (proved).
+  Scratch models (worst-case upper bounds on each engine's balance, so they refute the *sufficient
+  condition*, not the mechanism): grid power engine fails at c=4..7 for all K,α,ρ even with base 2
+  exact as Good; free-offset (continuum) engine with all bases charged fails at c=4,6,8; it handles
+  bases ≥16 at c=4 (slack .16).  μ-averaged continuum engine with base 2 exact (Parry measure on
+  binary run-free, s=.879): c=4 fails with base 3 charged (base 3 ≈ .5 of budget), closes for
+  b≥5 only at regularity C≈1 (slack .08); c=5 closes with all b≥3 at C=1, fails at C≈1.9 (the Parry
+  eigenvector ratio).  With S={2,3,5,6,7} exact at s=.8: slack .53 (C=1), .30 (C=1.5).
+  Key mechanisms found: (i) obstacles meet only the E₂-cores of dyadic cells (X avoids
+  2^{-j-c}-neighbourhoods of depth-j dyadics) so tiny carried obstacles meet ≤1 child, not 2;
+  (ii) many-obstacle (A) terms need no Frostman constant (per-point multiplicity bound); only
+  carried and proximity (B) terms pay C.  A naive uniform regularity on a Cantor set is FALSE
+  near gap edges, hence the cell-relative formulation.
+  **Next:** (1) derive the exact cell-engine balance inequality (state it as the hypothesis of a
+  general theorem `admissible_of_treeCore_balance`, then prove it — reuse `powPot_step` shape);
+  (2) attack `SmallBaseTreeCore` for S={2,3}: binary run-free cells U inside run-free ternary cells
+  (ternary depth matched to binary depth); bound the worst-case kill by base-3 bad cells per step;
+  (3) only then add 5,6,7.
+  **Lap 2b probes:** worst-case avoidance of base 3 inside the binary run-free tree keeps ≤ 21% of
+  children (t23.py) ⇒ dimension ~0.5, useless; survivor counting measure has cell-relative
+  Frostman C ≈ 9 with base 3 (fr.js), ≈ 30 on gap-split components (fr2.js).  SmallBaseTreeCore at
+  C=1.5 is doubtful (15%).  Promising fix: normalise the potential by the local density
+  h(Q)=μ(Q)/|Q|^s (Perron-style).  The carried factor is then exactly β^{s−α}·(children met), with
+  no C; the cost moves to new charges/h(child) and needs an upper bound h ≤ H.  Next: model the
+  h-normalised engine on the depth-20 survivor tree (track min h along the greedy path).
 ## Repetition review lap 7 (2026-10-07) — ROUTE CHANGE: sparse pairs + Matveev replace the walls
 * Insight: `RepPairArith` needs only summability along `sched` (a polylog saving suffices), not the
   power saving of `TOrbitCyclicDecay`.  Two sparse points `y, tᵟy` of one orbit mod `3^A − 1`,

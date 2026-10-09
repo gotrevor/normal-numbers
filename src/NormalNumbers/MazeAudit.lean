@@ -12,6 +12,10 @@ import NormalNumbers.LogCastingOutStretch
 import NormalNumbers.PairDecoupleProve
 import NormalNumbers.StonehamBase6
 import NormalNumbers.LinearFormsScalesStretch
+import NormalNumbers.UniformBadJoint
+import NormalNumbers.UniformBadRoute
+import NormalNumbers.UniformBadNewhouse
+import NormalNumbers.UniformBadNineHalves
 import NormalNumbers.EntropyProfiles
 import NormalNumbers.CantorExactExponentStretch
 import NormalNumbers.CantorExactExponentProfile
@@ -22,6 +26,8 @@ import NormalNumbers.ConjugateEntropy
 import NormalNumbers.Barriers
 import NormalNumbers.CantorBadNormal
 import NormalNumbers.ErdosTriples
+import NormalNumbers.ZerolessTuples
+import NormalNumbers.ErdosTripleClasses
 
 /-!
 # Maze audit: every closed route cites declarations
@@ -49,12 +55,35 @@ def mazeRows : List RowInfo :=
 
 /-- Each linked row and the declarations it rests on. -/
 def mazeLinks : List Link := [
+  ⟨"adaptive split cores for the Newhouse thick core",
+   [``UniformBadThreshold.Newhouse.merge_forced,
+    ``UniformBadThreshold.Newhouse.windows_merge_forced,
+    ``UniformBadThreshold.Newhouse.thickCore_of_splitCore],
+   [``UniformBadThreshold.Newhouse.ThickCore]⟩,
+  ⟨"two-rate counting engine at c = 9/2",
+   [``UniformBadThreshold.not_nineHalvesBalance,
+    ``UniformBadThreshold.cStar_le_124_25],
+   [``UniformBadThreshold.SmallBaseTreeCore]⟩,
+  ⟨"local per-window engines at c = 9/2",
+   [``UniformBadThreshold.not_perStageCert,
+    ``UniformBadThreshold.PerStage.Cert],
+   [``UniformBadThreshold.SmallBaseTreeCore]⟩,
+  ⟨"counted medium bases over an exact {2,3} core at c = 4",
+   [``UniformBadThreshold.Count.jointCoreSubEigen_four,
+    ``UniformBadThreshold.Count.exists_good_of_subEigen],
+   [``UniformBadThreshold.SmallBaseTreeCore]⟩,
   ⟨"Archimedean-only mechanisms for Erdős #406",
    [``ErdosTriples.Literature.LagariasRealSibling], []⟩,
   ⟨"Exceptional set via all exponent tuples",
    [``ErdosTriples.not_tripleTrivial_one_three, ``ErdosTriples.not_tripleTrivial_eight_one], []⟩,
   ⟨"Erdős #406 via gap-two triples",
    [``ErdosTriples.erdos406_of_gapTriplesEventually, ``ErdosTriples.tripleTrivial_of_sum_le_160],
+   [``ErdosTriples.GapTwoTriples]⟩,
+  ⟨"Zeroless powers of two via gap tuples",
+   [``ZerolessTuples.not_tupleDeathAtLength, ``ZerolessTuples.survives10_four_sixteen_thirty],
+   [``ZerolessTuples.NoNestedZerolessChain]⟩,
+  ⟨"Gap triples via exponent-class certificates",
+   [``ErdosTriples.Classes.survives_offLine_eight, ``ErdosTriples.Classes.tripleTrivial_of_mod_nine],
    [``ErdosTriples.GapTwoTriples]⟩,
   ⟨"x, 3x, 5x as the first member of a family",
    [``Adder.not_isWordSetBlock_runs_three_one_seven_nine,
@@ -300,7 +329,7 @@ def mazeLegacy : List String := [
   "Diophantine good-denominator detour for the tail cell",
   "route B's unweighted cover of the state-dependent target"]
 
-/-- info: maze audit: 176 rows, 69 cite declarations, 107 legacy (prose only) -/
+/-- info: maze audit: 182 rows, 75 cite declarations, 107 legacy (prose only) -/
 #guard_msgs in
 #maze_audit mazeRows, mazeLinks, mazeLegacy
 
