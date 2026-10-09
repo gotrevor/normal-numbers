@@ -28,7 +28,11 @@
   swapped; `b₁=b₂=0`, `P = X`).  Corrected `Literature.LaurentZeroLemma` (polynomial-family form).
   PROVED (c, linear algebra): `det_mul_eq_sum`, `exists_det_submatrix_ne_zero` (trivial kernel ⇒
   nonzero maximal minor via `det(AᵀA) ≠ 0`).
-* NEXT (c, wiring): grid matrix `A (r,s) (k,l) = C(r+δs,k)·(tʳ(b/a)ˢ)ˡ` over ℚ; kernel vector ⇒
+* Same lap, PROVED (c) from the cited zero lemma: `choose_coeffs_eq_zero`, `grid_ker_trivial`,
+  `exists_det_hom_ne_zero` (nonzero integer homogenised `KL`-minor on the grid).
+* NEXT (d): assembly `padicTwoLogs_of_zeroLemma : LaurentZeroLemma → PadicTwoLogs` — parameters,
+  entry bound `X`, reductions (`t ↦ t²` for `3 ∣ t−1`; `3 ∣ a`/`3 ∣ b`; dependent case; small δ).
+* DONE-NOTE (c, wiring): grid matrix `A (r,s) (k,l) = C(r+δs,k)·(tʳ(b/a)ˢ)ˡ` over ℚ; kernel vector ⇒
   `q_l = Σ_k v_{kl} chooseP k` vanish on the grid ⇒ (zero lemma) `q_l = 0` ⇒ evaluate at `0,1,…`
   (triangular in `C(n,k)`) ⇒ `v = 0`; then minor ⇒ integer homogenised det ≠ 0.  Then (d).
   Small-δ regime (`δ < R₂`, values `r+δs` collide): use the trivial bound `3ᵍ ≤ |tᵟa − b|`.

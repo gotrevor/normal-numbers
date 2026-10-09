@@ -640,4 +640,121 @@ theorem not_laurentZeroLemmaMisread : ¬ LaurentZeroLemmaMisread := by
 
 end Literature
 
+
+section ZeroWiring
+open Polynomial
+
+/-- Triangularity of the binomial basis: `Σ_{k<K} v_k C(n,k) = 0` for all `n` forces `v = 0`. -/
+theorem choose_coeffs_eq_zero (K : ℕ) (v : ℕ → ℚ)
+    (h : ∀ n : ℕ, ∑ k ∈ range K, v k * (n.choose k : ℚ) = 0) : ∀ k < K, v k = 0 := by
+  intro k hk
+  induction k using Nat.strong_induction_on with
+  | _ j ih =>
+    have hj := h j
+    rw [← sum_range_add_sum_Ico _ (show j + 1 ≤ K by omega), sum_range_succ] at hj
+    have e1 : ∑ k ∈ range j, v k * (j.choose k : ℚ) = 0 :=
+      sum_eq_zero fun k hk' => by rw [ih k (by simpa using hk') (by simp at hk'; omega), zero_mul]
+    have e2 : ∑ k ∈ Ico (j + 1) K, v k * (j.choose k : ℚ) = 0 :=
+      sum_eq_zero fun k hk' => by
+        rw [Nat.choose_eq_zero_of_lt (by simp at hk'; omega)]; simp
+    rw [e1, e2, Nat.choose_self] at hj; simpa using hj
+
+/-- **(c), zero-lemma half (proved from the cited `LaurentZeroLemma`).**  The grid matrix with
+rows `(r, s)`, `r < R₁+R₂−1`, `s < S₁+S₂−1`, and columns `C(r+δs, k)·(α₁^r α₂^s)^l` has trivial
+kernel: a kernel vector gives `q_l = Σ_k v_{kl} C(X,k)` vanishing on the grid. -/
+theorem grid_ker_trivial (hZ : Literature.LaurentZeroLemma) (α₁ α₂ : ℚ) (δ : ℕ)
+    (h1 : α₁ ≠ 0) (h2 : α₂ ≠ 0) (hind : ∀ u v : ℤ, α₁ ^ u * α₂ ^ v = 1 → u = 0 ∧ v = 0)
+    (K L R₁ R₂ S₁ S₂ : ℕ)
+    (hc1 : L ≤ ((range R₁ ×ˢ range S₁).image fun rs : ℕ × ℕ => α₁ ^ rs.1 * α₂ ^ rs.2).card)
+    (hc2 : (K - 1) * L < ((range R₂ ×ˢ range S₂).image fun rs : ℕ × ℕ =>
+      (rs.1 : ℤ) * 1 + (rs.2 : ℤ) * δ).card)
+    (v : Fin K × Fin L → ℚ)
+    (hv : (Matrix.of fun (x : Fin (R₁ + R₂ - 1) × Fin (S₁ + S₂ - 1)) (kl : Fin K × Fin L) =>
+      (((x.1 : ℕ) + δ * x.2).choose kl.1 : ℚ) * (α₁ ^ (x.1 : ℕ) * α₂ ^ (x.2 : ℕ)) ^ (kl.2 : ℕ))
+        *ᵥ v = 0) : v = 0 := by
+  rcases Nat.eq_zero_or_pos K with rfl | hK
+  · funext x; exact x.1.elim0
+  set q : ℕ → ℚ[X] := fun l => if hl : l < L then ∑ k : Fin K, C (v (k, ⟨l, hl⟩)) * chooseP k
+    else 0
+  have hdeg : ∀ l < L, (q l).natDegree < K := by
+    intro l hl
+    simp only [q, hl, dite_true]
+    refine lt_of_le_of_lt (natDegree_sum_le_of_forall_le _ _ (n := K - 1) fun k _ => ?_) (by omega)
+    exact (natDegree_C_mul_le _ _).trans ((chooseP_natDegree k).trans (by omega))
+  have hvan : ∀ r < R₁ + R₂ - 1, ∀ s < S₁ + S₂ - 1,
+      ∑ l ∈ range L, (q l).eval ((r : ℚ) * ((1 : ℤ) : ℚ) + (s : ℚ) * ((δ : ℤ) : ℚ)) *
+        (α₁ ^ r * α₂ ^ s) ^ l = 0 := by
+    intro r hr s hs
+    have := congrFun hv (⟨r, hr⟩, ⟨s, hs⟩)
+    simp only [mulVec, dotProduct, of_apply, Pi.zero_apply, Fintype.sum_prod_type] at this
+    rw [← this, Finset.sum_comm, ← Fin.sum_univ_eq_sum_range]
+    refine Finset.sum_congr rfl fun l _ => ?_
+    simp only [q, l.isLt, dite_true, eval_finsetSum, eval_mul, eval_C, Finset.sum_mul]
+    refine Finset.sum_congr rfl fun k _ => ?_
+    have := chooseP_eval k (r + δ * s)
+    push_cast at this ⊢
+    rw [show (r : ℚ) * 1 + s * δ = r + δ * s by ring, this]
+    ring
+  have hq := hZ α₁ α₂ δ 1 K L R₁ R₂ S₁ S₂ h1 h2 hind hc1 hc2 q hdeg hvan
+  funext ⟨k, l⟩
+  have hql := hq l l.isLt
+  simp only [q, l.isLt, dite_true] at hql
+  have := choose_coeffs_eq_zero K (fun k => if hk : k < K then v (⟨k, hk⟩, l) else 0)
+    (fun n => by
+      have := congrArg (eval (n : ℚ)) hql
+      simp only [eval_finsetSum, eval_mul, eval_C, chooseP_eval, eval_zero] at this
+      rw [← this, ← Fin.sum_univ_eq_sum_range]
+      refine Finset.sum_congr rfl fun k _ => ?_
+      simp [k.isLt]) k k.isLt
+  simpa [k.isLt] using this
+
+
+/-- **(c) (proved from `LaurentZeroLemma`).**  Some `KL` grid points make the integer
+homogenised determinant (binomial columns, entries `C(r+δs,k) t^{lr} b^{ls} a^{(L−1−l)s}`) nonzero. -/
+theorem exists_det_hom_ne_zero (hZ : Literature.LaurentZeroLemma) (t a b : ℤ) (δ : ℕ)
+    (ht : t ≠ 0) (ha : a ≠ 0) (hb : b ≠ 0)
+    (hind : ∀ u v : ℤ, (t : ℚ) ^ u * ((b : ℚ) / a) ^ v = 1 → u = 0 ∧ v = 0)
+    (K L R₁ R₂ S₁ S₂ : ℕ)
+    (hc1 : L ≤ ((range R₁ ×ˢ range S₁).image fun rs : ℕ × ℕ =>
+      (t : ℚ) ^ rs.1 * ((b : ℚ) / a) ^ rs.2).card)
+    (hc2 : (K - 1) * L < ((range R₂ ×ˢ range S₂).image fun rs : ℕ × ℕ =>
+      (rs.1 : ℤ) * 1 + (rs.2 : ℤ) * δ).card) :
+    ∃ r s : Fin K × Fin L → ℕ, (∀ x, r x < R₁ + R₂ - 1) ∧ (∀ x, s x < S₁ + S₂ - 1) ∧
+      (Matrix.of fun (x l : Fin K × Fin L) => (((r x + δ * s x).choose l.1 : ℕ) : ℤ) *
+        t ^ ((l.2 : ℕ) * r x) * b ^ ((l.2 : ℕ) * s x) * a ^ ((L - 1 - l.2) * s x)).det ≠ 0 := by
+  have hβ : (b : ℚ) / a ≠ 0 := div_ne_zero (by exact_mod_cast hb) (by exact_mod_cast ha)
+  obtain ⟨f, hf⟩ := exists_det_submatrix_ne_zero _
+    (grid_ker_trivial hZ (t : ℚ) ((b : ℚ) / a) δ (by exact_mod_cast ht) hβ hind K L R₁ R₂ S₁ S₂
+      hc1 hc2)
+  refine ⟨fun x => ((f x).1 : ℕ), fun x => ((f x).2 : ℕ), fun x => (f x).1.isLt,
+    fun x => (f x).2.isLt, fun h => hf ?_⟩
+  have hcast := congrArg (Int.cast : ℤ → ℚ) h
+  rw [Int.cast_zero, Int.cast_det] at hcast
+  have hmat : (Matrix.of fun (x l : Fin K × Fin L) => ((((((f x).1 : ℕ) + δ * ((f x).2 : ℕ)).choose
+        l.1 : ℕ) : ℤ) * t ^ ((l.2 : ℕ) * ((f x).1 : ℕ)) * b ^ ((l.2 : ℕ) * ((f x).2 : ℕ)) *
+        a ^ ((L - 1 - l.2) * ((f x).2 : ℕ)) : ℤ)).map (Int.cast : ℤ → ℚ) =
+      Matrix.of fun x l => ((a : ℚ) ^ ((L - 1) * ((f x).2 : ℕ))) *
+        ((Matrix.of fun (x : Fin (R₁ + R₂ - 1) × Fin (S₁ + S₂ - 1)) (kl : Fin K × Fin L) =>
+          (((x.1 : ℕ) + δ * x.2).choose kl.1 : ℚ) * ((t : ℚ) ^ (x.1 : ℕ) * ((b : ℚ) / a) ^ (x.2 : ℕ))
+            ^ (kl.2 : ℕ)).submatrix f id) x l := by
+    ext x l
+    simp only [map_apply, of_apply, submatrix_apply, id]
+    have hl : (L - 1) * ((f x).2 : ℕ) = (L - 1 - l.2) * ((f x).2 : ℕ) + (l.2 : ℕ) * ((f x).2 : ℕ) := by
+      rw [← add_mul]; congr 1; have := l.2.isLt; omega
+    rw [hl, pow_add]
+    push_cast
+    have ha' : (a : ℚ) ≠ 0 := by exact_mod_cast ha
+    simp only [mul_pow, div_pow, ← pow_mul]
+    rw [mul_comm ((f x).1 : ℕ), mul_comm ((f x).2 : ℕ)]
+    field_simp
+  have hcol := det_mul_column (fun x : Fin K × Fin L => (a : ℚ) ^ ((L - 1) * ((f x).2 : ℕ)))
+    ((Matrix.of fun (x : Fin (R₁ + R₂ - 1) × Fin (S₁ + S₂ - 1)) (kl : Fin K × Fin L) =>
+      (((x.1 : ℕ) + δ * x.2).choose kl.1 : ℚ) * ((t : ℚ) ^ (x.1 : ℕ) * ((b : ℚ) / a) ^ (x.2 : ℕ))
+        ^ (kl.2 : ℕ)).submatrix f id)
+  rw [hmat, hcol] at hcast
+  exact (mul_eq_zero.1 hcast).resolve_left
+    (Finset.prod_ne_zero_iff.2 fun x _ => pow_ne_zero _ (by exact_mod_cast ha))
+
+end ZeroWiring
+
 end PadicTwoLogs
