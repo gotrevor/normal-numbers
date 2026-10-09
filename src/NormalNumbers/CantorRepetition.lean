@@ -4955,6 +4955,138 @@ theorem runOrbitDecay_of_sparse {t : ℕ} (ht : 2 ≤ t) (h3 : ¬ 3 ∣ t)
         gcongr
     _ = 24 * Real.exp (8 * C) * t * (((k : ℝ) + 3) ^ 5 * E ^ k / k.factorial) := by ring
 
+section RunSparse
+open Finset
+
+open Classical in
+/-- **Run sparse decay (the shadow-zone count node).**  For the runs `A = a_k`,
+`N_k = (k+2)a_k + 1`, and sparsity level `K'_k = a(⌊√k⌋+1) + b`, the `m < N_k` with `c tᵐ`
+cyclically `K'_k`-sparse number `≤ N_k ψ_k` for every non-degenerate `c`, `Σ ψ_k (k+3)⁴ < ∞`. -/
+def RunSparseDecay (t a b : ℕ) : Prop :=
+  ∃ ψ : ℕ → ℝ, (∀ k, 0 ≤ ψ k) ∧ Summable (fun k => ψ k * ((k : ℝ) + 3) ^ 4) ∧ ∃ k₁ : ℕ,
+    ∀ k, k₁ ≤ k → ∀ c : ℤ,
+      ¬ ((3 : ℤ) ^ runStart k - 1 ∣ 2 * c * (t : ℤ) ^ ((k + 2) * runStart k + 1)) →
+      ((((range ((k + 2) * runStart k + 1)).filter fun m =>
+        SparseIdentity.CycSparse (runStart k) (a * (Nat.sqrt k + 1) + b) (c * (t : ℤ) ^ m)).card :
+          ℕ) : ℝ) ≤ (((k + 2) * runStart k + 1 : ℕ) : ℝ) * ψ k
+
+theorem sq_le_runStart (k : ℕ) : k * k ≤ runStart k := by
+  have h : ∀ n : ℕ, n * n ≤ 4 ^ (n + 1) := by
+    intro n
+    have := Nat.lt_two_pow_self (n := n)
+    have : n * n ≤ 2 ^ n * 2 ^ n := Nat.mul_le_mul this.le this.le
+    calc n * n ≤ 2 ^ n * 2 ^ n := this
+      _ = 4 ^ n := by rw [← mul_pow]; norm_num
+      _ ≤ 4 ^ (n + 1) := Nat.pow_le_pow_right (by norm_num) (by omega)
+  exact (h k).trans (four_pow_le_runStart k)
+
+/-- **Run sparse decay from sparse identities (proved).**  As `runOrbitDecay_of_sparse`. -/
+theorem runSparseDecay_of_sparse {t : ℕ} (ht : 2 ≤ t) (a b : ℕ)
+    (hS : SparseIdentity.SparseIdentityBound t) : RunSparseDecay t a b := by
+  obtain ⟨C0, hC0⟩ := hS
+  set C := max C0 0
+  have hC : 0 ≤ C := le_max_right _ _
+  have hS' : ∀ (K δ : ℕ) (U V : ℤ), SparseIdentity.IsSparse3 K U → SparseIdentity.IsSparse3 K V →
+      U ≠ 0 → (t : ℤ) ^ δ * U = V → (δ : ℝ) ≤ Real.exp (C * (K + 1) ^ 2) := by
+    intro K δ U V hU hV hU0 h
+    refine (hC0 K δ U V hU hV hU0 h).trans (Real.exp_le_exp.2 ?_)
+    exact mul_le_mul_of_nonneg_right (le_max_left _ _) (by positivity)
+  let K : ℕ → ℕ := fun k => a * (Nat.sqrt k + 1) + b
+  let L : ℕ → ℕ := fun k => ⌊Real.exp (C * ((K k : ℝ) + 1) ^ 2)⌋₊
+  let g : ℕ → ℕ := fun k => runStart k / (2 * K k + 1)
+  let D : ℕ → ℕ := fun k => (g k - 1) / t
+  let ψ : ℕ → ℝ := fun k => min 1 (2 * ((L k : ℝ) + 1) / max (D k : ℝ) 1)
+  have hψ0 : ∀ k, 0 ≤ ψ k := fun k => le_min zero_le_one (by positivity)
+  have hKk : ∀ k, 2 * K k + 1 ≤ (2 * a + 2 * b + 1) * (k + 3) := by
+    intro k
+    have : Nat.sqrt k ≤ k := Nat.sqrt_le_self k
+    simp only [K]; nlinarith
+  refine ⟨ψ, hψ0, ?_, 2 * a + 2 * b + 4, fun k hk c hnd => ?_⟩
+  swap
+  · have hA : 1 ≤ runStart k := le_trans (Nat.one_le_pow _ _ (by norm_num)) (four_pow_le_runStart k)
+    have hK3 : 2 * K k + 1 ≤ runStart k := by
+      have h1 := hKk k
+      have h2 := sq_le_runStart k
+      have : (2 * a + 2 * b + 1) * (k + 3) ≤ k * k := by
+        obtain ⟨j, rfl⟩ : ∃ j, k = j + 3 := ⟨k - 3, by omega⟩
+        have : 2 * a + 2 * b + 1 ≤ j := by omega
+        calc (2 * a + 2 * b + 1) * (j + 3 + 3) ≤ j * (j + 3 + 3) := Nat.mul_le_mul_right _ this
+          _ ≤ (j + 3) * (j + 3) := by nlinarith
+      omega
+    have hg1 : 1 ≤ g k := (Nat.le_div_iff_mul_le (by omega)).2 (by simpa using hK3)
+    refine card_sparse_orbit_le (C := C) (by omega) hA hS' (fun δ hδ => Nat.le_floor hδ) ?_ ?_ c hnd
+    · have h1 : t ^ D k ≤ 3 ^ (g k - 1) := by
+        calc t ^ D k ≤ (3 ^ t) ^ D k := Nat.pow_le_pow_left (Nat.lt_pow_self (by norm_num)).le _
+          _ = 3 ^ (t * D k) := by rw [← pow_mul]
+          _ ≤ 3 ^ (g k - 1) := Nat.pow_le_pow_right (by norm_num) (Nat.mul_div_le _ _)
+      have h2 : 3 ^ (g k) = 3 * 3 ^ (g k - 1) := by
+        rw [← pow_succ']; congr 1; omega
+      have h3 : 1 ≤ 3 ^ (g k - 1) := Nat.one_le_pow _ _ (by norm_num)
+      show t ^ D k + 2 ≤ 3 ^ g k
+      omega
+    · have : D k ≤ g k := (Nat.div_le_self _ _).trans (Nat.sub_le _ _)
+      have : g k ≤ runStart k := Nat.div_le_self _ _
+      nlinarith
+  -- summability
+  set c₀ : ℝ := 2 * ((a : ℝ) + b + 1) ^ 2
+  set E := Real.exp (2 * (a : ℝ) ^ 2 * C)
+  have hsum2 := (summable_poly_exp_div_fact 5 (x := E) (by positivity)).mul_left
+    (12 * Real.exp (c₀ * C) * t * (2 * a + 2 * b + 1))
+  refine Summable.of_nonneg_of_le (fun k => mul_nonneg (hψ0 k) (by positivity)) (fun k => ?_)
+    hsum2
+  set r := 2 * ((L k : ℝ) + 1) / max (D k : ℝ) 1
+  have hAle : (runStart k : ℝ) ≤ 3 * t * (2 * K k + 1) * max (D k : ℝ) 1 := by
+    have e2 : g k - 1 < (g k - 1) / t * t + t := Nat.lt_div_mul_add (by omega)
+    have e3 : runStart k ≤ (2 * K k + 1) * (t * (D k + 1) + 1) := by
+      have e1 : runStart k < g k * (2 * K k + 1) + (2 * K k + 1) := Nat.lt_div_mul_add (by omega)
+      have : g k ≤ t * (D k + 1) := by
+        simp only [D]
+        have : t * ((g k - 1) / t + 1) = (g k - 1) / t * t + t := by ring
+        omega
+      nlinarith
+    have e3' : (runStart k : ℝ) ≤ (2 * K k + 1) * (t * (D k + 1) + 1) := by exact_mod_cast e3
+    have ht1 : (2 : ℝ) ≤ t := by exact_mod_cast ht
+    rcases Nat.eq_zero_or_pos (D k) with h0 | h0
+    · rw [h0] at e3' ⊢; simp at e3' ⊢; nlinarith
+    · have hD1 : (1 : ℝ) ≤ D k := by exact_mod_cast h0
+      rw [max_eq_left hD1]
+      have h : (t : ℝ) * (D k + 1) + 1 ≤ 3 * t * D k := by nlinarith
+      have : (0 : ℝ) ≤ 2 * K k + 1 := by positivity
+      nlinarith
+  have hA0 : (0 : ℝ) < runStart k := by
+    exact_mod_cast lt_of_lt_of_le (Nat.factorial_pos k) (factorial_le_runStart k)
+  have hfact : ((k.factorial : ℕ) : ℝ) ≤ runStart k := by exact_mod_cast factorial_le_runStart k
+  have hr : r ≤ 6 * t * (2 * K k + 1) * ((L k : ℝ) + 1) / runStart k := by
+    simp only [r]
+    rw [div_le_div_iff₀ (by positivity) hA0]
+    nlinarith [(by positivity : (0 : ℝ) ≤ (L k : ℝ) + 1)]
+  have hKk' : (2 * (K k : ℝ) + 1) ≤ (2 * a + 2 * b + 1) * (k + 3) := by exact_mod_cast hKk k
+  have hK2 : ((K k : ℝ) + 1) ^ 2 ≤ 2 * (a : ℝ) ^ 2 * k + c₀ := by
+    have h1 : Nat.sqrt k * Nat.sqrt k ≤ k := Nat.sqrt_le k
+    have h1' : ((Nat.sqrt k : ℕ) : ℝ) * (Nat.sqrt k : ℕ) ≤ k := by exact_mod_cast h1
+    have e : ((K k : ℝ) + 1) = a * (Nat.sqrt k : ℕ) + (a + b + 1) := by
+      simp only [K]; push_cast; ring
+    rw [e]; simp only [c₀]
+    nlinarith [sq_nonneg ((a : ℝ) * (Nat.sqrt k : ℕ) - (a + b + 1))]
+  have hL1 : (L k : ℝ) + 1 ≤ 2 * (Real.exp (c₀ * C) * E ^ k) := by
+    have h1 : (L k : ℝ) ≤ Real.exp (C * ((K k : ℝ) + 1) ^ 2) := Nat.floor_le (by positivity)
+    have h2 : Real.exp (C * ((K k : ℝ) + 1) ^ 2) ≤ Real.exp (c₀ * C) * E ^ k := by
+      rw [← Real.exp_nat_mul, ← Real.exp_add]
+      exact Real.exp_le_exp.2 (by nlinarith)
+    have h3 : 1 ≤ Real.exp (C * ((K k : ℝ) + 1) ^ 2) := Real.one_le_exp (by positivity)
+    linarith
+  have hmin : min 1 r ≤ r := min_le_right _ _
+  have hk3 : (0 : ℝ) ≤ ((k : ℝ) + 3) ^ 4 := by positivity
+  calc min 1 r * ((k : ℝ) + 3) ^ 4 ≤ r * ((k : ℝ) + 3) ^ 4 := mul_le_mul_of_nonneg_right hmin hk3
+    _ ≤ 6 * t * (2 * K k + 1) * ((L k : ℝ) + 1) / runStart k * ((k : ℝ) + 3) ^ 4 :=
+        mul_le_mul_of_nonneg_right hr hk3
+    _ ≤ 6 * t * ((2 * a + 2 * b + 1) * (k + 3)) * (2 * (Real.exp (c₀ * C) * E ^ k)) /
+        k.factorial * ((k : ℝ) + 3) ^ 4 := by gcongr
+    _ = 12 * Real.exp (c₀ * C) * t * (2 * a + 2 * b + 1) * (((k : ℝ) + 3) ^ 5 * E ^ k /
+        k.factorial) := by ring
+
+end RunSparse
+
 section DegRows
 
 theorem pow_padicVal_le_of_dvd {p a b : ℕ} [Fact p.Prime] (hb : b ≠ 0) (h : a ∣ b) :
