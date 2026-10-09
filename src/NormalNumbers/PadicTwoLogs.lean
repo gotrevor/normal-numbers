@@ -579,7 +579,10 @@ polynomial `P(X, Y) = Σ_{l<L} q_l(X) Yˡ` with `deg q_l < K` vanishing at all
 (families `q_l`), so it applies to the binomial columns `C(X, k)` directly.  Sanity: `L = 1` is
 "`< K` roots", `K = 1` is "`< L` roots in `Y`".  Confidence in the transcription: moderate (the first
 attempt swapped the conditions and was refuted, `not_laurentZeroLemmaMisread`); sources requested
-in ON-LINE-REQUEST.md. -/
+in ON-LINE-REQUEST.md.  Numerical evidence (2026-10-09, `scripts/zero_lemma_probe.py`, exact
+rational rank): 1419 random admissible instances (`K, L, Rᵢ, Sᵢ ≤ 4`, `|bᵢ| ≤ 3`, five independent
+pairs) all have full-rank evaluation matrix; control: the swapped (misread) conditions fail on 19 of
+1535 instances. -/
 def LaurentZeroLemma : Prop :=
   ∀ (α₁ α₂ : ℚ) (b₁ b₂ : ℤ) (K L R₁ R₂ S₁ S₂ : ℕ),
     α₁ ≠ 0 → α₂ ≠ 0 → (∀ u v : ℤ, α₁ ^ u * α₂ ^ v = 1 → u = 0 ∧ v = 0) →
