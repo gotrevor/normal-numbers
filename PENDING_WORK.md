@@ -5,7 +5,14 @@
   `dvd_det_mul_monomial` (columns carry `x^{μ₁}y^{μ₂}`, `p∣x`, `pᵍ∣y` ⇒ `p^{T(L−T(T/g+1))} ∣ det`).
   Axioms: trust base.
 * STATED (cited, transcription from memory, unchecked): `Literature.LaurentZeroLemma` (rational case).
-* NEXT: (a') the Mahler expansion itself — write the interpolation matrix entries
+* Same lap, PROVED (a'): `dvd_det_interp` — the actual interpolation determinant
+  `det[z_x^k t^{l z_x} w^{l s_x}]` (rows = `KL` points, columns `(k,l)`), `p∣t−1`, `pᵍ∣w−1`, in any
+  comm ring: `p^{T(KL − (T+K)(T/g+1))} ∣ Δ`.  Finite Mahler expansion, no p-adic analysis:
+  `pow_mul_choose_expand` (`zᵏC(z,j) ∈ span_ℤ{C(z,i) : i ≤ k+j}`), `one_add_pow_eq_sum`,
+  `sum_weight_ge_shift`.  So (a) is DONE.
+* NEXT: (b) Liouville upper bound for `Δ` with `z = r+δs`, `t`, `w = b/(a tᵟ)` (clear denominators:
+  `(a tᵟ)^{L·S}·Δ ∈ ℤ`, `|Δ| ≤ (KL)!·max|entry|^{KL}`, so `v₃ ≤ log|·|/log 3` if nonzero); (c) zero
+  lemma ⇒ `Δ ≠ 0` for a suitable point set; (d) parameters.  OLD NOTE: (a') the Mahler expansion itself — write the interpolation matrix entries
   `binom(r b₂+s b₁, k)·α₁^{lr}α₂^{ls}` as `P·Q` with `P` monomial in `x = α₁−1`, `y = α₂/α₁^δ − 1`
   (integer binomial identity `(1+x)^N = Σ binom(N,j)xʲ` + Vandermonde-type rewriting); then (b)
   Liouville, (d) parameters.  P1 leaves of `repPairArith_of_sparse` still pending.
