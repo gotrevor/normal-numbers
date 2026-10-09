@@ -5,6 +5,7 @@ Authors: Trevor Morris
 -/
 import NormalNumbers.PadicTwoLogs
 import Mathlib.Algebra.Polynomial.Taylor
+import Architect
 
 /-!
 # Laurent's zero lemma for `G_a × G_m` (proved)
@@ -69,6 +70,7 @@ theorem coeff_det_of_col {n R : Type*} [Fintype n] [DecidableEq n] [CommRing R]
 
 /-- **Laurent's zero lemma, rational two-variable form (PROVED).**  See the module docstring for
 the argument; `Literature.LaurentZeroLemma` for the statement and its source. -/
+@[blueprint (title := "Laurent's two-variable zero lemma, elementary proof")]
 theorem laurentZeroLemma : Literature.LaurentZeroLemma := by
   intro α₁ α₂ b₁ b₂ K L R₁ R₂ S₁ S₂ hα₁ hα₂ _hind hY hX q hdeg hvan
   classical

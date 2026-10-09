@@ -19,3 +19,11 @@ P1 per the directive: per-pair min-option dichotomy for shadow classes 2/4 (deci
 refined classification, totals, assembly.  Operator kickoff order (lap-7 list) is fully done
 (laps 8–9); the operator's standing constraints (cited results only as hypothesis Props; frozen
 statements unchanged) are respected.
+
+## Later the same lap: P1 PROVED — scope target met
+- `repPairArith_of_sparse` proved (section `Shadow`, CantorRepetition); commit 16f91baf.
+- `#print axioms liouvilleCantorFullProfile` = `[propext, Classical.choice, Quot.sound]`.
+- `CantorRepetition.lean` sorry-free (the run's `sorry-free:` target).  BarrierAudit waivers for
+  both former sorries removed.  Blueprint tags on `liouvilleCantorFullProfile`,
+  `repPairArith_of_sparse`, `laurentZeroLemma`, `padicTwoLogs`.
+- Nothing left on this headline.  Off-target follow-ups listed in PENDING_WORK.

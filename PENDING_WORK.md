@@ -1,3 +1,17 @@
+## Repetition lap 13 (2026-10-09, later) — P1 PROVED; HEADLINE `liouvilleCantorFullProfile` PROVED
+* `repPairArith_of_sparse` is a theorem (section `Shadow` in CantorRepetition, ~1000 lines);
+  `#print axioms liouvilleCantorFullProfile` = trust base.  Scope target `CantorRepetition.lean`
+  sorry-free.
+* Design as formalized (simpler than the 4-step plan below): no refined `pair_classify_rep`; a new
+  `shadow_classify` on `v` alone (class 1 fresh low window, or `v` in even run `k` with top below
+  `a_{k+2}` (I) or separated (II)); per pair `exists_option_le_shadowPair` (cost `θ_k + 1[sparse]
+  + 1[sparse]`); `sum_shadowTerm_le` regroups by runs into `runShadow k N`; `runShadow_le`
+  (`RunSparseDecay t 12 32`, `card_degRows_gen` for `d < N`, `not_dvd_two_mul_pow`);
+  `summable_shadow_sched` (`sched_tail1` + `sched_tail`); `repPairPos_shadow` (q = 2, class-1 and
+  bad terms as in `repPairPos_explicit`).  Classes 3–6 and the copy-run sums are not used.
+* Possible follow-ups: neutral note `docs/notes/liouville-cantor-profile.md`; the exact-exponent
+  sibling `ExponentCantorFullProfile` (frozen def, 40%).
+
 ## Repetition review lap 13 (2026-10-09) — ZERO LEMMA PROVED; P3 DONE; P1 is the last leaf
 * `PadicTwoLogs.laurentZeroLemma : Literature.LaurentZeroLemma` (new `ZeroLemma.lean`, trust base).
   Proof: `S = supp q`; rows `σ₁..σ_m ∈ Σ₁` with `det[y_σˡ]_{l∈S} ≠ 0` (kernel of `[y_σˡ]` trivial by

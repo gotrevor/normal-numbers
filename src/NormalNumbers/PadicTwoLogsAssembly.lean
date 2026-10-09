@@ -6,6 +6,7 @@ Authors: Trevor Morris
 import NormalNumbers.PadicTwoLogs
 import NormalNumbers.SparseIdentity
 import NormalNumbers.ZeroLemma
+import Architect
 
 /-!
 # Assembly: `SparseIdentity.Literature.PadicTwoLogs` from Laurent's zero lemma
@@ -290,6 +291,7 @@ theorem padicTwoLogs_of_zeroLemma (hZ : Literature.LaurentZeroLemma) :
 /-- **The 3-adic two-logarithm bound (PROVED, unconditional).**  `Literature.PadicTwoLogs`
 (Bugeaud–Laurent 1996, transcribed in `SparseIdentity`) from the assembly
 `padicTwoLogs_of_zeroLemma` and the elementary zero lemma `laurentZeroLemma`. -/
+@[blueprint (title := "3-adic linear forms in two logarithms of rationals")]
 theorem padicTwoLogs : NormalNumbers.SparseIdentity.Literature.PadicTwoLogs :=
   padicTwoLogs_of_zeroLemma laurentZeroLemma
 

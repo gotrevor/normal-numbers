@@ -10,6 +10,7 @@ import NormalNumbers.LevinSparse
 import NormalNumbers.SparseIdentity
 import NormalNumbers.CycMerge
 import NormalNumbers.PadicTwoLogsAssembly
+import Architect
 import Mathlib.NumberTheory.Multiplicity
 import Mathlib.Analysis.SpecificLimits.Normed
 
@@ -7278,6 +7279,7 @@ Baker nor the copy-run sums are used.  Per-pair: `shadow_sparse` (copy and free 
 `≥ θ_k` ⇒ `Z` cyclically sparse); per run: `runShadow_le` (`RunSparseDecay t 12 32`,
 `card_degRows_gen`); along `sched`: `summable_shadow_sched` (`sched_tail1`); per `N`:
 `repPairPos_shadow`. -/
+@[blueprint (title := "Baker-free shadow dichotomy for the repetition construction")]
 theorem repPairArith_of_sparse {s t : ℕ} (hs : 1 ≤ s) (ht : 2 ≤ t) (h3t : ¬ 3 ∣ t)
     (hS : SparseIdentity.SparseIdentityBound t) : RepPairArith (3 ^ s * t) := by
   intro h hh
@@ -7440,6 +7442,7 @@ theorem repPairArith_of_three_dvd_of_inputs (hI : RepInputs) {b : ℕ} (hb : 2 �
 the crux `ae_isNormal_rep_of_three_dvd` rests on `repPairArith_of_three_dvd`, i.e. on the proved
 3-adic two-logarithm bound (`PadicTwoLogs.padicTwoLogs`, via the elementary zero lemma) and the
 proved Baker-free shadow dichotomy `repPairArith_of_sparse`.  No cited input. -/
+@[blueprint (title := "A Liouville number in the Cantor set normal exactly to the bases that are not powers of 3")]
 theorem liouvilleCantorFullProfile : LiouvilleCantorFullProfile := by
   obtain ⟨ω, hω⟩ := ae_repProfile.exists
   have h2 : IsNormal 2 (repReal ω) := (hω 2 le_rfl).2 fun s hs => by
