@@ -844,6 +844,94 @@ theorem g_le_of_squeeze (hZ : Literature.LaurentZeroLemma) (t a b : ℤ) (δ g :
   have := hle.trans hdl
   linarith
 
+theorem mul32_le_two_pow (x : ℕ) (hx : 8 ≤ x) : 32 * x ≤ 2 ^ x := by
+  induction x, hx using Nat.le_induction with
+  | base => norm_num
+  | succ n hn ih => rw [pow_succ]; omega
+
+theorem hm_aux (y K : ℕ) (hK : 64 * K ≤ 32 * y) (_hy : 8 ≤ y) :
+    4 * y * (32 * y) ≤ 32 * y / 3 * (32 * y - (32 * y / 3 + K)) := by
+  set T := 32 * y / 3
+  set U := 32 * y - (T + K)
+  have h1 : 30 * y ≤ 3 * T := by omega
+  have h2 : 125 * y ≤ 6 * U := by omega
+  have := Nat.mul_le_mul h1 h2
+  nlinarith
+
+/-- **(d), the numeric inequality (proved).**  With `t < 2^τ`, `δ < 2^D`, `M < 2^A` and
+`E = D+τ+20`, `L = 64E`, `R₂ = 64AL`, `S₂ = 64τL`, `K = 4096τAL`, `T = ⌊KL/3⌋`, and `R₂ ≤ δ`:
+`(KL)!·X^{KL} < 3^{T(KL−T−K)}` (every factor of `X` is `≤ 2^{KL/32}`, so the left side is
+`≤ 2^{(KL)²/8}`).  These are the `hnum` of `g_le_of_squeeze`. -/
+theorem numeric_core (t δ M τ D A E L R₂ S₂ K : ℕ) (ht : t < 2 ^ τ) (hδ2 : δ < 2 ^ D)
+    (hM : M < 2 ^ A) (hτ : 1 ≤ τ) (hA : 1 ≤ A) (hEd : E = D + τ + 20) (hLd : L = 64 * E)
+    (hRd : R₂ = 64 * A * L) (hSd : S₂ = 64 * τ * L) (hKd : K = 4096 * τ * A * L)
+    (hδ : R₂ ≤ δ) :
+    (K * L).factorial * ((L + R₂ + δ * S₂) ^ K * t ^ (L * (L + R₂)) * M ^ (L * S₂)) ^ (K * L) <
+      3 ^ (K * L / 3 * (K * L - (K * L / 3 + K))) := by
+  set x := 128 * τ * A * L * L with hx
+  have hN : K * L = 32 * x := by rw [hKd, hx]; ring
+  have hL : 64 ≤ L := by omega
+  have hE : E < 2 ^ E := Nat.lt_two_pow_self
+  -- (1) Z ≤ 2^(2E)
+  have hZ : L + R₂ + δ * S₂ ≤ 2 ^ (2 * E) := by
+    have hR : 64 * A * L ≤ δ := hRd ▸ hδ
+    have hAL : 1 ≤ A * L := Nat.one_le_iff_ne_zero.2 (by positivity)
+    have hδ1 : 1 ≤ δ := by have : 64 * A * L = 64 * (A * L) := by ring
+                           omega
+    have h1 : L + R₂ + δ * S₂ ≤ 66 * δ * τ * L := by
+      have a1 : L ≤ δ * τ * L := Nat.le_mul_of_pos_left _ (by positivity)
+      have a2 : δ ≤ δ * τ * L := by
+        calc δ = δ * 1 * 1 := by ring
+          _ ≤ δ * τ * L := by (gcongr; omega)
+      rw [hRd, hSd]
+      have : δ * (64 * τ * L) = 64 * (δ * τ * L) := by ring
+      have : 66 * δ * τ * L = 66 * (δ * τ * L) := by ring
+      omega
+    have h2 : 66 * δ * τ * L ≤ 2 ^ 13 * (2 ^ D * 2 ^ τ * 2 ^ E) := by
+      have hτ2 : τ < 2 ^ τ := Nat.lt_two_pow_self
+      have hL2 : L ≤ 64 * 2 ^ E := by omega
+      calc 66 * δ * τ * L ≤ 66 * 2 ^ D * 2 ^ τ * (64 * 2 ^ E) :=
+            Nat.mul_le_mul (Nat.mul_le_mul (Nat.mul_le_mul_left 66 hδ2.le) hτ2.le) hL2
+        _ = 4224 * (2 ^ D * 2 ^ τ * 2 ^ E) := by ring
+        _ ≤ 2 ^ 13 * (2 ^ D * 2 ^ τ * 2 ^ E) := Nat.mul_le_mul_right _ (by norm_num)
+    calc _ ≤ 2 ^ 13 * (2 ^ D * 2 ^ τ * 2 ^ E) := h1.trans h2
+      _ = 2 ^ (13 + D + τ + E) := by rw [← pow_add, ← pow_add, ← pow_add]; ring_nf
+      _ ≤ 2 ^ (2 * E) := Nat.pow_le_pow_right (by norm_num) (by omega)
+  have hXZ : (L + R₂ + δ * S₂) ^ K ≤ 2 ^ x := by
+    calc _ ≤ (2 ^ (2 * E)) ^ K := Nat.pow_le_pow_left hZ _
+      _ = 2 ^ x := by rw [← pow_mul]; congr 1; rw [hx, hKd, hLd]; ring
+  have hXt : t ^ (L * (L + R₂)) ≤ 2 ^ x := by
+    calc _ ≤ (2 ^ τ) ^ (L * (L + R₂)) := Nat.pow_le_pow_left ht.le _
+      _ = 2 ^ (τ * (L * (L + R₂))) := by rw [← pow_mul]
+      _ ≤ 2 ^ x := Nat.pow_le_pow_right (by norm_num) (by rw [hx, hRd]; nlinarith)
+  have hXM : M ^ (L * S₂) ≤ 2 ^ x := by
+    calc _ ≤ (2 ^ A) ^ (L * S₂) := Nat.pow_le_pow_left hM.le _
+      _ = 2 ^ (A * (L * S₂)) := by rw [← pow_mul]
+      _ ≤ 2 ^ x := Nat.pow_le_pow_right (by norm_num) (by rw [hx, hSd]; nlinarith)
+  have hNx : K * L ≤ 2 ^ x := by
+    rw [hN]; exact mul32_le_two_pow x (by rw [hx]; nlinarith)
+  have hNX : K * L * ((L + R₂ + δ * S₂) ^ K * t ^ (L * (L + R₂)) * M ^ (L * S₂)) ≤ 2 ^ (4 * x) := by
+    calc _ ≤ 2 ^ x * (2 ^ x * 2 ^ x * 2 ^ x) := by gcongr
+      _ = 2 ^ (4 * x) := by rw [← pow_add, ← pow_add, ← pow_add]; ring_nf
+  have hm : 4 * x * (K * L) ≤ K * L / 3 * (K * L - (K * L / 3 + K)) := by
+    have hK : 64 * K ≤ K * L := by rw [mul_comm]; exact Nat.mul_le_mul_left _ hL
+    rw [hN] at hK ⊢
+    exact hm_aux x K hK (by rw [hx]; nlinarith)
+  calc (K * L).factorial * ((L + R₂ + δ * S₂) ^ K * t ^ (L * (L + R₂)) * M ^ (L * S₂)) ^ (K * L)
+      ≤ (K * L) ^ (K * L) * ((L + R₂ + δ * S₂) ^ K * t ^ (L * (L + R₂)) * M ^ (L * S₂)) ^ (K * L) :=
+        Nat.mul_le_mul_right _ (Nat.factorial_le_pow _)
+    _ = (K * L * ((L + R₂ + δ * S₂) ^ K * t ^ (L * (L + R₂)) * M ^ (L * S₂))) ^ (K * L) := by
+        rw [mul_pow (K * L)]
+    _ ≤ (2 ^ (4 * x)) ^ (K * L) := Nat.pow_le_pow_left hNX _
+    _ = 2 ^ (4 * x * (K * L)) := by rw [← pow_mul]
+    _ ≤ 2 ^ (K * L / 3 * (K * L - (K * L / 3 + K))) := Nat.pow_le_pow_right (by norm_num) hm
+    _ < 3 ^ (K * L / 3 * (K * L - (K * L / 3 + K))) := by
+        apply Nat.pow_lt_pow_left (by norm_num)
+        have hx8 : 8 ≤ x := by rw [hx]; nlinarith
+        have h0 : 0 < x := by omega
+        have : 0 < 4 * x * (K * L) := by rw [hN]; positivity
+        omega
+
 end ZeroWiring
 
 end PadicTwoLogs
