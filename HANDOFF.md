@@ -1,3 +1,6 @@
+# Repetition: review lap 10 (2026-10-08) WITHDRAWS the lap-9 box-stuck claim — read HANDOFF-2026-10-08-repetition-lap10.md
+- New campaign (DIRECTION.md CURRENT DIRECTIVE): one 3-adic two-log input, then formalize it.
+
 # Repetition: STUCK claim (lap 6) RESOLVED 2026-10-07 by review lap 7 — read HANDOFF-2026-10-07-repetition-lap7.md
 - New route (sparse pairs + Matveev) avoids the walls; DIRECTION.md CURRENT DIRECTIVE lists the leaves.
 

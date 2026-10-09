@@ -883,4 +883,315 @@ theorem sparseIdentityBound_of_matveev (hM : Literature.MatveevThreeLogs) {t : �
     nlinarith [(Nat.cast_nonneg (Lv.card) : (0:ℝ) ≤ _)]
   nlinarith
 
+
+/-! ### The 3-adic route (review lap 10, 2026-10-08): one cited input in two logarithms
+
+The archimedean chain above needs three logarithms (`log t`, `log 3`, `log(U'/V')`) because it
+compares top parts.  Comparing *bottom* parts instead is 3-adic, and the power of 3 drops out:
+`tᵟ U_{<p} ≡ V_{<p} (mod 3^p)` is a 3-adic linear form in the two logarithms of `t` and
+`V_{<p}/U_{<p}`.  The chain also needs no recursion: the lowest exactly-splitting cut is itself
+the endgame. -/
+
+/-- **Literature (cited, referee needed): 3-adic linear forms in two logarithms.**
+Y. Bugeaud, M. Laurent, *Minoration effective de la distance p-adique entre puissances de
+nombres algébriques*, J. Number Theory 61 (1996) 311–342 (interpolation determinants): for
+multiplicatively independent algebraic `α₁, α₂` with `v_p(αᵢ) = 0` in a field of degree `D`,
+`v_p(α₁^{b₁} − α₂^{b₂}) ≤ c(p)·D⁴·(max{log b' + log log p + 0.4, 10 log p / D, 10})²·log A₁·log A₂`,
+`b' = b₁/(D log A₂) + b₂/(D log A₁)`, `log Aᵢ ≥ max(h(αᵢ), log p / D)`.
+Transcription (faithful or weaker): `p = 3`, `D = 1`, `α₁ = t`, `b₁ = δ`, `α₂ = b/a`, `b₂ = 1`.
+Write `a = 3^k a'`, `b = 3^{k'} b'`.  If `k ≠ k'` then `v₃(tᵟa − b) = min(k, k') ≤ log₃ max(|a|,|b|)`;
+if `a` or `b` is `0` the same bound holds.  If `k = k'` the cited bound applies to `b'/a'`:
+`log A₂ ≤ max(log max(|a|,|b|), log 3)`, `log b' ≤ log(δ + 1) + O(1)`, and the extra `k` is
+`≤ log₃ max(|a|,|b|)`.  Multiplicatively dependent pairs (`b'/a' = ±t₀ʲ`, `t = t₀ⁱ`) are covered
+by lifting the exponent: `v₃(t₀ⁿ ∓ 1) ≤ c(t₀) + log₃ n` with `n = |iδ − j|`.  All constants
+go into `C(t)`.  Source not opened (no egress); the shape is quoted from memory of the standard
+statement, and a referee should check the transcription of `b'` and `log A₂` (any bound of the
+form `C(t)·polylog(δ)·(1 + log max(|a|,|b|))` works below: the linear dependence on the height of
+`b/a` is the one feature the chain needs). -/
+def Literature.PadicTwoLogs : Prop :=
+  ∀ t : ℕ, 2 ≤ t → ¬ 3 ∣ t → ∃ C : ℝ, 0 < C ∧ ∀ (δ g : ℕ) (a b : ℤ), (t : ℤ) ^ δ * a ≠ b →
+    (3 : ℤ) ^ g ∣ (t : ℤ) ^ δ * a - b →
+      (g : ℝ) ≤ C * (1 + Real.log (δ + 1)) ^ 2 * (1 + Real.log ((max |a| |b| : ℤ) : ℝ))
+
+/-- Pulling a common power of 3 out of a sparse representation. -/
+theorem sum_shift {S : Finset ℕ} {c : ℕ → ℤ} {p : ℕ} (h : ∀ e ∈ S, p ≤ e) :
+    ∑ e ∈ S, c e * 3 ^ e = 3 ^ p * ∑ i ∈ S.image (· - p), c (i + p) * 3 ^ i := by
+  have hinj : Set.InjOn (· - p) (S : Set ℕ) := by
+    intro a ha b hb hab
+    have := h a ha; have := h b hb
+    simp only at hab; omega
+  rw [sum_image hinj, mul_sum]
+  refine sum_congr rfl fun e he => ?_
+  have := h e he
+  rw [Nat.sub_add_cancel this, show (3 : ℤ) ^ e = 3 ^ p * 3 ^ (e - p) by
+    rw [← pow_add, Nat.add_sub_cancel' this]]
+  ring
+
+theorem shift_coef {S : Finset ℕ} {c : ℕ → ℤ} {p : ℕ} (h : ∀ e ∈ S, p ≤ e)
+    (hc : ∀ e ∈ S, c e ≠ 0 ∧ |c e| ≤ 2) :
+    ∀ i ∈ S.image (· - p), c (i + p) ≠ 0 ∧ |c (i + p)| ≤ 2 := by
+  intro i hi
+  obtain ⟨e, he, rfl⟩ := mem_image.1 hi
+  rw [Nat.sub_add_cancel (h e he)]; exact hc e he
+
+/-- The bottom part below a cut is congruent across an identity. -/
+theorem dvd_bot {T : ℤ} {S S' : Finset ℕ} {c c' : ℕ → ℤ}
+    (hid : T * ∑ e ∈ S, c e * 3 ^ e = ∑ f ∈ S', c' f * 3 ^ f) (θ : ℕ) :
+    (3 : ℤ) ^ θ ∣ T * ∑ e ∈ S.filter (· < θ), c e * 3 ^ e -
+      ∑ f ∈ S'.filter (· < θ), c' f * 3 ^ f := by
+  have h1 := sum_filter_add_sum_filter_not S (· < θ) (fun e => c e * 3 ^ e)
+  have h2 := sum_filter_add_sum_filter_not S' (· < θ) (fun f => c' f * 3 ^ f)
+  have d1 : (3 : ℤ) ^ θ ∣ ∑ e ∈ S.filter (fun e => ¬ e < θ), c e * 3 ^ e :=
+    pow_dvd_sum fun e he => not_lt.1 (mem_filter.1 he).2
+  have d2 : (3 : ℤ) ^ θ ∣ ∑ f ∈ S'.filter (fun f => ¬ f < θ), c' f * 3 ^ f :=
+    pow_dvd_sum fun f hf => not_lt.1 (mem_filter.1 hf).2
+  have : T * ∑ e ∈ S.filter (· < θ), c e * 3 ^ e - ∑ f ∈ S'.filter (· < θ), c' f * 3 ^ f =
+      ∑ f ∈ S'.filter (fun f => ¬ f < θ), c' f * 3 ^ f -
+        T * ∑ e ∈ S.filter (fun e => ¬ e < θ), c e * 3 ^ e := by
+    linear_combination hid + T * h1 - h2
+  rw [this]
+  exact dvd_sub d2 (d1.mul_left T)
+
+theorem abs_bot_lt {S : Finset ℕ} {c : ℕ → ℤ} (hc : ∀ e ∈ S, |c e| ≤ 2) (θ : ℕ) :
+    |∑ e ∈ S.filter (· < θ), c e * 3 ^ e| < 3 ^ θ := by
+  have := abs_sum_le_geom (n := θ) (S := S.filter (· < θ)) (c := c)
+    (fun e he => mem_range.2 (mem_filter.1 he).2) (fun e he => hc e (mem_filter.1 he).1)
+  linarith
+
+/-- **The 3-adic chain (normalized form).**  For an identity `T·U = V` between sparse
+representations with lowest level `0`, and a gap bound `θ + 1 ≤ R q` for every nonzero bottom
+difference `T a − b ≡ 0 (mod 3^θ)` with `|a|, |b| < 3^q`, the size of `T` is at most
+`3^{R^{#levels}}`. -/
+theorem chain_padic {T : ℤ} {S S' : Finset ℕ} {c c' : ℕ → ℤ}
+    (hc : ∀ e ∈ S, c e ≠ 0 ∧ |c e| ≤ 2) (hc' : ∀ f ∈ S', c' f ≠ 0 ∧ |c' f| ≤ 2)
+    (h0 : 0 ∈ S ∪ S')
+    (hid : T * ∑ e ∈ S, c e * 3 ^ e = ∑ f ∈ S', c' f * 3 ^ f) {R : ℝ} (hR : 1 ≤ R)
+    (hgap : ∀ (θ q : ℕ) (a b : ℤ), T * a ≠ b → (3 : ℤ) ^ θ ∣ T * a - b → |a| < 3 ^ q →
+      |b| < 3 ^ q → (θ : ℝ) + 1 ≤ R * q) :
+    ∃ p : ℕ, (p : ℝ) + 1 ≤ R ^ (S ∪ S').card ∧ |T| < 3 ^ (p + 1) := by
+  classical
+  set P := S ∪ S'
+  set good : ℕ → Prop := fun p => T * ∑ e ∈ S.filter (· < p + 1), c e * 3 ^ e =
+    ∑ f ∈ S'.filter (· < p + 1), c' f * 3 ^ f
+  have hPne : P.Nonempty := ⟨0, h0⟩
+  set G := P.filter good
+  have hGne : G.Nonempty := by
+    refine ⟨P.max' hPne, mem_filter.2 ⟨P.max'_mem hPne, ?_⟩⟩
+    simp only [good]
+    rw [filter_true_of_mem (fun e he => Nat.lt_succ_of_le (P.le_max' e (mem_union_left _ he))),
+      filter_true_of_mem (fun f hf => Nat.lt_succ_of_le (P.le_max' f (mem_union_right _ hf))), hid]
+  set ps := G.min' hGne
+  have hps : ps ∈ P := (mem_filter.1 (G.min'_mem hGne)).1
+  have hpsg : good ps := (mem_filter.1 (G.min'_mem hGne)).2
+  have hmin : ∀ p ∈ P, good p → ps ≤ p := fun p hp hg => G.min'_le p (mem_filter.2 ⟨hp, hg⟩)
+  -- the chain
+  have chain : ∀ n : ℕ, ∀ p ∈ P, p ≤ ps → (P.filter (· < p)).card ≤ n → (p : ℝ) + 1 ≤ R ^ n := by
+    intro n
+    induction n with
+    | zero =>
+      intro p hp _ hcard
+      have : p = 0 := by
+        by_contra hne
+        have : 0 ∈ P.filter (· < p) := mem_filter.2 ⟨h0, Nat.pos_of_ne_zero hne⟩
+        have := card_pos.2 ⟨0, this⟩; omega
+      subst this; simp
+    | succ n ih =>
+      intro p hp hpps hcard
+      rcases Nat.eq_zero_or_pos p with rfl | hp0
+      · simp only [CharP.cast_eq_zero, zero_add]; exact one_le_pow₀ hR
+      have hBne : (P.filter (· < p)).Nonempty := ⟨0, mem_filter.2 ⟨h0, hp0⟩⟩
+      set p' := (P.filter (· < p)).max' hBne
+      have hp'mem := mem_filter.1 ((P.filter (· < p)).max'_mem hBne)
+      have hp'p : p' < p := hp'mem.2
+      have hnext : ∀ x ∈ P, x < p → x ≤ p' := fun x hx hxp =>
+        (P.filter (· < p)).le_max' x (mem_filter.2 ⟨hx, hxp⟩)
+      have hcard' : (P.filter (· < p')).card ≤ n := by
+        have hss : P.filter (· < p') ⊂ P.filter (· < p) := by
+          refine ⟨fun x hx => mem_filter.2 ⟨(mem_filter.1 hx).1, (mem_filter.1 hx).2.trans hp'p⟩,
+            fun hsub => ?_⟩
+          have := (mem_filter.1 (hsub (mem_filter.2 ⟨hp'mem.1, hp'p⟩))).2
+          exact lt_irrefl _ this
+        have := card_lt_card hss; omega
+      have hih := ih p' hp'mem.1 (hp'p.le.trans hpps) hcard'
+      have hng : ¬ good p' := fun hg => absurd (hmin p' hp'mem.1 hg) (by omega)
+      -- the bottom parts at the cut `p' + 1` are those at `p`
+      have hfS : S.filter (· < p' + 1) = S.filter (· < p) := by
+        ext e; simp only [mem_filter]
+        constructor
+        · rintro ⟨he, h⟩; exact ⟨he, by omega⟩
+        · rintro ⟨he, h⟩; exact ⟨he, Nat.lt_succ_of_le (hnext e (mem_union_left _ he) h)⟩
+      have hfS' : S'.filter (· < p' + 1) = S'.filter (· < p) := by
+        ext f; simp only [mem_filter]
+        constructor
+        · rintro ⟨hf, h⟩; exact ⟨hf, by omega⟩
+        · rintro ⟨hf, h⟩; exact ⟨hf, Nat.lt_succ_of_le (hnext f (mem_union_right _ hf) h)⟩
+      have hdvd := dvd_bot hid p
+      have hne : T * ∑ e ∈ S.filter (· < p), c e * 3 ^ e ≠
+          ∑ f ∈ S'.filter (· < p), c' f * 3 ^ f := by
+        intro h; apply hng; simp only [good]; rw [hfS, hfS']; exact h
+      have ha := abs_bot_lt (fun e he => (hc e he).2) (p' + 1)
+      have hb := abs_bot_lt (fun f hf => (hc' f hf).2) (p' + 1)
+      rw [hfS] at ha; rw [hfS'] at hb
+      have := hgap p (p' + 1) _ _ hne hdvd ha hb
+      push_cast at this
+      calc (p : ℝ) + 1 ≤ R * ((p' : ℝ) + 1) := this
+        _ ≤ R * R ^ n := mul_le_mul_of_nonneg_left hih (by linarith)
+        _ = R ^ (n + 1) := by ring
+  refine ⟨ps, ?_, ?_⟩
+  · have hc1 := chain (P.filter (· < ps)).card ps hps le_rfl le_rfl
+    refine hc1.trans (pow_le_pow_right₀ hR (card_le_card (filter_subset _ _)))
+  · -- the endgame: `T·U_bot = V_bot` with `U_bot ≠ 0`
+    have hU0 : ∑ e ∈ S.filter (· < ps + 1), c e * 3 ^ e ≠ 0 := by
+      intro hU
+      have hV : ∑ f ∈ S'.filter (· < ps + 1), c' f * 3 ^ f = 0 := by
+        rw [← hpsg, hU, mul_zero]
+      rcases mem_union.1 hps with h | h
+      · exact sum_ne_zero_of_nonempty (fun e he => hc e (mem_filter.1 he).1)
+          ⟨ps, mem_filter.2 ⟨h, Nat.lt_succ_self _⟩⟩ hU
+      · exact sum_ne_zero_of_nonempty (fun f hf => hc' f (mem_filter.1 hf).1)
+          ⟨ps, mem_filter.2 ⟨h, Nat.lt_succ_self _⟩⟩ hV
+    have hb := abs_bot_lt (fun f hf => (hc' f hf).2) (ps + 1)
+    rw [← hpsg, abs_mul] at hb
+    have : 1 ≤ |∑ e ∈ S.filter (· < ps + 1), c e * 3 ^ e| := Int.one_le_abs hU0
+    nlinarith [abs_nonneg T]
+
+
+theorem gap_of_padic {t : ℕ} {C : ℝ} (hC : 0 < C)
+    (hCb : ∀ (δ g : ℕ) (a b : ℤ), (t : ℤ) ^ δ * a ≠ b → (3 : ℤ) ^ g ∣ (t : ℤ) ^ δ * a - b →
+      (g : ℝ) ≤ C * (1 + Real.log (δ + 1)) ^ 2 * (1 + Real.log ((max |a| |b| : ℤ) : ℝ)))
+    (δ : ℕ) : ∀ (θ q : ℕ) (a b : ℤ), (t : ℤ) ^ δ * a ≠ b → (3 : ℤ) ^ θ ∣ (t : ℤ) ^ δ * a - b →
+      |a| < 3 ^ q → |b| < 3 ^ q → (θ : ℝ) + 1 ≤
+        (C * (1 + Real.log (δ + 1)) ^ 2 * (1 + Real.log 3) + 1) * q := by
+  intro θ q a b hne hdvd ha hb
+  have h1 := hCb δ θ a b hne hdvd
+  set L := 1 + Real.log (δ + 1)
+  have hM1 : (1 : ℤ) ≤ max |a| |b| := by
+    by_contra h; push Not at h
+    have ha0 : a = 0 := abs_eq_zero.1 (le_antisymm (by omega) (abs_nonneg a))
+    have hb0 : b = 0 := abs_eq_zero.1 (le_antisymm (by omega) (abs_nonneg b))
+    exact hne (by rw [ha0, hb0, mul_zero])
+  have hMq : max |a| |b| < 3 ^ q := max_lt ha hb
+  have hq : 1 ≤ q := by
+    by_contra h; push Not at h
+    have : q = 0 := by omega
+    subst this; simp at hMq; omega
+  have hlog : Real.log ((max |a| |b| : ℤ) : ℝ) ≤ q * Real.log 3 := by
+    rw [← Real.log_pow]
+    refine Real.log_le_log (by exact_mod_cast (by omega : (0 : ℤ) < max |a| |b|)) ?_
+    exact_mod_cast hMq.le
+  have hL : 0 ≤ C * L ^ 2 := by positivity
+  have hq' : (1 : ℝ) ≤ q := by exact_mod_cast hq
+  have hl3 : 0 ≤ Real.log 3 := Real.log_nonneg (by norm_num)
+  calc (θ : ℝ) + 1 ≤ C * L ^ 2 * (1 + q * Real.log 3) + 1 := by
+        have := mul_le_mul_of_nonneg_left (add_le_add_left hlog 1) hL; linarith
+    _ ≤ (C * L ^ 2 * (1 + Real.log 3) + 1) * q := by nlinarith
+
+/-- **Sparse identities from the 3-adic two-logarithm bound (the 3-adic chain).**
+
+English proof.  Cancel the common power `3^{p₁}`, `p₁` the lowest level of `U` and `V`.  Order the
+levels `0 = p₁ < p₂ < ⋯` of the two representations.  For a cut at level `p`, the bottom parts
+satisfy `tᵟU_{<p} ≡ V_{<p} (mod 3^p)` (`dvd_bot`).  Let `p*` be the lowest level whose cut
+`p* + 1` splits off exactly.  Below it every cut is non-exact, so the cited bound with
+`|U_{<p}|, |V_{<p}| < 3^{p'+1}` (`p'` the previous level) gives `p + 1 ≤ R(p' + 1)`,
+`R = C(1 + log(δ+1))²(1 + log 3) + 1` (`gap_of_padic`); hence `p* + 1 ≤ R^{2K}`.  At `p*`,
+`tᵟU_{≤p*} = V_{≤p*}` with `U_{≤p*} ≠ 0`, so `tᵟ < 3^{p*+1}`: `δ log₃ t ≤ R^{2K}`, and `endgame`
+gives `δ ≤ exp(C'(K+1)²)`.  No recursion and no archimedean input. -/
+theorem sparseIdentityBound_of_padic (hP : Literature.PadicTwoLogs) {t : ℕ} (ht : 2 ≤ t)
+    (h3 : ¬ 3 ∣ t) : SparseIdentityBound t := by
+  obtain ⟨C, hC, hCb⟩ := hP t ht h3
+  have ht0 : (0 : ℝ) < t := by have : (2 : ℝ) ≤ t := by exact_mod_cast ht
+                               linarith
+  have hlog3 : 0 < Real.log 3 := Real.log_pos (by norm_num)
+  have hlogt : 0 < Real.log t := Real.log_pos (by have : (2 : ℝ) ≤ t := by exact_mod_cast ht
+                                                  linarith)
+  set κ := Real.log t / Real.log 3
+  have hκ : 0 < κ := div_pos hlogt hlog3
+  set a₀ := C * (1 + Real.log 3) + 1
+  have ha₀ : 1 ≤ a₀ := by have : 0 ≤ C * (1 + Real.log 3) := by positivity
+                          linarith
+  obtain ⟨C', hC', hend⟩ := endgame hκ (by linarith : (0 : ℝ) ≤ a₀)
+  refine ⟨64 * C', fun K δ U V hU hV hU0 hid => ?_⟩
+  rcases Nat.eq_zero_or_pos δ with rfl | hδ
+  · simp; positivity
+  obtain ⟨S, c, hSK, hc, rfl⟩ := hU
+  obtain ⟨S', c', hSK', hc', rfl⟩ := hV
+  classical
+  have hSne : S.Nonempty := by
+    rcases S.eq_empty_or_nonempty with h | h
+    · exact absurd (by rw [h]; simp) hU0
+    · exact h
+  have hPne : (S ∪ S').Nonempty := hSne.mono subset_union_left
+  set p₁ := (S ∪ S').min' hPne
+  have hp₁S : ∀ e ∈ S, p₁ ≤ e := fun e he => (S ∪ S').min'_le e (mem_union_left _ he)
+  have hp₁S' : ∀ f ∈ S', p₁ ≤ f := fun f hf => (S ∪ S').min'_le f (mem_union_right _ hf)
+  set S₀ := S.image (· - p₁)
+  set S₀' := S'.image (· - p₁)
+  have hid₀ : (t : ℤ) ^ δ * ∑ i ∈ S₀, c (i + p₁) * 3 ^ i = ∑ i ∈ S₀', c' (i + p₁) * 3 ^ i := by
+    rw [sum_shift hp₁S, sum_shift hp₁S'] at hid
+    have h3p : (3 : ℤ) ^ p₁ ≠ 0 := pow_ne_zero _ (by norm_num)
+    apply mul_left_cancel₀ h3p
+    rw [← hid]; ring
+  have h0 : 0 ∈ S₀ ∪ S₀' := by
+    rcases mem_union.1 ((S ∪ S').min'_mem hPne) with h | h
+    · exact mem_union_left _ (mem_image.2 ⟨p₁, h, Nat.sub_self _⟩)
+    · exact mem_union_right _ (mem_image.2 ⟨p₁, h, Nat.sub_self _⟩)
+  set L := 1 + Real.log (δ + 1)
+  set R := C * L ^ 2 * (1 + Real.log 3) + 1
+  have hR : 1 ≤ R := by have : 0 ≤ C * L ^ 2 * (1 + Real.log 3) := by positivity
+                        linarith
+  obtain ⟨p, hpR, hpT⟩ := chain_padic (shift_coef hp₁S hc) (shift_coef hp₁S' hc') h0 hid₀ hR
+    (gap_of_padic hC hCb δ)
+  have hcard : (S₀ ∪ S₀').card ≤ 2 * K := by
+    refine (card_union_le _ _).trans ?_
+    have h1 : S₀.card ≤ S.card := card_image_le
+    have h2 : S₀'.card ≤ S'.card := card_image_le
+    omega
+  -- `δ log₃ t < p + 1 ≤ R^{2K}`
+  have hlt : ((t : ℝ)) ^ δ < 3 ^ (p + 1) := by
+    have h0 : (0 : ℤ) ≤ (t : ℤ) ^ δ := by positivity
+    have : ((t : ℤ) ^ δ) < 3 ^ (p + 1) := by
+      rw [abs_of_nonneg h0] at hpT; exact hpT
+    exact_mod_cast this
+  have hκδ : κ * δ ≤ R ^ (4 * K) := by
+    have h1 : (δ : ℝ) * Real.log t < (p + 1) * Real.log 3 := by
+      have := Real.log_lt_log (by positivity) hlt
+      rw [Real.log_pow, Real.log_pow] at this; push_cast at this; exact this
+    have h2 : κ * δ < p + 1 := by
+      simp only [κ]; rw [div_mul_eq_mul_div, div_lt_iff₀ hlog3]; linarith
+    have h3 : R ^ (S₀ ∪ S₀').card ≤ R ^ (4 * K) := pow_le_pow_right₀ hR (by omega)
+    linarith
+  -- fit the endgame
+  have hLδ : 1 ≤ L := by
+    have : 0 ≤ Real.log (δ + 1) := Real.log_nonneg (by have := (Nat.cast_nonneg δ : (0:ℝ) ≤ δ); linarith)
+    linarith
+  set w := Real.log ((1 + κ) * δ + 2)
+  have hw : Real.log (δ + 1) ≤ w := by
+    refine Real.log_le_log (by positivity) ?_
+    have : (0 : ℝ) ≤ κ * δ := by positivity
+    linarith
+  have hR' : R ≤ (3 + a₀ + a₀ * w) ^ 2 := by
+    have e1 : R ≤ a₀ * L ^ 2 := by
+      simp only [R, a₀]; nlinarith [sq_nonneg L]
+    have e2 : a₀ * L ^ 2 ≤ (a₀ * L) ^ 2 := by nlinarith [sq_nonneg L]
+    have e3 : a₀ * L ≤ 3 + a₀ + a₀ * w := by
+      simp only [L]; nlinarith
+    have e4 : 0 ≤ a₀ * L := by positivity
+    calc R ≤ (a₀ * L) ^ 2 := e1.trans e2
+      _ ≤ (3 + a₀ + a₀ * w) ^ 2 := pow_le_pow_left₀ e4 e3 2
+  have hx : κ * δ ≤ 2 * (3 + a₀ + a₀ * w) ^ (8 * K) := by
+    have : R ^ (4 * K) ≤ ((3 + a₀ + a₀ * w) ^ 2) ^ (4 * K) :=
+      pow_le_pow_left₀ (by linarith) hR' _
+    rw [← pow_mul, show 2 * (4 * K) = 8 * K by ring] at this
+    have : 0 ≤ (3 + a₀ + a₀ * w) ^ (8 * K) := by
+      have : 0 ≤ w := Real.log_nonneg (by have : (0 : ℝ) ≤ κ * δ := by positivity
+                                          nlinarith)
+      positivity
+    linarith
+  have hfin := hend (8 * K) δ (Nat.cast_nonneg _) hx
+  refine hfin.trans (Real.exp_le_exp.2 ?_)
+  push_cast
+  have : ((8 * (K : ℝ)) + 1) ^ 2 ≤ 64 * ((K : ℝ) + 1) ^ 2 := by
+    nlinarith [(Nat.cast_nonneg K : (0:ℝ) ≤ K)]
+  nlinarith
+
 end NormalNumbers.SparseIdentity

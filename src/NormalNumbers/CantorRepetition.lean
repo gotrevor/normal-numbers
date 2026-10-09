@@ -5545,13 +5545,84 @@ theorem repPairArith_of_literature (hB : CantorExactExponentProfile.Literature.B
     (runOrbitDecay_of_sparse (by omega) hnd
       (SparseIdentity.sparseIdentityBound_of_matveev hM (by omega) hnd))
 
+/-- **The crux from Baker and the 3-adic two-logarithm bound (proved).**  As
+`repPairArith_of_literature`, with Matveev (three archimedean logarithms) replaced by the 3-adic
+chain `SparseIdentity.sparseIdentityBound_of_padic` (two 3-adic logarithms). -/
+theorem repPairArith_of_baker_padic
+    (hB : CantorExactExponentProfile.Literature.BakerLogDiscrepancy)
+    (hP : SparseIdentity.Literature.PadicTwoLogs) {b : ℕ} (hb : 2 ≤ b) (h3 : 3 ∣ b)
+    (hpow : ∀ s : ℕ, b ≠ 3 ^ s) : RepPairArith b := by
+  obtain ⟨s, t, hnd, rfl⟩ := Nat.exists_eq_pow_mul_and_not_dvd (by omega : b ≠ 0) 3 (by norm_num)
+  have ht0 : t ≠ 0 := by rintro rfl; simp at hnd
+  have ht1 : t ≠ 1 := by rintro rfl; exact hpow s (mul_one _)
+  have hs : 1 ≤ s := by
+    rcases Nat.eq_zero_or_pos s with h | h
+    · subst h; simp at h3; exact absurd h3 hnd
+    · exact h
+  exact repPairArith_of_runDecay hs (by omega) hnd hB
+    (runOrbitDecay_of_sparse (by omega) hnd
+      (SparseIdentity.sparseIdentityBound_of_padic hP (by omega) hnd))
+
+/-- **The shadow zone needs no Baker input (open; believed, 80%).**  `RepPairArith (3ˢt)` from
+`SparseIdentityBound t` alone: classes 2 and 4 of `pairMaj` (a window end in the fresh stretch
+after an even run, the other end deep inside it), the only users of
+`Literature.BakerLogDiscrepancy`, are bounded by the copy-zone orbit count instead.
+
+English proof (review lap 10).  Take a pair with `ξ = 3^v Z`, `v = sm + e`, `Z = h'(bᵈ − 1)tᵐ`,
+`v` deep inside even run `k` (`A = a_k`, `E = (k+2)A`) and all places of `[E, top + 2]` fresh
+(true for `k ≥ k₀`: the top is `≤ ρ²v` and `a_{k+2}/E = 4(k+3)`).  Split
+`Z = Z_top·3^g + Z_low`, `g = E − v`.
+1. *Copy option.*  `repBound_some_add` drops `Z_top`: the bound is `cycProdR A (I − f)` with
+   `I = 3^{v−A} Z_low ∈ ℤ` and `f = Z_low/3^g ∈ [0, 1)`.  On the coins `i < A − 5` the
+   perturbation `f·3ⁱ/(3^A − 1)` is `≤ 3⁻⁵`, so a cyclic digit change of `I` there still costs a
+   factor `≤ cos(π/10)`.  Copy option `≥ θ` forces `≤ K₁ + 6` cyclic changes of `I`, where
+   `cos(π/10)^{K₁} < θ`.
+2. *Free option.*  The fresh place `E − 1 + q` reads `(Z_top + f)/3^q`, whose two leading
+   ternary digits are digits `q − 1, q − 2` of `Z_top`; so free option `≥ θ` forces `≤ K₁`
+   digit changes of `Z_top`, i.e. `2Z_top` is `IsSparse3 (K₁ + 1)` (`2y = 3y − y`).
+3. *Both large.*  `3^{E−A} ≡ 1 (mod 3^A − 1)`, so `2·3^{v−A}Z ≡ 2I + 2Z_top` is a sum of
+   `≤ 2K₁ + 8` terms `±3ʲ, ±2·3ʲ` (exponents mod `A`, possibly repeated); carrying gives
+   `CycSparse A (C K₁)`.  So the orbit point `c tᵐ`, `c = h'(bᵈ − 1)`, is cyclically sparse.  (If
+   the top of `ξ` leaves the fresh stretch, the pair is separated and the same argument runs on
+   the low piece `Y = 3^v h' tᵐ` with `c = h'`.)
+4. *Count.*  Per row `d`, the `m < N_k` with `c tᵐ` cyclically sparse number
+   `≤ (N_k/D + 1)(L_K + 1)` (`card_cluster_le`, `cyclic_pair_identity`, `SparseIdentityBound`, as
+   in `runOrbitDecay_of_sparse`); degenerate rows by `card_degRows_le`.  So these pairs cost
+   `≤ N²θ + N·O(k K L_K N_k / A)`, the `ψ_k` shape of `copyRun_psi`, summable along `sched` by
+   `summable_copy_sched`.
+Risk (why 80%): the carry normalization in step 3 with repeated exponents, and the bookkeeping of
+the separated sub-case. -/
+theorem repPairArith_of_sparse {s t : ℕ} (hs : 1 ≤ s) (ht : 2 ≤ t) (h3t : ¬ 3 ∣ t)
+    (hS : SparseIdentity.SparseIdentityBound t) : RepPairArith (3 ^ s * t) := by
+  sorry
+
+/-- **The crux from the 3-adic two-logarithm bound alone (proved from `repPairArith_of_sparse`).**
+One cited input: `SparseIdentity.Literature.PadicTwoLogs`. -/
+theorem repPairArith_of_padic (hP : SparseIdentity.Literature.PadicTwoLogs) {b : ℕ} (hb : 2 ≤ b)
+    (h3 : 3 ∣ b) (hpow : ∀ s : ℕ, b ≠ 3 ^ s) : RepPairArith b := by
+  obtain ⟨s, t, hnd, rfl⟩ := Nat.exists_eq_pow_mul_and_not_dvd (by omega : b ≠ 0) 3 (by norm_num)
+  have ht0 : t ≠ 0 := by rintro rfl; simp at hnd
+  have ht1 : t ≠ 1 := by rintro rfl; exact hpow s (mul_one _)
+  have hs : 1 ≤ s := by
+    rcases Nat.eq_zero_or_pos s with h | h
+    · subst h; simp at h3; exact absurd h3 hnd
+    · exact h
+  exact repPairArith_of_sparse hs (by omega) hnd
+    (SparseIdentity.sparseIdentityBound_of_padic hP (by omega) hnd)
+
 /-- **The crux, arithmetic form (open).**  This is `repPairArith_of_literature` applied to the
 two cited inputs, Baker–Wüstholz with Erdős–Turán
 (`CantorExactExponentProfile.Literature.BakerLogDiscrepancy`) and Matveev's three-logarithm bound
 (`SparseIdentity.Literature.MatveevThreeLogs`).  Cited results enter only as hypothesis `Prop`s,
 so this unconditional form stays a direct `sorry`; the honest conditional headline is
 `liouvilleCantorFullProfile_of_literature`, whose every route leaf is proved (2026-10-08), so its
-`#print axioms` is the trust base and only the two cited `Prop`s remain as hypotheses. -/
+`#print axioms` is the trust base and only the two cited `Prop`s remain as hypotheses.
+
+Review lap 10 (2026-10-08): the live route to this `sorry` is `repPairArith_of_padic`, one cited
+input (`SparseIdentity.Literature.PadicTwoLogs`, 3-adic, two logarithms, rational numbers), via
+the proved 3-adic chain `sparseIdentityBound_of_padic` and the open Baker-free shadow dichotomy
+`repPairArith_of_sparse`.  Closing it means formalizing that 3-adic bound (interpolation
+determinants), the campaign set in DIRECTION.md. -/
 theorem repPairArith_of_three_dvd {b : ℕ} (hb : 2 ≤ b) (h3 : 3 ∣ b) (hpow : ∀ s : ℕ, b ≠ 3 ^ s) :
     RepPairArith b := by
   sorry
@@ -5677,6 +5748,34 @@ theorem liouvilleCantorFullProfile_of_literature
     (hM : SparseIdentity.Literature.MatveevThreeLogs) : LiouvilleCantorFullProfile := by
   obtain ⟨ω, hω⟩ := (ae_repProfile_of fun _ hb h3 hp =>
     repPairArith_of_literature hB hM hb h3 hp).exists
+  have h2 : IsNormal 2 (repReal ω) := (hω 2 le_rfl).2 fun s hs => by
+    rcases s with _ | s
+    · norm_num at hs
+    · have : 3 ∣ 2 := hs ▸ dvd_pow_self 3 (Nat.succ_ne_zero s)
+      norm_num at this
+  exact ⟨repReal ω, repReal_mem_cantorSet ω,
+    liouville_repReal ω (irrational_of_isNormal_two h2), hω⟩
+
+/-- **Conditional headline from Baker and the 3-adic two-logarithm bound (proved).** -/
+theorem liouvilleCantorFullProfile_of_baker_padic
+    (hB : CantorExactExponentProfile.Literature.BakerLogDiscrepancy)
+    (hP : SparseIdentity.Literature.PadicTwoLogs) : LiouvilleCantorFullProfile := by
+  obtain ⟨ω, hω⟩ := (ae_repProfile_of fun _ hb h3 hp =>
+    repPairArith_of_baker_padic hB hP hb h3 hp).exists
+  have h2 : IsNormal 2 (repReal ω) := (hω 2 le_rfl).2 fun s hs => by
+    rcases s with _ | s
+    · norm_num at hs
+    · have : 3 ∣ 2 := hs ▸ dvd_pow_self 3 (Nat.succ_ne_zero s)
+      norm_num at this
+  exact ⟨repReal ω, repReal_mem_cantorSet ω,
+    liouville_repReal ω (irrational_of_isNormal_two h2), hω⟩
+
+/-- **Conditional headline from one cited input (wired; open only through
+`repPairArith_of_sparse`).**  The 3-adic two-logarithm bound gives a Liouville number in `K`
+normal exactly to the bases that are not powers of 3. -/
+theorem liouvilleCantorFullProfile_of_padic (hP : SparseIdentity.Literature.PadicTwoLogs) :
+    LiouvilleCantorFullProfile := by
+  obtain ⟨ω, hω⟩ := (ae_repProfile_of fun _ hb h3 hp => repPairArith_of_padic hP hb h3 hp).exists
   have h2 : IsNormal 2 (repReal ω) := (hω 2 le_rfl).2 fun s hs => by
     rcases s with _ | s
     · norm_num at hs

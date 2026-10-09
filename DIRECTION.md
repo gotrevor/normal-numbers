@@ -1,29 +1,46 @@
 # DIRECTION — normal-numbers 🧭
 
-## CURRENT DIRECTIVE (2026-10-07, branch `proof/cantor-repetition`, review lap 7): the sparse-pair route 🎯
+## CURRENT DIRECTIVE (2026-10-08, branch `proof/cantor-repetition`, review lap 10): one 3-adic input, then prove it 🎯
 
-**Objective:** make the conditional headline `liouvilleCantorFullProfile_of_literature (hB) (hM)` rest
-only on two cited classical theorems, entered as hypothesis `Prop`s
-(`CantorExactExponentProfile.Literature.BakerLogDiscrepancy`, `SparseIdentity.Literature.MatveevThreeLogs`;
-never as sorry'd theorems), by proving the leaves of the sparse-pair route (`CantorRepetition.lean` "The copy zone through sparse pairs",
-`SparseIdentity.lean`).  Wiring is in place: `repPairArith_of_literature` (proved from the leaves); the unconditional
-`repPairArith_of_three_dvd` stays a direct waived `sorry` (2026-10-08: the sorry'd `_cited` theorems were
-an axiom in disguise and were removed).
-**STATUS 2026-10-08 (lap 9): ALL route leaves PROVED; `liouvilleCantorFullProfile_of_literature` is axiom-clean modulo the two cited Props.  Remaining: only the waived unconditional `repPairArith_of_three_dvd` (needs Baker/Matveev themselves).**
-**Mandated next move (was, in order; all done):** (1) `sparseIdentityBound_of_matveev` (the Diophantine leaf; the only
-new-math leaf left, believed 90%): strong induction on the term count + top-cut gap bounds from
-Matveev; state the gap-step lemma first; (2) `cycSparse_of_cycProd_ge`, `card_cluster_le`,
-`runOrbitDecay_of_sparse`; (3) `card_degRows_le`, `copyRun_psi`; (4) `repPairArith_of_runDecay`
-(ψ-version of the assembly + the sched sum swap).
-**Forbidden drift:** attacking `TOrbitCyclicDecay` / `BadGcdSparseH` (superseded, not needed: the
-assembly needs only a saving summable along `sched`); construction redesigns; edits to frozen statements;
-trying to formalize Baker/Matveev themselves before every other leaf is closed.
-**Why:** two sparse points of one orbit `c tᵐ mod 3^A − 1` at distance `δ ≲ A/(K log t)` force an exact
-identity `tᵟU = V` between `K`-sparse integers (`cyclic_pair_identity`, PROVED), and Matveev bounds
-`δ ≤ exp(O(K log K))`; so sparse points cluster, and the copy-zone saving is `≈ cos(π/9)^{√k}` per run
-`k`, summable.  The previous walls asked for a power saving, which is an open digits-of-powers problem.
+**Objective:** close the scope sorry `repPairArith_of_three_dvd` (hence `liouvilleCantorFullProfile`)
+by reducing its Diophantine content to ONE classical input, the 3-adic linear form in two
+logarithms of rationals (`SparseIdentity.Literature.PadicTwoLogs`, Bugeaud–Laurent 1996), and then
+formalizing that input.  Wiring in place: `repPairArith_of_padic` (from `PadicTwoLogs` through the
+PROVED 3-adic chain `sparseIdentityBound_of_padic` and the OPEN Baker-free shadow dichotomy
+`repPairArith_of_sparse`); conditional headline `liouvilleCantorFullProfile_of_padic`.
+**Mandated next moves, in order (hardest-first: P3 is the only step with no fallback):**
+1. **P3 decisive probe — the core of `Literature.PadicTwoLogs`** (new file
+   `src/NormalNumbers/PadicTwoLogs.lean`; NOT a sorry'd theorem of the cited Prop — build it from
+   named sub-lemmas).  Interpolation determinant, all in `ℤ`/`ℤ_[3]`: (a) Mahler expansion
+   `t^{mz}w^{ms} = Σ binom·(t−1)ʲ(w−1)ⁿ` + Cauchy–Binet ⇒ `v₃(Δ) ≥ min_J Σ_{(a,b)∈J}(a + g b) −
+   LK²/2` (the two-variable count gives `g ≲ B`, LINEAR in `log M` — the one feature the chain
+   needs; a one-variable Vandermonde gives `(log M)²`, which is NOT enough); (b) Liouville:
+   `Δ·a^{…} ∈ ℤ∖{0}` ⇒ `v₃(Δ) ≤ N·B`; (c) zero lemma (Laurent 1994 sumset lemma for
+   `G_a × G_m`); (d) parameters; (e) the multiplicatively dependent case by LTE.  First: state (a)
+   and (c), prove (a)'s algebraic core (the Cauchy–Binet valuation bound).  Sources requested in
+   ON-LINE-REQUEST.md (2026-10-08).
+2. **P1 — `repPairArith_of_sparse`** (CantorRepetition; English proof in its docstring, 80%):
+   decompose into named leaves (perturbed cyclic product ⇒ cyclic change count; fresh window ⇒
+   digit changes of `Z_top`; carry/merge lemma mod `3^A − 1`; shadow class bound; assembly reusing
+   `repPairPos_copy`/`summable_copy_sched` without `hB`), then prove them.  Removes the archimedean
+   `BakerLogDiscrepancy`.  (Fallback if P1 fails: an archimedean two-log bound with FIXED heights
+   `t, 3` and any polylog rate, which is easier than P3.)
+3. **P3 rest:** (b)–(e) and the assembly `padicTwoLogs : Literature.PadicTwoLogs`, then
+   `repPairArith_of_three_dvd := repPairArith_of_padic padicTwoLogs …`.
+**Forbidden drift:** formalizing archimedean Matveev / Baker–Wüstholz (superseded by the 3-adic
+two-log route); a sorry'd theorem whose statement is a cited Prop (axiom in disguise); edits to
+frozen statements (`LiouvilleCantorFullProfile`, `RepPairArith`, `repPairArith_of_three_dvd`);
+work in other lanes.
+**Why:** the route needs only a saving summable along `sched` with runs `a_k ≈ k^k`; with
+`cos(π/9)` per digit change that forces `K ≈ 80 log k` changes and a sparse-identity bound
+`log log L_K ≤ K/80`, i.e. a gap bound LINEAR in the height of the bottom part — Baker strength,
+but the bottom-up (3-adic) chain needs only TWO logarithms (`t` and `V_{<p}/U_{<p}`; the power of 3
+cancels), and the shadow zone's Baker discrepancy is replaceable by the copy-zone orbit count.
+The 3-adic two-log bound for rationals is the smallest Baker-type theorem that suffices, and its
+analytic part is pure integer arithmetic (binomial coefficients), with no p-adic analysis library.
 
 Directive history (repetition branch):
+- 2026-10-08 review lap 10: sparse-pair route complete; next = one 3-adic two-log input (3-adic chain proved), Baker-free shadow (P1), then prove the input (P3).
 - 2026-10-07 review lap 7: sparse-pair route (cluster lemma + Matveev) replaces the walls.
 - 2026-10-07 review lap: assembly first; walls stay named nodes.
 

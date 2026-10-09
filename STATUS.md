@@ -1,39 +1,43 @@
 # STATUS — normal-numbers 📊
 
-## Cantor repetition update, 7 October 2026 (branch `proof/cantor-repetition`, review lap 7)
+## Cantor repetition update, 8 October 2026 (branch `proof/cantor-repetition`, review lap 10)
 
-**Is the profile cut forced?** · **Build**: 🟢 green (10797 jobs, full default build) · lap 7
+**Is the profile cut forced?** · **Build**: 🟢 green (10798 jobs, full default build) · lap 10
 
-**Where it stands.**  `CantorRepetition.liouvilleCantorFullProfile` (a Liouville point of `K` normal
-to exactly the bases that are not powers of 3) now runs through the **sparse-pair route**: its
-`sorry` dependence is two cited classical theorems (Baker–Wüstholz discrepancy, Matveev's
-three-logarithm bound) plus named elementary/Diophantine leaves.  The old walls
-(`TOrbitCyclicDecay`, `BadGcdSparseH`, open digits-of-powers problems) are no longer on the path.
-Key new fact, proved: `SparseIdentity.cyclic_pair_identity` (two sparse points of an orbit mod
-`3^A − 1` force an exact sparse identity `tᵟU = V`).
+**Where it stands.**  `CantorRepetition.liouvilleCantorFullProfile` (a Liouville point of `K`
+normal to exactly the bases that are not powers of 3) is proved conditionally on cited Diophantine
+inputs, three ways, all with trust-base `#print axioms`: Baker + Matveev
+(`_of_literature`), Baker + the 3-adic two-log bound (`_of_baker_padic`), and — through one open
+route leaf — the 3-adic two-log bound alone (`_of_padic`).  The unconditional headline needs that
+input proved; review lap 10 set the campaign to formalize it (DIRECTION.md, P3).
 
 **What's happened.**
-- 2026-10-07 review lap 7: route change.  The assembly needs only a saving summable along `sched`;
-  pairs of sparse orbit points give `tᵟU = V`, bounded by Matveev (`sparseIdentityBound_of_matveev`,
-  90%), so sparse points cluster.  `repPairArith_of_three_dvd` rewired through
-  `repPairArith_of_literature`; conditional headline `liouvilleCantorFullProfile_of_literature`.
-- 2026-10-07 laps 4–6: assembly `repPairArith_of_inputs` and `liouvilleCantorFullProfile_of_inputs`
-  proved (trust base), `card_cycProd_ge_le` proved.
-- 2026-10-07 laps 1–3: construction (even runs copy), copy-zone toolkit, measure-free crux
-  `RepPairArith`, probes at the `1/N` floor for `b = 6, 12` (control `b = 9` flat).
+- 2026-10-08 review lap 10: the 3-adic chain `SparseIdentity.sparseIdentityBound_of_padic` (PROVED)
+  replaces Matveev (three archimedean logs) by the 3-adic two-log bound
+  (`Literature.PadicTwoLogs`, Bugeaud–Laurent 1996).  Baker-free shadow dichotomy stated
+  (`repPairArith_of_sparse`, 80%).  Analysis: the chain needs a gap bound LINEAR in the height;
+  a two-variable Mahler/Cauchy–Binet interpolation determinant gives it.
+- 2026-10-08 laps 8–9: every sparse-pair leaf proved (`sparseIdentityBound_of_matveev`,
+  `runOrbitDecay_of_sparse`, `copyRun_psi`, `repPairArith_of_runDecay`, …).
+- 2026-10-07 review lap 7: route change to sparse pairs (`cyclic_pair_identity`).
+- 2026-10-07 laps 1–6: construction, copy-zone toolkit, assembly, probes (`b = 6, 12` at the
+  `1/N` floor; control `b = 9` flat).
 
-**Outstanding.**  Short (DIRECTION order): `sparseIdentityBound_of_matveev`; `cycSparse_of_cycProd_ge`,
-`card_cluster_le`, `runOrbitDecay_of_sparse`; `card_degRows_le`, `copyRun_psi`;
-`repPairArith_of_runDecay`.  Long: formalizing the two cited inputs (🟠/🟡: Baker theory).
+**Outstanding.**  Short: P3 core (`PadicTwoLogs.lean`: Cauchy–Binet valuation bound, zero lemma),
+P1 leaves (`repPairArith_of_sparse`).  Long: the rest of P3 (Liouville bound, parameters, LTE
+case).  To completion: `repPairArith_of_three_dvd := repPairArith_of_padic padicTwoLogs`.
 
-| headline | claim | `#print axioms` | open inputs |
+| headline | claim | `#print axioms` | inputs |
 |---|---|---|---|
-| `liouvilleCantorFullProfile` | unconditional (frozen) | propext, choice, Quot.sound, **sorryAx** | 🟡 Baker–Wüstholz (cited), 🟡 Matveev (cited), 7 route leaves (elementary + one Diophantine) |
-| `liouvilleCantorFullProfile_of_literature` | cond. on Baker + Matveev | propext, choice, Quot.sound, **sorryAx** | the 7 route leaves |
-| `liouvilleCantorFullProfile_of_inputs` | cond. on old walls | trust base | `TOrbitCyclicDecay`, `BadGcdSparseH` (superseded) |
-| `SparseIdentity.cyclic_pair_identity` | pair lemma | trust base | none |
+| `liouvilleCantorFullProfile` | unconditional (frozen) | trust base + **sorryAx** (via `repPairArith_of_three_dvd`) | 🟡 3-adic two-log bound (current frontier; next prerequisite = Cauchy–Binet valuation bound + zero lemma) |
+| `liouvilleCantorFullProfile_of_padic` | cond. on `PadicTwoLogs` | trust base + **sorryAx** (via `repPairArith_of_sparse`) | 🟡 cited (Bugeaud–Laurent); P1 leaf open |
+| `liouvilleCantorFullProfile_of_baker_padic` | cond. on Baker discrepancy + `PadicTwoLogs` | trust base | 🟡 + 🟡 cited |
+| `liouvilleCantorFullProfile_of_literature` | cond. on Baker + Matveev | trust base | 🟡 + 🟠 cited (Matveev: superseded, not pursued) |
+| `SparseIdentity.sparseIdentityBound_of_padic` | 3-adic chain | trust base | cited `PadicTwoLogs` |
 | `ae_isNormal_rep_of_coprime_three`, `liouville_repReal` | `3 ∤ b`; Liouville | trust base | none |
 
+Math-axiom count of the unconditional headline: 0 cited axioms (inputs are hypothesis Props); the
+one `sorryAx` is the disclosed crux.
 
 ## Cantor exact-exponent stretch update, 6 October 2026 (branch `proof/cantorexp-stretch`)
 

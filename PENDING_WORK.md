@@ -1,3 +1,29 @@
+## Repetition review lap 10 (2026-10-08) — ONE input: the 3-adic two-log bound; 3-adic chain PROVED
+* Inventory: `liouvilleCantorFullProfile_of_literature` = trust base (Baker + Matveev as hypotheses);
+  the scope sorry `repPairArith_of_three_dvd` needs those inputs PROVED.  The lap-9 "box stuck"
+  was premature: the inputs are the crux, and they can be narrowed.
+* PROVED: `SparseIdentity.sparseIdentityBound_of_padic` (from the new cited
+  `Literature.PadicTwoLogs`, Bugeaud–Laurent 1996): bottom-up 3-adic chain `chain_padic`
+  (`dvd_bot`: `tᵟU_{<p} ≡ V_{<p} mod 3^p`; the lowest exact cut is the endgame; no recursion),
+  `gap_of_padic`, `sum_shift`.  Wiring: `repPairArith_of_baker_padic`,
+  `liouvilleCantorFullProfile_of_baker_padic` (both trust base).
+* STATED (sorry, 80%): `repPairArith_of_sparse` — Baker-free shadow dichotomy (English proof in the
+  docstring).  With it: `repPairArith_of_padic`, `liouvilleCantorFullProfile_of_padic` (ONE input).
+* Why the 3-adic two-log input is the right target (checked this lap):
+  - `a_k ≈ k^k` and `cos(π/9)` per digit change force `K ≈ 80 log k`; the sparse-identity bound must
+    satisfy `log log L_K ≤ K/80`.  A chain gap bound `p_{j+1} ≤ C·polylog(δ)·(p_j+1)^κ'` gives
+    `log log L_K ≈ 2K log κ'`: so `κ' = 1` (LINEAR in the height) is required.  Elementary
+    (Liouville) bounds give gaps `≈ δ log t`: useless.  Counting bad `δ` instead of bounding them
+    does not help (`#ratios ≈ A^{2K}`).
+  - Naive one-variable interpolation determinant: `v₃(Δ) ≥ N²/2`, Liouville `N·B` ⇒ `g ≲ B²`
+    (quadratic in `log M`) — NOT enough.  Two-variable Mahler expansion (in `z = r + δs` and `s`,
+    coefficients `(t−1)ʲ(w−1)ⁿ`, `v₃(w − 1) = g`): `v₃(Δ) ≥ min_J Σ(a + g b) ≈ (2√2/3) N^{3/2} g^{1/2}`
+    ⇒ `g ≲ B ≈ (log δ)² log t log M`.  Linear.  This is the decisive analytic point of P3.
+  - Zero lemma: the one-slice exponential-polynomial count needs `R ≥ KL` (too weak); need Laurent's
+    2-log sumset lemma.
+* NEXT (DIRECTION order): P3 decisive probe (state + prove the Cauchy–Binet valuation bound; state the
+  zero lemma), then P1 leaves, then the rest of P3.  Sources: ON-LINE-REQUEST.md.
+
 ## Repetition lap 9 (2026-10-08) — `repPairArith_of_runDecay` PROVED; sparse-pair route COMPLETE
 * `repPairArith_of_runDecay` is a theorem.  New: `repPairPos_copy` (`repPairPos_eventually` with the
   copy term left explicit, no copy-zone inputs), `runCopy`, `summable_copy_sched` (the sum swap:
