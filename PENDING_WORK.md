@@ -1,3 +1,15 @@
+## Repetition lap 11 (2026-10-09) — P3(a) algebraic core PROVED; zero lemma STATED
+* New `src/NormalNumbers/PadicTwoLogs.lean`.  PROVED: `dvd_det_mul` (Cauchy–Binet valuation bound
+  via multilinear expansion of rows; non-injective selections vanish by alternation),
+  `sum_weight_ge` (`Σ(a+gb) ≥ T(L − T(T/g+1))` over `L` distinct lattice points),
+  `dvd_det_mul_monomial` (columns carry `x^{μ₁}y^{μ₂}`, `p∣x`, `pᵍ∣y` ⇒ `p^{T(L−T(T/g+1))} ∣ det`).
+  Axioms: trust base.
+* STATED (cited, transcription from memory, unchecked): `Literature.LaurentZeroLemma` (rational case).
+* NEXT: (a') the Mahler expansion itself — write the interpolation matrix entries
+  `binom(r b₂+s b₁, k)·α₁^{lr}α₂^{ls}` as `P·Q` with `P` monomial in `x = α₁−1`, `y = α₂/α₁^δ − 1`
+  (integer binomial identity `(1+x)^N = Σ binom(N,j)xʲ` + Vandermonde-type rewriting); then (b)
+  Liouville, (d) parameters.  P1 leaves of `repPairArith_of_sparse` still pending.
+
 ## Repetition review lap 10 (2026-10-08) — ONE input: the 3-adic two-log bound; 3-adic chain PROVED
 * Inventory: `liouvilleCantorFullProfile_of_literature` = trust base (Baker + Matveev as hypotheses);
   the scope sorry `repPairArith_of_three_dvd` needs those inputs PROVED.  The lap-9 "box stuck"
