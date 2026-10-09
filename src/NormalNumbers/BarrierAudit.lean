@@ -281,11 +281,6 @@ def waivers : List Waiver := [
   ⟨``CantorExactExponentProfile.ae_isNormal_of_profileOK_of_gelfond,
    "believed implication (55%): a Gelfond-strength two-log bound suffices for the run shadows; \
     the elementary t^k ≠ 3^j rate does not"⟩,
-  ⟨``CantorRepetition.repPairArith_of_sparse,
-   "the one open crux leaf of liouvilleCantorFullProfile (Baker-free shadow dichotomy, 80%; the \
-    3-adic two-log input is proved, PadicTwoLogs.padicTwoLogs): copy coins read Z mod 3^E, fresh \
-    coins the top part; both large forces a cyclically sparse orbit point.  The sibling t = 9 fails through \
-    SparseIdentityBound (not_sparseIdentityBound_nine)"⟩,
   ⟨``FiniteState.isFNormal_delayEnum_of_normal,
    "a leaf: O(1) cost of composing with the delay transducer and its finite-state right inverse"⟩]
 

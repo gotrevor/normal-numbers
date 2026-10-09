@@ -6187,7 +6187,1063 @@ theorem repPairArith_of_baker_padic
     (runOrbitDecay_of_sparse (by omega) hnd
       (SparseIdentity.sparseIdentityBound_of_padic hP (by omega) hnd))
 
-/-- **The shadow zone needs no Baker input (open; believed, 80%).**  `RepPairArith (3ˢt)` from
+section Shadow
+open Finset
+
+/-- Fresh places `[E, E+Q)` below `M`: the free bound is at most their window product. -/
+theorem bf_le_window (M E Q : ℕ) (hM : E + Q ≤ M) (hfr : ∀ q < Q, isFresh (E + q) = true)
+    (ξ : ℝ) :
+    Bf isFresh M ξ ≤ ∏ q ∈ range Q, |Real.cos (2 * Real.pi * ξ / 3 ^ (E + q + 1))| := by
+  unfold Bf
+  set S := (range Q).image (fun q => E + q)
+  have hsub : S ⊆ (range M).filter (fun p => isFresh p = true) := by
+    intro p hp
+    obtain ⟨q, hq, rfl⟩ := mem_image.1 hp
+    exact mem_filter.2 ⟨mem_range.2 (by have := mem_range.1 hq; omega), hfr q (mem_range.1 hq)⟩
+  rw [← prod_sdiff hsub]
+  have h1 : ∏ p ∈ (range M).filter (fun p => isFresh p = true) \ S,
+      |Real.cos (2 * Real.pi * ξ / 3 ^ (p + 1))| ≤ 1 :=
+    prod_le_one (fun _ _ => abs_nonneg _) fun _ _ => Real.abs_cos_le_one _
+  have h2 : ∏ p ∈ S, |Real.cos (2 * Real.pi * ξ / 3 ^ (p + 1))| =
+      ∏ q ∈ range Q, |Real.cos (2 * Real.pi * ξ / 3 ^ (E + q + 1))| := by
+    rw [prod_image (fun a _ b _ h => Nat.add_left_cancel h)]
+  have h3 : 0 ≤ ∏ p ∈ S, |Real.cos (2 * Real.pi * ξ / 3 ^ (p + 1))| :=
+    prod_nonneg fun _ _ => abs_nonneg _
+  rw [← h2]
+  nlinarith
+
+/-- **The shadow dichotomy (P1 per-pair core).**  `ξ = 3ᵛZ + H` with `v` in even run `k`
+(`A = a_k ≤ v ≤ E = (k+2)A`), `Z ≥ 0` whose part above `E` fits in `Q` places, `3^{E+Q} ∣ H`, and
+the places `[E, E+Q)` fresh and below `M`.  If both the free option and the run-`k` copy option are
+`≥ θ > cos(π/9)^K`, then `Z` is cyclically `4(3K + 8)`-sparse modulo `3^A − 1`. -/
+theorem shadow_sparse {k K Q M : ℕ} (hk : Even k) {θ : ℝ} (hK : Real.cos (Real.pi / 9) ^ K < θ)
+    (v : ℕ) (hvA : runStart k ≤ v) (hvE : v ≤ (k + 2) * runStart k) (Z H : ℤ) (hZ0 : 0 ≤ Z)
+    (hZt : Z / 3 ^ ((k + 2) * runStart k - v) < 3 ^ Q)
+    (hH : (3 : ℤ) ^ ((k + 2) * runStart k + Q) ∣ H)
+    (hfr : ∀ q < Q, isFresh ((k + 2) * runStart k + q) = true)
+    (hM : (k + 2) * runStart k + Q ≤ M)
+    (hnone : θ ≤ repBound M none ((3 : ℝ) ^ v * Z + H))
+    (hsome : θ ≤ repBound M (some k) ((3 : ℝ) ^ v * Z + H)) :
+    SparseIdentity.CycSparse (runStart k) (2 * (2 * ((2 * K + 6) + (K + 2)))) Z := by
+  set E := (k + 2) * runStart k with hE
+  obtain ⟨H₁, rfl⟩ := hH
+  have hA1 : 1 ≤ runStart k := by have := lt_runStart k; omega
+  have hsome' : θ ≤ repBound M (some k) ((3 : ℝ) ^ v * Z) := by
+    have := repBound_some_add M k ((3 : ℝ) ^ v * Z) ((3 : ℤ) ^ Q * H₁)
+    rw [← this]
+    convert hsome using 2
+    push_cast; rw [pow_add]; ring
+  have hfree : θ ≤ ∏ q ∈ range Q,
+      |Real.cos (2 * Real.pi * ((3 : ℝ) ^ v * Z) / 3 ^ (E + q + 1))| := by
+    refine hnone.trans ((bf_le_window M E Q hM hfr _).trans
+      (le_of_eq (prod_congr rfl fun q hq => ?_)))
+    have hq := mem_range.1 hq
+    have e : 2 * Real.pi * ((3 : ℝ) ^ v * Z + ((3 ^ (E + Q) * H₁ : ℤ) : ℝ)) / 3 ^ (E + q + 1) =
+        2 * Real.pi * ((3 : ℝ) ^ v * Z) / 3 ^ (E + q + 1) +
+          ((3 ^ (Q - q - 1) * H₁ : ℤ) : ℝ) * (2 * Real.pi) := by
+      push_cast
+      have : (3 : ℝ) ^ (E + Q) = 3 ^ (E + q + 1) * 3 ^ (Q - q - 1) := by
+        rw [← pow_add]; congr 1; omega
+      rw [this]; field_simp
+    rw [e, Real.cos_add_int_mul_two_pi]
+  have := cycSparse_of_copy_free hk hK v hvA hvE Z hZ0 hZt hsome' hfree
+  exact CycMerge.cycSparse_of_three_pow_mul _ hA1 _ this
+
+open Classical in
+/-- **Shadow option (P1 per-pair bound).**  Under the hypotheses of `shadow_sparse`, some option
+costs at most `θ + 1[Z cyclically sparse]`. -/
+theorem exists_option_le_shadow {k K Q M : ℕ} (hk : Even k) {θ : ℝ}
+    (hK : Real.cos (Real.pi / 9) ^ K < θ) (v : ℕ) (hvA : runStart k ≤ v)
+    (hvE : v ≤ (k + 2) * runStart k) (Z H : ℤ) (hZ0 : 0 ≤ Z)
+    (hZt : Z / 3 ^ ((k + 2) * runStart k - v) < 3 ^ Q)
+    (hH : (3 : ℤ) ^ ((k + 2) * runStart k + Q) ∣ H)
+    (hfr : ∀ q < Q, isFresh ((k + 2) * runStart k + q) = true)
+    (hM : (k + 2) * runStart k + Q ≤ M) :
+    ∃ o, repBound M o ((3 : ℝ) ^ v * Z + H) ≤ θ +
+      (if SparseIdentity.CycSparse (runStart k) (2 * (2 * ((2 * K + 6) + (K + 2)))) Z
+        then 1 else 0) := by
+  have hc0 : 0 ≤ Real.cos (Real.pi / 9) :=
+    Real.cos_nonneg_of_mem_Icc ⟨by linarith [Real.pi_pos], by linarith [Real.pi_pos]⟩
+  have hθ0 : 0 ≤ θ := (pow_nonneg hc0 K).trans hK.le
+  by_cases hs : SparseIdentity.CycSparse (runStart k) (2 * (2 * ((2 * K + 6) + (K + 2)))) Z
+  · exact ⟨none, by rw [if_pos hs]; linarith [repBound_le_one M none ((3 : ℝ) ^ v * Z + H)]⟩
+  · rw [if_neg hs, add_zero]
+    by_contra hc
+    push Not at hc
+    exact hs (shadow_sparse hk hK v hvA hvE Z H hZ0 hZt hH hfr hM (hc none).le (hc (some k)).le)
+
+
+/-- The places between an even run `k` and run `k + 2` are fresh. -/
+theorem isFresh_of_gap {k p : ℕ} (hk : Even k) (h1 : (k + 2) * runStart k ≤ p)
+    (h2 : p < runStart (k + 2)) : isFresh p = true := by
+  by_contra h
+  rw [Bool.not_eq_true, isFresh_eq_false] at h
+  obtain ⟨k', hk', h1', h2'⟩ := h
+  rcases lt_trichotomy k' k with hlt | rfl | hgt
+  · have := runEnd_le_runStart hlt
+    have : runStart k ≤ (k + 2) * runStart k := Nat.le_mul_of_pos_left _ (by omega)
+    omega
+  · omega
+  · have hk2 : k + 2 ≤ k' := by
+      obtain ⟨i, rfl⟩ := hk; obtain ⟨j, rfl⟩ := hk'; omega
+    have := runStart_mono hk2
+    omega
+
+/-- The shadow sparsity parameter `K = ⌊√k⌋ + 1`, threshold `θ_k = 2cos(π/9)^K`, and the resulting
+cyclic sparsity level `4(3K + 8)`. -/
+def shadowK (k : ℕ) : ℕ := Nat.sqrt k + 1
+
+noncomputable def shadowθ (k : ℕ) : ℝ := 2 * Real.cos (Real.pi / 9) ^ shadowK k
+
+def shadowL (k : ℕ) : ℕ := 2 * (2 * ((2 * shadowK k + 6) + (shadowK k + 2)))
+
+theorem shadowL_eq (k : ℕ) : shadowL k = 12 * (Nat.sqrt k + 1) + 32 := by
+  simp only [shadowL, shadowK]; ring
+
+theorem cos_pi_nine_pos : 0 < Real.cos (Real.pi / 9) :=
+  Real.cos_pos_of_mem_Ioo ⟨by linarith [Real.pi_pos], by linarith [Real.pi_pos]⟩
+
+theorem lt_shadowθ (k : ℕ) : Real.cos (Real.pi / 9) ^ shadowK k < shadowθ k := by
+  have := pow_pos cos_pi_nine_pos (shadowK k)
+  simp only [shadowθ]; linarith
+
+theorem shadowθ_nonneg (k : ℕ) : 0 ≤ shadowθ k :=
+  (pow_pos cos_pi_nine_pos (shadowK k)).le.trans (lt_shadowθ k).le
+
+theorem natZ_div_lt {Zn v T E : ℕ} (hvE : v ≤ E) (h : 3 ^ v * Zn < 3 ^ (T + 1)) :
+    ((Zn : ℤ)) / (3 : ℤ) ^ (E - v) < (3 : ℤ) ^ (T + 1 - E) := by
+  have hZ : Zn < 3 ^ (E - v) * 3 ^ (T + 1 - E) := by
+    rcases Nat.eq_zero_or_pos Zn with h0 | hpos
+    · rw [h0]; positivity
+    have hv : v < T + 1 := by
+      by_contra hc; push Not at hc
+      have : 3 ^ (T + 1) ≤ 3 ^ v * Zn :=
+        (Nat.pow_le_pow_right (by norm_num) hc).trans (Nat.le_mul_of_pos_right _ hpos)
+      omega
+    have h1 : Zn < 3 ^ (T + 1 - v) := by
+      have e : 3 ^ (T + 1) = 3 ^ v * 3 ^ (T + 1 - v) := by rw [← pow_add]; congr 1; omega
+      rw [e] at h
+      exact Nat.lt_of_mul_lt_mul_left h
+    refine h1.trans_le ?_
+    rw [← pow_add]; exact Nat.pow_le_pow_right (by norm_num) (by omega)
+  have hZ' : Zn < 3 ^ (T + 1 - E) * 3 ^ (E - v) := by rwa [mul_comm] at hZ
+  have := (Nat.div_lt_iff_lt_mul (pow_pos (by norm_num : 0 < 3) (E - v))).2 hZ'
+  have e : ((Zn / 3 ^ (E - v) : ℕ) : ℤ) = (Zn : ℤ) / (3 : ℤ) ^ (E - v) := by
+    push_cast; rfl
+  rw [← e]; exact_mod_cast this
+
+open Classical in
+/-- **Shadow pair bound (P1, per pair; proved).**  A pair `(m, d)` with `v = sm + e` in even run `k`,
+in either shadow case — (I) the top `T` of `ξ` below `a_{k+2}`, or (II) the low piece `Y = 3ᵉh'bᵐ`
+(top `y`) below `a_{k+2}` and the high part `3ᵘ…`, `u = s(m+d)+e`, above both `E` and `y` — has an
+option costing at most `θ_k + 1[h'(bᵈ−1)tᵐ sparse] + 1[h'tᵐ sparse]` (cyclic, modulo `3^{a_k} − 1`). -/
+theorem exists_option_le_shadowPair {s t e h' m d k M : ℕ} (hs : 1 ≤ s) (ht : 1 ≤ t) (hh : 1 ≤ h')
+    (hd : 1 ≤ d) (hk : Even k) (hvA : runStart k ≤ s * m + e)
+    (hvE : s * m + e ≤ (k + 2) * runStart k) (hME : (k + 2) * runStart k ≤ M)
+    (hMT : Nat.log 3 (pairNat s t e h' m d) + 1 ≤ M)
+    (hcase : Nat.log 3 (pairNat s t e h' m d) < runStart (k + 2) ∨
+      ((k + 2) * runStart k ≤ s * (m + d) + e ∧
+        Nat.log 3 (3 ^ e * h' * (3 ^ s * t) ^ m) + 1 ≤ s * (m + d) + e ∧
+        Nat.log 3 (3 ^ e * h' * (3 ^ s * t) ^ m) < runStart (k + 2))) :
+    ∃ o, repBound M o (pairNat s t e h' m d) ≤ shadowθ k +
+      (if SparseIdentity.CycSparse (runStart k) (shadowL k)
+          ((h' : ℤ) * (((3 ^ s * t : ℕ) : ℤ) ^ d - 1) * (t : ℤ) ^ m) then 1 else 0) +
+      (if SparseIdentity.CycSparse (runStart k) (shadowL k) ((h' : ℤ) * (t : ℤ) ^ m)
+        then 1 else 0) := by
+  set v := s * m + e
+  set E := (k + 2) * runStart k
+  set T := Nat.log 3 (pairNat s t e h' m d)
+  set y := Nat.log 3 (3 ^ e * h' * (3 ^ s * t) ^ m)
+  have hb2 : 2 ≤ 3 ^ s * t := by
+    have : 3 ≤ 3 ^ s := Nat.le_self_pow (by omega) 3
+    nlinarith
+  have hbd : 1 ≤ (3 ^ s * t) ^ d := Nat.one_le_pow _ _ (by omega)
+  have hYv : 3 ^ e * h' * (3 ^ s * t) ^ m = 3 ^ v * (h' * t ^ m) := by
+    simp only [v]; rw [mul_pow, ← pow_mul, pow_add]; ring
+  have hpY : 3 ^ e * h' * (3 ^ s * t) ^ m ≤ pairNat s t e h' m d := by
+    unfold pairNat
+    have h2 : 2 ≤ (3 ^ s * t) ^ d := le_trans hb2 (Nat.le_self_pow (by omega) _)
+    have : (3 ^ s * t) ^ m ≤ (3 ^ s * t) ^ (m + d) - (3 ^ s * t) ^ m := by
+      rw [pow_add]
+      have : (3 ^ s * t) ^ m * 2 ≤ (3 ^ s * t) ^ m * (3 ^ s * t) ^ d := Nat.mul_le_mul_left _ h2
+      omega
+    exact Nat.mul_le_mul_left _ this
+  have hyT : y ≤ T := Nat.log_mono_right hpY
+  have hind : ∀ P : Prop, (0 : ℝ) ≤ (if P then 1 else 0) := fun P => by split_ifs <;> norm_num
+  rcases hcase with hI | ⟨huE, huy, hy2⟩
+  · -- shadow I: `ξ = 3ᵛ Z`, `Z = h'(bᵈ − 1)tᵐ`
+    set Zn := h' * ((3 ^ s * t) ^ d - 1) * t ^ m with hZn
+    have hZ : ((Zn : ℕ) : ℤ) = (h' : ℤ) * (((3 ^ s * t : ℕ) : ℤ) ^ d - 1) * (t : ℤ) ^ m := by
+      rw [hZn]; push_cast [hbd]; ring
+    have hpn : pairNat s t e h' m d = 3 ^ v * Zn := by
+      have h := pairNat_eq s t e h' m d
+      rw [← hZn] at h
+      exact_mod_cast h
+    have hξ : ((pairNat s t e h' m d : ℕ) : ℝ) = (3 : ℝ) ^ v * ((Zn : ℤ) : ℝ) + ((0 : ℤ) : ℝ) := by
+      rw [hpn]; push_cast; ring
+    have hlt : 3 ^ v * Zn < 3 ^ (T + 1) := by
+      rw [← hpn]; exact Nat.lt_pow_succ_log_self (by norm_num) _
+    obtain ⟨o, ho⟩ := exists_option_le_shadow (Q := T + 1 - E) (M := M) hk (lt_shadowθ k) v hvA hvE
+      (Zn : ℤ) 0 (by positivity) (natZ_div_lt hvE hlt) (dvd_zero _)
+      (fun q hq => isFresh_of_gap hk (by omega) (by omega)) (by omega)
+    refine ⟨o, ?_⟩
+    rw [hξ]
+    refine ho.trans ?_
+    rw [hZ]
+    have := hind (SparseIdentity.CycSparse (runStart k) (shadowL k) ((h' : ℤ) * (t : ℤ) ^ m))
+    unfold shadowL at this ⊢
+    linarith
+  · -- shadow II: `−ξ = 3ᵛ Z + H`, `Z = h'tᵐ`, `H = −3ᵘ h' t^{m+d}`
+    set u := s * (m + d) + e
+    set Zn := h' * t ^ m with hZn
+    have hZ : ((Zn : ℕ) : ℤ) = (h' : ℤ) * (t : ℤ) ^ m := by rw [hZn]; push_cast; ring
+    set H : ℤ := -((3 ^ u * (h' * t ^ (m + d)) : ℕ) : ℤ) with hHd
+    have hξ : -((pairNat s t e h' m d : ℕ) : ℝ) = (3 : ℝ) ^ v * ((Zn : ℤ) : ℝ) + (H : ℝ) := by
+      rw [pairNat_eq_sub ht]
+      have := congrArg (fun n : ℕ => (n : ℝ)) hYv
+      rw [this, hHd, hZn]; push_cast; ring
+    have hlt : 3 ^ v * Zn < 3 ^ (y + 1) := by
+      rw [hZn, ← hYv]; exact Nat.lt_pow_succ_log_self (by norm_num) _
+    have hH : (3 : ℤ) ^ (E + (y + 1 - E)) ∣ H := by
+      rw [hHd]
+      refine Dvd.dvd.neg_right ?_
+      have h1 : (3 : ℤ) ^ (E + (y + 1 - E)) ∣ (3 : ℤ) ^ u := pow_dvd_pow 3 (by omega)
+      have h2 := h1.mul_right ((h' : ℤ) * (t : ℤ) ^ (m + d))
+      push_cast; exact h2
+    obtain ⟨o, ho⟩ := exists_option_le_shadow (Q := y + 1 - E) (M := M) hk (lt_shadowθ k) v hvA hvE
+      (Zn : ℤ) H (by positivity) (natZ_div_lt hvE hlt) hH
+      (fun q hq => isFresh_of_gap hk (by omega) (by omega)) (by omega)
+    refine ⟨o, ?_⟩
+    rw [← repBound_neg, hξ]
+    refine ho.trans ?_
+    rw [hZ]
+    have := hind (SparseIdentity.CycSparse (runStart k) (shadowL k)
+        ((h' : ℤ) * (((3 ^ s * t : ℕ) : ℤ) ^ d - 1) * (t : ℤ) ^ m))
+    unfold shadowL at this ⊢
+    linarith
+
+
+/-- **Shadow classification (P1; proved).**  Away from a copy-run boundary, the low end `v` of a
+pair either has a fresh window above it (class 1) or lies in an even run `k` past `k₀`; then either
+the top `T` of `ξ` is below `a_{k+2}` (shadow I) or the pair is separated with the high part above
+`E_k` and the low piece's top `y` (shadow II).  Positions: `y ≤ ρv`, `T ≤ ρu`. -/
+theorem shadow_classify {W K ρ k₀ v y u T : ℕ} (hρ1 : 1 ≤ ρ) (hρ : ρ * ρ ≤ 4 * (k₀ + 3))
+    (hv0 : runStart k₀ ≤ v) (hy : y ≤ ρ * v) (hT : T ≤ ρ * u) (hnv : ¬ NearCopyBdry W K v) :
+    (∀ p, v + 1 ≤ p → p < v + W → isFresh p = true) ∨
+      ∃ k, Even k ∧ runStart k ≤ v ∧ v ≤ (k + 2) * runStart k ∧
+        (T < runStart (k + 2) ∨
+          ((k + 2) * runStart k ≤ u ∧ y + 1 ≤ u ∧ y < runStart (k + 2))) := by
+  rcases deep_or_fresh hnv with ⟨k, hk, hv1, hv2⟩ | hfv
+  swap
+  · exact Or.inl fun p hp1 hp2 => hfv p (by omega) (by omega)
+  right
+  refine ⟨k, hk, by omega, by omega, ?_⟩
+  have hkk₀ : k₀ ≤ k := run_index_ge hv0 (by omega)
+  have hA2 := runStart_add_two k
+  set E := (k + 2) * runStart k
+  have hρk : ρ * ρ ≤ 4 * (k + 3) := hρ.trans (by omega)
+  have hvE : v < E := by omega
+  have h1 : ρ * v < ρ * E := Nat.mul_lt_mul_of_pos_left hvE (by omega)
+  have h2 : ρ * E ≤ ρ * ρ * E := by
+    have := Nat.mul_le_mul_right E (Nat.le_mul_of_pos_left ρ (by omega : 0 < ρ)); simpa using this
+  have h3 : ρ * ρ * E ≤ 4 * (k + 3) * E := Nat.mul_le_mul_right E hρk
+  have hyE : y < runStart (k + 2) := by omega
+  by_cases hTa : T < runStart (k + 2)
+  · exact Or.inl hTa
+  right
+  push Not at hTa
+  refine ⟨?_, ?_, hyE⟩
+  · by_contra hc; push Not at hc
+    have : ρ * u < ρ * E := Nat.mul_lt_mul_of_pos_left hc (by omega)
+    omega
+  · by_contra hc; push Not at hc
+    have hu : u ≤ y := by omega
+    have a1 : ρ * u ≤ ρ * y := Nat.mul_le_mul_left ρ hu
+    have a2 : ρ * y ≤ ρ * (ρ * v) := Nat.mul_le_mul_left ρ hy
+    have a3 : ρ * (ρ * v) < ρ * (ρ * E) :=
+      Nat.mul_lt_mul_of_pos_left h1 (by omega)
+    have a4 : ρ * (ρ * E) = ρ * ρ * E := by ring
+    omega
+
+/-- The even runs whose block contains `v` (at most one). -/
+def shadowRuns (v : ℕ) : Finset ℕ :=
+  (range (v + 1)).filter fun k => Even k ∧ runStart k ≤ v ∧ v ≤ (k + 2) * runStart k
+
+open Classical in
+/-- **The shadow majorant** of the pair `(m, d)`: over the run `k` containing `v = sm + e`,
+`θ_k + 1[h'(bᵈ−1)tᵐ cyclically sparse] + 1[h'tᵐ cyclically sparse]` (modulo `3^{a_k} − 1`). -/
+noncomputable def shadowTerm (s t e h' m d : ℕ) : ℝ :=
+  ∑ k ∈ shadowRuns (s * m + e), (shadowθ k +
+    (if SparseIdentity.CycSparse (runStart k) (shadowL k)
+        ((h' : ℤ) * (((3 ^ s * t : ℕ) : ℤ) ^ d - 1) * (t : ℤ) ^ m) then 1 else 0) +
+    (if SparseIdentity.CycSparse (runStart k) (shadowL k) ((h' : ℤ) * (t : ℤ) ^ m)
+      then 1 else 0))
+
+theorem shadowTerm_nonneg (s t e h' m d : ℕ) : 0 ≤ shadowTerm s t e h' m d := by
+  unfold shadowTerm
+  refine sum_nonneg fun k _ => ?_
+  have := shadowθ_nonneg k
+  split_ifs <;> linarith
+
+/-- **The Baker-free per-pair majorant:** the class-1 (fresh low window) majorant plus the shadow
+term. -/
+noncomputable def pairMajS (s t e h' m d W : ℕ) : ℝ :=
+  Hf (fun _ => true) 0 W ((h' * ((3 ^ s * t) ^ d - 1) * t ^ m : ℕ) : ℝ) + shadowTerm s t e h' m d
+
+theorem pairMajS_nonneg (s t e h' m d W : ℕ) : 0 ≤ pairMajS s t e h' m d W :=
+  add_nonneg (Hf_nonneg _ _ _ _) (shadowTerm_nonneg _ _ _ _ _ _)
+
+/-- Good pairs for the shadow route: `m` large, past run `k₀`, `v` away from copy boundaries. -/
+def PairGoodS (s e h' m k₀ W : ℕ) : Prop :=
+  3 ^ e * h' < 3 ^ (s * m) ∧ runStart k₀ ≤ s * m + e ∧ W ≤ s * m + e ∧
+    ¬ NearCopyBdry W 0 (s * m + e)
+
+theorem pairGoodS_of_pairGood {s t e h' m d k₀ W : ℕ} (h : PairGood s t e h' m d k₀ W 0) :
+    PairGoodS s e h' m k₀ W :=
+  ⟨h.1, h.2.1, h.2.2.1, h.2.2.2.2.1⟩
+
+open Classical in
+/-- **Every pair has an option bounded by the shadow majorant plus a bad-pair indicator.** -/
+theorem exists_option_le_pairMajS_bad {s t e h' m d ρ k₀ M W : ℕ} (ht : 2 ≤ t) (hh : 1 ≤ h')
+    (hd : 1 ≤ d) (hs : 1 ≤ s) (hρ1 : 1 ≤ ρ) (hb : 3 ^ s * t ≤ 3 ^ (s * (ρ - 1)))
+    (hρ : ρ * ρ ≤ 4 * (k₀ + 3)) (hMv : s * m + e + W ≤ M)
+    (hMT : Nat.log 3 (pairNat s t e h' m d) + 1 ≤ M)
+    (hME : (s * m + e + 2) * (s * m + e) ≤ M) :
+    ∃ o, repBound M o (pairNat s t e h' m d) ≤
+      pairMajS s t e h' m d W + (if PairGoodS s e h' m k₀ W then 0 else 1) := by
+  by_cases hg : PairGoodS s e h' m k₀ W
+  swap
+  · refine ⟨none, ?_⟩
+    rw [if_neg hg]
+    linarith [repBound_le_one M none (pairNat s t e h' m d), pairMajS_nonneg s t e h' m d W]
+  rw [if_pos hg, add_zero]
+  obtain ⟨g1, g2, g3, g4⟩ := hg
+  set B := 3 ^ s * t
+  set v := s * m + e
+  set u := s * (m + d) + e
+  set y := Nat.log 3 (3 ^ e * h' * B ^ m)
+  set T := Nat.log 3 (pairNat s t e h' m d)
+  have hsm : s * m ≤ s * (m + d) := Nat.mul_le_mul_left _ (by omega)
+  have hsm0 : 0 < s * m := by
+    rcases Nat.eq_zero_or_pos (s * m) with h0 | h0
+    · rw [h0, pow_zero] at g1; have : 1 ≤ 3 ^ e * h' := Nat.mul_pos (by positivity) hh; omega
+    · exact h0
+  have hBpos : 1 ≤ B := Nat.mul_pos (by positivity) (by omega)
+  have hyρ : y ≤ ρ * v := by
+    have := log_mul_pow_lt hρ1 hb g1 hsm0
+    have : ρ * (s * m) ≤ ρ * v := Nat.mul_le_mul_left _ (by omega)
+    omega
+  have hTρ : T ≤ ρ * u := by
+    have h1 : T ≤ Nat.log 3 (3 ^ e * h' * B ^ (m + d)) := Nat.log_mono_right
+      (Nat.mul_le_mul_left _ (Nat.sub_le _ _))
+    have hH' : 3 ^ e * h' < 3 ^ (s * (m + d)) :=
+      lt_of_lt_of_le g1 (Nat.pow_le_pow_right (by norm_num) hsm)
+    have h2 := log_mul_pow_lt (m := m + d) hρ1 hb hH' (by omega)
+    have : ρ * (s * (m + d)) ≤ ρ * u := Nat.mul_le_mul_left _ (by omega)
+    omega
+  rcases shadow_classify (K := 0) hρ1 hρ g2 hyρ hTρ g4 with c | ⟨k, hk, hk1, hk2, hc⟩
+  · refine ⟨none, (pair_class1 (by omega) c).trans ?_⟩
+    unfold pairMajS; linarith [shadowTerm_nonneg s t e h' m d]
+  · have hkv : k ≤ v := (lt_runStart k).le.trans hk1
+    have hME' : (k + 2) * runStart k ≤ M :=
+      le_trans (Nat.mul_le_mul (by omega) hk1) hME
+    obtain ⟨o, ho⟩ := exists_option_le_shadowPair hs (by omega) hh hd hk hk1 hk2 hME' hMT hc
+    refine ⟨o, ho.trans ?_⟩
+    unfold pairMajS shadowTerm
+    have hmem : k ∈ shadowRuns v :=
+      mem_filter.2 ⟨mem_range.2 (by omega), hk, hk1, hk2⟩
+    have := single_le_sum (f := fun k => shadowθ k +
+      (if SparseIdentity.CycSparse (runStart k) (shadowL k)
+          ((h' : ℤ) * (((3 ^ s * t : ℕ) : ℤ) ^ d - 1) * (t : ℤ) ^ m) then 1 else 0) +
+      (if SparseIdentity.CycSparse (runStart k) (shadowL k) ((h' : ℤ) * (t : ℤ) ^ m)
+        then (1 : ℝ) else 0)) (fun k _ => by
+          have := shadowθ_nonneg k
+          split_ifs <;> linarith) hmem
+    linarith [Hf_nonneg (fun _ => true) 0 W ((h' * ((3 ^ s * t) ^ d - 1) * t ^ m : ℕ) : ℝ)]
+
+
+theorem nearCopyBdry_mono {W K P : ℕ} (h : NearCopyBdry W 0 P) : NearCopyBdry W K P := by
+  obtain ⟨k, hk, h⟩ := h
+  exact ⟨k, hk, by omega⟩
+
+theorem pairGoodS_of_pairGood' {s t e h' m d k₀ W K : ℕ} (h : PairGood s t e h' m d k₀ W K) :
+    PairGoodS s e h' m k₀ W :=
+  ⟨h.1, h.2.1, h.2.2.1, fun hn => h.2.2.2.2.1 (nearCopyBdry_mono hn)⟩
+
+open Classical in
+/-- **Per-`N` bound for `h = 3ᵉh' > 0`, shadow route.**  As `exists_kappa_pos`, with `pairMajS`. -/
+theorem exists_kappa_posS {s t e h' ρ k₀ M W N : ℕ} (ht : 2 ≤ t) (hh : 1 ≤ h') (hs : 1 ≤ s)
+    (hρ1 : 1 ≤ ρ) (hb : 3 ^ s * t ≤ 3 ^ (s * (ρ - 1))) (hρ : ρ * ρ ≤ 4 * (k₀ + 3))
+    (hM : ∀ m < N, ∀ d < N, s * m + e + W ≤ M ∧ Nat.log 3 (pairNat s t e h' m d) + 1 ≤ M ∧
+      (s * m + e + 2) * (s * m + e) ≤ M) :
+    ∃ κ : ℕ → ℕ → Option ℕ, ∑ n ∈ range N, ∑ m ∈ range N,
+      repBound M (κ n m) (((3 ^ e * h' : ℕ) : ℝ) * (((3 ^ s * t : ℕ) : ℝ) ^ n -
+        ((3 ^ s * t : ℕ) : ℝ) ^ m)) ≤
+        N + 2 * (∑ m ∈ range N, ∑ d ∈ Ico 1 N, pairMajS s t e h' m d W +
+          ∑ m ∈ range N, ∑ d ∈ Ico 1 N,
+            ((if PairGoodS s e h' m k₀ W then 0 else 1 : ℕ) : ℝ)) := by
+  set G : ℕ → ℕ → ℝ := fun m d => if m < N ∧ d < N then pairMajS s t e h' m d W +
+    ((if PairGoodS s e h' m k₀ W then 0 else 1 : ℕ) : ℝ) else 1
+  have hG0 : ∀ m d, 0 ≤ G m d := fun m d => by
+    simp only [G]; split_ifs <;> push_cast <;> linarith [pairMajS_nonneg s t e h' m d W]
+  obtain ⟨κ, hκ⟩ := exists_kappa_half M ((3 ^ s * t : ℕ) : ℝ) ((3 ^ e * h' : ℕ) : ℝ) G hG0
+    (fun m d hd => by
+      by_cases hmd : m < N ∧ d < N
+      · obtain ⟨h1, h2, h3⟩ := hM m hmd.1 d hmd.2
+        obtain ⟨o, ho⟩ := exists_option_le_pairMajS_bad (k₀ := k₀) ht hh hd hs hρ1 hb hρ h1 h2 h3
+        refine ⟨o, ?_⟩
+        rw [← pairNat_cast e h' m d (by omega)]
+        simp only [G, if_pos hmd]
+        rw [Nat.cast_ite, Nat.cast_zero, Nat.cast_one]; exact ho
+      · exact ⟨none, by simp only [G, if_neg hmd]; exact repBound_le_one _ _ _⟩) N
+  refine ⟨κ, hκ.trans (le_of_eq ?_)⟩
+  rw [← sum_add_distrib]
+  congr 2
+  refine sum_congr rfl fun m hm => ?_
+  rw [← sum_add_distrib]
+  refine sum_congr rfl fun d hd => ?_
+  simp only [G, if_pos (⟨mem_range.1 hm, (mem_Ico.1 hd).2⟩ : m < N ∧ d < N)]
+
+open Classical in
+/-- The shadow cost of run `k` at size `N`: over `m < N_k = (k+2)a_k + 1` and `1 ≤ d < N`. -/
+noncomputable def runShadow (s t h' k N : ℕ) : ℝ :=
+  ∑ m ∈ range ((k + 2) * runStart k + 1), ∑ d ∈ Ico 1 N, (shadowθ k +
+    (if SparseIdentity.CycSparse (runStart k) (shadowL k)
+        ((h' : ℤ) * (((3 ^ s * t : ℕ) : ℤ) ^ d - 1) * (t : ℤ) ^ m) then 1 else 0) +
+    (if SparseIdentity.CycSparse (runStart k) (shadowL k) ((h' : ℤ) * (t : ℤ) ^ m)
+      then 1 else 0))
+
+theorem runShadow_nonneg (s t h' k N : ℕ) : 0 ≤ runShadow s t h' k N := by
+  unfold runShadow
+  refine sum_nonneg fun m _ => sum_nonneg fun d _ => ?_
+  have := shadowθ_nonneg k
+  split_ifs <;> linarith
+
+open Classical in
+/-- **Shadow sum by runs (proved).**  The shadow terms of the pairs `m < N`, `1 ≤ d < N` are
+bounded by the run costs `runShadow k N` over the runs `k` with `a_k ≤ s(2N) + e`. -/
+theorem sum_shadowTerm_le {s t e h' N : ℕ} (hs : 1 ≤ s) :
+    ∑ m ∈ range N, ∑ d ∈ Ico 1 N, shadowTerm s t e h' m d ≤
+      ∑ k ∈ (range (Nat.log 4 (s * (2 * N) + e) + 1)).filter
+        (fun k => runStart k ≤ s * (2 * N) + e), runShadow s t h' k N := by
+  set Ks := (range (Nat.log 4 (s * (2 * N) + e) + 1)).filter
+    (fun k => runStart k ≤ s * (2 * N) + e)
+  set f : ℕ → ℕ → ℕ → ℝ := fun k m d => shadowθ k +
+    (if SparseIdentity.CycSparse (runStart k) (shadowL k)
+        ((h' : ℤ) * (((3 ^ s * t : ℕ) : ℤ) ^ d - 1) * (t : ℤ) ^ m) then 1 else 0) +
+    (if SparseIdentity.CycSparse (runStart k) (shadowL k) ((h' : ℤ) * (t : ℤ) ^ m)
+      then 1 else 0)
+  have hf0 : ∀ k m d, 0 ≤ f k m d := fun k m d => by
+    have := shadowθ_nonneg k
+    simp only [f]; split_ifs <;> linarith
+  have h1 : ∑ m ∈ range N, ∑ d ∈ Ico 1 N, shadowTerm s t e h' m d =
+      ∑ m ∈ range N, ∑ k ∈ shadowRuns (s * m + e), ∑ d ∈ Ico 1 N, f k m d := by
+    refine sum_congr rfl fun m _ => ?_
+    unfold shadowTerm
+    exact sum_comm
+  have hmem : ∀ m k, m ∈ range N → k ∈ shadowRuns (s * m + e) → k ∈ Ks := by
+    intro m k hm hk
+    obtain ⟨-, -, hk1, -⟩ := mem_filter.1 hk
+    have hm := mem_range.1 hm
+    have hsm : s * m ≤ s * (2 * N) := Nat.mul_le_mul_left _ (by omega)
+    refine mem_filter.2 ⟨mem_range.2 (Nat.lt_succ_of_le (Nat.le_log_of_pow_le (by norm_num) ?_)),
+      by omega⟩
+    have := four_pow_le_runStart k
+    have : 4 ^ k ≤ 4 ^ (k + 1) := Nat.pow_le_pow_right (by norm_num) (by omega)
+    omega
+  have h2 : ∑ m ∈ range N, ∑ k ∈ shadowRuns (s * m + e), ∑ d ∈ Ico 1 N, f k m d =
+      ∑ k ∈ Ks, ∑ m ∈ (range N).filter (fun m => k ∈ shadowRuns (s * m + e)),
+        ∑ d ∈ Ico 1 N, f k m d := by
+    refine sum_comm' fun m k => ?_
+    constructor
+    · rintro ⟨hm, hk⟩; exact ⟨mem_filter.2 ⟨hm, hk⟩, hmem m k hm hk⟩
+    · rintro ⟨hm, -⟩; exact ⟨(mem_filter.1 hm).1, (mem_filter.1 hm).2⟩
+  rw [h1, h2]
+  refine sum_le_sum fun k _ => ?_
+  unfold runShadow
+  refine sum_le_sum_of_subset_of_nonneg (fun m hm => ?_)
+    (fun m _ _ => sum_nonneg fun d _ => hf0 k m d)
+  obtain ⟨-, hk⟩ := mem_filter.1 hm
+  obtain ⟨-, -, -, hk2⟩ := mem_filter.1 hk
+  have : m ≤ s * m := Nat.le_mul_of_pos_left _ (by omega)
+  exact mem_range.2 (by omega)
+
+
+/-- **Degenerate rows over any `d`-range (proved; as `card_degRows_le`).**  Shifts `1 ≤ d < D` with
+`3^{a_k} − 1 ∣ 2h'(bᵈ − 1)t^{N_k}` number at most `4bD/a_k + 1`. -/
+theorem card_degRows_gen {s t : ℕ} (hs : 1 ≤ s) (ht : 2 ≤ t) (h3 : ¬ 3 ∣ t) (h' : ℕ)
+    (hh : 1 ≤ h') : ∃ k₁ : ℕ, ∀ k, k₁ ≤ k → ∀ D : ℕ,
+      (((Ico 1 D).filter fun d =>
+        (3 : ℤ) ^ runStart k - 1 ∣ 2 * ((h' : ℤ) * (((3 ^ s * t : ℕ) : ℤ) ^ d - 1)) *
+          (t : ℤ) ^ ((k + 2) * runStart k + 1)).card : ℝ) ≤
+        4 * (3 ^ s * t : ℕ) * D / runStart k + 1 := by
+  set b := 3 ^ s * t with hbdef
+  have hb : 2 ≤ b := by
+    have : 3 ≤ 3 ^ s := Nat.le_self_pow (by omega) 3
+    nlinarith
+  set c0 := 2 * h' * (2 * 9 ^ t) ^ (t + 1)
+  obtain ⟨A0, hA0⟩ := poly_le_three_pow c0 (t + 1)
+  refine ⟨max A0 (4 * b), fun k hk D => ?_⟩
+  set A := runStart k
+  have hAk : k < A := lt_runStart k
+  have hAA0 : A0 ≤ A := by omega
+  have hA4 : 4 * b ≤ A := by omega
+  have hA1 : 1 ≤ A := by omega
+  set N := (k + 2) * A + 1
+  set q := 3 ^ A - 1
+  have hq0 : q ≠ 0 := by have : 3 ≤ 3 ^ A := Nat.le_self_pow (by omega) 3; omega
+  set Y := 2 * h' * t ^ N
+  set g := Nat.gcd q Y
+  have hg0 : 0 < g := Nat.gcd_pos_of_pos_left _ (Nat.pos_of_ne_zero hq0)
+  have hgle : g ≤ c0 * A ^ (t + 1) := by
+    have h1 : g ∣ Nat.gcd q (2 * h') * Nat.gcd q (t ^ N) := gcd_mul_dvd_mul_gcd q (2 * h') (t ^ N)
+    have h2 : Nat.gcd q (2 * h') ≤ 2 * h' := Nat.le_of_dvd (by omega) (Nat.gcd_dvd_right _ _)
+    have h3' := gcd_three_pow_sub_one_le (N := N) (by omega) h3 hA1
+    have := Nat.le_of_dvd (by
+      have : 0 < Nat.gcd q (t ^ N) := Nat.gcd_pos_of_pos_left _ (Nat.pos_of_ne_zero hq0)
+      have : 0 < Nat.gcd q (2 * h') := Nat.gcd_pos_of_pos_left _ (Nat.pos_of_ne_zero hq0)
+      positivity) h1
+    calc g ≤ Nat.gcd q (2 * h') * Nat.gcd q (t ^ N) := this
+      _ ≤ 2 * h' * (2 * A * 9 ^ t) ^ (t + 1) := Nat.mul_le_mul h2 h3'
+      _ = c0 * A ^ (t + 1) := by simp only [c0]; ring
+  set Q := q / g
+  have hQ : 3 ^ (A / 2) ≤ Q := by
+    rw [Nat.le_div_iff_mul_le hg0]
+    have h1 := hA0 A hAA0
+    have h2 : 3 ^ (A / 2) * 3 ^ (A / 2) ≤ 3 ^ A := by
+      rw [← pow_add]; exact Nat.pow_le_pow_right (by norm_num) (by omega)
+    have h3p : 1 ≤ 3 ^ (A / 2) := Nat.one_le_pow _ _ (by norm_num)
+    have : 3 ^ (A / 2) * g ≤ 3 ^ (A / 2) * (3 ^ (A / 2) - 1) :=
+      Nat.mul_le_mul_left _ (by omega)
+    rw [Nat.mul_sub, mul_one] at this
+    simp only [q]; omega
+  set m := A / (2 * b)
+  have hm2 : 2 ≤ m := (Nat.le_div_iff_mul_le (by omega)).2 (by linarith)
+  have hbm : b ^ m ≤ Q := by
+    calc b ^ m ≤ (3 ^ b) ^ m := Nat.pow_le_pow_left (Nat.lt_pow_self (by norm_num)).le _
+      _ = 3 ^ (b * m) := by rw [← pow_mul]
+      _ ≤ 3 ^ (A / 2) := Nat.pow_le_pow_right (by norm_num) (by
+          rw [Nat.le_div_iff_mul_le (by norm_num)]
+          have := Nat.div_mul_le_self A (2 * b)
+          simp only [m]; nlinarith)
+      _ ≤ Q := hQ
+  have hQ1 : 1 ≤ Q := le_trans (Nat.one_le_pow _ _ (by omega)) hbm
+  have hmlog : m ≤ Nat.log b Q := Nat.le_log_of_pow_le (by omega) hbm
+  set B := (Ico 1 D).filter fun d =>
+    (3 : ℤ) ^ A - 1 ∣ 2 * ((h' : ℤ) * ((b : ℤ) ^ d - 1)) * (t : ℤ) ^ N
+  have hBsub : B ⊆ range D := fun d hd =>
+    mem_range.2 (mem_Ico.1 (mem_filter.1 hd).1).2
+  have hdeg : ∀ d ∈ B, Q ∣ b ^ d - 1 := by
+    intro d hd
+    have h := (mem_filter.1 hd).2
+    have hbd : 1 ≤ b ^ d := Nat.one_le_pow _ _ (by omega)
+    have hcast : ((q : ℕ) : ℤ) ∣ ((Y * (b ^ d - 1) : ℕ) : ℤ) := by
+      have e1 : ((q : ℕ) : ℤ) = (3 : ℤ) ^ A - 1 := by
+        simp only [q]; rw [Nat.cast_sub (Nat.one_le_pow _ _ (by norm_num))]; push_cast; ring
+      have e2 : ((Y * (b ^ d - 1) : ℕ) : ℤ) = 2 * ((h' : ℤ) * ((b : ℤ) ^ d - 1)) * (t : ℤ) ^ N := by
+        simp only [Y]; rw [Nat.cast_mul, Nat.cast_sub hbd]; push_cast; ring
+      rw [e1, e2]; exact h
+    exact dvd_of_dvd_mul_gcd hq0 (Int.natCast_dvd_natCast.1 hcast)
+  have hcard := card_deg_le (by omega : 2 ≤ b) hQ1 (by omega) B hBsub hdeg
+  have hN : (D / Nat.log b Q : ℕ) ≤ D / m := Nat.div_le_div_left hmlog (by omega)
+  have hmA : (A : ℝ) ≤ 4 * b * m := by
+    have h1 : A < (m + 1) * (2 * b) := by
+      have := Nat.lt_div_mul_add (a := A) (b := 2 * b) (by omega); simp only [m]; nlinarith
+    have : A ≤ 4 * b * m := by nlinarith
+    exact_mod_cast this
+  have hc : (B.card : ℝ) ≤ ((D / m : ℕ) : ℝ) + 1 := by exact_mod_cast hcard.trans (by omega)
+  have hDm : ((D / m : ℕ) : ℝ) ≤ 4 * b * D / A := by
+    refine Nat.cast_div_le.trans ?_
+    have hm0 : (0 : ℝ) < m := by exact_mod_cast (show 0 < m by omega)
+    have hA0 : (0 : ℝ) < A := by exact_mod_cast hA1
+    rw [div_le_div_iff₀ hm0 hA0]
+    have : (0 : ℝ) ≤ D := Nat.cast_nonneg _
+    nlinarith
+  have hbb : ((3 ^ s * t : ℕ) : ℝ) = b := rfl
+  rw [hbb]
+  have : (B.card : ℝ) ≤ 4 * b * D / A + 1 := by linarith
+  convert this using 3
+
+
+open Classical in
+/-- **Per-run shadow cost (proved, from `RunSparseDecay t 12 32`).**  For large `k` and every `N`,
+`runShadow k N ≤ N·N_k·φ_k + N_k` with `Σ φ_k (k+3)⁴ < ∞`: the threshold `θ_k`, the sparse orbit
+counts (`RunSparseDecay`, rows `c = h'(bᵈ−1)` and the single orbit `c = h'`), and the degenerate
+rows (`card_degRows_gen`). -/
+theorem runShadow_le {s t : ℕ} (hs : 1 ≤ s) (ht : 2 ≤ t) (h3 : ¬ 3 ∣ t)
+    (hR : RunSparseDecay t 12 32) (h' : ℕ) (hh : 1 ≤ h') :
+    ∃ φ : ℕ → ℝ, (∀ k, 0 ≤ φ k) ∧ Summable (fun k => φ k * ((k : ℝ) + 3) ^ 4) ∧ ∃ k₁ : ℕ,
+      ∀ k, k₁ ≤ k → ∀ N : ℕ, runShadow s t h' k N ≤
+        N * (((k + 2) * runStart k + 1 : ℕ) : ℝ) * φ k + (((k + 2) * runStart k + 1 : ℕ) : ℝ) := by
+  obtain ⟨ψ, hψ0, hψs, k₁, hRb⟩ := hR
+  obtain ⟨k₂, hdeg⟩ := card_degRows_gen hs ht h3 h' hh
+  obtain ⟨A0, hA0⟩ := not_dvd_two_mul_pow (t := t) (by omega) h3 hh
+  set bR : ℝ := ((3 ^ s * t : ℕ) : ℝ)
+  have hbR : 0 ≤ bR := Nat.cast_nonneg _
+  have hA0' : ∀ k, (0 : ℝ) < runStart k := fun k => by
+    exact_mod_cast lt_of_lt_of_le (Nat.factorial_pos k) (factorial_le_runStart k)
+  let φ : ℕ → ℝ := fun k => shadowθ k + 2 * ψ k + 4 * bR / runStart k
+  have hφ0 : ∀ k, 0 ≤ φ k := fun k => by
+    have := shadowθ_nonneg k; have := hψ0 k; have := hA0' k
+    simp only [φ]; positivity
+  refine ⟨φ, hφ0, ?_, max k₁ (max k₂ A0), fun k hk N => ?_⟩
+  · -- summability
+    have hc0 : 0 ≤ Real.cos (Real.pi / 9) := cos_pi_nine_pos.le
+    have hc1 : Real.cos (Real.pi / 9) < 1 := by
+      rw [← Real.cos_zero]
+      exact Real.cos_lt_cos_of_nonneg_of_le_pi le_rfl (by linarith [Real.pi_pos]) (by positivity)
+    have s1 := (summable_sqrt_geom hc0 hc1).mul_left 2
+    have s2 := hψs.mul_left 2
+    have s3 := (summable_poly_exp_div_fact 4 (x := 1) zero_le_one).mul_left (4 * bR)
+    refine Summable.of_nonneg_of_le (fun k => mul_nonneg (hφ0 k) (by positivity)) (fun k => ?_)
+      ((s1.add s2).add s3)
+    simp only [φ, add_mul]
+    have hf : ((k.factorial : ℕ) : ℝ) ≤ runStart k := by exact_mod_cast factorial_le_runStart k
+    have hf0 : (0 : ℝ) < (k.factorial : ℕ) := by exact_mod_cast Nat.factorial_pos k
+    have e1 : shadowθ k * ((k : ℝ) + 3) ^ 4 =
+        2 * (Real.cos (Real.pi / 9) ^ (Nat.sqrt k + 1) * ((k : ℝ) + 3) ^ 4) := by
+      simp only [shadowθ, shadowK]; ring
+    have e2 : 2 * ψ k * ((k : ℝ) + 3) ^ 4 = 2 * (ψ k * ((k : ℝ) + 3) ^ 4) := by ring
+    have e3 : 4 * bR / runStart k * ((k : ℝ) + 3) ^ 4 ≤
+        4 * bR * (((k : ℝ) + 3) ^ 4 * 1 ^ k / (k.factorial : ℕ)) := by
+      rw [one_pow, mul_one, div_mul_eq_mul_div, mul_div_assoc]
+      refine mul_le_mul_of_nonneg_left ?_ (by positivity)
+      rw [div_le_div_iff₀ (hA0' k) hf0]
+      exact mul_le_mul_of_nonneg_left hf (by positivity)
+    linarith
+  -- the bound
+  set A := runStart k
+  set Nk := (k + 2) * A + 1
+  have hAk : k < A := lt_runStart k
+  have hA1 : 1 ≤ A := by omega
+  have hRk := hRb k (by omega)
+  have hL : shadowL k = 12 * (Nat.sqrt k + 1) + 32 := shadowL_eq k
+  set I1 : ℕ → ℕ → ℝ := fun m d => if SparseIdentity.CycSparse A (shadowL k)
+      ((h' : ℤ) * (((3 ^ s * t : ℕ) : ℤ) ^ d - 1) * (t : ℤ) ^ m) then 1 else 0
+  set I2 : ℕ → ℝ := fun m => if SparseIdentity.CycSparse A (shadowL k) ((h' : ℤ) * (t : ℤ) ^ m)
+      then 1 else 0
+  have hsplit : runShadow s t h' k N = ∑ m ∈ range Nk, ∑ d ∈ Ico 1 N, shadowθ k +
+      ∑ d ∈ Ico 1 N, ∑ m ∈ range Nk, I1 m d + ∑ m ∈ range Nk, ∑ d ∈ Ico 1 N, I2 m := by
+    unfold runShadow
+    simp only [sum_add_distrib]
+    rw [sum_comm (s := range Nk) (t := Ico 1 N) (f := fun m d => I1 m d)]
+  have hNd : ((Ico 1 N).card : ℝ) ≤ N := by
+    rw [Nat.card_Ico]; exact_mod_cast Nat.sub_le _ _
+  have hN0 : (0 : ℝ) ≤ N := Nat.cast_nonneg _
+  have hNk0 : (0 : ℝ) ≤ Nk := Nat.cast_nonneg _
+  -- θ part
+  have p1 : ∑ m ∈ range Nk, ∑ d ∈ Ico 1 N, shadowθ k ≤ N * Nk * shadowθ k := by
+    simp only [sum_const, card_range, nsmul_eq_mul]
+    have := shadowθ_nonneg k
+    calc (Nk : ℝ) * (((Ico 1 N).card : ℝ) * shadowθ k) ≤ Nk * (N * shadowθ k) := by gcongr
+      _ = _ := by ring
+  -- rows `c = h'(bᵈ−1)`
+  have hrow : ∀ d ∈ Ico 1 N, ∑ m ∈ range Nk, I1 m d ≤ Nk * ψ k +
+      (if (3 : ℤ) ^ A - 1 ∣ 2 * ((h' : ℤ) * (((3 ^ s * t : ℕ) : ℤ) ^ d - 1)) * (t : ℤ) ^ Nk
+        then (Nk : ℝ) else 0) := by
+    intro d _
+    have hcnt : ∑ m ∈ range Nk, I1 m d = (((range Nk).filter fun m => SparseIdentity.CycSparse A
+        (12 * (Nat.sqrt k + 1) + 32) ((h' : ℤ) * (((3 ^ s * t : ℕ) : ℤ) ^ d - 1) * (t : ℤ) ^ m)).card
+          : ℝ) := by
+      simp only [I1, hL]; rw [sum_boole]
+    rw [hcnt]
+    have hψk := hψ0 k
+    split_ifs with hdg
+    · have : (((range Nk).filter fun m => SparseIdentity.CycSparse A
+          (12 * (Nat.sqrt k + 1) + 32) ((h' : ℤ) * (((3 ^ s * t : ℕ) : ℤ) ^ d - 1) * (t : ℤ) ^ m)).card
+            : ℝ) ≤ Nk := by
+        exact_mod_cast (card_filter_le _ _).trans (card_range Nk).le
+      nlinarith
+    · have := hRk ((h' : ℤ) * (((3 ^ s * t : ℕ) : ℤ) ^ d - 1)) hdg
+      linarith
+  have p2 : ∑ d ∈ Ico 1 N, ∑ m ∈ range Nk, I1 m d ≤
+      N * Nk * ψ k + Nk * (4 * bR * N / A + 1) := by
+    refine (sum_le_sum hrow).trans ?_
+    rw [sum_add_distrib, sum_const, nsmul_eq_mul, ← sum_filter, sum_const, nsmul_eq_mul]
+    have hd := hdeg k (by omega) N
+    have h1 : ((Ico 1 N).card : ℝ) * (Nk * ψ k) ≤ N * Nk * ψ k := by
+      have := mul_le_mul_of_nonneg_right hNd (mul_nonneg hNk0 (hψ0 k))
+      linarith
+    have h2 : (((Ico 1 N).filter fun d => (3 : ℤ) ^ A - 1 ∣ 2 * ((h' : ℤ) *
+        (((3 ^ s * t : ℕ) : ℤ) ^ d - 1)) * (t : ℤ) ^ Nk).card : ℝ) * Nk ≤
+        Nk * (4 * bR * N / A + 1) := by
+      rw [mul_comm]; exact mul_le_mul_of_nonneg_left hd hNk0
+    linarith
+  -- the single orbit `c = h'`
+  have p3 : ∑ m ∈ range Nk, ∑ d ∈ Ico 1 N, I2 m ≤ N * Nk * ψ k := by
+    have hnd : ¬ ((3 : ℤ) ^ A - 1 ∣ 2 * (h' : ℤ) * (t : ℤ) ^ Nk) := hA0 A Nk (by omega) hA1
+    have h1 := hRk (h' : ℤ) hnd
+    have hcnt : ∑ m ∈ range Nk, I2 m = (((range Nk).filter fun m => SparseIdentity.CycSparse A
+        (12 * (Nat.sqrt k + 1) + 32) ((h' : ℤ) * (t : ℤ) ^ m)).card : ℝ) := by
+      simp only [I2, hL]; rw [sum_boole]
+    have e : ∑ m ∈ range Nk, ∑ d ∈ Ico 1 N, I2 m = ((Ico 1 N).card : ℝ) * ∑ m ∈ range Nk, I2 m := by
+      rw [mul_sum]; refine sum_congr rfl fun m _ => ?_
+      rw [sum_const, nsmul_eq_mul]
+    rw [e, hcnt]
+    have hc0 : (0 : ℝ) ≤ (((range Nk).filter fun m => SparseIdentity.CycSparse A
+        (12 * (Nat.sqrt k + 1) + 32) ((h' : ℤ) * (t : ℤ) ^ m)).card : ℝ) := Nat.cast_nonneg _
+    calc _ ≤ (N : ℝ) * (Nk * ψ k) := mul_le_mul hNd h1 hc0 hN0
+      _ = _ := by ring
+  rw [hsplit]
+  have hA0k := hA0' k
+  have e : (N : ℝ) * Nk * φ k + Nk = N * Nk * shadowθ k + 2 * (N * Nk * ψ k) +
+      Nk * (4 * bR * N / A + 1) := by
+    simp only [φ]; field_simp; ring
+  rw [e]
+  linarith
+
+
+open Classical in
+theorem runShadow_le_triv (s t h' k N : ℕ) :
+    runShadow s t h' k N ≤ 4 * N * (((k + 2) * runStart k + 1 : ℕ) : ℝ) := by
+  unfold runShadow
+  have hθ : shadowθ k ≤ 2 := by
+    have h1 : Real.cos (Real.pi / 9) ^ shadowK k ≤ 1 :=
+      pow_le_one₀ cos_pi_nine_pos.le (Real.cos_le_one _)
+    simp only [shadowθ]; linarith
+  have hterm : ∀ m d, (shadowθ k +
+      (if SparseIdentity.CycSparse (runStart k) (shadowL k)
+        ((h' : ℤ) * (((3 ^ s * t : ℕ) : ℤ) ^ d - 1) * (t : ℤ) ^ m) then (1 : ℝ) else 0) +
+      (if SparseIdentity.CycSparse (runStart k) (shadowL k) ((h' : ℤ) * (t : ℤ) ^ m)
+        then (1 : ℝ) else 0)) ≤ 4 := fun m d => by
+    split_ifs <;> linarith
+  calc _ ≤ ∑ _m ∈ range ((k + 2) * runStart k + 1), ∑ _d ∈ Ico 1 N, (4 : ℝ) :=
+        sum_le_sum fun m _ => sum_le_sum fun d _ => hterm m d
+    _ = (((k + 2) * runStart k + 1 : ℕ) : ℝ) * (((Ico 1 N).card : ℝ) * 4) := by
+        simp [sum_const, nsmul_eq_mul]
+    _ ≤ (((k + 2) * runStart k + 1 : ℕ) : ℝ) * ((N : ℝ) * 4) := by
+        gcongr; rw [Nat.card_Ico]; exact_mod_cast Nat.sub_le _ _
+    _ = _ := by ring
+
+/-- The per-run weights of the shadow sum swap: `N_k·9(log X+3)/X ≤ 72s(k+3)⁴` and
+`N_k·9(log X+3)/X² ≤ 288s²(k+3)⁴/a_k`, `X = a_k/(4s)`. -/
+theorem run_tail_weight1 {s : ℕ} (hs : 1 ≤ s) (k : ℕ) (hX : 1 ≤ (runStart k : ℝ) / (4 * s)) :
+    ((((k + 2) * runStart k + 1 : ℕ) : ℝ)) *
+        (9 * (Real.log ((runStart k : ℝ) / (4 * s)) + 3) / ((runStart k : ℝ) / (4 * s))) ≤
+      72 * s * ((k : ℝ) + 3) ^ 4 ∧
+    ((((k + 2) * runStart k + 1 : ℕ) : ℝ)) *
+        (9 * (Real.log ((runStart k : ℝ) / (4 * s)) + 3) / ((runStart k : ℝ) / (4 * s)) ^ 2) ≤
+      288 * (s : ℝ) ^ 2 * ((k : ℝ) + 3) ^ 4 / runStart k := by
+  set a : ℝ := (runStart k : ℝ) with had
+  have hs' : (1 : ℝ) ≤ s := by exact_mod_cast hs
+  have ha : 4 * (s : ℝ) ≤ a := by rwa [le_div_iff₀ (by positivity), one_mul] at hX
+  have ha0 : 0 < a := by linarith
+  have hN : ((((k + 2) * runStart k + 1 : ℕ) : ℝ)) ≤ ((k : ℝ) + 3) * a := by
+    push_cast; nlinarith
+  have hlog : Real.log (a / (4 * s)) + 3 ≤ 2 * ((k : ℝ) + 3) ^ 2 := by
+    have := log_runStart_le k
+    have : Real.log (a / (4 * s)) ≤ Real.log a :=
+      Real.log_le_log (by positivity) (div_le_self ha0.le (by linarith))
+    linarith
+  have hl0 : 0 ≤ Real.log (a / (4 * s)) := Real.log_nonneg hX
+  have hX0 : (0 : ℝ) < a / (4 * s) := by positivity
+  have hk1 : (1 : ℝ) ≤ (k : ℝ) + 3 := by have := (Nat.cast_nonneg k : (0 : ℝ) ≤ k); linarith
+  have key : ((((k + 2) * runStart k + 1 : ℕ) : ℝ)) *
+      (9 * (Real.log (a / (4 * s)) + 3) / (a / (4 * s))) ≤ 72 * s * ((k : ℝ) + 3) ^ 3 := by
+    rw [mul_div_assoc', div_le_iff₀ hX0]
+    have h1 : ((((k + 2) * runStart k + 1 : ℕ) : ℝ)) * (9 * (Real.log (a / (4 * s)) + 3)) ≤
+        ((k : ℝ) + 3) * a * (9 * (2 * ((k : ℝ) + 3) ^ 2)) :=
+      mul_le_mul hN (by linarith) (by positivity) (by positivity)
+    calc _ ≤ ((k : ℝ) + 3) * a * (9 * (2 * ((k : ℝ) + 3) ^ 2)) := h1
+      _ = 72 * s * ((k : ℝ) + 3) ^ 3 * (a / (4 * s)) := by field_simp; ring
+  have hk34 : ((k : ℝ) + 3) ^ 3 ≤ ((k : ℝ) + 3) ^ 4 :=
+    pow_le_pow_right₀ hk1 (by norm_num)
+  constructor
+  · calc _ ≤ 72 * s * ((k : ℝ) + 3) ^ 3 := key
+      _ ≤ _ := by gcongr
+  · have e : ((((k + 2) * runStart k + 1 : ℕ) : ℝ)) *
+        (9 * (Real.log (a / (4 * s)) + 3) / (a / (4 * s)) ^ 2) =
+        (((((k + 2) * runStart k + 1 : ℕ) : ℝ)) *
+          (9 * (Real.log (a / (4 * s)) + 3) / (a / (4 * s)))) / (a / (4 * s)) := by
+      field_simp
+    rw [e, div_le_iff₀ hX0]
+    calc _ ≤ 72 * s * ((k : ℝ) + 3) ^ 3 := key
+      _ ≤ 72 * s * ((k : ℝ) + 3) ^ 4 := by gcongr
+      _ = 288 * (s : ℝ) ^ 2 * ((k : ℝ) + 3) ^ 4 / a * (a / (4 * s)) := by field_simp; ring
+
+/-- **Shadow sums are summable along `sched` (the sum swap; proved).**  From per-run bounds
+`runShadow k N ≤ N·N_k·φ_k + N_k` (`k ≥ k₁`) with `Σ φ_k (k+3)⁴ < ∞`: for fixed `k` the `j` with
+`a_k ≤ 2s·sched j + e` have `sched j ≥ a_k/(4s)`, and `sched_tail1` / `sched_tail` bound their
+weights `1/sched j` and `1/sched j²`. -/
+theorem summable_shadow_sched {s t e h' : ℕ} (hs : 1 ≤ s) (φ : ℕ → ℝ) (hφ0 : ∀ k, 0 ≤ φ k)
+    (hφs : Summable (fun k => φ k * ((k : ℝ) + 3) ^ 4)) (k₁ : ℕ)
+    (hb : ∀ k, k₁ ≤ k → ∀ N : ℕ, runShadow s t h' k N ≤
+      N * (((k + 2) * runStart k + 1 : ℕ) : ℝ) * φ k + (((k + 2) * runStart k + 1 : ℕ) : ℝ)) :
+    Summable fun j => (∑ k ∈ (range (Nat.log 4 (s * (2 * sched j) + e) + 1)).filter
+        (fun k => runStart k ≤ s * (2 * sched j) + e), runShadow s t h' k (sched j)) /
+          ((sched j : ℝ) ^ 2) := by
+  set k₃ := max k₁ (2 * e + 4 * s)
+  set C₀ := ∑ k ∈ range k₃, 4 * (((k + 2) * runStart k + 1 : ℕ) : ℝ)
+  have hC₀ : 0 ≤ C₀ := sum_nonneg fun _ _ => by positivity
+  let F : ℕ → ℕ → ℝ := fun k j => if k₃ ≤ k ∧ runStart k ≤ s * (2 * sched j) + e then
+    (((k + 2) * runStart k + 1 : ℕ) : ℝ) * φ k / (sched j : ℝ) +
+      (((k + 2) * runStart k + 1 : ℕ) : ℝ) / (sched j : ℝ) ^ 2 else 0
+  have hF0 : ∀ k j, 0 ≤ F k j := fun k j => by
+    simp only [F]; split_ifs
+    · have := hφ0 k; positivity
+    · exact le_rfl
+  let G : ℕ → ℝ := fun j => ∑ k ∈ range (s * (2 * sched j) + e + 1), F k j
+  have hsch : ∀ j, (0 : ℝ) < sched j := fun j => by exact_mod_cast one_le_sched j
+  have hpt : ∀ j, (∑ k ∈ (range (Nat.log 4 (s * (2 * sched j) + e) + 1)).filter
+        (fun k => runStart k ≤ s * (2 * sched j) + e), runShadow s t h' k (sched j)) /
+          ((sched j : ℝ) ^ 2) ≤ C₀ * (sched j : ℝ) ^ (-(1 : ℝ)) + G j := by
+    intro j
+    set N := sched j
+    set Ks := (range (Nat.log 4 (s * (2 * N) + e) + 1)).filter
+        (fun k => runStart k ≤ s * (2 * N) + e)
+    have hsplit := sum_filter_add_sum_filter_not Ks (fun k => k < k₃)
+      (fun k => runShadow s t h' k N)
+    have h1 : ∑ k ∈ Ks.filter (fun k => k < k₃), runShadow s t h' k N ≤ N * C₀ := by
+      calc _ ≤ ∑ k ∈ Ks.filter (fun k => k < k₃), 4 * N * (((k + 2) * runStart k + 1 : ℕ) : ℝ) :=
+            sum_le_sum fun k _ => runShadow_le_triv s t h' k N
+        _ ≤ ∑ k ∈ range k₃, 4 * N * (((k + 2) * runStart k + 1 : ℕ) : ℝ) :=
+            sum_le_sum_of_subset_of_nonneg (fun k hk => mem_range.2 (mem_filter.1 hk).2)
+              fun _ _ _ => by positivity
+        _ = N * C₀ := by
+            simp only [C₀]; rw [mul_sum]; refine sum_congr rfl fun k _ => by ring
+    have h2 : ∑ k ∈ Ks.filter (fun k => ¬ k < k₃), runShadow s t h' k N ≤
+        ∑ k ∈ range (s * (2 * N) + e + 1), F k j * (N : ℝ) ^ 2 := by
+      have hsub : Ks.filter (fun k => ¬ k < k₃) ⊆ range (s * (2 * N) + e + 1) := by
+        intro k hk
+        have := (mem_filter.1 (mem_filter.1 hk).1).2
+        have := lt_runStart k
+        exact mem_range.2 (by omega)
+      refine (sum_le_sum fun k hk => ?_).trans
+        (sum_le_sum_of_subset_of_nonneg hsub fun k _ _ => mul_nonneg (hF0 k j) (by positivity))
+      have hk := mem_filter.1 hk
+      have hk2 := (mem_filter.1 hk.1).2
+      have hk3 : k₃ ≤ k := by omega
+      simp only [F]
+      rw [if_pos (show k₃ ≤ k ∧ runStart k ≤ s * (2 * sched j) + e from ⟨hk3, hk2⟩)]
+      have hN0 : (0 : ℝ) < (N : ℝ) := hsch j
+      refine (hb k (le_trans (le_max_left _ _) hk3) N).trans (le_of_eq ?_)
+      have hN : ((sched j : ℕ) : ℝ) = (N : ℝ) := rfl
+      rw [hN]
+      field_simp
+    rw [div_le_iff₀ (pow_pos (hsch j) 2), add_mul, ← hsplit]
+    have e1 : C₀ * (N : ℝ) ^ (-(1 : ℝ)) * (N : ℝ) ^ 2 = N * C₀ := by
+      have hN0 : (0 : ℝ) < N := hsch j
+      rw [Real.rpow_neg hN0.le, Real.rpow_one]; field_simp
+    have e2 : G j * (N : ℝ) ^ 2 = ∑ k ∈ range (s * (2 * N) + e + 1), F k j * (N : ℝ) ^ 2 := by
+      simp only [G]; rw [sum_mul]
+    rw [e1, e2]; linarith
+  refine Summable.of_nonneg_of_le (fun j => div_nonneg (sum_nonneg fun _ _ =>
+    runShadow_nonneg _ _ _ _ _) (by positivity)) hpt
+    (((CantorExactExponentProfile.summable_sched_rpow (by norm_num : (0 : ℝ) < 1)).mul_left C₀).add ?_)
+  -- the column weights
+  set w : ℕ → ℝ := fun k => 72 * s * (φ k * ((k : ℝ) + 3) ^ 4) +
+    288 * (s : ℝ) ^ 2 * (((k : ℝ) + 3) ^ 4 * 1 ^ k / (k.factorial : ℕ))
+  have hws : Summable w :=
+    (hφs.mul_left (72 * (s : ℝ))).add
+      ((summable_poly_exp_div_fact 4 (x := 1) zero_le_one).mul_left (288 * (s : ℝ) ^ 2))
+  have hw0 : ∀ k, 0 ≤ w k := fun k => by have := hφ0 k; simp only [w]; positivity
+  refine summable_of_sum_range_le (fun j => sum_nonneg fun k _ => hF0 k j)
+    (c := ∑' k, w k) fun n => ?_
+  set B := s * (2 * ∑ j ∈ range n, sched j) + e + 1
+  have hext : ∀ j ∈ range n, G j ≤ ∑ k ∈ range B, F k j := by
+    intro j hj
+    refine sum_le_sum_of_subset_of_nonneg (range_subset_range.2 ?_) fun k _ _ => hF0 k j
+    have := single_le_sum (fun i _ => Nat.zero_le (sched i)) hj
+    have : s * (2 * sched j) ≤ s * (2 * ∑ j ∈ range n, sched j) := by
+      apply Nat.mul_le_mul_left; omega
+    omega
+  refine (sum_le_sum hext).trans ?_
+  rw [sum_comm]
+  have hcol : ∀ k, ∑ j ∈ range n, F k j ≤ w k := by
+    intro k
+    by_cases hk : k₃ ≤ k
+    · set X : ℝ := (runStart k : ℝ) / (4 * s)
+      have hk' : 2 * e + 4 * s ≤ k := le_trans (le_max_right _ _) hk
+      have hak := lt_runStart k
+      have hs' : (0 : ℝ) < 4 * s := by positivity
+      have hX1 : 1 ≤ X := by
+        rw [le_div_iff₀ hs', one_mul]; exact_mod_cast (by omega : 4 * s ≤ runStart k)
+      set Nk : ℝ := (((k + 2) * runStart k + 1 : ℕ) : ℝ)
+      have hpt2 : ∀ j ∈ range n, F k j ≤ Nk * φ k *
+          (if X ≤ (sched j : ℝ) then 1 / (sched j : ℝ) else 0) +
+          Nk * (if X ≤ (sched j : ℝ) then 1 / (sched j : ℝ) ^ 2 else 0) := by
+        intro j _
+        simp only [F]
+        split_ifs with h1 h2
+        · rw [mul_one_div, mul_one_div]
+        · exfalso; apply h2
+          rw [div_le_iff₀ hs']
+          have h3 : runStart k ≤ 4 * s * sched j := by have := h1.2; nlinarith
+          calc (runStart k : ℝ) ≤ ((4 * s * sched j : ℕ) : ℝ) := by exact_mod_cast h3
+            _ = _ := by push_cast; ring
+        · have := hφ0 k; positivity
+        · simp
+      refine (sum_le_sum hpt2).trans ?_
+      rw [sum_add_distrib, ← mul_sum, ← mul_sum]
+      have ht1 := sched_tail1 X hX1 n
+      have ht2 := sched_tail X hX1 n
+      obtain ⟨hw1, hw2⟩ := run_tail_weight1 hs k hX1
+      have hφk := hφ0 k
+      have hNk0 : 0 ≤ Nk := by positivity
+      have hfact : ((k.factorial : ℕ) : ℝ) ≤ runStart k := by exact_mod_cast factorial_le_runStart k
+      have hf0 : (0 : ℝ) < (k.factorial : ℕ) := by exact_mod_cast Nat.factorial_pos k
+      have hA0 : (0 : ℝ) < runStart k := by linarith
+      have b1 : Nk * φ k * ∑ j ∈ range n, (if X ≤ (sched j : ℝ) then 1 / (sched j : ℝ) else 0) ≤
+          72 * s * (φ k * ((k : ℝ) + 3) ^ 4) := by
+        calc _ ≤ Nk * φ k * (9 * (Real.log X + 3) / X) :=
+              mul_le_mul_of_nonneg_left ht1 (mul_nonneg hNk0 hφk)
+          _ = φ k * (Nk * (9 * (Real.log X + 3) / X)) := by ring
+          _ ≤ φ k * (72 * s * ((k : ℝ) + 3) ^ 4) := mul_le_mul_of_nonneg_left hw1 hφk
+          _ = _ := by ring
+      have b2 : Nk * ∑ j ∈ range n, (if X ≤ (sched j : ℝ) then 1 / (sched j : ℝ) ^ 2 else 0) ≤
+          288 * (s : ℝ) ^ 2 * (((k : ℝ) + 3) ^ 4 * 1 ^ k / (k.factorial : ℕ)) := by
+        calc _ ≤ Nk * (9 * (Real.log X + 3) / X ^ 2) := mul_le_mul_of_nonneg_left ht2 hNk0
+          _ ≤ 288 * (s : ℝ) ^ 2 * ((k : ℝ) + 3) ^ 4 / runStart k := hw2
+          _ ≤ _ := by
+              rw [one_pow, mul_one, mul_div_assoc]
+              refine mul_le_mul_of_nonneg_left ?_ (by positivity)
+              exact div_le_div_of_nonneg_left (by positivity) hf0 hfact
+      simp only [w]; linarith
+    · have : ∀ j ∈ range n, F k j = 0 := fun j _ => by
+        simp only [F]; rw [if_neg (fun h => hk h.1)]
+      rw [sum_eq_zero this]
+      exact hw0 k
+  refine (sum_le_sum fun k _ => hcol k).trans ?_
+  exact hws.sum_le_tsum _ fun k _ => hw0 k
+
+
+open Classical in
+/-- **Per-`N` bound, shadow route (proved; no Baker input).**  For `h = 3ᵉh' > 0` every `N ≥ 1` has
+options with pair sum `≤ C N^{2−δ} + 2 Σ_k runShadow k N` over the runs `a_k ≤ s(2N) + e`:
+class 1 (fresh low window, `sum_class_low_le`), bad pairs (`sum_bad_le`), and the shadow terms
+(`sum_shadowTerm_le`). -/
+theorem repPairPos_shadow {s t : ℕ} (hs : 1 ≤ s) (ht : 2 ≤ t) (h3t : ¬ 3 ∣ t)
+    (e h' : ℕ) (hh : 1 ≤ h') (hnd : ¬ 3 ∣ h') :
+    ∃ C δ : ℝ, 0 < δ ∧ ∀ N : ℕ, 1 ≤ N → ∃ (M : ℕ) (κ : ℕ → ℕ → Option ℕ),
+      ∑ n ∈ range N, ∑ m ∈ range N,
+        repBound M (κ n m) (((3 ^ e * h' : ℕ) : ℝ) * (((3 ^ s * t : ℕ) : ℝ) ^ n -
+          ((3 ^ s * t : ℕ) : ℝ) ^ m)) ≤ C * (N : ℝ) ^ (2 - δ) +
+          2 * ∑ k ∈ (range (Nat.log 4 (s * (2 * N) + e) + 1)).filter
+            (fun k => runStart k ≤ s * (2 * N) + e), runShadow s t h' k N := by
+  obtain ⟨q, hqdef⟩ : ∃ q : ℕ, q = 2 := ⟨2, rfl⟩
+  have hq : 1 ≤ q := by omega
+  have hq0 : (0 : ℝ) < q := by rw [hqdef]; norm_num
+  obtain ⟨Cd, hCd⟩ := badTerm_le hq (3 ^ e * h' + runStart ((t + 2) * (t + 3))) (2 * (s + t))
+    (3 ^ e * h' + e)
+  have hlg : Real.logb 3 (2 / 3) < 0 := Real.logb_neg (by norm_num) (by norm_num) (by norm_num)
+  set η : ℝ := -(Real.logb 3 (2 / 3)) / q
+  have hη : 0 < η := div_pos (by linarith) hq0
+  set δ : ℝ := min η (1 / 2)
+  have hδ0 : 0 < δ := lt_min hη (by norm_num)
+  have hδη : δ ≤ η := min_le_left _ _
+  have hδ2 : δ ≤ 1 / 2 := min_le_right _ _
+  set cc : ℝ := (3 / 2 : ℝ) ^ CantorLiouvilleAll.tb t
+  have hcc : 0 ≤ cc := by positivity
+  refine ⟨1 + 2 * (cc * (9 / 2 + 4) + |Cd|), δ, hδ0, fun N hN => ?_⟩
+  have hN1 : (1 : ℝ) ≤ N := by exact_mod_cast hN
+  have mono : ∀ a : ℝ, a ≤ 2 - δ → (N : ℝ) ^ a ≤ (N : ℝ) ^ (2 - δ) :=
+    fun a ha => Real.rpow_le_rpow_of_exponent_le hN1 ha
+  set j := Nat.log 3 N / q
+  obtain ⟨W, hWd⟩ : ∃ W, W = j + 1 := ⟨_, rfl⟩
+  obtain ⟨X, hXd⟩ : ∃ X, X = 3 ^ e * h' + 2 * (s + t) * N + e := ⟨_, rfl⟩
+  obtain ⟨M, hMd⟩ : ∃ M, M = (X + 2) * X + X + W + 1 := ⟨_, rfl⟩
+  set ρ := t + 2
+  set k₀ := (t + 2) * (t + 3)
+  have hB2 : 1 ≤ 3 ^ s * t := Nat.mul_pos (by positivity) (by omega)
+  have hpos : ∀ m d, m < N → d ≤ N → 3 ^ e * h' * (3 ^ s * t) ^ (m + d) ≤
+      3 ^ e * h' * (3 ^ s * t) ^ (2 * N) := fun m d hm hd =>
+    Nat.mul_le_mul_left _ (Nat.pow_le_pow_right hB2 (by omega))
+  have hpairle : ∀ m d, pairNat s t e h' m d ≤ 3 ^ e * h' * (3 ^ s * t) ^ (m + d) := fun m d =>
+    Nat.mul_le_mul_left _ (Nat.sub_le _ _)
+  have hX : ∀ m < N, ∀ d ≤ N, s * m + e ≤ X ∧ Nat.log 3 (3 ^ e * h' * (3 ^ s * t) ^ m) ≤ X ∧
+      s * (m + d) + e ≤ X ∧ Nat.log 3 (pairNat s t e h' m d) ≤ X := by
+    intro m hm d hd
+    have hsm : s * (m + d) ≤ 2 * (s + t) * N := by nlinarith
+    have : s * m ≤ s * (m + d) := Nat.mul_le_mul_left _ (by omega)
+    rw [hXd]
+    exact ⟨by omega, log_le_posBound (by omega) ((Nat.mul_le_mul_left _
+      (Nat.pow_le_pow_right hB2 (by omega))).trans (hpos m 0 hm (Nat.zero_le _))), by omega,
+      log_le_posBound (by omega) ((hpairle m d).trans (hpos m d hm hd))⟩
+  have hρ1 : 1 ≤ ρ := by omega
+  have hb : 3 ^ s * t ≤ 3 ^ (s * (ρ - 1)) := by
+    have : ρ - 1 = 1 + t := by omega
+    rw [this, mul_add, mul_one, pow_add, pow_mul]
+    refine Nat.mul_le_mul_left _ ((Nat.lt_pow_self (by norm_num : 1 < 3)).le.trans ?_)
+    exact Nat.pow_le_pow_left (Nat.le_self_pow (by omega) 3) t
+  have hρ : ρ * ρ ≤ 4 * (k₀ + 3) := by simp only [ρ, k₀]; nlinarith
+  have hMX : X + W + 1 ≤ M := by
+    rw [hMd]; have : 0 ≤ (X + 2) * X := Nat.zero_le _; omega
+  have hMX2 : (X + 2) * X ≤ M := by rw [hMd]; omega
+  have hM : ∀ m < N, ∀ d < N, s * m + e + W ≤ M ∧ Nat.log 3 (pairNat s t e h' m d) + 1 ≤ M ∧
+      (s * m + e + 2) * (s * m + e) ≤ M := by
+    intro m hm d hd
+    obtain ⟨h1, -, -, h4⟩ := hX m hm d hd.le
+    have h5 : (s * m + e + 2) * (s * m + e) ≤ (X + 2) * X := Nat.mul_le_mul (by omega) h1
+    exact ⟨by omega, by omega, h5.trans hMX2⟩
+  obtain ⟨κ, hκ⟩ := exists_kappa_posS (k₀ := k₀) (W := W) ht hh hs hρ1 hb hρ hM
+  refine ⟨M, κ, hκ.trans ?_⟩
+  -- class 1
+  have c1 : ∑ m ∈ range N, ∑ d ∈ Ico 1 N,
+      Hf (fun _ => true) 0 W ((h' * ((3 ^ s * t) ^ d - 1) * t ^ m : ℕ) : ℝ) ≤
+      N * ((N + 2 * 3 ^ j) * cc * (2 / 3 : ℝ) ^ j) := by
+    rw [hWd, sum_comm]; exact sum_class_low_le hs ht h3t h' hnd j N
+  -- shadow
+  have c2 := sum_shadowTerm_le (t := t) (e := e) (h' := h') (N := N) hs
+  have hmaj : ∑ m ∈ range N, ∑ d ∈ Ico 1 N, pairMajS s t e h' m d W =
+      ∑ m ∈ range N, ∑ d ∈ Ico 1 N,
+        Hf (fun _ => true) 0 W ((h' * ((3 ^ s * t) ^ d - 1) * t ^ m : ℕ) : ℝ) +
+      ∑ m ∈ range N, ∑ d ∈ Ico 1 N, shadowTerm s t e h' m d := by
+    unfold pairMajS; simp only [sum_add_distrib]
+  -- bad pairs
+  have hbad := sum_bad_le (k₀ := k₀) (W := W) (K := W)
+    (m₀ := 3 ^ e * h' + runStart k₀ + W) hs ht hh (fun m hm => by
+      have hm' : m ≤ s * m := Nat.le_mul_of_pos_left _ (by omega)
+      refine ⟨?_, by omega, by omega, by omega⟩
+      calc 3 ^ e * h' ≤ m := by omega
+        _ < 3 ^ m := Nat.lt_pow_self (by norm_num)
+        _ ≤ 3 ^ (s * m) := Nat.pow_le_pow_right (by norm_num) (Nat.le_mul_of_pos_left _ (by omega))) hX
+  have hbadS : ∑ m ∈ range N, ∑ d ∈ Ico 1 N,
+      ((if PairGoodS s e h' m k₀ W then 0 else 1 : ℕ) : ℝ) ≤
+      ((N * ((3 ^ e * h' + runStart k₀ + W) +
+        4 * (2 * (W + 2 * W + 1) * (Nat.log 4 (X + W + W) + 1))) : ℕ) : ℝ) := by
+    have hle : ∀ m d, ((if PairGoodS s e h' m k₀ W then 0 else 1 : ℕ) : ℝ) ≤
+        ((if PairGood s t e h' m d k₀ W W then 0 else 1 : ℕ) : ℝ) := by
+      intro m d
+      by_cases hg : PairGood s t e h' m d k₀ W W
+      · rw [if_pos (pairGoodS_of_pairGood' hg), if_pos hg]
+      · rw [if_neg hg]; split_ifs <;> norm_num
+    refine (sum_le_sum fun m _ => sum_le_sum fun d _ => hle m d).trans ?_
+    exact_mod_cast hbad
+  have hcl := classTerms_le hq hN hcc
+  have e1 : 3 ^ e * h' + 2 * (s + t) * N + e = 2 * (s + t) * N + (3 ^ e * h' + e) := by ring
+  rw [hXd, e1] at hbadS
+  have hbd : ((N * ((3 ^ e * h' + runStart k₀ + W) +
+        4 * (2 * (W + 2 * W + 1) * (Nat.log 4 (2 * (s + t) * N + (3 ^ e * h' + e) + W + W) + 1)))
+          : ℕ) : ℝ) ≤ Cd * (N : ℝ) ^ ((3 : ℝ) / 2) := by
+    rw [hWd]; exact hCd N hN
+  -- exponents
+  have x1 := mono (2 + Real.logb 3 (2 / 3) / q) (by
+    have : Real.logb 3 (2 / 3) / q = -η := by simp only [η]; ring
+    rw [this]; linarith)
+  have x2 := mono (1 + (q : ℝ)⁻¹) (by rw [hqdef]; norm_num; linarith)
+  have x6 := mono (3 / 2) (by linarith)
+  have x7 := mono 1 (by linarith)
+  rw [Real.rpow_one] at x7
+  have hP : 0 ≤ (N : ℝ) ^ (2 - δ) := by positivity
+  have hpart : 0 ≤ (N : ℝ) * ((2 * N + 2 * 3 ^ j) * cc * (2 / 3 : ℝ) ^ j) := by positivity
+  have y1 : cc * (9 / 2 * (N : ℝ) ^ (2 + Real.logb 3 (2 / 3) / q) + 4 * (N : ℝ) ^ (1 + (q : ℝ)⁻¹)) ≤
+      cc * (9 / 2 + 4) * (N : ℝ) ^ (2 - δ) := by
+    rw [mul_assoc]; apply mul_le_mul_of_nonneg_left _ hcc; linarith
+  have y4 : Cd * (N : ℝ) ^ ((3 : ℝ) / 2) ≤ |Cd| * (N : ℝ) ^ (2 - δ) :=
+    (mul_le_mul_of_nonneg_right (le_abs_self Cd) (by positivity)).trans
+      (mul_le_mul_of_nonneg_left x6 (abs_nonneg _))
+  rw [hmaj]
+  have hcl' : (N : ℝ) * ((N + 2 * 3 ^ j) * cc * (2 / 3 : ℝ) ^ j) ≤
+      cc * (9 / 2 * (N : ℝ) ^ (2 + Real.logb 3 (2 / 3) / q) + 4 * (N : ℝ) ^ (1 + (q : ℝ)⁻¹)) := by
+    linarith
+  have hb2 := hbadS.trans (hbd.trans y4)
+  have hc2 := c1.trans (hcl'.trans y1)
+  linarith
+
+
+end Shadow
+
+/-- **The shadow zone needs no Baker input (PROVED 2026-10-09, `section Shadow`).**  `RepPairArith (3ˢt)` from
 `SparseIdentityBound t` alone: classes 2 and 4 of `pairMaj` (a window end in the fresh stretch
 after an even run, the other end deep inside it), the only users of
 `Literature.BakerLogDiscrepancy`, are bounded by the copy-zone orbit count instead.
@@ -6214,11 +7270,56 @@ English proof (review lap 10).  Take a pair with `ξ = 3^v Z`, `v = sm + e`, `Z 
    in `runOrbitDecay_of_sparse`); degenerate rows by `card_degRows_le`.  So these pairs cost
    `≤ N²θ + N·O(k K L_K N_k / A)`, the `ψ_k` shape of `copyRun_psi`, summable along `sched` by
    `summable_copy_sched`.
-Risk (why 80%): the carry normalization in step 3 with repeated exponents, and the bookkeeping of
-the separated sub-case. -/
+As formalized (2026-10-09) the classification is simpler than the plan: with `v` in even run `k`,
+either the top `T` of `ξ` is below `a_{k+2}` (shadow I, `Z = h'(bᵈ−1)tᵐ`, fresh window `[E, T]`)
+or the pair is separated with the high part above `E` and `y` (shadow II, `Z = h'tᵐ`, `−ξ`); this
+covers the old classes 2–6 at once (`shadow_classify`, `exists_option_le_shadowPair`), so neither
+Baker nor the copy-run sums are used.  Per-pair: `shadow_sparse` (copy and free options both
+`≥ θ_k` ⇒ `Z` cyclically sparse); per run: `runShadow_le` (`RunSparseDecay t 12 32`,
+`card_degRows_gen`); along `sched`: `summable_shadow_sched` (`sched_tail1`); per `N`:
+`repPairPos_shadow`. -/
 theorem repPairArith_of_sparse {s t : ℕ} (hs : 1 ≤ s) (ht : 2 ≤ t) (h3t : ¬ 3 ∣ t)
     (hS : SparseIdentity.SparseIdentityBound t) : RepPairArith (3 ^ s * t) := by
-  sorry
+  intro h hh
+  obtain ⟨e, h', hnd, he⟩ := Nat.exists_eq_pow_mul_and_not_dvd (Int.natAbs_ne_zero.2 hh) 3
+    (by norm_num)
+  have h1 : 1 ≤ h' := Nat.pos_of_ne_zero (by rintro rfl; simp at hnd)
+  have hR := runSparseDecay_of_sparse ht 12 32 hS
+  obtain ⟨φ, hφ0, hφs, k₁, hφ⟩ := runShadow_le hs ht h3t hR h' h1
+  have hSum := summable_shadow_sched (e := e) hs φ hφ0 hφs k₁ hφ
+  obtain ⟨C, δ, hδ, hC⟩ := repPairPos_shadow hs ht h3t e h' h1 hnd
+  choose M κ hMκ using fun j => hC (sched j) (one_le_sched j)
+  refine ⟨M, κ, ?_⟩
+  have habs : ((3 ^ e * h' : ℕ) : ℝ) = |(h : ℝ)| := by
+    rw [← he, Nat.cast_natAbs, Int.cast_abs]
+  have hsign : ∀ (Mj : ℕ) (κj : ℕ → ℕ → Option ℕ) (N : ℕ),
+      ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N,
+        repBound Mj (κj n m) ((h : ℝ) * (((3 ^ s * t : ℕ) : ℝ) ^ n - ((3 ^ s * t : ℕ) : ℝ) ^ m)) =
+      ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N,
+        repBound Mj (κj n m) (((3 ^ e * h' : ℕ) : ℝ) * (((3 ^ s * t : ℕ) : ℝ) ^ n -
+          ((3 ^ s * t : ℕ) : ℝ) ^ m)) := by
+    intro Mj κj N
+    refine Finset.sum_congr rfl fun n _ => Finset.sum_congr rfl fun m _ => ?_
+    rw [habs]
+    rcases abs_choice (h : ℝ) with ha | ha <;> rw [ha]
+    rw [show -(h : ℝ) * (((3 ^ s * t : ℕ) : ℝ) ^ n - ((3 ^ s * t : ℕ) : ℝ) ^ m) =
+      -((h : ℝ) * (((3 ^ s * t : ℕ) : ℝ) ^ n - ((3 ^ s * t : ℕ) : ℝ) ^ m)) by ring, repBound_neg]
+  refine (((CantorExactExponentProfile.summable_sched_rpow hδ).mul_left C).add
+    (hSum.mul_left 2)).of_nonneg_of_le
+    (fun j => div_nonneg (Finset.sum_nonneg fun _ _ => Finset.sum_nonneg fun _ _ => ?_)
+      (by positivity)) (fun j => ?_)
+  · rcases κ j _ _ with _ | k <;> simp only [repBound]
+    · exact Bf_nonneg _ _ _
+    · split_ifs
+      · exact Finset.prod_nonneg fun _ _ => abs_nonneg _
+      · exact zero_le_one
+  · have hN : (0 : ℝ) < sched j := by exact_mod_cast one_le_sched j
+    rw [hsign, div_le_iff₀ (by positivity)]
+    refine (hMκ j).trans (le_of_eq ?_)
+    rw [add_mul, mul_assoc, mul_div_assoc', div_mul_cancel₀ _ (by positivity),
+      ← Real.rpow_natCast (sched j : ℝ) 2, ← Real.rpow_add hN]
+    norm_num; left; ring_nf
+
 
 /-- **The crux from the 3-adic two-logarithm bound alone (proved from `repPairArith_of_sparse`).**
 One cited input: `SparseIdentity.Literature.PadicTwoLogs`. -/
@@ -6234,11 +7335,11 @@ theorem repPairArith_of_padic (hP : SparseIdentity.Literature.PadicTwoLogs) {b :
   exact repPairArith_of_sparse hs (by omega) hnd
     (SparseIdentity.sparseIdentityBound_of_padic hP (by omega) hnd)
 
-/-- **The crux, arithmetic form (proved modulo `repPairArith_of_sparse`).**  The 3-adic
-two-logarithm bound is a theorem (`PadicTwoLogs.padicTwoLogs`, from the assembly
-`padicTwoLogs_of_zeroLemma` and the elementary zero lemma `PadicTwoLogs.laurentZeroLemma`, review
-lap 13, 2026-10-09), so `repPairArith_of_padic` applies with no cited input.  The one open leaf
-under this theorem is the Baker-free shadow dichotomy `repPairArith_of_sparse`.
+/-- **The crux, arithmetic form (PROVED 2026-10-09).**  The 3-adic two-logarithm bound is a
+theorem (`PadicTwoLogs.padicTwoLogs`, from the assembly `padicTwoLogs_of_zeroLemma` and the
+elementary zero lemma `PadicTwoLogs.laurentZeroLemma`), so `repPairArith_of_padic` applies with no
+cited input; its one route leaf, the Baker-free shadow dichotomy `repPairArith_of_sparse`, is
+proved.
 
 History: the earlier conditional forms are `repPairArith_of_literature` (Baker–Wüstholz with
 Erdős–Turán and Matveev, both cited) and `repPairArith_of_baker_padic` (Baker, cited). -/
@@ -6246,13 +7347,14 @@ theorem repPairArith_of_three_dvd {b : ℕ} (hb : 2 ≤ b) (h3 : 3 ∣ b) (hpow 
     RepPairArith b :=
   repPairArith_of_padic PadicTwoLogs.padicTwoLogs hb h3 hpow
 
-/-- **Pair-sum decay at `b = 3ˢt`, `t > 1` (open leaf; the crux in pair form).**  See
+/-- **Pair-sum decay at `b = 3ˢt`, `t > 1` (proved; the crux in pair form).**  See
 `RepPairDecay` and the zone route in the docstring of `ae_isNormal_rep_of_three_dvd`. -/
 theorem repPairDecay_of_three_dvd {b : ℕ} (hb : 2 ≤ b) (h3 : 3 ∣ b) (hpow : ∀ s : ℕ, b ≠ 3 ^ s) :
     RepPairDecay b :=
   repPairDecay_of_arith (repPairArith_of_three_dvd hb h3 hpow)
 
-/-- **Crux: a.e. normality to `b = 3ˢt`, `t > 1`.**  Open; confidence 50%.
+/-- **Crux: a.e. normality to `b = 3ˢt`, `t > 1` (PROVED 2026-10-09; the route below is the
+historical plan, superseded by the sparse-pair route: `repPairArith_of_three_dvd`).**
 
 What is proved around it: bases prime to 3 (`ae_isNormal_rep_of_coprime_three`, the free coins
 alone), powers of 3 fail (`not_isNormal_rep_three_pow`), and the known-false sibling `b = 9` is
@@ -6334,8 +7436,10 @@ theorem repPairArith_of_three_dvd_of_inputs (hI : RepInputs) {b : ℕ} (hb : 2 �
   obtain ⟨hT, hS⟩ := hI.2 s t hs (by omega) hnd
   exact repPairArith_of_inputs hs (by omega) hnd hI.1 hT hS
 
-/-- **The cut is not forced (Liouville case).**  Wiring (proved) from `ae_repProfile`, whose only
-open input is the crux `ae_isNormal_rep_of_three_dvd`. -/
+/-- **The cut is not forced (Liouville case) — PROVED 2026-10-09.**  Wiring from `ae_repProfile`;
+the crux `ae_isNormal_rep_of_three_dvd` rests on `repPairArith_of_three_dvd`, i.e. on the proved
+3-adic two-logarithm bound (`PadicTwoLogs.padicTwoLogs`, via the elementary zero lemma) and the
+proved Baker-free shadow dichotomy `repPairArith_of_sparse`.  No cited input. -/
 theorem liouvilleCantorFullProfile : LiouvilleCantorFullProfile := by
   obtain ⟨ω, hω⟩ := ae_repProfile.exists
   have h2 : IsNormal 2 (repReal ω) := (hω 2 le_rfl).2 fun s hs => by
@@ -6392,7 +7496,7 @@ theorem liouvilleCantorFullProfile_of_baker_padic
 /-- **Conditional headline from Baker's discrepancy alone (proved).**  The Matveev and
 Bugeaud–Laurent inputs are discharged: `PadicTwoLogs.padicTwoLogs` is a theorem.  The one cited
 input left on this route is `CantorExactExponentProfile.Literature.BakerLogDiscrepancy`, used only by
-the shadow zone; `repPairArith_of_sparse` would remove it. -/
+the shadow zone; `repPairArith_of_sparse` (proved) removes it, see `liouvilleCantorFullProfile`. -/
 theorem liouvilleCantorFullProfile_of_baker
     (hB : CantorExactExponentProfile.Literature.BakerLogDiscrepancy) :
     LiouvilleCantorFullProfile :=
@@ -6405,8 +7509,8 @@ theorem liouvilleCantorFullProfile_of_baker_zeroLemma
     (hZ : PadicTwoLogs.Literature.LaurentZeroLemma) : LiouvilleCantorFullProfile :=
   liouvilleCantorFullProfile_of_baker_padic hB (PadicTwoLogs.padicTwoLogs_of_zeroLemma hZ)
 
-/-- **Conditional headline from one cited input (wired; open only through
-`repPairArith_of_sparse`).**  The 3-adic two-logarithm bound gives a Liouville number in `K`
+/-- **Conditional headline from one cited input (proved; the input is itself proved,
+`PadicTwoLogs.padicTwoLogs`).**  The 3-adic two-logarithm bound gives a Liouville number in `K`
 normal exactly to the bases that are not powers of 3. -/
 theorem liouvilleCantorFullProfile_of_padic (hP : SparseIdentity.Literature.PadicTwoLogs) :
     LiouvilleCantorFullProfile := by
