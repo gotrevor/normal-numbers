@@ -11,6 +11,9 @@ import Mathlib.Tactic.Ring
 import Mathlib.Algebra.BigOperators.Fin
 import Mathlib.Data.Nat.Choose.Sum
 import Mathlib.Algebra.Ring.GeomSum
+import Mathlib.Data.ZMod.Basic
+import Mathlib.LinearAlgebra.Matrix.AbsoluteValue
+import Mathlib.Tactic.LinearCombination
 
 /-!
 # The 3-adic linear form in two logarithms: interpolation-determinant ingredients (P3)
@@ -271,6 +274,88 @@ theorem dvd_det_interp {R : Type*} [CommRing R] (p t w : R) {g : ℕ} (hg : 1 �
   have := sum_weight_ge_shift hg T K (fun a => (((f a).1 : ℕ), ((f a).2 : ℕ)))
     (fun a b h => hf (by simp only [Prod.mk.injEq] at h; exact Prod.ext (Fin.ext h.1) (Fin.ext h.2)))
   simpa using this
+
+/-- **(b), homogenised integer form (proved).**  With `V = a tᵟ`, `3 ∤ V`, `3 ∣ t − 1`,
+`3ᵍ ∣ b − V`, the integer determinant `det[z^k t^{lz} b^{ls} V^{(L−1−l)s}]` (the rows of the
+interpolation determinant for `w = b/V` scaled by `V^{(L−1)s}`) is divisible by
+`3^{T(KL − (T+K)(T/g+1))}`.  Proof: in `ZMod 3^m` the scaling is a unit and `dvd_det_interp`
+applies with `p^m = 0`. -/
+theorem three_pow_dvd_det_hom (t a b : ℤ) (δ : ℕ) {g : ℕ} (hg : 1 ≤ g) (ht : 3 ∣ t - 1)
+    (hV : ¬ (3 : ℤ) ∣ a * t ^ δ) (hab : (3 : ℤ) ^ g ∣ b - a * t ^ δ) (K L : ℕ)
+    (z s : Fin K × Fin L → ℕ) (T : ℕ) :
+    (3 : ℤ) ^ (T * (K * L - (T + K) * (T / g + 1))) ∣
+      (Matrix.of fun (x l : Fin K × Fin L) => (z x : ℤ) ^ (l.1 : ℕ) * t ^ ((l.2 : ℕ) * z x) *
+        b ^ ((l.2 : ℕ) * s x) * (a * t ^ δ) ^ ((L - 1 - l.2) * s x)).det := by
+  set m := T * (K * L - (T + K) * (T / g + 1))
+  have h3 : ((3 ^ m : ℕ) : ℤ) = 3 ^ m := by push_cast; rfl
+  rw [← h3, ← ZMod.intCast_zmod_eq_zero_iff_dvd]
+  set R := ZMod (3 ^ m)
+  rw [show ((det _ : ℤ) : R) = (Int.castRingHom R) (det _) from rfl, RingHom.map_det]
+  set V := a * t ^ δ
+  have hcop : V.natAbs.Coprime (3 ^ m) := Nat.Coprime.pow_right m
+    ((Nat.Prime.coprime_iff_not_dvd Nat.prime_three).2 (by
+      intro h; exact hV (Int.natCast_dvd.2 h))).symm
+  have hu : IsUnit (V : R) := by
+    have := (ZMod.isUnit_iff_coprime _ _).2 hcop
+    rcases Int.natAbs_eq V with h | h <;> rw [h]
+    · rw [Int.cast_natCast]; exact this
+    · rw [Int.cast_neg, Int.cast_natCast]; exact this.neg
+  set u := hu.unit
+  set w : R := (b : R) * ↑u⁻¹
+  have hVu : (V : R) * ↑u⁻¹ = 1 := by simp [u]
+  have hmat : (Int.castRingHom R).mapMatrix (Matrix.of fun (x l : Fin K × Fin L) =>
+      (z x : ℤ) ^ (l.1 : ℕ) * t ^ ((l.2 : ℕ) * z x) * b ^ ((l.2 : ℕ) * s x) *
+        V ^ ((L - 1 - l.2) * s x)) = Matrix.of fun x l => (V : R) ^ ((L - 1) * s x) *
+      ((z x : R) ^ (l.1 : ℕ) * (t : R) ^ ((l.2 : ℕ) * z x) * w ^ ((l.2 : ℕ) * s x)) := by
+    ext x l
+    rw [RingHom.mapMatrix_apply, Matrix.map_apply, of_apply, of_apply]
+    have hl : (L - 1) * s x = (L - 1 - l.2) * s x + (l.2 : ℕ) * s x := by
+      rw [← add_mul]; congr 1; have := l.2.isLt; omega
+    have : (V : R) ^ ((l.2 : ℕ) * s x) * (↑u⁻¹ : R) ^ ((l.2 : ℕ) * s x) = 1 := by
+      rw [← mul_pow, hVu, one_pow]
+    simp only [map_mul, map_pow, eq_intCast, Int.cast_natCast]
+    rw [hl, pow_add]
+    simp only [w, mul_pow]
+    linear_combination (-1 : R) * (↑(z x) ^ (l.1 : ℕ) * (t : R) ^ ((l.2 : ℕ) * z x) * (b : R) ^ ((l.2 : ℕ) * s x) *
+      (V : R) ^ ((L - 1 - l.2) * s x)) * this
+  have hcol := det_mul_column (fun x : Fin K × Fin L => (V : R) ^ ((L - 1) * s x))
+    (Matrix.of fun (x l : Fin K × Fin L) =>
+      (z x : R) ^ (l.1 : ℕ) * (t : R) ^ ((l.2 : ℕ) * z x) * w ^ ((l.2 : ℕ) * s x))
+  simp only [of_apply] at hcol
+  rw [hmat, hcol]
+  have ht' : (3 : R) ∣ (t : R) - 1 := by
+    simpa using (Int.castRingHom R).map_dvd ht
+  have hw' : (3 : R) ^ g ∣ w - 1 := by
+    obtain ⟨c, hc⟩ := hab
+    have h : (3 : R) ^ g ∣ (b : R) - (V : R) := ⟨c, by
+      have := congrArg (Int.castRingHom R) hc
+      simp only [map_mul, map_pow, map_sub, eq_intCast, map_ofNat] at this; exact this⟩
+    have : w - 1 = ((b : R) - (V : R)) * ↑u⁻¹ := by
+      simp only [w]; rw [sub_mul, hVu]
+    rw [this]; exact h.mul_right _
+  obtain ⟨c, hc⟩ := dvd_det_interp (3 : R) (t : R) w hg ht' hw' K L z s T
+  have h0 : (3 : R) ^ m = 0 := by
+    rw [show (3 : R) ^ m = ((3 ^ m : ℕ) : R) by push_cast; rfl, ZMod.natCast_self]
+  rw [hc, h0, zero_mul, mul_zero]
+
+/-- **(b) Liouville (proved).**  If the homogenised determinant is nonzero and its entries are
+bounded by `X`, then `3^{T(KL − (T+K)(T/g+1))} ≤ (KL)! X^{KL}`.  With (c) supplying `Δ ≠ 0` this
+is the two-sided squeeze; (d) chooses `K, L, T` and the points. -/
+theorem three_pow_le_of_det_ne_zero (t a b : ℤ) (δ : ℕ) {g : ℕ} (hg : 1 ≤ g) (ht : 3 ∣ t - 1)
+    (hV : ¬ (3 : ℤ) ∣ a * t ^ δ) (hab : (3 : ℤ) ^ g ∣ b - a * t ^ δ) (K L : ℕ)
+    (z s : Fin K × Fin L → ℕ) (T : ℕ) (X : ℤ)
+    (hX : ∀ x l : Fin K × Fin L, |(z x : ℤ) ^ (l.1 : ℕ) * t ^ ((l.2 : ℕ) * z x) *
+        b ^ ((l.2 : ℕ) * s x) * (a * t ^ δ) ^ ((L - 1 - l.2) * s x)| ≤ X)
+    (hΔ : (Matrix.of fun (x l : Fin K × Fin L) => (z x : ℤ) ^ (l.1 : ℕ) * t ^ ((l.2 : ℕ) * z x) *
+        b ^ ((l.2 : ℕ) * s x) * (a * t ^ δ) ^ ((L - 1 - l.2) * s x)).det ≠ 0) :
+    (3 : ℤ) ^ (T * (K * L - (T + K) * (T / g + 1))) ≤ (K * L).factorial * X ^ (K * L) := by
+  have h := three_pow_dvd_det_hom t a b δ hg ht hV hab K L z s T
+  refine (Int.le_of_dvd (abs_pos.2 hΔ) ((dvd_abs _ _).2 h)).trans ?_
+  have := Matrix.det_le (A := Matrix.of fun (x l : Fin K × Fin L) => (z x : ℤ) ^ (l.1 : ℕ) *
+      t ^ ((l.2 : ℕ) * z x) * b ^ ((l.2 : ℕ) * s x) * (a * t ^ δ) ^ ((L - 1 - l.2) * s x))
+    (abv := AbsoluteValue.abs) (fun x l => by simpa using hX x l)
+  rw [Fintype.card_prod, Fintype.card_fin, Fintype.card_fin, nsmul_eq_mul] at this
+  exact this
 
 namespace Literature
 

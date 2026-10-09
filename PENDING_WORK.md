@@ -10,7 +10,12 @@
   comm ring: `p^{T(KL − (T+K)(T/g+1))} ∣ Δ`.  Finite Mahler expansion, no p-adic analysis:
   `pow_mul_choose_expand` (`zᵏC(z,j) ∈ span_ℤ{C(z,i) : i ≤ k+j}`), `one_add_pow_eq_sum`,
   `sum_weight_ge_shift`.  So (a) is DONE.
-* NEXT: (b) Liouville upper bound for `Δ` with `z = r+δs`, `t`, `w = b/(a tᵟ)` (clear denominators:
+* Same lap, PROVED (b): `three_pow_dvd_det_hom` (homogenised integer determinant
+  `det[zᵏ t^{lz} b^{ls} V^{(L−1−l)s}]`, `V = a tᵟ`, divisible by `3^{T(KL−(T+K)(T/g+1))}`; via
+  `ZMod 3^m`, where `p^m = 0`) and `three_pow_le_of_det_ne_zero` (nonzero ⇒ `3^m ≤ (KL)! X^{KL}`).
+* NEXT: (c) zero lemma ⇒ Δ ≠ 0 for points `z = r + δs` (need the transcription check), (d) parameters
+  and the assembly `padicTwoLogs`; reduction to `3 ∣ t − 1` (replace t by t², δ by ⌈δ/2⌉ carefully),
+  3 ∣ a·b case split.  OLD: (b) Liouville upper bound for `Δ` with `z = r+δs`, `t`, `w = b/(a tᵟ)` (clear denominators:
   `(a tᵟ)^{L·S}·Δ ∈ ℤ`, `|Δ| ≤ (KL)!·max|entry|^{KL}`, so `v₃ ≤ log|·|/log 3` if nonzero); (c) zero
   lemma ⇒ `Δ ≠ 0` for a suitable point set; (d) parameters.  OLD NOTE: (a') the Mahler expansion itself — write the interpolation matrix entries
   `binom(r b₂+s b₁, k)·α₁^{lr}α₂^{ls}` as `P·Q` with `P` monomial in `x = α₁−1`, `y = α₂/α₁^δ − 1`
