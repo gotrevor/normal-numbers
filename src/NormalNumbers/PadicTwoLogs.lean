@@ -22,6 +22,7 @@ import Mathlib.LinearAlgebra.Matrix.DotProduct
 import Mathlib.NumberTheory.Padics.PadicVal.Basic
 import Mathlib.NumberTheory.Multiplicity
 import Mathlib.Algebra.Order.Field.Power
+import Mathlib.RingTheory.Int.Basic
 
 /-!
 # The 3-adic linear form in two logarithms: interpolation-determinant ingredients (P3)
@@ -1107,6 +1108,111 @@ theorem small_relation (t : ℕ) (ht : 2 ≤ t) (a b : ℤ) (ha : a ≠ 0) (hb :
     field_simp at this
     linarith [this]
   rw [← this, ← zpow_natCast]; push_cast; rfl
+
+
+
+theorem three_coprime_pow {g : ℕ} {x : ℤ} (hx : ¬ (3 : ℤ) ∣ x) (k : ℕ) : IsCoprime ((3 : ℤ) ^ g) (x ^ k) :=
+  ((Int.prime_three.coprime_iff_not_dvd.2 hx).pow_left).pow_right
+
+theorem finish_lte (t n g B : ℕ) (ht : 2 ≤ t) (ht1 : (3 : ℤ) ∣ (t : ℤ) - 1) (hn : 1 ≤ n)
+    (hnB : n ≤ B) (h : (3 : ℤ) ^ g ∣ (t : ℤ) ^ n - 1) : g ≤ Nat.log 3 t + Nat.log 3 B := by
+  have h1 : 1 ≤ t ^ n := Nat.one_le_pow _ _ (by omega)
+  have hN : 3 ^ g ∣ t ^ n - 1 := by
+    have : ((t ^ n - 1 : ℕ) : ℤ) = (t : ℤ) ^ n - 1 := by push_cast [Nat.cast_sub h1]; ring
+    rw [← this] at h; exact_mod_cast h
+  have ht1' : 3 ∣ t - 1 := by
+    have : ((t - 1 : ℕ) : ℤ) = (t : ℤ) - 1 := by push_cast [Nat.cast_sub (by omega : 1 ≤ t)]; ring
+    rw [← this] at ht1; exact_mod_cast ht1
+  exact (le_of_three_pow_dvd_pow_sub_one t n g ht ht1' hn hN).trans
+    (Nat.add_le_add_left (Nat.log_mono_right hnB) _)
+
+/-- **The 3-adic bound, dependent case (proved, no zero lemma).**  If `(b/a)^{2e} = t^{2f}`
+(`small_relation`), `3 ∣ t − 1`, `3 ∤ a`, `tᵟa ≠ b`, `3ᵍ ∣ tᵟa − b`, then
+`g ≤ log₃ t + log₃(2eδ + 2|f|)`: `tᵟa − b ∣ (tᵟa)^{2e} − b^{2e} = a^{2e} t^{−2Q}(t^{2eδ+2Q} − t^{2P})`,
+then LTE; equal exponents force `tᵟa = −b`, so `g = 0`. -/
+theorem g_le_dep (t : ℕ) (ht : 2 ≤ t) (ht1 : (3 : ℤ) ∣ (t : ℤ) - 1) (a b : ℤ) (ha0 : a ≠ 0)
+    (ha3 : ¬ (3 : ℤ) ∣ a) (δ g e : ℕ) (f : ℤ) (he : 1 ≤ e)
+    (hrel : ((b : ℚ) / a) ^ (2 * e) = (t : ℚ) ^ (2 * f))
+    (hne : (t : ℤ) ^ δ * a ≠ b) (hab : (3 : ℤ) ^ g ∣ (t : ℤ) ^ δ * a - b) :
+    g ≤ Nat.log 3 t + Nat.log 3 (2 * e * δ + 2 * f.natAbs) := by
+  have ht3 : ¬ (3 : ℤ) ∣ (t : ℤ) := by
+    intro h; have := Int.dvd_sub h ht1; norm_num at this
+  set c := 2 * e
+  set P := f.toNat
+  set Q := (-f).toNat
+  have hfPQ : f = P - Q := by omega
+  have hPQ : f.natAbs = P + Q := by omega
+  -- integer relation  b^c t^(2Q) = a^c t^(2P)
+  have hint : b ^ c * (t : ℤ) ^ (2 * Q) = a ^ c * (t : ℤ) ^ (2 * P) := by
+    have ha' : (a : ℚ) ≠ 0 := by exact_mod_cast ha0
+    have ht' : (t : ℚ) ≠ 0 := by exact_mod_cast (by omega : t ≠ 0)
+    have h := hrel
+    rw [hfPQ, mul_sub, zpow_sub₀ ht', div_pow] at h
+    simp only [← Int.cast_natCast (R := ℚ)] at h
+    have : ((b ^ c * (t : ℤ) ^ (2 * Q) : ℤ) : ℚ) = ((a ^ c * (t : ℤ) ^ (2 * P) : ℤ) : ℚ) := by
+      push_cast
+      rw [show (2 : ℤ) * (P : ℤ) = ((2 * P : ℕ) : ℤ) by push_cast; ring,
+        show (2 : ℤ) * (Q : ℤ) = ((2 * Q : ℕ) : ℤ) by push_cast; ring, zpow_natCast, zpow_natCast] at h
+      field_simp at h
+      linear_combination h
+    exact_mod_cast this
+  have hdvd1 : (3 : ℤ) ^ g ∣ a ^ c * ((t : ℤ) ^ (c * δ + 2 * Q) - (t : ℤ) ^ (2 * P)) := by
+    have h1 : (3 : ℤ) ^ g ∣ ((t : ℤ) ^ δ * a) ^ c - b ^ c := hab.trans (sub_dvd_pow_sub_pow _ _ _)
+    have : a ^ c * ((t : ℤ) ^ (c * δ + 2 * Q) - (t : ℤ) ^ (2 * P)) =
+        (t : ℤ) ^ (2 * Q) * (((t : ℤ) ^ δ * a) ^ c - b ^ c) := by
+      rw [mul_sub, mul_sub, mul_pow, ← pow_mul, pow_add, mul_comm δ c]
+      linear_combination hint
+    rw [this]; exact h1.mul_left _
+  have hdvd2 : (3 : ℤ) ^ g ∣ (t : ℤ) ^ (c * δ + 2 * Q) - (t : ℤ) ^ (2 * P) :=
+    (three_coprime_pow ha3 c).dvd_of_dvd_mul_left hdvd1
+  rcases Nat.lt_trichotomy (c * δ + 2 * Q) (2 * P) with hlt | heq | hgt
+  · obtain ⟨n, hn⟩ : ∃ n, 2 * P = c * δ + 2 * Q + n := ⟨_, (Nat.add_sub_cancel' hlt.le).symm⟩
+    have h3 : (3 : ℤ) ^ g ∣ (t : ℤ) ^ n - 1 := by
+      rw [hn, pow_add (t : ℤ) (c * δ + 2 * Q) n] at hdvd2
+      have : (t : ℤ) ^ (c * δ + 2 * Q) - (t : ℤ) ^ (c * δ + 2 * Q) * (t : ℤ) ^ n =
+          -((t : ℤ) ^ (c * δ + 2 * Q) * ((t : ℤ) ^ n - 1)) := by ring
+      rw [this, dvd_neg] at hdvd2
+      exact (three_coprime_pow ht3 _).dvd_of_dvd_mul_left hdvd2
+    exact finish_lte t n g _ ht ht1 (by
+      rcases Nat.eq_zero_or_pos n with h0 | h0
+      · omega
+      · exact h0) (by omega) h3
+  · -- equal exponents: (tᵟa)^c = b^c, so tᵟa = −b and g = 0
+    have hzero : ((t : ℤ) ^ δ * a) ^ c = b ^ c := by
+      have : a ^ c * ((t : ℤ) ^ (c * δ + 2 * Q) - (t : ℤ) ^ (2 * P)) =
+          (t : ℤ) ^ (2 * Q) * (((t : ℤ) ^ δ * a) ^ c - b ^ c) := by
+        rw [mul_sub, mul_sub, mul_pow, ← pow_mul, pow_add, mul_comm δ c]
+        linear_combination hint
+      rw [heq, sub_self, mul_zero] at this
+      have ht0 : (t : ℤ) ^ (2 * Q) ≠ 0 := pow_ne_zero _ (by exact_mod_cast (by omega : t ≠ 0))
+      exact sub_eq_zero.1 ((mul_eq_zero.1 this.symm).resolve_left ht0)
+    have habs : |(t : ℤ) ^ δ * a| = |b| := by
+      have hc : c ≠ 0 := by omega
+      have := congrArg abs hzero
+      rw [abs_pow, abs_pow] at this
+      exact (pow_left_inj₀ (abs_nonneg _) (abs_nonneg _) hc).1 this
+    have hneg : b = -((t : ℤ) ^ δ * a) := by
+      rcases abs_eq_abs.1 habs with h | h
+      · exact absurd h hne
+      · linarith
+    rw [hneg, sub_neg_eq_add, ← two_mul] at hab
+    rcases Nat.eq_zero_or_pos g with h0 | h0
+    · omega
+    · exfalso
+      have h3 : (3 : ℤ) ∣ 2 * ((t : ℤ) ^ δ * a) := (dvd_pow_self 3 (by omega)).trans hab
+      rcases (Int.prime_three.dvd_or_dvd h3) with h | h
+      · norm_num at h
+      · rcases (Int.prime_three.dvd_or_dvd h) with h' | h'
+        · exact ht3 (Int.prime_three.dvd_of_dvd_pow h')
+        · exact ha3 h'
+  · obtain ⟨n, hn⟩ : ∃ n, c * δ + 2 * Q = 2 * P + n := ⟨_, (Nat.add_sub_cancel' hgt.le).symm⟩
+    have h3 : (3 : ℤ) ^ g ∣ (t : ℤ) ^ n - 1 := by
+      rw [hn, pow_add (t : ℤ) (2 * P) n] at hdvd2
+      have : (t : ℤ) ^ (2 * P) * (t : ℤ) ^ n - (t : ℤ) ^ (2 * P) =
+          (t : ℤ) ^ (2 * P) * ((t : ℤ) ^ n - 1) := by ring
+      rw [this] at hdvd2
+      exact (three_coprime_pow ht3 _).dvd_of_dvd_mul_left hdvd2
+    exact finish_lte t n g _ ht ht1 (by omega) (by omega) h3
 
 end ZeroWiring
 
