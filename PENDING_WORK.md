@@ -1,3 +1,16 @@
+## Repetition review lap 13 (2026-10-09) — ZERO LEMMA PROVED; P3 DONE; P1 is the last leaf
+* `PadicTwoLogs.laurentZeroLemma : Literature.LaurentZeroLemma` (new `ZeroLemma.lean`, trust base).
+  Proof: `S = supp q`; rows `σ₁..σ_m ∈ Σ₁` with `det[y_σˡ]_{l∈S} ≠ 0` (kernel of `[y_σˡ]` trivial by
+  root count, then `exists_det_submatrix_ne_zero`); `D(X) = det[taylor_{x_σᵢ}(q_l)·y_σᵢˡ]` vanishes on
+  the `> (K−1)L` x-values of `Σ₂` (kills `(y_γˡ)`), degree `≤ (K−1)L` ⇒ `D = 0`; but
+  `coeff_det_of_col` gives top coefficient `∏ lc(q_l)·det[y_σᵢˡ] ≠ 0`.  Independence unused.
+* `PadicTwoLogs.padicTwoLogs` (unconditional); `repPairArith_of_three_dvd := repPairArith_of_padic
+  padicTwoLogs` (CantorRepetition now imports PadicTwoLogsAssembly; the zeroLemma corollary moved
+  into CantorRepetition); `liouvilleCantorFullProfile_of_baker` (Baker only, trust base).
+* Headline `#print axioms`: trust base + sorryAx, the sorry being `repPairArith_of_sparse` only.
+* NEXT (DIRECTION, binding): P1 per-pair dichotomy first (decisive probe), then classification,
+  totals, assembly.  Fallback: `BakerLogDiscrepancy` by an archimedean interpolation determinant.
+
 ## Repetition lap 12 (2026-10-09) — P3 assembly PROVED; P1 per-pair leaves PROVED
 * `PadicTwoLogsAssembly.padicTwoLogs_of_zeroLemma`: `LaurentZeroLemma → Literature.PadicTwoLogs`.
 * P1 leaves: `CycMerge.cycSparse_of_sum/exists_bal_finsum/cycSparse_add` (carry/merge),

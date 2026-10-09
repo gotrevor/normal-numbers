@@ -570,7 +570,8 @@ theorem exists_det_submatrix_ne_zero {G n : Type*} [Fintype G] [DecidableEq G] [
 
 namespace Literature
 
-/-- **Laurent's zero lemma for two logarithms (cited; transcription from memory, corrected once).**
+/-- **Laurent's zero lemma for two logarithms (PROVED: `PadicTwoLogs.laurentZeroLemma`, `ZeroLemma.lean`,
+2026-10-09; first stated as a cited input, transcription from memory, corrected once).**
 M. Laurent, Acta Arith. 66 (1994); Laurent–Mignotte–Nesterenko, J. Number Theory 55 (1995),
 Lemme 1, specialised to rationals: `α₁, α₂ ∈ ℚ` nonzero, multiplicatively independent, `b₁, b₂ ∈ ℤ`.
 If `Card{α₁^r α₂^s : r < R₁, s < S₁} ≥ L` and `Card{r b₂ + s b₁ : r < R₂, s < S₂} > (K−1)L`, then a

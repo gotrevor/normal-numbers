@@ -1,43 +1,52 @@
 # STATUS — normal-numbers 📊
 
-## Cantor repetition update, 8 October 2026 (branch `proof/cantor-repetition`, review lap 10)
+## Cantor repetition update, 9 October 2026 (branch `proof/cantor-repetition`, review lap 13)
 
-**Is the profile cut forced?** · **Build**: 🟢 green (10798 jobs, full default build) · lap 10
+**Is the profile cut forced?** · **Build**: 🟢 green (10802 jobs, full default build) · lap 13
 
 **Where it stands.**  `CantorRepetition.liouvilleCantorFullProfile` (a Liouville point of `K`
-normal to exactly the bases that are not powers of 3) is proved conditionally on cited Diophantine
-inputs, three ways, all with trust-base `#print axioms`: Baker + Matveev
-(`_of_literature`), Baker + the 3-adic two-log bound (`_of_baker_padic`), and — through one open
-route leaf — the 3-adic two-log bound alone (`_of_padic`).  The unconditional headline needs that
-input proved; review lap 10 set the campaign to formalize it (DIRECTION.md, P3).
+normal to exactly the bases that are not powers of 3) now rests on ONE open leaf,
+`repPairArith_of_sparse` (the Baker-free shadow dichotomy, 80%).  The 3-adic two-logarithm bound
+is a theorem (`PadicTwoLogs.padicTwoLogs`), because Laurent's zero lemma has a short elementary
+proof (`PadicTwoLogs.laurentZeroLemma`, `ZeroLemma.lean`).  Without P1 the headline is proved
+conditionally on Baker's discrepancy alone (`liouvilleCantorFullProfile_of_baker`, trust base).
 
 **What's happened.**
+- 2026-10-09 review lap 13: `laurentZeroLemma` PROVED (the determinant `det[q_l(X + x_σ)y_σˡ]`
+  over the support vanishes at `> (K−1)L` points, but its top coefficient is
+  `∏ lc(q_l) · det[y_σˡ] ≠ 0`; multiplicative independence is not even used).  So
+  `padicTwoLogs` is unconditional, `repPairArith_of_three_dvd := repPairArith_of_padic padicTwoLogs`,
+  and P3 is DONE.  New conditional headline `liouvilleCantorFullProfile_of_baker`.
+- 2026-10-09 laps 11–12: P3 (a)–(e) proved (interpolation determinant valuation, Liouville bound,
+  squeeze, LTE dependent case, assembly `padicTwoLogs_of_zeroLemma`); P1 per-pair leaves
+  (`CycMerge`, `cycSparse_of_copy_free`, `runSparseDecay_of_sparse`, `sched_tail1`).
 - 2026-10-08 review lap 10: the 3-adic chain `SparseIdentity.sparseIdentityBound_of_padic` (PROVED)
-  replaces Matveev (three archimedean logs) by the 3-adic two-log bound
-  (`Literature.PadicTwoLogs`, Bugeaud–Laurent 1996).  Baker-free shadow dichotomy stated
-  (`repPairArith_of_sparse`, 80%).  Analysis: the chain needs a gap bound LINEAR in the height;
-  a two-variable Mahler/Cauchy–Binet interpolation determinant gives it.
+  replaces Matveev (three archimedean logs) by the 3-adic two-log bound.  Baker-free shadow
+  dichotomy stated (`repPairArith_of_sparse`, 80%).
 - 2026-10-08 laps 8–9: every sparse-pair leaf proved (`sparseIdentityBound_of_matveev`,
   `runOrbitDecay_of_sparse`, `copyRun_psi`, `repPairArith_of_runDecay`, …).
 - 2026-10-07 review lap 7: route change to sparse pairs (`cyclic_pair_identity`).
 - 2026-10-07 laps 1–6: construction, copy-zone toolkit, assembly, probes (`b = 6, 12` at the
   `1/N` floor; control `b = 9` flat).
 
-**Outstanding.**  Short: P3 core (`PadicTwoLogs.lean`: Cauchy–Binet valuation bound, zero lemma),
-P1 leaves (`repPairArith_of_sparse`).  Long: the rest of P3 (Liouville bound, parameters, LTE
-case).  To completion: `repPairArith_of_three_dvd := repPairArith_of_padic padicTwoLogs`.
+**Outstanding.**  Short: P1 assembly (PENDING_WORK, 4 steps: refined pair classification with the
+run `k`; per-pair min-option bound; `N·N_k`-shaped totals via `sched_tail1`; `repPairPos_shadow`).
+Long: none on this route once P1 lands.  To completion: `repPairArith_of_sparse` proved ⇒ scope file
+`CantorRepetition.lean` sorry-free and the headline at trust base.  Fallback if P1 fails: prove
+`BakerLogDiscrepancy` (archimedean two logs with fixed heights `t, 3`) by the same
+interpolation-determinant machinery.
 
 | headline | claim | `#print axioms` | inputs |
 |---|---|---|---|
-| `liouvilleCantorFullProfile` | unconditional (frozen) | trust base + **sorryAx** (via `repPairArith_of_three_dvd`) | 🟡 3-adic two-log bound (current frontier; next prerequisite = Cauchy–Binet valuation bound + zero lemma) |
-| `liouvilleCantorFullProfile_of_padic` | cond. on `PadicTwoLogs` | trust base + **sorryAx** (via `repPairArith_of_sparse`) | 🟡 cited (Bugeaud–Laurent); P1 leaf open |
-| `liouvilleCantorFullProfile_of_baker_padic` | cond. on Baker discrepancy + `PadicTwoLogs` | trust base | 🟡 + 🟡 cited |
-| `liouvilleCantorFullProfile_of_literature` | cond. on Baker + Matveev | trust base | 🟡 + 🟠 cited (Matveev: superseded, not pursued) |
-| `SparseIdentity.sparseIdentityBound_of_padic` | 3-adic chain | trust base | cited `PadicTwoLogs` |
+| `liouvilleCantorFullProfile` | unconditional (frozen) | trust base + **sorryAx** (via `repPairArith_of_sparse` only) | 🟡 P1 leaf open (current frontier; next prerequisite = refined pair classification) |
+| `liouvilleCantorFullProfile_of_baker` | cond. on Baker discrepancy | trust base | 🟡 cited `BakerLogDiscrepancy` (removed by P1) |
+| `liouvilleCantorFullProfile_of_padic` | cond. on `PadicTwoLogs` | trust base + sorryAx (P1) | `PadicTwoLogs` now PROVED (`padicTwoLogs`) |
+| `liouvilleCantorFullProfile_of_literature` | cond. on Baker + Matveev | trust base | superseded |
+| `PadicTwoLogs.padicTwoLogs`, `laurentZeroLemma` | 3-adic two-log bound; zero lemma | trust base | none |
 | `ae_isNormal_rep_of_coprime_three`, `liouville_repReal` | `3 ∤ b`; Liouville | trust base | none |
 
-Math-axiom count of the unconditional headline: 0 cited axioms (inputs are hypothesis Props); the
-one `sorryAx` is the disclosed crux.
+Math-axiom count of the unconditional headline: 0 (no cited input left on it); the one `sorryAx`
+is the disclosed P1 leaf.
 
 ## Cantor exact-exponent stretch update, 6 October 2026 (branch `proof/cantorexp-stretch`)
 

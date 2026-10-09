@@ -9,6 +9,7 @@ import NormalNumbers.ExplicitPQ
 import NormalNumbers.LevinSparse
 import NormalNumbers.SparseIdentity
 import NormalNumbers.CycMerge
+import NormalNumbers.PadicTwoLogsAssembly
 import Mathlib.NumberTheory.Multiplicity
 import Mathlib.Analysis.SpecificLimits.Normed
 
@@ -6233,22 +6234,17 @@ theorem repPairArith_of_padic (hP : SparseIdentity.Literature.PadicTwoLogs) {b :
   exact repPairArith_of_sparse hs (by omega) hnd
     (SparseIdentity.sparseIdentityBound_of_padic hP (by omega) hnd)
 
-/-- **The crux, arithmetic form (open).**  This is `repPairArith_of_literature` applied to the
-two cited inputs, Baker–Wüstholz with Erdős–Turán
-(`CantorExactExponentProfile.Literature.BakerLogDiscrepancy`) and Matveev's three-logarithm bound
-(`SparseIdentity.Literature.MatveevThreeLogs`).  Cited results enter only as hypothesis `Prop`s,
-so this unconditional form stays a direct `sorry`; the honest conditional headline is
-`liouvilleCantorFullProfile_of_literature`, whose every route leaf is proved (2026-10-08), so its
-`#print axioms` is the trust base and only the two cited `Prop`s remain as hypotheses.
+/-- **The crux, arithmetic form (proved modulo `repPairArith_of_sparse`).**  The 3-adic
+two-logarithm bound is a theorem (`PadicTwoLogs.padicTwoLogs`, from the assembly
+`padicTwoLogs_of_zeroLemma` and the elementary zero lemma `PadicTwoLogs.laurentZeroLemma`, review
+lap 13, 2026-10-09), so `repPairArith_of_padic` applies with no cited input.  The one open leaf
+under this theorem is the Baker-free shadow dichotomy `repPairArith_of_sparse`.
 
-Review lap 10 (2026-10-08): the live route to this `sorry` is `repPairArith_of_padic`, one cited
-input (`SparseIdentity.Literature.PadicTwoLogs`, 3-adic, two logarithms, rational numbers), via
-the proved 3-adic chain `sparseIdentityBound_of_padic` and the open Baker-free shadow dichotomy
-`repPairArith_of_sparse`.  Closing it means formalizing that 3-adic bound (interpolation
-determinants), the campaign set in DIRECTION.md. -/
+History: the earlier conditional forms are `repPairArith_of_literature` (Baker–Wüstholz with
+Erdős–Turán and Matveev, both cited) and `repPairArith_of_baker_padic` (Baker, cited). -/
 theorem repPairArith_of_three_dvd {b : ℕ} (hb : 2 ≤ b) (h3 : 3 ∣ b) (hpow : ∀ s : ℕ, b ≠ 3 ^ s) :
-    RepPairArith b := by
-  sorry
+    RepPairArith b :=
+  repPairArith_of_padic PadicTwoLogs.padicTwoLogs hb h3 hpow
 
 /-- **Pair-sum decay at `b = 3ˢt`, `t > 1` (open leaf; the crux in pair form).**  See
 `RepPairDecay` and the zone route in the docstring of `ae_isNormal_rep_of_three_dvd`. -/
@@ -6392,6 +6388,22 @@ theorem liouvilleCantorFullProfile_of_baker_padic
       norm_num at this
   exact ⟨repReal ω, repReal_mem_cantorSet ω,
     liouville_repReal ω (irrational_of_isNormal_two h2), hω⟩
+
+/-- **Conditional headline from Baker's discrepancy alone (proved).**  The Matveev and
+Bugeaud–Laurent inputs are discharged: `PadicTwoLogs.padicTwoLogs` is a theorem.  The one cited
+input left on this route is `CantorExactExponentProfile.Literature.BakerLogDiscrepancy`, used only by
+the shadow zone; `repPairArith_of_sparse` would remove it. -/
+theorem liouvilleCantorFullProfile_of_baker
+    (hB : CantorExactExponentProfile.Literature.BakerLogDiscrepancy) :
+    LiouvilleCantorFullProfile :=
+  liouvilleCantorFullProfile_of_baker_padic hB PadicTwoLogs.padicTwoLogs
+
+/-- **Conditional headline with the 3-adic input reduced to the zero lemma (proved; moved here
+from `PadicTwoLogsAssembly`, 2026-10-09).** -/
+theorem liouvilleCantorFullProfile_of_baker_zeroLemma
+    (hB : CantorExactExponentProfile.Literature.BakerLogDiscrepancy)
+    (hZ : PadicTwoLogs.Literature.LaurentZeroLemma) : LiouvilleCantorFullProfile :=
+  liouvilleCantorFullProfile_of_baker_padic hB (PadicTwoLogs.padicTwoLogs_of_zeroLemma hZ)
 
 /-- **Conditional headline from one cited input (wired; open only through
 `repPairArith_of_sparse`).**  The 3-adic two-logarithm bound gives a Liouville number in `K`

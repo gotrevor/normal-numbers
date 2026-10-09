@@ -5,14 +5,15 @@ Authors: Trevor Morris
 -/
 import NormalNumbers.PadicTwoLogs
 import NormalNumbers.SparseIdentity
-import NormalNumbers.CantorRepetition
+import NormalNumbers.ZeroLemma
 
 /-!
 # Assembly: `SparseIdentity.Literature.PadicTwoLogs` from Laurent's zero lemma
 
 `padicTwoLogs_of_zeroLemma : LaurentZeroLemma → SparseIdentity.Literature.PadicTwoLogs`.
 After this, the cited Bugeaud–Laurent bound is no longer an input: the 3-adic chain rests on the
-(rational, two-variable) zero lemma `PadicTwoLogs.Literature.LaurentZeroLemma` only.
+(rational, two-variable) zero lemma `PadicTwoLogs.Literature.LaurentZeroLemma` only, which is proved
+in `ZeroLemma.lean`; so `padicTwoLogs : SparseIdentity.Literature.PadicTwoLogs` is a theorem.
 -/
 
 namespace PadicTwoLogs
@@ -286,11 +287,10 @@ theorem padicTwoLogs_of_zeroLemma (hZ : Literature.LaurentZeroLemma) :
     _ = 8 * ((K : ℝ) + 1) * (1 + Real.log (δ + 1)) ^ 2 * (1 + Real.log ((max |a| |b| : ℤ) : ℝ)) := by ring
     _ = _ := by push_cast; ring
 
-/-- **Conditional headline with the 3-adic input reduced to the zero lemma (proved).** -/
-theorem liouvilleCantorFullProfile_of_baker_zeroLemma
-    (hB : NormalNumbers.CantorExactExponentProfile.Literature.BakerLogDiscrepancy)
-    (hZ : Literature.LaurentZeroLemma) : NormalNumbers.CantorRepetition.LiouvilleCantorFullProfile :=
-  NormalNumbers.CantorRepetition.liouvilleCantorFullProfile_of_baker_padic hB
-    (padicTwoLogs_of_zeroLemma hZ)
+/-- **The 3-adic two-logarithm bound (PROVED, unconditional).**  `Literature.PadicTwoLogs`
+(Bugeaud–Laurent 1996, transcribed in `SparseIdentity`) from the assembly
+`padicTwoLogs_of_zeroLemma` and the elementary zero lemma `laurentZeroLemma`. -/
+theorem padicTwoLogs : NormalNumbers.SparseIdentity.Literature.PadicTwoLogs :=
+  padicTwoLogs_of_zeroLemma laurentZeroLemma
 
 end PadicTwoLogs

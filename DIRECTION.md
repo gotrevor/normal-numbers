@@ -1,45 +1,36 @@
 # DIRECTION — normal-numbers 🧭
 
-## CURRENT DIRECTIVE (2026-10-08, branch `proof/cantor-repetition`, review lap 10): one 3-adic input, then prove it 🎯
+## CURRENT DIRECTIVE (2026-10-09, branch `proof/cantor-repetition`, review lap 13): P1 is the last leaf 🎯
 
-**Objective:** close the scope sorry `repPairArith_of_three_dvd` (hence `liouvilleCantorFullProfile`)
-by reducing its Diophantine content to ONE classical input, the 3-adic linear form in two
-logarithms of rationals (`SparseIdentity.Literature.PadicTwoLogs`, Bugeaud–Laurent 1996), and then
-formalizing that input.  Wiring in place: `repPairArith_of_padic` (from `PadicTwoLogs` through the
-PROVED 3-adic chain `sparseIdentityBound_of_padic` and the OPEN Baker-free shadow dichotomy
-`repPairArith_of_sparse`); conditional headline `liouvilleCantorFullProfile_of_padic`.
-**Mandated next moves, in order (hardest-first: P3 is the only step with no fallback):**
-1. **P3 decisive probe — the core of `Literature.PadicTwoLogs`** (new file
-   `src/NormalNumbers/PadicTwoLogs.lean`; NOT a sorry'd theorem of the cited Prop — build it from
-   named sub-lemmas).  Interpolation determinant, all in `ℤ`/`ℤ_[3]`: (a) Mahler expansion
-   `t^{mz}w^{ms} = Σ binom·(t−1)ʲ(w−1)ⁿ` + Cauchy–Binet ⇒ `v₃(Δ) ≥ min_J Σ_{(a,b)∈J}(a + g b) −
-   LK²/2` (the two-variable count gives `g ≲ B`, LINEAR in `log M` — the one feature the chain
-   needs; a one-variable Vandermonde gives `(log M)²`, which is NOT enough); (b) Liouville:
-   `Δ·a^{…} ∈ ℤ∖{0}` ⇒ `v₃(Δ) ≤ N·B`; (c) zero lemma (Laurent 1994 sumset lemma for
-   `G_a × G_m`); (d) parameters; (e) the multiplicatively dependent case by LTE.  First: state (a)
-   and (c), prove (a)'s algebraic core (the Cauchy–Binet valuation bound).  Sources requested in
-   ON-LINE-REQUEST.md (2026-10-08).
-2. **P1 — `repPairArith_of_sparse`** (CantorRepetition; English proof in its docstring, 80%):
-   decompose into named leaves (perturbed cyclic product ⇒ cyclic change count; fresh window ⇒
-   digit changes of `Z_top`; carry/merge lemma mod `3^A − 1`; shadow class bound; assembly reusing
-   `repPairPos_copy`/`summable_copy_sched` without `hB`), then prove them.  Removes the archimedean
-   `BakerLogDiscrepancy`.  (Fallback if P1 fails: an archimedean two-log bound with FIXED heights
-   `t, 3` and any polylog rate, which is easier than P3.)
-3. **P3 rest:** (b)–(e) and the assembly `padicTwoLogs : Literature.PadicTwoLogs`, then
-   `repPairArith_of_three_dvd := repPairArith_of_padic padicTwoLogs …`.
-**Forbidden drift:** formalizing archimedean Matveev / Baker–Wüstholz (superseded by the 3-adic
-two-log route); a sorry'd theorem whose statement is a cited Prop (axiom in disguise); edits to
-frozen statements (`LiouvilleCantorFullProfile`, `RepPairArith`, `repPairArith_of_three_dvd`);
-work in other lanes.
-**Why:** the route needs only a saving summable along `sched` with runs `a_k ≈ k^k`; with
-`cos(π/9)` per digit change that forces `K ≈ 80 log k` changes and a sparse-identity bound
-`log log L_K ≤ K/80`, i.e. a gap bound LINEAR in the height of the bottom part — Baker strength,
-but the bottom-up (3-adic) chain needs only TWO logarithms (`t` and `V_{<p}/U_{<p}`; the power of 3
-cancels), and the shadow zone's Baker discrepancy is replaceable by the copy-zone orbit count.
-The 3-adic two-log bound for rationals is the smallest Baker-type theorem that suffices, and its
-analytic part is pure integer arithmetic (binomial coefficients), with no p-adic analysis library.
+**Objective:** prove `repPairArith_of_sparse` (CantorRepetition), the Baker-free shadow dichotomy.
+It is the ONLY open obligation under the frozen headline `liouvilleCantorFullProfile` and the scope
+target (`CantorRepetition.lean` sorry-free): P3 is DONE (`PadicTwoLogs.laurentZeroLemma` proved
+elementarily, so `padicTwoLogs` is a theorem and `repPairArith_of_three_dvd` is wired to it).
+**Mandated next moves, in order** (design detail: PENDING_WORK "P1 ASSEMBLY DESIGN"):
+1. **Decisive probe first:** state `repPairPos_shadow` (the `repPairPos_copy` analogue whose
+   shadow-class terms are the min-option bound with NO Baker input) and the per-pair lemma
+   "min(repBound none, repBound (some k)) ≤ θ_k + 1[orbit point c·tᵐ cyclically sparse]" for
+   classes 2/4.  Prove the per-pair lemma on the real `repBound` (it reuses
+   `cycSparse_of_copy_free` + `cycSparse_of_three_pow_mul`).  If the separated sub-case (class 2:
+   top of ξ leaves the fresh stretch) does not reduce to `c = h'`, record that as a refutation
+   (Lean `¬` or counterexample) + Maze row and fall back (below).
+2. Refined classification (`pair_classify_rep` returning the run `k` for classes 2/4).
+3. Totals of shape `N·N_k·φ_k`, summable along `sched` (`sched_tail1`, `summable_shadow_sched`).
+4. Assembly `repPairArith_of_sparse` (sign/3-part reduction as `repPairPower_of_pos`).
+**Fallback (only if step 1 refutes the per-pair dichotomy):** prove
+`CantorExactExponentProfile.Literature.BakerLogDiscrepancy` (archimedean two logs, fixed heights
+`t, 3`, any polylog rate) by an interpolation determinant on the model of `PadicTwoLogs.lean`.
+**Forbidden drift:** re-opening P3 (done); Matveev / Baker–Wüstholz formalization; sorry'd theorems
+whose statement is a cited Prop; edits to frozen statements (`LiouvilleCantorFullProfile`,
+`RepPairArith`, `repPairArith_of_three_dvd`'s statement, `repPairArith_of_sparse`'s statement);
+other lanes.
+**Why:** the review lap found the zero lemma elementary (a support determinant whose top
+coefficient is a generalized Vandermonde), which closed P3 in one lap; the remaining uncertainty
+of the whole route is concentrated in P1's per-pair dichotomy (carry normalization with repeated
+exponents; the separated sub-case), so that is the decisive probe.
 
 Directive history (repetition branch):
+- 2026-10-09 review lap 13: zero lemma PROVED (elementary), P3 done; P1 `repPairArith_of_sparse` is the last leaf, per-pair dichotomy first.
 - 2026-10-08 review lap 10: sparse-pair route complete; next = one 3-adic two-log input (3-adic chain proved), Baker-free shadow (P1), then prove the input (P3).
 - 2026-10-07 review lap 7: sparse-pair route (cluster lemma + Matveev) replaces the walls.
 - 2026-10-07 review lap: assembly first; walls stay named nodes.
