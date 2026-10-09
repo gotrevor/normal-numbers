@@ -932,6 +932,76 @@ theorem numeric_core (t δ M τ D A E L R₂ S₂ K : ℕ) (ht : t < 2 ^ τ) (h�
         have : 0 < 4 * x * (K * L) := by rw [hN]; positivity
         omega
 
+/-- **The 3-adic two-log bound, independent case (proved from `LaurentZeroLemma`).**  For `t ≥ 2`,
+`3 ∣ t − 1`, `3 ∤ a`, `t` and `b/a` multiplicatively independent, `|a|, |b| ≤ M`, `tᵟa ≠ b`,
+`3ᵍ ∣ tᵟa − b`: `g ≤ 2²⁴ τ A (D + τ + 20)²` with `τ, A, D` the binary lengths of `t, M, δ`.
+Large `δ`: `g_le_of_squeeze` + `numeric_core`; small `δ` (`δ < 4096 A E`): `3ᵍ ≤ 2M tᵟ`. -/
+theorem g_le_indep (hZ : Literature.LaurentZeroLemma) (t : ℕ) (a b : ℤ) (δ g : ℕ)
+    (ht1 : (3 : ℤ) ∣ (t : ℤ) - 1) (ht2 : 2 ≤ t) (ha : ¬ (3 : ℤ) ∣ a) (ha0 : a ≠ 0) (hb0 : b ≠ 0)
+    (M : ℕ) (hM1 : 1 ≤ M) (haM : |a| ≤ M) (hbM : |b| ≤ M)
+    (hind : ∀ u v : ℤ, ((t : ℤ) : ℚ) ^ u * ((b : ℚ) / a) ^ v = 1 → u = 0 ∧ v = 0)
+    (hne : (t : ℤ) ^ δ * a ≠ b) (hab : (3 : ℤ) ^ g ∣ (t : ℤ) ^ δ * a - b) :
+    g ≤ 2 ^ 24 * (Nat.log 2 t + 1) * (Nat.log 2 M + 1) *
+      (Nat.log 2 δ + 1 + (Nat.log 2 t + 1) + 20) ^ 2 := by
+  set τ := Nat.log 2 t + 1
+  set A := Nat.log 2 M + 1
+  set D := Nat.log 2 δ + 1
+  set E := D + τ + 20
+  have ht : t < 2 ^ τ := Nat.lt_pow_succ_log_self (by norm_num) t
+  have hM : M < 2 ^ A := Nat.lt_pow_succ_log_self (by norm_num) M
+  have hδ2 : δ < 2 ^ D := Nat.lt_pow_succ_log_self (by norm_num) δ
+  have hτ : 1 ≤ τ := by omega
+  have hA : 1 ≤ A := by omega
+  have hab' : (3 : ℤ) ^ g ∣ b - a * (t : ℤ) ^ δ := by
+    rw [show b - a * (t : ℤ) ^ δ = -((t : ℤ) ^ δ * a - b) by ring]; exact (dvd_neg).2 hab
+  rcases le_or_gt (64 * A * (64 * E)) δ with hδ | hδ
+  · have h := g_le_of_squeeze hZ t a b δ g ht1 (by exact_mod_cast ht2) ha ha0 hb0 M hM1 haM hbM
+      hind hab' (4096 * τ * A * (64 * E)) (64 * E) (64 * A * (64 * E)) (64 * τ * (64 * E))
+      (4096 * τ * A * (64 * E) * (64 * E) / 3) hδ (by
+        have : 1 ≤ 64 * E := by omega
+        have : (4096 * τ * A * (64 * E) - 1) * (64 * E) < 4096 * τ * A * (64 * E) * (64 * E) := by
+          have : 1 ≤ 4096 * τ * A * (64 * E) := Nat.one_le_iff_ne_zero.2 (by positivity)
+          exact Nat.mul_lt_mul_of_pos_right (by omega) (by omega)
+        calc _ < _ := this
+          _ = 64 * A * (64 * E) * (64 * τ * (64 * E)) := by ring)
+      (by
+        have := numeric_core t δ M τ D A E (64 * E) (64 * A * (64 * E)) (64 * τ * (64 * E))
+          (4096 * τ * A * (64 * E)) ht hδ2 hM hτ hA rfl rfl rfl rfl rfl hδ
+        exact_mod_cast this)
+    calc g ≤ _ := h
+      _ ≤ 4096 * τ * A * (64 * E) * (64 * E) := Nat.div_le_self _ _
+      _ = 2 ^ 24 * τ * A * E ^ 2 := by ring
+  · -- small δ: Liouville directly
+    have hne' : (t : ℤ) ^ δ * a - b ≠ 0 := sub_ne_zero.2 hne
+    have h1 := Int.le_of_dvd (abs_pos.2 hne') ((dvd_abs _ _).2 hab)
+    have h2 : |(t : ℤ) ^ δ * a - b| ≤ 2 * M * (t : ℤ) ^ δ := by
+      have ht0 : (0 : ℤ) ≤ (t : ℤ) ^ δ := by positivity
+      have ht1' : (1 : ℤ) ≤ (t : ℤ) ^ δ := one_le_pow₀ (by exact_mod_cast (by omega : 1 ≤ t))
+      calc |(t : ℤ) ^ δ * a - b| ≤ |(t : ℤ) ^ δ * a| + |b| := abs_sub _ _
+        _ = (t : ℤ) ^ δ * |a| + |b| := by rw [abs_mul, abs_of_nonneg ht0]
+        _ ≤ (t : ℤ) ^ δ * M + M * (t : ℤ) ^ δ := by gcongr; nlinarith
+        _ = 2 * M * (t : ℤ) ^ δ := by ring
+    have h3 : (3 : ℤ) ^ g ≤ 2 ^ (1 + A + τ * δ) := by
+      refine h1.trans (h2.trans ?_)
+      rw [pow_add, pow_add, pow_mul]
+      have : (M : ℤ) ≤ 2 ^ A := by exact_mod_cast hM.le
+      have : ((t : ℕ) : ℤ) ^ δ ≤ ((2 : ℤ) ^ τ) ^ δ := by
+        gcongr; exact_mod_cast ht.le
+      nlinarith [pow_nonneg (show (0:ℤ) ≤ 2 by norm_num) A, pow_nonneg (show (0:ℤ) ≤ (t:ℤ) by positivity) δ]
+    have h4 : (2 : ℤ) ^ g ≤ 2 ^ (1 + A + τ * δ) :=
+      (pow_le_pow_left₀ (by norm_num) (by norm_num) g).trans h3
+    have h5 : g ≤ 1 + A + τ * δ := (pow_le_pow_iff_right₀ (by norm_num)).1 h4
+    have h6 : τ * δ ≤ τ * (64 * A * (64 * E)) := Nat.mul_le_mul_left _ hδ.le
+    have h7 : τ * (64 * A * (64 * E)) = 4096 * (τ * A * E) := by ring
+    have hE1 : 1 ≤ E := by omega
+    have h8 : τ * A * E ≤ τ * A * E ^ 2 := Nat.mul_le_mul_left _ (by nlinarith)
+    have h9 : A ≤ τ * A * E := by
+      calc A = 1 * A * 1 := by ring
+        _ ≤ τ * A * E := by gcongr
+    have h10 : 2 ^ 24 * τ * A * E ^ 2 = 2 ^ 24 * (τ * A * E ^ 2) := by ring
+    have h11 : 1 ≤ τ * A * E := le_trans hA h9
+    omega
+
 end ZeroWiring
 
 end PadicTwoLogs

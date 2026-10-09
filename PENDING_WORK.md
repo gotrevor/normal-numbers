@@ -32,7 +32,13 @@
   `exists_det_hom_ne_zero` (nonzero integer homogenised `KL`-minor on the grid).
 * Same lap, PROVED (d, squeeze): `g_le_of_squeeze` (+ `entry_bound`): parameters abstract, numeric
   inequality `hnum` as hypothesis.
-* NEXT (d): `hnum` for explicit parameters (real-log estimate), then assembly `padicTwoLogs_of_zeroLemma : LaurentZeroLemma → PadicTwoLogs` — parameters,
+* Same lap, PROVED: `numeric_core`, `g_le_indep` — the independent case with `3∣t−1`, `3∤a`:
+  `g ≤ 2²⁴ τ A (D+τ+20)²` (binary lengths), from `LaurentZeroLemma` only.
+* NEXT: reductions to `g_le_indep` — (i) `t ↦ t²` (`t² ≡ 1 mod 3`; `δ` even/odd: `t^δ a = (t²)^{⌊δ/2⌋}(t^{δ mod 2} a)`),
+  (ii) `3 ∣ a` or `3 ∣ b` (if `3∣a`, `3∤b` then `g = 0`; strip common powers of 3 — but they're
+  not coprime-free: `v₃(tᵟa−b) ≥ g`, write `a = 3ᵉa'`, `b = 3ᶠb'`; if `e ≠ f` then `g ≤ min(e,f) ≤
+  log₃M`; if `e = f`, divide out), (iii) dependent case by LTE, (iv) real-log conversion.
+* OLD NEXT (d): `hnum` for explicit parameters (real-log estimate), then assembly `padicTwoLogs_of_zeroLemma : LaurentZeroLemma → PadicTwoLogs` — parameters,
   entry bound `X`, reductions (`t ↦ t²` for `3 ∣ t−1`; `3 ∣ a`/`3 ∣ b`; dependent case; small δ).
 * DONE-NOTE (c, wiring): grid matrix `A (r,s) (k,l) = C(r+δs,k)·(tʳ(b/a)ˢ)ˡ` over ℚ; kernel vector ⇒
   `q_l = Σ_k v_{kl} chooseP k` vanish on the grid ⇒ (zero lemma) `q_l = 0` ⇒ evaluate at `0,1,…`
