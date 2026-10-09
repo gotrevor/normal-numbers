@@ -20,6 +20,8 @@ import Mathlib.Tactic.FieldSimp
 import Mathlib.LinearAlgebra.Matrix.ToLinearEquiv
 import Mathlib.LinearAlgebra.Matrix.DotProduct
 import Mathlib.NumberTheory.Padics.PadicVal.Basic
+import Mathlib.NumberTheory.Multiplicity
+import Mathlib.Algebra.Order.Field.Power
 
 /-!
 # The 3-adic linear form in two logarithms: interpolation-determinant ingredients (P3)
@@ -1001,6 +1003,110 @@ theorem g_le_indep (hZ : Literature.LaurentZeroLemma) (t : ℕ) (a b : ℤ) (δ 
     have h10 : 2 ^ 24 * τ * A * E ^ 2 = 2 ^ 24 * (τ * A * E ^ 2) := by ring
     have h11 : 1 ≤ τ * A * E := le_trans hA h9
     omega
+
+/-! ### Reductions: the dependent case -/
+
+
+/-- LTE bound: `3 ∣ t − 1`, `3ᵍ ∣ tⁿ − 1` ⇒ `g ≤ log₃ t + log₃ n`. -/
+theorem le_of_three_pow_dvd_pow_sub_one (t n g : ℕ) (ht : 2 ≤ t) (ht1 : 3 ∣ t - 1) (hn : 1 ≤ n)
+    (h : 3 ^ g ∣ t ^ n - 1) : g ≤ Nat.log 3 t + Nat.log 3 n := by
+  have : Fact (Nat.Prime 3) := ⟨Nat.prime_three⟩
+  have hpos : t ^ n - 1 ≠ 0 := by
+    have : 2 ≤ t ^ n := le_trans ht (Nat.le_self_pow (by omega) t)
+    omega
+  have hv := (padicValNat_dvd_iff_le hpos).1 h
+  have hlte := padicValNat.pow_sub_pow (p := 3) (x := t) (y := 1) (by decide) (by omega) ht1
+    (by intro h3; have := Nat.dvd_sub h3 ht1; rw [Nat.sub_sub_self (by omega)] at this
+        norm_num at this) (n := n) (by omega)
+  rw [one_pow] at hlte
+  have h1 : padicValNat 3 (t - 1) ≤ Nat.log 3 t := by
+    refine Nat.le_log_of_pow_le (by norm_num) ?_
+    exact (Nat.le_of_dvd (by omega) pow_padicValNat_dvd).trans (by omega)
+  have h2 : padicValNat 3 n ≤ Nat.log 3 n :=
+    Nat.le_log_of_pow_le (by norm_num) (Nat.le_of_dvd (by omega) pow_padicValNat_dvd)
+  omega
+
+
+
+/-- `v_p(b) ≤ log₂|b|`. -/
+theorem padicValRat_int_le_log (p : ℕ) [Fact p.Prime] (b : ℤ) (hb : b ≠ 0) :
+    padicValRat p (b : ℚ) ≤ Nat.log 2 b.natAbs := by
+  rw [padicValRat.of_int, padicValInt]
+  have hp2 := (Fact.out : p.Prime).two_le
+  have : p ^ padicValNat p b.natAbs ≤ b.natAbs :=
+    Nat.le_of_dvd (by omega) pow_padicValNat_dvd
+  have : 2 ^ padicValNat p b.natAbs ≤ b.natAbs :=
+    le_trans (Nat.pow_le_pow_left hp2 _) this
+  exact_mod_cast Nat.le_log_of_pow_le (by norm_num) this
+
+/-- **Dependent case, small relation (proved).**  If `t ≥ 2` and `β = b/a` are multiplicatively
+dependent, then `β^{2e} = t^{2f}` with `1 ≤ e ≤ log₂ t`, `|f| ≤ log₂|a| + log₂|b|`: take a prime
+`p ∣ t`, `e = v_p(t)`, `f = v_p(β)`; `x = t^{−2f}β^{2e} > 0` satisfies `x^v = 1`. -/
+theorem small_relation (t : ℕ) (ht : 2 ≤ t) (a b : ℤ) (ha : a ≠ 0) (hb : b ≠ 0) (u v : ℤ)
+    (huv : ¬ (u = 0 ∧ v = 0)) (hrel : (t : ℚ) ^ u * ((b : ℚ) / a) ^ v = 1) :
+    ∃ e : ℕ, ∃ f : ℤ, 1 ≤ e ∧ e ≤ Nat.log 2 t ∧
+      |f| ≤ Nat.log 2 a.natAbs + Nat.log 2 b.natAbs ∧ ((b : ℚ) / a) ^ (2 * e) = (t : ℚ) ^ (2 * f) := by
+  set p := t.minFac
+  have hp : p.Prime := Nat.minFac_prime (by omega)
+  have : Fact p.Prime := ⟨hp⟩
+  set β : ℚ := (b : ℚ) / a
+  have ha' : (a : ℚ) ≠ 0 := by exact_mod_cast ha
+  have hb' : (b : ℚ) ≠ 0 := by exact_mod_cast hb
+  have hβ : β ≠ 0 := div_ne_zero hb' ha'
+  have ht' : (t : ℚ) ≠ 0 := by exact_mod_cast (by omega : t ≠ 0)
+  set e := padicValNat p t
+  set f := padicValRat p β
+  have he1 : 1 ≤ e := one_le_padicValNat_of_dvd (by omega) (Nat.minFac_dvd t)
+  have he2 : e ≤ Nat.log 2 t := by
+    have : p ^ e ≤ t := Nat.le_of_dvd (by omega) pow_padicValNat_dvd
+    exact Nat.le_log_of_pow_le (by norm_num) (le_trans (Nat.pow_le_pow_left hp.two_le _) this)
+  have hf : |f| ≤ Nat.log 2 a.natAbs + Nat.log 2 b.natAbs := by
+    have hfd : f = padicValRat p (b : ℚ) - padicValRat p (a : ℚ) := padicValRat.div hb' ha'
+    have h1 := padicValRat_int_le_log p b hb
+    have h2 := padicValRat_int_le_log p a ha
+    have h3 : 0 ≤ padicValRat p (b : ℚ) := by rw [padicValRat.of_int]; positivity
+    have h4 : 0 ≤ padicValRat p (a : ℚ) := by rw [padicValRat.of_int]; positivity
+    rw [abs_le]; constructor <;> omega
+  have hval : u * e + v * f = 0 := by
+    have := congrArg (padicValRat p) hrel
+    rw [padicValRat.mul (zpow_ne_zero _ ht') (zpow_ne_zero _ hβ), padicValRat.zpow,
+      padicValRat.zpow, padicValRat.one] at this
+    simpa [e, padicValRat.of_nat] using this
+  have hv : v ≠ 0 := by
+    rintro rfl
+    apply huv; refine ⟨?_, rfl⟩
+    have : u * e = 0 := by simpa using hval
+    rcases mul_eq_zero.1 this with h | h
+    · exact h
+    · omega
+  set x : ℚ := (t : ℚ) ^ (-2 * f) * β ^ (2 * (e : ℤ))
+  have hx0 : 0 < x := by
+    have : 0 < β ^ (2 * (e : ℤ)) := Even.zpow_pos (even_two_mul _) hβ
+    have : 0 < (t : ℚ) ^ (-2 * f) := zpow_pos (by positivity) _
+    positivity
+  have hxv : x ^ v = 1 := by
+    have h2 : ((t : ℚ) ^ u * β ^ v) ^ (2 * (e : ℤ)) = 1 := by rw [hrel, one_zpow]
+    rw [mul_zpow, ← zpow_mul, ← zpow_mul] at h2
+    rw [mul_zpow, ← zpow_mul, ← zpow_mul, ← h2]
+    congr 2
+    · linear_combination (-2) * hval
+    · ring
+  have hx1 : x = 1 := by
+    rcases lt_or_gt_of_ne hv with hneg | hpos
+    · have : x ^ (-v).toNat = 1 := by
+        rw [← zpow_natCast, Int.toNat_of_nonneg (by omega), zpow_neg, hxv, inv_one]
+      exact (pow_eq_one_iff_of_nonneg hx0.le (by omega)).1 this
+    · have : x ^ v.toNat = 1 := by
+        rw [← zpow_natCast, Int.toNat_of_nonneg (by omega), hxv]
+      exact (pow_eq_one_iff_of_nonneg hx0.le (by omega)).1 this
+  refine ⟨e, f, he1, he2, hf, ?_⟩
+  have : β ^ (2 * (e : ℤ)) = (t : ℚ) ^ (2 * f) := by
+    have := hx1
+    simp only [x] at this
+    rw [show (-2 * f) = -(2 * f) by ring, zpow_neg] at this
+    field_simp at this
+    linarith [this]
+  rw [← this, ← zpow_natCast]; push_cast; rfl
 
 end ZeroWiring
 
