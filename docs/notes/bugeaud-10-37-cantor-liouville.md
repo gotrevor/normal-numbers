@@ -43,6 +43,30 @@ The content is a second-moment bound in the style of Cassels (1959), proved for 
 
 This differs from the typical Cantor point.  By Cassels (1959) and Schmidt (1960), almost every point for the Cantor measure is normal to every base that is not a power of 3, base 6 included ([`Cassels1959`](https://github.com/gotrevor/normal-numbers/blob/569bfdf86ac6d012afec1b7fa34ad3a9925bfb12/src/NormalNumbers/CantorLiouvilleAll.lean#L72), cited only for contrast).  Our Liouville points are never normal to base 6 ([`not_isNormal_six`](https://github.com/gotrevor/normal-numbers/blob/569bfdf86ac6d012afec1b7fa34ad3a9925bfb12/src/NormalNumbers/CantorLiouvilleAll.lean#L850)).
 
+## Every base that is not a power of 3
+
+The zero runs above are what cost base 6.  A different construction recovers every base the Cantor measure allows.
+
+**Theorem.**  There is a Liouville number `x` in the middle-third Cantor set such that for every base `b ≥ 2`:
+
+`x` is normal to base `b`  ⟺  `b` is not a power of 3.
+
+- [`liouvilleCantorFullProfile`](https://github.com/gotrevor/normal-numbers/blob/11b085cebae95c1d050361cd9d732092c216c261/src/NormalNumbers/CantorRepetition.lean#L7446), statement [`LiouvilleCantorFullProfile`](https://github.com/gotrevor/normal-numbers/blob/11b085cebae95c1d050361cd9d732092c216c261/src/NormalNumbers/CantorRepetition.lean#L68).  No cited results: `#print axioms` lists only `propext`, `Classical.choice` and `Quot.sound`.
+- This is the most a point of `K` can do: its ternary digits avoid 1, so it is never normal to a power of 3.  It matches the Cassels–Schmidt profile of a typical Cantor point, now at exponent ∞.
+- The witness comes from an almost-everywhere statement over coin sequences, so unlike the theorems above it is not claimed computable.
+
+**Repetitions instead of zero runs.**  Instead of forcing a block of zeros, copy a free block `W` of length `ℓ` many times.  Then `x` is within `3^{−Mℓ}` of `W/(3^ℓ − 1)`, the digits stay in `{0, 2}`, and letting the copy count grow makes `x` Liouville.  The approximants have denominators prime to 3, so the base-`3ˢt` obstruction of the zero runs does not arise.
+
+**The bases divisible by 3.**  Let `b = 3ˢt` with `t > 1` and `3 ∤ t`; base 6 is the first case.
+- *Bases prime to 3 and powers of 3.*  These go as before ([`ae_isNormal_rep_of_coprime_three`](https://github.com/gotrevor/normal-numbers/blob/11b085cebae95c1d050361cd9d732092c216c261/src/NormalNumbers/CantorRepetition.lean#L536), [`not_isNormal_rep_three_pow`](https://github.com/gotrevor/normal-numbers/blob/11b085cebae95c1d050361cd9d732092c216c261/src/NormalNumbers/CantorRepetition.lean#L557)).
+- *The second moment.*  In a copy region, a pair term is large only if a certain integer is cyclically sparse modulo `3^A − 1`, that is, if it has few nonzero ternary digits up to rotation.
+- *Two sparse points of one orbit force an exact identity.*  Two such sparse points `y` and `tᵈy` give an identity `tᵈU = V` between sparse integers ([`cyclic_pair_identity`](https://github.com/gotrevor/normal-numbers/blob/11b085cebae95c1d050361cd9d732092c216c261/src/NormalNumbers/SparseIdentity.lean#L235)).
+- *A 3-adic two-logarithm bound.*  The bound `v₃(tᵟa − b) ≤ C(t)(1 + log(δ+1))²(1 + log max(|a|,|b|))` ([`padicTwoLogs`](https://github.com/gotrevor/normal-numbers/blob/11b085cebae95c1d050361cd9d732092c216c261/src/NormalNumbers/PadicTwoLogsAssembly.lean#L295)) caps `d` in those identities ([`sparseIdentityBound_of_padic`](https://github.com/gotrevor/normal-numbers/blob/11b085cebae95c1d050361cd9d732092c216c261/src/NormalNumbers/SparseIdentity.lean#L1099)).  Sparse orbit points therefore cluster and are few.
+  - The bound is of Bugeaud–Laurent type.  It is proved in Lean by Laurent's interpolation-determinant method, including the two-variable zero lemma ([`laurentZeroLemma`](https://github.com/gotrevor/normal-numbers/blob/11b085cebae95c1d050361cd9d732092c216c261/src/NormalNumbers/ZeroLemma.lean#L74)), so no linear-forms result is cited.
+- *The shadow just past a copy region* needs no Baker input either ([`repPairArith_of_sparse`](https://github.com/gotrevor/normal-numbers/blob/11b085cebae95c1d050361cd9d732092c216c261/src/NormalNumbers/CantorRepetition.lean#L7283)).  The free digits and the copied digits there cannot both be large unless the same sparsity holds.
+
+**Open.**  The finite-exponent version, a point of `K` with exponent exactly `μ₀` and the same profile ([`ExponentCantorFullProfile`](https://github.com/gotrevor/normal-numbers/blob/11b085cebae95c1d050361cd9d732092c216c261/src/NormalNumbers/CantorRepetition.lean#L73)), is stated but not proved.  Its upper bound on the exponent needs a count of approximants `p/(3^ℓ − 1)`, and the 3-adic count used for zero runs does not apply to them.
+
 ## Prior work and what is not claimed
 
 - The method is Cassels's (1959), who showed that almost every point of `K` for the Cantor measure is normal to base 2.  What is new here is that the long forced zero-runs needed for the Liouville property leave enough free digits for the second moment, and that the result is checked in Lean.
@@ -57,6 +81,14 @@ git clone https://github.com/gotrevor/normal-numbers && cd normal-numbers
 git checkout 569bfdf86ac6d012afec1b7fa34ad3a9925bfb12
 lake exe cache get
 lake build NormalNumbers.CantorLiouville NormalNumbers.CantorLiouvilleAll
+```
+
+For the theorem on every base that is not a power of 3:
+
+```sh
+git checkout 11b085cebae95c1d050361cd9d732092c216c261
+lake exe cache get
+lake build NormalNumbers.CantorRepetition
 ```
 
 Questions and corrections: please open an issue on this repository.
