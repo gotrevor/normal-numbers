@@ -196,4 +196,34 @@ theorem cycSparse_of_sum (A : ℕ) (hA : 1 ≤ A) (n : ℕ) (c : ℕ → ℤ) (e
       · push Not at h; rw [h, zero_mul]
     rw [this]
 
+/-- A balanced digit function gives a cyclic sparse representation. -/
+theorem cycSparse_of_bal (A K : ℕ) (d : ℕ → ℤ) (hd : Bal d) (hs : supp A d ≤ K) (y : ℤ)
+    (hy : 2 * y ≡ val A d [ZMOD (3 ^ A - 1)]) : SparseIdentity.CycSparse A K y := by
+  refine ⟨(range A).filter fun j => d j ≠ 0, d, filter_subset _ _, hs, ?_, ?_⟩
+  · intro j hj
+    refine ⟨(mem_filter.1 hj).2, ?_⟩
+    rcases hd j with h | h | h <;> rw [h] <;> norm_num
+  · refine hy.trans ?_
+    unfold val
+    rw [sum_filter]
+    have : ∑ j ∈ range A, (if d j ≠ 0 then d j * 3 ^ j else 0) = ∑ j ∈ range A, d j * 3 ^ j := by
+      refine sum_congr rfl fun j _ => ?_
+      split_ifs with h
+      · rfl
+      · push Not at h; rw [h, zero_mul]
+    rw [this]
+
+/-- Finset-indexed sums of `≤ 2`-coefficient terms have a balanced representation. -/
+theorem exists_bal_finsum {ι : Type*} [DecidableEq ι] (A : ℕ) (hA : 1 ≤ A) (T : Finset ι)
+    (c : ι → ℤ) (e : ι → ℕ) (hc : ∀ j ∈ T, |c j| ≤ 2) :
+    ∃ d, Bal d ∧ supp A d ≤ 2 * T.card ∧
+      val A d ≡ ∑ j ∈ T, c j * 3 ^ e j [ZMOD (3 ^ A - 1)] := by
+  induction T using Finset.induction_on with
+  | empty => exact ⟨fun _ => 0, fun _ => Or.inr (Or.inl rfl), by simp [supp], by simp [val]⟩
+  | insert a T ha ih =>
+    obtain ⟨d, hd, hs, hv⟩ := ih fun j hj => hc j (mem_insert_of_mem hj)
+    obtain ⟨d', hd', hs', hv'⟩ := add_term A hA (c a) (hc a (mem_insert_self _ _)) d (e a) hd
+    refine ⟨d', hd', by rw [card_insert_of_notMem ha]; omega, hv'.trans ?_⟩
+    rw [sum_insert ha, add_comm]; exact Int.ModEq.add_left _ hv
+
 end NormalNumbers.CycMerge

@@ -4271,6 +4271,126 @@ theorem cycSparse_of_cycProd_ge {P K : ℕ} (hP : 1 ≤ P) {θ : ℝ}
 
 end CycSparse
 
+section CycSparseR
+open Finset
+
+/-- Real-frequency version of `card_changes_lt`. -/
+theorem card_changes_lt_real {A K : ℕ} {θ u : ℝ} (hK : Real.cos (Real.pi / 9) ^ K < θ)
+    (h : θ ≤ ∏ i ∈ range A, |Real.cos (2 * Real.pi * (3 ^ i * u))|) :
+    ((range A).filter fun i => rd (3 ^ i * u) ≠ rd (3 ^ (i + 1) * u)).card < K := by
+  set C := (range A).filter fun i => rd (3 ^ i * u) ≠ rd (3 ^ (i + 1) * u)
+  set c := Real.cos (Real.pi / 9)
+  have hc0 : 0 ≤ c := Real.cos_nonneg_of_mem_Icc ⟨by linarith [Real.pi_pos], by linarith [Real.pi_pos]⟩
+  have hc1 : c < 1 := by
+    rw [← Real.cos_zero]
+    exact Real.cos_lt_cos_of_nonneg_of_le_pi le_rfl (by linarith [Real.pi_pos]) (by positivity)
+  have hprod : ∏ i ∈ range A, |Real.cos (2 * Real.pi * (3 ^ i * u))| ≤ c ^ C.card := by
+    calc _ ≤ ∏ i ∈ range A, (if i ∈ C then c else 1) := by
+          refine prod_le_prod (fun _ _ => abs_nonneg _) fun i hi => ?_
+          split_ifs with hC
+          · refine abs_cos_le_of_rd_ne ?_
+            have := (mem_filter.1 hC).2
+            rwa [show (3 : ℝ) * (3 ^ i * u) = 3 ^ (i + 1) * u by ring]
+          · exact Real.abs_cos_le_one _
+      _ = c ^ C.card := by
+          rw [prod_ite, prod_const_one, mul_one, prod_const]
+          congr 1
+          rw [filter_mem_eq_inter, inter_eq_right.2 (filter_subset _ _)]
+  by_contra hcon
+  push Not at hcon
+  have : c ^ C.card ≤ c ^ K := pow_le_pow_of_le_one hc0 hc1.le hcon
+  linarith
+
+/-- **P1 leaf (i): a large cyclic product at a perturbed frequency forces cyclic sparsity
+(proved).**  If `cos(π/9)^K < θ ≤ cycProdR A (I − f)` with `I ∈ ℤ`, `0 ≤ f < 1`, then `I` is
+cyclically `(2K + 6)`-sparse modulo `3^A − 1`. -/
+theorem cycSparse_of_cycProdR_ge {A K : ℕ} (hA : 1 ≤ A) {θ : ℝ}
+    (hK : Real.cos (Real.pi / 9) ^ K < θ) (I : ℤ) {f : ℝ} (hf0 : 0 ≤ f) (hf1 : f < 1)
+    (h : θ ≤ cycProdR A ((I : ℝ) - f)) : SparseIdentity.CycSparse A (2 * K + 6) I := by
+  obtain ⟨Q, rfl⟩ : ∃ Q, A = Q + 1 := ⟨A - 1, by omega⟩
+  have hq1 : (1 : ℝ) < 3 ^ (Q + 1) := one_lt_pow₀ (by norm_num) (by omega)
+  have hq : (0 : ℝ) < 3 ^ (Q + 1) - 1 := by linarith
+  set u : ℝ := ((I : ℝ) - f) / (3 ^ (Q + 1) - 1)
+  set d : ℕ → ℤ := fun i => rd (3 ^ i * u)
+  -- (a) few changes
+  have hprod : cycProdR (Q + 1) ((I : ℝ) - f) =
+      ∏ i ∈ range (Q + 1), |Real.cos (2 * Real.pi * (3 ^ i * u))| := by
+    unfold cycProdR
+    refine prod_congr rfl fun i _ => ?_
+    congr 2; simp only [u]; field_simp
+  have hC := card_changes_lt_real hK (hprod ▸ h)
+  -- (b) expansion
+  set W : ℤ := ∑ i ∈ range (Q + 1), d i * 3 ^ (Q + 1 - 1 - i)
+  have hexp := fract_mul_pow_eq u (Q + 1)
+  have hW : ((W : ℤ) : ℝ) = ∑ i ∈ range (Q + 1), (rd (3 ^ i * u) : ℝ) * 3 ^ (Q + 1 - 1 - i) := by
+    simp only [W, d]; push_cast; rfl
+  set n : ℤ := ⌊u⌋
+  set r : ℤ := I - (3 ^ (Q + 1) - 1) * n - W
+  have hr : (r : ℝ) = f + Int.fract (3 ^ (Q + 1) * u) - Int.fract u := by
+    have hu : ((I : ℝ) - f) = (3 ^ (Q + 1) - 1) * u := by simp only [u]; field_simp
+    have hfu : Int.fract u = u - n := rfl
+    simp only [r]; push_cast
+    rw [← hW] at hexp
+    rw [hfu] at hexp ⊢
+    nlinarith
+  have hr01 : r = 0 ∨ r = 1 := by
+    have a1 := Int.fract_nonneg (3 ^ (Q + 1) * u)
+    have a2 := Int.fract_lt_one (3 ^ (Q + 1) * u)
+    have a3 := Int.fract_nonneg u
+    have a4 := Int.fract_lt_one u
+    have l : (-1 : ℝ) < r := by rw [hr]; linarith
+    have r' : (r : ℝ) < 2 := by rw [hr]; linarith
+    have : -1 < r := by exact_mod_cast l
+    have : r < 2 := by exact_mod_cast r'
+    omega
+  -- (c) telescoping 2W
+  have h2W : 2 * W = ∑ i ∈ range Q, (d (i + 1) - d i) * 3 ^ (Q - i) + d 0 * 3 ^ (Q + 1) - d Q := by
+    have e1 : 3 * W = ∑ i ∈ range Q, d (i + 1) * 3 ^ (Q - i) + d 0 * 3 ^ (Q + 1) := by
+      simp only [W]; rw [mul_sum, sum_range_succ']
+      congr 1
+      · refine sum_congr rfl fun i hi => ?_
+        have := mem_range.1 hi
+        rw [show Q + 1 - 1 - (i + 1) = Q - i - 1 by omega, mul_left_comm, ← pow_succ']
+        congr 2; omega
+      · simp; ring
+    have e2 : W = ∑ i ∈ range Q, d i * 3 ^ (Q - i) + d Q := by
+      simp only [W]; rw [sum_range_succ]; simp
+    have : ∑ i ∈ range Q, (d (i + 1) - d i) * 3 ^ (Q - i) =
+        ∑ i ∈ range Q, d (i + 1) * 3 ^ (Q - i) - ∑ i ∈ range Q, d i * 3 ^ (Q - i) := by
+      rw [← sum_sub_distrib]; exact sum_congr rfl fun _ _ => by ring
+    rw [this]; linarith
+  have hdb : ∀ i, 0 ≤ d i ∧ d i ≤ 2 := fun i => ⟨rd_nonneg _, by have := rd_lt (3 ^ i * u); simp only [d]; omega⟩
+  set T := (range Q).filter fun i => d i ≠ d (i + 1)
+  have hT : T.card < K := by
+    refine lt_of_le_of_lt (card_le_card fun i hi => ?_) hC
+    simp only [T, mem_filter, mem_range] at hi ⊢
+    exact ⟨by omega, hi.2⟩
+  have hsumT : ∑ i ∈ range Q, (d (i + 1) - d i) * 3 ^ (Q - i) =
+      ∑ i ∈ T, (d (i + 1) - d i) * 3 ^ (Q - i) := by
+    refine (sum_filter_of_ne fun i _ hne => ?_).symm
+    intro h; apply hne; rw [h, sub_self, zero_mul]
+  obtain ⟨d1, hd1, hs1, hv1⟩ := CycMerge.exists_bal_finsum (Q + 1) (by omega) T
+    (fun i => d (i + 1) - d i) (fun i => Q - i) (fun i _ => by
+      have := hdb i; have := hdb (i + 1); rw [abs_le]; constructor <;> omega)
+  obtain ⟨d2, hd2, hs2, hv2⟩ := CycMerge.add_term (Q + 1) (by omega) (d 0)
+    (by have := hdb 0; rw [abs_le]; constructor <;> omega) d1 (Q + 1) hd1
+  obtain ⟨d3, hd3, hs3, hv3⟩ := CycMerge.add_term (Q + 1) (by omega) (-d Q)
+    (by have := hdb Q; rw [abs_le]; constructor <;> omega) d2 0 hd2
+  obtain ⟨d4, hd4, hs4, hv4⟩ := CycMerge.add_term (Q + 1) (by omega) (2 * r)
+    (by rcases hr01 with h | h <;> rw [h] <;> norm_num) d3 0 hd3
+  refine CycMerge.cycSparse_of_bal (Q + 1) _ d4 hd4 (by omega) I ?_
+  have hI : 2 * I = 2 * W + 2 * r + (3 ^ (Q + 1) - 1) * (2 * n) := by simp only [r]; ring
+  refine Int.ModEq.symm (hv4.trans ?_)
+  have hv3' := (hv3.add_right (2 * r * 3 ^ 0))
+  have hv2' := ((hv2.add_right (-d Q * 3 ^ 0)).add_right (2 * r * 3 ^ 0))
+  have hv1' := (((hv1.add_right (d 0 * 3 ^ (Q + 1))).add_right (-d Q * 3 ^ 0)).add_right
+    (2 * r * 3 ^ 0))
+  refine hv3'.trans (hv2'.trans (hv1'.trans ?_))
+  rw [hI, ← hsumT, Int.modEq_iff_dvd]
+  exact ⟨2 * n, by rw [h2W]; ring⟩
+
+end CycSparseR
+
 /-- **Cluster count (pure combinatorics).**  A set `B ⊆ [0, N)` any two of whose points within
 distance `D` are within distance `L < D` has at most `(N/D + 1)(L + 1)` points. -/
 theorem card_cluster_le {N D L : ℕ} (hLD : L < D) (B : Finset ℕ) (hB : B ⊆ Finset.range N)
