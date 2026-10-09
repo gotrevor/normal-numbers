@@ -4757,6 +4757,70 @@ theorem orbit_sum_le {t A K N D L : ℕ} {C θ : ℝ} (ht : 1 ≤ t) (hA : 1 ≤
   nlinarith
 
 
+open Classical in
+/-- **Sparse orbit count (proved).**  The `m < N` with `c tᵐ` cyclically `K'`-sparse modulo
+`3^A − 1` number at most `N · min(1, 2(L+1)/D)` (cluster lemma + sparse identities); the counting
+core of `orbit_sum_le`, with the sparsity level `K'` free. -/
+theorem card_sparse_orbit_le {t A K' N D L : ℕ} {C : ℝ} (ht : 1 ≤ t) (hA : 1 ≤ A)
+    (hS : ∀ (K δ : ℕ) (U V : ℤ), SparseIdentity.IsSparse3 K U → SparseIdentity.IsSparse3 K V →
+      U ≠ 0 → (t : ℤ) ^ δ * U = V → (δ : ℝ) ≤ Real.exp (C * (K + 1) ^ 2))
+    (hL : ∀ δ : ℕ, (δ : ℝ) ≤ Real.exp (C * (K' + 1) ^ 2) → δ ≤ L)
+    (hD : t ^ D + 2 ≤ 3 ^ (A / (2 * K' + 1))) (hDN : D ≤ N) (c : ℤ)
+    (hnd : ¬ ((3 : ℤ) ^ A - 1 ∣ 2 * c * (t : ℤ) ^ N)) :
+    ((((range N).filter fun m => SparseIdentity.CycSparse A K' (c * (t : ℤ) ^ m)).card : ℕ) : ℝ) ≤
+      (N : ℝ) * min 1 (2 * ((L : ℝ) + 1) / max (D : ℝ) 1) := by
+  set Bad := (range N).filter fun m => SparseIdentity.CycSparse A K' (c * (t : ℤ) ^ m)
+  have hBN : (Bad.card : ℝ) ≤ N := by exact_mod_cast (card_filter_le _ _).trans (card_range N).le
+  set r := 2 * ((L : ℝ) + 1) / max (D : ℝ) 1
+  have hclust : L < D → (Bad.card : ℝ) ≤ N * r := by
+    intro hLD
+    have hcl : ∀ m ∈ Bad, ∀ m' ∈ Bad, m < m' → m' - m ≤ D → m' - m ≤ L := by
+      intro m hm m' hm' hmm' hδ
+      set δ := m' - m
+      have hy := (mem_filter.1 hm).2
+      have hy' := (mem_filter.1 hm').2
+      have heq : c * (t : ℤ) ^ m' = ((t ^ δ : ℕ) : ℤ) * (c * (t : ℤ) ^ m) := by
+        push_cast; rw [show m' = δ + m by omega, pow_add]; ring
+      have hgap : t ^ δ + 2 ≤ 3 ^ (A / (2 * K' + 1)) :=
+        le_trans (by have := Nat.pow_le_pow_right ht hδ; omega) hD
+      obtain ⟨U, V, hU, hV, hUV, hU0⟩ := SparseIdentity.cyclic_pair_identity hA hy hy'
+        (heq ▸ Int.ModEq.refl _) hgap
+      have hUne : U ≠ 0 := by
+        intro h
+        apply hnd
+        have := hU0 h
+        obtain ⟨j, hj⟩ : ∃ j, N = m + j := ⟨N - m, by have := mem_range.1 (mem_filter.1 hm').1; omega⟩
+        rw [hj, pow_add]
+        have h2 := this.mul_right ((t : ℤ) ^ j)
+        rwa [show 2 * (c * (t : ℤ) ^ m) * (t : ℤ) ^ j = 2 * c * ((t : ℤ) ^ m * (t : ℤ) ^ j) by ring] at h2
+      exact hL δ (hS K' δ U V hU hV hUne (by rw [← hUV]; push_cast; ring))
+    have hc := card_cluster_le hLD Bad (filter_subset _ _ |>.trans le_rfl) hcl
+    have hD1 : (1 : ℝ) ≤ D := by exact_mod_cast (show 1 ≤ D by omega)
+    have hmax : max (D : ℝ) 1 = D := max_eq_left hD1
+    have hdiv : ((N / D : ℕ) : ℝ) + 1 ≤ 2 * N / D := by
+      have h1 : ((N / D : ℕ) : ℝ) ≤ (N : ℝ) / D := Nat.cast_div_le
+      have h2 : (1 : ℝ) ≤ N / D := by
+        rw [le_div_iff₀ (by linarith)]; simp; exact_mod_cast hDN
+      have : 2 * (N : ℝ) / D = N / D + N / D := by ring
+      linarith
+    have : (Bad.card : ℝ) ≤ (((N / D : ℕ) : ℝ) + 1) * ((L : ℝ) + 1) := by exact_mod_cast hc
+    calc (Bad.card : ℝ) ≤ (((N / D : ℕ) : ℝ) + 1) * ((L : ℝ) + 1) := this
+      _ ≤ 2 * N / D * ((L : ℝ) + 1) := mul_le_mul_of_nonneg_right hdiv (by positivity)
+      _ = N * r := by simp only [r, hmax]; ring
+  rcases le_total 1 r with h | h
+  · rw [min_eq_left h]; simpa using hBN
+  · rw [min_eq_right h]
+    apply hclust
+    by_contra hDL; push Not at hDL
+    have : 1 < r := by
+      simp only [r]
+      rw [lt_div_iff₀ (by positivity)]
+      have : (D : ℝ) ≤ L := by exact_mod_cast hDL
+      rcases le_total (D : ℝ) 1 with h' | h'
+      · rw [max_eq_right h']; linarith [(Nat.cast_nonneg L : (0:ℝ) ≤ L)]
+      · rw [max_eq_left h']; linarith
+    linarith
+
 theorem factorial_le_runStart (k : ℕ) : k.factorial ≤ runStart k := by
   induction k with
   | zero => simp [runStart]
