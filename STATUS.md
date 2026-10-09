@@ -1,6 +1,48 @@
 # STATUS — normal-numbers 📊
 
 ## Cantor repetition update, 9 October 2026 (branch `proof/cantor-repetition`, lap 13) — HEADLINE PROVED
+
+**Is the profile cut forced? No.** · **Build**: 🟢 green (10802 jobs, full default build) · lap 13
+
+**Where it stands.**  `CantorRepetition.liouvilleCantorFullProfile` is a theorem with
+`#print axioms` = `[propext, Classical.choice, Quot.sound]`: there is a Liouville number in the
+middle-third Cantor set that is normal to every base that is not a power of 3 (and, necessarily,
+not normal to the powers of 3).  No cited input remains: the 3-adic two-logarithm bound is proved
+(`PadicTwoLogs.padicTwoLogs`, via the elementary `laurentZeroLemma`), and the shadow zone needs no
+Baker discrepancy (`repPairArith_of_sparse`, proved).  `CantorRepetition.lean` is sorry-free.
+
+**What's happened.**
+- 2026-10-09 lap 13 (later): `repPairArith_of_sparse` PROVED (new `section Shadow`).  With `v` in
+  even run `k`, either the top `T` of `ξ` is below `a_{k+2}` (shadow I, `Z = h'(bᵈ−1)tᵐ`) or the
+  pair is separated (shadow II, `Z = h'tᵐ`, use `−ξ`); in both, the copy and free options are both
+  `≥ θ_k = 2cos(π/9)^{√k+1}` only if `Z` is cyclically `(12(√k+1)+32)`-sparse modulo `3^{a_k} − 1`
+  (`shadow_sparse`), and sparse orbit points are counted by `RunSparseDecay`.  This replaces classes
+  2–6 and the copy-run sums; summability along `sched` by `summable_shadow_sched`.
+- 2026-10-09 review lap 13: `laurentZeroLemma` PROVED (support determinant; top coefficient
+  `∏ lc(q_l) · det[y_σˡ] ≠ 0`); `padicTwoLogs` unconditional; `repPairArith_of_three_dvd` wired.
+- 2026-10-09 laps 11–12: P3 (a)–(e) proved (interpolation determinant valuation, Liouville bound,
+  squeeze, LTE dependent case, assembly `padicTwoLogs_of_zeroLemma`); P1 per-pair leaves.
+- 2026-10-08 review lap 10: the 3-adic chain `SparseIdentity.sparseIdentityBound_of_padic` replaces
+  Matveev by the 3-adic two-log bound.
+- 2026-10-08 laps 8–9: every sparse-pair leaf proved (`sparseIdentityBound_of_matveev`,
+  `runOrbitDecay_of_sparse`, `copyRun_psi`, `repPairArith_of_runDecay`, …).
+- 2026-10-07 review lap 7: route change to sparse pairs (`cyclic_pair_identity`).
+- 2026-10-07 laps 1–6: construction, copy-zone toolkit, assembly, probes (`b = 6, 12` at the
+  `1/N` floor; control `b = 9` flat).
+
+**Outstanding.**  On this headline: none.  Follow-ups (off the scoped target): the exact-exponent
+sibling `ExponentCantorFullProfile μ₀` (frozen, 40%); a neutral note `docs/notes/` for the result.
+
+| headline | claim | `#print axioms` | inputs |
+|---|---|---|---|
+| `liouvilleCantorFullProfile` | unconditional (frozen) | trust base | none 🟢 |
+| `repPairArith_of_sparse` | Baker-free shadow dichotomy | trust base | `SparseIdentityBound t` (proved from `padicTwoLogs`) |
+| `PadicTwoLogs.padicTwoLogs`, `laurentZeroLemma` | 3-adic two-log bound; zero lemma | trust base | none |
+| `liouvilleCantorFullProfile_of_baker`, `_of_padic`, `_of_literature` | conditional forms (historical) | trust base | superseded |
+| `ae_isNormal_rep_of_coprime_three`, `liouville_repReal` | `3 ∤ b`; Liouville | trust base | none |
+
+Math-axiom count of the headline: 0.
+
 ## Bugeaud 10.36 optimal exponent c⋆ (branch `proof/uniformbad-threshold`) — review lap 13, 7 October 2026
 
 **Located: `93/37 ≤ c⋆ ≤ 124/25`; gate `c⋆ ≤ 9/2` walled for local engines** · **Build**: 🟢 green (10809 jobs) · **Updated**: c⋆ lap 13 · 2026-10-07 · see `git log`
@@ -55,49 +97,6 @@ Math-axiom count for the proved headlines: 0 (trust base + `native_decide` artif
 Pointers: `DIRECTION.md` (branch CURRENT DIRECTIVE, review lap 13) · newest `HANDOFF-2026-10-07-cstar-lap13.md` ·
 `PENDING_WORK.md` top section · `src/NormalNumbers/Maze.lean` (rows "local per-window engines at c = 9/2",
 "two-rate counting engine at c = 9/2", "counted medium bases", "adaptive split cores").
-## Cantor repetition update, 7 October 2026 (branch `proof/cantor-repetition`, review lap 7)
-
-**Is the profile cut forced? No.** · **Build**: 🟢 green (10802 jobs, full default build) · lap 13
-
-**Where it stands.**  `CantorRepetition.liouvilleCantorFullProfile` is a theorem with
-`#print axioms` = `[propext, Classical.choice, Quot.sound]`: there is a Liouville number in the
-middle-third Cantor set that is normal to every base that is not a power of 3 (and, necessarily,
-not normal to the powers of 3).  No cited input remains: the 3-adic two-logarithm bound is proved
-(`PadicTwoLogs.padicTwoLogs`, via the elementary `laurentZeroLemma`), and the shadow zone needs no
-Baker discrepancy (`repPairArith_of_sparse`, proved).  `CantorRepetition.lean` is sorry-free.
-
-**What's happened.**
-- 2026-10-09 lap 13 (later): `repPairArith_of_sparse` PROVED (new `section Shadow`).  With `v` in
-  even run `k`, either the top `T` of `ξ` is below `a_{k+2}` (shadow I, `Z = h'(bᵈ−1)tᵐ`) or the
-  pair is separated (shadow II, `Z = h'tᵐ`, use `−ξ`); in both, the copy and free options are both
-  `≥ θ_k = 2cos(π/9)^{√k+1}` only if `Z` is cyclically `(12(√k+1)+32)`-sparse modulo `3^{a_k} − 1`
-  (`shadow_sparse`), and sparse orbit points are counted by `RunSparseDecay`.  This replaces classes
-  2–6 and the copy-run sums; summability along `sched` by `summable_shadow_sched`.
-- 2026-10-09 review lap 13: `laurentZeroLemma` PROVED (support determinant; top coefficient
-  `∏ lc(q_l) · det[y_σˡ] ≠ 0`); `padicTwoLogs` unconditional; `repPairArith_of_three_dvd` wired.
-- 2026-10-09 laps 11–12: P3 (a)–(e) proved (interpolation determinant valuation, Liouville bound,
-  squeeze, LTE dependent case, assembly `padicTwoLogs_of_zeroLemma`); P1 per-pair leaves.
-- 2026-10-08 review lap 10: the 3-adic chain `SparseIdentity.sparseIdentityBound_of_padic` replaces
-  Matveev by the 3-adic two-log bound.
-- 2026-10-08 laps 8–9: every sparse-pair leaf proved (`sparseIdentityBound_of_matveev`,
-  `runOrbitDecay_of_sparse`, `copyRun_psi`, `repPairArith_of_runDecay`, …).
-- 2026-10-07 review lap 7: route change to sparse pairs (`cyclic_pair_identity`).
-- 2026-10-07 laps 1–6: construction, copy-zone toolkit, assembly, probes (`b = 6, 12` at the
-  `1/N` floor; control `b = 9` flat).
-
-**Outstanding.**  On this headline: none.  Follow-ups (off the scoped target): the exact-exponent
-sibling `ExponentCantorFullProfile μ₀` (frozen, 40%); a neutral note `docs/notes/` for the result.
-
-| headline | claim | `#print axioms` | inputs |
-|---|---|---|---|
-| `liouvilleCantorFullProfile` | unconditional (frozen) | trust base | none 🟢 |
-| `repPairArith_of_sparse` | Baker-free shadow dichotomy | trust base | `SparseIdentityBound t` (proved from `padicTwoLogs`) |
-| `PadicTwoLogs.padicTwoLogs`, `laurentZeroLemma` | 3-adic two-log bound; zero lemma | trust base | none |
-| `liouvilleCantorFullProfile_of_baker`, `_of_padic`, `_of_literature` | conditional forms (historical) | trust base | superseded |
-| `ae_isNormal_rep_of_coprime_three`, `liouville_repReal` | `3 ∤ b`; Liouville | trust base | none |
-
-Math-axiom count of the headline: 0.
-
 ## Cantor exact-exponent stretch update, 6 October 2026 (branch `proof/cantorexp-stretch`)
 
 **PROVED** (lap 3): `CantorExactExponentStretch.exists_computable_mem_cantorSet_irrExponent_normal_all`
