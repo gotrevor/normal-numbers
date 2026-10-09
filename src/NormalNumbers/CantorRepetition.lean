@@ -8,6 +8,7 @@ import NormalNumbers.EntropyProfiles
 import NormalNumbers.ExplicitPQ
 import NormalNumbers.LevinSparse
 import NormalNumbers.SparseIdentity
+import NormalNumbers.CycMerge
 import Mathlib.NumberTheory.Multiplicity
 import Mathlib.Analysis.SpecificLimits.Normed
 
