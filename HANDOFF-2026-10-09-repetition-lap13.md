@@ -27,3 +27,7 @@ statements unchanged) are respected.
   both former sorries removed.  Blueprint tags on `liouvilleCantorFullProfile`,
   `repPairArith_of_sparse`, `laurentZeroLemma`, `padicTwoLogs`.
 - Nothing left on this headline.  Off-target follow-ups listed in PENDING_WORK.
+
+## Checkpoint (end of lap 13)
+Branch `proof/cantor-repetition`, HEAD d460dd11 (+ this handoff commit).  No uncommitted proof edits
+(scratch/ files only).  Scoped target met; `box done` reported the host will stop the run.
