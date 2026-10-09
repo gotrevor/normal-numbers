@@ -5704,6 +5704,131 @@ theorem sched_tail (X : ℝ) (hX : 1 ≤ X) (n : ℕ) :
       nlinarith
   linarith
 
+noncomputable def gT1 (x : ℝ) : ℝ := 2 * (Real.sqrt x + 1) * Real.exp (-Real.sqrt x)
+
+theorem hasDerivAt_gT1 {x : ℝ} (hx : 0 < x) : HasDerivAt gT1 (-Real.exp (-Real.sqrt x)) x := by
+  have hs : HasDerivAt Real.sqrt (1 / (2 * Real.sqrt x)) x := by
+    have := (hasDerivAt_id x).sqrt hx.ne'; simpa using this
+  have h1 := ((hs.add_const 1).const_mul 2).mul (hs.neg.exp)
+  have hsx : 0 < Real.sqrt x := Real.sqrt_pos.2 hx
+  unfold gT1
+  refine h1.congr_deriv ?_
+  simp only [Pi.neg_apply]
+  field_simp
+  ring
+
+theorem gT1_step (j : ℕ) : Real.exp (-Real.sqrt (j + 1)) ≤ gT1 j - gT1 (j + 1) := by
+  have hcont : ContinuousOn gT1 (Set.Icc (j : ℝ) (j + 1)) := by
+    unfold gT1; fun_prop
+  obtain ⟨ξ, hξ, hd⟩ := exists_hasDerivAt_eq_slope gT1 (fun x => -Real.exp (-Real.sqrt x))
+    (by linarith : (j : ℝ) < j + 1) hcont
+    (fun x hx => hasDerivAt_gT1 (lt_of_le_of_lt (Nat.cast_nonneg j) hx.1))
+  have : gT1 (j + 1) - gT1 j = -Real.exp (-Real.sqrt ξ) := by
+    rw [hd]; ring
+  have hle : Real.exp (-Real.sqrt (j + 1)) ≤ Real.exp (-Real.sqrt ξ) := by
+    apply Real.exp_le_exp.2
+    have := Real.sqrt_le_sqrt hξ.2.le
+    linarith
+  linarith
+
+theorem sum_exp_sqrt1_le (J n : ℕ) :
+    ∑ j ∈ Finset.Ico (J + 1) (J + 1 + n), Real.exp (-Real.sqrt j) ≤ gT1 J := by
+  have h : ∑ j ∈ Finset.Ico (J + 1) (J + 1 + n), Real.exp (-Real.sqrt j) ≤ gT1 J - gT1 (J + n) := by
+    induction n with
+    | zero => simp
+    | succ n ih =>
+      rw [← add_assoc, Finset.sum_Ico_succ_top (by omega)]
+      have hstep := gT1_step (J + n)
+      push_cast at hstep ⊢
+      rw [show (J : ℝ) + 1 + n = J + n + 1 by ring]
+      rw [show (J : ℝ) + (n + 1) = J + n + 1 by ring]
+      linarith
+  have hpos : 0 ≤ gT1 (J + n) := by unfold gT1; positivity
+  linarith
+
+theorem decr_aux1 {a b : ℝ} (ha : 0 ≤ a) (hab : a ≤ b) :
+    (2 * b + 3) * Real.exp (-b) ≤ (2 * a + 3) * Real.exp (-a) := by
+  have h := Real.add_one_le_exp (b - a)
+  have e : Real.exp (-a) = Real.exp (-b) * Real.exp (b - a) := by
+    rw [← Real.exp_add]; ring_nf
+  rw [e]
+  have hp := Real.exp_pos (-b)
+  have h2 : 2 * b + 3 ≤ (2 * a + 3) * Real.exp (b - a) := by
+    have : 2 * b + 3 ≤ (2 * a + 3) * ((b - a) + 1) := by nlinarith
+    exact this.trans (mul_le_mul_of_nonneg_left h (by linarith))
+  calc (2 * b + 3) * Real.exp (-b) ≤ (2 * a + 3) * Real.exp (b - a) * Real.exp (-b) :=
+        mul_le_mul_of_nonneg_right h2 hp.le
+    _ = _ := by ring
+
+/-- **First-power schedule tail (proved).**  `Σ_{j : sched j ≥ X} 1/sched j ≤ 9(log X + 3)/X`. -/
+theorem sched_tail1 (X : ℝ) (hX : 1 ≤ X) (n : ℕ) :
+    ∑ j ∈ Finset.range n, (if X ≤ (sched j : ℝ) then 1 / (sched j : ℝ) else 0) ≤
+      9 * (Real.log X + 3) / X := by
+  set y := max (Real.log (X / 3)) 0
+  have hy0 : 0 ≤ y := le_max_right _ _
+  set J := ⌈y ^ 2⌉₊
+  have hJ : y ≤ Real.sqrt J := by
+    rw [← Real.sqrt_sq hy0]; exact Real.sqrt_le_sqrt (Nat.le_ceil _)
+  have hpt : ∀ j ∈ Finset.range n, (if X ≤ (sched j : ℝ) then 1 / (sched j : ℝ) else 0) ≤
+      if J ≤ j then Real.exp (-Real.sqrt j) else 0 := by
+    intro j _
+    split_ifs with h1 h2
+    · have h3 := exp_sqrt_le_sched j
+      have hsp : (0 : ℝ) < sched j := lt_of_lt_of_le (Real.exp_pos _) h3
+      rw [div_le_iff₀ hsp]
+      calc (1 : ℝ) = Real.exp (-Real.sqrt j) * Real.exp (Real.sqrt j) := by
+            rw [← Real.exp_add, show -Real.sqrt j + Real.sqrt j = 0 by ring, Real.exp_zero]
+        _ ≤ Real.exp (-Real.sqrt j) * (sched j : ℝ) :=
+            mul_le_mul_of_nonneg_left h3 (Real.exp_pos _).le
+    · exfalso; apply h2
+      have h3 := (h1.trans (sched_le_three_exp j))
+      have hl : Real.log (X / 3) ≤ Real.sqrt j := by
+        rw [Real.log_le_iff_le_exp (by positivity)]; linarith
+      have hyj : y ≤ Real.sqrt j := max_le hl (Real.sqrt_nonneg _)
+      have : y ^ 2 ≤ j := by
+        have := pow_le_pow_left₀ hy0 hyj 2
+        rwa [Real.sq_sqrt (Nat.cast_nonneg _)] at this
+      exact Nat.ceil_le.2 this
+    · positivity
+    · exact le_rfl
+  refine (Finset.sum_le_sum hpt).trans ?_
+  rw [← Finset.sum_filter]
+  have hsub : (Finset.range n).filter (fun j => J ≤ j) ⊆ insert J (Finset.Ico (J + 1) (J + 1 + n)) := by
+    intro j hj
+    simp only [Finset.mem_filter, Finset.mem_range] at hj
+    rcases hj.2.eq_or_lt with h | h
+    · rw [← h]; exact Finset.mem_insert_self _ _
+    · exact Finset.mem_insert_of_mem (Finset.mem_Ico.2 ⟨h, by omega⟩)
+  refine (Finset.sum_le_sum_of_subset_of_nonneg hsub fun _ _ _ => (Real.exp_pos _).le).trans ?_
+  rw [Finset.sum_insert (by simp)]
+  have h1 := sum_exp_sqrt1_le J n
+  have h2 := decr_aux1 hy0 hJ
+  have hg : Real.exp (-Real.sqrt J) + gT1 J = (2 * Real.sqrt J + 3) * Real.exp (-Real.sqrt J) := by
+    unfold gT1; ring
+  have hfin : (2 * y + 3) * Real.exp (-y) ≤ 9 * (Real.log X + 3) / X := by
+    have hX0 : 0 < X := by linarith
+    have hlX : 0 ≤ Real.log X := Real.log_nonneg hX
+    have hl3 : Real.log 3 < 2 := by
+      have := Real.log_lt_sub_one_of_pos (by norm_num : (0:ℝ) < 3) (by norm_num); linarith
+    have hl3' : 0 < Real.log 3 := Real.log_pos (by norm_num)
+    rcases le_total (Real.log (X / 3)) 0 with h | h
+    · have hy : y = 0 := max_eq_right h
+      rw [hy]; simp only [mul_zero, neg_zero, Real.exp_zero, mul_one, zero_add]
+      have hX3 : X ≤ 3 := by
+        have := (Real.log_nonpos_iff (by positivity)).1 h
+        rw [div_le_one (by norm_num)] at this; exact this
+      rw [le_div_iff₀ (by positivity)]
+      nlinarith
+    · have hy : y = Real.log (X / 3) := max_eq_left h
+      rw [hy, Real.log_div hX0.ne' (by norm_num)]
+      have he : Real.exp (-(Real.log X - Real.log 3)) = 3 / X := by
+        rw [show -(Real.log X - Real.log 3) = Real.log 3 - Real.log X by ring,
+          Real.exp_sub, Real.exp_log (by positivity), Real.exp_log (by positivity)]
+      rw [he]
+      rw [mul_div_assoc', div_le_div_iff_of_pos_right (by positivity)]
+      nlinarith
+  linarith
+
 end SchedTail
 
 section CopySched
