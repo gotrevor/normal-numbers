@@ -755,6 +755,95 @@ theorem exists_det_hom_ne_zero (hZ : Literature.LaurentZeroLemma) (t a b : ℤ) 
   exact (mul_eq_zero.1 hcast).resolve_left
     (Finset.prod_ne_zero_iff.2 fun x _ => pow_ne_zero _ (by exact_mod_cast ha))
 
+/-- Entry bound for the homogenised grid determinant. -/
+theorem entry_bound (t a b : ℤ) (M : ℕ) (hM1 : 1 ≤ M) (ht : 1 ≤ t) (ha : |a| ≤ M) (hb : |b| ≤ M)
+    (L Z P S : ℕ) (hZ : 1 ≤ Z) (z k l r s K : ℕ) (hz : z ≤ Z) (hk : k ≤ K) (hl : l < L)
+    (hr : r ≤ P) (hs : s ≤ S) :
+    |(((z.choose k : ℕ) : ℤ)) * t ^ (l * r) * b ^ (l * s) * a ^ ((L - 1 - l) * s)| ≤
+      (Z : ℤ) ^ K * t ^ (L * P) * (M : ℤ) ^ (L * S) := by
+  rw [abs_mul, abs_mul, abs_mul, abs_pow, abs_pow, abs_pow, abs_of_pos (by omega : (0:ℤ) < t)]
+  have h1 : |(((z.choose k : ℕ) : ℤ))| ≤ (Z : ℤ) ^ K := by
+    rw [Nat.abs_cast]
+    exact_mod_cast ((Nat.choose_le_pow z k).trans (Nat.pow_le_pow_left hz k)).trans
+      (Nat.pow_le_pow_right hZ hk)
+  have h2 : t ^ (l * r) ≤ t ^ (L * P) := pow_le_pow_right₀ ht (Nat.mul_le_mul (by omega) hr)
+  have h3 : |b| ^ (l * s) * |a| ^ ((L - 1 - l) * s) ≤ (M : ℤ) ^ (L * S) := by
+    calc |b| ^ (l * s) * |a| ^ ((L - 1 - l) * s) ≤ (M : ℤ) ^ (l * s) * (M : ℤ) ^ ((L - 1 - l) * s) :=
+          mul_le_mul (pow_le_pow_left₀ (abs_nonneg _) hb _) (pow_le_pow_left₀ (abs_nonneg _) ha _)
+            (by positivity) (by positivity)
+      _ = (M : ℤ) ^ ((L - 1) * s) := by rw [← pow_add, ← add_mul]; congr 2; omega
+      _ ≤ (M : ℤ) ^ (L * S) := pow_le_pow_right₀ (by exact_mod_cast hM1)
+          (Nat.mul_le_mul (by omega) hs)
+  calc _ = |(((z.choose k : ℕ) : ℤ))| * t ^ (l * r) * (|b| ^ (l * s) * |a| ^ ((L - 1 - l) * s)) := by ring
+    _ ≤ (Z : ℤ) ^ K * t ^ (L * P) * (M : ℤ) ^ (L * S) := by
+      gcongr
+
+/-- **(d), the squeeze (proved from `LaurentZeroLemma`).**  Independent case, `3 ∣ t − 1`,
+`3 ∤ a`, heights `≤ M`.  For any parameters with `R₂ ≤ δ` (the values `r + δs` are distinct),
+`(K−1)L < R₂S₂` (zero-lemma count; the other count uses `R₁ = L`, `S₁ = 1`) and the numeric
+inequality `(KL)!·X^{KL} < 3^{T(KL−T−K)}`, `X = (L+R₂+δS₂)^K t^{L(L+R₂)} M^{LS₂}`: `g ≤ T`.  (If
+`g > T`, then `T/g = 0`, the grid minor is nonzero, `3^{T(KL−T−K)}` divides it, and Liouville
+contradicts `hnum`.)  Left for the assembly: choose the parameters (`L ≈ C(1+log δ)`,
+`K ≈ C'L log t log M`, `R₂ ≈ K/log t`, `S₂ ≈ K/log M`, `T = ⌊KL/3⌋`) and prove `hnum`. -/
+theorem g_le_of_squeeze (hZ : Literature.LaurentZeroLemma) (t a b : ℤ) (δ g : ℕ)
+    (ht1 : 3 ∣ t - 1) (ht2 : 2 ≤ t) (ha : ¬ (3 : ℤ) ∣ a) (ha0 : a ≠ 0) (hb0 : b ≠ 0)
+    (M : ℕ) (hM1 : 1 ≤ M) (haM : |a| ≤ M) (hbM : |b| ≤ M)
+    (hind : ∀ u v : ℤ, (t : ℚ) ^ u * ((b : ℚ) / a) ^ v = 1 → u = 0 ∧ v = 0)
+    (hab : (3 : ℤ) ^ g ∣ b - a * t ^ δ) (K L R₂ S₂ T : ℕ) (hδ : R₂ ≤ δ)
+    (hcount : (K - 1) * L < R₂ * S₂)
+    (hnum : ((K * L).factorial : ℤ) * (((L + R₂ + δ * S₂ : ℕ) : ℤ) ^ K * t ^ (L * (L + R₂)) *
+      (M : ℤ) ^ (L * S₂)) ^ (K * L) < 3 ^ (T * (K * L - (T + K)))) : g ≤ T := by
+  by_contra hgT
+  push Not at hgT
+  have hg : 1 ≤ g := by omega
+  have hR₂ : 1 ≤ R₂ := by
+    rcases Nat.eq_zero_or_pos R₂ with h | h
+    · rw [h] at hcount; simp at hcount
+    · exact h
+  have hβ : (b : ℚ) / a ≠ 0 := div_ne_zero (by exact_mod_cast hb0) (by exact_mod_cast ha0)
+  have hc1 : L ≤ ((range L ×ˢ range 1).image fun rs : ℕ × ℕ =>
+      (t : ℚ) ^ rs.1 * ((b : ℚ) / a) ^ rs.2).card := by
+    rw [card_image_of_injOn]
+    · simp
+    · intro x hx y hy hxy
+      simp only [coe_product, coe_range, Set.mem_prod, Set.mem_Iio] at hx hy
+      have hx2 : x.2 = 0 := by omega
+      have hy2 : y.2 = 0 := by omega
+      simp only [hx2, hy2, pow_zero, mul_one] at hxy
+      have ht' : (1 : ℚ) < t := by exact_mod_cast (by omega : (1 : ℤ) < t)
+      exact Prod.ext ((pow_right_strictMono₀ ht').injective hxy) (by rw [hx2, hy2])
+  have hc2 : (K - 1) * L < ((range R₂ ×ˢ range S₂).image fun rs : ℕ × ℕ =>
+      (rs.1 : ℤ) * 1 + (rs.2 : ℤ) * δ).card := by
+    rw [card_image_of_injOn]
+    · simpa using hcount
+    · intro x hx y hy hxy
+      simp only [coe_product, coe_range, Set.mem_prod, Set.mem_Iio] at hx hy
+      simp only at hxy
+      have h : x.1 + x.2 * δ = y.1 + y.2 * δ := by exact_mod_cast (by linarith : _)
+      have hm := congrArg (· % δ) h
+      simp only [Nat.add_mul_mod_self_right] at hm
+      rw [Nat.mod_eq_of_lt (by omega), Nat.mod_eq_of_lt (by omega)] at hm
+      have : x.2 * δ = y.2 * δ := by omega
+      exact Prod.ext hm (Nat.eq_of_mul_eq_mul_right (by omega) this)
+  obtain ⟨r, s, hr, hs, hdet⟩ := exists_det_hom_ne_zero hZ t a b δ (by omega) ha0 hb0 hind
+    K L L R₂ 1 S₂ hc1 hc2
+  have hdvd := three_pow_dvd_det_rs (fun k z => ((z.choose k : ℕ) : ℤ)) choose_mul_choose_expand
+    t a b δ hg ht1 ha hab K L r s T
+  rw [Nat.div_eq_of_lt hgT, zero_add, mul_one] at hdvd
+  have hle := Int.le_of_dvd (abs_pos.2 hdet) ((dvd_abs _ _).2 hdvd)
+  have hdl := Matrix.det_le (abv := AbsoluteValue.abs) (A := Matrix.of fun (x l : Fin K × Fin L) =>
+      (((r x + δ * s x).choose l.1 : ℕ) : ℤ) * t ^ ((l.2 : ℕ) * r x) * b ^ ((l.2 : ℕ) * s x) *
+        a ^ ((L - 1 - l.2) * s x))
+    (x := ((L + R₂ + δ * S₂ : ℕ) : ℤ) ^ K * t ^ (L * (L + R₂)) * (M : ℤ) ^ (L * S₂))
+    (fun x l => by
+      have := hr x; have := hs x
+      simpa using entry_bound t a b M hM1 (by omega) haM hbM L (L + R₂ + δ * S₂) (L + R₂) S₂
+        (by omega) (r x + δ * s x) l.1 l.2 (r x) (s x) K
+        (by have := Nat.mul_le_mul_left δ (show s x ≤ S₂ by omega); omega) l.1.isLt.le l.2.isLt (by omega) (by omega))
+  rw [Fintype.card_prod, Fintype.card_fin, Fintype.card_fin, nsmul_eq_mul] at hdl
+  have := hle.trans hdl
+  linarith
+
 end ZeroWiring
 
 end PadicTwoLogs
