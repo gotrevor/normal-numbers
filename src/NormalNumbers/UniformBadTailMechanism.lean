@@ -218,4 +218,60 @@ theorem tailChargeBudget449_of_nodes (h1 : APKillUniform449 6 (37 / 20))
     (h4 : RegularPotential2_449 45) (h5 : OrphanSmall449 (1 / 100)) : TailChargeBudget449 := by
   sorry
 
+open Classical in
+/-- Survivors' Good descendant weight `d` blocks down (the depth-`d` potential in totals). -/
+noncomputable def potTot (d m : ℕ) : ℚ :=
+  ∑ a ∈ (Finset.range (2 ^ (6 * m))).filter (survives (6 * m)), descMass (6 * m) a (6 * m + 6 * d)
+
+open Classical in
+/-- Depth-`d` potential of orphan survivors at block `m+1`. -/
+noncomputable def orphanPot (d m : ℕ) : ℚ :=
+  ∑ a ∈ (Finset.range (2 ^ (6 * (m + 1)))).filter
+      (fun a => survives (6 * (m + 1)) a ∧ ¬ survives (6 * m) (a / 64)),
+    descMass (6 * (m + 1)) a (6 * (m + 1) + 6 * d)
+
+/-- **Depth-`d` totals step** (generalizes `childMassTot_succ_le`; `d = 2` is node 4′'s). -/
+theorem potTot_succ_le {d : ℕ} {R : ℚ}
+    (hR : ∀ k a, Good449 k a → descMass k a (k + 6 + 6 * d) ≤ R * descMass k a (k + 6 * d))
+    (m : ℕ) : potTot d (m + 1) ≤ R * potTot d m + orphanPot d m := by
+  classical
+  have hd : ∀ k a K, 0 ≤ descMass k a K := fun k a K =>
+    Finset.sum_nonneg fun _ _ => coreWeight_nonneg _ _
+  unfold potTot orphanPot
+  rw [← Finset.sum_filter_add_sum_filter_not _ (fun a => survives (6 * m) (a / 64)),
+    Finset.filter_filter, Finset.filter_filter]
+  refine add_le_add ?_ le_rfl
+  rw [Finset.sum_filter]
+  have e6 : 6 * (m + 1) = 6 * m + 6 := by ring
+  rw [show 2 ^ (6 * (m + 1)) = 2 ^ 6 * 2 ^ (6 * m) by rw [e6, pow_add, mul_comm],
+    sum_range_mul_split]
+  rw [Finset.sum_filter, Finset.mul_sum]
+  refine Finset.sum_le_sum fun p _ => ?_
+  split_ifs with hp
+  · calc ∑ j ∈ Finset.range (2 ^ 6), (if survives (6 * (m + 1)) (2 ^ 6 * p + j) ∧
+            survives (6 * m) ((2 ^ 6 * p + j) / 64) then
+            descMass (6 * (m + 1)) (2 ^ 6 * p + j) (6 * (m + 1) + 6 * d) else 0)
+          ≤ ∑ j ∈ Finset.range (2 ^ 6), descMass (6 * m + 6) (2 ^ 6 * p + j) (6 * m + 6 + 6 * d) :=
+            Finset.sum_le_sum fun j _ => by
+              split_ifs
+              · rw [e6]
+              · exact hd _ _ _
+        _ = descMass (6 * m) p (6 * m + 6 + 6 * d) := (descMass_split _ _ _).symm
+        _ ≤ R * descMass (6 * m) p (6 * m + 6 * d) := hR _ _ hp.1
+  · rw [mul_zero]
+    refine Finset.sum_nonpos (ι := ℕ) (N := ℚ) fun j hj => ?_
+    split_ifs with h
+    · exfalso; apply hp
+      have : (2 ^ 6 * p + j) / 64 = p := by
+        have := Finset.mem_range.1 hj; omega
+      exact this ▸ h.2
+    · exact le_rfl
+
+/-- Node 4′ is the `d = 2` hypothesis of `potTot_succ_le`. -/
+theorem potTot_two_succ_le {R : ℚ} (hR : RegularPotential2_449 R) (m : ℕ) :
+    potTot 2 (m + 1) ≤ R * potTot 2 m + orphanPot 2 m :=
+  potTot_succ_le (fun k a hg => by
+    have := hR k a hg
+    rwa [show k + 6 + 6 * 2 = k + 18 by ring, show k + 6 * 2 = k + 12 by ring]) m
+
 end NormalNumbers.UniformBadThreshold.TailReview
