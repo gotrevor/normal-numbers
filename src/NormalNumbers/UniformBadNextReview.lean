@@ -84,6 +84,55 @@ def BinaryCriticalClassification : Prop :=
     (∀ n : ℕ, δ ≤ dnear ((2 : ℝ) ^ n * x)) →
     ∃ q : ℚ, (q : ℝ) = x
 
+/-- No compactness is needed for the lower-bound contradiction: classification
+makes an admissible witness rational, and its killing base is already among
+the universally quantified bases. -/
+theorem not_admissible_of_binaryCriticalClassification {c : ℝ}
+    (hclass : BinaryCriticalClassification)
+    (hwidth : binaryCriticalWidth < (2 : ℝ) ^ (-c)) : ¬ Admissible c := by
+  rintro ⟨x, hx⟩
+  obtain ⟨q, rfl⟩ := hclass _ hwidth x (fun n => (hx 2 (by norm_num) n).le)
+  exact not_goodBelow_rat c q (fun b hb _ n => hx b hb n)
+
+/-- The exact binary constant is a conditional lower bound for cStar.
+The classification and positivity of the defining product are explicit inputs;
+neither is discharged by this elementary wiring theorem. -/
+@[blueprint (title := "The binary critical exponent bounds cStar under rational classification")]
+theorem binaryCriticalExponent_le_cStar_of_classification
+    (hpos : 0 < binaryCriticalWidth) (hclass : BinaryCriticalClassification) :
+    binaryCriticalExponent ≤ cStar := by
+  refine le_csInf ⟨24, admissible_24⟩ ?_
+  intro c hc
+  by_contra h
+  have hc' : c < -Real.logb 2 binaryCriticalWidth := not_le.1 h
+  have he : Real.logb 2 binaryCriticalWidth < -c := by linarith
+  have hwidth : binaryCriticalWidth < (2 : ℝ) ^ (-c) := by
+    rw [← Real.rpow_logb (b := 2) (by norm_num) (by norm_num) hpos]
+    exact Real.rpow_lt_rpow_of_exponent_lt (by norm_num) he
+  exact not_admissible_of_binaryCriticalClassification hclass hwidth hc
+
+/-- The source input used in the reviewed derivation: central-hole survivors
+are countable strictly before the symmetric Thue--Morse transition.
+Source: Glendinning--Sidorov, arXiv:1302.2486v2, Lemma 2.12, Proposition 3.3,
+and §4.3.  For a below 1/4 use monotonicity and Lemma 1.1.
+This is a literature hypothesis Prop, not an axiom. -/
+def CentralHoleCountability : Prop :=
+  ∀ a : ℝ, 0 < a → a < (1 - binaryCriticalWidth) / 2 →
+    {x : ℝ | x ∈ Set.Icc 0 1 ∧ ∀ n : ℕ,
+      Int.fract ((2 : ℝ) ^ n * x) ∉ Set.Ioo a (1 - a)}.Countable
+
+/-- Reviewed implication to formalize if desired (not proved here).
+Choose a strictly smaller dyadic central hole, still before the transition.
+Its avoidance condition has a finite-state binary presentation, with dyadic
+endpoint exceptions already rational.  A countable finite-state survivor
+language has no branching recurrent component, so all paths are eventually
+periodic.  This extra finite-state argument, not countability alone, yields
+rationality.  The strict gap above the critical width permits the dyadic
+approximation; no conclusion at equality is asserted. -/
+def BinaryClassificationOfCentralCountability : Prop :=
+  0 < binaryCriticalWidth → binaryCriticalWidth < 1 / 2 →
+    CentralHoleCountability → BinaryCriticalClassification
+
 /-- New boundary question: can finitely many other-base windows strictly
 exclude the entire closed binary critical survivor set?  Such a certificate,
 with compactness and strict margins, would produce a gap above the binary
@@ -99,5 +148,7 @@ denominators are bases, so no fixed ceiling such as 30 or 3000 is imposed.
 Any success must finish as an exact finite Win certificate.  No evidence in
 this review establishes this target. -/
 def AdaptiveLower252 : Prop := ¬ Admissible (63 / 25)
+
+#print axioms binaryCriticalExponent_le_cStar_of_classification
 
 end NormalNumbers.UniformBadThreshold.NextReview
