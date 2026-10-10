@@ -388,6 +388,85 @@ theorem acc2_succ (k a d : ℕ) (hd : d < 2) :
       rw [Nat.sub_self, pow_zero, Nat.div_one]
       exact h2 _ (by omega) (by omega)
 
+/-- The 25-state binary automaton `sft449` (`scripts/cstar_models/sft449.h`); `99` = dead. -/
+def sftT : List (ℕ × ℕ) :=
+  [(1,13),(2,13),(3,13),(4,13),(99,5),(6,14),(99,7),(99,8),(9,15),(99,10),(99,11),(12,15),(99,13),
+   (1,14),(1,15),(1,16),(17,99),(2,18),(19,99),(20,99),(3,21),(22,99),(23,99),(3,24),(1,99)]
+
+def sftStep (s d : ℕ) : ℕ :=
+  match sftT[s]? with
+  | some p => if d = 0 then p.1 else p.2
+  | none => 99
+
+/-- The automaton state after reading the `k`-bit word `a` (most significant bit first). -/
+def sftRun : ℕ → ℕ → ℕ
+  | 0, _ => 0
+  | k + 1, a => let s := sftRun k (a / 2); if s = 99 then 99 else sftStep s (a % 2)
+
+/-- Reachable (state, suffix length ≤ 12, suffix) triples, by iterated closure from the start. -/
+def reachStep (l : List (ℕ × ℕ × ℕ)) : List (ℕ × ℕ × ℕ) :=
+  (l ++ l.flatMap fun (p : ℕ × ℕ × ℕ) => [0, 1].filterMap fun d =>
+    let t := sftStep p.1 d
+    if t = 99 then none else some (t, min (p.2.1 + 1) 12, (2 * p.2.2 + d) % 2 ^ min (p.2.1 + 1) 12)).dedup
+
+def sftReach : List (ℕ × ℕ × ℕ) := (reachStep)^[20] [(0, 0, 0)]
+
+/-- Closure and safety of `sftReach`, checked by evaluation. -/
+def sftReachOK : Bool :=
+  sftReach.all fun (p : ℕ × ℕ × ℕ) => [0, 1].all fun d =>
+    let t := sftStep p.1 d
+    t = 99 || (sftReach.contains (t, min (p.2.1 + 1) 12, (2 * p.2.2 + d) % 2 ^ min (p.2.1 + 1) 12) &&
+      (List.range (min (p.2.1 + 1) 13 + 1)).all fun L =>
+        L = 0 || !decide (Forb2 L ((2 * p.2.2 + d) % 2 ^ L)))
+
+theorem sftReachOK_true : sftReachOK = true := by native_decide
+
+
+theorem sftReach_closed {p : ℕ × ℕ × ℕ} (hp : p ∈ sftReach) {d : ℕ} (hd : d < 2)
+    (ht : sftStep p.1 d ≠ 99) :
+    (sftStep p.1 d, min (p.2.1 + 1) 12, (2 * p.2.2 + d) % 2 ^ min (p.2.1 + 1) 12) ∈ sftReach ∧
+      ∀ L, 0 < L → L ≤ min (p.2.1 + 1) 13 → ¬ Forb2 L ((2 * p.2.2 + d) % 2 ^ L) := by
+  have h := sftReachOK_true
+  simp only [sftReachOK, List.all_eq_true] at h
+  have h2 := h p hp d (by interval_cases d <;> simp)
+  simp only [Bool.or_eq_true, decide_eq_true_eq, ht, false_or, Bool.and_eq_true,
+    List.contains_iff_mem, List.all_eq_true, List.mem_range] at h2
+  refine ⟨h2.1, fun L hL hLe => ?_⟩
+  have := h2.2 L (by omega)
+  simpa [show L ≠ 0 by omega] using this
+
+theorem two_mul_mod_add_mod (x m d j : ℕ) (hj : j ≤ m + 1) :
+    (2 * (x % 2 ^ m) + d) % 2 ^ j = (2 * x + d) % 2 ^ j := by
+  have hdvd : 2 ^ j ∣ 2 ^ (m + 1) := pow_dvd_pow 2 hj
+  obtain ⟨c, hc⟩ := hdvd
+  have e : 2 * x + d = 2 * (x % 2 ^ m) + d + 2 ^ j * (c * (x / 2 ^ m)) := by
+    have := Nat.mod_add_div x (2 ^ m)
+    rw [← mul_assoc, ← hc, pow_succ]; nlinarith
+  rw [e, Nat.add_mul_mod_self_left]
+
+/-- **SFT soundness**: a word the automaton `sft449` accepts has no forbidden `Forb2` substring. -/
+theorem acc2_of_sftRun : ∀ k a, sftRun k a ≠ 99 →
+    (sftRun k a, min k 12, a % 2 ^ min k 12) ∈ sftReach ∧ Acc2 k a
+  | 0, a, _ => by
+    refine ⟨by rw [show (sftRun 0 a, min 0 12, a % 2 ^ min 0 12) = (0, 0, 0) by simp [sftRun, Nat.mod_one]]; native_decide, fun n m hnm hmk => by omega⟩
+  | k + 1, a, h => by
+    have hs : sftRun k (a / 2) ≠ 99 := fun h' => h (by simp [sftRun, h'])
+    obtain ⟨hr, hacc⟩ := acc2_of_sftRun k (a / 2) hs
+    have hrun : sftRun (k + 1) a = sftStep (sftRun k (a / 2)) (a % 2) := by simp [sftRun, hs]
+    rw [hrun] at h ⊢
+    obtain ⟨h1, h2⟩ := sftReach_closed hr (Nat.mod_lt _ (by norm_num)) h
+    dsimp only at h1 h2
+    have ha : a = 2 * (a / 2) + a % 2 := by omega
+    have hm : min (min k 12 + 1) 12 = min (k + 1) 12 := by omega
+    refine ⟨?_, ?_⟩
+    · rw [hm, two_mul_mod_add_mod _ _ _ _ (by omega), ← ha] at h1; exact h1
+    · rw [ha, acc2_succ _ _ _ (Nat.mod_lt _ (by norm_num))]
+      refine ⟨hacc, fun L hL hLk hf => ?_⟩
+      have hL13 : L ≤ 13 := hf.1
+      have := h2 L hL (by omega)
+      rw [two_mul_mod_add_mod _ _ _ _ (by omega)] at this
+      exact this hf
+
 /-- Staging node (gate step 1 asks for `c = 4.5` first): the same certificate at `c = 9/2`.
 Evidence: sampled shared-phase growth ≈ 1.815 at D = 8 (optimistic screen); no rigorous
 certificate yet (uniform bins fail, see module doc).  Confidence it holds with an adapted

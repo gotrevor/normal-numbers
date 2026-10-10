@@ -21,3 +21,5 @@ Branch `proof/uniformbad-threshold`.
 3. Port exact3's `go`/`bb` to Lean over Int (computable), prove `go` is a lower bound for the sum over Good
    descendants (the main soundness lemma), then native_decide the check over 76800 bins (C: 3.9M boxes).
 4. Root: Good level-6 cells, direct computation.
+- Lap 4b: item 2 DONE — `acc2_of_sftRun` (sftRun ≠ 99 → Acc2), via `sftReach` (5647 reachable
+  (state, 12-bit suffix) triples) closure + safety by native_decide (`sftReachOK_true`).
