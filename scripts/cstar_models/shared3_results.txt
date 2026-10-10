@@ -58,3 +58,7 @@ exact-cont D=4: N=16 M=6 1.526013   N=32 M=6 1.679486   N=128 M=6 1.761422   N=6
 ## target-driven fixed point, containment (exactinf3.c ... c G), sampled warm start, 1% overshoot on lowering
 cert-cont D=4 N=16  M=6:  G=1.52 CERTIFICATE, G=1.6 no convergence (control vs exact 1.526)
 cert-cont D=4 N=128 M=12: G=1.70, 1.75, 1.78 CERTIFICATE (37082/38400 positive bins)   [float; abs3-type model]
+cert-cont D=6 N=128 M=12 c=4.5 G=1.8: CERTIFICATE (float, model) 37168/38400 positive bins
+cert-cont D=6 N=128 M=24 c=4.5 G=1.8: CERTIFICATE (float, model) 74671/76800 positive bins
+# sampled: zone-carrying leaves killed at block end cost D=8 1.853 -> 1.850 only (D=4 1.818 -> 1.793).
+# per-C binary model in exactinf3.c: -DSFT_H='"sft449.h"' (sft_header.js from gen_sft.js 4.49 13).

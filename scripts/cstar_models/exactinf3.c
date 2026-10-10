@@ -12,10 +12,11 @@ int atoi(const char*); double atof(const char*); int strcmp(const char*, const c
 double floor(double); double ceil(double); double pow(double,double); double log2(double); double round(double); double fmax(double,double);
 #define INFINITY __builtin_inf()
 #define fprintf(f, ...) printf(__VA_ARGS__)
-#define S 25
-static const int T[S][2] = {{1,2},{3,2},{1,4},{5,2},{1,6},{7,2},{1,8},{-1,9},{10,-1},{11,4},{3,12},{-1,13},{14,-1},{-1,15},{16,-1},{17,6},{5,18},{-1,19},{20,-1},{21,4},{3,22},{-1,23},{24,-1},{-1,4},{3,-1}};
-static const double R[S] = {1.0,0.9451260262333576,0.9451260262333576,0.8414003846939574,0.8414003846939574,0.6453327778806791,0.6453327778806791,0.274715581679643,0.274715581679643,0.5192816921145327,0.5192816921145327,0.1401728996339273,0.1401728996339273,0.26496211123324204,0.26496211123324204,0.5008451745845498,0.5008451745845498,0.30139084134581684,0.30139084134581684,0.5697046564486004,0.5697046564486004,0.2354850114578546,0.2354850114578546,0.44512602623335756,0.44512602623335756};
-static const double LAM = 1.8902520524667157;
+#ifndef SFT_H
+#include "sft45.h"
+#else
+#include SFT_H
+#endif
 static int N, M, D, NO3, MAXB; static double C, delta, U, L3, edges[64]; static const double eps = 1e-12;
 static double P[S][2];
 typedef struct { float w; short s, ia, ib; unsigned char ja, jb; } Leaf;
