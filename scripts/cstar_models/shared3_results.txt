@@ -82,3 +82,5 @@ read-only check (exact3 ... check W449.txt, separate code path, no lowering): CH
 ## TODO is now a real passing test (CC=leanc node --test shared3_lap2_review_test.js: 3/3).  exact3.c never had
 ## u-bins: rho-bins with ja = first j with edge[j+1] >= rlo, jb = last j with edge[j] <= rhi, ja <= jb by the same
 ## monotonicity argument; it supersedes the float certificates for gate 4.
+## Lean (lap 5): CertData.Gate4 checker re-run by native_decide on all 76800 bins: 0 failures
+## (8 modules, 3m19s wall).  coherentTwoThree449 proved (axioms: standard + native_decide).
