@@ -11,6 +11,16 @@
   charging one block higher (shift 1, climbing past weight-0 non-Good ancestors) 7.50 at n<=6
   (was 3.09 at n<=5: rising with depth — n<=7 run pending); shift 2: 2.84.  Per-parent lag-0
   worst grows 41 (m=2) -> 130 (m=3).  Sampled maxima only.
+* Lap 1 later (2026-10-10): `UniformBadTailSplit` (loss_le_split, SplitChargeBudget449 -> crux).
+  Corrected totals (Codex n): loss/mass 0.2300 (m=2), 0.2104 (m=3), exact on finite tree, bases 5..7.
+  PER-ANCESTOR OBSTRUCTION (sampled): Good cell (18,191938), weight 7.16e-4, has Good child mass
+  5704x its weight in ONE block; fixed-shift sup charging FAILS at gamma=(17/10)^6: shift0 655 (n<=6),
+  shift1 226.5 (n<=7) [both dominated by that cell]; shift2 2.32 only reaches level<=12 ancestors.
+  Climb (zero-weight survivors -> positive ancestor): 0:112267, 1:1728, 2:21 (through level 24).
+  Crude large-base tail (spread 3020, climb<=2, design estimate): fits only for B ~ 800+.
+  NEXT: adaptive scheme (climb to weight > theta; runs theta=1/100,1/20 in tail5_out/); if it fails,
+  the per-ancestor route is dead -> Lean node + Maze row + ON-LINE-REQUEST (kill test), structural
+  fix = fold 5..7 into the core or a totals (averaging) mechanism.
 * NEXT (crux): finish n<=7 shift-1/2 runs; if shift-2 stays well under budget, design a finite
   upper certificate (max-analogue of exact3.c with base-b phase) for per-ancestor charges at
   shift 2, plus the rigorous b>=8 tail.  If the per-ancestor sums keep rising with depth, that

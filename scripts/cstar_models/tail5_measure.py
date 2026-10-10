@@ -47,6 +47,7 @@ BUDGET = GROW - GAMMA
 AMBIG = [0]
 CLIMB = [0]
 JJ = 16
+THETA = Fraction(__import__('os').environ.get('TAIL5_THETA', '0'))  # climb to weight > THETA
 
 def sft(k, a):
     s = 0
@@ -204,7 +205,7 @@ def main():
                         # a weight-0 (non-Good) ancestor is not in mass: climb to the nearest Good
                         # block ancestor, one extra lag per block climbed
                         LL, aa, off = L, a0, 0
-                        while weight(LL, aa) == 0: LL, aa, off = LL - 6, aa >> 6, off + 1
+                        while weight(LL, aa) <= THETA: LL, aa, off = LL - 6, aa >> 6, off + 1
                         CLIMB[0] = max(CLIMB[0], off)
                         key = (LL, aa)
                         if key not in acc: acc[key] = (weight(LL, aa), [Fraction(0)] * JJ)
