@@ -62,6 +62,16 @@ for the root state) where the whole block dies, so the bin infimum is 0.  A cert
 a partition refined along the touching boundaries (`CoherentTwoThree45` below is the c = 4.5
 staging node).
 
+## Lap 2-3 (2026-10-10): float certificates in the containment model
+
+With pruning matched to `twoThreeBad` (containment; partial overlaps carry forbidden end-zones,
+zone-carrying block leaves are killed, so the model's alive cells are genuinely alive) and the
+binary automaton rebuilt per exponent (`gen_sft.js`), the target-driven fixed point
+(`exactinf3.c`, interval branch-and-bound over each whole bin, no sampling) certifies growth
+`9/5` at `D = 6`: c = 4.5 with `N = 128, M = 12/24` and `N = 256, M = 12`; **c = 4.49 with
+`N = 128, M = 24`**.  Floating point, abstract bins (not yet the concrete root cell); the
+realization obligation is reduced by `coherentBlockCertificate_of_weights`.
+
 ## Forbidden
 
 Retuning local charges without the shared-phase change, and another blind base sweep.
