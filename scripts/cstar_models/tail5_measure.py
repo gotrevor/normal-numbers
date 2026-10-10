@@ -152,10 +152,11 @@ def is_pp(b):
 def report(acc, J, label):
     gam = [GAMMA ** j for j in range(J)]
     worst, worstkey = Fraction(0), None
+    unch = 0
     lagmax = [Fraction(0)] * J
     for key, (w, prof) in acc.items():
         if w == 0:
-            if any(prof): print("  UNCHARGEABLE: ancestor", key, "has weight 0 but loss", [float(x) for x in prof])
+            if any(prof): unch += 1
             continue
         rat = [x / w for x in prof]
         for j in range(J): lagmax[j] = max(lagmax[j], rat[j])
@@ -165,7 +166,8 @@ def report(acc, J, label):
     print(f"[{label}] ancestors={len(acc)} ambiguous={AMBIG[0]} max climb={CLIMB[0]}")
     print("  per-lag max ratio h_j:", [f"{float(x):.6g}" for x in lagmax])
     print(f"  sum_j h_j/gamma^j = {float(disc):.6g}   (per-ancestor worst {float(worst):.6g} at {worstkey})")
-    print(f"  budget (9/5)^6 - (17/10)^6 = {float(BUDGET):.6f}  ->  {'PASS' if disc <= BUDGET else 'FAIL'}")
+    print(f"  budget (9/5)^6 - (17/10)^6 = {float(BUDGET):.6f}  ->  {'PASS' if disc <= BUDGET and unch == 0 else 'FAIL'} at gamma=(17/10)^6"
+          f" [SAMPLED lower bound on the scheme's supremum, per-window isolation overcount; unchargeable={unch}]")
     return disc
 
 def main():
