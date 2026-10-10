@@ -71,6 +71,32 @@ namespace NormalNumbers.UniformBadThreshold.Coherent
 
 open NextReview
 
+/-- **Outcome bookkeeping is free.**  A certificate only needs the weight inequality along the
+realized rows: the outcome set of a state can be taken to be the (finite) set of rows of
+bounded length that satisfy the inequality.  So the realization obligation of
+`CoherentBlockCertificate` is exactly: for every alive cell,
+`growth ^ D * w (classify k a) ≤ Σ` over its alive depth-`D` descendants. -/
+theorem coherentBlockCertificate_of_weights {Bad : ℕ → ℕ → Prop} {D : ℕ} {growth : ℚ}
+    (hD : 0 < D) (S : ℕ) (classify : ℕ → ℕ → Fin S) (w : Fin S → ℚ)
+    (hw : ∀ s, 0 ≤ w s ∧ w s ≤ 1) (hroot : 0 < w (classify 0 0))
+    (hgrow : ∀ k a, Count.Alive Bad k a →
+      growth ^ D * w (classify k a) ≤ ((blockRow Bad D classify k a).map w).sum) :
+    CoherentBlockCertificate Bad D growth := by
+  classical
+  have hfin : ∀ s : Fin S, {row : List (Fin S) | row.length ≤ 2 ^ D ∧
+      growth ^ D * w s ≤ (row.map w).sum}.Finite := fun s =>
+    (List.finite_length_le (α := Fin S) (n := 2 ^ D)).subset fun row h => h.1
+  refine ⟨hD, S, classify, fun s => (hfin s).toFinset, w, hw, hroot, ?_, ?_⟩
+  · intro k a ha
+    rw [Set.Finite.mem_toFinset]
+    refine ⟨?_, hgrow k a ha⟩
+    unfold blockRow
+    rw [List.length_map]
+    exact (List.length_filter_le _ _).trans (by simp)
+  · intro s row hrow
+    rw [Set.Finite.mem_toFinset] at hrow
+    exact hrow.2
+
 /-- Staging node (gate step 1 asks for `c = 4.5` first): the same certificate at `c = 9/2`.
 Evidence: sampled shared-phase growth ≈ 1.815 at D = 8 (optimistic screen); no rigorous
 certificate yet (uniform bins fail, see module doc).  Confidence it holds with an adapted

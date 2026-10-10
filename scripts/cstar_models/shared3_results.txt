@@ -62,3 +62,4 @@ cert-cont D=6 N=128 M=12 c=4.5 G=1.8: CERTIFICATE (float, model) 37168/38400 pos
 cert-cont D=6 N=128 M=24 c=4.5 G=1.8: CERTIFICATE (float, model) 74671/76800 positive bins
 # sampled: zone-carrying leaves killed at block end cost D=8 1.853 -> 1.850 only (D=4 1.818 -> 1.793).
 # per-C binary model in exactinf3.c: -DSFT_H='"sft449.h"' (sft_header.js from gen_sft.js 4.49 13).
+cert-cont D=6 N=256 M=12 c=4.5 G=1.8: CERTIFICATE (float, model) 75060/76800 positive
