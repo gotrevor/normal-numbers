@@ -1555,7 +1555,12 @@ def register : List Hall := [
    "The depth-d test of C(1, 4^a, 4^(a+b)) reads only (a, b) mod 3^d, so one death certificate settles a residue class; hope: every class off the danger differences {0, +-1} dies, closing GapTwoTriples by a finite computation",
    .refuted, .kernel,
    "Class certificates are real (every pair with a, b, a+b not 0, +-1 mod 9 is trivial; alive fraction 25% at depth 7) but the bad exponent set is the fractal {(log4(y/x), log4(z/y)) : x, y, z in the Cantor set} of dimension log3 8, not a union of lines: x = 1, y = 10, z = 28 keeps the class of (1227, 6261) alive at depth 8 off every danger residue. Certificates cover density -> 1, never everything; the residue is GapTwoTriples itself (integer pairs avoiding the fractal). REOPEN IF: a Diophantine reason integer exponent pairs stay off {(log4(y/x), log4(z/y))}",
-   "ErdosTripleClasses.lean: tripleTrivial_of_mod_nine, aliveClasses_three, survives_offLine_eight, AliveClassBound", "2026-10-08"⟩
+   "ErdosTripleClasses.lean: tripleTrivial_of_mod_nine, aliveClasses_three, survives_offLine_eight, AliveClassBound", "2026-10-08"⟩,
+  ⟨"82000 by digit-count exponents",
+   "Bound the integers with 0/1 digits in bases 3, 4, 5 (or just 4, 5) by the random-model exponent sum log 2/log 3 + log 2/log 4 + log 2/log 5 - 2 < 0",
+   .refuted, .kernel,
+   "A3 cap A9 has negative exponent (-0.054) yet is all of A9, infinite: counting must use multiplicative independence. Using it (Shmerkin-Wu) is Burrell-Yu's O(n^eps) for bases 4, 5, which never touches base 3. The pair (4, 5) alone already carries the conjecture (only A263684's nine numbers below 4^8339). The converse pair (3, 4) is supercritical and its infinitude is open; the construction 4^k + r stalls on the middle base-3 digits of 4^k. REOPEN IF: a mechanism beating n^eps that uses all three bases, or controls middle digits of 4^k in base 3",
+   "ZeroOneBases.lean: threeNine_infinite, Literature.BurrellYuFourFive, ZeroOneFourFive, ZeroOneThreeFourInfinite", "2026-10-09"⟩
 ]
 
 /-- Rows whose verdict is machine-checked in this build. -/

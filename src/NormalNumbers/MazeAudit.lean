@@ -28,6 +28,7 @@ import NormalNumbers.CantorBadNormal
 import NormalNumbers.ErdosTriples
 import NormalNumbers.ZerolessTuples
 import NormalNumbers.ErdosTripleClasses
+import NormalNumbers.ZeroOneBases
 
 /-!
 # Maze audit: every closed route cites declarations
@@ -85,6 +86,9 @@ def mazeLinks : List Link := [
   ⟨"Gap triples via exponent-class certificates",
    [``ErdosTriples.Classes.survives_offLine_eight, ``ErdosTriples.Classes.tripleTrivial_of_mod_nine],
    [``ErdosTriples.GapTwoTriples]⟩,
+  ⟨"82000 by digit-count exponents",
+   [``ZeroOneBases.threeNine_infinite, ``ZeroOneBases.Literature.BurrellYuFourFive],
+   [``ZeroOneBases.ZeroOneFourFive, ``ZeroOneBases.ZeroOneThreeFourInfinite]⟩,
   ⟨"x, 3x, 5x as the first member of a family",
    [``Adder.not_isWordSetBlock_runs_three_one_seven_nine,
     ``Adder.not_isWordSetBlock_runs_three_small, ``Adder.not_isWordSetBlock_extremeDigits], []⟩,
@@ -329,7 +333,7 @@ def mazeLegacy : List String := [
   "Diophantine good-denominator detour for the tail cell",
   "route B's unweighted cover of the state-dependent target"]
 
-/-- info: maze audit: 182 rows, 75 cite declarations, 107 legacy (prose only) -/
+/-- info: maze audit: 183 rows, 76 cite declarations, 107 legacy (prose only) -/
 #guard_msgs in
 #maze_audit mazeRows, mazeLinks, mazeLegacy
 
