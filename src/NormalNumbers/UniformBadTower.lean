@@ -44,9 +44,15 @@ self-good densities:
 approximated arbitrarily well by members that are good below any base bound.  The point `ξ` is a
 Cauchy limit that keeps the finitely many margins in force at each step.  For rational families
 (`RationalTower`) this makes the upper bound a question about rationals with small-`λ`
-denominators, each of whose finite checks is decidable.  This is a global mechanism: periodicity
-handles every base at once, which is exactly what the local engines lack.  They are walled at
-`9/2` (`not_nineHalvesBalance`, `not_perStageCert`).
+denominators, each of whose finite checks is decidable.
+
+**Refuted (2026-10-09, Codex review, `UniformBadTowerReview`).**  No rational family is ever a tower
+family, at any exponent (`not_rationalTower`, `not_selfGoodPerfect`).  For a member `p/d`, base `2d`
+at `n = 1` kills the whole `(2d)^{−1−c}`-neighbourhood, while the tower condition asks for survivors
+arbitrarily close.  So the rational-tower mechanism was vacuous.  The conditional refutation below
+(`not_selfGoodPerfect_four_of_coset`) is superseded.  The census data and the extremal-survivor
+structure stand.  The local engines we built stall near `9/2` (`not_nineHalvesBalance`,
+`not_perStageCert`), but those theorems refute specific engines, not every local construction.
 -/
 
 namespace NormalNumbers.UniformBadThreshold

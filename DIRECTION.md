@@ -125,6 +125,7 @@ Never restate or weaken them.  The stretch node `CStarLeThree` and any sharper l
   placement of base-3 windows, not the bookkeeping.
 
 Directive history:
+- 2026-10-09 (operator): gate 3 stopped on a confirmed stuck: 729/290 ≤ c⋆ proved; rational towers refuted unconditionally by the Codex review (not_rationalTower); refuted headlines retired as RationalTowerFour/SelfGoodPerfectFour; lane parked pending a non-local {2,3} mechanism.
 - 2026-10-08 19:40 (operator gate 3): "tighten the beam": UniformBadTower gate (729/290 + rational towers at c = 4).
 - 2026-10-07 (c⋆ lap 13, review): local engines walled at 9/2 (`not_perStageCert`); lower bound 93/37; stuck evidence.
 - 2026-10-07 07:05 (operator): gate moved to `cStar_le_nine_halves` after `cStar_le_five`.

@@ -25,8 +25,8 @@ Frozen 2026-10-07 by the operator (Ren) after `cStar_le_five` landed.
 
 namespace NormalNumbers.UniformBadThreshold
 
-/-- **Headline (frozen 2026-10-07): `c⋆ ≤ 9/2`.**  Believed true (95%: the finite systems put `c⋆`
-near `5/2`, `CStarLeThirteenFifths`); no proof mechanism known (c⋆ lap 13: every local engine
+/-- **Headline (frozen 2026-10-07): `c⋆ ≤ 9/2`.**  Believed true (85%, lowered 2026-10-09: the earlier 95% leaned on finite systems near `5/2`,
+which the Codex review found uncalibrated); no proof mechanism known (c⋆ lap 13: every local engine
 tried stalls near `c ≈ 4.55`, `not_perStageCert`, Maze row "local per-window engines at c = 9/2").
 
 English proof sketch.  Run the two-rate counting engine of `cStar_le_five` at exponent `9/2` with

@@ -247,7 +247,9 @@ theorem cStar_le_four : cStar ≤ 4 := by
   -- counting needs a weight-regular exact `{2, 3}` core with growth `≥ 1.78` (Maze rows).
   sorry
 
-/-- **Stretch node.**  Believed 35%.  `c⋆ ≤ 3`. -/
+/-- **Stretch node.**  `c⋆ ≤ 3`.  No calibrated belief: the earlier 35% conflicted with the 60% on
+`CStarLeThirteenFifths`, and the Codex review (2026-10-09) found that the finite-horizon data cannot
+tell `c⋆` near `2.52` from substantially higher. -/
 def CStarLeThree : Prop := cStar ≤ 3
 
 end NormalNumbers.UniformBadThreshold

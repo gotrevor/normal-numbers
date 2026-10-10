@@ -65,7 +65,8 @@ theorem not_admissible_93_37 : ¬ Admissible (93 / 37) := by
 theorem ninety_three_thirty_sevenths_le_cStar : (93 : ℝ) / 37 ≤ cStar :=
   le_cStar_of_not_admissible not_admissible_93_37
 
-/-- **Open conjecture (believed 60%): `c⋆ ≤ 13/5`.**  The optimal exponent sits only slightly
+/-- **Open conjecture: `c⋆ ≤ 13/5`.**  The lap's 60% was withdrawn 2026-10-09 (Codex review: the
+evidence below is about finite truncations, which also produced the vanishing `77/257` plateau).  The optimal exponent sits only slightly
 above `5/2`.
 
 Evidence (c⋆ lap 13, `scripts/cstar_models/surv.py`, `cover2.py`): with all bases `b ≤ 3000`
