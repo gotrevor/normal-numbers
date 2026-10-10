@@ -3899,8 +3899,9 @@ Next: `isFresh` Riesz bound, then the classification lemma in Lean (route-decisi
   Reduction: crux <- node1 (APKillUniform449) + node3 (UpperGrowthLag449) + bookkeeping (lag j_b
   charging, summed over b with gamma=20).  Next: write that bookkeeping theorem with both nodes
   as hypotheses (statement first), then attack node 3 via actual survivor distribution.
-- Node 4 RegularPotential449: child-mass potential nearly regular (max desc2/desc1 = 52 at level 12,
-  42 at the 5704 cell).  Plan: crux <- node1 (APKill) + node4 + childMassTot_succ_le (sorry,
+- PROVED childMassTot_succ_le (with orphanChild term), descMass_split, sum_range_mul_split.
+- Node 4 RegularPotential449: child-mass potential nearly regular (max desc2/desc1 = 57.3 at level 12 (no heredity prune),
+  48 at the 5704 cell); Good449 NOT hereditary -> orphanChild term added.  Plan: crux <- node1 (APKill) + node4 + childMassTot_succ_le (sorry,
   bookkeeping; needs Good449 heredity check) + lag charging sum.  Rough cost with Lambda=52,
   gamma=20, spacing 2^12: ~9C for base 5 alone vs budget 14 -> marginal; reduce spacing to 2^6 or
   use deeper iterate (ratio -> ~44).  Next: prove childMassTot_succ_le; measure APKill at spacing 2^6.

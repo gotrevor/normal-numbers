@@ -104,18 +104,79 @@ def UpperGrowthLag449 (K Λ : ℚ) : Prop := ∀ m j, descTot m j ≤ K * Λ ^ j
 
 /-- **Node 4 (conjecture): the once-iterated potential is regular.**  The raw weights are not
 (`desc₁/w` reaches 5704 at `(18, 191938)`, 604 at level 12), but the child-mass potential
-`v = descMass k a (k+6)` is nearly an eigenvector: `max desc₂/desc₁ = 52.07` over all Good level-12
-cells, and `42.05` at the bad cell `(18, 191938)` (`scripts/cstar_models/tail5_ratio_iter.py`,
+`v = descMass k a (k+6)` is nearly an eigenvector: `max desc₂/desc₁ = 57.30` over all Good level-12
+cells, and `48.16` at the bad cell `(18, 191938)` (`scripts/cstar_models/tail5_ratio_iter.py`,
 `tail5_out/ratio_iter.txt`; SAMPLED maxima).  Confidence 65% that `R = 60` holds at every level. -/
 def RegularPotential449 (R : ℚ) : Prop :=
   ∀ k a, Good449 k a → descMass k a (k + 12) ≤ R * descMass k a (k + 6)
 
-/-- **Totals upper growth from node 4** (statement; proof is bookkeeping: survivors at `m+1` are
-Good children of survivors at `m`, and `descMass` splits over children).  With the recurrence
-this gives `UpperGrowth449 (R · 34/(34-c))` once `loss ≤ c · mass` is known up to `m`, so the
-induction closes. -/
+/-- Split a sum over `range (n * m)` into `n` blocks of length `m`. -/
+theorem sum_range_mul_split (f : ℕ → ℚ) (n M : ℕ) :
+    ∑ i ∈ Finset.range (n * M), f i = ∑ p ∈ Finset.range M, ∑ j ∈ Finset.range n, f (n * p + j) := by
+  induction M with
+  | zero => simp
+  | succ M ih => rw [Nat.mul_succ, Finset.sum_range_add, ih, Finset.sum_range_succ]
+
+/-- Descendant mass splits over the 64 children one block down. -/
+theorem descMass_split (k a L : ℕ) :
+    descMass k a (k + 6 + L) = ∑ j ∈ Finset.range (2 ^ 6), descMass (k + 6) (2 ^ 6 * a + j) (k + 6 + L) := by
+  classical
+  unfold descMass
+  simp only [Finset.sum_filter]
+  rw [show k + 6 + L - k = L + 6 by omega, show k + 6 + L - (k + 6) = L by omega,
+    pow_add, sum_range_mul_split]
+  refine Finset.sum_congr rfl fun j _ => Finset.sum_congr rfl fun i _ => ?_
+  rw [show 2 ^ L * 2 ^ 6 * a + (2 ^ L * j + i) = 2 ^ L * (2 ^ 6 * a + j) + i by ring]
+
+open Classical in
+/-- Child mass of "orphan" survivors at block `m+1`: their level-`6m` parent does not survive.
+`Good449` is NOT hereditary (base-3 windows of a resolved stage can meet a parent and miss the
+child): 14 of 2562 Good level-12 cells and 922 of 114066 at level 18 have a non-Good ancestor one
+or six levels up (lap 2 count, `tail5_measure.good`). -/
+noncomputable def orphanChild (m : ℕ) : ℚ :=
+  ∑ a ∈ (Finset.range (2 ^ (6 * (m + 1)))).filter
+      (fun a => survives (6 * (m + 1)) a ∧ ¬ survives (6 * m) (a / 64)),
+    descMass (6 * (m + 1)) a (6 * (m + 2))
+
+/-- **Totals upper growth from node 4** (statement; bookkeeping: non-orphan survivors at `m+1`
+are Good children of survivors at `m`, and `descMass` splits over children).  Lap 2 correction:
+the orphan term is needed because `Good449` is not hereditary. -/
 theorem childMassTot_succ_le {R : ℚ} (hR : RegularPotential449 R) (m : ℕ) :
-    childMassTot (m + 1) ≤ R * childMassTot m := by
-  sorry
+    childMassTot (m + 1) ≤ R * childMassTot m + orphanChild m := by
+  classical
+  have hd : ∀ k a K, 0 ≤ descMass k a K := fun k a K =>
+    Finset.sum_nonneg fun _ _ => coreWeight_nonneg _ _
+  -- split survivors at `m+1` into children of survivors and orphans
+  unfold childMassTot orphanChild
+  rw [← Finset.sum_filter_add_sum_filter_not _ (fun a => survives (6 * m) (a / 64)),
+    Finset.filter_filter, Finset.filter_filter]
+  refine add_le_add ?_ le_rfl
+  rw [Finset.sum_filter]
+  have e6 : 6 * (m + 1) = 6 * m + 6 := by ring
+  have e12 : 6 * (m + 2) = 6 * m + 6 + 6 := by ring
+  rw [show 2 ^ (6 * (m + 1)) = 2 ^ 6 * 2 ^ (6 * m) by rw [e6, pow_add, mul_comm],
+    sum_range_mul_split]
+  rw [Finset.sum_filter, Finset.mul_sum]
+  refine Finset.sum_le_sum fun p _ => ?_
+  split_ifs with hp
+  · calc ∑ j ∈ Finset.range (2 ^ 6), (if survives (6 * (m + 1)) (2 ^ 6 * p + j) ∧
+            survives (6 * m) ((2 ^ 6 * p + j) / 64) then
+            descMass (6 * (m + 1)) (2 ^ 6 * p + j) (6 * (m + 2)) else 0)
+          ≤ ∑ j ∈ Finset.range (2 ^ 6), descMass (6 * m + 6) (2 ^ 6 * p + j) (6 * m + 6 + 6) :=
+            Finset.sum_le_sum fun j _ => by
+              split_ifs
+              · rw [e6, e12]
+              · exact hd _ _ _
+        _ = descMass (6 * m) p (6 * m + 12) := (descMass_split _ _ _).symm
+        _ ≤ R * descMass (6 * m) p (6 * (m + 1)) := by
+            rw [e6]; exact hR _ _ hp.1
+  · rw [mul_zero]
+    refine Finset.sum_nonpos (ι := ℕ) (N := ℚ) fun j hj => ?_
+    split_ifs with h
+    · exfalso; apply hp
+      have : (2 ^ 6 * p + j) / 64 = p := by
+        have := Finset.mem_range.1 hj; omega
+      exact this ▸ h.2
+    · exact le_rfl
 
 end NormalNumbers.UniformBadThreshold.TailReview
