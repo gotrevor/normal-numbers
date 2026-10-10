@@ -1,33 +1,28 @@
-# ON-LINE REQUEST (box has no egress; a host session answers as ON-LINE-FINDINGS-<date>-<topic>.md)
+# ON-LINE FINDINGS 2026-10-10: request queue cleared (3-adic two-log items self-resolved)
 
-## 2026-10-08 (repetition review lap 10): sources for the 3-adic two-logarithm bound
+Host session (Ren), 2026-10-10.  Clears the whole `ON-LINE-REQUEST.md` (identical in `nn-stretch`
+and `normal-numbers`).
 
-Needed for `SparseIdentity.Literature.PadicTwoLogs` (transcription check) and for its
-formalization (DIRECTION.md, P3).  Please fetch and summarize, quoting statements verbatim:
+## 2026-10-08 / 2026-10-09 items (Bugeaud–Laurent 1996, Laurent 1994, LMN 1995 Lemme 1): self-resolved
 
-1. **Y. Bugeaud, M. Laurent**, *Minoration effective de la distance p-adique entre puissances de
-   nombres algébriques*, J. Number Theory 61 (1996) 311–342.  Needed: (i) the exact statement of
-   the main corollary for two logarithms (shape `v_p(α₁^{b₁} − α₂^{b₂}) ≤ c·D⁴·(max{log b' + …})²
-   log A₁ log A₂`; exact definitions of `b'`, `A_i`, the constant, and every hypothesis, e.g.
-   `v_p(α_i) = 0`, multiplicative independence, `p`-adic disc conditions); (ii) the structure of
-   the proof: the interpolation matrix (rows/columns, entries), the p-adic analytic upper bound
-   (lemma statement), the zero lemma used (statement + hypotheses), the parameter choice.
-2. **M. Laurent**, *Linear forms in two logarithms and interpolation determinants*, Acta Arith.
-   66 (1994) 181–199: the zero lemma for two logarithms (statement and proof; the sumset
-   condition `Card{α₁^r α₂^s} ≥ L`, `Card{r b₂ + s b₁} > (K−1)L`, `R = R₁ + R₂ − 1`, …).
-3. Any expository source giving a complete, short proof of a p-adic two-logarithm lower bound
-   for RATIONAL numbers (e.g. lecture notes; Waldschmidt's book ch. 7/9; Bugeaud's 2018 book
-   *Linear Forms in Logarithms and Applications*, ch. on p-adic two logarithms).
+Not researched.  Repetition lap 13 (`b70bd94b`, 2026-10-09) proved the zero lemma elementarily
+(`PadicTwoLogs.laurentZeroLemma`, `src/NormalNumbers/ZeroLemma.lean`) and made
+`PadicTwoLogs.padicTwoLogs` unconditional.  `HANDOFF-2026-10-09-repetition-lap13.md` records
+`#print axioms liouvilleCantorFullProfile = [propext, Classical.choice, Quot.sound]`.  The
+corrected `Literature.LaurentZeroLemma` is now a theorem, so the transcription's fidelity no longer
+carries weight, and the swapped form is refuted in Lean (`not_laurentZeroLemmaMisread`).  The host
+re-checked only that the three PadicTwoLogs/ZeroLemma files contain no `sorry` (a grep, 2026-10-10).
 
-Also useful: whether any Lean/Isabelle/Coq formalization of a linear-forms-in-logarithms bound
-(any case) exists.
+Still open, but no longer blocking: (a) a verbatim check that `Literature.PadicTwoLogs` really is a
+special case of Bugeaud–Laurent's corollary, as `docs/notes/bugeaud-10-37-cantor-liouville.md`
+says; (b) whether any proof assistant has a formalized linear-forms-in-logarithms bound (the note
+makes no priority claim here).  Re-ask either one if a note will lean on it.
 
-## 2026-10-09 (repetition lap 11): zero-lemma orientation check (high priority)
-`PadicTwoLogs.Literature.LaurentZeroLemma` now reads: `Card{α₁^r α₂^s : r<R₁, s<S₁} ≥ L` and
-`Card{r b₂ + s b₁ : r<R₂, s<S₂} > (K−1)L` ⇒ no nonzero `P = Σ_{l<L} q_l(X) Yˡ`, `deg q_l < K`,
-vanishes on `(r b₂ + s b₁, α₁^r α₂^s)`, `r < R₁+R₂−1`, `s < S₁+S₂−1`.  (The first transcription had
-the conditions swapped and is refuted in Lean.)  Please quote LMN 1995 Lemme 1 / Laurent 1994
-verbatim so the orientation, the `−1`s and any extra hypothesis can be checked.
+## 2026-10-07 items (nn-cstar: Falconer–Yavicoli, thickness survey): moved here from inline
+
+These answers were committed inline in the request file (`b359ac03`, `ca9403da`) and reached this
+branch through merges.  They are reproduced verbatim below, so that deleting the request file loses
+nothing.
 
 ## 2026-10-07 (nn-cstar, proof/uniformbad-threshold)
 Please fetch arXiv 2102.01186 (Falconer–Yavicoli, "Intersections of thick compact sets in R^d")
