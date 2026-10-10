@@ -359,4 +359,80 @@ theorem alivePot_succ_le {R : ℚ} (hR : RegularPotential2_449 R) (hR0 : 0 ≤ R
       rwa [this] at h'
     · exact le_rfl
 
+/-- `sum_children_le` for descendants `L` levels down. -/
+theorem sum_desc_le {S : Finset ℕ} {K L : ℕ} (hS : ∀ a ∈ S, a < 2 ^ K)
+    (P : ℕ → ℕ → Prop) [∀ a j, Decidable (P a j)] (Q : ℕ → Prop) [DecidablePred Q]
+    (hPQ : ∀ a ∈ S, ∀ j < 2 ^ L, P a j → Q (2 ^ L * a + j)) (f : ℕ → ℚ) (hf : ∀ c, 0 ≤ f c) :
+    ∑ a ∈ S, ∑ j ∈ (Finset.range (2 ^ L)).filter (P a), f (2 ^ L * a + j) ≤
+      ∑ c ∈ (Finset.range (2 ^ (K + L))).filter Q, f c := by
+  have hL : 0 < 2 ^ L := by positivity
+  have e : ∑ a ∈ S, ∑ j ∈ (Finset.range (2 ^ L)).filter (P a), f (2 ^ L * a + j) =
+      ∑ p ∈ (S ×ˢ Finset.range (2 ^ L)).filter (fun p => P p.1 p.2), f (2 ^ L * p.1 + p.2) := by
+    rw [Finset.sum_filter, Finset.sum_product]
+    exact Finset.sum_congr rfl fun a _ => by rw [Finset.sum_filter]
+  rw [e, ← Finset.sum_image (g := fun p : ℕ × ℕ => 2 ^ L * p.1 + p.2)
+    (f := f) (fun p hp q hq h => by
+      simp only [Finset.coe_filter, Finset.mem_product, Finset.mem_range, Set.mem_setOf_eq]
+        at hp hq
+      simp only at h
+      have h1 : (2 ^ L * p.1 + p.2) / 2 ^ L = p.1 := by
+        rw [Nat.mul_add_div hL, Nat.div_eq_of_lt hp.1.2, add_zero]
+      have h2 : (2 ^ L * q.1 + q.2) / 2 ^ L = q.1 := by
+        rw [Nat.mul_add_div hL, Nat.div_eq_of_lt hq.1.2, add_zero]
+      have h3 : (2 ^ L * p.1 + p.2) % 2 ^ L = p.2 := by
+        rw [Nat.mul_add_mod, Nat.mod_eq_of_lt hp.1.2]
+      have h4 : (2 ^ L * q.1 + q.2) % 2 ^ L = q.2 := by
+        rw [Nat.mul_add_mod, Nat.mod_eq_of_lt hq.1.2]
+      ext
+      · rw [← h1, ← h2, h]
+      · rw [← h3, ← h4, h])]
+  · refine Finset.sum_le_sum_of_subset_of_nonneg (fun c hc => ?_) (fun c _ _ => hf c)
+    simp only [Finset.mem_image, Finset.mem_filter, Finset.mem_product, Finset.mem_range] at hc
+    obtain ⟨⟨a, j⟩, ⟨⟨ha, hj⟩, hp⟩, rfl⟩ := hc
+    refine Finset.mem_filter.2 ⟨Finset.mem_range.2 ?_, hPQ a ha j hj hp⟩
+    have := hS a ha
+    rw [pow_add]
+    calc 2 ^ L * a + j < 2 ^ L * a + 2 ^ L := by omega
+      _ = 2 ^ L * (a + 1) := by ring
+      _ ≤ 2 ^ L * 2 ^ K := Nat.mul_le_mul_left _ this
+      _ = 2 ^ K * 2 ^ L := by ring
+
+open Classical in
+/-- **Two-block extended loss**: Good weight at level `6m+12` under tail-alive level-`6m`
+cells (Good or not) that is killed by level `6m+12`. -/
+noncomputable def extLoss (m : ℕ) : ℚ :=
+  ∑ a ∈ (Finset.range (2 ^ (6 * m))).filter (Count.Alive tailBad449 (6 * m)),
+    ∑ i ∈ (Finset.range (2 ^ 12)).filter (fun i =>
+      Good449 (6 * m + 12) (2 ^ 12 * a + i) ∧ ¬ Count.Alive tailBad449 (6 * m + 12) (2 ^ 12 * a + i)),
+      coreWeight (6 * m + 12) (2 ^ 12 * a + i)
+
+/-- **Mass from the alive potential**: `alivePot 2 m ≤ mass (m+2) + extLoss m`. -/
+theorem alivePot_le (m : ℕ) : alivePot 2 m ≤ mass (m + 2) + extLoss m := by
+  classical
+  unfold alivePot extLoss mass
+  set S := (Finset.range (2 ^ (6 * m))).filter (Count.Alive tailBad449 (6 * m))
+  have hS : ∀ a ∈ S, a < 2 ^ (6 * m) := fun a ha => Finset.mem_range.1 (Finset.mem_filter.1 ha).1
+  have hsplit : ∀ a ∈ S, descMass (6 * m) a (6 * m + 6 * 2) =
+      ∑ i ∈ (Finset.range (2 ^ 12)).filter (fun i =>
+          Good449 (6 * m + 12) (2 ^ 12 * a + i) ∧ Count.Alive tailBad449 (6 * m + 12) (2 ^ 12 * a + i)),
+        coreWeight (6 * m + 12) (2 ^ 12 * a + i) +
+      ∑ i ∈ (Finset.range (2 ^ 12)).filter (fun i =>
+          Good449 (6 * m + 12) (2 ^ 12 * a + i) ∧ ¬ Count.Alive tailBad449 (6 * m + 12) (2 ^ 12 * a + i)),
+        coreWeight (6 * m + 12) (2 ^ 12 * a + i) := by
+    intro a _
+    unfold descMass
+    rw [show 6 * m + 6 * 2 - 6 * m = 12 by omega, show 6 * m + 6 * 2 = 6 * m + 12 by ring,
+      ← Finset.sum_filter_add_sum_filter_not _
+        (fun i => Count.Alive tailBad449 (6 * m + 12) (2 ^ 12 * a + i)),
+      Finset.filter_filter, Finset.filter_filter]
+  rw [Finset.sum_congr rfl hsplit, Finset.sum_add_distrib]
+  gcongr
+  have := sum_desc_le (L := 12) hS
+    (fun a i => Good449 (6 * m + 12) (2 ^ 12 * a + i) ∧
+      Count.Alive tailBad449 (6 * m + 12) (2 ^ 12 * a + i))
+    (survives (6 * (m + 2))) (fun a _ i _ h => by
+      rw [show 6 * (m + 2) = 6 * m + 12 by ring]; exact h) (coreWeight (6 * (m + 2)))
+    (coreWeight_nonneg _)
+  rwa [show 6 * m + 12 = 6 * (m + 2) by ring] at this
+
 end NormalNumbers.UniformBadThreshold.TailReview

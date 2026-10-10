@@ -3920,3 +3920,4 @@ Next: `isFresh` Riesz bound, then the classification lemma in Lean (route-decisi
   Remaining bookkeeping: E(m) := Good weight at 6m+12 under alive 6m-cells that dies by 6m+12;
   mass(m+2) >= P(m) - E(m); loss m <= E-type kills; bound kills by node 1 against P(m-j)
   (ancestors any alive cell — node 1 allows non-Good).  Then strong induction -> ratio lemma.
+- PROVED sum_desc_le (2^L reindex), extLoss def, alivePot_le: alivePot 2 m <= mass(m+2) + extLoss m.  NEXT: bound extLoss and loss by node 1 against alivePot of ancestors.
