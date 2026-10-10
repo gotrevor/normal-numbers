@@ -52,6 +52,7 @@ import NormalNumbers.UniformBadNextReview
 import NormalNumbers.UniformBadCoherent
 import NormalNumbers.UniformBadEntryReview
 import NormalNumbers.UniformBadTailReview
+import NormalNumbers.UniformBadTail
 
 /-!
 # Barrier audit: every open crux names a sibling it must fail on
@@ -82,6 +83,11 @@ namespace NormalNumbers.Barriers
 
 /-- Each frozen headline `sorry` and the barriers its mechanism must fail on. -/
 def cruxLinks : List CruxLink := [
+  ⟨``UniformBadThreshold.Tail.tailChargeBudget449,
+   [``uniformBad_base_two],
+   "the tail charges must be WEIGHTED by the proved gate-4 core weights (spread about 3020), and must \
+    respect the single-base floor: base 2 alone dies at exponent ≤ log₂ 3, so the budget must come \
+    from the joint {2,3} growth 9/5 per level, not from any one base"⟩,
   ⟨``UniformBadThreshold.cStar_le_nine_halves,
    [``uniformBad_base_two],
    "the engine must make base 3 exact alongside base 2: the two-rate counting engine (base 2 exact, \
@@ -171,6 +177,10 @@ def cruxLinks : List CruxLink := [
 
 /-- Open `sorry`s that are not cruxes, and why no barrier applies. -/
 def waivers : List Waiver := [
+  ⟨``UniformBadThreshold.Tail.tailBudgetSuffices449,
+   "wiring (gate 5): sum gate-4 growth over disjoint surviving parents (CoreDeletionRecurrence449), \
+    delayed-charge induction from root mass 1, then compactness of nested surviving cells; no \
+    new mathematical premise beyond the budget"⟩,
   ⟨``UniformBadThreshold.Newhouse.e2_four_facts,
    "off the route (the wiring uses the proved e15_facts); a computation about the explicit set E₂(4)"⟩,
   ⟨``ErdosTriples.tripleTrivial_of_sum_le_160,
