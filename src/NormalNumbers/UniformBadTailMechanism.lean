@@ -466,7 +466,10 @@ def APKillGeneral449 (s : ℕ) (C : ℝ) : Prop :=
 /-- **Node 1‴ (conjecture): Frostman form of the AP bound.**  The killed fraction is at most
 `C · (2hq)^α` with `α < 1` (fits the coarse trend with `α ≈ 0.9`).  Windows: `2hq = 2b^{-4.49}`,
 so the base sum stays summable (`b^{-4.49α}`); endpoint neighbourhoods: `(2^{-6m} q)^α R^j` still
-converges since `64^α ρ ≫ R`.  Confidence 60% for `C = 2`, `α = 17/20`, `s = 0`. -/
+converges since `64^α ρ ≫ R`.  Single-interval Frostman at the root, level 20
+(`scripts/cstar_models/tail5_frostman.py`, `tail5_out/frostman_K20.txt`): max over x of
+`μ[x, x+2^{-t}]/μ` is `2^{-α_t t}` with `α_t` from 0.909 (t = 2) to 0.902 (t = 18): the weighted
+core is `0.90`-Frostman with constant about 1.  Confidence 65% for `C = 2`, `α = 17/20`, `s = 0`. -/
 def APKillFrostman449 (s : ℕ) (C α : ℝ) : Prop :=
   ∀ k a K q (θ h : ℝ), k ≤ K → 2 ^ (k + s) ≤ q → 0 ≤ h →
     (descInAP k a K q θ h : ℝ) ≤ C * (2 * h * q) ^ α * descMass k a K
