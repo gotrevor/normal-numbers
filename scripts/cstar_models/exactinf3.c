@@ -22,8 +22,8 @@ static double P[S][2];
 typedef struct { float w; short s, ia, ib; unsigned char ja, jb; } Leaf;
 typedef struct { Leaf *a; long n, cap; } LV;
 static void push(LV *v, Leaf l) { if (v->n == v->cap) { v->cap = v->cap ? 2 * v->cap : 256; v->a = realloc(v->a, v->cap * sizeof(Leaf)); } v->a[v->n++] = l; }
-static int binLo(double v) { int j = 0; while (j < M - 1 && edges[j + 1] <= v + eps) j++; return j; }
-static int binHi(double v) { int j = M - 1; while (j > 0 && edges[j] >= v - eps) j--; return j; }
+static int binLo(double v) { int j = 0; while (j < M - 1 && edges[j + 1] < v - eps) j++; return j; } // outward: an edge point owns both bins
+static int binHi(double v) { int j = M - 1; while (j > 0 && edges[j] > v + eps) j--; return j; }
 // status flags
 static double usplit; static int needx, needu;
 static int descendz(int s, double xlo, double xhi, double ulo, double uhi, int depth, double w, LV *out,
@@ -121,9 +121,12 @@ static void build(int s, double xlo, double xhi, double ulo, double uhi, int lvl
 }
 
 // ---- target-driven fixed point (no storage): LB of inf over a box, refined only while below target ----
+static long bbt_evals = 0, bbt_leaves = 0;
 static double bbt(int s, double xlo, double xhi, double ulo, double uhi, int lvl, double target) {
+  bbt_evals++;
   scratch.n = 0; usplit = -1; needx = needu = 0;
   if (!descend(s, xlo, xhi, ulo, uhi, 0, 1, &scratch)) { double um = ulo + usplit; double a = bbt(s, xlo, xhi, ulo, um, lvl, target); if (a < target) return a; double b = bbt(s, xlo, xhi, um, uhi, lvl, target); return a < b ? a : b; }
+  bbt_leaves += scratch.n;
   double v = 0; for (long l = 0; l < scratch.n; l++) { Leaf *L = &scratch.a[l]; double m = INFINITY;
     for (int x = L->ia; x <= L->ib; x++) { int base = L->s * NB + (((x % N) + N) % N) * M; for (int y = L->ja; y <= L->jb; y++) if (V[base + y] < m) m = V[base + y]; }
     v += L->w * m; }
@@ -161,7 +164,7 @@ static int certmode(int Q, double G, int SH, int NSH) {
       if (v < tg) { V[q] = v / gD * 0.99; if (V[q] < 1e-6) V[q] = 0; ch++; } // 1% overshoot: finite convergence
     }
     double mx = 0; int z = 0; for (int q = 0; q < Q; q++) { if (V[q] > mx) mx = V[q]; if (V[q] <= 0) z++; }
-    printf("pass %d lowered %ld zeros %d/%d maxV %.3e bin000 %.3e worst %.4f\n", pass, ch, z, Q, mx, V[0], worst); fflush(0);
+    printf("evals %ld leaves %ld ", bbt_evals, bbt_leaves); bbt_evals = 0; bbt_leaves = 0; printf("pass %d lowered %ld zeros %d/%d maxV %.3e bin000 %.3e worst %.4f\n", pass, ch, z, Q, mx, V[0], worst); fflush(0);
     if (mx <= 0) { printf("CERT FAILED G=%g\n", G); return 0; }
     for (int q = 0; q < Q; q++) V[q] /= mx;
     if (!ch) { printf("CERTIFICATE (float, model) G=%g N=%d M=%d D=%d C=%g positive %d/%d\n", G, N, M, D, C, Q - z, Q); if (DUMPV) for (int q = 0; q < Q; q++) printf("V %d %.17g\n", q, V[q]); return 0; }

@@ -20,8 +20,8 @@ static double P[S][2];
 typedef struct { float w; short s, ia, ib; unsigned char ja, jb; } Leaf;
 typedef struct { Leaf *a; long n, cap; } LV;
 static void push(LV *v, Leaf l) { if (v->n == v->cap) { v->cap = v->cap ? 2 * v->cap : 256; v->a = realloc(v->a, v->cap * sizeof(Leaf)); } v->a[v->n++] = l; }
-static int binLo(double v) { int j = 0; while (j < M - 1 && edges[j + 1] <= v + eps) j++; return j; }
-static int binHi(double v) { int j = M - 1; while (j > 0 && edges[j] >= v - eps) j--; return j; }
+static int binLo(double v) { int j = 0; while (j < M - 1 && edges[j + 1] < v - eps) j++; return j; } // outward: an edge point owns both bins
+static int binHi(double v) { int j = M - 1; while (j > 0 && edges[j] > v + eps) j--; return j; }
 // status flags
 static double usplit; static int needx, needu;
 static int descend(int s, double xlo, double xhi, double ulo, double uhi, int depth, double w, LV *out) {

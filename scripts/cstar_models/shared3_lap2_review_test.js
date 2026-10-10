@@ -74,9 +74,8 @@ test('containment-screen leaves avoid all resolved ternary windows on a fixed gr
   assert.ok(count > 0);
 });
 
-test('C enclosures at a leaf u-bin boundary must be finite', {
-  todo: 'aa2e7360 binLo(2) > binHi(2) leaves an empty u range and returns infinity',
-}, () => {
+// fixed (lap 4): outward bin ownership, an edge point belongs to both adjacent bins, so ja <= jb always
+test('C enclosures at a leaf u-bin boundary must be finite', () => {
   const source = path.join(__dirname, 'shared3cert.c');
   const driver = path.join(dir, 'boundary.c'), exe = path.join(dir, 'boundary');
   fs.writeFileSync(driver, `#define main probe_main
@@ -94,7 +93,7 @@ int main(void) {
   return 0;
 }
 `);
-  execFileSync('cc', ['-O0', driver, '-lm', '-o', exe], { timeout: 15000 });
+  execFileSync(process.env.CC || 'cc', ['-O0', driver, '-o', exe], { timeout: 15000 });
   const result = execFileSync(exe, [], { encoding: 'utf8', timeout: 5000 }).trim();
   for (const value of result.split(/\s+/))
     assert.ok(Number.isFinite(Number(value)), `non-finite enclosure: ${result}`);

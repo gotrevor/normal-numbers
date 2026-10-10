@@ -67,3 +67,18 @@ cert-cont D=6 N=128 M=24 c=4.49 (own SFT, gen_sft 4.49 13) G=1.8: CERTIFICATE (f
 ## entry states (entry.js): levels 0-4 are early (cell > 6 delta in stage-0 units); levels >= 5 are regular bins.
 entry c=4.49 N=128 M=24 D=6 G=1.8 with the certified weights (v449_N128_M24_D6.txt.gz):
   root weight = min(1, 1.8^-6 * sum over clean SFT-alive level-6 cells of V(bin)) = 1  (no ambiguous window tests)
+## EXACT integer certificate (exact3.c, lap 4, 2026-10-10): fixed point 2^-90 arithmetic, delta3 enclosure
+## [dlo,dhi] (+-2^-50; dlo^100 3^449 < 2^9000 < dhi^100 3^449 checked exactly), dyadic rho-bin edges
+## (exact3_edges449.txt), Good449 semantics: closed windows, strict zones (touching kills), ambiguous
+## resolution = min of both interpretations, SFT sft449 (= minimal forbidden words of Forb2, forb2_check.js).
+exact3 128 24 6 16 v449 40 9 5: EXACT CERTIFICATE growth 9/5, positive 74431/76800, 12 passes, 73 s
+   (weights W449_N128_M24_D6.txt.gz, integers; Lean weight = W / maxW, maxW 1072633893121)
+control growth 37/20: no fixed point (uniform decay, worst 0.950 every pass)
+entry (entry_exact.py): root weight 1 (level-6 descendants all regular); early cells k=1..4 may take weight 0.
+read-only check (exact3 ... check W449.txt, separate code path, no lowering): CHECK PASSED 74431/76800 positive,
+   0 failures, 5.9 s.  Mutation control (W[bin 0] := 1e14): CHECK FAILED at bin 0.
+## operator blocker (h) (binLo/binHi empty range): fixed in exactinf.c/exactinf3.c/shared3cert.c/shared3rig.c by
+## outward ownership (strict comparisons: an edge point belongs to both bins; monotone, so ja <= jb).  The review
+## TODO is now a real passing test (CC=leanc node --test shared3_lap2_review_test.js: 3/3).  exact3.c never had
+## u-bins: rho-bins with ja = first j with edge[j+1] >= rlo, jb = last j with edge[j] <= rhi, ja <= jb by the same
+## monotonicity argument; it supersedes the float certificates for gate 4.

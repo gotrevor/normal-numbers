@@ -72,6 +72,18 @@ binary automaton rebuilt per exponent (`gen_sft.js`), the target-driven fixed po
 `N = 128, M = 24`**.  Floating point, abstract bins (not yet the concrete root cell); the
 realization obligation is reduced by `coherentBlockCertificate_of_weights`.
 
+## Lap 4 (2026-10-10): EXACT integer certificate in the Good449 semantics
+
+`scripts/cstar_models/exact3.c` re-runs the target-driven fixed point in exact fixed-point
+integer arithmetic (denominator `2^90`), with a rational enclosure of `δ₃` (checked exactly:
+`dlo^100·3^449 < 2^9000 < dhi^100·3^449`), dyadic `ρ = 3ⁿ/2ᵏ` bin edges, closed windows and
+strict zones (a leaf that may touch a window dies), and min-over-both-interpretations where
+the resolution `ρ/2 ≤ 2δ₃` is ambiguous.  The binary SFT equals the minimal forbidden words of
+`Forb2` exactly (`forb2_check.js`).  Result: **exact certificate at growth 9/5, c = 449/100,
+D = 6, N = 128, M = 24** (74431/76800 positive bins, 73 s); control growth 37/20 decays.  Root
+entry weight 1 (`entry_exact.py`).  What remains is porting the checker to Lean with a
+soundness proof, and `acc2_succ`-style transfer lemmas for the SFT and the base-3 steps.
+
 ## Forbidden
 
 Retuning local charges without the shared-phase change, and another blind base sweep.
@@ -355,6 +367,27 @@ theorem good449_clean {k a : ℕ} (h : Good449 k a) : Clean449 k a := by
   obtain ⟨m, hnm, hmk, hf⟩ := forb2_of_window hs
   exact h.2.1 n m hnm hmk hf
 
+/-- **Acc2 is a suffix automaton condition**: appending a bit only adds the new suffixes. -/
+theorem acc2_succ (k a d : ℕ) (hd : d < 2) :
+    Acc2 (k + 1) (2 * a + d) ↔
+      Acc2 k a ∧ ∀ L, 0 < L → L ≤ k + 1 → ¬ Forb2 L ((2 * a + d) % 2 ^ L) := by
+  have hdiv : ∀ j, (2 * a + d) / 2 ^ (j + 1) = a / 2 ^ j := by
+    intro j; rw [pow_succ', ← Nat.div_div_eq_div_mul]; congr 1; omega
+  constructor
+  · intro h
+    refine ⟨fun n m hnm hmk => ?_, fun L hL hLk => ?_⟩
+    · have := h n m hnm (by omega)
+      rwa [show k + 1 - m = (k - m) + 1 by omega, hdiv] at this
+    · have := h (k + 1 - L) (k + 1) (by omega) le_rfl
+      rwa [Nat.sub_self, pow_zero, Nat.div_one, show k + 1 - (k + 1 - L) = L by omega] at this
+  · rintro ⟨h1, h2⟩ n m hnm hmk
+    rcases Nat.lt_or_ge m (k + 1) with hm | hm
+    · rw [show k + 1 - m = (k - m) + 1 by omega, hdiv]
+      exact h1 n m hnm (by omega)
+    · obtain rfl : m = k + 1 := by omega
+      rw [Nat.sub_self, pow_zero, Nat.div_one]
+      exact h2 _ (by omega) (by omega)
+
 /-- Staging node (gate step 1 asks for `c = 4.5` first): the same certificate at `c = 9/2`.
 Evidence: sampled shared-phase growth ≈ 1.815 at D = 8 (optimistic screen); no rigorous
 certificate yet (uniform bins fail, see module doc).  Confidence it holds with an adapted
@@ -382,8 +415,9 @@ theorem coherentTwoThree449_of_clean (h : CleanCertificate449) : CoherentTwoThre
     S classify w hw hroot (by norm_num) hzero (by convert hgrow)⟩
 
 /-- **Crux (open).**  Evidence: float certificates at growth 9/5 (module doc, lap 2-3).
-Confidence 50%: the model-level margin is real, but the exact check, the early-level entry
-states and the clean-cell semantics of the bins are not yet machine-checked. -/
+Confidence 75% (lap 4): an exact integer certificate in the Good449 semantics exists
+(`exact3.c`, module doc); what is not machine-checked is the checker's soundness and its
+Lean port. -/
 theorem cleanCertificate449 : CleanCertificate449 := by
   sorry
 
