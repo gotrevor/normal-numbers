@@ -53,3 +53,8 @@ touching    D=4: 1.742198   D=8: 1.821668
 containment D=4: 1.793335   D=8: 1.850041   (zeros 159/4800 vs 355)
 # touching pruning (abs3) charges the window widened by a cell on each side; containment roughly halves the
 # base-3 cost.  The rigorous tools (exactinf3.c / shared3cert.c) still use touching: port CONT next.
+## exact bin-infimum, CONTAINMENT pruning (exactinf3.c, interval zones), c = 4.5
+exact-cont D=4: N=16 M=6 1.526013   N=32 M=6 1.679486   N=128 M=6 1.761422   N=64 M=12 1.747790   N=128 M=12 1.797783
+## target-driven fixed point, containment (exactinf3.c ... c G), sampled warm start, 1% overshoot on lowering
+cert-cont D=4 N=16  M=6:  G=1.52 CERTIFICATE, G=1.6 no convergence (control vs exact 1.526)
+cert-cont D=4 N=128 M=12: G=1.70, 1.75, 1.78 CERTIFICATE (37082/38400 positive bins)   [float; abs3-type model]
