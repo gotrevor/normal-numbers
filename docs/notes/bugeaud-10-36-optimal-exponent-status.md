@@ -2,7 +2,7 @@
 
 [ Claude wrote this note at my direction.  The Lean files it names are the authority.  -Trevor ]
 
-Status as of 2026-10-09, branch `proof/uniformbad-threshold` at `1c038a4f`.  This branch is not yet merged into trunk.
+Status as of 2026-10-09, branch `proof/uniformbad-threshold`, not yet merged into trunk.  Revised the same day after Codex's review (mailbox `~/personal/agent-mail/nn-cstar/`, review module `UniformBadTowerReview.lean` at `819bd8fc`).
 
 ## The question
 
@@ -26,7 +26,7 @@ In Lean this is `cStar` in `src/NormalNumbers/UniformBadThreshold.lean`, with `A
 | `c⋆ ≤ 5`, `6`, `12` (earlier) | `cStar_le_five`, `cStar_le_six`, `cStar_le_twelve` | `UniformBadFive`, `UniformBadCount`, `UniformBadTwelve` | |
 | Perfect-power bases are free | `admissible_iff_nonPerfectPow` | `UniformBadThreshold` family | |
 
-The lower side is essentially finished.  The upper side is stuck, roughly a factor of two above where the numerics point.
+Pushing the lower bound further by small-base certificates is not worth the cost.  That is a resource decision, not a statement about `c⋆`.  The upper side is stuck near 4.96.
 
 ## Lower side: finite certificates, and why they stop at ≈ 2.5138
 
@@ -36,7 +36,7 @@ An exact rational probe, `scripts/uniformbad_cstar_probe_scaled.py`, used every 
 
 - **The last survivors** are the family of `241/1365`.  Its binary orbit has period 12 and stays at distance `239/1365` from the integers, so it dies at `c = log₂(1365/239) ≈ 2.5138184`.
 - **Every base below 1365 keeps `241/1365` alive at `c = 2.514`, for every `n`** (`goodBelow_241_1365`, proved).  The reason is that `1365 = 3·5·7·13` has Carmichael exponent `λ = 12`, so every base has a short orbit mod 1365.
-- **So no finite cover can pass `c = 2.514` without using a multiple of 1365 as a base.**  The remaining lower-side gain is about `2·10⁻⁵`, and it isn't worth chasing.
+- **So no finite cover can pass `c = 2.514` without using a multiple of 1365 as a base.**  About `2·10⁻⁵` is available before that small-base obstruction.  Covers that use larger bases could go further, and how much further is not bounded.
 - **An earlier apparent plateau** at `log₂(257/45)`, from the 16-cycle of `77/257`, was an artifact of short horizons.  `3` is a primitive root mod `257`, so base 3 kills `77/257`, but only near `n = 128`.
 
 The finite threshold is **not** an estimate of `c⋆`.  It only says where small bases with bounded horizons stop excluding points.
@@ -52,34 +52,29 @@ An upper bound needs an infinite construction of one `ξ`.
 | Counting engine: kills charged to alive ancestors, base 2 exact through its runs | 6 | proved |
 | Two-rate counting: base 2 exact at threshold `33/1024`, base 3 counted | 5, then **124/25** | proved |
 | Same engine at 9/2 | no | **wall, proved**: `not_nineHalvesBalance` (the balance fails by about 0.08) |
-| Any per-stage local engine, even charging only bases 2 and 3 | no at 9/2 | **wall, proved**: `not_perStageCert`.  Every local engine we tried stalls near `c ≈ 4.55` |
-| Newhouse thickness / gap lemma (`UniformBadNewhouse`) | would need a thick core | **closed**: `merge_forced` |
-| Rational towers (limits of rationals good for all small bases) | would give `c⋆ ≤ 4` | **refuted conditionally**, see below |
+| The defined per-stage engine `PerStage.Cert` (fixed patterns, levels 40..181), even charging only bases 2 and 3 | no at 9/2 | **wall for that engine, proved**: `not_perStageCert`.  It is not a theorem about all local constructions.  The local engines we tried stall near `c ≈ 4.55` |
+| Newhouse thickness / gap lemma (`UniformBadNewhouse`) | would need a thick core | **open, unresolved**: `merge_forced` is a necessary merging condition, not `¬ThickCore`.  `thickCore_four` is still a sorry, blocked on uniform control of merge cascades |
+| Rational towers (limits of rationals good for all small bases) | would give `c⋆ ≤ 4` | **refuted unconditionally, at every `c`** (Codex), see below |
 
-**The diagnosis behind the 9/2 wall.**  Three independent local mechanisms meet at the same threshold.  Pessimistic counting pays about `0.12` per base-3 kill level, while the exact joint `{2,3}` tree loses only about `2.4%`.  So the loss comes from the worst-case placement of base-3 windows relative to the base-2 survivors, not from the bookkeeping.  Beating 9/2 needs a **non-local** input: where the windows `k/3ⁿ` fall among the binary cells that survive base 2.
+**The current engine diagnosis behind the 9/2 wall (a diagnosis, not a proved necessity).**  Three independent local mechanisms meet at the same threshold.  Pessimistic counting pays about `0.12` per base-3 kill level, while the exact joint `{2,3}` tree loses only about `2.4%`.  So the loss comes from the worst-case placement of base-3 windows relative to the base-2 survivors, not from the bookkeeping.  Our diagnosis is that beating 9/2 needs a **non-local** input: where the windows `k/3ⁿ` fall among the binary cells that survive base 2.
 
-### The rational-tower attempt (2026-10-08) and its refutation
+### The rational-tower attempt (2026-10-08), refuted
 
-- **The idea.** The extremal survivors are *self-good rationals*: `p/q` that are good for every base below `q`, at every `n`.  A rational always dies at base `q`, but a convergent sequence of self-good rationals with growing denominators would have an admissible limit.
-- **Proved in `UniformBadTower.lean`:**
-  - `admissible_of_towerFamily`: a family whose members are approximable, arbitrarily well, by members good below any base bound yields an admissible `ξ`.
-  - `rationalTower_of_selfGoodPerfect`: if self-good rationals have no isolated points, there is a rational tower.
-- **Refutation, unconditional half:** `not_rationalTower_of_jointRationalsFinite` (proved).  If only finitely many rationals are good for bases 2 and 3 at exponent `c`, there is no rational tower at `c`.
-- **Refutation, conditional half:** `not_selfGoodPerfect_four_of_coset` (proved) refutes rational towers at `c = 4` from two premises:
-  - `CosetSurvival 4 κ C`, a stated conjecture, believed 70%.  A rational good for bases 2 and 3 can exist only where `m·exp(−κ(ord 2 + ord 3)) ≳ 1`.  It passes a census of all 260 surviving denominators `q ≤ 2·10⁵` with `gcd(q, 6) = 1`, with `κ = 0.0125` and `C = 1`.
-  - `CZGcdTwoThree`, the Corvaja–Zannier gcd bound `gcd(2^a − 1, 3^b − 1) ≤ C·exp(ε(a + b))`.  It is cited (Monatsh. Math. 144 (2005)), and our transcription is weaker than the source.
-- **Takeaway:** the upper bound needs an irrational `ξ` that is not a limit of good rationals.
+- **The idea (Ren's).** The extremal survivors are *self-good rationals*: `p/q` that are good for every base below `q`, at every `n`.  A family of rationals, each approximable arbitrarily well by members good below any base bound, would yield an admissible limit.  `admissible_of_towerFamily` proves that implication, and `towerFamily_singleton_of_admissible` (Codex) is its positive control.
+- **Why it can never work (Codex, `not_rationalTower`, standard axioms only).** Take a rational `r = p/d` in the family.  At base `2d` and `n = 1`, `‖2d·y‖ ≤ 2d·|y − r|`, so every `y` within `(2d)^{−1−c}` of `r` fails base `2d`.  The tower condition demands survivors arbitrarily close to `r`.  So `RationalTower c` is false for **every** `c`, and `SelfGoodPerfect c` with it (`not_selfGoodPerfect`).  More generally, an admissible `ξ` has `|ξ − p/q| > q^{−1−c}` for all `p/q`.
+- **What this supersedes.** It replaces the lap's conditional refutation (`not_selfGoodPerfect_four_of_coset`, via `CosetSurvival` and Corvaja–Zannier).
+- **What it does not settle.** It does not prove `JointRationalsFinite`, does not locate `c⋆`, and does not rule out every convergent sequence of good rationals.  That weaker condition is recorded as `ConvergentGoodRationalSequence`.
 
 ## What the numerics say about the true value
 
 - **The finite systems go thin, not empty, just above 2.5138.**  At `c = 2.52` to `2.6`, survivors persist with all bases `≤ 3000` and windows down to radius `10⁻¹³`.  At `c = 2.55` the number of surviving intervals grows with the resolution (606, 1066, 1762 at radii `10⁻¹¹, 10⁻¹², 10⁻¹³`), which looks like a Cantor set of dimension about 0.2.  At `c = 3` survivors are abundant.
 - **But every survivor family seen so far sits near a binary-periodic rational** `p/(2^m − 1)` or a small-`λ` denominator.  Those families die once the base reaches the denominator, and new families with longer periods replace them.  Whether the limit of those families survives every base is exactly the open question.
 - **Stated beliefs:**
-  - `CStarLeThirteenFifths` (`c⋆ ≤ 13/5`) was recorded at 60% by a lap.
-  - `CStarLeThree` still carries an older 35% that is stale and inconsistent with that 60%.  My current figure is about 60% for `c⋆ ≤ 3`.
+  - The lap's 60% for `c⋆ ≤ 13/5` and my 60% for `c⋆ ≤ 3` are withdrawn.  The finite-horizon data cannot tell "near 2.52" from "substantially higher".  The 77/257 plateau that vanished at a deeper horizon is the known-answer warning.  The interval growth across resolutions is evidence about the truncation, not an asymptotic dimension.
+  - The Lean docstrings still carry the old figures (35% on `CStarLeThree`, 60% on `CStarLeThirteenFifths`).  They are stale and will be reconciled.
   - The frozen headlines `cStar_le_four` and `cStar_le_nine_halves` are open walls.
 
-So the honest picture is `c⋆ ∈ [2.5138, 4.96]` proved, a numerical lean towards `[2.52, 3]`, and no mechanism that gets the upper bound below 9/2.
+So the honest picture is `c⋆ ∈ [2.5138, 4.96]` proved, no calibrated estimate inside that range, and no mechanism that gets the upper bound below 9/2.
 
 ## Questions for a second opinion
 
@@ -87,7 +82,9 @@ So the honest picture is `c⋆ ∈ [2.5138, 4.96]` proved, a numerical lean towa
 2. **A non-local `{2,3}` mechanism.**  We need a set of `ξ` with explicit control of both `‖2ⁿξ‖` and `‖3ⁿξ‖`, plus room for the other bases, at exponent below 9/2.  Candidates we have not built:
    - a substitution or Sturmian-type `ξ` copying the survivors' binary block structure;
    - Schmidt games with explicit constants;
-   - a Falconer–Yavicoli countable-intersection-of-thick-sets argument with a better thickness bound for intersections.
+   - a Falconer–Yavicoli countable-intersection-of-thick-sets argument.  This was already rejected once (its constant `K₂ = 240` is too large), so it needs a changed quantitative input to be reconsidered.
+
+   Codex's verdict: none of these names alone supplies the missing base-3 estimate, and the route map should be corrected before choosing another engine.
 
    Does any of these look viable, or is there a standard tool we are missing?
 3. **Literature.**  Is any explicit uniform exponent known for "badly approximable to bases 2 and 3 simultaneously"?  Is `JointRationalsFinite` known: only finitely many rationals whose orbits under ×2 and ×3 both avoid `b^{−c}`-neighbourhoods of the integers?  It looks close to Bugeaud–Corvaja–Zannier.
@@ -104,3 +101,9 @@ So the honest picture is `c⋆ ∈ [2.5138, 4.96]` proved, a numerical lean towa
 - **Run directive and history:** `DIRECTION.md`, first section.
 - **Every lap's notes:** the `HANDOFF-*.md` files.
 - **Probes:** `scripts/uniformbad_cstar_probe_scaled.py`, `scripts/uniformbad_selfgood_rationals.py`, `scripts/uniformbad_carmichael_density.py`, and `scripts/cstar_models/` (the lap probes: `cover2.py`, `surv.py`, `joint_rationals.js`, `gcd_budget.py`, `coset_survival_check.py`).
+
+## Codex review (2026-10-09), literature pointers
+
+- **Peres–Schlag**, arXiv:0706.0223, Thm 3.1 (unions of lacunary sequences): specialized to `{2ⁿ} ∪ {3ⁿ}`, it gives `‖2ⁿξ‖, ‖3ⁿξ‖ ≥ 1/1920` for some `ξ`.  Recorded as `PeresSchlagTwoThreeBound`.  It is a coarse two-base bound and does not cover the other bases.
+- **Corvaja–Zannier**, arXiv:math/0311030, Cor. 1 and (1.3): supports the gcd input, but not `CosetSurvival`.
+- **Li–Li–Wu**, arXiv:2204.07357 (rationals in ×b-invariant sets): restricts the denominators' primes to a fixed finite set, so it does not settle `JointRationalsFinite`.
