@@ -3870,3 +3870,16 @@ Next: `isFresh` Riesz bound, then the classification lemma in Lean (route-decisi
   recursion, check root weight > 0; (3) the Lean bridge: clean descendants of a clean cell with signature
   (s, x = frac(3^n a/2^k), rho = 3^n/2^k) are exactly the j whose interval avoids the new-stage windows ->
   a native_decide checker over boxes with a soundness lemma.
+
+## 2026-10-10 gate 5 lap 2
+- Kill test NOT fired: shift-2 per-ancestor scheme passes at n<=7 (4.496 < 9.874655), growing.
+  Deeper runs (base 5 n<=8 shift 2/3; bases 5..7 n<=7 shift 3) in `tail5_out/`.
+- Refuted shortcut (not worth a Lean node; arithmetic only): take gamma near 1 (budget ~33) and bound
+  loss m by wmax * 256 * #windows of length >= 2^-(6m+6).  Fails: base-b stage-n windows have length
+  2 b^-(n+4.49), so per stage they cover a fixed fraction 2b^-4.49 and the window count grows like
+  2^k, against core mass ~ 2^(0.848k).  Any proof of the crux needs equidistribution of windows
+  against the core (that is TailTotalsBound449's content), not counting.
+- Regularity probe (`/tmp/regul.py` logic): max over Good cells of lag-j good-descendant mass /
+  (w * 34^j): k=6: 3.64 (j=1), 4.65 (j=2); k=12: 17.75 (j=1); k=18: ~168 (childConcentration).
+  The per-block sup is capped by 64*3020/34 ~ 5700 (weights in [1/3020,1]), so per-ancestor sups
+  are finite but huge; shift-s charging divides by gamma^s ~ 24^s.
