@@ -1,6 +1,6 @@
 # HANDOFF 2026-10-10 — operator gate 4, lap 5: `coherentTwoThree449` PROVED
 
-Branch `proof/uniformbad-threshold`.
+Branch `proof/uniformbad-threshold`, HEAD 47a22d47 (green). Uncommitted: only scripts/cstar_models/__pycache__ (ignore).
 
 - `cleanCertificate449` and the frozen `coherentTwoThree449` are theorems (no sorry in
   `src/NormalNumbers/UniformBadCoherent.lean`).  `#print axioms coherentTwoThree449`: propext,
