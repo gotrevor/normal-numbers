@@ -96,3 +96,16 @@ Please transcribe (statements + definitions, verbatim where possible):
 - **Host note:** nothing found gives a usable lower bound on the thickness of an intersection of many sets, so
   `ThickCore` (thickness of ⋂_{b≥3} E_b(4) after merging near-coincident windows) is your own lemma to prove;
   with E₂(4) at thickness exactly 3, you need τ(B) ≥ 1/3 (Theorem 8 allows equality).
+
+## 2026-10-10 — gate 5 kill test fired (operator decision needed)
+Bases 5..7 exhaust the 9.874655 budget at gamma=(17/10)^6 under every per-ancestor SUP charging
+scheme measured (natural 655, shift-1 226.5, theta=1/100 174.4, theta=1/20 81.7; sampled, bases 5..7,
+n<=7; `scripts/cstar_models/tail5_out/`).  Cause: gate-4 weights are not locally regular
+(`TailReview.childConcentration_18`: a Good cell with good-child weight 5704x its own in one block).
+Totals pass (loss/mass 0.230, 0.210 at m=2,3), so `TailChargeBudget449` is NOT refuted; reopen node
+`TailReview.TailTotalsBound449` (implies the crux, `tailChargeBudget449_of_totals`).
+Maze row: "Per-ancestor sup charging of the base >= 5 tail on the gate-4 weights".
+Wiring is PROVED (`tailBudgetSuffices449`); `cStar_le_449` rests only on the crux.
+Request: operator/Codex decision on the structural fix — (a) fold bases 5..7 into a gate-4-style core
+certificate (state carries their phases; size estimate needed), or (b) an averaging mechanism for
+`TailTotalsBound449`.  No web fetch needed.

@@ -1,0 +1,15 @@
+base 5 done (n <= 7)
+[bases 5..5, n <= 7] ancestors=21788 ambiguous=0 max climb=2
+  per-lag max ratio h_j: ['18.128', '1124.75', '3091.1', '1648.19', '2947.68', '1265.92', '190.324', '0', '0', '0', '0', '0', '0', '0', '0', '0']
+  sum_j h_j/gamma^j = 70.1569   (per-ancestor worst 51.294 at (18, 46274))
+  budget (9/5)^6 - (17/10)^6 = 9.874655  ->  FAIL at gamma=(17/10)^6 [SAMPLED lower bound on the scheme's supremum, per-window isolation overcount; unchargeable=0]
+base 6 done (n <= 7)
+[bases 5..6, n <= 7] ancestors=99507 ambiguous=0 max climb=2
+  per-lag max ratio h_j: ['77.9226', '1950.39', '8891.83', '5404.54', '2947.68', '1286.73', '1083.43', '30.6685', '0', '0', '0', '0', '0', '0', '0', '0']
+  sum_j h_j/gamma^j = 174.38   (per-ancestor worst 156.945 at (18, 40386))
+  budget (9/5)^6 - (17/10)^6 = 9.874655  ->  FAIL at gamma=(17/10)^6 [SAMPLED lower bound on the scheme's supremum, per-window isolation overcount; unchargeable=0]
+base 7 done (n <= 7)
+[bases 5..7, n <= 7] ancestors=264228 ambiguous=0 max climb=3
+  per-lag max ratio h_j: ['77.9226', '1950.39', '8891.83', '5404.54', '3167.85', '2334.48', '1127.9', '53.5022', '41.5818', '0', '0', '0', '0', '0', '0', '0']
+  sum_j h_j/gamma^j = 174.381   (per-ancestor worst 156.945 at (18, 40386))
+  budget (9/5)^6 - (17/10)^6 = 9.874655  ->  FAIL at gamma=(17/10)^6 [SAMPLED lower bound on the scheme's supremum, per-window isolation overcount; unchargeable=0]

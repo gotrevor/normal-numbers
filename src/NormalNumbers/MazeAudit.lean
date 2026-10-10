@@ -21,6 +21,7 @@ import NormalNumbers.UniformBadTowerReview
 import NormalNumbers.UniformBadNextReview
 import NormalNumbers.UniformBadEntryReview
 import NormalNumbers.UniformBadTailReview
+import NormalNumbers.UniformBadTailObstruction
 import NormalNumbers.EntropyProfiles
 import NormalNumbers.CantorExactExponentStretch
 import NormalNumbers.CantorExactExponentProfile
@@ -61,6 +62,10 @@ def mazeRows : List RowInfo :=
 
 /-- Each linked row and the declarations it rests on. -/
 def mazeLinks : List Link := [
+  ⟨"Per-ancestor sup charging of the base >= 5 tail on the gate-4 weights",
+   [``UniformBadThreshold.TailReview.childConcentration_18,
+    ``UniformBadThreshold.TailReview.tailChargeBudget449_of_totals],
+   [``UniformBadThreshold.TailReview.TailTotalsBound449]⟩,
   ⟨"Carmichael towers for rationalTower_four",
    [``UniformBadThreshold.carmichaelQ_le,
     ``UniformBadThreshold.CarmichaelChainCollapse,
@@ -350,7 +355,7 @@ def mazeLegacy : List String := [
   "Diophantine good-denominator detour for the tail cell",
   "route B's unweighted cover of the state-dependent target"]
 
-/-- info: maze audit: 185 rows, 78 cite declarations, 107 legacy (prose only) -/
+/-- info: maze audit: 186 rows, 79 cite declarations, 107 legacy (prose only) -/
 #guard_msgs in
 #maze_audit mazeRows, mazeLinks, mazeLegacy
 

@@ -52,6 +52,7 @@ import NormalNumbers.UniformBadNextReview
 import NormalNumbers.UniformBadCoherent
 import NormalNumbers.UniformBadEntryReview
 import NormalNumbers.UniformBadTailReview
+import NormalNumbers.UniformBadTailObstruction
 import NormalNumbers.UniformBadTail
 
 /-!
@@ -177,6 +178,9 @@ def cruxLinks : List CruxLink := [
 
 /-- Open `sorry`s that are not cruxes, and why no barrier applies. -/
 def waivers : List Waiver := [
+  ⟨``UniformBadThreshold.TailReview.childConcentration_18,
+   "a finite exact computation on 7 cells (classify and Good449 at levels 18, 24), recording the \
+    gate-5 kill-test mechanism; off the proof route of cStar_le_449"⟩,
   ⟨``UniformBadThreshold.Newhouse.e2_four_facts,
    "off the route (the wiring uses the proved e15_facts); a computation about the explicit set E₂(4)"⟩,
   ⟨``ErdosTriples.tripleTrivial_of_sum_le_160,
