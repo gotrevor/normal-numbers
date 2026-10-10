@@ -39,10 +39,11 @@ Laurent's interpolation determinant `Δ`, squeezed between
   `L^{3/2} g^{1/2}`: two variables are essential (one variable gives only `L²/2`, which leads to a
   bound quadratic in `log M`, not enough for the chain of `SparseIdentity`).
 * (b) a **Liouville** upper bound (`Δ` times a denominator is a nonzero integer);
-* (c) a **zero lemma** making `Δ ≠ 0` (`Literature.LaurentZeroLemma`, cited);
+* (c) a **zero lemma** making `Δ ≠ 0` (`Literature.LaurentZeroLemma`, proved in `ZeroLemma.lean`);
 * (d) parameters, (e) the multiplicatively dependent case by LTE.
 
-This file holds (a) (proved) and the statement of (c).
+This file holds (a), (b), the statement of (c) and its wiring, and both cases of (d)/(e); the
+assembly is `PadicTwoLogsAssembly.lean`.
 -/
 
 open Matrix Finset
@@ -578,9 +579,9 @@ If `Card{α₁^r α₂^s : r < R₁, s < S₁} ≥ L` and `Card{r b₂ + s b₁ 
 polynomial `P(X, Y) = Σ_{l<L} q_l(X) Yˡ` with `deg q_l < K` vanishing at all
 `(r b₂ + s b₁, α₁^r α₂^s)`, `r < R₁ + R₂ − 1`, `s < S₁ + S₂ − 1`, is zero.  Stated basis-free
 (families `q_l`), so it applies to the binomial columns `C(X, k)` directly.  Sanity: `L = 1` is
-"`< K` roots", `K = 1` is "`< L` roots in `Y`".  Confidence in the transcription: moderate (the first
-attempt swapped the conditions and was refuted, `not_laurentZeroLemmaMisread`); sources requested
-in ON-LINE-REQUEST.md.  Numerical evidence (2026-10-09, `scripts/zero_lemma_probe.py`, exact
+"`< K` roots", `K = 1` is "`< L` roots in `Y`".  Proved (`laurentZeroLemma`, `ZeroLemma.lean`), so the
+fidelity of the transcription no longer carries weight (the first attempt swapped the conditions and
+was refuted, `not_laurentZeroLemmaMisread`).  Numerical evidence (2026-10-09, `scripts/zero_lemma_probe.py`, exact
 rational rank): 1419 random admissible instances (`K, L, Rᵢ, Sᵢ ≤ 4`, `|bᵢ| ≤ 3`, five independent
 pairs) all have full-rank evaluation matrix; control: the swapped (misread) conditions fail on 19 of
 1535 instances. -/
@@ -666,7 +667,7 @@ theorem choose_coeffs_eq_zero (K : ℕ) (v : ℕ → ℚ)
         rw [Nat.choose_eq_zero_of_lt (by simp at hk'; omega)]; simp
     rw [e1, e2, Nat.choose_self] at hj; simpa using hj
 
-/-- **(c), zero-lemma half (proved from the cited `LaurentZeroLemma`).**  The grid matrix with
+/-- **(c), zero-lemma half (proved from `LaurentZeroLemma`, itself proved).**  The grid matrix with
 rows `(r, s)`, `r < R₁+R₂−1`, `s < S₁+S₂−1`, and columns `C(r+δs, k)·(α₁^r α₂^s)^l` has trivial
 kernel: a kernel vector gives `q_l = Σ_k v_{kl} C(X,k)` vanishing on the grid. -/
 theorem grid_ker_trivial (hZ : Literature.LaurentZeroLemma) (α₁ α₂ : ℚ) (δ : ℕ)

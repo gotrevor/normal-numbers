@@ -26,7 +26,9 @@ digits-of-powers problem in the wrap regime).  The assembly only needs a saving 
   large compared with `K log T`, then rotating the cyclic word to put a long empty arc at the
   wrap point turns the congruence into an exact integer identity `T·U = V` between two sparse
   integers, with `U ≠ 0` unless `2y ≡ 0`.
-* `SparseIdentityBound t` (from Baker-type input, `sparseIdentityBound_of_matveev`): an identity
+* `SparseIdentityBound t` (proved for `t ≥ 2`, `3 ∤ t`, via the 3-adic chain
+  `sparseIdentityBound_of_padic` and the proved `PadicTwoLogs.padicTwoLogs`; the Matveev route
+  `sparseIdentityBound_of_matveev` is an alternative conditional): an identity
   `tᵟ·U = V` between `K`-sparse integers with `U ≠ 0` forces `δ ≤ exp(C(K+1)²)`.
 
 So two sparse points of one orbit at distance `δ ≤ D ≈ A/(2K log₃ t)` are at distance
@@ -34,9 +36,9 @@ So two sparse points of one orbit at distance `δ ≤ D ≈ A/(2K log₃ t)` are
 `> D`.  For the runs of `CantorRepetition` (`A = a_k`, orbit length `≈ (k+2)a_k`) this bounds the
 sparse points per orbit by `O(K k L_K)`, independent of `A`.
 
-Sibling checks (recorded as theorems): `t = 9` (a power of 3) has `9ᵟ·1 = 3^{2δ}`, so
-`SparseIdentityBound 9` is false (`not_sparseIdentityBound_nine`), as it must be, since `x ∈ K`
-is never normal to base 9.  `t = 1` likewise (`not_sparseIdentityBound_one`).  Degenerate case
+Sibling checks (recorded as theorems): `t = 9` has `9ᵟ·1 = 3^{2δ}`, so `SparseIdentityBound 9`
+is false (`not_sparseIdentityBound_nine`): the hypothesis `3 ∤ t` is needed.  `t = 1`, i.e. base
+`3ˢ` itself, which no `x ∈ K` is normal to, shows `t > 1` is needed (`not_sparseIdentityBound_one`).  Degenerate case
 `K ≤ 1`: only `δ ≤ 1` (`pow_le_two_of_sparse_one`).
 -/
 
@@ -56,8 +58,8 @@ def CycSparse (A K : ℕ) (y : ℤ) : Prop :=
   ∃ (S : Finset ℕ) (c : ℕ → ℤ), S ⊆ range A ∧ S.card ≤ K ∧ (∀ e ∈ S, c e ≠ 0 ∧ |c e| ≤ 2) ∧
     2 * y ≡ ∑ e ∈ S, c e * 3 ^ e [ZMOD (3 ^ A - 1)]
 
-/-- **Literature (cited, referee needed): Matveev's lower bound for three logarithms of positive
-rationals**, in a weak form.  E. M. Matveev, *An explicit lower bound for a homogeneous rational
+/-- **Literature (cited, referee needed; off the headline route): Matveev's lower bound for three
+logarithms of positive rationals**, in a weak form.  E. M. Matveev, *An explicit lower bound for a homogeneous rational
 linear form in logarithms of algebraic numbers II*, Izv. Math. 64 (2000) 1217–1269,
 Corollary 2.3: for algebraic `α₁, …, αₙ` in a field of degree `D`, integers `bᵢ` with
 `Λ = Σ bᵢ log αᵢ ≠ 0`, `log |Λ| > −1.4·30^{n+3} n^{4.5} D² (1 + log D)(1 + log B) A₁⋯Aₙ`,
@@ -884,7 +886,8 @@ theorem sparseIdentityBound_of_matveev (hM : Literature.MatveevThreeLogs) {t : �
   nlinarith
 
 
-/-! ### The 3-adic route (review lap 10, 2026-10-08): one cited input in two logarithms
+/-! ### The 3-adic route (review lap 10, 2026-10-08): one input in two logarithms, now proved
+(`PadicTwoLogs.padicTwoLogs`)
 
 The archimedean chain above needs three logarithms (`log t`, `log 3`, `log(U'/V')`) because it
 compares top parts.  Comparing *bottom* parts instead is 3-adic, and the power of 3 drops out:
@@ -892,7 +895,9 @@ compares top parts.  Comparing *bottom* parts instead is 3-adic, and the power o
 `V_{<p}/U_{<p}`.  The chain also needs no recursion: the lowest exactly-splitting cut is itself
 the endgame. -/
 
-/-- **Literature (cited, referee needed): 3-adic linear forms in two logarithms.**
+/-- **3-adic linear forms in two logarithms (PROVED: `PadicTwoLogs.padicTwoLogs`,
+`PadicTwoLogsAssembly.lean`).**  The shape follows Bugeaud–Laurent; the transcription below is kept
+as motivation only, and the Lean statement is the authority.
 Y. Bugeaud, M. Laurent, *Minoration effective de la distance p-adique entre puissances de
 nombres algébriques*, J. Number Theory 61 (1996) 311–342 (interpolation determinants): for
 multiplicatively independent algebraic `α₁, α₂` with `v_p(αᵢ) = 0` in a field of degree `D`,
@@ -904,8 +909,7 @@ if `a` or `b` is `0` the same bound holds.  If `k = k'` the cited bound applies 
 `log A₂ ≤ max(log max(|a|,|b|), log 3)`, `log b' ≤ log(δ + 1) + O(1)`, and the extra `k` is
 `≤ log₃ max(|a|,|b|)`.  Multiplicatively dependent pairs (`b'/a' = ±t₀ʲ`, `t = t₀ⁱ`) are covered
 by lifting the exponent: `v₃(t₀ⁿ ∓ 1) ≤ c(t₀) + log₃ n` with `n = |iδ − j|`.  All constants
-go into `C(t)`.  Source not opened (no egress); the shape is quoted from memory of the standard
-statement, and a referee should check the transcription of `b'` and `log A₂` (any bound of the
+go into `C(t)`.  (Any bound of the
 form `C(t)·polylog(δ)·(1 + log max(|a|,|b|))` works below: the linear dependence on the height of
 `b/a` is the one feature the chain needs). -/
 def Literature.PadicTwoLogs : Prop :=
