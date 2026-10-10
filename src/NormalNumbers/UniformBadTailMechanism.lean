@@ -195,6 +195,13 @@ theorem childMassTot_succ_le_of_orphan {R η : ℚ} (hR : RegularPotential449 R)
   have := hη m
   linarith
 
+/-- **Node 4′ (conjecture): the twice-iterated potential is near-Perron.**  `desc₃/desc₂`:
+max `45.11` over all Good level-6 cells (`tail5_out/ratio_iter3.txt`); at level 12, max `43.79`
+over the three `desc₂/desc₁`-worst cells (57.3, 52.1, 47.6 there) and 25 random Good cells, all
+in `[43.19, 43.79]` (`tail5_out/ratio_r2_k12.txt`, SAMPLED).  Confidence 75% for `R = 45`. -/
+def RegularPotential2_449 (R : ℚ) : Prop :=
+  ∀ k a, Good449 k a → descMass k a (k + 18) ≤ R * descMass k a (k + 12)
+
 /-- **Bookkeeping theorem (statement; the crux from nodes 1, 4, 5).**  Proof plan: strong
 induction on `m` for `loss m ≤ 6 · mass m` (then `tailChargeBudget449_of_ratio`).  A base-`b`
 window killing in block `m+1` is charged to the progression of its stage inside an ancestor
@@ -203,12 +210,12 @@ window killing in block `m+1` is charged to the progression of its stage inside 
 bound by `K (R/(1-η))^{j_b} / (34-c)^{j_b} · mass m` with `K ≈ R(1 + c/(34-c))`.
 Numerics (`python`, lap 2): with `C = 1.85` (spacing-`2^6` probe max/coverage 1.50, 1.81, 1.40,
 1.26: `tail5_out/offset_probe_sp6.txt`), `R = 57`, `η = 1/100`, `K = 70`, `c = 6`:
-`Σ_b ≈ 5.9 ≤ 6` — closes with almost no margin.  Using the twice-iterated potential
-(`desc₃/desc₂ ≤ 45.1` at level 6, `tail5_out/ratio_iter3.txt`) would give real margin.
+`Σ_b ≈ 5.9 ≤ 6` — closes with almost no margin.  With node 4′ (`R = 45`, `K = 45(1 + c/(34-c))`) the sum is `1.90` at
+`c = 3` and `2.65` at `c = 6`: margin `2.3×`.  The statement below uses node 4′.
 Known gaps (node 1 now allows non-Good ancestors): stage counts per block
-taken as `6/log₂ b + 1`.  Confidence 35%. -/
+taken as `6/log₂ b + 1`.  Confidence 55%. -/
 theorem tailChargeBudget449_of_nodes (h1 : APKillUniform449 6 (37 / 20))
-    (h4 : RegularPotential449 57) (h5 : OrphanSmall449 (1 / 100)) : TailChargeBudget449 := by
+    (h4 : RegularPotential2_449 45) (h5 : OrphanSmall449 (1 / 100)) : TailChargeBudget449 := by
   sorry
 
 end NormalNumbers.UniformBadThreshold.TailReview

@@ -3911,3 +3911,4 @@ Next: `isFresh` Riesz bound, then the classification lemma in Lean (route-decisi
   probe C~1.81; R_d at level 6: 124, 46.4, 45.1 (iterated potentials converge to ~44).
   NEXT: switch node 4 to the twice-iterated potential (margin), fix node-1 Good-ancestor gap, then
   prove the bookkeeping.
+- Node 4' RegularPotential2_449 45 (desc3/desc2 in [43.2,43.8] at level 12 incl. R1-worst cells); bookkeeping now uses it, margin 2.3x (sum 2.65 vs c=6).  NEXT: prove the bookkeeping theorem (needs a desc2-potential analogue of childMassTot_succ_le).
