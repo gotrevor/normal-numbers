@@ -538,6 +538,7 @@ import NormalNumbers.LiteratureDigitsOfPowers
 import NormalNumbers.ErdosTriples
 import NormalNumbers.ErdosTripleClasses
 import NormalNumbers.ZeroOneBases
+import NormalNumbers.ZeroOneBasesReview
 import NormalNumbers.ZerolessTuples
 import NormalNumbers.CampbellAnswer
 import NormalNumbers.CPrimeSiteFactorization

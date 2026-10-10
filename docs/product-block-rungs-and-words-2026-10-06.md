@@ -128,3 +128,40 @@ sizes: 1, 3, then at least 5 (none of 4 odd members up to 64; greedy found 9).  
 digits {0, 3}: 4 members.  The run greedy stalls from k = 4 the way the 4-word greedy did: k = 4
 reached 11 members with failing leaves still rising (509 → 1013), and k = 5 tied on every
 candidate.  Lean: `not_isWordSetBlock_*`, Maze row "x, 3x, 5x as the first member of a family".
+
+## Run blocks grow, by a real witness (2026-10-10)
+
+**Result.**  If `16·|S| ≤ 2^⌊k/4⌋`, one irrational `X` keeps `1^k` out of every `m·X`, `m ∈ S`
+(`exists_irrational_noOnes`, hand proof in the docstring, confidence 90%).  So a run block of
+order `k`, and a binary `k`-word block, has more than `2^⌊k/4⌋/16` members
+(`IsWordSetBlock.runs_card`, `IsWordBlock.two_card`, `runBlocks_grow`; the wiring is proved).
+Against Szüsz–Volkmann's doubly exponential upper bound, the member count is now pinned between
+exponential and doubly exponential in `k`.
+
+**Mechanism.**  Nested intervals with a union bound at each scale.  Keep `J` and, for each `m`,
+a dyadic cell holding `m·J` that is at most `2^a` times longer and whose binary index has no
+`1^k` and ends in at most `k/2` ones.  Shrink `J` by `2^u` at a random position.  Each `m` fails
+by straddling a boundary (probability about `2^−a`) or by landing in a bad sub-cell
+(probability about `2^a · 2^−k/2`, since the density against the uniform law is at most `2^a`).
+`a = k/4` balances them, so `s` multipliers survive while `s ≲ 2^(k/4)`.  The `k/2` cap on
+trailing ones stops a run from completing across the seam between scales.  This is a
+Newhouse-thickness argument in disguise.  The sibling to cite is the gap lemma for many thick
+sets (Hunt–Kan–Yorke, Yavicoli, Falconer–Yavicoli).  The application to product blocks is ours.
+
+**What it replaced.**  The plan was `RunCoversGrow`: integers `B` with no `1^k` in any `m·B`,
+fed through the Liouville witness.  An exact carry automaton
+(`experiments/mahler_run_cover_exact.py`) showed three things.
+- The ILP's "k = 3 optimum 3" was an artifact of checking `B ≤ 2000`.  `{137, 213, 243}` first
+  fails at `B = 5177`, no triple of odd `m ≤ 256` is a cover, and `{1, 3, 5, 7}` is one (the units
+  mod 8).
+- Both completions are easy.  In `Z₂`, each odd `m` forbids one base-`2^t` digit of `B`, so
+  fewer than `2^(t−1)` multipliers leave a `B` free of `1^(2t−1)` (`twoAdic_runFree`).  In `ℝ`,
+  the theorem above applies.
+- The glue fails.  `{3, 7, 21, 35}` is an integer cover of order 3, although `B = −23/127` works
+  in `Z₂` and `y = 1/7` works in `ℝ` (`runCover_three_mixed`; `{37, 57}` at `k = 2` too).  An
+  integer needs a 2-adic tail and a real head to agree on a window of about `log₂ max S` bits.
+  Multiplication smears that window from both ends, and neither one-sided argument controls it.
+
+So `RunCoversGrow` stays open (confidence 65%) as arithmetic in its own right.  Block growth
+does not need it: the real witness never has to terminate.  Maze row: "Run covers from their
+2-adic and real completions".
