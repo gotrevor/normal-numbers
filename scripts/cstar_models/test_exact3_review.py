@@ -7,6 +7,7 @@ import gzip
 import json
 import os
 import random
+import re
 import shlex
 import subprocess
 import sys
@@ -60,6 +61,14 @@ def test_frozen_weights_pass_read_only_mode(checked):
     _, result = checked
     assert result.returncode == 0, result.stdout + result.stderr
     assert "CHECK PASSED: positive 74431/76800, failures 0" in result.stdout
+
+
+def test_lean_embedding_matches_the_frozen_weights(candidate):
+    _, _, values = candidate
+    source = (HERE.parents[1] / "src" / "CertData" / "Gate4.lean").read_text()
+    block = source.split("def wString : String :=", 1)[1].split("def W : Array Int", 1)[0]
+    literal = block[block.index('"') + 1:block.rindex('"')]
+    assert [int(value) for value in re.findall(r"\d+", literal)] == values
 
 
 def test_actual_cli_geometry_matches_entry_artifact_and_exact_radius_bound(checked):
