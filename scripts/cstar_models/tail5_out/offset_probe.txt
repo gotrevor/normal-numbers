@@ -1,0 +1,9 @@
+# tail5_offset_root.py (ancestor root, K=20) and tail5_offset_62.py (ancestor (6,2), K=30)
+# killed weight fraction of Good level-K descendants, actual offset vs SAMPLED-exact max over AP offset theta
+# coverage cov_b = 2 b^-4.49: b5 0.001464, b6 0.000637, b7 0.000317
+root  5 3 actual 0.0016154 maxoffset 0.0016247  (max/cov 1.11)
+root  6 3 actual 0.0003205 maxoffset 0.0007276  (1.14)
+root  7 2 actual 0.0002235 maxoffset 0.0003494  (1.10)
+(6,2) 5 8 actual 0.0010979 maxoffset 0.0012194  (0.83)
+(6,2) 6 7 actual 0.0004445 maxoffset 0.0004655  (0.73)
+# float positions; max over theta by exact event sweep (wrap counted once per side)

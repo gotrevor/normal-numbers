@@ -3888,3 +3888,9 @@ Next: `isFresh` Riesz bound, then the classification lemma in Lean (route-decisi
   scheme's sup is finite; whether shift-2 saturates under 9.87 is undecided by sampling.
   Next: a deterministic upper bound for the shift-s scheme via the 76802-class transfer data
   (max over classes of lag-j good-descendant weight), not deeper sampling.
+- Lap 2 mechanism (`UniformBadTailMechanism.lean`): crux split into APKillUniform449 (offset-uniform
+  AP kill bound, evidence C<=1.15 at root and (6,2)) and UpperGrowth449 (totals upper growth of the
+  weighted core; the identified hard core: per-class potentials lose the 3020 spread, lags need
+  Lambda < gamma).  Proved: tailTotals_of_upperGrowth.  Next: (a) prove/measure UpperGrowth449
+  totals ratio childMassTot/mass for m <= 4 exactly; (b) formal bridge APKillUniform449 ->
+  loss m <= eps * childMassTot m (ancestor j_b blocks up; needs descendant bookkeeping).

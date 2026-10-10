@@ -1000,6 +1000,7 @@ import NormalNumbers.UniformBadTailReview
 import NormalNumbers.UniformBadTail
 import NormalNumbers.UniformBadTailSplit
 import NormalNumbers.UniformBadTailObstruction
+import NormalNumbers.UniformBadTailMechanism
 import NormalNumbers.LinearFormsScales
 import NormalNumbers.LinearFormsScalesStretch
 import NormalNumbers.Hertling
