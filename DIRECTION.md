@@ -84,6 +84,7 @@ Never restate or weaken them.  The stretch node `CStarLeThree` and any sharper l
   bank the lowest exponent the current engine certifies (any c < 5) as its own theorem, record the wall in the Maze,
   and stop.  A higher certified lower bound (above 5/2) is a parallel bonus.
 
+- **Operator gate 4 (Ren, 2026-10-10) - shared-phase {2,3} core (Trevor: `/youthify yes` to "launch gate 4 on the shared-phase measurement").** Frozen target: `Coherent.coherentTwoThree449` (`src/NormalNumbers/UniformBadCoherent.lean`) = `NextReview.CoherentTwoThree449`; do not weaken or restate it. Order: (1) **measurement** - modify a copy of `scripts/cstar_models/abs3.js` so one parent phase is shared by all siblings over D-level blocks (inf_phase sum_child, not sum_child inf_phase), on `sft45.json`, D = 2/4/8 (cap 12), at c = 4.5 then 4.49; the number to reach is per-level growth >= 9/5 with weights in [0,1] and positive root weight; run the controls in the gate docstring first (base 3 off -> 1.890252; singleton phase -> equal minima; below log2 3 the tree dies). (2) **kill test or certificate** - if shared ~ separate minimum on reachable states, state the refutation in Lean, add a Maze row and write ON-LINE-REQUEST.md; else build the exact finite certificate and its Lean realization. (3) **tail interface** - weight-aware tail charges into the base >= 5 engine with a rigorous infinite-base tail. Forbidden: retuning local charges without the shared-phase change; another blind base sweep. Codex's review files `UniformBadTowerReview`/`UniformBadNextReview` are in the build; Codex reviews lap results via `~/personal/agent-mail/nn-cstar/`.
 - **Operator gate 3 (Ren, 2026-10-08 19:40) — "tighten the beam" (Trevor: `/youthify tighten the beam!`).
   Supersedes gate 2 and the lap-13 directive; the lap-13 walls stand.**  The run gate is
   `sorry-free:src/NormalNumbers/UniformBadTower.lean`, and the required headlines are `le_cStar_729_290` and
@@ -125,6 +126,7 @@ Never restate or weaken them.  The stretch node `CStarLeThree` and any sharper l
   placement of base-3 windows, not the bookkeeping.
 
 Directive history:
+- 2026-10-10 (operator): gate 4 opened on the shared-phase {2,3} core (coherentTwoThree449, Codex review #1); UniformBadNextReview wired into the build.
 - 2026-10-09 (operator): gate 3 stopped on a confirmed stuck: 729/290 ≤ c⋆ proved; rational towers refuted unconditionally by the Codex review (not_rationalTower); refuted headlines retired as RationalTowerFour/SelfGoodPerfectFour; lane parked pending a non-local {2,3} mechanism.
 - 2026-10-08 19:40 (operator gate 3): "tighten the beam": UniformBadTower gate (729/290 + rational towers at c = 4).
 - 2026-10-07 (c⋆ lap 13, review): local engines walled at 9/2 (`not_perStageCert`); lower bound 93/37; stuck evidence.

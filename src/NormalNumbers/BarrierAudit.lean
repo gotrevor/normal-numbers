@@ -48,6 +48,8 @@ import NormalNumbers.UniformBadFive
 import NormalNumbers.UniformBadNineHalves
 import NormalNumbers.UniformBadTower
 import NormalNumbers.UniformBadTowerReview
+import NormalNumbers.UniformBadNextReview
+import NormalNumbers.UniformBadCoherent
 
 /-!
 # Barrier audit: every open crux names a sibling it must fail on
@@ -78,6 +80,11 @@ namespace NormalNumbers.Barriers
 
 /-- Each frozen headline `sorry` and the barriers its mechanism must fail on. -/
 def cruxLinks : List CruxLink := [
+  ⟨``UniformBadThreshold.Coherent.coherentTwoThree449,
+   [``uniformBad_base_two],
+   "the shared-phase certificate must keep base 3 exact under ONE parent phase: base 2 alone \
+    dies at exponent ≤ log₂ 3, and summing per-child phase minima (abs3.js) is only a relaxation \
+    (common_phase_sum_bound), so the growth must come from joint rows a real parent realizes"⟩,
   ⟨``UniformBadThreshold.cStar_le_nine_halves,
    [``uniformBad_base_two],
    "the engine must make base 3 exact alongside base 2: the two-rate counting engine (base 2 exact, \
