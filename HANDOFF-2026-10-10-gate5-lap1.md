@@ -16,3 +16,13 @@ Branch `proof/uniformbad-threshold`, HEAD f6297030 (green).
 
 ## Next
 Awaiting operator.  Off-decision leaf: prove `childConcentration_18` by evaluation.
+
+## BLOCKER (box stuck, strike 1) — for the fresh lap to verify fast
+- WHAT: `Tail.tailChargeBudget449` (the only sorry under `cStar_le_449`).
+- WHY operator-gated: DIRECTION.md gate 5 step (2) says: if bases 5-7 exhaust the budget, state the
+  obstruction in Lean, add a Maze row, write ON-LINE-REQUEST.md and STOP; the structural fix (fold
+  bases into the core) is the operator's call.  Done: `UniformBadTailObstruction.lean`, Maze row,
+  ON-LINE-REQUEST 2026-10-10 entry.  Verify: `grep -A6 "bases 5..7, n <= 7" scripts/cstar_models/
+  tail5_out/peranc_b7_n7_*.txt` (all FAIL vs 9.874655).  Retuning gate-4 weights is forbidden.
+- NEED from operator: choose (a) a gate-4-style core certificate including base-5..7 phases, or
+  (b) an averaging route to `TailTotalsBound449`; or relabel the kill-test threshold.
