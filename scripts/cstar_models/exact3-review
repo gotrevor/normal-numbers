@@ -1,0 +1,16 @@
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.11"
+# dependencies = ["pytest"]
+# ///
+"""Persistent exact3 review checks: ./exact3-review test [pytest options]."""
+import subprocess
+import sys
+from pathlib import Path
+
+if len(sys.argv) < 2 or sys.argv[1] != "test":
+    raise SystemExit("usage: exact3-review test [pytest options]")
+raise SystemExit(subprocess.call([
+    sys.executable, "-m", "pytest", "-q",
+    str(Path(__file__).with_name("test_exact3_review.py")), *sys.argv[2:],
+]))
