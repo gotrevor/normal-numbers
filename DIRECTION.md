@@ -132,27 +132,39 @@ Directive history:
 - 2026-10-07 (c⋆ lap 7, review): Newhouse thick core closed by forced merging; probe c=4 counting core, bank c⋆ ≤ 5.
 - 2026-10-07 (c⋆ lap 3, review): counting engine + `c⋆ ≤ 6` banked first; crux = exact joint {2,3} core certificate.
 - 2026-10-06 evening: threshold lane opened (Trevor: "go for it").
-## CURRENT DIRECTIVE (2026-10-07, branch `proof/cantor-repetition`, review lap 7): the sparse-pair route 🎯
 
-**Objective:** make the frozen headline `liouvilleCantorFullProfile` rest only on two cited classical
-theorems (`Literature.bakerLogDiscrepancy_cited`, `Literature.matveevThreeLogs_cited`) by proving the
-leaves of the sparse-pair route (`CantorRepetition.lean` "The copy zone through sparse pairs",
-`SparseIdentity.lean`).  Wiring is in place: `repPairArith_of_three_dvd` now goes through
-`repPairArith_of_literature`; conditional headline `liouvilleCantorFullProfile_of_literature`.
-**Mandated next move (in order):** (1) `sparseIdentityBound_of_matveev` (the Diophantine leaf; the only
-new-math leaf left, believed 90%): strong induction on the term count + top-cut gap bounds from
-Matveev; state the gap-step lemma first; (2) `cycSparse_of_cycProd_ge`, `card_cluster_le`,
-`runOrbitDecay_of_sparse`; (3) `card_degRows_le`, `copyRun_psi`; (4) `repPairArith_of_runDecay`
-(ψ-version of the assembly + the sched sum swap).
-**Forbidden drift:** attacking `TOrbitCyclicDecay` / `BadGcdSparseH` (superseded, not needed: the
-assembly needs only a saving summable along `sched`); construction redesigns; edits to frozen statements;
-trying to formalize Baker/Matveev themselves before every other leaf is closed.
-**Why:** two sparse points of one orbit `c tᵐ mod 3^A − 1` at distance `δ ≲ A/(K log t)` force an exact
-identity `tᵟU = V` between `K`-sparse integers (`cyclic_pair_identity`, PROVED), and Matveev bounds
-`δ ≤ exp(O(K log K))`; so sparse points cluster, and the copy-zone saving is `≈ cos(π/9)^{√k}` per run
-`k`, summable.  The previous walls asked for a power saving, which is an open digits-of-powers problem.
+## CURRENT DIRECTIVE (2026-10-09, branch `proof/cantor-repetition`, review lap 13): P1 is the last leaf 🎯
+
+**Objective:** prove `repPairArith_of_sparse` (CantorRepetition), the Baker-free shadow dichotomy.
+It is the ONLY open obligation under the frozen headline `liouvilleCantorFullProfile` and the scope
+target (`CantorRepetition.lean` sorry-free): P3 is DONE (`PadicTwoLogs.laurentZeroLemma` proved
+elementarily, so `padicTwoLogs` is a theorem and `repPairArith_of_three_dvd` is wired to it).
+**Mandated next moves, in order** (design detail: PENDING_WORK "P1 ASSEMBLY DESIGN"):
+1. **Decisive probe first:** state `repPairPos_shadow` (the `repPairPos_copy` analogue whose
+   shadow-class terms are the min-option bound with NO Baker input) and the per-pair lemma
+   "min(repBound none, repBound (some k)) ≤ θ_k + 1[orbit point c·tᵐ cyclically sparse]" for
+   classes 2/4.  Prove the per-pair lemma on the real `repBound` (it reuses
+   `cycSparse_of_copy_free` + `cycSparse_of_three_pow_mul`).  If the separated sub-case (class 2:
+   top of ξ leaves the fresh stretch) does not reduce to `c = h'`, record that as a refutation
+   (Lean `¬` or counterexample) + Maze row and fall back (below).
+2. Refined classification (`pair_classify_rep` returning the run `k` for classes 2/4).
+3. Totals of shape `N·N_k·φ_k`, summable along `sched` (`sched_tail1`, `summable_shadow_sched`).
+4. Assembly `repPairArith_of_sparse` (sign/3-part reduction as `repPairPower_of_pos`).
+**Fallback (only if step 1 refutes the per-pair dichotomy):** prove
+`CantorExactExponentProfile.Literature.BakerLogDiscrepancy` (archimedean two logs, fixed heights
+`t, 3`, any polylog rate) by an interpolation determinant on the model of `PadicTwoLogs.lean`.
+**Forbidden drift:** re-opening P3 (done); Matveev / Baker–Wüstholz formalization; sorry'd theorems
+whose statement is a cited Prop; edits to frozen statements (`LiouvilleCantorFullProfile`,
+`RepPairArith`, `repPairArith_of_three_dvd`'s statement, `repPairArith_of_sparse`'s statement);
+other lanes.
+**Why:** the review lap found the zero lemma elementary (a support determinant whose top
+coefficient is a generalized Vandermonde), which closed P3 in one lap; the remaining uncertainty
+of the whole route is concentrated in P1's per-pair dichotomy (carry normalization with repeated
+exponents; the separated sub-case), so that is the decisive probe.
 
 Directive history (repetition branch):
+- 2026-10-09 review lap 13: zero lemma PROVED (elementary), P3 done; P1 `repPairArith_of_sparse` is the last leaf, per-pair dichotomy first.
+- 2026-10-08 review lap 10: sparse-pair route complete; next = one 3-adic two-log input (3-adic chain proved), Baker-free shadow (P1), then prove the input (P3).
 - 2026-10-07 review lap 7: sparse-pair route (cluster lemma + Matveev) replaces the walls.
 - 2026-10-07 review lap: assembly first; walls stay named nodes.
 

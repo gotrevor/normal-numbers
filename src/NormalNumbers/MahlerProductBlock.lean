@@ -364,4 +364,39 @@ binary's `{1, 3, 5}` is the stronger result. -/
 theorem isWordSetBlock_four_extreme : IsWordSetBlock 4 {[0], [3]} {1, 3, 6, 9} := by
   sorry
 
+/-! ### The run cover: an arithmetic shadow that grows with `k`
+
+`runs_liouville_cover` turns every run block into an arithmetic object: a set `S` such that
+every odd `B` has `k` consecutive ones in some `m·B`.  Its minimum size (exact ILP over odd
+`m ≤ 256`, `B ≤ 2000`) is 2, 3, at least 5 for `k = 2, 3, 4`.  The true run-block sizes sit
+above it (`{1, 3, 5}` at `k = 2` needs its third member for the token witness `01`/`001`). -/
+
+/-- `S` is a **run cover** of order `k`: every `B ≥ 1` has `k` consecutive ones in some `m·B`. -/
+def RunCover (k : ℕ) (S : Finset ℕ) : Prop :=
+  ∀ B, 1 ≤ B → ∃ m ∈ S, List.replicate k 1 <:+: Nat.digits 2 (m * B)
+
+/-- Every run block is a run cover (the Liouville witness). -/
+theorem IsWordSetBlock.runCover {k : ℕ} {S : Finset ℕ} (hS : IsWordSetBlock 2 (binaryRuns k) S) :
+    RunCover k S :=
+  hS.runs_liouville_cover
+
+/-- **Order-4 run covers need 5 multipliers** below 257 (computational; confidence 90%):
+exact ILP, HiGHS dual bound 5.0 over odd `m ≤ 256` against odd `B ≤ 2000`
+(`experiments/mahler_run_cover.py`; orders 2, 3 give optima 2, 3). -/
+theorem not_runCover_four_small :
+    ∀ S ⊆ Finset.Icc 1 256, S.card ≤ 4 → (∀ m ∈ S, Odd m) → ¬ RunCover 4 S := by
+  sorry
+
+/-- **Open node: run covers grow.**  For every size bound `s` some order `k` has no run cover
+of size `≤ s`.  Believed (confidence 60%): the optimum climbs 2, 3, ≥ 5, and a single `m`
+never covers (some multiple of `m` is a sparse repunit `(2^(jn) − 1)/(2^j − 1)`). -/
+def RunCoversGrow : Prop :=
+  ∀ s : ℕ, ∃ k, ∀ S : Finset ℕ, S.card ≤ s → ¬ RunCover k S
+
+/-- **Edge**: growing run covers force growing run blocks. -/
+theorem runBlocks_grow_of_runCoversGrow (h : RunCoversGrow) (s : ℕ) :
+    ∃ k, ∀ S : Finset ℕ, S.card ≤ s → ¬ IsWordSetBlock 2 (binaryRuns k) S := by
+  obtain ⟨k, hk⟩ := h s
+  exact ⟨k, fun S hS hB => hk S hS hB.runCover⟩
+
 end NormalNumbers.Adder

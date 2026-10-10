@@ -1,3 +1,167 @@
+## Repetition lap 13 (2026-10-09, later) — P1 PROVED; HEADLINE `liouvilleCantorFullProfile` PROVED
+* `repPairArith_of_sparse` is a theorem (section `Shadow` in CantorRepetition, ~1000 lines);
+  `#print axioms liouvilleCantorFullProfile` = trust base.  Scope target `CantorRepetition.lean`
+  sorry-free.
+* Design as formalized (simpler than the 4-step plan below): no refined `pair_classify_rep`; a new
+  `shadow_classify` on `v` alone (class 1 fresh low window, or `v` in even run `k` with top below
+  `a_{k+2}` (I) or separated (II)); per pair `exists_option_le_shadowPair` (cost `θ_k + 1[sparse]
+  + 1[sparse]`); `sum_shadowTerm_le` regroups by runs into `runShadow k N`; `runShadow_le`
+  (`RunSparseDecay t 12 32`, `card_degRows_gen` for `d < N`, `not_dvd_two_mul_pow`);
+  `summable_shadow_sched` (`sched_tail1` + `sched_tail`); `repPairPos_shadow` (q = 2, class-1 and
+  bad terms as in `repPairPos_explicit`).  Classes 3–6 and the copy-run sums are not used.
+* Possible follow-ups: neutral note `docs/notes/liouville-cantor-profile.md`; the exact-exponent
+  sibling `ExponentCantorFullProfile` (frozen def, 40%).
+
+## Repetition review lap 13 (2026-10-09) — ZERO LEMMA PROVED; P3 DONE; P1 is the last leaf
+* `PadicTwoLogs.laurentZeroLemma : Literature.LaurentZeroLemma` (new `ZeroLemma.lean`, trust base).
+  Proof: `S = supp q`; rows `σ₁..σ_m ∈ Σ₁` with `det[y_σˡ]_{l∈S} ≠ 0` (kernel of `[y_σˡ]` trivial by
+  root count, then `exists_det_submatrix_ne_zero`); `D(X) = det[taylor_{x_σᵢ}(q_l)·y_σᵢˡ]` vanishes on
+  the `> (K−1)L` x-values of `Σ₂` (kills `(y_γˡ)`), degree `≤ (K−1)L` ⇒ `D = 0`; but
+  `coeff_det_of_col` gives top coefficient `∏ lc(q_l)·det[y_σᵢˡ] ≠ 0`.  Independence unused.
+* `PadicTwoLogs.padicTwoLogs` (unconditional); `repPairArith_of_three_dvd := repPairArith_of_padic
+  padicTwoLogs` (CantorRepetition now imports PadicTwoLogsAssembly; the zeroLemma corollary moved
+  into CantorRepetition); `liouvilleCantorFullProfile_of_baker` (Baker only, trust base).
+* Headline `#print axioms`: trust base + sorryAx, the sorry being `repPairArith_of_sparse` only.
+* NEXT (DIRECTION, binding): P1 per-pair dichotomy first (decisive probe), then classification,
+  totals, assembly.  Fallback: `BakerLogDiscrepancy` by an archimedean interpolation determinant.
+
+## Repetition lap 12 (2026-10-09) — P3 assembly PROVED; P1 per-pair leaves PROVED
+* `PadicTwoLogsAssembly.padicTwoLogs_of_zeroLemma`: `LaurentZeroLemma → Literature.PadicTwoLogs`.
+* P1 leaves: `CycMerge.cycSparse_of_sum/exists_bal_finsum/cycSparse_add` (carry/merge),
+  `cycSparse_of_cycProdR_ge` (copy ≥ θ), `isSparse3_of_freeProd_ge` (free ≥ θ),
+  `cycSparse_of_copy_free` (both ≥ θ ⇒ `3^{v−A}Z` CycSparse A (6K+16)) — on the real repBound ξ.
+* NEXT (P1 crux): Baker-free `repPairPos_explicit` variant — shadow classes 2/4 choose κ = copy
+  run vs free (min ≤ θ unless both large), both-large pairs counted per row via
+  `card_cluster_le` + SparseIdentityBound as in `runOrbitDecay_of_sparse`.  Then the ψ shape.
+
+* Lap 12 later: `card_sparse_orbit_le`, `RunSparseDecay`/`runSparseDecay_of_sparse`,
+  `CycMerge.cycSparse_of_three_pow_mul` (unrotation), `sched_tail1` (Σ_{sched j≥X} 1/sched j ≲ log X/X).
+* P1 ASSEMBLY DESIGN (next laps):
+  1. Refined classification: re-prove `pair_classify_rep` so classes 2/4 also return the run k
+     (`deep_or_fresh hnv` gives it) — `v` deep in even run k; then derive `E ≤ T < a_{k+2}`
+     (class 4) / `E ≤ y ≤ u`, `y < a_{k+2}` (class 2), all of `[E, top]` fresh, `< M`.
+  2. Per-pair: min(repBound none, repBound (some k)) ≤ θ_k + 1[both ≥ θ_k];
+     both ≥ θ_k ⇒ (`cycSparse_of_copy_free` on ξ (class 4) or on −Y (class 2: copy/free of ξ equal
+     those of −Y since u ≥ E; cos/cycProdR even)) ⇒ unrotate ⇒ `CycSparse A K'' (c tᵐ)`,
+     c = h'(bᵈ−1) (class 4) or c = h' (class 2).  θ_k = 2cos(π/9)^{⌊√k⌋+1}, K'' = 2(6K+16).
+  3. Totals: shadow pairs with v in run k: m ∈ run-k range (≤ N_k), d < N ⇒ shape N·N_k·φ_k
+     (θ part + RunSparseDecay rows + `card_degRows_le`).  Summable along sched via `sched_tail1`
+     (new `summable_shadow_sched`, analog of `summable_copy_sched`).
+  4. New `repPairPos_shadow` (copy of `repPairPos_copy` with pairMaj' = pairMaj minus topProd
+     terms plus shadow terms; no hB) ⇒ `repPairArith_of_sparse`.
+
+## Repetition lap 11 (2026-10-09) — P3(a) algebraic core PROVED; zero lemma STATED
+* New `src/NormalNumbers/PadicTwoLogs.lean`.  PROVED: `dvd_det_mul` (Cauchy–Binet valuation bound
+  via multilinear expansion of rows; non-injective selections vanish by alternation),
+  `sum_weight_ge` (`Σ(a+gb) ≥ T(L − T(T/g+1))` over `L` distinct lattice points),
+  `dvd_det_mul_monomial` (columns carry `x^{μ₁}y^{μ₂}`, `p∣x`, `pᵍ∣y` ⇒ `p^{T(L−T(T/g+1))} ∣ det`).
+  Axioms: trust base.
+* STATED (cited, transcription from memory, unchecked): `Literature.LaurentZeroLemma` (rational case).
+* Same lap, PROVED (a'): `dvd_det_interp` — the actual interpolation determinant
+  `det[z_x^k t^{l z_x} w^{l s_x}]` (rows = `KL` points, columns `(k,l)`), `p∣t−1`, `pᵍ∣w−1`, in any
+  comm ring: `p^{T(KL − (T+K)(T/g+1))} ∣ Δ`.  Finite Mahler expansion, no p-adic analysis:
+  `pow_mul_choose_expand` (`zᵏC(z,j) ∈ span_ℤ{C(z,i) : i ≤ k+j}`), `one_add_pow_eq_sum`,
+  `sum_weight_ge_shift`.  So (a) is DONE.
+* Same lap, PROVED (b): `three_pow_dvd_det_hom` (homogenised integer determinant
+  `det[zᵏ t^{lz} b^{ls} V^{(L−1−l)s}]`, `V = a tᵟ`, divisible by `3^{T(KL−(T+K)(T/g+1))}`; via
+  `ZMod 3^m`, where `p^m = 0`) and `three_pow_le_of_det_ne_zero` (nonzero ⇒ `3^m ≤ (KL)! X^{KL}`).
+* Same lap, PROVED: `dvd_det_interp_gen` (any column family `φ` with a binomial expansion),
+  `choose_mul_choose_expand` (Gregory–Newton + `fwdDiff_iter_eq_zero_of_degree_lt`),
+  `three_pow_dvd_det_rs` (grid points `(r,s)`, entries `φ_k(r+δs) t^{lr} b^{ls} a^{(L−1−l)s}`:
+  the correct Liouville heights).
+* PARAMETER CHECK (paper, lap 11; to be formalized in (d)): the regime `T < g` suffices.  If
+  `g > KL/3`, take `T = ⌊KL/3⌋`: `m ≥ T(KL − T − K) ≈ 2N²/9` (`N = KL`), while
+  `log|Δ| ≤ N log N + N(K log(e(R+δS)/K) + LR log t + LS B)`.  Choose `L ≈ C(log(δ/B) + 1)`,
+  `K ≈ C²LB`, `R ≈ K/C`, `S ≈ K/(CB)`: zero-lemma counts `RS ≳ KL` and `R ≥ L` hold, and the squeeze
+  fails, so `g ≤ KL/3 ≈ C'(1 + log δ)²·B` — exactly the `PadicTwoLogs` shape.  With columns `z^k`
+  an extra `log K ≈ log B` appears (`B log²B`, still enough for the chain but not the Prop shape),
+  hence the binomial columns.  The two-variable count is NOT needed at this precision.
+* Same lap: REFUTED my first zero-lemma transcription (`not_laurentZeroLemmaMisread`: conditions
+  swapped; `b₁=b₂=0`, `P = X`).  Corrected `Literature.LaurentZeroLemma` (polynomial-family form).
+  PROVED (c, linear algebra): `det_mul_eq_sum`, `exists_det_submatrix_ne_zero` (trivial kernel ⇒
+  nonzero maximal minor via `det(AᵀA) ≠ 0`).
+* Same lap, PROVED (c) from the cited zero lemma: `choose_coeffs_eq_zero`, `grid_ker_trivial`,
+  `exists_det_hom_ne_zero` (nonzero integer homogenised `KL`-minor on the grid).
+* Same lap, PROVED (d, squeeze): `g_le_of_squeeze` (+ `entry_bound`): parameters abstract, numeric
+  inequality `hnum` as hypothesis.
+* Same lap, PROVED: `numeric_core`, `g_le_indep` — the independent case with `3∣t−1`, `3∤a`:
+  `g ≤ 2²⁴ τ A (D+τ+20)²` (binary lengths), from `LaurentZeroLemma` only.
+* NEXT: reductions to `g_le_indep` — (i) `t ↦ t²` (`t² ≡ 1 mod 3`; `δ` even/odd: `t^δ a = (t²)^{⌊δ/2⌋}(t^{δ mod 2} a)`),
+  (ii) `3 ∣ a` or `3 ∣ b` (if `3∣a`, `3∤b` then `g = 0`; strip common powers of 3 — but they're
+  not coprime-free: `v₃(tᵟa−b) ≥ g`, write `a = 3ᵉa'`, `b = 3ᶠb'`; if `e ≠ f` then `g ≤ min(e,f) ≤
+  log₃M`; if `e = f`, divide out), (iii) dependent case by LTE, (iv) real-log conversion.
+* OLD NEXT (d): `hnum` for explicit parameters (real-log estimate), then assembly `padicTwoLogs_of_zeroLemma : LaurentZeroLemma → PadicTwoLogs` — parameters,
+  entry bound `X`, reductions (`t ↦ t²` for `3 ∣ t−1`; `3 ∣ a`/`3 ∣ b`; dependent case; small δ).
+* DONE-NOTE (c, wiring): grid matrix `A (r,s) (k,l) = C(r+δs,k)·(tʳ(b/a)ˢ)ˡ` over ℚ; kernel vector ⇒
+  `q_l = Σ_k v_{kl} chooseP k` vanish on the grid ⇒ (zero lemma) `q_l = 0` ⇒ evaluate at `0,1,…`
+  (triangular in `C(n,k)`) ⇒ `v = 0`; then minor ⇒ integer homogenised det ≠ 0.  Then (d).
+  Small-δ regime (`δ < R₂`, values `r+δs` collide): use the trivial bound `3ᵍ ≤ |tᵟa − b|`.
+* OLD NEXT: (c) zero lemma ⇒ Δ ≠ 0 for points `z = r + δs` (need the transcription check), (d) parameters
+  and the assembly `padicTwoLogs`; reduction to `3 ∣ t − 1` (replace t by t², δ by ⌈δ/2⌉ carefully),
+  3 ∣ a·b case split.  OLD: (b) Liouville upper bound for `Δ` with `z = r+δs`, `t`, `w = b/(a tᵟ)` (clear denominators:
+  `(a tᵟ)^{L·S}·Δ ∈ ℤ`, `|Δ| ≤ (KL)!·max|entry|^{KL}`, so `v₃ ≤ log|·|/log 3` if nonzero); (c) zero
+  lemma ⇒ `Δ ≠ 0` for a suitable point set; (d) parameters.  OLD NOTE: (a') the Mahler expansion itself — write the interpolation matrix entries
+  `binom(r b₂+s b₁, k)·α₁^{lr}α₂^{ls}` as `P·Q` with `P` monomial in `x = α₁−1`, `y = α₂/α₁^δ − 1`
+  (integer binomial identity `(1+x)^N = Σ binom(N,j)xʲ` + Vandermonde-type rewriting); then (b)
+  Liouville, (d) parameters.  P1 leaves of `repPairArith_of_sparse` still pending.
+
+## Repetition review lap 10 (2026-10-08) — ONE input: the 3-adic two-log bound; 3-adic chain PROVED
+* Inventory: `liouvilleCantorFullProfile_of_literature` = trust base (Baker + Matveev as hypotheses);
+  the scope sorry `repPairArith_of_three_dvd` needs those inputs PROVED.  The lap-9 "box stuck"
+  was premature: the inputs are the crux, and they can be narrowed.
+* PROVED: `SparseIdentity.sparseIdentityBound_of_padic` (from the new cited
+  `Literature.PadicTwoLogs`, Bugeaud–Laurent 1996): bottom-up 3-adic chain `chain_padic`
+  (`dvd_bot`: `tᵟU_{<p} ≡ V_{<p} mod 3^p`; the lowest exact cut is the endgame; no recursion),
+  `gap_of_padic`, `sum_shift`.  Wiring: `repPairArith_of_baker_padic`,
+  `liouvilleCantorFullProfile_of_baker_padic` (both trust base).
+* STATED (sorry, 80%): `repPairArith_of_sparse` — Baker-free shadow dichotomy (English proof in the
+  docstring).  With it: `repPairArith_of_padic`, `liouvilleCantorFullProfile_of_padic` (ONE input).
+* Why the 3-adic two-log input is the right target (checked this lap):
+  - `a_k ≈ k^k` and `cos(π/9)` per digit change force `K ≈ 80 log k`; the sparse-identity bound must
+    satisfy `log log L_K ≤ K/80`.  A chain gap bound `p_{j+1} ≤ C·polylog(δ)·(p_j+1)^κ'` gives
+    `log log L_K ≈ 2K log κ'`: so `κ' = 1` (LINEAR in the height) is required.  Elementary
+    (Liouville) bounds give gaps `≈ δ log t`: useless.  Counting bad `δ` instead of bounding them
+    does not help (`#ratios ≈ A^{2K}`).
+  - Naive one-variable interpolation determinant: `v₃(Δ) ≥ N²/2`, Liouville `N·B` ⇒ `g ≲ B²`
+    (quadratic in `log M`) — NOT enough.  Two-variable Mahler expansion (in `z = r + δs` and `s`,
+    coefficients `(t−1)ʲ(w−1)ⁿ`, `v₃(w − 1) = g`): `v₃(Δ) ≥ min_J Σ(a + g b) ≈ (2√2/3) N^{3/2} g^{1/2}`
+    ⇒ `g ≲ B ≈ (log δ)² log t log M`.  Linear.  This is the decisive analytic point of P3.
+  - Zero lemma: the one-slice exponential-polynomial count needs `R ≥ KL` (too weak); need Laurent's
+    2-log sumset lemma.
+* NEXT (DIRECTION order): P3 decisive probe (state + prove the Cauchy–Binet valuation bound; state the
+  zero lemma), then P1 leaves, then the rest of P3.  Sources: ON-LINE-REQUEST.md.
+
+## Repetition lap 9 (2026-10-08) — `repPairArith_of_runDecay` PROVED; sparse-pair route COMPLETE
+* `repPairArith_of_runDecay` is a theorem.  New: `repPairPos_copy` (`repPairPos_eventually` with the
+  copy term left explicit, no copy-zone inputs), `runCopy`, `summable_copy_sched` (the sum swap:
+  per run `k ≥ max k₁ (2e+4s)`, the `j` with `a_k ≤ 2s·sched j + e` have `sched j ≥ a_k/(4s)`;
+  `sched_tail` + `run_tail_weight` give `≤ 288 s² ψ_k (k+3)⁴`), `runStart_le_pow`
+  (`a_k ≤ (2k+4)^{k+1}`), `log_runStart_le`.
+* `#print axioms liouvilleCantorFullProfile_of_literature` = [propext, Classical.choice, Quot.sound];
+  Baker and Matveev enter only as hypotheses.  BarrierAudit waiver removed.
+* Left: only `repPairArith_of_three_dvd` (designated waived; unconditional form needs proofs of
+  Baker–Wüstholz/Erdős–Turán and Matveev — the forbidden-until-last item; now the only item).
+
+## Repetition lap 8 (2026-10-08) — `sparseIdentityBound_of_matveev` PROVED (from the cited Matveev Prop)
+* `SparseIdentity.sparseIdentityBound_of_matveev` is now a theorem; `#print axioms` = trust base
+  (Matveev enters only as the hypothesis `Literature.MatveevThreeLogs`).  Route as formalized:
+  `top_lower` (nonzero top-cut difference `≥ 3^θ·exp(−C L (1+(s+1)log 3))`, `L = 1+log(δ+λ+2)`;
+  the normalisation `a = ⌈θ−λ⌉₊`, `b = ⌈θ⌉₊` makes `|b₂| ≤ λ+1`, independent of the cut),
+  `gap_step` (next level within `2 + CL(s+2)`), a chain over the levels down to the *highest*
+  exactly-splitting cut `θ*` (no strong induction needed), `exists_le_of_split` (`λ ≤ span(θ*)` by
+  3-adic divisibility), `endgame` (`κx ≤ 2(3+C+C log((1+κ)x+2))^m ⇒ x ≤ exp(C'(m+1)²)`).
+* BarrierAudit crux link for it removed (closed).
+* Same lap, also PROVED: `cycSparse_of_cycProd_ge`, `card_cluster_le`, `runOrbitDecay_of_sparse`
+  (explicit `K = √k+1`, `θ = 2cos(π/9)^K`, `D = (⌊A/(2K+1)⌋−1)/t`; `orbit_sum_le`), `card_degRows_le`
+  (LTE: `pow_padicVal_three_pow_sub_one_le`, `gcd_three_pow_sub_one_le`), `copyRun_psi`
+  (`sum_sym_le_rows`).  Infrastructure for the last leaf: `sched_tail`
+  (`Σ_{sched j ≥ X} sched(j)⁻² ≤ 9(log X + 3)/X²`, via the telescoping `gT`).
+* OPEN (only remaining route leaf): `repPairArith_of_runDecay`.  Plan: (a) generalize
+  `repPairPos_eventually` to an abstract copy bound `Copy(N) ≤ C₀ + N²Φ(N)`; (b) `Φ(N) =
+  Σ_{k ≥ k₁, a_k ≤ 2sN+e} (N_k/N)² ψ_k`; (c) sum swap: `Σ_j Φ(sched j) ≤ Σ_k ψ_k N_k² · tail(X_k)`,
+  `X_k = (a_k − e)/(2s)`, `sched_tail` gives `≲ ψ_k (k+3)² log a_k ≲ ψ_k (k+3)⁴`; (d) sign/3-part
+  reduction in summable form (as `repPairPower_of_pos`).
+
 ## UniformBad threshold c⋆ (branch proof/uniformbad-threshold, 2026-10-07)
 * **2026-10-07 lap 13 (review, operator gate 2 rerun).**  Gate `cStar_le_nine_halves`: **no mechanism;
   local engines walled, proved for the per-stage engine.**  New probes at 9/2
@@ -224,8 +388,9 @@
   4. `repPairArith_of_runDecay`: ψ-versions of `power_of_eventually`, `repPairPower_of_pos`,
      `repPairPos_eventually` + `Copy(N) ≤ C₀ + N² Φ(N)`, `Σ_j Φ(sched j) < ∞` by a sum swap
      (`Σ_{sched j ≥ X} sched(j)^{-2} ≲ log X/X²`).
-* Cited (sorried, the end state): `Literature.bakerLogDiscrepancy_cited`,
-  `Literature.matveevThreeLogs_cited`.
+* Cited inputs enter only as hypothesis `Prop`s (`BakerLogDiscrepancy`, `MatveevThreeLogs`) in
+  `liouvilleCantorFullProfile_of_literature`; the unconditional `repPairArith_of_three_dvd` is a
+  direct waived `sorry` (the sorry'd `_cited` theorems were removed 2026-10-08).
 
 ## Repetition lap 6 (2026-10-07) — ASSEMBLY PROVED: `repPairArith_of_inputs` (Baker + TOrbitCyclicDecay + BadGcdSparseH ⇒ RepPairArith (3ˢt)), #print axioms clean. Next per DIRECTION: state+prove the conditional headline (LiouvilleCantorFullProfile from the three inputs).
 ### (history)

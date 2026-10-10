@@ -536,6 +536,8 @@ import NormalNumbers.EDensityAudit
 import NormalNumbers.LiteratureCampbell
 import NormalNumbers.LiteratureDigitsOfPowers
 import NormalNumbers.ErdosTriples
+import NormalNumbers.ErdosTripleClasses
+import NormalNumbers.ZerolessTuples
 import NormalNumbers.CampbellAnswer
 import NormalNumbers.CPrimeSiteFactorization
 import NormalNumbers.MazeAudit
@@ -968,6 +970,10 @@ import NormalNumbers.CantorExactExponentStretch
 import NormalNumbers.StretchBFR
 import NormalNumbers.CantorExactExponentProfile
 import NormalNumbers.SparseIdentity
+import NormalNumbers.PadicTwoLogs
+import NormalNumbers.ZeroLemma
+import NormalNumbers.CycMerge
+import NormalNumbers.PadicTwoLogsAssembly
 import NormalNumbers.CantorRepetition
 import NormalNumbers.CantorExactExponentFive
 import NormalNumbers.SchedFamily
