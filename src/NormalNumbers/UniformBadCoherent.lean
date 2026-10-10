@@ -206,6 +206,140 @@ theorem clean449_not_bad {k a : ℕ} (h : Clean449 k a) : ¬ twoThreeBad (449 / 
 theorem clean449_alive {k a : ℕ} (h : Clean449 k a) : Count.Alive (twoThreeBad (449 / 100)) k a :=
   alive_of_not_bad (twoThreeBad_succ _) k a h.1 (clean449_not_bad h)
 
+/-- Rational upper bound for the base-2 radius `2^(-449/100) ≈ 0.0445016`. -/
+def δ2hi : ℚ := 4451 / 100000
+
+/-- A forbidden binary word of length `L ≤ 13` with value `v`: its cylinder `[v/2ᴸ, (v+1)/2ᴸ]`
+lies inside `[0, δ₂⁺)` or `(1 − δ₂⁺, 1]`, or `L = 13` and the cylinder meets one of them. -/
+def Forb2 (L v : ℕ) : Prop :=
+  L ≤ 13 ∧ (((v : ℚ) + 1) / 2 ^ L < δ2hi ∨ 1 - δ2hi < (v : ℚ) / 2 ^ L ∨
+    (L = 13 ∧ ((v : ℚ) / 2 ^ 13 < δ2hi ∨ 1 - δ2hi < ((v : ℚ) + 1) / 2 ^ 13)))
+
+instance (L v : ℕ) : Decidable (Forb2 L v) := by unfold Forb2; infer_instance
+
+set_option exponentiation.threshold 1000 in
+theorem two_rpow_lt : (2 : ℝ) ^ (-(449 / 100 : ℝ)) < (δ2hi : ℝ) := by
+  have hx : 0 ≤ (2 : ℝ) ^ (-(449 / 100 : ℝ)) := by positivity
+  have h100 : ((2 : ℝ) ^ (-(449 / 100 : ℝ))) ^ (100 : ℕ) = ((2 : ℝ) ^ (449 : ℕ))⁻¹ := by
+    rw [← Real.rpow_natCast, ← Real.rpow_mul (by norm_num)]
+    rw [show (-(449 / 100 : ℝ) * ((100 : ℕ) : ℝ)) = -((449 : ℕ) : ℝ) by push_cast; ring]
+    rw [Real.rpow_neg (by norm_num), Real.rpow_natCast]
+  rw [← pow_lt_pow_iff_left₀ hx (by norm_num [δ2hi]) (by norm_num : (100 : ℕ) ≠ 0), h100]
+  rw [show ((δ2hi : ℚ) : ℝ) = 4451 / 100000 by norm_num [δ2hi]]
+  rw [inv_lt_comm₀ (by positivity) (by norm_num), ← inv_pow, inv_div]; norm_num
+
+/-- **Base-2 containment leaves a forbidden substring.**  If the cell `[a/2ᵏ, (a+1)/2ᵏ]` lies
+in a base-2 window of stage `n`, then the binary digits `n+1 … m` of `a` (as a `k`-bit word),
+for some `n < m ≤ k`, form a forbidden word. -/
+theorem forb2_of_window {k a n A : ℕ} (h : Count.cell k a ⊆ window 2 n A) :
+    ∃ m, n < m ∧ m ≤ k ∧ Forb2 (m - n) (a / 2 ^ (k - m) % 2 ^ (m - n)) := by
+  set d := (2 : ℝ) ^ (-(449 / 100 : ℝ)) with hd
+  have hdlt := two_rpow_lt
+  have hdpos : 0 < d := by positivity
+  have hdhi : (δ2hi : ℝ) = 4451 / 100000 := by norm_num [δ2hi]
+  have h2k : (0 : ℝ) < 2 ^ k := by positivity
+  have h2n : (0 : ℝ) < 2 ^ n := by positivity
+  have hlo : (a : ℝ) / 2 ^ k ∈ window 2 n A := h ⟨le_rfl, by gcongr; linarith⟩
+  have hhi : ((a : ℝ) + 1) / 2 ^ k ∈ window 2 n A := h ⟨by gcongr; linarith, le_rfl⟩
+  simp only [window, Set.mem_Icc, Nat.cast_ofNat] at hlo hhi
+  rw [← hd] at hlo hhi
+  -- n < k: otherwise the window is shorter than the cell
+  have hnk : n < k := by
+    by_contra hc
+    push Not at hc
+    have hpow : (2 : ℝ) ^ k ≤ 2 ^ n := pow_le_pow_right₀ (by norm_num) hc
+    have := sub_le_sub hhi.2 hlo.1
+    have e1 : ((a : ℝ) + 1) / 2 ^ k - a / 2 ^ k = 1 / 2 ^ k := by ring
+    have e2 : ((A : ℝ) + d) / 2 ^ n - (A - d) / 2 ^ n = 2 * d / 2 ^ n := by ring
+    rw [e1, e2, div_le_div_iff₀ h2k h2n] at this
+    nlinarith
+  -- scale by 2^n: with L' = k - n, a = B 2^L' + t
+  set L' := k - n with hL'
+  have hk : k = n + L' := by omega
+  have h2L : (0 : ℝ) < 2 ^ L' := by positivity
+  set B := a / 2 ^ L' with hB
+  set t := a % 2 ^ L' with ht
+  have hat : (a : ℝ) = B * 2 ^ L' + t := by
+    have := Nat.div_add_mod a (2 ^ L'); rw [← hB, ← ht] at this
+    exact_mod_cast (by linarith [this] : (a : ℕ) = 2 ^ L' * B + t) |>.trans (by ring)
+  have htlt : (t : ℝ) + 1 ≤ 2 ^ L' := by
+    have : t < 2 ^ L' := Nat.mod_lt _ (by positivity)
+    exact_mod_cast this
+  have hscale : ∀ y : ℝ, y / 2 ^ k = (y / 2 ^ L') / 2 ^ n := by
+    intro y; rw [hk, pow_add]; field_simp
+  have hlo1 : (A : ℝ) - d ≤ a / 2 ^ L' := by
+    have := hlo.1; rw [hscale] at this; exact (div_le_div_iff_of_pos_right h2n).1 this
+  have hhi1 : ((a : ℝ) + 1) / 2 ^ L' ≤ A + d := by
+    have := hhi.2; rw [hscale] at this; exact (div_le_div_iff_of_pos_right h2n).1 this
+  have hlo' : (A : ℝ) - d ≤ B + t / 2 ^ L' := by
+    rw [hat, show ((B : ℝ) * 2 ^ L' + t) / 2 ^ L' = B + t / 2 ^ L' by field_simp] at hlo1
+    exact hlo1
+  have hhi' : (B : ℝ) + (t + 1) / 2 ^ L' ≤ A + d := by
+    rw [hat, show ((B : ℝ) * 2 ^ L' + t + 1) / 2 ^ L' = B + (t + 1) / 2 ^ L' by
+      field_simp; ring] at hhi1
+    exact hhi1
+  have ht0 : (0 : ℝ) ≤ t / 2 ^ L' := by positivity
+  have ht1 : (t + 1 : ℝ) / 2 ^ L' ≤ 1 := by rw [div_le_one h2L]; exact htlt
+  have htpos : (0 : ℝ) < (t + 1) / 2 ^ L' := by positivity
+  have hd2 : d < 1 / 4 := by linarith
+  -- the two cases: inside [0,d] or inside [1-d,1]
+  have hcase : (t + 1 : ℝ) / 2 ^ L' ≤ d ∨ 1 - d ≤ (t : ℝ) / 2 ^ L' := by
+    rcases lt_trichotomy (A : ℤ) (B : ℤ) with hAB | hAB | hAB
+    · exfalso
+      have : (A : ℝ) + 1 ≤ B := by exact_mod_cast hAB
+      linarith
+    · left
+      have : (A : ℝ) = B := by exact_mod_cast hAB
+      linarith
+    · right
+      have h1 : (B : ℝ) + 1 ≤ A := by exact_mod_cast hAB
+      by_contra hc
+      push Not at hc
+      have : (B : ℝ) + 2 ≤ A ∨ (A : ℝ) = B + 1 := by
+        rcases Int.lt_or_eq_of_le (show (B : ℤ) + 1 ≤ A by omega) with h' | h'
+        · left; exact_mod_cast (show (B : ℤ) + 2 ≤ A by omega)
+        · right; exact_mod_cast h'.symm
+      rcases this with h' | h' <;> linarith
+  by_cases hsmall : L' ≤ 13
+  · refine ⟨k, by omega, le_rfl, ?_⟩
+    rw [Nat.sub_self, pow_zero, Nat.div_one, ← hL', ← ht]
+    refine ⟨hsmall, ?_⟩
+    rcases hcase with hc | hc
+    · left
+      refine (Rat.cast_lt (K := ℝ)).mp ?_; push_cast; linarith
+    · right; left
+      refine (Rat.cast_lt (K := ℝ)).mp ?_; push_cast; linarith
+  · push Not at hsmall
+    refine ⟨n + 13, by omega, by omega, ?_⟩
+    rw [show n + 13 - n = 13 by omega, show k - (n + 13) = L' - 13 by omega]
+    set v := a / 2 ^ (L' - 13) % 2 ^ 13 with hv
+    have hv' : v = t / 2 ^ (L' - 13) := by
+      rw [hv, ht, show 2 ^ L' = 2 ^ (L' - 13) * 2 ^ 13 by rw [← pow_add]; congr 1; omega,
+        Nat.mod_mul_right_div_self]
+    have hsplit : (2 : ℝ) ^ L' = 2 ^ (L' - 13) * 2 ^ 13 := by
+      rw [← pow_add]; congr 1; omega
+    have hq : (0 : ℝ) < 2 ^ (L' - 13) := by positivity
+    have hvle : (v : ℝ) * 2 ^ (L' - 13) ≤ t := by
+      rw [hv']; exact_mod_cast Nat.div_mul_le_self t _
+    have hvge : (t : ℝ) + 1 ≤ ((v : ℝ) + 1) * 2 ^ (L' - 13) := by
+      rw [hv']
+      have := Nat.lt_div_mul_add (a := t) (show 0 < 2 ^ (L' - 13) by positivity)
+      have : t + 1 ≤ (t / 2 ^ (L' - 13) + 1) * 2 ^ (L' - 13) := by
+        rw [add_mul, one_mul]; omega
+      exact_mod_cast this
+    refine ⟨le_rfl, Or.inr (Or.inr ⟨rfl, ?_⟩)⟩
+    rcases hcase with hc | hc
+    · left
+      have : (v : ℝ) / 2 ^ 13 ≤ (t + 1) / 2 ^ L' := by
+        rw [hsplit, div_le_div_iff₀ (by positivity) (by positivity)]
+        nlinarith
+      refine (Rat.cast_lt (K := ℝ)).mp ?_; push_cast; linarith
+    · right
+      have : (t : ℝ) / 2 ^ L' < ((v : ℝ) + 1) / 2 ^ 13 := by
+        rw [hsplit, div_lt_div_iff₀ (by positivity) (by positivity)]
+        nlinarith
+      refine (Rat.cast_lt (K := ℝ)).mp ?_; push_cast; linarith
+
 /-- Staging node (gate step 1 asks for `c = 4.5` first): the same certificate at `c = 9/2`.
 Evidence: sampled shared-phase growth ≈ 1.815 at D = 8 (optimistic screen); no rigorous
 certificate yet (uniform bins fail, see module doc).  Confidence it holds with an adapted
