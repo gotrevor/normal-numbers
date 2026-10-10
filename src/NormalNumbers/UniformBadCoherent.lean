@@ -42,7 +42,12 @@ positive margin, including a rigorous infinite-base tail.
 ## Kill test
 
 If the shared-phase minimum is ≈ the separate minimum on the reachable states, the lever is
-irrelevant: record that as a Lean refutation statement plus a Maze row, and stop.
+irrelevant for that finite model.  That is a screening failure, NOT a proof of
+`¬ CoherentTwoThree449`, which quantifies over all classifiers, weights, outcomes and `D ≤ 12`
+(Codex review, 2026-10-10).  State it in Lean as the actual finite model, the tested states and
+phases, and an exact rational tolerance (or as a named conjecture `Prop`), add a Maze row, and
+stop.  The `c = 4.49` run needs a binary model rebuilt at 4.49 (or proved stronger than
+`sft45.json`), since the binary forbidden radius grows as `c` decreases.
 
 ## Measurement, lap 1 (2026-10-10; `scripts/cstar_models/shared3*.{js,c}`, `shared3_results.txt`)
 
