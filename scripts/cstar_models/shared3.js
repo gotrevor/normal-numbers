@@ -9,8 +9,13 @@ const fs = require('fs');
 const a = process.argv.slice(2);
 const [N, M, D, IT] = a.slice(0, 4).map(Number);
 const C = Number(a[4]), KX = Number(a[5]), KU = Number(a[6]), MODE = a[7], NO3 = a[8] === 'no3';
-const sft = JSON.parse(fs.readFileSync(__dirname + '/sft45.json'));
+// binary SFT rebuilt for THIS C (gen_sft.js, depth 13 conservative; = sft45.json at C = 4.5), or env SFT=path
+const sftPath = process.env.SFT || (() => { const p = require('os').tmpdir() + `/sft_${C}_13.json`;
+  require('child_process').execFileSync(process.execPath, [__dirname + '/gen_sft.js', String(C), '13', p]); return p; })();
+const sft = JSON.parse(fs.readFileSync(sftPath));
+if (!sft.T.length || !(sft.lam > 0)) { console.log(`${MODE}${NO3 ? ' no3' : ''} C=${C}: tree DEAD (binary SFT empty)`); process.exit(0); }
 const S = sft.T.length, T = sft.T, r = sft.r, lam = sft.lam;
+// note: sampled points are (a+0.5)/K, nested for K = 3, 9, 27, ...
 const delta = Math.pow(3, -C) * 1.0001, eps = 1e-12, U = Math.log2(6), L3 = Math.log2(3);
 const M2 = Math.max(1, Math.round(M * (U - 2) / (U - 1))), M1 = M - M2;
 const edges = []; for (let t = 0; t <= M1; t++) edges.push(1 + t / M1); for (let t = 1; t <= M2; t++) edges.push(2 + (U - 2) * t / M2);
@@ -60,4 +65,4 @@ for (let it = 0; it < IT; it++) {
 }
 let z = 0, mp = Infinity; for (const v of V) { if (v < 1e-9) z++; else if (v < mp) mp = v; }
 const g = lam * Math.pow(Math.max(lo, 0), 1 / D);
-console.log(`${MODE}${NO3 ? ' no3' : ''} N=${N} M=${M} D=${D} C=${C} K=${KX}x${KU}: block ratio ${lo.toFixed(6)} per-level growth ${g.toFixed(6)} zeros ${z}/${V.length} minpos ${mp.toExponential(3)} rootV ${V[0].toExponential(3)}`);
+console.log(`${MODE}${NO3 ? ' no3' : ''} N=${N} M=${M} D=${D} C=${C} K=${KX}x${KU}: block ratio ${lo.toFixed(6)} per-level growth ${g.toFixed(6)} zeros ${z}/${V.length} minpos ${mp.toExponential(3)} bin000 ${V[0].toExponential(3)}`);

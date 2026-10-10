@@ -25,3 +25,18 @@ verify N=32 M=6 D=8 C=4.5 G=1.8 MAXB=12: all 4434 nonzero bins fail, worst certi
   base-3 window (closed touching), so the block sum is 0 on a neighbourhood after interval
   pessimism; the infimum over a uniform bin is 0 although every interior sample is >0.
   => uniform bins cannot carry a certificate; the partition must follow window/touch boundaries.
+
+# ---- lap 2 (2026-10-10), after Codex review of c93704d6 ----
+# (a) binary SFT now rebuilt per C: gen_sft.js C 13 (containment windows, conservative at depth 13).
+#     gen_sft(4.5,13) reproduces sft45.json's lam 1.8902520524667157 exactly; gen_sft(4.49,13): lam 1.889271428823794;
+#     gen_sft(1.5,13): empty (binary control now dies genuinely); review suite: 4/4 pass (test 3 moved to C = 3).
+# (b) matched baseline = abs3 iterated per level (shared3.js D=1 separate), same nested samples:
+separate N=32 M=6 D=1 C=4.5 K=3x3:   DEAD at iteration 10
+separate N=32 M=6 D=1 C=4.5 K=9x9:   DEAD at iteration 7
+separate N=32 M=6 D=1 C=4.5 K=27x27: DEAD at iteration 7
+# shared, nested samples K = 3, 9 (per-C SFT):
+shared N=32 M=6 D=8 C=4.5  K=3x3: 1.839207    K=9x9: 1.821668
+shared N=32 M=6 D=8 C=4.49 K=3x3: 1.837337    K=9x9: 1.823344
+# (c) "rootV" relabelled bin000 (abstract bin (0,0,0), not the root cell).
+# (f) confirmed closure artifact: with OPEN touching (real cells never touch exactly, delta irrational)
+#     the bin-(0,0,0) infimum is positive (exactinf.c).

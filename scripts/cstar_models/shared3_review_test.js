@@ -1,6 +1,6 @@
 // Reviewer controls for the real shared3.js CLI.
 // Run: node --test scripts/cstar_models/shared3_review_test.js
-// The TODO is a demonstrated defect at c93704d6, not a passing binary control.
+// The binary SFT is rebuilt per C by gen_sft.js (fixes the c93704d6 hardcoded-sft45 defect).
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const { execFileSync } = require('node:child_process');
@@ -24,12 +24,11 @@ test('one parent phase gives identical shared and separate values', () => {
   assert.equal(metrics(run(4.5, 'shared')), metrics(run(4.5, 'separate')));
 });
 
-test('the low-exponent joint control is affected by the ternary kills', () => {
-  assert.notEqual(metrics(run(1.5, 'shared')), metrics(run(1.5, 'shared', true)));
+test('the joint control (C = 3, binary alive) is affected by the ternary kills', () => {
+  assert.notEqual(metrics(run(3, 'shared')), metrics(run(3, 'shared', true)));
 });
 
 test('the low-exponent BINARY control must die with base 3 disabled', {
-  todo: 'c93704d6 hardcodes sft45.json; C changes only the ternary threshold',
 }, () => {
   assert.match(run(1.5, 'shared', true), /tree DEAD/);
 });
