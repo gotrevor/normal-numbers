@@ -274,4 +274,33 @@ theorem potTot_two_succ_le {R : ℚ} (hR : RegularPotential2_449 R) (m : ℕ) :
     have := hR k a hg
     rwa [show k + 6 + 6 * 2 = k + 18 by ring, show k + 6 * 2 = k + 12 by ring]) m
 
+/-- **Child mass = surviving children + lost children** (upper half): the Good children of
+survivors either survive (and are counted in `mass (m+1)`) or are lost. -/
+theorem childMassTot_le (m : ℕ) : childMassTot m ≤ mass (m + 1) + loss m := by
+  classical
+  unfold childMassTot mass loss
+  set S := (Finset.range (2 ^ (6 * m))).filter (survives (6 * m))
+  have hS : ∀ a ∈ S, a < 2 ^ (6 * m) := fun a ha => Finset.mem_range.1 (Finset.mem_filter.1 ha).1
+  have hsplit : ∀ a ∈ S, descMass (6 * m) a (6 * (m + 1)) =
+      ∑ j ∈ (Finset.range 64).filter (fun j =>
+          Good449 (6 * (m + 1)) (64 * a + j) ∧ Count.Alive tailBad449 (6 * (m + 1)) (64 * a + j)),
+        coreWeight (6 * (m + 1)) (64 * a + j) +
+      ∑ j ∈ (Finset.range 64).filter (fun j =>
+          Good449 (6 * (m + 1)) (64 * a + j) ∧ ¬ Count.Alive tailBad449 (6 * (m + 1)) (64 * a + j)),
+        coreWeight (6 * (m + 1)) (64 * a + j) := by
+    intro a _
+    unfold descMass
+    rw [show 6 * (m + 1) - 6 * m = 6 by omega,
+      show (2 : ℕ) ^ 6 = 64 by norm_num, ← Finset.sum_union]
+    · congr 1; ext j; simp only [Finset.mem_union, Finset.mem_filter]; tauto
+    · exact Finset.disjoint_filter.2 fun j _ h1 h2 => h2.2 h1.2
+  rw [Finset.sum_congr rfl hsplit, Finset.sum_add_distrib]
+  gcongr
+  have := sum_children_le hS
+    (fun a j => Good449 (6 * (m + 1)) (64 * a + j) ∧
+      Count.Alive tailBad449 (6 * (m + 1)) (64 * a + j))
+    (survives (6 * (m + 1))) (fun a _ j _ h => h) (coreWeight (6 * (m + 1)))
+    (coreWeight_nonneg _)
+  rwa [show 6 * m + 6 = 6 * (m + 1) by ring] at this
+
 end NormalNumbers.UniformBadThreshold.TailReview

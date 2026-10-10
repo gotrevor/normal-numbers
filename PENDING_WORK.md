@@ -3913,3 +3913,4 @@ Next: `isFresh` Riesz bound, then the classification lemma in Lean (route-decisi
   prove the bookkeeping.
 - Node 4' RegularPotential2_449 45 (desc3/desc2 in [43.2,43.8] at level 12 incl. R1-worst cells); bookkeeping now uses it, margin 2.3x (sum 2.65 vs c=6).  NEXT: prove the bookkeeping theorem (needs a desc2-potential analogue of childMassTot_succ_le).
 - PROVED potTot_succ_le (depth-d totals step) and potTot_two_succ_le (node 4' form).
+- PROVED childMassTot_le: childMassTot m <= mass(m+1) + loss m.
