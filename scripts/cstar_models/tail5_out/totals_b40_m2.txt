@@ -1,0 +1,4 @@
+m=0: mass=1 loss=0 loss/mass=0 mass(m+1)/mass(m)=39.5643 max parent loss/w=0
+m=1: mass=39.5643 loss=0 loss/mass=0 mass(m+1)/mass(m)=44.3852 max parent loss/w=0
+m=2: mass=1756.07 loss=405.894 loss/mass=0.231138 mass(m+1)/mass(m)=43.182 max parent loss/w=40.972
+ambiguous=0 budget=9.874655

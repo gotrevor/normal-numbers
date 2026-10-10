@@ -1,0 +1,15 @@
+base 5 done (n <= 6)
+[bases 5..5, n <= 6] ancestors=2354 ambiguous=0 max climb=1
+  per-lag max ratio h_j: ['0', '37.6885', '810.459', '1882.41', '1159', '779.053', '560.24', '90.4005', '0', '0', '0', '0', '0', '0', '0', '0']
+  sum_j h_j/gamma^j = 3.08983   (per-ancestor worst 2.89103 at (12, 336))
+  budget (9/5)^6 - (17/10)^6 = 9.874655  ->  PASS
+base 6 done (n <= 6)
+[bases 5..6, n <= 6] ancestors=2575 ambiguous=0 max climb=1
+  per-lag max ratio h_j: ['0', '79.6087', '1762.86', '3011.02', '2987.9', '2930.79', '1264.2', '293.681', '0', '0', '0', '0', '0', '0', '0', '0']
+  sum_j h_j/gamma^j = 6.54714   (per-ancestor worst 6.34364 at (12, 1725))
+  budget (9/5)^6 - (17/10)^6 = 9.874655  ->  PASS
+base 7 done (n <= 6)
+[bases 5..7, n <= 6] ancestors=2575 ambiguous=0 max climb=1
+  per-lag max ratio h_j: ['0', '79.6087', '1997.18', '10434.7', '11009.7', '6706.42', '1986.22', '834.741', '0', '0', '0', '0', '0', '0', '0', '0']
+  sum_j h_j/gamma^j = 7.50129   (per-ancestor worst 7.02775 at (12, 1725))
+  budget (9/5)^6 - (17/10)^6 = 9.874655  ->  PASS

@@ -3,7 +3,7 @@ Copyright (c) 2026 Trevor Morris. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
-import NormalNumbers.UniformBadTailReview
+import NormalNumbers.UniformBadTailWiring
 
 /-!
 # Operator gate 5: the weighted base ≥ 5 tail at exponent 4.49
@@ -59,8 +59,8 @@ theorem tailChargeBudget449 : TailChargeBudget449 := by
   sorry
 
 /-- **Operator gate 5, wiring.**  A tail charge budget bounds `cStar` by `449/100`. -/
-theorem tailBudgetSuffices449 : TailBudgetSuffices449 := by
-  sorry
+theorem tailBudgetSuffices449 : TailBudgetSuffices449 :=
+  tailBudgetSuffices449_proof
 
 /-- **Operator gate 5, headline.** -/
 theorem cStar_le_449 : cStar ≤ 449 / 100 :=

@@ -1,3 +1,20 @@
+## Gate 5 lap 1 (2026-10-10) — WIRING PROVED; measurement: kill test does NOT fire
+* `tailBudgetSuffices449` PROVED (`UniformBadTailWiring.lean`: `coreDeletionRecurrence449`,
+  `mass_pos_of_budget`, `exists_limit`, `weak_avoid`; growth `Coherent.wq_grow`).
+  `cStar_le_449` now rests only on `tailChargeBudget449`.
+* Prework: exact3.c `A << F` -> `A * ONE`; UBSan xfail removed (checked by trap-mode UBSan).
+* Measurement (`scripts/cstar_models/tail5_measure.py`, `tail5_totals.py`, outputs `tail5_out/`):
+  controls: zero tail PASS; delete-all-first-block FAIL (lag-0 ratio 603.7).
+  TOTALS (the statement's own quantities, bases 5..7 / 5..40): loss m / mass m = 0.229 (m=2),
+  0.210 (m=3) vs budget 9.874655 — the statement looks true with lag-0 charge alone.
+  PER-ANCESTOR (what a proof can certify): natural ancestor level FAILS (655 at n<=6);
+  charging one block higher (shift 1, climbing past weight-0 non-Good ancestors) 7.50 at n<=6
+  (was 3.09 at n<=5: rising with depth — n<=7 run pending); shift 2: 2.84.  Per-parent lag-0
+  worst grows 41 (m=2) -> 130 (m=3).  Sampled maxima only.
+* NEXT (crux): finish n<=7 shift-1/2 runs; if shift-2 stays well under budget, design a finite
+  upper certificate (max-analogue of exact3.c with base-b phase) for per-ancestor charges at
+  shift 2, plus the rigorous b>=8 tail.  If the per-ancestor sums keep rising with depth, that
+  is the obstruction to state in Lean (operator kill test).
 ## Repetition lap 13 (2026-10-09, later) — P1 PROVED; HEADLINE `liouvilleCantorFullProfile` PROVED
 * `repPairArith_of_sparse` is a theorem (section `Shadow` in CantorRepetition, ~1000 lines);
   `#print axioms liouvilleCantorFullProfile` = trust base.  Scope target `CantorRepetition.lean`

@@ -1,0 +1,15 @@
+base 5 done (n <= 5)
+[bases 5..5, n <= 5] ancestors=59 ambiguous=0
+  per-lag max ratio h_j: ['0', '8.89972', '515.825', '1853.72', '1089.65', '740.732', '511.971']
+  sum_j h_j/gamma^j = 1.38918   (per-ancestor worst 1.29967 at (6, 47))
+  budget (9/5)^6 - (17/10)^6 = 9.874655  ->  PASS
+base 6 done (n <= 5)
+[bases 5..6, n <= 5] ancestors=2721 ambiguous=0
+  per-lag max ratio h_j: ['0', '79.6087', '958.439', '3011.02', '1723.41', '1333.97', '1264.2']
+  sum_j h_j/gamma^j = 5.16252   (per-ancestor worst 5.16022 at (12, 1725))
+  budget (9/5)^6 - (17/10)^6 = 9.874655  ->  PASS
+base 7 done (n <= 5)
+[bases 5..7, n <= 5] ancestors=2721 ambiguous=0
+  per-lag max ratio h_j: ['0', '79.6087', '958.439', '3824.97', '2308.12', '1696.79', '1264.2']
+  sum_j h_j/gamma^j = 5.22217   (per-ancestor worst 5.16022 at (12, 1725))
+  budget (9/5)^6 - (17/10)^6 = 9.874655  ->  PASS

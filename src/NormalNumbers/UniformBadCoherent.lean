@@ -1664,6 +1664,57 @@ theorem cleanCertificate449_of_data (hAll : ∀ q < 76800, checkBin q = true)
           unfold classify; rw [if_neg (by omega), dif_neg (by omega)]
         rw [hc]; unfold wq; simpa using hRn
 
+open Classical in
+/-- **Gate-4 growth of the concrete weights** `wq ∘ classify` (the fourth component of
+`cleanCertificate449_of_data`, exposed for the gate-5 wiring). -/
+theorem wq_grow_of_data (hAll : ∀ q < 76800, checkBin q = true)
+    (hWsize : W.size = 76800) (hRoot : 531441 * maxW ≤ 15625 * rootSum) {k a : ℕ}
+    (hg : Good449 k a) : (9 / 5 : ℚ) ^ 6 * wq (classify k a) ≤
+      ∑ j ∈ (Finset.range (2 ^ 6)).filter (fun j => Good449 (k + 6) (2 ^ 6 * a + j)),
+        wq (classify (k + 6) (2 ^ 6 * a + j)) := by
+  have hmax : (0 : ℝ) < maxW := by norm_num [maxW]
+  -- the right side in ℝ
+  have hR : (((∑ j ∈ (Finset.range (2 ^ 6)).filter (fun j => Good449 (k + 6) (2 ^ 6 * a + j)),
+      wq (classify (k + 6) (2 ^ 6 * a + j)) : ℚ)) : ℝ) = Sum D k a / maxW := by
+    push_cast
+    unfold Sum
+    rw [Finset.sum_filter, Finset.sum_div]
+    refine Finset.sum_congr rfl fun j _ => ?_
+    rw [show D = 6 from rfl]
+    rw [show (2 : ℕ) ^ 6 = 64 by norm_num]
+    by_cases h : Good449 (k + 6) (64 * a + j)
+    · rw [if_pos h, if_pos h]; exact w_cls hWsize (by omega) h
+    · rw [if_neg h, if_neg h]; simp
+  have hRn : (0 : ℝ) ≤ Sum D k a / maxW := div_nonneg (Sum_nonneg _ _ _) hmax.le
+  rw [← Rat.cast_le (K := ℝ), hR]
+  push_cast
+  rcases Nat.eq_zero_or_pos k with rfl | hk0
+  · -- the root
+    have ha : a = 0 := by have := hg.1; simpa using this
+    subst ha
+    have hc : classify 0 0 = ⟨76801, by norm_num⟩ := by unfold classify; simp
+    rw [hc]; unfold wq; norm_num
+    have h1 := rootSum_le
+    have h2 : (531441 : ℝ) * maxW ≤ 15625 * rootSum := by exact_mod_cast hRoot
+    rw [le_div_iff₀ hmax]; nlinarith
+  · by_cases hk5 : 5 ≤ k
+    · rw [w_cls hWsize hk5 hg]
+      by_cases hs : sftRun k a ≠ 99
+      · have := grow_good hk5 hg hs (hAll _ (binIdx_lt hs))
+        rw [show D = 6 from rfl] at this ⊢
+        rw [← mul_div_assoc, div_le_div_iff_of_pos_right hmax]
+        have e : (9 / 5 : ℝ) ^ 6 * Wc k a = 9 ^ 6 * Wc k a / 5 ^ 6 := by ring
+        rw [e, div_le_iff₀ (by norm_num)]; linarith
+      · push Not at hs
+        have : Wc k a = 0 := by
+          unfold Wc wt
+          rw [getElem!_neg]; · rfl
+          rw [hs, hWsize]; unfold N M; omega
+        rw [this]; simpa using hRn
+    · have hc : classify k a = ⟨76800, by norm_num⟩ := by
+        unfold classify; rw [if_neg (by omega), dif_neg (by omega)]
+      rw [hc]; unfold wq; simpa using hRn
+
 end Certificate
 
 theorem W_size : Data.W.size = 76800 := by native_decide
@@ -1695,5 +1746,12 @@ theorem cleanCertificate449 : CleanCertificate449 :=
 exponent 449/100, with block growth at least 9/5 over some block length `D ≤ 12`. -/
 theorem coherentTwoThree449 : CoherentTwoThree449 :=
   coherentTwoThree449_of_clean cleanCertificate449
+
+open Classical in
+/-- Gate-4 growth of `wq ∘ classify` over one block of six binary levels. -/
+theorem wq_grow {k a : ℕ} (hg : Good449 k a) : (9 / 5 : ℚ) ^ 6 * wq (classify k a) ≤
+    ∑ j ∈ (Finset.range 64).filter (fun j => Good449 (k + 6) (64 * a + j)),
+      wq (classify (k + 6) (64 * a + j)) := by
+  simpa using wq_grow_of_data all_checks W_size root_ok hg
 
 end NormalNumbers.UniformBadThreshold.Coherent
