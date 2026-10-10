@@ -53,9 +53,12 @@ noncomputable def descKilled (k a K b n : ℕ) (θ : ℝ) : ℚ :=
       ∃ A : ℤ, Count.cell K (2 ^ (K - k) * a + j) ⊆ windowAt b n θ A),
     coreWeight K (2 ^ (K - k) * a + j)
 
-/-- **Node 1 (conjecture, evidence above).**  Offset-uniform kill bound for fine progressions. -/
+/-- **Node 1 (conjecture, evidence above).**  Offset-uniform kill bound for fine progressions.
+Any ancestor cell (not only Good: `Good449` is not hereditary, so charged ancestors may be
+non-Good).  Non-Good ancestors `(12,302)`, `(12,458)`, spacing `2^6`: max/coverage `1.25, 1.30,
+1.07, 1.10` (`tail5_out/offset_probe_nongood.txt`). -/
 def APKillUniform449 (s : ℕ) (C : ℝ) : Prop :=
-  ∀ k a K b n (θ : ℝ), Good449 k a → k ≤ K → 5 ≤ b → 2 ^ (k + s) ≤ b ^ n →
+  ∀ k a K b n (θ : ℝ), a < 2 ^ k → k ≤ K → 5 ≤ b → 2 ^ (k + s) ≤ b ^ n →
     (descKilled k a K b n θ : ℝ) ≤ C * (2 * (b : ℝ) ^ (-(449 / 100 : ℝ))) * descMass k a K
 
 open Classical in
@@ -202,7 +205,7 @@ Numerics (`python`, lap 2): with `C = 1.85` (spacing-`2^6` probe max/coverage 1.
 1.26: `tail5_out/offset_probe_sp6.txt`), `R = 57`, `η = 1/100`, `K = 70`, `c = 6`:
 `Σ_b ≈ 5.9 ≤ 6` — closes with almost no margin.  Using the twice-iterated potential
 (`desc₃/desc₂ ≤ 45.1` at level 6, `tail5_out/ratio_iter3.txt`) would give real margin.
-Known gaps: node 1 assumes a Good ancestor (`Good449` is not hereditary); stage counts per block
+Known gaps (node 1 now allows non-Good ancestors): stage counts per block
 taken as `6/log₂ b + 1`.  Confidence 35%. -/
 theorem tailChargeBudget449_of_nodes (h1 : APKillUniform449 6 (37 / 20))
     (h4 : RegularPotential449 57) (h5 : OrphanSmall449 (1 / 100)) : TailChargeBudget449 := by
