@@ -994,6 +994,7 @@ import NormalNumbers.UniformBadTower
 import NormalNumbers.UniformBadTowerReview
 import NormalNumbers.UniformBadNextReview
 import NormalNumbers.UniformBadCoherent
+import NormalNumbers.UniformBadEntryReview
 import NormalNumbers.LinearFormsScales
 import NormalNumbers.LinearFormsScalesStretch
 import NormalNumbers.Hertling

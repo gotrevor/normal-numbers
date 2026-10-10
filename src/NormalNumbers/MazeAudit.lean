@@ -19,6 +19,7 @@ import NormalNumbers.UniformBadNineHalves
 import NormalNumbers.UniformBadTower
 import NormalNumbers.UniformBadTowerReview
 import NormalNumbers.UniformBadNextReview
+import NormalNumbers.UniformBadEntryReview
 import NormalNumbers.EntropyProfiles
 import NormalNumbers.CantorExactExponentStretch
 import NormalNumbers.CantorExactExponentProfile

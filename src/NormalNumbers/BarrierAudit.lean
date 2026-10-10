@@ -50,6 +50,7 @@ import NormalNumbers.UniformBadTower
 import NormalNumbers.UniformBadTowerReview
 import NormalNumbers.UniformBadNextReview
 import NormalNumbers.UniformBadCoherent
+import NormalNumbers.UniformBadEntryReview
 
 /-!
 # Barrier audit: every open crux names a sibling it must fail on

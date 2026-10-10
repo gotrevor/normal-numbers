@@ -25,6 +25,9 @@ Branch `proof/uniformbad-threshold`, HEAD 2c33b8a6. No uncommitted edits (only s
    4.49 N=128 M=24 D=6 certificate pass.  Then repair the kernel with justified endpoint ownership and
    outward coverage (clamping alone is not enough), make that TODO a real passing test, and re-run the
    4.5 and 4.49 certificates.  Report the new margins.  Items (g), (j) and (k) in DIRECTION still apply.
+   **(07:50Z) Also DIRECTION items (l) and (m):** entry.js must use W = r(s)·V, not V, and the SAME
+   δ = 1.0001·3^-C and bin endpoints as the certificate (Codex TODO in shared3_entry_review_test.js).  The exact
+   checker should verify an exported rational witness on (x, ρ) rectangles, not rerun the search.
 1. Base-3 bridge: for a Good449 cell (k ≥ 5) with signature (sft state, x = frac(3^n a/2^k), rho = 3^n/2^k,
    n = pending stage), descendant j is Good iff its interval avoids the new-stage windows (and Acc2).
 2. Finite decide: the 25-state automaton (sft449) tracks Acc2 (check over all words ≤ 13 bits; δ2hi =
