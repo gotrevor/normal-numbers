@@ -47,3 +47,9 @@ exact N=16 M=12 D=4: 1.566857     exact N=16 M=6 D=6: 1.664868
 #  the exact value rises with N toward the sampled screen.  Piece storage does not scale to D = 8.
 ## target-driven fixed point (shared3cert.c): V <- min(V, LB/g^D); certificate iff it stabilises with V > 0
 cert N=16 M=6 D=4 G=1.5: CERTIFICATE (1637/2400 positive bins)      G=1.6: no fixed point (decays), consistent
+## containment pruning (CONT=1 shared3.js; matches twoThreeBad): partial overlaps carry forbidden end-zones,
+## zone-carrying leaves killed at block end (pessimistic).  Sampled, nested K=9x9, N=32 M=6, c = 4.5:
+touching    D=4: 1.742198   D=8: 1.821668
+containment D=4: 1.793335   D=8: 1.850041   (zeros 159/4800 vs 355)
+# touching pruning (abs3) charges the window widened by a cell on each side; containment roughly halves the
+# base-3 cost.  The rigorous tools (exactinf3.c / shared3cert.c) still use touching: port CONT next.

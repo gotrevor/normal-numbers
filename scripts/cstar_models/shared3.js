@@ -25,19 +25,35 @@ const P = []; for (let s = 0; s < S; s++) P.push([0, 1].map(d => T[s][d] < 0 ? 0
 const NB = N * M;
 // leaves[(s,i,j)] = array over samples of array of [weight, leafIndex] ; leaves keyed by path id
 // enumerate: for each sample, a Map path->(w, idx); killed paths absent.
-function descend(s, x, u, depth, path, w, out) {
-  if (depth === D) { const xi = Math.min(N - 1, Math.floor((x - Math.floor(x)) * N)); out.push([path, w, s * NB + xi * M + ubin(u)]); return; }
-  const rho = rhoOf(u);
+// CONT=1: containment pruning (twoThreeBad): a child dies only if it lies inside a base-3 window; a partial
+// overlap leaves a forbidden end-zone (zl at the left end, zr at the right, in stage units) that is carried
+// through later binary splits (children inside a zone die) and scaled by 3 at each ternary stage.  A leaf
+// still carrying a zone at the end of the block is killed (pessimistic, so the model's alive cells are
+// containment-alive).
+const CONT = process.env.CONT === '1';
+function descend(s, x, u, depth, path, w, out, zl = 0, zr = 0) {
+  if (depth === D) { if (zl > 0 || zr > 0) return; const xi = Math.min(N - 1, Math.floor((x - Math.floor(x)) * N)); out.push([path, w, s * NB + xi * M + ubin(u)]); return; }
+  const rho = rhoOf(u), h = rho / 2;
   for (let d = 0; d < 2; d++) {
     const t = T[s][d]; if (t < 0) continue;
-    let cx = x + d * rho / 2, cu = u - 1;
+    let cx = x + d * h, cu = u - 1, czl = d === 0 ? zl : Math.max(0, zl - h), czr = d === 1 ? zr : Math.max(0, zr - h);
+    if (czl >= h || czr >= h || czl + czr >= h) continue; // child inside forbidden zone(s)
     if (cu <= 1 + eps) {
-      if (!NO3) { const k = Math.round(cx + rho / 4); // nearest integer to child centre; check touch with all nearby
-        let touch = false; for (let kk = Math.floor(cx) - 1; kk <= Math.ceil(cx + rho / 2) + 1; kk++) if (cx <= kk + delta && cx + rho / 2 >= kk - delta) { touch = true; break; }
-        if (touch) continue; }
-      cx = 3 * cx; cx -= Math.floor(cx); cu += L3;
+      if (!NO3) {
+        if (!CONT) { let touch = false; for (let kk = Math.floor(cx) - 1; kk <= Math.ceil(cx + h) + 1; kk++) if (cx < kk + delta && cx + h > kk - delta) { touch = true; break; }
+          if (touch) continue; }
+        else { let dead = false;
+          for (let kk = Math.floor(cx) - 1; kk <= Math.ceil(cx + h) + 1; kk++) {
+            const a = kk - delta, b = kk + delta;
+            if (b <= cx || a >= cx + h) continue;
+            if (a <= cx && b >= cx + h) { dead = true; break; }
+            if (a <= cx) czl = Math.max(czl, b - cx); else if (b >= cx + h) czr = Math.max(czr, cx + h - a); else { dead = true; break; } // window strictly inside: treat as dead (pessimistic)
+          }
+          if (dead || czl + czr >= h) continue; }
+      }
+      const fl = Math.floor(3 * cx); cx = 3 * cx - fl; cu += L3; czl *= 3; czr *= 3;
     }
-    descend(t, cx, cu, depth + 1, path * 2 + d, w * P[s][d], out);
+    descend(t, cx, cu, depth + 1, path * 2 + d, w * P[s][d], out, czl, czr);
   }
 }
 // precompute sample leaves
