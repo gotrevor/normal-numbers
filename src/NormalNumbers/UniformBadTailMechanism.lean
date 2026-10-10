@@ -455,9 +455,20 @@ coverage diverges like `(R/ρ)^j`, `R ≈ 45 > ρ = 34`).  Resonant bases (lap 2
 `tail5_out/offset_probe_resonant.txt`, root, level 24): max/coverage `1.93` (12²), `1.48` (6³),
 `1.06` (6⁴), `1.55` (10²), `1.03` (5⁴).  General widths (root, level 20, `h = 2^{-13..-17}`,
 `tail5_out/offset_probe_width.txt`): max/(2hq) in `[0.99, 1.49]` (worst 12² at `h = 2^{-15}`).
-Confidence 55% for `C = 3`, `s = 6`. -/
+**Lap 2 later: very likely FALSE as stated (confidence 10%).**  At fixed `q` and shrinking `h`
+the max/(2hq) ratio grows like `(hq)^{-0.09}` (root, `q = 5`: `1.18, 1.51, 1.97` at
+`h = 2^{-8}, 2^{-12}, 2^{-16}`, `tail5_out/offset_probe_coarse.txt`): the offset max picks points of
+local dimension below 1 (core dimension `≈ log 44 / log 64 ≈ 0.91`).  Use `APKillFrostman449`. -/
 def APKillGeneral449 (s : ℕ) (C : ℝ) : Prop :=
   ∀ k a K q (θ h : ℝ), k ≤ K → 2 ^ (k + s) ≤ q → 0 ≤ h →
     (descInAP k a K q θ h : ℝ) ≤ C * (2 * h * q) * descMass k a K
+
+/-- **Node 1‴ (conjecture): Frostman form of the AP bound.**  The killed fraction is at most
+`C · (2hq)^α` with `α < 1` (fits the coarse trend with `α ≈ 0.9`).  Windows: `2hq = 2b^{-4.49}`,
+so the base sum stays summable (`b^{-4.49α}`); endpoint neighbourhoods: `(2^{-6m} q)^α R^j` still
+converges since `64^α ρ ≫ R`.  Confidence 60% for `C = 2`, `α = 17/20`, `s = 0`. -/
+def APKillFrostman449 (s : ℕ) (C α : ℝ) : Prop :=
+  ∀ k a K q (θ h : ℝ), k ≤ K → 2 ^ (k + s) ≤ q → 0 ≤ h →
+    (descInAP k a K q θ h : ℝ) ≤ C * (2 * h * q) ^ α * descMass k a K
 
 end NormalNumbers.UniformBadThreshold.TailReview

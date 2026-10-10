@@ -3927,3 +3927,7 @@ Next: `isFresh` Riesz bound, then the classification lemma in Lean (route-decisi
   resonant bases 12^2, 6^3, 10^2 give max/cov <= 1.93.  NEXT: probe endpoint-nbhd widths (h ~ 2^-K
   scale, coarse q) — that is the untested regime; then write extLoss <= eps*alivePot.
 - Width probe: max/(2hq) in [0.99,1.49] for h=2^-13..-17 (node 1'' evidence).
+- Node 1'' (uniform C) very likely FALSE: ratio grows ~(hq)^-0.09 at fixed q (local dim < 1).
+  Replaced by Frostman node 1''' APKillFrostman449 (C (2hq)^alpha).  Feasibility (C=2, R=45, s=0):
+  alpha=0.9: 3.68 vs c=6; alpha=0.85: 5.40 vs 6 (thin).  NEXT: measure alpha honestly (min local
+  dimension of the weighted core: max over points x of mu(B(x,h))/h^alpha across h) — decisive.
