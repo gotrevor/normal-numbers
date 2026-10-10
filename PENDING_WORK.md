@@ -3905,3 +3905,4 @@ Next: `isFresh` Riesz bound, then the classification lemma in Lean (route-decisi
   bookkeeping; needs Good449 heredity check) + lag charging sum.  Rough cost with Lambda=52,
   gamma=20, spacing 2^12: ~9C for base 5 alone vs budget 14 -> marginal; reduce spacing to 2^6 or
   use deeper iterate (ratio -> ~44).  Next: prove childMassTot_succ_le; measure APKill at spacing 2^6.
+- Node 5 OrphanSmall449 (orphan fraction 0.0052 at m=2); proved childMassTot_succ_le_of_orphan. Next: state crux bookkeeping theorem from nodes 1,4,5 (lag charging over bases).

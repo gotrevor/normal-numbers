@@ -179,4 +179,17 @@ theorem childMassTot_succ_le {R : ℚ} (hR : RegularPotential449 R) (m : ℕ) :
       exact this ▸ h.2
     · exact le_rfl
 
+/-- **Node 5 (conjecture): orphans are rare.**  Measured (tail kills ignored,
+`scripts/cstar_models/tail5_orphan.py`, `tail5_out/orphan.txt`): orphan child-mass fraction 0 at
+`m = 1`, `0.0052` at `m = 2`.  Confidence 70% for `η = 1/20` at every `m`. -/
+def OrphanSmall449 (η : ℚ) : Prop := ∀ m, orphanChild m ≤ η * childMassTot (m + 1)
+
+/-- Nodes 4 + 5 give geometric upper growth of the survivors' child mass. -/
+theorem childMassTot_succ_le_of_orphan {R η : ℚ} (hR : RegularPotential449 R)
+    (hη : OrphanSmall449 η) (m : ℕ) :
+    (1 - η) * childMassTot (m + 1) ≤ R * childMassTot m := by
+  have := childMassTot_succ_le hR m
+  have := hη m
+  linarith
+
 end NormalNumbers.UniformBadThreshold.TailReview
