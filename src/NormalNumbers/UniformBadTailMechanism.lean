@@ -474,4 +474,57 @@ def APKillFrostman449 (s : ℕ) (C α : ℝ) : Prop :=
   ∀ k a K q (θ h : ℝ), k ≤ K → 2 ^ (k + s) ≤ q → 0 ≤ h →
     (descInAP k a K q θ h : ℝ) ≤ C * (2 * h * q) ^ α * descMass k a K
 
+theorem cell_anc_sub : ∀ (d k c : ℕ), Count.cell (k + d) c ⊆ Count.cell k (c / 2 ^ d)
+  | 0, k, c => by simp
+  | d + 1, k, c => by
+    refine (Count.cell_succ_sub (k + d) c).trans ?_
+    have := cell_anc_sub d k (c / 2)
+    rwa [Nat.div_div_eq_div_mul, ← pow_succ'] at this
+
+/-- A cell dead at level `k+d` whose level-`k` ancestor is alive was killed at some level
+`k+e`, `0 < e ≤ d`, by its own ancestor there. -/
+theorem killed_between {B : ℕ → ℕ → Prop} :
+    ∀ (d k c : ℕ), Count.Alive B k (c / 2 ^ d) → ¬ Count.Alive B (k + d) c →
+      ∃ e, 0 < e ∧ e ≤ d ∧ B (k + e) (c / 2 ^ (d - e))
+  | 0, k, c, h, hn => absurd (by simpa using h) hn
+  | d + 1, k, c, h, hn => by
+    by_cases hp : Count.Alive B (k + d) (c / 2)
+    · refine ⟨d + 1, by omega, le_rfl, ?_⟩
+      by_contra hb
+      rw [Nat.sub_self, pow_zero, Nat.div_one] at hb
+      exact hn ⟨hp, hb⟩
+    · have h' : Count.Alive B k (c / 2 / 2 ^ d) := by
+        rwa [Nat.div_div_eq_div_mul, ← pow_succ']
+      obtain ⟨e, he0, hed, hbe⟩ := killed_between d k (c / 2) h' hp
+      refine ⟨e, he0, by omega, ?_⟩
+      rwa [Nat.div_div_eq_div_mul, ← pow_succ', show d - e + 1 = d + 1 - e by omega] at hbe
+
+open Classical in
+/-- Good weight at `6m+12` under alive `6m`-cells that lies inside some tail window. -/
+noncomputable def killedTot (m : ℕ) : ℚ :=
+  ∑ a ∈ (Finset.range (2 ^ (6 * m))).filter (Count.Alive tailBad449 (6 * m)),
+    ∑ i ∈ (Finset.range (2 ^ 12)).filter (fun i =>
+      Good449 (6 * m + 12) (2 ^ 12 * a + i) ∧ tailBad449 (6 * m + 12) (2 ^ 12 * a + i)),
+      coreWeight (6 * m + 12) (2 ^ 12 * a + i)
+
+/-- **Every extended loss is a window containment at the bottom level.** -/
+theorem extLoss_le_killedTot (m : ℕ) : extLoss m ≤ killedTot m := by
+  classical
+  unfold extLoss killedTot
+  refine Finset.sum_le_sum fun a ha => ?_
+  have hal := (Finset.mem_filter.1 ha).2
+  refine Finset.sum_le_sum_of_subset_of_nonneg (fun i hi => ?_)
+    (fun _ _ _ => coreWeight_nonneg _ _)
+  obtain ⟨hir, hg, hna⟩ := Finset.mem_filter.1 hi
+  refine Finset.mem_filter.2 ⟨hir, hg, ?_⟩
+  have hdiv : (2 ^ 12 * a + i) / 2 ^ 12 = a := by
+    have := Finset.mem_range.1 hir; omega
+  obtain ⟨e, he0, he12, hb⟩ := killed_between (B := tailBad449) 12 (6 * m) (2 ^ 12 * a + i)
+    (by rwa [hdiv]) hna
+  obtain ⟨b, h5, hpp, n, A, hsub⟩ := hb
+  refine ⟨b, h5, hpp, n, A, ?_⟩
+  refine (?_ : Count.cell (6 * m + 12) (2 ^ 12 * a + i) ⊆ _).trans hsub
+  have := cell_anc_sub (12 - e) (6 * m + e) (2 ^ 12 * a + i)
+  rwa [show 6 * m + e + (12 - e) = 6 * m + 12 by omega] at this
+
 end NormalNumbers.UniformBadThreshold.TailReview

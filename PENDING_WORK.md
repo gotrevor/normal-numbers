@@ -3932,3 +3932,4 @@ Next: `isFresh` Riesz bound, then the classification lemma in Lean (route-decisi
   alpha=0.9: 3.68 vs c=6; alpha=0.85: 5.40 vs 6 (thin).  NEXT: measure alpha honestly (min local
   dimension of the weighted core: max over points x of mu(B(x,h))/h^alpha across h) — decisive.
 - Frostman probe: weighted core is 0.90-Frostman (const ~1) at root level 20, alpha_t 0.909->0.902.
+- PROVED cell_anc_sub, killed_between, extLoss_le_killedTot (extLoss <= Good weight at 6m+12 in some window, under alive 6m cells).  NEXT: split killedTot over finitely many (b,n) (window length >= 2^-(6m+12)) and bound each by Frostman node + regularPotential_iter.
