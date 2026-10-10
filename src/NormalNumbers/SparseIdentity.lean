@@ -900,7 +900,7 @@ the endgame. -/
 as motivation only, and the Lean statement is the authority.
 Y. Bugeaud, M. Laurent, *Minoration effective de la distance p-adique entre puissances de
 nombres algébriques*, J. Number Theory 61 (1996) 311–342 (interpolation determinants): for
-multiplicatively independent algebraic `α₁, α₂` with `v_p(αᵢ) = 0` in a field of degree `D`,
+multiplicatively independent algebraic `α₁, α₂` with `v_p(αᵢ) = 0`, `D = [ℚ(α₁, α₂) : ℚ] / f` (`f` the residue degree),
 `v_p(α₁^{b₁} − α₂^{b₂}) ≤ c(p)·D⁴·(max{log b' + log log p + 0.4, 10 log p / D, 10})²·log A₁·log A₂`,
 `b' = b₁/(D log A₂) + b₂/(D log A₁)`, `log Aᵢ ≥ max(h(αᵢ), log p / D)`.
 Transcription (faithful or weaker): `p = 3`, `D = 1`, `α₁ = t`, `b₁ = δ`, `α₂ = b/a`, `b₂ = 1`.

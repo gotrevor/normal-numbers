@@ -91,3 +91,65 @@ Please transcribe (statements + definitions, verbatim where possible):
 - **Host note:** nothing found gives a usable lower bound on the thickness of an intersection of many sets, so
   `ThickCore` (thickness of ⋂_{b≥3} E_b(4) after merging near-coincident windows) is your own lemma to prove;
   with E₂(4) at thickness exactly 3, you need τ(B) ≥ 1/3 (Theorem 8 allows equality).
+
+## Addendum (same day): Bugeaud–Laurent 1996 checked against the authors' preprint
+
+**Source read:** the authors' preprint `logpadicdef.ps`, linked from Bugeaud's publication list
+(`https://irma.math.unistra.fr/~bugeaud/travaux/logpadicdef.ps`; headed "Journal of Number
+Theory", 29 pp.).  ScienceDirect (DOI 10.1006/jnth.1996.0152) served a bot check to the host, so
+the typeset version was **not** read.  Statements below were read from page images, not OCR, but
+should be checked against the published version before anything quotes a constant.  The PDF is at
+`papers/bugeaud-laurent-1996-padic-two-logs-preprint.pdf`, a gitignored symlink into
+`~/personal/papers/` that the box may not be able to follow.
+
+**Setup (§2).**  `v` is the valuation on `Q̄_p` with `v(p) = 1`, and `Λ = α₁^{b₁} − α₂^{b₂}` with
+`b₁, b₂` positive integers.  `K_v = Q_p(α₁, α₂)` has ramification index `e` and residue degree
+`f`, and `D = [Q(α₁, α₂) : Q] / f` (note the division by `f`).  The hypothesis throughout is
+`α₁, α₂ ∈ U_v`, i.e. `v(αᵢ) = 0`.  `g` is the least positive integer with `αᵢ^g ∈ U_v¹` (principal
+units), and `g ∣ p^f − 1`.  `A₁, A₂ > 1` satisfy `log Aᵢ ≥ max{h(αᵢ), log p / D}`, and
+`b' = b₁/(D log A₂) + b₂/(D log A₁)`.
+
+**Théorème 3** (verbatim in substance).  *If `α₁, α₂` are multiplicatively independent, then*
+`v(Λ) ≤ 24pg/((p−1)(log p)⁴) · D⁴ · (max{log b' + log log p + 0.4, 10 log p / D, 10})² · log A₁ log A₂.`
+**Corollaire 1** replaces `g` by `p^f − 1`.  **Corollaire 2** adds `αᵢ ∈ U_v¹` (so `g = 1`), and
+the bound is then `≤ 208 D⁴ (max{…})² log A₁ log A₂`.  **Théorème 2** is the asymptotic version, with
+`c > 64/9` in place of 24, valid for `b' ≥ b(c, p)`.  **Théorème 4** is a table `c(μ, ν)` for other
+coefficients in the max.
+
+**Verdict on `Literature.PadicTwoLogs` (SparseIdentity.lean:915).**  Its docstring formula is
+Théorème 3 / Corollaire 1, with `c(p) = 24pg/((p−1)(log p)⁴)`.  One imprecision: "a field of degree
+`D`" should be `D = [Q(α₁,α₂):Q]/f`, which is 1 for rationals in any case.  The Lean statement
+follows from Théorème 3 with `p = 3`, `D = 1`, `g ≤ 2`, `α₁ = t`, `α₂ = b'/a'` (with the 3-parts
+stripped), `b₁ = δ`, `b₂ = 1`, but **only in the multiplicatively independent case**.  The dependent
+case (`b'/a' = ±t₀ʲ`) is outside BL and is lifting the exponent, as the docstring and `g_le_dep`
+already handle it.  So "special case of Bugeaud–Laurent" overstates it slightly; "follows from BL
+Théorème 3 in the independent case" is exact.
+
+**Zero lemma: orientation confirmed.**  BL **Lemme 6** (§4), verbatim in substance: *let
+`a₁, a₂, b₁, b₂` lie in a field, `a₁ ≠ 0`, `a₂ ≠ 0`, `K, L` positive integers, `E₁, E₂ ⊂ Z²` finite,
+and `P ∈ K[X,Y]` nonzero of partial degree `≤ K−1` in `X` and `≤ L−1` in `Y`.  If
+`Card{a₁^r a₂^s : (r,s) ∈ E₁} ≥ L` and `Card{b₂r + b₁s : (r,s) ∈ E₂} > (K−1)L`, then at least one of
+`P(b₂r + b₁s, a₁^r a₂^s)`, `(r,s) ∈ E₁ + E₂`, is nonzero.*  Taking `Eᵢ = [0,Rᵢ) × [0,Sᵢ)` gives
+`E₁ + E₂ = [0, R₁+R₂−1) × [0, S₁+S₂−1)`, which is exactly the corrected `LaurentZeroLemma`: the
+multiplicative condition is `≥ L` on `(R₁,S₁)`, the additive one is strict `> (K−1)L` on `(R₂,S₂)`.
+BL's lemma needs **no** multiplicative independence, so that hypothesis in the Lean statement is
+harmless but unnecessary.  BL's proof is short: eliminate `Y` with a nonzero generalized
+Vandermonde `det((a₁^{r'} a₂^{s'})^ℓ)` (citing Lemme 1 of their [5], = Laurent–Mignotte–Nesterenko
+1995), then count the degree of the resulting `Δ(X)`, `≤ L(K−1)`.  That is the same shape as the
+proof in `ZeroLemma.lean`.  Théorème 1's version adds the congruence classes mod `g` and `p^t`-th
+powers: `Card{α₁^{p^t r} α₂^{p^t s} : r<R₁, s<S₁, m₁r+m₂s ≡ c₁ (g)} ≥ L` and
+`Card{rb₂ + sb₁ : r<R₂, s<S₂, m₁r+m₂s ≡ c₂ (g)} > (K−1)L`.
+(Yamada, arXiv math/0607072, restates Théorème 1 with `≥ (K−1)L` in the second condition.  The BL
+preprint has strict `>`, and Lemme 6 needs it.)
+
+**Prior formalizations of linear forms in logarithms.**  None found as a proved bound.
+- Lean 4: Karatarakis–Wiedijk, *A formalization of the Gelfond–Schneider theorem*, arXiv
+  2603.24823 (March 2026; abstract read).  This is qualitative transcendence, not an effective
+  lower bound.
+- The lean-eval problem list carries a Baker–Wüstholz statement marked "Not yet solved"
+  (`lean-lang.org/eval/problems/bakerWustholz_linearForms_logs/`; this comes from a search
+  summary, and the page was not opened).
+- No Isabelle/AFP or Coq/Rocq hit came up in two web searches, which is not an exhaustive check.
+  So as far as this search reaches, `padicTwoLogs` may be the first proved effective linear-forms
+  bound in a proof assistant (p-adic, two rational logarithms).  That is a priority claim and needs
+  a proper AFP / Zulip check before any note makes it.

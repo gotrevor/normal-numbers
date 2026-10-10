@@ -66,7 +66,7 @@ The zero runs above are what cost base 6.  A different construction recovers eve
 
 **Prior work for this section.**
 - The repetition device is classical.  A block `UV^w` in an expansion gives a good rational approximation with denominator `b^{|U|}(b^{|V|} − 1)` (Adamczewski–Bugeaud, Annals 165, 2007, the "stammering" lemma).  What we did not find is its use, with random copied blocks inside `K`, to combine the Liouville property with normality.
-- The 3-adic bound is a special case of Bugeaud–Laurent, *Minoration effective de la distance p-adique entre puissances de nombres algébriques*, J. Number Theory 61 (1996) 311–342.  The Lean proof follows their interpolation-determinant method, specialised to rationals.
+- When `t` and `b/a` are multiplicatively independent, the 3-adic bound follows from Bugeaud–Laurent, *Minoration effective de la distance p-adique entre puissances de nombres algébriques*, J. Number Theory 61 (1996) 311–342, Théorème 3 with `p = 3` and `D = 1`.  The dependent case is lifting the exponent.  The Lean proof follows their interpolation-determinant method, specialised to rationals, and its zero lemma is their Lemme 6 on rectangles.
 - Becher, Bugeaud and Slaman announced in talks (Slaman, IMS 2015 and 2019) that for every exponent in `[2, ∞]` and every admissible base set there is a number with that exponent that is simply normal to exactly those bases.  That would give a Liouville number normal to every non-power of 3, but not one in `K`, and we could not find a published source.
 - Becher's 2014 talk with Bugeaud and Slaman lists the base-2 question for `K` as open.  We found no later answer, but our search was by keyword and abstract, without a citation index.  Corrections are welcome.
 
