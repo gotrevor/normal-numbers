@@ -107,6 +107,105 @@ theorem coherentBlockCertificate_of_weights {Bad : ℕ → ℕ → Prop} {D : �
     rw [Set.Finite.mem_toFinset] at hrow
     exact hrow.2
 
+theorem list_range_filter_map_sum (n : ℕ) (p : ℕ → Prop) [DecidablePred p] (f : ℕ → ℚ) :
+    (((List.range n).filter (fun j => decide (p j))).map f).sum =
+      ∑ j ∈ (Finset.range n).filter p, f j := by
+  induction n with
+  | zero => simp
+  | succ n ih =>
+    rw [List.range_succ, List.filter_append, List.map_append, List.sum_append, ih,
+      Finset.sum_filter, Finset.sum_filter, Finset.sum_range_succ]
+    by_cases h : p n <;> simp [h]
+
+open Classical in
+/-- **Good-cell reduction.**  If a predicate `Good` implies `Alive`, the weights vanish off `Good`,
+and every good cell's weight is beaten by its good depth-`D` descendants, then the certificate
+holds.  (Alive non-good descendants only add nonnegative weight.) -/
+theorem coherentBlockCertificate_of_good {Bad Good : ℕ → ℕ → Prop} {D : ℕ} {growth : ℚ}
+    (hD : 0 < D) (hgood : ∀ k a, Good k a → Count.Alive Bad k a)
+    (S : ℕ) (classify : ℕ → ℕ → Fin S) (w : Fin S → ℚ)
+    (hw : ∀ s, 0 ≤ w s ∧ w s ≤ 1) (hroot : 0 < w (classify 0 0)) (hg : 0 ≤ growth)
+    (hzero : ∀ k a, ¬ Good k a → w (classify k a) = 0)
+    (hgrow : ∀ k a, Good k a → growth ^ D * w (classify k a) ≤
+      ∑ j ∈ (Finset.range (2 ^ D)).filter (fun j => Good (k + D) (2 ^ D * a + j)),
+        w (classify (k + D) (2 ^ D * a + j))) :
+    CoherentBlockCertificate Bad D growth := by
+  classical
+  refine coherentBlockCertificate_of_weights hD S classify w hw hroot fun k a _ => ?_
+  have hrow : ((blockRow Bad D classify k a).map w).sum =
+      ∑ j ∈ (Finset.range (2 ^ D)).filter (fun j => Count.Alive Bad (k + D) (2 ^ D * a + j)),
+        w (classify (k + D) (2 ^ D * a + j)) := by
+    unfold blockRow
+    rw [List.map_map]
+    exact list_range_filter_map_sum _ _ (fun j => w (classify (k + D) (2 ^ D * a + j)))
+  by_cases hk : Good k a
+  · refine (hgrow k a hk).trans ?_
+    rw [hrow]
+    exact Finset.sum_le_sum_of_subset_of_nonneg
+      (Finset.monotone_filter_right _ fun j _ hj => hgood _ _ hj)
+      (fun j _ _ => (hw _).1)
+  · rw [hzero k a hk, mul_zero, hrow]
+    exact Finset.sum_nonneg fun j _ => (hw _).1
+
+/-- Containment pruning is inherited by children, so a cell that is not `Bad` and lies in
+`[0,1]` is alive (its ancestors contain it and so are not `Bad` either). -/
+theorem alive_of_not_bad {Bad : ℕ → ℕ → Prop} (hB : ∀ k a, Bad k (a / 2) → Bad (k + 1) a) :
+    ∀ k a, a < 2 ^ k → ¬ Bad k a → Count.Alive Bad k a
+  | 0, a, ha, _ => by simp only [Count.Alive]; simpa using ha
+  | k + 1, a, ha, hb => by
+    refine ⟨alive_of_not_bad hB k (a / 2) ?_ fun h => hb (hB k a h), hb⟩
+    rw [pow_succ] at ha; omega
+
+theorem twoThreeBad_succ (c : ℝ) (k a : ℕ) (h : twoThreeBad c k (a / 2)) :
+    twoThreeBad c (k + 1) a := by
+  obtain ⟨b, hb, n, A, hs⟩ := h
+  exact ⟨b, hb, n, A, (Count.cell_succ_sub k a).trans hs⟩
+
+/-- The base-3 radius at the frozen exponent. -/
+noncomputable def δ3 : ℝ := (3 : ℝ) ^ (-(449 / 100 : ℝ))
+
+/-- The window of `twoThreeBad` for base `b`, stage `n`, centre `A`. -/
+noncomputable def window (b n A : ℕ) : Set ℝ :=
+  Set.Icc (((A : ℝ) - (b : ℝ) ^ (-(449 / 100 : ℝ))) / (b : ℝ) ^ n)
+    (((A : ℝ) + (b : ℝ) ^ (-(449 / 100 : ℝ))) / (b : ℝ) ^ n)
+
+/-- **Clean cells** (the certificate's live states): inside `[0,1]`, inside no base-2 window,
+and disjoint from every base-3 window of an already *resolved* stage (`3ⁿ ≤ 2δ₃2ᵏ`, i.e. the
+window is at least as long as the cell).  Whether a descendant is clean is a pure interval
+disjointness question about its position `frac(3ⁿ a / 2ᵏ)` at the new stages. -/
+def Clean449 (k a : ℕ) : Prop :=
+  a < 2 ^ k ∧ (∀ n A : ℕ, ¬ Count.cell k a ⊆ window 2 n A) ∧
+    ∀ n A : ℕ, (3 : ℝ) ^ n ≤ 2 * δ3 * 2 ^ k → Disjoint (Count.cell k a) (window 3 n A)
+
+theorem clean449_not_bad {k a : ℕ} (h : Clean449 k a) : ¬ twoThreeBad (449 / 100) k a := by
+  rintro ⟨b, hb, n, A, hs⟩
+  rcases hb with rfl | rfl
+  · exact h.2.1 n A (by simpa [window] using hs)
+  · have hs' : Count.cell k a ⊆ window 3 n A := by simpa [window] using hs
+    have hne : (Count.cell k a).Nonempty := ⟨(a : ℝ) / 2 ^ k, by
+      refine ⟨le_rfl, ?_⟩; gcongr; linarith⟩
+    by_cases hr : (3 : ℝ) ^ n ≤ 2 * δ3 * 2 ^ k
+    · obtain ⟨x, hx⟩ := hne
+      exact Set.disjoint_left.1 (h.2.2 n A hr) hx (hs' hx)
+    · -- the window is shorter than the cell
+      push_neg at hr
+      have h1 : (a : ℝ) / 2 ^ k ∈ window 3 n A := hs' ⟨le_rfl, by gcongr; linarith⟩
+      have h2 : ((a : ℝ) + 1) / 2 ^ k ∈ window 3 n A := hs' ⟨by gcongr; linarith, le_rfl⟩
+      simp only [window, Set.mem_Icc] at h1 h2
+      have h3p : (0 : ℝ) < 3 ^ n := by positivity
+      have h2p : (0 : ℝ) < 2 ^ k := by positivity
+      have hlen : ((a : ℝ) + 1) / 2 ^ k - a / 2 ^ k ≤ 2 * δ3 / 3 ^ n := by
+        have := sub_le_sub h2.2 h1.1
+        simp only [δ3]; push_cast at this ⊢
+        calc _ ≤ _ := this
+          _ = _ := by ring
+      have e : ((a : ℝ) + 1) / 2 ^ k - a / 2 ^ k = 1 / 2 ^ k := by ring
+      rw [e, div_le_div_iff₀ h2p h3p] at hlen
+      linarith
+
+theorem clean449_alive {k a : ℕ} (h : Clean449 k a) : Count.Alive (twoThreeBad (449 / 100)) k a :=
+  alive_of_not_bad (twoThreeBad_succ _) k a h.1 (clean449_not_bad h)
+
 /-- Staging node (gate step 1 asks for `c = 4.5` first): the same certificate at `c = 9/2`.
 Evidence: sampled shared-phase growth ≈ 1.815 at D = 8 (optimistic screen); no rigorous
 certificate yet (uniform bins fail, see module doc).  Confidence it holds with an adapted
@@ -114,9 +213,34 @@ partition: 45%. -/
 def CoherentTwoThree45 : Prop :=
   ∃ D : ℕ, D ≤ 12 ∧ CoherentBlockCertificate (twoThreeBad (9 / 2)) D (9 / 5)
 
+open Classical in
+/-- **The crux, restated on clean cells.**  A weight function on finitely many states, vanishing
+off clean cells, positive at the root, such that every clean cell's weight is beaten (by the
+factor `(9/5)^D`) by its clean depth-`D` descendants.  The float certificate in the module doc
+is a candidate witness (classify = (SFT state, x-bin, u-bin) of a clean cell, plus finitely many
+early-level states); what remains is the exact check and the root entry. -/
+def CleanCertificate449 : Prop :=
+  ∃ D : ℕ, 0 < D ∧ D ≤ 12 ∧ ∃ (S : ℕ) (classify : ℕ → ℕ → Fin S) (w : Fin S → ℚ),
+    (∀ s, 0 ≤ w s ∧ w s ≤ 1) ∧ 0 < w (classify 0 0) ∧
+    (∀ k a, ¬ Clean449 k a → w (classify k a) = 0) ∧
+    ∀ k a, Clean449 k a → (9 / 5 : ℚ) ^ D * w (classify k a) ≤
+      ∑ j ∈ (Finset.range (2 ^ D)).filter (fun j => Clean449 (k + D) (2 ^ D * a + j)),
+        w (classify (k + D) (2 ^ D * a + j))
+
+theorem coherentTwoThree449_of_clean (h : CleanCertificate449) : CoherentTwoThree449 := by
+  obtain ⟨D, hD, hD12, S, classify, w, hw, hroot, hzero, hgrow⟩ := h
+  exact ⟨D, hD12, coherentBlockCertificate_of_good hD (fun k a hk => clean449_alive hk)
+    S classify w hw hroot (by norm_num) hzero (by convert hgrow)⟩
+
+/-- **Crux (open).**  Evidence: float certificates at growth 9/5 (module doc, lap 2-3).
+Confidence 50%: the model-level margin is real, but the exact check, the early-level entry
+states and the clean-cell semantics of the bins are not yet machine-checked. -/
+theorem cleanCertificate449 : CleanCertificate449 := by
+  sorry
+
 /-- **Operator gate 4.**  A shared-phase finite-state certificate for the {2,3} core at
 exponent 449/100, with block growth at least 9/5 over some block length `D ≤ 12`. -/
-theorem coherentTwoThree449 : CoherentTwoThree449 := by
-  sorry
+theorem coherentTwoThree449 : CoherentTwoThree449 :=
+  coherentTwoThree449_of_clean cleanCertificate449
 
 end NormalNumbers.UniformBadThreshold.Coherent

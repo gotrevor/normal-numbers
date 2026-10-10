@@ -80,7 +80,7 @@ namespace NormalNumbers.Barriers
 
 /-- Each frozen headline `sorry` and the barriers its mechanism must fail on. -/
 def cruxLinks : List CruxLink := [
-  ⟨``UniformBadThreshold.Coherent.coherentTwoThree449,
+  ⟨``UniformBadThreshold.Coherent.cleanCertificate449,
    [``uniformBad_base_two],
    "the shared-phase certificate must keep base 3 exact under ONE parent phase: base 2 alone \
     dies at exponent ≤ log₂ 3, and summing per-child phase minima (abs3.js) is only a relaxation \

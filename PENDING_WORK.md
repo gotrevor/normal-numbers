@@ -3832,3 +3832,14 @@ Next: `isFresh` Riesz bound, then the classification lemma in Lean (route-decisi
   G=1.8 (D=6/8, N=32/64).
 - Next: if the fixed point fails at 1.8 for all feasible N, quantify the N-scaling of the exact value and
   decide whether a non-uniform (boundary-adapted) classify is needed; entry states for the real root cell.
+
+## Gate 4, lap 3 (2026-10-10): float certificate at 9/5 + Lean reduction to clean cells
+- Containment model + per-C SFT: float certificates at growth 9/5, D=6 (c=4.5 N=128/256; c=4.49 N=128 M=24).
+- Lean (all proved): `coherentBlockCertificate_of_weights`, `coherentBlockCertificate_of_good`,
+  `alive_of_not_bad`, `clean449_alive`, `coherentTwoThree449_of_clean`.  The frozen theorem now rests on the
+  single crux `cleanCertificate449 : CleanCertificate449` (sorry, 50%).
+- Next attack on the crux: (1) exact-rational re-check of the 4.49 certificate (rational delta bounds, bins
+  in rho/delta with rational edges); (2) early-level entry states (k with no resolved stage) by backward
+  recursion, check root weight > 0; (3) the Lean bridge: clean descendants of a clean cell with signature
+  (s, x = frac(3^n a/2^k), rho = 3^n/2^k) are exactly the j whose interval avoids the new-stage windows ->
+  a native_decide checker over boxes with a soundness lemma.
