@@ -3810,3 +3810,15 @@ Next: `isFresh` Riesz bound, then the classification lemma in Lean (route-decisi
 - NEXT: test CosetSurvival on large structured moduli (divisors of gcd(2^a−1, 3^b−1), e.g. (144, 432))
   and on denominators divisible by 2, 3; a counterexample would reopen rational towers.  The gate leaf
   `selfGoodPerfect_four` stays a disclosed sorry, believed false.
+
+## Gate 4, lap 1 (2026-10-10): shared-phase measurement
+- **Advance:** kill test does NOT fire.  Shared phase vs separate on identical samples: separate dies/collapses,
+  shared reaches sampled growth ≈ 1.815 at D = 8 (N=32), 1.84 (N=64), both c = 4.5 and 4.49
+  (`scripts/cstar_models/shared3_results.txt`).  Margin over 9/5 is thin and decreasing in sample count.
+- **Obstruction found:** uniform bins cannot carry a rigorous certificate: a bin containing a closed-touching
+  point (x=0,u=1) has block infimum 0 (`shared3cert.c` branch-and-bound; interval iteration 1.587 at K=64x8).
+- **Lean:** staging node `Coherent.CoherentTwoThree45` (45%), measurements in the gate module doc.
+- **Next attack:** adaptive (quadtree in x, per SFT state) partition whose cells are cut at the touching
+  boundaries; rigorous value iteration on that mesh (`shared3cert.c` has the interval evaluator; compile with
+  `leanc -O2`, no gcc on the box).  If the mesh-refined rigorous growth stays < 1.8 while sampled stays ≈1.81,
+  the gap is the boundary-point loss: quantify it.

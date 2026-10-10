@@ -3,6 +3,7 @@
 // leaf contributes w * min V over every bin its box meets; u-threshold straddles are bisected.
 // Box value = sum over leaves; bin value = min over sub-boxes (shared phase within each sub-box).
 // usage: node shared3rig.js N M D IT C KX KU [no3]
+// ADAPT=k env: additionally bisect a sub-box in x (up to k times) while some leaf box meets 2+ x-bins.
 const fs = require('fs');
 const a = process.argv.slice(2);
 const [N, M, D, IT] = a.slice(0, 4).map(Number);
@@ -17,7 +18,7 @@ const binHi = v => { let j = M - 1; while (j > 0 && edges[j] >= v - eps) j--; re
 const rhoOf = u => delta * Math.pow(2, u);
 const P = []; for (let s = 0; s < S; s++) P.push([0, 1].map(d => T[s][d] < 0 ? 0 : r[T[s][d]] / (lam * r[s])));
 const NB = N * M;
-let splits = 0;
+let splits = 0; const ADAPT = Number(process.env.ADAPT || 0);
 // returns array of leaves [w, s, ia, ib, ja, jb] or null if a u-straddle needs bisection
 function descend(s, xlo, xhi, ulo, uhi, depth, w, out) {
   if (depth === D) {
@@ -43,8 +44,10 @@ function descend(s, xlo, xhi, ulo, uhi, depth, w, out) {
 function boxes(s, xlo, xhi, ulo, uhi, acc, lvl) {
   const out = [];
   const rr = descend(s, xlo, xhi, ulo, uhi, 0, 1, out);
-  if (rr < 0) { acc.push(out); return; }
-  if (lvl > 40) throw new Error('split loop');
+  if (rr < 0) {
+    if (lvl < ADAPT && out.some(l => l[3] > l[2])) { const xm = (xlo + xhi) / 2; boxes(s, xlo, xm, ulo, uhi, acc, lvl + 1); boxes(s, xm, xhi, ulo, uhi, acc, lvl + 1); return; }
+    acc.push(out); return; }
+  if (lvl > 60) throw new Error('split loop');
   splits++; const um = ulo + rr; boxes(s, xlo, xhi, ulo, um, acc, lvl + 1); boxes(s, xlo, xhi, um, uhi, acc, lvl + 1);
 }
 function binBoxes(s, i, j) {

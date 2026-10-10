@@ -1,0 +1,27 @@
+# Operator gate 4 measurements (2026-10-10).  Model = abs3.js (sft45 binary SFT, base-3 touching kills).
+# Growth = per-level, = lam * (block ratio)^(1/D); target 1.8.
+## sampled (optimistic) shared vs separate, same samples
+shared   N=32 M=6 D=2 C=4.5 K=6x3: growth 1.576631
+separate N=32 M=6 D=2 C=4.5 K=6x3: tree DEAD at iteration 4
+shared   N=32 M=6 D=4 C=4.5 K=6x3: growth 1.758877
+separate N=32 M=6 D=4 C=4.5 K=6x3: growth 0.964949 (3592/4800 zeros, root 0)
+shared   N=32 M=6 D=6 C=4.5 K=6x3: growth 1.828837
+shared   N=32 M=6 D=8 C=4.5 K=6x3:  1.832150
+shared   N=32 M=6 D=8 C=4.5 K=12x6: 1.821087
+shared   N=32 M=6 D=8 C=4.5 K=24x6: 1.818167
+shared   N=32 M=6 D=8 C=4.5 K=48x6: 1.814790   (decreasing in K: sampled limit ~1.81)
+shared   N=64 M=6 D=8 C=4.5 K=12x6: 1.840824
+shared   N=32 M=12 D=8 C=4.5 K=12x6: 1.823153
+shared   N=32 M=6 D=8 C=4.49 K=12x6: 1.819933
+shared   N=64 M=6 D=8 C=4.49 K=12x6: 1.840361
+shared   N=32 M=6 D=10 C=4.49 K=12x6: 1.828227
+## interval (rigorous in the model) value iteration, uniform grid bins, uniform sub-boxes
+rig N=32 M=6 D=4 C=4.5 K=16x4: 1.533545
+rig N=32 M=6 D=8 C=4.5 K=16x4: 1.000000 (ratio 0.006)
+rig N=32 M=6 D=8 C=4.5 K=64x8: 1.587172
+## branch-and-bound verification of the sampled V (shared3cert.c, built with leanc)
+verify N=32 M=6 D=8 C=4.5 G=1.8 MAXB=12: all 4434 nonzero bins fail, worst certified ratio 0.
+  Cause: bin (s=0,i=0,j=0) contains the point x=0,u=1, where both first-level children touch a
+  base-3 window (closed touching), so the block sum is 0 on a neighbourhood after interval
+  pessimism; the infimum over a uniform bin is 0 although every interior sample is >0.
+  => uniform bins cannot carry a certificate; the partition must follow window/touch boundaries.
