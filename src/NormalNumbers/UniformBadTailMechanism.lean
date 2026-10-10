@@ -527,4 +527,85 @@ theorem extLoss_le_killedTot (m : ℕ) : extLoss m ≤ killedTot m := by
   have := cell_anc_sub (12 - e) (6 * m + e) (2 ^ 12 * a + i)
   rwa [show 6 * m + e + (12 - e) = 6 * m + 12 by omega] at this
 
+open Classical in
+/-- Good weight at `6m+12` under alive `6m`-cells inside a window of base `b`, stage `n`. -/
+noncomputable def killedBy (b n m : ℕ) : ℚ :=
+  ∑ a ∈ (Finset.range (2 ^ (6 * m))).filter (Count.Alive tailBad449 (6 * m)),
+    ∑ i ∈ (Finset.range (2 ^ 12)).filter (fun i =>
+      Good449 (6 * m + 12) (2 ^ 12 * a + i) ∧
+        ∃ A : ℕ, Count.cell (6 * m + 12) (2 ^ 12 * a + i) ⊆ Coherent.window b n A),
+      coreWeight (6 * m + 12) (2 ^ 12 * a + i)
+
+/-- A level-`K` cell inside a base-`b` stage-`n` window forces `b^{n+1} ≤ 2^{K+1}`. -/
+theorem pow_le_of_cell_sub {K c b n A : ℕ} (hb : 1 ≤ b)
+    (h : Count.cell K c ⊆ Coherent.window b n A) : b ^ (n + 1) ≤ 2 ^ (K + 1) := by
+  unfold Count.cell Coherent.window at h
+  have h2K : (0 : ℝ) < 2 ^ K := by positivity
+  have hb1 : (1 : ℝ) ≤ b := by exact_mod_cast hb
+  have hle : (c : ℝ) / 2 ^ K ≤ ((c : ℝ) + 1) / 2 ^ K :=
+    div_le_div_of_nonneg_right (by linarith) h2K.le
+  have h1 := (h ⟨le_rfl, hle⟩).1
+  have h2 := (h ⟨hle, le_rfl⟩).2
+  have hbn : (0 : ℝ) < (b : ℝ) ^ n := by positivity
+  have hr : (b : ℝ) ^ (-(449 / 100 : ℝ)) ≤ 1 / b := by
+    rw [one_div, ← Real.rpow_neg_one]
+    exact Real.rpow_le_rpow_of_exponent_le hb1 (by norm_num)
+  have hlen : 1 / (2 : ℝ) ^ K ≤ 2 / (b : ℝ) ^ (n + 1) := by
+    have : ((c : ℝ) + 1) / 2 ^ K - c / 2 ^ K ≤
+        ((A : ℝ) + (b : ℝ) ^ (-(449 / 100 : ℝ))) / (b : ℝ) ^ n -
+          ((A : ℝ) - (b : ℝ) ^ (-(449 / 100 : ℝ))) / (b : ℝ) ^ n := by linarith
+    rw [← sub_div, ← sub_div] at this
+    calc 1 / (2 : ℝ) ^ K = ((c : ℝ) + 1 - c) / 2 ^ K := by ring_nf
+      _ ≤ _ := this
+      _ = 2 * (b : ℝ) ^ (-(449 / 100 : ℝ)) / (b : ℝ) ^ n := by ring_nf
+      _ ≤ 2 * (1 / b) / (b : ℝ) ^ n := div_le_div_of_nonneg_right (by linarith) hbn.le
+      _ = 2 / (b : ℝ) ^ (n + 1) := by rw [pow_succ]; field_simp
+  rw [div_le_div_iff₀ h2K (by positivity)] at hlen
+  have : ((b ^ (n + 1) : ℕ) : ℝ) ≤ ((2 ^ (K + 1) : ℕ) : ℝ) := by
+    push_cast; rw [pow_succ 2]; linarith
+  exact_mod_cast this
+
+open Classical in
+/-- **Union bound over the finitely many windows that can contain a level-`6m+12` cell.** -/
+theorem killedTot_le_sum (m : ℕ) :
+    killedTot m ≤ ∑ b ∈ (Finset.range (2 ^ (6 * m + 13) + 1)).filter (fun b => 5 ≤ b ∧ ¬ IsPerfPow b),
+      ∑ n ∈ Finset.range (6 * m + 13), killedBy b n m := by
+  set Bs := (Finset.range (2 ^ (6 * m + 13) + 1)).filter (fun b => 5 ≤ b ∧ ¬ IsPerfPow b)
+  unfold killedTot killedBy
+  simp only [Finset.sum_filter]
+  -- move the `(b, n)` sums inside
+  rw [Finset.sum_congr rfl fun b _ => Finset.sum_comm, Finset.sum_comm]
+  refine Finset.sum_le_sum fun a _ => ?_
+  split_ifs with ha
+  swap; · simp
+  rw [Finset.sum_congr rfl fun b _ => Finset.sum_comm, Finset.sum_comm]
+  refine Finset.sum_le_sum fun i _ => ?_
+  split_ifs with hP
+  swap; · exact Finset.sum_nonneg fun _ _ => Finset.sum_nonneg fun _ _ => by
+            split_ifs <;> simp_all [coreWeight_nonneg]
+  obtain ⟨hg, b, h5, hpp, n, A, hsub⟩ := hP
+  have hpow := pow_le_of_cell_sub (by omega) hsub
+  rw [show 6 * m + 12 + 1 = 6 * m + 13 by ring] at hpow
+  have hbB : b ∈ Bs := by
+    refine Finset.mem_filter.2 ⟨Finset.mem_range.2 ?_, h5, hpp⟩
+    have : b ≤ b ^ (n + 1) := Nat.le_self_pow (by omega) b
+    omega
+  have hnN : n ∈ Finset.range (6 * m + 13) := by
+    refine Finset.mem_range.2 ?_
+    have h2 : 2 ^ (n + 1) ≤ b ^ (n + 1) := Nat.pow_le_pow_left (by omega) _
+    have := (Nat.pow_le_pow_iff_right (by norm_num : 1 < 2)).1 (h2.trans hpow)
+    omega
+  have hnn : ∀ n' b', 0 ≤ (if Good449 (6 * m + 12) (2 ^ 12 * a + i) ∧
+        ∃ A : ℕ, Count.cell (6 * m + 12) (2 ^ 12 * a + i) ⊆ Coherent.window b' n' A
+      then coreWeight (6 * m + 12) (2 ^ 12 * a + i) else 0) := fun _ _ => by
+    split_ifs <;> simp [coreWeight_nonneg]
+  calc coreWeight (6 * m + 12) (2 ^ 12 * a + i)
+      = (if Good449 (6 * m + 12) (2 ^ 12 * a + i) ∧
+            ∃ A : ℕ, Count.cell (6 * m + 12) (2 ^ 12 * a + i) ⊆ Coherent.window b n A
+          then coreWeight (6 * m + 12) (2 ^ 12 * a + i) else 0) := by
+        rw [if_pos ⟨hg, A, hsub⟩]
+    _ ≤ _ := Finset.single_le_sum (fun n' _ => hnn n' b) hnN
+    _ ≤ _ := Finset.single_le_sum (f := fun b' => ∑ n' ∈ Finset.range (6 * m + 13), _)
+        (fun b' _ => Finset.sum_nonneg fun n' _ => hnn n' b') hbB
+
 end NormalNumbers.UniformBadThreshold.TailReview
