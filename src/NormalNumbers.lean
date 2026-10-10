@@ -990,6 +990,7 @@ import NormalNumbers.UniformBadBelowFive
 import NormalNumbers.UniformBadNineHalves
 import NormalNumbers.UniformBadLowerBound
 import NormalNumbers.UniformBadTower
+import NormalNumbers.UniformBadTowerReview
 import NormalNumbers.LinearFormsScales
 import NormalNumbers.LinearFormsScalesStretch
 import NormalNumbers.Hertling

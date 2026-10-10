@@ -47,6 +47,7 @@ import NormalNumbers.UniformBadNewhouse
 import NormalNumbers.UniformBadFive
 import NormalNumbers.UniformBadNineHalves
 import NormalNumbers.UniformBadTower
+import NormalNumbers.UniformBadTowerReview
 
 /-!
 # Barrier audit: every open crux names a sibling it must fail on
@@ -77,11 +78,6 @@ namespace NormalNumbers.Barriers
 
 /-- Each frozen headline `sorry` and the barriers its mechanism must fail on. -/
 def cruxLinks : List CruxLink := [
-  ⟨``UniformBadThreshold.selfGoodPerfect_four,
-   [``uniformBad_base_two],
-   "the tower must use the exponent quantitatively: rationals of bounded denominator die at base q \
-    and base 2 alone refuses c ≤ log₂ 3, so the denominators must grow with small Carmichael \
-    exponent and the numerator count must beat the window cosets at c = 4, failing at c ≤ 93/37"⟩,
   ⟨``UniformBadThreshold.cStar_le_nine_halves,
    [``uniformBad_base_two],
    "the engine must make base 3 exact alongside base 2: the two-rate counting engine (base 2 exact, \

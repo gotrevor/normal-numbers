@@ -510,12 +510,19 @@ theorem rationalTower_of_selfGoodPerfect {c : ℝ} (h : SelfGoodPerfect c) (x0 :
       mul_le_mul_of_nonneg_left (mul_le_mul_of_nonneg_left h4 (by positivity)) (abs_nonneg _)
     linarith
 
-/-- **The crux leaf of `rationalTower_four`** (believed 20%; refuted under the coset model, see
-`JointRationalsFinite`; see `SelfGoodPerfect`). -/
-theorem selfGoodPerfect_four : SelfGoodPerfect 4 := by
-  sorry
+/-- **REFUTED (2026-10-09, Codex review): `not_selfGoodPerfect` in `UniformBadTowerReview`, for every
+exponent.**  Kept as a statement for the record.  It was the crux leaf of `RationalTowerFour`,
+frozen 2026-10-08 as the theorem `selfGoodPerfect_four` (believed 20%, then refuted under the
+coset model by `not_selfGoodPerfect_four_of_coset`). -/
+def SelfGoodPerfectFour : Prop := SelfGoodPerfect 4
 
-/-- **Headline (upper-bound route, frozen 2026-10-08).**  Believed 40% true, 15% provable soon.
+/-- **REFUTED (2026-10-09, Codex review): `not_rationalTower` in `UniformBadTowerReview`, for every
+exponent.**  For a rational member `p/d`, base `2d` at `n = 1` kills the whole
+`(2d)^{−1−c}`-neighbourhood, while `TowerFamily` demands survivors arbitrarily close to it.
+Kept as a statement for the record.  It was frozen 2026-10-08 as the theorem `rationalTower_four`
+(the original docstring follows).
+
+**Headline (upper-bound route, frozen 2026-10-08).**  Believed 40% true, 15% provable soon.
 
 A tower of rationals at exponent `4`.  With `cStar_le_of_rationalTower` this closes the frozen
 wall `cStar_le_four` by a global mechanism, outside the local engines walled at `9/2`.
@@ -534,8 +541,11 @@ Known-false siblings.  Rationals with a bounded denominator: they die at base `q
 (`uniformBad_base_two` is the base-2 floor).  The same tower at `c ≤ 93/37` must fail
 (`ninety_three_thirty_sevenths_le_cStar`).  A proof must therefore use `c = 4` quantitatively,
 not just periodicity. -/
-theorem rationalTower_four : RationalTower 4 := by
-  refine rationalTower_of_selfGoodPerfect selfGoodPerfect_four (529 / 2730) ?_
+def RationalTowerFour : Prop := RationalTower 4
+
+/-- The original reduction of the refuted headline to its refuted leaf. -/
+theorem rationalTowerFour_of_selfGoodPerfectFour (h : SelfGoodPerfectFour) : RationalTowerFour := by
+  refine rationalTower_of_selfGoodPerfect h (529 / 2730) ?_
   have h : ((529 / 2730 : ℚ)).den = 2730 := by decide +kernel
   rw [h]
   have e : (((529 / 2730 : ℚ)) : ℝ) = 529 / 2730 := by push_cast; ring

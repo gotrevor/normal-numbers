@@ -17,6 +17,7 @@ import NormalNumbers.UniformBadRoute
 import NormalNumbers.UniformBadNewhouse
 import NormalNumbers.UniformBadNineHalves
 import NormalNumbers.UniformBadTower
+import NormalNumbers.UniformBadTowerReview
 import NormalNumbers.EntropyProfiles
 import NormalNumbers.CantorExactExponentStretch
 import NormalNumbers.CantorExactExponentProfile
@@ -61,7 +62,9 @@ def mazeLinks : List Link := [
     ``UniformBadThreshold.CarmichaelChainCollapse,
     ``UniformBadThreshold.goodBelow_tower_step,
     ``UniformBadThreshold.not_rationalTower_of_jointRationalsFinite,
-    ``UniformBadThreshold.JointRationalsFinite],
+    ``UniformBadThreshold.JointRationalsFinite,
+    ``UniformBadThreshold.not_rationalTower,
+    ``UniformBadThreshold.not_selfGoodPerfect],
    [``UniformBadThreshold.SmallOrderModuli]⟩,
   ⟨"adaptive split cores for the Newhouse thick core",
    [``UniformBadThreshold.Newhouse.merge_forced,
