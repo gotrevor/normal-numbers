@@ -17,6 +17,14 @@ Branch `proof/uniformbad-threshold`, HEAD 2c33b8a6. No uncommitted edits (only s
   stated on `Good449`.  BarrierAudit crux link moved to it.
 
 ## Next (in order)
+0. **(Operator, 07:40Z) BLOCKER before items 1-4: the float certificates are UNTRUSTED.** Codex's
+   `node --test scripts/cstar_models/shared3_lap2_review_test.js` still reports TODO "C enclosures at a
+   leaf u-bin boundary must be finite": `binLo`/`binHi` (exactinf3.c:25-26, 35) can give an EMPTY u range,
+   and the box then evaluates to +infinity, an OPTIMISTIC lower enclosure that can inflate the certificate
+   (DIRECTION gate 4, item (h)).  First, instrument a run to count empty-range or infinite leaves in the
+   4.49 N=128 M=24 D=6 certificate pass.  Then repair the kernel with justified endpoint ownership and
+   outward coverage (clamping alone is not enough), make that TODO a real passing test, and re-run the
+   4.5 and 4.49 certificates.  Report the new margins.  Items (g), (j) and (k) in DIRECTION still apply.
 1. Base-3 bridge: for a Good449 cell (k ≥ 5) with signature (sft state, x = frac(3^n a/2^k), rho = 3^n/2^k,
    n = pending stage), descendant j is Good iff its interval avoids the new-stage windows (and Acc2).
 2. Finite decide: the 25-state automaton (sft449) tracks Acc2 (check over all words ≤ 13 bits; δ2hi =
