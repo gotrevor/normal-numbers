@@ -10,7 +10,7 @@ import Architect
 /-!
 # Laurent's zero lemma for `G_a × G_m` (proved)
 
-`laurentZeroLemma : Literature.LaurentZeroLemma`.  The cited two-variable zero lemma behind the
+`laurentZeroLemma : Literature.LaurentZeroLemma`.  The formerly cited two-variable zero lemma behind the
 3-adic two-logarithm bound has a short elementary proof (review lap 13, 2026-10-09).
 
 Let `P(X, Y) = Σ_{l<L} q_l(X) Yˡ ≠ 0` vanish at `φ(σ + γ)` for `σ ∈ Σ₁ = [0,R₁)×[0,S₁)`,

@@ -31,11 +31,11 @@ Take a free block `W` of length `ℓ` and copy it `M` times: then `x ≈ W/(3^�
 `3^{−Mℓ}`, and `3^ℓ − 1` is prime to 3.  The digits stay in `{0, 2}`, so `x ∈ K`.  With `M → ∞`,
 `x` is Liouville.
 
-**Conjecture (frozen).**  There is a Liouville number in `K` that is normal to every base that is
-not a power of 3 (`LiouvilleCantorFullProfile`); in particular one normal to base 6.  More
-strongly, for every rational `μ₀ > 2` there is such a point with exponent exactly `μ₀`
-(`ExponentCantorFullProfile`).  The profile cut would then belong to the zero-run construction,
-not to the exponent.
+**Theorem (frozen statement, proved 2026-10-08: `liouvilleCantorFullProfile`, no cited input).**
+There is a Liouville number in `K` that is normal to exactly the bases that are not powers of 3
+(`LiouvilleCantorFullProfile`); in particular one normal to base 6.  So at exponent ∞ the profile
+cut belongs to the zero-run construction, not to the exponent.  The stronger form, for every
+rational `μ₀ > 2` such a point with exponent exactly `μ₀` (`ExponentCantorFullProfile`), is open.
 
 **Why the zero-run obstruction is absent.**  In base `b = 3ˢt`, `bʲ·W/(3^ℓ − 1)` is never close
 to an integer unless `3^ℓ − 1` divides it.  `gcd(b, 3^ℓ − 1)` divides `t`, so the base-`b`
@@ -56,7 +56,8 @@ digit-change counting, as `CantorLiouvilleAll.secondMoment_le_b` uses `3 ∤ b`)
 whole difficulty is normality with copied digits (the fraction of copied digits tends to 1 along
 the repetitions).  The exact-exponent version also needs an upper bound.  The approximants
 `p/(3^ℓ−1)` are prime to 3, so the 3-adic count `hit_mass_padic` does not apply, and a new
-count is needed.
+count is needed.  The normality half is resolved by the sparse-pair route (`repPairArith_of_sparse`,
+`repPairArith_of_three_dvd`); the exponent upper bound for the exact-exponent version is open.
 -/
 
 open MeasureTheory Filter
@@ -64,12 +65,12 @@ open MeasureTheory Filter
 namespace NormalNumbers.CantorRepetition
 
 /-- **A Liouville number in `K` with the full Cassels–Schmidt profile.**  Normal to `b` exactly
-when `b` is not a power of 3.  Confidence 60%. -/
+when `b` is not a power of 3.  Proved: `liouvilleCantorFullProfile`. -/
 def LiouvilleCantorFullProfile : Prop :=
   ∃ x ∈ cantorSet, Liouville x ∧ ∀ b : ℕ, 2 ≤ b → (IsNormal b x ↔ ∀ s : ℕ, b ≠ 3 ^ s)
 
-/-- **Exact exponent `μ₀` in `K` with the full profile.**  Confidence 40% (the exponent upper
-bound for repetition approximants is a new count). -/
+/-- **Exact exponent `μ₀` in `K` with the full profile (open).**  Confidence 40% (the exponent
+upper bound for repetition approximants is a new count). -/
 def ExponentCantorFullProfile (μ₀ : ℚ) : Prop :=
   ∃ x ∈ cantorSet, CantorExactExponent.HasIrrExponent x μ₀ ∧
     ∀ b : ℕ, 2 ≤ b → (IsNormal b x ↔ ∀ s : ℕ, b ≠ 3 ^ s)
@@ -484,7 +485,7 @@ theorem secondMoment_le_explicit_of_cf (free : ℕ → Bool) (Φ : (ℕ → Bool
         gcongr
     _ = _ := by simp only [T, E, F, M]; ring
 
-/-- **Cassels second moment, base `b` coprime to 3, any law with the Riesz bound.**  Confidence 80%.
+/-- **Cassels second moment, base `b` coprime to 3, any law with the Riesz bound.**
 
 English proof.  `secondMoment_le_explicit` verbatim with `2 → b`: `secondMoment_expand` (base-free
 up to `2ᵏ → bᵏ`) gives `Σ_{n,m} Bf free M (h(bⁿ − bᵐ))`; the pair `m < n` has frequency
@@ -1053,7 +1054,7 @@ theorem cycProd_pair (A s t m d : ℕ) :
       3 ^ (s * m) * ((t : ℤ) ^ m * (((3 ^ s * t : ℕ) : ℤ) ^ d - 1)) := by push_cast; ring
   rw [e, cycProd_mul_three_pow]
 
-/-- **Copy-zone decay (open conjecture, the copy-zone leaf of `ae_isNormal_rep_of_three_dvd`).**
+/-- **Copy-zone decay (open conjecture; off the proved route, superseded by the sparse-pair argument).**
 For `b` not a power of 3 there are `C, δ > 0` with `copyPairSum b A N ≤ C N^{2−δ}` for
 `A ≤ N ≤ A^{3}` (runs of polynomially many copies).  Evidence (`scripts/rep_copyzone.py`,
 `N = 4A`, `A = 8..24`): `N⁻²·copyPairSum` is `.0116/.0108/.0105` for `b = 2, 6, 12` at `A = 24`,
@@ -1063,7 +1064,7 @@ def CopyZoneDecay (b : ℕ) : Prop :=
   ∃ C δ : ℝ, 0 < δ ∧ ∀ A N : ℕ, 1 ≤ A → A ≤ N → N ≤ A ^ 3 →
     copyPairSum b A N ≤ C * (N : ℝ) ^ (2 - δ)
 
-/-- **Uniform orbit decay of cyclic digits (open conjecture; the residual leaf of
+/-- **Uniform orbit decay of cyclic digits (open conjecture, off the proved route; the residual leaf of
 `CopyZoneDecay`, via `cycProd_pair` with `c = b^d − 1`).**  For `t ≥ 2` prime to 3: the orbit
 `c tᵐ` (`m < N`, `A ≤ N ≤ A³`) has cyclic Riesz products summing to `O(N^{1−δ})`, uniformly in
 `c` with `gcd(c, 3^A−1)² ≤ 3^A − 1`.  Evidence (`scripts/rep_single.py`, exhaustive max over `c`,
@@ -1075,7 +1076,7 @@ def TOrbitCyclicDecay (t : ℕ) : Prop :=
     (Int.gcd c (3 ^ A - 1) : ℝ) ^ 2 ≤ 3 ^ A - 1 →
     ∑ m ∈ Finset.range N, cycProd A (c * (t : ℤ) ^ m) ≤ C * (N : ℝ) ^ (1 - δ)
 
-/-- **Few shifts `d` with a large common factor (open; believed, 75%).**  Shifts `d < N` with
+/-- **Few shifts `d` with a large common factor (open, off the proved route; believed, 75%).**  Shifts `d < N` with
 `gcd(b^d − 1, 3^A − 1)² > 3^A − 1` number `O(N^{1−δ})`.  Evidence (`A ≤ 14`, `N = A³`): for
 `b = 2, 6, 12` the bad `d` are multiples of one order (e.g. `b = 6, A = 12`: `36ℤ`, 47 of 1728),
 at most 66 of 1000.  Mechanism: a bad `d` has `b^d ≡ 1` modulo a divisor `> 3^{A/2}`, so its order
@@ -1308,13 +1309,14 @@ theorem int_gcd_mul_le {h q : ℤ} (hh : h ≠ 0) (hq : q ≠ 0) (c : ℤ) :
   rw [Int.gcd, Int.gcd, Int.natAbs_mul]
   exact_mod_cast this
 
-/-- **Copy-zone decay with a multiplier `h` (open; ⇐ `TOrbitCyclicDecay` + `BadGcdSparseH`).** -/
+/-- **Copy-zone decay with a multiplier `h` (open, off the proved route; ⇐ `TOrbitCyclicDecay` +
+`BadGcdSparseH`).** -/
 def CopyZoneDecayH (b : ℕ) (h : ℤ) : Prop :=
   ∃ C δ : ℝ, 0 < δ ∧ ∀ A N : ℕ, 1 ≤ A → A ≤ N → N ≤ A ^ 3 →
     ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N, cycProd A (h * ((b : ℤ) ^ n - (b : ℤ) ^ m)) ≤
       C * (N : ℝ) ^ (2 - δ)
 
-/-- **`BadGcdSparse` with a multiplier slack `H` (open; believed, 75%).** -/
+/-- **`BadGcdSparse` with a multiplier slack `H` (open, off the proved route; believed, 75%).** -/
 def BadGcdSparseH (b : ℕ) : Prop :=
   ∀ H : ℕ, 1 ≤ H → ∃ C δ : ℝ, 0 < δ ∧ ∀ A N : ℕ, 1 ≤ A → A ≤ N → N ≤ A ^ 3 →
     (((Finset.Ico 1 N).filter fun d =>
@@ -1431,7 +1433,8 @@ theorem secondMoment_le_pairs (Φ : (ℕ → Bool) → ℝ) (hG : Measurable Φ)
   refine (Complex.re_le_norm _).trans ((norm_sum_le _ _).trans ?_)
   exact Finset.sum_le_sum fun n _ => norm_sum_le _ _
 
-/-- **Pair-sum decay for the repetition law (open; the crux in pair form).**  For every
+/-- **Pair-sum decay for the repetition law (the crux in pair form; proved for `b = 3ˢt`, `t > 1`:
+`repPairDecay_of_three_dvd`).**  For every
 `h ≠ 0`, `N⁻²·Σ_{n,m<N} ‖𝔼 e(h(bⁿ − bᵐ)·repReal)‖` is summable along `N = sched j`
 (`sched j ≈ e^{√j}`, so a rate `N^{-δ}` or even `exp(−c log N/log log N)` suffices).  Confidence 45% for `b = 3ˢt`,
 `t > 1` (the zone split in the docstring of `ae_isNormal_rep_of_three_dvd`; copy-zone terms are
@@ -1601,7 +1604,8 @@ theorem copyRun_sum_le (M k s t : ℕ) (hk : Even k) (h : ℤ) (P : Finset (ℕ 
   obtain ⟨h1, h2, -, -⟩ := hP p hp
   exact Finset.mem_product.2 ⟨Finset.mem_range.2 h1, Finset.mem_range.2 h2⟩
 
-/-- **The crux as a deterministic exponential-sum statement (open).**  For each `h ≠ 0` there
+/-- **The crux as a deterministic exponential-sum statement (proved for `b = 3ˢt`, `t > 1`:
+`repPairArith_of_three_dvd`).**  For each `h ≠ 0` there
 is a choice, per `N = sched j` and pair `(n, m)`, of free coins or of one run's block coins whose
 Riesz bounds at `ξ = h(bⁿ − bᵐ)` sum to `N²·ε_j` with `Σ ε_j < ∞`.
 
@@ -1615,7 +1619,7 @@ wrap pairs are modular (`tᵐ mod 3^A − 1`, orbit length polylog in the modulu
 Bourgain–Glibichuk–Konyagin range).  No measure theory left: the crux
 `repPairDecay_of_three_dvd` follows (`repPairDecay_of_arith`).  Choices expected: `some k` when
 the window of `h bⁿ` sits in run `k`'s copy stretch (`CopyZoneDecay`), `none` otherwise (free
-gaps: Cassels; shadow: Baker).  Evidence (`scripts/rep_arith.py`, `h = 1`, greedy `κ` = min
+gaps: Cassels; shadow: originally Baker, now the sparse dichotomy `repPairArith_of_sparse`).  Evidence (`scripts/rep_arith.py`, `h = 1`, greedy `κ` = min
 over all options, `N⁻²·Σ` at `N = 30, 60, 120, 200`; `N = 200` reaches run 2's copy stretch):
 `b = 6`: `.043/.019/.009/.0052`, `b = 12`: `.037/.018/.009/.0051`, i.e. the diagonal floor `1/N`;
 control `b = 9`: `.30/.30/.28/.25`, no decay. -/
@@ -4107,7 +4111,7 @@ theorem repPairPos_eventually {s t : ℕ} (hs : 1 ≤ s) (ht : 2 ≤ t) (h3t : �
   clear_value Btop
   linarith
 
-/-- **Per-`N` assembly (open; believed, 60%; the remaining content of `repPairArith_of_inputs`).**
+/-- **Per-`N` assembly (historical route; proved from its hypotheses; the content of `repPairArith_of_inputs`).**
 Plan: `W = K = ⌈ε log₃ N⌉`; `κ` per `pair_classify_rep` (hypotheses: `le_log_mul_pow`,
 `log_mul_pow_lt`, `le_log_pair`, `log_pair_le_log`, `hsep_of`); class sums `sum_class_low_le`,
 `sum_class_top_le`, `sum_class_sep_le`, `sum_class_copy_le`, `sum_class_copySep_le` (range glue
@@ -4167,7 +4171,8 @@ assembly needs only a saving summable along `sched`.  Route (`SparseIdentity`):
   `card_changes_lt`: `2y = 3y − y ≡ Σ (dg_{i+1} − dg_i) 3^{P−1−i}`);
 * two sparse points `c tᵐ`, `c tᵐ⁺ᵟ` of one orbit with `t^δ + 2 ≤ 3^{⌊A/(2K+1)⌋}` give an exact
   sparse identity `tᵟ U = V` (`SparseIdentity.cyclic_pair_identity`, proved), hence `δ ≤ L_K`
-  (`SparseIdentity.SparseIdentityBound`, from Matveev);
+  (`SparseIdentity.SparseIdentityBound`, originally from Matveev, now from
+  `sparseIdentityBound_of_padic` and the proved `PadicTwoLogs.padicTwoLogs`);
 * so sparse points of an orbit cluster (`card_cluster_le`) and the run orbit sums are
   `≤ N θ + (N/D + 1)(L_K + 1)` with `D ≍ A/(K log₃ t)`, `N/D = O(K k log t)` (`RunOrbitDecay`).
 `BadGcdSparseH` is not needed: only fully degenerate rows (`3^A − 1 ∣ 2 c t^N`) escape, and they
@@ -6153,7 +6158,7 @@ theorem repPairArith_of_runDecay {s t : ℕ} (hs : 1 ≤ s) (ht : 2 ≤ t) (h3t 
       ← Real.rpow_natCast (sched j : ℝ) 2, ← Real.rpow_add hN]
     norm_num; left; ring_nf
 
-/-- **The crux from the two cited inputs (proved, modulo the leaves above).**  Baker's discrepancy
+/-- **The crux from the two cited inputs (proved; conditional on the two cited Props only).**  Baker's discrepancy
 for `m log₃ t` and Matveev's three-logarithm bound give `RepPairArith b` for every `b = 3ˢt`,
 `t > 1`. -/
 theorem repPairArith_of_literature (hB : CantorExactExponentProfile.Literature.BakerLogDiscrepancy)
@@ -7324,7 +7329,7 @@ theorem repPairArith_of_sparse {s t : ℕ} (hs : 1 ≤ s) (ht : 2 ≤ t) (h3t : 
 
 
 /-- **The crux from the 3-adic two-logarithm bound alone (proved from `repPairArith_of_sparse`).**
-One cited input: `SparseIdentity.Literature.PadicTwoLogs`. -/
+Its one hypothesis, `SparseIdentity.Literature.PadicTwoLogs`, is proved (`PadicTwoLogs.padicTwoLogs`). -/
 theorem repPairArith_of_padic (hP : SparseIdentity.Literature.PadicTwoLogs) {b : ℕ} (hb : 2 ≤ b)
     (h3 : 3 ∣ b) (hpow : ∀ s : ℕ, b ≠ 3 ^ s) : RepPairArith b := by
   obtain ⟨s, t, hnd, rfl⟩ := Nat.exists_eq_pow_mul_and_not_dvd (by omega : b ≠ 0) 3 (by norm_num)
@@ -7380,7 +7385,8 @@ Split the frequencies `bᵐ` by where the window `[sm, sm + m log₃ t]` of `b�
    is the expected mechanism.
 3. *Shadow zone* (`m ∈ [(k+2)A/log₃ b, (k+2)A/s]`, window straddling the run end): the free
    coins after the run read the top digits of `h tᵐ (b^d − 1)`, as in the profile thread's
-   shadow (Baker input `Literature.BakerLogDiscrepancy`, `sum_topProd_le`).
+   shadow (Baker input `Literature.BakerLogDiscrepancy`, `sum_topProd_le`).  Superseded:
+   `repPairArith_of_sparse` needs no Baker.
 -/
 theorem ae_isNormal_rep_of_three_dvd {b : ℕ} (hb : 2 ≤ b) (h3 : 3 ∣ b) (hpow : ∀ s : ℕ, b ≠ 3 ^ s) :
     ∀ᵐ ω ∂coinMeasure, IsNormal b (repReal ω) :=
@@ -7419,8 +7425,9 @@ theorem ae_repProfile : ∀ᵐ ω ∂coinMeasure,
     ∀ b : ℕ, 2 ≤ b → (IsNormal b (repReal ω) ↔ ∀ s : ℕ, b ≠ 3 ^ s) :=
   ae_repProfile_of fun _ hb h3 hp => repPairArith_of_three_dvd hb h3 hp
 
-/-- The three open inputs of the crux: Baker's discrepancy for `m log₃ t` (cited), and the
-copy-zone digit statements for every `b = 3ˢt`, `t > 1`, `3 ∤ t`. -/
+/-- Historical conditional inputs of the crux (superseded; the headline uses none of them): Baker's
+discrepancy for `m log₃ t` (cited), and the copy-zone digit statements for every `b = 3ˢt`, `t > 1`,
+`3 ∤ t`. -/
 def RepInputs : Prop :=
   CantorExactExponentProfile.Literature.BakerLogDiscrepancy ∧
     ∀ s t : ℕ, 1 ≤ s → 2 ≤ t → ¬ 3 ∣ t → TOrbitCyclicDecay t ∧ BadGcdSparseH (3 ^ s * t)
@@ -7466,7 +7473,7 @@ theorem liouvilleCantorFullProfile_of_inputs (hI : RepInputs) : LiouvilleCantorF
   exact ⟨repReal ω, repReal_mem_cantorSet ω,
     liouville_repReal ω (irrational_of_isNormal_two h2), hω⟩
 
-/-- **Conditional headline from the literature (proved, modulo the sparse-pair leaves).**
+/-- **Conditional headline from the literature (proved; conditional on the cited Baker and Matveev Props).**
 Baker's discrepancy (two logarithms) and Matveev's bound (three logarithms) give a Liouville
 number in `K` normal exactly to the bases that are not powers of 3. -/
 theorem liouvilleCantorFullProfile_of_literature
@@ -7496,8 +7503,8 @@ theorem liouvilleCantorFullProfile_of_baker_padic
   exact ⟨repReal ω, repReal_mem_cantorSet ω,
     liouville_repReal ω (irrational_of_isNormal_two h2), hω⟩
 
-/-- **Conditional headline from Baker's discrepancy alone (proved).**  The Matveev and
-Bugeaud–Laurent inputs are discharged: `PadicTwoLogs.padicTwoLogs` is a theorem.  The one cited
+/-- **Conditional headline from Baker's discrepancy alone (proved).**  Matveev is not
+used on this route, and the Bugeaud–Laurent-type input is discharged: `PadicTwoLogs.padicTwoLogs` is a theorem.  The one cited
 input left on this route is `CantorExactExponentProfile.Literature.BakerLogDiscrepancy`, used only by
 the shadow zone; `repPairArith_of_sparse` (proved) removes it, see `liouvilleCantorFullProfile`. -/
 theorem liouvilleCantorFullProfile_of_baker

@@ -30,6 +30,7 @@ import NormalNumbers.CantorBadNormal
 import NormalNumbers.ErdosTriples
 import NormalNumbers.ZerolessTuples
 import NormalNumbers.ErdosTripleClasses
+import NormalNumbers.ZeroOneBases
 
 /-!
 # Maze audit: every closed route cites declarations
@@ -96,6 +97,9 @@ def mazeLinks : List Link := [
   ⟨"Gap triples via exponent-class certificates",
    [``ErdosTriples.Classes.survives_offLine_eight, ``ErdosTriples.Classes.tripleTrivial_of_mod_nine],
    [``ErdosTriples.GapTwoTriples]⟩,
+  ⟨"82000 by digit-count exponents",
+   [``ZeroOneBases.threeNine_infinite, ``ZeroOneBases.Literature.BurrellYuFourFive],
+   [``ZeroOneBases.ZeroOneFourFive, ``ZeroOneBases.ZeroOneThreeFourInfinite]⟩,
   ⟨"x, 3x, 5x as the first member of a family",
    [``Adder.not_isWordSetBlock_runs_three_one_seven_nine,
     ``Adder.not_isWordSetBlock_runs_three_small, ``Adder.not_isWordSetBlock_extremeDigits], []⟩,
