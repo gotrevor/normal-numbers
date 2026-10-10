@@ -203,7 +203,6 @@ int main(int argc, char **argv) {{
         assert 0 <= lower <= point_value, (case, lower, point_value)
 
 
-@pytest.mark.xfail(strict=True, reason="dfde6d34 shifts a negative window index left in child()")
 def test_read_only_checker_has_no_undefined_integer_arithmetic(candidate):
     directory, weights, _ = candidate
     binary = compile_kernel(directory, sanitize=True)

@@ -33,7 +33,7 @@ static Z zmax(Z a, Z b) { return a > b ? a : b; }
 static Z fl(Z v) { return v >> F; } // floor (v >= 0 or arithmetic shift)
 // leaf value: min W over bins met by x in [xlo,xhi] (mod 1), rho in [rlo,rhi]
 static long long leafmin(int s, Z xlo, Z xhi, Z rlo, Z rhi) {
-  Z f0 = fl(xlo); xlo -= f0 << F; xhi -= f0 << F;
+  Z f0 = fl(xlo); xlo -= f0 * ONE; xhi -= f0 * ONE;
   long ia = (long)((xlo * N) >> F), ib = (long)((xhi * N) >> F);
   int ja = 0, jb = M - 1;
   while (ja < M - 1 && redge[ja + 1] < rlo) ja++;
@@ -49,7 +49,7 @@ static long long child(int t, Z cxlo, Z cxhi, Z crlo, Z crhi, int depth, Z zl, Z
   if (resolve) {
     // windows [A - d, A + d], d in [dlo, dhi]; cell [c, c + h], c in [cxlo, cxhi], h in [crlo, crhi]
     for (Z A = fl(cxlo) - 1; A <= fl(cxhi + crhi) + 2; A++) {
-      Z Ac = A << F;
+      Z Ac = A * ONE;
       if (cxhi + crhi < Ac - dhi || cxlo > Ac + dhi) continue;           // surely disjoint
       needx = 1;
       // possibly contained: exists c with A - dhi <= c <= A + dhi - crlo
@@ -59,7 +59,7 @@ static long long child(int t, Z cxlo, Z cxhi, Z crlo, Z crhi, int depth, Z zl, Z
       // right zone possible: window covers c + h
       if (cxlo + crlo <= Ac + dhi && cxhi + crhi >= Ac - dhi) zr = zmax(zr, cxhi + crhi - (Ac - dhi));
     }
-    Z f0 = fl(cxlo); cxlo = 3 * (cxlo - (f0 << F)); cxhi = 3 * (cxhi - (f0 << F));
+    Z f0 = fl(cxlo); cxlo = 3 * (cxlo - f0 * ONE); cxhi = 3 * (cxhi - f0 * ONE);
     crlo *= 3; crhi *= 3; if (zl >= 0) zl *= 3; if (zr >= 0) zr *= 3;
   }
   return go(t, cxlo, cxhi, crlo, crhi, depth + 1, zl, zr);
