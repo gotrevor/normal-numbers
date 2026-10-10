@@ -8,16 +8,24 @@ import NormalNumbers.ZeroOneBases
 /-!
 # Review of the zero endpoint in the literature counting premise
 
-The current `BurrellYuFourFive` premise counts zero but bounds its counting function by
-`C * n ^ ε` even at `n = 0`.  This refutes that transcription, not the published theorem.
-The intended repair is to restrict the bound to positive `n`, or use `n + 1` on the right.
-The original declaration is left intact for review by its owning session.
+The first transcription of `BurrellYuFourFive` counted zero but bounded its counting function by
+`C * n ^ ε` even at `n = 0`, so it was false.  That form is kept here as
+`BurrellYuFourFiveUnrestricted` with its refutation; `Literature.BurrellYuFourFive` now quantifies
+over `n ≥ 1`.
 -/
 
 namespace NormalNumbers.ZeroOneBases.Review
 
-/-- The recorded counting premise fails at `ε = 1`, `n = 0`: it asserts `1 ≤ 0`. -/
-theorem not_burrellYuFourFive : ¬ Literature.BurrellYuFourFive := by
+/-- The first transcription, without `1 ≤ n`. -/
+def BurrellYuFourFiveUnrestricted : Prop :=
+  ∀ ε : ℝ, 0 < ε → ∃ C : ℝ, ∀ n : ℕ,
+    (((Finset.range (n + 1)).filter fun k =>
+        NormalNumbers.Literature.DigitsOfPowers.ZeroOneIn 4 k ∧
+          NormalNumbers.Literature.DigitsOfPowers.ZeroOneIn 5 k).card : ℝ) ≤
+      C * (n : ℝ) ^ ε
+
+/-- The unrestricted form fails at `ε = 1`, `n = 0`: it asserts `1 ≤ 0`. -/
+theorem not_burrellYuFourFiveUnrestricted : ¬ BurrellYuFourFiveUnrestricted := by
   intro h
   obtain ⟨C, hC⟩ := h 1 (by norm_num)
   have hz := hC 0

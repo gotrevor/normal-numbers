@@ -80,9 +80,11 @@ theorem threeNine_infinite : {n : ℕ | ZeroOneIn 3 n ∧ ZeroOneIn 9 n}.Infinit
 namespace Literature
 
 /-- **Burrell–Yu, Theorem 1.2** (J. Number Theory 226 (2021), arXiv:1905.00832; tier S): integers
-with `0/1` digits in bases 4 and 5 number `O_ε(n^ε)` up to `n`. -/
+with `0/1` digits in bases 4 and 5 number `O_ε(n^ε)` up to `n`.  The bound is for `n ≥ 1`: the
+count includes `0`, so at `n = 0` the left side is `1` while `C · 0^ε = 0`
+(`Review.not_burrellYuFourFiveUnrestricted`). -/
 def BurrellYuFourFive : Prop :=
-  ∀ ε : ℝ, 0 < ε → ∃ C : ℝ, ∀ n : ℕ,
+  ∀ ε : ℝ, 0 < ε → ∃ C : ℝ, ∀ n : ℕ, 1 ≤ n →
     (((Finset.range (n + 1)).filter fun k => ZeroOneIn 4 k ∧ ZeroOneIn 5 k).card : ℝ) ≤
       C * (n : ℝ) ^ ε
 
