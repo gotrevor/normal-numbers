@@ -340,6 +340,21 @@ theorem forb2_of_window {k a n A : ℕ} (h : Count.cell k a ⊆ window 2 n A) :
         nlinarith
       refine (Rat.cast_lt (K := ℝ)).mp ?_; push_cast; linarith
 
+/-- No forbidden base-2 substring among the binary digits `n+1 … m` of the `k`-bit word `a`. -/
+def Acc2 (k a : ℕ) : Prop :=
+  ∀ n m : ℕ, n < m → m ≤ k → ¬ Forb2 (m - n) (a / 2 ^ (k - m) % 2 ^ (m - n))
+
+/-- **Good cells**: the finitely checkable version of `Clean449` (base 2 through forbidden
+substrings). -/
+def Good449 (k a : ℕ) : Prop :=
+  a < 2 ^ k ∧ Acc2 k a ∧
+    ∀ n A : ℕ, (3 : ℝ) ^ n ≤ 2 * δ3 * 2 ^ k → Disjoint (Count.cell k a) (window 3 n A)
+
+theorem good449_clean {k a : ℕ} (h : Good449 k a) : Clean449 k a := by
+  refine ⟨h.1, fun n A hs => ?_, h.2.2⟩
+  obtain ⟨m, hnm, hmk, hf⟩ := forb2_of_window hs
+  exact h.2.1 n m hnm hmk hf
+
 /-- Staging node (gate step 1 asks for `c = 4.5` first): the same certificate at `c = 9/2`.
 Evidence: sampled shared-phase growth ≈ 1.815 at D = 8 (optimistic screen); no rigorous
 certificate yet (uniform bins fail, see module doc).  Confidence it holds with an adapted
@@ -348,7 +363,7 @@ def CoherentTwoThree45 : Prop :=
   ∃ D : ℕ, D ≤ 12 ∧ CoherentBlockCertificate (twoThreeBad (9 / 2)) D (9 / 5)
 
 open Classical in
-/-- **The crux, restated on clean cells.**  A weight function on finitely many states, vanishing
+/-- **The crux, restated on good cells** (`Good449 → Clean449 → Alive`).  A weight function on finitely many states, vanishing
 off clean cells, positive at the root, such that every clean cell's weight is beaten (by the
 factor `(9/5)^D`) by its clean depth-`D` descendants.  The float certificate in the module doc
 is a candidate witness (classify = (SFT state, x-bin, u-bin) of a clean cell, plus finitely many
@@ -356,14 +371,14 @@ early-level states); what remains is the exact check and the root entry. -/
 def CleanCertificate449 : Prop :=
   ∃ D : ℕ, 0 < D ∧ D ≤ 12 ∧ ∃ (S : ℕ) (classify : ℕ → ℕ → Fin S) (w : Fin S → ℚ),
     (∀ s, 0 ≤ w s ∧ w s ≤ 1) ∧ 0 < w (classify 0 0) ∧
-    (∀ k a, ¬ Clean449 k a → w (classify k a) = 0) ∧
-    ∀ k a, Clean449 k a → (9 / 5 : ℚ) ^ D * w (classify k a) ≤
-      ∑ j ∈ (Finset.range (2 ^ D)).filter (fun j => Clean449 (k + D) (2 ^ D * a + j)),
+    (∀ k a, ¬ Good449 k a → w (classify k a) = 0) ∧
+    ∀ k a, Good449 k a → (9 / 5 : ℚ) ^ D * w (classify k a) ≤
+      ∑ j ∈ (Finset.range (2 ^ D)).filter (fun j => Good449 (k + D) (2 ^ D * a + j)),
         w (classify (k + D) (2 ^ D * a + j))
 
 theorem coherentTwoThree449_of_clean (h : CleanCertificate449) : CoherentTwoThree449 := by
   obtain ⟨D, hD, hD12, S, classify, w, hw, hroot, hzero, hgrow⟩ := h
-  exact ⟨D, hD12, coherentBlockCertificate_of_good hD (fun k a hk => clean449_alive hk)
+  exact ⟨D, hD12, coherentBlockCertificate_of_good hD (fun k a hk => clean449_alive (good449_clean hk))
     S classify w hw hroot (by norm_num) hzero (by convert hgrow)⟩
 
 /-- **Crux (open).**  Evidence: float certificates at growth 9/5 (module doc, lap 2-3).
