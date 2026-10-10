@@ -435,4 +435,28 @@ theorem alivePot_le (m : ℕ) : alivePot 2 m ≤ mass (m + 2) + extLoss m := by
     (coreWeight_nonneg _)
   rwa [show 6 * m + 12 = 6 * (m + 2) by ring] at this
 
+/-- Intervals of half-width `h` around the progression `(A + θ)/q`. -/
+def apNbhd (q : ℕ) (θ h : ℝ) (A : ℤ) : Set ℝ :=
+  Set.Icc (((A : ℝ) + θ) / q - h) (((A : ℝ) + θ) / q + h)
+
+open Classical in
+/-- Good level-`K` descendant weight of `(k, a)` inside the progression of intervals. -/
+noncomputable def descInAP (k a K q : ℕ) (θ h : ℝ) : ℚ :=
+  ∑ j ∈ (Finset.range (2 ^ (K - k))).filter (fun j => Good449 K (2 ^ (K - k) * a + j) ∧
+      ∃ A : ℤ, Count.cell K (2 ^ (K - k) * a + j) ⊆ apNbhd q θ h A),
+    coreWeight K (2 ^ (K - k) * a + j)
+
+/-- **Node 1″ (conjecture): AP-equidistribution of the core at every width.**  Generalizes node 1
+from window widths to ANY half-width `h` (needed for the edge kills of coarse windows: a level-`6m`
+cell straddling the endpoint of an earlier, wider window loses the descendants inside it, i.e.
+inside a one-sided `2^{-6m}`-neighbourhood of the endpoint progression; charging those at the
+spacing scale costs `(2^{-6m} q) R^j ≈ (R/64ρ)^j`, which converges, whereas charging with window
+coverage diverges like `(R/ρ)^j`, `R ≈ 45 > ρ = 34`).  Resonant bases (lap 2,
+`tail5_out/offset_probe_resonant.txt`, root, level 24): max/coverage `1.93` (12²), `1.48` (6³),
+`1.06` (6⁴), `1.55` (10²), `1.03` (5⁴).  Endpoint-neighbourhood widths are NOT yet probed.
+Confidence 55% for `C = 3`, `s = 6`. -/
+def APKillGeneral449 (s : ℕ) (C : ℝ) : Prop :=
+  ∀ k a K q (θ h : ℝ), k ≤ K → 2 ^ (k + s) ≤ q → 0 ≤ h →
+    (descInAP k a K q θ h : ℝ) ≤ C * (2 * h * q) * descMass k a K
+
 end NormalNumbers.UniformBadThreshold.TailReview

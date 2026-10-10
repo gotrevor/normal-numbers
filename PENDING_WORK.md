@@ -3921,3 +3921,8 @@ Next: `isFresh` Riesz bound, then the classification lemma in Lean (route-decisi
   mass(m+2) >= P(m) - E(m); loss m <= E-type kills; bound kills by node 1 against P(m-j)
   (ancestors any alive cell — node 1 allows non-Good).  Then strong induction -> ratio lemma.
 - PROVED sum_desc_le (2^L reindex), extLoss def, alivePot_le: alivePot 2 m <= mass(m+2) + extLoss m.  NEXT: bound extLoss and loss by node 1 against alivePot of ancestors.
+- Lap 2 finding: charging COARSE windows' edge kills with window coverage diverges like (R/rho)^j
+  (R~45 > rho=34, gate-4 lower growth); must charge them as one-sided 2^-6m neighbourhoods of the
+  endpoint progression: (R/64rho)^j converges.  Node 1'' APKillGeneral449 (any width) stated;
+  resonant bases 12^2, 6^3, 10^2 give max/cov <= 1.93.  NEXT: probe endpoint-nbhd widths (h ~ 2^-K
+  scale, coarse q) — that is the untested regime; then write extLoss <= eps*alivePot.
