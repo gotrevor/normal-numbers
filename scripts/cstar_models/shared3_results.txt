@@ -40,3 +40,10 @@ shared N=32 M=6 D=8 C=4.49 K=3x3: 1.837337    K=9x9: 1.823344
 # (c) "rootV" relabelled bin000 (abstract bin (0,0,0), not the root cell).
 # (f) confirmed closure artifact: with OPEN touching (real cells never touch exactly, delta irrational)
 #     the bin-(0,0,0) infimum is positive (exactinf.c).
+## exact bin-infimum iteration (exactinf3.c: V-independent piece split, open touches), c = 4.5, sft45
+exact N=16 M=6  D=4: 1.536469     exact N=32 M=6 D=4: 1.669299     exact N=64 M=6 D=4: 1.714048
+exact N=16 M=12 D=4: 1.566857     exact N=16 M=6 D=6: 1.664868
+#  vs sampled (same N, D): N=16 D=4 1.646, N=16 D=6 1.81, N=32 D=4 1.759.  Sampling misses thin bad slivers;
+#  the exact value rises with N toward the sampled screen.  Piece storage does not scale to D = 8.
+## target-driven fixed point (shared3cert.c): V <- min(V, LB/g^D); certificate iff it stabilises with V > 0
+cert N=16 M=6 D=4 G=1.5: CERTIFICATE (1637/2400 positive bins)      G=1.6: no fixed point (decays), consistent

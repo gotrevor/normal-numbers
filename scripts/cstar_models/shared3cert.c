@@ -5,7 +5,7 @@
 // Box value = sum_leaf w * min V over met bins; bin value = min over its boxes.
 // usage: ./shared3rig N M D IT C MAXB [no3]
 typedef unsigned long size_t;
-int printf(const char*, ...); void *malloc(size_t); void *realloc(void*, size_t); void *calloc(size_t, size_t);
+int printf(const char*, ...); int fflush(void*); void *malloc(size_t); void *realloc(void*, size_t); void *calloc(size_t, size_t);
 int atoi(const char*); double atof(const char*); int strcmp(const char*, const char*);
 double floor(double); double ceil(double); double pow(double,double); double log2(double); double round(double); double fmax(double,double);
 #define INFINITY __builtin_inf()
@@ -40,8 +40,8 @@ static int descend(int s, double xlo, double xhi, double ulo, double uhi, int de
       if (!NO3) {
         double clo = rlo / 2, chi = rhi / 2; int touch = 0, certain = 0;
         for (long k = (long)floor(cxlo) - 1; k <= (long)ceil(cxhi + chi) + 1; k++) {
-          if (cxlo <= k + delta + eps && cxhi + chi >= k - delta - eps) touch = 1;
-          if (cxhi <= k + delta && cxlo + clo >= k - delta) certain = 1;
+          if (cxlo < k + delta && cxhi + chi > k - delta) touch = 1; // open (delta irrational)
+          if (cxhi < k + delta && cxlo + clo > k - delta) certain = 1;
         }
         if (touch) { if (!certain) needx = 1; continue; }
       }
@@ -104,17 +104,23 @@ int main(int argc, char **argv) {
   }
   int z = 0; for (int q = 0; q < Q; q++) if (V[q] < 1e-9) z++;
   printf("sampled N=%d M=%d D=%d C=%g K=%d: ratio %.6f growth %.6f zeros %d/%d rootV %.3e\n", N, M, D, C, K, lo, LAM * pow(fmax(lo, 0), 1.0 / D), z, Q, V[0]);
-  // verification of g^D V <= block sum, rigorous within the model
-  double gD = pow(G / LAM, D), worst = INFINITY; long fail = 0;
-  for (int q = 0; q < Q; q++) {
-    if (V[q] < 1e-12) continue;
-    int s = q / NB, i = (q % NB) / M, j = q % M;
-    double tg = gD * V[q];
-    double v = bb(s, (double)i / N, (double)(i + 1) / N, edges[j], edges[j + 1], 0, tg);
-    if (v < tg) fail++;
-    if (v / V[q] < worst) worst = v / V[q];
+  // target-driven fixed point: V <- min(V, LB(bin)/g^D) until stable; LB = branch-and-bound lower bound
+  // pruned at the target g^D V(bin).  A fixed point with V > 0 somewhere is a certificate at growth G.
+  double gD = pow(G / LAM, D);
+  for (int pass = 0; pass < 200; pass++) {
+    long changed = 0; nb_eval = 0; double worst = INFINITY;
+    for (int q = 0; q < Q; q++) {
+      if (V[q] < 1e-300) { V[q] = 0; continue; }
+      int s = q / NB, i = (q % NB) / M, j = q % M; double tg = gD * V[q];
+      double v = bb(s, (double)i / N, (double)(i + 1) / N, edges[j], edges[j + 1], 0, tg);
+      if (v / V[q] < worst) worst = v / V[q];
+      if (v < tg * (1 - 1e-12)) { V[q] = v / gD; changed++; }
+    }
+    double mx = 0; int z = 0; for (int q = 0; q < Q; q++) { if (V[q] > mx) mx = V[q]; if (V[q] < 1e-12) z++; }
+    printf("pass %d: lowered %ld bins, worst ratio %.6f, zeros %d/%d, max V %.3e, bin000 %.3e evals %ld\n", pass, changed, worst, z, Q, mx, V[0], nb_eval); fflush(0);
+    if (mx < 1e-200) { printf("CERT FAILED at G=%g: weights collapse to 0\n", G); return 0; }
+    for (int q = 0; q < Q; q++) V[q] /= mx;
+    if (!changed) { printf("CERTIFICATE (float, model) at G=%g: N=%d M=%d D=%d C=%g, %d/%d positive bins, bin000 %.3e\n", G, N, M, D, C, Q - z, Q, V[0]); return 0; }
   }
-  printf("verify G=%g MAXB=%d: failing bins %ld / %d nonzero; worst certified ratio %.6f (growth %.6f) evals %ld\n",
-    G, MAXB, fail, Q - z, worst, LAM * pow(fmax(worst, 0), 1.0 / D), nb_eval);
   return 0;
 }
