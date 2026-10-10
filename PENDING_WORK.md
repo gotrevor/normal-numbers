@@ -3822,3 +3822,13 @@ Next: `isFresh` Riesz bound, then the classification lemma in Lean (route-decisi
   boundaries; rigorous value iteration on that mesh (`shared3cert.c` has the interval evaluator; compile with
   `leanc -O2`, no gcc on the box).  If the mesh-refined rigorous growth stays < 1.8 while sampled stays ≈1.81,
   the gap is the boundary-point loss: quantify it.
+
+## Gate 4, lap 2 (2026-10-10)
+- Codex review fixes: per-C binary SFT (`gen_sft.js`, = sft45 at 4.5), review suite 4/4, matched per-level abs3
+  baseline dies, bin000 relabel, corner (0,1) confirmed a closure artifact (open touching).
+- **Crux advance:** exact bin-infimum value (`exactinf3.c`) is far below the sampled screen at small N
+  (D=4: 1.54/1.67/1.71 at N=16/32/64; D=6,N=16: 1.66).  Rising with N; whether it passes 1.8 at D=8 and
+  feasible N is the open question.  Fixed-point certifier `shared3cert.c` (target-pruned B&B) running at
+  G=1.8 (D=6/8, N=32/64).
+- Next: if the fixed point fails at 1.8 for all feasible N, quantify the N-scaling of the exact value and
+  decide whether a non-uniform (boundary-adapted) classify is needed; entry states for the real root cell.
