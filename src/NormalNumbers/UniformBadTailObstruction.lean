@@ -6,11 +6,11 @@ Authors: Trevor Morris
 import NormalNumbers.UniformBadTailSplit
 
 /-!
-# Gate 5 kill test: per-ancestor charging of bases 5–7 fails on the gate-4 weights
+# Gate 5 kill test: per-ancestor charging of bases 5–7 on the gate-4 weights (NOT fired)
 
 **What is obstructed.**  Not `TailChargeBudget449` (an existential over totals; the measured
 totals `loss m / mass m` are 0.2300 at `m = 2` and 0.2104 at `m = 3`, exact on the finite tree,
-bases 5..7).  What fails is every per-ancestor SUP charging scheme tried at `γ = (17/10)^6`:
+bases 5..7).  Per-ancestor SUP charging schemes at `γ = (17/10)^6`:
 each window loss is charged to one ancestor and `h_lag` is the sup over ancestors of
 (charged loss)/(ancestor weight).  Sampled values of `Σ h_j/γ^j` for bases 5..7, stages
 `n ≤ 7` (`scripts/cstar_models/tail5_measure.py`, outputs in `tail5_out/`), against the budget
@@ -18,11 +18,16 @@ each window loss is charged to one ancestor and `h_lag` is the sup over ancestor
 
 * natural ancestor level (`2^L ≥ bⁿ`): 655 (n ≤ 6);
 * one block higher: 226.5;
+* **two blocks higher: 4.496 (n ≤ 7) — PASSES** (2.24, 2.84, 4.50 at n ≤ 5, 6, 7; growing).
+  Correction 2026-10-10 (lap 2): lap 1 recorded "every scheme fails" and omitted this output
+  (`tail5_out/peranc_b7_n7_shift2.txt`).  The kill test has therefore NOT fired: bases 5..7 do
+  not exhaust the budget under the shift-2 scheme on the measured range;
 * climb to the nearest ancestor of weight `> θ`: 174.4 (`θ = 1/100`), 81.7 (`θ = 1/20`);
 * base 5 alone, `θ = 1/20`: 64.1.
 
 These are SAMPLED lower bounds on the scheme's supremum (per-window isolation overcount), so
-each is a failure of that scheme at that `γ`, never a lower bound on the true joint loss.
+each FAIL is a failure of that scheme at that `γ`, never a lower bound on the true joint loss;
+the shift-2 PASS is only a pass on the sampled range `n ≤ 7` (sup over larger `n` unmeasured).
 
 **Mechanism.**  The proved weights `wq ∘ classify` are a sub-eigenvector, not a regular measure:
 a Good cell can carry tiny weight while its good children are heavy

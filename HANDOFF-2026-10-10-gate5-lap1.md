@@ -26,3 +26,10 @@ Awaiting operator.  Off-decision leaf: prove `childConcentration_18` by evaluati
   tail5_out/peranc_b7_n7_*.txt` (all FAIL vs 9.874655).  Retuning gate-4 weights is forbidden.
 - NEED from operator: choose (a) a gate-4-style core certificate including base-5..7 phases, or
   (b) an averaging route to `TailTotalsBound449`; or relabel the kill-test threshold.
+
+## Lap 2 (strike-2 verification) — blocker REJECTED
+Verifying the grep above: `peranc_b7_n7_shift2.txt` says PASS (4.496 < 9.874655).  Lap 1's
+"every scheme fails" was false; kill test not fired.  Corrected Obstruction docstring, Maze row,
+ON-LINE-REQUEST.  Running shift-2/shift-3 at base 5, n <= 8 (`tail5_out/peranc_b5_n8_shift{2,3}.txt`,
+~1h) to test saturation.  Next: if shift-2 saturates below budget, formalize the shift-2 charging
+(h_lag from charged loss / weight two blocks up) as the route to `tailChargeBudget449`.

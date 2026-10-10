@@ -109,3 +109,11 @@ Wiring is PROVED (`tailBudgetSuffices449`); `cStar_le_449` rests only on the cru
 Request: operator/Codex decision on the structural fix — (a) fold bases 5..7 into a gate-4-style core
 certificate (state carries their phases; size estimate needed), or (b) an averaging mechanism for
 `TailTotalsBound449`.  No web fetch needed.
+
+## 2026-10-10 (lap 2) — CORRECTION to the gate-5 kill-test entry above
+The kill test did NOT fire as stated.  The shift-2 per-ancestor scheme (charge two blocks above the
+natural level) PASSES on bases 5..7, n <= 7: sum h_j/gamma^j = 4.496 < 9.874655
+(`scripts/cstar_models/tail5_out/peranc_b7_n7_shift2.txt`; 2.24/2.84/4.50 at n<=5/6/7, growing).
+Lap 1 omitted this output.  The box is now measuring shift-2/shift-3 deeper (base 5, n <= 8) to see
+whether the growth saturates below budget.  The operator decision requested above is on hold until
+that lands; if shift-2 saturates, gate 5 proceeds on that scheme with no structural fix.
