@@ -64,3 +64,6 @@ cert-cont D=6 N=128 M=24 c=4.5 G=1.8: CERTIFICATE (float, model) 74671/76800 pos
 # per-C binary model in exactinf3.c: -DSFT_H='"sft449.h"' (sft_header.js from gen_sft.js 4.49 13).
 cert-cont D=6 N=256 M=12 c=4.5 G=1.8: CERTIFICATE (float, model) 75060/76800 positive
 cert-cont D=6 N=128 M=24 c=4.49 (own SFT, gen_sft 4.49 13) G=1.8: CERTIFICATE (float, model) 74443/76800 positive
+## entry states (entry.js): levels 0-4 are early (cell > 6 delta in stage-0 units); levels >= 5 are regular bins.
+entry c=4.49 N=128 M=24 D=6 G=1.8 with the certified weights (v449_N128_M24_D6.txt.gz):
+  root weight = min(1, 1.8^-6 * sum over clean SFT-alive level-6 cells of V(bin)) = 1  (no ambiguous window tests)

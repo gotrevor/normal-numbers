@@ -133,6 +133,7 @@ static double bbt(int s, double xlo, double xhi, double ulo, double uhi, int lvl
   else { double um = (ulo + uhi) / 2; a = bbt(s, xlo, xhi, ulo, um, lvl + 1, target); if (a < target) return a; b = bbt(s, xlo, xhi, um, uhi, lvl + 1, target); }
   return a < b ? a : b;
 }
+static int DUMPV = 0;
 static int certmode(int Q, double G, int SH, int NSH) {
   // V initialised to 1 on all bins; V <- min(V, LB/g^D) until no bin is lowered.  Early exit per bin as soon
   // as some box is below target (the bin is then lowered to that box's bound).
@@ -163,7 +164,7 @@ static int certmode(int Q, double G, int SH, int NSH) {
     printf("pass %d lowered %ld zeros %d/%d maxV %.3e bin000 %.3e worst %.4f\n", pass, ch, z, Q, mx, V[0], worst); fflush(0);
     if (mx <= 0) { printf("CERT FAILED G=%g\n", G); return 0; }
     for (int q = 0; q < Q; q++) V[q] /= mx;
-    if (!ch) { printf("CERTIFICATE (float, model) G=%g N=%d M=%d D=%d C=%g positive %d/%d\n", G, N, M, D, C, Q - z, Q); return 0; }
+    if (!ch) { printf("CERTIFICATE (float, model) G=%g N=%d M=%d D=%d C=%g positive %d/%d\n", G, N, M, D, C, Q - z, Q); if (DUMPV) for (int q = 0; q < Q; q++) printf("V %d %.17g\n", q, V[q]); return 0; }
   }
   return 0;
 }
@@ -175,7 +176,7 @@ int main(int argc, char **argv) {
   for (int t = 0; t <= M1; t++) edges[e++] = 1 + (double)t / M1; for (int t = 1; t <= M2; t++) edges[e++] = 2 + (U - 2) * t / M2;
   for (int s = 0; s < S; s++) for (int d = 0; d < 2; d++) P[s][d] = T[s][d] < 0 ? 0 : R[T[s][d]] / (LAM * R[s]);
   NB = N * M; int Q = S * NB; binp = malloc((Q + 1) * sizeof(long));
-  if (argc > 8) { V = malloc(Q * sizeof(double)); return certmode(Q, atof(argv[8]), 0, 1); }
+  if (argc > 8) { V = malloc(Q * sizeof(double)); DUMPV = argc > 9; return certmode(Q, atof(argv[8]), 0, 1); }
   for (int q = 0; q < Q; q++) { int s = q / NB, i = (q % NB) / M, j = q % M; binp[q] = npc; stamp++; build(s, (double)i / N, (double)(i + 1) / N, edges[j], edges[j + 1], 0); }
   binp[Q] = npc;
   printf("built: terminal boxes %ld (capped %ld), distinct pieces %ld, leaves %ld\n", nterm, ncapped, npc, np_); fflush(0);
