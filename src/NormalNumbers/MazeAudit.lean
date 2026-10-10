@@ -100,6 +100,9 @@ def mazeLinks : List Link := [
   ⟨"82000 by digit-count exponents",
    [``ZeroOneBases.threeNine_infinite, ``ZeroOneBases.Literature.BurrellYuFourFive],
    [``ZeroOneBases.ZeroOneFourFive, ``ZeroOneBases.ZeroOneThreeFourInfinite]⟩,
+  ⟨"Run covers from their 2-adic and real completions",
+   [``Adder.runCover_three_mixed, ``Adder.twoAdic_runFree, ``Adder.exists_irrational_noOnes],
+   [``Adder.RunCoversGrow]⟩,
   ⟨"x, 3x, 5x as the first member of a family",
    [``Adder.not_isWordSetBlock_runs_three_one_seven_nine,
     ``Adder.not_isWordSetBlock_runs_three_small, ``Adder.not_isWordSetBlock_extremeDigits], []⟩,
@@ -344,7 +347,7 @@ def mazeLegacy : List String := [
   "Diophantine good-denominator detour for the tail cell",
   "route B's unweighted cover of the state-dependent target"]
 
-/-- info: maze audit: 184 rows, 77 cite declarations, 107 legacy (prose only) -/
+/-- info: maze audit: 185 rows, 78 cite declarations, 107 legacy (prose only) -/
 #guard_msgs in
 #maze_audit mazeRows, mazeLinks, mazeLegacy
 
