@@ -21,7 +21,10 @@ each window loss is charged to one ancestor and `h_lag` is the sup over ancestor
 * **two blocks higher: 4.496 (n ≤ 7) — PASSES** (2.24, 2.84, 4.50 at n ≤ 5, 6, 7; growing).
   Correction 2026-10-10 (lap 2): lap 1 recorded "every scheme fails" and omitted this output
   (`tail5_out/peranc_b7_n7_shift2.txt`).  The kill test has therefore NOT fired: bases 5..7 do
-  not exhaust the budget under the shift-2 scheme on the measured range;
+  not exhaust the budget under the shift-2 scheme on the measured range.  Base 5 alone,
+  shift 2: 2.32 (n ≤ 7), 3.71 (n ≤ 8) — still growing, saturation unknown (lap 2);
+* three blocks higher, base 5, n ≤ 8: 2.64 (PASS; at this depth nearly every window charges the
+  root, so this says little about the supremum);
 * climb to the nearest ancestor of weight `> θ`: 174.4 (`θ = 1/100`), 81.7 (`θ = 1/20`);
 * base 5 alone, `θ = 1/20`: 64.1.
 

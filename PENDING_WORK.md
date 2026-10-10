@@ -3883,3 +3883,8 @@ Next: `isFresh` Riesz bound, then the classification lemma in Lean (route-decisi
   (w * 34^j): k=6: 3.64 (j=1), 4.65 (j=2); k=12: 17.75 (j=1); k=18: ~168 (childConcentration).
   The per-block sup is capped by 64*3020/34 ~ 5700 (weights in [1/3020,1]), so per-ancestor sups
   are finite but huge; shift-s charging divides by gamma^s ~ 24^s.
+- Lap 2 results: base 5 shift-2 2.32 (n<=7) -> 3.71 (n<=8), growing ~+1.4/stage; shift-3 base 5
+  n<=8 2.64 (root-dominated).  Per-ancestor sups are bounded (weights in [1/3020,1]) so each
+  scheme's sup is finite; whether shift-2 saturates under 9.87 is undecided by sampling.
+  Next: a deterministic upper bound for the shift-s scheme via the 76802-class transfer data
+  (max over classes of lag-j good-descendant weight), not deeper sampling.
