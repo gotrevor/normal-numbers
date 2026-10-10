@@ -77,4 +77,29 @@ theorem tailTotals_of_upperGrowth {ε Λ : ℚ} (hε : 0 ≤ ε) (hΛ : ε * Λ 
     _ = (ε * Λ) * mass m := by ring
     _ ≤ 1 / 4 * mass m := mul_le_mul_of_nonneg_right hΛ (hmass m)
 
+/-- **The crux has 140× slack in totals.**  Any uniform ratio `loss ≤ c · mass` with
+`c < (9/5)^6 - 1 ≈ 33` gives the crux (take `γ = (9/5)^6 - c`).  Measured `c ≈ 0.23`
+(`tail5_out/totals_b7_m3.txt`, bases 5..7, `m = 2, 3`). -/
+theorem tailChargeBudget449_of_ratio {c : ℚ} (hc0 : 0 ≤ c) (hc : c < (9 / 5 : ℚ) ^ 6 - 1)
+    (h : ∀ m, loss m ≤ c * mass m) : TailChargeBudget449 := by
+  refine ⟨(9 / 5 : ℚ) ^ 6 - c, by linarith, fun lag => if lag = 0 then c else 0,
+    fun lag => by dsimp only; split_ifs <;> linarith, fun m => ?_, fun m => ?_⟩
+  · rw [Finset.sum_eq_single 0 (fun l _ hl => by simp [hl]) (by simp)]
+    simpa using h m
+  · rw [Finset.sum_eq_single 0 (fun l _ hl => by simp [hl]) (by simp)]
+    simp
+
+open Classical in
+/-- Survivors' Good descendant weight `j` blocks down (tail kills inside ignored). -/
+noncomputable def descTot (m j : ℕ) : ℚ :=
+  ∑ a ∈ (Finset.range (2 ^ (6 * m))).filter (survives (6 * m)), descMass (6 * m) a (6 * (m + j))
+
+/-- **Node 3 (conjecture, refines node 2 for lag charging).**  Multi-block totals upper growth.
+Charging base `b` at lag `j_b ≈ 0.75 log₂ b + 2` (where node 1 applies) costs
+`≈ 2b^{-4.49} · C · Λ^{j_b+1} / γ^{j_b}` per stage; with `Λ ≈ 44` (measured one-block totals
+`childMass/mass = 43.4, 44.6` at `m = 2, 3`) and `γ = 20` this is summable, `≈ 0.8` for base 5,
+against the budget `(9/5)^6 - 20 ≈ 14`.  Per-ancestor sups (`≥ 5704` at one block) make the same
+sum diverge, so the totals are essential.  Confidence 60%. -/
+def UpperGrowthLag449 (K Λ : ℚ) : Prop := ∀ m j, descTot m j ≤ K * Λ ^ j * mass m
+
 end NormalNumbers.UniformBadThreshold.TailReview

@@ -3894,3 +3894,8 @@ Next: `isFresh` Riesz bound, then the classification lemma in Lean (route-decisi
   Lambda < gamma).  Proved: tailTotals_of_upperGrowth.  Next: (a) prove/measure UpperGrowth449
   totals ratio childMassTot/mass for m <= 4 exactly; (b) formal bridge APKillUniform449 ->
   loss m <= eps * childMassTot m (ancestor j_b blocks up; needs descendant bookkeeping).
+- Proved `tailChargeBudget449_of_ratio`: loss <= c*mass with c < (9/5)^6-1 ~ 33 suffices (measured
+  c ~ 0.23: 140x slack).  New node UpperGrowthLag449 (multi-block totals growth, Lambda ~ 44).
+  Reduction: crux <- node1 (APKillUniform449) + node3 (UpperGrowthLag449) + bookkeeping (lag j_b
+  charging, summed over b with gamma=20).  Next: write that bookkeeping theorem with both nodes
+  as hypotheses (statement first), then attack node 3 via actual survivor distribution.
