@@ -3915,3 +3915,8 @@ Next: `isFresh` Riesz bound, then the classification lemma in Lean (route-decisi
 - PROVED potTot_succ_le (depth-d totals step) and potTot_two_succ_le (node 4' form).
 - PROVED childMassTot_le: childMassTot m <= mass(m+1) + loss m.
 - Node 4' now for every cell (non-Good R2 43.2-43.4); PROVED regularPotential_iter (all depths d>=2).
+- ARCHITECTURE (lap 2, supersedes orphan route): alive potential P(m) = alivePot 2 m over ALL tail-alive
+  level-6m cells.  PROVED alivePot_succ_le: P(m+1) <= R P(m) (node 4' only, no orphans).
+  Remaining bookkeeping: E(m) := Good weight at 6m+12 under alive 6m-cells that dies by 6m+12;
+  mass(m+2) >= P(m) - E(m); loss m <= E-type kills; bound kills by node 1 against P(m-j)
+  (ancestors any alive cell — node 1 allows non-Good).  Then strong induction -> ratio lemma.

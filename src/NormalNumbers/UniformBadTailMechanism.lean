@@ -317,4 +317,46 @@ theorem regularPotential_iter {R : ℚ} (hR : RegularPotential2_449 R) (hR0 : 0 
       have := regularPotential_iter hR hR0 d (k + 6) (2 ^ 6 * a + j)
       simpa [add_assoc] using this
 
+open Classical in
+/-- **Alive potential** (lap 2 architecture, no orphans): depth-`d` Good descendant weight of ALL
+tail-alive level-`6m` cells (Good or not).  Aliveness is hereditary, so its one-block step needs
+no orphan term; node 4′ (now for every cell) drives it. -/
+noncomputable def alivePot (d m : ℕ) : ℚ :=
+  ∑ a ∈ (Finset.range (2 ^ (6 * m))).filter (Count.Alive tailBad449 (6 * m)),
+    descMass (6 * m) a (6 * m + 6 * d)
+
+/-- **Orphan-free totals step** for the alive potential, from node 4′. -/
+theorem alivePot_succ_le {R : ℚ} (hR : RegularPotential2_449 R) (hR0 : 0 ≤ R) (m : ℕ) :
+    alivePot 2 (m + 1) ≤ R * alivePot 2 m := by
+  classical
+  have hd : ∀ k a K, 0 ≤ descMass k a K := fun k a K =>
+    Finset.sum_nonneg fun _ _ => coreWeight_nonneg _ _
+  unfold alivePot
+  have e6 : 6 * (m + 1) = 6 * m + 6 := by ring
+  rw [Finset.sum_filter, show 2 ^ (6 * (m + 1)) = 2 ^ 6 * 2 ^ (6 * m) by rw [e6, pow_add, mul_comm],
+    sum_range_mul_split, Finset.sum_filter, Finset.mul_sum]
+  refine Finset.sum_le_sum fun p _ => ?_
+  split_ifs with hp
+  · calc ∑ j ∈ Finset.range (2 ^ 6), (if Count.Alive tailBad449 (6 * (m + 1)) (2 ^ 6 * p + j) then
+            descMass (6 * (m + 1)) (2 ^ 6 * p + j) (6 * (m + 1) + 6 * 2) else 0)
+          ≤ ∑ j ∈ Finset.range (2 ^ 6), descMass (6 * m + 6) (2 ^ 6 * p + j) (6 * m + 6 + 12) :=
+            Finset.sum_le_sum fun j _ => by
+              split_ifs
+              · rw [e6]
+              · exact hd _ _ _
+        _ = descMass (6 * m) p (6 * m + 6 + 12) := (descMass_split _ _ _).symm
+        _ ≤ R * descMass (6 * m) p (6 * m + 6 * 2) := by
+            have := hR (6 * m) p
+            rwa [show 6 * m + 18 = 6 * m + 6 + 12 by ring, show 6 * m + 12 = 6 * m + 6 * 2 by ring]
+              at this
+  · rw [mul_zero]
+    refine Finset.sum_nonpos (ι := ℕ) (N := ℚ) fun j hj => ?_
+    split_ifs with h
+    · exfalso; apply hp
+      have h' := Count.alive_anc tailBad449 6 (by rwa [e6] at h)
+      have : (2 ^ 6 * p + j) / 2 ^ 6 = p := by
+        have := Finset.mem_range.1 hj; omega
+      rwa [this] at h'
+    · exact le_rfl
+
 end NormalNumbers.UniformBadThreshold.TailReview
