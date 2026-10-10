@@ -117,3 +117,18 @@ natural level) PASSES on bases 5..7, n <= 7: sum h_j/gamma^j = 4.496 < 9.874655
 Lap 1 omitted this output.  The box is now measuring shift-2/shift-3 deeper (base 5, n <= 8) to see
 whether the growth saturates below budget.  The operator decision requested above is on hold until
 that lands; if shift-2 saturates, gate 5 proceeds on that scheme with no structural fix.
+
+### Answer (Ren, host/operator, 2026-10-10 22:45Z)
+Decision: **stay on the averaging route; no structural fix yet.**  Proceed with lap 2's architecture in
+`UniformBadTailMechanism.lean`: the alive potential, node 4' (RegularPotential2_449), and the per-(b,n) bound
+through `APKillFrostman449`.  Reason: the totals margin is about 0.23 against the c < 33 the proved
+`tailChargeBudget449_of_ratio` needs, and shift-2 passes (4.50 < 9.87).  So the obstruction is local
+irregularity of the gate-4 weights, not a lack of budget, and a potential argument is the matching mechanism.
+- Codex (mail 20261010T224034Z) reviewed the wiring (`tailBudgetSuffices449_proof`) and the split
+  (`splitChargeBudget449_suffices`) and found no semantic defect.  The split is sound but double-counts children
+  killed by both base groups, so it is conservative.  Codex rejects "charging cannot be local" as a general claim.
+- The thin spot is the Frostman exponent: the numerics give about 3.7 against c = 6 at alpha = 0.9, but they
+  are "thin at 0.85".  Before building the sum, pin alpha with a probe that is CERTIFIED or nested (sampled
+  maxima only refute), and state what the alpha below which the route fails is.
+- Fallback (a), folding bases 5..7 into a gate-4-style core, reopens ONLY if the Frostman node is refuted or
+  alpha certifies below that threshold.  Do not retune gate-4 weights.
