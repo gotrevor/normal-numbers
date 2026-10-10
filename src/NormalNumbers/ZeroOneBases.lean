@@ -112,4 +112,32 @@ theorem zeroOneBases2to5_of_zeroOneFourFive (h : ZeroOneFourFive) : ZeroOneBases
 base 3 and base 4.  Supercritical (exponent `≈ +0.131`). -/
 def ZeroOneThreeFourInfinite : Prop := {n : ℕ | ZeroOneIn 3 n ∧ ZeroOneIn 4 n}.Infinite
 
+/-! ## What the base-3 restriction buys (2026-10-10, review challenge)
+
+Measured on the exact top-down tree (`experiments/zero-one-bases/width.py`), base-4 lengths
+200–1399: the fraction of lengths whose tree survives `d` digits decays per digit like `0.889` for
+bases {4, 5} and `0.558` for {3, 4, 5}, matching the random-model rates `4^(−0.069) = 0.908` and
+`4^(−0.438) = 0.545`.  Deepest survival 57 vs 10.  But the tree *width* (the integer shadow of
+the Shmerkin–Wu covering number) stays `O(1)` for both (max 6 vs 2 through length 400), so base 3
+does nothing for the `n^ε` step: the loss there is in the proof, not the sets
+(`FourFiveBoundedPerLength`).  What base 3 adds is a second slope coordinate: lengths with a
+solution need `(L log₃ 4, L log₅ 4) mod 1` in a target of measure `≈ 0.545^d` at depth `d`, a
+two-dimensional shrinking target.  Using it needs the orbit to equidistribute in `𝕋²`, i.e.
+`JointSlopeIndependence`, which we do not know how to prove (Schanuel-type; Burrell–Yu assume
+Schanuel for their digit-special theorem). -/
+
+/-- **Uniform covering, conjectured from the width data** (85%): a bounded number of integers with
+`0/1` digits in bases 4 and 5 in each `[4ᴸ, 4ᴸ⁺¹)`.  A Shmerkin–Wu bound without the `ε` would
+give it; base 3 is not needed. -/
+def FourFiveBoundedPerLength : Prop :=
+  ∃ C : ℕ, ∀ L : ℕ, ((Finset.Ico (4 ^ L) (4 ^ (L + 1))).filter
+    fun k => ZeroOneIn 4 k ∧ ZeroOneIn 5 k).card ≤ C
+
+/-- **What the base-3 coordinate needs**: `1, log₃ 4, log₅ 4` are linearly independent over `ℚ`,
+so the length orbit `L ↦ (L log₃ 4, L log₅ 4)` equidistributes in `𝕋²` (status unknown to us;
+a relation would be `p log 3 log 5 + q log 4 log 5 + r log 3 log 4 = 0`). -/
+def JointSlopeIndependence : Prop :=
+  ∀ p q r : ℤ, (p : ℝ) + q * (Real.log 4 / Real.log 3) + r * (Real.log 4 / Real.log 5) = 0 →
+    p = 0 ∧ q = 0 ∧ r = 0
+
 end NormalNumbers.ZeroOneBases
