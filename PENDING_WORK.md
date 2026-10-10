@@ -3906,3 +3906,8 @@ Next: `isFresh` Riesz bound, then the classification lemma in Lean (route-decisi
   gamma=20, spacing 2^12: ~9C for base 5 alone vs budget 14 -> marginal; reduce spacing to 2^6 or
   use deeper iterate (ratio -> ~44).  Next: prove childMassTot_succ_le; measure APKill at spacing 2^6.
 - Node 5 OrphanSmall449 (orphan fraction 0.0052 at m=2); proved childMassTot_succ_le_of_orphan. Next: state crux bookkeeping theorem from nodes 1,4,5 (lag charging over bases).
+- Stated tailChargeBudget449_of_nodes (sorry, waived bookkeeping): crux <- APKillUniform449 6 1.85,
+  RegularPotential449 57, OrphanSmall449 0.01.  Feasibility sum ~5.9 vs c=6: razor-thin.  Spacing-2^6
+  probe C~1.81; R_d at level 6: 124, 46.4, 45.1 (iterated potentials converge to ~44).
+  NEXT: switch node 4 to the twice-iterated potential (margin), fix node-1 Good-ancestor gap, then
+  prove the bookkeeping.

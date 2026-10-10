@@ -54,8 +54,8 @@ noncomputable def descKilled (k a K b n : ℕ) (θ : ℝ) : ℚ :=
     coreWeight K (2 ^ (K - k) * a + j)
 
 /-- **Node 1 (conjecture, evidence above).**  Offset-uniform kill bound for fine progressions. -/
-def APKillUniform449 (C : ℝ) : Prop :=
-  ∀ k a K b n (θ : ℝ), Good449 k a → k ≤ K → 5 ≤ b → 2 ^ (k + 12) ≤ b ^ n →
+def APKillUniform449 (s : ℕ) (C : ℝ) : Prop :=
+  ∀ k a K b n (θ : ℝ), Good449 k a → k ≤ K → 5 ≤ b → 2 ^ (k + s) ≤ b ^ n →
     (descKilled k a K b n θ : ℝ) ≤ C * (2 * (b : ℝ) ^ (-(449 / 100 : ℝ))) * descMass k a K
 
 open Classical in
@@ -191,5 +191,21 @@ theorem childMassTot_succ_le_of_orphan {R η : ℚ} (hR : RegularPotential449 R)
   have := childMassTot_succ_le hR m
   have := hη m
   linarith
+
+/-- **Bookkeeping theorem (statement; the crux from nodes 1, 4, 5).**  Proof plan: strong
+induction on `m` for `loss m ≤ 6 · mass m` (then `tailChargeBudget449_of_ratio`).  A base-`b`
+window killing in block `m+1` is charged to the progression of its stage inside an ancestor
+`j_b = ⌈4.49 log₂ b / 6⌉` blocks up (spacing `2^6`, node 1); the killed weight is
+`≤ C · 2b^{-4.49}` of that ancestor's descendant mass, which nodes 4 + 5 and the recurrence
+bound by `K (R/(1-η))^{j_b} / (34-c)^{j_b} · mass m` with `K ≈ R(1 + c/(34-c))`.
+Numerics (`python`, lap 2): with `C = 1.85` (spacing-`2^6` probe max/coverage 1.50, 1.81, 1.40,
+1.26: `tail5_out/offset_probe_sp6.txt`), `R = 57`, `η = 1/100`, `K = 70`, `c = 6`:
+`Σ_b ≈ 5.9 ≤ 6` — closes with almost no margin.  Using the twice-iterated potential
+(`desc₃/desc₂ ≤ 45.1` at level 6, `tail5_out/ratio_iter3.txt`) would give real margin.
+Known gaps: node 1 assumes a Good ancestor (`Good449` is not hereditary); stage counts per block
+taken as `6/log₂ b + 1`.  Confidence 35%. -/
+theorem tailChargeBudget449_of_nodes (h1 : APKillUniform449 6 (37 / 20))
+    (h4 : RegularPotential449 57) (h5 : OrphanSmall449 (1 / 100)) : TailChargeBudget449 := by
+  sorry
 
 end NormalNumbers.UniformBadThreshold.TailReview

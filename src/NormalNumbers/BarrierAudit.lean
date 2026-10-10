@@ -179,6 +179,9 @@ def cruxLinks : List CruxLink := [
 
 /-- Open `sorry`s that are not cruxes, and why no barrier applies. -/
 def waivers : List Waiver := [
+  ⟨``UniformBadThreshold.TailReview.tailChargeBudget449_of_nodes,
+   "bookkeeping reduction of the gate-5 crux to the named conjecture nodes APKillUniform449, \
+    RegularPotential449, OrphanSmall449 (all hypotheses); the mathematical content is in those nodes"⟩,
   ⟨``UniformBadThreshold.TailReview.childConcentration_18,
    "a finite exact computation on 7 cells (classify and Good449 at levels 18, 24), recording the \
     gate-5 kill-test mechanism; off the proof route of cStar_le_449"⟩,
