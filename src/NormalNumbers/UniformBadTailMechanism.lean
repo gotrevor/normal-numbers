@@ -102,4 +102,20 @@ against the budget `(9/5)^6 - 20 ≈ 14`.  Per-ancestor sups (`≥ 5704` at one 
 sum diverge, so the totals are essential.  Confidence 60%. -/
 def UpperGrowthLag449 (K Λ : ℚ) : Prop := ∀ m j, descTot m j ≤ K * Λ ^ j * mass m
 
+/-- **Node 4 (conjecture): the once-iterated potential is regular.**  The raw weights are not
+(`desc₁/w` reaches 5704 at `(18, 191938)`, 604 at level 12), but the child-mass potential
+`v = descMass k a (k+6)` is nearly an eigenvector: `max desc₂/desc₁ = 52.07` over all Good level-12
+cells, and `42.05` at the bad cell `(18, 191938)` (`scripts/cstar_models/tail5_ratio_iter.py`,
+`tail5_out/ratio_iter.txt`; SAMPLED maxima).  Confidence 65% that `R = 60` holds at every level. -/
+def RegularPotential449 (R : ℚ) : Prop :=
+  ∀ k a, Good449 k a → descMass k a (k + 12) ≤ R * descMass k a (k + 6)
+
+/-- **Totals upper growth from node 4** (statement; proof is bookkeeping: survivors at `m+1` are
+Good children of survivors at `m`, and `descMass` splits over children).  With the recurrence
+this gives `UpperGrowth449 (R · 34/(34-c))` once `loss ≤ c · mass` is known up to `m`, so the
+induction closes. -/
+theorem childMassTot_succ_le {R : ℚ} (hR : RegularPotential449 R) (m : ℕ) :
+    childMassTot (m + 1) ≤ R * childMassTot m := by
+  sorry
+
 end NormalNumbers.UniformBadThreshold.TailReview

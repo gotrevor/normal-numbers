@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
 import NormalNumbers.Barriers
+import NormalNumbers.UniformBadTailMechanism
 import NormalNumbers.LiteratureDigitsOfPowers
 import NormalNumbers.ErdosTriples
 import NormalNumbers.PairDecoupleProve
@@ -178,6 +179,9 @@ def cruxLinks : List CruxLink := [
 
 /-- Open `sorry`s that are not cruxes, and why no barrier applies. -/
 def waivers : List Waiver := [
+  ⟨``UniformBadThreshold.TailReview.childMassTot_succ_le,
+   "bookkeeping leaf (survivors at m+1 are Good children of survivors at m; descMass splits over \
+    children) under the hypothesis RegularPotential449; no mathematical barrier"⟩,
   ⟨``UniformBadThreshold.TailReview.childConcentration_18,
    "a finite exact computation on 7 cells (classify and Good449 at levels 18, 24), recording the \
     gate-5 kill-test mechanism; off the proof route of cStar_le_449"⟩,
