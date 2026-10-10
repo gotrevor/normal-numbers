@@ -198,9 +198,11 @@ theorem childMassTot_succ_le_of_orphan {R η : ℚ} (hR : RegularPotential449 R)
 /-- **Node 4′ (conjecture): the twice-iterated potential is near-Perron.**  `desc₃/desc₂`:
 max `45.11` over all Good level-6 cells (`tail5_out/ratio_iter3.txt`); at level 12, max `43.79`
 over the three `desc₂/desc₁`-worst cells (57.3, 52.1, 47.6 there) and 25 random Good cells, all
-in `[43.19, 43.79]` (`tail5_out/ratio_r2_k12.txt`, SAMPLED).  Confidence 75% for `R = 45`. -/
+in `[43.19, 43.79]` (`tail5_out/ratio_r2_k12.txt`, SAMPLED).  Stated for EVERY cell (no `Good449`
+hypothesis, which is not hereditary): non-Good level-12 cells give `43.21–43.44`
+(`tail5_out/ratio_nongood.txt`); cells with no Good descendants give `0 ≤ 0`.  Confidence 75% for `R = 45`. -/
 def RegularPotential2_449 (R : ℚ) : Prop :=
-  ∀ k a, Good449 k a → descMass k a (k + 18) ≤ R * descMass k a (k + 12)
+  ∀ k a, descMass k a (k + 18) ≤ R * descMass k a (k + 12)
 
 /-- **Bookkeeping theorem (statement; the crux from nodes 1, 4, 5).**  Proof plan: strong
 induction on `m` for `loss m ≤ 6 · mass m` (then `tailChargeBudget449_of_ratio`).  A base-`b`
@@ -270,8 +272,8 @@ theorem potTot_succ_le {d : ℕ} {R : ℚ}
 /-- Node 4′ is the `d = 2` hypothesis of `potTot_succ_le`. -/
 theorem potTot_two_succ_le {R : ℚ} (hR : RegularPotential2_449 R) (m : ℕ) :
     potTot 2 (m + 1) ≤ R * potTot 2 m + orphanPot 2 m :=
-  potTot_succ_le (fun k a hg => by
-    have := hR k a hg
+  potTot_succ_le (fun k a _ => by
+    have := hR k a
     rwa [show k + 6 + 6 * 2 = k + 18 by ring, show k + 6 * 2 = k + 12 by ring]) m
 
 /-- **Child mass = surviving children + lost children** (upper half): the Good children of
@@ -302,5 +304,17 @@ theorem childMassTot_le (m : ℕ) : childMassTot m ≤ mass (m + 1) + loss m := 
     (survives (6 * (m + 1))) (fun a _ j _ h => h) (coreWeight (6 * (m + 1)))
     (coreWeight_nonneg _)
   rwa [show 6 * m + 6 = 6 * (m + 1) by ring] at this
+
+/-- **Node 4′ propagates to every depth `d ≥ 2`** (split over the 64 children and induct). -/
+theorem regularPotential_iter {R : ℚ} (hR : RegularPotential2_449 R) (hR0 : 0 ≤ R) :
+    ∀ d, ∀ k a, descMass k a (k + 6 * (d + 3)) ≤ R * descMass k a (k + 6 * (d + 2))
+  | 0, k, a => by simpa using hR k a
+  | d + 1, k, a => by
+    rw [show k + 6 * (d + 1 + 3) = k + 6 + 6 * (d + 3) by ring,
+      show k + 6 * (d + 1 + 2) = k + 6 + 6 * (d + 2) by ring,
+      descMass_split, descMass_split, Finset.mul_sum]
+    exact Finset.sum_le_sum fun j _ => by
+      have := regularPotential_iter hR hR0 d (k + 6) (2 ^ 6 * a + j)
+      simpa [add_assoc] using this
 
 end NormalNumbers.UniformBadThreshold.TailReview
