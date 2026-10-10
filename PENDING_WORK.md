@@ -3926,3 +3926,4 @@ Next: `isFresh` Riesz bound, then the classification lemma in Lean (route-decisi
   endpoint progression: (R/64rho)^j converges.  Node 1'' APKillGeneral449 (any width) stated;
   resonant bases 12^2, 6^3, 10^2 give max/cov <= 1.93.  NEXT: probe endpoint-nbhd widths (h ~ 2^-K
   scale, coarse q) — that is the untested regime; then write extLoss <= eps*alivePot.
+- Width probe: max/(2hq) in [0.99,1.49] for h=2^-13..-17 (node 1'' evidence).

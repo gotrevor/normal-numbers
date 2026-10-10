@@ -453,7 +453,8 @@ inside a one-sided `2^{-6m}`-neighbourhood of the endpoint progression; charging
 spacing scale costs `(2^{-6m} q) R^j ≈ (R/64ρ)^j`, which converges, whereas charging with window
 coverage diverges like `(R/ρ)^j`, `R ≈ 45 > ρ = 34`).  Resonant bases (lap 2,
 `tail5_out/offset_probe_resonant.txt`, root, level 24): max/coverage `1.93` (12²), `1.48` (6³),
-`1.06` (6⁴), `1.55` (10²), `1.03` (5⁴).  Endpoint-neighbourhood widths are NOT yet probed.
+`1.06` (6⁴), `1.55` (10²), `1.03` (5⁴).  General widths (root, level 20, `h = 2^{-13..-17}`,
+`tail5_out/offset_probe_width.txt`): max/(2hq) in `[0.99, 1.49]` (worst 12² at `h = 2^{-15}`).
 Confidence 55% for `C = 3`, `s = 6`. -/
 def APKillGeneral449 (s : ℕ) (C : ℝ) : Prop :=
   ∀ k a K q (θ h : ℝ), k ≤ K → 2 ^ (k + s) ≤ q → 0 ≤ h →
