@@ -21,8 +21,8 @@ that branch merges.
   2.5.
 * `PairSecondOrderScheduled` and its producer.  This is the frozen `PairSecondOrder` on the
   Erdős–Turán schedule only, as a separate statement; the all-`u` Prop is unchanged.  Its proof
-  (paper, signed off conditionally by Astra 2026-10-11) loses a factor `log(1/δ)` in the corner
-  `p ≈ p′ ≈ √N`, which the schedule absorbs.
+  (paper, signed off conditionally by Astra 2026-10-11) loses a factor `log(1/δ)` from the
+  off-diagonal Brun–Titchmarsh integral (region (2), at `w = δ`); the schedule absorbs it.
 -/
 
 namespace NormalNumbers.Literature
@@ -84,7 +84,7 @@ def MultBVOmegaRestricted : Prop :=
 
 /-- Believed ~90%.  English proof:
 - write `z^{ω_P} = z^{Ω_P} ∗ h_z`, whose local factor is `H_p = 1 + z(1−z)X²/(1−X)`, so h is
-  supported on squarefull b with `|h| ≤ 2`;
+  supported on squarefull b, with `|h(p^ν)| ≤ 2` locally and so `|h(b)| ≤ 2^{ω(b)}`;
 - for `b ≤ √x`, apply `MultBVResidue` at length `x/b`, with moduli `e ≤ x^θ ≤ √(x/b)/log^B`
   since θ < 1/4;
 - for `b > √x`, use the trivial bound `x^{θ+3/4+ε}`.
@@ -108,10 +108,11 @@ review section.  The steps:
 - a fixed fresh-site cut, with the deep tail through `J₁(N)`;
 - the unimodular reduction `|R| ≤ Σ_{i<j} |f_i||f_j|`;
 - regions: CRT, Brun–Titchmarsh off the diagonal, the two-forms sieve near the diagonal (where
-  the weighted compatibility average gives exactly δ²), and the corner `p ≈ p′ ≈ √N` at
-  `γ = w = δ`.
+  the weighted compatibility average gives exactly δ²), and the corner `p ≈ p′ ≈ √N`, which
+  costs `C δ(γ + w) = O(δ²)` at `γ = w = δ`.
 
-The corner loses `log(1/δ)`, which the schedule's `log s ≥ 4 log(1/ρ)` absorbs. -/
+The off-diagonal Brun–Titchmarsh region loses `log(1/w) = log(1/δ)`, which the schedule's
+`log s ≥ 4 log(1/ρ)` absorbs. -/
 theorem pairSecondOrderScheduled_of (hBT : BrunTitchmarshAP) (hUS : UpperSieveTwoLinearForms)
     (hMer : MertensAPAsymptotic) : PairSecondOrderScheduled := sorry
 

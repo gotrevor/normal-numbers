@@ -327,3 +327,9 @@ symmetric blocks are handled the same way.
 from Astra (175014Z), with the displayed quantifiers and an absolute constant.  This does not
 cover the Lean implementation, the build, or trunk.  The separate site producer still carries its
 BV/TSW dependency.
+
+**Attribution correction (Astra 180820Z).**  The `log(1/δ)` loss comes from region (2), the
+off-diagonal Brun–Titchmarsh integral `C δ² log(1/w)` at `w = δ`.  The corner, region (4), costs
+only `C δ(γ + w) = O(δ²)`.  Earlier wording that blamed "the corner" for the logarithm (commit
+messages, mails, the opening summary) is superseded.  The squarefull bound in
+`multBVOmegaRestricted_of` is `|h_z(b)| ≤ 2^{ω(b)}`; `≤ 2` holds only at a prime power.
