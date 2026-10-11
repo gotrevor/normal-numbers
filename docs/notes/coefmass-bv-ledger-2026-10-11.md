@@ -372,7 +372,10 @@ not (Astra 160352Z).  So keep ω everywhere, and touch Ω only where `MultBVResi
   - So `Σ_{gcd(m,Q)=g} f τ = z_k^{ω(g)} Σ_{rad(a)=g} Σ_{m″ ∈ (k/a, (N+k)/a], (m″,Q)=1} f(m″) τ(m″)`.
     The a-sum converges: `Σ_{rad(a)=g} 1/a = ∏_{p|g} 1/(p−1)`.  Truncate at `a ≤ A₀` with tail
     `≪ N Σ_{a>A₀, rad(a)|Q} 1/a`, which is → 0 in `A₀` uniformly for Q polylog: count
-    `≤ (log A₀)^{ω(Q)}` per dyadic block.  ⚠️ Check this uniformity; ω(Q) grows like `J/log J`.
+    `≤ (log A₀)^{ω(Q)}` per dyadic block.  **Uniformity, by Rankin:**
+    `Σ_{a>A, rad(a)|Q} 1/a ≤ A^{−1/4} ∏_{p|Q}(1 − p^{−3/4})^{−1} ≤ A^{−1/4} exp(C J^{1/4})`.
+    At `A₀ = √N` this is `N^{−1/8} e^{C(log log N)^{1/4}} → 0`.  So keep every `a ≤ √N` exactly
+    (each has length `N/a ≥ √N` for the SD step) and bound the rest trivially.
   - The faithful SD target is therefore stated for `z^{ω_P}·τ·1[(·,Q)=1]`, not Ω.
 - **Type I (E2) BV in ω form.**  `z^{ω_P} = z^{Ω_P} ∗ h_z`, where `h_z` is multiplicative and
   supported on squarefull b.
