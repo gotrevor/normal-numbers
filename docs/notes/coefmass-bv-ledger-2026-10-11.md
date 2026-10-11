@@ -198,7 +198,7 @@ relative precision `(log N)^{−A}`, which SD does not give.  This rearrangement
 - **Owed before trunk:** Astra's referee of E1–E5; the `C_h` growth check above; Lean
   statements for the loosened `SiteFactorization` and `SelbergDelangeTilted`; and a green build.
 
-## Repair 1 (draft for referee): the raw-conditional main term
+## Repair 1 (draft, revised after Astra 160352Z): the raw-conditional main term
 
 This replaces E4ii and E4iii.  The notation is that of the referee box.
 
@@ -211,8 +211,11 @@ Split `Λ = C + (Λ − C)`, where C is the same kernel for the UNtruncated `Φ^
 The difference `Λ − C` is the truncation residual.  It is handled like E1, on the augmented state
 (item 2) and with the indicator-expanded arithmetic fourth moment (item 3).
 
-**Large primes: a division only where it is safe.**  For `p > 2J` and `2J ≥ W + 2` (true
-eventually), `|a_p| ≤ W < p − 1`, so `b_p ≠ 0` and `|b_p − 1| ≤ W/(p−1)`.  Then
+**Large primes: a division only where it is safe.**  Impose `2J ≥ 2W + 2`, which holds
+eventually for fixed h.  Then for `p > 2J`, `b_p ≠ 0`, `|b_p − 1| ≤ W/(p−1)`, and
+`|b_p^{−1} − 1| ≤ 2W/p`.  (`2J ≥ W + 2` is NOT enough: W=4, J=3, p=7, a=−4 gives
+`|b^{−1} − 1| = 2 > 8/7`; Astra.)  Also `|b_p| ≤ 1`, as a conditional average of unit phases,
+so `|B_large| ≤ 1`.  Then
 
     ∏_{2J<p≤y_head} C_p(m) = B_large · τ(m),   B_large = ∏ b_p,   τ(m) = ∏_{p|m, 2J<p≤y_head} b_p^{−1},
 
@@ -223,32 +226,51 @@ with `|τ_p − 1| ≤ 2W/p`.
 and `C_p(nonhit) = (p−1)^{−1} Σ_{r ≢ −k} g_p(r)` has modulus `≤ 1` and may vanish.  It is never
 inverted.  Then
 
-    Σ_m f(m) C(m) = B_large Σ_{g|Q} C_small(g) Σ_{m ≤ N+k, gcd(m,Q)=g} f(m) τ(m).
+    Σ_{m ∈ (k, N+k]} f(m) C(m) = B_large Σ_{g|Q} C_small(g) Σ_{m ∈ (k, N+k], gcd(m,Q)=g} f(m) τ(m).
+
+Keep the shifted interval `(k, N+k]`.  Replacing it by a prefix is an endpoint error, not an
+identity.
 
 **Inner sums (Ω form; the ω translation is item 4).**  `gcd(m,Q) = g` ⟺ `m = g m′` with
 `gcd(m′, Q/g) = 1`.  This holds because Q is squarefree and m′ may still carry primes of g.  By
-complete multiplicativity, and since `τ` is supported above 2J, `f(g m′) τ(g m′) = f(g) f(m′) τ(m′)`.
-So each inner sum is `f(g) Σ_{m′ ≤ (N+k)/g, (m′,Q/g)=1} f(m′) τ(m′)`.  That is one tilted mean of f,
+complete multiplicativity of F and F_y, and since they agree at the primes of g ≤ 2J ≤ y_k,
+`f(g m′) = F(g) f(m′)` with `F(g) = z_k^{Ω(g)}` unimodular.  ⚠️ It is NOT `f(g) f(m′)`: f is not
+multiplicative and `f(g) = 0` for every `g | Q` (Astra's control: frozen g, fresh r, phases −1,
+`f(gr) = 2`, `f(g) f(r) = 0`).  τ is supported above 2J, so `τ(g m′) = τ(m′)`.  So each inner sum is
+`F(g) Σ_{m′ ∈ (k/g, (N+k)/g], (m′,Q/g)=1} f(m′) τ(m′)`.  That is one tilted mean of f,
 with tilt `τ_p` above 2J and `0` at the primes of `Q/g`.
 
 - **The faithful SD target (to state after items 2–5):** a Selberg–Delange asymptotic for
   `z^{Ω_P}·τ·1[(·, Q′) = 1]`, uniform over squarefree `Q′ | Q` and tilts with `|τ_p − 1| ≤ 2W/p`,
   `p > 2J`.  The coprimality costs `Σ_{p|Q′} p^{−1/2} ≤ C√J/log J`.  An error factor
   `exp(C√J)/log N → 0` suffices.
-- The same decomposition for `F_y` gives the κ = 0 case (Euler product, `O(1/log N)` error).
+- `F_y` is NOT a κ = 0 SD case: it depends on N through the fixed-power cutoff.  Its mean comes
+  from the accepted augmented TV (5.3′): `|F_y C| ≤ 1` is a state function, so
+  `mean_arith[F_y C] = E_μ′[F_y C] + O(e^{−u}) + o_N(1)`.  Arithmetic and model means are not
+  equal; the tower identity is exact inside the model only.  For the Ω form this waits on item 4's
+  valuation ledger, since Ω-valuations are not radical-state measurable.
 
 **Assembly.**
 
-- The g-sum has `2^{ω(Q)}` terms, with `ω(Q) ≤ π(2J)`, weighted by `|C_small(g) f(g)|/g ≤ 1/g`.
+- The g-sum has `2^{ω(Q)}` terms, with `ω(Q) ≤ π(2J)`, weighted by `|C_small(g) F(g)|/g ≤ 1/g`.
   So `Σ_g 1/g ≤ ∏_{p|Q}(1 + 1/p) ≤ C log J`, and the summed SD errors are
   `N (log J) exp(C√J)/log N = o(N)`.
-- The main terms reassemble into Euler products.  At frozen primes `p ≤ y_k`, F and F_y share the
-  local factor, including the C-weights, so these cancel in `M[FC]/M[F_y C]`.
-- At `p ∈ (y_k, y_head]` the tilt changes the ratio by `∏(1 + O(W/p²)) = 1 + O(W/y_k)`.  So
-  `M[FC]/M[F_y C] = 1 + g(κ_k, s_k) + o(1)`.
-- `M[F_y C]` is the model value `E_μ[F_y Φ^{≠k}]` by the tower identity (accepted in 131444Z,
-  with C the correctly normalized conditional expectation).  The integer `W_y` differs from it
-  by the C′ TV error.  `B_large` is never divided out: it sits inside `M[F_y C]`.
+- **Division-free assembly (Astra 160352Z).**  No lower bound on the small-prime frozen mean
+  is known; it may vanish.  So never form `M[FC]/M[F_y C]`.  Match Euler factors algebraically
+  and state the additive pair (after item 4):
+
+      mean_arith[F C]   = G(κ_k, s_k) · E_μ′[F_y C] + err₁,     G = 1 + g,
+      mean_arith[F_y C] = E_μ′[F_y C] + err₂,                   err₂ = O(e^{−u}) + o_N(1),
+
+  - `err₁` collects the SD error over the g-decomposition and the fresh-prime tilt
+    `∏_{y_k<p≤y_head}(1 + O(W/p²)) − 1 = O(W/y_k)`.
+  - The g-decomposition SD error is `N (log J) e^{C√J}/log N`, which is `o(N)`.
+  - Then `E_μ′[F_y C] = E_μ′[F_y Φ^{≠k}]` (tower, in the model) `≈ W_y` up to the C′ TV error.
+  - This stays meaningful when a small-prime factor vanishes.
+- **Arithmetic M4 mass (Astra's bookkeeping).**  For expanded d, g is confined to Q, so
+  `φ(e/g) = φ(Q/g) φ(d)`.  After the gcd-indicator expansion the ℓ¹ mass is at most a Q-factor
+  times `(log y)^W Σ_{d≤D} (2W)^{ω(d)}/φ(d) = (log N)^{O_h(1)}`.  CRT then bounds the
+  fourth-moment discrepancy by `mass⁴/N`, which is `o(1)`.
 
 **Controls to run before asking for referee:**
 - Astra's p=5, one parity site, target −1: the kernel must give the joint local mean `1/5`.
@@ -301,7 +323,10 @@ unchanged.
   The conductor is `≤ QD`, the mass grows by `2^{ω(e)}`, and the CRT remainder is
   `≤ (mass)⁴ (QD)⁴/N = o(1)` for θ < 1/4.
 
-Open within repair 2: none that I see.  Referee targets:
+**Repair 2: ACCEPTED on paper (Astra 160352Z), for the radical-state model.**  Checks:
+`log R′/log N ≤ 406/u² + 4/u`, and the CRT exponent `(√2+2)/16 + 2(406/u² + 4/u) − 1 < 0` for
+large absolute u.  It does not make Ω-valuations state-measurable (item 4).
+Open within repair 2 at submission: none that I saw.  Referee targets:
 - the claim that μ′ marginalizes to μ;
 - the moment bound for `D′_k` at the `y_head` scale;
 - whether any §4 constant silently used more than `d_b ≤ J`.  It still holds: above `y_k` only
