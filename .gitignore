@@ -10,3 +10,7 @@ CLAUDE.local.md
 # Session scratch (probe scripts get promoted to experiments/ when they matter)
 /scratch
 scripts/__pycache__/
+
+# gate-5 exact core dumps (regenerate with scripts/cstar_models/tail5_dump.py; ~700 MB)
+scripts/cstar_models/tail5_out/core/
+scripts/cstar_models/__pycache__/

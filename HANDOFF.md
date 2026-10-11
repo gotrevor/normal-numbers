@@ -1,3 +1,8 @@
+# Gate 5 lap 3 (2026-10-11, review): per-cell route REFUTED, counting route; read HANDOFF-2026-10-11-gate5-lap3.md
+- Binding: DIRECTION.md CURRENT DIRECTIVE (gate 5 review lap 3).  Escalation: ROUTE-ESCALATION-2026-10-11.md.
+
+# STUCK strike 2 (2026-10-09, c⋆ gate 3 lap 2): read HANDOFF-2026-10-09-cstar-gate3-lap2.md
+
 # Repetition: review lap 10 (2026-10-08) WITHDRAWS the lap-9 box-stuck claim — read HANDOFF-2026-10-08-repetition-lap10.md
 - New campaign (DIRECTION.md CURRENT DIRECTIVE): one 3-adic two-log input, then formalize it.
 # STUCK claim (2026-10-07, c⋆ lap 13, fresh review lap after the operator rerun): read HANDOFF-2026-10-07-cstar-lap13.md
@@ -189,3 +194,6 @@ ASK: rescope the run to `sorry-free:src/NormalNumbers/UniformBadFive.lean` (bank
 
 ## 2026-10-07 c⋆ lap 10
 `cStar_le_five` proved; scoped gate met. See HANDOFF-2026-10-07-cstar-lap10.md.
+
+## 2026-10-08 c⋆ gate 3 STUCK (strike 1)
+See HANDOFF-2026-10-08-cstar-gate3.md §STUCK: gate leaf `selfGoodPerfect_four` is predicted false (gcd budget plus Corvaja–Zannier); the operator must rescope.

@@ -38,5 +38,11 @@ def test_oeis_A263684_and_A146025():
     assert four_five == [1, 5, 16400, 16401, 16405, 82000, 82001, 82005]
     assert [x for L in range(1, 60) for x in solutions([4, 3, 5], L)] == [1, 82000]
 
+def test_width_reaches_known_solutions():
+    from width import width
+    w = width([4, 5, 3], 9)                  # 82000 has 9 base-4 digits
+    assert len(w) == 9 and w[-1] == 1
+    assert width([4, 5], 9)[-1] == 3         # 82000, 82001, 82005 (OEIS A263684, all in [4^8, 4^9))
+
 if __name__ == "__main__":
     sys.exit(pytest.main([__file__, "-q"]))

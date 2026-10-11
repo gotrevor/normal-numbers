@@ -1,0 +1,7 @@
+# gate 4 controls (2026-10-10)
+shared no3 N=16 M=6 D=2 C=4.5 K=1x1: block ratio 1.000000 per-level growth 1.890252 zeros 0/2400 minpos 1.000e+0 rootV 1.000e+0
+shared N=16 M=6 D=2 C=4.5 K=1x1: block ratio 0.967364 per-level growth 1.859151 zeros 22/2400 minpos 3.159e-2 rootV 9.544e-1
+separate N=16 M=6 D=2 C=4.5 K=1x1: block ratio 0.967364 per-level growth 1.859151 zeros 22/2400 minpos 3.159e-2 rootV 9.544e-1
+shared C=1.5: tree DEAD (all values 0) at iteration 2
+rig no3 N=16 M=6 D=8 C=4.5 K=2x1: block ratio 1.000000 per-level growth 1.890252 zeros 0/2400 minpos 1.000e+0 rootV 1.000e+0 usplits 16800
+rig C=1.5 D=4: tree DEAD at iteration 0

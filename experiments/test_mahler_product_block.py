@@ -145,3 +145,35 @@ def test_rust_x_3x_5x_hand_proof():
     # tokens 01 and 001 beats {1, 3} (x avoids 11, 3x avoids 00); adding 5 closes it.
     assert rs_count("wfail", 2, 2, "1,3") > 0
     assert rs_count("wfail", 2, 2, "1,3,5") == 0
+
+
+def test_run_cover_exact_hand_verdicts():
+    from mahler_run_cover_exact import search, twoadic
+    # {1, 3}, order 2: B with no 11 ends in 01, so 3B = B + 2B adds without carry and ends 11.
+    assert search(2, [1, 3])[0] == "COVER"
+    # {1, 3, 5, 7}, order 3: they are the units mod 8, so some m has m*B = 7 mod 8 (ends 111).
+    assert search(3, [1, 3, 5, 7])[0] == "COVER"
+    # {1, 7, 9}, order 3: B = 3 gives 11, 10101, 11011 (the Liouville witness in the Lean file).
+    verdict, _, B = search(3, [1, 7, 9])
+    assert verdict == "WITNESS" and B == 3
+    # The ILP artifact: {137, 213, 243} survives every B <= 2000 by brute force, yet is no cover.
+    assert all(any("111" in bin(m * b) for m in (137, 213, 243)) for b in range(1, 2001))
+    verdict, _, B = search(3, [137, 213, 243])
+    assert verdict == "WITNESS" and B > 2000
+    assert all("111" not in bin(m * B) for m in (137, 213, 243))
+
+
+def test_run_cover_mixed_obstruction():
+    from mahler_run_cover_exact import search, twoadic
+    S = [3, 7, 21, 35]
+    assert search(3, S)[0] == "COVER"
+    assert twoadic(3, S)
+    # Independent certificates, computed here rather than by the automaton.
+    # 2-adic: B = -23/127, so m*B mod 2^n is -23*m*127^-1 mod 2^n.
+    n = 256
+    inv = pow(127, -1, 2**n)
+    for m in S:
+        assert "111" not in bin((-23 * m * inv) % 2**n)[2:].zfill(n)
+    # Real: y = 1/7 gives 3/7 = 0.(011), 1, 3 = 11, 5 = 101 in binary.
+    assert [m // 7 for m in S] == [0, 1, 3, 5] and 3 % 7 == 3
+    assert all("111" not in bin(v) for v in (1, 3, 5)) and "111" not in "011" * 3

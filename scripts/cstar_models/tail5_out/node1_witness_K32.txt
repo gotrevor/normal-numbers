@@ -1,0 +1,4 @@
+(13,808) level 32: 361 positive Good descendants, descMass = 253.352
+best window (left end at cell 423811625): captured 2.64894 = 1.0456% of descMass
+node-1 bound C*2*5^-4.49*descMass <= 0.681634 (0.2690%)  -> REFUTED
+exact: captured = 2841346892346/1072633893121 ; descMass = 271754277609887/1072633893121 ; AMBIG 0

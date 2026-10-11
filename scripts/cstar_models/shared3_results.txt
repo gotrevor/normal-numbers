@@ -1,0 +1,86 @@
+# Operator gate 4 measurements (2026-10-10).  Model = abs3.js (sft45 binary SFT, base-3 touching kills).
+# Growth = per-level, = lam * (block ratio)^(1/D); target 1.8.
+## sampled (optimistic) shared vs separate, same samples
+shared   N=32 M=6 D=2 C=4.5 K=6x3: growth 1.576631
+separate N=32 M=6 D=2 C=4.5 K=6x3: tree DEAD at iteration 4
+shared   N=32 M=6 D=4 C=4.5 K=6x3: growth 1.758877
+separate N=32 M=6 D=4 C=4.5 K=6x3: growth 0.964949 (3592/4800 zeros, root 0)
+shared   N=32 M=6 D=6 C=4.5 K=6x3: growth 1.828837
+shared   N=32 M=6 D=8 C=4.5 K=6x3:  1.832150
+shared   N=32 M=6 D=8 C=4.5 K=12x6: 1.821087
+shared   N=32 M=6 D=8 C=4.5 K=24x6: 1.818167
+shared   N=32 M=6 D=8 C=4.5 K=48x6: 1.814790   (decreasing in K: sampled limit ~1.81)
+shared   N=64 M=6 D=8 C=4.5 K=12x6: 1.840824
+shared   N=32 M=12 D=8 C=4.5 K=12x6: 1.823153
+shared   N=32 M=6 D=8 C=4.49 K=12x6: 1.819933
+shared   N=64 M=6 D=8 C=4.49 K=12x6: 1.840361
+shared   N=32 M=6 D=10 C=4.49 K=12x6: 1.828227
+## interval (rigorous in the model) value iteration, uniform grid bins, uniform sub-boxes
+rig N=32 M=6 D=4 C=4.5 K=16x4: 1.533545
+rig N=32 M=6 D=8 C=4.5 K=16x4: 1.000000 (ratio 0.006)
+rig N=32 M=6 D=8 C=4.5 K=64x8: 1.587172
+## branch-and-bound verification of the sampled V (shared3cert.c, built with leanc)
+verify N=32 M=6 D=8 C=4.5 G=1.8 MAXB=12: all 4434 nonzero bins fail, worst certified ratio 0.
+  Cause: bin (s=0,i=0,j=0) contains the point x=0,u=1, where both first-level children touch a
+  base-3 window (closed touching), so the block sum is 0 on a neighbourhood after interval
+  pessimism; the infimum over a uniform bin is 0 although every interior sample is >0.
+  => uniform bins cannot carry a certificate; the partition must follow window/touch boundaries.
+
+# ---- lap 2 (2026-10-10), after Codex review of c93704d6 ----
+# (a) binary SFT now rebuilt per C: gen_sft.js C 13 (containment windows, conservative at depth 13).
+#     gen_sft(4.5,13) reproduces sft45.json's lam 1.8902520524667157 exactly; gen_sft(4.49,13): lam 1.889271428823794;
+#     gen_sft(1.5,13): empty (binary control now dies genuinely); review suite: 4/4 pass (test 3 moved to C = 3).
+# (b) matched baseline = abs3 iterated per level (shared3.js D=1 separate), same nested samples:
+separate N=32 M=6 D=1 C=4.5 K=3x3:   DEAD at iteration 10
+separate N=32 M=6 D=1 C=4.5 K=9x9:   DEAD at iteration 7
+separate N=32 M=6 D=1 C=4.5 K=27x27: DEAD at iteration 7
+# shared, nested samples K = 3, 9 (per-C SFT):
+shared N=32 M=6 D=8 C=4.5  K=3x3: 1.839207    K=9x9: 1.821668
+shared N=32 M=6 D=8 C=4.49 K=3x3: 1.837337    K=9x9: 1.823344
+# (c) "rootV" relabelled bin000 (abstract bin (0,0,0), not the root cell).
+# (f) confirmed closure artifact: with OPEN touching (real cells never touch exactly, delta irrational)
+#     the bin-(0,0,0) infimum is positive (exactinf.c).
+## exact bin-infimum iteration (exactinf3.c: V-independent piece split, open touches), c = 4.5, sft45
+exact N=16 M=6  D=4: 1.536469     exact N=32 M=6 D=4: 1.669299     exact N=64 M=6 D=4: 1.714048
+exact N=16 M=12 D=4: 1.566857     exact N=16 M=6 D=6: 1.664868
+#  vs sampled (same N, D): N=16 D=4 1.646, N=16 D=6 1.81, N=32 D=4 1.759.  Sampling misses thin bad slivers;
+#  the exact value rises with N toward the sampled screen.  Piece storage does not scale to D = 8.
+## target-driven fixed point (shared3cert.c): V <- min(V, LB/g^D); certificate iff it stabilises with V > 0
+cert N=16 M=6 D=4 G=1.5: CERTIFICATE (1637/2400 positive bins)      G=1.6: no fixed point (decays), consistent
+## containment pruning (CONT=1 shared3.js; matches twoThreeBad): partial overlaps carry forbidden end-zones,
+## zone-carrying leaves killed at block end (pessimistic).  Sampled, nested K=9x9, N=32 M=6, c = 4.5:
+touching    D=4: 1.742198   D=8: 1.821668
+containment D=4: 1.793335   D=8: 1.850041   (zeros 159/4800 vs 355)
+# touching pruning (abs3) charges the window widened by a cell on each side; containment roughly halves the
+# base-3 cost.  The rigorous tools (exactinf3.c / shared3cert.c) still use touching: port CONT next.
+## exact bin-infimum, CONTAINMENT pruning (exactinf3.c, interval zones), c = 4.5
+exact-cont D=4: N=16 M=6 1.526013   N=32 M=6 1.679486   N=128 M=6 1.761422   N=64 M=12 1.747790   N=128 M=12 1.797783
+## target-driven fixed point, containment (exactinf3.c ... c G), sampled warm start, 1% overshoot on lowering
+cert-cont D=4 N=16  M=6:  G=1.52 CERTIFICATE, G=1.6 no convergence (control vs exact 1.526)
+cert-cont D=4 N=128 M=12: G=1.70, 1.75, 1.78 CERTIFICATE (37082/38400 positive bins)   [float; abs3-type model]
+cert-cont D=6 N=128 M=12 c=4.5 G=1.8: CERTIFICATE (float, model) 37168/38400 positive bins
+cert-cont D=6 N=128 M=24 c=4.5 G=1.8: CERTIFICATE (float, model) 74671/76800 positive bins
+# sampled: zone-carrying leaves killed at block end cost D=8 1.853 -> 1.850 only (D=4 1.818 -> 1.793).
+# per-C binary model in exactinf3.c: -DSFT_H='"sft449.h"' (sft_header.js from gen_sft.js 4.49 13).
+cert-cont D=6 N=256 M=12 c=4.5 G=1.8: CERTIFICATE (float, model) 75060/76800 positive
+cert-cont D=6 N=128 M=24 c=4.49 (own SFT, gen_sft 4.49 13) G=1.8: CERTIFICATE (float, model) 74443/76800 positive
+## entry states (entry.js): levels 0-4 are early (cell > 6 delta in stage-0 units); levels >= 5 are regular bins.
+entry c=4.49 N=128 M=24 D=6 G=1.8 with the certified weights (v449_N128_M24_D6.txt.gz):
+  root weight = min(1, 1.8^-6 * sum over clean SFT-alive level-6 cells of V(bin)) = 1  (no ambiguous window tests)
+## EXACT integer certificate (exact3.c, lap 4, 2026-10-10): fixed point 2^-90 arithmetic, delta3 enclosure
+## [dlo,dhi] (+-2^-50; dlo^100 3^449 < 2^9000 < dhi^100 3^449 checked exactly), dyadic rho-bin edges
+## (exact3_edges449.txt), Good449 semantics: closed windows, strict zones (touching kills), ambiguous
+## resolution = min of both interpretations, SFT sft449 (= minimal forbidden words of Forb2, forb2_check.js).
+exact3 128 24 6 16 v449 40 9 5: EXACT CERTIFICATE growth 9/5, positive 74431/76800, 12 passes, 73 s
+   (weights W449_N128_M24_D6.txt.gz, integers; Lean weight = W / maxW, maxW 1072633893121)
+control growth 37/20: no fixed point (uniform decay, worst 0.950 every pass)
+entry (entry_exact.py): root weight 1 (level-6 descendants all regular); early cells k=1..4 may take weight 0.
+read-only check (exact3 ... check W449.txt, separate code path, no lowering): CHECK PASSED 74431/76800 positive,
+   0 failures, 5.9 s.  Mutation control (W[bin 0] := 1e14): CHECK FAILED at bin 0.
+## operator blocker (h) (binLo/binHi empty range): fixed in exactinf.c/exactinf3.c/shared3cert.c/shared3rig.c by
+## outward ownership (strict comparisons: an edge point belongs to both bins; monotone, so ja <= jb).  The review
+## TODO is now a real passing test (CC=leanc node --test shared3_lap2_review_test.js: 3/3).  exact3.c never had
+## u-bins: rho-bins with ja = first j with edge[j+1] >= rlo, jb = last j with edge[j] <= rhi, ja <= jb by the same
+## monotonicity argument; it supersedes the float certificates for gate 4.
+## Lean (lap 5): CertData.Gate4 checker re-run by native_decide on all 76800 bins: 0 failures
+## (8 modules, 3m19s wall).  coherentTwoThree449 proved (axioms: standard + native_decide).

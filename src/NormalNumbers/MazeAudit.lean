@@ -16,6 +16,13 @@ import NormalNumbers.UniformBadJoint
 import NormalNumbers.UniformBadRoute
 import NormalNumbers.UniformBadNewhouse
 import NormalNumbers.UniformBadNineHalves
+import NormalNumbers.UniformBadTower
+import NormalNumbers.UniformBadTowerReview
+import NormalNumbers.UniformBadNextReview
+import NormalNumbers.UniformBadEntryReview
+import NormalNumbers.UniformBadTailReview
+import NormalNumbers.UniformBadTailObstruction
+import NormalNumbers.UniformBadTailRefute
 import NormalNumbers.EntropyProfiles
 import NormalNumbers.CantorExactExponentStretch
 import NormalNumbers.CantorExactExponentProfile
@@ -56,6 +63,30 @@ def mazeRows : List RowInfo :=
 
 /-- Each linked row and the declarations it rests on. -/
 def mazeLinks : List Link := [
+  ⟨"Per-ancestor sup charging of the base >= 5 tail on the gate-4 weights",
+   [``UniformBadThreshold.TailReview.childConcentration_18,
+    ``UniformBadThreshold.TailReview.tailChargeBudget449_of_totals],
+   [``UniformBadThreshold.TailReview.TailTotalsBound449]⟩,
+  ⟨"Per-cell relative regularity nodes for the gate-5 tail bookkeeping",
+   [``UniformBadThreshold.TailReview.not_apKillFrostman449_of_hull,
+    ``UniformBadThreshold.TailReview.not_apKillFrostman449_eight,
+    ``UniformBadThreshold.TailReview.not_apKillFrostman449_of_concentrated,
+    ``UniformBadThreshold.TailReview.not_apKillUniform449,
+    ``UniformBadThreshold.TailReview.not_regularPotential449_sixty,
+    ``UniformBadThreshold.TailReview.not_regularPotential2_449_45,
+    ``UniformBadThreshold.TailReview.tailChargeBudget449_of_upperGrowth_kill],
+   [``UniformBadThreshold.TailReview.ConcentratedCells449,
+    ``UniformBadThreshold.TailReview.UpperGrowth449,
+    ``UniformBadThreshold.TailReview.TotalsKill449]⟩,
+  ⟨"Carmichael towers for rationalTower_four",
+   [``UniformBadThreshold.carmichaelQ_le,
+    ``UniformBadThreshold.CarmichaelChainCollapse,
+    ``UniformBadThreshold.goodBelow_tower_step,
+    ``UniformBadThreshold.not_rationalTower_of_jointRationalsFinite,
+    ``UniformBadThreshold.JointRationalsFinite,
+    ``UniformBadThreshold.not_rationalTower,
+    ``UniformBadThreshold.not_selfGoodPerfect],
+   [``UniformBadThreshold.SmallOrderModuli]⟩,
   ⟨"adaptive split cores for the Newhouse thick core",
    [``UniformBadThreshold.Newhouse.merge_forced,
     ``UniformBadThreshold.Newhouse.windows_merge_forced,
@@ -89,6 +120,9 @@ def mazeLinks : List Link := [
   ⟨"82000 by digit-count exponents",
    [``ZeroOneBases.threeNine_infinite, ``ZeroOneBases.Literature.BurrellYuFourFive],
    [``ZeroOneBases.ZeroOneFourFive, ``ZeroOneBases.ZeroOneThreeFourInfinite]⟩,
+  ⟨"Run covers from their 2-adic and real completions",
+   [``Adder.runCover_three_mixed, ``Adder.twoAdic_runFree, ``Adder.exists_irrational_noOnes],
+   [``Adder.RunCoversGrow]⟩,
   ⟨"x, 3x, 5x as the first member of a family",
    [``Adder.not_isWordSetBlock_runs_three_one_seven_nine,
     ``Adder.not_isWordSetBlock_runs_three_small, ``Adder.not_isWordSetBlock_extremeDigits], []⟩,
@@ -333,7 +367,7 @@ def mazeLegacy : List String := [
   "Diophantine good-denominator detour for the tail cell",
   "route B's unweighted cover of the state-dependent target"]
 
-/-- info: maze audit: 183 rows, 76 cite declarations, 107 legacy (prose only) -/
+/-- info: maze audit: 187 rows, 80 cite declarations, 107 legacy (prose only) -/
 #guard_msgs in
 #maze_audit mazeRows, mazeLinks, mazeLegacy
 

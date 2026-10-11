@@ -367,9 +367,15 @@ theorem isWordSetBlock_four_extreme : IsWordSetBlock 4 {[0], [3]} {1, 3, 6, 9} :
 /-! ### The run cover: an arithmetic shadow that grows with `k`
 
 `runs_liouville_cover` turns every run block into an arithmetic object: a set `S` such that
-every odd `B` has `k` consecutive ones in some `m·B`.  Its minimum size (exact ILP over odd
-`m ≤ 256`, `B ≤ 2000`) is 2, 3, at least 5 for `k = 2, 3, 4`.  The true run-block sizes sit
-above it (`{1, 3, 5}` at `k = 2` needs its third member for the token witness `01`/`001`). -/
+every odd `B` has `k` consecutive ones in some `m·B`.  Its minimum size over odd `m ≤ 256` is 2
+at `k = 2` (`{1, 3}`), 4 at `k = 3` (`{1, 3, 5, 7}`, and no triple), and at least 5 at `k = 4`
+(exact carry automaton `experiments/mahler_run_cover_exact.py`; the `k = 4` bound is the ILP
+dual against odd `B ≤ 2000`).  An earlier ILP optimum of 3 at `k = 3` was an artifact of
+`B ≤ 2000`: `{137, 213, 243}` first fails at `B = 5177`.  The true run-block sizes sit above the
+cover sizes (`{1, 3, 5}` at `k = 2` needs its third member for the token witness `01`/`001`).
+
+The growth of run blocks no longer needs this shadow: `runBlocks_grow` below gets it from a real
+witness.  `RunCoversGrow` stays open as arithmetic in its own right. -/
 
 /-- `S` is a **run cover** of order `k`: every `B ≥ 1` has `k` consecutive ones in some `m·B`. -/
 def RunCover (k : ℕ) (S : Finset ℕ) : Prop :=
@@ -382,14 +388,18 @@ theorem IsWordSetBlock.runCover {k : ℕ} {S : Finset ℕ} (hS : IsWordSetBlock 
 
 /-- **Order-4 run covers need 5 multipliers** below 257 (computational; confidence 90%):
 exact ILP, HiGHS dual bound 5.0 over odd `m ≤ 256` against odd `B ≤ 2000`
-(`experiments/mahler_run_cover.py`; orders 2, 3 give optima 2, 3). -/
+(`experiments/mahler_run_cover.py`).  A dual bound against finitely many `B` is a valid lower
+bound; the ILP's optima are not (see the section note). -/
 theorem not_runCover_four_small :
     ∀ S ⊆ Finset.Icc 1 256, S.card ≤ 4 → (∀ m ∈ S, Odd m) → ¬ RunCover 4 S := by
   sorry
 
 /-- **Open node: run covers grow.**  For every size bound `s` some order `k` has no run cover
-of size `≤ s`.  Believed (confidence 60%): the optimum climbs 2, 3, ≥ 5, and a single `m`
-never covers (some multiple of `m` is a sparse repunit `(2^(jn) − 1)/(2^j − 1)`). -/
+of size `≤ s`.  Believed (confidence 65%): the optimum climbs 2, 4, ≥ 5, a single `m` never
+covers (`m·B = Σ_{i<m} 2^(2ni)` with `n` the order of 2 mod `m`), and both completions of the
+problem are solved (`twoAdic_runFree`, `exists_irrational_noOnes`).  What is missing is the
+junction: an integer `B` needs a 2-adic tail and a real head that agree on a window of about
+`log₂ max S` bits, and `runCover_three_mixed` shows the window can block both. -/
 def RunCoversGrow : Prop :=
   ∀ s : ℕ, ∃ k, ∀ S : Finset ℕ, S.card ≤ s → ¬ RunCover k S
 
@@ -398,5 +408,105 @@ theorem runBlocks_grow_of_runCoversGrow (h : RunCoversGrow) (s : ℕ) :
     ∃ k, ∀ S : Finset ℕ, S.card ≤ s → ¬ IsWordSetBlock 2 (binaryRuns k) S := by
   obtain ⟨k, hk⟩ := h s
   exact ⟨k, fun S hS hB => hk S hS hB.runCover⟩
+
+/-- **`{1, 3, 5, 7}` is a run cover of order 3** (hand proof, confidence 99%; exact automaton
+`mahler_run_cover_exact.py 3 1,3,5,7`: COVER).  English proof: strip the factor `2^a` from
+`B` (it only appends zeros).  For odd `B`, the units mod 8 are `{1, 3, 5, 7}`, so
+`m ≡ 7·B⁻¹ (mod 8)` lies in `S` and `m·B ≡ 7 (mod 8)` ends in `111`.  The same argument makes
+the `2^(k−1)` odd residues mod `2^k` a run cover of order `k`; it is a purely 2-adic cover. -/
+theorem runCover_three_one_three_five_seven : RunCover 3 {1, 3, 5, 7} := by
+  sorry
+
+/-- **The 2-adic completion is easy** (hand proof, confidence 92%): if fewer than `2^(t−1)` odd
+multipliers are given, some odd `B` keeps `k = 2t − 1` consecutive ones out of the low `n` bits
+of every `m·B`, for every `n`.
+
+English proof.  Read `B` in base `q = 2^t`, lowest digit first.  A run of `2t − 1` ones contains
+a whole aligned `t`-bit block, so it suffices that no base-`q` digit of any `m·B` equals
+`q − 1`.  Once the lower digits of `B` are fixed, the next digit of `m·B` is
+`(c + m·v) mod q` for the incoming carry `c`, and `v ↦ c + m·v` is a bijection mod `q` because
+`m` is odd.  So each `m` forbids exactly one value of the next digit `v` of `B`.  At the bottom
+`c = 0` and the forbidden value is odd, so an odd first digit survives when `|S| < 2^(t−1)`; at
+every later digit `|S| < q` leaves a choice.  Truncate after `⌈n/t⌉` digits. -/
+theorem twoAdic_runFree (t : ℕ) (ht : 1 ≤ t) (S : Finset ℕ) (hodd : ∀ m ∈ S, Odd m)
+    (hS : S.card < 2 ^ (t - 1)) (n : ℕ) :
+    ∃ B, Odd B ∧ ∀ m ∈ S, ¬ List.replicate (2 * t - 1) 1 <:+: Nat.digits 2 (m * B % 2 ^ n) := by
+  sorry
+
+/-- **A mixed obstruction: both completions solvable, integers not** (computational, confidence
+95%; `mahler_run_cover_exact.py 3 3,7,21,35`: COVER after 23 states, and no `B < 2^20` by brute
+force).  `{3, 7, 21, 35}` is a run cover of order 3, yet the 2-adic number `B = −23/127` keeps
+`111` out of every `m·B`, and so does the real `y = 1/7` (`3y = 0.(011)`, `7y = 1`, `21y = 11₂`,
+`35y = 101₂`).  An integer must carry a 2-adic tail and a real head at once, and here no head
+meets any tail.  So `RunCoversGrow` does not follow from `twoAdic_runFree` and
+`exists_irrational_noOnes` by gluing.  At `k = 2`, `{37, 57}` behaves the same way. -/
+theorem runCover_three_mixed : RunCover 3 {3, 7, 21, 35} := by
+  sorry
+
+/-! ### Run blocks grow: the real witness (2026-10-10)
+
+A run block must beat every irrational witness, not just the Liouville ones that produce run
+covers.  A nested-interval argument builds one irrational `X` with no `1^k` anywhere in any
+`m·X` as soon as `16·|S| ≤ 2^⌊k/4⌋`.  So run blocks, and binary `k`-word blocks, need
+exponentially many members, and the integer junction that blocks `RunCoversGrow` never arises. -/
+
+/-- **One irrational beats `2^⌊k/4⌋/16` multipliers** (hand proof, confidence 90%): if
+`16·|S| ≤ 2^⌊k/4⌋`, some irrational `X` has no `k` consecutive ones in the binary expansion of
+any `m·X`, `m ∈ S`.
+
+English proof.  Drop `m = 0`.  Put `h = ⌊k/2⌋`, `a = ⌊k/4⌋ = ⌊h/2⌋`, `u = a + k − h`.  Call an
+integer `j ≥ 0` *good* if its binary has no `1^k` and ends in at most `h` ones; a *cell* of level
+`ℓ ∈ ℤ` is `[j·2^(−ℓ), (j+1)·2^(−ℓ))`, good when `j` is.  Keep an interval `J = [y₀, y₀ + λ)`
+and, for each `m`, a good cell `C_m ⊇ m·J` with `|C_m| ≤ 2^a·m·λ`.  Start from `J = [0, λ₀)`,
+`C_m = [0, 2^(−ℓ))` with `2^(−ℓ)` the least power of two `≥ m·λ₀`.
+
+Step: put `λ' = λ·2^(−u)`, draw `y` uniformly from `[y₀, y₀ + λ − λ']`, and let `J' = [y, y + λ')`.
+For each `m` take the level `ℓ'` with `2^(a−1)·m·λ' < 2^(−ℓ') ≤ 2^a·m·λ'`; then
+`k − h ≤ ℓ' − ℓ =: e ≤ u ≤ k`.  `J'` fails for `m` in two ways.
+(1) `m·J'` straddles a level-`ℓ'` boundary: probability `≤ 2^(1−a) + 2^(1−u) ≤ 2^(2−a)`.
+(2) `m·J'` lies in a level-`ℓ'` cell `C' ⊆ C_m`, whose index is `j·2^e + v` with `v` an `e`-bit
+string, and that index is not good.  This needs `v` to start with `k − h` ones (a run across the
+seam, since `j` ends in at most `h` ones), contain `1^k` (one position at most, as `e ≤ k`), or
+end in `h + 1` ones.  Under the uniform law on `C_m` this has probability
+`≤ 2^(−(k−h)) + 2^(−k) + 2^(−h−1) < 2^(1−h)`, and `m·y` has density at most `2^(a+1)` against
+that law.  So the probability is `< 2^(a+2−h) ≤ 2^(2−a)`.
+Each `m` fails with probability `< 2^(3−a) ≤ 1/(2|S|)`, and `J'` contains the `n`-th rational
+with probability `≤ 2^(1−u) ≤ 1/4`.  Some `y` avoids everything; `J'` and the new cells keep
+the invariant.  The nested intervals meet in an irrational `X`.  Each `m·X` is irrational and is
+the limit of its nested good cells, so its unique expansion has every prefix free of `1^k`. -/
+theorem exists_irrational_noOnes (k : ℕ) (S : Finset ℕ) (hS : 16 * S.card ≤ 2 ^ (k / 4)) :
+    ∃ X : ℝ, Irrational X ∧ ∀ m ∈ S, ∀ n, ¬ OccursAt 2 ((m : ℝ) * X) (List.replicate k 1) n := by
+  sorry
+
+/-- **Run blocks need more than `2^⌊k/4⌋/16` members.** -/
+theorem IsWordSetBlock.runs_card {k : ℕ} {S : Finset ℕ}
+    (hS : IsWordSetBlock 2 (binaryRuns k) S) : 2 ^ (k / 4) < 16 * S.card := by
+  by_contra h
+  obtain ⟨X, hX, hno⟩ := exists_irrational_noOnes k S (not_lt.mp h)
+  obtain ⟨m, hm, hw⟩ := hS X hX
+  obtain ⟨n, -, hn⟩ := hw (List.replicate k 1) (by simp [binaryRuns]) 0
+  exact hno m hm n hn
+
+/-- **Binary `k`-word blocks need more than `2^⌊k/4⌋/16` members**, against the doubly
+exponential `Literature.SzuszVolkmann1983` upper bound. -/
+theorem IsWordBlock.two_card {k : ℕ} {S : Finset ℕ} (hS : IsWordBlock 2 k S) :
+    2 ^ (k / 4) < 16 * S.card := by
+  by_contra h
+  obtain ⟨X, hX, hno⟩ := exists_irrational_noOnes k S (not_lt.mp h)
+  obtain ⟨m, hm, hw⟩ := hS X hX
+  obtain ⟨n, -, hn⟩ := hw (List.replicate k 1) (by simp)
+    (fun d hd => by rw [List.eq_of_mem_replicate hd]; norm_num) 0
+  exact hno m hm n hn
+
+/-- **Run blocks grow**: no `s` multipliers form a run block of order `4(s + 4)`. -/
+theorem runBlocks_grow (s : ℕ) :
+    ∃ k, ∀ S : Finset ℕ, S.card ≤ s → ¬ IsWordSetBlock 2 (binaryRuns k) S := by
+  refine ⟨4 * (s + 4), fun S hS hB => ?_⟩
+  have h1 := hB.runs_card
+  have h2 : 4 * (s + 4) / 4 = s + 4 := by omega
+  rw [h2, pow_add] at h1
+  have h3 : s < 2 ^ s := Nat.lt_two_pow_self
+  generalize 2 ^ s = t at h1 h3
+  omega
 
 end NormalNumbers.Adder

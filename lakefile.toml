@@ -41,3 +41,9 @@ name = "LeanLedger"
 git = "https://github.com/gotrevor/lean-agent-skills.git"
 rev = "97a1e13bb29d802404be0ced664743b75fd4bf31"
 subDir = "lean"
+
+# Gate 4 certificate checker (pure Int/Array, no Mathlib): precompiled so `native_decide` runs native code.
+[[lean_lib]]
+name = "CertData"
+roots = ["CertData.Gate4", "CertData.Gate4Check0", "CertData.Gate4Check1", "CertData.Gate4Check2", "CertData.Gate4Check3", "CertData.Gate4Check4", "CertData.Gate4Check5", "CertData.Gate4Check6", "CertData.Gate4Check7"]
+precompileModules = true

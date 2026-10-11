@@ -538,6 +538,7 @@ import NormalNumbers.LiteratureDigitsOfPowers
 import NormalNumbers.ErdosTriples
 import NormalNumbers.ErdosTripleClasses
 import NormalNumbers.ZeroOneBases
+import NormalNumbers.ZeroOneBasesReview
 import NormalNumbers.ZerolessTuples
 import NormalNumbers.CampbellAnswer
 import NormalNumbers.CPrimeSiteFactorization
@@ -990,6 +991,18 @@ import NormalNumbers.UniformBadFive
 import NormalNumbers.UniformBadBelowFive
 import NormalNumbers.UniformBadNineHalves
 import NormalNumbers.UniformBadLowerBound
+import NormalNumbers.UniformBadTower
+import NormalNumbers.UniformBadTowerReview
+import NormalNumbers.UniformBadNextReview
+import NormalNumbers.UniformBadCoherent
+import NormalNumbers.UniformBadEntryReview
+import NormalNumbers.UniformBadTailReview
+import NormalNumbers.UniformBadTail
+import NormalNumbers.UniformBadTailSplit
+import NormalNumbers.UniformBadTailObstruction
+import NormalNumbers.UniformBadTailMechanism
+import NormalNumbers.UniformBadTailRefute
+import NormalNumbers.UniformBadTailProbeReview
 import NormalNumbers.LinearFormsScales
 import NormalNumbers.LinearFormsScalesStretch
 import NormalNumbers.Hertling

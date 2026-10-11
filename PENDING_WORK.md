@@ -1,3 +1,66 @@
+## Gate 5 lap 3 (2026-10-11, REVIEW) — per-cell route REFUTED; counting route with comb comparability
+* **Refuted (exact, exhaustive; `UniformBadTailRefute.lean`):** every per-cell node of the lap-2
+  bookkeeping, at its stated constants.  `not_apKillFrostman449_eight` (s ≤ 8, C = 2, α = 17/20; proved
+  reduction `not_apKillFrostman449_of_hull` + 2 sorry'd finite facts at cell (13,808), whose positive
+  mass is in 4 of 4096 level-25 cells); `not_apKillUniform449` (node 1, s = 6, C = 37/20: one base-5
+  stage-9 window takes 1.046% vs 0.269%); `not_regularPotential449_sixty` ((10,573), 71.62);
+  `not_regularPotential2_449_45` ((6,61), 45.11).  `tailChargeBudget449_of_nodes` is vacuous.
+  Mechanism: CONCENTRATED cells (window edge beside a binary-follower hull end).
+  `ConcentratedCells449 → ∀ s C α>0, ¬ APKillFrostman449` PROVED.  Lesson: no bound normalized by a
+  single cell's own mass can work; the crux is a TOTALS statement.
+* **Totals form (proved wiring):** `tailChargeBudget449_of_upperGrowth_kill`: `UpperGrowth449 Λ` +
+  `TotalsKill449 ε` with `εΛ < 33` ⇒ crux (measured ε ≈ 0.005, Λ ≈ 44; huge slack).
+* **New mechanism: COMB SPREADING (Doeblin-type, per parent, no regularity).**  A parent's 64
+  block-children sit at base-3 phases x0 + iρ (ρ ∈ (2δ3, 6δ3] > 1/128 = x-bin width), ≤ 3 per x-bin, so
+  few land in low-weight (state, x-bin) pairs.  Exhaustive over all core-alive parents at k ≤ 15
+  (`scripts/cstar_models/tail5_comb.py`): max #core-alive children that are non-Good or of weight
+  < maxW/3 is e = 12 (≤ 6 below maxW/10).  Induction: N'_m ≤ mass(m)/w0 + e N'_{m-1} ⇒ survivor COUNT
+  N'_m ≤ K mass(m), K = (1/w0)/(1 − e/γ) ≈ 5–6.  This is the comparability every earlier route lacked.
+* **Counting budget screen (`tail5_countbudget.py`, design floats):** per family (b,n), ancestors at the
+  spacing block level meet ≤ φ+2 windows; each kills ≤ min(64ρ, 126) children of weight ≤ 1; charge
+  K·(kills) to mass at the lag.  FAILS by ~6× at the best γ ≈ 28 (Σ ≈ 35 vs budget 6); the excess is
+  long-window EDGES (126 per edge per block, every later block) of bases 5,6,7 at lags 2–3.  Without
+  bases 5–7 (fallback (a)) the same crude count closes (~4.2 vs 6 at γ = 28).
+* **NEXT (decisive, ordered):**
+  1. Refined counting screen, all rigorous per-parent finite quantities: (i) W-weighted run sums
+     f(R) = max over parents and contiguous child runs of length R of Σ W (replaces 64ρ and 63 per
+     edge, weight 1); (ii) layer-cake comparability N' ≤ β(mass + loss) + e'·N'_prev (β ≈ 2); (iii) exact
+     per-ancestor window counts per (b, φ0) instead of φ+2.  Target: close the ~6× gap at some γ.
+  2. If it closes: state the per-parent comb + run-sum facts as frozen nodes, prove the strong
+     induction (comparability ∧ charges) in Lean, then certify the per-parent facts by a gate-4-style
+     B&B (max instead of min) over parent types incl. zone cells.
+  3. If not: record the counting obstruction (Lean statement + Maze row) and take the operator's call on
+     (a) (ON-LINE-REQUEST 2026-10-11).
+* Data: exact core dump to level 26 in `scripts/cstar_models/tail5_out/core/` (regenerate:
+  `tail5_dump.py 27`; ~1 h); outputs `tail5_out/concentrate_k24.txt`.
+
+## Gate 5 lap 1 (2026-10-10) — WIRING PROVED; measurement: kill test does NOT fire
+* `tailBudgetSuffices449` PROVED (`UniformBadTailWiring.lean`: `coreDeletionRecurrence449`,
+  `mass_pos_of_budget`, `exists_limit`, `weak_avoid`; growth `Coherent.wq_grow`).
+  `cStar_le_449` now rests only on `tailChargeBudget449`.
+* Prework: exact3.c `A << F` -> `A * ONE`; UBSan xfail removed (checked by trap-mode UBSan).
+* Measurement (`scripts/cstar_models/tail5_measure.py`, `tail5_totals.py`, outputs `tail5_out/`):
+  controls: zero tail PASS; delete-all-first-block FAIL (lag-0 ratio 603.7).
+  TOTALS (the statement's own quantities, bases 5..7 / 5..40): loss m / mass m = 0.229 (m=2),
+  0.210 (m=3) vs budget 9.874655 — the statement looks true with lag-0 charge alone.
+  PER-ANCESTOR (what a proof can certify): natural ancestor level FAILS (655 at n<=6);
+  charging one block higher (shift 1, climbing past weight-0 non-Good ancestors) 7.50 at n<=6
+  (was 3.09 at n<=5: rising with depth — n<=7 run pending); shift 2: 2.84.  Per-parent lag-0
+  worst grows 41 (m=2) -> 130 (m=3).  Sampled maxima only.
+* Lap 1 later (2026-10-10): `UniformBadTailSplit` (loss_le_split, SplitChargeBudget449 -> crux).
+  Corrected totals (Codex n): loss/mass 0.2300 (m=2), 0.2104 (m=3), exact on finite tree, bases 5..7.
+  PER-ANCESTOR OBSTRUCTION (sampled): Good cell (18,191938), weight 7.16e-4, has Good child mass
+  5704x its weight in ONE block; fixed-shift sup charging FAILS at gamma=(17/10)^6: shift0 655 (n<=6),
+  shift1 226.5 (n<=7) [both dominated by that cell]; shift2 2.32 only reaches level<=12 ancestors.
+  Climb (zero-weight survivors -> positive ancestor): 0:112267, 1:1728, 2:21 (through level 24).
+  Crude large-base tail (spread 3020, climb<=2, design estimate): fits only for B ~ 800+.
+  NEXT: adaptive scheme (climb to weight > theta; runs theta=1/100,1/20 in tail5_out/); if it fails,
+  the per-ancestor route is dead -> Lean node + Maze row + ON-LINE-REQUEST (kill test), structural
+  fix = fold 5..7 into the core or a totals (averaging) mechanism.
+* NEXT (crux): finish n<=7 shift-1/2 runs; if shift-2 stays well under budget, design a finite
+  upper certificate (max-analogue of exact3.c with base-b phase) for per-ancestor charges at
+  shift 2, plus the rigorous b>=8 tail.  If the per-ancestor sums keep rising with depth, that
+  is the obstruction to state in Lean (operator kill test).
 ## Repetition lap 13 (2026-10-09, later) — P1 PROVED; HEADLINE `liouvilleCantorFullProfile` PROVED
 * `repPairArith_of_sparse` is a theorem (section `Shadow` in CantorRepetition, ~1000 lines);
   `#print axioms liouvilleCantorFullProfile` = trust base.  Scope target `CantorRepetition.lean`
@@ -3776,3 +3839,134 @@ Next: `isFresh` Riesz bound, then the classification lemma in Lean (route-decisi
 - PROVED `exists_kappa_sum_le`, `repBound_le_one` (option-choice glue).
 - PROVED `pairNat`, `pairNat_eq`, `pairNat_eq_sub`, `pair_class1`, `pair_class3` (concrete per-pair bounds, h = 3^e h').  PROVED `pair_class2`, `pair_class4`, `pairNat_eq_mul`.  PROVED `pair_class5`, `pair_class6`, `pairNat_lt` (all six concrete).  PROVED `pairMaj`, `pairMaj_ge`, `exists_option_le_pairMaj` (six-way disjunction ⇒ option ≤ pairMaj), `lt_runStart`.  PROVED `pair_classes` (disjunction at concrete positions).  PROVED `card_nearCopyBdry_le_of` (band count for injective positions: y(m), T(m,·)).  PROVED `strictMono_log_mul_pow`, `strictMono_log_pair` (injectivity of y, T).  pairMaj copy terms restricted to `copyRuns` (a_k ≤ u, T < (k+2)a_k), else Σ_k over all k ≤ M ≈ N would kill the power saving.  PROVED `u_le_T`, `sum_copyRuns_le` (copy terms ≤ Σ_{k≤log₄(2sN+e)} full sums below (k+2)a_k+1).  PROVED `runLen_mono`, `copy5_total_le`, `copy6_total_le` (run-by-run copy totals). Fixed: k-range filtered by a_k ≤ 2sN+e (a_L for L = log₄ X is superpolynomial in X — the unfiltered bound was useless); copy totals take any run set Ks with lengths ≤ Nmax. PROVED `sum_shift_le`, `sum_pair_class3_le`. PROVED `sum_pairMaj_le` (total of pairMaj).  Next: excluded pairs (small m, bands) ≤ count; final arithmetic with W=j+1, K ≍ ε log N; assemble repPairPower_of_inputs.  Next: sum pairMaj + band/small counts; combine with pair_classify_rep.
 - Next: κ choice (classical, per classification), summability (step 3 of lap-4 handoff): κ choice, band/small-m counts, summability.
+
+## c⋆ gate 3 lap (2026-10-08)
+- Proved: `not_admissible_729_290` (95-window cert, `cert_exact.py`), `goodBelow_241_1365`,
+  `admissible_of_towerFamily` (Baire on `closure F`), exact checker `goodBelow_of_check`.
+- Crux `rationalTower_four`: Carmichael-chain mechanism recorded as a wall (Maze row "Carmichael towers
+  for rationalTower_four"; `carmichaelQ_le`, `CarmichaelChainCollapse`, reopen `SmallOrderModuli`).
+  Measured density ≈ sqrt of independent-coset model; expected count `Q_L e^{-κL}` → 0 since
+  `log Q_L = L^{o(1)}`.  Local density near previous numerator = global (no shadowing boost).
+- NEXT attack: the coset heuristic predicts few self-good rationals for ANY denominator family
+  (Corvaja–Zannier).  Either (a) state/prove `¬ RationalTower 4` conditionally on a coset-equidistribution
+  hypothesis, or (b) find moduli beating it (`SmallOrderModuli`); check CZ transcription against source.
+- Proved `not_rationalTower_of_jointRationalsFinite`: finitely many {2,3}-good rationals in [0,1) at c ⇒ ¬RationalTower c.
+  Conjecture node `JointRationalsFinite` (50%): data at c = 4 shows {2,3}-good rationals persist to q = 2·10⁵
+  (30–50 denominators per dyadic range), CZ heuristic says finite asymptotically.  NEXT: same census with all
+  bases b < q^{1/4} (self-good) — does the per-range count of self-good denominators decay? That decides the route.
+- rationalTower_four now PROVED from the single leaf `selfGoodPerfect_four` (every self-good rational at c = 4 is a
+  limit of self-good rationals) + `goodBelow_529_2730`, via `rationalTower_of_selfGoodPerfect`.  Census: 23970
+  coprime-base self-good rationals q < 10⁵, nearest-neighbour distances shrink like ~1/q.  NEXT: a structured
+  mechanism for SelfGoodPerfect (e.g. y = x + 1/(qM) with M chosen so x's orbits are preserved), or its refutation.
+- gcd budget (gcd_budget.py): optimistic log-margin of joint small-order moduli peaks at 26.5 ((a,b)=(144,432)) and
+  goes negative past scale 4096 ⇒ coset model + CZ predict finitely many self-good rationals ⇒ ¬RationalTower 4.
+  selfGoodPerfect_four lowered to 20%; JointRationalsFinite raised to 75%.  The gate (sorry-free Tower file) rests
+  on a leaf now believed false: operator should decide between refuting (prove ¬RationalTower 4 conditionally) or
+  a non-rational tower mechanism.
+
+## c⋆ gate 3 lap 2 (2026-10-09)
+- PROVED `not_selfGoodPerfect_four_of_coset`: `CosetSurvival 4 κ C` (κ > 0) + cited `CZGcdTwoThree`
+  (Corvaja–Zannier 2005, transcription weaker than source) ⇒ ¬SelfGoodPerfect 4 ∧ ¬RationalTower 4, via
+  `jointRationalsFinite_of_coset` (bounded a+b, then bounded denominator; `finite_rat_Ico_den_le`).
+- The open part of the refutation is now the per-denominator, finitely checkable node `CosetSurvival`
+  (70%); control: holds with κ = 0.0125, C = 1 on all 260 census denominators q ≤ 2e5 (coprime to 6).
+- NEXT: test CosetSurvival on large structured moduli (divisors of gcd(2^a−1, 3^b−1), e.g. (144, 432))
+  and on denominators divisible by 2, 3; a counterexample would reopen rational towers.  The gate leaf
+  `selfGoodPerfect_four` stays a disclosed sorry, believed false.
+
+## Gate 4, lap 1 (2026-10-10): shared-phase measurement
+- **Advance:** kill test does NOT fire.  Shared phase vs separate on identical samples: separate dies/collapses,
+  shared reaches sampled growth ≈ 1.815 at D = 8 (N=32), 1.84 (N=64), both c = 4.5 and 4.49
+  (`scripts/cstar_models/shared3_results.txt`).  Margin over 9/5 is thin and decreasing in sample count.
+- **Obstruction found:** uniform bins cannot carry a rigorous certificate: a bin containing a closed-touching
+  point (x=0,u=1) has block infimum 0 (`shared3cert.c` branch-and-bound; interval iteration 1.587 at K=64x8).
+- **Lean:** staging node `Coherent.CoherentTwoThree45` (45%), measurements in the gate module doc.
+- **Next attack:** adaptive (quadtree in x, per SFT state) partition whose cells are cut at the touching
+  boundaries; rigorous value iteration on that mesh (`shared3cert.c` has the interval evaluator; compile with
+  `leanc -O2`, no gcc on the box).  If the mesh-refined rigorous growth stays < 1.8 while sampled stays ≈1.81,
+  the gap is the boundary-point loss: quantify it.
+
+## Gate 4, lap 2 (2026-10-10)
+- Codex review fixes: per-C binary SFT (`gen_sft.js`, = sft45 at 4.5), review suite 4/4, matched per-level abs3
+  baseline dies, bin000 relabel, corner (0,1) confirmed a closure artifact (open touching).
+- **Crux advance:** exact bin-infimum value (`exactinf3.c`) is far below the sampled screen at small N
+  (D=4: 1.54/1.67/1.71 at N=16/32/64; D=6,N=16: 1.66).  Rising with N; whether it passes 1.8 at D=8 and
+  feasible N is the open question.  Fixed-point certifier `shared3cert.c` (target-pruned B&B) running at
+  G=1.8 (D=6/8, N=32/64).
+- Next: if the fixed point fails at 1.8 for all feasible N, quantify the N-scaling of the exact value and
+  decide whether a non-uniform (boundary-adapted) classify is needed; entry states for the real root cell.
+
+## Gate 4, lap 3 (2026-10-10): float certificate at 9/5 + Lean reduction to clean cells
+- Containment model + per-C SFT: float certificates at growth 9/5, D=6 (c=4.5 N=128/256; c=4.49 N=128 M=24).
+- Lean (all proved): `coherentBlockCertificate_of_weights`, `coherentBlockCertificate_of_good`,
+  `alive_of_not_bad`, `clean449_alive`, `coherentTwoThree449_of_clean`.  The frozen theorem now rests on the
+  single crux `cleanCertificate449 : CleanCertificate449` (sorry, 50%).
+- Next attack on the crux: (1) exact-rational re-check of the 4.49 certificate (rational delta bounds, bins
+  in rho/delta with rational edges); (2) early-level entry states (k with no resolved stage) by backward
+  recursion, check root weight > 0; (3) the Lean bridge: clean descendants of a clean cell with signature
+  (s, x = frac(3^n a/2^k), rho = 3^n/2^k) are exactly the j whose interval avoids the new-stage windows ->
+  a native_decide checker over boxes with a soundness lemma.
+
+## 2026-10-10 gate 5 lap 2
+- Kill test NOT fired: shift-2 per-ancestor scheme passes at n<=7 (4.496 < 9.874655), growing.
+  Deeper runs (base 5 n<=8 shift 2/3; bases 5..7 n<=7 shift 3) in `tail5_out/`.
+- Refuted shortcut (not worth a Lean node; arithmetic only): take gamma near 1 (budget ~33) and bound
+  loss m by wmax * 256 * #windows of length >= 2^-(6m+6).  Fails: base-b stage-n windows have length
+  2 b^-(n+4.49), so per stage they cover a fixed fraction 2b^-4.49 and the window count grows like
+  2^k, against core mass ~ 2^(0.848k).  Any proof of the crux needs equidistribution of windows
+  against the core (that is TailTotalsBound449's content), not counting.
+- Regularity probe (`/tmp/regul.py` logic): max over Good cells of lag-j good-descendant mass /
+  (w * 34^j): k=6: 3.64 (j=1), 4.65 (j=2); k=12: 17.75 (j=1); k=18: ~168 (childConcentration).
+  The per-block sup is capped by 64*3020/34 ~ 5700 (weights in [1/3020,1]), so per-ancestor sups
+  are finite but huge; shift-s charging divides by gamma^s ~ 24^s.
+- Lap 2 results: base 5 shift-2 2.32 (n<=7) -> 3.71 (n<=8), growing ~+1.4/stage; shift-3 base 5
+  n<=8 2.64 (root-dominated).  Per-ancestor sups are bounded (weights in [1/3020,1]) so each
+  scheme's sup is finite; whether shift-2 saturates under 9.87 is undecided by sampling.
+  Next: a deterministic upper bound for the shift-s scheme via the 76802-class transfer data
+  (max over classes of lag-j good-descendant weight), not deeper sampling.
+- Lap 2 mechanism (`UniformBadTailMechanism.lean`): crux split into APKillUniform449 (offset-uniform
+  AP kill bound, evidence C<=1.15 at root and (6,2)) and UpperGrowth449 (totals upper growth of the
+  weighted core; the identified hard core: per-class potentials lose the 3020 spread, lags need
+  Lambda < gamma).  Proved: tailTotals_of_upperGrowth.  Next: (a) prove/measure UpperGrowth449
+  totals ratio childMassTot/mass for m <= 4 exactly; (b) formal bridge APKillUniform449 ->
+  loss m <= eps * childMassTot m (ancestor j_b blocks up; needs descendant bookkeeping).
+- Proved `tailChargeBudget449_of_ratio`: loss <= c*mass with c < (9/5)^6-1 ~ 33 suffices (measured
+  c ~ 0.23: 140x slack).  New node UpperGrowthLag449 (multi-block totals growth, Lambda ~ 44).
+  Reduction: crux <- node1 (APKillUniform449) + node3 (UpperGrowthLag449) + bookkeeping (lag j_b
+  charging, summed over b with gamma=20).  Next: write that bookkeeping theorem with both nodes
+  as hypotheses (statement first), then attack node 3 via actual survivor distribution.
+- PROVED childMassTot_succ_le (with orphanChild term), descMass_split, sum_range_mul_split.
+- Node 4 RegularPotential449: child-mass potential nearly regular (max desc2/desc1 = 57.3 at level 12 (no heredity prune),
+  48 at the 5704 cell); Good449 NOT hereditary -> orphanChild term added.  Plan: crux <- node1 (APKill) + node4 + childMassTot_succ_le (sorry,
+  bookkeeping; needs Good449 heredity check) + lag charging sum.  Rough cost with Lambda=52,
+  gamma=20, spacing 2^12: ~9C for base 5 alone vs budget 14 -> marginal; reduce spacing to 2^6 or
+  use deeper iterate (ratio -> ~44).  Next: prove childMassTot_succ_le; measure APKill at spacing 2^6.
+- Node 5 OrphanSmall449 (orphan fraction 0.0052 at m=2); proved childMassTot_succ_le_of_orphan. Next: state crux bookkeeping theorem from nodes 1,4,5 (lag charging over bases).
+- Stated tailChargeBudget449_of_nodes (sorry, waived bookkeeping): crux <- APKillUniform449 6 1.85,
+  RegularPotential449 57, OrphanSmall449 0.01.  Feasibility sum ~5.9 vs c=6: razor-thin.  Spacing-2^6
+  probe C~1.81; R_d at level 6: 124, 46.4, 45.1 (iterated potentials converge to ~44).
+  NEXT: switch node 4 to the twice-iterated potential (margin), fix node-1 Good-ancestor gap, then
+  prove the bookkeeping.
+- Node 4' RegularPotential2_449 45 (desc3/desc2 in [43.2,43.8] at level 12 incl. R1-worst cells); bookkeeping now uses it, margin 2.3x (sum 2.65 vs c=6).  NEXT: prove the bookkeeping theorem (needs a desc2-potential analogue of childMassTot_succ_le).
+- PROVED potTot_succ_le (depth-d totals step) and potTot_two_succ_le (node 4' form).
+- PROVED childMassTot_le: childMassTot m <= mass(m+1) + loss m.
+- Node 4' now for every cell (non-Good R2 43.2-43.4); PROVED regularPotential_iter (all depths d>=2).
+- ARCHITECTURE (lap 2, supersedes orphan route): alive potential P(m) = alivePot 2 m over ALL tail-alive
+  level-6m cells.  PROVED alivePot_succ_le: P(m+1) <= R P(m) (node 4' only, no orphans).
+  Remaining bookkeeping: E(m) := Good weight at 6m+12 under alive 6m-cells that dies by 6m+12;
+  mass(m+2) >= P(m) - E(m); loss m <= E-type kills; bound kills by node 1 against P(m-j)
+  (ancestors any alive cell — node 1 allows non-Good).  Then strong induction -> ratio lemma.
+- PROVED sum_desc_le (2^L reindex), extLoss def, alivePot_le: alivePot 2 m <= mass(m+2) + extLoss m.  NEXT: bound extLoss and loss by node 1 against alivePot of ancestors.
+- Lap 2 finding: charging COARSE windows' edge kills with window coverage diverges like (R/rho)^j
+  (R~45 > rho=34, gate-4 lower growth); must charge them as one-sided 2^-6m neighbourhoods of the
+  endpoint progression: (R/64rho)^j converges.  Node 1'' APKillGeneral449 (any width) stated;
+  resonant bases 12^2, 6^3, 10^2 give max/cov <= 1.93.  NEXT: probe endpoint-nbhd widths (h ~ 2^-K
+  scale, coarse q) — that is the untested regime; then write extLoss <= eps*alivePot.
+- Width probe: max/(2hq) in [0.99,1.49] for h=2^-13..-17 (node 1'' evidence).
+- Node 1'' (uniform C) very likely FALSE: ratio grows ~(hq)^-0.09 at fixed q (local dim < 1).
+  Replaced by Frostman node 1''' APKillFrostman449 (C (2hq)^alpha).  Feasibility (C=2, R=45, s=0):
+  alpha=0.9: 3.68 vs c=6; alpha=0.85: 5.40 vs 6 (thin).  NEXT: measure alpha honestly (min local
+  dimension of the weighted core: max over points x of mu(B(x,h))/h^alpha across h) — decisive.
+- Frostman probe: weighted core is 0.90-Frostman (const ~1) at root level 20, alpha_t 0.909->0.902.
+- PROVED cell_anc_sub, killed_between, extLoss_le_killedTot (extLoss <= Good weight at 6m+12 in some window, under alive 6m cells).  NEXT: split killedTot over finitely many (b,n) (window length >= 2^-(6m+12)) and bound each by Frostman node + regularPotential_iter.
+- PROVED pow_le_of_cell_sub (b^(n+1) <= 2^(K+1)), killedTot_le_sum (finite union bound over (b,n)).  NEXT: per-(b,n) bound killedBy b n m via Frostman node + regularPotential_iter (interior vs edge kills).

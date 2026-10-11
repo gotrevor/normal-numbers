@@ -1,0 +1,6 @@
+m=0: mass=1 loss=0 loss/mass=0 mass(m+1)/mass(m)=39.5643 max parent loss/w=0
+m=1: mass=39.5643 loss=0 loss/mass=0 mass(m+1)/mass(m)=44.3852 max parent loss/w=0
+m=2: mass=1756.07 loss=403.845 loss/mass=0.229971 mass(m+1)/mass(m)=43.1838 max parent loss/w=40.972
+m=3: mass=75833.8 loss=15957.9 loss/mass=0.210433 mass(m+1)/mass(m)=44.47 max parent loss/w=129.592
+zero-weight surviving parents with positive child loss: 26 (max loss 7.59594)
+ambiguous=0 budget=9.874655  [all numbers: exact values on the finite tree, not suprema]

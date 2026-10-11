@@ -1,0 +1,5 @@
+base 5 done (n <= 8)
+[bases 5..5, n <= 8] ancestors=2575 ambiguous=0 max climb=1
+  per-lag max ratio h_j: ['0', '0', '1118.87', '23530.8', '39210.8', '28580', '21689.2', '12800.7', '1120.44', '0', '0', '0', '0', '0', '0', '0']
+  sum_j h_j/gamma^j = 3.71275   (per-ancestor worst 3.01153 at (12, 1163))
+  budget (9/5)^6 - (17/10)^6 = 9.874655  ->  PASS at gamma=(17/10)^6 [SAMPLED lower bound on the scheme's supremum, per-window isolation overcount; unchargeable=0]

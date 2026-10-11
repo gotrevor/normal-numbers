@@ -4,6 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
 import NormalNumbers.Barriers
+import NormalNumbers.UniformBadTailMechanism
+import NormalNumbers.UniformBadTailRefute
 import NormalNumbers.LiteratureDigitsOfPowers
 import NormalNumbers.ErdosTriples
 import NormalNumbers.PairDecoupleProve
@@ -46,6 +48,14 @@ import NormalNumbers.UniformBadJoint
 import NormalNumbers.UniformBadNewhouse
 import NormalNumbers.UniformBadFive
 import NormalNumbers.UniformBadNineHalves
+import NormalNumbers.UniformBadTower
+import NormalNumbers.UniformBadTowerReview
+import NormalNumbers.UniformBadNextReview
+import NormalNumbers.UniformBadCoherent
+import NormalNumbers.UniformBadEntryReview
+import NormalNumbers.UniformBadTailReview
+import NormalNumbers.UniformBadTailObstruction
+import NormalNumbers.UniformBadTail
 
 /-!
 # Barrier audit: every open crux names a sibling it must fail on
@@ -76,6 +86,11 @@ namespace NormalNumbers.Barriers
 
 /-- Each frozen headline `sorry` and the barriers its mechanism must fail on. -/
 def cruxLinks : List CruxLink := [
+  ⟨``UniformBadThreshold.Tail.tailChargeBudget449,
+   [``uniformBad_base_two],
+   "the tail charges must be WEIGHTED by the proved gate-4 core weights (spread about 3020), and must \
+    respect the single-base floor: base 2 alone dies at exponent ≤ log₂ 3, so the budget must come \
+    from the joint {2,3} growth 9/5 per level, not from any one base"⟩,
   ⟨``UniformBadThreshold.cStar_le_nine_halves,
    [``uniformBad_base_two],
    "the engine must make base 3 exact alongside base 2: the two-rate counting engine (base 2 exact, \
@@ -165,6 +180,29 @@ def cruxLinks : List CruxLink := [
 
 /-- Open `sorry`s that are not cruxes, and why no barrier applies. -/
 def waivers : List Waiver := [
+  ⟨``UniformBadThreshold.TailReview.hull_13_808,
+   "finite exact fact (Good449 and coreWeight on the 4096 level-25 descendants of (13, 808)), \
+    the witness of a REFUTATION of an off-path conjecture node (APKillFrostman449); computed \
+    exactly by tail5_hull.py and an independent DFS"⟩,
+  ⟨``UniformBadThreshold.TailReview.descMass_13_808_pos,
+   "finite exact fact (descMass 13 808 25 = 2655262458957/1072633893121), witness of the \
+    APKillFrostman449 refutation; same computation as hull_13_808"⟩,
+  ⟨``UniformBadThreshold.TailReview.not_apKillUniform449,
+   "refutation of the off-path node APKillUniform449 6 (37/20) by an exact finite witness \
+    ((13, 808), level 32, one base-5 stage-9 window: 1.046% against 0.269%)"⟩,
+  ⟨``UniformBadThreshold.TailReview.not_regularPotential449_sixty,
+   "refutation of the off-path node RegularPotential449 60 by an exact finite witness \
+    (Good cell (10, 573), descMass ratio 71.62)"⟩,
+  ⟨``UniformBadThreshold.TailReview.not_regularPotential2_449_45,
+   "refutation of the off-path node RegularPotential2_449 45 by an exact finite witness \
+    (Good cell (6, 61), descMass ratio 45.1115)"⟩,
+  ⟨``UniformBadThreshold.TailReview.tailChargeBudget449_of_nodes,
+   "bookkeeping reduction of the gate-5 crux to the named conjecture nodes APKillUniform449, \
+    RegularPotential449, OrphanSmall449 (all hypotheses); lap 3 refuted h1 and h4 \
+    (UniformBadTailRefute), so the implication is vacuous"⟩,
+  ⟨``UniformBadThreshold.TailReview.childConcentration_18,
+   "a finite exact computation on 7 cells (classify and Good449 at levels 18, 24), recording the \
+    gate-5 kill-test mechanism; off the proof route of cStar_le_449"⟩,
   ⟨``UniformBadThreshold.Newhouse.e2_four_facts,
    "off the route (the wiring uses the proved e15_facts); a computation about the explicit set E₂(4)"⟩,
   ⟨``ErdosTriples.tripleTrivial_of_sum_le_160,
@@ -198,6 +236,14 @@ def waivers : List Waiver := [
    "a finite computation: an avoided-digit-set assignment with a live SCC for each small T"⟩,
   ⟨``Adder.not_runCover_four_small,
    "a finite computation: exact ILP set cover (HiGHS dual bound)"⟩,
+  ⟨``Adder.runCover_three_one_three_five_seven,
+   "a leaf: units mod 8 (hand proof in the docstring)"⟩,
+  ⟨``Adder.twoAdic_runFree,
+   "a leaf: one forbidden base-2^t digit per odd multiplier (hand proof in the docstring)"⟩,
+  ⟨``Adder.runCover_three_mixed,
+   "a finite computation: exact carry automaton (mahler_run_cover_exact.py)"⟩,
+  ⟨``Adder.exists_irrational_noOnes,
+   "a leaf: nested-interval potential argument (hand proof in the docstring)"⟩,
   ⟨``Adder.IsWordSetBlock.runs_liouville_cover,
    "a leaf: liouville_cover's argument for runs of ones"⟩,
   ⟨``Adder.not_isWordSetBlock_runs_three_small,
