@@ -4,7 +4,42 @@ Opus (Ren), 2026-10-11, attended.  Paper draft for Astra's referee, **not refere
 Target: `CPrimeSiteFactorization.TwistedSiegelWalfisz` (frozen, unchanged).  Scope assigned by Astra
 `20261011T220855Z`.
 
-## Claim
+## ✅ Primary route: direct, from prime Siegel–Walfisz alone (Astra `224341Z`, Opus-checked)
+
+Astra found a shorter proof that needs neither TSW∞ nor Granville–Koukoulopoulos; Opus reviewed it
+step by step and accepts it (`20261011T2250Z` reply).  It supersedes the two-regime route below,
+which is kept as a record.
+
+**Largest-prime transfer.**  Let `f` be multiplicative with `|f| ≤ 1`, and `2 ≤ W ≤ X`.  Suppose
+every prime interval `W ≤ U < V ≤ X` has `|Σ_{U<p≤V} f(p)| ≤ η V`.  Then
+
+    |Σ_{n≤X} f(n)| ≤ Ψ(X, W) + X/(W − 1) + η X (1 + log X).
+
+Proof: split `n` by its largest prime `p = P⁺(n)`.  If `p ≤ W`, then `n` is `W`-smooth (at most
+`Ψ(X, W)` of them).  If `p > W` and `p² | n`, there are at most `X Σ_{p>W} p⁻² ≤ X/(W − 1)`.
+Otherwise `n = mp` uniquely, with `p > max(W, P⁺(m))`, and that block is exactly
+`Σ_{m≤X/W} f(m) Σ_{max(W,P⁺(m)) < p ≤ X/m} f(p)`.  Drop empty intervals and use `Σ_{m≤X} 1/m ≤ 1 + log X`.
+
+**Application.**  `f(n) = z^{Ω_{P,≤y}(n)} χ(n)` is completely multiplicative, `|f| ≤ 1`, and
+`f(p) = χ(p)[1 + (z − 1) 1_P(p) 1_{p≤y}]`.  The cutoff only truncates an interval at `y`.  Expand
+`1_P` by characters ψ mod q₀; each `χψ` is nonprincipal mod `r q₀`.  Take `L = log X`,
+`W = ⌈e^{√L}⌉`.  Every nonempty endpoint `t ≥ W` has `r q₀ ≤ q₀ L^B ≤ (log t)^{2B+2}`, so SW with
+saving `D = 2A + 4` gives `η ≤ C L^{−A−2}`, uniformly in `y, r, χ`, **and in unit z**.  Rankin gives
+`Ψ(X, W) ≤ C X e^{−L/log W} (log W)^{C₀}`, which is `O(X/L^A)`.  Hence `|S| ≤ C X/L^A`, which is
+slightly stronger than frozen `TwistedSiegelWalfisz`, whose `C` may depend on `z`.
+
+**Checks.**  The partition was checked exactly and independently by both of us: Astra on 108
+cases, Opus with `tmp/opus-tsw/partition.py` (`X ≤ 2500`, `W ∈ {2, 5, 11, 30}`,
+`y ∈ {1, 7, 40, 10⁹}`), error `2.8·10⁻¹³`.  Red control: dropping the `p² | n` block gives `4.66`.
+
+**Status:** TSW ⇐ SW (a theorem; a `Literature` Prop in this repo's style).  Paper-level, refereed
+both ways.  Not in Lean.
+
+---
+
+## Superseded: the two-regime route (kept as a record)
+
+### Claim
 
 `TwistedSiegelWalfisz` follows from two inputs that carry no cutoff at all:
 
