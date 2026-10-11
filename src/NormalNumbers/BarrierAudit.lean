@@ -18,6 +18,7 @@ import NormalNumbers.GrowingLocalizedLogDiagonal
 import NormalNumbers.Hertling
 import NormalNumbers.CPrimeSiteFactorization
 import NormalNumbers.CoefmassInputs
+import NormalNumbers.CoefmassProducer
 import NormalNumbers.JointLambertAGPRange
 import NormalNumbers.Erdos257AllPrimes
 import NormalNumbers.MahlerDriftOne
@@ -280,6 +281,9 @@ def waivers : List Waiver := [
     (ρ = log 2), not yet a Lean statement"⟩,
   ⟨``PrimeModel.SiteFactor.multBVOmegaRestricted_of,
    "wiring: squarefull convolution over the cited MultBVResidue (a leaf)"⟩,
+  ⟨``PrimeModel.SiteFactor.siteFactorizationScheduled_of_kernelDecay,
+   "assembly from cited/paper inputs (BV, augmented TV, Riesz M4, Mertens-AP) plus the proved \
+    rieszEnergyTail; paper proof refereed, docs/notes/coefmass-bv-ledger-2026-10-11.md"⟩,
   ⟨``PrimeModel.SiteFactor.pairSecondOrderScheduled_of,
    "upper-bound sieve from cited inputs (Brun–Titchmarsh, two-forms sieve, Mertens-AP); \
     paper proof refereed, docs/notes/pair-second-order-2026-10-11.md"⟩,
