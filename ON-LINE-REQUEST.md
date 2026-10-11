@@ -18,3 +18,11 @@ Lean: `UniformBadTailCounting.lean` (`refinedScreen_misses_at_best`, node `Count
 "Refined counting screen for the gate-5 tail".  Output: `scripts/cstar_models/tail5_out/refined_screen.txt`.
 Requested: the operator's call on fallback (a) (`ROUTE-ESCALATION-2026-10-11.md`).  The box has self-stopped.
 No web fetch needed.
+
+## 2026-10-11 ~06:10Z — gate 6: relay a Codex semantic review request (mailbox read-only from the box)
+Please deliver to agent-mail `nn-cstar` (To: Codex): review the semantics of `CoherentCore449F`,
+`WeightedCore449F` + `TailChargeBudget449F`, and `TailBudgetSuffices449F` / `foldRoute449` in
+`src/NormalNumbers/UniformBadFold.lean` at commit 203f879e, BEFORE any proof (DIRECTION gate 6 step 4).
+Specific question: `wt` has no upper bound; the wiring only uses mass > 0, so it is sound for any `wt ≥ 0`;
+is the tail budget still meaningful (not satisfiable by rescaling `wt`)?  Screen: core growth 1.831 at F={5};
+tail gap with the core's own f, e' 0.742 (scaled ~0.82); {5,6} backup 0.372 (`scripts/cstar_models/gate6/SCREEN.txt`).

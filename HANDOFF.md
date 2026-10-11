@@ -1,3 +1,5 @@
+# Gate 6 lap 1 (2026-10-11): F={5} screen passes; route stated in UniformBadFold.lean; Codex review requested via ON-LINE-REQUEST.md; read HANDOFF-2026-10-11-gate6-lap1.md
+
 # STUCK strike 2 (2026-10-11): fresh lap confirms lever-probe kill (certified gap >= 1.2552 > 0.9); operator ask unchanged: launch fallback (a) as its own run.
 # STUCK strike 1 (2026-10-11, operator lever probe): KILL; read HANDOFF-2026-10-11-lever-probe.md
 - Blocked on the OPERATOR: DIRECTION "Operator lever probe (2026-10-11)" mandates self-stop either way and forbids starting fallback (a) here.
