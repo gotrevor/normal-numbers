@@ -426,7 +426,8 @@ the lengths `x/b`, `b ≤ B₀`.
 /-- Restricted-level BV for the ω form (derived from MultBVResidue; believed ~90%).
 Proof: z^{ω_P} = z^{Ω_P} ∗ h_z, H_p = 1 + z(1−z)X²/(1−X); split at b ≤ √x (MultBVResidue at x/b,
 moduli e ≤ x^θ ≤ √(x/b)/log^B since θ < 1/4) and b > √x (trivial, x^{θ+3/4+ε/2}).  Coprime c
-kills (b, e) > 1.  NOT the full √x/log^B range. -/
+kills (b, e) > 1.  NOT the full √x/log^B range.  Consumer: the conductor is Q·N^θ and the
+length x = N/a with a ≤ (log N)^D, so invoke at θ′ ∈ (θ, 1/4); the strict gap absorbs both. -/
 def MultBVOmegaRestricted : Prop :=
   ∀ q₀ a : ℕ, 3 ≤ q₀ → Nat.Coprime a q₀ → ∀ z : ℂ, ‖z‖ = 1 → ∀ θ : ℝ, 0 < θ → θ < 1/4 →
     ∀ A : ℝ, 0 < A → ∃ C : ℝ, 0 < C ∧ ∀ x y : ℕ, 3 ≤ x →
@@ -435,14 +436,17 @@ def MultBVOmegaRestricted : Prop :=
           ‖apDiscrepancy (fun n => z ^ omegaLe (residueClass q₀ a) y n) x e c.val.val‖
         ≤ C * x / Real.log x ^ A
 
-/-- Selberg–Delange for z^{ω_P} with a zero set S₀ and a 1/p tilt (cited instantiation, ~80%).
-Division-free: no small-prime value is inverted; τ = 0 on S₀ encodes coprimality to Q′.  Uniform
-in x ≥ 3 (all lengths N/a), in finite S₀ through exp(C Σ_{S₀} p^{−1/2}), and in tilts with
-|τ_p − 1| ≤ K/p off S₀.  In use: S₀ = primes of Q/g, Σ_{S₀} p^{−1/2} ≤ C√J, so the factor is
-(log N)^{o(1)} against a 1/log x error. -/
+/-- Selberg–Delange for z^{ω_P} with a zero set S₀ and a 1/p tilt.  UNPROVED analytic input:
+the statement is accepted as faithful (Astra 162350Z), but its uniform instantiation from the SD
+source theorem is not checked (analytic continuation and derivative summability of the normalized
+series).  Division-free: no small-prime value is inverted; τ = 0 on S₀ encodes coprimality.
+Uniform in x ≥ 3 (all lengths N/a), in finite prime sets S₀ through exp(C Σ_{S₀} p^{−1/2}), and
+in tilts with |τ_p − 1| ≤ K/p off S₀.  In use: S₀ = ALL primes of Q, since the radical
+decomposition leaves (m″, Q) = 1; τ_p = b_p^{−1} on (2J, y_head] and 1 beyond; K = 2W.  Then
+Σ_{S₀} p^{−1/2} ≤ C√J, and the factor is (log N)^{o(1)} against a 1/log x error. -/
 def SelbergDelangeOmegaTilted : Prop :=
-  ∀ q₀ a : ℕ, 3 ≤ q₀ → Nat.Coprime a q₀ → ∀ K : ℝ, ∃ C : ℝ, 0 ≤ C ∧ ∀ z : ℂ, ‖z‖ = 1 →
-    ∀ (S₀ : Finset ℕ) (τ : ℕ → ℂ), (∀ p ∈ S₀, τ p = 0) →
+  ∀ q₀ a : ℕ, 3 ≤ q₀ → Nat.Coprime a q₀ → ∀ K : ℝ, 0 ≤ K → ∃ C : ℝ, 0 ≤ C ∧ ∀ z : ℂ, ‖z‖ = 1 →
+    ∀ (S₀ : Finset ℕ) (τ : ℕ → ℂ), (∀ p ∈ S₀, p.Prime) → (∀ p ∈ S₀, τ p = 0) →
       (∀ p, p.Prime → p ∉ S₀ → ‖τ p - 1‖ ≤ K / p) →
       ∃ L₀ : ℂ,
         Tendsto (fun X : ℕ => ∏ p ∈ (Finset.Icc 1 X).filter Nat.Prime,
@@ -581,3 +585,125 @@ Control (Opus, exact, J=3, P={7,11,13,17}): with k=0 and K large, `rieszCentered
 The check was against the built `NormalNumbers.CPrimeSiteFactorization` in a scratch file
 (`lake env lean`, not in the tree), with sorry warnings only.  It shows the statements elaborate,
 not that they mean what is intended.
+
+## Statement review (Astra 162350Z) and the producer assembly
+
+**Applied above:**
+- the θ′ ∈ (θ, 1/4) consumer note on `MultBVOmegaRestricted`;
+- `SelbergDelangeOmegaTilted` gets `0 ≤ K` and prime `S₀`, and its in-use zero set is ALL primes
+  of Q.  The radical decomposition leaves `(m″, Q) = 1`; "Q/g" belonged to the superseded Ω split.
+- SD is relabelled as an unproved analytic input whose statement is accepted as faithful.  Its
+  instantiation from the source theorem (continuation, derivative summability) is unchecked.
+- SD keeps `exp(C Σ_{S₀} p^{−1/2})`.
+
+Already consistent:
+- **Q** = `primorial (2J)` in `AugmentedJointTV` is ROUND2 §3's Q (line 80: all primes `≤ 2J`).
+  The Setup's P-only Q is coarser, so its functions are state functions too.
+- **`RieszFourthMoment` carries its h-growth explicitly.**
+  - `|w_j| ≤ min(2, 2π|h|4^{−j−1})`, so `A ≤ 4 log₄(2π|h|) + C = O(1 + log|h|)`.
+  - With `k = ⌈9A/2⌉ + 1` (so `k − β ≥ 1`), the bound's log is
+    `4[log k! + 9C₀A/2 + (9A/4) log 2 + log(π + 2)] = O((1 + log h) log(2 + log h))`.
+  - No bare `∃ B(h)` appears.
+
+**Type-I Q-part truncation (Astra item 4), checked independently.**  Put
+`E = {n : Q-part(n+k) > A₀}`.
+- `#E ≤ Σ_{a>A₀, rad(a)|Q} (N+k)/a ≤ (N+k) A₀^{−1/2} ∏_{p≤2J}(1 − p^{−1/2})^{−1}`, which is
+  `≤ (N+k) A₀^{−1/2} e^{C√J}` (Rankin, σ = 1/2).
+- Hölder with exponents `(4, ∞, 4/3)` gives `|mean[P f 1_E]| ≤ ‖P‖_{4,int} · 2 · Prob(E)^{3/4}`.
+- With `A₀ = (log N)^D` and the arithmetic M4, this is `B_h^{1/4}(log N)^{−3D/8+o(1)} → 0`.
+- Only then expand `P·1_{E^c}` into progressions.  Each `a ≤ A₀` with `rad(a) | Q` is one BV
+  invocation at length `N/a`.  The number of such a is `≤ ∏_{p≤2J}(1 + log A₀/log p)`, which is
+  `exp(O(π(2J) L₃N)) = (log N)^{O(1)}`, absorbed by BV's free A.
+- The A₀-tail of the coefficient mass is never paid: that would cost `N^θ`.  Agreed.
+
+**New named input: the model energy above the Riesz cutoff.**  It is elementary.
+- The centered terms `c_T` are orthogonal under the period mean: for `T ≠ T′`, a prime in the
+  symmetric difference contributes `E φ_p = 0`.
+- Also `E|c_T|² = ∏_{p∉T}|μ_p|² ∏_{p∈T} V_p`, and these sum to `∏(|μ_p|² + V_p) = 1`.
+- Then `(1 − (1−x)_+^k)² ≤ kx` for `k ≥ 1`, `x ≥ 0`.
+- Exact control: J=3, P={7,11,13,17}, four (K, k) pairs.  The period-mean energy equals the
+  orthogonal sum to all printed digits, and is `≤ (k/K) Σ V_p log p` (e.g. 0.1866 ≤ 0.2987;
+  0.5163 ≤ 2.145).
+
+```lean
+/-- **Model energy above the Riesz cutoff (elementary; a proof target, not literature).** -/
+def RieszEnergyTail : Prop :=
+  ∀ (J : ℕ) (y : Fin J → ℕ) (h : ℤ) (P : Finset ℕ), (∀ p ∈ P, p.Prime) →
+    ∀ K : ℝ, 0 < K → ∀ k : ℕ, 1 ≤ k →
+      (∑ n ∈ Finset.range (∏ p ∈ P, p),
+          ‖(∏ p ∈ P, psiP J y h p n) - rieszCentered P J y h K k n‖ ^ 2) / (∏ p ∈ P, p : ℕ)
+        ≤ k / K * ∑ p ∈ P, (1 - ‖muP J y h p‖ ^ 2) * Real.log p
+
+/-- Mertens in progressions, asymptotic form (classical; the repo has only lower-bound rates,
+`G4.MertensAP.mertensRate_residueClass`).  It gives the fresh mass
+`Σ_{y<p≤x, p≡a} 1/p = δ log(log x/log y) + o(1)` as `y → ∞`. -/
+def MertensAPAsymptotic : Prop :=
+  ∀ q a : ℕ, 1 ≤ q → Nat.Coprime a q → ∃ M : ℝ, Tendsto (fun x : ℕ =>
+    G4.MertensAP.sumInvPrimesIn (residueClass q a) x
+      - Real.log (Real.log x) / (Nat.totient q : ℝ)) atTop (𝓝 M)
+
+theorem siteFactorizationScheduled_of' (hBV : MultBVOmegaRestricted)
+    (hSD : SelbergDelangeOmegaTilted) (hTV : AugmentedJointTV) (hM4 : RieszFourthMoment)
+    (hE : RieszEnergyTail) (hMer : MertensAPAsymptotic) : SiteFactorizationScheduled := sorry
+```
+
+**The producer proof, end to end (paper; every input named).**  Fix q ≥ q₁, a unit, and
+`1 ≤ |h| ≤ u = schedU q`, with `δ = 1/φ(q)` and `ρ = δ log 2`.  Fix θ < θ′ < 1/4, the Riesz degree
+`k_R = ⌈9A/2⌉ + 1`, `D = N^θ` and ε > 0.  Write `J = winJ N` and `y = cutU u N J`.
+
+| step | what | input | size after limsup N |
+|---|---|---|---|
+| 0a | deep frozen sites `j > J₁ ≈ L₃N` dropped from Φ and from `W_y` | lemma (`|z^ω−1| ≤ ω|w|`, Mertens) | `C|h|4^{−J₁} log log N → 0` |
+| 0b | fresh sites `k > L(h,u,ε)` dropped from `T1′` and from `W_y G_h` | lemma (item 5), `hMer` | `≤ ε/2` |
+| 1 | `T1′_k = mean[P f(·+k)] + E1_k` | definition | |
+| 2 | E1: `‖f_k‖₂ ‖Φ^{≠k} − P‖₂`, with `‖f_k‖₂² ≤ 2|w_k| δ log s_k` | `hMer`; clipped-L² lemma from `hTV` + `hM4` + `hE` + the CRT M4 lemma | `Σ_k ≤ C ρ³ log²(1/ρ) + C B_h^{1/4} e^{−u/4}` |
+| 3 | Q-part truncation `1_E` | Hölder lemma + `hM4` + CRT M4 | `→ 0` |
+| 4 | `P·1_{E^c}` = progressions; BV error, `a ≤ A₀`, θ′ | `hBV` | `o(1)` |
+| 5 | `Λ − C` (truncation residual of the kernel) | as step 2 on the augmented state; conditional Jensen | same as step 2 |
+| 6 | `mean[F_y C] = E_μ′[F_y C] + O(e^{−u}) + o(1)` | `hTV` (`|F_y C| ≤ 1` is a state function) | `C e^{−u}` |
+| 7 | `mean[F C]` via `m = a m″` and SD at lengths `(N+k)/a` | `hSD` (S₀ = primes of Q, K = 2W), `B_large` and `C_small` outside | `o(1)` errors |
+| 8 | Euler-factor matching: `mean[F C] = G(κ_k, s_k) E_μ′[F_y C](1 + O(W/y_k)) + o(1)` | lemma, `hMer` | `o(1)` |
+| 9 | `E_μ′[F_y C] = E_μ′[F_y Φ^{≠k}]` = model `W_y`, which is within `C e^{−u}` of `windowMeanLeG` | tower identity in μ′; `hTV` | `C e^{−u} Σ|g_k|` |
+
+**Step 8 in full (division-free).**  Per prime, both sides are local means of the same factor
+`C_p`:
+- At `p ≤ y_k` both sides have the factor `E_p[F_y C_p] = E_p[F C_p]`, since F and F_y agree.
+- At `y_k < p ≤ y_head`, the ratio is `(b_p(1−1/p) + z_p/p)/(b_p(1−1/p) + 1/p) = 1 + (z_p − 1)/p + O(W/p²)`.
+- Beyond `y_head`, the SD side has `1 + (z_p − 1)/p` and the model side has 1.
+- SD's normalization supplies `∏_{p≤X}(1 − 1/p)^{κ}(log x)^{κ}/Γ(1+κ)`, with `κ = (z_k − 1)δ`.
+- Mertens in progressions: `∏_{y_k<p≤X, p∈P}(1 + (z_k − 1)/p) = (log X/log y_k)^{κ}(1 + o(1))`.
+- Mertens over all primes: `∏_{p≤X}(1 − 1/p)^κ ~ (e^{−γ}/log X)^κ`.
+- So the product is `s_k^κ e^{−γκ}/Γ(1+κ)`, with `s_k = log N/log y_k = u² 2^{k+1}`.  That is
+  `1 + g(κ_k, s_k)`, `siteFactor`'s value.  `log(N/a) = log N (1 + O(L₂N/log N))` for `a ≤ A₀`.
+- The small-prime factors appear only as the same `C_small(g)` multiplier on both sides, never
+  as a divisor.  Only the large-prime ratio is formed, where `b_p ≠ 0` (threshold `2J ≥ 2W + 2`).
+
+**Sum over k ≤ L.**  `T1′ − W_y G_h = Σ_{k≤L}(E1_k + residuals) + (step 6, 9 errors)·Σ_k|g_k| + ε`.
+- Steps 2 and 5 sum to `C ρ³ log²(1/ρ) + C δ^{1/2} L_h (log u + L_h)^{1/2} B_h^{1/4} e^{−u/4}`.
+- Steps 6 and 9 sum to `C e^{−u} Σ_k |g_k| ≤ C e^{−u} δ L_h log u`.
+- On the schedule (`|h| ≤ u`, `log B_h = o(u)`, Astra's `UniformFrequencySuppression`), the total
+  is `≤ C(ρ² + e^{−u/8}) + ε` with C absolute.  q₁ is chosen so that `schedU q₁` passes U.
+
+**Dependency honesty.**
+- **Named inputs:** `hBV, hSD, hTV, hM4, hE, hMer`.
+  - `hSD` is unproved analytic.
+  - `hBV` is derived from `MultBVResidue`, whose own TSW node is open.
+  - `hTV`, `hM4` and `hE` are paper-proved (`hE` is elementary, a Lean proof target).
+  - `hMer` is classical.
+- **Proved-dependency lemmas, to be planted as separate named sorries, never folded into the
+  producer:**
+  - `crtFourthMoment` (integer M4 = model + o(1), θ < 1/4, gcd-indicator expansion);
+  - `clippedL2Transfer` (E1 from TV + M4 + energy);
+  - `rareQPartHolder` (step 3);
+  - `deepSiteTruncation` (0a) and `freshSiteCut` (0b);
+  - `eulerFactorMatching` (step 8);
+  - Astra's three scalar Props.
+- Producer believed ~60%.  The weakest joints:
+  - step 7's uniform SD instantiation;
+  - step 5's arithmetic fourth moment for Λ (the indicator expansion's mass);
+  - step 8's interchange of `X → ∞` with the finite `y_head`.
+
+**Elaboration check (Opus):** every Lean block from "Items 4–5 referee" on compiles in a scratch file.
+The imports are `NormalNumbers.CPrimeSiteFactorization` and `NormalNumbers.G4MertensAP`, and
+`MertensAPAsymptotic` needs the second.  Only sorry warnings appear.  This is elaboration, not
+meaning.
