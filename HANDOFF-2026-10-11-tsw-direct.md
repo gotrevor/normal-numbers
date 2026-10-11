@@ -41,3 +41,15 @@ as the only analytic input.  Paper proof: `docs/notes/tsw-y-uniformity-2026-10-1
 `#print axioms twistedSiegelWalfisz_of_primeSW` shows only `propext, Classical.choice, Quot.sound`.
 When a sorry closes, remove its waiver in `BarrierAudit.lean`: the audit fails the build
 otherwise.
+
+## Status (2026-10-11, end of treadmill run)
+
+Done.  `CoefmassTSWDirect.lean` is sorry-free; all three waivers removed from `BarrierAudit.lean`.
+`#print axioms twistedSiegelWalfisz_of_primeSW` = `propext, Classical.choice, Quot.sound`; the only
+analytic input is the hypothesis `Literature.PrimeCharacterSW`.  Statements untouched.
+- `largestPrimeTransfer`: `topPrime` partition, fiber bijection `n ↦ (n/P⁺(n), P⁺(n))`, telescoped `Σ k⁻²`.
+- `smoothCount_rankin`: Mathlib `EulerProduct.summable_and_hasSum_smoothNumbers_prod_primesBelow_tsum`
+  at `σ = 1 − 1/(2 log W)`, factors `≤ exp(8/p)`, Erdos67b Mertens.
+- `uniformZTSW_of_primeSW`: `exists_prod_char` (changeLevel product, CRT nonprincipality),
+  `residue_expand` (orthogonality), `twistedPrime_interval`; small `x` (`log x < max q₀ 4`) absorbed in `C`.
+Open follow-up (not this run): pin a textbook theorem number for `PrimeCharacterSW`.

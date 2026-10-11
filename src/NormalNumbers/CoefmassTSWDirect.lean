@@ -487,6 +487,202 @@ theorem smoothCount_rankin : SmoothCountRankin := by
         mul_le_mul_of_nonneg_left hpk (by positivity)
     _ = _ := by ring
 
+lemma omegaMultLe_mul (S : ℕ → Prop) [DecidablePred S] (y : ℕ) {a b : ℕ} (ha : a ≠ 0)
+    (hb : b ≠ 0) : omegaMultLe S y (a * b) = omegaMultLe S y a + omegaMultLe S y b := by
+  unfold omegaMultLe
+  rw [Nat.primeFactors_mul ha hb, Nat.factorization_mul ha hb]
+  simp only [Finsupp.add_apply, sum_add_distrib]
+  have key : ∀ c : ℕ, c ≠ 0 → ∀ s : Finset ℕ, c.primeFactors ⊆ s →
+      ∑ p ∈ (s.filter S).filter (fun p => p ≤ y), c.factorization p =
+        ∑ p ∈ (c.primeFactors.filter S).filter (fun p => p ≤ y), c.factorization p := by
+    intro c hc s hs
+    symm
+    apply sum_subset
+    · intro p hp
+      simp only [mem_filter] at hp ⊢
+      exact ⟨⟨hs hp.1.1, hp.1.2⟩, hp.2⟩
+    · intro p hp hpn
+      simp only [mem_filter] at hp hpn
+      have : p ∉ c.primeFactors := fun h => hpn ⟨⟨h, hp.1.2⟩, hp.2⟩
+      rwa [← Nat.support_factorization, Finsupp.notMem_support_iff] at this
+  rw [key a ha _ subset_union_left, key b hb _ subset_union_right]
+
+lemma omegaMultLe_prime (S : ℕ → Prop) [DecidablePred S] (y : ℕ) {p : ℕ} (hp : p.Prime) :
+    omegaMultLe S y p = if S p ∧ p ≤ y then 1 else 0 := by
+  unfold omegaMultLe
+  rw [hp.primeFactors, filter_singleton, apply_ite (fun s : Finset ℕ => s.filter _)]
+  by_cases h1 : S p <;> by_cases h2 : p ≤ y <;> simp [h1, h2, hp.factorization_self, filter_singleton]
+
+/-- Product of characters at coprime levels, nonprincipal if the first factor is. -/
+lemma exists_prod_char {r q : ℕ} [NeZero r] [NeZero q] (hrq : Nat.Coprime r q)
+    (χ : DirichletCharacter ℂ r) (ψ : DirichletCharacter ℂ q) :
+    ∃ Θ : DirichletCharacter ℂ (r * q), (∀ n : ℕ, Θ n = χ n * ψ n) ∧ (χ ≠ 1 → Θ ≠ 1) := by
+  set Θ := DirichletCharacter.changeLevel (dvd_mul_right r q) χ *
+    DirichletCharacter.changeLevel (dvd_mul_left q r) ψ with hΘdef
+  have hΘ : ∀ n : ℕ, Θ n = χ n * ψ n := by
+    intro n
+    by_cases hn : Nat.Coprime n (r * q)
+    · have hz : IsCoprime (n : ℤ) ((r * q : ℕ) : ℤ) := Nat.isCoprime_iff_coprime.mpr hn
+      rw [hΘdef, MulChar.mul_apply]
+      have h1 := DirichletCharacter.changeLevel_eq_cast_of_dvd' χ (dvd_mul_right r q) hz
+      have h2 := DirichletCharacter.changeLevel_eq_cast_of_dvd' ψ (dvd_mul_left q r) hz
+      push_cast at h1 h2
+      rw [h1, h2]
+    · rw [MulChar.map_nonunit _ (by rwa [ZMod.isUnit_iff_coprime])]
+      rw [Nat.coprime_mul_iff_right, not_and_or] at hn
+      rcases hn with h | h
+      · rw [MulChar.map_nonunit χ (by rwa [ZMod.isUnit_iff_coprime]), zero_mul]
+      · rw [MulChar.map_nonunit ψ (by rwa [ZMod.isUnit_iff_coprime]), mul_zero]
+  refine ⟨Θ, hΘ, fun hχ h1 => hχ ?_⟩
+  ext u
+  rw [MulChar.one_apply_coe]
+  set n := (u : ZMod r).val with hn
+  have hnu : ((n : ℕ) : ZMod r) = u := ZMod.natCast_zmod_val _
+  have hncop : Nat.Coprime n r := (ZMod.isUnit_iff_coprime n r).mp (by rw [hnu]; exact u.isUnit)
+  obtain ⟨k, hk1, hk2⟩ := Nat.chineseRemainder hrq n 1
+  have hkr : Nat.Coprime k r := by
+    rw [Nat.Coprime, Nat.ModEq.gcd_eq hk1]; exact hncop
+  have hkq : Nat.Coprime k q := by
+    rw [Nat.Coprime, Nat.ModEq.gcd_eq hk2]; simp
+  have hk : Θ k = 1 := by
+    rw [h1]; exact MulChar.one_apply ((ZMod.isUnit_iff_coprime k (r * q)).mpr
+      (Nat.Coprime.mul_right hkr hkq))
+  rw [hΘ] at hk
+  have hψ : ψ k = 1 := by
+    rw [(ZMod.natCast_eq_natCast_iff k 1 q).mpr hk2, Nat.cast_one, map_one]
+  rw [hψ, mul_one, (ZMod.natCast_eq_natCast_iff k n r).mpr hk1, hnu] at hk
+  exact hk
+
+lemma residue_expand {q : ℕ} [NeZero q] {a : ℕ} (ha : Nat.Coprime a q) (n : ℕ) :
+    (if residueClass q a n then (1 : ℂ) else 0) =
+      (q.totient : ℂ)⁻¹ * ∑ ψ : DirichletCharacter ℂ q, ψ ((a : ZMod q)⁻¹) * ψ n := by
+  rw [DirichletCharacter.sum_char_inv_mul_char_eq ℂ
+    ((ZMod.isUnit_iff_coprime a q).mpr ha) (n : ZMod q)]
+  have hq : (q.totient : ℂ) ≠ 0 := by
+    exact_mod_cast (Nat.totient_pos.mpr (Nat.pos_of_ne_zero (NeZero.ne q))).ne'
+  by_cases h : residueClass q a n
+  · rw [if_pos h, if_pos ((ZMod.natCast_eq_natCast_iff' _ _ _).mpr (h : n % q = a % q).symm),
+      inv_mul_cancel₀ hq]
+  · rw [if_neg h, if_neg (fun h' => h ((ZMod.natCast_eq_natCast_iff' _ _ _).mp h').symm),
+      mul_zero]
+
+lemma primeCharSW_interval (hSW : PrimeCharacterSW) (A1 B1 : ℝ) (hA : 0 < A1) (hB : 0 < B1) :
+    ∃ C : ℝ, 0 < C ∧ ∀ U V r : ℕ, 3 ≤ U → U ≤ V → 1 ≤ r → (r : ℝ) ≤ Real.log U ^ B1 →
+      ∀ χ : DirichletCharacter ℂ r, χ ≠ 1 →
+        ‖∑ p ∈ (Ioc U V).filter Nat.Prime, χ (p : ZMod r)‖ ≤ 2 * C * V / Real.log U ^ A1 := by
+  obtain ⟨C, hC, h⟩ := hSW A1 B1 hA hB
+  refine ⟨C, hC, fun U V r hU hUV hr hrU χ hχ => ?_⟩
+  have hU0 : (0 : ℝ) < U := by exact_mod_cast (by omega : 0 < U)
+  have hlU : 0 < Real.log U := Real.log_pos (by exact_mod_cast (by omega : 1 < U))
+  have hlUV : Real.log U ≤ Real.log V := Real.log_le_log hU0 (by exact_mod_cast hUV)
+  have hrV : (r : ℝ) ≤ Real.log V ^ B1 :=
+    hrU.trans (Real.rpow_le_rpow hlU.le hlUV hB.le)
+  have h1 := h V r (by omega) hr hrV χ hχ
+  have h2 := h U r hU hr hrU χ hχ
+  have hsplit : (Icc 1 V).filter Nat.Prime =
+      (Ioc U V).filter Nat.Prime ∪ (Icc 1 U).filter Nat.Prime := by
+    ext p; simp only [mem_filter, mem_union, mem_Ioc, mem_Icc]
+    constructor
+    · rintro ⟨⟨h1, h2⟩, hp⟩; by_cases hpU : p ≤ U
+      · exact Or.inr ⟨⟨h1, hpU⟩, hp⟩
+      · exact Or.inl ⟨⟨by omega, h2⟩, hp⟩
+    · rintro (⟨⟨h1, h2⟩, hp⟩ | ⟨⟨h1, h2⟩, hp⟩)
+      · exact ⟨⟨hp.one_le, h2⟩, hp⟩
+      · exact ⟨⟨h1, by omega⟩, hp⟩
+  have hdisj : Disjoint ((Ioc U V).filter Nat.Prime) ((Icc 1 U).filter Nat.Prime) := by
+    rw [disjoint_left]; intro p h1 h2
+    simp only [mem_filter, mem_Ioc, mem_Icc] at h1 h2; omega
+  rw [hsplit, sum_union hdisj] at h1
+  have hpow : Real.log U ^ A1 ≤ Real.log V ^ A1 := Real.rpow_le_rpow hlU.le hlUV hA.le
+  have hpos : 0 < Real.log U ^ A1 := Real.rpow_pos_of_pos hlU _
+  have hb1 : C * V / Real.log V ^ A1 ≤ C * V / Real.log U ^ A1 :=
+    div_le_div_of_nonneg_left (by positivity) hpos hpow
+  have hb2 : C * U / Real.log U ^ A1 ≤ C * V / Real.log U ^ A1 := by
+    gcongr
+  have := norm_sub_le (∑ p ∈ (Ioc U V).filter Nat.Prime, χ (p : ZMod r) +
+    ∑ p ∈ (Icc 1 U).filter Nat.Prime, χ (p : ZMod r)) (∑ p ∈ (Icc 1 U).filter Nat.Prime, χ (p : ZMod r))
+  rw [add_sub_cancel_right] at this
+  have e : 2 * C * V / Real.log U ^ A1 = C * V / Real.log U ^ A1 + C * V / Real.log U ^ A1 := by ring
+  rw [e]; linarith
+
+lemma twistedPrime_interval (hSW : PrimeCharacterSW) {q : ℕ} (hq : 0 < q) {a : ℕ} (ha : Nat.Coprime a q)
+    (A1 B1 : ℝ) (hA : 0 < A1) (hB : 0 < B1) :
+    ∃ C : ℝ, 0 < C ∧ ∀ z : ℂ, ‖z‖ = 1 → ∀ y r U V : ℕ, 3 ≤ U → U ≤ V → 1 ≤ r →
+      Nat.Coprime r q → ((r * q : ℕ) : ℝ) ≤ Real.log U ^ B1 →
+      ∀ χ : DirichletCharacter ℂ r, χ ≠ 1 →
+        ‖∑ p ∈ (Ioc U V).filter Nat.Prime,
+            z ^ omegaMultLe (residueClass q a) y p * χ (p : ZMod r)‖
+          ≤ 6 * C * V / Real.log U ^ A1 := by
+  obtain ⟨C, hC, hI⟩ := primeCharSW_interval hSW A1 B1 hA hB
+  refine ⟨C, hC, fun z hz y r U V hU hUV hr hrq hrqU χ hχ => ?_⟩
+  have : NeZero q := ⟨hq.ne'⟩
+  have : NeZero r := ⟨by omega⟩
+  have hlU : 0 < Real.log U := Real.log_pos (by exact_mod_cast (by omega : 1 < U))
+  have hpos : 0 < Real.log U ^ A1 := Real.rpow_pos_of_pos hlU _
+  set D := 2 * C * V / Real.log U ^ A1 with hD
+  have hD0 : 0 ≤ D := by positivity
+  have hrU : (r : ℝ) ≤ Real.log U ^ B1 :=
+    le_trans (by exact_mod_cast Nat.le_mul_of_pos_right r hq) hrqU
+  have h1 : ‖∑ p ∈ (Ioc U V).filter Nat.Prime, χ (p : ZMod r)‖ ≤ D := hI U V r hU hUV hr hrU χ hχ
+  set J := (Ioc U (min V y)).filter Nat.Prime with hJ
+  have h2 : ∀ ψ : DirichletCharacter ℂ q,
+      ‖∑ p ∈ J, χ (p : ZMod r) * ψ (p : ZMod q)‖ ≤ D := by
+    intro ψ
+    obtain ⟨Θ, hΘ, hΘ1⟩ := exists_prod_char hrq χ ψ
+    have e : ∑ p ∈ J, χ (p : ZMod r) * ψ (p : ZMod q) = ∑ p ∈ J, Θ (p : ZMod (r * q)) :=
+      sum_congr rfl (fun p _ => (hΘ p).symm)
+    rw [e]
+    by_cases hc : U ≤ min V y
+    · refine (hI U (min V y) (r * q) hU hc (Nat.one_le_iff_ne_zero.mpr
+        (Nat.mul_ne_zero (by omega) hq.ne')) hrqU Θ (hΘ1 hχ)).trans ?_
+      rw [hD]; gcongr; exact_mod_cast min_le_left V y
+    · rw [hJ, Ioc_eq_empty (by omega), filter_empty, sum_empty, norm_zero]; exact hD0
+  -- decomposition
+  have hdec : ∑ p ∈ (Ioc U V).filter Nat.Prime,
+      z ^ omegaMultLe (residueClass q a) y p * χ (p : ZMod r) =
+      ∑ p ∈ (Ioc U V).filter Nat.Prime, χ (p : ZMod r) +
+        (z - 1) * ∑ p ∈ J, (if residueClass q a p then (1 : ℂ) else 0) * χ (p : ZMod r) := by
+    have hJ' : J = ((Ioc U V).filter Nat.Prime).filter (fun p => p ≤ y) := by
+      ext p; simp only [hJ, mem_filter, mem_Ioc, le_min_iff]; tauto
+    rw [hJ', mul_sum, Finset.sum_filter (fun p => p ≤ y), ← sum_add_distrib]
+    refine sum_congr rfl (fun p hp => ?_)
+    have hpp := (mem_filter.mp hp).2
+    rw [omegaMultLe_prime _ _ hpp]
+    by_cases h1 : residueClass q a p <;> by_cases h2 : p ≤ y <;> simp [h1, h2] <;> ring
+  have hexp : ∑ p ∈ J, (if residueClass q a p then (1 : ℂ) else 0) * χ (p : ZMod r) =
+      (q.totient : ℂ)⁻¹ * ∑ ψ : DirichletCharacter ℂ q, ψ ((a : ZMod q)⁻¹) *
+        ∑ p ∈ J, χ (p : ZMod r) * ψ (p : ZMod q) := by
+    simp_rw [residue_expand ha, mul_sum, sum_mul]
+    rw [sum_comm]
+    refine sum_congr rfl (fun ψ _ => sum_congr rfl (fun p _ => by ring))
+  have hcard : (Fintype.card (DirichletCharacter ℂ q) : ℝ) = q.totient := by
+    rw [← Nat.card_eq_fintype_card,
+      DirichletCharacter.card_eq_totient_of_hasEnoughRootsOfUnity ℂ q]
+  have htot : (0 : ℝ) < q.totient := by exact_mod_cast Nat.totient_pos.mpr hq
+  have h3 : ‖(q.totient : ℂ)⁻¹ * ∑ ψ : DirichletCharacter ℂ q, ψ ((a : ZMod q)⁻¹) *
+        ∑ p ∈ J, χ (p : ZMod r) * ψ (p : ZMod q)‖ ≤ D := by
+    rw [norm_mul, norm_inv, Complex.norm_natCast]
+    have hs : ‖∑ ψ : DirichletCharacter ℂ q, ψ ((a : ZMod q)⁻¹) *
+        ∑ p ∈ J, χ (p : ZMod r) * ψ (p : ZMod q)‖ ≤ q.totient * D := by
+      refine (norm_sum_le _ _).trans ?_
+      calc _ ≤ ∑ ψ : DirichletCharacter ℂ q, D := by
+            refine sum_le_sum (fun ψ _ => ?_)
+            rw [norm_mul]
+            calc _ ≤ 1 * D := mul_le_mul (DirichletCharacter.norm_le_one ψ _) (h2 ψ)
+                    (norm_nonneg _) zero_le_one
+              _ = D := one_mul D
+        _ = _ := by rw [sum_const, nsmul_eq_mul, ← hcard]; rfl
+    rw [inv_mul_le_iff₀ htot]; exact hs
+  have hz1 : ‖z - 1‖ ≤ 2 := (norm_sub_le _ _).trans (by rw [hz, norm_one]; norm_num)
+  rw [hdec, hexp]
+  refine (norm_add_le _ _).trans ?_
+  rw [norm_mul]
+  have : ‖z - 1‖ * ‖(q.totient : ℂ)⁻¹ * ∑ ψ : DirichletCharacter ℂ q, ψ ((a : ZMod q)⁻¹) *
+        ∑ p ∈ J, χ (p : ZMod r) * ψ (p : ZMod q)‖ ≤ 2 * D :=
+    mul_le_mul hz1 h3 (norm_nonneg _) (by norm_num)
+  have e : 6 * C * V / Real.log U ^ A1 = 3 * D := by rw [hD]; ring
+  rw [e]; linarith
+
 /-- `TwistedSiegelWalfisz` with the constant uniform in the unit `z`. -/
 def UniformZTSW : Prop :=
   ∀ q₀ a : ℕ, 3 ≤ q₀ → Nat.Coprime a q₀ → ∀ A B : ℝ, 0 < A → 0 < B →
@@ -504,7 +700,141 @@ part lives on `(U, min(V, y)]`, which is dropped if empty.  For `p > W > q₀`,
 `Coprime r q₀`).  Both endpoints are at least `W`, so `r q₀ ≤ q₀ (log x)^B ≤ (log t)^{2B+2}`.
 `PrimeCharacterSW` with `A₁ = 2A + 4` then gives `η ≤ C (log x)^{−A−2}`.  The smooth block is
 `smoothCount_rankin`, and the repeated-prime block is `x/(W−1)`. -/
-theorem uniformZTSW_of_primeSW (hSW : PrimeCharacterSW) : UniformZTSW := sorry
+theorem uniformZTSW_of_primeSW (hSW : PrimeCharacterSW) : UniformZTSW := by
+  intro q₀ a hq ha A B hA hB
+  obtain ⟨C1, hC1, hf⟩ := twistedPrime_interval hSW (by omega : 0 < q₀) ha (2 * A + 4) (2 * B + 2)
+    (by linarith) (by linarith)
+  obtain ⟨C2, hC2, hR⟩ := smoothCount_rankin A hA
+  set k : ℕ := ⌈2 * A⌉₊ with hk
+  set L0 : ℝ := max (q₀ : ℝ) 4 with hL0
+  refine ⟨L0 ^ A + C2 + 2 * k.factorial + 12 * C1, by positivity, ?_⟩
+  intro z hz x y r hx hr hrB hrq χ hχ
+  set f : ℕ → ℂ := fun n => z ^ omegaMultLe (residueClass q₀ a) y n * χ (n : ZMod r) with hfdef
+  have hf1 : ∀ n, ‖f n‖ ≤ 1 := by
+    intro n
+    rw [hfdef, norm_mul, norm_pow, hz, one_pow, one_mul]
+    exact DirichletCharacter.norm_le_one χ _
+  have hΩ1 : omegaMultLe (residueClass q₀ a) y 1 = 0 := by simp [omegaMultLe]
+  have hmul : ∀ a b : ℕ, Nat.Coprime a b → f (a * b) = f a * f b := by
+    intro m n hmn
+    by_cases hm : m = 0
+    · subst hm; rw [Nat.coprime_zero_left] at hmn; subst hmn
+      simp [hfdef, hΩ1]
+    by_cases hn : n = 0
+    · subst hn; rw [Nat.coprime_zero_right] at hmn; subst hmn
+      simp [hfdef, hΩ1]
+    simp only [hfdef, omegaMultLe_mul _ _ hm hn, pow_add, Nat.cast_mul, map_mul]
+    ring
+  have hx0 : (0 : ℝ) < x := by exact_mod_cast (by omega : 0 < x)
+  set L := Real.log x with hL
+  have hL1 : 1 < L := by
+    rw [hL, Real.lt_log_iff_exp_lt hx0]
+    have := Real.exp_one_lt_d9
+    have : (3 : ℝ) ≤ x := by exact_mod_cast hx
+    linarith
+  have hLApos : 0 < L ^ A := Real.rpow_pos_of_pos (by linarith) _
+  have hcard : ∑ n ∈ Icc 1 x, ‖f n‖ ≤ x := by
+    refine (sum_le_sum (fun n _ => hf1 n)).trans ?_
+    simp
+  by_cases hsmall : L < L0
+  · -- small x: trivial bound
+    refine (norm_sum_le _ _).trans (hcard.trans ?_)
+    rw [le_div_iff₀ hLApos]
+    have : L ^ A ≤ L0 ^ A := Real.rpow_le_rpow (by linarith) hsmall.le hA.le
+    have : (0 : ℝ) ≤ C2 + 2 * k.factorial + 12 * C1 := by positivity
+    nlinarith
+  push Not at hsmall
+  have hLq : (q₀ : ℝ) ≤ L := le_trans (le_max_left _ _) hsmall
+  have hL4 : 4 ≤ L := le_trans (le_max_right _ _) hsmall
+  set t := Real.sqrt L with ht
+  have htL : t ^ 2 = L := Real.sq_sqrt (by linarith)
+  have ht2 : 2 ≤ t := by
+    rw [ht, Real.le_sqrt (by norm_num) (by linarith)]; linarith
+  have hLpow : ∀ c : ℝ, L ^ c = t ^ (2 * c) := by
+    intro c
+    rw [← htL, ← Real.rpow_natCast, ← Real.rpow_mul (by linarith)]; norm_num
+  set W := ⌈Real.exp t⌉₊ with hW
+  have hWe : Real.exp t ≤ W := Nat.le_ceil _
+  have he2 : (2 : ℝ) < Real.exp t := by
+    have := Real.add_one_lt_exp (show t ≠ 0 by linarith); linarith
+  have hW2 : 2 ≤ W := by
+    have : (2 : ℝ) < W := by linarith
+    exact_mod_cast this.le
+  have hWpos : (0 : ℝ) < W := by linarith
+  have hWx : W ≤ x := by
+    have h1 : (W : ℝ) < Real.exp t + 1 := Nat.ceil_lt_add_one (by positivity)
+    have h2 : Real.exp t + 1 ≤ Real.exp L := by
+      have h3 : Real.exp t + 1 ≤ Real.exp (t + 1) := by
+        rw [Real.exp_add]
+        have := Real.add_one_le_exp (1 : ℝ)
+        have : (1 : ℝ) ≤ Real.exp t := Real.one_le_exp (by linarith)
+        nlinarith
+      refine h3.trans (Real.exp_le_exp.mpr ?_)
+      nlinarith
+    rw [hL, Real.exp_log hx0] at h2
+    exact_mod_cast (h1.trans_le h2).le
+  have hlogW : t ≤ Real.log W := by
+    rw [Real.le_log_iff_exp_le hWpos]; exact hWe
+  set η := 6 * C1 / L ^ (A + 2) with hη
+  have hLA2 : L ^ (A + 2) = L ^ A * L ^ 2 := by
+    rw [Real.rpow_add (by linarith), Real.rpow_two]
+  have hint : ∀ U V : ℕ, W ≤ U → U ≤ V → V ≤ x →
+      ‖∑ p ∈ (Ioc U V).filter Nat.Prime, f p‖ ≤ η * V := by
+    intro U V hWU hUV hVx
+    have hU3 : 3 ≤ U := by
+      have : (2 : ℝ) < U := lt_of_lt_of_le he2 (hWe.trans (by exact_mod_cast hWU))
+      exact_mod_cast this
+    have hUpos : (0 : ℝ) < U := by exact_mod_cast (by omega : 0 < U)
+    have hlogU : t ≤ Real.log U :=
+      hlogW.trans (Real.log_le_log hWpos (by exact_mod_cast hWU))
+    have hrq' : ((r * q₀ : ℕ) : ℝ) ≤ Real.log U ^ (2 * B + 2) := by
+      calc ((r * q₀ : ℕ) : ℝ) = r * q₀ := by push_cast; ring
+        _ ≤ L ^ B * L := mul_le_mul hrB hLq (by positivity) (by positivity)
+        _ = t ^ (2 * B + 2) := by
+          rw [← Real.rpow_add_one (by linarith), hLpow]; ring_nf
+        _ ≤ _ := Real.rpow_le_rpow (by linarith) hlogU (by linarith)
+    refine (hf z hz y r U V hU3 hUV hr hrq hrq' χ hχ).trans ?_
+    have hden : L ^ (A + 2) ≤ Real.log U ^ (2 * A + 4) := by
+      rw [hLpow]
+      calc t ^ (2 * (A + 2)) = t ^ (2 * A + 4) := by ring_nf
+        _ ≤ _ := Real.rpow_le_rpow (by linarith) hlogU (by linarith)
+    rw [hη, div_mul_eq_mul_div]
+    exact div_le_div_of_nonneg_left (by positivity) (by positivity) hden
+  have hT := largestPrimeTransfer f hf1 hmul x W hx hW2 hWx η (by positivity) hint
+  -- the three blocks
+  have hb1 : (smoothCount x W : ℝ) ≤ C2 * x / L ^ A := hR x hx
+  have hb2 : (x : ℝ) / ((W : ℝ) - 1) ≤ 2 * k.factorial * x / L ^ A := by
+    have hLt : L ^ A ≤ t ^ k := by
+      rw [hLpow, ← Real.rpow_natCast]
+      exact Real.rpow_le_rpow_of_exponent_le (by linarith) (Nat.le_ceil _)
+    have hte : t ^ k ≤ k.factorial * Real.exp t := by
+      have h := Real.pow_div_factorial_le_exp (x := t) (by linarith) k
+      rwa [div_le_iff₀ (by positivity), mul_comm] at h
+    have hW1 : (0 : ℝ) < W - 1 := by linarith
+    rw [div_le_div_iff₀ hW1 hLApos]
+    have hW2' : (2 : ℝ) ≤ W := by exact_mod_cast hW2
+    have hkf : (0 : ℝ) ≤ k.factorial := by positivity
+    have : L ^ A ≤ 2 * k.factorial * ((W : ℝ) - 1) :=
+      calc L ^ A ≤ k.factorial * Real.exp t := hLt.trans hte
+        _ ≤ k.factorial * W := mul_le_mul_of_nonneg_left hWe hkf
+        _ ≤ k.factorial * (2 * ((W : ℝ) - 1)) := mul_le_mul_of_nonneg_left (by linarith) hkf
+        _ = _ := by ring
+    calc (x : ℝ) * L ^ A ≤ x * (2 * k.factorial * ((W : ℝ) - 1)) :=
+          mul_le_mul_of_nonneg_left this hx0.le
+      _ = _ := by ring
+  have hb3 : η * x * (1 + L) ≤ 12 * C1 * x / L ^ A := by
+    rw [hη, hLA2, div_mul_eq_mul_div, div_mul_eq_mul_div, div_le_div_iff₀ (by positivity) hLApos]
+    have : 0 ≤ C1 * x * L ^ A := by positivity
+    have hLL : 1 + L ≤ 2 * L ^ 2 := by nlinarith
+    calc 6 * C1 * x * (1 + L) * L ^ A = 6 * (C1 * x * L ^ A) * (1 + L) := by ring
+      _ ≤ 6 * (C1 * x * L ^ A) * (2 * L ^ 2) := by gcongr
+      _ = 12 * C1 * x * (L ^ A * L ^ 2) := by ring
+  have hsum : (L0 ^ A + C2 + 2 * k.factorial + 12 * C1) * x / L ^ A =
+      L0 ^ A * x / L ^ A + C2 * x / L ^ A + 2 * k.factorial * x / L ^ A + 12 * C1 * x / L ^ A := by
+    ring
+  have : 0 ≤ L0 ^ A * x / L ^ A := by positivity
+  rw [hsum]
+  linarith
 
 /-- Quantifier plumbing: the uniform-in-`z` form implies the frozen statement. -/
 theorem twistedSiegelWalfisz_of_uniformZ (h : UniformZTSW) : TwistedSiegelWalfisz := by
