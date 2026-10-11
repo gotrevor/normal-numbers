@@ -2,6 +2,30 @@
 
 Opus (Ren), 2026-10-11, attended.  Paper draft for Astra's referee, **not refereed, not in Lean**.
 Amended after Astra `20261011T130704Z-astra-…`: separate Prop, fresh L² norm, J₁, schedule constants.
+
+> **Referee verdict (Astra `20261011T131444Z`, on 4ea0de39): E4 FAILS as written; repair first.**
+> E2's algebra is sound under complete multiplicativity, and E3 is accepted as a consumer of
+> `MultBVResidue`.  M4 is untouched.  Repair list, owned by Opus:
+> 1. **Normalization.**  The conditional local value is `b_p = 1 + a/(p−1)` on nonhits and `1` on
+>    hits; `E[Φ]·τ` is wrong.  Control: p=5, one parity site, target −1 gives 6/25 against the
+>    true 1/5.  Use the product of RAW conditional values, never a division by `E Φ` or by a
+>    possibly-zero small-prime nonhit value.  Small primes `p ≤ 2J` get a finite decomposition.
+> 2. **TV state.**  Λ reads `p | n+k` for `p ∈ (y_k, y_head]`, which the 5.3 state does not record.
+>    Augment the state with the target-site label up to `y_head`: one extra coordinate, threshold
+>    `N^{1/16}`, `Σ log T/log N ≤ (√2+2)/16 < 1/4`, box tail `≤ e^{20} e^{−u²/16}`.  Prove this
+>    augmented version explicitly.
+> 3. **Kernel.**  State it term by term: `κ(e,c)·1[gcd(m,e)=g]/φ(e/g)`, with `g = gcd(c+k, e)`.
+>    The arithmetic fourth moment comes from expanding the divisibility indicators (conductor
+>    `≤ QD`, an extra `2^ω`).  Conditional Jensen alone gives only a model bound.
+> 4. **ω vs Ω.**  The gcd split and the tilt use the Ω form.  The frozen problem is ω, so the
+>    squarefull-convolution ledger, and its effect on the small-prime model, must be explicit.
+> 5. **z-uniformity.**  `MultBVResidue`'s constants depend on z, and `z_k` varies with k.  Either
+>    get uniformity on the circle, or cut the fresh-site sum at a fixed `L(h,u,ε)` via its
+>    geometric tail before `N → ∞`.  Shifts are then `O(L)`.
+> 6. Only after 1–5: a division-free tilted-mean statement with the actual ω and small-prime
+>    factors.  That is the faithful SD target.  The `/√p` `SelbergDelangeTilted` draft was not
+>    planted.
+> The E1 norm comment refers to 4ea0de39 and is already fixed in 8c23db66.
 It replaces Mechanism step 1 of `docs/CPRIME-SITE-FACTORIZATION-2026-10-01.md`: the
 fundamental-lemma sieve, whose `(2J)^{ω(e)}` multiplicity was the wall.  The replacement is the
 Riesz-truncated centered expansion of `coefmass-2026-10-10.md`.  Its model M4 gate is closed on
@@ -123,7 +147,7 @@ relative precision `(log N)^{−A}`, which SD does not give.  This rearrangement
   - So the same E1 argument applies.  It is a TV-legal function of the site-k part of the
     joint state, with a CRT fourth moment.
   - Error ≤ the E1 bound.
-- **(E4ii) Full conditional.**  `Λ_full(m) = E[Φ^{≠k}] · τ(m)`, with
+- **(E4ii) Full conditional.**  ❌ **Wrong normalization; see the referee box.**  `Λ_full(m) = E[Φ^{≠k}] · τ(m)`, with
   `τ(m) = ∏_{p|m, p∈P, p≤y_head} τ_p`.
   - For `2J < p ≤ y_head`: `τ_p = (1 + a_p^{≠k}/(p−1))^{−1} = 1 + O(W/p)`.
   - For `p ≤ 2J`: τ_p is the bounded small-prime correlation, read off g₀.
@@ -152,7 +176,7 @@ relative precision `(log N)^{−A}`, which SD does not give.  This rearrangement
 | CRT remainders | `(QD)⁴ < N^{1−ε}` | yes |
 | BV saving A | free | yes |
 | deep sites | **J₁ ≈ L3 N required**: at J ≈ log₂log₂N, `y_J < 2J` violates the full-state TV hypotheses.  The truncated phase tail costs `4^{−J₁} δ log log N → 0` | yes, after truncation |
-| exceptional characters | inside `MultBVResidue` (E3).  At `(e,q₀) = 1` no Siegel modulus divides e, but TSW's ineffective constant is inherited | yes |
+| exceptional characters | inside `MultBVResidue` (E3).  `(e,q₀) = 1` only rules out characters induced from q₀ as the correlation-pole family.  Other small-conductor real characters with conductor dividing e (coprime to q₀) remain, and `TwistedSiegelWalfisz` is the *assumed* bound on their twisted sums, with ineffective constants.  This makes no claim about where exceptional zeros sit (Astra 132048Z) | yes, given TSW |
 
 ## What this does and does not claim
 
@@ -173,3 +197,61 @@ relative precision `(log N)^{−A}`, which SD does not give.  This rearrangement
   proof.
 - **Owed before trunk:** Astra's referee of E1–E5; the `C_h` growth check above; Lean
   statements for the loosened `SiteFactorization` and `SelbergDelangeTilted`; and a green build.
+
+## Repair 1 (draft for referee): the raw-conditional main term
+
+This replaces E4ii and E4iii.  The notation is that of the referee box.
+
+**Kernel.**  `Λ(m) = Σ_{e,c} κ(e,c) 1[gcd(m,e) = g_{c,e}]/φ(e/g_{c,e})` term by term (item 3).
+Split `Λ = C + (Λ − C)`, where C is the same kernel for the UNtruncated `Φ^{≠k}`:
+
+    C(m) = C_small(m mod Q) · ∏_{2J < p ≤ y_head} C_p(m),
+    C_p(m) = b_p if p ∤ m,  1 if p | m,   b_p = 1 + a_p/(p−1),   a_p = Σ_{j≠k, p≤y_j} w_j.
+
+The difference `Λ − C` is the truncation residual.  It is handled like E1, on the augmented state
+(item 2) and with the indicator-expanded arithmetic fourth moment (item 3).
+
+**Large primes: a division only where it is safe.**  For `p > 2J` and `2J ≥ W + 2` (true
+eventually), `|a_p| ≤ W < p − 1`, so `b_p ≠ 0` and `|b_p − 1| ≤ W/(p−1)`.  Then
+
+    ∏_{2J<p≤y_head} C_p(m) = B_large · τ(m),   B_large = ∏ b_p,   τ(m) = ∏_{p|m, 2J<p≤y_head} b_p^{−1},
+
+with `|τ_p − 1| ≤ 2W/p`.
+
+**Small primes: a finite decomposition, no division.**  Q is squarefree.  For `g | Q`, put
+`C_small(g) = ∏_{p|g} C_p(hit) ∏_{p|Q/g} C_p(nonhit)`.  Here `C_p(hit) = g_p(−k)` is unimodular,
+and `C_p(nonhit) = (p−1)^{−1} Σ_{r ≢ −k} g_p(r)` has modulus `≤ 1` and may vanish.  It is never
+inverted.  Then
+
+    Σ_m f(m) C(m) = B_large Σ_{g|Q} C_small(g) Σ_{m ≤ N+k, gcd(m,Q)=g} f(m) τ(m).
+
+**Inner sums (Ω form; the ω translation is item 4).**  `gcd(m,Q) = g` ⟺ `m = g m′` with
+`gcd(m′, Q/g) = 1`.  This holds because Q is squarefree and m′ may still carry primes of g.  By
+complete multiplicativity, and since `τ` is supported above 2J, `f(g m′) τ(g m′) = f(g) f(m′) τ(m′)`.
+So each inner sum is `f(g) Σ_{m′ ≤ (N+k)/g, (m′,Q/g)=1} f(m′) τ(m′)`.  That is one tilted mean of f,
+with tilt `τ_p` above 2J and `0` at the primes of `Q/g`.
+
+- **The faithful SD target (to state after items 2–5):** a Selberg–Delange asymptotic for
+  `z^{Ω_P}·τ·1[(·, Q′) = 1]`, uniform over squarefree `Q′ | Q` and tilts with `|τ_p − 1| ≤ 2W/p`,
+  `p > 2J`.  The coprimality costs `Σ_{p|Q′} p^{−1/2} ≤ C√J/log J`.  An error factor
+  `exp(C√J)/log N → 0` suffices.
+- The same decomposition for `F_y` gives the κ = 0 case (Euler product, `O(1/log N)` error).
+
+**Assembly.**
+
+- The g-sum has `2^{ω(Q)}` terms, with `ω(Q) ≤ π(2J)`, weighted by `|C_small(g) f(g)|/g ≤ 1/g`.
+  So `Σ_g 1/g ≤ ∏_{p|Q}(1 + 1/p) ≤ C log J`, and the summed SD errors are
+  `N (log J) exp(C√J)/log N = o(N)`.
+- The main terms reassemble into Euler products.  At frozen primes `p ≤ y_k`, F and F_y share the
+  local factor, including the C-weights, so these cancel in `M[FC]/M[F_y C]`.
+- At `p ∈ (y_k, y_head]` the tilt changes the ratio by `∏(1 + O(W/p²)) = 1 + O(W/y_k)`.  So
+  `M[FC]/M[F_y C] = 1 + g(κ_k, s_k) + o(1)`.
+- `M[F_y C]` is the model value `E_μ[F_y Φ^{≠k}]` by the tower identity (accepted in 131444Z,
+  with C the correctly normalized conditional expectation).  The integer `W_y` differs from it
+  by the C′ TV error.  `B_large` is never divided out: it sits inside `M[F_y C]`.
+
+**Controls to run before asking for referee:**
+- Astra's p=5, one parity site, target −1: the kernel must give the joint local mean `1/5`.
+  Here `b = 1/2`, and `C_p(hit) = 1` (other site not hit).  The target phase is −1 on hit, 1 on
+  nonhit, so `E[ψ_target·C] = (1/5)(−1)(1) + (4/5)(1)(1/2) = 1/5` ✓.
+- The `h = 1` ET-phase case (site j=1 phase i, target k=2, p=5): `C_p(nonhit) = (3+i)/4`.

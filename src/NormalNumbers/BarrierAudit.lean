@@ -271,6 +271,9 @@ def waivers : List Waiver := [
    "C′-quantitative chain; same candidate sibling (ρ = log 2) as siteFactorization_of_depthUniform"⟩,
   ⟨``PrimeModel.SiteFactor.cprimeResidueQuad_of,
    "C′-quantitative assembly; same candidate sibling (ρ = log 2), not yet a Lean statement"⟩,
+  ⟨``PrimeModel.SiteFactor.cprimeResidueQuad_of_scheduled,
+   "C′-quantitative assembly from the scheduled statement; same candidate sibling (ρ = log 2), \
+    not yet a Lean statement"⟩,
   ⟨``Erdos257.towerGapPrimes_gapSet, "Mertens with error term per block (a leaf)"⟩,
   ⟨``Erdos257.squareBlockPrimes_weakRate, "Mertens with error term per block (a leaf)"⟩,
   ⟨``Erdos257.squareBlockPrimes_not_mertensRate, "Mertens with error term per block (a leaf)"⟩,
