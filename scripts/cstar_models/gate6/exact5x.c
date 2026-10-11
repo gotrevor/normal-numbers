@@ -152,13 +152,14 @@ static Bx box3(long r3) { int i = r3 / M3, j = r3 % M3; Bx c; c.xlo = ((Z)i << F
 static Bx box5(long r5) { int i = r5 / M5, j = r5 % M5; Bx c; c.xlo = xedge5[i]; c.xhi = xedge5[i + 1];
   c.rlo = redge[1][j]; c.rhi = redge[1][j + 1]; c.zl = c.zr = -1; return c; }
 static int NT, CHECK;
+static long NEXTQ;
 typedef struct { long q3, q5; ll v, tgt; } Rec;   // failing pair: lower bound v*DEN/NUM vs target
 typedef struct { long lo, hi, fail, pairs; double worst; Rec *rec; long nrec, cap; } Job;
 static void *worker(void *pp) {
   Job *j = pp; j->fail = 0; j->worst = 1e9; pairs = 0; j->nrec = 0; j->cap = 0; j->rec = 0;
   Node **T5 = calloc(S * NB5, sizeof(Node*));  // this thread's base-5 trees (lazily refined)
   for (long q5 = 0; q5 < S * NB5; q5++) if (PHI[q5] > 0) T5[q5] = mk(1, q5 / NB5, box5(q5 % NB5), 0);
-  for (long q3 = j->lo; q3 < j->hi; q3++) {
+  for (;;) { long q3 = __sync_fetch_and_add(&NEXTQ, 1); if (q3 >= S * NB3) break;
     ll w3 = W3[q3]; if (w3 <= 0) continue;
     int s = q3 / NB3, r3 = q3 % NB3; Node *a = 0;
     for (long r5 = 0; r5 < NB5; r5++) { long q5 = s * NB5 + r5; ll ph = PHI[q5]; if (ph <= 0) continue;
@@ -228,7 +229,7 @@ int main(int argc, char **argv) {
   if (CHECK && argc > 11) { FILE *f = fopen(argv[11], "r"); char line[128]; while (fgets(line, 128, f)) { char *p; long q5 = strtoll(line, &p, 10); long r3 = strtoll(p, &p, 10); ll e = strtoll(p, 0, 10); exSet(q5, (int)r3, e); }
     for (long q = 0; q < S * NB5; q++) if (EXN[q]) qsort(EX[q], EXN[q], sizeof(Ex), cmpex); }
   for (int it = 0; it < IT; it++) {
-    pthread_t th[64]; Job jb[64]; long Q3 = S * NB3, chunk = (Q3 + NT - 1) / NT;
+    pthread_t th[64]; Job jb[64]; long Q3 = S * NB3, chunk = (Q3 + NT - 1) / NT; NEXTQ = 0;
     for (int t = 0; t < NT; t++) { jb[t].lo = t * chunk; jb[t].hi = (t + 1) * chunk < Q3 ? (t + 1) * chunk : Q3; pthread_create(&th[t], 0, worker, &jb[t]); }
     long fail = 0, pr = 0; double worst = 1e9;
     for (int t = 0; t < NT; t++) { pthread_join(th[t], 0); fail += jb[t].fail; pr += jb[t].pairs; if (jb[t].worst < worst) worst = jb[t].worst; }

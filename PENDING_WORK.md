@@ -4013,3 +4013,8 @@ Next: `isFresh` Riesz bound, then the classification lemma in Lean (route-decisi
   joint value 0 (both windows kill everything), and a product cannot zero a single pair.
   NEXT: sparse exception table E(p3,p5) on top of the product (leaf bound per path = min(a3*b5, exceptions met)),
   PHI from a robust quantile, exceptions absorb the joint-death pairs; measure the exception count.
+- Zero-value pairs under the pure product: 35,718 of 9.83M (0.36%), over 790 base-5 bins, median 3 per bin
+  (`ZC=1` run).  So joint death is sparse -> `gate6/exact5x.c` = product + sparse exception table
+  (leaf bound per path min(a3*b5, exceptions in the met product set); PHI lowered at the KQ-th failing ratio,
+  the rest become exceptions).  Run: `MAXB5=20 exact5x 128 24 6 2 6 16 W181 60 15 PHI_x` (dynamic work queue).
+- Lean: `Fold.Good5`, `Fold.good5_alive` proved (the certificate's Good predicate and its aliveness).
