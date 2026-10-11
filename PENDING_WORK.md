@@ -3993,3 +3993,13 @@ Next: `isFresh` Riesz bound, then the classification lemma in Lean (route-decisi
   `WeightedCore449F` docstring fixed (no `wq ≤ 1`). Frozen predicates unchanged.
 - Next: step (2), exact {2,3,5} D=6 certificate with frozen rational W = r·V, Lean bridge to
   `WeightedCore449F F5 (9/5)`, same weights in tail budget; send artifacts to Codex via ON-LINE-REQUEST.md.
+
+## 2026-10-11 gate 6 step (2) in progress: exact {2,3,5} core
+- Gate-4 slack measured: `exact3 128 24 6 16 v449 40 91 50` -> EXACT CERTIFICATE at growth 91/50 = 1.82
+  (exit 0, 11.5 min).  So the {2,3} core has ~6.8% per-block headroom over (9/5)^6; base 5 cost ~0.4%/level sampled.
+- `scripts/cstar_models/gate6/exact35.c`: joint exact checker (bins s,i3,j3,i5,j5; base-5 x edges uniform 2^m +
+  geometric near 0/1 to 2^-12; per-base ambiguous resolution min; base-5 kill-driven B&B priority).
+  Control NO5=1 with W3 x 1: passes (spot bins).  Full run 128x24 x 76x2 = 11.7M bins in progress.
+- Lean-side cost concern: 11.7M bins at gate-4 Lean speed (bignum Int, ~20 ms/bin) is infeasible.  Plan: (a) keep all
+  fixed-point values < 2^62 (F ~ 50) so Lean `Int` stays on the scalar fast path; (b) product weights
+  W = W3(s,i3,j3) * phi(s,i5,j5) so the Lean data stays small.
