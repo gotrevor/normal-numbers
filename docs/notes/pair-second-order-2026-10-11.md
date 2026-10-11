@@ -91,18 +91,19 @@ O(1) per `(m, m′)`.
 
 ```lean
 /-- Brun–Titchmarsh in progressions (Montgomery–Vaughan 1973: constant 2), weakened to an
-absolute C. -/
+absolute C.  Checked source: K. Ford, *Sieve Methods* lecture notes (2023), Thm 2.7 (via Thm 2.5
+with k = 1). -/
 def BrunTitchmarshAP : Prop :=
   ∃ C : ℝ, 0 < C ∧ ∀ k l : ℕ, 1 ≤ k → Nat.Coprime l k → ∀ x : ℝ, (k : ℝ) < x →
     (((Finset.Iic ⌊x⌋₊).filter (fun p => p.Prime ∧ p % k = l % k)).card : ℝ)
       ≤ C * x / ((Nat.totient k : ℝ) * Real.log (x / k))
 
-/-- Upper-bound sieve for two linear forms, in the shape of Halberstam–Richert, *Sieve Methods*
-(1974), Thm 5.7 with g = 2.  It is quoted in the open-access arXiv:2308.01152 (Luca, Maynard,
-Noubissie, Ouaknine, Worrell), p. 8.  The bound is the singular series times `x/log²x` times
-`1 + O((log log 3x + log log 3|E|)/log x)`, with `E = a₁a₂(a₁b₂ − a₂b₁) ≠ 0`.  Here the singular
-series is weakened to `C (E/φ(E))²` (local factor ≤ `(1−1/p)^{−2}` at `p | E`, `1 + O(p^{−2})`
-elsewhere), and the constant to an absolute C. -/
+/-- Upper-bound sieve for two linear forms, uniform in the coefficients.  Source: K. Ford,
+*Sieve Methods* lecture notes (2023), Thm 2.5 with k = 2 (constants depend only on k, for
+primitive admissible forms).  The general case reduces to it by elementary case splits (Astra
+175014Z): a nonprimitive form has ≤ 2 prime hits; a primitive inadmissible pair is obstructed at 2
+(≤ 4 hits); otherwise use four sign choices, which preserve |E| and admissibility.  Singular
+series ≤ C (E/φ(E))². -/
 def UpperSieveTwoLinearForms : Prop :=
   ∃ C : ℝ, 0 < C ∧ ∀ a₁ a₂ : ℕ, ∀ b₁ b₂ : ℤ, 0 < a₁ → 0 < a₂ →
     (a₁ : ℤ) * a₂ * (a₁ * b₂ - a₂ * b₁) ≠ 0 → ∀ X : ℕ, 3 ≤ X →
@@ -111,8 +112,6 @@ def UpperSieveTwoLinearForms : Prop :=
         ≤ C * (((a₁ * a₂ * (a₁ * b₂ - a₂ * b₁) : ℤ).natAbs : ℝ)
                 / Nat.totient (a₁ * a₂ * (a₁ * b₂ - a₂ * b₁) : ℤ).natAbs) ^ 2
             * X / Real.log X ^ 2
-            * (1 + Real.log (Real.log (3 * ((a₁ * a₂ * (a₁ * b₂ - a₂ * b₁) : ℤ).natAbs : ℝ)))
-                    / Real.log X)
 
 /-- **Second order on the Erdős–Turán schedule.**  A SEPARATE statement: the frozen all-`u`
 `PairSecondOrder` is unchanged. -/
@@ -295,3 +294,36 @@ symmetric blocks are handled the same way.
   `X = T ≥ N^{γ}/q`, so the factor is `1 + o(1)`.
 - The book itself is unchecked.  Bordignon–Lee (arXiv:2211.11012) make HR Thm 5.3 explicit, but
   with an F-dependent constant, which is not the coefficient-uniform form needed here.
+
+## Final conditional review (Astra 175014Z): sign-off on paper, with three edits applied
+
+1. **Sieve source checked: Ford, *Sieve Methods* lecture notes (2023), Thm 2.5, p. 19.**
+   - Astra checked the page image and proof; Opus re-read the statement from the PDF.  The bound is
+     `≪_k S x/log^k x` for distinct admissible primitive forms, with the singular series S over
+     `∏ a_i ∏_{i<j}(a_i b_j − a_j b_i)`, uniform in the coefficients.
+   - With Astra's case split (above), the original height-free `UpperSieveTwoLinearForms` holds.
+     So the HR-5.7-shaped restatement with the `log log 3|E|` factor (5f892eb7) is REVERTED to the
+     height-free form, now citing Ford, not unchecked HR theorem numbers.
+   - `BrunTitchmarshAP` is Ford Thm 2.7.
+2. **Step 0, deep tail written explicitly.**  The tail is
+   `≤ C|h|4^{−L}(log u + L) + C|h|4^{−J₁(N)} log log N + o_N(1)`, with
+   `J₁(N) = ⌈log₂ log log N⌉`, which eventually lies between L and J.
+   - `4^{−J₁} log log N → 0`.
+   - The smallest retained frozen cutoff `y_{J₁} = exp(c log N/(u² log log N)) → ∞`, so the
+     all-prime Mertens remainder is uniform on the shallow part.
+   - Choose L first, then N.
+3. **Region (2) keeps the mixed-small-prime term, and uses V-shells.**
+   - `C δ² log(1/w)` covers pairs with both primes above `Z = N^{1/8}`.  Pairs with one prime
+     below Z add `C δ²(log s_i + log s_j)` (old region (5)).
+   - The cofactor sum runs over V-shells, with the same geometric `V/N` summation as region (3).
+   - Corrected pre-absorption bound, with an absolute C on the WHOLE expression:
+
+         mean[ω_i ω_j] ≤ C δ² [log s_i log s_j + (1 + C_Δ)(1 + log(1/δ))] + o(1).
+
+   - On the schedule, `log s_i, log s_j ≥ 1` and the absorption in Step 3 is unchanged:
+     `|T2| ≤ C freshBudget² + ε`.
+
+**Status:** `pairSecondOrderScheduled_of (hBT) (hUS) (hMer)` has paper-level CONDITIONAL sign-off
+from Astra (175014Z), with the displayed quantifiers and an absolute constant.  This does not
+cover the Lean implementation, the build, or trunk.  The separate site producer still carries its
+BV/TSW dependency.
