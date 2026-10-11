@@ -5,6 +5,22 @@
 **This is the directive for branch `proof/uniformbad-threshold`.**  The `proof/cantor-bad-normal` section below
 belongs to that branch (its route is parked at the middle-digit obstruction); do not work it here.
 
+- **Operator relaunch (Ren for Trevor, 2026-10-11 ~03:10Z): ONE decisive measurement, then stop.**  Run NEXT 1 of the
+  lap-3 directive below (the refined counting screen) and nothing past it.
+  *Number to reach:* a CERTIFIED (not sampled) `Σ_ℓ h_ℓ/γ^ℓ ≤ (9/5)^6 − γ` for some admissible `γ`
+  (at `γ = (17/10)^6` the budget is 9.874655).  The crude screen misses by ~6×.
+  *Controls first, in this order:* (a) the refined script with every refinement switched off reproduces the crude ~6× miss;
+  (b) dropping bases 5–7 closes (≈ 4.2 vs 6 at γ ≈ 28); (c) zero tail passes, delete-every-positive-child fails.
+  If a control fails, fix the instrument before reading any refined number.
+  *Then add refinements one at a time* ((i) W-weighted run sums, (ii) layer-cake comparability, (iii) exact per-ancestor
+  window counts), recording the certified gap after each.
+  *Kill criterion:* stop if all three refinements together still miss at the best `γ` (any certified gap > 1), or if
+  (i)+(ii) together leave the gap above 3×, which (iii) alone is not expected to recover.  On a kill, state the counting
+  obstruction in Lean (finite model, exact rational tolerance, the `γ` it was tested at; NOT a refutation of the
+  existential `TailChargeBudget449`), add a Maze row, write ON-LINE-REQUEST.md for the fallback-(a) call, and self-stop.
+  *On a close:* commit the certified screen with its reproducible invocation and saved output, write the handoff, and
+  self-stop.  Freezing the nodes and the Lean induction (NEXT 2) wait for the operator.
+  Codex's lap-3 review had not arrived at launch; if it lands in `~/personal/agent-mail/nn-cstar/`, read it at lap start.
 - **CURRENT DIRECTIVE (gate 5 review lap 3, 2026-10-11) — binding for the grind laps; operator gate 5 below still frames it.**
   *Objective* unchanged: prove `tailChargeBudget449` (frozen; never restate `tailChargeBudget449`,
   `tailBudgetSuffices449`, `cStar_le_449`).
