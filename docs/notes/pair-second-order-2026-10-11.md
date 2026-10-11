@@ -4,7 +4,7 @@ Opus (Ren), 2026-10-11, attended.  Paper draft for Astra's referee, **not refere
 Companion to `coefmass-bv-ledger-2026-10-11.md`.  The ET chain needs both `SiteFactorizationScheduled`
 and a second-order bound.  This note is about the second.
 
-## Finding 1: `pairSecondOrder_of (h : SelbergUpperTwoForms)` cannot work as stated
+## Finding 1: `SelbergUpperTwoForms` does not directly supply what `pairSecondOrder_of` needs
 
 `PairSecondOrder` bounds `T2 = W − W_y − T1′` by `C · freshBudget²`, and `freshBudget ∝ δ = 1/φ(q)`.
 So the bound must carry **δ²**: both fresh primes lie in the class `a mod q`.
@@ -15,8 +15,9 @@ on `ap + b`.  Two things are missing:
 - the shape.  The pair count needs `(mp + Δ)/m′` prime with p in a class mod `qm′`, which is not
   `ap + b` with p the prime variable.
 
-The Lean docstring's own English says "in progressions mod q₀", but the Prop dropped that.  This is a
-statement gap, not a proof gap.  Believed ~90%.
+The Lean docstring's own English says "in progressions mod q₀", but the Prop dropped that.  This is
+a missing reduction or input, not a counterexample: it does not show the implication is false
+(Astra 170505Z).  Believed ~90% that some progression or linear-form input must be added.
 
 ## The pair mean, region by region
 
@@ -137,3 +138,73 @@ theorem cprimeResidueQuad_of_scheduled' (hSF : SiteFactorizationScheduled)
 
 **Elaboration check (Opus):** the four Props and two producers above compile in a scratch file
 together with the ledger's drafts, with sorry warnings only.  This is elaboration, not meaning.
+
+## Referee (Astra 170505Z): region (3) is still the gate
+
+- **Exact compatibility.**  Put `g = gcd(m, m′) | Δ`, `M = m/g`, `M′ = m′/g`, `D = Δ/g`.
+  - Integer solutions with `p, p′ ≡ a (q)` exist iff `q | a(M′ − M) − D`.
+  - The solutions are one class mod `qM′`, with primitive slopes `qM′` and `qM`.
+  - The nonprimitive modulus `qm′` splits it into g classes.
+  - This needs no `(g, q) = 1`.
+- **There is no blanket 1/q saving per cofactor block.**  `(m, m′, a, Δ) = (1, 2, 1, 1)` is
+  compatible for every q.  The second δ must come from averaging compatible `(M, M′)`.  Blocks with
+  bounded cofactors are `o_N(1)` at fixed q.
+- **Owed:** the weighted compatibility sum, with its gcd and class-count factors and the
+  `(E/φ(E))²` weight, including primes dividing q and Δ.  The claimed `C δ² w/γ` is not
+  established until then.
+- Region (1) needs a log factor in the crude pair count, which is still `o(N)`.
+- Region (4) is sound, and `γ = w = δ` is enough once q₁ gives δ < 1/8.
+
+## Region (3): the weighted compatibility sum (Opus draft, answering 170505Z)
+
+Fix a near-diagonal block `p ~ P`, `p′ ~ P′` with `PP′ = N^{1+γ′}`, `γ′ ≥ γ`, and `Δ = j − i`.
+
+**Parametrize.**  `m = (n+i)/p`, `m′ = (n+j)/p′`, `g = gcd(m, m′) | Δ`, `M = m/g`, `M′ = m′/g`,
+`D = Δ/g`.
+- From `p′M′ − pM = D` with `p = a + qr`, `p′ = a + qs`: compatibility is `q | a(M′−M) − D`, i.e.
+  `M′ ≡ c_M := M + D ā (mod q)` (Astra's exact form).
+- The solutions are `p = b₁ + qM′t`, `p′ = b₂ + qMt`, `t ≤ T := 2P/(qM′)`.
+- Then `a₁b₂ − a₂b₁ = q(a(M′−M) + q(s₀M′ − r₀M)) = qD`, so `E = q³ M M′ D`.
+
+**Sieve per (M, M′).**  `≤ C (E/φ(E))² T/log² T`, with
+`E/φ(E) ≤ (q/φ(q))(M/φ(M))(M′/φ(M′))(D/φ(D))`.
+- The `(q/φ(q))²` is genuine.  Both forms are `≡ a ≢ 0 mod ℓ` for `ℓ | q`, so ρ(ℓ) = 0 and the
+  local factor is `(1 − 1/ℓ)^{−2}`.
+- `log T ≥ γ′ log N − log q`, as before.
+
+**Sum over M′ in its class.**  Write `(n/φ(n))² = Σ_{e|n} η(e)`, η multiplicative, supported on
+squarefree e, `η(ℓ) = (ℓ/(ℓ−1))² − 1`.  For `X′ ≥ q`:
+
+    Σ_{M′~X′, M′≡c (q)} (M′/φ(M′))²/M′ ≤ (C/q) · (gcd(c,q)/φ(gcd(c,q)))² + O((log X′)³/X′).
+
+Primes `ℓ | q` with `ℓ ∤ c` never divide M′, so they contribute nothing.
+
+**Sum over M.**  As M runs over a dyadic block (`≥ q` long), `c_M = M + Dā` is equidistributed mod q.
+- The extra weight averages to `(1/q) Σ_{c mod q}(gcd(c,q)/φ(gcd(c,q)))^r = ∏_{ℓ|q}(1 + O(1/ℓ²))`.
+  This is bounded, even with the `(M′/φ(M′))²` double count from E (r = 4).
+- Correlations between M and `c_M` at primes dividing q come only through `ℓ | D`.  They are folded
+  into `C(Δ)`.
+- `(M/φ(M))²` has bounded average.
+
+**Block total.**  Count `≤ C (q/φ(q))² · (1/q) · (1/q) · N · C(Δ)/log² T`, with
+`C(Δ) = Σ_{g|Δ} g^{−1}(D/φ(D))^{O(1)} ≤ C (log log(Δ+3))^{O(1)}`.
+- One 1/q comes from T (p in a class), the other from the M′ class (p′ in a class).
+- `(q/φ(q))²/q² = 1/φ(q)² = δ²` exactly.
+- So the block is `≤ C δ² C(Δ) (log 2)²/(γ′ log N)²`, and summing near-diagonal blocks gives
+  `C δ² C(Δ) w/γ`, as claimed in the table.
+- `C(Δ) ≤ C log(j+2) ≤ C log s_j` is absorbed by the site weights.
+
+**Edge blocks** (`X′ = N/(gP′) < q`, i.e. `p′ > N/(qΔ)`): the count is at most
+`#{n : n+j has an S-prime > N/(qΔ)} ≤ Nδ log(log 2N/log(N/qΔ)) + π(2N) = o(N)` at fixed q.  The
+symmetric blocks are handled the same way.
+
+**Controls (Opus, exact):**
+- `max_q (1/q)Σ_c (gcd/φ(gcd))²` over `q < 400` and two primorials is 4.31; for the 4th power it
+  is 31.5.  Both are bounded, since the per-prime factors are `1 + O(1/ℓ²)`.
+- `(q/φ(q))²·φ(q)²/q² = 1` (q = 7 and q = 510510), confirming the δ² normalization.
+
+**Region (1) correction (Astra):** the crude pair count `≤ N^{1−γ} log N` is still `o(N)`.
+
+**Status:** with this sum, regions (1)–(5) give
+`mean[ω_i ω_j] ≤ δ² log s_i log s_j + C δ² C(Δ)(1 + log 1/δ) + o(1)`.
+`PairSecondOrderScheduled` is believed ~70%.  The class-count averaging is the step to referee.

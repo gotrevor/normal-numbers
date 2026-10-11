@@ -437,9 +437,9 @@ def MultBVOmegaRestricted : Prop :=
         ≤ C * x / Real.log x ^ A
 
 /-- Selberg–Delange for z^{ω_P} with a zero set S₀ and a 1/p tilt.  UNPROVED analytic input:
-the statement is accepted as faithful (Astra 162350Z), but its uniform instantiation from the SD
-source theorem is not checked (analytic continuation and derivative summability of the normalized
-series).  Division-free: no small-prime value is inverted; τ = 0 on S₀ encodes coprimality.
+the statement is accepted as faithful (Astra 162350Z).  Instantiation route: Tenenbaum II.5.2 (P is
+continuation plus the bound (5.11); M-linearity verified from page images), see ledger step 7;
+the L-function bracket is shared with SelbergDelangeResidue and not re-proved.  Division-free: no small-prime value is inverted; τ = 0 on S₀ encodes coprimality.
 Uniform in x ≥ 3 (all lengths N/a), in finite prime sets S₀ through exp(C Σ_{S₀} p^{−1/2}), and
 in tilts with |τ_p − 1| ≤ K/p off S₀.  In use: S₀ = ALL primes of Q, since the radical
 decomposition leaves (m″, Q) = 1; τ_p = b_p^{−1} on (2J, y_head] and 1 beyond; K = 2W.  Then
@@ -775,11 +775,36 @@ so it never vanishes.  Then
 - **The Euler constant** `L₀ = G(1)/…` is identified by the same partial-product limit as in
   `SelbergDelangeResidue`.  The τ and S₀ factors converge absolutely.
 
-**Net:** `hSD`'s remaining risk is the same as the frozen `SelbergDelangeResidue`'s instantiation:
-the L-function bracket and the II.5.2 citation.  Add one recalled fact (M-linearity) and an
-elementary ℋ bound.  Believed ~75%, conditional on II.5.2's M-linearity being as recalled.
-**Verification needed:** Tenenbaum, *Introduction to Analytic and Probabilistic Number Theory*,
-3rd ed., §II.5, Thm 5.2 and its definition of `P(z; c₀, δ, M)` (edition and series recalled).
+**II.5.2 M-linearity: VERIFIED** against the page images of pp. 280–281 (2026-10-11).  The
+paraphrase and citation are in `docs/notes/tenenbaum-II52-M-linearity-2026-10-11.md` (Tenenbaum,
+3rd ed., AMS GSM 163, §II.5.2).
+- Property P is continuation to the zero-free-type region plus a growth bound M(1+|t|)^{1−δ}.  It
+  has no derivative-summability clause.
+- Type T requires F and a non-negative majorant to satisfy P with the same (c₀, δ, M).
+- The theorem's error is M times a fixed decaying function, with constants depending only on c₀, δ
+  and the bound on |z|, |w|.
+
+**Step 7 under the verified hypotheses:**
+- **One shared triple.**  Take `M := max(M_F, M_maj)`, `c₀ := min` and `δ := min` over F and the
+  majorant.
+  - `M_F = M_{q₀} exp(C Σ_{S₀} p^{−3/4} + C_K)`.
+  - Majorant: `bₙ = ∏_{p|n}(1 + K/p)`.  Its G is `∏_p(1 + K p^{−1−s})`, so
+    `M_maj ≤ e^{CK}` on σ ≥ 3/4.  It has w = 1, and its continuation is trivial (absolutely
+    convergent on σ > 0).
+  - Linearity is unaffected: the error is `O(max(M_F, M_maj) R₀)`.  Both factors are uniform in
+    S₀ beyond `exp(C Σ_{S₀} p^{−3/4})` and in τ beyond K.
+- **Region.**  The ℋ bound and the majorant bound are proved on σ ≥ 3/4.  The P-region satisfies
+  `σ ≥ 1 − c₀/(1 + ln⁺|τ|) ≥ 1 − c₀`, so **take c₀ ≤ 1/4**.
+- **The L-function bracket on the same region.**  Take `c₀ ≤ c(q₀)`, inside the classical
+  zero-free region `σ ≥ 1 − c/log(|τ|+2)` for all χ mod q₀, and to the right of any exceptional
+  zero β.  q₀ is fixed, so β < 1 is a fixed number.
+  - There, `|L(s,χ)^{c_χ}| ≤ (C log(|τ|+3))^{|c_χ|}`, and `|c_χ| ≤ 2/φ(q₀)`.
+  - So the bracket is `≤ M_{q₀}(1+|τ|)^{1−δ}` for any δ < 1, e.g. δ = 1/2.
+  - This is the same fact the frozen `SelbergDelangeResidue` uses; it is not re-proved here.
+
+**Net:** `hSD` = the frozen `SelbergDelangeResidue` instantiation (the L-function bracket on
+`c₀ ≤ min(1/4, c(q₀))`) plus the elementary ℋ and majorant bounds.  The II.5.2 citation is
+verified.  Believed ~85%.
 
 ## Named inputs referee (Astra 164508Z, on c9b3dcd3): accepted with refinements
 
@@ -826,3 +851,62 @@ elementary ℋ bound.  Believed ~75%, conditional on II.5.2's M-linearity being 
    `RieszEnergyTail` (56adf079, crossed in transit).  The remaining items stay ordinary supporting
    lemmas with accurate status: integer M4, coefficient ledger, strict BV exponent slack,
    small-prime truncation, scalar norm and ET steps.  The SD gate is unchanged.
+
+## SD-free scheduled producer (Astra 170505Z; Opus check agrees)
+
+**The kernel has vanishing arithmetic L¹ norm.**
+- `C_k(m) = C_small · B · ∏_{p|m, 2J<p≤y_head} b_p^{−1}`, with `|C_small| ≤ 1` and
+  `|b_p^{−1}| ≤ 1 + 2W/p`.
+- Expand the positive product as a divisor sum and use `⌊X/d⌋ ≤ X/d`:
+  `X^{−1} Σ_{m≤X} |C_k(m)| ≤ |B| ∏_{p>2J}(1 + 2W/p²) ≤ |B| e^{W/J}`.  This is exact as an upper
+  bound: no CRT remainder, no level restriction.
+- `|B| → 0` at fixed (q, h, u):
+  - `|1 + a/t| ≤ exp(Re a/t + |a|²/2t²)` holds, and every `Re w_j ≤ 0`.
+  - For a nontrivial other site j* (`z_{j*} ≠ 1`, so `Re w_{j*} = −c_h < 0`), every `p ≤ y_{j*}`
+    has `Re a_p ≤ −c_h`.
+  - So `|B| ≤ e^{O(W²/J)} exp(−c_h Σ_{p∈P, 2J<p≤y_{j*}} 1/(p−1)) → 0` by Mertens-AP, since
+    `y_{j*} = N^{c}` while `J = O(log log N)`.
+  - Two nontrivial sites exist for h ≠ 0, so one survives omitting any target k ≤ L.
+- Hence `mean[C_k f_k] → 0` for any `|f_k| ≤ 2`, uniformly in k ≤ L.
+
+**The target is already small.**
+- Same argument in the model: `|∏ μ_p| → 0`.  So by TV, `|W_y| ≤ C e^{−u} + o(1)`.
+- `|siteFactor(κ, s)| ≤ C|κ|(1 + log s)` for `Re κ ≤ 0`, `|κ| ≤ 1/2`, `s ≥ 1`.  Here
+  `|s^κ − 1| ≤ |κ| log s`, and `e^{−γκ}/Γ(1+κ)` has a bounded derivative on the disk.
+- So `Σ_k|g_k| ≤ C δ(L_h log u + L_h²)`, and `|W_y G_h| ≤ C e^{−u} δ polylog(u) + o(1) ≤ e^{−u/8}`
+  on `|h| ≤ u`.
+
+**Exact controls (Opus):**
+- `h = 3, J = 6`, class `3 mod 7`, primes ≤ 3000, `X = 2·10⁵`:
+  - all `Re w_j ≤ 0`; the threshold bounds hold at every prime;
+  - `|1 + a/t| ≤ exp(…)` holds on 200 random `(a, t)`;
+  - the divisor-sum mean is 1.0098, under its bound 1.0310.
+- `max |g|/(|κ|(1 + log s)) ≈ 0.95` over a grid of `Re κ ≤ 0`, `|κ| ≤ 1/2`, `s ∈ [1, 10¹²]`.
+
+**New assembly.**  Keep steps 0–5 (BV transfers `P f` to `Λ f`; the `Λ − C` residual uses the
+fresh L² norm, `hE`, `hM4` and `hTV`).  Replace steps 6–9 by `mean[C_k f_k] = o(1)` and the
+`|W_y G_h|` bound.
+
+```lean
+theorem siteFactorizationScheduled_of'' (hBV : MultBVOmegaRestricted) (hTV : AugmentedJointTV)
+    (hM4 : RieszFourthMoment) (hE : RieszEnergyTail) (hMer : MertensAPAsymptotic) :
+    SiteFactorizationScheduled := sorry
+```
+
+**Consequences:**
+- `hSD` and `eulerFactorMatching` are no longer needed for the scheduled Prop.  The SD route
+  above (step 7, II.5.2) stays as a record.  It is still the route for any relative asymptotic of
+  the tilted mean, but nothing scheduled consumes it.
+  - An open-access M-linear source, if that route is revived: Chang–Martin, arXiv:1908.00035v2,
+    Appendix A.  Use the proof of Thm A.13 (p. 24), which is linear in M with an M-independent x
+    threshold, at expansion order 0.  The printed `R_N` display on p. 23 looks inconsistent with
+    its proof (Astra), so derive from the proof rather than silently correct the display.
+- **The old table had a gap** (Astra): steps 6 and 9 paid an unweighted `C e^{−u}` TV error per
+  retained k.  With `L = L(h, u, ε)` growing as `ε → 0`, `L·e^{−u}` is not uniformly absorbed.
+  The direct C bound bypasses it.
+- **Choosing q₁.**  Use eventual growth of φ(q), e.g. `φ(q) ≥ √(q/2)`, not monotonicity of
+  `schedU`: φ(6) = 2 < φ(5) = 4.
+- **Status:** `RieszEnergyTail` is accepted on paper (Astra), and the Hölder truncation is
+  accepted.  The Λ majorant keeps a `2^{ω(Q)}` factor, which is polylog and harmless.
+  `siteFactorizationScheduled_of''` is believed ~75%: no analytic SD input, `hBV` and `hTV`
+  carry the weight.
