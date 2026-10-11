@@ -331,3 +331,29 @@ Open within repair 2 at submission: none that I saw.  Referee targets:
 - the moment bound for `D′_k` at the `y_head` scale;
 - whether any §4 constant silently used more than `d_b ≤ J`.  It still holds: above `y_k` only
   sites `j < k` are active, so `d′_b ≤ (k−1) + 1 ≤ J`, and `g_p = d′/p < 1/2` since `p > 2J`.
+
+## Item 5 (draft for referee): fixed fresh-site cut, so `MultBVResidue` sees finitely many z
+
+`MultBVResidue`'s constants `B, C` depend on z, and the fresh site's `z_k = e(h/4^k)` varies with
+`k ≤ winJ N`.  So cut the FRESH-site sum, not the frozen window, at a fixed `L = L(h, u, ε)`.
+
+- **Tail of `T1′`.**  `|z^n − 1| ≤ n|z − 1|`, so
+  `Σ_{k>L} |T1′_k| ≤ Σ_{k>L} |w_k| · mean_n ω_{(y_k, N]}(n+k)`.
+  - Mertens for all primes (no AP upper bound needed) gives the mean as
+    `≤ log(log N/log y_k) + O(1) = log(u² 2^k) + O(1)`.
+  - With `|w_k| ≤ 2π|h| 4^{−k}`, the tail is `≤ C|h| 4^{−L}(log u + L)`.
+- **Tail of the main term.**  `|W_y| ≤ 1` and `|g(κ_k, s_k)| ≤ C|κ_k| log s_k` for `k > k_h`, with
+  `|κ_k| ≤ δ|w_k|`.  So `|W_y Σ_{k>L} g| ≤ C δ|h| 4^{−L}(log u + L)`.
+- **Choice.**  Take L with `C|h| 4^{−L}(log u + L) ≤ ε/2`.  It depends only on h, u, ε, not on
+  N or q, and fits the Prop's `+ε` slot.
+- **Consequences:**
+  - The type-I and main-term analysis runs only for `k ≤ L`.  `MultBVResidue` is used at the
+    finitely many `z_1, …, z_L`, and its constants are maximized over them before `N → ∞`.
+  - Shifts are `k ≤ L = O_{h,u,ε}(1)`, so the endpoint terms are `O(L)`.
+  - The frozen phase `Φ^{≠k}` still carries every site up to `J₁`.  Its phases enter only through
+    the coefficient mass W, the M4 constant and (5.3′), which are already uniform.
+- **Scheduled Prop.**  With u = ⌈ρ⁻²⌉ and `|h| ≤ u` fixed by q, L depends on (q, ε).  It is still
+  chosen before N, as the `∀ᶠ N` quantifier allows.
+
+Referee target: that cutting the fresh site and keeping the frozen window at `J₁` is consistent
+with C′'s hypotheses.  Here `k ≤ L` means the target site is always in the retained window.
