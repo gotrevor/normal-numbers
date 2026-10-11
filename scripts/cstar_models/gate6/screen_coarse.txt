@@ -1,0 +1,4 @@
+F={} C=4.49 D=6 specs=16:4:2:2: states 1600 leaves 170648 growth 1.838199 zeros 111 pre 0.1s total 0.1s
+F={5} C=4.49 D=6 specs=16:4:2:2 4:2:1:1: states 12800 leaves 1365184 growth 1.838199 zeros 888 pre 0.4s total 0.5s
+F={5,6} C=4.49 D=6 specs=16:4:2:2 4:2:1:1 4:2:1:1: states 102400 leaves 10921472 growth 1.838199 zeros 7104 pre 4.5s total 5.1s
+F={5,6,7} C=4.49 D=6 specs=16:4:2:2 4:2:1:1 4:2:1:1 4:2:1:1: states 819200 leaves 87371776 growth 1.838199 zeros 56832 pre 47.8s total 54.3s

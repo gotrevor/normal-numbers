@@ -3995,11 +3995,21 @@ Next: `isFresh` Riesz bound, then the classification lemma in Lean (route-decisi
   `WeightedCore449F F5 (9/5)`, same weights in tail budget; send artifacts to Codex via ON-LINE-REQUEST.md.
 
 ## 2026-10-11 gate 6 step (2) in progress: exact {2,3,5} core
-- Gate-4 slack measured: `exact3 128 24 6 16 v449 40 91 50` -> EXACT CERTIFICATE at growth 91/50 = 1.82
-  (exit 0, 11.5 min).  So the {2,3} core has ~6.8% per-block headroom over (9/5)^6; base 5 cost ~0.4%/level sampled.
+- Gate-4 slack: CORRECTION. The first "exit 0" at 91/50 was `tail`'s exit code.  Rerun: 40 passes, no fixed point
+  (maxW decays ~1%/pass, ~65k bins lowered per pass), so growth 1.82 is NOT certified at N=128 M=24.  Headroom over
+  9/5 is under 1.1%/level; 181/100 being tested.  Base 5 costs ~0.4%/level sampled: margin is thin.
 - `scripts/cstar_models/gate6/exact35.c`: joint exact checker (bins s,i3,j3,i5,j5; base-5 x edges uniform 2^m +
   geometric near 0/1 to 2^-12; per-base ambiguous resolution min; base-5 kill-driven B&B priority).
   Control NO5=1 with W3 x 1: passes (spot bins).  Full run 128x24 x 76x2 = 11.7M bins in progress.
 - Lean-side cost concern: 11.7M bins at gate-4 Lean speed (bignum Int, ~20 ms/bin) is infeasible.  Plan: (a) keep all
   fixed-point values < 2^62 (F ~ 50) so Lean `Int` stays on the scalar fast path; (b) product weights
   W = W3(s,i3,j3) * phi(s,i5,j5) so the Lean data stays small.
+- Gate-4 headroom: `exact3 128 24 6 16 v449 40 181 100` -> EXACT CERTIFICATE at 181/100 (18 passes); weights saved
+  `gate6/W181_N128_M24_D6.txt.gz`.  91/50 fails.  So the {2,3} core has 0.55%..1.1% per level over 9/5.
+- `gate6/exact35.c` (full 4-D joint B&B) is far too slow (>4 CPU-h per pass, and hopeless for native_decide).
+- `gate6/exact5t.c`: PRODUCT certificate W3(s,i3,j3)*PHI(s,i5,j5) with W3 = W181 frozen; per-path tensor bound
+  sum_p a3[p] b5[p] (per-base B&B trees, pair refinement).  Control NO5: passes in 36 s (11.7M pairs).
+  With base 5: PHI collapses (~25% of base-5 bins forced to 0 in pass 0) because some (bin3,bin5) pairs have
+  joint value 0 (both windows kill everything), and a product cannot zero a single pair.
+  NEXT: sparse exception table E(p3,p5) on top of the product (leaf bound per path = min(a3*b5, exceptions met)),
+  PHI from a robust quantile, exceptions absorb the joint-death pairs; measure the exception count.
