@@ -208,3 +208,74 @@ symmetric blocks are handled the same way.
 **Status:** with this sum, regions (1)–(5) give
 `mean[ω_i ω_j] ≤ δ² log s_i log s_j + C δ² C(Δ)(1 + log 1/δ) + o(1)`.
 `PairSecondOrderScheduled` is believed ~70%.  The class-count averaging is the step to referee.
+
+## Consolidated pair argument (v2, after Astra 171731Z), for final paper review
+
+**Inputs:** `BrunTitchmarshAP`, `UpperSieveTwoLinearForms`, `MertensAPAsymptotic`.
+**Target:** `PairSecondOrderScheduled`.  Fix q ≥ q₁ (δ < 1/8 via eventual growth of φ), a,
+`1 ≤ |h| ≤ u = schedU q` and ε > 0.
+
+**Step 0: fixed fresh-site cut, before N → ∞.**
+- `T2 = mean[Φ_y R_J]` with `R_K = ∏_{j<K}(1+f_j) − 1 − Σ_{j<K} f_j` and `|1 + f_j| = 1`.
+- Subtracting and telescoping gives `|R_J − R_L| ≤ 2 Σ_{L≤j<J} |f_j|`.  Exact control: 0
+  violations in 2000 random unimodular trials.
+- With `|f_j| ≤ |w_j| ω_j` and Mertens over all primes, the tail mean is
+  `≤ C|h| 4^{−L}(log u + L) + (deep sites: C|h|4^{−L} log log N … absorbed as in ledger 0a)`.
+- Choose `L = L(h, u, ε)` so this is `≤ ε/2`.  Deep sites lie in the tail.
+- All retained shifts `Δ = j − i < L` are now fixed.  No uniform-in-J rate is needed below.
+
+**Step 1: reduction.**  `|R_L| ≤ Σ_{i<j<L} |f_i||f_j|`, so
+`|T2| ≤ Σ_{i<j<L} |w_i||w_j| mean[ω_i ω_j] + ε/2`.  It remains to bound
+`mean[ω_i(n+i+1) ω_j(n+j+1)]` over S-prime pairs `p | n+i+1`, `p′ | n+j+1`, `p > y_i`,
+`p′ > y_j`.  Here `p ≠ p′`, since `p | Δ < L < y`.
+
+**Step 2: regions,** in dyadic blocks `p ~ P`, `p′ ~ P′`, with `γ = w = δ`:
+- **(1) `pp′ ≤ N^{1−γ}`.**  CRT gives `N/(pp′) + O(1)` per pair, and the pair count is
+  `≤ N^{1−γ} log N = o(N)`.  The main term is `(Σ_{y_i<p} 1/p)(Σ_{y_j<p′} 1/p′)`, which is
+  `≤ δ² log s_i log s_j + o(1)` by `hMer`.
+- **(2) `pp′ > N^{1−γ}`, `|log(P/P′)| ≥ w log N`.**  Fix the cofactor m and apply
+  Brun–Titchmarsh for p mod `qp′`.  Then sum the weighted prime reciprocals by partial summation
+  on the exponent scale; this avoids invoking a PNT-AP rate per dyadic block.
+  - The cutoff exponents are positive and fixed (Step 0).  So `hMer`'s uniform o(1) remainder
+    gives `o(1/log N)` per block and `o(1)` in total.
+  - The main integral is `C δ² log(1/w) = C δ² log(1/δ)`.
+- **(3) `pp′ ≥ N^{1+γ}`, `|log(P/P′)| < w log N`.**
+  - Decompose n into shells `n ~ V` (`V ≫ N^{(1+γ)/2}` is the relevant range).  Within a shell,
+    `X ~ V/(gP)`, `Y ~ V/(gP′)` and `T ~ P/(qY)`.
+  - *Mixed-weight lemma (Astra).*  For `F(n) = (n/φ(n))²`, `H_q(c) = (gcd(c,q)/φ(gcd(c,q)))²`
+    and `X ≥ q`: `Σ_{m~X} F(m) H_q(m+c) ≤ C X`, absolute, uniform in c.
+    - Proof: Cauchy–Schwarz.  `Σ F² ≤ CX` via the divisor expansion of `(n/φ(n))⁴`, with
+      `((p/(p−1))⁴ − 1)/p ≤ 30/p²`.
+    - `Σ H_q² ≤ CX` by periods, since `q^{−1} Σ_r H_q(r)² = ∏_{ℓ|q}[1 + ((ℓ/(ℓ−1))⁴ − 1)/ℓ] ≤ C`.
+    - No independence between the two weights is assumed.
+  - *Inner class.*  `Σ_{n~Y, n≡c (q)} F(n)/n ≤ C H_q(c)/q + C (log 2Y)³/Y`, via `F = Σ_{e|n} η(e)`
+    and `η(e) ≤ C 3^{ω(e)}/e`.
+  - *Two-variable estimate.*  `Σ_{m~X} Σ_{n~Y, n≡m+c (q)} F(m)F(n)/n ≤ C X/q + C X (log 2Y)³/Y`.
+  - *Block.*  Multiply by the sieve prefactor `C (q/φ(q))² (D/φ(D))² P/(q log² T)`, with
+    `E = q³MM′D` and ρ(ℓ) = 0 for `ℓ | q`.
+    - The main term is `C δ² (V/g) F(D)/log² T`, where `(q/φ(q))²/q² = δ²` exactly.
+    - The error is `C (q/φ(q))² (V/(gq)) F(D) (log 2Y)³/(Y log² T)`.  Summed over dyadic Y, the
+      `O(log N)` P-blocks and geometric shells, it is `O_{q,Δ,γ}(N/log N)`.
+  - *Edges* (`X < q` or `Y < q`, in each shell): one prime exceeds `cV/(qΔ)`, and the other has
+    multiplicity ≤ 8 (both exceed `N^{1/8}`).  Mertens plus `π(2V) = o(V)` gives `o(V)`, which sums
+    to `o(N)`.
+  - *Over blocks:* the strip width is `O(w)` and `∫_γ γ′^{−2} dγ′` gives `C δ² C_Δ w/γ = C δ² C_Δ`,
+    with no q-dependence in C.
+- **(4) corner `N^{1−γ} < pp′ < N^{1+γ}`, near the diagonal.**  The one-variable bound gives
+  `C δ (γ + w) = 2C δ²`.
+- **Shift cost.**  `C_Δ = Σ_{g|Δ} g^{−1}((Δ/g)/φ(Δ/g))² ≤ (Δ/φ(Δ))³ ≤ (9/2)Δ`, using
+  `Σ_{g|Δ} 1/g ≤ Δ/φ(Δ)` and `(p/(p−1))³ ≤ p` for p ≥ 5.  Exact control over Δ ≤ 5000:
+  `max C_Δ/Δ = 2.25` and `max (Δ/φ(Δ))³/Δ = 4.5`.
+
+**Step 3: assembly.**
+`mean[ω_i ω_j] ≤ δ² log s_i log s_j + C δ² (1 + C_Δ)(1 + log 1/δ) + o(1)`.
+- On the schedule, `log s_i ≥ log(2u²) ≥ 4 log(1/ρ) ≥ c(1 + log 1/δ)`.
+- Also `(9/2)Δ ≤ (9/2) j ≤ C log s_j`, since `log s_j ≥ (j+1) log 2`.
+- So each retained pair is `≤ C δ² log s_i log s_j + o(1)`, and
+  `|T2| ≤ C (Σ_k |w_k| δ log s_k)² + ε = C freshBudget² + ε`, with C absolute.
+
+**Status:**
+- Regions (1)–(4) and steps 0–3 are on paper.  Region (3) is accepted by Astra (171731Z),
+  conditional on `UpperSieveTwoLinearForms`, whose source theorem is not yet checked.
+- Believed ~75%, conditional on that input.
+- The frozen all-u `PairSecondOrder` stays separate (~60%).
