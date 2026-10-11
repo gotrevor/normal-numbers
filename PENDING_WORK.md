@@ -4023,3 +4023,11 @@ Next: `isFresh` Riesz bound, then the classification lemma in Lean (route-decisi
 - Tail plan (after the core): counting scheme of `UniformBadTailCounting` (refinements i+ii+iii) on the fold tail
   (bases >= 6 non-perfect-power + all b >= 7), with f(R), e'(beta) computed from THIS core's finite-state weights
   by B&B over bins (uniform in the level, unlike the gate-5 finite-level maxima).  Screen says ~0.74-0.82 < 1.
+- REFUTED (numerically) decoupled designs for the {2,3,5} core, both at g3 = 181/100:
+  * run-sum adversary `gate6/exact5r.c`: the uniform run-share table Q[s][I] is 1.0 for every run (concentrated
+    base-3 parents put ~all mass on one path; cf. `UniformBadTailRefute` concentrated cells) -> PHI dies.
+  * concentration classes `gate6/exact5k.c` (6 classes by max single-path share; class 0 = 25530 bins with share
+    <= 0.05, run shares L=1..16: .05 .10 .19 .35 .63): still DEAD in 7 passes - single-path losses (5%) exceed the
+    3.3% block slack (181/180)^6, and every class's leaves may land in the concentrated class.
+  Conclusion: the joint core needs per-pair (base-3 bin x base-5 bin) information.  Back to `exact5y`
+  (product + sparse exceptions, threshold-aligned base-5 rho bins with slivers, clean-root classes).
