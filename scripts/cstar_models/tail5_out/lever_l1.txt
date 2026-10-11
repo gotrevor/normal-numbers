@@ -1,0 +1,2 @@
+L1-optimistic (K_l=1 for l>=2): CERTIFIED gap >= 0.7053 [worst on [23.7784, 23.7867]]
+floor (K_l=1 at every lag): CERTIFIED gap >= 0.5797 [worst on [23.5639, 23.5721]]

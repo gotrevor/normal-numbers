@@ -63,4 +63,34 @@ def CountingScreenMisses (Klo : ℚ → ℚ) (H : ℕ → ℚ) : Prop :=
   ∀ γ : ℚ, 1 < γ → γ < (9 / 5 : ℚ) ^ 6 →
     (139 / 100) * ((9 / 5 : ℚ) ^ 6 - γ) ≤ Klo γ * ∑ l ∈ Finset.Icc 1 10, H l / γ ^ l
 
+/-- Open node (certified numerically, not in Lean; operator lever probe 2026-10-11, KILL).
+Lever (L2), MASS charging: on top of (i)+(ii)+(iii), for bases 5–7 at lags 1–3 the per-family kill
+`∑_a s_a` over ancestors `a` is bounded by `β · mass(m' + j) + K · E_j(β) · mass(m')`, with
+`E_j(β) = max_a (s_a − β D_j(a))^+`, `D_j(a)` the depth-`j` descendant weight of `a` (`j = 0`: `W(a)`),
+`s_a` per-ancestor descendant run sums (`tail5_lever_data.py 26`, exhaustive, levels ≤ 26), and the best
+`j, β` taken per `(b, l)`.  Certified gap `≥ 1.2552` over every `γ` (design 1.334 at `γ ≈ 24.29`;
+control `β = 0` gives 1.384 against the refined screen's 1.391), output
+`scripts/cstar_models/tail5_out/lever_screen.txt`.  Mechanism: the worst run sums sit under
+WEIGHT-ZERO core-alive ancestors (`E_0(β)` is flat in `β`), and charging deeper (`j ≥ 1`) costs `γ^j`
+in the discount.  The `D_j` are core (not tail-alive) weights, so these `E` are lower bounds:
+a sound miss, not a close.  `MassChargedTotal γ` is the certified lower bound on the L2 lag sum. -/
+def MassChargingScreenMisses (MassChargedTotal : ℚ → ℚ) : Prop :=
+  ∀ γ : ℚ, 1 < γ → γ < (9 / 5 : ℚ) ^ 6 → (5 / 4) * ((9 / 5 : ℚ) ^ 6 - γ) ≤ MassChargedTotal γ
+
+/-- Lever (L1), lag-dependent `K`: no sound per-lag comparability was found.  Any such constant is
+`≥ 1` (count ≥ mass since `W ≤ maxW`), and the optimistic screen with `K_l = 1` for `l ≥ 2`
+(`tail5_lever_l1.py 300 100`, `tail5_out/lever_l1.txt`) gives gap `0.705`, so L1 is NOT refuted.
+To close at `0.9` it needs a certified `K_{l ≥ 2} ≤ 1.4` (vs `2.32`): survivors relevant at lags
+`≥ 2` of average weight `≥ 0.71 maxW`.  Open node: that comparability statement, with `Kl2 = 7/5`. -/
+def LagTwoComparability (count mass : ℕ → ℚ) (Kl2 : ℚ) : Prop := ∀ m, count m ≤ Kl2 * mass m
+
+/-- The L1 arithmetic: with the refined coefficients `h_1..h_5` and `K = 2321/1000` on lag 1 only,
+`K_l = 7/5` at lags `2..5` fits under `0.9` of the budget at `γ = 24`; `K_l = 2` does not. -/
+theorem lagTwoK_threshold :
+    (7 / 5 : ℚ) * (1723 / 24 ^ 2 + 23324 / 24 ^ 3 + 83016 / 24 ^ 4 + 228620 / 24 ^ 5) + 2321 / 1000 * (21 / 24)
+      < 9 / 10 * ((9 / 5 : ℚ) ^ 6 - 24) ∧
+    9 / 10 * ((9 / 5 : ℚ) ^ 6 - 24) <
+      (2 : ℚ) * (1723 / 24 ^ 2 + 23324 / 24 ^ 3 + 83015 / 24 ^ 4 + 228619 / 24 ^ 5) + 2321 / 1000 * (20 / 24) := by
+  norm_num
+
 end NormalNumbers.UniformBadThreshold.TailCounting

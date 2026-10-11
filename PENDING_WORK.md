@@ -1,3 +1,6 @@
+## Operator lever probe (2026-10-11): KILL - L2 certified 1.2552 > 0.9; L1 optimistic 0.705 (needs K<=7/5 at lags>=2, no sound form)
+* See HANDOFF-2026-10-11-lever-probe.md; Lean nodes MassChargingScreenMisses, LagTwoComparability, lagTwoK_threshold.
+
 ## Gate 5 relaunch (2026-10-11, operator): refined counting screen — KILL criterion fired
 * Controls first (`tail5_refined.py 300 100 FLAGS`, output `tail5_out/refined_screen.txt`): crude 5.419
   (reproduces the ~6× miss with bases < 300); drop bases 5–7 closes 0.695; zero tail 0; kill-all 1.584.
