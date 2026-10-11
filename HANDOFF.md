@@ -1,3 +1,4 @@
+# STUCK strike 2 (2026-10-11): fresh lap confirms lever-probe kill (certified gap >= 1.2552 > 0.9); operator ask unchanged: launch fallback (a) as its own run.
 # STUCK strike 1 (2026-10-11, operator lever probe): KILL; read HANDOFF-2026-10-11-lever-probe.md
 - Blocked on the OPERATOR: DIRECTION "Operator lever probe (2026-10-11)" mandates self-stop either way and forbids starting fallback (a) here.
 - Verify fast: `tail -3 scripts/cstar_models/tail5_out/lever_screen.txt` (CERTIFIED gap >= 1.2552 > 0.9); Lean: UniformBadTailCounting.MassChargingScreenMisses, lagTwoK_threshold. Ask: operator launches fallback (a) as its own run.
