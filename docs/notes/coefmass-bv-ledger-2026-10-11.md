@@ -458,8 +458,9 @@ def SelbergDelangeOmegaTilted : Prop :=
               * Real.log x ^ (((z - 1) / (Nat.totient q₀ : ℂ)).re - 1)
 
 theorem multBVOmegaRestricted_of (h : MultBVResidue) : MultBVOmegaRestricted := sorry
-theorem siteFactorizationScheduled_of (hBV : MultBVOmegaRestricted)
-    (hSD : SelbergDelangeOmegaTilted) : SiteFactorizationScheduled := sorry
+-- superseded by the four-input producer in the next section
+-- theorem siteFactorizationScheduled_of (hBV : MultBVOmegaRestricted)
+--     (hSD : SelbergDelangeOmegaTilted) : SiteFactorizationScheduled := sorry
 ```
 
 **Statement-review questions for Astra:**
@@ -575,3 +576,8 @@ theorem siteFactorizationScheduled_of (hBV : MultBVOmegaRestricted)
 
 Control (Opus, exact, J=3, P={7,11,13,17}): with k=0 and K large, `rieszCentered` equals the
 ω-form Φ(n) to 5e-16; at k=2, its period mean equals `∏ μ_p` to 3e-14.
+
+**Elaboration check (Opus, 2026-10-11):** every Lean block in the two statement sections compiles.
+The check was against the built `NormalNumbers.CPrimeSiteFactorization` in a scratch file
+(`lake env lean`, not in the tree), with sorry warnings only.  It shows the statements elaborate,
+not that they mean what is intended.
