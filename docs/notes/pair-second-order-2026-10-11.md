@@ -1,0 +1,139 @@
+# `PairSecondOrder`: the frozen producer is under-hypothesized; a scheduled variant by sieve
+
+Opus (Ren), 2026-10-11, attended.  Paper draft for Astra's referee, **not refereed, not in Lean**.
+Companion to `coefmass-bv-ledger-2026-10-11.md`.  The ET chain needs both `SiteFactorizationScheduled`
+and a second-order bound.  This note is about the second.
+
+## Finding 1: `pairSecondOrder_of (h : SelbergUpperTwoForms)` cannot work as stated
+
+`PairSecondOrder` bounds `T2 = W − W_y − T1′` by `C · freshBudget²`, and `freshBudget ∝ δ = 1/φ(q)`.
+So the bound must carry **δ²**: both fresh primes lie in the class `a mod q`.
+
+`SelbergUpperTwoForms` counts `#{p ≤ x prime : ap + b prime}` with no progression condition on p or
+on `ap + b`.  Two things are missing:
+- the δ²;
+- the shape.  The pair count needs `(mp + Δ)/m′` prime with p in a class mod `qm′`, which is not
+  `ap + b` with p the prime variable.
+
+The Lean docstring's own English says "in progressions mod q₀", but the Prop dropped that.  This is a
+statement gap, not a proof gap.  Believed ~90%.
+
+## The pair mean, region by region
+
+**Reduction.**  Write `f_j = z_j^{ω_{>y_j}} − 1`.  Then
+`T2 = mean[Φ_y (∏(1+f_j) − 1 − Σ f_j)]`.
+- Since `|1 + f_j| = 1`, the identity `∏(1+f) − 1 − Σf = Σ_j f_j(∏_{i<j}(1+f_i) − 1)` gives
+  `|·| ≤ Σ_{i<j} |f_i||f_j|`.
+- `|f_j| ≤ |w_j| ω_j`.
+- So `|T2| ≤ Σ_{i<j} |w_i||w_j| mean[ω_i(n+i+1) ω_j(n+j+1)]`.
+- Deep sites `j > J₁` are dropped first (ledger 0a), so every `y_j → ∞`.
+- `p = p′` would need `p | Δ = j − i < J < y`, so it is impossible.
+
+Put `A = n+i+1`, `B = A + Δ`, and `Z = N^{1/8}` (above `y_head` once u ≥ 2).  Sum over S-prime
+pairs `p | A`, `p′ | B`, `p > y_i`, `p′ > y_j`, in dyadic blocks `p ~ P`, `p′ ~ P′`.  Parameters
+`γ, w ∈ (0, 1/8)` may depend on q, since every error below only has to be `o(1)` as `N → ∞` at
+fixed q.
+
+| region | tool | contribution to the mean |
+|---|---|---|
+| (1) `pp′ ≤ N^{1−γ}` | CRT: `#{n} = N/(pp′) + O(1)`, at most `N^{1−γ}` pairs | `(Σ 1/p)(Σ 1/p′) + o(1)` ≤ `δ² log s_i log s_j + o(1)` (`hMer`) |
+| (2) `pp′ > N^{1−γ}`, `|log(P/P′)| ≥ w log N` | Brun–Titchmarsh for p mod `qp′` (P > P′; symmetric otherwise), cofactor m fixed | `C δ² log(1/w)` |
+| (3) `pp′ ≥ N^{1+γ}`, `|log(P/P′)| < w log N` | two-linear-forms upper sieve in t, `(m, m′)` fixed, length `T ≈ PP′/(qN) ≥ N^{γ}/q` | `C δ² w/γ` |
+| (4) `N^{1−γ} < pp′ < N^{1+γ}`, `|log(P/P′)| < w log N` | one variable: A has an S-prime in `N^{1/2 ± (γ+w)}` | `C δ (γ + w)` |
+| (5) p ≤ Z, p′ > Z (or symmetric) | inside (1) or (2) | `C δ² log s_i` |
+
+**Choice: `γ = w = δ`.**  The total is `mean[ω_i ω_j] ≤ δ² log s_i log s_j + C δ²(1 + log(1/δ)) + o(1)`.
+
+**Region (2).**  Fix `m = A/p ~ N/P` and `p′ ∤ m`.  Then p runs over primes `≤ N/m` in one class
+mod `qp′`.  Brun–Titchmarsh (Montgomery–Vaughan) gives `≤ 2(N/m)/(φ(q)(p′−1) log(P/(qP′)))`.  Here
+`log(P/(qP′)) ≥ (w/2) log N` eventually.  Summing `1/m` over the dyadic block gives `log 4`.  So
+the block is `≤ C δ (δ log 2/log P′)/log(P/(qP′))`.  Summed over dyadic `P′ ≤ P N^{−w}` this is
+`(C/log P) log(1/w)`, and over `P` it is `O(log(1/w))`, since the `1/log P` sum over dyadic
+`P ∈ (Z, N]` is `O(1)`.
+
+**Region (3).**  Fix `(m, m′)` with `g = gcd(m, m′) | Δ`.  The conditions
+`p ≡ a (q)`, `pm + Δ ≡ 0 (m′)` and `p′ = (pm+Δ)/m′ ≡ a (q)` are a union of classes `r mod qm′`.
+For each class, `p = r + qm′t` and `p′ = r′ + qmt`.  These are two linear forms in t with
+`E = a₁a₂(a₁b₂ − a₂b₁) = −q³mm′Δ`, so `𝔖 ≤ C (E/φ(E))²`.
+- The upper sieve gives `≤ C 𝔖 T/log² T` with `T = N/(qmm′)`.
+- Summing over `(m, m′)` in the block with `Σ (m/φ(m))²/m ≪ log` and the class count, the block
+  is `≤ C δ² (log 2)²/(log T)²`.  The `(q/φ(q))²` from `p ∤ q` turns `1/q²` into `δ²`.
+- With `log T = γ′ log N` (`PP′ = N^{1+γ′}`) summed over the near-diagonal blocks, the region is
+  `C δ² w/γ`.
+- ⚠️ The class count and the `𝔖`-average are sketched, not written out.  Referee target.
+
+**Region (4)** is the anti-diagonal corner `p ≈ p′ ≈ √N`, where every parametrization has length
+O(1) per `(m, m′)`.
+- Bound the pair count by the multiplicity `≤ 8` (`ω^{>Z} ≤ 8`) times
+  `#{n : A has an S-prime in N^{1/2 ± (γ+w)}}`.
+- By `hMer`, that count is `≤ N δ log((1/2+γ+w)/(1/2−γ−w)) + o(N) ≤ C N δ (γ + w)`.
+- Only one δ survives here.  This is why γ and w must shrink with δ.
+
+**`Δ/φ(Δ)`.**  `E` contains Δ, and `(Δ/φ(Δ))² ≤ C log²(j+2) ≤ C log s_j`, since
+`log s_j ≥ (j+1) log 2`.  It is absorbed.
+
+## Conclusion: a scheduled `PairSecondOrder`, not the frozen one
+
+`|T2| ≤ Σ_{i<j}|w_i||w_j| δ²[log s_i log s_j + C(1 + log(1/δ)) log s_j] + o(1)`.
+
+- **On the ET schedule**, `u = ⌈ρ^{−2}⌉`, so `log s_i ≥ log(2u²) ≥ 4 log(1/ρ) ≥ log(1/δ)`.  The
+  loss is absorbed: `|T2| ≤ C freshBudget² + ε`, with C absolute.
+- **For the frozen all-`u` Prop**, `log(1/δ)` is not bounded by `log s_i log s_j` at small u, so
+  this route does not prove it.  It stays a separate gate (~60%, down from 75%).
+- The numerics in the Lean docstring fit a slowly growing q-factor.  At fixed N, `|T2|/Fw²` rises
+  from 0.18 at q = 3 to 0.37 at q = 61.  That is not proof that the loss is real.
+- **Removing the loss** would take equidistribution of the CRT points `n₀(p, p′)/(pp′)` over S-prime
+  pairs with `pp′ ≈ N`.  That is Kloosterman fractions `p̄/p′` over primes (the Fouvry–Shparlinski,
+  Bourgain–Garaev line): a literature check, not attempted.
+
+## Statement drafts (NOT planted)
+
+```lean
+/-- Brun–Titchmarsh in progressions (Montgomery–Vaughan 1973: constant 2), weakened to an
+absolute C. -/
+def BrunTitchmarshAP : Prop :=
+  ∃ C : ℝ, 0 < C ∧ ∀ k l : ℕ, 1 ≤ k → Nat.Coprime l k → ∀ x : ℝ, (k : ℝ) < x →
+    (((Finset.Iic ⌊x⌋₊).filter (fun p => p.Prime ∧ p % k = l % k)).card : ℝ)
+      ≤ C * x / ((Nat.totient k : ℝ) * Real.log (x / k))
+
+/-- Upper-bound sieve for two linear forms (Halberstam–Richert, dimension 2; theorem number not
+re-opened), uniform in the coefficients through `(E/φ(E))²`, `E = a₁a₂(a₁b₂ − a₂b₁) ≠ 0`. -/
+def UpperSieveTwoLinearForms : Prop :=
+  ∃ C : ℝ, 0 < C ∧ ∀ a₁ a₂ : ℕ, ∀ b₁ b₂ : ℤ, 0 < a₁ → 0 < a₂ →
+    (a₁ : ℤ) * a₂ * (a₁ * b₂ - a₂ * b₁) ≠ 0 → ∀ X : ℕ, 3 ≤ X →
+      (((Finset.Icc 1 X).filter (fun t : ℕ =>
+          ((a₁ : ℤ) * t + b₁).natAbs.Prime ∧ ((a₂ : ℤ) * t + b₂).natAbs.Prime)).card : ℝ)
+        ≤ C * (((a₁ * a₂ * (a₁ * b₂ - a₂ * b₁) : ℤ).natAbs : ℝ)
+                / Nat.totient (a₁ * a₂ * (a₁ * b₂ - a₂ * b₁) : ℤ).natAbs) ^ 2
+            * X / Real.log X ^ 2
+
+/-- **Second order on the Erdős–Turán schedule.**  A SEPARATE statement: the frozen all-`u`
+`PairSecondOrder` is unchanged. -/
+def PairSecondOrderScheduled : Prop :=
+  ∃ C : ℝ, 0 < C ∧ ∃ q₁ : ℕ, ∀ q a : ℕ, 3 ≤ q → q₁ ≤ q → Nat.Coprime a q →
+    ∀ h : ℤ, h ≠ 0 → h.natAbs ≤ schedU q → ∀ ε > 0, ∀ᶠ N : ℕ in atTop,
+      ‖fullMean (residueClass q a) (winJ N) h N
+        - windowMeanLeG (residueClass q a) (winJ N) (cutU (schedU q) N (winJ N)) h N
+        - freshOneSite (residueClass q a) (winJ N) (cutU (schedU q) N (winJ N)) h N‖
+        ≤ C * freshBudget (1 / (Nat.totient q : ℝ)) h (winJ N) (schedU q) ^ 2 + ε
+
+theorem pairSecondOrderScheduled_of (hBT : BrunTitchmarshAP) (hUS : UpperSieveTwoLinearForms)
+    (hMer : MertensAPAsymptotic) : PairSecondOrderScheduled := sorry
+
+theorem cprimeResidueQuad_of_scheduled' (hSF : SiteFactorizationScheduled)
+    (hPair : PairSecondOrderScheduled) : CPrimeResidueQuad := sorry
+```
+
+**Referee targets:**
+1. Finding 1: is the frozen producer really under-hypothesized, or is there a reduction I am
+   missing?
+2. The region (3) class count and its `𝔖`-average.
+3. ~~Is `PairSecondOrder` consumed only at `u = ⌈ρ^{−2}⌉`, `|h| ≤ u`?~~  Checked:
+   `docs/CPRIME-SITE-FACTORIZATION-2026-10-01.md` lines 116–125 evaluate `B_h(u)²` only at
+   `u = ⌈ρ⁻²⌉`, `h ≤ H = ⌈ρ⁻²⌉`.  The scheduled variant is exactly what the chain uses.  That
+   doc's §PairSecondOrder sketch (line 110: "two linear forms in p, primes restricted to a
+   progression, singular series bounded on average") does not treat the anti-diagonal corner (4).
+4. Whether the corner (4) admits a δ² bound by an elementary route.
+
+**Elaboration check (Opus):** the four Props and two producers above compile in a scratch file
+together with the ledger's drafts, with sorry warnings only.  This is elaboration, not meaning.
