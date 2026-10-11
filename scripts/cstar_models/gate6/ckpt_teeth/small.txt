@@ -1,0 +1,9 @@
+# teeth: MAXB5=3 exact5y 128 24 3 0 6 3 W181 ; A = 2 passes, B = 1 pass + resume + 1 pass (threads 4)
+## A
+iter 0: failing pairs 7719523, phi lowered 2600, phi zeros 2189, exceptions set 12320 total 12320, worst 0.00000, pair evals 54699100, max phi 662878, phi checksum a67146f092c00f52
+iter 1: failing pairs 1233976, phi lowered 411, phi zeros 2600, exceptions set 10027 total 0, worst 0.00000, pair evals 8620348, max phi 0, phi checksum 20c495baafb77b63
+## B
+iter 0: failing pairs 7719523, phi lowered 2600, phi zeros 2189, exceptions set 12320 total 12320, worst 0.00000, pair evals 54699100, max phi 662878, phi checksum a67146f092c00f52
+iter 1: failing pairs 1233976, phi lowered 411, phi zeros 2600, exceptions set 10027 total 0, worst 0.00000, pair evals 8620348, max phi 0, phi checksum 20c495baafb77b63
+RESUMED from B2 pass 0: exceptions 12320, phi checksum a67146f092c00f52
+cmp phi.1 ex.1: IDENTICAL

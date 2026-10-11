@@ -17,6 +17,7 @@ int printf(const char*, ...); int fflush(void*); void *malloc(size_t); void *cal
 int atoi(const char*); int strcmp(const char*, const char*); double pow(double,double); double log2(double); double round(double); double fmax(double,double);
 long long strtoll(const char*, char**, int); char *getenv(const char*);
 typedef void FILE; FILE *fopen(const char*, const char*); char *fgets(char*, int, FILE*); int fprintf(FILE*, const char*, ...); int fclose(FILE*); void exit(int);
+int rename(const char*, const char*); int snprintf(char*, size_t, const char*, ...); int sscanf(const char*, const char*, ...);
 typedef unsigned long pthread_t; int pthread_create(pthread_t*, const void*, void*(*)(void*), void*); int pthread_join(pthread_t, void**);
 #include "../sft449.h"
 typedef __int128 Z;
@@ -208,6 +209,20 @@ static void exSet(long q5, int r3, ll e) {   // insert or lower
 static Z todyad(double v, int bits) { return (Z)(long long)round(v * pow(2, bits)) << (F - bits); }
 static void pz(const char *tag, Z v) { char t[64]; int n = 0; if (v == 0) t[n++] = '0'; while (v > 0) { t[n++] = (char)('0' + (int)(v % 10)); v /= 10; }
   printf("%s ", tag); for (int k = n - 1; k >= 0; k--) printf("%c", t[k]); printf("\n"); }
+// checkpoint: after every pass write <CKPT>/phi.<it>.txt, ex.<it>.txt (atomic .tmp + rename), append stats.txt,
+// then atomically rewrite <CKPT>/latest = "<it>".  RESUME=<dir> loads the latest PHI + exceptions, continues at it+1.
+static char *CKPT;
+static unsigned long long phisum(void) { unsigned long long h = 1469598103934665603ULL; for (long q = 0; q < S * NB5; q++) { h ^= (unsigned long long)PHI[q]; h *= 1099511628211ULL; } return h; }
+static void ckpt(int it, const char *stats) {
+  char a[1024], b[1024]; FILE *o;
+  snprintf(a, 1024, "%s/phi.%d.txt.tmp", CKPT, it); o = fopen(a, "w"); for (long q = 0; q < S * NB5; q++) fprintf(o, "%lld\n", PHI[q]); fclose(o);
+  snprintf(b, 1024, "%s/phi.%d.txt", CKPT, it); rename(a, b);
+  snprintf(a, 1024, "%s/ex.%d.txt.tmp", CKPT, it); o = fopen(a, "w"); for (long q = 0; q < S * NB5; q++) for (int t = 0; t < EXN[q]; t++) fprintf(o, "%ld %d %lld\n", q, EX[q][t].r3, EX[q][t].e); fclose(o);
+  snprintf(b, 1024, "%s/ex.%d.txt", CKPT, it); rename(a, b);
+  snprintf(a, 1024, "%s/stats.txt", CKPT); o = fopen(a, "a"); fprintf(o, "%s", stats); fclose(o);
+  snprintf(a, 1024, "%s/latest.tmp", CKPT); o = fopen(a, "w"); fprintf(o, "%d\n", it); fclose(o);
+  snprintf(b, 1024, "%s/latest", CKPT); rename(a, b);
+}
 int main(int argc, char **argv) {
   N3 = atoi(argv[1]); M3 = atoi(argv[2]); int mode5 = atoi(argv[3]); M5 = atoi(argv[4]); D = atoi(argv[5]); MAXB = atoi(argv[6]);
   CHECK = !strcmp(argv[8], "check"); NT = atoi(argv[CHECK ? 10 : 9]); NOWIN5 = getenv("NO5") != 0;
@@ -258,7 +273,17 @@ int main(int argc, char **argv) {
   int KQ = getenv("KQ") ? atoi(getenv("KQ")) : 30;
   if (CHECK && argc > 11) { FILE *f = fopen(argv[11], "r"); char line[128]; while (fgets(line, 128, f)) { char *p; long q5 = strtoll(line, &p, 10); long r3 = strtoll(p, &p, 10); ll e = strtoll(p, 0, 10); exSet(q5, (int)r3, e); }
     for (long q = 0; q < S * NB5; q++) if (EXN[q]) qsort(EX[q], EXN[q], sizeof(Ex), cmpex); }
-  for (int it = 0; it < IT; it++) {
+  CKPT = getenv("CKPT"); int it0 = 0;
+  if (getenv("RESUME") && !CHECK) { char *R = getenv("RESUME"), nm[1024], line[128]; FILE *f; int last = -1;
+    snprintf(nm, 1024, "%s/latest", R); f = fopen(nm, "r"); if (!f || !fgets(line, 128, f)) { printf("RESUME: no latest\n"); return 1; } fclose(f); last = atoi(line);
+    snprintf(nm, 1024, "%s/phi.%d.txt", R, last); f = fopen(nm, "r"); long q = 0; while (q < S * NB5 && fgets(line, 64, f)) PHI[q++] = strtoll(line, 0, 10); fclose(f);
+    if (q != S * NB5) { printf("RESUME: SHORT PHI\n"); return 1; }
+    snprintf(nm, 1024, "%s/ex.%d.txt", R, last); f = fopen(nm, "r"); long ne = 0;
+    while (fgets(line, 128, f)) { char *p; long q5 = strtoll(line, &p, 10); long r3 = strtoll(p, &p, 10); ll e = strtoll(p, 0, 10); exSet(q5, (int)r3, e); ne++; } fclose(f);
+    for (long q = 0; q < S * NB5; q++) if (EXN[q]) qsort(EX[q], EXN[q], sizeof(Ex), cmpex);
+    it0 = last + 1; if (!CKPT) CKPT = R;
+    printf("RESUMED from %s pass %d: exceptions %ld, phi checksum %016llx\n", R, last, ne, phisum()); fflush(0); }
+  for (int it = it0; it < it0 + IT; it++) {
     pthread_t th[64]; Job jb[64]; long Q3 = S * NB3, chunk = (Q3 + NT - 1) / NT; NEXTQ = 0;
     for (int t = 0; t < NT; t++) { jb[t].lo = t * chunk; jb[t].hi = (t + 1) * chunk < Q3 ? (t + 1) * chunk : Q3; pthread_create(&th[t], 0, worker, &jb[t]); }
     long fail = 0, pr = 0; double worst = 1e9;
@@ -290,7 +315,8 @@ int main(int argc, char **argv) {
       for (long q = 0; q < S * NB5; q++) { int k = 0; for (int t = 0; t < EXN[q]; t++) { Ex x = EX[q][t]; long q3 = (q / NB5) * NB3 + x.r3;
           if ((Z)x.e < (Z)W3[q3] * PHI[q]) EX[q][k++] = x; } EXN[q] = k; nex += k; if (k) qsort(EX[q], k, sizeof(Ex), cmpex); }
       ll mx = 0; long z = 0; for (long q = 0; q < S * NB5; q++) { if (PHI[q] > mx) mx = PHI[q]; if (!PHI[q]) z++; }
-      printf("iter %d: failing pairs %ld, phi lowered %ld, phi zeros %ld, exceptions set %ld total %ld, worst %.5f, pair evals %ld, max phi %lld\n", it, fail, lowphi, z, newex, nex, worst, pr, mx); fflush(0);
+      char st[512]; snprintf(st, 512, "iter %d: failing pairs %ld, phi lowered %ld, phi zeros %ld, exceptions set %ld total %ld, worst %.5f, pair evals %ld, max phi %lld, phi checksum %016llx\n", it, fail, lowphi, z, newex, nex, worst, pr, mx, phisum());
+      printf("%s", st); fflush(0); if (CKPT) ckpt(it, st);
       if (!fail) { printf("EXACT PRODUCT+EXCEPTION CERTIFICATE growth 9/5, exceptions %ld\n", nex);
         if (argc > 10) { FILE *o = fopen(argv[10], "w"); for (long q = 0; q < S * NB5; q++) fprintf(o, "%lld\n", PHI[q]); fclose(o);
           char nm[512]; int L = 0; while (argv[10][L]) { nm[L] = argv[10][L]; L++; } nm[L++] = '.'; nm[L++] = 'e'; nm[L++] = 'x'; nm[L] = 0;
