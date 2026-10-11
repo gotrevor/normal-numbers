@@ -19,7 +19,8 @@ against primes beyond y, which SW controls.  The 10-01 obstruction (`Σ_{p≤y} 
 on the contour) never arises, because no contour is moved after the truncation.
 
 **Confidence:** about 75% that the argument below is complete as written; the identities are
-exact-checked (below).  TSW∞ is a separate literature question (see "Inputs").
+exact-checked (below).  TSW∞ itself reduces to SW + Granville–Koukoulopoulos Thm 1 (see "Inputs"),
+so the whole of TSW rests on SW and GK.
 
 ## Notation
 
@@ -96,16 +97,29 @@ Partial sums of χ stay `≤ 1 ≤ r` up to `X = 2000`.  These check the algebra
 ## Inputs, and what is owed
 
 - **SW** is a theorem; in the repo's style it enters as a `Literature` Prop.
-- **TSW∞** is the Selberg–Delange-with-characters estimate at `y = ∞`, plus Siegel for possible
-  exceptional zeros of the `χψ`.  All `χψ` are nonprincipal, so the generating function
-  `L(s, χ) Π_ψ L(s, χψ)^{(z−1)ψ̄(a)/φ(q₀)} × (holomorphic)` has no pole at `s = 1`.  ⚠️ **Source
-  RECALLED, not checked:** Granville–Koukoulopoulos, "Beyond the LSD method for the partial sums of
-  multiplicative functions" (Ramanujan J., 2019), Thm 1, with `κ = 0` (the `1/Γ(κ − j)` main-term
-  coefficients vanish).  The uniformity in `r ≤ (log X)^{B₁}` must be confirmed against the
-  source before TSW∞ is planted.  Tenenbaum II.5 is the other candidate; no book text here.
-- Owed before Lean: the referee's check of the two regimes; the source check for TSW∞.
+- **TSW∞ ⇐ SW + Granville–Koukoulopoulos Thm 1** (arXiv:1710.01389, Ramanujan J. 2019; PDF
+  `~/personal/papers/granville-koukoulopoulos-2019-beyond-lsd.pdf`).  Statement read from the
+  source 2026-10-11, paraphrased: if `f` is multiplicative, `|f| ≤ τ_k`, and
+  `Σ_{p≤u} f(p) log p = αu + O(u/(log u)^A)` for **all** `u ≥ 2`, then `Σ_{n≤x} f(n)` equals a
+  main term whose coefficients carry `1/Γ(α − j)`, plus `O(x (log x)^{k−1−A} (log log x)^{[A=J+1]})`.
+  Its constants depend only on `k`, `A` and the constant in the hypothesis.  At `α = 0` every
+  `1/Γ(−j)` vanishes, so the sum is `O(x (log x)^{−A}(log log x))` with `k = 1`.
+
+  **Uniformity in `r`.**  For `f = G χ`, the hypothesis with `α = 0` is SW for `χ` and the `χψ`,
+  which needs `r q₀ ≤ (log u)^{B₁}`, i.e. it fails for `u < w := exp((q₀ r)^{1/B₁})`.  So split at
+  `w`: `f = f_s ∗ f*`, with `f*` equal to `f` on prime powers of `p > w` and zero on `p ≤ w`, and
+  `f_s` the `w`-smooth part.  Then `Σ_{p≤u} f*(p) log p` is `0` for `u < w` and a difference of two
+  SW evaluations at endpoints `≥ w` otherwise, so GK applies to `f*` with a constant uniform in
+  `r, χ`.  Summing `f_s(d) F*(X/d)` over `w`-smooth `d`: `Σ 1/d ≤ C log w ≪ (log X)^{(B+1)/B₁}`
+  costs a small power of log, and the `d` near `X` are `w`-smooth with
+  `u = log X/log w ≥ (log X)^{1−(B+1)/B₁}`, so `Ψ(X, w)` is far below any `X/(log X)^A`.  This is the
+  small-y bookkeeping again, with `w` in place of `y`.  The only analytic inputs are SW and GK.
+  TSW∞ is therefore a derived statement, not a new citation.  (Tenenbaum II.5 + Siegel is the
+  classical route; not needed.)
+- Owed before Lean: the referee's check of the two regimes and of the `w`-split above.
 
 ## Consequence for the ledger
 
 If accepted, E3's "inherited and still owed: TSW's uniformity in y" becomes "TSW ⇐ SW + TSW∞",
-and the ledger's open analytic node shrinks to a cutoff-free, literature-strength statement.
+and with the `w`-split, TSW ⇐ SW + GK Thm 1: the ledger's open analytic node becomes two cited
+theorems plus elementary bookkeeping.
