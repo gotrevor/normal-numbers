@@ -732,3 +732,51 @@ meaning.
     with no division.  The `a > A₀` tail is the Rankin bound.
 - **Remaining weak joint:** step 7's uniform SD (`hSD`).  The producer is now believed ~65%,
   conditional on `hSD`, with most of the residual risk in its source instantiation.
+
+## Step 7: instantiating `SelbergDelangeOmegaTilted` (Opus draft, for referee)
+
+**It is not derivable from the frozen `SelbergDelangeResidue` by convolution.**
+- Removing a P-prime p from `z^{ω_P}` multiplies by `F₀,p(s)^{−1}`, with
+  `F₀,p = (1 − (1−z)p^{−s})/(1 − p^{−s})`.
+- At p = 2 ∈ P and z = −1, `F₀,2(1) = 1 + z/(2−1) = 0` (Astra's control).  The inverse series
+  has coefficients `−z(1−z)^{ν−1}`, of size `2^{ν−1}`.
+- Inverting `S(x) = M(x) + z Σ_{ν≥1} M(x/2^ν)` then costs a full `log x` in the error.  The
+  coprime sum has to come from the analytic statement itself.
+
+**Analytic route, division-free.**  Take `κ′ = 1 + (z−1)/φ(q₀)` and `c_χ = (z−1)χ̄(a)/φ(q₀)`.
+Let `E_p(s) = exp(Σ_ν (1 + (z−1)1[p^ν ≡ a]) p^{−νs}/ν)` be the local factor of
+`ζ^{κ′}∏_{χ≠χ₀} L(s,χ)^{c_χ}` (with the χ₀ correction at `p | q₀`).  `E_p` is an exponential,
+so it never vanishes.  Then
+
+    F_{S₀,τ}(s) = ζ(s)^{κ′} · [∏_{χ≠χ₀} L(s,χ)^{c_χ} · (χ₀ correction)] · ℋ(s),
+    ℋ(s) = ∏_{p∈S₀} E_p(s)^{−1} · ∏_{p∉S₀} F^τ_p(s)/E_p(s).
+
+- **The bracket** is the same fixed analytic object as in `SelbergDelangeResidue`'s
+  instantiation.  It is holomorphic and `≪ (log(|t|+2))^C` in a zero-free region for fixed q₀.
+  Any exceptional zero sits at a fixed distance from 1, so c₀ = c₀(q₀) excludes it.
+- **ℋ is bounded on σ ≥ 3/4, uniformly in S₀ and τ.**
+  - For `p ∈ S₀`, `|E_p^{−1}| ≤ exp(C p^{−σ})`.
+  - For `p ∉ S₀`, `F^τ_p/E_p = 1 + (τ_p − 1) z_p p^{−s} + O(p^{−2σ})`, so the factor is
+    `1 + O(K p^{−1−σ} + p^{−2σ})`.
+  - The finitely many `p ≤ C(K)` are O(1) each.  No `F_p` is ever inverted, so a vanishing small
+    prime factor is harmless.
+  - Hence `|ℋ| ≤ exp(C Σ_{S₀} p^{−3/4} + C_K)`.  The draft's `exp(C Σ_{S₀} p^{−1/2})` is weaker,
+    so the statement stands.
+- **Majorant.**  `|a_n| ≤ ∏_{p|n}(1 + K/p)`.  Its series `ζ(s) H_K(s)` is of type `T` with a
+  constant `e^{CK}`, independent of S₀.
+- **Tenenbaum, Thm II.5.2** (class `P(κ′; c₀, δ, M)` plus a type-T majorant) then gives the
+  `N = 0` asymptotic with error `O(M R₀(x))`.
+  - ⚠️ That the error is LINEAR in M, with the implied constant depending only on `c₀, δ` and the
+    bound on `|z|`, is RECALLED, not re-opened.  The book is not on disk.
+  - The fetched de la Bretèche–Tenenbaum survey (Acta Arith. 200 (2021)) confirms the two
+    hypothesis types (continuation, derivative summability) but does not restate II.5.2.
+  - With `M = M_{q₀} exp(C Σ_{S₀} p^{−3/4} + C_K)`, this is exactly `SelbergDelangeOmegaTilted`'s
+    error form.
+- **The Euler constant** `L₀ = G(1)/…` is identified by the same partial-product limit as in
+  `SelbergDelangeResidue`.  The τ and S₀ factors converge absolutely.
+
+**Net:** `hSD`'s remaining risk is the same as the frozen `SelbergDelangeResidue`'s instantiation:
+the L-function bracket and the II.5.2 citation.  Add one recalled fact (M-linearity) and an
+elementary ℋ bound.  Believed ~75%, conditional on II.5.2's M-linearity being as recalled.
+**Verification needed:** Tenenbaum, *Introduction to Analytic and Probabilistic Number Theory*,
+3rd ed., §II.5, Thm 5.2 and its definition of `P(z; c₀, δ, M)` (edition and series recalled).
