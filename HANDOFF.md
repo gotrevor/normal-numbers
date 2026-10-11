@@ -1,3 +1,6 @@
+# Gate 5 lap 3 (2026-10-11, review): per-cell route REFUTED, counting route; read HANDOFF-2026-10-11-gate5-lap3.md
+- Binding: DIRECTION.md CURRENT DIRECTIVE (gate 5 review lap 3).  Escalation: ROUTE-ESCALATION-2026-10-11.md.
+
 # STUCK strike 2 (2026-10-09, c⋆ gate 3 lap 2): read HANDOFF-2026-10-09-cstar-gate3-lap2.md
 
 # Repetition: review lap 10 (2026-10-08) WITHDRAWS the lap-9 box-stuck claim — read HANDOFF-2026-10-08-repetition-lap10.md

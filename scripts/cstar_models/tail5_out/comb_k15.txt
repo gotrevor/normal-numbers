@@ -1,0 +1,11 @@
+k=5: core-alive parents 30, max alive children 55; w0=maxW/1: e=55; w0=maxW/3: e=9; w0=maxW/10: e=5; w0=maxW/30: e=4; w0=maxW/100: e=3; w0=maxW/300: e=3; w0=maxW/1000: e=3
+k=6: core-alive parents 58, max alive children 55; w0=maxW/1: e=55; w0=maxW/3: e=12; w0=maxW/10: e=4; w0=maxW/30: e=3; w0=maxW/100: e=3; w0=maxW/300: e=3; w0=maxW/1000: e=3
+k=7: core-alive parents 110, max alive children 55; w0=maxW/1: e=55; w0=maxW/3: e=10; w0=maxW/10: e=5; w0=maxW/30: e=4; w0=maxW/100: e=4; w0=maxW/300: e=4; w0=maxW/1000: e=4
+k=8: core-alive parents 208, max alive children 55; w0=maxW/1: e=55; w0=maxW/3: e=10; w0=maxW/10: e=5; w0=maxW/30: e=4; w0=maxW/100: e=4; w0=maxW/300: e=4; w0=maxW/1000: e=4
+k=9: core-alive parents 392, max alive children 55; w0=maxW/1: e=55; w0=maxW/3: e=12; w0=maxW/10: e=5; w0=maxW/30: e=5; w0=maxW/100: e=5; w0=maxW/300: e=5; w0=maxW/1000: e=5
+k=10: core-alive parents 734, max alive children 55; w0=maxW/1: e=55; w0=maxW/3: e=11; w0=maxW/10: e=5; w0=maxW/30: e=4; w0=maxW/100: e=4; w0=maxW/300: e=4; w0=maxW/1000: e=4
+k=11: core-alive parents 1376, max alive children 55; w0=maxW/1: e=55; w0=maxW/3: e=10; w0=maxW/10: e=6; w0=maxW/30: e=4; w0=maxW/100: e=4; w0=maxW/300: e=4; w0=maxW/1000: e=4
+k=12: core-alive parents 2584, max alive children 55; w0=maxW/1: e=55; w0=maxW/3: e=11; w0=maxW/10: e=6; w0=maxW/30: e=5; w0=maxW/100: e=5; w0=maxW/300: e=5; w0=maxW/1000: e=5
+k=13: core-alive parents 4866, max alive children 55; w0=maxW/1: e=55; w0=maxW/3: e=10; w0=maxW/10: e=5; w0=maxW/30: e=5; w0=maxW/100: e=4; w0=maxW/300: e=4; w0=maxW/1000: e=4
+k=14: core-alive parents 9144, max alive children 55; w0=maxW/1: e=55; w0=maxW/3: e=12; w0=maxW/10: e=6; w0=maxW/30: e=5; w0=maxW/100: e=4; w0=maxW/300: e=4; w0=maxW/1000: e=4
+k=15: core-alive parents 17158, max alive children 55; w0=maxW/1: e=55; w0=maxW/3: e=11; w0=maxW/10: e=5; w0=maxW/30: e=5; w0=maxW/100: e=5; w0=maxW/300: e=5; w0=maxW/1000: e=5

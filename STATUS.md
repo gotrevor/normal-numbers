@@ -43,19 +43,34 @@ sibling `ExponentCantorFullProfile μ₀` (frozen, 40%); a neutral note `docs/no
 
 Math-axiom count of the headline: 0.
 
-## Bugeaud 10.36 optimal exponent c⋆ (branch `proof/uniformbad-threshold`) — review lap 13, 7 October 2026
+## Bugeaud 10.36 optimal exponent c⋆ (branch `proof/uniformbad-threshold`) — gate 5 review lap 3, 11 October 2026
 
-**Located: `93/37 ≤ c⋆ ≤ 124/25`; gate `c⋆ ≤ 9/2` walled for local engines** · **Build**: 🟢 green (10809 jobs) · **Updated**: c⋆ lap 13 · 2026-10-07 · see `git log`
+**Located: `729/290 ≤ c⋆ ≤ 124/25`; gate 5 (`c⋆ ≤ 449/100`) rests on one crux** · **Build**: 🟢 green (full default build) · **Updated**: gate 5 lap 3 · 2026-10-11 · see `git log`
 
-**Where it stands.**  `c⋆` is the optimal exponent in Bugeaud's Problem 10.36 (`cStar`,
-`UniformBadThreshold.lean`).  Proved: `93/37 ≤ c⋆` (`ninety_three_thirty_sevenths_le_cStar`, 59-window
-cover) and `c⋆ ≤ 124/25` (`cStar_le_124_25`, two-rate counting).  The run gate `cStar_le_nine_halves`
-is almost certainly true (finite systems put `c⋆` near `5/2`, node `CStarLeThirteenFifths`), but no
-proof mechanism is known: every local per-window engine stalls near `c ≈ 4.55`, proved for the
-per-stage engine even with only bases 2 and 3 (`not_perStageCert`).  Closing the gap needs the exact
-joint `{2,3}` core, i.e. where base-3 windows fall in the alive set (digits of powers of 3 in base 2).
+**Where it stands.**  `c⋆` is the optimal exponent in Bugeaud's Problem 10.36 (`cStar`).  Proved:
+`729/290 ≤ c⋆` (`le_cStar_729_290`) and `c⋆ ≤ 124/25` (`cStar_le_124_25`).  The operator's gate 5 headline
+`Tail.cStar_le_449` is wired (`tailBudgetSuffices449`, proved) to the proved shared-phase `{2,3}` core
+(gate 4, `Coherent.coherentTwoThree449`) and ONE open crux, `tailChargeBudget449`: the weighted losses of
+all bases `b ≥ 5` charged to past surviving mass.  Lap 3 showed the lap-2 route to that crux rests on false
+per-cell nodes (concentrated cells), so the crux is a TOTALS statement; the live route is counting with
+comb-spreading comparability (`UniformBadTailRefute.lean`, PENDING_WORK).
 
 **What's happened (newest first).**
+* 2026-10-11 gate 5 lap 3 (review): every per-cell node of the lap-2 bookkeeping is FALSE at its stated
+  constants, by exact exhaustive witnesses: Frostman AP node at `s ≤ 8` (`not_apKillFrostman449_eight`,
+  cell `(13, 808)` whose positive mass sits in 4 of 4096 cells), node 1 (`not_apKillUniform449`), node 4
+  at `R = 60` (`(10, 573)`, 71.62), node 4′ at `R = 45` (`(6, 61)`, 45.11).  Mechanism: concentrated cells
+  (window edge next to a binary-follower hull end); `ConcentratedCells449 → ¬ APKillFrostman449` for all
+  parameters (proved).  New totals decomposition `tailChargeBudget449_of_upperGrowth_kill` (proved).  New
+  mechanism found: a parent's 64 children spread over the base-3 phase circle (≤ 3 per x-bin), so at most
+  12 of them are low-weight (`w < maxW/3`; exhaustive `k ≤ 15`), giving survivor count ≤ ~6·mass with no
+  regularity.  Crude worst-case window counting on top of it misses the budget by ~6× (long-window edges).
+* 2026-10-10 gate 5 laps 1–2: wiring proved (`tailBudgetSuffices449`); measurement: totals loss/mass
+  0.23 (kill test not fired); per-ancestor sup charging fails at shift ≤ 1; lap-2 potential/Frostman
+  architecture (now refuted).
+* 2026-10-10 gate 4: shared-phase `{2,3}` core at 4.49 PROVED (`coherentTwoThree449`, exact B&B
+  certificate, `N = 128`, `M = 24`, growth `(9/5)^6` per block).
+* 2026-10-08/09 gate 3: `le_cStar_729_290` proved; rational towers refuted (`not_rationalTower`).
 * 2026-10-07 lap 13 (review): three new engines probed at 9/2 (per-stage depth, Lebesgue precharge,
   Parry-measure precharge) all stall at 4.55–4.6; `not_perStageCert` proved; box abstractions of the
   exact core shown to collapse (steering); lower bound raised to `93/37`; finite systems with `b ≤ 3000`
@@ -69,34 +84,31 @@ joint `{2,3}` core, i.e. where base-3 windows fall in the alive set (digits of p
   `cStar_le_four_of_newhouse` (wiring); crux `thickCore_four`.
 * 2026-10-07 lap 4: exact `{2,3}` containment-kill core lemma; abstraction ratio 1.669; counted `b ≥ 5`
   obstruction (Maze row "counted medium bases").
-* 2026-10-07 lap 3 (review): counting engine `Count.growth` + `cStar_le_six`.
-* 2026-10-07 lap 2: perfect-power bases free (`admissible_iff_nonPerfectPow`); crux nodes
-  `SmallBaseTreeCore` (15%), `TreeEngineSuffices` (50%).
-* 2026-10-07 lap 1: `twelve_fifths_le_cStar` proved; `cStar_le_twelve` via the power engine.
 
 **Outstanding.**
-*Short-term:* the 9/2 gate needs a new idea (a base-3 charge at most 0.7 of the per-stage engine's, or a
-regular exact `{2,3}` core); operator decision on stopping (stuck evidence in `HANDOFF-2026-10-07-cstar-lap13.md`).
-*Long-term:* a formal per-stage engine would bank about `c⋆ ≤ 4.6–4.7` (numerics; the two-rate formal
-engine is at its floor `124/25`); `cStar_le_four`, `CStarLeThree`, `CStarLeThirteenFifths`.
-*To completion:* `cStar_le_nine_halves` (gate), then `cStar_le_four`.
+*Short-term (PENDING_WORK top):* decide whether worst-case counting can close the crux: refined screen
+(W-weighted run sums of killed children, layer-cake comparability) against the ~6× gap; if it closes, a
+gate-4-style B&B certificate for the comb bound plus elementary window counting.  Operator decision pending
+on fallback (a) (fold bases 5–7 into the core): crude counting closes without them (`ON-LINE-REQUEST.md`).
+*Long-term:* `cStar_le_nine_halves` follows from `cStar_le_449`; `cStar_le_four`, `CStarLeThirteenFifths`.
+*To completion:* `tailChargeBudget449`.
 
 **Axiom ledger (this branch).**
 | headline | claim | `#print axioms` | status |
 |---|---|---|---|
-| `ninety_three_thirty_sevenths_le_cStar` | `93/37 ≤ c⋆` (uncond.) | propext, choice, Quot.sound | 🟢 proved lap 13 |
-| `five_halves_le_cStar`, `twelve_fifths_le_cStar` | `5/2`, `12/5 ≤ c⋆` | propext, choice, Quot.sound | 🟢 proved |
+| `le_cStar_729_290` | `729/290 ≤ c⋆` (uncond.) | propext, choice, Quot.sound | 🟢 proved |
 | `cStar_le_124_25` (bank) | `c⋆ ≤ 124/25` (uncond.) | std + 3 `native_decide` | 🟢 proved (finite tables) |
-| `cStar_le_five`, `cStar_le_six` (banks) | `c⋆ ≤ 5`, `≤ 6` | std (+ `native_decide`) | 🟢 proved |
-| `not_perStageCert`, `not_nineHalvesBalance` | engine obstructions at 9/2 | std (+ 3 `native_decide`) | 🟢 proved |
-| `cStar_le_nine_halves` (gate) | `c⋆ ≤ 9/2` (uncond.) | + `sorryAx` | open; local engines walled |
-| `cStar_le_four` | `c⋆ ≤ 4` (uncond.) | + `sorryAx` | open; both mechanisms walled |
+| `Coherent.coherentTwoThree449` (gate 4) | shared-phase `{2,3}` core at 4.49 | std + `native_decide` (cert chunks) | 🟢 proved |
+| `Tail.tailBudgetSuffices449` (gate 5 wiring) | budget → `c⋆ ≤ 449/100` | std + `native_decide` | 🟢 proved |
+| `Tail.cStar_le_449` (gate 5 headline) | `c⋆ ≤ 449/100` (uncond.) | + `sorryAx` (only `tailChargeBudget449`) | 🟡 open crux, totals route |
+| `cStar_le_nine_halves`, `cStar_le_four` | `≤ 9/2`, `≤ 4` | + `sorryAx` | open (9/2 follows from 4.49) |
 
-Math-axiom count for the proved headlines: 0 (trust base + `native_decide` artifacts only).
+Math-axiom count for the proved headlines: 0 (trust base + `native_decide` artifacts only).  The gate-5
+headline's only `sorryAx` is the crux (no cited axiom).
 
-Pointers: `DIRECTION.md` (branch CURRENT DIRECTIVE, review lap 13) · newest `HANDOFF-2026-10-07-cstar-lap13.md` ·
-`PENDING_WORK.md` top section · `src/NormalNumbers/Maze.lean` (rows "local per-window engines at c = 9/2",
-"two-rate counting engine at c = 9/2", "counted medium bases", "adaptive split cores").
+Pointers: `DIRECTION.md` (branch CURRENT DIRECTIVE, gate 5 review lap 3) · newest `HANDOFF-2026-10-11-gate5-lap3.md` ·
+`PENDING_WORK.md` top section · `src/NormalNumbers/UniformBadTailRefute.lean` · Maze row "Per-cell relative
+regularity nodes for the gate-5 tail bookkeeping".
 ## Cantor exact-exponent stretch update, 6 October 2026 (branch `proof/cantorexp-stretch`)
 
 **PROVED** (lap 3): `CantorExactExponentStretch.exists_computable_mem_cantorSet_irrExponent_normal_all`

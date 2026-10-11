@@ -1,3 +1,39 @@
+## Gate 5 lap 3 (2026-10-11, REVIEW) — per-cell route REFUTED; counting route with comb comparability
+* **Refuted (exact, exhaustive; `UniformBadTailRefute.lean`):** every per-cell node of the lap-2
+  bookkeeping, at its stated constants.  `not_apKillFrostman449_eight` (s ≤ 8, C = 2, α = 17/20; proved
+  reduction `not_apKillFrostman449_of_hull` + 2 sorry'd finite facts at cell (13,808), whose positive
+  mass is in 4 of 4096 level-25 cells); `not_apKillUniform449` (node 1, s = 6, C = 37/20: one base-5
+  stage-9 window takes 1.046% vs 0.269%); `not_regularPotential449_sixty` ((10,573), 71.62);
+  `not_regularPotential2_449_45` ((6,61), 45.11).  `tailChargeBudget449_of_nodes` is vacuous.
+  Mechanism: CONCENTRATED cells (window edge beside a binary-follower hull end).
+  `ConcentratedCells449 → ∀ s C α>0, ¬ APKillFrostman449` PROVED.  Lesson: no bound normalized by a
+  single cell's own mass can work; the crux is a TOTALS statement.
+* **Totals form (proved wiring):** `tailChargeBudget449_of_upperGrowth_kill`: `UpperGrowth449 Λ` +
+  `TotalsKill449 ε` with `εΛ < 33` ⇒ crux (measured ε ≈ 0.005, Λ ≈ 44; huge slack).
+* **New mechanism: COMB SPREADING (Doeblin-type, per parent, no regularity).**  A parent's 64
+  block-children sit at base-3 phases x0 + iρ (ρ ∈ (2δ3, 6δ3] > 1/128 = x-bin width), ≤ 3 per x-bin, so
+  few land in low-weight (state, x-bin) pairs.  Exhaustive over all core-alive parents at k ≤ 15
+  (`scripts/cstar_models/tail5_comb.py`): max #core-alive children that are non-Good or of weight
+  < maxW/3 is e = 12 (≤ 6 below maxW/10).  Induction: N'_m ≤ mass(m)/w0 + e N'_{m-1} ⇒ survivor COUNT
+  N'_m ≤ K mass(m), K = (1/w0)/(1 − e/γ) ≈ 5–6.  This is the comparability every earlier route lacked.
+* **Counting budget screen (`tail5_countbudget.py`, design floats):** per family (b,n), ancestors at the
+  spacing block level meet ≤ φ+2 windows; each kills ≤ min(64ρ, 126) children of weight ≤ 1; charge
+  K·(kills) to mass at the lag.  FAILS by ~6× at the best γ ≈ 28 (Σ ≈ 35 vs budget 6); the excess is
+  long-window EDGES (126 per edge per block, every later block) of bases 5,6,7 at lags 2–3.  Without
+  bases 5–7 (fallback (a)) the same crude count closes (~4.2 vs 6 at γ = 28).
+* **NEXT (decisive, ordered):**
+  1. Refined counting screen, all rigorous per-parent finite quantities: (i) W-weighted run sums
+     f(R) = max over parents and contiguous child runs of length R of Σ W (replaces 64ρ and 63 per
+     edge, weight 1); (ii) layer-cake comparability N' ≤ β(mass + loss) + e'·N'_prev (β ≈ 2); (iii) exact
+     per-ancestor window counts per (b, φ0) instead of φ+2.  Target: close the ~6× gap at some γ.
+  2. If it closes: state the per-parent comb + run-sum facts as frozen nodes, prove the strong
+     induction (comparability ∧ charges) in Lean, then certify the per-parent facts by a gate-4-style
+     B&B (max instead of min) over parent types incl. zone cells.
+  3. If not: record the counting obstruction (Lean statement + Maze row) and take the operator's call on
+     (a) (ON-LINE-REQUEST 2026-10-11).
+* Data: exact core dump to level 26 in `scripts/cstar_models/tail5_out/core/` (regenerate:
+  `tail5_dump.py 27`; ~1 h); outputs `tail5_out/concentrate_k24.txt`.
+
 ## Gate 5 lap 1 (2026-10-10) — WIRING PROVED; measurement: kill test does NOT fire
 * `tailBudgetSuffices449` PROVED (`UniformBadTailWiring.lean`: `coreDeletionRecurrence449`,
   `mass_pos_of_budget`, `exists_limit`, `weak_avoid`; growth `Coherent.wq_grow`).

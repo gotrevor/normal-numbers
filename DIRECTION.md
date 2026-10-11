@@ -5,6 +5,28 @@
 **This is the directive for branch `proof/uniformbad-threshold`.**  The `proof/cantor-bad-normal` section below
 belongs to that branch (its route is parked at the middle-digit obstruction); do not work it here.
 
+- **CURRENT DIRECTIVE (gate 5 review lap 3, 2026-10-11) — binding for the grind laps; operator gate 5 below still frames it.**
+  *Objective* unchanged: prove `tailChargeBudget449` (frozen; never restate `tailChargeBudget449`,
+  `tailBudgetSuffices449`, `cStar_le_449`).
+  *Finding:* the lap-2 per-cell route is dead.  Every per-cell node it used is false at its constants
+  (`UniformBadTailRefute.lean`: `not_apKillFrostman449_eight`, `not_apKillUniform449`,
+  `not_regularPotential449_sixty`, `not_regularPotential2_449_45`; exact exhaustive witnesses), because
+  CONCENTRATED cells exist (window edge beside a binary-follower hull end; `not_apKillFrostman449_of_concentrated`).
+  The crux is a totals statement.  New lever: COMB SPREADING (a parent's 64 children spread over the base-3
+  phase circle, at most 12 of them low-weight; exhaustive `k ≤ 15`), which gives survivor count ≤ ~6·mass
+  by a per-parent induction, with no regularity.
+  *Mandated next move:* the refined COUNTING screen (PENDING_WORK lap 3, NEXT 1): W-weighted run sums,
+  layer-cake comparability, exact per-ancestor window counts, against the crude screen's ~6× gap
+  (`tail5_countbudget.py`).  If it closes, freeze the per-parent facts as nodes and prove the strong induction
+  in Lean, then certify the nodes by a gate-4-style B&B.  If it does not close, state the counting
+  obstruction in Lean, add a Maze row, and wait for the operator's call on fallback (a)
+  (`ROUTE-ESCALATION-2026-10-11.md`).
+  *Forbidden drift:* any bound normalized by a single cell's own mass (relative Frostman, potential ratios,
+  per-ancestor relative kills); sampled per-ancestor sup charging; retuning gate-4 weights; starting
+  fallback (a) without the operator.
+  *Why:* the crux has ~140× slack in totals but fails per cell; counting with the comb comparability is the
+  first route whose every ingredient is a true per-parent finite statement, so it is the one that can be certified.
+
 **Objective:** prove the two frozen headlines in `src/NormalNumbers/UniformBadThreshold.lean`:
 `twelve_fifths_le_cStar` (`12/5 ≤ c⋆`, 85%) and `cStar_le_four` (`c⋆ ≤ 4`, 55%), where
 `c⋆ = inf {c : ∃ ξ, ∀ b ≥ 2, ∀ n, ‖bⁿξ‖ > b^{−c}}` (Bugeaud 2012, Problem 10.36; the repo proved `c⋆ ≤ 24`).
@@ -131,6 +153,7 @@ Never restate or weaken them.  The stretch node `CStarLeThree` and any sharper l
   placement of base-3 windows, not the bookkeeping.
 
 Directive history:
+- 2026-10-11 (gate 5 review lap 3): per-cell nodes refuted (concentrated cells); counting route with comb-spreading comparability; operator trigger for fallback (a) fired, escalated.
 - 2026-10-10 (operator): gate 4 PROVED (coherentTwoThree449, 47a22d47, trunk 17b7a44b); gate 5 opened on the weighted base >= 5 tail (TailChargeBudget449, Codex proposal 84384926).
 - 2026-10-10 (operator): gate 4 opened on the shared-phase {2,3} core (coherentTwoThree449, Codex review #1); UniformBadNextReview wired into the build.
 - 2026-10-09 (operator): gate 3 stopped on a confirmed stuck: 729/290 ≤ c⋆ proved; rational towers refuted unconditionally by the Codex review (not_rationalTower); refuted headlines retired as RationalTowerFour/SelfGoodPerfectFour; lane parked pending a non-local {2,3} mechanism.

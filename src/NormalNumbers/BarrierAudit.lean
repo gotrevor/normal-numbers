@@ -5,6 +5,7 @@ Authors: Trevor Morris
 -/
 import NormalNumbers.Barriers
 import NormalNumbers.UniformBadTailMechanism
+import NormalNumbers.UniformBadTailRefute
 import NormalNumbers.LiteratureDigitsOfPowers
 import NormalNumbers.ErdosTriples
 import NormalNumbers.PairDecoupleProve
@@ -179,9 +180,26 @@ def cruxLinks : List CruxLink := [
 
 /-- Open `sorry`s that are not cruxes, and why no barrier applies. -/
 def waivers : List Waiver := [
+  ⟨``UniformBadThreshold.TailReview.hull_13_808,
+   "finite exact fact (Good449 and coreWeight on the 4096 level-25 descendants of (13, 808)), \
+    the witness of a REFUTATION of an off-path conjecture node (APKillFrostman449); computed \
+    exactly by tail5_hull.py and an independent DFS"⟩,
+  ⟨``UniformBadThreshold.TailReview.descMass_13_808_pos,
+   "finite exact fact (descMass 13 808 25 = 2655262458957/1072633893121), witness of the \
+    APKillFrostman449 refutation; same computation as hull_13_808"⟩,
+  ⟨``UniformBadThreshold.TailReview.not_apKillUniform449,
+   "refutation of the off-path node APKillUniform449 6 (37/20) by an exact finite witness \
+    ((13, 808), level 32, one base-5 stage-9 window: 1.046% against 0.269%)"⟩,
+  ⟨``UniformBadThreshold.TailReview.not_regularPotential449_sixty,
+   "refutation of the off-path node RegularPotential449 60 by an exact finite witness \
+    (Good cell (10, 573), descMass ratio 71.62)"⟩,
+  ⟨``UniformBadThreshold.TailReview.not_regularPotential2_449_45,
+   "refutation of the off-path node RegularPotential2_449 45 by an exact finite witness \
+    (Good cell (6, 61), descMass ratio 45.1115)"⟩,
   ⟨``UniformBadThreshold.TailReview.tailChargeBudget449_of_nodes,
    "bookkeeping reduction of the gate-5 crux to the named conjecture nodes APKillUniform449, \
-    RegularPotential449, OrphanSmall449 (all hypotheses); the mathematical content is in those nodes"⟩,
+    RegularPotential449, OrphanSmall449 (all hypotheses); lap 3 refuted h1 and h4 \
+    (UniformBadTailRefute), so the implication is vacuous"⟩,
   ⟨``UniformBadThreshold.TailReview.childConcentration_18,
    "a finite exact computation on 7 cells (classify and Good449 at levels 18, 24), recording the \
     gate-5 kill-test mechanism; off the proof route of cStar_le_449"⟩,

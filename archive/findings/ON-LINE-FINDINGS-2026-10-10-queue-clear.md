@@ -1,0 +1,126 @@
+# ON-LINE FINDINGS 2026-10-10: request queue cleared
+
+Host session (Ren), 2026-10-10 ~18:45 EDT.  This clears `ON-LINE-REQUEST.md` as of commit b4e6aad3.
+No new web research was needed; this file preserves what the request file held.
+
+## 1. 2026-10-08 (Bugeaud–Laurent 1996 sources) + 2026-10-09 (zero-lemma orientation): SELF-RESOLVED
+
+The box closed both on its own in repetition lap 13 (`HANDOFF-2026-10-09-repetition-lap13.md`, branch
+`proof/cantor-repetition`):
+- `PadicTwoLogs.laurentZeroLemma : Literature.LaurentZeroLemma` (`src/NormalNumbers/ZeroLemma.lean:74`):
+  an elementary proof in Lean.
+- `PadicTwoLogs.padicTwoLogs : SparseIdentity.Literature.PadicTwoLogs` (`PadicTwoLogsAssembly.lean:295`):
+  the 3-adic two-logarithm bound, now unconditional.
+- Host check: `sorry` greps clean in `ZeroLemma.lean`, `PadicTwoLogsAssembly.lean`, `PadicTwoLogs.lean` at
+  `proof/cantor-repetition`.  The handoff reports `#print axioms liouvilleCantorFullProfile` =
+  `[propext, Classical.choice, Quot.sound]`.  The host did not re-run that check.
+
+The hypothesis is now a kernel-checked theorem, so soundness no longer depends on a faithful transcription
+of Bugeaud–Laurent 1996, Laurent 1994 or LMN 1995.  These were NOT fetched.  Re-ask only if a docstring or
+note must cite the exact published constant or statement.
+
+## 2. Earlier host answers, moved here from inline blocks in the request file (verbatim)
+
+### 2026-10-07 (nn-cstar, proof/uniformbad-threshold)
+Please fetch arXiv 2102.01186 (Falconer–Yavicoli, "Intersections of thick compact sets in R^d")
+and transcribe verbatim the statement of Theorem 6 (countable intersections) and the definitions
+it uses (thickness in R^d, any diameter/gap hypotheses), plus the d=1 specialization if stated.
+Also Yavicoli "Patterns in thick compact sets" (Israel J. Math 2021): statement of the finite
+intersection theorem with Σ 1/(1+τ_i) style condition, if present.
+
+#### Answer (Ren, host, 2026-10-07 01:50) - transcribed from the arXiv PDF of 2102.01186
+- **Definition 1 (thickness in ℝ).**  C ⊂ ℝ compact, convex hull I, (Gₙ) the bounded open complementary
+  intervals ordered by non-increasing length; Gₙ is removed from a closed interval Iₙ (a component of
+  I \ (G₁ ∪ … ∪ G_{n−1})), leaving left/right closed intervals Lₙ, Rₙ.  τ(C) := inf_n min{|Lₙ|, |Rₙ|}/|Gₙ|.
+  A point has thickness 0, a non-degenerate interval +∞.
+- **Theorem 2 (Newhouse gap lemma).**  C₁, C₂ ⊂ ℝ compact, neither lies in a gap of the other, τ(C₁)τ(C₂) > 1
+  ⇒ C₁ ∩ C₂ ≠ ∅.  (Paper: "does not generalise in any simple way to intersections of 3 or more sets.")
+- **Definition 3 (ℝᵈ).**  Gaps (Gₙ) bounded components of Cᶜ by non-increasing diameter, E the unbounded
+  component(s); τ(C) := inf_n dist(Gₙ, ⋃_{i<n} Gᵢ ∪ E)/diam(Gₙ).  Agrees with Definition 1 in d = 1.
+- **Definition 5.**  K₁ := 2d(24√d)ᵈ log(16√d)/(1 − 2^{−d}),  K₂ := (24√d)ᵈ(1 + 4d²)/(1 − 2^{−d}).
+  For d = 1: K₁ = 96 log 16 ≈ 266, K₂ = 240.
+- **Theorem 6.**  (Cᵢ) countably many compact sets in ℝᵈ, τᵢ := τ(Cᵢ) > 0, with (i) supᵢ diam Cᵢ < ∞,
+  (ii) a ball B with B ∩ Eᵢ = ∅ for every i, (iii) some c ∈ (0, d) with
+  Σᵢ τᵢ^{−c} ≤ (1/K₂) β^c (1 − β^{d−c}),  β := min{1/4, diam(B)/supᵢ diam(Cᵢ)}.
+  Then dim_H(B ∩ ⋂ᵢ Cᵢ) ≥ d − K₁ (Σᵢ τᵢ^{−c})^{d/c} / (βᵈ |log β|) > 0.
+  (The PDF text extraction renders the right side of (iii) as "1/K2 · βc(1−β d−c)"; read it against the
+  PDF if a constant matters.  The authors: "In practice, the thicknesses needed are rather large as a
+  consequence of the large constants K₁ and K₂.")
+- Not fetched: Yavicoli, "Patterns in thick compact sets" (Israel J. Math 2021).
+- **Host note on fit:** with d = 1, β ≤ 1/4 and K₂ = 240, (iii) needs Σ_b τ_b^{−c'} ≲ 4^{−c'}/240 for some
+  c' ∈ (0, 1).  With τ_b ≈ b^C/2 that forces C far above 4 (the base-2 term alone is (2^{C}/2)^{−c'}), so
+  Theorem 6 as stated will not reach c⋆ ≤ 4 and probably not beat 12.  Newhouse (Theorem 2) is pairwise
+  only.  A c ≤ 4 proof needs its own multi-set gap argument for the small bases (that is new math, and
+  the place to invent), with Theorem 6-type potential handling only the tail.
+
+### 2026-10-07 (c⋆ lap 5) — thickness-of-intersection results
+Context: a Newhouse route to c⋆ ≤ 4 (A = E₂(4) has thickness exactly 3; need B ⊂ ⋂_{b≥3} E_b(4)
+compact with thickness > 1/3; raw ⋂ has thickness 0 from cross-base near-coincident windows).
+Please transcribe (statements + definitions, verbatim where possible):
+1. Hunt–Kan–Yorke, "When Cantor sets intersect thickly", Trans. AMS 339 (1993) 869–888
+   (https://www.yorke.umd.edu/Yorke_papers_most_cited_and_post2000/1993_11_Hunt_Kan_Trans_AMS_Cantor_sets_intersect_thickly.pdf):
+   the main theorem with the explicit (τ₁,τ₂) curve and the lower bound on the thickness of the Cantor
+   set inside K₁ ∩ K₂ (any formula like τ(K) ≥ f(τ₁,τ₂)).
+2. arXiv 2212.02023 ("A survey on Newhouse thickness, fractal intersections and patterns"): every
+   theorem about (a) intersections of 3 or more / countably many sets on the line with explicit
+   thickness conditions, (b) thickness of an intersection, (c) stability of thickness when a compact
+   set is cut by small intervals or perturbed.
+
+#### Answer (Ren, host, 2026-10-07 04:55)
+1. **Hunt–Kan–Yorke 1993: NOT REACHED.**  The yorke.umd.edu URL gives no response and the AMS copy needs a login
+   (Trevor's Cornell access could get it if it becomes decisive).  Do not cite it from memory.  The survey below
+   cites it as [13] but does not restate its theorem.
+2. **Yavicoli, arXiv 2212.02023 (survey), transcribed from the PDF:**
+   - **Theorem 8 (Newhouse gap lemma, survey form).**  C₁, C₂ ⊂ ℝ compact with (1) conv(C₁) ∩ conv(C₂) ≠ ∅,
+     (2) neither set lies in a gap of the other, (3) τ(C₁)τ(C₂) ≥ 1.  Then C₁ ∩ C₂ ≠ ∅.  (Note **≥ 1**, not > 1;
+     unbounded complementary components are not gaps.)  Observation 9: sharp, for any τ₁τ₂ < 1 there are
+     disjoint examples.
+   - **Theorem 13.**  τ(C) > 0 ⇒ dim_H C ≥ log 2 / log(2 + 1/τ(C)).
+   - **Lemma 24 (countable intersection property)** is stated for *winning* sets (Schmidt-game side), not for
+     thickness; Theorem 22 (Broderick–Fishman–Simmons) is about M_ε winning.  The survey says the Gap Lemma
+     "does not generalize in any simple way to intersections of 3 or more sets" and notes its own ℝᵈ countable
+     result ([10] = Falconer–Yavicoli, answered above) needs large thickness.
+   - **Stability:** "the hypotheses are robust under perturbations of the Cantor sets ... under C¹ perturbations
+     whose derivatives are close to the identity ... and if the sets are self-homothetic, under perturbations of
+     the generating IFS" (for Theorem 31, the ℝᵈ gap lemma, citing [28, Lemmas 7 and 8]).  No quantitative
+     statement on thickness of a set cut by small intervals, and no thickness-of-intersection formula, in the
+     survey text.
+- **Host note:** nothing found gives a usable lower bound on the thickness of an intersection of many sets, so
+  `ThickCore` (thickness of ⋂_{b≥3} E_b(4) after merging near-coincident windows) is your own lemma to prove;
+  with E₂(4) at thickness exactly 3, you need τ(B) ≥ 1/3 (Theorem 8 allows equality).
+
+### 2026-10-10 — gate 5 kill test fired (operator decision needed)
+Bases 5..7 exhaust the 9.874655 budget at gamma=(17/10)^6 under every per-ancestor SUP charging
+scheme measured (natural 655, shift-1 226.5, theta=1/100 174.4, theta=1/20 81.7; sampled, bases 5..7,
+n<=7; `scripts/cstar_models/tail5_out/`).  Cause: gate-4 weights are not locally regular
+(`TailReview.childConcentration_18`: a Good cell with good-child weight 5704x its own in one block).
+Totals pass (loss/mass 0.230, 0.210 at m=2,3), so `TailChargeBudget449` is NOT refuted; reopen node
+`TailReview.TailTotalsBound449` (implies the crux, `tailChargeBudget449_of_totals`).
+Maze row: "Per-ancestor sup charging of the base >= 5 tail on the gate-4 weights".
+Wiring is PROVED (`tailBudgetSuffices449`); `cStar_le_449` rests only on the crux.
+Request: operator/Codex decision on the structural fix — (a) fold bases 5..7 into a gate-4-style core
+certificate (state carries their phases; size estimate needed), or (b) an averaging mechanism for
+`TailTotalsBound449`.  No web fetch needed.
+
+### 2026-10-10 (lap 2) — CORRECTION to the gate-5 kill-test entry above
+The kill test did NOT fire as stated.  The shift-2 per-ancestor scheme (charge two blocks above the
+natural level) PASSES on bases 5..7, n <= 7: sum h_j/gamma^j = 4.496 < 9.874655
+(`scripts/cstar_models/tail5_out/peranc_b7_n7_shift2.txt`; 2.24/2.84/4.50 at n<=5/6/7, growing).
+Lap 1 omitted this output.  The box is now measuring shift-2/shift-3 deeper (base 5, n <= 8) to see
+whether the growth saturates below budget.  The operator decision requested above is on hold until
+that lands; if shift-2 saturates, gate 5 proceeds on that scheme with no structural fix.
+
+#### Answer (Ren, host/operator, 2026-10-10 22:45Z)
+Decision: **stay on the averaging route; no structural fix yet.**  Proceed with lap 2's architecture in
+`UniformBadTailMechanism.lean`: the alive potential, node 4' (RegularPotential2_449), and the per-(b,n) bound
+through `APKillFrostman449`.  Reason: the totals margin is about 0.23 against the c < 33 the proved
+`tailChargeBudget449_of_ratio` needs, and shift-2 passes (4.50 < 9.87).  So the obstruction is local
+irregularity of the gate-4 weights, not a lack of budget, and a potential argument is the matching mechanism.
+- Codex (mail 20261010T224034Z) reviewed the wiring (`tailBudgetSuffices449_proof`) and the split
+  (`splitChargeBudget449_suffices`) and found no semantic defect.  The split is sound but double-counts children
+  killed by both base groups, so it is conservative.  Codex rejects "charging cannot be local" as a general claim.
+- The thin spot is the Frostman exponent: the numerics give about 3.7 against c = 6 at alpha = 0.9, but they
+  are "thin at 0.85".  Before building the sum, pin alpha with a probe that is CERTIFIED or nested (sampled
+  maxima only refute), and state what the alpha below which the route fails is.
+- Fallback (a), folding bases 5..7 into a gate-4-style core, reopens ONLY if the Frostman node is refuted or
+  alpha certifies below that threshold.  Do not retune gate-4 weights.

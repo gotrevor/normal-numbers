@@ -109,7 +109,9 @@ def UpperGrowthLag449 (K Λ : ℚ) : Prop := ∀ m j, descTot m j ≤ K * Λ ^ j
 (`desc₁/w` reaches 5704 at `(18, 191938)`, 604 at level 12), but the child-mass potential
 `v = descMass k a (k+6)` is nearly an eigenvector: `max desc₂/desc₁ = 57.30` over all Good level-12
 cells, and `48.16` at the bad cell `(18, 191938)` (`scripts/cstar_models/tail5_ratio_iter.py`,
-`tail5_out/ratio_iter.txt`; SAMPLED maxima).  Confidence 65% that `R = 60` holds at every level. -/
+`tail5_out/ratio_iter.txt`; SAMPLED maxima).  Confidence 65% that `R = 60` holds at every level.
+**Lap 3: FALSE at `R = 60`** (`not_regularPotential449_sixty`, Good cell `(10, 573)`, ratio `71.62`;
+exhaustive maxima `44.4 … 71.6` over `k ≤ 12`). -/
 def RegularPotential449 (R : ℚ) : Prop :=
   ∀ k a, Good449 k a → descMass k a (k + 12) ≤ R * descMass k a (k + 6)
 
@@ -198,7 +200,8 @@ theorem childMassTot_succ_le_of_orphan {R η : ℚ} (hR : RegularPotential449 R)
 /-- **Node 4′ (conjecture): the twice-iterated potential is near-Perron.**  `desc₃/desc₂`:
 max `45.11` over all Good level-6 cells (`tail5_out/ratio_iter3.txt`); at level 12, max `43.79`
 over the three `desc₂/desc₁`-worst cells (57.3, 52.1, 47.6 there) and 25 random Good cells, all
-in `[43.19, 43.79]` (`tail5_out/ratio_r2_k12.txt`, SAMPLED).  Stated for EVERY cell (no `Good449`
+in `[43.19, 43.79]` (`tail5_out/ratio_r2_k12.txt`, SAMPLED).  **Lap 3: FALSE at `R = 45`**
+(`not_regularPotential2_449_45`, cell `(6, 61)`, ratio `45.1115`, exhaustive over `k ≤ 6`).  Stated for EVERY cell (no `Good449`
 hypothesis, which is not hereditary): non-Good level-12 cells give `43.21–43.44`
 (`tail5_out/ratio_nongood.txt`); cells with no Good descendants give `0 ≤ 0`.  Confidence 75% for `R = 45`. -/
 def RegularPotential2_449 (R : ℚ) : Prop :=
@@ -215,7 +218,10 @@ Numerics (`python`, lap 2): with `C = 1.85` (spacing-`2^6` probe max/coverage 1.
 `Σ_b ≈ 5.9 ≤ 6` — closes with almost no margin.  With node 4′ (`R = 45`, `K = 45(1 + c/(34-c))`) the sum is `1.90` at
 `c = 3` and `2.65` at `c = 6`: margin `2.3×`.  The statement below uses node 4′.
 Known gaps (node 1 now allows non-Good ancestors): stage counts per block
-taken as `6/log₂ b + 1`.  Confidence 55%. -/
+taken as `6/log₂ b + 1`.  Confidence 55%.
+**Lap 3: VACUOUS** — `h1` and `h4` are false (`not_apKillUniform449`, `not_regularPotential2_449_45`
+in `UniformBadTailRefute.lean`, exact witnesses at the concentrated cell `(13, 808)` and at `(6, 61)`).
+The implication stands but proves nothing; the crux needs a totals mechanism. -/
 theorem tailChargeBudget449_of_nodes (h1 : APKillUniform449 6 (37 / 20))
     (h4 : RegularPotential2_449 45) (h5 : OrphanSmall449 (1 / 100)) : TailChargeBudget449 := by
   sorry
@@ -469,7 +475,10 @@ so the base sum stays summable (`b^{-4.49α}`); endpoint neighbourhoods: `(2^{-6
 converges since `64^α ρ ≫ R`.  Single-interval Frostman at the root, level 20
 (`scripts/cstar_models/tail5_frostman.py`, `tail5_out/frostman_K20.txt`): max over x of
 `μ[x, x+2^{-t}]/μ` is `2^{-α_t t}` with `α_t` from 0.909 (t = 2) to 0.902 (t = 18): the weighted
-core is `0.90`-Frostman with constant about 1.  Confidence 65% for `C = 2`, `α = 17/20`, `s = 0`. -/
+core is `0.90`-Frostman with constant about 1.  Confidence 65% for `C = 2`, `α = 17/20`, `s = 0`.
+**Lap 3: FALSE** for `s ≤ 8` at these constants (`not_apKillFrostman449_eight`), and for every `s, C, α > 0`
+under `ConcentratedCells449` (`not_apKillFrostman449_of_concentrated`): the root-level Frostman
+measurement says nothing about cells whose own mass is concentrated. -/
 def APKillFrostman449 (s : ℕ) (C α : ℝ) : Prop :=
   ∀ k a K q (θ h : ℝ), k ≤ K → 2 ^ (k + s) ≤ q → 0 ≤ h →
     (descInAP k a K q θ h : ℝ) ≤ C * (2 * h * q) ^ α * descMass k a K
