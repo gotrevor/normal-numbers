@@ -37,6 +37,22 @@ belongs to that branch (its route is parked at the middle-digit obstruction); do
   maxima as certificates; retuning gate-4 weights without re-proving the core.
   *Why:* the tail misses only in bases 5-7's long-window edges; moving them into the exact core trades tail charge for
   core state, and the true loss sits ~140× under budget in totals, so the joint core should keep growth near 9/5.
+  - **Codex semantic review of the Fold route (mail 20261011T125023Z-codex-4670c533, thread 01a12ac7) - PASSED; binding for
+    the next run.**  Proceed: (1) prove the wiring `tailBudgetSuffices449F` by generalizing
+    `TailReview.tailBudgetSuffices449_proof` (`UniformBadTailWiring.lean`) to `WeightedCore449F` (root `wt 0 0 = 1`; sum the
+    growth inequality over ALL surviving parents, zero-weight ones included; `Good` need not be hereditary; `g^6` in place
+    of `(9/5)^6`).  Fix the `WeightedCore449F` docstring prose (it mentions `wq ≤ 1`, which the definition does not
+    contain); do NOT change any frozen predicate.  (2) Then the exact `{2,3,5}` certificate at D = 6: freeze ONE ordinary
+    rational finite-state weight vector `W = r·V` (not raw normalized V) plus the concrete entry state, and PROVE in Lean
+    that those weights and `Good` give `WeightedCore449F F5 (9/5)`; use EXACTLY those weights in `TailChargeBudget449F`;
+    keep the bounded finite-state `CoherentCore449F` certificate as a deliverable too (nothing consumes it yet, so it must
+    be proved explicitly, not assumed).  Checker lessons apply per folded base: the 4.49 binary model, identical geometry
+    and radii at entry and regular states, outward rational enclosures, shared-parent sibling outcomes with
+    multiplicities, conservative handling of EVERY ambiguous pending-stage boundary for bases 3 AND 5, root and
+    zero-weight-parent controls, re-check after rounding, a finite witness with a read-only checker proved sound (no
+    B&B re-search under `native_decide`).  Keep the all-base parent survivor predicate in `lossF`.  The 0.74 / 0.82 tail
+    screen is not a rigorous tail bound; the {5,6}/{5,6,7} numbers do not certify backups.  Send each certificate
+    artifact for Codex review (via ON-LINE-REQUEST.md; the operator relays) before calling it accepted.
 - **Operator lever probe (Ren for Trevor, 2026-10-11 ~04:15Z): ONE script-only probe of the remaining 1.39×, then stop.**
   Supersedes the relaunch block below for this run (that run's kill fired, `042f054d`).  Scripts and a Lean kill/close
   record only; no new Lean proof work.
