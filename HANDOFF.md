@@ -1,3 +1,7 @@
+# STUCK strike 1 (2026-10-11, operator gate-5 relaunch): KILL fired; read HANDOFF-2026-10-11-gate5-relaunch.md
+- Blocked on the OPERATOR: DIRECTION.md "Operator relaunch (2026-10-11)" mandates self-stop on the kill criterion and the operator's call on fallback (a).
+- Verify fast: `python3 scripts/cstar_models/tail5_refined.py 300 100 i,ii,iii` → CERTIFIED gap >= 1.3910 (> 1). Lean: UniformBadTailCounting.refinedScreen_misses_at_best. Ask: ON-LINE-REQUEST.md 2026-10-11 relaunch entry.
+
 # Gate 5 lap 3 (2026-10-11, review): per-cell route REFUTED, counting route; read HANDOFF-2026-10-11-gate5-lap3.md
 - Binding: DIRECTION.md CURRENT DIRECTIVE (gate 5 review lap 3).  Escalation: ROUTE-ESCALATION-2026-10-11.md.
 
