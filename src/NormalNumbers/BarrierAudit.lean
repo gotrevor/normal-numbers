@@ -19,6 +19,7 @@ import NormalNumbers.Hertling
 import NormalNumbers.CPrimeSiteFactorization
 import NormalNumbers.CoefmassInputs
 import NormalNumbers.CoefmassProducer
+import NormalNumbers.CoefmassTSWDirect
 import NormalNumbers.JointLambertAGPRange
 import NormalNumbers.Erdos257AllPrimes
 import NormalNumbers.MahlerDriftOne
@@ -284,6 +285,14 @@ def waivers : List Waiver := [
   ⟨``PrimeModel.SiteFactor.siteFactorizationScheduled_of_kernelDecay,
    "assembly from cited/paper inputs (BV, augmented TV, Riesz M4, Mertens-AP) plus the proved \
     rieszEnergyTail; paper proof refereed, docs/notes/coefmass-bv-ledger-2026-10-11.md"⟩,
+  ⟨``PrimeModel.SiteFactor.largestPrimeTransfer,
+   "elementary (a leaf): largest-prime partition, squareful count, harmonic sum; \
+    docs/notes/tsw-y-uniformity-2026-10-11.md"⟩,
+  ⟨``PrimeModel.SiteFactor.smoothCount_rankin,
+   "elementary (a leaf): Rankin plus the proved Erdos67b Mertens bound"⟩,
+  ⟨``PrimeModel.SiteFactor.uniformZTSW_of_primeSW,
+   "wiring from cited prime Siegel–Walfisz (character expansion mod q₀, largest-prime transfer); \
+    paper proof refereed both ways, docs/notes/tsw-y-uniformity-2026-10-11.md"⟩,
   ⟨``PrimeModel.SiteFactor.pairSecondOrderScheduled_of,
    "upper-bound sieve from cited inputs (Brun–Titchmarsh, two-forms sieve, Mertens-AP); \
     paper proof refereed, docs/notes/pair-second-order-2026-10-11.md"⟩,
