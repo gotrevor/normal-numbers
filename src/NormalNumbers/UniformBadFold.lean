@@ -113,6 +113,64 @@ def TailBudgetSuffices449F : Prop :=
   ∀ (F : Finset ℕ) (g : ℚ) (wt : ℕ → ℕ → ℚ) (Good : ℕ → ℕ → Prop),
     WeightedCore449F F g wt Good → TailChargeBudget449F F g wt Good → cStar ≤ 449 / 100
 
+/-! ### The core's good cells over `{2,3,5}` -/
+
+/-- The base-5 radius at the frozen exponent. -/
+noncomputable def δ5 : ℝ := (5 : ℝ) ^ (-(449 / 100 : ℝ))
+
+/-- **Good cells of the `{2,3,5}` core**: gate-4 good (`Coherent.Good449`) and disjoint from every
+base-5 window of an already resolved stage (`5ⁿ ≤ 2δ₅2ᵏ`). -/
+def Good5 (k a : ℕ) : Prop :=
+  Coherent.Good449 k a ∧
+    ∀ n A : ℕ, (5 : ℝ) ^ n ≤ 2 * δ5 * 2 ^ k → Disjoint (Count.cell k a) (Coherent.window 5 n A)
+
+/-- A cell disjoint from the windows of every resolved stage lies in no window of base `b`
+(an unresolved window is shorter than the cell). -/
+theorem not_sub_window_of_disjoint {b k a n A : ℕ} (hb : 1 ≤ b)
+    (h : (b : ℝ) ^ n ≤ 2 * (b : ℝ) ^ (-(449 / 100 : ℝ)) * 2 ^ k →
+      Disjoint (Count.cell k a) (Coherent.window b n A)) :
+    ¬ Count.cell k a ⊆ Coherent.window b n A := by
+  intro hs
+  have hne : (Count.cell k a).Nonempty := ⟨(a : ℝ) / 2 ^ k, by
+    refine ⟨le_rfl, ?_⟩; gcongr; linarith⟩
+  by_cases hr : (b : ℝ) ^ n ≤ 2 * (b : ℝ) ^ (-(449 / 100 : ℝ)) * 2 ^ k
+  · obtain ⟨x, hx⟩ := hne
+    exact Set.disjoint_left.1 (h hr) hx (hs hx)
+  · push_neg at hr
+    have h1 : (a : ℝ) / 2 ^ k ∈ Coherent.window b n A := hs ⟨le_rfl, by gcongr; linarith⟩
+    have h2 : ((a : ℝ) + 1) / 2 ^ k ∈ Coherent.window b n A := hs ⟨by gcongr; linarith, le_rfl⟩
+    simp only [Coherent.window, Set.mem_Icc] at h1 h2
+    have hbp : (0 : ℝ) < (b : ℝ) ^ n := pow_pos (by exact_mod_cast hb) n
+    have h2p : (0 : ℝ) < 2 ^ k := by positivity
+    have hlen : ((a : ℝ) + 1) / 2 ^ k - a / 2 ^ k ≤
+        2 * (b : ℝ) ^ (-(449 / 100 : ℝ)) / (b : ℝ) ^ n := by
+      have := sub_le_sub h2.2 h1.1
+      calc _ ≤ _ := this
+        _ = _ := by ring
+    have e : ((a : ℝ) + 1) / 2 ^ k - a / 2 ^ k = 1 / 2 ^ k := by ring
+    rw [e, div_le_div_iff₀ h2p hbp] at hlen
+    linarith
+
+theorem good5_not_bad {k a : ℕ} (h : Good5 k a) : ¬ coreBadF F5 k a := by
+  rintro ⟨b, hb, n, A, hs⟩
+  have hc := Coherent.good449_clean h.1
+  rcases hb with rfl | rfl | hb5
+  · exact hc.2.1 n A hs
+  · exact not_sub_window_of_disjoint (by norm_num) (fun hr => hc.2.2 n A (by
+      simpa [Coherent.δ3] using hr)) hs
+  · obtain rfl : b = 5 := by simpa [F5] using hb5
+    exact not_sub_window_of_disjoint (by norm_num) (fun hr => h.2 n A (by
+      simpa [δ5] using hr)) hs
+
+theorem coreBadF_succ (F : Finset ℕ) (k a : ℕ) (h : coreBadF F k (a / 2)) :
+    coreBadF F (k + 1) a := by
+  obtain ⟨b, hb, n, A, hs⟩ := h
+  exact ⟨b, hb, n, A, (Count.cell_succ_sub k a).trans hs⟩
+
+/-- Good cells of the `{2,3,5}` core are alive for the core's pruning. -/
+theorem good5_alive {k a : ℕ} (h : Good5 k a) : Count.Alive (coreBadF F5) k a :=
+  Coherent.alive_of_not_bad (coreBadF_succ F5) k a h.1.1 (good5_not_bad h)
+
 section Wiring
 
 open NormalNumbers.UniformBad (dnear)
