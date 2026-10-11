@@ -470,3 +470,105 @@ theorem siteFactorizationScheduled_of (hBV : MultBVOmegaRestricted)
 3. The producer's hypotheses omit C′'s (5.3′) and the Riesz M4.  They are paper-proved, not
    frozen Props.  Should they become named Props first, so the producer's dependencies are
    honest?  My lean: yes, as `AugmentedJointTV` and `RieszFourthMoment`.
+
+## The two paper-proved inputs as named Props (drafts for review, NOT planted)
+
+This answers question 3 above with drafts, so the producer's dependencies are honest.  Both are
+stated without a probability space.  The model expectation of a function of the residues
+`n mod p` is the exact average over one CRT period, so the model side is `periodMean` over
+`∏ p`, a finite sum.
+
+- **`RieszFourthMoment`** is the (L)–(P)–(B)–(R) theorem of `coefmass-2026-10-10.md`.
+  - `ψ_p(n) = ∏_{j : p ≤ y_j, p ∣ n+j+1} z_j` is the local phase, so the frozen product is
+    `Φ = ∏_p ψ_p` exactly.  `μ_p` is its period mean.
+  - The expansion runs over any finite set P of primes `> 2J`, where the residues `−(j+1)` are
+    distinct mod p and `V_p ≤ A/p` holds.  The primes `≤ 2J` stay in the exact Q-block factor,
+    which has modulus 1 and leaves `|·|⁴` unchanged.
+  - The bound is uniform in J, y, P and K = log D, as (R) states.  Only `C₀` (Mertens) is
+    existential.
+- **`AugmentedJointTV`** is (5.3′) of repair 2, evaluated on the §8 schedule.
+  - On `cutU u N J`: `log T_j/(2 log y_j) = u² 2^{j/2}/32`, so the j-sum is `≤ C e^{−u²/32}`.
+    The new coordinate gives `e^{−u²/16}`, and the CRT term is `o(1)` for `u ≥ u₀`.  For
+    `u ≥ 32`, all of it is `≤ C e^{−u} + ε` eventually.
+  - The state is `(n mod Q, p ↦ augmented label)` with `Q = primorial (2J)`, for the primes of S
+    in `(2J, y_head]`, `y_head = cutU u N J 0`.  F factors through the state, `‖F‖ ≤ 1`, and the
+    bound is uniform in F and in the target k.
+  - It is h-free: the state carries no phase.
+
+```lean
+/-- Local phase of prime `p` at `n`: `ψ_p(n) = ∏_{j : p ≤ y_j, p ∣ n+j+1} z_j`. -/
+noncomputable def psiP (J : ℕ) (y : Fin J → ℕ) (h : ℤ) (p n : ℕ) : ℂ :=
+  ∏ j : Fin J, if p ≤ y j ∧ p ∣ n + j.val + 1 then zPhase h J j else 1
+
+/-- Exact average over one period: the model expectation, by CRT. -/
+noncomputable def periodMean (F : ℕ → ℂ) (M : ℕ) : ℂ := (∑ n ∈ Finset.range M, F n) / M
+
+noncomputable def muP (J : ℕ) (y : Fin J → ℕ) (h : ℤ) (p : ℕ) : ℂ :=
+  periodMean (psiP J y h p) p
+
+/-- Riesz-truncated centered expansion over a finite prime set `P`:
+`Σ_{T ⊆ P} (1 − log d_T/K)_+^k ∏_{p∉T} μ_p ∏_{p∈T} (ψ_p − μ_p)`. -/
+noncomputable def rieszCentered (P : Finset ℕ) (J : ℕ) (y : Fin J → ℕ) (h : ℤ) (K : ℝ) (k : ℕ)
+    (n : ℕ) : ℂ :=
+  ∑ T ∈ P.powerset, ((max 0 (1 - Real.log (∏ p ∈ T, (p : ℝ)) / K)) ^ k : ℝ) *
+    ((∏ p ∈ P \ T, muP J y h p) * ∏ p ∈ T, (psiP J y h p n - muP J y h p))
+
+/-- **Riesz fourth moment (paper: Astra, refereed by Opus, 2026-10-11).**  For integer
+`k > β = 9A/2`, `A = Σ_j |z_j − 1|²`, the model `‖P_k‖₄` is at most
+`(k! e/2π) e^{9C₀A/2} [2^{β/2} π + 2/(k−β)]`, uniformly in `J, y, P, K`. -/
+def RieszFourthMoment : Prop :=
+  ∃ C₀ : ℝ, 0 ≤ C₀ ∧ ∀ (J : ℕ) (y : Fin J → ℕ) (h : ℤ) (P : Finset ℕ),
+    (∀ p ∈ P, p.Prime ∧ 2 * J < p) → ∀ K : ℝ, 1 ≤ K → ∀ k : ℕ,
+      let A := ∑ j : Fin J, ‖zPhase h J j - 1‖ ^ 2
+      9 * A / 2 < k →
+        (∑ n ∈ Finset.range (∏ p ∈ P, p), ‖rieszCentered P J y h K k n‖ ^ 4)
+            / (∏ p ∈ P, p : ℕ)
+          ≤ ((k.factorial : ℝ) * Real.exp 1 / (2 * Real.pi) * Real.exp (9 * C₀ * A / 2)
+              * (2 ^ (9 * A / 4) * Real.pi + 2 / (k - 9 * A / 2))) ^ 4
+
+/-- Augmented label at `p`: the sites `j` with `p ∣ n+j+1` that are active at `p` (`p ≤ y_j`),
+plus the target `k`.  For `p > 2J` it has at most one element. -/
+def augLabel (J : ℕ) (y : Fin J → ℕ) (k : Fin J) (p n : ℕ) : Finset (Fin J) :=
+  Finset.univ.filter (fun j => (p ≤ y j ∨ j = k) ∧ p ∣ n + j.val + 1)
+
+/-- Labelled primes: the primes of `S` in `(2J, Y]`. -/
+def labPrimes (S : ℕ → Prop) [DecidablePred S] (J Y : ℕ) : Finset ℕ :=
+  (Finset.Ioc (2 * J) Y).filter (fun p => p.Prime ∧ S p)
+
+/-- **Augmented joint TV (repair 2, (5.3′) on the §8 schedule; paper, accepted 160352Z).**
+Any `‖F‖ ≤ 1` that factors through `(n mod primorial 2J, p ↦ augLabel p n)` for the labelled
+primes up to `y_head` has integer mean within `C e^{−u}` of its model (period) mean. -/
+def AugmentedJointTV : Prop :=
+  ∃ C : ℝ, 0 < C ∧ ∃ u₀ : ℕ, ∀ q a : ℕ, 3 ≤ q → Nat.Coprime a q → ∀ u : ℕ, u₀ ≤ u →
+    ∀ ε > 0, ∀ᶠ N : ℕ in atTop, ∀ k : Fin (winJ N), ∀ F : ℕ → ℂ, (∀ n, ‖F n‖ ≤ 1) →
+      (let J := winJ N
+       let y := cutU u N J
+       let P := labPrimes (residueClass q a) J (y ⟨0, k.pos_of_lt⟩)
+       ∀ n m, n % primorial (2 * J) = m % primorial (2 * J) →
+         (∀ p ∈ P, augLabel J y k p n = augLabel J y k p m) → F n = F m) →
+      ‖prefixMean F N
+        - periodMean F (primorial (2 * winJ N) *
+            ∏ p ∈ labPrimes (residueClass q a) (winJ N)
+                    (cutU u N (winJ N) ⟨0, k.pos_of_lt⟩), p)‖
+        ≤ C * Real.exp (-(u : ℝ)) + ε
+
+theorem siteFactorizationScheduled_of (hBV : MultBVOmegaRestricted)
+    (hSD : SelbergDelangeOmegaTilted) (hTV : AugmentedJointTV) (hM4 : RieszFourthMoment) :
+    SiteFactorizationScheduled := sorry
+```
+
+**What stays a lemma, not an input:**
+- the integer-side M4, which equals the model M4 up to CRT remainders `≤ (mass)⁴ D⁴/N`, for
+  θ < 1/4;
+- the scalar steps `ResidualNormScale`, `UniformFrequencySuppression` and
+  `ScheduledRieszEnergySmall` (Astra's private ledger), which are elementary.
+
+**Referee targets:**
+1. Is `Q = primorial (2J)` the Q of `ROUND2-multicutoff-astra.md` §3?  If Q also carries q, the
+   key becomes `n mod (q · primorial 2J)`.
+2. `AugmentedJointTV` puts `∀ k` and `∀ F` inside `∀ᶠ N`, i.e. uniform in both.  (5.3′) is uniform
+   in F by construction; the k-uniformity uses `d′_b ≤ J`.
+3. Is `C e^{−u}` (u ≥ 32) the right packaging, or should the Prop keep the raw (5.3′) right-hand
+   side and let the producer evaluate it?
+4. `RieszFourthMoment` writes `2^{β/2}` as `2^{9A/4}`.  Its hypothesis `2J < p` is stronger than
+   the `p > J` that `V_p ≤ A/p` needs.
