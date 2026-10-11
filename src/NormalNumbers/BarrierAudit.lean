@@ -17,6 +17,7 @@ import NormalNumbers.ExplicitSquareNonNormal
 import NormalNumbers.GrowingLocalizedLogDiagonal
 import NormalNumbers.Hertling
 import NormalNumbers.CPrimeSiteFactorization
+import NormalNumbers.CoefmassInputs
 import NormalNumbers.JointLambertAGPRange
 import NormalNumbers.Erdos257AllPrimes
 import NormalNumbers.MahlerDriftOne
@@ -274,6 +275,14 @@ def waivers : List Waiver := [
   ⟨``PrimeModel.SiteFactor.cprimeResidueQuad_of_scheduled,
    "C′-quantitative assembly from the scheduled statement; same candidate sibling (ρ = log 2), \
     not yet a Lean statement"⟩,
+  ⟨``PrimeModel.SiteFactor.cprimeResidueQuad_of_scheduled',
+   "C′-quantitative assembly from both scheduled statements; same candidate sibling \
+    (ρ = log 2), not yet a Lean statement"⟩,
+  ⟨``PrimeModel.SiteFactor.multBVOmegaRestricted_of,
+   "wiring: squarefull convolution over the cited MultBVResidue (a leaf)"⟩,
+  ⟨``PrimeModel.SiteFactor.pairSecondOrderScheduled_of,
+   "upper-bound sieve from cited inputs (Brun–Titchmarsh, two-forms sieve, Mertens-AP); \
+    paper proof refereed, docs/notes/pair-second-order-2026-10-11.md"⟩,
   ⟨``Erdos257.towerGapPrimes_gapSet, "Mertens with error term per block (a leaf)"⟩,
   ⟨``Erdos257.squareBlockPrimes_weakRate, "Mertens with error term per block (a leaf)"⟩,
   ⟨``Erdos257.squareBlockPrimes_not_mertensRate, "Mertens with error term per block (a leaf)"⟩,

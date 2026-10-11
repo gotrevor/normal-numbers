@@ -542,6 +542,7 @@ import NormalNumbers.ZeroOneBasesReview
 import NormalNumbers.ZerolessTuples
 import NormalNumbers.CampbellAnswer
 import NormalNumbers.CPrimeSiteFactorization
+import NormalNumbers.CoefmassInputs
 import NormalNumbers.MazeAudit
 import NormalNumbers.StonehamSixFailure
 import NormalNumbers.CastingOut
