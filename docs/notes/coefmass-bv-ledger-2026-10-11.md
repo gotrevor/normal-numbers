@@ -780,3 +780,45 @@ the L-function bracket and the II.5.2 citation.  Add one recalled fact (M-linear
 elementary ℋ bound.  Believed ~75%, conditional on II.5.2's M-linearity being as recalled.
 **Verification needed:** Tenenbaum, *Introduction to Analytic and Probabilistic Number Theory*,
 3rd ed., §II.5, Thm 5.2 and its definition of `P(z; c₀, δ, M)` (edition and series recalled).
+
+## Named inputs referee (Astra 164508Z, on c9b3dcd3): accepted with refinements
+
+1. **`RieszFourthMoment` is accepted**: the exponent `2^{9A/4}`, the fourth power, and absolute
+   C₀ before all parameters.  The CRT period mean is a valid model expectation.  P need only be
+   primes `> 2J`, and y need not be monotone.  **Scale reduction to add to the proof** (Opus
+   check agrees):
+   - K is raw `log D`, while (R) used `K_norm = log D/log y ≥ 1`.
+   - Since `k > 9A/2 ≥ 0` forces k ≥ 1, every T containing a prime with `log p > K` has weight 0.
+   - So the expansion equals `∏_{p∈P∖P_small} μ_p` (modulus ≤ 1) times the expansion over
+     `P_small = {p ∈ P : log p ≤ K}`.
+   - Apply (R) to `P_small` with `y = e^K`, `K_norm = 1`.  This gives uniformity in arbitrary
+     finite P.
+   - The k = 0 control is an algebra check only (`0⁰ = 1` removes truncation).
+2. **Two small-prime moduli, named separately.**
+   - `Q_TV = primorial(2J)` is the TV state's modulus (ROUND2 §3).  It does not carry q: q selects
+     the prime set and is not a congruence on n.
+   - `Q_arith = ∏_{p≤2J, p∈P} p` is the expansion and BV modulus, coprime to q.  `Q_arith | Q_TV`.
+   - Never use `Q_TV` as a BV modulus: it would break `(e, q) = 1`.  Every "Q" in E2–E4, repair 1
+     and item 4 is `Q_arith`.  `AugmentedJointTV`'s `primorial (2J)` is `Q_TV`.
+3. **`AugmentedJointTV` on the full window `winJ N` is valid with an explicit extension of
+   ROUND2's proof.**  This is for this state theorem only; the other deep-site bookkeeping (0a)
+   stays.
+   - A site with `y_j ≤ 2J` has no large-prime labels, so `D_j ≡ 1` and its moment and tail terms
+     are omitted.
+   - Empty bands below 2J are omitted.
+   - `n mod Q_TV` is kept in full (independent in the CRT model).
+   - The target coordinate uses only primes in `(2J, y_head]`, even when `y_k ≤ 2J`.
+   - `Q_TV = N^{o(1)}`.
+   - The k- and F-uniformity inside `∀ᶠ N` is correct, and there is no `log 0` or `log 1`
+     denominator.
+   - The earlier "J₁ required" applied to the verbatim source lemma, not to this enlarged-state
+     argument.
+4. **u₀ is the actual condition, not "u ≥ 32".**  u₀ must satisfy both:
+   - `u ≥ 32`, for the box tail `e^{−u²/32} ≤ e^{−u}`;
+   - `(√2+2)/16 + 2(406/u² + 4/u) < 1`, for the CRT exponent, with `Q_TV = N^{o(1)}`.
+   A raw finite (5.3′) theorem underneath would aid audit; the producer consumes only the
+   `C e^{−u} + ε` corollary.
+5. **Hypothesis completeness.**  Astra's "name the model energy separately" was already met by
+   `RieszEnergyTail` (56adf079, crossed in transit).  The remaining items stay ordinary supporting
+   lemmas with accurate status: integer M4, coefficient ledger, strict BV exponent slack,
+   small-prime truncation, scalar norm and ET steps.  The SD gate is unchanged.
