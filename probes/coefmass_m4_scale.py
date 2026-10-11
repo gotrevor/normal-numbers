@@ -40,9 +40,10 @@ def law_of_logsum(P, xmax):
     g[0] = 1.0
     for p in P:
         s = int(round(math.log(p) / H))
-        if s >= n:
-            continue  # contributes only beyond xmax: mass at >xmax tracked as deficit
         q = 2 / p
+        if s >= n:
+            g *= 1 - q  # p only moves mass beyond xmax (tracked as the deficit 1 - g.sum())
+            continue
         g[s:] = (1 - q) * g[s:] + q * g[:-s].copy()
         g[:s] *= 1 - q
     return g  # mass beyond xmax is 1 - g.sum()
@@ -67,8 +68,10 @@ def sample_T(P, S, rng):
     small = P[P <= 20000]
     large = P[P > 20000]
     hits = rng.random((S, len(small))) < 1 / small
-    lam = float(np.sum(1 / large)) if len(large) else 0.0
-    cdf = np.cumsum(1 / large) / lam if len(large) else None
+    # Poisson rates -log(1 - 1/p): after dedup, P(p in T) = 1 - exp(-rate) = 1/p exactly.
+    rate = -np.log1p(-1 / large) if len(large) else None
+    lam = float(np.sum(rate)) if len(large) else 0.0
+    cdf = np.cumsum(rate) / lam if len(large) else None
     out = []
     for i in range(S):
         T = list(small[hits[i]])

@@ -7,7 +7,8 @@
 
 Why: E_int|Phi_{>D}|^2 <= E_model|Phi_{>D}|^2 + 2K TV + 8(1 + M4)/K, where M4 = E|Phi_{<=D}|^4.
 That holds because min(|Phi_{>D}|^2, K) is a bounded function of the frozen state (TV transfers),
-and E_int|Phi_{<=D}|^4 = M4 exactly once D^4 < N.  Optimizing K gives an error of about
+and E_int|Phi_{<=D}|^4 = M4 up to explicit CRT remainders once D^4 < N (D^4 < N alone is not
+exactness; Astra 20261011T051146Z).  Optimizing K gives an error of about
 sqrt(M4 TV).  So the integer transfer of the energy cutoff is reduced to: is M4 = O(1),
 uniformly in y and D?  (If M4 grows like a log power, that is the (log y)^C ghost again.)
 
