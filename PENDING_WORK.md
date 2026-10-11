@@ -3986,3 +3986,10 @@ Next: `isFresh` Riesz bound, then the classification lemma in Lean (route-decisi
 - Frostman probe: weighted core is 0.90-Frostman (const ~1) at root level 20, alpha_t 0.909->0.902.
 - PROVED cell_anc_sub, killed_between, extLoss_le_killedTot (extLoss <= Good weight at 6m+12 in some window, under alive 6m cells).  NEXT: split killedTot over finitely many (b,n) (window length >= 2^-(6m+12)) and bound each by Frostman node + regularPotential_iter.
 - PROVED pow_le_of_cell_sub (b^(n+1) <= 2^(K+1)), killedTot_le_sum (finite union bound over (b,n)).  NEXT: per-(b,n) bound killedBy b n m via Frostman node + regularPotential_iter (interior vs edge kills).
+
+## 2026-10-11 gate 6 step (1) DONE
+- `Fold.tailBudgetSuffices449F` proved (std axioms only), generalizing gate-5 wiring
+  (`recurrenceF`, `massF_zero`, `massF_pos`, `exists_limitF`, `weak_avoidF`); waiver removed from BarrierAudit.
+  `WeightedCore449F` docstring fixed (no `wq ≤ 1`). Frozen predicates unchanged.
+- Next: step (2), exact {2,3,5} D=6 certificate with frozen rational W = r·V, Lean bridge to
+  `WeightedCore449F F5 (9/5)`, same weights in tail budget; send artifacts to Codex via ON-LINE-REQUEST.md.
