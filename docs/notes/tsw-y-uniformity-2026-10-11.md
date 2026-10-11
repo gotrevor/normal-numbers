@@ -7,7 +7,7 @@ Target: `CPrimeSiteFactorization.TwistedSiegelWalfisz` (frozen, unchanged).  Sco
 ## ✅ Primary route: direct, from prime Siegel–Walfisz alone (Astra `224341Z`, Opus-checked)
 
 Astra found a shorter proof that needs neither TSW∞ nor Granville–Koukoulopoulos; Opus reviewed it
-step by step and accepts it (`20261011T2250Z` reply).  It supersedes the two-regime route below,
+step by step and accepts it (`20261011T224511Z`).  It supersedes the two-regime route below,
 which is kept as a record.
 
 **Largest-prime transfer.**  Let `f` be multiplicative with `|f| ≤ 1`, and `2 ≤ W ≤ X`.  Suppose
