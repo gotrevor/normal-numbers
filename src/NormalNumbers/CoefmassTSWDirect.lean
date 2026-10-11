@@ -107,7 +107,8 @@ def LargestPrimeTransfer : Prop :=
 - Otherwise `n = m p` uniquely, with `p > max(W, P⁺(m))` and `Coprime m p`.  That block equals
   `Σ_{m ≤ X/W} f(m) Σ_{max(W,P⁺(m)) < p ≤ X/m} f(p)`.  Empty intervals are dropped; each remaining
   interval is bounded by `η X/m`, and `Σ_{m≤X} 1/m ≤ 1 + log X`.
-The partition was checked exactly (`X ≤ 2500`); dropping the repeated-prime block breaks it. -/
+The partition passed a finite numerical check (`X ≤ 2500`); dropping the repeated-prime block
+breaks it. -/
 theorem largestPrimeTransfer : LargestPrimeTransfer := by
   intro f hf1 hmul X W hX hW hWX η hη hint
   set P : ℕ → Prop := fun n => ∀ p ∈ n.primeFactors, p ≤ W with hPdef
@@ -395,7 +396,8 @@ def SmoothCountRankin : Prop :=
   ∀ A : ℝ, 0 < A → ∃ C : ℝ, 0 < C ∧ ∀ X : ℕ, 3 ≤ X →
     (smoothCount X ⌈Real.exp (Real.sqrt (Real.log X))⌉₊ : ℝ) ≤ C * X / Real.log X ^ A
 
-/-- Elementary.  Rankin with `η = 1/log W`:
+/-- Elementary.  Rankin with `η = 1/log W` (for `X` large enough that `η ≤ 1/2`; bounded `X` goes
+into `C`):
 `Ψ(X, W) ≤ X^{1−η} Π_{p≤W} (1 − p^{−1+η})⁻¹`.  For `p ≤ W`, `p^η ≤ e` and `p^{−1+η} ≤ 2^{−1/2}`, so
 the product is at most `exp(C Σ_{p≤W} 1/p) ≤ C′ (log W)^C` by
 `Erdos67b.PrimeEstimates.abs_primeReciprocals_sub_log_log_le`.  Then
