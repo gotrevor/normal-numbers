@@ -78,3 +78,33 @@ Current blocker: specialize the generic `ZMod` factorization to the subtype `p :
 Next highest-value attack: package that specialization as the natural-number CRT average lemma,
 then prove that a product with one centered local factor has zero period sum.  This immediately
 gives cross-term orthogonality for distinct powerset terms.
+
+### 2026-10-11 review lap 3
+
+Review verdict: the planted route is sound.  The statements of `RieszEnergyTail` and the frozen
+definitions `psiP`, `periodMean`, `muP`, and `rieszCentered` remain unchanged from planting commit
+`2c1c7ab0`.
+
+Concrete advance in `CoefmassRieszEnergy.lean`:
+- specialized the generic `ZMod.prodEquivPi` argument to obtain the natural-number CRT
+  product-sum identity over a finite set of primes;
+- proved the local variance and centered-correlation identities, expanded the prime product by
+  subsets, and established exact CRT orthogonality and the resulting finite Parseval formula;
+- identified the subset weights as a probability distribution, computed their first logarithmic
+  moment, applied `one_sub_rieszWeight_sq_le` termwise, and proved `rieszEnergyTail`;
+- added the completed module to `src/NormalNumbers.lean` as required by the done predicate.
+
+Exact verification:
+- `lake env lean src/NormalNumbers/CoefmassRieszEnergy.lean` succeeded with no `sorry` warning;
+- `rg -n '\bsorry\b' src/NormalNumbers/CoefmassRieszEnergy.lean` returned no matches;
+- `#print axioms NormalNumbers.PrimeModel.SiteFactor.rieszEnergyTail` reported exactly
+  `propext`, `Classical.choice`, and `Quot.sound`;
+- `~/personal/bin/lean-green ~/src/nn-coefmass-riesz-energy --axioms NormalNumbers.PrimeModel.SiteFactor.rieszEnergyTail`
+  built all 10,844 jobs and ended `FORMALIZE-TIER GREEN`.
+
+Current blocker: none.  The scoped no-`sorry` objective and every item in this handoff's done
+predicate are complete.
+
+Next highest-value attack: in a later campaign, consume `RieszEnergyTail` in the coefficient-mass
+ledger described by `docs/notes/coefmass-bv-ledger-2026-10-11.md`; there is no remaining work in
+the present scoped target.
