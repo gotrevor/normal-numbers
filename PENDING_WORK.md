@@ -4018,3 +4018,8 @@ Next: `isFresh` Riesz bound, then the classification lemma in Lean (route-decisi
   (leaf bound per path min(a3*b5, exceptions in the met product set); PHI lowered at the KQ-th failing ratio,
   the rest become exceptions).  Run: `MAXB5=20 exact5x 128 24 6 2 6 16 W181 60 15 PHI_x` (dynamic work queue).
 - Lean: `Fold.Good5`, `Fold.good5_alive` proved (the certificate's Good predicate and its aliveness).
+- exact5x pass 0 (55 min wall, 15 threads): 4.22M failing pairs, PHI lowered 1449 bins, PHI zeros 69 (vs 790 pure
+  product), 41,241 exceptions.  Iterating.
+- Tail plan (after the core): counting scheme of `UniformBadTailCounting` (refinements i+ii+iii) on the fold tail
+  (bases >= 6 non-perfect-power + all b >= 7), with f(R), e'(beta) computed from THIS core's finite-state weights
+  by B&B over bins (uniform in the level, unlike the gate-5 finite-level maxima).  Screen says ~0.74-0.82 < 1.
