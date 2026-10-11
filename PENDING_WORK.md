@@ -1,3 +1,16 @@
+## Gate 5 relaunch (2026-10-11, operator): refined counting screen — KILL criterion fired
+* Controls first (`tail5_refined.py 300 100 FLAGS`, output `tail5_out/refined_screen.txt`): crude 5.419
+  (reproduces the ~6× miss with bases < 300); drop bases 5–7 closes 0.695; zero tail 0; kill-all 1.584.
+* Refinements one at a time, certified gap inf_γ Σ/budget (all inputs certified LOWER bounds: exhaustive
+  finite-level maxima, bases < 300, rational φ0 grid, r_b lower enclosure, β bracketing, 4000-interval γ sweep):
+  (i) W-weighted run sums (`tail5_runsum.py 5 20`: f(63) = 40.06 vs 63) 4.190; (iii) exact window counts 4.385;
+  (ii) layer-cake K (`tail5_layercake.py 5 15`: K ≈ 2.32 vs 5.63) 2.231; (i)+(ii) 1.725; (i)+(ii)+(iii) **1.391**
+  (best γ ≈ 25.64: 11.60 vs budget 8.37).
+* Recorded: `UniformBadTailCounting.lean` (`refinedScreen_misses_at_best`, `refinedScreen_misses_with_slack`,
+  open node `CountingScreenMisses`), Maze row "Refined counting screen for the gate-5 tail".
+  A scheme failure, not a refutation of `TailChargeBudget449`.
+* NEXT: operator's call on fallback (a) (ON-LINE-REQUEST 2026-10-11 relaunch entry).  Box self-stopped.
+
 ## Gate 5 lap 3 (2026-10-11, REVIEW) — per-cell route REFUTED; counting route with comb comparability
 * **Refuted (exact, exhaustive; `UniformBadTailRefute.lean`):** every per-cell node of the lap-2
   bookkeeping, at its stated constants.  `not_apKillFrostman449_eight` (s ≤ 8, C = 2, α = 17/20; proved

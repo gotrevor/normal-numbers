@@ -1,0 +1,27 @@
+flags=['crude'] BMAX=300 GRID=100: h_l(l=1..5)=33.5, 2757, 3.724e+04, 1.322e+05, 3.68e+05
+  best gamma~25.6766 K=5.6322 sum=45.213 budget=8.3356 GAP~5.4241
+  CERTIFIED: gap >= 5.4188 for every gamma in (1, (9/5)^6) [4000 intervals; worst on [25.66838, 25.67664]]
+flags=['drop57'] BMAX=300 GRID=100: h_l(l=1..5)=0, 164.6, 9073, 1.013e+05, 3.37e+05
+  best gamma~26.9641 K=5.4058 sum=4.9033 budget=7.0481 GAP~0.6957
+  CERTIFIED: gap >= 0.6949 for every gamma in (1, (9/5)^6) [4000 intervals; worst on [26.96411, 26.97237]]
+flags=['zero'] BMAX=300 GRID=100: h_l(l=1..5)=0, 0, 0, 0, 0
+  best gamma~12.0096 K=3762.1221 sum=0 budget=22.003 GAP~0.0000
+  CERTIFIED: gap >= 0.0000 for every gamma in (1, (9/5)^6) [4000 intervals; worst on [11.99307, 12.00132]]
+flags=['killall'] BMAX=300 GRID=100: h_l(l=1..5)=64, 0, 0, 0, 0
+  best gamma~23.0026 K=6.2719 sum=17.45 budget=11.01 GAP~1.5850
+  CERTIFIED: gap >= 1.5838 for every gamma in (1, (9/5)^6) [4000 intervals; worst on [23.00265, 23.01090]]
+flags=['i'] BMAX=300 GRID=100: h_l(l=1..5)=31.22, 2151, 2.539e+04, 8.937e+04, 2.44e+05
+  best gamma~25.5446 K=5.6579 sum=35.512 budget=8.4676 GAP~4.1939
+  CERTIFIED: gap >= 4.1898 for every gamma in (1, (9/5)^6) [4000 intervals; worst on [25.53634, 25.54459]]
+flags=['ii'] BMAX=300 GRID=100: h_l(l=1..5)=33.5, 2757, 3.724e+04, 1.322e+05, 3.68e+05
+  best gamma~25.6436 K=2.3216 sum=18.69 budget=8.3686 GAP~2.2333
+  CERTIFIED: gap >= 2.2311 for every gamma in (1, (9/5)^6) [4000 intervals; worst on [25.63537, 25.64363]]
+flags=['iii'] BMAX=300 GRID=100: h_l(l=1..5)=22, 2178, 3.419e+04, 1.228e+05, 3.432e+05
+  best gamma~25.8087 K=5.6071 sum=36.005 budget=8.2035 GAP~4.3889
+  CERTIFIED: gap >= 4.3845 for every gamma in (1, (9/5)^6) [4000 intervals; worst on [25.80869, 25.81694]]
+flags=['i', 'ii'] BMAX=300 GRID=100: h_l(l=1..5)=31.22, 2151, 2.539e+04, 8.937e+04, 2.44e+05
+  best gamma~25.4951 K=2.3333 sum=14.706 budget=8.5172 GAP~1.7266
+  CERTIFIED: gap >= 1.7249 for every gamma in (1, (9/5)^6) [4000 intervals; worst on [25.49507, 25.50332]]
+flags=['i', 'ii', 'iii'] BMAX=300 GRID=100: h_l(l=1..5)=20.52, 1723, 2.332e+04, 8.302e+04, 2.286e+05
+  best gamma~25.6436 K=2.3216 sum=11.652 budget=8.3686 GAP~1.3924
+  CERTIFIED: gap >= 1.3910 for every gamma in (1, (9/5)^6) [4000 intervals; worst on [25.64363, 25.65188]]

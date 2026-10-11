@@ -23,6 +23,7 @@ import NormalNumbers.UniformBadEntryReview
 import NormalNumbers.UniformBadTailReview
 import NormalNumbers.UniformBadTailObstruction
 import NormalNumbers.UniformBadTailRefute
+import NormalNumbers.UniformBadTailCounting
 import NormalNumbers.EntropyProfiles
 import NormalNumbers.CantorExactExponentStretch
 import NormalNumbers.CantorExactExponentProfile
@@ -78,6 +79,10 @@ def mazeLinks : List Link := [
    [``UniformBadThreshold.TailReview.ConcentratedCells449,
     ``UniformBadThreshold.TailReview.UpperGrowth449,
     ``UniformBadThreshold.TailReview.TotalsKill449]⟩,
+  ⟨"Refined counting screen for the gate-5 tail (comb comparability + run sums)",
+   [``UniformBadThreshold.TailCounting.refinedScreen_misses_at_best,
+    ``UniformBadThreshold.TailCounting.refinedScreen_misses_with_slack],
+   [``UniformBadThreshold.TailCounting.CountingScreenMisses]⟩,
   ⟨"Carmichael towers for rationalTower_four",
    [``UniformBadThreshold.carmichaelQ_le,
     ``UniformBadThreshold.CarmichaelChainCollapse,
@@ -367,7 +372,7 @@ def mazeLegacy : List String := [
   "Diophantine good-denominator detour for the tail cell",
   "route B's unweighted cover of the state-dependent target"]
 
-/-- info: maze audit: 187 rows, 80 cite declarations, 107 legacy (prose only) -/
+/-- info: maze audit: 188 rows, 81 cite declarations, 107 legacy (prose only) -/
 #guard_msgs in
 #maze_audit mazeRows, mazeLinks, mazeLegacy
 
