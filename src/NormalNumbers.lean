@@ -545,6 +545,7 @@ import NormalNumbers.CampbellAnswer
 import NormalNumbers.CPrimeSiteFactorization
 import NormalNumbers.CoefmassInputs
 import NormalNumbers.CoefmassProducer
+import NormalNumbers.CoefmassTSWDirect
 import NormalNumbers.MazeAudit
 import NormalNumbers.StonehamSixFailure
 import NormalNumbers.CastingOut

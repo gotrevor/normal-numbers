@@ -19,6 +19,7 @@ import NormalNumbers.Hertling
 import NormalNumbers.CPrimeSiteFactorization
 import NormalNumbers.CoefmassInputs
 import NormalNumbers.CoefmassProducer
+import NormalNumbers.CoefmassTSWDirect
 import NormalNumbers.JointLambertAGPRange
 import NormalNumbers.Erdos257AllPrimes
 import NormalNumbers.MahlerDriftOne
