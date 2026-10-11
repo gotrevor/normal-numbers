@@ -400,3 +400,73 @@ not (Astra 160352Z).  So keep ω everywhere, and touch Ω only where `MultBVResi
 Referee targets: (i) the `rad(a) = g` decomposition and its `A₀`-tail uniformity as ω(Q) grows;
 (ii) the `h_z` local factor and its sup bound; (iii) that MultBVResidue's uniformity in x covers
 the lengths `x/b`, `b ≤ B₀`.
+
+## Items 4–5 referee (Astra 161128Z) and statement drafts for review (NOT planted)
+
+**Accepted:**
+- Item 5, with this proviso: for the original deep sites `k > J₁` use the budgeted
+  `C|h| 4^{−J₁} log log N = o(1)`, never `log(log N/log y_k)` with `y_k ≤ 1`.
+- The local identity `H_p(X) = 1 + z(1−z)X²/(1−X)`, so `h(p) = 0` and `h(p^ν) = z(1−z)`.  The
+  majorant `H(p^ν) = 2`, ν ≥ 2, gives `Σ_{b>B} H(b)/b ≤ C_ε B^{−1/2+ε}`.
+- The radical decomposition and its unit residues.
+
+**Corrected (Opus check agrees):**
+- **A₀ grows:** `A₀ = (log N)^D`.  By Rankin (σ = 1/2), the tail is
+  `≤ A₀^{−1/2} exp(C√J) = (log N)^{−D/2+o(1)}`.  The c382e4d2 choice `A₀ = √N` gave a true tail
+  bound but a retained range too long for BV (`x/b` falls to `N^{1/4}`).  The retained `1/a` mass
+  is `O(log J)`, and the SD input must be uniform over the lengths `N/a ≥ N/(log N)^D`.
+- **ω-BV only at restricted level.**  Split the squarefull convolution at `B₀ = √x`.  Small b:
+  `x/b ≥ √x`, so `e ≤ x^θ ≤ √(x/b)/log^B` for θ < 1/4, and `MultBVResidue` applies at `x/b`.
+  Large b: trivially `≤ x^θ · x · x^{−1/4+ε/2}`, which is `o(x/(log x)^A)` for θ < 1/4.  Use the
+  bounded raw product `|B_large τ| ≤ 1` in the main-term truncation.
+
+**Statement drafts.**  The Lean is for statement review only; nothing is planted.
+
+```lean
+/-- Restricted-level BV for the ω form (derived from MultBVResidue; believed ~90%).
+Proof: z^{ω_P} = z^{Ω_P} ∗ h_z, H_p = 1 + z(1−z)X²/(1−X); split at b ≤ √x (MultBVResidue at x/b,
+moduli e ≤ x^θ ≤ √(x/b)/log^B since θ < 1/4) and b > √x (trivial, x^{θ+3/4+ε/2}).  Coprime c
+kills (b, e) > 1.  NOT the full √x/log^B range. -/
+def MultBVOmegaRestricted : Prop :=
+  ∀ q₀ a : ℕ, 3 ≤ q₀ → Nat.Coprime a q₀ → ∀ z : ℂ, ‖z‖ = 1 → ∀ θ : ℝ, 0 < θ → θ < 1/4 →
+    ∀ A : ℝ, 0 < A → ∃ C : ℝ, 0 < C ∧ ∀ x y : ℕ, 3 ≤ x →
+      ∑ e ∈ (Finset.Icc 1 ⌊(x : ℝ) ^ θ⌋₊).filter (fun e => Nat.Coprime e q₀),
+        ⨆ c : {c : Fin e // Nat.Coprime c.val e},
+          ‖apDiscrepancy (fun n => z ^ omegaLe (residueClass q₀ a) y n) x e c.val.val‖
+        ≤ C * x / Real.log x ^ A
+
+/-- Selberg–Delange for z^{ω_P} with a zero set S₀ and a 1/p tilt (cited instantiation, ~80%).
+Division-free: no small-prime value is inverted; τ = 0 on S₀ encodes coprimality to Q′.  Uniform
+in x ≥ 3 (all lengths N/a), in finite S₀ through exp(C Σ_{S₀} p^{−1/2}), and in tilts with
+|τ_p − 1| ≤ K/p off S₀.  In use: S₀ = primes of Q/g, Σ_{S₀} p^{−1/2} ≤ C√J, so the factor is
+(log N)^{o(1)} against a 1/log x error. -/
+def SelbergDelangeOmegaTilted : Prop :=
+  ∀ q₀ a : ℕ, 3 ≤ q₀ → Nat.Coprime a q₀ → ∀ K : ℝ, ∃ C : ℝ, 0 ≤ C ∧ ∀ z : ℂ, ‖z‖ = 1 →
+    ∀ (S₀ : Finset ℕ) (τ : ℕ → ℂ), (∀ p ∈ S₀, τ p = 0) →
+      (∀ p, p.Prime → p ∉ S₀ → ‖τ p - 1‖ ≤ K / p) →
+      ∃ L₀ : ℂ,
+        Tendsto (fun X : ℕ => ∏ p ∈ (Finset.Icc 1 X).filter Nat.Prime,
+          (1 - 1 / (p : ℂ)) ^ (1 + (z - 1) / (Nat.totient q₀ : ℂ)) *
+            (1 + τ p * (if p % q₀ = a % q₀ then z else 1) / ((p : ℂ) - 1))) atTop (𝓝 L₀) ∧
+        ∀ x : ℕ, 3 ≤ x →
+          ‖(∑ n ∈ Finset.Icc 1 x,
+                z ^ ((n.primeFactors.filter (fun p => p % q₀ = a % q₀)).card)
+                  * ∏ p ∈ n.primeFactors, τ p) / (x : ℂ)
+            - L₀ * (Real.log x : ℂ) ^ ((z - 1) / (Nat.totient q₀ : ℂ))
+                * (Complex.Gamma (1 + (z - 1) / (Nat.totient q₀ : ℂ)))⁻¹‖
+          ≤ C * Real.exp (C * ∑ p ∈ S₀, 1 / Real.sqrt p)
+              * Real.log x ^ (((z - 1) / (Nat.totient q₀ : ℂ)).re - 1)
+
+theorem multBVOmegaRestricted_of (h : MultBVResidue) : MultBVOmegaRestricted := sorry
+theorem siteFactorizationScheduled_of (hBV : MultBVOmegaRestricted)
+    (hSD : SelbergDelangeOmegaTilted) : SiteFactorizationScheduled := sorry
+```
+
+**Statement-review questions for Astra:**
+1. Is the `K/p`-tilt plus zero-set `S₀` family exactly what repair 1 and item 4 consume?  In
+   particular: `τ_p = b_p^{−1}` above 2J, 0 on `Q/g`, 1 elsewhere, at lengths `x = N/a`.
+2. Should the SD error carry `exp(C Σ_{S₀} p^{−1/2})`, or is a cleaner sufficient form
+   `C (1 + |S₀|)^C`?  `|S₀| ≤ π(2J)` would also be `(log N)^{o(1)}`.
+3. The producer's hypotheses omit C′'s (5.3′) and the Riesz M4.  They are paper-proved, not
+   frozen Props.  Should they become named Props first, so the producer's dependencies are
+   honest?  My lean: yes, as `AugmentedJointTV` and `RieszFourthMoment`.
