@@ -128,7 +128,11 @@ No CRT remainder enters, because this is an identity in n.
   and Q's primes all lie in P, and P-primes do not divide q₀.
 - The extra character count per e is at most `τ(e)(log N)^B`, and its cost
   `Σ_e A_e τ(e)/φ(e) ≪ (log N)^{O(W)}` is absorbed by choosing A larger.
-- Inherited and still owed: TSW's uniformity in y (two-regime argument), believed about 85%.
+- ~~Inherited and still owed: TSW's uniformity in y (two-regime argument), believed about 85%.~~
+  **Closed 2026-10-11:** `twistedSiegelWalfisz_of_primeSW : PrimeCharacterSW → TwistedSiegelWalfisz`
+  is proved in Lean (`CoefmassTSWDirect.lean`, axioms `propext, Classical.choice, Quot.sound`), by
+  Astra's largest-prime transfer; see `docs/notes/tsw-y-uniformity-2026-10-11.md`.  The only input is
+  classical prime Siegel–Walfisz, as a `Literature` Prop.
   The coefmass route does not change this node.
 
 ## E4: the main term, as one tilted mean (replaces SD uniformity over e)
