@@ -4031,3 +4031,12 @@ Next: `isFresh` Riesz bound, then the classification lemma in Lean (route-decisi
     3.3% block slack (181/180)^6, and every class's leaves may land in the concentrated class.
   Conclusion: the joint core needs per-pair (base-3 bin x base-5 bin) information.  Back to `exact5y`
   (product + sparse exceptions, threshold-aligned base-5 rho bins with slivers, clean-root classes).
+
+## Gate 6 core relaunch, run g6run1 (2026-10-11 ~20:00Z)
+- exact5y now checkpoints every pass (`CKPT=dir`: phi.<it>.txt, ex.<it>.txt, stats.txt, latest; atomic) and resumes
+  (`RESUME=dir`).  Teeth: `scripts/cstar_models/gate6/ckpt_teeth/small.txt` (2 passes == 1 + resume + 1, identical
+  PHI/ex files and checksums, different thread counts).  Commit 6066ba93.
+- Run: `cd tmp/g6run1; MAXB5=20 CKPT=. ../exact5y 128 24 6 0 6 16 ../W181.txt 60 15` (W181 = gunzipped
+  `gate6/W181_N128_M24_D6.txt.gz` at tmp/W181.txt; binary via `leanc -O2 ... -lpthread` into tmp/exact5y).
+  Resume next lap: `cd tmp/g6run1; MAXB5=20 RESUME=. ../exact5y 128 24 6 0 6 16 ../W181.txt 60 15 >> log.txt`.
+- Pre-registered kill: after 3 passes, pass-3 failing pairs not < half of pass 1, or PHI zeros rising -> stop.
