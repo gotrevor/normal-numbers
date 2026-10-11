@@ -1,6 +1,6 @@
 # HANDOFF 2026-10-11 — operator gate 5, lap 3 (fresh-mind REVIEW lap)
 
-Branch `proof/uniformbad-threshold`.  Build green (full default build, 10850 jobs).  Binding orders:
+Branch `proof/uniformbad-threshold`, lap work at HEAD 54c01a0a.  Build green (full default build, 10850 jobs).  Binding orders:
 `DIRECTION.md` → CURRENT DIRECTIVE (gate 5 review lap 3), at the top of the branch section.
 
 ## What changed this lap
