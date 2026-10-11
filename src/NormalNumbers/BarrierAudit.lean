@@ -6,6 +6,7 @@ Authors: Trevor Morris
 import NormalNumbers.Barriers
 import NormalNumbers.UniformBadTailMechanism
 import NormalNumbers.UniformBadTailRefute
+import NormalNumbers.UniformBadFold
 import NormalNumbers.LiteratureDigitsOfPowers
 import NormalNumbers.ErdosTriples
 import NormalNumbers.PairDecoupleProve
@@ -86,6 +87,11 @@ namespace NormalNumbers.Barriers
 
 /-- Each frozen headline `sorry` and the barriers its mechanism must fail on. -/
 def cruxLinks : List CruxLink := [
+  ⟨``UniformBadThreshold.Fold.foldRoute449,
+   [``uniformBad_base_two],
+   "gate 6: the exact core now runs over {2,3,5}; its growth must still come from the JOINT phases \
+    (base 2 alone dies at exponent ≤ log₂ 3), and the fold tail must be charged with the new core's \
+    own weights, not the gate-4 ones"⟩,
   ⟨``UniformBadThreshold.Tail.tailChargeBudget449,
    [``uniformBad_base_two],
    "the tail charges must be WEIGHTED by the proved gate-4 core weights (spread about 3020), and must \
@@ -196,6 +202,9 @@ def waivers : List Waiver := [
   ⟨``UniformBadThreshold.TailReview.not_regularPotential2_449_45,
    "refutation of the off-path node RegularPotential2_449 45 by an exact finite witness \
     (Good cell (6, 61), descMass ratio 45.1115)"⟩,
+  ⟨``UniformBadThreshold.Fold.tailBudgetSuffices449F,
+   "gate-6 wiring, statement frozen for Codex's semantic review before any proof; the proof is \
+    TailReview.tailBudgetSuffices449_proof with the core's facts taken as hypotheses"⟩,
   ⟨``UniformBadThreshold.TailReview.tailChargeBudget449_of_nodes,
    "bookkeeping reduction of the gate-5 crux to the named conjecture nodes APKillUniform449, \
     RegularPotential449, OrphanSmall449 (all hypotheses); lap 3 refuted h1 and h4 \

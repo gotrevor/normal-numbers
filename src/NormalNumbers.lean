@@ -1003,6 +1003,7 @@ import NormalNumbers.UniformBadTailObstruction
 import NormalNumbers.UniformBadTailMechanism
 import NormalNumbers.UniformBadTailRefute
 import NormalNumbers.UniformBadTailCounting
+import NormalNumbers.UniformBadFold
 import NormalNumbers.UniformBadTailProbeReview
 import NormalNumbers.LinearFormsScales
 import NormalNumbers.LinearFormsScalesStretch

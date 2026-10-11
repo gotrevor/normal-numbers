@@ -1,0 +1,14 @@
+# Operator gate 6 screen (2026-10-11).  node sharedF.js C D IT F specs... ; specs N:M:KX:KU per base [3, ...F]
+## controls
+F={} C=4.49 D=8 specs=32:6:3:3: growth 1.837893     (gate 4 shared3.js same params: 1.837337)
+ZERO=5 F={5} 32:6:3:3 2:2:1:1: growth 1.837893     (zero radius reproduces F={})
+NOKEEP=1 F={}: tree DEAD at iteration 0
+## growth per F (sampled, upper bound on a certificate)
+F={5} D=8 32:6:3:3 + 4:2:1:1 / 8:3:1:1 / 16:4:1:1: 1.837231 / 1.836961 / 1.835948
+F={5} D=6 16:4:2:2 + 64:4:2:1 / 128:4:2:1 / 256:2:2:1: 1.831067 / 1.831010 / 1.832733   (target 1.79)
+F={5,6} D=6 16:4:2:2 + 16:2:1:1 x2: 1.836825 (target 1.75)
+F={5,6,7} D=6 16:4:2:2 + 4:2:1:1 x3: 1.838199, 819200 states, 54 s (target 1.715)
+## tail re-screen with the core's own f, e' (CELLS=10:16, tail_kf.py g=9/5, BMAX 300 GRID 50, refinements i,ii,iii)
+instrument control F={} weights, tail minus {5}: 0.6643 ; certified gate-4 W (tail_at.py 9/5 5): 0.7365
+F={5} own weights (16:4:2:2 64:4:2:1): 0.7418  -> scaled by control ~0.82
+F={5,6} own weights: 0.3719 (F={} weights: 0.3550; certified W: 0.3935)
