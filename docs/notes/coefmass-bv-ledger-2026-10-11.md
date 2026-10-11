@@ -715,10 +715,11 @@ meaning.
     with `r ≤ QD`.
   - Its ℓ¹ mass is `≤ Σ_e 2^{ω(e)} Σ_c|κ(e,c)|/φ(e/g) ≤ Q (log y)^W Σ_{d≤D}(2W)^{ω(d)}/φ(d)`,
     which is `(log N)^{O(W)}`.
-  - `|Λ − C|⁴` expands into `1[lcm | m]`, with `lcm ≤ (QD)⁴ ≤ N^{4θ+o(1)} < N^{1−ε}`.  So
-    `mean_int = E_model + O(mass⁴ (QD)⁴/N) = E_model + o(1)`.
-  - C is a bounded state function (`|C| ≤ 1`).  So it needs no expansion: it goes through `hTV`
-    directly.
+  - `|Λ|⁴` expands into `1[lcm | m]`, with `lcm ≤ (QD)⁴ ≤ N^{4θ+o(1)} < N^{1−ε}`.  So
+    `mean_int|Λ|⁴ = E_model|Λ|⁴ + O(mass⁴ (QD)⁴/N) = E_model|Λ|⁴ + o(1)`.
+  - C has unbounded conductor but is a bounded state function (`|C| ≤ 1`), so it is never
+    expanded.  The clipped-test tails need only `|Λ − C|⁴ ≤ 8(|Λ|⁴ + 1)`, and the clipped test
+    itself goes through `hTV`.
 - **Step 8, the `X → ∞` interchange: closes by Mertens.**
   - Factor SD's constant as `L₀ = ∏_{p≤y_head}[(1−1/p)^κ E_p[F C_p]] · T(y_head)`, where
     `T(Y) = lim_X ∏_{Y<p≤X}(1−1/p)^κ (1 + (z_p − 1)/p)`.
