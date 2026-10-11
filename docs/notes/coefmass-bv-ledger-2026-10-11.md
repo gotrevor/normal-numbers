@@ -304,4 +304,5 @@ unchanged.
 Open within repair 2: none that I see.  Referee targets:
 - the claim that μ′ marginalizes to μ;
 - the moment bound for `D′_k` at the `y_head` scale;
-- whether any §4 constant silently used `d_b ≤ J` rather than `d_b < p/2`.
+- whether any §4 constant silently used more than `d_b ≤ J`.  It still holds: above `y_k` only
+  sites `j < k` are active, so `d′_b ≤ (k−1) + 1 ≤ J`, and `g_p = d′/p < 1/2` since `p > 2J`.
