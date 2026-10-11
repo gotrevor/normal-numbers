@@ -24,11 +24,11 @@ Otherwise `n = mp` uniquely, with `p > max(W, P⁺(m))`, and that block is exact
 `f(p) = χ(p)[1 + (z − 1) 1_P(p) 1_{p≤y}]`.  The cutoff only truncates an interval at `y`.  Expand
 `1_P` by characters ψ mod q₀; each `χψ` is nonprincipal mod `r q₀`.  Take `L = log X`,
 `W = ⌈e^{√L}⌉`.  Every nonempty endpoint `t ≥ W` has `r q₀ ≤ q₀ L^B ≤ (log t)^{2B+2}`, so SW with
-saving `D = 2A + 4` gives `η ≤ C L^{−A−2}`, uniformly in `y, r, χ`, **and in unit z**.  Rankin gives
+saving `D = 2A + 4` gives `η ≤ C L^{−A−2}`, uniformly in `y, r, χ`, **and in unit z**.  Rankin (for `X` large enough that `η = 1/log W ≤ 1/2`; bounded `X` goes into `C`) gives
 `Ψ(X, W) ≤ C X e^{−L/log W} (log W)^{C₀}`, which is `O(X/L^A)`.  Hence `|S| ≤ C X/L^A`, which is
 slightly stronger than frozen `TwistedSiegelWalfisz`, whose `C` may depend on `z`.
 
-**Checks.**  The partition was checked exactly and independently by both of us: Astra on 108
+**Checks.**  The partition passed a finite numerical check, run independently by each of us: Astra on 108
 cases, Opus with `tmp/opus-tsw/partition.py` (`X ≤ 2500`, `W ∈ {2, 5, 11, 30}`,
 `y ∈ {1, 7, 40, 10⁹}`), error `2.8·10⁻¹³`.  Red control: dropping the `p² | n` block gives `4.66`.
 
@@ -58,7 +58,7 @@ with three bookkeeping repairs, applied below (edge cases, the `j ≥ 2` weight,
 That verdict does not cover TSW∞ or its source.
 
 **Confidence:** about 75% that the argument below is complete as written; the identities are
-exact-checked (below).  TSW∞ itself reduces to SW + Granville–Koukoulopoulos Thm 1 (see "Inputs"),
+checked numerically on finite cases (below).  TSW∞ itself reduces to SW + Granville–Koukoulopoulos Thm 1 (see "Inputs"),
 so the whole of TSW rests on SW and GK.
 
 ## Notation
@@ -135,7 +135,7 @@ and `Z = exp(√L) = o(x/L^A)`.
 So in both regimes `|S| ≤ C x/L^A` with `C = C(q₀, a, z, A, B)`, uniform in `y, r, χ`.  The case
 `y ≥ x` is the large regime with `D_y ∩ [1, x] = {1}`, i.e. TSW∞ itself.
 
-## Exact checks (identities only)
+## Finite numerical checks (identities only)
 
 `tmp/opus-tsw/identities.py` (scratch, not committed): `q₀ = 5, a = 2, r = 7`, χ of order 3,
 `z = e^{1.1i}`, `x ∈ {200, 777, 1500}`, `y ∈ {1, 3, 7, 13, 50, 300, 10⁹}`.  Both decompositions
