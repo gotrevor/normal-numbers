@@ -5,6 +5,19 @@
 **This is the directive for branch `proof/uniformbad-threshold`.**  The `proof/cantor-bad-normal` section below
 belongs to that branch (its route is parked at the middle-digit obstruction); do not work it here.
 
+- **Operator lever probe (Ren for Trevor, 2026-10-11 ~04:15Z): ONE script-only probe of the remaining 1.39×, then stop.**
+  Supersedes the relaunch block below for this run (that run's kill fired, `042f054d`).  Scripts and a Lean kill/close
+  record only; no new Lean proof work.
+  *Levers* (named in `HANDOFF-2026-10-11-gate5-relaunch.md`, untested): (L1) a lag-dependent `K`, a separate comparability
+  constant for survivors of a parent that was hit at the previous lag; (L2) charging bases 5–7 long-window edges to parent
+  MASS (W-weighted) rather than child count.  Both build on `tail5_refined.py` with (i)+(ii)+(iii) on.
+  *Controls first:* levers off reproduces 1.391; drop bases 5–7 still closes; zero passes, kill-all fails.
+  *Close:* best certified gap ≤ 0.9 with L1, L2 or both (the 10% headroom is for the later B&B certification, since the
+  exhaustive `k ≤ 15`/`k ≤ 20` maxima are not yet uniform upper bounds; say so in the record).  On a close, commit the
+  screen + output + invocation, handoff, self-stop.  NEXT 2 waits for the operator.
+  *Kill:* otherwise.  Record the gap per lever in the Maze row "Refined counting screen for the gate-5 tail", update
+  `CountingScreenMisses` with the improved coefficients if they are certified, handoff, self-stop.  Fallback (a) is
+  already approved and launches as a separate run under its own directive; do not start it here.
 - **Operator relaunch (Ren for Trevor, 2026-10-11 ~03:10Z): ONE decisive measurement, then stop.**  Run NEXT 1 of the
   lap-3 directive below (the refined counting screen) and nothing past it.
   *Number to reach:* a CERTIFIED (not sampled) `Σ_ℓ h_ℓ/γ^ℓ ≤ (9/5)^6 − γ` for some admissible `γ`
