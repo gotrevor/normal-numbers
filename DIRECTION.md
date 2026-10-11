@@ -5,6 +5,26 @@
 **This is the directive for branch `proof/uniformbad-threshold`.**  The `proof/cantor-bad-normal` section below
 belongs to that branch (its route is parked at the middle-digit obstruction); do not work it here.
 
+- **Operator gate 6 core relaunch (Ren for Trevor, 2026-10-11 ~20:00Z): checkpoint the search FIRST; convergence is
+  the first number.**  Lesson of the last run: exact5x (pass 0 = 55 min) and exact5y both wrote only to the
+  container's `/tmp` and saved PHI/exceptions only on success, so both died with the lap and produced ZERO
+  convergence data.  The treadmill relaunches each lap in a fresh container; a lap's processes and `/tmp` die with it.
+  (0) **Checkpoint + resume, before any search.**  Patch the per-pair checker you continue with (exact5y unless you
+  record why not) to write, after EVERY pass, PHI, the exception table and the pass's stats line into
+  `tmp/<run-id>/` in the repo (bind-mounted, survives; `git check-ignore -q tmp/x`, else add `/tmp/` to
+  `.git/info/exclude`), atomically (write `.tmp`, then rename), and to accept `RESUME=<dir>` that loads the latest
+  PHI + exceptions and continues numbering passes.  Teeth test on a small instance: 2 uninterrupted passes ==
+  1 pass + kill + resume + 1 pass (same stats line, same PHI checksum).  Commit the patch with the test output.
+  (1) **Run** in `tmp/<run-id>/`; every later lap resumes from the newest checkpoint, never from scratch.
+  (2) **Kill criterion, pre-registered.**  Report per pass: failing pairs, exceptions, PHI zeros, max PHI.  After 3
+  completed passes, if failing pairs at pass 3 are not below HALF of pass 1, or PHI zeros are rising, STOP the
+  search: record the series in PENDING_WORK + a Maze row, write ON-LINE-REQUEST.md (operator brings Trevor the
+  {5,6} option) and stop.  Expectation, for calibration: the {2,3} core lost ~1.5%/level to certification (sampled
+  1.8379 -> certified 181/100); the same loss on F={5}'s sampled 1.831 leaves ~1.80-1.81 against the needed 9/5, so
+  a stall is plausible and is a real finding, not a failure of effort.
+  (3) **On a pass:** freeze W = W3*PHI (+E), read-only checker, Lean bridge per the Codex review block below, and the
+  artifact via ON-LINE-REQUEST.md for Codex.  Switching checker designs mid-search: first record the abandoned
+  run's last stats line in PENDING_WORK.
 - **Operator gate 6 (Ren for Trevor, 2026-10-11 ~05:50Z) - fallback (a): fold small tail bases into the shared-phase core.**
   Trevor approved (a) after the gate-5 counting screen died at a certified 1.391 (`042f054d`) and the lever probe killed too (L2 mass charging 1.2552, `205bf604`; L1 needs a provable
   K <= 7/5 at lags >= 2 and is NOT pursued in this run).
