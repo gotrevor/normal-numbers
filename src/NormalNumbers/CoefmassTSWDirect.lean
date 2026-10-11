@@ -849,4 +849,13 @@ theorem twistedSiegelWalfisz_of_uniformZ (h : UniformZTSW) : TwistedSiegelWalfis
 theorem twistedSiegelWalfisz_of_primeSW (hSW : PrimeCharacterSW) : TwistedSiegelWalfisz :=
   twistedSiegelWalfisz_of_uniformZ (uniformZTSW_of_primeSW hSW)
 
+/-- `MultBVResidue` with prime Siegel–Walfisz in place of the frozen `TwistedSiegelWalfisz`.  This
+is an additive wrapper: `multBVResidue_of` is unchanged, and its own `sorry` (the BV reduction) is
+still a separate debt.  Interface approved by Astra (`20261011T235406Z`).  It lives here because
+importing this module into `CPrimeSiteFactorization` would create a cycle. -/
+theorem multBVResidue_of_primeSW (h71 : GranvilleShaoCor71)
+    (hBV : BoundedGaps.Maynard.bombieriVinogradov) (hSW : PrimeCharacterSW) :
+    MultBVResidue :=
+  multBVResidue_of h71 hBV (twistedSiegelWalfisz_of_primeSW hSW)
+
 end NormalNumbers.PrimeModel.SiteFactor
