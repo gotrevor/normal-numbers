@@ -707,3 +707,27 @@ theorem siteFactorizationScheduled_of' (hBV : MultBVOmegaRestricted)
 The imports are `NormalNumbers.CPrimeSiteFactorization` and `NormalNumbers.G4MertensAP`, and
 `MertensAPAsymptotic` needs the second.  Only sorry warnings appear.  This is elaboration, not
 meaning.
+
+**Weak joints re-examined (Opus, after 56adf079).**  Two of the three close on paper.  SD remains.
+
+- **Step 5, the arithmetic M4 of Λ: closes by Astra's mass bookkeeping.**
+  - Expand `1[gcd(m,e) = g] = Σ_{d|e/g} μ(d) 1[gd | m]`.  Λ is then a combination of `1[r | m]`
+    with `r ≤ QD`.
+  - Its ℓ¹ mass is `≤ Σ_e 2^{ω(e)} Σ_c|κ(e,c)|/φ(e/g) ≤ Q (log y)^W Σ_{d≤D}(2W)^{ω(d)}/φ(d)`,
+    which is `(log N)^{O(W)}`.
+  - `|Λ − C|⁴` expands into `1[lcm | m]`, with `lcm ≤ (QD)⁴ ≤ N^{4θ+o(1)} < N^{1−ε}`.  So
+    `mean_int = E_model + O(mass⁴ (QD)⁴/N) = E_model + o(1)`.
+  - C is a bounded state function (`|C| ≤ 1`).  So it needs no expansion: it goes through `hTV`
+    directly.
+- **Step 8, the `X → ∞` interchange: closes by Mertens.**
+  - Factor SD's constant as `L₀ = ∏_{p≤y_head}[(1−1/p)^κ E_p[F C_p]] · T(y_head)`, where
+    `T(Y) = lim_X ∏_{Y<p≤X}(1−1/p)^κ (1 + (z_p − 1)/p)`.
+  - `log T(Y) = lim_X Σ_{Y<p≤X}[−κ/p + (z−1)1_P(p)/p] + O(1/Y)`.  By Mertens (all primes) and
+    `hMer`, the bracket is `lim_X[−κ log(log X/log Y) + (z−1)δ log(log X/log Y)] + o(1) = o(1)`,
+    since `(z−1)δ = κ`.  So `T(y_head) → 1`.
+  - The small-prime mixture is consistent with this.  At `p | Q`, τ = 0, and the `a`-sum
+    `Σ_{rad(a)=g} 1/a = ∏_{p|g} 1/(p−1)` combines with `(1−1/p)^{1+κ}` into
+    `(1−1/p)^κ[(1−1/p)C_p(nonhit) + z C_p(hit)/p] = (1−1/p)^κ E_p[F C_p]`.  This is a product,
+    with no division.  The `a > A₀` tail is the Rankin bound.
+- **Remaining weak joint:** step 7's uniform SD (`hSD`).  The producer is now believed ~65%,
+  conditional on `hSD`, with most of the residual risk in its source instantiation.
