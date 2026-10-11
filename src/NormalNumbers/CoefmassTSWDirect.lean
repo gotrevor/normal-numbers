@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
 import NormalNumbers.CPrimeSiteFactorization
+import ErdosProblems.Erdos67b.PrimeEstimates
 
 /-!
 # `TwistedSiegelWalfisz` from prime Siegel–Walfisz: the largest-prime transfer
@@ -274,6 +275,121 @@ theorem largestPrimeTransfer : LargestPrimeTransfer := by
     (∑ n ∈ T, f n)
   linarith
 
+lemma rpow_geom_tsw {p : ℕ} (_hp : p.Prime) (σ : ℝ) (n : ℕ) :
+    (((p ^ n : ℕ) : ℝ)) ^ (-σ) = ((p : ℝ) ^ (-σ)) ^ n := by
+  push_cast
+  rw [← Real.rpow_natCast, ← Real.rpow_natCast, ← Real.rpow_mul (by positivity),
+    ← Real.rpow_mul (by positivity), mul_comm]
+
+lemma rpow_neg_lt_one_tsw {p : ℕ} (hp : p.Prime) {σ : ℝ} (hσ : 0 < σ) : (p : ℝ) ^ (-σ) < 1 :=
+  Real.rpow_lt_one_of_one_lt_of_neg (by exact_mod_cast hp.one_lt) (by linarith)
+
+/-- Rankin's trick through Mathlib's Euler product over smooth numbers. -/
+lemma rankin_euler (X W : ℕ) {σ : ℝ} (hσ : 0 < σ) :
+    (smoothCount X W : ℝ) ≤
+      (X : ℝ) ^ σ * ∏ p ∈ (W + 1).primesBelow, (1 - (p : ℝ) ^ (-σ))⁻¹ := by
+  set f : ℕ → ℝ := fun n => (n : ℝ) ^ (-σ) with hf
+  have hf1 : f 1 = 1 := by simp [hf]
+  have hmul : ∀ {m n : ℕ}, Nat.Coprime m n → f (m * n) = f m * f n := by
+    intro m n _
+    simp only [hf, Nat.cast_mul]
+    exact Real.mul_rpow (by positivity) (by positivity)
+  have hsum : ∀ {p : ℕ}, p.Prime → Summable (fun n : ℕ ↦ ‖f (p ^ n)‖) := by
+    intro p hp
+    simp only [hf, rpow_geom_tsw hp, norm_pow, Real.norm_eq_abs]
+    exact summable_geometric_of_lt_one (abs_nonneg _)
+      (by rw [abs_of_nonneg (by positivity)]; exact rpow_neg_lt_one_tsw hp hσ)
+  obtain ⟨-, hHas⟩ := EulerProduct.summable_and_hasSum_smoothNumbers_prod_primesBelow_tsum
+    hf1 hmul hsum (W + 1)
+  have hval : ∏ p ∈ (W + 1).primesBelow, ∑' n : ℕ, f (p ^ n)
+      = ∏ p ∈ (W + 1).primesBelow, (1 - (p : ℝ) ^ (-σ))⁻¹ := by
+    refine prod_congr rfl (fun p hp => ?_)
+    have hpp := (Nat.mem_primesBelow.mp hp).2
+    simp only [hf, rpow_geom_tsw hpp]
+    exact tsum_geometric_of_lt_one (by positivity) (rpow_neg_lt_one_tsw hpp hσ)
+  rw [hval] at hHas
+  set S := (Icc 1 X).filter (fun n => ∀ p ∈ n.primeFactors, p ≤ W) with hS
+  have hSsm : ∀ n ∈ S, n ∈ (W + 1).smoothNumbers := by
+    intro n hn
+    rw [hS, mem_filter, mem_Icc] at hn
+    rw [Nat.mem_smoothNumbers']
+    intro p hp hpn
+    have := hn.2 p (Nat.mem_primeFactors.mpr ⟨hp, hpn, by omega⟩)
+    omega
+  have hle : ∑ n ∈ S, f n ≤ ∏ p ∈ (W + 1).primesBelow, (1 - (p : ℝ) ^ (-σ))⁻¹ := by
+    have := sum_le_hasSum (S.subtype (· ∈ (W + 1).smoothNumbers))
+      (fun i _ => by simp only [hf]; positivity) hHas
+    rw [Finset.sum_subtype_of_mem (f := f) hSsm] at this
+    exact this
+  unfold smoothCount
+  rw [← hS]
+  calc (S.card : ℝ) = ∑ n ∈ S, (1 : ℝ) := by simp
+    _ ≤ ∑ n ∈ S, (X : ℝ) ^ σ * f n := by
+      refine sum_le_sum (fun n hn => ?_)
+      rw [hS, mem_filter, mem_Icc] at hn
+      simp only [hf]
+      rw [Real.rpow_neg (by positivity), ← div_eq_mul_inv,
+        le_div_iff₀ (Real.rpow_pos_of_pos (by exact_mod_cast (by omega : 0 < n)) _), one_mul]
+      exact Real.rpow_le_rpow (by positivity) (by exact_mod_cast hn.1.2) hσ.le
+    _ = (X : ℝ) ^ σ * ∑ n ∈ S, f n := by rw [mul_sum]
+    _ ≤ _ := mul_le_mul_of_nonneg_left hle (by positivity)
+
+lemma one_sub_inv_le_exp_tsw {x : ℝ} (h0 : 0 ≤ x) (h1 : x ≤ 3 / 4) : (1 - x)⁻¹ ≤ Real.exp (4 * x) := by
+  rw [inv_le_iff_one_le_mul₀ (by linarith)]
+  have := Real.add_one_le_exp (4 * x)
+  nlinarith
+
+lemma exp_half_le_two_tsw : Real.exp (1 / 2) ≤ 2 := by
+  have h : Real.exp (1 / 2) ^ 2 = Real.exp 1 := by
+    rw [← Real.exp_nat_mul]; norm_num
+  have := Real.exp_one_lt_d9
+  nlinarith [Real.exp_pos (1 / 2)]
+
+lemma euler_prod_le (W : ℕ) (hW : 3 ≤ W) :
+    ∏ p ∈ (W + 1).primesBelow, (1 - (p : ℝ) ^ (-(1 - 1 / (2 * Real.log W))))⁻¹ ≤
+      Real.exp (8 * Erdos67b.PrimeEstimates.primeReciprocals W) := by
+  have hlog3 : 1 < Real.log 3 := by
+    rw [Real.lt_log_iff_exp_lt (by norm_num)]; have := Real.exp_one_lt_d9; linarith
+  have hlW : 1 < Real.log W := lt_of_lt_of_le hlog3
+    (Real.log_le_log (by norm_num) (by exact_mod_cast hW))
+  set η := 1 / (2 * Real.log W) with hη
+  have hη0 : 0 < η := by positivity
+  have hη1 : η ≤ 1 / 2 := by
+    rw [hη, div_le_div_iff₀ (by positivity) (by norm_num)]; linarith
+  have key : ∀ p ∈ (W + 1).primesBelow,
+      (1 - (p : ℝ) ^ (-(1 - η)))⁻¹ ≤ Real.exp (8 * (p : ℝ)⁻¹) := by
+    intro p hp
+    obtain ⟨hpW, hpp⟩ := Nat.mem_primesBelow.mp hp
+    have hp1 : (1 : ℝ) < p := by exact_mod_cast hpp.one_lt
+    have hp0 : (0 : ℝ) < p := by linarith
+    set x := (p : ℝ) ^ (-(1 - η)) with hx
+    have hx0 : 0 ≤ x := by positivity
+    have hxa : x ≤ 2 * (p : ℝ)⁻¹ := by
+      rw [hx, show -(1 - η) = η + (-1) by ring, Real.rpow_add hp0, Real.rpow_neg_one]
+      refine mul_le_mul_of_nonneg_right ?_ (by positivity)
+      rw [Real.rpow_def_of_pos hp0]
+      refine le_trans (Real.exp_le_exp.mpr ?_) exp_half_le_two_tsw
+      have : Real.log p ≤ Real.log W :=
+        Real.log_le_log hp0 (by exact_mod_cast (by omega : p ≤ W))
+      rw [hη, mul_one_div, div_le_iff₀ (by positivity)]
+      linarith
+    have hxb : x ≤ 3 / 4 := by
+      have hsq : x ^ 2 ≤ (p : ℝ) ^ (-1 : ℝ) := by
+        rw [hx, ← Real.rpow_natCast, ← Real.rpow_mul hp0.le]
+        exact Real.rpow_le_rpow_of_exponent_le hp1.le (by push_cast; linarith)
+      have h2 : (p : ℝ) ^ (-1 : ℝ) ≤ 1 / 2 := by
+        rw [Real.rpow_neg_one, ← one_div]
+        exact one_div_le_one_div_of_le (by norm_num) (by exact_mod_cast hpp.two_le)
+      nlinarith
+    refine (one_sub_inv_le_exp_tsw hx0 hxb).trans (Real.exp_le_exp.mpr (by linarith))
+  refine (prod_le_prod (fun p hp => by
+    have hpp := (Nat.mem_primesBelow.mp hp).2
+    have : (p : ℝ) ^ (-(1 - η)) < 1 := rpow_neg_lt_one_tsw hpp (by linarith)
+    exact inv_nonneg.mpr (by linarith)) key).trans ?_
+  rw [← Real.exp_sum, ← mul_sum]
+  apply le_of_eq
+  congr 2
+
 /-- Smooth numbers below `exp √log X` are negligible. -/
 def SmoothCountRankin : Prop :=
   ∀ A : ℝ, 0 < A → ∃ C : ℝ, 0 < C ∧ ∀ X : ℕ, 3 ≤ X →
@@ -284,7 +400,92 @@ def SmoothCountRankin : Prop :=
 the product is at most `exp(C Σ_{p≤W} 1/p) ≤ C′ (log W)^C` by
 `Erdos67b.PrimeEstimates.abs_primeReciprocals_sub_log_log_le`.  Then
 `Ψ ≤ C′ X e^{−log X/log W} (log W)^C`, and `log W ≈ √log X`, so this beats every `(log X)^{−A}`. -/
-theorem smoothCount_rankin : SmoothCountRankin := sorry
+theorem smoothCount_rankin : SmoothCountRankin := by
+  intro A hA
+  set M := Erdos67b.PrimeEstimates.mertensBound
+  set k : ℕ := ⌈2 * A⌉₊ + 8 with hk
+  refine ⟨Real.exp (8 * M) * 2 ^ 8 * (4 ^ k * k.factorial), by positivity, ?_⟩
+  intro X hX
+  have hX0 : (0 : ℝ) < X := by exact_mod_cast (by omega : 0 < X)
+  set L := Real.log X with hL
+  have hL1 : 1 < L := by
+    rw [hL, Real.lt_log_iff_exp_lt hX0]
+    have := Real.exp_one_lt_d9
+    have : (3 : ℝ) ≤ X := by exact_mod_cast hX
+    linarith
+  set t := Real.sqrt L with ht
+  have ht1 : 1 ≤ t := by rw [ht, Real.one_le_sqrt]; linarith
+  have htL : t ^ 2 = L := Real.sq_sqrt (by linarith)
+  set W := ⌈Real.exp t⌉₊ with hW
+  have hWe : Real.exp t ≤ W := Nat.le_ceil _
+  have he2 : (2 : ℝ) < Real.exp t := by
+    have := Real.add_one_lt_exp (show t ≠ 0 by linarith); linarith
+  have hW3 : 3 ≤ W := by
+    have : (2 : ℝ) < W := by linarith
+    exact_mod_cast (show 2 < W by exact_mod_cast this)
+  have hWpos : (0 : ℝ) < W := by linarith
+  have hlogW_ge : t ≤ Real.log W := by
+    rw [Real.le_log_iff_exp_le hWpos]; exact hWe
+  have hlogW_le : Real.log W ≤ 2 * t := by
+    have h1 : (W : ℝ) < Real.exp t + 1 := Nat.ceil_lt_add_one (by positivity)
+    have h2 : Real.exp t + 1 ≤ Real.exp (t + 1) := by
+      rw [Real.exp_add]
+      have := Real.add_one_le_exp (1 : ℝ)
+      have : (1 : ℝ) ≤ Real.exp t := Real.one_le_exp (by linarith)
+      nlinarith
+    have : Real.log W ≤ t + 1 := by
+      rw [Real.log_le_iff_le_exp hWpos]; linarith
+    linarith
+  have hlW0 : 0 < 2 * Real.log W := by linarith
+  -- Rankin
+  set η := 1 / (2 * Real.log W) with hη
+  have hR := rankin_euler X W (σ := 1 - η) (by
+    have : η ≤ 1 / 2 := by
+      rw [hη, div_le_div_iff₀ hlW0 (by norm_num)]; linarith
+    linarith)
+  have hE := euler_prod_le W hW3
+  have hMert := Erdos67b.PrimeEstimates.abs_primeReciprocals_sub_log_log_le (X := W) (by omega)
+  rw [abs_le] at hMert
+  have hll : Real.log (Real.log W) ≤ Real.log (2 * t) :=
+    Real.log_le_log (by linarith) hlogW_le
+  have hexp8 : Real.exp (8 * Erdos67b.PrimeEstimates.primeReciprocals W)
+      ≤ Real.exp (8 * M) * (2 * t) ^ 8 := by
+    calc _ ≤ Real.exp (8 * M + (8 : ℕ) * Real.log (2 * t)) := by
+            apply Real.exp_le_exp.mpr; push_cast; linarith
+      _ = _ := by rw [Real.exp_add, Real.exp_nat_mul, Real.exp_log (by linarith)]
+  have hXs : (X : ℝ) ^ (1 - η) ≤ X * Real.exp (-(t / 4)) := by
+    rw [Real.rpow_sub hX0, Real.rpow_one, div_eq_mul_inv]
+    refine mul_le_mul_of_nonneg_left ?_ hX0.le
+    rw [Real.rpow_def_of_pos hX0, ← Real.exp_neg, Real.exp_le_exp, neg_le_neg_iff, ← hL]
+    rw [hη, mul_one_div, le_div_iff₀ hlW0, ← htL]
+    nlinarith
+  have hS : (smoothCount X W : ℝ) ≤ X * Real.exp (-(t / 4)) * (Real.exp (8 * M) * (2 * t) ^ 8) :=
+    hR.trans ((mul_le_mul_of_nonneg_left (hE.trans hexp8) (by positivity)).trans
+      (mul_le_mul_of_nonneg_right hXs (by positivity)))
+  -- L^A ≤ t^(k-8)
+  have hLA : L ^ A ≤ t ^ (k - 8) := by
+    rw [← htL, ← Real.rpow_natCast, ← Real.rpow_natCast, ← Real.rpow_mul (by linarith)]
+    refine Real.rpow_le_rpow_of_exponent_le ht1 ?_
+    rw [hk, Nat.add_sub_cancel]; push_cast
+    have := Nat.le_ceil (2 * A); linarith
+  -- t^k e^{-t/4} ≤ 4^k k!
+  have hpk : t ^ k * Real.exp (-(t / 4)) ≤ 4 ^ k * k.factorial := by
+    have h := Real.pow_div_factorial_le_exp (x := t / 4) (by linarith) k
+    rw [div_pow, div_div, div_le_iff₀ (by positivity)] at h
+    rw [Real.exp_neg, ← div_eq_mul_inv, div_le_iff₀ (Real.exp_pos _)]
+    nlinarith [Real.exp_pos (t / 4)]
+  have hLpos : 0 < L ^ A := Real.rpow_pos_of_pos (by linarith) _
+  rw [le_div_iff₀ hLpos]
+  have htk : t ^ (k - 8) * t ^ 8 = t ^ k := by
+    rw [← pow_add]; congr 1
+  calc (smoothCount X W : ℝ) * L ^ A
+      ≤ (X * Real.exp (-(t / 4)) * (Real.exp (8 * M) * (2 * t) ^ 8)) * t ^ (k - 8) :=
+        mul_le_mul hS hLA hLpos.le (by positivity)
+    _ = X * Real.exp (8 * M) * 2 ^ 8 * (t ^ k * Real.exp (-(t / 4))) := by
+        rw [← htk]; ring
+    _ ≤ X * Real.exp (8 * M) * 2 ^ 8 * (4 ^ k * k.factorial) :=
+        mul_le_mul_of_nonneg_left hpk (by positivity)
+    _ = _ := by ring
 
 /-- `TwistedSiegelWalfisz` with the constant uniform in the unit `z`. -/
 def UniformZTSW : Prop :=
