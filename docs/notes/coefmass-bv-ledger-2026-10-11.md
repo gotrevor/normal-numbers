@@ -818,6 +818,10 @@ elementary ℋ bound.  Believed ~75%, conditional on II.5.2's M-linearity being 
    - `(√2+2)/16 + 2(406/u² + 4/u) < 1`, for the CRT exponent, with `Q_TV = N^{o(1)}`.
    A raw finite (5.3′) theorem underneath would aid audit; the producer consumes only the
    `C e^{−u} + ε` corollary.
+   - **Computed (Opus):** the CRT exponent is 1.256 at u = 32, so "32 suffices" would have been
+     FALSE.  The smallest integer that works is u = 38 (0.986); u = 40 gives 0.921.
+   - Take `u₀ = 40` for margin.  On the schedule `u = ⌈ρ⁻²⌉ ≥ 40` once `φ(q) ≥ 5`, which q₁
+     absorbs.
 5. **Hypothesis completeness.**  Astra's "name the model energy separately" was already met by
    `RieszEnergyTail` (56adf079, crossed in transit).  The remaining items stay ordinary supporting
    lemmas with accurate status: integer M4, coefficient ledger, strict BV exponent slack,
