@@ -357,3 +357,43 @@ Open within repair 2 at submission: none that I saw.  Referee targets:
 
 Referee target: that cutting the fresh site and keeping the frozen window at `J₁` is consistent
 with C′'s hypotheses.  Here `k ≤ L` means the target site is always in the retained window.
+
+## Item 4 (draft for referee): stay in ω; the Ω form is used only inside BV
+
+The frozen objects (`omegaLe`, `omegaGt`) are ω-valued, and ω is radical-state measurable.  Ω is
+not (Astra 160352Z).  So keep ω everywhere, and touch Ω only where `MultBVResidue` is consumed.
+
+- **Main term (replaces the Ω gcd split of repair 1).**  `F = z^{ω_P}` and `F_y = z^{ω_{P,≤y_k}}`
+  are multiplicative, and they agree on every prime power `p^ν` with `p ≤ y_k`.
+  - For squarefree Q and `g | Q`: `gcd(m, Q) = g` ⟺ `m = a m″`, with `rad(a) = g`
+    (a = the g-part of m, all exponents ≥ 1) and `gcd(m″, Q) = 1`.
+  - Then, coprimally, `f(m) = F(a) F(m″) − F_y(a) F_y(m″) = z_k^{ω(g)} f(m″)`, using
+    `F(a) = F_y(a) = z_k^{ω_P(g)}`.  It is exact, and τ is supported above 2J.
+  - So `Σ_{gcd(m,Q)=g} f τ = z_k^{ω(g)} Σ_{rad(a)=g} Σ_{m″ ∈ (k/a, (N+k)/a], (m″,Q)=1} f(m″) τ(m″)`.
+    The a-sum converges: `Σ_{rad(a)=g} 1/a = ∏_{p|g} 1/(p−1)`.  Truncate at `a ≤ A₀` with tail
+    `≪ N Σ_{a>A₀, rad(a)|Q} 1/a`, which is → 0 in `A₀` uniformly for Q polylog: count
+    `≤ (log A₀)^{ω(Q)}` per dyadic block.  ⚠️ Check this uniformity; ω(Q) grows like `J/log J`.
+  - The faithful SD target is therefore stated for `z^{ω_P}·τ·1[(·,Q)=1]`, not Ω.
+- **Type I (E2) BV in ω form.**  `z^{ω_P} = z^{Ω_P} ∗ h_z`, where `h_z` is multiplicative and
+  supported on squarefull b.
+  - Locally `h_z(p^ν)` is the `X^ν`-coefficient of `(1 − (1−z)X)(1 − zX)/(1 − X)` for `p ∈ P`, and
+    `h = δ_1` off P.  So `|h_z(p^ν)| ≤ 2` and `Σ_b |h_z(b)|/b < ∞`.
+  - For a coprime residue c mod e: `ab ≡ c` with `p | b` and `p | e` would force `p | c`, so only
+    `(b, e) = 1` terms occur.  Each is a coprime progression for a at length `x/b`.
+  - Apply `MultBVResidue` (uniform in x) for `b ≤ B₀`.  The tail `b > B₀` is trivial,
+    `≪ x Σ_{b>B₀} |h(b)|/b ≪ x B₀^{−1/2+ε}`.
+  - The same applies to `F_y` with `Ω_{≤y}`.  This is a derived lemma
+    (`multBVResidueOmega_of : MultBVResidue → MultBVResidueOmega`, believed about 90%), and the
+    10-01 doc's "routine".
+- **Q-block non-coprime classes (E2b) in ω form.**  Classes with `gcd(c+k, e) = g` use the same
+  `m = a m″` decomposition.  The residue of m″ mod `e/g` is `(c+k)/g · (a/g)^{−1}`, which is a unit.
+  Coprimality of m″ to g's primes is a union of `φ(g)` coprime classes mod g, so the modulus is e.
+- **What changed from repair 1:**
+  - no complete multiplicativity is assumed anywhere;
+  - `F(g)` becomes `z^{ω(g)}`, which agrees with Astra's `F(g)` in the Ω form since g is
+    squarefree;
+  - the a-sum is new.
+
+Referee targets: (i) the `rad(a) = g` decomposition and its `A₀`-tail uniformity as ω(Q) grows;
+(ii) the `h_z` local factor and its sup bound; (iii) that MultBVResidue's uniformity in x covers
+the lengths `x/b`, `b ≤ B₀`.
