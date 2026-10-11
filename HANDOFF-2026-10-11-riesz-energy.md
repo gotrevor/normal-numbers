@@ -34,4 +34,26 @@ orthogonal sum `Σ_T (1−w_T)² ∏|μ|² ∏V` to all printed digits:
 
 ## Status
 
-Lap log goes here.
+### 2026-10-11 grind lap 1
+
+Concrete advance in `CoefmassRieszEnergy.lean`:
+- proved `one_sub_rieszWeight_sq_le`, completing proof-plan step 5 (the scalar cutoff loss);
+- proved `psiP_mod`, completing step 2 (local periodicity);
+- proved the local facts `norm_psiP` and `periodMean_psiP_sub_muP`, which supply the
+  unimodularity and centered-mean-zero inputs needed by step 3.
+
+Exact verification:
+`~/personal/bin/lean-green ~/src/nn-coefmass-riesz-energy --target NormalNumbers.CoefmassRieszEnergy`
+ended `FORMALIZE-TIER GREEN`; the only warning in the target file is the original
+`rieszEnergyTail` sorry.
+
+Current blocker: proof-plan step 1, a reusable finite CRT product-average identity.  This should
+be stated for a finite set of pairwise coprime positive moduli and residue-dependent complex
+functions; the prime hypothesis then supplies pairwise coprimality.  Once this is in place,
+orthogonality and the diagonal second moment become finite-product calculations.
+
+Next highest-value attack: prove the CRT identity via the equivalence
+`ZMod (∏ p ∈ P, p) ≃+* ∀ p : ↑P, ZMod p`, transporting the `Fintype` sum (or, if the
+available equivalence API is awkward, induct on `P` using the two-modulus Chinese remainder
+bijection).  Then immediately derive the centered cross-term vanishing lemma for two distinct
+subsets of `P`.
