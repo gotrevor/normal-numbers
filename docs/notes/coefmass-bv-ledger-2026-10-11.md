@@ -1,6 +1,7 @@
 # Coefmass route to `SiteFactorization`: the BV / main-term / character ledger
 
 Opus (Ren), 2026-10-11, attended.  Paper draft for Astra's referee, **not refereed, not in Lean**.
+Amended after Astra `20261011T130704Z-astra-…`: separate Prop, fresh L² norm, J₁, schedule constants.
 It replaces Mechanism step 1 of `docs/CPRIME-SITE-FACTORIZATION-2026-10-01.md`: the
 fundamental-lemma sieve, whose `(2J)^{ω(e)}` multiplicity was the wall.  The replacement is the
 Riesz-truncated centered expansion of `coefmass-2026-10-10.md`.  Its model M4 gate is closed on
@@ -27,7 +28,9 @@ paper; see that note, "Finite-y proof of uniform M4 for the Riesz cutoff".
 
 `|E1| ≤ ‖f_k‖_{2,int} · ‖Φ^{≠k} − P‖_{2,int}`.
 
-- `‖f_k‖₂ ≤ C|w_k|·(δ log s_k)^{1/2}`, from `|f| ≤ min(2, |w_k| Ω_{P,(y_k,N]})`.
+- `‖f_k‖₂ ≤ C(|w_k| δ log s_k)^{1/2}`, from `|z^ω − 1|² ≤ 2|w_k| ω_fresh` (Astra).  It is NOT
+  `|w_k|(δ log s_k)^{1/2}`, which holds only when `|w_k| ω` is small.  Keep this second `√δ`:
+  do not pay the residual with `|f| ≤ 2`.
 - The second factor squared is at most:
   - the model energy above the Riesz cutoff, `≤ k_R·C δ/(u²θ)`;
   - plus `O(1/M + M ε)` from the clipped TV test, with `ε ≍ e^{−u}` (Astra's §8 schedule,
@@ -36,13 +39,20 @@ paper; see that note, "Finite-y proof of uniform M4 for the Riesz cutoff".
   - plus the CRT remainder of `M4_int − M4_mod`, which is `o(1)` for θ < 1/4.
 - With `M4 ≤ C(h)` (Riesz bound (R)) and M optimized:
   `‖Φ^{≠k} − P‖₂ ≤ C(h)[(k_R δ)^{1/2}/(u θ^{1/2}) + e^{−u/4}]`.
-- Summed over k with `Σ_k |w_k| (log s_k)^{1/2} ≤ C_h (log u)^{1/2}`:
+- Summed over k with `Σ_k |w_k|^{1/2}(2 log u + k log 2)^{1/2} ≤ C L_h (log u + L_h)^{1/2}`,
+  where `L_h = 1 + log(1+|h|)`:
 
-      Σ_k |E1_k| ≤ C_h [ δ (log u)^{1/2}/u + δ^{1/2} (log u)^{1/2} e^{−u/4} ].
+      Σ_k |E1_k| ≤ C δ k_R^{1/2} L_h (log u + L_h)^{1/2}/u  +  C δ^{1/2} L_h (log u + L_h)^{1/2} B_h^{1/4} e^{−u/4}.
 
-- ⚠️ **This is weaker than the frozen statement's `C_h(e^{−u/2} + δ/√u)`.**  The `e^{−u/4}`
-  comes from the square root in the clipped-TV transfer.  Proposed fix: restate
-  `SiteFactorization` with `C_h(e^{−u/8} + δ/√u)`.
+  On the ET schedule (`u = ⌈ρ^{−2}⌉`, h ≤ H) the first term is `O(ρ³ log²(1/ρ))`, which is below ρ².
+
+- ⚠️ **This does not prove the frozen `SiteFactorization` Prop.**  `e^{−u/4}` comes from the square
+  root in the clipped-TV transfer: the squared residual is `Ckδ/u² + C B_h^{1/2} e^{−u/2}`.
+  - **Do not weaken the frozen Prop under its old name (Astra).**  State a separate scheduled
+    consumer with its real quantifiers, `SiteFactorizationScheduled`.  Alternatively, finish the
+    all-(h,u) bookkeeping by splitting `u ≫ L_h log(2+L_h)` (factorial absorbed) from its
+    complement (fresh-mass triangle bound at a larger polylog power).  That split needs a
+    larger sieve-accuracy parameter; check its product-support budget.
   - The ET chain only needs some `e^{−cu} ≤ Cρ²` at `u = ρ^{−2}`, so it is unaffected.
   - The first term is ≤ δ/√u for large u.
   - Uniformity in q holds, because the `e^{−u/4}` term carries `δ^{1/2} ≤ 1` and needs no δ.
@@ -141,25 +151,24 @@ relative precision `(log N)^{−A}`, which SD does not give.  This rearrangement
 | TV ε | §8 schedule | yes (Astra) |
 | CRT remainders | `(QD)⁴ < N^{1−ε}` | yes |
 | BV saving A | free | yes |
-| deep sites | J₁ ≈ L3 N if C′'s `y_J ≥ 2J` is needed elsewhere | unchanged |
+| deep sites | **J₁ ≈ L3 N required**: at J ≈ log₂log₂N, `y_J < 2J` violates the full-state TV hypotheses.  The truncated phase tail costs `4^{−J₁} δ log log N → 0` | yes, after truncation |
+| exceptional characters | inside `MultBVResidue` (E3).  At `(e,q₀) = 1` no Siegel modulus divides e, but TSW's ineffective constant is inherited | yes |
 
 ## What this does and does not claim
 
-- **Claims (draft, about 55%):** `SiteFactorization` with a **two-constant error**,
+- **Claims (draft, about 55%):** `SiteFactorizationScheduled`, a NEW Prop; the frozen
+  `SiteFactorization` stays unchanged.  For `u = ⌈ρ^{−2}⌉` and all h ≤ H = ⌈ρ^{−2}⌉,
 
-      limsup_N |T1' − W_y G_h(u)| ≤ C₁(h)·δ/√u + C₂(h)·e^{−u/8},
-      C₁(h) ≤ C(1 + log|h|)^m,   C₂(h) ≤ exp(C log²(2 + |h|)),
+      limsup_N |T1' − W_y G_h(u)| ≤ C (ρ² + e^{−u/8}),   with C absolute (independent of q, h).
 
-  follows from `MultBVResidue` (hence GS Cor 7.1 + BV + TSW), `SelbergDelangeTilted`, C′ (5.3)
-  on the §8 schedule, and the Riesz M4 bound.  It is uniform in q, u and J.
-  - The M4 constant (`e^{O(A)}` with `A ≍ log|h|`, times the `k_R!` factor of (R)) only multiplies
-    `e^{−u/4}`, so it lives in C₂.
-  - Only `k_R^{1/2} ≍ (log|h|)^{1/2}` reaches C₁, through the energy term, and that is polylog.
-  - **ET check:** Erdős–Turán uses `h ≤ H = ρ^{−2} ≍ u`.  So
-    `Σ_{h≤H} C₂(h) e^{−u/8}/h ≤ exp(C log² u − u/8) log u → 0`, and the C₁ part is the existing
-    `Cρ² log⁵(1/ρ)` computation.
-  - The frozen Lean form `C(1 + log|h|)^m (e^{−u/2} + δ/√u)` must be restated in this two-constant
-    form.
+  It follows from `MultBVResidue` (GS Cor 7.1 + BV + TSW), `SelbergDelangeTilted`, C′ (5.3) on
+  the §8 schedule with deep-site truncation J₁, and the Riesz M4 bound.
+  - **Constants (Astra's check).**  On the schedule, `A, W = O(log u)` and
+    `k_R = ⌈9A/2⌉ + 1 = O(log u)`.  So `log B_h ≤ C(1 + log u) log(2 + log u) = o(u)`, uniformly
+    over the whole ET sum, and `B_h^{1/4} e^{−u/4} ≤ e^{−u/8}` eventually.
+  - The q-dependent N threshold is maximized over the finitely many h ≤ H.
+  - This is exactly what `CPrimeResidueQuad`'s chain consumes.  The all-(h,u) frozen Prop remains
+    a separate gate (split above).
 - **Does not claim:** `PairSecondOrder` (separate, about 75%); anything about G₄; or a Lean
   proof.
 - **Owed before trunk:** Astra's referee of E1–E5; the `C_h` growth check above; Lean
