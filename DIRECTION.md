@@ -5,6 +5,38 @@
 **This is the directive for branch `proof/uniformbad-threshold`.**  The `proof/cantor-bad-normal` section below
 belongs to that branch (its route is parked at the middle-digit obstruction); do not work it here.
 
+- **Operator gate 6 (Ren for Trevor, 2026-10-11 ~05:50Z) - fallback (a): fold small tail bases into the shared-phase core.**
+  Trevor approved (a) after the gate-5 counting screen died at a certified 1.391 (`042f054d`) and the lever probe killed too (L2 mass charging 1.2552, `205bf604`; L1 needs a provable
+  K <= 7/5 at lags >= 2 and is NOT pursued in this run).
+  *Objective:* `cStar_le_449` (frozen headline, unchanged) by a second route: a joint core over `{2,3} ∪ F`, with `F` a
+  subset of `{5,6,7}`, plus the weighted tail over the remaining bases.  The gate-5 frozen statements
+  (`tailChargeBudget449`, `tailBudgetSuffices449`) stay untouched; this route adds NEW statements beside them.
+  *Design numbers (Ren, steering session, refined screen with the CURRENT {2,3} core's K and f, all lower bounds, so
+  these are targets, not closes):* the remaining tail reaches screen gap ~0.9 at core growth g ≈ 1.79 for `F = {5}`,
+  ≈ 1.75 for `{5,6}`, ≈ 1.715 for `{5,6,7}` (gap 0.18 / 0.25 / 0.35 / 0.50 / 0.73 at g = 1.80 / 1.78 / 1.76 / 1.74 / 1.72
+  for `{5,6,7}`).  Reproduce: monkeypatch `tail5_refined.G = g**6` and exclude `F` from `bases`.
+  Order:
+  (1) **Measurement first (screen, no Lean).**  A copy of the gate-4 shared-phase scripts with the bases in `F` tracked
+  exactly in the core state (coarse phases are fine for the SCREEN).  Report the per-level growth for each `F`, the state
+  count, and time per level.  Controls first: `F = ∅` reproduces the gate-4 core (growth ≥ 9/5 at 4.49); `F` with zero
+  radii reproduces it too; deleting every positive child kills the tree.  A sampled growth is an UPPER bound on what a
+  certificate can show: if it is below the `F`'s target, `F` is dead.
+  (2) **Pick `F`:** the cheapest `F` (state count) whose sampled growth clears its target by ≥ 0.02.  Recompute the tail
+  screen with THIS core's own K (layer-cake) and f (run sums), not the {2,3} core's.  That recomputed gap is the real number.
+  (3) **Kill:** no `F` clears its target in (1), or the recomputed tail gap in (2) exceeds 1 for every `F`.  Then state
+  the obstruction in Lean (finite model, exact tolerance; a screen failure, NOT `¬` of any frozen Prop), add a Maze row,
+  write ON-LINE-REQUEST.md, self-stop.
+  (4) **On a pass:** state the new route in `src/NormalNumbers/UniformBadFold.lean`: `CoherentCore449F` (joint core
+  growth ≥ g at 4.49, mirroring `NextReview.CoherentTwoThree449` with `F` added), `TailChargeBudget449F` (the weighted
+  tail over bases ∉ {2,3} ∪ F, mirroring `TailReview.TailChargeBudget449`), and the wiring `tailBudgetSuffices449F`
+  to `cStar ≤ 449/100`.  Ask Codex (agent-mail `nn-cstar`) for a semantic review of the three statements BEFORE proving.
+  Then the wiring (independent), then the exact certificate under the gate-4 checker lessons (Codex lap-1/2/tail reviews
+  below: C-dependent binary model, outward enclosures, witness export + rational read-only checker, no B&B re-search under
+  `native_decide`, real entry state).
+  *Forbidden:* restating or weakening any gate-4/5 frozen Prop; a finite base cutoff presented as the statement; sampled
+  maxima as certificates; retuning gate-4 weights without re-proving the core.
+  *Why:* the tail misses only in bases 5-7's long-window edges; moving them into the exact core trades tail charge for
+  core state, and the true loss sits ~140× under budget in totals, so the joint core should keep growth near 9/5.
 - **Operator lever probe (Ren for Trevor, 2026-10-11 ~04:15Z): ONE script-only probe of the remaining 1.39×, then stop.**
   Supersedes the relaunch block below for this run (that run's kill fired, `042f054d`).  Scripts and a Lean kill/close
   record only; no new Lean proof work.
