@@ -53,3 +53,5 @@ analytic input is the hypothesis `Literature.PrimeCharacterSW`.  Statements unto
 - `uniformZTSW_of_primeSW`: `exists_prod_char` (changeLevel product, CRT nonprincipality),
   `residue_expand` (orthogonality), `twistedPrime_interval`; small `x` (`log x < max q₀ 4`) absorbed in `C`.
 Open follow-up (not this run): pin a textbook theorem number for `PrimeCharacterSW`.
+
+Branch `wip/tsw-direct`, HEAD `3237c821` (before this note).  Next: none in scope; optional follow-up is the `PrimeCharacterSW` citation pin.
