@@ -437,6 +437,7 @@ import NormalNumbers.PrimeModelBrunCountGraded
 import NormalNumbers.PrimeModelErrorBudget
 import NormalNumbers.PrimeModelLowerTransfer
 import NormalNumbers.PrimeModelPhaseAlgebra
+import NormalNumbers.CoefmassRieszEnergy
 import NormalNumbers.PrimeModelSiteIndexBound
 import NormalNumbers.PrimeModelPhaseAlgebraGraded
 import NormalNumbers.PrimeModelPhaseFactor
