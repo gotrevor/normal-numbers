@@ -18,6 +18,10 @@ the trivial character-sum bound, and for large y the y-truncation is a finite-sh
 against primes beyond y, which SW controls.  The 10-01 obstruction (`Σ_{p≤y} p^{−σ}` blowing up
 on the contour) never arises, because no contour is moved after the truncation.
 
+**Referee (Astra `223436Z`, on 43cf7e46):** the two-regime reduction to SW + TSW∞ is ACCEPTED on paper
+with three bookkeeping repairs, applied below (edge cases, the `j ≥ 2` weight, empty intervals).
+That verdict does not cover TSW∞ or its source.
+
 **Confidence:** about 75% that the argument below is complete as written; the identities are
 exact-checked (below).  TSW∞ itself reduces to SW + Granville–Koukoulopoulos Thm 1 (see "Inputs"),
 so the whole of TSW rests on SW and GK.
@@ -26,7 +30,11 @@ so the whole of TSW rests on SW and GK.
 
 `P = {p prime : p ≡ a (q₀)}`, `g_y(n) = z^{Ω_{P,≤y}(n)}` (the Lean `omegaMultLe`, multiplicity
 counted), `S = S(x, y) = Σ_{n≤x} g_y(n) χ(n)`, `L = log x`, `K = K(A, B)` a large constant fixed
-below.  The two regimes are complementary:
+below.
+
+**Edge cases first** (repair 1, Astra `223436Z`): if `y ≤ 1` then `g_y = 1` and `|S| ≤ r`; if
+`y ≥ x` then `g_y = G` on `[1, x]` and `S` is the cutoff-free sum, i.e. TSW∞ itself.  From here
+on `1 < y < x`, and the two regimes are complementary:
 
 - **small:** `log y ≤ L/(K log L)`;
 - **large:** `log y > L/(K log L)`.
@@ -56,7 +64,8 @@ factors lie in `P ∩ (y, ∞)`) and `k(p^j) = 1 − z`, i.e. `k(d) = (1 − z)^
 
     S = Σ_{d ∈ D_y} k(d) χ(d) T(x/d),   T(X) = Σ_{m≤X} G(m) χ(m).
 
-Every `d ∈ D_y ∩ [1, x]` has `ω(d) ≤ L/log y < K log L`, and
+Every `d ∈ D_y ∩ [1, x]` has `ω(d) ≤ L/log y < K log L`, so `|k(d)| ≤ 2^{ω(d)} ≤ L^{K log 2}`, and
+(for `2 ≤ y < x`; this is where the cap `y < x` matters, since `d = 1` is always on the left)
 
     Σ_{d ∈ D_y, d≤x} 2^{ω(d)}/d ≤ Π_{y<p≤x} (1 + 2/(p − 1)) ≤ C (L/log y)² ≤ C (K log L)².   (★)
 
@@ -73,11 +82,15 @@ take `A₁ = 2A + 2`.
 **Lemma (K).**  For `x/Z ≤ X ≤ x`: `|K_y(X)| ≤ 1 + C X (log L)^{A₃+2} L^{−A₃}`.
 
 *Proof.*  Split `d > 1` by its largest prime `p` and that prime's exponent `j`.
-- `j ≥ 2`: at most `2 Σ_{p>y} Σ_{j≥2} X/p^j ≤ 4X/y`, and `y > exp(L/(K log L))` beats any power of L.
+- `j ≥ 2` (repair 2): bound the whole coefficient, not just the local factor.  These `d` are
+  divisible by `p²` for some `p > y`; there are at most `X Σ_{p>y} p^{−2} ≤ C X/y` of them, each
+  with `|k(d)| ≤ L^{K log 2}`.  The contribution is `≤ C X L^{K log 2}/y`, and
+  `y > exp(L/(K log L))` beats any power of L.
 - `j = 1`: `d = d′p` with `P⁺(d′) < p`, and the sum is
   `(1 − z) Σ_{d′} k(d′) χ(d′) Σ_{p ∈ P, U₁ < p ≤ U₂} χ(p)` with `U₁ = max(y, P⁺(d′))`,
-  `U₂ = X/d′`.  Expand `1_P` by characters ψ mod q₀: `χψ` is a nonprincipal character mod `r q₀`
-  because `χ ≠ 1` and `(r, q₀) = 1`.  Both endpoints are `≥ y`, so `log u ≥ L/(K log L) ≥ √L`
+  `U₂ = X/d′`.  Discard every `d′` with `U₂ ≤ U₁` (empty interval; repair 3), so the remaining
+  intervals have both endpoints `≥ y`.  Expand `1_P` by characters ψ mod q₀: `χψ` is a nonprincipal character mod `r q₀`
+  because `χ ≠ 1` and `(r, q₀) = 1` (imprimitive characters included).  Both endpoints are `≥ y`, so `log u ≥ L/(K log L) ≥ √L`
   and `r q₀ ≤ q₀ L^B ≤ (log u)^{2B+1}`: SW applies at each endpoint, and the prime sum is
   `≤ 2C (X/d′)(log y)^{−A₃} ≤ 2C (X/d′)(K log L / L)^{A₃}`.  Sum over `d′` with (★).  ∎
 
