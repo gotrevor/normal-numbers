@@ -1580,7 +1580,12 @@ def register : List Hall := [
    "Bound the integers with 0/1 digits in bases 3, 4, 5 (or just 4, 5) by the random-model exponent sum log 2/log 3 + log 2/log 4 + log 2/log 5 - 2 < 0",
    .refuted, .kernel,
    "A3 cap A9 has negative exponent (-0.054) yet is all of A9, infinite: counting must use multiplicative independence. Using it (Shmerkin-Wu) is Burrell-Yu's O(n^eps) for bases 4, 5, which never touches base 3. The pair (4, 5) alone already carries the conjecture (only A263684's nine numbers below 4^8339). The converse pair (3, 4) is supercritical and its infinitude is open; the construction 4^k + r stalls on the middle base-3 digits of 4^k. REOPEN IF: a mechanism beating n^eps that uses all three bases, or controls middle digits of 4^k in base 3",
-   "ZeroOneBases.lean: threeNine_infinite, Literature.BurrellYuFourFive, ZeroOneFourFive, ZeroOneThreeFourInfinite", "2026-10-09"⟩
+   "ZeroOneBases.lean: threeNine_infinite, Literature.BurrellYuFourFive, ZeroOneFourFive, ZeroOneThreeFourInfinite", "2026-10-09"⟩,
+  ⟨"82000 via the base-3 slope coordinate",
+   "Use base 3 (which the (4, 5) pair conjecture discards) through the length orbit L -> (L log3 4, L log5 4) mod 1: a solution of length L needs the orbit in a target of area ~0.545^d at depth d, so equidistribution in T^2 plus a shrinking-target count would cap solutions",
+   .wall, .kernel,
+   "Equidistribution needs 1, log3 4, log5 4 independent over Q, and a relation p + q log3 4 + r log5 4 = 0 is a homogeneous quadratic form in logs (p log3 log5 + q log4 log5 + r log3 log4), out of Baker's reach; with r != 0 it is exactly a four-exponentials configuration (x = (1, r log5 4), y = (log 3, log 5), all four exponentials rational), so the premise is conditional on an open conjecture. Even granted, equidistribution says nothing about exponentially shrinking targets. Base 3 buys robustness (decay 0.558 vs 0.889 per digit), not a proof step. REOPEN IF: a proof of this four-exponentials instance, or a base-3 mechanism that is not about the length orbit",
+   "ZeroOneBasesSlopes.lean: fourExponentials_jointSlopeIndependence, FourExponentialsConjecture; ZeroOneBases.lean: JointSlopeIndependence", "2026-10-10"⟩
 ]
 
 /-- Rows whose verdict is machine-checked in this build. -/
