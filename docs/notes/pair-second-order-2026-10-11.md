@@ -97,8 +97,12 @@ def BrunTitchmarshAP : Prop :=
     (((Finset.Iic ⌊x⌋₊).filter (fun p => p.Prime ∧ p % k = l % k)).card : ℝ)
       ≤ C * x / ((Nat.totient k : ℝ) * Real.log (x / k))
 
-/-- Upper-bound sieve for two linear forms (Halberstam–Richert, dimension 2; theorem number not
-re-opened), uniform in the coefficients through `(E/φ(E))²`, `E = a₁a₂(a₁b₂ − a₂b₁) ≠ 0`. -/
+/-- Upper-bound sieve for two linear forms, in the shape of Halberstam–Richert, *Sieve Methods*
+(1974), Thm 5.7 with g = 2.  It is quoted in the open-access arXiv:2308.01152 (Luca, Maynard,
+Noubissie, Ouaknine, Worrell), p. 8.  The bound is the singular series times `x/log²x` times
+`1 + O((log log 3x + log log 3|E|)/log x)`, with `E = a₁a₂(a₁b₂ − a₂b₁) ≠ 0`.  Here the singular
+series is weakened to `C (E/φ(E))²` (local factor ≤ `(1−1/p)^{−2}` at `p | E`, `1 + O(p^{−2})`
+elsewhere), and the constant to an absolute C. -/
 def UpperSieveTwoLinearForms : Prop :=
   ∃ C : ℝ, 0 < C ∧ ∀ a₁ a₂ : ℕ, ∀ b₁ b₂ : ℤ, 0 < a₁ → 0 < a₂ →
     (a₁ : ℤ) * a₂ * (a₁ * b₂ - a₂ * b₁) ≠ 0 → ∀ X : ℕ, 3 ≤ X →
@@ -107,6 +111,8 @@ def UpperSieveTwoLinearForms : Prop :=
         ≤ C * (((a₁ * a₂ * (a₁ * b₂ - a₂ * b₁) : ℤ).natAbs : ℝ)
                 / Nat.totient (a₁ * a₂ * (a₁ * b₂ - a₂ * b₁) : ℤ).natAbs) ^ 2
             * X / Real.log X ^ 2
+            * (1 + Real.log (Real.log (3 * ((a₁ * a₂ * (a₁ * b₂ - a₂ * b₁) : ℤ).natAbs : ℝ)))
+                    / Real.log X)
 
 /-- **Second order on the Erdős–Turán schedule.**  A SEPARATE statement: the frozen all-`u`
 `PairSecondOrder` is unchanged. -/
@@ -279,3 +285,13 @@ symmetric blocks are handled the same way.
   conditional on `UpperSieveTwoLinearForms`, whose source theorem is not yet checked.
 - Believed ~75%, conditional on that input.
 - The frozen all-u `PairSecondOrder` stays separate (~60%).
+
+**Sieve input source (Opus, after 172250Z).**
+- `UpperSieveTwoLinearForms` is restated in the Halberstam–Richert Thm 5.7 shape: the extra factor
+  is `1 + log log(3|E|)/log X`.  Its `log log 3x` term is absorbed in C.
+- Source: HR74 Thm 5.7 as quoted (open access) in arXiv:2308.01152, p. 8, eq. (6) and following.
+  That paper also notes the `E/φ(E)` weakening of the singular series.
+- **In our use** `E = q³MM′D` with `M, M′ ≤ N`, so `log log 3|E| ≤ log log N + O(1)`.  Also
+  `X = T ≥ N^{γ}/q`, so the factor is `1 + o(1)`.
+- The book itself is unchecked.  Bordignon–Lee (arXiv:2211.11012) make HR Thm 5.3 explicit, but
+  with an F-dependent constant, which is not the coefficient-uniform form needed here.
