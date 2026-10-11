@@ -255,3 +255,53 @@ with tilt `τ_p` above 2J and `0` at the primes of `Q/g`.
   Here `b = 1/2`, and `C_p(hit) = 1` (other site not hit).  The target phase is −1 on hit, 1 on
   nonhit, so `E[ψ_target·C] = (1/5)(−1)(1) + (4/5)(1)(1/2) = 1/5` ✓.
 - The `h = 1` ET-phase case (site j=1 phase i, target k=2, p=5): `C_p(nonhit) = (3+i)/4`.
+
+## Repair 2 (draft for referee): (5.3) on the target-augmented state
+
+Source: `papers/ROUND2-multicutoff-astra.md` §3–5, with the §8 schedule
+`y_j = N^{u^{−2}2^{−j}}` and `T_j = N^{2^{−j/2}/16}`.
+
+**Augmented labels.**  Fix the target site k.  For `2J < p ≤ y_head`, put `I′_p = I_p ∪ {k}`
+and `d′_p = |I′_p| ≤ d_p + 1`.
+- For `p ≤ y_k`, k is already in `I_p`, so `I′_p = I_p`.  It is the same target residue, not a copy.
+- Above `y_head`, `I′_p = I_p`, which is empty.
+
+Model μ′: independently over p, label `j ∈ I′_p` with probability `1/p`, `none` with `1 − d′_p/p`.
+Forgetting the k-label above `y_k` (k ↦ none) maps μ′ to μ.  So any function of the original
+state has the same law under μ and μ′.  In particular P, `Φ^{≠k}` and the Riesz M4 bound are
+unchanged.
+
+**Every §3–5 step with `d′_p` for `d_p`:**
+- **Atoms (3.4), CRT (5.1):** these use only `d′_p < p` (true: `d′_p ≤ J + 1 < 2J < p`) and the
+  `d′_p` admissible residues.  So `|error| ≤ ∏_{p∈E} d′_p`, and the total is `≤ R′²`.
+- **Box (3.2), (3.3):** add one radical coordinate `D′_k` = the product of the primes labelled k in
+  `(y_k, y_head]`, with `T′ = N^{1/16}`.
+  - Its one-site moment bound uses `y_head`: `E D′_k^{1/(2 log y_head)} ≤ e^{20}`.
+  - Since `log y_head = log N/(2u²)`, the new tail is `e^{20} exp(−(log N/16)/(2 log y_head))`,
+    which is `e^{20} e^{−u²/16}`.
+  - Box count: `Σ_j log T_j/log N + 1/16 = (√2+1)/16 + 1/16 = (√2+2)/16 < 1/4`.
+- **Split sieve (§4):** bands above `y_k` get `d′_b = d_b + 1`, and `r = 64d′_b + 2u_b + 2l + 4`
+  keeps (4.1)–(4.5) verbatim (`λ ≤ 8d′`, `g_p = d′/p < 1/2`).
+  - Support (4.6) grows by at most `128 Σ_b log Y_b ≤ 128 Σ_j log y_j ≤ 128 log N/u²`.
+  - So `R′ ≤ R · N^{128/u²}`, which is negligible for u past a fixed threshold.
+- **Conclusion (5.3′).**  For every complex `|F| ≤ 1` on the augmented state `(r mod Q, p ↦ I′_p-label)`:
+
+      |E_ν′ F − E_μ′ F| ≤ 2e^{20}[Σ_j e^{−log T_j/(2 log y_j)} + e^{−u²/16}] + 4e^{−u}
+                          + 2Q ∏_j⌊T_j⌋ ⌊T′⌋ R′²/N.
+
+**What it buys.**
+- `Λ(m)` (item 3's kernel) reads `gcd(m, e)` only at primes of moduli: Q, and P-primes ≤ `y_head`.
+  The frozen phases use no larger primes, so every modulus has all prime factors ≤ `y_head`
+  though `e ≤ QD` and `D ≫ y_head`.  And `p | m = n+k` ⟺ the label at p is k.
+- So Λ, C and the clipped test `min(|Λ − C|², M)/M` are functions of the augmented state, and
+  (5.3′) transfers them.
+- The model fourth moment: `E_μ′|Λ|⁴ ≤ E_μ′|P|⁴ = M4` by conditional Jensen.  The tower identity
+  holds in μ′.
+- The arithmetic fourth moment: expand `1[gcd(m,e) = g] = Σ_{d | e/g} μ(d) 1[gd | m]` (item 3).
+  The conductor is `≤ QD`, the mass grows by `2^{ω(e)}`, and the CRT remainder is
+  `≤ (mass)⁴ (QD)⁴/N = o(1)` for θ < 1/4.
+
+Open within repair 2: none that I see.  Referee targets:
+- the claim that μ′ marginalizes to μ;
+- the moment bound for `D′_k` at the `y_head` scale;
+- whether any §4 constant silently used `d_b ≤ J` rather than `d_b < p/2`.
