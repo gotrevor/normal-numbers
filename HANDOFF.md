@@ -1,3 +1,5 @@
+# STUCK strike 1 (2026-10-11, gate 6): blocked on Codex semantic review of UniformBadFold.lean (DIRECTION gate 6 step 4: review BEFORE proving). Verify: no Codex reply in ~/personal/agent-mail/nn-cstar newer than 20261011T0042Z and no ON-LINE-FINDINGS for the 06:10Z request. Ask: host relays ON-LINE-REQUEST.md 2026-10-11 ~06:10Z to Codex.
+
 # Gate 6 lap 1 (2026-10-11): F={5} screen passes; route stated in UniformBadFold.lean; Codex review requested via ON-LINE-REQUEST.md; read HANDOFF-2026-10-11-gate6-lap1.md
 
 # STUCK strike 2 (2026-10-11): fresh lap confirms lever-probe kill (certified gap >= 1.2552 > 0.9); operator ask unchanged: launch fallback (a) as its own run.
