@@ -543,13 +543,13 @@ def AugmentedJointTV : Prop :=
     ∀ ε > 0, ∀ᶠ N : ℕ in atTop, ∀ k : Fin (winJ N), ∀ F : ℕ → ℂ, (∀ n, ‖F n‖ ≤ 1) →
       (let J := winJ N
        let y := cutU u N J
-       let P := labPrimes (residueClass q a) J (y ⟨0, k.pos_of_lt⟩)
+       let P := labPrimes (residueClass q a) J (y ⟨0, k.pos⟩)
        ∀ n m, n % primorial (2 * J) = m % primorial (2 * J) →
          (∀ p ∈ P, augLabel J y k p n = augLabel J y k p m) → F n = F m) →
       ‖prefixMean F N
         - periodMean F (primorial (2 * winJ N) *
             ∏ p ∈ labPrimes (residueClass q a) (winJ N)
-                    (cutU u N (winJ N) ⟨0, k.pos_of_lt⟩), p)‖
+                    (cutU u N (winJ N) ⟨0, k.pos⟩), p)‖
         ≤ C * Real.exp (-(u : ℝ)) + ε
 
 theorem siteFactorizationScheduled_of (hBV : MultBVOmegaRestricted)
@@ -572,3 +572,6 @@ theorem siteFactorizationScheduled_of (hBV : MultBVOmegaRestricted)
    side and let the producer evaluate it?
 4. `RieszFourthMoment` writes `2^{β/2}` as `2^{9A/4}`.  Its hypothesis `2J < p` is stronger than
    the `p > J` that `V_p ≤ A/p` needs.
+
+Control (Opus, exact, J=3, P={7,11,13,17}): with k=0 and K large, `rieszCentered` equals the
+ω-form Φ(n) to 5e-16; at k=2, its period mean equals `∏ μ_p` to 3e-14.
