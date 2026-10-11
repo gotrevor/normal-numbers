@@ -57,3 +57,24 @@ Next highest-value attack: prove the CRT identity via the equivalence
 available equivalence API is awkward, induct on `P` using the two-modulus Chinese remainder
 bijection).  Then immediately derive the centered cross-term vanishing lemma for two distinct
 subsets of `P`.
+
+### 2026-10-11 grind lap 2
+
+Concrete advance in `CoefmassRieszEnergy.lean`:
+- proved `sum_range_eq_sum_zmod`, the exact bridge from the theorem's natural-number period sum
+  to a `ZMod` sum;
+- proved `sum_zmod_prod_eq_prod_sum`, the route-decisive finite CRT product-sum factorization via
+  `ZMod.prodEquivPi` and `Fintype.prod_sum`.
+
+Exact verification:
+`~/personal/bin/lean-green ~/src/nn-coefmass-riesz-energy --target NormalNumbers.CoefmassRieszEnergy`
+ended `FORMALIZE-TIER GREEN`; the target's sole remaining warning is the original
+`rieszEnergyTail` sorry.
+
+Current blocker: specialize the generic `ZMod` factorization to the subtype `p : ↑P`.  Supply
+`NeZero p` and pairwise coprimality from primality/distinctness, and rewrite
+`(ZMod.prodEquivPi ...) x p` as the residue `x.val % p` using `ZMod.prodEquivPi_apply`.
+
+Next highest-value attack: package that specialization as the natural-number CRT average lemma,
+then prove that a product with one centered local factor has zero period sum.  This immediately
+gives cross-term orthogonality for distinct powerset terms.

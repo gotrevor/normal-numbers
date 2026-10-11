@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
 import NormalNumbers.PrimeModelPhaseAlgebra
+import Mathlib.Data.ZMod.QuotientRing
 
 /-!
 # Model energy above the Riesz cutoff
@@ -89,6 +90,25 @@ lemma periodMean_psiP_sub_muP (J : ℕ) (y : Fin J → ℕ) (h : ℤ) (p : ℕ)
   push_cast
   field_simp
   ring
+
+/-- Rewrite a sum over the standard representatives modulo a nonzero modulus as a `ZMod` sum. -/
+lemma sum_range_eq_sum_zmod (M : ℕ) [NeZero M] (F : ℕ → ℂ) :
+    (∑ n ∈ Finset.range M, F n) = ∑ x : ZMod M, F x.val := by
+  rw [← Equiv.sum_comp (ZMod.finEquiv M).toEquiv (fun x : ZMod M ↦ F x.val)]
+  obtain _ | M := M
+  · exact (NeZero.ne 0 rfl).elim
+  · change (∑ n ∈ Finset.range (M + 1), F n) = ∑ i : Fin (M + 1), F i
+    exact (Fin.sum_univ_eq_sum_range F (M + 1)).symm
+
+/-- The algebraic heart of CRT averaging: a product of coordinate functions factors after
+summing over the product modulus. -/
+lemma sum_zmod_prod_eq_prod_sum {ι : Type*} [Fintype ι] [DecidableEq ι] (a : ι → ℕ)
+    [∀ i, NeZero (a i)] [NeZero (∏ i, a i)]
+    (hcop : Pairwise (Function.onFun Nat.Coprime a)) (g : ∀ i, ZMod (a i) → ℂ) :
+    (∑ x : ZMod (∏ i, a i), ∏ i, g i ((ZMod.prodEquivPi a hcop) x i)) =
+      ∏ i, ∑ r : ZMod (a i), g i r := by
+  rw [Fintype.prod_sum]
+  exact Equiv.sum_comp (ZMod.prodEquivPi a hcop).toEquiv (fun x ↦ ∏ i, g i (x i))
 
 /-- Riesz-truncated centered expansion over a finite prime set `P`:
 `Σ_{T ⊆ P} (1 − log d_T/K)_+^k ∏_{p∉T} μ_p ∏_{p∈T} (ψ_p − μ_p)`. -/
