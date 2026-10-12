@@ -7,6 +7,8 @@ import Mathlib
 import Architect
 import NormalNumbers.RealDefs
 import NormalNumbers.CoefmassRandomLambertMoment
+import NormalNumbers.QSpanCriterion
+import NormalNumbers.CantorLiouville
 
 /-!
 # Random Erdős–Borwein subseries: the positive side (below exponent `ln 2`)
@@ -450,6 +452,44 @@ noncomputable def weylMean (b : ℕ) (h : ℤ) (x : ℝ) (N : ℕ) : ℂ :=
   (∑ n ∈ Finset.range N,
     Complex.exp (2 * Real.pi * Complex.I * (h : ℂ) * (b : ℂ)^n * (x : ℂ))) / N
 
+/-- Every Weyl mean is bounded by one. -/
+theorem norm_weylMean_le_one (b : ℕ) (h : ℤ) (x : ℝ) (N : ℕ) (hN : 1 ≤ N) :
+    ‖weylMean b h x N‖ ≤ 1 := by
+  have hterm (n : ℕ) :
+      ‖Complex.exp (2 * Real.pi * Complex.I * (h : ℂ) * (b : ℂ)^n * (x : ℂ))‖ = 1 := by
+    rw [show 2 * Real.pi * Complex.I * (h : ℂ) * (b : ℂ)^n * (x : ℂ) =
+        ((2 * Real.pi * (h : ℝ) * (b : ℝ)^n * x : ℝ) : ℂ) * Complex.I by
+      norm_cast
+      push_cast
+      ring]
+    exact Complex.norm_exp_ofReal_mul_I _
+  have hsum :
+      ‖∑ n ∈ Finset.range N,
+          Complex.exp (2 * Real.pi * Complex.I * (h : ℂ) * (b : ℂ)^n * (x : ℂ))‖ ≤ N := by
+    calc
+      ‖∑ n ∈ Finset.range N,
+          Complex.exp (2 * Real.pi * Complex.I * (h : ℂ) * (b : ℂ)^n * (x : ℂ))‖ ≤
+          ∑ n ∈ Finset.range N,
+            ‖Complex.exp (2 * Real.pi * Complex.I * (h : ℂ) * (b : ℂ)^n * (x : ℂ))‖ :=
+        norm_sum_le _ _
+      _ = N := by simp only [hterm, Finset.sum_const, Finset.card_range, nsmul_eq_mul, mul_one]
+  unfold weylMean
+  rw [norm_div, Complex.norm_natCast, div_le_one (by positivity)]
+  exact hsum
+
+/-- The local Weyl mean is definitionally the raw-orbit average consumed by the repository's
+Weyl criterion. -/
+theorem weylMean_eq_weylAvg (b : ℕ) (h : ℤ) (x : ℝ) (N : ℕ) :
+    weylMean b h x N = NormalNumbers.QSpanCriterion.weylAvg b x h N := by
+  unfold weylMean NormalNumbers.QSpanCriterion.weylAvg NormalNumbers.DecayAeNormal.ee
+  congr 1
+  apply Finset.sum_congr rfl
+  intro n hn
+  congr 1
+  norm_cast
+  push_cast
+  ring
+
 /-! ### Natural-index Bernoulli characteristic functions
 
 The corresponding lemmas in `RandomLambertMoment` are indexed by primes.  The Erdős--Borwein
@@ -685,7 +725,7 @@ theorem norm_integral_ePh_add_ebLambert_le {Ω : Type*} [MeasurableSpace Ω]
 natural-index analogue of `RandomLambertMoment.moment_le_tupleAvg`; no complementary infinite
 random sum remains after this lemma. -/
 theorem ebMoment_le_tupleAvg (b : ℕ) (hb : 2 ≤ b) (h : ℤ)
-    {Ω : Type} [MeasurableSpace Ω] (μ : Measure Ω) [IsProbabilityMeasure μ]
+    {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω) [IsProbabilityMeasure μ]
     (delta : ℕ → ℝ) (X : ℕ → Ω → Bool) (hX : BernoulliLawNat μ delta X)
     (F : Finset ℕ) (k N : ℕ) (hN : 1 ≤ N) (c : ℝ) (s : ℤ) (hs : s = 1 ∨ s = -1) :
     (∫ w, ‖weylMean b h (c + (s : ℝ) * ebLambert b X w) N‖ ^ (2 * k) ∂μ) ≤
@@ -2020,6 +2060,311 @@ theorem exists_eb_decay_parameters (a : ℝ) (ha0 : 0 ≤ a) (ha : a < Real.log 
   obtain ⟨k, R, hk, hR, hkq, hRη⟩ := exists_moment_parameters hq0 hη0
   exact ⟨α, q, η, k, R, hα0, hα1, hq0, hq, hη0, hηgap, hk, hR, hkq, hRη⟩
 
+/-- A stretched exponential in a positive power eventually beats every negative power.
+This is stated on the logarithmic scale used by the moment estimate. -/
+theorem eventually_exp_neg_rpow_le_rpow {d η q : ℝ}
+    (hd : 0 < d) (hη : 0 < η) (hq : 0 < q) :
+    ∀ᶠ L : ℝ in atTop, Real.exp (-d * Real.rpow L η) ≤ Real.rpow L (-q) := by
+  have hsmall := (isLittleO_log_rpow_atTop hη).bound (div_pos hd hq)
+  filter_upwards [hsmall, eventually_ge_atTop (1 : ℝ)] with L hsmall hL
+  have hLpos : 0 < L := zero_lt_one.trans_le hL
+  have hlog0 : 0 ≤ Real.log L := Real.log_nonneg hL
+  have hpow0 : 0 ≤ Real.rpow L η := Real.rpow_nonneg hLpos.le _
+  have hdom : q * Real.log L ≤ d * Real.rpow L η := by
+    change ‖Real.log L‖ ≤ (d / q) * ‖Real.rpow L η‖ at hsmall
+    rw [Real.norm_eq_abs, abs_of_nonneg hlog0, Real.norm_eq_abs,
+      abs_of_nonneg hpow0] at hsmall
+    calc
+      q * Real.log L ≤ q * ((d / q) * Real.rpow L η) :=
+        mul_le_mul_of_nonneg_left hsmall hq.le
+      _ = d * Real.rpow L η := by field_simp
+  calc
+    Real.exp (-d * Real.rpow L η) ≤ Real.exp (Real.log L * (-q)) :=
+      Real.exp_le_exp.mpr (by nlinarith)
+    _ = Real.rpow L (-q) := (Real.rpow_def_of_pos hLpos _).symm
+
+/-- The same domination after the shifted scale `N ↦ log (N + u)`, with the comparison power
+written at the smaller unshifted logarithm. -/
+theorem eventually_exp_neg_shifted_log_rpow_le (u : ℕ) {d η q : ℝ}
+    (hd : 0 < d) (hη : 0 < η) (hq : 0 < q) :
+    ∀ᶠ N : ℕ in atTop,
+      Real.exp (-d * Real.rpow (Real.log ((N + u : ℕ) : ℝ)) η) ≤
+        Real.rpow (Real.log N) (-q) := by
+  have hlog : Tendsto (fun N : ℕ ↦ Real.log (N : ℝ)) atTop atTop :=
+    Real.tendsto_log_atTop.comp tendsto_natCast_atTop_atTop
+  have hbase := hlog.eventually (eventually_exp_neg_rpow_le_rpow hd hη hq)
+  filter_upwards [hbase, eventually_ge_atTop 3] with N hbase hN
+  have hlogN : 0 < Real.log (N : ℝ) :=
+    Real.log_pos (by exact_mod_cast (by omega : 1 < N))
+  have hlogle : Real.log (N : ℝ) ≤ Real.log ((N + u : ℕ) : ℝ) := by
+    apply Real.log_le_log (by positivity)
+    exact_mod_cast Nat.le_add_right N u
+  have hpow : Real.rpow (Real.log N) η ≤
+      Real.rpow (Real.log ((N + u : ℕ) : ℝ)) η :=
+    Real.rpow_le_rpow hlogN.le hlogle hη.le
+  calc
+    Real.exp (-d * Real.rpow (Real.log ((N + u : ℕ) : ℝ)) η) ≤
+        Real.exp (-d * Real.rpow (Real.log N) η) := by
+      exact Real.exp_le_exp.mpr (by nlinarith)
+    _ ≤ Real.rpow (Real.log N) (-q) := hbase
+
+/-- Normalize the finite exceptional-set estimate once and for all.  The `N^(2k)` tuple-box
+factor cancels exactly; the two surviving losses are the Hardy--Ramanujan power and the
+collision Markov power. -/
+theorem normalized_exceptionalTuples_le
+    (u K P₀ k R N : ℕ) (α q η Cp : ℝ) (Ci : Fin (2 * k) → ℝ)
+    (hN : 3 ≤ N) (hη : 0 < η) (hCi : ∀ i, 0 ≤ Ci i)
+    (hpoor : ((poorTuples u N k α).card : ℝ) ≤
+      (Cp * N * Real.rpow (Real.log N) (-q)) ^ (2 * k))
+    (hMoment : ∀ i,
+      (∑ n : Fin (2 * k) → Fin N,
+        (((tupleBadModuli u K P₀ k (fun j ↦ (n j).val) i).card : ℝ) ^ R)) ≤
+          Ci i * (N : ℝ) ^ (2 * k)) :
+    ((exceptionalTuples u K P₀ k N α
+        (Real.rpow (Real.log ((N + u : ℕ) : ℝ)) η)).card : ℝ) /
+        (N : ℝ) ^ (2 * k) ≤
+      Cp ^ (2 * k) * Real.rpow (Real.log N) (-(2 * (k : ℝ) * q)) +
+        (∑ i, Ci i) * Real.rpow (Real.log N) (-(η * R)) := by
+  have hNR : (0 : ℝ) < N := by exact_mod_cast (by omega : 0 < N)
+  have hden : 0 < (N : ℝ) ^ (2 * k) := pow_pos hNR _
+  have hlogN : 0 < Real.log (N : ℝ) :=
+    Real.log_pos (by exact_mod_cast (by omega : 1 < N))
+  have hlogM : 0 < Real.log ((N + u : ℕ) : ℝ) :=
+    Real.log_pos (by exact_mod_cast (by omega : 1 < N + u))
+  have hlogle : Real.log (N : ℝ) ≤ Real.log ((N + u : ℕ) : ℝ) := by
+    apply Real.log_le_log (by positivity)
+    exact_mod_cast Nat.le_add_right N u
+  let T := Real.rpow (Real.log ((N + u : ℕ) : ℝ)) η
+  have hT : 0 < T := Real.rpow_pos_of_pos hlogM _
+  have hpoorNorm : ((poorTuples u N k α).card : ℝ) / (N : ℝ) ^ (2 * k) ≤
+      Cp ^ (2 * k) * Real.rpow (Real.log N) (-(2 * (k : ℝ) * q)) := by
+    refine (div_le_div_of_nonneg_right hpoor hden.le).trans_eq ?_
+    have hrpow : (Real.rpow (Real.log N) (-q)) ^ (2 * k) =
+        Real.rpow (Real.log N) (-(2 * (k : ℝ) * q)) := by
+      calc
+        (Real.rpow (Real.log N) (-q)) ^ (2 * k) =
+            Real.rpow (Real.rpow (Real.log N) (-q)) (2 * k : ℕ) :=
+          (Real.rpow_natCast _ _).symm
+        _ = Real.rpow (Real.log N) ((-q) * (2 * k : ℕ)) :=
+          (Real.rpow_mul hlogN.le _ _).symm
+        _ = Real.rpow (Real.log N) (-(2 * (k : ℝ) * q)) := by
+          congr 1
+          push_cast
+          ring
+    rw [mul_pow, mul_pow, hrpow]
+    field_simp
+  have hheavy (i : Fin (2 * k)) :
+      ((collisionHeavyTuples u K P₀ k N i T).card : ℝ) / (N : ℝ) ^ (2 * k) ≤
+        Ci i * Real.rpow (Real.log N) (-(η * R)) := by
+    have hmark := card_collisionHeavyTuples_mul_pow_le u K P₀ k R N i T (Ci i)
+      hT.le (hMoment i)
+    have hinv : (T ^ R)⁻¹ =
+        Real.rpow (Real.log ((N + u : ℕ) : ℝ)) (-(η * R)) := by
+      dsimp [T]
+      rw [← Real.rpow_natCast, ← Real.rpow_mul hlogM.le,
+        Real.rpow_neg hlogM.le]
+    have hshift : Real.rpow (Real.log ((N + u : ℕ) : ℝ)) (-(η * R)) ≤
+        Real.rpow (Real.log N) (-(η * R)) :=
+      Real.rpow_le_rpow_of_nonpos hlogN hlogle
+        (neg_nonpos.mpr (mul_nonneg hη.le (Nat.cast_nonneg R)))
+    rw [div_le_iff₀ hden]
+    calc
+      ((collisionHeavyTuples u K P₀ k N i T).card : ℝ) ≤
+          (Ci i * (N : ℝ) ^ (2 * k)) / T ^ R := by
+        rw [le_div_iff₀ (pow_pos hT R)]
+        exact hmark
+      _ = Ci i * (T ^ R)⁻¹ * (N : ℝ) ^ (2 * k) := by
+        rw [div_eq_mul_inv]
+        ring
+      _ ≤ Ci i * Real.rpow (Real.log N) (-(η * R)) *
+          (N : ℝ) ^ (2 * k) := by
+        rw [hinv]
+        exact mul_le_mul_of_nonneg_right
+          (mul_le_mul_of_nonneg_left hshift (hCi i)) hden.le
+  have hcard :
+      ((exceptionalTuples u K P₀ k N α T).card : ℝ) ≤
+        ((poorTuples u N k α).card : ℝ) +
+          ∑ i : Fin (2 * k), ((collisionHeavyTuples u K P₀ k N i T).card : ℝ) := by
+    exact_mod_cast card_exceptionalTuples_le u K P₀ k N α T
+  change ((exceptionalTuples u K P₀ k N α T).card : ℝ) / _ ≤ _
+  calc
+    ((exceptionalTuples u K P₀ k N α T).card : ℝ) / (N : ℝ) ^ (2 * k) ≤
+        (((poorTuples u N k α).card : ℝ) +
+          ∑ i : Fin (2 * k), ((collisionHeavyTuples u K P₀ k N i T).card : ℝ)) /
+            (N : ℝ) ^ (2 * k) := div_le_div_of_nonneg_right hcard hden.le
+    _ = ((poorTuples u N k α).card : ℝ) / (N : ℝ) ^ (2 * k) +
+        ∑ i : Fin (2 * k),
+          ((collisionHeavyTuples u K P₀ k N i T).card : ℝ) /
+            (N : ℝ) ^ (2 * k) := by rw [add_div, Finset.sum_div]
+    _ ≤ Cp ^ (2 * k) * Real.rpow (Real.log N) (-(2 * (k : ℝ) * q)) +
+        ∑ i : Fin (2 * k), Ci i * Real.rpow (Real.log N) (-(η * R)) := by
+      gcongr with i
+      exact hheavy i
+    _ = Cp ^ (2 * k) * Real.rpow (Real.log N) (-(2 * (k : ℝ) * q)) +
+        (∑ i, Ci i) * Real.rpow (Real.log N) (-(η * R)) := by
+      rw [Finset.sum_mul]
+
+/-- Two negative logarithmic powers and one shifted stretched exponential are eventually
+dominated by any strictly smaller negative logarithmic power. -/
+theorem eventually_moment_error_le (u : ℕ) {A B d η p r q : ℝ}
+    (hA : 0 ≤ A) (hB : 0 ≤ B) (hd : 0 < d) (hη : 0 < η)
+    (hq : 0 < q) (hqp : q < p) (hqr : q < r) :
+    ∀ᶠ N : ℕ in atTop,
+      A * Real.rpow (Real.log N) (-p) +
+          B * Real.rpow (Real.log N) (-r) +
+          Real.exp (-d * Real.rpow (Real.log ((N + u : ℕ) : ℝ)) η) ≤
+        (A + B + 1) * Real.rpow (Real.log N) (-q) := by
+  filter_upwards [eventually_exp_neg_shifted_log_rpow_le u hd hη hq,
+    eventually_ge_atTop 3] with N hexp hN
+  have hlog1 : 1 ≤ Real.log (N : ℝ) := by
+    have h3 : Real.exp 1 < (3 : ℝ) := Real.exp_one_lt_three
+    rw [Real.le_log_iff_exp_le (by positivity)]
+    exact h3.le.trans (by exact_mod_cast hN)
+  have hp : Real.rpow (Real.log N) (-p) ≤ Real.rpow (Real.log N) (-q) :=
+    Real.rpow_le_rpow_of_exponent_le hlog1 (by linarith)
+  have hr : Real.rpow (Real.log N) (-r) ≤ Real.rpow (Real.log N) (-q) :=
+    Real.rpow_le_rpow_of_exponent_le hlog1 (by linarith)
+  have hpow0 : 0 ≤ Real.rpow (Real.log N) (-q) :=
+    Real.rpow_nonneg (zero_le_one.trans hlog1) _
+  calc
+    A * Real.rpow (Real.log N) (-p) +
+        B * Real.rpow (Real.log N) (-r) +
+        Real.exp (-d * Real.rpow (Real.log ((N + u : ℕ) : ℝ)) η) ≤
+      A * Real.rpow (Real.log N) (-q) +
+        B * Real.rpow (Real.log N) (-q) + Real.rpow (Real.log N) (-q) := by
+      gcongr
+    _ = (A + B + 1) * Real.rpow (Real.log N) (-q) := by ring
+
+/-- A negative logarithmic power of exponent greater than two is summable along the shifted
+slow schedule `⌊exp √j⌋ + j`. -/
+theorem summable_log_slowSchedule_rpow {q : ℝ} (hq : 2 < q) :
+    Summable (fun j : ℕ ↦ Real.rpow
+      (Real.log (NormalNumbers.CantorLiouville.sched (j + 3))) (-q)) := by
+  have hs : Summable (fun j : ℕ ↦ Real.rpow (j : ℝ) (-q / 2)) :=
+    Real.summable_nat_rpow.mpr (by linarith)
+  have hs3 : Summable (fun j : ℕ ↦ Real.rpow ((j + 3 : ℕ) : ℝ) (-q / 2)) := by
+    simpa only [Nat.cast_add, Nat.cast_ofNat] using (summable_nat_add_iff 3).mpr hs
+  refine Summable.of_nonneg_of_le
+    (fun j ↦ Real.rpow_nonneg (Real.log_nonneg (by
+      have := NormalNumbers.CantorLiouville.one_le_sched (j + 3)
+      exact_mod_cast this)) _)
+    (fun j ↦ ?_) hs3
+  have hj : 1 ≤ j + 3 := by omega
+  have hsched : (0 : ℝ) < NormalNumbers.CantorLiouville.sched (j + 3) := by
+    exact_mod_cast NormalNumbers.CantorLiouville.one_le_sched (j + 3)
+  have hroot : Real.sqrt (j + 3 : ℕ) ≤
+      Real.log (NormalNumbers.CantorLiouville.sched (j + 3)) := by
+    rw [Real.le_log_iff_exp_le hsched]
+    exact NormalNumbers.CantorLiouville.exp_sqrt_le_sched (j + 3) hj
+  have hsqrt : 0 < Real.sqrt ((j + 3 : ℕ) : ℝ) := Real.sqrt_pos.2 (by positivity)
+  calc
+    Real.rpow (Real.log (NormalNumbers.CantorLiouville.sched (j + 3))) (-q) ≤
+        Real.rpow (Real.sqrt ((j + 3 : ℕ) : ℝ)) (-q) :=
+      Real.rpow_le_rpow_of_nonpos hsqrt hroot (by linarith)
+    _ = Real.rpow ((j + 3 : ℕ) : ℝ) (-q / 2) := by
+      rw [Real.sqrt_eq_rpow]
+      calc
+        Real.rpow (Real.rpow ((j + 3 : ℕ) : ℝ) (1 / 2)) (-q) =
+            Real.rpow ((j + 3 : ℕ) : ℝ) ((1 / 2) * (-q)) :=
+          (Real.rpow_mul (Nat.cast_nonneg _) _ _).symm
+        _ = Real.rpow ((j + 3 : ℕ) : ℝ) (-q / 2) := by
+          congr 1
+          ring
+
+/-- A summable even-moment bound along the slow schedule forces the full sequence of Weyl means
+to vanish almost surely. -/
+theorem ae_tendsto_weylMean_of_moment_decay
+    {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω) [IsProbabilityMeasure μ]
+    (G : Ω → ℝ) (hG : Measurable G) (b : ℕ) (h : ℤ)
+    (k : ℕ) (hk : 1 ≤ k) (q C : ℝ) (hq : 2 < q) (hC : 0 < C)
+    (hmoment : ∀ N : ℕ, 3 ≤ N →
+      (∫ w, ‖weylMean b h (G w) N‖ ^ (2 * k) ∂μ) ≤
+        C * Real.rpow (Real.log N) (-q)) :
+    ∀ᵐ w ∂μ, Tendsto (fun N : ℕ ↦ weylMean b h (G w) N) atTop (𝓝 0) := by
+  let n : ℕ → ℕ := fun j ↦ NormalNumbers.CantorLiouville.sched (j + 3)
+  have hn : StrictMono n := by
+    intro i j hij
+    exact NormalNumbers.CantorLiouville.sched_strictMono (by omega)
+  have hn3 (j : ℕ) : 3 ≤ n j := by
+    dsimp [n, NormalNumbers.CantorLiouville.sched]
+    omega
+  have hratio : Tendsto (fun j ↦ (n (j + 1) : ℝ) / n j) atTop (𝓝 1) := by
+    have h := NormalNumbers.CantorLiouville.sched_ratio.comp (tendsto_add_atTop_nat 3)
+    simpa [n, Function.comp_def, Nat.add_assoc, Nat.add_comm, Nat.add_left_comm] using h
+  have hsumI : Summable (fun j : ℕ ↦
+      ∫ w, ‖weylMean b h (G w) (n j)‖ ^ (2 * k) ∂μ) := by
+    refine Summable.of_nonneg_of_le
+      (fun j ↦ integral_nonneg fun w ↦ by positivity)
+      (fun j ↦ hmoment (n j) (hn3 j)) ?_
+    exact (summable_log_slowSchedule_rpow hq).mul_left C
+  have hWm (N : ℕ) : Measurable (fun w ↦ weylMean b h (G w) N) := by
+    unfold weylMean
+    fun_prop
+  let f : ℕ → Ω → ℝ := fun j w ↦ ‖weylMean b h (G w) (n j)‖ ^ (2 * k)
+  have hf0 : ∀ j w, 0 ≤ f j w := fun j w ↦ by positivity
+  have hfm : ∀ j, Measurable (f j) := fun j ↦ ((hWm _).norm.pow_const _)
+  have hfi : ∀ j, Integrable (f j) μ := fun j ↦
+    Integrable.of_bound (hfm j).aestronglyMeasurable 1
+      (Eventually.of_forall fun w ↦ by
+        rw [Real.norm_of_nonneg (hf0 j w)]
+        exact pow_le_one₀ (norm_nonneg _)
+          (norm_weylMean_le_one b h (G w) (n j) (by have := hn3 j; omega)))
+  have hfI : ∀ j, ∫ w, f j w ∂μ =
+      ∫ w, ‖weylMean b h (G w) (n j)‖ ^ (2 * k) ∂μ := fun j ↦ rfl
+  have hlin : ∫⁻ w, ∑' j, ENNReal.ofReal (f j w) ∂μ ≠ ⊤ := by
+    rw [lintegral_tsum fun j ↦ (hfm j).ennreal_ofReal.aemeasurable]
+    refine ne_top_of_le_ne_top (ENNReal.ofReal_ne_top
+      (r := ∑' j : ℕ, ∫ w, f j w ∂μ)) ?_
+    have hs : Summable (fun j ↦ ∫ w, f j w ∂μ) := by
+      simpa only [hfI] using hsumI
+    rw [ENNReal.ofReal_tsum_of_nonneg (fun j ↦ integral_nonneg (hf0 j)) hs]
+    refine ENNReal.tsum_le_tsum fun j ↦ ?_
+    rw [← ofReal_integral_eq_lintegral_ofReal (hfi j)
+      (Eventually.of_forall (hf0 j))]
+  have hae := ae_lt_top' (AEMeasurable.tsum fun j ↦
+    (hfm j).ennreal_ofReal.aemeasurable) hlin
+  filter_upwards [hae] with w hw
+  have h1 : Tendsto (fun j ↦ ENNReal.ofReal (f j w)) atTop (𝓝 0) :=
+    ENNReal.tendsto_atTop_zero_of_tsum_ne_top hw.ne
+  have h2 : Tendsto (fun j ↦ f j w) atTop (𝓝 0) := by
+    have ht := (ENNReal.tendsto_toReal ENNReal.zero_ne_top).comp h1
+    simpa [Function.comp_def, ENNReal.toReal_ofReal (hf0 _ w)] using ht
+  have hpow : (0 : ℝ) < (2 * k : ℕ) := by exact_mod_cast (by omega : 0 < 2 * k)
+  have hroot := h2.rpow_const_nhds_zero (one_div_pos.mpr hpow)
+  have hsched : Tendsto (fun j ↦ ‖weylMean b h (G w) (n j)‖) atTop (𝓝 0) := by
+    refine hroot.congr fun j ↦ ?_
+    dsimp [f]
+    have hz : 0 ≤ ‖weylMean b h (G w) (n j)‖ := norm_nonneg _
+    calc
+      (‖weylMean b h (G w) (n j)‖ ^ (2 * k)) ^ (1 / (2 * k : ℕ) : ℝ) =
+          Real.rpow (Real.rpow ‖weylMean b h (G w) (n j)‖ (2 * k : ℕ))
+            (1 / (2 * k : ℕ) : ℝ) := by
+        congr 1
+        exact (Real.rpow_natCast _ _).symm
+      _ = Real.rpow ‖weylMean b h (G w) (n j)‖
+          ((2 * k : ℕ) * (1 / (2 * k : ℕ) : ℝ)) :=
+        (Real.rpow_mul hz _ _).symm
+      _ = ‖weylMean b h (G w) (n j)‖ := by
+        rw [show ((2 * k : ℕ) : ℝ) * (1 / (2 * k : ℕ) : ℝ) = 1 by field_simp]
+        exact Real.rpow_one _
+  have hsums : Tendsto (fun j ↦
+      ‖∑ t ∈ Finset.range (n j),
+        Complex.exp (2 * Real.pi * Complex.I * (h : ℂ) * (b : ℂ)^t * (G w : ℂ))‖ /
+          (n j : ℝ)) atTop (𝓝 0) := by
+    simpa only [weylMean, norm_div, Complex.norm_natCast] using hsched
+  simpa only [weylMean] using
+    (NormalNumbers.CantorLiouville.tendsto_of_tendsto_sched
+      (fun t ↦ Complex.exp
+        (2 * Real.pi * Complex.I * (h : ℂ) * (b : ℂ)^t * (G w : ℂ)))
+      (fun t ↦ by
+        rw [show 2 * Real.pi * Complex.I * (h : ℂ) * (b : ℂ)^t * (G w : ℂ) =
+            ((2 * Real.pi * (h : ℝ) * (b : ℝ)^t * G w : ℝ) : ℂ) * Complex.I by
+          norm_cast
+          push_cast
+          ring]
+        exact (Complex.norm_exp_ofReal_mul_I _).le)
+      n hn hratio hsums)
+
 /-- Outside the finite exceptional set, the common Bernoulli characteristic product has uniform
 stretched-exponential contraction.  This closes the scalar bridge from rich/light anchors to the
 tuple summand used by `ebMoment_le_tupleAvg`. -/
@@ -2107,7 +2452,166 @@ theorem eb_weyl_moment_decay (hHR : HardyRamanujanLowerTail)
     ∃ k : ℕ, 1 ≤ k ∧ ∃ q C : ℝ, 2 < q ∧ 0 < C ∧ ∀ N : ℕ, 3 ≤ N →
       (∫ w, ‖weylMean b h (ebLambert b X w) N‖ ^ (2 * k) ∂μ) ≤
         C * Real.rpow (Real.log N) (-q) := by
-  sorry
+  obtain ⟨α, q₀, η, k, R, hα0, hα1, hq₀0, hq₀, hη0, hηgap,
+    hk, hR, hp2, hr2⟩ := exists_eb_decay_parameters a ha0 ha
+  have hH0 : h.natAbs ≠ 0 := (Int.natAbs_pos.mpr hh).ne'
+  obtain ⟨e, m, hm, hfac⟩ :=
+    Nat.exists_eq_pow_mul_and_not_dvd hH0 b (by omega : b ≠ 1)
+  let K : ℕ := e + 1 + 16 * h.natAbs * (2 * k)
+  let P₀ : ℕ := 2 * K
+  have hK : e + 1 ≤ K := by simp [K]
+  have hK1 : 1 ≤ K := by omega
+  have hKP : 2 * K ≤ P₀ := by simp [P₀]
+  have hP₀ : 1 ≤ P₀ := by dsimp [P₀]; omega
+  have hlarge : 16 * h.natAbs * (2 * k) ≤ b ^ K := by
+    have hlinR : (K : ℝ) + 1 ≤ (2 : ℝ) ^ K := by
+      have hbern := one_add_mul_sub_le_pow (a := (2 : ℝ)) (by norm_num) K
+      norm_num at hbern ⊢
+      linarith
+    have hlin : K + 1 ≤ 2 ^ K := by exact_mod_cast hlinR
+    calc
+      16 * h.natAbs * (2 * k) ≤ K + 1 := by dsimp [K]; omega
+      _ ≤ 2 ^ K := hlin
+      _ ≤ b ^ K := Nat.pow_le_pow_left hb K
+  obtain ⟨Cp, hCp, hpoor⟩ := poorTuples_card_le_of_HR hHR (e + 1) k
+    (by omega) α q₀ hα0 hα1 hq₀0 hq₀
+  choose Ci hCi hMoment using fun i : Fin (2 * k) ↦
+    tupleBadModuli_moment (e + 1) K P₀ k R hk (by omega) hK1
+      (by dsimp [P₀]; omega) hR i
+  let p : ℝ := 2 * (k : ℝ) * q₀
+  let r : ℝ := η * R
+  let q : ℝ := (2 + min p r) / 2
+  have hmin2 : 2 < min p r := lt_min (by simpa only [p] using hp2)
+    (by simpa only [r] using hr2)
+  have hq2 : 2 < q := by dsimp [q]; linarith
+  have hqp : q < p := by
+    have := min_le_left p r
+    dsimp [q]
+    linarith
+  have hqr : q < r := by
+    have := min_le_right p r
+    dsimp [q]
+    linarith
+  have hq0 : 0 < q := by linarith
+  let A : ℝ := Cp ^ (2 * k)
+  let B : ℝ := ∑ i, Ci i
+  let d : ℝ := spectralConst b * c
+  let D : ℝ := A + B + 1
+  have hA : 0 ≤ A := by dsimp [A]; positivity
+  have hB : 0 ≤ B := by
+    dsimp [B]
+    exact Finset.sum_nonneg fun i _ ↦ (hCi i).le
+  have hd : 0 < d := mul_pos (spectralConst_pos b hb) hc
+  have hD : 0 < D := by dsimp [D]; linarith
+  have hscalar := eventually_retained_log_power_nat (e + 1) P₀ ha0 hη0 hηgap
+  have herr := eventually_moment_error_le (e + 1) hA hB hd hη0 hq0
+    (by simpa only [p] using hqp) (by simpa only [r] using hqr)
+  have heventual : ∀ᶠ N : ℕ in atTop,
+      (∫ w, ‖weylMean b h (ebLambert b X w) N‖ ^ (2 * k) ∂μ) ≤
+        D * Real.rpow (Real.log N) (-q) := by
+    filter_upwards [hscalar, herr, eventually_ge_atTop 3] with N hscalarN herrN hN
+    let T := Real.rpow (Real.log ((N + (e + 1) : ℕ) : ℝ)) η
+    let E := Real.exp (-d * T)
+    let S := exceptionalTuples (e + 1) K P₀ k N α T
+    let f : (Fin (2 * k) → Fin N) → ℝ := fun n ↦
+      ∏ z ∈ Finset.range (N + e + 1),
+        bernMod (delta (z + 1))
+          (tuplePhase b h k (z + 1) (fun i ↦ (n i).val))
+    have hsplit : (∑ n, f n) ≤ (S.card : ℝ) + (N : ℝ) ^ (2 * k) * E := by
+      have hraw := sum_le_card_exceptional_add_uniform S f E (Real.exp_pos _).le
+        (fun n hn ↦ by
+          dsimp [f]
+          apply Finset.prod_le_one
+          · intro z hz
+            exact bernMod_nonneg _ _
+          · intro z hz
+            exact bernMod_le_one (hX.1 (z + 1)).1 (hX.1 (z + 1)).2 _)
+        (fun n hn ↦ by
+          obtain ⟨i, hrich, hlight⟩ :=
+            exists_rich_light_anchor_of_not_mem_exceptional
+              (e + 1) K P₀ k N α T n (by simpa only [S] using hn)
+          have hcontract := global_bernMod_product_le_rich_light delta a c α η
+            hX.1 ha0 hc hα0 hvar b e m K P₀ k N h n i hb hk hN hfac hm hK
+            hlarge hKP hP₀ hrich (by simpa only [T] using hlight) hscalarN
+          simpa only [f, E, T, d, neg_mul, mul_assoc] using hcontract)
+      simpa only [Fintype.card_fun, Fintype.card_fin, Nat.cast_pow] using hraw
+    have hcard := normalized_exceptionalTuples_le (e + 1) K P₀ k R N α q₀ η Cp Ci
+      hN hη0 (fun i ↦ (hCi i).le) (hpoor N hN) (fun i ↦ hMoment i N (by omega))
+    have hsum : (∑ n, f n) / (N : ℝ) ^ (2 * k) ≤
+        D * Real.rpow (Real.log N) (-q) := by
+      have hden : 0 < (N : ℝ) ^ (2 * k) := by positivity
+      calc
+        (∑ n, f n) / (N : ℝ) ^ (2 * k) ≤
+            ((S.card : ℝ) + (N : ℝ) ^ (2 * k) * E) /
+              (N : ℝ) ^ (2 * k) := div_le_div_of_nonneg_right hsplit hden.le
+        _ = (S.card : ℝ) / (N : ℝ) ^ (2 * k) + E := by
+          rw [add_div]
+          field_simp
+        _ ≤ A * Real.rpow (Real.log N) (-p) +
+              B * Real.rpow (Real.log N) (-r) + E := by
+          have hcard' : (S.card : ℝ) / (N : ℝ) ^ (2 * k) ≤
+              A * Real.rpow (Real.log N) (-p) +
+                B * Real.rpow (Real.log N) (-r) := by
+            simpa only [S, T, A, B, p, r] using hcard
+          exact add_le_add hcard' le_rfl
+        _ ≤ D * Real.rpow (Real.log N) (-q) := by
+          simpa only [A, B, D, E, T, d, p, r] using herrN
+    have hmoment := ebMoment_le_tupleAvg b hb h μ delta X hX
+      (Finset.range (N + e + 1)) k N (by omega) 0 1 (Or.inl rfl)
+    have hmoment' :
+        (∫ w, ‖weylMean b h (ebLambert b X w) N‖ ^ (2 * k) ∂μ) ≤
+          (∑ n, f n) / (N : ℝ) ^ (2 * k) := by
+      simpa [f] using hmoment
+    exact hmoment'.trans hsum
+  obtain ⟨N₀, hN₀⟩ := eventually_atTop.mp heventual
+  let J := max N₀ 3
+  let C : ℝ := D + Real.rpow (Real.log J) q
+  have hJ3 : 3 ≤ J := le_max_right _ _
+  have hlogJ : 0 < Real.log (J : ℝ) :=
+    Real.log_pos (by exact_mod_cast (by omega : 1 < J))
+  have hC : 0 < C := by
+    dsimp [C]
+    exact add_pos_of_pos_of_nonneg hD (Real.rpow_nonneg hlogJ.le _)
+  refine ⟨k, hk, q, C, hq2, hC, ?_⟩
+  intro N hN
+  have hlogN : 0 < Real.log (N : ℝ) :=
+    Real.log_pos (by exact_mod_cast (by omega : 1 < N))
+  by_cases hJN : J ≤ N
+  · have hmain := hN₀ N (le_trans (le_max_left N₀ 3) hJN)
+    have hpow0 : 0 ≤ Real.rpow (Real.log N) (-q) := Real.rpow_nonneg hlogN.le _
+    exact hmain.trans (mul_le_mul_of_nonneg_right
+      (by dsimp [C]; exact le_add_of_nonneg_right (Real.rpow_nonneg hlogJ.le _)) hpow0)
+  · have hNJ : N ≤ J := by omega
+    have hlogle : Real.log (N : ℝ) ≤ Real.log (J : ℝ) :=
+      Real.log_le_log (by positivity) (by exact_mod_cast hNJ)
+    have hp_le : Real.rpow (Real.log N) q ≤ Real.rpow (Real.log J) q :=
+      Real.rpow_le_rpow hlogN.le hlogle hq0.le
+    have hpN : 0 < Real.rpow (Real.log N) q := Real.rpow_pos_of_pos hlogN _
+    have hone : 1 ≤ Real.rpow (Real.log J) q * Real.rpow (Real.log N) (-q) := by
+      rw [show Real.rpow (Real.log N) (-q) =
+        (Real.rpow (Real.log N) q)⁻¹ from Real.rpow_neg hlogN.le q]
+      rw [le_mul_inv_iff₀ hpN]
+      simpa using hp_le
+    have hunit := ebMoment_le_tupleAvg b hb h μ delta X hX
+      (∅ : Finset ℕ) k N (by omega) 0 1 (Or.inl rfl)
+    have hunit' :
+        (∫ w, ‖weylMean b h (ebLambert b X w) N‖ ^ (2 * k) ∂μ) ≤ 1 := by
+      have hunit'' :
+          (∫ w, ‖weylMean b h (ebLambert b X w) N‖ ^ (2 * k) ∂μ) ≤
+            (N : ℝ) ^ (2 * k) / (N : ℝ) ^ (2 * k) := by
+        simpa [Fintype.card_fun, Fintype.card_fin] using hunit
+      calc
+        (∫ w, ‖weylMean b h (ebLambert b X w) N‖ ^ (2 * k) ∂μ) ≤
+            (N : ℝ) ^ (2 * k) / (N : ℝ) ^ (2 * k) := hunit''
+        _ = 1 := div_self (pow_ne_zero (2 * k) (by positivity : (N : ℝ) ≠ 0))
+    calc
+      (∫ w, ‖weylMean b h (ebLambert b X w) N‖ ^ (2 * k) ∂μ) ≤ 1 := hunit'
+      _ ≤ Real.rpow (Real.log J) q * Real.rpow (Real.log N) (-q) := hone
+      _ ≤ C * Real.rpow (Real.log N) (-q) := by
+        have hpow0 : 0 ≤ Real.rpow (Real.log N) (-q) := Real.rpow_nonneg hlogN.le _
+        apply mul_le_mul_of_nonneg_right _ hpow0
+        dsimp [C]
+        exact le_add_of_nonneg_left hD.le
 
 /-- **Conditional headline** (new companion, 2026-10-12; the frozen unconditional
 `ebRandom_ae_normal_below_ln2` is NOT weakened).  Identical conclusion, plus the named literature
@@ -2125,6 +2629,24 @@ theorem ebRandom_ae_normal_below_ln2_of_HR (hHR : HardyRamanujanLowerTail)
     (a c : ℝ) (ha0 : 0 ≤ a) (ha : a < Real.log 2) (hc : 0 < c)
     (hvar : ∀ m : ℕ, 2 ≤ m → c * Real.rpow (Real.log m) (-a) ≤ delta m * (1 - delta m)) :
     ∀ᵐ w ∂μ, ∀ b : ℕ, 2 ≤ b → NormalNumbers.IsNormal b (ebLambert b X w) := by
-  sorry
+  rw [ae_all_iff]
+  intro b
+  by_cases hb : 2 ≤ b
+  · have hall : ∀ᵐ w ∂μ, ∀ h : ℤ, h ≠ 0 →
+        Tendsto (fun N : ℕ ↦ weylMean b h (ebLambert b X w) N) atTop (𝓝 0) := by
+      rw [ae_all_iff]
+      intro h
+      by_cases hh : h = 0
+      · exact Eventually.of_forall fun _ hne ↦ absurd hh hne
+      · obtain ⟨k, hk, q, C, hq, hC, hmoment⟩ :=
+          eb_weyl_moment_decay hHR μ delta X hX a c ha0 ha hc hvar b hb h hh
+        filter_upwards [ae_tendsto_weylMean_of_moment_decay μ (ebLambert b X)
+          (measurable_ebLambert b X hX.2.1) b h k hk q C hq hC hmoment] with w hw _
+        exact hw
+    filter_upwards [hall] with w hw _
+    apply NormalNumbers.QSpanCriterion.isNormal_of_weylAvg b hb
+    intro h hh
+    exact (hw h hh).congr fun N ↦ weylMean_eq_weylAvg b h (ebLambert b X w) N
+  · exact Eventually.of_forall fun _ hb' ↦ absurd hb' hb
 
 end NormalNumbers.ErdosBorweinPositive

@@ -68,6 +68,35 @@ Expect step 4 to be the longest.  Splitting it into named leaves is progress.
 
 ## Status
 
+- Lap 12 completion checkpoint (`research/eb-positive`): the scoped module is sorry-free and the
+  conditional positive-side theorem is complete.  The adversarial review reconstructed the route
+  from the frozen statements and exposed one genuine implementation mismatch:
+  `ebMoment_le_tupleAvg` had accidentally fixed `Ω : Type` while the frozen headline quantifies
+  over `Ω : Type*`; the helper is now universe-polymorphic, with no mathematical statement
+  change.  `normalized_exceptionalTuples_le` cancels the tuple-box factor exactly and leaves the
+  Hardy--Ramanujan power and collision Markov power.  The stretched-exponential comparison and
+  finite-initial-segment absorption then close `eb_weyl_moment_decay`.  Finally,
+  `summable_log_slowSchedule_rpow` and `ae_tendsto_weylMean_of_moment_decay` reuse the checked
+  slow schedule/interpolation machinery to obtain all Weyl limits on a countable intersection;
+  `QSpanCriterion.isNormal_of_weylAvg` closes
+  `ebRandom_ae_normal_below_ln2_of_HR`.  No frozen definition or theorem statement changed, and
+  `HardyRamanujanLowerTail` remains an explicit hypothesis exactly as required.
+- Exact verification run (lap 12):
+  - `lake env lean src/NormalNumbers/CoefmassErdosBorweinPositive.lean` (green; no `sorry`
+    warnings).
+  - `rg -n '\bsorry\b|sorryAx' src/NormalNumbers/CoefmassErdosBorweinPositive.lean` (no matches).
+  - `git diff --check` (clean before the handoff edit).
+  - `/Users/gotrevor/personal/bin/lean-green /Users/gotrevor/src/nn-eb-positive --target
+    NormalNumbers.CoefmassErdosBorweinPositive --import
+    NormalNumbers.CoefmassErdosBorweinPositive --axioms
+    NormalNumbers.ErdosBorweinPositive.ebRandom_ae_normal_below_ln2_of_HR`
+    (`FORMALIZE-TIER GREEN`, 8877 jobs; headline axioms exactly `propext`, `Classical.choice`, and
+    `Quot.sound`).
+- Current blocker: none in the scoped objective.  The host predicate
+  `sorry-free:src/NormalNumbers/CoefmassErdosBorweinPositive.lean` is met.
+- Next highest-value attack: no in-scope attack remains.  The distinct unconditional theorem in
+  the private packet would require formalizing the named Hardy--Ramanujan literature input; do not
+  turn that input into an axiom or silently broaden this completed conditional campaign.
 - Lap 11 scalar contraction checkpoint (`research/eb-positive`): the asymptotic and deterministic
   rich/light bookkeeping needed by `eb_weyl_moment_decay` is now kernel-checked.
   `eventually_retained_log_power` proves that a logarithmic divisor supply of exponent `s` absorbs
