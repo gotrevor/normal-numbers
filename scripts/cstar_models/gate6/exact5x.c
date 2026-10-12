@@ -116,6 +116,8 @@ static int worstNZ(int s, Node *n, int depth, Bx *wb) { int nz = 0; for (int p =
   if (a <= b) { *wb = b0; return a; } *wb = b1; return b; }
 static void freeTree(Node *n) { if (!n) return; freeTree(n->ch[0]); freeTree(n->ch[1]); free(n); }
 static __thread long pairs;
+static void freeTree(Node *n);
+static void prune(Node *n, int keep) { if (!n || !n->ch[0]) return; if (n->lvl >= keep) { freeTree(n->ch[0]); freeTree(n->ch[1]); n->ch[0] = n->ch[1] = 0; return; } prune(n->ch[0], keep); prune(n->ch[1], keep); }
 static int LS[S][NP];   // leaf SFT state of path p from parent state s (-1: path not allowed)
 typedef struct { int r3; ll e; } Ex;
 static Ex **EX; static int *EXN;   // per q5: exceptions (r3 within the state, value), sorted by r3
@@ -159,6 +161,7 @@ static void *worker(void *pp) {
   Job *j = pp; j->fail = 0; j->worst = 1e9; pairs = 0; j->nrec = 0; j->cap = 0; j->rec = 0;
   Node **T5 = calloc(S * NB5, sizeof(Node*));  // this thread's base-5 trees (lazily refined)
   for (long q5 = 0; q5 < S * NB5; q5++) if (PHI[q5] > 0) T5[q5] = mk(1, q5 / NB5, box5(q5 % NB5), 0);
+  long nq = 0;
   for (;;) { long q3 = __sync_fetch_and_add(&NEXTQ, 1); if (q3 >= S * NB3) break;
     ll w3 = W3[q3]; if (w3 <= 0) continue;
     int s = q3 / NB3, r3 = q3 % NB3; Node *a = 0;
@@ -173,6 +176,7 @@ static void *worker(void *pp) {
         else { if (j->nrec == j->cap) { j->cap = j->cap ? 2 * j->cap : 4096; void *realloc(void*, size_t); j->rec = realloc(j->rec, j->cap * sizeof(Rec)); }
           Rec R = { q3, q5, (ll)(v * DEN / NUM), (ll)target }; j->rec[j->nrec++] = R; } } }
     freeTree(a);
+    if (++nq % 4 == 0) for (long q5 = 0; q5 < S * NB5; q5++) prune(T5[q5], 8);
   }
   for (long q5 = 0; q5 < S * NB5; q5++) freeTree(T5[q5]); free(T5);
   j->pairs = pairs; return 0;
