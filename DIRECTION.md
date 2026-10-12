@@ -5,6 +5,34 @@
 **This is the directive for branch `proof/uniformbad-threshold`.**  The `proof/cantor-bad-normal` section below
 belongs to that branch (its route is parked at the middle-digit obstruction); do not work it here.
 
+- **Operator gate 6 COST LAP (Ren for Trevor, 2026-10-12 ~02:55Z) - ONE bounded engineering lap, then stop.
+  Binding: Astra's second opinion, mail `~/personal/agent-mail/nn-cstar/20261012T024404Z-codex-58a77b90-*.md`
+  (read it whole first).**  Why: budgeted exact5z costs slice E 1552 s per 3% = **14.4 h/pass** (not 11-12 h);
+  3 passes to the kill screen = ~43 h, a certificate possibly days.  g6run2 was stopped by the operator with
+  0/100 pass-0 chunks done; its directory stays as-is (do not resume it under a changed work partition).
+  (a) **Correctness first (cheap, required):** the `if (!fail)` success branch runs before the `mx == 0` DEAD
+  check, and nothing requires positive weight at the actual ROOT, so an all-zero candidate can print EXACT
+  CERTIFICATE.  Make the concrete root weight (with any exception override) > 0 an explicit acceptance condition,
+  checked before success is printed, and normalize that value.  Teeth: an all-zero PHI must NOT print success.
+  (b) **Profile before redesign:** time in mk/vgo, pairv traversal, exMin, pruning, allocation on the slice E
+  inputs.  Memo sharing saves construction, not the 9.82e9 pair traversals.
+  (c) **B0 = state ownership** (S = 25 states vs 15 workers): a worker takes whole parent states, processes all
+  of that state's q3 against that state's q5, and keeps only that state's T5 forest resident (PHI/W3/EX are
+  frozen within a pass and stay globally readable).  Measure per-state cost; split only demonstrated stragglers.
+  Durable chunk checkpoints with an explicit work-unit map.  B2 (shared immutable per-pass T5 prefix) only if the
+  profile shows repeated node construction dominates.
+  (d) **Equivalence + cost gate:** on identical frozen inputs (slice E's pairs), sorted exact failure records and
+  stats must match exact5z byte-for-byte.  The number to reach: projected pass <= 2 h (= the 3% slice in
+  <= 216 s plus measured startup), peak <= 10 GB.  Also price a post-update snapshot (pass 0 has no exceptions,
+  so it cannot price exMin): use the teeth instance's ex.0 or a pass-0 slice update.
+  (e) **Record per pass from now on:** positive-target pair count, failure fraction, exception-zero count, weight
+  loss, the concrete root weight and its normalized dynamic range (PHI zeros alone miss collapse through E).
+  The 3-pass rule stays as an ECONOMIC screen, not a convergence or refutation criterion.
+  (f) **Stop either way at the end of this lap:** gate met -> write the numbers to PENDING_WORK, ON-LINE-REQUEST.md
+  "cost gate met, ready to fund passes", stop (`box stuck` is the honest exit; the operator relaunches).  Gate missed
+  -> record the profile and the best projection, ON-LINE-REQUEST.md "cost gate missed", stop; the operator brings
+  Trevor park-vs-continue.  Do not launch a multi-pass search in this lap.  Long jobs: `run_in_background` (box
+  charter), outputs in `tmp/<run-id>/`.
 - **Operator gate 6 core relaunch (Ren for Trevor, 2026-10-11 ~20:00Z): checkpoint the search FIRST; convergence is
   the first number.**  Lesson of the last run: exact5x (pass 0 = 55 min) and exact5y both wrote only to the
   container's `/tmp` and saved PHI/exceptions only on success, so both died with the lap and produced ZERO
