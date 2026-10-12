@@ -60,6 +60,27 @@ Notation: `μ_M(n) = largeDivisorMass a M n = Σ_{d ∣ n, d > M} (log d)^{-a}`.
 
 ## Status
 
+- **Lap 4 checkpoint (2026-10-12): divisor-support bridge and block moment bound proved; 2 sorries remain.**
+  - DEFINED the exact `y`-smooth part `smoothPart y n` and PROVED its factorization and prime-factor
+    identities (`smoothPart_factorization`, `smoothPart_primeFactors`).  Consequently
+    `smoothPart_card_divisors` identifies its number of divisors with `smoothDivisorCount y n`.
+  - PROVED the requested cardinal bridge `card_divisors_filter_le_smoothDivisorCount`:
+    every divisor `d | n` with `d ≤ y` divides `smoothPart y n`, so
+    `#(n.divisors.filter (fun d => d ≤ y)) ≤ smoothDivisorCount y n`.
+  - Introduced the fully discrete cutoffs `dyadicExpCutoff ℓ = 2^(2^ℓ)`, avoiding all
+    `Nat.ceil (exp ·)` bookkeeping while preserving the exponent gap.  PROVED the one-block
+    pointwise bound `divisorBlockMass_le` and the uniform averaged fractional-moment estimate
+    `divisorBlockMass_rpow_sum_le`, which composes directly with Lap 3's smooth-divisor theorem.
+  - Exact verification:
+    - `lake env lean src/NormalNumbers/CoefmassErdosBorweinNegative.lean` — succeeds, exactly the
+      two expected sorry warnings (`largeDivisorMass_moment_small` and
+      `ebRandom_ae_not_normal_of_marginal_bound`).
+    - `~/personal/bin/lean-green . --target NormalNumbers.CoefmassErdosBorweinNegative --import
+      NormalNumbers.CoefmassErdosBorweinNegative --axioms
+      NormalNumbers.ErdosBorweinRandom.divisorBlockMass_rpow_sum_le` — FORMALIZE-TIER GREEN;
+      axioms exactly `propext`, `Classical.choice`, `Quot.sound`.
+    - `~/personal/bin/lean-green .` — FORMALIZE-TIER GREEN, 10847 jobs.
+
 - **Lap 3 checkpoint (2026-10-12): exact uniform smooth-divisor averaging proved; 2 sorries remain.**
   - PROVED the formerly open combinatorial bridge `factorizationMajorant_sum_le`:
     `Σ_{n≤N} ∏_{p∈P,p∣n}(1+q v_p(n)) ≤ N * ∏_{p∈P}(1+q/(p-1))` for `q ≥ 0`
@@ -132,16 +153,16 @@ Notation: `μ_M(n) = largeDivisorMass a M n = Σ_{d ∣ n, d > M} (log d)^{-a}`.
 
 ### Current blocker / next attack
 
-The load-bearing open theorem is `largeDivisorMass_moment_small`.  Its exponent choice and the
-complete uniform smooth-divisor fractional-moment estimate are now discharged.  Next prove that
-every divisor `d ∣ n` with `d ≤ y` is represented among the prime-exponent choices counted by
-`smoothDivisorCount y n`, preferably as the cardinal inequality
-`#(n.divisors.filter (· ≤ y)) ≤ smoothDivisorCount y n`.  Then formalize the pointwise log-dyadic
-decomposition of `largeDivisorMass`: for blocks `2^ℓ < log d ≤ 2^(ℓ+1)`, bound the block by
-`2^(-aℓ) * smoothDivisorCount(⌈exp(2^(ℓ+1))⌉, n)`, apply `rpow` subadditivity, average with
-`smoothDivisorCount_rpow_sum_le_log_rpow`, and close the geometric tail using
-`a*s - (2^s-1) > 0`.  This should finish `largeDivisorMass_moment_small`.  Only then attack the
-remaining `ebRandom_ae_not_normal_of_marginal_bound` probability/orbit argument.
+The load-bearing open theorem is `largeDivisorMass_moment_small`.  Its exponent choice, complete
+uniform smooth-divisor estimate, divisor-support bridge, and the averaged estimate for every
+double-exponential block are now discharged.  Next prove the discrete partition identity saying
+that for `M = dyadicExpCutoff L`, the divisors `d > M` are the disjoint union of blocks
+`dyadicExpCutoff ℓ < d ≤ dyadicExpCutoff (ℓ+1)` for `ℓ ≥ L` (a finite range up to `n` is
+enough).  Apply finite `Real.rpow_add_le_add_rpow`, sum
+`divisorBlockMass_rpow_sum_le`, rewrite `log_dyadicExpCutoff`, and close the resulting geometric
+tail with ratio `2 ^ (-(a*s-(2^s-1))) < 1`.  This should finish
+`largeDivisorMass_moment_small`.  Only then attack the remaining
+`ebRandom_ae_not_normal_of_marginal_bound` probability/orbit argument.
 
 ## Findings
 

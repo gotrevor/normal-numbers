@@ -600,6 +600,228 @@ lemma smoothDivisorCount_rpow_sum_le_log_rpow
         (Real.log (y : ℝ)) ^ ((2 : ℝ) ^ s - 1)) := by
       exact mul_le_mul_of_nonneg_left (momentEulerProduct_le_log_rpow s hs hs1 y hy) (by positivity)
 
+/-! ### Divisors supported on the small primes -/
+
+/-- The part of `n` supported on primes at most `y`. -/
+def smoothPart (y n : ℕ) : ℕ :=
+  ∏ p ∈ n.primeFactors.filter (fun p => p ≤ y), p ^ n.factorization p
+
+lemma smoothPart_ne_zero (y n : ℕ) : smoothPart y n ≠ 0 := by
+  unfold smoothPart
+  apply Finset.prod_ne_zero_iff.mpr
+  intro p hp
+  exact pow_ne_zero _ (Nat.prime_of_mem_primeFactors (Finset.mem_filter.mp hp).1).ne_zero
+
+lemma smoothPart_factorization (y n p : ℕ) :
+    (smoothPart y n).factorization p =
+      if p ∈ n.primeFactors.filter (fun p => p ≤ y) then n.factorization p else 0 := by
+  let P := n.primeFactors.filter (fun p => p ≤ y)
+  change (∏ q ∈ P, q ^ n.factorization q).factorization p =
+    if p ∈ P then n.factorization p else 0
+  rw [Nat.factorization_prod_apply]
+  · by_cases hp : p ∈ P
+    · rw [if_pos hp]
+      calc
+        (∑ q ∈ P, (q ^ n.factorization q).factorization p) =
+            (p ^ n.factorization p).factorization p := by
+          apply Finset.sum_eq_single p
+          · intro q hq hqp
+            rw [(Nat.prime_of_mem_primeFactors (Finset.mem_filter.mp hq).1).factorization_pow]
+            simp [hqp]
+          · simp [hp]
+        _ = n.factorization p := by
+          rw [(Nat.prime_of_mem_primeFactors (Finset.mem_filter.mp hp).1).factorization_pow]
+          simp
+    · rw [if_neg hp]
+      apply Finset.sum_eq_zero
+      intro q hq
+      have hqp : q ≠ p := by
+        intro hqp
+        subst q
+        exact hp hq
+      rw [(Nat.prime_of_mem_primeFactors (Finset.mem_filter.mp hq).1).factorization_pow]
+      simp [hqp]
+  · intro q hq
+    exact pow_ne_zero _ (Nat.prime_of_mem_primeFactors (Finset.mem_filter.mp hq).1).ne_zero
+
+lemma smoothPart_primeFactors (y n : ℕ) :
+    (smoothPart y n).primeFactors = n.primeFactors.filter (fun p => p ≤ y) := by
+  let P := n.primeFactors.filter (fun p => p ≤ y)
+  have hpart : smoothPart y n ≠ 0 := smoothPart_ne_zero y n
+  ext p
+  rw [Nat.mem_primeFactors_of_ne_zero hpart]
+  constructor
+  · rintro ⟨hpprime, hpdiv⟩
+    have hfac := (hpprime.dvd_iff_one_le_factorization hpart).mp hpdiv
+    rw [smoothPart_factorization] at hfac
+    by_cases hpP : p ∈ P
+    · exact hpP
+    · simp [P, hpP] at hfac
+  · intro hpP
+    have hpn : p ∈ n.primeFactors := (Finset.mem_filter.mp hpP).1
+    have hpprime : p.Prime := Nat.prime_of_mem_primeFactors hpn
+    refine ⟨hpprime, (hpprime.dvd_iff_one_le_factorization hpart).mpr ?_⟩
+    rw [smoothPart_factorization, if_pos hpP]
+    have hn : n ≠ 0 := (Nat.mem_primeFactors.mp hpn).2.2
+    exact (hpprime.dvd_iff_one_le_factorization hn).mp (Nat.dvd_of_mem_primeFactors hpn)
+
+lemma smoothPart_card_divisors (y n : ℕ) :
+    (smoothPart y n).divisors.card = smoothDivisorCount y n := by
+  rw [Nat.card_divisors (smoothPart_ne_zero y n), smoothPart_primeFactors]
+  unfold smoothDivisorCount
+  apply Finset.prod_congr rfl
+  intro p hp
+  rw [smoothPart_factorization, if_pos hp]
+
+/-- Every divisor of `n` that is at most `y` divides the `y`-smooth part of `n`; hence the
+number of such divisors is bounded by the product of the available prime-exponent choices. -/
+lemma card_divisors_filter_le_smoothDivisorCount (y n : ℕ) :
+    (n.divisors.filter (fun d => d ≤ y)).card ≤ smoothDivisorCount y n := by
+  rw [← smoothPart_card_divisors y n]
+  apply Finset.card_le_card
+  intro d hd
+  have hdmem := (Finset.mem_filter.mp hd).1
+  have hdy := (Finset.mem_filter.mp hd).2
+  have hdn : d ∣ n := (Nat.mem_divisors.mp hdmem).1
+  have hn : n ≠ 0 := (Nat.mem_divisors.mp hdmem).2
+  have hd0 : d ≠ 0 := fun hd0 => by subst d; simp at hdmem
+  have hpart : smoothPart y n ≠ 0 := smoothPart_ne_zero y n
+  apply Nat.mem_divisors.mpr
+  refine ⟨(Nat.factorization_le_iff_dvd hd0 hpart).mp ?_, hpart⟩
+  rw [Finsupp.le_def]
+  intro p
+  by_cases hpprime : p.Prime
+  · by_cases hpd : p ∣ d
+    · have hp_le_d : p ≤ d := Nat.le_of_dvd (Nat.pos_of_ne_zero hd0) hpd
+      have hpn : p ∈ n.primeFactors := hpprime.mem_primeFactors (hpd.trans hdn) hn
+      have hpP : p ∈ n.primeFactors.filter (fun p => p ≤ y) :=
+        Finset.mem_filter.mpr ⟨hpn, hp_le_d.trans hdy⟩
+      rw [smoothPart_factorization, if_pos hpP]
+      exact (Nat.factorization_le_iff_dvd hd0 hn).mpr hdn p
+    · rw [Nat.factorization_eq_zero_of_not_dvd hpd]
+      exact Nat.zero_le _
+  · rw [Nat.factorization_eq_zero_of_not_prime d hpprime]
+    exact Nat.zero_le _
+
+/-! ### Logarithmic dyadic blocks -/
+
+/-- Integer cutoffs `2^(2^ℓ)`.  These replace ceilings of `exp (2^ℓ)` and make the eventual
+partition of divisors entirely discrete, while changing only the harmless constant `log 2`. -/
+def dyadicExpCutoff (ℓ : ℕ) : ℕ := 2 ^ (2 ^ ℓ)
+
+lemma dyadicExpCutoff_two_le (ℓ : ℕ) : 2 ≤ dyadicExpCutoff ℓ := by
+  unfold dyadicExpCutoff
+  exact Nat.le_pow (Nat.two_pow_pos ℓ)
+
+lemma log_dyadicExpCutoff (ℓ : ℕ) :
+    Real.log (dyadicExpCutoff ℓ : ℝ) = (2 : ℝ) ^ ℓ * Real.log 2 := by
+  unfold dyadicExpCutoff
+  push_cast
+  rw [Real.log_pow]
+  norm_num
+
+/-- Contribution of divisors in one double-exponential block. -/
+noncomputable def divisorBlockMass (a : ℝ) (ℓ n : ℕ) : ℝ :=
+  ∑ d ∈ n.divisors.filter
+    (fun d => dyadicExpCutoff ℓ < d ∧ d ≤ dyadicExpCutoff (ℓ + 1)),
+    Real.rpow (Real.log d) (-a)
+
+lemma divisorBlockMass_nonneg (a : ℝ) (ℓ n : ℕ) : 0 ≤ divisorBlockMass a ℓ n := by
+  unfold divisorBlockMass
+  exact Finset.sum_nonneg fun d hd => Real.rpow_nonneg (Real.log_nonneg (by
+    have hcutd := (Finset.mem_filter.mp hd).2.1
+    have hd1 : 1 ≤ d := (show 1 ≤ dyadicExpCutoff ℓ by
+      exact (by omega : 1 ≤ 2).trans (dyadicExpCutoff_two_le ℓ)).trans hcutd.le
+    exact_mod_cast hd1)) _
+
+lemma divisorBlock_card_le (n ℓ : ℕ) :
+    (n.divisors.filter
+      (fun d => dyadicExpCutoff ℓ < d ∧ d ≤ dyadicExpCutoff (ℓ + 1))).card ≤
+      smoothDivisorCount (dyadicExpCutoff (ℓ + 1)) n := by
+  refine (Finset.card_le_card ?_).trans
+    (card_divisors_filter_le_smoothDivisorCount (dyadicExpCutoff (ℓ + 1)) n)
+  intro d hd
+  simp only [Finset.mem_filter] at hd ⊢
+  exact ⟨hd.1, hd.2.2⟩
+
+/-- Each block is bounded by its left-end weight times the number of divisors supported on
+primes below the right endpoint. -/
+lemma divisorBlockMass_le (a : ℝ) (ha : 0 < a) (ℓ n : ℕ) :
+    divisorBlockMass a ℓ n ≤
+      (smoothDivisorCount (dyadicExpCutoff (ℓ + 1)) n : ℝ) *
+        Real.rpow ((2 : ℝ) ^ ℓ * Real.log 2) (-a) := by
+  let S := n.divisors.filter
+    (fun d => dyadicExpCutoff ℓ < d ∧ d ≤ dyadicExpCutoff (ℓ + 1))
+  have hcut_pos : (0 : ℝ) < dyadicExpCutoff ℓ := by
+    exact_mod_cast (show 0 < dyadicExpCutoff ℓ from
+      lt_of_lt_of_le (by omega) (dyadicExpCutoff_two_le ℓ))
+  have hlogcut_pos : 0 < Real.log (dyadicExpCutoff ℓ : ℝ) :=
+    Real.log_pos (by exact_mod_cast (show 1 < dyadicExpCutoff ℓ by
+      exact lt_of_lt_of_le (by omega) (dyadicExpCutoff_two_le ℓ)))
+  have hterm : ∀ d ∈ S, Real.rpow (Real.log d) (-a) ≤
+      Real.rpow ((2 : ℝ) ^ ℓ * Real.log 2) (-a) := by
+    intro d hd
+    have hcutd : (dyadicExpCutoff ℓ : ℝ) ≤ d := by
+      exact_mod_cast (Finset.mem_filter.mp hd).2.1.le
+    have hdpos : (0 : ℝ) < d := hcut_pos.trans_le hcutd
+    have hlogle : Real.log (dyadicExpCutoff ℓ : ℝ) ≤ Real.log d :=
+      Real.strictMonoOn_log.monotoneOn (Set.mem_Ioi.mpr hcut_pos)
+        (Set.mem_Ioi.mpr hdpos) hcutd
+    rw [log_dyadicExpCutoff] at hlogle
+    exact Real.rpow_le_rpow_of_nonpos
+      (by simpa [log_dyadicExpCutoff] using hlogcut_pos) hlogle (neg_nonpos.mpr ha.le)
+  calc
+    divisorBlockMass a ℓ n = ∑ d ∈ S, Real.rpow (Real.log d) (-a) := rfl
+    _ ≤ ∑ _d ∈ S, Real.rpow ((2 : ℝ) ^ ℓ * Real.log 2) (-a) := by
+      exact Finset.sum_le_sum fun d hd => hterm d hd
+    _ = (S.card : ℝ) * Real.rpow ((2 : ℝ) ^ ℓ * Real.log 2) (-a) := by
+      simp [mul_comm]
+    _ ≤ (smoothDivisorCount (dyadicExpCutoff (ℓ + 1)) n : ℝ) *
+        Real.rpow ((2 : ℝ) ^ ℓ * Real.log 2) (-a) := by
+      exact mul_le_mul_of_nonneg_right (by exact_mod_cast divisorBlock_card_le n ℓ)
+        (Real.rpow_nonneg (by positivity) _)
+
+/-- The already-proved smooth-divisor estimate controls the averaged fractional moment of one
+double-exponential block, uniformly in the averaging cutoff `N`. -/
+lemma divisorBlockMass_rpow_sum_le
+    (a s : ℝ) (ha : 0 < a) (hs : 0 < s) (hs1 : s ≤ 1) (ℓ N : ℕ) :
+    (∑ n ∈ Finset.Icc 1 N, Real.rpow (divisorBlockMass a ℓ n) s) ≤
+      Real.rpow (Real.rpow ((2 : ℝ) ^ ℓ * Real.log 2) (-a)) s *
+        (N * (Real.exp (((2 : ℝ) ^ s - 1) * Erdos67.PrimeEstimates.mertensBound + 1) *
+          Real.rpow (Real.log (dyadicExpCutoff (ℓ + 1) : ℝ)) ((2 : ℝ) ^ s - 1))) := by
+  let w := Real.rpow ((2 : ℝ) ^ ℓ * Real.log 2) (-a)
+  have hw : 0 ≤ w := Real.rpow_nonneg (by positivity) _
+  have hpoint : ∀ n, Real.rpow (divisorBlockMass a ℓ n) s ≤
+      Real.rpow (smoothDivisorCount (dyadicExpCutoff (ℓ + 1)) n : ℝ) s *
+        Real.rpow w s := by
+    intro n
+    calc
+      Real.rpow (divisorBlockMass a ℓ n) s ≤
+          Real.rpow ((smoothDivisorCount (dyadicExpCutoff (ℓ + 1)) n : ℝ) * w) s := by
+        exact Real.rpow_le_rpow (divisorBlockMass_nonneg a ℓ n)
+          (by simpa [w] using divisorBlockMass_le a ha ℓ n) hs.le
+      _ = Real.rpow (smoothDivisorCount (dyadicExpCutoff (ℓ + 1)) n : ℝ) s *
+          Real.rpow w s := by
+        exact Real.mul_rpow (by positivity) hw
+  calc
+    (∑ n ∈ Finset.Icc 1 N, Real.rpow (divisorBlockMass a ℓ n) s) ≤
+        ∑ n ∈ Finset.Icc 1 N,
+          Real.rpow (smoothDivisorCount (dyadicExpCutoff (ℓ + 1)) n : ℝ) s *
+            Real.rpow w s := by
+      exact Finset.sum_le_sum fun n _ => hpoint n
+    _ = Real.rpow w s *
+        ∑ n ∈ Finset.Icc 1 N,
+          Real.rpow (smoothDivisorCount (dyadicExpCutoff (ℓ + 1)) n : ℝ) s := by
+      simp [Finset.mul_sum, mul_comm]
+    _ ≤ Real.rpow w s *
+        (N * (Real.exp (((2 : ℝ) ^ s - 1) * Erdos67.PrimeEstimates.mertensBound + 1) *
+          Real.rpow (Real.log (dyadicExpCutoff (ℓ + 1) : ℝ)) ((2 : ℝ) ^ s - 1))) := by
+      exact mul_le_mul_of_nonneg_left
+        (smoothDivisorCount_rpow_sum_le_log_rpow s hs hs1 (dyadicExpCutoff (ℓ + 1))
+          (dyadicExpCutoff_two_le (ℓ + 1)) N)
+        (Real.rpow_nonneg hw _)
+    _ = _ := by rfl
+
 /-- Uniform vanishing fractional moment of the large-divisor mass.  Choose `0 < s ≤ 1` with
 `q = 2^s - 1 < a s`.  `τ(n_y)^s = 1 * g_y` with `g_y ≥ 0`, so for EVERY `T`,
 `(1/T) Σ_{n ≤ T} τ(n_y)^s ≤ ∏_{p ≤ y}(1 + q/p + 1/(p(p-1))) ≤ A_s (log y)^q`; prime powers are
