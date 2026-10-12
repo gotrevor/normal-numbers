@@ -112,3 +112,59 @@ Next highest-value attack: define the finite collision tuple set with `p ≤ N +
 fixed `(i,j,r,p)` fiber has cardinality at most
 `N^(2k-2) * (N/p + 1)^2` using `card_shifted_multiples_le`, sum the fibers, and combine its
 complement with `global_bernMod_product_le_divisorVarianceMass_of_collisionFree`.
+
+## Lap checkpoint (2026-10-12, finite collision union and count)
+
+Concrete advance in `CoefmassErdosBorweinEndpoint.lean`:
+
+- Proved the sharp single-coordinate residue-class count `card_fin_dvd_add_le` directly for
+  `Fin N`: at most `N / p + 1` values satisfy `p ∣ n + a`.
+- Defined `tupleCollisionFiber` and proved `card_tupleCollisionFiber_le`; a fixed ordered
+  `(i,j,r,p)` collision has at most
+  `(N / p + 1)^2 * N^(2*k-2)` tuples.  The proof identifies the fiber with a dependent
+  `Fintype.piFinset`, so the `2*k-2` unrestricted-coordinate exponent is exact.
+- Defined the full finite `tupleCollisionSet` over distinct ordered coordinates, shifts
+  `r ∈ [1,K]`, and moduli `p ∈ (P₀,N+K]`.  Proved
+  `mem_tupleCollisionSet_iff_not_collisionFree`: the finite union is exactly the complement of
+  `TupleCollisionFree`; the upper cutoff follows from `p ∣ n_j+r > 0`.
+- Summed the fibers with `Finset.card_biUnion_le`.  The capstone
+  `card_tupleCollisionSet_le` gives
+  `(2k)(2k-1)K * Σ_{P₀<p≤N+K} (N/p+1)^2 N^(2k-2)`.
+
+Verification run before this handoff update:
+
+```text
+lake env lean src/NormalNumbers/CoefmassErdosBorweinEndpoint.lean
+```
+
+It succeeds; the only proof-debt warning in the target is the frozen headline.
+
+Repository gate and axiom audit:
+
+```text
+~/personal/bin/lean-green ~/src/nn-eb-endpoint \
+  --target NormalNumbers.CoefmassErdosBorweinEndpoint \
+  --import NormalNumbers.CoefmassErdosBorweinEndpoint \
+  --axioms NormalNumbers.ErdosBorweinEndpoint.card_tupleCollisionSet_le \
+  --axioms NormalNumbers.ErdosBorweinEndpoint.mem_tupleCollisionSet_iff_not_collisionFree
+```
+
+Verdict: `FORMALIZE-TIER GREEN`; both audited declarations use only `propext`,
+`Classical.choice`, and `Quot.sound`.
+
+Current blocker: normalize `card_tupleCollisionSet_le` by `N^(2k)` and prove the real analytic
+tail
+
+```text
+Σ_{P₀ < p ≤ N+K} (1/p + 1/N)^2 ≤ 3/P₀ + 4/N
+```
+
+under the eventual size hypotheses needed by the schedule.  This is now purely the
+cast/division/harmonic-tail layer; the finite event and every fiber count are closed.
+
+Next highest-value attack: prove a real-valued `collisionDensity_le` from
+`card_tupleCollisionSet_le`, then split the square and bound the three elementary sums
+(`Σ p⁻²`, `Σ p⁻¹/N`, and the interval cardinality over `N²`).  Feed that estimate and
+the exact complement theorem into a tuple-average lemma combining
+`global_bernMod_product_le_divisorVarianceMass_of_collisionFree` with the unit bound on the
+collision set.

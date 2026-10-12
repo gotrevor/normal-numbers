@@ -41,6 +41,201 @@ def TupleCollisionFree (a₀ K P₀ k : ℕ) (n : Fin (2 * k) → ℕ) : Prop :=
   ∀ (i j : Fin (2 * k)) (r p : ℕ), i ≠ j → r ∈ Finset.Icc 1 K → P₀ < p →
     p ∣ n i + a₀ → ¬ p ∣ n j + r
 
+/-- A divisibility condition on one coordinate of `Fin N` occupies at most one residue class
+per complete block of length `p`, plus one incomplete block. -/
+theorem card_fin_dvd_add_le (N p a : ℕ) (hp : 0 < p) :
+    ((Finset.univ : Finset (Fin N)).filter (fun x => p ∣ x.val + a)).card ≤ N / p + 1 := by
+  classical
+  refine le_trans (Finset.card_le_card_of_injOn (t := Finset.range (N / p + 1))
+    (fun x : Fin N => x.val / p) ?_ ?_) ?_
+  · intro x hx
+    simp only [Finset.coe_filter, Set.mem_ofPred_eq, Finset.mem_univ, true_and] at hx
+    simpa only [Finset.mem_coe, Finset.mem_range] using
+      Nat.lt_succ_of_le (Nat.div_le_div_right x.isLt.le)
+  · intro x hx y hy hxy
+    simp only [Finset.coe_filter, Set.mem_ofPred_eq, Finset.mem_univ, true_and] at hx hy
+    change x.val / p = y.val / p at hxy
+    apply Fin.ext
+    rcases le_total y.val x.val with hyx | hxyv
+    · have hdvd : p ∣ x.val - y.val := by
+        have := Nat.dvd_sub hx hy
+        simpa only [Nat.add_sub_add_right] using this
+      have hlt : x.val - y.val < p := by
+        have hxmod := Nat.mod_lt x.val hp
+        have hymod := Nat.mod_lt y.val hp
+        have hxsplit := Nat.div_add_mod x.val p
+        have hysplit := Nat.div_add_mod y.val p
+        rw [hxy] at hxsplit
+        omega
+      rcases Nat.eq_zero_or_pos (x.val - y.val) with hzero | hpos
+      · omega
+      · exact absurd (Nat.le_of_dvd hpos hdvd) (by omega)
+    · have hdvd : p ∣ y.val - x.val := by
+        have := Nat.dvd_sub hy hx
+        simpa only [Nat.add_sub_add_right] using this
+      have hlt : y.val - x.val < p := by
+        have hxmod := Nat.mod_lt x.val hp
+        have hymod := Nat.mod_lt y.val hp
+        have hxsplit := Nat.div_add_mod x.val p
+        have hysplit := Nat.div_add_mod y.val p
+        rw [hxy] at hxsplit
+        omega
+      rcases Nat.eq_zero_or_pos (y.val - x.val) with hzero | hpos
+      · omega
+      · exact absurd (Nat.le_of_dvd hpos hdvd) (by omega)
+  · simp
+
+/-- Tuples realizing one fixed collision between two distinct coordinates. -/
+def tupleCollisionFiber (a r p N k : ℕ) (i j : Fin (2 * k)) :
+    Finset (Fin (2 * k) → Fin N) :=
+  Finset.univ.filter fun n => p ∣ (n i).val + a ∧ p ∣ (n j).val + r
+
+/-- A fixed collision fiber has the product density expected from its two independent
+coordinates.  The remaining `2k - 2` coordinates are unrestricted. -/
+theorem card_tupleCollisionFiber_le {a r p N k : ℕ} {i j : Fin (2 * k)}
+    (hij : i ≠ j) (hp : 0 < p) :
+    (tupleCollisionFiber a r p N k i j).card ≤
+      (N / p + 1) ^ 2 * N ^ (2 * k - 2) := by
+  classical
+  let A : Finset (Fin N) := Finset.univ.filter fun x => p ∣ x.val + a
+  let B : Finset (Fin N) := Finset.univ.filter fun x => p ∣ x.val + r
+  let C : Fin (2 * k) → Finset (Fin N) := fun t =>
+    if t = i then A else if t = j then B else Finset.univ
+  have hfiber : tupleCollisionFiber a r p N k i j = Fintype.piFinset C := by
+    ext n
+    simp only [tupleCollisionFiber, Finset.mem_filter, Finset.mem_univ, true_and,
+      Fintype.mem_piFinset]
+    constructor
+    · rintro ⟨hni, hnj⟩ t
+      by_cases hti : t = i
+      · subst t
+        simp only [C, if_pos, A, Finset.mem_filter, Finset.mem_univ, true_and]
+        exact hni
+      · by_cases htj : t = j
+        · subst t
+          simp only [C, if_neg hij.symm, if_pos, B, Finset.mem_filter, Finset.mem_univ,
+            true_and]
+          exact hnj
+        · simp [C, hti, htj]
+    · intro hn
+      constructor
+      · have := hn i
+        simpa only [C, if_pos, A, Finset.mem_filter, Finset.mem_univ, true_and] using this
+      · have := hn j
+        simpa only [C, if_neg hij.symm, if_pos, B, Finset.mem_filter, Finset.mem_univ,
+          true_and] using this
+  have hA : A.card ≤ N / p + 1 := card_fin_dvd_add_le N p a hp
+  have hB : B.card ≤ N / p + 1 := card_fin_dvd_add_le N p r hp
+  have hjmem : j ∈ (Finset.univ : Finset (Fin (2 * k))).erase i :=
+    Finset.mem_erase.mpr ⟨hij.symm, Finset.mem_univ j⟩
+  have hrest :
+      (∏ t ∈ (Finset.univ : Finset (Fin (2 * k))).erase i |>.erase j, (C t).card) =
+        N ^ (2 * k - 2) := by
+    calc
+      (∏ t ∈ (Finset.univ : Finset (Fin (2 * k))).erase i |>.erase j, (C t).card) =
+          ∏ _t ∈ (Finset.univ : Finset (Fin (2 * k))).erase i |>.erase j, N := by
+        apply Finset.prod_congr rfl
+        intro t ht
+        have htj : t ≠ j := (Finset.mem_erase.mp ht).1
+        have hti : t ≠ i := (Finset.mem_erase.mp (Finset.mem_of_mem_erase ht)).1
+        simp [C, hti, htj]
+      _ = N ^ ((Finset.univ : Finset (Fin (2 * k))).erase i |>.erase j).card :=
+        Finset.prod_const N
+      _ = N ^ (2 * k - 2) := by
+        congr 1
+        rw [Finset.card_erase_of_mem hjmem,
+          Finset.card_erase_of_mem (Finset.mem_univ i), Finset.card_univ,
+          Fintype.card_fin]
+        omega
+  have hprod : (∏ t, (C t).card) = A.card * B.card * N ^ (2 * k - 2) := by
+    rw [← Finset.mul_prod_erase (Finset.univ : Finset (Fin (2 * k)))
+      (fun t => (C t).card) (Finset.mem_univ i)]
+    rw [← Finset.mul_prod_erase ((Finset.univ : Finset (Fin (2 * k))).erase i)
+      (fun t => (C t).card) hjmem]
+    rw [hrest]
+    simp [C, hij.symm, mul_assoc]
+  rw [hfiber, Fintype.card_piFinset, hprod]
+  calc
+    A.card * B.card * N ^ (2 * k - 2) ≤
+        (N / p + 1) * (N / p + 1) * N ^ (2 * k - 2) := by
+      exact Nat.mul_le_mul (Nat.mul_le_mul hA hB) le_rfl
+    _ = (N / p + 1) ^ 2 * N ^ (2 * k - 2) := by ring
+
+/-- The finite union of all large-divisor collisions relevant at tuple length `N`. -/
+def tupleCollisionSet (a K P₀ N k : ℕ) : Finset (Fin (2 * k) → Fin N) :=
+  (Finset.univ : Finset (Fin (2 * k))).biUnion fun i =>
+    (Finset.univ.erase i).biUnion fun j =>
+      (Finset.Icc 1 K).biUnion fun r =>
+        (Finset.Ioc P₀ (N + K)).biUnion fun p => tupleCollisionFiber a r p N k i j
+
+/-- Membership in the finite collision union is exactly failure of collision freedom.  The upper
+cutoff `N + K` loses nothing because a collision modulus divides the positive number `n_j + r`. -/
+theorem mem_tupleCollisionSet_iff_not_collisionFree {a K P₀ N k : ℕ}
+    {n : Fin (2 * k) → Fin N} :
+    n ∈ tupleCollisionSet a K P₀ N k ↔
+      ¬ TupleCollisionFree a K P₀ k (fun t => (n t).val) := by
+  classical
+  constructor
+  · intro hn hfree
+    rcases Finset.mem_biUnion.mp hn with ⟨i, hi, hn⟩
+    rcases Finset.mem_biUnion.mp hn with ⟨j, hj, hn⟩
+    rcases Finset.mem_biUnion.mp hn with ⟨r, hr, hn⟩
+    rcases Finset.mem_biUnion.mp hn with ⟨p, hp, hn⟩
+    have hij : i ≠ j := fun h => (Finset.mem_erase.mp hj).1 h.symm
+    rcases Finset.mem_filter.mp hn with ⟨_, hpi, hpj⟩
+    exact (hfree i j r p hij hr (Finset.mem_Ioc.mp hp).1 hpi) hpj
+  · intro hfree
+    rw [TupleCollisionFree] at hfree
+    push Not at hfree
+    rcases hfree with ⟨i, j, r, p, hij, hr, hPp, hpi, hpj⟩
+    rcases Finset.mem_Icc.mp hr with ⟨hr1, hrK⟩
+    have hp_le : p ≤ N + K := by
+      have hp_njr : p ≤ (n j).val + r := Nat.le_of_dvd (by omega) hpj
+      omega
+    rw [tupleCollisionSet]
+    refine Finset.mem_biUnion.mpr ⟨i, Finset.mem_univ i, ?_⟩
+    refine Finset.mem_biUnion.mpr ⟨j, Finset.mem_erase.mpr ⟨hij.symm, Finset.mem_univ j⟩, ?_⟩
+    refine Finset.mem_biUnion.mpr ⟨r, Finset.mem_Icc.mpr ⟨hr1, hrK⟩, ?_⟩
+    refine Finset.mem_biUnion.mpr ⟨p, Finset.mem_Ioc.mpr ⟨hPp, hp_le⟩, ?_⟩
+    exact Finset.mem_filter.mpr ⟨Finset.mem_univ n, hpi, hpj⟩
+
+/-- Union-bound form of the collision count, before collapsing the repeated constant sums. -/
+theorem card_tupleCollisionSet_le_sum (a K P₀ N k : ℕ) :
+    (tupleCollisionSet a K P₀ N k).card ≤
+      ∑ i ∈ (Finset.univ : Finset (Fin (2 * k))),
+        ∑ j ∈ Finset.univ.erase i, ∑ r ∈ Finset.Icc 1 K,
+          ∑ p ∈ Finset.Ioc P₀ (N + K), (N / p + 1) ^ 2 * N ^ (2 * k - 2) := by
+  classical
+  unfold tupleCollisionSet
+  refine Finset.card_biUnion_le.trans ?_
+  apply Finset.sum_le_sum
+  intro i hi
+  refine Finset.card_biUnion_le.trans ?_
+  apply Finset.sum_le_sum
+  intro j hj
+  refine Finset.card_biUnion_le.trans ?_
+  apply Finset.sum_le_sum
+  intro r hr
+  refine Finset.card_biUnion_le.trans ?_
+  apply Finset.sum_le_sum
+  intro p hp
+  exact card_tupleCollisionFiber_le (Finset.ne_of_mem_erase hj).symm
+    (Nat.zero_lt_of_lt (Finset.mem_Ioc.mp hp).1)
+
+/-- The collision union has the paper's combinatorial prefactor: ordered distinct coordinate
+pairs, one of `K` shifts, and the sum of the fixed-modulus fiber bounds. -/
+theorem card_tupleCollisionSet_le (a K P₀ N k : ℕ) :
+    (tupleCollisionSet a K P₀ N k).card ≤
+      (2 * k) * (2 * k - 1) * K *
+        ∑ p ∈ Finset.Ioc P₀ (N + K), (N / p + 1) ^ 2 * N ^ (2 * k - 2) := by
+  refine (card_tupleCollisionSet_le_sum a K P₀ N k).trans_eq ?_
+  classical
+  have hcardK : (Finset.Icc 1 K).card = K := by simp [Nat.card_Icc]
+  simp only [Finset.sum_const, nsmul_eq_mul, Finset.card_erase_of_mem,
+    Finset.mem_univ, Finset.card_univ, Fintype.card_fin, hcardK]
+  norm_cast
+  ac_rfl
+
 /-- On a collision-free tuple, every large divisor anchored at a coordinate is a good modulus at
 that coordinate. -/
 theorem mem_tupleGoodModuli_of_collisionFree {a₀ K P₀ k p : ℕ}
