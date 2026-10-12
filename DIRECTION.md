@@ -5,6 +5,28 @@
 **This is the directive for branch `proof/uniformbad-threshold`.**  The `proof/cantor-bad-normal` section below
 belongs to that branch (its route is parked at the middle-digit obstruction); do not work it here.
 
+- **Operator gate 6 CAUSAL PANEL (Ren for Trevor, 2026-10-12 ~09:20Z) - ONE bounded diagnostic lap, no search.**
+  Trevor funded this over parking (Astra recommended PARK, mail `20261012T090735Z-codex-8b3d4904-*.md`, section 3
+  is the design: read it first).  Question: after one update, are the newly failing pairs GENUINE (the frozen
+  candidate really loses weighted growth there) or CHECKER LOOSENESS (exMin's product-of-bin-sets enclosure admits
+  joint combinations the shared parent/phase cannot reach)?  Not a certificate, not a convergence rate.
+  (1) **Inputs, frozen:** the cost lap's before/after weights (pass-0 PHI/W3 and the post-update PHI + 185,413
+  exceptions in `tmp/costlap/`).  First recompute the 0.28 vs 0.57 failure fractions on IDENTICAL parent pair IDs.
+  (2) **Panel:** ~40 positive-target pairs that pass before and fail after, stratified by state, plus ~40 matched
+  controls that pass both times.  Fix the panel (IDs + seed) in a committed file before evaluating anything.
+  (3) **Per pair, with explicit per-case node and time caps** (e.g. 60 s), record bound/target for:
+  (i) ordinary exact5b0 evaluation; (ii) a tighter evaluation that subdivides the common parent/phase jointly
+  (joint-image enclosures: only combinations reachable from one parent), same semantics otherwise; (iii) concrete
+  admissible parents sampled inside the pair's bins, exact value/target.  Record depth/node-cap hits.
+  (4) **Classify each failing pair:** GENUINE = a concrete admissible parent below target (a witness for this
+  fixed candidate); LOOSE = (ii) passes where (i) failed; UNRESOLVED = neither within caps.  Controls must pass
+  (i) and (ii) (else the tighter evaluator is wrong: stop and record).
+  (5) **Pre-registered reading:** LOOSE >= 60% of the panel -> mechanism found; price a joint-image checker on a
+  slice (time per pair vs exact5b0) and stop.  GENUINE >= 50% -> the update really costs growth for this shape;
+  stop, recommend PARK.  Otherwise -> unresolved; stop, recommend PARK.  Soundness of (ii) is the crux: it must be
+  a valid lower bound for every real parent in the pair (state why in the commit).
+  (6) **Stop at the end either way:** numbers + table to PENDING_WORK, ON-LINE-REQUEST.md with the reading, then
+  `box stuck`.  Long jobs via `run_in_background`; outputs in `tmp/<run-id>/`.
 - **Operator gate 6 COST LAP (Ren for Trevor, 2026-10-12 ~02:55Z) - ONE bounded engineering lap, then stop.
   Binding: Astra's second opinion, mail `~/personal/agent-mail/nn-cstar/20261012T024404Z-codex-58a77b90-*.md`
   (read it whole first).**  Why: budgeted exact5z costs slice E 1552 s per 3% = **14.4 h/pass** (not 11-12 h);
