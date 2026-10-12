@@ -4068,3 +4068,42 @@ Next: `isFresh` Riesz bound, then the classification lemma in Lean (route-decisi
   `kill -0 $(cat tmp/g6run2/pid)`; the wrapper appends `EXIT <code> <time>` to log.txt; watchdog kills > 11 GB.
   Kill rule (pre-registered, unchanged): after 3 completed passes, failing pairs at pass 3 must be < half pass 1 and
   phi zeros not rising; else STOP + Maze row + ON-LINE-REQUEST ({5,6} option).
+
+## Gate 6 COST LAP (2026-10-12): cost gate MISSED; profile says exceptions, not forests, are the cost
+Tool: `scripts/cstar_models/gate6/exact5b0.c` (= exact5z + the items below).  Runs in `tmp/costlap/`.
+Box caveat: load average ~12 from other containers the whole lap; a 15-thread CPU burn ran 2.1x slower than
+1 thread (~7 effective cores), and two identical-config runs differed by 35% (255 s vs 344 s).  All wall
+times are on this contended box; exact5z was re-run under the same conditions as the comparator.
+- (a) **Root acceptance, teeth bite** (`gate6/b0_teeth/`).  Real root (k,a)=(0,0) by exact backward
+  recursion from the 4096 binary level-12 cells (first multiple of 6 with both bases in-model); weight =
+  min joint weight (exception override included) over every bin box containing the cell's signature.
+  exact5z on an all-zero PHI prints `EXACT PRODUCT+EXCEPTION CERTIFICATE`; exact5b0 prints `REJECTED` (exit 3),
+  also in `check`.  Control: 2554/4096 good level-12 cells (independent exact-Fraction recount `good12.py`
+  agrees), RS > 0 at PHI = 2^20 and after the slice update (RS 1.947e21, root (5/9)^12 RS = 1.68e18).
+- (b) **Profile, slice E pass 0** (SIGPROF, z mode = exact5z semantics): **exMin 90.0%**, mk/vgo 6.2%,
+  pairv 3.7%, prune 0.2%.  exMin scanned ~108 empty base-5 bins per call (pass 0 has NO exceptions).
+  Fix: per-state 2-D prefix count of exceptions, O(1) empty check.  Slice E 1836 s (exact5z) -> 417 s.
+- (c) **B0 state ownership** (B0=1, B0SPLIT=P interleaved parts per state, B0ORDER = costliest states
+  first): slice E 308 s (P=1; straggler state 13 = 307 s, states range 19-307 s), 255 s (P=6), 287-344 s
+  (other configs, within noise).  CPU 1049-1071 s against 1480 s for z mode with the index: B0 saves ~29% CPU.
+  Remaining split ~50% mk/vgo, ~50% pairv.
+- (d) **Equivalence**: slice E sorted failure records (522,770, md5 7ef85ef3...) byte-identical to exact5z for
+  every exact5b0 variant (ZX, BX, BS6, BL12, BL6, BM6); pair evals 9,820,243,586 everywhere.  Teeth instance
+  2 passes: iter lines, phi.0, ex.0 identical, z and B0.
+- **Post-update snapshot (the binding number)**: slice-E records -> update (SLICEUPD=1): 185,413 exceptions,
+  6,113 PHI lowered.  Pass 1 on a 0.3% slice (NC=5000, SLICE=15): with only the empty check, exMin was 98.7% and
+  units of 0-1 items took 150-470 s (about 1000x pass 0 per item).  A base-3 row index (exceptions per
+  (state, r3) sorted by value; first hit inside the base-5 met set = the min) gives **528 s for 0.3% = ~49 h/pass**,
+  exMin still 79.6%; pair evals per item are ~17x pass 0 and the slice failure fraction rose 0.28 -> 0.57.
+  Row index vs the original scan on the snapshot (NC=50000 SLICE=3): 3,041 records identical, 265 s -> 20 s.
+- **Gate verdict: MISSED.**  Pass 0: 255-344 s per 3% = 2.4-3.2 h/pass contended (target <= 216 s, <= 2 h).
+  Post-update pass: ~49 h contended.  Peak memory fine (<= 5.3 GB).  Not launched: any multi-pass search.
+- Metrics now emitted per pass (`metrics.txt`): positive-target pairs, failure fraction, exception zeros,
+  phi mass ratio, root RS + root weight + normalized max joint weight.
+- Mechanism behind the post-update blowup (observation, not proved): an exception at 0.99 v enters the
+  min over every leaf whose met bin set contains it, so it lowers the neighbours' bounds.  Refinement grows
+  (17x pair evals), and so do failures (0.28 -> 0.57 on the slice).  The product+exception shape seems to fight
+  its own update.
+- Next, if funded: (1) exMin as a precomputed per-row 2-D range-min (or per (row, l) sorted by y), aiming
+  for exMin under 20% of CPU; (2) re-price post-update; (3) address the poisoning itself: exceptions keyed
+  to the met set so they cannot enter neighbouring leaves, or a joint lookup/partition shape (Astra section 3).

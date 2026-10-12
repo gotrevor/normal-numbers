@@ -18,6 +18,7 @@
 //   (B0=1): a work unit is one parent state s (optionally split, B0SPLIT=P parts per state, interleaved q3), its
 //   worker keeps only state s's base-5 forest; unit checkpoints pass<it>/u<s>_<p>.txt carry an explicit unit header;
 //   (d) per-pass metrics: positive-target pairs, failure fraction, exception zeros, phi mass ratio, root weight;
+//   (f) exception-emptiness index in exMin (NOEXIDX=1 disables; results identical);
 //   (e) SLICEUPD=1: a slice also runs the update + checkpoint (post-update snapshot for pricing exMin).
 typedef unsigned long size_t;
 struct itimerval { long a, b, c, d; }; int setitimer(int, const struct itimerval*, struct itimerval*); void (*signal(int, void(*)(int)))(int);
@@ -26,7 +27,12 @@ static const char *PHNAME[PH_N] = {"other", "mk/vgo", "pairv-own", "exMin", "pru
 static __thread volatile int phase; static long PHS[PH_N];
 static void onprof(int sig) { (void)sig; __sync_fetch_and_add(&PHS[phase], 1); }
 static __thread long nmk, nexmin, nexscan;
-int printf(const char*, ...); int fflush(void*); void *malloc(size_t); void *calloc(size_t, size_t); void free(void*);
+static long GPAIRS, GEXMIN, GEXSCAN;   // global progress counters for the periodic dump (PROFDUMP=seconds)
+unsigned sleep(unsigned); int printf(const char*, ...); int fflush(void*);
+static void *profdump(void *pp) { int sec = *(int*)pp; for (;;) { sleep(sec); long tot = 0; for (int t = 0; t < PH_N; t++) tot += PHS[t];
+    printf("PROFDUMP %ld samples:", tot); for (int t = 0; t < PH_N; t++) printf(" %s %.1f%%", PHNAME[t], tot ? 100.0 * PHS[t] / tot : 0.0);
+    printf(" | pairv %ld exMin(nonempty) %ld scan %ld\n", GPAIRS, GEXMIN, GEXSCAN); fflush(0); } return 0; }
+int printf(const char*, ...); int fflush(void*); void *malloc(size_t); void *calloc(size_t, size_t); void free(void*); void qsort(void*, size_t, size_t, int(*)(const void*, const void*));
 int atoi(const char*); int strcmp(const char*, const char*); double pow(double,double); double log2(double); double round(double); double fmax(double,double);
 long long strtoll(const char*, char**, int); char *getenv(const char*);
 typedef void FILE; FILE *fopen(const char*, const char*); char *fgets(char*, int, FILE*); int fprintf(FILE*, const char*, ...); int fclose(FILE*); void exit(int);
@@ -145,11 +151,50 @@ static Ex **EX; static int *EXN;   // per q5: exceptions (r3 within the state, v
 static ll exLookup(long q5, int r3) { Ex *a = EX[q5]; int lo = 0, hi = EXN[q5] - 1;
   while (lo <= hi) { int m = (lo + hi) / 2; if (a[m].r3 == r3) return a[m].e; if (a[m].r3 < r3) lo = m + 1; else hi = m - 1; } return -1; }
 // min exception value over the met product set of one path (or -1 if none)
+// exception-emptiness index (frozen within a pass): EXP[sl][(y)*(M5+1)+l] = 2-D prefix count of exceptions over
+// base-5 bins (y' < y, l' < l) of state sl.  exMin returns -1 at once when the met bin set holds no exception
+// (identical result to the scan; pass 0 has no exceptions and the scan was 90% of CPU on slice E).
+static int *EXP; static int NOEXIDX;
+static void exIndex(void) { long W = (long)(N5 + 1) * (M5 + 1); if (!EXP) EXP = malloc(S * W * sizeof(int));
+  for (int sl = 0; sl < S; sl++) { int *P = EXP + sl * W;
+    for (int y = 0; y <= N5; y++) for (int l = 0; l <= M5; l++) { long v = 0;
+      if (y && l) v = EXN[(long)sl * NB5 + (y - 1) * M5 + (l - 1)] + P[(y - 1) * (M5 + 1) + l] + P[y * (M5 + 1) + l - 1] - P[(y - 1) * (M5 + 1) + l - 1];
+      P[y * (M5 + 1) + l] = (int)v; } } }
+static int exCount(int sl, int y0, int y1, int l0, int l1) {   // y0..y1 within [0, N5), l0..l1 within [0, M5)
+  const int *P = EXP + (long)sl * (N5 + 1) * (M5 + 1); int W = M5 + 1;
+  return P[(y1 + 1) * W + l1 + 1] - P[y0 * W + l1 + 1] - P[(y1 + 1) * W + l0] + P[y0 * W + l0]; }
+static int exAny(int sl, const Lf *b) {
+  int ia = b->ia % N5, n = b->ib - b->ia + 1; if (n >= N5) return exCount(sl, 0, N5 - 1, b->ja, b->jb) > 0;
+  int ib = ia + n - 1; if (ib < N5) return exCount(sl, ia, ib, b->ja, b->jb) > 0;
+  return exCount(sl, ia, N5 - 1, b->ja, b->jb) + exCount(sl, 0, ib - N5, b->ja, b->jb) > 0; }
+// row index: for each (state, r3) the exceptions of that base-3 bin, sorted by value ascending, as (y5, l5, e).
+// exMinRow walks the base-3 met set and returns the first entry inside the base-5 met set of each row (= its min).
+typedef struct { short y, l; ll e; } RX;
+static long *RXS; static RX *RXA;   // row r = sl * NB3 + r3 owns RXA[RXS[r] .. RXS[r+1])
+static int cmprx(const void *x, const void *y) { ll a = ((const RX*)x)->e, b = ((const RX*)y)->e; return a < b ? -1 : a > b; }
+static void rowIndex(void) { free(RXS); free(RXA); RXS = calloc(S * NB3 + 1, sizeof(long)); long tot = 0;
+  for (long q = 0; q < S * NB5; q++) for (int t = 0; t < EXN[q]; t++) { RXS[(q / NB5) * NB3 + EX[q][t].r3 + 1]++; tot++; }
+  for (long r = 0; r < S * NB3; r++) RXS[r + 1] += RXS[r];
+  RXA = malloc((tot + 1) * sizeof(RX)); long *pos = malloc(S * NB3 * sizeof(long)); for (long r = 0; r < S * NB3; r++) pos[r] = RXS[r];
+  for (long q = 0; q < S * NB5; q++) for (int t = 0; t < EXN[q]; t++) { long r = (q / NB5) * NB3 + EX[q][t].r3; RX x = { (short)((q % NB5) / M5), (short)(q % M5), EX[q][t].e }; RXA[pos[r]++] = x; }
+  for (long r = 0; r < S * NB3; r++) if (RXS[r + 1] - RXS[r] > 1) qsort(RXA + RXS[r], RXS[r + 1] - RXS[r], sizeof(RX), cmprx);
+  free(pos); }
+static Z exMinRow(int sl, const Lf *u, const Lf *b) {
+  Z m = -1; int ny = b->ib - b->ia + 1; int y0 = b->ia % N5;
+  for (int x = u->ia; x <= u->ib; x++) { long rb = (long)sl * NB3 + (x % N3) * M3;
+    for (int j = u->ja; j <= u->jb; j++) { long r = rb + j; for (long t = RXS[r]; t < RXS[r + 1]; t++) { RX *e = &RXA[t];
+        if (m >= 0 && e->e >= m) break;
+        if (e->l < b->ja || e->l > b->jb) continue; if (ny < N5 && ((e->y - y0) % N5 + N5) % N5 >= ny) continue;
+        m = e->e; break; } } }
+  return m; }
 static Z exMin(int sl, const Lf *u, const Lf *b) {
-  Z m = -1; int ph = phase; phase = PH_EX; nexmin++;
+  if (!NOEXIDX && !exAny(sl, b)) return -1;
+  if (!NOEXIDX && (long)(u->ib - u->ia + 1) * (u->jb - u->ja + 1) <= (long)(b->ib - b->ia + 1) * (b->jb - b->ja + 1)) {
+    int ph = phase; phase = PH_EX; nexmin++; Z m = exMinRow(sl, u, b); phase = ph; return m; }
+  Z m = -1; int ph = phase; phase = PH_EX; nexmin++; if (!(nexmin & 1023)) __sync_fetch_and_add(&GEXMIN, 1024);
   for (int y = b->ia; y <= b->ib; y++) for (int l = b->ja; l <= b->jb; l++) {
     long q5 = (long)sl * NB5 + (y % N5) * M5 + l; int n = EXN[q5]; nexscan++; if (!n) continue;
-    Ex *a = EX[q5]; nexscan += n;
+    Ex *a = EX[q5]; nexscan += n; if (!(nexscan & 0xFFFFF)) __sync_fetch_and_add(&GEXSCAN, 1);
     for (int t = 0; t < n; t++) { int i3 = a[t].r3 / M3, j3 = a[t].r3 % M3;
       int di = ((i3 - u->ia) % N3 + N3) % N3;
       if (di <= u->ib - u->ia && j3 >= u->ja && j3 <= u->jb) if (m < 0 || a[t].e < m) m = a[t].e; } }
@@ -160,7 +205,7 @@ static Z pairv0(int s, Node *a, Node *b, Z target, int lvl);
 static Z pairv(int s, Node *a, Node *b, Z target, int lvl) { int ph = phase; phase = PH_PAIR; Z r = pairv0(s, a, b, target, lvl); phase = ph; return r; }
 static Z pairv0(int s, Node *a, Node *b, Z target, int lvl) {
   static long NB5_; (void)NB5_;
-  pairs++;
+  pairs++; if (!(pairs & 1023)) __sync_fetch_and_add(&GPAIRS, 1024);
   Z v = 0; for (int p = 0; p < NP; p++) { if (!a->v[p].w || !b->v[p].w) continue;
     Z t = (Z)a->v[p].w * b->v[p].w; Z e = exMin(LS[s][p], &a->v[p], &b->v[p]); if (e >= 0 && e < t) t = e; v += t; }
   if ((Z)DEN * v >= (Z)NUM * target) return v;
@@ -183,7 +228,7 @@ typedef struct { long lo, hi, fail, pairs; double worst; Rec *rec; long nrec, ca
 // in-pass chunks: chunk k = { q3 : q3 % NC == k } (interleaved, so any prefix of chunks samples every state).
 typedef struct { int done; long fail, pairs, ptgt; double worst; Rec *rec; long nrec; } Chunk;
 static int NC = 100, NCRUN; static Chunk *CH; static long NEXTC, NDONE; static char PASSDIR[1024]; static double T0; static long NODECAP, INCAP; static int PKEEP;
-static int B0, B0P = 1, NU, NUR;   // B0: unit u = s * B0P + p (state s, part p); z mode: unit = chunk, NU = NC, NUR = NCRUN
+static int B0, B0P = 1, NU, NUR; static long *UORD;   // UORD: dispatch order of units (B0ORDER = states, costliest first)   // B0: unit u = s * B0P + p (state s, part p); z mode: unit = chunk, NU = NC, NUR = NCRUN
 double now(void);
 static long vmkb(const char *key) { FILE *f = fopen("/proc/self/status", "r"); char line[256]; long v = -1; int L = 0; while (key[L]) L++;
   while (f && fgets(line, 256, f)) { int m = 1; for (int i = 0; i < L; i++) if (line[i] != key[i]) { m = 0; break; } if (m) { sscanf(line + L, "%ld", &v); break; } }
@@ -227,7 +272,7 @@ static void *worker(void *pp) {
     if (j->lo == 0) { printf("  classes: %ld base-5 bins share a representative\n", nclean); fflush(0); } }
   Z *vcache = malloc(NB5 * sizeof(Z)); char *vok = malloc(NB5);
   long nq = 0;
-  for (;;) { long k = __sync_fetch_and_add(&NEXTC, 1); if (k >= NUR) break; if (CH[k].done) continue;
+  for (;;) { long k = __sync_fetch_and_add(&NEXTC, 1); if (k >= NUR) break; if (UORD) k = UORD[k]; if (CH[k].done) continue;
    int us = B0 ? (int)(k / B0P) : 0, up = B0 ? (int)(k % B0P) : 0; long lo5 = 0, hi5 = S * NB5;
    if (B0) { lo5 = us * NB5; hi5 = lo5 + NB5;
      if (us != curS) { if (curS >= 0) for (long q5 = curS * NB5; q5 < (curS + 1) * NB5; q5++) { freeTree(T5[q5]); T5[q5] = 0; }
@@ -386,8 +431,13 @@ int main(int argc, char **argv) {
   CKPT = getenv("CKPT"); int it0 = 0;
   if (getenv("NC")) NC = atoi(getenv("NC"));
   NCRUN = getenv("SLICE") ? atoi(getenv("SLICE")) : NC; B0 = getenv("B0") != 0; if (getenv("B0SPLIT")) B0P = atoi(getenv("B0SPLIT"));
+  if (B0 && getenv("B0ORDER")) { UORD = malloc(S * B0P * sizeof(long)); char *p = getenv("B0ORDER"); int seen[S] = {0}, n = 0;
+    while (*p) { int st = (int)strtoll(p, &p, 10); if (st < 0 || st >= S || seen[st]) { printf("bad B0ORDER\n"); return 1; } seen[st] = 1;
+      for (int q = 0; q < B0P; q++) UORD[n++] = (long)st * B0P + q; if (*p == ',') p++; }
+    for (int st = 0; st < S; st++) if (!seen[st]) for (int q = 0; q < B0P; q++) UORD[n++] = (long)st * B0P + q; }
   NU = B0 ? S * B0P : NC; NUR = B0 ? NU : NCRUN; int SLICED = NCRUN < NC, SLICEUPD = getenv("SLICEUPD") != 0;
   if (getenv("PROF")) { struct itimerval it = {0, 1000, 0, 1000}; signal(27, onprof); setitimer(2, &it, 0); }
+  static int PDS; if (getenv("PROFDUMP")) { PDS = atoi(getenv("PROFDUMP")); pthread_t pt; pthread_create(&pt, 0, profdump, &PDS); }
   printf("mode %s, units %d (run %d), slice %d/%d chunks\n", B0 ? "B0 state ownership" : "z interleaved chunks", NU, NUR, NCRUN, NC);
   if (CHECK) { char rm[512]; Z RS = rootCheck(rm, 512); printf("%s\n", rm); if (RS <= 0) { printf("CHECK REJECTED: root weight 0 (an all-zero or rootless candidate is not a certificate)\n"); return 3; } }
   NODECAP = getenv("NODECAP") ? atol(getenv("NODECAP")) : 200000; PKEEP = getenv("PKEEP") ? atoi(getenv("PKEEP")) : 4; INCAP = getenv("INCAP") ? atol(getenv("INCAP")) : 2 * NODECAP;
@@ -402,7 +452,7 @@ int main(int argc, char **argv) {
     printf("RESUMED from %s pass %d: exceptions %ld, phi checksum %016llx\n", R, last, ne, phisum()); fflush(0); }
   noresume:
   for (int it = it0; it < it0 + IT; it++) {
-    pthread_t th[64]; Job jb[64]; NEXTC = 0; NDONE = 0; T0 = now();
+    pthread_t th[64]; Job jb[64]; NEXTC = 0; NDONE = 0; T0 = now(); NOEXIDX = getenv("NOEXIDX") != 0; exIndex(); rowIndex();
     CH = calloc(NU, sizeof(Chunk)); PASSDIR[0] = 0; for (int t = 0; t < PH_N; t++) PHS[t] = 0;
     double ph0 = 0; long phi0s = 0; (void)ph0; { for (long q = 0; q < S * NB5; q++) phi0s += PHI[q]; }
     if (CKPT) { snprintf(PASSDIR, 1024, "%s/pass%d", CKPT, it); mkdir(PASSDIR, 0755); long nl = 0;
