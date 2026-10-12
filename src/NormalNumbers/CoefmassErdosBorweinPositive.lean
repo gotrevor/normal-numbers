@@ -55,6 +55,111 @@ def HardyRamanujanLowerTail : Prop :=
         (n.primeFactors.card : ℝ) ≤ α * Real.log (Real.log N))).card : ℝ) ≤
           C * N * Real.rpow (Real.log N) (-q)
 
+/-! ### The shifted Hardy--Ramanujan input -/
+
+/-- The Hardy--Ramanujan lower-tail exponent is positive strictly below its mean. -/
+theorem hardyRamanujanExponent_pos {α : ℝ} (hα0 : 0 < α) (hα1 : α < 1) :
+    0 < 1 - α + α * Real.log α := by
+  nlinarith [Real.self_sub_one_lt_mul_log hα0.le hα1.ne]
+
+/-- Choose the two strict margins used by the moment argument: a Hardy--Ramanujan exponent `q`
+and a divisor-mass exponent `α log 2 - a`. -/
+theorem exists_hardyRamanujan_parameters (a : ℝ) (ha0 : 0 ≤ a) (ha : a < Real.log 2) :
+    ∃ α q : ℝ, 0 < α ∧ α < 1 ∧ 0 < q ∧
+      q < 1 - α + α * Real.log α ∧ 0 < α * Real.log 2 - a := by
+  have hlog2 : 0 < Real.log 2 := Real.log_pos (by norm_num)
+  let α := (a / Real.log 2 + 1) / 2
+  have hdiv0 : 0 ≤ a / Real.log 2 := div_nonneg ha0 hlog2.le
+  have hdiv1 : a / Real.log 2 < 1 := (div_lt_one hlog2).2 ha
+  have hα0 : 0 < α := by dsimp [α]; linarith
+  have hα1 : α < 1 := by dsimp [α]; linarith
+  have hgap : 0 < α * Real.log 2 - a := by
+    dsimp [α]
+    field_simp
+    linarith
+  let Q := 1 - α + α * Real.log α
+  have hQ : 0 < Q := hardyRamanujanExponent_pos hα0 hα1
+  refine ⟨α, Q / 2, hα0, hα1, by positivity, ?_, hgap⟩
+  dsimp [Q]
+  linarith
+
+/-- Hardy--Ramanujan remains valid for the zero-based shifted coordinates used by the Weyl
+tuple expansion.  Enlarging the endpoint from `N` to `N + u` costs only the fixed factor
+`u + 1`; the negative logarithmic power improves when the endpoint is enlarged. -/
+theorem shifted_hardyRamanujanLowerTail (hHR : HardyRamanujanLowerTail)
+    (u : ℕ) (hu : 1 ≤ u) (α q : ℝ) (hα0 : 0 < α) (hα1 : α < 1)
+    (hq0 : 0 < q) (hq : q < 1 - α + α * Real.log α) :
+    ∃ C : ℝ, 0 < C ∧ ∀ N : ℕ, 3 ≤ N →
+      (((Finset.univ : Finset (Fin N)).filter (fun n =>
+        ((n.val + u).primeFactors.card : ℝ) ≤
+          α * Real.log (Real.log ((N + u : ℕ) : ℝ)))).card : ℝ) ≤
+        C * N * Real.rpow (Real.log N) (-q) := by
+  obtain ⟨C, hC, hbound⟩ := hHR α hα0 hα1 q hq0 hq
+  refine ⟨C * (u + 1), mul_pos hC (by positivity), ?_⟩
+  intro N hN
+  let A := (Finset.univ : Finset (Fin N)).filter (fun n =>
+    ((n.val + u).primeFactors.card : ℝ) ≤
+      α * Real.log (Real.log ((N + u : ℕ) : ℝ)))
+  let B := (Finset.Icc 1 (N + u)).filter (fun n =>
+    (n.primeFactors.card : ℝ) ≤
+      α * Real.log (Real.log ((N + u : ℕ) : ℝ)))
+  have hinj : Function.Injective (fun n : Fin N => n.val + u) := by
+    intro x y hxy
+    exact Fin.ext (Nat.add_right_cancel hxy)
+  have himage : A.image (fun n => n.val + u) ⊆ B := by
+    intro y hy
+    rcases Finset.mem_image.mp hy with ⟨n, hn, rfl⟩
+    rcases Finset.mem_filter.mp hn with ⟨_, hnpoor⟩
+    exact Finset.mem_filter.mpr ⟨Finset.mem_Icc.mpr ⟨by omega, by omega⟩, hnpoor⟩
+  have hcard : (A.card : ℝ) ≤ (B.card : ℝ) := by
+    exact_mod_cast (show A.card ≤ B.card by
+      rw [← Finset.card_image_of_injective A hinj]
+      exact Finset.card_le_card himage)
+  have hNu : ((N + u : ℕ) : ℝ) ≤ ((u + 1 : ℕ) : ℝ) * N := by
+    exact_mod_cast (show N + u ≤ (u + 1) * N by
+      calc
+        N + u ≤ N + u * N := Nat.add_le_add_left (Nat.le_mul_of_pos_right u (by omega)) N
+        _ = (u + 1) * N := by ring)
+  have hlogN : 0 < Real.log (N : ℝ) := Real.log_pos (by exact_mod_cast (by omega : 1 < N))
+  have hlogle : Real.log (N : ℝ) ≤ Real.log (N + u : ℕ) := by
+    apply Real.log_le_log (by positivity)
+    exact_mod_cast (Nat.le_add_right N u)
+  have hrpow : Real.rpow (Real.log (N + u : ℕ)) (-q) ≤
+      Real.rpow (Real.log N) (-q) :=
+    Real.rpow_le_rpow_of_nonpos hlogN hlogle (by linarith)
+  change (A.card : ℝ) ≤ _
+  calc
+    (A.card : ℝ) ≤ (B.card : ℝ) := hcard
+    _ ≤ C * ((N + u : ℕ) : ℝ) * Real.rpow (Real.log (N + u : ℕ)) (-q) := by
+      simpa only [B] using hbound (N + u) (by omega)
+    _ ≤ C * (((u + 1 : ℕ) : ℝ) * N) *
+        Real.rpow (Real.log (N + u : ℕ)) (-q) := by
+      have hrpow0 : 0 ≤ Real.rpow (Real.log (N + u : ℕ)) (-q) :=
+        Real.rpow_nonneg (by positivity) _
+      simpa only [mul_assoc] using mul_le_mul_of_nonneg_right
+        (mul_le_mul_of_nonneg_left hNu hC.le) hrpow0
+    _ ≤ C * (((u + 1 : ℕ) : ℝ) * N) * Real.rpow (Real.log N) (-q) := by
+      exact mul_le_mul_of_nonneg_left hrpow (mul_nonneg hC.le (by positivity))
+    _ = (C * (u + 1)) * N * Real.rpow (Real.log N) (-q) := by
+      push_cast
+      ring
+
+/-- Outside the Hardy--Ramanujan exceptional set, the squarefree-divisor supply has the
+advertised logarithmic power.  This is the exact real-power conversion used before subtracting
+the fixed cutoff and the collision loss. -/
+theorem log_rpow_lt_two_pow_primeFactors (M n : ℕ) (α : ℝ) (hM : 3 ≤ M)
+    (hrich : α * Real.log (Real.log M) < (n.primeFactors.card : ℝ)) :
+    Real.rpow (Real.log M) (α * Real.log 2) <
+      ((2 ^ n.primeFactors.card : ℕ) : ℝ) := by
+  have hlogM : 0 < Real.log (M : ℝ) := Real.log_pos (by exact_mod_cast (by omega : 1 < M))
+  have hlog2 : 0 < Real.log 2 := Real.log_pos (by norm_num)
+  have hscaled := mul_lt_mul_of_pos_right hrich hlog2
+  rw [Nat.cast_pow, Real.rpow_eq_pow, ← Real.rpow_natCast]
+  rw [Real.rpow_def_of_pos hlogM,
+    Real.rpow_def_of_pos (x := ((2 : ℕ) : ℝ)) (by norm_num)]
+  apply Real.exp_lt_exp.mpr
+  simpa [mul_comm, mul_left_comm, mul_assoc] using hscaled
+
 /-! ### Shifted common-divisor reduction
 
 The four lemmas below isolate the analytic content of `shifted_gcd_divisor_moment`: once the

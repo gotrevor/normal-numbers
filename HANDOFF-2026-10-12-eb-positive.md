@@ -68,17 +68,24 @@ Expect step 4 to be the longest.  Splitting it into named leaves is progress.
 
 ## Status
 
-- Lap 8 collision-moment checkpoint (`research/eb-positive`): the scoped file still has exactly
-  two frozen proof debts.  The new load-bearing theorem `tupleBadModuli_moment` proves that, for
-  every fixed positive `R` and anchor coordinate `i`, the `R`-th power of the tuple collision loss
-  sums to `O(N^(2k))` over all zero-based `2k`-tuples.  The proof chain is fully exposed:
-  `piSplitTwoEquiv` and `sum_pair_over_pi` factor out the `2k-2` inactive coordinates;
-  `shifted_gcd_divisor_moment_fin` ports the earlier one-based shifted-gcd theorem to `Fin N`;
-  `shifted_gcd_divisor_moment_over_tuples` supplies each `(j,r)` summand; and
-  `card_tupleBadModuli_pow_le` applies Jensen twice to the finite collision pool before the final
-  sum.  This discharges the high-moment/Markov input requested by lap 7.  No frozen statement or
-  copied definition changed.
-- Exact verification run (lap 8):
+- Lap 9 reflection / shifted Hardy--Ramanujan checkpoint (`research/eb-positive`): the scoped file
+  still has exactly two frozen proof debts.  The analytic input now has the exact interface needed
+  by zero-based tuple coordinates.  `hardyRamanujanExponent_pos` proves positivity of the
+  lower-tail rate, `exists_hardyRamanujan_parameters` simultaneously chooses
+  `a / log 2 < α < 1` and an admissible positive tail exponent, and
+  `shifted_hardyRamanujanLowerTail` bounds the poor coordinates `n : Fin N` after the shift
+  `n.val + u`.  Its proof injects into the one-based interval through endpoint `N + u` and absorbs
+  the enlargement into the fixed factor `u + 1`; monotonicity of the negative log power loses
+  nothing.  `log_rpow_lt_two_pow_primeFactors` then converts the complementary rich-coordinate
+  inequality into the required squarefree-divisor supply.  No frozen statement or copied
+  definition changed.
+- Reflection audit: the reviewed private source note and frozen packet still agree verbatim with
+  this module's assumptions and headline statements.  The tuple-dependent finite good-modulus set
+  is selected before the independent Bernoulli factors are split, so the existing architecture has
+  no hidden independence mismatch.  The reusable slow-schedule/interpolation machinery is already
+  present elsewhere in the repository; the route-decisive open work is still the finite tuple
+  exceptional-set decomposition, not the downstream normality wrapper.
+- Exact verification run (lap 9):
   - Shared-store check: `/Users/gotrevor/personal/bin/lake-base status
     leanprover/lean4:v4.33.1` and `/Users/gotrevor/personal/bin/lake-base status v4.33.1` both
     reported that no shared store exists; no relink is available.
@@ -88,24 +95,26 @@ Expect step 4 to be the longest.  Splitting it into named leaves is progress.
   - `/Users/gotrevor/personal/bin/lean-green /Users/gotrevor/src/nn-eb-positive --target
     NormalNumbers.CoefmassErdosBorweinPositive --import
     NormalNumbers.CoefmassErdosBorweinPositive --axioms
-    NormalNumbers.ErdosBorweinPositive.tupleBadModuli_moment`
+    NormalNumbers.ErdosBorweinPositive.shifted_hardyRamanujanLowerTail`
     (`FORMALIZE-TIER GREEN`, 8719 jobs; theorem axioms exactly `propext`, `Classical.choice`, and
     `Quot.sound`).
-- Previous checkpoints: lap 7 proved the exact deterministic tuple-product contraction; lap 6
-  proved the complete one-anchor retained-variance mass lower bound; lap 5 proved the full-tuple
-  good-modulus cosine gap; lap 4 built the collision-modulus and spectral-product bridges; lap 3
-  proved `shifted_gcd_divisor_moment`; lap 2 proved its complete finite shifted-gcd reduction; lap
-  1 proved `ebMoment_le_tupleAvg`, closing the infinite random-series side.
-- Current blocker: `eb_weyl_moment_decay`.  The phase geometry and one-anchor retained mass are
-  now closed through deterministic tuple-product contraction and the required arbitrary collision
-  moments.  Its remaining content is the Hardy--Ramanujan parameter choice and exceptional-set
-  decomposition.  The final Borel--Cantelli/interpolation theorem remains downstream.
-- Next highest-value attack: port `hHR` to the shifted zero-based anchor count
-  `n ↦ n + (e+1)`, with a harmless enlarged endpoint and finite boundary term, then formalize the
-  split of the tuple average into (i) all coordinates poor in prime-factor mass, (ii) some rich
-  anchor with collision loss above `(log N)^η`, controlled by `tupleBadModuli_moment`, and (iii)
-  the exponentially contracted complement, controlled by `tupleGoodModuli_bernMod_product_le`.
-  After choosing `α,q,k,η,R`, this should close `eb_weyl_moment_decay`.
+- Previous checkpoints: lap 8 proved arbitrary moments of the tuple collision loss; lap 7 proved
+  the exact deterministic tuple-product contraction; lap 6 proved the complete one-anchor
+  retained-variance mass lower bound; lap 5 proved the full-tuple good-modulus cosine gap; lap 4
+  built the collision-modulus and spectral-product bridges; lap 3 proved
+  `shifted_gcd_divisor_moment`; lap 2 proved its complete finite shifted-gcd reduction; lap 1
+  proved `ebMoment_le_tupleAvg`, closing the infinite random-series side.
+- Current blocker: `eb_weyl_moment_decay`.  Phase geometry, retained mass, arbitrary collision
+  moments, and the shifted Hardy--Ramanujan bound are now available.  Its remaining content is the
+  quantitative finite tuple split and assembly of those proved inputs.  The final
+  Borel--Cantelli/interpolation theorem remains downstream.
+- Next highest-value attack: define the poor-coordinate finset at endpoint `N + (e+1)` and prove
+  the exact all-poor tuple count (or the equivalent iterated-sum bound).  Partition every remaining
+  tuple by a rich anchor, union-bound anchors whose `tupleBadModuli.card` exceeds
+  `(log N)^η` using `tupleBadModuli_moment`, and apply
+  `tupleGoodModuli_bernMod_product_le` on the complement.  Choose `k`, `η`, and `R` so both the
+  all-poor exponent `2kq` and collision exponent `ηR` exceed `2`; absorb the exponentially small
+  third term into the same log power.  This should close `eb_weyl_moment_decay`.
 
 ## Findings
 
