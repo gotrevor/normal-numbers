@@ -1130,6 +1130,163 @@ theorem tupleBadModuli_moment (a₀ K P₀ k R : ℕ) (hk : 1 ≤ k)
       gcongr
       linarith
 
+/-! ### The two finite exceptional sets
+
+The moment proof partitions the tuple box into tuples all of whose coordinates lie in the
+Hardy--Ramanujan lower tail, tuples with a rich coordinate but excessive collision loss, and the
+remaining contracting tuples.  The next lemmas make the first two pieces exact finite objects.
+-/
+
+/-- The zero-based coordinates whose shifted prime-factor count lies in the Hardy--Ramanujan
+lower tail at endpoint `N + u`. -/
+noncomputable def poorCoordinates (u N : ℕ) (α : ℝ) : Finset (Fin N) :=
+  (Finset.univ : Finset (Fin N)).filter fun n =>
+    ((n.val + u).primeFactors.card : ℝ) ≤
+      α * Real.log (Real.log ((N + u : ℕ) : ℝ))
+
+/-- Tuples all of whose coordinates are in the shifted Hardy--Ramanujan lower tail. -/
+noncomputable def poorTuples (u N k : ℕ) (α : ℝ) : Finset (Fin (2 * k) → Fin N) :=
+  Fintype.piFinset fun _ : Fin (2 * k) ↦ poorCoordinates u N α
+
+@[simp] theorem mem_poorTuples {u N k : ℕ} {α : ℝ}
+    {n : Fin (2 * k) → Fin N} :
+    n ∈ poorTuples u N k α ↔ ∀ i, n i ∈ poorCoordinates u N α := by
+  simp [poorTuples]
+
+/-- Independence of the tuple coordinates appears combinatorially as the exact power formula for
+the all-poor exceptional set. -/
+theorem card_poorTuples (u N k : ℕ) (α : ℝ) :
+    (poorTuples u N k α).card = (poorCoordinates u N α).card ^ (2 * k) := by
+  exact Fintype.card_piFinset_const _ _
+
+/-- The shifted Hardy--Ramanujan estimate raises to the exact number of tuple coordinates. -/
+theorem poorTuples_card_le_of_HR (hHR : HardyRamanujanLowerTail)
+    (u k : ℕ) (hu : 1 ≤ u) (α q : ℝ) (hα0 : 0 < α) (hα1 : α < 1)
+    (hq0 : 0 < q) (hq : q < 1 - α + α * Real.log α) :
+    ∃ C : ℝ, 0 < C ∧ ∀ N : ℕ, 3 ≤ N →
+      ((poorTuples u N k α).card : ℝ) ≤
+        (C * N * Real.rpow (Real.log N) (-q)) ^ (2 * k) := by
+  obtain ⟨C, hC, hbound⟩ :=
+    shifted_hardyRamanujanLowerTail hHR u hu α q hα0 hα1 hq0 hq
+  refine ⟨C, hC, fun N hN ↦ ?_⟩
+  rw [card_poorTuples]
+  push_cast
+  exact pow_le_pow_left₀ (show 0 ≤ ((poorCoordinates u N α).card : ℝ) by positivity)
+    (by simpa only [poorCoordinates] using hbound N hN) (2 * k)
+
+/-- Tuples for which one fixed anchor loses at least `T` good moduli to coordinate collisions. -/
+noncomputable def collisionHeavyTuples (a₀ K P₀ k N : ℕ) (i : Fin (2 * k)) (T : ℝ) :
+    Finset (Fin (2 * k) → Fin N) :=
+  (Finset.univ : Finset (Fin (2 * k) → Fin N)).filter fun n =>
+    T ≤ ((tupleBadModuli a₀ K P₀ k (fun j ↦ (n j).val) i).card : ℝ)
+
+/-- Finite Markov inequality for the collision-loss exceptional set at a fixed anchor. -/
+theorem card_collisionHeavyTuples_mul_pow_le (a₀ K P₀ k R N : ℕ)
+    (i : Fin (2 * k)) (T C : ℝ) (hT : 0 ≤ T)
+    (hMoment :
+      (∑ n : Fin (2 * k) → Fin N,
+        (((tupleBadModuli a₀ K P₀ k (fun j ↦ (n j).val) i).card : ℝ) ^ R)) ≤
+          C * (N : ℝ) ^ (2 * k)) :
+    ((collisionHeavyTuples a₀ K P₀ k N i T).card : ℝ) * T ^ R ≤
+      C * (N : ℝ) ^ (2 * k) := by
+  calc
+    ((collisionHeavyTuples a₀ K P₀ k N i T).card : ℝ) * T ^ R =
+        ∑ _n ∈ collisionHeavyTuples a₀ K P₀ k N i T, T ^ R := by
+      rw [Finset.sum_const, nsmul_eq_mul]
+    _ ≤ ∑ n ∈ collisionHeavyTuples a₀ K P₀ k N i T,
+        (((tupleBadModuli a₀ K P₀ k (fun j ↦ (n j).val) i).card : ℝ) ^ R) := by
+      apply Finset.sum_le_sum
+      intro n hn
+      exact pow_le_pow_left₀ hT (Finset.mem_filter.mp hn).2 R
+    _ ≤ ∑ n : Fin (2 * k) → Fin N,
+        (((tupleBadModuli a₀ K P₀ k (fun j ↦ (n j).val) i).card : ℝ) ^ R) := by
+      exact Finset.sum_le_univ_sum_of_nonneg fun _ ↦ by positivity
+    _ ≤ C * (N : ℝ) ^ (2 * k) := hMoment
+
+/-- The finite exceptional set: either every coordinate is Hardy--Ramanujan-poor, or at least one
+anchor has collision loss at least `T`. -/
+noncomputable def exceptionalTuples (u K P₀ k N : ℕ) (α T : ℝ) :
+    Finset (Fin (2 * k) → Fin N) :=
+  poorTuples u N k α ∪ (Finset.univ : Finset (Fin (2 * k))).biUnion fun i =>
+    collisionHeavyTuples u K P₀ k N i T
+
+/-- Outside the exceptional set there is a rich anchor whose collision loss is below `T`. -/
+theorem exists_rich_light_anchor_of_not_mem_exceptional
+    (u K P₀ k N : ℕ) (α T : ℝ) (n : Fin (2 * k) → Fin N)
+    (hn : n ∉ exceptionalTuples u K P₀ k N α T) :
+    ∃ i : Fin (2 * k),
+      α * Real.log (Real.log ((N + u : ℕ) : ℝ)) <
+          ((n i).val + u).primeFactors.card ∧
+        ((tupleBadModuli u K P₀ k (fun j ↦ (n j).val) i).card : ℝ) < T := by
+  classical
+  have hnpoor : n ∉ poorTuples u N k α := fun hmem =>
+    hn (Finset.mem_union_left _ hmem)
+  have hnotall : ¬ ∀ i, n i ∈ poorCoordinates u N α := by
+    simpa only [mem_poorTuples] using hnpoor
+  push Not at hnotall
+  obtain ⟨i, hi⟩ := hnotall
+  refine ⟨i, ?_, ?_⟩
+  · have hi' : ¬ (((n i).val + u).primeFactors.card : ℝ) ≤
+        α * Real.log (Real.log ((N + u : ℕ) : ℝ)) := by
+      simpa only [poorCoordinates, Finset.mem_filter, Finset.mem_univ, true_and] using hi
+    exact lt_of_not_ge hi'
+  · have hnheavy : n ∉ collisionHeavyTuples u K P₀ k N i T := by
+      intro hmem
+      apply hn
+      apply Finset.mem_union_right
+      exact Finset.mem_biUnion.mpr ⟨i, Finset.mem_univ i, hmem⟩
+    simpa only [collisionHeavyTuples, Finset.mem_filter, Finset.mem_univ, true_and,
+      not_le] using hnheavy
+
+/-- Union bounding the two exceptional mechanisms loses only the sum over the `2k` possible
+anchors. -/
+theorem card_exceptionalTuples_le (u K P₀ k N : ℕ) (α T : ℝ) :
+    (exceptionalTuples u K P₀ k N α T).card ≤
+      (poorTuples u N k α).card +
+        ∑ i : Fin (2 * k), (collisionHeavyTuples u K P₀ k N i T).card := by
+  rw [exceptionalTuples]
+  calc
+    (poorTuples u N k α ∪
+        (Finset.univ : Finset (Fin (2 * k))).biUnion fun i =>
+          collisionHeavyTuples u K P₀ k N i T).card ≤
+        (poorTuples u N k α).card +
+          ((Finset.univ : Finset (Fin (2 * k))).biUnion fun i =>
+            collisionHeavyTuples u K P₀ k N i T).card := by
+      exact Finset.card_union_le _ _
+    _ ≤ (poorTuples u N k α).card +
+        ∑ i : Fin (2 * k), (collisionHeavyTuples u K P₀ k N i T).card := by
+      gcongr
+      exact Finset.card_biUnion_le
+
+/-- Abstract finite-sum split used after the two exceptional sets have been counted: exceptional
+tuples cost at most one each, while every tuple outside costs at most the uniform contraction
+`E`. -/
+theorem sum_le_card_exceptional_add_uniform {I : Type*} [Fintype I] [DecidableEq I]
+    (S : Finset I) (f : I → ℝ) (E : ℝ) (hE : 0 ≤ E)
+    (hS : ∀ i ∈ S, f i ≤ 1) (hout : ∀ i, i ∉ S → f i ≤ E) :
+    (∑ i, f i) ≤ (S.card : ℝ) + (Fintype.card I : ℝ) * E := by
+  have hsplit := Finset.sum_filter_add_sum_filter_not
+    (s := (Finset.univ : Finset I)) (p := fun i ↦ i ∈ S) f
+  calc
+    (∑ i, f i) =
+        (∑ i ∈ (Finset.univ : Finset I) with i ∈ S, f i) +
+          ∑ i ∈ (Finset.univ : Finset I) with i ∉ S, f i := hsplit.symm
+    _ ≤ (((Finset.univ : Finset I).filter fun i ↦ i ∈ S).card : ℝ) +
+        (((Finset.univ : Finset I).filter fun i ↦ i ∉ S).card : ℝ) * E := by
+      gcongr
+      · simpa only [nsmul_eq_mul, Nat.cast_ofNat, mul_one] using
+          (Finset.sum_le_card_nsmul
+            ((Finset.univ : Finset I).filter fun i ↦ i ∈ S) f 1
+            (fun i hi ↦ hS i (Finset.mem_filter.mp hi).2))
+      · simpa only [nsmul_eq_mul] using
+          (Finset.sum_le_card_nsmul
+            ((Finset.univ : Finset I).filter fun i ↦ i ∉ S) f E
+            (fun i hi ↦ hout i (Finset.mem_filter.mp hi).2))
+    _ ≤ (S.card : ℝ) + (Fintype.card I : ℝ) * E := by
+      gcongr
+      · simp
+      · exact_mod_cast Finset.card_le_card (Finset.filter_subset _ _)
+
 /-! ### Retained Bernoulli variance mass -/
 
 /-- Choosing whether to include each distinct prime factor injects `2 ^ ω(m)` squarefree
@@ -1676,6 +1833,51 @@ theorem tupleGoodModuli_bernMod_product_le (delta : ℕ → ℝ) (a c : ℝ)
         (c * Real.rpow (Real.log (n i + (e + 1))) (-a) *
           ((((2 ^ (n i + (e + 1)).primeFactors.card : ℕ) : ℝ) - P₀) -
             ((tupleBadModuli (e + 1) K P₀ k n i).card : ℝ))) := by ring
+
+/-- A fixed initial set of Bernoulli coordinates contains every tuple-dependent good modulus.
+Consequently its characteristic product inherits the contraction from any chosen good anchor.
+This is the bridge needed because `ebMoment_le_tupleAvg` chooses its finite set before summing over
+tuples. -/
+theorem global_bernMod_product_le_good_anchor (delta : ℕ → ℝ) (a c : ℝ)
+    (hdelta : ∀ p : ℕ, 0 ≤ delta p ∧ delta p ≤ 1)
+    (ha : 0 ≤ a) (hc : 0 < c)
+    (hvar : ∀ p : ℕ, 2 ≤ p →
+      c * Real.rpow (Real.log p) (-a) ≤ delta p * (1 - delta p))
+    (b e m K P₀ k N : ℕ) (h : ℤ) (n : Fin (2 * k) → Fin N) (i : Fin (2 * k))
+    (hb : 2 ≤ b) (hk : 1 ≤ k)
+    (hfac : h.natAbs = b ^ e * m) (hm : ¬ b ∣ m) (hK : e + 1 ≤ K)
+    (hlarge : 16 * h.natAbs * (2 * k) ≤ b ^ K) (hKP : 2 * K ≤ P₀)
+    (hP₀ : 1 ≤ P₀) :
+    ∏ r ∈ Finset.range (N + e + 1),
+        bernMod (delta (r + 1)) (tuplePhase b h k (r + 1) (fun j ↦ (n j).val)) ≤
+      Real.exp (-spectralConst b *
+        (c * Real.rpow (Real.log ((n i).val + (e + 1))) (-a) *
+          ((((2 ^ ((n i).val + (e + 1)).primeFactors.card : ℕ) : ℝ) - P₀) -
+            ((tupleBadModuli (e + 1) K P₀ k (fun j ↦ (n j).val) i).card : ℝ)))) := by
+  let G := (tupleGoodModuli (e + 1) K P₀ k (fun j ↦ (n j).val) i).image
+    (fun p ↦ p - 1)
+  have hsubset : G ⊆ Finset.range (N + e + 1) := by
+    intro r hr
+    rcases Finset.mem_image.mp hr with ⟨p, hp, rfl⟩
+    have hpdiv := ((mem_tupleGoodModuli (a₀ := e + 1) (K := K) (P₀ := P₀)
+      (k := k) (p := p) (n := fun j ↦ (n j).val) (i := i) (by omega)).mp hp).1
+    have hple : p ≤ (n i).val + (e + 1) := Nat.le_of_dvd (by omega) hpdiv
+    rw [Finset.mem_range]
+    omega
+  have hglobal :
+      (∏ r ∈ Finset.range (N + e + 1),
+          bernMod (delta (r + 1))
+            (tuplePhase b h k (r + 1) (fun j ↦ (n j).val))) ≤
+        ∏ r ∈ G, bernMod (delta (r + 1))
+          (tuplePhase b h k (r + 1) (fun j ↦ (n j).val)) := by
+    apply Finset.prod_le_prod_of_subset_of_le_one hsubset
+    · intro r hr
+      exact bernMod_nonneg _ _
+    · intro r hr hrG
+      exact bernMod_le_one (hdelta (r + 1)).1 (hdelta (r + 1)).2 _
+  refine hglobal.trans ?_
+  simpa only [G] using tupleGoodModuli_bernMod_product_le delta a c hdelta ha hc hvar
+    b e m K P₀ k h (fun j ↦ (n j).val) i hb hk hfac hm hK hlarge hKP hP₀
 
 /-- The summable moment bound behind `ebRandom_ae_normal_below_ln2` (codex2, 95%).
 1. With `α ln 2 > a`, fix `k` and `q < Q(α)` with `kq > 1`.

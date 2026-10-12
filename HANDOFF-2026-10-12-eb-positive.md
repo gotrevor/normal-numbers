@@ -68,6 +68,21 @@ Expect step 4 to be the longest.  Splitting it into named leaves is progress.
 
 ## Status
 
+- Lap 10 finite exceptional-set checkpoint (`research/eb-positive`): the finite tuple split needed
+  by `eb_weyl_moment_decay` is now kernel-checked.  `poorCoordinates` and `poorTuples` define the
+  shifted Hardy--Ramanujan lower-tail set and its coordinatewise product;
+  `card_poorTuples` proves its cardinality is exactly the `2k`-th power and
+  `poorTuples_card_le_of_HR` raises the shifted HR estimate to that power.
+  `collisionHeavyTuples` isolates a fixed anchor whose collision loss exceeds a real threshold,
+  and `card_collisionHeavyTuples_mul_pow_le` is the exact finite Markov inequality driven by
+  `tupleBadModuli_moment`.  Their union `exceptionalTuples` has the expected union bound, while
+  `exists_rich_light_anchor_of_not_mem_exceptional` produces a rich coordinate with sub-threshold
+  collision loss on every complementary tuple.  `sum_le_card_exceptional_add_uniform` packages
+  the final exceptional/complement sum split.  Finally,
+  `global_bernMod_product_le_good_anchor` closes the fixed-set mismatch in
+  `ebMoment_le_tupleAvg`: the common truncation `range (N+e+1)` contains each tuple-dependent
+  good-modulus image and therefore inherits its exponential contraction.  No frozen statement or
+  copied definition changed; the scoped file still has exactly its two frozen proof debts.
 - Lap 9 reflection / shifted Hardy--Ramanujan checkpoint (`research/eb-positive`): the scoped file
   still has exactly two frozen proof debts.  The analytic input now has the exact interface needed
   by zero-based tuple coordinates.  `hardyRamanujanExponent_pos` proves positivity of the
@@ -85,17 +100,14 @@ Expect step 4 to be the longest.  Splitting it into named leaves is progress.
   no hidden independence mismatch.  The reusable slow-schedule/interpolation machinery is already
   present elsewhere in the repository; the route-decisive open work is still the finite tuple
   exceptional-set decomposition, not the downstream normality wrapper.
-- Exact verification run (lap 9):
-  - Shared-store check: `/Users/gotrevor/personal/bin/lake-base status
-    leanprover/lean4:v4.33.1` and `/Users/gotrevor/personal/bin/lake-base status v4.33.1` both
-    reported that no shared store exists; no relink is available.
+- Exact verification run (lap 10):
   - `lake env lean src/NormalNumbers/CoefmassErdosBorweinPositive.lean` (green; exactly the two
     remaining disclosed `sorry` warnings).
   - `git diff --check` (clean before the handoff edit).
   - `/Users/gotrevor/personal/bin/lean-green /Users/gotrevor/src/nn-eb-positive --target
     NormalNumbers.CoefmassErdosBorweinPositive --import
     NormalNumbers.CoefmassErdosBorweinPositive --axioms
-    NormalNumbers.ErdosBorweinPositive.shifted_hardyRamanujanLowerTail`
+    NormalNumbers.ErdosBorweinPositive.global_bernMod_product_le_good_anchor`
     (`FORMALIZE-TIER GREEN`, 8719 jobs; theorem axioms exactly `propext`, `Classical.choice`, and
     `Quot.sound`).
 - Previous checkpoints: lap 8 proved arbitrary moments of the tuple collision loss; lap 7 proved
@@ -104,17 +116,20 @@ Expect step 4 to be the longest.  Splitting it into named leaves is progress.
   built the collision-modulus and spectral-product bridges; lap 3 proved
   `shifted_gcd_divisor_moment`; lap 2 proved its complete finite shifted-gcd reduction; lap 1
   proved `ebMoment_le_tupleAvg`, closing the infinite random-series side.
-- Current blocker: `eb_weyl_moment_decay`.  Phase geometry, retained mass, arbitrary collision
-  moments, and the shifted Hardy--Ramanujan bound are now available.  Its remaining content is the
-  quantitative finite tuple split and assembly of those proved inputs.  The final
-  Borel--Cantelli/interpolation theorem remains downstream.
-- Next highest-value attack: define the poor-coordinate finset at endpoint `N + (e+1)` and prove
-  the exact all-poor tuple count (or the equivalent iterated-sum bound).  Partition every remaining
-  tuple by a rich anchor, union-bound anchors whose `tupleBadModuli.card` exceeds
-  `(log N)^η` using `tupleBadModuli_moment`, and apply
-  `tupleGoodModuli_bernMod_product_le` on the complement.  Choose `k`, `η`, and `R` so both the
-  all-poor exponent `2kq` and collision exponent `ηR` exceed `2`; absorb the exponentially small
-  third term into the same log power.  This should close `eb_weyl_moment_decay`.
+- Current blocker: `eb_weyl_moment_decay`.  The finite tuple partition and the fixed-global-product
+  bridge are now proved.  What remains is scalar/asymptotic bookkeeping: with
+  `T_N = (log N)^η`, show that a rich/light anchor makes the retained bracket large enough for
+  uniform `exp (-c_b T_N)` contraction, normalize the proved cardinality bounds by `N^(2k)`, and
+  dominate all three terms by one negative log power.  The final Borel--Cantelli/interpolation
+  theorem remains downstream.
+- Next highest-value attack: choose `k`, `η`, and `R` from
+  `exists_hardyRamanujan_parameters` so `2kq > 2` and `ηR > 2`.  Prove an eventual scalar lemma
+  comparing `2^omega - P₀ - T_N` and the negative log power at a rich anchor to a positive
+  multiple of `T_N`; feed it to `global_bernMod_product_le_good_anchor`.  Then combine
+  `poorTuples_card_le_of_HR`, `card_collisionHeavyTuples_mul_pow_le`,
+  `card_exceptionalTuples_le`, and `sum_le_card_exceptional_add_uniform` inside
+  `ebMoment_le_tupleAvg`.  Package the finite initial segment into the constant `C`; this should
+  close `eb_weyl_moment_decay`.
 
 ## Findings
 
