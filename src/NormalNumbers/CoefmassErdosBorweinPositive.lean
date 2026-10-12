@@ -54,6 +54,170 @@ def HardyRamanujanLowerTail : Prop :=
         (n.primeFactors.card : ℝ) ≤ α * Real.log (Real.log N))).card : ℝ) ≤
           C * N * Real.rpow (Real.log N) (-q)
 
+/-! ### Shifted common-divisor reduction
+
+The four lemmas below isolate the analytic content of `shifted_gcd_divisor_moment`: once the
+Dirichlet series `∑ τ(d)^r / d²` is known to converge, the shifted moment follows by an exact
+finite rearrangement and the elementary count of multiples in a shifted interval. -/
+
+/-- A shifted interval contains at most `⌊(N+u)/d⌋` multiples of `d`. -/
+theorem card_shifted_multiples_le (u d N : ℕ) :
+    ((Finset.Icc 1 N).filter (fun n => d ∣ n + u)).card ≤ (N + u) / d := by
+  calc
+    ((Finset.Icc 1 N).filter (fun n => d ∣ n + u)).card =
+        (((Finset.Icc 1 N).filter (fun n => d ∣ n + u)).image (fun n => n + u)).card :=
+      (Finset.card_image_of_injective _ (fun _ _ h => by omega)).symm
+    _ ≤ ((Finset.range (N + u + 1)).filter (fun k => k ≠ 0 ∧ d ∣ k)).card := by
+      apply Finset.card_le_card
+      intro k hk
+      rcases Finset.mem_image.mp hk with ⟨n, hn, rfl⟩
+      rcases Finset.mem_filter.mp hn with ⟨hn, hd⟩
+      rcases Finset.mem_Icc.mp hn with ⟨hn1, hnN⟩
+      exact Finset.mem_filter.mpr ⟨Finset.mem_range.mpr (by omega), by
+        exact ⟨by omega, hd⟩⟩
+    _ = (N + u) / d := by
+      simpa [Nat.succ_eq_add_one] using Nat.card_multiples' (N + u) d
+
+/-- Real-valued form of `card_shifted_multiples_le`, with a bound uniform in `N ≥ 1`. -/
+theorem card_shifted_multiples_real_le (u d N : ℕ) (hN : 1 ≤ N) :
+    (((Finset.Icc 1 N).filter (fun n => d ∣ n + u)).card : ℝ) ≤
+      ((u + 1 : ℕ) : ℝ) * N / d := by
+  calc
+    (((Finset.Icc 1 N).filter (fun n => d ∣ n + u)).card : ℝ) ≤
+        (((N + u) / d : ℕ) : ℝ) := by exact_mod_cast card_shifted_multiples_le u d N
+    _ ≤ ((N + u : ℕ) : ℝ) / (d : ℝ) := Nat.cast_div_le
+    _ ≤ ((u + 1 : ℕ) : ℝ) * N / d := by
+      gcongr
+      exact_mod_cast (show N + u ≤ (u + 1) * N by
+        calc
+          N + u ≤ N + u * N := Nat.add_le_add_left (Nat.le_mul_of_pos_right u hN) N
+          _ = (u + 1) * N := by ring)
+
+/-- Rearrange a finite weighted sum over common divisors into a product of shifted counts. -/
+theorem shifted_common_divisor_sum_eq (u v N B : ℕ) (f : ℕ → ℝ) :
+    (∑ n ∈ Finset.Icc 1 N, ∑ m ∈ Finset.Icc 1 N, ∑ d ∈ Finset.Icc 1 B,
+      if d ∣ n + u ∧ d ∣ m + v then f d else 0) =
+      ∑ d ∈ Finset.Icc 1 B, f d *
+        (((Finset.Icc 1 N).filter (fun n => d ∣ n + u)).card : ℝ) *
+        (((Finset.Icc 1 N).filter (fun m => d ∣ m + v)).card : ℝ) := by
+  classical
+  conv_lhs =>
+    enter [2, n]
+    rw [Finset.sum_comm]
+  rw [Finset.sum_comm]
+  apply Finset.sum_congr rfl
+  intro d hd
+  have hinner (n : ℕ) :
+      (∑ m ∈ Finset.Icc 1 N, if d ∣ n + u ∧ d ∣ m + v then f d else 0) =
+        if d ∣ n + u then
+          f d * (((Finset.Icc 1 N).filter (fun m => d ∣ m + v)).card : ℝ) else 0 := by
+    by_cases hn : d ∣ n + u
+    · simp only [hn, true_and, if_true]
+      rw [← Finset.sum_filter, Finset.sum_const]
+      simp [nsmul_eq_mul, mul_comm]
+    · simp [hn]
+  rw [Finset.sum_congr rfl (fun n _ => hinner n)]
+  rw [← Finset.sum_filter, Finset.sum_const]
+  simp [nsmul_eq_mul, mul_assoc]
+  ring
+
+/-- Common divisors in the required finite range are exactly the divisors of the gcd. -/
+theorem gcd_divisors_eq_filter (u v N n m : ℕ) (hn : n ∈ Finset.Icc 1 N)
+    (hm : m ∈ Finset.Icc 1 N) :
+    (Nat.gcd (n + u) (m + v)).divisors =
+      (Finset.Icc 1 (N + u + v)).filter
+        (fun d => d ∣ n + u ∧ d ∣ m + v) := by
+  ext d
+  rcases Finset.mem_Icc.mp hn with ⟨hn1, hnN⟩
+  rcases Finset.mem_Icc.mp hm with ⟨hm1, hmN⟩
+  have hnu0 : n + u ≠ 0 := by omega
+  have hg0 : Nat.gcd (n + u) (m + v) ≠ 0 := Nat.gcd_ne_zero_left hnu0
+  simp only [Nat.mem_divisors, Finset.mem_filter, Finset.mem_Icc]
+  constructor
+  · rintro ⟨hd, _⟩
+    have hd' := (Nat.dvd_gcd_iff.mp hd)
+    exact ⟨⟨Nat.one_le_iff_ne_zero.mpr (fun hd0 =>
+        hg0 (zero_dvd_iff.mp (hd0 ▸ hd))),
+      le_trans (Nat.le_of_dvd (by omega) hd'.1) (by omega)⟩, hd'⟩
+  · rintro ⟨hdB, hd1, hd2⟩
+    exact ⟨Nat.dvd_gcd hd1 hd2, hg0⟩
+
+/-- The shifted gcd-divisor moment follows from the one-variable divisor Dirichlet series. -/
+theorem shifted_gcd_divisor_moment_of_summable (u v r : ℕ)
+    (hsum : Summable (fun d : ℕ =>
+      ((d.divisors.card : ℝ) ^ r) / (d : ℝ) ^ 2)) :
+    ∃ C : ℝ, 0 < C ∧ ∀ N : ℕ, 1 ≤ N →
+      (∑ n ∈ Finset.Icc 1 N, ∑ m ∈ Finset.Icc 1 N,
+        (((Nat.gcd (n + u) (m + v)).divisors.card : ℝ) ^ r)) ≤ C * (N : ℝ)^2 := by
+  let A : ℝ := ((u + 1 : ℕ) : ℝ) * ((v + 1 : ℕ) : ℝ)
+  let T : ℝ := ∑' d : ℕ, ((d.divisors.card : ℝ) ^ r) / (d : ℝ) ^ 2
+  have hT0 : 0 ≤ T := tsum_nonneg fun _ => by positivity
+  have hA0 : 0 ≤ A := by positivity
+  refine ⟨1 + A * T, by positivity, ?_⟩
+  intro N hN
+  let D := Finset.Icc 1 (N + u + v)
+  have hpoint (n : ℕ) (hn : n ∈ Finset.Icc 1 N) (m : ℕ)
+      (hm : m ∈ Finset.Icc 1 N) :
+      (((Nat.gcd (n + u) (m + v)).divisors.card : ℝ) ^ r) ≤
+        ∑ d ∈ D, if d ∣ n + u ∧ d ∣ m + v then
+          ((d.divisors.card : ℝ) ^ r) else 0 := by
+    let g := Nat.gcd (n + u) (m + v)
+    have hnu0 : n + u ≠ 0 := by
+      rcases Finset.mem_Icc.mp hn with ⟨hn1, hnN⟩
+      omega
+    have hg0 : g ≠ 0 := Nat.gcd_ne_zero_left hnu0
+    have hmem : g ∈ g.divisors := Nat.mem_divisors_self g hg0
+    calc
+      ((g.divisors.card : ℝ) ^ r) ≤
+          ∑ d ∈ g.divisors, ((d.divisors.card : ℝ) ^ r) :=
+        Finset.single_le_sum (s := g.divisors)
+          (f := fun d => ((d.divisors.card : ℝ) ^ r))
+          (fun d hd => by positivity) hmem
+      _ = ∑ d ∈ D, if d ∣ n + u ∧ d ∣ m + v then
+          ((d.divisors.card : ℝ) ^ r) else 0 := by
+        rw [gcd_divisors_eq_filter u v N n m hn hm]
+        simp only [D, Finset.sum_filter]
+  calc
+    (∑ n ∈ Finset.Icc 1 N, ∑ m ∈ Finset.Icc 1 N,
+        (((Nat.gcd (n + u) (m + v)).divisors.card : ℝ) ^ r)) ≤
+        ∑ n ∈ Finset.Icc 1 N, ∑ m ∈ Finset.Icc 1 N,
+          ∑ d ∈ D, if d ∣ n + u ∧ d ∣ m + v then
+            ((d.divisors.card : ℝ) ^ r) else 0 := by
+      apply Finset.sum_le_sum
+      intro n hn
+      apply Finset.sum_le_sum
+      intro m hm
+      exact hpoint n hn m hm
+    _ = ∑ d ∈ D, ((d.divisors.card : ℝ) ^ r) *
+          (((Finset.Icc 1 N).filter (fun n => d ∣ n + u)).card : ℝ) *
+          (((Finset.Icc 1 N).filter (fun m => d ∣ m + v)).card : ℝ) :=
+      shifted_common_divisor_sum_eq u v N (N + u + v) _
+    _ ≤ ∑ d ∈ D, A * (N : ℝ) ^ 2 *
+          (((d.divisors.card : ℝ) ^ r) / (d : ℝ) ^ 2) := by
+      apply Finset.sum_le_sum
+      intro d hd
+      have hcu := card_shifted_multiples_real_le u d N hN
+      have hcv := card_shifted_multiples_real_le v d N hN
+      calc
+        ((d.divisors.card : ℝ) ^ r) *
+            (((Finset.Icc 1 N).filter (fun n => d ∣ n + u)).card : ℝ) *
+            (((Finset.Icc 1 N).filter (fun m => d ∣ m + v)).card : ℝ) ≤
+            ((d.divisors.card : ℝ) ^ r) *
+              (((u + 1 : ℕ) : ℝ) * N / d) *
+              (((v + 1 : ℕ) : ℝ) * N / d) := by gcongr
+        _ = A * (N : ℝ) ^ 2 *
+            (((d.divisors.card : ℝ) ^ r) / (d : ℝ) ^ 2) := by
+          dsimp [A]
+          ring
+    _ = A * (N : ℝ) ^ 2 *
+          (∑ d ∈ D, ((d.divisors.card : ℝ) ^ r) / (d : ℝ) ^ 2) := by
+      rw [Finset.mul_sum]
+    _ ≤ A * (N : ℝ) ^ 2 * T := by
+      gcongr
+      exact hsum.sum_le_tsum D (fun d hd => by positivity)
+    _ ≤ (1 + A * T) * (N : ℝ) ^ 2 := by
+      nlinarith [sq_nonneg (N : ℝ)]
+
 /-- All fixed positive integer moments of the shifted gcd divisor count are bounded (codex2,
 95%).  Dominate `τ(gcd)^r` by `Σ_{d ∣ gcd} τ(d)^r`, count simultaneous divisibility
 (`≤ 9/d²`), and sum `Σ τ(d)^r/d² < ∞`. -/

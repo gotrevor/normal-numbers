@@ -68,39 +68,43 @@ Expect step 4 to be the longest.  Splitting it into named leaves is progress.
 
 ## Status
 
-- Lap 1 natural-index characteristic checkpoint (`research/eb-positive`): the scoped file still
-  has the three frozen proof debts, but the infinite probability-theoretic obstruction inside
-  `eb_weyl_moment_decay` is now closed.  Ported the completed prime-index machinery to the actual
-  positive-integer indexing of `ebLambert`: deterministic and selected-series summability,
-  measurability, one-coordinate and finite-set Bernoulli characteristic identities, convergence
-  of initial truncations, dominated convergence for the full infinite series, translate removal,
-  and the exact signed `2k`-tuple expansion.  The load-bearing
-  `ebMoment_le_tupleAvg` now reduces every even Weyl moment to a finite tuple average of `bernMod`
-  products.  No frozen statement or copied definition changed.
-- Exact verification run:
+- Lap 2 shifted-gcd reduction checkpoint (`research/eb-positive`): the scoped file still has the
+  same three frozen proof debts, but `shifted_gcd_divisor_moment` is reduced to one exact
+  one-variable analytic lemma.  Proved `card_shifted_multiples_le` and its real uniform form,
+  `shifted_common_divisor_sum_eq`, `gcd_divisors_eq_filter`, and the load-bearing
+  `shifted_gcd_divisor_moment_of_summable`.  The latter kernel-checks the paper's whole finite
+  argument: expand `τ(gcd)^r` over common divisors, rearrange the sums, bound each shifted
+  divisibility count, and conclude from `Summable (fun d => τ(d)^r / d^2)`.  Thus no
+  probability, shifting, or finite-sum issue remains in the first frozen debt.  No frozen
+  statement or copied definition changed.
+- Exact verification run (lap 2):
   - `lake env lean src/NormalNumbers/CoefmassErdosBorweinPositive.lean` (green; exactly the three
     original disclosed `sorry` warnings).
   - `lake build NormalNumbers.CoefmassErdosBorweinPositive` (green, 8719 jobs).
-  - `lake env lean AuditEBPositiveLap1.lean` with `#print axioms` for
-    `summable_ebLambert_denom`, `measurable_ebLambert`, `integral_ePh_finset_eb`,
-    `norm_integral_ePh_ebLambert_le`, and `ebMoment_le_tupleAvg` (temporary audit file removed;
-    every declaration exactly `[propext, Classical.choice, Quot.sound]`).
+  - `lake env lean AuditEBPositiveLap2.lean` with `#print axioms` for
+    `card_shifted_multiples_le`, `card_shifted_multiples_real_le`,
+    `shifted_common_divisor_sum_eq`, `gcd_divisors_eq_filter`, and
+    `shifted_gcd_divisor_moment_of_summable` (temporary audit file removed; every declaration
+    exactly `[propext, Classical.choice, Quot.sound]`).
   - `git diff --check` (clean).
   - `~/personal/bin/lean-green ~/src/nn-eb-positive --target
     NormalNumbers.CoefmassErdosBorweinPositive --import
     NormalNumbers.CoefmassErdosBorweinPositive --axioms
-    NormalNumbers.ErdosBorweinPositive.ebMoment_le_tupleAvg` (`FORMALIZE-TIER GREEN`, 8719 jobs;
-    headline helper axioms exactly the canonical three).
-- Current blocker: the residual core of `eb_weyl_moment_decay` is now finite/combinatorial.  For
-  each tuple one must choose its good moduli, use `anchor_tail_cos_le` to contract the resulting
-  `bernMod` product, and prove that tuples without enough good mass are rare.  The latter requires
-  the still-open `shifted_gcd_divisor_moment`; the final a.e. headline remains downstream of the
-  moment theorem.
-- Next highest-value attack: prove `shifted_gcd_divisor_moment`.  First establish the summability
-  of `d ↦ τ(d)^r/d²` (most likely by domination by a fixed iterated divisor convolution), then
-  expand `τ(gcd)^r` over common divisors and bound the two shifted divisibility counts.  With that
-  lemma banked, formalize the tuple good-mass/Markov estimate and feed it to
-  `ebMoment_le_tupleAvg`.
+    NormalNumbers.ErdosBorweinPositive.shifted_gcd_divisor_moment_of_summable`
+    (`FORMALIZE-TIER GREEN`, 8719 jobs; helper axioms exactly the canonical three).
+- Previous checkpoint (lap 1): `ebMoment_le_tupleAvg` closed the infinite random-series side and
+  reduced every even Weyl moment to a finite tuple average of `bernMod` products.
+- Current blocker: prove `Summable (fun d : ℕ => (d.divisors.card : ℝ)^r / (d : ℝ)^2)` for fixed
+  `r`.  This is the only missing input to `shifted_gcd_divisor_moment_of_summable`, hence the only
+  remaining content of the first frozen sorry.  The other two frozen sorries remain downstream:
+  good-modulus mass plus Hardy--Ramanujan for `eb_weyl_moment_decay`, then Borel--Cantelli and
+  interpolation for the a.e. headline.
+- Next highest-value attack: dominate `τ(d)^r` by a fixed higher divisor function (an iterated
+  Dirichlet convolution of the constant-one arithmetic function), whose L-series is a finite
+  product of zeta series and is summable at `s = 2`.  The local prime-power inequality
+  `(e+1)^r ≤ d_k(p^e)` with sufficiently large fixed `k` is the route-decisive leaf.  Once this
+  summability theorem is proved, close `shifted_gcd_divisor_moment` immediately by applying
+  `shifted_gcd_divisor_moment_of_summable`, then move to the tuple good-mass/Markov estimate.
 
 ## Findings
 
