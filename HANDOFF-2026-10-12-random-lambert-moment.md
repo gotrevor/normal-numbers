@@ -77,6 +77,35 @@ Make `src/NormalNumbers/CoefmassRandomLambertMoment.lean` sorry-free, then check
 
 ## Status
 
+- Lap 4 checkpoint (`research/lambert-moment`): factored the spectral-gap obligation into three
+  proved, axiom-clean interfaces.  `localMean_norm_sq_eq` is the exact normalized double-cosine
+  identity for the local mean, so the remaining work is now a real finite-sum deficit estimate.
+  `cos_two_pi_le_cos_pi_div` turns membership in the central fractional interval
+  `[1/(2b), 1-1/(2b)]` into precisely the required loss `spectralConst b`.  Finally,
+  `anchor_phase_formula` computes the handoff's anchor residue `p-(e+1)` exactly when
+  `|h| = b^e m`, isolating the nonintegral main term `m/b` from its finite-period correction.
+  The four original declarations remain open; no frozen statement or definition changed.
+- Exact verification run:
+  - `lake env lean src/NormalNumbers/CoefmassRandomLambertMoment.lean` (green; only the four
+    remaining disclosed `sorry` warnings).
+  - `lake build NormalNumbers.CoefmassRandomLambertMoment` (green, 8716 jobs).
+  - `~/personal/bin/lean-green ~/src/nn-lambert-moment --target NormalNumbers.CoefmassRandomLambertMoment`
+    (`✅ FORMALIZE-TIER GREEN`, 8716 jobs).
+  - Commit pre-hook `lake build` (green, 10847 jobs).
+  - `lake env lean AuditRandomLambertMoment.lean` with `#print axioms` for
+    `cos_two_pi_le_cos_pi_div`, `anchor_phase_formula`, and `localMean_norm_sq_eq` (temporary audit
+    file; each exactly `[propext, Classical.choice, Quot.sound]`).
+- Current blocker: finish the phase-enclosure half of `localMean_normSq_le`.  Choose
+  `e,m` from `Nat.exists_eq_pow_mul_and_not_dvd` for `h.natAbs = b^e m`; after reducing the signed
+  `m/b` main term modulo an integer, `¬ b ∣ m` gives distance at least `1/b` from the endpoints.
+  It remains to bound the anchor correction and every tail phase `t < p-K` by a combined
+  `≤ 1/(2b)`, then feed the resulting central-interval membership to the new cosine lemma.
+- Next highest-value attack: prove a single signed phase-enclosure helper using
+  `Nat.exists_eq_pow_mul_and_not_dvd`, with `K ≥ e+1` and `b^K ≥ 16|h|`; then use
+  `localMean_norm_sq_eq` to retain the `2(p-K)` ordered anchor/tail pairs while bounding all other
+  cosine terms by one.  The arithmetic `2(p-K)/p² ≥ 1/p` follows from `p > 2K` and closes
+  `localMean_normSq_le`.
+
 - Lap 3 review checkpoint (`research/lambert-moment`): proved both remaining finite averaging
   layers, `prefix_tuple_mean_le` and `residueTuple_mean_sq`.  The prefix proof first establishes
   the sharp one-coordinate block/remainder estimate (complete `Q`-blocks plus a tail bounded by

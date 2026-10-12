@@ -198,13 +198,7 @@ theorem bernMod_tuplePhase_mod (b : ℕ) (hb : 2 ≤ b) (h : ℤ) (k p : ℕ) (h
   unfold bernMod
   rw [hphase, ePh_add_int]
 
-/-! ### Step 7: the one-prime spectral gap -/
-
-theorem localMean_normSq_le (b : ℕ) (hb : 2 ≤ b) (h : ℤ) (hh : h ≠ 0) :
-    ∃ P₀ : ℕ, ∀ p : ℕ, P₀ < p → ‖localMean b h p‖ ^ 2 ≤ 1 - spectralConst b / p := by
-  sorry
-
-/-! ### Step 6: exact second moment over residues -/
+/-! ### Spectral-gap preliminaries -/
 
 /-- Negating a phase conjugates its unit exponential. -/
 theorem ePh_neg (x : ℝ) : ePh (-x) = conj (ePh x) := by
@@ -214,6 +208,118 @@ theorem ePh_neg (x : ℝ) : ePh (-x) = conj (ePh x) := by
   push_cast
   simp only [map_mul, map_ofNat, Complex.conj_ofReal, Complex.conj_I]
   ring
+
+/-- The real part of `ePh x` is `cos (2πx)`. -/
+theorem ePh_re (x : ℝ) : (ePh x).re = Real.cos (2 * Real.pi * x) := by
+  simp [ePh, Complex.exp_re]
+
+/-- On the part of a period at distance at least `1/(2b)` from either endpoint, the cosine
+loses at least `spectralConst b` from its maximum. -/
+theorem cos_two_pi_le_cos_pi_div {b : ℕ} (hb : 2 ≤ b) {x : ℝ}
+    (hx0 : 1 / (2 * (b : ℝ)) ≤ x) (hx1 : x ≤ 1 - 1 / (2 * (b : ℝ))) :
+    Real.cos (2 * Real.pi * x) ≤ Real.cos (Real.pi / b) := by
+  have hbR : (2 : ℝ) ≤ b := by exact_mod_cast hb
+  have hbpos : (0 : ℝ) < b := lt_of_lt_of_le (by norm_num) hbR
+  have hpi : 0 < Real.pi := Real.pi_pos
+  by_cases hx : x ≤ 1 / 2
+  · apply Real.cos_le_cos_of_nonneg_of_le_pi
+    · positivity
+    · nlinarith
+    · have hbase : 1 / (b : ℝ) ≤ 2 * x := by
+        calc
+          1 / (b : ℝ) = 2 * (1 / (2 * (b : ℝ))) := by field_simp
+          _ ≤ 2 * x := mul_le_mul_of_nonneg_left hx0 (by norm_num)
+      calc
+        Real.pi / (b : ℝ) = Real.pi * (1 / (b : ℝ)) := by ring
+        _ ≤ Real.pi * (2 * x) := mul_le_mul_of_nonneg_left hbase hpi.le
+        _ = 2 * Real.pi * x := by ring
+  · have hcos : Real.cos (2 * Real.pi * x) = Real.cos (2 * Real.pi * (1 - x)) := by
+      rw [show 2 * Real.pi * x = 2 * Real.pi - 2 * Real.pi * (1 - x) by ring,
+        Real.cos_two_pi_sub]
+    rw [hcos]
+    apply Real.cos_le_cos_of_nonneg_of_le_pi
+    · positivity
+    · have : x ≥ 1 / 2 := le_of_not_ge hx
+      nlinarith
+    · have hbase : 1 / (b : ℝ) ≤ 2 * (1 - x) := by
+        calc
+          1 / (b : ℝ) = 2 * (1 / (2 * (b : ℝ))) := by field_simp
+          _ ≤ 2 * (1 - x) := by nlinarith
+      calc
+        Real.pi / (b : ℝ) = Real.pi * (1 / (b : ℝ)) := by ring
+        _ ≤ Real.pi * (2 * (1 - x)) := mul_le_mul_of_nonneg_left hbase hpi.le
+        _ = 2 * Real.pi * (1 - x) := by ring
+
+/-- Exact phase of the anchor residue `p-(e+1)` when the frequency has base-`b` factor
+`b^e`.  The main term is the nonintegral rational `m/b`; the second factor is the small
+finite-period correction. -/
+theorem anchor_phase_formula (b e m p : ℕ) (hb : 2 ≤ b) (hep : e + 1 ≤ p) :
+    (((b ^ e * m : ℕ) : ℝ) * residuePhase b p (p - (e + 1))) =
+      (m : ℝ) / b * (1 + 1 / ((b : ℝ) ^ p - 1)) := by
+  have hbR : (1 : ℝ) < b := by exact_mod_cast (lt_of_lt_of_le (by norm_num) hb)
+  have hp : 0 < p := lt_of_lt_of_le (by omega) hep
+  have hden : (b : ℝ) ^ p - 1 ≠ 0 := by
+    have : (1 : ℝ) < (b : ℝ) ^ p := one_lt_pow₀ hbR hp.ne'
+    linarith
+  have hb0 : (b : ℝ) ≠ 0 := ne_of_gt (lt_trans (by norm_num) hbR)
+  unfold residuePhase
+  rw [Nat.cast_mul, Nat.cast_pow]
+  field_simp
+  have heq : e + (p - (e + 1)) + 1 = p := by omega
+  have hpow : (b : ℝ) ^ e * (b : ℝ) ^ (p - (e + 1)) * b = (b : ℝ) ^ p := by
+    rw [← pow_add, ← pow_succ, heq]
+  rw [show (b : ℝ) ^ p - 1 + 1 = (b : ℝ) ^ p by ring]
+  calc
+    (b : ℝ) ^ e * (m : ℝ) * (b : ℝ) ^ (p - (e + 1)) * b =
+        (m : ℝ) * ((b : ℝ) ^ e * (b : ℝ) ^ (p - (e + 1)) * b) := by ring
+    _ = (m : ℝ) * (b : ℝ) ^ p := by rw [hpow]
+
+/-- The squared local mean is the normalized double cosine sum of phase differences. -/
+theorem localMean_norm_sq_eq (b : ℕ) (h : ℤ) (p : ℕ) (hp : 0 < p) :
+    ‖localMean b h p‖ ^ 2 =
+      (∑ r ∈ Finset.range p, ∑ t ∈ Finset.range p,
+        Real.cos (2 * Real.pi * ((h : ℝ) *
+          (residuePhase b p r - residuePhase b p t)))) / (p : ℝ) ^ 2 := by
+  let z : ℕ → ℂ := fun r => ePh ((h : ℝ) * residuePhase b p r)
+  let S : ℂ := ∑ r ∈ Finset.range p, z r
+  have he (r t : ℕ) :
+      z r * conj (z t) = ePh ((h : ℝ) * (residuePhase b p r - residuePhase b p t)) := by
+    dsimp [z]
+    rw [← ePh_neg]
+    unfold ePh
+    rw [← Complex.exp_add]
+    congr 1
+    push_cast
+    ring
+  have hmul : S * conj S =
+      ∑ r ∈ Finset.range p, ∑ t ∈ Finset.range p,
+        ePh ((h : ℝ) * (residuePhase b p r - residuePhase b p t)) := by
+    dsimp [S]
+    rw [map_sum, Finset.sum_mul]
+    apply Finset.sum_congr rfl
+    intro r hr
+    rw [Finset.mul_sum]
+    apply Finset.sum_congr rfl
+    intro t ht
+    exact he r t
+  have hnormS : ‖S‖ ^ 2 =
+      ∑ r ∈ Finset.range p, ∑ t ∈ Finset.range p,
+        Real.cos (2 * Real.pi * ((h : ℝ) *
+          (residuePhase b p r - residuePhase b p t))) := by
+    have hre := congrArg Complex.re hmul
+    rw [Complex.mul_conj] at hre
+    simpa only [Complex.normSq_eq_norm_sq, Complex.ofReal_re, Complex.re_sum, ePh_re] using hre
+  change ‖S / (p : ℂ)‖ ^ 2 = _
+  rw [norm_div, Complex.norm_natCast]
+  rw [show (‖S‖ / (p : ℝ)) ^ 2 = ‖S‖ ^ 2 / (p : ℝ) ^ 2 by ring, hnormS]
+
+/-! ### Step 7: the one-prime spectral gap -/
+
+theorem localMean_normSq_le (b : ℕ) (hb : 2 ≤ b) (h : ℤ) (hh : h ≠ 0) :
+    ∃ P₀ : ℕ, ∀ p : ℕ, P₀ < p → ‖localMean b h p‖ ^ 2 ≤ 1 - spectralConst b / p := by
+  sorry
+
+/-! ### Step 6: exact second moment over residues -/
 
 /-- The exponential of a finite real sum is the product of its exponentials. -/
 theorem ePh_sum {ι : Type*} [Fintype ι] (x : ι → ℝ) :
@@ -326,10 +432,6 @@ theorem tuple_ePh_mean_eq_norm_pow (b : ℕ) (h : ℤ) (k p : ℕ) (hp : 0 < p) 
   rw [show (p : ℂ) ^ (2 * k) = (p : ℂ) ^ k * (p : ℂ) ^ k by rw [two_mul, pow_add]]
   field_simp
   exact pow_mul_conj_pow_eq_norm_pow _ _
-
-/-- The real part of `ePh x` is `cos (2πx)`. -/
-theorem ePh_re (x : ℝ) : (ePh x).re = Real.cos (2 * Real.pi * x) := by
-  simp [ePh, Complex.exp_re]
 
 /-- The complete signed-tuple cosine sum is the local-mean norm power times its cardinality. -/
 theorem tuple_cos_sum_eq (b : ℕ) (h : ℤ) (k p : ℕ) (hp : 0 < p) :
