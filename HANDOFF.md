@@ -1,3 +1,5 @@
+# Gate 6 relaunch #2 (2026-10-12): memory fixed (exact5z, 4.2 GB slice), chunk checkpoints teeth-tested; g6run2 running in tmp/g6run2 (resume: nohup tmp/g6run2/run.sh &); see PENDING_WORK 'Gate 6 relaunch #2'
+
 # Gate 6 lap 2 (2026-10-11): wiring proved, Good5 proved; exact {2,3,5} core search running; read HANDOFF-2026-10-11-gate6-lap2.md
 
 # STUCK strike 2 (2026-10-11, gate 6): fresh lap confirms still no Codex reply (mailbox newest 20261011T004153Z opus; no new ON-LINE-FINDINGS). Operator directive forbids proving UniformBadFold before review. Ask unchanged: relay ON-LINE-REQUEST.md ~06:10Z to Codex.
