@@ -6,6 +6,7 @@ Authors: Trevor Morris
 import Mathlib
 import Architect
 import NormalNumbers.RealDefs
+import NormalNumbers.WallRational
 import ErdosProblems.Erdos67.PrimeEstimates
 
 /-!
@@ -951,7 +952,7 @@ lemma divisorBlockMomentBound_eq_geometric (a s : ℝ) (ℓ N : ℕ) :
 `(1/T) Σ_{n ≤ T} τ(n_y)^s ≤ ∏_{p ≤ y}(1 + q/p + 1/(p(p-1))) ≤ A_s (log y)^q`; prime powers are
 retained.  Subadditivity of `t^s` over log-dyadic blocks gives
 `(1/T) Σ μ_M^s ≤ A_s 2^q Σ_{ℓ ≥ L} 2^{-(as-q)ℓ} → 0`.  Implies `typicalDivisorMass_small` by Markov.
-Paper confidence 95% (codex2); unproved in Lean. -/
+Paper confidence 95% (codex2); formal proof below. -/
 theorem largeDivisorMass_moment_small (a : ℝ) (ha : Real.log 2 < a) :
     ∃ s : ℝ, 0 < s ∧ s ≤ 1 ∧ ∀ ε : ℝ, 0 < ε →
       ∃ M : ℕ, 2 ≤ M ∧ ∀ N : ℕ, 1 ≤ N →
@@ -1459,6 +1460,46 @@ noncomputable def shiftResidualPartial {Ω : Type*} (b : ℕ) (X : ℕ → Ω �
   ∑ j ∈ Finset.range J,
     (1 / (b : ℝ)) ^ (j + 1) * selectedDivisorCount X M (n + j + 1) w
 
+lemma shiftResidualPartial_nonneg {Ω : Type*} (b : ℕ) (X : ℕ → Ω → Bool)
+    (M n J : ℕ) (w : Ω) : 0 ≤ shiftResidualPartial b X M n J w := by
+  unfold shiftResidualPartial
+  exact Finset.sum_nonneg fun j _ =>
+    mul_nonneg (pow_nonneg (by positivity) _) (selectedDivisorCount_nonneg X M _ w)
+
+lemma measurable_shiftResidualPartial {Ω : Type*} [MeasurableSpace Ω]
+    (b : ℕ) (X : ℕ → Ω → Bool) (hX : ∀ m, Measurable (X m)) (M n J : ℕ) :
+    Measurable (shiftResidualPartial b X M n J) := by
+  unfold shiftResidualPartial
+  exact Finset.measurable_sum _ fun j _ =>
+    (measurable_selectedDivisorCount X hX M (n + j + 1)).const_mul _
+
+lemma integrable_shiftResidualPartial_rpow {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) [IsFiniteMeasure μ] (b : ℕ) (X : ℕ → Ω → Bool)
+    (hX : ∀ m, Measurable (X m)) (M n J : ℕ) (s : ℝ) (hs : 0 < s) :
+    Integrable (fun w => Real.rpow (shiftResidualPartial b X M n J w) s) μ := by
+  let B : ℝ := ∑ j ∈ Finset.range J,
+    (1 / (b : ℝ)) ^ (j + 1) * ((n + j + 1 : ℕ) : ℝ)
+  have hB0 : 0 ≤ B := Finset.sum_nonneg fun j _ => by positivity
+  apply Integrable.of_bound
+    ((Real.continuous_rpow_const hs.le).measurable.comp
+      (measurable_shiftResidualPartial b X hX M n J)).aestronglyMeasurable
+    (Real.rpow B s)
+  filter_upwards [] with w
+  change |Real.rpow (shiftResidualPartial b X M n J w) s| ≤ Real.rpow B s
+  calc
+    |Real.rpow (shiftResidualPartial b X M n J w) s| =
+        Real.rpow (shiftResidualPartial b X M n J w) s :=
+      abs_of_nonneg (Real.rpow_nonneg (shiftResidualPartial_nonneg b X M n J w) _)
+    _ ≤ Real.rpow B s := Real.rpow_le_rpow
+      (shiftResidualPartial_nonneg b X M n J w) (by
+        unfold shiftResidualPartial B
+        apply Finset.sum_le_sum
+        intro j hj
+        exact mul_le_mul_of_nonneg_left
+          ((selectedDivisorCount_le_card_divisors X M (n + j + 1) w).trans
+            (by exact_mod_cast Nat.card_divisors_le_self (n + j + 1)))
+          (pow_nonneg (by positivity) _)) hs.le
+
 lemma integrable_selectedDivisorCount_rpow {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) [IsFiniteMeasure μ] (X : ℕ → Ω → Bool)
     (hX : ∀ m, Measurable (X m)) (M n : ℕ) (s : ℝ) (hs : 0 < s) :
@@ -1558,6 +1599,303 @@ lemma integral_shiftResidualPartial_rpow_le
       apply Finset.sum_congr rfl
       intro j hj
       ring
+
+/-! ### Cesàro moments of the shift residual -/
+
+/-- The geometric weight, including the linear loss from shifting a Cesàro interval. -/
+noncomputable def shiftMomentWeight (b : ℕ) (s : ℝ) (j : ℕ) : ℝ :=
+  Real.rpow ((1 / (b : ℝ)) ^ (j + 1)) s * (j + 1)
+
+lemma shiftMomentWeight_nonneg (b : ℕ) (s : ℝ) (j : ℕ) :
+    0 ≤ shiftMomentWeight b s j := by
+  unfold shiftMomentWeight
+  exact mul_nonneg (Real.rpow_nonneg (pow_nonneg (by positivity) _) _)
+    (by positivity)
+
+lemma summable_shiftMomentWeight (b : ℕ) (hb : 2 ≤ b) (s : ℝ) (hs : 0 < s) :
+    Summable (shiftMomentWeight b s) := by
+  let r : ℝ := 1 / (b : ℝ)
+  let q : ℝ := Real.rpow r s
+  have hr0 : 0 ≤ r := by positivity
+  have hr1 : r < 1 := by
+    rw [div_lt_one (by positivity : (0 : ℝ) < b)]
+    exact_mod_cast (show 1 < b by omega)
+  have hq0 : 0 ≤ q := Real.rpow_nonneg hr0 _
+  have hq1 : ‖q‖ < 1 := by
+    rw [Real.norm_eq_abs, abs_of_nonneg hq0]
+    exact Real.rpow_lt_one hr0 hr1 hs
+  have hbase : Summable (fun j : ℕ => (j : ℝ) * q ^ j) := by
+    simpa using (summable_pow_mul_geometric_of_norm_lt_one 1 hq1)
+  refine (hbase.comp_injective Nat.succ_injective).congr fun j => ?_
+  have hweight : Real.rpow (r ^ (j + 1)) s = q ^ (j + 1) := by
+    calc
+      Real.rpow (r ^ (j + 1)) s = Real.rpow r ((j + 1 : ℕ) * s) :=
+        (Real.rpow_natCast_mul hr0 (j + 1) s).symm
+      _ = Real.rpow r (s * (j + 1 : ℕ)) := by congr 1; ring
+      _ = (Real.rpow r s) ^ (j + 1) := Real.rpow_mul_natCast hr0 s (j + 1)
+      _ = q ^ (j + 1) := rfl
+  simp only [Function.comp_apply, shiftMomentWeight, Nat.succ_eq_add_one,
+    Nat.cast_add, Nat.cast_one]
+  rw [show (1 / (b : ℝ)) = r from rfl]
+  rw [hweight]
+  ring
+
+/-- A positive finite constant dominating all shifted geometric moment weights. -/
+noncomputable def shiftMomentConstant (b : ℕ) (s : ℝ) : ℝ :=
+  1 + ∑' j : ℕ, shiftMomentWeight b s j
+
+lemma shiftMomentConstant_pos (b : ℕ) (s : ℝ) : 0 < shiftMomentConstant b s := by
+  unfold shiftMomentConstant
+  have : 0 ≤ ∑' j : ℕ, shiftMomentWeight b s j :=
+    tsum_nonneg fun j => shiftMomentWeight_nonneg b s j
+  linarith
+
+/-- Cesàro average of the fractional moment of the infinite shift residual. -/
+noncomputable def shiftResidualMomentAverage {Ω : Type*} (b : ℕ)
+    (X : ℕ → Ω → Bool) (M : ℕ) (s : ℝ) (N : ℕ) (w : Ω) : ℝ :=
+  (∑ n ∈ Finset.range N, Real.rpow (shiftResidual b X M n w) s) / N
+
+/-- Cesàro average formed from the first `J` terms of every shift residual. -/
+noncomputable def shiftResidualPartialMomentAverage {Ω : Type*} (b : ℕ)
+    (X : ℕ → Ω → Bool) (M : ℕ) (s : ℝ) (N J : ℕ) (w : Ω) : ℝ :=
+  (∑ n ∈ Finset.range N, Real.rpow (shiftResidualPartial b X M n J w) s) / N
+
+lemma shiftResidualMomentAverage_nonneg {Ω : Type*} (b : ℕ)
+    (X : ℕ → Ω → Bool) (M : ℕ) (s : ℝ) (N : ℕ) (w : Ω) :
+    0 ≤ shiftResidualMomentAverage b X M s N w := by
+  unfold shiftResidualMomentAverage
+  exact div_nonneg (Finset.sum_nonneg fun n _ =>
+    Real.rpow_nonneg (shiftResidual_nonneg b X M n w) _) (by positivity)
+
+lemma shiftResidualPartialMomentAverage_nonneg {Ω : Type*} (b : ℕ)
+    (X : ℕ → Ω → Bool) (M : ℕ) (s : ℝ) (N J : ℕ) (w : Ω) :
+    0 ≤ shiftResidualPartialMomentAverage b X M s N J w := by
+  unfold shiftResidualPartialMomentAverage
+  exact div_nonneg (Finset.sum_nonneg fun n _ =>
+    Real.rpow_nonneg (shiftResidualPartial_nonneg b X M n J w) _) (by positivity)
+
+lemma measurable_shiftResidualMomentAverage {Ω : Type*} [MeasurableSpace Ω]
+    (b : ℕ) (X : ℕ → Ω → Bool) (hX : ∀ m, Measurable (X m))
+    (M : ℕ) (s : ℝ) (hs : 0 < s) (N : ℕ) :
+    Measurable (shiftResidualMomentAverage b X M s N) := by
+  unfold shiftResidualMomentAverage
+  exact (Finset.measurable_sum _ fun n _ =>
+    (Real.continuous_rpow_const hs.le).measurable.comp
+      (measurable_shiftResidual b X hX M n)).div_const _
+
+lemma measurable_shiftResidualPartialMomentAverage {Ω : Type*} [MeasurableSpace Ω]
+    (b : ℕ) (X : ℕ → Ω → Bool) (hX : ∀ m, Measurable (X m))
+    (M : ℕ) (s : ℝ) (hs : 0 < s) (N J : ℕ) :
+    Measurable (shiftResidualPartialMomentAverage b X M s N J) := by
+  unfold shiftResidualPartialMomentAverage
+  exact (Finset.measurable_sum _ fun n _ =>
+    (Real.continuous_rpow_const hs.le).measurable.comp
+      (measurable_shiftResidualPartial b X hX M n J)).div_const _
+
+lemma integrable_shiftResidualPartialMomentAverage {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) [IsFiniteMeasure μ] (b : ℕ) (X : ℕ → Ω → Bool)
+    (hX : ∀ m, Measurable (X m)) (M : ℕ) (s : ℝ) (hs : 0 < s) (N J : ℕ) :
+    Integrable (shiftResidualPartialMomentAverage b X M s N J) μ := by
+  unfold shiftResidualPartialMomentAverage
+  exact (integrable_finsetSum (Finset.range N) fun n _ =>
+    integrable_shiftResidualPartial_rpow μ b X hX M n J s hs).div_const _
+
+lemma tendsto_shiftResidualPartial {Ω : Type*} (b : ℕ) (hb : 2 ≤ b)
+    (X : ℕ → Ω → Bool) (M n : ℕ) (w : Ω) :
+    Tendsto (fun J => shiftResidualPartial b X M n J w) atTop
+      (nhds (shiftResidual b X M n w)) := by
+  exact (summable_shiftResidual_terms b hb X M n w).hasSum.tendsto_sum_nat
+
+lemma tendsto_shiftResidualPartialMomentAverage {Ω : Type*}
+    (b : ℕ) (hb : 2 ≤ b) (X : ℕ → Ω → Bool) (M : ℕ)
+    (s : ℝ) (hs : 0 < s) (N : ℕ) (w : Ω) :
+    Tendsto (fun J => shiftResidualPartialMomentAverage b X M s N J w) atTop
+      (nhds (shiftResidualMomentAverage b X M s N w)) := by
+  unfold shiftResidualPartialMomentAverage shiftResidualMomentAverage
+  apply Tendsto.div_const
+  apply tendsto_finset_sum
+  intro n hn
+  exact (Real.continuousAt_rpow_const (shiftResidual b X M n w) s (Or.inr hs.le)).tendsto.comp
+    (tendsto_shiftResidualPartial b hb X M n w)
+
+/-- Enlarging a shifted interval costs only the linear factor `j + 1`. -/
+lemma shifted_largeDivisorMass_moment_sum_le
+    (a : ℝ) (M : ℕ) (s η : ℝ) (hη : 0 ≤ η)
+    (hmoment : ∀ T : ℕ, 1 ≤ T →
+      (∑ t ∈ Finset.Icc 1 T, Real.rpow (largeDivisorMass a M t) s) ≤ η * T)
+    (N : ℕ) (hN : 1 ≤ N) (j : ℕ) :
+    (∑ n ∈ Finset.range N,
+      Real.rpow (largeDivisorMass a M (n + j + 1)) s) ≤ η * (j + 1) * N := by
+  calc
+    (∑ n ∈ Finset.range N,
+        Real.rpow (largeDivisorMass a M (n + j + 1)) s) =
+        ∑ t ∈ Finset.Ico (j + 1) (N + j + 1),
+          Real.rpow (largeDivisorMass a M t) s := by
+      rw [Finset.sum_Ico_eq_sum_range]
+      simp only [show N + j + 1 - (j + 1) = N by omega]
+      apply Finset.sum_congr rfl
+      intro n hn
+      rw [show n + j + 1 = j + 1 + n by omega]
+    _ ≤ ∑ t ∈ Finset.Icc 1 (N + j),
+        Real.rpow (largeDivisorMass a M t) s := by
+      apply Finset.sum_le_sum_of_subset_of_nonneg
+      · intro t ht
+        simp only [Finset.mem_Ico] at ht
+        simp only [Finset.mem_Icc]
+        omega
+      · intro t ht hnot
+        exact Real.rpow_nonneg (by
+          unfold largeDivisorMass
+          exact Finset.sum_nonneg fun d hd => Real.rpow_nonneg
+            (Real.log_nonneg (by
+              have hdM : M < d := (Finset.mem_filter.mp hd).2
+              exact_mod_cast (show 1 ≤ d by omega))) _) _
+    _ ≤ η * (N + j) := by
+      simpa only [Nat.cast_add] using hmoment (N + j) (by omega)
+    _ ≤ η * (j + 1) * N := by
+      have hjN : j ≤ j * N := by
+        simpa only [mul_one] using Nat.mul_le_mul_left j hN
+      have hrewrite : (j + 1) * N = N + j * N := by ring
+      have hnj : N + j ≤ (j + 1) * N := by rw [hrewrite]; omega
+      push_cast
+      have hnjR : (N : ℝ) + j ≤ (j + 1) * N := by exact_mod_cast hnj
+      calc
+        η * ((N : ℝ) + j) ≤ η * ((j + 1) * N) :=
+          mul_le_mul_of_nonneg_left hnjR hη
+        _ = η * (j + 1) * N := by ring
+
+/-- Every finite residual approximation has the uniform Cesàro moment bound that survives
+passage to the infinite residual. -/
+lemma integral_shiftResidualPartialMomentAverage_le
+    {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω) [IsProbabilityMeasure μ]
+    (b : ℕ) (hb : 2 ≤ b) (X : ℕ → Ω → Bool) (hX : ∀ m, Measurable (X m))
+    (a C s : ℝ) (hC : 0 ≤ C) (hs : 0 < s) (hs1 : s ≤ 1)
+    (hMarginal : ∀ m : ℕ, 2 ≤ m →
+      μ {w | X m w = true} ≤ ENNReal.ofReal (C * Real.rpow (Real.log m) (-a)))
+    (M : ℕ) (hM : 2 ≤ M) (η : ℝ) (hη : 0 ≤ η)
+    (hmoment : ∀ T : ℕ, 1 ≤ T →
+      (∑ t ∈ Finset.Icc 1 T, Real.rpow (largeDivisorMass a M t) s) ≤ η * T)
+    (N : ℕ) (hN : 1 ≤ N) (J : ℕ) :
+    (∫ w, shiftResidualPartialMomentAverage b X M s N J w ∂μ) ≤
+      Real.rpow C s * η * shiftMomentConstant b s := by
+  have hNpos : (0 : ℝ) < N := by exact_mod_cast (show 0 < N by omega)
+  have htermInt : ∀ n ∈ Finset.range N,
+      Integrable (fun w => Real.rpow (shiftResidualPartial b X M n J w) s) μ :=
+    fun n hn => integrable_shiftResidualPartial_rpow μ b X hX M n J s hs
+  have hsumInt : Integrable
+      (fun w => ∑ n ∈ Finset.range N,
+        Real.rpow (shiftResidualPartial b X M n J w) s) μ :=
+    integrable_finsetSum (Finset.range N) htermInt
+  have hfiniteWeight :
+      (∑ j ∈ Finset.range J, shiftMomentWeight b s j) ≤ shiftMomentConstant b s := by
+    calc
+      (∑ j ∈ Finset.range J, shiftMomentWeight b s j) ≤
+          ∑' j : ℕ, shiftMomentWeight b s j :=
+        (summable_shiftMomentWeight b hb s hs).sum_le_tsum (Finset.range J)
+          (fun j hj => shiftMomentWeight_nonneg b s j)
+      _ ≤ shiftMomentConstant b s := by
+        unfold shiftMomentConstant
+        linarith
+  have hsumBound :
+      (∑ n ∈ Finset.range N,
+        ∫ w, Real.rpow (shiftResidualPartial b X M n J w) s ∂μ) ≤
+      Real.rpow C s * η * N *
+        ∑ j ∈ Finset.range J, shiftMomentWeight b s j := by
+    calc
+      (∑ n ∈ Finset.range N,
+          ∫ w, Real.rpow (shiftResidualPartial b X M n J w) s ∂μ) ≤
+          ∑ n ∈ Finset.range N, Real.rpow C s *
+            ∑ j ∈ Finset.range J,
+              Real.rpow ((1 / (b : ℝ)) ^ (j + 1)) s *
+                Real.rpow (largeDivisorMass a M (n + j + 1)) s := by
+        apply Finset.sum_le_sum
+        intro n hn
+        exact integral_shiftResidualPartial_rpow_le μ b hb X hX a C s hC hs hs1
+          hMarginal M n J hM
+      _ = Real.rpow C s * ∑ j ∈ Finset.range J,
+          Real.rpow ((1 / (b : ℝ)) ^ (j + 1)) s *
+            ∑ n ∈ Finset.range N,
+              Real.rpow (largeDivisorMass a M (n + j + 1)) s := by
+        rw [← Finset.mul_sum]
+        congr 1
+        rw [Finset.sum_comm]
+        apply Finset.sum_congr rfl
+        intro j hj
+        rw [Finset.mul_sum]
+      _ ≤ Real.rpow C s * ∑ j ∈ Finset.range J,
+          Real.rpow ((1 / (b : ℝ)) ^ (j + 1)) s * (η * (j + 1) * N) := by
+        apply mul_le_mul_of_nonneg_left _ (Real.rpow_nonneg hC _)
+        apply Finset.sum_le_sum
+        intro j hj
+        exact mul_le_mul_of_nonneg_left
+          (shifted_largeDivisorMass_moment_sum_le a M s η hη hmoment N hN j)
+          (Real.rpow_nonneg (pow_nonneg (by positivity) _) _)
+      _ = Real.rpow C s * η * N *
+          ∑ j ∈ Finset.range J, shiftMomentWeight b s j := by
+        rw [Finset.mul_sum]
+        rw [Finset.mul_sum]
+        apply Finset.sum_congr rfl
+        intro j hj
+        unfold shiftMomentWeight
+        ring
+  calc
+    (∫ w, shiftResidualPartialMomentAverage b X M s N J w ∂μ) =
+        (∑ n ∈ Finset.range N,
+          ∫ w, Real.rpow (shiftResidualPartial b X M n J w) s ∂μ) / N := by
+      unfold shiftResidualPartialMomentAverage
+      rw [integral_div]
+      congr 1
+      exact integral_finsetSum (Finset.range N) htermInt
+    _ ≤ (Real.rpow C s * η * N *
+        ∑ j ∈ Finset.range J, shiftMomentWeight b s j) / N := by
+      exact div_le_div_of_nonneg_right hsumBound hNpos.le
+    _ = Real.rpow C s * η *
+        ∑ j ∈ Finset.range J, shiftMomentWeight b s j := by
+      field_simp
+    _ ≤ Real.rpow C s * η * shiftMomentConstant b s := by
+      exact mul_le_mul_of_nonneg_left hfiniteWeight
+        (mul_nonneg (Real.rpow_nonneg hC _) hη)
+
+/-- The infinite residual obeys the same uniform Cesàro moment estimate.  Fatou is applied only
+to the measurable finite residual approximants. -/
+lemma lintegral_shiftResidualMomentAverage_le
+    {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω) [IsProbabilityMeasure μ]
+    (b : ℕ) (hb : 2 ≤ b) (X : ℕ → Ω → Bool) (hX : ∀ m, Measurable (X m))
+    (a C s : ℝ) (hC : 0 ≤ C) (hs : 0 < s) (hs1 : s ≤ 1)
+    (hMarginal : ∀ m : ℕ, 2 ≤ m →
+      μ {w | X m w = true} ≤ ENNReal.ofReal (C * Real.rpow (Real.log m) (-a)))
+    (M : ℕ) (hM : 2 ≤ M) (η : ℝ) (hη : 0 ≤ η)
+    (hmoment : ∀ T : ℕ, 1 ≤ T →
+      (∑ t ∈ Finset.Icc 1 T, Real.rpow (largeDivisorMass a M t) s) ≤ η * T)
+    (N : ℕ) (hN : 1 ≤ N) :
+    (∫⁻ w, ENNReal.ofReal (shiftResidualMomentAverage b X M s N w) ∂μ) ≤
+      ENNReal.ofReal (Real.rpow C s * η * shiftMomentConstant b s) := by
+  let f : ℕ → Ω → ENNReal := fun J w =>
+    ENNReal.ofReal (shiftResidualPartialMomentAverage b X M s N J w)
+  let F : Ω → ENNReal := fun w =>
+    ENNReal.ofReal (shiftResidualMomentAverage b X M s N w)
+  have hfMeas : ∀ J, Measurable (f J) := fun J =>
+    (measurable_shiftResidualPartialMomentAverage b X hX M s hs N J).ennreal_ofReal
+  have hlim : ∀ w, Tendsto (fun J => f J w) atTop (nhds (F w)) := by
+    intro w
+    exact (ENNReal.continuous_ofReal.tendsto _).comp
+      (tendsto_shiftResidualPartialMomentAverage b hb X M s hs N w)
+  have hpartial : ∀ J, (∫⁻ w, f J w ∂μ) ≤
+      ENNReal.ofReal (Real.rpow C s * η * shiftMomentConstant b s) := by
+    intro J
+    rw [← ofReal_integral_eq_lintegral_ofReal
+      (integrable_shiftResidualPartialMomentAverage μ b X hX M s hs N J)
+      (Eventually.of_forall fun w =>
+        shiftResidualPartialMomentAverage_nonneg b X M s N J w)]
+    exact ENNReal.ofReal_le_ofReal
+      (integral_shiftResidualPartialMomentAverage_le μ b hb X hX a C s hC hs hs1
+        hMarginal M hM η hη hmoment N hN J)
+  have hfatou := lintegral_liminf_le hfMeas (μ := μ) (u := atTop)
+  have hpoint : (fun w => liminf (fun J => f J w) atTop) = F := by
+    funext w
+    exact (hlim w).liminf_eq
+  rw [hpoint] at hfatou
+  exact hfatou.trans (liminf_le_of_frequently_le' (Frequently.of_forall hpartial))
 
 /-! ### Exact periodic form of the residual -/
 
@@ -1869,15 +2207,194 @@ lemma fract_pow_mul_ebLambertTail_le_shiftResidual {Ω : Type*}
   rw [Int.fract]
   linarith
 
+/-! ### The normal-orbit lower bound -/
+
+/-- The deleted finite head, represented exactly as a rational number. -/
+noncomputable def ebLambertHeadRat {Ω : Type*} (b : ℕ) (X : ℕ → Ω → Bool)
+    (M : ℕ) (w : Ω) : ℚ :=
+  ∑ m ∈ Finset.range M,
+    (if X (m + 1) w then (1 : ℚ) else 0) / ((b : ℚ) ^ (m + 1) - 1)
+
+lemma ebLambertHeadRat_cast {Ω : Type*} (b : ℕ) (X : ℕ → Ω → Bool)
+    (M : ℕ) (w : Ω) :
+    (ebLambertHeadRat b X M w : ℝ) =
+      ∑ m ∈ Finset.range M,
+        (if X (m + 1) w then (1 : ℝ) else 0) / ((b : ℝ) ^ (m + 1) - 1) := by
+  unfold ebLambertHeadRat
+  push_cast
+  apply Finset.sum_congr rfl
+  intro m hm
+  by_cases h : X (m + 1) w = true
+  · simp [h]
+  · have h' : X (m + 1) w = false := Bool.eq_false_of_not_eq_true h
+    simp [h']
+
+/-- Deleting finitely many selected Lambert summands preserves normality because the head is
+rational. -/
+lemma ebLambertTail_isNormal_of_ebLambert {Ω : Type*}
+    (b : ℕ) (hb : 2 ≤ b) (X : ℕ → Ω → Bool) (M : ℕ) (w : Ω)
+    (hnormal : NormalNumbers.IsNormal b (ebLambert b X w)) :
+    NormalNumbers.IsNormal b (ebLambertTail b X M w) := by
+  let q : ℚ := ebLambertHeadRat b X M w
+  have hnormal' := NormalNumbers.isNormal_rat_mul_add b hb (ebLambert b X w)
+    1 (-q) (by norm_num) hnormal
+  have hsplit := ebLambert_eq_head_add_tail b hb X M w
+  have hq : (q : ℝ) = ∑ m ∈ Finset.range M,
+      (if X (m + 1) w then (1 : ℝ) else 0) / ((b : ℝ) ^ (m + 1) - 1) :=
+    ebLambertHeadRat_cast b X M w
+  convert hnormal' using 1
+  rw [hsplit, ← hq]
+  push_cast
+  ring
+
+/-- A fixed positive threshold forced by visits of a normal orbit to `[1/2,1)`. -/
+noncomputable def normalMomentThreshold (s : ℝ) : ℝ :=
+  Real.rpow (1 / 2 : ℝ) s / 4
+
+lemma normalMomentThreshold_pos (s : ℝ) : 0 < normalMomentThreshold s := by
+  unfold normalMomentThreshold
+  exact div_pos (Real.rpow_pos_of_pos (by norm_num) _) (by norm_num)
+
+lemma orbitMomentAverage_le_shiftResidualMomentAverage {Ω : Type*}
+    (b : ℕ) (hb : 2 ≤ b) (X : ℕ → Ω → Bool) (M : ℕ)
+    (s : ℝ) (hs : 0 < s) (N : ℕ) (w : Ω) :
+    (∑ n ∈ Finset.range N,
+      Real.rpow (NormalNumbers.orbit b (ebLambertTail b X M w) n) s) / N ≤
+      shiftResidualMomentAverage b X M s N w := by
+  unfold shiftResidualMomentAverage
+  apply div_le_div_of_nonneg_right _ (by positivity)
+  apply Finset.sum_le_sum
+  intro n hn
+  have hfract : NormalNumbers.orbit b (ebLambertTail b X M w) n ≤
+      shiftResidual b X M n w := by
+    simpa only [NormalNumbers.orbit, mul_comm] using
+      fract_pow_mul_ebLambertTail_le_shiftResidual b hb X M n w
+  exact Real.rpow_le_rpow (Int.fract_nonneg _) hfract hs.le
+
+/-- A normal deleted-head orbit eventually has a uniformly positive residual moment average. -/
+lemma isNormal_eventually_shiftResidualMomentAverage_ge {Ω : Type*}
+    (b : ℕ) (hb : 2 ≤ b) (X : ℕ → Ω → Bool) (M : ℕ) (w : Ω)
+    (s : ℝ) (hs : 0 < s)
+    (hnormal : NormalNumbers.IsNormal b (ebLambertTail b X M w)) :
+    ∀ᶠ N : ℕ in atTop,
+      normalMomentThreshold s ≤ shiftResidualMomentAverage b X M s N w := by
+  let u : ℕ → ℝ := NormalNumbers.orbit b (ebLambertTail b X M w)
+  let c : ℝ := Real.rpow (1 / 2 : ℝ) s
+  have hc0 : 0 < c := by
+    simp only [c]
+    exact Real.rpow_pos_of_pos (by norm_num) _
+  have hequid : NormalNumbers.Equidistributed u := by
+    exact (NormalNumbers.isNormal_iff_equidistributed_orbit b hb _).mp hnormal
+  have htend : Tendsto
+      (fun N => (NormalNumbers.visitCount u (1 / 2) 1 N : ℝ) / N)
+      atTop (nhds (1 / 2 : ℝ)) := by
+    have h := hequid (1 / 2) 1 (by norm_num) (by norm_num) (by norm_num)
+    convert h using 1 <;> norm_num
+  have hvisit : ∀ᶠ N : ℕ in atTop,
+      (1 / 4 : ℝ) ≤ (NormalNumbers.visitCount u (1 / 2) 1 N : ℝ) / N :=
+    (htend.eventually (isOpen_Ioi.mem_nhds (by norm_num : (1 / 4 : ℝ) < 1 / 2))).mono
+      fun N hN => hN.le
+  filter_upwards [hvisit, eventually_ge_atTop 1] with N hfreq hN
+  have hNpos : (0 : ℝ) < N := by exact_mod_cast (show 0 < N by omega)
+  have hlower : c * (NormalNumbers.visitCount u (1 / 2) 1 N : ℝ) ≤
+      ∑ n ∈ Finset.range N, Real.rpow (u n) s := by
+    calc
+      c * (NormalNumbers.visitCount u (1 / 2) 1 N : ℝ) =
+          ∑ n ∈ (Finset.range N).filter (fun n => u n ∈ Set.Ico (1 / 2) 1), c := by
+        unfold NormalNumbers.visitCount
+        rw [Finset.sum_const, nsmul_eq_mul]
+        ring
+      _ ≤ ∑ n ∈ (Finset.range N).filter (fun n => u n ∈ Set.Ico (1 / 2) 1),
+          Real.rpow (u n) s := by
+        apply Finset.sum_le_sum
+        intro n hn
+        have hmem := (Finset.mem_filter.mp hn).2
+        exact Real.rpow_le_rpow (by norm_num) hmem.1 hs.le
+      _ ≤ ∑ n ∈ Finset.range N, Real.rpow (u n) s := by
+        apply Finset.sum_le_sum_of_subset_of_nonneg (Finset.filter_subset _ _)
+        intro n hn hnot
+        exact Real.rpow_nonneg (Int.fract_nonneg _) _
+  calc
+    normalMomentThreshold s = c * (1 / 4) := by
+      simp only [normalMomentThreshold, c]
+      ring
+    _ ≤ c * ((NormalNumbers.visitCount u (1 / 2) 1 N : ℝ) / N) :=
+      mul_le_mul_of_nonneg_left hfreq hc0.le
+    _ = (c * (NormalNumbers.visitCount u (1 / 2) 1 N : ℝ)) / N := by ring
+    _ ≤ (∑ n ∈ Finset.range N, Real.rpow (u n) s) / N :=
+      div_le_div_of_nonneg_right hlower hNpos.le
+    _ ≤ shiftResidualMomentAverage b X M s N w := by
+      exact orbitMomentAverage_le_shiftResidualMomentAverage b hb X M s hs N w
+
+/-- Uniform first-moment control bounds the measure of the event on which the residual Cesàro
+average is eventually above a positive threshold. -/
+lemma measure_eventually_shiftResidualMomentAverage_ge_le
+    {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω)
+    (b : ℕ) (X : ℕ → Ω → Bool) (hX : ∀ m, Measurable (X m))
+    (M : ℕ) (s : ℝ) (hs : 0 < s) (ε R : ℝ) (hε : 0 < ε)
+    (hbound : ∀ N : ℕ, 1 ≤ N →
+      (∫⁻ w, ENNReal.ofReal (shiftResidualMomentAverage b X M s N w) ∂μ) ≤
+        ENNReal.ofReal R) :
+    μ {w | ∀ᶠ N : ℕ in atTop,
+      ε ≤ shiftResidualMomentAverage b X M s N w} ≤ ENNReal.ofReal (R / ε) := by
+  let E : ℕ → Set Ω := fun N =>
+    {w | ε ≤ shiftResidualMomentAverage b X M s N w}
+  let T : ℕ → Set Ω := fun K => {w | ∀ N, K ≤ N → w ∈ E N}
+  have hE : ∀ N : ℕ, 1 ≤ N → μ (E N) ≤ ENNReal.ofReal (R / ε) := by
+    intro N hN
+    have hset : {w | ENNReal.ofReal ε ≤
+        ENNReal.ofReal (shiftResidualMomentAverage b X M s N w)} = E N := by
+      ext w
+      simp only [E, Set.mem_setOf_eq]
+      exact ENNReal.ofReal_le_ofReal_iff
+        (shiftResidualMomentAverage_nonneg b X M s N w)
+    have hmarkov := mul_meas_ge_le_lintegral
+      ((measurable_shiftResidualMomentAverage b X hX M s hs N).ennreal_ofReal)
+      (ENNReal.ofReal ε) (μ := μ)
+    rw [hset] at hmarkov
+    rw [ENNReal.ofReal_div_of_pos hε]
+    apply (ENNReal.le_div_iff_mul_le
+      (Or.inl (ne_of_gt (ENNReal.ofReal_pos.mpr hε)))
+      (Or.inl ENNReal.ofReal_ne_top)).2
+    rw [mul_comm]
+    exact hmarkov.trans (hbound N hN)
+  have hTmono : Monotone T := by
+    intro K L hKL w hw N hLN
+    exact hw N (hKL.trans hLN)
+  have hT : ∀ K, μ (T K) ≤ ENNReal.ofReal (R / ε) := by
+    intro K
+    calc
+      μ (T K) ≤ μ (E (max K 1)) := by
+        apply measure_mono
+        intro w hw
+        exact hw (max K 1) (le_max_left K 1)
+      _ ≤ ENNReal.ofReal (R / ε) := hE (max K 1) (le_max_right K 1)
+  have hunion : μ (⋃ K, T K) ≤ ENNReal.ofReal (R / ε) := by
+    rw [hTmono.measure_iUnion]
+    exact iSup_le hT
+  have heq : {w | ∀ᶠ N : ℕ in atTop,
+      ε ≤ shiftResidualMomentAverage b X M s N w} = ⋃ K, T K := by
+    ext w
+    constructor
+    · intro hw
+      obtain ⟨K, hK⟩ := eventually_atTop.1 hw
+      exact Set.mem_iUnion.2 ⟨K, hK⟩
+    · intro hw
+      obtain ⟨K, hK⟩ := Set.mem_iUnion.1 hw
+      exact eventually_atTop.2 ⟨K, hK⟩
+  rw [heq]
+  exact hunion
+
 /-- **Marginal decay alone forces non-normality** (strengthens `ebRandom_ae_not_normal`).
 Proof outline:
 1. Use the exact residual `R_M(n) = Σ_{j ≥ 1} b^{-j} D_M(n+j)`, with
    `D_M(t) = #{m > M selected : m ∣ t}`.  `b^n Y_M - R_M(n) ∈ ℤ`, so `frac ≤ R_M`.
 2. By subadditivity and Jensen, `E[frac^s] ≤ C^s Σ_j b^{-js} μ_M(n+j)^s`.
 3. Shifting by `j` costs at most `1+j`, which is summable against `b^{-js}`.
-4. On the normality event the orbit average of `frac^s` tends to `1/(s+1)`.  Fatou then bounds
-   `P(normal)` by a quantity that vanishes as `M → ∞`.
-Paper confidence 95% (codex2); unproved in Lean. -/
+4. A normal orbit visits `[1/2,1)` with frequency `1/2`, so its residual moment average is
+   eventually bounded below.  Markov bounds every measurable level set uniformly; continuity from
+   below bounds their eventual-event union without requiring measurability of the normality event.
+Paper confidence 95% (codex2); formal proof below. -/
 @[blueprint (title := "Marginal decay alone forces random Erdős–Borwein non-normality")]
 theorem ebRandom_ae_not_normal_of_marginal_bound
     {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω) [IsProbabilityMeasure μ]
@@ -1886,17 +2403,80 @@ theorem ebRandom_ae_not_normal_of_marginal_bound
     (hMarginal : ∀ m : ℕ, 2 ≤ m →
       μ {w | X m w = true} ≤ ENNReal.ofReal (C * Real.rpow (Real.log m) (-a))) :
     ∀ᵐ w ∂μ, ∀ b : ℕ, 2 ≤ b → ¬ NormalNumbers.IsNormal b (ebLambert b X w) := by
-  sorry
+  classical
+  rw [ae_all_iff]
+  intro b
+  by_cases hb : 2 ≤ b
+  · have hbase : ∀ᵐ w ∂μ, ¬ NormalNumbers.IsNormal b (ebLambert b X w) := by
+      rw [ae_iff]
+      simp only [not_not]
+      let A : Set Ω := {w | NormalNumbers.IsNormal b (ebLambert b X w)}
+      change μ A = 0
+      by_contra hA0
+      have hAtop : μ A ≠ ⊤ := measure_ne_top μ A
+      let p : ℝ := (μ A).toReal
+      have hp : 0 < p := ENNReal.toReal_pos hA0 hAtop
+      obtain ⟨s, hs, hs1, hmomentAll⟩ := largeDivisorMass_moment_small a ha
+      let ε : ℝ := normalMomentThreshold s
+      let K : ℝ := shiftMomentConstant b s
+      have hε : 0 < ε := by exact normalMomentThreshold_pos s
+      have hK : 0 < K := by exact shiftMomentConstant_pos b s
+      have hCs : 0 ≤ Real.rpow C s := Real.rpow_nonneg hC _
+      let D : ℝ := (Real.rpow C s + 1) * K
+      have hD : 0 < D := by
+        dsimp [D]
+        exact mul_pos (add_pos_of_nonneg_of_pos hCs zero_lt_one) hK
+      let η : ℝ := p * ε / (2 * D)
+      have hη : 0 < η := by
+        dsimp [η]
+        positivity
+      obtain ⟨M, hM, hmoment⟩ := hmomentAll η hη
+      let R : ℝ := Real.rpow C s * η * K
+      have hR : 0 ≤ R := by
+        dsimp [R]
+        positivity
+      have hlintegral : ∀ N : ℕ, 1 ≤ N →
+          (∫⁻ w, ENNReal.ofReal (shiftResidualMomentAverage b X M s N w) ∂μ) ≤
+            ENNReal.ofReal R := by
+        intro N hN
+        exact lintegral_shiftResidualMomentAverage_le μ b hb X hMeas a C s hC hs hs1
+          hMarginal M hM η hη.le hmoment N hN
+      let E : Set Ω := {w | ∀ᶠ N : ℕ in atTop,
+        ε ≤ shiftResidualMomentAverage b X M s N w}
+      have hE : μ E ≤ ENNReal.ofReal (R / ε) := by
+        exact measure_eventually_shiftResidualMomentAverage_ge_le μ b X hMeas M s hs
+          ε R hε hlintegral
+      have hsub : A ⊆ E := by
+        intro w hw
+        have htail := ebLambertTail_isNormal_of_ebLambert b hb X M w hw
+        exact isNormal_eventually_shiftResidualMomentAverage_ge b hb X M w s hs htail
+      have hmeasure : μ A ≤ ENNReal.ofReal (R / ε) := (measure_mono hsub).trans hE
+      have hp_le : p ≤ R / ε := by
+        dsimp [p]
+        exact ENNReal.toReal_le_of_le_ofReal (div_nonneg hR hε.le) hmeasure
+      have hηD : η * D = p * ε / 2 := by
+        dsimp [η]
+        field_simp
+      have hRle : R ≤ p * ε / 2 := by
+        calc
+          R = Real.rpow C s * η * K := rfl
+          _ ≤ (Real.rpow C s + 1) * η * K := by
+            exact mul_le_mul_of_nonneg_right
+              (mul_le_mul_of_nonneg_right (by linarith) hη.le) hK.le
+          _ = η * D := by dsimp [D]; ring
+          _ = p * ε / 2 := hηD
+      have hhalf : R / ε ≤ p / 2 := by
+        calc
+          R / ε ≤ (p * ε / 2) / ε := div_le_div_of_nonneg_right hRle hε.le
+          _ = p / 2 := by field_simp
+      linarith
+    filter_upwards [hbase] with w hw
+    exact fun _ => hw
+  · exact ae_of_all μ fun w hb' => (hb hb').elim
 
-/-- **Non-normality beyond finite mass.**  Paper proof:
-1. Remove the rational head `m ≤ M`.
-2. `frac(b^n Y_M) ≤ 2 Σ_{j ≥ 1} b^{-j} d_{S,M}(n+j)`, since `α_m(n) = b^{m-j}/(b^m-1)` with
-   `m ∣ n+j`.
-3. `E_X 1[d_{S,M}(n) ≥ 1] ≤ C · largeDivisorMass a M n`; the `j > J` tail is handled by the typical
-   bound plus Markov in `X`.
-4. So `E_X` of the density of `{n ≤ N : frac ≥ ε'}` is small, uniformly in `N`.
-5. Fatou gives non-normality with positive probability.  Normality is a tail event (finite changes
-   are rational shifts, Wall), so Kolmogorov's 0-1 law makes it almost sure. -/
+/-- **Non-normality beyond finite mass.**  The Bernoulli law supplies the coordinate marginals
+required by `ebRandom_ae_not_normal_of_marginal_bound`.  The hypothesis at `m = 2`, together with
+positivity of `(log 2)⁻ᵃ`, forces `C ≥ 0`; no independence beyond those marginals is needed. -/
 @[blueprint (title := "Random Erdős–Borwein subseries are non-normal above exponent ln 2")]
 theorem ebRandom_ae_not_normal {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω)
     [IsProbabilityMeasure μ] (delta : ℕ → ℝ) (X : ℕ → Ω → Bool) (hX : BernoulliLawNat μ delta X)

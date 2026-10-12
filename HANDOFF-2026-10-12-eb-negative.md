@@ -60,6 +60,40 @@ Notation: `μ_M(n) = largeDivisorMass a M n = Σ_{d ∣ n, d > M} (log d)^{-a}`.
 
 ## Status
 
+- **Lap 9 checkpoint (2026-10-12): marginal-only nonnormality proved; scoped target complete.**
+  - PROVED the finite-residual measurability and integrability lemmas, then passed the residual
+    fractional-moment estimate to the infinite series by monotone finite approximation and
+    `lintegral_liminf_le`.  The resulting uniform estimate
+    `lintegral_shiftResidualMomentAverage_le` controls every Cesaro residual-moment average by the
+    arithmetic large-divisor moment bound, with a summable geometric shift weight.
+  - PROVED that normality of the original Lambert sum implies normality of its deleted-head tail:
+    the removed head is rational, so Wall's rational affine invariance applies.  Normality forces
+    the base-`b` orbit to visit `[1/2, 1)` with frequency `1/2`; the exact tail-orbit identity then
+    forces the residual Cesaro moment average eventually above the fixed positive threshold
+    `normalMomentThreshold`.
+  - Reflection exposed a simpler close than measurability of a pointwise liminf.  For each base,
+    the normal set is contained in a measurable *eventual* level-set event, expressed as an
+    increasing union of tail intersections.  Markov's inequality bounds every level set, and
+    continuity from below gives `measure_eventually_shiftResidualMomentAverage_ge_le`.  Choosing
+    the arithmetic cutoff supplied by `largeDivisorMass_moment_small` contradicts any positive
+    outer measure of the normal set.  A countable union over bases proves the frozen theorem
+    `ebRandom_ae_not_normal_of_marginal_bound`; `ebRandom_ae_not_normal` follows from its Bernoulli
+    marginals.
+  - The target file has no `sorry`.  Byte-level extraction against introduction commit
+    `3e4cac49` reconfirmed that all four frozen theorem statements and all three protected
+    definition blocks are unchanged.
+  - Exact verification:
+    - `lake env lean src/NormalNumbers/CoefmassErdosBorweinNegative.lean` — succeeds with no sorry
+      warning.
+    - `~/personal/bin/lean-green . --target NormalNumbers.CoefmassErdosBorweinNegative --import
+      NormalNumbers.CoefmassErdosBorweinNegative --axioms
+      NormalNumbers.ErdosBorweinRandom.largeDivisorMass_moment_small --axioms
+      NormalNumbers.ErdosBorweinRandom.typicalDivisorMass_small --axioms
+      NormalNumbers.ErdosBorweinRandom.ebRandom_ae_not_normal_of_marginal_bound --axioms
+      NormalNumbers.ErdosBorweinRandom.ebRandom_ae_not_normal` — FORMALIZE-TIER GREEN; every
+      theorem's axioms are exactly `propext`, `Classical.choice`, `Quot.sound`.
+    - `~/personal/bin/lean-green .` — FORMALIZE-TIER GREEN, 10847 jobs.
+
 - **Lap 8 checkpoint (2026-10-12): exact Lambert-tail orbit identity proved; 1 sorry remains.**
   - DEFINED the selected periodic denominator contribution `selectedPeriodicTerm` and PROVED its
     positivity and summability.  PROVED `shiftResidual_eq_tsum_selectedPeriodic` by expanding the
@@ -249,25 +283,9 @@ Notation: `μ_M(n) = largeDivisorMass a M n = Σ_{d ∣ n, d > M} (log d)^{-a}`.
 
 ### Current blocker / next attack
 
-The sole open theorem is `ebRandom_ae_not_normal_of_marginal_bound`.  Both its arithmetic input and
-the marginal-to-divisor-moment Jensen bridge are complete.  Lap 7 supplies the convergent shift
-residual, infinite fractional-power subadditivity, and the finite integrated moment estimate; Lap 8
-now proves the exact integer orbit identity and the pointwise fractional-part bound.
-
-Next pass `integral_shiftResidualPartial_rpow_le` to `J -> infinity` and sum
-over `n in Icc 1 N`.  For fixed `j`, enlarge the shifted interval to `Icc 1 (N+j+1)` and apply
-`largeDivisorMass_moment_small`; `N+j+1 <= (j+2)N` for `N >= 1`, and
-`sum_j (j+2)b^{-s(j+1)}` converges.  This yields the uniform integrated Cesaro estimate needed by
-Fatou.
-
-For the probability/orbit close, avoid first proving that the `IsNormal` event is measurable (no
-such repository lemma was found).  Instead, for each base majorize the normal set by a measurable
-level set of the `liminf` of the tail-orbit Cesàro averages.  Normality supplies the positive lower
-bound through `isNormal_iff_equidistributed_orbit` and visits to `[1/2,1)`; Fatou bounds that level
-set by the integrated moment estimate.  Let the arithmetic cutoff tend to infinity, use Wall's
-`isNormal_rat_mul_add` to restore the finite rational head, then take the countable intersection in
-`b`.  The route-decisive first checkpoint is the exact residual plus integrated moment estimate;
-the final checkpoint is the measurable-liminf/Fatou and normal-orbit contradiction.
+None.  The scoped completion predicate
+`sorry-free:src/NormalNumbers/CoefmassErdosBorweinNegative.lean` is met, the four headline theorems
+are axiom-clean, and the full repository gate is green.  No stretch objective was requested.
 
 ## Findings
 
