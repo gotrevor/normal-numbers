@@ -25,6 +25,20 @@ belongs to that branch (its route is parked at the middle-digit obstruction); do
   (3) **On a pass:** freeze W = W3*PHI (+E), read-only checker, Lean bridge per the Codex review block below, and the
   artifact via ON-LINE-REQUEST.md for Codex.  Switching checker designs mid-search: first record the abandoned
   run's last stats line in PENDING_WORK.
+  **Addendum (Ren, 2026-10-12 ~00:10Z) - g6run1 was OOM-killed in pass 0; memory + in-pass progress come first.**
+  Evidence: container cgroup `memory.events` oom_kill 1, `memory.peak` 15.04 GB; exact5y died between 2h and 4h into
+  pass 0 with no stats line, so the per-pass checkpoint saved nothing.  The lap's wait loop never noticed: `pgrep -f
+  "exact5y 128 24 6"` matches the waiting shell's own command line.  Operator stopped the lap.  Order now:
+  (a) **Measure memory on a slice before any full pass**: add a progress line every ~1% of the q3 queue (items done,
+  elapsed, peak RSS from /proc/self/status VmHWM), run ~2-3% of pass 0 at 15 threads, and extrapolate time AND
+  memory to the full pass.  Suspects to check, not assume: per-thread private T5 trees (S*NB5 bins x 15 copies,
+  pruned to depth 8 only every 4 items) and the in-memory failing-record arrays.
+  (b) **Fix to a budget**: projected peak <= 10 GB (the box shares one memory ceiling), e.g. prune harder or more
+  often, share or shrink T5, stream failing records to a per-chunk file.  Re-run the slice to show it.
+  (c) **In-pass checkpoint**: if a projected pass exceeds ~1 h, persist per-chunk results under `tmp/<run-id>/` so a
+  resume skips finished chunks; teeth-test it like the per-pass resume.
+  (d) Wait on the search by its PID (`$!` saved to a file, `kill -0`), never `pgrep -f` with a pattern your own
+  shell contains, and append `EXIT $?` to the log.  Then (1)-(3) above, unchanged.
 - **Operator gate 6 (Ren for Trevor, 2026-10-11 ~05:50Z) - fallback (a): fold small tail bases into the shared-phase core.**
   Trevor approved (a) after the gate-5 counting screen died at a certified 1.391 (`042f054d`) and the lever probe killed too (L2 mass charging 1.2552, `205bf604`; L1 needs a provable
   K <= 7/5 at lags >= 2 and is NOT pursued in this run).
