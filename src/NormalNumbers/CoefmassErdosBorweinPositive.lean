@@ -673,6 +673,155 @@ theorem ebMoment_le_tupleAvg (b : ℕ) (hb : 2 ≤ b) (h : ℤ)
           (N : ℝ) ^ (2 * k) := by
       exact div_le_div_of_nonneg_right (Finset.sum_le_sum fun n _ => hchar n) hden
 
+/-! ### Good moduli and their Bernoulli contraction -/
+
+/-- The moduli anchored at coordinate `i` and separated from the last `K` residue classes of
+every other coordinate. -/
+def tupleGoodModuli (a₀ K P₀ k : ℕ) (n : Fin (2 * k) → ℕ) (i : Fin (2 * k)) : Finset ℕ :=
+  (n i + a₀).divisors.filter fun p =>
+    P₀ < p ∧ ∀ j, j ≠ i → n j % p < p - K
+
+theorem mem_tupleGoodModuli {a₀ K P₀ k p : ℕ} {n : Fin (2 * k) → ℕ}
+    {i : Fin (2 * k)} (ha₀ : 1 ≤ a₀) :
+      p ∈ tupleGoodModuli a₀ K P₀ k n i ↔
+      p ∣ n i + a₀ ∧ P₀ < p ∧ ∀ j, j ≠ i → n j % p < p - K := by
+  rw [tupleGoodModuli, Finset.mem_filter, Nat.mem_divisors]
+  constructor
+  · rintro ⟨⟨hp, _⟩, hP, hsep⟩
+    exact ⟨hp, hP, hsep⟩
+  · rintro ⟨hp, hP, hsep⟩
+    exact ⟨⟨hp, by omega⟩, hP, hsep⟩
+
+/-- A modulus excluded by another coordinate's last `K` residue classes divides one of the
+shifted gcds used in the moment estimate. -/
+theorem bad_modulus_dvd_shifted_gcd {a₀ K k p : ℕ} {n : Fin (2 * k) → ℕ}
+    {i : Fin (2 * k)} (hpK : K < p) (hpi : p ∣ n i + a₀)
+    (hbad : ¬ ∀ j, j ≠ i → n j % p < p - K) :
+    ∃ j, j ≠ i ∧ ∃ r ∈ Finset.Icc 1 K,
+      p ∣ Nat.gcd (n i + a₀) (n j + r) := by
+  push Not at hbad
+  obtain ⟨j, hji, hj⟩ := hbad
+  let r := p - n j % p
+  have hp0 : 0 < p := by omega
+  have hmodlt : n j % p < p := Nat.mod_lt _ hp0
+  have hr1 : 1 ≤ r := by dsimp [r]; omega
+  have hrK : r ≤ K := by dsimp [r]; omega
+  have hpjr : p ∣ n j + r := by
+    refine ⟨n j / p + 1, ?_⟩
+    have hdecomp := Nat.mod_add_div (n j) p
+    calc
+      n j + r = (n j % p + p * (n j / p)) + (p - n j % p) := by
+        rw [hdecomp]
+      _ = p * (n j / p) + p := by omega
+      _ = p * (n j / p + 1) := by rw [Nat.mul_add, Nat.mul_one]
+  exact ⟨j, hji, r, Finset.mem_Icc.mpr ⟨hr1, hrK⟩, Nat.dvd_gcd hpi hpjr⟩
+
+/-- The divisors anchored at `i` that fail separation from another coordinate. -/
+def tupleBadModuli (a₀ K P₀ k : ℕ) (n : Fin (2 * k) → ℕ) (i : Fin (2 * k)) : Finset ℕ :=
+  (n i + a₀).divisors.filter fun p =>
+    P₀ < p ∧ ¬ ∀ j, j ≠ i → n j % p < p - K
+
+/-- The finite pool of shifted-gcd divisors that contains every bad anchored modulus. -/
+def shiftedGcdDivisorPool (a₀ K k : ℕ) (n : Fin (2 * k) → ℕ)
+    (i : Fin (2 * k)) : Finset ℕ :=
+  (Finset.univ.erase i).biUnion fun j =>
+    (Finset.Icc 1 K).biUnion fun r => (Nat.gcd (n i + a₀) (n j + r)).divisors
+
+/-- The number of moduli lost to coordinate collisions is bounded by the advertised finite sum
+of shifted-gcd divisor counts. -/
+theorem card_tupleBadModuli_le (a₀ K P₀ k : ℕ) (n : Fin (2 * k) → ℕ)
+    (i : Fin (2 * k)) (ha₀ : 1 ≤ a₀) (hKP : K ≤ P₀) :
+    (tupleBadModuli a₀ K P₀ k n i).card ≤
+      ∑ j ∈ Finset.univ.erase i, ∑ r ∈ Finset.Icc 1 K,
+        (Nat.gcd (n i + a₀) (n j + r)).divisors.card := by
+  have hsubset : tupleBadModuli a₀ K P₀ k n i ⊆
+      shiftedGcdDivisorPool a₀ K k n i := by
+    intro p hp
+    rcases Finset.mem_filter.mp hp with ⟨hpdiv, hPp, hbad⟩
+    have hpK : K < p := lt_of_le_of_lt hKP hPp
+    obtain ⟨j, hji, r, hr, hpgcd⟩ :=
+      bad_modulus_dvd_shifted_gcd hpK (Nat.dvd_of_mem_divisors hpdiv) hbad
+    rw [shiftedGcdDivisorPool, Finset.mem_biUnion]
+    refine ⟨j, Finset.mem_erase.mpr ⟨hji, Finset.mem_univ j⟩, ?_⟩
+    rw [Finset.mem_biUnion]
+    refine ⟨r, hr, ?_⟩
+    exact Nat.mem_divisors.mpr ⟨hpgcd,
+      (Nat.gcd_pos_of_pos_left _ (by omega)).ne'⟩
+  calc
+    (tupleBadModuli a₀ K P₀ k n i).card ≤
+        (shiftedGcdDivisorPool a₀ K k n i).card := Finset.card_le_card hsubset
+    _ ≤ ∑ j ∈ Finset.univ.erase i,
+        ((Finset.Icc 1 K).biUnion fun r =>
+          (Nat.gcd (n i + a₀) (n j + r)).divisors).card := Finset.card_biUnion_le
+    _ ≤ ∑ j ∈ Finset.univ.erase i, ∑ r ∈ Finset.Icc 1 K,
+        (Nat.gcd (n i + a₀) (n j + r)).divisors.card := by
+      apply Finset.sum_le_sum
+      intro j hj
+      exact Finset.card_biUnion_le
+
+/-- A fixed cosine gap turns a Bernoulli characteristic factor into exponential variance
+decay. -/
+theorem bernMod_le_exp_of_cos_le {delta theta kappa : ℝ}
+    (hdelta0 : 0 ≤ delta) (hdelta1 : delta ≤ 1)
+    (hcos : Real.cos (2 * Real.pi * theta) ≤ 1 - kappa) :
+    bernMod delta theta ≤ Real.exp (-kappa * (delta * (1 - delta))) := by
+  let v := delta * (1 - delta)
+  let x := v * (1 - Real.cos (2 * Real.pi * theta))
+  have hv0 : 0 ≤ v := mul_nonneg hdelta0 (sub_nonneg.mpr hdelta1)
+  have hcos1 : Real.cos (2 * Real.pi * theta) ≤ 1 := Real.cos_le_one _
+  have hx0 : 0 ≤ x := mul_nonneg hv0 (sub_nonneg.mpr hcos1)
+  have hsq : bernMod delta theta ^ 2 = 1 - 2 * x := by
+    rw [bernMod_sq]
+    dsimp [x, v]
+    ring
+  have hxhalf : x ≤ 1 / 2 := by
+    nlinarith [sq_nonneg (bernMod delta theta)]
+  have hsqrt : Real.sqrt (1 - 2 * x) ≤ Real.exp (-x) :=
+    sqrt_one_sub_two_mul_le_exp_neg hx0 hxhalf
+  have hbern : bernMod delta theta ≤ Real.exp (-x) := by
+    have hroot : bernMod delta theta = Real.sqrt (1 - 2 * x) := by
+      rw [← hsq, Real.sqrt_sq (bernMod_nonneg _ _)]
+    rw [hroot]
+    exact hsqrt
+  have hxgap : kappa * v ≤ x := by
+    calc
+      kappa * v = v * kappa := by ring
+      _ ≤ v * (1 - Real.cos (2 * Real.pi * theta)) := by
+        apply mul_le_mul_of_nonneg_left _ hv0
+        linarith
+      _ = x := rfl
+  exact hbern.trans (Real.exp_le_exp.mpr (by linarith))
+
+/-- The anchor cosine gap gives the precise spectral contraction used for a good modulus. -/
+theorem bernMod_le_exp_spectral_of_cos_le (b : ℕ) {delta theta : ℝ}
+    (hdelta0 : 0 ≤ delta) (hdelta1 : delta ≤ 1)
+    (hcos : Real.cos (2 * Real.pi * theta) ≤ Real.cos (Real.pi / b)) :
+    bernMod delta theta ≤
+      Real.exp (-spectralConst b * (delta * (1 - delta))) := by
+  apply bernMod_le_exp_of_cos_le hdelta0 hdelta1
+  simpa only [spectralConst, sub_sub_cancel] using hcos
+
+/-- Good-modulus contractions multiply to the exponential of their total Bernoulli variance. -/
+theorem prod_bernMod_le_exp_neg_spectral (b : ℕ) (F : Finset ℕ)
+    (delta theta : ℕ → ℝ) (hdelta : ∀ p ∈ F, 0 ≤ delta p ∧ delta p ≤ 1)
+    (hcos : ∀ p ∈ F,
+      Real.cos (2 * Real.pi * theta p) ≤ Real.cos (Real.pi / b)) :
+    ∏ p ∈ F, bernMod (delta p) (theta p) ≤
+      Real.exp (-spectralConst b * ∑ p ∈ F, delta p * (1 - delta p)) := by
+  calc
+    ∏ p ∈ F, bernMod (delta p) (theta p) ≤
+        ∏ p ∈ F, Real.exp (-spectralConst b * (delta p * (1 - delta p))) := by
+      apply Finset.prod_le_prod
+      · intro p hp
+        exact bernMod_nonneg _ _
+      · intro p hp
+        exact bernMod_le_exp_spectral_of_cos_le b (hdelta p hp).1 (hdelta p hp).2
+          (hcos p hp)
+    _ = Real.exp (-spectralConst b * ∑ p ∈ F, delta p * (1 - delta p)) := by
+      rw [← Real.exp_sum]
+      congr 1
+      rw [Finset.mul_sum]
+
 /-- The summable moment bound behind `ebRandom_ae_normal_below_ln2` (codex2, 95%).
 1. With `α ln 2 > a`, fix `k` and `q < Q(α)` with `kq > 1`.
 2. The event that all coordinates have poor mass has probability `p_N^{2k} = O((log N)^{-2kq})`.

@@ -68,43 +68,43 @@ Expect step 4 to be the longest.  Splitting it into named leaves is progress.
 
 ## Status
 
-- Lap 3 divisor-series checkpoint (`research/eb-positive`): `shifted_gcd_divisor_moment` is now
-  proved, so the scoped file has exactly two frozen proof debts.  The new prime-power induction
-  proves
-  `τ(n)^r ≤ ((ζ : ArithmeticFunction ℕ) ^ (2^r)) n`: at the successor step the convolution
-  splits into `e + 1` terms and each term dominates `(e + 1)^r`.  Multiplicativity extends this
-  to general `n`.  Repeated `ArithmeticFunction.LSeriesSummable_mul` then proves that every
-  positive convolution power of zeta is summable at `s = 2`; coefficient casting and comparison
-  give `summable_divisorCard_pow_div_sq`.  Applying the lap-2 reduction closes the first frozen
-  theorem.  A fresh-history review found no statement drift and no break in the advertised route;
-  no frozen statement or copied definition changed.
-- Exact verification run (lap 3):
+- Lap 4 good-modulus checkpoint (`research/eb-positive`): the scoped file still has exactly two
+  frozen proof debts, but both deterministic bridges advertised for `eb_weyl_moment_decay` are
+  now formalized.  `tupleGoodModuli` and `tupleBadModuli` encode the anchor divisors and collision
+  exclusions.  `bad_modulus_dvd_shifted_gcd` constructs the exact shift
+  `r = p - (n_j mod p) ∈ [1,K]`, and `card_tupleBadModuli_le` puts every collision modulus in
+  the finite union of shifted-gcd divisor sets, giving the required divisor-count loss bound.
+  Independently, `bernMod_le_exp_of_cos_le` turns any cosine gap into exponential Bernoulli
+  variance decay, and `prod_bernMod_le_exp_neg_spectral` multiplies the good-modulus bounds into
+  the exponential of their total variance.  No frozen statement or copied definition changed.
+- Exact verification run (lap 4):
   - `lake env lean src/NormalNumbers/CoefmassErdosBorweinPositive.lean` (green; exactly the two
     remaining disclosed `sorry` warnings).
   - `lake build NormalNumbers.CoefmassErdosBorweinPositive` (green, 8719 jobs).
-  - `lake env lean AuditEBPositiveLap3.lean` with `#print axioms` for
-    `divisorCard_pow_le_zetaPow_primePow`, `divisorCard_pow_le_zetaPow`,
-    `natCast_zetaPow_apply`, `summable_zetaPow_div_sq`,
-    `summable_divisorCard_pow_div_sq`, and `shifted_gcd_divisor_moment` (temporary audit file
-    removed; every declaration exactly `[propext, Classical.choice, Quot.sound]`).
+  - `lake env lean AuditEBPositiveLap4.lean` with `#print axioms` for
+    `mem_tupleGoodModuli`, `bad_modulus_dvd_shifted_gcd`, `card_tupleBadModuli_le`,
+    `bernMod_le_exp_of_cos_le`, `bernMod_le_exp_spectral_of_cos_le`, and
+    `prod_bernMod_le_exp_neg_spectral` (temporary audit file removed; every declaration exactly
+    `[propext, Classical.choice, Quot.sound]`).
   - `git diff --check` (clean).
   - `~/personal/bin/lean-green ~/src/nn-eb-positive --target
     NormalNumbers.CoefmassErdosBorweinPositive --import
     NormalNumbers.CoefmassErdosBorweinPositive --axioms
-    NormalNumbers.ErdosBorweinPositive.shifted_gcd_divisor_moment`
+    NormalNumbers.ErdosBorweinPositive.card_tupleBadModuli_le`
     (`FORMALIZE-TIER GREEN`, 8719 jobs; theorem axioms exactly the canonical three).
-- Previous checkpoints: lap 2 proved the complete finite shifted-gcd reduction; lap 1 proved
-  `ebMoment_le_tupleAvg`, closing the infinite random-series side and reducing every even Weyl
-  moment to a finite tuple average of `bernMod` products.
+- Previous checkpoints: lap 3 proved `shifted_gcd_divisor_moment`; lap 2 proved its complete finite
+  shifted-gcd reduction; lap 1 proved `ebMoment_le_tupleAvg`, closing the infinite random-series
+  side and reducing every even Weyl moment to a finite tuple average of `bernMod` products.
 - Current blocker: `eb_weyl_moment_decay`.  Its remaining content is now precisely the
-  deterministic good-modulus phase contraction, the lower bound for good-modulus variance mass,
-  and the tuple exceptional-set estimate combining Hardy--Ramanujan with the proved shifted-gcd
-  moments.  The final Borel--Cantelli/interpolation theorem remains downstream.
-- Next highest-value attack: define the per-tuple good-modulus finset and prove its one-coordinate
-  contraction leaf using `anchor_phase_formula`, `anchor_tail_cos_le`,
-  `cos_two_pi_le_of_near_rational`, and `bernMod_sq`.  Then prove the bad-modulus mass loss is
-  bounded by the advertised shifted-gcd divisor sums; this is the bridge from the now-closed
-  moment theorem to the Markov estimate in `eb_weyl_moment_decay`.
+  good-modulus phase cosine bound for the full signed `2k`-tuple, the lower bound for its retained
+  variance mass, and the tuple exceptional-set estimate combining Hardy--Ramanujan with the
+  shifted-gcd moments.  The final Borel--Cantelli/interpolation theorem remains downstream.
+- Next highest-value attack: prove that membership in `tupleGoodModuli` forces
+  `cos (2π tuplePhase) ≤ cos (π/b)`.  Factor `|h| = b^e m`, use the anchored residue
+  `p-(e+1)`, and generalize `anchor_tail_phase_error` from one tail to the signed sum of the other
+  `2k-1` coordinates under `b^K ≥ 16|h|·2k`.  Then apply
+  `prod_bernMod_le_exp_neg_spectral` and subtract `card_tupleBadModuli_le` from the anchor-divisor
+  variance mass.
 
 ## Findings
 
