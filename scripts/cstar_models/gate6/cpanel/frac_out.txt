@@ -1,0 +1,4 @@
+parents 240; before: ptgt 199680 fail 55169 frac 0.2763; after: ptgt 199240 fail 113819 frac 0.5713
+newly failing 60506, failing both 53313, fixed (fail->pass or target 0) 1856
+newly failing by state [(0, 2622), (1, 2190), (3, 2443), (4, 3609), (6, 3798), (8, 3348), (9, 4102), (11, 2662), (13, 3436), (14, 788), (16, 6080), (17, 3261), (19, 5842), (21, 7910), (22, 5088), (24, 3327)]
+newly failing with own exception 0 with lowered PHI 1008
