@@ -1879,6 +1879,217 @@ theorem global_bernMod_product_le_good_anchor (delta : ℕ → ℝ) (a c : ℝ)
   simpa only [G] using tupleGoodModuli_bernMod_product_le delta a c hdelta ha hc hvar
     b e m K P₀ k h (fun j ↦ (n j).val) i hb hk hfac hm hK hlarge hKP hP₀
 
+/-! ### Scalar assembly for the moment bound -/
+
+/-- After multiplying by the variance weight `(log x)^{-a}`, a logarithmic divisor supply of
+exponent `s` absorbs both a fixed cutoff and a collision threshold of exponent `η < s - a`.
+This is the eventual scalar inequality needed on every rich/light tuple. -/
+theorem eventually_retained_log_power (P₀ : ℕ) {a s η : ℝ}
+    (ha : 0 ≤ a) (hη : 0 < η) (hgap : η < s - a) :
+    ∀ᶠ L : ℝ in atTop,
+      L ^ (-a) * ((L ^ s - P₀) - L ^ η) ≥ L ^ η := by
+  have hs : 0 < s := by linarith
+  have hd : 0 < s - (a + η) := by linarith
+  have hmain := (tendsto_rpow_atTop hs).eventually_ge_atTop (2 * P₀)
+  have hratio := (tendsto_rpow_atTop hd).eventually_ge_atTop 4
+  filter_upwards [eventually_ge_atTop (1 : ℝ), hmain, hratio] with L hL hmain hratio
+  have hLpos : 0 < L := lt_of_lt_of_le zero_lt_one hL
+  have hpow_aη_nonneg : 0 ≤ L ^ (a + η) := Real.rpow_nonneg hLpos.le _
+  have hpowη_le : L ^ η ≤ L ^ (a + η) :=
+    Real.rpow_le_rpow_of_exponent_le hL (by linarith)
+  have hfactor : 4 * L ^ (a + η) ≤ L ^ s := by
+    calc
+      4 * L ^ (a + η) ≤ L ^ (s - (a + η)) * L ^ (a + η) := by
+        exact mul_le_mul_of_nonneg_right hratio hpow_aη_nonneg
+      _ = L ^ s := by
+        rw [← Real.rpow_add hLpos]
+        congr 1
+        ring
+  have hbracket : L ^ (a + η) ≤ (L ^ s - P₀) - L ^ η := by
+    nlinarith
+  calc
+    L ^ η = L ^ (-a) * L ^ (a + η) := by
+      rw [← Real.rpow_add hLpos]
+      congr 1
+      ring
+    _ ≤ L ^ (-a) * ((L ^ s - P₀) - L ^ η) := by
+      exact mul_le_mul_of_nonneg_left hbracket (Real.rpow_nonneg hLpos.le _)
+
+/-- Natural endpoints inherit `eventually_retained_log_power` after the shifted logarithmic
+scale `N ↦ log (N + u)`, which tends to infinity. -/
+theorem eventually_retained_log_power_nat (u P₀ : ℕ) {a s η : ℝ}
+    (ha : 0 ≤ a) (hη : 0 < η) (hgap : η < s - a) :
+    ∀ᶠ N : ℕ in atTop,
+      Real.rpow (Real.log ((N + u : ℕ) : ℝ)) (-a) *
+          ((Real.rpow (Real.log ((N + u : ℕ) : ℝ)) s - P₀) -
+            Real.rpow (Real.log ((N + u : ℕ) : ℝ)) η) ≥
+        Real.rpow (Real.log ((N + u : ℕ) : ℝ)) η := by
+  have hNu : Tendsto (fun N : ℕ ↦ ((N + u : ℕ) : ℝ)) atTop atTop := by
+    simpa only [Nat.cast_add] using
+      (tendsto_natCast_atTop_atTop.atTop_add
+        (tendsto_const_nhds : Tendsto (fun _ : ℕ ↦ (u : ℝ)) atTop (nhds u)))
+  exact (Real.tendsto_log_atTop.comp hNu).eventually
+    (eventually_retained_log_power P₀ ha hη hgap)
+
+/-- A rich coordinate whose collision loss is below the chosen logarithmic threshold retains
+at least that threshold after the variance weight is applied. -/
+theorem retained_log_mass_ge_of_rich_light
+    (M x P₀ : ℕ) (a α η B : ℝ)
+    (hM : 3 ≤ M) (hx : 2 ≤ x) (hxM : x ≤ M)
+    (ha : 0 ≤ a)
+    (hrich : α * Real.log (Real.log M) < (x.primeFactors.card : ℝ))
+    (hB : B < Real.rpow (Real.log M) η)
+    (hscalar :
+      Real.rpow (Real.log M) (-a) *
+          ((Real.rpow (Real.log M) (α * Real.log 2) - P₀) -
+            Real.rpow (Real.log M) η) ≥
+        Real.rpow (Real.log M) η) :
+    Real.rpow (Real.log x) (-a) *
+        ((((2 ^ x.primeFactors.card : ℕ) : ℝ) - P₀) - B) ≥
+      Real.rpow (Real.log M) η := by
+  have hlogx : 0 < Real.log (x : ℝ) := Real.log_pos (by exact_mod_cast (by omega : 1 < x))
+  have hlogM : 0 < Real.log (M : ℝ) := Real.log_pos (by exact_mod_cast (by omega : 1 < M))
+  have hlogle : Real.log (x : ℝ) ≤ Real.log (M : ℝ) :=
+    Real.log_le_log (by positivity) (by exact_mod_cast hxM)
+  have hsupply := log_rpow_lt_two_pow_primeFactors M x α hM hrich
+  have hbracket :
+      (Real.rpow (Real.log M) (α * Real.log 2) - P₀) -
+          Real.rpow (Real.log M) η <
+        (((2 ^ x.primeFactors.card : ℕ) : ℝ) - P₀) - B := by
+    linarith
+  have htarget_pos : 0 < Real.rpow (Real.log M) η :=
+    Real.rpow_pos_of_pos hlogM _
+  have hcoeff_pos : 0 < Real.rpow (Real.log M) (-a) :=
+    Real.rpow_pos_of_pos hlogM _
+  have hbase_nonneg :
+      0 ≤ (Real.rpow (Real.log M) (α * Real.log 2) - P₀) -
+        Real.rpow (Real.log M) η := by
+    by_contra hneg
+    have hneg' :
+        (Real.rpow (Real.log M) (α * Real.log 2) - P₀) -
+            Real.rpow (Real.log M) η < 0 := lt_of_not_ge hneg
+    have hprodneg := mul_neg_of_pos_of_neg hcoeff_pos hneg'
+    linarith
+  have hactual_nonneg :
+      0 ≤ (((2 ^ x.primeFactors.card : ℕ) : ℝ) - P₀) - B :=
+    hbase_nonneg.trans hbracket.le
+  have hcoeff_le : Real.rpow (Real.log M) (-a) ≤
+      Real.rpow (Real.log x) (-a) :=
+    Real.rpow_le_rpow_of_nonpos hlogx hlogle (by linarith)
+  calc
+    Real.rpow (Real.log M) η ≤
+        Real.rpow (Real.log M) (-a) *
+          ((Real.rpow (Real.log M) (α * Real.log 2) - P₀) -
+            Real.rpow (Real.log M) η) := hscalar
+    _ ≤ Real.rpow (Real.log M) (-a) *
+        ((((2 ^ x.primeFactors.card : ℕ) : ℝ) - P₀) - B) := by
+      exact mul_le_mul_of_nonneg_left hbracket.le hcoeff_pos.le
+    _ ≤ Real.rpow (Real.log x) (-a) *
+        ((((2 ^ x.primeFactors.card : ℕ) : ℝ) - P₀) - B) := by
+      exact mul_le_mul_of_nonneg_right hcoeff_le hactual_nonneg
+
+/-- Choose integral moments making both the Hardy--Ramanujan and collision exceptional sets
+decay faster than the square-log threshold required downstream. -/
+theorem exists_moment_parameters {q η : ℝ} (hq : 0 < q) (hη : 0 < η) :
+    ∃ k R : ℕ, 1 ≤ k ∧ 1 ≤ R ∧ 2 < 2 * (k : ℝ) * q ∧ 2 < η * R := by
+  obtain ⟨k, hk⟩ := exists_nat_gt (1 / q)
+  obtain ⟨R, hR⟩ := exists_nat_gt (2 / η)
+  have hk1 : 1 ≤ k := by
+    have hkpos : (0 : ℝ) < k := (div_pos one_pos hq).trans hk
+    exact_mod_cast hkpos
+  have hR1 : 1 ≤ R := by
+    have hRpos : (0 : ℝ) < R := (div_pos (by norm_num) hη).trans hR
+    exact_mod_cast hRpos
+  refine ⟨k, R, hk1, hR1, ?_, ?_⟩
+  · rw [div_lt_iff₀ hq] at hk
+    nlinarith
+  · rw [div_lt_iff₀ hη] at hR
+    nlinarith
+
+/-- Simultaneously choose the Hardy--Ramanujan exponent, retained-mass exponent, Weyl moment,
+and collision moment with both exceptional powers strictly greater than two. -/
+theorem exists_eb_decay_parameters (a : ℝ) (ha0 : 0 ≤ a) (ha : a < Real.log 2) :
+    ∃ α q η : ℝ, ∃ k R : ℕ,
+      0 < α ∧ α < 1 ∧ 0 < q ∧ q < 1 - α + α * Real.log α ∧
+      0 < η ∧ η < α * Real.log 2 - a ∧
+      1 ≤ k ∧ 1 ≤ R ∧ 2 < 2 * (k : ℝ) * q ∧ 2 < η * R := by
+  obtain ⟨α, q, hα0, hα1, hq0, hq, hgap⟩ := exists_hardyRamanujan_parameters a ha0 ha
+  let η := (α * Real.log 2 - a) / 2
+  have hη0 : 0 < η := by dsimp [η]; linarith
+  have hηgap : η < α * Real.log 2 - a := by dsimp [η]; linarith
+  obtain ⟨k, R, hk, hR, hkq, hRη⟩ := exists_moment_parameters hq0 hη0
+  exact ⟨α, q, η, k, R, hα0, hα1, hq0, hq, hη0, hηgap, hk, hR, hkq, hRη⟩
+
+/-- Outside the finite exceptional set, the common Bernoulli characteristic product has uniform
+stretched-exponential contraction.  This closes the scalar bridge from rich/light anchors to the
+tuple summand used by `ebMoment_le_tupleAvg`. -/
+theorem global_bernMod_product_le_rich_light
+    (delta : ℕ → ℝ) (a c α η : ℝ)
+    (hdelta : ∀ p : ℕ, 0 ≤ delta p ∧ delta p ≤ 1)
+    (ha : 0 ≤ a) (hc : 0 < c) (hα : 0 < α)
+    (hvar : ∀ p : ℕ, 2 ≤ p →
+      c * Real.rpow (Real.log p) (-a) ≤ delta p * (1 - delta p))
+    (b e m K P₀ k N : ℕ) (h : ℤ) (n : Fin (2 * k) → Fin N) (i : Fin (2 * k))
+    (hb : 2 ≤ b) (hk : 1 ≤ k) (hN : 3 ≤ N)
+    (hfac : h.natAbs = b ^ e * m) (hm : ¬ b ∣ m) (hK : e + 1 ≤ K)
+    (hlarge : 16 * h.natAbs * (2 * k) ≤ b ^ K) (hKP : 2 * K ≤ P₀)
+    (hP₀ : 1 ≤ P₀)
+    (hrich : α * Real.log (Real.log ((N + (e + 1) : ℕ) : ℝ)) <
+      (((n i).val + (e + 1)).primeFactors.card : ℝ))
+    (hlight :
+      ((tupleBadModuli (e + 1) K P₀ k (fun j ↦ (n j).val) i).card : ℝ) <
+        Real.rpow (Real.log ((N + (e + 1) : ℕ) : ℝ)) η)
+    (hscalar :
+      Real.rpow (Real.log ((N + (e + 1) : ℕ) : ℝ)) (-a) *
+          ((Real.rpow (Real.log ((N + (e + 1) : ℕ) : ℝ)) (α * Real.log 2) - P₀) -
+            Real.rpow (Real.log ((N + (e + 1) : ℕ) : ℝ)) η) ≥
+        Real.rpow (Real.log ((N + (e + 1) : ℕ) : ℝ)) η) :
+    ∏ r ∈ Finset.range (N + e + 1),
+        bernMod (delta (r + 1)) (tuplePhase b h k (r + 1) (fun j ↦ (n j).val)) ≤
+      Real.exp (-spectralConst b *
+        (c * Real.rpow (Real.log ((N + (e + 1) : ℕ) : ℝ)) η)) := by
+  let M := N + (e + 1)
+  let x := (n i).val + (e + 1)
+  have hM : 3 ≤ M := by omega
+  have hxM : x ≤ M := by
+    dsimp [x, M]
+    have := (n i).isLt
+    omega
+  have hloglog : 0 < Real.log (Real.log (M : ℝ)) := by
+    apply Real.log_pos
+    rw [Real.lt_log_iff_exp_lt (by positivity : (0 : ℝ) < M)]
+    exact Real.exp_one_lt_three.trans_le (by exact_mod_cast hM)
+  have homega : 0 < (x.primeFactors.card : ℝ) := by
+    exact (mul_pos hα hloglog).trans (by simpa only [M, x] using hrich)
+  have hx1 : 1 ≤ x := by dsimp [x]; omega
+  have hx : 2 ≤ x := by
+    by_contra hxnot
+    have hxone : x = 1 := by omega
+    subst x
+    norm_num at homega
+    omega
+  have hmass := retained_log_mass_ge_of_rich_light M x P₀ a α η
+    ((tupleBadModuli (e + 1) K P₀ k (fun j ↦ (n j).val) i).card : ℝ)
+    hM hx hxM ha (by simpa only [M, x] using hrich)
+    (by simpa only [M] using hlight) (by simpa only [M] using hscalar)
+  have hglobal := global_bernMod_product_le_good_anchor delta a c hdelta ha hc hvar
+    b e m K P₀ k N h n i hb hk hfac hm hK hlarge hKP hP₀
+  refine hglobal.trans (Real.exp_le_exp.mpr ?_)
+  have hscale :
+      c * Real.rpow (Real.log M) η ≤
+        c * (Real.rpow (Real.log x) (-a) *
+          ((((2 ^ x.primeFactors.card : ℕ) : ℝ) - P₀) -
+            ((tupleBadModuli (e + 1) K P₀ k (fun j ↦ (n j).val) i).card : ℝ))) :=
+    mul_le_mul_of_nonneg_left hmass hc.le
+  have hspectral := (spectralConst_pos b hb).le
+  have hscale' :
+      c * Real.rpow (Real.log ((N + (e + 1) : ℕ) : ℝ)) η ≤
+        c * (Real.rpow (Real.log (((n i).val : ℝ) + ((e : ℝ) + 1))) (-a) *
+          ((((2 ^ ((n i).val + (e + 1)).primeFactors.card : ℕ) : ℝ) - P₀) -
+            ((tupleBadModuli (e + 1) K P₀ k (fun j ↦ (n j).val) i).card : ℝ))) := by
+    simpa only [M, x, Nat.cast_add, Nat.cast_one] using hscale
+  nlinarith [mul_le_mul_of_nonneg_left hscale' hspectral]
+
 /-- The summable moment bound behind `ebRandom_ae_normal_below_ln2` (codex2, 95%).
 1. With `α ln 2 > a`, fix `k` and `q < Q(α)` with `kq > 1`.
 2. The event that all coordinates have poor mass has probability `p_N^{2k} = O((log N)^{-2kq})`.
