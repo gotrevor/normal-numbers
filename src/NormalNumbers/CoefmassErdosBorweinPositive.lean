@@ -759,6 +759,295 @@ theorem card_tupleBadModuli_le (a₀ K P₀ k : ℕ) (n : Fin (2 * k) → ℕ)
       intro j hj
       exact Finset.card_biUnion_le
 
+/-! ### The full-tuple good-modulus phase gap -/
+
+/-- A residue at least `K` places below the top of the period contributes at most its share of
+the tuple's phase-error budget. -/
+theorem scaled_residuePhase_le (b H L K p t : ℕ) (hb : 2 ≤ b) (hL : 1 ≤ L)
+    (hlarge : 16 * H * L ≤ b ^ K) (hp : 2 * K < p) (ht : t < p - K) :
+    (H : ℝ) * residuePhase b p t ≤ 1 / (8 * (b : ℝ) * L) := by
+  have hbR : (2 : ℝ) ≤ b := by exact_mod_cast hb
+  have hbpos : (0 : ℝ) < b := lt_of_lt_of_le (by norm_num) hbR
+  have hLpos : (0 : ℝ) < L := by exact_mod_cast (lt_of_lt_of_le Nat.zero_lt_one hL)
+  have htK : t + (K + 1) ≤ p := by omega
+  have hpow2 : (2 : ℝ) ≤ (b : ℝ) ^ p := by
+    calc
+      (2 : ℝ) ≤ b := hbR
+      _ = (b : ℝ) ^ 1 := by ring
+      _ ≤ (b : ℝ) ^ p := pow_le_pow_right₀ (by linarith) (by omega)
+  have hdenpos : 0 < (b : ℝ) ^ p - 1 := by linarith
+  have hdenhalf : (b : ℝ) ^ p / 2 ≤ (b : ℝ) ^ p - 1 := by linarith
+  have hpowmono : (b : ℝ) ^ t * (b : ℝ) ^ (K + 1) ≤ (b : ℝ) ^ p := by
+    rw [← pow_add]
+    exact pow_le_pow_right₀ (by linarith : (1 : ℝ) ≤ b) htK
+  have hlargeR : (16 : ℝ) * H * L ≤ (b : ℝ) ^ K := by exact_mod_cast hlarge
+  have hpowK : (b : ℝ) ^ (K + 1) = (b : ℝ) ^ K * b := by rw [pow_succ]
+  rw [hpowK] at hpowmono
+  have hmain : (16 : ℝ) * b * H * L * (b : ℝ) ^ t ≤ (b : ℝ) ^ p := by
+    calc
+      (16 : ℝ) * b * H * L * (b : ℝ) ^ t =
+          (b : ℝ) ^ t * ((16 : ℝ) * H * L) * b := by ring
+      _ ≤ (b : ℝ) ^ t * (b : ℝ) ^ K * b := by gcongr
+      _ ≤ (b : ℝ) ^ p := by simpa [mul_assoc] using hpowmono
+  have hcross : (8 : ℝ) * b * L * H * (b : ℝ) ^ t ≤ (b : ℝ) ^ p - 1 := by
+    nlinarith
+  unfold residuePhase
+  rw [show (H : ℝ) * ((b : ℝ) ^ t / ((b : ℝ) ^ p - 1)) =
+    ((H : ℝ) * (b : ℝ) ^ t) / ((b : ℝ) ^ p - 1) by ring]
+  rw [div_le_div_iff₀ hdenpos (by positivity : (0 : ℝ) < 8 * b * L)]
+  nlinarith [hcross]
+
+/-- The finite-period correction at the anchor also fits in one share of the phase-error
+budget. -/
+theorem scaled_anchor_phase_error (b e m H L K p : ℕ) (hb : 2 ≤ b)
+    (hH : H = b ^ e * m) (hL : 1 ≤ L) (hK : e + 1 ≤ K)
+    (hlarge : 16 * H * L ≤ b ^ K) (hp : 2 * K < p) :
+    |(H : ℝ) * residuePhase b p (p - (e + 1)) - (m : ℝ) / b| ≤
+      1 / (8 * (b : ℝ) * L) := by
+  have hbR : (2 : ℝ) ≤ b := by exact_mod_cast hb
+  have hbpos : (0 : ℝ) < b := lt_of_lt_of_le (by norm_num) hbR
+  have hLpos : (0 : ℝ) < L := by exact_mod_cast (lt_of_lt_of_le Nat.zero_lt_one hL)
+  have hep : e + 1 ≤ p := by omega
+  have hpow2 : (2 : ℝ) ≤ (b : ℝ) ^ p := by
+    calc
+      (2 : ℝ) ≤ b := hbR
+      _ = (b : ℝ) ^ 1 := by ring
+      _ ≤ (b : ℝ) ^ p := pow_le_pow_right₀ (by linarith) (by omega)
+  have hdenpos : 0 < (b : ℝ) ^ p - 1 := by linarith
+  have hKp : K ≤ p := by omega
+  have hpowKp : (b : ℝ) ^ K ≤ (b : ℝ) ^ p :=
+    pow_le_pow_right₀ (by linarith : (1 : ℝ) ≤ b) hKp
+  have hlargeR : (16 : ℝ) * H * L ≤ (b : ℝ) ^ K := by exact_mod_cast hlarge
+  have hmH : m ≤ H := by
+    rw [hH]
+    exact Nat.le_mul_of_pos_left m (pow_pos (by omega) _)
+  have hmHR : (m : ℝ) ≤ H := by exact_mod_cast hmH
+  have hcross : (8 : ℝ) * m * L ≤ (b : ℝ) ^ p - 1 := by
+    have hbig : (16 : ℝ) * H * L ≤ (b : ℝ) ^ p := hlargeR.trans hpowKp
+    nlinarith
+  have hanchor := anchor_phase_formula b e m p hb hep
+  rw [← hH] at hanchor
+  have herr :
+      (H : ℝ) * residuePhase b p (p - (e + 1)) - (m : ℝ) / b =
+        (m : ℝ) / b / ((b : ℝ) ^ p - 1) := by
+    rw [hanchor]
+    ring
+  rw [herr, abs_of_nonneg (by positivity)]
+  rw [div_div]
+  rw [div_le_div_iff₀ (by positivity : (0 : ℝ) < b * ((b : ℝ) ^ p - 1))
+    (by positivity : (0 : ℝ) < 8 * b * L)]
+  nlinarith [hcross]
+
+/-- The anchor coordinate dominates the signed sum of all other coordinates: after orienting by
+the anchor sign, the whole residue phase remains within `1/(4b)` of `m/b`. -/
+theorem signed_tuple_phase_error (b e m H K k p : ℕ) (hb : 2 ≤ b) (hk : 1 ≤ k)
+    (hH : H = b ^ e * m) (hK : e + 1 ≤ K)
+    (hlarge : 16 * H * (2 * k) ≤ b ^ K) (hp : 2 * K < p)
+    (t : Fin (2 * k) → ℕ) (i : Fin (2 * k))
+    (hti : t i = p - (e + 1)) (htail : ∀ j, j ≠ i → t j < p - K) :
+    |(tupleSign k i : ℝ) *
+        ((H : ℝ) * ∑ j, (tupleSign k j : ℝ) * residuePhase b p (t j)) -
+          (m : ℝ) / b| ≤ 1 / (4 * (b : ℝ)) := by
+  classical
+  have hL : 1 ≤ 2 * k := by omega
+  have hsabs (j : Fin (2 * k)) : |(tupleSign k j : ℝ)| = 1 := by
+    by_cases hj : j.val < k <;> simp [tupleSign, hj]
+  have hssq : (tupleSign k i : ℝ) * (tupleSign k i : ℝ) = 1 := by
+    by_cases hi : i.val < k <;> simp [tupleSign, hi]
+  have hres0 (r : ℕ) : 0 ≤ residuePhase b p r := by
+    unfold residuePhase
+    have hbp : (1 : ℝ) < (b : ℝ) ^ p := one_lt_pow₀ (by exact_mod_cast (by omega : 1 < b))
+      (by omega)
+    positivity
+  have hanchor := scaled_anchor_phase_error b e m H (2 * k) K p hb hH hL hK hlarge hp
+  have htail_each (j : Fin (2 * k)) (hji : j ≠ i) :
+      (H : ℝ) * residuePhase b p (t j) ≤
+        1 / (8 * (b : ℝ) * ((2 * k : ℕ) : ℝ)) :=
+    scaled_residuePhase_le b H (2 * k) K p (t j) hb hL hlarge hp (htail j hji)
+  let S : ℝ := ∑ j ∈ Finset.univ.erase i,
+    (tupleSign k j : ℝ) * residuePhase b p (t j)
+  have hsum :
+      (∑ j, (tupleSign k j : ℝ) * residuePhase b p (t j)) =
+        (tupleSign k i : ℝ) * residuePhase b p (t i) + S := by
+    rw [show (∑ j, (tupleSign k j : ℝ) * residuePhase b p (t j)) =
+        ∑ j ∈ Finset.univ, (tupleSign k j : ℝ) * residuePhase b p (t j) by simp]
+    rw [← Finset.sum_erase_add _ _ (Finset.mem_univ i)]
+    simp only [S]
+    ring
+  have hother : |(tupleSign k i : ℝ) * (H : ℝ) * S| ≤ 1 / (8 * (b : ℝ)) := by
+    calc
+      |(tupleSign k i : ℝ) * (H : ℝ) * S| =
+          (H : ℝ) * |S| := by
+        rw [abs_mul, abs_mul, hsabs, abs_of_nonneg (Nat.cast_nonneg H)]
+        ring
+      _ ≤ (H : ℝ) * ∑ j ∈ Finset.univ.erase i,
+          |(tupleSign k j : ℝ) * residuePhase b p (t j)| := by
+        gcongr
+        exact Finset.abs_sum_le_sum_abs _ _
+      _ = ∑ j ∈ Finset.univ.erase i, (H : ℝ) * residuePhase b p (t j) := by
+        rw [Finset.mul_sum]
+        apply Finset.sum_congr rfl
+        intro j hj
+        rw [abs_mul, hsabs, one_mul, abs_of_nonneg]
+        exact hres0 (t j)
+      _ ≤ ∑ _j ∈ Finset.univ.erase i,
+          1 / (8 * (b : ℝ) * ((2 * k : ℕ) : ℝ)) := by
+        apply Finset.sum_le_sum
+        intro j hj
+        exact htail_each j (Finset.ne_of_mem_erase hj)
+      _ ≤ 1 / (8 * (b : ℝ)) := by
+        simp only [Finset.sum_const, nsmul_eq_mul]
+        have hc : (Finset.univ.erase i).card ≤ 2 * k := by
+          calc
+            (Finset.univ.erase i).card ≤ (Finset.univ : Finset (Fin (2 * k))).card :=
+              Finset.card_le_card (Finset.erase_subset i _)
+            _ = 2 * k := Fintype.card_fin (2 * k)
+        have hconst : 0 ≤ 1 / (8 * (b : ℝ) * ((2 * k : ℕ) : ℝ)) := by positivity
+        calc
+          ((Finset.univ.erase i).card : ℝ) *
+              (1 / (8 * (b : ℝ) * ((2 * k : ℕ) : ℝ))) ≤
+              ((2 * k : ℕ) : ℝ) *
+                (1 / (8 * (b : ℝ) * ((2 * k : ℕ) : ℝ))) := by
+            gcongr
+          _ = 1 / (8 * (b : ℝ)) := by field_simp
+  have hdecomp :
+      (tupleSign k i : ℝ) *
+          ((H : ℝ) * ∑ j, (tupleSign k j : ℝ) * residuePhase b p (t j)) -
+            (m : ℝ) / b =
+        ((H : ℝ) * residuePhase b p (t i) - (m : ℝ) / b) +
+          (tupleSign k i : ℝ) * (H : ℝ) * S := by
+    calc
+      _ = ((tupleSign k i : ℝ) * (tupleSign k i : ℝ)) *
+            ((H : ℝ) * residuePhase b p (t i)) - (m : ℝ) / b +
+          (tupleSign k i : ℝ) * (H : ℝ) * S := by rw [hsum]; ring
+      _ = _ := by rw [hssq]; ring
+  rw [hdecomp, hti]
+  calc
+    |(H : ℝ) * residuePhase b p (p - (e + 1)) - (m : ℝ) / b +
+        (tupleSign k i : ℝ) * (H : ℝ) * S| ≤
+        |(H : ℝ) * residuePhase b p (p - (e + 1)) - (m : ℝ) / b| +
+          |(tupleSign k i : ℝ) * (H : ℝ) * S| := abs_add_le _ _
+    _ ≤ 1 / (8 * (b : ℝ) * ((2 * k : ℕ) : ℝ)) + 1 / (8 * (b : ℝ)) :=
+      add_le_add hanchor hother
+    _ ≤ 1 / (4 * (b : ℝ)) := by
+      have hbpos : (0 : ℝ) < b := by positivity
+      have hkR : (1 : ℝ) ≤ k := by exact_mod_cast hk
+      have hLR : (1 : ℝ) ≤ ((2 * k : ℕ) : ℝ) := by exact_mod_cast hL
+      field_simp
+      nlinarith
+
+/-- Reducing every tuple coordinate modulo `p` changes the phase only by an integer and hence
+does not change its cosine. -/
+theorem cos_tuplePhase_mod (b : ℕ) (hb : 2 ≤ b) (h : ℤ) (k p : ℕ) (hp : 1 ≤ p)
+    (n : Fin (2 * k) → ℕ) :
+    Real.cos (2 * Real.pi * tuplePhase b h k p n) =
+      Real.cos (2 * Real.pi * tuplePhase b h k p (fun i ↦ n i % p)) := by
+  classical
+  choose w hw using fun i : Fin (2 * k) ↦ residuePhase_add_int b (n i) p hb hp
+  have hsum :
+      (∑ i, (tupleSign k i : ℝ) *
+          ((b : ℝ) ^ (n i) / ((b : ℝ) ^ p - 1))) =
+        (∑ i, (tupleSign k i : ℝ) *
+          ((b : ℝ) ^ (n i % p) / ((b : ℝ) ^ p - 1))) +
+          ((∑ i, tupleSign k i * w i : ℤ) : ℝ) := by
+    push_cast
+    rw [← Finset.sum_add_distrib]
+    apply Finset.sum_congr rfl
+    intro i _
+    rw [hw i]
+    ring
+  have hphase : tuplePhase b h k p n = tuplePhase b h k p (fun i ↦ n i % p) +
+      ((h * ∑ i, tupleSign k i * w i : ℤ) : ℝ) := by
+    unfold tuplePhase
+    rw [hsum]
+    push_cast
+    ring
+  calc
+    Real.cos (2 * Real.pi * tuplePhase b h k p n) = (ePh (tuplePhase b h k p n)).re :=
+      (ePh_re _).symm
+    _ = (ePh (tuplePhase b h k p (fun i ↦ n i % p))).re := by
+      rw [hphase, ePh_add_int]
+    _ = Real.cos (2 * Real.pi * tuplePhase b h k p (fun i ↦ n i % p)) := ePh_re _
+
+/-- An anchored divisor forces the anchor coordinate into the residue `p - a₀`. -/
+theorem anchor_residue_of_dvd {a₀ p n : ℕ} (ha₀ : 1 ≤ a₀) (ha₀p : a₀ < p)
+    (hp : p ∣ n + a₀) : n % p = p - a₀ := by
+  have hp0 : 0 < p := by omega
+  have hnmod : n % p < p := Nat.mod_lt _ hp0
+  have hzero : (n % p + a₀) % p = 0 := by
+    have := Nat.mod_eq_zero_of_dvd hp
+    simpa [Nat.add_mod, Nat.mod_eq_of_lt ha₀p] using this
+  have hdvd : p ∣ n % p + a₀ := Nat.dvd_of_mod_eq_zero hzero
+  have hsumpos : 0 < n % p + a₀ := by omega
+  have hge : p ≤ n % p + a₀ := Nat.le_of_dvd hsumpos hdvd
+  have hsub : n % p + a₀ - p < p := by omega
+  rw [Nat.mod_eq_sub_mod hge, Nat.mod_eq_of_lt hsub] at hzero
+  omega
+
+/-- Every modulus in `tupleGoodModuli` forces the advertised spectral cosine gap for the complete
+signed tuple, not merely for an anchor/tail pair. -/
+theorem tupleGoodModuli_cos_le (b e m K P₀ k p : ℕ) (h : ℤ)
+    (n : Fin (2 * k) → ℕ) (i : Fin (2 * k))
+    (hb : 2 ≤ b) (hk : 1 ≤ k)
+    (hfac : h.natAbs = b ^ e * m) (hm : ¬ b ∣ m) (hK : e + 1 ≤ K)
+    (hlarge : 16 * h.natAbs * (2 * k) ≤ b ^ K) (hKP : 2 * K ≤ P₀)
+    (hgood : p ∈ tupleGoodModuli (e + 1) K P₀ k n i) :
+    Real.cos (2 * Real.pi * tuplePhase b h k p n) ≤ Real.cos (Real.pi / b) := by
+  classical
+  rcases (mem_tupleGoodModuli (a₀ := e + 1) (K := K) (P₀ := P₀)
+    (k := k) (p := p) (n := n) (i := i) (by omega)).mp hgood with ⟨hpi, hPp, hsep⟩
+  have hpK : 2 * K < p := lt_of_le_of_lt hKP hPp
+  have hep : e + 1 < p := by omega
+  have hp1 : 1 ≤ p := by omega
+  have hti : n i % p = p - (e + 1) := anchor_residue_of_dvd (by omega) hep hpi
+  have herr := signed_tuple_phase_error b e m h.natAbs K k p hb hk hfac hK hlarge hpK
+    (fun j ↦ n j % p) i hti hsep
+  have herr' :
+      |(tupleSign k i : ℝ) *
+          ((h.natAbs : ℝ) * ∑ j, (tupleSign k j : ℝ) *
+            residuePhase b p (n j % p)) - (m : ℝ) / b| ≤
+        1 / (2 * (b : ℝ)) :=
+    herr.trans (by
+      rw [div_le_div_iff₀ (by positivity : (0 : ℝ) < 4 * b)
+        (by positivity : (0 : ℝ) < 2 * b)]
+      nlinarith)
+  let S : ℝ := ∑ j, (tupleSign k j : ℝ) * residuePhase b p (n j % p)
+  have hphase : tuplePhase b h k p (fun j ↦ n j % p) = (h : ℝ) * S := by
+    simp only [tuplePhase, residuePhase, S]
+  have hcosS :
+      Real.cos (2 * Real.pi * tuplePhase b h k p (fun j ↦ n j % p)) =
+        Real.cos (2 * Real.pi * ((tupleSign k i : ℝ) * (h.natAbs : ℝ) * S)) := by
+    rw [hphase]
+    by_cases hhpos : 0 ≤ h
+    · have hcast : (h : ℝ) = (h.natAbs : ℝ) := by
+        rw [← Int.cast_natCast, Int.natAbs_of_nonneg hhpos]
+      rw [hcast]
+      by_cases hi : i.val < k
+      · simp [tupleSign, hi]
+      · simp only [tupleSign, hi, if_false, Int.cast_neg, Int.cast_one, neg_mul]
+        rw [show 2 * Real.pi * -(1 * (h.natAbs : ℝ) * S) =
+          -(2 * Real.pi * ((h.natAbs : ℝ) * S)) by ring, Real.cos_neg]
+    · have hhneg : h < 0 := lt_of_not_ge hhpos
+      have hcast : (h : ℝ) = -(h.natAbs : ℝ) := by
+        have habs : (h.natAbs : ℝ) = -(h : ℝ) := by
+          rw [Nat.cast_natAbs, Int.cast_abs, abs_of_neg]
+          exact_mod_cast hhneg
+        linarith
+      rw [hcast]
+      by_cases hi : i.val < k
+      · simp only [tupleSign, hi, if_true, Int.cast_one, one_mul]
+        rw [show 2 * Real.pi * (-(h.natAbs : ℝ) * S) =
+          -(2 * Real.pi * ((h.natAbs : ℝ) * S)) by ring, Real.cos_neg]
+      · simp [tupleSign, hi]
+  calc
+    Real.cos (2 * Real.pi * tuplePhase b h k p n) =
+        Real.cos (2 * Real.pi * tuplePhase b h k p (fun j ↦ n j % p)) :=
+      cos_tuplePhase_mod b hb h k p hp1 n
+    _ = Real.cos (2 * Real.pi * ((tupleSign k i : ℝ) * (h.natAbs : ℝ) * S)) := hcosS
+    _ ≤ Real.cos (Real.pi / b) := by
+      apply cos_two_pi_le_of_near_rational hb hm
+      simpa only [S, mul_assoc] using herr'
+
 /-- A fixed cosine gap turns a Bernoulli characteristic factor into exponential variance
 decay. -/
 theorem bernMod_le_exp_of_cos_le {delta theta kappa : ℝ}
