@@ -60,6 +60,27 @@ Notation: `μ_M(n) = largeDivisorMass a M n = Σ_{d ∣ n, d > M} (log d)^{-a}`.
 
 ## Status
 
+- **Lap 5 checkpoint (2026-10-12): uniform large-divisor fractional moment proved; 1 sorry remains.**
+  - PROVED `largeDivisorMass_moment_small`, the arithmetic/analytic half of the negative theorem.
+    The proof partitions `largeDivisorMass` by an exact finite cutoff recursion
+    (`largeDivisorMass_cutoff_step`, `largeDivisorMass_cutoff_iterate`,
+    `largeDivisorMass_eq_block_sum`), avoiding a brittle explicit logarithmic block index.
+  - PROVED finite fractional-power subadditivity in `rpow_finset_sum_le_sum_rpow` and the exact
+    algebraic reduction `divisorBlockMomentBound_eq_geometric`: the one-block estimate is a fixed
+    positive constant times `r^ℓ`, where `r = 2^{-(a*s-(2^s-1))} < 1`.  Summing the finite
+    geometric tail uniformly in `N` closes the frozen theorem.
+  - The four frozen theorem statements and the protected definitions are unchanged.  The only
+    remaining sorry is `ebRandom_ae_not_normal_of_marginal_bound`; its corollaries
+    `typicalDivisorMass_small` and `ebRandom_ae_not_normal` remain proved.
+  - Exact verification:
+    - `lake env lean src/NormalNumbers/CoefmassErdosBorweinNegative.lean` — succeeds, exactly one
+      expected sorry warning (`ebRandom_ae_not_normal_of_marginal_bound`).
+    - `~/personal/bin/lean-green . --target NormalNumbers.CoefmassErdosBorweinNegative --import
+      NormalNumbers.CoefmassErdosBorweinNegative --axioms
+      NormalNumbers.ErdosBorweinRandom.largeDivisorMass_moment_small` — FORMALIZE-TIER GREEN;
+      axioms exactly `propext`, `Classical.choice`, `Quot.sound`.
+    - `~/personal/bin/lean-green .` — FORMALIZE-TIER GREEN, 10847 jobs.
+
 - **Lap 4 checkpoint (2026-10-12): divisor-support bridge and block moment bound proved; 2 sorries remain.**
   - DEFINED the exact `y`-smooth part `smoothPart y n` and PROVED its factorization and prime-factor
     identities (`smoothPart_factorization`, `smoothPart_primeFactors`).  Consequently
@@ -153,16 +174,20 @@ Notation: `μ_M(n) = largeDivisorMass a M n = Σ_{d ∣ n, d > M} (log d)^{-a}`.
 
 ### Current blocker / next attack
 
-The load-bearing open theorem is `largeDivisorMass_moment_small`.  Its exponent choice, complete
-uniform smooth-divisor estimate, divisor-support bridge, and the averaged estimate for every
-double-exponential block are now discharged.  Next prove the discrete partition identity saying
-that for `M = dyadicExpCutoff L`, the divisors `d > M` are the disjoint union of blocks
-`dyadicExpCutoff ℓ < d ≤ dyadicExpCutoff (ℓ+1)` for `ℓ ≥ L` (a finite range up to `n` is
-enough).  Apply finite `Real.rpow_add_le_add_rpow`, sum
-`divisorBlockMass_rpow_sum_le`, rewrite `log_dyadicExpCutoff`, and close the resulting geometric
-tail with ratio `2 ^ (-(a*s-(2^s-1))) < 1`.  This should finish
-`largeDivisorMass_moment_small`.  Only then attack the remaining
-`ebRandom_ae_not_normal_of_marginal_bound` probability/orbit argument.
+The sole open theorem is `ebRandom_ae_not_normal_of_marginal_bound`.  The arithmetic input it needs
+is now complete.  Next introduce helper definitions for the selected-divisor count and the Lambert
+tail above `M`, then prove: measurability/summability; the exact residual identity modulo an integer;
+the pointwise fractional-power bound; and its integrated Cesàro bound from
+`largeDivisorMass_moment_small`.
+
+For the probability/orbit close, avoid first proving that the `IsNormal` event is measurable (no
+such repository lemma was found).  Instead, for each base majorize the normal set by a measurable
+level set of the `liminf` of the tail-orbit Cesàro averages.  Normality supplies the positive lower
+bound through `isNormal_iff_equidistributed_orbit` and visits to `[1/2,1)`; Fatou bounds that level
+set by the integrated moment estimate.  Let the arithmetic cutoff tend to infinity, use Wall's
+`isNormal_rat_mul_add` to restore the finite rational head, then take the countable intersection in
+`b`.  The route-decisive first checkpoint is the exact residual plus integrated moment estimate;
+the final checkpoint is the measurable-liminf/Fatou and normal-orbit contradiction.
 
 ## Findings
 

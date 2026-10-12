@@ -713,6 +713,13 @@ lemma dyadicExpCutoff_two_le (ℓ : ℕ) : 2 ≤ dyadicExpCutoff ℓ := by
   unfold dyadicExpCutoff
   exact Nat.le_pow (Nat.two_pow_pos ℓ)
 
+lemma dyadicExpCutoff_le_succ (ℓ : ℕ) :
+    dyadicExpCutoff ℓ ≤ dyadicExpCutoff (ℓ + 1) := by
+  unfold dyadicExpCutoff
+  apply Nat.pow_le_pow_right
+  · omega
+  · exact Nat.pow_le_pow_right (by omega) (Nat.le_succ ℓ)
+
 lemma log_dyadicExpCutoff (ℓ : ℕ) :
     Real.log (dyadicExpCutoff ℓ : ℝ) = (2 : ℝ) ^ ℓ * Real.log 2 := by
   unfold dyadicExpCutoff
@@ -822,6 +829,123 @@ lemma divisorBlockMass_rpow_sum_le
         (Real.rpow_nonneg hw _)
     _ = _ := by rfl
 
+/-! ### Assembly of the logarithmic blocks -/
+
+/-- Splitting once at the next double-exponential cutoff separates the first block from the
+remaining large-divisor mass. -/
+lemma largeDivisorMass_cutoff_step (a : ℝ) (ℓ n : ℕ) :
+    largeDivisorMass a (dyadicExpCutoff ℓ) n =
+      divisorBlockMass a ℓ n + largeDivisorMass a (dyadicExpCutoff (ℓ + 1)) n := by
+  rw [largeDivisorMass, divisorBlockMass, largeDivisorMass]
+  let S := n.divisors.filter (fun d => dyadicExpCutoff ℓ < d)
+  let p := fun d : ℕ => d ≤ dyadicExpCutoff (ℓ + 1)
+  calc
+    (∑ d ∈ S, Real.rpow (Real.log d) (-a)) =
+        (∑ d ∈ S.filter p, Real.rpow (Real.log d) (-a)) +
+          ∑ d ∈ S.filter (fun d => ¬p d), Real.rpow (Real.log d) (-a) :=
+      (Finset.sum_filter_add_sum_filter_not S p
+        (fun d => Real.rpow (Real.log d) (-a))).symm
+    _ = _ := by
+      apply congrArg₂ (· + ·)
+      · apply Finset.sum_congr
+        · ext d
+          simp [S, p, and_assoc]
+        · intro d hd
+          rfl
+      · apply Finset.sum_congr
+        · ext d
+          simp only [S, p, Finset.mem_filter, Nat.not_le]
+          have hcut := dyadicExpCutoff_le_succ ℓ
+          constructor
+          · rintro ⟨⟨hd, -⟩, hnext⟩
+            exact ⟨hd, hnext⟩
+          · rintro ⟨hd, hnext⟩
+            exact ⟨⟨hd, hcut.trans_lt hnext⟩, hnext⟩
+        · intro d hd
+          rfl
+
+/-- Iterating the one-step split leaves a finite initial collection of blocks and one tail. -/
+lemma largeDivisorMass_cutoff_iterate (a : ℝ) (L K n : ℕ) :
+    largeDivisorMass a (dyadicExpCutoff L) n =
+      (∑ i ∈ Finset.range K, divisorBlockMass a (L + i) n) +
+        largeDivisorMass a (dyadicExpCutoff (L + K)) n := by
+  induction K with
+  | zero => simp
+  | succ K ih =>
+      rw [ih, Finset.sum_range_succ, largeDivisorMass_cutoff_step]
+      simp only [Nat.add_assoc]
+      ring
+
+lemma index_le_dyadicExpCutoff_add (L n : ℕ) : n ≤ dyadicExpCutoff (L + n) := by
+  have hn_pow : n ≤ 2 ^ n := n.lt_two_pow_self.le
+  have hn_exp : n ≤ 2 ^ (L + n) := hn_pow.trans (Nat.pow_le_pow_right (by omega) (Nat.le_add_left n L))
+  unfold dyadicExpCutoff
+  exact hn_pow.trans (Nat.pow_le_pow_right (by omega) hn_exp)
+
+lemma largeDivisorMass_eq_block_sum (a : ℝ) (L n : ℕ) (hn : 1 ≤ n) :
+    largeDivisorMass a (dyadicExpCutoff L) n =
+      ∑ i ∈ Finset.range n, divisorBlockMass a (L + i) n := by
+  rw [largeDivisorMass_cutoff_iterate a L n n]
+  have htail : largeDivisorMass a (dyadicExpCutoff (L + n)) n = 0 := by
+    unfold largeDivisorMass
+    apply Finset.sum_eq_zero
+    intro d hd
+    have hdn : d ≤ n := Nat.le_of_dvd (by omega) (Nat.dvd_of_mem_divisors (Finset.mem_filter.mp hd).1)
+    have hcutd := (Finset.mem_filter.mp hd).2
+    have hcutn := index_le_dyadicExpCutoff_add L n
+    omega
+  rw [htail, add_zero]
+
+/-- Fractional powers are subadditive over finite sums of nonnegative reals. -/
+lemma rpow_finset_sum_le_sum_rpow {ι : Type*} (S : Finset ι) (f : ι → ℝ)
+    (hf : ∀ i ∈ S, 0 ≤ f i) (s : ℝ) (hs : 0 < s) (hs1 : s ≤ 1) :
+    Real.rpow (∑ i ∈ S, f i) s ≤ ∑ i ∈ S, Real.rpow (f i) s := by
+  classical
+  induction S using Finset.induction_on with
+  | empty => simp [Real.zero_rpow hs.ne']
+  | @insert i S hi ih =>
+      rw [Finset.sum_insert hi, Finset.sum_insert hi]
+      refine (Real.rpow_add_le_add_rpow (hf i (Finset.mem_insert_self i S))
+        (Finset.sum_nonneg fun j hj => hf j (Finset.mem_insert_of_mem hj)) hs.le hs1).trans ?_
+      exact add_le_add_right (ih (fun j hj => hf j (Finset.mem_insert_of_mem hj))) _
+
+/-- The analytic expression in the one-block estimate is a fixed constant times a geometric
+factor. -/
+lemma divisorBlockMomentBound_eq_geometric (a s : ℝ) (ℓ N : ℕ) :
+    Real.rpow (Real.rpow ((2 : ℝ) ^ ℓ * Real.log 2) (-a)) s *
+      (N * (Real.exp (((2 : ℝ) ^ s - 1) * Erdos67.PrimeEstimates.mertensBound + 1) *
+        Real.rpow (Real.log (dyadicExpCutoff (ℓ + 1) : ℝ)) ((2 : ℝ) ^ s - 1))) =
+      N * (Real.exp (((2 : ℝ) ^ s - 1) * Erdos67.PrimeEstimates.mertensBound + 1) *
+        Real.rpow (Real.log 2) (-a * s + ((2 : ℝ) ^ s - 1)) *
+        Real.rpow 2 ((2 : ℝ) ^ s - 1)) *
+        (Real.rpow 2 (-(a * s - ((2 : ℝ) ^ s - 1)))) ^ ℓ := by
+  simp only [Real.rpow_eq_pow]
+  have hlogpos : 0 < Real.log 2 := Real.log_pos (by norm_num)
+  have htwo :
+      ((2 : ℝ) ^ ℓ) ^ (-a * s) * ((2 : ℝ) ^ (ℓ + 1)) ^ ((2 : ℝ) ^ s - 1) =
+        (2 : ℝ) ^ ((2 : ℝ) ^ s - 1) *
+          ((2 : ℝ) ^ (-(a * s - ((2 : ℝ) ^ s - 1))) : ℝ) ^ ℓ := by
+    rw [← Real.rpow_natCast, ← Real.rpow_mul (by norm_num : (0 : ℝ) ≤ 2)]
+    rw [← Real.rpow_natCast, ← Real.rpow_mul (by norm_num : (0 : ℝ) ≤ 2)]
+    rw [← Real.rpow_add (by norm_num : (0 : ℝ) < 2)]
+    rw [show (ℓ : ℝ) * (-a * s) + (ℓ + 1 : ℕ) * ((2 : ℝ) ^ s - 1) =
+        ((2 : ℝ) ^ s - 1) + (-(a * s - ((2 : ℝ) ^ s - 1))) * ℓ by push_cast; ring]
+    rw [Real.rpow_add (by norm_num : (0 : ℝ) < 2)]
+    rw [Real.rpow_mul (by norm_num : (0 : ℝ) ≤ 2), Real.rpow_natCast]
+  have hlog :
+      Real.log 2 ^ (-a * s) * Real.log 2 ^ ((2 : ℝ) ^ s - 1) =
+        Real.log 2 ^ (-a * s + ((2 : ℝ) ^ s - 1)) := by
+    exact (Real.rpow_add hlogpos _ _).symm
+  rw [log_dyadicExpCutoff]
+  rw [← Real.rpow_mul (by positivity : 0 ≤ (2 : ℝ) ^ ℓ * Real.log 2) (-a) s]
+  rw [Real.mul_rpow (by positivity : 0 ≤ (2 : ℝ) ^ ℓ) hlogpos.le]
+  rw [Real.mul_rpow (by positivity : 0 ≤ (2 : ℝ) ^ (ℓ + 1)) hlogpos.le]
+  calc
+    _ = N * Real.exp (((2 : ℝ) ^ s - 1) * Erdos67.PrimeEstimates.mertensBound + 1) *
+        (((2 : ℝ) ^ ℓ) ^ (-a * s) * ((2 : ℝ) ^ (ℓ + 1)) ^ ((2 : ℝ) ^ s - 1)) *
+        (Real.log 2 ^ (-a * s) * Real.log 2 ^ ((2 : ℝ) ^ s - 1)) := by ring
+    _ = _ := by rw [htwo, hlog]; ring
+
 /-- Uniform vanishing fractional moment of the large-divisor mass.  Choose `0 < s ≤ 1` with
 `q = 2^s - 1 < a s`.  `τ(n_y)^s = 1 * g_y` with `g_y ≥ 0`, so for EVERY `T`,
 `(1/T) Σ_{n ≤ T} τ(n_y)^s ≤ ∏_{p ≤ y}(1 + q/p + 1/(p(p-1))) ≤ A_s (log y)^q`; prime powers are
@@ -835,7 +959,95 @@ theorem largeDivisorMass_moment_small (a : ℝ) (ha : Real.log 2 < a) :
   obtain ⟨s, hs, hs1, hgap⟩ := exists_erdosBorwein_moment_exponent a ha
   refine ⟨s, hs, hs1, ?_⟩
   intro ε hε
-  sorry
+  let q : ℝ := (2 : ℝ) ^ s - 1
+  let κ : ℝ := a * s - q
+  let r : ℝ := Real.rpow 2 (-κ)
+  let C : ℝ := Real.exp (q * Erdos67.PrimeEstimates.mertensBound + 1) *
+    Real.rpow (Real.log 2) (-a * s + q) * Real.rpow 2 q
+  have ha0 : 0 < a := (Real.log_pos (by norm_num : (1 : ℝ) < 2)).trans ha
+  have hκ : 0 < κ := by simpa [κ, q] using sub_pos.mpr hgap
+  have hr0 : 0 ≤ r := by
+    simp only [r]
+    exact Real.rpow_nonneg (by norm_num) _
+  have hr1 : r < 1 := by
+    exact Real.rpow_lt_one_of_one_lt_of_neg (by norm_num) (neg_neg_of_pos hκ)
+  have hC : 0 < C := by
+    simp only [C]
+    exact mul_pos
+      (mul_pos (Real.exp_pos _)
+        (Real.rpow_pos_of_pos (Real.log_pos (by norm_num : (1 : ℝ) < 2)) _))
+      (Real.rpow_pos_of_pos (by norm_num) _)
+  have hone_r : 0 < 1 - r := sub_pos.mpr hr1
+  let K : ℝ := C * (1 - r)⁻¹
+  have hK : 0 < K := mul_pos hC (inv_pos.mpr hone_r)
+  obtain ⟨L, hL⟩ := exists_pow_lt_of_lt_one (div_pos hε hK) hr1
+  have hchoice : K * r ^ L < ε := by
+    exact (lt_div_iff₀' hK).mp (by simpa [mul_comm] using hL)
+  refine ⟨dyadicExpCutoff L, dyadicExpCutoff_two_le L, ?_⟩
+  intro N hN
+  have hblock : ∀ ℓ : ℕ,
+      (∑ n ∈ Finset.Icc 1 N, Real.rpow (divisorBlockMass a ℓ n) s) ≤
+        N * C * r ^ ℓ := by
+    intro ℓ
+    calc
+      (∑ n ∈ Finset.Icc 1 N, Real.rpow (divisorBlockMass a ℓ n) s) ≤
+          Real.rpow (Real.rpow ((2 : ℝ) ^ ℓ * Real.log 2) (-a)) s *
+            (N * (Real.exp (((2 : ℝ) ^ s - 1) *
+              Erdos67.PrimeEstimates.mertensBound + 1) *
+              Real.rpow (Real.log (dyadicExpCutoff (ℓ + 1) : ℝ))
+                ((2 : ℝ) ^ s - 1))) :=
+        divisorBlockMass_rpow_sum_le a s ha0 hs hs1 ℓ N
+      _ = N * C * r ^ ℓ := by
+        simpa [q, κ, r, C] using divisorBlockMomentBound_eq_geometric a s ℓ N
+  have hgeom : ∀ m : ℕ, (∑ i ∈ Finset.range m, r ^ i) ≤ (1 - r)⁻¹ := by
+    intro m
+    calc
+      (∑ i ∈ Finset.range m, r ^ i) ≤ ∑' i : ℕ, r ^ i := by
+        exact (hasSum_geometric_of_lt_one hr0 hr1).summable.sum_le_tsum
+          (Finset.range m) (fun i hi => pow_nonneg hr0 i)
+      _ = (1 - r)⁻¹ := tsum_geometric_of_lt_one hr0 hr1
+  have hmass : ∀ n ∈ Finset.Icc 1 N,
+      Real.rpow (largeDivisorMass a (dyadicExpCutoff L) n) s ≤
+        ∑ i ∈ Finset.range N, Real.rpow (divisorBlockMass a (L + i) n) s := by
+    intro n hn
+    have hnI := Finset.mem_Icc.mp hn
+    calc
+      Real.rpow (largeDivisorMass a (dyadicExpCutoff L) n) s =
+          Real.rpow (∑ i ∈ Finset.range n, divisorBlockMass a (L + i) n) s := by
+        rw [largeDivisorMass_eq_block_sum a L n hnI.1]
+      _ ≤ ∑ i ∈ Finset.range n, Real.rpow (divisorBlockMass a (L + i) n) s := by
+        exact rpow_finset_sum_le_sum_rpow (Finset.range n)
+          (fun i => divisorBlockMass a (L + i) n)
+          (fun i hi => divisorBlockMass_nonneg a (L + i) n) s hs hs1
+      _ ≤ ∑ i ∈ Finset.range N, Real.rpow (divisorBlockMass a (L + i) n) s := by
+        apply Finset.sum_le_sum_of_subset_of_nonneg (Finset.range_mono hnI.2)
+        intro i hiN hin
+        exact Real.rpow_nonneg (divisorBlockMass_nonneg a (L + i) n) _
+  calc
+    (∑ n ∈ Finset.Icc 1 N,
+        Real.rpow (largeDivisorMass a (dyadicExpCutoff L) n) s) ≤
+        ∑ n ∈ Finset.Icc 1 N,
+          ∑ i ∈ Finset.range N, Real.rpow (divisorBlockMass a (L + i) n) s := by
+      exact Finset.sum_le_sum fun n hn => hmass n hn
+    _ = ∑ i ∈ Finset.range N,
+        ∑ n ∈ Finset.Icc 1 N, Real.rpow (divisorBlockMass a (L + i) n) s := by
+      rw [Finset.sum_comm]
+    _ ≤ ∑ i ∈ Finset.range N, N * C * r ^ (L + i) := by
+      exact Finset.sum_le_sum fun i hi => hblock (L + i)
+    _ = N * C * r ^ L * (∑ i ∈ Finset.range N, r ^ i) := by
+      simp_rw [pow_add]
+      rw [Finset.mul_sum]
+      ring
+    _ ≤ N * C * r ^ L * (1 - r)⁻¹ := by
+      exact mul_le_mul_of_nonneg_left (hgeom N) (by positivity)
+    _ = N * (K * r ^ L) := by
+      simp only [K]
+      ring
+    _ ≤ ε * N := by
+      calc
+        (N : ℝ) * (K * r ^ L) ≤ N * ε :=
+          mul_le_mul_of_nonneg_left hchoice.le (by positivity)
+        _ = ε * N := by ring
 
 /-- **Typical divisor mass is small above `ln 2`.**  Dyadic blocks in `log d`.  The divisors
 `d ≤ y` of `n` divide the `y`-smooth part `n_y`, so their number is at most `τ(n_y)`.  Use
