@@ -49,8 +49,8 @@ with `P₀, γ` depending only on `b, h`.
    `‖f‖^{2k} ≤ e^{-c₀k/p}` and concavity give `E G ≤ exp(-γ v min(k/p,1))`, with
    `γ = 1 - e^{-c₀}`.
 
-Status: SKELETON.  Every analytic declaration is `sorry`.  The proof grind runs outside the
-attended session.
+Status: IN PROGRESS.  The Bernoulli algebra, phase periodicity, and positivity of `momentGamma`
+are proved; the averaging, spectral-gap, moment-expansion, and assembly declarations remain.
 -/
 
 namespace NormalNumbers.RandomLambertMoment
@@ -84,6 +84,23 @@ noncomputable def primeVariance (delta : Prime → ℝ) (p : Prime) : ℝ :=
 /-- `e(x) = exp(2πix)`. -/
 noncomputable def ePh (x : ℝ) : ℂ := Complex.exp (2 * Real.pi * Complex.I * (x : ℂ))
 
+@[simp] theorem norm_ePh (x : ℝ) : ‖ePh x‖ = 1 := by
+  have hx : ePh x = Complex.exp (((2 * Real.pi * x : ℝ) : ℂ) * Complex.I) := by
+    unfold ePh
+    congr 1
+    push_cast
+    ring
+  rw [hx]
+  exact Complex.norm_exp_ofReal_mul_I _
+
+theorem ePh_add_int (x : ℝ) (w : ℤ) : ePh (x + w) = ePh x := by
+  unfold ePh
+  have hx : (2 * Real.pi * Complex.I * ((x + w : ℝ) : ℂ)) =
+      2 * Real.pi * Complex.I * (x : ℂ) + (w : ℂ) * (2 * (Real.pi : ℂ) * Complex.I) := by
+    push_cast
+    ring
+  rw [hx, Complex.exp_add, Complex.exp_int_mul_two_pi_mul_I, mul_one]
+
 /-- `α_p(r) = b^r/(b^p-1)`. -/
 noncomputable def residuePhase (b p r : ℕ) : ℝ := (b : ℝ) ^ r / ((b : ℝ) ^ p - 1)
 
@@ -111,19 +128,74 @@ noncomputable def tuplePhase (b : ℕ) (h : ℤ) (k p : ℕ) (n : Fin (2 * k) �
 
 theorem bernMod_sq (δ θ : ℝ) :
     bernMod δ θ ^ 2 = 1 - 2 * (δ * (1 - δ)) * (1 - Real.cos (2 * Real.pi * θ)) := by
-  sorry
+  rw [bernMod, ← Complex.normSq_eq_norm_sq]
+  simp [Complex.normSq_apply, ePh, Complex.exp_re, Complex.exp_im]
+  have htrig := Real.sin_sq_add_cos_sq (Real.pi * θ * 2)
+  ring_nf at htrig ⊢
+  nlinarith
 
 theorem bernMod_nonneg (δ θ : ℝ) : 0 ≤ bernMod δ θ := norm_nonneg _
 
 theorem bernMod_le_one {δ : ℝ} (h0 : 0 ≤ δ) (h1 : δ ≤ 1) (θ : ℝ) : bernMod δ θ ≤ 1 := by
-  sorry
+  calc
+    bernMod δ θ ≤ ‖((1 - δ : ℝ) : ℂ)‖ + ‖(δ : ℂ) * ePh θ‖ := norm_add_le _ _
+    _ = (1 - δ) + δ := by
+      rw [norm_mul, norm_ePh, mul_one, Complex.norm_real, Complex.norm_real,
+        Real.norm_eq_abs, Real.norm_eq_abs, abs_of_nonneg h0, abs_of_nonneg (sub_nonneg.mpr h1)]
+    _ = 1 := by ring
 
 /-! ### Step 2: periodicity in each residue -/
+
+theorem pow_sub_pow_mod_dvd (b n p : ℕ) :
+    (b : ℤ) ^ p - 1 ∣ (b : ℤ) ^ n - (b : ℤ) ^ (n % p) := by
+  conv_rhs =>
+    lhs
+    rw [← Nat.mod_add_div n p, pow_add, pow_mul]
+  simpa [mul_sub] using
+    (dvd_mul_of_dvd_right (sub_one_dvd_pow_sub_one ((b : ℤ) ^ p) (n / p))
+      ((b : ℤ) ^ (n % p)))
+
+theorem residuePhase_add_int (b n p : ℕ) (hb : 2 ≤ b) (hp : 1 ≤ p) :
+    ∃ w : ℤ, (b : ℝ) ^ n / ((b : ℝ) ^ p - 1) =
+      (b : ℝ) ^ (n % p) / ((b : ℝ) ^ p - 1) + w := by
+  obtain ⟨w, hw⟩ := pow_sub_pow_mod_dvd b n p
+  refine ⟨w, ?_⟩
+  have hden : (b : ℝ) ^ p - 1 ≠ 0 := by
+    have hb' : (1 : ℝ) < b := by exact_mod_cast (lt_of_lt_of_le (by norm_num) hb)
+    have : (1 : ℝ) < (b : ℝ) ^ p := one_lt_pow₀ hb' (Nat.ne_of_gt hp)
+    linarith
+  have hwR : (b : ℝ) ^ n - (b : ℝ) ^ (n % p) =
+      ((b : ℝ) ^ p - 1) * (w : ℝ) := by
+    exact_mod_cast hw
+  apply (div_eq_iff hden).2
+  rw [add_mul, div_mul_cancel₀ _ hden]
+  nlinarith
 
 theorem bernMod_tuplePhase_mod (b : ℕ) (hb : 2 ≤ b) (h : ℤ) (k p : ℕ) (hp : 1 ≤ p) (δ : ℝ)
     (n : Fin (2 * k) → ℕ) :
     bernMod δ (tuplePhase b h k p n) = bernMod δ (tuplePhase b h k p (fun i => n i % p)) := by
-  sorry
+  classical
+  choose w hw using fun i : Fin (2 * k) => residuePhase_add_int b (n i) p hb hp
+  have hsum :
+      (∑ i, (tupleSign k i : ℝ) *
+          ((b : ℝ) ^ (n i) / ((b : ℝ) ^ p - 1))) =
+        (∑ i, (tupleSign k i : ℝ) *
+          ((b : ℝ) ^ (n i % p) / ((b : ℝ) ^ p - 1))) +
+          ((∑ i, tupleSign k i * w i : ℤ) : ℝ) := by
+    push_cast
+    rw [← Finset.sum_add_distrib]
+    apply Finset.sum_congr rfl
+    intro i _
+    rw [hw i]
+    ring
+  have hphase : tuplePhase b h k p n = tuplePhase b h k p (fun i => n i % p) +
+      ((h * ∑ i, tupleSign k i * w i : ℤ) : ℝ) := by
+    unfold tuplePhase
+    rw [hsum]
+    push_cast
+    ring
+  unfold bernMod
+  rw [hphase, ePh_add_int]
 
 /-! ### Step 7: the one-prime spectral gap -/
 
@@ -142,7 +214,21 @@ theorem residueTuple_mean_sq (b : ℕ) (hb : 2 ≤ b) (h : ℤ) (k p : ℕ) (hp 
 /-! ### Step 8: the local first-moment bound -/
 
 theorem momentGamma_pos (b : ℕ) (hb : 2 ≤ b) : 0 < momentGamma b := by
-  sorry
+  have hbpos : (0 : ℝ) < b := by positivity
+  have hxpos : 0 < Real.pi / (b : ℝ) := div_pos Real.pi_pos hbpos
+  have hxle : Real.pi / (b : ℝ) ≤ Real.pi := by
+    apply (div_le_iff₀ hbpos).2
+    have hb' : (2 : ℝ) ≤ b := by exact_mod_cast hb
+    nlinarith [Real.pi_pos]
+  have hcos : Real.cos (Real.pi / (b : ℝ)) < Real.cos 0 :=
+    Real.cos_lt_cos_of_nonneg_of_le_pi le_rfl hxle hxpos
+  have hc : 0 < spectralConst b := by
+    rw [spectralConst]
+    rw [Real.cos_zero] at hcos
+    linarith
+  rw [momentGamma]
+  have hexp : Real.exp (-spectralConst b) < 1 := Real.exp_lt_one_iff.mpr (neg_neg_of_pos hc)
+  linarith
 
 theorem residueTuple_mean_le (b : ℕ) (hb : 2 ≤ b) (h : ℤ) (hh : h ≠ 0) :
     ∃ P₀ : ℕ, ∀ p : ℕ, P₀ < p → ∀ k : ℕ, 1 ≤ k → ∀ δ : ℝ, 0 ≤ δ → δ ≤ 1 →

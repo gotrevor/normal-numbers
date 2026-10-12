@@ -77,8 +77,24 @@ Make `src/NormalNumbers/CoefmassRandomLambertMoment.lean` sorry-free, then check
 
 ## Status
 
-- Skeleton: 11 sorries, 0 errors.  Exact statement controls are green
-  (`experiments/random_lambert_moment_controls.py`).
+- Lap 1 checkpoint (`research/lambert-moment`): proved `bernMod_sq`, `bernMod_le_one`,
+  `bernMod_tuplePhase_mod`, and `momentGamma_pos`.  The periodicity proof is now grounded in the
+  public integer-divisibility helpers `pow_sub_pow_mod_dvd` and `residuePhase_add_int`; it proves
+  that every coordinate shift changes the tuple phase by an integer and then applies the proved
+  one-periodicity of `ePh`.  Seven declarations remain open.
+- Exact verification run:
+  - `lake env lean src/NormalNumbers/CoefmassRandomLambertMoment.lean` (green; only the seven
+    remaining disclosed `sorry` warnings).
+  - `~/personal/bin/lean-green ~/src/nn-lambert-moment --target NormalNumbers.CoefmassRandomLambertMoment`
+    (`✅ FORMALIZE-TIER GREEN`, 8716 jobs).
+  - `python3 experiments/random_lambert_moment_controls.py` (all positive controls within tolerance;
+    both deliberately false red controls fail as expected).
+- Current blocker: the finite averaging layer is next; specifically, `crt_tuple_prod_mean` needs a
+  clean reindexing between functions into `Fin (∏ i ∈ F, q i)` and the product of the residue
+  function spaces.  The analytic spectral-gap lemma remains the later route-decisive crux.
+- Next highest-value attack: prove `crt_tuple_prod_mean`, preferably via `ZMod.prodEquivPi`, then
+  use its chosen reindexing machinery for `prefix_tuple_mean_le` before expanding the exact second
+  moment.
 
 ## Findings
 
