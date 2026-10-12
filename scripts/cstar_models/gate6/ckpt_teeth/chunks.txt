@@ -1,0 +1,22 @@
+# exact5z in-pass chunk teeth: MAXB5=3 NODECAP=100000 exact5z 128 24 3 0 6 3 W181 1 4 (NC=100)
+# A = 1 uninterrupted pass; B = killed mid-pass, RESUME=B
+#   #!/bin/bash
+#   # in-pass chunk resume teeth: A = 1 uninterrupted pass; B = start, kill after >=3 chunks, RESUME, finish.  Compare stats.
+#   cd "$(dirname "$0")"; X=../exact5z3; ARGS="128 24 3 0 6 3 ../W181.txt 1 4"
+#   mkdir -p A B
+#   MAXB5=3 NODECAP=100000 CKPT=A $X $ARGS > A.log 2>&1; echo "EXIT $?" >> A.log
+#   MAXB5=3 NODECAP=100000 CKPT=B $X $ARGS > B1.log 2>&1 & P=$!
+#   until [ $(ls B/pass0 2>/dev/null | grep -c 'txt$') -ge 3 ]; do sleep 1; done; kill $P; wait $P; echo "EXIT $? (killed)" >> B1.log
+#   ls B/pass0 | grep -c 'txt$' > B.ndone
+#   MAXB5=3 NODECAP=100000 RESUME=B $X $ARGS > B2.log 2>&1; echo "EXIT $?" >> B2.log
+#   grep "^iter" A.log > A.st; grep "^iter" B2.log > B.st
+#   cmp A.st B.st && cmp A/phi.0.txt B/phi.0.txt && cmp A/ex.0.txt B/ex.0.txt && echo "TEETH IDENTICAL (B killed after $(cat B.ndone) chunks)" || echo "TEETH DIFFER"
+## A
+iter 0: failing pairs 7719523, phi lowered 2600, phi zeros 2189, exceptions set 12320 total 12320, worst 0.00000, pair evals 54699100, max phi 662878, phi checksum a67146f092c00f52
+## B (resumed)
+RESUME: no completed pass, resuming pass 0 chunks
+pass 0: 23/100 chunks already done in B/pass0
+iter 0: failing pairs 7719523, phi lowered 2600, phi zeros 2189, exceptions set 12320 total 12320, worst 0.00000, pair evals 54699100, max phi 662878, phi checksum a67146f092c00f52
+TEETH IDENTICAL (B killed after 23 chunks)
+EXIT 0
+# matches exact5y small.txt iter 0 line (same phi checksum a67146f092c00f52)

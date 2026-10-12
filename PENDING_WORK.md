@@ -4055,3 +4055,16 @@ Next: `isFresh` Riesz bound, then the classification lemma in Lean (route-decisi
   the base-3 tree, to roots; memo only) + over-budget prune keeps PKEEP=4 levels first.
 - Slice C (NODECAP=100000): 15/15 chunks, 2045 s wall, **VmHWM 2436 MB**, failing pairs 522,770 (3% of pass 0),
   9.82e9 pair evals.  Projection: ~16-19 h per pass, peak ~2.5 GB.  Slice D (NODECAP=300000) measuring speed/memory.
+- Slice D (NODECAP=300000, in-item prune at the cap): chunk 1 at 1540 s, HWM 5.7 GB = C's speed at 2.3x memory;
+  killed.  Lesson: speed comes from keeping memo trees ACROSS items (depth 8), not from the cap size.
+- Slice E (NODECAP=120000 between items keeping PKEEP=8 levels, INCAP=240000 in-item): 15/15 chunks, **1552 s,
+  VmHWM 4157 MB**; failing pairs 522,770 and pair evals 9,820,243,586 IDENTICAL to slice C (pruning is memo-only:
+  a control that the budget does not change results).  Projection: ~11-12 h per pass, peak < 5 GB (<= 10 GB budget).
+- Teeth (in-pass chunk resume): `scripts/cstar_models/gate6/ckpt_teeth/chunks.txt` - A (1 pass) == B (killed after
+  23/100 chunks, RESUME) stats line + phi.0 + ex.0 byte-identical; also equals exact5y's iter-0 line (checksum a671...).
+- **g6run2 launched 2026-10-12 ~01:58Z**: `tmp/g6run2/run.sh` (exact5z binary + source copied in; MAXB5=20
+  NODECAP=120000 INCAP=240000 PKEEP=8, 15 threads, 60 passes max, NC=100 chunks/pass of 768 q3 each ~7 min).
+  RESUME: just rerun `nohup tmp/g6run2/run.sh &` (it sets RESUME=. when pass0/ or latest exists).  Wait on
+  `kill -0 $(cat tmp/g6run2/pid)`; the wrapper appends `EXIT <code> <time>` to log.txt; watchdog kills > 11 GB.
+  Kill rule (pre-registered, unchanged): after 3 completed passes, failing pairs at pass 3 must be < half pass 1 and
+  phi zeros not rising; else STOP + Maze row + ON-LINE-REQUEST ({5,6} option).
