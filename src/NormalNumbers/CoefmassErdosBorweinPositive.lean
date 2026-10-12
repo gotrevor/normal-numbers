@@ -1222,6 +1222,90 @@ theorem prod_bernMod_le_exp_neg_spectral (b : ℕ) (F : Finset ℕ)
       congr 1
       rw [Finset.mul_sum]
 
+/-- The spectral gap `1 - cos (π / b)` is strictly positive for every admissible base. -/
+theorem spectralConst_pos (b : ℕ) (hb : 2 ≤ b) : 0 < spectralConst b := by
+  have hbpos : (0 : ℝ) < b := by positivity
+  have hxpos : 0 < Real.pi / (b : ℝ) := div_pos Real.pi_pos hbpos
+  have hxle : Real.pi / (b : ℝ) ≤ Real.pi := by
+    apply (div_le_iff₀ hbpos).2
+    have hb' : (2 : ℝ) ≤ b := by exact_mod_cast hb
+    nlinarith [Real.pi_pos]
+  have hcos : Real.cos (Real.pi / (b : ℝ)) < Real.cos 0 :=
+    Real.cos_lt_cos_of_nonneg_of_le_pi le_rfl hxle hxpos
+  unfold spectralConst
+  rw [Real.cos_zero] at hcos
+  linarith
+
+/-- The zero-based Bernoulli indices attached to one tuple anchor inherit the full retained-mass
+contraction.  This is the deterministic per-tuple bridge between `ebMoment_le_tupleAvg` and the
+Hardy--Ramanujan / shifted-gcd exceptional-set estimates. -/
+theorem tupleGoodModuli_bernMod_product_le (delta : ℕ → ℝ) (a c : ℝ)
+    (hdelta : ∀ p : ℕ, 0 ≤ delta p ∧ delta p ≤ 1)
+    (ha : 0 ≤ a) (hc : 0 < c)
+    (hvar : ∀ p : ℕ, 2 ≤ p →
+      c * Real.rpow (Real.log p) (-a) ≤ delta p * (1 - delta p))
+    (b e m K P₀ k : ℕ) (h : ℤ) (n : Fin (2 * k) → ℕ) (i : Fin (2 * k))
+    (hb : 2 ≤ b) (hk : 1 ≤ k)
+    (hfac : h.natAbs = b ^ e * m) (hm : ¬ b ∣ m) (hK : e + 1 ≤ K)
+    (hlarge : 16 * h.natAbs * (2 * k) ≤ b ^ K) (hKP : 2 * K ≤ P₀)
+    (hP₀ : 1 ≤ P₀) :
+    ∏ r ∈ (tupleGoodModuli (e + 1) K P₀ k n i).image (fun p => p - 1),
+        bernMod (delta (r + 1)) (tuplePhase b h k (r + 1) n) ≤
+      Real.exp (-spectralConst b *
+        (c * Real.rpow (Real.log (n i + (e + 1))) (-a) *
+          ((((2 ^ (n i + (e + 1)).primeFactors.card : ℕ) : ℝ) - P₀) -
+            ((tupleBadModuli (e + 1) K P₀ k n i).card : ℝ)))) := by
+  classical
+  let G := tupleGoodModuli (e + 1) K P₀ k n i
+  have hp_two (p : ℕ) (hp : p ∈ G) : 2 ≤ p := by
+    have hcut := ((mem_tupleGoodModuli (a₀ := e + 1) (K := K) (P₀ := P₀)
+      (k := k) (p := p) (n := n) (i := i) (by omega)).mp hp).2.1
+    omega
+  have hinj : Set.InjOn (fun p : ℕ => p - 1) ↑G := by
+    intro p hp q hq hpq
+    change p ∈ G at hp
+    change q ∈ G at hq
+    have hp1 : 1 ≤ p := le_trans (by omega) (hp_two p hp)
+    have hq1 : 1 ≤ q := le_trans (by omega) (hp_two q hq)
+    change p - 1 = q - 1 at hpq
+    omega
+  have hreindex :
+      (∏ r ∈ G.image (fun p => p - 1),
+          bernMod (delta (r + 1)) (tuplePhase b h k (r + 1) n)) =
+        ∏ p ∈ G, bernMod (delta p) (tuplePhase b h k p n) := by
+    rw [Finset.prod_image hinj]
+    apply Finset.prod_congr rfl
+    intro p hp
+    rw [Nat.sub_add_cancel (by have := hp_two p hp; omega : 1 ≤ p)]
+  have hproduct :
+      (∏ p ∈ G, bernMod (delta p) (tuplePhase b h k p n)) ≤
+        Real.exp (-spectralConst b *
+          ∑ p ∈ G, delta p * (1 - delta p)) := by
+    apply prod_bernMod_le_exp_neg_spectral
+    · intro p hp
+      exact hdelta p
+    · intro p hp
+      exact tupleGoodModuli_cos_le b e m K P₀ k p h n i hb hk hfac hm hK hlarge hKP hp
+  have hmass := retained_variance_mass_le delta a c ha hc hvar
+    (e + 1) K P₀ k n i (by omega) hP₀
+  have hspectral := (spectralConst_pos b hb).le
+  rw [show tupleGoodModuli (e + 1) K P₀ k n i = G by rfl] at hmass
+  rw [show tupleGoodModuli (e + 1) K P₀ k n i = G by rfl, hreindex]
+  refine hproduct.trans (Real.exp_le_exp.mpr ?_)
+  have hmul := mul_le_mul_of_nonneg_left hmass hspectral
+  calc
+    -spectralConst b * (∑ p ∈ G, delta p * (1 - delta p)) =
+        -(spectralConst b * (∑ p ∈ G, delta p * (1 - delta p))) := by ring
+    _ ≤ -(spectralConst b *
+        (c * Real.rpow (Real.log (n i + (e + 1))) (-a) *
+          ((((2 ^ (n i + (e + 1)).primeFactors.card : ℕ) : ℝ) - P₀) -
+            ((tupleBadModuli (e + 1) K P₀ k n i).card : ℝ)))) := by
+      simpa only [Nat.cast_add, Nat.cast_one] using neg_le_neg hmul
+    _ = -spectralConst b *
+        (c * Real.rpow (Real.log (n i + (e + 1))) (-a) *
+          ((((2 ^ (n i + (e + 1)).primeFactors.card : ℕ) : ℝ) - P₀) -
+            ((tupleBadModuli (e + 1) K P₀ k n i).card : ℝ))) := by ring
+
 /-- The summable moment bound behind `ebRandom_ae_normal_below_ln2` (codex2, 95%).
 1. With `α ln 2 > a`, fix `k` and `q < Q(α)` with `kq > 1`.
 2. The event that all coordinates have poor mass has probability `p_N^{2k} = O((log N)^{-2kq})`.
