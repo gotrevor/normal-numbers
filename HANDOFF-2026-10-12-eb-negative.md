@@ -60,6 +60,30 @@ Notation: `μ_M(n) = largeDivisorMass a M n = Σ_{d ∣ n, d > M} (log d)^{-a}`.
 
 ## Status
 
+- **Lap 8 checkpoint (2026-10-12): exact Lambert-tail orbit identity proved; 1 sorry remains.**
+  - DEFINED the selected periodic denominator contribution `selectedPeriodicTerm` and PROVED its
+    positivity and summability.  PROVED `shiftResidual_eq_tsum_selectedPeriodic` by expanding the
+    residual into the nonnegative double family indexed by shift and denominator, swapping the two
+    absolutely summable series, and evaluating each denominator column as a geometric progression.
+  - PROVED the tail-indexed form `shiftResidual_eq_tsum_tailPeriodic`, together with the integer
+    quotient identity `exists_int_pow_div_eq_mod_add`.  Splitting the Lambert tail after the first
+    `n` terms then gives the load-bearing exact orbit statement
+    `exists_int_pow_mul_ebLambertTail_eq_shiftResidual_add`:
+    `b^n * ebLambertTail b X M w = shiftResidual b X M n w + z` for some integer `z`.
+  - PROVED the pointwise consequence `fract_pow_mul_ebLambertTail_le_shiftResidual`, so the
+    fractional orbit of the deleted-head series is now directly controlled by Lap 7's residual
+    moment scaffold.  The four frozen theorem statements and three protected definition signatures
+    were not edited; the sole remaining sorry is still
+    `ebRandom_ae_not_normal_of_marginal_bound`.
+  - Exact verification:
+    - `lake env lean src/NormalNumbers/CoefmassErdosBorweinNegative.lean` — succeeds, exactly one
+      expected sorry warning (`ebRandom_ae_not_normal_of_marginal_bound`).
+    - `~/personal/bin/lean-green . --target NormalNumbers.CoefmassErdosBorweinNegative --import
+      NormalNumbers.CoefmassErdosBorweinNegative --axioms
+      NormalNumbers.ErdosBorweinRandom.fract_pow_mul_ebLambertTail_le_shiftResidual` —
+      FORMALIZE-TIER GREEN; axioms exactly `propext`, `Classical.choice`, `Quot.sound`.
+    - `~/personal/bin/lean-green .` — FORMALIZE-TIER GREEN, 10847 jobs.
+
 - **Lap 7 checkpoint (2026-10-12): Lambert tail and residual moment scaffold proved; 1 sorry remains.**
   - DEFINED the deleted-head series `ebLambertTail` and PROVED the exact finite-head split
     `ebLambert_eq_head_add_tail` using absolute summability of the selected Lambert series.
@@ -226,18 +250,11 @@ Notation: `μ_M(n) = largeDivisorMass a M n = Σ_{d ∣ n, d > M} (log d)^{-a}`.
 ### Current blocker / next attack
 
 The sole open theorem is `ebRandom_ae_not_normal_of_marginal_bound`.  Both its arithmetic input and
-the marginal-to-divisor-moment Jensen bridge are complete, and Lap 7 now supplies the convergent
-shift residual, infinite fractional-power subadditivity, and the finite integrated moment estimate.
-Next prove the exact identity
-`b^n * ebLambertTail b X M w - shiftResidual b X M n w ∈ ℤ`.  Split the selected Lambert tail at
-`m <= n`: for `m > n`, `n % m = n` and the integer correction in `residuePhase_add_int` is zero;
-the remaining correction is a finite sum of integers.  The residual side then needs a nonnegative
-double-tsum swap, grouping pairs `(m,j)` by `m | n+j`.  The short, already kernel-checked quotient identity
-`residuePhase_add_int` in `CoefmassRandomLambertMoment.lean` (~lines 145--166) is a useful template:
-`b^n/(b^m-1) = b^(n % m)/(b^m-1) + z` for an integer `z`.  For residual summability, the crude bound
-`selectedDivisorCount X M (n+j) w <= (n+j).divisors.card <= n+j` is already formalized in Lap 7.
+the marginal-to-divisor-moment Jensen bridge are complete.  Lap 7 supplies the convergent shift
+residual, infinite fractional-power subadditivity, and the finite integrated moment estimate; Lap 8
+now proves the exact integer orbit identity and the pointwise fractional-part bound.
 
-After the exact identity, pass `integral_shiftResidualPartial_rpow_le` to `J -> infinity` and sum
+Next pass `integral_shiftResidualPartial_rpow_le` to `J -> infinity` and sum
 over `n in Icc 1 N`.  For fixed `j`, enlarge the shifted interval to `Icc 1 (N+j+1)` and apply
 `largeDivisorMass_moment_small`; `N+j+1 <= (j+2)N` for `N >= 1`, and
 `sum_j (j+2)b^{-s(j+1)}` converges.  This yields the uniform integrated Cesaro estimate needed by

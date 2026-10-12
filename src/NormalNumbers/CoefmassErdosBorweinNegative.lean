@@ -1559,6 +1559,316 @@ lemma integral_shiftResidualPartial_rpow_le
       intro j hj
       ring
 
+/-! ### Exact periodic form of the residual -/
+
+/-- The contribution of one selected denominator to the shifted Lambert tail. -/
+noncomputable def selectedPeriodicTerm {Ω : Type*} (b : ℕ) (X : ℕ → Ω → Bool)
+    (M n : ℕ) (w : Ω) (m : ℕ) : ℝ :=
+  if M < m ∧ X m w = true then
+    (b : ℝ) ^ (n % m) / ((b : ℝ) ^ m - 1)
+  else 0
+
+lemma selectedPeriodicTerm_nonneg {Ω : Type*} (b : ℕ) (hb : 2 ≤ b)
+    (X : ℕ → Ω → Bool) (M n : ℕ) (w : Ω) (m : ℕ) :
+    0 ≤ selectedPeriodicTerm b X M n w m := by
+  rw [selectedPeriodicTerm]
+  split_ifs with hm
+  · have hm0 : 0 < m := by omega
+    have hb1 : (1 : ℝ) < b := by exact_mod_cast (show 1 < b by omega)
+    have hden : 0 < (b : ℝ) ^ m - 1 := by
+      linarith [one_lt_pow₀ hb1 (Nat.ne_of_gt hm0)]
+    positivity
+  · exact le_rfl
+
+lemma summable_selectedPeriodicTerm {Ω : Type*} (b : ℕ) (hb : 2 ≤ b)
+    (X : ℕ → Ω → Bool) (M n : ℕ) (w : Ω) :
+    Summable (selectedPeriodicTerm b X M n w) := by
+  have hbR : (2 : ℝ) ≤ b := by exact_mod_cast hb
+  have hb0 : (0 : ℝ) < b := by linarith
+  have hmajor : Summable (fun m : ℕ => 2 * (b : ℝ) ^ n * ((b : ℝ)⁻¹) ^ m) :=
+    (summable_geometric_of_lt_one (r := (b : ℝ)⁻¹) (by positivity)
+      (by rw [inv_lt_one_iff₀]; right; linarith)).mul_left _
+  exact Summable.of_nonneg_of_le
+    (fun m => selectedPeriodicTerm_nonneg b hb X M n w m) (fun m => by
+    rw [selectedPeriodicTerm]
+    split_ifs with hm
+    · have hm0 : 0 < m := by omega
+      have hbm : (2 : ℝ) ≤ (b : ℝ) ^ m := by
+        calc
+          (2 : ℝ) ≤ (b : ℝ) ^ 1 := by simpa using hbR
+          _ ≤ (b : ℝ) ^ m := pow_le_pow_right₀ (by linarith) (by omega)
+      have hnum : (b : ℝ) ^ (n % m) ≤ (b : ℝ) ^ n :=
+        pow_le_pow_right₀ (by linarith) (Nat.mod_le n m)
+      have hden : (0 : ℝ) < (b : ℝ) ^ m - 1 := by linarith
+      have hhalf : (b : ℝ) ^ m / 2 ≤ (b : ℝ) ^ m - 1 := by linarith
+      rw [inv_pow]
+      calc
+        (b : ℝ) ^ (n % m) / ((b : ℝ) ^ m - 1) ≤
+            (b : ℝ) ^ n / ((b : ℝ) ^ m / 2) := by gcongr
+        _ = 2 * (b : ℝ) ^ n * ((b : ℝ) ^ m)⁻¹ := by field_simp
+    · positivity) hmajor
+
+lemma pow_sub_pow_mod_dvd (b n m : ℕ) :
+    (b : ℤ) ^ m - 1 ∣ (b : ℤ) ^ n - (b : ℤ) ^ (n % m) := by
+  conv_rhs =>
+    lhs
+    rw [← Nat.mod_add_div n m, pow_add, pow_mul]
+  simpa [mul_sub] using
+    (dvd_mul_of_dvd_right (sub_one_dvd_pow_sub_one ((b : ℤ) ^ m) (n / m))
+      ((b : ℤ) ^ (n % m)))
+
+lemma exists_int_pow_div_eq_mod_add (b n m : ℕ) (hb : 2 ≤ b) (hm : 1 ≤ m) :
+    ∃ z : ℤ, (b : ℝ) ^ n / ((b : ℝ) ^ m - 1) =
+      (b : ℝ) ^ (n % m) / ((b : ℝ) ^ m - 1) + z := by
+  obtain ⟨z, hz⟩ := pow_sub_pow_mod_dvd b n m
+  refine ⟨z, ?_⟩
+  have hden : (b : ℝ) ^ m - 1 ≠ 0 := by
+    have hb' : (1 : ℝ) < b := by exact_mod_cast (lt_of_lt_of_le (by norm_num) hb)
+    have : (1 : ℝ) < (b : ℝ) ^ m := one_lt_pow₀ hb' (Nat.ne_of_gt hm)
+    linarith
+  have hzR : (b : ℝ) ^ n - (b : ℝ) ^ (n % m) =
+      ((b : ℝ) ^ m - 1) * (z : ℝ) := by
+    exact_mod_cast hz
+  apply (div_eq_iff hden).2
+  rw [add_mul, div_mul_cancel₀ _ hden]
+  nlinarith
+
+/-- The divisor-count residual is the sum of its periodic denominator contributions. -/
+lemma shiftResidual_eq_tsum_selectedPeriodic {Ω : Type*} (b : ℕ) (hb : 2 ≤ b)
+    (X : ℕ → Ω → Bool) (M n : ℕ) (w : Ω) :
+    shiftResidual b X M n w = ∑' m : ℕ, selectedPeriodicTerm b X M n w m := by
+  classical
+  have hbR : (2 : ℝ) ≤ b := by exact_mod_cast hb
+  have hb0 : (0 : ℝ) < b := by linarith
+  let f : ℕ → ℕ → ℝ := fun j m =>
+    if M < m ∧ X m w = true ∧ m ∣ n + j + 1 then ((b : ℝ) ^ (j + 1))⁻¹ else 0
+  have hf0 : ∀ j m, 0 ≤ f j m := by
+    intro j m
+    simp only [f]
+    split_ifs <;> positivity
+  have hrowsupp : ∀ j : ℕ, ∀ m ∉
+      ((n + j + 1).divisors.filter (fun m => M < m)).filter (fun m => X m w = true),
+      f j m = 0 := by
+    intro j m hm
+    have hc : ¬ (M < m ∧ X m w = true ∧ m ∣ n + j + 1) := by
+      rintro ⟨hmM, hmX, hmdvd⟩
+      apply hm
+      simp only [Finset.mem_filter]
+      exact ⟨⟨Nat.mem_divisors.mpr ⟨hmdvd, by omega⟩, hmM⟩, hmX⟩
+    simp only [f]
+    exact if_neg hc
+  have hrowS : ∀ j, Summable (f j) := fun j => summable_of_ne_finset_zero (hrowsupp j)
+  have hrow : ∀ j, ∑' m, f j m =
+      (1 / (b : ℝ)) ^ (j + 1) * selectedDivisorCount X M (n + j + 1) w := by
+    intro j
+    rw [tsum_eq_sum (hrowsupp j), selectedDivisorCount_eq_card]
+    have hval : ∀ m ∈
+        ((n + j + 1).divisors.filter (fun m => M < m)).filter (fun m => X m w = true),
+        f j m = ((b : ℝ) ^ (j + 1))⁻¹ := by
+      intro m hm
+      simp only [Finset.mem_filter, Nat.mem_divisors] at hm
+      simp only [f]
+      exact if_pos ⟨hm.1.2, hm.2, hm.1.1.1⟩
+    rw [Finset.sum_congr rfl hval, Finset.sum_const, nsmul_eq_mul]
+    rw [one_div, inv_pow]
+    ring
+  have hcolS : ∀ m, Summable (fun j => f j m) := by
+    intro m
+    refine Summable.of_nonneg_of_le (fun j => hf0 j m) (fun j => ?_)
+      (((summable_geometric_of_lt_one (r := (b : ℝ)⁻¹) (by positivity)
+        (by rw [inv_lt_one_iff₀]; right; linarith)).mul_left ((b : ℝ)⁻¹)).congr
+        (fun j => by rw [← pow_succ']))
+    simp only [f]
+    split_ifs
+    · rw [← inv_pow]
+    · positivity
+  have hcol : ∀ m, ∑' j, f j m = selectedPeriodicTerm b X M n w m := by
+    intro m
+    by_cases hm : M < m ∧ X m w = true
+    · rw [selectedPeriodicTerm, if_pos hm]
+      have hm0 : 0 < m := by omega
+      set d : ℕ := m - n % m with hd
+      have hmod : n % m < m := Nat.mod_lt _ hm0
+      have hd1 : 1 ≤ d := by omega
+      have hdm : d + n % m = m := by omega
+      have hbm : (1 : ℝ) < (b : ℝ) ^ m :=
+        one_lt_pow₀ (by linarith) (Nat.ne_of_gt hm0)
+      set r : ℝ := ((b : ℝ) ^ m)⁻¹ with hrdef
+      have hr0 : 0 < r := by rw [hrdef]; positivity
+      have hr1 : r < 1 := by rw [hrdef, inv_lt_one_iff₀]; right; exact hbm
+      have hgeo0 : HasSum (fun k : ℕ => r ^ k) (1 - r)⁻¹ :=
+        hasSum_geometric_of_lt_one hr0.le hr1
+      have hval : ((b : ℝ) ^ d)⁻¹ * (1 - r)⁻¹ =
+          (b : ℝ) ^ (n % m) / ((b : ℝ) ^ m - 1) := by
+        have hne : ((b : ℝ) ^ m - 1) ≠ 0 := by intro hc; rw [sub_eq_zero] at hc; linarith
+        have hbd : (0 : ℝ) < (b : ℝ) ^ d := by positivity
+        have hsplit : (b : ℝ) ^ d * (b : ℝ) ^ (n % m) = (b : ℝ) ^ m := by
+          rw [← pow_add, hdm]
+        rw [hrdef]
+        field_simp
+        nlinarith [hsplit, hbd]
+      have hgeo : HasSum (fun k : ℕ => ((b : ℝ) ^ d)⁻¹ * r ^ k)
+          ((b : ℝ) ^ (n % m) / ((b : ℝ) ^ m - 1)) := by
+        rw [← hval]
+        exact hgeo0.mul_left _
+      have hinj : Function.Injective (fun k : ℕ => d - 1 + k * m) := by
+        intro k₁ k₂ hk
+        simp only [add_right_inj] at hk
+        exact Nat.eq_of_mul_eq_mul_right hm0 hk
+      have hzero : ∀ j ∉ Set.range (fun k : ℕ => d - 1 + k * m), f j m = 0 := by
+        intro j hj
+        have hc : ¬ (M < m ∧ X m w = true ∧ m ∣ n + j + 1) := by
+          rintro ⟨-, -, hdvd⟩
+          obtain ⟨c, hc⟩ := hdvd
+          refine hj ⟨c - (n / m) - 1, ?_⟩
+          simp only
+          have h1 := Nat.div_add_mod n m
+          have h2 : m * (n / m) < m * c := by omega
+          have h3 : n / m < c := lt_of_mul_lt_mul_left h2 (Nat.zero_le m)
+          have h4 : (c - (n / m) - 1) * m + (n / m + 1) * m = c * m := by
+            rw [← add_mul]
+            congr 1
+            omega
+          have h5 : (n / m + 1) * m = m * (n / m) + m := by ring
+          have h6 : c * m = m * c := mul_comm c m
+          omega
+        simp only [f]
+        exact if_neg hc
+      have hcomp : ∀ k : ℕ, f (d - 1 + k * m) m = ((b : ℝ) ^ d)⁻¹ * r ^ k := by
+        intro k
+        have hdvd : m ∣ n + (d - 1 + k * m) + 1 := by
+          have h1 := Nat.div_add_mod n m
+          refine ⟨n / m + 1 + k, ?_⟩
+          have h2 : m * (n / m + 1 + k) = m * (n / m) + m + m * k := by ring
+          have h3 : k * m = m * k := mul_comm k m
+          omega
+        simp only [f]
+        rw [if_pos ⟨hm.1, hm.2, hdvd⟩, hrdef, inv_pow, ← pow_mul, ← mul_inv, ← pow_add]
+        have h3 : k * m = m * k := mul_comm k m
+        congr 2
+        omega
+      have hHS : HasSum (fun j => f j m)
+          ((b : ℝ) ^ (n % m) / ((b : ℝ) ^ m - 1)) :=
+        (Function.Injective.hasSum_iff (f := fun j => f j m) hinj hzero).1
+          (hgeo.congr_fun fun k => hcomp k)
+      exact hHS.tsum_eq
+    · rw [selectedPeriodicTerm, if_neg hm]
+      have hz : ∀ j, f j m = 0 := by
+        intro j
+        simp only [f]
+        exact if_neg (fun hc => hm ⟨hc.1, hc.2.1⟩)
+      simp [hz]
+  have huncurry : Summable (Function.uncurry f) := by
+    have huc : Function.uncurry f = fun x : ℕ × ℕ => f x.1 x.2 := rfl
+    rw [huc, summable_prod_of_nonneg (fun x => hf0 x.1 x.2)]
+    exact ⟨hrowS, Summable.congr (summable_shiftResidual_terms b hb X M n w)
+      (fun j => (hrow j).symm)⟩
+  calc
+    shiftResidual b X M n w = ∑' j, ∑' m, f j m := by
+      rw [shiftResidual]
+      exact tsum_congr fun j => (hrow j).symm
+    _ = ∑' m, ∑' j, f j m := (huncurry.tsum_comm' hrowS hcolS).symm
+    _ = ∑' m, selectedPeriodicTerm b X M n w m := tsum_congr hcol
+
+/-- The selected-periodic closed form, indexed in the same way as `ebLambertTail`. -/
+lemma shiftResidual_eq_tsum_tailPeriodic {Ω : Type*} (b : ℕ) (hb : 2 ≤ b)
+    (X : ℕ → Ω → Bool) (M n : ℕ) (w : Ω) :
+    shiftResidual b X M n w =
+      ∑' k : ℕ, (if X (M + k + 1) w then
+        (b : ℝ) ^ (n % (M + k + 1)) / ((b : ℝ) ^ (M + k + 1) - 1) else 0) := by
+  let g : ℕ → ℝ := selectedPeriodicTerm b X M n w
+  have hg : Summable g := summable_selectedPeriodicTerm b hb X M n w
+  rw [shiftResidual_eq_tsum_selectedPeriodic b hb X M n w]
+  rw [show (∑' m : ℕ, selectedPeriodicTerm b X M n w m) = ∑' m, g m from rfl]
+  rw [← hg.sum_add_tsum_nat_add (M + 1)]
+  have hhead : ∑ m ∈ Finset.range (M + 1), g m = 0 := by
+    apply Finset.sum_eq_zero
+    intro m hm
+    change selectedPeriodicTerm b X M n w m = 0
+    rw [selectedPeriodicTerm, if_neg]
+    intro h
+    have hmlt : m < M + 1 := Finset.mem_range.mp hm
+    omega
+  rw [hhead, zero_add]
+  apply tsum_congr
+  intro k
+  rw [show k + (M + 1) = M + k + 1 by omega]
+  simp only [g, selectedPeriodicTerm]
+  by_cases hk : X (M + k + 1) w = true <;> simp [hk]
+
+/-- Multiplying the selected Lambert tail by `b^n` leaves exactly `shiftResidual`, modulo an
+integer.  This is the orbit identity used by the negative theorem. -/
+lemma exists_int_pow_mul_ebLambertTail_eq_shiftResidual_add
+    {Ω : Type*} (b : ℕ) (hb : 2 ≤ b) (X : ℕ → Ω → Bool)
+    (M n : ℕ) (w : Ω) :
+    ∃ z : ℤ, (b : ℝ) ^ n * ebLambertTail b X M w = shiftResidual b X M n w + z := by
+  let F : ℕ → ℝ := fun k =>
+    (if X (M + k + 1) w then (b : ℝ) ^ n else 0) /
+      ((b : ℝ) ^ (M + k + 1) - 1)
+  let G : ℕ → ℝ := fun k =>
+    if X (M + k + 1) w then
+      (b : ℝ) ^ (n % (M + k + 1)) / ((b : ℝ) ^ (M + k + 1) - 1) else 0
+  have hF : Summable F := by
+    have h := (summable_nat_add_iff M).mpr (summable_ebLambert_terms b hb X w)
+    exact (h.mul_left ((b : ℝ) ^ n)).congr fun k => by
+      rw [show k + M + 1 = M + k + 1 by omega]
+      simp only [F]
+      split_ifs <;> ring
+  have hG : Summable G := by
+    have h := (summable_nat_add_iff (M + 1)).mpr
+      (summable_selectedPeriodicTerm b hb X M n w)
+    exact h.congr fun k => by
+      rw [show k + (M + 1) = M + k + 1 by omega]
+      simp only [G, selectedPeriodicTerm]
+      by_cases hk : X (M + k + 1) w = true <;> simp [hk]
+  choose z hz using fun k : ℕ =>
+    exists_int_pow_div_eq_mod_add b n (M + k + 1) hb (by omega)
+  have hterm : ∀ k, F k = G k + (if X (M + k + 1) w then (z k : ℝ) else 0) := by
+    intro k
+    simp only [F, G]
+    by_cases hk : X (M + k + 1) w = true
+    · simp only [hk, if_true]
+      exact hz k
+    · have hk' : X (M + k + 1) w = false := Bool.eq_false_of_not_eq_true hk
+      simp [hk']
+  have htail : ∀ k, F (k + n) = G (k + n) := by
+    intro k
+    simp only [F, G]
+    have hnlt : n < M + (k + n) + 1 := by omega
+    rw [Nat.mod_eq_of_lt hnlt]
+    split_ifs <;> simp
+  refine ⟨∑ k ∈ Finset.range n, if X (M + k + 1) w then z k else 0, ?_⟩
+  have hleft : (b : ℝ) ^ n * ebLambertTail b X M w = ∑' k, F k := by
+    rw [ebLambertTail, ← tsum_mul_left]
+    apply tsum_congr
+    intro k
+    simp only [F]
+    split_ifs <;> ring
+  have hright : shiftResidual b X M n w = ∑' k, G k :=
+    shiftResidual_eq_tsum_tailPeriodic b hb X M n w
+  rw [hleft, hright, ← hF.sum_add_tsum_nat_add n, ← hG.sum_add_tsum_nat_add n]
+  rw [tsum_congr htail]
+  push_cast
+  have hsum : ∑ k ∈ Finset.range n, F k =
+      (∑ k ∈ Finset.range n, G k) +
+        ∑ k ∈ Finset.range n, (if X (M + k + 1) w then (z k : ℝ) else 0) := by
+    rw [← Finset.sum_add_distrib]
+    exact Finset.sum_congr rfl fun k hk => hterm k
+  rw [hsum]
+  ring
+
+/-- The fractional part of the dilated Lambert tail is controlled pointwise by the nonnegative
+shift residual. -/
+lemma fract_pow_mul_ebLambertTail_le_shiftResidual {Ω : Type*}
+    (b : ℕ) (hb : 2 ≤ b) (X : ℕ → Ω → Bool) (M n : ℕ) (w : Ω) :
+    Int.fract ((b : ℝ) ^ n * ebLambertTail b X M w) ≤ shiftResidual b X M n w := by
+  obtain ⟨z, hz⟩ := exists_int_pow_mul_ebLambertTail_eq_shiftResidual_add b hb X M n w
+  rw [hz, Int.fract_add_intCast]
+  have hfloor : (0 : ℝ) ≤ (⌊shiftResidual b X M n w⌋ : ℤ) := by
+    exact_mod_cast Int.floor_nonneg.mpr (shiftResidual_nonneg b X M n w)
+  rw [Int.fract]
+  linarith
+
 /-- **Marginal decay alone forces non-normality** (strengthens `ebRandom_ae_not_normal`).
 Proof outline:
 1. Use the exact residual `R_M(n) = Σ_{j ≥ 1} b^{-j} D_M(n+j)`, with
