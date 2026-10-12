@@ -4040,3 +4040,13 @@ Next: `isFresh` Riesz bound, then the classification lemma in Lean (route-decisi
   `gate6/W181_N128_M24_D6.txt.gz` at tmp/W181.txt; binary via `leanc -O2 ... -lpthread` into tmp/exact5y).
   Resume next lap: `cd tmp/g6run1; MAXB5=20 RESUME=. ../exact5y 128 24 6 0 6 16 ../W181.txt 60 15 >> log.txt`.
 - Pre-registered kill: after 3 passes, pass-3 failing pairs not < half of pass 1, or PHI zeros rising -> stop.
+
+## Gate 6 relaunch #2 (2026-10-12): memory first (exact5z)
+- `scripts/cstar_models/gate6/exact5z.c` = exact5y + per-chunk progress (elapsed, VmHWM, VmRSS, thread node count),
+  interleaved chunks (chunk k = {q3 : q3 % NC == k}, NC=100 default, `NC`/`SLICE` env for measurement slices),
+  per-thread node budget `NODECAP` (prune base-5 trees to roots between q3 items; drops only memoized refinements),
+  in-pass checkpoint `CKPT/pass<it>/c<k>.txt` (atomic, records streamed to disk), `RESUME` skips finished chunks
+  (also when no pass has completed).
+- Slice A (NC=500 SLICE=15 = 3%, 15 threads, no cap): RSS 10.0 GB at 2:50, 10.7 GB at ~3.5 min, ZERO chunks done;
+  killed by hand.  Culprit confirmed: per-thread T5 memo trees (~1.7 KB/node, ~400k nodes/thread), not the records.
+- Slice B (same, NODECAP=150000): RSS steady 2.8-4.1 GB (watchdog `tmp/watch_rss.sh`, 5 s samples).  Timing: pending.
