@@ -77,6 +77,36 @@ Make `src/NormalNumbers/CoefmassRandomLambertMoment.lean` sorry-free, then check
 
 ## Status
 
+- Lap 5 checkpoint (`research/lambert-moment`): proved the route-decisive spectral gap
+  `localMean_normSq_le`, leaving three declarations open.  The proof factors
+  `|h| = b^e m` with `b ∤ m`, takes the explicit cutoff `K = e + 1 + 16|h|`, and proves that
+  the anchor phase at `p-(e+1)` minus every tail phase below `p-K` lies within `1/(4b)` of
+  `m/b`.  A modular-rational enclosure then puts each such phase in the central part of a
+  period, giving the exact loss `spectralConst b`.  A reusable double-sum lemma retains both
+  ordered anchor/tail arms, hence `2(p-K)` deficits; `p > 2K` converts their normalized loss
+  into `spectralConst b / p`.  Negative `h` is handled by cosine evenness.  No frozen statement
+  or definition changed.
+- Exact verification run:
+  - `lake env lean src/NormalNumbers/CoefmassRandomLambertMoment.lean` (green; only the three
+    remaining disclosed `sorry` warnings).
+  - `lake build NormalNumbers.CoefmassRandomLambertMoment` (green, 8716 jobs).
+  - `~/personal/bin/lean-green ~/src/nn-lambert-moment --target NormalNumbers.CoefmassRandomLambertMoment`
+    (`✅ FORMALIZE-TIER GREEN`, 8716 jobs).
+  - Commit pre-hook `lake build` (green, 10847 jobs).
+  - `python3 experiments/random_lambert_moment_controls.py` (all positive controls within
+    tolerance; both deliberately false red controls fail as expected).
+  - `lake env lean AuditRandomLambertMomentLap5.lean` with `#print axioms` for
+    `rational_phase_central`, `cos_two_pi_le_of_near_rational`, `anchor_tail_phase_error`,
+    `double_sum_le_of_anchor`, and `localMean_normSq_le` (temporary audit file; each exactly
+    `[propext, Classical.choice, Quot.sound]`).
+- Current blocker: `residueTuple_mean_le` is now the next obligation.  Its exact squared mean and
+  the required spectral gap are both proved; what remains is a self-contained real-inequality
+  chain implementing Cauchy--Schwarz, `sqrt(1-2x) ≤ exp(-x)`, the power/exponential comparison,
+  and the chord bound defining `momentGamma b`.
+- Next highest-value attack: prove the analytic helper inequalities used in step 8, then combine
+  `residueTuple_mean_sq` with `localMean_normSq_le` to close `residueTuple_mean_le`.  After that,
+  only the probability-theoretic expansion `moment_le_tupleAvg` and final CRT assembly remain.
+
 - Lap 4 checkpoint (`research/lambert-moment`): factored the spectral-gap obligation into three
   proved, axiom-clean interfaces.  `localMean_norm_sq_eq` is the exact normalized double-cosine
   identity for the local mean, so the remaining work is now a real finite-sum deficit estimate.

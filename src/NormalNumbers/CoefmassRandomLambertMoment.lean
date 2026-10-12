@@ -51,7 +51,7 @@ with `P₀, γ` depending only on `b, h`.
 
 Status: IN PROGRESS.  The Bernoulli algebra, phase periodicity, positivity of `momentGamma`,
 pairwise-coprime CRT factorization, prefix transfer, and exact residue moment are proved;
-the spectral gap, local bound, moment expansion, and assembly declarations remain.
+the spectral gap is proved, while the local bound, moment expansion, and assembly declarations remain.
 -/
 
 namespace NormalNumbers.RandomLambertMoment
@@ -274,6 +274,214 @@ theorem anchor_phase_formula (b e m p : ℕ) (hb : 2 ≤ b) (hep : e + 1 ≤ p) 
         (m : ℝ) * ((b : ℝ) ^ e * (b : ℝ) ^ (p - (e + 1)) * b) := by ring
     _ = (m : ℝ) * (b : ℝ) ^ p := by rw [hpow]
 
+/-- A perturbation of a nonintegral rational with denominator `b` by at most `1/(2b)`
+still has a representative in the central part `[1/(2b), 1-1/(2b)]` of a period. -/
+theorem rational_phase_central {b m : ℕ} (hb : 2 ≤ b) (hm : ¬ b ∣ m)
+    {ε : ℝ} (hε : |ε| ≤ 1 / (2 * (b : ℝ))) :
+    ∃ z : ℤ, 1 / (2 * (b : ℝ)) ≤ (m : ℝ) / b + ε - z ∧
+      (m : ℝ) / b + ε - z ≤ 1 - 1 / (2 * (b : ℝ)) := by
+  have hbpos : 0 < b := by omega
+  have hrpos : 0 < m % b := Nat.pos_of_ne_zero (fun hr => hm (Nat.dvd_of_mod_eq_zero hr))
+  have hrlt : m % b < b := Nat.mod_lt _ hbpos
+  refine ⟨(m / b : ℕ), ?_⟩
+  have hmdecomp : (m : ℝ) / b - (m / b : ℕ) = (m % b : ℕ) / b := by
+    have hn := Nat.mod_add_div m b
+    have hnR : ((m % b : ℕ) : ℝ) + (b : ℝ) * ((m / b : ℕ) : ℝ) = (m : ℝ) := by
+      exact_mod_cast hn
+    field_simp
+    nlinarith [hnR]
+  change 1 / (2 * (b : ℝ)) ≤ (m : ℝ) / b + ε - (m / b : ℕ) ∧
+    (m : ℝ) / b + ε - (m / b : ℕ) ≤ 1 - 1 / (2 * (b : ℝ))
+  rw [show (m : ℝ) / b + ε - (m / b : ℕ) =
+      ((m : ℝ) / b - (m / b : ℕ)) + ε by ring, hmdecomp]
+  constructor
+  · have hrR : (1 : ℝ) ≤ ((m % b : ℕ) : ℝ) := by exact_mod_cast hrpos
+    have helo : -(1 / (2 * (b : ℝ))) ≤ ε := (abs_le.mp hε).1
+    have hbR : (0 : ℝ) < b := by positivity
+    have hdiv : 2 * (1 / (2 * (b : ℝ))) ≤ ((m % b : ℕ) : ℝ) / b := by
+      rw [show 2 * (1 / (2 * (b : ℝ))) = 1 / (b : ℝ) by ring]
+      exact (div_le_div_iff_of_pos_right hbR).2 hrR
+    nlinarith
+  · have hrR : ((m % b : ℕ) : ℝ) ≤ (b : ℝ) - 1 := by
+      have hrNat : m % b + 1 ≤ b := by omega
+      have hrNatR : ((m % b : ℕ) : ℝ) + 1 ≤ (b : ℝ) := by exact_mod_cast hrNat
+      linarith
+    have hehi : ε ≤ 1 / (2 * (b : ℝ)) := (abs_le.mp hε).2
+    have hbR : (0 : ℝ) < b := by positivity
+    have hdiv : ((m % b : ℕ) : ℝ) / b ≤ 1 - 2 * (1 / (2 * (b : ℝ))) := by
+      rw [show 1 - 2 * (1 / (2 * (b : ℝ))) = ((b : ℝ) - 1) / b by field_simp]
+      exact (div_le_div_iff_of_pos_right hbR).2 hrR
+    nlinarith
+
+/-- A phase within `1/(2b)` of a rational `m/b` with `b ∤ m` incurs the spectral loss. -/
+theorem cos_two_pi_le_of_near_rational {b m : ℕ} (hb : 2 ≤ b) (hm : ¬ b ∣ m)
+    {x : ℝ} (hx : |x - (m : ℝ) / b| ≤ 1 / (2 * (b : ℝ))) :
+    Real.cos (2 * Real.pi * x) ≤ Real.cos (Real.pi / b) := by
+  obtain ⟨z, hz0, hz1⟩ :=
+    rational_phase_central hb hm (ε := x - (m : ℝ) / b) hx
+  have harg : (m : ℝ) / b + (x - (m : ℝ) / b) - (z : ℝ) = x - z := by ring
+  rw [harg] at hz0 hz1
+  have hperiod : Real.cos (2 * Real.pi * x) = Real.cos (2 * Real.pi * (x - z)) := by
+    rw [show 2 * Real.pi * (x - z) = 2 * Real.pi * x - (z : ℝ) * (2 * Real.pi) by ring,
+      Real.cos_sub_int_mul_two_pi]
+  rw [hperiod]
+  exact cos_two_pi_le_cos_pi_div hb hz0 hz1
+
+/-- The finite-period correction to the anchor phase and a sufficiently short tail phase
+together move the rational main term `m/b` by at most `1/(4b)`. -/
+theorem anchor_tail_phase_error (b e m H K p t : ℕ) (hb : 2 ≤ b)
+    (hH : H = b ^ e * m) (hK : e + 1 ≤ K) (hlarge : 16 * H ≤ b ^ K)
+    (hp : 2 * K < p) (ht : t < p - K) :
+    |(H : ℝ) * (residuePhase b p (p - (e + 1)) - residuePhase b p t) -
+        (m : ℝ) / b| ≤ 1 / (4 * (b : ℝ)) := by
+  have hbR : (2 : ℝ) ≤ b := by exact_mod_cast hb
+  have hbpos : (0 : ℝ) < b := lt_of_lt_of_le (by norm_num) hbR
+  have hep : e + 1 ≤ p := by omega
+  have htK : t + (K + 1) ≤ p := by omega
+  have hpow2 : (2 : ℝ) ≤ (b : ℝ) ^ p := by
+    calc
+      (2 : ℝ) ≤ b := hbR
+      _ = (b : ℝ) ^ 1 := by ring
+      _ ≤ (b : ℝ) ^ p := pow_le_pow_right₀ (by linarith) (by omega)
+  have hdenpos : 0 < (b : ℝ) ^ p - 1 := by linarith
+  have hdenhalf : (b : ℝ) ^ p / 2 ≤ (b : ℝ) ^ p - 1 := by linarith
+  have hpowmono : (b : ℝ) ^ t * (b : ℝ) ^ (K + 1) ≤ (b : ℝ) ^ p := by
+    rw [← pow_add]
+    exact pow_le_pow_right₀ (by linarith : (1 : ℝ) ≤ b) htK
+  have hlargeR : (16 : ℝ) * H ≤ (b : ℝ) ^ K := by exact_mod_cast hlarge
+  have htailCross : (8 : ℝ) * b * H * (b : ℝ) ^ t ≤ (b : ℝ) ^ p - 1 := by
+    have hpowK : (b : ℝ) ^ (K + 1) = (b : ℝ) ^ K * b := by rw [pow_succ]
+    rw [hpowK] at hpowmono
+    have hmain : (16 : ℝ) * b * H * (b : ℝ) ^ t ≤ (b : ℝ) ^ p := by
+      calc
+        (16 : ℝ) * b * H * (b : ℝ) ^ t =
+            (b : ℝ) ^ t * ((16 : ℝ) * H) * b := by ring
+        _ ≤ (b : ℝ) ^ t * (b : ℝ) ^ K * b := by gcongr
+        _ ≤ (b : ℝ) ^ p := by simpa [mul_assoc] using hpowmono
+    nlinarith
+  have htail : (H : ℝ) * residuePhase b p t ≤ 1 / (8 * (b : ℝ)) := by
+    unfold residuePhase
+    rw [show (H : ℝ) * ((b : ℝ) ^ t / ((b : ℝ) ^ p - 1)) =
+      ((H : ℝ) * (b : ℝ) ^ t) / ((b : ℝ) ^ p - 1) by ring]
+    rw [div_le_div_iff₀ hdenpos (by positivity : (0 : ℝ) < 8 * b)]
+    nlinarith [htailCross]
+  have hmH : m ≤ H := by
+    rw [hH]
+    exact Nat.le_mul_of_pos_left m (pow_pos (by omega) _)
+  have hcorrCross : (8 : ℝ) * m ≤ (b : ℝ) ^ p - 1 := by
+    have hKp : K ≤ p := by omega
+    have hpowKp : (b : ℝ) ^ K ≤ (b : ℝ) ^ p :=
+      pow_le_pow_right₀ (by linarith : (1 : ℝ) ≤ b) hKp
+    have hbig : (16 : ℝ) * H ≤ (b : ℝ) ^ p := hlargeR.trans hpowKp
+    have hmHR : (m : ℝ) ≤ H := by exact_mod_cast hmH
+    nlinarith
+  have hcorr : (m : ℝ) / b / ((b : ℝ) ^ p - 1) ≤ 1 / (8 * (b : ℝ)) := by
+    apply (le_div_iff₀ (by positivity : (0 : ℝ) < 8 * b)).2
+    calc
+      (m : ℝ) / b / ((b : ℝ) ^ p - 1) * (8 * b) =
+          8 * (m : ℝ) / ((b : ℝ) ^ p - 1) := by field_simp
+      _ ≤ 1 := (div_le_one hdenpos).2 hcorrCross
+  have hanchor := anchor_phase_formula b e m p hb hep
+  rw [← hH] at hanchor
+  have herr :
+      (H : ℝ) * (residuePhase b p (p - (e + 1)) - residuePhase b p t) -
+          (m : ℝ) / b =
+        (m : ℝ) / b / ((b : ℝ) ^ p - 1) - (H : ℝ) * residuePhase b p t := by
+    rw [mul_sub, hanchor]
+    ring
+  rw [herr]
+  have hcorr0 : 0 ≤ (m : ℝ) / b / ((b : ℝ) ^ p - 1) := by positivity
+  have htail0 : 0 ≤ (H : ℝ) * residuePhase b p t := by
+    unfold residuePhase
+    positivity
+  calc
+    |(m : ℝ) / b / ((b : ℝ) ^ p - 1) - (H : ℝ) * residuePhase b p t| ≤
+        (m : ℝ) / b / ((b : ℝ) ^ p - 1) + (H : ℝ) * residuePhase b p t := by
+      simpa [abs_of_nonneg hcorr0, abs_of_nonneg htail0] using
+        (abs_sub ((m : ℝ) / b / ((b : ℝ) ^ p - 1))
+          ((H : ℝ) * residuePhase b p t))
+    _ ≤ 1 / (8 * (b : ℝ)) + 1 / (8 * (b : ℝ)) := add_le_add hcorr htail
+    _ = 1 / (4 * (b : ℝ)) := by ring
+
+/-- Every anchor/tail pair selected by the spectral-gap argument loses at least
+`spectralConst b` from the maximal cosine value. -/
+theorem anchor_tail_cos_le (b e m H K p t : ℕ) (hb : 2 ≤ b) (hm : ¬ b ∣ m)
+    (hH : H = b ^ e * m) (hK : e + 1 ≤ K) (hlarge : 16 * H ≤ b ^ K)
+    (hp : 2 * K < p) (ht : t < p - K) :
+    Real.cos (2 * Real.pi * ((H : ℝ) *
+      (residuePhase b p (p - (e + 1)) - residuePhase b p t))) ≤
+        Real.cos (Real.pi / b) := by
+  apply cos_two_pi_le_of_near_rational hb hm
+  exact (anchor_tail_phase_error b e m H K p t hb hH hK hlarge hp ht).trans (by
+    rw [div_le_div_iff₀ (by positivity : (0 : ℝ) < 4 * b)
+      (by positivity : (0 : ℝ) < 2 * b)]
+    nlinarith)
+
+/-- If a row and column of a square sum each contain `L` entries losing at least `c`,
+and the two selected arms are disjoint, the whole sum loses at least `2Lc`. -/
+theorem double_sum_le_of_anchor (p L a : ℕ) (C : ℕ → ℕ → ℝ) (c : ℝ)
+    (ha : a < p) (hLa : L ≤ a)
+    (hone : ∀ r < p, ∀ t < p, C r t ≤ 1)
+    (hleft : ∀ t < L, C a t ≤ 1 - c)
+    (hright : ∀ r < L, C r a ≤ 1 - c) :
+    (∑ r ∈ Finset.range p, ∑ t ∈ Finset.range p, C r t) ≤
+      (p : ℝ) ^ 2 - 2 * L * c := by
+  let I : ℕ → ℕ → ℝ := fun r t =>
+    (if r = a ∧ t < L then c else 0) + (if t = a ∧ r < L then c else 0)
+  have hpoint (r : ℕ) (hr : r < p) (t : ℕ) (ht : t < p) : I r t ≤ 1 - C r t := by
+    dsimp [I]
+    by_cases hra : r = a
+    · subst r
+      have hnot : ¬a < L := by omega
+      by_cases htL : t < L
+      · simp [htL, hnot]
+        linarith [hleft t htL]
+      · simp [htL, hnot]
+        linarith [hone a ha t ht]
+    · by_cases hta : t = a
+      · subst t
+        by_cases hrL : r < L
+        · simp [hra, hrL]
+          linarith [hright r hrL]
+        · simp [hra, hrL]
+          linarith [hone r hr a ha]
+      · simp [hra, hta]
+        linarith [hone r hr t ht]
+  have hsum : (∑ r ∈ Finset.range p, ∑ t ∈ Finset.range p, I r t) ≤
+      ∑ r ∈ Finset.range p, ∑ t ∈ Finset.range p, (1 - C r t) := by
+    exact Finset.sum_le_sum fun r hr => Finset.sum_le_sum fun t ht =>
+      hpoint r (Finset.mem_range.mp hr) t (Finset.mem_range.mp ht)
+  have hIsum : (∑ r ∈ Finset.range p, ∑ t ∈ Finset.range p, I r t) = 2 * L * c := by
+    dsimp [I]
+    rw [Finset.sum_congr rfl (fun _ _ => Finset.sum_add_distrib)]
+    rw [Finset.sum_add_distrib]
+    have hf : (Finset.range p).filter (fun t => t < L) = Finset.range L := by
+      ext t
+      simp only [Finset.mem_filter, Finset.mem_range]
+      omega
+    have hrow (r : ℕ) : (∑ t ∈ Finset.range p, (if r = a ∧ t < L then c else 0)) =
+        if r = a then L * c else 0 := by
+      by_cases hra : r = a
+      · simp [hra, Finset.sum_ite, hf]
+      · simp [hra]
+    have hfirst : (∑ r ∈ Finset.range p, ∑ t ∈ Finset.range p,
+        (if r = a ∧ t < L then c else 0)) = L * c := by
+      simp_rw [hrow]
+      simp [ha]
+    have hsecond : (∑ r ∈ Finset.range p, ∑ t ∈ Finset.range p,
+        (if t = a ∧ r < L then c else 0)) = L * c := by
+      rw [Finset.sum_comm]
+      simpa [and_comm] using hfirst
+    rw [hfirst, hsecond]
+    ring
+  have hDsum : (∑ r ∈ Finset.range p, ∑ t ∈ Finset.range p, (1 - C r t)) =
+      (p : ℝ) ^ 2 - ∑ r ∈ Finset.range p, ∑ t ∈ Finset.range p, C r t := by
+    simp_rw [Finset.sum_sub_distrib]
+    simp
+    ring
+  rw [hIsum, hDsum] at hsum
+  linarith
+
 /-- The squared local mean is the normalized double cosine sum of phase differences. -/
 theorem localMean_norm_sq_eq (b : ℕ) (h : ℤ) (p : ℕ) (hp : 0 < p) :
     ‖localMean b h p‖ ^ 2 =
@@ -317,7 +525,89 @@ theorem localMean_norm_sq_eq (b : ℕ) (h : ℤ) (p : ℕ) (hp : 0 < p) :
 
 theorem localMean_normSq_le (b : ℕ) (hb : 2 ≤ b) (h : ℤ) (hh : h ≠ 0) :
     ∃ P₀ : ℕ, ∀ p : ℕ, P₀ < p → ‖localMean b h p‖ ^ 2 ≤ 1 - spectralConst b / p := by
-  sorry
+  have hH0 : h.natAbs ≠ 0 := (Int.natAbs_pos.mpr hh).ne'
+  obtain ⟨e, m, hm, hfac⟩ :=
+    Nat.exists_eq_pow_mul_and_not_dvd hH0 b (by omega : b ≠ 1)
+  let K : ℕ := e + 1 + 16 * h.natAbs
+  have heK : e + 1 ≤ K := by simp [K]
+  have hlarge : 16 * h.natAbs ≤ b ^ K := by
+    have hlinR : (K : ℝ) + 1 ≤ (2 : ℝ) ^ K := by
+      have hbern := one_add_mul_sub_le_pow (a := (2 : ℝ)) (by norm_num) K
+      norm_num at hbern ⊢
+      linarith
+    have hlin : K + 1 ≤ 2 ^ K := by exact_mod_cast hlinR
+    calc
+      16 * h.natAbs ≤ K + 1 := by dsimp [K]; omega
+      _ ≤ 2 ^ K := hlin
+      _ ≤ b ^ K := Nat.pow_le_pow_left hb K
+  refine ⟨2 * K, fun p hp => ?_⟩
+  have hp0 : 0 < p := by omega
+  let a := p - (e + 1)
+  let L := p - K
+  let C : ℕ → ℕ → ℝ := fun r t =>
+    Real.cos (2 * Real.pi * ((h.natAbs : ℝ) *
+      (residuePhase b p r - residuePhase b p t)))
+  have ha : a < p := by dsimp [a]; omega
+  have hLa : L ≤ a := by dsimp [L, a]; omega
+  have hone : ∀ r < p, ∀ t < p, C r t ≤ 1 := by
+    intro r hr t ht
+    exact Real.cos_le_one _
+  have hleft : ∀ t < L, C a t ≤ 1 - spectralConst b := by
+    intro t ht
+    dsimp [C, a]
+    have hcos := anchor_tail_cos_le b e m h.natAbs K p t hb hm hfac heK hlarge hp ht
+    convert hcos using 1 <;> simp [spectralConst]
+  have hright : ∀ r < L, C r a ≤ 1 - spectralConst b := by
+    intro r hr
+    have hcos := anchor_tail_cos_le b e m h.natAbs K p r hb hm hfac heK hlarge hp hr
+    dsimp [C, a]
+    rw [show (h.natAbs : ℝ) *
+        (residuePhase b p r - residuePhase b p (p - (e + 1))) =
+      -((h.natAbs : ℝ) *
+        (residuePhase b p (p - (e + 1)) - residuePhase b p r)) by ring]
+    rw [show 2 * Real.pi * -((h.natAbs : ℝ) *
+        (residuePhase b p (p - (e + 1)) - residuePhase b p r)) =
+      -(2 * Real.pi * ((h.natAbs : ℝ) *
+        (residuePhase b p (p - (e + 1)) - residuePhase b p r))) by ring,
+      Real.cos_neg]
+    convert hcos using 1 <;> simp [spectralConst]
+  have hsum := double_sum_le_of_anchor p L a C (spectralConst b) ha hLa hone hleft hright
+  have hcosSign (x : ℝ) :
+      Real.cos (2 * Real.pi * ((h : ℝ) * x)) =
+        Real.cos (2 * Real.pi * ((h.natAbs : ℝ) * x)) := by
+    cases h with
+    | ofNat n => simp
+    | negSucc n =>
+      rw [show (((Int.negSucc n : ℤ) : ℝ) * x) = -(((n + 1 : ℕ) : ℝ) * x) by
+        norm_num [Int.cast_negSucc]
+        ring]
+      rw [show 2 * Real.pi * -(((n + 1 : ℕ) : ℝ) * x) =
+        -(2 * Real.pi * (((n + 1 : ℕ) : ℝ) * x)) by ring, Real.cos_neg]
+      rfl
+  rw [localMean_norm_sq_eq b h p hp0]
+  have hsum' :
+      (∑ r ∈ Finset.range p, ∑ t ∈ Finset.range p,
+        Real.cos (2 * Real.pi * ((h : ℝ) *
+          (residuePhase b p r - residuePhase b p t)))) ≤
+        (p : ℝ) ^ 2 - 2 * L * spectralConst b := by
+    simpa only [C, hcosSign] using hsum
+  have hpR : (0 : ℝ) < p := by exact_mod_cast hp0
+  apply (div_le_iff₀ (sq_pos_of_pos hpR)).2
+  have hL : 2 * L ≥ p := by
+    dsimp [L]
+    omega
+  have hc : 0 ≤ spectralConst b := by
+    unfold spectralConst
+    linarith [Real.neg_one_le_cos (Real.pi / b), Real.cos_le_one (Real.pi / b)]
+  calc
+    (∑ r ∈ Finset.range p, ∑ t ∈ Finset.range p,
+        Real.cos (2 * Real.pi * ((h : ℝ) *
+          (residuePhase b p r - residuePhase b p t)))) ≤
+        (p : ℝ) ^ 2 - 2 * L * spectralConst b := hsum'
+    _ ≤ (1 - spectralConst b / p) * (p : ℝ) ^ 2 := by
+      have hLR : (p : ℝ) ≤ 2 * L := by exact_mod_cast hL
+      field_simp
+      nlinarith
 
 /-! ### Step 6: exact second moment over residues -/
 
