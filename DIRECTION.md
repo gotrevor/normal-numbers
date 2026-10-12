@@ -27,6 +27,21 @@ belongs to that branch (its route is parked at the middle-digit obstruction); do
   a valid lower bound for every real parent in the pair (state why in the commit).
   (6) **Stop at the end either way:** numbers + table to PENDING_WORK, ON-LINE-REQUEST.md with the reading, then
   `box stuck`.  Long jobs via `run_in_background`; outputs in `tmp/<run-id>/`.
+  **ADDENDUM (Ren, 2026-10-12 ~13:15Z) - Astra caught a flaw in cpanel.c; binding before any LOOSE label.**  Mail
+  `~/personal/agent-mail/nn-cstar/20261012T130859Z-codex-87887111-*.md`; operator confirmed in source.  `UNION=1` is
+  NOT a joint-image evaluator: pairv0 still splits the base-3 tree and the base-5 tree independently and multiplies
+  per-base bounds; UNION only keeps the union of each base's own met boxes.  Nothing couples the two coordinates
+  through ONE common parent x, so a UNION pass may still rest on unreachable cross-base combinations.  UNION results
+  may be reported only as "per-base union tightening", never as LOOSE.
+  A sound joint-image (ii): partition the common parent interval (and the shared binary SFT path); on each parent
+  subinterval propagate BOTH base maps; per path use only jointly reachable bin pairs; count a path as surviving
+  only if both base tests surely survive on the whole subinterval (else bound it by 0 or subdivide); take the min
+  of the frozen joint W(q3,q5) over the reachable pair set.  A rational outward enclosure of the joint image is fine
+  if it provably contains every reachable pair.
+  Teeth (required): on every panel pair, every concrete admissible parent's exact value must be >= both lower
+  bounds (i) and (ii); one violation = the evaluator is unsound, stop and record.  Controls must still pass.
+  If a true common-parent (ii) does not fit this lap, classify the affected pairs UNRESOLVED and stop (reading:
+  unresolved -> recommend park).
 - **Operator gate 6 COST LAP (Ren for Trevor, 2026-10-12 ~02:55Z) - ONE bounded engineering lap, then stop.
   Binding: Astra's second opinion, mail `~/personal/agent-mail/nn-cstar/20261012T024404Z-codex-58a77b90-*.md`
   (read it whole first).**  Why: budgeted exact5z costs slice E 1552 s per 3% = **14.4 h/pass** (not 11-12 h);
