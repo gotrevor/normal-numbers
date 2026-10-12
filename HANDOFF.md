@@ -1,3 +1,5 @@
+# STUCK (2026-10-12 gate 6 CAUSAL PANEL done): reading UNRESOLVED (LOOSE 16, GENUINE 3, UNRESOLVED 21 of 40) -> PARK recommended; see PENDING_WORK "Gate 6 CAUSAL PANEL", ON-LINE-REQUEST.md. No search launched.
+
 # STUCK strike 1 (2026-10-12 ~05:45Z, gate 6 COST LAP done): DIRECTION (f) says stop either way. Cost gate MISSED: pass 0 2.4-3.2 h/pass after exMin index + B0 (exact5z ~17 h); post-update ~49 h/pass (exMin still 80%, pair evals 17x). Root-positivity acceptance landed with teeth. Operator-gated: ON-LINE-REQUEST.md asks Trevor/Astra park-vs-continue. Verify: PENDING_WORK 'Gate 6 COST LAP', commit db022adb. Do NOT launch a multi-pass search.
 
 # Gate 6 relaunch #2 (2026-10-12): memory fixed (exact5z, 4.2 GB slice), chunk checkpoints teeth-tested; g6run2 running in tmp/g6run2 (resume: nohup tmp/g6run2/run.sh &); see PENDING_WORK 'Gate 6 relaunch #2'

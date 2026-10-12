@@ -4124,3 +4124,27 @@ times are on this contended box; exact5z was re-run under the same conditions as
   * Reopen only on a concrete mechanism: a fixed small panel of newly failing positive-target pairs plus matched
     passing controls, frozen before/after weights, ordinary vs tighter joint-image subdivision, node/time caps.
     Plus a credible path to TailChargeBudget449F on the SAME normalized weights.
+
+## Gate 6 CAUSAL PANEL (2026-10-12): reading UNRESOLVED -> recommend PARK (pre-registered)
+Tools/data: `scripts/cstar_models/gate6/cpanel/` (commits 096d1e63 panel frozen before evaluation, 1fb883c0 results).
+(1) **Identical parent IDs** (240 parents, q3 % 5000 < 15): before 55,169/199,680 = **0.2763**, after
+  113,819/199,240 = **0.5713**.  The 0.28 -> 0.57 jump is real on identical parents.  60,506 newly failing pairs;
+  none carries its own exception, 1,008 have lowered PHI (so ~98% fail at an UNCHANGED target).
+(2) Panel: 40 newly failing (2 per state + 8 by share, seed 20261012) + 40 controls (same q3; 4 same-state fallback).
+(3) Evaluators.  (i) ordinary = exact5b0 pairv, reproduces all 40 T2 records bit-for-bit; every failing pair hits the
+  depth cap.  (ii) sound tight variants: UNION (met-set union instead of full-row collapse on ambiguity): 4/40 pass;
+  deeper MAXB 22/26 alone: 0/40; WORLDS (consistent ambiguity: one decision per depth shared by all paths, min over
+  worlds) : 4/40; **WORLDS + RSPLIT (bisect r as well as x; the stock split never splits r unless nd.nr, so the r-width
+  keeps the leaf images' x-spread wide), MAXB 28/32: 16/40 pass**, controls 40/40 pass.  (iii) real parents:
+  independent exact Python semantics (true delta; controls: 2554/4096 level-12 good cells = rootCheck; block values
+  == C point evaluator on 120 real cells), random good walks; 18/40 pairs sit in base-5 SLIVER r-bins (width ~1e-16;
+  no real parent at level <= 12000, existence only by density) and get none.
+(4)/(5) **LOOSE 16 (40%), GENUINE 3 (7.5%: 50008/13970 2 of 300 parents, 50011/14074 41/300, 55007/14711 1/203),
+  UNRESOLVED 21.**  Neither threshold met (LOOSE >= 60%, GENUINE >= 50%) -> pre-registered: unresolved, PARK.
+  Table: `cpanel/classify.txt`.  Of the 21 unresolved, 13 have failing 2^-82 point-probe boxes (open failing sets,
+  genuine by density, mostly sliver bins); 8 show neither (ratios 0.998-0.99998, likely more of the split looseness).
+- Mechanism reading: about half of the newly failing set is checker looseness from the split heuristic (r never
+  bisected) - a cheap fix (RSPLIT=1 costs ~4x nodes on the panel) that also applies to pass 0; the rest is real
+  growth loss for this candidate shape or unresolvable sliver-bin parents.  Not a certificate, not a convergence rate.
+- Reopen condition (if ever funded): rerun the cost slice with WORLDS+RSPLIT and see whether the post-update failure
+  fraction drops below the pass-0 0.276 on the same IDs; the sliver r5 bins are a model artifact worth removing first.
