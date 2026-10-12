@@ -80,6 +80,207 @@ lemma primeReciprocalMass_le_log_log_add (X : ℕ) (hX : 2 ≤ X) :
   simpa [Erdos67.PrimeEstimates.primeReciprocals,
     Erdos784.Analytic.primeReciprocals, one_div, add_comm] using h.2
 
+/-! ### The smooth-divisor Euler majorant -/
+
+/-- Concavity gives the sharp secant-line majorant
+`(r+1)^s ≤ 1 + (2^s-1)r`.  Keeping the coefficient `2^s-1`, rather than replacing it by
+`s`, is what leaves a positive exponent gap when `a > log 2`. -/
+lemma rpow_nat_succ_le_secant (s : ℝ) (hs : 0 < s) (hs1 : s ≤ 1) (r : ℕ) :
+    ((r + 1 : ℕ) : ℝ) ^ s ≤ 1 + ((2 : ℝ) ^ s - 1) * r := by
+  rcases eq_or_lt_of_le hs1 with rfl | hs1
+  · norm_num [add_comm]
+  rcases r with _ | r
+  · simp
+  rcases r with _ | r
+  · norm_num
+  have hconc := Real.strictConcaveOn_rpow hs hs1
+  have hsec := hconc.secant_strict_mono
+    (a := (1 : ℝ)) (x := 2) (y := ((r + 3 : ℕ) : ℝ))
+    (by norm_num) (by norm_num)
+    (by simp only [Set.mem_Ici]; positivity)
+    (by norm_num)
+    (by exact_mod_cast (show r + 3 ≠ 1 by omega))
+    (by exact_mod_cast (show 2 < r + 3 by omega))
+  norm_num only [Real.one_rpow] at hsec
+  push_cast at hsec ⊢
+  have hr : (0 : ℝ) < r + 2 := by positivity
+  have hden : ((r : ℝ) + 3 - 1) = r + 2 := by ring
+  rw [hden, div_lt_iff₀ hr] at hsec
+  norm_num at hsec
+  have h := (sub_lt_iff_lt_add.mp hsec).le
+  have hr3 : (r : ℝ) + 1 + 1 + 1 = r + 3 := by ring
+  have hr2 : (r : ℝ) + 1 + 1 = r + 2 := by ring
+  rw [hr3, hr2]
+  linarith
+
+/-- Number of divisors contributed by prime powers at primes at most `y`. -/
+def smoothDivisorCount (y n : ℕ) : ℕ :=
+  ∏ p ∈ n.primeFactors.filter (fun p => p ≤ y), (n.factorization p + 1)
+
+/-- The fractional moment of the smooth divisor count is bounded by a product whose local
+coefficient is exactly `2^s-1`. -/
+lemma smoothDivisorCount_rpow_le_factorizationMajorant
+    (s : ℝ) (hs : 0 < s) (hs1 : s ≤ 1) (y n : ℕ) :
+    ((smoothDivisorCount y n : ℕ) : ℝ) ^ s ≤
+      ∏ p ∈ n.primeFactors.filter (fun p => p ≤ y),
+        (1 + ((2 : ℝ) ^ s - 1) * n.factorization p) := by
+  rw [smoothDivisorCount, Nat.cast_prod]
+  let S := n.primeFactors.filter (fun p => p ≤ y)
+  change (∏ p ∈ S, ((n.factorization p + 1 : ℕ) : ℝ)) ^ s ≤ _
+  rw [← Real.finsetProd_rpow S (fun p => ((n.factorization p + 1 : ℕ) : ℝ))
+    (fun p hp => by positivity) s]
+  gcongr with p hp
+  exact rpow_nat_succ_le_secant s hs hs1 (n.factorization p)
+
+lemma momentPrimeCoefficient_nonneg (s : ℝ) (hs : 0 < s) :
+    0 ≤ (2 : ℝ) ^ s - 1 := by
+  linarith [Real.one_le_rpow (by norm_num : (1 : ℝ) ≤ 2) hs.le]
+
+lemma momentPrimeCoefficient_le_one (s : ℝ) (hs1 : s ≤ 1) :
+    (2 : ℝ) ^ s - 1 ≤ 1 := by
+  have := Real.rpow_le_rpow_of_exponent_le (by norm_num : (1 : ℝ) ≤ 2) hs1
+  norm_num at this ⊢
+  linarith
+
+/-- The geometric sum of valuation indicators has the required first-order prime term and a
+summable prime-power error. -/
+lemma momentPrimeFactor_le (s : ℝ) (hs1 : s ≤ 1) (p : ℕ) (hp : 2 ≤ p) :
+    1 + ((2 : ℝ) ^ s - 1) / (p - 1) ≤
+      1 + ((2 : ℝ) ^ s - 1) / p + 1 / ((p : ℝ) * (p - 1)) := by
+  have hp0 : (0 : ℝ) < p := by exact_mod_cast (show 0 < p by omega)
+  have hp1' : (1 : ℝ) < p := by exact_mod_cast (show 1 < p by omega)
+  have hp1 : (0 : ℝ) < p - 1 := by linarith
+  have hq := momentPrimeCoefficient_le_one s hs1
+  have hid : ((2 : ℝ) ^ s - 1) / (p - 1) =
+      ((2 : ℝ) ^ s - 1) / p + ((2 : ℝ) ^ s - 1) / (p * (p - 1)) := by
+    field_simp [hp0.ne', hp1.ne']
+    ring
+  have hden : 0 < (p : ℝ) * (p - 1) := mul_pos hp0 hp1
+  have hfrac : ((2 : ℝ) ^ s - 1) / (p * (p - 1)) ≤ 1 / (p * (p - 1)) :=
+    (div_le_div_iff_of_pos_right hden).2 hq
+  rw [hid]
+  linarith
+
+/-- A finite Euler product is controlled by the exponential of its linearized prime sum. -/
+lemma momentEulerProduct_le_exp (s : ℝ) (hs : 0 < s) (P : Finset ℕ)
+    (hP : ∀ p ∈ P, 2 ≤ p) :
+    ∏ p ∈ P, (1 + ((2 : ℝ) ^ s - 1) / p + 1 / ((p : ℝ) * (p - 1))) ≤
+      Real.exp (((2 : ℝ) ^ s - 1) * ∑ p ∈ P, 1 / (p : ℝ) +
+        ∑ p ∈ P, 1 / ((p : ℝ) * (p - 1))) := by
+  let x : ℕ → ℝ := fun p => ((2 : ℝ) ^ s - 1) / p + 1 / ((p : ℝ) * (p - 1))
+  have hx : ∀ p ∈ P, 0 ≤ x p := by
+    intro p hp
+    have hpN := hP p hp
+    have hp0 : (0 : ℝ) < p := by exact_mod_cast (show 0 < p by omega)
+    have hp1 : (0 : ℝ) < p - 1 := by
+      have : (1 : ℝ) < p := by exact_mod_cast (show 1 < p by omega)
+      linarith
+    dsimp [x]
+    exact add_nonneg (div_nonneg (momentPrimeCoefficient_nonneg s hs) hp0.le)
+      (div_nonneg zero_le_one (mul_nonneg hp0.le hp1.le))
+  calc
+    ∏ p ∈ P, (1 + ((2 : ℝ) ^ s - 1) / p + 1 / ((p : ℝ) * (p - 1))) =
+        ∏ p ∈ P, (1 + x p) := by simp [x, add_assoc]
+    _ ≤ ∏ p ∈ P, Real.exp (x p) := by
+      apply Finset.prod_le_prod
+      · intro p hp
+        linarith [hx p hp]
+      · intro p hp
+        simpa [add_comm] using Real.add_one_le_exp (x p)
+    _ = Real.exp (∑ p ∈ P, x p) := by rw [Real.exp_sum]
+    _ = _ := by
+      congr 1
+      simp only [x, Finset.sum_add_distrib]
+      rw [Finset.mul_sum]
+      congr 1
+      apply Finset.sum_congr rfl
+      intro p hp
+      rw [mul_one_div]
+
+/-- The prime-power error telescopes even before restricting to primes. -/
+lemma reciprocalPrimePowerError_sum_Icc (X : ℕ) (hX : 2 ≤ X) :
+    ∑ p ∈ Finset.Icc 2 X, 1 / ((p : ℝ) * (p - 1)) = 1 - 1 / (X : ℝ) := by
+  induction X, hX using Nat.le_induction with
+  | base => norm_num
+  | succ X hX ih =>
+      rw [Finset.sum_Icc_succ_top (by omega), ih]
+      have hX0 : (X : ℝ) ≠ 0 := by positivity
+      have hXs0 : ((X : ℝ) + 1) ≠ 0 := by positivity
+      push_cast
+      field_simp [hX0, hXs0]
+      ring
+
+lemma reciprocalPrimePowerError_sum_le_one
+    (X : ℕ) (P : Finset ℕ) (hP : P ⊆ Finset.Icc 2 X) :
+    ∑ p ∈ P, 1 / ((p : ℝ) * (p - 1)) ≤ 1 := by
+  calc
+    ∑ p ∈ P, 1 / ((p : ℝ) * (p - 1)) ≤
+        ∑ p ∈ Finset.Icc 2 X, 1 / ((p : ℝ) * (p - 1)) := by
+      apply Finset.sum_le_sum_of_subset_of_nonneg hP
+      intro p hpP hp
+      have hp2 : 2 ≤ p := (Finset.mem_Icc.mp hpP).1
+      have hp0 : (0 : ℝ) ≤ p := by positivity
+      have hp1r : (1 : ℝ) ≤ p := by exact_mod_cast (show 1 ≤ p by omega)
+      have hp1 : (0 : ℝ) ≤ p - 1 := by linarith
+      exact div_nonneg zero_le_one (mul_nonneg hp0 hp1)
+    _ ≤ 1 := by
+      by_cases hX : 2 ≤ X
+      · rw [reciprocalPrimePowerError_sum_Icc X hX]
+        have : 0 ≤ 1 / (X : ℝ) := by positivity
+        linarith
+      · have : Finset.Icc 2 X = ∅ := Finset.Icc_eq_empty (by omega)
+        simp [this]
+
+/-- The complete finite Euler-product bound used in the smooth-divisor moment estimate. -/
+lemma momentEulerProduct_le_mertens
+    (s : ℝ) (hs : 0 < s) (hs1 : s ≤ 1) (X : ℕ) (hX : 2 ≤ X) :
+    ∏ p ∈ X.primesLE, (1 + ((2 : ℝ) ^ s - 1) / (p - 1)) ≤
+      Real.exp (((2 : ℝ) ^ s - 1) *
+        (Real.log (Real.log (X : ℝ)) + Erdos67.PrimeEstimates.mertensBound) + 1) := by
+  let q : ℝ := (2 : ℝ) ^ s - 1
+  have hq : 0 ≤ q := momentPrimeCoefficient_nonneg s hs
+  have hp2 : ∀ p ∈ X.primesLE, 2 ≤ p := fun p hp => Nat.two_le_of_mem_primesLE hp
+  have hsub : X.primesLE ⊆ Finset.Icc 2 X := by
+    intro p hp
+    exact Finset.mem_Icc.mpr ⟨Nat.two_le_of_mem_primesLE hp, Nat.le_of_mem_primesLE hp⟩
+  have hprime := primeReciprocalMass_le_log_log_add X hX
+  have herr := reciprocalPrimePowerError_sum_le_one X X.primesLE hsub
+  calc
+    ∏ p ∈ X.primesLE, (1 + ((2 : ℝ) ^ s - 1) / (p - 1)) ≤
+        ∏ p ∈ X.primesLE,
+          (1 + ((2 : ℝ) ^ s - 1) / p + 1 / ((p : ℝ) * (p - 1))) := by
+      apply Finset.prod_le_prod
+      · intro p hp
+        have hp1 : (0 : ℝ) < p - 1 := by
+          have : (1 : ℝ) < p := by exact_mod_cast (Nat.one_lt_of_mem_primesLE hp)
+          linarith
+        exact add_nonneg zero_le_one (div_nonneg hq hp1.le)
+      · intro p hp
+        exact momentPrimeFactor_le s hs1 p (hp2 p hp)
+    _ ≤ Real.exp (q * ∑ p ∈ X.primesLE, 1 / (p : ℝ) +
+        ∑ p ∈ X.primesLE, 1 / ((p : ℝ) * (p - 1))) := by
+      exact momentEulerProduct_le_exp s hs X.primesLE hp2
+    _ ≤ _ := by
+      apply Real.exp_le_exp.mpr
+      have hmul := mul_le_mul_of_nonneg_left hprime hq
+      dsimp [q] at hmul ⊢
+      linarith
+
+/-- Mertens' bound in the power form used by the dyadic block argument.  The leading exponent is
+exactly `2^s-1`; all prime-power contributions are absorbed into the constant. -/
+lemma momentEulerProduct_le_log_rpow
+    (s : ℝ) (hs : 0 < s) (hs1 : s ≤ 1) (X : ℕ) (hX : 2 ≤ X) :
+    ∏ p ∈ X.primesLE, (1 + ((2 : ℝ) ^ s - 1) / (p - 1)) ≤
+      Real.exp (((2 : ℝ) ^ s - 1) * Erdos67.PrimeEstimates.mertensBound + 1) *
+        (Real.log (X : ℝ)) ^ ((2 : ℝ) ^ s - 1) := by
+  refine (momentEulerProduct_le_mertens s hs hs1 X hX).trans_eq ?_
+  have hXr : (1 : ℝ) < X := by exact_mod_cast (show 1 < X by omega)
+  have hlog : 0 < Real.log (X : ℝ) := Real.log_pos hXr
+  rw [Real.rpow_def_of_pos hlog]
+  rw [← Real.exp_add]
+  congr 1
+  ring
+
 /-- Uniform vanishing fractional moment of the large-divisor mass.  Choose `0 < s ≤ 1` with
 `q = 2^s - 1 < a s`.  `τ(n_y)^s = 1 * g_y` with `g_y ≥ 0`, so for EVERY `T`,
 `(1/T) Σ_{n ≤ T} τ(n_y)^s ≤ ∏_{p ≤ y}(1 + q/p + 1/(p(p-1))) ≤ A_s (log y)^q`; prime powers are

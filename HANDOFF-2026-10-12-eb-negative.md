@@ -60,6 +60,29 @@ Notation: `μ_M(n) = largeDivisorMass a M n = Σ_{d ∣ n, d > M} (log d)^{-a}`.
 
 ## Status
 
+- **Lap 2 checkpoint (2026-10-12): sharp smooth-divisor Euler majorant proved; 2 sorries remain.**
+  - PROVED the sharp local concavity bound `rpow_nat_succ_le_secant`:
+    `(r+1)^s ≤ 1 + (2^s-1)r` for `0 < s ≤ 1`.  This avoids formalizing the exact increment
+    function `g_y` while preserving the indispensable coefficient `q = 2^s-1`.
+  - DEFINED `smoothDivisorCount y n` from the exponents of primes `p ≤ y` in `n`, and PROVED
+    `smoothDivisorCount_rpow_le_factorizationMajorant`, bounding its fractional moment by
+    `∏_{p≤y,p∣n}(1+q v_p(n))`.
+  - PROVED the complete analytic Euler-product bound:
+    `momentPrimeFactor_le`, `momentEulerProduct_le_exp`,
+    `reciprocalPrimePowerError_sum_Icc`, `reciprocalPrimePowerError_sum_le_one`,
+    `momentEulerProduct_le_mertens`, and finally `momentEulerProduct_le_log_rpow`:
+    `∏_{p≤X}(1+q/(p-1)) ≤ exp(q*mertensBound+1) * (log X)^q`.
+    Thus the exact exponent-`q` Mertens side of the uniform smooth-divisor estimate is discharged.
+  - Exact verification:
+    - `lake env lean src/NormalNumbers/CoefmassErdosBorweinNegative.lean` — succeeds, exactly the
+      two expected sorry warnings (`largeDivisorMass_moment_small` and
+      `ebRandom_ae_not_normal_of_marginal_bound`).
+    - `~/personal/bin/lean-green . --target NormalNumbers.CoefmassErdosBorweinNegative --import
+      NormalNumbers.CoefmassErdosBorweinNegative --axioms
+      NormalNumbers.ErdosBorweinRandom.momentEulerProduct_le_log_rpow` — FORMALIZE-TIER GREEN;
+      axioms exactly `propext`, `Classical.choice`, `Quot.sound`.
+    - `~/personal/bin/lean-green .` — FORMALIZE-TIER GREEN, 10847 jobs.
+
 - **Lap 1 checkpoint (2026-10-12): 2 sorries remain; full repository green.**
   - PROVED `exists_erdosBorwein_moment_exponent`: for `a > log 2`, there is `0 < s ≤ 1` with
     `2^s - 1 < a*s`, via the right-hand secant limit at zero.  The proof is wired into
@@ -84,12 +107,14 @@ Notation: `μ_M(n) = largeDivisorMass a M n = Σ_{d ∣ n, d > M} (log d)^{-a}`.
 ### Current blocker / next attack
 
 The load-bearing open theorem is `largeDivisorMass_moment_small`.  Its exponent choice and exact
-coefficient-1 reciprocal-prime Mertens input are now discharged.  Next formalize the uniform
-smooth-divisor estimate
-`Σ_{n≤T} τ(n_y)^s ≤ T*A_s*(log y)^(2^s-1)` for every `T ≥ 1`: define the `y`-smooth part through
-`Nat.factorization`, expand `τ(n_y)^s = Σ_{d∣n} g_y(d)`, average multiples by `⌊T/d⌋ ≤ T/d`, and
-bound the finite Euler factors by `1 + (2^s-1)/p + 1/(p(p-1))`.  Then the dyadic log-block
-geometric tail closes the theorem.  Only after this analytic crux should the remaining
+coefficient-1 reciprocal-prime Mertens input and the resulting sharp Euler-product bound are now
+discharged.  Next prove the remaining **combinatorial averaging bridge**
+`Σ_{n≤T} ∏_{p≤y,p∣n}(1+q v_p(n)) ≤ T * ∏_{p≤y}(1+q/(p-1))`: expand the finite product into subsets,
+expand each valuation as `Σ_{k≥1} 1[p^k∣n]` truncated at `T`, then count multiples by
+`⌊T/d⌋ ≤ T/d`; distinct primes make the resulting prime-power choices coprime and factor the sum.
+Also prove that every divisor `d∣n` with `d≤y` is counted by `smoothDivisorCount y n`.  These two
+facts yield `Σ_{n≤T} τ(n_y)^s ≤ T*A_s*(log y)^q`; then the dyadic log-block geometric tail closes
+`largeDivisorMass_moment_small`.  Only after this analytic crux should the remaining
 `ebRandom_ae_not_normal_of_marginal_bound` probability/orbit argument be attacked.
 
 ## Findings
