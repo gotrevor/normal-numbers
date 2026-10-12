@@ -64,3 +64,51 @@ Fix `b ≥ 2`, `h ≠ 0`; write `|h| = b^e·m'` with `b ∤ m'` and set `a₀ = 
 ## Findings
 
 (none yet)
+
+## Lap checkpoint (2026-10-12, deterministic no-collision contraction)
+
+Concrete advance in `CoefmassErdosBorweinEndpoint.lean`:
+
+- Added the finite predicate `TupleCollisionFree` matching the paper's absence of a large common
+  divisor between an anchor and any shifted second coordinate.
+- Proved that collision freedom makes every divisor above `P₀` good
+  (`tupleGoodModuli_eq_large_divisors_of_collisionFree`) and hence identifies its weighted sum
+  exactly with `divisorVarianceMass`
+  (`sum_tupleGoodModuli_eq_divisorVarianceMass_of_collisionFree`).
+- Proved good-modulus sets at distinct anchors are disjoint (`disjoint_tupleGoodModuli`) and that
+  mass over their union is the sum of all coordinate masses (`sum_tupleAllGoodModuli`).
+- Generalized the existing positive-exponent contraction to actual Bernoulli variance mass, first
+  for one anchor and then for the union of all anchors.  The capstone
+  `global_bernMod_product_le_divisorVarianceMass_of_collisionFree` now proves the paper's full
+  per-tuple no-collision bound
+  `product ≤ exp (-spectralConst b * Σ_i divisorVarianceMass ...)`.
+
+Verification run before this handoff update:
+
+```text
+lake env lean src/NormalNumbers/CoefmassErdosBorweinEndpoint.lean
+```
+
+It succeeds; the only warning is the disclosed `sorry` on the frozen headline.
+
+Final repository gate (explicit import is required when targeting a single module):
+
+```text
+~/personal/bin/lean-green ~/src/nn-eb-endpoint \
+  --target NormalNumbers.CoefmassErdosBorweinEndpoint \
+  --import NormalNumbers.CoefmassErdosBorweinEndpoint \
+  --axioms NormalNumbers.ErdosBorweinEndpoint.global_bernMod_product_le_divisorVarianceMass_of_collisionFree
+```
+
+Verdict: `FORMALIZE-TIER GREEN`; the capstone depends only on `propext`, `Classical.choice`, and
+`Quot.sound`.
+
+Current blocker: turn `¬ TupleCollisionFree` into the finite union over `(i,j,r,p)` and prove the
+normalized bad-tuple count bounded by the paper's
+`4 k² K (3 / P₀ + 4 / N)`.  This is now the route-decisive bridge between the proved deterministic
+contraction and `ebMoment_le_tupleAvg`.
+
+Next highest-value attack: define the finite collision tuple set with `p ≤ N + K`, prove each
+fixed `(i,j,r,p)` fiber has cardinality at most
+`N^(2k-2) * (N/p + 1)^2` using `card_shifted_multiples_le`, sum the fibers, and combine its
+complement with `global_bernMod_product_le_divisorVarianceMass_of_collisionFree`.
