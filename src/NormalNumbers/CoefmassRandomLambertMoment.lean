@@ -49,9 +49,8 @@ with `P₀, γ` depending only on `b, h`.
    `‖f‖^{2k} ≤ e^{-c₀k/p}` and concavity give `E G ≤ exp(-γ v min(k/p,1))`, with
    `γ = 1 - e^{-c₀}`.
 
-Status: IN PROGRESS.  The Bernoulli algebra, phase periodicity, positivity of `momentGamma`,
-pairwise-coprime CRT factorization, prefix transfer, and exact residue moment are proved;
-the spectral gap is proved, while the local bound, moment expansion, and assembly declarations remain.
+Status: IN PROGRESS.  The finite local analytic layer and the infinite-series characteristic bound
+are proved.  The finite even-moment expansion and final assembly declarations remain.
 -/
 
 namespace NormalNumbers.RandomLambertMoment
@@ -1199,6 +1198,253 @@ theorem prefix_tuple_mean_le (Q d N : ℕ) (hQ : 0 < Q) (hN : 1 ≤ N) (G : (Fin
           ring
 
 /-! ### Step 1: moment expansion and independence -/
+
+/-- The deterministic Lambert denominators are summable, uniformly before inserting the
+Bernoulli selectors. -/
+theorem summable_lambert_denom (b : ℕ) (hb : 2 ≤ b) :
+    Summable (fun p : Prime => (1 : ℝ) / ((b : ℝ) ^ p.val - 1)) := by
+  have hbR : (2 : ℝ) ≤ b := by exact_mod_cast hb
+  have hb1 : (1 : ℝ) < b := lt_of_lt_of_le (by norm_num) hbR
+  have hgeom : Summable (fun p : Prime => 2 * (1 / (b : ℝ)) ^ p.val) := by
+    exact ((summable_geometric_of_lt_one (by positivity)
+      (by simpa using one_div_lt_one_div_of_lt zero_lt_one hb1)).mul_left 2).comp_injective
+        Subtype.val_injective
+  refine Summable.of_nonneg_of_le (fun p => by
+    exact div_nonneg (by norm_num) (sub_nonneg.mpr (one_le_pow₀ hb1.le))) (fun p => ?_) hgeom
+  have hp2 : 2 ≤ p.val := p.property.two_le
+  have hpow : (2 : ℝ) ≤ (b : ℝ) ^ p.val := by
+    calc
+      (2 : ℝ) ≤ b := hbR
+      _ = (b : ℝ) ^ 1 := by ring
+      _ ≤ (b : ℝ) ^ p.val := pow_le_pow_right₀ hb1.le (by omega)
+  have hden : 0 < (b : ℝ) ^ p.val - 1 := by linarith
+  have hbpowpos : (0 : ℝ) < (b : ℝ) ^ p.val := by positivity
+  calc
+    1 / ((b : ℝ) ^ p.val - 1) ≤ 2 / (b : ℝ) ^ p.val := by
+      rw [div_le_div_iff₀ hden hbpowpos]
+      nlinarith
+    _ = 2 * (1 / (b : ℝ)) ^ p.val := by
+      rw [div_pow]
+      simp only [one_pow]
+      ring
+
+/-- The selected Lambert series is absolutely summable at every sample point. -/
+theorem summable_randomLambert_terms (b : ℕ) (hb : 2 ≤ b)
+    {Ω : Type*} (X : Prime → Ω → Bool) (w : Ω) :
+    Summable (fun p : Prime =>
+      (if X p w then (1 : ℝ) else 0) / ((b : ℝ) ^ p.val - 1)) := by
+  apply (summable_lambert_denom b hb).of_norm_bounded
+  intro p
+  have hbR : (1 : ℝ) < b := by exact_mod_cast (lt_of_lt_of_le (by norm_num) hb)
+  have hden : 0 < (b : ℝ) ^ p.val - 1 :=
+    sub_pos.mpr (one_lt_pow₀ hbR p.property.pos.ne')
+  split_ifs <;> simp only [norm_div, Real.norm_eq_abs, abs_one, abs_zero, zero_div]
+  · rw [abs_of_pos hden]
+  · exact div_nonneg (by norm_num) hden.le
+
+/-- The random Lambert series is measurable when its Bernoulli coordinates are measurable. -/
+theorem measurable_randomLambert (b : ℕ) {Ω : Type*} [MeasurableSpace Ω]
+    (X : Prime → Ω → Bool) (hX : ∀ p, Measurable (X p)) :
+    Measurable (randomLambert b X) := by
+  unfold randomLambert
+  exact Measurable.tsum fun p => by
+    have hm : Measurable (fun w => if X p w then (1 : ℝ) else 0) :=
+      (measurable_of_finite (f := fun z : Bool => if z then (1 : ℝ) else 0)).comp (hX p)
+    exact hm.div_const _
+
+/-- The characteristic function of one Bernoulli coordinate. -/
+theorem integral_ePh_bernoulli {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) [IsProbabilityMeasure μ] (delta : Prime → ℝ)
+    (X : Prime → Ω → Bool) (hX : BernoulliLaw μ delta X) (p : Prime) (θ : ℝ) :
+    (∫ w, ePh (if X p w then θ else 0) ∂μ) =
+      ((1 - delta p : ℝ) : ℂ) + (delta p : ℂ) * ePh θ := by
+  let A : Set Ω := {w | X p w = true}
+  have hA : MeasurableSet A := (hX.2.1 p) (measurableSet_singleton true)
+  have hdelta0 : 0 ≤ delta p := (hX.1 p).1
+  have hreal : μ.real A = delta p := by
+    rw [measureReal_def, hX.2.2.2 p, ENNReal.toReal_ofReal hdelta0]
+  have hfun : (fun w => ePh (if X p w then θ else 0)) =
+      fun w => A.indicator (fun _ => ePh θ - 1) w + 1 := by
+    funext w
+    by_cases hw : X p w = true
+    · simp [A, hw]
+    · have hw' : X p w = false := Bool.eq_false_of_not_eq_true hw
+      simp [A, hw, hw', ePh]
+  rw [hfun, integral_add]
+  · rw [integral_indicator_const _ hA, integral_const, hreal]
+    have huniv : μ.real Set.univ = 1 := by simp [measureReal_def]
+    rw [huniv]
+    simp only [one_smul]
+    push_cast
+    rw [Complex.real_smul]
+    ring
+  · exact (integrable_const _).indicator hA
+  · exact integrable_const _
+
+/-- Independence factorizes the characteristic function of every finite prime truncation. -/
+theorem integral_ePh_finset_sum {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) [IsProbabilityMeasure μ] (b : ℕ)
+    (delta : Prime → ℝ) (X : Prime → Ω → Bool) (hX : BernoulliLaw μ delta X)
+    (G : Finset Prime) (a : ℝ) :
+    (∫ w, ePh (a * ∑ p ∈ G,
+        (if X p w then (1 : ℝ) else 0) / ((b : ℝ) ^ p.val - 1)) ∂μ) =
+      ∏ p ∈ G, (((1 - delta p : ℝ) : ℂ) +
+        (delta p : ℂ) * ePh (a / ((b : ℝ) ^ p.val - 1))) := by
+  classical
+  let Y : G → Ω → ℂ := fun p w =>
+    ePh (if X p.1 w then a / ((b : ℝ) ^ p.1.val - 1) else 0)
+  have hI : iIndepFun (fun p : G => X p.1) μ :=
+    iIndepFun.precomp Subtype.val_injective hX.2.2.1
+  have hprod := hI.integral_fun_prod_comp
+    (fun p => (hX.2.1 p.1).aemeasurable)
+    (fun p => (measurable_of_finite (f := fun z : Bool =>
+      ePh (if z then a / ((b : ℝ) ^ p.1.val - 1) else 0))).aestronglyMeasurable)
+  have hpoint (w : Ω) :
+      ePh (a * ∑ p ∈ G,
+          (if X p w then (1 : ℝ) else 0) / ((b : ℝ) ^ p.val - 1)) =
+        ∏ p : G, Y p w := by
+    rw [Finset.mul_sum]
+    rw [show (∑ p ∈ G, a * ((if X p w then (1 : ℝ) else 0) /
+        ((b : ℝ) ^ p.val - 1))) =
+        ∑ p : G, (if X p.1 w then a / ((b : ℝ) ^ p.1.val - 1) else 0) by
+      calc
+        _ = ∑ p : G, a * ((if X p.1 w then (1 : ℝ) else 0) /
+            ((b : ℝ) ^ p.1.val - 1)) :=
+          Finset.sum_subtype G (p := fun p : Prime => p ∈ G) (by simp) _
+        _ = _ := by
+          apply Finset.sum_congr rfl
+          intro p hp
+          split_ifs <;> ring]
+    unfold ePh Y
+    push_cast
+    rw [Finset.mul_sum, Complex.exp_sum]
+    rfl
+  rw [show (∫ w, ePh (a * ∑ p ∈ G,
+      (if X p w then (1 : ℝ) else 0) / ((b : ℝ) ^ p.val - 1)) ∂μ) =
+      ∫ w, ∏ p : G, Y p w ∂μ by
+        apply integral_congr_ae
+        exact Filter.Eventually.of_forall hpoint]
+  rw [hprod]
+  calc
+    (∏ p : G, ∫ w, Y p w ∂μ) =
+        ∏ p ∈ G, ∫ w, ePh (if X p w then a / ((b : ℝ) ^ p.val - 1) else 0) ∂μ := by
+      rw [Finset.prod_subtype G (p := fun p : Prime => p ∈ G) (by simp)]
+    _ = _ := by
+      apply Finset.prod_congr rfl
+      intro p hp
+      exact integral_ePh_bernoulli μ delta X hX p _
+
+/-- Moduli of the finite characteristic factors are exactly `bernMod`. -/
+theorem norm_integral_ePh_finset_sum {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) [IsProbabilityMeasure μ] (b : ℕ)
+    (delta : Prime → ℝ) (X : Prime → Ω → Bool) (hX : BernoulliLaw μ delta X)
+    (G : Finset Prime) (a : ℝ) :
+    ‖∫ w, ePh (a * ∑ p ∈ G,
+        (if X p w then (1 : ℝ) else 0) / ((b : ℝ) ^ p.val - 1)) ∂μ‖ =
+      ∏ p ∈ G, bernMod (delta p) (a / ((b : ℝ) ^ p.val - 1)) := by
+  rw [integral_ePh_finset_sum μ b delta X hX G a, norm_prod]
+  simp only [bernMod]
+
+/-- The finite set of primes with value below `M`. -/
+noncomputable def primesBelow (M : ℕ) : Finset Prime :=
+  Finset.map ⟨fun p : {p // p ∈ (Finset.range M).filter Nat.Prime} =>
+      (⟨p.1, (Finset.mem_filter.mp p.2).2⟩ : Prime), by
+        intro x y h
+        apply Subtype.ext
+        exact congrArg (fun z : Prime => z.val) h⟩ Finset.univ
+
+@[simp] theorem mem_primesBelow {M : ℕ} {p : Prime} :
+    p ∈ primesBelow M ↔ p.val < M := by
+  classical
+  simp only [primesBelow, Finset.mem_map, Finset.mem_univ, true_and]
+  constructor
+  · rintro ⟨q, hq⟩
+    have hv := congrArg (fun z : Prime => z.val) hq
+    have hlt : q.val < M := Finset.mem_range.mp (Finset.mem_filter.mp q.2).1
+    exact hv.symm ▸ hlt
+  · intro hp
+    let q : {p // p ∈ (Finset.range M).filter Nat.Prime} :=
+      ⟨p.val, Finset.mem_filter.mpr ⟨Finset.mem_range.mpr hp, p.property⟩⟩
+    refine ⟨q, ?_⟩
+    exact Subtype.ext rfl
+
+/-- Prime-value cutoffs converge to the full random Lambert series. -/
+theorem tendsto_sum_primesBelow (b : ℕ) (hb : 2 ≤ b)
+    {Ω : Type*} (X : Prime → Ω → Bool) (w : Ω) :
+    Tendsto (fun M => ∑ p ∈ primesBelow M,
+      (if X p w then (1 : ℝ) else 0) / ((b : ℝ) ^ p.val - 1)) atTop
+      (𝓝 (randomLambert b X w)) := by
+  have hs := (summable_randomLambert_terms b hb X w).hasSum
+  have hcof : Tendsto primesBelow atTop (atTop : Filter (Finset Prime)) := by
+    rw [tendsto_atTop_atTop]
+    intro G
+    refine ⟨(G.sup fun p => p.val) + 1, fun M hM => ?_⟩
+    intro p hp
+    rw [mem_primesBelow]
+    have hle : p.val ≤ G.sup fun q => q.val := Finset.le_sup hp
+    omega
+  change Tendsto ((fun G : Finset Prime => ∑ p ∈ G,
+    (if X p w then (1 : ℝ) else 0) / ((b : ℝ) ^ p.val - 1)) ∘ primesBelow)
+      atTop (𝓝 (∑' p : Prime,
+        (if X p w then (1 : ℝ) else 0) / ((b : ℝ) ^ p.val - 1)))
+  exact hs.comp hcof
+
+theorem continuous_ePh : Continuous ePh := by
+  unfold ePh
+  fun_prop
+
+theorem measurable_lambert_finset_sum (b : ℕ) {Ω : Type*} [MeasurableSpace Ω]
+    (X : Prime → Ω → Bool) (hX : ∀ p, Measurable (X p)) (G : Finset Prime) :
+    Measurable (fun w => ∑ p ∈ G,
+      (if X p w then (1 : ℝ) else 0) / ((b : ℝ) ^ p.val - 1)) := by
+  apply Finset.measurable_sum
+  intro p hp
+  have hm : Measurable (fun w => if X p w then (1 : ℝ) else 0) :=
+    (measurable_of_finite (f := fun z : Bool => if z then (1 : ℝ) else 0)).comp (hX p)
+  exact hm.div_const _
+
+/-- The full infinite characteristic function is bounded by the product over any prescribed
+finite collection of Bernoulli prime coordinates. -/
+theorem norm_integral_ePh_randomLambert_le {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) [IsProbabilityMeasure μ] (b : ℕ) (hb : 2 ≤ b)
+    (delta : Prime → ℝ) (X : Prime → Ω → Bool) (hX : BernoulliLaw μ delta X)
+    (F : Finset Prime) (a : ℝ) :
+    ‖∫ w, ePh (a * randomLambert b X w) ∂μ‖ ≤
+      ∏ p ∈ F, bernMod (delta p) (a / ((b : ℝ) ^ p.val - 1)) := by
+  let Z : ℕ → Ω → ℂ := fun M w => ePh (a * ∑ p ∈ primesBelow M,
+    (if X p w then (1 : ℝ) else 0) / ((b : ℝ) ^ p.val - 1))
+  have hZm : ∀ M, AEStronglyMeasurable (Z M) μ := by
+    intro M
+    exact (continuous_ePh.measurable.comp
+      (measurable_const.mul (measurable_lambert_finset_sum b X hX.2.1 _))).aestronglyMeasurable
+  have hbound : ∀ M, ∀ᵐ w ∂μ, ‖Z M w‖ ≤ (1 : ℝ) := by
+    intro M
+    exact Filter.Eventually.of_forall fun w => (norm_ePh _).le
+  have hlim : ∀ᵐ w ∂μ, Tendsto (fun M => Z M w) atTop
+      (𝓝 (ePh (a * randomLambert b X w))) := by
+    apply Filter.Eventually.of_forall
+    intro w
+    exact continuous_ePh.continuousAt.tendsto.comp
+      (tendsto_const_nhds.mul (tendsto_sum_primesBelow b hb X w))
+  have hint := tendsto_integral_of_dominated_convergence (μ := μ) (fun _ => (1 : ℝ))
+    hZm (integrable_const 1) hbound hlim
+  have hnorm : Tendsto (fun M => ‖∫ w, Z M w ∂μ‖) atTop
+      (𝓝 ‖∫ w, ePh (a * randomLambert b X w) ∂μ‖) :=
+    (continuous_norm.tendsto _).comp hint
+  apply le_of_tendsto hnorm
+  have hcof : ∀ᶠ M in atTop, F ⊆ primesBelow M := by
+    filter_upwards [eventually_ge_atTop ((F.sup fun p => p.val) + 1)] with M hM
+    intro p hp
+    rw [mem_primesBelow]
+    have hle : p.val ≤ F.sup fun q => q.val := Finset.le_sup hp
+    omega
+  filter_upwards [hcof] with M hFM
+  rw [norm_integral_ePh_finset_sum μ b delta X hX (primesBelow M) a]
+  apply Finset.prod_le_prod_of_subset_of_le_one hFM
+  · intro p hp
+    exact bernMod_nonneg _ _
+  · intro p hp hpF
+    exact bernMod_le_one (hX.1 p).1 (hX.1 p).2 _
 
 theorem moment_le_tupleAvg (b : ℕ) (hb : 2 ≤ b) (h : ℤ)
     {Ω : Type} [MeasurableSpace Ω] (μ : Measure Ω) [IsProbabilityMeasure μ]

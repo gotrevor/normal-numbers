@@ -77,6 +77,40 @@ Make `src/NormalNumbers/CoefmassRandomLambertMoment.lean` sorry-free, then check
 
 ## Status
 
+- Lap 7 checkpoint (`research/lambert-moment`): proved the full infinite-series characteristic
+  bound `norm_integral_ePh_randomLambert_le`, discharging the probability-theoretic independence
+  and limit passage at the heart of `moment_le_tupleAvg`.  The new chain proves geometric absolute
+  summability and measurability of `randomLambert`, computes one Bernoulli characteristic factor,
+  factorizes every finite prime truncation using `iIndepFun.integral_fun_prod_comp`, constructs
+  cofinal value cutoffs `primesBelow`, and passes their integrals to the full series by dominated
+  convergence.  Since every omitted Bernoulli modulus lies in `[0,1]`, the full characteristic
+  function is bounded by the product over any prescribed finite `F`.  The two original
+  declarations remain open; no frozen statement or definition changed.
+- Exact verification run:
+  - `lake env lean src/NormalNumbers/CoefmassRandomLambertMoment.lean` (green; only the two
+    remaining disclosed `sorry` warnings).
+  - `lake build NormalNumbers.CoefmassRandomLambertMoment` (green, 8716 jobs).
+  - `lake env lean AuditRandomLambertMomentLap7.lean` with `#print axioms` for
+    `summable_lambert_denom`, `measurable_randomLambert`, `integral_ePh_bernoulli`,
+    `integral_ePh_finset_sum`, `tendsto_sum_primesBelow`, and
+    `norm_integral_ePh_randomLambert_le` (temporary audit file; each exactly `[propext,
+    Classical.choice, Quot.sound]`).
+  - `python3 experiments/random_lambert_moment_controls.py` (all positive controls within
+    tolerance; both deliberately false red controls fail as expected).
+  - `~/personal/bin/lean-green ~/src/nn-lambert-moment --target NormalNumbers.CoefmassRandomLambertMoment`
+    (`✅ FORMALIZE-TIER GREEN`, 8716 jobs).
+- Current blocker: `moment_le_tupleAvg` now only needs the finite algebraic expansion of
+  `‖weylMean‖^(2k)`, interchange of its finite tuple sum with the integral, and application of the
+  proved full-series characteristic bound to each tuple.  The infinite complement and its
+  independence no longer appear in the remaining proof.  Final CRT/prefix assembly remains after
+  this theorem.
+- Next highest-value attack: prove a generic even-moment expansion for a finite complex average
+  using `Fintype.sum_pow`, identify the first `k` factors with `ePh` and the last `k` conjugate
+  factors via `ePh_neg`, discard the translate's unit phase, and apply
+  `norm_integral_ePh_randomLambert_le` with coefficient
+  `s * h * Σ_i tupleSign(k,i) * b^(n_i)`.  Its per-prime argument simplifies to
+  `± tuplePhase`, whose `bernMod` is sign-invariant.
+
 - Lap 6 checkpoint (`research/lambert-moment`): proved `residueTuple_mean_le`, closing the entire
   finite local analytic layer.  Two reusable real inequalities now absorb the Cauchy--Schwarz
   square root into `exp (-x)` and lower-bound `1 - exp (-c t)` by its chord on `[0,1]` and its
