@@ -4050,3 +4050,8 @@ Next: `isFresh` Riesz bound, then the classification lemma in Lean (route-decisi
 - Slice A (NC=500 SLICE=15 = 3%, 15 threads, no cap): RSS 10.0 GB at 2:50, 10.7 GB at ~3.5 min, ZERO chunks done;
   killed by hand.  Culprit confirmed: per-thread T5 memo trees (~1.7 KB/node, ~400k nodes/thread), not the records.
 - Slice B (same, NODECAP=150000): RSS steady 2.8-4.1 GB (watchdog `tmp/watch_rss.sh`, 5 s samples).  Timing: pending.
+- Slice B finished 6/15 chunks (~1000-1080 s each) then hit 11.5 GB (watchdog kill): between-item pruning is not
+  enough, the trees grow inside one q3 item.  Fix: budget check after EVERY pair evaluation (prune that q5 tree, then
+  the base-3 tree, to roots; memo only) + over-budget prune keeps PKEEP=4 levels first.
+- Slice C (NODECAP=100000): 15/15 chunks, 2045 s wall, **VmHWM 2436 MB**, failing pairs 522,770 (3% of pass 0),
+  9.82e9 pair evals.  Projection: ~16-19 h per pass, peak ~2.5 GB.  Slice D (NODECAP=300000) measuring speed/memory.

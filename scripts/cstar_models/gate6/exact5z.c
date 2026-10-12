@@ -164,7 +164,7 @@ typedef struct { long q3, q5; ll v, tgt; } Rec;   // failing pair: lower bound v
 typedef struct { long lo, hi, fail, pairs; double worst; Rec *rec; long nrec, cap; } Job;
 // in-pass chunks: chunk k = { q3 : q3 % NC == k } (interleaved, so any prefix of chunks samples every state).
 typedef struct { int done; long fail, pairs; double worst; Rec *rec; long nrec; } Chunk;
-static int NC = 100, NCRUN; static Chunk *CH; static long NEXTC, NDONE; static char PASSDIR[1024]; static double T0; static long NODECAP;
+static int NC = 100, NCRUN; static Chunk *CH; static long NEXTC, NDONE; static char PASSDIR[1024]; static double T0; static long NODECAP; static int PKEEP;
 double now(void);
 static long vmkb(const char *key) { FILE *f = fopen("/proc/self/status", "r"); char line[256]; long v = -1; int L = 0; while (key[L]) L++;
   while (f && fgets(line, 256, f)) { int m = 1; for (int i = 0; i < L; i++) if (line[i] != key[i]) { m = 0; break; } if (m) { sscanf(line + L, "%ld", &v); break; } }
@@ -213,6 +213,7 @@ static void *worker(void *pp) {
         v = vcache[rr];
         if ((Z)DEN * v < (Z)NUM * target) v = pairv(s, a, T5[rq], target, 0); }
       else v = pairv(s, a, T5[q5], target, 0);
+      if (nnodes > NODECAP) { prune(T5[rq], 0); if (nnodes > NODECAP) prune(a, 0); }   // in-item budget (memo only)
       double r = (double)v * DEN / NUM / (double)target; if (r < j->worst) j->worst = r;
       if ((Z)DEN * v < (Z)NUM * target) { j->fail++;
         if (CHECK) { if (j->fail < 5) printf("FAIL pair q3 %ld q5 %ld ratio %.6f\n", q3, q5, r); }
@@ -220,7 +221,9 @@ static void *worker(void *pp) {
           Rec R = { q3, q5, (ll)(v * DEN / NUM), (ll)target }; j->rec[j->nrec++] = R; } } }
     freeTree(a);
     if (++nq % 4 == 0) for (long q5 = 0; q5 < S * NB5; q5++) prune(T5[q5], 8);
-    if (nnodes > NODECAP) for (long q5 = 0; q5 < S * NB5; q5++) prune(T5[q5], 0);   // pruning only drops memoized refinements
+    // over budget: drop deep memoized refinements first (PKEEP levels kept), roots only if still over (results unchanged)
+    if (nnodes > NODECAP) for (long q5 = 0; q5 < S * NB5; q5++) prune(T5[q5], PKEEP);
+    if (nnodes > NODECAP * 3 / 4) for (long q5 = 0; q5 < S * NB5; q5++) prune(T5[q5], 0);
    }
    C->fail = j->fail; C->pairs = pairs; C->worst = j->worst; C->rec = j->rec; C->nrec = j->nrec; if (PASSDIR[0]) chunkSave((int)k);
    long nd = __sync_add_and_fetch(&NDONE, 1);
@@ -304,7 +307,7 @@ int main(int argc, char **argv) {
     for (long q = 0; q < S * NB5; q++) if (EXN[q]) qsort(EX[q], EXN[q], sizeof(Ex), cmpex); }
   CKPT = getenv("CKPT"); int it0 = 0;
   if (getenv("NC")) NC = atoi(getenv("NC"));
-  NCRUN = getenv("SLICE") ? atoi(getenv("SLICE")) : NC; NODECAP = getenv("NODECAP") ? atol(getenv("NODECAP")) : 200000;
+  NCRUN = getenv("SLICE") ? atoi(getenv("SLICE")) : NC; NODECAP = getenv("NODECAP") ? atol(getenv("NODECAP")) : 200000; PKEEP = getenv("PKEEP") ? atoi(getenv("PKEEP")) : 4;
   if (getenv("RESUME") && !CHECK) { char *R = getenv("RESUME"), nm[1024], line[128]; FILE *f; int last = -1;
     snprintf(nm, 1024, "%s/latest", R); f = fopen(nm, "r"); if (!f || !fgets(line, 128, f)) { printf("RESUME: no completed pass, resuming pass 0 chunks\n"); if (!CKPT) CKPT = R; goto noresume; } fclose(f); last = atoi(line);
     snprintf(nm, 1024, "%s/phi.%d.txt", R, last); f = fopen(nm, "r"); long q = 0; while (q < S * NB5 && fgets(line, 64, f)) PHI[q++] = strtoll(line, 0, 10); fclose(f);
