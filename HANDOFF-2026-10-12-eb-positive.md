@@ -68,17 +68,17 @@ Expect step 4 to be the longest.  Splitting it into named leaves is progress.
 
 ## Status
 
-- Lap 7 deterministic-contraction checkpoint (`research/eb-positive`): the scoped file still has
-  exactly two frozen proof debts.  `spectralConst_pos` proves the fixed cosine gap is positive.
-  The new load-bearing theorem `tupleGoodModuli_bernMod_product_le` completes the bridge requested
-  by lap 6: it injectively reindexes every actual good modulus by `p ↦ p - 1`, proves
-  `(p - 1) + 1 = p` from `p > P₀ ≥ 1`, applies `tupleGoodModuli_cos_le` and
-  `prod_bernMod_le_exp_neg_spectral`, and inserts `retained_variance_mass_le` with the correct
-  inequality direction.  Thus the exact zero-based product accepted by `ebMoment_le_tupleAvg` is
-  bounded by the exponential of
-  `-spectralConst b * c(log(n_i+a₀))^(-a) (2^ω(n_i+a₀)-P₀-#bad)`.
-  No frozen statement or copied definition changed.
-- Exact verification run (lap 7):
+- Lap 8 collision-moment checkpoint (`research/eb-positive`): the scoped file still has exactly
+  two frozen proof debts.  The new load-bearing theorem `tupleBadModuli_moment` proves that, for
+  every fixed positive `R` and anchor coordinate `i`, the `R`-th power of the tuple collision loss
+  sums to `O(N^(2k))` over all zero-based `2k`-tuples.  The proof chain is fully exposed:
+  `piSplitTwoEquiv` and `sum_pair_over_pi` factor out the `2k-2` inactive coordinates;
+  `shifted_gcd_divisor_moment_fin` ports the earlier one-based shifted-gcd theorem to `Fin N`;
+  `shifted_gcd_divisor_moment_over_tuples` supplies each `(j,r)` summand; and
+  `card_tupleBadModuli_pow_le` applies Jensen twice to the finite collision pool before the final
+  sum.  This discharges the high-moment/Markov input requested by lap 7.  No frozen statement or
+  copied definition changed.
+- Exact verification run (lap 8):
   - Shared-store check: `/Users/gotrevor/personal/bin/lake-base status
     leanprover/lean4:v4.33.1` and `/Users/gotrevor/personal/bin/lake-base status v4.33.1` both
     reported that no shared store exists; no relink is available.
@@ -88,25 +88,24 @@ Expect step 4 to be the longest.  Splitting it into named leaves is progress.
   - `/Users/gotrevor/personal/bin/lean-green /Users/gotrevor/src/nn-eb-positive --target
     NormalNumbers.CoefmassErdosBorweinPositive --import
     NormalNumbers.CoefmassErdosBorweinPositive --axioms
-    NormalNumbers.ErdosBorweinPositive.tupleGoodModuli_bernMod_product_le`
+    NormalNumbers.ErdosBorweinPositive.tupleBadModuli_moment`
     (`FORMALIZE-TIER GREEN`, 8719 jobs; theorem axioms exactly `propext`, `Classical.choice`, and
     `Quot.sound`).
-- Previous checkpoints: lap 6 proved the complete one-anchor retained-variance mass lower bound;
-  lap 5 proved the full-tuple good-modulus cosine gap; lap 4 built the collision-modulus and
-  spectral-product bridges; lap 3 proved `shifted_gcd_divisor_moment`; lap 2 proved its complete
-  finite shifted-gcd reduction; lap 1 proved `ebMoment_le_tupleAvg`, closing the infinite
-  random-series side.
+- Previous checkpoints: lap 7 proved the exact deterministic tuple-product contraction; lap 6
+  proved the complete one-anchor retained-variance mass lower bound; lap 5 proved the full-tuple
+  good-modulus cosine gap; lap 4 built the collision-modulus and spectral-product bridges; lap 3
+  proved `shifted_gcd_divisor_moment`; lap 2 proved its complete finite shifted-gcd reduction; lap
+  1 proved `ebMoment_le_tupleAvg`, closing the infinite random-series side.
 - Current blocker: `eb_weyl_moment_decay`.  The phase geometry and one-anchor retained mass are
-  now closed through the deterministic tuple-product contraction.  Its remaining content is the
-  tuple exceptional-set average combining Hardy--Ramanujan with high moments of the shifted-gcd
-  collision loss.  The final Borel--Cantelli/interpolation theorem remains downstream.
-- Next highest-value attack: prove the high-moment tuple collision estimate needed for Markov.
-  Raise `card_tupleBadModuli_le` to a fixed positive power `R`, dominate the power of its finite
-  `(j,r)` sum by a constant times the sum of the `R`-th powers, and sum over all tuples.  The two
-  active coordinates are controlled by `shifted_gcd_divisor_moment`; the other `2k-2` coordinates
-  contribute only powers of `N`.  Then combine that estimate with `hHR` to split the tuple average
-  into the all-poor anchor event, the large-collision event, and the exponentially contracted
-  complement.
+  now closed through deterministic tuple-product contraction and the required arbitrary collision
+  moments.  Its remaining content is the Hardy--Ramanujan parameter choice and exceptional-set
+  decomposition.  The final Borel--Cantelli/interpolation theorem remains downstream.
+- Next highest-value attack: port `hHR` to the shifted zero-based anchor count
+  `n ↦ n + (e+1)`, with a harmless enlarged endpoint and finite boundary term, then formalize the
+  split of the tuple average into (i) all coordinates poor in prime-factor mass, (ii) some rich
+  anchor with collision loss above `(log N)^η`, controlled by `tupleBadModuli_moment`, and (iii)
+  the exponentially contracted complement, controlled by `tupleGoodModuli_bernMod_product_le`.
+  After choosing `α,q,k,η,R`, this should close `eb_weyl_moment_decay`.
 
 ## Findings
 

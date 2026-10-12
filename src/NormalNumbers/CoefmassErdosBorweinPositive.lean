@@ -759,6 +759,272 @@ theorem card_tupleBadModuli_le (a₀ K P₀ k : ℕ) (n : Fin (2 * k) → ℕ)
       intro j hj
       exact Finset.card_biUnion_le
 
+/-! ### High moments of the tuple collision loss -/
+
+/-- Split a function at two distinct coordinates, retaining all remaining coordinates as a
+separate function. -/
+def piSplitTwoEquiv {ι β : Type*} [Fintype ι] [DecidableEq ι]
+    (i j : ι) (hij : i ≠ j) :
+    (ι → β) ≃ (β × β) × ({l : ι // l ≠ i ∧ l ≠ j} → β) where
+  toFun n := ((n i, n j), fun l => n l)
+  invFun z l := if hli : l = i then z.1.1 else if hlj : l = j then z.1.2
+    else z.2 ⟨l, hli, hlj⟩
+  left_inv n := by
+    funext l
+    by_cases hli : l = i
+    · subst l
+      simp
+    · by_cases hlj : l = j
+      · subst l
+        simp [hli]
+      · simp [hli, hlj]
+  right_inv z := by
+    rcases z with ⟨⟨x, y⟩, r⟩
+    apply Prod.ext
+    · apply Prod.ext <;> simp [Ne.symm hij]
+    · funext l
+      simp [l.2.1, l.2.2]
+
+/-- Removing two distinct coordinates reduces the cardinality by two. -/
+theorem card_piSplitTwo_remainder {ι : Type*} [Fintype ι] [DecidableEq ι]
+    (i j : ι) (hij : i ≠ j) :
+    Fintype.card {l : ι // l ≠ i ∧ l ≠ j} = Fintype.card ι - 2 := by
+  let e : {l : ι // l ≠ i ∧ l ≠ j} ≃ {l : ι // ¬ (l = i ∨ l = j)} :=
+    Equiv.subtypeEquivRight (fun l => not_or.symm)
+  calc
+    Fintype.card {l : ι // l ≠ i ∧ l ≠ j} =
+        Fintype.card {l : ι // ¬ (l = i ∨ l = j)} := Fintype.card_congr e
+    _ = Fintype.card ι - Fintype.card {l : ι // l = i ∨ l = j} :=
+      Fintype.card_subtype_compl (fun l : ι => l = i ∨ l = j)
+    _ = Fintype.card ι - 2 := by rw [Fintype.card_subtype_eq_or_eq_of_ne hij]
+
+/-- A sum over all functions whose summand sees only two distinct coordinates factors as the
+two-coordinate sum times the number of assignments to the remaining coordinates. -/
+theorem sum_pair_over_pi {ι β : Type*} [Fintype ι] [DecidableEq ι] [Fintype β]
+    (i j : ι) (hij : i ≠ j) (f : β → β → ℝ) :
+    (∑ n : ι → β, f (n i) (n j)) =
+      (Fintype.card β : ℝ) ^ (Fintype.card ι - 2) * ∑ x : β, ∑ y : β, f x y := by
+  let e := piSplitTwoEquiv (β := β) i j hij
+  rw [Fintype.sum_equiv e (fun n => f (n i) (n j))
+    (fun z => f z.1.1 z.1.2) (fun n => rfl)]
+  rw [Fintype.sum_prod_type]
+  have hcard : Fintype.card ({l : ι // l ≠ i ∧ l ≠ j} → β) =
+      Fintype.card β ^ (Fintype.card ι - 2) := by
+    rw [Fintype.card_fun, card_piSplitTwo_remainder i j hij]
+  simp_rw [Fintype.sum_prod_type, Finset.sum_const, nsmul_eq_mul]
+  rw [show (Finset.univ : Finset ({l : ι // l ≠ i ∧ l ≠ j} → β)).card =
+      Fintype.card β ^ (Fintype.card ι - 2) by simpa using hcard]
+  push_cast
+  rw [Finset.mul_sum]
+  apply Finset.sum_congr rfl
+  intro x hx
+  rw [Finset.mul_sum]
+
+/-- The shifted-gcd moment bound in the zero-based `Fin N` coordinates used by the Weyl tuple
+expansion. -/
+theorem shifted_gcd_divisor_moment_fin (u v r : ℕ) (hu : 1 ≤ u) (hv : 1 ≤ v)
+    (hr : 1 ≤ r) :
+    ∃ C : ℝ, 0 < C ∧ ∀ N : ℕ, 1 ≤ N →
+      (∑ x : Fin N, ∑ y : Fin N,
+        (((Nat.gcd (x.val + u) (y.val + v)).divisors.card : ℝ) ^ r)) ≤
+          C * (N : ℝ)^2 := by
+  obtain ⟨C, hC, hbound⟩ := shifted_gcd_divisor_moment (u - 1) (v - 1) r hr
+  refine ⟨C, hC, fun N hN => ?_⟩
+  have hIcc : Finset.Icc 1 N = Finset.Ico 1 (N + 1) := by
+    ext x
+    simp only [Finset.mem_Icc, Finset.mem_Ico]
+    omega
+  have hrewrite (x y : ℕ) :
+      Nat.gcd (x + u) (y + v) = Nat.gcd (1 + x + (u - 1)) (1 + y + (v - 1)) := by
+    congr 1 <;> omega
+  calc
+    (∑ x : Fin N, ∑ y : Fin N,
+        (((Nat.gcd (x.val + u) (y.val + v)).divisors.card : ℝ) ^ r)) =
+        ∑ x ∈ Finset.range N, ∑ y ∈ Finset.range N,
+          (((Nat.gcd (x + u) (y + v)).divisors.card : ℝ) ^ r) := by
+      rw [Fin.sum_univ_eq_sum_range (fun x => ∑ y : Fin N,
+        (((Nat.gcd (x + u) (y.val + v)).divisors.card : ℝ) ^ r)) N]
+      apply Finset.sum_congr rfl
+      intro x hx
+      rw [Fin.sum_univ_eq_sum_range (fun y =>
+        (((Nat.gcd (x + u) (y + v)).divisors.card : ℝ) ^ r)) N]
+    _ = ∑ x ∈ Finset.Icc 1 N, ∑ y ∈ Finset.Icc 1 N,
+          (((Nat.gcd (x + (u - 1)) (y + (v - 1))).divisors.card : ℝ) ^ r) := by
+      rw [hIcc, Finset.sum_Ico_eq_sum_range]
+      simp only [Nat.add_sub_cancel]
+      apply Finset.sum_congr rfl
+      intro x hx
+      rw [Finset.sum_Ico_eq_sum_range]
+      simp only [Nat.add_sub_cancel]
+      apply Finset.sum_congr rfl
+      intro y hy
+      rw [hrewrite]
+    _ ≤ C * (N : ℝ)^2 := hbound N hN
+
+/-- A shifted-gcd summand depending on two tuple coordinates has total mass `O(N^(2k))` over
+all `2k`-tuples. -/
+theorem shifted_gcd_divisor_moment_over_tuples (a₀ v R k : ℕ) (hk : 1 ≤ k)
+    (ha₀ : 1 ≤ a₀) (hv : 1 ≤ v) (hR : 1 ≤ R)
+    (i j : Fin (2 * k)) (hij : i ≠ j) :
+    ∃ C : ℝ, 0 < C ∧ ∀ N : ℕ, 1 ≤ N →
+      (∑ n : Fin (2 * k) → Fin N,
+        (((Nat.gcd (n i + a₀) (n j + v)).divisors.card : ℝ) ^ R)) ≤
+          C * (N : ℝ) ^ (2 * k) := by
+  obtain ⟨C, hC, hpair⟩ := shifted_gcd_divisor_moment_fin a₀ v R ha₀ hv hR
+  refine ⟨C, hC, fun N hN => ?_⟩
+  rw [sum_pair_over_pi i j hij (fun x y : Fin N =>
+    (((Nat.gcd (x.val + a₀) (y.val + v)).divisors.card : ℝ) ^ R))]
+  calc
+    (Fintype.card (Fin N) : ℝ) ^ (Fintype.card (Fin (2 * k)) - 2) *
+        (∑ x : Fin N, ∑ y : Fin N,
+          (((Nat.gcd (x.val + a₀) (y.val + v)).divisors.card : ℝ) ^ R)) ≤
+        (N : ℝ) ^ (2 * k - 2) * (C * (N : ℝ) ^ 2) := by
+      simp only [Fintype.card_fin]
+      gcongr
+      exact hpair N hN
+    _ = C * (N : ℝ) ^ (2 * k) := by
+      calc
+        (N : ℝ) ^ (2 * k - 2) * (C * (N : ℝ) ^ 2) =
+            C * ((N : ℝ) ^ (2 * k - 2) * (N : ℝ) ^ 2) := by ring
+        _ = C * (N : ℝ) ^ (2 * k) := by
+          rw [← pow_add, Nat.sub_add_cancel (by omega : 2 ≤ 2 * k)]
+
+/-- Jensen's inequality converts the collision pool bound into a pointwise bound for every
+positive integral moment of its cardinality. -/
+theorem card_tupleBadModuli_pow_le (a₀ K P₀ k R : ℕ)
+    (n : Fin (2 * k) → ℕ) (i : Fin (2 * k))
+    (ha₀ : 1 ≤ a₀) (hKP : K ≤ P₀) (hR : 1 ≤ R) :
+    (((tupleBadModuli a₀ K P₀ k n i).card : ℝ) ^ R) ≤
+      (((Finset.univ.erase i).card : ℝ) ^ (R - 1)) *
+      (((Finset.Icc 1 K).card : ℝ) ^ (R - 1)) *
+      (∑ j ∈ Finset.univ.erase i, ∑ r ∈ Finset.Icc 1 K,
+        (((Nat.gcd (n i + a₀) (n j + r)).divisors.card : ℝ) ^ R)) := by
+  have hcard := card_tupleBadModuli_le a₀ K P₀ k n i ha₀ hKP
+  have hcardR : ((tupleBadModuli a₀ K P₀ k n i).card : ℝ) ≤
+      ∑ j ∈ Finset.univ.erase i, ∑ r ∈ Finset.Icc 1 K,
+        ((Nat.gcd (n i + a₀) (n j + r)).divisors.card : ℝ) := by
+    exact_mod_cast hcard
+  have hpow := pow_le_pow_left₀ (by positivity : (0 : ℝ) ≤
+      ((tupleBadModuli a₀ K P₀ k n i).card : ℝ)) hcardR R
+  calc
+    (((tupleBadModuli a₀ K P₀ k n i).card : ℝ) ^ R) ≤
+        (∑ j ∈ Finset.univ.erase i, ∑ r ∈ Finset.Icc 1 K,
+          ((Nat.gcd (n i + a₀) (n j + r)).divisors.card : ℝ)) ^ R := hpow
+    _ ≤ (((Finset.univ.erase i).card : ℝ) ^ (R - 1)) *
+        ∑ j ∈ Finset.univ.erase i,
+          (∑ r ∈ Finset.Icc 1 K,
+            ((Nat.gcd (n i + a₀) (n j + r)).divisors.card : ℝ)) ^ R := by
+      simpa only [Nat.sub_add_cancel hR] using
+        (pow_sum_le_card_mul_sum_pow (s := Finset.univ.erase i)
+          (f := fun j => ∑ r ∈ Finset.Icc 1 K,
+            ((Nat.gcd (n i + a₀) (n j + r)).divisors.card : ℝ))
+          (fun j hj => Finset.sum_nonneg fun r hr => by positivity) (R - 1))
+    _ ≤ (((Finset.univ.erase i).card : ℝ) ^ (R - 1)) *
+        ∑ j ∈ Finset.univ.erase i,
+          (((Finset.Icc 1 K).card : ℝ) ^ (R - 1)) *
+            ∑ r ∈ Finset.Icc 1 K,
+              (((Nat.gcd (n i + a₀) (n j + r)).divisors.card : ℝ) ^ R) := by
+      gcongr with j hj
+      simpa only [Nat.sub_add_cancel hR] using
+        (pow_sum_le_card_mul_sum_pow (s := Finset.Icc 1 K)
+          (f := fun r => ((Nat.gcd (n i + a₀) (n j + r)).divisors.card : ℝ))
+          (fun r hr => by positivity) (R - 1))
+    _ = (((Finset.univ.erase i).card : ℝ) ^ (R - 1)) *
+        (((Finset.Icc 1 K).card : ℝ) ^ (R - 1)) *
+        (∑ j ∈ Finset.univ.erase i, ∑ r ∈ Finset.Icc 1 K,
+          (((Nat.gcd (n i + a₀) (n j + r)).divisors.card : ℝ) ^ R)) := by
+      simp_rw [Finset.mul_sum, mul_assoc]
+
+/-- For every fixed anchor coordinate, every positive moment of the bad-modulus count is
+uniformly bounded under the uniform measure on `2k`-tuples. -/
+theorem tupleBadModuli_moment (a₀ K P₀ k R : ℕ) (hk : 1 ≤ k)
+    (ha₀ : 1 ≤ a₀) (hK : 1 ≤ K) (hKP : K ≤ P₀) (hR : 1 ≤ R)
+    (i : Fin (2 * k)) :
+    ∃ C : ℝ, 0 < C ∧ ∀ N : ℕ, 1 ≤ N →
+      (∑ n : Fin (2 * k) → Fin N,
+        (((tupleBadModuli a₀ K P₀ k (fun j => (n j).val) i).card : ℝ) ^ R)) ≤
+          C * (N : ℝ) ^ (2 * k) := by
+  classical
+  let J := Finset.univ.erase i
+  let V := Finset.Icc 1 K
+  choose C hC hbound using fun (j : J) (v : V) =>
+    shifted_gcd_divisor_moment_over_tuples a₀ v R k hk ha₀
+      (by
+        have hv := v.2
+        change v.val ∈ Finset.Icc 1 K at hv
+        exact (Finset.mem_Icc.mp hv).1) hR i j
+      (by
+        have hj := j.2
+        change j.val ∈ Finset.univ.erase i at hj
+        exact (Finset.ne_of_mem_erase hj).symm)
+  let A : ℝ := (J.card : ℝ) ^ (R - 1) * (V.card : ℝ) ^ (R - 1)
+  let D : Fin (2 * k) → ℕ → ℝ := fun j v =>
+    if hj : j ∈ J then if hv : v ∈ V then C ⟨j, hj⟩ ⟨v, hv⟩ else 0 else 0
+  let S : ℝ := ∑ j ∈ J, ∑ v ∈ V, D j v
+  refine ⟨1 + A * S, ?_, fun N hN => ?_⟩
+  · have hA : 0 ≤ A := by dsimp [A]; positivity
+    have hS : 0 ≤ S := by
+      dsimp [S]
+      exact Finset.sum_nonneg fun j hj => Finset.sum_nonneg fun v hv => by
+        rw [show D j v = C ⟨j, hj⟩ ⟨v, hv⟩ by simp [D, hj, hv]]
+        exact (hC ⟨j, hj⟩ ⟨v, hv⟩).le
+    positivity
+  have hA : 0 ≤ A := by dsimp [A]; positivity
+  have hS : 0 ≤ S := by
+    dsimp [S]
+    exact Finset.sum_nonneg fun j hj => Finset.sum_nonneg fun v hv => by
+      rw [show D j v = C ⟨j, hj⟩ ⟨v, hv⟩ by simp [D, hj, hv]]
+      exact (hC ⟨j, hj⟩ ⟨v, hv⟩).le
+  have hpoint (n : Fin (2 * k) → Fin N) :
+      (((tupleBadModuli a₀ K P₀ k (fun j => (n j).val) i).card : ℝ) ^ R) ≤
+        A * ∑ j ∈ J, ∑ v ∈ V,
+          (((Nat.gcd (n i + a₀) (n j + v)).divisors.card : ℝ) ^ R) := by
+    simpa only [J, V, A] using
+        card_tupleBadModuli_pow_le a₀ K P₀ k R (fun j => (n j).val) i ha₀ hKP hR
+  have hswap :
+      (∑ n : Fin (2 * k) → Fin N, ∑ j ∈ J, ∑ v ∈ V,
+        (((Nat.gcd (n i + a₀) (n j + v)).divisors.card : ℝ) ^ R)) =
+      ∑ j ∈ J, ∑ v ∈ V, ∑ n : Fin (2 * k) → Fin N,
+        (((Nat.gcd (n i + a₀) (n j + v)).divisors.card : ℝ) ^ R) := by
+    rw [show (∑ n : Fin (2 * k) → Fin N, ∑ j ∈ J, ∑ v ∈ V,
+        (((Nat.gcd (n i + a₀) (n j + v)).divisors.card : ℝ) ^ R)) =
+        ∑ n ∈ (Finset.univ : Finset (Fin (2 * k) → Fin N)),
+          ∑ j ∈ J, ∑ v ∈ V,
+            (((Nat.gcd (n i + a₀) (n j + v)).divisors.card : ℝ) ^ R) by simp]
+    rw [Finset.sum_comm]
+    apply Finset.sum_congr rfl
+    intro j hj
+    rw [Finset.sum_comm]
+  calc
+    (∑ n : Fin (2 * k) → Fin N,
+        (((tupleBadModuli a₀ K P₀ k (fun j => (n j).val) i).card : ℝ) ^ R)) ≤
+        ∑ n : Fin (2 * k) → Fin N, A * ∑ j ∈ J, ∑ v ∈ V,
+          (((Nat.gcd (n i + a₀) (n j + v)).divisors.card : ℝ) ^ R) :=
+      Finset.sum_le_sum fun n _ => hpoint n
+    _ = A * ∑ j ∈ J, ∑ v ∈ V, ∑ n : Fin (2 * k) → Fin N,
+          (((Nat.gcd (n i + a₀) (n j + v)).divisors.card : ℝ) ^ R) := by
+      rw [← Finset.mul_sum, hswap]
+    _ ≤ A * ∑ j ∈ J, ∑ v ∈ V,
+        D j v * (N : ℝ) ^ (2 * k) := by
+      gcongr with j hj v hv
+      rw [show D j v = C ⟨j, hj⟩ ⟨v, hv⟩ by simp [D, hj, hv]]
+      exact hbound ⟨j, hj⟩ ⟨v, hv⟩ N hN
+    _ = A * S * (N : ℝ) ^ (2 * k) := by
+      dsimp [S]
+      calc
+        A * ∑ j ∈ J, ∑ v ∈ V, D j v * (N : ℝ) ^ (2 * k) =
+            A * ((∑ j ∈ J, ∑ v ∈ V, D j v) * (N : ℝ) ^ (2 * k)) := by
+          congr 1
+          rw [Finset.sum_mul]
+          apply Finset.sum_congr rfl
+          intro j hj
+          rw [Finset.sum_mul]
+        _ = (A * ∑ j ∈ J, ∑ v ∈ V, D j v) * (N : ℝ) ^ (2 * k) := by ring
+    _ ≤ (1 + A * S) * (N : ℝ) ^ (2 * k) := by
+      have hpow : 0 ≤ (N : ℝ) ^ (2 * k) := by positivity
+      gcongr
+      linarith
+
 /-! ### Retained Bernoulli variance mass -/
 
 /-- Choosing whether to include each distinct prime factor injects `2 ^ ω(m)` squarefree
