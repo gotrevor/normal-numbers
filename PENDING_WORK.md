@@ -4107,3 +4107,20 @@ times are on this contended box; exact5z was re-run under the same conditions as
 - Next, if funded: (1) exMin as a precomputed per-row 2-D range-min (or per (row, l) sorted by y), aiming
   for exMin under 20% of CPU; (2) re-price post-update; (3) address the poisoning itself: exceptions keyed
   to the met set so they cannot enter neighbouring leaves, or a joint lookup/partition shape (Astra section 3).
+- **Operator note (Ren, 2026-10-12 ~09:15Z) - Astra's review of the cost lap** (mail
+  `~/personal/agent-mail/nn-cstar/20261012T090735Z-codex-8b3d4904-*.md`, PARK recommended, 90% on the resource
+  decision).  Record as: **current representation/search misses the cost gate; convergence unresolved** - not a
+  refutation of the core, not a barrier at 9/2; c* <= 124/25 stands.  Corrections:
+  * SOUNDNESS: "exceptions keyed to the met set so they cannot enter neighbouring leaves" (Next, item 3 above) is
+    NOT sound as stated: a fixed W cannot ignore an exception according to which parent/query visits it.  It
+    needs a proof that the exception is unreachable for that leaf, or an explicitly enlarged state with one
+    coherent weight and proved transition semantics.
+  * The neighbour-poisoning mechanism is only partly intrinsic: exMin works on an enclosing product of bin sets,
+    so part of the spread may be enclosure looseness (impossible joint combinations), not lost growth.  The
+    measurements do not separate the two.
+  * Even with exMin at 0% the post-update slice projects ~10 h/pass (the 17x evaluation growth); an index alone
+    cannot reach 2 h.  The 0.28 -> 0.57 failure fractions came from different slices; recompute on identical
+    parent IDs before using them as a controlled comparison.
+  * Reopen only on a concrete mechanism: a fixed small panel of newly failing positive-target pairs plus matched
+    passing controls, frozen before/after weights, ordinary vs tighter joint-image subdivision, node/time caps.
+    Plus a credible path to TailChargeBudget449F on the SAME normalized weights.
