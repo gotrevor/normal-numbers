@@ -806,12 +806,132 @@ theorem momentGamma_pos (b : ℕ) (hb : 2 ≤ b) : 0 < momentGamma b := by
   have hexp : Real.exp (-spectralConst b) < 1 := Real.exp_lt_one_iff.mpr (neg_neg_of_pos hc)
   linarith
 
+/-- The square-root loss produced by Cauchy--Schwarz is absorbed by an exponential. -/
+theorem sqrt_one_sub_two_mul_le_exp_neg {x : ℝ} (hx0 : 0 ≤ x) (hx1 : x ≤ 1 / 2) :
+    Real.sqrt (1 - 2 * x) ≤ Real.exp (-x) := by
+  rw [← sq_le_sq₀ (Real.sqrt_nonneg _) (Real.exp_pos _).le]
+  rw [Real.sq_sqrt (by nlinarith)]
+  rw [← Real.exp_nat_mul]
+  simpa only [Nat.cast_ofNat, show (2 : ℝ) * -x = -(2 * x) by ring] using
+    Real.one_sub_le_exp_neg (2 * x)
+
+/-- The chord from `0` to `1` for `1 - exp (-c t)`, continued monotonically after `1`. -/
+theorem momentGamma_mul_min_le_one_sub_exp {c t : ℝ} (hc : 0 ≤ c) (ht : 0 ≤ t) :
+    (1 - Real.exp (-c)) * min t 1 ≤ 1 - Real.exp (-c * t) := by
+  by_cases ht1 : t ≤ 1
+  · have hconv : Real.exp ((1 - t) * 0 + t * (-c)) ≤
+        (1 - t) * Real.exp 0 + t * Real.exp (-c) :=
+      convexOn_exp.2 (Set.mem_univ _) (Set.mem_univ _) (by linarith) ht (by ring)
+    have hconv' : Real.exp (-c * t) ≤ 1 - t + t * Real.exp (-c) := by
+      calc
+        Real.exp (-c * t) = Real.exp ((1 - t) * 0 + t * (-c)) := by congr 1 <;> ring
+        _ ≤ (1 - t) * Real.exp 0 + t * Real.exp (-c) := hconv
+        _ = 1 - t + t * Real.exp (-c) := by rw [Real.exp_zero]; ring
+    rw [min_eq_left ht1]
+    nlinarith [hconv']
+  · have hone : 1 ≤ t := le_of_not_ge ht1
+    have harg : -c * t ≤ -c := by nlinarith
+    have hexp := Real.exp_le_exp.mpr harg
+    rw [min_eq_right hone]
+    linarith
+
 theorem residueTuple_mean_le (b : ℕ) (hb : 2 ≤ b) (h : ℤ) (hh : h ≠ 0) :
     ∃ P₀ : ℕ, ∀ p : ℕ, P₀ < p → ∀ k : ℕ, 1 ≤ k → ∀ δ : ℝ, 0 ≤ δ → δ ≤ 1 →
       (∑ r : Fin (2 * k) → Fin p, bernMod δ (tuplePhase b h k p (fun i => (r i).val))) /
           (p : ℝ) ^ (2 * k) ≤
         Real.exp (-(momentGamma b) * (δ * (1 - δ)) * min ((k : ℝ) / p) 1) := by
-  sorry
+  obtain ⟨P₀, hgap⟩ := localMean_normSq_le b hb h hh
+  refine ⟨P₀, fun p hp k hk δ hδ0 hδ1 => ?_⟩
+  have hp0 : 0 < p := by omega
+  have hpR : (0 : ℝ) < p := by exact_mod_cast hp0
+  let v : ℝ := δ * (1 - δ)
+  let L : ℝ := ‖localMean b h p‖ ^ (2 * k)
+  let T : ℝ := (k : ℝ) / p
+  let A : ℝ :=
+    (∑ r : Fin (2 * k) → Fin p,
+      bernMod δ (tuplePhase b h k p (fun i => (r i).val))) / (p : ℝ) ^ (2 * k)
+  have hc : 0 < spectralConst b := by
+    have hgamma := momentGamma_pos b hb
+    rw [momentGamma] at hgamma
+    by_contra hnot
+    have hc0 : spectralConst b ≤ 0 := le_of_not_gt hnot
+    have hexp : 1 ≤ Real.exp (-spectralConst b) := by
+      rw [← Real.exp_zero]
+      exact Real.exp_le_exp.mpr (by linarith)
+    linarith
+  have hv0 : 0 ≤ v := mul_nonneg hδ0 (sub_nonneg.mpr hδ1)
+  have hv4 : v ≤ 1 / 4 := by
+    dsimp [v]
+    nlinarith [sq_nonneg (δ - 1 / 2)]
+  have hT0 : 0 ≤ T := div_nonneg (by positivity) hpR.le
+  have hnormSq : ‖localMean b h p‖ ^ 2 ≤ 1 - spectralConst b / p := hgap p hp
+  have hbase0 : 0 ≤ 1 - spectralConst b / p :=
+    (sq_nonneg ‖localMean b h p‖).trans hnormSq
+  have hbase1 : 1 - spectralConst b / p ≤ 1 := by
+    exact sub_le_self _ (div_nonneg hc.le hpR.le)
+  have hL0 : 0 ≤ L := by positivity
+  have hL1 : L ≤ 1 := by
+    change ‖localMean b h p‖ ^ (2 * k) ≤ 1
+    rw [pow_mul]
+    calc
+      (‖localMean b h p‖ ^ 2) ^ k ≤ (1 - spectralConst b / p) ^ k :=
+        pow_le_pow_left₀ (sq_nonneg _) hnormSq k
+      _ ≤ 1 ^ k := pow_le_pow_left₀ hbase0 hbase1 k
+      _ = 1 := one_pow k
+  have hLexp : L ≤ Real.exp (-spectralConst b * T) := by
+    change ‖localMean b h p‖ ^ (2 * k) ≤ _
+    rw [pow_mul]
+    calc
+      (‖localMean b h p‖ ^ 2) ^ k ≤ (1 - spectralConst b / p) ^ k :=
+        pow_le_pow_left₀ (sq_nonneg _) hnormSq k
+      _ ≤ (Real.exp (-(spectralConst b / p))) ^ k :=
+        pow_le_pow_left₀ hbase0 (Real.one_sub_le_exp_neg _) k
+      _ = Real.exp (-spectralConst b * T) := by
+        rw [← Real.exp_nat_mul]
+        dsimp [T]
+        congr 1
+        push_cast
+        field_simp
+  have hgammaLoss : momentGamma b * min T 1 ≤ 1 - L := by
+    have hchord := momentGamma_mul_min_le_one_sub_exp (c := spectralConst b) (t := T) hc.le hT0
+    exact (show momentGamma b * min T 1 ≤ 1 - Real.exp (-spectralConst b * T) by
+      simpa only [momentGamma] using hchord).trans (sub_le_sub_left hLexp 1)
+  let x : ℝ := v * (1 - L)
+  have hx0 : 0 ≤ x := mul_nonneg hv0 (sub_nonneg.mpr hL1)
+  have hxhalf : x ≤ 1 / 2 := by
+    have honeL : 1 - L ≤ 1 := by linarith
+    calc
+      x ≤ v * 1 := mul_le_mul_of_nonneg_left honeL hv0
+      _ ≤ 1 / 4 := by simpa using hv4
+      _ ≤ 1 / 2 := by norm_num
+  have hxgamma : momentGamma b * v * min T 1 ≤ x := by
+    dsimp [x]
+    calc
+      momentGamma b * v * min T 1 = v * (momentGamma b * min T 1) := by ring
+      _ ≤ v * (1 - L) := mul_le_mul_of_nonneg_left hgammaLoss hv0
+  have hcard :
+      ((Fintype.card (Fin (2 * k) → Fin p) : ℕ) : ℝ) = (p : ℝ) ^ (2 * k) := by
+    simp only [Fintype.card_pi, Finset.prod_const, Finset.card_univ, Fintype.card_fin,
+      Nat.cast_pow]
+  have hcs : A ^ 2 ≤
+      (∑ r : Fin (2 * k) → Fin p,
+        bernMod δ (tuplePhase b h k p (fun i => (r i).val)) ^ 2) /
+          (p : ℝ) ^ (2 * k) := by
+    have h := sum_div_card_sq_le_sum_sq_div_card
+      (s := (Finset.univ : Finset (Fin (2 * k) → Fin p)))
+      (f := fun r => bernMod δ (tuplePhase b h k p (fun i => (r i).val)))
+    simp only [Finset.card_univ] at h
+    rw [hcard] at h
+    exact h
+  have hsq : A ^ 2 ≤ 1 - 2 * x := by
+    rw [residueTuple_mean_sq b hb h k p hp0 δ] at hcs
+    simpa only [A, x, v, L, mul_assoc] using hcs
+  have hAsqrt : A ≤ Real.sqrt (1 - 2 * x) := Real.le_sqrt_of_sq_le hsq
+  have hsqrt : Real.sqrt (1 - 2 * x) ≤ Real.exp (-x) :=
+    sqrt_one_sub_two_mul_le_exp_neg hx0 hxhalf
+  have hexp : Real.exp (-x) ≤ Real.exp (-(momentGamma b * v * min T 1)) :=
+    Real.exp_le_exp.mpr (neg_le_neg hxgamma)
+  simpa only [A, v, T, neg_mul, mul_assoc] using hAsqrt.trans (hsqrt.trans hexp)
 
 /-! ### Step 4: the pairwise-coprime CRT abstraction -/
 

@@ -77,6 +77,36 @@ Make `src/NormalNumbers/CoefmassRandomLambertMoment.lean` sorry-free, then check
 
 ## Status
 
+- Lap 6 checkpoint (`research/lambert-moment`): proved `residueTuple_mean_le`, closing the entire
+  finite local analytic layer.  Two reusable real inequalities now absorb the Cauchy--Schwarz
+  square root into `exp (-x)` and lower-bound `1 - exp (-c t)` by its chord on `[0,1]` and its
+  monotone continuation afterward.  The main proof combines the exact residue second moment with
+  `localMean_normSq_le`, proves `‖localMean‖^(2k) ≤ exp(-c₀ k/p)`, and carries the sharp Bernoulli
+  variance factor `δ(1-δ)` through to `momentGamma b * min(k/p,1)`.  Two declarations remain open;
+  no frozen statement or definition changed.
+- Exact verification run:
+  - `lake env lean src/NormalNumbers/CoefmassRandomLambertMoment.lean` (green; only the two
+    remaining disclosed `sorry` warnings).
+  - `lake build NormalNumbers.CoefmassRandomLambertMoment` (green, 8716 jobs).
+  - `lake env lean AuditRandomLambertMomentLap6.lean` with `#print axioms` for
+    `sqrt_one_sub_two_mul_le_exp_neg`, `momentGamma_mul_min_le_one_sub_exp`, and
+    `residueTuple_mean_le` (temporary audit file; each exactly `[propext, Classical.choice,
+    Quot.sound]`).
+  - `~/personal/bin/lean-green ~/src/nn-lambert-moment --target NormalNumbers.CoefmassRandomLambertMoment`
+    (`✅ FORMALIZE-TIER GREEN`, 8716 jobs).
+  - `python3 experiments/random_lambert_moment_controls.py` (all positive controls within
+    tolerance; both deliberately false red controls fail as expected).
+  - Commit pre-hook `lake build` (green, 10847 jobs).
+- Current blocker: `moment_le_tupleAvg` is now the route-decisive obligation.  The remaining work is
+  the probability-theoretic expansion of the `2k`-th moment and factorization of the finitely many
+  Bernoulli coordinates in `F`, while controlling the complementary infinite Lambert sum by a
+  unit-modulus factor.  Once it is proved, only final CRT/prefix assembly remains.
+- Next highest-value attack: prove summability and measurability of `randomLambert`, truncate its
+  prime `tsum` to finite sets, establish the finite independent-characteristic-function bound via
+  `iIndepFun.integral_fun_prod_eq_prod_integral`, and pass to the limit by dominated convergence.
+  This avoids requiring a direct independence theorem between a finite coordinate block and an
+  infinite complementary `tsum`.
+
 - Lap 5 checkpoint (`research/lambert-moment`): proved the route-decisive spectral gap
   `localMean_normSq_le`, leaving three declarations open.  The proof factors
   `|h| = b^e m` with `b ∤ m`, takes the explicit cutoff `K = e + 1 + 16|h|`, and proves that
