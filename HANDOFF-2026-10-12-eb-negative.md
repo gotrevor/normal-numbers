@@ -60,6 +60,31 @@ Notation: `μ_M(n) = largeDivisorMass a M n = Σ_{d ∣ n, d > M} (log d)^{-a}`.
 
 ## Status
 
+- **Lap 6 checkpoint (2026-10-12): marginal selected-divisor fractional moment proved; 1 sorry remains.**
+  - PROVED summability of the Lambert denominators and every selected subseries
+    (`summable_ebLambert_denom`, `summable_ebLambert_terms`), plus measurability of the full random
+    Lambert sum (`measurable_ebLambert`).  These are the analytic prerequisites for the tail-orbit
+    random variables.
+  - DEFINED the real-valued finite divisor count `selectedDivisorCount X M n w`, and PROVED its
+    nonnegativity, uniform finite bound, measurability, integrability, and exact expectation from
+    the one-coordinate marginals (`integral_selectedDivisorCount`).
+  - PROVED the load-bearing independence-free Jensen estimate
+    `integral_selectedDivisorCount_rpow_le`:
+    `E[D_M(n)^s] <= C^s * largeDivisorMass(a,M,n)^s` for `0 < s <= 1`.  This is the precise
+    probabilistic bridge from the frozen marginal hypothesis to Lap 5's arithmetic moment bound;
+    no joint law or independence is used.
+  - A byte-level extraction/diff against introduction commit `3e4cac49` reconfirmed that all four
+    frozen theorem statements and all three protected definition signatures are unchanged.  The
+    sole remaining sorry is still `ebRandom_ae_not_normal_of_marginal_bound`.
+  - Exact verification:
+    - `lake env lean src/NormalNumbers/CoefmassErdosBorweinNegative.lean` — succeeds, exactly one
+      expected sorry warning (`ebRandom_ae_not_normal_of_marginal_bound`).
+    - `~/personal/bin/lean-green . --target NormalNumbers.CoefmassErdosBorweinNegative --import
+      NormalNumbers.CoefmassErdosBorweinNegative --axioms
+      NormalNumbers.ErdosBorweinRandom.integral_selectedDivisorCount_rpow_le` — FORMALIZE-TIER
+      GREEN; axioms exactly `propext`, `Classical.choice`, `Quot.sound`.
+    - `~/personal/bin/lean-green .` — FORMALIZE-TIER GREEN, 10847 jobs.
+
 - **Lap 5 checkpoint (2026-10-12): uniform large-divisor fractional moment proved; 1 sorry remains.**
   - PROVED `largeDivisorMass_moment_small`, the arithmetic/analytic half of the negative theorem.
     The proof partitions `largeDivisorMass` by an exact finite cutoff recursion
@@ -174,11 +199,17 @@ Notation: `μ_M(n) = largeDivisorMass a M n = Σ_{d ∣ n, d > M} (log d)^{-a}`.
 
 ### Current blocker / next attack
 
-The sole open theorem is `ebRandom_ae_not_normal_of_marginal_bound`.  The arithmetic input it needs
-is now complete.  Next introduce helper definitions for the selected-divisor count and the Lambert
-tail above `M`, then prove: measurability/summability; the exact residual identity modulo an integer;
-the pointwise fractional-power bound; and its integrated Cesàro bound from
-`largeDivisorMass_moment_small`.
+The sole open theorem is `ebRandom_ae_not_normal_of_marginal_bound`.  Both its arithmetic input and
+the marginal-to-divisor-moment Jensen bridge are now complete.  Next define the Lambert tail above
+`M` and the shift residual
+`R_M(n,w) = sum_{j>=1} b^(-j) * selectedDivisorCount X M (n+j) w`.  Prove its
+summability/measurability, the exact residual identity modulo an integer, infinite fractional-power
+subadditivity, and the integrated Cesàro estimate using `integral_selectedDivisorCount_rpow_le` and
+`largeDivisorMass_moment_small`.  The short, already kernel-checked quotient identity
+`residuePhase_add_int` in `CoefmassRandomLambertMoment.lean` (~lines 145--166) is a useful template:
+`b^n/(b^m-1) = b^(n % m)/(b^m-1) + z` for an integer `z`.  For residual summability, the crude bound
+`selectedDivisorCount X M (n+j) w <= (n+j).divisors.card <= n+j` is enough against the geometric
+weight.
 
 For the probability/orbit close, avoid first proving that the `IsNormal` event is measurable (no
 such repository lemma was found).  Instead, for each base majorize the normal set by a measurable

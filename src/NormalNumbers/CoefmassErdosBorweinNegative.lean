@@ -1094,6 +1094,197 @@ theorem typicalDivisorMass_small (a : ℝ) (ha : Real.log 2 < a) (ε η : ℝ) (
   change (S.card : ℝ) ≤ η * N
   exact (mul_le_mul_iff_of_pos_right hεs).mp hmul
 
+/-! ### Random selected-divisor moments -/
+
+/-- The positive-integer Lambert denominators form a summable family. -/
+lemma summable_ebLambert_denom (b : ℕ) (hb : 2 ≤ b) :
+    Summable (fun m : ℕ => (1 : ℝ) / ((b : ℝ) ^ (m + 1) - 1)) := by
+  have hbR : (2 : ℝ) ≤ b := by exact_mod_cast hb
+  have hb1 : (1 : ℝ) < b := lt_of_lt_of_le (by norm_num) hbR
+  have hgeom : Summable (fun m : ℕ => 2 * (1 / (b : ℝ)) ^ (m + 1)) := by
+    exact ((summable_geometric_of_lt_one (by positivity)
+      (by simpa using one_div_lt_one_div_of_lt zero_lt_one hb1)).mul_left 2).comp_injective
+        Nat.succ_injective
+  refine Summable.of_nonneg_of_le (fun m => by
+    exact div_nonneg (by norm_num) (sub_nonneg.mpr (one_le_pow₀ hb1.le))) (fun m => ?_) hgeom
+  have hpow : (2 : ℝ) ≤ (b : ℝ) ^ (m + 1) := by
+    calc
+      (2 : ℝ) ≤ b := hbR
+      _ = (b : ℝ) ^ 1 := by ring
+      _ ≤ (b : ℝ) ^ (m + 1) := pow_le_pow_right₀ hb1.le (by omega)
+  have hden : 0 < (b : ℝ) ^ (m + 1) - 1 := by linarith
+  have hbpowpos : (0 : ℝ) < (b : ℝ) ^ (m + 1) := by positivity
+  calc
+    1 / ((b : ℝ) ^ (m + 1) - 1) ≤ 2 / (b : ℝ) ^ (m + 1) := by
+      rw [div_le_div_iff₀ hden hbpowpos]
+      nlinarith
+    _ = 2 * (1 / (b : ℝ)) ^ (m + 1) := by
+      rw [div_pow]
+      simp only [one_pow]
+      ring
+
+/-- Every selected Erdős--Borwein subseries is absolutely summable. -/
+lemma summable_ebLambert_terms (b : ℕ) (hb : 2 ≤ b)
+    {Ω : Type*} (X : ℕ → Ω → Bool) (w : Ω) :
+    Summable (fun m : ℕ =>
+      (if X (m + 1) w then (1 : ℝ) else 0) / ((b : ℝ) ^ (m + 1) - 1)) := by
+  apply (summable_ebLambert_denom b hb).of_norm_bounded
+  intro m
+  have hbR : (1 : ℝ) < b := by exact_mod_cast (lt_of_lt_of_le (by norm_num) hb)
+  have hden : 0 < (b : ℝ) ^ (m + 1) - 1 :=
+    sub_pos.mpr (one_lt_pow₀ hbR (by omega))
+  split_ifs <;> simp only [norm_div, Real.norm_eq_abs, abs_one, abs_zero, zero_div]
+  · rw [abs_of_pos hden]
+  · exact div_nonneg (by norm_num) hden.le
+
+/-- The selected Erdős--Borwein series is measurable when every coordinate is measurable. -/
+lemma measurable_ebLambert (b : ℕ) {Ω : Type*} [MeasurableSpace Ω]
+    (X : ℕ → Ω → Bool) (hX : ∀ m, Measurable (X m)) :
+    Measurable (ebLambert b X) := by
+  unfold ebLambert
+  exact Measurable.tsum fun m => by
+    have hm : Measurable (fun w => if X (m + 1) w then (1 : ℝ) else 0) :=
+      (measurable_of_finite (f := fun z : Bool => if z then (1 : ℝ) else 0)).comp (hX (m + 1))
+    exact hm.div_const _
+
+/-- Number of selected divisors of `n` lying strictly above `M`, viewed as a real random
+variable.  It is a finite sum even though the selected set itself can be infinite. -/
+noncomputable def selectedDivisorCount {Ω : Type*} (X : ℕ → Ω → Bool)
+    (M n : ℕ) (w : Ω) : ℝ :=
+  ∑ m ∈ n.divisors.filter (fun m => M < m), if X m w then 1 else 0
+
+lemma selectedDivisorCount_nonneg {Ω : Type*} (X : ℕ → Ω → Bool) (M n : ℕ) (w : Ω) :
+    0 ≤ selectedDivisorCount X M n w := by
+  unfold selectedDivisorCount
+  exact Finset.sum_nonneg fun m _ => by split_ifs <;> positivity
+
+lemma selectedDivisorCount_le_card_divisors {Ω : Type*} (X : ℕ → Ω → Bool)
+    (M n : ℕ) (w : Ω) : selectedDivisorCount X M n w ≤ n.divisors.card := by
+  unfold selectedDivisorCount
+  calc
+    (∑ m ∈ n.divisors.filter (fun m => M < m), if X m w then (1 : ℝ) else 0) ≤
+        ∑ _m ∈ n.divisors.filter (fun m => M < m), (1 : ℝ) := by
+      exact Finset.sum_le_sum fun m _ => by split_ifs <;> norm_num
+    _ = ((n.divisors.filter (fun m => M < m)).card : ℝ) := by simp
+    _ ≤ n.divisors.card := by exact_mod_cast Finset.card_filter_le _ _
+
+lemma measurable_selectedDivisorCount {Ω : Type*} [MeasurableSpace Ω]
+    (X : ℕ → Ω → Bool) (hX : ∀ m, Measurable (X m)) (M n : ℕ) :
+    Measurable (selectedDivisorCount X M n) := by
+  unfold selectedDivisorCount
+  exact Finset.measurable_sum _ fun m _ =>
+    (measurable_of_finite (f := fun z : Bool => if z then (1 : ℝ) else 0)).comp (hX m)
+
+lemma integrable_selectedDivisorCount {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) [IsFiniteMeasure μ] (X : ℕ → Ω → Bool)
+    (hX : ∀ m, Measurable (X m)) (M n : ℕ) :
+    Integrable (selectedDivisorCount X M n) μ := by
+  apply Integrable.of_bound (measurable_selectedDivisorCount X hX M n).aestronglyMeasurable
+    n.divisors.card
+  filter_upwards [] with w
+  rw [Real.norm_eq_abs, abs_of_nonneg (selectedDivisorCount_nonneg X M n w)]
+  exact selectedDivisorCount_le_card_divisors X M n w
+
+lemma integral_selectedIndicator {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) [IsFiniteMeasure μ] (X : ℕ → Ω → Bool)
+    (hX : ∀ m, Measurable (X m)) (m : ℕ) :
+    (∫ w, (if X m w then (1 : ℝ) else 0) ∂μ) = μ.real {w | X m w = true} := by
+  let A : Set Ω := {w | X m w = true}
+  have hA : MeasurableSet A := (hX m) (measurableSet_singleton true)
+  have hfun : (fun w => if X m w then (1 : ℝ) else 0) = A.indicator (fun _ => 1) := by
+    funext w
+    by_cases hw : X m w = true
+    · simp [A, hw]
+    · have hw' : X m w = false := Bool.eq_false_of_not_eq_true hw
+      simp [A, hw']
+  rw [hfun, integral_indicator_const _ hA]
+  simp [A]
+
+/-- The expectation of the selected-divisor count uses only the one-coordinate marginals. -/
+lemma integral_selectedDivisorCount {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) [IsProbabilityMeasure μ] (X : ℕ → Ω → Bool)
+    (hX : ∀ m, Measurable (X m)) (M n : ℕ) :
+    (∫ w, selectedDivisorCount X M n w ∂μ) =
+      ∑ m ∈ n.divisors.filter (fun m => M < m), μ.real {w | X m w = true} := by
+  unfold selectedDivisorCount
+  calc
+    (∫ w, ∑ m ∈ n.divisors.filter (fun m => M < m),
+        (if X m w then (1 : ℝ) else 0) ∂μ) =
+        ∑ m ∈ n.divisors.filter (fun m => M < m),
+          ∫ w, (if X m w then (1 : ℝ) else 0) ∂μ := by
+      apply integral_finsetSum
+      intro m hm
+      apply Integrable.of_bound
+        ((measurable_of_finite (f := fun z : Bool => if z then (1 : ℝ) else 0)).comp
+          (hX m)).aestronglyMeasurable 1
+      exact Eventually.of_forall fun w => by
+        simp only [Function.comp_apply]
+        split_ifs <;> norm_num
+    _ = _ := Finset.sum_congr rfl fun m _ => integral_selectedIndicator μ X hX m
+
+/-- Jensen converts the marginal first-moment estimate into exactly the fractional divisor
+moment used by `largeDivisorMass_moment_small`.  No independence is used. -/
+lemma integral_selectedDivisorCount_rpow_le
+    {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω) [IsProbabilityMeasure μ]
+    (X : ℕ → Ω → Bool) (hX : ∀ m, Measurable (X m))
+    (a C s : ℝ) (hC : 0 ≤ C) (hs : 0 < s) (hs1 : s ≤ 1)
+    (hMarginal : ∀ m : ℕ, 2 ≤ m →
+      μ {w | X m w = true} ≤ ENNReal.ofReal (C * Real.rpow (Real.log m) (-a)))
+    (M n : ℕ) (hM : 2 ≤ M) :
+    (∫ w, Real.rpow (selectedDivisorCount X M n w) s ∂μ) ≤
+      Real.rpow C s * Real.rpow (largeDivisorMass a M n) s := by
+  have hD0 : ∀ w, 0 ≤ selectedDivisorCount X M n w :=
+    selectedDivisorCount_nonneg X M n
+  have hDint := integrable_selectedDivisorCount μ X hX M n
+  have hDpowMeas : Measurable (fun w => Real.rpow (selectedDivisorCount X M n w) s) :=
+    (Real.continuous_rpow_const hs.le).measurable.comp
+      (measurable_selectedDivisorCount X hX M n)
+  have hDpowInt : Integrable (fun w => Real.rpow (selectedDivisorCount X M n w) s) μ := by
+    apply Integrable.of_bound hDpowMeas.aestronglyMeasurable
+      (Real.rpow (n.divisors.card : ℝ) s)
+    filter_upwards [] with w
+    rw [Real.norm_eq_abs]
+    calc
+      |Real.rpow (selectedDivisorCount X M n w) s| =
+          Real.rpow (selectedDivisorCount X M n w) s :=
+        abs_of_nonneg (Real.rpow_nonneg (hD0 w) _)
+      _ ≤ Real.rpow (n.divisors.card : ℝ) s :=
+        Real.rpow_le_rpow (hD0 w)
+          (selectedDivisorCount_le_card_divisors X M n w) hs.le
+  have hmean : (∫ w, selectedDivisorCount X M n w ∂μ) ≤ C * largeDivisorMass a M n := by
+    rw [integral_selectedDivisorCount μ X hX M n]
+    unfold largeDivisorMass
+    rw [Finset.mul_sum]
+    apply Finset.sum_le_sum
+    intro m hm
+    have hmM : M < m := (Finset.mem_filter.mp hm).2
+    have hprod0 : 0 ≤ C * Real.rpow (Real.log m) (-a) :=
+      mul_nonneg hC (Real.rpow_nonneg (Real.log_nonneg (by exact_mod_cast (show 1 ≤ m by omega))) _)
+    calc
+      μ.real {w | X m w = true} = (μ {w | X m w = true}).toReal := rfl
+      _ ≤ (ENNReal.ofReal (C * Real.rpow (Real.log m) (-a))).toReal := by
+        exact ENNReal.toReal_mono (by simp) (hMarginal m (by omega))
+      _ = C * Real.rpow (Real.log m) (-a) := ENNReal.toReal_ofReal hprod0
+  have hJensen : (∫ w, Real.rpow (selectedDivisorCount X M n w) s ∂μ) ≤
+      Real.rpow (∫ w, selectedDivisorCount X M n w ∂μ) s := by
+    change (∫ w, selectedDivisorCount X M n w ^ s ∂μ) ≤
+      (∫ w, selectedDivisorCount X M n w ∂μ) ^ s
+    exact (Real.concaveOn_rpow hs.le hs1).le_map_integral
+      (Real.continuous_rpow_const hs.le).continuousOn isClosed_Ici
+      (Eventually.of_forall hD0) hDint hDpowInt
+  calc
+    (∫ w, Real.rpow (selectedDivisorCount X M n w) s ∂μ) ≤
+        Real.rpow (∫ w, selectedDivisorCount X M n w ∂μ) s := hJensen
+    _ ≤ Real.rpow (C * largeDivisorMass a M n) s := by
+      exact Real.rpow_le_rpow (integral_nonneg hD0) hmean hs.le
+    _ = Real.rpow C s * Real.rpow (largeDivisorMass a M n) s := by
+      exact Real.mul_rpow hC (by
+        unfold largeDivisorMass
+        exact Finset.sum_nonneg fun m hm => Real.rpow_nonneg
+          (Real.log_nonneg (by
+            have hmM : M < m := (Finset.mem_filter.mp hm).2
+            exact_mod_cast (show 1 ≤ m by omega))) _)
+
 /-- **Marginal decay alone forces non-normality** (strengthens `ebRandom_ae_not_normal`).
 Proof outline:
 1. Use the exact residual `R_M(n) = Σ_{j ≥ 1} b^{-j} D_M(n+j)`, with
