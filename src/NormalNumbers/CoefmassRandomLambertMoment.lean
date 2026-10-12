@@ -49,8 +49,9 @@ with `P₀, γ` depending only on `b, h`.
    `‖f‖^{2k} ≤ e^{-c₀k/p}` and concavity give `E G ≤ exp(-γ v min(k/p,1))`, with
    `γ = 1 - e^{-c₀}`.
 
-Status: IN PROGRESS.  The Bernoulli algebra, phase periodicity, and positivity of `momentGamma`
-are proved; the averaging, spectral-gap, moment-expansion, and assembly declarations remain.
+Status: IN PROGRESS.  The Bernoulli algebra, phase periodicity, positivity of `momentGamma`, and
+the pairwise-coprime CRT factorization are proved; the prefix transfer, exact residue moment,
+spectral-gap, local bound, moment-expansion, and assembly declarations remain.
 -/
 
 namespace NormalNumbers.RandomLambertMoment
@@ -245,7 +246,66 @@ theorem crt_tuple_prod_mean {ι : Type*} (F : Finset ι) (q : ι → ℕ) (hq : 
     (∑ n : Fin d → Fin (∏ i ∈ F, q i), ∏ i ∈ F, g i (fun j => (n j).val)) /
         ((∏ i ∈ F, q i : ℕ) : ℝ) ^ d =
       ∏ i ∈ F, (∑ r : Fin d → Fin (q i), g i (fun j => (r j).val)) / (q i : ℝ) ^ d := by
-  sorry
+  classical
+  let a : F → ℕ := fun i => q i
+  have ha : ∀ i : F, 0 < a i := fun i => hq i i.property
+  let _ (i : F) : NeZero (a i) := ⟨Nat.ne_of_gt (ha i)⟩
+  have hc : Pairwise (Function.onFun Nat.Coprime a) := by
+    intro i j hij
+    exact hcop i.property j.property (fun h => hij (Subtype.ext h))
+  have hprod : 0 < ∏ i : F, a i := Finset.prod_pos fun _ _ => ha _
+  let _ : NeZero (∏ i : F, a i) := ⟨Nat.ne_of_gt hprod⟩
+  let crt : Fin (∏ i : F, a i) ≃ (∀ i : F, Fin (a i)) :=
+    (ZMod.finEquiv (∏ i : F, a i)).toEquiv |>.trans
+      ((ZMod.prodEquivPi a hc).toEquiv |>.trans
+        (Equiv.piCongrRight fun i => (ZMod.finEquiv (a i)).symm.toEquiv))
+  have hfin (n : ℕ) [NeZero n] (x : Fin n) : (ZMod.finEquiv n x).val = x.val := by
+    cases n with
+    | zero => exact (NeZero.ne 0 rfl).elim
+    | succ n => rfl
+  have hinv (n : ℕ) [NeZero n] (x : ZMod n) : ((ZMod.finEquiv n).symm x).val = x.val := by
+    cases n with
+    | zero => exact (NeZero.ne 0 rfl).elim
+    | succ n => rfl
+  have hcrt (x : Fin (∏ i : F, a i)) (i : F) :
+      (crt x i).val = x.val % a i := by
+    simp only [crt, Equiv.trans_apply]
+    rw [Equiv.piCongrRight_apply, Pi.map_apply]
+    change ((ZMod.finEquiv (a i)).symm
+      (ZMod.prodEquivPi a hc (ZMod.finEquiv (∏ i : F, a i) x) i)).val = _
+    rw [hinv, ZMod.prodEquivPi_apply, ZMod.castHom_apply]
+    rw [ZMod.cast_eq_val, hfin, ZMod.val_natCast]
+  let tupleCrt : (Fin d → Fin (∏ i : F, a i)) ≃
+      (∀ i : F, Fin d → Fin (a i)) :=
+    (Equiv.piCongrRight fun _ : Fin d => crt).trans (Equiv.piComm _)
+  have htuple (n : Fin d → Fin (∏ i : F, a i)) (i : F) (j : Fin d) :
+      (tupleCrt n i j).val = (n j).val % a i := by
+    change (crt (n j) i).val = _
+    exact hcrt (n j) i
+  have hprod_eq : (∏ i ∈ F, q i) = ∏ i : F, a i := by
+    change (∏ i ∈ F, q i) = ∏ i ∈ F.attach, q i
+    exact (Finset.prod_attach F q).symm
+  rw [hprod_eq]
+  have hsum :
+      (∑ n : Fin d → Fin (∏ i : F, a i), ∏ i ∈ F, g i (fun j => (n j).val)) =
+        ∑ r : ∀ i : F, Fin d → Fin (a i), ∏ i : F, g i (fun j => (r i j).val) := by
+    apply Fintype.sum_equiv tupleCrt
+    intro n
+    rw [Finset.prod_subtype F (p := fun x => x ∈ F) (by simp)]
+    apply Finset.prod_congr rfl
+    intro i hi
+    rw [hper i i.property]
+    congr 1
+    funext j
+    exact (htuple n i j).symm
+  rw [hsum]
+  rw [← Fintype.prod_sum (fun i (r : Fin d → Fin (a i)) =>
+    g i (fun j => (r j).val))]
+  rw [Finset.prod_subtype F (p := fun x => x ∈ F) (by simp)]
+  simp only [Finset.prod_div_distrib]
+  congr 1
+  push_cast
+  simp [a, Finset.prod_pow]
 
 /-! ### Step 3: prefix-to-period transfer -/
 

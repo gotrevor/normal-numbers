@@ -77,6 +77,30 @@ Make `src/NormalNumbers/CoefmassRandomLambertMoment.lean` sorry-free, then check
 
 ## Status
 
+- Lap 2 checkpoint (`research/lambert-moment`): proved `crt_tuple_prod_mean`.  The proof passes
+  from the finset `F` to its subtype, installs positivity-derived `NeZero` instances for every
+  modulus, constructs `ZMod.prodEquivPi`, and transports it through `ZMod.finEquiv` to an explicit
+  equivalence
+  `Fin (∏ i∈F, q i) ≃ (∀ i : F, Fin (q i))`.  A projection lemma proves that each coordinate is
+  exactly reduction modulo `q i`; lifting the equivalence pointwise to `d`-tuples and using
+  `Fintype.prod_sum` then gives the normalized product factorization.  Six declarations remain
+  open.
+- Exact verification run:
+  - `lake env lean src/NormalNumbers/CoefmassRandomLambertMoment.lean` (green; only the six
+    remaining disclosed `sorry` warnings).
+  - `~/personal/bin/lean-green ~/src/nn-lambert-moment --target NormalNumbers.CoefmassRandomLambertMoment`
+    (`✅ FORMALIZE-TIER GREEN`, 8716 jobs).
+  - `lake env lean AuditRandomLambertMoment.lean` with
+    `#print axioms NormalNumbers.RandomLambertMoment.crt_tuple_prod_mean` (temporary audit file;
+    exactly `[propext, Classical.choice, Quot.sound]`).
+- Current blocker: `prefix_tuple_mean_le` is now the active finite-averaging obligation.  It needs
+  a coordinate-by-coordinate hybrid between `Fin N` and `Fin Q`; the clean route is induction on
+  `d` using `Fin.consEquiv`, backed by the one-dimensional periodic prefix estimate obtained from
+  `N = (N / Q) Q + N % Q`.  The analytic spectral-gap lemma remains the later route-decisive crux.
+- Next highest-value attack: first prove the one-dimensional `[0,1]` periodic prefix estimate,
+  then induct on tuple dimension via `Fin.consEquiv` to close `prefix_tuple_mean_le`; reuse the
+  resulting tuple-sum reindexing in `residueTuple_mean_sq`.
+
 - Lap 1 checkpoint (`research/lambert-moment`): proved `bernMod_sq`, `bernMod_le_one`,
   `bernMod_tuplePhase_mod`, and `momentGamma_pos`.  The periodicity proof is now grounded in the
   public integer-divisibility helpers `pow_sub_pow_mod_dvd` and `residuePhase_add_int`; it proves
