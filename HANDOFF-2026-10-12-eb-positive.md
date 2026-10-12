@@ -68,44 +68,46 @@ Expect step 4 to be the longest.  Splitting it into named leaves is progress.
 
 ## Status
 
-- Lap 5 full-tuple phase checkpoint (`research/eb-positive`): the scoped file still has exactly
-  two frozen proof debts, and the route-decisive good-modulus cosine bridge is now formalized.
-  `scaled_residuePhase_le` assigns each of the other `2k-1` coordinates its share of the tail
-  budget under `16|h|·2k ≤ b^K`; `scaled_anchor_phase_error` controls the finite-period
-  correction; and `signed_tuple_phase_error` combines them with arbitrary tuple signs.
-  `anchor_residue_of_dvd` identifies the anchored residue `p-(e+1)`, while
-  `cos_tuplePhase_mod` proves residue reduction changes the tuple phase only by an integer.
-  Consequently `tupleGoodModuli_cos_le` proves exactly
-  `cos (2π tuplePhase) ≤ cos (π/b)` for every good modulus, for either sign of `h` and either
-  half of the signed tuple.  No frozen statement or copied definition changed.
-- Exact verification run (lap 5):
+- Lap 6 retained-variance checkpoint (`research/eb-positive`): the scoped file still has exactly
+  two frozen proof debts.  The complete one-anchor mass lower bound is now formalized.
+  `two_pow_primeFactors_card_le_card_divisors` proves `2^ω(M) ≤ τ(M)`;
+  `card_divisors_le_cutoff_add_large` loses at most `P₀` divisors at the cutoff; and
+  `card_large_anchor_moduli_eq_good_add_bad` gives the exact good/bad partition.  The analytic
+  leaf `tupleGoodModuli_variance_mass` uses `p ∣ n_i+a₀`, `p ≤ n_i+a₀`, and antitonicity of
+  `x ↦ x^(-a)` to freeze every good factor at the anchor scale.  Consequently
+  `retained_variance_mass_le` proves
+  `c(log(n_i+a₀))^(-a) (2^ω(n_i+a₀)-P₀-#bad) ≤ Σ_good δ_p(1-δ_p)`.
+  Together with `card_tupleBadModuli_le`, this is exactly the retained-mass estimate prescribed
+  by step 3.  No frozen statement or copied definition changed.
+- Exact verification run (lap 6):
+  - Shared-store preflight: `lake-base status leanprover/lean4:v4.33.1` and `lake-base status
+    v4.33.1` both reported that no shared store exists; no relink was available.
+  - `lake env lean _EBRetainedProbe.lean` (green kernel probe for the five-lemma chain; temporary
+    file removed).
   - `lake env lean src/NormalNumbers/CoefmassErdosBorweinPositive.lean` (green; exactly the two
     remaining disclosed `sorry` warnings).
-  - `lake build NormalNumbers.CoefmassErdosBorweinPositive` (green, 8719 jobs).
-  - `lake env lean AuditEBPositiveLap5.lean` with `#print axioms` for
-    `scaled_residuePhase_le`, `scaled_anchor_phase_error`, `signed_tuple_phase_error`,
-    `cos_tuplePhase_mod`, `anchor_residue_of_dvd`, and `tupleGoodModuli_cos_le` (temporary audit
-    file removed; every declaration uses only `propext`, `Classical.choice`, and `Quot.sound`, with
-    `anchor_residue_of_dvd` not needing choice).
   - `git diff --check` (clean before the handoff edit).
   - `~/personal/bin/lean-green ~/src/nn-eb-positive --target
     NormalNumbers.CoefmassErdosBorweinPositive --import
     NormalNumbers.CoefmassErdosBorweinPositive --axioms
-    NormalNumbers.ErdosBorweinPositive.tupleGoodModuli_cos_le`
-    (`FORMALIZE-TIER GREEN`, 8719 jobs; theorem axioms exactly the canonical three).
-- Previous checkpoints: lap 4 built the collision-modulus and spectral-product bridges; lap 3
-  proved `shifted_gcd_divisor_moment`; lap 2 proved its complete finite shifted-gcd reduction;
-  lap 1 proved `ebMoment_le_tupleAvg`, closing the infinite random-series side.
-- Current blocker: `eb_weyl_moment_decay`.  The phase geometry is closed.  Its remaining content
-  is the lower bound for retained good-modulus variance mass and the tuple exceptional-set estimate
-  combining Hardy--Ramanujan with the shifted-gcd moments.  The final
+    NormalNumbers.ErdosBorweinPositive.retained_variance_mass_le`
+    (`FORMALIZE-TIER GREEN`, 8719 jobs; theorem axioms exactly `propext`, `Classical.choice`, and
+    `Quot.sound`).
+- Previous checkpoints: lap 5 proved the full-tuple good-modulus cosine gap; lap 4 built the
+  collision-modulus and spectral-product bridges; lap 3 proved `shifted_gcd_divisor_moment`; lap 2
+  proved its complete finite shifted-gcd reduction; lap 1 proved `ebMoment_le_tupleAvg`, closing
+  the infinite random-series side.
+- Current blocker: `eb_weyl_moment_decay`.  The phase geometry and one-anchor retained mass are
+  closed.  Its remaining content is the deterministic tuple-product contraction and the tuple
+  exceptional-set average combining Hardy--Ramanujan with the shifted-gcd moments.  The final
   Borel--Cantelli/interpolation theorem remains downstream.
-- Next highest-value attack: prove a retained-mass lemma for one anchor coordinate.  Lower-bound
-  `∑ p∈tupleGoodModuli δ_p(1-δ_p)` by the weighted divisor mass of `n_i+e+1` above `P₀`,
-  minus the collision loss controlled by `card_tupleBadModuli_le`; use `hvar`, monotonicity of
-  `(log p)^{-a}` for `a ≥ 0`, and `p ≤ n_i+e+1`.  Then combine
-  `tupleGoodModuli_cos_le` with `prod_bernMod_le_exp_neg_spectral` and begin the HR/Markov tuple
-  exceptional-set bound.
+- Next highest-value attack: prove the deterministic per-tuple product bridge combining
+  `tupleGoodModuli_cos_le`, `prod_bernMod_le_exp_neg_spectral`, and
+  `retained_variance_mass_le`.  The selected set passed to `ebMoment_le_tupleAvg` is zero-based
+  (`m` contributes the Bernoulli factor at `m+1`), whereas `tupleGoodModuli` contains the actual
+  moduli `p`; therefore reindex it injectively by `p ↦ p-1` (all good `p ≥ 2`) and prove
+  `(p-1)+1=p` explicitly.  Once that bridge is in place, split tuples according to the HR lower
+  tail and a Markov threshold for the `card_tupleBadModuli_le` shifted-gcd sum.
 
 ## Findings
 

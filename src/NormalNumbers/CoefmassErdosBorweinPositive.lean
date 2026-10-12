@@ -759,6 +759,117 @@ theorem card_tupleBadModuli_le (a₀ K P₀ k : ℕ) (n : Fin (2 * k) → ℕ)
       intro j hj
       exact Finset.card_biUnion_le
 
+/-! ### Retained Bernoulli variance mass -/
+
+/-- Choosing whether to include each distinct prime factor injects `2 ^ ω(m)` squarefree
+divisors into the full divisor set. -/
+theorem two_pow_primeFactors_card_le_card_divisors {m : ℕ} (hm : m ≠ 0) :
+    2 ^ m.primeFactors.card ≤ m.divisors.card := by
+  rw [Nat.card_divisors hm, ← Finset.prod_const]
+  refine Finset.prod_le_prod' fun p hp => ?_
+  have := Nat.Prime.factorization_pos_of_dvd (Nat.prime_of_mem_primeFactors hp) hm
+    (Nat.dvd_of_mem_primeFactors hp)
+  omega
+
+/-- Discarding divisors at most `P₀` loses at most `P₀` elements. -/
+theorem card_divisors_le_cutoff_add_large (m P₀ : ℕ) (hm : m ≠ 0) :
+    m.divisors.card ≤ P₀ + (m.divisors.filter fun p => P₀ < p).card := by
+  have hsmall : (m.divisors.filter fun p => ¬ P₀ < p).card ≤ P₀ := by
+    calc
+      (m.divisors.filter fun p => ¬ P₀ < p).card ≤ (Finset.Icc 1 P₀).card := by
+        apply Finset.card_le_card
+        intro p hp
+        rcases Finset.mem_filter.mp hp with ⟨hpdiv, hpP₀⟩
+        exact Finset.mem_Icc.mpr ⟨
+          Nat.pos_of_dvd_of_pos (Nat.dvd_of_mem_divisors hpdiv) (Nat.pos_of_ne_zero hm),
+          by omega⟩
+      _ = P₀ := by rw [Nat.card_Icc]; omega
+  have hsplit := Finset.card_filter_add_card_filter_not
+    (s := m.divisors) (p := fun p => P₀ < p)
+  omega
+
+/-- Every anchored divisor above the cutoff is uniquely classified as good or bad. -/
+theorem card_large_anchor_moduli_eq_good_add_bad
+    (a₀ K P₀ k : ℕ) (n : Fin (2 * k) → ℕ) (i : Fin (2 * k)) :
+    ((n i + a₀).divisors.filter fun p => P₀ < p).card =
+      (tupleGoodModuli a₀ K P₀ k n i).card +
+        (tupleBadModuli a₀ K P₀ k n i).card := by
+  classical
+  have hsplit := Finset.card_filter_add_card_filter_not
+    (s := (n i + a₀).divisors.filter fun p => P₀ < p)
+    (p := fun p => ∀ j, j ≠ i → n j % p < p - K)
+  simpa only [tupleGoodModuli, tupleBadModuli, Finset.filter_filter] using hsplit.symm
+
+/-- The variance hypothesis at each good modulus can be frozen at the anchor scale
+`n i + a₀`: the exponent `-a` reverses the logarithmic comparison. -/
+theorem tupleGoodModuli_variance_mass (delta : ℕ → ℝ) (a c : ℝ)
+    (ha : 0 ≤ a) (hc : 0 < c)
+    (hvar : ∀ m : ℕ, 2 ≤ m →
+      c * Real.rpow (Real.log m) (-a) ≤ delta m * (1 - delta m))
+    (a₀ K P₀ k : ℕ) (n : Fin (2 * k) → ℕ) (i : Fin (2 * k))
+    (ha₀ : 1 ≤ a₀) (hP₀ : 1 ≤ P₀) :
+    c * Real.rpow (Real.log (n i + a₀)) (-a) *
+        ((tupleGoodModuli a₀ K P₀ k n i).card : ℝ) ≤
+      ∑ p ∈ tupleGoodModuli a₀ K P₀ k n i, delta p * (1 - delta p) := by
+  calc
+    c * Real.rpow (Real.log (n i + a₀)) (-a) *
+        ((tupleGoodModuli a₀ K P₀ k n i).card : ℝ) =
+        ∑ p ∈ tupleGoodModuli a₀ K P₀ k n i,
+          c * Real.rpow (Real.log (n i + a₀)) (-a) := by
+      rw [Finset.sum_const, nsmul_eq_mul]
+      ring
+    _ ≤ ∑ p ∈ tupleGoodModuli a₀ K P₀ k n i,
+        delta p * (1 - delta p) := by
+      apply Finset.sum_le_sum
+      intro p hp
+      rcases (mem_tupleGoodModuli ha₀).mp hp with ⟨hpdiv, hP₀p, hsep⟩
+      have hp2 : 2 ≤ p := by omega
+      have hpM : p ≤ n i + a₀ := Nat.le_of_dvd (by omega) hpdiv
+      have hpR : (0 : ℝ) < p := by exact_mod_cast (by omega : 0 < p)
+      have hlogp : 0 < Real.log (p : ℝ) := Real.log_pos (by exact_mod_cast hp2)
+      have hlogle : Real.log (p : ℝ) ≤ Real.log ((n i : ℝ) + a₀) :=
+        Real.log_le_log hpR (by exact_mod_cast hpM)
+      have hrpow : Real.rpow (Real.log (n i + a₀)) (-a) ≤
+          Real.rpow (Real.log p) (-a) :=
+        Real.rpow_le_rpow_of_nonpos hlogp hlogle (by linarith)
+      exact (mul_le_mul_of_nonneg_left hrpow hc.le).trans (hvar p hp2)
+
+/-- After the cutoff and collision losses, the surviving good moduli retain at least the
+advertised `2 ^ ω` amount of Bernoulli variance.  A negative bracket makes the claim automatic;
+later Hardy--Ramanujan and shifted-gcd estimates make it quantitatively positive. -/
+theorem retained_variance_mass_le (delta : ℕ → ℝ) (a c : ℝ)
+    (ha : 0 ≤ a) (hc : 0 < c)
+    (hvar : ∀ m : ℕ, 2 ≤ m →
+      c * Real.rpow (Real.log m) (-a) ≤ delta m * (1 - delta m))
+    (a₀ K P₀ k : ℕ) (n : Fin (2 * k) → ℕ) (i : Fin (2 * k))
+    (ha₀ : 1 ≤ a₀) (hP₀ : 1 ≤ P₀) :
+    c * Real.rpow (Real.log (n i + a₀)) (-a) *
+        ((((2 ^ (n i + a₀).primeFactors.card : ℕ) : ℝ) - P₀) -
+          ((tupleBadModuli a₀ K P₀ k n i).card : ℝ)) ≤
+      ∑ p ∈ tupleGoodModuli a₀ K P₀ k n i, delta p * (1 - delta p) := by
+  have hM0 : n i + a₀ ≠ 0 := by omega
+  have hcardNat : 2 ^ (n i + a₀).primeFactors.card ≤
+      P₀ + (tupleGoodModuli a₀ K P₀ k n i).card +
+        (tupleBadModuli a₀ K P₀ k n i).card := by
+    have htwo := two_pow_primeFactors_card_le_card_divisors hM0
+    have hlarge := card_divisors_le_cutoff_add_large (n i + a₀) P₀ hM0
+    have hpart := card_large_anchor_moduli_eq_good_add_bad a₀ K P₀ k n i
+    omega
+  have hcardRadd : ((2 ^ (n i + a₀).primeFactors.card : ℕ) : ℝ) ≤
+      (P₀ : ℝ) + ((tupleGoodModuli a₀ K P₀ k n i).card : ℝ) +
+        ((tupleBadModuli a₀ K P₀ k n i).card : ℝ) := by
+    exact_mod_cast hcardNat
+  have hretain : (((2 ^ (n i + a₀).primeFactors.card : ℕ) : ℝ) - P₀) -
+        ((tupleBadModuli a₀ K P₀ k n i).card : ℝ) ≤
+      ((tupleGoodModuli a₀ K P₀ k n i).card : ℝ) := by
+    linarith
+  have hlognonneg : 0 ≤ Real.log ((n i : ℝ) + a₀) :=
+    Real.log_nonneg (by exact_mod_cast (show 1 ≤ n i + a₀ by omega))
+  have hcoeff : 0 ≤ c * Real.rpow (Real.log (n i + a₀)) (-a) :=
+    mul_nonneg hc.le (Real.rpow_nonneg hlognonneg _)
+  exact (mul_le_mul_of_nonneg_left hretain hcoeff).trans
+    (tupleGoodModuli_variance_mass delta a c ha hc hvar a₀ K P₀ k n i ha₀ hP₀)
+
 /-! ### The full-tuple good-modulus phase gap -/
 
 /-- A residue at least `K` places below the top of the period contributes at most its share of
