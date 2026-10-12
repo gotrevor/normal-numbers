@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
 import NormalNumbers.CPrimeSiteFactorization
+import NormalNumbers.CoefmassOmegaBV
 import NormalNumbers.G4MertensAP
 
 /-!
@@ -15,7 +16,8 @@ inputs (`RieszFourthMoment`, `RieszEnergyTail`), `AugmentedJointTV` and the site
 producer depend on definitions being proved on branch `wip/riesz-energy`.  They are planted after
 that branch merges.
 
-* `MultBVOmegaRestricted`: restricted-level BV for the ω form, derived from `MultBVResidue`.
+* `MultBVOmegaRestricted` (restricted-level BV for the ω form) now lives in
+  `CoefmassOmegaBV.lean`, with its producer `multBVOmegaRestricted_of`.
 * Literature inputs `MertensAPAsymptotic`, `BrunTitchmarshAP` and `UpperSieveTwoLinearForms`.
   The last two are checked against K. Ford, *Sieve Methods* lecture notes (2023), Thms 2.7 and
   2.5.
@@ -69,28 +71,6 @@ open Filter
 open NormalNumbers.Literature
 open NormalNumbers.PrimeModel.KMT NormalNumbers.PrimeModel.PhaseFactor
 open NormalNumbers.PrimeModel.PhaseAlgebra NormalNumbers.PrimeModel.Quant
-
-/-- **Restricted-level BV for the ω form** (derived from `MultBVResidue`; believed ~90%).  Moduli
-range only up to `x^θ` with `θ < 1/4`, NOT the full `√x/log^B` range.  A consumer whose conductor
-is `Q·N^θ` at lengths `N/a`, `a ≤ (log N)^D`, invokes this at some `θ′ ∈ (θ, 1/4)`; the strict
-gap absorbs both. -/
-def MultBVOmegaRestricted : Prop :=
-  ∀ q₀ a : ℕ, 3 ≤ q₀ → Nat.Coprime a q₀ → ∀ z : ℂ, ‖z‖ = 1 → ∀ θ : ℝ, 0 < θ → θ < 1/4 →
-    ∀ A : ℝ, 0 < A → ∃ C : ℝ, 0 < C ∧ ∀ x y : ℕ, 3 ≤ x →
-      ∑ e ∈ (Finset.Icc 1 ⌊(x : ℝ) ^ θ⌋₊).filter (fun e => Nat.Coprime e q₀),
-        ⨆ c : {c : Fin e // Nat.Coprime c.val e},
-          ‖apDiscrepancy (fun n => z ^ omegaLe (residueClass q₀ a) y n) x e c.val.val‖
-        ≤ C * x / Real.log x ^ A
-
-/-- Believed ~90%.  English proof:
-- write `z^{ω_P} = z^{Ω_P} ∗ h_z`, whose local factor is `H_p = 1 + z(1−z)X²/(1−X)`, so h is
-  supported on squarefull b, with `|h(p^ν)| ≤ 2` locally and so `|h(b)| ≤ 2^{ω(b)}`;
-- for `b ≤ √x`, apply `MultBVResidue` at length `x/b`, with moduli `e ≤ x^θ ≤ √(x/b)/log^B`
-  since θ < 1/4;
-- for `b > √x`, use the trivial bound `x^{θ+3/4+ε}`.
-
-A coprime residue c kills every term with `(b, e) > 1`. -/
-theorem multBVOmegaRestricted_of (h : MultBVResidue) : MultBVOmegaRestricted := sorry
 
 /-- **Second order on the Erdős–Turán schedule.**  A SEPARATE statement: the frozen all-`u`
 `PairSecondOrder` is unchanged. -/

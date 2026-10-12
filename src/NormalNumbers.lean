@@ -544,6 +544,7 @@ import NormalNumbers.ZerolessTuples
 import NormalNumbers.CampbellAnswer
 import NormalNumbers.CPrimeSiteFactorization
 import NormalNumbers.CoefmassInputs
+import NormalNumbers.CoefmassOmegaBV
 import NormalNumbers.CoefmassProducer
 import NormalNumbers.CoefmassTSWDirect
 import NormalNumbers.MazeAudit
