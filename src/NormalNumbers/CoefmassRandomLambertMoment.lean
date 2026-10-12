@@ -49,8 +49,8 @@ with `P₀, γ` depending only on `b, h`.
    `‖f‖^{2k} ≤ e^{-c₀k/p}` and concavity give `E G ≤ exp(-γ v min(k/p,1))`, with
    `γ = 1 - e^{-c₀}`.
 
-Status: IN PROGRESS.  The finite local analytic layer and the infinite-series characteristic bound
-are proved.  The finite even-moment expansion and final assembly declarations remain.
+Status: COMPLETE.  The finite local analytic layer, infinite-series characteristic bound,
+finite even-moment expansion, and final CRT/prefix assembly are proved.
 -/
 
 namespace NormalNumbers.RandomLambertMoment
@@ -1446,6 +1446,181 @@ theorem norm_integral_ePh_randomLambert_le {Ω : Type*} [MeasurableSpace Ω]
   · intro p hp hpF
     exact bernMod_le_one (hX.1 p).1 (hX.1 p).2 _
 
+/-! ### Finite even-moment expansion -/
+
+/-- The signed power sum attached to a `2k`-tuple of Weyl indices. -/
+noncomputable def tuplePowerSum (b k : ℕ) (n : Fin (2 * k) → ℕ) : ℝ :=
+  ∑ i, (tupleSign k i : ℝ) * (b : ℝ) ^ (n i)
+
+/-- `weylMean` as a sum over `Fin N`, in the `ePh` notation used by the
+characteristic-function estimates. -/
+theorem weylMean_eq_ePh_sum (b : ℕ) (h : ℤ) (x : ℝ) (N : ℕ) :
+    weylMean b h x N =
+      (∑ n : Fin N, ePh ((h : ℝ) * (b : ℝ) ^ n.val * x)) / (N : ℂ) := by
+  unfold weylMean
+  rw [← Fin.sum_univ_eq_sum_range]
+  congr 1
+  apply Finset.sum_congr rfl
+  intro n hn
+  unfold ePh
+  congr 1
+  push_cast
+  ring
+
+/-- A signed tuple phase is the product of the `k` direct Weyl phases and the
+`k` conjugate Weyl phases. -/
+theorem ePh_tuplePowerSum_prod (b : ℕ) (h : ℤ) (k : ℕ)
+    (n : Fin (2 * k) → ℕ) (x : ℝ) :
+    ePh ((h : ℝ) * tuplePowerSum b k n * x) =
+      ∏ i, if i.val < k then ePh ((h : ℝ) * (b : ℝ) ^ (n i) * x)
+        else conj (ePh ((h : ℝ) * (b : ℝ) ^ (n i) * x)) := by
+  have harg :
+      (h : ℝ) * tuplePowerSum b k n * x =
+        ∑ i, (tupleSign k i : ℝ) * (h : ℝ) * (b : ℝ) ^ (n i) * x := by
+    unfold tuplePowerSum
+    rw [Finset.mul_sum, Finset.sum_mul]
+    apply Finset.sum_congr rfl
+    intro i hi
+    ring
+  rw [harg, ePh_sum]
+  apply Finset.prod_congr rfl
+  intro i hi
+  by_cases hik : i.val < k
+  · simp only [tupleSign, hik, if_pos, Int.cast_one, one_mul]
+  · simp only [tupleSign, hik, if_false, Int.cast_neg, Int.cast_one, neg_mul, one_mul]
+    exact ePh_neg _
+
+/-- Expanding the direct and conjugate `k`th powers produces the signed
+`2k`-tuple sum. -/
+theorem tuple_ePh_weyl_sum (b : ℕ) (h : ℤ) (k N : ℕ) (x : ℝ) :
+    (∑ n : Fin (2 * k) → Fin N,
+        ePh ((h : ℝ) * tuplePowerSum b k (fun i => (n i).val) * x)) =
+      (∑ j : Fin N, ePh ((h : ℝ) * (b : ℝ) ^ j.val * x)) ^ k *
+        conj (∑ j : Fin N, ePh ((h : ℝ) * (b : ℝ) ^ j.val * x)) ^ k := by
+  classical
+  let z : ℂ := ∑ j : Fin N, ePh ((h : ℝ) * (b : ℝ) ^ j.val * x)
+  calc
+    (∑ n : Fin (2 * k) → Fin N,
+        ePh ((h : ℝ) * tuplePowerSum b k (fun i => (n i).val) * x)) =
+        ∑ n : Fin (2 * k) → Fin N,
+          ∏ i, if i.val < k then ePh ((h : ℝ) * (b : ℝ) ^ (n i).val * x)
+            else conj (ePh ((h : ℝ) * (b : ℝ) ^ (n i).val * x)) := by
+      apply Finset.sum_congr rfl
+      intro n hn
+      exact ePh_tuplePowerSum_prod b h k (fun i => (n i).val) x
+    _ = ∏ i : Fin (2 * k),
+        ∑ j : Fin N, if i.val < k then ePh ((h : ℝ) * (b : ℝ) ^ j.val * x)
+          else conj (ePh ((h : ℝ) * (b : ℝ) ^ j.val * x)) := by
+      rw [Fintype.prod_sum]
+    _ = ∏ i : Fin (2 * k), if i.val < k then z else conj z := by
+      apply Finset.prod_congr rfl
+      intro i hi
+      by_cases hik : i.val < k
+      · simp only [hik, if_pos]
+        rfl
+      · simp only [hik, if_false]
+        rw [map_sum]
+    _ = z ^ k * conj z ^ k := prod_fin_two_blocks k z (conj z)
+    _ = (∑ j : Fin N, ePh ((h : ℝ) * (b : ℝ) ^ j.val * x)) ^ k *
+        conj (∑ j : Fin N, ePh ((h : ℝ) * (b : ℝ) ^ j.val * x)) ^ k := rfl
+
+/-- Exact complex form of the pointwise even-moment expansion. -/
+theorem weylMean_even_expansion (b : ℕ) (h : ℤ) (k N : ℕ) (hN : 1 ≤ N) (x : ℝ) :
+    ((‖weylMean b h x N‖ ^ (2 * k) : ℝ) : ℂ) =
+      (∑ n : Fin (2 * k) → Fin N,
+        ePh ((h : ℝ) * tuplePowerSum b k (fun i => (n i).val) * x)) /
+          (N : ℂ) ^ (2 * k) := by
+  rw [← pow_mul_conj_pow_eq_norm_pow]
+  rw [weylMean_eq_ePh_sum, tuple_ePh_weyl_sum]
+  have hNC : (N : ℂ) ≠ 0 := by exact_mod_cast (by omega : N ≠ 0)
+  rw [div_pow, map_div₀, map_natCast, div_pow]
+  rw [show (N : ℂ) ^ (2 * k) = (N : ℂ) ^ k * (N : ℂ) ^ k by
+    rw [two_mul, pow_add]]
+  field_simp
+  ring
+
+/-- The Bernoulli characteristic modulus is invariant under phase negation. -/
+theorem bernMod_neg (δ θ : ℝ) : bernMod δ (-θ) = bernMod δ θ := by
+  unfold bernMod
+  rw [ePh_neg]
+  have hconj :
+      (((1 - δ : ℝ) : ℂ) + (δ : ℂ) * conj (ePh θ)) =
+        conj (((1 - δ : ℝ) : ℂ) + (δ : ℂ) * ePh θ) := by
+    simp
+  rw [hconj, RCLike.norm_conj]
+
+/-- The prime phase is the signed tuple power sum divided by the Lambert
+denominator. -/
+theorem tuplePhase_eq_tuplePowerSum_div (b : ℕ) (h : ℤ) (k p : ℕ)
+    (n : Fin (2 * k) → ℕ) :
+    tuplePhase b h k p n =
+      (h : ℝ) * tuplePowerSum b k n / ((b : ℝ) ^ p - 1) := by
+  unfold tuplePhase tuplePowerSum
+  simp_rw [div_eq_mul_inv, ← mul_assoc]
+  rw [← Finset.sum_mul]
+  ring
+
+/-- Multiplication of the characteristic frequency by either allowed sign
+does not change the Bernoulli modulus. -/
+theorem bernMod_signed_tuplePowerSum (b : ℕ) (h : ℤ) (k p : ℕ)
+    (n : Fin (2 * k) → ℕ) (δ : ℝ) (s : ℤ) (hs : s = 1 ∨ s = -1) :
+    bernMod δ
+        (((s : ℝ) * (h : ℝ) * tuplePowerSum b k n) / ((b : ℝ) ^ p - 1)) =
+      bernMod δ (tuplePhase b h k p n) := by
+  rw [tuplePhase_eq_tuplePowerSum_div]
+  rcases hs with rfl | rfl
+  · norm_num
+  · rw [show ((((-1 : ℤ) : ℝ) * (h : ℝ) * tuplePowerSum b k n) /
+        ((b : ℝ) ^ p - 1)) =
+      -((h : ℝ) * tuplePowerSum b k n / ((b : ℝ) ^ p - 1)) by
+        norm_num
+        ring, bernMod_neg]
+
+/-- Periodicity modulo `p` implies periodicity modulo every multiple of `p`. -/
+theorem bernMod_tuplePhase_mod_of_dvd (b : ℕ) (hb : 2 ≤ b) (h : ℤ)
+    (k p Q : ℕ) (hp : 1 ≤ p) (hpQ : p ∣ Q) (δ : ℝ)
+    (n : Fin (2 * k) → ℕ) :
+    bernMod δ (tuplePhase b h k p n) =
+      bernMod δ (tuplePhase b h k p (fun i => n i % Q)) := by
+  have heq : (fun i : Fin (2 * k) => n i % p) =
+      (fun i : Fin (2 * k) => (n i % Q) % p) := by
+    funext i
+    exact (Nat.mod_mod_of_dvd (n i) hpQ).symm
+  calc
+    bernMod δ (tuplePhase b h k p n) =
+        bernMod δ (tuplePhase b h k p (fun i => n i % p)) :=
+      bernMod_tuplePhase_mod b hb h k p hp δ n
+    _ = bernMod δ (tuplePhase b h k p (fun i => (n i % Q) % p)) := by rw [heq]
+    _ = bernMod δ (tuplePhase b h k p (fun i => n i % Q)) :=
+      (bernMod_tuplePhase_mod b hb h k p hp δ (fun i => n i % Q)).symm
+
+/-- Addition law for the normalized exponential. -/
+theorem ePh_add (x y : ℝ) : ePh (x + y) = ePh x * ePh y := by
+  unfold ePh
+  rw [show 2 * Real.pi * Complex.I * (((x + y : ℝ) : ℂ)) =
+      2 * Real.pi * Complex.I * (x : ℂ) +
+        2 * Real.pi * Complex.I * (y : ℂ) by
+    push_cast
+    ring, Complex.exp_add]
+
+/-- A deterministic translate contributes only a unit factor to the norm of
+the random Lambert characteristic function. -/
+theorem norm_integral_ePh_add_randomLambert_le {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) [IsProbabilityMeasure μ] (b : ℕ) (hb : 2 ≤ b)
+    (delta : Prime → ℝ) (X : Prime → Ω → Bool) (hX : BernoulliLaw μ delta X)
+    (F : Finset Prime) (u a : ℝ) :
+    ‖∫ w, ePh (u + a * randomLambert b X w) ∂μ‖ ≤
+      ∏ p ∈ F, bernMod (delta p) (a / ((b : ℝ) ^ p.val - 1)) := by
+  have hpoint (w : Ω) :
+      ePh (u + a * randomLambert b X w) =
+        ePh u * ePh (a * randomLambert b X w) := ePh_add _ _
+  rw [show (∫ w, ePh (u + a * randomLambert b X w) ∂μ) =
+      ∫ w, ePh u * ePh (a * randomLambert b X w) ∂μ by
+        apply integral_congr_ae
+        exact Filter.Eventually.of_forall hpoint]
+  rw [integral_const_mul, norm_mul, norm_ePh, one_mul]
+  exact norm_integral_ePh_randomLambert_le μ b hb delta X hX F a
+
 theorem moment_le_tupleAvg (b : ℕ) (hb : 2 ≤ b) (h : ℤ)
     {Ω : Type} [MeasurableSpace Ω] (μ : Measure Ω) [IsProbabilityMeasure μ]
     (delta : Prime → ℝ) (X : Prime → Ω → Bool) (hX : BernoulliLaw μ delta X)
@@ -1454,7 +1629,91 @@ theorem moment_le_tupleAvg (b : ℕ) (hb : 2 ≤ b) (h : ℤ)
       (∑ n : Fin (2 * k) → Fin N,
           ∏ p ∈ F, bernMod (delta p) (tuplePhase b h k p.val (fun i => (n i).val))) /
         (N : ℝ) ^ (2 * k) := by
-  sorry
+  classical
+  let A : (Fin (2 * k) → Fin N) → Ω → ℂ := fun n w =>
+    ePh ((h : ℝ) * tuplePowerSum b k (fun i => (n i).val) *
+      (c + (s : ℝ) * randomLambert b X w))
+  have hY : Measurable (randomLambert b X) :=
+    measurable_randomLambert b X hX.2.1
+  have hAmeas (n : Fin (2 * k) → Fin N) : Measurable (A n) := by
+    dsimp [A]
+    exact continuous_ePh.measurable.comp
+      (measurable_const.mul (measurable_const.add (measurable_const.mul hY)))
+  have hAint (n : Fin (2 * k) → Fin N) : Integrable (A n) μ := by
+    apply Integrable.of_bound (hAmeas n).aestronglyMeasurable 1
+    exact Filter.Eventually.of_forall fun w => (norm_ePh _).le
+  have hpoint (w : Ω) :
+      ((‖weylMean b h (c + (s : ℝ) * randomLambert b X w) N‖ ^ (2 * k) : ℝ) : ℂ) =
+        (∑ n : Fin (2 * k) → Fin N, A n w) / (N : ℂ) ^ (2 * k) := by
+    exact weylMean_even_expansion b h k N hN _
+  have hint :
+      (((∫ w, ‖weylMean b h (c + (s : ℝ) * randomLambert b X w) N‖ ^
+          (2 * k) ∂μ) : ℝ) : ℂ) =
+        (∑ n : Fin (2 * k) → Fin N, ∫ w, A n w ∂μ) / (N : ℂ) ^ (2 * k) := by
+    calc
+      (((∫ w, ‖weylMean b h (c + (s : ℝ) * randomLambert b X w) N‖ ^
+          (2 * k) ∂μ) : ℝ) : ℂ) =
+          ∫ w, ((‖weylMean b h (c + (s : ℝ) * randomLambert b X w) N‖ ^
+            (2 * k) : ℝ) : ℂ) ∂μ :=
+        (integral_complex_ofReal (μ := μ)).symm
+      _ = ∫ w, (∑ n : Fin (2 * k) → Fin N, A n w) /
+          (N : ℂ) ^ (2 * k) ∂μ := by
+        apply integral_congr_ae
+        exact Filter.Eventually.of_forall hpoint
+      _ = (∑ n : Fin (2 * k) → Fin N, ∫ w, A n w ∂μ) /
+          (N : ℂ) ^ (2 * k) := by
+        rw [integral_div, integral_finsetSum Finset.univ (fun n _ => hAint n)]
+  have hchar (n : Fin (2 * k) → Fin N) :
+      ‖∫ w, A n w ∂μ‖ ≤
+        ∏ p ∈ F,
+          bernMod (delta p) (tuplePhase b h k p.val (fun i => (n i).val)) := by
+    let q : ℝ := tuplePowerSum b k (fun i => (n i).val)
+    have hrewrite (w : Ω) :
+        A n w = ePh ((h : ℝ) * q * c +
+          ((s : ℝ) * (h : ℝ) * q) * randomLambert b X w) := by
+      dsimp [A, q]
+      congr 1
+      ring
+    calc
+      ‖∫ w, A n w ∂μ‖ =
+          ‖∫ w, ePh ((h : ℝ) * q * c +
+            ((s : ℝ) * (h : ℝ) * q) * randomLambert b X w) ∂μ‖ := by
+        congr 1
+        apply integral_congr_ae
+        exact Filter.Eventually.of_forall hrewrite
+      _ ≤ ∏ p ∈ F, bernMod (delta p)
+          (((s : ℝ) * (h : ℝ) * q) / ((b : ℝ) ^ p.val - 1)) :=
+        norm_integral_ePh_add_randomLambert_le μ b hb delta X hX F
+          ((h : ℝ) * q * c) ((s : ℝ) * (h : ℝ) * q)
+      _ = ∏ p ∈ F,
+          bernMod (delta p) (tuplePhase b h k p.val (fun i => (n i).val)) := by
+        apply Finset.prod_congr rfl
+        intro p hp
+        exact bernMod_signed_tuplePowerSum b h k p.val (fun i => (n i).val)
+          (delta p) s hs
+  have hnonneg : 0 ≤
+      ∫ w, ‖weylMean b h (c + (s : ℝ) * randomLambert b X w) N‖ ^ (2 * k) ∂μ :=
+    integral_nonneg fun w => by positivity
+  have hden : 0 ≤ (N : ℝ) ^ (2 * k) := by positivity
+  calc
+    (∫ w, ‖weylMean b h (c + (s : ℝ) * randomLambert b X w) N‖ ^
+        (2 * k) ∂μ) =
+        ‖(((∫ w, ‖weylMean b h (c + (s : ℝ) * randomLambert b X w) N‖ ^
+          (2 * k) ∂μ) : ℝ) : ℂ)‖ := by
+      rw [Complex.norm_real, Real.norm_eq_abs, abs_of_nonneg hnonneg]
+    _ = ‖(∑ n : Fin (2 * k) → Fin N, ∫ w, A n w ∂μ) /
+          (N : ℂ) ^ (2 * k)‖ := by rw [hint]
+    _ = ‖∑ n : Fin (2 * k) → Fin N, ∫ w, A n w ∂μ‖ /
+          (N : ℝ) ^ (2 * k) := by
+      rw [norm_div, norm_pow, Complex.norm_natCast]
+    _ ≤ (∑ n : Fin (2 * k) → Fin N, ‖∫ w, A n w ∂μ‖) /
+          (N : ℝ) ^ (2 * k) :=
+      div_le_div_of_nonneg_right (norm_sum_le Finset.univ _) hden
+    _ ≤ (∑ n : Fin (2 * k) → Fin N,
+          ∏ p ∈ F, bernMod (delta p)
+            (tuplePhase b h k p.val (fun i => (n i).val))) /
+          (N : ℝ) ^ (2 * k) := by
+      exact div_le_div_of_nonneg_right (Finset.sum_le_sum fun n _ => hchar n) hden
 
 /-! ### The frozen target (verbatim) -/
 
@@ -1473,6 +1732,91 @@ theorem finiteCRT_moment_bound (b : ℕ) (hb : 2 ≤ b) (h : ℤ) (hh : h ≠ 0)
       (∫ w, ‖weylMean b h (c + (s : ℝ) * randomLambert b X w) N‖^(2*k) ∂μ) ≤
         Real.exp (-γ * ∑ p ∈ F, primeVariance delta p * min ((k : ℝ) / p.val) 1) +
         2 * (k : ℝ) * (∏ p ∈ F, (p.val : ℝ)) / N := by
-  sorry
+  classical
+  obtain ⟨P₀, hlocal⟩ := residueTuple_mean_le b hb h hh
+  refine ⟨P₀, momentGamma b, momentGamma_pos b hb, ?_⟩
+  intro Ω _ μ _ delta X hX F hF k N hk hN c s hs
+  let Q : ℕ := ∏ p ∈ F, p.val
+  let G : (Fin (2 * k) → ℕ) → ℝ := fun n =>
+    ∏ p ∈ F, bernMod (delta p) (tuplePhase b h k p.val n)
+  let L : Prime → ℝ := fun p =>
+    (∑ r : Fin (2 * k) → Fin p.val,
+      bernMod (delta p) (tuplePhase b h k p.val (fun i => (r i).val))) /
+        (p.val : ℝ) ^ (2 * k)
+  let E : Prime → ℝ := fun p =>
+    Real.exp (-(momentGamma b) * primeVariance delta p *
+      min ((k : ℝ) / p.val) 1)
+  have hQ : 0 < Q := by
+    dsimp [Q]
+    exact Finset.prod_pos fun p hp => p.property.pos
+  have hG0 (n : Fin (2 * k) → ℕ) : 0 ≤ G n := by
+    dsimp [G]
+    exact Finset.prod_nonneg fun p hp => bernMod_nonneg _ _
+  have hG1 (n : Fin (2 * k) → ℕ) : G n ≤ 1 := by
+    dsimp [G]
+    exact Finset.prod_le_one (fun p hp => bernMod_nonneg _ _)
+      (fun p hp => bernMod_le_one (hX.1 p).1 (hX.1 p).2 _)
+  have hGper (n : Fin (2 * k) → ℕ) : G n = G (fun i => n i % Q) := by
+    dsimp [G]
+    apply Finset.prod_congr rfl
+    intro p hp
+    apply bernMod_tuplePhase_mod_of_dvd b hb h k p.val Q
+    · exact le_trans (by norm_num) p.property.two_le
+    · exact Finset.dvd_prod_of_mem (fun q : Prime => q.val) hp
+  have hpref := prefix_tuple_mean_le Q (2 * k) N hQ hN G hG0 hG1 hGper
+  have hcop : (F : Set Prime).Pairwise (Function.onFun Nat.Coprime Subtype.val) := by
+    intro p hp q hq hpq
+    exact (Nat.coprime_primes p.property q.property).2
+      (fun hpqv => hpq (Subtype.ext hpqv))
+  have hcrt0 := crt_tuple_prod_mean F (fun p : Prime => p.val)
+    (fun p hp => p.property.pos) hcop (2 * k)
+    (fun p n => bernMod (delta p) (tuplePhase b h k p.val n))
+    (fun p hp n => bernMod_tuplePhase_mod b hb h k p.val
+      (le_trans (by norm_num) p.property.two_le) (delta p) n)
+  have hcrt :
+      (∑ r : Fin (2 * k) → Fin Q, G (fun i => (r i).val)) /
+          (Q : ℝ) ^ (2 * k) = ∏ p ∈ F, L p := by
+    simpa only [Q, G, L] using hcrt0
+  have hprod : (∏ p ∈ F, L p) ≤ ∏ p ∈ F, E p := by
+    apply Finset.prod_le_prod
+    · intro p hp
+      dsimp [L]
+      apply div_nonneg
+      · exact Finset.sum_nonneg fun r hr => bernMod_nonneg _ _
+      · positivity
+    · intro p hp
+      dsimp [L, E]
+      simpa only [primeVariance] using
+        hlocal p.val (hF p hp) k hk (delta p) (hX.1 p).1 (hX.1 p).2
+  have hexp :
+      (∏ p ∈ F, E p) =
+        Real.exp (-(momentGamma b) *
+          ∑ p ∈ F, primeVariance delta p * min ((k : ℝ) / p.val) 1) := by
+    dsimp [E]
+    rw [← Real.exp_sum]
+    congr 1
+    rw [Finset.mul_sum]
+    apply Finset.sum_congr rfl
+    intro p hp
+    ring
+  have hmoment := moment_le_tupleAvg b hb h μ delta X hX F k N hN c s hs
+  calc
+    (∫ w, ‖weylMean b h (c + (s : ℝ) * randomLambert b X w) N‖ ^
+        (2 * k) ∂μ) ≤
+        (∑ n : Fin (2 * k) → Fin N, G (fun i => (n i).val)) /
+          (N : ℝ) ^ (2 * k) := by simpa only [G] using hmoment
+    _ ≤ (∑ r : Fin (2 * k) → Fin Q, G (fun i => (r i).val)) /
+          (Q : ℝ) ^ (2 * k) + (2 * k : ℕ) * (Q : ℝ) / N := hpref
+    _ = (∏ p ∈ F, L p) + (2 * k : ℕ) * (Q : ℝ) / N := by rw [hcrt]
+    _ ≤ (∏ p ∈ F, E p) + (2 * k : ℕ) * (Q : ℝ) / N :=
+      add_le_add hprod le_rfl
+    _ = Real.exp (-(momentGamma b) *
+          ∑ p ∈ F, primeVariance delta p * min ((k : ℝ) / p.val) 1) +
+        2 * (k : ℝ) * (∏ p ∈ F, (p.val : ℝ)) / N := by
+      rw [hexp]
+      congr 1
+      dsimp [Q]
+      push_cast
+      ring
 
 end NormalNumbers.RandomLambertMoment

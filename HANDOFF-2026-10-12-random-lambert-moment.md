@@ -77,6 +77,38 @@ Make `src/NormalNumbers/CoefmassRandomLambertMoment.lean` sorry-free, then check
 
 ## Status
 
+- Lap 8 reflection checkpoint (`research/lambert-moment`): completed the scoped objective;
+  `src/NormalNumbers/CoefmassRandomLambertMoment.lean` is sorry-free and the frozen headline
+  `finiteCRT_moment_bound` is proved.  The reflection audit confirmed that the prior truncation and
+  independence route had already removed the genuinely infinite obstacle, so this lap exposed and
+  proved the missing finite abstraction instead of reopening that machinery: `tuplePowerSum`, the
+  exact signed `2k`-tuple expansion `weylMean_even_expansion`, translate/sign removal, and the
+  tuplewise characteristic-function estimate now prove `moment_le_tupleAvg`.  The headline then
+  combines `prefix_tuple_mean_le`, prime pairwise coprimality through `crt_tuple_prod_mean`, and
+  `residueTuple_mean_le`; products of the local exponential losses give exactly the frozen
+  `primeVariance` exponent, and the prefix error casts to exactly `2k(∏p)/N`.  No frozen statement
+  or copied definition changed.
+- Exact verification run:
+  - `lake env lean src/NormalNumbers/CoefmassRandomLambertMoment.lean` (green; no `sorry`
+    warnings).
+  - `lake build NormalNumbers.CoefmassRandomLambertMoment` (green, 8716 jobs).
+  - `lake env lean AuditRandomLambertMomentLap8.lean` with `#print axioms` for every new helper,
+    `moment_le_tupleAvg`, and `finiteCRT_moment_bound` (temporary audit file removed; every
+    declaration exactly `[propext, Classical.choice, Quot.sound]`).
+  - `python3 experiments/random_lambert_moment_controls.py` (all positive controls within
+    tolerance; every deliberately false red control fails as expected).
+  - `~/personal/bin/lean-green ~/src/nn-lambert-moment --target
+    NormalNumbers.CoefmassRandomLambertMoment --import
+    NormalNumbers.CoefmassRandomLambertMoment --axioms
+    NormalNumbers.RandomLambertMoment.finiteCRT_moment_bound`
+    (`✅ FORMALIZE-TIER GREEN`, headline axioms exactly the canonical three).
+  - Commit pre-hook `lake build` (green).
+- Current blocker: none in the scoped target.  The host predicate
+  `sorry-free:src/NormalNumbers/CoefmassRandomLambertMoment.lean` is satisfied.
+- Next highest-value attack: no further attack is required for this campaign checkpoint; preserve
+  the local-only branch and hand the completed theorem back to the operator.  Distribution-tier
+  cleanup or broader downstream integration should be a separately requested objective.
+
 - Lap 7 checkpoint (`research/lambert-moment`): proved the full infinite-series characteristic
   bound `norm_integral_ePh_randomLambert_le`, discharging the probability-theoretic independence
   and limit passage at the heart of `moment_le_tupleAvg`.  The new chain proves geometric absolute
