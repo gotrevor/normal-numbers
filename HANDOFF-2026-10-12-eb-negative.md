@@ -60,7 +60,37 @@ Notation: `μ_M(n) = largeDivisorMass a M n = Σ_{d ∣ n, d > M} (log d)^{-a}`.
 
 ## Status
 
-- Skeleton: 4 sorries, compiles.
+- **Lap 1 checkpoint (2026-10-12): 2 sorries remain; full repository green.**
+  - PROVED `exists_erdosBorwein_moment_exponent`: for `a > log 2`, there is `0 < s ≤ 1` with
+    `2^s - 1 < a*s`, via the right-hand secant limit at zero.  The proof is wired into
+    `largeDivisorMass_moment_small`, so its remaining hole starts after the exponent choice.
+  - PROVED `primeReciprocalMass_le_log_log_add`, reusing the axiom-clean bounded-error Mertens
+    theorem `Erdos67.PrimeEstimates.abs_primeReciprocals_sub_log_log_le` (separately checked:
+    `propext`, `Classical.choice`, `Quot.sound` only).
+  - PROVED `typicalDivisorMass_small` from `largeDivisorMass_moment_small` by the finite Markov
+    inequality at threshold `ε^s`.  Its statement is unchanged and was moved below its dependency.
+  - PROVED `ebRandom_ae_not_normal` from the marginal-only theorem: `C ≥ 0` follows from the
+    `m = 2` bound and positivity of `(log 2)^{-a}`, and the Bernoulli law supplies the marginals.
+    Its statement is unchanged and was moved below its dependency.
+  - Exact verification:
+    - `lake env lean src/NormalNumbers/CoefmassErdosBorweinNegative.lean` — succeeds, exactly the
+      two expected sorry warnings (`largeDivisorMass_moment_small` and
+      `ebRandom_ae_not_normal_of_marginal_bound`).
+    - `~/personal/bin/lean-green . --target ErdosProblems.Erdos67.PrimeEstimates --import
+      ErdosProblems.Erdos67.PrimeEstimates --axioms
+      Erdos67.PrimeEstimates.abs_primeReciprocals_sub_log_log_le` — FORMALIZE-TIER GREEN.
+    - `~/personal/bin/lean-green .` — FORMALIZE-TIER GREEN, 10847 jobs.
+
+### Current blocker / next attack
+
+The load-bearing open theorem is `largeDivisorMass_moment_small`.  Its exponent choice and exact
+coefficient-1 reciprocal-prime Mertens input are now discharged.  Next formalize the uniform
+smooth-divisor estimate
+`Σ_{n≤T} τ(n_y)^s ≤ T*A_s*(log y)^(2^s-1)` for every `T ≥ 1`: define the `y`-smooth part through
+`Nat.factorization`, expand `τ(n_y)^s = Σ_{d∣n} g_y(d)`, average multiples by `⌊T/d⌋ ≤ T/d`, and
+bound the finite Euler factors by `1 + (2^s-1)/p + 1/(p(p-1))`.  Then the dyadic log-block
+geometric tail closes the theorem.  Only after this analytic crux should the remaining
+`ebRandom_ae_not_normal_of_marginal_bound` probability/orbit argument be attacked.
 
 ## Findings
 
