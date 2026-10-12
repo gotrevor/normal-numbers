@@ -68,7 +68,39 @@ Expect step 4 to be the longest.  Splitting it into named leaves is progress.
 
 ## Status
 
-- Skeleton: 3 sorries, compiles.
+- Lap 1 natural-index characteristic checkpoint (`research/eb-positive`): the scoped file still
+  has the three frozen proof debts, but the infinite probability-theoretic obstruction inside
+  `eb_weyl_moment_decay` is now closed.  Ported the completed prime-index machinery to the actual
+  positive-integer indexing of `ebLambert`: deterministic and selected-series summability,
+  measurability, one-coordinate and finite-set Bernoulli characteristic identities, convergence
+  of initial truncations, dominated convergence for the full infinite series, translate removal,
+  and the exact signed `2k`-tuple expansion.  The load-bearing
+  `ebMoment_le_tupleAvg` now reduces every even Weyl moment to a finite tuple average of `bernMod`
+  products.  No frozen statement or copied definition changed.
+- Exact verification run:
+  - `lake env lean src/NormalNumbers/CoefmassErdosBorweinPositive.lean` (green; exactly the three
+    original disclosed `sorry` warnings).
+  - `lake build NormalNumbers.CoefmassErdosBorweinPositive` (green, 8719 jobs).
+  - `lake env lean AuditEBPositiveLap1.lean` with `#print axioms` for
+    `summable_ebLambert_denom`, `measurable_ebLambert`, `integral_ePh_finset_eb`,
+    `norm_integral_ePh_ebLambert_le`, and `ebMoment_le_tupleAvg` (temporary audit file removed;
+    every declaration exactly `[propext, Classical.choice, Quot.sound]`).
+  - `git diff --check` (clean).
+  - `~/personal/bin/lean-green ~/src/nn-eb-positive --target
+    NormalNumbers.CoefmassErdosBorweinPositive --import
+    NormalNumbers.CoefmassErdosBorweinPositive --axioms
+    NormalNumbers.ErdosBorweinPositive.ebMoment_le_tupleAvg` (`FORMALIZE-TIER GREEN`, 8719 jobs;
+    headline helper axioms exactly the canonical three).
+- Current blocker: the residual core of `eb_weyl_moment_decay` is now finite/combinatorial.  For
+  each tuple one must choose its good moduli, use `anchor_tail_cos_le` to contract the resulting
+  `bernMod` product, and prove that tuples without enough good mass are rare.  The latter requires
+  the still-open `shifted_gcd_divisor_moment`; the final a.e. headline remains downstream of the
+  moment theorem.
+- Next highest-value attack: prove `shifted_gcd_divisor_moment`.  First establish the summability
+  of `d ↦ τ(d)^r/d²` (most likely by domination by a fixed iterated divisor convolution), then
+  expand `τ(gcd)^r` over common divisors and bound the two shifted divisibility counts.  With that
+  lemma banked, formalize the tuple good-mass/Markov estimate and feed it to
+  `ebMoment_le_tupleAvg`.
 
 ## Findings
 

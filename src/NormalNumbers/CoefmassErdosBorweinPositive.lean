@@ -67,6 +67,334 @@ noncomputable def weylMean (b : ℕ) (h : ℤ) (x : ℝ) (N : ℕ) : ℂ :=
   (∑ n ∈ Finset.range N,
     Complex.exp (2 * Real.pi * Complex.I * (h : ℂ) * (b : ℂ)^n * (x : ℂ))) / N
 
+/-! ### Natural-index Bernoulli characteristic functions
+
+The corresponding lemmas in `RandomLambertMoment` are indexed by primes.  The Erdős--Borwein
+series uses every positive integer, represented here by the injective index map `m ↦ m + 1`.
+The proofs below deliberately keep that shift visible, so later good-modulus products can be
+stated directly in terms of the frozen `BernoulliLawNat` and `ebLambert` definitions. -/
+
+open NormalNumbers.RandomLambertMoment
+
+/-- The positive-integer Lambert denominators form a summable family. -/
+theorem summable_ebLambert_denom (b : ℕ) (hb : 2 ≤ b) :
+    Summable (fun m : ℕ => (1 : ℝ) / ((b : ℝ) ^ (m + 1) - 1)) := by
+  have hbR : (2 : ℝ) ≤ b := by exact_mod_cast hb
+  have hb1 : (1 : ℝ) < b := lt_of_lt_of_le (by norm_num) hbR
+  have hgeom : Summable (fun m : ℕ => 2 * (1 / (b : ℝ)) ^ (m + 1)) := by
+    exact ((summable_geometric_of_lt_one (by positivity)
+      (by simpa using one_div_lt_one_div_of_lt zero_lt_one hb1)).mul_left 2).comp_injective
+        Nat.succ_injective
+  refine Summable.of_nonneg_of_le (fun m => by
+    exact div_nonneg (by norm_num) (sub_nonneg.mpr (one_le_pow₀ hb1.le))) (fun m => ?_) hgeom
+  have hpow : (2 : ℝ) ≤ (b : ℝ) ^ (m + 1) := by
+    calc
+      (2 : ℝ) ≤ b := hbR
+      _ = (b : ℝ) ^ 1 := by ring
+      _ ≤ (b : ℝ) ^ (m + 1) := pow_le_pow_right₀ hb1.le (by omega)
+  have hden : 0 < (b : ℝ) ^ (m + 1) - 1 := by linarith
+  have hbpowpos : (0 : ℝ) < (b : ℝ) ^ (m + 1) := by positivity
+  calc
+    1 / ((b : ℝ) ^ (m + 1) - 1) ≤ 2 / (b : ℝ) ^ (m + 1) := by
+      rw [div_le_div_iff₀ hden hbpowpos]
+      nlinarith
+    _ = 2 * (1 / (b : ℝ)) ^ (m + 1) := by
+      rw [div_pow]
+      simp only [one_pow]
+      ring
+
+/-- Every selected Erdős--Borwein subseries is absolutely summable. -/
+theorem summable_ebLambert_terms (b : ℕ) (hb : 2 ≤ b)
+    {Ω : Type*} (X : ℕ → Ω → Bool) (w : Ω) :
+    Summable (fun m : ℕ =>
+      (if X (m + 1) w then (1 : ℝ) else 0) / ((b : ℝ) ^ (m + 1) - 1)) := by
+  apply (summable_ebLambert_denom b hb).of_norm_bounded
+  intro m
+  have hbR : (1 : ℝ) < b := by exact_mod_cast (lt_of_lt_of_le (by norm_num) hb)
+  have hden : 0 < (b : ℝ) ^ (m + 1) - 1 :=
+    sub_pos.mpr (one_lt_pow₀ hbR (by omega))
+  split_ifs <;> simp only [norm_div, Real.norm_eq_abs, abs_one, abs_zero, zero_div]
+  · rw [abs_of_pos hden]
+  · exact div_nonneg (by norm_num) hden.le
+
+/-- The natural-index Erdős--Borwein random series is measurable. -/
+theorem measurable_ebLambert (b : ℕ) {Ω : Type*} [MeasurableSpace Ω]
+    (X : ℕ → Ω → Bool) (hX : ∀ m, Measurable (X m)) :
+    Measurable (ebLambert b X) := by
+  unfold ebLambert
+  exact Measurable.tsum fun m => by
+    have hm : Measurable (fun w => if X (m + 1) w then (1 : ℝ) else 0) :=
+      (measurable_of_finite (f := fun z : Bool => if z then (1 : ℝ) else 0)).comp (hX (m + 1))
+    exact hm.div_const _
+
+/-- The characteristic function of one natural-index Bernoulli coordinate. -/
+theorem integral_ePh_bernoulli_nat {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) [IsProbabilityMeasure μ] (delta : ℕ → ℝ)
+    (X : ℕ → Ω → Bool) (hX : BernoulliLawNat μ delta X) (m : ℕ) (θ : ℝ) :
+    (∫ w, ePh (if X m w then θ else 0) ∂μ) =
+      ((1 - delta m : ℝ) : ℂ) + (delta m : ℂ) * ePh θ := by
+  let A : Set Ω := {w | X m w = true}
+  have hA : MeasurableSet A := (hX.2.1 m) (measurableSet_singleton true)
+  have hdelta0 : 0 ≤ delta m := (hX.1 m).1
+  have hreal : μ.real A = delta m := by
+    rw [measureReal_def, hX.2.2.2 m, ENNReal.toReal_ofReal hdelta0]
+  have hfun : (fun w => ePh (if X m w then θ else 0)) =
+      fun w => A.indicator (fun _ => ePh θ - 1) w + 1 := by
+    funext w
+    by_cases hw : X m w = true
+    · simp [A, hw]
+    · have hw' : X m w = false := Bool.eq_false_of_not_eq_true hw
+      simp [A, hw, hw', ePh]
+  rw [hfun, integral_add]
+  · rw [integral_indicator_const _ hA, integral_const, hreal]
+    have huniv : μ.real Set.univ = 1 := by simp [measureReal_def]
+    rw [huniv]
+    simp only [one_smul]
+    push_cast
+    rw [Complex.real_smul]
+    ring
+  · exact (integrable_const _).indicator hA
+  · exact integrable_const _
+
+/-- Independence factorizes a finite set of positive-integer coordinates. -/
+theorem integral_ePh_finset_eb {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) [IsProbabilityMeasure μ] (b : ℕ)
+    (delta : ℕ → ℝ) (X : ℕ → Ω → Bool) (hX : BernoulliLawNat μ delta X)
+    (G : Finset ℕ) (a : ℝ) :
+    (∫ w, ePh (a * ∑ m ∈ G,
+        (if X (m + 1) w then (1 : ℝ) else 0) / ((b : ℝ) ^ (m + 1) - 1)) ∂μ) =
+      ∏ m ∈ G, (((1 - delta (m + 1) : ℝ) : ℂ) +
+        (delta (m + 1) : ℂ) * ePh (a / ((b : ℝ) ^ (m + 1) - 1))) := by
+  classical
+  let Y : G → Ω → ℂ := fun m w =>
+    ePh (if X (m.1 + 1) w then a / ((b : ℝ) ^ (m.1 + 1) - 1) else 0)
+  have hI : iIndepFun (fun m : G => X (m.1 + 1)) μ :=
+    iIndepFun.precomp (Nat.succ_injective.comp Subtype.val_injective) hX.2.2.1
+  have hprod := hI.integral_fun_prod_comp
+    (fun m => (hX.2.1 (m.1 + 1)).aemeasurable)
+    (fun m => (measurable_of_finite (f := fun z : Bool =>
+      ePh (if z then a / ((b : ℝ) ^ (m.1 + 1) - 1) else 0))).aestronglyMeasurable)
+  have hpoint (w : Ω) :
+      ePh (a * ∑ m ∈ G,
+          (if X (m + 1) w then (1 : ℝ) else 0) / ((b : ℝ) ^ (m + 1) - 1)) =
+        ∏ m : G, Y m w := by
+    rw [Finset.mul_sum]
+    rw [show (∑ m ∈ G, a * ((if X (m + 1) w then (1 : ℝ) else 0) /
+        ((b : ℝ) ^ (m + 1) - 1))) =
+        ∑ m : G, (if X (m.1 + 1) w then a / ((b : ℝ) ^ (m.1 + 1) - 1) else 0) by
+      calc
+        _ = ∑ m : G, a * ((if X (m.1 + 1) w then (1 : ℝ) else 0) /
+            ((b : ℝ) ^ (m.1 + 1) - 1)) :=
+          Finset.sum_subtype G (p := fun m : ℕ => m ∈ G) (by simp) _
+        _ = _ := by
+          apply Finset.sum_congr rfl
+          intro m hm
+          split_ifs <;> ring]
+    unfold ePh Y
+    push_cast
+    rw [Finset.mul_sum, Complex.exp_sum]
+    rfl
+  rw [show (∫ w, ePh (a * ∑ m ∈ G,
+      (if X (m + 1) w then (1 : ℝ) else 0) / ((b : ℝ) ^ (m + 1) - 1)) ∂μ) =
+      ∫ w, ∏ m : G, Y m w ∂μ by
+        apply integral_congr_ae
+        exact Filter.Eventually.of_forall hpoint]
+  rw [hprod]
+  calc
+    (∏ m : G, ∫ w, Y m w ∂μ) =
+        ∏ m ∈ G, ∫ w, ePh (if X (m + 1) w then
+          a / ((b : ℝ) ^ (m + 1) - 1) else 0) ∂μ := by
+      rw [Finset.prod_subtype G (p := fun m : ℕ => m ∈ G) (by simp)]
+    _ = _ := by
+      apply Finset.prod_congr rfl
+      intro m hm
+      exact integral_ePh_bernoulli_nat μ delta X hX (m + 1) _
+
+/-- Moduli of the finite natural-index characteristic factors are `bernMod` products. -/
+theorem norm_integral_ePh_finset_eb {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) [IsProbabilityMeasure μ] (b : ℕ)
+    (delta : ℕ → ℝ) (X : ℕ → Ω → Bool) (hX : BernoulliLawNat μ delta X)
+    (G : Finset ℕ) (a : ℝ) :
+    ‖∫ w, ePh (a * ∑ m ∈ G,
+        (if X (m + 1) w then (1 : ℝ) else 0) / ((b : ℝ) ^ (m + 1) - 1)) ∂μ‖ =
+      ∏ m ∈ G, bernMod (delta (m + 1)) (a / ((b : ℝ) ^ (m + 1) - 1)) := by
+  rw [integral_ePh_finset_eb μ b delta X hX G a, norm_prod]
+  simp only [bernMod]
+
+/-- Initial positive-integer truncations converge to the full Erdős--Borwein subseries. -/
+theorem tendsto_sum_range_ebLambert (b : ℕ) (hb : 2 ≤ b)
+    {Ω : Type*} (X : ℕ → Ω → Bool) (w : Ω) :
+    Tendsto (fun M => ∑ m ∈ Finset.range M,
+      (if X (m + 1) w then (1 : ℝ) else 0) / ((b : ℝ) ^ (m + 1) - 1)) atTop
+      (𝓝 (ebLambert b X w)) := by
+  exact (summable_ebLambert_terms b hb X w).hasSum.tendsto_sum_nat
+
+theorem measurable_ebLambert_finset_sum (b : ℕ) {Ω : Type*} [MeasurableSpace Ω]
+    (X : ℕ → Ω → Bool) (hX : ∀ m, Measurable (X m)) (G : Finset ℕ) :
+    Measurable (fun w => ∑ m ∈ G,
+      (if X (m + 1) w then (1 : ℝ) else 0) / ((b : ℝ) ^ (m + 1) - 1)) := by
+  apply Finset.measurable_sum
+  intro m hm
+  have hmeas : Measurable (fun w => if X (m + 1) w then (1 : ℝ) else 0) :=
+    (measurable_of_finite (f := fun z : Bool => if z then (1 : ℝ) else 0)).comp (hX (m + 1))
+  exact hmeas.div_const _
+
+/-- The full natural-index characteristic function is bounded by the product over any finite
+set of selected positive-integer coordinates. -/
+theorem norm_integral_ePh_ebLambert_le {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) [IsProbabilityMeasure μ] (b : ℕ) (hb : 2 ≤ b)
+    (delta : ℕ → ℝ) (X : ℕ → Ω → Bool) (hX : BernoulliLawNat μ delta X)
+    (F : Finset ℕ) (a : ℝ) :
+    ‖∫ w, ePh (a * ebLambert b X w) ∂μ‖ ≤
+      ∏ m ∈ F, bernMod (delta (m + 1)) (a / ((b : ℝ) ^ (m + 1) - 1)) := by
+  let Z : ℕ → Ω → ℂ := fun M w => ePh (a * ∑ m ∈ Finset.range M,
+    (if X (m + 1) w then (1 : ℝ) else 0) / ((b : ℝ) ^ (m + 1) - 1))
+  have hZm : ∀ M, AEStronglyMeasurable (Z M) μ := by
+    intro M
+    exact (continuous_ePh.measurable.comp
+      (measurable_const.mul (measurable_ebLambert_finset_sum b X hX.2.1 _))).aestronglyMeasurable
+  have hbound : ∀ M, ∀ᵐ w ∂μ, ‖Z M w‖ ≤ (1 : ℝ) := by
+    intro M
+    exact Filter.Eventually.of_forall fun w => (norm_ePh _).le
+  have hlim : ∀ᵐ w ∂μ, Tendsto (fun M => Z M w) atTop
+      (𝓝 (ePh (a * ebLambert b X w))) := by
+    apply Filter.Eventually.of_forall
+    intro w
+    exact continuous_ePh.continuousAt.tendsto.comp
+      (tendsto_const_nhds.mul (tendsto_sum_range_ebLambert b hb X w))
+  have hint := tendsto_integral_of_dominated_convergence (μ := μ) (fun _ => (1 : ℝ))
+    hZm (integrable_const 1) hbound hlim
+  have hnorm : Tendsto (fun M => ‖∫ w, Z M w ∂μ‖) atTop
+      (𝓝 ‖∫ w, ePh (a * ebLambert b X w) ∂μ‖) :=
+    (continuous_norm.tendsto _).comp hint
+  apply le_of_tendsto hnorm
+  have hcof : ∀ᶠ M in atTop, F ⊆ Finset.range M := by
+    filter_upwards [eventually_ge_atTop ((F.sup id) + 1)] with M hM
+    intro m hm
+    rw [Finset.mem_range]
+    have hle : m ≤ F.sup id := Finset.le_sup (f := id) hm
+    omega
+  filter_upwards [hcof] with M hFM
+  rw [norm_integral_ePh_finset_eb μ b delta X hX (Finset.range M) a]
+  apply Finset.prod_le_prod_of_subset_of_le_one hFM
+  · intro m hm
+    exact bernMod_nonneg _ _
+  · intro m hm hmF
+    exact bernMod_le_one (hX.1 (m + 1)).1 (hX.1 (m + 1)).2 _
+
+/-- A deterministic translate contributes only a unit factor to the full characteristic norm. -/
+theorem norm_integral_ePh_add_ebLambert_le {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) [IsProbabilityMeasure μ] (b : ℕ) (hb : 2 ≤ b)
+    (delta : ℕ → ℝ) (X : ℕ → Ω → Bool) (hX : BernoulliLawNat μ delta X)
+    (F : Finset ℕ) (u a : ℝ) :
+    ‖∫ w, ePh (u + a * ebLambert b X w) ∂μ‖ ≤
+      ∏ m ∈ F, bernMod (delta (m + 1)) (a / ((b : ℝ) ^ (m + 1) - 1)) := by
+  have hpoint (w : Ω) :
+      ePh (u + a * ebLambert b X w) = ePh u * ePh (a * ebLambert b X w) := ePh_add _ _
+  rw [show (∫ w, ePh (u + a * ebLambert b X w) ∂μ) =
+      ∫ w, ePh u * ePh (a * ebLambert b X w) ∂μ by
+        apply integral_congr_ae
+        exact Filter.Eventually.of_forall hpoint]
+  rw [integral_const_mul, norm_mul, norm_ePh, one_mul]
+  exact norm_integral_ePh_ebLambert_le μ b hb delta X hX F a
+
+/-- Finite even moments reduce to an average of Bernoulli characteristic moduli.  This is the
+natural-index analogue of `RandomLambertMoment.moment_le_tupleAvg`; no complementary infinite
+random sum remains after this lemma. -/
+theorem ebMoment_le_tupleAvg (b : ℕ) (hb : 2 ≤ b) (h : ℤ)
+    {Ω : Type} [MeasurableSpace Ω] (μ : Measure Ω) [IsProbabilityMeasure μ]
+    (delta : ℕ → ℝ) (X : ℕ → Ω → Bool) (hX : BernoulliLawNat μ delta X)
+    (F : Finset ℕ) (k N : ℕ) (hN : 1 ≤ N) (c : ℝ) (s : ℤ) (hs : s = 1 ∨ s = -1) :
+    (∫ w, ‖weylMean b h (c + (s : ℝ) * ebLambert b X w) N‖ ^ (2 * k) ∂μ) ≤
+      (∑ n : Fin (2 * k) → Fin N,
+          ∏ m ∈ F, bernMod (delta (m + 1))
+            (tuplePhase b h k (m + 1) (fun i => (n i).val))) /
+        (N : ℝ) ^ (2 * k) := by
+  classical
+  let A : (Fin (2 * k) → Fin N) → Ω → ℂ := fun n w =>
+    ePh ((h : ℝ) * tuplePowerSum b k (fun i => (n i).val) *
+      (c + (s : ℝ) * ebLambert b X w))
+  have hY : Measurable (ebLambert b X) := measurable_ebLambert b X hX.2.1
+  have hAmeas (n : Fin (2 * k) → Fin N) : Measurable (A n) := by
+    dsimp [A]
+    exact continuous_ePh.measurable.comp
+      (measurable_const.mul (measurable_const.add (measurable_const.mul hY)))
+  have hAint (n : Fin (2 * k) → Fin N) : Integrable (A n) μ := by
+    apply Integrable.of_bound (hAmeas n).aestronglyMeasurable 1
+    exact Filter.Eventually.of_forall fun w => (norm_ePh _).le
+  have hpoint (w : Ω) :
+      ((‖weylMean b h (c + (s : ℝ) * ebLambert b X w) N‖ ^ (2 * k) : ℝ) : ℂ) =
+        (∑ n : Fin (2 * k) → Fin N, A n w) / (N : ℂ) ^ (2 * k) := by
+    exact weylMean_even_expansion b h k N hN _
+  have hint :
+      (((∫ w, ‖weylMean b h (c + (s : ℝ) * ebLambert b X w) N‖ ^
+          (2 * k) ∂μ) : ℝ) : ℂ) =
+        (∑ n : Fin (2 * k) → Fin N, ∫ w, A n w ∂μ) / (N : ℂ) ^ (2 * k) := by
+    calc
+      (((∫ w, ‖weylMean b h (c + (s : ℝ) * ebLambert b X w) N‖ ^
+          (2 * k) ∂μ) : ℝ) : ℂ) =
+          ∫ w, ((‖weylMean b h (c + (s : ℝ) * ebLambert b X w) N‖ ^
+            (2 * k) : ℝ) : ℂ) ∂μ :=
+        (integral_complex_ofReal (μ := μ)).symm
+      _ = ∫ w, (∑ n : Fin (2 * k) → Fin N, A n w) /
+          (N : ℂ) ^ (2 * k) ∂μ := by
+        apply integral_congr_ae
+        exact Filter.Eventually.of_forall hpoint
+      _ = (∑ n : Fin (2 * k) → Fin N, ∫ w, A n w ∂μ) /
+          (N : ℂ) ^ (2 * k) := by
+        rw [integral_div, integral_finsetSum Finset.univ (fun n _ => hAint n)]
+  have hchar (n : Fin (2 * k) → Fin N) :
+      ‖∫ w, A n w ∂μ‖ ≤
+        ∏ m ∈ F, bernMod (delta (m + 1))
+          (tuplePhase b h k (m + 1) (fun i => (n i).val)) := by
+    let q : ℝ := tuplePowerSum b k (fun i => (n i).val)
+    have hrewrite (w : Ω) :
+        A n w = ePh ((h : ℝ) * q * c +
+          ((s : ℝ) * (h : ℝ) * q) * ebLambert b X w) := by
+      dsimp [A, q]
+      congr 1
+      ring
+    calc
+      ‖∫ w, A n w ∂μ‖ =
+          ‖∫ w, ePh ((h : ℝ) * q * c +
+            ((s : ℝ) * (h : ℝ) * q) * ebLambert b X w) ∂μ‖ := by
+        congr 1
+        apply integral_congr_ae
+        exact Filter.Eventually.of_forall hrewrite
+      _ ≤ ∏ m ∈ F, bernMod (delta (m + 1))
+          (((s : ℝ) * (h : ℝ) * q) / ((b : ℝ) ^ (m + 1) - 1)) :=
+        norm_integral_ePh_add_ebLambert_le μ b hb delta X hX F
+          ((h : ℝ) * q * c) ((s : ℝ) * (h : ℝ) * q)
+      _ = ∏ m ∈ F, bernMod (delta (m + 1))
+          (tuplePhase b h k (m + 1) (fun i => (n i).val)) := by
+        apply Finset.prod_congr rfl
+        intro m hm
+        exact bernMod_signed_tuplePowerSum b h k (m + 1) (fun i => (n i).val)
+          (delta (m + 1)) s hs
+  have hnonneg : 0 ≤
+      ∫ w, ‖weylMean b h (c + (s : ℝ) * ebLambert b X w) N‖ ^ (2 * k) ∂μ :=
+    integral_nonneg fun w => by positivity
+  have hden : 0 ≤ (N : ℝ) ^ (2 * k) := by positivity
+  calc
+    (∫ w, ‖weylMean b h (c + (s : ℝ) * ebLambert b X w) N‖ ^
+        (2 * k) ∂μ) =
+        ‖(((∫ w, ‖weylMean b h (c + (s : ℝ) * ebLambert b X w) N‖ ^
+          (2 * k) ∂μ) : ℝ) : ℂ)‖ := by
+      rw [Complex.norm_real, Real.norm_eq_abs, abs_of_nonneg hnonneg]
+    _ = ‖(∑ n : Fin (2 * k) → Fin N, ∫ w, A n w ∂μ) /
+          (N : ℂ) ^ (2 * k)‖ := by rw [hint]
+    _ = ‖∑ n : Fin (2 * k) → Fin N, ∫ w, A n w ∂μ‖ /
+          (N : ℝ) ^ (2 * k) := by
+      rw [norm_div, norm_pow, Complex.norm_natCast]
+    _ ≤ (∑ n : Fin (2 * k) → Fin N, ‖∫ w, A n w ∂μ‖) /
+          (N : ℝ) ^ (2 * k) :=
+      div_le_div_of_nonneg_right (norm_sum_le Finset.univ _) hden
+    _ ≤ (∑ n : Fin (2 * k) → Fin N,
+          ∏ m ∈ F, bernMod (delta (m + 1))
+            (tuplePhase b h k (m + 1) (fun i => (n i).val))) /
+          (N : ℝ) ^ (2 * k) := by
+      exact div_le_div_of_nonneg_right (Finset.sum_le_sum fun n _ => hchar n) hden
+
 /-- The summable moment bound behind `ebRandom_ae_normal_below_ln2` (codex2, 95%).
 1. With `α ln 2 > a`, fix `k` and `q < Q(α)` with `kq > 1`.
 2. The event that all coordinates have poor mass has probability `p_N^{2k} = O((log N)^{-2kq})`.
