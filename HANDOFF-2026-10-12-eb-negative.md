@@ -60,6 +60,32 @@ Notation: `μ_M(n) = largeDivisorMass a M n = Σ_{d ∣ n, d > M} (log d)^{-a}`.
 
 ## Status
 
+- **Lap 7 checkpoint (2026-10-12): Lambert tail and residual moment scaffold proved; 1 sorry remains.**
+  - DEFINED the deleted-head series `ebLambertTail` and PROVED the exact finite-head split
+    `ebLambert_eq_head_add_tail` using absolute summability of the selected Lambert series.
+  - DEFINED the geometric divisor-count residual `shiftResidual` and its finite approximants
+    `shiftResidualPartial`.  PROVED pointwise summability, nonnegativity, and measurability of the
+    infinite residual (`summable_shiftResidual_terms`, `shiftResidual_nonneg`,
+    `measurable_shiftResidual`).
+  - PROVED that the selected-divisor count is literally a finite cardinal and hence obeys the
+    sharp fractional-power bound `D^s <= D`.  This gives summability of the termwise fractional
+    powers and the infinite subadditivity estimate `shiftResidual_rpow_le_tsum`.
+  - PROVED the finite integrated residual estimate
+    `integral_shiftResidualPartial_rpow_le`: for every truncation `J`, the expected `s`-moment is
+    at most `C^s` times the weighted sum of the already-controlled arithmetic moments at shifts
+    `n+j+1`.  This is the first direct composition of Lap 6's marginal Jensen bridge with the
+    geometric orbit residual.
+  - The four frozen theorem statements and three protected definition signatures were not edited.
+    The sole remaining sorry is still `ebRandom_ae_not_normal_of_marginal_bound`.
+  - Exact verification:
+    - `lake env lean src/NormalNumbers/CoefmassErdosBorweinNegative.lean` — succeeds, exactly one
+      expected sorry warning (`ebRandom_ae_not_normal_of_marginal_bound`).
+    - `~/personal/bin/lean-green . --target NormalNumbers.CoefmassErdosBorweinNegative --import
+      NormalNumbers.CoefmassErdosBorweinNegative --axioms
+      NormalNumbers.ErdosBorweinRandom.integral_shiftResidualPartial_rpow_le` — FORMALIZE-TIER
+      GREEN; axioms exactly `propext`, `Classical.choice`, `Quot.sound`.
+    - `~/personal/bin/lean-green .` — FORMALIZE-TIER GREEN, 10847 jobs.
+
 - **Lap 6 checkpoint (2026-10-12): marginal selected-divisor fractional moment proved; 1 sorry remains.**
   - PROVED summability of the Lambert denominators and every selected subseries
     (`summable_ebLambert_denom`, `summable_ebLambert_terms`), plus measurability of the full random
@@ -200,16 +226,22 @@ Notation: `μ_M(n) = largeDivisorMass a M n = Σ_{d ∣ n, d > M} (log d)^{-a}`.
 ### Current blocker / next attack
 
 The sole open theorem is `ebRandom_ae_not_normal_of_marginal_bound`.  Both its arithmetic input and
-the marginal-to-divisor-moment Jensen bridge are now complete.  Next define the Lambert tail above
-`M` and the shift residual
-`R_M(n,w) = sum_{j>=1} b^(-j) * selectedDivisorCount X M (n+j) w`.  Prove its
-summability/measurability, the exact residual identity modulo an integer, infinite fractional-power
-subadditivity, and the integrated Cesàro estimate using `integral_selectedDivisorCount_rpow_le` and
-`largeDivisorMass_moment_small`.  The short, already kernel-checked quotient identity
+the marginal-to-divisor-moment Jensen bridge are complete, and Lap 7 now supplies the convergent
+shift residual, infinite fractional-power subadditivity, and the finite integrated moment estimate.
+Next prove the exact identity
+`b^n * ebLambertTail b X M w - shiftResidual b X M n w ∈ ℤ`.  Split the selected Lambert tail at
+`m <= n`: for `m > n`, `n % m = n` and the integer correction in `residuePhase_add_int` is zero;
+the remaining correction is a finite sum of integers.  The residual side then needs a nonnegative
+double-tsum swap, grouping pairs `(m,j)` by `m | n+j`.  The short, already kernel-checked quotient identity
 `residuePhase_add_int` in `CoefmassRandomLambertMoment.lean` (~lines 145--166) is a useful template:
 `b^n/(b^m-1) = b^(n % m)/(b^m-1) + z` for an integer `z`.  For residual summability, the crude bound
-`selectedDivisorCount X M (n+j) w <= (n+j).divisors.card <= n+j` is enough against the geometric
-weight.
+`selectedDivisorCount X M (n+j) w <= (n+j).divisors.card <= n+j` is already formalized in Lap 7.
+
+After the exact identity, pass `integral_shiftResidualPartial_rpow_le` to `J -> infinity` and sum
+over `n in Icc 1 N`.  For fixed `j`, enlarge the shifted interval to `Icc 1 (N+j+1)` and apply
+`largeDivisorMass_moment_small`; `N+j+1 <= (j+2)N` for `N >= 1`, and
+`sum_j (j+2)b^{-s(j+1)}` converges.  This yields the uniform integrated Cesaro estimate needed by
+Fatou.
 
 For the probability/orbit close, avoid first proving that the `IsNormal` event is measurable (no
 such repository lemma was found).  Instead, for each base majorize the normal set by a measurable

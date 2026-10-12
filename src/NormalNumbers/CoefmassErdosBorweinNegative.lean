@@ -1285,6 +1285,280 @@ lemma integral_selectedDivisorCount_rpow_le
             have hmM : M < m := (Finset.mem_filter.mp hm).2
             exact_mod_cast (show 1 ≤ m by omega))) _)
 
+/-! ### Lambert tails and shift residuals -/
+
+/-- The selected Lambert tail after deleting the first `M` positive indices. -/
+noncomputable def ebLambertTail {Ω : Type*} (b : ℕ) (X : ℕ → Ω → Bool)
+    (M : ℕ) (w : Ω) : ℝ :=
+  ∑' j : ℕ, (if X (M + j + 1) w then (1 : ℝ) else 0) /
+    ((b : ℝ) ^ (M + j + 1) - 1)
+
+/-- The full selected Lambert series is its finite head plus `ebLambertTail`. -/
+lemma ebLambert_eq_head_add_tail (b : ℕ) (hb : 2 ≤ b) {Ω : Type*}
+    (X : ℕ → Ω → Bool) (M : ℕ) (w : Ω) :
+    ebLambert b X w =
+      (∑ m ∈ Finset.range M,
+        (if X (m + 1) w then (1 : ℝ) else 0) / ((b : ℝ) ^ (m + 1) - 1)) +
+        ebLambertTail b X M w := by
+  let f : ℕ → ℝ := fun m =>
+    (if X (m + 1) w then (1 : ℝ) else 0) / ((b : ℝ) ^ (m + 1) - 1)
+  have hf : Summable f := summable_ebLambert_terms b hb X w
+  rw [ebLambert, show (fun m => (if X (m + 1) w then (1 : ℝ) else 0) /
+      ((b : ℝ) ^ (m + 1) - 1)) = f from rfl]
+  rw [← hf.sum_add_tsum_nat_add M]
+  unfold ebLambertTail
+  apply congrArg (fun z => (∑ m ∈ Finset.range M, f m) + z)
+  apply tsum_congr
+  intro j
+  simp only [f]
+  rw [show j + M + 1 = M + j + 1 by omega]
+
+/-- The geometric shift residual
+`Σ_{j ≥ 1} b⁻ʲ #{m > M : X_m = 1, m ∣ n+j}`. -/
+noncomputable def shiftResidual {Ω : Type*} (b : ℕ) (X : ℕ → Ω → Bool)
+    (M n : ℕ) (w : Ω) : ℝ :=
+  ∑' j : ℕ, (1 / (b : ℝ)) ^ (j + 1) * selectedDivisorCount X M (n + j + 1) w
+
+/-- The residual converges pointwise; the crude divisor bound is only linear and is absorbed by
+the geometric weight. -/
+lemma summable_shiftResidual_terms {Ω : Type*} (b : ℕ) (hb : 2 ≤ b)
+    (X : ℕ → Ω → Bool) (M n : ℕ) (w : Ω) :
+    Summable (fun j : ℕ =>
+      (1 / (b : ℝ)) ^ (j + 1) * selectedDivisorCount X M (n + j + 1) w) := by
+  let r : ℝ := 1 / (b : ℝ)
+  have hr0 : 0 ≤ r := by positivity
+  have hr1 : ‖r‖ < 1 := by
+    rw [Real.norm_eq_abs, abs_of_nonneg hr0]
+    rw [div_lt_one (by positivity : (0 : ℝ) < b)]
+    exact_mod_cast (show 1 < b by omega)
+  have hgeom : Summable (fun j : ℕ => r ^ j) := summable_geometric_of_norm_lt_one hr1
+  have hjgeom : Summable (fun j : ℕ => (j : ℝ) * r ^ j) := by
+    simpa using (summable_pow_mul_geometric_of_norm_lt_one 1 hr1)
+  have hmajor : Summable (fun j : ℕ => r * ((n + 1 : ℝ) * r ^ j + (j : ℝ) * r ^ j)) :=
+    ((hgeom.mul_left ((n : ℝ) + 1)).add hjgeom).mul_left r
+  apply hmajor.of_norm_bounded
+  intro j
+  rw [Real.norm_eq_abs, abs_of_nonneg (mul_nonneg (pow_nonneg hr0 _)
+    (selectedDivisorCount_nonneg X M _ w))]
+  calc
+    r ^ (j + 1) * selectedDivisorCount X M (n + j + 1) w ≤
+        r ^ (j + 1) * ((n + j + 1 : ℕ) : ℝ) := by
+      have hcount : selectedDivisorCount X M (n + j + 1) w ≤ (n + j + 1 : ℕ) := by
+        exact (selectedDivisorCount_le_card_divisors X M (n + j + 1) w).trans
+          (by exact_mod_cast Nat.card_divisors_le_self (n + j + 1))
+      exact mul_le_mul_of_nonneg_left hcount (pow_nonneg hr0 _)
+    _ = r * ((n + 1 : ℝ) * r ^ j + (j : ℝ) * r ^ j) := by
+      push_cast
+      rw [pow_succ]
+      ring
+
+lemma shiftResidual_nonneg {Ω : Type*} (b : ℕ) (X : ℕ → Ω → Bool)
+    (M n : ℕ) (w : Ω) : 0 ≤ shiftResidual b X M n w := by
+  unfold shiftResidual
+  exact tsum_nonneg fun j => mul_nonneg (pow_nonneg (by positivity) _)
+    (selectedDivisorCount_nonneg X M _ w)
+
+lemma measurable_shiftResidual {Ω : Type*} [MeasurableSpace Ω]
+    (b : ℕ) (X : ℕ → Ω → Bool) (hX : ∀ m, Measurable (X m)) (M n : ℕ) :
+    Measurable (shiftResidual b X M n) := by
+  unfold shiftResidual
+  exact Measurable.tsum fun j =>
+    (measurable_selectedDivisorCount X hX M (n + j + 1)).const_mul _
+
+/-- `selectedDivisorCount` really is the cardinality of the selected divisor filter. -/
+lemma selectedDivisorCount_eq_card {Ω : Type*} (X : ℕ → Ω → Bool)
+    (M n : ℕ) (w : Ω) :
+    selectedDivisorCount X M n w =
+      (((n.divisors.filter (fun m => M < m)).filter (fun m => X m w)).card : ℝ) := by
+  unfold selectedDivisorCount
+  simp [Finset.filter_filter]
+
+lemma selectedDivisorCount_rpow_le_self {Ω : Type*} (X : ℕ → Ω → Bool)
+    (M n : ℕ) (w : Ω) (s : ℝ) (hs : 0 < s) (hs1 : s ≤ 1) :
+    Real.rpow (selectedDivisorCount X M n w) s ≤ selectedDivisorCount X M n w := by
+  rw [selectedDivisorCount_eq_card]
+  by_cases hcard : ((n.divisors.filter (fun m => M < m)).filter (fun m => X m w)).card = 0
+  · simp [hcard, Real.zero_rpow hs.ne']
+  · exact Real.rpow_le_self_of_one_le (by exact_mod_cast (Nat.one_le_iff_ne_zero.mpr hcard)) hs1
+
+/-- The fractional powers of the residual terms are themselves summable. -/
+lemma summable_shiftResidual_rpow_terms {Ω : Type*} (b : ℕ) (hb : 2 ≤ b)
+    (X : ℕ → Ω → Bool) (M n : ℕ) (w : Ω) (s : ℝ) (hs : 0 < s) (hs1 : s ≤ 1) :
+    Summable (fun j : ℕ => Real.rpow
+      ((1 / (b : ℝ)) ^ (j + 1) * selectedDivisorCount X M (n + j + 1) w) s) := by
+  let r : ℝ := 1 / (b : ℝ)
+  let q : ℝ := Real.rpow r s
+  have hr0 : 0 ≤ r := by positivity
+  have hr1 : r < 1 := by
+    rw [div_lt_one (by positivity : (0 : ℝ) < b)]
+    exact_mod_cast (show 1 < b by omega)
+  have hq0 : 0 ≤ q := Real.rpow_nonneg hr0 _
+  have hq1 : ‖q‖ < 1 := by
+    rw [Real.norm_eq_abs, abs_of_nonneg hq0]
+    exact Real.rpow_lt_one hr0 hr1 hs
+  have hgeom : Summable (fun j : ℕ => q ^ j) := summable_geometric_of_norm_lt_one hq1
+  have hjgeom : Summable (fun j : ℕ => (j : ℝ) * q ^ j) := by
+    simpa using (summable_pow_mul_geometric_of_norm_lt_one 1 hq1)
+  have hmajor : Summable (fun j : ℕ => q * ((n + 1 : ℝ) * q ^ j + (j : ℝ) * q ^ j)) :=
+    ((hgeom.mul_left ((n : ℝ) + 1)).add hjgeom).mul_left q
+  apply hmajor.of_norm_bounded
+  intro j
+  have hD0 := selectedDivisorCount_nonneg X M (n + j + 1) w
+  have hterm0 : 0 ≤ r ^ (j + 1) * selectedDivisorCount X M (n + j + 1) w :=
+    mul_nonneg (pow_nonneg hr0 _) hD0
+  have hweight : Real.rpow (r ^ (j + 1)) s = q ^ (j + 1) := by
+    calc
+      Real.rpow (r ^ (j + 1)) s = Real.rpow r ((j + 1 : ℕ) * s) :=
+        (Real.rpow_natCast_mul hr0 (j + 1) s).symm
+      _ = Real.rpow r (s * (j + 1 : ℕ)) := by congr 1; ring
+      _ = (Real.rpow r s) ^ (j + 1) := Real.rpow_mul_natCast hr0 s (j + 1)
+      _ = q ^ (j + 1) := rfl
+  change |Real.rpow (r ^ (j + 1) * selectedDivisorCount X M (n + j + 1) w) s| ≤ _
+  calc
+    |Real.rpow (r ^ (j + 1) * selectedDivisorCount X M (n + j + 1) w) s| =
+        Real.rpow (r ^ (j + 1) * selectedDivisorCount X M (n + j + 1) w) s :=
+      abs_of_nonneg (Real.rpow_nonneg hterm0 _)
+    _ = q ^ (j + 1) * Real.rpow (selectedDivisorCount X M (n + j + 1) w) s := by
+      exact (Real.mul_rpow (pow_nonneg hr0 _) hD0).trans
+        (congrArg (fun z => z * Real.rpow (selectedDivisorCount X M (n + j + 1) w) s) hweight)
+    _ ≤ q ^ (j + 1) * selectedDivisorCount X M (n + j + 1) w := by
+      exact mul_le_mul_of_nonneg_left
+        (selectedDivisorCount_rpow_le_self X M _ w s hs hs1) (pow_nonneg hq0 _)
+    _ ≤ q ^ (j + 1) * ((n + j + 1 : ℕ) : ℝ) := by
+      exact mul_le_mul_of_nonneg_left
+        ((selectedDivisorCount_le_card_divisors X M _ w).trans
+          (by exact_mod_cast Nat.card_divisors_le_self (n + j + 1))) (pow_nonneg hq0 _)
+    _ = q * ((n + 1 : ℝ) * q ^ j + (j : ℝ) * q ^ j) := by
+      push_cast
+      rw [pow_succ]
+      ring
+
+/-- Fractional-power subadditivity passes from finite residuals to the convergent residual. -/
+lemma shiftResidual_rpow_le_tsum {Ω : Type*} (b : ℕ) (hb : 2 ≤ b)
+    (X : ℕ → Ω → Bool) (M n : ℕ) (w : Ω) (s : ℝ) (hs : 0 < s) (hs1 : s ≤ 1) :
+    Real.rpow (shiftResidual b X M n w) s ≤
+      ∑' j : ℕ, Real.rpow
+        ((1 / (b : ℝ)) ^ (j + 1) * selectedDivisorCount X M (n + j + 1) w) s := by
+  let f : ℕ → ℝ := fun j =>
+    (1 / (b : ℝ)) ^ (j + 1) * selectedDivisorCount X M (n + j + 1) w
+  have hf : Summable f := summable_shiftResidual_terms b hb X M n w
+  have hfpow : Summable (fun j => Real.rpow (f j) s) :=
+    summable_shiftResidual_rpow_terms b hb X M n w s hs hs1
+  apply le_of_tendsto_of_tendsto'
+    ((Real.continuousAt_rpow_const (∑' j, f j) s (Or.inr hs.le)).tendsto.comp
+      hf.hasSum.tendsto_sum_nat)
+    hfpow.hasSum.tendsto_sum_nat
+  intro J
+  exact rpow_finset_sum_le_sum_rpow (Finset.range J) f
+    (fun j hj => mul_nonneg (pow_nonneg (by positivity) _)
+      (selectedDivisorCount_nonneg X M _ w)) s hs hs1
+
+/-- The finite residual used before passing to the infinite series. -/
+noncomputable def shiftResidualPartial {Ω : Type*} (b : ℕ) (X : ℕ → Ω → Bool)
+    (M n J : ℕ) (w : Ω) : ℝ :=
+  ∑ j ∈ Finset.range J,
+    (1 / (b : ℝ)) ^ (j + 1) * selectedDivisorCount X M (n + j + 1) w
+
+lemma integrable_selectedDivisorCount_rpow {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) [IsFiniteMeasure μ] (X : ℕ → Ω → Bool)
+    (hX : ∀ m, Measurable (X m)) (M n : ℕ) (s : ℝ) (hs : 0 < s) :
+    Integrable (fun w => Real.rpow (selectedDivisorCount X M n w) s) μ := by
+  apply Integrable.of_bound
+    ((Real.continuous_rpow_const hs.le).measurable.comp
+      (measurable_selectedDivisorCount X hX M n)).aestronglyMeasurable
+    (Real.rpow (n.divisors.card : ℝ) s)
+  filter_upwards [] with w
+  change |Real.rpow (selectedDivisorCount X M n w) s| ≤ _
+  calc
+    |Real.rpow (selectedDivisorCount X M n w) s| =
+        Real.rpow (selectedDivisorCount X M n w) s :=
+      abs_of_nonneg (Real.rpow_nonneg (selectedDivisorCount_nonneg X M n w) _)
+    _ ≤ Real.rpow (n.divisors.card : ℝ) s :=
+      Real.rpow_le_rpow (selectedDivisorCount_nonneg X M n w)
+        (selectedDivisorCount_le_card_divisors X M n w) hs.le
+
+/-- The finite shift residual obeys exactly the expected marginal/Jensen moment estimate.
+This is the integrable finite approximation to the infinite residual bound. -/
+lemma integral_shiftResidualPartial_rpow_le
+    {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω) [IsProbabilityMeasure μ]
+    (b : ℕ) (hb : 2 ≤ b) (X : ℕ → Ω → Bool) (hX : ∀ m, Measurable (X m))
+    (a C s : ℝ) (hC : 0 ≤ C) (hs : 0 < s) (hs1 : s ≤ 1)
+    (hMarginal : ∀ m : ℕ, 2 ≤ m →
+      μ {w | X m w = true} ≤ ENNReal.ofReal (C * Real.rpow (Real.log m) (-a)))
+    (M n J : ℕ) (hM : 2 ≤ M) :
+    (∫ w, Real.rpow (shiftResidualPartial b X M n J w) s ∂μ) ≤
+      Real.rpow C s * ∑ j ∈ Finset.range J,
+        Real.rpow ((1 / (b : ℝ)) ^ (j + 1)) s *
+          Real.rpow (largeDivisorMass a M (n + j + 1)) s := by
+  let r : ℝ := 1 / (b : ℝ)
+  let f : ℕ → Ω → ℝ := fun j w =>
+    r ^ (j + 1) * selectedDivisorCount X M (n + j + 1) w
+  let g : ℕ → Ω → ℝ := fun j w => Real.rpow (f j w) s
+  have hr0 : 0 ≤ r := by positivity
+  have hf0 : ∀ j w, 0 ≤ f j w := fun j w =>
+    mul_nonneg (pow_nonneg hr0 _) (selectedDivisorCount_nonneg X M _ w)
+  have hDpowInt : ∀ j, Integrable
+      (fun w => Real.rpow (selectedDivisorCount X M (n + j + 1) w) s) μ := fun j =>
+    integrable_selectedDivisorCount_rpow μ X hX M (n + j + 1) s hs
+  have hgInt : ∀ j, Integrable (g j) μ := by
+    intro j
+    have hconst : ∀ w, g j w = Real.rpow (r ^ (j + 1)) s *
+        Real.rpow (selectedDivisorCount X M (n + j + 1) w) s := by
+      intro w
+      exact Real.mul_rpow (pow_nonneg hr0 _) (selectedDivisorCount_nonneg X M _ w)
+    rw [funext hconst]
+    exact (hDpowInt j).const_mul _
+  have hsumInt : Integrable (fun w => ∑ j ∈ Finset.range J, g j w) μ :=
+    integrable_finsetSum (Finset.range J) fun j hj => hgInt j
+  have hpartialMeas : Measurable (shiftResidualPartial b X M n J) := by
+    unfold shiftResidualPartial
+    exact Finset.measurable_sum _ fun j hj =>
+      (measurable_selectedDivisorCount X hX M (n + j + 1)).const_mul _
+  have hleftInt : Integrable (fun w => Real.rpow (shiftResidualPartial b X M n J w) s) μ := by
+    apply hsumInt.mono'
+    · exact ((Real.continuous_rpow_const hs.le).measurable.comp hpartialMeas).aestronglyMeasurable
+    · filter_upwards [] with w
+      change |Real.rpow (∑ j ∈ Finset.range J, f j w) s| ≤ _
+      calc
+        |Real.rpow (∑ j ∈ Finset.range J, f j w) s| =
+            Real.rpow (∑ j ∈ Finset.range J, f j w) s :=
+          abs_of_nonneg (Real.rpow_nonneg (Finset.sum_nonneg fun j hj => hf0 j w) _)
+        _ ≤ ∑ j ∈ Finset.range J, g j w :=
+          rpow_finset_sum_le_sum_rpow (Finset.range J) (fun j => f j w)
+            (fun j hj => hf0 j w) s hs hs1
+  calc
+    (∫ w, Real.rpow (shiftResidualPartial b X M n J w) s ∂μ) ≤
+        ∫ w, ∑ j ∈ Finset.range J, g j w ∂μ := by
+      apply integral_mono hleftInt hsumInt
+      intro w
+      exact rpow_finset_sum_le_sum_rpow (Finset.range J) (fun j => f j w)
+        (fun j hj => hf0 j w) s hs hs1
+    _ = ∑ j ∈ Finset.range J, ∫ w, g j w ∂μ := by
+      exact integral_finsetSum _ fun j hj => hgInt j
+    _ ≤ ∑ j ∈ Finset.range J,
+        Real.rpow (r ^ (j + 1)) s *
+          (Real.rpow C s * Real.rpow (largeDivisorMass a M (n + j + 1)) s) := by
+      apply Finset.sum_le_sum
+      intro j hj
+      have hjensen := integral_selectedDivisorCount_rpow_le μ X hX a C s hC hs hs1
+        hMarginal M (n + j + 1) hM
+      have hconst : ∀ w, g j w = Real.rpow (r ^ (j + 1)) s *
+          Real.rpow (selectedDivisorCount X M (n + j + 1) w) s := by
+        intro w
+        exact Real.mul_rpow (pow_nonneg hr0 _) (selectedDivisorCount_nonneg X M _ w)
+      rw [show (∫ w, g j w ∂μ) = Real.rpow (r ^ (j + 1)) s *
+          ∫ w, Real.rpow (selectedDivisorCount X M (n + j + 1) w) s ∂μ by
+        simp_rw [hconst]; rw [integral_const_mul]]
+      exact mul_le_mul_of_nonneg_left hjensen (Real.rpow_nonneg (pow_nonneg hr0 _) _)
+    _ = Real.rpow C s * ∑ j ∈ Finset.range J,
+        Real.rpow ((1 / (b : ℝ)) ^ (j + 1)) s *
+          Real.rpow (largeDivisorMass a M (n + j + 1)) s := by
+      simp only [r]
+      rw [Finset.mul_sum]
+      apply Finset.sum_congr rfl
+      intro j hj
+      ring
+
 /-- **Marginal decay alone forces non-normality** (strengthens `ebRandom_ae_not_normal`).
 Proof outline:
 1. Use the exact residual `R_M(n) = Σ_{j ≥ 1} b^{-j} D_M(n+j)`, with
