@@ -30,7 +30,8 @@ primality): `anchor_phase_formula`, `anchor_tail_cos_le`, `cos_two_pi_le_of_near
 namespace NormalNumbers.ErdosBorweinPositive
 
 open MeasureTheory ProbabilityTheory Filter
-open scoped BigOperators Topology
+open ArithmeticFunction
+open scoped BigOperators Topology ArithmeticFunction.zeta
 
 /-- Independent Bernoulli selections of positive integers (index `0` unused). -/
 def BernoulliLawNat {Ω : Type*} [MeasurableSpace Ω]
@@ -218,6 +219,118 @@ theorem shifted_gcd_divisor_moment_of_summable (u v r : ℕ)
     _ ≤ (1 + A * T) * (N : ℝ) ^ 2 := by
       nlinarith [sq_nonneg (N : ℝ)]
 
+/-! ### Divisor-series summability -/
+
+/-- On prime powers, the `r`-th power of the divisor count is bounded by the coefficient of
+the `2 ^ r`-fold Dirichlet convolution of the arithmetic zeta function. -/
+theorem divisorCard_pow_le_zetaPow_primePow (r e : ℕ) {p : ℕ} (hp : p.Prime) :
+    (e + 1) ^ r ≤ ((ζ : ArithmeticFunction ℕ) ^ (2 ^ r)) (p ^ e) := by
+  induction r generalizing e with
+  | zero =>
+      simp [ArithmeticFunction.zeta_apply_ne (pow_ne_zero e hp.ne_zero)]
+  | succ r ih =>
+      have htwo : 2 ^ (r + 1) = 2 ^ r + 2 ^ r := by ring
+      rw [htwo]
+      rw [show (ζ : ArithmeticFunction ℕ) ^ (2 ^ r + 2 ^ r) =
+          (ζ : ArithmeticFunction ℕ) ^ (2 ^ r) *
+            (ζ : ArithmeticFunction ℕ) ^ (2 ^ r) by rw [pow_add]]
+      rw [ArithmeticFunction.mul_apply,
+        Nat.sum_divisorsAntidiagonal (fun a b =>
+          ((ζ : ArithmeticFunction ℕ) ^ (2 ^ r)) a *
+            ((ζ : ArithmeticFunction ℕ) ^ (2 ^ r)) b),
+        Nat.sum_divisors_prime_pow hp]
+      calc
+        (e + 1) ^ (r + 1) = ∑ j ∈ Finset.range (e + 1), (e + 1) ^ r := by
+          simp [pow_succ, Nat.mul_comm]
+        _ ≤ ∑ j ∈ Finset.range (e + 1),
+            ((ζ : ArithmeticFunction ℕ) ^ (2 ^ r)) (p ^ j) *
+              ((ζ : ArithmeticFunction ℕ) ^ (2 ^ r)) (p ^ e / p ^ j) := by
+          apply Finset.sum_le_sum
+          intro j hj
+          have hje : j ≤ e := by simpa using Finset.mem_range.mp hj
+          have hbase : e + 1 ≤ (j + 1) * (e - j + 1) := by
+            have hsplit : j + (e - j) = e := Nat.add_sub_of_le hje
+            nlinarith [Nat.zero_le (j * (e - j))]
+          calc
+            (e + 1) ^ r ≤ ((j + 1) * (e - j + 1)) ^ r :=
+              Nat.pow_le_pow_left hbase r
+            _ = (j + 1) ^ r * (e - j + 1) ^ r := by rw [mul_pow]
+            _ ≤ ((ζ : ArithmeticFunction ℕ) ^ (2 ^ r)) (p ^ j) *
+                ((ζ : ArithmeticFunction ℕ) ^ (2 ^ r)) (p ^ (e - j)) :=
+              Nat.mul_le_mul (ih j) (ih (e - j))
+            _ = ((ζ : ArithmeticFunction ℕ) ^ (2 ^ r)) (p ^ j) *
+                ((ζ : ArithmeticFunction ℕ) ^ (2 ^ r)) (p ^ e / p ^ j) := by
+              rw [Nat.pow_div hje hp.pos]
+        _ = _ := rfl
+
+/-- The divisor-count domination extends from prime powers to every natural number. -/
+theorem divisorCard_pow_le_zetaPow (n r : ℕ) (hr : 1 ≤ r) :
+    n.divisors.card ^ r ≤ ((ζ : ArithmeticFunction ℕ) ^ (2 ^ r)) n := by
+  by_cases hn : n = 0
+  · subst n
+    simp [show r ≠ 0 by omega]
+  · rw [Nat.card_divisors hn, ← Finset.prod_pow]
+    rw [(isMultiplicative_zeta.pow).multiplicative_factorization _ hn]
+    apply Finset.prod_le_prod'
+    intro p hp
+    exact divisorCard_pow_le_zetaPow_primePow r (n.factorization p)
+      (Nat.prime_of_mem_primeFactors hp)
+
+/-- Casting the coefficients of a convolution power of zeta commutes with evaluation. -/
+theorem natCast_zetaPow_apply (k n : ℕ) :
+    ((((ζ : ArithmeticFunction ℕ) ^ k) n : ℕ) : ℂ) =
+      ((ζ : ArithmeticFunction ℂ) ^ k) n := by
+  induction k generalizing n with
+  | zero => simp [ArithmeticFunction.one_apply]
+  | succ k ih =>
+      rw [pow_succ, pow_succ, ArithmeticFunction.mul_apply, ArithmeticFunction.mul_apply]
+      push_cast
+      apply Finset.sum_congr rfl
+      intro x hx
+      rw [ih]
+      simp only [ArithmeticFunction.natCoe_apply]
+
+/-- Every positive convolution power of zeta has summable coefficients after division by `n²`. -/
+theorem summable_zetaPow_div_sq (k : ℕ) (hk : 1 ≤ k) :
+    Summable (fun n : ℕ =>
+      (((((ζ : ArithmeticFunction ℕ) ^ k) n : ℕ) : ℝ) / (n : ℝ) ^ 2)) := by
+  let Z : ArithmeticFunction ℂ := (ζ : ArithmeticFunction ℂ)
+  have hZ : LSeriesSummable (Z ·) (2 : ℂ) := by
+    exact ArithmeticFunction.LSeriesSummable_zeta_iff.mpr (by norm_num)
+  have hpow : ∀ j : ℕ, LSeriesSummable ((Z ^ (j + 1)) ·) (2 : ℂ) := by
+    intro j
+    induction j with
+    | zero => simpa using hZ
+    | succ j ih =>
+        rw [show j + 1 + 1 = (j + 1) + 1 by omega, pow_succ]
+        exact ArithmeticFunction.LSeriesSummable_mul ih hZ
+  have hk' : k - 1 + 1 = k := by omega
+  have hseries : LSeriesSummable ((Z ^ k) ·) (2 : ℂ) := by
+    rw [← hk']
+    exact hpow (k - 1)
+  refine hseries.norm.congr (fun n => ?_)
+  rw [LSeries.norm_term_eq]
+  by_cases hn : n = 0
+  · subst n
+    simp
+  · rw [if_neg hn]
+    congr 1
+    rw [show (Z ^ k) n =
+        (((((ζ : ArithmeticFunction ℕ) ^ k) n : ℕ) : ℂ)) by
+      simpa [Z] using (natCast_zetaPow_apply k n).symm]
+    simp
+    norm_num
+
+/-- The divisor-count Dirichlet series needed by the shifted gcd moment is summable. -/
+theorem summable_divisorCard_pow_div_sq (r : ℕ) (hr : 1 ≤ r) :
+    Summable (fun n : ℕ => ((n.divisors.card : ℝ) ^ r) / (n : ℝ) ^ 2) := by
+  apply (summable_zetaPow_div_sq (2 ^ r) (one_le_pow₀ (by omega))).of_nonneg_of_le
+  · intro n
+    positivity
+  · intro n
+    gcongr
+    exact_mod_cast divisorCard_pow_le_zetaPow n r hr
+
 /-- All fixed positive integer moments of the shifted gcd divisor count are bounded (codex2,
 95%).  Dominate `τ(gcd)^r` by `Σ_{d ∣ gcd} τ(d)^r`, count simultaneous divisibility
 (`≤ 9/d²`), and sum `Σ τ(d)^r/d² < ∞`. -/
@@ -225,7 +338,8 @@ theorem shifted_gcd_divisor_moment (u v r : ℕ) (hr : 1 ≤ r) :
     ∃ C : ℝ, 0 < C ∧ ∀ N : ℕ, 1 ≤ N →
       (∑ n ∈ Finset.Icc 1 N, ∑ m ∈ Finset.Icc 1 N,
         (((Nat.gcd (n + u) (m + v)).divisors.card : ℝ) ^ r)) ≤ C * (N : ℝ)^2 := by
-  sorry
+  exact shifted_gcd_divisor_moment_of_summable u v r
+    (summable_divisorCard_pow_div_sq r hr)
 
 noncomputable def weylMean (b : ℕ) (h : ℤ) (x : ℝ) (N : ℕ) : ℂ :=
   (∑ n ∈ Finset.range N,
