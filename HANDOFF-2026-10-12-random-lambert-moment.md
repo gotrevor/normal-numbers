@@ -77,6 +77,39 @@ Make `src/NormalNumbers/CoefmassRandomLambertMoment.lean` sorry-free, then check
 
 ## Status
 
+- Lap 3 review checkpoint (`research/lambert-moment`): proved both remaining finite averaging
+  layers, `prefix_tuple_mean_le` and `residueTuple_mean_sq`.  The prefix proof first establishes
+  the sharp one-coordinate block/remainder estimate (complete `Q`-blocks plus a tail bounded by
+  `Q/N`), then applies it through a `Fin.consEquiv` head-tail induction; each coordinate costs one
+  `Q/N`.  The residue proof expands the tuple phase into a product of `ePh` factors, applies
+  `Fintype.prod_sum`, splits the first/last `k` signs into a power and its conjugate, identifies the
+  normalized sum with `‖localMean‖^(2k)`, takes real parts, and finishes with `bernMod_sq`.  Four
+  declarations remain open.
+- Adversarial review result: the route still reaches the frozen headline with no statement drift.
+  A zero-context diff scan against skeleton commit `54019320` found no change to `Prime`,
+  `BernoulliLaw`, `randomLambert`, `weylMean`, `primeVariance`, or `finiteCRT_moment_bound`; the
+  Python positive and red controls still pass.  No direction correction is warranted.
+- Exact verification run:
+  - `lake env lean src/NormalNumbers/CoefmassRandomLambertMoment.lean` (green; only the four
+    remaining disclosed `sorry` warnings).
+  - `lake build NormalNumbers.CoefmassRandomLambertMoment` (green, 8716 jobs).
+  - `~/personal/bin/lean-green ~/src/nn-lambert-moment --target NormalNumbers.CoefmassRandomLambertMoment`
+    (`✅ FORMALIZE-TIER GREEN`, 8716 jobs).
+  - `python3 experiments/random_lambert_moment_controls.py` (all positive controls within
+    tolerance; both deliberately false red controls fail as expected).
+  - `lake env lean AuditRandomLambertMoment.lean` with `#print axioms` for
+    `prefix_tuple_mean_le` and `residueTuple_mean_sq` (temporary audit file; each exactly
+    `[propext, Classical.choice, Quot.sound]`).
+- Current blocker: `localMean_normSq_le` is now the active route-decisive spectral-gap obligation.
+  The finite identities on both sides of it are closed; downstream remain
+  `residueTuple_mean_le`, `moment_le_tupleAvg`, and final assembly.
+- Next highest-value attack: set `a₀ = padicValNat b h.natAbs + 1` and prove the anchor/small-tail
+  phase-separation lemma for `r = p - a₀` and `t < p - K`, choosing `K ≥ a₀` with
+  `b^K ≥ 16|h|`, then sum the resulting `2(p-K)` cosine deficits.  The fresh source check found
+  that generic (not necessarily prime-base) `padicValNat` in `Mathlib/Data/Nat/MaxPowDiv.lean`
+  supplies `pow_padicValNat_dvd` and `pow_dvd_iff_le_padicValNat`, so it matches the composite-base
+  statement and avoids building a custom valuation.
+
 - Lap 2 checkpoint (`research/lambert-moment`): proved `crt_tuple_prod_mean`.  The proof passes
   from the finset `F` to its subtype, installs positivity-derived `NeZero` instances for every
   modulus, constructs `ZMod.prodEquivPi`, and transports it through `ZMod.finEquiv` to an explicit
