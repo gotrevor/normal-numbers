@@ -351,10 +351,7 @@ def waivers : List Waiver := [
    "believed implication (55%): a Gelfond-strength two-log bound suffices for the run shadows; \
     the elementary t^k ≠ 3^j rate does not"⟩,
   ⟨``FiniteState.isFNormal_delayEnum_of_normal,
-   "a leaf: O(1) cost of composing with the delay transducer and its finite-state right inverse"⟩,
-  ⟨``digitOf_stoneham_sum_eq_zero,
-   "an exact arithmetic leaf: LTE divisibility, Stoneham-series head integrality, and a geometric \
-    tail bound; its proved corollary is not_isSimplyNormal_stoneham_sum"⟩]
+   "a leaf: O(1) cost of composing with the delay transducer and its finite-state right inverse"⟩]
 
 #barrier_audit allBarriers, cruxLinks, waivers
 

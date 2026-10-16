@@ -626,11 +626,11 @@ newest baton `HANDOFF.md` / `archive/handoff/HANDOFF-2026-09-28-*` · `PENDING_W
   `find archive -name <file>`.
 - `OVERVIEW.md`/`.html`: the reader's project map, refreshed 2026-09-28.  Rebuild it with
   `make -f docs/overview.mk`.
-# 2026-10-16 disjunction Lean lap 2
+# 2026-10-16 disjunction Lean lap 3 -- KICKOFF COMPLETE
 
-Kickoff Part 1 is complete: `IndependenceRelative.ternary_line`,
-`IndependenceRelative.exists_counterexample_on_line`, and `QSpan.exists_pair_qSpan_not_normal`
-all have only the standard trust-base axioms, and the Q-span Maze/Barrier entries are promoted.
-Part 2 is open at exactly `StonehamSums.digitOf_stoneham_sum_eq_zero`; the generic constant and
-`stonehamAlpha_two_three` are defined/proved, and `not_isSimplyNormal_stoneham_sum` is proved from
-the digit window.  See `HANDOFF-2026-10-16-disjunction-lap2.md`.
+The three Part 1 declarations (`IndependenceRelative.ternary_line`,
+`IndependenceRelative.exists_counterexample_on_line`, and `QSpan.exists_pair_qSpan_not_normal`)
+and Part 2's `StonehamSums.digitOf_stoneham_sum_eq_zero` all have only the standard trust-base
+axioms.  The exact Stoneham window makes `not_isSimplyNormal_stoneham_sum` unconditional: the
+binary digits vanish throughout `[2*3^k, 3^(k+1))`.  The Q-span Maze/Barrier promotions are also
+complete.  See `HANDOFF-2026-10-16-disjunction-lap3.md`.

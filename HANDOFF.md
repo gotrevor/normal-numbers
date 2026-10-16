@@ -1,7 +1,6 @@
-# Disjunction Lean lap 2 (2026-10-16): Part 1 complete; read HANDOFF-2026-10-16-disjunction-lap2.md
-- All three Part 1 theorems are proved at the trust baseline and the Maze/Barrier promotions are
-  complete.  Part 2 is reduced to `StonehamSums.digitOf_stoneham_sum_eq_zero`; its simple-normality
-  corollary is already proved from that window.
+# Disjunction Lean lap 3 (2026-10-16): KICKOFF COMPLETE; read HANDOFF-2026-10-16-disjunction-lap3.md
+- All three Part 1 theorems and the Part 2 Stoneham digit window are proved at the trust baseline.
+  `not_isSimplyNormal_stoneham_sum` is therefore axiom-clean, so the kickoff's done condition is met.
 
 # Gate 5 lap 3 (2026-10-11, review): per-cell route REFUTED, counting route; read HANDOFF-2026-10-11-gate5-lap3.md
 - Binding: DIRECTION.md CURRENT DIRECTIVE (gate 5 review lap 3).  Escalation: ROUTE-ESCALATION-2026-10-11.md.
