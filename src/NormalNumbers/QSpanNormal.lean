@@ -7,6 +7,10 @@ import NormalNumbers.MasterConjectures
 import NormalNumbers.WallRational
 import NormalNumbers.FiniteStateSelection
 import NormalNumbers.CantorExactExponent
+import NormalNumbers.NormalMeager
+import Mathlib.Analysis.Normed.Operator.Banach
+import Mathlib.Topology.Algebra.Module.ContinuousLinearMap.PiProd
+import Mathlib.Topology.Instances.Irrational
 
 /-!
 # A normal number in the ℚ-span of `√2, √3`?
@@ -105,19 +109,82 @@ theorem qSpanNormal_sqrt_two_sqrt_three (b : ℕ) (hb : 2 ≤ b) :
     QSpanNormal b (Real.sqrt 2) (Real.sqrt 3) := by
   sorry
 
-/-- **Sibling: a ℚ-independent pair whose ℚ-span holds no normal number.**  Confidence 90%.
+/-- **Sibling: a ℚ-independent pair whose ℚ-span holds no normal number.**
 
-English construction.  `x = Σ_k b^{−n_k}`, `y = Σ_k b^{−m_k}` with `n_k = (2k)!`,
-`m_k = (2k+1)!`; disjoint supersparse supports make `1, x, y` ℚ-independent.  For
-`z = (a x + a' y)/q` with integers `a, a'` and `q ≥ 1`, between consecutive support points
-`N < N'` the digits of `z` from about `N + O(log q)` to `N'` are those of a rational with
-denominator `q`: periodic with period at most `q`.  As `N'/N → ∞`, at time `N'` almost all of
-the prefix is periodic, so a length-`n` block with `bⁿ > q` and none of the `≤ q` periodic
-blocks has frequency tending to `0` along `N'`.  So `z` is not normal. -/
+The proof is a Baire-category argument.  For each nonzero rational pair `(c₁, c₂)`, the
+linear form `(x, y) ↦ c₁x + c₂y` is a continuous open surjection.  Irrational reals are
+residual, while base-`b` normal reals are meagre (`isMeagre_setOf_isNormal`), so the inverse image
+of the irrational non-normal reals is residual in `ℝ × ℝ`.  Intersecting over the countable
+set `ℚ × ℚ` gives a pair for which every nonzero rational linear combination is both
+irrational and non-normal. -/
 theorem exists_pair_qSpan_not_normal (b : ℕ) (hb : 2 ≤ b) :
     ∃ x y : ℝ, (∀ c₀ c₁ c₂ : ℚ, (c₁ : ℝ) * x + c₂ * y = c₀ → c₁ = 0 ∧ c₂ = 0) ∧
       ¬ QSpanNormal b x y := by
-  sorry
+  let form (p : ℚ × ℚ) : ℝ × ℝ →L[ℝ] ℝ :=
+    (((p.1 : ℝ) • ContinuousLinearMap.id ℝ ℝ).coprod
+      ((p.2 : ℝ) • ContinuousLinearMap.id ℝ ℝ))
+  have form_apply (p : ℚ × ℚ) (v : ℝ × ℝ) :
+      form p v = (p.1 : ℝ) * v.1 + p.2 * v.2 := by
+    simp [form, smul_eq_mul]
+  have form_surj (p : ℚ × ℚ) (hp : p ≠ 0) : Function.Surjective (form p) := by
+    intro z
+    by_cases h₁ : p.1 = 0
+    · have h₂ : p.2 ≠ 0 := by
+        intro h₂
+        apply hp
+        ext <;> simp_all
+      refine ⟨(0, z / (p.2 : ℝ)), ?_⟩
+      rw [form_apply, h₁]
+      simp only [Rat.cast_zero, zero_mul, Prod.fst, Prod.snd, zero_add]
+      exact mul_div_cancel₀ z (Rat.cast_ne_zero.mpr h₂)
+    · refine ⟨(z / (p.1 : ℝ), 0), ?_⟩
+      rw [form_apply]
+      simp only [Prod.fst, Prod.snd, mul_zero, add_zero]
+      exact mul_div_cancel₀ z (Rat.cast_ne_zero.mpr h₁)
+  let good : Set (ℝ × ℝ) := ⋂ p : ℚ × ℚ,
+    {v | p ≠ 0 → Irrational (form p v) ∧ ¬ IsNormal b (form p v)}
+  have hgood : good ∈ residual (ℝ × ℝ) := by
+    dsimp only [good]
+    refine countable_iInter_mem.2 fun p ↦ ?_
+    by_cases hp : p = 0
+    · simp [hp]
+    · have hmap : Tendsto (form p) (residual (ℝ × ℝ)) (residual ℝ) :=
+        tendsto_residual_of_isOpenMap (form p).continuous
+          ((form p).isOpenMap (form_surj p hp))
+      have hirr : {v : ℝ × ℝ | Irrational (form p v)} ∈ residual (ℝ × ℝ) :=
+        hmap eventually_residual_irrational
+      have hnon : {v : ℝ × ℝ | ¬ IsNormal b (form p v)} ∈ residual (ℝ × ℝ) := by
+        change (form p) ⁻¹' {z : ℝ | ¬ IsNormal b z} ∈ residual (ℝ × ℝ)
+        apply hmap
+        exact isMeagre_setOf_isNormal b hb
+      rw [show {v : ℝ × ℝ | p ≠ 0 →
+          Irrational (form p v) ∧ ¬ IsNormal b (form p v)} =
+        {v : ℝ × ℝ | Irrational (form p v)} ∩
+          {v : ℝ × ℝ | ¬ IsNormal b (form p v)} by ext; simp [hp]]
+      exact Filter.inter_mem hirr hnon
+  obtain ⟨v, hv⟩ := nonempty_of_not_isMeagre (not_isMeagre_of_mem_residual hgood)
+  have hv' (p : ℚ × ℚ) (hp : p ≠ 0) :
+      Irrational (form p v) ∧ ¬ IsNormal b (form p v) := by
+    exact (Set.mem_iInter.mp hv p) hp
+  refine ⟨v.1, v.2, ?_, ?_⟩
+  · intro c₀ c₁ c₂ heq
+    by_contra hne
+    have hp : (c₁, c₂) ≠ (0, 0) := by
+      intro hp
+      apply hne
+      exact Prod.mk_eq_zero.mp hp
+    apply (hv' (c₁, c₂) hp).1
+    refine ⟨c₀, ?_⟩
+    rw [form_apply]
+    exact_mod_cast heq.symm
+  · rintro ⟨c₁, c₂, hne, hnormal⟩
+    have hp : (c₁, c₂) ≠ (0, 0) := by
+      intro hp
+      have hz := Prod.mk_eq_zero.mp hp
+      exact hne.elim (fun h ↦ h hz.1) (fun h ↦ h hz.2)
+    apply (hv' (c₁, c₂) hp).2
+    rw [form_apply]
+    exact hnormal
 
 /-- Base-`b` digit sequence of `x` (of its fractional part), as letters of `Fin b`. -/
 noncomputable def digitSeq (b : ℕ) (hb : 0 < b) (x : ℝ) : ℕ → Fin b :=

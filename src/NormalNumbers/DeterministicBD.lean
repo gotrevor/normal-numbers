@@ -168,6 +168,19 @@ Hence no normal number is deterministic.  Guarded by `2 ≤ b`: at `b = 1` every
 def NormalNotDet (b : ℕ) : Prop :=
   2 ≤ b → ∀ x : ℝ, IsNormal b x → ¬ IsDeterministic b x
 
+/-- **Rauzy 1976** (one direction): adding a deterministic real to a normal real gives a
+normal real.  Cited, not proved. -/
+def Rauzy1976 (b : ℕ) : Prop :=
+  ∀ x y : ℝ, IsNormal b x → IsDeterministic b y → IsNormal b (x + y)
+
+/-- The Rauzy disjunction holds for **every** `y`, so it says nothing about `π` (or any
+particular constant): `.vacuous`. -/
+theorem rauzy_disjunction_universal (b : ℕ) (hR : Rauzy1976 b) (c : ℝ) (hc : IsNormal b c)
+    (y : ℝ) : IsNormal b (c + y) ∨ ¬ IsDeterministic b y := by
+  by_cases hy : IsDeterministic b y
+  · exact Or.inl (hR c y hc hy)
+  · exact Or.inr hy
+
 /-- **B-D open question 2** (§8.6), as a `Prop`.  `not_reciprocalQuestion` answers it. -/
 def ReciprocalQuestion (b : ℕ) : Prop :=
   ∀ y : ℝ, y ≠ 0 → IsDeterministic b y → IsDeterministic b y⁻¹

@@ -15,6 +15,7 @@ import NormalNumbers.Wall
 import NormalNumbers.LnTwo
 import NormalNumbers.StonehamArith
 import NormalNumbers.Stoneham
+import NormalNumbers.StonehamSums
 import NormalNumbers.StonehamBase6
 import NormalNumbers.CFDefs
 import NormalNumbers.CFCylinder
@@ -492,6 +493,7 @@ import NormalNumbers.GrowingLocalizedLog
 import NormalNumbers.MasterConjectures
 import NormalNumbers.EquidistTransfer
 import NormalNumbers.MasterConsequences
+import NormalNumbers.MasterLogFamily
 import NormalNumbers.MasterKicked
 import NormalNumbers.MasterPiSq
 import NormalNumbers.MasterLnTwoBase3

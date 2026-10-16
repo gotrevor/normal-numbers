@@ -40,6 +40,7 @@ import NormalNumbers.StretchBFR
 import NormalNumbers.CantorExactExponentProfile
 import NormalNumbers.CantorRepetition
 import NormalNumbers.QSpanCriterion
+import NormalNumbers.StonehamSums
 import NormalNumbers.ComputableReal
 import NormalNumbers.KurtzRandom
 import NormalNumbers.MahlerProductBlock
@@ -214,11 +215,6 @@ def waivers : List Waiver := [
   ⟨``IndependenceRelative.not_isRelativeBlock_small,
    "a finite computation stated as a sibling: the blocksearch probe's non-certification over \
     small direction sets; it closes a route, no open crux uses it"⟩,
-  ⟨``IndependenceRelative.ternary_line,
-   "a leaf: a borrow-propagation case split with a full English proof in the docstring; the \
-    independence-relative probe agrees (witness 2X - Y)"⟩,
-  ⟨``IndependenceRelative.exists_counterexample_on_line,
-   "a sibling: X = sum 3^(-k!), Y = 2X shows the line obstruction is real; no open crux uses it"⟩,
   ⟨``ConjugateEntropy.fsDimUpper_le_of_sum_rat,
    "a leaf: the span_dimension_budget block-entropy argument with both terms upper (Fekete in ℓ); \
     B–D 2506.12929 Prop. 4.9(d) for point entropy, bridge to Dim_FS not formalized"⟩,

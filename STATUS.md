@@ -626,3 +626,20 @@ newest baton `HANDOFF.md` / `archive/handoff/HANDOFF-2026-09-28-*` · `PENDING_W
   `find archive -name <file>`.
 - `OVERVIEW.md`/`.html`: the reader's project map, refreshed 2026-09-28.  Rebuild it with
   `make -f docs/overview.mk`.
+# 2026-10-16 disjunction Lean lap 3 -- KICKOFF COMPLETE
+
+The three Part 1 declarations (`IndependenceRelative.ternary_line`,
+`IndependenceRelative.exists_counterexample_on_line`, and `QSpan.exists_pair_qSpan_not_normal`)
+and Part 2's `StonehamSums.digitOf_stoneham_sum_eq_zero` all have only the standard trust-base
+axioms.  The exact Stoneham window makes `not_isSimplyNormal_stoneham_sum` unconditional: the
+binary digits vanish throughout `[2*3^k, 3^(k+1))`.  The Q-span Maze/Barrier promotions are also
+complete.  See `HANDOFF-2026-10-16-disjunction-lap3.md`.
+
+## 2026-10-16 disjunction Lean lap 4 -- Rauzy stretch
+
+`Literature.BergelsonDownarowicz.Rauzy1976` now records the cited normal-plus-deterministic
+direction, and `rauzy_disjunction_universal` proves that its associated disjunction holds for
+every second summand.  Therefore the disjunction carries no information about pi; this is linked
+as the kernel-tier Maze row "Rauzy disjunction as information about pi".  The theorem uses only
+the standard trust-base axioms, and the full 10,852-job build is green.  The binding kickoff done
+condition remains complete.  See `HANDOFF-2026-10-16-disjunction-lap4.md`.

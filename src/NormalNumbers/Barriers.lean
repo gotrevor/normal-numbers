@@ -293,9 +293,9 @@ def cantorExp_trivialCount_mu_three : Barrier :=
     "Borel–Cantelli with the trivial count (2^F numerators per denominator) in windows that \
      enter a forced run"
 
-/-- A ℚ-independent Liouville-type pair whose ℚ-span holds no normal number. -/
+/-- A ℚ-independent pair whose ℚ-span holds no normal number. -/
 def liouville_pair_qSpan : Barrier :=
-  .frozen "sparse Liouville pair x, y (1, x, y ℚ-independent): no c₁x + c₂y is normal"
+  .proved "Baire-generic pair x, y (1, x, y ℚ-independent): no c₁x + c₂y is normal"
     @QSpan.exists_pair_qSpan_not_normal
     [``QSpan.exists_pair_qSpan_not_normal]
     "pair-universal mechanisms (carry coupling, ℚ-span or Wall-type closure arguments) aimed at \

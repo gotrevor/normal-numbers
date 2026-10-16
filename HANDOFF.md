@@ -1,3 +1,20 @@
+# Disjunction Lean lap 7 (2026-10-16): Hermite crux for T-C; read HANDOFF-2026-10-16-disjunction-lap7.md
+- The binding kickoff remains complete.  The conditional HypA log-family stretch now has its
+  hardest arithmetic prerequisite: every nonzero rational combination of log 2 and log 3 is
+  proved irrational at the standard trust baseline.  Next: grouped base-4 series and kick wiring.
+
+# Disjunction Lean lap 5 (2026-10-16): Stoneham R3/R5 Maze promotion; read HANDOFF-2026-10-16-disjunction-lap5.md
+- The binding kickoff remains complete.  Stretch report routes R3/R5 are now kernel-tier Maze rows,
+  backed by the axiom-clean theorem `not_isNormal_stoneham_sum` and audited declaration links.
+
+# Disjunction Lean lap 4 (2026-10-16): Rauzy stretch landed; read HANDOFF-2026-10-16-disjunction-lap4.md
+- The binding kickoff remains complete.  Stretch item 2's mandatory Rauzy theorem and kernel-tier
+  Maze row are now formalized and audited.
+
+# Disjunction Lean lap 3 (2026-10-16): KICKOFF COMPLETE; read HANDOFF-2026-10-16-disjunction-lap3.md
+- All three Part 1 theorems and the Part 2 Stoneham digit window are proved at the trust baseline.
+  `not_isSimplyNormal_stoneham_sum` is therefore axiom-clean, so the kickoff's done condition is met.
+
 # Gate 5 lap 3 (2026-10-11, review): per-cell route REFUTED, counting route; read HANDOFF-2026-10-11-gate5-lap3.md
 - Binding: DIRECTION.md CURRENT DIRECTIVE (gate 5 review lap 3).  Escalation: ROUTE-ESCALATION-2026-10-11.md.
 

@@ -4,6 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
 import NormalNumbers.Disjunctive
+import NormalNumbers.AdderBaseG
+import NormalNumbers.MahlerLowerBoundBackground
 import Architect
 import Mathlib.Analysis.SpecialFunctions.Exp
 import Mathlib.Analysis.Real.Pi.Bounds
@@ -59,7 +61,189 @@ the tails of `Y` and `2X` agree with no carries, so `Y − 2X` is rational.  Con
 @[blueprint (title := "Ternary line theorem: X has 2, Y has 1, or Y - X has 2, unless Y - 2X is rational")]
 theorem ternary_line (X Y : ℝ) (h : Irrational (Y - 2 * X)) :
     DigitIO 3 X 2 ∨ DigitIO 3 Y 1 ∨ DigitIO 3 (Y - X) 2 := by
-  sorry
+  by_contra havoid
+  push Not at havoid
+  obtain ⟨hXio, hYio, hZio⟩ := havoid
+  unfold DigitIO at hXio hYio hZio
+  push Not at hXio hYio hZio
+  obtain ⟨NX, hX⟩ := hXio
+  obtain ⟨NY, hY⟩ := hYio
+  obtain ⟨NZ, hZ⟩ := hZio
+  let N := max NX (max NY NZ)
+  have hX' : ∀ m, N ≤ m → ¬ OccursAt 3 X [2] m := by
+    intro m hm
+    exact hX m (le_trans (le_max_left _ _) hm)
+  have hY' : ∀ m, N ≤ m → ¬ OccursAt 3 Y [1] m := by
+    intro m hm
+    exact hY m (le_trans (le_max_left _ _) (le_trans (le_max_right _ _) hm))
+  have hZ' : ∀ m, N ≤ m → ¬ OccursAt 3 (Y - X) [2] m := by
+    intro m hm
+    exact hZ m (le_trans (le_max_right _ _) (le_trans (le_max_right _ _) hm))
+  have hdigit {L : ℝ} {d m : ℕ} (hm : ¬ OccursAt 3 L [d] m) :
+      (Adder.gdigit 3 L m).toNat ≠ d := by
+    intro heq
+    apply hm
+    rw [Adder.occursAt_iff_winListG 3 (by norm_num)]
+    simpa using heq
+  let B : ℕ → ℤ := Adder.carryTG 3 (-1) 1 X Y
+  have hBbounds (m : ℕ) : -1 ≤ B m ∧ B m ≤ 0 := by
+    exact ⟨Adder.carryTG_nonneg' 3 (-1) 1 X Y m,
+      Adder.carryTG_le' 3 (-1) 1 X Y m (by norm_num)⟩
+  have hminus_next (m : ℕ) (hm : N ≤ m) (hb : B m = -1) : B (m + 1) = -1 := by
+    have hx0 := Adder.gdigit_nonneg 3 (by norm_num) X m
+    have hx1 := Adder.gdigit_lt 3 (by norm_num) X m
+    have hy0 := Adder.gdigit_nonneg 3 (by norm_num) Y m
+    have hy1 := Adder.gdigit_lt 3 (by norm_num) Y m
+    have hz0 := Adder.gdigit_nonneg 3 (by norm_num) (Y - X) m
+    have hz1 := Adder.gdigit_lt 3 (by norm_num) (Y - X) m
+    have hxn := hdigit (hX' m hm)
+    have hyn := hdigit (hY' m hm)
+    have hzn := hdigit (hZ' m hm)
+    have hb' := hBbounds (m + 1)
+    have hcol := Adder.carryG_column 3 (-1) 1 X Y m
+    norm_num at hcol
+    rw [show -X + Y = Y - X by ring] at hcol
+    change Adder.carryTG 3 (-1) 1 X Y m = -1 at hb
+    change (-1 : ℤ) ≤ Adder.carryTG 3 (-1) 1 X Y (m + 1) ∧
+      Adder.carryTG 3 (-1) 1 X Y (m + 1) ≤ 0 at hb'
+    change Adder.carryTG 3 (-1) 1 X Y (m + 1) = -1
+    have hxnZ : Adder.gdigit 3 X m ≠ 2 := by intro heq; apply hxn; omega
+    have hynZ : Adder.gdigit 3 Y m ≠ 1 := by intro heq; apply hyn; omega
+    have hznZ : Adder.gdigit 3 (Y - X) m ≠ 2 := by intro heq; apply hzn; omega
+    omega
+  have htarget_const (m : ℕ) (hm : N ≤ m) (s : ℤ)
+      (hs : s = -1 ∨ s = 0) (h0 : B m = s) (h1 : B (m + 1) = s)
+      (h2 : B (m + 2) = s) (h3 : B (m + 3) = s) :
+      Adder.gdigit 3 (Y - 2 * X) (m + 1) = Adder.gdigit 3 (Y - 2 * X) m := by
+    have hm1 : N ≤ m + 1 := by omega
+    have hm2 : N ≤ m + 2 := by omega
+    have hx0 := Adder.gdigit_nonneg 3 (by norm_num) X m
+    have hx1 := Adder.gdigit_lt 3 (by norm_num) X m
+    have hy0 := Adder.gdigit_nonneg 3 (by norm_num) Y m
+    have hy1 := Adder.gdigit_lt 3 (by norm_num) Y m
+    have hz0 := Adder.gdigit_nonneg 3 (by norm_num) (Y - X) m
+    have hz1 := Adder.gdigit_lt 3 (by norm_num) (Y - X) m
+    have hx0' := Adder.gdigit_nonneg 3 (by norm_num) X (m + 1)
+    have hx1' := Adder.gdigit_lt 3 (by norm_num) X (m + 1)
+    have hy0' := Adder.gdigit_nonneg 3 (by norm_num) Y (m + 1)
+    have hy1' := Adder.gdigit_lt 3 (by norm_num) Y (m + 1)
+    have hz0' := Adder.gdigit_nonneg 3 (by norm_num) (Y - X) (m + 1)
+    have hz1' := Adder.gdigit_lt 3 (by norm_num) (Y - X) (m + 1)
+    have hx0'' := Adder.gdigit_nonneg 3 (by norm_num) X (m + 2)
+    have hx1'' := Adder.gdigit_lt 3 (by norm_num) X (m + 2)
+    have hy0'' := Adder.gdigit_nonneg 3 (by norm_num) Y (m + 2)
+    have hy1'' := Adder.gdigit_lt 3 (by norm_num) Y (m + 2)
+    have hz0'' := Adder.gdigit_nonneg 3 (by norm_num) (Y - X) (m + 2)
+    have hz1'' := Adder.gdigit_lt 3 (by norm_num) (Y - X) (m + 2)
+    have hxn := hdigit (hX' m hm)
+    have hyn := hdigit (hY' m hm)
+    have hzn := hdigit (hZ' m hm)
+    have hxn' := hdigit (hX' (m + 1) hm1)
+    have hyn' := hdigit (hY' (m + 1) hm1)
+    have hzn' := hdigit (hZ' (m + 1) hm1)
+    have hxn'' := hdigit (hX' (m + 2) hm2)
+    have hyn'' := hdigit (hY' (m + 2) hm2)
+    have hzn'' := hdigit (hZ' (m + 2) hm2)
+    have hbc := Adder.carryG_column 3 (-1) 1 X Y m
+    have hbc' := Adder.carryG_column 3 (-1) 1 X Y (m + 1)
+    have hbc'' := Adder.carryG_column 3 (-1) 1 X Y (m + 2)
+    have hc0 := Adder.carryTG_nonneg' 3 (-2) 1 X Y m
+    have hc1 := Adder.carryTG_le' 3 (-2) 1 X Y m (by norm_num)
+    have hc0' := Adder.carryTG_nonneg' 3 (-2) 1 X Y (m + 1)
+    have hc1' := Adder.carryTG_le' 3 (-2) 1 X Y (m + 1) (by norm_num)
+    have hc0'' := Adder.carryTG_nonneg' 3 (-2) 1 X Y (m + 2)
+    have hc1'' := Adder.carryTG_le' 3 (-2) 1 X Y (m + 2) (by norm_num)
+    have hc0''' := Adder.carryTG_nonneg' 3 (-2) 1 X Y (m + 3)
+    have hc1''' := Adder.carryTG_le' 3 (-2) 1 X Y (m + 3) (by norm_num)
+    have hw0 := Adder.gdigit_nonneg 3 (by norm_num) (Y - 2 * X) m
+    have hw1 := Adder.gdigit_lt 3 (by norm_num) (Y - 2 * X) m
+    have hw0' := Adder.gdigit_nonneg 3 (by norm_num) (Y - 2 * X) (m + 1)
+    have hw1' := Adder.gdigit_lt 3 (by norm_num) (Y - 2 * X) (m + 1)
+    have hw0'' := Adder.gdigit_nonneg 3 (by norm_num) (Y - 2 * X) (m + 2)
+    have hw1'' := Adder.gdigit_lt 3 (by norm_num) (Y - 2 * X) (m + 2)
+    have hcc := Adder.carryG_column 3 (-2) 1 X Y m
+    have hcc' := Adder.carryG_column 3 (-2) 1 X Y (m + 1)
+    have hcc'' := Adder.carryG_column 3 (-2) 1 X Y (m + 2)
+    norm_num at hbc hbc' hbc'' hcc hcc' hcc'' hc0 hc1 hc0' hc1' hc0'' hc1'' hc0''' hc1'''
+    rw [show m + 1 + 1 = m + 2 by omega] at hbc' hcc'
+    rw [show m + 2 + 1 = m + 3 by omega] at hbc'' hcc''
+    rw [show -X + Y = Y - X by ring] at hbc hbc' hbc''
+    rw [show -(2 * X) + Y = Y - 2 * X by ring] at hcc hcc' hcc''
+    change Adder.carryTG 3 (-1) 1 X Y m = s at h0
+    change Adder.carryTG 3 (-1) 1 X Y (m + 1) = s at h1
+    change Adder.carryTG 3 (-1) 1 X Y (m + 2) = s at h2
+    change Adder.carryTG 3 (-1) 1 X Y (m + 3) = s at h3
+    have hxnZ : Adder.gdigit 3 X m ≠ 2 := by intro heq; apply hxn; omega
+    have hynZ : Adder.gdigit 3 Y m ≠ 1 := by intro heq; apply hyn; omega
+    have hznZ : Adder.gdigit 3 (Y - X) m ≠ 2 := by intro heq; apply hzn; omega
+    have hxnZ' : Adder.gdigit 3 X (m + 1) ≠ 2 := by intro heq; apply hxn'; omega
+    have hynZ' : Adder.gdigit 3 Y (m + 1) ≠ 1 := by intro heq; apply hyn'; omega
+    have hznZ' : Adder.gdigit 3 (Y - X) (m + 1) ≠ 2 := by intro heq; apply hzn'; omega
+    have hxnZ'' : Adder.gdigit 3 X (m + 2) ≠ 2 := by intro heq; apply hxn''; omega
+    have hynZ'' : Adder.gdigit 3 Y (m + 2) ≠ 1 := by intro heq; apply hyn''; omega
+    have hznZ'' : Adder.gdigit 3 (Y - X) (m + 2) ≠ 2 := by intro heq; apply hzn''; omega
+    have hc_cases : Adder.carryTG 3 (-2) 1 X Y m = -2 ∨
+        Adder.carryTG 3 (-2) 1 X Y m = -1 ∨ Adder.carryTG 3 (-2) 1 X Y m = 0 := by omega
+    have hc_cases' : Adder.carryTG 3 (-2) 1 X Y (m + 1) = -2 ∨
+        Adder.carryTG 3 (-2) 1 X Y (m + 1) = -1 ∨
+          Adder.carryTG 3 (-2) 1 X Y (m + 1) = 0 := by omega
+    have hc_cases'' : Adder.carryTG 3 (-2) 1 X Y (m + 2) = -2 ∨
+        Adder.carryTG 3 (-2) 1 X Y (m + 2) = -1 ∨
+          Adder.carryTG 3 (-2) 1 X Y (m + 2) = 0 := by omega
+    rcases hs with rfl | rfl
+    · have ha : -(2 * Adder.gdigit 3 X m) + Adder.gdigit 3 Y m = -2 := by omega
+      have ha' : -(2 * Adder.gdigit 3 X (m + 1)) +
+          Adder.gdigit 3 Y (m + 1) = -2 := by omega
+      have ha'' : -(2 * Adder.gdigit 3 X (m + 2)) +
+          Adder.gdigit 3 Y (m + 2) = -2 := by omega
+      have heq : -2 + Adder.carryTG 3 (-2) 1 X Y (m + 1) =
+          Adder.gdigit 3 (Y - 2 * X) m + 3 * Adder.carryTG 3 (-2) 1 X Y m := by
+        omega
+      have heq' : -2 + Adder.carryTG 3 (-2) 1 X Y (m + 2) =
+          Adder.gdigit 3 (Y - 2 * X) (m + 1) +
+            3 * Adder.carryTG 3 (-2) 1 X Y (m + 1) := by omega
+      rcases hc_cases with hc | hc | hc <;>
+        rcases hc_cases' with hc' | hc' | hc' <;>
+        rcases hc_cases'' with hc'' | hc'' | hc'' <;> omega
+    · have ha : -(2 * Adder.gdigit 3 X m) + Adder.gdigit 3 Y m = 0 := by omega
+      have ha' : -(2 * Adder.gdigit 3 X (m + 1)) +
+          Adder.gdigit 3 Y (m + 1) = 0 := by omega
+      have ha'' : -(2 * Adder.gdigit 3 X (m + 2)) +
+          Adder.gdigit 3 Y (m + 2) = 0 := by omega
+      have heq : Adder.carryTG 3 (-2) 1 X Y (m + 1) =
+          Adder.gdigit 3 (Y - 2 * X) m + 3 * Adder.carryTG 3 (-2) 1 X Y m := by
+        omega
+      have heq' : Adder.carryTG 3 (-2) 1 X Y (m + 2) =
+          Adder.gdigit 3 (Y - 2 * X) (m + 1) +
+            3 * Adder.carryTG 3 (-2) 1 X Y (m + 1) := by omega
+      rcases hc_cases with hc | hc | hc <;>
+        rcases hc_cases' with hc' | hc' | hc' <;>
+        rcases hc_cases'' with hc'' | hc'' | hc'' <;> omega
+  by_cases hex : ∃ k, N ≤ k ∧ B k = -1
+  · obtain ⟨k, hkN, hk⟩ := hex
+    have htail : ∀ m, k ≤ m → B m = -1 := by
+      intro m hm
+      induction m, hm using Nat.le_induction with
+      | base => exact hk
+      | succ m hkm ih => exact hminus_next m (le_trans hkN hkm) ih
+    exact (Adder.not_irrational_of_periodic_digits_g 3 (by norm_num)
+      (Y - 2 * X) k 1 one_pos (fun m hm => by
+        rw [Adder.digitOf_g_fract 3 (by norm_num), Adder.digitOf_g_fract 3 (by norm_num)]
+        rw [htarget_const m (le_trans hkN hm) (-1) (Or.inl rfl)
+          (htail m hm) (htail (m + 1) (by omega)) (htail (m + 2) (by omega))
+          (htail (m + 3) (by omega))])) h
+  · push Not at hex
+    have hzero : ∀ m, N ≤ m → B m = 0 := by
+      intro m hm
+      have hb := hBbounds m
+      have hn := hex m hm
+      omega
+    exact (Adder.not_irrational_of_periodic_digits_g 3 (by norm_num)
+      (Y - 2 * X) N 1 one_pos (fun m hm => by
+        rw [Adder.digitOf_g_fract 3 (by norm_num), Adder.digitOf_g_fract 3 (by norm_num)]
+        rw [htarget_const m hm 0 (Or.inr rfl)
+          (hzero m hm) (hzero (m + 1) (by omega)) (hzero (m + 2) (by omega))
+          (hzero (m + 3) (by omega))])) h
 
 /-- **The line is a real obstruction.**  Confidence 90%.  Take `X = Σ 3^{-k!}` (digits in
 `{0,1}`, irrational: not eventually periodic) and `Y = 2X` (digits in `{0,2}`, no carries).
@@ -67,7 +251,38 @@ Then `Y − X = X` has digits in `{0,1}`.  None of the three digits recurs. -/
 theorem exists_counterexample_on_line :
     ∃ X Y : ℝ, Irrational X ∧ Irrational Y ∧ Y = 2 * X ∧
       ¬ DigitIO 3 X 2 ∧ ¬ DigitIO 3 Y 1 ∧ ¬ DigitIO 3 (Y - X) 2 := by
-  sorry
+  let X := Mahler.bgLiouville 3 0 1
+  let Y := 2 * X
+  have hcertX := Mahler.mahler_lower_bound_bg_digit 3 0 1 1 2 1 0
+    (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num)
+    (by intro m hm; norm_num [Mahler.repunit]; omega)
+    (by intro m hm d hd hd1; interval_cases m <;> interval_cases d <;>
+      norm_num [Mahler.bgResidue, Mahler.repunit])
+    (by intro m hm; norm_num)
+  have hcertY := Mahler.mahler_lower_bound_bg_digit 3 0 2 1 1 1 1
+    (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num)
+    (by intro m hm; norm_num [Mahler.repunit]; omega)
+    (by intro m hm d hd hd1; interval_cases m <;> interval_cases d <;>
+      norm_num [Mahler.bgResidue, Mahler.repunit])
+    (by intro m hm; norm_num)
+  have hYX : Y - X = X := by simp only [Y]; ring
+  have hYbg : Y = Mahler.bgLiouville 3 0 2 := by
+    simp only [Y, X, Mahler.bgLiouville]
+    ring
+  refine ⟨X, Y, hcertX.1, ?_, rfl, ?_, ?_, ?_⟩
+  · exact hcertX.1.natCast_mul (by norm_num)
+  · intro hio
+    obtain ⟨N, hN⟩ := hcertX.2 1 le_rfl le_rfl
+    obtain ⟨n, hn, hocc⟩ := hio N
+    exact hN n hn (by simpa [X] using hocc)
+  · intro hio
+    obtain ⟨N, hN⟩ := hcertY.2 1 le_rfl le_rfl
+    obtain ⟨n, hn, hocc⟩ := hio N
+    exact hN n hn (by simpa [hYbg] using hocc)
+  · intro hio
+    obtain ⟨N, hN⟩ := hcertX.2 1 le_rfl le_rfl
+    obtain ⟨n, hn, hocc⟩ := hio N
+    exact hN n hn (by simpa [hYX, X] using hocc)
 
 /-- **The `π + e` shape.**  Either `e − 2π` is rational, or ternary `π` has infinitely many `2`s,
 or ternary `e` has infinitely many `1`s, or ternary `e − π` has infinitely many `2`s.  Every

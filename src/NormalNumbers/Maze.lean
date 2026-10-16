@@ -14,6 +14,7 @@ import NormalNumbers.G4RowVariance
 import NormalNumbers.G4RowMassOptimal
 import NormalNumbers.G4WiringSparse
 import NormalNumbers.StonehamSixFailure
+import NormalNumbers.StonehamSums
 import NormalNumbers.CastingOut
 import NormalNumbers.LogCastingOut
 import NormalNumbers.C3MrtTTDefect
@@ -38,6 +39,8 @@ import NormalNumbers.VandeheyS7WidthDensity
 import NormalNumbers.VandeheyS7ArchWidthFree
 import NormalNumbers.Erdos257Squarefree
 import NormalNumbers.EDensityAudit
+import NormalNumbers.QSpanNormal
+import NormalNumbers.DeterministicBD
 
 /-!
 # `Maze.lean` — the halls we have walked, encoded
@@ -635,6 +638,24 @@ alias hall_logavg_casting_out :=
 /-- **HALL: the log rung is a natural-average statement in disguise** (`refuted`, 2026-10-04).
 It is not: `dyadicBit` has log digit frequency `1/2` and no natural digit frequency. -/
 alias hall_log_rung_distinct := NormalNumbers.LogCastingOut.not_tendsto_natFreq_dyadicBit
+
+/-- Hall witness: a pair-universal mechanism cannot force a normal element of a rational span. -/
+alias hall_qspan_pair_universal := NormalNumbers.QSpan.exists_pair_qSpan_not_normal
+
+/-- Hall witness: Rauzy's normal-plus-deterministic disjunction is true for every second
+summand, so specializing it to a named constant supplies no information about that constant. -/
+alias hall_rauzy_disjunction_universal :=
+  NormalNumbers.Literature.BergelsonDownarowicz.rauzy_disjunction_universal
+
+/-- Hall witness for the failed Stoneham-decomposition normality route: the first two coupled
+pieces are separately binary normal but already have a non-simply-normal sum. -/
+alias hall_stoneham_decomposition_sum :=
+  NormalNumbers.stoneham_pair_normal_not_isSimplyNormal_sum
+
+/-- Hall witness against treating normality as closed under addition for the coupled Stoneham
+family. -/
+alias hall_stoneham_sum_normal :=
+  NormalNumbers.stoneham_pair_normal_not_isSimplyNormal_sum
 
 /-! ## 4. The register
 
@@ -1413,9 +1434,27 @@ def register : List Hall := [
    "EntropyProfiles.lean: exists_strictMono_biLipschitz_cantorSet_not_isNormal_two (sorry), not_biLipschitz_stable, HochmanShmerkinCantorDiff1; docs/ENTROPY-REFEREE-2026-10-04.md", "2026-10-04"⟩,
   ⟨"pair-universal mechanism for a normal element of a Q-span",
    "Find a normal number among the nonzero rational combinations of sqrt 2 and sqrt 3 by an argument that works for every Q-independent pair, as the six-fold adder disjunction works for every pair not both rational",
-   .refuted, .frozen,
-   "Witness: a supersparse Liouville pair whose every rational combination has long periodic stretches dominating its prefixes, so none is normal. A mechanism must use something sqrt 2, sqrt 3 have and the pair lacks",
-   "QSpanNormal.lean: exists_pair_qSpan_not_normal (sorry, 90%), qSpanNormal_sqrt_two_sqrt_three; Barriers.liouville_pair_qSpan", "2026-10-05"⟩,
+   .refuted, .kernel,
+   "Witness: a Baire-generic pair whose every nonzero rational combination is irrational and non-normal. A mechanism must use something sqrt 2, sqrt 3 have and the pair lacks",
+   "alias hall_qspan_pair_universal := QSpan.exists_pair_qSpan_not_normal; QSpanNormal.lean: qSpanNormal_sqrt_two_sqrt_three; Barriers.liouville_pair_qSpan", "2026-10-05"⟩,
+  ⟨"Rauzy disjunction as information about pi",
+   "Read 'pi + Champernowne is normal, or pi's digits are not deterministic' as a fact about pi",
+   .vacuous, .kernel,
+   "The disjunction holds for every real y (rauzy_disjunction_universal), so it carries no information about pi; the only informative branch, pi + Champernowne NOT normal, is believed false. REOPEN IF: a proof that some explicit c + pi is non-normal",
+   "DeterministicBD.lean: rauzy_disjunction_universal, Literature.BergelsonDownarowicz.Rauzy1976",
+   "2026-10-16"⟩,
+  ⟨"Stoneham decomposition of ln 2 into normal summands",
+   "Use ln 2 = sum_{3 does not divide m} alpha_{2^m,3}/m and infer normality from the individual Stoneham pieces",
+   .falseAsStated, .kernel,
+   "The coupled initial pieces already fail: alpha_{2,3} + alpha_{4,3} has binary zero windows [2*3^k, 3^(k+1)), hence is not even simply normal. Any decomposition argument must control arithmetic cancellation between pieces, not only each piece separately",
+   "alias hall_stoneham_decomposition_sum := stoneham_pair_normal_not_isSimplyNormal_sum; StonehamSums.lean: digitOf_stoneham_sum_eq_zero",
+   "2026-10-16"⟩,
+  ⟨"normal Stoneham constants are closed under addition",
+   "Infer joint normality, or normality of a sum, from separate normality of Stoneham constants",
+   .refuted, .kernel,
+   "The same-prime pair alpha_{2,3}, alpha_{4,3} is arithmetically coupled: their sum has binary zero windows of asymptotic relative length 1/3 and is not binary normal",
+   "alias hall_stoneham_sum_normal := stoneham_pair_normal_not_isSimplyNormal_sum; StonehamSums.lean: digitOf_stoneham_sum_eq_zero",
+   "2026-10-16"⟩,
   ⟨"Diophantine (exponent-2) input for a normal element of a Q-span",
    "Use Roth-type information (every element of the span of sqrt 2, sqrt 3 has irrationality exponent 2), which kills the Liouville witness, to force a normal element of the span",
    .refuted, .frozen,
@@ -1475,7 +1514,7 @@ def register : List Hall := [
    "Use independence-relative certificates (fail only on rational lines) to get a small two-track all-digits block: for every Q-independent pair, some combination aX + bY with small (a, b) has every ternary digit i.o., beating the single-track {2, 11}",
    .refuted, .frozen,
    "Every small direction set has an avoided-digit assignment whose live automaton keeps a component not certified degenerate. Product-block counterexamples vary X and Y separately (two-dimensional); a relative certificate only discards one-dimensional failure loci, so the gain is confined to tightly coupled single-word families like ternary_line. Binary 2-word blocks (|coef| <= 3, up to 3 directions) also all fail. REOPEN IF: a complete degeneracy test, or larger coefficients",
-   "IndependenceRelative.lean: not_isRelativeBlock_small (sorry, 65%), IsRelativeBlock, ternary_line; experiments/independence_relative.py blocksearch", "2026-10-05"⟩,
+   "IndependenceRelative.lean: not_isRelativeBlock_small (sorry, 65%), IsRelativeBlock, ternary_line (proved); experiments/independence_relative.py blocksearch", "2026-10-05"⟩,
   ⟨"elementary orbit port to 3 | b",
    "Prove a.e. normality of the exact-exponent Cantor point to b = 3^s t below the profile threshold by porting secondMoment_le_b, with the orbit of t mod 3^k counting the low ternary digits of h(b^d-1)t^m",
    .wall, .kernel,
