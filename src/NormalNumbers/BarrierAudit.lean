@@ -217,6 +217,9 @@ def waivers : List Waiver := [
   ⟨``VandeheyProof.vandeheyThm51_holds,
    "campaign target (KICKOFF-2026-10-16-vandehey-thm51.md): proving the cited VandeheyThm51, \
     a literature discharge Trevor opened; not a crux"⟩,
+  ⟨``VandeheyKorobov.div_bigM_le_orderOf,
+   "rung-1 leaf of the VandeheyThm51 campaign: Vandehey Lemma 2.1 / equation (5), an \
+    elementary prime-power order and LTE calculation; not a new-mathematics crux"⟩,
   ⟨``IndependenceRelative.not_isRelativeBlock_small,
    "a finite computation stated as a sibling: the blocksearch probe's non-certification over \
     small direction sets; it closes a route, no open crux uses it"⟩,

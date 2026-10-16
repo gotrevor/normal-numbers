@@ -1,3 +1,10 @@
+# Vandehey Theorem 5.1 lap 1 (2026-10-16); read HANDOFF-2026-10-16-vandehey-thm51-lap1.md
+- Kickoff rung 1 is frozen faithfully as `div_bigM_le_orderOf` (open prime-power lifting proof).
+- The Parseval--orbit square-root core of rung 2 is proved as
+  `norm_blockFourier_le_sqrt_of_orbit`; target gate is FORMALIZE-TIER GREEN.
+- Next: discharge rung 1, odd primes first via `padicValNat.pow_sub_pow`, then the exceptional
+  2-adic case and CRT/lcm assembly.
+
 # Stoneham sums normal lap 3 COMPLETE (2026-10-16); read HANDOFF-2026-10-16-stoneham-sums-normal-lap3.md
 - `StonehamSumsNormal.lean` is sorry-free.  The derived Vandehey Corollary 1.2, general rational
   combination theorem, and `α₂,₃ + α₂,₅` headline all have exactly the standard trust-base
