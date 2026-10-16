@@ -3974,6 +3974,10 @@ Next: `isFresh` Riesz bound, then the classification lemma in Lean (route-decisi
 
 - DONE: `IndependenceRelative.ternary_line`.
 - DONE: `IndependenceRelative.exists_counterexample_on_line`.
-- NEXT: prove `QSpan.exists_pair_qSpan_not_normal` for every base `b >= 2`, then perform the
-  kickoff's Maze and Barrier promotion.  Route comparison and verification are recorded in
-  `HANDOFF-2026-10-16-disjunction-lap1.md`.
+- DONE: `QSpan.exists_pair_qSpan_not_normal` for every base `b >= 2` (Baire-category proof), plus
+  the kickoff's Maze and Barrier promotion.
+- DONE (Part 2 scaffold): `stonehamAlpha_two_three`; the proof of
+  `not_isSimplyNormal_stoneham_sum` is complete conditional only on the exact digit window.
+- NEXT: prove `StonehamSums.digitOf_stoneham_sum_eq_zero` by the exact integer-block regrouping,
+  LTE divisibility, and head/tail floor calculation.  See
+  `HANDOFF-2026-10-16-disjunction-lap2.md`.

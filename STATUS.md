@@ -626,9 +626,11 @@ newest baton `HANDOFF.md` / `archive/handoff/HANDOFF-2026-09-28-*` · `PENDING_W
   `find archive -name <file>`.
 - `OVERVIEW.md`/`.html`: the reader's project map, refreshed 2026-09-28.  Rebuild it with
   `make -f docs/overview.mk`.
-# 2026-10-16 disjunction Lean lap 1
+# 2026-10-16 disjunction Lean lap 2
 
-Kickoff objectives 1 and 2 are proved: `IndependenceRelative.ternary_line` and
-`IndependenceRelative.exists_counterexample_on_line` both have only the standard trust-base
-axioms.  The remaining ordered objective is `QSpan.exists_pair_qSpan_not_normal`, followed by the
-specified Maze/Barrier promotion.  See `HANDOFF-2026-10-16-disjunction-lap1.md`.
+Kickoff Part 1 is complete: `IndependenceRelative.ternary_line`,
+`IndependenceRelative.exists_counterexample_on_line`, and `QSpan.exists_pair_qSpan_not_normal`
+all have only the standard trust-base axioms, and the Q-span Maze/Barrier entries are promoted.
+Part 2 is open at exactly `StonehamSums.digitOf_stoneham_sum_eq_zero`; the generic constant and
+`stonehamAlpha_two_three` are defined/proved, and `not_isSimplyNormal_stoneham_sum` is proved from
+the digit window.  See `HANDOFF-2026-10-16-disjunction-lap2.md`.

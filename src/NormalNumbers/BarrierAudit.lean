@@ -40,6 +40,7 @@ import NormalNumbers.StretchBFR
 import NormalNumbers.CantorExactExponentProfile
 import NormalNumbers.CantorRepetition
 import NormalNumbers.QSpanCriterion
+import NormalNumbers.StonehamSums
 import NormalNumbers.ComputableReal
 import NormalNumbers.KurtzRandom
 import NormalNumbers.MahlerProductBlock
@@ -350,7 +351,10 @@ def waivers : List Waiver := [
    "believed implication (55%): a Gelfond-strength two-log bound suffices for the run shadows; \
     the elementary t^k ≠ 3^j rate does not"⟩,
   ⟨``FiniteState.isFNormal_delayEnum_of_normal,
-   "a leaf: O(1) cost of composing with the delay transducer and its finite-state right inverse"⟩]
+   "a leaf: O(1) cost of composing with the delay transducer and its finite-state right inverse"⟩,
+  ⟨``digitOf_stoneham_sum_eq_zero,
+   "an exact arithmetic leaf: LTE divisibility, Stoneham-series head integrality, and a geometric \
+    tail bound; its proved corollary is not_isSimplyNormal_stoneham_sum"⟩]
 
 #barrier_audit allBarriers, cruxLinks, waivers
 

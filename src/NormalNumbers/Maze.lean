@@ -38,6 +38,7 @@ import NormalNumbers.VandeheyS7WidthDensity
 import NormalNumbers.VandeheyS7ArchWidthFree
 import NormalNumbers.Erdos257Squarefree
 import NormalNumbers.EDensityAudit
+import NormalNumbers.QSpanNormal
 
 /-!
 # `Maze.lean` — the halls we have walked, encoded
@@ -635,6 +636,9 @@ alias hall_logavg_casting_out :=
 /-- **HALL: the log rung is a natural-average statement in disguise** (`refuted`, 2026-10-04).
 It is not: `dyadicBit` has log digit frequency `1/2` and no natural digit frequency. -/
 alias hall_log_rung_distinct := NormalNumbers.LogCastingOut.not_tendsto_natFreq_dyadicBit
+
+/-- Hall witness: a pair-universal mechanism cannot force a normal element of a rational span. -/
+alias hall_qspan_pair_universal := NormalNumbers.QSpan.exists_pair_qSpan_not_normal
 
 /-! ## 4. The register
 
@@ -1413,9 +1417,9 @@ def register : List Hall := [
    "EntropyProfiles.lean: exists_strictMono_biLipschitz_cantorSet_not_isNormal_two (sorry), not_biLipschitz_stable, HochmanShmerkinCantorDiff1; docs/ENTROPY-REFEREE-2026-10-04.md", "2026-10-04"⟩,
   ⟨"pair-universal mechanism for a normal element of a Q-span",
    "Find a normal number among the nonzero rational combinations of sqrt 2 and sqrt 3 by an argument that works for every Q-independent pair, as the six-fold adder disjunction works for every pair not both rational",
-   .refuted, .frozen,
-   "Witness: a supersparse Liouville pair whose every rational combination has long periodic stretches dominating its prefixes, so none is normal. A mechanism must use something sqrt 2, sqrt 3 have and the pair lacks",
-   "QSpanNormal.lean: exists_pair_qSpan_not_normal (sorry, 90%), qSpanNormal_sqrt_two_sqrt_three; Barriers.liouville_pair_qSpan", "2026-10-05"⟩,
+   .refuted, .kernel,
+   "Witness: a Baire-generic pair whose every nonzero rational combination is irrational and non-normal. A mechanism must use something sqrt 2, sqrt 3 have and the pair lacks",
+   "alias hall_qspan_pair_universal := QSpan.exists_pair_qSpan_not_normal; QSpanNormal.lean: qSpanNormal_sqrt_two_sqrt_three; Barriers.liouville_pair_qSpan", "2026-10-05"⟩,
   ⟨"Diophantine (exponent-2) input for a normal element of a Q-span",
    "Use Roth-type information (every element of the span of sqrt 2, sqrt 3 has irrationality exponent 2), which kills the Liouville witness, to force a normal element of the span",
    .refuted, .frozen,
@@ -1475,7 +1479,7 @@ def register : List Hall := [
    "Use independence-relative certificates (fail only on rational lines) to get a small two-track all-digits block: for every Q-independent pair, some combination aX + bY with small (a, b) has every ternary digit i.o., beating the single-track {2, 11}",
    .refuted, .frozen,
    "Every small direction set has an avoided-digit assignment whose live automaton keeps a component not certified degenerate. Product-block counterexamples vary X and Y separately (two-dimensional); a relative certificate only discards one-dimensional failure loci, so the gain is confined to tightly coupled single-word families like ternary_line. Binary 2-word blocks (|coef| <= 3, up to 3 directions) also all fail. REOPEN IF: a complete degeneracy test, or larger coefficients",
-   "IndependenceRelative.lean: not_isRelativeBlock_small (sorry, 65%), IsRelativeBlock, ternary_line; experiments/independence_relative.py blocksearch", "2026-10-05"⟩,
+   "IndependenceRelative.lean: not_isRelativeBlock_small (sorry, 65%), IsRelativeBlock, ternary_line (proved); experiments/independence_relative.py blocksearch", "2026-10-05"⟩,
   ⟨"elementary orbit port to 3 | b",
    "Prove a.e. normality of the exact-exponent Cantor point to b = 3^s t below the profile threshold by porting secondMoment_le_b, with the orbit of t mod 3^k counting the low ternary digits of h(b^d-1)t^m",
    .wall, .kernel,

@@ -1,6 +1,7 @@
-# Disjunction Lean lap 1 (2026-10-16): objectives 1 and 2 proved; read HANDOFF-2026-10-16-disjunction-lap1.md
-- `IndependenceRelative.ternary_line` and `exists_counterexample_on_line` are proved and axiom-clean
-  at the trust baseline.  Next: `QSpan.exists_pair_qSpan_not_normal`; Maze promotion waits for it.
+# Disjunction Lean lap 2 (2026-10-16): Part 1 complete; read HANDOFF-2026-10-16-disjunction-lap2.md
+- All three Part 1 theorems are proved at the trust baseline and the Maze/Barrier promotions are
+  complete.  Part 2 is reduced to `StonehamSums.digitOf_stoneham_sum_eq_zero`; its simple-normality
+  corollary is already proved from that window.
 
 # Gate 5 lap 3 (2026-10-11, review): per-cell route REFUTED, counting route; read HANDOFF-2026-10-11-gate5-lap3.md
 - Binding: DIRECTION.md CURRENT DIRECTIVE (gate 5 review lap 3).  Escalation: ROUTE-ESCALATION-2026-10-11.md.
