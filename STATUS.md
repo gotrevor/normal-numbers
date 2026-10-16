@@ -626,3 +626,9 @@ newest baton `HANDOFF.md` / `archive/handoff/HANDOFF-2026-09-28-*` · `PENDING_W
   `find archive -name <file>`.
 - `OVERVIEW.md`/`.html`: the reader's project map, refreshed 2026-09-28.  Rebuild it with
   `make -f docs/overview.mk`.
+# 2026-10-16 disjunction Lean lap 1
+
+Kickoff objectives 1 and 2 are proved: `IndependenceRelative.ternary_line` and
+`IndependenceRelative.exists_counterexample_on_line` both have only the standard trust-base
+axioms.  The remaining ordered objective is `QSpan.exists_pair_qSpan_not_normal`, followed by the
+specified Maze/Barrier promotion.  See `HANDOFF-2026-10-16-disjunction-lap1.md`.

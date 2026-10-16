@@ -3970,3 +3970,10 @@ Next: `isFresh` Riesz bound, then the classification lemma in Lean (route-decisi
 - Frostman probe: weighted core is 0.90-Frostman (const ~1) at root level 20, alpha_t 0.909->0.902.
 - PROVED cell_anc_sub, killed_between, extLoss_le_killedTot (extLoss <= Good weight at 6m+12 in some window, under alive 6m cells).  NEXT: split killedTot over finitely many (b,n) (window length >= 2^-(6m+12)) and bound each by Frostman node + regularPotential_iter.
 - PROVED pow_le_of_cell_sub (b^(n+1) <= 2^(K+1)), killedTot_le_sum (finite union bound over (b,n)).  NEXT: per-(b,n) bound killedBy b n m via Frostman node + regularPotential_iter (interior vs edge kills).
+# Disjunction Lean campaign (2026-10-16)
+
+- DONE: `IndependenceRelative.ternary_line`.
+- DONE: `IndependenceRelative.exists_counterexample_on_line`.
+- NEXT: prove `QSpan.exists_pair_qSpan_not_normal` for every base `b >= 2`, then perform the
+  kickoff's Maze and Barrier promotion.  Route comparison and verification are recorded in
+  `HANDOFF-2026-10-16-disjunction-lap1.md`.
