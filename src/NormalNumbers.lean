@@ -16,6 +16,7 @@ import NormalNumbers.LnTwo
 import NormalNumbers.StonehamArith
 import NormalNumbers.Stoneham
 import NormalNumbers.StonehamSums
+import NormalNumbers.StonehamSumsNormal
 import NormalNumbers.StonehamBase6
 import NormalNumbers.CFDefs
 import NormalNumbers.CFCylinder
