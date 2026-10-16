@@ -4,8 +4,10 @@
 > ACCEPT WITH MINOR REPAIRS (~88%)**, repairs applied below.  Elementary part ~98%; (F3) is used
 > exactly within its stated hypotheses (verbatim quote checked, Prop. 4.1 induction re-derived,
 > Korobov Lemma 2.2 probed on 107 mixed moduli).  Residual risk: [V] is an arXiv preprint with no
-> journal reference found, so the one deep input may be unrefereed.  Freshness check pending.  Do
-> not cite or share outward before it clears.  Referee scratch: `tmp/referee-stoneham-sums/`.
+> journal reference found, so the one deep input may be unrefereed.  **Freshness: NOT FOUND (~85% novel)**, 2026-10-16: all forward citers of [BB] (OpenAlex 11, Google
+> Scholar 15) and of [V] (2) triaged; citers of Bailey–Crandall 2002 since 2012 (~45); zbMATH,
+> arXiv, keyword searches.  Gaps: MathSciNet, Bugeaud 2012 book ch., full texts of Wagner 1995,
+> Kano–Shiokawa 1993, Jung–Volkmann 1996 (summaries only).  Scratch: `tmp/fresh-stoneham-sums/`.  Referee scratch: `tmp/referee-stoneham-sums/`.
 > Origin: joint Bailey–Crandall orbit long shot (`tmp/joint-bc-orbits/REPORT.md`, candidate T-A).
 
 ## Abstract
@@ -125,6 +127,17 @@ Total $\le\sqrt N+1+O(r\sqrt N\log N)+N\eta(N)=o(N)$.  $\square$
 4. **Generality (unproved, ~75%).**  The proof uses only: $O(N^{1/2-\eta})$ kicks up to $N$;
    $c_i^{K_i(n)}\le n^{O(1)}$; $K_i\to\infty$.  So it should extend to general kick sequences
    $n_{i,k}$, and to a discrepancy bound $\ll N^{-\theta(r)}$ via Erdős–Turán.
+
+## Related work (closest prior art; cite and distinguish)
+
+- **Wagner rings** (G. Wagner, J. Number Theory 54 (1995); Kano–Shiokawa, Israel J. Math. 84 (1993);
+  Jung–Volkmann, J. Number Theory 56 (1996)): uncountable subrings of ℝ whose nonzero elements are all
+  b-normal.  **H. Kano, Osaka J. Math. 30 (1993) Thm 1** covers Σ Aₙ/(a^{λₙ} b^{μₙ}) and subsumes
+  Stoneham, Korobov, Wagner, Kano–Shiokawa.  All fix a single a (one c-chain); a mixed-c sum like
+  α_{2,3}+α_{2,5} breaks Kano's growth conditions (a = 15 would need 15^λ ≪ μ = 3^k).
+- **[V] Thm 7.4**: Σ 1/(c_k b^{m_k}) with c_k from a finite prime set but c_k | c_{k+1} and
+  numerators 1; interleaving 3^k with 5^j breaks the divisibility chain.  [V] never mentions Stoneham sums.
+- Open-problem statements: [BB] §4; Bailey's talk slides ("Can we prove normality for α2,3 + α2,5?").
 
 ## References
 
