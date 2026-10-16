@@ -41,8 +41,48 @@ leave the original sorried with a docstring note, and `box stuck` with the witne
   so note it in the evidence string.
 - Update `#guard_msgs` counts in `MazeAudit.lean` if they move.
 
+## Part 2 (added 2026-10-16, after Part 1): Stoneham sums
+
+Source: the joint-orbit research report, `tmp/joint-bc-orbits/REPORT.md` in the **main** checkout
+`~/src/normal-numbers` (read-only to you; copy what you need).  New file
+`src/NormalNumbers/StonehamSums.lean`, imported from `NormalNumbers.lean`.  Ratified statements
+(state them exactly; `stoneham23` is in `Stoneham.lean`):
+
+```lean
+/-- The Stoneham constant `α_{B,c} = Σ_{m≥1} 1/(c^m · B^(c^m))`. -/
+noncomputable def stonehamAlpha (B c : ℕ) : ℝ :=
+  ∑' n : ℕ, 1 / ((c : ℝ) ^ (n + 1) * (B : ℝ) ^ (c ^ (n + 1)))
+
+theorem stonehamAlpha_two_three : stonehamAlpha 2 3 = stoneham23
+
+/-- `α₂,₃ + α₄,₃ = Σ_k ((2^(3^k)+1)/3^k)·4^(−3^k)` is a sum of disjoint integer blocks
+(`3^(k+1) ∣ 2^(3^k) + 1`, lifting the exponent), so its binary digits vanish on
+`[2·3^k, 3^(k+1))` (0-indexed `digitOf`). -/
+theorem digitOf_stoneham_sum_eq_zero (k i : ℕ) (h₁ : 2 * 3 ^ k ≤ i) (h₂ : i < 3 ^ (k + 1)) :
+    digitOf 2 (Int.fract (stonehamAlpha 2 3 + stonehamAlpha 4 3)) i = 0
+
+/-- Hence the zero frequency is pushed toward `2/3` at `n = 3^(k+1)`. -/
+theorem not_isSimplyNormal_stoneham_sum :
+    ¬ IsSimplyNormal 2 (stonehamAlpha 2 3 + stonehamAlpha 4 3)
+```
+
+Confidence 95% for the digit window (hand-checked; if an endpoint is off by one, fix the endpoint
+and say so in the commit, never weaken the conclusion).  The proof of the corollary: if zeros had
+frequency `1/2`, about `3^k` of the first `2·3^k` digits are zero, and the window adds `3^k` more by
+`3^(k+1)`, so the frequency there is near `2/3`.
+
+Stretch, in order (skip any that balloons):
+1. `isNormal_two_stonehamAlpha_four_three` (α₄,₃ is 4-normal hence 2-normal), generalizing
+   `Stoneham.lean` if that is cheap, so the docstring punchline "two 2-normal numbers whose sum is
+   not simply normal" is a theorem.
+2. Maze rows from the report's §3 (R1–R6) and a row for the Rauzy disjunction ("y + Champernowne
+   normal or y non-deterministic" holds for every y, so it is `.vacuous` about π).  Each row needs a
+   `MazeAudit` link per the Maze rules; R3 and R5 link `not_isSimplyNormal_stoneham_sum`.
+3. T-C from the report (HypA ⇒ every nonzero rational combination of `ln 2`, `ln 3` is 4-normal)
+   only if the repo already has a generic BBP ⇒ `bcOrbit` bridge.
+
 ## Done when
 
-All three named theorems print only `[propext, Classical.choice, Quot.sound]` under
+Part 1: all three named theorems print only `[propext, Classical.choice, Quot.sound]` under
 `#print axioms` (use `lean-axiom-gate` if present in the box), `lake build` is green, and the Maze
-edits compile.  Then `box done`.
+edits compile.  Part 2: `not_isSimplyNormal_stoneham_sum` axiom-clean too.  Then `box done`.
