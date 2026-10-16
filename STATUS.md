@@ -579,6 +579,7 @@ This repo holds **no `axiom` declarations**: literature inputs are named hypothe
 
 | headline theorem | paper claim | `#print axioms` shows | status |
 | --- | --- | --- | --- |
+| `StonehamSumsNormal.isNormal_stonehamCombination` | conditional on Vandehey 2016 Thm 5.1 | trust base | 🟢 **CLEAN 2026-10-16**: every nonzero rational combination of pairwise-coprime Stoneham families is normal in the base; the cited `VandeheyThm51` input is an explicit binder.  The specialization `isNormal_two_stoneham_three_add_five` answers Bailey's `α₂,₃ + α₂,₅` question under the same input. |
 | `CantorBadNormal.exists_mem_cantorSet_bad_isNormal_coprime_three` | open (sweep row 2) | trust base + `sorryAx` + 2 `native_decide` artifacts (`J_lt`, `J_inj`) | 🟡 three disclosed leaves: `ae_cesaro_condDiff`, `cesaro_contChar_small` (standard, next prerequisites) and the crux `localDeadBias_resLaw` (2026-10-06, `32682ed0`) |
 | `Literature.vandehey_matrix_action_holds` (`VandeheyCapstone.lean`) | unconditional (Vandehey 2017 Thm 1.1) | trust base | 🟢 **CLEAN, DISCHARGED 2026-09-29** (`6d7a8ad`).  Route: Serret + Smith reduce to `x ↦ D·x` (`D` prime); the concrete Raney `L/R` transducer supplies a monotone RUN clock with an `x`-independent positive rate (`tendsto_runClock_div`, Lemma 6.1) and an `x`-independent Cesàro limit for the image's CF-occurrence count sampled along it (`exists_tendsto_cfCount_runClock`).  Assembled by `mobiusUniformFreq_of_runClock`.  NB the theorem lives downstream of `LiteratureVandehey.lean` (import cycle); the frozen statements stay there. |
 | `VandeheyS7.affineCFN_of_runClock` (`VandeheyS7Clock.lean`) | — (reduction for the OPEN §7 Problem 1) | trust base | 🟡 clean **as a reduction**, and since lap 88 the PRIMARY route: `0 < q` + `RunClock ℓ rate` + `SampledUniformCount q r₀ ℓ` ⊢ `AffineCFN q r₀`, for every real `q, r₀`, with **no cited ergodic input**.  `SampledUniformCount` is the live frontier; next prerequisite = `RefCesaro` (a CF-normality consequence via S7-EQ), and then the crux `BlockForget` |
@@ -643,3 +644,19 @@ every second summand.  Therefore the disjunction carries no information about pi
 as the kernel-tier Maze row "Rauzy disjunction as information about pi".  The theorem uses only
 the standard trust-base axioms, and the full 10,852-job build is green.  The binding kickoff done
 condition remains complete.  See `HANDOFF-2026-10-16-disjunction-lap4.md`.
+
+## 2026-10-16 Stoneham sums normal -- Theorem A complete
+
+`StonehamSumsNormal.isNormal_stonehamCombination` proves that, assuming the cited
+`Literature.VandeheyDiff.VandeheyThm51`, every nonzero rational combination of
+`stonehamAlpha (b ^ m i) (c i)` is base-`b` normal when the `c i` are pairwise coprime and
+coprime to `b`.  In particular, `isNormal_two_stoneham_three_add_five` proves normality of
+`α₂,₃ + α₂,₅`.  The target file is sorry-free, and the derived Corollary 1.2,
+Theorem A, and the headline specialization all print exactly the standard trust-base axioms.
+
+The proof formalizes the rational orbit state, its sharp reduced-denominator growth via
+`ℓ`-adic valuations, the kick-block partition, Vandehey cancellation on long blocks,
+square-to-full Cesàro interpolation, active-support reindexing, and rational denominator
+clearing through Wall's theorem.  Existing Maze rows concern the false same-parameter closure
+claim (`α₂,₃ + α₄,₃`) and remain valid; no row described the pairwise-coprime theorem
+as open.

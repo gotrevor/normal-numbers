@@ -1,7 +1,11 @@
+# Stoneham sums normal lap 3 COMPLETE (2026-10-16); read HANDOFF-2026-10-16-stoneham-sums-normal-lap3.md
+- `StonehamSumsNormal.lean` is sorry-free.  The derived Vandehey Corollary 1.2, general rational
+  combination theorem, and `α₂,₃ + α₂,₅` headline all have exactly the standard trust-base
+  axioms.  The 8762-job target gate and 10854-job full gate are green; the scoped campaign is
+  complete.
+
 # Stoneham sums normal lap 2 (2026-10-16): rational state and denominator support; read HANDOFF-2026-10-16-stoneham-sums-normal-lap2.md
-- The target remains at one sorry (Theorem A).  Paper Lemma 2 is proved, and Lemma 3 now has its
-  common-denominator, upper-growth, coprimality, and fixed-prime-support parts.  Next: the unique
-  minimum ℓ-adic valuation giving the reduced-denominator lower bound.
+- Superseded by lap 3 completion.
 
 # Stoneham sums normal lap 1 (2026-10-16): Corollary 1.2 proved, headline wired; read HANDOFF-2026-10-16-stoneham-sums-normal-lap1.md
 - The target is down from three sorries to one without statement changes.  The analytic derivation
