@@ -1,7 +1,10 @@
 # Bailey–Borwein §4, the complete answer (RESEARCH SKETCH, UNREFEREED)
 
-> **Status (2026-10-16):** research-subagent sketch with exact-arithmetic probes; not refereed, not
-> Lean.  Builds on `papers/2026-10-16-stoneham-sums-normal.md` (Theorem A).  Scratch, predictors and
+> **Status (2026-10-16):** research-subagent sketch; **independent referee: headline ACCEPT (~92%),
+> Lemma 3′ ACCEPT, Corollary J ACCEPT, T-B′ ACCEPT, L1 ACCEPT, L2 ACCEPT; Theorem C and the
+> single-class shortcut ACCEPT WITH MINOR REPAIRS** (below).  Referee instrument independent of the
+> author's (`tmp/referee-bb-full/den.py`, 300/300 vs full Fraction); exhaustive same-class search:
+> 11,364 pairs, 409k exact evaluations, no cancelling pair.  Not yet Lean (L1, L2 queued).  Builds on `papers/2026-10-16-stoneham-sums-normal.md` (Theorem A).  Scratch, predictors and
 > pre-registrations: `tmp/bb-full/` (`PREREG-1.txt`, `PREREG-2.txt`, `dmeasure.py`, `predict.py`,
 > `probe1`–`probe7`).  Confidences are the author's.
 
@@ -15,6 +18,20 @@
 - **Joint normality**: a per-class rank condition (Corollary J); for one prime p it is
   ℚ-linear independence of ω_p(b)^{mᵢ} (Theorem T-B′, proving the T-B dichotomy both ways).
 - The non-normal direction is elementary (no F3).
+
+## Referee repairs (to apply when formalizing)
+
+1. **Single-class shortcut.**  Pieces are ≥ c·D with c possibly < 1 and the last piece is truncated,
+   so "complete sums only (Lemma 2.3)" is the wrong tool.  Use completion:
+   |Σ_{n<J} e(abⁿ/D)| ≤ (J/T + 1)·√D·(1 + log D), T = ord_D b ≫ D for D ∈ ℕ_P (twisted sums over
+   ⟨b⟩ bounded by √D).  This makes T-B′, the same-class BB pairs and all single-class results
+   **free of F3**.
+2. **Theorem C presentation.**  Define P_g to include the period of u^j mod d_ℓ, and handle the
+   eventual (not pure) periodicity when gcd(u, d_ℓ) > 1 (e.g. g = 10, ℓ = 5).
+3. The "never silent" argument simplifies: at the top s*, Σ_{s<P} μ(J−s)g^s with |μ| ∈ {0,1,2} is
+   nonzero under every complex embedding once g ≥ 3, so the case split is redundant.
+4. Stale risk note: the referee flagged F3 as an unrefereed preprint; it is published
+   (J. Anal. Math. 138 (2019), doi:10.1007/s11854-019-0038-2), and a Lean proof of it is running.
 
 ## (a) Characterization
 
