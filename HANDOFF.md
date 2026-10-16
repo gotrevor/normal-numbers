@@ -1,3 +1,7 @@
+# Disjunction Lean lap 4 (2026-10-16): Rauzy stretch landed; read HANDOFF-2026-10-16-disjunction-lap4.md
+- The binding kickoff remains complete.  Stretch item 2's mandatory Rauzy theorem and kernel-tier
+  Maze row are now formalized and audited.
+
 # Disjunction Lean lap 3 (2026-10-16): KICKOFF COMPLETE; read HANDOFF-2026-10-16-disjunction-lap3.md
 - All three Part 1 theorems and the Part 2 Stoneham digit window are proved at the trust baseline.
   `not_isSimplyNormal_stoneham_sum` is therefore axiom-clean, so the kickoff's done condition is met.

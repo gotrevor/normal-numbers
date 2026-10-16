@@ -164,6 +164,9 @@ def mazeLinks : List Link := [
   ⟨"pair-universal mechanism for a normal element of a Q-span",
    [``QSpan.exists_pair_qSpan_not_normal, ``QSpan.qSpanNormal_sqrt_two_sqrt_three,
     ``Barriers.liouville_pair_qSpan], []⟩,
+  ⟨"Rauzy disjunction as information about pi",
+   [``NormalNumbers.Literature.BergelsonDownarowicz.rauzy_disjunction_universal],
+   [``NormalNumbers.Literature.BergelsonDownarowicz.Rauzy1976]⟩,
   ⟨"Diophantine (exponent-2) input for a normal element of a Q-span",
    [``QSpan.exists_pair_exponentTwo_qSpan_not_normal, ``QSpan.span_dimension_budget,
     ``QSpan.qSpanNormal_sqrt_upperDim], []⟩,
@@ -371,7 +374,7 @@ def mazeLegacy : List String := [
   "Diophantine good-denominator detour for the tail cell",
   "route B's unweighted cover of the state-dependent target"]
 
-/-- info: maze audit: 188 rows, 81 cite declarations, 107 legacy (prose only) -/
+/-- info: maze audit: 189 rows, 82 cite declarations, 107 legacy (prose only) -/
 #guard_msgs in
 #maze_audit mazeRows, mazeLinks, mazeLegacy
 

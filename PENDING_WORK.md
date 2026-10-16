@@ -3978,5 +3978,8 @@ Next: `isFresh` Riesz bound, then the classification lemma in Lean (route-decisi
   the kickoff's Maze and Barrier promotion.
 - DONE: `StonehamSums.digitOf_stoneham_sum_eq_zero` by LTE, exact integer-block regrouping, and a
   geometric tail bound; hence `not_isSimplyNormal_stoneham_sum` is unconditional and axiom-clean.
-- KICKOFF COMPLETE.  Optional stretch only: base-2 normality of `stonehamAlpha 4 3`, then report
-  Maze rows R1--R6/Rauzy.  See `HANDOFF-2026-10-16-disjunction-lap3.md`.
+- KICKOFF COMPLETE.  Stretch update: `Literature.BergelsonDownarowicz.Rauzy1976`,
+  `rauzy_disjunction_universal`, and the audited kernel-tier Maze row "Rauzy disjunction as
+  information about pi" are DONE.  Remaining optional stretch: base-2 normality of
+  `stonehamAlpha 4 3` (requires a genuine base-4 Stoneham proof), then report rows R1--R6.
+  See `HANDOFF-2026-10-16-disjunction-lap4.md`.

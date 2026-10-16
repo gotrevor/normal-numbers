@@ -39,6 +39,7 @@ import NormalNumbers.VandeheyS7ArchWidthFree
 import NormalNumbers.Erdos257Squarefree
 import NormalNumbers.EDensityAudit
 import NormalNumbers.QSpanNormal
+import NormalNumbers.DeterministicBD
 
 /-!
 # `Maze.lean` — the halls we have walked, encoded
@@ -639,6 +640,11 @@ alias hall_log_rung_distinct := NormalNumbers.LogCastingOut.not_tendsto_natFreq_
 
 /-- Hall witness: a pair-universal mechanism cannot force a normal element of a rational span. -/
 alias hall_qspan_pair_universal := NormalNumbers.QSpan.exists_pair_qSpan_not_normal
+
+/-- Hall witness: Rauzy's normal-plus-deterministic disjunction is true for every second
+summand, so specializing it to a named constant supplies no information about that constant. -/
+alias hall_rauzy_disjunction_universal :=
+  NormalNumbers.Literature.BergelsonDownarowicz.rauzy_disjunction_universal
 
 /-! ## 4. The register
 
@@ -1420,6 +1426,12 @@ def register : List Hall := [
    .refuted, .kernel,
    "Witness: a Baire-generic pair whose every nonzero rational combination is irrational and non-normal. A mechanism must use something sqrt 2, sqrt 3 have and the pair lacks",
    "alias hall_qspan_pair_universal := QSpan.exists_pair_qSpan_not_normal; QSpanNormal.lean: qSpanNormal_sqrt_two_sqrt_three; Barriers.liouville_pair_qSpan", "2026-10-05"⟩,
+  ⟨"Rauzy disjunction as information about pi",
+   "Read 'pi + Champernowne is normal, or pi's digits are not deterministic' as a fact about pi",
+   .vacuous, .kernel,
+   "The disjunction holds for every real y (rauzy_disjunction_universal), so it carries no information about pi; the only informative branch, pi + Champernowne NOT normal, is believed false. REOPEN IF: a proof that some explicit c + pi is non-normal",
+   "DeterministicBD.lean: rauzy_disjunction_universal, Literature.BergelsonDownarowicz.Rauzy1976",
+   "2026-10-16"⟩,
   ⟨"Diophantine (exponent-2) input for a normal element of a Q-span",
    "Use Roth-type information (every element of the span of sqrt 2, sqrt 3 has irrationality exponent 2), which kills the Liouville witness, to force a normal element of the span",
    .refuted, .frozen,

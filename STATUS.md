@@ -634,3 +634,12 @@ and Part 2's `StonehamSums.digitOf_stoneham_sum_eq_zero` all have only the stand
 axioms.  The exact Stoneham window makes `not_isSimplyNormal_stoneham_sum` unconditional: the
 binary digits vanish throughout `[2*3^k, 3^(k+1))`.  The Q-span Maze/Barrier promotions are also
 complete.  See `HANDOFF-2026-10-16-disjunction-lap3.md`.
+
+## 2026-10-16 disjunction Lean lap 4 -- Rauzy stretch
+
+`Literature.BergelsonDownarowicz.Rauzy1976` now records the cited normal-plus-deterministic
+direction, and `rauzy_disjunction_universal` proves that its associated disjunction holds for
+every second summand.  Therefore the disjunction carries no information about pi; this is linked
+as the kernel-tier Maze row "Rauzy disjunction as information about pi".  The theorem uses only
+the standard trust-base axioms, and the full 10,852-job build is green.  The binding kickoff done
+condition remains complete.  See `HANDOFF-2026-10-16-disjunction-lap4.md`.
