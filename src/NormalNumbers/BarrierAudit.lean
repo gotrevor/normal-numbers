@@ -58,6 +58,7 @@ import NormalNumbers.UniformBadTailReview
 import NormalNumbers.UniformBadTailObstruction
 import NormalNumbers.UniformBadTail
 import NormalNumbers.StonehamSumsNormal
+import NormalNumbers.VandeheyProof
 
 /-!
 # Barrier audit: every open crux names a sibling it must fail on
@@ -213,6 +214,9 @@ def waivers : List Waiver := [
   ⟨``ErdosTriples.exceptionalSet_eq_zero_of_gapTriplesEventually,
    "wiring lemma (a leaf): the proved integer wiring erdos406_of_gapTriplesEventually lifted to \
     3-adic digits (parity, valuation shift, residues); English proof in the docstring"⟩,
+  ⟨``VandeheyProof.vandeheyThm51_holds,
+   "campaign target (KICKOFF-2026-10-16-vandehey-thm51.md): proving the cited VandeheyThm51, \
+    a literature discharge Trevor opened; not a crux"⟩,
   ⟨``IndependenceRelative.not_isRelativeBlock_small,
    "a finite computation stated as a sibling: the blocksearch probe's non-certification over \
     small direction sets; it closes a route, no open crux uses it"⟩,
