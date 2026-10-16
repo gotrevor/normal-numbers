@@ -3,8 +3,8 @@
 > **Status (2026-10-16):** paper proof by a proof subagent (~92% self-assessed); **independent referee:
 > ACCEPT WITH MINOR REPAIRS (~88%)**, repairs applied below.  Elementary part ~98%; (F3) is used
 > exactly within its stated hypotheses (verbatim quote checked, Prop. 4.1 induction re-derived,
-> Korobov Lemma 2.2 probed on 107 mixed moduli).  Residual risk: [V] is an arXiv preprint with no
-> journal reference found, so the one deep input may be unrefereed.  **Freshness: NOT FOUND (~85% novel)**, 2026-10-16: all forward citers of [BB] (OpenAlex 11, Google
+> Korobov Lemma 2.2 probed on 107 mixed moduli).  [V] is published (J. Anal. Math. 138 (2019), DOI 10.1007/s11854-019-0038-2, Crossref-verified
+> 2026-10-16; the referee's "no journal reference" was a search miss).  **Freshness: NOT FOUND (~85% novel)**, 2026-10-16: all forward citers of [BB] (OpenAlex 11, Google
 > Scholar 15) and of [V] (2) triaged; citers of Bailey–Crandall 2002 since 2012 (~45); zbMATH,
 > arXiv, keyword searches.  Gaps: MathSciNet, Bugeaud 2012 book ch., full texts of Wagner 1995,
 > Kano–Shiokawa 1993, Jung–Volkmann 1996 (summaries only).  Scratch: `tmp/fresh-stoneham-sums/`.  Referee scratch: `tmp/referee-stoneham-sums/`.
@@ -144,8 +144,8 @@ Total $\le\sqrt N+1+O(r\sqrt N\log N)+N\eta(N)=o(N)$.  $\square$
 - [BB] D. H. Bailey, J. M. Borwein, *Nonnormality of Stoneham constants*, Ramanujan J. 29 (2012).
 - [BC] D. H. Bailey, R. E. Crandall, *Random generators and normal numbers*, Exp. Math. 11 (2002).
 - [KN] L. Kuipers, H. Niederreiter, *Uniform Distribution of Sequences*, Wiley 1974.
-- [V] J. Vandehey, *Differencing methods for Korobov-type exponential sums*, arXiv:1606.07911 (2016
-  preprint; no journal reference found as of 2026-10-16), Cor. 1.2 (and Lemma 2.3, §6.1).
+- [V] J. Vandehey, *Differencing methods for Korobov-type exponential sums*, J. Anal. Math. 138 (2019),
+  doi:10.1007/s11854-019-0038-2; arXiv:1606.07911.  Cor. 1.2 (and Lemma 2.3, §6.1).
 
 ## Gaps and confidence (author's)
 
