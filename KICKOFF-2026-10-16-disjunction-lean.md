@@ -75,9 +75,33 @@ Stretch, in order (skip any that balloons):
 1. `isNormal_two_stonehamAlpha_four_three` (α₄,₃ is 4-normal hence 2-normal), generalizing
    `Stoneham.lean` if that is cheap, so the docstring punchline "two 2-normal numbers whose sum is
    not simply normal" is a theorem.
-2. Maze rows from the report's §3 (R1–R6) and a row for the Rauzy disjunction ("y + Champernowne
-   normal or y non-deterministic" holds for every y, so it is `.vacuous` about π).  Each row needs a
-   `MazeAudit` link per the Maze rules; R3 and R5 link `not_isSimplyNormal_stoneham_sum`.
+2. Maze rows from the report's §3 (R1–R6), plus the **Rauzy row** (ratified 2026-10-16, do this one
+   even if R1–R6 are trimmed).  Rauzy is not yet stated in Lean (only cited in a
+   `DeterministicBD.lean` docstring), so in `DeterministicBD.lean`'s `Literature` namespace add the
+   cited direction and the vacuity theorem:
+
+   ```lean
+   /-- **Rauzy 1976** (one direction): adding a deterministic real to a normal real gives a
+   normal real.  Cited, not proved. -/
+   def Rauzy1976 (b : ℕ) : Prop :=
+     ∀ x y : ℝ, IsNormal b x → IsDeterministic b y → IsNormal b (x + y)
+
+   /-- The Rauzy disjunction holds for **every** `y`, so it says nothing about `π` (or any
+   particular constant): `.vacuous`. -/
+   theorem rauzy_disjunction_universal (b : ℕ) (hR : Rauzy1976 b) (c : ℝ) (hc : IsNormal b c)
+       (y : ℝ) : IsNormal b (c + y) ∨ ¬ IsDeterministic b y
+   ```
+
+   Maze row: name "Rauzy disjunction as information about pi", tried "Read 'pi + Champernowne is
+   normal, or pi's digits are not deterministic' as a fact about pi", `.vacuous`, `.kernel`,
+   mechanism "The disjunction holds for every real y (rauzy_disjunction_universal), so it carries
+   no information about pi; the only informative branch, pi + Champernowne NOT normal, is believed
+   false.  REOPEN IF: a proof that some explicit c + pi is non-normal", evidence
+   "DeterministicBD.lean: rauzy_disjunction_universal, Literature.BergelsonDownarowicz.Rauzy1976",
+   date 2026-10-16.  Link it in `MazeAudit.lean`.
+
+   For R1–R6: each row needs a `MazeAudit` link per the Maze rules; R3 and R5 link
+   `not_isSimplyNormal_stoneham_sum`.
 3. T-C from the report (HypA ⇒ every nonzero rational combination of `ln 2`, `ln 3` is 4-normal)
    only if the repo already has a generic BBP ⇒ `bcOrbit` bridge.
 
