@@ -1,8 +1,11 @@
 # Sums of Stoneham constants are normal (PROPOSED, UNREFEREED)
 
-> **Status (2026-10-16):** paper proof written by a proof subagent, ~92% self-assessed; the risk is
-> concentrated in the exact hypotheses of Vandehey's Cor. 1.2 (F3).  Independent referee pass and
-> literature freshness check pending.  Do not cite or share outward before both clear.
+> **Status (2026-10-16):** paper proof by a proof subagent (~92% self-assessed); **independent referee:
+> ACCEPT WITH MINOR REPAIRS (~88%)**, repairs applied below.  Elementary part ~98%; (F3) is used
+> exactly within its stated hypotheses (verbatim quote checked, Prop. 4.1 induction re-derived,
+> Korobov Lemma 2.2 probed on 107 mixed moduli).  Residual risk: [V] is an arXiv preprint with no
+> journal reference found, so the one deep input may be unrefereed.  Freshness check pending.  Do
+> not cite or share outward before it clears.  Referee scratch: `tmp/referee-stoneham-sums/`.
 > Origin: joint Bailey–Crandall orbit long shot (`tmp/joint-bc-orbits/REPORT.md`, candidate T-A).
 
 ## Abstract
@@ -33,7 +36,8 @@ and words $w_1,\dots,w_r\in\{0,\dots,b-1\}^k$, the set of $n$ with digits $n+1..
 spelling $w_i$ for every $i$ has natural density $b^{-kr}$.
 
 **Headline instance.**  $b=2$, $(c_1,c_2)=(3,5)$, $m=(1,1)$, $q=(1,1)$: $\alpha_{2,3}+\alpha_{2,5}$
-is 2-normal.
+is 2-normal.  [BB]'s question also allows non-coprime ,c_220 20 12 61 79 80 81 701 33 98 100 204 250 395 398 399 400e.g. lpha_{2,3}+\alpha_{2,9}20 20 12 61 79 80 81 701 33 98 100 204 250 395 398 399 400; Theorem A
+leaves that case open, and Remark 3 shows it can fail when the x27s coincide.
 
 ## 2. Standard facts used
 
@@ -116,7 +120,7 @@ Total $\le\sqrt N+1+O(r\sqrt N\log N)+N\eta(N)=o(N)$.  $\square$
    LTE: $v_3(4^{3^k}-1)=1+k$, so the $k$-th difference is $N_k/4^{2\cdot3^k}$ with
    $N_k=(4^{3^k}-1)/3^k\in\mathbb Z$, $0<N_k<4^{3^k}/3^k$.  Then
    $\{4^{2\cdot3^k}x\}<4^{-3^k}$, so base-4 digits $2\cdot3^k+1..3^{k+1}$ vanish; $x$ is not
-   4-normal, hence not 2-normal.  Numerically the base-4 zero frequency tends to ~0.625.  (Same
+   4-normal, hence not 2-normal.  The base-4 zero frequency has no limit: it is /16 =2\cdot3^k /8 =3^{k+1}20 20 12 61 79 80 81 701 33 98 100 204 250 395 398 399 400referee correction).  (Same
    mechanism as the T-B flagship $\alpha_{2,3}+\alpha_{4,3}$, kickoff Part 2.)
 4. **Generality (unproved, ~75%).**  The proof uses only: $O(N^{1/2-\eta})$ kicks up to $N$;
    $c_i^{K_i(n)}\le n^{O(1)}$; $K_i\to\infty$.  So it should extend to general kick sequences
@@ -127,8 +131,8 @@ Total $\le\sqrt N+1+O(r\sqrt N\log N)+N\eta(N)=o(N)$.  $\square$
 - [BB] D. H. Bailey, J. M. Borwein, *Nonnormality of Stoneham constants*, Ramanujan J. 29 (2012).
 - [BC] D. H. Bailey, R. E. Crandall, *Random generators and normal numbers*, Exp. Math. 11 (2002).
 - [KN] L. Kuipers, H. Niederreiter, *Uniform Distribution of Sequences*, Wiley 1974.
-- [V] J. Vandehey, *Differencing methods for Korobov-type exponential sums*, J. Anal. Math. (2019);
-  arXiv:1606.07911, Cor. 1.2 (and Lemma 2.3, §6.1).
+- [V] J. Vandehey, *Differencing methods for Korobov-type exponential sums*, arXiv:1606.07911 (2016
+  preprint; no journal reference found as of 2026-10-16), Cor. 1.2 (and Lemma 2.3, §6.1).
 
 ## Gaps and confidence (author's)
 
