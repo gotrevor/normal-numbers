@@ -1,3 +1,8 @@
+# Stoneham sums normal lap 1 (2026-10-16): Corollary 1.2 proved, headline wired; read HANDOFF-2026-10-16-stoneham-sums-normal-lap1.md
+- The target is down from three sorries to one without statement changes.  The analytic derivation
+  `vandeheyCor12_of_thm51` and the explicit `α₂,₃ + α₂,₅` specialization are proved.  Next: the
+  elementary orbit-state, denominator-growth, kick-partition, and Weyl assembly for Theorem A.
+
 # Disjunction Lean lap 7 (2026-10-16): Hermite crux for T-C; read HANDOFF-2026-10-16-disjunction-lap7.md
 - The binding kickoff remains complete.  The conditional HypA log-family stretch now has its
   hardest arithmetic prerequisite: every nonzero rational combination of log 2 and log 3 is
