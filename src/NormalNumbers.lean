@@ -493,6 +493,7 @@ import NormalNumbers.GrowingLocalizedLog
 import NormalNumbers.MasterConjectures
 import NormalNumbers.EquidistTransfer
 import NormalNumbers.MasterConsequences
+import NormalNumbers.MasterLogFamily
 import NormalNumbers.MasterKicked
 import NormalNumbers.MasterPiSq
 import NormalNumbers.MasterLnTwoBase3

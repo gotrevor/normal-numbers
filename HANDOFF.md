@@ -1,3 +1,8 @@
+# Disjunction Lean lap 7 (2026-10-16): Hermite crux for T-C; read HANDOFF-2026-10-16-disjunction-lap7.md
+- The binding kickoff remains complete.  The conditional HypA log-family stretch now has its
+  hardest arithmetic prerequisite: every nonzero rational combination of log 2 and log 3 is
+  proved irrational at the standard trust baseline.  Next: grouped base-4 series and kick wiring.
+
 # Disjunction Lean lap 5 (2026-10-16): Stoneham R3/R5 Maze promotion; read HANDOFF-2026-10-16-disjunction-lap5.md
 - The binding kickoff remains complete.  Stretch report routes R3/R5 are now kernel-tier Maze rows,
   backed by the axiom-clean theorem `not_isNormal_stoneham_sum` and audited declaration links.
