@@ -81,3 +81,15 @@ There is no external blocker.  Continue T-C in `MasterLogFamily.lean`:
 
 The safest first next lemma is the grouped `log 2` `HasSum`: it tests the reindexing machinery
 before committing to the final polynomial normal form.
+
+## Completion marker
+
+After the green commit, this lap called
+
+```text
+box done "kickoff done condition remains green; T-C Hermite crux discharged axiom-clean"
+```
+
+The lap stop was signalled, but the host reported that its repo-wide self-stop gate will decline
+because unrelated campaigns leave 105 open source sorries.  This is not a blocker and does not
+justify `box stuck`; a relaunched lap should continue the ordered T-C stretch above.
