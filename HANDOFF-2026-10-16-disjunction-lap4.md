@@ -61,3 +61,11 @@ mathematical attack is a base-4 Stoneham visit theorem for `stonehamAlpha 4 3`: 
 then descend normality from base 4 to base 2 with `isNormal_of_isNormal_pow`.  If that is not
 resumed, the cheaper remaining documentation stretch is to formalize report rows R1--R6, beginning
 with R3 and R5 linked to `not_isSimplyNormal_stoneham_sum`.
+
+## Completion marker
+
+`box done "disjunction kickoff complete; Rauzy universal-disjunction stretch is kernel-checked
+and full gate green"` was invoked successfully.  Its generic repository-wide self-stop gate warned
+that 105 unrelated source sorries remain and may relaunch the box.  This is a bounded kickoff: its
+declared done condition is met, so a relaunch should use the kickoff-scoped done condition rather
+than reopening the finished objectives.
