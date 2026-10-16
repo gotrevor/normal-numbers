@@ -648,12 +648,14 @@ alias hall_rauzy_disjunction_universal :=
   NormalNumbers.Literature.BergelsonDownarowicz.rauzy_disjunction_universal
 
 /-- Hall witness for the failed Stoneham-decomposition normality route: the first two coupled
-pieces already have a non-normal sum. -/
-alias hall_stoneham_decomposition_sum := NormalNumbers.not_isNormal_stoneham_sum
+pieces are separately binary normal but already have a non-simply-normal sum. -/
+alias hall_stoneham_decomposition_sum :=
+  NormalNumbers.stoneham_pair_normal_not_isSimplyNormal_sum
 
 /-- Hall witness against treating normality as closed under addition for the coupled Stoneham
 family. -/
-alias hall_stoneham_sum_normal := NormalNumbers.not_isNormal_stoneham_sum
+alias hall_stoneham_sum_normal :=
+  NormalNumbers.stoneham_pair_normal_not_isSimplyNormal_sum
 
 /-! ## 4. The register
 
@@ -1445,13 +1447,13 @@ def register : List Hall := [
    "Use ln 2 = sum_{3 does not divide m} alpha_{2^m,3}/m and infer normality from the individual Stoneham pieces",
    .falseAsStated, .kernel,
    "The coupled initial pieces already fail: alpha_{2,3} + alpha_{4,3} has binary zero windows [2*3^k, 3^(k+1)), hence is not even simply normal. Any decomposition argument must control arithmetic cancellation between pieces, not only each piece separately",
-   "alias hall_stoneham_decomposition_sum := not_isNormal_stoneham_sum; StonehamSums.lean: digitOf_stoneham_sum_eq_zero",
+   "alias hall_stoneham_decomposition_sum := stoneham_pair_normal_not_isSimplyNormal_sum; StonehamSums.lean: digitOf_stoneham_sum_eq_zero",
    "2026-10-16"⟩,
   ⟨"normal Stoneham constants are closed under addition",
    "Infer joint normality, or normality of a sum, from separate normality of Stoneham constants",
    .refuted, .kernel,
    "The same-prime pair alpha_{2,3}, alpha_{4,3} is arithmetically coupled: their sum has binary zero windows of asymptotic relative length 1/3 and is not binary normal",
-   "alias hall_stoneham_sum_normal := not_isNormal_stoneham_sum; StonehamSums.lean: digitOf_stoneham_sum_eq_zero",
+   "alias hall_stoneham_sum_normal := stoneham_pair_normal_not_isSimplyNormal_sum; StonehamSums.lean: digitOf_stoneham_sum_eq_zero",
    "2026-10-16"⟩,
   ⟨"Diophantine (exponent-2) input for a normal element of a Q-span",
    "Use Roth-type information (every element of the span of sqrt 2, sqrt 3 has irrationality exponent 2), which kills the Liouville witness, to force a normal element of the span",
