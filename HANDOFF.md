@@ -1,3 +1,17 @@
+# Stoneham sums normal lap 3 COMPLETE (2026-10-16); read HANDOFF-2026-10-16-stoneham-sums-normal-lap3.md
+- `StonehamSumsNormal.lean` is sorry-free.  The derived Vandehey Corollary 1.2, general rational
+  combination theorem, and `α₂,₃ + α₂,₅` headline all have exactly the standard trust-base
+  axioms.  The 8762-job target gate and 10854-job full gate are green; the scoped campaign is
+  complete.
+
+# Stoneham sums normal lap 2 (2026-10-16): rational state and denominator support; read HANDOFF-2026-10-16-stoneham-sums-normal-lap2.md
+- Superseded by lap 3 completion.
+
+# Stoneham sums normal lap 1 (2026-10-16): Corollary 1.2 proved, headline wired; read HANDOFF-2026-10-16-stoneham-sums-normal-lap1.md
+- The target is down from three sorries to one without statement changes.  The analytic derivation
+  `vandeheyCor12_of_thm51` and the explicit `α₂,₃ + α₂,₅` specialization are proved.  Next: the
+  elementary orbit-state, denominator-growth, kick-partition, and Weyl assembly for Theorem A.
+
 # Disjunction Lean lap 7 (2026-10-16): Hermite crux for T-C; read HANDOFF-2026-10-16-disjunction-lap7.md
 - The binding kickoff remains complete.  The conditional HypA log-family stretch now has its
   hardest arithmetic prerequisite: every nonzero rational combination of log 2 and log 3 is
