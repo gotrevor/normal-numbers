@@ -371,4 +371,10 @@ theorem not_isSimplyNormal_stoneham_sum :
   rw [hn₂] at e₂ e₃
   nlinarith
 
+/-- The coupled Stoneham sum is not binary normal.  This is the exact obstruction behind the
+failure of the proposed "normal Stoneham pieces remain normal after addition" route. -/
+theorem not_isNormal_stoneham_sum :
+    ¬ IsNormal 2 (stonehamAlpha 2 3 + stonehamAlpha 4 3) := by
+  exact fun h => not_isSimplyNormal_stoneham_sum (isSimplyNormal_of_isNormal h)
+
 end NormalNumbers

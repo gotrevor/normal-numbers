@@ -1,3 +1,7 @@
+# Disjunction Lean lap 5 (2026-10-16): Stoneham R3/R5 Maze promotion; read HANDOFF-2026-10-16-disjunction-lap5.md
+- The binding kickoff remains complete.  Stretch report routes R3/R5 are now kernel-tier Maze rows,
+  backed by the axiom-clean theorem `not_isNormal_stoneham_sum` and audited declaration links.
+
 # Disjunction Lean lap 4 (2026-10-16): Rauzy stretch landed; read HANDOFF-2026-10-16-disjunction-lap4.md
 - The binding kickoff remains complete.  Stretch item 2's mandatory Rauzy theorem and kernel-tier
   Maze row are now formalized and audited.
