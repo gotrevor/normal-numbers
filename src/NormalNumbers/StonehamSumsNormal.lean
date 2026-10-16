@@ -165,6 +165,194 @@ theorem vandeheyCor12_of_thm51 (hV : VandeheyThm51) : VandeheyCor12 := by
       _ ≤ C * ((N : ℝ) * (M : ℝ) ^ (-δ)) * (1 + Real.log M) := by gcongr
       _ = C * (M : ℝ) ^ (-δ) * N * (1 + Real.log M) := by ring
 
+/-! ### The rational orbit state -/
+
+/-- The number of terms from the `i`-th Stoneham series which have entered the orbit by time `n`.
+For the hypotheses of Theorem A this is the largest `K` with `m i * c i ^ K ≤ n`. -/
+def stonehamK {r : ℕ} (c m : Fin r → ℕ) (i : Fin r) (n : ℕ) : ℕ :=
+  Nat.log (c i) (n / m i)
+
+lemma le_stonehamK_iff {r : ℕ} (c m : Fin r → ℕ) (i : Fin r) (n k : ℕ)
+    (hc : 2 ≤ c i) (hm : 1 ≤ m i) (hk : 1 ≤ k) :
+    k ≤ stonehamK c m i n ↔ m i * c i ^ k ≤ n := by
+  unfold stonehamK
+  by_cases hq : n / m i = 0
+  · rw [hq, Nat.log_zero_right]
+    constructor
+    · omega
+    · intro h
+      have hp : c i ^ k ≤ n / m i := by
+        rw [Nat.le_div_iff_mul_le (by omega : 0 < m i)]
+        simpa [mul_comm] using h
+      simp [hq] at hp
+      omega
+  · rw [Nat.le_log_iff_pow_le (by omega) hq,
+      Nat.le_div_iff_mul_le (by omega : 0 < m i)]
+    simp only [mul_comm]
+
+/-- The rational truncation of `b^n · (L⁻¹ ∑ i, p i · α_{b^{m i},c i})` at all
+terms whose base-`b` exponent is at most `n`. -/
+noncomputable def stonehamState (b L : ℕ) {r : ℕ} (c m : Fin r → ℕ)
+    (p : Fin r → ℤ) (n : ℕ) : ℚ :=
+  (1 / (L : ℚ)) * ∑ i, (p i : ℚ) *
+    ∑ k ∈ Icc 1 (stonehamK c m i n),
+      (b : ℚ) ^ (n - m i * c i ^ k) / (c i : ℚ) ^ k
+
+/-- Lemma 2: between kicks, the rational state follows exact multiplication by the base. -/
+lemma stonehamState_add_of_K_eq (b L : ℕ) {r : ℕ} (c m : Fin r → ℕ)
+    (p : Fin r → ℤ) (s j : ℕ) (hc : ∀ i, 2 ≤ c i) (hm : ∀ i, 1 ≤ m i)
+    (hK : ∀ i, stonehamK c m i (s + j) = stonehamK c m i s) :
+    stonehamState b L c m p (s + j) = (b : ℚ) ^ j * stonehamState b L c m p s := by
+  classical
+  have hi : ∀ i : Fin r,
+      ∑ k ∈ Icc 1 (stonehamK c m i (s + j)),
+          (b : ℚ) ^ (s + j - m i * c i ^ k) / (c i : ℚ) ^ k =
+        (b : ℚ) ^ j * ∑ k ∈ Icc 1 (stonehamK c m i s),
+          (b : ℚ) ^ (s - m i * c i ^ k) / (c i : ℚ) ^ k := by
+    intro i
+    rw [hK i, Finset.mul_sum]
+    apply Finset.sum_congr rfl
+    intro k hk
+    have hk' := (Finset.mem_Icc.mp hk)
+    have hkick : m i * c i ^ k ≤ s :=
+      (le_stonehamK_iff c m i s k (hc i) (hm i) hk'.1).mp hk'.2
+    have hsub : s + j - m i * c i ^ k = (s - m i * c i ^ k) + j := by omega
+    rw [hsub, pow_add]
+    ring
+  rw [stonehamState, stonehamState]
+  simp_rw [hi]
+  have hsum : (∑ x, (p x : ℚ) * ((b : ℚ) ^ j *
+        ∑ k ∈ Icc 1 (stonehamK c m x s),
+          (b : ℚ) ^ (s - m x * c x ^ k) / (c x : ℚ) ^ k)) =
+      (b : ℚ) ^ j * ∑ x, (p x : ℚ) *
+        ∑ k ∈ Icc 1 (stonehamK c m x s),
+          (b : ℚ) ^ (s - m x * c x ^ k) / (c x : ℚ) ^ k := by
+    rw [Finset.mul_sum]
+    apply Finset.sum_congr rfl
+    intro x _
+    ring
+  rw [hsum]
+  ring
+
+/-- A finite sum of rationals which can all be written over `D` can itself be written over `D`. -/
+lemma exists_int_div_nat_sum {a : Type*} [DecidableEq a] (s : Finset a) (f : a → ℚ)
+    {D : ℕ} (_hD : D ≠ 0) (hf : ∀ x ∈ s, ∃ A : ℤ, f x = A / (D : ℚ)) :
+    ∃ A : ℤ, ∑ x ∈ s, f x = A / (D : ℚ) := by
+  classical
+  induction s using Finset.induction_on with
+  | empty =>
+      exact ⟨0, by simp⟩
+  | @insert x s hx ih =>
+      obtain ⟨A, hA⟩ := hf x (by simp)
+      obtain ⟨B, hB⟩ := ih (fun y hy => hf y (by simp [hy]))
+      refine ⟨A + B, ?_⟩
+      rw [sum_insert hx, hA, hB]
+      push_cast
+      ring
+
+/-- The explicit common denominator of the rational orbit state. -/
+def stonehamStateDen (L : ℕ) {r : ℕ} (c m : Fin r → ℕ) (n : ℕ) : ℕ :=
+  L * ∏ i, c i ^ stonehamK c m i n
+
+/-- Lemma 3(1), common-denominator part: the truncated orbit state has an integer numerator over
+`L · ∏_i c_i^{K_i(n)}`.  In particular its reduced denominator divides this number. -/
+lemma stonehamState_eq_int_div_den (b L : ℕ) {r : ℕ} (c m : Fin r → ℕ)
+    (p : Fin r → ℤ) (n : ℕ) (hL : L ≠ 0) (hc0 : ∀ i, c i ≠ 0) :
+    ∃ A : ℤ, stonehamState b L c m p n = A / (stonehamStateDen L c m n : ℚ) := by
+  classical
+  let C : ℕ := ∏ i, c i ^ stonehamK c m i n
+  have hC : C ≠ 0 := by
+    dsimp [C]
+    exact prod_ne_zero_iff.mpr fun i _ => pow_ne_zero _ (hc0 i)
+  have hterm : ∀ (i : Fin r) (k : ℕ), k ∈ (Finset.Icc 1 (stonehamK c m i n)) →
+      ∃ A : ℤ,
+        (b : ℚ) ^ (n - m i * c i ^ k) / (c i : ℚ) ^ k = A / (C : ℚ) := by
+    intro i k hk
+    have hk_le : k ≤ stonehamK c m i n := (Finset.mem_Icc.mp hk).2
+    have hd : c i ^ k ∣ C := by
+      dsimp [C]
+      refine dvd_trans (pow_dvd_pow (c i) hk_le) ?_
+      exact Finset.dvd_prod_of_mem (fun j : Fin r => c j ^ stonehamK c m j n) (mem_univ i)
+    obtain ⟨t, ht⟩ := hd
+    have ht0 : t ≠ 0 := by
+      rintro rfl
+      simp at ht
+      exact hC ht
+    refine ⟨((b ^ (n - m i * c i ^ k) * t : ℕ) : ℤ), ?_⟩
+    rw [ht]
+    push_cast
+    field_simp [hc0 i, ht0]
+  have hi : ∀ i : Fin r, ∃ A : ℤ,
+      (p i : ℚ) * ∑ k ∈ Icc 1 (stonehamK c m i n),
+        (b : ℚ) ^ (n - m i * c i ^ k) / (c i : ℚ) ^ k = A / (C : ℚ) := by
+    intro i
+    obtain ⟨A, hA⟩ := exists_int_div_nat_sum (Icc 1 (stonehamK c m i n))
+      (fun k => (b : ℚ) ^ (n - m i * c i ^ k) / (c i : ℚ) ^ k) hC (hterm i)
+    refine ⟨p i * A, ?_⟩
+    rw [hA]
+    push_cast
+    ring
+  obtain ⟨A, hA⟩ := exists_int_div_nat_sum univ
+    (fun i => (p i : ℚ) * ∑ k ∈ Icc 1 (stonehamK c m i n),
+      (b : ℚ) ^ (n - m i * c i ^ k) / (c i : ℚ) ^ k) hC
+    (fun i _ => hi i)
+  refine ⟨A, ?_⟩
+  rw [stonehamState, hA]
+  dsimp [stonehamStateDen, C]
+  push_cast
+  field_simp
+
+lemma stonehamState_den_dvd (b L : ℕ) {r : ℕ} (c m : Fin r → ℕ)
+    (p : Fin r → ℤ) (n : ℕ) (hL : L ≠ 0) (hc0 : ∀ i, c i ≠ 0) :
+    (stonehamState b L c m p n).den ∣ stonehamStateDen L c m n := by
+  obtain ⟨A, hA⟩ := stonehamState_eq_int_div_den b L c m p n hL hc0
+  rw [hA]
+  exact_mod_cast Rat.den_dvd A (stonehamStateDen L c m n)
+
+/-- Each factor in the common denominator is at most the orbit time. -/
+lemma stonehamK_pow_le {r : ℕ} (c m : Fin r → ℕ) (i : Fin r) (n : ℕ)
+    (hn : n ≠ 0) : c i ^ stonehamK c m i n ≤ n := by
+  unfold stonehamK
+  by_cases hq : n / m i = 0
+  · rw [hq, Nat.log_zero_right, pow_zero]
+    exact Nat.one_le_iff_ne_zero.mpr hn
+  · exact (Nat.pow_log_le_self (c i) hq).trans (Nat.div_le_self n (m i))
+
+/-- Lemma 3(3), easy direction: the explicit common denominator is at most `L n^r`. -/
+lemma stonehamStateDen_le (L : ℕ) {r : ℕ} (c m : Fin r → ℕ) (n : ℕ)
+    (hn : n ≠ 0) : stonehamStateDen L c m n ≤ L * n ^ r := by
+  unfold stonehamStateDen
+  gcongr
+  calc
+    ∏ i : Fin r, c i ^ stonehamK c m i n ≤ ∏ _i : Fin r, n := by
+      exact Finset.prod_le_prod (fun _ _ => Nat.zero_le _) (fun i _ => stonehamK_pow_le c m i n hn)
+    _ = n ^ r := by simp
+
+/-- Lemma 3(1), coprimality part: under the hypotheses of Proposition C, both the explicit and
+reduced state denominators are coprime to the base. -/
+lemma stonehamState_den_coprime (b L : ℕ) {r : ℕ} (c m : Fin r → ℕ)
+    (p : Fin r → ℤ) (n : ℕ) (hL : L ≠ 0) (hLb : Nat.Coprime L b)
+    (hc0 : ∀ i, c i ≠ 0) (hcb : ∀ i, Nat.Coprime (c i) b) :
+    Nat.Coprime (stonehamState b L c m p n).den b := by
+  apply Nat.Coprime.of_dvd_left (stonehamState_den_dvd b L c m p n hL hc0)
+  unfold stonehamStateDen
+  exact Nat.Coprime.mul_left hLb
+    (Nat.Coprime.prod_left fun i _ => (hcb i).pow_left (stonehamK c m i n))
+
+/-- Lemma 3(1), smoothness part: every prime in the reduced state denominator already occurs in
+`L` or in one of the fixed Stoneham parameters `c i`. -/
+lemma prime_dvd_stonehamState_den (b L : ℕ) {r : ℕ} (c m : Fin r → ℕ)
+    (p : Fin r → ℤ) (n ℓ : ℕ) (hL : L ≠ 0) (hc0 : ∀ i, c i ≠ 0)
+    (hℓ : ℓ.Prime) (hd : ℓ ∣ (stonehamState b L c m p n).den) :
+    ℓ ∣ L ∨ ∃ i, ℓ ∣ c i := by
+  have hbig : ℓ ∣ stonehamStateDen L c m n :=
+    hd.trans (stonehamState_den_dvd b L c m p n hL hc0)
+  rw [stonehamStateDen] at hbig
+  rcases hℓ.dvd_mul.mp hbig with hL' | hprod
+  · exact Or.inl hL'
+  · rcases (Prime.dvd_finsetProd_iff hℓ.prime _).mp hprod with ⟨i, -, hi⟩
+    exact Or.inr ⟨i, hℓ.dvd_of_dvd_pow hi⟩
+
 /-- **Theorem A.**  Pairwise-coprime Stoneham families: every nonzero rational combination is
 normal. -/
 theorem isNormal_stonehamCombination (hV : VandeheyThm51)

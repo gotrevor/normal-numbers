@@ -1,3 +1,8 @@
+# Stoneham sums normal lap 2 (2026-10-16): rational state and denominator support; read HANDOFF-2026-10-16-stoneham-sums-normal-lap2.md
+- The target remains at one sorry (Theorem A).  Paper Lemma 2 is proved, and Lemma 3 now has its
+  common-denominator, upper-growth, coprimality, and fixed-prime-support parts.  Next: the unique
+  minimum ℓ-adic valuation giving the reduced-denominator lower bound.
+
 # Stoneham sums normal lap 1 (2026-10-16): Corollary 1.2 proved, headline wired; read HANDOFF-2026-10-16-stoneham-sums-normal-lap1.md
 - The target is down from three sorries to one without statement changes.  The analytic derivation
   `vandeheyCor12_of_thm51` and the explicit `α₂,₃ + α₂,₅` specialization are proved.  Next: the
