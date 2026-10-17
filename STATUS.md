@@ -1,6 +1,6 @@
 # STATUS — normal-numbers 📊
 
-## Vandehey Theorem 5.1 complete, 17 October 2026 (branch `proof/vandehey-thm51`, lap 25 audit)
+## Vandehey Theorem 5.1 complete, 17 October 2026 (branch `proof/vandehey-thm51`, lap 27 reflection audit)
 
 `VandeheyProof.vandeheyThm51_holds` is proved with the frozen statement unchanged.  The final
 step is `VandeheyKorobov.norm_power_sum_le_step`, a complete formalization of Proposition 4.1:
@@ -21,6 +21,12 @@ interfaces remain load-bearing proved lemmas.  Its scoped and full gates are gre
 again checked the exact host predicate, frozen contract, machinery debt and circularity surfaces,
 BarrierAudit waiver absence, theorem axiom footprint, and both real build gates from the committed
 lap-24 tree; every terminal condition remains green.
+
+Lap 27 converted the remaining manual statement-fidelity check into an executable audit surface.
+Definitional-equality pins in `VandeheyProof.lean` now fix the paper's `Q`, `M`, `C_{P,x}`,
+`alpha`, exponent-pair and constant-pair recursions, plus the complete quantified theorem type.
+The ratified literature source remains byte-unchanged, and both the scoped 8,936-job gate and full
+10,868-job gate pass with the pins active.  No in-scope obligation remains.
 
 ## Vandehey Theorem 5.1 update, 17 October 2026 (branch `proof/vandehey-thm51`, lap 17)
 

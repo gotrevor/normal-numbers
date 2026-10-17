@@ -1,3 +1,9 @@
+# Vandehey Theorem 5.1 lap 27 COMPLETE (2026-10-17, executable statement audit); read HANDOFF-2026-10-17-vandehey-thm51-lap27.md
+- The paper-defined constants, recursions, and full frozen theorem type now have compile-time
+  definitional-equality pins, closing the only manual gap left by the permanent axiom guards.
+- The ratified source remains byte-unchanged; scoped and full real gates are green; terminate the
+  completed campaign.
+
 # Vandehey Theorem 5.1 lap 26 COMPLETE (2026-10-17, terminal predicate reconfirmed); read HANDOFF-2026-10-17-vandehey-thm51-lap26.md
 - The exact sorry-free predicate, frozen statement, machinery debt surface, BarrierAudit waiver
   absence, all four axiom guards, and both real build gates were independently reconfirmed.

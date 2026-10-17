@@ -252,6 +252,67 @@ theorem zetaY_isNormal_unconditional
     IsNormal 2 (GrowingLocalizedLog.zetaY Y) :=
   GrowingLocalizedLog.zetaY_isNormal vandeheyThm51_holds Y hmono h3 ε hε hY
 
+/-! ## Statement audit surface
+
+`#print axioms` guards proofs, not statements.  These definitional-equality pins make the paper's
+six displayed definitions and the exact frozen Theorem 5.1 type executable build obligations.
+They deliberately live outside `LiteratureVandeheyDifferencing.lean`, so that the ratified source
+file itself remains byte-unchanged.
+-/
+
+section Audit
+
+example (P : Finset ℕ) :
+    primeProd P = ∏ p ∈ P, p := rfl
+
+example (b : ℕ) (P : Finset ℕ) :
+    bigM b P =
+      ∏ p ∈ P, p ^ padicValNat p
+        (b ^ (2 * orderOf (b : ZMod (primeProd P))) - 1) := rfl
+
+example (P : Finset ℕ) (x : ℝ) :
+    cP P x = ∏ p ∈ P, (p : ℝ) ^ x / ((p : ℝ) ^ x - 1) := rfl
+
+example (k : ℕ) :
+    alpha k = 1 / ((2 : ℝ) ^ (k + 2) - 2) := rfl
+
+example : expPair 0 = (0, 1) := rfl
+
+example (k : ℕ) :
+    expPair (k + 1) =
+      let γ := (expPair k).1
+      let ν := (expPair k).2
+      let α := alpha k
+      ((1 + γ + α * ν) / (2 * (1 + α)),
+        (1 + ν) / 2 + (1 + γ - ν) * α / (2 * (1 + α))) := rfl
+
+example (b : ℕ) (P : Finset ℕ) :
+    constPair b P 0 = ((1 : ℝ), (bigM b P : ℝ)) := rfl
+
+example (b : ℕ) (P : Finset ℕ) (k : ℕ) :
+    constPair b P (k + 1) =
+      let A := (constPair b P k).1
+      let B := (constPair b P k).2
+      let α := alpha k
+      let s : ℝ := P.card
+      let Q : ℝ := primeProd P
+      let M : ℝ := bigM b P
+      (Real.sqrt ((2 : ℝ) ^ (s + 2) * Q * (A + B) * cP P α + 2 * Q +
+          2 * A * M * cP P (1 + α)),
+        Real.sqrt ((2 : ℝ) ^ (1 + α) * B * M * Q ^ α * cP P (1 - α))) := rfl
+
+example : VandeheyThm51 =
+    (∀ (b : ℕ), 2 ≤ b → ∀ (P : Finset ℕ),
+      (∀ p ∈ P, p.Prime ∧ Nat.Coprime p b) →
+      ∀ (m : ℕ), 2 ≤ m → (∀ p, p.Prime → p ∣ m → p ∈ P) →
+      ∀ (a : ℤ), IsCoprime a (m : ℤ) → ∀ (k N : ℕ), 1 ≤ N →
+        ‖∑ n ∈ Icc 1 N, ePhase ((a : ℝ) * (b : ℝ) ^ n / m)‖ ≤
+          ((constPair b P k).1 * (m : ℝ) ^ alpha k * (N : ℝ) ^ (expPair k).1 +
+            (constPair b P k).2 * (m : ℝ) ^ (-alpha k) * (N : ℝ) ^ (expPair k).2) *
+            (1 + Real.log m) ^ ((2 : ℝ) ^ (-(k : ℝ)))) := rfl
+
+end Audit
+
 /-! The kickoff's trust gate is kept executable: future changes to either the proof or one of
 its unconditional consumers must not silently introduce proof debt. -/
 
