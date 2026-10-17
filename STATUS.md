@@ -1,5 +1,23 @@
 # STATUS — normal-numbers 📊
 
+## Literal Bailey--Borwein pairs, 17 October 2026 (branch `proof/bb-literal-pairs`, lap 5)
+
+**Scoped kickoff open** · **Crux advance**: product-deleted polar exponent made eventually periodic ·
+**Build**: 🟢 `StonehamPairsNormal` target green (8,776 jobs)
+
+`StonehamPairsArithmetic.lean` now rewrites both full and product-deleted polar multipliers as
+single explicit powers. A finite-state pigeonhole proof establishes a common eventual period
+modulo every positive modulus for `u^K` and its running geometric sum, without a coprimality
+assumption; its top-offset corollary gives exactly the periodicity of the deleted exponent required
+by referee repair 2. The three audited bridge declarations have exactly
+`[Classical.choice, Quot.sound, propext]` as their axiom list.
+
+The two ratified sorries in `StonehamPairsNormal.lean` remain. Next convert the already-proved
+complex nonvanishing of literal sum/difference tails into a fixed nonzero integer
+norm/resultant, use it to bound p-adic cancellation uniformly, then prove distinct-class rate
+separation and derive `StonehamStateDenPowerLower`. See
+`HANDOFF-2026-10-17-bb-literal-pairs-lap5.md`.
+
 ## Literal Bailey--Borwein pairs, 17 October 2026 (branch `proof/bb-literal-pairs`, lap 4)
 
 **Scoped kickoff open** · **Crux advance**: full-history polar numerator assembled ·

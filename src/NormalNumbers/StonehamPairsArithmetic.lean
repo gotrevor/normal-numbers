@@ -314,6 +314,143 @@ lemma stonehamClearedFamily_mul_polarProduct_modEq_of_factor
   exact (Finset.mul_prod_erase (Icc 1 K)
     (fun t => ((b : ℤ) ^ (p ^ (a * K))) ^ (u ^ t)) hj).symm
 
+/-! ### The finite polar exponent and its eventual period -/
+
+/-- Exponent of the full product of finite polar factors. -/
+def stonehamPolarExponent (u K : ℕ) : ℕ :=
+  ∑ t ∈ Icc 1 K, u ^ t
+
+/-- Exponent of the common finite Teichmüller representative after deleting the
+`j`-th polar factor.  This is the exponent hidden in the product on the right of
+`stonehamClearedFamily_mul_polarProduct_modEq_of_factor`. -/
+def stonehamPolarDeletedExponent (u K j : ℕ) : ℕ :=
+  ∑ t ∈ (Icc 1 K).erase j, u ^ t
+
+/-- The product-deleted polar factor is a single power.  Exposing this exponent
+is what permits the finite periodicity argument, without choosing a root of
+unity or introducing division in `ZMod`. -/
+lemma stoneham_polarProduct_erase_eq_pow (w : ℤ) (u K j : ℕ) :
+    ∏ t ∈ (Icc 1 K).erase j, w ^ (u ^ t) =
+      w ^ stonehamPolarDeletedExponent u K j := by
+  exact Finset.prod_pow_eq_pow_sum ((Icc 1 K).erase j) (fun t => u ^ t) w
+
+/-- The common multiplier on the left side is likewise one explicit power. -/
+lemma stoneham_polarProduct_eq_pow (w : ℤ) (u K : ℕ) :
+    ∏ t ∈ Icc 1 K, w ^ (u ^ t) = w ^ stonehamPolarExponent u K := by
+  exact Finset.prod_pow_eq_pow_sum (Icc 1 K) (fun t => u ^ t) w
+
+/-- Restoring the deleted exponent gives the full geometric exponent sum. -/
+lemma stonehamPolarDeletedExponent_add (u K j : ℕ) (hj : j ∈ Icc 1 K) :
+    stonehamPolarDeletedExponent u K j + u ^ j = stonehamPolarExponent u K := by
+  exact Finset.sum_erase_add (Icc 1 K) (fun t => u ^ t) hj
+
+/-- Power-normalized version of the full-history polar congruence.  Both large
+products have disappeared: the right side now visibly depends on `j` only
+through `stonehamPolarDeletedExponent`, whose fixed top offsets are eventually
+periodic by `exists_eventually_modEq_stonehamPolarDeletedExponent`. -/
+lemma stonehamClearedFamily_mul_polarPower_modEq_of_factor
+    (p b c a u K n : ℕ) (hp : p.Prime) (hc : c = p ^ a * u)
+    (hentered : ∀ j ∈ Icc 1 K, c ^ j ≤ n) :
+    ∑ j ∈ Icc 1 K,
+          (b : ℤ) ^ (n - c ^ j) * (c : ℤ) ^ (K - j) *
+            ((b : ℤ) ^ (p ^ (a * K))) ^ stonehamPolarExponent u K ≡
+      ∑ j ∈ Icc 1 K,
+          (b : ℤ) ^ n * (c : ℤ) ^ (K - j) *
+            ((b : ℤ) ^ (p ^ (a * K))) ^ stonehamPolarDeletedExponent u K j
+        [ZMOD p ^ (a * K + 1)] := by
+  simpa only [← stoneham_polarProduct_eq_pow, ← stoneham_polarProduct_erase_eq_pow] using
+    stonehamClearedFamily_mul_polarProduct_modEq_of_factor p b c a u K n hp hc hentered
+
+/-- Powers and their running geometric sums are eventually periodic modulo any
+positive modulus.  The pair is used rather than powers alone because deleting
+one factor from the polar product leaves the running sum of all the others.
+
+This is the finite, non-coprime form required by referee repair 2: no Euler
+theorem is used, so the result includes the genuinely preperiodic case
+`gcd u d > 1`. -/
+lemma exists_eventually_modEq_pow_and_geomSum (u d : ℕ) (hd : 0 < d) :
+    ∃ K₀ T : ℕ, 0 < T ∧ ∀ K, K₀ ≤ K →
+      u ^ (K + T) ≡ u ^ K [MOD d] ∧
+      (∑ t ∈ Icc 1 (K + T), u ^ t) ≡ (∑ t ∈ Icc 1 K, u ^ t) [MOD d] := by
+  let state : Fin (d * d + 1) → Fin d × Fin d := fun K =>
+    (⟨u ^ (K : ℕ) % d, Nat.mod_lt _ hd⟩,
+      ⟨(∑ t ∈ Icc 1 (K : ℕ), u ^ t) % d, Nat.mod_lt _ hd⟩)
+  obtain ⟨i, j, hij, heq⟩ := Fintype.exists_ne_map_eq_of_card_lt state (by simp)
+  have propagate : ∀ i j : ℕ, i < j →
+      (u ^ i ≡ u ^ j [MOD d] ∧
+        (∑ t ∈ Icc 1 i, u ^ t) ≡ (∑ t ∈ Icc 1 j, u ^ t) [MOD d]) →
+      ∀ K, i ≤ K →
+        u ^ (K + (j - i)) ≡ u ^ K [MOD d] ∧
+        (∑ t ∈ Icc 1 (K + (j - i)), u ^ t) ≡
+          (∑ t ∈ Icc 1 K, u ^ t) [MOD d] := by
+    intro i j hij hstart K hiK
+    obtain ⟨q, rfl⟩ := Nat.exists_eq_add_of_le hiK
+    induction q with
+    | zero =>
+        have hji : i + (j - i) = j := by omega
+        simpa only [Nat.add_zero, hji] using And.intro hstart.1.symm hstart.2.symm
+    | succ q ih =>
+        have ih' := ih (by omega)
+        have hpow : u ^ (i + q + (j - i) + 1) ≡ u ^ (i + q + 1) [MOD d] := by
+          rw [pow_succ, pow_succ]
+          exact ih'.1.mul Nat.ModEq.rfl
+        have hsum :
+            (∑ t ∈ Icc 1 (i + (q + 1) + (j - i)), u ^ t) ≡
+              (∑ t ∈ Icc 1 (i + (q + 1)), u ^ t) [MOD d] := by
+          rw [show i + (q + 1) + (j - i) = (i + q + (j - i)) + 1 by omega,
+            show i + (q + 1) = i + q + 1 by omega,
+            sum_Icc_succ_top (by omega) (fun t => u ^ t),
+            sum_Icc_succ_top (by omega) (fun t => u ^ t)]
+          exact ih'.2.add hpow
+        refine ⟨?_, hsum⟩
+        rw [show i + (q + 1) + (j - i) = i + q + (j - i) + 1 by omega,
+          show i + (q + 1) = i + q + 1 by omega]
+        exact hpow
+  have hstateEq :
+      u ^ (i : ℕ) % d = u ^ (j : ℕ) % d ∧
+        (∑ t ∈ Icc 1 (i : ℕ), u ^ t) % d =
+          (∑ t ∈ Icc 1 (j : ℕ), u ^ t) % d := by
+    simpa only [state, Prod.mk.injEq, Fin.mk.injEq] using heq
+  have hstate :
+      u ^ (i : ℕ) ≡ u ^ (j : ℕ) [MOD d] ∧
+        (∑ t ∈ Icc 1 (i : ℕ), u ^ t) ≡
+          (∑ t ∈ Icc 1 (j : ℕ), u ^ t) [MOD d] := hstateEq
+  rcases lt_or_gt_of_ne (Fin.val_injective.ne hij) with hlt | hgt
+  · refine ⟨i, j - i, by omega, fun K hK => ?_⟩
+    have h := propagate i j hlt hstate K hK
+    exact h
+  · refine ⟨j, i - j, by omega, fun K hK => ?_⟩
+    have h := propagate j i hgt ⟨hstate.1.symm, hstate.2.symm⟩ K hK
+    exact h
+
+/-- Consequently, every fixed top offset of the product-deleted polar exponent
+is eventually periodic modulo `d`, with one period working for all offsets.
+The threshold grows only by the offset; this is the exact tail form used when
+the Stoneham kicks are reindexed downwards from the top depth. -/
+lemma exists_eventually_modEq_stonehamPolarDeletedExponent (u d : ℕ) (hd : 0 < d) :
+    ∃ K₀ T : ℕ, 0 < T ∧ ∀ K s, K₀ + s ≤ K →
+      stonehamPolarDeletedExponent u (K + T) (K + T - s) ≡
+        stonehamPolarDeletedExponent u K (K - s) [MOD d] := by
+  obtain ⟨K₀, T, hT, hperiod⟩ := exists_eventually_modEq_pow_and_geomSum u d hd
+  refine ⟨K₀ + 1, T, hT, fun K s hKs => ?_⟩
+  have hK₀K : K₀ ≤ K := by omega
+  have hK₀sub : K₀ ≤ K - s := by omega
+  have hsK : s ≤ K := by omega
+  have hj : K - s ∈ Icc 1 K := mem_Icc.mpr ⟨by omega, Nat.sub_le K s⟩
+  have hjT : K + T - s ∈ Icc 1 (K + T) :=
+    mem_Icc.mpr ⟨by omega, Nat.sub_le (K + T) s⟩
+  have hpow : u ^ (K + T - s) ≡ u ^ (K - s) [MOD d] := by
+    have := (hperiod (K - s) hK₀sub).1
+    simpa only [show K - s + T = K + T - s by omega] using this
+  have hsum := (hperiod K hK₀K).2
+  have hall :
+      stonehamPolarDeletedExponent u (K + T) (K + T - s) + u ^ (K + T - s) ≡
+        stonehamPolarDeletedExponent u K (K - s) + u ^ (K - s) [MOD d] := by
+    rw [stonehamPolarDeletedExponent_add u (K + T) (K + T - s) hjT,
+      stonehamPolarDeletedExponent_add u K (K - s) hj]
+    exact hsum
+  exact hpow.add_right_cancel hall
+
 /-- The explicit numerator obtained by clearing the denominator `c^K` in one
 Stoneham family (with the literal base exponent `m = 1`). -/
 def stonehamClearedFamily (b c n K : ℕ) : ℤ :=
