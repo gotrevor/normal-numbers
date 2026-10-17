@@ -1,3 +1,19 @@
+# Prime-class joint normality, 17 October 2026 (branch `proof/prime-class`, lap 10)
+
+`StonehamPrimeClassPowerLower` proves the uniform scheduling input for the remaining normal half.
+At every nonzero orbit time, if `T` is the maximum weighted kick depth, then
+`T - s_i K_i < u_i + s_i` for every component.  The gap vector is therefore an element of the
+fixed finite type `∀ i, Fin (u i + s i)`, independent of time.  Conversely any chosen component
+gives `n < p^(u_i + T + s_i)`, so `p^T` has the required linear scale in `n`.  The same module
+proves that linear independence makes the cyclotomic resultant of every nonzero cleared integral
+coefficient polynomial nonzero.  These endpoints audit to exactly the standard trust base.
+
+The scoped target remains FORMALIZE-TIER GREEN with exactly the independent/normal headline
+sorried.  Next prove linear independence for the complementary exponents, instantiate the
+resultant with the gap-dependent cleared-state coefficient polynomial, and turn its uniform
+finite-pattern valuation bound into `StonehamStateDenPowerLower`.  See
+`HANDOFF-2026-10-17-prime-class-lap10.md`.
+
 # Prime-class joint normality, 17 October 2026 (branch `proof/prime-class`, lap 6 REVIEW)
 
 `StonehamPrimeClassState` corrects the mixed-state route found incomplete during review.  It

@@ -10,6 +10,7 @@ import NormalNumbers.StonehamPrimeClassMahler
 import NormalNumbers.StonehamPrimeClassState
 import NormalNumbers.StonehamPrimeClassSchedule
 import NormalNumbers.StonehamPrimeClassNonNormal
+import NormalNumbers.StonehamPrimeClassPowerLower
 import NormalNumbers.VandeheyProof
 
 /-!

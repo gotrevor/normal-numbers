@@ -1,3 +1,13 @@
+# Prime class lap 10 (2026-10-17): bounded max-depth patterns; read HANDOFF-2026-10-17-prime-class-lap10.md
+
+- The remaining normal-half schedule is now finite: every max-depth gap is strictly below
+  `u_i+s_i`, with a typed finite-pattern encoding, while the maximum depth has the correct
+  logarithmic growth in orbit time.  Linear independence also gives a nonzero cyclotomic
+  resultant for every nonzero cleared coefficient polynomial.  All new endpoints are
+  axiom-clean and the target gate is FORMALIZE-TIER GREEN.  Next orient independence to the
+  complementary exponents, form the actual gap-pattern numerator polynomial, and bound its
+  p-adic loss uniformly over the finite pattern type.
+
 # Prime class lap 9 REFLECTION (2026-10-17): dependent half proved; read HANDOFF-2026-10-17-prime-class-lap9.md
 
 - Multiplicative dilations of one canonical unit cell, not additive periodicity, give exact fixed
