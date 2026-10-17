@@ -1,3 +1,11 @@
+# Vandehey Theorem 5.1 lap 4 (2026-10-17); read HANDOFF-2026-10-17-vandehey-thm51-lap4.md
+- Kickoff rung 2 is proved as `norm_twisted_powers_sum_le_sqrt`; the concrete completed-twist
+  corollary `norm_completed_power_sum_le_sqrt` is ready for Lemma 2.2.
+- The construction uses the actual power residues, a zero extension of the character, exact L² mass,
+  and cyclic reindexing.  Its axiom list is exactly the standard trust base.
+- Next: the exact Dirichlet-kernel L1 estimate (`1 + log τ`, with centered harmonic bookkeeping),
+  then the completion identity for Vandehey Lemma 2.2.
+
 # Vandehey Theorem 5.1 lap 3 (2026-10-17); read HANDOFF-2026-10-17-vandehey-thm51-lap3.md
 - Kickoff rung 1 (`div_bigM_le_orderOf`, Vandehey Lemma 2.1 / equation (5)) is proved and its
   BarrierAudit waiver is removed.
