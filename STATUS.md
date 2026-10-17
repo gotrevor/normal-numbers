@@ -1,5 +1,26 @@
 # STATUS — normal-numbers 📊
 
+## Literal Bailey--Borwein pairs, 17 October 2026 (branch `proof/bb-literal-pairs`, lap 3 review)
+
+**Scoped kickoff open** · **Crux advance**: exponent-form item (K) and literal never-silent core
+proved · **Build**: 🟢 `StonehamPairsNormal` target green (8,776 jobs)
+
+The route review found no statement drift and confirmed that a positive-power denominator bound
+still feeds the complete analytic/Weyl chain. `StonehamPairsArithmetic.lean` now specializes the
+finite Teichmueller tower to `c = p^a u`, mathlib's canonical `ordProj`/`ordCompl` decomposition,
+and the entered Stoneham phase `b^(n-c^j)`. The dyadic clause retains its two extra powers of two.
+
+The same module proves the referee-repaired top-digit argument as
+`geom_weighted_sum_ne_zero_of_norm`, with `literalSum_tail_ne_zero` and
+`literalDiff_tail_ne_zero` as the exact coefficient bounds for the two headlines. The four audited
+phase/noncancellation declarations have exactly `[Classical.choice, Quot.sound, propext]` as their
+axiom list.
+
+The two ratified sorries in `StonehamPairsNormal.lean` remain. Next assemble the one/two-family
+polar coefficient, prove its eventual periodicity and uniform p-adic cancellation bound (using the
+new nonvanishing theorem), establish rate separation for distinct primitive classes, and derive
+`StonehamStateDenPowerLower`. See `HANDOFF-2026-10-17-bb-literal-pairs-lap3.md`.
+
 ## Literal Bailey--Borwein pairs, 17 October 2026 (branch `proof/bb-literal-pairs`, lap 2)
 
 **Scoped kickoff open** · **Crux advance**: finite Teichmueller congruence core proved ·

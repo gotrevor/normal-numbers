@@ -1,3 +1,10 @@
+# Literal Bailey--Borwein pairs lap 3 review (2026-10-17): exponent (K) and never-silent core proved; read HANDOFF-2026-10-17-bb-literal-pairs-lap3.md
+- The finite Teichmueller system is now specialized to the actual phases `b^(n-c^j)`, with
+  canonical odd-prime and dyadic factorization forms. The referee-repaired complex top-digit
+  inequality proves literal sum/difference periodic tails cannot vanish once assembled.
+  Next: build the one/two-family polar coefficient, prove its eventual periodicity and bounded
+  p-adic cancellation, then derive `StonehamStateDenPowerLower`.
+
 # Literal Bailey--Borwein pairs lap 2 (2026-10-17): finite Teichmueller core proved; read HANDOFF-2026-10-17-bb-literal-pairs-lap2.md
 - The geometric-sum lift, compatible finite representatives `b^(p^K)`, their all-later-level
   congruence, and the extra-precision dyadic tower are kernel-proved at the standard trust baseline.
