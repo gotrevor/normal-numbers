@@ -1,3 +1,10 @@
+# Literal Bailey--Borwein pairs lap 13 (2026-10-17): distinct-class sum power bound; read HANDOFF-2026-10-17-bb-literal-pairs-lap13.md
+
+- The slope-separating prime now yields a global positive-power reduced-denominator lower bound
+  for every nonzero Fourier state of a literal sum from distinct multiplicative classes. Fixed
+  Fourier loss and the finite prefix are absorbed cleanly. Next package the already-proved sub
+  divisor in the same way, wire distinct-class normality, then attack same-class compression.
+
 # Literal Bailey--Borwein pairs lap 12 (2026-10-17): Fourier loss and exact pair state; read HANDOFF-2026-10-17-bb-literal-pairs-lap12.md
 
 - Fixed integer multiplication now removes at most `padicValInt p h` from any prime-power

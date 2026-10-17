@@ -116,6 +116,83 @@ theorem eventually_natLog_depth_ne
     rw [habs] at hthreshold
     exact (not_lt_of_ge this) hthreshold
 
+/-- A fixed denominator prime already turns one ordinary Stoneham entry depth into a positive
+real power of time.  The extra factor `p` absorbs the one-digit error in `Nat.log c n`. -/
+theorem nat_rpow_log_ratio_le_prime_mul_prime_pow_natLog
+    (p c n : ℕ) (hp : p.Prime) (hc : 2 ≤ c) :
+    (n : ℝ) ^ (Real.log p / Real.log c) ≤
+      p * (p ^ Nat.log c n : ℕ) := by
+  have hp1 : (1 : ℝ) < p := by exact_mod_cast hp.one_lt
+  have hc1 : (1 : ℝ) < c := by exact_mod_cast (show 1 < c by omega)
+  have hlp : 0 < Real.log (p : ℝ) := Real.log_pos hp1
+  have hlc : 0 < Real.log (c : ℝ) := Real.log_pos hc1
+  by_cases hn0 : n = 0
+  · subst n
+    norm_num [Real.zero_rpow (div_pos hlp hlc).ne']
+  have hn : 1 ≤ n := Nat.one_le_iff_ne_zero.mpr hn0
+  obtain ⟨_, herr⟩ := natLog_mul_log_base_error c n hc hn
+  have hlog : Real.log (n : ℝ) < (Nat.log c n + 1 : ℕ) * Real.log (c : ℝ) := by
+    push_cast
+    linarith
+  have hexp : Real.log (n : ℝ) * (Real.log (p : ℝ) / Real.log (c : ℝ)) ≤
+      (Nat.log c n + 1 : ℕ) * Real.log (p : ℝ) := by
+    have := (mul_lt_mul_of_pos_right hlog (div_pos hlp hlc)).le
+    push_cast at this ⊢
+    field_simp
+    nlinarith
+  rw [Real.rpow_def_of_pos (by positivity : (0 : ℝ) < n)]
+  calc
+    Real.exp (Real.log (n : ℝ) * (Real.log (p : ℝ) / Real.log (c : ℝ))) ≤
+        Real.exp ((Nat.log c n + 1 : ℕ) * Real.log (p : ℝ)) :=
+      Real.exp_le_exp.mpr hexp
+    _ = ((p : ℝ) ^ (Nat.log c n + 1 : ℕ)) := by
+      rw [Real.exp_nat_mul, Real.exp_log (by linarith : (0 : ℝ) < p)]
+    _ = p * (p ^ Nat.log c n : ℕ) := by
+      push_cast
+      rw [pow_succ]
+      ring
+
+/-- A fixed subtraction from a positive multiple of the entry depth costs only a fixed
+multiplicative constant.  This is the quantitative form needed after Fourier multiplication. -/
+theorem nat_rpow_log_ratio_le_prime_pow_mul_prime_pow_depth_sub
+    (p c n a H : ℕ) (hp : p.Prime) (hc : 2 ≤ c) (ha : 1 ≤ a) :
+    (n : ℝ) ^ (Real.log p / Real.log c) ≤
+      (p ^ (H + 1) : ℕ) * (p ^ (a * Nat.log c n - H) : ℕ) := by
+  refine (nat_rpow_log_ratio_le_prime_mul_prime_pow_natLog p c n hp hc).trans ?_
+  have hdepth : Nat.log c n ≤ a * Nat.log c n := by
+    simpa using Nat.mul_le_mul_right (Nat.log c n) ha
+  have hexp : Nat.log c n + 1 ≤ H + 1 + (a * Nat.log c n - H) := by
+    omega
+  have hpow : p ^ (Nat.log c n + 1) ≤ p ^ (H + 1 + (a * Nat.log c n - H)) :=
+    Nat.pow_le_pow_right hp.pos hexp
+  have hpow' : p * p ^ Nat.log c n ≤
+      p ^ (H + 1) * p ^ (a * Nat.log c n - H) := by
+    simpa only [pow_succ, pow_add, mul_comm] using hpow
+  exact_mod_cast hpow'
+
+/-- An eventual power lower bound for a positive natural-valued quantity can be made global by
+enlarging its constant over the finite initial segment. -/
+theorem exists_global_power_lower_of_eventually
+    (q : ℕ → ℕ) (rho C : ℝ) (hrho : 0 ≤ rho) (hC : 0 < C)
+    (hq : ∀ n, 1 ≤ q n)
+    (hevent : ∀ᶠ n : ℕ in Filter.atTop, (n : ℝ) ^ rho ≤ C * q n) :
+    ∃ C' : ℝ, 0 < C' ∧ ∀ n : ℕ, (n : ℝ) ^ rho ≤ C' * q n := by
+  obtain ⟨N, hN⟩ := Filter.eventually_atTop.mp hevent
+  refine ⟨max C ((N : ℝ) ^ rho), lt_of_lt_of_le hC (le_max_left _ _), ?_⟩
+  intro n
+  by_cases hn : N ≤ n
+  · exact (hN n hn).trans (mul_le_mul_of_nonneg_right (le_max_left _ _)
+      (by positivity : (0 : ℝ) ≤ q n))
+  · have hnr : (n : ℝ) ≤ N := by exact_mod_cast (Nat.le_of_lt (lt_of_not_ge hn))
+    calc
+      (n : ℝ) ^ rho ≤ (N : ℝ) ^ rho :=
+        Real.rpow_le_rpow (by positivity) hnr hrho
+      _ ≤ max C ((N : ℝ) ^ rho) := le_max_right _ _
+      _ ≤ max C ((N : ℝ) ^ rho) * q n := by
+        nlinarith [show (1 : ℝ) ≤ q n by exact_mod_cast hq n,
+          show 0 ≤ max C ((N : ℝ) ^ rho) from
+            (le_max_left C ((N : ℝ) ^ rho)).trans' hC.le]
+
 /-- The algebraic companion to `padicValInt_unit_mul_pow_add_mul_pow_of_lt`:
 the same shallower unit term also prevents the sum from vanishing. -/
 theorem unit_mul_pow_add_mul_pow_ne_zero_of_lt
@@ -491,5 +568,127 @@ theorem prime_pow_max_sub_padicValInt_dvd_stonehamState_pair_sub_den_of_depth_ne
     prime_pow_sub_padicValInt_dvd_stonehamState_pair_one_den
       p (max (c₁.factorization p * Nat.log c₁ n)
         (c₂.factorization p * Nat.log c₂ n)) b c₁ c₂ n h (-1) hp hh hdiv'
+
+/-- In distinct multiplicative classes, a slope-separating prime that divides the first base
+gives an eventual positive-power lower bound for every nonzero Fourier state of the literal sum. -/
+theorem eventually_pair_add_state_den_power_lower_of_prime_dvd_left
+    (p b c₁ c₂ : ℕ) (h : ℤ) (hp : p.Prime)
+    (hc₁ : 2 ≤ c₁) (hc₂ : 2 ≤ c₂) (hpc₁ : p ∣ c₁)
+    (hcb₁ : Nat.Coprime c₁ b) (hcb₂ : Nat.Coprime c₂ b) (hh : h ≠ 0)
+    (hslope : (c₁.factorization p : ℝ) * Real.log c₂ ≠
+      (c₂.factorization p : ℝ) * Real.log c₁) :
+    ∀ᶠ n : ℕ in Filter.atTop,
+      (n : ℝ) ^ (Real.log p / Real.log c₁) ≤
+        (p ^ (padicValInt p h + 1) : ℕ) *
+          (NormalNumbers.StonehamSumsNormal.stonehamState b 1
+            ![c₁, c₂] ![1, 1] ![h, h] n).den := by
+  have ha : 1 ≤ c₁.factorization p := by
+    apply Nat.one_le_iff_ne_zero.mpr
+    simpa [Nat.factorization_eq_zero_iff, hp, hpc₁] using (show c₁ ≠ 0 by omega)
+  filter_upwards [Filter.eventually_ge_atTop (max c₁ c₂),
+    eventually_natLog_depth_ne c₁ c₂ (c₁.factorization p) (c₂.factorization p)
+      hc₁ hc₂ hslope] with n hn hne
+  have hK₁ : 1 ≤ Nat.log c₁ n := Nat.log_pos (by omega) ((le_max_left _ _).trans hn)
+  have hK₂ : 1 ≤ Nat.log c₂ n := Nat.log_pos (by omega) ((le_max_right _ _).trans hn)
+  have hentered₁ : ∀ j ∈ Finset.Icc 1 (Nat.log c₁ n), c₁ ^ j ≤ n := by
+    intro j hj
+    exact (Nat.pow_le_pow_right (by omega) (Finset.mem_Icc.mp hj).2).trans
+      (Nat.pow_log_le_self c₁ (by omega))
+  have hentered₂ : ∀ j ∈ Finset.Icc 1 (Nat.log c₂ n), c₂ ^ j ≤ n := by
+    intro j hj
+    exact (Nat.pow_le_pow_right (by omega) (Finset.mem_Icc.mp hj).2).trans
+      (Nat.pow_log_le_self c₂ (by omega))
+  let E := max (c₁.factorization p * Nat.log c₁ n)
+    (c₂.factorization p * Nat.log c₂ n) - padicValInt p h
+  have hdiv := prime_pow_max_sub_padicValInt_dvd_stonehamState_pair_add_den_of_depth_ne
+    p b c₁ c₂ n h hp hh (by omega) (by omega) hcb₁ hcb₂ hK₁ hK₂
+      hentered₁ hentered₂ hne
+  have hpowden : p ^ E ≤
+      (NormalNumbers.StonehamSumsNormal.stonehamState b 1
+        ![c₁, c₂] ![1, 1] ![h, h] n).den :=
+    Nat.le_of_dvd (by positivity) (by simpa only [E] using hdiv)
+  have he : c₁.factorization p * Nat.log c₁ n - padicValInt p h ≤ E := by
+    dsimp only [E]
+    exact Nat.sub_le_sub_right (le_max_left _ _) _
+  have hpows : p ^ (c₁.factorization p * Nat.log c₁ n - padicValInt p h) ≤ p ^ E :=
+    Nat.pow_le_pow_right hp.pos he
+  calc
+    (n : ℝ) ^ (Real.log p / Real.log c₁) ≤
+        (p ^ (padicValInt p h + 1) : ℕ) *
+          (p ^ (c₁.factorization p * Nat.log c₁ n - padicValInt p h) : ℕ) :=
+      nat_rpow_log_ratio_le_prime_pow_mul_prime_pow_depth_sub
+        p c₁ n (c₁.factorization p) (padicValInt p h) hp hc₁ ha
+    _ ≤ (p ^ (padicValInt p h + 1) : ℕ) *
+        (NormalNumbers.StonehamSumsNormal.stonehamState b 1
+          ![c₁, c₂] ![1, 1] ![h, h] n).den := by
+      exact_mod_cast Nat.mul_le_mul_left (p ^ (padicValInt p h + 1)) (hpows.trans hpowden)
+
+/-- Global version of the preceding eventual estimate, ready for the analytic power-lower
+interface.  The finite prefix is absorbed into an unspecified positive constant. -/
+theorem exists_pair_add_state_den_power_lower_of_prime_dvd_left
+    (p b c₁ c₂ : ℕ) (h : ℤ) (hp : p.Prime)
+    (hc₁ : 2 ≤ c₁) (hc₂ : 2 ≤ c₂) (hpc₁ : p ∣ c₁)
+    (hcb₁ : Nat.Coprime c₁ b) (hcb₂ : Nat.Coprime c₂ b) (hh : h ≠ 0)
+    (hslope : (c₁.factorization p : ℝ) * Real.log c₂ ≠
+      (c₂.factorization p : ℝ) * Real.log c₁) :
+    ∃ C : ℝ, 0 < C ∧ ∀ n : ℕ,
+      (n : ℝ) ^ (Real.log p / Real.log c₁) ≤ C *
+        (NormalNumbers.StonehamSumsNormal.stonehamState b 1
+          ![c₁, c₂] ![1, 1] ![h, h] n).den := by
+  apply exists_global_power_lower_of_eventually
+    (fun n => (NormalNumbers.StonehamSumsNormal.stonehamState b 1
+      ![c₁, c₂] ![1, 1] ![h, h] n).den)
+    (Real.log p / Real.log c₁) (p ^ (padicValInt p h + 1) : ℕ)
+  · exact (div_pos (Real.log_pos (by exact_mod_cast hp.one_lt))
+      (Real.log_pos (by exact_mod_cast (show 1 < c₁ by omega)))).le
+  · exact_mod_cast pow_pos hp.pos (padicValInt p h + 1)
+  · intro n
+    exact (NormalNumbers.StonehamSumsNormal.stonehamState b 1
+      ![c₁, c₂] ![1, 1] ![h, h] n).pos
+  · exact eventually_pair_add_state_den_power_lower_of_prime_dvd_left
+      p b c₁ c₂ h hp hc₁ hc₂ hpc₁ hcb₁ hcb₂ hh hslope
+
+/-- Symmetric right-support version of the global literal-sum bound. -/
+theorem exists_pair_add_state_den_power_lower_of_prime_dvd_right
+    (p b c₁ c₂ : ℕ) (h : ℤ) (hp : p.Prime)
+    (hc₁ : 2 ≤ c₁) (hc₂ : 2 ≤ c₂) (hpc₂ : p ∣ c₂)
+    (hcb₁ : Nat.Coprime c₁ b) (hcb₂ : Nat.Coprime c₂ b) (hh : h ≠ 0)
+    (hslope : (c₁.factorization p : ℝ) * Real.log c₂ ≠
+      (c₂.factorization p : ℝ) * Real.log c₁) :
+    ∃ C : ℝ, 0 < C ∧ ∀ n : ℕ,
+      (n : ℝ) ^ (Real.log p / Real.log c₂) ≤ C *
+        (NormalNumbers.StonehamSumsNormal.stonehamState b 1
+          ![c₁, c₂] ![1, 1] ![h, h] n).den := by
+  obtain ⟨C, hC, hbound⟩ := exists_pair_add_state_den_power_lower_of_prime_dvd_left
+    p b c₂ c₁ h hp hc₂ hc₁ hpc₂ hcb₂ hcb₁ hh (Ne.symm hslope)
+  refine ⟨C, hC, fun n => ?_⟩
+  simpa [NormalNumbers.StonehamSumsNormal.stonehamState,
+    NormalNumbers.StonehamSumsNormal.stonehamK, Fin.sum_univ_two, add_comm] using
+    hbound n
+
+/-- Complete arithmetic output for a literal sum from two distinct multiplicative classes:
+some positive exponent and constant give the global denominator power lower bound required by
+the analytic engine, uniformly for each nonzero Fourier multiplier. -/
+theorem exists_pair_add_state_den_power_lower_of_not_mulDep
+    (b c₁ c₂ : ℕ) (h : ℤ) (hc₁ : 2 ≤ c₁) (hc₂ : 2 ≤ c₂)
+    (hcb₁ : Nat.Coprime c₁ b) (hcb₂ : Nat.Coprime c₂ b) (hh : h ≠ 0)
+    (hdep : ¬ StonehamPairMulDep c₁ c₂) :
+    ∃ rho C : ℝ, 0 < rho ∧ 0 < C ∧ ∀ n : ℕ,
+      (n : ℝ) ^ rho ≤ C *
+        (NormalNumbers.StonehamSumsNormal.stonehamState b 1
+          ![c₁, c₂] ![1, 1] ![h, h] n).den := by
+  obtain ⟨p, hp, hpdiv, hslope⟩ :=
+    exists_prime_logSlope_ne_of_not_stonehamPairMulDep c₁ c₂ hc₁ hc₂ hdep
+  rcases (hp.dvd_mul).mp hpdiv with hpc₁ | hpc₂
+  · obtain ⟨C, hC, hbound⟩ := exists_pair_add_state_den_power_lower_of_prime_dvd_left
+      p b c₁ c₂ h hp hc₁ hc₂ hpc₁ hcb₁ hcb₂ hh hslope
+    exact ⟨Real.log p / Real.log c₁,
+      C, div_pos (Real.log_pos (by exact_mod_cast hp.one_lt))
+        (Real.log_pos (by exact_mod_cast (show 1 < c₁ by omega))), hC, hbound⟩
+  · obtain ⟨C, hC, hbound⟩ := exists_pair_add_state_den_power_lower_of_prime_dvd_right
+      p b c₁ c₂ h hp hc₁ hc₂ hpc₂ hcb₁ hcb₂ hh hslope
+    exact ⟨Real.log p / Real.log c₂,
+      C, div_pos (Real.log_pos (by exact_mod_cast hp.one_lt))
+        (Real.log_pos (by exact_mod_cast (show 1 < c₂ by omega))), hC, hbound⟩
 
 end NormalNumbers.StonehamPairsNormal
