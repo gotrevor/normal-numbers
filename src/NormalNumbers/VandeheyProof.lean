@@ -12,6 +12,7 @@ import NormalNumbers.VandeheyKorobovOrders
 import NormalNumbers.VandeheyKorobovGcd
 import NormalNumbers.VandeheyKorobovBigM
 import NormalNumbers.VandeheyKorobovReduction
+import NormalNumbers.VandeheyKorobovAggregation
 
 /-!
 # Vandehey's Korobov-sum bound, proved (no longer cited)

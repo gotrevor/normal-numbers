@@ -1,3 +1,9 @@
+# Vandehey Theorem 5.1 lap 14 (2026-10-17); read HANDOFF-2026-10-17-vandehey-thm51-lap14.md
+- The exact gcd-class partition and Lemma 4.3 aggregation are proved, including the split
+  main/error divisor-sum form used on page 13 of Proposition 4.1.
+- Next: instantiate the correlation weight after `shifted_phase_reduce`, apply both Lemma 4.2
+  divisor-power bounds, then feed the result into differencing and rounded-divisor optimization.
+
 # Vandehey Theorem 5.1 lap 13 (2026-10-17); read HANDOFF-2026-10-17-vandehey-thm51-lap13.md
 - Exact coefficient cancellation is proved: Claim 4.5 now feeds `shifted_phase_reduce`, which
   preserves the phase, identifies denominator `m/(mbar*gcd(i,m/mbar))`, and proves the reduced
