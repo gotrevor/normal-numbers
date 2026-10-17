@@ -1,3 +1,9 @@
+# Vandehey Theorem 5.1 lap 5 (2026-10-17); read HANDOFF-2026-10-17-vandehey-thm51-lap5.md
+- Kickoff rungs 3 and 4 are proved: sharp finite completion gives repaired Lemma 2.2, and
+  period decomposition plus `m ≤ M(P) * ord(b,m)` gives Lemma 2.3 / the exact frozen `k = 0` case.
+- `vandeheyThm51_k_zero` has exactly the standard trust-base axioms.
+- Next: isolate and prove the Lemma 3.1 differencing inequality, then build Proposition 4.1.
+
 # Vandehey Theorem 5.1 lap 4 (2026-10-17); read HANDOFF-2026-10-17-vandehey-thm51-lap4.md
 - Kickoff rung 2 is proved as `norm_twisted_powers_sum_le_sqrt`; the concrete completed-twist
   corollary `norm_completed_power_sum_le_sqrt` is ready for Lemma 2.2.

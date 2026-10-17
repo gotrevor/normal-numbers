@@ -168,19 +168,19 @@ private lemma prod_dvd_of_pairwise_coprime_nat {ι : Type*} [DecidableEq ι]
       · exact ih (hcop.mono (Finset.coe_subset.mpr (Finset.subset_insert a s)))
           (fun i hi => hdvd i (Finset.mem_insert_of_mem hi))
 
-/-- **Vandehey, Lemma 2.1, consumed form (equation (5)).**  If every prime factor of `m`
-belongs to `P`, then the multiplicative order of `b` modulo `m` is at least `m / M(P)`.
+/-- **Vandehey, Lemma 2.1, multiplicative form (equation (5)).**  If every prime factor of `m`
+belongs to `P`, then `m ≤ M(P) * ord(b,m)`.
 
 For `q = 2 * ord(b, ∏ P)` and `n = ord(b, m)`, the local LTE bounds show that
 `p^(v_p(m) - v_p(b^q - 1))` divides `n` for every `p ∣ m`.  These excess prime powers
 are pairwise coprime, so their product divides `n`; the complementary fixed powers form
 a subproduct of `M(P)`. -/
-theorem div_bigM_le_orderOf
+theorem le_bigM_mul_orderOf
     (b : ℕ) (hb : 2 ≤ b) (P : Finset ℕ)
     (hP : ∀ p ∈ P, p.Prime ∧ Nat.Coprime p b)
     (m : ℕ) (hm : 2 ≤ m) (hsupp : ∀ p, p.Prime → p ∣ m → p ∈ P)
     (hbm : Nat.Coprime b m) :
-    m / bigM b P ≤ orderOf (b : ZMod m) := by
+    m ≤ bigM b P * orderOf (b : ZMod m) := by
   classical
   let Q := primeProd P
   let L := orderOf (b : ZMod Q)
@@ -283,7 +283,18 @@ theorem div_bigM_le_orderOf
       _ ≤ bigM b P * (∏ p ∈ m.primeFactors, excess p) :=
         Nat.mul_le_mul_right _ hfixed_le
       _ ≤ bigM b P * n := Nat.mul_le_mul_left _ hprodExcess_le
-  exact Nat.div_le_of_le_mul (by simpa [mul_comm] using hm_le)
+  exact hm_le
+
+/-- **Vandehey, Lemma 2.1, quotient form (equation (5)).**  This is the convenient
+natural-number rendering of `m / M(P) ≤ ord(b,m)`. -/
+theorem div_bigM_le_orderOf
+    (b : ℕ) (hb : 2 ≤ b) (P : Finset ℕ)
+    (hP : ∀ p ∈ P, p.Prime ∧ Nat.Coprime p b)
+    (m : ℕ) (hm : 2 ≤ m) (hsupp : ∀ p, p.Prime → p ∣ m → p ∈ P)
+    (hbm : Nat.Coprime b m) :
+    m / bigM b P ≤ orderOf (b : ZMod m) := by
+  apply Nat.div_le_of_le_mul
+  simpa [mul_comm] using le_bigM_mul_orderOf b hb P hP m hm hsupp hbm
 
 /-! ## Rung 2: the Parseval--orbit mechanism -/
 
