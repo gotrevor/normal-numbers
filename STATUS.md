@@ -1,5 +1,21 @@
 # STATUS — normal-numbers 📊
 
+# Literal Bailey--Borwein pairs, 17 October 2026 (branch `proof/bb-literal-pairs`, lap 8)
+
+**Scoped kickoff open** · **Crux advance**: growing polar tail reduced to a fixed-length periodic
+evaluation · **Build**: 🟢 `StonehamPairsNormal` target green (8,777 jobs)
+
+`StonehamPairsResultant.lean` now proves that offsets beyond `S` vanish modulo `p^N` as soon as
+`N <= v_p(c)*S`, freezes all retained deleted exponents with one eventual period, and composes both
+facts with the actual full-history cleared numerator. The growing polynomial is therefore reduced
+to finitely many fixed-length evaluations at every preassigned precision. The three audited crux
+declarations have exactly `[Classical.choice, Quot.sound, propext]` as their axiom list.
+
+The two ratified sorries in `StonehamPairsNormal.lean` remain. Next geometrically compress the
+offset-periodic infinite tail to obtain a fixed nonzero resultant bound independent of the cutoff;
+then choose the cutoff and prove the uniform one-family p-adic loss. See
+`HANDOFF-2026-10-17-bb-literal-pairs-lap8.md`.
+
 ## Literal Bailey--Borwein pairs, 17 October 2026 (branch `proof/bb-literal-pairs`, lap 7)
 
 **Scoped kickoff open** · **Crux advance**: actual full numerator reindexed as a polar-tail

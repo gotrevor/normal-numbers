@@ -40,6 +40,92 @@ noncomputable def polarTailPolynomial (g J : ℕ) (a : ℕ → ℤ) (e : ℕ →
   ∑ s ∈ Finset.range (J + 1),
     Polynomial.C (a s * (g : ℤ) ^ s) * Polynomial.X ^ e s
 
+/-- Integral evaluation of a polar-tail polynomial. -/
+lemma eval_polarTailPolynomial_int (g J : ℕ) (a : ℕ → ℤ) (e : ℕ → ℕ)
+    (w : ℤ) :
+    (polarTailPolynomial g J a e).eval w =
+      ∑ s ∈ Finset.range (J + 1), a s * (g : ℤ) ^ s * w ^ e s := by
+  simp only [polarTailPolynomial, Polynomial.eval_finsetSum, Polynomial.eval_mul,
+    Polynomial.eval_C, Polynomial.eval_pow, Polynomial.eval_X]
+
+/-- Terms at top offsets `s ≥ S` vanish modulo `p^N` once their built-in
+`c^s` weight contains at least `N` copies of `p`.  This is the finite
+truncation step that turns the growing Stoneham polar tail into a fixed-length
+tail before periodicity and resultants are applied. -/
+lemma polarTail_sum_modEq_truncate_of_factor
+    (p c a u N S K : ℕ) (w : ℤ) (coeff : ℕ → ℤ) (e : ℕ → ℕ)
+    (hc : c = p ^ a * u) (hSK : S ≤ K) (hNS : N ≤ a * S) :
+    ∑ s ∈ Finset.range K, coeff s * (c : ℤ) ^ s * w ^ e s ≡
+      ∑ s ∈ Finset.range S, coeff s * (c : ℤ) ^ s * w ^ e s
+        [ZMOD p ^ N] := by
+  rw [show K = S + (K - S) by omega, Finset.sum_range_add]
+  have htail :
+      ∑ x ∈ Finset.range (K - S),
+          coeff (S + x) * (c : ℤ) ^ (S + x) * w ^ e (S + x) ≡ 0
+            [ZMOD p ^ N] := by
+    simpa only [Finset.sum_const_zero] using
+      (Int.ModEq.sum fun x hx => (Int.modEq_zero_iff_dvd.mpr (by
+        have hpow : (p : ℤ) ^ (a * (S + x)) ∣ (c : ℤ) ^ (S + x) := by
+          rw [hc]
+          push_cast
+          rw [mul_pow, ← pow_mul]
+          exact dvd_mul_right ((p : ℤ) ^ (a * (S + x))) ((u : ℤ) ^ (S + x))
+        have hNSx : N ≤ a * (S + x) :=
+          hNS.trans (Nat.mul_le_mul_left a (Nat.le_add_right S x))
+        have hprec : (p : ℤ) ^ N ∣ (p : ℤ) ^ (a * (S + x)) :=
+          pow_dvd_pow (p : ℤ) hNSx
+        have hbase : (p : ℤ) ^ N ∣ (c : ℤ) ^ (S + x) := hprec.trans hpow
+        simpa only [mul_assoc, mul_left_comm, mul_comm] using
+          dvd_mul_of_dvd_left hbase (coeff (S + x) * w ^ e (S + x)))))
+  simpa using htail.add_left
+    (∑ s ∈ Finset.range S, coeff s * (c : ℤ) ^ s * w ^ e s)
+
+/-- Polynomial form of `polarTail_sum_modEq_truncate_of_factor`: a tail of
+length `K` agrees modulo `p^N` with its first `S` top offsets.  The exponent
+pattern is kept unchanged, ready to be frozen on an eventual period class. -/
+lemma polarTailPolynomial_eval_modEq_truncate_of_factor
+    (p c a u N S K : ℕ) (w : ℤ) (coeff : ℕ → ℤ) (e : ℕ → ℕ)
+    (hc : c = p ^ a * u) (hS : 1 ≤ S) (hSK : S ≤ K) (hNS : N ≤ a * S) :
+    (polarTailPolynomial c (K - 1) coeff e).eval w ≡
+      (polarTailPolynomial c (S - 1) coeff e).eval w [ZMOD p ^ N] := by
+  rw [eval_polarTailPolynomial_int, eval_polarTailPolynomial_int,
+    show K - 1 + 1 = K by omega, show S - 1 + 1 = S by omega]
+  exact polarTail_sum_modEq_truncate_of_factor p c a u N S K w coeff e hc hSK hNS
+
+/-- If two exponent patterns agree modulo `d`, their polar-tail evaluations
+agree at every approximate `d`-th root of unity. -/
+lemma polarTailPolynomial_eval_modEq_of_exponents
+    (D d g J : ℕ) (w : ℤ) (coeff : ℕ → ℤ) (e₁ e₂ : ℕ → ℕ)
+    (hroot : w ^ d ≡ 1 [ZMOD D])
+    (hexp : ∀ s ∈ Finset.range (J + 1), e₁ s ≡ e₂ s [MOD d]) :
+    (polarTailPolynomial g J coeff e₁).eval w ≡
+      (polarTailPolynomial g J coeff e₂).eval w [ZMOD D] := by
+  rw [eval_polarTailPolynomial_int, eval_polarTailPolynomial_int]
+  apply Int.ModEq.sum
+  intro s hs
+  exact (pow_modEq_pow_of_exponent_modEq D d (e₁ s) (e₂ s) w hroot
+    (hexp s hs)).mul_left (coeff s * (g : ℤ) ^ s)
+
+/-- A fixed-length top part of the actual Stoneham polar tail is eventually
+periodic, as a polynomial evaluation, at every approximate root of unity.
+This packages the finite-state reduction needed after truncation: one period
+and threshold work for all `S` retained offsets simultaneously. -/
+lemma exists_eventually_modEq_truncatedPolarTail
+    (u d D c S : ℕ) (hS : 1 ≤ S) (hd : 0 < d) :
+    ∃ K₀ T : ℕ, 0 < T ∧ ∀ K w, K₀ + S ≤ K → w ^ d ≡ 1 [ZMOD D] →
+      (polarTailPolynomial c (S - 1) (fun _ => 1)
+        (fun s => stonehamPolarDeletedExponent u (K + T) (K + T - s))).eval w ≡
+      (polarTailPolynomial c (S - 1) (fun _ => 1)
+        (fun s => stonehamPolarDeletedExponent u K (K - s))).eval w [ZMOD D] := by
+  obtain ⟨K₀, T, hT, hperiod⟩ :=
+    exists_eventually_modEq_stonehamPolarDeletedExponent u d hd
+  refine ⟨K₀, T, hT, fun K w hKS hroot => ?_⟩
+  apply polarTailPolynomial_eval_modEq_of_exponents D d c (S - 1) w
+    (fun _ => 1) _ _ hroot
+  intro s hs
+  have hsS : s < S := by simpa [show S - 1 + 1 = S by omega] using Finset.mem_range.mp hs
+  exact hperiod K s (by omega)
+
 /-- Evaluation after embedding the integral polar tail in `ℂ` is the weighted geometric sum
 used by `geom_weighted_sum_ne_zero_of_norm`. -/
 lemma eval_map_polarTailPolynomial (g J : ℕ) (a : ℕ → ℤ) (e : ℕ → ℕ)
@@ -117,6 +203,30 @@ lemma stonehamClearedFamily_mul_polarPower_modEq_polarTail
     p b c a u K n hp hc hentered
   rw [stoneham_polarRhs_eq_eval b c u K n ((b : ℤ) ^ (p ^ (a * K))) hK] at hpolar
   exact hpolar
+
+/-- The complete cleared numerator already agrees, at any requested precision
+`N ≤ a*K+1`, with a polar tail of the fixed length `S`, provided `a*S`
+absorbs that precision.  Thus all dependence on earlier kicks has been removed;
+only the first `S` top-offset exponents still have to be frozen by eventual
+periodicity. -/
+lemma stonehamClearedFamily_mul_polarPower_modEq_truncatedTail
+    (p b c a u K n N S : ℕ) (hp : p.Prime) (hc : c = p ^ a * u)
+    (hS : 1 ≤ S) (hSK : S ≤ K) (hNS : N ≤ a * S) (hNK : N ≤ a * K + 1)
+    (hentered : ∀ j ∈ Finset.Icc 1 K, c ^ j ≤ n) :
+    ∑ j ∈ Finset.Icc 1 K,
+          (b : ℤ) ^ (n - c ^ j) * (c : ℤ) ^ (K - j) *
+            ((b : ℤ) ^ (p ^ (a * K))) ^ stonehamPolarExponent u K ≡
+      (b : ℤ) ^ n *
+        (polarTailPolynomial c (S - 1) (fun _ => 1)
+          (fun s => stonehamPolarDeletedExponent u K (K - s))).eval
+            ((b : ℤ) ^ (p ^ (a * K))) [ZMOD p ^ N] := by
+  have hfull := stonehamClearedFamily_mul_polarPower_modEq_polarTail
+    p b c a u K n hp hc (hS.trans hSK) hentered
+  have hdrop := hfull.of_dvd (pow_dvd_pow (p : ℤ) hNK)
+  have htrunc := polarTailPolynomial_eval_modEq_truncate_of_factor
+    p c a u N S K ((b : ℤ) ^ (p ^ (a * K))) (fun _ => 1)
+      (fun s => stonehamPolarDeletedExponent u K (K - s)) hc hS hSK hNS
+  exact hdrop.trans (htrunc.mul_left ((b : ℤ) ^ n))
 
 /-- Every root-of-unity evaluation of a polar tail is nonzero when the top base-`g` digit
 strictly dominates all lower digits.  The exponent pattern is completely arbitrary. -/

@@ -1,3 +1,10 @@
+# Literal Bailey--Borwein pairs lap 8 (2026-10-17): fixed-length polar-tail reduction; read HANDOFF-2026-10-17-bb-literal-pairs-lap8.md
+
+- The full cleared one-family numerator now agrees at every preassigned prime-power precision
+  with a fixed-length top-offset tail, and the retained exponent pattern is frozen by one eventual
+  period. Next compress the offset-periodic infinite tail geometrically so its fixed nonzero
+  resultant loss is chosen before the truncation cutoff, then derive the uniform valuation bound.
+
 # Literal Bailey--Borwein pairs lap 7 (2026-10-17): full numerator reindexed as polar-tail evaluation; read HANDOFF-2026-10-17-bb-literal-pairs-lap7.md
 
 - The modular exponent bridge and its common eventual period are proved. The complete cleared
