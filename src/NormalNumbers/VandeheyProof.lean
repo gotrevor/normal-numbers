@@ -7,6 +7,7 @@ import NormalNumbers.StonehamSumsNormal
 import NormalNumbers.GrowingLocalizedLog
 import NormalNumbers.VandeheyKorobovDivisors
 import NormalNumbers.VandeheyKorobovCounting
+import NormalNumbers.VandeheyKorobovRounded
 
 /-!
 # Vandehey's Korobov-sum bound, proved (no longer cited)

@@ -1,3 +1,10 @@
+# Vandehey Theorem 5.1 lap 9 (2026-10-17); read HANDOFF-2026-10-17-vandehey-thm51-lap9.md
+- Equations (12)--(13) are proved by a support-local rounded divisor: divisibility, exact
+  prime support, preservation of `4 | m`, and the sharp `m^x` / `2Qm^x` bounds.
+- Reflection separated the paper's support radical from the frozen statement's ambient prime
+  product and identified the exact order-lifting interface needed after Claim 4.4.
+- Next: Claim 4.4's gcd/order maximality, then the local order-growth lemma for Claims 4.5--4.6.
+
 # Vandehey Theorem 5.1 lap 8 (2026-10-17); read HANDOFF-2026-10-17-vandehey-thm51-lap8.md
 - Vandehey Lemma 4.3 is proved with the exact totient main term and `2^s` inclusion--exclusion
   error; the production theorem has exactly the standard trust-base axioms.
