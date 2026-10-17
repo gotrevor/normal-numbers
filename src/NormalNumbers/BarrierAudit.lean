@@ -222,12 +222,6 @@ def waivers : List Waiver := [
   ⟨``StonehamPrimeClass.isRationallyJointNormal_of_linearIndependent,
    "campaign target (KICKOFF-2026-10-17-prime-class.md): T-B' normal half, refereed \
     paper sketch; not a crux"⟩,
-  ⟨``StonehamPrimeClass.isRationallyJointNormal_pair_iff,
-   "campaign target (KICKOFF-2026-10-17-prime-class.md): T-B' pair criterion, refereed \
-    paper sketch; not a crux"⟩,
-  ⟨``StonehamPrimeClass.stonehamThreeSevenPairwiseNormal_holds,
-   "campaign target (KICKOFF-2026-10-17-prime-class.md): the parked L2 premise as a T-B' \
-    instance; not a crux"⟩,
   ⟨``IndependenceRelative.not_isRelativeBlock_small,
    "a finite computation stated as a sibling: the blocksearch probe's non-certification over \
     small direction sets; it closes a route, no open crux uses it"⟩,

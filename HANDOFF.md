@@ -1,4 +1,12 @@
 # Literal Bailey--Borwein pairs lap 14 COMPLETE (2026-10-17): both headlines proved; read HANDOFF-2026-10-17-bb-literal-pairs-lap14.md
+# Prime class lap 1 (2026-10-17): pair algebra and L2 wiring; read HANDOFF-2026-10-17-prime-class-lap1.md
+
+- The exact two-power cyclotomic linear-independence criterion is kernel-proved in the new
+  `StonehamPrimeClassAlgebra.lean`.  It discharges the direct pair and concrete L2 sorries through
+  T-B′; only the general non-normal and normal halves remain directly sorried.  The scoped 8,957-job
+  gate is FORMALIZE-TIER GREEN.  Next formalize the arbitrary-polynomial cyclotomic/finite-
+  Teichmüller bridge shared by those two halves.
+
 
 - `StonehamPairsNormal.lean` is sorry-free. Distinct classes, same-class differences, odd-prime
   same-class sums, and the exceptional pure-dyadic sums all have kernel proofs. The 8,780-job

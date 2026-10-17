@@ -1,4 +1,19 @@
 # Literal Bailey--Borwein pairs, 17 October 2026 (branch `proof/bb-literal-pairs`, lap 14 COMPLETE)
+# Prime-class joint normality, 17 October 2026 (branch `proof/prime-class`, lap 1)
+
+`StonehamPrimeClassAlgebra.linearIndependent_two_powers_iff` now proves the exact algebraic pair
+criterion: two powers of a primitive `d`-th complex root are rationally linearly independent iff
+`d` does not divide twice their exponent difference.  Consequently
+`StonehamPrimeClass.isRationallyJointNormal_pair_iff` and
+`StonehamPrimeClass.stonehamThreeSevenPairwiseNormal_holds` have explicit proofs; the latter
+kernel-checks `ord_7(3)=6` and all three unordered pairs with arbitrary rational coefficients.
+
+The target file has two direct sorries left: the general dependent-family non-normal half and the
+independent-family normal half.  The pair/L2 direct-sorry BarrierAudit waivers are removed, leaving
+only the two core waivers.  The next shared crux is the arbitrary-polynomial
+cyclotomic/finite-Teichmüller vanishing bridge.  See
+`HANDOFF-2026-10-17-prime-class-lap1.md`.
+
 
 **Scoped kickoff complete** · **Crux advance**: all same-class and distinct-class literal pair
 branches proved · **Build**: 🟢 `StonehamPairsNormal` target green (8,780 jobs), BarrierAudit green

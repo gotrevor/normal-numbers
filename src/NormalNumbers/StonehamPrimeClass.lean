@@ -5,6 +5,7 @@ Authors: Trevor Morris
 -/
 import NormalNumbers.StonehamSumsBoundary
 import NormalNumbers.StonehamPairsUnconditional
+import NormalNumbers.StonehamPrimeClassAlgebra
 import NormalNumbers.VandeheyProof
 
 /-!
@@ -71,12 +72,78 @@ theorem isRationallyJointNormal_pair_iff
     IsRationallyJointNormal b
         ![stonehamAlpha (b ^ m₁) (p ^ s₁), stonehamAlpha (b ^ m₂) (p ^ s₂)] ↔
       ¬ ((orderOf (b : ZMod p) : ℤ) ∣ 2 * ((m₂ : ℤ) - m₁)) := by
-  sorry
+  have hd : orderOf (b : ZMod p) ≠ 0 :=
+    orderOf_ne_zero_iff.mpr ((ZMod.isUnit_iff_coprime b p).mpr hpb.symm).isOfFinOrder
+  obtain ⟨ζ, hζ, hli⟩ := exists_primitiveRoot_linearIndependent_two_powers_iff
+    (orderOf (b : ZMod p)) m₁ m₂ hd
+  have hm : ∀ i : Fin 2, 1 ≤ ![m₁, m₂] i := by
+    intro i
+    fin_cases i <;> simp [hm₁, hm₂]
+  have hs : ∀ i : Fin 2, 1 ≤ ![s₁, s₂] i := by
+    intro i
+    fin_cases i <;> simp [hs₁, hs₂]
+  change IsRationallyJointNormal b (primeClassFamily b p ![m₁, m₂] ![s₁, s₂]) ↔ _
+  refine (isRationallyJointNormal_iff_linearIndependent b p hp hb hpb
+    ![m₁, m₂] ![s₁, s₂] hm hs ζ hζ).trans ?_
+  have heq : (fun i : Fin 2 ↦ ζ ^ ![m₁, m₂] i) = ![ζ ^ m₁, ζ ^ m₂] := by
+    funext i
+    fin_cases i <;> rfl
+  rw [heq]
+  exact hli
 
 /-- **The L2 premise holds**: each pair in `α_{3,7}, α_{9,7}, α_{27,7}` is rationally jointly
 `3`-normal (`ord_7 3 = 6` divides none of `2, 4`). -/
 theorem stonehamThreeSevenPairwiseNormal_holds : StonehamThreeSevenPairwiseNormal := by
-  sorry
+  have pair_apply {x y : ℝ} (h : IsRationallyJointNormal 3 ![x, y])
+      (a c : ℚ) (hac : a ≠ 0 ∨ c ≠ 0) :
+      IsNormal 3 ((a : ℝ) * x + (c : ℝ) * y) := by
+    have hq : ![a, c] ≠ (0 : Fin 2 → ℚ) := by
+      intro heq
+      have ha := congrFun heq (0 : Fin 2)
+      have hc := congrFun heq (1 : Fin 2)
+      simp only [Matrix.cons_val_zero, Matrix.cons_val_one, Pi.zero_apply] at ha hc
+      rcases hac with ha0 | hc0
+      · exact ha0 ha
+      · exact hc0 hc
+    simpa only [Fin.sum_univ_two, Matrix.cons_val_zero, Matrix.cons_val_one] using h ![a, c] hq
+  have horder : orderOf (3 : ZMod 7) = 6 := by
+    rw [orderOf_eq_iff (by norm_num)]
+    constructor
+    · decide +kernel
+    · intro k hk hk0
+      interval_cases k <;> decide +kernel
+  have h₁₂ : IsRationallyJointNormal 3
+      ![stonehamAlpha 3 7, stonehamAlpha 9 7] := by
+    apply (isRationallyJointNormal_pair_iff 3 7 1 2 1 1 (by norm_num) (by norm_num)
+      (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num)).2
+    change ¬ ((orderOf (3 : ZMod 7) : ℤ) ∣ _)
+    rw [horder]
+    norm_num
+  have h₁₃ : IsRationallyJointNormal 3
+      ![stonehamAlpha 3 7, stonehamAlpha 27 7] := by
+    apply (isRationallyJointNormal_pair_iff 3 7 1 3 1 1 (by norm_num) (by norm_num)
+      (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num)).2
+    change ¬ ((orderOf (3 : ZMod 7) : ℤ) ∣ _)
+    rw [horder]
+    norm_num
+  have h₂₃ : IsRationallyJointNormal 3
+      ![stonehamAlpha 9 7, stonehamAlpha 27 7] := by
+    apply (isRationallyJointNormal_pair_iff 3 7 2 3 1 1 (by norm_num) (by norm_num)
+      (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num)).2
+    change ¬ ((orderOf (3 : ZMod 7) : ℤ) ∣ _)
+    rw [horder]
+    norm_num
+  intro i j hij a c hac
+  fin_cases i <;> fin_cases j
+  · exact (hij rfl).elim
+  · simpa [stonehamThreeSevenFamily] using pair_apply h₁₂ a c hac
+  · simpa [stonehamThreeSevenFamily] using pair_apply h₁₃ a c hac
+  · simpa [stonehamThreeSevenFamily, add_comm] using pair_apply h₁₂ c a hac.symm
+  · exact (hij rfl).elim
+  · simpa [stonehamThreeSevenFamily] using pair_apply h₂₃ a c hac
+  · simpa [stonehamThreeSevenFamily, add_comm] using pair_apply h₁₃ c a hac.symm
+  · simpa [stonehamThreeSevenFamily, add_comm] using pair_apply h₂₃ c a hac.symm
+  · exact (hij rfl).elim
 
 /-- **Joint normality is not pairwise**, unconditionally: the ternary triple is pairwise but not
 jointly rationally `3`-normal. -/

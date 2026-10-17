@@ -1,4 +1,13 @@
 # Maze backlog lap 10 (2026-10-17, REVIEW) — tied-depth history controlled; unequal depth next
+# Prime class lap 1 (2026-10-17) — pair/L2 direct sorries closed; two core halves remain
+
+* `StonehamPrimeClassAlgebra.linearIndependent_two_powers_iff` proves the exact pair rank
+  criterion, and the pair theorem plus `stonehamThreeSevenPairwiseNormal_holds` are now derived.
+* The scoped file has only the general non-normal and normal T-B′ halves directly sorried.
+* Next: formalize arbitrary polynomial vanishing at a primitive root as cyclotomic divisibility,
+  then transfer it to finite Teichmüller evaluations; use that shared lemma in the two analytic
+  halves.  See `HANDOFF-2026-10-17-prime-class-lap1.md`.
+
 
 * **Binding objective:** execute `KICKOFF-2026-10-16-maze-backlog.md` in order. Parts 1, 2, and
   3/L1 are complete. Part 3/L2 is open only at `StonehamThreeSevenPairwiseNormal` and the parked
