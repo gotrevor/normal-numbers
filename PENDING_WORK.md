@@ -1,4 +1,14 @@
 # Maze backlog lap 10 (2026-10-17, REVIEW) — tied-depth history controlled; unequal depth next
+# Prime class lap 2 (2026-10-17) — arbitrary cyclotomic relation bridge proved
+
+* `StonehamPrimeClassCyclotomic.lean` proves rational vanishing at a primitive root iff
+  cyclotomic divisibility, the equivalent finite-family linear-independence criterion, invariance
+  under the primitive-root choice, Gauss descent to cleared integer coefficients, and divisibility
+  after evaluation at a finite integer representative.
+* The remaining step-1 crux is the growing p-power in `Φ_d(b^(p^K))`, with the dyadic extra-
+  precision case separated.  Once proved, evaluation divisibility transfers it to every dependent
+  coefficient vector.  See `HANDOFF-2026-10-17-prime-class-lap2.md`.
+
 # Prime class lap 1 (2026-10-17) — pair/L2 direct sorries closed; two core halves remain
 
 * `StonehamPrimeClassAlgebra.linearIndependent_two_powers_iff` proves the exact pair rank

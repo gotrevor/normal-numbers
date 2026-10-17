@@ -1,4 +1,17 @@
 # Literal Bailey--Borwein pairs, 17 October 2026 (branch `proof/bb-literal-pairs`, lap 14 COMPLETE)
+# Prime-class joint normality, 17 October 2026 (branch `proof/prime-class`, lap 2)
+
+`StonehamPrimeClassCyclotomic` now proves the arbitrary-family algebraic half of kickoff step 1.
+The declarations `cyclotomic_dvd_iff_aeval_eq_zero`,
+`linearIndependent_powers_iff_cyclotomic`, and
+`not_linearIndependent_powers_iff_exists_cyclotomic` identify rational dependence with a nonzero
+relation polynomial divisible by `cyclotomic d ℚ`; `linearIndependent_powers_primitiveRoot_congr`
+shows the result is independent of the chosen primitive root.  Gauss descent and
+`cyclotomic_eval_dvd_integerRelation_eval` carry a cleared relation into finite integer
+evaluation.  The next arithmetic obligation is the growing p-power in the cyclotomic value at
+`b^(p^K)`.  The target still has exactly the two general analytic sorries.  See
+`HANDOFF-2026-10-17-prime-class-lap2.md`.
+
 # Prime-class joint normality, 17 October 2026 (branch `proof/prime-class`, lap 1)
 
 `StonehamPrimeClassAlgebra.linearIndependent_two_powers_iff` now proves the exact algebraic pair

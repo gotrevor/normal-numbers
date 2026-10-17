@@ -1,4 +1,12 @@
 # Literal Bailey--Borwein pairs lap 14 COMPLETE (2026-10-17): both headlines proved; read HANDOFF-2026-10-17-bb-literal-pairs-lap14.md
+# Prime class lap 2 (2026-10-17): cyclotomic relation bridge; read HANDOFF-2026-10-17-prime-class-lap2.md
+
+- Arbitrary rational relations among primitive-root powers are now kernel-equivalent to
+  cyclotomic divisibility, invariant under the primitive-root embedding, and descended by Gauss's
+  lemma to cleared integer polynomials.  Evaluation transfers this divisibility to every finite
+  integer representative.  Next prove the growing p-power in the cyclotomic value at the finite
+  Teichmüller representative; the two general analytic halves remain the scoped sorries.
+
 # Prime class lap 1 (2026-10-17): pair algebra and L2 wiring; read HANDOFF-2026-10-17-prime-class-lap1.md
 
 - The exact two-power cyclotomic linear-independence criterion is kernel-proved in the new
