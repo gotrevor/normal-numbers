@@ -356,6 +356,73 @@ theorem norm_power_sum_range_sq_le_differencing
     exact norm_star _
   simpa only [T, hcorr] using hdiff
 
+/-- A positive shift contributes to the differencing sum exactly below the
+ceiling cutoff. -/
+lemma lt_ceilDiv_iff_mul_lt (N k T : ℕ) (hT : 0 < T) :
+    k < N ⌈/⌉ T ↔ k * T < N := by
+  rw [lt_iff_not_ge, ceilDiv_le_iff_le_mul hT, not_le]
+  simp only [Nat.mul_comm]
+
+/-- The last integral shift below the ceiling is bounded by the paper's real
+cutoff `N / T`. -/
+lemma natCast_ceilDiv_sub_one_le_div (N T : ℕ) (hT : 0 < T) :
+    (((N ⌈/⌉ T) - 1 : ℕ) : ℝ) ≤ (N : ℝ) / T := by
+  by_cases hN : N = 0
+  · simp [hN]
+  · have hXpos : 0 < N ⌈/⌉ T := by
+      rw [lt_ceilDiv_iff_mul_lt N 0 T hT]
+      simpa using Nat.pos_of_ne_zero hN
+    have hpred : (N ⌈/⌉ T) - 1 < N ⌈/⌉ T := Nat.sub_lt hXpos (by omega)
+    have hmul : ((N ⌈/⌉ T) - 1) * T ≤ N :=
+      (lt_ceilDiv_iff_mul_lt N ((N ⌈/⌉ T) - 1) T hT).mp hpred |>.le
+    rw [le_div_iff₀ (by exact_mod_cast hT)]
+    exact_mod_cast hmul
+
+/-- Vandehey's differencing inequality with the zero correlations removed.
+The surviving shifts are precisely `1 ≤ k < ⌈N / T⌉`, where
+`T = ord(b,m')`.  This is the cutoff to which Lemma 4.3 must be applied. -/
+theorem norm_power_sum_range_sq_le_differencing_cutoff
+    (b m m' : ℕ) (a : ℤ) (N : ℕ) (hm : 0 < m) (hm' : 0 < m')
+    (hbm' : Nat.Coprime b m') :
+    let T := orderOf (b : ZMod m')
+    ‖∑ j ∈ range N, phase m a ((b : ℤ) ^ (j + 1))‖ ^ 2 ≤
+      m' * N + 2 * m' *
+        ∑ k ∈ Ico 1 (N ⌈/⌉ T),
+          ‖∑ j ∈ range (N - k * T),
+            phase m (a * ((b : ℤ) ^ (k * T) - 1))
+              ((b : ℤ) ^ (j + 1))‖ := by
+  dsimp only
+  let T := orderOf (b : ZMod m')
+  have hbunit : IsUnit (b : ZMod m') := (ZMod.isUnit_iff_coprime b m').mpr hbm'
+  have hT : 0 < T := by
+    dsimp [T]
+    exact orderOf_pos_iff.mpr hbunit.isOfFinOrder
+  let X := N ⌈/⌉ T
+  have hXN : X ≤ N := by
+    apply (ceilDiv_le_iff_le_mul hT).2
+    exact Nat.le_mul_of_pos_left N hT
+  let C : ℕ → ℝ := fun k =>
+    ‖∑ j ∈ range (N - k * T),
+      phase m (a * ((b : ℤ) ^ (k * T) - 1)) ((b : ℤ) ^ (j + 1))‖
+  have hsubset : Ico 1 X ⊆ Ico 1 N := Finset.Ico_subset_Ico_right hXN
+  have hsum : (∑ k ∈ Ico 1 N, C k) = ∑ k ∈ Ico 1 X, C k := by
+    symm
+    apply Finset.sum_subset hsubset
+    intro k hkN hkX
+    have hkge : X ≤ k := by
+      have hkN' := Finset.mem_Ico.mp hkN
+      by_contra hk
+      exact hkX (Finset.mem_Ico.mpr ⟨hkN'.1, Nat.lt_of_not_ge hk⟩)
+    have hNle : N ≤ k * T := by
+      have := (ceilDiv_le_iff_le_mul hT).1 hkge
+      simpa [Nat.mul_comm] using this
+    simp [C, Nat.sub_eq_zero_of_le hNle]
+  have hbase := norm_power_sum_range_sq_le_differencing b m m' a N hm hm' hbm'
+  change ‖∑ j ∈ range N, phase m a ((b : ℤ) ^ (j + 1))‖ ^ 2 ≤
+    m' * N + 2 * m' * ∑ k ∈ Ico 1 X, C k
+  rw [← hsum]
+  simpa only [T, C] using hbase
+
 end
 
 end NormalNumbers.VandeheyKorobov

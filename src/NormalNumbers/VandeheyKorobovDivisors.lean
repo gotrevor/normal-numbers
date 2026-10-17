@@ -98,6 +98,17 @@ private lemma one_le_prime_factor {p : ℕ} (hp : 2 ≤ p) {x : ℝ} (hx : 0 < x
   rw [le_div_iff₀ (sub_pos.mpr ht)]
   linarith
 
+/-- Every Euler factor in `C_{P,x}` is positive for a positive exponent. -/
+theorem cP_pos (P : Finset ℕ) (hP : ∀ p ∈ P, p.Prime)
+    {x : ℝ} (hx : 0 < x) :
+    0 < Literature.VandeheyDiff.cP P x := by
+  unfold Literature.VandeheyDiff.cP
+  apply Finset.prod_pos
+  intro p hp
+  have hpR : (1 : ℝ) < p := by exact_mod_cast (hP p hp).two_le
+  have hpow : 1 < (p : ℝ) ^ x := Real.one_lt_rpow hpR hx
+  exact div_pos (Real.rpow_pos_of_pos (by positivity) _) (sub_pos.mpr hpow)
+
 /-- Vandehey's Lemma 4.2, negative-power half. -/
 theorem sum_divisors_rpow_neg_le_cP (P : Finset ℕ)
     (hP : ∀ p ∈ P, p.Prime) {n : ℕ} (hn : n ≠ 0)

@@ -1,3 +1,11 @@
+# Vandehey Theorem 5.1 lap 15 (2026-10-17, review); read HANDOFF-2026-10-17-vandehey-thm51-lap15.md
+- Adversarial review repaired the shift-endpoint gap: correlations survive for
+  `i < ⌈N/τ⌉`, and the sharp Lemma 4.3 term is `(X-1)/n`, preserving `N/(τn)`.
+- `shifted_correlation_sum_le` now proves the complete pp. 12--13 reduced-phase,
+  gcd-class, and four-divisor-sum estimate at the standard trust baseline.
+- Next: combine it with differencing and the order/Claim 4.6 bounds, then perform
+  the rounded-divisor substitution and square-root algebra for Proposition 4.1.
+
 # Vandehey Theorem 5.1 lap 14 (2026-10-17); read HANDOFF-2026-10-17-vandehey-thm51-lap14.md
 - The exact gcd-class partition and Lemma 4.3 aggregation are proved, including the split
   main/error divisor-sum form used on page 13 of Proposition 4.1.

@@ -228,10 +228,15 @@ theorem coprime_Ico_count_le (q X : ℕ) (hq : q ≠ 0) :
             (2 : ℝ) ^ q.primeFactors.card := by gcongr
         _ = (X : ℝ) / q * q.totient + (2 : ℝ) ^ q.primeFactors.card := by ring
 
-/-- Vandehey's Lemma 4.3, with an integral right endpoint. -/
-theorem gcd_Ico_count_le (n d X : ℕ) (hn : n ≠ 0) (hdvd : d ∣ n) :
+/-- Vandehey's Lemma 4.3, retaining the sharp real cutoff represented by an
+integral right endpoint.  The integers in `Ico 1 X` lie in the paper's
+half-open interval `[1, X - 1 + 1)`, so its main term is `(X - 1) / n`.
+This sharper form matters when `X` is a ceiling such as `⌈N / τ⌉`: it avoids
+an otherwise spurious full gcd class in the differencing step. -/
+theorem gcd_Ico_count_le_sub_one (n d X : ℕ) (hn : n ≠ 0) (hdvd : d ∣ n) :
     (((Ico 1 X).filter (fun i => i.gcd n = d)).card : ℝ) ≤
-      (X : ℝ) / n * (n / d).totient + (2 : ℝ) ^ (n / d).primeFactors.card := by
+      ((X - 1 : ℕ) : ℝ) / n * (n / d).totient +
+        (2 : ℝ) ^ (n / d).primeFactors.card := by
   have hd : 0 < d := Nat.pos_of_dvd_of_pos hdvd (Nat.pos_of_ne_zero hn)
   let q := n / d
   let Y := (X - 1) / d
@@ -272,28 +277,41 @@ theorem gcd_Ico_count_le (n d X : ℕ) (hn : n ≠ 0) (hdvd : d ∣ n) :
   have hnfac : d * q = n := by
     dsimp [q]
     exact Nat.mul_div_cancel' hdvd
-  have hYmul : Y * d ≤ X := by
+  have hYmul : Y * d ≤ X - 1 := by
     dsimp [Y]
-    exact (Nat.div_mul_le_self (X - 1) d).trans (Nat.sub_le X 1)
+    exact Nat.div_mul_le_self (X - 1) d
   have hdR : (0 : ℝ) < d := by exact_mod_cast hd
   have hqR : (0 : ℝ) < q := by exact_mod_cast Nat.pos_of_ne_zero hq
   have hnfacR : (d : ℝ) * q = n := by exact_mod_cast hnfac
-  have hYmulR : (Y : ℝ) * d ≤ X := by exact_mod_cast hYmul
+  have hYmulR : (Y : ℝ) * d ≤ (X - 1 : ℕ) := by exact_mod_cast hYmul
   have hmain : (Y : ℝ) * ((q.totient : ℝ) / q) ≤
-      (X : ℝ) / n * (q.totient : ℝ) := by
-    have hratio : (Y : ℝ) / q ≤ (X : ℝ) / n := by
+      ((X - 1 : ℕ) : ℝ) / n * (q.totient : ℝ) := by
+    have hratio : (Y : ℝ) / q ≤ ((X - 1 : ℕ) : ℝ) / n := by
       rw [← hnfacR]
       rw [div_le_div_iff₀ hqR (mul_pos hdR hqR)]
       nlinarith
     have htot : (0 : ℝ) ≤ q.totient := by positivity
     calc
       (Y : ℝ) * ((q.totient : ℝ) / q) = (Y : ℝ) / q * q.totient := by ring
-      _ ≤ (X : ℝ) / n * q.totient := mul_le_mul_of_nonneg_right hratio htot
+      _ ≤ ((X - 1 : ℕ) : ℝ) / n * q.totient :=
+        mul_le_mul_of_nonneg_right hratio htot
   calc
     (((Ico 1 X).filter (fun i => i.gcd n = d)).card : ℝ) ≤
         (((Ico 1 (Y + 1)).filter (fun j => Nat.Coprime j q)).card : ℝ) := by exact_mod_cast hcard
     _ ≤ (Y : ℝ) * ((q.totient : ℝ) / q) + (2 : ℝ) ^ q.primeFactors.card := hupper
-    _ ≤ (X : ℝ) / n * q.totient + (2 : ℝ) ^ q.primeFactors.card := by gcongr
+    _ ≤ ((X - 1 : ℕ) : ℝ) / n * q.totient +
+        (2 : ℝ) ^ q.primeFactors.card := by gcongr
+
+/-- Vandehey's Lemma 4.3, with the coarser integral endpoint used by earlier
+callers. -/
+theorem gcd_Ico_count_le (n d X : ℕ) (hn : n ≠ 0) (hdvd : d ∣ n) :
+    (((Ico 1 X).filter (fun i => i.gcd n = d)).card : ℝ) ≤
+      (X : ℝ) / n * (n / d).totient + (2 : ℝ) ^ (n / d).primeFactors.card := by
+  refine (gcd_Ico_count_le_sub_one n d X hn hdvd).trans ?_
+  have hsub : ((X - 1 : ℕ) : ℝ) ≤ X := by exact_mod_cast Nat.sub_le X 1
+  have hnR : (0 : ℝ) ≤ n := by positivity
+  have htot : (0 : ℝ) ≤ (n / d).totient := by positivity
+  gcongr
 
 /-- Vandehey's Lemma 4.3 in the paper's stated `2^s` form. -/
 theorem gcd_Ico_count_le_two_pow (n d X s : ℕ) (hn : n ≠ 0) (hdvd : d ∣ n)
@@ -301,6 +319,22 @@ theorem gcd_Ico_count_le_two_pow (n d X s : ℕ) (hn : n ≠ 0) (hdvd : d ∣ n)
     (((Ico 1 X).filter (fun i => i.gcd n = d)).card : ℝ) ≤
       (X : ℝ) / n * (n / d).totient + (2 : ℝ) ^ s := by
   refine (gcd_Ico_count_le n d X hn hdvd).trans ?_
+  have hsub : (n / d).primeFactors ⊆ n.primeFactors := by
+    intro p hp
+    have hpprime : p.Prime := Nat.prime_of_mem_primeFactors hp
+    have hpd : p ∣ n / d := Nat.dvd_of_mem_primeFactors hp
+    exact (Nat.mem_primeFactors_of_ne_zero hn).2
+      ⟨hpprime, hpd.trans (Nat.div_dvd_of_dvd hdvd)⟩
+  have hcard : (n / d).primeFactors.card ≤ s := (Finset.card_le_card hsub).trans hs
+  gcongr
+  norm_num
+
+/-- The sharp-cutoff form of Lemma 4.3 with the paper's uniform `2^s` error. -/
+theorem gcd_Ico_count_le_sub_one_two_pow (n d X s : ℕ) (hn : n ≠ 0)
+    (hdvd : d ∣ n) (hs : n.primeFactors.card ≤ s) :
+    (((Ico 1 X).filter (fun i => i.gcd n = d)).card : ℝ) ≤
+      ((X - 1 : ℕ) : ℝ) / n * (n / d).totient + (2 : ℝ) ^ s := by
+  refine (gcd_Ico_count_le_sub_one n d X hn hdvd).trans ?_
   have hsub : (n / d).primeFactors ⊆ n.primeFactors := by
     intro p hp
     have hpprime : p.Prime := Nat.prime_of_mem_primeFactors hp
