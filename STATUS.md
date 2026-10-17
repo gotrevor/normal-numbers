@@ -1,6 +1,6 @@
 # STATUS — normal-numbers 📊
 
-## Vandehey Theorem 5.1 complete, 17 October 2026 (branch `proof/vandehey-thm51`, lap 19 confirmation)
+## Vandehey Theorem 5.1 complete, 17 October 2026 (branch `proof/vandehey-thm51`, lap 20 confirmation)
 
 `VandeheyProof.vandeheyThm51_holds` is proved with the frozen statement unchanged.  The final
 step is `VandeheyKorobov.norm_power_sum_le_step`, a complete formalization of Proposition 4.1:
@@ -10,7 +10,7 @@ window and `B_k ≥ 1`.  `VandeheyProof.lean` is sorry-free, its BarrierAudit wa
 and all four declarations in that file print exactly `[Classical.choice, Quot.sound, propext]`.
 Consequently the general Stoneham-combination theorem, `α₂,₃ + α₂,₅`, and `ζ_Y` now
 have unconditional wrappers at the standard trust baseline.  See
-`HANDOFF-2026-10-17-vandehey-thm51-lap19.md`; lap 19 independently re-ran all four scoped
+`HANDOFF-2026-10-17-vandehey-thm51-lap20.md`; lap 20 independently re-ran all four scoped
 axiom gates and the full 10868-job repository gate.
 
 ## Vandehey Theorem 5.1 update, 17 October 2026 (branch `proof/vandehey-thm51`, lap 17)
