@@ -1,3 +1,8 @@
+# Vandehey Theorem 5.1 lap 29 COMPLETE (2026-10-17, terminal gate reconfirmed); read HANDOFF-2026-10-17-vandehey-thm51-lap29.md
+- The exact host predicate, frozen statement, proof-escape/circularity surface, permanent axiom
+  guards, and both authoritative build gates were independently reconfirmed from lap 28.
+- No blocker or further in-scope attack remains; terminate the completed campaign.
+
 # Vandehey Theorem 5.1 lap 28 COMPLETE (2026-10-17, terminal predicate confirmed); read HANDOFF-2026-10-17-vandehey-thm51-lap28.md
 - The exact sorry-free predicate, frozen source, proof-escape/circularity surface, permanent axiom
   guards, and both real build gates were independently reconfirmed from the lap-27 checkpoint.

@@ -1,6 +1,6 @@
 # STATUS — normal-numbers 📊
 
-## Vandehey Theorem 5.1 complete, 17 October 2026 (branch `proof/vandehey-thm51`, lap 28 terminal confirmation)
+## Vandehey Theorem 5.1 complete, 17 October 2026 (branch `proof/vandehey-thm51`, lap 29 terminal confirmation)
 
 `VandeheyProof.vandeheyThm51_holds` is proved with the frozen statement unchanged.  The final
 step is `VandeheyKorobov.norm_power_sum_le_step`, a complete formalization of Proposition 4.1:
@@ -31,6 +31,10 @@ The ratified literature source remains byte-unchanged, and both the scoped 8,936
 Lap 28 independently reconfirmed the exact host predicate and the stronger kickoff conditions from
 the committed lap-27 tree: zero scoped proof holes, unchanged frozen source, no machinery proof
 escape or circularity, all four permanent trust guards active, and green scoped/full real gates.
+
+Lap 29 independently repeated the terminal audit from the committed lap-28 tree.  Direct target
+elaboration, the 8,936-job scoped theorem/axiom gate, and the full 10,868-job repository gate are
+green; the frozen source and scoped trust surface remain unchanged.  No in-scope obligation remains.
 
 ## Vandehey Theorem 5.1 update, 17 October 2026 (branch `proof/vandehey-thm51`, lap 17)
 
