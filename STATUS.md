@@ -1,5 +1,21 @@
 # STATUS — normal-numbers 📊
 
+# Literal Bailey--Borwein pairs, 17 October 2026 (branch `proof/bb-literal-pairs`, lap 9 reflection)
+
+**Scoped kickoff open** · **Crux advance**: one-family cancellation removed; exact unequal-depth
+pair valuation proved · **Build**: 🟢 `StonehamPairsNormal` target green (8,777 jobs)
+
+The reflection audit found that lap 8's circular cutoff/resultant problem was artificial for one
+family: its newest polar term is already a unit modulo every denominator prime. The kernel now
+proves this exact unit statement, the exact smaller-depth valuation for literal two-family sums
+and differences, and the common-denominator identity linking that integer to the rational state.
+The five audited declarations have exactly `[Classical.choice, Quot.sound, propext]` as their axiom
+list.
+
+The two ratified headline sorries remain. Distinct classes now need only the global normalized-
+slope separation theorem; geometric compression is reserved for the genuinely cancelling
+same-class combined tail. See `HANDOFF-2026-10-17-bb-literal-pairs-lap9.md`.
+
 # Literal Bailey--Borwein pairs, 17 October 2026 (branch `proof/bb-literal-pairs`, lap 8)
 
 **Scoped kickoff open** · **Crux advance**: growing polar tail reduced to a fixed-length periodic

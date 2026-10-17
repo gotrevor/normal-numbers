@@ -1,3 +1,11 @@
+# Literal Bailey--Borwein pairs lap 9 reflection (2026-10-17): one-family units and exact depth separation; read HANDOFF-2026-10-17-bb-literal-pairs-lap9.md
+
+- Reflection removed the circular fixed-cutoff/resultant problem from the one-family branch: the
+  cleared numerator is a unit at every denominator prime. Exact minimum-depth valuation formulas
+  now cover literal sums/differences whenever the two `p`-depths differ, and the exact rational
+  common-denominator bridge is proved. Next prove the global normalized-slope separation for
+  distinct classes; reserve geometric compression for the aligned same-class combined tail.
+
 # Literal Bailey--Borwein pairs lap 8 (2026-10-17): fixed-length polar-tail reduction; read HANDOFF-2026-10-17-bb-literal-pairs-lap8.md
 
 - The full cleared one-family numerator now agrees at every preassigned prime-power precision

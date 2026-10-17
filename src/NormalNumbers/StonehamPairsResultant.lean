@@ -228,6 +228,258 @@ lemma stonehamClearedFamily_mul_polarPower_modEq_truncatedTail
       (fun s => stonehamPolarDeletedExponent u K (K - s)) hc hS hSK hNS
   exact hdrop.trans (htrunc.mul_left ((b : ℤ) ^ n))
 
+/-- A single Stoneham family has no `p`-adic cancellation at all in its
+cleared numerator.  After the common polar multiplication, the newest kick
+is a unit modulo `p`, while every older top-offset term carries a positive
+power of `c` and hence vanishes modulo `p`.
+
+This is the non-circular one-family endpoint of the truncation argument: no
+resultant or cutoff depending on a prospective valuation bound is needed.
+Resultants enter only after two same-class families have been aligned, where
+their newest unit terms can genuinely cancel. -/
+theorem not_dvd_stonehamClearedFamily_of_factor
+    (p b c a u K n : ℕ) (hp : p.Prime) (hbp : Nat.Coprime b p)
+    (hc : c = p ^ a * u) (ha : 1 ≤ a) (hK : 1 ≤ K)
+    (hentered : ∀ j ∈ Finset.Icc 1 K, c ^ j ≤ n) :
+    ¬ (p : ℤ) ∣ stonehamClearedFamily b c n K := by
+  let w : ℤ := (b : ℤ) ^ (p ^ (a * K))
+  have hcong := stonehamClearedFamily_mul_polarPower_modEq_truncatedTail
+    p b c a u K n 1 1 hp hc (by omega) hK (by simpa using ha)
+      (by omega) hentered
+  have hcong' :
+      stonehamClearedFamily b c n K * w ^ stonehamPolarExponent u K ≡
+        (b : ℤ) ^ n * w ^ stonehamPolarDeletedExponent u K K [ZMOD p] := by
+    simpa [stonehamClearedFamily, w, eval_polarTailPolynomial_int,
+      Finset.sum_mul, mul_assoc] using hcong
+  intro hdvd
+  have hleft : (p : ℤ) ∣
+      stonehamClearedFamily b c n K * w ^ stonehamPolarExponent u K :=
+    dvd_mul_of_dvd_left hdvd _
+  have hright : (p : ℤ) ∣
+      (b : ℤ) ^ n * w ^ stonehamPolarDeletedExponent u K K :=
+    Int.modEq_zero_iff_dvd.mp (hcong'.symm.trans
+      (Int.modEq_zero_iff_dvd.mpr hleft))
+  have hpow : (p : ℤ) ∣
+      (b : ℤ) ^ (n + p ^ (a * K) * stonehamPolarDeletedExponent u K K) := by
+    simpa only [w, ← pow_mul, ← pow_add] using hright
+  have hpb : ¬ p ∣ b := hp.coprime_iff_not_dvd.mp hbp.symm
+  exact hpb (by simpa using Int.Prime.dvd_pow hp hpow)
+
+/-- Valuation form of `not_dvd_stonehamClearedFamily_of_factor`. -/
+theorem padicValInt_stonehamClearedFamily_eq_zero_of_factor
+    (p b c a u K n : ℕ) (hp : p.Prime) (hbp : Nat.Coprime b p)
+    (hc : c = p ^ a * u) (ha : 1 ≤ a) (hK : 1 ≤ K)
+    (hentered : ∀ j ∈ Finset.Icc 1 K, c ^ j ≤ n) :
+    padicValInt p (stonehamClearedFamily b c n K) = 0 := by
+  exact padicValInt.eq_zero_of_not_dvd
+    (not_dvd_stonehamClearedFamily_of_factor
+      p b c a u K n hp hbp hc ha hK hentered)
+
+/-- Canonical-factorization form of the one-family unit theorem. -/
+theorem not_dvd_stonehamClearedFamily
+    (p b c K n : ℕ) (hp : p.Prime) (hc0 : c ≠ 0) (hpc : p ∣ c)
+    (hcb : Nat.Coprime c b) (hK : 1 ≤ K)
+    (hentered : ∀ j ∈ Finset.Icc 1 K, c ^ j ≤ n) :
+    ¬ (p : ℤ) ∣ stonehamClearedFamily b c n K := by
+  have ha : 1 ≤ c.factorization p :=
+    (hp.dvd_iff_one_le_factorization hc0).mp hpc
+  have hbp : Nat.Coprime b p :=
+    (Nat.Coprime.of_dvd_left hpc hcb).symm
+  exact not_dvd_stonehamClearedFamily_of_factor p b c
+    (c.factorization p) (ordCompl[p] c) K n hp hbp
+      (Nat.ordProj_mul_ordCompl_eq_self c p).symm ha hK hentered
+
+/-- Every prime divisor of `c` sees the one-family cleared numerator as a
+unit.  This is the form used by the later distinct-class rate comparison. -/
+theorem padicValInt_stonehamClearedFamily_eq_zero
+    (p b c K n : ℕ) (hp : p.Prime) (hc0 : c ≠ 0) (hpc : p ∣ c)
+    (hcb : Nat.Coprime c b) (hK : 1 ≤ K)
+    (hentered : ∀ j ∈ Finset.Icc 1 K, c ^ j ≤ n) :
+    padicValInt p (stonehamClearedFamily b c n K) = 0 := by
+  exact padicValInt.eq_zero_of_not_dvd
+    (not_dvd_stonehamClearedFamily p b c K n hp hc0 hpc hcb hK hentered)
+
+/-- Elementary rate-separation lemma for two cleared families.  If the term
+at the shallower `p`-depth has a unit coefficient, then adding any term at a
+strictly deeper `p`-depth cannot change its valuation.  Together with
+`padicValInt_stonehamClearedFamily_eq_zero`, this is the local algebraic
+mechanism for two distinct primitive classes; the remaining global step is
+to find a prime whose two depth slopes separate. -/
+theorem padicValInt_unit_mul_pow_add_mul_pow_of_lt
+    (p : ℕ) [Fact p.Prime] (A B : ℤ) (e f : ℕ)
+    (hA : ¬ (p : ℤ) ∣ A) (hef : e < f) :
+    padicValInt p (A * (p : ℤ) ^ e + B * (p : ℤ) ^ f) = e := by
+  have hp : p.Prime := Fact.out
+  have hp0 : (p : ℤ) ≠ 0 := Int.natCast_ne_zero.mpr hp.ne_zero
+  have hpdvd : (p : ℤ) ∣ (p : ℤ) ^ (f - e) :=
+    dvd_pow_self (p : ℤ) (by omega)
+  have hterm : (p : ℤ) ∣ B * (p : ℤ) ^ (f - e) :=
+    dvd_mul_of_dvd_right hpdvd B
+  have hunit : ¬ (p : ℤ) ∣ A + B * (p : ℤ) ^ (f - e) := by
+    intro hsum
+    apply hA
+    simpa using dvd_sub hsum hterm
+  have hunit0 : A + B * (p : ℤ) ^ (f - e) ≠ 0 := by
+    intro hz
+    apply hunit
+    simp [hz]
+  have hpow0 : (p : ℤ) ^ e ≠ 0 := pow_ne_zero e hp0
+  have hpowf : (p : ℤ) ^ f = (p : ℤ) ^ e * (p : ℤ) ^ (f - e) := by
+    calc
+      (p : ℤ) ^ f = (p : ℤ) ^ (e + (f - e)) := by congr 1; omega
+      _ = (p : ℤ) ^ e * (p : ℤ) ^ (f - e) := pow_add _ _ _
+  have hfactor :
+      A * (p : ℤ) ^ e + B * (p : ℤ) ^ f =
+        (p : ℤ) ^ e * (A + B * (p : ℤ) ^ (f - e)) := by
+    rw [hpowf]
+    ring
+  rw [hfactor, padicValInt.mul hpow0 hunit0,
+    padicValInt.eq_zero_of_not_dvd hunit, add_zero]
+  rw [← Int.natCast_pow, padicValInt.of_nat, padicValNat.prime_pow]
+
+/-- The preceding separation applied to the actual common-denominator
+numerator of two Stoneham families.  If the `c₁` family contributes at a
+strictly shallower `p`-depth after cross multiplication, its cleared numerator
+and the prime-to-`p` part of `c₂` form the required unit coefficient.  The
+second family may have either literal sign (indeed, any integer coefficient).
+
+This theorem isolates the complete local content of the distinct-class case.
+What remains for that branch is the global arithmetic statement that
+multiplicatively independent `c₁,c₂` admit a prime for which these depths
+separate by a positive multiple of `log n`. -/
+theorem padicValInt_pairCleared_eq_of_depth_lt
+    (p b c₁ c₂ K₁ K₂ n : ℕ) (σ : ℤ) (hp : p.Prime)
+    (hc₁0 : c₁ ≠ 0) (hc₂0 : c₂ ≠ 0) (hpc₁ : p ∣ c₁)
+    (hcb₁ : Nat.Coprime c₁ b) (hK₁ : 1 ≤ K₁)
+    (hentered₁ : ∀ j ∈ Finset.Icc 1 K₁, c₁ ^ j ≤ n)
+    (hdepth : c₂.factorization p * K₂ < c₁.factorization p * K₁) :
+    padicValInt p
+        (stonehamClearedFamily b c₁ n K₁ * (c₂ : ℤ) ^ K₂ +
+          σ * stonehamClearedFamily b c₂ n K₂ * (c₁ : ℤ) ^ K₁) =
+      c₂.factorization p * K₂ := by
+  letI : Fact p.Prime := ⟨hp⟩
+  let A₁ := stonehamClearedFamily b c₁ n K₁
+  let A₂ := stonehamClearedFamily b c₂ n K₂
+  let u₁ : ℕ := ordCompl[p] c₁
+  let u₂ : ℕ := ordCompl[p] c₂
+  let e := c₂.factorization p * K₂
+  let f := c₁.factorization p * K₁
+  have hA₁ : ¬ (p : ℤ) ∣ A₁ := by
+    exact not_dvd_stonehamClearedFamily p b c₁ K₁ n hp hc₁0 hpc₁
+      hcb₁ hK₁ hentered₁
+  have hu₂ : ¬ p ∣ u₂ := Nat.not_dvd_ordCompl hp hc₂0
+  have hu₂Z : ¬ (p : ℤ) ∣ (u₂ : ℤ) ^ K₂ := by
+    intro hdvd
+    apply hu₂
+    have hdvdNat : p ∣ u₂ ^ K₂ := by exact_mod_cast hdvd
+    exact hp.dvd_of_dvd_pow hdvdNat
+  have hunit : ¬ (p : ℤ) ∣ A₁ * (u₂ : ℤ) ^ K₂ := by
+    intro hdvd
+    rcases Int.Prime.dvd_mul' hp hdvd with h | h
+    · exact hA₁ h
+    · exact hu₂Z h
+  have hc₁pow : (c₁ : ℤ) ^ K₁ =
+      (p : ℤ) ^ f * (u₁ : ℤ) ^ K₁ := by
+    calc
+      (c₁ : ℤ) ^ K₁ =
+          (((p : ℤ) ^ c₁.factorization p) * (u₁ : ℤ)) ^ K₁ := by
+            congr 1
+            exact_mod_cast (Nat.ordProj_mul_ordCompl_eq_self c₁ p).symm
+      _ = (p : ℤ) ^ f * (u₁ : ℤ) ^ K₁ := by
+        rw [mul_pow, ← pow_mul]
+  have hc₂pow : (c₂ : ℤ) ^ K₂ =
+      (p : ℤ) ^ e * (u₂ : ℤ) ^ K₂ := by
+    calc
+      (c₂ : ℤ) ^ K₂ =
+          (((p : ℤ) ^ c₂.factorization p) * (u₂ : ℤ)) ^ K₂ := by
+            congr 1
+            exact_mod_cast (Nat.ordProj_mul_ordCompl_eq_self c₂ p).symm
+      _ = (p : ℤ) ^ e * (u₂ : ℤ) ^ K₂ := by
+        rw [mul_pow, ← pow_mul]
+  have hshape :
+      stonehamClearedFamily b c₁ n K₁ * (c₂ : ℤ) ^ K₂ +
+          σ * stonehamClearedFamily b c₂ n K₂ * (c₁ : ℤ) ^ K₁ =
+        (A₁ * (u₂ : ℤ) ^ K₂) * (p : ℤ) ^ e +
+          (σ * A₂ * (u₁ : ℤ) ^ K₁) * (p : ℤ) ^ f := by
+    rw [hc₁pow, hc₂pow]
+    dsimp only [A₁, A₂]
+    ring
+  rw [hshape]
+  exact padicValInt_unit_mul_pow_add_mul_pow_of_lt p
+    (A₁ * (u₂ : ℤ) ^ K₂) (σ * A₂ * (u₁ : ℤ) ^ K₁) e f hunit hdepth
+
+/-- For a literal sum at a common prime, unequal cleared depths make the
+valuation exactly the smaller depth. -/
+theorem padicValInt_pairCleared_add_eq_min_of_depth_ne
+    (p b c₁ c₂ K₁ K₂ n : ℕ) (hp : p.Prime)
+    (hc₁0 : c₁ ≠ 0) (hc₂0 : c₂ ≠ 0) (hpc₁ : p ∣ c₁) (hpc₂ : p ∣ c₂)
+    (hcb₁ : Nat.Coprime c₁ b) (hcb₂ : Nat.Coprime c₂ b)
+    (hK₁ : 1 ≤ K₁) (hK₂ : 1 ≤ K₂)
+    (hentered₁ : ∀ j ∈ Finset.Icc 1 K₁, c₁ ^ j ≤ n)
+    (hentered₂ : ∀ j ∈ Finset.Icc 1 K₂, c₂ ^ j ≤ n)
+    (hne : c₁.factorization p * K₁ ≠ c₂.factorization p * K₂) :
+    padicValInt p
+        (stonehamClearedFamily b c₁ n K₁ * (c₂ : ℤ) ^ K₂ +
+          stonehamClearedFamily b c₂ n K₂ * (c₁ : ℤ) ^ K₁) =
+      min (c₁.factorization p * K₁) (c₂.factorization p * K₂) := by
+  rcases lt_or_gt_of_ne hne with hlt | hgt
+  · have h := padicValInt_pairCleared_eq_of_depth_lt
+      p b c₂ c₁ K₂ K₁ n 1 hp hc₂0 hc₁0 hpc₂ hcb₂ hK₂ hentered₂ hlt
+    simpa [add_comm, Nat.min_eq_left hlt.le] using h
+  · have h := padicValInt_pairCleared_eq_of_depth_lt
+      p b c₁ c₂ K₁ K₂ n 1 hp hc₁0 hc₂0 hpc₁ hcb₁ hK₁ hentered₁ hgt
+    simpa [Nat.min_eq_right hgt.le] using h
+
+/-- The same exact smaller-depth valuation for a literal difference. -/
+theorem padicValInt_pairCleared_sub_eq_min_of_depth_ne
+    (p b c₁ c₂ K₁ K₂ n : ℕ) (hp : p.Prime)
+    (hc₁0 : c₁ ≠ 0) (hc₂0 : c₂ ≠ 0) (hpc₁ : p ∣ c₁) (hpc₂ : p ∣ c₂)
+    (hcb₁ : Nat.Coprime c₁ b) (hcb₂ : Nat.Coprime c₂ b)
+    (hK₁ : 1 ≤ K₁) (hK₂ : 1 ≤ K₂)
+    (hentered₁ : ∀ j ∈ Finset.Icc 1 K₁, c₁ ^ j ≤ n)
+    (hentered₂ : ∀ j ∈ Finset.Icc 1 K₂, c₂ ^ j ≤ n)
+    (hne : c₁.factorization p * K₁ ≠ c₂.factorization p * K₂) :
+    padicValInt p
+        (stonehamClearedFamily b c₁ n K₁ * (c₂ : ℤ) ^ K₂ -
+          stonehamClearedFamily b c₂ n K₂ * (c₁ : ℤ) ^ K₁) =
+      min (c₁.factorization p * K₁) (c₂.factorization p * K₂) := by
+  rcases lt_or_gt_of_ne hne with hlt | hgt
+  · have h := padicValInt_pairCleared_eq_of_depth_lt
+      p b c₂ c₁ K₂ K₁ n (-1) hp hc₂0 hc₁0 hpc₂ hcb₂ hK₂ hentered₂ hlt
+    calc
+      padicValInt p
+          (stonehamClearedFamily b c₁ n K₁ * (c₂ : ℤ) ^ K₂ -
+            stonehamClearedFamily b c₂ n K₂ * (c₁ : ℤ) ^ K₁) =
+        padicValInt p
+          (-(stonehamClearedFamily b c₁ n K₁ * (c₂ : ℤ) ^ K₂ -
+            stonehamClearedFamily b c₂ n K₂ * (c₁ : ℤ) ^ K₁)) := by
+              simp only [padicValInt, Int.natAbs_neg]
+      _ = c₁.factorization p * K₁ := by
+        convert h using 1 <;> ring
+      _ = min (c₁.factorization p * K₁) (c₂.factorization p * K₂) := by
+        symm
+        exact Nat.min_eq_left hlt.le
+  · have h := padicValInt_pairCleared_eq_of_depth_lt
+      p b c₁ c₂ K₁ K₂ n (-1) hp hc₁0 hc₂0 hpc₁ hcb₁ hK₁ hentered₁ hgt
+    simpa [Nat.min_eq_right hgt.le, sub_eq_add_neg] using h
+
+/-- Exact common-denominator form of a literal two-family state.  This is the
+rational bridge from the cleared integer whose valuation is controlled above
+to the `stonehamState` consumed by the analytic engine. -/
+theorem stonehamPairFamilies_eq_cleared_div
+    (b c₁ c₂ n K₁ K₂ : ℕ) (σ : ℤ) (hc₁0 : c₁ ≠ 0) (hc₂0 : c₂ ≠ 0) :
+    (∑ j ∈ Finset.Icc 1 K₁,
+        (b : ℚ) ^ (n - c₁ ^ j) / (c₁ : ℚ) ^ j) +
+      (σ : ℚ) * (∑ j ∈ Finset.Icc 1 K₂,
+        (b : ℚ) ^ (n - c₂ ^ j) / (c₂ : ℚ) ^ j) =
+      ((stonehamClearedFamily b c₁ n K₁ * (c₂ : ℤ) ^ K₂ +
+          σ * stonehamClearedFamily b c₂ n K₂ * (c₁ : ℤ) ^ K₁ : ℤ) : ℚ) /
+        (((c₁ ^ K₁) * (c₂ ^ K₂) : ℕ) : ℚ) := by
+  rw [stonehamFamily_eq_cleared_div b c₁ n K₁ hc₁0,
+    stonehamFamily_eq_cleared_div b c₂ n K₂ hc₂0]
+  push_cast
+  field_simp [hc₁0, hc₂0]
+
 /-- Every root-of-unity evaluation of a polar tail is nonzero when the top base-`g` digit
 strictly dominates all lower digits.  The exponent pattern is completely arbitrary. -/
 lemma polarTailPolynomial_eval_ne_zero
