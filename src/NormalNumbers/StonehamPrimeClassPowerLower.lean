@@ -143,6 +143,66 @@ theorem orbitTime_lt_prime_pow_add_maxDepth
 
 /-! ### Fixed-pattern resultant input -/
 
+/-- Complementing every exponent in one common cap preserves linear independence.  This is the
+inverse-phase orientation occurring after the finite Stoneham histories are cleared to a common
+prime-power denominator. -/
+lemma linearIndependent_powers_complement
+    {d r : ℕ} (hd : d ≠ 0) (ζ : ℂ) (hζ : IsPrimitiveRoot ζ d)
+    (u : Fin r → ℕ) (hind : LinearIndependent ℚ (fun i ↦ ζ ^ u i)) :
+    LinearIndependent ℚ (fun i ↦ ζ ^ primeClassComplementExponent u i) := by
+  have hinv : LinearIndependent ℚ (fun i ↦ (ζ⁻¹) ^ u i) :=
+    (linearIndependent_powers_primitiveRoot_congr hd hζ hζ.inv u).mp hind
+  rw [Fintype.linearIndependent_iff] at hinv ⊢
+  intro q hq
+  apply hinv q
+  have hζ0 : ζ ≠ 0 := hζ.ne_zero hd
+  have hfactor :
+      ∑ i, q i • ζ ^ primeClassComplementExponent u i =
+        ζ ^ primeClassExponentCap u * ∑ i, q i • (ζ⁻¹) ^ u i := by
+    rw [mul_sum]
+    apply sum_congr rfl
+    intro i hi
+    rw [primeClassComplementExponent,
+      pow_sub₀ ζ hζ0 (primeClassExponent_le_cap u i), inv_pow]
+    simp only [Algebra.smul_def]
+    ring
+  rw [hfactor] at hq
+  exact (mul_eq_zero.mp hq).resolve_left (pow_ne_zero _ hζ0)
+
+/-- The integral coefficient left at a fixed max-depth gap pattern after multiplying all
+geometric denominators `(p ^ s i - 1)` into the cleared state.  The deleted product matches the
+deleted finite-phase product, hence the complementary exponent. -/
+def primeClassPatternCoefficient
+    (p : ℕ) {r : ℕ} (s : Fin r → ℕ) (q : Fin r → ℤ) (δ : Fin r → ℕ)
+    (i : Fin r) : ℤ :=
+  q i * (p : ℤ) ^ δ i *
+    ∏ j ∈ (univ : Finset (Fin r)).erase i, ((p : ℤ) ^ s j - 1)
+
+/-- A nonzero Fourier coefficient vector remains nonzero after the fixed-pattern scaling. -/
+lemma primeClassPatternCoefficient_ne_zero
+    (p : ℕ) {r : ℕ} (s : Fin r → ℕ) (q : Fin r → ℤ) (δ : Fin r → ℕ)
+    (hp : p.Prime) (hs : ∀ i, 1 ≤ s i) (hq : q ≠ 0) :
+    primeClassPatternCoefficient p s q δ ≠ 0 := by
+  obtain ⟨i, hi⟩ : ∃ i, q i ≠ 0 := by
+    by_contra hnone
+    apply hq
+    funext i
+    by_contra hi
+    exact hnone ⟨i, hi⟩
+  intro hzero
+  have hscale : ∀ j, (p : ℤ) ^ s j - 1 ≠ 0 := by
+    intro j h
+    have hpow : 1 < p ^ s j :=
+      Nat.one_lt_pow (Nat.ne_zero_of_lt (hs j)) hp.one_lt
+    have : (p : ℤ) ^ s j ≠ 1 := by exact_mod_cast hpow.ne'
+    exact this (sub_eq_zero.mp h)
+  have hne : primeClassPatternCoefficient p s q δ i ≠ 0 := by
+    unfold primeClassPatternCoefficient
+    exact mul_ne_zero
+      (mul_ne_zero hi (pow_ne_zero _ (by exact_mod_cast hp.ne_zero)))
+      (prod_ne_zero_iff.mpr (fun j hj ↦ hscale j))
+  exact hne (by simpa only [Pi.zero_apply] using congrFun hzero i)
+
 /-- Linear independence makes the cyclotomic resultant of every nonzero cleared coefficient
 polynomial nonzero.  Applied to each member of the finite gap-pattern box, this gives the fixed
 integer whose `p`-adic valuation bounds the loss at that pattern. -/
@@ -175,6 +235,44 @@ lemma cyclotomic_resultant_integerRelation_ne_zero
     have hi := congrFun hcoeff i
     simp only [Pi.zero_apply] at hi
     exact_mod_cast hi
+
+/-- Every fixed gap pattern has a nonzero cyclotomic resultant in the complementary orientation.
+These finitely many integers are the exact source of the uniform `p`-adic loss constant. -/
+lemma cyclotomic_resultant_primeClassPattern_ne_zero
+    {d r : ℕ} (hd : d ≠ 0) (ζ : ℂ) (hζ : IsPrimitiveRoot ζ d)
+    (p : ℕ) (s u : Fin r → ℕ) (q : Fin r → ℤ) (δ : Fin r → ℕ)
+    (hp : p.Prime) (hs : ∀ i, 1 ≤ s i) (hq : q ≠ 0)
+    (hind : LinearIndependent ℚ (fun i ↦ ζ ^ u i)) :
+    (cyclotomic d ℤ).resultant
+        (integerRelationPolynomial (primeClassComplementExponent u)
+          (primeClassPatternCoefficient p s q δ)) ≠ 0 := by
+  apply cyclotomic_resultant_integerRelation_ne_zero hd ζ hζ
+    (primeClassComplementExponent u) (primeClassPatternCoefficient p s q δ)
+  · exact primeClassPatternCoefficient_ne_zero p s q δ hp hs hq
+  · exact linearIndependent_powers_complement hd ζ hζ u hind
+
+/-- The uniform cancellation loss obtained by maximizing the resultant valuation over the fixed
+finite box of all max-depth gap patterns. -/
+noncomputable def primeClassPatternResultantLoss
+    (d p : ℕ) {r : ℕ} (s u : Fin r → ℕ) (q : Fin r → ℤ) : ℕ :=
+  (univ : Finset (∀ i, Fin (u i + s i))).sup fun δ ↦
+    padicValInt p <| (cyclotomic d ℤ).resultant
+      (integerRelationPolynomial (primeClassComplementExponent u)
+        (primeClassPatternCoefficient p s q (fun i ↦ δ i)))
+
+/-- Every admissible pattern resultant has valuation at most the single finite-family loss. -/
+lemma padicValInt_patternResultant_le_loss
+    (d p : ℕ) {r : ℕ} (s u : Fin r → ℕ) (q : Fin r → ℤ)
+    (δ : ∀ i, Fin (u i + s i)) :
+    padicValInt p ((cyclotomic d ℤ).resultant
+        (integerRelationPolynomial (primeClassComplementExponent u)
+          (primeClassPatternCoefficient p s q (fun i ↦ δ i)))) ≤
+      primeClassPatternResultantLoss d p s u q := by
+  unfold primeClassPatternResultantLoss
+  exact Finset.le_sup (f := fun δ : ∀ i, Fin (u i + s i) ↦
+    padicValInt p <| (cyclotomic d ℤ).resultant
+      (integerRelationPolynomial (primeClassComplementExponent u)
+        (primeClassPatternCoefficient p s q (fun i ↦ δ i)))) (mem_univ δ)
 
 /-- Concrete anchor: a singleton family has zero gap at every nonzero orbit time. -/
 theorem primeClassMaxDepthGap_singleton_three (n : ℕ) :

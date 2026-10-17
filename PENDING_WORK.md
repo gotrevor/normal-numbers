@@ -1,3 +1,13 @@
+# Prime class lap 11 (2026-10-17) — uniform finite-pattern resultant loss proved
+
+* Complementary exponents preserve the exact rational linear-independence criterion.
+* The actual gap-pattern coefficient vector is nonzero for every nonzero Fourier vector; every
+  resulting cyclotomic resultant is nonzero, and their valuations admit one finite supremum.
+* The scoped file has one direct `sorry`: `isRationallyJointNormal_of_linearIndependent`.
+  Next prove the scaled cleared-numerator congruence with the pattern-polynomial evaluation,
+  apply the uniform resultant loss, derive `StonehamStateDenPowerLower`, and invoke the existing
+  Vandehey/Weyl engine.  See `HANDOFF-2026-10-17-prime-class-lap11.md`.
+
 # Prime class lap 9 (2026-10-17, REFLECTION) — dependent half proved; normal half remains
 
 * Multiplicatively dilated canonical cells have fixed weighted kick-depth gaps; the dependent

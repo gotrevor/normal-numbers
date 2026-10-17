@@ -1,3 +1,11 @@
+# Prime class lap 11 (2026-10-17): finite-pattern resultant loss; read HANDOFF-2026-10-17-prime-class-lap11.md
+
+- Complementary-exponent independence, the exact nonzero gap-pattern coefficient polynomial,
+  nonvanishing of every pattern resultant, and a single finite supremum bounding all their
+  `p`-adic valuations are now kernel-proved.  All new endpoints are axiom-clean and the target
+  gate is FORMALIZE-TIER GREEN.  Next prove the modular bridge from the literal cleared numerator
+  to that pattern-polynomial evaluation, then derive the power denominator lower bound.
+
 # Prime class lap 10 (2026-10-17): bounded max-depth patterns; read HANDOFF-2026-10-17-prime-class-lap10.md
 
 - The remaining normal-half schedule is now finite: every max-depth gap is strictly below

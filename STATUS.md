@@ -1,3 +1,17 @@
+# Prime-class joint normality, 17 October 2026 (branch `proof/prime-class`, lap 11)
+
+`StonehamPrimeClassPowerLower` now proves that common-cap complementary exponents preserve
+rational linear independence and constructs the exact coefficient polynomial for each bounded
+max-depth gap pattern.  Every nonzero Fourier vector gives a nonzero pattern vector and a nonzero
+cyclotomic resultant.  Their `p`-adic valuations are uniformly bounded by one kernel-defined
+supremum over the fixed finite pattern type.  All four new proof endpoints audit to exactly the
+standard trust base.
+
+The scoped target remains FORMALIZE-TIER GREEN with exactly the independent/normal headline
+sorried.  Next connect the literal common-depth numerator to the pattern-polynomial evaluation
+modulo `p^T`, apply the uniform resultant loss, and derive `StonehamStateDenPowerLower`.  See
+`HANDOFF-2026-10-17-prime-class-lap11.md`.
+
 # Prime-class joint normality, 17 October 2026 (branch `proof/prime-class`, lap 10)
 
 `StonehamPrimeClassPowerLower` proves the uniform scheduling input for the remaining normal half.
