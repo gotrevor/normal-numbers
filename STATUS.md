@@ -1,5 +1,24 @@
 # STATUS — normal-numbers 📊
 
+## Literal Bailey--Borwein pairs, 17 October 2026 (branch `proof/bb-literal-pairs`, lap 4)
+
+**Scoped kickoff open** · **Crux advance**: full-history polar numerator assembled ·
+**Build**: 🟢 `StonehamPairsNormal` target green (8,776 jobs)
+
+`StonehamPairsArithmetic.lean` now identifies the literal one-family sum with its explicit
+`c^K`-cleared integer numerator.  Its new top-level phase congruence uses the single finite
+Teichmueller representative `b^(p^(aK))` for every earlier kick and gains the missing
+`p^(a(K-j))` precision from the clearing factor `c^(K-j)`.  The product specialization then
+assembles every entered term modulo `p^(aK+1)` without introducing modular inverses.  The three
+audited bridge declarations have exactly `[Classical.choice, Quot.sound, propext]` as their axiom
+list.
+
+The two ratified sorries in `StonehamPairsNormal.lean` remain. Next normalize the product-deleted
+coefficient into an eventually periodic finite polar tail, use `literalSum_tail_ne_zero` /
+`literalDiff_tail_ne_zero` plus an integer norm to bound its p-adic loss uniformly, prove rate
+separation for distinct primitive classes, and derive `StonehamStateDenPowerLower`. See
+`HANDOFF-2026-10-17-bb-literal-pairs-lap4.md`.
+
 ## Literal Bailey--Borwein pairs, 17 October 2026 (branch `proof/bb-literal-pairs`, lap 3 review)
 
 **Scoped kickoff open** · **Crux advance**: exponent-form item (K) and literal never-silent core

@@ -212,6 +212,130 @@ lemma stonehamPhase_mul_teichmuller_modEq (p b c k j n : ℕ)
   exact stonehamPhase_mul_teichmuller_modEq_of_factor p b c (c.factorization p)
     (ordCompl[p] c) k j n hp (Nat.ordProj_mul_ordCompl_eq_self c p).symm hkj hentered
 
+/-- All entered phases can be compared using the *top-level* finite Teichmüller
+representative.  Clearing the `j`-th denominator by `c^(K-j)` upgrades the
+`p^(a*j+1)` phase congruence to the common numerator precision `p^(a*K+1)`.
+
+This is the finite polar decomposition in the exact form needed for a full
+Stoneham-family numerator: the representative is independent of `j`, while
+the residual exponent `u^j` is eventually periodic modulo every finite order. -/
+lemma stonehamPhase_mul_topTeichmuller_modEq_of_factor
+    (p b c a u j K n : ℕ) (hp : p.Prime) (hc : c = p ^ a * u)
+    (hjK : j ≤ K) (hentered : c ^ j ≤ n) :
+    (b : ℤ) ^ (n - c ^ j) *
+          ((b : ℤ) ^ (p ^ (a * K))) ^ (u ^ j) * (c : ℤ) ^ (K - j) ≡
+      (b : ℤ) ^ n * (c : ℤ) ^ (K - j) [ZMOD p ^ (a * K + 1)] := by
+  have hlevel : a * j ≤ a * K := Nat.mul_le_mul_left a hjK
+  have hcj : c ^ j = p ^ (a * j) * u ^ j := by
+    rw [hc, mul_pow, ← pow_mul]
+  have hphase :
+      (b : ℤ) ^ (n - c ^ j) *
+          ((b : ℤ) ^ (p ^ (a * K))) ^ (u ^ j) ≡
+        (b : ℤ) ^ n [ZMOD p ^ (a * j + 1)] := by
+    have hrep := teichmullerTower_power_modEq_of_le
+      p b (a * j) (a * K) (u ^ j) hp hlevel
+    have hmul := hrep.mul_left ((b : ℤ) ^ (n - c ^ j))
+    calc
+      (b : ℤ) ^ (n - c ^ j) *
+            ((b : ℤ) ^ (p ^ (a * K))) ^ (u ^ j) ≡
+          (b : ℤ) ^ (n - c ^ j) * (b : ℤ) ^ (p ^ (a * j) * u ^ j)
+            [ZMOD p ^ (a * j + 1)] := by simpa only [pow_mul] using hmul
+      _ = (b : ℤ) ^ n := by
+        rw [← hcj, ← pow_add, tsub_add_cancel_of_le hentered]
+  rw [Int.modEq_iff_dvd] at hphase ⊢
+  have hAK : a * K = a * j + a * (K - j) := by
+    rw [← Nat.mul_add, Nat.add_sub_of_le hjK]
+  rw [show a * K + 1 = (a * j + 1) + a * (K - j) by omega, pow_add]
+  have hfactor : (p : ℤ) ^ (a * (K - j)) ∣ (c : ℤ) ^ (K - j) := by
+    rw [hc]
+    push_cast
+    rw [mul_pow, ← pow_mul]
+    exact dvd_mul_right ((p : ℤ) ^ (a * (K - j))) ((u : ℤ) ^ (K - j))
+  simpa only [sub_mul] using mul_dvd_mul hphase hfactor
+
+/-- Canonical-factorization form of the common-precision polar congruence. -/
+lemma stonehamPhase_mul_topTeichmuller_modEq
+    (p b c j K n : ℕ) (hp : p.Prime) (hjK : j ≤ K) (hentered : c ^ j ≤ n) :
+    (b : ℤ) ^ (n - c ^ j) *
+          ((b : ℤ) ^ (p ^ (c.factorization p * K))) ^ (ordCompl[p] c ^ j) *
+          (c : ℤ) ^ (K - j) ≡
+      (b : ℤ) ^ n * (c : ℤ) ^ (K - j)
+        [ZMOD p ^ (c.factorization p * K + 1)] := by
+  exact stonehamPhase_mul_topTeichmuller_modEq_of_factor p b c
+    (c.factorization p) (ordCompl[p] c) j K n hp
+    (Nat.ordProj_mul_ordCompl_eq_self c p).symm hjK hentered
+
+/-- Assemble the termwise polar congruences after multiplying the cleared
+family numerator by a common factor `Q`.  The hypothesis `hQ` records the
+factorization `Q = W_j R_j`, where `W_j` is the `j`-th polar unit.  Taking
+`Q` to be the product of all `W_j` makes `R_j` the product with the `j`-th
+factor deleted, and turns the right side into the finite periodic polar
+coefficient used in Lemma 3′. -/
+lemma stonehamClearedFamily_mul_polar_modEq_of_factor
+    (p b c a u K n : ℕ) (Q : ℤ) (R : ℕ → ℤ)
+    (hp : p.Prime) (hc : c = p ^ a * u)
+    (hentered : ∀ j ∈ Icc 1 K, c ^ j ≤ n)
+    (hQ : ∀ j ∈ Icc 1 K,
+      Q = ((b : ℤ) ^ (p ^ (a * K))) ^ (u ^ j) * R j) :
+    ∑ j ∈ Icc 1 K,
+        (b : ℤ) ^ (n - c ^ j) * (c : ℤ) ^ (K - j) * Q ≡
+      ∑ j ∈ Icc 1 K,
+        (b : ℤ) ^ n * (c : ℤ) ^ (K - j) * R j
+          [ZMOD p ^ (a * K + 1)] := by
+  apply Int.ModEq.sum
+  intro j hj
+  have hterm := stonehamPhase_mul_topTeichmuller_modEq_of_factor
+    p b c a u j K n hp hc (mem_Icc.mp hj).2 (hentered j hj)
+  have hscaled := hterm.mul_right (R j)
+  rw [hQ j hj]
+  simpa only [mul_assoc, mul_left_comm, mul_comm] using hscaled
+
+/-- Product specialization of `stonehamClearedFamily_mul_polar_modEq_of_factor`.
+It supplies the common multiplier canonically, so no modular inverses or
+division in `ZMod` remain in the later noncancellation argument. -/
+lemma stonehamClearedFamily_mul_polarProduct_modEq_of_factor
+    (p b c a u K n : ℕ) (hp : p.Prime) (hc : c = p ^ a * u)
+    (hentered : ∀ j ∈ Icc 1 K, c ^ j ≤ n) :
+    ∑ j ∈ Icc 1 K,
+          (b : ℤ) ^ (n - c ^ j) * (c : ℤ) ^ (K - j) *
+            (∏ t ∈ Icc 1 K,
+              ((b : ℤ) ^ (p ^ (a * K))) ^ (u ^ t)) ≡
+      ∑ j ∈ Icc 1 K,
+          (b : ℤ) ^ n * (c : ℤ) ^ (K - j) *
+            (∏ t ∈ (Icc 1 K).erase j,
+              ((b : ℤ) ^ (p ^ (a * K))) ^ (u ^ t))
+        [ZMOD p ^ (a * K + 1)] := by
+  classical
+  apply stonehamClearedFamily_mul_polar_modEq_of_factor p b c a u K n
+    (∏ t ∈ Icc 1 K, ((b : ℤ) ^ (p ^ (a * K))) ^ (u ^ t))
+    (fun j => ∏ t ∈ (Icc 1 K).erase j,
+      ((b : ℤ) ^ (p ^ (a * K))) ^ (u ^ t)) hp hc hentered
+  intro j hj
+  exact (Finset.mul_prod_erase (Icc 1 K)
+    (fun t => ((b : ℤ) ^ (p ^ (a * K))) ^ (u ^ t)) hj).symm
+
+/-- The explicit numerator obtained by clearing the denominator `c^K` in one
+Stoneham family (with the literal base exponent `m = 1`). -/
+def stonehamClearedFamily (b c n K : ℕ) : ℤ :=
+  ∑ j ∈ Icc 1 K, (b : ℤ) ^ (n - c ^ j) * (c : ℤ) ^ (K - j)
+
+/-- Clearing by `c^K` gives exactly `stonehamClearedFamily`; this identifies
+the modular polar calculation above with the numerator used by
+`stonehamState`. -/
+lemma stonehamFamily_eq_cleared_div (b c n K : ℕ) (hc0 : c ≠ 0) :
+    ∑ j ∈ Icc 1 K,
+        (b : ℚ) ^ (n - c ^ j) / (c : ℚ) ^ j =
+      (stonehamClearedFamily b c n K : ℚ) / (c : ℚ) ^ K := by
+  rw [eq_div_iff (pow_ne_zero _ (by exact_mod_cast hc0)),
+    stonehamClearedFamily, Int.cast_sum, Finset.sum_mul]
+  apply Finset.sum_congr rfl
+  intro j hj
+  rw [Int.cast_mul, Int.cast_pow, Int.cast_natCast, Int.cast_pow, Int.cast_natCast]
+  have hjK : j ≤ K := (mem_Icc.mp hj).2
+  rw [show K = j + (K - j) by omega, pow_add]
+  field_simp
+  congr 2 <;> omega
+
 /-- Dyadic polar-phase form of item (K).  At a positive dyadic depth the Teichmüller factor is
 one, so an entered phase `b^(n-c^j)` agrees directly with `b^n`. -/
 lemma twoStonehamPhase_modEq_of_factor (b c a u j n : ℕ)

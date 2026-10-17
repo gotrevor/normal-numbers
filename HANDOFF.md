@@ -1,3 +1,10 @@
+# Literal Bailey--Borwein pairs lap 4 (2026-10-17): full-history polar numerator assembled; read HANDOFF-2026-10-17-bb-literal-pairs-lap4.md
+- The explicit one-family cleared numerator is now identified with the rational Stoneham family.
+  Every entered kick is transferred to the top Teichmueller level at common precision, and a
+  canonical product multiplier assembles the entire history without modular inverses. Next:
+  normalize the product-deleted periodic coefficient, prove its fixed nonzero norm gives bounded
+  p-adic loss, then combine the one/two-family cases into `StonehamStateDenPowerLower`.
+
 # Literal Bailey--Borwein pairs lap 3 review (2026-10-17): exponent (K) and never-silent core proved; read HANDOFF-2026-10-17-bb-literal-pairs-lap3.md
 - The finite Teichmueller system is now specialized to the actual phases `b^(n-c^j)`, with
   canonical odd-prime and dyadic factorization forms. The referee-repaired complex top-digit
