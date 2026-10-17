@@ -1,5 +1,27 @@
 # STATUS — normal-numbers 📊
 
+## Maze backlog same-prime denominator update, 17 October 2026 (branch `proof/maze-backlog`, lap 8)
+
+**Kickoff open at Part 3/L2** · **Crux advance**: eventual fixed 7-adic leading loss proved ·
+**Build**: 🟢 `MazeAudit` gate green (10,470 jobs)
+
+The two equal-depth cases now have the precise arithmetic estimate required by a denominator
+argument.  `stoneham_pair_leadingVal_le_one` proves that, past the fixed threshold
+`v₇(a²+ac+c²)`, the leading coefficient `a+c·3^(7^n)` loses at most that many powers of seven.
+`stoneham_pair_leadingVal_le_two` proves the conjugate statement with `a²-ac+c²` and
+`a+c·(3^(7^n))²`.  The proof combines the lap-7 cancellation-depth obstruction with the
+cyclotomic congruence at every smaller modulus, so it rules out intermediate unbounded loss as
+well as cancellation through the whole kick depth.
+
+The remaining kickoff obligation is still `StonehamThreeSevenPairwiseNormal`.  Next, package the
+new tied-depth estimate with the easier unequal-depth case and older-term separation into a
+same-prime replacement for `padicValRat_stonehamState_le`; then feed the resulting denominator
+growth into the existing Vandehey block-mean engine.  See
+`HANDOFF-2026-10-17-maze-backlog-lap8.md`.
+
+Verification: the 10,470-job `lean-green` gate ended `FORMALIZE-TIER GREEN`; both new leading
+valuation lemmas have exactly `[Classical.choice, Quot.sound, propext]` as their axiom list.
+
 ## Maze backlog reflection correction, 17 October 2026 (branch `proof/maze-backlog`, lap 7)
 
 **Kickoff reopened at Part 3/L2** · **Build**: 🟢 `MazeAudit` gate green (10470 jobs) ·

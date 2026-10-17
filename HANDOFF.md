@@ -1,3 +1,9 @@
+# Maze backlog lap 8 (2026-10-17): fixed same-prime 7-adic loss proved; read HANDOFF-2026-10-17-maze-backlog-lap8.md
+- The exponent-gap-one and -two leading coefficients now have an eventual valuation bound by the
+  fixed quadratic coefficient norm.  This upgrades lap 7's full-depth cancellation implication to
+  the actual bounded-loss lemma needed for the same-prime state denominator.  Next: combine tied
+  and untied kick depths into a reduced-denominator lower bound and reuse the Vandehey mean engine.
+
 # Maze backlog reflection lap 7 (2026-10-17): L2 pairwise gap exposed; read HANDOFF-2026-10-17-maze-backlog-lap7.md
 - The former kernel row “joint normality is pairwise” proved only the non-joint signed
   combination, not the required pairwise-joint premise.  The row is now honestly frozen/parked;

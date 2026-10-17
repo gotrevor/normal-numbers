@@ -618,6 +618,68 @@ theorem stoneham_pair_cancellationDepth_le_two (a c : ℤ) (n : ℕ)
   exact ((padicValInt_dvd_iff n _).mp hdvd).resolve_left
     (stoneham_pairNorms_ne_zero a c hac).2
 
+/-- Once the kick depth exceeds the coefficient norm's valuation, the actual 7-adic loss
+in the equal-depth leading coefficient is bounded by that fixed valuation.  This is the
+form needed when two same-prime Stoneham families enter their newest kicks together. -/
+theorem stoneham_pair_leadingVal_le_one (a c : ℤ) (n : ℕ)
+    (hac : a ≠ 0 ∨ c ≠ 0)
+    (hn : padicValInt 7 (a ^ 2 + a * c + c ^ 2) < n) :
+    padicValInt 7 (a + c * (3 : ℤ) ^ (7 ^ n)) ≤
+      padicValInt 7 (a ^ 2 + a * c + c ^ 2) := by
+  letI : Fact (Nat.Prime 7) := ⟨by norm_num⟩
+  let v := padicValInt 7 (a + c * (3 : ℤ) ^ (7 ^ n))
+  have hvn : v < n := by
+    by_contra h
+    have hnv : n ≤ v := by omega
+    have hd : (7 : ℤ) ^ n ∣ a + c * (3 : ℤ) ^ (7 ^ n) :=
+      (padicValInt_dvd_iff n _).mpr (Or.inr hnv)
+    have := stoneham_pair_cancellationDepth_le_one a c n hac hd
+    omega
+  have hlin : (7 : ℤ) ^ v ∣ a + c * (3 : ℤ) ^ (7 ^ n) := padicValInt_dvd _
+  have hphiN : (7 : ℤ) ^ n ∣
+      ((3 : ℤ) ^ (7 ^ n)) ^ 2 - (3 : ℤ) ^ (7 ^ n) + 1 := by
+    simpa only [pow_two, ← pow_add, show 7 ^ n + 7 ^ n = 2 * 7 ^ n by omega] using
+      seven_pow_dvd_stoneham_phiSix_int n
+  have hphi : (7 : ℤ) ^ v ∣
+      ((3 : ℤ) ^ (7 ^ n)) ^ 2 - (3 : ℤ) ^ (7 ^ n) + 1 := by
+    exact (pow_dvd_pow (7 : ℤ) (by omega : v ≤ n)).trans hphiN
+  have hnorm := dvd_pairNorm_of_phiSix ((7 : ℤ) ^ v) a c
+    ((3 : ℤ) ^ (7 ^ n)) hlin hphi
+  exact ((padicValInt_dvd_iff v _).mp hnorm).resolve_left
+    (stoneham_pairNorms_ne_zero a c hac).1
+
+/-- The analogous leading-coefficient valuation bound when the Stoneham exponents differ
+by two. -/
+theorem stoneham_pair_leadingVal_le_two (a c : ℤ) (n : ℕ)
+    (hac : a ≠ 0 ∨ c ≠ 0)
+    (hn : padicValInt 7 (a ^ 2 - a * c + c ^ 2) < n) :
+    padicValInt 7 (a + c * ((3 : ℤ) ^ (7 ^ n)) ^ 2) ≤
+      padicValInt 7 (a ^ 2 - a * c + c ^ 2) := by
+  letI : Fact (Nat.Prime 7) := ⟨by norm_num⟩
+  let v := padicValInt 7 (a + c * ((3 : ℤ) ^ (7 ^ n)) ^ 2)
+  have hvn : v < n := by
+    by_contra h
+    have hnv : n ≤ v := by omega
+    have hd : (7 : ℤ) ^ n ∣ a + c * ((3 : ℤ) ^ (7 ^ n)) ^ 2 :=
+      (padicValInt_dvd_iff n _).mpr (Or.inr hnv)
+    have := stoneham_pair_cancellationDepth_le_two a c n hac hd
+    omega
+  have hlin : (7 : ℤ) ^ v ∣ a + c * ((3 : ℤ) ^ (7 ^ n)) ^ 2 :=
+    padicValInt_dvd _
+  have hphiSix : (7 : ℤ) ^ n ∣
+      ((3 : ℤ) ^ (7 ^ n)) ^ 2 - (3 : ℤ) ^ (7 ^ n) + 1 := by
+    simpa only [pow_two, ← pow_add, show 7 ^ n + 7 ^ n = 2 * 7 ^ n by omega] using
+      seven_pow_dvd_stoneham_phiSix_int n
+  have hphiN := dvd_phiThree_sq_of_phiSix ((7 : ℤ) ^ n)
+    ((3 : ℤ) ^ (7 ^ n)) hphiSix
+  have hphi : (7 : ℤ) ^ v ∣
+      (((3 : ℤ) ^ (7 ^ n)) ^ 2) ^ 2 + ((3 : ℤ) ^ (7 ^ n)) ^ 2 + 1 := by
+    exact (pow_dvd_pow (7 : ℤ) (by omega : v ≤ n)).trans hphiN
+  have hnorm := dvd_pairNorm_of_phiThree ((7 : ℤ) ^ v) a c
+    (((3 : ℤ) ^ (7 ^ n)) ^ 2) hlin hphi
+  exact ((padicValInt_dvd_iff v _).mp hnorm).resolve_left
+    (stoneham_pairNorms_ne_zero a c hac).2
+
 /-- The L2 zero windows prove the *non-joint* half of the proposed pairwise counterexample,
 with the exact rational-joint formulation made explicit. -/
 @[blueprint (title := "The ternary Stoneham triple is not rationally jointly normal")]
