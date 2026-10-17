@@ -496,6 +496,8 @@ import NormalNumbers.EquidistTransfer
 import NormalNumbers.MasterConsequences
 import NormalNumbers.MasterLogFamily
 import NormalNumbers.MasterKicked
+import NormalNumbers.BBPSpan
+import NormalNumbers.JointOrbitBarriers
 import NormalNumbers.MasterPiSq
 import NormalNumbers.MasterLnTwoBase3
 import NormalNumbers.MasterMaze

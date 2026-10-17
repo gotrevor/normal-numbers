@@ -1,3 +1,9 @@
+# Maze backlog lap 1 (2026-10-17): closed joint-orbit routes; read HANDOFF-2026-10-17-maze-backlog-lap1.md
+- Part 1 of `KICKOFF-2026-10-16-maze-backlog.md` is complete: R1 and R6 have axiom-clean kernel
+  witnesses, R2 and R4 have exact frozen statements, and all four rows are declaration-audited.
+  The target gate is green at 195 rows / 88 declaration-backed links.  Next: Part 2's universal
+  positive-frequency product-block refutation using `Mahler.bgLiouville 3 0 1`.
+
 # Stoneham sums normal lap 3 COMPLETE (2026-10-16); read HANDOFF-2026-10-16-stoneham-sums-normal-lap3.md
 - `StonehamSumsNormal.lean` is sorry-free.  The derived Vandehey Corollary 1.2, general rational
   combination theorem, and `α₂,₃ + α₂,₅` headline all have exactly the standard trust-base

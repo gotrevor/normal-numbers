@@ -171,6 +171,20 @@ def mazeLinks : List Link := [
    [``NormalNumbers.Maze.hall_stoneham_decomposition_sum,
     ``NormalNumbers.stoneham_pair_normal_not_isSimplyNormal_sum,
     ``NormalNumbers.digitOf_stoneham_sum_eq_zero], []⟩,
+  ⟨"factor-map entropy seed for a BBP pair",
+   [``NormalNumbers.Maze.hall_bbp_factor_entropy_seed,
+    ``NormalNumbers.MasterConjectures.isBBPTypeSeries_nonzero_rat_linear],
+   [``NormalNumbers.MasterConjectures.NormalBBPSeed]⟩,
+  ⟨"Stoneham sub-series pointing at ln 2",
+   [``NormalNumbers.JointOrbitBarriers.StonehamUniversalDisagreement], []⟩,
+  ⟨"Diophantine input for a disjunctive rational channel",
+   [``NormalNumbers.JointOrbitBarriers.CantorPairNoDisjunctiveChannel,
+    ``NormalNumbers.JointOrbitBarriers.IsZeroOneCantorTen,
+    ``QSpan.exists_pair_exponentTwo_qSpan_not_normal], []⟩,
+  ⟨"joint orbit containing ln 2",
+   [``NormalNumbers.Maze.hall_joint_orbit_ln_two,
+    ``NormalNumbers.JointOrbitBarriers.isNormal_coordinates_of_jointNormal],
+   [``NormalNumbers.JointOrbitBarriers.LnTwoNormalSeed]⟩,
   ⟨"normal Stoneham constants are closed under addition",
    [``NormalNumbers.Maze.hall_stoneham_sum_normal,
     ``NormalNumbers.stoneham_pair_normal_not_isSimplyNormal_sum], []⟩,
@@ -381,7 +395,7 @@ def mazeLegacy : List String := [
   "Diophantine good-denominator detour for the tail cell",
   "route B's unweighted cover of the state-dependent target"]
 
-/-- info: maze audit: 191 rows, 84 cite declarations, 107 legacy (prose only) -/
+/-- info: maze audit: 195 rows, 88 cite declarations, 107 legacy (prose only) -/
 #guard_msgs in
 #maze_audit mazeRows, mazeLinks, mazeLegacy
 

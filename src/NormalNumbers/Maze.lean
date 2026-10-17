@@ -41,6 +41,8 @@ import NormalNumbers.Erdos257Squarefree
 import NormalNumbers.EDensityAudit
 import NormalNumbers.QSpanNormal
 import NormalNumbers.DeterministicBD
+import NormalNumbers.BBPSpan
+import NormalNumbers.JointOrbitBarriers
 
 /-!
 # `Maze.lean` — the halls we have walked, encoded
@@ -577,6 +579,21 @@ Wall's 1949 thesis theorem — `q * x + r` is normal in base `b` whenever `x` is
 abnormal, so a "pick a multiple" normality statement carries no information.  Formerly a
 `.cited` prose row; now a theorem of this build. -/
 alias hall_mahler_block_occurrence := NormalNumbers.isNormal_rat_mul_add
+
+/-- **HALL: factor-map entropy seed for a BBP pair** (`restatement`, 2026-10-16).
+The polynomial-ratio BBP kick class is closed under every rational linear combination.
+Consequently, passing from one BBP constant to a rational span of two of them does not create a
+new entropy source: the proposed factor-map seed still needs a normal (or independently
+positive-entropy) BBP-type constant.  The explicit normal-seed reopen condition is
+`NormalBBPSeed`. -/
+alias hall_bbp_factor_entropy_seed :=
+  NormalNumbers.MasterConjectures.isBBPTypeSeries_nonzero_rat_linear
+
+/-- **HALL: a jointly normal orbit containing `ln 2`** (`wall`, 2026-10-16).
+Joint normality projects to each coordinate, so including `ln 2` cannot average away its
+unknown normality.  The explicit reopen condition is `LnTwoNormalSeed`. -/
+alias hall_joint_orbit_ln_two :=
+  NormalNumbers.JointOrbitBarriers.isNormal_coordinates_of_jointNormal
 
 /-! ## 3. Tier `frozen` — precise statements, undischarged
 
@@ -1448,6 +1465,30 @@ def register : List Hall := [
    .falseAsStated, .kernel,
    "The coupled initial pieces already fail: alpha_{2,3} + alpha_{4,3} has binary zero windows [2*3^k, 3^(k+1)), hence is not even simply normal. Any decomposition argument must control arithmetic cancellation between pieces, not only each piece separately",
    "alias hall_stoneham_decomposition_sum := stoneham_pair_normal_not_isSimplyNormal_sum; StonehamSums.lean: digitOf_stoneham_sum_eq_zero",
+   "2026-10-16"⟩,
+  ⟨"factor-map entropy seed for a BBP pair",
+   "Use the joint factor of two base-b BBP polynomial-ratio series to obtain an entropy seed unavailable for either series alone",
+   .restatement, .kernel,
+   "Every nonzero rational combination is again a base-b polynomial-ratio BBP-type series (isBBPTypeSeries_nonzero_rat_linear), so the seed still requires normality or positive entropy for a BBP constant. REOPEN IF: NormalBBPSeed, or a positive-entropy analogue",
+   "BBPSpan.lean: hall_bbp_factor_entropy_seed, isBBPTypeSeries_nonzero_rat_linear, NormalBBPSeed; docs/joint-bc-orbits-2026-10-16.md R1",
+   "2026-10-16"⟩,
+  ⟨"Stoneham sub-series pointing at ln 2",
+   "Subtract the known-normal Stoneham component alpha_{2,3} from ln 2 and use the forced digit disagreements to obtain information about ln 2",
+   .vacuous, .frozen,
+   "The disagreement estimate is universal in the input: every real x disagrees with x - alpha_{2,3} on lower density at least 1/4. Applying it at x = ln 2 therefore detects only the normal Stoneham translate, not special structure of ln 2",
+   "JointOrbitBarriers.lean: StonehamUniversalDisagreement (frozen, 97%); docs/joint-bc-orbits-2026-10-16.md T-D and R2",
+   "2026-10-16"⟩,
+  ⟨"Diophantine input for a disjunctive rational channel",
+   "Use irrationality exponent two in every nonzero rational channel of a pair to force one channel to be disjunctive",
+   .refuted, .frozen,
+   "A pair from the base-ten {0,1}-digit Cantor set has exponent two in every nontrivial rational channel, but every channel orbit stays in finitely many affine images of aC + cC, of upper box dimension at most log 4 / log 10, and is not dense. Diophantine quality does not supply digit entropy",
+   "JointOrbitBarriers.lean: CantorPairNoDisjunctiveChannel (frozen, 85%); QSpanNormal.lean: exists_pair_exponentTwo_qSpan_not_normal (exponent-two leg); docs/joint-bc-orbits-2026-10-16.md R4",
+   "2026-10-16"⟩,
+  ⟨"joint orbit containing ln 2",
+   "Place ln 2 in a jointly normal family and use the other coordinates to overcome the missing single-orbit estimate",
+   .wall, .kernel,
+   "Joint normality forces normality of every coordinate (isNormal_coordinates_of_jointNormal), so the family inherits the hardest coordinate and supplies no averaging escape. REOPEN IF: LnTwoNormalSeed, or a positive segment exponent that proves such a seed",
+   "JointOrbitBarriers.lean: hall_joint_orbit_ln_two, isNormal_coordinates_of_jointNormal, LnTwoNormalSeed; docs/joint-bc-orbits-2026-10-16.md R6",
    "2026-10-16"⟩,
   ⟨"normal Stoneham constants are closed under addition",
    "Infer joint normality, or normality of a sum, from separate normality of Stoneham constants",
