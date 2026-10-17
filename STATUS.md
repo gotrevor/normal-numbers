@@ -1,5 +1,22 @@
 # STATUS — normal-numbers 📊
 
+## Literal Bailey--Borwein pairs, 17 October 2026 (branch `proof/bb-literal-pairs`, lap 1)
+
+**Scoped kickoff open** · **Crux advance**: power-growth analytic half complete ·
+**Build**: 🟢 `StonehamPairsNormal` target green (8,775 jobs)
+
+`StonehamPairsAnalytic.lean` now proves the complete Vandehey block/mean argument from the
+referee-required hypothesis `(n:ℝ)^rho <= C0 * den(state n)` for arbitrary `rho,C0 > 0`.
+The headline interface is `stonehamCombination_mean_tendsto_of_powerLower`; its square-mean
+prerequisite and the headline both have exactly `[Classical.choice, Quot.sound, propext]` as
+their axiom list. The former linear interface embeds at exponent one, and no Theorem A statement
+was changed.
+
+The two ratified sorries in `StonehamPairsNormal.lean` remain. The next blocker is entirely
+arithmetic: formalize Lemma 3-prime for one or two literal families (finite Teichmueller
+congruence, periodic polar tail, rate separation, and the top-digit never-silent argument), then
+instantiate the new power-lower interface. See `HANDOFF-2026-10-17-bb-literal-pairs-lap1.md`.
+
 ## Maze backlog full-history cancellation update, 17 October 2026 (branch `proof/maze-backlog`, lap 10 review)
 
 **Kickoff open at Part 3/L2** · **Crux advance**: tied-depth full numerator controlled ·

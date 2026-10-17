@@ -1,3 +1,10 @@
+# Literal Bailey--Borwein pairs lap 1 (2026-10-17): power-growth analytic engine complete; read HANDOFF-2026-10-17-bb-literal-pairs-lap1.md
+- The scoped target still has its two ratified sorries. Kickoff step 1 is complete:
+  `stonehamCombination_mean_tendsto_of_powerLower` carries any positive-power reduced-denominator
+  lower bound through the full Vandehey block/mean argument at the standard trust baseline.
+  Next: Lemma 3-prime arithmetic (finite Teichmueller congruence, periodic tail, and never-silent
+  literal pair) to supply that bound for sums and unequal differences.
+
 # Maze backlog review lap 10 (2026-10-17): full tied-depth history controlled; read HANDOFF-2026-10-17-maze-backlog-lap10.md
 - The review rejected the strict-minimum treatment of older kicks. Phase congruence modulo the
   exact surviving powers of seven now transfers lap 8's newest-phase bound to the complete
