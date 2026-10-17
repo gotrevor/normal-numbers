@@ -1,3 +1,16 @@
+# Prime-class joint normality, 17 October 2026 (branch `proof/prime-class`, lap 12 COMPLETE)
+
+Theorem T-B′ is complete.  `StonehamPrimeClass.lean` is sorry-free, and all six kickoff
+declarations -- the dependent non-normal half, independent normal half, iff, pair iff, concrete
+pairwise-normal premise, and unconditional pairwise-not-joint counterexample -- use exactly the
+standard trust base `[Classical.choice, Quot.sound, propext]`.
+
+The final proof bounds the literal cleared-state numerator by one finite gap-pattern resultant
+loss, retains `p^(maxDepth-loss)` in the reduced state denominator, and feeds the resulting linear
+power lower bound to the existing Vandehey/Weyl engine.  The last BarrierAudit waiver is removed,
+and the Maze row "joint normality is pairwise" is now `.refuted/.kernel`.  Target, Maze, MazeAudit,
+and BarrierAudit builds are green.  See `HANDOFF-2026-10-17-prime-class-lap12.md`.
+
 # Prime-class joint normality, 17 October 2026 (branch `proof/prime-class`, lap 11)
 
 `StonehamPrimeClassPowerLower` now proves that common-cap complementary exponents preserve

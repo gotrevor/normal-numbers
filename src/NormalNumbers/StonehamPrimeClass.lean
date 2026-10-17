@@ -126,7 +126,10 @@ theorem isRationallyJointNormal_of_linearIndependent
     (ζ : ℂ) (hζ : IsPrimitiveRoot ζ (orderOf (b : ZMod p)))
     (hind : LinearIndependent ℚ (fun i => ζ ^ m i)) :
     IsRationallyJointNormal b (primeClassFamily b p m s) := by
-  sorry
+  intro q hq
+  simpa only [primeClassFamily] using
+    isNormal_primeClassCombination_rat VandeheyProof.vandeheyThm51_holds
+      b p s m q ζ hp hb hpb hs hm hq hζ hind
 
 /-- **Theorem T-B′.**  A prime-class Stoneham family is rationally jointly normal exactly when the
 `ζ^{mᵢ}` are `ℚ`-linearly independent. -/

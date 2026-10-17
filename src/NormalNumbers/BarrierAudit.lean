@@ -216,9 +216,6 @@ def waivers : List Waiver := [
   ⟨``ErdosTriples.exceptionalSet_eq_zero_of_gapTriplesEventually,
    "wiring lemma (a leaf): the proved integer wiring erdos406_of_gapTriplesEventually lifted to \
     3-adic digits (parity, valuation shift, residues); English proof in the docstring"⟩,
-  ⟨``StonehamPrimeClass.isRationallyJointNormal_of_linearIndependent,
-   "campaign target (KICKOFF-2026-10-17-prime-class.md): T-B' normal half, refereed \
-    paper sketch; not a crux"⟩,
   ⟨``IndependenceRelative.not_isRelativeBlock_small,
    "a finite computation stated as a sibling: the blocksearch probe's non-certification over \
     small direction sets; it closes a route, no open crux uses it"⟩,

@@ -45,6 +45,7 @@ import NormalNumbers.BBPSpan
 import NormalNumbers.JointOrbitBarriers
 import NormalNumbers.MahlerDensityProduct
 import NormalNumbers.StonehamSumsBoundary
+import NormalNumbers.StonehamPrimeClass
 
 /-!
 # `Maze.lean` — the halls we have walked, encoded
@@ -690,6 +691,12 @@ normality.  The pairwise premise itself is the frozen
 refutation of the whole claim. -/
 alias hall_pairwise_joint_normality_nonjoint_half :=
   NormalNumbers.not_isRationallyJointNormal_stonehamThreeSeven
+
+/-- Kernel-checked counterexample to pairwise joint normality implying joint normality: the
+three Stoneham constants are pairwise rationally jointly normal, while their signed triple
+combination is not normal. -/
+alias hall_pairwise_joint_normality :=
+  NormalNumbers.StonehamPrimeClass.stonehamThreeSeven_pairwise_not_joint_unconditional
 
 /-- Hall witness against asserting normality for every rational combination
 inside one multiplicative `c`-class. -/
@@ -1520,9 +1527,9 @@ def register : List Hall := [
    "2026-10-17"⟩,
   ⟨"joint normality is pairwise",
    "Treat pairwise joint normality of every two coordinates as sufficient for joint normality of the whole finite family",
-   .parked, .frozen,
-   "The signed triple combination has kernel-checked ternary zero windows [3*7^(k+1), 7^(k+2)) and is not jointly normal, but the required premise that all three pairs are jointly normal was only asserted via the unformalized Bailey--Borwein same-prime criterion. StonehamThreeSevenPairwiseNormal pins that exact missing premise. Leading cancellation at exponent difference one or two has fixed 7-adic loss. The tempting claim that older kicks are then strict valuation minima is false when that loss exceeds one; instead stoneham_seven_phase_modEq makes every cleared older-phase error vanish modulo 7^(K+1), and padicValInt_stonehamPairWeighted_le_one/two now prove the full tied-depth numerator bounds. The complete Vandehey block/mean argument depends only on StonehamStateDenLinearLower. REOPEN IF: handle unequal kick depths, identify the weighted numerators with the rational state, and derive that linear denominator bound for all three pairs",
-   "StonehamSumsBoundary.lean: hall_pairwise_joint_normality_nonjoint_half, not_isRationallyJointNormal_stonehamThreeSeven, StonehamThreeSevenPairwiseNormal, stoneham_seven_phase_modEq, padicValInt_stonehamPairWeighted_le_one/two, stonehamThreeSeven_pairwise_not_joint; StonehamSumsNormal.lean: StonehamStateDenLinearLower, stonehamCombination_mean_tendsto_of_linearLower; papers/2026-10-16-bailey-borwein-full-answer.md L2",
+   .refuted, .kernel,
+   "The Stoneham triple alpha_{3,7}, alpha_{9,7}, alpha_{27,7} is pairwise rationally jointly 3-normal by the prime-class criterion (ord_7(3)=6), while the signed triple combination has ternary zero windows [3*7^(k+1), 7^(k+2)) and is not jointly normal",
+   "StonehamPrimeClass.lean: hall_pairwise_joint_normality, stonehamThreeSevenPairwiseNormal_holds, stonehamThreeSeven_pairwise_not_joint_unconditional; StonehamSumsBoundary.lean: not_isRationallyJointNormal_stonehamThreeSeven; papers/2026-10-16-bailey-borwein-full-answer.md L2",
    "2026-10-17"⟩,
   ⟨"same-c combinations are normal",
    "Assert normality for every nonzero rational combination of Stoneham constants whose c parameters lie in one multiplicative class",

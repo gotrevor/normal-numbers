@@ -37,6 +37,7 @@ import NormalNumbers.ZerolessTuples
 import NormalNumbers.ErdosTripleClasses
 import NormalNumbers.ZeroOneBases
 import NormalNumbers.ZeroOneBasesSlopes
+import NormalNumbers.StonehamPrimeClass
 
 /-!
 # Maze audit: every closed route cites declarations
@@ -191,20 +192,13 @@ def mazeLinks : List Link := [
     ``NormalNumbers.Mahler.IsDensityProductBlock],
    [``NormalNumbers.Mahler.DensityProductBlockExponentTwo]⟩,
   ⟨"joint normality is pairwise",
-   [``NormalNumbers.Maze.hall_pairwise_joint_normality_nonjoint_half,
+   [``NormalNumbers.Maze.hall_pairwise_joint_normality,
+    ``NormalNumbers.StonehamPrimeClass.stonehamThreeSevenPairwiseNormal_holds,
+    ``NormalNumbers.StonehamPrimeClass.stonehamThreeSeven_pairwise_not_joint_unconditional,
     ``NormalNumbers.not_isRationallyJointNormal_stonehamThreeSeven,
-    ``NormalNumbers.stonehamThreeSeven_pairwise_not_joint,
-    ``NormalNumbers.seven_pow_dvd_stoneham_pairNorm_one,
-    ``NormalNumbers.seven_pow_dvd_stoneham_pairNorm_two,
-    ``NormalNumbers.stoneham_pairNorms_ne_zero,
-    ``NormalNumbers.stoneham_pair_cancellationDepth_le_one,
-    ``NormalNumbers.stoneham_pair_cancellationDepth_le_two,
-    ``NormalNumbers.stoneham_seven_phase_modEq,
-    ``NormalNumbers.padicValInt_stonehamPairWeighted_le_one,
-    ``NormalNumbers.padicValInt_stonehamPairWeighted_le_two,
     ``NormalNumbers.not_isSimplyNormal_three_seven_triple,
     ``NormalNumbers.digitOf_stoneham_three_seven_triple_eq_zero],
-   [``NormalNumbers.StonehamThreeSevenPairwiseNormal]⟩,
+   []⟩,
   ⟨"same-c combinations are normal",
    [``NormalNumbers.Maze.hall_same_c_combinations_normal,
     ``NormalNumbers.not_isSimplyNormal_stoneham_sub_succ_mul,

@@ -1,3 +1,15 @@
+# Prime class lap 12 (2026-10-17, COMPLETE) -- T-B′ and L2 closed
+
+* `StonehamPrimeClass.lean` is sorry-free.  All six kickoff declarations audit to exactly
+  `[Classical.choice, Quot.sound, propext]`.
+* The fixed-pattern resultant loss now bounds the literal cleared-state numerator, yields a
+  reduced-denominator divisor `p^(maxDepth-loss)`, and supplies the Vandehey/Weyl power lower
+  bound for every nonzero rational combination under the cyclotomic independence criterion.
+* All four campaign BarrierAudit waivers are gone.  The Maze row "joint normality is pairwise"
+  is `.refuted/.kernel`, backed by the unconditional Stoneham triple counterexample.
+* No in-scope work remains.  Next action: operator review/merge; do not let unrelated proof debt
+  delay the completed scoped gate.  See `HANDOFF-2026-10-17-prime-class-lap12.md`.
+
 # Prime class lap 11 (2026-10-17) — uniform finite-pattern resultant loss proved
 
 * Complementary exponents preserve the exact rational linear-independence criterion.
