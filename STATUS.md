@@ -1,5 +1,14 @@
 # STATUS — normal-numbers 📊
 
+## Vandehey Theorem 5.1 update, 17 October 2026 (branch `proof/vandehey-thm51`, lap 16)
+
+The Proposition 4.1 differencing and correlation halves are now assembled in the axiom-clean
+theorem `VandeheyKorobov.norm_power_sum_sq_le_aggregated`.  The companion theorem
+`rounded_step_data` packages equations (12)--(13) and Claim 4.6 for the exact rounded modulus.
+The remaining crux is the real-exponent normalization to the paper's three squared terms, then
+the trivial branches, square-root step, and Theorem 5.1 induction.  The scoped file retains one
+headline `sorry`.  See `HANDOFF-2026-10-17-vandehey-thm51-lap16.md`.
+
 ## Cantor repetition update, 9 October 2026 (branch `proof/cantor-repetition`, lap 13) — HEADLINE PROVED
 
 **Is the profile cut forced? No.** · **Build**: 🟢 green (10802 jobs, full default build) · lap 13
