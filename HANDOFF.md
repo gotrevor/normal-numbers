@@ -1,3 +1,12 @@
+# Prime class lap 7 (2026-10-17): full-precision phase alignment; read HANDOFF-2026-10-17-prime-class-lap7.md
+
+- Literal cleared histories now align, at full common precision, with the abstract
+  `primeClassHistoryWeight`.  Familywise multiplication by all top finite Teichmuller phases
+  produces deleted products, and those products are kernel-identified with the complementary
+  exponents carrying the cyclotomic relation.  The scoped target remains green with its two
+  ratified analytic sorries.  Next assemble growing divisibility for the literal cleared-state
+  numerator under fixed depth gaps, cancel the coprime phase product, and prove the periodic cell.
+
 # Prime class lap 6 REVIEW (2026-10-17): corrected mixed-state preparation; read HANDOFF-2026-10-17-prime-class-lap6.md
 
 - Review exposed and repaired an incomplete route: inverse Mahler scaling must be combined with

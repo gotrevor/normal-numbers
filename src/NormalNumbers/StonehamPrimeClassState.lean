@@ -5,6 +5,7 @@ Authors: Trevor Morris
 -/
 import NormalNumbers.StonehamPrimeClassFinite
 import NormalNumbers.StonehamPrimeClassMahler
+import NormalNumbers.StonehamPairsArithmetic
 
 /-!
 # State preparation for one prime Stoneham class
@@ -311,6 +312,239 @@ lemma primeClassStateCoefficient_mul_clearedHistory
   rw [← primeClassHistoryWeight_eq_sum_Icc]
   exact primeClassStateCoefficient_mul_historyWeight p s K δ D a hp hδD
 
+/-! ### Finite phase alignment -/
+
+/-- A uniform natural exponent above every selected exponent. -/
+def primeClassExponentCap {r : ℕ} (m : Fin r → ℕ) : ℕ :=
+  ∑ i, m i
+
+/-- Complementary exponents turn inverse powers into ordinary nonnegative powers after one
+common unit factor. -/
+def primeClassComplementExponent {r : ℕ} (m : Fin r → ℕ) (i : Fin r) : ℕ :=
+  primeClassExponentCap m - m i
+
+/-- Multiplying an entered prime-class phase by its top finite Teichmuller representative
+recovers the common phase `b^n` at the full precision supplied by clearing the denominator.
+
+Unlike the literal-pair polar congruence, the residual exponent here is the fixed reduced base
+exponent `u`; the Stoneham parameter itself is the pure prime power `p^s`. -/
+lemma primeClassPhase_mul_topTeichmuller_modEq
+    (p b s u k K n : ℕ) (hp : p.Prime) (hkK : k ≤ K)
+    (hentered : u * p ^ (s * k) ≤ n) :
+    (b : ℤ) ^ (n - u * p ^ (s * k)) *
+          ((b : ℤ) ^ (p ^ (s * K))) ^ u * (p : ℤ) ^ (s * (K - k)) ≡
+      (b : ℤ) ^ n * (p : ℤ) ^ (s * (K - k)) [ZMOD p ^ (s * K + 1)] := by
+  have hlevel : s * k ≤ s * K := Nat.mul_le_mul_left s hkK
+  have hphase :
+      (b : ℤ) ^ (n - u * p ^ (s * k)) *
+          ((b : ℤ) ^ (p ^ (s * K))) ^ u ≡
+        (b : ℤ) ^ n [ZMOD p ^ (s * k + 1)] := by
+    have hrep := NormalNumbers.StonehamPairsNormal.teichmullerTower_power_modEq_of_le
+      p b (s * k) (s * K) u hp hlevel
+    have hmul := hrep.mul_left ((b : ℤ) ^ (n - u * p ^ (s * k)))
+    calc
+      (b : ℤ) ^ (n - u * p ^ (s * k)) *
+            ((b : ℤ) ^ (p ^ (s * K))) ^ u ≡
+          (b : ℤ) ^ (n - u * p ^ (s * k)) *
+            (b : ℤ) ^ (p ^ (s * k) * u) [ZMOD p ^ (s * k + 1)] := by
+              simpa only [pow_mul] using hmul
+      _ = (b : ℤ) ^ n := by
+        rw [mul_comm (p ^ (s * k)) u, ← pow_add]
+        congr 1
+        omega
+  rw [Int.modEq_iff_dvd] at hphase ⊢
+  have hdepth : s * K = s * k + s * (K - k) := by
+    rw [← Nat.mul_add, Nat.add_sub_of_le hkK]
+  rw [show s * K + 1 = (s * k + 1) + s * (K - k) by omega, pow_add]
+  simpa only [sub_mul] using
+    mul_dvd_mul hphase (dvd_refl ((p : ℤ) ^ (s * (K - k))))
+
+/-- The complete entered history has one common phase after multiplication by the top finite
+Teichmuller representative.  Its remaining coefficient is exactly
+`primeClassHistoryWeight`; the additional common-depth gap `δ` contributes the same additional
+`p^δ` precision on both sides. -/
+lemma primeClassClearedHistory_mul_topTeichmuller_modEq
+    (p b s u K δ n : ℕ) (hp : p.Prime)
+    (hentered : ∀ k ∈ Icc 1 K, u * p ^ (s * k) ≤ n) :
+    (∑ k ∈ Icc 1 K,
+        (b : ℤ) ^ (n - u * p ^ (s * k)) * (p : ℤ) ^ (δ + s * (K - k))) *
+          ((b : ℤ) ^ (p ^ (s * K))) ^ u ≡
+      (b : ℤ) ^ n * (primeClassHistoryWeight p s K δ : ℤ)
+        [ZMOD p ^ (δ + s * K + 1)] := by
+  have hterm : ∀ k ∈ Icc 1 K,
+      (b : ℤ) ^ (n - u * p ^ (s * k)) *
+            ((b : ℤ) ^ (p ^ (s * K))) ^ u * (p : ℤ) ^ (δ + s * (K - k)) ≡
+        (b : ℤ) ^ n * (p : ℤ) ^ (δ + s * (K - k))
+          [ZMOD p ^ (δ + s * K + 1)] := by
+    intro k hk
+    have hbase := primeClassPhase_mul_topTeichmuller_modEq p b s u k K n hp
+      (mem_Icc.mp hk).2 (hentered k hk)
+    rw [Int.modEq_iff_dvd] at hbase ⊢
+    have hscaled := mul_dvd_mul hbase (dvd_refl ((p : ℤ) ^ δ))
+    rw [pow_add (p : ℤ) δ (s * (K - k))]
+    rw [show δ + s * K + 1 = (s * K + 1) + δ by omega, pow_add]
+    rw [show
+      (b : ℤ) ^ n * ((p : ℤ) ^ δ * (p : ℤ) ^ (s * (K - k))) -
+          (b : ℤ) ^ (n - u * p ^ (s * k)) * ((b : ℤ) ^ (p ^ (s * K))) ^ u *
+            ((p : ℤ) ^ δ * (p : ℤ) ^ (s * (K - k))) =
+        ((b : ℤ) ^ n * (p : ℤ) ^ (s * (K - k)) -
+          (b : ℤ) ^ (n - u * p ^ (s * k)) * ((b : ℤ) ^ (p ^ (s * K))) ^ u *
+            (p : ℤ) ^ (s * (K - k))) * (p : ℤ) ^ δ by ring]
+    exact hscaled
+  calc
+    (∑ k ∈ Icc 1 K,
+        (b : ℤ) ^ (n - u * p ^ (s * k)) * (p : ℤ) ^ (δ + s * (K - k))) *
+          ((b : ℤ) ^ (p ^ (s * K))) ^ u =
+        ∑ k ∈ Icc 1 K,
+          (b : ℤ) ^ (n - u * p ^ (s * k)) *
+            ((b : ℤ) ^ (p ^ (s * K))) ^ u * (p : ℤ) ^ (δ + s * (K - k)) := by
+              rw [sum_mul]
+              apply sum_congr rfl
+              intro k hk
+              ring
+    _ ≡ ∑ k ∈ Icc 1 K,
+          (b : ℤ) ^ n * (p : ℤ) ^ (δ + s * (K - k))
+            [ZMOD p ^ (δ + s * K + 1)] := Int.ModEq.sum hterm
+    _ = (b : ℤ) ^ n * (primeClassHistoryWeight p s K δ : ℤ) := by
+      rw [← mul_sum]
+      congr 1
+      exact_mod_cast (primeClassHistoryWeight_eq_sum_Icc p s K δ).symm
+
+/-- Assemble the phase alignment for a finite prime-class family.  Multiplication by the product
+of all top finite Teichmuller phases makes the factor left after treating family `i` the product
+with `i` deleted.  Those deleted products are the integral counterpart of the complementary
+exponents in `prime_pow_dvd_integerRelation_eval_teichmuller_complement`. -/
+lemma primeClassClearedHistories_mul_phaseProduct_modEq
+    (p b T n : ℕ) {r : ℕ} (s u K δ : Fin r → ℕ) (q : Fin r → ℤ)
+    (hp : p.Prime) (hT : ∀ i, δ i + s i * K i = T)
+    (hentered : ∀ i, ∀ k ∈ Icc 1 (K i), u i * p ^ (s i * k) ≤ n) :
+    (∑ i, q i * ∑ k ∈ Icc 1 (K i),
+        (b : ℤ) ^ (n - u i * p ^ (s i * k)) *
+          (p : ℤ) ^ (δ i + s i * (K i - k))) *
+        (∏ i, ((b : ℤ) ^ (p ^ (s i * K i))) ^ u i) ≡
+      (b : ℤ) ^ n * ∑ i,
+        q i * (primeClassHistoryWeight p (s i) (K i) (δ i) : ℤ) *
+          ∏ j ∈ (univ : Finset (Fin r)).erase i,
+            ((b : ℤ) ^ (p ^ (s j * K j))) ^ u j
+        [ZMOD p ^ (T + 1)] := by
+  classical
+  let z : Fin r → ℤ := fun i ↦ ((b : ℤ) ^ (p ^ (s i * K i))) ^ u i
+  let R : Fin r → ℤ := fun i ↦ ∏ j ∈ (univ : Finset (Fin r)).erase i, z j
+  have hfamily : ∀ i,
+      (∑ k ∈ Icc 1 (K i),
+          (b : ℤ) ^ (n - u i * p ^ (s i * k)) *
+            (p : ℤ) ^ (δ i + s i * (K i - k))) * z i ≡
+        (b : ℤ) ^ n * (primeClassHistoryWeight p (s i) (K i) (δ i) : ℤ)
+          [ZMOD p ^ (T + 1)] := by
+    intro i
+    have hi := primeClassClearedHistory_mul_topTeichmuller_modEq
+      p b (s i) (u i) (K i) (δ i) n hp (hentered i)
+    simpa only [z, hT i] using hi
+  have hQ : ∀ i, ∏ j, z j = z i * R i := by
+    intro i
+    exact (mul_prod_erase (univ : Finset (Fin r)) z (mem_univ i)).symm
+  calc
+    (∑ i, q i * ∑ k ∈ Icc 1 (K i),
+        (b : ℤ) ^ (n - u i * p ^ (s i * k)) *
+          (p : ℤ) ^ (δ i + s i * (K i - k))) *
+        (∏ i, ((b : ℤ) ^ (p ^ (s i * K i))) ^ u i) =
+      ∑ i, q i *
+        ((∑ k ∈ Icc 1 (K i),
+          (b : ℤ) ^ (n - u i * p ^ (s i * k)) *
+            (p : ℤ) ^ (δ i + s i * (K i - k))) * z i) * R i := by
+        rw [sum_mul]
+        apply sum_congr rfl
+        intro i hi
+        rw [hQ i]
+        simp only [z, R]
+        ring
+    _ ≡ ∑ i, q i *
+        ((b : ℤ) ^ n * (primeClassHistoryWeight p (s i) (K i) (δ i) : ℤ)) * R i
+          [ZMOD p ^ (T + 1)] := by
+            apply Int.ModEq.sum
+            intro i hi
+            exact (hfamily i).mul_left (q i) |>.mul_right (R i)
+    _ = (b : ℤ) ^ n * ∑ i,
+        q i * (primeClassHistoryWeight p (s i) (K i) (δ i) : ℤ) *
+          ∏ j ∈ (univ : Finset (Fin r)).erase i,
+            ((b : ℤ) ^ (p ^ (s j * K j))) ^ u j := by
+      rw [mul_sum]
+      apply sum_congr rfl
+      intro i hi
+      simp only [R, z]
+      ring
+
+/-- Once every selected top depth is at least `E`, the product of all finite phases except `i`
+is congruent to the single level-`E` representative raised to the complementary exponent.  This
+is the exact bridge between the deleted products above and the complementary cyclotomic
+relation. -/
+lemma primeClassDeletedPhaseProduct_modEq
+    (p b E : ℕ) {r : ℕ} (s u K : Fin r → ℕ) (i : Fin r)
+    (hp : p.Prime) (hdepth : ∀ j, E ≤ s j * K j) :
+    (∏ j ∈ (univ : Finset (Fin r)).erase i,
+        ((b : ℤ) ^ (p ^ (s j * K j))) ^ u j) ≡
+      ((b : ℤ) ^ (p ^ E)) ^ primeClassComplementExponent u i
+        [ZMOD p ^ (E + 1)] := by
+  have hprod :
+      (∏ j ∈ (univ : Finset (Fin r)).erase i,
+          ((b : ℤ) ^ (p ^ (s j * K j))) ^ u j) ≡
+        ∏ j ∈ (univ : Finset (Fin r)).erase i,
+          ((b : ℤ) ^ (p ^ E)) ^ u j [ZMOD p ^ (E + 1)] := by
+    apply Int.ModEq.prod
+    intro j hj
+    exact (NormalNumbers.StonehamPairsNormal.teichmullerTower_modEq_of_le
+      p b E (s j * K j) hp (hdepth j)).pow (u j)
+  calc
+    (∏ j ∈ (univ : Finset (Fin r)).erase i,
+        ((b : ℤ) ^ (p ^ (s j * K j))) ^ u j) ≡
+      ∏ j ∈ (univ : Finset (Fin r)).erase i,
+        ((b : ℤ) ^ (p ^ E)) ^ u j [ZMOD p ^ (E + 1)] := hprod
+    _ = ((b : ℤ) ^ (p ^ E)) ^
+        ∑ j ∈ (univ : Finset (Fin r)).erase i, u j := by
+          exact Finset.prod_pow_eq_pow_sum _ _ _
+    _ = ((b : ℤ) ^ (p ^ E)) ^ primeClassComplementExponent u i := by
+      congr 1
+      unfold primeClassComplementExponent primeClassExponentCap
+      have herase := sum_erase_add (univ : Finset (Fin r)) u (mem_univ i)
+      omega
+
+/-- The deleted finite-phase products inherit every complementary-exponent relation modulo the
+requested precision. -/
+lemma prime_pow_dvd_integerRelation_deletedPhaseProducts
+    (p b E : ℕ) {r : ℕ} (s u K : Fin r → ℕ) (a : Fin r → ℤ)
+    (hp : p.Prime) (hdepth : ∀ j, E ≤ s j * K j)
+    (hrel : (p : ℤ) ^ E ∣ ∑ i,
+      a i * ((b : ℤ) ^ (p ^ E)) ^ primeClassComplementExponent u i) :
+    (p : ℤ) ^ E ∣ ∑ i, a i *
+      ∏ j ∈ (univ : Finset (Fin r)).erase i,
+        ((b : ℤ) ^ (p ^ (s j * K j))) ^ u j := by
+  have hsum :
+      (∑ i, a i * ∏ j ∈ (univ : Finset (Fin r)).erase i,
+          ((b : ℤ) ^ (p ^ (s j * K j))) ^ u j) ≡
+        ∑ i, a i * ((b : ℤ) ^ (p ^ E)) ^ primeClassComplementExponent u i
+          [ZMOD p ^ (E + 1)] := by
+    apply Int.ModEq.sum
+    intro i hi
+    exact (primeClassDeletedPhaseProduct_modEq p b E s u K i hp hdepth).mul_left (a i)
+  have hmodE :
+      (∑ i, a i * ∏ j ∈ (univ : Finset (Fin r)).erase i,
+          ((b : ℤ) ^ (p ^ (s j * K j))) ^ u j) ≡
+        ∑ i, a i * ((b : ℤ) ^ (p ^ E)) ^ primeClassComplementExponent u i
+          [ZMOD p ^ E] :=
+    hsum.of_dvd (pow_dvd_pow (p : ℤ) (by omega))
+  rw [Int.modEq_iff_dvd] at hmodE
+  obtain ⟨x, hx⟩ := hrel
+  obtain ⟨y, hy⟩ := hmodE
+  refine ⟨x - y, ?_⟩
+  calc
+    ∑ i, a i * ∏ j ∈ (univ : Finset (Fin r)).erase i,
+        ((b : ℤ) ^ (p ^ (s j * K j))) ^ u j =
+      (∑ i, a i * ((b : ℤ) ^ (p ^ E)) ^ primeClassComplementExponent u i) -
+        ((∑ i, a i * ((b : ℤ) ^ (p ^ E)) ^ primeClassComplementExponent u i) -
+          ∑ i, a i * ∏ j ∈ (univ : Finset (Fin r)).erase i,
+            ((b : ℤ) ^ (p ^ (s j * K j))) ^ u j) := by ring
+    _ = (p : ℤ) ^ E * (x - y) := by rw [hy, hx]; ring
+
 /-- Summing aligned histories reduces the whole mixed-`s` numerator to one relation modulo a
 common power of `p`.  This is the algebraic core of the bounded-denominator direction: the new
 top terms vanish because every `s i * K i` is deep enough, while the remaining terms are the
@@ -406,15 +640,6 @@ lemma integerRelation_inverseRoot_eq_zero
     ∑ i, (((a i : ℤ) : ℚ) : ℂ) * (ζ⁻¹) ^ m i = 0 := by
   have h := (cyclotomic_int_dvd_integerRelationPolynomial_iff hd hζ.inv m a).mp hdiv
   simpa only [aeval_relationPolynomial] using h
-
-/-- A uniform natural exponent above every selected exponent. -/
-def primeClassExponentCap {r : ℕ} (m : Fin r → ℕ) : ℕ :=
-  ∑ i, m i
-
-/-- Complementary exponents turn inverse powers into ordinary nonnegative powers after one
-common unit factor. -/
-def primeClassComplementExponent {r : ℕ} (m : Fin r → ℕ) (i : Fin r) : ℕ :=
-  primeClassExponentCap m - m i
 
 lemma primeClassExponent_le_cap {r : ℕ} (m : Fin r → ℕ) (i : Fin r) :
     m i ≤ primeClassExponentCap m := by

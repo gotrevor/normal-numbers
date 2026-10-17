@@ -148,6 +148,17 @@ the commit hook's full 10,863-job build passed.
 
 # STATUS — normal-numbers 📊
 
+# Prime-class joint normality, 17 October 2026 (branch `proof/prime-class`, lap 7)
+
+`StonehamPrimeClassState` now connects the literal mixed-`s` cleared histories to the corrected
+lap-6 state algebra.  Termwise and complete-history finite Teichmuller congruences hold at full
+cleared precision; their family product leaves deleted phase products, which are congruent to the
+complementary exponents and inherit the cyclotomic relation.  All five new endpoints audit to the
+standard trust base.  The scoped target retains exactly the two general analytic sorries and is
+FORMALIZE-TIER GREEN.  Next combine these congruences with aligned-history divisibility and
+coprime cancellation under abstract fixed depth gaps, then construct the periodic gap cell.  See
+`HANDOFF-2026-10-17-prime-class-lap7.md`.
+
 # Literal Bailey--Borwein pairs, 17 October 2026 (branch `proof/bb-literal-pairs`, lap 9 reflection)
 
 **Scoped kickoff open** · **Crux advance**: one-family cancellation removed; exact unequal-depth
