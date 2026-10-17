@@ -1,5 +1,20 @@
 # STATUS — normal-numbers 📊
 
+## Literal Bailey--Borwein pairs, 17 October 2026 (branch `proof/bb-literal-pairs`, lap 2)
+
+**Scoped kickoff open** · **Crux advance**: finite Teichmueller congruence core proved ·
+**Build**: 🟢 `StonehamPairsNormal` target green (8,776 jobs)
+
+`StonehamPairsArithmetic.lean` now proves the geometric-sum prime-power lift, compatibility of the
+finite representatives `b^(p^K)` at every later level, and the extra dyadic precision
+`2^(K+3) | b^(2^(K+1))-1` for odd `b`. The two audited headline arithmetic lemmas have exactly
+`[Classical.choice, Quot.sound, propext]` as their axiom list. The target imports this new module.
+
+The two ratified sorries in `StonehamPairsNormal.lean` remain. Next specialize the congruence to
+exponents of prescribed prime valuation, derive the Stoneham polar and eventual-periodic tail,
+prove the literal one/two-family tail never silent, and instantiate the power-lower analytic
+interface. See `HANDOFF-2026-10-17-bb-literal-pairs-lap2.md`.
+
 ## Literal Bailey--Borwein pairs, 17 October 2026 (branch `proof/bb-literal-pairs`, lap 1)
 
 **Scoped kickoff open** · **Crux advance**: power-growth analytic half complete ·

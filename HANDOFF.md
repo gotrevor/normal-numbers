@@ -1,3 +1,9 @@
+# Literal Bailey--Borwein pairs lap 2 (2026-10-17): finite Teichmueller core proved; read HANDOFF-2026-10-17-bb-literal-pairs-lap2.md
+- The geometric-sum lift, compatible finite representatives `b^(p^K)`, their all-later-level
+  congruence, and the extra-precision dyadic tower are kernel-proved at the standard trust baseline.
+  Next: specialize (K) to exponents by valuation, derive the Stoneham polar/periodic tail, and prove
+  the literal one/two-family tail never silent to obtain the required power denominator bound.
+
 # Literal Bailey--Borwein pairs lap 1 (2026-10-17): power-growth analytic engine complete; read HANDOFF-2026-10-17-bb-literal-pairs-lap1.md
 - The scoped target still has its two ratified sorries. Kickoff step 1 is complete:
   `stonehamCombination_mean_tendsto_of_powerLower` carries any positive-power reduced-denominator

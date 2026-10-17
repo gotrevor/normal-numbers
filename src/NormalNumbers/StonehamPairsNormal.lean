@@ -6,6 +6,7 @@ Authors: Trevor Morris
 import NormalNumbers.StonehamSumsNormal
 import NormalNumbers.StonehamSumsBoundary
 import NormalNumbers.StonehamPairsAnalytic
+import NormalNumbers.StonehamPairsArithmetic
 
 /-!
 # Bailey–Borwein's question, literally: `α_{b,c₁} ± α_{b,c₂}` is always `b`-normal
