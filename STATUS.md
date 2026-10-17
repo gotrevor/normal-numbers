@@ -1,6 +1,6 @@
 # STATUS — normal-numbers 📊
 
-## Vandehey Theorem 5.1 complete, 17 October 2026 (branch `proof/vandehey-thm51`, lap 34 reflection audit)
+## Vandehey Theorem 5.1 complete, 17 October 2026 (branch `proof/vandehey-thm51`, lap 35 terminal confirmation)
 
 `VandeheyProof.vandeheyThm51_holds` is proved with the frozen statement unchanged.  The final
 step is `VandeheyKorobov.norm_power_sum_le_step`, a complete formalization of Proposition 4.1:
@@ -52,6 +52,11 @@ the repo-owned additive character `ePhase` definition to `exp(2πix)` and re-ela
 frozen unconditional consumer contracts during every build.  The ratified theorem contract and
 proof remain unchanged; the scoped theorem/axiom gate and full repository gate are green.  No
 in-scope obligation remains.
+
+Lap 35 independently reconfirmed the exact host predicate from the committed lap-34 tree.  The
+ratified source remains unchanged, the scoped machinery has no proof escape or reverse dependency,
+the permanent statement and axiom guards remain active, and both the 8,936-job scoped gate and
+10,868-job full repository gate are green.  No in-scope obligation remains.
 
 ## Vandehey Theorem 5.1 update, 17 October 2026 (branch `proof/vandehey-thm51`, lap 17)
 
