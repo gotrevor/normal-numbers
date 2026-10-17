@@ -5,7 +5,7 @@ Authors: Trevor Morris
 -/
 import NormalNumbers.StonehamSumsBoundary
 import NormalNumbers.StonehamPairsUnconditional
-import NormalNumbers.StonehamPrimeClassCyclotomic
+import NormalNumbers.StonehamPrimeClassFinite
 import NormalNumbers.VandeheyProof
 
 /-!

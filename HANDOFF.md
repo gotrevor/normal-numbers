@@ -1,3 +1,11 @@
+# Prime class lap 3 REVIEW (2026-10-17): finite cyclotomic lift; read HANDOFF-2026-10-17-prime-class-lap3.md
+
+- Non-independence now kernel-produces one nonzero integral relation whose value at
+  `b^(p^K)` is divisible by `p^K` for every K.  This includes the sharper odd-prime and dyadic
+  bounds and closes a review-found rational coefficient-clearing seam.  The target remains green
+  with exactly the two ratified analytic sorries.  Next implement the mixed-`s i` state congruence
+  and positive-density zero-window argument for the non-normal half.
+
 # Literal Bailey--Borwein pairs lap 14 COMPLETE (2026-10-17): both headlines proved; read HANDOFF-2026-10-17-bb-literal-pairs-lap14.md
 # Prime class lap 2 (2026-10-17): cyclotomic relation bridge; read HANDOFF-2026-10-17-prime-class-lap2.md
 

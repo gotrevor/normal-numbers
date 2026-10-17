@@ -1,3 +1,14 @@
+# Prime class lap 3 (2026-10-17, REVIEW) — dependent finite Teichmüller bridge proved
+
+* `StonehamPrimeClassFinite.lean` proves the uniform, odd-prime, and dyadic prime-power
+  divisibility of the appropriate cyclotomic value and transfers it to integral relations.
+* The review also closes rational coefficient clearing and packages the direct implication from
+  non-independence to one nonzero integral relation divisible at every finite depth.
+* The target still has exactly its two general analytic sorries.  Next, in kickoff order, express
+  the mixed-`p^(s i)` Stoneham state in terms of that finite relation and generalize the L1/L2
+  positive-density zero-window contradiction.  See
+  `HANDOFF-2026-10-17-prime-class-lap3.md`.
+
 # Maze backlog lap 10 (2026-10-17, REVIEW) — tied-depth history controlled; unequal depth next
 # Prime class lap 2 (2026-10-17) — arbitrary cyclotomic relation bridge proved
 

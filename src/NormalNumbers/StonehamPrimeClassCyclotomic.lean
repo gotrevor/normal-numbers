@@ -114,6 +114,70 @@ lemma not_linearIndependent_powers_iff_exists_cyclotomic {d r : ℕ} (hd : d ≠
   · rintro ⟨q, hq, hdiv⟩ hall
     exact hq (hall q hdiv)
 
+/-- Clearing the finitely many rational denominators turns dependence into a nonzero integral
+relation divisible by the integral cyclotomic polynomial. -/
+lemma not_linearIndependent_powers_iff_exists_integer_cyclotomic
+    {d r : ℕ} (hd : d ≠ 0) {ζ : ℂ} (hζ : IsPrimitiveRoot ζ d) (m : Fin r → ℕ) :
+    ¬ LinearIndependent ℚ (fun i ↦ ζ ^ m i) ↔
+      ∃ a : Fin r → ℤ, a ≠ 0 ∧ cyclotomic d ℤ ∣ integerRelationPolynomial m a := by
+  classical
+  constructor
+  · intro hdep
+    obtain ⟨q, hq, hdiv⟩ :=
+      (not_linearIndependent_powers_iff_exists_cyclotomic hd hζ m).mp hdep
+    let D : ℕ := ∏ i, (q i).den
+    let a : Fin r → ℤ := fun i => (D / (q i).den : ℕ) * (q i).num
+    have hDpos : 0 < D := by
+      dsimp only [D]
+      exact Finset.prod_pos fun i _ => (q i).pos
+    have hden : ∀ i, (q i).den ∣ D := fun i => by
+      dsimp only [D]
+      exact Finset.dvd_prod_of_mem (fun j => (q j).den) (Finset.mem_univ i)
+    have haq : ∀ i, (a i : ℚ) = (D : ℚ) * q i := by
+      intro i
+      have hmul := Nat.div_mul_cancel (hden i)
+      have hmulQ : ((D / (q i).den : ℕ) : ℚ) * (q i).den = D := by
+        exact_mod_cast hmul
+      dsimp only [a]
+      simp only [Int.cast_mul, Int.cast_natCast]
+      rw [← Rat.den_mul_eq_num]
+      push_cast
+      rw [← mul_assoc, hmulQ]
+    have ha : a ≠ 0 := by
+      intro ha0
+      apply hq
+      funext i
+      have hai : a i = 0 := congrFun ha0 i
+      have hqi : (D : ℚ) * q i = 0 := by
+        rw [← haq i, hai, Int.cast_zero]
+      exact (mul_eq_zero.mp hqi).resolve_left (by exact_mod_cast hDpos.ne')
+    refine ⟨a, ha, (cyclotomic_int_dvd_integerRelationPolynomial_iff hd hζ m a).mpr ?_⟩
+    rw [aeval_relationPolynomial]
+    have hzero := (cyclotomic_dvd_iff_aeval_eq_zero hd hζ _).mp hdiv
+    rw [aeval_relationPolynomial] at hzero
+    calc
+      ∑ i, ((a i : ℚ) : ℂ) * ζ ^ m i =
+          ((D : ℚ) : ℂ) * ∑ i, (q i : ℂ) * ζ ^ m i := by
+            rw [Finset.mul_sum]
+            apply sum_congr rfl
+            intro i hi
+            have hai : ((a i : ℚ) : ℂ) = ((D : ℚ) : ℂ) * (q i : ℂ) := by
+              exact_mod_cast haq i
+            rw [hai]
+            ring
+      _ = 0 := by rw [hzero, mul_zero]
+  · rintro ⟨a, ha, hdiv⟩
+    apply (not_linearIndependent_powers_iff_exists_cyclotomic hd hζ m).mpr
+    refine ⟨fun i => (a i : ℚ), ?_, ?_⟩
+    · intro hcast
+      apply ha
+      funext i
+      have hi := congrFun hcast i
+      simp only [Pi.zero_apply] at hi
+      exact_mod_cast hi
+    · apply (cyclotomic_dvd_iff_aeval_eq_zero hd hζ _).mpr
+      exact (cyclotomic_int_dvd_integerRelationPolynomial_iff hd hζ m a).mp hdiv
+
 /-- Rational independence of a fixed list of powers is independent of the chosen primitive
 complex root of the same order. -/
 lemma linearIndependent_powers_primitiveRoot_congr {d r : ℕ} (hd : d ≠ 0) {ζ ξ : ℂ}

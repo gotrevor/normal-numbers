@@ -1,3 +1,17 @@
+# Prime-class joint normality, 17 October 2026 (branch `proof/prime-class`, lap 3 REVIEW)
+
+`StonehamPrimeClassFinite` proves the finite Teichmüller arithmetic required by the dependent
+half of kickoff step 1.  Proper cyclotomic cofactors are units modulo `p`, so the full lift in
+`b^(d*p^K) - 1` lies in `Φ_d(b^(p^K))`; this gives uniform `p^K` divisibility, the sharper odd
+`p^(K+1)` and dyadic `2^(K+3)` forms, and their transfer to cleared relation evaluations.  A
+review-found coefficient-clearing seam is also closed: dependence now produces one nonzero
+integral relation satisfying the finite divisibility at every depth.
+
+The scoped target retains exactly the two general analytic sorries and is FORMALIZE-TIER GREEN;
+all new endpoints audit to the standard trust base.  Next implement the mixed-`s i` Stoneham state
+congruence and positive-density zero-window argument for the non-normal half.  See
+`HANDOFF-2026-10-17-prime-class-lap3.md`.
+
 # Literal Bailey--Borwein pairs, 17 October 2026 (branch `proof/bb-literal-pairs`, lap 14 COMPLETE)
 # Prime-class joint normality, 17 October 2026 (branch `proof/prime-class`, lap 2)
 
