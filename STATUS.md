@@ -1,5 +1,17 @@
 # STATUS — normal-numbers 📊
 
+## Vandehey Theorem 5.1 complete, 17 October 2026 (branch `proof/vandehey-thm51`, lap 18)
+
+`VandeheyProof.vandeheyThm51_holds` is proved with the frozen statement unchanged.  The final
+step is `VandeheyKorobov.norm_power_sum_le_step`, a complete formalization of Proposition 4.1:
+rounded divisor, exact three-term normalization, equations (12)--(13), square-root extraction,
+and both trivial cases.  Theorem 5.1 follows by induction after proving the recursive exponent
+window and `B_k ≥ 1`.  `VandeheyProof.lean` is sorry-free, its BarrierAudit waiver is removed,
+and all four declarations in that file print exactly `[Classical.choice, Quot.sound, propext]`.
+Consequently the general Stoneham-combination theorem, `α₂,₃ + α₂,₅`, and `ζ_Y` now
+have unconditional wrappers at the standard trust baseline.  See
+`HANDOFF-2026-10-17-vandehey-thm51-lap18.md`.
+
 ## Vandehey Theorem 5.1 update, 17 October 2026 (branch `proof/vandehey-thm51`, lap 17)
 
 The exact three-term real normalization for Proposition 4.1 is now proved in the axiom-clean
@@ -598,7 +610,7 @@ This repo holds **no `axiom` declarations**: literature inputs are named hypothe
 
 | headline theorem | paper claim | `#print axioms` shows | status |
 | --- | --- | --- | --- |
-| `VandeheyProof.vandeheyThm51_holds` | unconditional (Vandehey 2019 Thm 5.1) | trust base + `sorryAx` | 🟡 **ACTIVE 2026-10-17**: rungs 1--4 are proved. In rung 5, Lemma 3.1, Lemmas 4.2--4.3, equations (12)--(13), and Claims 4.4--4.6 are proved. `shifted_phase_reduce` supplies the exact coprime reduced denominator, and review lap 15's `shifted_correlation_sum_le` proves the complete pp. 12--13 correlation aggregation with the four `C_{P,x}` divisor bounds. Lap 15 also corrected an endpoint gap: the positive shifts end at `⌈N/τ⌉`, so the sharp Lemma 4.3 main term is `(X−1)/n`, not the coarser `X/n`; `norm_power_sum_range_sq_le_differencing_cutoff` and `natCast_ceilDiv_sub_one_le_div` now preserve the paper's exact constants. All proved endpoints have the standard trust-base axioms. Next: feed this correlation bound into differencing, apply the order/Claim 4.6 and rounded-divisor bounds, prove Proposition 4.1, then induct for Theorem 5.1. |
+| `VandeheyProof.vandeheyThm51_holds` | unconditional (Vandehey 2019 Thm 5.1) | trust base | 🟢 **CLEAN, DISCHARGED 2026-10-17**: Proposition 4.1 is `norm_power_sum_le_step`; the exact frozen recursion is closed by induction.  Review verified the decisive order bound at `mbar`, both trivial branches, the `B_k ≥ 1` invariant, and all four downstream axiom lists. |
 | `StonehamSumsNormal.isNormal_stonehamCombination` | conditional on Vandehey 2016 Thm 5.1 | trust base | 🟢 **CLEAN 2026-10-16**: every nonzero rational combination of pairwise-coprime Stoneham families is normal in the base; the cited `VandeheyThm51` input is an explicit binder.  The specialization `isNormal_two_stoneham_three_add_five` answers Bailey's `α₂,₃ + α₂,₅` question under the same input. |
 | `CantorBadNormal.exists_mem_cantorSet_bad_isNormal_coprime_three` | open (sweep row 2) | trust base + `sorryAx` + 2 `native_decide` artifacts (`J_lt`, `J_inj`) | 🟡 three disclosed leaves: `ae_cesaro_condDiff`, `cesaro_contChar_small` (standard, next prerequisites) and the crux `localDeadBias_resLaw` (2026-10-06, `32682ed0`) |
 | `Literature.vandehey_matrix_action_holds` (`VandeheyCapstone.lean`) | unconditional (Vandehey 2017 Thm 1.1) | trust base | 🟢 **CLEAN, DISCHARGED 2026-09-29** (`6d7a8ad`).  Route: Serret + Smith reduce to `x ↦ D·x` (`D` prime); the concrete Raney `L/R` transducer supplies a monotone RUN clock with an `x`-independent positive rate (`tendsto_runClock_div`, Lemma 6.1) and an `x`-independent Cesàro limit for the image's CF-occurrence count sampled along it (`exists_tendsto_cfCount_runClock`).  Assembled by `mobiusUniformFreq_of_runClock`.  NB the theorem lives downstream of `LiteratureVandehey.lean` (import cycle); the frozen statements stay there. |

@@ -1,3 +1,10 @@
+# Vandehey Theorem 5.1 lap 18 COMPLETE (2026-10-17, review); read HANDOFF-2026-10-17-vandehey-thm51-lap18.md
+- `VandeheyKorobov.norm_power_sum_le_step` proves the complete rounded Proposition 4.1,
+  including both trivial branches and exact frozen recursive constants.
+- `VandeheyProof.vandeheyThm51_holds` is proved by induction and the scoped file is sorry-free.
+- All four declarations in `VandeheyProof.lean` have exactly the standard trust-base axioms;
+  the BarrierAudit waiver is removed.  The campaign is complete.
+
 # Vandehey Theorem 5.1 lap 17 (2026-10-17); read HANDOFF-2026-10-17-vandehey-thm51-lap17.md
 - The exact pp. 12--13 normalization from the four aggregate pieces to the paper's three
   squared terms is proved at the standard trust baseline.
