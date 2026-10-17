@@ -148,6 +148,20 @@ the commit hook's full 10,863-job build passed.
 
 # STATUS — normal-numbers 📊
 
+# Prime-class joint normality, 17 October 2026 (branch `proof/prime-class`, lap 9 REFLECTION)
+
+The dependent/non-normal half of T-B' is proved at the standard trust baseline.  The new schedule
+module replaces the mistaken additive-periodicity picture with exact multiplicative cells whose
+weighted kick-depth gaps are fixed; lap 8's divisibility then makes the reduced rational state
+integral on every such cell.  The new analytic module proves that `O(1/n)` integer shadowing on
+these fixed-proportion geometric cells contradicts equidistribution.  The headline's BarrierAudit
+waiver is removed.  The Maze row `joint normality is pairwise` remains `.parked/.frozen`, because
+its explicit pairwise proof still transitively reaches the remaining normal-half `sorry`.  The
+target is FORMALIZE-TIER GREEN and has only that independent/normal headline left.  Next prove a
+uniform p-adic loss over the finitely many bounded max-depth gap patterns, derive
+`StonehamStateDenPowerLower`, and invoke the existing Vandehey/Weyl engine.  See
+`HANDOFF-2026-10-17-prime-class-lap9.md`.
+
 # Prime-class joint normality, 17 October 2026 (branch `proof/prime-class`, lap 8)
 
 `StonehamPrimeClassState` now proves the complete abstract fixed-gap arithmetic theorem for the

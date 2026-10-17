@@ -24,6 +24,8 @@ import NormalNumbers.StonehamPairsUnconditional
 import NormalNumbers.StonehamPrimeClassFinite
 import NormalNumbers.StonehamPrimeClassMahler
 import NormalNumbers.StonehamPrimeClassState
+import NormalNumbers.StonehamPrimeClassSchedule
+import NormalNumbers.StonehamPrimeClassNonNormal
 import NormalNumbers.StonehamPrimeClass
 import NormalNumbers.StonehamBase6
 import NormalNumbers.CFDefs

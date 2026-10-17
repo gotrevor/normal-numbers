@@ -1,3 +1,13 @@
+# Prime class lap 9 REFLECTION (2026-10-17): dependent half proved; read HANDOFF-2026-10-17-prime-class-lap9.md
+
+- Multiplicative dilations of one canonical unit cell, not additive periodicity, give exact fixed
+  weighted-depth gaps.  On those cells the cyclotomic witness makes the reduced state integral;
+  a new geometric edge-visit lemma contradicts equidistribution.  Consequently the
+  dependent/non-normal headline of T-B′ is kernel-proved and its BarrierAudit waiver is gone.  The Maze
+  pairwise-vs-joint row stays frozen until the remaining normal half removes its transitive
+  `sorry`.  Prove uniform bounded p-adic loss for the finitely many max-depth gap patterns and
+  feed the resulting power denominator lower bound to the existing Vandehey/Weyl engine.
+
 # Prime class lap 8 (2026-10-17): literal cleared-state divisibility; read HANDOFF-2026-10-17-prime-class-lap8.md
 
 - The full phase/cyclotomic stack now yields `p^(D+E)` divisibility of the actual

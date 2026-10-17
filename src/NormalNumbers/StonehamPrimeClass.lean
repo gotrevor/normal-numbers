@@ -8,6 +8,8 @@ import NormalNumbers.StonehamPairsUnconditional
 import NormalNumbers.StonehamPrimeClassFinite
 import NormalNumbers.StonehamPrimeClassMahler
 import NormalNumbers.StonehamPrimeClassState
+import NormalNumbers.StonehamPrimeClassSchedule
+import NormalNumbers.StonehamPrimeClassNonNormal
 import NormalNumbers.VandeheyProof
 
 /-!
@@ -40,7 +42,80 @@ theorem not_isRationallyJointNormal_of_not_linearIndependent
     (ζ : ℂ) (hζ : IsPrimitiveRoot ζ (orderOf (b : ZMod p)))
     (hdep : ¬ LinearIndependent ℚ (fun i => ζ ^ m i)) :
     ¬ IsRationallyJointNormal b (primeClassFamily b p m s) := by
-  sorry
+  classical
+  intro hjoint
+  let u : Fin r → ℕ := fun i ↦ primeClassReducedExponent p (s i) (m i)
+  obtain ⟨a, ha, -, -, -, hrel₀, -⟩ :=
+    exists_inverseMahlerWitness_of_not_linearIndependent
+      b p hp hb hpb s m hs ζ hζ hdep
+  have hrel : ∀ E, (p : ℤ) ^ E ∣ ∑ i,
+      a i * ((b : ℤ) ^ (p ^ E)) ^ primeClassComplementExponent u i := by
+    simpa only [u] using hrel₀
+  have hu : ∀ i, 1 ≤ u i := by
+    intro i
+    apply Nat.one_le_iff_ne_zero.mpr
+    intro hui
+    have hfac : u i * (p ^ s i) ^ primeClassShiftCount p (s i) (m i) = m i := by
+      simpa only [u] using primeClassReducedExponent_mul_pow p (s i) (m i)
+    rw [hui, zero_mul] at hfac
+    have hmi := hm i
+    omega
+  have ha_exists : ∃ i, a i ≠ 0 := by
+    by_contra hnone
+    apply ha
+    funext i
+    by_contra hai
+    exact hnone ⟨i, hai⟩
+  obtain ⟨i₀, hai₀⟩ := ha_exists
+  have hseed : 1 ≤ primeClassScheduleSeed p s u := by
+    have hterm : 1 ≤ u i₀ * p ^ s i₀ := by
+      exact Nat.one_le_iff_ne_zero.mpr
+        (mul_ne_zero (Nat.one_le_iff_ne_zero.mp (hu i₀)) (pow_ne_zero _ hp.ne_zero))
+    exact hterm.trans
+      (Finset.single_le_sum (fun i _ ↦ Nat.zero_le (u i * p ^ s i))
+        (Finset.mem_univ i₀))
+  have hperiod : 1 ≤ primeClassScalePeriod s :=
+    Nat.one_le_iff_ne_zero.mpr (primeClassScalePeriod_pos s hs).ne'
+  let δ : Fin r → ℕ := primeClassScheduleGap p s u
+  let D : ℕ := primeClassScheduleTop p s u
+  let a' : Fin r → ℤ := fun i ↦
+    primeClassStateCoefficient p (s i) (δ i) D (a i)
+  have ha' : a' ≠ 0 := by
+    intro hzero
+    apply ha
+    funext i
+    by_contra hai
+    have hne : a' i ≠ 0 := by
+      dsimp only [a', δ, D]
+      exact primeClassStateCoefficient_ne_zero p (s i)
+        (primeClassScheduleGap p s u i) (primeClassScheduleTop p s u) (a i)
+          hp (hs i) hai
+    exact hne (by simpa only [Pi.zero_apply] using congrFun hzero i)
+  let q : Fin r → ℚ := primeClassInverseMahlerCoefficient p s m a'
+  have hq : q ≠ 0 := by
+    simpa only [q] using primeClassInverseMahlerCoefficient_ne_zero p s m a' hp ha'
+  have hnormalOriginal : IsNormal b
+      (∑ i, (q i : ℝ) * stonehamAlpha (b ^ m i) (p ^ s i)) := by
+    simpa only [primeClassFamily] using hjoint q hq
+  have hnormalReduced : IsNormal b
+      (∑ i, (a' i : ℝ) * stonehamAlpha (b ^ u i) (p ^ s i)) := by
+    apply (isNormal_inverseMahlerCombination_iff b p s m a' hb hp hs).mp
+    simpa only [q, u] using hnormalOriginal
+  let x : ℝ := ∑ i, (a' i : ℝ) * stonehamAlpha (b ^ u i) (p ^ s i)
+  let C : ℝ := ∑ i, |(a' i : ℝ)| * ((u i * p ^ s i : ℕ) : ℝ)
+  have hnot : ¬ IsNormal b x := by
+    apply not_isNormal_of_geometric_integer_approx b p (primeClassScalePeriod s)
+      (primeClassScheduleSeed p s u) hb hp.two_le hperiod hseed x C
+    intro t n hnlower hnupper hn
+    obtain ⟨z, hz⟩ := primeClassSchedule_state_eq_int p b s u a hp hpb hs hu hrel
+      t n hnlower hnupper
+    refine ⟨z, ?_⟩
+    have happ := StonehamSumsNormal.stonehamCombination_approx
+      b 1 (fun i ↦ p ^ s i) u a' n hb (by norm_num)
+        (fun i ↦ two_le_prime_pow p (s i) hp (hs i)) hu hn
+    rw [hz] at happ
+    simpa [x, C] using happ
+  exact hnot (by simpa only [x] using hnormalReduced)
 
 /-- **T-B′, normal half.**  If the `ζ^{mᵢ}` are `ℚ`-linearly independent, every nonzero rational
 combination of the family is `b`-normal. -/

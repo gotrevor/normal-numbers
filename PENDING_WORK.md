@@ -1,3 +1,15 @@
+# Prime class lap 9 (2026-10-17, REFLECTION) — dependent half proved; normal half remains
+
+* Multiplicatively dilated canonical cells have fixed weighted kick-depth gaps; the dependent
+  cyclotomic relation makes the reduced state integral on every such cell.
+* A general geometric edge-visit obstruction converts the `O(1/n)` state approximation into
+  non-normality, closing `not_isRationallyJointNormal_of_not_linearIndependent` without new
+  axioms.  Its BarrierAudit waiver is removed.
+* The scoped file has one direct `sorry`: `isRationallyJointNormal_of_linearIndependent`.
+  Next prove bounded max-depth gaps, obtain a uniform resultant/p-adic loss over their finitely
+  many patterns, derive `StonehamStateDenPowerLower`, and apply the existing Vandehey/Weyl engine.
+  See `HANDOFF-2026-10-17-prime-class-lap9.md`.
+
 # Prime class lap 3 (2026-10-17, REVIEW) — dependent finite Teichmüller bridge proved
 
 * `StonehamPrimeClassFinite.lean` proves the uniform, odd-prime, and dyadic prime-power
