@@ -1,3 +1,9 @@
+# Maze backlog lap 9 (2026-10-17): same-prime analytic engine isolated; read HANDOFF-2026-10-17-maze-backlog-lap9.md
+- The complete Vandehey block/Cesaro argument now depends only on the explicit
+  `StonehamStateDenLinearLower` interface, not pairwise coprimality. The remaining L2 blocker
+  is purely arithmetic: prove that linear reduced-denominator bound for exponent gaps one and
+  two from lap 8's fixed 7-adic loss, then instantiate the three pairs.
+
 # Maze backlog lap 8 (2026-10-17): fixed same-prime 7-adic loss proved; read HANDOFF-2026-10-17-maze-backlog-lap8.md
 - The exponent-gap-one and -two leading coefficients now have an eventual valuation bound by the
   fixed quadratic coefficient norm.  This upgrades lap 7's full-depth cancellation implication to
