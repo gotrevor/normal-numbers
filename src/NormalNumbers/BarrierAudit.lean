@@ -60,6 +60,7 @@ import NormalNumbers.UniformBadTail
 import NormalNumbers.StonehamSumsNormal
 import NormalNumbers.VandeheyProof
 import NormalNumbers.StonehamPairsNormal
+import NormalNumbers.StonehamPrimeClass
 
 /-!
 # Barrier audit: every open crux names a sibling it must fail on
@@ -215,6 +216,18 @@ def waivers : List Waiver := [
   ⟨``ErdosTriples.exceptionalSet_eq_zero_of_gapTriplesEventually,
    "wiring lemma (a leaf): the proved integer wiring erdos406_of_gapTriplesEventually lifted to \
     3-adic digits (parity, valuation shift, residues); English proof in the docstring"⟩,
+  ⟨``StonehamPrimeClass.not_isRationallyJointNormal_of_not_linearIndependent,
+   "campaign target (KICKOFF-2026-10-17-prime-class.md): T-B' non-normal half, refereed \
+    paper sketch; not a crux"⟩,
+  ⟨``StonehamPrimeClass.isRationallyJointNormal_of_linearIndependent,
+   "campaign target (KICKOFF-2026-10-17-prime-class.md): T-B' normal half, refereed \
+    paper sketch; not a crux"⟩,
+  ⟨``StonehamPrimeClass.isRationallyJointNormal_pair_iff,
+   "campaign target (KICKOFF-2026-10-17-prime-class.md): T-B' pair criterion, refereed \
+    paper sketch; not a crux"⟩,
+  ⟨``StonehamPrimeClass.stonehamThreeSevenPairwiseNormal_holds,
+   "campaign target (KICKOFF-2026-10-17-prime-class.md): the parked L2 premise as a T-B' \
+    instance; not a crux"⟩,
   ⟨``IndependenceRelative.not_isRelativeBlock_small,
    "a finite computation stated as a sibling: the blocksearch probe's non-certification over \
     small direction sets; it closes a route, no open crux uses it"⟩,
