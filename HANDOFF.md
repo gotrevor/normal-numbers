@@ -1,3 +1,11 @@
+# Literal Bailey--Borwein pairs lap 6 review (2026-10-17): fixed resultant loss bridge proved; read HANDOFF-2026-10-17-bb-literal-pairs-lap6.md
+
+- `StonehamPairsResultant.lean` converts complex top-digit nonvanishing into a fixed nonzero
+  integral resultant and a uniform p-adic bound at the actual finite Teichmuller representative.
+- Review confirmed the frozen statements and analytic route; the two original headline sorries
+  remain. Next freeze the product-deleted coefficient into finitely many periodic tail polynomials,
+  then transfer the new loss bound to the complete one/two-family numerator.
+
 # Literal Bailey--Borwein pairs lap 4 (2026-10-17): full-history polar numerator assembled; read HANDOFF-2026-10-17-bb-literal-pairs-lap4.md
 - The explicit one-family cleared numerator is now identified with the rational Stoneham family.
   Every entered kick is transferred to the top Teichmueller level at common precision, and a

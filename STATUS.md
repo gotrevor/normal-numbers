@@ -1,5 +1,24 @@
 # STATUS — normal-numbers 📊
 
+## Literal Bailey--Borwein pairs, 17 October 2026 (branch `proof/bb-literal-pairs`, lap 6 review)
+
+**Scoped kickoff open** · **Crux advance**: complex nonvanishing converted to a fixed integral
+resultant and uniform p-adic loss bound · **Build**: 🟢 `StonehamPairsNormal` target green
+(8,777 jobs)
+
+`StonehamPairsResultant.lean` now proves the general Sylvester-Bezout divisibility bridge,
+nonvanishing of the resultant from the repaired top-digit estimate at every complex root of unity,
+and the resulting valuation bound. Its final specialization applies directly to the finite
+Teichmuller representative `b^(p^K)`, whose `(p-1)`-st power is one modulo `p^(K+1)` by Euler.
+The five audited bridge declarations have exactly `[Classical.choice, Quot.sound, propext]` as
+their axiom list.
+
+The review found no statement drift and no shortcut through pairwise-coprime Theorem A. The two
+ratified sorries in `StonehamPairsNormal.lean` remain. Next reindex the product-deleted coefficient
+by top offsets, freeze it into finitely many periodic `polarTailPolynomial`s, and transfer the new
+fixed-resultant bound to the complete one/two-family numerator before proving distinct-class rate
+separation. See `HANDOFF-2026-10-17-bb-literal-pairs-lap6.md`.
+
 ## Literal Bailey--Borwein pairs, 17 October 2026 (branch `proof/bb-literal-pairs`, lap 5)
 
 **Scoped kickoff open** · **Crux advance**: product-deleted polar exponent made eventually periodic ·
