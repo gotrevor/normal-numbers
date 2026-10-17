@@ -1,3 +1,11 @@
+# Vandehey Theorem 5.1 lap 17 (2026-10-17); read HANDOFF-2026-10-17-vandehey-thm51-lap17.md
+- The exact pp. 12--13 normalization from the four aggregate pieces to the paper's three
+  squared terms is proved at the standard trust baseline.
+- `weighted_main_term_le` handles `α` and `-δ` through the single factor
+  `(m'/mbar)^(1+e) ≤ 1`.
+- Next: instantiate the normalization with the rounded natural modulus, substitute
+  equations (12)--(13), then close Proposition 4.1 and the Theorem 5.1 induction.
+
 # Vandehey Theorem 5.1 lap 15 (2026-10-17, review); read HANDOFF-2026-10-17-vandehey-thm51-lap15.md
 - Adversarial review repaired the shift-endpoint gap: correlations survive for
   `i < ⌈N/τ⌉`, and the sharp Lemma 4.3 term is `(X-1)/n`, preserving `N/(τn)`.

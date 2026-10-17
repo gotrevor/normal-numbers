@@ -1,5 +1,15 @@
 # STATUS — normal-numbers 📊
 
+## Vandehey Theorem 5.1 update, 17 October 2026 (branch `proof/vandehey-thm51`, lap 17)
+
+The exact three-term real normalization for Proposition 4.1 is now proved in the axiom-clean
+theorem `VandeheyKorobov.aggregated_rhs_le_three_terms`.  Its helper
+`weighted_main_term_le` uniformly handles both the `α` and `-δ` powers and isolates the
+crucial factor `(m'/mbar)^(1+e) ≤ 1`.  Next instantiate it with the rounded natural modulus,
+substitute equations (12)--(13), close the trivial branches and square-root step, then perform
+the Theorem 5.1 induction.  The scoped file retains one headline `sorry`.  See
+`HANDOFF-2026-10-17-vandehey-thm51-lap17.md`.
+
 ## Vandehey Theorem 5.1 update, 17 October 2026 (branch `proof/vandehey-thm51`, lap 16)
 
 The Proposition 4.1 differencing and correlation halves are now assembled in the axiom-clean
