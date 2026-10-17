@@ -1,3 +1,10 @@
+# Literal Bailey--Borwein pairs lap 7 (2026-10-17): full numerator reindexed as polar-tail evaluation; read HANDOFF-2026-10-17-bb-literal-pairs-lap7.md
+
+- The modular exponent bridge and its common eventual period are proved. The complete cleared
+  one-family numerator is now congruent to an explicit dominated `polarTailPolynomial` evaluation,
+  not just informally associated with one. Next truncate at a fixed top offset, freeze the finitely
+  many exponent patterns modulo `p-1`, and maximize their fixed resultant losses.
+
 # Literal Bailey--Borwein pairs lap 6 review (2026-10-17): fixed resultant loss bridge proved; read HANDOFF-2026-10-17-bb-literal-pairs-lap6.md
 
 - `StonehamPairsResultant.lean` converts complex top-digit nonvanishing into a fixed nonzero

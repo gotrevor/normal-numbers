@@ -451,6 +451,50 @@ lemma exists_eventually_modEq_stonehamPolarDeletedExponent (u d : ℕ) (hd : 0 <
     exact hsum
   exact hpow.add_right_cancel hall
 
+/-- Exponents congruent modulo `d` give congruent powers whenever the base is a
+`d`-th root of unity modulo the ambient modulus.  This is the elementary bridge
+from the eventual period of `stonehamPolarDeletedExponent` to the finite
+Teichmüller evaluations used in the resultant argument. -/
+lemma pow_modEq_pow_of_exponent_modEq (D d e₁ e₂ : ℕ) (w : ℤ)
+    (hroot : w ^ d ≡ 1 [ZMOD D]) (hexp : e₁ ≡ e₂ [MOD d]) :
+    w ^ e₁ ≡ w ^ e₂ [ZMOD D] := by
+  rw [← ZMod.intCast_eq_intCast_iff] at hroot ⊢
+  push_cast at hroot ⊢
+  exact pow_eq_pow_of_modEq hexp hroot
+
+/-- After fixing an approximate `d`-th root of unity, every top-offset
+product-deleted polar factor is eventually periodic.  One threshold and period
+work simultaneously for all offsets that have entered the tail. -/
+lemma exists_eventually_modEq_polarDeletedPower
+    (u d D : ℕ) (w : ℤ) (hd : 0 < d) (hroot : w ^ d ≡ 1 [ZMOD D]) :
+    ∃ K₀ T : ℕ, 0 < T ∧ ∀ K s, K₀ + s ≤ K →
+      w ^ stonehamPolarDeletedExponent u (K + T) (K + T - s) ≡
+        w ^ stonehamPolarDeletedExponent u K (K - s) [ZMOD D] := by
+  obtain ⟨K₀, T, hT, hperiod⟩ :=
+    exists_eventually_modEq_stonehamPolarDeletedExponent u d hd
+  exact ⟨K₀, T, hT, fun K s hKs =>
+    pow_modEq_pow_of_exponent_modEq D d _ _ w hroot (hperiod K s hKs)⟩
+
+/-- Reindex a positive-depth history by its offset below the top depth. -/
+lemma sum_Icc_one_reflect {A : Type*} [AddCommMonoid A] (F : ℕ → A) (K : ℕ) :
+    ∑ j ∈ Icc 1 K, F (K - j) = ∑ s ∈ range K, F s := by
+  have hshift : ∀ (H : ℕ → A) (K : ℕ),
+      ∑ j ∈ Icc 1 K, H j = ∑ k ∈ range K, H (k + 1) := by
+    intro H K
+    induction K with
+    | zero => simp
+    | succ K ih =>
+        rw [sum_Icc_succ_top (Nat.le_add_left 1 K), ih, sum_range_succ]
+  rw [hshift]
+  calc
+    (∑ k ∈ range K, F (K - (k + 1))) =
+        ∑ k ∈ range K, F (K - 1 - k) := by
+          apply sum_congr rfl
+          intro k hk
+          congr 1
+          omega
+    _ = ∑ s ∈ range K, F s := sum_range_reflect F K
+
 /-- The explicit numerator obtained by clearing the denominator `c^K` in one
 Stoneham family (with the literal base exponent `m = 1`). -/
 def stonehamClearedFamily (b c n K : ℕ) : ℤ :=

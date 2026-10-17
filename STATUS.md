@@ -1,5 +1,22 @@
 # STATUS — normal-numbers 📊
 
+## Literal Bailey--Borwein pairs, 17 October 2026 (branch `proof/bb-literal-pairs`, lap 7)
+
+**Scoped kickoff open** · **Crux advance**: actual full numerator reindexed as a polar-tail
+polynomial evaluation · **Build**: 🟢 `StonehamPairsNormal` target green (8,777 jobs)
+
+`StonehamPairsArithmetic.lean` now transfers exponent congruence through an approximate root of
+unity and gives one eventual period for all evaluated top-offset deleted powers.
+`StonehamPairsResultant.lean` reindexes the complete product-deleted coefficient exactly as a
+dominated `polarTailPolynomial`; its top theorem composes that identity with the full-history
+cleared-numerator congruence. The four audited bridge declarations have exactly
+`[Classical.choice, Quot.sound, propext]` as their axiom list.
+
+The two ratified sorries in `StonehamPairsNormal.lean` remain. Next truncate the growing tail at a
+fixed p-adic precision, freeze its finitely many exponent patterns modulo `p-1`, and maximize the
+corresponding fixed nonzero resultant losses to obtain the complete one-family valuation bound.
+See `HANDOFF-2026-10-17-bb-literal-pairs-lap7.md`.
+
 ## Literal Bailey--Borwein pairs, 17 October 2026 (branch `proof/bb-literal-pairs`, lap 6 review)
 
 **Scoped kickoff open** · **Crux advance**: complex nonvanishing converted to a fixed integral

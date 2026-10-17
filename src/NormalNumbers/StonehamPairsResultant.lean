@@ -60,6 +60,64 @@ lemma eval_map_polarTailPolynomial (g J : ℕ) (a : ℕ → ℤ) (e : ℕ → �
     ((a s : ℂ) * z ^ e s) * (g : ℂ) ^ s
   ring
 
+/-- The product-deleted coefficient in the cleared Stoneham numerator is
+literally a `polarTailPolynomial` evaluation after reindexing the history by
+offsets below its top kick.  This removes the growing interval `Icc 1 K` from
+the arithmetic expression and exposes the dominated base-`c` digits consumed
+by the resultant bound. -/
+lemma eval_polarTailPolynomial_stonehamDeleted (c u K : ℕ) (w : ℤ) (hK : 1 ≤ K) :
+    (polarTailPolynomial c (K - 1) (fun _ => 1)
+        (fun s => stonehamPolarDeletedExponent u K (K - s))).eval w =
+      ∑ j ∈ Finset.Icc 1 K,
+        (c : ℤ) ^ (K - j) * w ^ stonehamPolarDeletedExponent u K j := by
+  rw [polarTailPolynomial]
+  change (Polynomial.evalRingHom w)
+      (∑ s ∈ Finset.range (K - 1 + 1),
+        Polynomial.C (1 * (c : ℤ) ^ s) *
+          Polynomial.X ^ stonehamPolarDeletedExponent u K (K - s)) = _
+  rw [map_sum]
+  simp only [Polynomial.coe_evalRingHom, Polynomial.eval_mul, Polynomial.eval_C,
+    Polynomial.eval_pow, Polynomial.eval_X, one_mul]
+  rw [show K - 1 + 1 = K by omega]
+  rw [← sum_Icc_one_reflect
+    (fun s => (c : ℤ) ^ s * w ^ stonehamPolarDeletedExponent u K (K - s)) K]
+  apply Finset.sum_congr rfl
+  intro j hj
+  rw [Nat.sub_sub_self (Finset.mem_Icc.mp hj).2]
+
+/-- The full right side of the polar congruence is a common `b^n` factor
+times the preceding fixed-shape tail evaluation. -/
+lemma stoneham_polarRhs_eq_eval (b c u K n : ℕ) (w : ℤ) (hK : 1 ≤ K) :
+    ∑ j ∈ Finset.Icc 1 K,
+        (b : ℤ) ^ n * (c : ℤ) ^ (K - j) *
+          w ^ stonehamPolarDeletedExponent u K j =
+      (b : ℤ) ^ n *
+        (polarTailPolynomial c (K - 1) (fun _ => 1)
+          (fun s => stonehamPolarDeletedExponent u K (K - s))).eval w := by
+  rw [eval_polarTailPolynomial_stonehamDeleted c u K w hK, Finset.mul_sum]
+  apply Finset.sum_congr rfl
+  intro j hj
+  ring
+
+/-- The actual cleared one-family numerator, after multiplication by its
+common polar unit, is congruent to a single dominated tail-polynomial
+evaluation.  This is the direct interface between the full-history arithmetic
+congruence and the fixed-resultant noncancellation machinery. -/
+lemma stonehamClearedFamily_mul_polarPower_modEq_polarTail
+    (p b c a u K n : ℕ) (hp : p.Prime) (hc : c = p ^ a * u)
+    (hK : 1 ≤ K) (hentered : ∀ j ∈ Finset.Icc 1 K, c ^ j ≤ n) :
+    ∑ j ∈ Finset.Icc 1 K,
+          (b : ℤ) ^ (n - c ^ j) * (c : ℤ) ^ (K - j) *
+            ((b : ℤ) ^ (p ^ (a * K))) ^ stonehamPolarExponent u K ≡
+      (b : ℤ) ^ n *
+        (polarTailPolynomial c (K - 1) (fun _ => 1)
+          (fun s => stonehamPolarDeletedExponent u K (K - s))).eval
+            ((b : ℤ) ^ (p ^ (a * K))) [ZMOD p ^ (a * K + 1)] := by
+  have hpolar := stonehamClearedFamily_mul_polarPower_modEq_of_factor
+    p b c a u K n hp hc hentered
+  rw [stoneham_polarRhs_eq_eval b c u K n ((b : ℤ) ^ (p ^ (a * K))) hK] at hpolar
+  exact hpolar
+
 /-- Every root-of-unity evaluation of a polar tail is nonzero when the top base-`g` digit
 strictly dominates all lower digits.  The exponent pattern is completely arbitrary. -/
 lemma polarTailPolynomial_eval_ne_zero
