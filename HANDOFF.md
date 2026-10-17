@@ -1,3 +1,10 @@
+# Maze backlog lap 5 COMPLETE (2026-10-17): kickoff complete; read HANDOFF-2026-10-17-maze-backlog-lap5.md
+- L2 is proved: the ternary Stoneham triple has exact zero windows
+  `[3*7^(k+1), 7^(k+2))` and is not simply normal.  The final two kernel Maze rows land at
+  198 rows / 91 declaration-backed links; the full 10,858-job gate is green and the headline
+  has exactly the standard trust-base axioms.  Every `KICKOFF-2026-10-16-maze-backlog.md`
+  done condition is met.
+
 # Maze backlog review lap 4 (2026-10-17): L1 boundary theorem proved; read HANDOFF-2026-10-17-maze-backlog-lap4.md
 - The ratified all-primes L1 headline is now a theorem: the same-class combination has exact
   zero windows `[p^(2k+2), p^(2k+3))`, hence is not simply normal.  Full/axiom gate is green

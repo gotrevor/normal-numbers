@@ -1,9 +1,9 @@
 # STATUS — normal-numbers 📊
 
-## Maze backlog update, 17 October 2026 (branch `proof/maze-backlog`, review lap 4)
+## Maze backlog COMPLETE, 17 October 2026 (branch `proof/maze-backlog`, lap 5)
 
-**Kickoff Parts 1--2 and Part 3/L1 complete** · **Build**: 🟢 full green (10858 jobs) ·
-**Audit**: 196 rows, 89 declaration-backed links, 107 legacy rows
+**All kickoff parts complete** · **Build**: 🟢 full green (10858 jobs) ·
+**Audit**: 198 rows, 91 declaration-backed links, 107 legacy rows
 
 The four joint-orbit routes R1/R2/R4/R6 from the 16 October report now have Lean witnesses and
 audited Maze rows.  R1 (rational closure of polynomial-ratio BBP series) and R6 (joint normality
@@ -25,8 +25,15 @@ ratified headline `not_isSimplyNormal_stoneham_sub_succ_mul` is proved for every
 Its axiom list is exactly `[Classical.choice, Quot.sound, propext]`.  See
 `HANDOFF-2026-10-17-maze-backlog-lap4.md`.
 
-**Outstanding in kickoff order:** L2's cyclotomic triple witness, then the two Bailey--Borwein
-kernel Maze rows.
+Part 3/L2 is complete in the same module.  The divisibility
+`seven_pow_dvd_stoneham_triple_block` makes every `Φ₆(3^(7^n))/7^n` coefficient integral;
+the resulting positive block series has exact ternary zero windows
+`[3*7^(k+1), 7^(k+2))`.  Therefore `not_isSimplyNormal_three_seven_triple` is proved with
+axiom list `[Classical.choice, Quot.sound, propext]`.  The final kernel Maze rows
+`joint normality is pairwise` and `same-c combinations are normal` are declaration-audited.
+See `HANDOFF-2026-10-17-maze-backlog-lap5.md`.
+
+**Outstanding in this kickoff:** none.
 
 ## Cantor repetition update, 9 October 2026 (branch `proof/cantor-repetition`, lap 13) — HEADLINE PROVED
 

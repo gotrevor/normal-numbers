@@ -190,6 +190,14 @@ def mazeLinks : List Link := [
     ``NormalNumbers.Mahler.not_forall_isDensityProductBlock,
     ``NormalNumbers.Mahler.IsDensityProductBlock],
    [``NormalNumbers.Mahler.DensityProductBlockExponentTwo]⟩,
+  ⟨"joint normality is pairwise",
+   [``NormalNumbers.Maze.hall_pairwise_joint_normality,
+    ``NormalNumbers.not_isSimplyNormal_three_seven_triple,
+    ``NormalNumbers.digitOf_stoneham_three_seven_triple_eq_zero], []⟩,
+  ⟨"same-c combinations are normal",
+   [``NormalNumbers.Maze.hall_same_c_combinations_normal,
+    ``NormalNumbers.not_isSimplyNormal_stoneham_sub_succ_mul,
+    ``NormalNumbers.digitOf_stoneham_sub_succ_mul_eq_zero], []⟩,
   ⟨"normal Stoneham constants are closed under addition",
    [``NormalNumbers.Maze.hall_stoneham_sum_normal,
     ``NormalNumbers.stoneham_pair_normal_not_isSimplyNormal_sum], []⟩,
@@ -400,7 +408,7 @@ def mazeLegacy : List String := [
   "Diophantine good-denominator detour for the tail cell",
   "route B's unweighted cover of the state-dependent target"]
 
-/-- info: maze audit: 196 rows, 89 cite declarations, 107 legacy (prose only) -/
+/-- info: maze audit: 198 rows, 91 cite declarations, 107 legacy (prose only) -/
 #guard_msgs in
 #maze_audit mazeRows, mazeLinks, mazeLegacy
 

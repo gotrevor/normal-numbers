@@ -44,6 +44,7 @@ import NormalNumbers.DeterministicBD
 import NormalNumbers.BBPSpan
 import NormalNumbers.JointOrbitBarriers
 import NormalNumbers.MahlerDensityProduct
+import NormalNumbers.StonehamSumsBoundary
 
 /-!
 # `Maze.lean` — the halls we have walked, encoded
@@ -682,6 +683,17 @@ alias hall_stoneham_decomposition_sum :=
 family. -/
 alias hall_stoneham_sum_normal :=
   NormalNumbers.stoneham_pair_normal_not_isSimplyNormal_sum
+
+/-- Hall witness against promoting pairwise joint normality to a criterion for
+a whole family: the ternary Stoneham triple has a non-simply-normal rational
+combination, witnessed by exact cyclotomic zero windows. -/
+alias hall_pairwise_joint_normality :=
+  NormalNumbers.not_isSimplyNormal_three_seven_triple
+
+/-- Hall witness against asserting normality for every rational combination
+inside one multiplicative `c`-class. -/
+alias hall_same_c_combinations_normal :=
+  NormalNumbers.not_isSimplyNormal_stoneham_sub_succ_mul
 
 /-! ## 4. The register
 
@@ -1504,6 +1516,18 @@ def register : List Hall := [
    .wall, .kernel,
    "The same ternary Liouville number defeats every finite multiplier set: in each multiple, digit 1 vanishes on the long part of every factorial interval, so its prefix-frequency liminf is zero. REOPEN IF: DensityProductBlockExponentTwo, or a positive-entropy or BBP-type restricted class with a mechanism",
    "MahlerDensityProduct.lean: hall_density_product_block_universal, not_forall_isDensityProductBlock, DensityProductBlockExponentTwo; KICKOFF-2026-10-16-maze-backlog.md Part 2",
+   "2026-10-17"⟩,
+  ⟨"joint normality is pairwise",
+   "Treat pairwise joint normality of every two coordinates as sufficient for joint normality of the whole finite family",
+   .refuted, .kernel,
+   "The Stoneham constants alpha_{3,7}, alpha_{9,7}, alpha_{27,7} pass the pairwise criterion from the Bailey--Borwein classification, but their signed triple combination has exact ternary zero windows [3*7^(k+1), 7^(k+2)) and is not even simply normal",
+   "StonehamSumsBoundary.lean: hall_pairwise_joint_normality, not_isSimplyNormal_three_seven_triple, digitOf_stoneham_three_seven_triple_eq_zero; papers/2026-10-16-bailey-borwein-full-answer.md L2",
+   "2026-10-17"⟩,
+  ⟨"same-c combinations are normal",
+   "Assert normality for every nonzero rational combination of Stoneham constants whose c parameters lie in one multiplicative class",
+   .falseAsStated, .kernel,
+   "For every prime p coprime to b, alpha_{b,p} - (p+1) alpha_{b,p^2} has exact base-b zero windows [p^(2k+2), p^(2k+3)) and is not even simply normal",
+   "StonehamSumsBoundary.lean: hall_same_c_combinations_normal, not_isSimplyNormal_stoneham_sub_succ_mul, digitOf_stoneham_sub_succ_mul_eq_zero; papers/2026-10-16-bailey-borwein-full-answer.md L1",
    "2026-10-17"⟩,
   ⟨"normal Stoneham constants are closed under addition",
    "Infer joint normality, or normality of a sum, from separate normality of Stoneham constants",
