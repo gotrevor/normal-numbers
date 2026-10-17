@@ -1,3 +1,19 @@
+# Literal Bailey--Borwein pairs, 17 October 2026 (branch `proof/bb-literal-pairs`, lap 12)
+
+**Scoped kickoff open** · **Crux advance**: Fourier multiplier loss and exact pair-state divisor
+proved · **Build**: 🟢 `StonehamPairsNormal` target green (8,779 jobs)
+
+`StonehamPairsDistinct.lean` now proves that multiplication by a fixed nonzero integer removes at
+most its p-adic valuation from a reduced denominator divisor, identifies the exact `Fin 2`
+Stoneham state for literal signed pairs, and packages both signs with the divisor
+`p^(max(depth1,depth2)-v_p(h))`. The four audited declarations have exactly
+`[Classical.choice, Quot.sound, propext]` as their axiom list.
+
+The two ratified headline sorries remain. Next convert the state divisor into a global positive-
+power lower bound by proving logarithmic growth of the selected maximum depth and absorbing the
+fixed loss plus finite prefix into the constant. Same-class aligned-tail compression remains
+afterward. See `HANDOFF-2026-10-17-bb-literal-pairs-lap12.md`.
+
 # Literal Bailey--Borwein pairs, 17 October 2026 (branch `proof/bb-literal-pairs`, lap 11)
 
 **Scoped kickoff open** · **Crux advance**: exact maximum-depth reduced-denominator divisor proved ·

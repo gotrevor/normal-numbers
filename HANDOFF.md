@@ -1,3 +1,10 @@
+# Literal Bailey--Borwein pairs lap 12 (2026-10-17): Fourier loss and exact pair state; read HANDOFF-2026-10-17-bb-literal-pairs-lap12.md
+
+- Fixed integer multiplication now removes at most `padicValInt p h` from any prime-power
+  denominator divisor. The exact `Fin 2` Stoneham state is identified, and literal sum/difference
+  states retain `p^(max(depth1,depth2)-v_p(h))`. Next convert that divisor into the global real
+  `StonehamStateDenPowerLower`; same-class aligned-tail compression remains afterward.
+
 # Literal Bailey--Borwein pairs lap 11 (2026-10-17): exact maximum-depth denominator divisor; read HANDOFF-2026-10-17-bb-literal-pairs-lap11.md
 
 - Unequal logarithmic slopes now give eventual unequal integral depths, and both literal signs

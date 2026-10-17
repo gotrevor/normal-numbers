@@ -359,4 +359,137 @@ theorem prime_pow_max_dvd_pairFamilies_sub_den_of_depth_ne
       p b c₁ c₂ K₁ K₂ n (-1) hp hc₁0 hc₂0 hpc₁ hcb₁ hK₁ hentered₁ hgt
     simpa [F₁, F₂, Nat.max_eq_left hgt.le, sub_eq_add_neg] using h
 
+/-! ### Fourier multipliers and the exact two-family state -/
+
+/-- Multiplication by a fixed nonzero integer can remove at most its `p`-adic valuation from a
+prime-power divisor of a reduced rational denominator. -/
+theorem prime_pow_sub_padicValInt_dvd_mul_den
+    (p E : ℕ) (h : ℤ) (q : ℚ) (hp : p.Prime) (hh : h ≠ 0)
+    (hdiv : p ^ E ∣ q.den) :
+    p ^ (E - padicValInt p h) ∣ ((h : ℚ) * q).den := by
+  letI : Fact p.Prime := ⟨hp⟩
+  by_cases hsmall : E ≤ padicValInt p h
+  · rw [Nat.sub_eq_zero_of_le hsmall, pow_zero]
+    exact one_dvd _
+  have hE : 0 < E := by omega
+  have hpd : p ∣ q.den :=
+    (dvd_pow_self p hE.ne').trans hdiv
+  have hq : q ≠ 0 := by
+    intro hzero
+    subst q
+    simp at hpd
+    exact hp.ne_one hpd
+  have hnum_not : ¬p ∣ q.num.natAbs := by
+    exact (hp.coprime_iff_not_dvd.mp
+      (q.reduced.symm.coprime_dvd_left hpd))
+  have hnum_not_int : ¬(p : ℤ) ∣ q.num := by
+    rw [Int.natCast_dvd]
+    exact hnum_not
+  have hnum : padicValInt p q.num = 0 :=
+    padicValInt.eq_zero_of_not_dvd hnum_not_int
+  have hqden : E ≤ padicValNat p q.den :=
+    (padicValNat_dvd_iff_le q.den_nz).mp hdiv
+  have hval :
+      (padicValInt p (((h : ℚ) * q).num) : ℤ) -
+          padicValNat p (((h : ℚ) * q).den) =
+        (padicValInt p h : ℤ) - padicValNat p q.den := by
+    calc
+      _ = padicValRat p ((h : ℚ) * q) := rfl
+      _ = padicValRat p (h : ℚ) + padicValRat p q :=
+        padicValRat.mul (by exact_mod_cast hh) hq
+      _ = (padicValInt p h : ℤ) - padicValNat p q.den := by
+        rw [padicValRat.of_int, padicValRat_def, hnum]
+        omega
+  apply (padicValNat_dvd_iff_le (((h : ℚ) * q).den_nz)).mpr
+  omega
+
+/-- The `Fin 2` state for two unshifted Stoneham families is exactly the fixed Fourier
+multiplier times the corresponding literal signed pair. -/
+theorem stonehamState_pair_one_eq
+    (b c₁ c₂ n : ℕ) (h σ : ℤ) :
+    NormalNumbers.StonehamSumsNormal.stonehamState b 1
+        ![c₁, c₂] ![1, 1] ![h, σ * h] n =
+      (h : ℚ) *
+        ((∑ j ∈ Finset.Icc 1 (Nat.log c₁ n),
+            (b : ℚ) ^ (n - c₁ ^ j) / (c₁ : ℚ) ^ j) +
+          (σ : ℚ) * (∑ j ∈ Finset.Icc 1 (Nat.log c₂ n),
+            (b : ℚ) ^ (n - c₂ ^ j) / (c₂ : ℚ) ^ j)) := by
+  simp [NormalNumbers.StonehamSumsNormal.stonehamState,
+    NormalNumbers.StonehamSumsNormal.stonehamK, Fin.sum_univ_two]
+  ring
+
+/-- Transfer a prime-power denominator divisor for a literal signed pair to its exact
+two-family Stoneham state, accounting for the fixed Fourier multiplier. -/
+theorem prime_pow_sub_padicValInt_dvd_stonehamState_pair_one_den
+    (p E b c₁ c₂ n : ℕ) (h σ : ℤ) (hp : p.Prime) (hh : h ≠ 0)
+    (hdiv : p ^ E ∣
+      ((∑ j ∈ Finset.Icc 1 (Nat.log c₁ n),
+          (b : ℚ) ^ (n - c₁ ^ j) / (c₁ : ℚ) ^ j) +
+        (σ : ℚ) * (∑ j ∈ Finset.Icc 1 (Nat.log c₂ n),
+          (b : ℚ) ^ (n - c₂ ^ j) / (c₂ : ℚ) ^ j)).den) :
+    p ^ (E - padicValInt p h) ∣
+      (NormalNumbers.StonehamSumsNormal.stonehamState b 1
+        ![c₁, c₂] ![1, 1] ![h, σ * h] n).den := by
+  rw [stonehamState_pair_one_eq]
+  exact prime_pow_sub_padicValInt_dvd_mul_den p E h _ hp hh hdiv
+
+/-- The literal sum state retains the maximum unequal prime depth, minus only the fixed
+valuation of its Fourier multiplier. -/
+theorem prime_pow_max_sub_padicValInt_dvd_stonehamState_pair_add_den_of_depth_ne
+    (p b c₁ c₂ n : ℕ) (h : ℤ) (hp : p.Prime) (hh : h ≠ 0)
+    (hc₁0 : c₁ ≠ 0) (hc₂0 : c₂ ≠ 0)
+    (hcb₁ : Nat.Coprime c₁ b) (hcb₂ : Nat.Coprime c₂ b)
+    (hK₁ : 1 ≤ Nat.log c₁ n) (hK₂ : 1 ≤ Nat.log c₂ n)
+    (hentered₁ : ∀ j ∈ Finset.Icc 1 (Nat.log c₁ n), c₁ ^ j ≤ n)
+    (hentered₂ : ∀ j ∈ Finset.Icc 1 (Nat.log c₂ n), c₂ ^ j ≤ n)
+    (hne : c₁.factorization p * Nat.log c₁ n ≠
+      c₂.factorization p * Nat.log c₂ n) :
+    p ^ (max (c₁.factorization p * Nat.log c₁ n)
+          (c₂.factorization p * Nat.log c₂ n) - padicValInt p h) ∣
+      (NormalNumbers.StonehamSumsNormal.stonehamState b 1
+        ![c₁, c₂] ![1, 1] ![h, h] n).den := by
+  have hdiv := prime_pow_max_dvd_pairFamilies_add_den_of_depth_ne
+    p b c₁ c₂ (Nat.log c₁ n) (Nat.log c₂ n) n hp hc₁0 hc₂0
+      hcb₁ hcb₂ hK₁ hK₂ hentered₁ hentered₂ hne
+  have hdiv' : p ^ max (c₁.factorization p * Nat.log c₁ n)
+      (c₂.factorization p * Nat.log c₂ n) ∣
+      ((∑ j ∈ Finset.Icc 1 (Nat.log c₁ n),
+          (b : ℚ) ^ (n - c₁ ^ j) / (c₁ : ℚ) ^ j) +
+        (1 : ℚ) * (∑ j ∈ Finset.Icc 1 (Nat.log c₂ n),
+          (b : ℚ) ^ (n - c₂ ^ j) / (c₂ : ℚ) ^ j)).den := by
+    simpa using hdiv
+  simpa using prime_pow_sub_padicValInt_dvd_stonehamState_pair_one_den
+    p (max (c₁.factorization p * Nat.log c₁ n)
+      (c₂.factorization p * Nat.log c₂ n)) b c₁ c₂ n h 1 hp hh hdiv'
+
+/-- The literal difference state has the same maximum-depth denominator divisor after its fixed
+Fourier-multiplier loss. -/
+theorem prime_pow_max_sub_padicValInt_dvd_stonehamState_pair_sub_den_of_depth_ne
+    (p b c₁ c₂ n : ℕ) (h : ℤ) (hp : p.Prime) (hh : h ≠ 0)
+    (hc₁0 : c₁ ≠ 0) (hc₂0 : c₂ ≠ 0)
+    (hcb₁ : Nat.Coprime c₁ b) (hcb₂ : Nat.Coprime c₂ b)
+    (hK₁ : 1 ≤ Nat.log c₁ n) (hK₂ : 1 ≤ Nat.log c₂ n)
+    (hentered₁ : ∀ j ∈ Finset.Icc 1 (Nat.log c₁ n), c₁ ^ j ≤ n)
+    (hentered₂ : ∀ j ∈ Finset.Icc 1 (Nat.log c₂ n), c₂ ^ j ≤ n)
+    (hne : c₁.factorization p * Nat.log c₁ n ≠
+      c₂.factorization p * Nat.log c₂ n) :
+    p ^ (max (c₁.factorization p * Nat.log c₁ n)
+          (c₂.factorization p * Nat.log c₂ n) - padicValInt p h) ∣
+      (NormalNumbers.StonehamSumsNormal.stonehamState b 1
+        ![c₁, c₂] ![1, 1] ![h, -h] n).den := by
+  have hdiv := prime_pow_max_dvd_pairFamilies_sub_den_of_depth_ne
+    p b c₁ c₂ (Nat.log c₁ n) (Nat.log c₂ n) n hp hc₁0 hc₂0
+      hcb₁ hcb₂ hK₁ hK₂ hentered₁ hentered₂ hne
+  have hdiv' : p ^ max (c₁.factorization p * Nat.log c₁ n)
+      (c₂.factorization p * Nat.log c₂ n) ∣
+      ((∑ j ∈ Finset.Icc 1 (Nat.log c₁ n),
+          (b : ℚ) ^ (n - c₁ ^ j) / (c₁ : ℚ) ^ j) +
+        ((-1 : ℤ) : ℚ) * (∑ j ∈ Finset.Icc 1 (Nat.log c₂ n),
+          (b : ℚ) ^ (n - c₂ ^ j) / (c₂ : ℚ) ^ j)).den := by
+    simpa [sub_eq_add_neg] using hdiv
+  simpa [sub_eq_add_neg] using
+    prime_pow_sub_padicValInt_dvd_stonehamState_pair_one_den
+      p (max (c₁.factorization p * Nat.log c₁ n)
+        (c₂.factorization p * Nat.log c₂ n)) b c₁ c₂ n h (-1) hp hh hdiv'
+
 end NormalNumbers.StonehamPairsNormal
