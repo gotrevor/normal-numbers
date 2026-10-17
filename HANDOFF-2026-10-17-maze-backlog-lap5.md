@@ -74,3 +74,8 @@ There is no blocker and no remaining item in the binding kickoff.  All three par
 all seven new Maze rows are declaration-backed, both boundary headlines are proved, and the full
 build is green.  The next session should take a new operator objective rather than extend this
 completed campaign speculatively.
+
+This is a bounded campaign completion, not a claim that the entire long-running repository is
+sorry-free.  `box done` was invoked for the completed kickoff; its generic repo-wide self-stop gate
+reported 105 unrelated source sorries and may therefore relaunch unless the host uses a scoped done
+condition.  Those obligations predate this branch and are outside `KICKOFF-2026-10-16-maze-backlog.md`.
