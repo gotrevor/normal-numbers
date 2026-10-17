@@ -1,6 +1,6 @@
 # STATUS — normal-numbers 📊
 
-## Vandehey Theorem 5.1 complete, 17 October 2026 (branch `proof/vandehey-thm51`, lap 24 review)
+## Vandehey Theorem 5.1 complete, 17 October 2026 (branch `proof/vandehey-thm51`, lap 25 audit)
 
 `VandeheyProof.vandeheyThm51_holds` is proved with the frozen statement unchanged.  The final
 step is `VandeheyKorobov.norm_power_sum_le_step`, a complete formalization of Proposition 4.1:
@@ -10,14 +10,17 @@ window and `B_k ≥ 1`.  `VandeheyProof.lean` is sorry-free, its BarrierAudit wa
 and all four declarations in that file print exactly `[Classical.choice, Quot.sound, propext]`.
 Consequently the general Stoneham-combination theorem, `α₂,₃ + α₂,₅`, and `ζ_Y` now
 have unconditional wrappers at the standard trust baseline.  See
-`HANDOFF-2026-10-17-vandehey-thm51-lap24.md`.  Lap 21 audited the frozen statement directly
+`HANDOFF-2026-10-17-vandehey-thm51-lap25.md`.  Lap 21 audited the frozen statement directly
 against the paper and the full dependency chain for concealed debt, then made all four kickoff
 axiom conditions permanent compile-time guards.  The scoped 8936-job gate and full 10868-job
 repository gate remain green.  Lap 24 freshly reconstructed the route from the paper, frozen
 statement history, current source, and proof dependency graph: the statement is unchanged and
 faithful-or-weaker, the proof is non-circular, and the corrected order/Claim 4.6/ceiling/support
 interfaces remain load-bearing proved lemmas.  Its scoped and full gates are green.  Laps 22 and
-23 independently reconfirmed the terminal predicate from earlier committed checkpoints.
+23 independently reconfirmed the terminal predicate from earlier committed checkpoints.  Lap 25
+again checked the exact host predicate, frozen contract, machinery debt and circularity surfaces,
+BarrierAudit waiver absence, theorem axiom footprint, and both real build gates from the committed
+lap-24 tree; every terminal condition remains green.
 
 ## Vandehey Theorem 5.1 update, 17 October 2026 (branch `proof/vandehey-thm51`, lap 17)
 

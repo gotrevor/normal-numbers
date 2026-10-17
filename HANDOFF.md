@@ -1,3 +1,8 @@
+# Vandehey Theorem 5.1 lap 25 COMPLETE (2026-10-17, terminal gate audit); read HANDOFF-2026-10-17-vandehey-thm51-lap25.md
+- The exact sorry-free predicate, frozen statement, machinery debt surface, BarrierAudit waiver
+  absence, theorem axiom list, and both real build gates were independently reconfirmed.
+- No blocker or further in-scope attack remains; terminate the completed campaign.
+
 # Vandehey Theorem 5.1 lap 24 COMPLETE (2026-10-17, adversarial completion review); read HANDOFF-2026-10-17-vandehey-thm51-lap24.md
 - Fresh reconstruction against the paper, frozen statement history, proof dependency graph, and
   current sources found no statement drift, circularity, concealed debt, or route mismatch.
