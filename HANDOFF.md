@@ -1,3 +1,9 @@
+# Vandehey Theorem 5.1 lap 36 COMPLETE (2026-10-17, adversarial terminal review); read HANDOFF-2026-10-17-vandehey-thm51-lap36.md
+- Fresh reconstruction from the paper, frozen statement, proof route, and recent history found no
+  drift, circularity, concealed proof debt, or route mismatch.
+- The exact host predicate, permanent trust guards, scoped build, and full repository gate are
+  green; no blocker or further in-scope attack remains.
+
 # Vandehey Theorem 5.1 lap 35 COMPLETE (2026-10-17, independent terminal confirmation); read HANDOFF-2026-10-17-vandehey-thm51-lap35.md
 - Independently reconfirmed the exact host predicate, frozen source, proof-escape and circularity
   surfaces, permanent statement/trust guards, and both authoritative build gates.

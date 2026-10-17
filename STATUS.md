@@ -1,6 +1,6 @@
 # STATUS — normal-numbers 📊
 
-## Vandehey Theorem 5.1 complete, 17 October 2026 (branch `proof/vandehey-thm51`, lap 35 terminal confirmation)
+## Vandehey Theorem 5.1 complete, 17 October 2026 (branch `proof/vandehey-thm51`, lap 36 adversarial review)
 
 `VandeheyProof.vandeheyThm51_holds` is proved with the frozen statement unchanged.  The final
 step is `VandeheyKorobov.norm_power_sum_le_step`, a complete formalization of Proposition 4.1:
@@ -10,7 +10,7 @@ window and `B_k ≥ 1`.  `VandeheyProof.lean` is sorry-free, its BarrierAudit wa
 and all four declarations in that file print exactly `[Classical.choice, Quot.sound, propext]`.
 Consequently the general Stoneham-combination theorem, `α₂,₃ + α₂,₅`, and `ζ_Y` now
 have unconditional wrappers at the standard trust baseline.  See
-`HANDOFF-2026-10-17-vandehey-thm51-lap25.md`.  Lap 21 audited the frozen statement directly
+`HANDOFF-2026-10-17-vandehey-thm51-lap36.md`.  Lap 21 audited the frozen statement directly
 against the paper and the full dependency chain for concealed debt, then made all four kickoff
 axiom conditions permanent compile-time guards.  The scoped 8936-job gate and full 10868-job
 repository gate remain green.  Lap 24 freshly reconstructed the route from the paper, frozen
@@ -57,6 +57,13 @@ Lap 35 independently reconfirmed the exact host predicate from the committed lap
 ratified source remains unchanged, the scoped machinery has no proof escape or reverse dependency,
 the permanent statement and axiom guards remain active, and both the 8,936-job scoped gate and
 10,868-job full repository gate are green.  No in-scope obligation remains.
+
+Lap 36 freshly reconstructed the campaign from the paper's Lemmas 2.1--2.3, Proposition 4.1,
+Theorem 5.1, the frozen statement, current proof, and recent history.  The base case, complete
+differencing step, recursive invariants, and exact displayed constants still compose without
+circularity or proof escape.  The ratified source remains byte-identical to `cba101f9`; the scoped
+8,936-job build and full 10,868-job repository gate are green, with all four permanent trust guards
+active.  No in-scope obligation remains.
 
 ## Vandehey Theorem 5.1 update, 17 October 2026 (branch `proof/vandehey-thm51`, lap 17)
 
