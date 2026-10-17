@@ -1,3 +1,9 @@
+# Maze backlog review lap 10 (2026-10-17): full tied-depth history controlled; read HANDOFF-2026-10-17-maze-backlog-lap10.md
+- The review rejected the strict-minimum treatment of older kicks. Phase congruence modulo the
+  exact surviving powers of seven now transfers lap 8's newest-phase bound to the complete
+  tied-depth numerator for exponent gaps one and two. Next: unequal depths, rational-state
+  packaging, and `StonehamStateDenLinearLower` for the three L2 pairs.
+
 # Maze backlog lap 9 (2026-10-17): same-prime analytic engine isolated; read HANDOFF-2026-10-17-maze-backlog-lap9.md
 - The complete Vandehey block/Cesaro argument now depends only on the explicit
   `StonehamStateDenLinearLower` interface, not pairwise coprimality. The remaining L2 blocker

@@ -680,6 +680,342 @@ theorem stoneham_pair_leadingVal_le_two (a c : ℤ) (n : ℕ)
   exact ((padicValInt_dvd_iff v _).mp hnorm).resolve_left
     (stoneham_pairNorms_ne_zero a c hac).2
 
+/-! ### The complete same-prime tail
+
+The newest equal-depth terms are not always a strict 7-adic minimum: their bounded loss can
+exceed one, while the immediately older terms lose only one denominator power.  The correct
+mechanism compares every older base-3 phase with the newest phase at exactly the modulus that
+remains after clearing the common denominator.  Consequently all comparison errors vanish
+modulo `7^(K+1)`, and the geometric coefficient left behind is a 7-adic unit. -/
+
+/-- Base-3 phases at Stoneham depths `k ≤ K` agree modulo `7^(k+1)`.  This is Euler's
+theorem at modulus `7^(k+1)`, since `φ(7^(k+1)) = 6·7^k` divides
+`m·(7^K - 7^k)`. -/
+theorem stoneham_seven_phase_modEq (m n k K : ℕ) (hk : k ≤ K)
+    (hentered : m * 7 ^ K ≤ n) :
+    3 ^ (n - m * 7 ^ k) ≡ 3 ^ (n - m * 7 ^ K) [MOD 7 ^ (k + 1)] := by
+  rcases eq_or_lt_of_le hk with rfl | hklt
+  · rfl
+  have hpow : 7 ^ k ≤ 7 ^ K := Nat.pow_le_pow_right (by norm_num) hk
+  have hmod : 7 ^ (K - k) ≡ 1 [MOD 6] := by
+    simpa using (show 7 ≡ 1 [MOD 6] by norm_num).pow (K - k)
+  have hsix : 6 ∣ 7 ^ (K - k) - 1 := hmod.symm.dvd'
+  obtain ⟨t, ht⟩ := hsix
+  have hpow_split : 7 ^ K = 7 ^ k * 7 ^ (K - k) := by
+    rw [← pow_add]
+    congr 1
+    omega
+  have hfactor : 7 ^ k * 7 ^ (K - k) - 7 ^ k =
+      7 ^ k * (7 ^ (K - k) - 1) := by
+    symm
+    simpa using Nat.mul_sub_left_distrib (7 ^ k) (7 ^ (K - k)) 1
+  have hdiff : m * (7 ^ K - 7 ^ k) = (6 * 7 ^ k) * (m * t) := by
+    rw [hpow_split, Nat.mul_sub_left_distrib]
+    calc
+      m * (7 ^ k * 7 ^ (K - k)) - m * 7 ^ k =
+          m * (7 ^ k * 7 ^ (K - k) - 7 ^ k) :=
+        (Nat.mul_sub_left_distrib m (7 ^ k * 7 ^ (K - k)) (7 ^ k)).symm
+      _ = m * (7 ^ k * (7 ^ (K - k) - 1)) := by rw [hfactor]
+      _ = (6 * 7 ^ k) * (m * t) := by rw [ht]; ring
+  have hdiff' : m * 7 ^ K - m * 7 ^ k = (6 * 7 ^ k) * (m * t) := by
+    rw [← Nat.mul_sub_left_distrib, hdiff]
+  have hexp : n - m * 7 ^ k =
+      (n - m * 7 ^ K) + (6 * 7 ^ k) * (m * t) := by
+    have hmk : m * 7 ^ k ≤ m * 7 ^ K := Nat.mul_le_mul_left m hpow
+    calc
+      n - m * 7 ^ k = (n - m * 7 ^ K) + (m * 7 ^ K - m * 7 ^ k) :=
+        (tsub_add_tsub_cancel hentered hmk).symm
+      _ = (n - m * 7 ^ K) + (6 * 7 ^ k) * (m * t) := by rw [hdiff']
+  have hcop : Nat.Coprime 3 (7 ^ (k + 1)) := by norm_num
+  have heuler := Nat.ModEq.pow_totient hcop
+  rw [Nat.totient_prime_pow_succ (by norm_num : Nat.Prime 7),
+    show 7 - 1 = 6 by omega, mul_comm] at heuler
+  rw [hexp, pow_add]
+  have hpowmod : 3 ^ ((6 * 7 ^ k) * (m * t)) ≡ 1 [MOD 7 ^ (k + 1)] := by
+    rw [pow_mul]
+    simpa using heuler.pow (m * t)
+  simpa [pow_succ, pow_add] using hpowmod.mul_left (3 ^ (n - m * 7 ^ K))
+
+/-- The numerator obtained by putting one truncated Stoneham family over the common
+denominator `7^K`. -/
+def stonehamSevenWeightedSum (f : ℕ → ℤ) (K : ℕ) : ℤ :=
+  ∑ k ∈ Finset.Icc 1 K, (7 : ℤ) ^ (K - k) * f k
+
+/-- The geometric coefficient left after replacing every phase in a cleared Stoneham
+numerator by its newest phase. -/
+def stonehamSevenGeom (K : ℕ) : ℤ :=
+  ∑ k ∈ Finset.Icc 1 K, (7 : ℤ) ^ (K - k)
+
+/-- If the `k`-th coefficient agrees with the newest coefficient modulo `7^(k+1)`, then
+the corresponding cleared weighted sums agree modulo the single common modulus
+`7^(K+1)`. -/
+theorem seven_pow_succ_dvd_weightedSum_sub (f : ℕ → ℤ) (K : ℕ)
+    (hf : ∀ k ∈ Finset.Icc 1 K, (7 : ℤ) ^ (k + 1) ∣ f k - f K) :
+    (7 : ℤ) ^ (K + 1) ∣
+      stonehamSevenWeightedSum f K - f K * stonehamSevenGeom K := by
+  rw [stonehamSevenWeightedSum, stonehamSevenGeom, Finset.mul_sum,
+    ← Finset.sum_sub_distrib]
+  apply Finset.dvd_sum
+  intro k hk
+  have hkK := (Finset.mem_Icc.mp hk).2
+  have hmul := mul_dvd_mul_left ((7 : ℤ) ^ (K - k)) (hf k hk)
+  have hexp : K - k + (k + 1) = K + 1 := by omega
+  simpa [← pow_add, hexp, sub_mul, mul_comm] using hmul
+
+/-- The comparison coefficient `1 + 7 + ⋯ + 7^(K-1)` is a 7-adic unit. -/
+theorem stonehamSevenGeom_not_seven_dvd (K : ℕ) (hK : 1 ≤ K) :
+    ¬(7 : ℤ) ∣ stonehamSevenGeom K := by
+  let s := Finset.Icc 1 K
+  let g : ℕ → ℤ := fun k => (7 : ℤ) ^ (K - k)
+  have hKmem : K ∈ s := by simp [s, hK]
+  have hrest : (7 : ℤ) ∣ ∑ k ∈ s.erase K, g k := by
+    apply Finset.dvd_sum
+    intro k hk
+    have hk' := Finset.mem_erase.mp hk
+    have hkK := (Finset.mem_Icc.mp hk'.2).2
+    exact dvd_pow_self (7 : ℤ) (by dsimp [g]; omega)
+  have hsum := Finset.sum_erase_add s g hKmem
+  have heq : stonehamSevenGeom K = (∑ k ∈ s.erase K, g k) + 1 := by
+    rw [stonehamSevenGeom, ← hsum]
+    simp [s, g]
+  intro hseven
+  have hone : (7 : ℤ) ∣ 1 := by
+    have hsub := dvd_sub hseven hrest
+    rw [heq] at hsub
+    simpa using hsub
+  norm_num at hone
+
+/-- The integer phase appearing in a common-denominator Stoneham numerator. -/
+def stonehamSevenPhase (m n k : ℕ) : ℤ :=
+  (3 ^ (n - m * 7 ^ k) : ℕ)
+
+/-- The complete cleared numerator of one Stoneham family is congruent to its newest
+phase times the geometric unit, modulo `7^(K+1)`. -/
+theorem seven_pow_succ_dvd_stonehamSevenPhase_weighted_sub
+    (m n K : ℕ) (hentered : m * 7 ^ K ≤ n) :
+    (7 : ℤ) ^ (K + 1) ∣
+      stonehamSevenWeightedSum (stonehamSevenPhase m n) K -
+        stonehamSevenPhase m n K * stonehamSevenGeom K := by
+  apply seven_pow_succ_dvd_weightedSum_sub
+  intro k hk
+  have hmod := stoneham_seven_phase_modEq m n k K
+    (Finset.mem_Icc.mp hk).2 hentered
+  simpa [stonehamSevenPhase] using hmod.symm.dvd
+
+/-- A bounded newest-coefficient valuation bounds the valuation of the entire cleared
+weighted history.  This is the step that prevents older kicks from deepening the same-prime
+cancellation. -/
+theorem padicValInt_stonehamWeightedSum_le (f : ℕ → ℤ) (K D : ℕ)
+    (hK : 1 ≤ K) (hDK : D < K) (hfK : f K ≠ 0)
+    (hval : padicValInt 7 (f K) ≤ D)
+    (hcong : (7 : ℤ) ^ (K + 1) ∣
+      stonehamSevenWeightedSum f K - f K * stonehamSevenGeom K) :
+    padicValInt 7 (stonehamSevenWeightedSum f K) ≤ D := by
+  letI : Fact (Nat.Prime 7) := ⟨by norm_num⟩
+  have hgeom := stonehamSevenGeom_not_seven_dvd K hK
+  have hsmall : (7 : ℤ) ^ (D + 1) ∣
+      stonehamSevenWeightedSum f K - f K * stonehamSevenGeom K :=
+    (pow_dvd_pow (7 : ℤ) (by omega : D + 1 ≤ K + 1)).trans hcong
+  have hnot : ¬(7 : ℤ) ^ (D + 1) ∣ stonehamSevenWeightedSum f K := by
+    intro hsum
+    have hprod : (7 : ℤ) ^ (D + 1) ∣ f K * stonehamSevenGeom K := by
+      rw [← show stonehamSevenWeightedSum f K -
+        (stonehamSevenWeightedSum f K - f K * stonehamSevenGeom K) =
+          f K * stonehamSevenGeom K by ring]
+      exact dvd_sub hsum hsmall
+    have hfdiv : (7 : ℤ) ^ (D + 1) ∣ f K :=
+      (show Prime (7 : ℤ) by norm_num).pow_dvd_of_dvd_mul_right
+        (D + 1) hgeom hprod
+    rcases (padicValInt_dvd_iff (D + 1) (f K)).mp hfdiv with hzero | hle
+    · exact hfK hzero
+    · exact (not_lt_of_ge hval) (lt_of_lt_of_le (Nat.lt_succ_self D) hle)
+  by_contra hle
+  have hlt : D < padicValInt 7 (stonehamSevenWeightedSum f K) :=
+    Nat.lt_of_not_ge hle
+  apply hnot
+  apply (padicValInt_dvd_iff (D + 1) (stonehamSevenWeightedSum f K)).mpr
+  exact Or.inr (Nat.succ_le_iff.mpr hlt)
+
+/-- **Complete tied-depth cancellation bound.**  For two same-prime Stoneham families,
+once the newest combined phase has valuation at most `D < K`, adding every older kick cannot
+increase that valuation.  The newest-phase hypotheses in
+`stoneham_pair_leadingVal_le_one/two` therefore suffice for the full tied-depth numerator. -/
+theorem padicValInt_stonehamPairWeighted_le (a c : ℤ) (u v n K D : ℕ)
+    (hK : 1 ≤ K) (hDK : D < K)
+    (hu : u * 7 ^ K ≤ n) (hv : v * 7 ^ K ≤ n)
+    (hlatest : a * stonehamSevenPhase u n K +
+      c * stonehamSevenPhase v n K ≠ 0)
+    (hval : padicValInt 7
+      (a * stonehamSevenPhase u n K + c * stonehamSevenPhase v n K) ≤ D) :
+    padicValInt 7
+      (a * stonehamSevenWeightedSum (stonehamSevenPhase u n) K +
+        c * stonehamSevenWeightedSum (stonehamSevenPhase v n) K) ≤ D := by
+  let f : ℕ → ℤ := fun k =>
+    a * stonehamSevenPhase u n k + c * stonehamSevenPhase v n k
+  have hfcong : ∀ k ∈ Finset.Icc 1 K,
+      (7 : ℤ) ^ (k + 1) ∣ f k - f K := by
+    intro k hk
+    have hku := stoneham_seven_phase_modEq u n k K (Finset.mem_Icc.mp hk).2 hu
+    have hkv := stoneham_seven_phase_modEq v n k K (Finset.mem_Icc.mp hk).2 hv
+    have hdu : (7 : ℤ) ^ (k + 1) ∣
+        stonehamSevenPhase u n k - stonehamSevenPhase u n K := by
+      simpa [stonehamSevenPhase] using hku.symm.dvd
+    have hdv : (7 : ℤ) ^ (k + 1) ∣
+        stonehamSevenPhase v n k - stonehamSevenPhase v n K := by
+      simpa [stonehamSevenPhase] using hkv.symm.dvd
+    have hsum := dvd_add (Dvd.dvd.mul_left hdu a) (Dvd.dvd.mul_left hdv c)
+    rw [show f k - f K =
+      a * (stonehamSevenPhase u n k - stonehamSevenPhase u n K) +
+        c * (stonehamSevenPhase v n k - stonehamSevenPhase v n K) by
+          dsimp [f]; ring]
+    exact hsum
+  have hmain := padicValInt_stonehamWeightedSum_le f K D hK hDK hlatest hval
+    (seven_pow_succ_dvd_weightedSum_sub f K hfcong)
+  have hrewrite : stonehamSevenWeightedSum f K =
+      a * stonehamSevenWeightedSum (stonehamSevenPhase u n) K +
+        c * stonehamSevenWeightedSum (stonehamSevenPhase v n) K := by
+    simp only [stonehamSevenWeightedSum, f, mul_add, Finset.sum_add_distrib,
+      Finset.mul_sum]
+    ring
+  simpa only [hrewrite] using hmain
+
+/-- At exponent gap one, the newest combined phase is nonzero and has valuation bounded by
+the fixed positive quadratic norm once the common depth passes that bound. -/
+theorem stonehamPairNewest_one (a c : ℤ) (m n K : ℕ)
+    (hac : a ≠ 0 ∨ c ≠ 0)
+    (hentered : (m + 1) * 7 ^ K ≤ n)
+    (hK : padicValInt 7 (a ^ 2 + a * c + c ^ 2) < K) :
+    a * stonehamSevenPhase (m + 1) n K + c * stonehamSevenPhase m n K ≠ 0 ∧
+      padicValInt 7
+        (a * stonehamSevenPhase (m + 1) n K + c * stonehamSevenPhase m n K) ≤
+          padicValInt 7 (a ^ 2 + a * c + c ^ 2) := by
+  letI : Fact (Nat.Prime 7) := ⟨by norm_num⟩
+  let e := n - (m + 1) * 7 ^ K
+  let z : ℤ := (3 : ℤ) ^ (7 ^ K)
+  have hmle : m * 7 ^ K ≤ (m + 1) * 7 ^ K :=
+    Nat.mul_le_mul_right (7 ^ K) (Nat.le_succ m)
+  have hdiff : (m + 1) * 7 ^ K - m * 7 ^ K = 7 ^ K := by
+    rw [Nat.add_mul, one_mul]
+    exact Nat.add_sub_cancel_left _ _
+  have hexp : n - m * 7 ^ K = e + 7 ^ K := by
+    dsimp only [e]
+    calc
+      n - m * 7 ^ K =
+          (n - (m + 1) * 7 ^ K) + ((m + 1) * 7 ^ K - m * 7 ^ K) :=
+        (tsub_add_tsub_cancel hentered hmle).symm
+      _ = (n - (m + 1) * 7 ^ K) + 7 ^ K := by rw [hdiff]
+  have hfactor :
+      a * stonehamSevenPhase (m + 1) n K + c * stonehamSevenPhase m n K =
+        (3 : ℤ) ^ e * (a + c * z) := by
+    simp only [stonehamSevenPhase]
+    push_cast
+    rw [hexp, pow_add]
+    dsimp only [e, z]
+    ring
+  have hcoef0 : a + c * z ≠ 0 := by
+    intro hz
+    have hd : (7 : ℤ) ^ K ∣ a + c * (3 : ℤ) ^ (7 ^ K) := by
+      simpa only [z, hz] using (dvd_zero ((7 : ℤ) ^ K))
+    have hdepth := stoneham_pair_cancellationDepth_le_one a c K hac hd
+    omega
+  have hunit0 : (3 : ℤ) ^ e ≠ 0 := pow_ne_zero _ (by norm_num)
+  have hunitVal : padicValInt 7 ((3 : ℤ) ^ e) = 0 := by
+    apply padicValInt.eq_zero_of_not_dvd
+    intro hd
+    have h73 : (7 : ℤ) ∣ 3 :=
+      (show Prime (7 : ℤ) by norm_num).dvd_of_dvd_pow hd
+    norm_num at h73
+  constructor
+  · rw [hfactor]
+    exact mul_ne_zero hunit0 hcoef0
+  · rw [hfactor, padicValInt.mul hunit0 hcoef0, hunitVal, zero_add]
+    simpa only [z] using stoneham_pair_leadingVal_le_one a c K hac hK
+
+/-- The complete tied-depth numerator inherits the exponent-gap-one quadratic-norm bound;
+all older kicks are included. -/
+theorem padicValInt_stonehamPairWeighted_le_one (a c : ℤ) (m n K : ℕ)
+    (hac : a ≠ 0 ∨ c ≠ 0)
+    (hentered : (m + 1) * 7 ^ K ≤ n)
+    (hK : padicValInt 7 (a ^ 2 + a * c + c ^ 2) < K) :
+    padicValInt 7
+      (a * stonehamSevenWeightedSum (stonehamSevenPhase (m + 1) n) K +
+        c * stonehamSevenWeightedSum (stonehamSevenPhase m n) K) ≤
+          padicValInt 7 (a ^ 2 + a * c + c ^ 2) := by
+  obtain ⟨hlatest, hval⟩ := stonehamPairNewest_one a c m n K hac hentered hK
+  have hm : m * 7 ^ K ≤ n :=
+    (Nat.mul_le_mul_right (7 ^ K) (Nat.le_succ m)).trans hentered
+  exact padicValInt_stonehamPairWeighted_le a c (m + 1) m n K
+    (padicValInt 7 (a ^ 2 + a * c + c ^ 2)) (by omega) hK hentered hm hlatest hval
+
+/-- At exponent gap two, the newest combined phase is controlled by the conjugate
+quadratic norm. -/
+theorem stonehamPairNewest_two (a c : ℤ) (m n K : ℕ)
+    (hac : a ≠ 0 ∨ c ≠ 0)
+    (hentered : (m + 2) * 7 ^ K ≤ n)
+    (hK : padicValInt 7 (a ^ 2 - a * c + c ^ 2) < K) :
+    a * stonehamSevenPhase (m + 2) n K + c * stonehamSevenPhase m n K ≠ 0 ∧
+      padicValInt 7
+        (a * stonehamSevenPhase (m + 2) n K + c * stonehamSevenPhase m n K) ≤
+          padicValInt 7 (a ^ 2 - a * c + c ^ 2) := by
+  letI : Fact (Nat.Prime 7) := ⟨by norm_num⟩
+  let e := n - (m + 2) * 7 ^ K
+  let z : ℤ := (3 : ℤ) ^ (7 ^ K)
+  have hmle : m * 7 ^ K ≤ (m + 2) * 7 ^ K := by
+    exact Nat.mul_le_mul_right (7 ^ K) (by omega)
+  have hdiff : (m + 2) * 7 ^ K - m * 7 ^ K = 2 * 7 ^ K := by
+    rw [Nat.add_mul]
+    omega
+  have hexp : n - m * 7 ^ K = e + 2 * 7 ^ K := by
+    dsimp only [e]
+    calc
+      n - m * 7 ^ K =
+          (n - (m + 2) * 7 ^ K) + ((m + 2) * 7 ^ K - m * 7 ^ K) :=
+        (tsub_add_tsub_cancel hentered hmle).symm
+      _ = (n - (m + 2) * 7 ^ K) + 2 * 7 ^ K := by rw [hdiff]
+  have hfactor :
+      a * stonehamSevenPhase (m + 2) n K + c * stonehamSevenPhase m n K =
+        (3 : ℤ) ^ e * (a + c * z ^ 2) := by
+    simp only [stonehamSevenPhase]
+    push_cast
+    rw [hexp, pow_add, show (3 : ℤ) ^ (2 * 7 ^ K) = z ^ 2 by
+      dsimp only [z]; rw [pow_two, ← pow_add]; congr 1 <;> omega]
+    dsimp only [e]
+    ring
+  have hcoef0 : a + c * z ^ 2 ≠ 0 := by
+    intro hz
+    have hd : (7 : ℤ) ^ K ∣ a + c * ((3 : ℤ) ^ (7 ^ K)) ^ 2 := by
+      simpa only [z, hz] using (dvd_zero ((7 : ℤ) ^ K))
+    have hdepth := stoneham_pair_cancellationDepth_le_two a c K hac hd
+    omega
+  have hunit0 : (3 : ℤ) ^ e ≠ 0 := pow_ne_zero _ (by norm_num)
+  have hunitVal : padicValInt 7 ((3 : ℤ) ^ e) = 0 := by
+    apply padicValInt.eq_zero_of_not_dvd
+    intro hd
+    have h73 : (7 : ℤ) ∣ 3 :=
+      (show Prime (7 : ℤ) by norm_num).dvd_of_dvd_pow hd
+    norm_num at h73
+  constructor
+  · rw [hfactor]
+    exact mul_ne_zero hunit0 hcoef0
+  · rw [hfactor, padicValInt.mul hunit0 hcoef0, hunitVal, zero_add]
+    simpa only [z] using stoneham_pair_leadingVal_le_two a c K hac hK
+
+/-- The complete tied-depth numerator inherits the exponent-gap-two quadratic-norm bound;
+all older kicks are included. -/
+theorem padicValInt_stonehamPairWeighted_le_two (a c : ℤ) (m n K : ℕ)
+    (hac : a ≠ 0 ∨ c ≠ 0)
+    (hentered : (m + 2) * 7 ^ K ≤ n)
+    (hK : padicValInt 7 (a ^ 2 - a * c + c ^ 2) < K) :
+    padicValInt 7
+      (a * stonehamSevenWeightedSum (stonehamSevenPhase (m + 2) n) K +
+        c * stonehamSevenWeightedSum (stonehamSevenPhase m n) K) ≤
+          padicValInt 7 (a ^ 2 - a * c + c ^ 2) := by
+  obtain ⟨hlatest, hval⟩ := stonehamPairNewest_two a c m n K hac hentered hK
+  have hm : m * 7 ^ K ≤ n :=
+    (Nat.mul_le_mul_right (7 ^ K) (by omega : m ≤ m + 2)).trans hentered
+  exact padicValInt_stonehamPairWeighted_le a c (m + 2) m n K
+    (padicValInt 7 (a ^ 2 - a * c + c ^ 2)) (by omega) hK hentered hm hlatest hval
+
 /-- The L2 zero windows prove the *non-joint* half of the proposed pairwise counterexample,
 with the exact rational-joint formulation made explicit. -/
 @[blueprint (title := "The ternary Stoneham triple is not rationally jointly normal")]

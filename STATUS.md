@@ -1,5 +1,33 @@
 # STATUS — normal-numbers 📊
 
+## Maze backlog full-history cancellation update, 17 October 2026 (branch `proof/maze-backlog`, lap 10 review)
+
+**Kickoff open at Part 3/L2** · **Crux advance**: tied-depth full numerator controlled ·
+**Build**: 🟢 `MazeAudit` gate green (10,470 jobs)
+
+The review rejected lap 9's proposed strict-minimum argument: if the newest tied pair loses more
+than one factor of seven, the immediately older kick need not have strictly larger valuation.
+The replacement mechanism is now kernel-proved. `stoneham_seven_phase_modEq` compares every old
+base-3 phase with the newest phase at the exact modulus surviving common-denominator clearing;
+all errors therefore vanish modulo `7^(K+1)`, while `stonehamSevenGeom_not_seven_dvd` shows that
+the remaining geometric coefficient is a 7-adic unit.
+
+The generic transfer theorem `padicValInt_stonehamPairWeighted_le` now controls the complete
+cleared history from the newest combined phase. Its gap-one and gap-two specializations
+`padicValInt_stonehamPairWeighted_le_one` and `_two` apply lap 8's quadratic-norm bounds, so the
+equal-kick-depth part of the same-prime denominator argument is complete, with no older terms
+discarded.
+
+The remaining kickoff obligation is still `StonehamThreeSevenPairwiseNormal`. Next prove that
+the two kick depths for `m ∈ {1,2,3}` differ by at most one, handle the unequal-depth numerator
+(where one geometric sum is multiplied by seven), identify these weighted sums with the actual
+rational `stonehamState`, and establish `StonehamStateDenLinearLower` for all three pairs. See
+`HANDOFF-2026-10-17-maze-backlog-lap10.md`.
+
+Verification: the narrow boundary-module check passed. The exact 10,470-job `lean-green` gate
+ended `FORMALIZE-TIER GREEN`; the phase-congruence theorem and both full tied-depth valuation
+theorems have exactly `[Classical.choice, Quot.sound, propext]` as their axiom list.
+
 ## Maze backlog same-prime denominator update, 17 October 2026 (branch `proof/maze-backlog`, lap 8)
 
 **Kickoff open at Part 3/L2** · **Crux advance**: eventual fixed 7-adic leading loss proved ·
