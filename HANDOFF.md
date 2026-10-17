@@ -1,3 +1,8 @@
+# Vandehey Theorem 5.1 lap 11 (2026-10-17); read HANDOFF-2026-10-17-vandehey-thm51-lap11.md
+- Vandehey Claim 4.5 is proved in its exact gcd form, including the exceptional two-adic branch,
+  and specialized to the rounded divisor used by Proposition 4.1.
+- Next: Claim 4.6's `m/mbar | bigM` valuation bound, then assemble Proposition 4.1.
+
 # Vandehey Theorem 5.1 lap 10 (2026-10-17); read HANDOFF-2026-10-17-vandehey-thm51-lap10.md
 - Vandehey Claim 4.4 is proved in its divisibility-maximal form, and the exact local LTE
   identity needed for Claims 4.5--4.6 is proved uniformly, including the preserved-`4` branch.
