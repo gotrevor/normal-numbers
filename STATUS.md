@@ -1,3 +1,22 @@
+# Literal Bailey--Borwein pairs, 17 October 2026 (branch `proof/bb-literal-pairs`, lap 11)
+
+**Scoped kickoff open** · **Crux advance**: exact maximum-depth reduced-denominator divisor proved ·
+**Build**: 🟢 `StonehamPairsNormal` target green (8,779 jobs)
+
+`StonehamPairsDistinct.lean` now turns unequal normalized slopes into eventual unequal integral
+depths and proves the decisive local denominator statement for both literal signs:
+`p^max(depth1,depth2)` divides the reduced pair-state denominator. This covers exclusive and
+overlapping prime support and corrects the prior plan: no growing depth-gap estimate is needed,
+because exact minimum numerator valuation leaves the entire larger depth in the denominator.
+
+The two ratified headline sorries remain. Next account for the fixed Fourier multiplier loss,
+identify the literal pair with the `Fin 2` `stonehamState`, and package the distinct-class
+`StonehamStateDenPowerLower`; same-class aligned-tail compression remains afterward. See
+`HANDOFF-2026-10-17-bb-literal-pairs-lap11.md`.
+
+The three audited separation/denominator declarations have exactly
+`[Classical.choice, Quot.sound, propext]`; the real target gate ended `FORMALIZE-TIER GREEN`.
+
 # Literal Bailey--Borwein pairs, 17 October 2026 (branch `proof/bb-literal-pairs`, lap 10)
 
 **Scoped kickoff open** · **Crux advance**: global distinct-class slope separation proved ·

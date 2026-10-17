@@ -1,3 +1,10 @@
+# Literal Bailey--Borwein pairs lap 11 (2026-10-17): exact maximum-depth denominator divisor; read HANDOFF-2026-10-17-bb-literal-pairs-lap11.md
+
+- Unequal logarithmic slopes now give eventual unequal integral depths, and both literal signs
+  have the exact reduced-denominator divisor `p^max(depth1,depth2)`, including exclusive prime
+  support. A growing depth gap is unnecessary. Next absorb the fixed Fourier-multiplier loss,
+  identify the `Fin 2` Stoneham state, and prove the distinct-class power denominator lower bound.
+
 # Literal Bailey--Borwein pairs lap 10 (2026-10-17): global class slope separation; read HANDOFF-2026-10-17-bb-literal-pairs-lap10.md
 
 - Multiplicative independence now kernel-produces a denominator prime with unequal normalized
