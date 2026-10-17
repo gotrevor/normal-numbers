@@ -1,3 +1,10 @@
+# Vandehey Theorem 5.1 lap 12 (2026-10-17, review); read HANDOFF-2026-10-17-vandehey-thm51-lap12.md
+- Adversarial source review corrected the prior baton: Claim 4.6 is `mbar / m' ∣ bigM`, not
+  `m / mbar ∣ bigM`.  The exact paper claim and its `mbar ≤ bigM * m'` corollary are proved,
+  including the rounded-divisor specialization.
+- Next: reduce the shifted coefficients to their exact coprime denominators, aggregate the
+  gcd classes with Lemmas 4.2--4.3, and assemble Proposition 4.1.
+
 # Vandehey Theorem 5.1 lap 11 (2026-10-17); read HANDOFF-2026-10-17-vandehey-thm51-lap11.md
 - Vandehey Claim 4.5 is proved in its exact gcd form, including the exceptional two-adic branch,
   and specialized to the rounded divisor used by Proposition 4.1.
