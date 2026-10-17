@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "docs/RESEARCH-REVIEW-FOR-TREVOR-2026-09-25.md",
+                "file": "docs/mahler-exact-values-2026-09-07.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "RESEARCH-REVIEW-FOR-TREVOR-2026-09-25"
+              "title": "mahler-exact-values-2026-09-07"
             }
           }
         ]
@@ -190,17 +190,22 @@
   },
   "active": "531fa67ef84421ba",
   "lastOpenFiles": [
-    "src/NormalNumbers/VandeheyS7Cocycle.lean",
-    "src/NormalNumbers/VandeheyS7Distortion.lean",
-    "src/NormalNumbers/VandeheyS7Clock.lean",
-    "src/NormalNumbers/VandeheyS7Wall.lean",
-    "src/NormalNumbers/VandeheyS7.lean",
+    "HANDOFF-2026-10-06-profile-lap2.md",
+    "HANDOFF-2026-10-06-profile-lap1.md",
+    "ON-LINE-REQUEST.md",
+    "ON-LINE-FINDINGS-2026-10-06-korobov-ranges.md",
+    "src/NormalNumbers/ConjugateDet.lean",
+    "papers/bugeaud-coons-2019-mahler-miscellany.pdf",
+    "papers/szusz-volkmann-1983-each-block-infinitely-often.pdf",
+    "experiments/mahler_block_rs/target/release/deps/mahler_block-041d76fa5028bd2d",
+    "experiments/mahler_block_rs/target/release/deps/rustchUUe85/libunwind-c4b74438713f5271.rlib",
+    "experiments/mahler_block_rs/target/release/deps/rustchUUe85/libstd_detect-e7208637ba4efbf1.rlib",
+    "experiments/mahler_block_rs/target/release/deps/rustchUUe85/libstd-cc9b12538d143830.rlib",
+    "experiments/mahler_block_rs/target/release/deps/rustchUUe85/librustc_std_workspace_core-222ef5c72a98cd4c.rlib",
+    "experiments/mahler_block_rs/target/release/deps/rustchUUe85/librustc_std_workspace_alloc-64b0949d2d836e78.rlib",
+    "experiments/mahler_block_rs/target/release/deps/rustchUUe85/librustc_demangle-ca4687f84ba3e680.rlib",
     "drafts/2026-09-29-vandehey-note.md",
-    "docs/overview.mk",
-    "docs/overview.css",
     "docs/overview.svg",
-    "docs/overview.dot",
-    "OVERVIEW.html",
     "OVERVIEW.md"
   ]
 }

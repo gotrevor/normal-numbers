@@ -1,5 +1,7 @@
 # Sums of Stoneham constants are normal (PROPOSED, UNREFEREED)
 
+> **LEAN (2026-10-17): proved unconditionally**, `VandeheyProof.isNormal_two_stoneham_three_add_five_unconditional` and `isNormal_stonehamCombination_unconditional` (Vandehey Thm 5.1 itself proved in `VandeheyKorobov*.lean`; axiom-clean).  This paper is now commentary on the Lean.
+>
 > **Status (2026-10-16):** paper proof by a proof subagent (~92% self-assessed); **independent referee:
 > ACCEPT WITH MINOR REPAIRS (~88%)**, repairs applied below.  Elementary part ~98%; (F3) is used
 > exactly within its stated hypotheses (verbatim quote checked, Prop. 4.1 induction re-derived,
