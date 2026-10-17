@@ -1,3 +1,11 @@
+# Prime class lap 5 (2026-10-17): canonical mixed-`s` normalization; read HANDOFF-2026-10-17-prime-class-lap5.md
+
+- Every exponent now splits kernel-exactly as `m = u * (p^s)^a`; the reduced exponent preserves
+  its primitive-root phase and hence the family linear-independence criterion.  The corresponding
+  Stoneham constant is an explicit nonzero Mahler multiple of the reduced constant plus a finite
+  rational correction.  The target remains green with exactly the two ratified analytic sorries.
+  Next package the inverse coefficients and prove the mixed-`s` common-state congruence.
+
 # Prime class lap 4 (2026-10-17): Mahler exponent normalization; read HANDOFF-2026-10-17-prime-class-lap4.md
 
 - The exact one-step and iterated Mahler identities are now kernel-proved, including the full

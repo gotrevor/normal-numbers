@@ -1,3 +1,13 @@
+# Prime-class joint normality, 17 October 2026 (branch `proof/prime-class`, lap 5)
+
+`StonehamPrimeClassMahler` now gives the canonical mixed-`s` exponent split
+`m = u * (p^s)^a`, proves `ζ^u = ζ^m` and familywise preservation of the exact T-B' linear-
+independence criterion, and specializes the iterated Mahler identity to this split with its full
+finite correction.  All five new endpoints audit to the standard trust base.  The scoped target
+retains exactly the two general analytic sorries and is FORMALIZE-TIER GREEN.  Next package the
+inverse coefficient vector and prove the mixed-`s` cleared-state congruence needed by the
+dependent/non-normal half.  See `HANDOFF-2026-10-17-prime-class-lap5.md`.
+
 # Prime-class joint normality, 17 October 2026 (branch `proof/prime-class`, lap 4)
 
 `StonehamPrimeClassMahler` proves the exact Mahler shift, its arbitrary iterate, and the
