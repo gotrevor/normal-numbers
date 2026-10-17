@@ -252,4 +252,23 @@ theorem zetaY_isNormal_unconditional
     IsNormal 2 (GrowingLocalizedLog.zetaY Y) :=
   GrowingLocalizedLog.zetaY_isNormal vandeheyThm51_holds Y hmono h3 ε hε hY
 
+/-! The kickoff's trust gate is kept executable: future changes to either the proof or one of
+its unconditional consumers must not silently introduce proof debt. -/
+
+/-- info: 'NormalNumbers.VandeheyProof.vandeheyThm51_holds' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms vandeheyThm51_holds
+
+/-- info: 'NormalNumbers.VandeheyProof.isNormal_stonehamCombination_unconditional' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms isNormal_stonehamCombination_unconditional
+
+/-- info: 'NormalNumbers.VandeheyProof.isNormal_two_stoneham_three_add_five_unconditional' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms isNormal_two_stoneham_three_add_five_unconditional
+
+/-- info: 'NormalNumbers.VandeheyProof.zetaY_isNormal_unconditional' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms zetaY_isNormal_unconditional
+
 end NormalNumbers.VandeheyProof
