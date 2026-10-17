@@ -2,7 +2,7 @@
 
 ## Maze backlog update, 17 October 2026 (branch `proof/maze-backlog`, lap 2)
 
-**Kickoff Parts 1--2 complete** · **Build**: 🟢 green (`MazeAudit` target, 10466 jobs) ·
+**Kickoff Parts 1--2 complete** · **Build**: 🟢 green (full default build, 10857 jobs) ·
 **Audit**: 196 rows, 89 declaration-backed links, 107 legacy rows
 
 The four joint-orbit routes R1/R2/R4/R6 from the 16 October report now have Lean witnesses and

@@ -53,6 +53,9 @@ All completed successfully.  The real gate was:
 Verdict: `FORMALIZE-TIER GREEN`; `NormalNumbers.MazeAudit` completed at 10466 jobs.  Both axiom
 reports were exactly `[Classical.choice, Quot.sound, propext]`.
 
+The repository's enforced pre-commit gate then ran the full default `lake build` with
+`taskset -c 0-5` and completed successfully at 10857 jobs.
+
 ## Current crux and next attack
 
 Part 3 is next, beginning with L1 in `StonehamSumsBoundary.lean`:
