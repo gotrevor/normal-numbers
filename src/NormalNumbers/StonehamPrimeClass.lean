@@ -6,6 +6,7 @@ Authors: Trevor Morris
 import NormalNumbers.StonehamSumsBoundary
 import NormalNumbers.StonehamPairsUnconditional
 import NormalNumbers.StonehamPrimeClassFinite
+import NormalNumbers.StonehamPrimeClassMahler
 import NormalNumbers.VandeheyProof
 
 /-!

@@ -22,6 +22,7 @@ import NormalNumbers.StonehamSumsBoundary
 import NormalNumbers.VandeheyProof
 import NormalNumbers.StonehamPairsUnconditional
 import NormalNumbers.StonehamPrimeClassFinite
+import NormalNumbers.StonehamPrimeClassMahler
 import NormalNumbers.StonehamPrimeClass
 import NormalNumbers.StonehamBase6
 import NormalNumbers.CFDefs

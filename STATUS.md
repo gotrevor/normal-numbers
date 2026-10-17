@@ -1,3 +1,14 @@
+# Prime-class joint normality, 17 October 2026 (branch `proof/prime-class`, lap 4)
+
+`StonehamPrimeClassMahler` proves the exact Mahler shift, its arbitrary iterate, and the
+exponent-form normalization needed for kickoff step 2.  A full `(p^s)^a` factor in a base
+exponent is now moved into the nonzero coefficient `(p^s)^a`, with the terminating base-`b`
+rational correction explicit.  All three endpoints audit to the standard trust base.  The
+scoped target retains exactly the two general analytic sorries and is FORMALIZE-TIER GREEN.
+Next split each `m i` canonically into its p-free part, residual exponent modulo `s i`, and full
+`p^(s_i*q_i)` blocks, then package the phase-preserving inverse coefficient vector.  See
+`HANDOFF-2026-10-17-prime-class-lap4.md`.
+
 # Prime-class joint normality, 17 October 2026 (branch `proof/prime-class`, lap 3 REVIEW)
 
 `StonehamPrimeClassFinite` proves the finite Teichmüller arithmetic required by the dependent

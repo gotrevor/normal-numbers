@@ -1,3 +1,11 @@
+# Prime class lap 4 (2026-10-17): Mahler exponent normalization; read HANDOFF-2026-10-17-prime-class-lap4.md
+
+- The exact one-step and iterated Mahler identities are now kernel-proved, including the full
+  finite correction and the exponent-form normalization used by `primeClassFamily`.  This moves
+  every full `p^s` block out of an exponent and into its coefficient.  The target remains green
+  with exactly the two ratified analytic sorries.  Next formalize the canonical p-adic exponent
+  split, phase invariance, and inverse coefficient vector before assembling the mixed state.
+
 # Prime class lap 3 REVIEW (2026-10-17): finite cyclotomic lift; read HANDOFF-2026-10-17-prime-class-lap3.md
 
 - Non-independence now kernel-produces one nonzero integral relation whose value at
