@@ -1,4 +1,235 @@
+# Literal Bailey--Borwein pairs, 17 October 2026 (branch `proof/bb-literal-pairs`, lap 14 COMPLETE)
+
+**Scoped kickoff complete** · **Crux advance**: all same-class and distinct-class literal pair
+branches proved · **Build**: 🟢 `StonehamPairsNormal` target green (8,780 jobs), BarrierAudit green
+(10,371 jobs)
+
+`StonehamPairsNormal.lean` is sorry-free without statement changes. A new aligned-denominator
+module proves same-class differences at any common prime and same-class sums via an odd-prime /
+pure-dyadic dichotomy; the latter includes the exceptional tied dyadic phases. Together with the
+completed distinct-class bounds and equal-base sum reduction, this proves both Bailey--Borwein
+headlines. The headlines and four branch endpoints all audit to exactly
+`[Classical.choice, Quot.sound, propext]`, and the two temporary BarrierAudit waivers are gone.
+
+The kickoff's conditional `StonehamThreeSevenPairwiseNormal` stretch does not follow from the
+literal-coefficient machinery: it requires arbitrary rational coefficients while varying the
+digit-base exponent. That separate Maze premise remains parked at the unequal-depth denominator
+step. See `HANDOFF-2026-10-17-bb-literal-pairs-lap14.md`.
+
+# Literal Bailey--Borwein pairs, 17 October 2026 (branch `proof/bb-literal-pairs`, lap 12)
+
+**Scoped kickoff open** · **Crux advance**: Fourier multiplier loss and exact pair-state divisor
+proved · **Build**: 🟢 `StonehamPairsNormal` target green (8,779 jobs)
+
+`StonehamPairsDistinct.lean` now proves that multiplication by a fixed nonzero integer removes at
+most its p-adic valuation from a reduced denominator divisor, identifies the exact `Fin 2`
+Stoneham state for literal signed pairs, and packages both signs with the divisor
+`p^(max(depth1,depth2)-v_p(h))`. The four audited declarations have exactly
+`[Classical.choice, Quot.sound, propext]` as their axiom list.
+
+The two ratified headline sorries remain. Next convert the state divisor into a global positive-
+power lower bound by proving logarithmic growth of the selected maximum depth and absorbing the
+fixed loss plus finite prefix into the constant. Same-class aligned-tail compression remains
+afterward. See `HANDOFF-2026-10-17-bb-literal-pairs-lap12.md`.
+
+# Literal Bailey--Borwein pairs, 17 October 2026 (branch `proof/bb-literal-pairs`, lap 11)
+
+**Scoped kickoff open** · **Crux advance**: exact maximum-depth reduced-denominator divisor proved ·
+**Build**: 🟢 `StonehamPairsNormal` target green (8,779 jobs)
+
+`StonehamPairsDistinct.lean` now turns unequal normalized slopes into eventual unequal integral
+depths and proves the decisive local denominator statement for both literal signs:
+`p^max(depth1,depth2)` divides the reduced pair-state denominator. This covers exclusive and
+overlapping prime support and corrects the prior plan: no growing depth-gap estimate is needed,
+because exact minimum numerator valuation leaves the entire larger depth in the denominator.
+
+The two ratified headline sorries remain. Next account for the fixed Fourier multiplier loss,
+identify the literal pair with the `Fin 2` `stonehamState`, and package the distinct-class
+`StonehamStateDenPowerLower`; same-class aligned-tail compression remains afterward. See
+`HANDOFF-2026-10-17-bb-literal-pairs-lap11.md`.
+
+The three audited separation/denominator declarations have exactly
+`[Classical.choice, Quot.sound, propext]`; the real target gate ended `FORMALIZE-TIER GREEN`.
+
+# Literal Bailey--Borwein pairs, 17 October 2026 (branch `proof/bb-literal-pairs`, lap 10)
+
+**Scoped kickoff open** · **Crux advance**: global distinct-class slope separation proved ·
+**Build**: 🟢 `StonehamPairsNormal` target green (8,778 jobs)
+
+`StonehamPairsClasses.lean` now proves that every multiplicatively independent pair has a prime
+in the combined support where the normalized factorization slopes differ. The proof handles
+exclusive support directly and overlapping support by showing that universal cross-proportionality
+would force equal positive powers via unique factorization. The same module proves that integral
+`Nat.log` entry depths have a fixed one-base-digit error from their real logarithmic models.
+
+The two ratified headline sorries remain. Next derive an eventual linear gap between the two
+integer prime depths and combine it with lap 9's exact unequal-depth valuation and rational bridge
+to prove the distinct-class power denominator lower bound. Same-class aligned-tail compression
+then remains. See `HANDOFF-2026-10-17-bb-literal-pairs-lap10.md`.
+
+The four audited class/slope declarations have exactly
+`[Classical.choice, Quot.sound, propext]`; the real target gate ended `FORMALIZE-TIER GREEN`, and
+the commit hook's full 10,863-job build passed.
+
 # STATUS — normal-numbers 📊
+
+# Literal Bailey--Borwein pairs, 17 October 2026 (branch `proof/bb-literal-pairs`, lap 9 reflection)
+
+**Scoped kickoff open** · **Crux advance**: one-family cancellation removed; exact unequal-depth
+pair valuation proved · **Build**: 🟢 `StonehamPairsNormal` target green (8,777 jobs)
+
+The reflection audit found that lap 8's circular cutoff/resultant problem was artificial for one
+family: its newest polar term is already a unit modulo every denominator prime. The kernel now
+proves this exact unit statement, the exact smaller-depth valuation for literal two-family sums
+and differences, and the common-denominator identity linking that integer to the rational state.
+The five audited declarations have exactly `[Classical.choice, Quot.sound, propext]` as their axiom
+list.
+
+The two ratified headline sorries remain. Distinct classes now need only the global normalized-
+slope separation theorem; geometric compression is reserved for the genuinely cancelling
+same-class combined tail. See `HANDOFF-2026-10-17-bb-literal-pairs-lap9.md`.
+
+# Literal Bailey--Borwein pairs, 17 October 2026 (branch `proof/bb-literal-pairs`, lap 8)
+
+**Scoped kickoff open** · **Crux advance**: growing polar tail reduced to a fixed-length periodic
+evaluation · **Build**: 🟢 `StonehamPairsNormal` target green (8,777 jobs)
+
+`StonehamPairsResultant.lean` now proves that offsets beyond `S` vanish modulo `p^N` as soon as
+`N <= v_p(c)*S`, freezes all retained deleted exponents with one eventual period, and composes both
+facts with the actual full-history cleared numerator. The growing polynomial is therefore reduced
+to finitely many fixed-length evaluations at every preassigned precision. The three audited crux
+declarations have exactly `[Classical.choice, Quot.sound, propext]` as their axiom list.
+
+The two ratified sorries in `StonehamPairsNormal.lean` remain. Next geometrically compress the
+offset-periodic infinite tail to obtain a fixed nonzero resultant bound independent of the cutoff;
+then choose the cutoff and prove the uniform one-family p-adic loss. See
+`HANDOFF-2026-10-17-bb-literal-pairs-lap8.md`.
+
+## Literal Bailey--Borwein pairs, 17 October 2026 (branch `proof/bb-literal-pairs`, lap 7)
+
+**Scoped kickoff open** · **Crux advance**: actual full numerator reindexed as a polar-tail
+polynomial evaluation · **Build**: 🟢 `StonehamPairsNormal` target green (8,777 jobs)
+
+`StonehamPairsArithmetic.lean` now transfers exponent congruence through an approximate root of
+unity and gives one eventual period for all evaluated top-offset deleted powers.
+`StonehamPairsResultant.lean` reindexes the complete product-deleted coefficient exactly as a
+dominated `polarTailPolynomial`; its top theorem composes that identity with the full-history
+cleared-numerator congruence. The four audited bridge declarations have exactly
+`[Classical.choice, Quot.sound, propext]` as their axiom list.
+
+The two ratified sorries in `StonehamPairsNormal.lean` remain. Next truncate the growing tail at a
+fixed p-adic precision, freeze its finitely many exponent patterns modulo `p-1`, and maximize the
+corresponding fixed nonzero resultant losses to obtain the complete one-family valuation bound.
+See `HANDOFF-2026-10-17-bb-literal-pairs-lap7.md`.
+
+## Literal Bailey--Borwein pairs, 17 October 2026 (branch `proof/bb-literal-pairs`, lap 6 review)
+
+**Scoped kickoff open** · **Crux advance**: complex nonvanishing converted to a fixed integral
+resultant and uniform p-adic loss bound · **Build**: 🟢 `StonehamPairsNormal` target green
+(8,777 jobs)
+
+`StonehamPairsResultant.lean` now proves the general Sylvester-Bezout divisibility bridge,
+nonvanishing of the resultant from the repaired top-digit estimate at every complex root of unity,
+and the resulting valuation bound. Its final specialization applies directly to the finite
+Teichmuller representative `b^(p^K)`, whose `(p-1)`-st power is one modulo `p^(K+1)` by Euler.
+The five audited bridge declarations have exactly `[Classical.choice, Quot.sound, propext]` as
+their axiom list.
+
+The review found no statement drift and no shortcut through pairwise-coprime Theorem A. The two
+ratified sorries in `StonehamPairsNormal.lean` remain. Next reindex the product-deleted coefficient
+by top offsets, freeze it into finitely many periodic `polarTailPolynomial`s, and transfer the new
+fixed-resultant bound to the complete one/two-family numerator before proving distinct-class rate
+separation. See `HANDOFF-2026-10-17-bb-literal-pairs-lap6.md`.
+
+## Literal Bailey--Borwein pairs, 17 October 2026 (branch `proof/bb-literal-pairs`, lap 5)
+
+**Scoped kickoff open** · **Crux advance**: product-deleted polar exponent made eventually periodic ·
+**Build**: 🟢 `StonehamPairsNormal` target green (8,776 jobs)
+
+`StonehamPairsArithmetic.lean` now rewrites both full and product-deleted polar multipliers as
+single explicit powers. A finite-state pigeonhole proof establishes a common eventual period
+modulo every positive modulus for `u^K` and its running geometric sum, without a coprimality
+assumption; its top-offset corollary gives exactly the periodicity of the deleted exponent required
+by referee repair 2. The three audited bridge declarations have exactly
+`[Classical.choice, Quot.sound, propext]` as their axiom list.
+
+The two ratified sorries in `StonehamPairsNormal.lean` remain. Next convert the already-proved
+complex nonvanishing of literal sum/difference tails into a fixed nonzero integer
+norm/resultant, use it to bound p-adic cancellation uniformly, then prove distinct-class rate
+separation and derive `StonehamStateDenPowerLower`. See
+`HANDOFF-2026-10-17-bb-literal-pairs-lap5.md`.
+
+## Literal Bailey--Borwein pairs, 17 October 2026 (branch `proof/bb-literal-pairs`, lap 4)
+
+**Scoped kickoff open** · **Crux advance**: full-history polar numerator assembled ·
+**Build**: 🟢 `StonehamPairsNormal` target green (8,776 jobs)
+
+`StonehamPairsArithmetic.lean` now identifies the literal one-family sum with its explicit
+`c^K`-cleared integer numerator.  Its new top-level phase congruence uses the single finite
+Teichmueller representative `b^(p^(aK))` for every earlier kick and gains the missing
+`p^(a(K-j))` precision from the clearing factor `c^(K-j)`.  The product specialization then
+assembles every entered term modulo `p^(aK+1)` without introducing modular inverses.  The three
+audited bridge declarations have exactly `[Classical.choice, Quot.sound, propext]` as their axiom
+list.
+
+The two ratified sorries in `StonehamPairsNormal.lean` remain. Next normalize the product-deleted
+coefficient into an eventually periodic finite polar tail, use `literalSum_tail_ne_zero` /
+`literalDiff_tail_ne_zero` plus an integer norm to bound its p-adic loss uniformly, prove rate
+separation for distinct primitive classes, and derive `StonehamStateDenPowerLower`. See
+`HANDOFF-2026-10-17-bb-literal-pairs-lap4.md`.
+
+## Literal Bailey--Borwein pairs, 17 October 2026 (branch `proof/bb-literal-pairs`, lap 3 review)
+
+**Scoped kickoff open** · **Crux advance**: exponent-form item (K) and literal never-silent core
+proved · **Build**: 🟢 `StonehamPairsNormal` target green (8,776 jobs)
+
+The route review found no statement drift and confirmed that a positive-power denominator bound
+still feeds the complete analytic/Weyl chain. `StonehamPairsArithmetic.lean` now specializes the
+finite Teichmueller tower to `c = p^a u`, mathlib's canonical `ordProj`/`ordCompl` decomposition,
+and the entered Stoneham phase `b^(n-c^j)`. The dyadic clause retains its two extra powers of two.
+
+The same module proves the referee-repaired top-digit argument as
+`geom_weighted_sum_ne_zero_of_norm`, with `literalSum_tail_ne_zero` and
+`literalDiff_tail_ne_zero` as the exact coefficient bounds for the two headlines. The four audited
+phase/noncancellation declarations have exactly `[Classical.choice, Quot.sound, propext]` as their
+axiom list.
+
+The two ratified sorries in `StonehamPairsNormal.lean` remain. Next assemble the one/two-family
+polar coefficient, prove its eventual periodicity and uniform p-adic cancellation bound (using the
+new nonvanishing theorem), establish rate separation for distinct primitive classes, and derive
+`StonehamStateDenPowerLower`. See `HANDOFF-2026-10-17-bb-literal-pairs-lap3.md`.
+
+## Literal Bailey--Borwein pairs, 17 October 2026 (branch `proof/bb-literal-pairs`, lap 2)
+
+**Scoped kickoff open** · **Crux advance**: finite Teichmueller congruence core proved ·
+**Build**: 🟢 `StonehamPairsNormal` target green (8,776 jobs)
+
+`StonehamPairsArithmetic.lean` now proves the geometric-sum prime-power lift, compatibility of the
+finite representatives `b^(p^K)` at every later level, and the extra dyadic precision
+`2^(K+3) | b^(2^(K+1))-1` for odd `b`. The two audited headline arithmetic lemmas have exactly
+`[Classical.choice, Quot.sound, propext]` as their axiom list. The target imports this new module.
+
+The two ratified sorries in `StonehamPairsNormal.lean` remain. Next specialize the congruence to
+exponents of prescribed prime valuation, derive the Stoneham polar and eventual-periodic tail,
+prove the literal one/two-family tail never silent, and instantiate the power-lower analytic
+interface. See `HANDOFF-2026-10-17-bb-literal-pairs-lap2.md`.
+
+## Literal Bailey--Borwein pairs, 17 October 2026 (branch `proof/bb-literal-pairs`, lap 1)
+
+**Scoped kickoff open** · **Crux advance**: power-growth analytic half complete ·
+**Build**: 🟢 `StonehamPairsNormal` target green (8,775 jobs)
+
+`StonehamPairsAnalytic.lean` now proves the complete Vandehey block/mean argument from the
+referee-required hypothesis `(n:ℝ)^rho <= C0 * den(state n)` for arbitrary `rho,C0 > 0`.
+The headline interface is `stonehamCombination_mean_tendsto_of_powerLower`; its square-mean
+prerequisite and the headline both have exactly `[Classical.choice, Quot.sound, propext]` as
+their axiom list. The former linear interface embeds at exponent one, and no Theorem A statement
+was changed.
+
+The two ratified sorries in `StonehamPairsNormal.lean` remain. The next blocker is entirely
+arithmetic: formalize Lemma 3-prime for one or two literal families (finite Teichmueller
+congruence, periodic polar tail, rate separation, and the top-digit never-silent argument), then
+instantiate the new power-lower interface. See `HANDOFF-2026-10-17-bb-literal-pairs-lap1.md`.
 
 ## Maze backlog full-history cancellation update, 17 October 2026 (branch `proof/maze-backlog`, lap 10 review)
 

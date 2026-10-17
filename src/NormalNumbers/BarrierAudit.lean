@@ -59,6 +59,7 @@ import NormalNumbers.UniformBadTailObstruction
 import NormalNumbers.UniformBadTail
 import NormalNumbers.StonehamSumsNormal
 import NormalNumbers.VandeheyProof
+import NormalNumbers.StonehamPairsNormal
 
 /-!
 # Barrier audit: every open crux names a sibling it must fail on

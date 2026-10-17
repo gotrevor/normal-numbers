@@ -1,3 +1,98 @@
+# Literal Bailey--Borwein pairs lap 14 COMPLETE (2026-10-17): both headlines proved; read HANDOFF-2026-10-17-bb-literal-pairs-lap14.md
+
+- `StonehamPairsNormal.lean` is sorry-free. Distinct classes, same-class differences, odd-prime
+  same-class sums, and the exceptional pure-dyadic sums all have kernel proofs. The 8,780-job
+  target/axiom gate is `FORMALIZE-TIER GREEN`, both headlines have only the standard trust-base
+  axioms, and their two BarrierAudit waivers are removed. The conditional three-seven pairwise
+  stretch remains a separate arbitrary-coefficient/digit-exponent problem; the scoped campaign is
+  complete.
+
+# Literal Bailey--Borwein pairs lap 13 (2026-10-17): distinct-class sum power bound; read HANDOFF-2026-10-17-bb-literal-pairs-lap13.md
+
+- The slope-separating prime now yields a global positive-power reduced-denominator lower bound
+  for every nonzero Fourier state of a literal sum from distinct multiplicative classes. Fixed
+  Fourier loss and the finite prefix are absorbed cleanly. Next package the already-proved sub
+  divisor in the same way, wire distinct-class normality, then attack same-class compression.
+
+# Literal Bailey--Borwein pairs lap 12 (2026-10-17): Fourier loss and exact pair state; read HANDOFF-2026-10-17-bb-literal-pairs-lap12.md
+
+- Fixed integer multiplication now removes at most `padicValInt p h` from any prime-power
+  denominator divisor. The exact `Fin 2` Stoneham state is identified, and literal sum/difference
+  states retain `p^(max(depth1,depth2)-v_p(h))`. Next convert that divisor into the global real
+  `StonehamStateDenPowerLower`; same-class aligned-tail compression remains afterward.
+
+# Literal Bailey--Borwein pairs lap 11 (2026-10-17): exact maximum-depth denominator divisor; read HANDOFF-2026-10-17-bb-literal-pairs-lap11.md
+
+- Unequal logarithmic slopes now give eventual unequal integral depths, and both literal signs
+  have the exact reduced-denominator divisor `p^max(depth1,depth2)`, including exclusive prime
+  support. A growing depth gap is unnecessary. Next absorb the fixed Fourier-multiplier loss,
+  identify the `Fin 2` Stoneham state, and prove the distinct-class power denominator lower bound.
+
+# Literal Bailey--Borwein pairs lap 10 (2026-10-17): global class slope separation; read HANDOFF-2026-10-17-bb-literal-pairs-lap10.md
+
+- Multiplicative independence now kernel-produces a denominator prime with unequal normalized
+  factorization slopes, including both exclusive and overlapping prime support. Integral
+  `Nat.log` entry depth is proved within one base digit of its real logarithmic model. Next turn
+  this nonzero slope plus bounded error into an eventual linear depth gap and package the
+  distinct-class `StonehamStateDenPowerLower`; same-class compression remains afterward.
+
+# Literal Bailey--Borwein pairs lap 9 reflection (2026-10-17): one-family units and exact depth separation; read HANDOFF-2026-10-17-bb-literal-pairs-lap9.md
+
+- Reflection removed the circular fixed-cutoff/resultant problem from the one-family branch: the
+  cleared numerator is a unit at every denominator prime. Exact minimum-depth valuation formulas
+  now cover literal sums/differences whenever the two `p`-depths differ, and the exact rational
+  common-denominator bridge is proved. Next prove the global normalized-slope separation for
+  distinct classes; reserve geometric compression for the aligned same-class combined tail.
+
+# Literal Bailey--Borwein pairs lap 8 (2026-10-17): fixed-length polar-tail reduction; read HANDOFF-2026-10-17-bb-literal-pairs-lap8.md
+
+- The full cleared one-family numerator now agrees at every preassigned prime-power precision
+  with a fixed-length top-offset tail, and the retained exponent pattern is frozen by one eventual
+  period. Next compress the offset-periodic infinite tail geometrically so its fixed nonzero
+  resultant loss is chosen before the truncation cutoff, then derive the uniform valuation bound.
+
+# Literal Bailey--Borwein pairs lap 7 (2026-10-17): full numerator reindexed as polar-tail evaluation; read HANDOFF-2026-10-17-bb-literal-pairs-lap7.md
+
+- The modular exponent bridge and its common eventual period are proved. The complete cleared
+  one-family numerator is now congruent to an explicit dominated `polarTailPolynomial` evaluation,
+  not just informally associated with one. Next truncate at a fixed top offset, freeze the finitely
+  many exponent patterns modulo `p-1`, and maximize their fixed resultant losses.
+
+# Literal Bailey--Borwein pairs lap 6 review (2026-10-17): fixed resultant loss bridge proved; read HANDOFF-2026-10-17-bb-literal-pairs-lap6.md
+
+- `StonehamPairsResultant.lean` converts complex top-digit nonvanishing into a fixed nonzero
+  integral resultant and a uniform p-adic bound at the actual finite Teichmuller representative.
+- Review confirmed the frozen statements and analytic route; the two original headline sorries
+  remain. Next freeze the product-deleted coefficient into finitely many periodic tail polynomials,
+  then transfer the new loss bound to the complete one/two-family numerator.
+
+# Literal Bailey--Borwein pairs lap 4 (2026-10-17): full-history polar numerator assembled; read HANDOFF-2026-10-17-bb-literal-pairs-lap4.md
+- The explicit one-family cleared numerator is now identified with the rational Stoneham family.
+  Every entered kick is transferred to the top Teichmueller level at common precision, and a
+  canonical product multiplier assembles the entire history without modular inverses. Next:
+  normalize the product-deleted periodic coefficient, prove its fixed nonzero norm gives bounded
+  p-adic loss, then combine the one/two-family cases into `StonehamStateDenPowerLower`.
+
+# Literal Bailey--Borwein pairs lap 3 review (2026-10-17): exponent (K) and never-silent core proved; read HANDOFF-2026-10-17-bb-literal-pairs-lap3.md
+- The finite Teichmueller system is now specialized to the actual phases `b^(n-c^j)`, with
+  canonical odd-prime and dyadic factorization forms. The referee-repaired complex top-digit
+  inequality proves literal sum/difference periodic tails cannot vanish once assembled.
+  Next: build the one/two-family polar coefficient, prove its eventual periodicity and bounded
+  p-adic cancellation, then derive `StonehamStateDenPowerLower`.
+
+# Literal Bailey--Borwein pairs lap 2 (2026-10-17): finite Teichmueller core proved; read HANDOFF-2026-10-17-bb-literal-pairs-lap2.md
+- The geometric-sum lift, compatible finite representatives `b^(p^K)`, their all-later-level
+  congruence, and the extra-precision dyadic tower are kernel-proved at the standard trust baseline.
+  Next: specialize (K) to exponents by valuation, derive the Stoneham polar/periodic tail, and prove
+  the literal one/two-family tail never silent to obtain the required power denominator bound.
+
+# Literal Bailey--Borwein pairs lap 1 (2026-10-17): power-growth analytic engine complete; read HANDOFF-2026-10-17-bb-literal-pairs-lap1.md
+- The scoped target still has its two ratified sorries. Kickoff step 1 is complete:
+  `stonehamCombination_mean_tendsto_of_powerLower` carries any positive-power reduced-denominator
+  lower bound through the full Vandehey block/mean argument at the standard trust baseline.
+  Next: Lemma 3-prime arithmetic (finite Teichmueller congruence, periodic tail, and never-silent
+  literal pair) to supply that bound for sums and unequal differences.
+
 # Maze backlog review lap 10 (2026-10-17): full tied-depth history controlled; read HANDOFF-2026-10-17-maze-backlog-lap10.md
 - The review rejected the strict-minimum treatment of older kicks. Phase congruence modulo the
   exact surviving powers of seven now transfers lap 8's newest-phase bound to the complete
