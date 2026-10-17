@@ -1,3 +1,12 @@
+# Prime class lap 6 REVIEW (2026-10-17): corrected mixed-state preparation; read HANDOFF-2026-10-17-prime-class-lap6.md
+
+- Review exposed and repaired an incomplete route: inverse Mahler scaling must be combined with
+  inverse-root orientation and the exact history factor `(p^s-1) * p^(D-δ)`.  A new sorry-free
+  state module proves the resulting aligned-history divisibility, complementary finite
+  Teichmuller relation, exact `stonehamState` numerator bridge, and nonzero witness package.  The
+  target remains green with its two ratified analytic sorries.  Next prove the periodic
+  depth/phase alignment lemma and feed this algebra into the non-normal zero-window argument.
+
 # Prime class lap 5 (2026-10-17): canonical mixed-`s` normalization; read HANDOFF-2026-10-17-prime-class-lap5.md
 
 - Every exponent now splits kernel-exactly as `m = u * (p^s)^a`; the reduced exponent preserves

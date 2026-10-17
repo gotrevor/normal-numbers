@@ -7,6 +7,7 @@ import NormalNumbers.StonehamSumsBoundary
 import NormalNumbers.StonehamPairsUnconditional
 import NormalNumbers.StonehamPrimeClassFinite
 import NormalNumbers.StonehamPrimeClassMahler
+import NormalNumbers.StonehamPrimeClassState
 import NormalNumbers.VandeheyProof
 
 /-!

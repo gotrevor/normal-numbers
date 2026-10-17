@@ -1,3 +1,15 @@
+# Prime-class joint normality, 17 October 2026 (branch `proof/prime-class`, lap 6 REVIEW)
+
+`StonehamPrimeClassState` corrects the mixed-state route found incomplete during review.  It
+packages nonzero inverse-Mahler coefficients and their rational correction, reorients the
+cyclotomic relation to inverse phases using complementary exponents, proves the exact
+`(p^s-1) * p^(D-δ)` history cancellation and its family divisibility theorem, and identifies the
+literal `stonehamState` with a common-depth integer numerator.  All five audited endpoints use
+only the standard trust base.  The scoped target retains exactly the two general analytic sorries
+and is FORMALIZE-TIER GREEN.  Next prove the periodic depth/phase alignment that specializes the
+new state algebra to the dependent-family zero-window contradiction.  See
+`HANDOFF-2026-10-17-prime-class-lap6.md`.
+
 # Prime-class joint normality, 17 October 2026 (branch `proof/prime-class`, lap 5)
 
 `StonehamPrimeClassMahler` now gives the canonical mixed-`s` exponent split
