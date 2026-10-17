@@ -1,9 +1,11 @@
-# Vandehey Theorem 5.1 lap 1 (2026-10-16); read HANDOFF-2026-10-16-vandehey-thm51-lap1.md
-- Kickoff rung 1 is frozen faithfully as `div_bigM_le_orderOf` (open prime-power lifting proof).
-- The Parseval--orbit square-root core of rung 2 is proved as
-  `norm_blockFourier_le_sqrt_of_orbit`; target gate is FORMALIZE-TIER GREEN.
-- Next: discharge rung 1, odd primes first via `padicValNat.pow_sub_pow`, then the exceptional
-  2-adic case and CRT/lcm assembly.
+# Vandehey Theorem 5.1 lap 3 (2026-10-17); read HANDOFF-2026-10-17-vandehey-thm51-lap3.md
+- Kickoff rung 1 (`div_bigM_le_orderOf`, Vandehey Lemma 2.1 / equation (5)) is proved and its
+  BarrierAudit waiver is removed.
+- Reflection repaired rung 2's Parseval interface: `norm_blockFourier_le_sqrt_of_orbit_l2`
+  accepts a sparse subgroup-character vector on all residues, unlike the dense initial-interval
+  specialization.
+- Next: instantiate the sparse lemma for `H = <b> <= (ZMod m)^*`, then prove the completion
+  estimate in Vandehey Lemma 2.2.
 
 # Stoneham sums normal lap 3 COMPLETE (2026-10-16); read HANDOFF-2026-10-16-stoneham-sums-normal-lap3.md
 - `StonehamSumsNormal.lean` is sorry-free.  The derived Vandehey Corollary 1.2, general rational
