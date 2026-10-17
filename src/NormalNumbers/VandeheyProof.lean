@@ -254,13 +254,17 @@ theorem zetaY_isNormal_unconditional
 
 /-! ## Statement audit surface
 
-`#print axioms` guards proofs, not statements.  These definitional-equality pins make the paper's
-six displayed definitions and the exact frozen Theorem 5.1 type executable build obligations.
-They deliberately live outside `LiteratureVandeheyDifferencing.lean`, so that the ratified source
-file itself remains byte-unchanged.
+`#print axioms` guards proofs, not statements.  These pins make the paper's additive character,
+six displayed definitions, exact frozen Theorem 5.1 type, and three frozen consumer contracts
+executable build obligations.  They deliberately live outside
+`LiteratureVandeheyDifferencing.lean`, so that the ratified source file itself remains
+byte-unchanged.
 -/
 
 section Audit
+
+example (x : ℝ) :
+    ePhase x = Complex.exp (2 * Real.pi * Complex.I * (x : ℂ)) := rfl
 
 example (P : Finset ℕ) :
     primeProd P = ∏ p ∈ P, p := rfl
@@ -310,6 +314,23 @@ example : VandeheyThm51 =
           ((constPair b P k).1 * (m : ℝ) ^ alpha k * (N : ℝ) ^ (expPair k).1 +
             (constPair b P k).2 * (m : ℝ) ^ (-alpha k) * (N : ℝ) ^ (expPair k).2) *
             (1 + Real.log m) ^ ((2 : ℝ) ^ (-(k : ℝ)))) := rfl
+
+example
+    (b : ℕ) (hb : 2 ≤ b) {r : ℕ} (c m : Fin r → ℕ) (q : Fin r → ℚ)
+    (hc : ∀ i, 2 ≤ c i) (hcop : Pairwise fun i j => Nat.Coprime (c i) (c j))
+    (hcb : ∀ i, Nat.Coprime (c i) b) (hm : ∀ i, 1 ≤ m i) (hq : q ≠ 0) :
+    IsNormal b (∑ i, (q i : ℝ) * stonehamAlpha (b ^ m i) (c i)) :=
+  isNormal_stonehamCombination_unconditional b hb c m q hc hcop hcb hm hq
+
+example : IsNormal 2 (stonehamAlpha 2 3 + stonehamAlpha 2 5) :=
+  isNormal_two_stoneham_three_add_five_unconditional
+
+example
+    (Y : ℕ → ℕ) (hmono : Monotone Y) (h3 : ∀ m, 3 ≤ Y m) (ε : ℝ) (hε : 0 < ε)
+    (hY : ∀ᶠ n : ℕ in Filter.atTop,
+      ((Y n).primeCounting : ℝ) ≤ (1 - ε) * Real.logb 2 (Real.log n)) :
+    IsNormal 2 (GrowingLocalizedLog.zetaY Y) :=
+  zetaY_isNormal_unconditional Y hmono h3 ε hε hY
 
 end Audit
 
