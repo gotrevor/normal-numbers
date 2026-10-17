@@ -1,8 +1,8 @@
 # STATUS — normal-numbers 📊
 
-## Maze backlog update, 17 October 2026 (branch `proof/maze-backlog`, lap 2)
+## Maze backlog update, 17 October 2026 (branch `proof/maze-backlog`, review lap 4)
 
-**Kickoff Parts 1--2 complete** · **Build**: 🟢 green (full default build, 10857 jobs) ·
+**Kickoff Parts 1--2 and Part 3/L1 complete** · **Build**: 🟢 full green (10858 jobs) ·
 **Audit**: 196 rows, 89 declaration-backed links, 107 legacy rows
 
 The four joint-orbit routes R1/R2/R4/R6 from the 16 October report now have Lean witnesses and
@@ -17,8 +17,16 @@ the proof samples prefixes immediately before factorial bursts.  The headline th
 factorial-cell localization have only the standard trust-base axioms.  See
 `HANDOFF-2026-10-17-maze-backlog-lap2.md`.
 
-**Outstanding in kickoff order:** Part 3, the L1/L2 Bailey--Borwein Stoneham boundary witnesses
-and their two kernel Maze rows.
+Part 3/L1 is now complete in `StonehamSumsBoundary.lean`.  Fermat plus the elementary
+prime-power lift gives the integral coefficients; paired terms form positive blocks ending at
+`p^(2k+2)`; and a uniform geometric majorant bounds the next tail below one throughout the gap
+to `p^(2k+3)`.  Thus `digitOf_stoneham_sub_succ_mul_eq_zero` proves exact zero windows and the
+ratified headline `not_isSimplyNormal_stoneham_sub_succ_mul` is proved for every prime `p ∤ b`.
+Its axiom list is exactly `[Classical.choice, Quot.sound, propext]`.  See
+`HANDOFF-2026-10-17-maze-backlog-lap4.md`.
+
+**Outstanding in kickoff order:** L2's cyclotomic triple witness, then the two Bailey--Borwein
+kernel Maze rows.
 
 ## Cantor repetition update, 9 October 2026 (branch `proof/cantor-repetition`, lap 13) — HEADLINE PROVED
 

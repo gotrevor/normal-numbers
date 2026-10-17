@@ -1,3 +1,14 @@
+# Maze backlog review lap 4 (2026-10-17): L1 boundary theorem proved; read HANDOFF-2026-10-17-maze-backlog-lap4.md
+- The ratified all-primes L1 headline is now a theorem: the same-class combination has exact
+  zero windows `[p^(2k+2), p^(2k+3))`, hence is not simply normal.  Full/axiom gate is green
+  at the standard trust baseline.  Next: L2's cyclotomic triple witness, then both Maze rows.
+
+# Maze backlog lap 3 (2026-10-17): L1 integer-block expansion; read HANDOFF-2026-10-17-maze-backlog-lap3.md
+- Part 3/L1 now has its arithmetic and series spine: every proposed coefficient is integral, each
+  paired term is exactly that scaled integer block, and the full Stoneham combination equals the
+  convergent positive block series.  Next: prove its zero windows and frequency contradiction,
+  then L2 and the two kernel Maze rows.
+
 # Maze backlog lap 2 (2026-10-17): universal density product block refuted; read HANDOFF-2026-10-17-maze-backlog-lap2.md
 - Part 2 of `KICKOFF-2026-10-16-maze-backlog.md` is complete.  The universal positive-frequency
   strengthening is refuted by one ternary Liouville witness for every finite multiplier set;
