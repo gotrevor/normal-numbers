@@ -1,3 +1,10 @@
+# Vandehey Theorem 5.1 lap 7 (2026-10-17); read HANDOFF-2026-10-17-vandehey-thm51-lap7.md
+- Adversarial review found no statement drift and reconfirmed that the exact Lemma 3.1 endpoint
+  feeds the published Proposition 4.1 route.
+- Vandehey Lemma 4.2 is now proved in both directions with the frozen `cP`; the production endpoint
+  has exactly the standard trust-base axioms.
+- Next: Lemma 4.3's inclusion-exclusion count, then equations (12)--(13) and Claims 4.4--4.6.
+
 # Vandehey Theorem 5.1 lap 6 (2026-10-17); read HANDOFF-2026-10-17-vandehey-thm51-lap6.md
 - Kickoff rung 5 now has its differencing core: Vandehey Lemma 3.1 / equation (11) is proved
   with the exact `m' N + 2m'` factor, order shifts, truncated ranges, and reduced coefficient.

@@ -5,7 +5,7 @@ Authors: Trevor Morris
 -/
 import NormalNumbers.StonehamSumsNormal
 import NormalNumbers.GrowingLocalizedLog
-import NormalNumbers.VandeheyKorobovDifferencing
+import NormalNumbers.VandeheyKorobovDivisors
 
 /-!
 # Vandehey's Korobov-sum bound, proved (no longer cited)
