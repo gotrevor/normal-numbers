@@ -1,3 +1,8 @@
+# Vandehey Theorem 5.1 lap 28 COMPLETE (2026-10-17, terminal predicate confirmed); read HANDOFF-2026-10-17-vandehey-thm51-lap28.md
+- The exact sorry-free predicate, frozen source, proof-escape/circularity surface, permanent axiom
+  guards, and both real build gates were independently reconfirmed from the lap-27 checkpoint.
+- No blocker or further in-scope attack remains; terminate the completed campaign.
+
 # Vandehey Theorem 5.1 lap 27 COMPLETE (2026-10-17, executable statement audit); read HANDOFF-2026-10-17-vandehey-thm51-lap27.md
 - The paper-defined constants, recursions, and full frozen theorem type now have compile-time
   definitional-equality pins, closing the only manual gap left by the permanent axiom guards.
