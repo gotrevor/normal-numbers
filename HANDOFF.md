@@ -1,3 +1,11 @@
+# Literal Bailey--Borwein pairs lap 10 (2026-10-17): global class slope separation; read HANDOFF-2026-10-17-bb-literal-pairs-lap10.md
+
+- Multiplicative independence now kernel-produces a denominator prime with unequal normalized
+  factorization slopes, including both exclusive and overlapping prime support. Integral
+  `Nat.log` entry depth is proved within one base digit of its real logarithmic model. Next turn
+  this nonzero slope plus bounded error into an eventual linear depth gap and package the
+  distinct-class `StonehamStateDenPowerLower`; same-class compression remains afterward.
+
 # Literal Bailey--Borwein pairs lap 9 reflection (2026-10-17): one-family units and exact depth separation; read HANDOFF-2026-10-17-bb-literal-pairs-lap9.md
 
 - Reflection removed the circular fixed-cutoff/resultant problem from the one-family branch: the

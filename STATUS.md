@@ -1,3 +1,22 @@
+# Literal Bailey--Borwein pairs, 17 October 2026 (branch `proof/bb-literal-pairs`, lap 10)
+
+**Scoped kickoff open** · **Crux advance**: global distinct-class slope separation proved ·
+**Build**: 🟢 `StonehamPairsNormal` target green (8,778 jobs)
+
+`StonehamPairsClasses.lean` now proves that every multiplicatively independent pair has a prime
+in the combined support where the normalized factorization slopes differ. The proof handles
+exclusive support directly and overlapping support by showing that universal cross-proportionality
+would force equal positive powers via unique factorization. The same module proves that integral
+`Nat.log` entry depths have a fixed one-base-digit error from their real logarithmic models.
+
+The two ratified headline sorries remain. Next derive an eventual linear gap between the two
+integer prime depths and combine it with lap 9's exact unequal-depth valuation and rational bridge
+to prove the distinct-class power denominator lower bound. Same-class aligned-tail compression
+then remains. See `HANDOFF-2026-10-17-bb-literal-pairs-lap10.md`.
+
+The four audited class/slope declarations have exactly
+`[Classical.choice, Quot.sound, propext]`; the real target gate ended `FORMALIZE-TIER GREEN`.
+
 # STATUS — normal-numbers 📊
 
 # Literal Bailey--Borwein pairs, 17 October 2026 (branch `proof/bb-literal-pairs`, lap 9 reflection)

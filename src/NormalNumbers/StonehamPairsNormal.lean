@@ -8,6 +8,7 @@ import NormalNumbers.StonehamSumsBoundary
 import NormalNumbers.StonehamPairsAnalytic
 import NormalNumbers.StonehamPairsArithmetic
 import NormalNumbers.StonehamPairsResultant
+import NormalNumbers.StonehamPairsClasses
 
 /-!
 # Bailey–Borwein's question, literally: `α_{b,c₁} ± α_{b,c₂}` is always `b`-normal
