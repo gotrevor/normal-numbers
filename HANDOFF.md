@@ -1,3 +1,8 @@
+# Vandehey Theorem 5.1 lap 8 (2026-10-17); read HANDOFF-2026-10-17-vandehey-thm51-lap8.md
+- Vandehey Lemma 4.3 is proved with the exact totient main term and `2^s` inclusion--exclusion
+  error; the production theorem has exactly the standard trust-base axioms.
+- Next: construct the rounded supported divisor from equations (12)--(13), then Claims 4.4--4.6.
+
 # Vandehey Theorem 5.1 lap 7 (2026-10-17); read HANDOFF-2026-10-17-vandehey-thm51-lap7.md
 - Adversarial review found no statement drift and reconfirmed that the exact Lemma 3.1 endpoint
   feeds the published Proposition 4.1 route.
