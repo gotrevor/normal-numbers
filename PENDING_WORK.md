@@ -1,3 +1,31 @@
+# Maze backlog lap 10 (2026-10-17, REVIEW) — tied-depth history controlled; unequal depth next
+
+* **Binding objective:** execute `KICKOFF-2026-10-16-maze-backlog.md` in order. Parts 1, 2, and
+  3/L1 are complete. Part 3/L2 is open only at `StonehamThreeSevenPairwiseNormal` and the parked
+  Maze row "joint normality is pairwise."
+* **Review correction:** lap 9's proposed strict-valuation-minimum treatment of older terms is
+  false when the newest tied coefficient loses more than one power of seven. Do not retry it.
+  `stoneham_seven_phase_modEq` instead aligns every old phase with the newest phase at modulus
+  `7^(k+1)`; after multiplying by `7^(K-k)`, all errors vanish modulo `7^(K+1)`.
+* **Proved this lap:** `padicValInt_stonehamPairWeighted_le` transfers a newest-phase bound to the
+  complete weighted history. Its `_one` and `_two` specializations give the required fixed
+  quadratic-norm valuation bounds for tied kick depths and exponent gaps one and two.
+* **Next, in order:**
+  1. prove that the two depths `stonehamK 7 m n` for `m ∈ {1,2,3}` differ by at most one;
+  2. handle unequal depths. If the depths are `K` and `K-1`, common-denominator clearing gives
+     `A·G_K + 7C·G_(K-1)`; the identity
+     `6U = 7^K(A+C) - (A+7C)` points to the same quadratic-norm bound with one coefficient
+     scaled by seven;
+  3. identify the resulting integer numerator with the two-family rational `stonehamState`,
+     account for the fixed coefficient-clearing denominator, and prove
+     `StonehamStateDenLinearLower` for exponent gaps one and two;
+  4. invoke `stonehamCombination_mean_tendsto_of_linearLower`, prove all three pairs rationally
+     jointly normal, discharge `StonehamThreeSevenPairwiseNormal`, and restore the Maze row to
+     `.refuted/.kernel`.
+* **Verification:** `lake env lean src/NormalNumbers/StonehamSumsBoundary.lean`; then the
+  10,470-job `MazeAudit`/axiom gate, ending `FORMALIZE-TIER GREEN`. See
+  `HANDOFF-2026-10-17-maze-backlog-lap10.md`.
+
 ## Gate 5 lap 3 (2026-10-11, REVIEW) — per-cell route REFUTED; counting route with comb comparability
 * **Refuted (exact, exhaustive; `UniformBadTailRefute.lean`):** every per-cell node of the lap-2
   bookkeeping, at its stated constants.  `not_apKillFrostman449_eight` (s ≤ 8, C = 2, α = 17/20; proved

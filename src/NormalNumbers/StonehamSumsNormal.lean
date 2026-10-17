@@ -1101,24 +1101,30 @@ lemma stonehamState_good_block_bound
   rw [hx]
   ring
 
-lemma stonehamState_block_den_bounds (b L : ℕ) {r : ℕ} (c m : Fin r → ℕ)
+def stonehamCoeffBound {r : ℕ} (c m : Fin r → ℕ) (p : Fin r → ℤ) : ℕ :=
+  (∏ i, (p i).natAbs) * ∏ i, m i * c i
+
+/-- The only arithmetic input needed by the analytic block argument: the reduced
+denominator of the rational orbit state grows at least linearly, up to the fixed
+coefficient bound.  Unlike the original proof of this fact, the interface itself does not
+require the Stoneham parameters to be pairwise coprime. -/
+def StonehamStateDenLinearLower (b L : ℕ) {r : ℕ} (c m : Fin r → ℕ)
+    (p : Fin r → ℤ) : Prop :=
+  ∀ n, n ≤ (stonehamState b L c m p n).den * stonehamCoeffBound c m p
+
+lemma stonehamState_block_den_bounds_of_linearLower
+    (b L : ℕ) {r : ℕ} (c m : Fin r → ℕ)
     (p : Fin r → ℤ) (J j : ℕ) (hJ : 1 ≤ J) (hj1 : 1 ≤ j) (hj : j < J)
-    (hr : 1 ≤ r) (hb : b ≠ 0) (hL : L ≠ 0)
-    (hc : ∀ i, 2 ≤ c i) (hm : ∀ i, 1 ≤ m i)
-    (hcb : ∀ i, Nat.Coprime (c i) b)
-    (hcop : Pairwise fun i k => Nat.Coprime (c i) (c k))
-    (hp : ∀ i, p i ≠ 0) :
-    let A := (∏ i, (p i).natAbs) * ∏ i, m i * c i
+    (hL : L ≠ 0) (hc : ∀ i, 2 ≤ c i)
+    (hlower : StonehamStateDenLinearLower b L c m p) :
+    let A := stonehamCoeffBound c m p
     J ≤ (stonehamState b L c m p (j * J)).den * A ∧
       (stonehamState b L c m p (j * J)).den ≤ L * (J ^ 2) ^ r := by
   dsimp only
   have hs0 : j * J ≠ 0 := mul_ne_zero (by omega) (by omega)
   have hsN : j * J ≤ J ^ 2 := by nlinarith
-  have hlower := stonehamState_den_lower_cross b L c m p (j * J) hb hL hc hm hcb hcop hp
-  have hJs : J ≤ (j * J) ^ r := by
-    exact (by nlinarith : J ≤ j * J).trans (Nat.le_self_pow (by omega) (j * J))
   constructor
-  · exact hJs.trans hlower
+  · exact (by nlinarith : J ≤ j * J).trans (hlower (j * J))
   · have hc0 : ∀ i, c i ≠ 0 := fun i => by have := hc i; omega
     have hdenDvd := stonehamState_den_dvd b L c m p (j * J) hL hc0
     have hstateDen0 : stonehamStateDen L c m (j * J) ≠ 0 := by
@@ -1128,6 +1134,33 @@ lemma stonehamState_block_den_bounds (b L : ℕ) {r : ℕ} (c m : Fin r → ℕ)
         stonehamStateDen L c m (j * J) := Nat.le_of_dvd (Nat.pos_of_ne_zero hstateDen0) hdenDvd
     exact hdenle.trans ((stonehamStateDen_le L c m (j * J) hs0).trans (by
       gcongr))
+
+lemma stonehamState_den_linearLower (b L : ℕ) {r : ℕ} (c m : Fin r → ℕ)
+    (p : Fin r → ℤ) (hb : b ≠ 0) (hL : L ≠ 0)
+    (hr : 1 ≤ r)
+    (hc : ∀ i, 2 ≤ c i) (hm : ∀ i, 1 ≤ m i)
+    (hcb : ∀ i, Nat.Coprime (c i) b)
+    (hcop : Pairwise fun i k => Nat.Coprime (c i) (c k))
+    (hp : ∀ i, p i ≠ 0) : StonehamStateDenLinearLower b L c m p := by
+  intro n
+  have hcross := stonehamState_den_lower_cross b L c m p n hb hL hc hm hcb hcop hp
+  by_cases hn : n = 0
+  · simp [hn]
+  · simpa only [stonehamCoeffBound] using
+      (Nat.le_self_pow (by omega : r ≠ 0) n |>.trans hcross)
+
+lemma stonehamState_block_den_bounds (b L : ℕ) {r : ℕ} (c m : Fin r → ℕ)
+    (p : Fin r → ℤ) (J j : ℕ) (hJ : 1 ≤ J) (hj1 : 1 ≤ j) (hj : j < J)
+    (hr : 1 ≤ r) (hb : b ≠ 0) (hL : L ≠ 0)
+    (hc : ∀ i, 2 ≤ c i) (hm : ∀ i, 1 ≤ m i)
+    (hcb : ∀ i, Nat.Coprime (c i) b)
+    (hcop : Pairwise fun i k => Nat.Coprime (c i) (c k))
+    (hp : ∀ i, p i ≠ 0) :
+    let A := stonehamCoeffBound c m p
+    J ≤ (stonehamState b L c m p (j * J)).den * A ∧
+      (stonehamState b L c m p (j * J)).den ≤ L * (J ^ 2) ^ r := by
+  exact stonehamState_block_den_bounds_of_linearLower b L c m p J j hJ hj1 hj hL hc
+    (stonehamState_den_linearLower b L c m p hb hL hr hc hm hcb hcop hp)
 
 lemma stonehamState_block_length (b L : ℕ) {r : ℕ} (c m : Fin r → ℕ)
     (p : Fin r → ℤ) (J j : ℕ) (hJ : 1 ≤ J) (hLJ : L ≤ J)
@@ -1155,16 +1188,14 @@ lemma stonehamState_block_length (b L : ℕ) {r : ℕ} (c m : Fin r → ℕ)
       have hd0 : (d : ℝ) ≠ 0 := by dsimp [d]; positivity
       rw [show (d : ℝ) * (1 / (d : ℝ)) = 1 by field_simp, Real.rpow_one]
 
-def stonehamCoeffBound {r : ℕ} (c m : Fin r → ℕ) (p : Fin r → ℤ) : ℕ :=
-  (∏ i, (p i).natAbs) * ∏ i, m i * c i
-
-lemma stonehamState_square_bound
+lemma stonehamState_square_bound_of_linearLower
     (b L : ℕ) {r : ℕ} (c m : Fin r → ℕ) (p : Fin r → ℤ)
     (hb : 2 ≤ b) (hL : 1 ≤ L) (hLb : Nat.Coprime L b)
     (hr : 1 ≤ r) (hc : ∀ i, 2 ≤ c i) (hm : ∀ i, 1 ≤ m i)
     (hcb : ∀ i, Nat.Coprime (c i) b)
-    (hcop : Pairwise fun i k => Nat.Coprime (c i) (c k))
-    (hp : ∀ i, p i ≠ 0) {δ C : ℝ} (hδ : 0 < δ)
+    (hp : ∀ i, p i ≠ 0)
+    (hlower : StonehamStateDenLinearLower b L c m p)
+    {δ C : ℝ} (hδ : 0 < δ)
     (hcor : ∀ (M : ℕ), 2 ≤ M →
       (∀ q, q.Prime → q ∣ M → q ∈ stonehamPrimes L c) →
       ∀ (a : ℤ), IsCoprime a (M : ℤ) → ∀ N : ℕ,
@@ -1213,8 +1244,8 @@ lemma stonehamState_square_bound
         have : j = 0 := by omega
         subst j
         exact hbad (by simp [stonehamKickBlocks])
-      obtain ⟨hlower, hupper⟩ := stonehamState_block_den_bounds b L c m p J j hJ hj1 hj
-        hr (by omega) (by omega) hc hm hcb hcop hp
+      obtain ⟨hlower, hupper⟩ := stonehamState_block_den_bounds_of_linearLower
+        b L c m p J j hJ hj1 hj (by omega) hc hlower
       let D := (stonehamState b L c m p (j * J)).den
       have hden2 : 2 ≤ D := by
         by_contra hd
@@ -1284,6 +1315,32 @@ lemma stonehamState_square_bound
         push_cast
         ring
   simpa [pow_two] using hfin
+
+/-- The original pairwise-coprime square bound is recovered by supplying the standard
+denominator-growth proof to the arithmetic-independent analytic engine. -/
+lemma stonehamState_square_bound
+    (b L : ℕ) {r : ℕ} (c m : Fin r → ℕ) (p : Fin r → ℤ)
+    (hb : 2 ≤ b) (hL : 1 ≤ L) (hLb : Nat.Coprime L b)
+    (hr : 1 ≤ r) (hc : ∀ i, 2 ≤ c i) (hm : ∀ i, 1 ≤ m i)
+    (hcb : ∀ i, Nat.Coprime (c i) b)
+    (hcop : Pairwise fun i k => Nat.Coprime (c i) (c k))
+    (hp : ∀ i, p i ≠ 0) {δ C : ℝ} (hδ : 0 < δ)
+    (hcor : ∀ (M : ℕ), 2 ≤ M →
+      (∀ q, q.Prime → q ∣ M → q ∈ stonehamPrimes L c) →
+      ∀ (a : ℤ), IsCoprime a (M : ℤ) → ∀ N : ℕ,
+        (M : ℝ) ^ (1 / (2 * r + 1 : ℝ)) ≤ N →
+        ‖∑ n ∈ Icc 1 N, ePhase ((a : ℝ) * (b : ℝ) ^ n / M)‖ ≤
+          C * (M : ℝ) ^ (-δ) * N * (1 + Real.log M))
+    (J : ℕ) (hJ : 1 ≤ J) (hAJ : stonehamCoeffBound c m p < J)
+    (hLJ : L ≤ J) :
+    ‖∑ n ∈ Icc 1 (J ^ 2),
+        ePhase ((stonehamState b L c m p n : ℚ) : ℝ)‖ ≤
+      (1 + r * Nat.log 2 (J ^ 2)) * J +
+        |C| * ((J : ℝ) / stonehamCoeffBound c m p) ^ (-δ) * J ^ 2 *
+          (1 + Real.log (L * (J ^ 2) ^ r)) := by
+  exact stonehamState_square_bound_of_linearLower b L c m p hb hL hLb hr hc hm hcb hp
+    (stonehamState_den_linearLower b L c m p (by omega) (by omega) hr hc hm hcb hcop hp)
+    hδ hcor J hJ hAJ hLJ
 
 lemma natLog_le_real (n : ℕ) : ((Nat.log 2 n : ℕ) : ℝ) ≤ 2 * Real.log n := by
   rcases Nat.eq_zero_or_pos n with rfl | hn
@@ -1362,13 +1419,13 @@ lemma tendsto_stoneham_analytic_rate (r L A : ℕ) (C δ : ℝ)
   field_simp [hJpow0, hAneg0]
   ring
 
-lemma stonehamState_square_mean_tendsto
+lemma stonehamState_square_mean_tendsto_of_linearLower
     (hV : VandeheyCor12) (b L : ℕ) {r : ℕ} (c m : Fin r → ℕ) (p : Fin r → ℤ)
     (hb : 2 ≤ b) (hL : 1 ≤ L) (hLb : Nat.Coprime L b)
     (hr : 1 ≤ r) (hc : ∀ i, 2 ≤ c i) (hm : ∀ i, 1 ≤ m i)
     (hcb : ∀ i, Nat.Coprime (c i) b)
-    (hcop : Pairwise fun i k => Nat.Coprime (c i) (c k))
-    (hp : ∀ i, p i ≠ 0) :
+    (hp : ∀ i, p i ≠ 0)
+    (hlower : StonehamStateDenLinearLower b L c m p) :
     Tendsto (fun J : ℕ =>
       (∑ n ∈ Icc 1 (J ^ 2), ePhase ((stonehamState b L c m p n : ℚ) : ℝ)) /
         ((J ^ 2 : ℕ) : ℂ)) atTop (𝓝 0) := by
@@ -1401,7 +1458,8 @@ lemma stonehamState_square_mean_tendsto
     have : A + 1 ≤ J := le_trans (le_max_right L (A + 1))
       (le_trans (le_max_right 1 (max L (A + 1))) hJlarge)
     omega
-  have hs := stonehamState_square_bound b L c m p hb hL hLb hr hc hm hcb hcop hp hδ
+  have hs := stonehamState_square_bound_of_linearLower
+    b L c m p hb hL hLb hr hc hm hcb hp hlower hδ
     (by simpa only [P, ε] using hcor) J hJ (by simpa only [A] using hAJ) hLJ
   have hJ0 : (0 : ℝ) < J := by exact_mod_cast (by omega : 0 < J)
   rw [norm_div, Complex.norm_natCast]
@@ -1418,6 +1476,43 @@ lemma stonehamState_square_mean_tendsto
       push_cast
       field_simp
 
+lemma stonehamState_square_mean_tendsto
+    (hV : VandeheyCor12) (b L : ℕ) {r : ℕ} (c m : Fin r → ℕ) (p : Fin r → ℤ)
+    (hb : 2 ≤ b) (hL : 1 ≤ L) (hLb : Nat.Coprime L b)
+    (hr : 1 ≤ r) (hc : ∀ i, 2 ≤ c i) (hm : ∀ i, 1 ≤ m i)
+    (hcb : ∀ i, Nat.Coprime (c i) b)
+    (hcop : Pairwise fun i k => Nat.Coprime (c i) (c k))
+    (hp : ∀ i, p i ≠ 0) :
+    Tendsto (fun J : ℕ =>
+      (∑ n ∈ Icc 1 (J ^ 2), ePhase ((stonehamState b L c m p n : ℚ) : ℝ)) /
+        ((J ^ 2 : ℕ) : ℂ)) atTop (𝓝 0) := by
+  exact stonehamState_square_mean_tendsto_of_linearLower hV b L c m p hb hL hLb hr hc hm hcb hp
+    (stonehamState_den_linearLower b L c m p (by omega) (by omega) hr hc hm hcb hcop hp)
+
+lemma stonehamState_mean_tendsto_of_linearLower
+    (hV : VandeheyCor12) (b L : ℕ) {r : ℕ} (c m : Fin r → ℕ) (p : Fin r → ℤ)
+    (hb : 2 ≤ b) (hL : 1 ≤ L) (hLb : Nat.Coprime L b)
+    (hr : 1 ≤ r) (hc : ∀ i, 2 ≤ c i) (hm : ∀ i, 1 ≤ m i)
+    (hcb : ∀ i, Nat.Coprime (c i) b)
+    (hp : ∀ i, p i ≠ 0)
+    (hlower : StonehamStateDenLinearLower b L c m p) :
+    Tendsto (fun N : ℕ =>
+      (∑ n ∈ range N, ePhase ((stonehamState b L c m p n : ℚ) : ℝ)) /
+        (N : ℂ)) atTop (𝓝 0) := by
+  let f : ℕ → ℂ := fun n => ePhase ((stonehamState b L c m p n : ℚ) : ℝ)
+  let z : ℕ → ℂ := fun n => f (n + 1)
+  have hsq : Tendsto (fun J : ℕ =>
+      (∑ n ∈ range (J ^ 2), z n) / ((J ^ 2 : ℕ) : ℂ)) atTop (𝓝 0) := by
+    convert stonehamState_square_mean_tendsto_of_linearLower
+      hV b L c m p hb hL hLb hr hc hm hcb hp hlower using 1
+    funext J
+    simp only [z, f]
+    rw [sum_range_shift_eq_sum_Icc
+      (fun n => ePhase ((stonehamState b L c m p n : ℚ) : ℝ)) (J ^ 2)]
+  have hz : ∀ n, ‖z n‖ ≤ 1 := fun n => by simp only [z, f, norm_ePhase, le_refl]
+  have hall := DecayAeNormal.tendsto_of_tendsto_sq z hz hsq
+  exact tendsto_mean_of_shift (fun n => by simp only [f, norm_ePhase, le_refl]) hall
+
 lemma stonehamState_mean_tendsto
     (hV : VandeheyCor12) (b L : ℕ) {r : ℕ} (c m : Fin r → ℕ) (p : Fin r → ℤ)
     (hb : 2 ≤ b) (hL : 1 ≤ L) (hLb : Nat.Coprime L b)
@@ -1428,19 +1523,8 @@ lemma stonehamState_mean_tendsto
     Tendsto (fun N : ℕ =>
       (∑ n ∈ range N, ePhase ((stonehamState b L c m p n : ℚ) : ℝ)) /
         (N : ℂ)) atTop (𝓝 0) := by
-  let f : ℕ → ℂ := fun n => ePhase ((stonehamState b L c m p n : ℚ) : ℝ)
-  let z : ℕ → ℂ := fun n => f (n + 1)
-  have hsq : Tendsto (fun J : ℕ =>
-      (∑ n ∈ range (J ^ 2), z n) / ((J ^ 2 : ℕ) : ℂ)) atTop (𝓝 0) := by
-    convert stonehamState_square_mean_tendsto
-      hV b L c m p hb hL hLb hr hc hm hcb hcop hp using 1
-    funext J
-    simp only [z, f]
-    rw [sum_range_shift_eq_sum_Icc
-      (fun n => ePhase ((stonehamState b L c m p n : ℚ) : ℝ)) (J ^ 2)]
-  have hz : ∀ n, ‖z n‖ ≤ 1 := fun n => by simp only [z, f, norm_ePhase, le_refl]
-  have hall := DecayAeNormal.tendsto_of_tendsto_sq z hz hsq
-  exact tendsto_mean_of_shift (fun n => by simp only [f, norm_ePhase, le_refl]) hall
+  exact stonehamState_mean_tendsto_of_linearLower hV b L c m p hb hL hLb hr hc hm hcb hp
+    (stonehamState_den_linearLower b L c m p (by omega) (by omega) hr hc hm hcb hcop hp)
 
 lemma stonehamCombination_phase_error_tendsto
     (b L : ℕ) {r : ℕ} (c m : Fin r → ℕ) (p : Fin r → ℤ)
@@ -1469,13 +1553,13 @@ lemma stonehamCombination_phase_error_tendsto
       exact stonehamCombination_approx b L c m p n hb hL hc hm hn
     _ = C / n := by simp only [C]; ring
 
-lemma stonehamCombination_mean_tendsto
+lemma stonehamCombination_mean_tendsto_of_linearLower
     (hV : VandeheyCor12) (b L : ℕ) {r : ℕ} (c m : Fin r → ℕ) (p : Fin r → ℤ)
     (hb : 2 ≤ b) (hL : 1 ≤ L) (hLb : Nat.Coprime L b)
     (hr : 1 ≤ r) (hc : ∀ i, 2 ≤ c i) (hm : ∀ i, 1 ≤ m i)
     (hcb : ∀ i, Nat.Coprime (c i) b)
-    (hcop : Pairwise fun i k => Nat.Coprime (c i) (c k))
-    (hp : ∀ i, p i ≠ 0) :
+    (hp : ∀ i, p i ≠ 0)
+    (hlower : StonehamStateDenLinearLower b L c m p) :
     Tendsto (fun N : ℕ =>
       (∑ n ∈ range N, ePhase ((b : ℝ) ^ n * ((1 / (L : ℝ)) *
         ∑ i, (p i : ℝ) * stonehamAlpha (b ^ m i) (c i)))) / (N : ℂ))
@@ -1486,7 +1570,8 @@ lemma stonehamCombination_mean_tendsto
   have hs : Tendsto (fun N : ℕ => (∑ n ∈ range N, s n) / (N : ℂ))
       atTop (𝓝 0) := by
     simpa only [s] using
-      stonehamState_mean_tendsto hV b L c m p hb hL hLb hr hc hm hcb hcop hp
+      stonehamState_mean_tendsto_of_linearLower
+        hV b L c m p hb hL hLb hr hc hm hcb hp hlower
   have he : Tendsto (fun n : ℕ => a n - s n) atTop (𝓝 0) := by
     simpa only [a, s] using
       stonehamCombination_phase_error_tendsto b L c m p hb hL hc hm
@@ -1503,6 +1588,21 @@ lemma stonehamCombination_mean_tendsto
     simp only [a, s, Finset.sum_sub_distrib]
     ring
   · simp
+
+lemma stonehamCombination_mean_tendsto
+    (hV : VandeheyCor12) (b L : ℕ) {r : ℕ} (c m : Fin r → ℕ) (p : Fin r → ℤ)
+    (hb : 2 ≤ b) (hL : 1 ≤ L) (hLb : Nat.Coprime L b)
+    (hr : 1 ≤ r) (hc : ∀ i, 2 ≤ c i) (hm : ∀ i, 1 ≤ m i)
+    (hcb : ∀ i, Nat.Coprime (c i) b)
+    (hcop : Pairwise fun i k => Nat.Coprime (c i) (c k))
+    (hp : ∀ i, p i ≠ 0) :
+    Tendsto (fun N : ℕ =>
+      (∑ n ∈ range N, ePhase ((b : ℝ) ^ n * ((1 / (L : ℝ)) *
+        ∑ i, (p i : ℝ) * stonehamAlpha (b ^ m i) (c i)))) / (N : ℂ))
+      atTop (𝓝 0) := by
+  exact stonehamCombination_mean_tendsto_of_linearLower
+    hV b L c m p hb hL hLb hr hc hm hcb hp
+      (stonehamState_den_linearLower b L c m p (by omega) (by omega) hr hc hm hcb hcop hp)
 
 lemma ePhase_orbit (b : ℕ) (x : ℝ) (h : ℤ) (n : ℕ) :
     ePhase ((h : ℝ) * orbit b x n) =

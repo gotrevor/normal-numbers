@@ -1,3 +1,64 @@
+# Maze backlog review lap 10 (2026-10-17): full tied-depth history controlled; read HANDOFF-2026-10-17-maze-backlog-lap10.md
+- The review rejected the strict-minimum treatment of older kicks. Phase congruence modulo the
+  exact surviving powers of seven now transfers lap 8's newest-phase bound to the complete
+  tied-depth numerator for exponent gaps one and two. Next: unequal depths, rational-state
+  packaging, and `StonehamStateDenLinearLower` for the three L2 pairs.
+
+# Maze backlog lap 9 (2026-10-17): same-prime analytic engine isolated; read HANDOFF-2026-10-17-maze-backlog-lap9.md
+- The complete Vandehey block/Cesaro argument now depends only on the explicit
+  `StonehamStateDenLinearLower` interface, not pairwise coprimality. The remaining L2 blocker
+  is purely arithmetic: prove that linear reduced-denominator bound for exponent gaps one and
+  two from lap 8's fixed 7-adic loss, then instantiate the three pairs.
+
+# Maze backlog lap 8 (2026-10-17): fixed same-prime 7-adic loss proved; read HANDOFF-2026-10-17-maze-backlog-lap8.md
+- The exponent-gap-one and -two leading coefficients now have an eventual valuation bound by the
+  fixed quadratic coefficient norm.  This upgrades lap 7's full-depth cancellation implication to
+  the actual bounded-loss lemma needed for the same-prime state denominator.  Next: combine tied
+  and untied kick depths into a reduced-denominator lower bound and reuse the Vandehey mean engine.
+
+# Maze backlog reflection lap 7 (2026-10-17): L2 pairwise gap exposed; read HANDOFF-2026-10-17-maze-backlog-lap7.md
+- The former kernel row “joint normality is pairwise” proved only the non-joint signed
+  combination, not the required pairwise-joint premise.  The row is now honestly frozen/parked;
+  `StonehamThreeSevenPairwiseNormal` names the missing obligation, while exact quadratic-norm
+  lemmas bound the leading 7-adic cancellation for all three pairs.  Next: lift those bounds to
+  the full Stoneham-state denominator and reuse the Vandehey block-mean engine.
+
+# Maze backlog lap 6 COMPLETE (2026-10-17): terminal audit; read HANDOFF-2026-10-17-maze-backlog-lap6.md
+- Independently rechecked the completed kickoff.  Both 10,470-job MazeAudit/axiom gates are
+  FORMALIZE-TIER GREEN; each Stoneham boundary headline has exactly the standard trust-base
+  axioms.  No kickoff item remains; the next session needs a new operator objective.
+
+# Maze backlog lap 5 COMPLETE (2026-10-17): kickoff complete; read HANDOFF-2026-10-17-maze-backlog-lap5.md
+- L2 is proved: the ternary Stoneham triple has exact zero windows
+  `[3*7^(k+1), 7^(k+2))` and is not simply normal.  The final two kernel Maze rows land at
+  198 rows / 91 declaration-backed links; the full 10,858-job gate is green and the headline
+  has exactly the standard trust-base axioms.  Every `KICKOFF-2026-10-16-maze-backlog.md`
+  done condition is met.
+
+# Maze backlog review lap 4 (2026-10-17): L1 boundary theorem proved; read HANDOFF-2026-10-17-maze-backlog-lap4.md
+- The ratified all-primes L1 headline is now a theorem: the same-class combination has exact
+  zero windows `[p^(2k+2), p^(2k+3))`, hence is not simply normal.  Full/axiom gate is green
+  at the standard trust baseline.  Next: L2's cyclotomic triple witness, then both Maze rows.
+
+# Maze backlog lap 3 (2026-10-17): L1 integer-block expansion; read HANDOFF-2026-10-17-maze-backlog-lap3.md
+- Part 3/L1 now has its arithmetic and series spine: every proposed coefficient is integral, each
+  paired term is exactly that scaled integer block, and the full Stoneham combination equals the
+  convergent positive block series.  Next: prove its zero windows and frequency contradiction,
+  then L2 and the two kernel Maze rows.
+
+# Maze backlog lap 2 (2026-10-17): universal density product block refuted; read HANDOFF-2026-10-17-maze-backlog-lap2.md
+- Part 2 of `KICKOFF-2026-10-16-maze-backlog.md` is complete.  The universal positive-frequency
+  strengthening is refuted by one ternary Liouville witness for every finite multiplier set;
+  its theorem and strengthened factorial-cell localization are axiom-clean.  The Maze target
+  gate is green at 196 rows / 89 declaration-backed links.  Next: Part 3's L1 boundary theorem,
+  then L2 and their two kernel Maze rows.
+
+# Maze backlog lap 1 (2026-10-17): closed joint-orbit routes; read HANDOFF-2026-10-17-maze-backlog-lap1.md
+- Part 1 of `KICKOFF-2026-10-16-maze-backlog.md` is complete: R1 and R6 have axiom-clean kernel
+  witnesses, R2 and R4 have exact frozen statements, and all four rows are declaration-audited.
+  The target gate is green at 195 rows / 88 declaration-backed links.  Next: Part 2's universal
+  positive-frequency product-block refutation using `Mahler.bgLiouville 3 0 1`.
+
 # Stoneham sums normal lap 3 COMPLETE (2026-10-16); read HANDOFF-2026-10-16-stoneham-sums-normal-lap3.md
 - `StonehamSumsNormal.lean` is sorry-free.  The derived Vandehey Corollary 1.2, general rational
   combination theorem, and `α₂,₃ + α₂,₅` headline all have exactly the standard trust-base

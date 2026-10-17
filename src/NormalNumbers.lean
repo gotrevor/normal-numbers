@@ -17,6 +17,7 @@ import NormalNumbers.StonehamArith
 import NormalNumbers.Stoneham
 import NormalNumbers.StonehamSums
 import NormalNumbers.StonehamSumsNormal
+import NormalNumbers.StonehamSumsBoundary
 import NormalNumbers.StonehamBase6
 import NormalNumbers.CFDefs
 import NormalNumbers.CFCylinder
@@ -165,6 +166,7 @@ import NormalNumbers.MahlerBase7Exact
 import NormalNumbers.MahlerLowerBoundPower
 import NormalNumbers.MahlerPowerInstances
 import NormalNumbers.MahlerProductBlock
+import NormalNumbers.MahlerDensityProduct
 import NormalNumbers.Furstenberg
 import NormalNumbers.LiteratureFurstenberg
 import NormalNumbers.AdderEngineSplit
@@ -496,6 +498,8 @@ import NormalNumbers.EquidistTransfer
 import NormalNumbers.MasterConsequences
 import NormalNumbers.MasterLogFamily
 import NormalNumbers.MasterKicked
+import NormalNumbers.BBPSpan
+import NormalNumbers.JointOrbitBarriers
 import NormalNumbers.MasterPiSq
 import NormalNumbers.MasterLnTwoBase3
 import NormalNumbers.MasterMaze

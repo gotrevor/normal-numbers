@@ -1,5 +1,128 @@
 # STATUS — normal-numbers 📊
 
+## Maze backlog full-history cancellation update, 17 October 2026 (branch `proof/maze-backlog`, lap 10 review)
+
+**Kickoff open at Part 3/L2** · **Crux advance**: tied-depth full numerator controlled ·
+**Build**: 🟢 `MazeAudit` gate green (10,470 jobs)
+
+The review rejected lap 9's proposed strict-minimum argument: if the newest tied pair loses more
+than one factor of seven, the immediately older kick need not have strictly larger valuation.
+The replacement mechanism is now kernel-proved. `stoneham_seven_phase_modEq` compares every old
+base-3 phase with the newest phase at the exact modulus surviving common-denominator clearing;
+all errors therefore vanish modulo `7^(K+1)`, while `stonehamSevenGeom_not_seven_dvd` shows that
+the remaining geometric coefficient is a 7-adic unit.
+
+The generic transfer theorem `padicValInt_stonehamPairWeighted_le` now controls the complete
+cleared history from the newest combined phase. Its gap-one and gap-two specializations
+`padicValInt_stonehamPairWeighted_le_one` and `_two` apply lap 8's quadratic-norm bounds, so the
+equal-kick-depth part of the same-prime denominator argument is complete, with no older terms
+discarded.
+
+The remaining kickoff obligation is still `StonehamThreeSevenPairwiseNormal`. Next prove that
+the two kick depths for `m ∈ {1,2,3}` differ by at most one, handle the unequal-depth numerator
+(where one geometric sum is multiplied by seven), identify these weighted sums with the actual
+rational `stonehamState`, and establish `StonehamStateDenLinearLower` for all three pairs. See
+`HANDOFF-2026-10-17-maze-backlog-lap10.md`.
+
+Verification: the narrow boundary-module check passed. The exact 10,470-job `lean-green` gate
+ended `FORMALIZE-TIER GREEN`; the phase-congruence theorem and both full tied-depth valuation
+theorems have exactly `[Classical.choice, Quot.sound, propext]` as their axiom list.
+
+## Maze backlog same-prime denominator update, 17 October 2026 (branch `proof/maze-backlog`, lap 8)
+
+**Kickoff open at Part 3/L2** · **Crux advance**: eventual fixed 7-adic leading loss proved ·
+**Build**: 🟢 `MazeAudit` gate green (10,470 jobs)
+
+The two equal-depth cases now have the precise arithmetic estimate required by a denominator
+argument.  `stoneham_pair_leadingVal_le_one` proves that, past the fixed threshold
+`v₇(a²+ac+c²)`, the leading coefficient `a+c·3^(7^n)` loses at most that many powers of seven.
+`stoneham_pair_leadingVal_le_two` proves the conjugate statement with `a²-ac+c²` and
+`a+c·(3^(7^n))²`.  The proof combines the lap-7 cancellation-depth obstruction with the
+cyclotomic congruence at every smaller modulus, so it rules out intermediate unbounded loss as
+well as cancellation through the whole kick depth.
+
+The remaining kickoff obligation is still `StonehamThreeSevenPairwiseNormal`.  Next, package the
+new tied-depth estimate with the easier unequal-depth case and older-term separation into a
+same-prime replacement for `padicValRat_stonehamState_le`; then feed the resulting denominator
+growth into the existing Vandehey block-mean engine.  See
+`HANDOFF-2026-10-17-maze-backlog-lap8.md`.
+
+Verification: the 10,470-job `lean-green` gate ended `FORMALIZE-TIER GREEN`; both new leading
+valuation lemmas have exactly `[Classical.choice, Quot.sound, propext]` as their axiom list.
+
+## Maze backlog reflection correction, 17 October 2026 (branch `proof/maze-backlog`, lap 7)
+
+**Kickoff reopened at Part 3/L2** · **Build**: 🟢 `MazeAudit` gate green (10470 jobs) ·
+**Audit**: 198 rows, 91 declaration-backed links, 107 legacy rows
+
+The reflection audit found a statement mismatch in the former kernel row “joint normality is
+pairwise.”  `not_isSimplyNormal_three_seven_triple` proves only that the signed combination
+`α₃,₇ − α₉,₇ + α₂₇,₇` is not jointly normal.  A counterexample to pairwise ⇒ joint also needs
+the separate premise that each of the three pairs is jointly normal; no declaration on the
+lap-6 branch proved that premise.
+
+`StonehamSumsBoundary.lean` now records the exact distinction.  `IsRationallyJointNormal` and
+`IsPairwiseRationallyJointNormal` pin the intended meanings,
+`not_isRationallyJointNormal_stonehamThreeSeven` kernel-proves the non-joint half, and the exact
+missing premise is the open Prop `StonehamThreeSevenPairwiseNormal`.  The Maze row is therefore
+honestly `.parked/.frozen`, not `.refuted/.kernel`.
+
+The same-prime route did advance: `stoneham_pair_cancellationDepth_le_one` and
+`stoneham_pair_cancellationDepth_le_two` prove that at exponent differences one and two, depth-`n`
+leading-phase cancellation forces `n` below the 7-adic valuation of a fixed nonzero quadratic
+norm of the coefficient pair.  The next step is to turn that bounded leading-phase loss into a
+reduced-denominator lower bound for the full two-family Stoneham state, then reuse the
+`VandeheyThm51` block-mean engine to prove `StonehamThreeSevenPairwiseNormal`.
+
+Parts 1, 2, and 3/L1 remain complete.  Part 3/L2's zero-window/non-joint theorem remains complete;
+only its advertised pairwise premise and hence the kernel Maze verdict are open.  See
+`HANDOFF-2026-10-17-maze-backlog-lap7.md`.
+
+Verification: the targeted 10,470-job `lean-green` gate ended `FORMALIZE-TIER GREEN`; the
+non-joint theorem and both cancellation-depth lemmas each have exactly
+`[Classical.choice, Quot.sound, propext]` as their axiom list.
+
+## Superseded maze-backlog completion claim, 17 October 2026 (lap 6 audit)
+
+**Superseded conclusion: all kickoff parts complete** · **Build at that checkpoint**: 🟢 full green (10858 jobs) ·
+**Audit**: 198 rows, 91 declaration-backed links, 107 legacy rows
+
+Lap 6 reconfirmed the two boundary theorems with two 10,470-job `MazeAudit` gates.  Both ended
+`FORMALIZE-TIER GREEN`, and each headline's axiom list was exactly
+`[Classical.choice, Quot.sound, propext]`; the reflection lap showed that this proof audit did not
+establish L2's additional pairwise-joint premise.  See `HANDOFF-2026-10-17-maze-backlog-lap6.md`.
+
+The four joint-orbit routes R1/R2/R4/R6 from the 16 October report now have Lean witnesses and
+audited Maze rows.  R1 (rational closure of polynomial-ratio BBP series) and R6 (joint normality
+projects to both coordinates) are proved at the standard trust baseline.  R2's universal Stoneham
+digit-disagreement claim and R4's no-disjunctive-channel Cantor pair are pinned as exact frozen
+nodes at the evidence level of the source report.
+
+Part 2's stronger positive-frequency version of C2 is now refuted universally.  For every finite
+multiplier set, `Mahler.bgLiouville 3 0 1` has digit `1` at lower density zero in every channel;
+the proof samples prefixes immediately before factorial bursts.  The headline theorem and its
+factorial-cell localization have only the standard trust-base axioms.  See
+`HANDOFF-2026-10-17-maze-backlog-lap2.md`.
+
+Part 3/L1 is now complete in `StonehamSumsBoundary.lean`.  Fermat plus the elementary
+prime-power lift gives the integral coefficients; paired terms form positive blocks ending at
+`p^(2k+2)`; and a uniform geometric majorant bounds the next tail below one throughout the gap
+to `p^(2k+3)`.  Thus `digitOf_stoneham_sub_succ_mul_eq_zero` proves exact zero windows and the
+ratified headline `not_isSimplyNormal_stoneham_sub_succ_mul` is proved for every prime `p ∤ b`.
+Its axiom list is exactly `[Classical.choice, Quot.sound, propext]`.  See
+`HANDOFF-2026-10-17-maze-backlog-lap4.md`.
+
+Part 3/L2's non-joint half is complete in the same module.  The divisibility
+`seven_pow_dvd_stoneham_triple_block` makes every `Φ₆(3^(7^n))/7^n` coefficient integral;
+the resulting positive block series has exact ternary zero windows
+`[3*7^(k+1), 7^(k+2))`.  Therefore `not_isSimplyNormal_three_seven_triple` is proved with
+axiom list `[Classical.choice, Quot.sound, propext]`.  The `same-c combinations are normal` row
+is kernel-backed; the formerly kernel-tier `joint normality is pairwise` row was corrected in
+lap 7 because its pairwise premise was absent.  See `HANDOFF-2026-10-17-maze-backlog-lap5.md`.
+
+**Outstanding in this kickoff:** prove `StonehamThreeSevenPairwiseNormal`, then restore the
+“joint normality is pairwise” row to `.refuted/.kernel`.
+
 ## Cantor repetition update, 9 October 2026 (branch `proof/cantor-repetition`, lap 13) — HEADLINE PROVED
 
 **Is the profile cut forced? No.** · **Build**: 🟢 green (10802 jobs, full default build) · lap 13

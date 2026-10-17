@@ -41,6 +41,10 @@ import NormalNumbers.Erdos257Squarefree
 import NormalNumbers.EDensityAudit
 import NormalNumbers.QSpanNormal
 import NormalNumbers.DeterministicBD
+import NormalNumbers.BBPSpan
+import NormalNumbers.JointOrbitBarriers
+import NormalNumbers.MahlerDensityProduct
+import NormalNumbers.StonehamSumsBoundary
 
 /-!
 # `Maze.lean` — the halls we have walked, encoded
@@ -578,6 +582,29 @@ abnormal, so a "pick a multiple" normality statement carries no information.  Fo
 `.cited` prose row; now a theorem of this build. -/
 alias hall_mahler_block_occurrence := NormalNumbers.isNormal_rat_mul_add
 
+/-- **HALL: universal positive-frequency product block** (`wall`, 2026-10-17).
+The Liouville-sparse ternary witness `bgLiouville 3 0 1` defeats every finite multiplier
+set simultaneously: for each multiplier, digit `1` has lower density zero along prefixes
+ending just before the factorial bursts.  The explicit finite-exponent reopen condition is
+`DensityProductBlockExponentTwo`. -/
+alias hall_density_product_block_universal :=
+  NormalNumbers.Mahler.not_forall_isDensityProductBlock
+
+/-- **HALL: factor-map entropy seed for a BBP pair** (`restatement`, 2026-10-16).
+The polynomial-ratio BBP kick class is closed under every rational linear combination.
+Consequently, passing from one BBP constant to a rational span of two of them does not create a
+new entropy source: the proposed factor-map seed still needs a normal (or independently
+positive-entropy) BBP-type constant.  The explicit normal-seed reopen condition is
+`NormalBBPSeed`. -/
+alias hall_bbp_factor_entropy_seed :=
+  NormalNumbers.MasterConjectures.isBBPTypeSeries_nonzero_rat_linear
+
+/-- **HALL: a jointly normal orbit containing `ln 2`** (`wall`, 2026-10-16).
+Joint normality projects to each coordinate, so including `ln 2` cannot average away its
+unknown normality.  The explicit reopen condition is `LnTwoNormalSeed`. -/
+alias hall_joint_orbit_ln_two :=
+  NormalNumbers.JointOrbitBarriers.isNormal_coordinates_of_jointNormal
+
 /-! ## 3. Tier `frozen` — precise statements, undischarged
 
 No proofs and no `sorry`: a frozen row pins down *what was claimed*, so that a future session
@@ -656,6 +683,18 @@ alias hall_stoneham_decomposition_sum :=
 family. -/
 alias hall_stoneham_sum_normal :=
   NormalNumbers.stoneham_pair_normal_not_isSimplyNormal_sum
+
+/-- Kernel-checked non-joint half of the proposed counterexample to pairwise joint
+normality.  The pairwise premise itself is the frozen
+`StonehamThreeSevenPairwiseNormal`; until that premise is proved this is not a kernel-tier
+refutation of the whole claim. -/
+alias hall_pairwise_joint_normality_nonjoint_half :=
+  NormalNumbers.not_isRationallyJointNormal_stonehamThreeSeven
+
+/-- Hall witness against asserting normality for every rational combination
+inside one multiplicative `c`-class. -/
+alias hall_same_c_combinations_normal :=
+  NormalNumbers.not_isSimplyNormal_stoneham_sub_succ_mul
 
 /-! ## 4. The register
 
@@ -1449,6 +1488,48 @@ def register : List Hall := [
    "The coupled initial pieces already fail: alpha_{2,3} + alpha_{4,3} has binary zero windows [2*3^k, 3^(k+1)), hence is not even simply normal. Any decomposition argument must control arithmetic cancellation between pieces, not only each piece separately",
    "alias hall_stoneham_decomposition_sum := stoneham_pair_normal_not_isSimplyNormal_sum; StonehamSums.lean: digitOf_stoneham_sum_eq_zero",
    "2026-10-16"⟩,
+  ⟨"factor-map entropy seed for a BBP pair",
+   "Use the joint factor of two base-b BBP polynomial-ratio series to obtain an entropy seed unavailable for either series alone",
+   .restatement, .kernel,
+   "Every nonzero rational combination is again a base-b polynomial-ratio BBP-type series (isBBPTypeSeries_nonzero_rat_linear), so the seed still requires normality or positive entropy for a BBP constant. REOPEN IF: NormalBBPSeed, or a positive-entropy analogue",
+   "BBPSpan.lean: hall_bbp_factor_entropy_seed, isBBPTypeSeries_nonzero_rat_linear, NormalBBPSeed; docs/joint-bc-orbits-2026-10-16.md R1",
+   "2026-10-16"⟩,
+  ⟨"Stoneham sub-series pointing at ln 2",
+   "Subtract the known-normal Stoneham component alpha_{2,3} from ln 2 and use the forced digit disagreements to obtain information about ln 2",
+   .vacuous, .frozen,
+   "The disagreement estimate is universal in the input: every real x disagrees with x - alpha_{2,3} on lower density at least 1/4. Applying it at x = ln 2 therefore detects only the normal Stoneham translate, not special structure of ln 2",
+   "JointOrbitBarriers.lean: StonehamUniversalDisagreement (frozen, 97%); docs/joint-bc-orbits-2026-10-16.md T-D and R2",
+   "2026-10-16"⟩,
+  ⟨"Diophantine input for a disjunctive rational channel",
+   "Use irrationality exponent two in every nonzero rational channel of a pair to force one channel to be disjunctive",
+   .refuted, .frozen,
+   "A pair from the base-ten {0,1}-digit Cantor set has exponent two in every nontrivial rational channel, but every channel orbit stays in finitely many affine images of aC + cC, of upper box dimension at most log 4 / log 10, and is not dense. Diophantine quality does not supply digit entropy",
+   "JointOrbitBarriers.lean: CantorPairNoDisjunctiveChannel (frozen, 85%); QSpanNormal.lean: exists_pair_exponentTwo_qSpan_not_normal (exponent-two leg); docs/joint-bc-orbits-2026-10-16.md R4",
+   "2026-10-16"⟩,
+  ⟨"joint orbit containing ln 2",
+   "Place ln 2 in a jointly normal family and use the other coordinates to overcome the missing single-orbit estimate",
+   .wall, .kernel,
+   "Joint normality forces normality of every coordinate (isNormal_coordinates_of_jointNormal), so the family inherits the hardest coordinate and supplies no averaging escape. REOPEN IF: LnTwoNormalSeed, or a positive segment exponent that proves such a seed",
+   "JointOrbitBarriers.lean: hall_joint_orbit_ln_two, isNormal_coordinates_of_jointNormal, LnTwoNormalSeed; docs/joint-bc-orbits-2026-10-16.md R6",
+   "2026-10-16"⟩,
+  ⟨"positive-frequency product block, universal",
+   "Strengthen C2 so that one multiplier from a fixed finite set gives every digit positive lower density for every irrational input",
+   .wall, .kernel,
+   "The same ternary Liouville number defeats every finite multiplier set: in each multiple, digit 1 vanishes on the long part of every factorial interval, so its prefix-frequency liminf is zero. REOPEN IF: DensityProductBlockExponentTwo, or a positive-entropy or BBP-type restricted class with a mechanism",
+   "MahlerDensityProduct.lean: hall_density_product_block_universal, not_forall_isDensityProductBlock, DensityProductBlockExponentTwo; KICKOFF-2026-10-16-maze-backlog.md Part 2",
+   "2026-10-17"⟩,
+  ⟨"joint normality is pairwise",
+   "Treat pairwise joint normality of every two coordinates as sufficient for joint normality of the whole finite family",
+   .parked, .frozen,
+   "The signed triple combination has kernel-checked ternary zero windows [3*7^(k+1), 7^(k+2)) and is not jointly normal, but the required premise that all three pairs are jointly normal was only asserted via the unformalized Bailey--Borwein same-prime criterion. StonehamThreeSevenPairwiseNormal pins that exact missing premise. Leading cancellation at exponent difference one or two has fixed 7-adic loss. The tempting claim that older kicks are then strict valuation minima is false when that loss exceeds one; instead stoneham_seven_phase_modEq makes every cleared older-phase error vanish modulo 7^(K+1), and padicValInt_stonehamPairWeighted_le_one/two now prove the full tied-depth numerator bounds. The complete Vandehey block/mean argument depends only on StonehamStateDenLinearLower. REOPEN IF: handle unequal kick depths, identify the weighted numerators with the rational state, and derive that linear denominator bound for all three pairs",
+   "StonehamSumsBoundary.lean: hall_pairwise_joint_normality_nonjoint_half, not_isRationallyJointNormal_stonehamThreeSeven, StonehamThreeSevenPairwiseNormal, stoneham_seven_phase_modEq, padicValInt_stonehamPairWeighted_le_one/two, stonehamThreeSeven_pairwise_not_joint; StonehamSumsNormal.lean: StonehamStateDenLinearLower, stonehamCombination_mean_tendsto_of_linearLower; papers/2026-10-16-bailey-borwein-full-answer.md L2",
+   "2026-10-17"⟩,
+  ⟨"same-c combinations are normal",
+   "Assert normality for every nonzero rational combination of Stoneham constants whose c parameters lie in one multiplicative class",
+   .falseAsStated, .kernel,
+   "For every prime p coprime to b, alpha_{b,p} - (p+1) alpha_{b,p^2} has exact base-b zero windows [p^(2k+2), p^(2k+3)) and is not even simply normal",
+   "StonehamSumsBoundary.lean: hall_same_c_combinations_normal, not_isSimplyNormal_stoneham_sub_succ_mul, digitOf_stoneham_sub_succ_mul_eq_zero; papers/2026-10-16-bailey-borwein-full-answer.md L1",
+   "2026-10-17"⟩,
   ⟨"normal Stoneham constants are closed under addition",
    "Infer joint normality, or normality of a sum, from separate normality of Stoneham constants",
    .refuted, .kernel,
