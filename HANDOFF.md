@@ -58,6 +58,199 @@
   witnesses, R2 and R4 have exact frozen statements, and all four rows are declaration-audited.
   The target gate is green at 195 rows / 88 declaration-backed links.  Next: Part 2's universal
   positive-frequency product-block refutation using `Mahler.bgLiouville 3 0 1`.
+# Vandehey Theorem 5.1 lap 36 COMPLETE (2026-10-17, adversarial terminal review); read HANDOFF-2026-10-17-vandehey-thm51-lap36.md
+- Fresh reconstruction from the paper, frozen statement, proof route, and recent history found no
+  drift, circularity, concealed proof debt, or route mismatch.
+- The exact host predicate, permanent trust guards, scoped build, and full repository gate are
+  green; no blocker or further in-scope attack remains.
+
+# Vandehey Theorem 5.1 lap 35 COMPLETE (2026-10-17, independent terminal confirmation); read HANDOFF-2026-10-17-vandehey-thm51-lap35.md
+- Independently reconfirmed the exact host predicate, frozen source, proof-escape and circularity
+  surfaces, permanent statement/trust guards, and both authoritative build gates.
+- No blocker or further in-scope attack remains; terminate the completed campaign.
+
+# Vandehey Theorem 5.1 lap 34 COMPLETE (2026-10-17, reflection audit hardening); read HANDOFF-2026-10-17-vandehey-thm51-lap34.md
+- Closed the remaining semantic audit gap by pinning `ePhase` to `exp(2πix)` and re-elaborating
+  all three frozen unconditional consumer contracts in every build.
+- The frozen theorem, proof route, and trust surface remain unchanged; scoped and full gates are
+  green, with no blocker or further in-scope attack.
+
+# Vandehey Theorem 5.1 lap 33 COMPLETE (2026-10-17, terminal completion reconfirmed); read HANDOFF-2026-10-17-vandehey-thm51-lap33.md
+- Independently reconfirmed the exact host predicate, frozen source, non-circular helper graph,
+  permanent trust guards, BarrierAudit surface, and both authoritative build gates.
+- No blocker or further in-scope attack remains; terminate the completed campaign.
+
+# Vandehey Theorem 5.1 lap 32 COMPLETE (2026-10-17, adversarial terminal review); read HANDOFF-2026-10-17-vandehey-thm51-lap32.md
+- Fresh reconstruction against the paper, frozen statement, proof route, and current dependency
+  graph found no drift, route mismatch, circularity, or concealed proof debt.
+- The exact host predicate, scoped theorem/axiom gate, and full repository gate are green; no
+  blocker or further in-scope attack remains.
+
+# Vandehey Theorem 5.1 lap 31 COMPLETE (2026-10-17, terminal completion reconfirmed); read HANDOFF-2026-10-17-vandehey-thm51-lap31.md
+- The exact host predicate, frozen statement and executable pins, proof-escape/circularity surface,
+  permanent axiom guards, and both authoritative build gates were independently reconfirmed.
+- No blocker or further in-scope attack remains; terminate the completed campaign.
+
+# Vandehey Theorem 5.1 lap 30 COMPLETE (2026-10-17, terminal gate reconfirmed); read HANDOFF-2026-10-17-vandehey-thm51-lap30.md
+- The exact host predicate, frozen statement, proof-escape/circularity surface, theorem axiom list,
+  and both authoritative build gates were independently reconfirmed from lap 29.
+- No blocker or further in-scope attack remains; terminate the completed campaign.
+
+# Vandehey Theorem 5.1 lap 29 COMPLETE (2026-10-17, terminal gate reconfirmed); read HANDOFF-2026-10-17-vandehey-thm51-lap29.md
+- The exact host predicate, frozen statement, proof-escape/circularity surface, permanent axiom
+  guards, and both authoritative build gates were independently reconfirmed from lap 28.
+- No blocker or further in-scope attack remains; terminate the completed campaign.
+
+# Vandehey Theorem 5.1 lap 28 COMPLETE (2026-10-17, terminal predicate confirmed); read HANDOFF-2026-10-17-vandehey-thm51-lap28.md
+- The exact sorry-free predicate, frozen source, proof-escape/circularity surface, permanent axiom
+  guards, and both real build gates were independently reconfirmed from the lap-27 checkpoint.
+- No blocker or further in-scope attack remains; terminate the completed campaign.
+
+# Vandehey Theorem 5.1 lap 27 COMPLETE (2026-10-17, executable statement audit); read HANDOFF-2026-10-17-vandehey-thm51-lap27.md
+- The paper-defined constants, recursions, and full frozen theorem type now have compile-time
+  definitional-equality pins, closing the only manual gap left by the permanent axiom guards.
+- The ratified source remains byte-unchanged; scoped and full real gates are green; terminate the
+  completed campaign.
+
+# Vandehey Theorem 5.1 lap 26 COMPLETE (2026-10-17, terminal predicate reconfirmed); read HANDOFF-2026-10-17-vandehey-thm51-lap26.md
+- The exact sorry-free predicate, frozen statement, machinery debt surface, BarrierAudit waiver
+  absence, all four axiom guards, and both real build gates were independently reconfirmed.
+- No blocker or further in-scope attack remains; terminate the completed campaign.
+
+# Vandehey Theorem 5.1 lap 25 COMPLETE (2026-10-17, terminal gate audit); read HANDOFF-2026-10-17-vandehey-thm51-lap25.md
+- The exact sorry-free predicate, frozen statement, machinery debt surface, BarrierAudit waiver
+  absence, theorem axiom list, and both real build gates were independently reconfirmed.
+- No blocker or further in-scope attack remains; terminate the completed campaign.
+
+# Vandehey Theorem 5.1 lap 24 COMPLETE (2026-10-17, adversarial completion review); read HANDOFF-2026-10-17-vandehey-thm51-lap24.md
+- Fresh reconstruction against the paper, frozen statement history, proof dependency graph, and
+  current sources found no statement drift, circularity, concealed debt, or route mismatch.
+- The scoped theorem/axiom gate and full repository gate are green; no in-scope work remains.
+
+# Vandehey Theorem 5.1 lap 23 COMPLETE (2026-10-17, terminal predicate reconfirmed); read HANDOFF-2026-10-17-vandehey-thm51-lap23.md
+- The exact host predicate, all machinery debt scans, BarrierAudit waiver absence, theorem trust
+  surface, and both real build gates were independently reconfirmed from the lap-22 checkpoint.
+- No blocker or further in-scope attack remains; terminate the completed campaign.
+
+# Vandehey Theorem 5.1 lap 22 COMPLETE (2026-10-17, terminal gate confirmation); read HANDOFF-2026-10-17-vandehey-thm51-lap22.md
+- The exact host predicate, machinery debt scan, theorem axiom query, and full repository gate
+  were independently reconfirmed from the lap-21 committed tree.
+- No blocker or further in-scope attack remains; terminate the completed campaign.
+
+# Vandehey Theorem 5.1 lap 21 COMPLETE (2026-10-17, reflection audit); read HANDOFF-2026-10-17-vandehey-thm51-lap21.md
+- Source-faithfulness and dependency audits found no drift or concealed proof debt.
+- All four kickoff axiom conditions are now permanent compile-time guards; scoped and full gates
+  remain green.
+
+# Vandehey Theorem 5.1 lap 20 COMPLETE (2026-10-17, terminal confirmation); read HANDOFF-2026-10-17-vandehey-thm51-lap20.md
+- The explicit host predicate and all four kickoff axiom gates were independently reconfirmed.
+- The full 10868-job gate is green; no blocker or further in-scope attack remains.
+
+# Vandehey Theorem 5.1 lap 19 COMPLETE (2026-10-17, independent confirmation); read HANDOFF-2026-10-17-vandehey-thm51-lap19.md
+- The lap 18 proof completion was independently rechecked: the scoped file is sorry-free, all four
+  declarations have exactly the standard trust-base axioms, and the full 10868-job gate is green.
+- No blocker or further in-scope attack remains; terminate the campaign.
+
+# Vandehey Theorem 5.1 lap 18 COMPLETE (2026-10-17, review); read HANDOFF-2026-10-17-vandehey-thm51-lap18.md
+- `VandeheyKorobov.norm_power_sum_le_step` proves the complete rounded Proposition 4.1,
+  including both trivial branches and exact frozen recursive constants.
+- `VandeheyProof.vandeheyThm51_holds` is proved by induction and the scoped file is sorry-free.
+- All four declarations in `VandeheyProof.lean` have exactly the standard trust-base axioms;
+  the BarrierAudit waiver is removed.  The campaign is complete.
+
+# Vandehey Theorem 5.1 lap 17 (2026-10-17); read HANDOFF-2026-10-17-vandehey-thm51-lap17.md
+- The exact pp. 12--13 normalization from the four aggregate pieces to the paper's three
+  squared terms is proved at the standard trust baseline.
+- `weighted_main_term_le` handles `α` and `-δ` through the single factor
+  `(m'/mbar)^(1+e) ≤ 1`.
+- Next: instantiate the normalization with the rounded natural modulus, substitute
+  equations (12)--(13), then close Proposition 4.1 and the Theorem 5.1 induction.
+
+# Vandehey Theorem 5.1 lap 15 (2026-10-17, review); read HANDOFF-2026-10-17-vandehey-thm51-lap15.md
+- Adversarial review repaired the shift-endpoint gap: correlations survive for
+  `i < ⌈N/τ⌉`, and the sharp Lemma 4.3 term is `(X-1)/n`, preserving `N/(τn)`.
+- `shifted_correlation_sum_le` now proves the complete pp. 12--13 reduced-phase,
+  gcd-class, and four-divisor-sum estimate at the standard trust baseline.
+- Next: combine it with differencing and the order/Claim 4.6 bounds, then perform
+  the rounded-divisor substitution and square-root algebra for Proposition 4.1.
+
+# Vandehey Theorem 5.1 lap 14 (2026-10-17); read HANDOFF-2026-10-17-vandehey-thm51-lap14.md
+- The exact gcd-class partition and Lemma 4.3 aggregation are proved, including the split
+  main/error divisor-sum form used on page 13 of Proposition 4.1.
+- Next: instantiate the correlation weight after `shifted_phase_reduce`, apply both Lemma 4.2
+  divisor-power bounds, then feed the result into differencing and rounded-divisor optimization.
+
+# Vandehey Theorem 5.1 lap 13 (2026-10-17); read HANDOFF-2026-10-17-vandehey-thm51-lap13.md
+- Exact coefficient cancellation is proved: Claim 4.5 now feeds `shifted_phase_reduce`, which
+  preserves the phase, identifies denominator `m/(mbar*gcd(i,m/mbar))`, and proves the reduced
+  numerator is coprime to it.
+- Next: aggregate the correlation sums by gcd class with Lemmas 4.2--4.3, then perform the
+  rounded-divisor and square-root optimization completing Proposition 4.1.
+
+# Vandehey Theorem 5.1 lap 12 (2026-10-17, review); read HANDOFF-2026-10-17-vandehey-thm51-lap12.md
+- Adversarial source review corrected the prior baton: Claim 4.6 is `mbar / m' ∣ bigM`, not
+  `m / mbar ∣ bigM`.  The exact paper claim and its `mbar ≤ bigM * m'` corollary are proved,
+  including the rounded-divisor specialization.
+- Next: reduce the shifted coefficients to their exact coprime denominators, aggregate the
+  gcd classes with Lemmas 4.2--4.3, and assemble Proposition 4.1.
+
+# Vandehey Theorem 5.1 lap 11 (2026-10-17); read HANDOFF-2026-10-17-vandehey-thm51-lap11.md
+- Vandehey Claim 4.5 is proved in its exact gcd form, including the exceptional two-adic branch,
+  and specialized to the rounded divisor used by Proposition 4.1.
+- Next: Claim 4.6's `m/mbar | bigM` valuation bound, then assemble Proposition 4.1.
+
+# Vandehey Theorem 5.1 lap 10 (2026-10-17); read HANDOFF-2026-10-17-vandehey-thm51-lap10.md
+- Vandehey Claim 4.4 is proved in its divisibility-maximal form, and the exact local LTE
+  identity needed for Claims 4.5--4.6 is proved uniformly, including the preserved-`4` branch.
+- Next: factorization bookkeeping at `mbar = gcd(b^τ-1,m)`, then Claim 4.5's gcd identity.
+
+# Vandehey Theorem 5.1 lap 9 (2026-10-17); read HANDOFF-2026-10-17-vandehey-thm51-lap9.md
+- Equations (12)--(13) are proved by a support-local rounded divisor: divisibility, exact
+  prime support, preservation of `4 | m`, and the sharp `m^x` / `2Qm^x` bounds.
+- Reflection separated the paper's support radical from the frozen statement's ambient prime
+  product and identified the exact order-lifting interface needed after Claim 4.4.
+- Next: Claim 4.4's gcd/order maximality, then the local order-growth lemma for Claims 4.5--4.6.
+
+# Vandehey Theorem 5.1 lap 8 (2026-10-17); read HANDOFF-2026-10-17-vandehey-thm51-lap8.md
+- Vandehey Lemma 4.3 is proved with the exact totient main term and `2^s` inclusion--exclusion
+  error; the production theorem has exactly the standard trust-base axioms.
+- Next: construct the rounded supported divisor from equations (12)--(13), then Claims 4.4--4.6.
+
+# Vandehey Theorem 5.1 lap 7 (2026-10-17); read HANDOFF-2026-10-17-vandehey-thm51-lap7.md
+- Adversarial review found no statement drift and reconfirmed that the exact Lemma 3.1 endpoint
+  feeds the published Proposition 4.1 route.
+- Vandehey Lemma 4.2 is now proved in both directions with the frozen `cP`; the production endpoint
+  has exactly the standard trust-base axioms.
+- Next: Lemma 4.3's inclusion-exclusion count, then equations (12)--(13) and Claims 4.4--4.6.
+
+# Vandehey Theorem 5.1 lap 6 (2026-10-17); read HANDOFF-2026-10-17-vandehey-thm51-lap6.md
+- Kickoff rung 5 now has its differencing core: Vandehey Lemma 3.1 / equation (11) is proved
+  with the exact `m' N + 2m'` factor, order shifts, truncated ranges, and reduced coefficient.
+- The concrete theorem has exactly the standard trust-base axioms.
+- Next: Lemmas 4.2 and 4.3, then the rounded divisor and gcd/order packages for Proposition 4.1.
+
+# Vandehey Theorem 5.1 lap 5 (2026-10-17); read HANDOFF-2026-10-17-vandehey-thm51-lap5.md
+- Kickoff rungs 3 and 4 are proved: sharp finite completion gives repaired Lemma 2.2, and
+  period decomposition plus `m ≤ M(P) * ord(b,m)` gives Lemma 2.3 / the exact frozen `k = 0` case.
+- `vandeheyThm51_k_zero` has exactly the standard trust-base axioms.
+- Next: isolate and prove the Lemma 3.1 differencing inequality, then build Proposition 4.1.
+
+# Vandehey Theorem 5.1 lap 4 (2026-10-17); read HANDOFF-2026-10-17-vandehey-thm51-lap4.md
+- Kickoff rung 2 is proved as `norm_twisted_powers_sum_le_sqrt`; the concrete completed-twist
+  corollary `norm_completed_power_sum_le_sqrt` is ready for Lemma 2.2.
+- The construction uses the actual power residues, a zero extension of the character, exact L² mass,
+  and cyclic reindexing.  Its axiom list is exactly the standard trust base.
+- Next: the exact Dirichlet-kernel L1 estimate (`1 + log τ`, with centered harmonic bookkeeping),
+  then the completion identity for Vandehey Lemma 2.2.
+
+# Vandehey Theorem 5.1 lap 3 (2026-10-17); read HANDOFF-2026-10-17-vandehey-thm51-lap3.md
+- Kickoff rung 1 (`div_bigM_le_orderOf`, Vandehey Lemma 2.1 / equation (5)) is proved and its
+  BarrierAudit waiver is removed.
+- Reflection repaired rung 2's Parseval interface: `norm_blockFourier_le_sqrt_of_orbit_l2`
+  accepts a sparse subgroup-character vector on all residues, unlike the dense initial-interval
+  specialization.
+- Next: instantiate the sparse lemma for `H = <b> <= (ZMod m)^*`, then prove the completion
+  estimate in Vandehey Lemma 2.2.
 
 # Stoneham sums normal lap 3 COMPLETE (2026-10-16); read HANDOFF-2026-10-16-stoneham-sums-normal-lap3.md
 - `StonehamSumsNormal.lean` is sorry-free.  The derived Vandehey Corollary 1.2, general rational

@@ -18,6 +18,7 @@ import NormalNumbers.Stoneham
 import NormalNumbers.StonehamSums
 import NormalNumbers.StonehamSumsNormal
 import NormalNumbers.StonehamSumsBoundary
+import NormalNumbers.VandeheyProof
 import NormalNumbers.StonehamBase6
 import NormalNumbers.CFDefs
 import NormalNumbers.CFCylinder

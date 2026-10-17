@@ -754,7 +754,9 @@ obstructions are stated.
 New: `weyl_scale`, `weyl_Rs` (`GrowingLocalizedLogScale.lean`, N9 complete);
 `ePhase_orbit`, `orbit_sum_close`, `isNormal_xS` (`GrowingLocalizedLogNormal.lean`, N10).
 The frozen statement is unchanged; only an import line and the proof body changed.
-Remaining open debt for this route: discharging `VandeheyThm51` itself (side quest).
+The former open debt `VandeheyThm51` is discharged by
+`VandeheyProof.vandeheyThm51_holds` (2026-10-17, lap 18); the unconditional `ζ_Y` wrapper has
+exactly the standard trust-base axioms.
 
 ### lap 1 record
 

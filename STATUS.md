@@ -122,6 +122,89 @@ lap 7 because its pairwise premise was absent.  See `HANDOFF-2026-10-17-maze-bac
 
 **Outstanding in this kickoff:** prove `StonehamThreeSevenPairwiseNormal`, then restore the
 “joint normality is pairwise” row to `.refuted/.kernel`.
+## Vandehey Theorem 5.1 complete, 17 October 2026 (branch `proof/vandehey-thm51`, lap 36 adversarial review)
+
+`VandeheyProof.vandeheyThm51_holds` is proved with the frozen statement unchanged.  The final
+step is `VandeheyKorobov.norm_power_sum_le_step`, a complete formalization of Proposition 4.1:
+rounded divisor, exact three-term normalization, equations (12)--(13), square-root extraction,
+and both trivial cases.  Theorem 5.1 follows by induction after proving the recursive exponent
+window and `B_k ≥ 1`.  `VandeheyProof.lean` is sorry-free, its BarrierAudit waiver is removed,
+and all four declarations in that file print exactly `[Classical.choice, Quot.sound, propext]`.
+Consequently the general Stoneham-combination theorem, `α₂,₃ + α₂,₅`, and `ζ_Y` now
+have unconditional wrappers at the standard trust baseline.  See
+`HANDOFF-2026-10-17-vandehey-thm51-lap36.md`.  Lap 21 audited the frozen statement directly
+against the paper and the full dependency chain for concealed debt, then made all four kickoff
+axiom conditions permanent compile-time guards.  The scoped 8936-job gate and full 10868-job
+repository gate remain green.  Lap 24 freshly reconstructed the route from the paper, frozen
+statement history, current source, and proof dependency graph: the statement is unchanged and
+faithful-or-weaker, the proof is non-circular, and the corrected order/Claim 4.6/ceiling/support
+interfaces remain load-bearing proved lemmas.  Its scoped and full gates are green.  Laps 22 and
+23 independently reconfirmed the terminal predicate from earlier committed checkpoints.  Lap 25
+again checked the exact host predicate, frozen contract, machinery debt and circularity surfaces,
+BarrierAudit waiver absence, theorem axiom footprint, and both real build gates from the committed
+lap-24 tree; every terminal condition remains green.
+
+Lap 27 converted the remaining manual statement-fidelity check into an executable audit surface.
+Definitional-equality pins in `VandeheyProof.lean` now fix the paper's `Q`, `M`, `C_{P,x}`,
+`alpha`, exponent-pair and constant-pair recursions, plus the complete quantified theorem type.
+The ratified literature source remains byte-unchanged, and both the scoped 8,936-job gate and full
+10,868-job gate pass with the pins active.  No in-scope obligation remains.
+
+Lap 28 independently reconfirmed the exact host predicate and the stronger kickoff conditions from
+the committed lap-27 tree: zero scoped proof holes, unchanged frozen source, no machinery proof
+escape or circularity, all four permanent trust guards active, and green scoped/full real gates.
+
+Lap 29 independently repeated the terminal audit from the committed lap-28 tree.  Direct target
+elaboration, the 8,936-job scoped theorem/axiom gate, and the full 10,868-job repository gate are
+green; the frozen source and scoped trust surface remain unchanged.  No in-scope obligation remains.
+
+Lap 32 freshly reconstructed the route from the checked-in paper, frozen statement, current proof
+sources, and commit history.  The Lemma 2.3 base case, complete Proposition 4.1 step, recursive
+invariants, and exact displayed constants still compose to the headline without circularity or
+proof escape.  The ratified statement source is unchanged from `cba101f9`; the scoped 8,936-job
+theorem/axiom gate and full 10,868-job repository gate are green.  No in-scope obligation remains.
+
+Lap 33 independently reconfirmed the exact host predicate from the committed lap-32 tree.  The
+ratified statement source remains unchanged, the helper dependency graph has no reverse edge or
+proof escape, all four permanent trust guards remain active, and the scoped 8,936-job plus full
+10,868-job authoritative gates are green.  No in-scope obligation remains.
+
+Lap 34 audited the semantic boundary left implicit by the earlier executable pins.  It now pins
+the repo-owned additive character `ePhase` definition to `exp(2πix)` and re-elaborates all three
+frozen unconditional consumer contracts during every build.  The ratified theorem contract and
+proof remain unchanged; the scoped theorem/axiom gate and full repository gate are green.  No
+in-scope obligation remains.
+
+Lap 35 independently reconfirmed the exact host predicate from the committed lap-34 tree.  The
+ratified source remains unchanged, the scoped machinery has no proof escape or reverse dependency,
+the permanent statement and axiom guards remain active, and both the 8,936-job scoped gate and
+10,868-job full repository gate are green.  No in-scope obligation remains.
+
+Lap 36 freshly reconstructed the campaign from the paper's Lemmas 2.1--2.3, Proposition 4.1,
+Theorem 5.1, the frozen statement, current proof, and recent history.  The base case, complete
+differencing step, recursive invariants, and exact displayed constants still compose without
+circularity or proof escape.  The ratified source remains byte-identical to `cba101f9`; the scoped
+8,936-job build and full 10,868-job repository gate are green, with all four permanent trust guards
+active.  No in-scope obligation remains.
+
+## Vandehey Theorem 5.1 update, 17 October 2026 (branch `proof/vandehey-thm51`, lap 17)
+
+The exact three-term real normalization for Proposition 4.1 is now proved in the axiom-clean
+theorem `VandeheyKorobov.aggregated_rhs_le_three_terms`.  Its helper
+`weighted_main_term_le` uniformly handles both the `α` and `-δ` powers and isolates the
+crucial factor `(m'/mbar)^(1+e) ≤ 1`.  Next instantiate it with the rounded natural modulus,
+substitute equations (12)--(13), close the trivial branches and square-root step, then perform
+the Theorem 5.1 induction.  The scoped file retains one headline `sorry`.  See
+`HANDOFF-2026-10-17-vandehey-thm51-lap17.md`.
+
+## Vandehey Theorem 5.1 update, 17 October 2026 (branch `proof/vandehey-thm51`, lap 16)
+
+The Proposition 4.1 differencing and correlation halves are now assembled in the axiom-clean
+theorem `VandeheyKorobov.norm_power_sum_sq_le_aggregated`.  The companion theorem
+`rounded_step_data` packages equations (12)--(13) and Claim 4.6 for the exact rounded modulus.
+The remaining crux is the real-exponent normalization to the paper's three squared terms, then
+the trivial branches, square-root step, and Theorem 5.1 induction.  The scoped file retains one
+headline `sorry`.  See `HANDOFF-2026-10-17-vandehey-thm51-lap16.md`.
 
 ## Cantor repetition update, 9 October 2026 (branch `proof/cantor-repetition`, lap 13) — HEADLINE PROVED
 
@@ -702,6 +785,7 @@ This repo holds **no `axiom` declarations**: literature inputs are named hypothe
 
 | headline theorem | paper claim | `#print axioms` shows | status |
 | --- | --- | --- | --- |
+| `VandeheyProof.vandeheyThm51_holds` | unconditional (Vandehey 2019 Thm 5.1) | trust base | 🟢 **CLEAN, DISCHARGED 2026-10-17**: Proposition 4.1 is `norm_power_sum_le_step`; the exact frozen recursion is closed by induction.  Review verified the decisive order bound at `mbar`, both trivial branches, the `B_k ≥ 1` invariant, and all four downstream axiom lists. |
 | `StonehamSumsNormal.isNormal_stonehamCombination` | conditional on Vandehey 2016 Thm 5.1 | trust base | 🟢 **CLEAN 2026-10-16**: every nonzero rational combination of pairwise-coprime Stoneham families is normal in the base; the cited `VandeheyThm51` input is an explicit binder.  The specialization `isNormal_two_stoneham_three_add_five` answers Bailey's `α₂,₃ + α₂,₅` question under the same input. |
 | `CantorBadNormal.exists_mem_cantorSet_bad_isNormal_coprime_three` | open (sweep row 2) | trust base + `sorryAx` + 2 `native_decide` artifacts (`J_lt`, `J_inj`) | 🟡 three disclosed leaves: `ae_cesaro_condDiff`, `cesaro_contChar_small` (standard, next prerequisites) and the crux `localDeadBias_resLaw` (2026-10-06, `32682ed0`) |
 | `Literature.vandehey_matrix_action_holds` (`VandeheyCapstone.lean`) | unconditional (Vandehey 2017 Thm 1.1) | trust base | 🟢 **CLEAN, DISCHARGED 2026-09-29** (`6d7a8ad`).  Route: Serret + Smith reduce to `x ↦ D·x` (`D` prime); the concrete Raney `L/R` transducer supplies a monotone RUN clock with an `x`-independent positive rate (`tendsto_runClock_div`, Lemma 6.1) and an `x`-independent Cesàro limit for the image's CF-occurrence count sampled along it (`exists_tendsto_cfCount_runClock`).  Assembled by `mobiusUniformFreq_of_runClock`.  NB the theorem lives downstream of `LiteratureVandehey.lean` (import cycle); the frozen statements stay there. |
