@@ -1,3 +1,10 @@
+# Vandehey Theorem 5.1 lap 13 (2026-10-17); read HANDOFF-2026-10-17-vandehey-thm51-lap13.md
+- Exact coefficient cancellation is proved: Claim 4.5 now feeds `shifted_phase_reduce`, which
+  preserves the phase, identifies denominator `m/(mbar*gcd(i,m/mbar))`, and proves the reduced
+  numerator is coprime to it.
+- Next: aggregate the correlation sums by gcd class with Lemmas 4.2--4.3, then perform the
+  rounded-divisor and square-root optimization completing Proposition 4.1.
+
 # Vandehey Theorem 5.1 lap 12 (2026-10-17, review); read HANDOFF-2026-10-17-vandehey-thm51-lap12.md
 - Adversarial source review corrected the prior baton: Claim 4.6 is `mbar / m' ∣ bigM`, not
   `m / mbar ∣ bigM`.  The exact paper claim and its `mbar ≤ bigM * m'` corollary are proved,
