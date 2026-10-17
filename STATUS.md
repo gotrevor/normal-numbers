@@ -1,9 +1,14 @@
 # STATUS — normal-numbers 📊
 
-## Maze backlog COMPLETE, 17 October 2026 (branch `proof/maze-backlog`, lap 5)
+## Maze backlog COMPLETE, 17 October 2026 (branch `proof/maze-backlog`, lap 6 audit)
 
 **All kickoff parts complete** · **Build**: 🟢 full green (10858 jobs) ·
 **Audit**: 198 rows, 91 declaration-backed links, 107 legacy rows
+
+Lap 6 independently reconfirmed the terminal state with two 10,470-job `MazeAudit` gates,
+one for each ratified Stoneham boundary headline.  Both ended `FORMALIZE-TIER GREEN`, and each
+headline's axiom list is exactly `[Classical.choice, Quot.sound, propext]`.  See
+`HANDOFF-2026-10-17-maze-backlog-lap6.md`.
 
 The four joint-orbit routes R1/R2/R4/R6 from the 16 October report now have Lean witnesses and
 audited Maze rows.  R1 (rational closure of polynomial-ratio BBP series) and R6 (joint normality
