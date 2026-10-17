@@ -1,3 +1,10 @@
+# Maze backlog reflection lap 7 (2026-10-17): L2 pairwise gap exposed; read HANDOFF-2026-10-17-maze-backlog-lap7.md
+- The former kernel row “joint normality is pairwise” proved only the non-joint signed
+  combination, not the required pairwise-joint premise.  The row is now honestly frozen/parked;
+  `StonehamThreeSevenPairwiseNormal` names the missing obligation, while exact quadratic-norm
+  lemmas bound the leading 7-adic cancellation for all three pairs.  Next: lift those bounds to
+  the full Stoneham-state denominator and reuse the Vandehey block-mean engine.
+
 # Maze backlog lap 6 COMPLETE (2026-10-17): terminal audit; read HANDOFF-2026-10-17-maze-backlog-lap6.md
 - Independently rechecked the completed kickoff.  Both 10,470-job MazeAudit/axiom gates are
   FORMALIZE-TIER GREEN; each Stoneham boundary headline has exactly the standard trust-base

@@ -477,6 +477,175 @@ theorem not_isSimplyNormal_three_seven_triple :
     ring
   nlinarith
 
+/-! ### The exact joint-normality obligation behind L2
+
+The zero-window theorem above proves that the three Stoneham constants are not jointly
+normal.  To refute the stronger claim that pairwise joint normality implies joint normality,
+one must additionally prove that each of their three pairs is jointly normal.  The
+Bailey--Borwein research sketch asserts this via its same-prime criterion, but the criterion
+has not yet been formalized.  The following definitions expose that missing premise instead
+of allowing the non-joint half alone to masquerade as the full counterexample. -/
+
+/-- A finite family is rationally jointly normal when every nonzero rational linear
+combination of its coordinates is normal.  This is the Weyl-character formulation used by
+the Bailey--Borwein joint-normality criterion. -/
+def IsRationallyJointNormal (b : ℕ) {r : ℕ} (x : Fin r → ℝ) : Prop :=
+  ∀ q : Fin r → ℚ, q ≠ 0 → IsNormal b (∑ i, (q i : ℝ) * x i)
+
+/-- Pairwise rational joint normality asks for the corresponding property on every two
+distinct coordinates. -/
+def IsPairwiseRationallyJointNormal (b : ℕ) {r : ℕ} (x : Fin r → ℝ) : Prop :=
+  Pairwise fun i j => ∀ a c : ℚ, a ≠ 0 ∨ c ≠ 0 →
+    IsNormal b ((a : ℝ) * x i + (c : ℝ) * x j)
+
+/-- The three Stoneham constants used by the L2 cyclotomic cancellation. -/
+noncomputable def stonehamThreeSevenFamily : Fin 3 → ℝ :=
+  ![stonehamAlpha 3 7, stonehamAlpha 9 7, stonehamAlpha 27 7]
+
+/-- **Open L2 premise (85%).**  Each pair in the ternary Stoneham triple is rationally
+jointly normal.  The unformalized same-prime criterion predicts this because
+`ord_7(3) = 6` does not divide twice any difference among `1, 2, 3`.
+
+This is the missing half of the proposed counterexample to "joint normality is pairwise". -/
+def StonehamThreeSevenPairwiseNormal : Prop :=
+  IsPairwiseRationallyJointNormal 3 stonehamThreeSevenFamily
+
+/-! A first arithmetic prerequisite predicted by the same-prime criterion is elementary.  At
+equal kick depth, the two newest terms differ by either `3^(7^n)` or its square.  The first
+quantity is an approximate root of `X^2 - X + 1` modulo `7^n`; its square is therefore an
+approximate root of `X^2 + X + 1`.  Taking the corresponding quadratic norm shows that deep
+cancellation of a fixed coefficient pair forces the same power of seven to divide a fixed,
+nonzero integer. -/
+
+/-- Integer form of the cyclotomic divisibility already used by the L2 block. -/
+theorem seven_pow_dvd_stoneham_phiSix_int (n : ℕ) :
+    (7 : ℤ) ^ n ∣
+      (3 : ℤ) ^ (2 * 7 ^ n) - (3 : ℤ) ^ (7 ^ n) + 1 := by
+  have hle : 3 ^ (7 ^ n) ≤ 3 ^ (2 * 7 ^ n) :=
+    Nat.pow_le_pow_right (by norm_num) (by omega)
+  exact_mod_cast seven_pow_dvd_stoneham_triple_block n
+
+/-- The resultant identity for an approximate sixth root of unity. -/
+theorem dvd_pairNorm_of_phiSix (D a c z : ℤ)
+    (hlin : D ∣ a + c * z) (hphi : D ∣ z ^ 2 - z + 1) :
+    D ∣ a ^ 2 + a * c + c ^ 2 := by
+  obtain ⟨u, hu⟩ := hlin
+  obtain ⟨v, hv⟩ := hphi
+  refine ⟨u * (a + c - c * z) + v * c ^ 2, ?_⟩
+  calc
+    a ^ 2 + a * c + c ^ 2 =
+        (a + c * z) * (a + c - c * z) + c ^ 2 * (z ^ 2 - z + 1) := by ring
+    _ = (D * u) * (a + c - c * z) + c ^ 2 * (D * v) := by rw [hu, hv]
+    _ = D * (u * (a + c - c * z) + v * c ^ 2) := by ring
+
+/-- Squaring an approximate sixth root gives an approximate third root. -/
+theorem dvd_phiThree_sq_of_phiSix (D z : ℤ) (hphi : D ∣ z ^ 2 - z + 1) :
+    D ∣ (z ^ 2) ^ 2 + z ^ 2 + 1 := by
+  obtain ⟨v, hv⟩ := hphi
+  refine ⟨v * (z ^ 2 + z + 1), ?_⟩
+  calc
+    (z ^ 2) ^ 2 + z ^ 2 + 1 =
+        (z ^ 2 - z + 1) * (z ^ 2 + z + 1) := by ring
+    _ = (D * v) * (z ^ 2 + z + 1) := by rw [hv]
+    _ = D * (v * (z ^ 2 + z + 1)) := by ring
+
+/-- The conjugate resultant identity for an approximate third root of unity. -/
+theorem dvd_pairNorm_of_phiThree (D a c z : ℤ)
+    (hlin : D ∣ a + c * z) (hphi : D ∣ z ^ 2 + z + 1) :
+    D ∣ a ^ 2 - a * c + c ^ 2 := by
+  obtain ⟨u, hu⟩ := hlin
+  obtain ⟨v, hv⟩ := hphi
+  refine ⟨u * (a - c - c * z) + v * c ^ 2, ?_⟩
+  calc
+    a ^ 2 - a * c + c ^ 2 =
+        (a + c * z) * (a - c - c * z) + c ^ 2 * (z ^ 2 + z + 1) := by ring
+    _ = (D * u) * (a - c - c * z) + c ^ 2 * (D * v) := by rw [hu, hv]
+    _ = D * (u * (a - c - c * z) + v * c ^ 2) := by ring
+
+/-- At exponent difference one, cancellation modulo `7^n` is bounded by the fixed positive
+quadratic norm of the coefficient pair. -/
+theorem seven_pow_dvd_stoneham_pairNorm_one (a c : ℤ) (n : ℕ)
+    (hlin : (7 : ℤ) ^ n ∣ a + c * (3 : ℤ) ^ (7 ^ n)) :
+    (7 : ℤ) ^ n ∣ a ^ 2 + a * c + c ^ 2 := by
+  apply dvd_pairNorm_of_phiSix _ _ _ _ hlin
+  simpa only [pow_two, ← pow_add, show 7 ^ n + 7 ^ n = 2 * 7 ^ n by omega] using
+    seven_pow_dvd_stoneham_phiSix_int n
+
+/-- At exponent difference two, the conjugate quadratic norm gives the same bounded-loss
+conclusion. -/
+theorem seven_pow_dvd_stoneham_pairNorm_two (a c : ℤ) (n : ℕ)
+    (hlin : (7 : ℤ) ^ n ∣ a + c * ((3 : ℤ) ^ (7 ^ n)) ^ 2) :
+    (7 : ℤ) ^ n ∣ a ^ 2 - a * c + c ^ 2 := by
+  apply dvd_pairNorm_of_phiThree _ _ _ _ hlin
+  exact dvd_phiThree_sq_of_phiSix _ _ (by
+    simpa only [pow_two, ← pow_add, show 7 ^ n + 7 ^ n = 2 * 7 ^ n by omega] using
+      seven_pow_dvd_stoneham_phiSix_int n)
+
+/-- Neither quadratic norm can vanish for a nonzero integer coefficient pair. -/
+theorem stoneham_pairNorms_ne_zero (a c : ℤ) (h : a ≠ 0 ∨ c ≠ 0) :
+    a ^ 2 + a * c + c ^ 2 ≠ 0 ∧ a ^ 2 - a * c + c ^ 2 ≠ 0 := by
+  constructor
+  · intro hz
+    rcases h with ha | hc
+    · have ha2 : 0 < a ^ 2 := sq_pos_of_ne_zero ha
+      nlinarith [sq_nonneg (a + c), sq_nonneg c]
+    · have hc2 : 0 < c ^ 2 := sq_pos_of_ne_zero hc
+      nlinarith [sq_nonneg a, sq_nonneg (a + c)]
+  · intro hz
+    rcases h with ha | hc
+    · have ha2 : 0 < a ^ 2 := sq_pos_of_ne_zero ha
+      nlinarith [sq_nonneg (a - c), sq_nonneg c]
+    · have hc2 : 0 < c ^ 2 := sq_pos_of_ne_zero hc
+      nlinarith [sq_nonneg a, sq_nonneg (a - c)]
+
+/-- Quantitative bounded cancellation for a pair whose Stoneham exponents differ by one. -/
+theorem stoneham_pair_cancellationDepth_le_one (a c : ℤ) (n : ℕ)
+    (hac : a ≠ 0 ∨ c ≠ 0)
+    (hlin : (7 : ℤ) ^ n ∣ a + c * (3 : ℤ) ^ (7 ^ n)) :
+    n ≤ padicValInt 7 (a ^ 2 + a * c + c ^ 2) := by
+  letI : Fact (Nat.Prime 7) := ⟨by norm_num⟩
+  have hdvd := seven_pow_dvd_stoneham_pairNorm_one a c n hlin
+  exact ((padicValInt_dvd_iff n _).mp hdvd).resolve_left
+    (stoneham_pairNorms_ne_zero a c hac).1
+
+/-- Quantitative bounded cancellation for a pair whose Stoneham exponents differ by two. -/
+theorem stoneham_pair_cancellationDepth_le_two (a c : ℤ) (n : ℕ)
+    (hac : a ≠ 0 ∨ c ≠ 0)
+    (hlin : (7 : ℤ) ^ n ∣ a + c * ((3 : ℤ) ^ (7 ^ n)) ^ 2) :
+    n ≤ padicValInt 7 (a ^ 2 - a * c + c ^ 2) := by
+  letI : Fact (Nat.Prime 7) := ⟨by norm_num⟩
+  have hdvd := seven_pow_dvd_stoneham_pairNorm_two a c n hlin
+  exact ((padicValInt_dvd_iff n _).mp hdvd).resolve_left
+    (stoneham_pairNorms_ne_zero a c hac).2
+
+/-- The L2 zero windows prove the *non-joint* half of the proposed pairwise counterexample,
+with the exact rational-joint formulation made explicit. -/
+@[blueprint (title := "The ternary Stoneham triple is not rationally jointly normal")]
+theorem not_isRationallyJointNormal_stonehamThreeSeven :
+    ¬ IsRationallyJointNormal 3 stonehamThreeSevenFamily := by
+  intro hjoint
+  let q : Fin 3 → ℚ := ![1, -1, 1]
+  have hq : q ≠ 0 := by
+    intro hzero
+    have hzero0 := congrFun hzero (0 : Fin 3)
+    norm_num [q] at hzero0
+  have hnormal := hjoint q hq
+  apply not_isSimplyNormal_three_seven_triple
+  apply ReciprocalNormal.isSimplyNormal_of_isNormal
+  simp only [stonehamThreeSevenFamily, q, Fin.sum_univ_succ, Fin.sum_univ_zero,
+    Fin.cons_zero, Fin.cons_succ, Matrix.cons_val_zero, Matrix.cons_val_succ, add_zero] at hnormal
+  norm_num at hnormal
+  convert hnormal using 1 <;> ring
+
+/-- Once the open pairwise premise is supplied, L2 is the claimed counterexample.  Keeping
+the premise explicit prevents the Maze tier from overstating what the kernel currently
+knows. -/
+theorem stonehamThreeSeven_pairwise_not_joint
+    (hpair : StonehamThreeSevenPairwiseNormal) :
+    IsPairwiseRationallyJointNormal 3 stonehamThreeSevenFamily ∧
+      ¬ IsRationallyJointNormal 3 stonehamThreeSevenFamily :=
+  ⟨hpair, not_isRationallyJointNormal_stonehamThreeSeven⟩
+
 /-- The positive paired summand in the L1 boundary witness.  It combines the
 `(2k+1)`-st and `(2k+2)`-nd `p`-terms with the `k`-th `p²`-term. -/
 noncomputable def stonehamBoundaryTerm (b p k : ℕ) : ℝ :=

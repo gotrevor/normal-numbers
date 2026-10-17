@@ -684,11 +684,12 @@ family. -/
 alias hall_stoneham_sum_normal :=
   NormalNumbers.stoneham_pair_normal_not_isSimplyNormal_sum
 
-/-- Hall witness against promoting pairwise joint normality to a criterion for
-a whole family: the ternary Stoneham triple has a non-simply-normal rational
-combination, witnessed by exact cyclotomic zero windows. -/
-alias hall_pairwise_joint_normality :=
-  NormalNumbers.not_isSimplyNormal_three_seven_triple
+/-- Kernel-checked non-joint half of the proposed counterexample to pairwise joint
+normality.  The pairwise premise itself is the frozen
+`StonehamThreeSevenPairwiseNormal`; until that premise is proved this is not a kernel-tier
+refutation of the whole claim. -/
+alias hall_pairwise_joint_normality_nonjoint_half :=
+  NormalNumbers.not_isRationallyJointNormal_stonehamThreeSeven
 
 /-- Hall witness against asserting normality for every rational combination
 inside one multiplicative `c`-class. -/
@@ -1519,9 +1520,9 @@ def register : List Hall := [
    "2026-10-17"⟩,
   ⟨"joint normality is pairwise",
    "Treat pairwise joint normality of every two coordinates as sufficient for joint normality of the whole finite family",
-   .refuted, .kernel,
-   "The Stoneham constants alpha_{3,7}, alpha_{9,7}, alpha_{27,7} pass the pairwise criterion from the Bailey--Borwein classification, but their signed triple combination has exact ternary zero windows [3*7^(k+1), 7^(k+2)) and is not even simply normal",
-   "StonehamSumsBoundary.lean: hall_pairwise_joint_normality, not_isSimplyNormal_three_seven_triple, digitOf_stoneham_three_seven_triple_eq_zero; papers/2026-10-16-bailey-borwein-full-answer.md L2",
+   .parked, .frozen,
+   "The signed triple combination has kernel-checked ternary zero windows [3*7^(k+1), 7^(k+2)) and is not jointly normal, but the required premise that all three pairs are jointly normal was only asserted via the unformalized Bailey--Borwein same-prime criterion. StonehamThreeSevenPairwiseNormal now pins that exact missing premise. A leading-phase arithmetic prerequisite is proved: cancellation at exponent difference one or two forces 7^n to divide a fixed nonzero quadratic norm. REOPEN IF: feed those bounded-loss lemmas through the VandeheyThm51 denominator/mean engine",
+   "StonehamSumsBoundary.lean: hall_pairwise_joint_normality_nonjoint_half, not_isRationallyJointNormal_stonehamThreeSeven, StonehamThreeSevenPairwiseNormal, seven_pow_dvd_stoneham_pairNorm_one/two, stoneham_pairNorms_ne_zero, stonehamThreeSeven_pairwise_not_joint; papers/2026-10-16-bailey-borwein-full-answer.md L2",
    "2026-10-17"⟩,
   ⟨"same-c combinations are normal",
    "Assert normality for every nonzero rational combination of Stoneham constants whose c parameters lie in one multiplicative class",
