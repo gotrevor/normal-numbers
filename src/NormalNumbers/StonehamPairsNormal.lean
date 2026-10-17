@@ -10,6 +10,7 @@ import NormalNumbers.StonehamPairsArithmetic
 import NormalNumbers.StonehamPairsResultant
 import NormalNumbers.StonehamPairsClasses
 import NormalNumbers.StonehamPairsDistinct
+import NormalNumbers.StonehamPairsSameClass
 
 /-!
 # Bailey–Borwein's question, literally: `α_{b,c₁} ± α_{b,c₂}` is always `b`-normal
@@ -35,14 +36,42 @@ open Literature.VandeheyDiff
 theorem isNormal_stonehamAlpha_add (hV : VandeheyThm51) (b c₁ c₂ : ℕ) (hb : 2 ≤ b)
     (hc₁ : 2 ≤ c₁) (hc₂ : 2 ≤ c₂) (hb₁ : Nat.Coprime c₁ b) (hb₂ : Nat.Coprime c₂ b) :
     IsNormal b (stonehamAlpha b c₁ + stonehamAlpha b c₂) := by
-  sorry
+  by_cases heq : c₁ = c₂
+  · subst c₂
+    exact NormalNumbers.StonehamSumsNormal.isNormal_stonehamAlpha_add_self
+      hV b c₁ hb hc₁ hb₁
+  by_cases hdep : StonehamPairMulDep c₁ c₂
+  · obtain ⟨g, s₁, s₂, hg, hs₁, hs₂, hc₁g, hc₂g⟩ :=
+      exists_common_power_base_of_stonehamPairMulDep c₁ c₂ hc₁ hc₂ hdep
+    subst c₁
+    subst c₂
+    have hsne : s₁ ≠ s₂ := by
+      intro hseq
+      apply heq
+      rw [hseq]
+    exact isNormal_stonehamAlpha_add_of_common_power
+      hV b g s₁ s₂ hb hg hs₁ hs₂ hb₁ hb₂ hsne
+  · exact isNormal_stonehamAlpha_add_of_not_mulDep
+      hV b c₁ c₂ hb hc₁ hc₂ hb₁ hb₂ hdep
 
 /-- **The difference** `α_{b,c₁} − α_{b,c₂}` is `b`-normal whenever `c₁ ≠ c₂`. -/
 theorem isNormal_stonehamAlpha_sub (hV : VandeheyThm51) (b c₁ c₂ : ℕ) (hb : 2 ≤ b)
     (hc₁ : 2 ≤ c₁) (hc₂ : 2 ≤ c₂) (hb₁ : Nat.Coprime c₁ b) (hb₂ : Nat.Coprime c₂ b)
     (hne : c₁ ≠ c₂) :
     IsNormal b (stonehamAlpha b c₁ - stonehamAlpha b c₂) := by
-  sorry
+  by_cases hdep : StonehamPairMulDep c₁ c₂
+  · obtain ⟨g, s₁, s₂, hg, hs₁, hs₂, hc₁g, hc₂g⟩ :=
+      exists_common_power_base_of_stonehamPairMulDep c₁ c₂ hc₁ hc₂ hdep
+    subst c₁
+    subst c₂
+    have hsne : s₁ ≠ s₂ := by
+      intro heq
+      apply hne
+      rw [heq]
+    exact isNormal_stonehamAlpha_sub_of_common_power
+      hV b g s₁ s₂ hb hg hs₁ hs₂ hb₁ hb₂ hsne
+  · exact isNormal_stonehamAlpha_sub_of_not_mulDep
+      hV b c₁ c₂ hb hc₁ hc₂ hb₁ hb₂ hdep
 
 /-- A same-class instance the coprime theorem cannot reach: `α₂,₃ + α₂,₉` is 2-normal. -/
 theorem isNormal_two_stoneham_three_add_nine (hV : VandeheyThm51) :

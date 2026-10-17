@@ -1,3 +1,12 @@
+# Literal Bailey--Borwein pairs lap 14 COMPLETE (2026-10-17): both headlines proved; read HANDOFF-2026-10-17-bb-literal-pairs-lap14.md
+
+- `StonehamPairsNormal.lean` is sorry-free. Distinct classes, same-class differences, odd-prime
+  same-class sums, and the exceptional pure-dyadic sums all have kernel proofs. The 8,780-job
+  target/axiom gate is `FORMALIZE-TIER GREEN`, both headlines have only the standard trust-base
+  axioms, and their two BarrierAudit waivers are removed. The conditional three-seven pairwise
+  stretch remains a separate arbitrary-coefficient/digit-exponent problem; the scoped campaign is
+  complete.
+
 # Literal Bailey--Borwein pairs lap 13 (2026-10-17): distinct-class sum power bound; read HANDOFF-2026-10-17-bb-literal-pairs-lap13.md
 
 - The slope-separating prime now yields a global positive-power reduced-denominator lower bound

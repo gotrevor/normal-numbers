@@ -21,6 +21,40 @@ namespace NormalNumbers.StonehamPairsNormal
 def StonehamPairMulDep (c₁ c₂ : ℕ) : Prop :=
   ∃ m n : ℕ, 0 < m ∧ 0 < n ∧ c₁ ^ m = c₂ ^ n
 
+/-- Multiplicatively dependent bases at least two are positive powers of one common integral
+base.  The exponents are obtained by dividing a dependence witness by its gcd; no primitivity
+choice is needed for the same-class Stoneham argument. -/
+theorem exists_common_power_base_of_stonehamPairMulDep
+    (c₁ c₂ : ℕ) (hc₁ : 2 ≤ c₁) (hc₂ : 2 ≤ c₂)
+    (hdep : StonehamPairMulDep c₁ c₂) :
+    ∃ g s₁ s₂ : ℕ, 2 ≤ g ∧ 1 ≤ s₁ ∧ 1 ≤ s₂ ∧
+      c₁ = g ^ s₁ ∧ c₂ = g ^ s₂ := by
+  obtain ⟨m, n, hm, hn, hpow⟩ := hdep
+  obtain ⟨g, hc₁g, hc₂g⟩ :=
+    Nat.exists_eq_pow_of_pow_eq_pow (Or.inl hm.ne') hpow
+  let s₁ := n / Nat.gcd m n
+  let s₂ := m / Nat.gcd m n
+  have hc₁g' : c₁ = g ^ s₁ := by simpa only [s₁] using hc₁g
+  have hc₂g' : c₂ = g ^ s₂ := by simpa only [s₂] using hc₂g
+  have hs₁ : 1 ≤ s₁ := by
+    cases hs : s₁ with
+    | zero => rw [hs, pow_zero] at hc₁g'; omega
+    | succ k => omega
+  have hs₂ : 1 ≤ s₂ := by
+    cases hs : s₂ with
+    | zero => rw [hs, pow_zero] at hc₂g'; omega
+    | succ k => omega
+  have hg : 2 ≤ g := by
+    by_contra hsmall
+    have hg01 : g = 0 ∨ g = 1 := by omega
+    rcases hg01 with rfl | rfl
+    · have hs₁0 : s₁ ≠ 0 := by omega
+      simp [hs₁0] at hc₁g'
+      omega
+    · simp at hc₁g'
+      omega
+  exact ⟨g, s₁, s₂, hg, hs₁, hs₂, hc₁g', hc₂g'⟩
+
 /-- If a common prime coordinate makes the two factorization vectors cross-proportional at every
 coordinate, then the bases lie in the same multiplicative class.  This is the exact finite
 factorization form of the class dichotomy needed before analytic rate separation. -/

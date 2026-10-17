@@ -1,3 +1,21 @@
+# Literal Bailey--Borwein pairs, 17 October 2026 (branch `proof/bb-literal-pairs`, lap 14 COMPLETE)
+
+**Scoped kickoff complete** · **Crux advance**: all same-class and distinct-class literal pair
+branches proved · **Build**: 🟢 `StonehamPairsNormal` target green (8,780 jobs), BarrierAudit green
+(10,371 jobs)
+
+`StonehamPairsNormal.lean` is sorry-free without statement changes. A new aligned-denominator
+module proves same-class differences at any common prime and same-class sums via an odd-prime /
+pure-dyadic dichotomy; the latter includes the exceptional tied dyadic phases. Together with the
+completed distinct-class bounds and equal-base sum reduction, this proves both Bailey--Borwein
+headlines. The headlines and four branch endpoints all audit to exactly
+`[Classical.choice, Quot.sound, propext]`, and the two temporary BarrierAudit waivers are gone.
+
+The kickoff's conditional `StonehamThreeSevenPairwiseNormal` stretch does not follow from the
+literal-coefficient machinery: it requires arbitrary rational coefficients while varying the
+digit-base exponent. That separate Maze premise remains parked at the unequal-depth denominator
+step. See `HANDOFF-2026-10-17-bb-literal-pairs-lap14.md`.
+
 # Literal Bailey--Borwein pairs, 17 October 2026 (branch `proof/bb-literal-pairs`, lap 12)
 
 **Scoped kickoff open** · **Crux advance**: Fourier multiplier loss and exact pair-state divisor

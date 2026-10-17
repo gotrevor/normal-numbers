@@ -3,6 +3,7 @@ Copyright (c) 2026 Trevor Morris. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
+import NormalNumbers.StonehamPairsAnalytic
 import NormalNumbers.StonehamPairsClasses
 
 /-!
@@ -690,5 +691,164 @@ theorem exists_pair_add_state_den_power_lower_of_not_mulDep
     exact ⟨Real.log p / Real.log c₂,
       C, div_pos (Real.log_pos (by exact_mod_cast hp.one_lt))
         (Real.log_pos (by exact_mod_cast (show 1 < c₂ by omega))), hC, hbound⟩
+
+/-- In distinct multiplicative classes, a slope-separating prime that divides the first base
+gives the same eventual positive-power lower bound for a literal difference. -/
+theorem eventually_pair_sub_state_den_power_lower_of_prime_dvd_left
+    (p b c₁ c₂ : ℕ) (h : ℤ) (hp : p.Prime)
+    (hc₁ : 2 ≤ c₁) (hc₂ : 2 ≤ c₂) (hpc₁ : p ∣ c₁)
+    (hcb₁ : Nat.Coprime c₁ b) (hcb₂ : Nat.Coprime c₂ b) (hh : h ≠ 0)
+    (hslope : (c₁.factorization p : ℝ) * Real.log c₂ ≠
+      (c₂.factorization p : ℝ) * Real.log c₁) :
+    ∀ᶠ n : ℕ in Filter.atTop,
+      (n : ℝ) ^ (Real.log p / Real.log c₁) ≤
+        (p ^ (padicValInt p h + 1) : ℕ) *
+          (NormalNumbers.StonehamSumsNormal.stonehamState b 1
+            ![c₁, c₂] ![1, 1] ![h, -h] n).den := by
+  have ha : 1 ≤ c₁.factorization p := by
+    apply Nat.one_le_iff_ne_zero.mpr
+    simpa [Nat.factorization_eq_zero_iff, hp, hpc₁] using (show c₁ ≠ 0 by omega)
+  filter_upwards [Filter.eventually_ge_atTop (max c₁ c₂),
+    eventually_natLog_depth_ne c₁ c₂ (c₁.factorization p) (c₂.factorization p)
+      hc₁ hc₂ hslope] with n hn hne
+  have hK₁ : 1 ≤ Nat.log c₁ n := Nat.log_pos (by omega) ((le_max_left _ _).trans hn)
+  have hK₂ : 1 ≤ Nat.log c₂ n := Nat.log_pos (by omega) ((le_max_right _ _).trans hn)
+  have hentered₁ : ∀ j ∈ Finset.Icc 1 (Nat.log c₁ n), c₁ ^ j ≤ n := by
+    intro j hj
+    exact (Nat.pow_le_pow_right (by omega) (Finset.mem_Icc.mp hj).2).trans
+      (Nat.pow_log_le_self c₁ (by omega))
+  have hentered₂ : ∀ j ∈ Finset.Icc 1 (Nat.log c₂ n), c₂ ^ j ≤ n := by
+    intro j hj
+    exact (Nat.pow_le_pow_right (by omega) (Finset.mem_Icc.mp hj).2).trans
+      (Nat.pow_log_le_self c₂ (by omega))
+  let E := max (c₁.factorization p * Nat.log c₁ n)
+    (c₂.factorization p * Nat.log c₂ n) - padicValInt p h
+  have hdiv := prime_pow_max_sub_padicValInt_dvd_stonehamState_pair_sub_den_of_depth_ne
+    p b c₁ c₂ n h hp hh (by omega) (by omega) hcb₁ hcb₂ hK₁ hK₂
+      hentered₁ hentered₂ hne
+  have hpowden : p ^ E ≤
+      (NormalNumbers.StonehamSumsNormal.stonehamState b 1
+        ![c₁, c₂] ![1, 1] ![h, -h] n).den :=
+    Nat.le_of_dvd (by positivity) (by simpa only [E] using hdiv)
+  have he : c₁.factorization p * Nat.log c₁ n - padicValInt p h ≤ E := by
+    dsimp only [E]
+    exact Nat.sub_le_sub_right (le_max_left _ _) _
+  have hpows : p ^ (c₁.factorization p * Nat.log c₁ n - padicValInt p h) ≤ p ^ E :=
+    Nat.pow_le_pow_right hp.pos he
+  calc
+    (n : ℝ) ^ (Real.log p / Real.log c₁) ≤
+        (p ^ (padicValInt p h + 1) : ℕ) *
+          (p ^ (c₁.factorization p * Nat.log c₁ n - padicValInt p h) : ℕ) :=
+      nat_rpow_log_ratio_le_prime_pow_mul_prime_pow_depth_sub
+        p c₁ n (c₁.factorization p) (padicValInt p h) hp hc₁ ha
+    _ ≤ (p ^ (padicValInt p h + 1) : ℕ) *
+        (NormalNumbers.StonehamSumsNormal.stonehamState b 1
+          ![c₁, c₂] ![1, 1] ![h, -h] n).den := by
+      exact_mod_cast Nat.mul_le_mul_left (p ^ (padicValInt p h + 1)) (hpows.trans hpowden)
+
+/-- Global left-support version of the literal-difference power lower bound. -/
+theorem exists_pair_sub_state_den_power_lower_of_prime_dvd_left
+    (p b c₁ c₂ : ℕ) (h : ℤ) (hp : p.Prime)
+    (hc₁ : 2 ≤ c₁) (hc₂ : 2 ≤ c₂) (hpc₁ : p ∣ c₁)
+    (hcb₁ : Nat.Coprime c₁ b) (hcb₂ : Nat.Coprime c₂ b) (hh : h ≠ 0)
+    (hslope : (c₁.factorization p : ℝ) * Real.log c₂ ≠
+      (c₂.factorization p : ℝ) * Real.log c₁) :
+    ∃ C : ℝ, 0 < C ∧ ∀ n : ℕ,
+      (n : ℝ) ^ (Real.log p / Real.log c₁) ≤ C *
+        (NormalNumbers.StonehamSumsNormal.stonehamState b 1
+          ![c₁, c₂] ![1, 1] ![h, -h] n).den := by
+  apply exists_global_power_lower_of_eventually
+    (fun n => (NormalNumbers.StonehamSumsNormal.stonehamState b 1
+      ![c₁, c₂] ![1, 1] ![h, -h] n).den)
+    (Real.log p / Real.log c₁) (p ^ (padicValInt p h + 1) : ℕ)
+  · exact (div_pos (Real.log_pos (by exact_mod_cast hp.one_lt))
+      (Real.log_pos (by exact_mod_cast (show 1 < c₁ by omega)))).le
+  · exact_mod_cast pow_pos hp.pos (padicValInt p h + 1)
+  · intro n
+    exact (NormalNumbers.StonehamSumsNormal.stonehamState b 1
+      ![c₁, c₂] ![1, 1] ![h, -h] n).pos
+  · exact eventually_pair_sub_state_den_power_lower_of_prime_dvd_left
+      p b c₁ c₂ h hp hc₁ hc₂ hpc₁ hcb₁ hcb₂ hh hslope
+
+/-- Symmetric right-support version of the global literal-difference bound. -/
+theorem exists_pair_sub_state_den_power_lower_of_prime_dvd_right
+    (p b c₁ c₂ : ℕ) (h : ℤ) (hp : p.Prime)
+    (hc₁ : 2 ≤ c₁) (hc₂ : 2 ≤ c₂) (hpc₂ : p ∣ c₂)
+    (hcb₁ : Nat.Coprime c₁ b) (hcb₂ : Nat.Coprime c₂ b) (hh : h ≠ 0)
+    (hslope : (c₁.factorization p : ℝ) * Real.log c₂ ≠
+      (c₂.factorization p : ℝ) * Real.log c₁) :
+    ∃ C : ℝ, 0 < C ∧ ∀ n : ℕ,
+      (n : ℝ) ^ (Real.log p / Real.log c₂) ≤ C *
+        (NormalNumbers.StonehamSumsNormal.stonehamState b 1
+          ![c₁, c₂] ![1, 1] ![h, -h] n).den := by
+  obtain ⟨C, hC, hbound⟩ := exists_pair_sub_state_den_power_lower_of_prime_dvd_left
+    p b c₂ c₁ (-h) hp hc₂ hc₁ hpc₂ hcb₂ hcb₁ (neg_ne_zero.mpr hh)
+      (Ne.symm hslope)
+  refine ⟨C, hC, fun n => ?_⟩
+  have hstate :
+      NormalNumbers.StonehamSumsNormal.stonehamState b 1
+          ![c₂, c₁] ![1, 1] ![-h, -(-h)] n =
+        NormalNumbers.StonehamSumsNormal.stonehamState b 1
+          ![c₁, c₂] ![1, 1] ![h, -h] n := by
+    simp [NormalNumbers.StonehamSumsNormal.stonehamState,
+      NormalNumbers.StonehamSumsNormal.stonehamK, Fin.sum_univ_two]
+    ring
+  rw [← hstate]
+  exact hbound n
+
+/-- Complete arithmetic output for a literal difference from two distinct multiplicative
+classes. -/
+theorem exists_pair_sub_state_den_power_lower_of_not_mulDep
+    (b c₁ c₂ : ℕ) (h : ℤ) (hc₁ : 2 ≤ c₁) (hc₂ : 2 ≤ c₂)
+    (hcb₁ : Nat.Coprime c₁ b) (hcb₂ : Nat.Coprime c₂ b) (hh : h ≠ 0)
+    (hdep : ¬ StonehamPairMulDep c₁ c₂) :
+    ∃ rho C : ℝ, 0 < rho ∧ 0 < C ∧ ∀ n : ℕ,
+      (n : ℝ) ^ rho ≤ C *
+        (NormalNumbers.StonehamSumsNormal.stonehamState b 1
+          ![c₁, c₂] ![1, 1] ![h, -h] n).den := by
+  obtain ⟨p, hp, hpdiv, hslope⟩ :=
+    exists_prime_logSlope_ne_of_not_stonehamPairMulDep c₁ c₂ hc₁ hc₂ hdep
+  rcases (hp.dvd_mul).mp hpdiv with hpc₁ | hpc₂
+  · obtain ⟨C, hC, hbound⟩ := exists_pair_sub_state_den_power_lower_of_prime_dvd_left
+      p b c₁ c₂ h hp hc₁ hc₂ hpc₁ hcb₁ hcb₂ hh hslope
+    exact ⟨Real.log p / Real.log c₁,
+      C, div_pos (Real.log_pos (by exact_mod_cast hp.one_lt))
+        (Real.log_pos (by exact_mod_cast (show 1 < c₁ by omega))), hC, hbound⟩
+  · obtain ⟨C, hC, hbound⟩ := exists_pair_sub_state_den_power_lower_of_prime_dvd_right
+      p b c₁ c₂ h hp hc₁ hc₂ hpc₂ hcb₁ hcb₂ hh hslope
+    exact ⟨Real.log p / Real.log c₂,
+      C, div_pos (Real.log_pos (by exact_mod_cast hp.one_lt))
+        (Real.log_pos (by exact_mod_cast (show 1 < c₂ by omega))), hC, hbound⟩
+
+/-- A literal sum from two distinct multiplicative classes is normal. -/
+theorem isNormal_stonehamAlpha_add_of_not_mulDep
+    (hV : Literature.VandeheyDiff.VandeheyThm51) (b c₁ c₂ : ℕ)
+    (hb : 2 ≤ b) (hc₁ : 2 ≤ c₁) (hc₂ : 2 ≤ c₂)
+    (hcb₁ : Nat.Coprime c₁ b) (hcb₂ : Nat.Coprime c₂ b)
+    (hdep : ¬ StonehamPairMulDep c₁ c₂) :
+    IsNormal b (stonehamAlpha b c₁ + stonehamAlpha b c₂) := by
+  simpa using NormalNumbers.StonehamSumsNormal.isNormal_stonehamAlpha_pair_of_powerLower
+    hV b c₁ c₂ 1 hb hc₁ hc₂ hcb₁ hcb₂ (by norm_num) (fun h hh => by
+      obtain ⟨rho, C, hrho, hC, hbound⟩ :=
+        exists_pair_add_state_den_power_lower_of_not_mulDep
+          b c₁ c₂ h hc₁ hc₂ hcb₁ hcb₂ hh hdep
+      exact ⟨rho, C, hrho, hC, by
+        simpa [NormalNumbers.StonehamSumsNormal.StonehamStateDenPowerLower] using hbound⟩)
+
+/-- A literal difference from two distinct multiplicative classes is normal. -/
+theorem isNormal_stonehamAlpha_sub_of_not_mulDep
+    (hV : Literature.VandeheyDiff.VandeheyThm51) (b c₁ c₂ : ℕ)
+    (hb : 2 ≤ b) (hc₁ : 2 ≤ c₁) (hc₂ : 2 ≤ c₂)
+    (hcb₁ : Nat.Coprime c₁ b) (hcb₂ : Nat.Coprime c₂ b)
+    (hdep : ¬ StonehamPairMulDep c₁ c₂) :
+    IsNormal b (stonehamAlpha b c₁ - stonehamAlpha b c₂) := by
+  simpa [sub_eq_add_neg] using
+    NormalNumbers.StonehamSumsNormal.isNormal_stonehamAlpha_pair_of_powerLower
+    hV b c₁ c₂ (-1) hb hc₁ hc₂ hcb₁ hcb₂ (by norm_num) (fun h hh => by
+      obtain ⟨rho, C, hrho, hC, hbound⟩ :=
+        exists_pair_sub_state_den_power_lower_of_not_mulDep
+          b c₁ c₂ h hc₁ hc₂ hcb₁ hcb₂ hh hdep
+      exact ⟨rho, C, hrho, hC, by
+        simpa [NormalNumbers.StonehamSumsNormal.StonehamStateDenPowerLower] using hbound⟩)
 
 end NormalNumbers.StonehamPairsNormal

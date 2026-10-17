@@ -214,12 +214,6 @@ def waivers : List Waiver := [
   ⟨``ErdosTriples.exceptionalSet_eq_zero_of_gapTriplesEventually,
    "wiring lemma (a leaf): the proved integer wiring erdos406_of_gapTriplesEventually lifted to \
     3-adic digits (parity, valuation shift, residues); English proof in the docstring"⟩,
-  ⟨``StonehamPairsNormal.isNormal_stonehamAlpha_add,
-   "campaign target (KICKOFF-2026-10-17-bb-literal-pairs.md): the literal Bailey--Borwein \
-    sum, refereed paper sketch; not a crux"⟩,
-  ⟨``StonehamPairsNormal.isNormal_stonehamAlpha_sub,
-   "campaign target (KICKOFF-2026-10-17-bb-literal-pairs.md): the literal Bailey--Borwein \
-    difference, refereed paper sketch; not a crux"⟩,
   ⟨``IndependenceRelative.not_isRelativeBlock_small,
    "a finite computation stated as a sibling: the blocksearch probe's non-certification over \
     small direction sets; it closes a route, no open crux uses it"⟩,

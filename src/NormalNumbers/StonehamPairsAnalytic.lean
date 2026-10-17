@@ -341,4 +341,90 @@ lemma stonehamCombination_mean_tendsto_of_powerLower
     ring
   · simp
 
+/-- Weyl wiring for a literal signed pair.  Once every nonzero Fourier multiplier has some
+positive-power reduced-denominator lower bound, the corresponding pair is normal.  The exponent
+and constant may depend on the multiplier. -/
+lemma isNormal_stonehamAlpha_pair_of_powerLower
+    (hV : VandeheyThm51) (b c₁ c₂ : ℕ) (σ : ℤ)
+    (hb : 2 ≤ b) (hc₁ : 2 ≤ c₁) (hc₂ : 2 ≤ c₂)
+    (hcb₁ : Nat.Coprime c₁ b) (hcb₂ : Nat.Coprime c₂ b) (hσ : σ ≠ 0)
+    (hlower : ∀ h : ℤ, h ≠ 0 → ∃ ρ C : ℝ, 0 < ρ ∧ 0 < C ∧
+      StonehamStateDenPowerLower b 1 ![c₁, c₂] ![1, 1] ![h, σ * h] ρ C) :
+    IsNormal b (stonehamAlpha b c₁ + (σ : ℝ) * stonehamAlpha b c₂) := by
+  let x : ℝ := stonehamAlpha b c₁ + (σ : ℝ) * stonehamAlpha b c₂
+  rw [isNormal_iff_equidistributed_orbit b hb]
+  refine equidistributed_of_weyl _ (orbit_mem_Ico b _) ?_
+  intro h hh
+  obtain ⟨ρ, C, hρ, hC, hden⟩ := hlower h hh
+  have hc : ∀ i : Fin 2, 2 ≤ ![c₁, c₂] i := by
+    intro i
+    fin_cases i <;> simp_all
+  have hm : ∀ i : Fin 2, 1 ≤ ![1, 1] i := by
+    intro i
+    fin_cases i <;> simp
+  have hcb : ∀ i : Fin 2, Nat.Coprime (![c₁, c₂] i) b := by
+    intro i
+    fin_cases i <;>
+      simp only [Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.head_cons] <;>
+      assumption
+  have hp : ∀ i : Fin 2, ![h, σ * h] i ≠ 0 := by
+    intro i
+    fin_cases i <;> simp_all
+  have hmean := stonehamCombination_mean_tendsto_of_powerLower
+    (vandeheyCor12_of_thm51 hV) b 1 ![c₁, c₂] ![1, 1] ![h, σ * h] ρ C
+      hb (by omega) (by simp) (by omega) hc hm hcb hp hρ hC hden
+  have heq : fourierMean (orbit b x) h = fun N : ℕ =>
+      (∑ n ∈ range N, ePhase ((h : ℝ) * orbit b x n)) / (N : ℂ) := by
+    funext N
+    rw [fourierMean]
+    congr 1
+    apply sum_congr rfl
+    intro n hn
+    rw [ePhase]
+    congr 1
+    push_cast
+    ring
+  rw [heq]
+  convert hmean using 1
+  funext N
+  congr 1
+  apply sum_congr rfl
+  intro n hn
+  rw [ePhase_orbit]
+  congr 1
+  dsimp only [x]
+  simp only [Fin.sum_univ_two, Matrix.cons_val_zero, Matrix.cons_val_one,
+    Matrix.head_cons, pow_one, one_div, one_mul, Int.cast_mul]
+  push_cast
+  ring
+
+/-- A single Stoneham family is the one-coordinate case of Theorem A. -/
+lemma isNormal_stonehamAlpha_of_vandehey
+    (hV : VandeheyThm51) (b c : ℕ) (hb : 2 ≤ b) (hc : 2 ≤ c)
+    (hcb : Nat.Coprime c b) :
+    IsNormal b (stonehamAlpha b c) := by
+  have hcop : Pairwise fun i j : Fin 1 => Nat.Coprime (![c] i) (![c] j) := by
+    intro i j hij
+    fin_cases i
+    fin_cases j
+    simp at hij
+  have hn := isNormal_stonehamCombination_int_nonzero
+    hV b hb ![c] ![1] ![1]
+      (by intro i; fin_cases i; simpa)
+      hcop
+      (by intro i; fin_cases i; simpa)
+      (by intro i; fin_cases i; simp)
+      (by norm_num)
+      (by intro i; fin_cases i; simp)
+  simpa only [Fin.sum_univ_one, Matrix.cons_val_zero, Int.cast_one, one_mul, pow_one] using hn
+
+/-- The equal-parameter literal sum is rational scaling of one normal Stoneham family. -/
+lemma isNormal_stonehamAlpha_add_self
+    (hV : VandeheyThm51) (b c : ℕ) (hb : 2 ≤ b) (hc : 2 ≤ c)
+    (hcb : Nat.Coprime c b) :
+    IsNormal b (stonehamAlpha b c + stonehamAlpha b c) := by
+  have hn := isNormal_stonehamAlpha_of_vandehey hV b c hb hc hcb
+  simpa [two_mul] using
+    (isNormal_rat_mul_add b hb (stonehamAlpha b c) (2 : ℚ) 0 (by norm_num) hn)
+
 end NormalNumbers.StonehamSumsNormal
