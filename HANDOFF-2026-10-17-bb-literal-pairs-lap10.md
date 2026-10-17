@@ -59,6 +59,8 @@ Real target/axiom gate:
 It completed 8,778 jobs and ended `FORMALIZE-TIER GREEN`. All four audited declarations print
 exactly `[Classical.choice, Quot.sound, propext]`.
 
+The commit hook then ran the full repository `lake build`; it completed 10,863 jobs successfully.
+
 ## Current blocker
 
 The distinct-class arithmetic now lacks only packaging, not a class-theory idea. For the prime

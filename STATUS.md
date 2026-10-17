@@ -15,7 +15,8 @@ to prove the distinct-class power denominator lower bound. Same-class aligned-ta
 then remains. See `HANDOFF-2026-10-17-bb-literal-pairs-lap10.md`.
 
 The four audited class/slope declarations have exactly
-`[Classical.choice, Quot.sound, propext]`; the real target gate ended `FORMALIZE-TIER GREEN`.
+`[Classical.choice, Quot.sound, propext]`; the real target gate ended `FORMALIZE-TIER GREEN`, and
+the commit hook's full 10,863-job build passed.
 
 # STATUS — normal-numbers 📊
 
