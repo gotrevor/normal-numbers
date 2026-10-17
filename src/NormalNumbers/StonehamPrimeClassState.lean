@@ -601,6 +601,91 @@ def primeClassClearedStateNumerator
   ∑ i, q i * ∑ k ∈ Icc 1 (StonehamSumsNormal.stonehamK (fun j => p ^ s j) u i n),
     (b : ℤ) ^ (n - u i * (p ^ s i) ^ k) * (p : ℤ) ^ (T - s i * k)
 
+/-- On a fixed-gap cell, the literal cleared numerator is exactly the aligned-history
+expression used by the finite phase calculation. -/
+lemma primeClassClearedStateNumerator_eq_alignedHistories
+    (b p T n : ℕ) {r : ℕ} (s u K δ : Fin r → ℕ) (q : Fin r → ℤ)
+    (hK : ∀ i, StonehamSumsNormal.stonehamK (fun j => p ^ s j) u i n = K i)
+    (hT : ∀ i, δ i + s i * K i = T) :
+    primeClassClearedStateNumerator b p T n s u q =
+      ∑ i, q i * ∑ k ∈ Icc 1 (K i),
+        (b : ℤ) ^ (n - u i * p ^ (s i * k)) *
+          (p : ℤ) ^ (δ i + s i * (K i - k)) := by
+  unfold primeClassClearedStateNumerator
+  apply sum_congr rfl
+  intro i hi
+  rw [hK i]
+  apply congrArg (q i * ·)
+  apply sum_congr rfl
+  intro k hk
+  have hpow : (p ^ s i) ^ k = p ^ (s i * k) := by rw [pow_mul]
+  have hkK : k ≤ K i := (mem_Icc.mp hk).2
+  have hsplit : s i * K i = s i * k + s i * (K i - k) := by
+    rw [← Nat.mul_add, Nat.add_sub_of_le hkK]
+  have hexp : T - s i * k = δ i + s i * (K i - k) := by
+    rw [← hT i, hsplit]
+    omega
+  rw [hpow, hexp]
+
+/-- The cyclotomic relation forces a growing prime power into the actual cleared-state
+numerator on every fixed-gap cell.  The common finite phase product is a `p`-adic unit and
+is cancelled in the final step. -/
+lemma prime_pow_add_dvd_primeClassClearedStateNumerator
+    (p b T n D E : ℕ) {r : ℕ} (s u K δ : Fin r → ℕ) (a : Fin r → ℤ)
+    (hp : p.Prime) (hpb : Nat.Coprime p b)
+    (hK : ∀ i, StonehamSumsNormal.stonehamK (fun j => p ^ s j) u i n = K i)
+    (hT : ∀ i, δ i + s i * K i = T)
+    (hδD : ∀ i, δ i ≤ D) (hdepth : ∀ i, E ≤ s i * K i)
+    (hprecision : D + E ≤ T + 1)
+    (hentered : ∀ i, ∀ k ∈ Icc 1 (K i), u i * p ^ (s i * k) ≤ n)
+    (hrel : (p : ℤ) ^ E ∣ ∑ i,
+      a i * ((b : ℤ) ^ (p ^ E)) ^ primeClassComplementExponent u i) :
+    (p : ℤ) ^ (D + E) ∣
+      primeClassClearedStateNumerator b p T n s u
+        (fun i ↦ primeClassStateCoefficient p (s i) (δ i) D (a i)) := by
+  classical
+  let z : Fin r → ℤ := fun i ↦
+    ∏ j ∈ (univ : Finset (Fin r)).erase i,
+      ((b : ℤ) ^ (p ^ (s j * K j))) ^ u j
+  let P : ℤ := ∏ i, ((b : ℤ) ^ (p ^ (s i * K i))) ^ u i
+  have hdeleted : (p : ℤ) ^ E ∣ ∑ i, a i * z i := by
+    simpa only [z] using
+      prime_pow_dvd_integerRelation_deletedPhaseProducts p b E s u K a hp hdepth hrel
+  have haligned : (p : ℤ) ^ (D + E) ∣
+      ∑ i, primeClassStateCoefficient p (s i) (δ i) D (a i) *
+        (primeClassHistoryWeight p (s i) (K i) (δ i) : ℤ) * z i :=
+    prime_pow_add_dvd_sum_alignedHistories p D E hp s K δ a z hδD hdepth hdeleted
+  have hmod := primeClassClearedHistories_mul_phaseProduct_modEq p b T n s u K δ
+    (fun i ↦ primeClassStateCoefficient p (s i) (δ i) D (a i)) hp hT hentered
+  rw [← primeClassClearedStateNumerator_eq_alignedHistories b p T n s u K δ
+    (fun i ↦ primeClassStateCoefficient p (s i) (δ i) D (a i)) hK hT] at hmod
+  change
+    primeClassClearedStateNumerator b p T n s u
+        (fun i ↦ primeClassStateCoefficient p (s i) (δ i) D (a i)) * P ≡
+      (b : ℤ) ^ n * ∑ i,
+        primeClassStateCoefficient p (s i) (δ i) D (a i) *
+          (primeClassHistoryWeight p (s i) (K i) (δ i) : ℤ) * z i
+      [ZMOD p ^ (T + 1)] at hmod
+  have hmod' := hmod.of_dvd (pow_dvd_pow (p : ℤ) hprecision)
+  have hrhs : (p : ℤ) ^ (D + E) ∣
+      (b : ℤ) ^ n * ∑ i,
+        primeClassStateCoefficient p (s i) (δ i) D (a i) *
+          (primeClassHistoryWeight p (s i) (K i) (δ i) : ℤ) * z i :=
+    haligned.mul_left ((b : ℤ) ^ n)
+  have hprod : (p : ℤ) ^ (D + E) ∣
+      primeClassClearedStateNumerator b p T n s u
+        (fun i ↦ primeClassStateCoefficient p (s i) (δ i) D (a i)) * P := by
+    simpa only [sub_sub_cancel] using dvd_sub hrhs hmod'.dvd
+  have hpInt : Prime (p : ℤ) := Nat.prime_iff_prime_int.mp hp
+  have hpbInt : ¬ (p : ℤ) ∣ (b : ℤ) := by
+    exact_mod_cast (hp.coprime_iff_not_dvd.mp hpb)
+  have hP : ¬ (p : ℤ) ∣ P := by
+    dsimp [P]
+    apply hpInt.not_dvd_finsetProd
+    intro i hi hpi
+    exact hpbInt (hpInt.dvd_of_dvd_pow (hpInt.dvd_of_dvd_pow hpi))
+  exact hpInt.pow_dvd_of_dvd_mul_right (D + E) hP hprod
+
 /-- Clearing to a common prime depth gives exactly `primeClassClearedStateNumerator`.  This is
 the bridge from the modular aligned-history calculation to the existing analytic
 `stonehamState` interface. -/

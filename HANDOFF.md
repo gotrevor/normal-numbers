@@ -1,3 +1,12 @@
+# Prime class lap 8 (2026-10-17): literal cleared-state divisibility; read HANDOFF-2026-10-17-prime-class-lap8.md
+
+- The full phase/cyclotomic stack now yields `p^(D+E)` divisibility of the actual
+  `primeClassClearedStateNumerator` on every abstract fixed-gap cell, including kernel-checked
+  cancellation of the common finite phase product.  The scoped target remains green with its two
+  ratified analytic sorries.  Next construct the periodic fixed-gap cell for `stonehamK`, convert
+  numerator divisibility to bounded reduced denominator, and apply the positive-density
+  non-normality obstruction.
+
 # Prime class lap 7 (2026-10-17): full-precision phase alignment; read HANDOFF-2026-10-17-prime-class-lap7.md
 
 - Literal cleared histories now align, at full common precision, with the abstract

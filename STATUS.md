@@ -148,6 +148,17 @@ the commit hook's full 10,863-job build passed.
 
 # STATUS — normal-numbers 📊
 
+# Prime-class joint normality, 17 October 2026 (branch `proof/prime-class`, lap 8)
+
+`StonehamPrimeClassState` now proves the complete abstract fixed-gap arithmetic theorem for the
+dependent half.  The literal `stonehamK`-defined cleared numerator is identified with the aligned
+history, the complementary cyclotomic relation supplies growing divisibility, and the common
+finite phase product is cancelled as a `p`-adic unit.  Both new declarations audit to the standard
+trust base.  The scoped target retains exactly the two general analytic sorries and is
+FORMALIZE-TIER GREEN.  Next construct the periodic fixed-gap cell and turn the resulting numerator
+divisibility into the positive-density bounded-denominator obstruction.  See
+`HANDOFF-2026-10-17-prime-class-lap8.md`.
+
 # Prime-class joint normality, 17 October 2026 (branch `proof/prime-class`, lap 7)
 
 `StonehamPrimeClassState` now connects the literal mixed-`s` cleared histories to the corrected
