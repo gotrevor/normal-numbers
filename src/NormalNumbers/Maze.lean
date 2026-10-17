@@ -43,6 +43,7 @@ import NormalNumbers.QSpanNormal
 import NormalNumbers.DeterministicBD
 import NormalNumbers.BBPSpan
 import NormalNumbers.JointOrbitBarriers
+import NormalNumbers.MahlerDensityProduct
 
 /-!
 # `Maze.lean` — the halls we have walked, encoded
@@ -579,6 +580,14 @@ Wall's 1949 thesis theorem — `q * x + r` is normal in base `b` whenever `x` is
 abnormal, so a "pick a multiple" normality statement carries no information.  Formerly a
 `.cited` prose row; now a theorem of this build. -/
 alias hall_mahler_block_occurrence := NormalNumbers.isNormal_rat_mul_add
+
+/-- **HALL: universal positive-frequency product block** (`wall`, 2026-10-17).
+The Liouville-sparse ternary witness `bgLiouville 3 0 1` defeats every finite multiplier
+set simultaneously: for each multiplier, digit `1` has lower density zero along prefixes
+ending just before the factorial bursts.  The explicit finite-exponent reopen condition is
+`DensityProductBlockExponentTwo`. -/
+alias hall_density_product_block_universal :=
+  NormalNumbers.Mahler.not_forall_isDensityProductBlock
 
 /-- **HALL: factor-map entropy seed for a BBP pair** (`restatement`, 2026-10-16).
 The polynomial-ratio BBP kick class is closed under every rational linear combination.
@@ -1490,6 +1499,12 @@ def register : List Hall := [
    "Joint normality forces normality of every coordinate (isNormal_coordinates_of_jointNormal), so the family inherits the hardest coordinate and supplies no averaging escape. REOPEN IF: LnTwoNormalSeed, or a positive segment exponent that proves such a seed",
    "JointOrbitBarriers.lean: hall_joint_orbit_ln_two, isNormal_coordinates_of_jointNormal, LnTwoNormalSeed; docs/joint-bc-orbits-2026-10-16.md R6",
    "2026-10-16"⟩,
+  ⟨"positive-frequency product block, universal",
+   "Strengthen C2 so that one multiplier from a fixed finite set gives every digit positive lower density for every irrational input",
+   .wall, .kernel,
+   "The same ternary Liouville number defeats every finite multiplier set: in each multiple, digit 1 vanishes on the long part of every factorial interval, so its prefix-frequency liminf is zero. REOPEN IF: DensityProductBlockExponentTwo, or a positive-entropy or BBP-type restricted class with a mechanism",
+   "MahlerDensityProduct.lean: hall_density_product_block_universal, not_forall_isDensityProductBlock, DensityProductBlockExponentTwo; KICKOFF-2026-10-16-maze-backlog.md Part 2",
+   "2026-10-17"⟩,
   ⟨"normal Stoneham constants are closed under addition",
    "Infer joint normality, or normality of a sum, from separate normality of Stoneham constants",
    .refuted, .kernel,

@@ -1,20 +1,24 @@
 # STATUS — normal-numbers 📊
 
-## Maze backlog update, 17 October 2026 (branch `proof/maze-backlog`, lap 1)
+## Maze backlog update, 17 October 2026 (branch `proof/maze-backlog`, lap 2)
 
-**Kickoff Part 1 complete** · **Build**: 🟢 green (full default build, 10856 jobs) ·
-**Audit**: 195 rows, 88 declaration-backed links, 107 legacy rows
+**Kickoff Parts 1--2 complete** · **Build**: 🟢 green (`MazeAudit` target, 10466 jobs) ·
+**Audit**: 196 rows, 89 declaration-backed links, 107 legacy rows
 
 The four joint-orbit routes R1/R2/R4/R6 from the 16 October report now have Lean witnesses and
 audited Maze rows.  R1 (rational closure of polynomial-ratio BBP series) and R6 (joint normality
 projects to both coordinates) are proved at the standard trust baseline.  R2's universal Stoneham
 digit-disagreement claim and R4's no-disjunctive-channel Cantor pair are pinned as exact frozen
-nodes at the evidence level of the source report.  See
-`HANDOFF-2026-10-17-maze-backlog-lap1.md`.
+nodes at the evidence level of the source report.
 
-**Outstanding in kickoff order:** Part 2, the universal refutation of positive-frequency product
-blocks via `Mahler.bgLiouville 3 0 1`; then Part 3, the L1/L2 Bailey--Borwein Stoneham boundary
-witnesses and their two kernel Maze rows.
+Part 2's stronger positive-frequency version of C2 is now refuted universally.  For every finite
+multiplier set, `Mahler.bgLiouville 3 0 1` has digit `1` at lower density zero in every channel;
+the proof samples prefixes immediately before factorial bursts.  The headline theorem and its
+factorial-cell localization have only the standard trust-base axioms.  See
+`HANDOFF-2026-10-17-maze-backlog-lap2.md`.
+
+**Outstanding in kickoff order:** Part 3, the L1/L2 Bailey--Borwein Stoneham boundary witnesses
+and their two kernel Maze rows.
 
 ## Cantor repetition update, 9 October 2026 (branch `proof/cantor-repetition`, lap 13) — HEADLINE PROVED
 

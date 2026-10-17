@@ -137,14 +137,14 @@ private theorem bg_assemble (G1 X S br rr qq rho T : ℝ) (hG1 : G1 ≠ 0) (hX :
   field_simp
   linear_combination (-br) * hS + G1 * hR
 
-/-- **The orbit identity.**  For `N = m B ≤ g^K` and every position
-`n ≥ (K+k+2)!` there is a distance `d ≥ 1` to the next burst such that the
-orbit point of `m · bgLiouville g a B` at `n` sits inside the *single* order-`d`
-cell indexed by `bgResidue g a B m d`.  (Not merely bounded — pinned.) -/
-theorem orbit_bg_mem (g k a B m K : ℕ) (hg : 2 ≤ g) (hk : 1 ≤ k)
+/-- The orbit-cell localization together with the factorial interval and the
+distance to its right endpoint.  The extra bookkeeping is useful when one
+needs to count the exceptional digits near the Liouville bursts. -/
+theorem orbit_bg_mem_with_distance (g k a B m K : ℕ) (hg : 2 ≤ g) (hk : 1 ≤ k)
     (ha : a + 2 ≤ g) (hm : 1 ≤ m) (hB : 1 ≤ B) (hNK : m * B ≤ g ^ K)
     (n : ℕ) (hn : (K + k + 2)! ≤ n) :
-    ∃ d, 1 ≤ d ∧ orbit g ((m : ℝ) * bgLiouville g a B) n ∈
+    ∃ j d, K + k + 2 ≤ j ∧ j ! ≤ n ∧ n < (j + 1)! ∧
+      (j + 1)! = n + d ∧ 1 ≤ d ∧ orbit g ((m : ℝ) * bgLiouville g a B) n ∈
       Set.Ico ((bgResidue g a B m d : ℝ) / (g : ℝ) ^ d)
         (((bgResidue g a B m d : ℝ) + 1) / (g : ℝ) ^ d) := by
   set N : ℕ := m * B with hNdef
@@ -168,7 +168,7 @@ theorem orbit_bg_mem (g k a B m K : ℕ) (hg : 2 ≤ g) (hk : 1 ≤ k)
     rw [show j - 1 + 1 = j by omega] at this
     omega
   obtain ⟨d, hd1, hFn⟩ : ∃ d, 1 ≤ d ∧ (j + 1)! = n + d := ⟨(j + 1)! - n, by omega, by omega⟩
-  refine ⟨d, hd1, ?_⟩
+  refine ⟨j, d, hjk, hj0, hj1, hFn, hd1, ?_⟩
   -- split `L = partialSum + g^{-(j+1)!} + remainder (j+1)`
   obtain ⟨p, hp₀⟩ := partialSum_eq_rat hgN j
   have hp : partialSum (g : ℝ) j = (p : ℝ) / (g : ℝ) ^ (j !) := by
@@ -326,6 +326,19 @@ theorem orbit_bg_mem (g k a B m K : ℕ) (hg : 2 ≤ g) (hk : 1 ≤ k)
   rw [hkey]
   simp only [Nat.cast_add, Int.cast_add, Int.cast_natCast]
   ring
+
+/-- **The orbit identity.**  For `N = m B ≤ g^K` and every position
+`n ≥ (K+k+2)!` there is a distance `d ≥ 1` to the next burst such that the
+orbit point lies in the single order-`d` cell indexed by `bgResidue`. -/
+theorem orbit_bg_mem (g k a B m K : ℕ) (hg : 2 ≤ g) (hk : 1 ≤ k)
+    (ha : a + 2 ≤ g) (hm : 1 ≤ m) (hB : 1 ≤ B) (hNK : m * B ≤ g ^ K)
+    (n : ℕ) (hn : (K + k + 2)! ≤ n) :
+    ∃ d, 1 ≤ d ∧ orbit g ((m : ℝ) * bgLiouville g a B) n ∈
+      Set.Ico ((bgResidue g a B m d : ℝ) / (g : ℝ) ^ d)
+        (((bgResidue g a B m d : ℝ) + 1) / (g : ℝ) ^ d) := by
+  obtain ⟨_j, d, _hj, _hjn, _hnj, _hdist, hd, hcell⟩ :=
+    orbit_bg_mem_with_distance g k a B m K hg hk ha hm hB hNK n hn
+  exact ⟨d, hd, hcell⟩
 
 /-- **The lower bound.**  If for every multiplier `1 ≤ m ≤ M` and every
 distance `d ≥ 1` the order-`d` cell `[ρ, ρ+1)/g^d` of `bgResidue g a B m d` is

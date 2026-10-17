@@ -165,6 +165,7 @@ import NormalNumbers.MahlerBase7Exact
 import NormalNumbers.MahlerLowerBoundPower
 import NormalNumbers.MahlerPowerInstances
 import NormalNumbers.MahlerProductBlock
+import NormalNumbers.MahlerDensityProduct
 import NormalNumbers.Furstenberg
 import NormalNumbers.LiteratureFurstenberg
 import NormalNumbers.AdderEngineSplit

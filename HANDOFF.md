@@ -1,3 +1,10 @@
+# Maze backlog lap 2 (2026-10-17): universal density product block refuted; read HANDOFF-2026-10-17-maze-backlog-lap2.md
+- Part 2 of `KICKOFF-2026-10-16-maze-backlog.md` is complete.  The universal positive-frequency
+  strengthening is refuted by one ternary Liouville witness for every finite multiplier set;
+  its theorem and strengthened factorial-cell localization are axiom-clean.  The Maze target
+  gate is green at 196 rows / 89 declaration-backed links.  Next: Part 3's L1 boundary theorem,
+  then L2 and their two kernel Maze rows.
+
 # Maze backlog lap 1 (2026-10-17): closed joint-orbit routes; read HANDOFF-2026-10-17-maze-backlog-lap1.md
 - Part 1 of `KICKOFF-2026-10-16-maze-backlog.md` is complete: R1 and R6 have axiom-clean kernel
   witnesses, R2 and R4 have exact frozen statements, and all four rows are declaration-audited.
