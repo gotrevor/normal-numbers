@@ -1,3 +1,9 @@
+# Vandehey Theorem 5.1 lap 6 (2026-10-17); read HANDOFF-2026-10-17-vandehey-thm51-lap6.md
+- Kickoff rung 5 now has its differencing core: Vandehey Lemma 3.1 / equation (11) is proved
+  with the exact `m' N + 2m'` factor, order shifts, truncated ranges, and reduced coefficient.
+- The concrete theorem has exactly the standard trust-base axioms.
+- Next: Lemmas 4.2 and 4.3, then the rounded divisor and gcd/order packages for Proposition 4.1.
+
 # Vandehey Theorem 5.1 lap 5 (2026-10-17); read HANDOFF-2026-10-17-vandehey-thm51-lap5.md
 - Kickoff rungs 3 and 4 are proved: sharp finite completion gives repaired Lemma 2.2, and
   period decomposition plus `m ≤ M(P) * ord(b,m)` gives Lemma 2.3 / the exact frozen `k = 0` case.
