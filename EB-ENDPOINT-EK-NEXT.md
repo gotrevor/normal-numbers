@@ -1,4 +1,4 @@
-# EB endpoint, Step 2 + assembly (FDEK-conditional) 🎯
+# EB endpoint, Step 2 + assembly (FDEK-conditional) — COMPLETE 🎯
 
 **Objective:** make `src/NormalNumbers/CoefmassErdosBorweinEndpointEK.lean` sorry-free.  The headline
 `ebPowerCandidateNormal_of_EK` must be axiom-clean: `[propext, Classical.choice, Quot.sound]`.
@@ -9,6 +9,13 @@ theorems or in a new `CoefmassErdosBorweinEndpointEKAux.lean`.  No `native_decid
 **NEVER git push:** `research/eb-endpoint` is local only.
 
 ## Current checkpoint (2026-10-25)
+
+Lap 7 completed the scoped objective.  `CoefmassErdosBorweinEndpointEK.lean` is sorry-free; the
+frozen theorem statements remain unchanged; `ErdosKacFiniteDim` remains exactly the planted named
+hypothesis; and the Step-2 theorem plus both downstream headlines audit to the standard trust
+triple only.  The final proof uses elementary Gaussian Chebyshev tails, the power grid
+`R = q^8`, `delta = q^-2`, three closed FDEK events, and the previously proved deterministic walk
+cap.  Full verification and proof architecture are in `HANDOFF-2026-10-25-eb-endpoint-ek.md`.
 
 The assembly is closed.  `ebRandom_ae_normal_le_ln2_of_EK` now applies the Step-1 growing-moment
 criterion to `divisorVariance_diverges_at_ln2`, and `ebPowerCandidateNormal_of_EK` follows from the
@@ -56,16 +63,14 @@ constant Brownian upper rectangle exactly with the iid Gaussian partial-sum even
 identification.  `brownianFDD_upperRectangle_equalTimeGrid_le` gives the required fourth-root
 equal-grid rectangle bound directly.
 
-Exactly one `sorry` remains, on `divisorVariance_diverges_at_ln2`.  The next load-bearing layer is
-the two elementary Gaussian control-coordinate tails followed by the FDEK finite-grid bookkeeping.
-Detailed baton:
+No `sorry` remains in the scoped file.  Detailed completion record:
 `HANDOFF-2026-10-25-eb-endpoint-ek.md`.
 
 Paper: `~/personal/claude/knowledge/drafts/collatz-nn-mechanisms/nn-erdos-borwein-random-2026-10-12.md`,
 section "Step 2".  Proved input: `ebRandom_ae_normal_of_divisorVariance_diverges` (Step 1, the
 growing-moment criterion), in `CoefmassErdosBorweinEndpoint.lean`.
 
-## Plan for `divisorVariance_diverges_at_ln2`
+## Completed plan for `divisorVariance_diverges_at_ln2`
 
 Write `L = log log N` and `y_t = exp((log N)^t)`.
 

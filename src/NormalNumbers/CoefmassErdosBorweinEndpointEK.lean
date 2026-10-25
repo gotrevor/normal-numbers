@@ -651,6 +651,212 @@ theorem normalized_omegaUpTo_cutoff_le
     rw [← hloglog]
     exact hjump.trans hcap
 
+/-! ### Gaussian control-coordinate tails and parameter choice -/
+
+/-- Chebyshev's inequality for a centered real Gaussian. -/
+theorem gaussianReal_abs_tail_le {v : NNReal} {r : ℝ} (hr : 0 < r) :
+    (gaussianReal 0 v).real {x : ℝ | r ≤ |x|} ≤ (v : ℝ) / r ^ 2 := by
+  have hcheb := meas_ge_le_variance_div_sq
+    (memLp_id_gaussianReal' (μ := 0) (v := v) 2 (by simp)) hr
+  simp only [integral_id_gaussianReal, sub_zero, id_eq, variance_id_gaussianReal] at hcheb
+  calc
+    (gaussianReal 0 v).real {x | r ≤ |x|} ≤
+        (ENNReal.ofReal ((v : ℝ) / r ^ 2)).toReal := by
+      exact ENNReal.toReal_mono ENNReal.ofReal_ne_top hcheb
+    _ = (v : ℝ) / r ^ 2 := ENNReal.toReal_ofReal (by positivity)
+
+/-- Chebyshev's inequality for the sum of independent centered Gaussian coordinates. -/
+theorem gaussianProduct_sum_abs_tail_le (R : ℕ) (v : NNReal)
+    {r : ℝ} (hr : 0 < r) :
+    (Measure.pi (fun _ : Fin R ↦ gaussianReal 0 v)).real
+        {y | r ≤ |∑ i, y i|} ≤ R * (v : ℝ) / r ^ 2 := by
+  let μ : Fin R → Measure ℝ := fun _ ↦ gaussianReal 0 v
+  let P : Measure (Fin R → ℝ) := Measure.pi μ
+  let X : (Fin R → ℝ) → ℝ := fun y ↦ ∑ i, y i
+  have hcoord : ∀ i : Fin R, MemLp (fun y : Fin R → ℝ ↦ y i) 2 P := by
+    intro i
+    exact (memLp_id_gaussianReal' (μ := 0) (v := v) 2 (by simp)).comp_measurePreserving
+      (measurePreserving_eval μ i)
+  have hX : MemLp X 2 P := by
+    exact memLp_finsetSum Finset.univ (fun i _ ↦ hcoord i)
+  have hmean_coord : ∀ i : Fin R, ∫ y, y i ∂P = 0 := by
+    intro i
+    have hid : AEStronglyMeasurable id (P.map (fun y ↦ y i)) := by
+      rw [(measurePreserving_eval μ i).map_eq]
+      exact (memLp_id_gaussianReal' (μ := 0) (v := v) 2 (by simp)).1
+    calc
+      ∫ y, y i ∂P = ∫ x, id x ∂(P.map (fun y ↦ y i)) := by
+        exact (integral_map (f := id) (μ := P) (φ := fun y ↦ y i)
+          (measurable_pi_apply i).aemeasurable hid).symm
+      _ = ∫ x, id x ∂gaussianReal 0 v := by
+        rw [(measurePreserving_eval μ i).map_eq]
+      _ = 0 := integral_id_gaussianReal
+  have hmean : ∫ y, X y ∂P = 0 := by
+    change ∫ y, ∑ i : Fin R, y i ∂P = 0
+    rw [integral_finsetSum Finset.univ
+      (fun i _ ↦ (hcoord i).integrable (by norm_num))]
+    simp only [hmean_coord, Finset.sum_const_zero]
+  have hvariance : Var[X; P] = R * (v : ℝ) := by
+    rw [show X = ∑ i : Fin R, fun y ↦ id (y i) by
+      funext y
+      simp only [X, id_eq, Finset.sum_apply]]
+    rw [variance_sum_pi (fun _ ↦ memLp_id_gaussianReal' (μ := 0) (v := v) 2 (by simp))]
+    simp only [variance_id_gaussianReal, Finset.sum_const, nsmul_eq_mul,
+      Finset.card_univ, Fintype.card_fin]
+  have hcheb := meas_ge_le_variance_div_sq hX hr
+  rw [hmean, hvariance] at hcheb
+  simp only [sub_zero] at hcheb
+  calc
+    (Measure.pi (fun _ : Fin R ↦ gaussianReal 0 v)).real {y | r ≤ |∑ i, y i|} =
+        P.real {y | r ≤ |X y|} := by rfl
+    _ ≤ (ENNReal.ofReal (R * (v : ℝ) / r ^ 2)).toReal := by
+      exact ENNReal.toReal_mono ENNReal.ofReal_ne_top hcheb
+    _ = R * (v : ℝ) / r ^ 2 := ENNReal.toReal_ofReal (by positivity)
+
+/-- The first coordinate of the equal-grid Brownian law has variance `1/R`. -/
+theorem brownianFDD_first_ge_le {R : ℕ} (hR : 0 < R) {r : ℝ} (hr : 0 < r) :
+    (brownianFDD R (equalTimeGrid R) {z | r ≤ z ⟨0, hR⟩}).toReal ≤
+      (R : ℝ)⁻¹ / r ^ 2 := by
+  let j₀ : Fin R := ⟨0, hR⟩
+  let μ : Fin R → Measure ℝ :=
+    fun _ ↦ gaussianReal 0 (Real.toNNReal (R : ℝ)⁻¹)
+  have hsum : Measurable
+      (fun y : Fin R → ℝ ↦ fun j : Fin R ↦
+        ∑ i ∈ Finset.univ.filter (fun i : Fin R ↦ i ≤ j), y i) := by
+    fun_prop
+  have hclosed : IsClosed {z : Fin R → ℝ | r ≤ z j₀} :=
+    isClosed_le continuous_const (continuous_apply j₀)
+  rw [brownianFDD, Measure.map_apply hsum hclosed.measurableSet]
+  rw [show Measure.pi (fun j : Fin R ↦ gaussianReal 0
+      (Real.toNNReal (equalTimeGrid R j.succ - equalTimeGrid R j.castSucc))) =
+      Measure.pi μ by
+    congr 1
+    funext j
+    simp only [μ, equalTimeGrid_increment hR j]]
+  have hsubset :
+      {y : Fin R → ℝ | r ≤ ∑ i ∈ Finset.univ.filter (fun i : Fin R ↦ i ≤ j₀), y i} ⊆
+        {y : Fin R → ℝ | r ≤ |y j₀|} := by
+    intro y hy
+    have hfilter : Finset.univ.filter (fun i : Fin R ↦ i ≤ j₀) = {j₀} := by
+      ext i
+      simp only [Finset.mem_filter, Finset.mem_univ, true_and, Finset.mem_singleton]
+      constructor
+      · intro hi
+        apply Fin.ext
+        change i.val = 0
+        apply Nat.eq_zero_of_le_zero
+        change i.val ≤ 0
+        change i.val ≤ j₀.val at hi
+        exact hi
+      · rintro rfl
+        exact le_rfl
+    rw [hfilter] at hy
+    simp only [Finset.sum_singleton] at hy
+    change r ≤ |y j₀|
+    exact hy.trans (le_abs_self _)
+  calc
+    (Measure.pi μ).real
+        {y | r ≤ ∑ i ∈ Finset.univ.filter (fun i : Fin R ↦ i ≤ j₀), y i} ≤
+        (Measure.pi μ).real {y | r ≤ |y j₀|} :=
+      measureReal_mono hsubset (measure_ne_top _ _)
+    _ = (gaussianReal 0 (Real.toNNReal (R : ℝ)⁻¹)).real {x | r ≤ |x|} := by
+      simp only [measureReal_def]
+      change ((Measure.pi μ) ((fun y ↦ y j₀) ⁻¹' {x : ℝ | r ≤ |x|})).toReal = _
+      rw [← Measure.map_apply (measurable_pi_apply j₀)
+          (measurableSet_le measurable_const measurable_id'.abs),
+        (measurePreserving_eval μ j₀).map_eq]
+    _ ≤ (Real.toNNReal (R : ℝ)⁻¹ : ℝ) / r ^ 2 := gaussianReal_abs_tail_le hr
+    _ = (R : ℝ)⁻¹ / r ^ 2 := by
+      congr 1
+      exact Real.coe_toNNReal ((R : ℝ)⁻¹) (inv_nonneg.mpr (Nat.cast_nonneg R))
+
+/-- The terminal coordinate of the equal-grid Brownian law has variance one. -/
+theorem brownianFDD_last_ge_le {R : ℕ} (hR : 0 < R) {r : ℝ} (hr : 0 < r) :
+    (brownianFDD R (equalTimeGrid R) {z | r ≤ z ⟨R - 1, by omega⟩}).toReal ≤
+      1 / r ^ 2 := by
+  let jlast : Fin R := ⟨R - 1, by omega⟩
+  let μ : Fin R → Measure ℝ :=
+    fun _ ↦ gaussianReal 0 (Real.toNNReal (R : ℝ)⁻¹)
+  have hsum : Measurable
+      (fun y : Fin R → ℝ ↦ fun j : Fin R ↦
+        ∑ i ∈ Finset.univ.filter (fun i : Fin R ↦ i ≤ j), y i) := by
+    fun_prop
+  have hclosed : IsClosed {z : Fin R → ℝ | r ≤ z jlast} :=
+    isClosed_le continuous_const (continuous_apply jlast)
+  rw [brownianFDD, Measure.map_apply hsum hclosed.measurableSet]
+  rw [show Measure.pi (fun j : Fin R ↦ gaussianReal 0
+      (Real.toNNReal (equalTimeGrid R j.succ - equalTimeGrid R j.castSucc))) =
+      Measure.pi μ by
+    congr 1
+    funext j
+    simp only [μ, equalTimeGrid_increment hR j]]
+  have hfilter :
+      Finset.univ.filter (fun i : Fin R ↦ i ≤ jlast) = Finset.univ := by
+    ext i
+    simp only [Finset.mem_filter, Finset.mem_univ, true_and, iff_true]
+    change i.val ≤ R - 1
+    omega
+  change (Measure.pi μ).real
+    {y | r ≤ ∑ i ∈ Finset.univ.filter (fun i : Fin R ↦ i ≤ jlast), y i} ≤ _
+  rw [hfilter]
+  calc
+    (Measure.pi μ).real {y | r ≤ ∑ i, y i} ≤
+        (Measure.pi μ).real {y | r ≤ |∑ i, y i|} := by
+      apply measureReal_mono _ (measure_ne_top _ _)
+      intro y hy
+      change r ≤ |∑ i, y i|
+      exact hy.trans (le_abs_self _)
+    _ ≤ R * (Real.toNNReal (R : ℝ)⁻¹ : ℝ) / r ^ 2 :=
+      gaussianProduct_sum_abs_tail_le R _ hr
+    _ = 1 / r ^ 2 := by
+      rw [Real.coe_toNNReal ((R : ℝ)⁻¹) (inv_nonneg.mpr (Nat.cast_nonneg R))]
+      have hRreal : (R : ℝ) ≠ 0 := by exact_mod_cast hR.ne'
+      rw [mul_inv_cancel₀ hRreal]
+
+/-- On the grid `R = q^8` with barrier `q⁻²`, both the ballot probability and the first
+coordinate control probability are `O(1/q)`. -/
+theorem equalTimeGrid_control_bounds (q : ℕ) (hq : 0 < q) :
+    let R := q ^ 8
+    let δ := ((q : ℝ) ^ 2)⁻¹
+    2 * Real.sqrt (δ / Real.sqrt (R : ℝ)⁻¹ + 2) /
+        Real.sqrt (Real.sqrt (R : ℝ)) ≤ 4 / q ∧
+      (R : ℝ)⁻¹ / δ ^ 2 ≤ 1 / q := by
+  dsimp only
+  let x : ℝ := q
+  have hx : 1 ≤ x := by
+    dsimp only [x]
+    exact_mod_cast (show 1 ≤ q by omega)
+  have hx0 : 0 < x := zero_lt_one.trans_le hx
+  have hcast : ((q ^ 8 : ℕ) : ℝ) = x ^ 8 := by
+    simp only [Nat.cast_pow, x]
+  have hsqrt8 : Real.sqrt (x ^ 8) = x ^ 4 := by
+    rw [show x ^ 8 = (x ^ 4) ^ 2 by ring, Real.sqrt_sq (by positivity)]
+  have hsqrt4 : Real.sqrt (x ^ 4) = x ^ 2 := by
+    rw [show x ^ 4 = (x ^ 2) ^ 2 by ring, Real.sqrt_sq (by positivity)]
+  have hsqrtInv : Real.sqrt (x ^ 8)⁻¹ = (x ^ 4)⁻¹ := by
+    rw [Real.sqrt_inv, hsqrt8]
+  rw [hcast, hsqrtInv, hsqrt8, hsqrt4]
+  have hquot : (x ^ 2)⁻¹ / (x ^ 4)⁻¹ = x ^ 2 := by
+    field_simp
+  rw [hquot]
+  constructor
+  · have hsqrt_le : Real.sqrt (x ^ 2 + 2) ≤ 2 * x := by
+      rw [← Real.sqrt_sq (by positivity : (0 : ℝ) ≤ 2 * x)]
+      apply Real.sqrt_le_sqrt
+      nlinarith [sq_nonneg x]
+    calc
+      2 * Real.sqrt (x ^ 2 + 2) / x ^ 2 ≤ 2 * (2 * x) / x ^ 2 := by
+        gcongr
+      _ = 4 / x := by field_simp <;> norm_num
+  · have hinvpow : (x ^ 8)⁻¹ / ((x ^ 2)⁻¹) ^ 2 = (x ^ 4)⁻¹ := by
+      field_simp
+    rw [hinvpow]
+    have hxpow : x ≤ x ^ 4 := by
+      calc
+        x = x ^ 1 := (pow_one x).symm
+        _ ≤ x ^ 4 := pow_le_pow_right₀ hx (by norm_num)
+    simpa only [one_div, x] using one_div_le_one_div_of_le hx0 hxpow
+
 /-- **The divisor variance mass diverges at the endpoint.**  Chain bound: for a prime `p ∣ n+a₀`
 with `P₀ < p`, the `2^{t-1}` divisors `p·d'` (with `t = ω(n+a₀; ≤ p)`) give
 `W ≥ (c/2) exp(ln 2 (t - log log p) - ln 2 · ln t)`.  So `W ≤ T` caps the walk
@@ -664,7 +870,246 @@ theorem divisorVariance_diverges_at_ln2 (hEK : ErdosKacFiniteDim)
       (((Finset.Icc 1 N).filter (fun n =>
         divisorVarianceMass v (collisionCutoff N) (n + a₀) ≤ T)).card : ℝ) / N)
       atTop (𝓝 0) := by
-  sorry
+  classical
+  rw [Metric.tendsto_atTop]
+  intro ε hε
+  obtain ⟨nq, hnq⟩ := exists_nat_one_div_lt (show 0 < ε / 100 by positivity)
+  let q : ℕ := nq + 1
+  let R : ℕ := q ^ 8
+  let δ : ℝ := ((q : ℝ) ^ 2)⁻¹
+  let A : ℝ := q
+  let η : ℝ := ε / 100
+  let j₀ : Fin R := ⟨0, by simp only [R, q]; positivity⟩
+  let jlast : Fin R := ⟨R - 1, by
+    simp only [R, q]
+    have : 0 < (nq + 1) ^ 8 := by positivity
+    omega⟩
+  let Fmain : Set (Fin R → ℝ) := upperRectangle (fun _ ↦ δ)
+  let Ffirst : Set (Fin R → ℝ) := {z | δ ≤ z j₀}
+  let Flast : Set (Fin R → ℝ) := {z | A ≤ z jlast}
+  have hq : 0 < q := by simp only [q]; omega
+  have hR : 0 < R := by simp only [R]; positivity
+  have hqsmall : 1 / (q : ℝ) < η := by
+    simpa only [q, η, Nat.cast_add, Nat.cast_one] using hnq
+  have hη : 0 < η := by simp only [η]; positivity
+  have hgrid := equalTimeGrid_control_bounds q hq
+  have hFmain : IsClosed Fmain := isClosed_upperRectangle _
+  have hFfirst : IsClosed Ffirst :=
+    isClosed_le continuous_const (continuous_apply j₀)
+  have hFlast : IsClosed Flast :=
+    isClosed_le continuous_const (continuous_apply jlast)
+  have htimeLast : equalTimeGrid R jlast.succ = 1 := by
+    have hj : jlast.succ = Fin.last R := by
+      apply Fin.ext
+      simp only [jlast, Fin.val_succ, Fin.val_last]
+      omega
+    rw [hj, equalTimeGrid_last hR]
+  have htimeFirst : equalTimeGrid R j₀.succ = (R : ℝ)⁻¹ := by
+    simp only [equalTimeGrid, j₀, Fin.val_succ, Nat.cast_one, zero_add]
+    rw [one_div]
+  have hmainMeasure : (brownianFDD R (equalTimeGrid R) Fmain).toReal ≤ 4 / q := by
+    exact (brownianFDD_upperRectangle_equalTimeGrid_le hR
+      (show 0 ≤ δ by simp only [δ]; positivity)).trans hgrid.1
+  have hfirstMeasure : (brownianFDD R (equalTimeGrid R) Ffirst).toReal ≤ 1 / q := by
+    exact (brownianFDD_first_ge_le hR
+      (show 0 < δ by simp only [δ]; positivity)).trans hgrid.2
+  have hlastMeasure : (brownianFDD R (equalTimeGrid R) Flast).toReal ≤ 1 / q := by
+    have htail := brownianFDD_last_ge_le hR
+      (show 0 < A by simp only [A]; exact_mod_cast hq)
+    have hqR : (1 : ℝ) ≤ q := by exact_mod_cast (show 1 ≤ q by omega)
+    exact htail.trans (by
+      have hqpos : (0 : ℝ) < q := zero_lt_one.trans_le hqR
+      rw [div_le_div_iff₀ (sq_pos_of_pos hqpos) hqpos]
+      nlinarith [sq_nonneg ((q : ℝ) - 1)])
+  have hmainEK := hEK R (equalTimeGrid R) (strictMono_equalTimeGrid hR)
+    (equalTimeGrid_zero R) (equalTimeGrid_last hR).le Fmain hFmain η hη
+  have hfirstEK := hEK R (equalTimeGrid R) (strictMono_equalTimeGrid hR)
+    (equalTimeGrid_zero R) (equalTimeGrid_last hR).le Ffirst hFfirst η hη
+  have hlastEK := hEK R (equalTimeGrid R) (strictMono_equalTimeGrid hR)
+    (equalTimeGrid_zero R) (equalTimeGrid_last hR).le Flast hFlast η hη
+  have hmainEKN := (tendsto_add_atTop_nat a₀).eventually hmainEK
+  have hfirstEKN := (tendsto_add_atTop_nat a₀).eventually hfirstEK
+  have hlastEKN := (tendsto_add_atTop_nat a₀).eventually hlastEK
+  have hLtop : Tendsto (fun N : ℕ ↦ Real.log (Real.log ((N + a₀ : ℕ) : ℝ))) atTop atTop :=
+    Real.tendsto_log_atTop.comp
+      (Real.tendsto_log_atTop.comp
+        (tendsto_natCast_atTop_atTop.comp (tendsto_add_atTop_nat a₀)))
+  have hcapN := hLtop.eventually (eventually_walk_cap_le_sqrt c T δ
+    (show 0 < δ by simp only [δ]; positivity))
+  have hAsqrtN := hLtop.eventually (eventually_const_le_sqrt A)
+  have hcutN := eventually_collisionCutoff_le_exp_log_rpow_add a₀
+    (show 0 < (R : ℝ)⁻¹ by positivity)
+  apply eventually_atTop.1
+  filter_upwards [hmainEKN, hfirstEKN, hlastEKN, hcapN, hAsqrtN, hcutN,
+      eventually_ge_atTop (max 3 a₀)] with N hmainN hfirstN hlastN hcap hAsqrt hcut hN
+  let M : ℕ := N + a₀
+  let L : ℝ := Real.log (Real.log M)
+  let Z : ℕ → (Fin R → ℝ) := fun m j ↦
+    ((omegaUpTo (Real.exp (Real.log M ^ equalTimeGrid R j.succ)) m : ℝ) -
+        equalTimeGrid R j.succ * L) / Real.sqrt L
+  let Q : ℕ → Prop := fun m ↦
+    divisorVarianceMass v (collisionCutoff N) m ≤ T
+  let S := (Finset.Icc 1 M).filter Q
+  let Smain := (Finset.Icc 1 M).filter (fun m ↦ Z m ∈ Fmain)
+  let Sfirst := (Finset.Icc 1 M).filter (fun m ↦ Z m ∈ Ffirst)
+  let Slast := (Finset.Icc 1 M).filter (fun m ↦ Z m ∈ Flast)
+  have hM3 : 3 ≤ M := by simp only [M]; omega
+  have hMpos : 0 < M := by omega
+  have hLpos : 0 < L := by
+    simp only [L]
+    exact Real.log_pos (by
+      calc
+        (1 : ℝ) = Real.log (Real.exp 1) := (Real.log_exp 1).symm
+        _ < Real.log 3 := Real.strictMonoOn_log (Real.exp_pos 1) (by norm_num)
+          Real.exp_one_lt_three
+        _ ≤ Real.log M := Real.log_le_log (by norm_num) (by exact_mod_cast hM3))
+  have hsub : S ⊆ Smain ∪ (Sfirst ∪ Slast) := by
+    intro m hm
+    have hmIcc := (Finset.mem_filter.mp hm).1
+    have hmass := (Finset.mem_filter.mp hm).2
+    rw [Finset.mem_union, Finset.mem_union]
+    by_cases hfirstbad : δ ≤ Z m j₀
+    · exact Or.inr (Or.inl (Finset.mem_filter.mpr ⟨hmIcc, hfirstbad⟩))
+    by_cases hlastbad : A ≤ Z m jlast
+    · exact Or.inr (Or.inr (Finset.mem_filter.mpr ⟨hmIcc, hlastbad⟩))
+    apply Or.inl
+    rw [Finset.mem_filter]
+    refine ⟨hmIcc, ?_⟩
+    intro j
+    by_cases hj : j = j₀
+    · subst j
+      exact le_of_not_ge hfirstbad
+    have hjlt : j₀.succ < j.succ := by
+      apply Fin.mk_lt_mk.mpr
+      have hjpos : 0 < j.val := by
+        by_contra hjzero
+        have : j.val = 0 := by omega
+        apply hj
+        apply Fin.ext
+        simpa only [j₀] using this
+      change j₀.val + 1 < j.val + 1
+      dsimp only [j₀]
+      omega
+    have hst : equalTimeGrid R j₀.succ < equalTimeGrid R j.succ :=
+      strictMono_equalTimeGrid hR hjlt
+    have hxy : Real.exp (Real.log M ^ equalTimeGrid R j₀.succ) ≤
+        Real.exp (Real.log M ^ equalTimeGrid R j.succ) :=
+      exp_log_rpow_mono hM3 hst.le
+    have hm0 : m ≠ 0 := by
+      have hm1 : 1 ≤ m := (Finset.mem_Icc.mp hmIcc).1
+      omega
+    have htermNorm :
+        ((omegaUpTo (M : ℝ) m : ℝ) - L) / Real.sqrt L ≤ A := by
+      have ht := le_of_not_ge hlastbad
+      simp only [Z, htimeLast, one_mul] at ht
+      rw [exp_log_rpow_one hMpos] at ht
+      exact ht
+    have homega : (omegaUpTo (M : ℝ) m : ℝ) ≤ 2 * L :=
+      omegaUpTo_le_two_mul_of_normalized_terminal_le hLpos hAsqrt htermNorm
+    have hearlyNorm :
+        ((omegaUpTo (Real.exp (Real.log M ^ equalTimeGrid R j₀.succ)) m : ℝ) -
+          equalTimeGrid R j₀.succ * L) / Real.sqrt L ≤ δ :=
+      le_of_not_ge hfirstbad
+    have hearly :
+        (omegaUpTo (Real.exp (Real.log M ^ equalTimeGrid R j₀.succ)) m : ℝ) -
+          equalTimeGrid R j₀.succ * L ≤ δ * Real.sqrt L :=
+      (div_le_iff₀ (Real.sqrt_pos.2 hLpos)).mp hearlyNorm
+    have hgap : δ - (equalTimeGrid R j.succ - equalTimeGrid R j₀.succ) *
+        Real.sqrt L ≤ δ := by
+      have : 0 ≤ (equalTimeGrid R j.succ - equalTimeGrid R j₀.succ) * Real.sqrt L :=
+        mul_nonneg (sub_nonneg.mpr hst.le) (Real.sqrt_nonneg L)
+      linarith
+    have hloglog := log_log_exp_log_rpow (N := M) (t := equalTimeGrid R j.succ)
+      (show 1 < M by omega)
+    have hPfirst : (collisionCutoff N : ℝ) ≤
+        Real.exp (Real.log M ^ equalTimeGrid R j₀.succ) := by
+      simpa only [M, htimeFirst, Nat.cast_add] using hcut
+    have htjle : equalTimeGrid R j.succ ≤ 1 := by
+      rw [← equalTimeGrid_last hR]
+      exact (strictMono_equalTimeGrid hR).monotone (Fin.le_last _)
+    have hyM : Real.exp (Real.log M ^ equalTimeGrid R j.succ) ≤ (M : ℝ) := by
+      calc
+        Real.exp (Real.log M ^ equalTimeGrid R j.succ) ≤
+            Real.exp (Real.log M ^ (1 : ℝ)) := exp_log_rpow_mono hM3 htjle
+        _ = M := exp_log_rpow_one hMpos
+    have homegaYNat :
+        omegaUpTo (Real.exp (Real.log M ^ equalTimeGrid R j.succ)) m ≤
+          omegaUpTo (M : ℝ) m := by
+      unfold omegaUpTo
+      apply Finset.card_le_card
+      intro p hp
+      simp only [Finset.mem_filter] at hp ⊢
+      exact ⟨hp.1, hp.2.trans hyM⟩
+    have homegaY :
+        (omegaUpTo (Real.exp (Real.log M ^ equalTimeGrid R j.succ)) m : ℝ) ≤ 2 * L := by
+      have hcast :
+          (omegaUpTo (Real.exp (Real.log M ^ equalTimeGrid R j.succ)) m : ℝ) ≤
+            (omegaUpTo (M : ℝ) m : ℝ) := by
+        exact_mod_cast homegaYNat
+      exact hcast.trans homega
+    have hresult := normalized_omegaUpTo_cutoff_le v c hc hv0 hv hm0 hPfirst hxy
+      hmass hLpos homegaY hloglog hearly hgap hcap
+    exact hresult
+  have hcard : S.card ≤ Smain.card + Sfirst.card + Slast.card := by
+    have h₁ := Finset.card_le_card hsub
+    have h₂ := Finset.card_union_le Smain (Sfirst ∪ Slast)
+    have h₃ := Finset.card_union_le Sfirst Slast
+    omega
+  have hmainDensity : (Smain.card : ℝ) / M ≤ 4 / q + η := by
+    calc
+      (Smain.card : ℝ) / M ≤ (brownianFDD R (equalTimeGrid R) Fmain).toReal + η := hmainN
+      _ ≤ 4 / q + η := by gcongr
+  have hfirstDensity : (Sfirst.card : ℝ) / M ≤ 1 / q + η := by
+    calc
+      (Sfirst.card : ℝ) / M ≤ (brownianFDD R (equalTimeGrid R) Ffirst).toReal + η := hfirstN
+      _ ≤ 1 / q + η := by gcongr
+  have hlastDensity : (Slast.card : ℝ) / M ≤ 1 / q + η := by
+    calc
+      (Slast.card : ℝ) / M ≤ (brownianFDD R (equalTimeGrid R) Flast).toReal + η := hlastN
+      _ ≤ 1 / q + η := by gcongr
+  have hshiftCard :
+      ((Finset.Icc 1 N).filter (fun m ↦
+        divisorVarianceMass v (collisionCutoff N) (m + a₀) ≤ T)).card ≤ S.card := by
+    simpa only [Q, S, M] using card_filter_Icc_add_le Q N a₀
+  have hNpos : (0 : ℝ) < N := by exact_mod_cast (show 0 < N by omega)
+  have hMreal : (0 : ℝ) < M := by exact_mod_cast hMpos
+  have hMN : (M : ℝ) / N ≤ 2 := by
+    apply (div_le_iff₀ hNpos).2
+    simp only [M, Nat.cast_add]
+    have haN : a₀ ≤ N := le_trans (le_max_right 3 a₀) hN
+    exact_mod_cast (show N + a₀ ≤ 2 * N by omega)
+  have hsumDensity :
+      ((Smain.card + Sfirst.card + Slast.card : ℕ) : ℝ) / M ≤
+        6 / q + 3 * η := by
+    push_cast
+    calc
+      ((Smain.card : ℝ) + Sfirst.card + Slast.card) / M =
+          (Smain.card : ℝ) / M + Sfirst.card / M + Slast.card / M := by ring
+      _ ≤ (4 / q + η) + (1 / q + η) + (1 / q + η) := by gcongr
+      _ = 6 / q + 3 * η := by ring
+  have hbound :
+      (((Finset.Icc 1 N).filter (fun m ↦
+        divisorVarianceMass v (collisionCutoff N) (m + a₀) ≤ T)).card : ℝ) / N < ε := by
+    calc
+      (((Finset.Icc 1 N).filter (fun m ↦
+          divisorVarianceMass v (collisionCutoff N) (m + a₀) ≤ T)).card : ℝ) / N
+          ≤ (S.card : ℝ) / N := by gcongr
+      _ ≤ ((Smain.card + Sfirst.card + Slast.card : ℕ) : ℝ) / N := by gcongr
+      _ = (((Smain.card + Sfirst.card + Slast.card : ℕ) : ℝ) / M) *
+          ((M : ℝ) / N) := by field_simp
+      _ ≤ (6 / q + 3 * η) * 2 :=
+        mul_le_mul hsumDensity hMN (by positivity) (by positivity)
+      _ < ε := by
+        have hsix : 6 / (q : ℝ) < 6 * η := by
+          calc
+            6 / (q : ℝ) = 6 * (1 / (q : ℝ)) := by ring
+            _ < 6 * η := mul_lt_mul_of_pos_left hqsmall (by norm_num)
+        calc
+          (6 / (q : ℝ) + 3 * η) * 2 < (6 * η + 3 * η) * 2 := by
+            gcongr
+          _ < ε := by simp only [η]; linarith
+  rw [Real.dist_eq, sub_zero, abs_of_nonneg (div_nonneg (by positivity) (by positivity))]
+  exact hbound
 
 /-- **Normal at and below `ln 2`.**  `δ_m(1-δ_m) ≥ c (log m)^{-ln 2}` gives a.s., for each `b`, base-`b` normality of `E_b` (one number per base, not absolute normality).
 Below `ln 2` is a literal corollary (for `m ≥ 3`, `(log m)^{-a} ≥ (log m)^{-ln 2}`), so this

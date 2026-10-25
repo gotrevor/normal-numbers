@@ -1,10 +1,33 @@
-# HANDOFF: EB endpoint Step 2, EK laps 1--6
+# HANDOFF: EB endpoint Step 2, EK laps 1--7 (COMPLETE)
 
 Branch `research/eb-endpoint` is local only.  Never push it.  The scoped host predicate is
 `sorry-free:src/NormalNumbers/CoefmassErdosBorweinEndpointEK.lean`.  Do not change any existing
 statement in that file, and keep `ErdosKacFiniteDim` as the named hypothesis exactly as planted.
 
 ## Concrete advance
+
+### Lap 7: Step 2 and both headlines closed
+
+The scoped objective is complete: `CoefmassErdosBorweinEndpointEK.lean` is sorry-free, with every
+pre-existing statement unchanged.  The last theorem `divisorVariance_diverges_at_ln2` is proved
+from the named hypothesis `ErdosKacFiniteDim`; no proof or axiom for that hypothesis was added.
+
+The final probability layer consists of:
+
+- `gaussianReal_abs_tail_le` and `gaussianProduct_sum_abs_tail_le`, elementary Chebyshev bounds
+  using the exact Gaussian mean and variance and independence of product coordinates;
+- `brownianFDD_first_ge_le` and `brownianFDD_last_ge_le`, identifying the first equal-grid
+  Brownian coordinate with one increment and the terminal coordinate with their sum;
+- `equalTimeGrid_control_bounds`, the explicit choice `R = q^8`, `delta = q^-2`, which bounds the
+  ballot rectangle by `4/q` and the first-coordinate failure by `1/q`.
+
+For the final FDEK assembly, the bounded-mass event is included in the union of three closed
+events: the constant upper rectangle, first-coordinate failure, and terminal-coordinate failure.
+Outside the two control failures, `normalized_omegaUpTo_cutoff_le` supplies every later grid
+coordinate.  The proof then handles the fixed shift via `card_filter_Icc_add_le` and the denominator
+change with `(N+a0)/N <= 2` eventually.  This closes `divisorVariance_diverges_at_ln2`, and therefore
+the already-assembled `ebRandom_ae_normal_le_ln2_of_EK` and `ebPowerCandidateNormal_of_EK` are now
+sorry-free and axiom-clean.
 
 ### Lap 6: local soft Gaussian ballot layer
 
@@ -317,28 +340,44 @@ Lap-6 repository gate and audits:
 Verdict: `FORMALIZE-TIER GREEN`; all five audited ballot/adapter theorems use only `propext`,
 `Classical.choice`, and `Quot.sound`.
 
-Auditing the two downstream headlines currently reports `sorryAx`, as expected, solely because
-they transitively call the one open Step-2 theorem.  Once that theorem closes, rerun the headline
-audits required by `EB-ENDPOINT-EK-NEXT.md`.
+At the lap-6 checkpoint the two downstream headlines still reported `sorryAx`, solely through the
+then-open Step-2 theorem.  The lap-7 audit below supersedes that historical result.
+
+Lap-7 narrow elaboration and module build:
+
+```text
+lake env lean src/NormalNumbers/CoefmassErdosBorweinEndpointEK.lean
+lake build NormalNumbers.CoefmassErdosBorweinEndpointEK
+```
+
+Both exit 0.  The scoped file contains no `sorry`, `native_decide`, or hand-declared axiom.
+
+Lap-7 repository gate and final audits:
+
+```text
+~/personal/bin/lean-green /Users/gotrevor/src/nn-eb-endpoint \
+  --target NormalNumbers.CoefmassErdosBorweinEndpointEK \
+  --import NormalNumbers.CoefmassErdosBorweinEndpointEK \
+  --axioms NormalNumbers.ErdosBorweinEndpointEK.gaussianReal_abs_tail_le \
+  --axioms NormalNumbers.ErdosBorweinEndpointEK.gaussianProduct_sum_abs_tail_le \
+  --axioms NormalNumbers.ErdosBorweinEndpointEK.brownianFDD_first_ge_le \
+  --axioms NormalNumbers.ErdosBorweinEndpointEK.brownianFDD_last_ge_le \
+  --axioms NormalNumbers.ErdosBorweinEndpointEK.equalTimeGrid_control_bounds \
+  --axioms NormalNumbers.ErdosBorweinEndpointEK.divisorVariance_diverges_at_ln2 \
+  --axioms NormalNumbers.ErdosBorweinEndpointEK.ebRandom_ae_normal_le_ln2_of_EK \
+  --axioms NormalNumbers.ErdosBorweinEndpointEK.ebPowerCandidateNormal_of_EK
+```
+
+Verdict: `FORMALIZE-TIER GREEN`.  All eight audited declarations use exactly `propext`,
+`Classical.choice`, and `Quot.sound`.
 
 ## Current blocker
 
-Exactly one `sorry` remains: `divisorVariance_diverges_at_ln2`.  The chain bound, arbitrary-cutoff
-bridge, collision-cutoff comparison, equal FDEK grid, `brownianFDD`/increment-event adapter, and
-soft fourth-root Gaussian ballot estimate are closed.  The remaining layers are:
-
-1. prove the elementary first-coordinate and terminal-coordinate Gaussian second-moment tail
-   bounds;
-2. do the finite-grid/FDEK union bookkeeping and finish the density limit, including the fixed
-   shift `n ↦ n+a₀` and denominator change from `N` to `N+a₀`.
-
-The main remaining formalization risk is the nested eventual/finite-union bookkeeping in the final
-FDEK application, not the Gaussian ballot input.
+None in scope.  The host predicate
+`sorry-free:src/NormalNumbers/CoefmassErdosBorweinEndpointEK.lean` is satisfied.
 
 ## Next highest-value attack
 
-Prove Gaussian Chebyshev bounds for the first and last coordinates, preferably as a reusable
-one-dimensional `gaussianReal 0 v` upper-tail lemma from `variance_id_gaussianReal` and Markov's
-inequality.  Then assemble the three FDEK closed-set estimates with `δ = R^(-1/4)` and a free
-terminal threshold `A`.  Use `brownianFDD_upperRectangle_equalTimeGrid_le` directly for the main
-rectangle; no sharper ballot theorem is needed.
+No stretch work was requested for this lap.  Preserve the completed frozen statements and the
+named-hypothesis status of `ErdosKacFiniteDim`; any later objective should begin from this green
+checkpoint.
