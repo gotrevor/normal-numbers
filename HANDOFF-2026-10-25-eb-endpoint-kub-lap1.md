@@ -62,6 +62,9 @@ Repository gate and axiom audits:
 Verdict: `FORMALIZE-TIER GREEN`. Every audited theorem uses only `propext`,
 `Classical.choice`, and `Quot.sound`.
 
+The commit hook also ran the repository-wide `lake build`: `Build completed successfully
+(10847 jobs)`.
+
 An explicit audit of `ebPowerCandidateNormal_of_kubilius` still reports `sorryAx`, exactly through
 the one remaining Step 2 theorem; there is no additional proof debt in the assembly.
 
