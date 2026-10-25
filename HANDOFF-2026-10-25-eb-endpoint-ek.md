@@ -1,10 +1,31 @@
-# HANDOFF: EB endpoint Step 2, EK laps 1--2
+# HANDOFF: EB endpoint Step 2, EK laps 1--3
 
 Branch `research/eb-endpoint` is local only.  Never push it.  The scoped host predicate is
 `sorry-free:src/NormalNumbers/CoefmassErdosBorweinEndpointEK.lean`.  Do not change any existing
 statement in that file, and keep `ErdosKacFiniteDim` as the named hypothesis exactly as planted.
 
 ## Concrete advance
+
+### Lap 3: finite cutoffs inherit the prime-jump cap
+
+The bridge requested at the end of lap 2 is proved, again without changing any planted statement.
+
+- `omegaUpTo_eq_of_greatest_primeFactor` identifies the cutoff count with the count at its greatest
+  prime factor.
+- `omegaUpTo_primeJump_or_eq_early` makes the decisive split for `P ≤ x ≤ y`: if a prime factor
+  of `n` lies in `(P,y]`, it selects the largest one and proves that `omegaUpTo y n` is attained at
+  that jump; otherwise it proves the exact equality `omegaUpTo y n = omegaUpTo x n`.
+- `omegaUpTo_cutoff_eq_early_or_sub_log_log_le` combines that split with the lap-2 cap.  On
+  `divisorVarianceMass v P n ≤ T` and `omegaUpTo y n ≤ 2L`, either the count is unchanged from
+  the early cutoff or
+
+  ```text
+  omegaUpTo y n - log (log y)
+    ≤ 1 + log (2*L) + log (T/c) / log 2.
+  ```
+
+Thus the remaining deterministic work no longer needs to reason about the location of the last
+prime factor at every FDEK coordinate.
 
 ### Lap 2: endpoint walk cap
 
@@ -98,6 +119,28 @@ Lap-2 gate:
 Verdict: `FORMALIZE-TIER GREEN`; all three audited walk-cap theorems use only `propext`,
 `Classical.choice`, and `Quot.sound`.
 
+Lap-3 narrow elaboration:
+
+```text
+lake env lean src/NormalNumbers/CoefmassErdosBorweinEndpointEK.lean
+```
+
+Exit 0.  The sole scoped proof-debt warning remains `divisorVariance_diverges_at_ln2`.
+
+Lap-3 repository gate and audits:
+
+```text
+~/personal/bin/lean-green ~/src/nn-eb-endpoint \
+  --target NormalNumbers.CoefmassErdosBorweinEndpointEK \
+  --import NormalNumbers.CoefmassErdosBorweinEndpointEK \
+  --axioms NormalNumbers.ErdosBorweinEndpointEK.omegaUpTo_eq_of_greatest_primeFactor \
+  --axioms NormalNumbers.ErdosBorweinEndpointEK.omegaUpTo_primeJump_or_eq_early \
+  --axioms NormalNumbers.ErdosBorweinEndpointEK.omegaUpTo_cutoff_eq_early_or_sub_log_log_le
+```
+
+Verdict: `FORMALIZE-TIER GREEN`; all three finite-cutoff helpers use only `propext`,
+`Classical.choice`, and `Quot.sound`.
+
 Auditing the two downstream headlines currently reports `sorryAx`, as expected, solely because
 they transitively call the one open Step-2 theorem.  Once that theorem closes, rerun the headline
 audits required by `EB-ENDPOINT-EK-NEXT.md`.
@@ -107,12 +150,12 @@ audits required by `EB-ENDPOINT-EK-NEXT.md`.
 Exactly one `sorry` remains: `divisorVariance_diverges_at_ln2`.  Its combinatorial chain lower
 bound is no longer part of the blocker.  The remaining layers are:
 
-1. cover a fixed FDEK grid point by the proved prime-jump cap or the
-   no-prime-since-an-early-grid-point case,
-   using extra grid points `s₀` and `1` to control small primes and total omega;
+1. use the new cutoff alternative simultaneously across a finite FDEK grid, with extra coordinates
+   `s₀` and `1` controlling the early count and total omega, and package the result as membership
+   in a coordinatewise upper rectangle;
 2. apply `ErdosKacFiniteDim` to the closed coordinatewise upper set;
 3. prove the elementary `brownianFDD` Gaussian recursion/grid probability tends to zero, then
-   finish the density limit.
+   finish the density limit (including the fixed shift `n ↦ n+a₀`).
 
 The main formalization risk is layer 4: `brownianFDD` is a mapped finite product of Gaussian
 increments, and the needed rectangle probability/factorization API has not yet been developed in
@@ -120,9 +163,8 @@ this repository.  The Lean reference corpus search found no existing implementat
 
 ## Next highest-value attack
 
-Prove the finite-cutoff bridge before introducing measures.  For a real grid cutoff `y`, split on
-whether `n` has a prime factor in `(P,y]`.  In the jump case choose the largest such factor `p`, prove
-`omegaUpTo y n = omegaUpTo p n`, and transfer the new prime-jump cap using
-`log (log p) ≤ log (log y)`.  In the no-jump case identify/bound `omegaUpTo y n` by the early-grid
-small-prime count.  Package this as a pointwise implication into the coordinatewise FDEK closed set;
-then formalize that set and its closedness.
+Package the new cutoff alternative as the pointwise implication into the coordinatewise FDEK closed
+set.  Introduce the upper rectangle and prove it closed first.  Then choose the extra `s₀` and `1`
+coordinates so the FDEK-good bounds at those coordinates eliminate respectively the no-jump and
+excessive-total-omega cases.  After that, invoke `hEK` on the rectangle and start the finite Gaussian
+grid estimate.

@@ -294,6 +294,86 @@ theorem omegaUpTo_sub_log_log_le_of_divisorVarianceMass_le_of_le
     Real.log_le_log homega_pos homega
   linarith
 
+/-! ### From prime jumps to finite cutoffs -/
+
+/-- If `p` is the largest prime factor of `n` below a real cutoff `y`, then cutting the
+prime-factor count at `y` is the same as cutting it at `p`. -/
+theorem omegaUpTo_eq_of_greatest_primeFactor {p n : ℕ} {y : ℝ}
+    (hpy : (p : ℝ) ≤ y)
+    (hmax : ∀ q ∈ n.primeFactors, (q : ℝ) ≤ y → q ≤ p) :
+    omegaUpTo y n = omegaUpTo (p : ℝ) n := by
+  unfold omegaUpTo
+  apply congrArg Finset.card
+  ext q
+  simp only [Finset.mem_filter]
+  constructor
+  · rintro ⟨hq, hqy⟩
+    exact ⟨hq, by exact_mod_cast hmax q hq hqy⟩
+  · rintro ⟨hq, hqp⟩
+    exact ⟨hq, hqp.trans hpy⟩
+
+/-- Finite-cutoff bridge.  Given an early cutoff `x` with `P ≤ x ≤ y`, either there is a
+largest prime jump above `P` at which the count at `y` is attained, or no such jump occurred and
+the count at `y` already equals the count at `x`. -/
+theorem omegaUpTo_primeJump_or_eq_early {P n : ℕ} {x y : ℝ}
+    (hPx : (P : ℝ) ≤ x) (hxy : x ≤ y) :
+    (∃ p : ℕ, p.Prime ∧ p ∣ n ∧ P < p ∧ (p : ℝ) ≤ y ∧
+      omegaUpTo y n = omegaUpTo (p : ℝ) n) ∨
+      omegaUpTo y n = omegaUpTo x n := by
+  classical
+  let B := n.primeFactors.filter (fun p ↦ P < p ∧ (p : ℝ) ≤ y)
+  by_cases hB : B.Nonempty
+  · left
+    obtain ⟨p, hpB, hpmax⟩ := Finset.exists_max_image B id hB
+    have hpdata := Finset.mem_filter.mp hpB
+    rcases Nat.mem_primeFactors.mp hpdata.1 with ⟨hp, hpn, _⟩
+    refine ⟨p, hp, hpn, hpdata.2.1, hpdata.2.2, ?_⟩
+    apply omegaUpTo_eq_of_greatest_primeFactor hpdata.2.2
+    intro q hqn hqy
+    by_cases hPq : P < q
+    · exact hpmax q (Finset.mem_filter.mpr ⟨hqn, hPq, hqy⟩)
+    · exact (Nat.le_of_not_gt hPq).trans hpdata.2.1.le
+  · right
+    unfold omegaUpTo
+    apply congrArg Finset.card
+    ext q
+    simp only [Finset.mem_filter]
+    constructor
+    · rintro ⟨hqn, hqy⟩
+      refine ⟨hqn, ?_⟩
+      by_contra hqx
+      have hxq : x < (q : ℝ) := lt_of_not_ge hqx
+      have hPq : P < q := by exact_mod_cast hPx.trans_lt hxq
+      exact hB ⟨q, Finset.mem_filter.mpr ⟨hqn, hPq, hqy⟩⟩
+    · rintro ⟨hqn, hqx⟩
+      exact ⟨hqn, hqx.trans hxy⟩
+
+/-- On a bounded divisor-mass event, the finite-cutoff count either has not moved since an early
+cutoff, or obeys the uniform walk cap inherited from its last prime jump. -/
+theorem omegaUpTo_cutoff_eq_early_or_sub_log_log_le
+    (v : ℕ → ℝ) (c : ℝ) (hc : 0 < c)
+    (hv0 : ∀ m, 0 ≤ v m)
+    (hv : ∀ m : ℕ, 2 ≤ m → c * Real.rpow (Real.log m) (-Real.log 2) ≤ v m)
+    {P n : ℕ} {x y T L : ℝ} (hn : n ≠ 0) (hPx : (P : ℝ) ≤ x) (hxy : x ≤ y)
+    (hmass : divisorVarianceMass v P n ≤ T) (hL : 0 < L)
+    (homega : (omegaUpTo y n : ℝ) ≤ 2 * L) :
+    omegaUpTo y n = omegaUpTo x n ∨
+      (omegaUpTo y n : ℝ) - Real.log (Real.log y) ≤
+        1 + Real.log (2 * L) + Real.log (T / c) / Real.log 2 := by
+  rcases omegaUpTo_primeJump_or_eq_early hPx hxy with hjump | hearly
+  · right
+    obtain ⟨p, hp, hpn, hPp, hpy, hpcount⟩ := hjump
+    have hpR : (0 : ℝ) < p := by exact_mod_cast hp.pos
+    have hlogp : 0 < Real.log (p : ℝ) := Real.log_pos (by exact_mod_cast hp.one_lt)
+    have hlogle : Real.log (p : ℝ) ≤ Real.log y := Real.log_le_log hpR hpy
+    have hloglogle : Real.log (Real.log (p : ℝ)) ≤ Real.log (Real.log y) :=
+      Real.log_le_log hlogp hlogle
+    have hcap := omegaUpTo_sub_log_log_le_of_divisorVarianceMass_le_of_le
+      v c hc hv0 hv hp hpn hn hPp hmass hL (hpcount ▸ homega)
+    rw [hpcount]
+    linarith
+  · exact Or.inl hearly
+
 /-- **The divisor variance mass diverges at the endpoint.**  Chain bound: for a prime `p ∣ n+a₀`
 with `P₀ < p`, the `2^{t-1}` divisors `p·d'` (with `t = ω(n+a₀; ≤ p)`) give
 `W ≥ (c/2) exp(ln 2 (t - log log p) - ln 2 · ln t)`.  So `W ≤ T` caps the walk

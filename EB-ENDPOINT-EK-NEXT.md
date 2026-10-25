@@ -35,9 +35,16 @@ omegaUpTo p n - log (log p)
 
 whenever `W ≤ T` and `omegaUpTo p n ≤ 2*L`.
 
+The finite-cutoff bridge is also closed.  `omegaUpTo_primeJump_or_eq_early` selects the largest
+prime factor in `(P,y]`: either the count at `y` is attained at that prime jump, or it equals the
+count at any earlier cutoff `x` with `P ≤ x ≤ y`.  Consequently
+`omegaUpTo_cutoff_eq_early_or_sub_log_log_le` transfers the uniform walk cap to an arbitrary grid
+cutoff, with the no-jump case returned as an exact equality to the early-grid count.
+
 Exactly one `sorry` remains, on `divisorVariance_diverges_at_ln2`.  The next load-bearing layer is
-the finite-cutoff bridge from prime jumps to the FDEK grid, followed by the FDEK closed-set estimate
-and the elementary Gaussian grid bound.  Detailed baton: `HANDOFF-2026-10-25-eb-endpoint-ek.md`.
+the deterministic implication from the new cutoff alternative and the two FDEK control coordinates
+into a coordinatewise upper rectangle, followed by the FDEK closed-set estimate and the elementary
+Gaussian grid bound.  Detailed baton: `HANDOFF-2026-10-25-eb-endpoint-ek.md`.
 
 Paper: `~/personal/claude/knowledge/drafts/collatz-nn-mechanisms/nn-erdos-borwein-random-2026-10-12.md`,
 section "Step 2".  Proved input: `ebRandom_ae_normal_of_divisorVariance_diverges` (Step 1, the
