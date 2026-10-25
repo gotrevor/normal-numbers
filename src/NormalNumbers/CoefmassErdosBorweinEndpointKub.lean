@@ -613,6 +613,247 @@ theorem primeFactorSet_mem_kubiliusBlockBadEvent_of_divisorVarianceMass_le
       (hV i hi) (hMertens i hi) (hdom i hi)
   exact (not_lt_of_ge hmass) hforced
 
+/-- Once `x ≥ 1`, its natural floor loses at most a factor of two.  This elementary floor
+estimate is the convenient way to control both logarithms of the natural Kubilius cutoffs. -/
+theorem half_le_natFloor {x : ℝ} (hx : 1 ≤ x) : x / 2 ≤ (⌊x⌋₊ : ℝ) := by
+  have hlt := Nat.lt_floor_add_one x
+  have hfloorOne : (1 : ℝ) ≤ ⌊x⌋₊ := by
+    exact_mod_cast Nat.one_le_iff_ne_zero.2 (by
+      rw [Ne, Nat.floor_eq_zero]
+      linarith)
+  linarith
+
+/-- The natural cutoff `⌊exp((log M)^s)⌋` has double logarithm within `log 2` of
+`s * log log M`.  The explicit growth hypothesis is intentionally separated from the eventual
+schedule proof: every fixed positive `s` satisfies it for all sufficiently large `M`. -/
+theorem log_log_natFloor_exp_log_rpow_bounds {M : ℕ} {s : ℝ}
+    (hM : 3 ≤ M) (hs : 0 < s)
+    (hgrowth : 2 * Real.log 2 ≤ Real.rpow (Real.log M) s) :
+    let z := ⌊Real.exp (Real.rpow (Real.log M) s)⌋₊
+    2 ≤ z ∧
+      s * Real.log (Real.log M) - Real.log 2 ≤ Real.log (Real.log z) ∧
+      Real.log (Real.log z) ≤ s * Real.log (Real.log M) := by
+  let x : ℝ := Real.log M ^ s
+  let z : ℕ := ⌊Real.exp x⌋₊
+  have hlogMpos : 0 < Real.log M := Real.log_pos (by exact_mod_cast (show 1 < M by omega))
+  have hxpos : 0 < x := by
+    exact Real.rpow_pos_of_pos hlogMpos s
+  change 2 * Real.log 2 ≤ x at hgrowth
+  have hlog2pos : 0 < Real.log 2 := Real.log_pos (by norm_num)
+  have hexpOne : 1 ≤ Real.exp x := Real.one_le_exp hxpos.le
+  have hhalf : Real.exp x / 2 ≤ (z : ℝ) := half_le_natFloor hexpOne
+  have hzTwoReal : (2 : ℝ) ≤ z := by
+    calc
+      (2 : ℝ) ≤ Real.exp x / 2 := by
+        rw [le_div_iff₀ (by norm_num : (0 : ℝ) < 2)]
+        calc
+          (2 : ℝ) * 2 = Real.exp (2 * Real.log 2) := by
+            calc
+              (2 : ℝ) * 2 = 4 := by norm_num
+              _ = Real.exp (Real.log 4) := (Real.exp_log (by norm_num)).symm
+              _ = Real.exp (2 * Real.log 2) := by
+                congr 1
+                rw [show (4 : ℝ) = 2 ^ 2 by norm_num, Real.log_pow]
+                norm_num
+          _ ≤ Real.exp x := Real.exp_le_exp.mpr hgrowth
+      _ ≤ z := hhalf
+  have hzTwo : 2 ≤ z := by exact_mod_cast hzTwoReal
+  have hzpos : (0 : ℝ) < z := by positivity
+  have hlogzLower : x / 2 ≤ Real.log z := by
+    calc
+      x / 2 ≤ x - Real.log 2 := by linarith
+      _ = Real.log (Real.exp x / 2) := by
+        rw [Real.log_div (Real.exp_ne_zero x) (by norm_num), Real.log_exp]
+      _ ≤ Real.log z := Real.log_le_log (by positivity) hhalf
+  have hfloorUpper : (z : ℝ) ≤ Real.exp x := Nat.floor_le (Real.exp_pos x).le
+  have hlogzUpper : Real.log z ≤ x := by
+    simpa only [Real.log_exp] using Real.log_le_log hzpos hfloorUpper
+  have hxhalfpos : 0 < x / 2 := by positivity
+  have hlogzpos : 0 < Real.log z := hxhalfpos.trans_le hlogzLower
+  have hlogx : Real.log x = s * Real.log (Real.log M) := by
+    simpa only [x] using Real.log_rpow hlogMpos s
+  refine ⟨hzTwo, ?_, ?_⟩
+  · calc
+      s * Real.log (Real.log M) - Real.log 2 = Real.log (x / 2) := by
+        rw [Real.log_div hxpos.ne' (by norm_num), hlogx]
+      _ ≤ Real.log (Real.log z) := Real.log_le_log hxhalfpos hlogzLower
+  · calc
+      Real.log (Real.log z) ≤ Real.log x := Real.log_le_log hlogzpos hlogzUpper
+      _ = s * Real.log (Real.log M) := hlogx
+
+/-- Natural FDEK-style cutoffs inherit monotonicity in their exponent. -/
+theorem natFloor_exp_log_rpow_mono {M : ℕ} {s t : ℝ}
+    (hM : 3 ≤ M) (hst : s ≤ t) :
+    ⌊Real.exp (Real.rpow (Real.log M) s)⌋₊ ≤
+      ⌊Real.exp (Real.rpow (Real.log M) t)⌋₊ := by
+  exact Nat.floor_le_floor (exp_log_rpow_mono hM hst)
+
+/-- Every fixed positive natural cutoff exponent eventually has the sharp double-log bounds above,
+also after a fixed additive shift of the sample endpoint. -/
+theorem eventually_log_log_natFloor_exp_log_rpow_bounds (a : ℕ) {s : ℝ} (hs : 0 < s) :
+    ∀ᶠ N : ℕ in atTop,
+      let M := N + a
+      let z := ⌊Real.exp (Real.rpow (Real.log M) s)⌋₊
+      2 ≤ z ∧
+        s * Real.log (Real.log M) - Real.log 2 ≤ Real.log (Real.log z) ∧
+        Real.log (Real.log z) ≤ s * Real.log (Real.log M) := by
+  have hlogTop : Tendsto (fun N : ℕ ↦ Real.log ((N + a : ℕ) : ℝ)) atTop atTop :=
+    Real.tendsto_log_atTop.comp
+      (tendsto_natCast_atTop_atTop.comp (tendsto_add_atTop_nat a))
+  have hpowTop : Tendsto
+      (fun N : ℕ ↦ Real.rpow (Real.log ((N + a : ℕ) : ℝ)) s) atTop atTop :=
+    (tendsto_rpow_atTop hs).comp hlogTop
+  filter_upwards [eventually_ge_atTop 3,
+      hpowTop.eventually_ge_atTop (2 * Real.log 2)] with N hN hgrowth
+  exact log_log_natFloor_exp_log_rpow_bounds (show 3 ≤ N + a by omega) hs hgrowth
+
+/-- The deterministic collision cutoff is eventually below the natural version of every fixed
+positive Kubilius cutoff. -/
+theorem eventually_collisionCutoff_le_natFloor_exp_log_rpow_add (a : ℕ)
+    {s : ℝ} (hs : 0 < s) :
+    ∀ᶠ N : ℕ in atTop,
+      collisionCutoff N ≤ ⌊Real.exp (Real.rpow (Real.log (N + a)) s)⌋₊ := by
+  filter_upwards [eventually_collisionCutoff_le_exp_log_rpow_add a hs] with N hN
+  exact Nat.le_floor hN
+
+/-- Exponents for `K` consecutive geometric blocks.  The final block ends at exponent `1/4`,
+leaving ample room below the Kubilius cutoff at exponent `1/2`. -/
+noncomputable def kubiliusGeometricExponent (K i : ℕ) (r : ℝ) : ℝ :=
+  r ^ i / (4 * r ^ K)
+
+theorem kubiliusGeometricExponent_pos {K i : ℕ} {r : ℝ} (hr : 0 < r) :
+    0 < kubiliusGeometricExponent K i r := by
+  exact div_pos (pow_pos hr _) (mul_pos (by norm_num) (pow_pos hr _))
+
+theorem kubiliusGeometricExponent_mono {K i j : ℕ} {r : ℝ}
+    (hr : 1 ≤ r) (hij : i ≤ j) :
+    kubiliusGeometricExponent K i r ≤ kubiliusGeometricExponent K j r := by
+  unfold kubiliusGeometricExponent
+  exact div_le_div_of_nonneg_right (pow_le_pow_right₀ hr hij)
+    (mul_nonneg (by norm_num) (pow_nonneg (zero_le_one.trans hr) _))
+
+theorem kubiliusGeometricExponent_succ {K i : ℕ} {r : ℝ} (hr : r ≠ 0) :
+    kubiliusGeometricExponent K (i + 1) r =
+      r * kubiliusGeometricExponent K i r := by
+  unfold kubiliusGeometricExponent
+  rw [pow_succ]
+  field_simp
+
+theorem kubiliusGeometricExponent_end {K : ℕ} {r : ℝ} (hr : r ≠ 0) :
+    kubiliusGeometricExponent K K r = 1 / 4 := by
+  unfold kubiliusGeometricExponent
+  field_simp
+
+theorem kubiliusGeometricExponent_le_quarter {K i : ℕ} {r : ℝ}
+    (hr : 1 ≤ r) (hi : i ≤ K) :
+    kubiliusGeometricExponent K i r ≤ 1 / 4 := by
+  calc
+    kubiliusGeometricExponent K i r ≤ kubiliusGeometricExponent K K r :=
+      kubiliusGeometricExponent_mono hr hi
+    _ = 1 / 4 := kubiliusGeometricExponent_end (ne_of_gt (zero_lt_one.trans_le hr))
+
+/-- The natural prime cutoff at one geometric schedule coordinate. -/
+noncomputable def kubiliusGeometricCutoff (M K : ℕ) (r : ℝ) (i : ℕ) : ℕ :=
+  ⌊Real.exp (Real.rpow (Real.log M) (kubiliusGeometricExponent K i r))⌋₊
+
+theorem kubiliusGeometricCutoff_mono {M K i j : ℕ} {r : ℝ}
+    (hM : 3 ≤ M) (hr : 1 ≤ r) (hij : i ≤ j) :
+    kubiliusGeometricCutoff M K r i ≤ kubiliusGeometricCutoff M K r j := by
+  exact natFloor_exp_log_rpow_mono hM (kubiliusGeometricExponent_mono hr hij)
+
+/-- Prime blocks whose earlier endpoint is below the later start are disjoint. -/
+theorem primeBlocks_disjoint_of_end_le_start {a b c d : ℕ} (hbc : b ≤ c) :
+    Disjoint ((primesUpTo b).filter (a < ·)) ((primesUpTo d).filter (c < ·)) := by
+  rw [Finset.disjoint_left]
+  intro p hp hq
+  have hpb : p ≤ b := by
+    have := (Finset.mem_filter.mp (Finset.mem_filter.mp hp).1).1
+    simp only [Finset.mem_range] at this
+    omega
+  have hcp : c < p := (Finset.mem_filter.mp hq).2
+  omega
+
+/-- Distinct blocks in the geometric schedule are pairwise disjoint. -/
+theorem kubiliusGeometricBlocks_disjoint {M K : ℕ} {r : ℝ}
+    (hM : 3 ≤ M) (hr : 1 ≤ r) {i j : ℕ} (hij : i ≠ j) :
+    Disjoint
+      ((primesUpTo (kubiliusGeometricCutoff M K r (i + 1))).filter
+        (kubiliusGeometricCutoff M K r i < ·))
+      ((primesUpTo (kubiliusGeometricCutoff M K r (j + 1))).filter
+        (kubiliusGeometricCutoff M K r j < ·)) := by
+  rcases lt_or_gt_of_ne hij with hijlt | hjilt
+  · exact primeBlocks_disjoint_of_end_le_start
+      (kubiliusGeometricCutoff_mono hM hr (by omega : i + 1 ≤ j))
+  · exact (primeBlocks_disjoint_of_end_le_start
+      (kubiliusGeometricCutoff_mono hM hr (by omega : j + 1 ≤ i))).symm
+
+/-- Mertens' theorem gives a linear-in-`log log M` variance lower bound on every geometric
+schedule block.  The only discretization loss is the explicit `log 2` from natural flooring. -/
+theorem mertens_kubiliusGeometricBlock_variance_lower :
+    ∃ C : ℝ, ∀ (M K i : ℕ) (r : ℝ), 3 ≤ M → 1 < r →
+      2 * Real.log 2 ≤
+        Real.rpow (Real.log M) (kubiliusGeometricExponent K i r) →
+      2 * Real.log 2 ≤
+        Real.rpow (Real.log M) (kubiliusGeometricExponent K (i + 1) r) →
+      (1 / 2 : ℝ) *
+          ((r - 1) * kubiliusGeometricExponent K i r * Real.log (Real.log M) -
+            Real.log 2 - 2 * C) ≤
+        ∑ p ∈ (primesUpTo (kubiliusGeometricCutoff M K r (i + 1))).filter
+            (kubiliusGeometricCutoff M K r i < ·),
+          (1 / p : ℝ) * (1 - 1 / p) := by
+  obtain ⟨C, hC⟩ := mertens_primeVariance_block_lower
+  refine ⟨C, fun M K i r hM hr hgrowi hgrowsucc ↦ ?_⟩
+  let si := kubiliusGeometricExponent K i r
+  let sj := kubiliusGeometricExponent K (i + 1) r
+  let a := kubiliusGeometricCutoff M K r i
+  let b := kubiliusGeometricCutoff M K r (i + 1)
+  have hri : (1 : ℝ) ≤ r := hr.le
+  have hsi : 0 < si := kubiliusGeometricExponent_pos (zero_lt_one.trans hr)
+  have hsj : 0 < sj := kubiliusGeometricExponent_pos (zero_lt_one.trans hr)
+  have hai := log_log_natFloor_exp_log_rpow_bounds hM hsi hgrowi
+  have hbj := log_log_natFloor_exp_log_rpow_bounds hM hsj hgrowsucc
+  change 2 ≤ a ∧
+    si * Real.log (Real.log M) - Real.log 2 ≤ Real.log (Real.log a) ∧
+    Real.log (Real.log a) ≤ si * Real.log (Real.log M) at hai
+  change 2 ≤ b ∧
+    sj * Real.log (Real.log M) - Real.log 2 ≤ Real.log (Real.log b) ∧
+    Real.log (Real.log b) ≤ sj * Real.log (Real.log M) at hbj
+  have hab : a ≤ b := kubiliusGeometricCutoff_mono hM hri (by omega)
+  have hMertens := hC a b hai.1 hab
+  have hsucc : sj = r * si := by
+    exact kubiliusGeometricExponent_succ (ne_of_gt (zero_lt_one.trans hr))
+  change (1 / 2 : ℝ) *
+      ((r - 1) * si * Real.log (Real.log M) - Real.log 2 - 2 * C) ≤ _
+  change (1 / 2 : ℝ) *
+      (Real.log (Real.log b) - Real.log (Real.log a) - 2 * C) ≤ _ at hMertens
+  have haiUpper := hai.2.2
+  have hbjLower := hbj.2.1
+  rw [hsucc] at hbjLower
+  nlinarith
+
+/-- The variance of every geometric schedule prefix is at most its exponent times
+`log log M`, plus one fixed Mertens constant. -/
+theorem mertens_kubiliusGeometricPrefix_variance_upper :
+    ∃ C : ℝ, ∀ (M K i : ℕ) (r : ℝ), 3 ≤ M → 0 < r →
+      2 * Real.log 2 ≤
+        Real.rpow (Real.log M) (kubiliusGeometricExponent K i r) →
+      ∑ p ∈ primesUpTo (kubiliusGeometricCutoff M K r i),
+          (1 / p : ℝ) * (1 - 1 / p) ≤
+        kubiliusGeometricExponent K i r * Real.log (Real.log M) + C := by
+  obtain ⟨C, hC⟩ := mertens_primeVariance_prefix_upper
+  refine ⟨C, fun M K i r hM hr hgrowth ↦ ?_⟩
+  let s := kubiliusGeometricExponent K i r
+  let a := kubiliusGeometricCutoff M K r i
+  have hs : 0 < s := kubiliusGeometricExponent_pos hr
+  have ha := log_log_natFloor_exp_log_rpow_bounds hM hs hgrowth
+  change 2 ≤ a ∧
+    s * Real.log (Real.log M) - Real.log 2 ≤ Real.log (Real.log a) ∧
+    Real.log (Real.log a) ≤ s * Real.log (Real.log M) at ha
+  have hprefix := hC a ha.1
+  change _ ≤ Real.log (Real.log a) + C at hprefix
+  change _ ≤ s * Real.log (Real.log M) + C
+  linarith [ha.2.2]
+
 open Classical in
 /-- Literature input: the Kubilius-model total-variation bound (Tenenbaum 1999, Théorème 1.1 and
 (1.7), as quoted by Ford, arXiv 2408.03803v4, Theorem A), at `ε = 1/2`, projected to divisibility

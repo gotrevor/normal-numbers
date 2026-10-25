@@ -32,9 +32,13 @@ Write `L = log log N`, `z = ⌊exp((log N)^{1−η})⌋`, and `S(n) = (n+a₀).p
    - `#S > 2L` has small mass: mean `Σ 1/p ≤ L + C` by Mertens; use Chebyshev.
    - **Crossing, with constants chosen in the right order.**  Fix `K` (number of blocks), then `M`, then a
      ratio `r ≥ 64·M²`, enlarged by any fixed numerical factor needed below.
-     - Take `K` geometric blocks `[u_k, r·u_k]` in `u = log log p` inside `[(log L)^3, (1−η)L]`.  This is
-       possible for `N` large.  The blocks are independent.
-     - The cap `C_T + log₂(2L) + O(1)` is `o(σ_k)`, since every block length is `≥ (log L)^3`.
+     - Take `K` geometric blocks `[u_k, r·u_k]` in `u = log log p`.  A floor-friendly concrete
+       schedule is `s_k = r^k/(4r^K)`, `u_k = s_k L`, with natural endpoints
+       `⌊exp((log M)^s_k)⌋` for `M = N+a₀`.  The last block ends at exponent `1/4`, below the
+       Kubilius cutoff exponent `1/2`; the first exponent is fixed and positive, so its endpoint
+       eventually exceeds `collisionCutoff N`.  The blocks are independent.
+     - The cap `C_T + log₂(2L) + O(1)` is `o(σ_k)`, since every fixed `s_k` is positive and each
+       block variance grows linearly in `L`.
      - Each centered block increment `Δ_k` has variance `σ_k² ≍ (r−1)·u_k`.  The proved finite-law
        bound `bernoulliSubsetMass_blockCenteredSum_ge_sqrt_eighth` gives
        `P(Δ_k ≥ σ_k/8) ≥ 1/64` once `σ_k² ≥ 1`, from `E Δ = 0` and
