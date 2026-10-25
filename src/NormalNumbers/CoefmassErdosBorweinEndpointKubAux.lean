@@ -684,6 +684,15 @@ noncomputable def bernoulliCenteredSum {α : Type*} [DecidableEq α]
   ∑ p ∈ U, if p ∈ S then 1 - q p else -q p
 
 open Classical in
+/-- Centered membership sums add over disjoint coordinate blocks. -/
+theorem bernoulliCenteredSum_union {α : Type*} [DecidableEq α]
+    (A B : Finset α) (hAB : Disjoint A B) (q : α → ℝ) (S : Finset α) :
+    bernoulliCenteredSum (A ∪ B) q S =
+      bernoulliCenteredSum A q S + bernoulliCenteredSum B q S := by
+  unfold bernoulliCenteredSum
+  exact Finset.sum_union hAB
+
+open Classical in
 /-- A centered membership sum is the selected cardinality minus its Bernoulli mean. -/
 theorem bernoulliCenteredSum_eq_card_inter_sub_sum {α : Type*} [DecidableEq α]
     (U S : Finset α) (q : α → ℝ) :

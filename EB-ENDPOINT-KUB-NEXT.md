@@ -40,14 +40,18 @@ Write `L = log log N`, `z = ⌊exp((log N)^{1−η})⌋`, and `S(n) = (n+a₀).p
        `P(Δ_k ≥ σ_k/8) ≥ 1/64` once `σ_k² ≥ 1`, from `E Δ = 0` and
        `E Δ⁴ ≤ 3σ_k⁴ + σ_k²`.  (The earlier `σ_k/2` threshold did not follow from those moments alone;
        the smaller fixed threshold is sufficient.)
-     - The running value at a block start is `≥ −M·√(u_k)` except with probability `≤ 1/M²`
-       (Chebyshev).  Enlarge `r` after choosing `M` so that `M·√(u_k) ≤ σ_k/32`; eventually the cap is
-       also `≤ σ_k/32`, leaving a positive crossing margin from the `σ_k/8` increment.
+     - Control the **centered reciprocal-prime prefix**
+       `X(a_k) = #(S ∩ [1,a_k]) − Σ_{p≤a_k} 1/p` directly.  It is `≥ −M·√(u_k)` except with
+       probability `≤ 1/M²` (Chebyshev).  At the block endpoint,
+       `ω(S;b_k) − log log b_k = X(a_k) + Δ_k + (Σ_{p≤b_k}1/p − log log b_k)`, so Mertens is
+       spent only once, at `b_k`; no start-point Mertens loss is needed.  Enlarge `r` after choosing
+       `M` so that the start loss, the fixed Mertens constant, and the logarithmic cap together are
+       at most `σ_k/8`.
      - `P(no crossing) ≤ (63/64)^K + K/M²`: choose `K` with `(63/64)^K < ε/2`, then `M` with
        `K/M² < ε/2`, then `r`.
      - A crossing at a block end gives a crossing at a prime jump `p > P₀` inside the block, because the walk
        only decreases between jumps.
-     - Mertens keeps the centering `Σ_{p ≤ x} 1/p` within `O(1)` of `log log x`.
+     - Mertens keeps the endpoint centering `Σ_{p ≤ b_k} 1/p` within `O(1)` of `log log b_k`.
 4. Conclude `density{W ≤ T} → 0`.
 
 ## Assembly

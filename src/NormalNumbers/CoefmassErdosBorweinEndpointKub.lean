@@ -135,6 +135,51 @@ theorem mertens_primeVariance_prefix_upper :
       linarith [(abs_le.mp (hC y hy)).2]
 
 open Classical in
+/-- Intersecting the prime factors cut off at `y` with the primes up to `a ≤ y` recovers the
+prime factors cut off at `a`. -/
+theorem primeFactors_filter_inter_primesUpTo {n a y : ℕ} (hay : a ≤ y) :
+    n.primeFactors.filter (· ≤ y) ∩ primesUpTo a = primeFactorsUpTo a n := by
+  ext p
+  simp only [Finset.mem_inter, Finset.mem_filter, primesUpTo_eq_filter_Iic,
+    Finset.mem_Iic, primeFactorsUpTo]
+  constructor
+  · rintro ⟨⟨hpn, _⟩, hpa, _⟩
+    exact ⟨hpn, hpa⟩
+  · rintro ⟨hpn, hpa⟩
+    exact ⟨⟨hpn, hpa.trans hay⟩, hpa, (Nat.mem_primeFactors.mp hpn).1⟩
+
+open Classical in
+/-- In the Kubilius coordinate set of an integer, a centered prime-prefix sum is its restricted
+prime-factor count minus the reciprocal-prime mean. -/
+theorem bernoulliCenteredSum_primesUpTo_primeFactors {n a y : ℕ} (hay : a ≤ y) :
+    bernoulliCenteredSum (primesUpTo a) (fun p ↦ (1 / p : ℝ))
+        (n.primeFactors.filter (· ≤ y)) =
+      (omegaUpTo (a : ℝ) n : ℝ) - ∑ p ∈ primesUpTo a, (1 / p : ℝ) := by
+  rw [bernoulliCenteredSum_eq_card_inter_sub_sum,
+    primeFactors_filter_inter_primesUpTo hay, card_primeFactorsUpTo_eq_omegaUpTo]
+
+open Classical in
+/-- A centered prime-prefix sum splits into the prefix at `a` and the block `(a,b]`. -/
+theorem bernoulliCenteredSum_primesUpTo_eq_add_block (S : Finset ℕ) {a b : ℕ}
+    (hab : a ≤ b) :
+    bernoulliCenteredSum (primesUpTo b) (fun p ↦ (1 / p : ℝ)) S =
+      bernoulliCenteredSum (primesUpTo a) (fun p ↦ (1 / p : ℝ)) S +
+        bernoulliCenteredSum ((primesUpTo b).filter (a < ·))
+          (fun p ↦ (1 / p : ℝ)) S := by
+  have hsub : primesUpTo a ⊆ primesUpTo b := by
+    intro p hp
+    simp only [primesUpTo_eq_filter_Iic, Finset.mem_filter, Finset.mem_Iic] at hp ⊢
+    exact ⟨hp.1.trans hab, hp.2⟩
+  have hblock : (primesUpTo b).filter (a < ·) = primesUpTo b \ primesUpTo a := by
+    ext p
+    simp only [primesUpTo_eq_filter_Iic, Finset.mem_filter, Finset.mem_Iic,
+      Finset.mem_sdiff]
+    by_cases hpprime : p.Prime <;> simp [hpprime]
+  rw [hblock, ← bernoulliCenteredSum_union]
+  · rw [Finset.union_sdiff_of_subset hsub]
+  · exact Finset.disjoint_sdiff
+
+open Classical in
 /-- Mass of `A` under the Kubilius model: each prime `p ≤ y` is included independently with
 probability `1/p`. -/
 noncomputable def kubiliusMass (y : ℕ) (A : Set (Finset ℕ)) : ℝ :=
@@ -178,6 +223,40 @@ theorem kubiliusMass_le_one (y : ℕ) (A : Set (Finset ℕ)) : kubiliusMass y A 
   rw [kubiliusMass_eq_bernoulliSubsetMass]
   exact bernoulliSubsetMass_le_one _ _ _
     (kubiliusParameter_nonneg y) (kubiliusParameter_le_one y)
+
+open Classical in
+/-- Finite Kubilius mass is subadditive. -/
+theorem kubiliusMass_union_le (y : ℕ) (A B : Set (Finset ℕ)) :
+    kubiliusMass y (A ∪ B) ≤ kubiliusMass y A + kubiliusMass y B := by
+  unfold kubiliusMass
+  rw [← Finset.sum_add_distrib]
+  apply Finset.sum_le_sum
+  intro S hS
+  have hweight : 0 ≤
+      ∏ p ∈ primesUpTo y, if p ∈ S then (1 / p : ℝ) else 1 - 1 / p := by
+    exact bernoulliSubsetWeight_nonneg (primesUpTo y) S (fun p ↦ (1 / p : ℝ))
+      (kubiliusParameter_nonneg y) (kubiliusParameter_le_one y)
+  by_cases hA : S ∈ A
+  · by_cases hB : S ∈ B
+    · simp only [Set.mem_union, hA, hB, true_or, if_true]
+      simpa only [one_div] using le_add_of_nonneg_right hweight
+    · simp [hA, hB]
+  · by_cases hB : S ∈ B <;> simp [hA, hB]
+
+open Classical in
+/-- Union bound for a finite family of events in the Kubilius model. -/
+theorem kubiliusMass_exists_mem_le_sum {ι : Type*} [DecidableEq ι]
+    (y : ℕ) (I : Finset ι) (A : ι → Set (Finset ℕ)) :
+    kubiliusMass y {S | ∃ i ∈ I, S ∈ A i} ≤ ∑ i ∈ I, kubiliusMass y (A i) := by
+  induction I using Finset.induction_on with
+  | empty => simp [kubiliusMass]
+  | @insert i I hi ih =>
+      have hevent : {S | ∃ j ∈ insert i I, S ∈ A j} =
+          A i ∪ {S | ∃ j ∈ I, S ∈ A j} := by
+        ext S
+        simp
+      rw [hevent, Finset.sum_insert hi]
+      exact (kubiliusMass_union_le y _ _).trans (add_le_add le_rfl ih)
 
 open Classical in
 /-- Chebyshev's inequality for a centered sum on any prime-coordinate block inside the full
@@ -254,6 +333,285 @@ theorem kubiliusMass_all_blockCenteredSum_lt_sqrt_eighth_le {ι : Type*} [Decida
   exact bernoulliSubsetMass_all_blockCenteredSum_lt_sqrt_eighth_le
     (primesUpTo y) I B hBU hdisj (fun p ↦ (1 / p : ℝ))
     (kubiliusParameter_nonneg y) (kubiliusParameter_le_one y) hV
+
+open Classical in
+/-- The three exceptional events in the fixed-block Kubilius crossing argument: too many selected
+primes, every block missing its positive increment, or an abnormally negative block start. -/
+noncomputable def kubiliusBlockBadEvent {ι : Type*} [DecidableEq ι]
+    (y : ℕ) (I : Finset ι) (a b : ι → ℕ) (R : ι → ℝ) (L : ℝ) :
+    Set (Finset ℕ) :=
+  {S | 2 * L < ((S ∩ primesUpTo y).card : ℝ) ∨
+    (∀ i ∈ I,
+      bernoulliCenteredSum ((primesUpTo (b i)).filter (a i < ·))
+          (fun p ↦ (1 / p : ℝ)) S <
+        Real.sqrt (∑ p ∈ (primesUpTo (b i)).filter (a i < ·),
+          (1 / p : ℝ) * (1 - 1 / p)) / 8) ∨
+    ∃ i ∈ I,
+      bernoulliCenteredSum (primesUpTo (a i)) (fun p ↦ (1 / p : ℝ)) S ≤ -R i}
+
+open Classical in
+/-- Fixed-block probability bound for `kubiliusBlockBadEvent`.  The three terms are respectively
+the missed-increment probability, the terminal-cardinality Chebyshev bound, and the sum of the
+block-start Chebyshev bounds. -/
+theorem kubiliusMass_blockBadEvent_le {ι : Type*} [DecidableEq ι]
+    (y : ℕ) (I : Finset ι) (a b : ι → ℕ) (R : ι → ℝ) (L D : ℝ)
+    (hab : ∀ i ∈ I, a i ≤ b i) (hby : ∀ i ∈ I, b i ≤ y)
+    (hdisj : ∀ i ∈ I, ∀ j ∈ I, i ≠ j →
+      Disjoint ((primesUpTo (b i)).filter (a i < ·))
+        ((primesUpTo (b j)).filter (a j < ·)))
+    (hV : ∀ i ∈ I, 1 ≤ ∑ p ∈ (primesUpTo (b i)).filter (a i < ·),
+      (1 / p : ℝ) * (1 - 1 / p))
+    (hD : 0 < D) (hR : ∀ i ∈ I, 0 < R i)
+    (hmean : (∑ p ∈ primesUpTo y, (1 / p : ℝ)) + D ≤ 2 * L) :
+    kubiliusMass y (kubiliusBlockBadEvent y I a b R L) ≤
+      ((63 : ℝ) / 64) ^ I.card +
+        (∑ p ∈ primesUpTo y, (1 / p : ℝ) * (1 - 1 / p)) / D ^ 2 +
+        ∑ i ∈ I, (∑ p ∈ primesUpTo (a i),
+          (1 / p : ℝ) * (1 - 1 / p)) / (R i) ^ 2 := by
+  let B : ι → Finset ℕ := fun i ↦ (primesUpTo (b i)).filter (a i < ·)
+  let Ecard : Set (Finset ℕ) :=
+    {S | 2 * L < ((S ∩ primesUpTo y).card : ℝ)}
+  let Eblocks : Set (Finset ℕ) :=
+    {S | ∀ i ∈ I, bernoulliCenteredSum (B i) (fun p ↦ (1 / p : ℝ)) S <
+      Real.sqrt (∑ p ∈ B i, (1 / p : ℝ) * (1 - 1 / p)) / 8}
+  let Estarts : Set (Finset ℕ) :=
+    {S | ∃ i ∈ I,
+      bernoulliCenteredSum (primesUpTo (a i)) (fun p ↦ (1 / p : ℝ)) S ≤ -R i}
+  have hBU : ∀ i ∈ I, B i ⊆ primesUpTo y := by
+    intro i hi p hp
+    have hpbi : p ∈ primesUpTo (b i) := (Finset.mem_filter.mp hp).1
+    simp only [primesUpTo_eq_filter_Iic, Finset.mem_filter, Finset.mem_Iic] at hpbi ⊢
+    exact ⟨hpbi.1.trans (hby i hi), hpbi.2⟩
+  have hblocks : kubiliusMass y Eblocks ≤ ((63 : ℝ) / 64) ^ I.card := by
+    exact kubiliusMass_all_blockCenteredSum_lt_sqrt_eighth_le
+      y I B hBU (fun i hi j hj hij ↦ hdisj i hi j hj hij) (fun i hi ↦ hV i hi)
+  have hcardEvent : Ecard ⊆
+      {S | D ≤ |(((S ∩ primesUpTo y).card : ℝ) -
+        ∑ p ∈ primesUpTo y, (1 / p : ℝ))|} := by
+    intro S hS
+    change 2 * L < ((S ∩ primesUpTo y).card : ℝ) at hS
+    have hdiff : D ≤ ((S ∩ primesUpTo y).card : ℝ) -
+        ∑ p ∈ primesUpTo y, (1 / p : ℝ) := by
+      linarith
+    exact hdiff.trans (le_abs_self _)
+  have hcardMass : kubiliusMass y Ecard ≤
+      (∑ p ∈ primesUpTo y, (1 / p : ℝ) * (1 - 1 / p)) / D ^ 2 := by
+    exact (kubiliusMass_mono y hcardEvent).trans
+      (kubiliusMass_card_deviation_ge_le y hD)
+  have hstartOne : ∀ i ∈ I,
+      kubiliusMass y
+          {S | bernoulliCenteredSum (primesUpTo (a i))
+            (fun p ↦ (1 / p : ℝ)) S ≤ -R i} ≤
+        (∑ p ∈ primesUpTo (a i), (1 / p : ℝ) * (1 - 1 / p)) / (R i) ^ 2 := by
+    intro i hi
+    have haiy : a i ≤ y := (hab i hi).trans (hby i hi)
+    have hprefix : primesUpTo (a i) ⊆ primesUpTo y := by
+      intro p hp
+      simp only [primesUpTo_eq_filter_Iic, Finset.mem_filter, Finset.mem_Iic] at hp ⊢
+      exact ⟨hp.1.trans haiy, hp.2⟩
+    have hsub :
+        {S | bernoulliCenteredSum (primesUpTo (a i))
+            (fun p ↦ (1 / p : ℝ)) S ≤ -R i} ⊆
+          {S | R i ≤ |bernoulliCenteredSum (primesUpTo (a i))
+            (fun p ↦ (1 / p : ℝ)) S|} := by
+      intro S hS
+      change bernoulliCenteredSum (primesUpTo (a i))
+        (fun p ↦ (1 / p : ℝ)) S ≤ -R i at hS
+      change R i ≤ |bernoulliCenteredSum (primesUpTo (a i))
+        (fun p ↦ (1 / p : ℝ)) S|
+      have hxnonpos : bernoulliCenteredSum (primesUpTo (a i))
+          (fun p ↦ (1 / p : ℝ)) S ≤ 0 := by
+        linarith [hR i hi]
+      rw [abs_of_nonpos hxnonpos]
+      linarith
+    exact (kubiliusMass_mono y hsub).trans
+      (kubiliusMass_blockCenteredSum_abs_ge_le y (primesUpTo (a i))
+        hprefix (hR i hi))
+  have hstarts : kubiliusMass y Estarts ≤
+      ∑ i ∈ I, (∑ p ∈ primesUpTo (a i),
+        (1 / p : ℝ) * (1 - 1 / p)) / (R i) ^ 2 := by
+    exact (kubiliusMass_exists_mem_le_sum y I (fun i ↦
+      {S | bernoulliCenteredSum (primesUpTo (a i))
+        (fun p ↦ (1 / p : ℝ)) S ≤ -R i})).trans
+      (Finset.sum_le_sum fun i hi ↦ hstartOne i hi)
+  have hevent : kubiliusBlockBadEvent y I a b R L = Eblocks ∪ (Ecard ∪ Estarts) := by
+    ext S
+    simp only [kubiliusBlockBadEvent, Set.mem_ofPred_eq, Set.mem_union]
+    change (2 * L < ((S ∩ primesUpTo y).card : ℝ) ∨
+      (∀ i ∈ I, bernoulliCenteredSum (B i) (fun p ↦ (1 / p : ℝ)) S <
+        Real.sqrt (∑ p ∈ B i, (1 / p : ℝ) * (1 - 1 / p)) / 8) ∨
+      (∃ i ∈ I, bernoulliCenteredSum (primesUpTo (a i))
+        (fun p ↦ (1 / p : ℝ)) S ≤ -R i)) ↔ _
+    simp only [Eblocks, Ecard, Estarts, Set.mem_ofPred_eq]
+    tauto
+  rw [hevent]
+  calc
+    kubiliusMass y (Eblocks ∪ (Ecard ∪ Estarts)) ≤
+        kubiliusMass y Eblocks + kubiliusMass y (Ecard ∪ Estarts) :=
+      kubiliusMass_union_le y _ _
+    _ ≤ kubiliusMass y Eblocks + (kubiliusMass y Ecard + kubiliusMass y Estarts) := by
+      gcongr
+      exact kubiliusMass_union_le y _ _
+    _ ≤ ((63 : ℝ) / 64) ^ I.card +
+        (∑ p ∈ primesUpTo y, (1 / p : ℝ) * (1 - 1 / p)) / D ^ 2 +
+        ∑ i ∈ I, (∑ p ∈ primesUpTo (a i),
+          (1 / p : ℝ) * (1 - 1 / p)) / (R i) ^ 2 := by
+      linarith
+
+open Classical in
+/-- A single good Kubilius block forces the divisor-variance mass above `T`.  The starting
+prime-prefix fluctuation is centered at its reciprocal-prime mean; consequently Mertens is spent
+only once, at the block endpoint. -/
+theorem divisorVarianceMass_gt_of_kubilius_block_crossing
+    (v : ℕ → ℝ) (c : ℝ) (hc : 0 < c) (hv0 : ∀ m, 0 ≤ v m)
+    (hv : ∀ m : ℕ, 2 ≤ m → c * Real.rpow (Real.log m) (-Real.log 2) ≤ v m)
+    {P n y a b : ℕ} {T L C R : ℝ} (hn : n ≠ 0) (hPa : P ≤ a)
+    (hab : a ≤ b) (hby : b ≤ y) (hL : 0 < L)
+    (hcard : ((n.primeFactors.filter (· ≤ y)).card : ℝ) ≤ 2 * L)
+    (hstart : -R <
+      bernoulliCenteredSum (primesUpTo a) (fun p ↦ (1 / p : ℝ))
+        (n.primeFactors.filter (· ≤ y)))
+    (hcross :
+      Real.sqrt (∑ p ∈ (primesUpTo b).filter (a < ·),
+          (1 / p : ℝ) * (1 - 1 / p)) / 8 ≤
+        bernoulliCenteredSum ((primesUpTo b).filter (a < ·))
+          (fun p ↦ (1 / p : ℝ)) (n.primeFactors.filter (· ≤ y)))
+    (hvariance : 1 ≤ ∑ p ∈ (primesUpTo b).filter (a < ·),
+      (1 / p : ℝ) * (1 - 1 / p))
+    (hMertens :
+      |∑ p ∈ primesUpTo b, (1 / p : ℝ) - Real.log (Real.log b)| ≤ C)
+    (hdom :
+      1 + Real.log (2 * L) + Real.log (T / c) / Real.log 2 ≤
+        Real.sqrt (∑ p ∈ (primesUpTo b).filter (a < ·),
+          (1 / p : ℝ) * (1 - 1 / p)) / 8 - R - C) :
+    T < divisorVarianceMass v P n := by
+  let S : Finset ℕ := n.primeFactors.filter (· ≤ y)
+  let B : Finset ℕ := (primesUpTo b).filter (a < ·)
+  let V : ℝ := ∑ p ∈ B, (1 / p : ℝ) * (1 - 1 / p)
+  change (S.card : ℝ) ≤ 2 * L at hcard
+  change -R < bernoulliCenteredSum (primesUpTo a) (fun p ↦ (1 / p : ℝ)) S at hstart
+  change Real.sqrt V / 8 ≤
+    bernoulliCenteredSum B (fun p ↦ (1 / p : ℝ)) S at hcross
+  change 1 ≤ V at hvariance
+  change 1 + Real.log (2 * L) + Real.log (T / c) / Real.log 2 ≤
+    Real.sqrt V / 8 - R - C at hdom
+  have hsqrt_pos : 0 < Real.sqrt V / 8 := by
+    exact div_pos (Real.sqrt_pos.2 (zero_lt_one.trans_le hvariance)) (by norm_num)
+  have hay : a ≤ y := hab.trans hby
+  have hprefa := bernoulliCenteredSum_primesUpTo_primeFactors (n := n) hay
+  have hprefb := bernoulliCenteredSum_primesUpTo_primeFactors (n := n) hby
+  change bernoulliCenteredSum (primesUpTo a) (fun p ↦ (1 / p : ℝ)) S =
+    (omegaUpTo (a : ℝ) n : ℝ) - ∑ p ∈ primesUpTo a, (1 / p : ℝ) at hprefa
+  change bernoulliCenteredSum (primesUpTo b) (fun p ↦ (1 / p : ℝ)) S =
+    (omegaUpTo (b : ℝ) n : ℝ) - ∑ p ∈ primesUpTo b, (1 / p : ℝ) at hprefb
+  have hsplit := bernoulliCenteredSum_primesUpTo_eq_add_block S hab
+  change bernoulliCenteredSum (primesUpTo b) (fun p ↦ (1 / p : ℝ)) S =
+    bernoulliCenteredSum (primesUpTo a) (fun p ↦ (1 / p : ℝ)) S +
+      bernoulliCenteredSum B (fun p ↦ (1 / p : ℝ)) S at hsplit
+  have homega_card : omegaUpTo (b : ℝ) n ≤ S.card := by
+    rw [← card_primeFactorsUpTo_eq_omegaUpTo]
+    have hinter := primeFactors_filter_inter_primesUpTo (n := n) hby
+    change S ∩ primesUpTo b = primeFactorsUpTo b n at hinter
+    rw [← hinter]
+    exact Finset.card_le_card Finset.inter_subset_left
+  have homega : (omegaUpTo (b : ℝ) n : ℝ) ≤ 2 * L := by
+    exact (by exact_mod_cast homega_card :
+      (omegaUpTo (b : ℝ) n : ℝ) ≤ (S.card : ℝ)).trans hcard
+  by_contra hnot
+  have hmass : divisorVarianceMass v P n ≤ T := le_of_not_gt hnot
+  have hbridge := omegaUpTo_cutoff_eq_early_or_sub_log_log_le
+    (P := P) (n := n) (x := (a : ℝ)) (y := (b : ℝ)) (T := T) (L := L)
+    v c hc hv0 hv hn (by exact_mod_cast hPa) (by exact_mod_cast hab) hmass hL homega
+  rcases hbridge with hearly | hcap
+  · have hmeanblock := primeReciprocalSum_block_eq_sub a b hab
+    change (∑ p ∈ B, (1 / p : ℝ)) =
+      (∑ p ∈ primesUpTo b, (1 / p : ℝ)) -
+        ∑ p ∈ primesUpTo a, (1 / p : ℝ) at hmeanblock
+    have hmeanblock_nonneg : 0 ≤ ∑ p ∈ B, (1 / p : ℝ) := by
+      apply Finset.sum_nonneg
+      intro p hp
+      positivity
+    have hearlyR : (omegaUpTo (b : ℝ) n : ℝ) = omegaUpTo (a : ℝ) n := by
+      exact_mod_cast hearly
+    have hblock_nonpos :
+        bernoulliCenteredSum B (fun p ↦ (1 / p : ℝ)) S ≤ 0 := by
+      linarith
+    linarith
+  · have hMertensLower := (abs_le.mp hMertens).1
+    have hwalk :
+        1 + Real.log (2 * L) + Real.log (T / c) / Real.log 2 <
+          (omegaUpTo (b : ℝ) n : ℝ) - Real.log (Real.log b) := by
+      linarith
+    exact (not_lt_of_ge hcap) hwalk
+
+open Classical in
+/-- If the divisor-variance mass is at most `T`, then the prime-factor coordinate set must lie in
+the fixed-block exceptional event.  Thus `kubiliusMass_blockBadEvent_le` can be transferred to
+integer density by `KubiliusTV` once a concrete block schedule has been chosen. -/
+theorem primeFactorSet_mem_kubiliusBlockBadEvent_of_divisorVarianceMass_le
+    {ι : Type*} [DecidableEq ι]
+    (v : ℕ → ℝ) (c : ℝ) (hc : 0 < c) (hv0 : ∀ m, 0 ≤ v m)
+    (hv : ∀ m : ℕ, 2 ≤ m → c * Real.rpow (Real.log m) (-Real.log 2) ≤ v m)
+    {P n y : ℕ} {T L C : ℝ} (I : Finset ι) (a b : ι → ℕ) (R : ι → ℝ)
+    (hn : n ≠ 0) (hPa : ∀ i ∈ I, P ≤ a i)
+    (hab : ∀ i ∈ I, a i ≤ b i) (hby : ∀ i ∈ I, b i ≤ y) (hL : 0 < L)
+    (hV : ∀ i ∈ I, 1 ≤ ∑ p ∈ (primesUpTo (b i)).filter (a i < ·),
+      (1 / p : ℝ) * (1 - 1 / p))
+    (hMertens : ∀ i ∈ I,
+      |∑ p ∈ primesUpTo (b i), (1 / p : ℝ) - Real.log (Real.log (b i))| ≤ C)
+    (hdom : ∀ i ∈ I,
+      1 + Real.log (2 * L) + Real.log (T / c) / Real.log 2 ≤
+        Real.sqrt (∑ p ∈ (primesUpTo (b i)).filter (a i < ·),
+          (1 / p : ℝ) * (1 - 1 / p)) / 8 - R i - C)
+    (hmass : divisorVarianceMass v P n ≤ T) :
+    n.primeFactors.filter (· ≤ y) ∈ kubiliusBlockBadEvent y I a b R L := by
+  let S : Finset ℕ := n.primeFactors.filter (· ≤ y)
+  change S ∈ kubiliusBlockBadEvent y I a b R L
+  by_contra hgood
+  change ¬ (2 * L < ((S ∩ primesUpTo y).card : ℝ) ∨
+    (∀ i ∈ I,
+      bernoulliCenteredSum ((primesUpTo (b i)).filter (a i < ·))
+          (fun p ↦ (1 / p : ℝ)) S <
+        Real.sqrt (∑ p ∈ (primesUpTo (b i)).filter (a i < ·),
+          (1 / p : ℝ) * (1 - 1 / p)) / 8) ∨
+    ∃ i ∈ I,
+      bernoulliCenteredSum (primesUpTo (a i)) (fun p ↦ (1 / p : ℝ)) S ≤ -R i) at hgood
+  have hcardNot : ¬ 2 * L < ((S ∩ primesUpTo y).card : ℝ) := by
+    intro h
+    exact hgood (Or.inl h)
+  have hblocksNot : ¬ (∀ i ∈ I,
+      bernoulliCenteredSum ((primesUpTo (b i)).filter (a i < ·))
+          (fun p ↦ (1 / p : ℝ)) S <
+        Real.sqrt (∑ p ∈ (primesUpTo (b i)).filter (a i < ·),
+          (1 / p : ℝ) * (1 - 1 / p)) / 8) := by
+    intro h
+    exact hgood (Or.inr (Or.inl h))
+  have hstartsNot : ¬ (∃ i ∈ I,
+      bernoulliCenteredSum (primesUpTo (a i)) (fun p ↦ (1 / p : ℝ)) S ≤ -R i) := by
+    intro h
+    exact hgood (Or.inr (Or.inr h))
+  have hinter : S ∩ primesUpTo y = S := by
+    have h := primeFactors_filter_inter_primesUpTo (n := n) (a := y) (y := y) le_rfl
+    simpa only [S, primeFactorsUpTo] using h
+  have hcard : (S.card : ℝ) ≤ 2 * L := by
+    rw [← hinter]
+    exact le_of_not_gt hcardNot
+  push Not at hblocksNot
+  obtain ⟨i, hi, hcrossNot⟩ := hblocksNot
+  have hcross :
+      Real.sqrt (∑ p ∈ (primesUpTo (b i)).filter (a i < ·),
+          (1 / p : ℝ) * (1 - 1 / p)) / 8 ≤
+        bernoulliCenteredSum ((primesUpTo (b i)).filter (a i < ·))
+          (fun p ↦ (1 / p : ℝ)) S := hcrossNot
+  have hstart : -R i <
+      bernoulliCenteredSum (primesUpTo (a i)) (fun p ↦ (1 / p : ℝ)) S := by
+    apply lt_of_not_ge
+    intro h
+    exact hstartsNot ⟨i, hi, h⟩
+  have hforced := divisorVarianceMass_gt_of_kubilius_block_crossing
+    v c hc hv0 hv hn (hPa i hi) (hab i hi) (hby i hi) hL hcard hstart hcross
+      (hV i hi) (hMertens i hi) (hdom i hi)
+  exact (not_lt_of_ge hmass) hforced
 
 open Classical in
 /-- Literature input: the Kubilius-model total-variation bound (Tenenbaum 1999, Théorème 1.1 and
