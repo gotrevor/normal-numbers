@@ -30,16 +30,21 @@ Write `L = log log N`, `z = ⌊exp((log N)^{1−η})⌋`, and `S(n) = (n+a₀).p
 3. **The model.**  Under `kubiliusMass`, `S` is an independent Bernoulli(`1/p`) subset of the primes `≤ z`.
    Show `kubiliusMass z A_N → 0` with an elementary independent-sum argument; no CLT is needed.
    - `#S > 2L` has small mass: mean `Σ 1/p ≤ L + C` by Mertens; use Chebyshev.
-   - **Crossing.**  Group the primes into geometric blocks in `u = log log p`, with ratio `r` (say `r = 16`)
-     over `u ∈ [log log P₀, (1−η)L]`.  That is `≍ log L` blocks, and they are independent.
-   - In each block the centered increment `Δ` has variance `σ² ≍` block length.  By fourth moments,
-     `P(Δ ≥ σ/2) ≥ q > 0`, uniformly.  Use `E Δ = 0`, `E Δ⁴ ≤ 3σ⁴ + σ²` for centered Bernoulli sums,
-     and Paley–Zygmund on `Δ⁺`.
-   - The running value before a block is `≥ −M·√(previous length)` except with probability `≤ 1/M²`
-     (Chebyshev), and `√(previous) ≤ σ/(4M)` for `r` large.  So each block independently crosses the
-     cap `C_T + log₂(2L) = o(σ)` with probability `≥ q/2`.
-   - Hence `P(no crossing) ≤ (1 − q/2)^{#blocks} + #blocks/M² → 0`: choose `M`, then `N` large.
-     Mertens keeps the centering `Σ_{p ≤ x} 1/p` within `O(1)` of `log log x`.
+   - **Crossing, with constants chosen in the right order.**  Fix `K` (number of blocks), then `M`, then a
+     ratio `r ≥ 64·M²`.
+     - Take `K` geometric blocks `[u_k, r·u_k]` in `u = log log p` inside `[(log L)^3, (1−η)L]`.  This is
+       possible for `N` large.  The blocks are independent.
+     - The cap `C_T + log₂(2L) + O(1)` is `o(σ_k)`, since every block length is `≥ (log L)^3`.
+     - Each centered block increment `Δ_k` has variance `σ_k² ≍ (r−1)·u_k`.  By fourth moments,
+       `P(Δ_k ≥ σ_k/2) ≥ q > 0`, uniformly.  Use `E Δ = 0`, `E Δ⁴ ≤ 3σ⁴ + σ²` for centered Bernoulli
+       sums, and Paley–Zygmund on `Δ⁺`.
+     - The running value at a block start is `≥ −M·√(u_k)` except with probability `≤ 1/M²`
+       (Chebyshev).  `r ≥ 64M²` makes `M·√(u_k) ≤ σ_k/8`.
+     - `P(no crossing) ≤ (1 − q)^K + K/M²`: choose `K` with `(1−q)^K < ε/2`, then `M` with `K/M² < ε/2`,
+       then `r`.
+     - A crossing at a block end gives a crossing at a prime jump `p > P₀` inside the block, because the walk
+       only decreases between jumps.
+     - Mertens keeps the centering `Σ_{p ≤ x} 1/p` within `O(1)` of `log log x`.
 4. Conclude `density{W ≤ T} → 0`.
 
 ## Assembly
