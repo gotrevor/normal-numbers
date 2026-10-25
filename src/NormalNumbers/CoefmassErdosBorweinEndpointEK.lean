@@ -374,6 +374,151 @@ theorem omegaUpTo_cutoff_eq_early_or_sub_log_log_le
     linarith
   · exact Or.inl hearly
 
+/-! ### The finite-dimensional upper rectangle -/
+
+/-- The coordinatewise upper rectangle used in the portmanteau application. -/
+def upperRectangle {R : ℕ} (u : Fin R → ℝ) : Set (Fin R → ℝ) :=
+  {z | ∀ j, z j ≤ u j}
+
+/-- A finite coordinatewise upper rectangle is closed. -/
+theorem isClosed_upperRectangle {R : ℕ} (u : Fin R → ℝ) :
+    IsClosed (upperRectangle u) := by
+  rw [show upperRectangle u = ⋂ j, {z | z j ≤ u j} by
+    ext z
+    simp only [upperRectangle, Set.mem_ofPred_eq, Set.mem_iInter]]
+  exact isClosed_iInter fun j ↦ isClosed_le (continuous_apply j) continuous_const
+
+/-- The centering in FDEK is exactly `t log log N` at its exponential cutoff. -/
+theorem log_log_exp_log_rpow {N : ℕ} {t : ℝ} (hN : 1 < N) :
+    Real.log (Real.log (Real.exp (Real.log N ^ t))) = t * Real.log (Real.log N) := by
+  rw [Real.log_exp]
+  exact Real.log_rpow (Real.log_pos (by exact_mod_cast hN)) t
+
+/-- The FDEK exponential cutoffs are monotone in their time parameter once `N ≥ 3`. -/
+theorem exp_log_rpow_mono {N : ℕ} {s t : ℝ} (hN : 3 ≤ N) (hst : s ≤ t) :
+    Real.exp (Real.log N ^ s) ≤ Real.exp (Real.log N ^ t) := by
+  apply Real.exp_le_exp.mpr
+  have hlog1 : (1 : ℝ) ≤ Real.log N := by
+    calc
+      (1 : ℝ) = Real.log (Real.exp 1) := (Real.log_exp 1).symm
+      _ ≤ Real.log 3 := Real.log_le_log (Real.exp_pos 1) Real.exp_one_lt_three.le
+      _ ≤ Real.log N := Real.log_le_log (by norm_num) (by exact_mod_cast hN)
+  exact Real.rpow_le_rpow_of_exponent_le hlog1 hst
+
+/-- The terminal FDEK cutoff is the sample size itself. -/
+theorem exp_log_rpow_one {N : ℕ} (hN : 0 < N) :
+    Real.exp (Real.log N ^ (1 : ℝ)) = N := by
+  rw [Real.rpow_one, Real.exp_log]
+  exact_mod_cast hN
+
+/-- Shifting the sampled integers by a fixed nonnegative amount only embeds the filtered interval
+into the correspondingly enlarged unshifted interval. -/
+theorem card_filter_Icc_add_le (Q : ℕ → Prop) [DecidablePred Q] (N a : ℕ) :
+    ((Finset.Icc 1 N).filter (fun n ↦ Q (n + a))).card ≤
+      ((Finset.Icc 1 (N + a)).filter Q).card := by
+  let e : ℕ ↪ ℕ := addRightEmbedding a
+  have hsub : ((Finset.Icc 1 N).filter (fun n ↦ Q (n + a))).map e ⊆
+      (Finset.Icc 1 (N + a)).filter Q := by
+    intro m hm
+    rcases Finset.mem_map.mp hm with ⟨n, hn, rfl⟩
+    rw [Finset.mem_filter] at hn ⊢
+    simp only [Finset.mem_Icc] at hn ⊢
+    simp only [e, addRightEmbedding_apply]
+    exact ⟨⟨by omega, by omega⟩, hn.2⟩
+  simpa only [Finset.card_map] using Finset.card_le_card hsub
+
+/-- The logarithmic chain cap is negligible on the FDEK `√L` scale. -/
+theorem eventually_walk_cap_le_sqrt (c T δ : ℝ) (hδ : 0 < δ) :
+    ∀ᶠ L : ℝ in atTop,
+      1 + Real.log (2 * L) + Real.log (T / c) / Real.log 2 ≤ δ * Real.sqrt L := by
+  let D : ℝ := 1 + Real.log 2 + Real.log (T / c) / Real.log 2
+  have hhalf : (0 : ℝ) < 1 / 2 := by norm_num
+  have hsmall := (isLittleO_log_rpow_atTop hhalf).bound (half_pos hδ)
+  have hlarge := (tendsto_rpow_atTop hhalf).eventually_ge_atTop (2 * D / δ)
+  filter_upwards [hsmall, hlarge, eventually_ge_atTop (1 : ℝ)] with L hlog hpow hL
+  have hLpos : 0 < L := zero_lt_one.trans_le hL
+  have hlog0 : 0 ≤ Real.log L := Real.log_nonneg hL
+  have hrpow0 : 0 ≤ L ^ (1 / 2 : ℝ) := Real.rpow_nonneg hLpos.le _
+  have hlog' : Real.log L ≤ (δ / 2) * L ^ (1 / 2 : ℝ) := by
+    simpa only [Real.norm_eq_abs, abs_of_nonneg hlog0, abs_of_nonneg hrpow0] using hlog
+  have hD : D ≤ (δ / 2) * L ^ (1 / 2 : ℝ) := by
+    calc
+      D = (δ / 2) * (2 * D / δ) := by field_simp
+      _ ≤ (δ / 2) * L ^ (1 / 2 : ℝ) :=
+        mul_le_mul_of_nonneg_left hpow (half_pos hδ).le
+  rw [Real.sqrt_eq_rpow, Real.log_mul (by norm_num) hLpos.ne']
+  dsimp only [D] at hD
+  linarith
+
+/-- A fixed positive gap between the early cutoff and a grid time dominates every fixed early
+coordinate bound on the `√L` scale. -/
+theorem eventually_early_gap_le {s t : ℝ} (hst : s < t) (A δ : ℝ) :
+    ∀ᶠ L : ℝ in atTop, A - (t - s) * Real.sqrt L ≤ δ := by
+  have hd : 0 < t - s := sub_pos.2 hst
+  have hlarge := (tendsto_rpow_atTop (by norm_num : (0 : ℝ) < 1 / 2)).eventually_ge_atTop
+    ((A - δ) / (t - s))
+  filter_upwards [hlarge] with L hL
+  rw [Real.sqrt_eq_rpow]
+  have hmul := mul_le_mul_of_nonneg_left hL hd.le
+  rw [mul_div_cancel₀ (A - δ) hd.ne'] at hmul
+  linarith
+
+/-- The terminal FDEK coordinate controls the total restricted prime-factor count.  This is the
+deterministic conversion used to supply the `ω ≤ 2L` hypothesis in the walk cap. -/
+theorem omegaUpTo_le_two_mul_of_normalized_terminal_le_one {y : ℝ} {n : ℕ} {L : ℝ}
+    (hL : 1 ≤ L)
+    (hterminal : ((omegaUpTo y n : ℝ) - L) / Real.sqrt L ≤ 1) :
+    (omegaUpTo y n : ℝ) ≤ 2 * L := by
+  have hsqrt_pos : 0 < Real.sqrt L := Real.sqrt_pos.2 (lt_of_lt_of_le zero_lt_one hL)
+  have hsqrt_sq : Real.sqrt L * Real.sqrt L = L := by
+    nlinarith [Real.sq_sqrt (le_trans (by norm_num) hL)]
+  have hsqrt_le : Real.sqrt L ≤ L := by
+    nlinarith [Real.sqrt_nonneg L]
+  have h := (div_le_iff₀ hsqrt_pos).1 hterminal
+  linarith
+
+/-- Pointwise deterministic rectangle implication at one grid coordinate.  The early-cutoff
+alternative loses `(t-s)√L`, while the prime-jump alternative is bounded by the chain cap.  The
+analytic hypotheses at the end are exactly the two scalar comparisons that later hold eventually
+for a fixed FDEK grid. -/
+theorem normalized_omegaUpTo_cutoff_le
+    (v : ℕ → ℝ) (c : ℝ) (hc : 0 < c)
+    (hv0 : ∀ m, 0 ≤ v m)
+    (hv : ∀ m : ℕ, 2 ≤ m → c * Real.rpow (Real.log m) (-Real.log 2) ≤ v m)
+    {P n : ℕ} {x y T L s t A δ : ℝ}
+    (hn : n ≠ 0) (hPx : (P : ℝ) ≤ x) (hxy : x ≤ y)
+    (hmass : divisorVarianceMass v P n ≤ T) (hL : 0 < L)
+    (homega : (omegaUpTo y n : ℝ) ≤ 2 * L)
+    (hloglog : Real.log (Real.log y) = t * L)
+    (hearly : (omegaUpTo x n : ℝ) - s * L ≤ A * Real.sqrt L)
+    (hgap : A - (t - s) * Real.sqrt L ≤ δ)
+    (hcap : 1 + Real.log (2 * L) + Real.log (T / c) / Real.log 2 ≤
+      δ * Real.sqrt L) :
+    ((omegaUpTo y n : ℝ) - t * L) / Real.sqrt L ≤ δ := by
+  have hsqrt_pos : 0 < Real.sqrt L := Real.sqrt_pos.2 hL
+  rcases omegaUpTo_cutoff_eq_early_or_sub_log_log_le
+      v c hc hv0 hv hn hPx hxy hmass hL homega with heq | hjump
+  · apply (div_le_iff₀ hsqrt_pos).2
+    have hsqrt_sq : Real.sqrt L * Real.sqrt L = L := by
+      nlinarith [Real.sq_sqrt hL.le]
+    have hmul : (t - s) * L = ((t - s) * Real.sqrt L) * Real.sqrt L := by
+      calc
+        (t - s) * L = (t - s) * (Real.sqrt L * Real.sqrt L) :=
+          congrArg ((t - s) * ·) hsqrt_sq.symm
+        _ = ((t - s) * Real.sqrt L) * Real.sqrt L := by ring
+    rw [heq]
+    calc
+      (omegaUpTo x n : ℝ) - t * L =
+          ((omegaUpTo x n : ℝ) - s * L) - (t - s) * L := by ring
+      _ ≤ A * Real.sqrt L - (t - s) * L := by linarith
+      _ = (A - (t - s) * Real.sqrt L) * Real.sqrt L := by
+        rw [hmul]
+        ring
+      _ ≤ δ * Real.sqrt L := mul_le_mul_of_nonneg_right hgap hsqrt_pos.le
+  · apply (div_le_iff₀ hsqrt_pos).2
+    rw [← hloglog]
+    exact hjump.trans hcap
+
 /-- **The divisor variance mass diverges at the endpoint.**  Chain bound: for a prime `p ∣ n+a₀`
 with `P₀ < p`, the `2^{t-1}` divisors `p·d'` (with `t = ω(n+a₀; ≤ p)`) give
 `W ≥ (c/2) exp(ln 2 (t - log log p) - ln 2 · ln t)`.  So `W ≤ T` caps the walk

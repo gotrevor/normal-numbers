@@ -1,10 +1,34 @@
-# HANDOFF: EB endpoint Step 2, EK laps 1--3
+# HANDOFF: EB endpoint Step 2, EK laps 1--4
 
 Branch `research/eb-endpoint` is local only.  Never push it.  The scoped host predicate is
 `sorry-free:src/NormalNumbers/CoefmassErdosBorweinEndpointEK.lean`.  Do not change any existing
 statement in that file, and keep `ErdosKacFiniteDim` as the named hypothesis exactly as planted.
 
 ## Concrete advance
+
+### Lap 4: deterministic FDEK rectangle layer
+
+The pointwise implication from bounded divisor mass to the coordinatewise FDEK upper rectangle is
+now formalized.  No planted statement was changed.
+
+- `upperRectangle` and `isClosed_upperRectangle` provide the closed set required by the
+  portmanteau hypothesis.
+- `log_log_exp_log_rpow`, `exp_log_rpow_mono`, and `exp_log_rpow_one` identify the exact FDEK
+  centering, order its cutoffs, and identify the terminal cutoff with the sample size.
+- `card_filter_Icc_add_le` handles the fixed shift `n ↦ n+a₀`: the shifted filtered interval
+  injects into the unshifted interval ending at `N+a₀`.
+- `omegaUpTo_le_two_mul_of_normalized_terminal_le_one` converts the terminal FDEK good-coordinate
+  bound into the `ω ≤ 2L` input of the walk cap.
+- `normalized_omegaUpTo_cutoff_le` combines the lap-3 cutoff alternative with the early-coordinate
+  and terminal-coordinate controls.  At each later grid coordinate, bounded divisor mass implies
+  the normalized count is at most `δ`: the no-jump branch gains `-(t-s)√L`, while the jump branch
+  uses the endpoint chain cap.
+- `eventually_walk_cap_le_sqrt` and `eventually_early_gap_le` prove the two scalar eventual bounds
+  required by that implication.
+
+Thus the deterministic heart of the simultaneous rectangle inclusion has been reduced to routine
+finite-grid bookkeeping plus the still-needed eventual comparison
+`collisionCutoff N ≤ exp ((log (N+a₀))^s)`.
 
 ### Lap 3: finite cutoffs inherit the prime-jump cap
 
@@ -141,6 +165,33 @@ Lap-3 repository gate and audits:
 Verdict: `FORMALIZE-TIER GREEN`; all three finite-cutoff helpers use only `propext`,
 `Classical.choice`, and `Quot.sound`.
 
+Lap-4 narrow elaboration:
+
+```text
+lake env lean src/NormalNumbers/CoefmassErdosBorweinEndpointEK.lean
+```
+
+Exit 0.  The sole scoped proof-debt warning remains `divisorVariance_diverges_at_ln2`.
+
+Lap-4 repository gate and audits:
+
+```text
+~/personal/bin/lean-green ~/src/nn-eb-endpoint \
+  --target NormalNumbers.CoefmassErdosBorweinEndpointEK \
+  --import NormalNumbers.CoefmassErdosBorweinEndpointEK \
+  --axioms NormalNumbers.ErdosBorweinEndpointEK.isClosed_upperRectangle \
+  --axioms NormalNumbers.ErdosBorweinEndpointEK.log_log_exp_log_rpow \
+  --axioms NormalNumbers.ErdosBorweinEndpointEK.exp_log_rpow_mono \
+  --axioms NormalNumbers.ErdosBorweinEndpointEK.card_filter_Icc_add_le \
+  --axioms NormalNumbers.ErdosBorweinEndpointEK.eventually_walk_cap_le_sqrt \
+  --axioms NormalNumbers.ErdosBorweinEndpointEK.eventually_early_gap_le \
+  --axioms NormalNumbers.ErdosBorweinEndpointEK.omegaUpTo_le_two_mul_of_normalized_terminal_le_one \
+  --axioms NormalNumbers.ErdosBorweinEndpointEK.normalized_omegaUpTo_cutoff_le
+```
+
+Verdict: `FORMALIZE-TIER GREEN`; all eight audited helpers use only `propext`,
+`Classical.choice`, and `Quot.sound`.
+
 Auditing the two downstream headlines currently reports `sorryAx`, as expected, solely because
 they transitively call the one open Step-2 theorem.  Once that theorem closes, rerun the headline
 audits required by `EB-ENDPOINT-EK-NEXT.md`.
@@ -150,21 +201,22 @@ audits required by `EB-ENDPOINT-EK-NEXT.md`.
 Exactly one `sorry` remains: `divisorVariance_diverges_at_ln2`.  Its combinatorial chain lower
 bound is no longer part of the blocker.  The remaining layers are:
 
-1. use the new cutoff alternative simultaneously across a finite FDEK grid, with extra coordinates
-   `s₀` and `1` controlling the early count and total omega, and package the result as membership
-   in a coordinatewise upper rectangle;
-2. apply `ErdosKacFiniteDim` to the closed coordinatewise upper set;
+1. finish the finite-grid bookkeeping around `normalized_omegaUpTo_cutoff_le`, including the
+   eventual comparison placing `collisionCutoff N` below the early FDEK cutoff;
+2. apply `ErdosKacFiniteDim` to the now-proved closed coordinatewise upper set;
 3. prove the elementary `brownianFDD` Gaussian recursion/grid probability tends to zero, then
    finish the density limit (including the fixed shift `n ↦ n+a₀`).
 
-The main formalization risk is layer 4: `brownianFDD` is a mapped finite product of Gaussian
+The main formalization risk is the probability layer: `brownianFDD` is a mapped finite product of Gaussian
 increments, and the needed rectangle probability/factorization API has not yet been developed in
 this repository.  The Lean reference corpus search found no existing implementation to reuse.
 
 ## Next highest-value attack
 
-Package the new cutoff alternative as the pointwise implication into the coordinatewise FDEK closed
-set.  Introduce the upper rectangle and prove it closed first.  Then choose the extra `s₀` and `1`
-coordinates so the FDEK-good bounds at those coordinates eliminate respectively the no-jump and
-excessive-total-omega cases.  After that, invoke `hEK` on the rectangle and start the finite Gaussian
-grid estimate.
+Prove
+`collisionCutoff N ≤ exp ((log (N+a₀))^s)` eventually for every fixed `s > 0`, then choose a
+concrete strictly increasing time vector containing `s`, the geometric grid, and `1`.  Use
+`normalized_omegaUpTo_cutoff_le` coordinatewise to obtain membership in `upperRectangle`, invoke
+`hEK`, and begin the finite Gaussian recursion estimate.  The probability layer should reuse
+Mathlib's product-measure cylinder API and `gaussianReal_apply`; the sibling TauCeti repository has
+proved Gaussian CDF/density infrastructure to consult, but it is not a dependency of this repo.
