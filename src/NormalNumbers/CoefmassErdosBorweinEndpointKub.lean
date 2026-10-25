@@ -1235,6 +1235,222 @@ theorem tendsto_kubiliusHalfCutoff_error (a₀ : ℕ) {C : ℝ} (hC : 0 < C) :
   · exact mul_nonneg hC.le (add_nonneg (Real.rpow_nonneg (zero_le_one.trans hu1) _)
       (Real.rpow_nonneg (by positivity) _))
 
+/-- Fixed geometric parameters can make both the missed-block probability and the accumulated
+block-start Chebyshev error arbitrarily small. -/
+theorem exists_kubiliusGeometric_error_parameters {ε : ℝ} (hε : 0 < ε) :
+    ∃ K : ℕ, ∃ B r : ℝ, 0 < B ∧ 1 < r ∧ (32 * B) ^ 2 ≤ r - 1 ∧
+      ((63 : ℝ) / 64) ^ K < ε ∧ 2 * (K : ℝ) / B ^ 2 < ε := by
+  have hpow : Tendsto (fun K : ℕ ↦ ((63 : ℝ) / 64) ^ K) atTop (𝓝 0) :=
+    tendsto_pow_atTop_nhds_zero_of_lt_one (by norm_num) (by norm_num)
+  rw [NormedAddGroup.tendsto_nhds_zero] at hpow
+  obtain ⟨K₀, hK₀⟩ := eventually_atTop.1 (hpow ε hε)
+  let K := K₀
+  have hpowSmall : ((63 : ℝ) / 64) ^ K < ε := by
+    have h := hK₀ K (le_refl K)
+    have hnonneg : 0 ≤ ((63 : ℝ) / 64) ^ K := by positivity
+    rw [Real.norm_eq_abs, abs_of_nonneg hnonneg] at h
+    exact h
+  let x : ℝ := 2 * (K : ℝ) / ε + 1
+  let B : ℝ := Real.sqrt x
+  have hx : 0 < x := by
+    dsimp only [x]
+    have : 0 ≤ 2 * (K : ℝ) / ε := by positivity
+    linarith
+  have hB : 0 < B := Real.sqrt_pos.2 hx
+  have hBsq : B ^ 2 = x := by
+    exact Real.sq_sqrt hx.le
+  have hstartSmall : 2 * (K : ℝ) / B ^ 2 < ε := by
+    rw [hBsq, div_lt_iff₀ hx]
+    dsimp only [x]
+    field_simp [hε.ne']
+    linarith
+  let r : ℝ := (32 * B) ^ 2 + 2
+  have hr : 1 < r := by
+    dsimp only [r]
+    nlinarith [sq_nonneg (32 * B)]
+  have hscale : (32 * B) ^ 2 ≤ r - 1 := by
+    dsimp only [r]
+    linarith
+  exact ⟨K, B, r, hB, hr, hscale, hpowSmall, hstartSmall⟩
+
+/-- For fixed geometric parameters, all structural and crossing hypotheses needed by the finite
+Kubilius bad-event bound hold eventually.  This is the interface between the analytic cutoff
+schedule and the two finite bridge theorems above. -/
+theorem eventually_kubiliusGeometric_bridgeHypotheses
+    (a₀ K : ℕ) (C B r c T : ℝ) (hB : 0 < B) (hr : 1 < r)
+    (hscale : (32 * B) ^ 2 ≤ r - 1)
+    (hMertens : ∀ y : ℕ, 2 ≤ y →
+      |∑ p ∈ primesUpTo y, (1 / p : ℝ) - Real.log (Real.log y)| ≤ C)
+    (hblock : ∀ (M K i : ℕ) (r : ℝ), 3 ≤ M → 1 < r →
+      2 * Real.log 2 ≤
+        Real.rpow (Real.log M) (kubiliusGeometricExponent K i r) →
+      2 * Real.log 2 ≤
+        Real.rpow (Real.log M) (kubiliusGeometricExponent K (i + 1) r) →
+      (1 / 2 : ℝ) *
+          ((r - 1) * kubiliusGeometricExponent K i r * Real.log (Real.log M) -
+            Real.log 2 - 2 * C) ≤
+        ∑ p ∈ (primesUpTo (kubiliusGeometricCutoff M K r (i + 1))).filter
+            (kubiliusGeometricCutoff M K r i < ·),
+          (1 / p : ℝ) * (1 - 1 / p)) :
+    ∀ᶠ N : ℕ in atTop,
+      let M := N + a₀
+      let L := Real.log (Real.log M)
+      let y := ⌊Real.exp (Real.rpow (Real.log M) (1 / 2 : ℝ))⌋₊
+      let I := Finset.range K
+      let a := fun i ↦ kubiliusGeometricCutoff M K r i
+      let b := fun i ↦ kubiliusGeometricCutoff M K r (i + 1)
+      let R := fun i ↦ B * Real.sqrt (kubiliusGeometricExponent K i r * L)
+      0 < L ∧
+        (∀ i ∈ I, collisionCutoff N ≤ a i) ∧
+        (∀ i ∈ I, a i ≤ b i) ∧
+        (∀ i ∈ I, b i ≤ y) ∧
+        (∀ i ∈ I, ∀ j ∈ I, i ≠ j →
+          Disjoint ((primesUpTo (b i)).filter (a i < ·))
+            ((primesUpTo (b j)).filter (a j < ·))) ∧
+        (∀ i ∈ I,
+          1 ≤ ∑ p ∈ (primesUpTo (b i)).filter (a i < ·),
+              (1 / p : ℝ) * (1 - 1 / p) ∧
+            1 + Real.log (2 * L) + Real.log (T / c) / Real.log 2 ≤
+              Real.sqrt (∑ p ∈ (primesUpTo (b i)).filter (a i < ·),
+                (1 / p : ℝ) * (1 - 1 / p)) / 8 - R i - C) ∧
+        (∀ i ∈ I,
+          |∑ p ∈ primesUpTo (b i), (1 / p : ℝ) - Real.log (Real.log (b i))| ≤ C) := by
+  let s₀ := kubiliusGeometricExponent K 0 r
+  have hrs : 0 < r := zero_lt_one.trans hr
+  have hr1 : 1 ≤ r := hr.le
+  have hs₀ : 0 < s₀ := kubiliusGeometricExponent_pos hrs
+  have hcoefLoss : 0 < (r - 1) * s₀ / 2 := by positivity
+  have hcoefUnit : 0 < (r - 1) * s₀ / 4 := by positivity
+  have hLtop : Tendsto (fun N : ℕ ↦ Real.log (Real.log ((N + a₀ : ℕ) : ℝ))) atTop atTop :=
+    Real.tendsto_log_atTop.comp
+      (Real.tendsto_log_atTop.comp
+        (tendsto_natCast_atTop_atTop.comp (tendsto_add_atTop_nat a₀)))
+  have hlogTop : Tendsto (fun N : ℕ ↦ Real.log ((N + a₀ : ℕ) : ℝ)) atTop atTop :=
+    Real.tendsto_log_atTop.comp
+      (tendsto_natCast_atTop_atTop.comp (tendsto_add_atTop_nat a₀))
+  have hgrow₀ := ((tendsto_rpow_atTop hs₀).comp hlogTop).eventually_ge_atTop
+    (2 * Real.log 2)
+  have hstart := eventually_log_log_natFloor_exp_log_rpow_bounds a₀ hs₀
+  have hcut := eventually_collisionCutoff_le_natFloor_exp_log_rpow_add a₀ hs₀
+  have hlossLarge := hLtop.eventually_ge_atTop
+    ((Real.log 2 + 2 * C) / ((r - 1) * s₀ / 2))
+  have hunitLarge := hLtop.eventually_ge_atTop (1 / ((r - 1) * s₀ / 4))
+  have hcap := hLtop.eventually
+    (eventually_walk_cap_add_const_le_sqrt c T C (B * Real.sqrt s₀) (by positivity))
+  filter_upwards [eventually_ge_atTop 3, hgrow₀, hstart, hcut, hlossLarge, hunitLarge,
+      hcap] with N hN hgrow hstartN hcutN hlossN hunitN hcapN
+  dsimp only
+  let M := N + a₀
+  let L := Real.log (Real.log M)
+  let y := ⌊Real.exp (Real.rpow (Real.log M) (1 / 2 : ℝ))⌋₊
+  let I := Finset.range K
+  let a := fun i ↦ kubiliusGeometricCutoff M K r i
+  let b := fun i ↦ kubiliusGeometricCutoff M K r (i + 1)
+  let R := fun i ↦ B * Real.sqrt (kubiliusGeometricExponent K i r * L)
+  have hM : 3 ≤ M := by simp only [M]; omega
+  have hlogM1 : (1 : ℝ) ≤ Real.log M := by
+    calc
+      (1 : ℝ) = Real.log (Real.exp 1) := (Real.log_exp 1).symm
+      _ ≤ Real.log 3 := Real.log_le_log (Real.exp_pos 1) Real.exp_one_lt_three.le
+      _ ≤ Real.log M := Real.log_le_log (by norm_num) (by exact_mod_cast hM)
+  have hL : 0 < L := by
+    exact Real.log_pos (lt_of_lt_of_le
+      (by
+        calc
+          (1 : ℝ) = Real.log (Real.exp 1) := (Real.log_exp 1).symm
+          _ < Real.log 3 := Real.strictMonoOn_log (Real.exp_pos 1) (by norm_num)
+            Real.exp_one_lt_three)
+      (Real.log_le_log (by norm_num) (by exact_mod_cast hM)))
+  have hstartTwo : 2 ≤ a 0 := by
+    change 2 ≤ kubiliusGeometricCutoff M K r 0
+    change 2 ≤ ⌊Real.exp (Real.rpow (Real.log M) s₀)⌋₊
+    exact hstartN.1
+  have hloss₀ : Real.log 2 + 2 * C ≤ (r - 1) * s₀ * L / 2 := by
+    have hmul := mul_le_mul_of_nonneg_left hlossN hcoefLoss.le
+    have hcancel : (r - 1) * s₀ / 2 *
+        ((Real.log 2 + 2 * C) / ((r - 1) * s₀ / 2)) = Real.log 2 + 2 * C := by
+      field_simp [ne_of_gt (sub_pos.mpr hr), hs₀.ne']
+    rw [hcancel] at hmul
+    nlinarith
+  have hunit₀ : 1 ≤ (r - 1) * s₀ * L / 4 := by
+    have hmul := mul_le_mul_of_nonneg_left hunitN hcoefUnit.le
+    have hcancel : (r - 1) * s₀ / 4 * (1 / ((r - 1) * s₀ / 4)) = 1 := by
+      field_simp [ne_of_gt (sub_pos.mpr hr), hs₀.ne']
+    rw [hcancel] at hmul
+    nlinarith
+  have hPa : ∀ i ∈ I, collisionCutoff N ≤ a i := by
+    intro i hi
+    calc
+      collisionCutoff N ≤ a 0 := by
+        change collisionCutoff N ≤ ⌊Real.exp (Real.rpow (Real.log M) s₀)⌋₊
+        simpa only [M, Nat.cast_add] using hcutN
+      _ ≤ a i := by
+        exact kubiliusGeometricCutoff_mono hM hr1 (Nat.zero_le i)
+  have hab : ∀ i ∈ I, a i ≤ b i := by
+    intro i hi
+    exact kubiliusGeometricCutoff_mono hM hr1 (by omega)
+  have hby : ∀ i ∈ I, b i ≤ y := by
+    intro i hi
+    have hiK : i + 1 ≤ K := Nat.succ_le_iff.mp (Finset.mem_range.mp hi)
+    have hsquarter := kubiliusGeometricExponent_le_quarter hr1 hiK
+    change kubiliusGeometricCutoff M K r (i + 1) ≤
+      ⌊Real.exp (Real.rpow (Real.log M) (1 / 2 : ℝ))⌋₊
+    exact natFloor_exp_log_rpow_mono hM (hsquarter.trans (by norm_num))
+  have hdisj : ∀ i ∈ I, ∀ j ∈ I, i ≠ j →
+      Disjoint ((primesUpTo (b i)).filter (a i < ·))
+        ((primesUpTo (b j)).filter (a j < ·)) := by
+    intro i hi j hj hij
+    exact kubiliusGeometricBlocks_disjoint hM hr1 hij
+  have hVDom : ∀ i ∈ I,
+      1 ≤ ∑ p ∈ (primesUpTo (b i)).filter (a i < ·),
+          (1 / p : ℝ) * (1 - 1 / p) ∧
+        1 + Real.log (2 * L) + Real.log (T / c) / Real.log 2 ≤
+          Real.sqrt (∑ p ∈ (primesUpTo (b i)).filter (a i < ·),
+            (1 / p : ℝ) * (1 - 1 / p)) / 8 - R i - C := by
+    intro i hi
+    let s := kubiliusGeometricExponent K i r
+    let V := ∑ p ∈ (primesUpTo (b i)).filter (a i < ·),
+      (1 / p : ℝ) * (1 - 1 / p)
+    have hs : 0 < s := kubiliusGeometricExponent_pos hrs
+    have hs₀s : s₀ ≤ s := kubiliusGeometricExponent_mono hr1 (Nat.zero_le i)
+    have hgrowi : 2 * Real.log 2 ≤ Real.rpow (Real.log M) s := by
+      exact hgrow.trans (Real.rpow_le_rpow_of_exponent_le hlogM1 hs₀s)
+    have hs₀succ : s₀ ≤ kubiliusGeometricExponent K (i + 1) r :=
+      kubiliusGeometricExponent_mono hr1 (Nat.zero_le _)
+    have hgrowsucc : 2 * Real.log 2 ≤
+        Real.rpow (Real.log M) (kubiliusGeometricExponent K (i + 1) r) := by
+      exact hgrow.trans (Real.rpow_le_rpow_of_exponent_le hlogM1 hs₀succ)
+    have hVlower : (1 / 2 : ℝ) *
+        ((r - 1) * s * L - Real.log 2 - 2 * C) ≤ V := by
+      exact hblock M K i r hM hr hgrowi hgrowsucc
+    have hloss : Real.log 2 + 2 * C ≤ (r - 1) * s * L / 2 := by
+      have hmono : (r - 1) * s₀ * L ≤ (r - 1) * s * L := by
+        gcongr
+      linarith
+    have hunit : 1 ≤ (r - 1) * s * L / 4 := by
+      have hmono : (r - 1) * s₀ * L ≤ (r - 1) * s * L := by
+        gcongr
+      linarith
+    have hcapS :
+        1 + Real.log (2 * L) + Real.log (T / c) / Real.log 2 + C ≤
+          B * Real.sqrt (s * L) := by
+      calc
+        1 + Real.log (2 * L) + Real.log (T / c) / Real.log 2 + C ≤
+            (B * Real.sqrt s₀) * Real.sqrt L := hcapN
+        _ = B * Real.sqrt (s₀ * L) := by rw [Real.sqrt_mul hs₀.le]; ring
+        _ ≤ B * Real.sqrt (s * L) := by
+          gcongr
+    have hresult := kubiliusBlock_variance_and_domination hs hL hB.le hscale hloss
+      hVlower hunit hcapS
+    simpa only [s, V, a, b, R] using hresult
+  have hMertensBlocks : ∀ i ∈ I,
+      |∑ p ∈ primesUpTo (b i), (1 / p : ℝ) - Real.log (Real.log (b i))| ≤ C := by
+    intro i hi
+    have ha0i : a 0 ≤ b i := (hab i hi).trans' (kubiliusGeometricCutoff_mono hM hr1
+      (Nat.zero_le i))
+    exact hMertens (b i) (hstartTwo.trans ha0i)
+  exact ⟨hL, hPa, hab, hby, hdisj, hVDom, hMertensBlocks⟩
+
 open Classical in
 /-- Literature input: the Kubilius-model total-variation bound (Tenenbaum 1999, Théorème 1.1 and
 (1.7), as quoted by Ford, arXiv 2408.03803v4, Theorem A), at `ε = 1/2`, projected to divisibility
@@ -1256,7 +1472,154 @@ theorem divisorVariance_diverges_at_ln2_of_kubilius (hK : KubiliusTV)
       (((Finset.Icc 1 N).filter (fun n =>
         divisorVarianceMass v (collisionCutoff N) (n + a₀) ≤ T)).card : ℝ) / N)
       atTop (𝓝 0) := by
-  sorry
+  classical
+  obtain ⟨C, hC0, hMertens, hblock, hprefix⟩ := exists_mertens_kubiliusUnified_bound
+  obtain ⟨Ctv, hCtv, htv⟩ := hK
+  rw [Metric.tendsto_atTop]
+  intro ε hε
+  have hε16 : 0 < ε / 16 := by positivity
+  obtain ⟨K, B, r, hB, hr, hscale, hpowSmall, hstartSmall⟩ :=
+    exists_kubiliusGeometric_error_parameters hε16
+  have hbridge := eventually_kubiliusGeometric_bridgeHypotheses
+    a₀ K C B r c T hB hr hscale hMertens hblock
+  have hhalf := eventually_kubiliusHalfCutoff_bounds a₀ C hMertens
+  have hstart := eventually_kubiliusGeometric_startError_le
+    a₀ K C B r hB hr.le hprefix
+  have htvLim := tendsto_kubiliusHalfCutoff_error a₀ hCtv
+  have htvSmall := (NormedAddGroup.tendsto_nhds_zero.mp htvLim) (ε / 16) hε16
+  have hLtop : Tendsto (fun N : ℕ ↦ Real.log (Real.log ((N + a₀ : ℕ) : ℝ))) atTop atTop :=
+    Real.tendsto_log_atTop.comp
+      (Real.tendsto_log_atTop.comp
+        (tendsto_natCast_atTop_atTop.comp (tendsto_add_atTop_nat a₀)))
+  have hfourLim : Tendsto
+      (fun N : ℕ ↦ (4 : ℝ) / Real.log (Real.log ((N + a₀ : ℕ) : ℝ))) atTop (𝓝 0) :=
+    tendsto_const_nhds.div_atTop hLtop
+  have hfourSmall := (NormedAddGroup.tendsto_nhds_zero.mp hfourLim) (ε / 16) hε16
+  apply eventually_atTop.1
+  filter_upwards [hbridge, hhalf, hstart, htvSmall, hfourSmall,
+      eventually_ge_atTop (max 3 a₀)] with N hbridgeN hhalfN hstartN htvN hfourN hN
+  let M : ℕ := N + a₀
+  let L : ℝ := Real.log (Real.log M)
+  let y : ℕ := ⌊Real.exp (Real.rpow (Real.log M) (1 / 2 : ℝ))⌋₊
+  let I : Finset ℕ := Finset.range K
+  let a : ℕ → ℕ := fun i ↦ kubiliusGeometricCutoff M K r i
+  let b : ℕ → ℕ := fun i ↦ kubiliusGeometricCutoff M K r (i + 1)
+  let R : ℕ → ℝ := fun i ↦ B * Real.sqrt (kubiliusGeometricExponent K i r * L)
+  let D : ℝ := L / 2
+  let A : Set (Finset ℕ) := kubiliusBlockBadEvent y I a b R L
+  let Q : ℕ → Prop := fun m ↦ divisorVarianceMass v (collisionCutoff N) m ≤ T
+  let SQ : Finset ℕ := (Finset.Icc 1 M).filter Q
+  let SA : Finset ℕ :=
+    (Finset.Icc 1 M).filter (fun m ↦ m.primeFactors.filter (· ≤ y) ∈ A)
+  change 0 < L ∧
+      (∀ i ∈ I, collisionCutoff N ≤ a i) ∧
+      (∀ i ∈ I, a i ≤ b i) ∧
+      (∀ i ∈ I, b i ≤ y) ∧
+      (∀ i ∈ I, ∀ j ∈ I, i ≠ j →
+        Disjoint ((primesUpTo (b i)).filter (a i < ·))
+          ((primesUpTo (b j)).filter (a j < ·))) ∧
+      (∀ i ∈ I,
+        1 ≤ ∑ p ∈ (primesUpTo (b i)).filter (a i < ·),
+            (1 / p : ℝ) * (1 - 1 / p) ∧
+          1 + Real.log (2 * L) + Real.log (T / c) / Real.log 2 ≤
+            Real.sqrt (∑ p ∈ (primesUpTo (b i)).filter (a i < ·),
+              (1 / p : ℝ) * (1 - 1 / p)) / 8 - R i - C) ∧
+      (∀ i ∈ I,
+        |∑ p ∈ primesUpTo (b i), (1 / p : ℝ) - Real.log (Real.log (b i))| ≤ C) at hbridgeN
+  rcases hbridgeN with ⟨hL, hPa, hab, hby, hdisj, hVDom, hMertensBlocks⟩
+  change 2 ≤ y ∧ y ≤ M ∧ 0 < D ∧
+      (∑ p ∈ primesUpTo y, (1 / p : ℝ)) + D ≤ 2 * L ∧
+      (∑ p ∈ primesUpTo y, (1 / p : ℝ) * (1 - 1 / p)) / D ^ 2 ≤ 4 / L at hhalfN
+  rcases hhalfN with ⟨hy2, hyM, hD, hmean, hterminal⟩
+  change ∀ i ∈ I,
+      (∑ p ∈ primesUpTo (a i), (1 / p : ℝ) * (1 - 1 / p)) / (R i) ^ 2 ≤
+        2 / B ^ 2 at hstartN
+  have hR : ∀ i ∈ I, 0 < R i := by
+    intro i hi
+    exact mul_pos hB (Real.sqrt_pos.2
+      (mul_pos (kubiliusGeometricExponent_pos (zero_lt_one.trans hr)) hL))
+  have hmodel := kubiliusMass_blockBadEvent_le y I a b R L D hab hby hdisj
+    (fun i hi ↦ (hVDom i hi).1) hD hR hmean
+  change kubiliusMass y A ≤
+      ((63 : ℝ) / 64) ^ I.card +
+        (∑ p ∈ primesUpTo y, (1 / p : ℝ) * (1 - 1 / p)) / D ^ 2 +
+        ∑ i ∈ I, (∑ p ∈ primesUpTo (a i),
+          (1 / p : ℝ) * (1 - 1 / p)) / (R i) ^ 2 at hmodel
+  have hIcard : I.card = K := by simp only [I, Finset.card_range]
+  rw [hIcard] at hmodel
+  have hstartSum :
+      (∑ i ∈ I, (∑ p ∈ primesUpTo (a i),
+        (1 / p : ℝ) * (1 - 1 / p)) / (R i) ^ 2) ≤ 2 * (K : ℝ) / B ^ 2 := by
+    calc
+      (∑ i ∈ I, (∑ p ∈ primesUpTo (a i),
+          (1 / p : ℝ) * (1 - 1 / p)) / (R i) ^ 2) ≤
+          ∑ _i ∈ I, 2 / B ^ 2 := Finset.sum_le_sum fun i hi ↦ hstartN i hi
+      _ = 2 * (K : ℝ) / B ^ 2 := by
+        simp only [I, Finset.sum_const, Finset.card_range, nsmul_eq_mul]
+        ring
+  have hfourSmall' : 4 / L < ε / 16 := by
+    rw [Real.norm_eq_abs, abs_of_pos (div_pos (by norm_num) hL)] at hfourN
+    exact hfourN
+  have hmodelSmall : kubiliusMass y A < ε / 4 := by
+    linarith
+  have htvBound := htv M y hy2 hyM A
+  change |(SA.card : ℝ) / M - kubiliusMass y A| ≤
+      Ctv * (Real.rpow (Real.log M / Real.log y) (-(Real.log M / Real.log y)) +
+        Real.rpow M (-(1 / 2 : ℝ))) at htvBound
+  change ‖Ctv * (Real.rpow (Real.log M / Real.log y) (-(Real.log M / Real.log y)) +
+      Real.rpow M (-(1 / 2 : ℝ)))‖ < ε / 16 at htvN
+  rw [Real.norm_eq_abs] at htvN
+  have htvErrorSmall :
+      Ctv * (Real.rpow (Real.log M / Real.log y) (-(Real.log M / Real.log y)) +
+        Real.rpow M (-(1 / 2 : ℝ))) < ε / 16 :=
+    (le_abs_self _).trans_lt htvN
+  have hSAdensity : (SA.card : ℝ) / M < ε / 2 := by
+    have hdiff := (le_abs_self ((SA.card : ℝ) / M - kubiliusMass y A)).trans htvBound
+    linarith
+  have hsub : SQ ⊆ SA := by
+    intro m hm
+    have hmIcc := (Finset.mem_filter.mp hm).1
+    have hmass := (Finset.mem_filter.mp hm).2
+    rw [Finset.mem_filter]
+    refine ⟨hmIcc, ?_⟩
+    change m.primeFactors.filter (· ≤ y) ∈ kubiliusBlockBadEvent y I a b R L
+    have hm0 : m ≠ 0 := by
+      have hm1 : 1 ≤ m := (Finset.mem_Icc.mp hmIcc).1
+      omega
+    exact primeFactorSet_mem_kubiliusBlockBadEvent_of_divisorVarianceMass_le
+      v c hc hv0 hv I a b R hm0 hPa hab hby hL
+        (fun i hi ↦ (hVDom i hi).1) hMertensBlocks (fun i hi ↦ (hVDom i hi).2) hmass
+  have hshiftCard :
+      ((Finset.Icc 1 N).filter (fun m ↦
+        divisorVarianceMass v (collisionCutoff N) (m + a₀) ≤ T)).card ≤ SQ.card := by
+    simpa only [Q, SQ, M] using card_filter_Icc_add_le Q N a₀
+  have hcard :
+      ((Finset.Icc 1 N).filter (fun m ↦
+        divisorVarianceMass v (collisionCutoff N) (m + a₀) ≤ T)).card ≤ SA.card :=
+    hshiftCard.trans (Finset.card_le_card hsub)
+  have hNpos : (0 : ℝ) < N := by
+    exact_mod_cast (show 0 < N by omega)
+  have hMpos : (0 : ℝ) < M := by
+    exact_mod_cast (show 0 < M by simp only [M]; omega)
+  have hMN : (M : ℝ) / N ≤ 2 := by
+    apply (div_le_iff₀ hNpos).2
+    simp only [M, Nat.cast_add]
+    have haN : a₀ ≤ N := le_trans (le_max_right 3 a₀) hN
+    exact_mod_cast (show N + a₀ ≤ 2 * N by omega)
+  have hbound :
+      (((Finset.Icc 1 N).filter (fun m ↦
+        divisorVarianceMass v (collisionCutoff N) (m + a₀) ≤ T)).card : ℝ) / N < ε := by
+    calc
+      (((Finset.Icc 1 N).filter (fun m ↦
+          divisorVarianceMass v (collisionCutoff N) (m + a₀) ≤ T)).card : ℝ) / N ≤
+          (SA.card : ℝ) / N := by gcongr
+      _ = ((SA.card : ℝ) / M) * ((M : ℝ) / N) := by field_simp
+      _ < (ε / 2) * ((M : ℝ) / N) :=
+        mul_lt_mul_of_pos_right hSAdensity (div_pos hMpos hNpos)
+      _ ≤ (ε / 2) * 2 := mul_le_mul_of_nonneg_left hMN (by positivity)
+      _ = ε := by ring
+  rw [Real.dist_eq, sub_zero, abs_of_nonneg (div_nonneg (by positivity) (by positivity))]
+  exact hbound
 
 /-- The candidate positive answer, FDEK-free: from the Kubilius model alone. -/
 theorem ebPowerCandidateNormal_of_kubilius (hK : KubiliusTV) : EBPowerCandidateNormal := by
