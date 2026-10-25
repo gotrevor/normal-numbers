@@ -388,6 +388,58 @@ theorem isClosed_upperRectangle {R : ℕ} (u : Fin R → ℝ) :
     simp only [upperRectangle, Set.mem_ofPred_eq, Set.mem_iInter]]
   exact isClosed_iInter fun j ↦ isClosed_le (continuous_apply j) continuous_const
 
+/-- The equally spaced FDEK grid on `[0,1]`. -/
+noncomputable def equalTimeGrid (R : ℕ) : Fin (R + 1) → ℝ :=
+  fun j ↦ (j : ℕ) / (R : ℝ)
+
+/-- Equal grid times are strictly increasing when the grid is nonempty. -/
+theorem strictMono_equalTimeGrid {R : ℕ} (hR : 0 < R) :
+    StrictMono (equalTimeGrid R) := by
+  intro i j hij
+  apply div_lt_div_of_pos_right _ (by exact_mod_cast hR)
+  exact_mod_cast hij
+
+@[simp]
+theorem equalTimeGrid_zero (R : ℕ) : equalTimeGrid R 0 = 0 := by
+  simp [equalTimeGrid]
+
+/-- The final equal-grid time is one. -/
+theorem equalTimeGrid_last {R : ℕ} (hR : 0 < R) :
+    equalTimeGrid R (Fin.last R) = 1 := by
+  simp [equalTimeGrid, hR.ne']
+
+/-- Every equal-grid increment has variance `1/R`. -/
+theorem equalTimeGrid_increment {R : ℕ} (hR : 0 < R) (j : Fin R) :
+    equalTimeGrid R j.succ - equalTimeGrid R j.castSucc = (R : ℝ)⁻¹ := by
+  simp only [equalTimeGrid, Fin.val_succ, Fin.val_castSucc, Nat.cast_add, Nat.cast_one]
+  field_simp
+  ring
+
+/-- The increment-space event that every partial sum stays below a constant barrier. -/
+def gaussianPartialSumUpperSet (R : ℕ) (δ : ℝ) : Set (Fin R → ℝ) :=
+  {y | ∀ j, ∑ i ∈ Finset.univ.filter (fun i : Fin R ↦ i ≤ j), y i ≤ δ}
+
+/-- On an equal grid, a `brownianFDD` constant upper rectangle is exactly the iid Gaussian
+partial-sum barrier event.  This is the adapter from the portmanteau law to a finite Gaussian
+ballot estimate. -/
+theorem brownianFDD_upperRectangle_equalTimeGrid {R : ℕ} (hR : 0 < R) (δ : ℝ) :
+    brownianFDD R (equalTimeGrid R) (upperRectangle (fun _ ↦ δ)) =
+      Measure.pi (fun _ : Fin R ↦ gaussianReal 0 (Real.toNNReal (R : ℝ)⁻¹))
+        (gaussianPartialSumUpperSet R δ) := by
+  have hsum : Measurable
+      (fun y : Fin R → ℝ ↦ fun j : Fin R ↦
+        ∑ i ∈ Finset.univ.filter (fun i : Fin R ↦ i ≤ j), y i) := by
+    fun_prop
+  rw [brownianFDD, Measure.map_apply hsum
+    (isClosed_upperRectangle (fun _ : Fin R ↦ δ)).measurableSet]
+  rw [show Measure.pi (fun j : Fin R ↦ gaussianReal 0
+      (Real.toNNReal (equalTimeGrid R j.succ - equalTimeGrid R j.castSucc))) =
+      Measure.pi (fun _ : Fin R ↦ gaussianReal 0 (Real.toNNReal (R : ℝ)⁻¹)) by
+    congr 1
+    funext j
+    rw [equalTimeGrid_increment hR j]]
+  congr 1
+
 /-- The centering in FDEK is exactly `t log log N` at its exponential cutoff. -/
 theorem log_log_exp_log_rpow {N : ℕ} {t : ℝ} (hN : 1 < N) :
     Real.log (Real.log (Real.exp (Real.log N ^ t))) = t * Real.log (Real.log N) := by
@@ -410,6 +462,42 @@ theorem exp_log_rpow_one {N : ℕ} (hN : 0 < N) :
     Real.exp (Real.log N ^ (1 : ℝ)) = N := by
   rw [Real.rpow_one, Real.exp_log]
   exact_mod_cast hN
+
+/-- The collision cutoff lies below every fixed positive FDEK time, even after a fixed shift of
+the sample endpoint. -/
+theorem eventually_collisionCutoff_le_exp_log_rpow_add (a : ℕ) {s : ℝ} (hs : 0 < s) :
+    ∀ᶠ N : ℕ in atTop,
+      (collisionCutoff N : ℝ) ≤ Real.exp (Real.log (N + a) ^ s) := by
+  have hsmallReal := (isLittleO_log_rpow_rpow_atTop 2 hs).bound one_pos
+  have hlogTop : Tendsto (fun N : ℕ ↦ Real.log (N : ℝ)) atTop atTop :=
+    Real.tendsto_log_atTop.comp tendsto_natCast_atTop_atTop
+  have hsmall := hlogTop.eventually hsmallReal
+  filter_upwards [hsmall, eventually_ge_atTop 3] with N hsmallN hN
+  have hNpos : (0 : ℝ) < N := by exact_mod_cast (lt_of_lt_of_le (by norm_num) hN)
+  have hlogN1 : (1 : ℝ) ≤ Real.log N := by
+    calc
+      (1 : ℝ) = Real.log (Real.exp 1) := (Real.log_exp 1).symm
+      _ ≤ Real.log 3 := Real.log_le_log (Real.exp_pos 1) Real.exp_one_lt_three.le
+      _ ≤ Real.log N := Real.log_le_log (by norm_num) (by exact_mod_cast hN)
+  have hloglog0 : 0 ≤ Real.log (Real.log N) := Real.log_nonneg hlogN1
+  have hrpow0 : 0 ≤ Real.log N ^ s :=
+    Real.rpow_nonneg (le_trans zero_le_one hlogN1) _
+  have hlogSq : Real.log (Real.log N) ^ 2 ≤ Real.log N ^ s := by
+    have hsmallN' : |Real.log (Real.log N) ^ (2 : ℝ)| ≤ Real.log N ^ s := by
+      simpa only [Real.norm_eq_abs, abs_of_nonneg hrpow0, one_mul] using hsmallN
+    rw [abs_of_nonneg (Real.rpow_nonneg hloglog0 _)] at hsmallN'
+    rw [Real.rpow_two] at hsmallN'
+    exact hsmallN'
+  have hlogMono : Real.log N ≤ Real.log (N + a) := by
+    apply Real.log_le_log hNpos
+    exact_mod_cast Nat.le_add_right N a
+  have hrpowMono : Real.log N ^ s ≤ Real.log (N + a) ^ s :=
+    Real.rpow_le_rpow (le_trans zero_le_one hlogN1) hlogMono hs.le
+  calc
+    (collisionCutoff N : ℝ) ≤ Real.exp (Real.log (Real.log N) ^ 2) := by
+      exact Nat.floor_le (Real.exp_pos _).le
+    _ ≤ Real.exp (Real.log (N + a) ^ s) :=
+      Real.exp_le_exp.mpr (hlogSq.trans hrpowMono)
 
 /-- Shifting the sampled integers by a fixed nonnegative amount only embeds the filtered interval
 into the correspondingly enlarged unshifted interval. -/
@@ -476,6 +564,26 @@ theorem omegaUpTo_le_two_mul_of_normalized_terminal_le_one {y : ℝ} {n : ℕ} {
     nlinarith [Real.sqrt_nonneg L]
   have h := (div_le_iff₀ hsqrt_pos).1 hterminal
   linarith
+
+/-- A freely chosen fixed terminal rectangle threshold supplies the same `ω ≤ 2L` cap once
+`√L` dominates that threshold.  Unlike a hard-coded threshold of one, this form lets the
+complementary Gaussian terminal tail be made arbitrarily small. -/
+theorem omegaUpTo_le_two_mul_of_normalized_terminal_le {y : ℝ} {n : ℕ} {L A : ℝ}
+    (hL : 0 < L) (hA : A ≤ Real.sqrt L)
+    (hterminal : ((omegaUpTo y n : ℝ) - L) / Real.sqrt L ≤ A) :
+    (omegaUpTo y n : ℝ) ≤ 2 * L := by
+  have hsqrt_pos : 0 < Real.sqrt L := Real.sqrt_pos.2 hL
+  have hsqrt_sq : Real.sqrt L * Real.sqrt L = L := by
+    nlinarith [Real.sq_sqrt hL.le]
+  have h := (div_le_iff₀ hsqrt_pos).1 hterminal
+  have hmul := mul_le_mul_of_nonneg_right hA hsqrt_pos.le
+  nlinarith
+
+/-- Every fixed terminal rectangle threshold is eventually at most the FDEK scale `√L`. -/
+theorem eventually_const_le_sqrt (A : ℝ) :
+    ∀ᶠ L : ℝ in atTop, A ≤ Real.sqrt L := by
+  simpa only [Real.sqrt_eq_rpow] using
+    (tendsto_rpow_atTop (by norm_num : (0 : ℝ) < 1 / 2)).eventually_ge_atTop A
 
 /-- Pointwise deterministic rectangle implication at one grid coordinate.  The early-cutoff
 alternative loses `(t-s)√L`, while the prime-jump alternative is bounded by the chain cap.  The

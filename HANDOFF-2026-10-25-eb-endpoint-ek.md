@@ -1,10 +1,60 @@
-# HANDOFF: EB endpoint Step 2, EK laps 1--4
+# HANDOFF: EB endpoint Step 2, EK laps 1--5
 
 Branch `research/eb-endpoint` is local only.  Never push it.  The scoped host predicate is
 `sorry-free:src/NormalNumbers/CoefmassErdosBorweinEndpointEK.lean`.  Do not change any existing
 statement in that file, and keep `ErdosKacFiniteDim` as the named hypothesis exactly as planted.
 
 ## Concrete advance
+
+### Lap 5: adversarial route correction and equal-grid Gaussian adapter
+
+The review reconstructed the remaining route from the frozen statement and found a genuine gap in
+the lap-4 plan: the hard-coded terminal condition
+`((ω-L)/√L) ≤ 1` leaves a fixed Brownian tail of about `P(B₁ > 1)`.  That exceptional set cannot
+be made arbitrarily small, so it cannot prove density convergence to zero.
+
+The deterministic interface is now corrected without changing or deleting the old helper.
+
+- `omegaUpTo_le_two_mul_of_normalized_terminal_le` accepts any fixed terminal threshold `A`, once
+  `A ≤ √L`; `eventually_const_le_sqrt` supplies that comparison.  The terminal Brownian tail can
+  therefore be sent to zero by choosing `A` large.
+- `eventually_collisionCutoff_le_exp_log_rpow_add` closes the missing cutoff comparison for every
+  fixed positive time `s`, directly in the shifted form needed later:
+
+  ```text
+  collisionCutoff N ≤ exp((log(N+a))^s) eventually.
+  ```
+
+  Its proof uses `log(x)^2 = o(x^s)` at `x = log N` and the monotonicity under `N ≤ N+a`.
+
+The probability route was also replaced by a source-backed equal-grid route.
+
+- `equalTimeGrid`, `strictMono_equalTimeGrid`, `equalTimeGrid_last`, and
+  `equalTimeGrid_increment` give the admissible FDEK grid `j/R`, with every increment variance
+  exactly `1/R`.
+- `gaussianPartialSumUpperSet` is the iid-increment event that all partial sums stay below a
+  constant barrier.
+- `brownianFDD_upperRectangle_equalTimeGrid` proves from the actual `brownianFDD` definition that
+  its constant upper rectangle on this grid is exactly the product-Gaussian partial-sum event.
+
+The read-only sibling development
+`/Users/gotrevor/src/lean-proofs/src/latest/ErdosProblems/Erdos520/` contains a kernel-checked,
+self-contained soft Gaussian ballot proof.  In particular,
+`HarperGaussianWalk.gaussianWalk_survival_probability_le_fourthRoot` and its fixed-variance
+rescaling are directly adaptable to `gaussianPartialSumUpperSet`; no new probability hypothesis is
+needed.  This is a much firmer route than the previously proposed geometric Gaussian recursion.
+
+For the final parameter choice, take an equal grid of size `R`, early threshold
+`δ = R^(-1/4)`, and an independent large terminal-control threshold `A`.  Then:
+
+- the soft fixed-variance ballot bound is `O(R^(-1/8))`;
+- the first-coordinate failure has Chebyshev bound
+  `(1/R)/δ² = R^(-1/2)`;
+- the terminal-control failure is at most `A^(-2)`.
+
+Choose `A`, then `R`, then the FDEK portmanteau error.  On the complement of the two control
+failures, `normalized_omegaUpTo_cutoff_le` puts every equal-grid coordinate in the `δ` upper
+rectangle.
 
 ### Lap 4: deterministic FDEK rectangle layer
 
@@ -192,31 +242,59 @@ Lap-4 repository gate and audits:
 Verdict: `FORMALIZE-TIER GREEN`; all eight audited helpers use only `propext`,
 `Classical.choice`, and `Quot.sound`.
 
+Lap-5 narrow elaboration:
+
+```text
+lake env lean src/NormalNumbers/CoefmassErdosBorweinEndpointEK.lean
+```
+
+Exit 0.  The sole scoped proof-debt warning remains `divisorVariance_diverges_at_ln2`.
+
+Lap-5 repository gate and audits:
+
+```text
+~/personal/bin/lean-green ~/src/nn-eb-endpoint \
+  --target NormalNumbers.CoefmassErdosBorweinEndpointEK \
+  --import NormalNumbers.CoefmassErdosBorweinEndpointEK \
+  --axioms NormalNumbers.ErdosBorweinEndpointEK.strictMono_equalTimeGrid \
+  --axioms NormalNumbers.ErdosBorweinEndpointEK.equalTimeGrid_increment \
+  --axioms NormalNumbers.ErdosBorweinEndpointEK.brownianFDD_upperRectangle_equalTimeGrid \
+  --axioms NormalNumbers.ErdosBorweinEndpointEK.eventually_collisionCutoff_le_exp_log_rpow_add \
+  --axioms NormalNumbers.ErdosBorweinEndpointEK.omegaUpTo_le_two_mul_of_normalized_terminal_le \
+  --axioms NormalNumbers.ErdosBorweinEndpointEK.eventually_const_le_sqrt
+```
+
+Verdict: `FORMALIZE-TIER GREEN`; all six audited helpers use only `propext`,
+`Classical.choice`, and `Quot.sound`.
+
 Auditing the two downstream headlines currently reports `sorryAx`, as expected, solely because
 they transitively call the one open Step-2 theorem.  Once that theorem closes, rerun the headline
 audits required by `EB-ENDPOINT-EK-NEXT.md`.
 
 ## Current blocker
 
-Exactly one `sorry` remains: `divisorVariance_diverges_at_ln2`.  Its combinatorial chain lower
-bound is no longer part of the blocker.  The remaining layers are:
+Exactly one `sorry` remains: `divisorVariance_diverges_at_ln2`.  The chain bound, arbitrary-cutoff
+bridge, collision-cutoff comparison, equal FDEK grid, and `brownianFDD`/increment-event adapter are
+closed.  The remaining layers are:
 
-1. finish the finite-grid bookkeeping around `normalized_omegaUpTo_cutoff_le`, including the
-   eventual comparison placing `collisionCutoff N` below the early FDEK cutoff;
-2. apply `ErdosKacFiniteDim` to the now-proved closed coordinatewise upper set;
-3. prove the elementary `brownianFDD` Gaussian recursion/grid probability tends to zero, then
-   finish the density limit (including the fixed shift `n ↦ n+a₀`).
+1. port the self-contained soft Gaussian ballot estimate from the sibling `Erdos520` files into a
+   local auxiliary module and specialize it to variance `1/R`;
+2. prove the elementary first-coordinate and terminal-coordinate Gaussian second-moment tail
+   bounds;
+3. do the finite-grid/FDEK union bookkeeping and finish the density limit, including the fixed
+   shift `n ↦ n+a₀` and denominator change from `N` to `N+a₀`.
 
-The main formalization risk is the probability layer: `brownianFDD` is a mapped finite product of Gaussian
-increments, and the needed rectangle probability/factorization API has not yet been developed in
-this repository.  The Lean reference corpus search found no existing implementation to reuse.
+The main formalization risk is now bounded and source-located rather than mathematical: the ballot
+proof is roughly the prefix through `gaussianWalk_survival_probability_le_fourthRoot` of
+`HarperGaussianWalk.lean`, together with `HarperGaussianBarrier.lean` and a short variance-rescaling
+tail.  It must be ported locally because the sibling project is not a dependency.
 
 ## Next highest-value attack
 
-Prove
-`collisionCutoff N ≤ exp ((log (N+a₀))^s)` eventually for every fixed `s > 0`, then choose a
-concrete strictly increasing time vector containing `s`, the geometric grid, and `1`.  Use
-`normalized_omegaUpTo_cutoff_le` coordinatewise to obtain membership in `upperRectangle`, invoke
-`hEK`, and begin the finite Gaussian recursion estimate.  The probability layer should reuse
-Mathlib's product-measure cylinder API and `gaussianReal_apply`; the sibling TauCeti repository has
-proved Gaussian CDF/density infrastructure to consult, but it is not a dependency of this repo.
+Create `CoefmassErdosBorweinEndpointEKAux.lean` and port the minimal soft-ballot prefix from
+`HarperGaussianBarrier.lean` and `HarperGaussianWalk.lean`.  Stop at the fourth-root survival bound,
+then add its constant-variance rescaling and identify the recursive survival event with
+`gaussianPartialSumUpperSet`.  This yields the exact estimate needed by
+`brownianFDD_upperRectangle_equalTimeGrid`; the sharper Markov-bootstrap half-power bound is not
+needed.  Next prove Gaussian Chebyshev bounds for the first and last coordinates and assemble the
+three FDEK closed-set estimates with `δ = R^(-1/4)` and a free terminal threshold `A`.

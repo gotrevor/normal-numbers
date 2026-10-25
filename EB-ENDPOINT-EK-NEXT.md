@@ -41,10 +41,25 @@ count at any earlier cutoff `x` with `P ≤ x ≤ y`.  Consequently
 `omegaUpTo_cutoff_eq_early_or_sub_log_log_le` transfers the uniform walk cap to an arbitrary grid
 cutoff, with the no-jump case returned as an exact equality to the early-grid count.
 
+The lap-5 review closed the missing collision-cutoff comparison and corrected the probability
+route.  `eventually_collisionCutoff_le_exp_log_rpow_add` puts `collisionCutoff N` below every fixed
+positive shifted FDEK cutoff.  A fixed terminal threshold of one was insufficient (its Brownian
+complement has nonzero limiting mass), so
+`omegaUpTo_le_two_mul_of_normalized_terminal_le` now accepts a free threshold `A`, with
+`eventually_const_le_sqrt` supplying `A ≤ √L`.
+
+The concrete FDEK grid is now the equal grid `equalTimeGrid R`.  Its monotonicity, endpoint, and
+variance-`1/R` increments are proved, and `brownianFDD_upperRectangle_equalTimeGrid` identifies a
+constant Brownian upper rectangle exactly with the iid Gaussian partial-sum event
+`gaussianPartialSumUpperSet`.  A kernel-checked soft Gaussian ballot proof suitable for local
+porting was found in the read-only sibling files
+`lean-proofs/src/latest/ErdosProblems/Erdos520/HarperGaussianBarrier.lean` and
+`HarperGaussianWalk.lean`.
+
 Exactly one `sorry` remains, on `divisorVariance_diverges_at_ln2`.  The next load-bearing layer is
-the deterministic implication from the new cutoff alternative and the two FDEK control coordinates
-into a coordinatewise upper rectangle, followed by the FDEK closed-set estimate and the elementary
-Gaussian grid bound.  Detailed baton: `HANDOFF-2026-10-25-eb-endpoint-ek.md`.
+the local port of the soft fourth-root Gaussian ballot estimate, followed by the two elementary
+Gaussian control-coordinate tails and the FDEK finite-grid bookkeeping.  Detailed baton:
+`HANDOFF-2026-10-25-eb-endpoint-ek.md`.
 
 Paper: `~/personal/claude/knowledge/drafts/collatz-nn-mechanisms/nn-erdos-borwein-random-2026-10-12.md`,
 section "Step 2".  Proved input: `ebRandom_ae_normal_of_divisorVariance_diverges` (Step 1, the
@@ -64,20 +79,24 @@ Write `L = log log N` and `y_t = exp((log N)^t)`.
    `ω(n+a₀; ≤ p) − log log p ≤ C_T + log₂-ish(t)`.  Between primes the walk only decreases.  So at a
    grid time `t_j` with some prime of `n+a₀` in `(P₀, y_{t_j}]`,
    `ω(n+a₀; ≤ y_{t_j}) − t_j·L ≤ C_T + O(log L)`.
-4. **No Turán–Kubilius needed.**  Control `ω(n+a₀) ≤ 2L` and the small primes by FDEK itself.
-   - Add an extra grid point `s₀ < t₁` (and `t = 1`) to the FDEK grid.
-   - Since `P₀ = exp(L²) ≤ y_{s₀}` eventually, `ω(≤ P₀) ≤ ω(≤ y_{s₀})`.
-   - When no prime lies in `(P₀, y_{t_j}]`, `ω(≤ y_{t_j}) − t_j L ≤ (ω(≤ y_{s₀}) − s₀ L) − (t_j − s₀) L`,
-     which is `< 0` off an FDEK-small set.
-   - So on `{W ≤ T}`, minus FDEK-small sets, the normalized vector lies in the closed set
-     `F_ε = {x : x_j ≤ ε for all grid j}`.
+4. **No Turán–Kubilius needed.**  Use the equal grid `t_j = j/R` and control the first and terminal
+   coordinates by FDEK itself.
+   - `P₀ = exp(L²) ≤ y_{1/R}` eventually by
+     `eventually_collisionCutoff_le_exp_log_rpow_add`.
+   - Take the first-coordinate threshold `δ = R^{-1/4}`.  In the no-prime branch,
+     `normalized_omegaUpTo_cutoff_le` propagates this bound from time `1/R` to every later grid
+     time; in the jump branch the chain cap is eventually at most `δ√L`.
+   - Take a separate free terminal threshold `A`.  Off `{B₁ ≥ A}`, the generalized terminal helper
+     supplies `ω ≤ 2L`; unlike the old fixed threshold one, `A` can be sent to infinity.
+   - Thus `{W ≤ T}` is contained in the constant `δ` upper rectangle, union the first-coordinate
+     failure and terminal-coordinate failure.
 5. **Portmanteau** is already the form of `ErdosKacFiniteDim`: `limsup density ≤ brownianFDD(F_ε) + ε′`.
-6. **Gaussian lemma** (elementary, no Brownian paths).  Take geometric times `t_j = r^{R−j}·τ`.
-   - With `X_j = B_{t_j}/√t_j`: `X_j = √r·X_{j−1} + √(1−r)·Z_j`, with `Z_j` iid `N(0,1)`
-     (from `brownianFDD`'s independent increments).
-   - On `|X_{j−1}| ≤ M`, the event `X_j ≤ δ` needs `Z_j ≤ (δ + √r·M)/√(1−r)`, probability `≤ q < 1`.
-   - So `P(all X_j ≤ δ) ≤ q^R + R·2e^{−M²/2}`.  Choose `M`, then `R`.  Note `ε/√t_j ≤ δ` for `ε` small.
-   - This gives `brownianFDD(F_ε) → 0` along refining grids and `ε → 0`.
+6. **Gaussian lemma** (finite product only).  Port the sibling soft ballot estimate through
+   `gaussianWalk_survival_probability_le_fourthRoot` and rescale it to increment variance `1/R`.
+   `brownianFDD_upperRectangle_equalTimeGrid` is already the exact adapter.  At
+   `δ = R^{-1/4}`, the rectangle bound is `O(R^{-1/8})`; Chebyshev gives first-coordinate failure
+   at most `1/(Rδ²) = R^{-1/2}` and terminal failure at most `A^{-2}`.  Choose `A`, then `R`, then
+   the portmanteau error.
 7. Conclude `density{W ≤ T} → 0`.
 
 ## Assembly
