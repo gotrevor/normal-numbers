@@ -8,6 +8,26 @@ a named HYPOTHESIS; never prove or weaken it, and never add an axiom.  Helpers g
 theorems or in a new `CoefmassErdosBorweinEndpointEKAux.lean`.  No `native_decide`.
 **NEVER git push:** `research/eb-endpoint` is local only.
 
+## Current checkpoint (2026-10-25)
+
+The assembly is closed.  `ebRandom_ae_normal_le_ln2_of_EK` now applies the Step-1 growing-moment
+criterion to `divisorVariance_diverges_at_ln2`, and `ebPowerCandidateNormal_of_EK` follows from the
+proved uniform variance lower bound `exists_powerDelta_variance_lower`.  Both frozen statements are
+unchanged.
+
+The deterministic chain is also closed in Lean.  `divisorVarianceMass_ge_primeChain_endpoint`
+constructs exactly `2^(t-1)` distinct squarefree divisors ending at a prime `p`, proves that each
+divides `n` and is at most `p^t`, and obtains
+
+```text
+2^(t-1) * c * (t * log p)^(-log 2) ≤ divisorVarianceMass v P n,
+    t = omegaUpTo p n.
+```
+
+Exactly one `sorry` remains, on `divisorVariance_diverges_at_ln2`.  The next load-bearing layer is
+the deterministic walk cap derived from this chain bound, followed by the FDEK closed-set estimate
+and the elementary Gaussian grid bound.  Detailed baton: `HANDOFF-2026-10-25-eb-endpoint-ek.md`.
+
 Paper: `~/personal/claude/knowledge/drafts/collatz-nn-mechanisms/nn-erdos-borwein-random-2026-10-12.md`,
 section "Step 2".  Proved input: `ebRandom_ae_normal_of_divisorVariance_diverges` (Step 1, the
 growing-moment criterion), in `CoefmassErdosBorweinEndpoint.lean`.
