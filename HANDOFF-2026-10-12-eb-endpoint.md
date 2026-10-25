@@ -233,3 +233,54 @@ Together with the standard bounds for `Nat.log 2`, this simultaneously gives the
 conditions and collision-error summability.  Then adapt
 `ae_tendsto_weylMean_of_moment_decay` to a sequence of exponents `k_j`; the existing
 `CantorLiouville.sched_strictMono`, `sched_ratio`, and interpolation theorem can be reused verbatim.
+
+## Lap checkpoint (2026-10-25, growing-moment criterion complete)
+
+Concrete advance in `CoefmassErdosBorweinEndpoint.lean`:
+
+- Repaired and committed the inherited lap-4 schedule bridge as commit `500ee635`.  The bridge proves
+  polynomial domination and summability for both the slow schedule and its collision cutoff,
+  establishes the eventual phase/cutoff side conditions, and supplies the variable-exponent
+  Borel--Cantelli/interpolation theorem
+  `ae_tendsto_weylMean_of_growing_moment_sums`.
+- Proved `summable_endpoint_normalized_moments`.  For each fixed base, nonzero frequency, and
+  rational threshold, it combines `tendsto_divisorMassExpAvg` with the growing moment order
+  `k_j = log₂(j+3)+1`, controls the main term by `1/(j+3)²`, and controls the normalized collision
+  term by the two proved polynomial-over-schedule summability lemmas.
+- Replaced the frozen headline's final `sorry` by the countable intersection over bases and
+  frequencies followed by `QSpanCriterion.isNormal_of_weylAvg`.  The scoped target file is now
+  sorry-free; the statements of `divisorVarianceMass`, `collisionCutoff`, and
+  `ebRandom_ae_normal_of_divisorVariance_diverges` were not changed.
+
+Verification:
+
+```text
+lake env lean src/NormalNumbers/CoefmassErdosBorweinEndpoint.lean
+```
+
+Exit 0, with no `declaration uses sorry` warning.
+
+```text
+rg -n '\bsorry\b|sorryAx' src/NormalNumbers/CoefmassErdosBorweinEndpoint.lean
+```
+
+No matches.
+
+```text
+~/personal/bin/lean-green ~/src/nn-eb-endpoint \
+  --target NormalNumbers.CoefmassErdosBorweinEndpoint \
+  --import NormalNumbers.CoefmassErdosBorweinEndpoint \
+  --axioms NormalNumbers.ErdosBorweinEndpoint.summable_endpoint_normalized_moments \
+  --axioms NormalNumbers.ErdosBorweinEndpoint.ebRandom_ae_normal_of_divisorVariance_diverges
+```
+
+Verdict: `FORMALIZE-TIER GREEN`.  Both audited declarations use only `propext`,
+`Classical.choice`, and `Quot.sound`.
+
+Current blocker: none for the scoped objective.  The host predicate
+`sorry-free:src/NormalNumbers/CoefmassErdosBorweinEndpoint.lean` is met.
+
+Next highest-value attack, only if a later objective is explicitly opened: formalize the endpoint
+probabilistic/number-theoretic input that establishes the frozen density-divergence hypothesis
+`hdiv` for the intended Erdős--Borwein selection law (Step 2 in the private proof packet).  It is
+outside this completed Step-1 module and should not delay the scoped completion gate.

@@ -1299,6 +1299,138 @@ theorem ae_tendsto_weylMean_of_growing_moment_sums
         exact (Complex.norm_exp_ofReal_mul_I _).le)
       n hn hratio hsums)
 
+/-- The endpoint moment estimate is summable after normalization by every fixed rational
+threshold.  This is the quantitative bridge from divisor-mass divergence to the growing-moment
+Borel--Cantelli criterion. -/
+theorem summable_endpoint_normalized_moments
+    {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω) [IsProbabilityMeasure μ]
+    (delta : ℕ → ℝ) (X : ℕ → Ω → Bool) (hX : BernoulliLawNat μ delta X)
+    (hdiv : ∀ a₀ : ℕ, ∀ T : ℝ, Tendsto (fun N : ℕ =>
+      (((Finset.Icc 1 N).filter (fun n =>
+        divisorVarianceMass (fun m => delta m * (1 - delta m)) (collisionCutoff N) (n + a₀)
+          ≤ T)).card : ℝ) / N) atTop (𝓝 0))
+    (b : ℕ) (hb : 2 ≤ b) (h : ℤ) (hh : h ≠ 0) (q : ℕ) :
+    Summable (fun j : ℕ =>
+      (∫ w, ‖ErdosBorweinPositive.weylMean b h (ebLambert b X w)
+        (NormalNumbers.CantorLiouville.sched (j + 3))‖ ^
+          (2 * endpointMomentOrder j) ∂μ) /
+        ((1 : ℝ) / (q + 1)) ^ (2 * endpointMomentOrder j)) := by
+  let v : ℕ → ℝ := fun m => delta m * (1 - delta m)
+  have hv (m : ℕ) : 0 ≤ v m := by
+    dsimp only [v]
+    exact mul_nonneg (hX.1 m).1 (sub_nonneg.mpr (hX.1 m).2)
+  have hc : 0 < spectralConst b := spectralConst_pos b hb
+  have hH0 : h.natAbs ≠ 0 := (Int.natAbs_pos.mpr hh).ne'
+  obtain ⟨e, m, hm, hfac⟩ :=
+    Nat.exists_eq_pow_mul_and_not_dvd hH0 b (by omega : b ≠ 1)
+  let n : ℕ → ℕ := fun j => NormalNumbers.CantorLiouville.sched (j + 3)
+  let k : ℕ → ℕ := endpointMomentOrder
+  let K : ℕ → ℕ := endpointPhaseCutoff e h.natAbs
+  let P : ℕ → ℕ := fun j => collisionCutoff (n j)
+  let φ : ℕ → ℝ := fun j =>
+    (∑ x : Fin (n j), Real.exp (-spectralConst b *
+      divisorVarianceMass v (P j) (x.val + (e + 1)))) / (n j : ℝ)
+  have hn : StrictMono n := by
+    intro i j hij
+    exact NormalNumbers.CantorLiouville.sched_strictMono (by omega)
+  have hφ : Tendsto φ atTop (𝓝 0) := by
+    exact (tendsto_divisorMassExpAvg v hv (spectralConst b) hc e (hdiv e)).comp
+      hn.tendsto_atTop
+  let ε : ℝ := 1 / (q + 1)
+  have hε : 0 < ε := by dsimp only [ε]; positivity
+  have hφsmall : ∀ᶠ j : ℕ in atTop, φ j < ε / 2 :=
+    (tendsto_order.1 hφ).2 (ε / 2) (by positivity)
+  have hcut := eventually_endpoint_cutoff_conditions e h.natAbs
+  let d : ℕ := 2 * (q + 1) + 3
+  let C : ℕ := 16 * (e + 1 + 64 * h.natAbs) * 2 ^ (2 * (q + 1))
+  have hsJ : Summable (fun j : ℕ => 1 / (((j + 3 : ℕ) : ℝ) ^ 2)) := by
+    simpa only [Nat.cast_add, Nat.cast_ofNat] using
+      (summable_nat_add_iff 3).mpr (Real.summable_one_div_nat_pow.mpr (by norm_num))
+  have hsP : Summable (fun j : ℕ =>
+      (C : ℝ) * 3 * (((j + 3 : ℕ) : ℝ) ^ d /
+        collisionCutoff (NormalNumbers.CantorLiouville.sched (j + 3)))) := by
+    exact (summable_pow_div_collisionCutoff_sched d).mul_left ((C : ℝ) * 3)
+  have hsN : Summable (fun j : ℕ =>
+      (C : ℝ) * 4 * (((j + 3 : ℕ) : ℝ) ^ d /
+        NormalNumbers.CantorLiouville.sched (j + 3))) := by
+    exact (summable_pow_div_sched d).mul_left ((C : ℝ) * 4)
+  have href : Summable (fun j : ℕ =>
+      1 / (((j + 3 : ℕ) : ℝ) ^ 2) +
+        (C : ℝ) * 3 * (((j + 3 : ℕ) : ℝ) ^ d / P j) +
+        (C : ℝ) * 4 * (((j + 3 : ℕ) : ℝ) ^ d / n j)) := by
+    simpa only [P, n] using (hsJ.add hsP).add hsN
+  refine Summable.of_norm_bounded_eventually href ?_
+  rw [Nat.cofinite_eq_atTop]
+  filter_upwards [hφsmall, hcut] with j hsmall hconditions
+  have hk : 1 ≤ k j := endpointMomentOrder_pos j
+  have hN : 1 ≤ n j := NormalNumbers.CantorLiouville.one_le_sched (j + 3)
+  have hK : e + 1 ≤ K j := by simp [K, endpointPhaseCutoff]
+  have hK1 : 1 ≤ K j := le_trans (by omega : 1 ≤ e + 1) hK
+  have hKP : 2 * K j ≤ P j := by simpa only [K, P, n] using hconditions.1
+  have hKN : K j ≤ n j := by simpa only [K, n] using hconditions.2
+  have hP : 1 ≤ P j := by omega
+  have hlarge : 16 * h.natAbs * (2 * k j) ≤ b ^ (K j) :=
+    endpoint_phase_large hb
+  have hmoment := ebMoment_le_divisorMassAvg_pow_add_collision μ delta X hX
+    b e m (K j) (P j) (k j) (n j) h hb hk hN hP hKN hfac hm hK hlarge hKP
+  have hφ0 : 0 ≤ φ j := by dsimp only [φ]; positivity
+  have hfirst : (φ j) ^ (2 * k j) / ε ^ (2 * k j) ≤
+      1 / (((j + 3 : ℕ) : ℝ) ^ 2) := by
+    have hbase : φ j / ε ≤ (1 / 2 : ℝ) := by
+      rw [div_le_iff₀ hε]
+      linarith
+    calc
+      (φ j) ^ (2 * k j) / ε ^ (2 * k j) = (φ j / ε) ^ (2 * k j) :=
+        (div_pow _ _ _).symm
+      _ ≤ (1 / 2 : ℝ) ^ (2 * k j) :=
+        pow_le_pow_left₀ (div_nonneg hφ0 hε.le) hbase _
+      _ ≤ 1 / (((j + 3 : ℕ) : ℝ) ^ 2) := endpoint_half_pow_le j
+  have hprefactor :
+      (((q + 1 : ℕ) : ℝ) ^ (2 * k j)) *
+          (4 * (k j : ℝ) ^ 2 * (K j : ℝ)) ≤
+        (C : ℝ) * (((j + 3 : ℕ) : ℝ) ^ d) := by
+    exact_mod_cast endpoint_collision_prefactor_le e h.natAbs q j
+  have hcollision :
+      (4 * (k j : ℝ) ^ 2 * (K j : ℝ) *
+          (3 / (P j : ℝ) + 4 / (n j : ℝ))) / ε ^ (2 * k j) ≤
+        (C : ℝ) * 3 * (((j + 3 : ℕ) : ℝ) ^ d / (P j : ℝ)) +
+          (C : ℝ) * 4 * (((j + 3 : ℕ) : ℝ) ^ d / (n j : ℝ)) := by
+    calc
+      (4 * (k j : ℝ) ^ 2 * (K j : ℝ) *
+          (3 / (P j : ℝ) + 4 / (n j : ℝ))) / ε ^ (2 * k j) =
+          ((((q + 1 : ℕ) : ℝ) ^ (2 * k j)) *
+            (4 * (k j : ℝ) ^ 2 * (K j : ℝ))) *
+              (3 / (P j : ℝ) + 4 / (n j : ℝ)) := by
+        dsimp only [ε]
+        rw [one_div_pow, one_div, div_inv_eq_mul]
+        push_cast
+        ring
+      _ ≤ ((C : ℝ) * (((j + 3 : ℕ) : ℝ) ^ d)) *
+          (3 / (P j : ℝ) + 4 / (n j : ℝ)) := by
+        exact mul_le_mul_of_nonneg_right hprefactor (by positivity)
+      _ = (C : ℝ) * 3 * (((j + 3 : ℕ) : ℝ) ^ d / (P j : ℝ)) +
+          (C : ℝ) * 4 * (((j + 3 : ℕ) : ℝ) ^ d / (n j : ℝ)) := by ring
+  have hI0 : 0 ≤ ∫ w, ‖ErdosBorweinPositive.weylMean b h (ebLambert b X w)
+      (n j)‖ ^ (2 * k j) ∂μ := integral_nonneg fun _ => by positivity
+  rw [Real.norm_of_nonneg (div_nonneg hI0 (pow_nonneg hε.le _))]
+  calc
+    (∫ w, ‖ErdosBorweinPositive.weylMean b h (ebLambert b X w)
+        (n j)‖ ^ (2 * k j) ∂μ) / ε ^ (2 * k j) ≤
+        ((φ j) ^ (2 * k j) + 4 * (k j : ℝ) ^ 2 * (K j : ℝ) *
+          (3 / (P j : ℝ) + 4 / (n j : ℝ))) / ε ^ (2 * k j) :=
+      div_le_div_of_nonneg_right (by simpa only [φ, v, P, n, k, K] using hmoment)
+        (pow_nonneg hε.le _)
+    _ = (φ j) ^ (2 * k j) / ε ^ (2 * k j) +
+        (4 * (k j : ℝ) ^ 2 * (K j : ℝ) *
+          (3 / (P j : ℝ) + 4 / (n j : ℝ))) / ε ^ (2 * k j) := by rw [add_div]
+    _ ≤ 1 / (((j + 3 : ℕ) : ℝ) ^ 2) +
+        ((C : ℝ) * 3 * (((j + 3 : ℕ) : ℝ) ^ d / (P j : ℝ)) +
+          (C : ℝ) * 4 * (((j + 3 : ℕ) : ℝ) ^ d / (n j : ℝ))) :=
+      add_le_add hfirst hcollision
+    _ = 1 / (((j + 3 : ℕ) : ℝ) ^ 2) +
+        (C : ℝ) * 3 * (((j + 3 : ℕ) : ℝ) ^ d / P j) +
+        (C : ℝ) * 4 * (((j + 3 : ℕ) : ℝ) ^ d / n j) := by ring
+
 /-- **Growing-moment criterion.**  If the variance divisor mass above `P₀(N)` of `n + a₀` diverges
 in density, for every shift `a₀`, then a.s. `E_b` is normal in every base.  Proof:
 1. Weyl moments factor over the independent coins.
@@ -1316,6 +1448,30 @@ theorem ebRandom_ae_normal_of_divisorVariance_diverges
         divisorVarianceMass (fun m => delta m * (1 - delta m)) (collisionCutoff N) (n + a₀)
           ≤ T)).card : ℝ) / N) atTop (𝓝 0)) :
     ∀ᵐ w ∂μ, ∀ b : ℕ, 2 ≤ b → NormalNumbers.IsNormal b (ebLambert b X w) := by
-  sorry
+  rw [ae_all_iff]
+  intro b
+  by_cases hb : 2 ≤ b
+  · have hall : ∀ᵐ w ∂μ, ∀ h : ℤ, h ≠ 0 →
+        Tendsto (fun N : ℕ => ErdosBorweinPositive.weylMean b h (ebLambert b X w) N)
+          atTop (𝓝 0) := by
+      rw [ae_all_iff]
+      intro h
+      by_cases hh : h = 0
+      · exact Eventually.of_forall fun _ hne => absurd hh hne
+      · have hsum : ∀ q : ℕ, Summable (fun j : ℕ =>
+            (∫ w, ‖ErdosBorweinPositive.weylMean b h (ebLambert b X w)
+              (NormalNumbers.CantorLiouville.sched (j + 3))‖ ^
+                (2 * endpointMomentOrder j) ∂μ) /
+              ((1 : ℝ) / (q + 1)) ^ (2 * endpointMomentOrder j)) :=
+          fun q => summable_endpoint_normalized_moments μ delta X hX hdiv b hb h hh q
+        filter_upwards [ae_tendsto_weylMean_of_growing_moment_sums μ (ebLambert b X)
+          (measurable_ebLambert b X hX.2.1) b h endpointMomentOrder
+          endpointMomentOrder_pos hsum] with w hw _
+        exact hw
+    filter_upwards [hall] with w hw _
+    apply NormalNumbers.QSpanCriterion.isNormal_of_weylAvg b hb
+    intro h hh
+    exact (hw h hh).congr fun N => weylMean_eq_weylAvg b h (ebLambert b X w) N
+  · exact Eventually.of_forall fun _ hb' => absurd hb' hb
 
 end NormalNumbers.ErdosBorweinEndpoint
