@@ -218,6 +218,82 @@ theorem divisorVarianceMass_ge_primeChain_endpoint (v : ℕ → ℝ) (c : ℝ) (
   rw [card_primeChainDivisors hp hpn hn, card_primeFactorsUpTo_eq_omegaUpTo] at h
   simpa only [Nat.cast_pow, Nat.cast_ofNat, Real.log_pow, Nat.cast_mul] using h
 
+/-- Taking logarithms in the endpoint chain inequality.  This is the scalar core of the walk
+cap: exponential growth in the number of prime factors beats the endpoint's logarithmic loss. -/
+theorem walk_cap_analytic {k : ℕ} {c T x : ℝ} (hk : 1 ≤ k) (hc : 0 < c) (hx : 0 < x)
+    (hchain : ((2 ^ (k - 1) : ℕ) : ℝ) *
+      (c * Real.rpow ((k : ℝ) * x) (-Real.log 2)) ≤ T) :
+    (k : ℝ) - Real.log x ≤
+      1 + Real.log (k : ℝ) + Real.log (T / c) / Real.log 2 := by
+  have hk0 : 0 < k := by omega
+  have hkR : (0 : ℝ) < k := by exact_mod_cast hk0
+  have hlog2 : 0 < Real.log 2 := Real.log_pos (by norm_num)
+  have hy : 0 < (k : ℝ) * x := mul_pos hkR hx
+  have hrpow : 0 < Real.rpow ((k : ℝ) * x) (-Real.log 2) :=
+    Real.rpow_pos_of_pos hy _
+  have hpow : (0 : ℝ) < ((2 ^ (k - 1) : ℕ) : ℝ) := by positivity
+  have hleft : 0 < ((2 ^ (k - 1) : ℕ) : ℝ) *
+      (c * Real.rpow ((k : ℝ) * x) (-Real.log 2)) :=
+    mul_pos hpow (mul_pos hc hrpow)
+  have hT : 0 < T := hleft.trans_le hchain
+  have hlogchain := Real.log_le_log hleft hchain
+  rw [Real.log_mul hpow.ne' (mul_pos hc hrpow).ne', Real.log_mul hc.ne' hrpow.ne',
+    Nat.cast_pow, Real.log_pow] at hlogchain
+  have hrpow_eq : Real.rpow ((k : ℝ) * x) (-Real.log 2) =
+      ((k : ℝ) * x) ^ (-Real.log 2) := rfl
+  rw [hrpow_eq, Real.log_rpow hy, Real.log_mul hkR.ne' hx.ne', Nat.cast_pred hk0] at hlogchain
+  norm_num at hlogchain
+  rw [Real.log_div hT.ne' hc.ne']
+  have hdiv : (k : ℝ) - Real.log x - (1 + Real.log (k : ℝ)) ≤
+      (Real.log T - Real.log c) / Real.log 2 := by
+    apply (le_div_iff₀ hlog2).2
+    nlinarith [hlogchain]
+  linarith
+
+/-- Pointwise walk cap at a prime jump.  On a bounded-divisor-mass event, the excess of the
+restricted prime-factor count over `log log p` is at most logarithmic in that count. -/
+theorem omegaUpTo_sub_log_log_le_of_divisorVarianceMass_le
+    (v : ℕ → ℝ) (c : ℝ) (hc : 0 < c)
+    (hv0 : ∀ m, 0 ≤ v m)
+    (hv : ∀ m : ℕ, 2 ≤ m → c * Real.rpow (Real.log m) (-Real.log 2) ≤ v m)
+    {P p n : ℕ} {T : ℝ} (hp : p.Prime) (hpn : p ∣ n) (hn : n ≠ 0) (hPp : P < p)
+    (hmass : divisorVarianceMass v P n ≤ T) :
+    (omegaUpTo (p : ℝ) n : ℝ) - Real.log (Real.log p) ≤
+      1 + Real.log (omegaUpTo (p : ℝ) n : ℝ) + Real.log (T / c) / Real.log 2 := by
+  have hpA : p ∈ primeFactorsUpTo p n := by
+    simp only [primeFactorsUpTo, Finset.mem_filter, Nat.mem_primeFactors]
+    exact ⟨⟨hp, hpn, hn⟩, le_rfl⟩
+  have homega : 1 ≤ omegaUpTo (p : ℝ) n := by
+    rw [← card_primeFactorsUpTo_eq_omegaUpTo]
+    exact Finset.one_le_card.mpr ⟨p, hpA⟩
+  have hlogp : 0 < Real.log p := Real.log_pos (by exact_mod_cast hp.one_lt)
+  apply walk_cap_analytic homega hc hlogp
+  exact (divisorVarianceMass_ge_primeChain_endpoint v c hc.le hv0 hv hp hpn hn hPp).trans hmass
+
+/-- The walk cap in the form used on the finite-dimensional Erdős--Kac good set: an a priori
+bound `ω(n; ≤ p) ≤ 2L` makes the right side uniform in the prime jump. -/
+theorem omegaUpTo_sub_log_log_le_of_divisorVarianceMass_le_of_le
+    (v : ℕ → ℝ) (c : ℝ) (hc : 0 < c)
+    (hv0 : ∀ m, 0 ≤ v m)
+    (hv : ∀ m : ℕ, 2 ≤ m → c * Real.rpow (Real.log m) (-Real.log 2) ≤ v m)
+    {P p n : ℕ} {T L : ℝ} (hp : p.Prime) (hpn : p ∣ n) (hn : n ≠ 0) (hPp : P < p)
+    (hmass : divisorVarianceMass v P n ≤ T) (hL : 0 < L)
+    (homega : (omegaUpTo (p : ℝ) n : ℝ) ≤ 2 * L) :
+    (omegaUpTo (p : ℝ) n : ℝ) - Real.log (Real.log p) ≤
+      1 + Real.log (2 * L) + Real.log (T / c) / Real.log 2 := by
+  have hcap := omegaUpTo_sub_log_log_le_of_divisorVarianceMass_le
+    v c hc hv0 hv hp hpn hn hPp hmass
+  have hpA : p ∈ primeFactorsUpTo p n := by
+    simp only [primeFactorsUpTo, Finset.mem_filter, Nat.mem_primeFactors]
+    exact ⟨⟨hp, hpn, hn⟩, le_rfl⟩
+  have homega_pos : (0 : ℝ) < omegaUpTo (p : ℝ) n := by
+    exact_mod_cast (show 0 < omegaUpTo (p : ℝ) n by
+      rw [← card_primeFactorsUpTo_eq_omegaUpTo]
+      exact Finset.card_pos.mpr ⟨p, hpA⟩)
+  have hlogle : Real.log (omegaUpTo (p : ℝ) n : ℝ) ≤ Real.log (2 * L) :=
+    Real.log_le_log homega_pos homega
+  linarith
+
 /-- **The divisor variance mass diverges at the endpoint.**  Chain bound: for a prime `p ∣ n+a₀`
 with `P₀ < p`, the `2^{t-1}` divisors `p·d'` (with `t = ω(n+a₀; ≤ p)`) give
 `W ≥ (c/2) exp(ln 2 (t - log log p) - ln 2 · ln t)`.  So `W ≤ T` caps the walk

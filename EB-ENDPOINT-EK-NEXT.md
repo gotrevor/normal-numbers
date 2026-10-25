@@ -24,8 +24,19 @@ divides `n` and is at most `p^t`, and obtains
     t = omegaUpTo p n.
 ```
 
+The pointwise walk cap is now closed too.  `walk_cap_analytic` takes logarithms in this inequality;
+`omegaUpTo_sub_log_log_le_of_divisorVarianceMass_le` specializes it at a prime jump; and
+`omegaUpTo_sub_log_log_le_of_divisorVarianceMass_le_of_le` proves the uniform form
+
+```text
+omegaUpTo p n - log (log p)
+  ≤ 1 + log (2*L) + log (T/c) / log 2
+```
+
+whenever `W ≤ T` and `omegaUpTo p n ≤ 2*L`.
+
 Exactly one `sorry` remains, on `divisorVariance_diverges_at_ln2`.  The next load-bearing layer is
-the deterministic walk cap derived from this chain bound, followed by the FDEK closed-set estimate
+the finite-cutoff bridge from prime jumps to the FDEK grid, followed by the FDEK closed-set estimate
 and the elementary Gaussian grid bound.  Detailed baton: `HANDOFF-2026-10-25-eb-endpoint-ek.md`.
 
 Paper: `~/personal/claude/knowledge/drafts/collatz-nn-mechanisms/nn-erdos-borwein-random-2026-10-12.md`,
