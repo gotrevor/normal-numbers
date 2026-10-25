@@ -39,6 +39,101 @@ Step 2 crossing needs no Gaussian limit (paper section "A route that replaces FD
 /-- The primes `≤ y`. -/
 def primesUpTo (y : ℕ) : Finset ℕ := (Finset.range (y + 1)).filter Nat.Prime
 
+theorem primesUpTo_eq_filter_Iic (y : ℕ) :
+    primesUpTo y = Finset.filter Nat.Prime (Finset.Iic y) := by
+  ext p
+  simp [primesUpTo]
+
+/-- Mertens' second theorem in the exact natural-cutoff form used by the Kubilius model. -/
+theorem mertens_primeReciprocalSum_bound :
+    ∃ C : ℝ, ∀ y : ℕ, 2 ≤ y →
+      |∑ p ∈ primesUpTo y, (1 / p : ℝ) - Real.log (Real.log y)| ≤ C := by
+  obtain ⟨C, hC⟩ := RS_prime.mertens_second_theorem'
+  refine ⟨C, fun y hy ↦ ?_⟩
+  have h := hC (y : ℝ) (by exact_mod_cast hy)
+  simpa [primesUpTo_eq_filter_Iic] using h
+
+/-- The reciprocal-prime mass in `(a,b]` is the difference of the two prefix masses. -/
+theorem primeReciprocalSum_block_eq_sub (a b : ℕ) (hab : a ≤ b) :
+    ∑ p ∈ (primesUpTo b).filter (a < ·), (1 / p : ℝ) =
+      (∑ p ∈ primesUpTo b, (1 / p : ℝ)) -
+        ∑ p ∈ primesUpTo a, (1 / p : ℝ) := by
+  have hsub : primesUpTo a ⊆ primesUpTo b := by
+    intro p hp
+    simp only [primesUpTo_eq_filter_Iic, Finset.mem_filter, Finset.mem_Iic] at hp ⊢
+    exact ⟨hp.1.trans hab, hp.2⟩
+  have hblock : (primesUpTo b).filter (a < ·) = primesUpTo b \ primesUpTo a := by
+    ext p
+    simp only [primesUpTo_eq_filter_Iic, Finset.mem_filter, Finset.mem_Iic,
+      Finset.mem_sdiff]
+    by_cases hpprime : p.Prime <;> simp [hpprime]
+  rw [hblock]
+  have hsum := Finset.sum_sdiff (s₁ := primesUpTo a) (s₂ := primesUpTo b)
+    hsub (f := fun p ↦ (1 / p : ℝ))
+  linarith
+
+/-- Mertens gives a uniform lower bound for the reciprocal-prime mass of every natural block. -/
+theorem mertens_primeReciprocalSum_block_lower :
+    ∃ C : ℝ, ∀ a b : ℕ, 2 ≤ a → a ≤ b →
+      Real.log (Real.log b) - Real.log (Real.log a) - 2 * C ≤
+        ∑ p ∈ (primesUpTo b).filter (a < ·), (1 / p : ℝ) := by
+  obtain ⟨C, hC⟩ := mertens_primeReciprocalSum_bound
+  refine ⟨C, fun a b ha hab ↦ ?_⟩
+  have hb : 2 ≤ b := ha.trans hab
+  have hCa := abs_le.mp (hC a ha)
+  have hCb := abs_le.mp (hC b hb)
+  rw [primeReciprocalSum_block_eq_sub a b hab]
+  linarith
+
+/-- On prime blocks, Bernoulli variance is at least half the reciprocal-prime mass.  Combined
+with Mertens, this is the lower bound needed for every independent crossing block. -/
+theorem mertens_primeVariance_block_lower :
+    ∃ C : ℝ, ∀ a b : ℕ, 2 ≤ a → a ≤ b →
+      (1 / 2 : ℝ) *
+          (Real.log (Real.log b) - Real.log (Real.log a) - 2 * C) ≤
+        ∑ p ∈ (primesUpTo b).filter (a < ·),
+          (1 / p : ℝ) * (1 - 1 / p) := by
+  obtain ⟨C, hC⟩ := mertens_primeReciprocalSum_block_lower
+  refine ⟨C, fun a b ha hab ↦ ?_⟩
+  calc
+    (1 / 2 : ℝ) *
+        (Real.log (Real.log b) - Real.log (Real.log a) - 2 * C) ≤
+        (1 / 2 : ℝ) *
+          ∑ p ∈ (primesUpTo b).filter (a < ·), (1 / p : ℝ) := by
+      gcongr
+      exact hC a b ha hab
+    _ = ∑ p ∈ (primesUpTo b).filter (a < ·),
+          (1 / 2 : ℝ) * (1 / p : ℝ) := by
+      rw [Finset.mul_sum]
+    _ ≤ ∑ p ∈ (primesUpTo b).filter (a < ·),
+          (1 / p : ℝ) * (1 - 1 / p) := by
+      apply Finset.sum_le_sum
+      intro p hp
+      have hpprime : p.Prime := by
+        exact (Finset.mem_filter.mp (Finset.mem_filter.mp hp).1).2
+      have hpR : (2 : ℝ) ≤ p := by exact_mod_cast hpprime.two_le
+      have hpinv : (1 / p : ℝ) ≤ 1 / 2 := by
+        exact one_div_le_one_div_of_le (by norm_num) hpR
+      have hhalf : (1 / 2 : ℝ) ≤ 1 - 1 / p := by linarith
+      nlinarith [show (0 : ℝ) ≤ 1 / p by positivity]
+
+/-- The variance of a prime prefix is at most its Mertens main term plus a fixed constant. -/
+theorem mertens_primeVariance_prefix_upper :
+    ∃ C : ℝ, ∀ y : ℕ, 2 ≤ y →
+      ∑ p ∈ primesUpTo y, (1 / p : ℝ) * (1 - 1 / p) ≤
+        Real.log (Real.log y) + C := by
+  obtain ⟨C, hC⟩ := mertens_primeReciprocalSum_bound
+  refine ⟨C, fun y hy ↦ ?_⟩
+  calc
+    ∑ p ∈ primesUpTo y, (1 / p : ℝ) * (1 - 1 / p) ≤
+        ∑ p ∈ primesUpTo y, (1 / p : ℝ) := by
+      apply Finset.sum_le_sum
+      intro p hp
+      have hq : (0 : ℝ) ≤ 1 / p := by positivity
+      nlinarith
+    _ ≤ Real.log (Real.log y) + C := by
+      linarith [(abs_le.mp (hC y hy)).2]
+
 open Classical in
 /-- Mass of `A` under the Kubilius model: each prime `p ≤ y` is included independently with
 probability `1/p`. -/
@@ -83,6 +178,42 @@ theorem kubiliusMass_le_one (y : ℕ) (A : Set (Finset ℕ)) : kubiliusMass y A 
   rw [kubiliusMass_eq_bernoulliSubsetMass]
   exact bernoulliSubsetMass_le_one _ _ _
     (kubiliusParameter_nonneg y) (kubiliusParameter_le_one y)
+
+open Classical in
+/-- Chebyshev's inequality for a centered sum on any prime-coordinate block inside the full
+Kubilius model. -/
+theorem kubiliusMass_blockCenteredSum_abs_ge_le (y : ℕ) (B : Finset ℕ)
+    (hB : B ⊆ primesUpTo y) {r : ℝ} (hr : 0 < r) :
+    kubiliusMass y {S | r ≤ |bernoulliCenteredSum B (fun p ↦ (1 / p : ℝ)) S|} ≤
+      (∑ p ∈ B, (1 / p : ℝ) * (1 - 1 / p)) / r ^ 2 := by
+  rw [kubiliusMass_eq_bernoulliSubsetMass]
+  let A : Set (Finset ℕ) :=
+    {S | r ≤ |bernoulliCenteredSum B (fun p ↦ (1 / p : ℝ)) S|}
+  calc
+    bernoulliSubsetMass (primesUpTo y) (fun p ↦ (1 / p : ℝ)) A =
+        bernoulliSubsetMass (primesUpTo y) (fun p ↦ (1 / p : ℝ))
+          {S | S ∩ B ∈ A} := by
+      congr 1
+      ext S
+      simp only [A, Set.mem_ofPred_eq]
+      rw [bernoulliCenteredSum_inter]
+    _ = bernoulliSubsetMass B (fun p ↦ (1 / p : ℝ)) A :=
+      bernoulliSubsetMass_inter (primesUpTo y) B hB _ A
+    _ ≤ (∑ p ∈ B, (1 / p : ℝ) * (1 - 1 / p)) / r ^ 2 := by
+      exact bernoulliSubsetMass_centeredSum_abs_ge_le B (fun p ↦ (1 / p : ℝ))
+        (fun p hp ↦ by positivity)
+        (fun p hp ↦ kubiliusParameter_le_one y p (hB hp)) hr
+
+open Classical in
+/-- Chebyshev's inequality for the selected-prime cardinality, centered at its reciprocal-prime
+mean.  The intersection makes the statement valid for arbitrary ambient finite sets `S`. -/
+theorem kubiliusMass_card_deviation_ge_le (y : ℕ) {r : ℝ} (hr : 0 < r) :
+    kubiliusMass y
+        {S | r ≤ |(((S ∩ primesUpTo y).card : ℝ) -
+          ∑ p ∈ primesUpTo y, (1 / p : ℝ))|} ≤
+      (∑ p ∈ primesUpTo y, (1 / p : ℝ) * (1 - 1 / p)) / r ^ 2 := by
+  simpa only [bernoulliCenteredSum_eq_card_inter_sub_sum] using
+    kubiliusMass_blockCenteredSum_abs_ge_le y (primesUpTo y) (fun _ hp ↦ hp) hr
 
 open Classical in
 /-- The number of selected primes has mean `∑_{p ≤ y} 1/p` in the Kubilius model. -/

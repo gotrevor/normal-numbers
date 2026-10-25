@@ -684,6 +684,29 @@ noncomputable def bernoulliCenteredSum {α : Type*} [DecidableEq α]
   ∑ p ∈ U, if p ∈ S then 1 - q p else -q p
 
 open Classical in
+/-- A centered membership sum is the selected cardinality minus its Bernoulli mean. -/
+theorem bernoulliCenteredSum_eq_card_inter_sub_sum {α : Type*} [DecidableEq α]
+    (U S : Finset α) (q : α → ℝ) :
+    bernoulliCenteredSum U q S =
+      ((S ∩ U).card : ℝ) - ∑ p ∈ U, q p := by
+  unfold bernoulliCenteredSum
+  calc
+    ∑ p ∈ U, (if p ∈ S then (1 : ℝ) - q p else -q p) =
+        ∑ p ∈ U, ((if p ∈ S then (1 : ℝ) else 0) - q p) := by
+      apply Finset.sum_congr rfl
+      intro p hp
+      by_cases hpS : p ∈ S <;> simp [hpS]
+    _ = (∑ p ∈ U, if p ∈ S then (1 : ℝ) else 0) - ∑ p ∈ U, q p := by
+      rw [Finset.sum_sub_distrib]
+    _ = ((S ∩ U).card : ℝ) - ∑ p ∈ U, q p := by
+      congr 1
+      norm_cast
+      rw [← Finset.card_filter]
+      congr 1
+      ext p
+      simp [and_comm]
+
+open Classical in
 theorem bernoulliCenteredSum_inter {α : Type*} [DecidableEq α]
     (U S : Finset α) (q : α → ℝ) :
     bernoulliCenteredSum U q (S ∩ U) = bernoulliCenteredSum U q S := by
