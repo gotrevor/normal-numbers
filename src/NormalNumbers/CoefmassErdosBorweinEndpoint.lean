@@ -926,6 +926,379 @@ theorem tendsto_divisorMassExpAvg
   rw [Real.dist_eq, sub_zero, abs_of_nonneg havg0]
   exact havg.trans_lt (by linarith)
 
+/-- Along the slow interpolation schedule, the collision cutoff eventually dominates every
+fixed polynomial. -/
+theorem eventually_pow_le_collisionCutoff_sched (d : ℕ) :
+    ∀ᶠ j : ℕ in atTop,
+      (j + 3) ^ (d + 3) ≤
+        collisionCutoff (NormalNumbers.CantorLiouville.sched (j + 3)) := by
+  have hlog : Tendsto (fun j : ℕ => Real.log ((j + 3 : ℕ) : ℝ)) atTop atTop :=
+    Real.tendsto_log_atTop.comp
+      (tendsto_natCast_atTop_atTop.comp (tendsto_add_atTop_nat 3))
+  filter_upwards [hlog.eventually
+    (eventually_ge_atTop (4 * ((d : ℝ) + 4)))] with j hj
+  let J := j + 3
+  let N := NormalNumbers.CantorLiouville.sched J
+  have hJ : 1 ≤ J := by omega
+  have hJR : (0 : ℝ) < J := by exact_mod_cast hJ
+  have hN : (0 : ℝ) < N := by
+    exact_mod_cast NormalNumbers.CantorLiouville.one_le_sched J
+  have hsqrt : Real.sqrt (J : ℝ) ≤ Real.log (N : ℝ) := by
+    rw [Real.le_log_iff_exp_le hN]
+    exact NormalNumbers.CantorLiouville.exp_sqrt_le_sched J hJ
+  have hsqrt0 : 0 < Real.sqrt (J : ℝ) := Real.sqrt_pos.2 hJR
+  have hloglog : Real.log (J : ℝ) / 2 ≤ Real.log (Real.log (N : ℝ)) := by
+    rw [← Real.log_sqrt hJR.le]
+    exact Real.log_le_log hsqrt0 hsqrt
+  have hL : 4 * ((d : ℝ) + 4) ≤ Real.log (J : ℝ) := by
+    simpa only [J, Nat.cast_add, Nat.cast_ofNat] using hj
+  have hsq : ((d : ℝ) + 4) * Real.log (J : ℝ) ≤
+      Real.log (Real.log (N : ℝ)) ^ 2 := by
+    have hloglog0 : 0 ≤ Real.log (Real.log (N : ℝ)) := by
+      have : 0 ≤ Real.log (J : ℝ) := Real.log_nonneg (by exact_mod_cast hJ)
+      linarith
+    nlinarith [sq_nonneg (Real.log (Real.log (N : ℝ)) - Real.log (J : ℝ) / 2)]
+  apply Nat.le_floor
+  calc
+    (((J ^ (d + 3) : ℕ) : ℝ)) ≤ (J : ℝ) ^ (d + 4) := by
+      push_cast
+      rw [pow_succ]
+      exact le_mul_of_one_le_right (by positivity) (by exact_mod_cast hJ)
+    _ = Real.exp (((d : ℝ) + 4) * Real.log (J : ℝ)) := by
+      rw [← Real.exp_log (pow_pos hJR (d + 4)), Real.log_pow]
+      push_cast
+      ring
+    _ ≤ Real.exp (Real.log (Real.log (N : ℝ)) ^ 2) := Real.exp_le_exp.mpr hsq
+
+/-- Any fixed polynomial divided by the collision cutoff is summable along the slow schedule. -/
+theorem summable_pow_div_collisionCutoff_sched (d : ℕ) :
+    Summable (fun j : ℕ =>
+      ((j + 3 : ℕ) : ℝ) ^ d /
+        collisionCutoff (NormalNumbers.CantorLiouville.sched (j + 3))) := by
+  have hs : Summable (fun j : ℕ => ((j + 3 : ℕ) : ℝ) ^ (-(3 : ℝ))) := by
+    simpa only [Nat.cast_add, Nat.cast_ofNat] using
+      (summable_nat_add_iff 3).mpr (Real.summable_nat_rpow.mpr (by norm_num))
+  refine Summable.of_norm_bounded_eventually hs ?_
+  rw [Nat.cofinite_eq_atTop]
+  filter_upwards [eventually_pow_le_collisionCutoff_sched d] with j hj
+  have hJ : (0 : ℝ) < (j + 3 : ℕ) := by positivity
+  have hP : (0 : ℝ) < collisionCutoff
+      (NormalNumbers.CantorLiouville.sched (j + 3)) := by
+    exact_mod_cast lt_of_lt_of_le (by positivity : 0 < (j + 3) ^ (d + 3)) hj
+  rw [Real.norm_of_nonneg (div_nonneg (by positivity) hP.le)]
+  rw [Real.rpow_neg (le_of_lt hJ)]
+  apply (div_le_iff₀ hP).2
+  rw [inv_mul_eq_div]
+  apply (le_div_iff₀ (Real.rpow_pos_of_pos hJ (3 : ℝ))).2
+  calc
+    ((j + 3 : ℕ) : ℝ) ^ d * (((j + 3 : ℕ) : ℝ) ^ (3 : ℝ)) =
+        (((j + 3 : ℕ) : ℝ) ^ (d + 3)) := by
+      rw [show (((j + 3 : ℕ) : ℝ) ^ (3 : ℝ)) =
+        (((j + 3 : ℕ) : ℝ) ^ (3 : ℕ)) by norm_num [Real.rpow_natCast], ← pow_add]
+    _ ≤ collisionCutoff (NormalNumbers.CantorLiouville.sched (j + 3)) := by
+      exact_mod_cast hj
+
+/-- The slow schedule itself also eventually dominates every fixed polynomial. -/
+theorem eventually_pow_le_sched (d : ℕ) :
+    ∀ᶠ j : ℕ in atTop,
+      (j + 3) ^ (d + 3) ≤ NormalNumbers.CantorLiouville.sched (j + 3) := by
+  have hJ : Tendsto (fun j : ℕ => ((j + 3 : ℕ) : ℝ)) atTop atTop :=
+    tendsto_natCast_atTop_atTop.comp (tendsto_add_atTop_nat 3)
+  have hlog := hJ.eventually
+    (NormalNumbers.CantorLiouville.ev_log_le
+      (r := (1 / 2 : ℝ)) (ε := 1 / ((d : ℝ) + 3)) (by norm_num) (by positivity))
+  filter_upwards [hlog] with j hj
+  let J := j + 3
+  have hJ1 : 1 ≤ J := by omega
+  have hJR : (0 : ℝ) < J := by exact_mod_cast hJ1
+  have hroot : ((d : ℝ) + 3) * Real.log (J : ℝ) ≤ Real.sqrt (J : ℝ) := by
+    rw [Real.sqrt_eq_rpow]
+    have hd : (0 : ℝ) < (d : ℝ) + 3 := by positivity
+    calc
+      ((d : ℝ) + 3) * Real.log (J : ℝ) ≤
+          ((d : ℝ) + 3) * (1 / ((d : ℝ) + 3) * (J : ℝ) ^ (1 / 2 : ℝ)) := by
+        gcongr
+      _ = (J : ℝ) ^ (1 / 2 : ℝ) := by field_simp
+  have hreal : ((J : ℝ) ^ (d + 3)) ≤
+      NormalNumbers.CantorLiouville.sched J := by
+    calc
+      (J : ℝ) ^ (d + 3) = Real.exp (((d : ℝ) + 3) * Real.log (J : ℝ)) := by
+        rw [← Real.exp_log (pow_pos hJR (d + 3)), Real.log_pow]
+        push_cast
+        ring
+      _ ≤ Real.exp (Real.sqrt (J : ℝ)) := Real.exp_le_exp.mpr hroot
+      _ ≤ NormalNumbers.CantorLiouville.sched J :=
+        NormalNumbers.CantorLiouville.exp_sqrt_le_sched J hJ1
+  exact_mod_cast hreal
+
+/-- Any fixed polynomial divided by the slow schedule is summable. -/
+theorem summable_pow_div_sched (d : ℕ) :
+    Summable (fun j : ℕ =>
+      ((j + 3 : ℕ) : ℝ) ^ d /
+        NormalNumbers.CantorLiouville.sched (j + 3)) := by
+  have hs : Summable (fun j : ℕ => ((j + 3 : ℕ) : ℝ) ^ (-(3 : ℝ))) := by
+    simpa only [Nat.cast_add, Nat.cast_ofNat] using
+      (summable_nat_add_iff 3).mpr (Real.summable_nat_rpow.mpr (by norm_num))
+  refine Summable.of_norm_bounded_eventually hs ?_
+  rw [Nat.cofinite_eq_atTop]
+  filter_upwards [eventually_pow_le_sched d] with j hj
+  have hJ : (0 : ℝ) < (j + 3 : ℕ) := by positivity
+  have hN : (0 : ℝ) < NormalNumbers.CantorLiouville.sched (j + 3) := by
+    exact_mod_cast NormalNumbers.CantorLiouville.one_le_sched (j + 3)
+  rw [Real.norm_of_nonneg (div_nonneg (by positivity) hN.le)]
+  rw [Real.rpow_neg (le_of_lt hJ)]
+  apply (div_le_iff₀ hN).2
+  rw [inv_mul_eq_div]
+  apply (le_div_iff₀ (Real.rpow_pos_of_pos hJ (3 : ℝ))).2
+  calc
+    ((j + 3 : ℕ) : ℝ) ^ d * (((j + 3 : ℕ) : ℝ) ^ (3 : ℝ)) =
+        (((j + 3 : ℕ) : ℝ) ^ (d + 3)) := by
+      rw [show (((j + 3 : ℕ) : ℝ) ^ (3 : ℝ)) =
+        (((j + 3 : ℕ) : ℝ) ^ (3 : ℕ)) by norm_num [Real.rpow_natCast], ← pow_add]
+    _ ≤ NormalNumbers.CantorLiouville.sched (j + 3) := by exact_mod_cast hj
+
+/-- Growing moment order used at the `j`-th slow-schedule checkpoint. -/
+def endpointMomentOrder (j : ℕ) : ℕ := Nat.log 2 (j + 3) + 1
+
+/-- Coarse phase cutoff; linear growth in the moment order is enough for the phase separation. -/
+def endpointPhaseCutoff (e H j : ℕ) : ℕ :=
+  e + 1 + 32 * H * endpointMomentOrder j
+
+theorem endpointMomentOrder_pos (j : ℕ) : 1 ≤ endpointMomentOrder j := by
+  unfold endpointMomentOrder
+  omega
+
+theorem endpointMomentOrder_le (j : ℕ) : endpointMomentOrder j ≤ 2 * (j + 3) := by
+  unfold endpointMomentOrder
+  have := Nat.log_le_self 2 (j + 3)
+  omega
+
+theorem endpointPhaseCutoff_le (e H j : ℕ) :
+    endpointPhaseCutoff e H j ≤ (e + 1 + 64 * H) * (j + 3) := by
+  unfold endpointPhaseCutoff
+  have hk := endpointMomentOrder_le j
+  have hJ : 1 ≤ j + 3 := by omega
+  nlinarith
+
+theorem endpoint_phase_large {b e H j : ℕ} (hb : 2 ≤ b) :
+    16 * H * (2 * endpointMomentOrder j) ≤ b ^ endpointPhaseCutoff e H j := by
+  let A := 32 * H * endpointMomentOrder j
+  have hAK : A ≤ endpointPhaseCutoff e H j := by
+    simp only [A, endpointPhaseCutoff]
+    omega
+  calc
+    16 * H * (2 * endpointMomentOrder j) = A := by simp only [A]; ring
+    _ ≤ 2 ^ A := (Nat.lt_two_pow_self).le
+    _ ≤ 2 ^ endpointPhaseCutoff e H j := Nat.pow_le_pow_right (by norm_num) hAK
+    _ ≤ b ^ endpointPhaseCutoff e H j := Nat.pow_le_pow_left hb _
+
+theorem eventually_endpoint_cutoff_conditions (e H : ℕ) :
+    ∀ᶠ j : ℕ in atTop,
+      2 * endpointPhaseCutoff e H j ≤
+          collisionCutoff (NormalNumbers.CantorLiouville.sched (j + 3)) ∧
+        endpointPhaseCutoff e H j ≤ NormalNumbers.CantorLiouville.sched (j + 3) := by
+  let C := 2 * (e + 1 + 64 * H)
+  filter_upwards [eventually_pow_le_collisionCutoff_sched 1,
+    eventually_pow_le_sched 1, eventually_ge_atTop C] with j hP hN hj
+  have hK := endpointPhaseCutoff_le e H j
+  have hJ : 1 ≤ j + 3 := by omega
+  have hCJ : C * (j + 3) ≤ (j + 3) ^ 4 := by
+    calc
+      C * (j + 3) ≤ (j + 3) * (j + 3) :=
+        Nat.mul_le_mul_right (j + 3) (by omega)
+      _ = (j + 3) ^ 2 := by ring
+      _ ≤ (j + 3) ^ 4 := pow_le_pow_right' hJ (by omega)
+  constructor
+  · calc
+      2 * endpointPhaseCutoff e H j ≤ C * (j + 3) := by
+        calc
+          _ ≤ 2 * ((e + 1 + 64 * H) * (j + 3)) := Nat.mul_le_mul_left 2 hK
+          _ = C * (j + 3) := by simp only [C]; ring
+      _ ≤ (j + 3) ^ (1 + 3) := by simpa using hCJ
+      _ ≤ collisionCutoff (NormalNumbers.CantorLiouville.sched (j + 3)) := hP
+  · calc
+      endpointPhaseCutoff e H j ≤ (e + 1 + 64 * H) * (j + 3) := hK
+      _ ≤ C * (j + 3) := by
+        exact Nat.mul_le_mul_right (j + 3) (by simp only [C]; omega)
+      _ ≤ (j + 3) ^ (1 + 3) := by simpa using hCJ
+      _ ≤ NormalNumbers.CantorLiouville.sched (j + 3) := hN
+
+theorem endpoint_threshold_factor_le (q j : ℕ) :
+    (q + 1) ^ (2 * endpointMomentOrder j) ≤
+      2 ^ (2 * (q + 1)) * (j + 3) ^ (2 * (q + 1)) := by
+  let k := endpointMomentOrder j
+  let J := j + 3
+  let D := 2 * (q + 1)
+  have hq : q + 1 ≤ 2 ^ (q + 1) := (Nat.lt_two_pow_self).le
+  have hkpow : 2 ^ k ≤ 2 * J := by
+    dsimp only [k, endpointMomentOrder, J]
+    rw [pow_add, pow_one]
+    simpa [Nat.mul_comm] using
+      (Nat.mul_le_mul_left 2 (Nat.pow_log_le_self 2 (x := j + 3) (by omega)))
+  calc
+    (q + 1) ^ (2 * k) ≤ (2 ^ (q + 1)) ^ (2 * k) := Nat.pow_le_pow_left hq _
+    _ = (2 ^ k) ^ D := by
+      simp only [D]
+      rw [← pow_mul, ← pow_mul]
+      congr 1
+      ring
+    _ ≤ (2 * J) ^ D := Nat.pow_le_pow_left hkpow _
+    _ = 2 ^ D * J ^ D := by rw [mul_pow]
+    _ = 2 ^ (2 * (q + 1)) * (j + 3) ^ (2 * (q + 1)) := by rfl
+
+theorem endpoint_collision_prefactor_le (e H q j : ℕ) :
+    (q + 1) ^ (2 * endpointMomentOrder j) *
+        (4 * endpointMomentOrder j ^ 2 * endpointPhaseCutoff e H j) ≤
+      (16 * (e + 1 + 64 * H) * 2 ^ (2 * (q + 1))) *
+        (j + 3) ^ (2 * (q + 1) + 3) := by
+  let k := endpointMomentOrder j
+  let K := endpointPhaseCutoff e H j
+  let J := j + 3
+  let D := 2 * (q + 1)
+  have hth := endpoint_threshold_factor_le q j
+  have hk := endpointMomentOrder_le j
+  have hK := endpointPhaseCutoff_le e H j
+  calc
+    (q + 1) ^ (2 * k) * (4 * k ^ 2 * K) ≤
+        (2 ^ D * J ^ D) * (4 * (2 * J) ^ 2 * ((e + 1 + 64 * H) * J)) := by
+      gcongr
+    _ = (16 * (e + 1 + 64 * H) * 2 ^ D) * J ^ (D + 3) := by ring
+    _ = (16 * (e + 1 + 64 * H) * 2 ^ (2 * (q + 1))) *
+        (j + 3) ^ (2 * (q + 1) + 3) := by rfl
+
+theorem endpoint_half_pow_le (j : ℕ) :
+    ((1 / 2 : ℝ) ^ (2 * endpointMomentOrder j)) ≤ 1 / ((j + 3 : ℕ) : ℝ) ^ 2 := by
+  have hp : (j + 3) ^ 2 ≤ 2 ^ (2 * endpointMomentOrder j) := by
+    have hlt := Nat.lt_pow_succ_log_self (b := 2) (by norm_num) (j + 3)
+    change j + 3 < 2 ^ endpointMomentOrder j at hlt
+    calc
+      (j + 3) ^ 2 ≤ (2 ^ endpointMomentOrder j) ^ 2 :=
+        Nat.pow_le_pow_left hlt.le _
+      _ = 2 ^ (2 * endpointMomentOrder j) := by
+        rw [← pow_mul]
+        congr 1
+        ring
+  have hJ : (0 : ℝ) < (j + 3 : ℕ) := by positivity
+  have htwo : (0 : ℝ) < 2 ^ (2 * endpointMomentOrder j) := by positivity
+  rw [one_div_pow]
+  apply one_div_le_one_div_of_le (pow_pos hJ 2)
+  exact_mod_cast hp
+
+/-- Variable even moments suffice for almost-sure Weyl convergence when every fixed threshold
+has a summable normalized moment along the slow schedule. -/
+theorem ae_tendsto_weylMean_of_growing_moment_sums
+    {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω) [IsProbabilityMeasure μ]
+    (G : Ω → ℝ) (hG : Measurable G) (b : ℕ) (h : ℤ)
+    (k : ℕ → ℕ) (hk : ∀ j, 1 ≤ k j)
+    (hsum : ∀ q : ℕ, Summable (fun j : ℕ =>
+      (∫ w, ‖ErdosBorweinPositive.weylMean b h (G w)
+        (NormalNumbers.CantorLiouville.sched (j + 3))‖ ^ (2 * k j) ∂μ) /
+          ((1 : ℝ) / (q + 1)) ^ (2 * k j))) :
+    ∀ᵐ w ∂μ, Tendsto
+      (fun N : ℕ => ErdosBorweinPositive.weylMean b h (G w) N) atTop (𝓝 0) := by
+  let n : ℕ → ℕ := fun j => NormalNumbers.CantorLiouville.sched (j + 3)
+  have hn : StrictMono n := by
+    intro i j hij
+    exact NormalNumbers.CantorLiouville.sched_strictMono (by omega)
+  have hn1 (j : ℕ) : 1 ≤ n j := NormalNumbers.CantorLiouville.one_le_sched (j + 3)
+  have hratio : Tendsto (fun j => (n (j + 1) : ℝ) / n j) atTop (𝓝 1) := by
+    have hrat := NormalNumbers.CantorLiouville.sched_ratio.comp (tendsto_add_atTop_nat 3)
+    simpa [n, Function.comp_def, Nat.add_assoc, Nat.add_comm, Nat.add_left_comm] using hrat
+  have hWm (N : ℕ) : Measurable (fun w =>
+      ErdosBorweinPositive.weylMean b h (G w) N) := by
+    unfold ErdosBorweinPositive.weylMean
+    fun_prop
+  have hthreshold : ∀ q : ℕ, ∀ᵐ w ∂μ, ∀ᶠ j : ℕ in atTop,
+      ‖ErdosBorweinPositive.weylMean b h (G w) (n j)‖ < (1 : ℝ) / (q + 1) := by
+    intro q
+    let ε : ℝ := 1 / (q + 1)
+    have hε : 0 < ε := by positivity
+    let f : ℕ → Ω → ℝ := fun j w =>
+      (‖ErdosBorweinPositive.weylMean b h (G w) (n j)‖ / ε) ^ (2 * k j)
+    have hf0 : ∀ j w, 0 ≤ f j w := fun j w => by positivity
+    have hfm : ∀ j, Measurable (f j) := fun j =>
+      (((hWm _).norm.div_const ε).pow_const _)
+    have hfi : ∀ j, Integrable (f j) μ := fun j =>
+      Integrable.of_bound (hfm j).aestronglyMeasurable
+        (((q : ℝ) + 1) ^ (2 * k j)) (Eventually.of_forall fun w => by
+          rw [Real.norm_of_nonneg (hf0 j w)]
+          dsimp only [f, ε]
+          have hnorm := norm_weylMean_le_one b h (G w) (n j) (hn1 j)
+          have hbase : ‖ErdosBorweinPositive.weylMean b h (G w) (n j)‖ /
+              ((1 : ℝ) / (q + 1)) ≤ (q : ℝ) + 1 := by
+            calc
+              _ ≤ 1 / ((1 : ℝ) / (q + 1)) :=
+                div_le_div_of_nonneg_right hnorm (by positivity)
+              _ = (q : ℝ) + 1 := by field_simp
+          exact pow_le_pow_left₀ (by positivity) hbase (2 * k j))
+    have hfI : ∀ j, ∫ w, f j w ∂μ =
+        (∫ w, ‖ErdosBorweinPositive.weylMean b h (G w) (n j)‖ ^ (2 * k j) ∂μ) /
+          ε ^ (2 * k j) := by
+      intro j
+      simp only [f, div_pow]
+      rw [integral_div]
+    have hsumf : Summable (fun j => ∫ w, f j w ∂μ) := by
+      simp_rw [hfI]
+      simpa only [n, ε] using hsum q
+    have hlin : ∫⁻ w, ∑' j, ENNReal.ofReal (f j w) ∂μ ≠ ⊤ := by
+      rw [lintegral_tsum fun j => (hfm j).ennreal_ofReal.aemeasurable]
+      refine ne_top_of_le_ne_top (ENNReal.ofReal_ne_top
+        (r := ∑' j : ℕ, ∫ w, f j w ∂μ)) ?_
+      rw [ENNReal.ofReal_tsum_of_nonneg (fun j => integral_nonneg (hf0 j)) hsumf]
+      refine ENNReal.tsum_le_tsum fun j => ?_
+      rw [← ofReal_integral_eq_lintegral_ofReal (hfi j)
+        (Eventually.of_forall (hf0 j))]
+    have hae := ae_lt_top' (AEMeasurable.tsum fun j =>
+      (hfm j).ennreal_ofReal.aemeasurable) hlin
+    filter_upwards [hae] with w hw
+    have h1 : Tendsto (fun j => ENNReal.ofReal (f j w)) atTop (𝓝 0) :=
+      ENNReal.tendsto_atTop_zero_of_tsum_ne_top hw.ne
+    have h2 : Tendsto (fun j => f j w) atTop (𝓝 0) := by
+      have ht := (ENNReal.tendsto_toReal ENNReal.zero_ne_top).comp h1
+      simpa [Function.comp_def, ENNReal.toReal_ofReal (hf0 _ w)] using ht
+    obtain ⟨J, hJ⟩ := Metric.tendsto_atTop.1 h2 1 zero_lt_one
+    filter_upwards [eventually_ge_atTop J] with j hj
+    have hfj := hJ j hj
+    rw [Real.dist_eq, sub_zero, abs_of_nonneg (hf0 j w)] at hfj
+    have hbase : ‖ErdosBorweinPositive.weylMean b h (G w) (n j)‖ / ε < 1 :=
+      (pow_lt_one_iff_of_nonneg (by positivity)
+        (Nat.mul_ne_zero (by norm_num) (Nat.ne_of_gt (hk j)))).mp hfj
+    dsimp only [ε] at hbase ⊢
+    exact (div_lt_one hε).mp hbase
+  have hall : ∀ᵐ w ∂μ, ∀ q : ℕ, ∀ᶠ j : ℕ in atTop,
+      ‖ErdosBorweinPositive.weylMean b h (G w) (n j)‖ < (1 : ℝ) / (q + 1) := by
+    rw [ae_all_iff]
+    exact hthreshold
+  filter_upwards [hall] with w hw
+  have hsched : Tendsto (fun j =>
+      ‖ErdosBorweinPositive.weylMean b h (G w) (n j)‖) atTop (𝓝 0) := by
+    refine Metric.tendsto_atTop.2 fun ε hε => ?_
+    obtain ⟨q, hq⟩ := Metric.tendsto_atTop.1
+      (tendsto_one_div_add_atTop_nhds_zero_nat (𝕜 := ℝ)) ε hε
+    have hq' := hq q le_rfl
+    rw [Real.dist_eq, sub_zero, abs_of_pos (by positivity : (0 : ℝ) < 1 / (q + 1))] at hq'
+    obtain ⟨J, hJ⟩ := (eventually_atTop.1 (hw q))
+    refine ⟨J, fun j hj => ?_⟩
+    rw [Real.dist_eq, sub_zero, abs_of_nonneg (norm_nonneg _)]
+    exact (hJ j hj).trans hq'
+  have hsums : Tendsto (fun j =>
+      ‖∑ t ∈ Finset.range (n j),
+        Complex.exp (2 * Real.pi * Complex.I * (h : ℂ) * (b : ℂ)^t * (G w : ℂ))‖ /
+          (n j : ℝ)) atTop (𝓝 0) := by
+    simpa only [ErdosBorweinPositive.weylMean, norm_div, Complex.norm_natCast] using hsched
+  simpa only [ErdosBorweinPositive.weylMean] using
+    (NormalNumbers.CantorLiouville.tendsto_of_tendsto_sched
+      (fun t => Complex.exp
+        (2 * Real.pi * Complex.I * (h : ℂ) * (b : ℂ)^t * (G w : ℂ)))
+      (fun t => by
+        rw [show 2 * Real.pi * Complex.I * (h : ℂ) * (b : ℂ)^t * (G w : ℂ) =
+            ((2 * Real.pi * (h : ℝ) * (b : ℝ)^t * G w : ℝ) : ℂ) * Complex.I by
+          norm_cast
+          push_cast
+          ring]
+        exact (Complex.norm_exp_ofReal_mul_I _).le)
+      n hn hratio hsums)
+
 /-- **Growing-moment criterion.**  If the variance divisor mass above `P₀(N)` of `n + a₀` diverges
 in density, for every shift `a₀`, then a.s. `E_b` is normal in every base.  Proof:
 1. Weyl moments factor over the independent coins.
