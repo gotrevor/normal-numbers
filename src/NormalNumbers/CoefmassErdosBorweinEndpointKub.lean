@@ -93,6 +93,21 @@ theorem kubilius_card_expectation (y : ℕ) :
   bernoulliSubset_card_expectation _ _
 
 open Classical in
+/-- Every prime block of variance at least one has a fixed positive one-sided crossing mass in
+the full Kubilius model. -/
+theorem kubiliusMass_blockCenteredSum_ge_sqrt_eighth (y : ℕ) (B : Finset ℕ)
+    (hB : B ⊆ primesUpTo y)
+    (hV : 1 ≤ ∑ p ∈ B, (1 / p : ℝ) * (1 - 1 / p)) :
+    (1 : ℝ) / 64 ≤ kubiliusMass y
+      {S | Real.sqrt (∑ p ∈ B, (1 / p : ℝ) * (1 - 1 / p)) / 8 ≤
+        bernoulliCenteredSum B (fun p ↦ (1 / p : ℝ)) S} := by
+  rw [kubiliusMass_eq_bernoulliSubsetMass]
+  exact bernoulliSubsetMass_blockCenteredSum_ge_sqrt_eighth
+    (primesUpTo y) B hB (fun p ↦ (1 / p : ℝ))
+    (fun p hp ↦ kubiliusParameter_nonneg y p (hB hp))
+    (fun p hp ↦ kubiliusParameter_le_one y p (hB hp)) hV
+
+open Classical in
 /-- Literature input: the Kubilius-model total-variation bound (Tenenbaum 1999, Théorème 1.1 and
 (1.7), as quoted by Ford, arXiv 2408.03803v4, Theorem A), at `ε = 1/2`, projected to divisibility
 indicators.  A named hypothesis, not an axiom. -/

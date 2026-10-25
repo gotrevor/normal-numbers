@@ -31,17 +31,20 @@ Write `L = log log N`, `z = ⌊exp((log N)^{1−η})⌋`, and `S(n) = (n+a₀).p
    Show `kubiliusMass z A_N → 0` with an elementary independent-sum argument; no CLT is needed.
    - `#S > 2L` has small mass: mean `Σ 1/p ≤ L + C` by Mertens; use Chebyshev.
    - **Crossing, with constants chosen in the right order.**  Fix `K` (number of blocks), then `M`, then a
-     ratio `r ≥ 64·M²`.
+     ratio `r ≥ 64·M²`, enlarged by any fixed numerical factor needed below.
      - Take `K` geometric blocks `[u_k, r·u_k]` in `u = log log p` inside `[(log L)^3, (1−η)L]`.  This is
        possible for `N` large.  The blocks are independent.
      - The cap `C_T + log₂(2L) + O(1)` is `o(σ_k)`, since every block length is `≥ (log L)^3`.
-     - Each centered block increment `Δ_k` has variance `σ_k² ≍ (r−1)·u_k`.  By fourth moments,
-       `P(Δ_k ≥ σ_k/2) ≥ q > 0`, uniformly.  Use `E Δ = 0`, `E Δ⁴ ≤ 3σ⁴ + σ²` for centered Bernoulli
-       sums, and Paley–Zygmund on `Δ⁺`.
+     - Each centered block increment `Δ_k` has variance `σ_k² ≍ (r−1)·u_k`.  The proved finite-law
+       bound `bernoulliSubsetMass_blockCenteredSum_ge_sqrt_eighth` gives
+       `P(Δ_k ≥ σ_k/8) ≥ 1/64` once `σ_k² ≥ 1`, from `E Δ = 0` and
+       `E Δ⁴ ≤ 3σ_k⁴ + σ_k²`.  (The earlier `σ_k/2` threshold did not follow from those moments alone;
+       the smaller fixed threshold is sufficient.)
      - The running value at a block start is `≥ −M·√(u_k)` except with probability `≤ 1/M²`
-       (Chebyshev).  `r ≥ 64M²` makes `M·√(u_k) ≤ σ_k/8`.
-     - `P(no crossing) ≤ (1 − q)^K + K/M²`: choose `K` with `(1−q)^K < ε/2`, then `M` with `K/M² < ε/2`,
-       then `r`.
+       (Chebyshev).  Enlarge `r` after choosing `M` so that `M·√(u_k) ≤ σ_k/32`; eventually the cap is
+       also `≤ σ_k/32`, leaving a positive crossing margin from the `σ_k/8` increment.
+     - `P(no crossing) ≤ (63/64)^K + K/M²`: choose `K` with `(63/64)^K < ε/2`, then `M` with
+       `K/M² < ε/2`, then `r`.
      - A crossing at a block end gives a crossing at a prime jump `p > P₀` inside the block, because the walk
        only decreases between jumps.
      - Mertens keeps the centering `Σ_{p ≤ x} 1/p` within `O(1)` of `log log x`.

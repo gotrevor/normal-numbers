@@ -225,4 +225,607 @@ theorem bernoulliSubset_card_expectation {α : Type*} [DecidableEq α]
       intro p hp
       exact bernoulliSubset_membership_expectation U q hp
 
+open Classical in
+/-- Expectation of a real observable on the finite Bernoulli subset model. -/
+noncomputable def bernoulliSubsetExpectation {α : Type*} [DecidableEq α]
+    (U : Finset α) (q : α → ℝ) (F : Finset α → ℝ) : ℝ :=
+  ∑ S ∈ U.powerset, bernoulliSubsetWeight U S q * F S
+
+open Classical in
+theorem bernoulliSubsetWeight_insert_absent {α : Type*} [DecidableEq α]
+    {U S : Finset α} {p : α} (q : α → ℝ) (hp : p ∉ U) (hS : S ⊆ U) :
+    bernoulliSubsetWeight (insert p U) S q =
+      (1 - q p) * bernoulliSubsetWeight U S q := by
+  have hpS : p ∉ S := fun hpS ↦ hp (hS hpS)
+  simp [bernoulliSubsetWeight, hp, hpS]
+
+open Classical in
+theorem bernoulliSubsetWeight_insert_present {α : Type*} [DecidableEq α]
+    {U S : Finset α} {p : α} (q : α → ℝ) (hp : p ∉ U) :
+    bernoulliSubsetWeight (insert p U) (insert p S) q =
+      q p * bernoulliSubsetWeight U S q := by
+  rw [bernoulliSubsetWeight, Finset.prod_insert hp]
+  simp only [Finset.mem_insert, true_or, if_true]
+  congr 1
+  apply Finset.prod_congr rfl
+  intro x hx
+  have hxp : x ≠ p := by
+    intro hxp
+    subst x
+    exact hp hx
+  simp [hxp]
+
+open Classical in
+/-- Split an expectation after adjoining one independent Bernoulli coordinate. -/
+theorem bernoulliSubsetExpectation_insert {α : Type*} [DecidableEq α]
+    {U : Finset α} {p : α} (hp : p ∉ U) (q : α → ℝ) (F : Finset α → ℝ) :
+    bernoulliSubsetExpectation (insert p U) q F =
+      (1 - q p) * bernoulliSubsetExpectation U q F +
+        q p * bernoulliSubsetExpectation U q (fun S ↦ F (insert p S)) := by
+  simp only [bernoulliSubsetExpectation]
+  rw [Finset.sum_powerset_insert hp]
+  apply congrArg₂ (· + ·)
+  · rw [Finset.mul_sum]
+    apply Finset.sum_congr rfl
+    intro S hS
+    rw [bernoulliSubsetWeight_insert_absent q hp (Finset.mem_powerset.mp hS)]
+    ring
+  · rw [Finset.mul_sum]
+    apply Finset.sum_congr rfl
+    intro S hS
+    rw [bernoulliSubsetWeight_insert_present q hp]
+    ring
+
+open Classical in
+/-- Adjoining a coordinate does not change the expectation of an observable that ignores it. -/
+theorem bernoulliSubsetExpectation_insert_of_invariant {α : Type*} [DecidableEq α]
+    {U : Finset α} {p : α} (hp : p ∉ U) (q : α → ℝ) (F : Finset α → ℝ)
+    (hF : ∀ S ∈ U.powerset, F (insert p S) = F S) :
+    bernoulliSubsetExpectation (insert p U) q F = bernoulliSubsetExpectation U q F := by
+  rw [bernoulliSubsetExpectation_insert hp]
+  have hinvariant : bernoulliSubsetExpectation U q (fun S ↦ F (insert p S)) =
+      bernoulliSubsetExpectation U q F := by
+    apply Finset.sum_congr rfl
+    intro S hS
+    change bernoulliSubsetWeight U S q * F (insert p S) =
+      bernoulliSubsetWeight U S q * F S
+    rw [hF S hS]
+  rw [hinvariant]
+  ring
+
+open Classical in
+theorem bernoulliSubsetExpectation_congr {α : Type*} [DecidableEq α]
+    (U : Finset α) (q : α → ℝ) {F G : Finset α → ℝ}
+    (hFG : ∀ S ∈ U.powerset, F S = G S) :
+    bernoulliSubsetExpectation U q F = bernoulliSubsetExpectation U q G := by
+  apply Finset.sum_congr rfl
+  intro S hS
+  rw [hFG S hS]
+
+open Classical in
+/-- Marginalization over coordinates disjoint from the support of an observable. -/
+theorem bernoulliSubsetExpectation_union_disjoint {α : Type*} [DecidableEq α]
+    (B D : Finset α) (hBD : Disjoint B D) (q : α → ℝ) (F : Finset α → ℝ) :
+    bernoulliSubsetExpectation (B ∪ D) q (fun S ↦ F (S ∩ B)) =
+      bernoulliSubsetExpectation B q F := by
+  induction D using Finset.induction_on with
+  | empty =>
+      simp only [Finset.union_empty]
+      apply bernoulliSubsetExpectation_congr
+      intro S hS
+      rw [Finset.inter_eq_left.mpr (Finset.mem_powerset.mp hS)]
+  | @insert p D hp ih =>
+      have hpB : p ∉ B := by
+        intro hpB
+        exact Finset.disjoint_left.mp hBD hpB (Finset.mem_insert_self p D)
+      have hBD' : Disjoint B D := hBD.mono_right (Finset.subset_insert p D)
+      have hpUnion : p ∉ B ∪ D := by simp [hpB, hp]
+      rw [show B ∪ insert p D = insert p (B ∪ D) by ext; simp [or_assoc]]
+      calc
+        bernoulliSubsetExpectation (insert p (B ∪ D)) q (fun S ↦ F (S ∩ B)) =
+            bernoulliSubsetExpectation (B ∪ D) q (fun S ↦ F (S ∩ B)) := by
+          apply bernoulliSubsetExpectation_insert_of_invariant hpUnion
+          intro S hS
+          simp [hpB]
+        _ = bernoulliSubsetExpectation B q F := ih hBD'
+
+open Classical in
+/-- An observable of `S ∩ B` has the same expectation in every larger Bernoulli universe. -/
+theorem bernoulliSubsetExpectation_inter {α : Type*} [DecidableEq α]
+    (U B : Finset α) (hBU : B ⊆ U) (q : α → ℝ) (F : Finset α → ℝ) :
+    bernoulliSubsetExpectation U q (fun S ↦ F (S ∩ B)) =
+      bernoulliSubsetExpectation B q F := by
+  rw [← Finset.union_sdiff_of_subset hBU]
+  exact bernoulliSubsetExpectation_union_disjoint B (U \ B)
+    Finset.disjoint_sdiff q F
+
+open Classical in
+/-- Cylinder events have the same mass in a Bernoulli universe and in their coordinate support. -/
+theorem bernoulliSubsetMass_inter {α : Type*} [DecidableEq α]
+    (U B : Finset α) (hBU : B ⊆ U) (q : α → ℝ) (A : Set (Finset α)) :
+    bernoulliSubsetMass U q {S | S ∩ B ∈ A} = bernoulliSubsetMass B q A := by
+  have hleft : bernoulliSubsetMass U q {S | S ∩ B ∈ A} =
+      bernoulliSubsetExpectation U q (fun S ↦ if S ∩ B ∈ A then 1 else 0) := by
+    unfold bernoulliSubsetMass bernoulliSubsetExpectation
+    apply Finset.sum_congr rfl
+    intro S hS
+    split <;> simp_all
+  have hright : bernoulliSubsetMass B q A =
+      bernoulliSubsetExpectation B q (fun S ↦ if S ∈ A then 1 else 0) := by
+    unfold bernoulliSubsetMass bernoulliSubsetExpectation
+    apply Finset.sum_congr rfl
+    intro S hS
+    split <;> simp_all
+  rw [hleft, hright]
+  exact bernoulliSubsetExpectation_inter U B hBU q (fun S ↦ if S ∈ A then 1 else 0)
+
+open Classical in
+theorem bernoulliSubsetExpectation_const {α : Type*} [DecidableEq α]
+    (U : Finset α) (q : α → ℝ) (a : ℝ) :
+    bernoulliSubsetExpectation U q (fun _ ↦ a) = a := by
+  rw [bernoulliSubsetExpectation, ← Finset.sum_mul, sum_bernoulliSubsetWeight]
+  exact one_mul a
+
+open Classical in
+theorem bernoulliSubsetExpectation_add {α : Type*} [DecidableEq α]
+    (U : Finset α) (q : α → ℝ) (F G : Finset α → ℝ) :
+    bernoulliSubsetExpectation U q (fun S ↦ F S + G S) =
+      bernoulliSubsetExpectation U q F + bernoulliSubsetExpectation U q G := by
+  simp only [bernoulliSubsetExpectation, mul_add, Finset.sum_add_distrib]
+
+open Classical in
+theorem bernoulliSubsetExpectation_sub {α : Type*} [DecidableEq α]
+    (U : Finset α) (q : α → ℝ) (F G : Finset α → ℝ) :
+    bernoulliSubsetExpectation U q (fun S ↦ F S - G S) =
+      bernoulliSubsetExpectation U q F - bernoulliSubsetExpectation U q G := by
+  simp only [bernoulliSubsetExpectation, mul_sub, Finset.sum_sub_distrib]
+
+open Classical in
+theorem bernoulliSubsetExpectation_const_mul {α : Type*} [DecidableEq α]
+    (U : Finset α) (q : α → ℝ) (a : ℝ) (F : Finset α → ℝ) :
+    bernoulliSubsetExpectation U q (fun S ↦ a * F S) =
+      a * bernoulliSubsetExpectation U q F := by
+  unfold bernoulliSubsetExpectation
+  rw [Finset.mul_sum]
+  apply Finset.sum_congr rfl
+  intro S hS
+  ring
+
+open Classical in
+theorem bernoulliSubsetExpectation_sq_sub_const {α : Type*} [DecidableEq α]
+    (U : Finset α) (q : α → ℝ) (F : Finset α → ℝ) (a : ℝ) :
+    bernoulliSubsetExpectation U q (fun S ↦ (F S - a) ^ 2) =
+      bernoulliSubsetExpectation U q (fun S ↦ (F S) ^ 2) -
+        2 * a * bernoulliSubsetExpectation U q F + a ^ 2 := by
+  calc
+    bernoulliSubsetExpectation U q (fun S ↦ (F S - a) ^ 2) =
+        bernoulliSubsetExpectation U q
+          (fun S ↦ (F S) ^ 2 - (2 * a) * F S + a ^ 2) := by
+      apply bernoulliSubsetExpectation_congr
+      intro S hS
+      ring
+    _ = _ := by
+      rw [bernoulliSubsetExpectation_add, bernoulliSubsetExpectation_sub,
+        bernoulliSubsetExpectation_const_mul, bernoulliSubsetExpectation_const]
+
+open Classical in
+theorem bernoulliSubsetExpectation_sq_add_const {α : Type*} [DecidableEq α]
+    (U : Finset α) (q : α → ℝ) (F : Finset α → ℝ) (a : ℝ) :
+    bernoulliSubsetExpectation U q (fun S ↦ (F S + a) ^ 2) =
+      bernoulliSubsetExpectation U q (fun S ↦ (F S) ^ 2) +
+        2 * a * bernoulliSubsetExpectation U q F + a ^ 2 := by
+  calc
+    bernoulliSubsetExpectation U q (fun S ↦ (F S + a) ^ 2) =
+        bernoulliSubsetExpectation U q
+          (fun S ↦ (F S) ^ 2 + (2 * a) * F S + a ^ 2) := by
+      apply bernoulliSubsetExpectation_congr
+      intro S hS
+      ring
+    _ = _ := by
+      rw [bernoulliSubsetExpectation_add, bernoulliSubsetExpectation_add,
+        bernoulliSubsetExpectation_const_mul, bernoulliSubsetExpectation_const]
+
+open Classical in
+/-- Fourth-moment update after adding one centered Bernoulli variable.  The cubic cross term
+cancels because the old sum has mean zero. -/
+theorem bernoulliSubsetExpectation_fourth_mixture {α : Type*} [DecidableEq α]
+    (U : Finset α) (q : α → ℝ) (F : Finset α → ℝ) (a : ℝ)
+    (hmean : bernoulliSubsetExpectation U q F = 0) :
+    (1 - a) * bernoulliSubsetExpectation U q (fun S ↦ (F S - a) ^ 4) +
+        a * bernoulliSubsetExpectation U q (fun S ↦ (F S + (1 - a)) ^ 4) =
+      bernoulliSubsetExpectation U q (fun S ↦ (F S) ^ 4) +
+        6 * (a * (1 - a)) * bernoulliSubsetExpectation U q (fun S ↦ (F S) ^ 2) +
+        a * (1 - a) * ((1 - a) ^ 3 + a ^ 3) := by
+  calc
+    (1 - a) * bernoulliSubsetExpectation U q (fun S ↦ (F S - a) ^ 4) +
+          a * bernoulliSubsetExpectation U q (fun S ↦ (F S + (1 - a)) ^ 4) =
+        bernoulliSubsetExpectation U q (fun S ↦
+          (1 - a) * (F S - a) ^ 4 + a * (F S + (1 - a)) ^ 4) := by
+      rw [bernoulliSubsetExpectation_add, bernoulliSubsetExpectation_const_mul,
+        bernoulliSubsetExpectation_const_mul]
+    _ = bernoulliSubsetExpectation U q (fun S ↦
+          (F S) ^ 4 + (6 * (a * (1 - a))) * (F S) ^ 2 +
+            (4 * (a * (1 - a)) * (1 - 2 * a)) * F S +
+              a * (1 - a) * ((1 - a) ^ 3 + a ^ 3)) := by
+      apply bernoulliSubsetExpectation_congr
+      intro S hS
+      ring
+    _ = _ := by
+      rw [bernoulliSubsetExpectation_add, bernoulliSubsetExpectation_add,
+        bernoulliSubsetExpectation_add, bernoulliSubsetExpectation_const_mul,
+        bernoulliSubsetExpectation_const_mul, bernoulliSubsetExpectation_const,
+        hmean]
+      ring
+
+open Classical in
+/-- Sum of the centered membership indicators `1_{p ∈ S} - q(p)`. -/
+noncomputable def bernoulliCenteredSum {α : Type*} [DecidableEq α]
+    (U : Finset α) (q : α → ℝ) (S : Finset α) : ℝ :=
+  ∑ p ∈ U, if p ∈ S then 1 - q p else -q p
+
+open Classical in
+theorem bernoulliCenteredSum_inter {α : Type*} [DecidableEq α]
+    (U S : Finset α) (q : α → ℝ) :
+    bernoulliCenteredSum U q (S ∩ U) = bernoulliCenteredSum U q S := by
+  unfold bernoulliCenteredSum
+  apply Finset.sum_congr rfl
+  intro p hp
+  simp [hp]
+
+open Classical in
+theorem bernoulliCenteredSum_insert_absent {α : Type*} [DecidableEq α]
+    {U S : Finset α} {p : α} (q : α → ℝ) (hp : p ∉ U) (hpS : p ∉ S) :
+    bernoulliCenteredSum (insert p U) q S = bernoulliCenteredSum U q S - q p := by
+  simp [bernoulliCenteredSum, hp, hpS]
+  ring
+
+open Classical in
+theorem bernoulliCenteredSum_insert_present {α : Type*} [DecidableEq α]
+    {U S : Finset α} {p : α} (q : α → ℝ) (hp : p ∉ U) :
+    bernoulliCenteredSum (insert p U) q (insert p S) =
+      bernoulliCenteredSum U q S + (1 - q p) := by
+  unfold bernoulliCenteredSum
+  rw [Finset.sum_insert hp]
+  simp only [Finset.mem_insert, true_or, if_true]
+  rw [add_comm]
+  congr 1
+  apply Finset.sum_congr rfl
+  intro x hx
+  have hxp : x ≠ p := by
+    intro hxp
+    subst x
+    exact hp hx
+  simp [hxp]
+
+open Classical in
+/-- A sum of centered independent Bernoulli indicators has mean zero. -/
+theorem bernoulliSubset_centeredSum_expectation {α : Type*} [DecidableEq α]
+    (U : Finset α) (q : α → ℝ) :
+    bernoulliSubsetExpectation U q (bernoulliCenteredSum U q) = 0 := by
+  induction U using Finset.induction_on with
+  | empty => simp [bernoulliSubsetExpectation, bernoulliCenteredSum, bernoulliSubsetWeight]
+  | @insert p U hp ih =>
+      rw [bernoulliSubsetExpectation_insert hp]
+      have habsent : bernoulliSubsetExpectation U q (bernoulliCenteredSum (insert p U) q) =
+          bernoulliSubsetExpectation U q (fun S ↦ bernoulliCenteredSum U q S - q p) := by
+        apply bernoulliSubsetExpectation_congr
+        intro S hS
+        exact bernoulliCenteredSum_insert_absent q hp
+          (Finset.notMem_of_mem_powerset_of_notMem hS hp)
+      have hpresent : bernoulliSubsetExpectation U q
+            (fun S ↦ bernoulliCenteredSum (insert p U) q (insert p S)) =
+          bernoulliSubsetExpectation U q
+            (fun S ↦ bernoulliCenteredSum U q S + (1 - q p)) := by
+        apply bernoulliSubsetExpectation_congr
+        intro S hS
+        exact bernoulliCenteredSum_insert_present q hp
+      rw [habsent, hpresent, bernoulliSubsetExpectation_sub,
+        bernoulliSubsetExpectation_add, bernoulliSubsetExpectation_const,
+        bernoulliSubsetExpectation_const, ih]
+      ring
+
+open Classical in
+/-- Exact variance identity for a finite sum of centered independent Bernoulli indicators. -/
+theorem bernoulliSubset_centeredSum_secondMoment {α : Type*} [DecidableEq α]
+    (U : Finset α) (q : α → ℝ) :
+    bernoulliSubsetExpectation U q (fun S ↦ (bernoulliCenteredSum U q S) ^ 2) =
+      ∑ p ∈ U, q p * (1 - q p) := by
+  induction U using Finset.induction_on with
+  | empty => simp [bernoulliSubsetExpectation, bernoulliCenteredSum, bernoulliSubsetWeight]
+  | @insert p U hp ih =>
+      rw [bernoulliSubsetExpectation_insert hp]
+      have habsent : bernoulliSubsetExpectation U q
+            (fun S ↦ (bernoulliCenteredSum (insert p U) q S) ^ 2) =
+          bernoulliSubsetExpectation U q
+            (fun S ↦ (bernoulliCenteredSum U q S - q p) ^ 2) := by
+        apply bernoulliSubsetExpectation_congr
+        intro S hS
+        rw [bernoulliCenteredSum_insert_absent q hp
+          (Finset.notMem_of_mem_powerset_of_notMem hS hp)]
+      have hpresent : bernoulliSubsetExpectation U q
+            (fun S ↦ (bernoulliCenteredSum (insert p U) q (insert p S)) ^ 2) =
+          bernoulliSubsetExpectation U q
+            (fun S ↦ (bernoulliCenteredSum U q S + (1 - q p)) ^ 2) := by
+        apply bernoulliSubsetExpectation_congr
+        intro S hS
+        rw [bernoulliCenteredSum_insert_present q hp]
+      rw [habsent, hpresent, bernoulliSubsetExpectation_sq_sub_const,
+        bernoulliSubsetExpectation_sq_add_const,
+        bernoulliSubset_centeredSum_expectation, ih, Finset.sum_insert hp]
+      ring
+
+open Classical in
+/-- Fourth-moment bound for a finite sum of centered independent Bernoulli indicators. -/
+theorem bernoulliSubset_centeredSum_fourthMoment_le {α : Type*} [DecidableEq α]
+    (U : Finset α) (q : α → ℝ) (hq0 : ∀ p ∈ U, 0 ≤ q p)
+    (hq1 : ∀ p ∈ U, q p ≤ 1) :
+    bernoulliSubsetExpectation U q (fun S ↦ (bernoulliCenteredSum U q S) ^ 4) ≤
+      3 * (∑ p ∈ U, q p * (1 - q p)) ^ 2 + ∑ p ∈ U, q p * (1 - q p) := by
+  induction U using Finset.induction_on with
+  | empty => simp [bernoulliSubsetExpectation, bernoulliCenteredSum, bernoulliSubsetWeight]
+  | @insert p U hp ih =>
+      have hq0U : ∀ x ∈ U, 0 ≤ q x := fun x hx ↦ hq0 x (Finset.mem_insert_of_mem hx)
+      have hq1U : ∀ x ∈ U, q x ≤ 1 := fun x hx ↦ hq1 x (Finset.mem_insert_of_mem hx)
+      have ihU := ih hq0U hq1U
+      have hqp0 : 0 ≤ q p := hq0 p (Finset.mem_insert_self p U)
+      have hqp1 : q p ≤ 1 := hq1 p (Finset.mem_insert_self p U)
+      let V : ℝ := ∑ x ∈ U, q x * (1 - q x)
+      let v : ℝ := q p * (1 - q p)
+      have hv0 : 0 ≤ v := mul_nonneg hqp0 (sub_nonneg.mpr hqp1)
+      have hlocal :
+          q p * (1 - q p) * ((1 - q p) ^ 3 + (q p) ^ 3) ≤ v := by
+        have hid : q p * (1 - q p) * ((1 - q p) ^ 3 + (q p) ^ 3) =
+            v - 3 * v ^ 2 := by
+          simp only [v]
+          ring
+        rw [hid]
+        nlinarith [sq_nonneg v]
+      rw [bernoulliSubsetExpectation_insert hp]
+      have habsent : bernoulliSubsetExpectation U q
+            (fun S ↦ (bernoulliCenteredSum (insert p U) q S) ^ 4) =
+          bernoulliSubsetExpectation U q
+            (fun S ↦ (bernoulliCenteredSum U q S - q p) ^ 4) := by
+        apply bernoulliSubsetExpectation_congr
+        intro S hS
+        rw [bernoulliCenteredSum_insert_absent q hp
+          (Finset.notMem_of_mem_powerset_of_notMem hS hp)]
+      have hpresent : bernoulliSubsetExpectation U q
+            (fun S ↦ (bernoulliCenteredSum (insert p U) q (insert p S)) ^ 4) =
+          bernoulliSubsetExpectation U q
+            (fun S ↦ (bernoulliCenteredSum U q S + (1 - q p)) ^ 4) := by
+        apply bernoulliSubsetExpectation_congr
+        intro S hS
+        rw [bernoulliCenteredSum_insert_present q hp]
+      rw [habsent, hpresent,
+        bernoulliSubsetExpectation_fourth_mixture U q (bernoulliCenteredSum U q) (q p)
+          (bernoulliSubset_centeredSum_expectation U q),
+        bernoulliSubset_centeredSum_secondMoment, Finset.sum_insert hp]
+      change bernoulliSubsetExpectation U q
+          (fun S ↦ (bernoulliCenteredSum U q S) ^ 4) + 6 * v * V +
+            q p * (1 - q p) * ((1 - q p) ^ 3 + (q p) ^ 3) ≤
+        3 * (v + V) ^ 2 + (v + V)
+      nlinarith [sq_nonneg v]
+
+open Classical in
+/-- Chebyshev bound for a centered Bernoulli subset sum, stated directly in terms of event mass. -/
+theorem bernoulliSubsetMass_centeredSum_abs_ge_le {α : Type*} [DecidableEq α]
+    (U : Finset α) (q : α → ℝ) (hq0 : ∀ p ∈ U, 0 ≤ q p)
+    (hq1 : ∀ p ∈ U, q p ≤ 1) {r : ℝ} (hr : 0 < r) :
+    bernoulliSubsetMass U q {S | r ≤ |bernoulliCenteredSum U q S|} ≤
+      (∑ p ∈ U, q p * (1 - q p)) / r ^ 2 := by
+  have hr2 : 0 < r ^ 2 := sq_pos_of_pos hr
+  apply (le_div_iff₀ hr2).2
+  rw [← bernoulliSubset_centeredSum_secondMoment U q]
+  unfold bernoulliSubsetMass bernoulliSubsetExpectation
+  rw [Finset.sum_mul]
+  apply Finset.sum_le_sum
+  intro S hS
+  have hw : 0 ≤ bernoulliSubsetWeight U S q :=
+    bernoulliSubsetWeight_nonneg U S q hq0 hq1
+  by_cases hlarge : r ≤ |bernoulliCenteredSum U q S|
+  · simp only [Set.mem_setOf_eq, hlarge, if_true]
+    have hsquare : r ^ 2 ≤ (bernoulliCenteredSum U q S) ^ 2 := by
+      nlinarith [sq_nonneg (|bernoulliCenteredSum U q S| - r),
+        sq_abs (bernoulliCenteredSum U q S)]
+    exact mul_le_mul_of_nonneg_left hsquare hw
+  · simp only [Set.mem_setOf_eq, hlarge, if_false, zero_mul]
+    exact mul_nonneg hw (sq_nonneg _)
+
+/-- A finite centered law with controlled fourth moment has a uniformly positive upper tail.
+This elementary one-sided Paley--Zygmund substitute is phrased for raw finite sums so that it can
+also be reused outside the Bernoulli subset model. -/
+theorem finite_centered_fourth_upperTail
+    {ι : Type*} (s : Finset ι) (w X : ι → ℝ)
+    (hw : ∀ i ∈ s, 0 ≤ w i) (hwt : ∑ i ∈ s, w i = 1)
+    (hmean : ∑ i ∈ s, w i * X i = 0) {V : ℝ}
+    (hsecond : ∑ i ∈ s, w i * (X i) ^ 2 = V) (hV : 1 ≤ V)
+    (hfourth : ∑ i ∈ s, w i * (X i) ^ 4 ≤ 4 * V ^ 2) :
+    (1 : ℝ) / 64 ≤ ∑ i ∈ s, if Real.sqrt V / 8 ≤ X i then w i else 0 := by
+  let t : ℝ := Real.sqrt V
+  let A : ℝ := ∑ i ∈ s, w i * |X i|
+  let B : ℝ := ∑ i ∈ s, w i * |X i| ^ 3
+  let C : ℝ := ∑ i ∈ s, w i * (X i)⁺
+  let Tail : ℝ := ∑ i ∈ s, if t / 8 ≤ X i then w i * (X i)⁺ else 0
+  let P : ℝ := ∑ i ∈ s, if t / 8 ≤ X i then w i else 0
+  have hVpos : 0 < V := zero_lt_one.trans_le hV
+  have ht : 0 < t := Real.sqrt_pos.2 hVpos
+  have ht_sq : t ^ 2 = V := Real.sq_sqrt hVpos.le
+  have hA0 : 0 ≤ A := Finset.sum_nonneg fun i hi ↦ mul_nonneg (hw i hi) (abs_nonneg _)
+  have hB0 : 0 ≤ B := Finset.sum_nonneg fun i hi ↦
+    mul_nonneg (hw i hi) (pow_nonneg (abs_nonneg _) _)
+  have hVAB : V ^ 2 ≤ A * B := by
+    have hcs := Finset.sum_sq_le_sum_mul_sum_of_sq_le_mul s
+      (r := fun i ↦ w i * (X i) ^ 2)
+      (f := fun i ↦ w i * |X i|)
+      (g := fun i ↦ w i * |X i| ^ 3)
+      (fun i hi ↦ mul_nonneg (hw i hi) (abs_nonneg _))
+      (fun i hi ↦ mul_nonneg (hw i hi) (pow_nonneg (abs_nonneg _) _))
+      (fun i hi ↦ by
+        have hx : (X i) ^ 2 = |X i| ^ 2 := (sq_abs (X i)).symm
+        rw [hx]
+        ring_nf
+        exact le_rfl)
+    simpa only [hsecond, A, B] using hcs
+  have hBsq : B ^ 2 ≤ V * (4 * V ^ 2) := by
+    have hcs := Finset.sum_sq_le_sum_mul_sum_of_sq_le_mul s
+      (r := fun i ↦ w i * |X i| ^ 3)
+      (f := fun i ↦ w i * (X i) ^ 2)
+      (g := fun i ↦ w i * (X i) ^ 4)
+      (fun i hi ↦ mul_nonneg (hw i hi) (sq_nonneg _))
+      (fun i hi ↦ by
+        have hx4 : 0 ≤ (X i) ^ 4 := by positivity
+        exact mul_nonneg (hw i hi) hx4)
+      (fun i hi ↦ by
+        have hx : (X i) ^ 2 = |X i| ^ 2 := (sq_abs (X i)).symm
+        have hx4 : (X i) ^ 4 = |X i| ^ 4 := by
+          calc
+            (X i) ^ 4 = ((X i) ^ 2) ^ 2 := by ring
+            _ = (|X i| ^ 2) ^ 2 := by rw [hx]
+            _ = |X i| ^ 4 := by ring
+        rw [hx, hx4]
+        ring_nf
+        exact le_rfl)
+    calc
+      B ^ 2 ≤ (∑ i ∈ s, w i * (X i) ^ 2) * ∑ i ∈ s, w i * (X i) ^ 4 := by
+        simpa only [B] using hcs
+      _ ≤ V * (4 * V ^ 2) := by rw [hsecond]; gcongr
+  have hB_le : B ≤ 2 * V * t := by
+    apply (sq_le_sq₀ hB0 (by positivity : 0 ≤ 2 * V * t)).mp
+    calc
+      B ^ 2 ≤ V * (4 * V ^ 2) := hBsq
+      _ = (2 * V * t) ^ 2 := by rw [← ht_sq]; ring
+  have ht_le_two_A : t ≤ 2 * A := by
+    have hmul : A * B ≤ A * (2 * V * t) := mul_le_mul_of_nonneg_left hB_le hA0
+    have hcancel : (V * t) * t ≤ (V * t) * (2 * A) := by
+      calc
+        (V * t) * t = V ^ 2 := by rw [← ht_sq]; ring
+        _ ≤ A * B := hVAB
+        _ ≤ A * (2 * V * t) := hmul
+        _ = (V * t) * (2 * A) := by ring
+    exact le_of_mul_le_mul_left hcancel (mul_pos hVpos ht)
+  have hC : A = 2 * C := by
+    calc
+      A = (∑ i ∈ s, w i * X i) + A := by rw [hmean, zero_add]
+      _ = ∑ i ∈ s, (w i * X i + w i * |X i|) := by
+        rw [Finset.sum_add_distrib]
+      _ = ∑ i ∈ s, 2 * (w i * (X i)⁺) := by
+        apply Finset.sum_congr rfl
+        intro i hi
+        rw [← mul_add, add_abs_eq_two_nsmul_posPart]
+        simp only [nsmul_eq_mul]
+        ring
+      _ = 2 * C := by rw [Finset.mul_sum]
+  have ht_four_le_C : t / 4 ≤ C := by nlinarith [ht_le_two_A]
+  have hC_le : C ≤ t / 8 + Tail := by
+    calc
+      C ≤ ∑ i ∈ s, (w i * (t / 8) + if t / 8 ≤ X i then w i * (X i)⁺ else 0) := by
+        apply Finset.sum_le_sum
+        intro i hi
+        by_cases hlarge : t / 8 ≤ X i
+        · simp only [hlarge, if_true]
+          exact le_add_of_nonneg_left (mul_nonneg (hw i hi) (by positivity))
+        · simp only [hlarge, if_false, add_zero]
+          apply mul_le_mul_of_nonneg_left _ (hw i hi)
+          rw [posPart_def]
+          exact max_le (le_of_not_ge hlarge) (by positivity)
+      _ = t / 8 + Tail := by
+        rw [Finset.sum_add_distrib, ← Finset.sum_mul, hwt, one_mul]
+  have hTail_lower : t / 8 ≤ Tail := by linarith
+  have hTail0 : 0 ≤ Tail := Finset.sum_nonneg fun i hi ↦ by
+    split
+    · exact mul_nonneg (hw i hi) (posPart_nonneg _)
+    · exact le_rfl
+  have hP0 : 0 ≤ P := Finset.sum_nonneg fun i hi ↦ by
+    split
+    · exact hw i hi
+    · exact le_rfl
+  have hposSecond : (∑ i ∈ s, w i * ((X i)⁺) ^ 2) ≤ V := by
+    rw [← hsecond]
+    apply Finset.sum_le_sum
+    intro i hi
+    apply mul_le_mul_of_nonneg_left _ (hw i hi)
+    by_cases hx : 0 ≤ X i
+    · rw [posPart_eq_self.mpr hx]
+    · rw [posPart_eq_zero.mpr (le_of_not_ge hx), zero_pow (by norm_num : 2 ≠ 0)]
+      exact sq_nonneg _
+  have hTail_sq : Tail ^ 2 ≤ V * P := by
+    have hcs := Finset.sum_sq_le_sum_mul_sum_of_sq_le_mul s
+      (r := fun i ↦ if t / 8 ≤ X i then w i * (X i)⁺ else 0)
+      (f := fun i ↦ w i * ((X i)⁺) ^ 2)
+      (g := fun i ↦ if t / 8 ≤ X i then w i else 0)
+      (fun i hi ↦ mul_nonneg (hw i hi) (sq_nonneg _))
+      (fun i hi ↦ by split <;> simp_all)
+      (fun i hi ↦ by
+        by_cases hlarge : t / 8 ≤ X i
+        · simp only [hlarge, if_true]
+          ring_nf
+          exact le_rfl
+        · simp [hlarge])
+    calc
+      Tail ^ 2 ≤ (∑ i ∈ s, w i * ((X i)⁺) ^ 2) * P := by
+        simpa only [Tail, P] using hcs
+      _ ≤ V * P := mul_le_mul_of_nonneg_right hposSecond hP0
+  have hthreshold_sq : (t / 8) ^ 2 ≤ Tail ^ 2 :=
+    (sq_le_sq₀ (by positivity) hTail0).2 hTail_lower
+  have hVP : V / 64 ≤ V * P := by
+    calc
+      V / 64 = (t / 8) ^ 2 := by rw [← ht_sq]; ring
+      _ ≤ Tail ^ 2 := hthreshold_sq
+      _ ≤ V * P := hTail_sq
+  have := le_of_mul_le_mul_left (show V * ((1 : ℝ) / 64) ≤ V * P by
+    calc
+      V * ((1 : ℝ) / 64) = V / 64 := by ring
+      _ ≤ V * P := hVP) hVpos
+  simpa only [P, t] using this
+
+open Classical in
+/-- Uniform one-sided crossing probability for a Bernoulli block whose variance is at least one. -/
+theorem bernoulliSubsetMass_centeredSum_ge_sqrt_eighth {α : Type*} [DecidableEq α]
+    (U : Finset α) (q : α → ℝ) (hq0 : ∀ p ∈ U, 0 ≤ q p)
+    (hq1 : ∀ p ∈ U, q p ≤ 1)
+    (hV : 1 ≤ ∑ p ∈ U, q p * (1 - q p)) :
+    (1 : ℝ) / 64 ≤ bernoulliSubsetMass U q
+      {S | Real.sqrt (∑ p ∈ U, q p * (1 - q p)) / 8 ≤ bernoulliCenteredSum U q S} := by
+  let V : ℝ := ∑ p ∈ U, q p * (1 - q p)
+  have hfourth :
+      bernoulliSubsetExpectation U q (fun S ↦ (bernoulliCenteredSum U q S) ^ 4) ≤
+        4 * V ^ 2 := by
+    have hbound := bernoulliSubset_centeredSum_fourthMoment_le U q hq0 hq1
+    change bernoulliSubsetExpectation U q (fun S ↦ (bernoulliCenteredSum U q S) ^ 4) ≤
+      4 * V ^ 2
+    change bernoulliSubsetExpectation U q (fun S ↦ (bernoulliCenteredSum U q S) ^ 4) ≤
+      3 * V ^ 2 + V at hbound
+    have hV0 : 0 ≤ V := zero_le_one.trans hV
+    nlinarith [sq_nonneg (V - 1)]
+  have htail := finite_centered_fourth_upperTail U.powerset
+    (fun S ↦ bernoulliSubsetWeight U S q) (bernoulliCenteredSum U q)
+    (fun S hS ↦ bernoulliSubsetWeight_nonneg U S q hq0 hq1)
+    (sum_bernoulliSubsetWeight U q)
+    (bernoulliSubset_centeredSum_expectation U q)
+    (bernoulliSubset_centeredSum_secondMoment U q) hV hfourth
+  simpa only [V, bernoulliSubsetMass, Set.mem_ofPred_eq] using htail
+
+open Classical in
+/-- The one-sided block bound inside any larger Bernoulli universe. -/
+theorem bernoulliSubsetMass_blockCenteredSum_ge_sqrt_eighth {α : Type*} [DecidableEq α]
+    (U B : Finset α) (hBU : B ⊆ U) (q : α → ℝ)
+    (hq0 : ∀ p ∈ B, 0 ≤ q p) (hq1 : ∀ p ∈ B, q p ≤ 1)
+    (hV : 1 ≤ ∑ p ∈ B, q p * (1 - q p)) :
+    (1 : ℝ) / 64 ≤ bernoulliSubsetMass U q
+      {S | Real.sqrt (∑ p ∈ B, q p * (1 - q p)) / 8 ≤ bernoulliCenteredSum B q S} := by
+  let A : Set (Finset α) :=
+    {S | Real.sqrt (∑ p ∈ B, q p * (1 - q p)) / 8 ≤ bernoulliCenteredSum B q S}
+  calc
+    (1 : ℝ) / 64 ≤ bernoulliSubsetMass B q A :=
+      bernoulliSubsetMass_centeredSum_ge_sqrt_eighth B q hq0 hq1 hV
+    _ = bernoulliSubsetMass U q {S | S ∩ B ∈ A} :=
+      (bernoulliSubsetMass_inter U B hBU q A).symm
+    _ = bernoulliSubsetMass U q
+        {S | Real.sqrt (∑ p ∈ B, q p * (1 - q p)) / 8 ≤
+          bernoulliCenteredSum B q S} := by
+      congr 1
+      ext S
+      simp only [A, Set.mem_ofPred_eq]
+      rw [bernoulliCenteredSum_inter]
+
 end NormalNumbers.ErdosBorweinEndpointKub
