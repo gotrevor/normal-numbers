@@ -51,14 +51,14 @@ complement has nonzero limiting mass), so
 The concrete FDEK grid is now the equal grid `equalTimeGrid R`.  Its monotonicity, endpoint, and
 variance-`1/R` increments are proved, and `brownianFDD_upperRectangle_equalTimeGrid` identifies a
 constant Brownian upper rectangle exactly with the iid Gaussian partial-sum event
-`gaussianPartialSumUpperSet`.  A kernel-checked soft Gaussian ballot proof suitable for local
-porting was found in the read-only sibling files
-`lean-proofs/src/latest/ErdosProblems/Erdos520/HarperGaussianBarrier.lean` and
-`HarperGaussianWalk.lean`.
+`gaussianPartialSumUpperSet`.  The soft Gaussian ballot proof has now been ported locally into
+`CoefmassErdosBorweinEndpointEKAux.lean`, including fixed-variance rescaling and prefix-sum
+identification.  `brownianFDD_upperRectangle_equalTimeGrid_le` gives the required fourth-root
+equal-grid rectangle bound directly.
 
 Exactly one `sorry` remains, on `divisorVariance_diverges_at_ln2`.  The next load-bearing layer is
-the local port of the soft fourth-root Gaussian ballot estimate, followed by the two elementary
-Gaussian control-coordinate tails and the FDEK finite-grid bookkeeping.  Detailed baton:
+the two elementary Gaussian control-coordinate tails followed by the FDEK finite-grid bookkeeping.
+Detailed baton:
 `HANDOFF-2026-10-25-eb-endpoint-ek.md`.
 
 Paper: `~/personal/claude/knowledge/drafts/collatz-nn-mechanisms/nn-erdos-borwein-random-2026-10-12.md`,

@@ -7,6 +7,7 @@ import Mathlib
 import Architect
 import NormalNumbers.RealDefs
 import NormalNumbers.CoefmassErdosBorweinEndpoint
+import NormalNumbers.CoefmassErdosBorweinEndpointEKAux
 
 /-!
 # The Erdős–Borwein endpoint `a = ln 2`, Step 2 and assembly (FDEK-conditional)
@@ -23,6 +24,7 @@ namespace NormalNumbers.ErdosBorweinEndpointEK
 open MeasureTheory ProbabilityTheory Filter
 open scoped BigOperators Topology
 open NormalNumbers.ErdosBorweinPositive NormalNumbers.ErdosBorweinEndpoint
+open NormalNumbers.ErdosBorweinEndpointEKAux
 
 /-- The power family `δ_m = min(1/2, (log m)^{-a})` (and `1/2` for `m < 3`). -/
 noncomputable def powerDelta (a : ℝ) (m : ℕ) : ℝ :=
@@ -419,6 +421,14 @@ theorem equalTimeGrid_increment {R : ℕ} (hR : 0 < R) (j : Fin R) :
 def gaussianPartialSumUpperSet (R : ℕ) (δ : ℝ) : Set (Fin R → ℝ) :=
   {y | ∀ j, ∑ i ∈ Finset.univ.filter (fun i : Fin R ↦ i ≤ j), y i ≤ δ}
 
+/-- The prefix-sum event used by the Brownian adapter is exactly survival of the recursively
+defined Gaussian walk below the same constant barrier. -/
+theorem gaussianPartialSumUpperSet_eq_survivalSet (R : ℕ) (δ : ℝ) :
+    gaussianPartialSumUpperSet R δ = gaussianWalkSurvivalSet R δ := by
+  ext y
+  simp only [gaussianPartialSumUpperSet, gaussianWalkSurvivalSet, Set.mem_ofPred_eq]
+  exact (gaussianWalkSurvives_iff_prefix_sums R δ y).symm
+
 /-- On an equal grid, a `brownianFDD` constant upper rectangle is exactly the iid Gaussian
 partial-sum barrier event.  This is the adapter from the portmanteau law to a finite Gaussian
 ballot estimate. -/
@@ -439,6 +449,20 @@ theorem brownianFDD_upperRectangle_equalTimeGrid {R : ℕ} (hR : 0 < R) (δ : �
     funext j
     rw [equalTimeGrid_increment hR j]]
   congr 1
+
+/-- Soft Gaussian ballot bound for the constant Brownian upper rectangle on the equal grid. -/
+theorem brownianFDD_upperRectangle_equalTimeGrid_le
+    {R : ℕ} (hR : 0 < R) {δ : ℝ} (hδ : 0 ≤ δ) :
+    (brownianFDD R (equalTimeGrid R) (upperRectangle (fun _ ↦ δ))).toReal ≤
+      2 * Real.sqrt (δ / Real.sqrt (R : ℝ)⁻¹ + 2) /
+        Real.sqrt (Real.sqrt (R : ℝ)) := by
+  rw [brownianFDD_upperRectangle_equalTimeGrid hR δ,
+    gaussianPartialSumUpperSet_eq_survivalSet]
+  have hRreal : (0 : ℝ) < R := by exact_mod_cast hR
+  have hv : Real.toNNReal (R : ℝ)⁻¹ ≠ 0 := by
+    exact ne_of_gt (Real.toNNReal_pos.mpr (inv_pos.mpr hRreal))
+  convert gaussianWalk_fixedVariance_survival_probability_le_fourthRoot R hR hδ hv using 1 <;>
+    simp only [Measure.real, Real.coe_toNNReal, inv_nonneg, hRreal.le]
 
 /-- The centering in FDEK is exactly `t log log N` at its exponential cutoff. -/
 theorem log_log_exp_log_rpow {N : ℕ} {t : ℝ} (hN : 1 < N) :

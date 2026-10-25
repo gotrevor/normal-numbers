@@ -1,10 +1,35 @@
-# HANDOFF: EB endpoint Step 2, EK laps 1--5
+# HANDOFF: EB endpoint Step 2, EK laps 1--6
 
 Branch `research/eb-endpoint` is local only.  Never push it.  The scoped host predicate is
 `sorry-free:src/NormalNumbers/CoefmassErdosBorweinEndpointEK.lean`.  Do not change any existing
 statement in that file, and keep `ErdosKacFiniteDim` as the named hypothesis exactly as planted.
 
 ## Concrete advance
+
+### Lap 6: local soft Gaussian ballot layer
+
+The source-located Gaussian ballot dependency is now ported locally and connected to the exact
+equal-grid event used by the endpoint proof.  No planted statement was changed.
+
+- New module `CoefmassErdosBorweinEndpointEKAux.lean` contains the self-contained kernel proof
+  through `gaussianWalk_survival_probability_le_fourthRoot`: the Gaussian barrier potential,
+  killed-walk recursion, terminal-law calculation, and optimized near/far split.  It imports only
+  Mathlib; the read-only sibling repository is not a dependency.
+- `gaussianWalk_fixedVariance_survival_probability_le_fourthRoot` rescales iid centered Gaussian
+  increments of every nonzero variance to the standard walk.
+- `gaussianWalkSurvives_iff_prefix_sums` identifies recursive survival with the simultaneous
+  prefix-sum inequalities.
+- In the endpoint module, `gaussianPartialSumUpperSet_eq_survivalSet` connects that event to the
+  existing Brownian adapter, and `brownianFDD_upperRectangle_equalTimeGrid_le` proves the explicit
+  equal-grid rectangle estimate
+
+  ```text
+  brownianFDD(R, equal grid){all coordinates ≤ δ}
+    ≤ 2 * sqrt(δ / sqrt(1/R) + 2) / sqrt(sqrt R).
+  ```
+
+This discharges the main source-port risk identified in lap 5.  The remaining probability work is
+the two Gaussian control-coordinate tails and the finite-grid/FDEK union bookkeeping.
 
 ### Lap 5: adversarial route correction and equal-grid Gaussian adapter
 
@@ -267,6 +292,31 @@ Lap-5 repository gate and audits:
 Verdict: `FORMALIZE-TIER GREEN`; all six audited helpers use only `propext`,
 `Classical.choice`, and `Quot.sound`.
 
+Lap-6 integration build:
+
+```text
+lake build NormalNumbers.CoefmassErdosBorweinEndpointEK
+```
+
+Exit 0.  The new auxiliary module is sorry-free, and the sole scoped proof-debt warning remains
+`divisorVariance_diverges_at_ln2`.
+
+Lap-6 repository gate and audits:
+
+```text
+~/personal/bin/lean-green /Users/gotrevor/src/nn-eb-endpoint \
+  --target NormalNumbers.CoefmassErdosBorweinEndpointEK \
+  --import NormalNumbers.CoefmassErdosBorweinEndpointEK \
+  --axioms NormalNumbers.ErdosBorweinEndpointEKAux.gaussianWalk_survival_probability_le_fourthRoot \
+  --axioms NormalNumbers.ErdosBorweinEndpointEKAux.gaussianWalk_fixedVariance_survival_probability_le_fourthRoot \
+  --axioms NormalNumbers.ErdosBorweinEndpointEKAux.gaussianWalkSurvives_iff_prefix_sums \
+  --axioms NormalNumbers.ErdosBorweinEndpointEK.gaussianPartialSumUpperSet_eq_survivalSet \
+  --axioms NormalNumbers.ErdosBorweinEndpointEK.brownianFDD_upperRectangle_equalTimeGrid_le
+```
+
+Verdict: `FORMALIZE-TIER GREEN`; all five audited ballot/adapter theorems use only `propext`,
+`Classical.choice`, and `Quot.sound`.
+
 Auditing the two downstream headlines currently reports `sorryAx`, as expected, solely because
 they transitively call the one open Step-2 theorem.  Once that theorem closes, rerun the headline
 audits required by `EB-ENDPOINT-EK-NEXT.md`.
@@ -274,27 +324,21 @@ audits required by `EB-ENDPOINT-EK-NEXT.md`.
 ## Current blocker
 
 Exactly one `sorry` remains: `divisorVariance_diverges_at_ln2`.  The chain bound, arbitrary-cutoff
-bridge, collision-cutoff comparison, equal FDEK grid, and `brownianFDD`/increment-event adapter are
-closed.  The remaining layers are:
+bridge, collision-cutoff comparison, equal FDEK grid, `brownianFDD`/increment-event adapter, and
+soft fourth-root Gaussian ballot estimate are closed.  The remaining layers are:
 
-1. port the self-contained soft Gaussian ballot estimate from the sibling `Erdos520` files into a
-   local auxiliary module and specialize it to variance `1/R`;
-2. prove the elementary first-coordinate and terminal-coordinate Gaussian second-moment tail
+1. prove the elementary first-coordinate and terminal-coordinate Gaussian second-moment tail
    bounds;
-3. do the finite-grid/FDEK union bookkeeping and finish the density limit, including the fixed
+2. do the finite-grid/FDEK union bookkeeping and finish the density limit, including the fixed
    shift `n ↦ n+a₀` and denominator change from `N` to `N+a₀`.
 
-The main formalization risk is now bounded and source-located rather than mathematical: the ballot
-proof is roughly the prefix through `gaussianWalk_survival_probability_le_fourthRoot` of
-`HarperGaussianWalk.lean`, together with `HarperGaussianBarrier.lean` and a short variance-rescaling
-tail.  It must be ported locally because the sibling project is not a dependency.
+The main remaining formalization risk is the nested eventual/finite-union bookkeeping in the final
+FDEK application, not the Gaussian ballot input.
 
 ## Next highest-value attack
 
-Create `CoefmassErdosBorweinEndpointEKAux.lean` and port the minimal soft-ballot prefix from
-`HarperGaussianBarrier.lean` and `HarperGaussianWalk.lean`.  Stop at the fourth-root survival bound,
-then add its constant-variance rescaling and identify the recursive survival event with
-`gaussianPartialSumUpperSet`.  This yields the exact estimate needed by
-`brownianFDD_upperRectangle_equalTimeGrid`; the sharper Markov-bootstrap half-power bound is not
-needed.  Next prove Gaussian Chebyshev bounds for the first and last coordinates and assemble the
-three FDEK closed-set estimates with `δ = R^(-1/4)` and a free terminal threshold `A`.
+Prove Gaussian Chebyshev bounds for the first and last coordinates, preferably as a reusable
+one-dimensional `gaussianReal 0 v` upper-tail lemma from `variance_id_gaussianReal` and Markov's
+inequality.  Then assemble the three FDEK closed-set estimates with `δ = R^(-1/4)` and a free
+terminal threshold `A`.  Use `brownianFDD_upperRectangle_equalTimeGrid_le` directly for the main
+rectangle; no sharper ballot theorem is needed.
