@@ -360,6 +360,226 @@ theorem bernoulliSubsetMass_inter {α : Type*} [DecidableEq α]
   exact bernoulliSubsetExpectation_inter U B hBU q (fun S ↦ if S ∈ A then 1 else 0)
 
 open Classical in
+theorem bernoulliSubsetMass_eq_expectation_indicator {α : Type*} [DecidableEq α]
+    (U : Finset α) (q : α → ℝ) (A : Set (Finset α)) :
+    bernoulliSubsetMass U q A =
+      bernoulliSubsetExpectation U q (fun S ↦ if S ∈ A then 1 else 0) := by
+  unfold bernoulliSubsetMass bernoulliSubsetExpectation
+  apply Finset.sum_congr rfl
+  intro S hS
+  split <;> simp_all
+
+open Classical in
+theorem bernoulliSubsetMass_compl {α : Type*} [DecidableEq α]
+    (U : Finset α) (q : α → ℝ) (A : Set (Finset α)) :
+    bernoulliSubsetMass U q Aᶜ = 1 - bernoulliSubsetMass U q A := by
+  have hsum : bernoulliSubsetMass U q A + bernoulliSubsetMass U q Aᶜ = 1 := by
+    rw [← sum_bernoulliSubsetWeight U q]
+    unfold bernoulliSubsetMass
+    rw [← Finset.sum_add_distrib]
+    apply Finset.sum_congr rfl
+    intro S hS
+    by_cases hSA : S ∈ A <;> simp [hSA]
+  linarith
+
+open Classical in
+/-- Observables on disjoint coordinate blocks are independent in the finite Bernoulli model. -/
+theorem bernoulliSubsetExpectation_mul_inter_disjoint {α : Type*} [DecidableEq α]
+    (B D : Finset α) (hBD : Disjoint B D) (q : α → ℝ)
+    (F G : Finset α → ℝ) :
+    bernoulliSubsetExpectation (B ∪ D) q
+        (fun S ↦ F (S ∩ B) * G (S ∩ D)) =
+      bernoulliSubsetExpectation B q F * bernoulliSubsetExpectation D q G := by
+  induction D using Finset.induction_on generalizing G with
+  | empty =>
+      simp only [Finset.union_empty, Finset.inter_empty]
+      have hleft :
+          bernoulliSubsetExpectation B q (fun S ↦ F (S ∩ B) * G ∅) =
+            bernoulliSubsetExpectation B q (fun S ↦ F S * G ∅) := by
+        apply bernoulliSubsetExpectation_congr
+        intro S hS
+        rw [Finset.inter_eq_left.mpr (Finset.mem_powerset.mp hS)]
+      have hempty : bernoulliSubsetExpectation ∅ q G = G ∅ := by
+        simp [bernoulliSubsetExpectation, bernoulliSubsetWeight]
+      rw [hleft, hempty]
+      unfold bernoulliSubsetExpectation
+      rw [Finset.sum_mul]
+      apply Finset.sum_congr rfl
+      intro S hS
+      ring
+  | @insert p D hp ih =>
+      have hpB : p ∉ B := by
+        intro hpB
+        exact Finset.disjoint_left.mp hBD hpB (Finset.mem_insert_self p D)
+      have hBD' : Disjoint B D := hBD.mono_right (Finset.subset_insert p D)
+      have hpUnion : p ∉ B ∪ D := by simp [hpB, hp]
+      rw [show B ∪ insert p D = insert p (B ∪ D) by ext; simp [or_assoc]]
+      rw [bernoulliSubsetExpectation_insert hpUnion]
+      have hzero :
+          bernoulliSubsetExpectation (B ∪ D) q
+              (fun S ↦ F (S ∩ B) * G (S ∩ insert p D)) =
+            bernoulliSubsetExpectation (B ∪ D) q
+              (fun S ↦ F (S ∩ B) * G (S ∩ D)) := by
+        apply bernoulliSubsetExpectation_congr
+        intro S hS
+        have hpS : p ∉ S := by
+          intro hpS
+          exact hpUnion (Finset.mem_powerset.mp hS hpS)
+        congr 2
+        ext x
+        simp [hpS]
+      have hone :
+          bernoulliSubsetExpectation (B ∪ D) q
+              (fun S ↦ F (insert p S ∩ B) * G (insert p S ∩ insert p D)) =
+            bernoulliSubsetExpectation (B ∪ D) q
+              (fun S ↦ F (S ∩ B) * G (insert p (S ∩ D))) := by
+        apply bernoulliSubsetExpectation_congr
+        intro S hS
+        congr 2
+        · ext x
+          simp [hpB]
+        · ext x
+          simp only [Finset.mem_inter, Finset.mem_insert]
+          tauto
+      rw [hzero, hone, ih hBD', ih (G := fun S ↦ G (insert p S)) hBD']
+      rw [bernoulliSubsetExpectation_insert hp]
+      ring
+
+open Classical in
+/-- Cylinder events on two disjoint coordinate blocks have product mass. -/
+theorem bernoulliSubsetMass_two_cylinders {α : Type*} [DecidableEq α]
+    (U B D : Finset α) (hBU : B ⊆ U) (hDU : D ⊆ U) (hBD : Disjoint B D)
+    (q : α → ℝ) (A C : Set (Finset α)) :
+    bernoulliSubsetMass U q {S | S ∩ B ∈ A ∧ S ∩ D ∈ C} =
+      bernoulliSubsetMass U q {S | S ∩ B ∈ A} *
+        bernoulliSubsetMass U q {S | S ∩ D ∈ C} := by
+  have hUnionU : B ∪ D ⊆ U := Finset.union_subset hBU hDU
+  have hleft :
+      bernoulliSubsetMass U q {S | S ∩ B ∈ A ∧ S ∩ D ∈ C} =
+        bernoulliSubsetMass (B ∪ D) q {S | S ∩ B ∈ A ∧ S ∩ D ∈ C} := by
+    rw [← bernoulliSubsetMass_inter U (B ∪ D) hUnionU q
+      {S | S ∩ B ∈ A ∧ S ∩ D ∈ C}]
+    congr 1
+    ext S
+    simp only [Set.mem_setOf_eq]
+    constructor
+    · intro h
+      simpa only [Finset.inter_assoc, Finset.inter_eq_right.mpr
+        (Finset.subset_union_left : B ⊆ B ∪ D), Finset.inter_eq_right.mpr
+        (Finset.subset_union_right : D ⊆ B ∪ D)] using h
+    · intro h
+      simpa only [Finset.inter_assoc, Finset.inter_eq_right.mpr
+        (Finset.subset_union_left : B ⊆ B ∪ D), Finset.inter_eq_right.mpr
+        (Finset.subset_union_right : D ⊆ B ∪ D)] using h
+  have hlocal :
+      bernoulliSubsetMass (B ∪ D) q {S | S ∩ B ∈ A ∧ S ∩ D ∈ C} =
+        bernoulliSubsetMass B q A * bernoulliSubsetMass D q C := by
+    rw [bernoulliSubsetMass_eq_expectation_indicator,
+      bernoulliSubsetMass_eq_expectation_indicator,
+      bernoulliSubsetMass_eq_expectation_indicator]
+    rw [← bernoulliSubsetExpectation_mul_inter_disjoint B D hBD q
+      (fun S ↦ if S ∈ A then 1 else 0) (fun S ↦ if S ∈ C then 1 else 0)]
+    apply bernoulliSubsetExpectation_congr
+    intro S hS
+    by_cases hA : S ∩ B ∈ A <;> by_cases hC : S ∩ D ∈ C <;> simp [hA, hC]
+  rw [hleft, hlocal, bernoulliSubsetMass_inter U B hBU q A,
+    bernoulliSubsetMass_inter U D hDU q C]
+
+open Classical in
+/-- Exact finite joint independence for cylinder events on pairwise-disjoint blocks. -/
+theorem bernoulliSubsetMass_cylinders {α ι : Type*} [DecidableEq α] [DecidableEq ι]
+    (U : Finset α) (I : Finset ι) (B : ι → Finset α)
+    (hBU : ∀ i ∈ I, B i ⊆ U)
+    (hdisj : ∀ i ∈ I, ∀ j ∈ I, i ≠ j → Disjoint (B i) (B j))
+    (q : α → ℝ) (A : ι → Set (Finset α)) :
+    bernoulliSubsetMass U q {S | ∀ i ∈ I, S ∩ B i ∈ A i} =
+      ∏ i ∈ I, bernoulliSubsetMass U q {S | S ∩ B i ∈ A i} := by
+  induction I using Finset.induction_on with
+  | empty => simp [bernoulliSubsetMass_univ]
+  | @insert p I hp ih =>
+      let D : Finset α := I.biUnion B
+      let C : Set (Finset α) := {R | ∀ i ∈ I, R ∩ B i ∈ A i}
+      have hpU : B p ⊆ U := hBU p (Finset.mem_insert_self p I)
+      have hDU : D ⊆ U := by
+        change I.biUnion B ⊆ U
+        rw [Finset.biUnion_subset]
+        intro i hi
+        exact hBU i (Finset.mem_insert_of_mem hi)
+      have hpD : Disjoint (B p) D := by
+        change Disjoint (B p) (I.biUnion B)
+        rw [Finset.disjoint_biUnion_right]
+        intro i hi
+        exact hdisj p (Finset.mem_insert_self p I) i (Finset.mem_insert_of_mem hi)
+          (Ne.symm (fun hip ↦ hp (hip ▸ hi)))
+      have hrest : {S | S ∩ D ∈ C} = {S | ∀ i ∈ I, S ∩ B i ∈ A i} := by
+        ext S
+        simp only [C, Set.mem_setOf_eq]
+        constructor <;> intro h i hi
+        · have hiD : B i ⊆ D := by
+            change B i ⊆ I.biUnion B
+            exact Finset.subset_biUnion_of_mem B hi
+          simpa only [Finset.inter_assoc, Finset.inter_eq_right.mpr hiD] using h i hi
+        · have hiD : B i ⊆ D := by
+            change B i ⊆ I.biUnion B
+            exact Finset.subset_biUnion_of_mem B hi
+          simpa only [Finset.inter_assoc, Finset.inter_eq_right.mpr hiD] using h i hi
+      have hall :
+          {S | ∀ i ∈ insert p I, S ∩ B i ∈ A i} =
+            {S | S ∩ B p ∈ A p ∧ S ∩ D ∈ C} := by
+        ext S
+        simp only [Set.mem_setOf_eq, Finset.forall_mem_insert]
+        rw [show (∀ i ∈ I, S ∩ B i ∈ A i) ↔ S ∩ D ∈ C by
+          simpa only [Set.ext_iff, Set.mem_setOf_eq] using (Set.ext_iff.mp hrest S).symm]
+      rw [hall, bernoulliSubsetMass_two_cylinders U (B p) D hpU hDU hpD q (A p) C]
+      rw [hrest]
+      rw [ih (fun i hi ↦ hBU i (Finset.mem_insert_of_mem hi))
+        (fun i hi j hj hij ↦ hdisj i (Finset.mem_insert_of_mem hi) j
+          (Finset.mem_insert_of_mem hj) hij)]
+      rw [Finset.prod_insert hp]
+
+open Classical in
+/-- A common upper bound for pairwise-disjoint cylinder events multiplies over the blocks. -/
+theorem bernoulliSubsetMass_cylinders_le_pow {α ι : Type*}
+    [DecidableEq α] [DecidableEq ι]
+    (U : Finset α) (I : Finset ι) (B : ι → Finset α)
+    (hBU : ∀ i ∈ I, B i ⊆ U)
+    (hdisj : ∀ i ∈ I, ∀ j ∈ I, i ≠ j → Disjoint (B i) (B j))
+    (q : α → ℝ) (hq0 : ∀ p ∈ U, 0 ≤ q p) (hq1 : ∀ p ∈ U, q p ≤ 1)
+    (A : ι → Set (Finset α)) (c : ℝ)
+    (hA : ∀ i ∈ I, bernoulliSubsetMass U q {S | S ∩ B i ∈ A i} ≤ c) :
+    bernoulliSubsetMass U q {S | ∀ i ∈ I, S ∩ B i ∈ A i} ≤ c ^ I.card := by
+  rw [bernoulliSubsetMass_cylinders U I B hBU hdisj q A]
+  calc
+    (∏ i ∈ I, bernoulliSubsetMass U q {S | S ∩ B i ∈ A i}) ≤ ∏ _i ∈ I, c :=
+      Finset.prod_le_prod
+        (fun i hi ↦ bernoulliSubsetMass_nonneg U q _ hq0 hq1)
+        (fun i hi ↦ hA i hi)
+    _ = c ^ I.card := by simp
+
+open Classical in
+/-- If every block event has mass at least `r`, simultaneous failure on pairwise-disjoint blocks
+has mass at most `(1-r)^#blocks`. -/
+theorem bernoulliSubsetMass_cylinder_complements_le_pow {α ι : Type*}
+    [DecidableEq α] [DecidableEq ι]
+    (U : Finset α) (I : Finset ι) (B : ι → Finset α)
+    (hBU : ∀ i ∈ I, B i ⊆ U)
+    (hdisj : ∀ i ∈ I, ∀ j ∈ I, i ≠ j → Disjoint (B i) (B j))
+    (q : α → ℝ) (hq0 : ∀ p ∈ U, 0 ≤ q p) (hq1 : ∀ p ∈ U, q p ≤ 1)
+    (A : ι → Set (Finset α)) (r : ℝ)
+    (hA : ∀ i ∈ I, r ≤ bernoulliSubsetMass U q {S | S ∩ B i ∈ A i}) :
+    bernoulliSubsetMass U q {S | ∀ i ∈ I, S ∩ B i ∉ A i} ≤
+      (1 - r) ^ I.card := by
+  apply bernoulliSubsetMass_cylinders_le_pow U I B hBU hdisj q hq0 hq1
+    (fun i ↦ (A i)ᶜ) (1 - r)
+  intro i hi
+  have hcompl := bernoulliSubsetMass_compl U q {S | S ∩ B i ∈ A i}
+  have heq : {S | S ∩ B i ∈ (A i)ᶜ} = ({S | S ∩ B i ∈ A i} : Set (Finset α))ᶜ := by
+    ext S
+    simp
+  rw [heq, hcompl]
+  linarith [hA i hi]
+
+open Classical in
 theorem bernoulliSubsetExpectation_const {α : Type*} [DecidableEq α]
     (U : Finset α) (q : α → ℝ) (a : ℝ) :
     bernoulliSubsetExpectation U q (fun _ ↦ a) = a := by
@@ -827,5 +1047,52 @@ theorem bernoulliSubsetMass_blockCenteredSum_ge_sqrt_eighth {α : Type*} [Decida
       ext S
       simp only [A, Set.mem_ofPred_eq]
       rw [bernoulliCenteredSum_inter]
+
+open Classical in
+/-- The exact fixed-block consequence of the one-block crossing estimate: on pairwise-disjoint
+blocks of variance at least one, the probability that every centered increment misses its
+`sqrt(V)/8` crossing is at most `(63/64)^#blocks`. -/
+theorem bernoulliSubsetMass_all_blockCenteredSum_lt_sqrt_eighth_le {α ι : Type*}
+    [DecidableEq α] [DecidableEq ι]
+    (U : Finset α) (I : Finset ι) (B : ι → Finset α)
+    (hBU : ∀ i ∈ I, B i ⊆ U)
+    (hdisj : ∀ i ∈ I, ∀ j ∈ I, i ≠ j → Disjoint (B i) (B j))
+    (q : α → ℝ) (hq0 : ∀ p ∈ U, 0 ≤ q p) (hq1 : ∀ p ∈ U, q p ≤ 1)
+    (hV : ∀ i ∈ I, 1 ≤ ∑ p ∈ B i, q p * (1 - q p)) :
+    bernoulliSubsetMass U q
+        {S | ∀ i ∈ I, bernoulliCenteredSum (B i) q S <
+          Real.sqrt (∑ p ∈ B i, q p * (1 - q p)) / 8} ≤
+      ((63 : ℝ) / 64) ^ I.card := by
+  let A : ι → Set (Finset α) := fun i ↦
+    {S | Real.sqrt (∑ p ∈ B i, q p * (1 - q p)) / 8 ≤
+      bernoulliCenteredSum (B i) q S}
+  have hAi : ∀ i ∈ I, (1 : ℝ) / 64 ≤
+      bernoulliSubsetMass U q {S | S ∩ B i ∈ A i} := by
+    intro i hi
+    calc
+      (1 : ℝ) / 64 ≤ bernoulliSubsetMass U q
+          {S | Real.sqrt (∑ p ∈ B i, q p * (1 - q p)) / 8 ≤
+            bernoulliCenteredSum (B i) q S} :=
+        bernoulliSubsetMass_blockCenteredSum_ge_sqrt_eighth U (B i) (hBU i hi) q
+          (fun p hp ↦ hq0 p (hBU i hi hp)) (fun p hp ↦ hq1 p (hBU i hi hp)) (hV i hi)
+      _ = bernoulliSubsetMass U q {S | S ∩ B i ∈ A i} := by
+        congr 1
+        ext S
+        simp only [A, Set.mem_ofPred_eq]
+        rw [bernoulliCenteredSum_inter]
+  have hbound := bernoulliSubsetMass_cylinder_complements_le_pow
+    U I B hBU hdisj q hq0 hq1 A ((1 : ℝ) / 64) hAi
+  have hevent :
+      {S | ∀ i ∈ I, S ∩ B i ∉ A i} =
+        {S | ∀ i ∈ I, bernoulliCenteredSum (B i) q S <
+          Real.sqrt (∑ p ∈ B i, q p * (1 - q p)) / 8} := by
+    ext S
+    simp only [A, Set.mem_setOf_eq, not_le]
+    constructor <;> intro h i hi
+    · simpa only [bernoulliCenteredSum_inter] using h i hi
+    · simpa only [bernoulliCenteredSum_inter] using h i hi
+  rw [hevent] at hbound
+  norm_num at hbound ⊢
+  exact hbound
 
 end NormalNumbers.ErdosBorweinEndpointKub

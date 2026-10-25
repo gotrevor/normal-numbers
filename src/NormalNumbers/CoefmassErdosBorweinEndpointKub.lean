@@ -108,6 +108,23 @@ theorem kubiliusMass_blockCenteredSum_ge_sqrt_eighth (y : ℕ) (B : Finset ℕ)
     (fun p hp ↦ kubiliusParameter_le_one y p (hB hp)) hV
 
 open Classical in
+/-- Pairwise-disjoint prime blocks amplify the one-block crossing estimate: the mass on which
+every block misses its `sqrt(V)/8` crossing is at most `(63/64)^#blocks`. -/
+theorem kubiliusMass_all_blockCenteredSum_lt_sqrt_eighth_le {ι : Type*} [DecidableEq ι]
+    (y : ℕ) (I : Finset ι) (B : ι → Finset ℕ)
+    (hBU : ∀ i ∈ I, B i ⊆ primesUpTo y)
+    (hdisj : ∀ i ∈ I, ∀ j ∈ I, i ≠ j → Disjoint (B i) (B j))
+    (hV : ∀ i ∈ I, 1 ≤ ∑ p ∈ B i, (1 / p : ℝ) * (1 - 1 / p)) :
+    kubiliusMass y
+        {S | ∀ i ∈ I, bernoulliCenteredSum (B i) (fun p ↦ (1 / p : ℝ)) S <
+          Real.sqrt (∑ p ∈ B i, (1 / p : ℝ) * (1 - 1 / p)) / 8} ≤
+      ((63 : ℝ) / 64) ^ I.card := by
+  rw [kubiliusMass_eq_bernoulliSubsetMass]
+  exact bernoulliSubsetMass_all_blockCenteredSum_lt_sqrt_eighth_le
+    (primesUpTo y) I B hBU hdisj (fun p ↦ (1 / p : ℝ))
+    (kubiliusParameter_nonneg y) (kubiliusParameter_le_one y) hV
+
+open Classical in
 /-- Literature input: the Kubilius-model total-variation bound (Tenenbaum 1999, Théorème 1.1 and
 (1.7), as quoted by Ford, arXiv 2408.03803v4, Theorem A), at `ε = 1/2`, projected to divisibility
 indicators.  A named hypothesis, not an axiom. -/
