@@ -7,6 +7,7 @@ import Mathlib
 import Architect
 import NormalNumbers.RealDefs
 import NormalNumbers.CoefmassErdosBorweinEndpointEK
+import NormalNumbers.CoefmassErdosBorweinEndpointKubAux
 import PrimeNumberTheoremAnd.IEANTN.RosserSchoenfeld.RosserSchoenfeldPrime
 
 /-!
@@ -46,6 +47,52 @@ noncomputable def kubiliusMass (y : ℕ) (A : Set (Finset ℕ)) : ℝ :=
     if S ∈ A then ∏ p ∈ primesUpTo y, (if p ∈ S then (1 / p : ℝ) else 1 - 1 / p) else 0
 
 open Classical in
+theorem kubiliusMass_eq_bernoulliSubsetMass (y : ℕ) (A : Set (Finset ℕ)) :
+    kubiliusMass y A =
+      bernoulliSubsetMass (primesUpTo y) (fun p ↦ (1 / p : ℝ)) A := rfl
+
+theorem kubiliusParameter_nonneg (y p : ℕ) (_hp : p ∈ primesUpTo y) :
+    (0 : ℝ) ≤ 1 / p := by positivity
+
+theorem kubiliusParameter_le_one (y p : ℕ) (hp : p ∈ primesUpTo y) :
+    (1 / p : ℝ) ≤ 1 := by
+  have hpprime : p.Prime := (Finset.mem_filter.mp hp).2
+  have hpR : (1 : ℝ) ≤ p := by exact_mod_cast hpprime.one_le
+  exact (div_le_one (by positivity)).mpr hpR
+
+open Classical in
+theorem kubiliusMass_univ (y : ℕ) : kubiliusMass y Set.univ = 1 := by
+  rw [kubiliusMass_eq_bernoulliSubsetMass]
+  exact bernoulliSubsetMass_univ _ _
+
+open Classical in
+theorem kubiliusMass_nonneg (y : ℕ) (A : Set (Finset ℕ)) : 0 ≤ kubiliusMass y A := by
+  rw [kubiliusMass_eq_bernoulliSubsetMass]
+  exact bernoulliSubsetMass_nonneg _ _ _
+    (kubiliusParameter_nonneg y) (kubiliusParameter_le_one y)
+
+open Classical in
+theorem kubiliusMass_mono (y : ℕ) {A B : Set (Finset ℕ)} (hAB : A ⊆ B) :
+    kubiliusMass y A ≤ kubiliusMass y B := by
+  simp only [kubiliusMass_eq_bernoulliSubsetMass]
+  exact bernoulliSubsetMass_mono _ _ hAB
+    (kubiliusParameter_nonneg y) (kubiliusParameter_le_one y)
+
+open Classical in
+theorem kubiliusMass_le_one (y : ℕ) (A : Set (Finset ℕ)) : kubiliusMass y A ≤ 1 := by
+  rw [kubiliusMass_eq_bernoulliSubsetMass]
+  exact bernoulliSubsetMass_le_one _ _ _
+    (kubiliusParameter_nonneg y) (kubiliusParameter_le_one y)
+
+open Classical in
+/-- The number of selected primes has mean `∑_{p ≤ y} 1/p` in the Kubilius model. -/
+theorem kubilius_card_expectation (y : ℕ) :
+    ∑ S ∈ (primesUpTo y).powerset,
+        bernoulliSubsetWeight (primesUpTo y) S (fun p ↦ (1 / p : ℝ)) * (S.card : ℝ) =
+      ∑ p ∈ primesUpTo y, (1 / p : ℝ) :=
+  bernoulliSubset_card_expectation _ _
+
+open Classical in
 /-- Literature input: the Kubilius-model total-variation bound (Tenenbaum 1999, Théorème 1.1 and
 (1.7), as quoted by Ford, arXiv 2408.03803v4, Theorem A), at `ε = 1/2`, projected to divisibility
 indicators.  A named hypothesis, not an axiom. -/
@@ -70,6 +117,13 @@ theorem divisorVariance_diverges_at_ln2_of_kubilius (hK : KubiliusTV)
 
 /-- The candidate positive answer, FDEK-free: from the Kubilius model alone. -/
 theorem ebPowerCandidateNormal_of_kubilius (hK : KubiliusTV) : EBPowerCandidateNormal := by
-  sorry
+  intro a ha0 ha Ω _ μ _ X hX
+  obtain ⟨c, hc, hvar⟩ := exists_powerDelta_variance_lower ha0 ha
+  apply ebRandom_ae_normal_of_divisorVariance_diverges μ (powerDelta a) X hX
+  intro a₀ T
+  exact divisorVariance_diverges_at_ln2_of_kubilius hK
+    (fun m ↦ powerDelta a m * (1 - powerDelta a m)) c hc
+    (fun m ↦ mul_nonneg (hX.1 m).1 (sub_nonneg.mpr (hX.1 m).2))
+    hvar a₀ T
 
 end NormalNumbers.ErdosBorweinEndpointKub
