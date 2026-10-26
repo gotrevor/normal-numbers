@@ -30,18 +30,21 @@ def sqrt2_frac():
     return isqrt(2 << (2 * B)) % (1 << B)
 
 def probe(name, X):
-    M = (1 << B) - 1
-    t3 = (3 * X) & M
+    """Slide a (k+40)-bit window over the binary digits: error of the window is < 2^-(k+40)."""
+    bits = format(X, f"0{B}b")
+    t3 = (3 * X) & ((1 << B) - 1)
     print(name, flush=True)
     for k in range(1, K + 1):
+        W = k + 40
+        T = t3 >> (B - W)              # top W bits of 3x mod 1
+        mod = 1 << W
+        thr = 1 << (W - k)
         found = None
-        thr = 1 << (B - k)
-        v = (X << k) & M
         for n in range(k, NSCAN + 1):
-            d = (v - t3) & M
-            if d < thr or (1 << B) - d < thr:
+            v = int(bits[n:n + W], 2)  # top W bits of 2^n x mod 1
+            d = (v - T) % mod
+            if d < thr - 2 or mod - d < thr - 2:   # margin covers truncation
                 found = n; break
-            v = (v << 1) & M
         print(f"  k={k:2d} n_k={found}  2^k={2**k}  4^k={4**k}", flush=True)
 
 probe("1/3 (control: expect None for k>=2)", ((1 << B) - 1) // 3)

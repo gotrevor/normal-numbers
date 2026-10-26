@@ -22,3 +22,11 @@ only used "some non-torsion y with y ∈ K and 3K ⊆ K"; next, state the weaker
 "∃ m, 3·2^m π-type target or any q·π (q odd ≥3) in K" — K ∋ qπ ⇒ qK ⊆ K, and Furstenberg needs
 only MultIndep 2 q, so any odd q ≥ 3 works.  Generalisation DONE.  Next: record the probe numbers from `scripts/pi_route1_first_return.py` (first-return n_k of ‖(2^n−3)π‖<2^-k, control: a
 rational, e.g. 1/3, and a known-normal-ish surrogate).
+
+## Lap 2 additions
+- Nodes `PiOrbitClosureNonTorsion` (i) and `PiOrbitClosureOddInvariant` (ii) (open, defs), proved edge
+  `pi_disjunctive_of_nonTorsion_of_oddInvariant`.  (ii) is the real crux; (i) fails for binary
+  Liouville numbers — next: prove that sibling counterexample in Lean (K = {0} for Σ 2^{-n!}),
+  making (i) a non-trivial node, and look for an arithmetic lever for (i) via π's finite
+  irrationality measure (does μ(π) < ∞ force K ≠ {0}? probably not: orbit can still cluster at 0).
+- False-starts doc: `docs/pi-routes/route1.md`.

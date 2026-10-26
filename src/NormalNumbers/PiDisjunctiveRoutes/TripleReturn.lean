@@ -185,4 +185,37 @@ theorem mem_circleOmegaLimit_oddMul_iff_disjunctive {x : ℝ} (hx : Irrational x
     · exact hu
   · intro h; rw [h]; trivial
 
+/-- Open node, ingredient (i) of the Furstenberg step: the binary orbit closure of π
+contains a non-torsion (irrational) point.
+Costume audit: (a) implied by the sink (K = 𝕋), so it is not an advance by itself;
+(b) strictly weaker than the sink in general: ingredient (ii), ×q-invariance, is what is
+missing.  Degenerate corner: for a binary Liouville number such as `∑ 2^{-n!}` the
+closure is `{0}` (standard, not yet Lean-checked), so the node is not automatic.
+Confidence true for π: 99% (heuristic: π is believed normal). -/
+def PiOrbitClosureNonTorsion : Prop :=
+  ∃ y ∈ circleOmegaLimit 2 Real.pi, ¬ IsOfFinAddOrder y
+
+/-- Open node, ingredient (ii): the binary orbit closure of π is `×q`-invariant for some
+odd `q ≥ 3`.  Costume audit: implied by the sink; together with
+`PiOrbitClosureNonTorsion` it gives the sink (`pi_disjunctive_of_nonTorsion_of_oddInvariant`).
+Alone it is satisfied by `K = {0}`-type closures, so it is not the sink by itself. -/
+def PiOrbitClosureOddInvariant : Prop :=
+  ∃ q : ℕ, 3 ≤ q ∧ Odd q ∧
+    MapsTo (q • · : UnitAddCircle → UnitAddCircle) (circleOmegaLimit 2 Real.pi)
+      (circleOmegaLimit 2 Real.pi)
+
+/-- Proved edge: the two Furstenberg ingredients give the sink. -/
+theorem pi_disjunctive_of_nonTorsion_of_oddInvariant
+    (h1 : PiOrbitClosureNonTorsion) (h2 : PiOrbitClosureOddInvariant) :
+    IsDisjunctive 2 Real.pi := by
+  obtain ⟨y, hy, hnt⟩ := h1
+  obtain ⟨q, hq, hodd, hQ⟩ := h2
+  rw [isDisjunctive_iff_circleOmegaLimit_eq_univ]
+  have h2' : MapsTo (2 • · : UnitAddCircle → UnitAddCircle) (circleOmegaLimit 2 Real.pi)
+      (circleOmegaLimit 2 Real.pi) := mapsTo_circleMap_circleOmegaLimit 2 Real.pi
+  rcases Furstenberg.isClosed_invariant_finite_or_univ (le_refl 2) (by omega)
+    (multIndep_two_of_odd hq hodd) (isClosed_circleOmegaLimit 2 Real.pi) h2' hQ with hf | hu
+  · exact absurd hf (Furstenberg.infinite_of_mem_not_torsion (le_refl 2) h2' hy hnt).not_finite
+  · exact hu
+
 end NormalNumbers.PiDisjunctiveRoutes
