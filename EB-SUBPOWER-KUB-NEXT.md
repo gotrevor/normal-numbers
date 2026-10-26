@@ -697,3 +697,46 @@ For the thin exceptional band, generalize the existing one-level Chernoff majora
 to show it tends to zero for every `c > 1`, then multiply by the logarithmic band width.  These four
 estimates yield `exists_subpower_marginal_large_cards_le_of_kubilius`; the final capped-residual and
 headline proofs should then be copied from the proved `c > 3` assembly with that sole input swapped.
+
+## Lap checkpoint — 2026-10-26, canonical model term discharged
+
+One of the four named terms in `subpowerKubiliusCanonicalGroupedBound` is now uniformly controlled.
+The canonical geometric partition is sparse in its schedule index, so applying the earlier
+consecutive-range model theorem directly would either require artificial filler blocks or obscure
+why missing blocks cost nothing.  This lap proved the exact sparse interface and specialized it to
+the canonical groups.
+
+- `exists_kubiliusPrimeCutoffLoweredCrossingMass_injective_sum_lt_of_ratio` bounds an arbitrary
+  finite family of prime-cutoff crossing masses whose geometric schedule keys are distinct and lie
+  beyond a common tail index.  The proof subtracts that tail index, uses injectivity to reindex the
+  family into a finite subset of `ℕ`, and compares it with the shifted `tsum` of the already-proved
+  summable majorant.  No interval completion and no level-count factor is introduced.
+- `exists_subpowerKubiliusCanonical_model_sum_lt` applies the sparse theorem to
+  `subpowerKubiliusLevelGroups`.  The previously proved
+  `subpowerKubiliusLevelGroup_index_injOn`, retained variance caps, and retained late-key facts
+  discharge its hypotheses.  It includes the factor `4` from the shift grouping, so the entire
+  model-crossing contribution displayed in the canonical bound is `< ζ`.
+
+The packet declarations `primesUpTo`, `kubiliusMass`, `KubiliusTV`, and the headline statement are
+unchanged.  `KubiliusTV` remains only a named hypothesis; no `axiom`, `opaque`, or `native_decide`
+was added.  The scoped target still has exactly its single frozen headline `sorry`.
+
+Verification actually run:
+
+- `lake env lean src/NormalNumbers/CoefmassErdosBorweinSubpowerKub.lean` — succeeds, with only the
+  pre-existing headline `sorry` warning (plus publish-tier tactic guidance).
+- `~/personal/bin/lean-green . --target NormalNumbers.CoefmassErdosBorweinSubpowerKub --import
+  NormalNumbers.CoefmassErdosBorweinSubpowerKub --axioms
+  NormalNumbers.ErdosBorweinSubpowerKub.exists_kubiliusPrimeCutoffLoweredCrossingMass_injective_sum_lt_of_ratio
+  --axioms NormalNumbers.ErdosBorweinSubpowerKub.exists_subpowerKubiliusCanonical_model_sum_lt` —
+  `FORMALIZE-TIER GREEN`; both declarations report exactly `Classical.choice`, `Quot.sound`, and
+  `propext`.
+- `~/personal/bin/lean-green .` — full 10,847-job repository build, `FORMALIZE-TIER GREEN`.
+
+Three global terms remain: the square-divisor sum, accumulated `KubiliusTV` error, and exceptional
+top band.  The next highest-value attack is the square term because it is independent of the common
+cutoff choice: prove the canonical level fibers pairwise disjoint, rewrite their double sum over
+ordinary levels, fix any `D > 1` (for example `D = 2`), and dominate
+`(blockLogLog ℓ)^{-D}` using `blockLogLog_ge_quarter_add` and a convergent p-series tail.  After
+that, choose the common cutoff `Y` to make the TV error small while leaving only a thin exceptional
+band for the one-level estimate.

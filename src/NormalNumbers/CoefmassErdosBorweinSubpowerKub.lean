@@ -1045,6 +1045,98 @@ theorem exists_kubiliusPrimeCutoffLoweredCrossingMass_geometric_sum_lt_of_ratio
     _ < ζ := hdata.1
 
 open Classical in
+/-- Uniform model-tail bound for an arbitrary finite family whose geometric schedule indices are
+distinct.  This is the sparse-index form needed by the canonical arithmetic level partition:
+missing geometric blocks cost nothing, and injectivity prevents any block majorant from being
+charged twice. -/
+theorem exists_kubiliusPrimeCutoffLoweredCrossingMass_injective_sum_lt_of_ratio
+    {c q : ℝ} (hc : 1 < c) (hq : 1 < q) (A B : ℝ) (hA : 0 ≤ A) (hB : 0 ≤ B)
+    (ζ : ℝ) (hζ : 0 < ζ) :
+    ∃ K : ℕ, ∀ {ι : Type*} (S : Finset ι) (key : ι → ℕ) (y J : ι → ℕ),
+      Set.InjOn key (S : Set ι) →
+      (∀ a ∈ S, K ≤ key a) →
+      (∀ a ∈ S, 2 ≤ y a ∧
+        Real.log (Real.log (y a : ℝ)) + Erdos67.PrimeEstimates.mertensBound ≤
+          kubiliusBlockRatio c * (q : ℝ) ^ key a) →
+      (∑ a ∈ S, kubiliusPrimeCutoffLoweredCrossingMass (y a) c A B
+        ((q : ℝ) ^ key a) (J a)) < ζ := by
+  let f : ℕ → ℝ := fun k ↦ kubiliusIntegratedMajorantConstant c *
+    Real.rpow q (kubiliusIntegratedDecayExponent c * (k : ℝ))
+  have hsum : Summable f := by
+    simpa only [f] using summable_kubiliusIntegratedMajorant_of_ratio hc hq
+  have hmodel := eventually_kubiliusLoweredCrossingMass_le hc A B hA hB
+  have hqpow : Tendsto (fun k : ℕ ↦ (q : ℝ) ^ k) atTop atTop :=
+    tendsto_pow_atTop_atTop_of_one_lt hq
+  have hmodelNat : ∀ᶠ k : ℕ in atTop, ∀ y J : ℕ, 2 ≤ y →
+      Real.log (Real.log (y : ℝ)) + Erdos67.PrimeEstimates.mertensBound ≤
+        kubiliusBlockRatio c * (q : ℝ) ^ k →
+      kubiliusLoweredCrossingMass y c A B ((q : ℝ) ^ k) J ≤ f k := by
+    filter_upwards [hqpow.eventually hmodel] with k hk
+    intro y J hy hvar
+    have h := hk y J hy hvar
+    calc
+      kubiliusLoweredCrossingMass y c A B (q ^ k) J ≤
+          kubiliusIntegratedMajorantConstant c *
+            Real.rpow (q ^ k) (kubiliusIntegratedDecayExponent c) := h
+      _ = f k := by
+        have hpow : (q : ℝ) ^ k = Real.rpow q (k : ℝ) :=
+          (Real.rpow_natCast q k).symm
+        rw [hpow]
+        simpa only [f] using
+          kubiliusIntegratedMajorant_geometric_of_ratio c q k (by linarith)
+  obtain ⟨K₀, hK₀⟩ := eventually_atTop.1 hmodelNat
+  have htailEv : ∀ᶠ K : ℕ in atTop, (∑' i : ℕ, f (i + K)) < ζ :=
+    (tendsto_sum_nat_add f).eventually_lt_const hζ
+  obtain ⟨K, hK⟩ := eventually_atTop.1 (htailEv.and (eventually_ge_atTop K₀))
+  have hdata := hK K le_rfl
+  refine ⟨K, ?_⟩
+  intro ι S key y J hinj hkey hvar
+  have hoffsetInj : Set.InjOn (fun a ↦ key a - K) (S : Set ι) := by
+    intro a ha b hb hab
+    apply hinj ha hb
+    have hka := hkey a ha
+    have hkb := hkey b hb
+    calc
+      key a = (key a - K) + K := (Nat.sub_add_cancel hka).symm
+      _ = (key b - K) + K := congrArg (fun n ↦ n + K) hab
+      _ = key b := Nat.sub_add_cancel hkb
+  have hrewrite :
+      (∑ a ∈ S, f (key a)) =
+        ∑ i ∈ S.image (fun a ↦ key a - K), f (i + K) := by
+    calc
+      (∑ a ∈ S, f (key a)) =
+          ∑ a ∈ S, f ((key a - K) + K) := by
+        apply Finset.sum_congr rfl
+        intro a ha
+        rw [Nat.sub_add_cancel (hkey a ha)]
+      _ = ∑ i ∈ S.image (fun a ↦ key a - K), f (i + K) :=
+        (Finset.sum_image (f := fun i ↦ f (i + K)) hoffsetInj).symm
+  have hconst : 0 ≤ kubiliusIntegratedMajorantConstant c := by
+    unfold kubiliusIntegratedMajorantConstant
+    positivity [kubiliusInnerCoefficient_pos hc, one_lt_kubiliusBlockRatio hc]
+  have hf0 : ∀ i, 0 ≤ f (i + K) := by
+    intro i
+    exact mul_nonneg hconst (Real.rpow_nonneg (by linarith : 0 ≤ q) _)
+  have hfinite :
+      (∑ i ∈ S.image (fun a ↦ key a - K), f (i + K)) ≤
+        ∑' i : ℕ, f (i + K) :=
+    (hsum.comp_injective (fun _ _ h ↦ Nat.add_right_cancel h)).sum_le_tsum
+      (S.image (fun a ↦ key a - K)) (fun i _ ↦ hf0 i)
+  calc
+    (∑ a ∈ S, kubiliusPrimeCutoffLoweredCrossingMass (y a) c A B
+        ((q : ℝ) ^ key a) (J a)) ≤ ∑ a ∈ S, f (key a) := by
+      apply Finset.sum_le_sum
+      intro a ha
+      have hblock := hK₀ (key a) ((hdata.2).trans (hkey a ha))
+      have hv := hvar a ha
+      exact (kubiliusPrimeCutoffLoweredCrossingMass_le
+        (y a) c A B (q ^ key a) (J a)).trans
+          (hblock (y a) (J a) hv.1 hv.2)
+    _ = ∑ i ∈ S.image (fun a ↦ key a - K), f (i + K) := hrewrite
+    _ ≤ ∑' i : ℕ, f (i + K) := hfinite
+    _ < ζ := hdata.1
+
+open Classical in
 /-- `KubiliusTV` transferred termwise to a finite family of arithmetic events.  This form records
 the accumulated total-variation error needed when the auxiliary divisor-mass thresholds are
 truncated. -/
@@ -2911,6 +3003,62 @@ theorem exists_sum_marginalDivisorMass_large_cards_div_le_canonical_kubilius
     (zero_le_one.trans hc.le) hC hε hT hdelta hd.1 hd.2.1 hd.2.2.1
   refine ⟨?_, hd.2.2.2.1, hd.2.2.2.2⟩
   simpa only [subpowerKubiliusCanonicalGroupedBound] using hbound
+
+open Classical in
+/-- The model-crossing contribution in the canonical grouped bound is uniformly small once the
+starting arithmetic level is late enough.  The proof reindexes the nonempty canonical fibers by
+their distinct geometric schedule indices and applies the sparse finite-family model tail. -/
+theorem exists_subpowerKubiliusCanonical_model_sum_lt
+    (c C ε D ζ : ℝ) (hc : 1 < c) (hD : 0 ≤ D)
+    (hζ : 0 < ζ) :
+    ∃ K₀ : ℕ, ∀ L T Y J : ℕ,
+      (∀ s ∈ subpowerKubiliusLevelGroups c L T Y,
+        Real.log (Real.log (subpowerKubiliusGroupCutoff s : ℝ)) +
+            Erdos67.PrimeEstimates.mertensBound ≤
+          kubiliusBlockRatio (subpowerKubiliusModelCoefficient c) *
+            subpowerKubiliusGroupAnchor c s) →
+      (∀ s ∈ subpowerKubiliusLevelGroups c L T Y,
+        K₀ ≤ subpowerKubiliusGroupingIndex c (s.sup id)) →
+      (∑ s ∈ subpowerKubiliusLevelGroups c L T Y,
+        4 * kubiliusPrimeCutoffLoweredCrossingMass
+          (subpowerKubiliusGroupCutoff s)
+          (subpowerKubiliusModelCoefficient c) (subpowerKubiliusLossA D)
+            (subpowerKubiliusLossB (ε / C)) (subpowerKubiliusGroupAnchor c s)
+              ((J + 3) / 4)) < ζ := by
+  have hmodelc : 1 < subpowerKubiliusModelCoefficient c :=
+    one_lt_subpowerKubiliusModelCoefficient hc
+  have hq : 1 < subpowerKubiliusGroupingRatio c :=
+    one_lt_subpowerKubiliusGroupingRatio hc
+  have hA : 0 ≤ subpowerKubiliusLossA D := subpowerKubiliusLossA_nonneg D hD
+  have hB : 0 ≤ subpowerKubiliusLossB (ε / C) :=
+    subpowerKubiliusLossB_nonneg (ε / C)
+  obtain ⟨K₀, htail⟩ :=
+    exists_kubiliusPrimeCutoffLoweredCrossingMass_injective_sum_lt_of_ratio
+      hmodelc hq (subpowerKubiliusLossA D) (subpowerKubiliusLossB (ε / C))
+        hA hB (ζ / 4) (by positivity)
+  refine ⟨K₀, ?_⟩
+  intro L T Y J hvar hlate
+  let groups := subpowerKubiliusLevelGroups c L T Y
+  have hraw := htail groups
+    (fun s ↦ subpowerKubiliusGroupingIndex c (s.sup id))
+    subpowerKubiliusGroupCutoff (fun _ ↦ (J + 3) / 4)
+    (subpowerKubiliusLevelGroup_index_injOn c L T Y) hlate
+    (fun s hs ↦ ⟨dyadicExpCutoff_two_le _, hvar s hs⟩)
+  calc
+    (∑ s ∈ subpowerKubiliusLevelGroups c L T Y,
+        4 * kubiliusPrimeCutoffLoweredCrossingMass
+          (subpowerKubiliusGroupCutoff s)
+          (subpowerKubiliusModelCoefficient c) (subpowerKubiliusLossA D)
+            (subpowerKubiliusLossB (ε / C)) (subpowerKubiliusGroupAnchor c s)
+              ((J + 3) / 4)) =
+        4 * ∑ s ∈ subpowerKubiliusLevelGroups c L T Y,
+          kubiliusPrimeCutoffLoweredCrossingMass
+            (subpowerKubiliusGroupCutoff s)
+            (subpowerKubiliusModelCoefficient c) (subpowerKubiliusLossA D)
+              (subpowerKubiliusLossB (ε / C)) (subpowerKubiliusGroupAnchor c s)
+                ((J + 3) / 4) := by rw [Finset.mul_sum]
+    _ < 4 * (ζ / 4) := mul_lt_mul_of_pos_left hraw (by norm_num)
+    _ = ζ := by ring
 
 /-- **Target: non-normal below the sub-power weight for every `c > 1`, given `KubiliusTV`.**  This
 reaches the heuristic threshold of `EBLogWindow`'s non-normal half.  The proof replaces the c > 3
