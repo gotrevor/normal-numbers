@@ -50,11 +50,12 @@ Fix `b ≥ 2`, `j₀`, `T`.  Let `L = log log N`, `J = J N`, `u = J·(log L)³`,
 Order of attack: 5 (standalone probability lemma) → 4 → 1 → 2 → 3 → assemble via Step 1′.  Commit each
 green lemma.
 
-## Lap checkpoint (2026-10-26, lap 1)
+## Lap checkpoint (2026-10-26, lap 2)
 
-Step 5's exact finite change-of-measure layer is proved in
-`CoefmassErdosBorweinMultiShiftAux.lean`: tilted parameter and variance identities, parameter-shift
-bounds, the Radon–Nikodym weight identity, the cardinality MGF, and
-`bernoulliSubsetMass_tiltedWindow_lower` (tilted Chebyshev plus transfer back to the original law).
-Next prove the scalar Taylor estimates that turn this exact window bound into the stated
-moderate-deviation lower bound.  Detailed baton: `HANDOFF-2026-10-26-eb-multishift-lap1.md`.
+Step 5's finite change-of-measure and scalar product layers are proved in
+`CoefmassErdosBorweinMultiShiftAux.lean`.  In addition to the lap-1 identities and tilted-window
+bound, lap 2 proves summed tilted-mean bounds, an `exp theta` tilted-variance bound, the quadratic
+product-normalizer lower bound, and `bernoulliSubsetMass_card_ge_tilt_lower`, a one-sided finite
+moderate-deviation estimate with every loss explicit.  Next choose `theta` and `radius`
+asymptotically and simplify its exponent to `-(1+ε)x²/(2μ)`.  Detailed baton:
+`HANDOFF-2026-10-26-eb-multishift-lap2.md`.

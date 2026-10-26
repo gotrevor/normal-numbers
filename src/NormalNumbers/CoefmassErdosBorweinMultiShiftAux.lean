@@ -114,6 +114,99 @@ theorem bernoulliTiltParameter_sub_bounds {alpha : Type*} {q : alpha -> Real} {p
       change numerator <= numerator * (1 - q p + q p * Real.exp theta)
       nlinarith)
 
+/-- The elementary lower Taylor bound used to control each factor of the tilt normalizer. -/
+theorem sub_sq_le_log_one_add {s : Real} (hs : 0 <= s) :
+    s - s ^ 2 <= Real.log (1 + s) := by
+  have hpos : 0 < 1 + s := by linarith
+  have h := Real.log_le_sub_one_of_pos (show 0 < (1 : Real) / (1 + s) by positivity)
+  rw [Real.log_div one_ne_zero (ne_of_gt hpos), Real.log_one, zero_sub] at h
+  have hrw : (1 : Real) / (1 + s) - 1 = -(s / (1 + s)) := by
+    field_simp
+    ring
+  rw [hrw] at h
+  have hfrac : s / (1 + s) <= Real.log (1 + s) := by linarith
+  have htaylor : s - s ^ 2 <= s / (1 + s) := by
+    rw [le_div_iff₀ hpos]
+    nlinarith [pow_nonneg hs 3]
+  exact htaylor.trans hfrac
+
+/-- Summing the coordinatewise displacement bounds locates the tilted mean between two explicit
+multiples of the original Bernoulli variance. -/
+theorem bernoulliTiltMean_sub_bounds {alpha : Type*} (U : Finset alpha) (q : alpha -> Real)
+    {theta : Real} (hq0 : ∀ p ∈ U, 0 <= q p) (hq1 : ∀ p ∈ U, q p <= 1)
+    (htheta : 0 <= theta) :
+    (∑ p ∈ U, q p * (1 - q p)) * (1 - Real.exp (-theta)) <=
+        (∑ p ∈ U, bernoulliTiltParameter q theta p) - ∑ p ∈ U, q p ∧
+      (∑ p ∈ U, bernoulliTiltParameter q theta p) - ∑ p ∈ U, q p <=
+        (∑ p ∈ U, q p * (1 - q p)) * (Real.exp theta - 1) := by
+  rw [← Finset.sum_sub_distrib]
+  constructor
+  · rw [Finset.sum_mul]
+    exact Finset.sum_le_sum fun p hp =>
+      (bernoulliTiltParameter_sub_bounds (hq0 p hp) (hq1 p hp) htheta).1
+  · rw [Finset.sum_mul]
+    exact Finset.sum_le_sum fun p hp =>
+      (bernoulliTiltParameter_sub_bounds (hq0 p hp) (hq1 p hp) htheta).2
+
+/-- A nonnegative exponential tilt increases the total Bernoulli variance by at most the factor
+`exp theta`. -/
+theorem bernoulliTiltVariance_le {alpha : Type*} (U : Finset alpha) (q : alpha -> Real)
+    {theta : Real} (hq0 : ∀ p ∈ U, 0 <= q p) (hq1 : ∀ p ∈ U, q p <= 1)
+    (htheta : 0 <= theta) :
+    ∑ p ∈ U, bernoulliTiltParameter q theta p * (1 - bernoulliTiltParameter q theta p) <=
+      Real.exp theta * ∑ p ∈ U, q p * (1 - q p) := by
+  rw [Finset.mul_sum]
+  apply Finset.sum_le_sum
+  intro p hp
+  rw [bernoulliTiltParameter_variance theta (hq0 p hp) (hq1 p hp)]
+  have hn : 0 <= q p * (1 - q p) * Real.exp theta :=
+    mul_nonneg (mul_nonneg (hq0 p hp) (sub_nonneg.mpr (hq1 p hp))) (Real.exp_pos theta).le
+  have hd := (bernoulliTiltDenominator_bounds (hq0 p hp) (hq1 p hp) htheta).1
+  have hdiv : q p * (1 - q p) * Real.exp theta /
+      (1 - q p + q p * Real.exp theta) ^ 2 <= q p * (1 - q p) * Real.exp theta :=
+    div_le_self hn (one_le_pow₀ hd)
+  calc
+    q p * (1 - q p) * Real.exp theta /
+        (1 - q p + q p * Real.exp theta) ^ 2 <=
+      q p * (1 - q p) * Real.exp theta := hdiv
+    _ = Real.exp theta * (q p * (1 - q p)) := by ring
+
+/-- Product-level lower Taylor bound for the tilt normalizer.  The quadratic correction is kept as
+`sum q²`; for prime parameters this is bounded independently of the growing mean. -/
+theorem bernoulliTiltNormalizer_lower {alpha : Type*} (U : Finset alpha) (q : alpha -> Real)
+    {theta : Real} (hq0 : ∀ p ∈ U, 0 <= q p) (htheta : 0 <= theta) :
+    Real.exp ((Real.exp theta - 1) * (∑ p ∈ U, q p) -
+        (Real.exp theta - 1) ^ 2 * ∑ p ∈ U, (q p) ^ 2) <=
+      bernoulliTiltNormalizer U q theta := by
+  let a := Real.exp theta - 1
+  have ha : 0 <= a := sub_nonneg.mpr (Real.one_le_exp htheta)
+  have hfactor : ∀ p ∈ U,
+      Real.exp (q p * a - (q p * a) ^ 2) <= 1 - q p + q p * Real.exp theta := by
+    intro p hp
+    have hs : 0 <= q p * a := mul_nonneg (hq0 p hp) ha
+    have hlog := sub_sq_le_log_one_add hs
+    have hpos : 0 < 1 + q p * a := by positivity
+    calc
+      Real.exp (q p * a - (q p * a) ^ 2) <= Real.exp (Real.log (1 + q p * a)) :=
+        Real.exp_le_exp.mpr hlog
+      _ = 1 + q p * a := Real.exp_log hpos
+      _ = 1 - q p + q p * Real.exp theta := by dsimp [a]; ring
+  calc
+    Real.exp ((Real.exp theta - 1) * (∑ p ∈ U, q p) -
+        (Real.exp theta - 1) ^ 2 * ∑ p ∈ U, (q p) ^ 2) =
+        Real.exp (∑ p ∈ U, (q p * a - (q p * a) ^ 2)) := by
+      congr 1
+      dsimp [a]
+      rw [Finset.mul_sum, Finset.mul_sum]
+      rw [← Finset.sum_sub_distrib]
+      apply Finset.sum_congr rfl
+      intro p hp
+      ring
+    _ = ∏ p ∈ U, Real.exp (q p * a - (q p * a) ^ 2) := Real.exp_sum _ _
+    _ <= ∏ p ∈ U, (1 - q p + q p * Real.exp theta) := by
+      exact Finset.prod_le_prod (fun p hp => (Real.exp_pos _).le) hfactor
+    _ = bernoulliTiltNormalizer U q theta := rfl
+
 open Classical in
 /-- Exact Radon--Nikodym identity between an original finite Bernoulli law and its exponential
 tilt. -/
@@ -328,5 +421,79 @@ theorem bernoulliSubsetMass_tiltedWindow_lower {alpha : Type*} [DecidableEq alph
       apply Finset.sum_congr rfl
       intro S hS
       by_cases hSA : S ∈ A <;> simp [hSA]
+
+open Classical in
+/-- A one-sided finite moderate-deviation bound with all analytic losses exposed.  Once the tilted
+mean lies at least `radius` above the requested threshold and `radius²` dominates the elementary
+upper bound for the tilted variance, the upper-tail cost is the quadratic normalizer correction
+plus the exact exponential change-of-measure cost. -/
+theorem bernoulliSubsetMass_card_ge_tilt_lower {alpha : Type*} [DecidableEq alpha]
+    (U : Finset alpha) (q : alpha -> Real) {theta radius x : Real}
+    (hq0 : ∀ p ∈ U, 0 <= q p) (hq1 : ∀ p ∈ U, q p <= 1)
+    (htheta : 0 <= theta) (hradius : 0 < radius)
+    (hlocate : (∑ p ∈ U, q p) + x <=
+      (∑ p ∈ U, bernoulliTiltParameter q theta p) - radius)
+    (hvariance : Real.exp theta * (∑ p ∈ U, q p * (1 - q p)) <= radius ^ 2) :
+    Real.exp ((Real.exp theta - 1) * (∑ p ∈ U, q p) -
+        (Real.exp theta - 1) ^ 2 * (∑ p ∈ U, (q p) ^ 2) -
+        theta * ((∑ p ∈ U, bernoulliTiltParameter q theta p) + radius)) *
+        (1 - Real.exp theta * (∑ p ∈ U, q p * (1 - q p)) / radius ^ 2) <=
+      bernoulliSubsetMass U q {S | (∑ p ∈ U, q p) + x <= (S.card : Real)} := by
+  let qt := bernoulliTiltParameter q theta
+  let mean : Real := ∑ p ∈ U, qt p
+  let variance : Real := ∑ p ∈ U, qt p * (1 - qt p)
+  let originalVariance : Real := ∑ p ∈ U, q p * (1 - q p)
+  let squareMass : Real := ∑ p ∈ U, (q p) ^ 2
+  let normalizerLower : Real :=
+    Real.exp ((Real.exp theta - 1) * (∑ p ∈ U, q p) -
+      (Real.exp theta - 1) ^ 2 * squareMass)
+  let windowFactor : Real := 1 - variance / radius ^ 2
+  let lowerFactor : Real := 1 - Real.exp theta * originalVariance / radius ^ 2
+  have hradiusSq : 0 < radius ^ 2 := sq_pos_of_pos hradius
+  have hvar := bernoulliTiltVariance_le U q hq0 hq1 htheta
+  have hfactor : lowerFactor <= windowFactor := by
+    dsimp [lowerFactor, windowFactor, variance, originalVariance]
+    have hdiv : variance / radius ^ 2 <= Real.exp theta * originalVariance / radius ^ 2 :=
+      div_le_div_of_nonneg_right hvar hradiusSq.le
+    linarith
+  have hlowerFactor : 0 <= lowerFactor := by
+    dsimp [lowerFactor, originalVariance]
+    rw [sub_nonneg, div_le_one hradiusSq]
+    exact hvariance
+  have hnormalizer : normalizerLower <= bernoulliTiltNormalizer U q theta := by
+    dsimp [normalizerLower, squareMass]
+    exact bernoulliTiltNormalizer_lower U q hq0 htheta
+  have hnormalizerNonneg : 0 <= bernoulliTiltNormalizer U q theta :=
+    Finset.prod_nonneg fun p hp =>
+      (bernoulliTiltDenominator_pos theta (hq0 p hp) (hq1 p hp)).le
+  have hwindow := bernoulliSubsetMass_tiltedWindow_lower U q hq0 hq1 htheta hradius
+  have hmono : bernoulliSubsetMass U q
+      {S | mean - radius < (S.card : Real) ∧ (S.card : Real) < mean + radius} <=
+      bernoulliSubsetMass U q {S | (∑ p ∈ U, q p) + x <= (S.card : Real)} := by
+    apply bernoulliSubsetMass_mono U q _ hq0 hq1
+    intro S hS
+    exact le_trans hlocate (le_of_lt hS.1)
+  calc
+    Real.exp ((Real.exp theta - 1) * (∑ p ∈ U, q p) -
+        (Real.exp theta - 1) ^ 2 * (∑ p ∈ U, (q p) ^ 2) -
+        theta * ((∑ p ∈ U, bernoulliTiltParameter q theta p) + radius)) *
+        (1 - Real.exp theta * (∑ p ∈ U, q p * (1 - q p)) / radius ^ 2) =
+      normalizerLower * Real.exp (-theta * (mean + radius)) * lowerFactor := by
+        dsimp [normalizerLower, mean, squareMass, lowerFactor, originalVariance, qt]
+        rw [← Real.exp_add]
+        congr 2
+        ring
+    _ <= bernoulliTiltNormalizer U q theta * Real.exp (-theta * (mean + radius)) *
+        lowerFactor := by
+      gcongr
+    _ <= bernoulliTiltNormalizer U q theta * Real.exp (-theta * (mean + radius)) *
+        windowFactor := by
+      gcongr
+    _ <= bernoulliSubsetMass U q
+        {S | mean - radius < (S.card : Real) ∧ (S.card : Real) < mean + radius} := by
+      dsimp [windowFactor, variance, mean, qt]
+      exact hwindow
+    _ <= bernoulliSubsetMass U q
+        {S | (∑ p ∈ U, q p) + x <= (S.card : Real)} := hmono
 
 end NormalNumbers.ErdosBorweinMultiShift
