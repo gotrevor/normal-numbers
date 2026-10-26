@@ -52,14 +52,21 @@ Fix `b ≥ 2`, `j₀`, `T`.  Let `L = log log N`, `J = J N`, `u = J·(log L)³`,
 Order of attack: 5 (standalone probability lemma) → 4 → 1 → 2 → 3 → assemble via Step 1′.  Commit each
 green lemma.
 
-## Lap checkpoint (2026-10-26, lap 3)
+## Lap checkpoint (2026-10-26, lap 4)
 
-Step 5's standalone finite probability input is now proved in
-`CoefmassErdosBorweinMultiShiftAux.lean`.  The new endpoint
-`bernoulliSubsetMass_card_ge_moderate_lower` chooses the tilt and window explicitly and gives
-`P(S ≥ μ+x) ≥ exp(-(1+ε)x²/(2μ))` from five scalar hypotheses: small square mass, small
-tilt, large deviation relative to `√μ`, and absorption of the fixed Chebyshev factor.  The proof is
-finite and has no asymptotic or measure-theoretic debt.  The review also corrected Step 4's false
-"conditioned product" description; `independentSingletonDefect_le` proves the direct per-prime
-TV cost needed by the replacement coupling.  Next build that categorical/product coupling and
-tensorize it.  Detailed baton: `HANDOFF-2026-10-26-eb-multishift-lap3.md`.
+Step 4's finite tensorization layer is now proved in
+`CoefmassErdosBorweinMultiShiftAux.lean`.  `finiteProductWeight_l1_le` proves the product-law
+`L¹` inequality, `abs_finiteProductMass_sub_le_half_l1` converts it to the sharp event/TV bound,
+and `categorical_cleared_l1_eq` computes the exact one-prime defect.  Consequently
+`categorical_cleared_product_comparison` gives, for arbitrary events,
+
+```text
+|P_categorical(A) - P_cleared-independent(A)|
+  ≤ Σ_i J(J-1)q_i².
+```
+
+Here the cleared law retains independent singleton outcomes and merges every nonsingleton outcome
+into `none`.  The next attack is the remaining half of Step 4: identify this law as the pushforward
+of the fully independent `Finset (Fin J)` coordinates, bound the probability that clearing changes
+any coordinate, and expose factorization of the per-shift heavy events.  Detailed baton:
+`HANDOFF-2026-10-26-eb-multishift-lap4.md`.

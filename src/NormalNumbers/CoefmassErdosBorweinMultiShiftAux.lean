@@ -895,4 +895,283 @@ theorem independentSingletonDefect_le {q : Real} (hq0 : 0 <= q) (hq1 : q <= 1) (
       mul_le_mul_of_nonneg_left hdefect (mul_nonneg (Nat.cast_nonneg J) hq0)
     _ = (J : Real) * (J - 1 : Nat) * q ^ 2 := by ring
 
+/-! ### Tensorization of the categorical/independent comparison -/
+
+/-- Weight of a configuration under a finite product of coordinate laws. -/
+noncomputable def finiteProductWeight {n : Nat} {β : Type*} [Fintype β]
+    (w : Fin n → β → Real) (σ : Fin n → β) : Real :=
+  ∏ i, w i (σ i)
+
+theorem finiteProductWeight_cons {n : Nat} {β : Type*} [Fintype β]
+    (w : Fin (n + 1) → β → Real) (x : β) (σ : Fin n → β) :
+    finiteProductWeight w (Fin.cons x σ) =
+      w 0 x * finiteProductWeight (fun i => w i.succ) σ := by
+  simp [finiteProductWeight, Fin.prod_univ_succ]
+
+/-- A product of normalized finite coordinate laws is normalized. -/
+theorem finiteProductWeight_sum_one {n : Nat} {β : Type*} [Fintype β]
+    (w : Fin n → β → Real) (hw : ∀ i, ∑ x, w i x = 1) :
+    ∑ σ : Fin n → β, finiteProductWeight w σ = 1 := by
+  rw [show (∑ σ : Fin n → β, finiteProductWeight w σ) = ∏ i, ∑ x, w i x by
+    simpa [finiteProductWeight] using
+      (Finset.sum_prod_piFinset (R := Real) (Finset.univ : Finset β) w)]
+  simp [hw]
+
+/-- The `L¹` distance between two finite product laws is at most the sum of their coordinatewise
+`L¹` distances.  This is the elementary tensorization estimate behind the multishift coupling. -/
+theorem finiteProductWeight_l1_le {n : Nat} {β : Type*} [Fintype β]
+    (f g : Fin n → β → Real)
+    (hf0 : ∀ i x, 0 ≤ f i x) (hg0 : ∀ i x, 0 ≤ g i x)
+    (hf1 : ∀ i, ∑ x, f i x = 1) (hg1 : ∀ i, ∑ x, g i x = 1) :
+    (∑ σ : Fin n → β, |finiteProductWeight f σ - finiteProductWeight g σ|) ≤
+      ∑ i, ∑ x, |f i x - g i x| := by
+  induction n with
+  | zero => simp [finiteProductWeight]
+  | succ n ih =>
+      let e := Fin.consEquiv (fun _ : Fin (n + 1) => β)
+      rw [← e.sum_comp]
+      rw [Fintype.sum_prod_type]
+      change (∑ x, ∑ σ, |finiteProductWeight f (Fin.cons x σ) -
+        finiteProductWeight g (Fin.cons x σ)|) ≤ _
+      simp only [finiteProductWeight_cons]
+      calc
+        (∑ x, ∑ σ, |f 0 x * finiteProductWeight (fun i => f i.succ) σ -
+            g 0 x * finiteProductWeight (fun i => g i.succ) σ|) ≤
+            ∑ x, ∑ σ, (|f 0 x - g 0 x| * finiteProductWeight (fun i => f i.succ) σ +
+              g 0 x * |finiteProductWeight (fun i => f i.succ) σ -
+                finiteProductWeight (fun i => g i.succ) σ|) := by
+          gcongr with x σ
+          have hF : 0 ≤ finiteProductWeight (fun i => f i.succ) σ := by
+            exact Finset.prod_nonneg fun i _ => hf0 i.succ (σ i)
+          have hg : 0 ≤ g 0 x := hg0 0 x
+          rw [show f 0 x * finiteProductWeight (fun i => f i.succ) σ -
+              g 0 x * finiteProductWeight (fun i => g i.succ) σ =
+              (f 0 x - g 0 x) * finiteProductWeight (fun i => f i.succ) σ +
+                g 0 x * (finiteProductWeight (fun i => f i.succ) σ -
+                  finiteProductWeight (fun i => g i.succ) σ) by ring]
+          calc
+            |_ + _| ≤ |(f 0 x - g 0 x) * finiteProductWeight (fun i => f i.succ) σ| +
+                |g 0 x * (finiteProductWeight (fun i => f i.succ) σ -
+                  finiteProductWeight (fun i => g i.succ) σ)| := abs_add_le _ _
+            _ = _ := by rw [abs_mul, abs_mul, abs_of_nonneg hF, abs_of_nonneg hg]
+        _ = (∑ x, |f 0 x - g 0 x|) +
+              ∑ σ, |finiteProductWeight (fun i => f i.succ) σ -
+                finiteProductWeight (fun i => g i.succ) σ| := by
+          rw [show (∑ x, ∑ σ, (|f 0 x - g 0 x| *
+              finiteProductWeight (fun i => f i.succ) σ +
+              g 0 x * |finiteProductWeight (fun i => f i.succ) σ -
+                finiteProductWeight (fun i => g i.succ) σ|)) =
+              (∑ x, ∑ σ, |f 0 x - g 0 x| *
+                finiteProductWeight (fun i => f i.succ) σ) +
+              ∑ x, ∑ σ, g 0 x * |finiteProductWeight (fun i => f i.succ) σ -
+                finiteProductWeight (fun i => g i.succ) σ| by
+            simp only [Finset.sum_add_distrib]]
+          simp_rw [← Finset.mul_sum,
+            finiteProductWeight_sum_one (fun i => f i.succ) (fun i => hf1 i.succ)]
+          simp_rw [mul_one]
+          congr 1
+          rw [← Finset.sum_mul]
+          rw [hg1 0, one_mul]
+        _ ≤ (∑ x, |f 0 x - g 0 x|) +
+              ∑ i : Fin n, ∑ x, |f i.succ x - g i.succ x| := by
+          gcongr
+          exact ih (fun i => f i.succ) (fun i => g i.succ)
+            (fun i x => hf0 i.succ x) (fun i x => hg0 i.succ x)
+            (fun i => hf1 i.succ) (fun i => hg1 i.succ)
+        _ = ∑ i : Fin (n + 1), ∑ x, |f i x - g i x| := by
+          rw [Fin.sum_univ_succ]
+
+open Classical in
+/-- Mass of an event under a finite product of coordinate laws. -/
+noncomputable def finiteProductMass {n : Nat} {β : Type*} [Fintype β]
+    (w : Fin n → β → Real) (A : Set (Fin n → β)) : Real :=
+  ∑ σ, if σ ∈ A then finiteProductWeight w σ else 0
+
+theorem abs_finiteProductMass_sub_le_l1 {n : Nat} {β : Type*} [Fintype β]
+    (f g : Fin n → β → Real) (A : Set (Fin n → β)) :
+    |finiteProductMass f A - finiteProductMass g A| ≤
+      ∑ σ, |finiteProductWeight f σ - finiteProductWeight g σ| := by
+  classical
+  rw [finiteProductMass, finiteProductMass, ← Finset.sum_sub_distrib]
+  refine (Finset.abs_sum_le_sum_abs _ _).trans (Finset.sum_le_sum fun σ _ => ?_)
+  by_cases hσ : σ ∈ A <;> simp [hσ]
+
+/-- Event masses inherit the coordinatewise `L¹` tensorization estimate. -/
+theorem abs_finiteProductMass_sub_le {n : Nat} {β : Type*} [Fintype β]
+    (f g : Fin n → β → Real) (A : Set (Fin n → β))
+    (hf0 : ∀ i x, 0 ≤ f i x) (hg0 : ∀ i x, 0 ≤ g i x)
+    (hf1 : ∀ i, ∑ x, f i x = 1) (hg1 : ∀ i, ∑ x, g i x = 1) :
+    |finiteProductMass f A - finiteProductMass g A| ≤
+      ∑ i, ∑ x, |f i x - g i x| :=
+  (abs_finiteProductMass_sub_le_l1 f g A).trans
+    (finiteProductWeight_l1_le f g hf0 hg0 hf1 hg1)
+
+/-- For normalized product laws, an event sees at most half of the full `L¹` distance. -/
+theorem two_mul_abs_finiteProductMass_sub_le_l1 {n : Nat} {β : Type*} [Fintype β]
+    (f g : Fin n → β → Real) (A : Set (Fin n → β))
+    (hf1 : ∀ i, ∑ x, f i x = 1) (hg1 : ∀ i, ∑ x, g i x = 1) :
+    2 * |finiteProductMass f A - finiteProductMass g A| ≤
+      ∑ σ, |finiteProductWeight f σ - finiteProductWeight g σ| := by
+  classical
+  let d : (Fin n → β) → Real := fun σ => finiteProductWeight f σ - finiteProductWeight g σ
+  let x : Real := ∑ σ, if σ ∈ A then d σ else 0
+  let y : Real := ∑ σ, if σ ∈ A then 0 else d σ
+  have htotal : ∑ σ, d σ = 0 := by
+    dsimp [d]
+    rw [Finset.sum_sub_distrib, finiteProductWeight_sum_one f hf1,
+      finiteProductWeight_sum_one g hg1, sub_self]
+  have hxy : x + y = 0 := by
+    calc
+      x + y = ∑ σ, d σ := by
+        dsimp [x, y]
+        rw [← Finset.sum_add_distrib]
+        apply Finset.sum_congr rfl
+        intro σ hσ
+        by_cases hσA : σ ∈ A <;> simp [hσA]
+      _ = 0 := htotal
+  have hxmass : finiteProductMass f A - finiteProductMass g A = x := by
+    dsimp [x, d]
+    rw [finiteProductMass, finiteProductMass, ← Finset.sum_sub_distrib]
+    apply Finset.sum_congr rfl
+    intro σ hσ
+    by_cases hσA : σ ∈ A <;> simp [hσA]
+  have hxbound : |x| ≤ ∑ σ, if σ ∈ A then |d σ| else 0 := by
+    dsimp [x]
+    refine (Finset.abs_sum_le_sum_abs _ _).trans (Finset.sum_le_sum fun σ _ => ?_)
+    by_cases hσA : σ ∈ A <;> simp [hσA]
+  have hybound : |y| ≤ ∑ σ, if σ ∈ A then 0 else |d σ| := by
+    dsimp [y]
+    refine (Finset.abs_sum_le_sum_abs _ _).trans (Finset.sum_le_sum fun σ _ => ?_)
+    by_cases hσA : σ ∈ A <;> simp [hσA]
+  have hsplit :
+      (∑ σ, if σ ∈ A then |d σ| else 0) +
+          (∑ σ, if σ ∈ A then 0 else |d σ|) = ∑ σ, |d σ| := by
+    rw [← Finset.sum_add_distrib]
+    apply Finset.sum_congr rfl
+    intro σ hσ
+    by_cases hσA : σ ∈ A <;> simp [hσA]
+  have habsy : |y| = |x| := by
+    have hyx : y = -x := by linarith
+    rw [hyx, abs_neg]
+  rw [hxmass]
+  dsimp [d] at hsplit ⊢
+  linarith
+
+/-- Total variation tensorizes: the event-mass difference is at most half the sum of the local
+`L¹` differences. -/
+theorem abs_finiteProductMass_sub_le_half_l1 {n : Nat} {β : Type*} [Fintype β]
+    (f g : Fin n → β → Real) (A : Set (Fin n → β))
+    (hf0 : ∀ i x, 0 ≤ f i x) (hg0 : ∀ i x, 0 ≤ g i x)
+    (hf1 : ∀ i, ∑ x, f i x = 1) (hg1 : ∀ i, ∑ x, g i x = 1) :
+    |finiteProductMass f A - finiteProductMass g A| ≤
+      (1 / 2 : Real) * ∑ i, ∑ x, |f i x - g i x| := by
+  have htv := two_mul_abs_finiteProductMass_sub_le_l1 f g A hf1 hg1
+  have htensor := finiteProductWeight_l1_le f g hf0 hg0 hf1 hg1
+  nlinarith
+
+/-- The categorical one-prime law: choose no shift with mass `1-Jq`, or each individual shift
+with mass `q`. -/
+noncomputable def categoricalShiftWeight (J : Nat) (q : Real) : Option (Fin J) → Real
+  | none => 1 - (J : Real) * q
+  | some _ => q
+
+/-- The law obtained from `J` independent Bernoulli-`q` variables by retaining singleton outcomes
+and merging every nonsingleton outcome into `none`. -/
+noncomputable def clearedIndependentShiftWeight (J : Nat) (q : Real) : Option (Fin J) → Real
+  | none => 1 - (J : Real) * q * (1 - q) ^ (J - 1)
+  | some _ => q * (1 - q) ^ (J - 1)
+
+theorem categoricalShiftWeight_sum (J : Nat) (q : Real) :
+    ∑ o, categoricalShiftWeight J q o = 1 := by
+  rw [Fintype.sum_option]
+  simp [categoricalShiftWeight]
+
+theorem clearedIndependentShiftWeight_sum (J : Nat) (q : Real) :
+    ∑ o, clearedIndependentShiftWeight J q o = 1 := by
+  rw [Fintype.sum_option]
+  simp [clearedIndependentShiftWeight]
+  ring
+
+theorem categoricalShiftWeight_nonneg {J : Nat} {q : Real} (hq0 : 0 ≤ q)
+    (hJq : (J : Real) * q ≤ 1) (o : Option (Fin J)) :
+    0 ≤ categoricalShiftWeight J q o := by
+  cases o <;> simp [categoricalShiftWeight, hq0, sub_nonneg.mpr hJq]
+
+theorem clearedIndependentShiftWeight_nonneg {J : Nat} {q : Real}
+    (hq0 : 0 ≤ q) (hq1 : q ≤ 1) (hJq : (J : Real) * q ≤ 1)
+    (o : Option (Fin J)) : 0 ≤ clearedIndependentShiftWeight J q o := by
+  have ha0 : 0 ≤ (1 - q) ^ (J - 1) := pow_nonneg (sub_nonneg.mpr hq1) _
+  have ha1 : (1 - q) ^ (J - 1) ≤ 1 := pow_le_one₀ (by linarith) (by linarith)
+  cases o with
+  | none =>
+      simp only [clearedIndependentShiftWeight]
+      exact sub_nonneg.mpr (by
+        calc
+          (J : Real) * q * (1 - q) ^ (J - 1) ≤ (J : Real) * q * 1 :=
+            mul_le_mul_of_nonneg_left ha1 (mul_nonneg (Nat.cast_nonneg J) hq0)
+          _ = (J : Real) * q := by ring
+          _ ≤ 1 := hJq)
+  | some j => simp [clearedIndependentShiftWeight, mul_nonneg hq0 ha0]
+
+/-- Exact one-prime `L¹` cost of replacing the categorical law by the cleared independent law.
+Half of this quantity is their total-variation distance. -/
+theorem categorical_cleared_l1_eq (J : Nat) {q : Real} (hq0 : 0 ≤ q) (hq1 : q ≤ 1) :
+    (∑ o, |categoricalShiftWeight J q o - clearedIndependentShiftWeight J q o|) =
+      2 * ((J : Real) * q * (1 - (1 - q) ^ (J - 1))) := by
+  have ha0 : 0 ≤ (1 - q) ^ (J - 1) := pow_nonneg (sub_nonneg.mpr hq1) _
+  have ha1 : (1 - q) ^ (J - 1) ≤ 1 := pow_le_one₀ (by linarith) (by linarith)
+  rw [Fintype.sum_option]
+  simp only [categoricalShiftWeight, clearedIndependentShiftWeight]
+  rw [show (1 - (J : Real) * q) - (1 - (J : Real) * q * (1 - q) ^ (J - 1)) =
+      -((J : Real) * q * (1 - (1 - q) ^ (J - 1))) by ring,
+    abs_neg, abs_of_nonneg
+      (mul_nonneg (mul_nonneg (Nat.cast_nonneg J) hq0) (sub_nonneg.mpr ha1))]
+  have hs : ∀ j : Fin J, |q - q * (1 - q) ^ (J - 1)| =
+      q * (1 - (1 - q) ^ (J - 1)) := by
+    intro j
+    rw [show q - q * (1 - q) ^ (J - 1) = q * (1 - (1 - q) ^ (J - 1)) by ring,
+      abs_of_nonneg (mul_nonneg hq0 (sub_nonneg.mpr ha1))]
+  have hsum : (∑ j : Fin J, |q - q * (1 - q) ^ (J - 1)|) =
+      (J : Real) * (q * (1 - (1 - q) ^ (J - 1))) := by
+    calc
+      (∑ j : Fin J, |q - q * (1 - q) ^ (J - 1)|) =
+          ∑ _j : Fin J, q * (1 - (1 - q) ^ (J - 1)) := by
+        apply Finset.sum_congr rfl
+        intro j hj
+        exact hs j
+      _ = _ := by
+        rw [Finset.sum_const]
+        simp
+  rw [hsum]
+  ring
+
+/-- Tensorized comparison between the multishift categorical law and the law obtained by clearing
+collisions from fully independent shifts.  The remaining bridge to the fully independent product
+is precisely the probability of a collision. -/
+theorem categorical_cleared_product_comparison {n J : Nat} (q : Fin n → Real)
+    (hq0 : ∀ i, 0 ≤ q i) (hq1 : ∀ i, q i ≤ 1)
+    (hJq : ∀ i, (J : Real) * q i ≤ 1)
+    (A : Set (Fin n → Option (Fin J))) :
+    |finiteProductMass (fun i => categoricalShiftWeight J (q i)) A -
+        finiteProductMass (fun i => clearedIndependentShiftWeight J (q i)) A| ≤
+      ∑ i, (J : Real) * (J - 1 : Nat) * (q i) ^ 2 := by
+  calc
+    _ ≤ (1 / 2 : Real) * ∑ i, ∑ o, |categoricalShiftWeight J (q i) o -
+        clearedIndependentShiftWeight J (q i) o| :=
+      abs_finiteProductMass_sub_le_half_l1 _ _ A
+        (fun i => categoricalShiftWeight_nonneg (hq0 i) (hJq i))
+        (fun i => clearedIndependentShiftWeight_nonneg (hq0 i) (hq1 i) (hJq i))
+        (fun i => categoricalShiftWeight_sum J (q i))
+        (fun i => clearedIndependentShiftWeight_sum J (q i))
+    _ = ∑ i, ((J : Real) * q i * (1 - (1 - q i) ^ (J - 1))) := by
+      rw [Finset.mul_sum]
+      congr 1
+      funext i
+      rw [categorical_cleared_l1_eq J (hq0 i) (hq1 i)]
+      ring
+    _ ≤ ∑ i, ((J : Real) * (J - 1 : Nat) * (q i) ^ 2) := by
+      apply Finset.sum_le_sum
+      intro i hi
+      exact independentSingletonDefect_le (hq0 i) (hq1 i) J
+
 end NormalNumbers.ErdosBorweinMultiShift
