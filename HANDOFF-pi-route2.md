@@ -1,5 +1,13 @@
 # HANDOFF — pi route 2 (prime reservoir) — lap 3, 2026-10-26
 
+**Denominator follow-up:** `ReservoirDenominator.lean` now tests the actual reduced
+residual denominator D_n, requiring candidate denominators to divide it.
+`rational_comparison_actual_denominators` retains rational targets at head error
+<1/D_n.  `actual_denominator_rigidity` forces the genuine residual when forcing
+errors are below 1/lcm(D_n,D_(n+1)).  The resulting criterion is proved equivalent
+to pi disjunctivity (`denominatorCouplingCriterion_iff`), so reconstruction alone
+does not advance the digit problem.  See `docs/pi-routes/reservoir-denominator.md`.
+
 **Latest comparison result:** `not_cutoffSix_robustBBPCouplingCriterion` refutes
 forcing disjunctivity from the unchanged reservoir, its surviving odd-prime
 poles, any finite exact BBP prefix, and any positive pointwise tolerance on
