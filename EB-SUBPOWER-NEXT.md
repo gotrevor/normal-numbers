@@ -11,6 +11,47 @@ Helpers go above the headline or in a new `CoefmassErdosBorweinSubpowerAux.lean`
 
 ## Status
 
+### Lap 2 checkpoint (2026-10-26): weighted blocks and variable Chernoff exponent proved
+
+- Added the generic arithmetic layer to `CoefmassErdosBorweinSubpowerAux.lean`:
+  `weightedDivisorBlockMass_le_smoothDivisorCount`,
+  `weightedDivisorBlockMass_rpow_sum_le`, and
+  `weightedDivisorBlockMass_large_card_mul_rpow_le`.  Thus a pointwise block cap `W_ℓ`
+  now gives the exact uniform-in-`N` fractional-moment and counting-Chernoff bounds needed by
+  the plan, with the existing smooth-divisor Euler product and no independence input.
+- Proved the analytic core of the variable exponent.  `blockSigma c u = √(c log u/u)` satisfies
+  the two exact identities behind the cancellation, and
+  `chernoffExponent_blockSigma_le_slack` gives
+  `u(exp σ - 1 - σ) - σ√(cu log u) ≤ -(1/2-ρ)c log u` whenever
+  `σ ≤ ρ < 1/2`.  The cubic Taylor estimate used here is fully proved from
+  `Real.exp_bound'`.
+- Connected the frozen weight to that generic layer in `CoefmassErdosBorweinSubpower.lean`.
+  `subpowerWeight_antitone` proves eventual monotonicity,
+  `subpowerWeight_block_le` caps every block from `ℓ ≥ 3` by its left endpoint, and
+  `subpowerWeight_block_large_card_mul_rpow_le` is the specialized per-block Chernoff estimate.
+  The definition and headline statement remain unchanged.
+- Exact verification:
+  - `lake build NormalNumbers.CoefmassErdosBorweinSubpowerAux` — succeeds, 8857 jobs.
+  - `lake env lean src/NormalNumbers/CoefmassErdosBorweinSubpower.lean` — succeeds with exactly the
+    expected headline `sorry` warning.
+  - `~/personal/bin/lean-green . --target NormalNumbers.CoefmassErdosBorweinSubpower --import
+    NormalNumbers.CoefmassErdosBorweinSubpower --axioms
+    NormalNumbers.ErdosBorweinSubpower.subpowerWeight_block_large_card_mul_rpow_le` —
+    FORMALIZE-TIER GREEN; axioms exactly `propext`, `Classical.choice`, `Quot.sound`.
+  - `~/personal/bin/lean-green . --target NormalNumbers.CoefmassErdosBorweinSubpowerAux --import
+    NormalNumbers.CoefmassErdosBorweinSubpowerAux --axioms
+    NormalNumbers.ErdosBorweinSubpower.chernoffExponent_blockSigma_le_slack` —
+    FORMALIZE-TIER GREEN; axioms exactly `propext`, `Classical.choice`, `Quot.sound`.
+  - `~/personal/bin/lean-green .` — FORMALIZE-TIER GREEN, 10847 jobs.
+
+**Current blocker / next attack.**  Normalize the specialized block bound with
+`u_ℓ = log ((2:ℝ)^ℓ · log 2)` and `s_ℓ = blockSigma c u_ℓ / log 2`: prove `0 < s_ℓ ≤ 1`
+eventually and rewrite the left-end weight plus the Euler factor into the exponent controlled by
+`chernoffExponent_blockSigma_le_slack`.  Choose explicit
+`ρ < (c-3)/(2c)` (for example `(c-3)/(4c)`) and obtain a summable block majorant with exponent
+strictly below `-3/2`.  Then prove the shift-threshold geometric sum and the block union/decomposition
+that imply the existing `ae_not_normal_of_capped_marginal_residual` hypothesis.
+
 ### Lap 1 checkpoint (2026-10-26): marginal/Fatou criterion proved; headline has 1 sorry
 
 - Added `CoefmassErdosBorweinSubpowerAux.lean` and proved the axiom-clean theorem

@@ -41,6 +41,199 @@ lemma marginalDivisorMass_le_card_divisors (delta : ℕ → ℝ)
     _ = ((n.divisors.filter (fun m => M < m)).card : ℝ) := by simp
     _ ≤ n.divisors.card := by exact_mod_cast Finset.card_filter_le _ _
 
+/-! ### Weighted logarithmic blocks
+
+The sub-power argument uses the same double-exponential divisor blocks as the power-weight
+argument, but the weight and the fractional-moment exponent now vary with the block.  The next
+lemmas separate the combinatorial and Markov steps from the eventual real-variable estimates for
+the particular sub-power weight. -/
+
+/-- Contribution of an arbitrary weight from one double-exponential divisor block. -/
+noncomputable def weightedDivisorBlockMass (weight : ℕ → ℝ) (ℓ n : ℕ) : ℝ :=
+  ∑ d ∈ n.divisors.filter
+    (fun d => dyadicExpCutoff ℓ < d ∧ d ≤ dyadicExpCutoff (ℓ + 1)), weight d
+
+lemma weightedDivisorBlockMass_nonneg (weight : ℕ → ℝ)
+    (hweight : ∀ d, 0 ≤ weight d) (ℓ n : ℕ) :
+    0 ≤ weightedDivisorBlockMass weight ℓ n := by
+  unfold weightedDivisorBlockMass
+  exact Finset.sum_nonneg fun d _ => hweight d
+
+/-- A pointwise cap on the weight throughout a block converts its mass to the already-controlled
+smooth-divisor count at the right endpoint. -/
+lemma weightedDivisorBlockMass_le_smoothDivisorCount
+    (weight : ℕ → ℝ) (W : ℝ) (hW : 0 ≤ W) (ℓ n : ℕ)
+    (hweight : ∀ d : ℕ, dyadicExpCutoff ℓ < d → d ≤ dyadicExpCutoff (ℓ + 1) → weight d ≤ W) :
+    weightedDivisorBlockMass weight ℓ n ≤
+      (smoothDivisorCount (dyadicExpCutoff (ℓ + 1)) n : ℝ) * W := by
+  let S := n.divisors.filter
+    (fun d => dyadicExpCutoff ℓ < d ∧ d ≤ dyadicExpCutoff (ℓ + 1))
+  calc
+    weightedDivisorBlockMass weight ℓ n = ∑ d ∈ S, weight d := rfl
+    _ ≤ ∑ _d ∈ S, W := by
+      exact Finset.sum_le_sum fun d hd =>
+        hweight d (Finset.mem_filter.mp hd).2.1 (Finset.mem_filter.mp hd).2.2
+    _ = (S.card : ℝ) * W := by simp [mul_comm]
+    _ ≤ (smoothDivisorCount (dyadicExpCutoff (ℓ + 1)) n : ℝ) * W := by
+      exact mul_le_mul_of_nonneg_right (by exact_mod_cast divisorBlock_card_le n ℓ) hW
+
+/-- Fractional moment of an arbitrary weighted block.  All dependence on the weight is through a
+single block cap `W`; the smooth-divisor Euler product is uniform in `s ∈ (0,1]`. -/
+lemma weightedDivisorBlockMass_rpow_sum_le
+    (weight : ℕ → ℝ) (W s : ℝ) (hweight0 : ∀ d, 0 ≤ weight d) (hW : 0 ≤ W)
+    (hs : 0 < s) (hs1 : s ≤ 1) (ℓ N : ℕ)
+    (hweight : ∀ d : ℕ, dyadicExpCutoff ℓ < d → d ≤ dyadicExpCutoff (ℓ + 1) → weight d ≤ W) :
+    (∑ n ∈ Finset.Icc 1 N, Real.rpow (weightedDivisorBlockMass weight ℓ n) s) ≤
+      Real.rpow W s *
+        (N * (Real.exp (((2 : ℝ) ^ s - 1) * Erdos67.PrimeEstimates.mertensBound + 1) *
+          Real.rpow (Real.log (dyadicExpCutoff (ℓ + 1) : ℝ)) ((2 : ℝ) ^ s - 1))) := by
+  have hpoint : ∀ n, Real.rpow (weightedDivisorBlockMass weight ℓ n) s ≤
+      Real.rpow (smoothDivisorCount (dyadicExpCutoff (ℓ + 1)) n : ℝ) s * Real.rpow W s := by
+    intro n
+    calc
+      Real.rpow (weightedDivisorBlockMass weight ℓ n) s ≤
+          Real.rpow ((smoothDivisorCount (dyadicExpCutoff (ℓ + 1)) n : ℝ) * W) s := by
+        exact Real.rpow_le_rpow (weightedDivisorBlockMass_nonneg weight hweight0 ℓ n)
+          (weightedDivisorBlockMass_le_smoothDivisorCount weight W hW ℓ n hweight) hs.le
+      _ = Real.rpow (smoothDivisorCount (dyadicExpCutoff (ℓ + 1)) n : ℝ) s *
+          Real.rpow W s := by
+        exact Real.mul_rpow (by positivity) hW
+  calc
+    (∑ n ∈ Finset.Icc 1 N, Real.rpow (weightedDivisorBlockMass weight ℓ n) s) ≤
+        ∑ n ∈ Finset.Icc 1 N,
+          Real.rpow (smoothDivisorCount (dyadicExpCutoff (ℓ + 1)) n : ℝ) s *
+            Real.rpow W s := by
+      exact Finset.sum_le_sum fun n _ => hpoint n
+    _ = Real.rpow W s *
+        ∑ n ∈ Finset.Icc 1 N,
+          Real.rpow (smoothDivisorCount (dyadicExpCutoff (ℓ + 1)) n : ℝ) s := by
+      simp [Finset.mul_sum, mul_comm]
+    _ ≤ Real.rpow W s *
+        (N * (Real.exp (((2 : ℝ) ^ s - 1) * Erdos67.PrimeEstimates.mertensBound + 1) *
+          Real.rpow (Real.log (dyadicExpCutoff (ℓ + 1) : ℝ)) ((2 : ℝ) ^ s - 1))) := by
+      exact mul_le_mul_of_nonneg_left
+        (smoothDivisorCount_rpow_sum_le_log_rpow s hs hs1 (dyadicExpCutoff (ℓ + 1))
+          (dyadicExpCutoff_two_le (ℓ + 1)) N)
+        (Real.rpow_nonneg hW _)
+
+/-- Per-block counting Chernoff bound.  This is the exact form needed before summing over the shift
+thresholds and over blocks: every large value pays `Y^s`, while the numerator is the uniform
+smooth-divisor fractional moment. -/
+lemma weightedDivisorBlockMass_large_card_mul_rpow_le
+    (weight : ℕ → ℝ) (W Y s : ℝ) (hweight0 : ∀ d, 0 ≤ weight d) (hW : 0 ≤ W)
+    (hY : 0 ≤ Y) (hs : 0 < s) (hs1 : s ≤ 1) (ℓ N : ℕ)
+    (hweight : ∀ d : ℕ, dyadicExpCutoff ℓ < d → d ≤ dyadicExpCutoff (ℓ + 1) → weight d ≤ W) :
+    (((Finset.Icc 1 N).filter
+        (fun n => Y < weightedDivisorBlockMass weight ℓ n)).card : ℝ) * Real.rpow Y s ≤
+      Real.rpow W s *
+        (N * (Real.exp (((2 : ℝ) ^ s - 1) * Erdos67.PrimeEstimates.mertensBound + 1) *
+          Real.rpow (Real.log (dyadicExpCutoff (ℓ + 1) : ℝ)) ((2 : ℝ) ^ s - 1))) := by
+  let S := (Finset.Icc 1 N).filter
+    (fun n => Y < weightedDivisorBlockMass weight ℓ n)
+  calc
+    (S.card : ℝ) * Real.rpow Y s = ∑ _n ∈ S, Real.rpow Y s := by simp [mul_comm]
+    _ ≤ ∑ n ∈ S, Real.rpow (weightedDivisorBlockMass weight ℓ n) s := by
+      exact Finset.sum_le_sum fun n hn =>
+        (Real.rpow_lt_rpow hY (Finset.mem_filter.mp hn).2 hs).le
+    _ ≤ ∑ n ∈ Finset.Icc 1 N, Real.rpow (weightedDivisorBlockMass weight ℓ n) s := by
+      exact Finset.sum_le_sum_of_subset_of_nonneg (Finset.filter_subset _ _)
+        (fun n _ _ => Real.rpow_nonneg
+          (weightedDivisorBlockMass_nonneg weight hweight0 ℓ n) _)
+    _ ≤ _ := weightedDivisorBlockMass_rpow_sum_le weight W s hweight0 hW hs hs1 ℓ N hweight
+
+/-! ### The analytic Chernoff exponent -/
+
+/-- Cubic Taylor control in the exact form used for the variable block exponent. -/
+lemma exp_sub_one_sub_le_sq_half_add_cube {x : ℝ} (hx0 : 0 ≤ x) (hx1 : x ≤ 1) :
+    Real.exp x - 1 - x ≤ x ^ 2 / 2 + x ^ 3 := by
+  have h := Real.exp_bound' hx0 hx1 (n := 3) (by norm_num)
+  norm_num [Finset.sum_range_succ, Nat.factorial] at h ⊢
+  nlinarith [mul_nonneg (sq_nonneg x) hx0]
+
+/-- Algebraic core of the per-block exponent estimate.  The two displayed identities are exactly
+what the later specialization `σ = sqrt (c log u / u)` supplies. -/
+lemma chernoffExponent_le
+    (u c σ : ℝ) (hu : 0 ≤ u) (hσ0 : 0 ≤ σ) (hσ1 : σ ≤ 1)
+    (hsq : u * σ ^ 2 = c * Real.log u)
+    (hlin : σ * Real.sqrt (c * u * Real.log u) = c * Real.log u) :
+    u * (Real.exp σ - 1 - σ) - σ * Real.sqrt (c * u * Real.log u) ≤
+      -(c / 2) * Real.log u + u * σ ^ 3 := by
+  have h := mul_le_mul_of_nonneg_left (exp_sub_one_sub_le_sq_half_add_cube hσ0 hσ1) hu
+  rw [mul_add] at h
+  have hquad : u * (σ ^ 2 / 2) = c * Real.log u / 2 := by
+    rw [← mul_div_assoc, hsq]
+  rw [hquad] at h
+  rw [hlin]
+  linarith
+
+/-- The variable Chernoff exponent attached to a logarithmic block parameter `u`. -/
+noncomputable def blockSigma (c u : ℝ) : ℝ :=
+  Real.sqrt (c * Real.log u / u)
+
+lemma blockSigma_sq (c u : ℝ) (hc : 0 ≤ c) (hu : 1 ≤ u) :
+    u * blockSigma c u ^ 2 = c * Real.log u := by
+  have hu0 : 0 < u := zero_lt_one.trans_le hu
+  have hlog : 0 ≤ Real.log u := Real.log_nonneg hu
+  rw [blockSigma, Real.sq_sqrt (div_nonneg (mul_nonneg hc hlog) hu0.le)]
+  field_simp
+
+lemma blockSigma_mul_sqrt (c u : ℝ) (hc : 0 ≤ c) (hu : 1 ≤ u) :
+    blockSigma c u * Real.sqrt (c * u * Real.log u) = c * Real.log u := by
+  have hu0 : 0 < u := zero_lt_one.trans_le hu
+  have hA : 0 ≤ c * Real.log u := mul_nonneg hc (Real.log_nonneg hu)
+  have hsqrtu : 0 < Real.sqrt u := Real.sqrt_pos.mpr hu0
+  rw [blockSigma, Real.sqrt_div hA]
+  rw [show c * u * Real.log u = u * (c * Real.log u) by ring, Real.sqrt_mul hu0.le]
+  field_simp [ne_of_gt hsqrtu]
+  rw [Real.sq_sqrt hA]
+
+lemma blockSigma_cubic (c u : ℝ) (hc : 0 ≤ c) (hu : 1 ≤ u) :
+    u * blockSigma c u ^ 3 = c * Real.log u * blockSigma c u := by
+  calc
+    u * blockSigma c u ^ 3 = (u * blockSigma c u ^ 2) * blockSigma c u := by ring
+    _ = c * Real.log u * blockSigma c u := by rw [blockSigma_sq c u hc hu]
+
+lemma blockSigma_le_one (c u : ℝ) (hu : 1 ≤ u)
+    (hbudget : c * Real.log u ≤ u) : blockSigma c u ≤ 1 := by
+  have hu0 : 0 < u := zero_lt_one.trans_le hu
+  rw [blockSigma, Real.sqrt_le_one]
+  exact (div_le_one hu0).mpr hbudget
+
+/-- The per-block exponent bound after substituting `σ = sqrt(c log u / u)`.  Subsequent work only
+has to make the cubic remainder small and choose `u` large enough that `σ ≤ 1`. -/
+lemma chernoffExponent_blockSigma_le
+    (c u : ℝ) (hc : 0 ≤ c) (hu : 1 ≤ u) (hbudget : c * Real.log u ≤ u) :
+    u * (Real.exp (blockSigma c u) - 1 - blockSigma c u) -
+        blockSigma c u * Real.sqrt (c * u * Real.log u) ≤
+      -(c / 2) * Real.log u + u * blockSigma c u ^ 3 := by
+  exact chernoffExponent_le u c (blockSigma c u) (zero_le_one.trans hu) (Real.sqrt_nonneg _)
+    (blockSigma_le_one c u hu hbudget) (blockSigma_sq c u hc hu)
+    (blockSigma_mul_sqrt c u hc hu)
+
+/-- Explicit slack form of the exponent estimate.  Once `blockSigma c u ≤ ρ`, any fixed
+`ρ < 1/2` turns the cubic remainder into only a `ρ`-fraction of the main decay. -/
+lemma chernoffExponent_blockSigma_le_slack
+    (c u ρ : ℝ) (hc : 0 ≤ c) (hu : 1 ≤ u) (hρhalf : ρ < 1 / 2)
+    (hσρ : blockSigma c u ≤ ρ) :
+    u * (Real.exp (blockSigma c u) - 1 - blockSigma c u) -
+        blockSigma c u * Real.sqrt (c * u * Real.log u) ≤
+      -(1 / 2 - ρ) * c * Real.log u := by
+  have hσ1 : blockSigma c u ≤ 1 := by linarith
+  have hmain := chernoffExponent_le u c (blockSigma c u) (zero_le_one.trans hu)
+    (Real.sqrt_nonneg _) hσ1 (blockSigma_sq c u hc hu)
+    (blockSigma_mul_sqrt c u hc hu)
+  have hclog : 0 ≤ c * Real.log u := mul_nonneg hc (Real.log_nonneg hu)
+  have hcubic : u * blockSigma c u ^ 3 ≤ c * Real.log u * ρ := by
+    rw [blockSigma_cubic c u hc hu]
+    exact mul_le_mul_of_nonneg_left hσρ hclog
+  calc
+    u * (Real.exp (blockSigma c u) - 1 - blockSigma c u) -
+        blockSigma c u * Real.sqrt (c * u * Real.log u) ≤
+        -(c / 2) * Real.log u + u * blockSigma c u ^ 3 := hmain
+    _ ≤ -(c / 2) * Real.log u + c * Real.log u * ρ := by
+      simpa [add_comm] using add_le_add_left hcubic (-(c / 2) * Real.log u)
+    _ = -(1 / 2 - ρ) * c * Real.log u := by ring
+
 /-- The deterministic residual obtained by replacing every selector by its marginal mass. -/
 noncomputable def marginalShiftResidual (b : ℕ) (delta : ℕ → ℝ)
     (M n : ℕ) : ℝ :=
