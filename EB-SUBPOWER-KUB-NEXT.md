@@ -396,3 +396,53 @@ events under `kubiliusPrimeCutoffLoweredCrossingMass`, control the finite TV err
 `kubiliusTV_sum_card_div_le`, and add the top-cut and large-threshold tails.  Once the large-cards
 lemma is green, reuse `subpower_capped_marginal_residual_small` and the proved `c > 3` headline
 assembly with only that input replaced.
+
+## Lap checkpoint — 2026-10-26, shift allocation and square-exception sum
+
+The first finite-bookkeeping layer after the arithmetic event bridge is now kernel-checked.  The
+square-divisor cutoff can be chosen to grow polynomially in the log-log coordinate and
+geometrically in the shift without destroying the lowered-barrier model estimate.
+
+- `log_blockAllocation_ge` proves the explicit loss bound
+  `log(blockAllocation ℓ) ≥ -2 log(blockLogLog ℓ) - 2 log 4` for `ℓ ≥ 6`.
+- `subpowerKubiliusSquareCutoff D u j = u^D * 2^(j/4)` allocates the square-divisor exceptions.
+  `subpowerKubiliusLossA` and `subpowerKubiliusLossB` package the resulting fixed logarithmic and
+  constant losses.
+- `subpowerBlockThreshold_after_squareCutoff_ge_lowered` proves that this choice retains
+  `⌊j/4⌋` of the original shift above the lowered Kubilius barrier.  Thus the prime-power excess
+  consumes only half of the available `j/2` logarithmic threshold.
+- `subpowerWeightedDivisorBlockMass_large_imp_square_or_kubiliusLowered` composes that inequality
+  with the previous divisor-block bridge: a large block now forces either the allocated
+  square-divisor exception or an actual selected-prime crossing above the lowered barrier plus
+  `⌊j/4⌋`.
+- `sum_squareDivisorCount_large_card_subpowerCutoff_le` sums the square-divisor exception over an
+  arbitrary finite shift family, uniformly in its length, at cost
+  `T * squareDivisorMomentConstant * u^{-D} * subpowerSquareShiftConstant`.  This removes the
+  prime-power excess from the remaining model/TV bookkeeping once `D > 1` is fixed.
+
+The packet declarations `primesUpTo`, `kubiliusMass`, `KubiliusTV`, and the headline statement are
+unchanged.  `KubiliusTV` remains only a named hypothesis; no `axiom`, `opaque`, or `native_decide`
+was added.  The scoped target still has exactly its single frozen headline `sorry`.
+
+Verification actually run:
+
+- `lake env lean src/NormalNumbers/CoefmassErdosBorweinSubpowerKub.lean` — succeeds, with only the
+  pre-existing headline `sorry` warning.
+- `~/personal/bin/lean-green . --target NormalNumbers.CoefmassErdosBorweinSubpowerKub --import
+  NormalNumbers.CoefmassErdosBorweinSubpowerKub --axioms
+  NormalNumbers.ErdosBorweinSubpowerKub.subpowerWeightedDivisorBlockMass_large_imp_square_or_kubiliusLowered
+  --axioms
+  NormalNumbers.ErdosBorweinSubpowerKub.sum_squareDivisorCount_large_card_subpowerCutoff_le
+  --axioms
+  NormalNumbers.ErdosBorweinSubpowerKub.subpowerBlockThreshold_after_squareCutoff_ge_lowered` —
+  `FORMALIZE-TIER GREEN`; all three declarations report exactly `Classical.choice`, `Quot.sound`,
+  and `propext`.
+- `~/personal/bin/lean-green .` — full 10,847-job repository build, `FORMALIZE-TIER GREEN`.
+
+The next highest-value attack is the remaining level-grouping/cardinality interface.  For levels
+whose `blockLogLog` coordinates lie in one geometric interval `[r^k,r^(k+1))`, use the new
+pointwise disjunction to bound the sum of large-block cards by (i) the now-summable square term and
+(ii) at most four copies of each integer-threshold prime-cutoff crossing event.  Compare the
+level's ideal barrier with the block anchor, apply `kubiliusTV_sum_card_div_le`, and feed the model
+terms to `exists_kubiliusPrimeCutoffLoweredCrossingMass_geometric_sum_lt`.  The later top-cut,
+large-threshold truncation, and trivial `T ≤ dyadicExpCutoff L` cases remain after that interface.

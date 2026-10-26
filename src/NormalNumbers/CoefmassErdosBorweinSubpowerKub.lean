@@ -1410,6 +1410,235 @@ lemma subpowerWeightedDivisorBlockMass_large_imp_square_or_centered_sum_gt
   · exact Or.inr (subpowerBlock_two_pow_large_imp_centered_sum_gt
       c hc ℓ n y hlog hy R U hR hU hwalk)
 
+lemma log_blockAllocation_ge (ℓ : ℕ) (hℓ : 6 ≤ ℓ) :
+    -(2 * Real.log (blockLogLog ℓ) + 2 * Real.log 4) ≤
+      Real.log (blockAllocation ℓ) := by
+  let u : ℝ := blockLogLog ℓ
+  have hu4 : ((ℓ : ℝ) + 2) / 4 ≤ u := by
+    simpa only [u] using blockLogLog_ge_quarter_add ℓ hℓ
+  have hu : 0 < u := by
+    have : (0 : ℝ) < ((ℓ : ℝ) + 2) / 4 := by positivity
+    linarith
+  have hle : (ℓ : ℝ) + 2 ≤ 4 * u := by linarith
+  have hprod : ((ℓ : ℝ) + 1) * ((ℓ : ℝ) + 2) ≤ (4 * u) ^ 2 := by
+    calc
+      ((ℓ : ℝ) + 1) * ((ℓ : ℝ) + 2) ≤ ((ℓ : ℝ) + 2) * ((ℓ : ℝ) + 2) := by
+        exact mul_le_mul_of_nonneg_right (by norm_num) (by positivity)
+      _ ≤ (4 * u) * (4 * u) := by gcongr
+      _ = (4 * u) ^ 2 := by ring
+  have hrecip : 1 / (4 * u) ^ 2 ≤ blockAllocation ℓ := by
+    unfold blockAllocation
+    exact one_div_le_one_div_of_le (by positivity) hprod
+  have hlog := Real.log_le_log (by positivity : 0 < 1 / (4 * u) ^ 2) hrecip
+  calc
+    -(2 * Real.log u + 2 * Real.log 4) = Real.log (1 / (4 * u) ^ 2) := by
+      rw [Real.log_div (by norm_num : (1 : ℝ) ≠ 0)
+          (pow_ne_zero 2 (mul_ne_zero (by norm_num) (ne_of_gt hu))),
+        Real.log_one, zero_sub, Real.log_pow, Real.log_mul (by norm_num : (4 : ℝ) ≠ 0)
+          (ne_of_gt hu)]
+      ring
+    _ ≤ Real.log (blockAllocation ℓ) := hlog
+
+lemma log_subpowerBlockThreshold (A : ℝ) (hA : 0 < A) (ℓ j : ℕ) :
+    Real.log (subpowerBlockThreshold A ℓ j) =
+      Real.log A + Real.log (blockAllocation ℓ) + (j : ℝ) / 2 * Real.log 2 := by
+  unfold subpowerBlockThreshold
+  change Real.log (A * blockAllocation ℓ * (2 ^ ((j : ℝ) / 2))) = _
+  rw [Real.log_mul (mul_ne_zero (ne_of_gt hA) (ne_of_gt (blockAllocation_pos ℓ)))
+      (ne_of_gt (Real.rpow_pos_of_pos (by norm_num) _)),
+    Real.log_mul (ne_of_gt hA) (ne_of_gt (blockAllocation_pos ℓ)),
+    Real.log_rpow (by norm_num : (0 : ℝ) < 2)]
+
+noncomputable def subpowerKubiliusSquareCutoff (D u : ℝ) (j : ℕ) : ℝ :=
+  Real.rpow u D * Real.rpow 2 ((j : ℝ) / 4)
+
+lemma subpowerKubiliusSquareCutoff_pos (D u : ℝ) (j : ℕ) (hu : 0 < u) :
+    0 < subpowerKubiliusSquareCutoff D u j := by
+  unfold subpowerKubiliusSquareCutoff
+  exact mul_pos (Real.rpow_pos_of_pos hu _) (Real.rpow_pos_of_pos (by norm_num) _)
+
+lemma log_subpowerKubiliusSquareCutoff (D u : ℝ) (j : ℕ) (hu : 0 < u) :
+    Real.log (subpowerKubiliusSquareCutoff D u j) =
+      D * Real.log u + (j : ℝ) / 4 * Real.log 2 := by
+  unfold subpowerKubiliusSquareCutoff
+  change Real.log (u ^ D * 2 ^ ((j : ℝ) / 4)) = _
+  rw [Real.log_mul (ne_of_gt (Real.rpow_pos_of_pos hu _))
+      (ne_of_gt (Real.rpow_pos_of_pos (by norm_num) _)),
+    Real.log_rpow hu, Real.log_rpow (by norm_num : (0 : ℝ) < 2)]
+
+noncomputable def subpowerKubiliusLossA (D : ℝ) : ℝ :=
+  (D + 2) / Real.log 2
+
+noncomputable def subpowerKubiliusLossB (A : ℝ) : ℝ :=
+  max 0 ((-Real.log A + 2 * Real.log 4) / Real.log 2 + Real.log 2 +
+    Erdos67.PrimeEstimates.mertensBound)
+
+lemma subpowerKubiliusLossA_nonneg (D : ℝ) (hD : 0 ≤ D) :
+    0 ≤ subpowerKubiliusLossA D := by
+  unfold subpowerKubiliusLossA
+  positivity
+
+lemma subpowerKubiliusLossB_nonneg (A : ℝ) :
+    0 ≤ subpowerKubiliusLossB A := by
+  exact le_max_left _ _
+
+lemma subpowerBlockThreshold_after_squareCutoff_ge_lowered
+    (c A D : ℝ) (hA : 0 < A) (ℓ j : ℕ) (hℓ : 6 ≤ ℓ) :
+    kubiliusLoweredBarrier c (subpowerKubiliusLossA D) (subpowerKubiliusLossB A)
+          (blockLogLog ℓ) + (j / 4 : ℕ) ≤
+      blockLogLog ℓ * blockSigma c (blockLogLog ℓ) +
+          (Real.log (subpowerBlockThreshold A ℓ j) -
+              Real.log (subpowerKubiliusSquareCutoff D (blockLogLog ℓ) j)) /
+            Real.log 2 - Real.log 2 - Erdos67.PrimeEstimates.mertensBound := by
+  let u : ℝ := blockLogLog ℓ
+  have hu4 : ((ℓ : ℝ) + 2) / 4 ≤ u := by
+    simpa only [u] using blockLogLog_ge_quarter_add ℓ hℓ
+  have hu : 0 < u := by
+    have : (0 : ℝ) < ((ℓ : ℝ) + 2) / 4 := by positivity
+    linarith
+  have halloc : -(2 * Real.log u + 2 * Real.log 4) ≤
+      Real.log (blockAllocation ℓ) := by
+    simpa only [u] using log_blockAllocation_ge ℓ hℓ
+  have hshift : ((j / 4 : ℕ) : ℝ) ≤ (j : ℝ) / 4 := Nat.cast_div_le
+  have hB :
+      (-Real.log A + 2 * Real.log 4) / Real.log 2 + Real.log 2 +
+          Erdos67.PrimeEstimates.mertensBound ≤ subpowerKubiliusLossB A :=
+    le_max_right _ _
+  rw [log_subpowerBlockThreshold A hA,
+    log_subpowerKubiliusSquareCutoff D u j hu]
+  change kubiliusLoweredBarrier c (subpowerKubiliusLossA D)
+      (subpowerKubiliusLossB A) u + (j / 4 : ℕ) ≤
+    u * blockSigma c u +
+          (Real.log A + Real.log (blockAllocation ℓ) + (j : ℝ) / 2 * Real.log 2 -
+              (D * Real.log u + (j : ℝ) / 4 * Real.log 2)) /
+            Real.log 2 - Real.log 2 - Erdos67.PrimeEstimates.mertensBound
+  have hlog2 : 0 < Real.log 2 := Real.log_pos one_lt_two
+  have hactual :
+      u * blockSigma c u +
+          (Real.log A + Real.log (blockAllocation ℓ) + (j : ℝ) / 2 * Real.log 2 -
+              (D * Real.log u + (j : ℝ) / 4 * Real.log 2)) /
+            Real.log 2 - Real.log 2 - Erdos67.PrimeEstimates.mertensBound =
+        u * blockSigma c u +
+          (Real.log A + Real.log (blockAllocation ℓ) - D * Real.log u) /
+            Real.log 2 + (j : ℝ) / 4 - Real.log 2 -
+              Erdos67.PrimeEstimates.mertensBound := by
+    field_simp [ne_of_gt hlog2]
+    ring
+  rw [hactual]
+  unfold kubiliusLoweredBarrier subpowerKubiliusLossA
+  rw [div_eq_mul_inv]
+  rw [div_eq_mul_inv] at hB
+  have hinv : 0 < (Real.log 2)⁻¹ := inv_pos.mpr hlog2
+  have halloc' := mul_le_mul_of_nonneg_right halloc hinv.le
+  ring_nf at halloc' hB ⊢
+  linarith
+
+open Classical in
+/-- A large weighted divisor block, with the square-divisor cutoff allocated polynomially in the
+log-log coordinate and geometrically in the shift, forces either the corresponding square-divisor
+exception or a crossing of the lowered Kubilius barrier.  A quarter of the original half-power
+shift survives, rounded down to an integer threshold. -/
+lemma subpowerWeightedDivisorBlockMass_large_imp_square_or_kubiliusLowered
+    (c A D : ℝ) (hc : 0 ≤ c) (hA : 0 < A) (ℓ n y j : ℕ) (hℓ : 6 ≤ ℓ)
+    (hlog : 1 ≤ blockLogLog ℓ) (hy : dyadicExpCutoff (ℓ + 1) ≤ y)
+    (hmass : subpowerBlockThreshold A ℓ j <
+      weightedDivisorBlockMass (subpowerWeight c) ℓ n) :
+    subpowerKubiliusSquareCutoff D (blockLogLog ℓ) j < squareDivisorCount n ∨
+      kubiliusLoweredBarrier c (subpowerKubiliusLossA D) (subpowerKubiliusLossB A)
+            (blockLogLog ℓ) + (j / 4 : ℕ) <
+        centeredBernoulliFinsetSum (fun p : ℕ ↦ (1 / p : ℝ))
+          (n.primeFactors.filter (fun p => p ≤ y))
+            (primesUpTo (dyadicExpCutoff (ℓ + 1))) := by
+  have hu4 : ((ℓ : ℝ) + 2) / 4 ≤ blockLogLog ℓ :=
+    blockLogLog_ge_quarter_add ℓ hℓ
+  have hu : 0 < blockLogLog ℓ := by
+    have : (0 : ℝ) < ((ℓ : ℝ) + 2) / 4 := by positivity
+    linarith
+  have hR := subpowerBlockThreshold_pos A hA ℓ j
+  have hU := subpowerKubiliusSquareCutoff_pos D (blockLogLog ℓ) j hu
+  rcases subpowerWeightedDivisorBlockMass_large_imp_square_or_centered_sum_gt
+      c hc ℓ n y (by omega) hlog hy
+        (subpowerBlockThreshold A ℓ j)
+        (subpowerKubiliusSquareCutoff D (blockLogLog ℓ) j) hR hU hmass with
+    hsq | hwalk
+  · exact Or.inl hsq
+  · exact Or.inr ((subpowerBlockThreshold_after_squareCutoff_ge_lowered
+      c A D hA ℓ j hℓ).trans_lt hwalk)
+
+noncomputable def subpowerSquareShiftConstant : ℝ :=
+  (1 - Real.rpow 2 (-(1 : ℝ) / 4))⁻¹
+
+lemma subpowerSquareShiftConstant_pos : 0 < subpowerSquareShiftConstant := by
+  unfold subpowerSquareShiftConstant
+  apply inv_pos.mpr
+  exact sub_pos.mpr (Real.rpow_lt_one_of_one_lt_of_neg (by norm_num) (by norm_num))
+
+lemma one_div_subpowerKubiliusSquareCutoff
+    (D u : ℝ) (j : ℕ) (hu : 0 < u) :
+    1 / subpowerKubiliusSquareCutoff D u j =
+      Real.rpow u (-D) * (Real.rpow 2 (-(1 : ℝ) / 4)) ^ j := by
+  unfold subpowerKubiliusSquareCutoff
+  rw [one_div, mul_inv]
+  change (u ^ D)⁻¹ * (2 ^ ((j : ℝ) / 4))⁻¹ = _
+  rw [← Real.rpow_neg hu.le, ← Real.rpow_neg (by norm_num : (0 : ℝ) ≤ 2)]
+  congr 1
+  rw [show -((j : ℝ) / 4) = (-(1 : ℝ) / 4) * j by ring]
+  exact Real.rpow_mul_natCast (by norm_num : (0 : ℝ) ≤ 2) _ j
+
+lemma sum_one_div_subpowerKubiliusSquareCutoff_le
+    (D u : ℝ) (hu : 0 < u) (J : ℕ) :
+    (∑ j ∈ Finset.range J, 1 / subpowerKubiliusSquareCutoff D u j) ≤
+      Real.rpow u (-D) * subpowerSquareShiftConstant := by
+  let q : ℝ := Real.rpow 2 (-(1 : ℝ) / 4)
+  have hq0 : 0 ≤ q := Real.rpow_nonneg (by norm_num) _
+  have hq1 : q < 1 := Real.rpow_lt_one_of_one_lt_of_neg (by norm_num) (by norm_num)
+  have hgeom : (∑ j ∈ Finset.range J, q ^ j) ≤ ∑' j : ℕ, q ^ j :=
+    (hasSum_geometric_of_lt_one hq0 hq1).summable.sum_le_tsum
+      (Finset.range J) (fun j _ ↦ pow_nonneg hq0 j)
+  calc
+    (∑ j ∈ Finset.range J, 1 / subpowerKubiliusSquareCutoff D u j) =
+        Real.rpow u (-D) * ∑ j ∈ Finset.range J, q ^ j := by
+      rw [Finset.mul_sum]
+      apply Finset.sum_congr rfl
+      intro j hj
+      simpa only [q] using one_div_subpowerKubiliusSquareCutoff D u j hu
+    _ ≤ Real.rpow u (-D) * ∑' j : ℕ, q ^ j := by
+      exact mul_le_mul_of_nonneg_left hgeom (Real.rpow_nonneg hu.le _)
+    _ = Real.rpow u (-D) * subpowerSquareShiftConstant := by
+      rw [tsum_geometric_of_lt_one hq0 hq1]
+      rfl
+
+lemma sum_squareDivisorCount_large_card_subpowerCutoff_le
+    (D u : ℝ) (hu : 0 < u) (T J : ℕ) :
+    (∑ j ∈ Finset.range J,
+        (((Finset.Icc 1 T).filter (fun n =>
+          subpowerKubiliusSquareCutoff D u j < squareDivisorCount n)).card : ℝ)) ≤
+      T * squareDivisorMomentConstant * Real.rpow u (-D) *
+        subpowerSquareShiftConstant := by
+  calc
+    (∑ j ∈ Finset.range J,
+        (((Finset.Icc 1 T).filter (fun n =>
+          subpowerKubiliusSquareCutoff D u j < squareDivisorCount n)).card : ℝ)) ≤
+        ∑ j ∈ Finset.range J,
+          (T * squareDivisorMomentConstant /
+            subpowerKubiliusSquareCutoff D u j) := by
+      apply Finset.sum_le_sum
+      intro j hj
+      exact squareDivisorCount_large_card_le T _
+        (subpowerKubiliusSquareCutoff_pos D u j hu)
+    _ = (T * squareDivisorMomentConstant) *
+          ∑ j ∈ Finset.range J, 1 / subpowerKubiliusSquareCutoff D u j := by
+      rw [Finset.mul_sum]
+      apply Finset.sum_congr rfl
+      intro j hj
+      ring
+    _ ≤ (T * squareDivisorMomentConstant) *
+          (Real.rpow u (-D) * subpowerSquareShiftConstant) := by
+      exact mul_le_mul_of_nonneg_left
+        (sum_one_div_subpowerKubiliusSquareCutoff_le D u hu J)
+        (mul_nonneg (by positivity) squareDivisorMomentConstant_nonneg)
+    _ = _ := by ring
+
 /-- **Target: non-normal below the sub-power weight for every `c > 1`, given `KubiliusTV`.**  This
 reaches the heuristic threshold of `EBLogWindow`'s non-normal half.  The proof replaces the c > 3
 block-union step of `ebRandom_ae_not_normal_subpower` by Doob's exponential maximal inequality on
