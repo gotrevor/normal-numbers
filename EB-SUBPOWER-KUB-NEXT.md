@@ -845,3 +845,49 @@ package `4K/H² + 4K H²/√T → 0` and the threshold truncation `J = 4H`; the 
 thresholds are handled by the divisor-count tail.  These estimates then feed the canonical grouped
 bound to produce `exists_subpower_marginal_large_cards_le_of_kubilius`, after which the proved
 `c > 3` capped-residual and headline assembly can be reused.
+
+## Review-lap completion checkpoint — 2026-10-26, headline proved
+
+The scoped objective is complete: `CoefmassErdosBorweinSubpowerKub.lean` is sorry-free, and the
+frozen theorem `ebRandom_ae_not_normal_subpower_of_kubilius` is kernel-checked with its statement
+unchanged.  `KubiliusTV` remains exactly the named hypothesis from the packet.
+
+The closing argument has four layers.
+
+- The active exceptional top band is confined to the last
+  `subpowerKubiliusTopGap T + 1` levels.  A sharpened one-level fractional-moment estimate leaves a
+  strictly negative power for every `c > 1`; its logarithmic-width envelope tends to zero.
+- The accumulated TV majorant `4K/H² + 4K H² T⁻¹ᐟ²` is proved to tend to zero.  Together with the
+  previously discharged square and model terms, this yields
+  `exists_subpower_marginal_large_cards_truncated_div_lt_of_kubilius` for `J ≤ 4H`.
+- For `j ≥ 4H`, an elementary divisor-average bound and Markov's inequality give a geometric tail.
+  The identity `(2⁻¹ᐟ²)^(4H) = 4⁻ᴴ` absorbs the `O(2ᴴ)` logarithmic factor, leaving an explicit
+  `O(2⁻ᴴ)` envelope.  Small averaging ranges vanish because their integers lie below the divisor
+  cutoff.  Splitting `range J` at `4H` gives the uniform all-shift theorem
+  `exists_subpower_marginal_large_cards_le_of_kubilius`.
+- `subpower_capped_marginal_residual_small_of_kubilius` reuses the proved `c > 3` deterministic
+  residual assembly with only that large-card input replaced.  The final headline likewise reuses
+  the established zero-`C` case and marginal-residual criterion.
+
+The cumulative diff from planting commit `e61852e6` is `5086` insertions and one deletion; the sole
+deleted line is the final `sorry`.  Thus `primesUpTo`, `kubiliusMass`, `KubiliusTV`, and the headline
+statement remain byte-unchanged.  No `axiom`, `opaque`, or `native_decide` was added.
+
+Verification actually run:
+
+- `lake env lean src/NormalNumbers/CoefmassErdosBorweinSubpowerKub.lean` — succeeds with no `sorry`
+  warning.
+- `~/personal/bin/lean-green . --target NormalNumbers.CoefmassErdosBorweinSubpowerKub --import
+  NormalNumbers.CoefmassErdosBorweinSubpowerKub --axioms
+  NormalNumbers.ErdosBorweinSubpowerKub.exists_subpower_marginal_large_cards_le_of_kubilius
+  --axioms NormalNumbers.ErdosBorweinSubpowerKub.subpower_capped_marginal_residual_small_of_kubilius
+  --axioms NormalNumbers.ErdosBorweinSubpowerKub.ebRandom_ae_not_normal_subpower_of_kubilius` —
+  `FORMALIZE-TIER GREEN`; all three declarations report exactly `Classical.choice`, `Quot.sound`,
+  and `propext`.
+- `~/personal/bin/lean-green .` — full 10,847-job repository build, `FORMALIZE-TIER GREEN`.
+- `rg '\bsorry\b|native_decide|^axiom |^opaque '
+  src/NormalNumbers/CoefmassErdosBorweinSubpowerKub.lean` — no matches.
+
+There is no remaining blocker or in-scope proof obligation.  The next action is for the host to
+accept the satisfied `sorry-free:src/NormalNumbers/CoefmassErdosBorweinSubpowerKub.lean` predicate;
+no stretch work was requested.

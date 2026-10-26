@@ -3344,6 +3344,1338 @@ theorem subpowerKubiliusCanonical_tv_sum_commonCutoff_le
         4 * K * (H : ℝ) ^ 2 * Real.rpow T (-(1 / 2 : ℝ)) := by
       field_simp
 
+/-! ### The exceptional top band
+
+The common Kubilius cutoff deliberately leaves a logarithmically thin band of top arithmetic
+levels.  On that band the original one-level fractional-moment estimate is strong enough for every
+`c > 1`: we keep less slack than the globally summable `c > 3` argument and only ask for a
+strictly negative power. -/
+
+/-- Cubic-error allowance in the one-level Chernoff exponent for the exceptional top band. -/
+noncomputable def subpowerTopBandRho (c : ℝ) : ℝ :=
+  (c - 1) / (4 * c)
+
+/-- Polynomial exponent retained from the one-level moment estimate. -/
+noncomputable def subpowerTopBandAlpha (c : ℝ) : ℝ :=
+  (c + 1) / 4
+
+/-- Small polynomial allowance for the allocated threshold. -/
+noncomputable def subpowerTopBandDelta (c : ℝ) : ℝ :=
+  (c - 1) / 16
+
+/-- Strict decay left after the moment, allocation, and geometric-shift factors. -/
+noncomputable def subpowerTopBandDecay (c : ℝ) : ℝ :=
+  3 * (c - 1) / 16
+
+lemma subpowerTopBandRho_pos {c : ℝ} (hc : 1 < c) :
+    0 < subpowerTopBandRho c := by
+  unfold subpowerTopBandRho
+  positivity
+
+lemma subpowerTopBandRho_lt_half {c : ℝ} (hc : 1 < c) :
+    subpowerTopBandRho c < 1 / 2 := by
+  unfold subpowerTopBandRho
+  rw [div_lt_iff₀ (by positivity : 0 < 4 * c)]
+  linarith
+
+lemma subpowerTopBandAlpha_pos {c : ℝ} (hc : 1 < c) :
+    0 < subpowerTopBandAlpha c := by
+  unfold subpowerTopBandAlpha
+  linarith
+
+lemma subpowerTopBandDelta_pos {c : ℝ} (hc : 1 < c) :
+    0 < subpowerTopBandDelta c := by
+  unfold subpowerTopBandDelta
+  linarith
+
+lemma subpowerTopBandDecay_pos {c : ℝ} (hc : 1 < c) :
+    0 < subpowerTopBandDecay c := by
+  unfold subpowerTopBandDecay
+  linarith
+
+lemma subpowerTopBand_slack_mul {c : ℝ} (hc : 1 < c) :
+    (1 / 2 - subpowerTopBandRho c) * c = subpowerTopBandAlpha c := by
+  have hc0 : c ≠ 0 := ne_of_gt (by linarith : 0 < c)
+  unfold subpowerTopBandRho subpowerTopBandAlpha
+  field_simp [hc0]
+  ring
+
+lemma subpowerTopBand_exponent (c : ℝ) :
+    -subpowerTopBandAlpha c + subpowerTopBandDelta c + 1 / 2 =
+      -subpowerTopBandDecay c := by
+  unfold subpowerTopBandAlpha subpowerTopBandDelta subpowerTopBandDecay
+  ring
+
+/-- Threshold-factor estimate with an arbitrary positive polynomial allowance.  The older
+`subpowerBlockThresholdFactor_le` hard-codes the `c > 3` allowance `subpowerDelta`; the thin top
+band instead uses `subpowerTopBandDelta`. -/
+lemma subpowerBlockThresholdFactor_le_of_two_mul_le
+    (c A δ : ℝ) (hA : 0 < A) (ℓ : ℕ)
+    (hs0 : 0 ≤ subpowerBlockS c ℓ) (hs1 : subpowerBlockS c ℓ ≤ 1)
+    (hsδ : 2 * subpowerBlockS c ℓ ≤ δ) :
+    Real.rpow (A * blockAllocation ℓ) (-subpowerBlockS c ℓ) ≤
+      max 1 A⁻¹ * Real.rpow ((ℓ : ℝ) + 2) δ := by
+  have halloc0 : 0 ≤ blockAllocation ℓ := (blockAllocation_pos ℓ).le
+  have hsplit :
+      Real.rpow (A * blockAllocation ℓ) (-subpowerBlockS c ℓ) =
+        Real.rpow A (-subpowerBlockS c ℓ) *
+          Real.rpow (blockAllocation ℓ) (-subpowerBlockS c ℓ) := by
+    change (A * blockAllocation ℓ) ^ (-subpowerBlockS c ℓ) = _
+    exact Real.mul_rpow hA.le halloc0
+  rw [hsplit]
+  exact mul_le_mul
+    (rpow_neg_le_max_one_inv A (subpowerBlockS c ℓ) hA hs0 hs1)
+    (blockAllocation_rpow_neg_le ℓ (subpowerBlockS c ℓ) δ hs0 hsδ)
+    (Real.rpow_nonneg (by positivity) _)
+    (le_trans zero_le_one (le_max_left _ _))
+
+/-- For every `c > 1`, the exact one-block moment has decay exponent `(c+1)/4`.  Unlike
+`eventually_subpowerBlockMomentFactor_le`, this spends only the slack needed by the thin top band
+and therefore does not require `c > 3`. -/
+lemma eventually_subpowerBlockMomentFactor_le_topBand {c : ℝ} (hc : 1 < c) :
+    ∀ᶠ ℓ : ℕ in atTop,
+      subpowerBlockMomentFactor c ℓ ≤
+        subpowerMomentConstant *
+          Real.rpow (blockLogLog ℓ) (-subpowerTopBandAlpha c) := by
+  have hρ0 : 0 < subpowerTopBandRho c := subpowerTopBandRho_pos hc
+  have hρhalf : subpowerTopBandRho c < 1 / 2 := subpowerTopBandRho_lt_half hc
+  have hσ : ∀ᶠ ℓ : ℕ in atTop,
+      blockSigma c (blockLogLog ℓ) < subpowerTopBandRho c :=
+    (tendsto_blockSigma_blockLogLog_zero c).eventually_lt_const hρ0
+  have hu : ∀ᶠ ℓ : ℕ in atTop, 1 ≤ blockLogLog ℓ :=
+    tendsto_blockLogLog_atTop.eventually_ge_atTop 1
+  filter_upwards [hσ, hu] with ℓ hσ hu
+  have hc0 : 0 < c := by linarith
+  have hσ0 : 0 ≤ blockSigma c (blockLogLog ℓ) := Real.sqrt_nonneg _
+  have hσ1 : blockSigma c (blockLogLog ℓ) ≤ 1 := by linarith
+  have hcore := chernoffExponent_blockSigma_le_slack c (blockLogLog ℓ)
+    (subpowerTopBandRho c) hc0.le hu hρhalf hσ.le
+  have hcore' :
+      blockLogLog ℓ *
+            (Real.exp (blockSigma c (blockLogLog ℓ)) - 1 -
+              blockSigma c (blockLogLog ℓ)) -
+          blockSigma c (blockLogLog ℓ) *
+            Real.sqrt (c * blockLogLog ℓ * Real.log (blockLogLog ℓ)) ≤
+        -subpowerTopBandAlpha c * Real.log (blockLogLog ℓ) := by
+    calc
+      _ ≤ -(1 / 2 - subpowerTopBandRho c) * c *
+          Real.log (blockLogLog ℓ) := hcore
+      _ = -((1 / 2 - subpowerTopBandRho c) * c) *
+          Real.log (blockLogLog ℓ) := by ring
+      _ = _ := by rw [subpowerTopBand_slack_mul hc]
+  let q : ℝ := Real.exp (blockSigma c (blockLogLog ℓ)) - 1
+  have hq0 : 0 ≤ q := by
+    dsimp only [q]
+    exact sub_nonneg.mpr (by simpa using Real.exp_le_exp.mpr hσ0)
+  have hq1 : q ≤ Real.exp 1 - 1 := by
+    dsimp only [q]
+    linarith [Real.exp_le_exp.mpr hσ1]
+  have hrest :
+      q * Real.log 2 + q * Erdos67.PrimeEstimates.mertensBound + 1 ≤
+        (Real.exp 1 - 1) *
+          (Real.log 2 + |Erdos67.PrimeEstimates.mertensBound|) + 1 := by
+    calc
+      q * Real.log 2 + q * Erdos67.PrimeEstimates.mertensBound + 1 ≤
+          q * Real.log 2 + q * |Erdos67.PrimeEstimates.mertensBound| + 1 := by
+        gcongr
+        exact le_abs_self _
+      _ = q * (Real.log 2 + |Erdos67.PrimeEstimates.mertensBound|) + 1 := by ring
+      _ ≤ (Real.exp 1 - 1) *
+          (Real.log 2 + |Erdos67.PrimeEstimates.mertensBound|) + 1 := by
+        gcongr
+  rw [subpowerBlockMomentFactor_eq_exp]
+  have hfull :
+      blockLogLog ℓ *
+            (Real.exp (blockSigma c (blockLogLog ℓ)) - 1 -
+              blockSigma c (blockLogLog ℓ)) -
+          blockSigma c (blockLogLog ℓ) *
+            Real.sqrt (c * blockLogLog ℓ * Real.log (blockLogLog ℓ)) +
+        (Real.exp (blockSigma c (blockLogLog ℓ)) - 1) * Real.log 2 +
+        (Real.exp (blockSigma c (blockLogLog ℓ)) - 1) *
+          Erdos67.PrimeEstimates.mertensBound + 1 ≤
+        -subpowerTopBandAlpha c * Real.log (blockLogLog ℓ) +
+          ((Real.exp 1 - 1) *
+            (Real.log 2 + |Erdos67.PrimeEstimates.mertensBound|) + 1) := by
+    change _ + q * Real.log 2 + q * Erdos67.PrimeEstimates.mertensBound + 1 ≤ _
+    linarith
+  have hrpow : Real.rpow (blockLogLog ℓ) (-subpowerTopBandAlpha c) =
+      Real.exp (Real.log (blockLogLog ℓ) * (-subpowerTopBandAlpha c)) := by
+    change blockLogLog ℓ ^ (-subpowerTopBandAlpha c) = _
+    rw [Real.rpow_def_of_pos (zero_lt_one.trans_le hu)]
+  rw [subpowerMomentConstant, hrpow]
+  rw [← Real.exp_add]
+  apply Real.exp_le_exp.mpr
+  convert hfull using 1 <;> ring
+
+/-- Eventual side conditions needed to turn the exact one-level majorant into a fixed negative
+power for the exceptional band. -/
+lemma eventually_subpowerTopBand_parameters {c : ℝ} (hc : 1 < c) :
+    ∀ᶠ ℓ : ℕ in atTop,
+      6 ≤ ℓ ∧
+      1 ≤ Real.log (blockLogLog ℓ) ∧
+      0 < subpowerBlockS c ℓ ∧
+      subpowerBlockS c ℓ ≤ 1 ∧
+      2 * subpowerBlockS c ℓ ≤ subpowerTopBandDelta c ∧
+      blockSigma c (blockLogLog ℓ) ≤ 1 := by
+  have hδ : 0 < subpowerTopBandDelta c / 2 := by
+    positivity [subpowerTopBandDelta_pos hc]
+  have hsδ : ∀ᶠ ℓ : ℕ in atTop,
+      subpowerBlockS c ℓ < subpowerTopBandDelta c / 2 :=
+    (tendsto_subpowerBlockS_zero c).eventually_lt_const hδ
+  have hs1 : ∀ᶠ ℓ : ℕ in atTop, subpowerBlockS c ℓ < 1 :=
+    (tendsto_subpowerBlockS_zero c).eventually_lt_const zero_lt_one
+  have hσ1 : ∀ᶠ ℓ : ℕ in atTop, blockSigma c (blockLogLog ℓ) < 1 :=
+    (tendsto_blockSigma_blockLogLog_zero c).eventually_lt_const zero_lt_one
+  have hu : ∀ᶠ ℓ : ℕ in atTop, Real.exp 1 ≤ blockLogLog ℓ :=
+    tendsto_blockLogLog_atTop.eventually_ge_atTop (Real.exp 1)
+  filter_upwards [eventually_ge_atTop 6, hu, hsδ, hs1, hσ1] with ℓ hℓ hu hsδ hs1 hσ1
+  have hu1 : 1 < blockLogLog ℓ :=
+    (by linarith [Real.exp_one_gt_two] : 1 < Real.exp 1).trans_le hu
+  have hlog : 1 ≤ Real.log (blockLogLog ℓ) := by
+    rw [← Real.log_exp (1 : ℝ)]
+    exact Real.strictMonoOn_log.monotoneOn (Set.mem_Ioi.mpr (Real.exp_pos 1))
+      (Set.mem_Ioi.mpr (zero_lt_one.trans hu1)) hu
+  exact ⟨hℓ, hlog, subpowerBlockS_pos c (by linarith) ℓ hu1, hs1.le,
+    (by linarith), hσ1.le⟩
+
+/-- Constant in the exceptional-band one-level majorant. -/
+noncomputable def subpowerTopBandConstant (c A : ℝ) : ℝ :=
+  subpowerMomentConstant * Real.rpow 4 (subpowerTopBandAlpha c) *
+    max 1 A⁻¹ * (4 / Real.sqrt c)
+
+lemma subpowerTopBandConstant_nonneg (c A : ℝ) :
+    0 ≤ subpowerTopBandConstant c A := by
+  unfold subpowerTopBandConstant
+  exact mul_nonneg
+    (mul_nonneg
+      (mul_nonneg subpowerMomentConstant_pos.le (Real.rpow_nonneg (by norm_num) _))
+      (le_trans zero_le_one (le_max_left _ _)))
+    (div_nonneg (by norm_num) (Real.sqrt_nonneg _))
+
+/-- The full one-level shift majorant decays by a fixed negative power for every `c > 1`.  Global
+summability is neither asserted nor needed: the exceptional set contains only logarithmically many
+levels near the top cutoff. -/
+theorem eventually_subpowerBlockShiftMajorant_le_topBand
+    {c A : ℝ} (hc : 1 < c) (hA : 0 < A) :
+    ∀ᶠ ℓ : ℕ in atTop,
+      subpowerBlockShiftMajorant c A ℓ ≤
+        subpowerTopBandConstant c A *
+          Real.rpow ((ℓ : ℝ) + 2) (-subpowerTopBandDecay c) := by
+  filter_upwards [eventually_subpowerBlockMomentFactor_le_topBand hc,
+    eventually_subpowerTopBand_parameters hc] with ℓ hmoment hpar
+  rcases hpar with ⟨hℓ, hlog, hs0, hs1, hsδ, hσ1⟩
+  let u : ℝ := blockLogLog ℓ
+  let v : ℝ := (ℓ : ℝ) + 2
+  have hu0 : 0 < u := by
+    dsimp only [u]
+    exact (by positivity : (0 : ℝ) < ((ℓ : ℝ) + 2) / 4).trans_le
+      (blockLogLog_ge_quarter_add ℓ hℓ)
+  have hv0 : 0 < v := by dsimp only [v]; positivity
+  have huv : v / 4 ≤ u := by
+    simpa only [u, v] using blockLogLog_ge_quarter_add ℓ hℓ
+  have hpowUV : Real.rpow u (-subpowerTopBandAlpha c) ≤
+      Real.rpow 4 (subpowerTopBandAlpha c) *
+        Real.rpow v (-subpowerTopBandAlpha c) := by
+    have hmono : Real.rpow u (-subpowerTopBandAlpha c) ≤
+        Real.rpow (v / 4) (-subpowerTopBandAlpha c) :=
+      Real.rpow_le_rpow_of_nonpos (by positivity) huv
+        (by linarith [subpowerTopBandAlpha_pos hc])
+    calc
+      Real.rpow u (-subpowerTopBandAlpha c) ≤
+          Real.rpow (v / 4) (-subpowerTopBandAlpha c) := hmono
+      _ = Real.rpow 4 (subpowerTopBandAlpha c) *
+          Real.rpow v (-subpowerTopBandAlpha c) := by
+        change (v / 4) ^ (-subpowerTopBandAlpha c) =
+          4 ^ subpowerTopBandAlpha c * v ^ (-subpowerTopBandAlpha c)
+        rw [Real.div_rpow hv0.le (by norm_num : (0 : ℝ) ≤ 4)]
+        rw [Real.rpow_neg (by norm_num : (0 : ℝ) ≤ 4), div_eq_mul_inv, inv_inv]
+        ring
+  have hthreshold := subpowerBlockThresholdFactor_le_of_two_mul_le
+    c A (subpowerTopBandDelta c) hA ℓ hs0.le hs1 hsδ
+  have hgeom := subpowerBlockShiftGeomFactor_le c (by linarith) ℓ hℓ hlog hs0 hσ1
+  have hthreshold0 : 0 ≤ Real.rpow (A * blockAllocation ℓ) (-subpowerBlockS c ℓ) :=
+    Real.rpow_nonneg (mul_nonneg hA.le (blockAllocation_pos ℓ).le) _
+  have hgeom0 : 0 ≤ (1 - Real.rpow 2 (-subpowerBlockS c ℓ / 2))⁻¹ := by
+    apply inv_nonneg.mpr
+    exact sub_nonneg.mpr
+      (Real.rpow_le_one_of_one_le_of_nonpos (by norm_num) (by linarith))
+  have hupper0 :
+      0 ≤ subpowerMomentConstant * Real.rpow u (-subpowerTopBandAlpha c) :=
+    mul_nonneg subpowerMomentConstant_pos.le (Real.rpow_nonneg hu0.le _)
+  have hthresholdUpper0 :
+      0 ≤ max 1 A⁻¹ * Real.rpow v (subpowerTopBandDelta c) :=
+    mul_nonneg (le_trans zero_le_one (le_max_left _ _))
+      (Real.rpow_nonneg hv0.le _)
+  have hgeomUpper0 : 0 ≤ (4 / Real.sqrt c) * Real.rpow v (1 / 2) :=
+    mul_nonneg (div_nonneg (by norm_num) (Real.sqrt_nonneg _))
+      (Real.rpow_nonneg hv0.le _)
+  have hraw : subpowerBlockShiftMajorant c A ℓ ≤
+      (subpowerMomentConstant * Real.rpow u (-subpowerTopBandAlpha c)) *
+        (max 1 A⁻¹ * Real.rpow v (subpowerTopBandDelta c)) *
+          ((4 / Real.sqrt c) * Real.rpow v (1 / 2)) := by
+    unfold subpowerBlockShiftMajorant
+    exact mul_le_mul
+      (mul_le_mul hmoment hthreshold hthreshold0 hupper0)
+      hgeom hgeom0 (mul_nonneg hupper0 hthresholdUpper0)
+  have hraw' : subpowerBlockShiftMajorant c A ℓ ≤
+      (subpowerMomentConstant *
+          (Real.rpow 4 (subpowerTopBandAlpha c) *
+            Real.rpow v (-subpowerTopBandAlpha c))) *
+        (max 1 A⁻¹ * Real.rpow v (subpowerTopBandDelta c)) *
+          ((4 / Real.sqrt c) * Real.rpow v (1 / 2)) :=
+    hraw.trans (mul_le_mul_of_nonneg_right
+      (mul_le_mul_of_nonneg_right
+        (mul_le_mul_of_nonneg_left hpowUV subpowerMomentConstant_pos.le)
+        hthresholdUpper0)
+      hgeomUpper0)
+  have hrpows :
+      Real.rpow v (-subpowerTopBandAlpha c) *
+          Real.rpow v (subpowerTopBandDelta c) * Real.rpow v (1 / 2) =
+        Real.rpow v
+          (-subpowerTopBandAlpha c + subpowerTopBandDelta c + 1 / 2) := by
+    change v ^ (-subpowerTopBandAlpha c) * v ^ subpowerTopBandDelta c *
+        v ^ (1 / 2 : ℝ) =
+      v ^ (-subpowerTopBandAlpha c + subpowerTopBandDelta c + 1 / 2)
+    rw [← Real.rpow_add hv0, ← Real.rpow_add hv0]
+  calc
+    subpowerBlockShiftMajorant c A ℓ ≤
+        (subpowerMomentConstant *
+            (Real.rpow 4 (subpowerTopBandAlpha c) *
+              Real.rpow v (-subpowerTopBandAlpha c))) *
+          (max 1 A⁻¹ * Real.rpow v (subpowerTopBandDelta c)) *
+            ((4 / Real.sqrt c) * Real.rpow v (1 / 2)) := hraw'
+    _ = subpowerTopBandConstant c A *
+        Real.rpow v (-subpowerTopBandDecay c) := by
+      unfold subpowerTopBandConstant
+      rw [← subpowerTopBand_exponent c, ← hrpows]
+      ring
+    _ = subpowerTopBandConstant c A *
+        Real.rpow ((ℓ : ℝ) + 2) (-subpowerTopBandDecay c) := rfl
+
+/-- Exceptional levels that can actually contribute for integers `n ≤ T`.  Levels whose left
+endpoint is already at least `T` have identically zero block mass and are removed here. -/
+def subpowerKubiliusActiveExceptionalLevels (L T : ℕ) : Finset ℕ :=
+  (subpowerKubiliusExceptionalLevels L T (subpowerKubiliusCommonCutoff T)).filter
+    (fun ℓ => dyadicExpCutoff ℓ < T)
+
+@[simp] lemma mem_subpowerKubiliusActiveExceptionalLevels {L T ℓ : ℕ} :
+    ℓ ∈ subpowerKubiliusActiveExceptionalLevels L T ↔
+      ℓ ∈ subpowerKubiliusExceptionalLevels L T
+        (subpowerKubiliusCommonCutoff T) ∧ dyadicExpCutoff ℓ < T := by
+  simp [subpowerKubiliusActiveExceptionalLevels]
+
+open Classical in
+/-- A divisor block vanishes once its left endpoint is at least the integer being factored. -/
+lemma weightedDivisorBlockMass_eq_zero_of_le
+    (weight : ℕ → ℝ) {ℓ n : ℕ} (hn : 1 ≤ n) (hle : n ≤ dyadicExpCutoff ℓ) :
+    weightedDivisorBlockMass weight ℓ n = 0 := by
+  unfold weightedDivisorBlockMass
+  apply Finset.sum_eq_zero
+  intro d hd
+  have hddiv : d ∣ n :=
+    Nat.dvd_of_mem_divisors (Finset.mem_filter.mp hd).1
+  have hdn : d ≤ n := Nat.le_of_dvd (by omega) hddiv
+  have hcutd := (Finset.mem_filter.mp hd).2.1
+  omega
+
+/-- A dyadic-exponential left endpoint below `T` has level at most the exact top level. -/
+lemma level_le_subpowerKubiliusTopLevel {T ℓ : ℕ}
+    (hcut : dyadicExpCutoff ℓ ≤ T) :
+    ℓ ≤ subpowerKubiliusTopLevel T := by
+  have hT0 : T ≠ 0 := by
+    have hcutPos : 0 < dyadicExpCutoff ℓ := by
+      unfold dyadicExpCutoff
+      positivity
+    omega
+  have hinner : 2 ^ ℓ ≤ Nat.log 2 T := by
+    rw [Nat.le_log_iff_pow_le (by omega) hT0]
+    simpa only [dyadicExpCutoff] using hcut
+  have hlogT0 : Nat.log 2 T ≠ 0 := by
+    have hpowPos : 0 < 2 ^ ℓ := by positivity
+    omega
+  rw [subpowerKubiliusTopLevel, Nat.le_log_iff_pow_le (by omega) hlogT0]
+  exact hinner
+
+/-- Every active exceptional level lies between the common-cutoff level and the exact top level. -/
+lemma subpowerKubiliusActiveExceptionalLevels_mem_bounds
+    {L T ℓ : ℕ} (hℓ : ℓ ∈ subpowerKubiliusActiveExceptionalLevels L T) :
+    subpowerKubiliusTopLevel T - subpowerKubiliusTopGap T ≤ ℓ ∧
+      ℓ ≤ subpowerKubiliusTopLevel T := by
+  let H := subpowerKubiliusTopLevel T
+  let g := subpowerKubiliusTopGap T
+  have hdata := mem_subpowerKubiliusActiveExceptionalLevels.mp hℓ
+  have hexceptional := (mem_subpowerKubiliusExceptionalLevels.mp hdata.1).2.2
+  have hlower : H - g ≤ ℓ := by
+    by_contra hnot
+    have hsucc : ℓ + 1 ≤ H - g := by omega
+    have hmono := dyadicExpCutoff_mono hsucc
+    dsimp only [H, g] at hmono
+    rw [← subpowerKubiliusCommonCutoff] at hmono
+    omega
+  have hupper : ℓ ≤ H := by
+    dsimp only [H]
+    exact level_le_subpowerKubiliusTopLevel hdata.2.le
+  exact ⟨hlower, hupper⟩
+
+/-- The active exceptional band contains at most `g + 1` levels, where
+`g = subpowerKubiliusTopGap T`. -/
+lemma subpowerKubiliusActiveExceptionalLevels_card_le
+    (L T : ℕ) (hH : 32 ≤ subpowerKubiliusTopLevel T) :
+    (subpowerKubiliusActiveExceptionalLevels L T).card ≤
+      subpowerKubiliusTopGap T + 1 := by
+  let H := subpowerKubiliusTopLevel T
+  let g := subpowerKubiliusTopGap T
+  have hgH : g ≤ H := by
+    simpa only [H, g] using subpowerKubiliusTopGap_le_topLevel hH
+  have hsubset : subpowerKubiliusActiveExceptionalLevels L T ⊆ Finset.Icc (H - g) H := by
+    intro ℓ hℓ
+    simp only [Finset.mem_Icc]
+    simpa only [H, g] using subpowerKubiliusActiveExceptionalLevels_mem_bounds hℓ
+  calc
+    (subpowerKubiliusActiveExceptionalLevels L T).card ≤
+        (Finset.Icc (H - g) H).card := Finset.card_le_card hsubset
+    _ = g + 1 := by
+      rw [Nat.card_Icc]
+      omega
+
+open Classical in
+/-- The exceptional union is bounded by the sum of the old one-level shift majorants, after
+discarding the levels that cannot contain a divisor of any `n ≤ T`. -/
+theorem subpowerKubiliusExceptional_union_large_cards_div_le_majorants
+    (c A : ℝ) (hc : 0 ≤ c) (hA : 0 < A) (L T J : ℕ) (hT : 0 < T)
+    (hpar : ∀ ℓ ∈ subpowerKubiliusActiveExceptionalLevels L T,
+      3 ≤ ℓ ∧ 0 < subpowerBlockS c ℓ ∧ subpowerBlockS c ℓ ≤ 1) :
+    (∑ j ∈ Finset.range J,
+        (((Finset.Icc 1 T).filter (fun n ↦
+          ∃ ℓ ∈ subpowerKubiliusExceptionalLevels L T
+              (subpowerKubiliusCommonCutoff T),
+            subpowerBlockThreshold A ℓ j <
+              weightedDivisorBlockMass (subpowerWeight c) ℓ n)).card : ℝ)) / T ≤
+      ∑ ℓ ∈ subpowerKubiliusActiveExceptionalLevels L T,
+        subpowerBlockShiftMajorant c A ℓ := by
+  let active := subpowerKubiliusActiveExceptionalLevels L T
+  let E : ℕ → Finset ℕ := fun j =>
+    (Finset.Icc 1 T).filter (fun n ↦
+      ∃ ℓ ∈ subpowerKubiliusExceptionalLevels L T
+          (subpowerKubiliusCommonCutoff T),
+        subpowerBlockThreshold A ℓ j <
+          weightedDivisorBlockMass (subpowerWeight c) ℓ n)
+  let B : ℕ → ℕ → Finset ℕ := fun ℓ j =>
+    (Finset.Icc 1 T).filter (fun n ↦
+      subpowerBlockThreshold A ℓ j <
+        weightedDivisorBlockMass (subpowerWeight c) ℓ n)
+  have hpoint : ∀ j : ℕ, ((E j).card : ℝ) ≤
+      ∑ ℓ ∈ active, ((B ℓ j).card : ℝ) := by
+    intro j
+    have hsubset : E j ⊆ active.biUnion (fun ℓ => B ℓ j) := by
+      intro n hn
+      have hnIcc := (Finset.mem_filter.mp hn).1
+      have hnBounds := Finset.mem_Icc.mp hnIcc
+      obtain ⟨ℓ, hℓexceptional, hmass⟩ := (Finset.mem_filter.mp hn).2
+      have hcut : dyadicExpCutoff ℓ < T := by
+        by_contra hnot
+        have hTcut : T ≤ dyadicExpCutoff ℓ := Nat.le_of_not_gt hnot
+        have hzero := weightedDivisorBlockMass_eq_zero_of_le
+          (subpowerWeight c) hnBounds.1 (hnBounds.2.trans hTcut)
+        rw [hzero] at hmass
+        linarith [subpowerBlockThreshold_pos A hA ℓ j]
+      have hℓactive : ℓ ∈ active := by
+        dsimp only [active]
+        exact mem_subpowerKubiliusActiveExceptionalLevels.mpr
+          ⟨hℓexceptional, hcut⟩
+      exact Finset.mem_biUnion.mpr ⟨ℓ, hℓactive, by
+        dsimp only [B]
+        exact Finset.mem_filter.mpr ⟨hnIcc, hmass⟩⟩
+    calc
+      ((E j).card : ℝ) ≤ ((active.biUnion (fun ℓ => B ℓ j)).card : ℝ) := by
+        exact_mod_cast Finset.card_le_card hsubset
+      _ ≤ ∑ ℓ ∈ active, ((B ℓ j).card : ℝ) := by
+        exact_mod_cast Finset.card_biUnion_le
+  have hsum : (∑ j ∈ Finset.range J, ((E j).card : ℝ)) ≤
+      T * ∑ ℓ ∈ active, subpowerBlockShiftMajorant c A ℓ := by
+    calc
+      (∑ j ∈ Finset.range J, ((E j).card : ℝ)) ≤
+          ∑ j ∈ Finset.range J, ∑ ℓ ∈ active, ((B ℓ j).card : ℝ) :=
+        Finset.sum_le_sum fun j _ ↦ hpoint j
+      _ = ∑ ℓ ∈ active, ∑ j ∈ Finset.range J, ((B ℓ j).card : ℝ) := by
+        rw [Finset.sum_comm]
+      _ ≤ ∑ ℓ ∈ active, T * subpowerBlockShiftMajorant c A ℓ := by
+        apply Finset.sum_le_sum
+        intro ℓ hℓ
+        obtain ⟨hℓ3, hs0, hs1⟩ := hpar ℓ (by simpa only [active] using hℓ)
+        simpa only [B] using
+          sum_subpowerWeight_block_large_cards_le_majorant
+            c A hc hA ℓ hℓ3 hs0 hs1 T J
+      _ = T * ∑ ℓ ∈ active, subpowerBlockShiftMajorant c A ℓ := by
+        rw [Finset.mul_sum]
+  change (∑ j ∈ Finset.range J, ((E j).card : ℝ)) / T ≤ _
+  calc
+    (∑ j ∈ Finset.range J, ((E j).card : ℝ)) / T ≤
+        (T * ∑ ℓ ∈ active, subpowerBlockShiftMajorant c A ℓ) / T :=
+      div_le_div_of_nonneg_right hsum (by positivity)
+    _ = ∑ ℓ ∈ active, subpowerBlockShiftMajorant c A ℓ := by
+      field_simp [show (T : ℝ) ≠ 0 by exact_mod_cast (ne_of_gt hT)]
+
+open Classical in
+/-- Quantitative exceptional-band estimate before taking the final limit.  Every active level lies
+in `[H-g,H]`, so the union costs at most `g+1` copies of the negative-power one-level majorant. -/
+theorem exists_subpowerKubiliusExceptional_union_large_cards_div_le_topBand
+    (c A : ℝ) (hc : 1 < c) (hA : 0 < A) :
+    ∃ L₀ : ℕ, 6 ≤ L₀ ∧ ∀ L : ℕ, L₀ ≤ L → ∀ T J : ℕ, 0 < T →
+      32 ≤ subpowerKubiliusTopLevel T →
+      (∑ j ∈ Finset.range J,
+          (((Finset.Icc 1 T).filter (fun n ↦
+            ∃ ℓ ∈ subpowerKubiliusExceptionalLevels L T
+                (subpowerKubiliusCommonCutoff T),
+              subpowerBlockThreshold A ℓ j <
+                weightedDivisorBlockMass (subpowerWeight c) ℓ n)).card : ℝ)) / T ≤
+        ((subpowerKubiliusTopGap T + 1 : ℕ) : ℝ) *
+          subpowerTopBandConstant c A *
+            Real.rpow
+              ((subpowerKubiliusTopLevel T - subpowerKubiliusTopGap T : ℕ) + 2)
+              (-subpowerTopBandDecay c) := by
+  have hevent := (eventually_subpowerBlockShiftMajorant_le_topBand hc hA).and
+    (eventually_subpowerTopBand_parameters hc)
+  obtain ⟨L₀, hL₀⟩ := eventually_atTop.1 (hevent.and (eventually_ge_atTop 6))
+  have hL₀data := hL₀ L₀ le_rfl
+  refine ⟨L₀, hL₀data.2, ?_⟩
+  intro L hL T J hT hH
+  let active := subpowerKubiliusActiveExceptionalLevels L T
+  let H := subpowerKubiliusTopLevel T
+  let g := subpowerKubiliusTopGap T
+  let E : ℝ := subpowerTopBandConstant c A *
+    Real.rpow ((H - g : ℕ) + 2) (-subpowerTopBandDecay c)
+  have hactiveL : ∀ ℓ ∈ active, L ≤ ℓ := by
+    intro ℓ hℓ
+    have hmem := mem_subpowerKubiliusActiveExceptionalLevels.mp (by
+      simpa only [active] using hℓ)
+    exact (mem_subpowerKubiliusExceptionalLevels.mp hmem.1).1
+  have hpar : ∀ ℓ ∈ active,
+      3 ≤ ℓ ∧ 0 < subpowerBlockS c ℓ ∧ subpowerBlockS c ℓ ≤ 1 := by
+    intro ℓ hℓ
+    obtain ⟨hmoment, hparams⟩ := (hL₀ ℓ (hL.trans (hactiveL ℓ hℓ))).1
+    exact ⟨by omega, hparams.2.2.1, hparams.2.2.2.1⟩
+  have hraw := subpowerKubiliusExceptional_union_large_cards_div_le_majorants
+    c A (zero_le_one.trans hc.le) hA L T J hT (by simpa only [active] using hpar)
+  have hterm : ∀ ℓ ∈ active, subpowerBlockShiftMajorant c A ℓ ≤ E := by
+    intro ℓ hℓ
+    have hmoment := (hL₀ ℓ (hL.trans (hactiveL ℓ hℓ))).1.1
+    have hlower := (subpowerKubiliusActiveExceptionalLevels_mem_bounds (by
+      simpa only [active] using hℓ)).1
+    have hbase : ((H - g : ℕ) + 2 : ℝ) ≤ (ℓ : ℝ) + 2 := by
+      exact_mod_cast Nat.add_le_add_right (by simpa only [H, g] using hlower) 2
+    have hrpow : Real.rpow ((ℓ : ℝ) + 2) (-subpowerTopBandDecay c) ≤
+        Real.rpow ((H - g : ℕ) + 2) (-subpowerTopBandDecay c) :=
+      Real.rpow_le_rpow_of_nonpos (by positivity) hbase
+        (by linarith [subpowerTopBandDecay_pos hc])
+    exact hmoment.trans (mul_le_mul_of_nonneg_left hrpow
+      (subpowerTopBandConstant_nonneg c A))
+  have hE : 0 ≤ E := by
+    dsimp only [E]
+    exact mul_nonneg (subpowerTopBandConstant_nonneg c A)
+      (Real.rpow_nonneg (by positivity) _)
+  have hcard : active.card ≤ g + 1 := by
+    simpa only [active, g] using
+      subpowerKubiliusActiveExceptionalLevels_card_le L T hH
+  calc
+    (∑ j ∈ Finset.range J,
+        (((Finset.Icc 1 T).filter (fun n ↦
+          ∃ ℓ ∈ subpowerKubiliusExceptionalLevels L T
+              (subpowerKubiliusCommonCutoff T),
+            subpowerBlockThreshold A ℓ j <
+              weightedDivisorBlockMass (subpowerWeight c) ℓ n)).card : ℝ)) / T ≤
+        ∑ ℓ ∈ active, subpowerBlockShiftMajorant c A ℓ := by
+      simpa only [active] using hraw
+    _ ≤ ∑ _ℓ ∈ active, E := Finset.sum_le_sum hterm
+    _ = (active.card : ℝ) * E := by rw [Finset.sum_const, nsmul_eq_mul]
+    _ ≤ ((g + 1 : ℕ) : ℝ) * E := by
+      exact mul_le_mul_of_nonneg_right (by exact_mod_cast hcard) hE
+    _ = ((subpowerKubiliusTopGap T + 1 : ℕ) : ℝ) *
+        subpowerTopBandConstant c A *
+          Real.rpow
+            ((subpowerKubiliusTopLevel T - subpowerKubiliusTopGap T : ℕ) + 2)
+            (-subpowerTopBandDecay c) := by
+      dsimp only [E, H, g]
+      ring
+
+/-- A logarithm times any fixed negative power tends to zero, in the scaled form used by the
+top-band envelope. -/
+lemma tendsto_logAffine_mul_halfRpow_neg_atTop
+    (d C : ℝ) (hd : 0 < d) :
+    Tendsto (fun x : ℝ => (8 * Real.log x + 5) * C *
+      Real.rpow (x / 2) (-d)) atTop (nhds 0) := by
+  have hlogdiv := (isLittleO_log_rpow_atTop hd).tendsto_div_nhds_zero
+  change Tendsto (fun x : ℝ => Real.log x / Real.rpow x d) atTop (nhds 0) at hlogdiv
+  have hlogmul : Tendsto (fun x : ℝ => Real.log x * Real.rpow x (-d))
+      atTop (nhds 0) := by
+    apply hlogdiv.congr'
+    filter_upwards [eventually_ge_atTop (0 : ℝ)] with x hx
+    rw [show Real.rpow x (-d) = (Real.rpow x d)⁻¹ from Real.rpow_neg hx d]
+    rw [div_eq_mul_inv]
+  have hpow : Tendsto (fun x : ℝ => Real.rpow x (-d)) atTop (nhds 0) :=
+    tendsto_rpow_neg_atTop hd
+  have hsum : Tendsto (fun x : ℝ =>
+      8 * (Real.log x * Real.rpow x (-d)) + 5 * Real.rpow x (-d))
+      atTop (nhds 0) := by
+    convert (hlogmul.const_mul 8).add (hpow.const_mul 5) using 1 <;> norm_num
+  have hscaled := hsum.const_mul (C * Real.rpow 2 d)
+  have hscaled' : Tendsto (fun x : ℝ => C * Real.rpow 2 d *
+      (8 * (Real.log x * Real.rpow x (-d)) + 5 * Real.rpow x (-d)))
+      atTop (nhds 0) := by simpa using hscaled
+  refine hscaled'.congr' ?_
+  filter_upwards [eventually_gt_atTop (0 : ℝ)] with x hx
+  have hdiv : Real.rpow (x / 2) (-d) =
+      Real.rpow x (-d) / Real.rpow 2 (-d) := by
+    exact Real.div_rpow hx.le (by norm_num : (0 : ℝ) ≤ 2) (-d)
+  rw [hdiv]
+  rw [show Real.rpow 2 (-d) = (Real.rpow 2 d)⁻¹ from
+    Real.rpow_neg (by norm_num : (0 : ℝ) ≤ 2) d]
+  rw [div_eq_mul_inv, inv_inv]
+  ring
+
+/-- The exact dyadic top level tends to infinity with the averaging range. -/
+lemma tendsto_subpowerKubiliusTopLevel_atTop :
+    Tendsto subpowerKubiliusTopLevel atTop atTop := by
+  apply tendsto_atTop.2
+  intro K
+  filter_upwards [eventually_ge_atTop (dyadicExpCutoff K)] with T hT
+  exact level_le_subpowerKubiliusTopLevel hT
+
+/-- The logarithmic band width is bounded by an affine natural logarithm of the top level. -/
+lemma topGap_add_one_cast_le_log_topLevel {T : ℕ}
+    (hH : 1 ≤ subpowerKubiliusTopLevel T) :
+    ((subpowerKubiliusTopGap T + 1 : ℕ) : ℝ) ≤
+      8 * Real.log (subpowerKubiliusTopLevel T : ℝ) + 5 := by
+  let H := subpowerKubiliusTopLevel T
+  have hlog0 : 0 ≤ Real.log (H : ℝ) :=
+    Real.log_nonneg (by exact_mod_cast hH)
+  have hlog2 : (1 / 2 : ℝ) ≤ Real.log 2 := by
+    linarith [Real.log_two_gt_d9]
+  have hlog2pos : 0 < Real.log 2 := by positivity
+  have hk := Real.natLog_le_logb H 2
+  have hk' : (Nat.log 2 H : ℝ) ≤ 2 * Real.log (H : ℝ) := by
+    calc
+      (Nat.log 2 H : ℝ) ≤ Real.log (H : ℝ) / Real.log 2 := by
+        norm_num [Real.logb] at hk ⊢
+        exact hk
+      _ ≤ 2 * Real.log (H : ℝ) := by
+        rw [div_le_iff₀ hlog2pos]
+        nlinarith
+  dsimp only [subpowerKubiliusTopGap, H]
+  push_cast
+  linarith
+
+/-- Once the top coordinate is large, the logarithmic gap occupies at most half of it. -/
+lemma two_mul_topGap_le_topLevel {T : ℕ}
+    (hH : 4096 ≤ subpowerKubiliusTopLevel T) :
+    2 * subpowerKubiliusTopGap T ≤ subpowerKubiliusTopLevel T := by
+  let H := subpowerKubiliusTopLevel T
+  have hHone : 1 ≤ H := by omega
+  have hlog0 : 0 ≤ Real.log (H : ℝ) :=
+    Real.log_nonneg (by exact_mod_cast hHone)
+  have hlog2 : (1 / 2 : ℝ) ≤ Real.log 2 := by
+    linarith [Real.log_two_gt_d9]
+  have hlog2pos : 0 < Real.log 2 := by positivity
+  have hk := Real.natLog_le_logb H 2
+  have hk' : (Nat.log 2 H : ℝ) ≤ 2 * Real.log (H : ℝ) := by
+    calc
+      (Nat.log 2 H : ℝ) ≤ Real.log (H : ℝ) / Real.log 2 := by
+        norm_num [Real.logb] at hk ⊢
+        exact hk
+      _ ≤ 2 * Real.log (H : ℝ) := by
+        rw [div_le_iff₀ hlog2pos]
+        nlinarith
+  have hlog : Real.log (H : ℝ) ≤ 2 * Real.sqrt H := by
+    calc
+      Real.log (H : ℝ) ≤ Real.rpow (H : ℝ) (1 / 2) / (1 / 2) :=
+        Real.log_le_rpow_div (by positivity) (by norm_num)
+      _ = 2 * Real.sqrt H := by
+        rw [show Real.rpow (H : ℝ) (1 / 2) = Real.sqrt H from
+          (Real.sqrt_eq_rpow _).symm]
+        ring
+  have hsqrt : (64 : ℝ) ≤ Real.sqrt H := by
+    have hs := Real.sqrt_le_sqrt (by exact_mod_cast hH : (4096 : ℝ) ≤ H)
+    norm_num at hs ⊢
+    exact hs
+  have hsquare : (Real.sqrt H) ^ 2 = (H : ℝ) :=
+    Real.sq_sqrt (by positivity)
+  exact_mod_cast (show (2 : ℝ) * (4 * ((Nat.log 2 H : ℝ) + 1)) ≤ H by
+    nlinarith)
+
+/-- The explicit exceptional-band envelope tends to zero for every `c > 1`. -/
+theorem tendsto_subpowerKubiliusTopBandEnvelope
+    (c A : ℝ) (hc : 1 < c) :
+    Tendsto (fun T : ℕ =>
+      ((subpowerKubiliusTopGap T + 1 : ℕ) : ℝ) *
+        subpowerTopBandConstant c A *
+          Real.rpow
+            ((subpowerKubiliusTopLevel T - subpowerKubiliusTopGap T : ℕ) + 2)
+            (-subpowerTopBandDecay c)) atTop (nhds 0) := by
+  let d := subpowerTopBandDecay c
+  let C₀ := subpowerTopBandConstant c A
+  have hd : 0 < d := subpowerTopBandDecay_pos hc
+  have hC₀ : 0 ≤ C₀ := subpowerTopBandConstant_nonneg c A
+  have htopReal : Tendsto (fun T : ℕ => (subpowerKubiliusTopLevel T : ℝ))
+      atTop atTop := tendsto_natCast_atTop_atTop.comp
+        tendsto_subpowerKubiliusTopLevel_atTop
+  have hupper : Tendsto (fun T : ℕ =>
+      (8 * Real.log (subpowerKubiliusTopLevel T : ℝ) + 5) * C₀ *
+        Real.rpow ((subpowerKubiliusTopLevel T : ℝ) / 2) (-d))
+      atTop (nhds 0) :=
+    (tendsto_logAffine_mul_halfRpow_neg_atTop d C₀ hd).comp htopReal
+  apply squeeze_zero'
+  · filter_upwards [] with T
+    exact mul_nonneg
+      (mul_nonneg (by positivity) hC₀)
+      (Real.rpow_nonneg (by positivity) _)
+  · filter_upwards
+      [tendsto_subpowerKubiliusTopLevel_atTop.eventually_ge_atTop 4096]
+      with T hH
+    let H := subpowerKubiliusTopLevel T
+    let g := subpowerKubiliusTopGap T
+    have htwog : 2 * g ≤ H := by
+      simpa only [H, g] using two_mul_topGap_le_topLevel hH
+    have hgH : g ≤ H := by omega
+    have hgap : ((g + 1 : ℕ) : ℝ) ≤ 8 * Real.log (H : ℝ) + 5 := by
+      simpa only [H, g] using topGap_add_one_cast_le_log_topLevel (T := T) (by omega)
+    have hlog0 : 0 ≤ Real.log (H : ℝ) :=
+      Real.log_nonneg (by exact_mod_cast (show 1 ≤ H by omega))
+    have hcoeff0 : 0 ≤ 8 * Real.log (H : ℝ) + 5 := by positivity
+    have hbase : (H : ℝ) / 2 ≤ ((H - g : ℕ) + 2 : ℝ) := by
+      rw [Nat.cast_sub hgH]
+      have htwogReal : (2 : ℝ) * g ≤ H := by exact_mod_cast htwog
+      linarith
+    have hrpow :
+        Real.rpow ((H - g : ℕ) + 2) (-d) ≤
+          Real.rpow ((H : ℝ) / 2) (-d) :=
+      Real.rpow_le_rpow_of_nonpos (by positivity) hbase (by linarith)
+    have hrpow0 : 0 ≤ Real.rpow ((H - g : ℕ) + 2) (-d) :=
+      Real.rpow_nonneg (by positivity) _
+    calc
+      ((subpowerKubiliusTopGap T + 1 : ℕ) : ℝ) *
+          subpowerTopBandConstant c A *
+            Real.rpow
+              ((subpowerKubiliusTopLevel T - subpowerKubiliusTopGap T : ℕ) + 2)
+              (-subpowerTopBandDecay c) =
+          ((g + 1 : ℕ) : ℝ) * C₀ * Real.rpow ((H - g : ℕ) + 2) (-d) := rfl
+      _ ≤ (8 * Real.log (H : ℝ) + 5) * C₀ *
+          Real.rpow ((H - g : ℕ) + 2) (-d) := by
+        exact mul_le_mul_of_nonneg_right
+          (mul_le_mul_of_nonneg_right hgap hC₀) hrpow0
+      _ ≤ (8 * Real.log (H : ℝ) + 5) * C₀ *
+          Real.rpow ((H : ℝ) / 2) (-d) := by
+        exact mul_le_mul_of_nonneg_left hrpow (mul_nonneg hcoeff0 hC₀)
+      _ = (8 * Real.log (subpowerKubiliusTopLevel T : ℝ) + 5) * C₀ *
+          Real.rpow ((subpowerKubiliusTopLevel T : ℝ) / 2) (-d) := rfl
+  · exact hupper
+
+open Classical in
+/-- The complete exceptional contribution is uniformly small in both the averaging range and the
+number of shift thresholds once the starting divisor level is late enough. -/
+theorem exists_subpowerKubiliusExceptional_union_large_cards_div_lt
+    (c A ζ : ℝ) (hc : 1 < c) (hA : 0 < A) (hζ : 0 < ζ) :
+    ∃ L₀ : ℕ, 6 ≤ L₀ ∧ ∀ L : ℕ, L₀ ≤ L → ∀ T J : ℕ,
+      (∑ j ∈ Finset.range J,
+          (((Finset.Icc 1 T).filter (fun n ↦
+            ∃ ℓ ∈ subpowerKubiliusExceptionalLevels L T
+                (subpowerKubiliusCommonCutoff T),
+              subpowerBlockThreshold A ℓ j <
+                weightedDivisorBlockMass (subpowerWeight c) ℓ n)).card : ℝ)) / T < ζ := by
+  obtain ⟨Lq, hLq6, hquant⟩ :=
+    exists_subpowerKubiliusExceptional_union_large_cards_div_le_topBand c A hc hA
+  obtain ⟨Lp, hparams⟩ := eventually_atTop.1 (eventually_subpowerTopBand_parameters hc)
+  have henvEv : ∀ᶠ T : ℕ in atTop,
+      ((subpowerKubiliusTopGap T + 1 : ℕ) : ℝ) *
+          subpowerTopBandConstant c A *
+            Real.rpow
+              ((subpowerKubiliusTopLevel T - subpowerKubiliusTopGap T : ℕ) + 2)
+              (-subpowerTopBandDecay c) < ζ :=
+    (tendsto_subpowerKubiliusTopBandEnvelope c A hc).eventually_lt_const hζ
+  obtain ⟨T₀, henv⟩ := eventually_atTop.1 henvEv
+  let L₀ := max (max (max Lq Lp) T₀) 32
+  refine ⟨L₀, ?_, ?_⟩
+  · dsimp only [L₀]
+    omega
+  intro L hL T J
+  by_cases hT0 : T = 0
+  · subst T
+    simpa using hζ
+  have hT : 0 < T := Nat.pos_of_ne_zero hT0
+  let active := subpowerKubiliusActiveExceptionalLevels L T
+  have hactiveL : ∀ ℓ ∈ active, L ≤ ℓ := by
+    intro ℓ hℓ
+    have hmem := mem_subpowerKubiliusActiveExceptionalLevels.mp (by
+      simpa only [active] using hℓ)
+    exact (mem_subpowerKubiliusExceptionalLevels.mp hmem.1).1
+  have hpar : ∀ ℓ ∈ active,
+      3 ≤ ℓ ∧ 0 < subpowerBlockS c ℓ ∧ subpowerBlockS c ℓ ≤ 1 := by
+    intro ℓ hℓ
+    have hLpL : Lp ≤ L :=
+      (le_max_right Lq Lp).trans
+        ((le_max_left (max Lq Lp) T₀).trans (le_max_left _ 32) |>.trans hL)
+    have hp := hparams ℓ (hLpL.trans (hactiveL ℓ hℓ))
+    exact ⟨by omega, hp.2.2.1, hp.2.2.2.1⟩
+  have hgeneric := subpowerKubiliusExceptional_union_large_cards_div_le_majorants
+    c A (zero_le_one.trans hc.le) hA L T J hT (by simpa only [active] using hpar)
+  have hLqL : Lq ≤ L :=
+    (le_max_left Lq Lp).trans
+      ((le_max_left (max Lq Lp) T₀).trans (le_max_left _ 32) |>.trans hL)
+  have hT₀L : T₀ ≤ L :=
+    (le_max_right (max Lq Lp) T₀).trans (le_max_left _ 32) |>.trans hL
+  have h32L : 32 ≤ L := (le_max_right (max (max Lq Lp) T₀) 32).trans hL
+  by_cases hTlarge : T₀ ≤ T
+  · by_cases hH : 32 ≤ subpowerKubiliusTopLevel T
+    · exact (hquant L hLqL T J hT hH).trans_lt (henv T hTlarge)
+    · have hempty : active = ∅ := by
+        apply Finset.not_nonempty_iff_eq_empty.mp
+        rintro ⟨ℓ, hℓ⟩
+        have hupper := (subpowerKubiliusActiveExceptionalLevels_mem_bounds (by
+          simpa only [active] using hℓ)).2
+        have hlower := hactiveL ℓ hℓ
+        omega
+      rw [show subpowerKubiliusActiveExceptionalLevels L T = ∅ by simpa only [active] using hempty,
+        Finset.sum_empty] at hgeneric
+      exact hgeneric.trans_lt hζ
+  · have hempty : active = ∅ := by
+      apply Finset.not_nonempty_iff_eq_empty.mp
+      rintro ⟨ℓ, hℓ⟩
+      have hmem := mem_subpowerKubiliusActiveExceptionalLevels.mp (by
+        simpa only [active] using hℓ)
+      have hindex : ℓ ≤ dyadicExpCutoff ℓ := by
+        simpa using index_le_dyadicExpCutoff_add 0 ℓ
+      have hlower := hactiveL ℓ hℓ
+      omega
+    rw [show subpowerKubiliusActiveExceptionalLevels L T = ∅ by simpa only [active] using hempty,
+      Finset.sum_empty] at hgeneric
+    exact hgeneric.trans_lt hζ
+
+/-- The square of a logarithm still loses to a square root. -/
+lemma tendsto_log_sq_mul_rpow_neg_half :
+    Tendsto (fun x : ℝ => (Real.log x) ^ 2 * Real.rpow x (-(1 / 2 : ℝ)))
+      atTop (nhds 0) := by
+  have hdiv := (isLittleO_log_rpow_rpow_atTop (2 : ℝ)
+    (by norm_num : (0 : ℝ) < 1 / 2)).tendsto_div_nhds_zero
+  change Tendsto (fun x : ℝ => Real.rpow (Real.log x) 2 /
+    Real.rpow x (1 / 2)) atTop (nhds 0) at hdiv
+  apply hdiv.congr'
+  filter_upwards [eventually_ge_atTop (1 : ℝ)] with x hx
+  rw [show Real.rpow x (-(1 / 2 : ℝ)) = (Real.rpow x (1 / 2))⁻¹ from
+    Real.rpow_neg (zero_le_one.trans hx) (1 / 2)]
+  rw [show Real.rpow (Real.log x) 2 = (Real.log x) ^ (2 : ℕ) by
+    exact Real.rpow_natCast (Real.log x) 2]
+  rw [div_eq_mul_inv]
+
+/-- The exact top level is at most twice the natural logarithm of the averaging range. -/
+lemma topLevel_cast_le_two_mul_log {T : ℕ} (hT : 1 ≤ T) :
+    (subpowerKubiliusTopLevel T : ℝ) ≤ 2 * Real.log T := by
+  have hlog0 : 0 ≤ Real.log (T : ℝ) := Real.log_nonneg (by exact_mod_cast hT)
+  have hlog2 : (1 / 2 : ℝ) ≤ Real.log 2 := by
+    linarith [Real.log_two_gt_d9]
+  have hlog2pos : 0 < Real.log 2 := by positivity
+  have hk := Real.natLog_le_logb T 2
+  have hk' : (Nat.log 2 T : ℝ) ≤ 2 * Real.log (T : ℝ) := by
+    calc
+      (Nat.log 2 T : ℝ) ≤ Real.log (T : ℝ) / Real.log 2 := by
+        norm_num [Real.logb] at hk ⊢
+        exact hk
+      _ ≤ 2 * Real.log (T : ℝ) := by
+        rw [div_le_iff₀ hlog2pos]
+        nlinarith
+  have houter : subpowerKubiliusTopLevel T ≤ Nat.log 2 T := by
+    exact Nat.log_le_self 2 (Nat.log 2 T)
+  exact (by exact_mod_cast houter :
+    (subpowerKubiliusTopLevel T : ℝ) ≤ Nat.log 2 T) |>.trans hk'
+
+/-- The `H² / √T` term in the accumulated total-variation error tends to zero. -/
+lemma tendsto_topLevel_sq_mul_rpow_neg_half :
+    Tendsto (fun T : ℕ => (subpowerKubiliusTopLevel T : ℝ) ^ 2 *
+      Real.rpow T (-(1 / 2 : ℝ))) atTop (nhds 0) := by
+  have hupper : Tendsto (fun T : ℕ =>
+      4 * (Real.log T) ^ 2 * Real.rpow T (-(1 / 2 : ℝ)))
+      atTop (nhds 0) := by
+    simpa only [Function.comp_def, mul_assoc, mul_zero] using
+      (tendsto_log_sq_mul_rpow_neg_half.const_mul 4).comp
+        tendsto_natCast_atTop_atTop
+  apply squeeze_zero'
+  · filter_upwards [] with T
+    exact mul_nonneg (sq_nonneg _) (Real.rpow_nonneg (by positivity) _)
+  · filter_upwards [eventually_ge_atTop 1] with T hT
+    have hH := topLevel_cast_le_two_mul_log hT
+    have hlog0 : 0 ≤ Real.log (T : ℝ) := Real.log_nonneg (by exact_mod_cast hT)
+    have hsq : (subpowerKubiliusTopLevel T : ℝ) ^ 2 ≤
+        4 * (Real.log T) ^ 2 := by
+      nlinarith [(sq_nonneg
+        ((subpowerKubiliusTopLevel T : ℝ) - 2 * Real.log T))]
+    exact mul_le_mul_of_nonneg_right hsq (Real.rpow_nonneg (by positivity) _)
+  · exact hupper
+
+/-- The explicit accumulated total-variation majorant tends to zero. -/
+theorem tendsto_subpowerKubiliusTVMajorant (K : ℝ) :
+    Tendsto (fun T : ℕ =>
+      4 * K / (subpowerKubiliusTopLevel T : ℝ) ^ 2 +
+        4 * K * (subpowerKubiliusTopLevel T : ℝ) ^ 2 *
+          Real.rpow T (-(1 / 2 : ℝ))) atTop (nhds 0) := by
+  have htopReal : Tendsto (fun T : ℕ => (subpowerKubiliusTopLevel T : ℝ))
+      atTop atTop := tendsto_natCast_atTop_atTop.comp
+        tendsto_subpowerKubiliusTopLevel_atTop
+  have hfirst : Tendsto (fun T : ℕ =>
+      4 * K / (subpowerKubiliusTopLevel T : ℝ) ^ 2) atTop (nhds 0) := by
+    have hrpow := (tendsto_rpow_atTop (by norm_num : (0 : ℝ) < 2)).comp htopReal
+    have hsquare : Tendsto (fun T : ℕ =>
+        (subpowerKubiliusTopLevel T : ℝ) ^ (2 : ℕ)) atTop atTop := by
+      apply hrpow.congr'
+      filter_upwards [] with T
+      exact Real.rpow_natCast (subpowerKubiliusTopLevel T : ℝ) 2
+    have hinv : Tendsto (fun T : ℕ =>
+        ((subpowerKubiliusTopLevel T : ℝ) ^ (2 : ℕ))⁻¹) atTop (nhds 0) := by
+      have hi := hsquare.inv_tendsto_atTop
+      change Tendsto (fun T : ℕ =>
+        ((subpowerKubiliusTopLevel T : ℝ) ^ (2 : ℕ))⁻¹) atTop (nhds 0) at hi
+      exact hi
+    simpa only [div_eq_mul_inv, mul_zero] using hinv.const_mul (4 * K)
+  have hsecond : Tendsto (fun T : ℕ =>
+      4 * K * (subpowerKubiliusTopLevel T : ℝ) ^ 2 *
+        Real.rpow T (-(1 / 2 : ℝ))) atTop (nhds 0) := by
+    simpa only [mul_assoc, mul_zero] using
+      tendsto_topLevel_sq_mul_rpow_neg_half.const_mul (4 * K)
+  simpa only [zero_add] using hfirst.add hsecond
+
+/-! ### Large shift thresholds -/
+
+/-- Divisor count as a divisibility-indicator sum over a containing interval. -/
+lemma card_divisors_eq_sum_Ico {m N : ℕ} (hm : m ≠ 0) (hmN : m < N) :
+    m.divisors.card = ∑ k ∈ Finset.Ico 1 N, if k ∣ m then 1 else 0 := by
+  rw [Finset.sum_boole]
+  congr 1
+  ext k
+  rw [Nat.mem_divisors, Finset.mem_filter, Finset.mem_Ico]
+  constructor
+  · rintro ⟨hk, -⟩
+    have hkle := Nat.le_of_dvd (Nat.pos_of_ne_zero hm) hk
+    have hkpos := Nat.pos_of_dvd_of_pos hk (Nat.pos_of_ne_zero hm)
+    exact ⟨⟨by omega, by omega⟩, hk⟩
+  · rintro ⟨-, hk⟩
+    exact ⟨hk, hm⟩
+
+/-- There are at most `N/k` positive multiples of `k` below `N`. -/
+lemma card_multiples_Ico_le (N k : ℕ) (hk : 0 < k) :
+    (((Finset.Ico 1 N).filter (fun m => k ∣ m)).card : ℝ) ≤ (N : ℝ) / k := by
+  rcases Nat.eq_zero_or_pos N with hN | hN
+  · subst N
+    simp
+  obtain ⟨N', rfl⟩ : ∃ N', N = N' + 1 := ⟨N - 1, by omega⟩
+  have h := Nat.card_multiples' N' k
+  have heq : (Finset.Ico 1 (N' + 1)).filter (fun m => k ∣ m) =
+      (Finset.range N'.succ).filter (fun m => m ≠ 0 ∧ k ∣ m) := by
+    ext m
+    simp only [Finset.mem_filter, Finset.mem_Ico, Finset.mem_range, Nat.succ_eq_add_one]
+    omega
+  rw [heq, h]
+  have hkr : (0 : ℝ) < k := by exact_mod_cast hk
+  calc
+    ((N' / k : ℕ) : ℝ) ≤ (N' : ℝ) / k := Nat.cast_div_le
+    _ ≤ ((N' + 1 : ℕ) : ℝ) / k := by
+      gcongr
+      exact_mod_cast Nat.le_succ N'
+
+/-- Elementary upper bound for a finite harmonic interval. -/
+lemma sum_Icc_inv_le_subpowerKubilius {a b : ℕ} (ha : 1 ≤ a) (hab : a ≤ b) :
+    ∑ k ∈ Finset.Icc a b, (k : ℝ)⁻¹ ≤
+      1 + Real.log b - Real.log a := by
+  induction b, hab using Nat.le_induction with
+  | base =>
+    rw [Finset.Icc_self, Finset.sum_singleton]
+    have haReal : (1 : ℝ) ≤ a := by exact_mod_cast ha
+    have hinv := inv_le_one_of_one_le₀ haReal
+    linarith
+  | succ b hab ih =>
+    rw [Finset.sum_Icc_succ_top (by omega)]
+    have hb : (0 : ℝ) < b := by exact_mod_cast (show 0 < b by omega)
+    have hstep : ((b + 1 : ℕ) : ℝ)⁻¹ ≤
+        Real.log (b + 1 : ℕ) - Real.log b := by
+      push_cast
+      rw [← Real.log_div (by positivity) hb.ne']
+      have hlog := Real.one_sub_inv_le_log_of_pos
+        (show (0 : ℝ) < (b + 1) / b by positivity)
+      rw [inv_div, show (1 : ℝ) - b / (b + 1) = ((b : ℝ) + 1)⁻¹ by
+        field_simp
+        ring] at hlog
+      exact hlog
+    linarith
+
+/-- Elementary average-order upper bound for the divisor function. -/
+theorem sum_card_divisors_range_le (N : ℕ) :
+    ∑ m ∈ Finset.range N, (m.divisors.card : ℝ) ≤
+      N * (Real.log N + 1) := by
+  rcases Nat.lt_or_ge N 2 with hN | hN
+  · interval_cases N <;> simp
+  have hNr : (0 : ℝ) < N := by exact_mod_cast (show 0 < N by omega)
+  have h1 : ∑ m ∈ Finset.range N, (m.divisors.card : ℝ) =
+      ∑ m ∈ Finset.Ico 1 N,
+        ∑ k ∈ Finset.Ico 1 N, (if k ∣ m then (1 : ℝ) else 0) := by
+    rw [Finset.range_eq_Ico,
+      ← Finset.sum_Ico_consecutive _ (Nat.zero_le 1) (by omega : 1 ≤ N),
+      ← Finset.range_eq_Ico, Finset.sum_range_one]
+    simp only [Nat.divisors_zero, Finset.card_empty, Nat.cast_zero, zero_add]
+    refine Finset.sum_congr rfl fun m hm => ?_
+    rw [Finset.mem_Ico] at hm
+    rw [card_divisors_eq_sum_Ico (by omega) hm.2]
+    push_cast
+    rfl
+  rw [h1, Finset.sum_comm]
+  have h2 : ∀ k ∈ Finset.Ico 1 N,
+      ∑ m ∈ Finset.Ico 1 N, (if k ∣ m then (1 : ℝ) else 0) ≤ (N : ℝ) / k := by
+    intro k hk
+    rw [Finset.sum_boole]
+    exact card_multiples_Ico_le N k (Finset.mem_Ico.1 hk).1
+  calc
+    ∑ k ∈ Finset.Ico 1 N,
+        ∑ m ∈ Finset.Ico 1 N, (if k ∣ m then (1 : ℝ) else 0) ≤
+        ∑ k ∈ Finset.Ico 1 N, (N : ℝ) / k := Finset.sum_le_sum h2
+    _ = N * ∑ k ∈ Finset.Icc 1 (N - 1), (k : ℝ)⁻¹ := by
+      rw [Finset.mul_sum]
+      have heq : Finset.Ico 1 N = Finset.Icc 1 (N - 1) := by
+        ext k
+        simp only [Finset.mem_Ico, Finset.mem_Icc]
+        omega
+      rw [heq]
+      refine Finset.sum_congr rfl fun k _ => ?_
+      rw [div_eq_mul_inv]
+    _ ≤ N * (1 + Real.log ((N - 1 : ℕ) : ℝ) - Real.log ((1 : ℕ) : ℝ)) := by
+      gcongr
+      exact sum_Icc_inv_le_subpowerKubilius le_rfl (by omega)
+    _ ≤ N * (Real.log N + 1) := by
+      gcongr
+      rw [Nat.cast_one, Real.log_one, sub_zero]
+      have hcast : ((N - 1 : ℕ) : ℝ) ≤ N := by exact_mod_cast Nat.sub_le N 1
+      have hlog := Real.log_le_log (by exact_mod_cast (show 0 < N - 1 by omega)) hcast
+      linarith
+
+open Classical in
+/-- Markov's inequality for a marginal-divisor large-value event, dominated by the divisor
+function because all marginals are at most one. -/
+lemma marginalDivisorMass_large_card_mul_le_sum_card_divisors
+    (delta : ℕ → ℝ) (hdelta : ∀ m, delta m ≤ 1)
+    (M T : ℕ) (Y : ℝ) (hY : 0 ≤ Y) :
+    (((Finset.Icc 1 T).filter (fun n => Y < marginalDivisorMass delta M n)).card : ℝ) * Y ≤
+      ∑ n ∈ Finset.Icc 1 T, (n.divisors.card : ℝ) := by
+  let B := (Finset.Icc 1 T).filter (fun n => Y < marginalDivisorMass delta M n)
+  calc
+    (B.card : ℝ) * Y = ∑ _n ∈ B, Y := by
+      rw [Finset.sum_const, nsmul_eq_mul]
+    _ ≤ ∑ n ∈ B, marginalDivisorMass delta M n := by
+      exact Finset.sum_le_sum fun n hn => (Finset.mem_filter.mp hn).2.le
+    _ ≤ ∑ n ∈ B, (n.divisors.card : ℝ) := by
+      exact Finset.sum_le_sum fun n _ => marginalDivisorMass_le_card_divisors delta hdelta M n
+    _ ≤ ∑ n ∈ Finset.Icc 1 T, (n.divisors.card : ℝ) := by
+      exact Finset.sum_le_sum_of_subset_of_nonneg (Finset.filter_subset _ _)
+        (fun _ _ _ => by positivity)
+
+/-- Geometric pointwise bound for a large marginal-divisor event at shift threshold `j`. -/
+lemma marginalDivisorMass_large_card_le_geometric
+    (delta : ℕ → ℝ) (hdelta : ∀ m, delta m ≤ 1)
+    (M T j : ℕ) (ε : ℝ) (hε : 0 < ε) :
+    (((Finset.Icc 1 T).filter (fun n =>
+      ε * Real.rpow 2 ((j : ℝ) / 2) < marginalDivisorMass delta M n)).card : ℝ) ≤
+      (((T + 1 : ℕ) : ℝ) * (Real.log (T + 1 : ℕ) + 1) / ε) *
+        (Real.rpow 2 (-(1 / 2 : ℝ))) ^ j := by
+  let Y : ℝ := ε * Real.rpow 2 ((j : ℝ) / 2)
+  let S : ℝ := ((T + 1 : ℕ) : ℝ) * (Real.log (T + 1 : ℕ) + 1)
+  have hY : 0 < Y := by
+    dsimp only [Y]
+    exact mul_pos hε (Real.rpow_pos_of_pos (by norm_num) _)
+  have hmarkov := marginalDivisorMass_large_card_mul_le_sum_card_divisors
+    delta hdelta M T Y hY.le
+  have hsubset : Finset.Icc 1 T ⊆ Finset.range (T + 1) := by
+    intro n hn
+    rw [Finset.mem_range]
+    exact Nat.lt_succ_of_le (Finset.mem_Icc.mp hn).2
+  have hsum : (∑ n ∈ Finset.Icc 1 T, (n.divisors.card : ℝ)) ≤ S := by
+    calc
+      (∑ n ∈ Finset.Icc 1 T, (n.divisors.card : ℝ)) ≤
+          ∑ n ∈ Finset.range (T + 1), (n.divisors.card : ℝ) :=
+        Finset.sum_le_sum_of_subset_of_nonneg hsubset (fun _ _ _ => by positivity)
+      _ ≤ S := by simpa only [S] using sum_card_divisors_range_le (T + 1)
+  have hcard :
+      (((Finset.Icc 1 T).filter (fun n =>
+        ε * Real.rpow 2 ((j : ℝ) / 2) < marginalDivisorMass delta M n)).card : ℝ) ≤
+        S / Y := by
+    apply (le_div_iff₀ hY).2
+    exact hmarkov.trans hsum
+  have hpow :
+      (Real.rpow 2 ((j : ℝ) / 2))⁻¹ =
+        (Real.rpow 2 (-(1 / 2 : ℝ))) ^ j := by
+    rw [show (Real.rpow 2 ((j : ℝ) / 2))⁻¹ =
+      Real.rpow 2 (-((j : ℝ) / 2)) from
+        (Real.rpow_neg (by norm_num : (0 : ℝ) ≤ 2) ((j : ℝ) / 2)).symm]
+    rw [show (Real.rpow 2 (-(1 / 2 : ℝ))) ^ j =
+      Real.rpow 2 (-(1 / 2 : ℝ) * j) from
+        (Real.rpow_mul_natCast (by norm_num : (0 : ℝ) ≤ 2) _ j).symm]
+    congr 1
+    ring
+  calc
+    (((Finset.Icc 1 T).filter (fun n =>
+      ε * Real.rpow 2 ((j : ℝ) / 2) < marginalDivisorMass delta M n)).card : ℝ) ≤
+        S / Y := hcard
+    _ = (S / ε) * (Real.rpow 2 (-(1 / 2 : ℝ))) ^ j := by
+      dsimp only [Y]
+      rw [div_eq_mul_inv, mul_inv_rev, hpow]
+      ring
+    _ = (((T + 1 : ℕ) : ℝ) * (Real.log (T + 1 : ℕ) + 1) / ε) *
+        (Real.rpow 2 (-(1 / 2 : ℝ))) ^ j := rfl
+
+/-- The sum over all shift thresholds `j ∈ [J₀,J)` is bounded by a geometric tail. -/
+theorem sum_marginalDivisorMass_large_cards_Ico_le
+    (delta : ℕ → ℝ) (hdelta : ∀ m, delta m ≤ 1)
+    (M T J₀ J : ℕ) (ε : ℝ) (hε : 0 < ε) :
+    (∑ j ∈ Finset.Ico J₀ J,
+        (((Finset.Icc 1 T).filter (fun n =>
+          ε * Real.rpow 2 ((j : ℝ) / 2) < marginalDivisorMass delta M n)).card : ℝ)) ≤
+      (((T + 1 : ℕ) : ℝ) * (Real.log (T + 1 : ℕ) + 1) / ε) *
+        ((Real.rpow 2 (-(1 / 2 : ℝ))) ^ J₀ /
+          (1 - Real.rpow 2 (-(1 / 2 : ℝ)))) := by
+  let q : ℝ := Real.rpow 2 (-(1 / 2 : ℝ))
+  let C : ℝ := ((T + 1 : ℕ) : ℝ) * (Real.log (T + 1 : ℕ) + 1) / ε
+  have hq0 : 0 ≤ q := Real.rpow_nonneg (by norm_num) _
+  have hq1 : q < 1 :=
+    Real.rpow_lt_one_of_one_lt_of_neg (by norm_num) (by norm_num)
+  have hC0 : 0 ≤ C := by
+    dsimp only [C]
+    have hlog : 0 ≤ Real.log ((T + 1 : ℕ) : ℝ) :=
+      Real.log_nonneg (by exact_mod_cast (show 1 ≤ T + 1 by omega))
+    exact div_nonneg
+      (mul_nonneg (by positivity)
+        (by linarith))
+      hε.le
+  calc
+    (∑ j ∈ Finset.Ico J₀ J,
+        (((Finset.Icc 1 T).filter (fun n =>
+          ε * Real.rpow 2 ((j : ℝ) / 2) < marginalDivisorMass delta M n)).card : ℝ)) ≤
+        ∑ j ∈ Finset.Ico J₀ J, C * q ^ j := by
+      apply Finset.sum_le_sum
+      intro j _
+      simpa only [C, q] using
+        marginalDivisorMass_large_card_le_geometric delta hdelta M T j ε hε
+    _ = C * ∑ j ∈ Finset.Ico J₀ J, q ^ j := by rw [Finset.mul_sum]
+    _ ≤ C * (q ^ J₀ / (1 - q)) := by
+      exact mul_le_mul_of_nonneg_left (geom_sum_Ico_le_of_lt_one hq0 hq1) hC0
+    _ = (((T + 1 : ℕ) : ℝ) * (Real.log (T + 1 : ℕ) + 1) / ε) *
+        ((Real.rpow 2 (-(1 / 2 : ℝ))) ^ J₀ /
+          (1 - Real.rpow 2 (-(1 / 2 : ℝ)))) := rfl
+
+/-- The logarithmic factor in the elementary divisor-average bound is at most exponential in the
+exact dyadic top level.  This is paired below with twice that much geometric decay. -/
+lemma log_succ_add_one_le_topLevel_pow (T : ℕ)
+    (hH : 1 ≤ subpowerKubiliusTopLevel T) :
+    Real.log (T + 1 : ℕ) + 1 ≤
+      5 * Real.log 2 * (2 : ℝ) ^ subpowerKubiliusTopLevel T := by
+  let A := Nat.log 2 T
+  let H := subpowerKubiliusTopLevel T
+  have hA0 : A ≠ 0 := by
+    intro hA
+    have hHzero : H = 0 := by simp [H, subpowerKubiliusTopLevel, A, hA]
+    omega
+  have hT0 : T ≠ 0 := by
+    intro hT
+    subst T
+    simp [A] at hA0
+  have hTpos : 0 < T := Nat.pos_of_ne_zero hT0
+  have hAupper : A + 1 ≤ 2 ^ (H + 1) := by
+    have hlt := Nat.lt_pow_succ_log_self (by omega : 1 < 2) A
+    have hle : A + 1 ≤ 2 ^ (Nat.log 2 A + 1) := by omega
+    simpa only [H, subpowerKubiliusTopLevel, A] using hle
+  have hTupper : T ≤ 2 ^ (A + 1) := by
+    exact (Nat.lt_pow_succ_log_self (by omega : 1 < 2) T).le
+  have hlogT : Real.log (T : ℝ) ≤
+      (2 : ℝ) ^ (H + 1) * Real.log 2 := by
+    calc
+      Real.log (T : ℝ) ≤ Real.log ((2 : ℝ) ^ (A + 1)) := by
+        apply Real.log_le_log (by exact_mod_cast hTpos)
+        exact_mod_cast hTupper
+      _ = ((A + 1 : ℕ) : ℝ) * Real.log 2 := by
+        rw [Real.log_pow]
+      _ ≤ ((2 ^ (H + 1) : ℕ) : ℝ) * Real.log 2 := by
+        gcongr
+      _ = (2 : ℝ) ^ (H + 1) * Real.log 2 := by push_cast; ring
+  have hsucc : Real.log (T + 1 : ℕ) ≤
+      Real.log 2 + (2 : ℝ) ^ (H + 1) * Real.log 2 := by
+    calc
+      Real.log (T + 1 : ℕ) ≤ Real.log ((2 : ℕ) * T : ℕ) := by
+        apply Real.log_le_log (by positivity)
+        exact_mod_cast (show T + 1 ≤ 2 * T by omega)
+      _ = Real.log 2 + Real.log T := by
+        push_cast
+        rw [Real.log_mul (by norm_num : (2 : ℝ) ≠ 0)
+          (by exact_mod_cast hT0)]
+      _ ≤ Real.log 2 + (2 : ℝ) ^ (H + 1) * Real.log 2 := by linarith
+  have hlog2 : (1 / 2 : ℝ) ≤ Real.log 2 := by
+    linarith [Real.log_two_gt_d9]
+  have hlog20 : 0 ≤ Real.log 2 := by positivity
+  have hpowone : (1 : ℝ) ≤ (2 : ℝ) ^ H := one_le_pow₀ (by norm_num)
+  have hlog_le : Real.log 2 ≤ (2 : ℝ) ^ H * Real.log 2 := by
+    nlinarith
+  have hone_le : (1 : ℝ) ≤ 2 * (2 : ℝ) ^ H * Real.log 2 := by
+    nlinarith
+  rw [pow_succ] at hsucc
+  dsimp only [H] at hsucc ⊢
+  nlinarith
+
+/-- Four top-level units of the geometric threshold cost exactly one fourth per top level. -/
+lemma rpow_neg_half_pow_four_mul (H : ℕ) :
+    (Real.rpow 2 (-(1 / 2 : ℝ))) ^ (4 * H) = (1 / 4 : ℝ) ^ H := by
+  rw [pow_mul]
+  congr 1
+  rw [show (Real.rpow 2 (-(1 / 2 : ℝ))) ^ 4 =
+      Real.rpow 2 (-(1 / 2 : ℝ) * 4) from
+    (Real.rpow_mul_natCast (by norm_num : (0 : ℝ) ≤ 2) _ 4).symm]
+  norm_num
+
+lemma two_pow_mul_rpow_neg_half_pow_four_mul (H : ℕ) :
+    (2 : ℝ) ^ H * (Real.rpow 2 (-(1 / 2 : ℝ))) ^ (4 * H) =
+      (1 / 2 : ℝ) ^ H := by
+  rw [rpow_neg_half_pow_four_mul]
+  rw [← mul_pow]
+  congr 1
+  norm_num
+
+open Classical in
+/-- After truncating at four times the exact top level, the entire remaining shift tail is bounded
+by a fixed constant times `2⁻ᴴ`. -/
+theorem sum_marginalDivisorMass_large_cards_high_div_le
+    (delta : ℕ → ℝ) (hdelta : ∀ m, delta m ≤ 1)
+    (M T J : ℕ) (ε : ℝ) (hε : 0 < ε)
+    (hH : 1 ≤ subpowerKubiliusTopLevel T) :
+    (∑ j ∈ Finset.Ico (4 * subpowerKubiliusTopLevel T) J,
+        (((Finset.Icc 1 T).filter (fun n =>
+          ε * Real.rpow 2 ((j : ℝ) / 2) < marginalDivisorMass delta M n)).card : ℝ)) / T ≤
+      ((10 * Real.log 2 / ε) /
+          (1 - Real.rpow 2 (-(1 / 2 : ℝ)))) *
+        (1 / 2 : ℝ) ^ subpowerKubiliusTopLevel T := by
+  let H := subpowerKubiliusTopLevel T
+  let q : ℝ := Real.rpow 2 (-(1 / 2 : ℝ))
+  let P : ℝ := (2 : ℝ) ^ H
+  let R : ℝ := q ^ (4 * H)
+  let a : ℝ := ((T + 1 : ℕ) : ℝ) / T
+  let b : ℝ := (Real.log (T + 1 : ℕ) + 1) / ε
+  let d : ℝ := 1 / (1 - q)
+  have hT0 : T ≠ 0 := by
+    intro hT
+    subst T
+    simp [subpowerKubiliusTopLevel] at hH
+  have hTpos : (0 : ℝ) < T := by exact_mod_cast Nat.pos_of_ne_zero hT0
+  have hq0 : 0 ≤ q := Real.rpow_nonneg (by norm_num) _
+  have hq1 : q < 1 :=
+    Real.rpow_lt_one_of_one_lt_of_neg (by norm_num) (by norm_num)
+  have hden : 0 < 1 - q := sub_pos.mpr hq1
+  have ha0 : 0 ≤ a := by dsimp only [a]; positivity
+  have ha : a ≤ 2 := by
+    dsimp only [a]
+    rw [div_le_iff₀ hTpos]
+    exact_mod_cast (show T + 1 ≤ 2 * T by omega)
+  have hb0 : 0 ≤ b := by
+    dsimp only [b]
+    exact div_nonneg
+      (add_nonneg (Real.log_nonneg (by exact_mod_cast (show 1 ≤ T + 1 by omega)))
+        zero_le_one)
+      hε.le
+  have hB0 : 0 ≤ (5 * Real.log 2 * P) / ε := by
+    dsimp only [P]
+    positivity
+  have hb : b ≤ (5 * Real.log 2 * P) / ε := by
+    dsimp only [b, P, H]
+    exact div_le_div_of_nonneg_right
+      (log_succ_add_one_le_topLevel_pow T hH) hε.le
+  have hd0 : 0 ≤ d := by dsimp only [d]; positivity
+  have hR0 : 0 ≤ R := by dsimp only [R]; positivity
+  have hab : a * b ≤ 2 * ((5 * Real.log 2 * P) / ε) :=
+    mul_le_mul ha hb hb0 (by norm_num)
+  have hraw := sum_marginalDivisorMass_large_cards_Ico_le
+    delta hdelta M T (4 * H) J ε hε
+  calc
+    (∑ j ∈ Finset.Ico (4 * subpowerKubiliusTopLevel T) J,
+        (((Finset.Icc 1 T).filter (fun n =>
+          ε * Real.rpow 2 ((j : ℝ) / 2) < marginalDivisorMass delta M n)).card : ℝ)) / T ≤
+        ((((T + 1 : ℕ) : ℝ) * (Real.log (T + 1 : ℕ) + 1) / ε) *
+          (q ^ (4 * H) / (1 - q))) / T := by
+      apply div_le_div_of_nonneg_right
+      · simpa only [H, q] using hraw
+      · positivity
+    _ = a * b * d * R := by
+      dsimp only [a, b, d, R]
+      field_simp [hT0, hε.ne', hden.ne']
+    _ ≤ 2 * ((5 * Real.log 2 * P) / ε) * d * R := by
+      exact mul_le_mul_of_nonneg_right
+        (mul_le_mul_of_nonneg_right hab hd0) hR0
+    _ = ((10 * Real.log 2 / ε) / (1 - q)) * (P * R) := by
+      dsimp only [d]
+      ring
+    _ = ((10 * Real.log 2 / ε) /
+          (1 - Real.rpow 2 (-(1 / 2 : ℝ)))) *
+        (1 / 2 : ℝ) ^ subpowerKubiliusTopLevel T := by
+      rw [show P * R = (1 / 2 : ℝ) ^ H by
+        simpa only [P, R, q] using
+          two_pow_mul_rpow_neg_half_pow_four_mul H]
+
+/-- The explicit high-shift envelope tends to zero. -/
+lemma tendsto_subpowerKubiliusHighShiftEnvelope (ε : ℝ) :
+    Tendsto (fun T : ℕ =>
+      ((10 * Real.log 2 / ε) /
+          (1 - Real.rpow 2 (-(1 / 2 : ℝ)))) *
+        (1 / 2 : ℝ) ^ subpowerKubiliusTopLevel T) atTop (nhds 0) := by
+  have hpow : Tendsto (fun H : ℕ => (1 / 2 : ℝ) ^ H) atTop (nhds 0) :=
+    tendsto_pow_atTop_nhds_zero_of_lt_one (by norm_num) (by norm_num)
+  have hcomp := hpow.comp tendsto_subpowerKubiliusTopLevel_atTop
+  simpa only [Function.comp_def, mul_zero] using hcomp.const_mul
+    ((10 * Real.log 2 / ε) / (1 - Real.rpow 2 (-(1 / 2 : ℝ))))
+
+open Classical in
+/-- The shifts beyond the Kubilius truncation are uniformly negligible once the divisor cutoff is
+late.  For small averaging ranges the marginal mass vanishes identically; for large ranges the
+geometric envelope applies. -/
+theorem exists_sum_marginalDivisorMass_large_cards_high_div_lt
+    (delta : ℕ → ℝ) (hdelta : ∀ m, delta m ≤ 1)
+    (ε ζ : ℝ) (hε : 0 < ε) (hζ : 0 < ζ) :
+    ∃ L₀ : ℕ, 6 ≤ L₀ ∧ ∀ L : ℕ, L₀ ≤ L → ∀ T J : ℕ,
+      (∑ j ∈ Finset.Ico (4 * subpowerKubiliusTopLevel T) J,
+          (((Finset.Icc 1 T).filter (fun n =>
+            ε * Real.rpow 2 ((j : ℝ) / 2) <
+              marginalDivisorMass delta (dyadicExpCutoff L) n)).card : ℝ)) / T < ζ := by
+  have hev : ∀ᶠ T : ℕ in atTop,
+      ((10 * Real.log 2 / ε) /
+          (1 - Real.rpow 2 (-(1 / 2 : ℝ)))) *
+        (1 / 2 : ℝ) ^ subpowerKubiliusTopLevel T < ζ :=
+    (tendsto_subpowerKubiliusHighShiftEnvelope ε).eventually_lt_const hζ
+  obtain ⟨T₀, hT₀⟩ := eventually_atTop.1
+    (hev.and (tendsto_subpowerKubiliusTopLevel_atTop.eventually_ge_atTop 1))
+  let L₀ := max T₀ 6
+  refine ⟨L₀, by simp [L₀], ?_⟩
+  intro L hL T J
+  by_cases hlarge : T₀ ≤ T
+  · have hdata := hT₀ T hlarge
+    exact (sum_marginalDivisorMass_large_cards_high_div_le
+      delta hdelta (dyadicExpCutoff L) T J ε hε hdata.2).trans_lt hdata.1
+  · have hTL : T ≤ dyadicExpCutoff L := by
+      have hTL' : T ≤ L := by
+        have hTlt : T < T₀ := Nat.lt_of_not_ge hlarge
+        have hT₀L : T₀ ≤ L := (le_max_left T₀ 6).trans hL
+        omega
+      exact hTL'.trans (by simpa using index_le_dyadicExpCutoff_add 0 L)
+    have hzero : ∀ j : ℕ,
+        (Finset.Icc 1 T).filter (fun n =>
+          ε * Real.rpow 2 ((j : ℝ) / 2) <
+            marginalDivisorMass delta (dyadicExpCutoff L) n) = ∅ := by
+      intro j
+      apply Finset.filter_eq_empty_iff.mpr
+      intro n hn
+      have hnT := (Finset.mem_Icc.mp hn).2
+      have hmass := marginalDivisorMass_eq_zero_of_le delta (dyadicExpCutoff L) n
+        (hnT.trans hTL)
+      rw [hmass]
+      exact (not_lt_of_ge
+        (mul_nonneg hε.le (Real.rpow_nonneg (by norm_num) _)))
+    simp only [hzero, Finset.card_empty, Nat.cast_zero, Finset.sum_const_zero, zero_div]
+    exact hζ
+
 lemma summable_blockLogLog_neg_rpow {D : ℝ} (hD : 1 < D) :
     Summable (fun ℓ : ℕ ↦ Real.rpow (blockLogLog ℓ) (-D)) := by
   have hseries₀ : Summable (fun ℓ : ℕ ↦
@@ -3524,6 +4856,246 @@ theorem exists_subpowerKubiliusCanonical_model_sum_lt
     _ < 4 * (ζ / 4) := mul_lt_mul_of_pos_left hraw (by norm_num)
     _ = ζ := by ring
 
+open Classical in
+/-- The canonical Kubilius estimate controls every threshold below four times the exact top level.
+The four displayed terms are each assigned one quarter of the requested error. -/
+theorem exists_subpower_marginal_large_cards_truncated_div_lt_of_kubilius
+    (hKub : KubiliusTV)
+    (c C ε ζ : ℝ) (hc : 1 < c) (hC : 0 < C) (hε : 0 < ε) (hζ : 0 < ζ)
+    (delta : ℕ → ℝ)
+    (hdelta : ∀ m : ℕ, 2 ≤ m → delta m ≤ C * subpowerWeight c m) :
+    ∃ L₀ : ℕ, 6 ≤ L₀ ∧ ∀ L : ℕ, L₀ ≤ L → ∀ T J : ℕ,
+      J ≤ 4 * subpowerKubiliusTopLevel T →
+      (∑ j ∈ Finset.range J,
+          (((Finset.Icc 1 T).filter (fun n =>
+            ε * Real.rpow 2 ((j : ℝ) / 2) <
+              marginalDivisorMass delta (dyadicExpCutoff L) n)).card : ℝ)) / T < ζ := by
+  have hquarter : 0 < ζ / 4 := by positivity
+  have hA : 0 < ε / C := div_pos hε hC
+  obtain ⟨K, hKpos, hcanonical⟩ :=
+    exists_sum_marginalDivisorMass_large_cards_div_le_canonical_kubilius hKub
+  obtain ⟨K₀, hmodel⟩ :=
+    exists_subpowerKubiliusCanonical_model_sum_lt c C ε 2 (ζ / 4)
+      hc (by norm_num) hquarter
+  obtain ⟨Lc, hLc6, hcanonicalAll⟩ :=
+    hcanonical c C ε 2 delta hc hC hε (by norm_num) hdelta K₀
+  obtain ⟨Le, hLe6, hexceptional⟩ :=
+    exists_subpowerKubiliusExceptional_union_large_cards_div_lt
+      c (ε / C) (ζ / 4) hc hA hquarter
+  obtain ⟨Ls, hLs6, hsquare⟩ :=
+    exists_subpowerKubiliusCanonical_square_sum_lt 2 (ζ / 4)
+      (by norm_num) hquarter
+  have htvEv : ∀ᶠ T : ℕ in atTop,
+      4 * K / (subpowerKubiliusTopLevel T : ℝ) ^ 2 +
+          4 * K * (subpowerKubiliusTopLevel T : ℝ) ^ 2 *
+            Real.rpow T (-(1 / 2 : ℝ)) < ζ / 4 :=
+    (tendsto_subpowerKubiliusTVMajorant K).eventually_lt_const hquarter
+  have hall : ∀ᶠ T : ℕ in atTop,
+      (4 * K / (subpowerKubiliusTopLevel T : ℝ) ^ 2 +
+          4 * K * (subpowerKubiliusTopLevel T : ℝ) ^ 2 *
+            Real.rpow T (-(1 / 2 : ℝ)) < ζ / 4) ∧
+        32 ≤ subpowerKubiliusTopLevel T ∧ 1 ≤ T := by
+    filter_upwards [htvEv,
+      tendsto_subpowerKubiliusTopLevel_atTop.eventually_ge_atTop 32,
+      eventually_ge_atTop 1] with T htv hH hT
+    exact ⟨htv, hH, hT⟩
+  obtain ⟨T₀, hT₀⟩ := eventually_atTop.1 hall
+  let L₀ := max (max (max Lc Le) Ls) (max T₀ 6)
+  refine ⟨L₀, by simp [L₀], ?_⟩
+  intro L hL T J hJ
+  by_cases hlarge : T₀ ≤ T
+  · have hdata := hT₀ T hlarge
+    have hLcL : Lc ≤ L := by
+      exact (le_max_left Lc Le |>.trans (le_max_left (max Lc Le) Ls) |>.trans
+        (le_max_left (max (max Lc Le) Ls) (max T₀ 6))).trans hL
+    have hLeL : Le ≤ L := by
+      exact (le_max_right Lc Le |>.trans (le_max_left (max Lc Le) Ls) |>.trans
+        (le_max_left (max (max Lc Le) Ls) (max T₀ 6))).trans hL
+    have hLsL : Ls ≤ L := by
+      exact (le_max_right (max Lc Le) Ls |>.trans
+        (le_max_left (max (max Lc Le) Ls) (max T₀ 6))).trans hL
+    have hTpos : 0 < T := by omega
+    have hYT : subpowerKubiliusCommonCutoff T ≤ T :=
+      subpowerKubiliusCommonCutoff_le (by omega)
+    have hcan := hcanonicalAll L hLcL T (subpowerKubiliusCommonCutoff T) J
+      hTpos hYT
+    have he := hexceptional L hLeL T J
+    have hs := hsquare c L T (subpowerKubiliusCommonCutoff T) hLsL
+    have hm := hmodel L T (subpowerKubiliusCommonCutoff T) J hcan.2.1 hcan.2.2
+    have htvle := subpowerKubiliusCanonical_tv_sum_commonCutoff_le
+      K c L T J hKpos.le hdata.2.1 hJ
+    have htv :
+        (∑ s ∈ subpowerKubiliusLevelGroups c L T
+            (subpowerKubiliusCommonCutoff T),
+          J * K * (Real.rpow
+            (Real.log T / Real.log (subpowerKubiliusGroupCutoff s))
+            (-(Real.log T / Real.log (subpowerKubiliusGroupCutoff s))) +
+              Real.rpow T (-(1 / 2 : ℝ)))) < ζ / 4 :=
+      htvle.trans_lt hdata.1
+    have hbound :
+        subpowerKubiliusCanonicalGroupedBound K c C ε 2 L T J
+          (subpowerKubiliusCommonCutoff T) < ζ := by
+      unfold subpowerKubiliusCanonicalGroupedBound
+      rw [Finset.sum_add_distrib, Finset.sum_add_distrib]
+      linarith
+    exact hcan.1.trans_lt hbound
+  · have hTL : T ≤ dyadicExpCutoff L := by
+      have hTlt : T < T₀ := Nat.lt_of_not_ge hlarge
+      have hT₀L : T₀ ≤ L := by
+        exact (le_max_left T₀ 6 |>.trans
+          (le_max_right (max (max Lc Le) Ls) (max T₀ 6))).trans hL
+      have hTL' : T ≤ L := by omega
+      exact hTL'.trans (by simpa using index_le_dyadicExpCutoff_add 0 L)
+    have hzero : ∀ j : ℕ,
+        (Finset.Icc 1 T).filter (fun n =>
+          ε * Real.rpow 2 ((j : ℝ) / 2) <
+            marginalDivisorMass delta (dyadicExpCutoff L) n) = ∅ := by
+      intro j
+      apply Finset.filter_eq_empty_iff.mpr
+      intro n hn
+      have hnT := (Finset.mem_Icc.mp hn).2
+      rw [marginalDivisorMass_eq_zero_of_le delta (dyadicExpCutoff L) n
+        (hnT.trans hTL)]
+      exact not_lt_of_ge (mul_nonneg hε.le (Real.rpow_nonneg (by norm_num) _))
+    simp only [hzero, Finset.card_empty, Nat.cast_zero, Finset.sum_const_zero, zero_div]
+    exact hζ
+
+open Classical in
+/-- Uniform large-marginal density estimate for all shift thresholds.  The initial `4H` shifts use
+the canonical Kubilius argument, while the remaining shifts use the elementary geometric tail. -/
+theorem exists_subpower_marginal_large_cards_div_lt_of_kubilius
+    (hKub : KubiliusTV)
+    (c C ε ζ : ℝ) (hc : 1 < c) (hC : 0 < C) (hε : 0 < ε) (hζ : 0 < ζ)
+    (delta : ℕ → ℝ) (hdeltaUpper : ∀ m, delta m ≤ 1)
+    (hdelta : ∀ m : ℕ, 2 ≤ m → delta m ≤ C * subpowerWeight c m) :
+    ∃ L₀ : ℕ, 6 ≤ L₀ ∧ ∀ L : ℕ, L₀ ≤ L → ∀ T J : ℕ,
+      (∑ j ∈ Finset.range J,
+          (((Finset.Icc 1 T).filter (fun n =>
+            ε * Real.rpow 2 ((j : ℝ) / 2) <
+              marginalDivisorMass delta (dyadicExpCutoff L) n)).card : ℝ)) / T < ζ := by
+  have hhalf : 0 < ζ / 2 := by positivity
+  obtain ⟨Lt, hLt6, htruncated⟩ :=
+    exists_subpower_marginal_large_cards_truncated_div_lt_of_kubilius
+      hKub c C ε (ζ / 2) hc hC hε hhalf delta hdelta
+  obtain ⟨Lh, hLh6, hhigh⟩ :=
+    exists_sum_marginalDivisorMass_large_cards_high_div_lt
+      delta hdeltaUpper ε (ζ / 2) hε hhalf
+  let L₀ := max Lt Lh
+  refine ⟨L₀, by simp [L₀, hLt6, hLh6], ?_⟩
+  intro L hL T J
+  have hLtL : Lt ≤ L := (le_max_left Lt Lh).trans hL
+  have hLhL : Lh ≤ L := (le_max_right Lt Lh).trans hL
+  by_cases hJ : J ≤ 4 * subpowerKubiliusTopLevel T
+  · exact (htruncated L hLtL T J hJ).trans (by linarith)
+  · have hcutJ : 4 * subpowerKubiliusTopLevel T ≤ J := Nat.le_of_not_ge hJ
+    have hlow := htruncated L hLtL T
+      (4 * subpowerKubiliusTopLevel T) le_rfl
+    have htail := hhigh L hLhL T J
+    calc
+      (∑ j ∈ Finset.range J,
+          (((Finset.Icc 1 T).filter (fun n =>
+            ε * Real.rpow 2 ((j : ℝ) / 2) <
+              marginalDivisorMass delta (dyadicExpCutoff L) n)).card : ℝ)) / T =
+          (∑ j ∈ Finset.range (4 * subpowerKubiliusTopLevel T),
+            (((Finset.Icc 1 T).filter (fun n =>
+              ε * Real.rpow 2 ((j : ℝ) / 2) <
+                marginalDivisorMass delta (dyadicExpCutoff L) n)).card : ℝ)) / T +
+          (∑ j ∈ Finset.Ico (4 * subpowerKubiliusTopLevel T) J,
+            (((Finset.Icc 1 T).filter (fun n =>
+              ε * Real.rpow 2 ((j : ℝ) / 2) <
+                marginalDivisorMass delta (dyadicExpCutoff L) n)).card : ℝ)) / T := by
+        rw [← add_div, Finset.sum_range_add_sum_Ico _ hcutJ]
+      _ < ζ := by linarith
+
+open Classical in
+/-- Unnormalized form of the uniform large-marginal estimate used by the deterministic residual
+criterion. -/
+theorem exists_subpower_marginal_large_cards_le_of_kubilius
+    (hKub : KubiliusTV)
+    (c C ε ζ : ℝ) (hc : 1 < c) (hC : 0 < C) (hε : 0 < ε) (hζ : 0 < ζ)
+    (delta : ℕ → ℝ) (hdeltaUpper : ∀ m, delta m ≤ 1)
+    (hdelta : ∀ m : ℕ, 2 ≤ m → delta m ≤ C * subpowerWeight c m) :
+    ∃ L₀ : ℕ, 6 ≤ L₀ ∧ ∀ L : ℕ, L₀ ≤ L → ∀ T J : ℕ,
+      (∑ j ∈ Finset.range J,
+          (((Finset.Icc 1 T).filter (fun n =>
+            ε * Real.rpow 2 ((j : ℝ) / 2) <
+              marginalDivisorMass delta (dyadicExpCutoff L) n)).card : ℝ)) ≤ ζ * T := by
+  obtain ⟨L₀, hL₀, hnorm⟩ :=
+    exists_subpower_marginal_large_cards_div_lt_of_kubilius
+      hKub c C ε ζ hc hC hε hζ delta hdeltaUpper hdelta
+  refine ⟨L₀, hL₀, ?_⟩
+  intro L hL T J
+  by_cases hT0 : T = 0
+  · subst T
+    simp
+  · have hT : (0 : ℝ) < T := by exact_mod_cast Nat.pos_of_ne_zero hT0
+    exact ((div_lt_iff₀ hT).mp (hnorm L hL T J)).le
+
+/-- The deterministic capped residual becomes uniformly small under the sub-power domination
+hypothesis for every `c > 1`, using `KubiliusTV` only through the large-card estimate above. -/
+lemma subpower_capped_marginal_residual_small_of_kubilius
+    (hKub : KubiliusTV)
+    (delta : ℕ → ℝ) (hdeltaRange : ∀ m, 0 ≤ delta m ∧ delta m ≤ 1)
+    (c C : ℝ) (hc : 1 < c) (hC : 0 < C)
+    (hdelta : ∀ m : ℕ, 2 ≤ m → delta m ≤ C * subpowerWeight c m) :
+    ∀ b : ℕ, 2 ≤ b → ∀ η : ℝ, 0 < η →
+      ∃ M : ℕ, 2 ≤ M ∧ ∀ N : ℕ, 1 ≤ N →
+        cappedMarginalResidualAverage b delta M N ≤ η := by
+  intro b hb η hη
+  let G : ℝ := ∑' j : ℕ, residualGoodMajorant j
+  have hG : 0 ≤ G := tsum_nonneg fun j => by
+    unfold residualGoodMajorant
+    exact mul_nonneg (by norm_num)
+      (pow_nonneg (Real.rpow_nonneg (by norm_num) _) _)
+  have hG1 : 0 < G + 1 := by linarith
+  let ε : ℝ := η / (4 * (G + 1))
+  let ζ : ℝ := η / 12
+  let τ : ℝ := η / 4
+  have hε : 0 < ε := by dsimp [ε]; positivity
+  have hζ : 0 < ζ := by dsimp [ζ]; positivity
+  have hτ : 0 < τ := by dsimp [τ]; positivity
+  obtain ⟨L₀, hL₀, hlargeAll⟩ :=
+    exists_subpower_marginal_large_cards_le_of_kubilius
+      hKub c C ε ζ hc hC hε hζ delta (fun m => (hdeltaRange m).2) hdelta
+  have htailEv : ∀ᶠ J : ℕ in atTop,
+      (∑' k : ℕ, residualTailMajorant (k + J)) < τ :=
+    (tendsto_sum_nat_add residualTailMajorant).eventually_lt_const hτ
+  obtain ⟨K, htailK⟩ := eventually_atTop.1 htailEv
+  let L := L₀ + 3 * K
+  let M := dyadicExpCutoff L
+  have hL : L₀ ≤ L := by dsimp [L]; omega
+  have hMK : 3 * K ≤ M := by
+    dsimp [M, L]
+    exact index_le_dyadicExpCutoff_add L₀ (3 * K)
+  have hlarge : ∀ T J : ℕ,
+      (∑ j ∈ Finset.range J,
+          (((Finset.Icc 1 T).filter (fun n =>
+            ε * Real.rpow 2 ((j : ℝ) / 2) <
+              marginalDivisorMass delta M n)).card : ℝ)) ≤ ζ * T := by
+    simpa [M] using hlargeAll L hL
+  have htail : ∀ J : ℕ, K ≤ J →
+      (∑' k : ℕ, residualTailMajorant (k + J)) ≤ τ := by
+    intro J hKJ
+    exact (htailK J hKJ).le
+  refine ⟨M, ?_, ?_⟩
+  · exact dyadicExpCutoff_two_le L
+  intro N hN
+  have havg := cappedMarginalResidualAverage_le_of_large_cards
+    b hb delta hdeltaRange M K hMK ε ζ τ hε.le hζ.le hlarge htail N hN
+  have hgood : ε * G ≤ η / 4 := by
+    calc
+      ε * G ≤ ε * (G + 1) := mul_le_mul_of_nonneg_left (by linarith) hε.le
+      _ = η / 4 := by
+        dsimp [ε]
+        field_simp [ne_of_gt hG1]
+  calc
+    cappedMarginalResidualAverage b delta M N ≤ ε * G + τ + 3 * ζ := by
+      simpa [G] using havg
+    _ ≤ η / 4 + η / 4 + 3 * (η / 12) := by
+      dsimp [τ, ζ]
+      gcongr
+    _ ≤ η := by linarith
+
 /-- **Target: non-normal below the sub-power weight for every `c > 1`, given `KubiliusTV`.**  This
 reaches the heuristic threshold of `EBLogWindow`'s non-normal half.  The proof replaces the c > 3
 block-union step of `ebRandom_ae_not_normal_subpower` by Doob's exponential maximal inequality on
@@ -3536,6 +5108,40 @@ theorem ebRandom_ae_not_normal_subpower_of_kubilius (hK : KubiliusTV)
     (c C : ℝ) (hc : 1 < c)
     (hdelta : ∀ m : ℕ, 2 ≤ m → delta m ≤ C * subpowerWeight c m) :
     ∀ᵐ w ∂μ, ∀ b : ℕ, 2 ≤ b → ¬ NormalNumbers.IsNormal b (ebLambert b X w) := by
-  sorry
+  have hX' := hX
+  obtain ⟨hdeltaRange, _hMeas, _hIndep, _hLaw⟩ := hX
+  have hweight : 0 < subpowerWeight c 2 := by
+    unfold subpowerWeight
+    exact mul_pos (Real.rpow_pos_of_pos (Real.log_pos (by norm_num)) _)
+      (Real.exp_pos _)
+  have hprod : 0 ≤ C * subpowerWeight c 2 :=
+    (hdeltaRange 2).1.trans (hdelta 2 (by omega))
+  have hC : 0 ≤ C := nonneg_of_mul_nonneg_left hprod hweight
+  apply ae_not_normal_of_capped_marginal_residual μ delta X hX'
+  by_cases hC0 : C = 0
+  · intro b hb η hη
+    have hdeltaZero : ∀ m : ℕ, 2 ≤ m → delta m = 0 := by
+      intro m hm
+      apply le_antisymm
+      · simpa [hC0] using hdelta m hm
+      · exact (hdeltaRange m).1
+    refine ⟨2, by omega, ?_⟩
+    intro N hN
+    have hmass : ∀ n : ℕ, marginalDivisorMass delta 2 n = 0 := by
+      intro n
+      unfold marginalDivisorMass
+      apply Finset.sum_eq_zero
+      intro m hm
+      exact hdeltaZero m (by
+        have hm2 := (Finset.mem_filter.mp hm).2
+        omega)
+    have hres : ∀ n : ℕ, marginalShiftResidual b delta 2 n = 0 := by
+      intro n
+      unfold marginalShiftResidual
+      simp only [hmass, mul_zero, tsum_zero]
+    unfold cappedMarginalResidualAverage
+    simp [hres, hη.le]
+  · exact subpower_capped_marginal_residual_small_of_kubilius hK
+      delta hdeltaRange c C hc (lt_of_le_of_ne hC (Ne.symm hC0)) hdelta
 
 end NormalNumbers.ErdosBorweinSubpowerKub
