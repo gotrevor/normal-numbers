@@ -493,3 +493,48 @@ Verification actually run:
   `FORMALIZE-TIER GREEN`; all three declarations report exactly `Classical.choice`, `Quot.sound`,
   and `propext`.
 - `~/personal/bin/lean-green .` — full 10,847-job repository build, `FORMALIZE-TIER GREEN`.
+
+## Review-lap checkpoint — 2026-10-26, union-before-cardinality transfer
+
+Fresh reconstruction from the frozen packet statement, the proved `c > 3` assembly, current
+source, and recent history confirms the route but also confirms the last checkpoint's warning:
+the fixed-level transfer cannot simply be summed over arithmetic levels.  Doing so would multiply
+the Doob crossing mass by the number of levels in a geometric block and lose the maximal-inequality
+gain.  The level union must be formed before cardinality and before applying `KubiliusTV`.
+
+That load-bearing correction is now kernel-checked.
+
+- `exists_subpowerBlock_union_large_cards_div_le_square_add_kubilius` takes an arbitrary finite
+  set of arithmetic levels sharing one geometric anchor and terminal prime cutoff.  It unions all
+  large weighted-block events before taking cardinality.
+- Only the square-divisor exceptions are then summed over levels.  Every selected-prime walk event
+  is absorbed into one anchored arithmetic event, so the theorem charges exactly one
+  `kubiliusPrimeCutoffLoweredCrossingMass` and one accumulated `KubiliusTV` error for the whole
+  level set.
+- The theorem retains the existing four-to-one threshold grouping and all explicit barrier,
+  cutoff, and total-variation side conditions.  No disjointness of the level events is assumed.
+
+The diff from the preceding checkpoint is insertion-only above the frozen headline.  The packet
+declarations `primesUpTo`, `kubiliusMass`, `KubiliusTV`, and the headline statement remain
+unchanged.  `KubiliusTV` remains only a named hypothesis; no `axiom`, `opaque`, or `native_decide`
+was added.  The scoped target still has exactly its single frozen headline `sorry`.
+
+Verification actually run:
+
+- `lake env lean src/NormalNumbers/CoefmassErdosBorweinSubpowerKub.lean` — succeeds, with only the
+  pre-existing headline `sorry` warning.
+- `~/personal/bin/lean-green . --target NormalNumbers.CoefmassErdosBorweinSubpowerKub --import
+  NormalNumbers.CoefmassErdosBorweinSubpowerKub --axioms
+  NormalNumbers.ErdosBorweinSubpowerKub.exists_subpowerBlock_union_large_cards_div_le_square_add_kubilius`
+  — `FORMALIZE-TIER GREEN`; the new theorem reports exactly `Classical.choice`, `Quot.sound`, and
+  `propext`.
+- `~/personal/bin/lean-green .` — full repository build, `FORMALIZE-TIER GREEN`.
+
+The next highest-value attack is to connect this finite-level union theorem directly to the
+marginal-divisor cover.  Partition the active levels into geometric `blockLogLog` intervals with
+ratio `kubiliusBlockRatio (subpowerKubiliusModelCoefficient c)`, take the terminal cutoff once per
+interval, and apply the union theorem before summing over geometric blocks.  Then discharge the
+remaining two uniformity tails: levels above the top cutoff and shifts beyond the TV truncation.
+This produces `exists_subpower_marginal_large_cards_le_of_kubilius`; after that, reuse the proved
+`subpower_capped_marginal_residual_small` and `c > 3` headline assembly with only that input
+replaced.

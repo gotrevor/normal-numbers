@@ -1911,6 +1911,175 @@ theorem exists_subpowerBlock_large_cards_div_le_square_add_kubilius
       field_simp [show (T : ℝ) ≠ 0 by exact_mod_cast (ne_of_gt hT)]
       ring
 
+open Classical in
+/-- Geometric-block arithmetic transfer with the union over arithmetic levels taken before
+cardinality.  This is the form compatible with the maximal inequality: the square-divisor
+exceptions are summed over levels, while the selected-prime crossing and its `KubiliusTV` error
+are charged only once for the entire level block. -/
+theorem exists_subpowerBlock_union_large_cards_div_le_square_add_kubilius
+    (hK : KubiliusTV) :
+    ∃ C : ℝ, 0 < C ∧
+      ∀ (c A D : ℝ) (s : Finset ℕ) (y T J : ℕ) (u₀ : ℝ),
+        0 ≤ c → 0 < A → 0 < T →
+        (∀ ℓ ∈ s, 6 ≤ ℓ ∧ 1 ≤ blockLogLog ℓ ∧
+          dyadicExpCutoff (ℓ + 1) ≤ y ∧
+          kubiliusLoweredBarrier (subpowerKubiliusModelCoefficient c)
+              (subpowerKubiliusLossA D) (subpowerKubiliusLossB A) u₀ ≤
+            kubiliusLoweredBarrier c (subpowerKubiliusLossA D)
+              (subpowerKubiliusLossB A) (blockLogLog ℓ)) →
+        2 ≤ y → y ≤ T →
+        (∑ j ∈ Finset.range J,
+            (((Finset.Icc 1 T).filter (fun n => ∃ ℓ ∈ s,
+              subpowerBlockThreshold A ℓ j <
+                weightedDivisorBlockMass (subpowerWeight c) ℓ n)).card : ℝ)) / T ≤
+          (∑ ℓ ∈ s, squareDivisorMomentConstant *
+              Real.rpow (blockLogLog ℓ) (-D) * subpowerSquareShiftConstant) +
+            4 * kubiliusPrimeCutoffLoweredCrossingMass y
+              (subpowerKubiliusModelCoefficient c) (subpowerKubiliusLossA D)
+                (subpowerKubiliusLossB A) u₀ ((J + 3) / 4) +
+            J * C * (Real.rpow (Real.log T / Real.log y)
+              (-(Real.log T / Real.log y)) + Real.rpow T (-(1 / 2 : ℝ))) := by
+  obtain ⟨C, hC, hTV⟩ := kubiliusTV_sum_arithmeticEventCard_div_le hK
+  refine ⟨C, hC, ?_⟩
+  intro c A D s y T J u₀ hc hA hT hlevels hy hyT
+  let E : ℕ → Set (Finset ℕ) := fun q =>
+    {S | ∃ a ≤ y,
+      kubiliusLoweredBarrier (subpowerKubiliusModelCoefficient c)
+          (subpowerKubiliusLossA D) (subpowerKubiliusLossB A) u₀ + q ≤
+        centeredBernoulliFinsetSum (fun p : ℕ ↦ (1 / p : ℝ)) S (primesUpTo a)}
+  let E4 : ℕ → Set (Finset ℕ) := fun j => E (j / 4)
+  let squareEvent : ℕ → ℕ → Finset ℕ := fun ℓ j =>
+    (Finset.Icc 1 T).filter (fun n =>
+      subpowerKubiliusSquareCutoff D (blockLogLog ℓ) j < squareDivisorCount n)
+  let squareUnion : ℕ → Finset ℕ := fun j =>
+    s.biUnion (fun ℓ => squareEvent ℓ j)
+  let squareCard : ℕ → ℕ → ℝ := fun ℓ j => ((squareEvent ℓ j).card : ℝ)
+  let walkCard : ℕ → ℝ := fun j =>
+    (kubiliusArithmeticEventCard T y (E4 j) : ℝ)
+  have hpoint : ∀ j : ℕ,
+      (((Finset.Icc 1 T).filter (fun n => ∃ ℓ ∈ s,
+        subpowerBlockThreshold A ℓ j <
+          weightedDivisorBlockMass (subpowerWeight c) ℓ n)).card : ℝ) ≤
+        (∑ ℓ ∈ s, squareCard ℓ j) + walkCard j := by
+    intro j
+    have hsubset : (Finset.Icc 1 T).filter (fun n => ∃ ℓ ∈ s,
+        subpowerBlockThreshold A ℓ j <
+          weightedDivisorBlockMass (subpowerWeight c) ℓ n) ⊆
+        squareUnion j ∪ kubiliusArithmeticEventFinset T y (E4 j) := by
+      intro n hn
+      have hnmem := (Finset.mem_filter.mp hn).1
+      obtain ⟨ℓ, hℓs, hmass⟩ := (Finset.mem_filter.mp hn).2
+      obtain ⟨hℓ, hlog, hycut, hbarrier⟩ := hlevels ℓ hℓs
+      rcases subpowerWeightedDivisorBlockMass_large_imp_square_or_kubiliusLowered
+          c A D hc hA ℓ n y j hℓ hlog hycut hmass with hsq | hwalk
+      · apply Finset.mem_union_left
+        dsimp only [squareUnion]
+        exact Finset.mem_biUnion.mpr ⟨ℓ, hℓs, by
+          dsimp only [squareEvent]
+          exact Finset.mem_filter.mpr ⟨hnmem, hsq⟩⟩
+      · apply Finset.mem_union_right
+        apply mem_kubiliusArithmeticEventFinset.mpr
+        refine ⟨hnmem, ?_⟩
+        dsimp only [E4, E]
+        change ∃ a ≤ y,
+          kubiliusLoweredBarrier (subpowerKubiliusModelCoefficient c)
+              (subpowerKubiliusLossA D) (subpowerKubiliusLossB A) u₀ +
+                ((j / 4 : ℕ) : ℝ) ≤
+            centeredBernoulliFinsetSum (fun p : ℕ ↦ (1 / p : ℝ))
+              (n.primeFactors.filter (fun p => p ≤ y)) (primesUpTo a)
+        refine ⟨dyadicExpCutoff (ℓ + 1), hycut, ?_⟩
+        exact (add_le_add hbarrier (le_refl ((j / 4 : ℕ) : ℝ))).trans hwalk.le
+    calc
+      (((Finset.Icc 1 T).filter (fun n => ∃ ℓ ∈ s,
+          subpowerBlockThreshold A ℓ j <
+            weightedDivisorBlockMass (subpowerWeight c) ℓ n)).card : ℝ) ≤
+          ((squareUnion j ∪ kubiliusArithmeticEventFinset T y (E4 j)).card : ℝ) := by
+        exact_mod_cast Finset.card_le_card hsubset
+      _ ≤ ((squareUnion j).card : ℝ) + walkCard j := by
+        dsimp only [walkCard, kubiliusArithmeticEventCard]
+        exact_mod_cast Finset.card_union_le (squareUnion j)
+          (kubiliusArithmeticEventFinset T y (E4 j))
+      _ ≤ (∑ ℓ ∈ s, squareCard ℓ j) + walkCard j := by
+        gcongr
+        dsimp only [squareUnion, squareCard]
+        exact_mod_cast (Finset.card_biUnion_le (s := s)
+          (t := fun ℓ => squareEvent ℓ j))
+  have hsumCover :
+      (∑ j ∈ Finset.range J,
+          (((Finset.Icc 1 T).filter (fun n => ∃ ℓ ∈ s,
+            subpowerBlockThreshold A ℓ j <
+              weightedDivisorBlockMass (subpowerWeight c) ℓ n)).card : ℝ)) ≤
+        (∑ j ∈ Finset.range J, ∑ ℓ ∈ s, squareCard ℓ j) +
+          ∑ j ∈ Finset.range J, walkCard j := by
+    calc
+      _ ≤ ∑ j ∈ Finset.range J, ((∑ ℓ ∈ s, squareCard ℓ j) + walkCard j) :=
+        Finset.sum_le_sum fun j _ ↦ hpoint j
+      _ = _ := by rw [Finset.sum_add_distrib]
+  have hsquare : (∑ j ∈ Finset.range J, ∑ ℓ ∈ s, squareCard ℓ j) ≤
+      T * ∑ ℓ ∈ s, squareDivisorMomentConstant *
+        Real.rpow (blockLogLog ℓ) (-D) * subpowerSquareShiftConstant := by
+    rw [Finset.sum_comm]
+    calc
+      (∑ ℓ ∈ s, ∑ j ∈ Finset.range J, squareCard ℓ j) ≤
+          ∑ ℓ ∈ s, T * squareDivisorMomentConstant *
+            Real.rpow (blockLogLog ℓ) (-D) * subpowerSquareShiftConstant := by
+        apply Finset.sum_le_sum
+        intro ℓ hℓs
+        obtain ⟨_hℓ, hlog, _hycut, _hbarrier⟩ := hlevels ℓ hℓs
+        simpa only [squareCard, squareEvent] using
+          sum_squareDivisorCount_large_card_subpowerCutoff_le D (blockLogLog ℓ)
+            (zero_lt_one.trans_le hlog) T J
+      _ = T * ∑ ℓ ∈ s, squareDivisorMomentConstant *
+          Real.rpow (blockLogLog ℓ) (-D) * subpowerSquareShiftConstant := by
+        rw [Finset.mul_sum]
+        apply Finset.sum_congr rfl
+        intro ℓ hℓs
+        ring
+  have hTVsum : (∑ j ∈ Finset.range J, walkCard j / T) ≤
+      (∑ j ∈ Finset.range J, kubiliusMass y (E4 j)) +
+        J * C * (Real.rpow (Real.log T / Real.log y)
+          (-(Real.log T / Real.log y)) + Real.rpow T (-(1 / 2 : ℝ))) := by
+    simpa only [walkCard] using hTV T y J hy hyT E4
+  have hmodel : (∑ j ∈ Finset.range J, kubiliusMass y (E4 j)) ≤
+      4 * kubiliusPrimeCutoffLoweredCrossingMass y
+        (subpowerKubiliusModelCoefficient c) (subpowerKubiliusLossA D)
+          (subpowerKubiliusLossB A) u₀ ((J + 3) / 4) := by
+    have hgroup := sum_comp_nat_div_four_le (fun q ↦ kubiliusMass y (E q))
+      (fun q ↦ kubiliusMass_nonneg y (E q)) J
+    simpa only [E4, E, kubiliusPrimeCutoffLoweredCrossingMass] using hgroup
+  have hwalk : (∑ j ∈ Finset.range J, walkCard j) / T ≤
+      4 * kubiliusPrimeCutoffLoweredCrossingMass y
+          (subpowerKubiliusModelCoefficient c) (subpowerKubiliusLossA D)
+            (subpowerKubiliusLossB A) u₀ ((J + 3) / 4) +
+        J * C * (Real.rpow (Real.log T / Real.log y)
+          (-(Real.log T / Real.log y)) + Real.rpow T (-(1 / 2 : ℝ))) := by
+    rw [Finset.sum_div]
+    exact hTVsum.trans (add_le_add hmodel (le_refl
+      (J * C * (Real.rpow (Real.log T / Real.log y)
+        (-(Real.log T / Real.log y)) + Real.rpow T (-(1 / 2 : ℝ))))))
+  calc
+    (∑ j ∈ Finset.range J,
+        (((Finset.Icc 1 T).filter (fun n => ∃ ℓ ∈ s,
+          subpowerBlockThreshold A ℓ j <
+            weightedDivisorBlockMass (subpowerWeight c) ℓ n)).card : ℝ)) / T ≤
+        ((∑ j ∈ Finset.range J, ∑ ℓ ∈ s, squareCard ℓ j) +
+          ∑ j ∈ Finset.range J, walkCard j) / T :=
+      div_le_div_of_nonneg_right hsumCover (by positivity)
+    _ = (∑ j ∈ Finset.range J, ∑ ℓ ∈ s, squareCard ℓ j) / T +
+        (∑ j ∈ Finset.range J, walkCard j) / T := by ring
+    _ ≤ (T * ∑ ℓ ∈ s, squareDivisorMomentConstant *
+          Real.rpow (blockLogLog ℓ) (-D) * subpowerSquareShiftConstant) / T +
+        (4 * kubiliusPrimeCutoffLoweredCrossingMass y
+            (subpowerKubiliusModelCoefficient c) (subpowerKubiliusLossA D)
+              (subpowerKubiliusLossB A) u₀ ((J + 3) / 4) +
+          J * C * (Real.rpow (Real.log T / Real.log y)
+            (-(Real.log T / Real.log y)) + Real.rpow T (-(1 / 2 : ℝ)))) := by
+      exact add_le_add (div_le_div_of_nonneg_right hsquare (by positivity)) hwalk
+    _ = _ := by
+      rw [mul_div_cancel_left₀ _ (show (T : ℝ) ≠ 0 by
+        exact_mod_cast (ne_of_gt hT))]
+      ring
+
 /-- **Target: non-normal below the sub-power weight for every `c > 1`, given `KubiliusTV`.**  This
 reaches the heuristic threshold of `EBLogWindow`'s non-normal half.  The proof replaces the c > 3
 block-union step of `ebRandom_ae_not_normal_subpower` by Doob's exponential maximal inequality on
