@@ -2001,6 +2001,541 @@ theorem eventually_multiShiftColumnMass_ge_deviation
         exact (div_le_one (by exact_mod_cast hp.pos)).2 (by exact_mod_cast hp.one_le)
     _ = _ := by rfl
 
+/-- The exact multishift displacement has the sharp uniform square bound predicted by its
+subpower term.  All the other pieces of the threshold--the fixed square-root baseline, the
+full `sqrt L` range of shifts, the logarithmic buffer, and the ceiling allowance--are
+`o(sqrt (L log L))`.  The coefficient is therefore allowed to be any
+`d > max c 0`, uniformly over every scheduled column. -/
+theorem eventually_multiShiftDeviation_sq_le
+    (c A d : ℝ) (hd : max c 0 < d) (hA : 0 ≤ A) (b : ℕ) (hb : 2 ≤ b) :
+    ∀ᶠ N : ℕ in atTop, ∀ j : Fin (multiShiftScheduleJ N),
+      multiShiftDeviation c A b N j.val ^ 2 ≤
+        d * Real.log (Real.log N) * Real.log (Real.log (Real.log N)) := by
+  let cp : ℝ := max c 0
+  let gap : ℝ := min (d - cp) 1
+  let r : ℝ := gap / (16 * (cp + 1))
+  let d₀ : ℝ := cp + gap / 4
+  let q : ℝ := (Real.sqrt d - Real.sqrt d₀) / 2
+  have hcp0 : 0 ≤ cp := by simp only [cp]; exact le_max_right _ _
+  have hcpd : cp < d := by simpa only [cp] using hd
+  have hgap0 : 0 < gap := by
+    dsimp only [gap]
+    exact lt_min (sub_pos.mpr hcpd) zero_lt_one
+  have hgap1 : gap ≤ 1 := by dsimp only [gap]; exact min_le_right _ _
+  have hgapDiff : gap ≤ d - cp := by dsimp only [gap]; exact min_le_left _ _
+  have hd₀0 : 0 < d₀ := by dsimp only [d₀]; positivity
+  have hd₀d : d₀ < d := by
+    dsimp only [d₀]
+    have : gap / 4 < d - cp := (div_lt_self hgap0 (by norm_num)).trans_le hgapDiff
+    linarith
+  have hd0 : 0 < d := hd₀0.trans hd₀d
+  have hq0 : 0 < q := by
+    dsimp only [q]
+    have hsqrt : Real.sqrt d₀ < Real.sqrt d := Real.sqrt_lt_sqrt hd₀0.le hd₀d
+    linarith
+  have hcpOne : 0 < cp + 1 := by positivity
+  have hr0 : 0 < r := by dsimp only [r]; positivity
+  have hrle : r ≤ 1 / 16 := by
+    dsimp only [r]
+    rw [div_le_iff₀ (by positivity : 0 < 16 * (cp + 1))]
+    nlinarith
+  have hrleOne : r ≤ 1 := hrle.trans (by norm_num)
+  have hcoef : cp * (1 + r) ^ 2 ≤ d₀ := by
+    have hre : 16 * (cp + 1) * r = gap := by
+      dsimp only [r]
+      exact mul_div_cancel₀ gap (by positivity)
+    have hcpr : cp * r ≤ gap / 16 := by
+      have hrnonneg : 0 ≤ r := hr0.le
+      nlinarith
+    have hcprr : cp * r ^ 2 ≤ cp * r := by
+      have := mul_nonneg (mul_nonneg hcp0 hr0.le) (sub_nonneg.mpr hrleOne)
+      nlinarith
+    dsimp only [d₀]
+    nlinarith
+  have hlog2 : 0 < Real.log (2 : ℝ) := Real.log_pos (by norm_num)
+  have hbR : (1 : ℝ) < b := by exact_mod_cast hb
+  have hlogb : 0 < Real.log (b : ℝ) := Real.log_pos hbR
+  let k : ℝ := 2 * Real.log b / Real.log 2
+  have hk0 : 0 < k := by dsimp only [k]; positivity
+  have hLTop : Tendsto (fun N : ℕ ↦ Real.log (Real.log (N : ℝ))) atTop atTop :=
+    Real.tendsto_log_atTop.comp
+      (Real.tendsto_log_atTop.comp tendsto_natCast_atTop_atTop)
+  have hlogLTop : Tendsto
+      (fun N : ℕ ↦ Real.log (Real.log (Real.log (N : ℝ)))) atTop atTop :=
+    Real.tendsto_log_atTop.comp hLTop
+  have hlogSmall := hLTop.eventually
+    (Real.isLittleO_log_id_atTop.bound (show 0 < q ^ 2 / 1024 by positivity))
+  filter_upwards [eventually_multiShiftPrimeMean_bounds, eventually_log_log_two_mul_le,
+      hlogSmall,
+      hLTop.eventually_ge_atTop
+        (max (max 2 (Real.log 2 / r)) (4 / q)),
+      hlogLTop.eventually_ge_atTop
+        (max (max 1 (32 * A ^ 2 / q ^ 2))
+          (max (64 * k ^ 2 / q ^ 2) (4 / q)))] with
+      N hmean htwo hlogSmall hLlarge hlogLlarge
+  intro j
+  let L : ℝ := Real.log (Real.log N)
+  let mean : ℝ := multiShiftPrimeMean N
+  let L₂ : ℝ := Real.log (Real.log ((2 * N : ℕ) : ℝ))
+  let S : ℝ := L * Real.log L
+  have hL2 : 2 ≤ L := by
+    exact (le_max_left (2 : ℝ) (Real.log 2 / r)).trans (le_max_left _ _)
+      |>.trans (by simpa only [L] using hLlarge)
+  have hL0 : 0 < L := by linarith
+  have hlogL1 : 1 ≤ Real.log L := by
+    exact (le_max_left (1 : ℝ) (32 * A ^ 2 / q ^ 2)).trans
+      (le_max_left _ _) |>.trans (by simpa only [L] using hlogLlarge)
+  have hlogL0 : 0 < Real.log L := zero_lt_one.trans_le hlogL1
+  have hS0 : 0 < S := mul_pos hL0 hlogL0
+  have hqSsq : (q / 4 * Real.sqrt S) ^ 2 = q ^ 2 / 16 * S := by
+    rw [mul_pow, Real.sq_sqrt hS0.le]
+    ring
+  have hmeanUpper : mean ≤ 2 * L := by
+    simpa only [mean, L, multiShiftPrimeMean] using hmean.2
+  have hmean0 : 0 < mean := by
+    have hmeanLower : L / 2 ≤ mean := by
+      simpa only [mean, L, multiShiftPrimeMean] using hmean.1
+    linarith
+  have hlogSmall' : Real.log L ≤ q ^ 2 / 1024 * L := by
+    simpa only [L, Real.norm_eq_abs, abs_of_pos hlogL0, abs_of_pos hL0,
+      one_mul, id] using hlogSmall
+  have hL₂Upper : L₂ ≤ L + Real.log 2 := by
+    simpa only [L, L₂] using htwo
+  have hlog2Le : Real.log 2 ≤ r * L := by
+    have hbound : Real.log 2 / r ≤ L := by
+      exact (le_max_right (2 : ℝ) (Real.log 2 / r)).trans (le_max_left _ _)
+        |>.trans (by simpa only [L] using hLlarge)
+    simpa only [mul_comm] using (div_le_iff₀ hr0).mp hbound
+  have hL₂Rel : L₂ ≤ (1 + r) * L := by
+    calc
+      L₂ ≤ L + Real.log 2 := hL₂Upper
+      _ ≤ (1 + r) * L := by nlinarith
+  have hL₂Lower : L ≤ L₂ := by
+    have hNpos : 0 < N := by
+      by_contra hnot
+      have : N = 0 := Nat.eq_zero_of_not_pos hnot
+      subst N
+      norm_num [L] at hL2
+    have hlogN0 : 0 < Real.log (N : ℝ) := by
+      have hN1 : (1 : ℝ) ≤ N := by exact_mod_cast (Nat.one_le_iff_ne_zero.mpr hNpos.ne')
+      have hlogNnonneg : 0 ≤ Real.log (N : ℝ) := Real.log_nonneg hN1
+      have : 1 < Real.log (N : ℝ) :=
+        (Real.log_pos_iff hlogNnonneg).mp (by simpa only [L] using hL0)
+      linarith
+    dsimp only [L, L₂]
+    apply Real.log_le_log hlogN0
+    apply Real.log_le_log (by exact_mod_cast hNpos)
+    exact_mod_cast (show N ≤ 2 * N by omega)
+  have hL₂0 : 0 < L₂ := hL0.trans_le hL₂Lower
+  have hlogL₂Rel : Real.log L₂ ≤ (1 + r) * Real.log L := by
+    calc
+      Real.log L₂ ≤ Real.log ((1 + r) * L) :=
+        Real.log_le_log hL₂0 hL₂Rel
+      _ = Real.log (1 + r) + Real.log L := by
+        rw [Real.log_mul (by positivity) hL0.ne']
+      _ ≤ r + Real.log L := by
+        have := Real.log_le_sub_one_of_pos (show 0 < 1 + r by positivity)
+        linarith
+      _ ≤ (1 + r) * Real.log L := by
+        nlinarith [mul_nonneg hr0.le (sub_nonneg.mpr hlogL1)]
+  have hpenaltySq : multiShiftSubpowerPenalty c N ^ 2 ≤ d₀ * S := by
+    rw [multiShiftSubpowerPenalty]
+    by_cases hrad0 : 0 ≤ c * L₂ * Real.log L₂
+    · rw [Real.sq_sqrt hrad0]
+      have hc0 : 0 ≤ c := by
+        by_contra hcnot
+        have hc' : c < 0 := lt_of_not_ge hcnot
+        have hlogL₂0 : 0 < Real.log L₂ := Real.log_pos (by linarith)
+        have : c * L₂ * Real.log L₂ < 0 := by
+          exact mul_neg_of_neg_of_pos (mul_neg_of_neg_of_pos hc' hL₂0) hlogL₂0
+        linarith
+      have hcCp : c ≤ cp := by dsimp only [cp]; exact le_max_left _ _
+      have hlogL₂0 : 0 ≤ Real.log L₂ := Real.log_nonneg (by linarith)
+      have hrad : c * L₂ * Real.log L₂ ≤ cp * (1 + r) ^ 2 * S := by
+        dsimp only [S]
+        calc
+          c * L₂ * Real.log L₂ ≤ cp * ((1 + r) * L) *
+              ((1 + r) * Real.log L) := by gcongr
+          _ = cp * (1 + r) ^ 2 * (L * Real.log L) := by ring
+      exact hrad.trans (mul_le_mul_of_nonneg_right hcoef hS0.le)
+    · rw [Real.sqrt_eq_zero_of_nonpos (le_of_not_ge hrad0)]
+      norm_num
+      exact mul_nonneg hd₀0.le hS0.le
+  have hpenalty : multiShiftSubpowerPenalty c N ≤ Real.sqrt d₀ * Real.sqrt S := by
+    calc
+      multiShiftSubpowerPenalty c N = Real.sqrt
+          (multiShiftSubpowerPenalty c N ^ 2) := by
+        rw [Real.sqrt_sq_eq_abs, abs_of_nonneg]
+        simp only [multiShiftSubpowerPenalty]
+        positivity
+      _ ≤ Real.sqrt (d₀ * S) := Real.sqrt_le_sqrt hpenaltySq
+      _ = Real.sqrt d₀ * Real.sqrt S := Real.sqrt_mul hd₀0.le S
+  have hbaseline : A * Real.sqrt mean ≤ q / 4 * Real.sqrt S := by
+    have hlogBase : 32 * A ^ 2 / q ^ 2 ≤ Real.log L := by
+      exact (le_max_right (1 : ℝ) (32 * A ^ 2 / q ^ 2)).trans
+        (le_max_left _ _) |>.trans (by simpa only [L] using hlogLlarge)
+    have hcoefBase : 32 * A ^ 2 ≤ q ^ 2 * Real.log L := by
+      simpa only [mul_comm] using (div_le_iff₀ (sq_pos_of_pos hq0)).mp hlogBase
+    have hsq : (A * Real.sqrt mean) ^ 2 ≤ (q / 4 * Real.sqrt S) ^ 2 := by
+      rw [hqSsq, mul_pow, Real.sq_sqrt hmean0.le]
+      have hcoefBase' : 2 * A ^ 2 ≤ q ^ 2 / 16 * Real.log L := by
+        nlinarith only [hcoefBase]
+      calc
+        A ^ 2 * mean ≤ A ^ 2 * (2 * L) :=
+          mul_le_mul_of_nonneg_left hmeanUpper (sq_nonneg A)
+        _ = (2 * A ^ 2) * L := by ring
+        _ ≤ (q ^ 2 / 16 * Real.log L) * L :=
+          mul_le_mul_of_nonneg_right hcoefBase' hL0.le
+        _ = q ^ 2 / 16 * S := by dsimp only [S]; ring
+    exact (sq_le_sq₀ (mul_nonneg hA (Real.sqrt_nonneg _))
+      (mul_nonneg (by positivity) (Real.sqrt_nonneg _))).mp hsq
+  have hshift : (((2 * (j.val + 1) : ℕ) : ℝ) * Real.log b / Real.log 2) ≤
+      q / 4 * Real.sqrt S := by
+    have hJceil : (multiShiftScheduleJ N : ℝ) < Real.sqrt L + 1 := by
+      simpa only [multiShiftScheduleJ, L] using Nat.ceil_lt_add_one (Real.sqrt_nonneg L)
+    have hjJ : ((j.val + 1 : ℕ) : ℝ) ≤ multiShiftScheduleJ N := by
+      exact_mod_cast j.isLt
+    have hj : ((j.val + 1 : ℕ) : ℝ) ≤ Real.sqrt L + 1 :=
+      hjJ.trans hJceil.le
+    have hsqrtL1 : 1 ≤ Real.sqrt L := by
+      rw [← Real.sqrt_one]
+      exact Real.sqrt_le_sqrt (by linarith)
+    have hshiftSimple :
+        (((2 * (j.val + 1) : ℕ) : ℝ) * Real.log b / Real.log 2) ≤
+          2 * k * Real.sqrt L := by
+      calc
+        (((2 * (j.val + 1) : ℕ) : ℝ) * Real.log b / Real.log 2) =
+            k * ((j.val + 1 : ℕ) : ℝ) := by
+          dsimp only [k]
+          push_cast
+          ring
+        _ ≤ k * (Real.sqrt L + 1) := mul_le_mul_of_nonneg_left hj hk0.le
+        _ ≤ k * (Real.sqrt L + Real.sqrt L) := by gcongr
+        _ = 2 * k * Real.sqrt L := by ring
+    have hlogShift : 64 * k ^ 2 / q ^ 2 ≤ Real.log L := by
+      exact (le_max_left (64 * k ^ 2 / q ^ 2) (4 / q)).trans
+        (le_max_right _ _) |>.trans (by simpa only [L] using hlogLlarge)
+    have hcoefShift : 64 * k ^ 2 ≤ q ^ 2 * Real.log L := by
+      simpa only [mul_comm] using (div_le_iff₀ (sq_pos_of_pos hq0)).mp hlogShift
+    have hsq : (2 * k * Real.sqrt L) ^ 2 ≤ (q / 4 * Real.sqrt S) ^ 2 := by
+      rw [hqSsq, mul_pow, Real.sq_sqrt hL0.le]
+      have hcoefShift' : 4 * k ^ 2 ≤ q ^ 2 / 16 * Real.log L := by
+        nlinarith only [hcoefShift]
+      dsimp only [S]
+      calc
+        (2 * k) ^ 2 * L = (4 * k ^ 2) * L := by ring
+        _ ≤ (q ^ 2 / 16 * Real.log L) * L :=
+          mul_le_mul_of_nonneg_right hcoefShift' hL0.le
+        _ = q ^ 2 / 16 * (L * Real.log L) := by ring
+    exact hshiftSimple.trans ((sq_le_sq₀ (by positivity)
+      (mul_nonneg (by positivity) (Real.sqrt_nonneg _))).mp hsq)
+  have hbuffer : 8 * Real.log L ≤ q / 4 * Real.sqrt S := by
+    have hsq : (8 * Real.log L) ^ 2 ≤ (q / 4 * Real.sqrt S) ^ 2 := by
+      rw [hqSsq]
+      calc
+        (8 * Real.log L) ^ 2 = 64 * Real.log L * Real.log L := by ring
+        _ ≤ 64 * (q ^ 2 / 1024 * L) * Real.log L := by
+          exact mul_le_mul_of_nonneg_right
+            (mul_le_mul_of_nonneg_left hlogSmall' (by norm_num)) hlogL0.le
+        _ = q ^ 2 / 16 * S := by dsimp only [S]; ring
+    exact (sq_le_sq₀ (by positivity)
+      (mul_nonneg (by positivity) (Real.sqrt_nonneg _))).mp hsq
+  have hone : (1 : ℝ) ≤ q / 4 * Real.sqrt S := by
+    have hLLarge : 4 / q ≤ L := by
+      exact (le_max_right (max 2 (Real.log 2 / r)) (4 / q)).trans
+        (by simpa only [L] using hLlarge)
+    have hlogLLarge : 4 / q ≤ Real.log L := by
+      exact (le_max_right (64 * k ^ 2 / q ^ 2) (4 / q)).trans
+        (le_max_right _ _) |>.trans (by simpa only [L] using hlogLlarge)
+    have hLq : 4 ≤ q * L := by
+      simpa only [mul_comm] using (div_le_iff₀ hq0).mp hLLarge
+    have hlogLq : 4 ≤ q * Real.log L := by
+      simpa only [mul_comm] using (div_le_iff₀ hq0).mp hlogLLarge
+    have hprod : 16 ≤ q ^ 2 * S := by
+      have hmul := mul_le_mul hLq hlogLq (by norm_num) (by positivity)
+      dsimp only [S]
+      nlinarith only [hmul]
+    have hsq : (1 : ℝ) ^ 2 ≤ (q / 4 * Real.sqrt S) ^ 2 := by
+      rw [hqSsq]
+      nlinarith only [hprod]
+    exact (sq_le_sq₀ zero_le_one
+      (mul_nonneg (by positivity) (Real.sqrt_nonneg _))).mp hsq
+  have hdev : multiShiftDeviation c A b N j.val ≤
+      Real.sqrt d₀ * Real.sqrt S + q * Real.sqrt S := by
+    rw [multiShiftDeviation]
+    change multiShiftSubpowerPenalty c N + A * Real.sqrt mean +
+      (((2 * (j.val + 1) : ℕ) : ℝ) * Real.log b / Real.log 2) +
+      8 * Real.log L + 1 ≤ _
+    linarith
+  have hroot : Real.sqrt d₀ + q ≤ Real.sqrt d := by
+    dsimp only [q]
+    have hsqrt := Real.sqrt_le_sqrt hd₀d.le
+    linarith
+  have hdevRoot : multiShiftDeviation c A b N j.val ≤ Real.sqrt d * Real.sqrt S := by
+    calc
+      multiShiftDeviation c A b N j.val ≤
+          Real.sqrt d₀ * Real.sqrt S + q * Real.sqrt S := hdev
+      _ = (Real.sqrt d₀ + q) * Real.sqrt S := by ring
+      _ ≤ Real.sqrt d * Real.sqrt S :=
+        mul_le_mul_of_nonneg_right hroot (Real.sqrt_nonneg _)
+  have hdev0 : 0 ≤ multiShiftDeviation c A b N j.val := by
+    rw [multiShiftDeviation]
+    have hshift0 : 0 ≤
+        (((2 * (j.val + 1) : ℕ) : ℝ) * Real.log b / Real.log 2) := by positivity
+    have hpenalty0 : 0 ≤ multiShiftSubpowerPenalty c N := by
+      simp only [multiShiftSubpowerPenalty]
+      positivity
+    positivity
+  have hsq := (sq_le_sq₀ hdev0
+    (mul_nonneg (Real.sqrt_nonneg _) (Real.sqrt_nonneg _))).2 hdevRoot
+  rw [mul_pow, Real.sq_sqrt hd0.le, Real.sq_sqrt hS0.le] at hsq
+  simpa only [S, mul_assoc] using hsq
+
+/-- Uniformly over all scheduled columns, the moderate-deviation exponent has the sharp leading
+coefficient `(1 + eps) * max c 0 / 2`.  The sharp Mertens lower bound is essential here: replacing
+the mean by the coarse `L / 2` estimate would lose the endpoint `c < 1`. -/
+theorem eventually_multiShiftDeviation_exponent_le
+    (c A eps alpha : ℝ) (hA : 0 ≤ A) (heps : 0 ≤ eps)
+    (halpha : (1 + eps) * max c 0 / 2 < alpha)
+    (b : ℕ) (hb : 2 ≤ b) :
+    ∀ᶠ N : ℕ in atTop, ∀ j : Fin (multiShiftScheduleJ N),
+      (1 + eps) * multiShiftDeviation c A b N j.val ^ 2 /
+          (2 * multiShiftPrimeMean N) ≤
+        alpha * Real.log (Real.log (Real.log N)) := by
+  let cp : ℝ := max c 0
+  let K : ℝ := 1 + eps
+  let exponentGap : ℝ := alpha - K * cp / 2
+  let rho : ℝ := min (1 / 2) (exponentGap / (K + 2 * alpha))
+  let d : ℝ := cp + rho
+  let gamma : ℝ := 1 - rho
+  have hcp0 : 0 ≤ cp := by dsimp only [cp]; exact le_max_right _ _
+  have hK1 : 1 ≤ K := by dsimp only [K]; linarith
+  have hK0 : 0 < K := zero_lt_one.trans_le hK1
+  have hgap0 : 0 < exponentGap := by
+    dsimp only [exponentGap, K, cp]
+    linarith
+  have halpha0 : 0 < alpha := by
+    have hbase0 : 0 ≤ K * cp / 2 := by positivity
+    linarith
+  have hdenom0 : 0 < K + 2 * alpha := by positivity
+  have hrho0 : 0 < rho := by
+    dsimp only [rho]
+    exact lt_min (by norm_num) (div_pos hgap0 hdenom0)
+  have hrhoHalf : rho ≤ 1 / 2 := by dsimp only [rho]; exact min_le_left _ _
+  have hrhoGap : rho ≤ exponentGap / (K + 2 * alpha) := by
+    dsimp only [rho]
+    exact min_le_right _ _
+  have hrhoProduct : rho * (K + 2 * alpha) ≤ exponentGap := by
+    simpa only [mul_comm] using (le_div_iff₀ hdenom0).mp hrhoGap
+  have hgamma0 : 0 < gamma := by dsimp only [gamma]; linarith
+  have hcpd : cp < d := by dsimp only [d]; linarith
+  have hcoef : K * d < 2 * alpha * gamma := by
+    dsimp only [d, gamma, exponentGap] at hrhoProduct ⊢
+    nlinarith
+  have hsq := eventually_multiShiftDeviation_sq_le c A d
+    (by simpa only [cp] using hcpd) hA b hb
+  obtain ⟨C, hC0, hmean⟩ := eventually_multiShiftPrimeMean_lower
+  have hLTop : Tendsto (fun N : ℕ ↦ Real.log (Real.log (N : ℝ))) atTop atTop :=
+    Real.tendsto_log_atTop.comp
+      (Real.tendsto_log_atTop.comp tendsto_natCast_atTop_atTop)
+  have hlogSmall := hLTop.eventually
+    (Real.isLittleO_log_id_atTop.bound (show 0 < rho / 12 by positivity))
+  filter_upwards [hsq, hmean, hlogSmall,
+      hLTop.eventually_ge_atTop (max 2 (2 * C / rho))] with
+      N hsqN hmeanN hlogSmall hlarge
+  intro j
+  let L : ℝ := Real.log (Real.log N)
+  let mean : ℝ := multiShiftPrimeMean N
+  have hL2 : 2 ≤ L := by
+    exact (le_max_left (2 : ℝ) (2 * C / rho)).trans
+      (by simpa only [L] using hlarge)
+  have hL0 : 0 < L := by linarith
+  have hlogL0 : 0 < Real.log L := Real.log_pos (by linarith)
+  have hlogSmall' : Real.log L ≤ rho / 12 * L := by
+    simpa only [L, Real.norm_eq_abs, abs_of_pos hlogL0, abs_of_pos hL0,
+      one_mul, id] using hlogSmall
+  have hCLarge : 2 * C / rho ≤ L := by
+    exact (le_max_right (2 : ℝ) (2 * C / rho)).trans
+      (by simpa only [L] using hlarge)
+  have hCsmall : C ≤ rho / 2 * L := by
+    have := (div_le_iff₀ hrho0).mp hCLarge
+    nlinarith
+  have hmeanLower : gamma * L ≤ mean := by
+    change L - 6 * Real.log L - C ≤ multiShiftPrimeMean N at hmeanN
+    dsimp only [gamma, mean]
+    nlinarith
+  have hmean0 : 0 < mean := (mul_pos hgamma0 hL0).trans_le hmeanLower
+  have hsqBound : multiShiftDeviation c A b N j.val ^ 2 ≤
+      d * L * Real.log L := by
+    simpa only [L] using hsqN j
+  have hnum : K * multiShiftDeviation c A b N j.val ^ 2 ≤
+      2 * alpha * mean * Real.log L := by
+    calc
+      K * multiShiftDeviation c A b N j.val ^ 2 ≤
+          K * (d * L * Real.log L) :=
+        mul_le_mul_of_nonneg_left hsqBound hK0.le
+      _ = (K * d) * (L * Real.log L) := by ring
+      _ ≤ (2 * alpha * gamma) * (L * Real.log L) :=
+        mul_le_mul_of_nonneg_right hcoef.le (mul_nonneg hL0.le hlogL0.le)
+      _ = (2 * alpha * Real.log L) * (gamma * L) := by ring
+      _ ≤ (2 * alpha * Real.log L) * mean :=
+        mul_le_mul_of_nonneg_left hmeanLower (by positivity)
+      _ = 2 * alpha * mean * Real.log L := by ring
+  rw [div_le_iff₀ (mul_pos (by norm_num) hmean0)]
+  dsimp only [K] at hnum
+  nlinarith only [hnum]
+
+/-- Once the uniform exponent is strictly below `log L / 2`, the sum of the independent
+heavy-column lower bounds over the full `J = ceil (sqrt L)` shift schedule diverges. -/
+theorem tendsto_multiShiftExpColumnSum
+    (c A eps alpha : ℝ) (hA : 0 ≤ A) (heps : 0 ≤ eps)
+    (halpha : (1 + eps) * max c 0 / 2 < alpha) (halphaHalf : alpha < 1 / 2)
+    (b : ℕ) (hb : 2 ≤ b) :
+    Tendsto (fun N : ℕ ↦
+      ∑ j : Fin (multiShiftScheduleJ N),
+        Real.exp (-((1 + eps) * multiShiftDeviation c A b N j.val ^ 2 /
+          (2 * multiShiftPrimeMean N)))) atTop atTop := by
+  have hexponent := eventually_multiShiftDeviation_exponent_le
+    c A eps alpha hA heps halpha b hb
+  have hLTop : Tendsto (fun N : ℕ ↦ Real.log (Real.log (N : ℝ))) atTop atTop :=
+    Real.tendsto_log_atTop.comp
+      (Real.tendsto_log_atTop.comp tendsto_natCast_atTop_atTop)
+  have hlogLTop : Tendsto
+      (fun N : ℕ ↦ Real.log (Real.log (Real.log (N : ℝ)))) atTop atTop :=
+    Real.tendsto_log_atTop.comp hLTop
+  have hrate0 : 0 < (1 / 2 : ℝ) - alpha := by linarith
+  have hmajor : Tendsto (fun N : ℕ ↦
+      Real.exp (((1 / 2 : ℝ) - alpha) *
+        Real.log (Real.log (Real.log (N : ℝ))))) atTop atTop :=
+    Real.tendsto_exp_atTop.comp (hlogLTop.const_mul_atTop hrate0)
+  refine Filter.tendsto_atTop_mono' atTop ?_ hmajor
+  filter_upwards [hexponent, hLTop.eventually_ge_atTop 2] with N hexponent hLlarge
+  let L : ℝ := Real.log (Real.log N)
+  have hL2 : 2 ≤ L := by simpa only [L] using hLlarge
+  have hL0 : 0 < L := by linarith
+  have hlogL0 : 0 < Real.log L := Real.log_pos (by linarith)
+  have hceil : Real.sqrt L ≤ (multiShiftScheduleJ N : ℝ) := by
+    simpa only [multiShiftScheduleJ, L] using Nat.le_ceil (Real.sqrt L)
+  calc
+    Real.exp (((1 / 2 : ℝ) - alpha) * Real.log L) =
+        Real.sqrt L * Real.exp (-(alpha * Real.log L)) := by
+      rw [Real.sqrt_eq_rpow, Real.rpow_def_of_pos hL0]
+      rw [← Real.exp_add]
+      congr 1
+      ring
+    _ ≤ (multiShiftScheduleJ N : ℝ) * Real.exp (-(alpha * Real.log L)) :=
+      mul_le_mul_of_nonneg_right hceil (Real.exp_pos _).le
+    _ = ∑ _j : Fin (multiShiftScheduleJ N), Real.exp (-(alpha * Real.log L)) := by
+      simp
+    _ ≤ ∑ j : Fin (multiShiftScheduleJ N),
+        Real.exp (-((1 + eps) * multiShiftDeviation c A b N j.val ^ 2 /
+          (2 * multiShiftPrimeMean N))) := by
+      apply Finset.sum_le_sum
+      intro j hj
+      apply Real.exp_le_exp.mpr
+      have := hexponent j
+      change (1 + eps) * multiShiftDeviation c A b N j.val ^ 2 /
+          (2 * multiShiftPrimeMean N) ≤ alpha * Real.log L at this
+      linarith
+
+/-- The scheduled independent heavy-event probability in one shift column. -/
+noncomputable def multiShiftScheduledColumnMass
+    (c A : ℝ) (b N : ℕ) (j : Fin (multiShiftScheduleJ N)) : ℝ :=
+  NormalNumbers.ErdosBorweinEndpointKub.bernoulliSubsetMass
+    (Finset.univ : Finset
+      (Fin (Fintype.card (primesIoc (collisionCutoff N) (multiShiftCutoffY N))) ×
+        Fin (multiShiftScheduleJ N)))
+    (fun z ↦ 1 / (((primeIndexEquiv (collisionCutoff N)
+      (multiShiftCutoffY N)) z.1 : ℕ) : ℝ))
+    {S | multiShiftThreshold c A b N j.val ≤
+      (S ∩ shiftArrayColumn
+        (Fintype.card (primesIoc (collisionCutoff N) (multiShiftCutoffY N)))
+        (multiShiftScheduleJ N) j).card}
+
+/-- The independent no-heavy product on the scheduled prime block. -/
+noncomputable def multiShiftScheduledNoHeavyProduct (c A : ℝ) (b N : ℕ) : ℝ :=
+  ∏ j : Fin (multiShiftScheduleJ N), (1 - multiShiftScheduledColumnMass c A b N j)
+
+theorem multiShiftScheduledColumnMass_nonneg (c A : ℝ) (b N : ℕ)
+    (j : Fin (multiShiftScheduleJ N)) :
+    0 ≤ multiShiftScheduledColumnMass c A b N j := by
+  classical
+  rw [multiShiftScheduledColumnMass]
+  apply NormalNumbers.ErdosBorweinEndpointKub.bernoulliSubsetMass_nonneg
+  · intro z hz
+    positivity
+  · intro z hz
+    have hp : Nat.Prime ((primeIndexEquiv (collisionCutoff N)
+        (multiShiftCutoffY N)) z.1 : ℕ) :=
+      (Finset.mem_filter.mp ((primeIndexEquiv (collisionCutoff N)
+        (multiShiftCutoffY N)) z.1).property).2
+    exact (div_le_one (by exact_mod_cast hp.pos)).2 (by exact_mod_cast hp.one_le)
+
+theorem multiShiftScheduledColumnMass_le_one (c A : ℝ) (b N : ℕ)
+    (j : Fin (multiShiftScheduleJ N)) :
+    multiShiftScheduledColumnMass c A b N j ≤ 1 := by
+  classical
+  rw [multiShiftScheduledColumnMass]
+  apply NormalNumbers.ErdosBorweinEndpointKub.bernoulliSubsetMass_le_one
+  · intro z hz
+    positivity
+  · intro z hz
+    have hp : Nat.Prime ((primeIndexEquiv (collisionCutoff N)
+        (multiShiftCutoffY N)) z.1 : ℕ) :=
+      (Finset.mem_filter.mp ((primeIndexEquiv (collisionCutoff N)
+        (multiShiftCutoffY N)) z.1).property).2
+    exact (div_le_one (by exact_mod_cast hp.pos)).2 (by exact_mod_cast hp.one_le)
+
+/-- Elementary product-to-exponential estimate used for the independent no-heavy event. -/
+theorem prod_one_sub_le_exp_neg_sum {I : Type*} [Fintype I]
+    (f : I → ℝ) (_hf0 : ∀ i, 0 ≤ f i) (hf1 : ∀ i, f i ≤ 1) :
+    ∏ i, (1 - f i) ≤ Real.exp (-∑ i, f i) := by
+  have hsum : -∑ i, f i = ∑ i, -(f i) := by rw [Finset.sum_neg_distrib]
+  rw [hsum, Real.exp_sum]
+  refine Finset.prod_le_prod (fun i hi ↦ by linarith [hf1 i]) (fun i hi ↦ ?_)
+  linarith [Real.add_one_le_exp (-(f i))]
+
+/-- The scheduled independent no-heavy product tends to zero. -/
+theorem tendsto_multiShiftScheduledNoHeavyProduct
+    (c A eps eta alpha : ℝ) (hc : c < 1) (hA : 0 ≤ A)
+    (heps : 0 < eps) (heta0 : 0 < eta) (heta1 : eta ≤ 1 / 100)
+    (hetaEps : 80 * eta ≤ eps) (hlargeA : 6 ≤ eta ^ 2 * A ^ 2)
+    (habsorbA : 4 * Real.log 2 ≤ eps * A ^ 2)
+    (halpha : (1 + eps) * max c 0 / 2 < alpha) (halphaHalf : alpha < 1 / 2)
+    (b : ℕ) (hb : 2 ≤ b) :
+    Tendsto (multiShiftScheduledNoHeavyProduct c A b) atTop (nhds 0) := by
+  have hcolumn := eventually_multiShiftColumnMass_ge_deviation
+    c A eps eta hc hA b hb heps heta0 heta1 hetaEps hlargeA habsorbA
+  have hsum := tendsto_multiShiftExpColumnSum
+    c A eps alpha hA heps.le halpha halphaHalf b hb
+  have hexp : Tendsto (fun N : ℕ ↦ Real.exp (-
+      ∑ j : Fin (multiShiftScheduleJ N),
+        Real.exp (-((1 + eps) * multiShiftDeviation c A b N j.val ^ 2 /
+          (2 * multiShiftPrimeMean N))))) atTop (nhds 0) :=
+    Real.tendsto_exp_atBot.comp (tendsto_neg_atTop_atBot.comp hsum)
+  refine squeeze_zero' ?_ ?_ hexp
+  · exact Eventually.of_forall fun N ↦ by
+      rw [multiShiftScheduledNoHeavyProduct]
+      exact Finset.prod_nonneg fun j hj ↦
+        sub_nonneg.mpr (multiShiftScheduledColumnMass_le_one c A b N j)
+  · filter_upwards [hcolumn] with N hcolumnN
+    rw [multiShiftScheduledNoHeavyProduct]
+    calc
+      ∏ j : Fin (multiShiftScheduleJ N), (1 - multiShiftScheduledColumnMass c A b N j) ≤
+          Real.exp (-∑ j : Fin (multiShiftScheduleJ N),
+            multiShiftScheduledColumnMass c A b N j) :=
+        prod_one_sub_le_exp_neg_sum _
+          (multiShiftScheduledColumnMass_nonneg c A b N)
+          (multiShiftScheduledColumnMass_le_one c A b N)
+      _ ≤ Real.exp (-∑ j : Fin (multiShiftScheduleJ N),
+          Real.exp (-((1 + eps) * multiShiftDeviation c A b N j.val ^ 2 /
+            (2 * multiShiftPrimeMean N)))) := by
+        apply Real.exp_le_exp.mpr
+        apply neg_le_neg
+        apply Finset.sum_le_sum
+        intro j hj
+        simpa only [multiShiftScheduledColumnMass] using hcolumnN j
+
 open Classical in
 /-- **Hypothesis (sieve, dimension `J`): the `J`-shift Kubilius model.**  This is the natural
 `J`-dimensional extension of `KubiliusTV`.  It is expected from the fundamental lemma of sieve theory

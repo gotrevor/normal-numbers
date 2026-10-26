@@ -290,3 +290,28 @@ or an equivalent explicit bound, then show the sum of the full `J` column lower 
 infinity.  This sends the product of lower-tail complements to zero.  Combine it with the already
 proved collision/TV limit and the deterministic transfer, then apply Step 1'.  Detailed baton:
 `HANDOFF-2026-10-26-eb-multishift-lap14.md`.
+
+## Lap checkpoint (2026-10-26, lap 15)
+
+The sharp exponent and full-column probability decay are now proved. The uniform theorem
+`eventually_multiShiftDeviation_sq_le` shows that for every `d > max c 0`, the exact displacement
+satisfies `deviation_j^2 <= d * L * log L` in every scheduled column. Combining this with the sharp
+Mertens lower bound, `eventually_multiShiftDeviation_exponent_le` gives every exponent coefficient
+strictly above `(1+eps) * max c 0 / 2`. Therefore `tendsto_multiShiftExpColumnSum` proves that the
+sum of the `J = ceil(sqrt L)` exponential column lower bounds diverges whenever that coefficient is
+below `1/2`.
+
+The exact scheduled Bernoulli column mass and independent no-heavy product are now named by
+`multiShiftScheduledColumnMass` and `multiShiftScheduledNoHeavyProduct`.
+`tendsto_multiShiftScheduledNoHeavyProduct` combines the lap-14 one-column lower bound, the new
+divergent sum, and `prod_one_sub_le_exp_neg_sum` to prove that the full independent no-heavy product
+tends to zero. All new declarations are axiom-clean.
+
+The remaining final-assembly adapter is the fixed Step 1' lower shift `j0`: deterministic transfer
+uses the impossible threshold `card(primesIoc)+1` on the finitely many inactive columns
+`j+1 < j0`, while the new product theorem uses the heavy threshold on every column. Prove that
+deleting these at most `j0` factors preserves decay (subtract at most `j0` from the divergent
+exponential sum), identify the impossible-column Bernoulli mass as zero, and then combine the
+mixed product with `multiShiftMass_noHeavy_le_prod_one_sub`, `tendsto_multiShiftTransferError`,
+`low_shiftedVarianceMass_density_le_model`, and Step 1'. Detailed baton:
+`HANDOFF-2026-10-26-eb-multishift-lap15.md`.
