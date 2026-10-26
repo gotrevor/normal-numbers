@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
 import Mathlib
-import NormalNumbers.CoefmassErdosBorweinNegative
+import NormalNumbers.CoefmassErdosBorweinSubpowerAux
 
 /-!
 # Non-normality below the sub-power weight, `c > 3` (personal-c5, 2026-10-25)

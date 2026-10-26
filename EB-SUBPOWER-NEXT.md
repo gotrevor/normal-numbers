@@ -9,6 +9,38 @@ Helpers go above the headline or in a new `CoefmassErdosBorweinSubpowerAux.lean`
 `CoefmassErdosBorweinNegative.lean` that you need.
 **NEVER git push:** `research/eb-random` is local only.
 
+## Status
+
+### Lap 1 checkpoint (2026-10-26): marginal/Fatou criterion proved; headline has 1 sorry
+
+- Added `CoefmassErdosBorweinSubpowerAux.lean` and proved the axiom-clean theorem
+  `ae_not_normal_of_capped_marginal_residual`.  It reduces the frozen headline to a deterministic
+  statement: the Cesàro average of
+  `min 1 (Σ_j b^{-(j+1)} μ_M(n+j+1))` tends to zero uniformly in the averaging cutoff.
+- This is the reusable marginal-only skeleton requested in step 1.  It proves, without independence:
+  the exact marginal expectation identity for selected-divisor counts; the finite-residual cap
+  bound; passage to the infinite residual by Fatou; the normal-orbit positive lower bound; and the
+  final Markov/continuity-from-below contradiction.  It reuses the deleted-head orbit identity and
+  rational-shift normality from `CoefmassErdosBorweinNegative.lean`.
+- The theorem statement and `subpowerWeight` in `CoefmassErdosBorweinSubpower.lean` remain byte-for-byte
+  unchanged.  Its import now points at the auxiliary module.  No `native_decide`, new axiom, or edit
+  to `CoefmassErdosBorweinNegative.lean` was made.
+- Exact verification:
+  - `lake env lean src/NormalNumbers/CoefmassErdosBorweinSubpowerAux.lean` — succeeds.
+  - `lake env lean src/NormalNumbers/CoefmassErdosBorweinSubpower.lean` — succeeds with exactly the
+    expected headline `sorry` warning.
+  - `~/personal/bin/lean-green . --target NormalNumbers.CoefmassErdosBorweinSubpowerAux --import
+    NormalNumbers.CoefmassErdosBorweinSubpowerAux --axioms
+    NormalNumbers.ErdosBorweinSubpower.ae_not_normal_of_capped_marginal_residual` —
+    FORMALIZE-TIER GREEN; axioms exactly `propext`, `Classical.choice`, `Quot.sound`.
+  - `~/personal/bin/lean-green .` — FORMALIZE-TIER GREEN, 10847 jobs.
+
+**Current blocker / next attack.**  Prove the deterministic capped-residual tail hypothesis for
+`delta m ≤ C * subpowerWeight c m`.  Start with the one-block domination by
+`smoothDivisorCount (dyadicExpCutoff (ℓ+1)) n`, then formalize the per-block exponent
+`s_ℓ = sqrt(c * log u_ℓ / u_ℓ) / log 2` and its explicit Chernoff bound.  This is now the
+only mathematical input between the proved criterion and the frozen headline.
+
 ## Reuse (CoefmassErdosBorweinNegative.lean, PROVED)
 - `ebRandom_ae_not_normal_of_marginal_bound` and `ebRandom_ae_not_normal`: the Fatou/orbit-average
   skeleton, the exact residual `R_M(n) = Σ_{j≥1} b^{−j} D_M(n+j)` with `frac(b^n Y_M) ≤ R_M(n)`, and
