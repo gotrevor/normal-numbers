@@ -583,3 +583,58 @@ large-threshold estimates.  For the ordinary groups, choose the left `blockLogLo
 `D > 1`, and show the finitely accumulated TV errors tend to zero uniformly.  That is the last
 substantial input before `exists_subpower_marginal_large_cards_le_of_kubilius` and the copied
 `c > 3` final assembly.
+
+## Lap checkpoint — 2026-10-26, slack-aware geometric schedule
+
+The model tail is now separated from the arithmetic grouping ratio, and the fixed endpoint loss
+has a kernel-checked absorption lemma.  This corrects one detail in the preceding plan: grouping at
+the model variance ratio itself leaves no strict room for the additive
+`log 2 + Erdos67.PrimeEstimates.mertensBound` incurred when a level uses the next dyadic endpoint.
+
+- `summable_kubiliusIntegratedDecay_of_ratio` and
+  `summable_kubiliusIntegratedMajorant_of_ratio` prove that the existing negative-power one-block
+  majorant is summable along every schedule `q^k` with `q > 1`, not only along the hard-coded model
+  variance ratio.
+- `exists_kubiliusPrimeCutoffLoweredCrossingMass_geometric_sum_lt_of_ratio` packages the resulting
+  uniform model tail.  Its anchor is `q^k`, while its variance cap correctly remains
+  `kubiliusBlockRatio c * q^k`.
+- `subpowerKubiliusGroupingRatio c` chooses a concrete arithmetic grouping ratio strictly between
+  `1` and `kubiliusBlockRatio (subpowerKubiliusModelCoefficient c)`.
+- `eventually_grouping_pow_succ_add_le_varianceRatio_mul_pow` proves that the strict ratio gap
+  eventually absorbs any fixed additive loss.  Combining it with mathlib's
+  `exists_nat_pow_near` gives
+  `eventually_exists_grouping_pow_le_and_add_le_varianceRatio_mul_pow`.
+- `eventually_exists_subpowerKubiliusGroupingIndex` specializes this to the actual arithmetic
+  levels: every sufficiently late `ℓ` has an anchor `q^k ≤ blockLogLog ℓ` for which
+  `blockLogLog (ℓ+1) + mertensBound` lies under the model variance cap.  Thus the barrier lower
+  bound and terminal-cutoff variance upper bound can hold simultaneously in each group.
+
+The packet declarations `primesUpTo`, `kubiliusMass`, `KubiliusTV`, and the headline statement are
+unchanged.  `KubiliusTV` remains only a named hypothesis; no `axiom`, `opaque`, or `native_decide`
+was added.  The scoped target still has exactly its single frozen headline `sorry`.
+
+Verification actually run:
+
+- `lake env lean src/NormalNumbers/CoefmassErdosBorweinSubpowerKub.lean` — succeeds, with only the
+  pre-existing headline `sorry` warning.
+- `~/personal/bin/lean-green . --target NormalNumbers.CoefmassErdosBorweinSubpowerKub --import
+  NormalNumbers.CoefmassErdosBorweinSubpowerKub --axioms
+  NormalNumbers.ErdosBorweinSubpowerKub.summable_kubiliusIntegratedDecay_of_ratio --axioms
+  NormalNumbers.ErdosBorweinSubpowerKub.exists_kubiliusPrimeCutoffLoweredCrossingMass_geometric_sum_lt_of_ratio
+  --axioms
+  NormalNumbers.ErdosBorweinSubpowerKub.eventually_grouping_pow_succ_add_le_varianceRatio_mul_pow
+  --axioms NormalNumbers.ErdosBorweinSubpowerKub.eventually_exists_subpowerKubiliusGroupingIndex`
+  — `FORMALIZE-TIER GREEN`; all four declarations report exactly `Classical.choice`, `Quot.sound`,
+  and `propext`.
+- `~/personal/bin/lean-green .` — full 10,847-job repository build, `FORMALIZE-TIER GREEN`.
+
+The next highest-value attack is now the finite partition itself.  For sufficiently late levels,
+group `ℓ` by the index supplied by `eventually_exists_subpowerKubiliusGroupingIndex`; within each
+nonempty group take the largest `ℓ` and terminal cutoff `dyadicExpCutoff (ℓ+1)`.  The new theorem
+supplies both the anchor/barrier side and the Mertens variance cap, while monotonicity supplies all
+smaller cutoffs.  Put levels whose cutoff exceeds the averaging range in `exceptional`, prove their
+top-cut contribution directly, and then apply
+`exists_sum_marginalDivisorMass_large_cards_div_le_grouped_kubilius`.  The remaining global terms
+are the square tail, the arbitrary-ratio model tail proved here, and the finite accumulated TV
+error; controlling those yields `exists_subpower_marginal_large_cards_le_of_kubilius`, after which
+the proved `c > 3` capped-residual and headline assembly can be reused.

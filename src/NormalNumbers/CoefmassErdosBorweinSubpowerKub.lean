@@ -635,6 +635,52 @@ theorem summable_kubiliusIntegratedMajorant {c : ℝ} (hc : 1 < c) :
         (kubiliusIntegratedDecayExponent c * (k : ℝ))) :=
   (summable_kubiliusIntegratedDecay hc).mul_left _
 
+/-- The integrated negative-power majorant is summable along any genuinely geometric schedule.
+The schedule ratio need not equal the variance ratio used inside the one-block estimate.  This
+separation leaves the strict slack needed later to absorb the additive Mertens and endpoint losses
+at an arithmetic prime cutoff. -/
+theorem summable_kubiliusIntegratedDecay_of_ratio {c q : ℝ}
+    (hc : 1 < c) (hq : 1 < q) :
+    Summable (fun k : ℕ ↦ Real.rpow q
+      (kubiliusIntegratedDecayExponent c * (k : ℝ))) := by
+  have he : kubiliusIntegratedDecayExponent c < 0 :=
+    kubiliusIntegratedDecayExponent_neg hc
+  have hqpos : 0 < Real.rpow q (kubiliusIntegratedDecayExponent c) :=
+    Real.rpow_pos_of_pos (zero_lt_one.trans hq) _
+  have hqnorm : ‖Real.rpow q (kubiliusIntegratedDecayExponent c)‖ < 1 := by
+    rw [Real.norm_eq_abs, abs_of_pos hqpos]
+    exact Real.rpow_lt_one_of_one_lt_of_neg hq he
+  have hsum := summable_geometric_of_norm_lt_one hqnorm
+  have hfun : (fun k : ℕ ↦ Real.rpow q
+      (kubiliusIntegratedDecayExponent c * (k : ℝ))) =
+      fun k : ℕ ↦ Real.rpow q (kubiliusIntegratedDecayExponent c) ^ k := by
+    funext k
+    exact Real.rpow_mul_natCast (zero_lt_one.trans hq).le _ k
+  rw [hfun]
+  exact hsum
+
+/-- Substitution of an arbitrary positive geometric schedule into the integrated majorant. -/
+theorem kubiliusIntegratedMajorant_geometric_of_ratio (c q : ℝ) (k : ℕ)
+    (hq : 0 ≤ q) :
+    kubiliusIntegratedMajorantConstant c *
+        Real.rpow (Real.rpow q (k : ℝ)) (kubiliusIntegratedDecayExponent c) =
+      kubiliusIntegratedMajorantConstant c *
+        Real.rpow q (kubiliusIntegratedDecayExponent c * (k : ℝ)) := by
+  congr 1
+  calc
+    Real.rpow (Real.rpow q (k : ℝ)) (kubiliusIntegratedDecayExponent c) =
+        Real.rpow q ((k : ℝ) * kubiliusIntegratedDecayExponent c) :=
+      (Real.rpow_mul hq (k : ℝ) (kubiliusIntegratedDecayExponent c)).symm
+    _ = Real.rpow q (kubiliusIntegratedDecayExponent c * (k : ℝ)) := by
+      congr 1
+      exact mul_comm _ _
+
+theorem summable_kubiliusIntegratedMajorant_of_ratio {c q : ℝ}
+    (hc : 1 < c) (hq : 1 < q) :
+    Summable (fun k : ℕ ↦ kubiliusIntegratedMajorantConstant c *
+      Real.rpow q (kubiliusIntegratedDecayExponent c * (k : ℝ))) :=
+  (summable_kubiliusIntegratedDecay_of_ratio hc hq).mul_left _
+
 open Classical in
 /-- The selected-prime walk up to the first `k` primes at terminal cutoff `y`, written as an
 unordered finite-coordinate sum.  This is the form to which arithmetic prime cutoffs are mapped. -/
@@ -925,6 +971,76 @@ theorem exists_kubiliusPrimeCutoffLoweredCrossingMass_geometric_sum_lt
       exact (kubiliusPrimeCutoffLoweredCrossingMass_le
         (y (k + K)) c A B (kubiliusBlockRatio c ^ (k + K)) (J (k + K))).trans
           (by simpa only [r] using hblock (y (k + K)) (J (k + K)) hv.1 hv.2)
+    _ ≤ ∑' i : ℕ, f (i + K) := hfinite
+    _ < ζ := hdata.1
+
+open Classical in
+/-- Uniform summable tail of arithmetic-cutoff crossing masses along an arbitrary geometric
+schedule `q^k`, with the one-block variance cap still using `kubiliusBlockRatio c`.  In the global
+arithmetic grouping we will take `q` strictly below that variance ratio, so the resulting gap can
+absorb the additive `log 2 + mertensBound` endpoint loss. -/
+theorem exists_kubiliusPrimeCutoffLoweredCrossingMass_geometric_sum_lt_of_ratio
+    {c q : ℝ} (hc : 1 < c) (hq : 1 < q) (A B : ℝ) (hA : 0 ≤ A) (hB : 0 ≤ B)
+    (ζ : ℝ) (hζ : 0 < ζ) :
+    ∃ K : ℕ, ∀ H : ℕ, ∀ y J : ℕ → ℕ,
+      (∀ k ∈ Finset.range H, 2 ≤ y (k + K) ∧
+        Real.log (Real.log (y (k + K) : ℝ)) + Erdos67.PrimeEstimates.mertensBound ≤
+          kubiliusBlockRatio c * (q : ℝ) ^ (k + K)) →
+      (∑ k ∈ Finset.range H,
+        kubiliusPrimeCutoffLoweredCrossingMass (y (k + K)) c A B
+          ((q : ℝ) ^ (k + K)) (J (k + K))) < ζ := by
+  let f : ℕ → ℝ := fun k ↦ kubiliusIntegratedMajorantConstant c *
+    Real.rpow q (kubiliusIntegratedDecayExponent c * (k : ℝ))
+  have hsum : Summable f := by
+    simpa only [f] using summable_kubiliusIntegratedMajorant_of_ratio hc hq
+  have hmodel := eventually_kubiliusLoweredCrossingMass_le hc A B hA hB
+  have hqpow : Tendsto (fun k : ℕ ↦ (q : ℝ) ^ k) atTop atTop :=
+    tendsto_pow_atTop_atTop_of_one_lt hq
+  have hmodelNat : ∀ᶠ k : ℕ in atTop, ∀ y J : ℕ, 2 ≤ y →
+      Real.log (Real.log (y : ℝ)) + Erdos67.PrimeEstimates.mertensBound ≤
+        kubiliusBlockRatio c * (q : ℝ) ^ k →
+      kubiliusLoweredCrossingMass y c A B ((q : ℝ) ^ k) J ≤ f k := by
+    filter_upwards [hqpow.eventually hmodel] with k hk
+    intro y J hy hvar
+    have h := hk y J hy hvar
+    calc
+      kubiliusLoweredCrossingMass y c A B (q ^ k) J ≤
+          kubiliusIntegratedMajorantConstant c *
+            Real.rpow (q ^ k) (kubiliusIntegratedDecayExponent c) := h
+      _ = f k := by
+        have hpow : (q : ℝ) ^ k = Real.rpow q (k : ℝ) :=
+          (Real.rpow_natCast q k).symm
+        rw [hpow]
+        simpa only [f] using
+          kubiliusIntegratedMajorant_geometric_of_ratio c q k (by linarith)
+  obtain ⟨K₀, hK₀⟩ := eventually_atTop.1 hmodelNat
+  have htailEv : ∀ᶠ K : ℕ in atTop, (∑' i : ℕ, f (i + K)) < ζ :=
+    (tendsto_sum_nat_add f).eventually_lt_const hζ
+  obtain ⟨K, hK⟩ := eventually_atTop.1 (htailEv.and (eventually_ge_atTop K₀))
+  have hdata := hK K le_rfl
+  refine ⟨K, ?_⟩
+  intro H y J hvar
+  have hfinite : (∑ k ∈ Finset.range H, f (k + K)) ≤ ∑' i : ℕ, f (i + K) := by
+    have hconst : 0 ≤ kubiliusIntegratedMajorantConstant c := by
+      unfold kubiliusIntegratedMajorantConstant
+      positivity [kubiliusInnerCoefficient_pos hc, one_lt_kubiliusBlockRatio hc]
+    have hf0 : ∀ i, 0 ≤ f (i + K) := by
+      intro i
+      exact mul_nonneg hconst (Real.rpow_nonneg (by linarith : 0 ≤ q) _)
+    exact (hsum.comp_injective (fun _ _ h ↦ Nat.add_right_cancel h)).sum_le_tsum
+      (Finset.range H) (fun i _ ↦ hf0 i)
+  calc
+    (∑ k ∈ Finset.range H,
+        kubiliusPrimeCutoffLoweredCrossingMass (y (k + K)) c A B
+          ((q : ℝ) ^ (k + K)) (J (k + K))) ≤
+        ∑ k ∈ Finset.range H, f (k + K) := by
+      apply Finset.sum_le_sum
+      intro k hk
+      have hblock := hK₀ (k + K) (by omega)
+      have hv := hvar k hk
+      exact (kubiliusPrimeCutoffLoweredCrossingMass_le
+        (y (k + K)) c A B (q ^ (k + K)) (J (k + K))).trans
+          (hblock (y (k + K)) (J (k + K)) hv.1 hv.2)
     _ ≤ ∑' i : ℕ, f (i + K) := hfinite
     _ < ζ := hdata.1
 
@@ -1692,6 +1808,11 @@ estimate after grouping arithmetic levels. -/
 noncomputable def subpowerKubiliusModelCoefficient (c : ℝ) : ℝ :=
   kubiliusBlockRatio c
 
+/-- Ratio used to group arithmetic levels.  It is chosen strictly below the variance ratio in the
+model estimate, leaving room for the fixed Mertens and right-endpoint losses. -/
+noncomputable def subpowerKubiliusGroupingRatio (c : ℝ) : ℝ :=
+  kubiliusBlockRatio (kubiliusBlockRatio (subpowerKubiliusModelCoefficient c))
+
 lemma one_lt_subpowerKubiliusModelCoefficient {c : ℝ} (hc : 1 < c) :
     1 < subpowerKubiliusModelCoefficient c :=
   one_lt_kubiliusBlockRatio hc
@@ -1699,6 +1820,90 @@ lemma one_lt_subpowerKubiliusModelCoefficient {c : ℝ} (hc : 1 < c) :
 lemma subpowerKubiliusModelCoefficient_lt {c : ℝ} (hc : 1 < c) :
     subpowerKubiliusModelCoefficient c < c :=
   kubiliusBlockRatio_lt hc
+
+lemma one_lt_subpowerKubiliusGroupingRatio {c : ℝ} (hc : 1 < c) :
+    1 < subpowerKubiliusGroupingRatio c := by
+  unfold subpowerKubiliusGroupingRatio
+  exact one_lt_kubiliusBlockRatio
+    (one_lt_kubiliusBlockRatio (one_lt_subpowerKubiliusModelCoefficient hc))
+
+lemma subpowerKubiliusGroupingRatio_lt_varianceRatio {c : ℝ} (hc : 1 < c) :
+    subpowerKubiliusGroupingRatio c <
+      kubiliusBlockRatio (subpowerKubiliusModelCoefficient c) := by
+  unfold subpowerKubiliusGroupingRatio
+  exact kubiliusBlockRatio_lt
+    (one_lt_kubiliusBlockRatio (one_lt_subpowerKubiliusModelCoefficient hc))
+
+/-- Eventually the gap between the arithmetic grouping ratio and the model variance ratio absorbs
+any fixed additive endpoint loss.  This is the quantitative reason for using two distinct ratios
+in the global partition. -/
+theorem eventually_grouping_pow_succ_add_le_varianceRatio_mul_pow
+    {c : ℝ} (hc : 1 < c) (E : ℝ) :
+    ∀ᶠ k : ℕ in atTop,
+      (subpowerKubiliusGroupingRatio c : ℝ) ^ (k + 1) + E ≤
+        kubiliusBlockRatio (subpowerKubiliusModelCoefficient c) *
+          (subpowerKubiliusGroupingRatio c : ℝ) ^ k := by
+  let q : ℝ := subpowerKubiliusGroupingRatio c
+  let r : ℝ := kubiliusBlockRatio (subpowerKubiliusModelCoefficient c)
+  have hq : 1 < q := one_lt_subpowerKubiliusGroupingRatio hc
+  have hqr : q < r := subpowerKubiliusGroupingRatio_lt_varianceRatio hc
+  have hgap : 0 < r - q := sub_pos.mpr hqr
+  have hpow : Tendsto (fun k : ℕ ↦ (q : ℝ) ^ k) atTop atTop :=
+    tendsto_pow_atTop_atTop_of_one_lt hq
+  filter_upwards [hpow.eventually_ge_atTop (E / (r - q))] with k hk
+  have hE : E ≤ (r - q) * q ^ k := by
+    calc
+      E = (r - q) * (E / (r - q)) := by field_simp
+      _ ≤ (r - q) * q ^ k := mul_le_mul_of_nonneg_left hk hgap.le
+  dsimp only [q, r] at hE ⊢
+  rw [pow_succ]
+  linarith
+
+/-- Every sufficiently large log-log coordinate lies in a grouping interval whose left endpoint
+is a valid model anchor and whose right endpoint, including any prescribed fixed loss, fits under
+the model variance cap. -/
+theorem eventually_exists_grouping_pow_le_and_add_le_varianceRatio_mul_pow
+    {c : ℝ} (hc : 1 < c) (E : ℝ) :
+    ∀ᶠ u : ℝ in atTop, ∃ k : ℕ,
+      (subpowerKubiliusGroupingRatio c : ℝ) ^ k ≤ u ∧
+        u + E ≤ kubiliusBlockRatio (subpowerKubiliusModelCoefficient c) *
+          (subpowerKubiliusGroupingRatio c : ℝ) ^ k := by
+  let q : ℝ := subpowerKubiliusGroupingRatio c
+  have hq : 1 < q := one_lt_subpowerKubiliusGroupingRatio hc
+  obtain ⟨K, hK⟩ := eventually_atTop.1
+    (eventually_grouping_pow_succ_add_le_varianceRatio_mul_pow hc E)
+  filter_upwards [eventually_ge_atTop (q ^ K)] with u hu
+  have hu1 : 1 ≤ u := (one_le_pow₀ hq.le).trans hu
+  obtain ⟨k, hku, huk⟩ := exists_nat_pow_near hu1 hq
+  have hKk : K ≤ k := by
+    by_contra hnot
+    have hkK : k + 1 ≤ K := by omega
+    have hp : q ^ (k + 1) ≤ q ^ K := pow_le_pow_right₀ hq.le hkK
+    linarith
+  refine ⟨k, hku, ?_⟩
+  have hendpoint := hK k hKk
+  have huend : u + E ≤
+      (subpowerKubiliusGroupingRatio c : ℝ) ^ (k + 1) + E := by
+    linarith
+  exact huend.trans hendpoint
+
+/-- Arithmetic-level specialization of the slack partition: the next dyadic endpoint and the
+Mertens constant both fit below the model variance cap of the chosen geometric anchor. -/
+theorem eventually_exists_subpowerKubiliusGroupingIndex
+    {c : ℝ} (hc : 1 < c) :
+    ∀ᶠ ℓ : ℕ in atTop, ∃ k : ℕ,
+      (subpowerKubiliusGroupingRatio c : ℝ) ^ k ≤ blockLogLog ℓ ∧
+        blockLogLog (ℓ + 1) + Erdos67.PrimeEstimates.mertensBound ≤
+          kubiliusBlockRatio (subpowerKubiliusModelCoefficient c) *
+            (subpowerKubiliusGroupingRatio c : ℝ) ^ k := by
+  have h := tendsto_blockLogLog_atTop.eventually
+    (eventually_exists_grouping_pow_le_and_add_le_varianceRatio_mul_pow hc
+      (Real.log 2 + Erdos67.PrimeEstimates.mertensBound))
+  filter_upwards [h] with ℓ hℓ
+  obtain ⟨k, hkleft, hkright⟩ := hℓ
+  refine ⟨k, hkleft, ?_⟩
+  rw [blockLogLog_succ]
+  linarith
 
 /-- Eventually, every arithmetic level above a geometric anchor has its actual lowered barrier
 above the model barrier at that anchor. -/
