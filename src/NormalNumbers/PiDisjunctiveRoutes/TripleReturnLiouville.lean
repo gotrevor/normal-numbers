@@ -10,9 +10,11 @@ import Mathlib.NumberTheory.Transcendental.Liouville.LiouvilleNumber
 # Route 1: the binary Liouville sibling
 
 Degenerate-corner check for `PiOrbitClosureNonTorsion`: for the irrational
-`liouvilleNumber 2 = ∑ 2^{-i!}`, every point of the binary orbit closure is a torsion
-(dyadic) point.  So "the orbit closure contains a non-torsion point" is a genuine
-condition on π, not a consequence of irrationality.
+`liouvilleNumber 2 = ∑ 2^{-i!}`, every point of the binary ω-limit set is a torsion
+(dyadic) point.  Its full orbit closure still contains the irrational starting
+point.  The non-torsion ω-limit condition is genuine but unnecessary for the
+route: `circleOmegaLimit_infinite_of_irrational` in `TripleReturnReview.lean`
+supplies the infinitude Furstenberg needs directly.
 -/
 
 namespace NormalNumbers.PiDisjunctiveRoutes
@@ -54,7 +56,7 @@ private theorem liouvilleTwo_orbit_near_dyadic (k n : ℕ) (hk : k ! ≤ n) (hn 
           have : k ≤ k * (k+1)! := Nat.le_mul_of_pos_right k (Nat.factorial_pos _)
           nlinarith
 
-/-- The binary orbit closure of `∑ 2^{-i!}` consists of dyadic points. -/
+/-- The binary ω-limit set of `∑ 2^{-i!}` consists of dyadic points. -/
 theorem circleOmegaLimit_liouvilleTwo_subset_dyadic :
     circleOmegaLimit 2 (liouvilleNumber 2) ⊆
       ((↑) : ℝ → UnitAddCircle) '' insert 0 (range fun r : ℕ => (1/2 : ℝ) ^ r) := by
@@ -97,10 +99,10 @@ theorem circleOmegaLimit_liouvilleTwo_subset_dyadic :
         ((1 / 2 ^ ((k+1)! - n) : ℝ) : UnitAddCircle) := dist_triangle _ _ _
     _ < ε := by rw [_root_.dist_comm] at h2; linarith
 
-/-- Proved sibling refutation: an irrational real whose binary orbit closure has no
+/-- Proved sibling refutation: an irrational real whose binary ω-limit set has no
 non-torsion point.  Hence the analogue of `PiOrbitClosureNonTorsion` fails for some
 irrationals, and that node is not implied by irrationality of π alone. -/
-@[blueprint (title := "Binary Liouville number: irrational, orbit closure all torsion")]
+@[blueprint (title := "Binary Liouville number: irrational, omega-limit set all torsion")]
 theorem liouvilleTwo_irrational_and_orbitClosure_torsion :
     Irrational (liouvilleNumber 2) ∧
       ∀ y ∈ circleOmegaLimit 2 (liouvilleNumber 2), IsOfFinAddOrder y := by
@@ -115,10 +117,12 @@ theorem liouvilleTwo_irrational_and_orbitClosure_torsion :
     rw [← mul_pow, show (2:ℝ) * (1/2) = 1 by norm_num, one_pow]
     exact AddCircle.coe_period (p := (1:ℝ))
 
-/-- Open node: π is a recurrent point of doubling, i.e. it lies in its own binary orbit
-closure (every prefix of π's binary expansion recurs, arbitrarily late).
+/-- Open node: π is a recurrent point of doubling, i.e. it lies in its own binary
+ω-limit set (every prefix of π's binary expansion recurs, arbitrarily late).
 Costume audit: (a) implied by the sink; (b) strictly weaker in kind, since it supplies no
 `×q`-invariance; it is a target of the same shape as `TripleReturn` with multiplier `1`.
+This node is not a required prerequisite for the Furstenberg route; see
+`pi_disjunctive_iff_oddInvariant` in `TripleReturnReview.lean`.
 Degenerate corner: fails for the irrational `∑ 2^{-i!}`
 (`not_selfReturn_liouvilleTwo`).  Confidence true: 99% (π believed normal). -/
 def PiSelfReturn : Prop :=
@@ -136,7 +140,7 @@ theorem not_selfReturn_liouvilleTwo :
     liouvilleTwo_irrational_and_orbitClosure_torsion.1
     (liouvilleTwo_irrational_and_orbitClosure_torsion.2 _ h)
 
-/-- Proved: the binary Liouville sibling is not binary disjunctive (its orbit closure is
+/-- Proved: the binary Liouville sibling is not binary disjunctive (its ω-limit set is
 all torsion, while the circle has non-torsion points). -/
 theorem not_isDisjunctive_liouvilleTwo : ¬ IsDisjunctive 2 (liouvilleNumber 2) := by
   intro h

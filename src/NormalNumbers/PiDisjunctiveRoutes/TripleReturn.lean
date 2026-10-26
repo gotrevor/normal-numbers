@@ -36,7 +36,7 @@ theorem nearInteger_sub_iff_dist (a b ε : ℝ) :
   · rintro ⟨z, hz⟩; exact lt_of_le_of_lt (round_le _ z) hz
   · intro h; exact ⟨round (a - b), h⟩
 
-/-- Membership in the binary orbit closure, as an arbitrarily-late return. -/
+/-- Membership in the binary ω-limit set, as an arbitrarily-late return. -/
 theorem mem_circleOmegaLimit_two_iff (x y : ℝ) : (y : UnitAddCircle) ∈ circleOmegaLimit 2 x ↔
     ∀ ε : ℝ, 0 < ε → ∀ N : ℕ, ∃ n, N ≤ n ∧ NearInteger ((2:ℝ)^n * x - y) ε := by
   unfold circleOmegaLimit
@@ -55,7 +55,7 @@ private theorem omegaLimit_point_subset {x : ℝ} {z : UnitAddCircle} (hz : z �
   rintro _ ⟨t, -, _, rfl, rfl⟩
   exact isInvariant_circleOmegaLimit 2 x t hz
 
-/-- If `3x` is in the binary orbit closure `K` of `x`, then `K` is `×3`-invariant. -/
+/-- If `3x` is in the binary ω-limit set `K` of `x`, then `K` is `×3`-invariant. -/
 theorem mapsTo_three_circleOmegaLimit {x : ℝ} (h3 : ((3 * x : ℝ) : UnitAddCircle) ∈ circleOmegaLimit 2 x) :
     MapsTo (3 • · : UnitAddCircle → UnitAddCircle) (circleOmegaLimit 2 x)
       (circleOmegaLimit 2 x) := by
@@ -71,7 +71,7 @@ theorem mapsTo_three_circleOmegaLimit {x : ℝ} (h3 : ((3 * x : ℝ) : UnitAddCi
     · intro t y; simp only [circleFlow_apply, smul_smul, mul_comm]
   exact fun y hy => omegaLimit_point_subset h3 (hm hy)
 
-/-- `TripleReturn x` says exactly that `3x` lies in the binary orbit closure of `x`. -/
+/-- `TripleReturn x` says exactly that `3x` lies in the binary ω-limit set of `x`. -/
 theorem tripleReturn_iff_mem_circleOmegaLimit (x : ℝ) :
     TripleReturn x ↔ ((3 * x : ℝ) : UnitAddCircle) ∈ circleOmegaLimit 2 x := by
   rw [mem_circleOmegaLimit_two_iff]
@@ -95,7 +95,7 @@ def PiQuantitativeTripleReturn : Prop :=
       NearInteger (((2 : ℝ) ^ n - 3) * Real.pi) (1 / 2 ^ k)
 
 /-- Proved.  With K the binary ω-limit set `circleOmegaLimit 2 x`:
-Let K be the binary orbit closure on the circle.  TripleReturn gives 3x ∈ K.
+Let K be the binary ω-limit set on the circle.  TripleReturn gives 3x ∈ K.
 Since K is ×2-invariant, every 2^m 3x belongs to K.  Continuity gives 3K ⊆ K.
 Irrationality makes K infinite; the existing ×2×3 theorem gives K = circle.
 Conversely, a dense irrational binary orbit has every tail dense, and hence
@@ -134,7 +134,7 @@ theorem pi_disjunctive_of_quantitativeTripleReturn
     _ ≤ (1 / 2) ^ k₀ := pow_le_pow_of_le_one (by norm_num) (by norm_num) (by omega)
     _ ≤ ε := hk₀.le
 
-/-- If `qx` is in the binary orbit closure `K` of `x`, then `K` is `×q`-invariant. -/
+/-- If `qx` is in the binary ω-limit set `K` of `x`, then `K` is `×q`-invariant. -/
 theorem mapsTo_mul_circleOmegaLimit {x : ℝ} (q : ℕ)
     (hq : ((q * x : ℝ) : UnitAddCircle) ∈ circleOmegaLimit 2 x) :
     MapsTo (q • · : UnitAddCircle → UnitAddCircle) (circleOmegaLimit 2 x)
@@ -162,11 +162,11 @@ private theorem multIndep_two_of_odd {q : ℕ} (hq : 3 ≤ q) (hodd : Odd q) :
   exact ⟨rfl, (Nat.pow_eq_one.mp hab.symm).resolve_left (by omega)⟩
 
 /-- Proved generalisation of `tripleReturn_iff_disjunctive`: any odd multiplier `q ≥ 3`
-works.  For irrational `x`, `qx` lies in the binary orbit closure iff `x` is binary
+works.  For irrational `x`, `qx` lies in the binary ω-limit set iff `x` is binary
 disjunctive.  Costume audit: equivalent to the sink for every such `q`, so the family
 "∃ odd q ≥ 3, qx ∈ K" is also the sink in a costume; its value is that a proof may pick
 whichever odd `q` the arithmetic of `x` favours. -/
-@[blueprint (title := "Any odd multiple of x in its binary orbit closure forces disjunctivity")]
+@[blueprint (title := "Any odd multiple of x in its binary omega-limit set forces disjunctivity")]
 theorem mem_circleOmegaLimit_oddMul_iff_disjunctive {x : ℝ} (hx : Irrational x)
     {q : ℕ} (hq : 3 ≤ q) (hodd : Odd q) :
     ((q * x : ℝ) : UnitAddCircle) ∈ circleOmegaLimit 2 x ↔ IsDisjunctive 2 x := by
@@ -185,20 +185,24 @@ theorem mem_circleOmegaLimit_oddMul_iff_disjunctive {x : ℝ} (hx : Irrational x
     · exact hu
   · intro h; rw [h]; trivial
 
-/-- Open node, ingredient (i) of the Furstenberg step: the binary orbit closure of π
+/-- Open node, a sufficient ingredient (i) of the Furstenberg step: the binary ω-limit set of π
 contains a non-torsion (irrational) point.
 Costume audit: (a) implied by the sink (K = 𝕋), so it is not an advance by itself;
 (b) strictly weaker than the sink in general: ingredient (ii), ×q-invariance, is what is
 missing.  Degenerate corner: for a binary Liouville number such as `∑ 2^{-n!}` the
-closure is all torsion (proved: `liouvilleTwo_irrational_and_orbitClosure_torsion`), so the node is not automatic.
+ω-limit set is all torsion (proved: `liouvilleTwo_irrational_and_orbitClosure_torsion`), so the node is not automatic.
+Review: this stronger ingredient is unnecessary.  Infinitude follows from
+irrationality; `pi_disjunctive_iff_oddInvariant` removes this premise.
 Confidence true for π: 99% (heuristic: π is believed normal). -/
 def PiOrbitClosureNonTorsion : Prop :=
   ∃ y ∈ circleOmegaLimit 2 Real.pi, ¬ IsOfFinAddOrder y
 
-/-- Open node, ingredient (ii): the binary orbit closure of π is `×q`-invariant for some
+/-- Open node, ingredient (ii): the binary ω-limit set of π is `×q`-invariant for some
 odd `q ≥ 3`.  Costume audit: implied by the sink; together with
 `PiOrbitClosureNonTorsion` it gives the sink (`pi_disjunctive_of_nonTorsion_of_oddInvariant`).
-Alone it is satisfied by `K = {0}`-type closures, so it is not the sink by itself. -/
+For irrational π the ω-limit set is automatically infinite, so this node alone
+is equivalent to disjunctivity (`pi_disjunctive_iff_oddInvariant`, review file).
+Finite ω-limit examples such as `{0}` cannot arise from an irrational start. -/
 def PiOrbitClosureOddInvariant : Prop :=
   ∃ q : ℕ, 3 ≤ q ∧ Odd q ∧
     MapsTo (q • · : UnitAddCircle → UnitAddCircle) (circleOmegaLimit 2 Real.pi)
