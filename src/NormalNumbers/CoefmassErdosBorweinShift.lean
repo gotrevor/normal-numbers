@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
 import Mathlib
-import NormalNumbers.CoefmassErdosBorweinEndpoint
+import NormalNumbers.CoefmassErdosBorweinShiftAux
 
 /-!
 # Step 1′: the shifted growing-moment criterion (personal-c5, 2026-10-25)
