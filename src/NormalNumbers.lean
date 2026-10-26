@@ -1013,6 +1013,7 @@ import NormalNumbers.FiniteStateSelectionStretch
 import NormalNumbers.EntropyProfiles
 import NormalNumbers.EntropyProfilesStretch
 import NormalNumbers.CoefmassErdosBorweinMultiShiftAux
+import NormalNumbers.CoefmassErdosBorweinMultiShift
 
 /-! Every open `sorry` of the build is a crux linked to a barrier, a waiver, or a frozen barrier
 (`BarrierAudit.lean`).  This run sees every module above. -/
