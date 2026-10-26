@@ -53,3 +53,7 @@ add the route-2 Maze row (reopen condition: a lever on ρ's digits not available
 - Next: exact cutoff-six R/S recurrence (generalize PrimeReservoirStep to cutoff s), Maze row
   for the cutoff-six variant, and whether CubicRootEscape follows from any proved
   equidistribution of 2^k mod p (it resembles open Artin-type questions).
+- Lap 2: `ReservoirCutoffSixStep.lean` proves the exact cutoff-s recurrences `reservoirS_succ`,
+  `residualS_succ`, `reservoirS_add_residualS` (R+S = 16ⁿ·piPartial n, exit-free), `sub_succ`
+  (R−S kicked by −2·exit), and `exitS_six_eq` (exit = rationalExit 6 n).  So the cutoff-six
+  arithmetic acts only on the R−S direction; nothing transfers to the π sum.  Remaining: Maze row.
