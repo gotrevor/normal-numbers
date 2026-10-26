@@ -149,3 +149,52 @@ block walk to the prefix event in
 lowered-barrier comparison and its eventual parameter conditions (`0 < h`, `2h ≤ U`), then combine
 it with `eventually_kubiliusOptimizedExponent_le`.  Only then move to the squarefull/divisor
 comparison and `KubiliusTV` transfer.
+
+## Lap checkpoint — 2026-10-26, lowered-barrier comparison
+
+The deterministic lowered-barrier layer of step 6 is now kernel-checked.
+
+- `kubiliusMass_mono` proves monotonicity of the packet's finite Bernoulli mass directly, with no
+  measure-theory detour.
+- `sum_kubiliusMass_exists_centeredPrefixSum_ge_add_le_of_le` separates the deterministic event
+  comparison from probability: any larger actual threshold inherits the already-proved optimized
+  finite-threshold sum bound from a smaller ideal threshold.
+- `kubiliusLoweredBarrier c A B u = u * blockSigma c u - A log u - B` packages exactly the
+  logarithmic and bounded losses required by the paper route.
+- `blockSigma_eq_sqrt_ratio_mul` identifies the fixed gap between coefficient-`c₀` and
+  coefficient-`c` ideal barriers.
+- `eventually_idealBarrier_le_kubiliusLoweredBarrier` proves, for every `0 < c₀ < c` and fixed
+  `A,B` with `0 ≤ B`, that the lowered `c` barrier eventually dominates the ideal `c₀` barrier.
+  The proof uses the exact identity `u * blockSigma c u ^ 2 = c log u`; thus a logarithmic loss
+  divided by the ideal barrier is a constant multiple of `blockSigma c u → 0`.
+- `eventually_kubiliusLoweredBarrier_conditions` adds the operational side conditions: for
+  nonnegative losses the lowered barrier is eventually positive, at most the ideal `c` barrier,
+  and satisfies `2h ≤ r*u` for every fixed `r > 0`.  This is precisely the hypothesis required by
+  the optimized threshold sum with variance cap `U = r*u`.
+
+The packet declarations `primesUpTo`, `kubiliusMass`, `KubiliusTV`, and the headline statement are
+still unchanged from `e61852e6`.  `KubiliusTV` remains only a hypothesis; no `axiom` or
+`native_decide` was added.  The scoped target still has its single headline `sorry`.
+
+Verification actually run:
+
+- `lake env lean src/NormalNumbers/CoefmassErdosBorweinSubpowerKub.lean` — succeeds, with only the
+  pre-existing headline `sorry` warning.
+- `~/personal/bin/lean-green . --target NormalNumbers.CoefmassErdosBorweinSubpowerKub --import
+  NormalNumbers.CoefmassErdosBorweinSubpowerKub --axioms
+  NormalNumbers.ErdosBorweinSubpowerKub.kubiliusMass_mono --axioms
+  NormalNumbers.ErdosBorweinSubpowerKub.sum_kubiliusMass_exists_centeredPrefixSum_ge_add_le_of_le
+  --axioms
+  NormalNumbers.ErdosBorweinSubpowerKub.eventually_idealBarrier_le_kubiliusLoweredBarrier --axioms
+  NormalNumbers.ErdosBorweinSubpowerKub.eventually_kubiliusLoweredBarrier_conditions` —
+  `FORMALIZE-TIER GREEN`; all four declarations report only `Classical.choice`, `Quot.sound`, and
+  `propext`.
+- `~/personal/bin/lean-green .` — full 10,847-job repository build, `FORMALIZE-TIER GREEN`.
+
+The next highest-value attack is the geometric-block assembly of the model theorem.  Choose an
+inner coefficient `c₀` strictly between `r = (1+c)/2` and `c`, use the new event comparison to
+replace the actual lowered threshold by `u * blockSigma c₀ u`, combine
+`eventually_kubiliusOptimizedExponent_le` with the `U/h ≪ √u` prefactor, and sum the resulting
+negative-power majorant over geometric blocks.  After that, identify a selected-prime set's block
+walk with the ordered-prefix event and only then move to the squarefull/divisor comparison and
+`KubiliusTV` transfer.

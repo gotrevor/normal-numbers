@@ -65,6 +65,29 @@ theorem kubiliusParameter_le_one (y p : ℕ) (hp : p ∈ primesUpTo y) :
   exact (div_le_one (by positivity)).mpr hpR
 
 open Classical in
+/-- The finite Kubilius mass is monotone in its event. -/
+theorem kubiliusMass_mono (y : ℕ) {A B : Set (Finset ℕ)} (hAB : A ⊆ B) :
+    kubiliusMass y A ≤ kubiliusMass y B := by
+  unfold kubiliusMass
+  apply Finset.sum_le_sum
+  intro S hS
+  by_cases hSA : S ∈ A
+  · simp only [hSA, hAB hSA, if_true]
+    exact le_rfl
+  · simp only [hSA, if_false]
+    by_cases hSB : S ∈ B
+    · simp only [hSB, if_true]
+      apply Finset.prod_nonneg
+      intro p hp
+      by_cases hpS : p ∈ S
+      · simp only [hpS, if_true]
+        exact kubiliusParameter_nonneg y p hp
+      · simp only [hpS, if_false]
+        exact sub_nonneg.mpr (kubiliusParameter_le_one y p hp)
+    · simp only [hSB, if_false]
+      exact le_rfl
+
+open Classical in
 /-- Doob's exponential maximal inequality in the packet's Kubilius model.  The primes are exposed
 in increasing order, and the empty prefix is included in `centeredBernoulliHit`. -/
 theorem kubiliusMass_centeredBernoulliHit_le_exp (y : ℕ) (θ h : ℝ) (hθ : 0 ≤ θ) :
@@ -243,6 +266,28 @@ theorem sum_kubiliusMass_exists_centeredPrefixSum_ge_add_le_optimized
     _ ≤ Real.exp E * (2 * U / h) :=
       tsum_kubiliusOptimizedTail_le E h U hh hU hhU
 
+open Classical in
+/-- A larger, lowered threshold inherits the optimized block estimate from any smaller ideal
+threshold.  This isolates the deterministic barrier comparison from the probabilistic maximal
+inequality. -/
+theorem sum_kubiliusMass_exists_centeredPrefixSum_ge_add_le_of_le
+    (y : ℕ) (hy : 2 ≤ y) (h₀ h U : ℝ) (hh₀ : 0 < h₀) (hU : 0 < U)
+    (hh₀U : 2 * h₀ ≤ U)
+    (hvar : Real.log (Real.log (y : ℝ)) + Erdos67.PrimeEstimates.mertensBound ≤ U)
+    (h₀h : h₀ ≤ h) (J : ℕ) :
+    (∑ j ∈ Finset.range J, kubiliusMass y
+        {S | ∃ k ≤ ((primesUpTo y).sort (· ≤ ·)).length,
+          h + j ≤ centeredBernoulliPrefixSum (fun p : ℕ ↦ (1 / p : ℝ)) S
+            ((primesUpTo y).sort (· ≤ ·)) k}) ≤
+      Real.exp (-h₀ ^ 2 / (2 * U) + h₀ ^ 3 / U ^ 2) * (2 * U / h₀) := by
+  refine le_trans (Finset.sum_le_sum fun j _ ↦ kubiliusMass_mono y ?_)
+    (sum_kubiliusMass_exists_centeredPrefixSum_ge_add_le_optimized
+      y hy h₀ U hh₀ hU hh₀U hvar J)
+  intro S hS
+  rcases hS with ⟨k, hk, hcross⟩
+  refine ⟨k, hk, ?_⟩
+  exact le_trans (by linarith) hcross
+
 /-! ### Geometric log-log blocks -/
 
 /-- The geometric block ratio chosen strictly between `1` and `c`. -/
@@ -345,6 +390,107 @@ theorem summable_kubiliusGeometricDecay {c : ℝ} (hc : 1 < c) :
     exact Real.rpow_mul_natCast (zero_lt_one.trans hr).le _ k
   rw [hfun]
   exact hsum
+
+/-! ### Lowered barriers -/
+
+/-- The barrier left after paying logarithmic and bounded deterministic losses.  In the
+application, `A * log u` absorbs the squarefull/divisor and block-location costs, while `B`
+absorbs fixed constants. -/
+noncomputable def kubiliusLoweredBarrier (c A B u : ℝ) : ℝ :=
+  u * blockSigma c u - A * Real.log u - B
+
+/-- Changing the coefficient inside the ideal square-root barrier only changes `blockSigma` by
+the corresponding constant square-root factor. -/
+theorem blockSigma_eq_sqrt_ratio_mul (c₀ c u : ℝ) (hc₀ : 0 ≤ c₀) (hc : 0 < c) :
+    blockSigma c₀ u = Real.sqrt (c₀ / c) * blockSigma c u := by
+  unfold blockSigma
+  rw [← Real.sqrt_mul (div_nonneg hc₀ hc.le)]
+  congr 1
+  field_simp [ne_of_gt hc]
+
+/-- Every fixed logarithmic-plus-constant loss is eventually smaller than the gap between the
+ideal barriers with coefficients `c₀ < c`.  This is the deterministic comparison needed to
+replace the actual lowered barrier by an ideal barrier before applying the optimized maximal
+inequality. -/
+theorem eventually_idealBarrier_le_kubiliusLoweredBarrier
+    {c₀ c : ℝ} (hc₀ : 0 < c₀) (hc : 0 < c) (hc₀c : c₀ < c)
+    (A B : ℝ) (hB : 0 ≤ B) :
+    ∀ᶠ u : ℝ in atTop,
+      u * blockSigma c₀ u ≤ kubiliusLoweredBarrier c A B u := by
+  let q : ℝ := Real.sqrt (c₀ / c)
+  have hratio1 : c₀ / c < 1 := (div_lt_one hc).2 hc₀c
+  have hq1 : q < 1 := (Real.sqrt_lt' zero_lt_one).2 (by simpa using hratio1)
+  have hgap : 0 < 1 - q := sub_pos.mpr hq1
+  have hsmall : ∀ᶠ u : ℝ in atTop,
+      (A + B) / c * blockSigma c u < 1 - q := by
+    have ht : Tendsto (fun u : ℝ ↦ (A + B) / c * blockSigma c u) atTop (nhds 0) := by
+      simpa using tendsto_const_nhds.mul (tendsto_blockSigma_atTop_zero c)
+    exact ht.eventually_lt_const hgap
+  filter_upwards [hsmall, Real.tendsto_log_atTop.eventually_ge_atTop 1,
+    eventually_ge_atTop (Real.exp 1)] with u hsmall hlog hu
+  have hu1 : 1 ≤ u := by linarith [Real.exp_one_gt_two]
+  have hu0 : 0 < u := zero_lt_one.trans_le hu1
+  have hσ0 : 0 ≤ blockSigma c u := Real.sqrt_nonneg _
+  have hloss : A * Real.log u + B ≤ (1 - q) * (u * blockSigma c u) := by
+    have hBlog : B ≤ B * Real.log u := by
+      nlinarith [mul_le_mul_of_nonneg_left hlog hB]
+    have hAB : A * Real.log u + B ≤ (A + B) * Real.log u := by
+      nlinarith
+    have hcoef :
+        u * blockSigma c u * ((A + B) / c * blockSigma c u) ≤
+          u * blockSigma c u * (1 - q) :=
+      mul_le_mul_of_nonneg_left hsmall.le (mul_nonneg hu0.le hσ0)
+    have hrewrite :
+        u * blockSigma c u * ((A + B) / c * blockSigma c u) =
+          (A + B) * Real.log u := by
+      rw [show u * blockSigma c u * ((A + B) / c * blockSigma c u) =
+          (A + B) / c * (u * blockSigma c u ^ 2) by ring,
+        blockSigma_sq c u hc.le hu1]
+      field_simp [ne_of_gt hc]
+    rw [hrewrite] at hcoef
+    exact hAB.trans (by simpa [mul_comm] using hcoef)
+  rw [kubiliusLoweredBarrier, blockSigma_eq_sqrt_ratio_mul c₀ c u hc₀.le hc]
+  change u * (q * blockSigma c u) ≤
+    u * blockSigma c u - A * Real.log u - B
+  nlinarith
+
+/-- Eventual side conditions for the lowered-barrier maximal estimate.  Besides comparison with
+an inner ideal barrier, the lowered barrier is positive and is at most half of the variance cap
+`r*u`; the latter supplies both `h ≤ U` and the geometric-threshold summation hypothesis. -/
+theorem eventually_kubiliusLoweredBarrier_conditions
+    {c₀ c r : ℝ} (hc₀ : 0 < c₀) (hc : 0 < c) (hc₀c : c₀ < c) (hr : 0 < r)
+    (A B : ℝ) (hA : 0 ≤ A) (hB : 0 ≤ B) :
+    ∀ᶠ u : ℝ in atTop,
+      u * blockSigma c₀ u ≤ kubiliusLoweredBarrier c A B u ∧
+      0 < kubiliusLoweredBarrier c A B u ∧
+      2 * kubiliusLoweredBarrier c A B u ≤ r * u ∧
+      kubiliusLoweredBarrier c A B u ≤ u * blockSigma c u := by
+  have hinner := eventually_idealBarrier_le_kubiliusLoweredBarrier
+    hc₀ hc hc₀c A B hB
+  have hsmall : ∀ᶠ u : ℝ in atTop, 2 * blockSigma c u < r := by
+    have ht : Tendsto (fun u : ℝ ↦ 2 * blockSigma c u) atTop (nhds 0) := by
+      simpa using tendsto_const_nhds.mul (tendsto_blockSigma_atTop_zero c)
+    exact ht.eventually_lt_const hr
+  filter_upwards [hinner, hsmall, Real.tendsto_log_atTop.eventually_ge_atTop 0,
+    eventually_ge_atTop (Real.exp 1)] with u hinner hsmall hlog hu
+  have hu1 : 1 ≤ u := by linarith [Real.exp_one_gt_two]
+  have hu0 : 0 < u := zero_lt_one.trans_le hu1
+  have hu_gt : 1 < u :=
+    (by norm_num : (1 : ℝ) < 2).trans (Real.exp_one_gt_two.trans_le hu)
+  have hinnerpos : 0 < u * blockSigma c₀ u := by
+    apply mul_pos hu0
+    unfold blockSigma
+    exact Real.sqrt_pos.mpr (div_pos (mul_pos hc₀ (Real.log_pos hu_gt)) hu0)
+  have hlower : kubiliusLoweredBarrier c A B u ≤ u * blockSigma c u := by
+    unfold kubiliusLoweredBarrier
+    have hAlog : 0 ≤ A * Real.log u := mul_nonneg hA hlog
+    linarith
+  refine ⟨hinner, hinnerpos.trans_le hinner, ?_, hlower⟩
+  calc
+    2 * kubiliusLoweredBarrier c A B u ≤ 2 * (u * blockSigma c u) := by gcongr
+    _ = u * (2 * blockSigma c u) := by ring
+    _ ≤ u * r := mul_le_mul_of_nonneg_left hsmall.le hu0.le
+    _ = r * u := by ring
 
 /-- **Target: non-normal below the sub-power weight for every `c > 1`, given `KubiliusTV`.**  This
 reaches the heuristic threshold of `EBLogWindow`'s non-normal half.  The proof replaces the c > 3
