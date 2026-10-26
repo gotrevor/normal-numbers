@@ -93,4 +93,50 @@ theorem diskResidueCover_of_piOrbitWindowCover (h : PiOrbitWindowCover) :
       rw [← ht]; linarith
     exact_mod_cast this
 
+/-- Small-`d` part of the χ₄ divisor identity at radius `4^n`. -/
+def diskSmallPart (n D : ℕ) : ℤ :=
+  ∑ d ∈ Finset.Icc 1 D, chiFour d * ((16 ^ n / d : ℕ) : ℤ)
+
+/-- d-range finding: the small-`d` part, scaled by `8^n`, is the binary orbit point
+`2^n · 4 L_D` of the Leibniz partial sum `L_D = Σ_{d ≤ D} χ₄(d)/d` (a rational), up to `4D/8^n`.
+So the small-`d` range carries a periodic (rational) orbit; all π-content of the residue sits
+in the tail `d > D`, where it is again `2^n · 4(π/4 − L_D)`: the digits of π, no new lever. -/
+theorem diskSmallPart_orbit (n D : ℕ) :
+    |4 * (diskSmallPart n D : ℝ) / 8 ^ n -
+        (2 : ℝ) ^ n * (4 * ∑ d ∈ Finset.Icc 1 D, (chiFour d : ℝ) / d)| ≤ 4 * D / 8 ^ n := by
+  have h8 : (0 : ℝ) < 8 ^ n := by positivity
+  have e : (4 * (diskSmallPart n D : ℝ) / 8 ^ n -
+        (2 : ℝ) ^ n * (4 * ∑ d ∈ Finset.Icc 1 D, (chiFour d : ℝ) / d)) =
+      4 * (∑ d ∈ Finset.Icc 1 D, (chiFour d : ℝ) *
+        (((16 ^ n / d : ℕ) : ℝ) - (16 : ℝ) ^ n / d)) / 8 ^ n := by
+    have h16 : (16 : ℝ) ^ n = 2 ^ n * 8 ^ n := by rw [← mul_pow]; norm_num
+    have hc : (diskSmallPart n D : ℝ) = ∑ d ∈ Finset.Icc 1 D,
+        (chiFour d : ℝ) * ((16 ^ n / d : ℕ) : ℝ) := by
+      rw [diskSmallPart, Int.cast_sum]; simp only [Int.cast_mul, Int.cast_natCast]
+    rw [hc, h16]
+    simp only [Finset.mul_sum, Finset.sum_div, ← Finset.sum_sub_distrib]
+    refine Finset.sum_congr rfl fun d hd => ?_
+    have hd1 : (d : ℝ) ≠ 0 := by
+      have := (Finset.mem_Icc.1 hd).1; positivity
+    field_simp
+  rw [e, abs_div, abs_of_pos h8, abs_mul, abs_of_pos (by norm_num : (0 : ℝ) < 4)]
+  gcongr
+  calc |∑ d ∈ Finset.Icc 1 D, (chiFour d : ℝ) * (((16 ^ n / d : ℕ) : ℝ) - (16 : ℝ) ^ n / d)|
+      ≤ ∑ d ∈ Finset.Icc 1 D, (1 : ℝ) := by
+        refine (Finset.abs_sum_le_sum_abs _ _).trans (Finset.sum_le_sum fun d hd => ?_)
+        have hd1 : (0 : ℝ) < d := by
+          have := (Finset.mem_Icc.1 hd).1; exact_mod_cast this
+        have hχ : |(chiFour d : ℝ)| ≤ 1 := by
+          unfold chiFour; split_ifs <;> norm_num
+        have hfl : |(((16 ^ n / d : ℕ) : ℝ) - (16 : ℝ) ^ n / d)| ≤ 1 := by
+          have a := Nat.cast_div_le (α := ℝ) (m := 16 ^ n) (n := d)
+          have b : (16 : ℝ) ^ n / d - 1 < ((16 ^ n / d : ℕ) : ℝ) := by
+            rw [sub_lt_iff_lt_add, div_lt_iff₀ hd1]
+            have := Nat.lt_div_mul_add (a := 16 ^ n) (b := d) (by exact_mod_cast hd1)
+            have : ((16 ^ n : ℕ) : ℝ) < ((16 ^ n / d * d + d : ℕ) : ℝ) := by exact_mod_cast this
+            push_cast at this a ⊢; nlinarith
+          push_cast at a; rw [abs_le]; constructor <;> linarith
+        rw [abs_mul]; nlinarith [abs_nonneg (chiFour d : ℝ)]
+    _ = D := by simp
+
 end NormalNumbers.PiDisjunctiveRoutes
