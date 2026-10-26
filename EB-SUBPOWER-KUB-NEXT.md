@@ -198,3 +198,55 @@ replace the actual lowered threshold by `u * blockSigma c₀ u`, combine
 negative-power majorant over geometric blocks.  After that, identify a selected-prime set's block
 walk with the ordered-prefix event and only then move to the squarefull/divisor comparison and
 `KubiliusTV` transfer.
+
+## Review-lap checkpoint — 2026-10-26, integrated geometric-block majorant
+
+Fresh reconstruction from the frozen packet statement, the proved `c > 3` theorem, source, and
+history confirms the route: the old headline assembly is c-free after
+`exists_subpower_marginal_large_cards_le`, so this campaign still needs exactly its Kubilius-based
+replacement and then can reuse `subpower_capped_marginal_residual_small` and the final marginal
+criterion.  A diff against planting commit `e61852e6` reconfirmed that `primesUpTo`,
+`kubiliusMass`, `KubiliusTV`, and the headline statement are byte-unchanged.
+
+The geometric-block assembly requested by the previous checkpoint is now kernel-checked.
+
+- `kubiliusInnerCoefficient c` chooses `c₀ = (r+c)/2`, where
+  `r = kubiliusBlockRatio c = (1+c)/2`; Lean proves `r < c₀ < c`.
+- `kubiliusIntegratedDecayExponent c = (r-c₀)/(4r)` records the exponent remaining after the
+  optimized maximal tail and the reciprocal-barrier cost.  It is strictly negative for every
+  `c > 1`.
+- `eventually_kubiliusLoweredCrossingMass_le` is the uniform one-block model theorem.  For every
+  sufficiently large log-log coordinate `u`, every terminal prime cutoff `y` whose Mertens
+  variance is at most `r*u`, and every finite number of auxiliary thresholds, the total
+  `kubiliusMass` of lowered-barrier prefix crossings is at most
+  `kubiliusIntegratedMajorantConstant c * u ^ kubiliusIntegratedDecayExponent c`.
+  The proof composes the lowered-barrier event comparison, the optimized cubic maximal bound,
+  the exponent gap `r < c₀`, and `blockSigma_inv_le_sqrt_div_sqrt`.
+- `kubiliusIntegratedMajorant_geometric` specializes `u = r^k`, and
+  `summable_kubiliusIntegratedMajorant` proves the resulting full majorant summable.  Thus the
+  analytic probability calculation on geometric blocks no longer has an open exponent or
+  summation step.
+
+The scoped target still has its single frozen headline `sorry`.  `KubiliusTV` remains only a
+hypothesis; no `axiom` declaration or `native_decide` was added.
+
+Verification actually run:
+
+- `lake env lean src/NormalNumbers/CoefmassErdosBorweinSubpowerKub.lean` — succeeds, with only the
+  pre-existing headline `sorry` warning.
+- `~/personal/bin/lean-green . --target NormalNumbers.CoefmassErdosBorweinSubpowerKub --import
+  NormalNumbers.CoefmassErdosBorweinSubpowerKub --axioms
+  NormalNumbers.ErdosBorweinSubpowerKub.eventually_kubiliusLoweredCrossingMass_le --axioms
+  NormalNumbers.ErdosBorweinSubpowerKub.summable_kubiliusIntegratedMajorant --axioms
+  NormalNumbers.ErdosBorweinSubpowerKub.kubiliusIntegratedMajorant_geometric` —
+  `FORMALIZE-TIER GREEN`; all three declarations report exactly `Classical.choice`, `Quot.sound`,
+  and `propext`.
+- `~/personal/bin/lean-green .` — full 10,847-job repository build, `FORMALIZE-TIER GREEN`.
+
+The remaining step-6 blocker is now purely the deterministic event interface, not the maximal
+estimate or geometric summation.  The next highest-value attack is to define the actual selected-
+prime walk on a geometric log-log block and prove that crossing its lowered barrier implies the
+ordered-prefix event in `kubiliusLoweredCrossingMass` (with the terminal cutoff variance cap).
+Then sum those block events using `summable_kubiliusIntegratedMajorant`.  After this model theorem
+is packaged, move to the squarefull/large-prime comparison and the `KubiliusTV` transfer; only then
+copy the proved `c > 3` capped-residual and headline assembly.

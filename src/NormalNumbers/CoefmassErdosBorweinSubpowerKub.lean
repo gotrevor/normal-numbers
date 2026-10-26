@@ -492,6 +492,205 @@ theorem eventually_kubiliusLoweredBarrier_conditions
     _ ≤ u * r := mul_le_mul_of_nonneg_left hsmall.le hu0.le
     _ = r * u := by ring
 
+/-! ### Integrated geometric-block majorant -/
+
+/-- Coefficient retained inside the lowered barrier, strictly between the geometric variance
+ratio and the packet coefficient. -/
+noncomputable def kubiliusInnerCoefficient (c : ℝ) : ℝ :=
+  (kubiliusBlockRatio c + c) / 2
+
+/-- Power left after the optimized exponential estimate and its reciprocal-barrier prefactor. -/
+noncomputable def kubiliusIntegratedDecayExponent (c : ℝ) : ℝ :=
+  (kubiliusBlockRatio c - kubiliusInnerCoefficient c) /
+    (4 * kubiliusBlockRatio c)
+
+/-- Constant in the integrated one-block Kubilius majorant. -/
+noncomputable def kubiliusIntegratedMajorantConstant (c : ℝ) : ℝ :=
+  2 * kubiliusBlockRatio c / Real.sqrt (kubiliusInnerCoefficient c)
+
+theorem kubiliusBlockRatio_lt_innerCoefficient {c : ℝ} (hc : 1 < c) :
+    kubiliusBlockRatio c < kubiliusInnerCoefficient c := by
+  unfold kubiliusInnerCoefficient
+  linarith [kubiliusBlockRatio_lt hc]
+
+theorem kubiliusInnerCoefficient_lt {c : ℝ} (hc : 1 < c) :
+    kubiliusInnerCoefficient c < c := by
+  unfold kubiliusInnerCoefficient
+  linarith [kubiliusBlockRatio_lt hc]
+
+theorem kubiliusInnerCoefficient_pos {c : ℝ} (hc : 1 < c) :
+    0 < kubiliusInnerCoefficient c :=
+  zero_lt_one.trans (one_lt_kubiliusBlockRatio hc) |>.trans
+    (kubiliusBlockRatio_lt_innerCoefficient hc)
+
+theorem kubiliusIntegratedDecayExponent_neg {c : ℝ} (hc : 1 < c) :
+    kubiliusIntegratedDecayExponent c < 0 := by
+  unfold kubiliusIntegratedDecayExponent
+  exact div_neg_of_neg_of_pos
+    (sub_neg.mpr (kubiliusBlockRatio_lt_innerCoefficient hc))
+    (mul_pos (by norm_num) (zero_lt_one.trans (one_lt_kubiliusBlockRatio hc)))
+
+/-- The negative-power majorant is summable along the geometric block schedule. -/
+theorem summable_kubiliusIntegratedDecay {c : ℝ} (hc : 1 < c) :
+    Summable (fun k : ℕ ↦ Real.rpow (kubiliusBlockRatio c)
+      (kubiliusIntegratedDecayExponent c * (k : ℝ))) := by
+  have hr : 1 < kubiliusBlockRatio c := one_lt_kubiliusBlockRatio hc
+  have he : kubiliusIntegratedDecayExponent c < 0 :=
+    kubiliusIntegratedDecayExponent_neg hc
+  have hqpos : 0 < Real.rpow (kubiliusBlockRatio c)
+      (kubiliusIntegratedDecayExponent c) :=
+    Real.rpow_pos_of_pos (zero_lt_one.trans hr) _
+  have hqnorm : ‖Real.rpow (kubiliusBlockRatio c)
+      (kubiliusIntegratedDecayExponent c)‖ < 1 := by
+    rw [Real.norm_eq_abs, abs_of_pos hqpos]
+    exact Real.rpow_lt_one_of_one_lt_of_neg hr he
+  have hsum := summable_geometric_of_norm_lt_one hqnorm
+  have hfun : (fun k : ℕ ↦ Real.rpow (kubiliusBlockRatio c)
+      (kubiliusIntegratedDecayExponent c * (k : ℝ))) =
+      fun k : ℕ ↦ Real.rpow (kubiliusBlockRatio c)
+        (kubiliusIntegratedDecayExponent c) ^ k := by
+    funext k
+    exact Real.rpow_mul_natCast (zero_lt_one.trans hr).le _ k
+  rw [hfun]
+  exact hsum
+
+/-- Substituting the geometric coordinate `u = r^k` puts the integrated one-block majorant in
+the exact form used by `summable_kubiliusIntegratedDecay`. -/
+theorem kubiliusIntegratedMajorant_geometric (c : ℝ) (k : ℕ)
+    (hr : 0 ≤ kubiliusBlockRatio c) :
+    kubiliusIntegratedMajorantConstant c *
+        Real.rpow (Real.rpow (kubiliusBlockRatio c) (k : ℝ))
+          (kubiliusIntegratedDecayExponent c) =
+      kubiliusIntegratedMajorantConstant c *
+        Real.rpow (kubiliusBlockRatio c)
+          (kubiliusIntegratedDecayExponent c * (k : ℝ)) := by
+  congr 1
+  calc
+    Real.rpow (Real.rpow (kubiliusBlockRatio c) (k : ℝ))
+        (kubiliusIntegratedDecayExponent c) =
+      Real.rpow (kubiliusBlockRatio c)
+        ((k : ℝ) * kubiliusIntegratedDecayExponent c) :=
+      (Real.rpow_mul hr (k : ℝ) (kubiliusIntegratedDecayExponent c)).symm
+    _ = Real.rpow (kubiliusBlockRatio c)
+        (kubiliusIntegratedDecayExponent c * (k : ℝ)) := by
+      congr 1
+      ring
+
+theorem summable_kubiliusIntegratedMajorant {c : ℝ} (hc : 1 < c) :
+    Summable (fun k : ℕ ↦ kubiliusIntegratedMajorantConstant c *
+      Real.rpow (kubiliusBlockRatio c)
+        (kubiliusIntegratedDecayExponent c * (k : ℝ))) :=
+  (summable_kubiliusIntegratedDecay hc).mul_left _
+
+open Classical in
+/-- Model mass of crossings above one lowered barrier, summed over auxiliary integer
+thresholds. -/
+noncomputable def kubiliusLoweredCrossingMass
+    (y : ℕ) (c A B u : ℝ) (J : ℕ) : ℝ :=
+  ∑ j ∈ Finset.range J, kubiliusMass y
+    {S | ∃ k ≤ ((primesUpTo y).sort (· ≤ ·)).length,
+      kubiliusLoweredBarrier c A B u + j ≤
+        centeredBernoulliPrefixSum (fun p : ℕ ↦ (1 / p : ℝ)) S
+          ((primesUpTo y).sort (· ≤ ·)) k}
+
+open Classical in
+/-- The lowered-barrier crossing mass on one log-log block is eventually bounded by a fixed
+negative power of the block coordinate, uniformly in the prime cutoff and number of auxiliary
+thresholds. -/
+theorem eventually_kubiliusLoweredCrossingMass_le
+    {c : ℝ} (hc : 1 < c) (A B : ℝ) (hA : 0 ≤ A) (hB : 0 ≤ B) :
+    ∀ᶠ u : ℝ in atTop, ∀ y J : ℕ, 2 ≤ y →
+      Real.log (Real.log (y : ℝ)) + Erdos67.PrimeEstimates.mertensBound ≤
+        kubiliusBlockRatio c * u →
+      kubiliusLoweredCrossingMass y c A B u J ≤
+        kubiliusIntegratedMajorantConstant c *
+          Real.rpow u (kubiliusIntegratedDecayExponent c) := by
+  let r : ℝ := kubiliusBlockRatio c
+  let c₀ : ℝ := kubiliusInnerCoefficient c
+  have hr : 0 < r := zero_lt_one.trans (one_lt_kubiliusBlockRatio hc)
+  have hc₀ : 0 < c₀ := kubiliusInnerCoefficient_pos hc
+  have hrc₀ : r < c₀ := kubiliusBlockRatio_lt_innerCoefficient hc
+  have hc₀c : c₀ < c := kubiliusInnerCoefficient_lt hc
+  have hconditions := eventually_kubiliusLoweredBarrier_conditions
+    hc₀ (by linarith : 0 < c) hc₀c hr A B hA hB
+  have hexponent := eventually_kubiliusOptimizedExponent_le hc₀ hr hrc₀
+  filter_upwards [hconditions, hexponent,
+    Real.tendsto_log_atTop.eventually_ge_atTop 1,
+    eventually_ge_atTop (Real.exp 1)] with u hconditions hexponent hlog hu
+  intro y J hy hvar
+  have hu1 : 1 ≤ u := by linarith [Real.exp_one_gt_two]
+  have hu0 : 0 < u := zero_lt_one.trans_le hu1
+  have hσ0 : 0 < blockSigma c₀ u := by
+    unfold blockSigma
+    exact Real.sqrt_pos.mpr (div_pos (mul_pos hc₀ (zero_lt_one.trans_le hlog)) hu0)
+  have hh₀ : 0 < u * blockSigma c₀ u := mul_pos hu0 hσ0
+  have hU : 0 < r * u := mul_pos hr hu0
+  have hh₀U : 2 * (u * blockSigma c₀ u) ≤ r * u := by
+    exact (mul_le_mul_of_nonneg_left hconditions.1 (by norm_num : (0 : ℝ) ≤ 2)).trans
+      hconditions.2.2.1
+  have hraw := sum_kubiliusMass_exists_centeredPrefixSum_ge_add_le_of_le
+    y hy (u * blockSigma c₀ u) (kubiliusLoweredBarrier c A B u) (r * u)
+    hh₀ hU hh₀U hvar hconditions.1 J
+  have hexp :
+      Real.exp (-(u * blockSigma c₀ u) ^ 2 / (2 * (r * u)) +
+          (u * blockSigma c₀ u) ^ 3 / (r * u) ^ 2) ≤
+        Real.rpow u (-(c₀ + r) / (4 * r)) := by
+    calc
+      Real.exp (-(u * blockSigma c₀ u) ^ 2 / (2 * (r * u)) +
+          (u * blockSigma c₀ u) ^ 3 / (r * u) ^ 2) ≤
+          Real.exp (-(c₀ + r) / (4 * r) * Real.log u) :=
+        Real.exp_le_exp.mpr hexponent.2
+      _ = Real.rpow u (-(c₀ + r) / (4 * r)) := by
+        calc
+          Real.exp (-(c₀ + r) / (4 * r) * Real.log u) =
+              Real.exp (Real.log u * (-(c₀ + r) / (4 * r))) := by ring
+          _ = Real.rpow u (-(c₀ + r) / (4 * r)) :=
+            (Real.rpow_def_of_pos hu0 (-(c₀ + r) / (4 * r))).symm
+  have hinv := blockSigma_inv_le_sqrt_div_sqrt c₀ u hc₀ hu1 hlog
+  have hpref :
+      2 * (r * u) / (u * blockSigma c₀ u) ≤
+        (2 * r / Real.sqrt c₀) * Real.rpow u (1 / 2) := by
+    have hsqrt : Real.rpow u (1 / 2) = Real.sqrt u := by
+      exact Real.sqrt_eq_rpow u |>.symm
+    rw [hsqrt]
+    calc
+      2 * (r * u) / (u * blockSigma c₀ u) =
+          2 * r * (blockSigma c₀ u)⁻¹ := by
+            field_simp [ne_of_gt hu0, ne_of_gt hσ0]
+      _ ≤ 2 * r * (Real.sqrt u / Real.sqrt c₀) := by gcongr
+      _ = (2 * r / Real.sqrt c₀) * Real.sqrt u := by ring
+  have hpref0 : 0 ≤ 2 * (r * u) / (u * blockSigma c₀ u) := by positivity
+  have hupper0 : 0 ≤ Real.rpow u (-(c₀ + r) / (4 * r)) :=
+    Real.rpow_nonneg hu0.le _
+  calc
+    kubiliusLoweredCrossingMass y c A B u J ≤
+        Real.exp (-(u * blockSigma c₀ u) ^ 2 / (2 * (r * u)) +
+          (u * blockSigma c₀ u) ^ 3 / (r * u) ^ 2) *
+            (2 * (r * u) / (u * blockSigma c₀ u)) := by
+      simpa [kubiliusLoweredCrossingMass, r, c₀] using hraw
+    _ ≤ Real.rpow u (-(c₀ + r) / (4 * r)) *
+          ((2 * r / Real.sqrt c₀) * Real.rpow u (1 / 2)) :=
+      mul_le_mul hexp hpref hpref0 hupper0
+    _ = kubiliusIntegratedMajorantConstant c *
+          Real.rpow u (kubiliusIntegratedDecayExponent c) := by
+      have hrpow :
+          Real.rpow u (-(c₀ + r) / (4 * r)) * Real.rpow u (1 / 2) =
+            Real.rpow u ((r - c₀) / (4 * r)) := by
+        calc
+          Real.rpow u (-(c₀ + r) / (4 * r)) * Real.rpow u (1 / 2) =
+              Real.rpow u (-(c₀ + r) / (4 * r) + 1 / 2) :=
+            (Real.rpow_add hu0 (-(c₀ + r) / (4 * r)) (1 / 2)).symm
+          _ = Real.rpow u ((r - c₀) / (4 * r)) := by
+            congr 1
+            field_simp [ne_of_gt hr]
+            ring
+      rw [show Real.rpow u (-(c₀ + r) / (4 * r)) *
+          ((2 * r / Real.sqrt c₀) * Real.rpow u (1 / 2)) =
+            (2 * r / Real.sqrt c₀) *
+              (Real.rpow u (-(c₀ + r) / (4 * r)) * Real.rpow u (1 / 2)) by ring,
+        hrpow]
+      rfl
+
 /-- **Target: non-normal below the sub-power weight for every `c > 1`, given `KubiliusTV`.**  This
 reaches the heuristic threshold of `EBLogWindow`'s non-normal half.  The proof replaces the c > 3
 block-union step of `ebRandom_ae_not_normal_subpower` by Doob's exponential maximal inequality on
