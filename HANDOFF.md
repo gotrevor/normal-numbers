@@ -1,3 +1,9 @@
+# BOX STUCK (strike 2, CONFIRMED, 2026-10-26, pi route 2 cutoff-six): read HANDOFF-pi-route2.md "BLOCKER (confirmed)"
+
+- WHAT: brief docs/pi-routes/opus-cutoff-six-followup.md delivered; plus nonvanishing reduced to `RestrictedRootFar` (ReservoirCutoffSixDFI.lean, `nonvanishing_of_restrictedRootFar`, axioms clean), via `cubicRootEscape_iff` and the p≡1 mod 120 quadratic class.
+- WHY operator-gated: the remaining gap is Duke–Friedlander–Iwaniec equidistribution restricted to {p≡1 mod 120, 2 not a sixth power}; needs a literature source (ON-LINE-REQUEST.md, 2026-10-26). Other src sorries belong to other campaigns.
+- ASK: supply a source for restricted DFI (Tóth IMRN 2000 or similar, exact theorem), or reassign the run.
+
 # BOX STUCK (strike 1, 2026-10-26, pi route 2 cutoff-six): read HANDOFF-pi-route2.md "BLOCKER"
 
 - WHAT: the operator brief docs/pi-routes/opus-cutoff-six-followup.md is fully delivered (bcd2af3e, 3fa836a4, 8bbdc428).
