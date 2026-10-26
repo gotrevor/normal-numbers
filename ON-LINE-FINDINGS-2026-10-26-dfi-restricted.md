@@ -1,5 +1,13 @@
 # ON-LINE-FINDINGS 2026-10-26 — DFI restricted to the cutoff-six Chebotarev set
 
+**Continuation:** item 4 correctly identifies a limitation at the fixed distance 1/4,
+but does not obstruct nonvanishing at a smaller positive distance.  The new
+`CutoffSix.nonvanishing_of_dfi_chebotarev` uses positive eligible-prime density and
+unrestricted DFI boundary scarcity.  The theorem retains both literature
+specializations as explicit hypothesis Props.  See
+`docs/pi-routes/cutoff-six-density.md`.  A restricted DFI source is no longer
+required for this nonvanishing argument; the historical search below is preserved.
+
 **Request** (`ON-LINE-REQUEST.md`, 2026-10-26, route 2): a published equidistribution theorem for
 roots ν/p of x²+64x+4096 to prime moduli, restricted to p ≡ 1 mod 120 with 2 not a sixth power
 mod p; candidates Tóth (IMRN 2000) and Duke–Friedlander–Iwaniec (Annals 1995).

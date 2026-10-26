@@ -28,6 +28,7 @@ import NormalNumbers.PiDisjunctiveRoutes.ReservoirCutoffSixVanishing
 import NormalNumbers.PiDisjunctiveRoutes.ReservoirCutoffSixRoot
 import NormalNumbers.PiDisjunctiveRoutes.ReservoirCutoffSixQuadratic
 import NormalNumbers.PiDisjunctiveRoutes.ReservoirCutoffSixDFI
+import NormalNumbers.PiDisjunctiveRoutes.ReservoirCutoffSixDensity
 import NormalNumbers.EntropyProfiles
 import NormalNumbers.CantorExactExponentStretch
 import NormalNumbers.CantorExactExponentProfile
@@ -129,8 +130,11 @@ def mazeLinks : List Link := [
    [``ZeroOneBases.ZeroOneFourFive, ``ZeroOneBases.ZeroOneThreeFourInfinite]⟩,
   ⟨"Cutoff-six prime reservoir as an arithmetic source for pi",
    [``PiDisjunctiveRoutes.CutoffSix.exit_six_not_eventually_small,
-    ``PiDisjunctiveRoutes.CutoffSix.reservoirS_add_residualS, ``PiDisjunctiveRoutes.CutoffSix.sub_succ],
-   [``PiDisjunctiveRoutes.CutoffSix.CubicRootEscape, ``PiDisjunctiveRoutes.ReservoirConstDisjunctive]⟩,
+    ``PiDisjunctiveRoutes.CutoffSix.reservoirS_add_residualS, ``PiDisjunctiveRoutes.CutoffSix.sub_succ,
+    ``PiDisjunctiveRoutes.CutoffSix.nonvanishing_of_dfi_chebotarev],
+   [``PiDisjunctiveRoutes.CutoffSix.EligibleChebotarevDensity,
+    ``PiDisjunctiveRoutes.CutoffSix.DFIBoundaryScarcity,
+    ``PiDisjunctiveRoutes.ReservoirConstDisjunctive]⟩,
   ⟨"82000 via the base-3 slope coordinate",
    [``ZeroOneBases.fourExponentials_jointSlopeIndependence],
    [``ZeroOneBases.FourExponentialsConjecture, ``ZeroOneBases.JointSlopeIndependence]⟩,

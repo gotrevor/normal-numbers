@@ -1,5 +1,13 @@
 # HANDOFF — pi route 2 (prime reservoir) — lap 3, 2026-10-26
 
+**Continuation:** the restricted-DFI blocker below is bypassed for nonvanishing.
+`CutoffSix.nonvanishing_of_dfi_chebotarev` in `ReservoirCutoffSixDensity.lean`
+proves `ExitSixNonvanishing` from two explicit inputs:
+`EligibleChebotarevDensity` and unrestricted `DFIBoundaryScarcity`.
+See `docs/pi-routes/cutoff-six-density.md` for the counting argument and input audit.
+The old fixed-distance `RestrictedRootFar` remains open; it is unnecessary for this bridge.
+The remaining π issue is still control of the sum direction.
+
 ## Node graph (all green unless noted; axioms = propext, Classical.choice, Quot.sound)
 - `fresh_prime_dvd_head_den` (PrimeReservoir.lean): fresh prime poles survive (p-adic norm).
 - `PiPrimeReservoirSupport` (premise, 70%→ see below) ⇒ `IsDisjunctive 16 π`
