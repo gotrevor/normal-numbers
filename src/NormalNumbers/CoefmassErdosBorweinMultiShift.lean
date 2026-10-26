@@ -49,6 +49,209 @@ noncomputable def multiShiftMass (P y J : ℕ) (A : Set (Fin J → Finset ℕ)) 
         | some _ => 1 / ((p : ℕ) : ℝ))
     else 0
 
+/-! ### Enumerating the concrete prime model -/
+
+/-- An arbitrary enumeration of the primes in `(P, y]`.  All product masses below are invariant
+under this choice. -/
+noncomputable def primeIndexEquiv (P y : ℕ) :
+    Fin (Fintype.card (primesIoc P y)) ≃ primesIoc P y :=
+  (Fintype.equivFin (primesIoc P y)).symm
+
+/-- Reconstruct the prime finset in every shift column from an indexed categorical configuration. -/
+noncomputable def indexedMultiShiftPattern (P y J : ℕ)
+    (τ : Fin (Fintype.card (primesIoc P y)) → Option (Fin J)) : Fin J → Finset ℕ :=
+  fun j => (Finset.univ.filter (fun i => τ i = some j)).map
+    ((primeIndexEquiv P y).toEmbedding.trans (Function.Embedding.subtype _))
+
+theorem indexedMultiShiftPattern_eq_subtype (P y J : ℕ)
+    (τ : Fin (Fintype.card (primesIoc P y)) → Option (Fin J)) :
+    indexedMultiShiftPattern P y J τ =
+      fun j => ((Finset.univ.filter
+        (fun p : primesIoc P y => τ ((primeIndexEquiv P y).symm p) = some j)).map
+          (Function.Embedding.subtype _)) := by
+  classical
+  funext j
+  unfold indexedMultiShiftPattern
+  rw [← Finset.map_map]
+  congr 1
+  ext p
+  simp
+
+/-- Enumeration does not change the number of selected primes in a shift column. -/
+theorem card_indexedMultiShiftPattern (P y J : ℕ)
+    (τ : Fin (Fintype.card (primesIoc P y)) → Option (Fin J)) (j : Fin J) :
+    (indexedMultiShiftPattern P y J τ j).card =
+      (Finset.univ.filter (fun i => τ i = some j)).card := by
+  simp [indexedMultiShiftPattern]
+
+/-- The packet's concrete multishift model is exactly the abstract categorical finite product,
+after enumerating `primesIoc`. -/
+theorem multiShiftMass_eq_finiteProductMass (P y J : ℕ)
+    (A : Set (Fin J → Finset ℕ)) :
+    multiShiftMass P y J A =
+      finiteProductMass
+        (fun i => categoricalShiftWeight J
+          (1 / (((primeIndexEquiv P y) i : ℕ) : ℝ)))
+        {τ | indexedMultiShiftPattern P y J τ ∈ A} := by
+  classical
+  symm
+  have hevent :
+      {τ | indexedMultiShiftPattern P y J τ ∈ A} =
+        {τ | (fun j => ((Finset.univ.filter
+          (fun p : primesIoc P y =>
+            τ ((primeIndexEquiv P y).symm p) = some j)).map
+              (Function.Embedding.subtype _))) ∈ A} := by
+    ext τ
+    simp only [Set.mem_ofPred_eq]
+    rw [indexedMultiShiftPattern_eq_subtype]
+  rw [hevent]
+  have hreindex := finiteProductMass_reindex (primeIndexEquiv P y)
+    (fun p : primesIoc P y =>
+      categoricalShiftWeight J (1 / ((p : ℕ) : ℝ)))
+    {σ | (fun j => ((Finset.univ.filter
+      (fun p : primesIoc P y => σ p = some j)).map
+        (Function.Embedding.subtype _))) ∈ A}
+  simp only [Set.mem_ofPred_eq] at hreindex
+  rw [hreindex]
+  unfold multiShiftMass
+  apply Fintype.sum_congr
+  intro σ
+  split <;> rename_i hσ
+  · apply Finset.prod_congr rfl
+    intro p hp
+    cases hval : σ p <;> simp [categoricalShiftWeight, div_eq_mul_inv]
+  · rfl
+
+/-- Concrete Step 4 comparison for the packet's prime model.  Its only error is the two copies of
+the summed per-prime collision cost; the independent term factors over shifts by
+`independentShiftProduct_card_lt_eq_prod_one_sub`. -/
+theorem multiShiftMass_noHeavy_le_independent {P y J : ℕ} (hJP : J ≤ P)
+    (threshold : Fin J → ℕ) :
+    multiShiftMass P y J
+        {Q | ∀ j, (Q j).card < threshold j} ≤
+      finiteProductMass
+          (fun i => independentShiftSubsetWeight J
+            (1 / (((primeIndexEquiv P y) i : ℕ) : ℝ)))
+          {σ | ∀ j, (Finset.univ.filter (fun i => j ∈ σ i)).card < threshold j} +
+        2 * ∑ i, (J : ℝ) * (J - 1 : ℕ) *
+          (1 / (((primeIndexEquiv P y) i : ℕ) : ℝ)) ^ 2 := by
+  classical
+  rw [multiShiftMass_eq_finiteProductMass]
+  have hprime : ∀ i : Fin (Fintype.card (primesIoc P y)),
+      Nat.Prime ((primeIndexEquiv P y) i : ℕ) := by
+    intro i
+    exact (Finset.mem_filter.mp ((primeIndexEquiv P y) i).property).2
+  have hP : ∀ i : Fin (Fintype.card (primesIoc P y)),
+      P < ((primeIndexEquiv P y) i : ℕ) := by
+    intro i
+    exact Finset.mem_Ioc.mp
+      (Finset.mem_filter.mp ((primeIndexEquiv P y) i).property).1 |>.1
+  have hq0 : ∀ i : Fin (Fintype.card (primesIoc P y)),
+      0 ≤ (1 / (((primeIndexEquiv P y) i : ℕ) : ℝ)) := by
+    intro i
+    positivity
+  have hq1 : ∀ i : Fin (Fintype.card (primesIoc P y)),
+      (1 / (((primeIndexEquiv P y) i : ℕ) : ℝ)) ≤ 1 := by
+    intro i
+    have hpR : (0 : ℝ) < (((primeIndexEquiv P y) i : ℕ) : ℝ) := by
+      exact_mod_cast (hprime i).pos
+    apply (div_le_one hpR).2
+    exact_mod_cast (hprime i).one_le
+  have hJq : ∀ i : Fin (Fintype.card (primesIoc P y)),
+      (J : ℝ) * (1 / (((primeIndexEquiv P y) i : ℕ) : ℝ)) ≤ 1 := by
+    intro i
+    rw [mul_one_div]
+    have hpR : (0 : ℝ) < (((primeIndexEquiv P y) i : ℕ) : ℝ) := by
+      exact_mod_cast (hprime i).pos
+    apply (div_le_one hpR).2
+    exact_mod_cast hJP.trans (hP i).le
+  simpa only [Set.mem_ofPred_eq, card_indexedMultiShiftPattern] using
+    (categoricalShiftProduct_noHeavy_le_independent
+      (fun i => 1 / (((primeIndexEquiv P y) i : ℕ) : ℝ)) hq0 hq1 hJq threshold)
+
+/-- The collision sum over the enumerated primes in `(P,y]` is bounded by the elementary
+reciprocal-square tail `1/P`. -/
+theorem sum_primeIndex_inv_sq_le {P y : ℕ} (hP0 : P ≠ 0) (hPy : P ≤ y) :
+    (∑ i : Fin (Fintype.card (primesIoc P y)),
+        (1 / (((primeIndexEquiv P y) i : ℕ) : ℝ)) ^ 2) ≤
+      ((P : ℝ) : ℝ)⁻¹ := by
+  classical
+  calc
+    (∑ i : Fin (Fintype.card (primesIoc P y)),
+        (1 / (((primeIndexEquiv P y) i : ℕ) : ℝ)) ^ 2) =
+        ∑ p : primesIoc P y, (1 / ((p : ℕ) : ℝ)) ^ 2 :=
+      (primeIndexEquiv P y).sum_comp
+        (fun p : primesIoc P y => (1 / ((p : ℕ) : ℝ)) ^ 2)
+    _ = ∑ p ∈ primesIoc P y, (1 / (p : ℝ)) ^ 2 := by
+      rw [← (primesIoc P y).attach_eq_univ]
+      exact Finset.sum_attach (primesIoc P y)
+        (fun p : ℕ => (1 / (p : ℝ)) ^ 2)
+    _ = ∑ p ∈ primesIoc P y, (((p : ℝ) ^ 2)⁻¹) := by
+      simp only [one_div, inv_pow]
+    _ ≤ ∑ p ∈ Finset.Ioc P y, (((p : ℝ) ^ 2)⁻¹) := by
+      apply Finset.sum_le_sum_of_subset_of_nonneg
+      · exact Finset.filter_subset _ _
+      · intro p hpIoc hpnot
+        positivity
+    _ ≤ (P : ℝ)⁻¹ - (y : ℝ)⁻¹ :=
+      sum_Ioc_inv_sq_le_sub hP0 hPy
+    _ ≤ (P : ℝ)⁻¹ := sub_le_self _ (by positivity)
+
+/-- Step 4 in its concrete factored form: the no-heavy model mass is bounded by a product of
+independent one-column lower tails plus an explicit `O(J²/P)` collision error. -/
+theorem multiShiftMass_noHeavy_le_prod_one_sub {P y J : ℕ} (hJP : J ≤ P)
+    (hP0 : P ≠ 0) (hPy : P ≤ y) (threshold : Fin J → ℕ) :
+    multiShiftMass P y J
+        {Q | ∀ j, (Q j).card < threshold j} ≤
+      ∏ j, (1 - NormalNumbers.ErdosBorweinEndpointKub.bernoulliSubsetMass
+        (Finset.univ : Finset
+          (Fin (Fintype.card (primesIoc P y)) × Fin J))
+        (fun z => 1 / (((primeIndexEquiv P y) z.1 : ℕ) : ℝ))
+        {S | threshold j ≤
+          (S ∩ shiftArrayColumn (Fintype.card (primesIoc P y)) J j).card}) +
+        2 * (J : ℝ) * (J - 1 : ℕ) * (P : ℝ)⁻¹ := by
+  calc
+    multiShiftMass P y J {Q | ∀ j, (Q j).card < threshold j} ≤
+        finiteProductMass
+            (fun i => independentShiftSubsetWeight J
+              (1 / (((primeIndexEquiv P y) i : ℕ) : ℝ)))
+            {σ | ∀ j, (Finset.univ.filter (fun i => j ∈ σ i)).card < threshold j} +
+          2 * ∑ i, (J : ℝ) * (J - 1 : ℕ) *
+            (1 / (((primeIndexEquiv P y) i : ℕ) : ℝ)) ^ 2 :=
+      multiShiftMass_noHeavy_le_independent hJP threshold
+    _ ≤ finiteProductMass
+            (fun i => independentShiftSubsetWeight J
+              (1 / (((primeIndexEquiv P y) i : ℕ) : ℝ)))
+            {σ | ∀ j, (Finset.univ.filter (fun i => j ∈ σ i)).card < threshold j} +
+          2 * (J : ℝ) * (J - 1 : ℕ) * (P : ℝ)⁻¹ := by
+      have herr :
+          2 * ∑ i, (J : ℝ) * (J - 1 : ℕ) *
+              (1 / (((primeIndexEquiv P y) i : ℕ) : ℝ)) ^ 2 ≤
+            2 * (J : ℝ) * (J - 1 : ℕ) * (P : ℝ)⁻¹ := by
+        calc
+        2 * ∑ i, (J : ℝ) * (J - 1 : ℕ) *
+            (1 / (((primeIndexEquiv P y) i : ℕ) : ℝ)) ^ 2 =
+            (2 * (J : ℝ) * (J - 1 : ℕ)) *
+              ∑ i, (1 / (((primeIndexEquiv P y) i : ℕ) : ℝ)) ^ 2 := by
+          have hfactor :
+              (∑ i, (J : ℝ) * (J - 1 : ℕ) *
+                (1 / (((primeIndexEquiv P y) i : ℕ) : ℝ)) ^ 2) =
+                ((J : ℝ) * (J - 1 : ℕ)) *
+                  ∑ i, (1 / (((primeIndexEquiv P y) i : ℕ) : ℝ)) ^ 2 := by
+            rw [Finset.mul_sum]
+          rw [hfactor]
+          ring
+        _ ≤ (2 * (J : ℝ) * (J - 1 : ℕ)) * (P : ℝ)⁻¹ :=
+          mul_le_mul_of_nonneg_left (sum_primeIndex_inv_sq_le hP0 hPy) (by positivity)
+        _ = 2 * (J : ℝ) * (J - 1 : ℕ) * (P : ℝ)⁻¹ := by ring
+      simpa only [add_comm] using add_le_add_left herr
+        (finiteProductMass
+          (fun i => independentShiftSubsetWeight J
+            (1 / (((primeIndexEquiv P y) i : ℕ) : ℝ)))
+          {σ | ∀ j, (Finset.univ.filter (fun i => j ∈ σ i)).card < threshold j})
+    _ = _ := by
+      rw [independentShiftProduct_card_lt_eq_prod_one_sub]
+
 open Classical in
 /-- **Hypothesis (sieve, dimension `J`): the `J`-shift Kubilius model.**  This is the natural
 `J`-dimensional extension of `KubiliusTV`.  It is expected from the fundamental lemma of sieve theory

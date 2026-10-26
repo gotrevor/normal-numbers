@@ -95,3 +95,22 @@ packet-verbatim `multiShiftMass` with the categorical `finiteProductMass` at `q_
 column counts to the resulting prime finsets, and bound the summed reciprocal squares by
 `O(J²/P)`. Then Step 4 is ready to consume the already-proved moderate-deviation lower bound.
 Detailed baton: `HANDOFF-2026-10-26-eb-multishift-lap6.md`.
+
+## Lap checkpoint (2026-10-26, lap 7)
+
+Step 4 is now complete in its concrete packet-verbatim form. `primeIndexEquiv` enumerates
+`primesIoc`; `multiShiftMass_eq_finiteProductMass` proves exact equality with the categorical
+finite product; `card_indexedMultiShiftPattern` transports column counts; and
+`multiShiftMass_noHeavy_le_prod_one_sub` combines the abstract coupling, the exact independent
+column factorization, and Mathlib's reciprocal-square tail to give
+
+```text
+multiShiftMass(no heavy)
+  ≤ ∏_j (1 - independent heavy-column mass_j) + 2 J (J-1) / P.
+```
+
+The theorem is axiom-clean. No packet-verbatim statement changed, and no `native_decide`, axiom,
+or new `sorry` was introduced. The next attack is Step 1: formalize deterministic
+heavy-prime-count ⇒ large `divisorVarianceMass`, reusing `divisorVarianceMass_ge_primeChain`,
+`card_primeChainDivisors`, `hdelta`, and the repo's Mertens estimates. Detailed baton:
+`HANDOFF-2026-10-26-eb-multishift-lap7.md`.

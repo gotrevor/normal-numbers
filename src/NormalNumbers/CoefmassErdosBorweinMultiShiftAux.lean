@@ -987,6 +987,31 @@ noncomputable def finiteProductMass {n : Nat} {β : Type*} [Fintype β]
     (w : Fin n → β → Real) (A : Set (Fin n → β)) : Real :=
   ∑ σ, if σ ∈ A then finiteProductWeight w σ else 0
 
+open Classical in
+/-- Reindex a finite product mass from an arbitrary finite coordinate type by `Fin`.  This is the
+enumeration bridge used to specialize the abstract product estimates to a concrete finset of
+primes; the choice of enumeration has no effect on the mass. -/
+theorem finiteProductMass_reindex {n : Nat} {alpha beta : Type*} [Fintype alpha]
+    [Fintype beta] [DecidableEq alpha] (e : Fin n ≃ alpha) (w : alpha → beta → Real)
+    (A : Set (alpha → beta)) :
+    finiteProductMass (fun i => w (e i))
+        {σ | (fun a => σ (e.symm a)) ∈ A} =
+      ∑ τ : alpha → beta, if τ ∈ A then ∏ a, w a (τ a) else 0 := by
+  unfold finiteProductMass finiteProductWeight
+  let E : (Fin n → beta) ≃ (alpha → beta) := Equiv.piCongrLeft (fun _ : alpha => beta) e
+  rw [← E.sum_comp]
+  apply Fintype.sum_congr
+  intro σ
+  have hE : E σ = fun a => σ (e.symm a) := by
+    funext a
+    obtain ⟨i, rfl⟩ := e.surjective a
+    simp [E]
+  rw [hE]
+  by_cases hσ : (fun a => σ (e.symm a)) ∈ A
+  · simp only [hσ, Set.mem_ofPred_eq, if_true]
+    simpa using e.prod_comp (fun a => w a (σ (e.symm a)))
+  · simp [hσ]
+
 theorem finiteProductMass_nonneg {n : Nat} {β : Type*} [Fintype β]
     (w : Fin n → β → Real) (A : Set (Fin n → β))
     (hw0 : ∀ i x, 0 ≤ w i x) :
