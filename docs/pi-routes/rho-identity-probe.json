@@ -1,0 +1,875 @@
+{
+  "description": "Numerical candidate search, not certified identity exclusion",
+  "mpmath_version": "1.3.0",
+  "maxsteps": 5000,
+  "levels": [
+    {
+      "decimal_precision": 200,
+      "working_precision": 240,
+      "recurrence_terms": 280,
+      "prime_cutoff": 2240,
+      "rho_interval_lower": "-0.25397602485718036344585336792803297007286054547709908020423400742595878316447061523990098137606019286187092394312953764866878890132750104596009198649223930237582343903354061430507400400678918837094329",
+      "rho_interval_upper": "-0.25397602485718036344585336792803297007286054547709908020423400742595878316447061523990098137606019286187092394312953764866878890132750104596009198649223930237582343903354061430507400400678918837094328",
+      "recurrence_tail_bound": "2.49861036044e-339",
+      "prime_regrouping_tail_bound": "8.42531413539e-337",
+      "control": {
+        "recovered_relation": [
+          11,
+          -7,
+          3,
+          -5
+        ],
+        "perturbed_control_rejected": true
+      },
+      "searches": [
+        {
+          "family": "rational",
+          "basis": [
+            "rho",
+            "1"
+          ],
+          "maxcoeff": 100000000000000000000,
+          "tolerance": "1.0e-150",
+          "relation": null,
+          "seconds": 0.0,
+          "termination_message": [
+            "27/5000:  Error:  1.0e-21   Norm: 1552745496837275925",
+            "28/5000:  Error:  2.0e-22   Norm: 9648583513502837512",
+            "29/5000:  Error:  7.0e-23   Norm: 45110868630428132132",
+            "30/5000:  Error:  6.0e-24   Norm: 138968449117620607895",
+            "CANCELLING after step 30/5000.",
+            "Could not find an integer relation. Norm bound: 138968449117620607895"
+          ]
+        },
+        {
+          "family": "pi_affine",
+          "basis": [
+            "rho",
+            "pi",
+            "1"
+          ],
+          "maxcoeff": 1000000000000,
+          "tolerance": "1.0e-150",
+          "relation": null,
+          "seconds": 0.002,
+          "termination_message": [
+            "75/5000:  Error:  6.0e-29   Norm: 297010195664",
+            "76/5000:  Error:  5.0e-30   Norm: 761823049427",
+            "77/5000:  Error:  7.0e-30   Norm: 845554988098",
+            "78/5000:  Error:  1.0e-30   Norm: 2114690494643",
+            "CANCELLING after step 78/5000.",
+            "Could not find an integer relation. Norm bound: 2114690494643"
+          ]
+        },
+        {
+          "family": "pi_log2",
+          "basis": [
+            "rho",
+            "pi",
+            "log2",
+            "1"
+          ],
+          "maxcoeff": 10000000000,
+          "tolerance": "1.0e-150",
+          "relation": null,
+          "seconds": 0.006,
+          "termination_message": [
+            "155/5000:  Error:  2.0e-37   Norm: 5119117915",
+            "156/5000:  Error:  2.0e-37   Norm: 5128343590",
+            "157/5000:  Error:  1.0e-38   Norm: 9602072870",
+            "158/5000:  Error:  5.0e-38   Norm: 12929253182",
+            "CANCELLING after step 158/5000.",
+            "Could not find an integer relation. Norm bound: 12929253182"
+          ]
+        },
+        {
+          "family": "small_logs",
+          "basis": [
+            "rho",
+            "pi",
+            "log2",
+            "log3",
+            "log5",
+            "log7",
+            "1"
+          ],
+          "maxcoeff": 100000000,
+          "tolerance": "1.0e-150",
+          "relation": null,
+          "seconds": 0.071,
+          "termination_message": [
+            "673/5000:  Error:  2.0e-65   Norm: 91696001",
+            "674/5000:  Error:  1.0e-63   Norm: 91696001",
+            "675/5000:  Error:  2.0e-65   Norm: 91696001",
+            "676/5000:  Error:  2.0e-63   Norm: 119771043",
+            "CANCELLING after step 676/5000.",
+            "Could not find an integer relation. Norm bound: 119771043"
+          ]
+        },
+        {
+          "family": "arctan_logs",
+          "basis": [
+            "rho",
+            "pi",
+            "atan_half",
+            "log2",
+            "log3",
+            "log5",
+            "log7",
+            "log17",
+            "1"
+          ],
+          "maxcoeff": 1000000,
+          "tolerance": "1.0e-150",
+          "relation": null,
+          "seconds": 0.184,
+          "termination_message": [
+            "1040/5000:  Error:  2.0e-67   Norm: 827085",
+            "1041/5000:  Error:  8.0e-68   Norm: 912827",
+            "1042/5000:  Error:  8.0e-68   Norm: 914243",
+            "1043/5000:  Error:  8.0e-68   Norm: 1022787",
+            "CANCELLING after step 1043/5000.",
+            "Could not find an integer relation. Norm bound: 1022787"
+          ]
+        },
+        {
+          "family": "other_constants",
+          "basis": [
+            "rho",
+            "pi",
+            "pi_squared",
+            "sqrt2",
+            "sqrt3",
+            "catalan",
+            "zeta3",
+            "1"
+          ],
+          "maxcoeff": 1000000,
+          "tolerance": "1.0e-150",
+          "relation": null,
+          "seconds": 0.103,
+          "termination_message": [
+            "745/5000:  Error:  6.0e-59   Norm: 933565",
+            "746/5000:  Error:  6.0e-59   Norm: 933565",
+            "747/5000:  Error:  6.0e-59   Norm: 958690",
+            "748/5000:  Error:  2.0e-59   Norm: 1050717",
+            "CANCELLING after step 748/5000.",
+            "Could not find an integer relation. Norm bound: 1050717"
+          ]
+        },
+        {
+          "family": "quadratic_pi",
+          "basis": [
+            "rho",
+            "rho_squared",
+            "rho_pi",
+            "pi",
+            "pi_squared",
+            "1"
+          ],
+          "maxcoeff": 1000000,
+          "tolerance": "1.0e-150",
+          "relation": null,
+          "seconds": 0.029,
+          "termination_message": [
+            "362/5000:  Error:  4.0e-43   Norm: 804429",
+            "363/5000:  Error:  4.0e-43   Norm: 804429",
+            "364/5000:  Error:  4.0e-43   Norm: 839501",
+            "365/5000:  Error:  4.0e-43   Norm: 1065602",
+            "CANCELLING after step 365/5000.",
+            "Could not find an integer relation. Norm bound: 1065602"
+          ]
+        },
+        {
+          "family": "algebraic_degree_2",
+          "basis": [
+            "1",
+            "rho_power_1",
+            "rho_power_2"
+          ],
+          "maxcoeff": 100000000,
+          "tolerance": "1.0e-150",
+          "relation": null,
+          "seconds": 0.001,
+          "termination_message": [
+            "40/5000:  Error:  3.0e-21   Norm: 18430135",
+            "41/5000:  Error:  6.0e-21   Norm: 36150470",
+            "42/5000:  Error:  1.0e-21   Norm: 76077704",
+            "43/5000:  Error:  4.0e-22   Norm: 134753139",
+            "CANCELLING after step 43/5000.",
+            "Could not find an integer relation. Norm bound: 134753139"
+          ]
+        },
+        {
+          "family": "algebraic_degree_3",
+          "basis": [
+            "1",
+            "rho_power_1",
+            "rho_power_2",
+            "rho_power_3"
+          ],
+          "maxcoeff": 100000000,
+          "tolerance": "1.0e-150",
+          "relation": null,
+          "seconds": 0.005,
+          "termination_message": [
+            "126/5000:  Error:  6.0e-33   Norm: 81689746",
+            "127/5000:  Error:  6.0e-33   Norm: 81750811",
+            "128/5000:  Error:  6.0e-33   Norm: 92909650",
+            "129/5000:  Error:  8.0e-34   Norm: 163688888",
+            "CANCELLING after step 129/5000.",
+            "Could not find an integer relation. Norm bound: 163688888"
+          ]
+        },
+        {
+          "family": "algebraic_degree_4",
+          "basis": [
+            "1",
+            "rho_power_1",
+            "rho_power_2",
+            "rho_power_3",
+            "rho_power_4"
+          ],
+          "maxcoeff": 100000000,
+          "tolerance": "1.0e-150",
+          "relation": null,
+          "seconds": 0.015,
+          "termination_message": [
+            "253/5000:  Error:  4.0e-42   Norm: 71226260",
+            "254/5000:  Error:  4.0e-42   Norm: 85944548",
+            "255/5000:  Error:  5.0e-42   Norm: 85944548",
+            "256/5000:  Error:  5.0e-42   Norm: 110443925",
+            "CANCELLING after step 256/5000.",
+            "Could not find an integer relation. Norm bound: 110443925"
+          ]
+        },
+        {
+          "family": "algebraic_degree_5",
+          "basis": [
+            "1",
+            "rho_power_1",
+            "rho_power_2",
+            "rho_power_3",
+            "rho_power_4",
+            "rho_power_5"
+          ],
+          "maxcoeff": 100000000,
+          "tolerance": "1.0e-150",
+          "relation": null,
+          "seconds": 0.033,
+          "termination_message": [
+            "411/5000:  Error:  2.0e-52   Norm: 63248316",
+            "412/5000:  Error:  4.0e-53   Norm: 93605466",
+            "413/5000:  Error:  4.0e-53   Norm: 99626367",
+            "414/5000:  Error:  2.0e-54   Norm: 108542037",
+            "CANCELLING after step 414/5000.",
+            "Could not find an integer relation. Norm bound: 108542037"
+          ]
+        },
+        {
+          "family": "algebraic_degree_6",
+          "basis": [
+            "1",
+            "rho_power_1",
+            "rho_power_2",
+            "rho_power_3",
+            "rho_power_4",
+            "rho_power_5",
+            "rho_power_6"
+          ],
+          "maxcoeff": 100000000,
+          "tolerance": "1.0e-150",
+          "relation": null,
+          "seconds": 0.063,
+          "termination_message": [
+            "604/5000:  Error:  5.0e-62   Norm: 85799349",
+            "605/5000:  Error:  5.0e-62   Norm: 88568562",
+            "606/5000:  Error:  5.0e-62   Norm: 89279363",
+            "607/5000:  Error:  5.0e-63   Norm: 113684480",
+            "CANCELLING after step 607/5000.",
+            "Could not find an integer relation. Norm bound: 113684480"
+          ]
+        }
+      ]
+    },
+    {
+      "decimal_precision": 400,
+      "working_precision": 440,
+      "recurrence_terms": 480,
+      "prime_cutoff": 3840,
+      "rho_interval_lower": "-0.2539760248571803634458533679280329700728605454770990802042340074259587831644706152399009813760601928618709239431295376486687889013275010459600919864922393023758234390335406143050740040067891883709432886389103697086172987065734608284726473373226922545174184475453595827964063694193351406309276899659703311400904937706210074329223105979881760032367766292353759463417722078370289297269923660212937314515",
+      "rho_interval_upper": "-0.2539760248571803634458533679280329700728605454770990802042340074259587831644706152399009813760601928618709239431295376486687889013275010459600919864922393023758234390335406143050740040067891883709432886389103697086172987065734608284726473373226922545174184475453595827964063694193351406309276899659703311400904937706210074329223105979881760032367766292353759463417722078370289297269923660212937314514",
+      "recurrence_tail_bound": "2.18908814361e-580",
+      "prime_regrouping_tail_bound": "1.26354167649e-577",
+      "control": {
+        "recovered_relation": [
+          11,
+          -7,
+          3,
+          -5
+        ],
+        "perturbed_control_rejected": true
+      },
+      "searches": [
+        {
+          "family": "rational",
+          "basis": [
+            "rho",
+            "1"
+          ],
+          "maxcoeff": 100000000000000000000,
+          "tolerance": "1.0e-350",
+          "relation": null,
+          "seconds": 0.001,
+          "termination_message": [
+            "27/5000:  Error:  1.0e-21   Norm: 1552745496837275925",
+            "28/5000:  Error:  2.0e-22   Norm: 9648583513502837512",
+            "29/5000:  Error:  7.0e-23   Norm: 45110868630428132132",
+            "30/5000:  Error:  6.0e-24   Norm: 138968449117620607895",
+            "CANCELLING after step 30/5000.",
+            "Could not find an integer relation. Norm bound: 138968449117620607895"
+          ]
+        },
+        {
+          "family": "pi_affine",
+          "basis": [
+            "rho",
+            "pi",
+            "1"
+          ],
+          "maxcoeff": 1000000000000,
+          "tolerance": "1.0e-350",
+          "relation": null,
+          "seconds": 0.005,
+          "termination_message": [
+            "75/5000:  Error:  6.0e-29   Norm: 297010195664",
+            "76/5000:  Error:  5.0e-30   Norm: 761823049427",
+            "77/5000:  Error:  7.0e-30   Norm: 845554988098",
+            "78/5000:  Error:  1.0e-30   Norm: 2114690494643",
+            "CANCELLING after step 78/5000.",
+            "Could not find an integer relation. Norm bound: 2114690494643"
+          ]
+        },
+        {
+          "family": "pi_log2",
+          "basis": [
+            "rho",
+            "pi",
+            "log2",
+            "1"
+          ],
+          "maxcoeff": 10000000000,
+          "tolerance": "1.0e-350",
+          "relation": null,
+          "seconds": 0.016,
+          "termination_message": [
+            "155/5000:  Error:  2.0e-37   Norm: 5119117915",
+            "156/5000:  Error:  2.0e-37   Norm: 5128343590",
+            "157/5000:  Error:  1.0e-38   Norm: 9602072870",
+            "158/5000:  Error:  5.0e-38   Norm: 12929253182",
+            "CANCELLING after step 158/5000.",
+            "Could not find an integer relation. Norm bound: 12929253182"
+          ]
+        },
+        {
+          "family": "small_logs",
+          "basis": [
+            "rho",
+            "pi",
+            "log2",
+            "log3",
+            "log5",
+            "log7",
+            "1"
+          ],
+          "maxcoeff": 100000000,
+          "tolerance": "1.0e-350",
+          "relation": null,
+          "seconds": 0.174,
+          "termination_message": [
+            "673/5000:  Error:  2.0e-65   Norm: 91696001",
+            "674/5000:  Error:  1.0e-63   Norm: 91696001",
+            "675/5000:  Error:  2.0e-65   Norm: 91696001",
+            "676/5000:  Error:  2.0e-63   Norm: 119771043",
+            "CANCELLING after step 676/5000.",
+            "Could not find an integer relation. Norm bound: 119771043"
+          ]
+        },
+        {
+          "family": "arctan_logs",
+          "basis": [
+            "rho",
+            "pi",
+            "atan_half",
+            "log2",
+            "log3",
+            "log5",
+            "log7",
+            "log17",
+            "1"
+          ],
+          "maxcoeff": 1000000,
+          "tolerance": "1.0e-350",
+          "relation": null,
+          "seconds": 0.482,
+          "termination_message": [
+            "1040/5000:  Error:  2.0e-67   Norm: 827085",
+            "1041/5000:  Error:  8.0e-68   Norm: 912827",
+            "1042/5000:  Error:  8.0e-68   Norm: 914243",
+            "1043/5000:  Error:  8.0e-68   Norm: 1022787",
+            "CANCELLING after step 1043/5000.",
+            "Could not find an integer relation. Norm bound: 1022787"
+          ]
+        },
+        {
+          "family": "other_constants",
+          "basis": [
+            "rho",
+            "pi",
+            "pi_squared",
+            "sqrt2",
+            "sqrt3",
+            "catalan",
+            "zeta3",
+            "1"
+          ],
+          "maxcoeff": 1000000,
+          "tolerance": "1.0e-350",
+          "relation": null,
+          "seconds": 0.287,
+          "termination_message": [
+            "745/5000:  Error:  6.0e-59   Norm: 933565",
+            "746/5000:  Error:  6.0e-59   Norm: 933565",
+            "747/5000:  Error:  6.0e-59   Norm: 958690",
+            "748/5000:  Error:  2.0e-59   Norm: 1050717",
+            "CANCELLING after step 748/5000.",
+            "Could not find an integer relation. Norm bound: 1050717"
+          ]
+        },
+        {
+          "family": "quadratic_pi",
+          "basis": [
+            "rho",
+            "rho_squared",
+            "rho_pi",
+            "pi",
+            "pi_squared",
+            "1"
+          ],
+          "maxcoeff": 1000000,
+          "tolerance": "1.0e-350",
+          "relation": null,
+          "seconds": 0.087,
+          "termination_message": [
+            "362/5000:  Error:  4.0e-43   Norm: 804429",
+            "363/5000:  Error:  4.0e-43   Norm: 804429",
+            "364/5000:  Error:  4.0e-43   Norm: 839501",
+            "365/5000:  Error:  4.0e-43   Norm: 1065602",
+            "CANCELLING after step 365/5000.",
+            "Could not find an integer relation. Norm bound: 1065602"
+          ]
+        },
+        {
+          "family": "algebraic_degree_2",
+          "basis": [
+            "1",
+            "rho_power_1",
+            "rho_power_2"
+          ],
+          "maxcoeff": 100000000,
+          "tolerance": "1.0e-350",
+          "relation": null,
+          "seconds": 0.003,
+          "termination_message": [
+            "40/5000:  Error:  3.0e-21   Norm: 18430135",
+            "41/5000:  Error:  6.0e-21   Norm: 36150470",
+            "42/5000:  Error:  1.0e-21   Norm: 76077704",
+            "43/5000:  Error:  4.0e-22   Norm: 134753139",
+            "CANCELLING after step 43/5000.",
+            "Could not find an integer relation. Norm bound: 134753139"
+          ]
+        },
+        {
+          "family": "algebraic_degree_3",
+          "basis": [
+            "1",
+            "rho_power_1",
+            "rho_power_2",
+            "rho_power_3"
+          ],
+          "maxcoeff": 100000000,
+          "tolerance": "1.0e-350",
+          "relation": null,
+          "seconds": 0.016,
+          "termination_message": [
+            "126/5000:  Error:  6.0e-33   Norm: 81689746",
+            "127/5000:  Error:  6.0e-33   Norm: 81750811",
+            "128/5000:  Error:  6.0e-33   Norm: 92909650",
+            "129/5000:  Error:  8.0e-34   Norm: 163688888",
+            "CANCELLING after step 129/5000.",
+            "Could not find an integer relation. Norm bound: 163688888"
+          ]
+        },
+        {
+          "family": "algebraic_degree_4",
+          "basis": [
+            "1",
+            "rho_power_1",
+            "rho_power_2",
+            "rho_power_3",
+            "rho_power_4"
+          ],
+          "maxcoeff": 100000000,
+          "tolerance": "1.0e-350",
+          "relation": null,
+          "seconds": 0.043,
+          "termination_message": [
+            "253/5000:  Error:  4.0e-42   Norm: 71226260",
+            "254/5000:  Error:  4.0e-42   Norm: 85944548",
+            "255/5000:  Error:  5.0e-42   Norm: 85944548",
+            "256/5000:  Error:  5.0e-42   Norm: 110443925",
+            "CANCELLING after step 256/5000.",
+            "Could not find an integer relation. Norm bound: 110443925"
+          ]
+        },
+        {
+          "family": "algebraic_degree_5",
+          "basis": [
+            "1",
+            "rho_power_1",
+            "rho_power_2",
+            "rho_power_3",
+            "rho_power_4",
+            "rho_power_5"
+          ],
+          "maxcoeff": 100000000,
+          "tolerance": "1.0e-350",
+          "relation": null,
+          "seconds": 0.1,
+          "termination_message": [
+            "411/5000:  Error:  2.0e-52   Norm: 63248316",
+            "412/5000:  Error:  4.0e-53   Norm: 93605466",
+            "413/5000:  Error:  4.0e-53   Norm: 99626367",
+            "414/5000:  Error:  2.0e-54   Norm: 108542037",
+            "CANCELLING after step 414/5000.",
+            "Could not find an integer relation. Norm bound: 108542037"
+          ]
+        },
+        {
+          "family": "algebraic_degree_6",
+          "basis": [
+            "1",
+            "rho_power_1",
+            "rho_power_2",
+            "rho_power_3",
+            "rho_power_4",
+            "rho_power_5",
+            "rho_power_6"
+          ],
+          "maxcoeff": 100000000,
+          "tolerance": "1.0e-350",
+          "relation": null,
+          "seconds": 0.192,
+          "termination_message": [
+            "604/5000:  Error:  5.0e-62   Norm: 85799349",
+            "605/5000:  Error:  5.0e-62   Norm: 88568562",
+            "606/5000:  Error:  5.0e-62   Norm: 89279363",
+            "607/5000:  Error:  5.0e-63   Norm: 113684480",
+            "CANCELLING after step 607/5000.",
+            "Could not find an integer relation. Norm bound: 113684480"
+          ]
+        }
+      ]
+    },
+    {
+      "decimal_precision": 800,
+      "working_precision": 840,
+      "recurrence_terms": 880,
+      "prime_cutoff": 7040,
+      "rho_interval_lower": "-0.25397602485718036344585336792803297007286054547709908020423400742595878316447061523990098137606019286187092394312953764866878890132750104596009198649223930237582343903354061430507400400678918837094328863891036970861729870657346082847264733732269225451741844754535958279640636941933514063092768996597033114009049377062100743292231059798817600323677662923537594634177220783702892972699236602129373145146609151320106365047928438455208975227651765299867660116807418764695736062431313350837727374968376634148490394995060747451380976115229712955880204935084543190577273025095207483440434613148392334878646873001411136998073404179841198072464147663137237160777604631757691335964009444095465069332476235225494561312127764810981659344106572578148331188755746449930731153055724634964713805587846753940769883972",
+      "rho_interval_upper": "-0.25397602485718036344585336792803297007286054547709908020423400742595878316447061523990098137606019286187092394312953764866878890132750104596009198649223930237582343903354061430507400400678918837094328863891036970861729870657346082847264733732269225451741844754535958279640636941933514063092768996597033114009049377062100743292231059798817600323677662923537594634177220783702892972699236602129373145146609151320106365047928438455208975227651765299867660116807418764695736062431313350837727374968376634148490394995060747451380976115229712955880204935084543190577273025095207483440434613148392334878646873001411136998073404179841198072464147663137237160777604631757691335964009444095465069332476235225494561312127764810981659344106572578148331188755746449930731153055724634964713805587846753940769883971",
+      "recurrence_tail_bound": "2.68806245121e-1062",
+      "prime_regrouping_tail_bound": "2.84181962342e-1059",
+      "control": {
+        "recovered_relation": [
+          11,
+          -7,
+          3,
+          -5
+        ],
+        "perturbed_control_rejected": true
+      },
+      "searches": [
+        {
+          "family": "rational",
+          "basis": [
+            "rho",
+            "1"
+          ],
+          "maxcoeff": 100000000000000000000,
+          "tolerance": "1.0e-750",
+          "relation": null,
+          "seconds": 0.002,
+          "termination_message": [
+            "27/5000:  Error:  1.0e-21   Norm: 1552745496837275925",
+            "28/5000:  Error:  2.0e-22   Norm: 9648583513502837512",
+            "29/5000:  Error:  7.0e-23   Norm: 45110868630428132132",
+            "30/5000:  Error:  6.0e-24   Norm: 138968449117620607895",
+            "CANCELLING after step 30/5000.",
+            "Could not find an integer relation. Norm bound: 138968449117620607895"
+          ]
+        },
+        {
+          "family": "pi_affine",
+          "basis": [
+            "rho",
+            "pi",
+            "1"
+          ],
+          "maxcoeff": 1000000000000,
+          "tolerance": "1.0e-750",
+          "relation": null,
+          "seconds": 0.015,
+          "termination_message": [
+            "75/5000:  Error:  6.0e-29   Norm: 297010195664",
+            "76/5000:  Error:  5.0e-30   Norm: 761823049427",
+            "77/5000:  Error:  7.0e-30   Norm: 845554988098",
+            "78/5000:  Error:  1.0e-30   Norm: 2114690494643",
+            "CANCELLING after step 78/5000.",
+            "Could not find an integer relation. Norm bound: 2114690494643"
+          ]
+        },
+        {
+          "family": "pi_log2",
+          "basis": [
+            "rho",
+            "pi",
+            "log2",
+            "1"
+          ],
+          "maxcoeff": 10000000000,
+          "tolerance": "1.0e-750",
+          "relation": null,
+          "seconds": 0.047,
+          "termination_message": [
+            "155/5000:  Error:  2.0e-37   Norm: 5119117915",
+            "156/5000:  Error:  2.0e-37   Norm: 5128343590",
+            "157/5000:  Error:  1.0e-38   Norm: 9602072870",
+            "158/5000:  Error:  5.0e-38   Norm: 12929253182",
+            "CANCELLING after step 158/5000.",
+            "Could not find an integer relation. Norm bound: 12929253182"
+          ]
+        },
+        {
+          "family": "small_logs",
+          "basis": [
+            "rho",
+            "pi",
+            "log2",
+            "log3",
+            "log5",
+            "log7",
+            "1"
+          ],
+          "maxcoeff": 100000000,
+          "tolerance": "1.0e-750",
+          "relation": null,
+          "seconds": 0.502,
+          "termination_message": [
+            "673/5000:  Error:  2.0e-65   Norm: 91696001",
+            "674/5000:  Error:  1.0e-63   Norm: 91696001",
+            "675/5000:  Error:  2.0e-65   Norm: 91696001",
+            "676/5000:  Error:  2.0e-63   Norm: 119771043",
+            "CANCELLING after step 676/5000.",
+            "Could not find an integer relation. Norm bound: 119771043"
+          ]
+        },
+        {
+          "family": "arctan_logs",
+          "basis": [
+            "rho",
+            "pi",
+            "atan_half",
+            "log2",
+            "log3",
+            "log5",
+            "log7",
+            "log17",
+            "1"
+          ],
+          "maxcoeff": 1000000,
+          "tolerance": "1.0e-750",
+          "relation": null,
+          "seconds": 1.241,
+          "termination_message": [
+            "1040/5000:  Error:  2.0e-67   Norm: 827085",
+            "1041/5000:  Error:  8.0e-68   Norm: 912827",
+            "1042/5000:  Error:  8.0e-68   Norm: 914243",
+            "1043/5000:  Error:  8.0e-68   Norm: 1022787",
+            "CANCELLING after step 1043/5000.",
+            "Could not find an integer relation. Norm bound: 1022787"
+          ]
+        },
+        {
+          "family": "other_constants",
+          "basis": [
+            "rho",
+            "pi",
+            "pi_squared",
+            "sqrt2",
+            "sqrt3",
+            "catalan",
+            "zeta3",
+            "1"
+          ],
+          "maxcoeff": 1000000,
+          "tolerance": "1.0e-750",
+          "relation": null,
+          "seconds": 0.714,
+          "termination_message": [
+            "745/5000:  Error:  6.0e-59   Norm: 933565",
+            "746/5000:  Error:  6.0e-59   Norm: 933565",
+            "747/5000:  Error:  6.0e-59   Norm: 958690",
+            "748/5000:  Error:  2.0e-59   Norm: 1050717",
+            "CANCELLING after step 748/5000.",
+            "Could not find an integer relation. Norm bound: 1050717"
+          ]
+        },
+        {
+          "family": "quadratic_pi",
+          "basis": [
+            "rho",
+            "rho_squared",
+            "rho_pi",
+            "pi",
+            "pi_squared",
+            "1"
+          ],
+          "maxcoeff": 1000000,
+          "tolerance": "1.0e-750",
+          "relation": null,
+          "seconds": 0.205,
+          "termination_message": [
+            "362/5000:  Error:  4.0e-43   Norm: 804429",
+            "363/5000:  Error:  4.0e-43   Norm: 804429",
+            "364/5000:  Error:  4.0e-43   Norm: 839501",
+            "365/5000:  Error:  4.0e-43   Norm: 1065602",
+            "CANCELLING after step 365/5000.",
+            "Could not find an integer relation. Norm bound: 1065602"
+          ]
+        },
+        {
+          "family": "algebraic_degree_2",
+          "basis": [
+            "1",
+            "rho_power_1",
+            "rho_power_2"
+          ],
+          "maxcoeff": 100000000,
+          "tolerance": "1.0e-750",
+          "relation": null,
+          "seconds": 0.009,
+          "termination_message": [
+            "40/5000:  Error:  3.0e-21   Norm: 18430135",
+            "41/5000:  Error:  6.0e-21   Norm: 36150470",
+            "42/5000:  Error:  1.0e-21   Norm: 76077704",
+            "43/5000:  Error:  4.0e-22   Norm: 134753139",
+            "CANCELLING after step 43/5000.",
+            "Could not find an integer relation. Norm bound: 134753139"
+          ]
+        },
+        {
+          "family": "algebraic_degree_3",
+          "basis": [
+            "1",
+            "rho_power_1",
+            "rho_power_2",
+            "rho_power_3"
+          ],
+          "maxcoeff": 100000000,
+          "tolerance": "1.0e-750",
+          "relation": null,
+          "seconds": 0.038,
+          "termination_message": [
+            "126/5000:  Error:  6.0e-33   Norm: 81689746",
+            "127/5000:  Error:  6.0e-33   Norm: 81750811",
+            "128/5000:  Error:  6.0e-33   Norm: 92909650",
+            "129/5000:  Error:  8.0e-34   Norm: 163688888",
+            "CANCELLING after step 129/5000.",
+            "Could not find an integer relation. Norm bound: 163688888"
+          ]
+        },
+        {
+          "family": "algebraic_degree_4",
+          "basis": [
+            "1",
+            "rho_power_1",
+            "rho_power_2",
+            "rho_power_3",
+            "rho_power_4"
+          ],
+          "maxcoeff": 100000000,
+          "tolerance": "1.0e-750",
+          "relation": null,
+          "seconds": 0.095,
+          "termination_message": [
+            "253/5000:  Error:  4.0e-42   Norm: 71226260",
+            "254/5000:  Error:  4.0e-42   Norm: 85944548",
+            "255/5000:  Error:  5.0e-42   Norm: 85944548",
+            "256/5000:  Error:  5.0e-42   Norm: 110443925",
+            "CANCELLING after step 256/5000.",
+            "Could not find an integer relation. Norm bound: 110443925"
+          ]
+        },
+        {
+          "family": "algebraic_degree_5",
+          "basis": [
+            "1",
+            "rho_power_1",
+            "rho_power_2",
+            "rho_power_3",
+            "rho_power_4",
+            "rho_power_5"
+          ],
+          "maxcoeff": 100000000,
+          "tolerance": "1.0e-750",
+          "relation": null,
+          "seconds": 0.237,
+          "termination_message": [
+            "411/5000:  Error:  2.0e-52   Norm: 63248316",
+            "412/5000:  Error:  4.0e-53   Norm: 93605466",
+            "413/5000:  Error:  4.0e-53   Norm: 99626367",
+            "414/5000:  Error:  2.0e-54   Norm: 108542037",
+            "CANCELLING after step 414/5000.",
+            "Could not find an integer relation. Norm bound: 108542037"
+          ]
+        },
+        {
+          "family": "algebraic_degree_6",
+          "basis": [
+            "1",
+            "rho_power_1",
+            "rho_power_2",
+            "rho_power_3",
+            "rho_power_4",
+            "rho_power_5",
+            "rho_power_6"
+          ],
+          "maxcoeff": 100000000,
+          "tolerance": "1.0e-750",
+          "relation": null,
+          "seconds": 0.442,
+          "termination_message": [
+            "604/5000:  Error:  5.0e-62   Norm: 85799349",
+            "605/5000:  Error:  5.0e-62   Norm: 88568562",
+            "606/5000:  Error:  5.0e-62   Norm: 89279363",
+            "607/5000:  Error:  5.0e-63   Norm: 113684480",
+            "CANCELLING after step 607/5000.",
+            "Could not find an integer relation. Norm bound: 113684480"
+          ]
+        }
+      ]
+    }
+  ],
+  "elapsed_seconds": 5.527
+}
