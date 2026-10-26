@@ -81,6 +81,8 @@ For \(F\equiv1\), the forward real limit is 1 and the backward 2-adic limit is â
 
 ## What this changes, and the next decision
 
+**Follow-up:** `BBPAdelicGrid.rational_grid_comparison` now proves that any prescribed finite 2-adic precision schedule, the actual BBP denominator budgets, and any finite exact prefix admit rational-target comparisons at error scale \(2^{K(n)}/D_n\).  See [the precise statement and limitations](bbp-adelic-grid.md).  This tests the finite-congruence consequence, not every possible use of the infinite backward identity.
+
 This supplies a specific arithmetic feature of the exact BBP formula, absent from the changed-coefficient control.  It does not supply the requested contradiction from a missing word.  In particular, 2-adic cancellation is not an estimate for the real fractional part of the head \(H_n=16^n\piPartial(n)\).
 
 The next research test is whether the backward identity imposes an additional quantitative restriction on **the genuine head inside a real missing-word set**, retaining the exact forcing.  A useful lemma must connect these two conditions; merely proving the 2-adic identity or the valuation conjecture would not do that.  No such lemma is supplied here.  Do not launch a long formalization of 2-adic logarithms on the assumption that it advances disjunctivity.

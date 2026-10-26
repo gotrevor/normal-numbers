@@ -31,6 +31,7 @@ import NormalNumbers.PiDisjunctiveRoutes.ReservoirCutoffSixDFI
 import NormalNumbers.PiDisjunctiveRoutes.ReservoirCutoffSixDensity
 import NormalNumbers.PiDisjunctiveRoutes.ReservoirComparisonRobustness
 import NormalNumbers.PiDisjunctiveRoutes.ReservoirDenominator
+import NormalNumbers.PiDisjunctiveRoutes.BBPAdelicGrid
 import NormalNumbers.EntropyProfiles
 import NormalNumbers.CantorExactExponentStretch
 import NormalNumbers.CantorExactExponentProfile
@@ -144,7 +145,8 @@ def mazeLinks : List Link := [
   ⟨"BBP denominator budgets as a sufficient approximate-coupling criterion",
    [``PiDisjunctiveRoutes.CutoffSix.denominatorCouplingCriterion_iff,
     ``PiDisjunctiveRoutes.CutoffSix.actual_denominator_rigidity,
-    ``PiDisjunctiveRoutes.CutoffSix.rational_comparison_actual_denominators],
+    ``PiDisjunctiveRoutes.CutoffSix.rational_comparison_actual_denominators,
+    ``PiDisjunctiveRoutes.BBPAdelicGrid.rational_grid_comparison],
    [``PiDisjunctiveRoutes.CutoffSix.DenominatorCouplingCriterion]⟩,
   ⟨"82000 via the base-3 slope coordinate",
    [``ZeroOneBases.fourExponentials_jointSlopeIndependence],

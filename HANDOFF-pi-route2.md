@@ -1,5 +1,15 @@
 # HANDOFF — pi route 2 (prime reservoir) — lap 3, 2026-10-26
 
+**Latest whole-head test:** `BBPAdelicGrid.rational_grid_comparison` is proved:
+any finite exact BBP prefix, actual head denominator budgets, and any prescribed
+finite 2-adic precision K(n) admit a rational target at real error 2^K(n)/D_n and
+forcing error E_(n+1)+16E_n.  It does not preserve exact infinite forcing,
+equality of reduced denominators, or all odd-prime poles; no decay for arbitrary
+K is asserted.  It does not use the frozen backward sum identity.  Details:
+`docs/pi-routes/bbp-adelic-grid.md`.  The next mechanism must use a global exact
+relation to force real interval visits; finite congruences alone at this scale
+do not do it.
+
 **Reading the historical notes below:** their statements that an uncancellable
 transfer "does not exist" and that rho disjunctivity is "at least as hard" as pi
 were stronger than the proved results.  Support implies rho disjunctivity; this
