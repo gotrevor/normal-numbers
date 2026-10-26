@@ -134,4 +134,55 @@ theorem pi_disjunctive_of_quantitativeTripleReturn
     _ ≤ (1 / 2) ^ k₀ := pow_le_pow_of_le_one (by norm_num) (by norm_num) (by omega)
     _ ≤ ε := hk₀.le
 
+/-- If `qx` is in the binary orbit closure `K` of `x`, then `K` is `×q`-invariant. -/
+theorem mapsTo_mul_circleOmegaLimit {x : ℝ} (q : ℕ)
+    (hq : ((q * x : ℝ) : UnitAddCircle) ∈ circleOmegaLimit 2 x) :
+    MapsTo (q • · : UnitAddCircle → UnitAddCircle) (circleOmegaLimit 2 x)
+      (circleOmegaLimit 2 x) := by
+  have hm : MapsTo (q • · : UnitAddCircle → UnitAddCircle) (circleOmegaLimit 2 x)
+      (omegaLimit atTop (circleFlow 2) {((q * x : ℝ) : UnitAddCircle)}) := by
+    unfold circleOmegaLimit
+    refine mapsTo_omegaLimit _ (ga := (q • · : UnitAddCircle → UnitAddCircle)) ?_ ?_
+      (continuous_nsmul q)
+    · intro a ha; rw [mem_singleton_iff.1 ha, mem_singleton_iff]
+      show q • (x : UnitAddCircle) = _
+      rw [← AddCircle.coe_nsmul]
+      congr 1; simp [nsmul_eq_mul]
+    · intro t y; simp only [circleFlow_apply, smul_smul, mul_comm]
+  exact fun y hy => omegaLimit_point_subset hq (hm hy)
+
+private theorem multIndep_two_of_odd {q : ℕ} (hq : 3 ≤ q) (hodd : Odd q) :
+    Furstenberg.MultIndep 2 q := by
+  intro a b hab
+  have ha : a = 0 := by
+    by_contra ha
+    have hdvd : 2 ∣ q ^ b := hab ▸ dvd_pow_self 2 ha
+    exact (Nat.odd_iff.mp (hodd.pow (n := b))) |> fun h => by omega
+  subst ha
+  exact ⟨rfl, (Nat.pow_eq_one.mp hab.symm).resolve_left (by omega)⟩
+
+/-- Proved generalisation of `tripleReturn_iff_disjunctive`: any odd multiplier `q ≥ 3`
+works.  For irrational `x`, `qx` lies in the binary orbit closure iff `x` is binary
+disjunctive.  Costume audit: equivalent to the sink for every such `q`, so the family
+"∃ odd q ≥ 3, qx ∈ K" is also the sink in a costume; its value is that a proof may pick
+whichever odd `q` the arithmetic of `x` favours. -/
+@[blueprint (title := "Any odd multiple of x in its binary orbit closure forces disjunctivity")]
+theorem mem_circleOmegaLimit_oddMul_iff_disjunctive {x : ℝ} (hx : Irrational x)
+    {q : ℕ} (hq : 3 ≤ q) (hodd : Odd q) :
+    ((q * x : ℝ) : UnitAddCircle) ∈ circleOmegaLimit 2 x ↔ IsDisjunctive 2 x := by
+  rw [isDisjunctive_iff_circleOmegaLimit_eq_univ]
+  constructor
+  · intro hqK
+    have h2 : MapsTo (2 • · : UnitAddCircle → UnitAddCircle) (circleOmegaLimit 2 x)
+        (circleOmegaLimit 2 x) := mapsTo_circleMap_circleOmegaLimit 2 x
+    have hnt := not_isOfFinAddOrder_of_irrational'
+      (hx.natCast_mul (by omega : q ≠ 0))
+    rcases Furstenberg.isClosed_invariant_finite_or_univ (le_refl 2) (by omega)
+      (multIndep_two_of_odd hq hodd) (isClosed_circleOmegaLimit 2 x) h2
+      (mapsTo_mul_circleOmegaLimit q hqK) with hf | hu
+    · exact absurd hf
+        (Furstenberg.infinite_of_mem_not_torsion (le_refl 2) h2 hqK hnt).not_finite
+    · exact hu
+  · intro h; rw [h]; trivial
+
 end NormalNumbers.PiDisjunctiveRoutes

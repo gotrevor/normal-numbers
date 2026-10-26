@@ -9,13 +9,16 @@
   K contains non-torsion 3x ⇒ infinite; Furstenberg ×2×3 ⇒ K = 𝕋.
 - Costume audit: TripleReturn is the sink in a costume (proved equivalence).
 
+- `mem_circleOmegaLimit_oddMul_iff_disjunctive` (proved): any odd q ≥ 3, `qx ∈ K ↔ IsDisjunctive 2 x`
+  (irrational x).  Costume: still the sink, but a proof may pick any odd q.
+
 ## This lap
-Bridges green (both lane-1 "first" theorems proved).
+Bridges green (both lane-1 "first" theorems proved), plus the odd-q generalisation.
+Probe `scripts/pi_route1_first_return.py` written (pure-integer; no PyPI egress), running K=9.
 
 ## Next move
 Research question: which single target t (tied to π) can be shown in K = ω₂(π)?  Note the proof
 only used "some non-torsion y with y ∈ K and 3K ⊆ K"; next, state the weaker node
 "∃ m, 3·2^m π-type target or any q·π (q odd ≥3) in K" — K ∋ qπ ⇒ qK ⊆ K, and Furstenberg needs
-only MultIndep 2 q, so any odd q ≥ 3 works.  State that generalisation as a theorem, then run
-the probe `scripts/pi_route1_first_return.py` (first-return n_k of ‖(2^n−3)π‖<2^-k, control: a
+only MultIndep 2 q, so any odd q ≥ 3 works.  Generalisation DONE.  Next: record the probe numbers from `scripts/pi_route1_first_return.py` (first-return n_k of ‖(2^n−3)π‖<2^-k, control: a
 rational, e.g. 1/3, and a known-normal-ish surrogate).
