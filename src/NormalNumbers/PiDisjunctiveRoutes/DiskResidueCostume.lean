@@ -139,4 +139,76 @@ theorem diskSmallPart_orbit (n D : ℕ) :
         rw [abs_mul]; nlinarith [abs_nonneg (chiFour d : ℝ)]
     _ = D := by simp
 
+/-- Wide-target π-orbit window cover (middle three quarters of each cylinder).
+Costume audit: pure π-digit statement; implied by `DiskResidueCover`
+(`piOrbitWindowCoverWide_of_diskResidueCover`), so the route premise sits between two
+π-orbit covers differing only in target margin. -/
+def PiOrbitWindowCoverWide : Prop :=
+  ∃ C : ℕ, 0 < C ∧ ∀ k : ℕ, 0 < k → ∀ N : ℕ, C * 4 ^ k ≤ N →
+    ∀ j : ℕ, j < 2 ^ k → ∃ n : ℕ, N ≤ n ∧ n ≤ 2 * N ∧
+      ((8 * j + 1 : ℝ) / (8 * 2 ^ k) < orbit 2 Real.pi n) ∧
+      (orbit 2 Real.pi n < (8 * j + 7 : ℝ) / (8 * 2 ^ k))
+
+/-- Converse costume edge: the disk premise implies a pure π-orbit cover. -/
+theorem piOrbitWindowCoverWide_of_diskResidueCover (h : DiskResidueCover) :
+    PiOrbitWindowCoverWide := by
+  obtain ⟨C, hC0, hC⟩ := h
+  refine ⟨64 * C, by positivity, fun k hk N hN j hj => ?_⟩
+  have h4k : k + 6 ≤ 64 * 4 ^ k := by
+    have := Nat.lt_pow_self (n := k) (by norm_num : 1 < 4); omega
+  have hCN : C * 4 ^ k ≤ N := le_trans (by nlinarith) hN
+  have hkn : k + 6 ≤ N := le_trans h4k (le_trans (by nlinarith) hN)
+  obtain ⟨n, hNn, hn2, hlo, hhi⟩ := hC k hk N hCN j hj
+  refine ⟨n, hNn, hn2, ?_⟩
+  have h8 : (0 : ℝ) < 8 ^ n := by positivity
+  set t : ℝ := 2 ^ k with ht
+  have h2k : (0 : ℝ) < t := by positivity
+  set u : ℝ := (diskResidue n : ℝ) / 8 ^ n with hu
+  set q : ℕ := diskCount (4 ^ n) / 8 ^ n
+  have hdec : diskPhase n = q + u := by
+    have := Nat.div_add_mod (diskCount (4 ^ n)) (8 ^ n)
+    have hcast : (diskCount (4 ^ n) : ℝ) = (8 : ℝ) ^ n * q + (diskResidue n : ℕ) := by
+      rw [diskResidue]; exact_mod_cast this.symm
+    rw [diskPhase, hu, hcast]; field_simp
+  have hδ : (5 : ℝ) / 2 ^ n < 1 / (8 * t) := by
+    have h64 : (2 : ℝ) ^ (k + 6) ≤ 2 ^ n := pow_le_pow_right₀ (by norm_num) (by omega)
+    rw [pow_add] at h64
+    rw [div_lt_div_iff₀ (by positivity) (by positivity)]; nlinarith
+  have hs := diskPhase_sub_le n
+  rw [hdec, abs_le] at hs
+  have ulo : (4 * (j : ℝ) + 1) / (4 * t) < u := by
+    rw [div_lt_div_iff₀ (by positivity) h8]
+    have : ((4 * j + 1) * 8 ^ n : ℝ) < 4 * 2 ^ k * diskResidue n := by exact_mod_cast hlo
+    rw [← ht] at this; linarith
+  have uhi : u < (4 * (j : ℝ) + 3) / (4 * t) := by
+    rw [div_lt_div_iff₀ h8 (by positivity)]
+    have : (4 * 2 ^ k * diskResidue n : ℝ) < (4 * j + 3) * 8 ^ n := by exact_mod_cast hhi
+    rw [← ht] at this; linarith
+  set m : ℤ := ⌊Real.pi * (2 : ℝ) ^ n⌋
+  have horb : orbit 2 Real.pi n = Real.pi * (2 : ℝ) ^ n - m := by
+    simp only [orbit, Nat.cast_ofNat]; rfl
+  have hx0 : 0 ≤ Real.pi * (2 : ℝ) ^ n - m := Int.fract_nonneg _
+  have hx1 : Real.pi * (2 : ℝ) ^ n - m < 1 := Int.fract_lt_one _
+  rw [horb]
+  have hj' : ((j : ℝ) + 1) ≤ t := by
+    have : (j + 1 : ℝ) ≤ (2 ^ k : ℕ) := by exact_mod_cast hj
+    simpa [ht] using this
+  have f1 : (4 * (j : ℝ) + 1) / (4 * t) = (8 * j + 1) / (8 * t) + 1 / (8 * t) := by
+    field_simp; ring
+  have f2 : (4 * (j : ℝ) + 3) / (4 * t) = (8 * j + 7) / (8 * t) - 1 / (8 * t) := by
+    field_simp; ring
+  have g0 : 1 / (8 * t) ≤ (4 * (j : ℝ) + 1) / (4 * t) := by
+    rw [f1]; have : 0 ≤ (8 * (j : ℝ) + 1) / (8 * t) := by positivity
+    linarith
+  have g1 : (4 * (j : ℝ) + 3) / (4 * t) + 1 / (8 * t) ≤ 1 := by
+    rw [f2, sub_add_cancel, div_le_one (by positivity)]; linarith
+  have hqm : (q : ℤ) = m := by
+    have a1 : ((q : ℤ) - m : ℝ) < 1 := by push_cast; linarith
+    have a2 : (-1 : ℝ) < ((q : ℤ) - m : ℝ) := by push_cast; linarith
+    have b1 : (q : ℤ) - m < 1 := by exact_mod_cast a1
+    have b2 : -1 < (q : ℤ) - m := by exact_mod_cast a2
+    omega
+  have hqm' : (q : ℝ) = m := by exact_mod_cast hqm
+  constructor <;> linarith
+
 end NormalNumbers.PiDisjunctiveRoutes
