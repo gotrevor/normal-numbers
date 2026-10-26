@@ -36,9 +36,11 @@ Fix `b ≥ 2`, `j₀`, `T`.  Let `L = log log N`, `J = J N`, `u = J·(log L)³`,
    Apply `hM` once (check `J ≤ P₀`, `2 ≤ y₀ ≤ N`, `C·J·log(J+2) ≤ log N/log y₀`).  The error is
    `C(e^{−(log L)³/C'} + (log N)^J/√N) → 0`.
 4. **Model.**
-   - Couple `multiShiftMass` to the fully independent product (each shift has its own
-     Bernoulli(`1/p`)).  The model is the independent product conditioned on "at most one shift per
-     prime"; the TV is `≤ Σ_p C(J,2)/p² ≤ J²/P₀`.
+   - Compare `multiShiftMass` directly with the fully independent product (each shift has its own
+     Bernoulli(`1/p`)).  It is **not** literally the independent product conditioned on "at most
+     one shift per prime": conditioning changes the singleton weights.  At one prime the exact TV
+     is the independent law's total singleton deficit
+     `J/p · (1 - (1 - 1/p)^(J-1)) ≤ J(J-1)/p²`; tensorize to get `≤ J²/P₀`.
    - Then `P(no heavy) = Π_{j}(1 − p_j) ≤ exp(−Σ_j p_j)`.
 5. **Moderate-deviation LOWER bound** (pure probability; the main analytic risk).  For independent
    `B_p ~ Bernoulli(1/p)`, `S = Σ B_p`, mean `μ`, and `x = o(μ^{2/3})`:
@@ -50,12 +52,14 @@ Fix `b ≥ 2`, `j₀`, `T`.  Let `L = log log N`, `J = J N`, `u = J·(log L)³`,
 Order of attack: 5 (standalone probability lemma) → 4 → 1 → 2 → 3 → assemble via Step 1′.  Commit each
 green lemma.
 
-## Lap checkpoint (2026-10-26, lap 2)
+## Lap checkpoint (2026-10-26, lap 3)
 
-Step 5's finite change-of-measure and scalar product layers are proved in
-`CoefmassErdosBorweinMultiShiftAux.lean`.  In addition to the lap-1 identities and tilted-window
-bound, lap 2 proves summed tilted-mean bounds, an `exp theta` tilted-variance bound, the quadratic
-product-normalizer lower bound, and `bernoulliSubsetMass_card_ge_tilt_lower`, a one-sided finite
-moderate-deviation estimate with every loss explicit.  Next choose `theta` and `radius`
-asymptotically and simplify its exponent to `-(1+ε)x²/(2μ)`.  Detailed baton:
-`HANDOFF-2026-10-26-eb-multishift-lap2.md`.
+Step 5's standalone finite probability input is now proved in
+`CoefmassErdosBorweinMultiShiftAux.lean`.  The new endpoint
+`bernoulliSubsetMass_card_ge_moderate_lower` chooses the tilt and window explicitly and gives
+`P(S ≥ μ+x) ≥ exp(-(1+ε)x²/(2μ))` from five scalar hypotheses: small square mass, small
+tilt, large deviation relative to `√μ`, and absorption of the fixed Chebyshev factor.  The proof is
+finite and has no asymptotic or measure-theoretic debt.  The review also corrected Step 4's false
+"conditioned product" description; `independentSingletonDefect_le` proves the direct per-prime
+TV cost needed by the replacement coupling.  Next build that categorical/product coupling and
+tensorize it.  Detailed baton: `HANDOFF-2026-10-26-eb-multishift-lap3.md`.

@@ -130,6 +130,31 @@ theorem sub_sq_le_log_one_add {s : Real} (hs : 0 <= s) :
     nlinarith [pow_nonneg hs 3]
   exact htaylor.trans hfrac
 
+/-- On the unit interval, the loss in `1 - exp (-theta)` is at most quadratic. -/
+theorem sub_sq_le_one_sub_exp_neg {theta : Real} (htheta0 : 0 <= theta)
+    (htheta1 : theta <= 1) :
+    theta - theta ^ 2 <= 1 - Real.exp (-theta) := by
+  have habs : |(-theta : Real)| <= 1 := by
+    rw [abs_neg, abs_of_nonneg htheta0]
+    exact htheta1
+  have hrem := Real.abs_exp_sub_one_sub_id_le habs
+  have hupper : Real.exp (-theta) - 1 - (-theta) <= theta ^ 2 := by
+    calc
+      Real.exp (-theta) - 1 - (-theta) <=
+          |Real.exp (-theta) - 1 - (-theta)| := le_abs_self _
+      _ <= (-theta) ^ 2 := hrem
+      _ = theta ^ 2 := by ring
+  linarith
+
+/-- On the unit interval, `exp theta - 1` is at most its linear term plus a quadratic error. -/
+theorem exp_sub_one_le_add_sq {theta : Real} (htheta0 : 0 <= theta)
+    (htheta1 : theta <= 1) :
+    Real.exp theta - 1 <= theta + theta ^ 2 := by
+  have habs : |theta| <= 1 := by rw [abs_of_nonneg htheta0]; exact htheta1
+  have hrem := Real.abs_exp_sub_one_sub_id_le habs
+  have hupper := le_trans (le_abs_self (Real.exp theta - 1 - theta)) hrem
+  linarith
+
 /-- Summing the coordinatewise displacement bounds locates the tilted mean between two explicit
 multiples of the original Bernoulli variance. -/
 theorem bernoulliTiltMean_sub_bounds {alpha : Type*} (U : Finset alpha) (q : alpha -> Real)
@@ -147,6 +172,16 @@ theorem bernoulliTiltMean_sub_bounds {alpha : Type*} (U : Finset alpha) (q : alp
   · rw [Finset.sum_mul]
     exact Finset.sum_le_sum fun p hp =>
       (bernoulliTiltParameter_sub_bounds (hq0 p hp) (hq1 p hp) htheta).2
+
+/-- The original Bernoulli variance is its mean minus the square-mass correction. -/
+theorem sum_bernoulliVariance_eq_sub_squareMass {alpha : Type*} (U : Finset alpha)
+    (q : alpha -> Real) :
+    (∑ p ∈ U, q p * (1 - q p)) =
+      (∑ p ∈ U, q p) - ∑ p ∈ U, (q p) ^ 2 := by
+  rw [← Finset.sum_sub_distrib]
+  apply Finset.sum_congr rfl
+  intro p hp
+  ring
 
 /-- A nonnegative exponential tilt increases the total Bernoulli variance by at most the factor
 `exp theta`. -/
@@ -495,5 +530,369 @@ theorem bernoulliSubsetMass_card_ge_tilt_lower {alpha : Type*} [DecidableEq alph
       exact hwindow
     _ <= bernoulliSubsetMass U q
         {S | (∑ p ∈ U, q p) + x <= (S.card : Real)} := hmono
+
+open Classical in
+/-- A finite near-Gaussian moderate-deviation lower bound.  The hypotheses separate the two
+parameter-selection obligations: the tilted mean must clear the threshold using the quadratic
+lower bound for `1 - exp (-theta)`, and twice the elementary tilted-variance bound must fit inside
+the chosen window.  The conclusion has leading cost `mean * theta^2 / 2`; all remaining losses are
+explicitly lower order when `theta -> 0`, `squareMass = o(mean)`, and `radius = o(mean * theta)`. -/
+theorem bernoulliSubsetMass_card_ge_quadratic_lower {alpha : Type*} [DecidableEq alpha]
+    (U : Finset alpha) (q : alpha -> Real) {theta radius x : Real}
+    (hq0 : ∀ p ∈ U, 0 <= q p) (hq1 : ∀ p ∈ U, q p <= 1)
+    (htheta0 : 0 <= theta) (htheta1 : theta <= 1) (hradius : 0 < radius)
+    (hlocate : x + radius <=
+      (∑ p ∈ U, q p * (1 - q p)) * (theta - theta ^ 2))
+    (hvariance : 2 * Real.exp theta * (∑ p ∈ U, q p * (1 - q p)) <= radius ^ 2) :
+    (1 / 2 : Real) * Real.exp (-(((∑ p ∈ U, q p) / 2 +
+        4 * ∑ p ∈ U, (q p) ^ 2) * theta ^ 2 +
+        (∑ p ∈ U, q p) * theta ^ 3 + theta * radius)) <=
+      bernoulliSubsetMass U q
+        {S | (∑ p ∈ U, q p) + x <= (S.card : Real)} := by
+  let mean : Real := ∑ p ∈ U, q p
+  let variance : Real := ∑ p ∈ U, q p * (1 - q p)
+  let squareMass : Real := ∑ p ∈ U, (q p) ^ 2
+  let tiltedMean : Real := ∑ p ∈ U, bernoulliTiltParameter q theta p
+  let a : Real := Real.exp theta - 1
+  let loss : Real :=
+    (mean / 2 + 4 * squareMass) * theta ^ 2 + mean * theta ^ 3 + theta * radius
+  have hmean0 : 0 <= mean := by
+    dsimp [mean]
+    exact Finset.sum_nonneg fun p hp => hq0 p hp
+  have hvariance0 : 0 <= variance := by
+    dsimp [variance]
+    exact Finset.sum_nonneg fun p hp => mul_nonneg (hq0 p hp) (sub_nonneg.mpr (hq1 p hp))
+  have hsquareMass0 : 0 <= squareMass := by
+    dsimp [squareMass]
+    exact Finset.sum_nonneg fun _ _ => sq_nonneg _
+  have hvarianceMean : variance <= mean := by
+    dsimp [variance, mean]
+    apply Finset.sum_le_sum
+    intro p hp
+    nlinarith [sq_nonneg (q p)]
+  have hmeanBounds := bernoulliTiltMean_sub_bounds U q hq0 hq1 htheta0
+  have hsubExp := sub_sq_le_one_sub_exp_neg htheta0 htheta1
+  have hlocate' : mean + x <= tiltedMean - radius := by
+    have hmul : variance * (theta - theta ^ 2) <=
+        variance * (1 - Real.exp (-theta)) :=
+      mul_le_mul_of_nonneg_left hsubExp hvariance0
+    dsimp [mean, variance, tiltedMean] at hmul ⊢
+    nlinarith [hlocate, hmeanBounds.1]
+  have hvariance' : Real.exp theta * variance <= radius ^ 2 := by
+    dsimp [variance] at hvariance ⊢
+    nlinarith [mul_nonneg (Real.exp_pos theta).le
+      (Finset.sum_nonneg fun p hp => mul_nonneg (hq0 p hp) (sub_nonneg.mpr (hq1 p hp)))]
+  have hbase := bernoulliSubsetMass_card_ge_tilt_lower U q hq0 hq1 htheta0 hradius
+    hlocate' hvariance'
+  have ha0 : 0 <= a := by
+    dsimp [a]
+    exact sub_nonneg.mpr (Real.one_le_exp htheta0)
+  have haLower : theta + theta ^ 2 / 2 <= a := by
+    dsimp [a]
+    nlinarith [Real.quadratic_le_exp_of_nonneg htheta0]
+  have haUpper : a <= theta + theta ^ 2 := by
+    dsimp [a]
+    exact exp_sub_one_le_add_sq htheta0 htheta1
+  have hthetaSq : theta ^ 2 <= theta := by nlinarith [mul_nonneg htheta0 (sub_nonneg.mpr htheta1)]
+  have haTwoTheta : a <= 2 * theta := by nlinarith
+  have haSq : a ^ 2 <= 4 * theta ^ 2 := by nlinarith [sq_nonneg (a - 2 * theta)]
+  have hthetaCube0 : 0 <= theta ^ 3 := by positivity
+  have hmeanA : mean * (theta + theta ^ 2 / 2) <= mean * a :=
+    mul_le_mul_of_nonneg_left haLower hmean0
+  have hsquareA : a ^ 2 * squareMass <= 4 * theta ^ 2 * squareMass :=
+    mul_le_mul_of_nonneg_right haSq hsquareMass0
+  have hthetaA : theta * a <= theta ^ 2 + theta ^ 3 := by
+    calc
+      theta * a <= theta * (theta + theta ^ 2) :=
+        mul_le_mul_of_nonneg_left haUpper htheta0
+      _ = theta ^ 2 + theta ^ 3 := by ring
+  have hvarianceThetaA : variance * (theta * a) <=
+      variance * (theta ^ 2 + theta ^ 3) :=
+    mul_le_mul_of_nonneg_left hthetaA hvariance0
+  have hvarianceThetaSq : variance * theta ^ 2 <= mean * theta ^ 2 :=
+    mul_le_mul_of_nonneg_right hvarianceMean (sq_nonneg theta)
+  have hvarianceThetaCube : variance * theta ^ 3 <= mean * theta ^ 3 :=
+    mul_le_mul_of_nonneg_right hvarianceMean hthetaCube0
+  have htiltedMeanUpper : tiltedMean <= mean + variance * a := by
+    dsimp [tiltedMean, mean, variance, a]
+    linarith [hmeanBounds.2]
+  have hthetaMean : theta * (tiltedMean + radius) <=
+      theta * (mean + variance * a + radius) :=
+    mul_le_mul_of_nonneg_left (by linarith [htiltedMeanUpper]) htheta0
+  have hexponent : -loss <=
+      a * mean - a ^ 2 * squareMass - theta * (tiltedMean + radius) := by
+    dsimp [loss]
+    nlinarith [hmeanA, hsquareA, hvarianceThetaA, hvarianceThetaSq,
+      hvarianceThetaCube, hthetaMean]
+  have hradiusSq : 0 < radius ^ 2 := sq_pos_of_pos hradius
+  have hratio : Real.exp theta * variance / radius ^ 2 <= (1 / 2 : Real) := by
+    rw [div_le_iff₀ hradiusSq]
+    dsimp [variance] at hvariance ⊢
+    nlinarith
+  have hfactor : (1 / 2 : Real) <=
+      1 - Real.exp theta * variance / radius ^ 2 := by linarith
+  calc
+    (1 / 2 : Real) * Real.exp (-(((∑ p ∈ U, q p) / 2 +
+        4 * ∑ p ∈ U, (q p) ^ 2) * theta ^ 2 +
+        (∑ p ∈ U, q p) * theta ^ 3 + theta * radius)) =
+        (1 / 2 : Real) * Real.exp (-loss) := by rfl
+    _ <= (1 / 2 : Real) *
+        Real.exp (a * mean - a ^ 2 * squareMass - theta * (tiltedMean + radius)) := by
+      exact mul_le_mul_of_nonneg_left (Real.exp_le_exp.mpr hexponent) (by norm_num)
+    _ <= (1 - Real.exp theta * variance / radius ^ 2) *
+        Real.exp (a * mean - a ^ 2 * squareMass - theta * (tiltedMean + radius)) := by
+      exact mul_le_mul_of_nonneg_right hfactor (Real.exp_pos _).le
+    _ = Real.exp ((Real.exp theta - 1) * (∑ p ∈ U, q p) -
+          (Real.exp theta - 1) ^ 2 * (∑ p ∈ U, (q p) ^ 2) -
+          theta * ((∑ p ∈ U, bernoulliTiltParameter q theta p) + radius)) *
+        (1 - Real.exp theta * (∑ p ∈ U, q p * (1 - q p)) / radius ^ 2) := by
+      dsimp [a, mean, variance, squareMass, tiltedMean]
+      ring
+    _ <= bernoulliSubsetMass U q
+        {S | (∑ p ∈ U, q p) + x <= (S.card : Real)} := hbase
+
+open Classical in
+/-- Explicit parameter choice for the finite moderate-deviation bound.  If the square-mass is at
+most `eta` times the mean, the deviation is small enough that
+`theta = (1 + 4 eta) x / mean <= eta`, and `x` is large enough compared with `sqrt mean`, then a
+window of radius `eta * x` gives a lower bound whose exponential constant is within `20 eta` of
+the Gaussian constant `1/2`. -/
+theorem bernoulliSubsetMass_card_ge_explicit_moderate_lower
+    {alpha : Type*} [DecidableEq alpha] (U : Finset alpha) (q : alpha -> Real)
+    {eta x : Real} (hq0 : ∀ p ∈ U, 0 <= q p) (hq1 : ∀ p ∈ U, q p <= 1)
+    (heta0 : 0 < eta) (heta1 : eta <= 1 / 100)
+    (hmean : 0 < ∑ p ∈ U, q p) (hx : 0 < x)
+    (hsquareMass : (∑ p ∈ U, (q p) ^ 2) <= eta * ∑ p ∈ U, q p)
+    (hsmallTilt : (1 + 4 * eta) * x / (∑ p ∈ U, q p) <= eta)
+    (hlargeDeviation : 6 * (∑ p ∈ U, q p) <= eta ^ 2 * x ^ 2) :
+    (1 / 2 : Real) * Real.exp (-((1 / 2 + 20 * eta) * x ^ 2 /
+        (∑ p ∈ U, q p))) <=
+      bernoulliSubsetMass U q
+        {S | (∑ p ∈ U, q p) + x <= (S.card : Real)} := by
+  let mean : Real := ∑ p ∈ U, q p
+  let variance : Real := ∑ p ∈ U, q p * (1 - q p)
+  let squareMass : Real := ∑ p ∈ U, (q p) ^ 2
+  let theta : Real := (1 + 4 * eta) * x / mean
+  let radius : Real := eta * x
+  let exactLoss : Real :=
+    (mean / 2 + 4 * squareMass) * theta ^ 2 + mean * theta ^ 3 + theta * radius
+  have heta0' : 0 <= eta := heta0.le
+  have hetaLeOne : eta <= 1 := heta1.trans (by norm_num)
+  have htheta0 : 0 <= theta := by
+    dsimp [theta]
+    positivity
+  have hthetaEta : theta <= eta := by
+    simpa only [theta, mean] using hsmallTilt
+  have htheta1 : theta <= 1 := hthetaEta.trans hetaLeOne
+  have hradius : 0 < radius := by
+    dsimp [radius]
+    positivity
+  have hmeanPos : 0 < mean := by simpa only [mean] using hmean
+  have hmean0 : 0 <= mean := hmeanPos.le
+  have hvariance0 : 0 <= variance := by
+    dsimp [variance]
+    exact Finset.sum_nonneg fun p hp => mul_nonneg (hq0 p hp) (sub_nonneg.mpr (hq1 p hp))
+  have hvarianceMean : variance <= mean := by
+    dsimp [variance, mean]
+    apply Finset.sum_le_sum
+    intro p hp
+    nlinarith [sq_nonneg (q p)]
+  have hvarianceEq : variance = mean - squareMass := by
+    simpa only [variance, mean, squareMass] using sum_bernoulliVariance_eq_sub_squareMass U q
+  have hsquareMass' : squareMass <= eta * mean := by
+    simpa only [squareMass, mean] using hsquareMass
+  have hvarianceLower : (1 - eta) * mean <= variance := by
+    rw [hvarianceEq]
+    linarith
+  have honeSubEta0 : 0 <= 1 - eta := sub_nonneg.mpr hetaLeOne
+  have hthetaOneSubEta0 : 0 <= theta * (1 - eta) := mul_nonneg htheta0 honeSubEta0
+  have hthetaLoss : theta * (1 - eta) <= theta - theta ^ 2 := by
+    have hmul := mul_le_mul_of_nonneg_left hthetaEta htheta0
+    nlinarith
+  have hmeanTheta : mean * theta = (1 + 4 * eta) * x := by
+    dsimp [theta]
+    field_simp [ne_of_gt hmeanPos]
+  have hlocateCoeff : 1 + eta <= (1 - eta) ^ 2 * (1 + 4 * eta) := by
+    have hbracket : 0 <= 1 - 7 * eta + 4 * eta ^ 2 := by
+      nlinarith [sq_nonneg eta]
+    nlinarith [mul_nonneg heta0' hbracket]
+  have hlocate : x + radius <= variance * (theta - theta ^ 2) := by
+    calc
+      x + radius = (1 + eta) * x := by dsimp [radius]; ring
+      _ <= ((1 - eta) ^ 2 * (1 + 4 * eta)) * x :=
+        mul_le_mul_of_nonneg_right hlocateCoeff hx.le
+      _ = ((1 - eta) * mean) * (theta * (1 - eta)) := by
+        calc
+          ((1 - eta) ^ 2 * (1 + 4 * eta)) * x =
+              (1 - eta) ^ 2 * ((1 + 4 * eta) * x) := by ring
+          _ = (1 - eta) ^ 2 * (mean * theta) := by rw [hmeanTheta]
+          _ = ((1 - eta) * mean) * (theta * (1 - eta)) := by ring
+      _ <= variance * (theta * (1 - eta)) :=
+        mul_le_mul_of_nonneg_right hvarianceLower hthetaOneSubEta0
+      _ <= variance * (theta - theta ^ 2) :=
+        mul_le_mul_of_nonneg_left hthetaLoss hvariance0
+  have hexpTheta : Real.exp theta <= 3 := by
+    exact (Real.exp_le_exp.mpr htheta1).trans Real.exp_one_lt_three.le
+  have hvarianceWindow : 2 * Real.exp theta * variance <= radius ^ 2 := by
+    calc
+      2 * Real.exp theta * variance <= 2 * 3 * variance := by
+        gcongr
+      _ <= 6 * mean := by
+        nlinarith
+      _ <= eta ^ 2 * x ^ 2 := by simpa only [mean] using hlargeDeviation
+      _ = radius ^ 2 := by dsimp [radius]; ring
+  have hquad := bernoulliSubsetMass_card_ge_quadratic_lower U q hq0 hq1
+    htheta0 htheta1 hradius hlocate hvarianceWindow
+  have hmeanThetaSq : mean * theta ^ 2 = (1 + 4 * eta) ^ 2 * x ^ 2 / mean := by
+    dsimp [theta]
+    field_simp [ne_of_gt hmeanPos]
+  have hcoeff : mean / 2 + 4 * squareMass <= mean * (1 / 2 + 4 * eta) := by
+    nlinarith
+  have htermOne : (mean / 2 + 4 * squareMass) * theta ^ 2 <=
+      (1 / 2 + 4 * eta) * ((1 + 4 * eta) ^ 2 * x ^ 2 / mean) := by
+    calc
+      (mean / 2 + 4 * squareMass) * theta ^ 2 <=
+          (mean * (1 / 2 + 4 * eta)) * theta ^ 2 :=
+        mul_le_mul_of_nonneg_right hcoeff (sq_nonneg theta)
+      _ = (1 / 2 + 4 * eta) * (mean * theta ^ 2) := by ring
+      _ = _ := by rw [hmeanThetaSq]
+  have htermTwo : mean * theta ^ 3 <=
+      eta * ((1 + 4 * eta) ^ 2 * x ^ 2 / mean) := by
+    calc
+      mean * theta ^ 3 = (mean * theta ^ 2) * theta := by ring
+      _ <= (mean * theta ^ 2) * eta := by
+        exact mul_le_mul_of_nonneg_left hthetaEta (mul_nonneg hmean0 (sq_nonneg theta))
+      _ = _ := by rw [hmeanThetaSq]; ring
+  have htermThree : theta * radius = eta * (1 + 4 * eta) * x ^ 2 / mean := by
+    dsimp [theta, radius]
+    field_simp [ne_of_gt hmeanPos]
+  have hetaSq : eta ^ 2 <= eta / 100 := by
+    have h := mul_le_mul_of_nonneg_left heta1 heta0'
+    nlinarith
+  have hetaCube : eta ^ 3 <= eta / 10000 := by
+    have h := mul_le_mul_of_nonneg_left hetaSq heta0'
+    nlinarith
+  have hcoarseCoeff :
+      (1 / 2 + 4 * eta) * (1 + 4 * eta) ^ 2 +
+          eta * (1 + 4 * eta) ^ 2 + eta * (1 + 4 * eta) <=
+        1 / 2 + 20 * eta := by
+    calc
+      (1 / 2 + 4 * eta) * (1 + 4 * eta) ^ 2 +
+          eta * (1 + 4 * eta) ^ 2 + eta * (1 + 4 * eta) =
+        1 / 2 + 10 * eta + 52 * eta ^ 2 + 80 * eta ^ 3 := by ring
+      _ <= 1 / 2 + 10 * eta + 52 * (eta / 100) + 80 * (eta / 10000) := by
+        gcongr
+      _ <= 1 / 2 + 20 * eta := by linarith
+  have hscale0 : 0 <= x ^ 2 / mean := div_nonneg (sq_nonneg x) hmean0
+  have hloss : exactLoss <= (1 / 2 + 20 * eta) * (x ^ 2 / mean) := by
+    dsimp [exactLoss]
+    rw [htermThree]
+    calc
+      (mean / 2 + 4 * squareMass) * theta ^ 2 + mean * theta ^ 3 +
+          eta * (1 + 4 * eta) * x ^ 2 / mean <=
+        (1 / 2 + 4 * eta) * ((1 + 4 * eta) ^ 2 * x ^ 2 / mean) +
+          eta * ((1 + 4 * eta) ^ 2 * x ^ 2 / mean) +
+            eta * (1 + 4 * eta) * x ^ 2 / mean := add_le_add (add_le_add htermOne htermTwo) le_rfl
+      _ = ((1 / 2 + 4 * eta) * (1 + 4 * eta) ^ 2 +
+          eta * (1 + 4 * eta) ^ 2 + eta * (1 + 4 * eta)) * (x ^ 2 / mean) := by ring
+      _ <= (1 / 2 + 20 * eta) * (x ^ 2 / mean) :=
+        mul_le_mul_of_nonneg_right hcoarseCoeff hscale0
+  calc
+    (1 / 2 : Real) * Real.exp (-((1 / 2 + 20 * eta) * x ^ 2 /
+        (∑ p ∈ U, q p))) =
+        (1 / 2 : Real) * Real.exp (-((1 / 2 + 20 * eta) * x ^ 2 / mean)) := by rfl
+    _ <= (1 / 2 : Real) * Real.exp (-exactLoss) := by
+      rw [mul_div_assoc]
+      exact mul_le_mul_of_nonneg_left (Real.exp_le_exp.mpr (neg_le_neg hloss)) (by norm_num)
+    _ <= bernoulliSubsetMass U q
+        {S | (∑ p ∈ U, q p) + x <= (S.card : Real)} := by
+      simpa only [exactLoss, mean, squareMass, theta, radius] using hquad
+
+open Classical in
+/-- The preceding explicit estimate in the standard moderate-deviation form.  The extra condition
+`4 log 2 * mean <= eps * x^2` absorbs the fixed Chebyshev factor `1/2` into the `eps`-loss in the
+exponent. -/
+theorem bernoulliSubsetMass_card_ge_moderate_lower
+    {alpha : Type*} [DecidableEq alpha] (U : Finset alpha) (q : alpha -> Real)
+    {eps eta x : Real} (hq0 : ∀ p ∈ U, 0 <= q p) (hq1 : ∀ p ∈ U, q p <= 1)
+    (heps : 0 < eps) (heta0 : 0 < eta) (heta1 : eta <= 1 / 100)
+    (hetaEps : 80 * eta <= eps)
+    (hmean : 0 < ∑ p ∈ U, q p) (hx : 0 < x)
+    (hsquareMass : (∑ p ∈ U, (q p) ^ 2) <= eta * ∑ p ∈ U, q p)
+    (hsmallTilt : (1 + 4 * eta) * x / (∑ p ∈ U, q p) <= eta)
+    (hlargeDeviation : 6 * (∑ p ∈ U, q p) <= eta ^ 2 * x ^ 2)
+    (habsorb : 4 * Real.log 2 * (∑ p ∈ U, q p) <= eps * x ^ 2) :
+    Real.exp (-((1 + eps) * x ^ 2 / (2 * ∑ p ∈ U, q p))) <=
+      bernoulliSubsetMass U q
+        {S | (∑ p ∈ U, q p) + x <= (S.card : Real)} := by
+  let mean : Real := ∑ p ∈ U, q p
+  let z : Real := x ^ 2 / mean
+  have hmeanPos : 0 < mean := by simpa only [mean] using hmean
+  have hz0 : 0 <= z := div_nonneg (sq_nonneg x) hmeanPos.le
+  have hfinite := bernoulliSubsetMass_card_ge_explicit_moderate_lower U q hq0 hq1
+    heta0 heta1 hmean hx hsquareMass hsmallTilt hlargeDeviation
+  have hetaLoss : 20 * eta <= eps / 4 := by linarith
+  have hlogLoss : Real.log 2 <= eps / 4 * z := by
+    have hmul : Real.log 2 * mean <= eps * x ^ 2 / 4 := by
+      have habsorb' : 4 * Real.log 2 * mean <= eps * x ^ 2 := by
+        simpa only [mean] using habsorb
+      nlinarith [habsorb']
+    rw [show eps / 4 * z = (eps * x ^ 2 / 4) / mean by
+      dsimp [z]
+      field_simp [ne_of_gt hmeanPos]]
+    exact (le_div_iff₀ hmeanPos).2 hmul
+  have htotal : Real.log 2 + (1 / 2 + 20 * eta) * z <=
+      (1 + eps) / 2 * z := by
+    have hetaScaled : (1 / 2 + 20 * eta) * z <= (1 / 2 + eps / 4) * z :=
+      mul_le_mul_of_nonneg_right (by linarith) hz0
+    have hlogScaled := hlogLoss
+    nlinarith
+  have hhalf : (1 / 2 : Real) = Real.exp (-Real.log 2) := by
+    rw [Real.exp_neg, Real.exp_log (by norm_num : (0 : Real) < 2)]
+    norm_num [div_eq_mul_inv]
+  calc
+    Real.exp (-((1 + eps) * x ^ 2 / (2 * ∑ p ∈ U, q p))) =
+        Real.exp (-((1 + eps) / 2 * z)) := by
+      dsimp [z, mean]
+      congr 2
+      field_simp [ne_of_gt hmean]
+    _ <= Real.exp (-(Real.log 2 + (1 / 2 + 20 * eta) * z)) :=
+      Real.exp_le_exp.mpr (neg_le_neg htotal)
+    _ = (1 / 2 : Real) * Real.exp (-((1 / 2 + 20 * eta) * x ^ 2 /
+        (∑ p ∈ U, q p))) := by
+      rw [hhalf, ← Real.exp_add]
+      dsimp [z, mean]
+      congr 2
+      ring
+    _ <= bernoulliSubsetMass U q
+        {S | (∑ p ∈ U, q p) + x <= (S.card : Real)} := hfinite
+
+/-! ### The per-prime comparison needed for the multishift coupling -/
+
+/-- Concrete refutation of the tempting conditioned-product identity.  For two independent
+Bernoulli(`1/3`) coordinates, conditioning on at most one success gives singleton mass `1/4`,
+whereas the categorical law used by `multiShiftMass` gives each singleton mass `1/3`. -/
+theorem conditionedIndependent_singleton_ne_categorical :
+    (((1 / 3 : Real) * (1 - 1 / 3)) /
+      ((1 - 1 / 3) ^ 2 + 2 * (1 / 3) * (1 - 1 / 3))) ≠ 1 / 3 := by
+  norm_num
+
+/-- The singleton deficit between `J` independent Bernoulli-`q` coordinates and the categorical
+law which selects each singleton with mass `q` is at most `J (J - 1) q²`.  This is the correct
+per-prime total-variation cost: the categorical law is *not* literally the independent law
+conditioned to have at most one success. -/
+theorem independentSingletonDefect_le {q : Real} (hq0 : 0 <= q) (hq1 : q <= 1) (J : Nat) :
+    (J : Real) * q * (1 - (1 - q) ^ (J - 1)) <=
+      (J : Real) * (J - 1 : Nat) * q ^ 2 := by
+  have hbern := one_add_mul_le_pow (a := -q) (by linarith) (J - 1)
+  have hdefect : 1 - (1 - q) ^ (J - 1) <= ((J - 1 : Nat) : Real) * q := by
+    have hbern' : 1 + ((J - 1 : Nat) : Real) * (-q) <= (1 - q) ^ (J - 1) := by
+      simpa only [sub_eq_add_neg] using hbern
+    nlinarith [hbern']
+  calc
+    (J : Real) * q * (1 - (1 - q) ^ (J - 1)) <=
+        (J : Real) * q * (((J - 1 : Nat) : Real) * q) :=
+      mul_le_mul_of_nonneg_left hdefect (mul_nonneg (Nat.cast_nonneg J) hq0)
+    _ = (J : Real) * (J - 1 : Nat) * q ^ 2 := by ring
 
 end NormalNumbers.ErdosBorweinMultiShift
