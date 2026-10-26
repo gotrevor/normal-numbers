@@ -199,3 +199,28 @@ inequality, the two TV errors and `J^2/P` tend to zero, and define the active-co
 Then bundle the deterministic scalar inequality and the moderate-deviation hypotheses, keeping the
 sharp `L - O(log L)` information from `eventually_multiShiftLogBlock_bounds` for the final exponent.
 Detailed baton: `HANDOFF-2026-10-26-eb-multishift-lap11.md`.
+
+## Lap checkpoint (2026-10-26, lap 12)
+
+The constant-dependent sieve schedule and all transfer losses are now closed. The theorem
+`eventually_multiShiftSieveDepth` proves the final depth hypothesis
+
+```text
+C J log(J+2) <= log N / log y(N),
+```
+
+using `J <= L` and `u = J (log L)^3`. The three limits
+`tendsto_multiShiftSieveExpError`, `tendsto_multiShiftSievePowerError`, and
+`tendsto_multiShiftCollisionError` prove respectively that the Rankin tail, the sieve remainder
+`(log N)^J/sqrt N`, and the concrete coupling cost `2J(J-1)/P` vanish.
+`tendsto_multiShiftTransferError` packages the exact combined loss used after applying `hM`.
+All are axiom-clean.
+
+The next attack is the active-column threshold. Fix moderate-deviation constants and define the
+threshold as the ceiling of the prime mean plus the subpower square-root penalty, a fixed
+`A sqrt(mean)` baseline, the `2j log_2 b` shift cost, and a `B log L` buffer. Prove uniformly on a
+long initial interval of shifts both the explicit scalar premise of
+`shiftedVarianceMass_gt_of_heavyColumn` and the hypotheses of
+`multiShiftColumnMass_ge_moderate_of_baseline`. Then use the sharp
+`eventually_multiShiftLogBlock_bounds` estimate—not merely `mean >= L/2`—to make the sum of column
+lower bounds diverge. Detailed baton: `HANDOFF-2026-10-26-eb-multishift-lap12.md`.
