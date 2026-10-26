@@ -46,4 +46,25 @@ theorem bbpPrimeReservoir_succ (n : ℕ) :
       simp only [hA, hB, true_and, false_and, if_false] <;> (try split_ifs) <;> first | omega | ring
   · rw [reservoirTerm, Nat.add_sub_cancel_left, pow_one]
 
+/-- Companion recurrence `S_{n+1} = 16 S_n + exit_n + 16·kick_n − entry_n`: the exit
+transfer moves from the reservoir to the residual, so `R − S` is kicked by `−2·exit`. -/
+theorem bbpResidual_succ (n : ℕ) :
+    bbpResidual (n + 1) =
+      16 * bbpResidual n + bbpReservoirExit n + 16 * bbpKick n - bbpReservoirEntry n := by
+  rw [bbpResidual, bbpResidual, bbpPrimeReservoir_succ, piPartial, piPartial,
+    Finset.sum_range_succ, bbpTerm]
+  have h : (16 : ℝ) ^ n ≠ 0 := by positivity
+  field_simp
+  ring
+
+/-- **Exit collapse** (frozen, 99%: English proof + exact probe).  The only candidate
+denominator in `(4n, 4n+4]` is `p = 4n+1`; its exponent is `(p-1)/4 + 1 = n/2+1` or
+`(n+3)/2`, and `16^{(p-1)/4} = 2^{(p-1)/2} ≡ (2|p) = ±1` by Euler's criterion, with the
+sign cancelling the coefficient `4` / `-1`.  Hence the exit transfer is `64/p` mod 1:
+NOT an O(1) arithmetic source.  Probe `scripts/pi_route2_exit.py`: 1125/1125 primes
+`4n+1 ≤ 20001`; control base 3: 2/1125. -/
+theorem bbpReservoirExit_mod_one (n : ℕ) : ∃ z : ℤ, bbpReservoirExit n =
+    z + (if Nat.Prime (4 * n + 1) then 64 / (4 * (n : ℝ) + 1) else 0) := by
+  sorry
+
 end NormalNumbers.PiDisjunctiveRoutes
