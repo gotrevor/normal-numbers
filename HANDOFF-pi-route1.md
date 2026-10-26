@@ -49,3 +49,11 @@ rational, e.g. 1/3, and a known-normal-ish surrogate).
   ×2-invariant set with a non-torsion point that is not ×3-invariant (e.g. ω₂ of a Sturmian-type
   or uniformly-bad ξ from `UniformBad.exists_irrational_not_isDisjunctive`) — shows (i) never
   bootstraps to (ii) without arithmetic.
+
+## Lap 5
+- Proved `not_isDisjunctive_liouvilleTwo` and the obstruction
+  `exists_closed_two_invariant_nonTorsion_not_three_invariant`: (i) never bootstraps to (ii)
+  for abstract ×2-closed sets; (ii) needs π-specific arithmetic.
+- Lane status vs rule 9: bridges green; research question answered by a stated obstruction
+  (Lean) + false-starts doc.  Remaining open: `PiQuantitativeTripleReturn`, `PiSelfReturn`,
+  `PiOrbitClosureNonTorsion`, `PiOrbitClosureOddInvariant` (no mechanism known for any).

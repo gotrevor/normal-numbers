@@ -18,3 +18,4 @@ Target: n_k ≤ C·4^k with small C.  Control 1/3: returns only at k=1 (as predi
 π: n_k = 1,2,5,16,16,16,101,240,240 for k=1..9 — at or below 2^k throughout, C = 1 suffices.
 √2: 1,3,3,5,5,13,13,120,120.  Verdict: premise constant not refuted; consistent with ~2^k heuristic.
 | "irrationality suffices for a non-torsion point of K" | Furstenberg needs only one | `∑2^{-i!}` has K all torsion | `liouvilleTwo_irrational_and_orbitClosure_torsion` |
+| "a ×2-closed set with an irrational point is ×3-invariant" | would close (ii) from (i) | false | `exists_closed_two_invariant_nonTorsion_not_three_invariant` |

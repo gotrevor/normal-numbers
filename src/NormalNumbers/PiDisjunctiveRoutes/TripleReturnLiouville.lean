@@ -136,4 +136,42 @@ theorem not_selfReturn_liouvilleTwo :
     liouvilleTwo_irrational_and_orbitClosure_torsion.1
     (liouvilleTwo_irrational_and_orbitClosure_torsion.2 _ h)
 
+/-- Proved: the binary Liouville sibling is not binary disjunctive (its orbit closure is
+all torsion, while the circle has non-torsion points). -/
+theorem not_isDisjunctive_liouvilleTwo : ¬ IsDisjunctive 2 (liouvilleNumber 2) := by
+  intro h
+  rw [isDisjunctive_iff_circleOmegaLimit_eq_univ] at h
+  exact not_isOfFinAddOrder_of_irrational' liouvilleTwo_irrational_and_orbitClosure_torsion.1
+    (liouvilleTwo_irrational_and_orbitClosure_torsion.2 _ (h ▸ mem_univ _))
+
+/-- Proved obstruction for Route 1: ingredient (i) does not bootstrap to ingredient (ii).
+There is a closed `×2`-invariant subset of the circle containing a non-torsion point that is
+*not* `×3`-invariant (the full binary orbit closure of `∑ 2^{-i!}`).  So any proof of
+`PiOrbitClosureOddInvariant` must use arithmetic of π beyond "closed, ×2-invariant,
+contains an irrational point". -/
+@[blueprint (title := "A ×2-closed set with an irrational point need not be ×3-invariant")]
+theorem exists_closed_two_invariant_nonTorsion_not_three_invariant :
+    ∃ L : Set UnitAddCircle, IsClosed L ∧
+      MapsTo (2 • · : UnitAddCircle → UnitAddCircle) L L ∧
+      (∃ y ∈ L, ¬ IsOfFinAddOrder y) ∧
+      ¬ MapsTo (3 • · : UnitAddCircle → UnitAddCircle) L L := by
+  set x : ℝ := liouvilleNumber 2
+  set L := closure (range (circleOrbit 2 x))
+  have h2 : MapsTo (2 • · : UnitAddCircle → UnitAddCircle) L L := by
+    refine MapsTo.closure ?_ (continuous_nsmul 2)
+    rintro _ ⟨n, rfl⟩
+    refine ⟨n + 1, ?_⟩
+    simp only [circleOrbit, circleFlow_apply, smul_smul, pow_succ, mul_comm]
+  have hnt : ¬ IsOfFinAddOrder ((x : ℝ) : UnitAddCircle) :=
+    not_isOfFinAddOrder_of_irrational' liouvilleTwo_irrational_and_orbitClosure_torsion.1
+  have hxL : ((x : ℝ) : UnitAddCircle) ∈ L :=
+    subset_closure ⟨0, by simp [circleOrbit]⟩
+  refine ⟨L, isClosed_closure, h2, ⟨_, hxL, hnt⟩, fun h3 => ?_⟩
+  rcases Furstenberg.isClosed_invariant_finite_or_univ (by norm_num) (by norm_num)
+    Furstenberg.multIndep_two_three isClosed_closure h2 h3 with hf | hu
+  · exact (Furstenberg.infinite_of_mem_not_torsion (le_refl 2) h2 hxL hnt).not_finite hf
+  · apply not_isDisjunctive_liouvilleTwo
+    rw [isDisjunctive_iff_denseRange_circleOrbit]
+    exact dense_iff_closure_eq.2 hu
+
 end NormalNumbers.PiDisjunctiveRoutes
