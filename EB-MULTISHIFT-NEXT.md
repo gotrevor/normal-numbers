@@ -315,3 +315,24 @@ exponential sum), identify the impossible-column Bernoulli mass as zero, and the
 mixed product with `multiShiftMass_noHeavy_le_prod_one_sub`, `tendsto_multiShiftTransferError`,
 `low_shiftedVarianceMass_density_le_model`, and Step 1'. Detailed baton:
 `HANDOFF-2026-10-26-eb-multishift-lap15.md`.
+
+## Lap checkpoint (2026-10-26, lap 16 — COMPLETE)
+
+The scoped objective is complete. `CoefmassErdosBorweinMultiShift.lean` is sorry-free, and the
+packet-verbatim headline `ebRandom_ae_normal_subpower_of_multiShift` is proved from the named
+`MultiShiftKubiliusTV` hypothesis with only the standard axioms `Classical.choice`, `Quot.sound`,
+and `propext`.
+
+The fixed Step 1' lower shift is handled by `tendsto_multiShiftActiveExpColumnSum`: deleting the
+columns `j+1 < j₀` subtracts at most `j₀` from the already-divergent exponential sum.
+`tendsto_multiShiftMixedNoHeavyProduct` transfers this to the exact mixed-threshold independent
+product. `exists_multiShiftModerateParameters` supplies compatible fixed `eps`, `eta`, `A`, and
+`alpha` for every `c < 1`. The headline then combines the deterministic mixed-pattern inclusion,
+one application of `MultiShiftKubiliusTV`, the categorical-to-independent coupling and collision
+bound, the vanishing transfer error, and Step 1'.
+
+The statement-integrity audit against planting commit `b774314f` found that the only deleted line
+in the target file is the headline's `sorry`; all packet-verbatim statements are unchanged. No
+`native_decide`, axiom, or statement change was introduced. Both the scoped axiom gate and the
+full repository gate pass. Detailed closure record:
+`HANDOFF-2026-10-26-eb-multishift-lap16.md`.

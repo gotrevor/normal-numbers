@@ -2536,6 +2536,256 @@ theorem tendsto_multiShiftScheduledNoHeavyProduct
         intro j hj
         simpa only [multiShiftScheduledColumnMass] using hcolumnN j
 
+/-! ### Removing the fixed initial shift prefix -/
+
+/-- The mixed threshold used by Step 1': columns below the fixed lower shift `j₀` receive an
+impossible threshold, while every active column uses the moderate-deviation threshold. -/
+noncomputable def multiShiftMixedThreshold
+    (c A : ℝ) (b j₀ N : ℕ) (j : Fin (multiShiftScheduleJ N)) : ℕ :=
+  if j₀ ≤ j.val + 1 then multiShiftThreshold c A b N j.val
+  else (primesIoc (collisionCutoff N) (multiShiftCutoffY N)).card + 1
+
+/-- The independent column mass at the mixed Step 1' threshold. -/
+noncomputable def multiShiftMixedColumnMass
+    (c A : ℝ) (b j₀ N : ℕ) (j : Fin (multiShiftScheduleJ N)) : ℝ :=
+  NormalNumbers.ErdosBorweinEndpointKub.bernoulliSubsetMass
+    (Finset.univ : Finset
+      (Fin (Fintype.card (primesIoc (collisionCutoff N) (multiShiftCutoffY N))) ×
+        Fin (multiShiftScheduleJ N)))
+    (fun z ↦ 1 / (((primeIndexEquiv (collisionCutoff N)
+      (multiShiftCutoffY N)) z.1 : ℕ) : ℝ))
+    {S | multiShiftMixedThreshold c A b j₀ N j ≤
+      (S ∩ shiftArrayColumn
+        (Fintype.card (primesIoc (collisionCutoff N) (multiShiftCutoffY N)))
+        (multiShiftScheduleJ N) j).card}
+
+/-- The independent no-heavy product with the fixed initial prefix disabled. -/
+noncomputable def multiShiftMixedNoHeavyProduct
+    (c A : ℝ) (b j₀ N : ℕ) : ℝ :=
+  ∏ j : Fin (multiShiftScheduleJ N), (1 - multiShiftMixedColumnMass c A b j₀ N j)
+
+theorem multiShiftMixedColumnMass_nonneg (c A : ℝ) (b j₀ N : ℕ)
+    (j : Fin (multiShiftScheduleJ N)) :
+    0 ≤ multiShiftMixedColumnMass c A b j₀ N j := by
+  classical
+  rw [multiShiftMixedColumnMass]
+  apply NormalNumbers.ErdosBorweinEndpointKub.bernoulliSubsetMass_nonneg
+  · intro z hz
+    positivity
+  · intro z hz
+    have hp : Nat.Prime ((primeIndexEquiv (collisionCutoff N)
+        (multiShiftCutoffY N)) z.1 : ℕ) :=
+      (Finset.mem_filter.mp ((primeIndexEquiv (collisionCutoff N)
+        (multiShiftCutoffY N)) z.1).property).2
+    exact (div_le_one (by exact_mod_cast hp.pos)).2 (by exact_mod_cast hp.one_le)
+
+theorem multiShiftMixedColumnMass_le_one (c A : ℝ) (b j₀ N : ℕ)
+    (j : Fin (multiShiftScheduleJ N)) :
+    multiShiftMixedColumnMass c A b j₀ N j ≤ 1 := by
+  classical
+  rw [multiShiftMixedColumnMass]
+  apply NormalNumbers.ErdosBorweinEndpointKub.bernoulliSubsetMass_le_one
+  · intro z hz
+    positivity
+  · intro z hz
+    have hp : Nat.Prime ((primeIndexEquiv (collisionCutoff N)
+        (multiShiftCutoffY N)) z.1 : ℕ) :=
+      (Finset.mem_filter.mp ((primeIndexEquiv (collisionCutoff N)
+        (multiShiftCutoffY N)) z.1).property).2
+    exact (div_le_one (by exact_mod_cast hp.pos)).2 (by exact_mod_cast hp.one_le)
+
+/-- Deleting the fixed set of columns below `j₀` preserves divergence of the exponential
+moderate-deviation lower-bound sum. -/
+theorem tendsto_multiShiftActiveExpColumnSum
+    (c A eps alpha : ℝ) (hA : 0 ≤ A) (heps : 0 ≤ eps)
+    (halpha : (1 + eps) * max c 0 / 2 < alpha) (halphaHalf : alpha < 1 / 2)
+    (b : ℕ) (hb : 2 ≤ b) (j₀ : ℕ) :
+    Tendsto (fun N : ℕ ↦
+      ∑ j : Fin (multiShiftScheduleJ N) with j₀ ≤ j.val + 1,
+        Real.exp (-((1 + eps) * multiShiftDeviation c A b N j.val ^ 2 /
+          (2 * multiShiftPrimeMean N)))) atTop atTop := by
+  have hsum := tendsto_multiShiftExpColumnSum
+    c A eps alpha hA heps halpha halphaHalf b hb
+  have hmajor : Tendsto (fun N : ℕ ↦
+      (∑ j : Fin (multiShiftScheduleJ N),
+        Real.exp (-((1 + eps) * multiShiftDeviation c A b N j.val ^ 2 /
+          (2 * multiShiftPrimeMean N)))) - (j₀ : ℝ)) atTop atTop := by
+    simpa only [sub_eq_add_neg] using
+      Filter.tendsto_atTop_add_const_right atTop (-(j₀ : ℝ)) hsum
+  refine Filter.tendsto_atTop_mono' atTop ?_ hmajor
+  have hLTop : Tendsto (fun N : ℕ ↦ Real.log (Real.log (N : ℝ))) atTop atTop :=
+    Real.tendsto_log_atTop.comp
+      (Real.tendsto_log_atTop.comp tendsto_natCast_atTop_atTop)
+  filter_upwards [eventually_multiShiftPrimeMean_bounds,
+      hLTop.eventually_ge_atTop 2] with N hmean hL
+  let L : ℝ := Real.log (Real.log N)
+  have hmean0 : 0 < multiShiftPrimeMean N := by
+    have hL0 : 0 < L := by simpa only [L] using (show (0 : ℝ) < 2 by norm_num).trans_le hL
+    exact lt_of_lt_of_le (by positivity) hmean.1
+  have hinactiveCard :
+      ((Finset.univ : Finset (Fin (multiShiftScheduleJ N))).filter
+        (fun j ↦ ¬j₀ ≤ j.val + 1)).card ≤ j₀ := by
+    have hsubset :
+        (Finset.univ : Finset (Fin (multiShiftScheduleJ N))).filter
+            (fun j ↦ ¬j₀ ≤ j.val + 1) ⊆
+          (Finset.univ : Finset (Fin (multiShiftScheduleJ N))).filter
+            (fun j ↦ j.val < j₀) := by
+      intro j hj
+      simp only [Finset.mem_filter, Finset.mem_univ, true_and] at hj ⊢
+      omega
+    calc
+      ((Finset.univ : Finset (Fin (multiShiftScheduleJ N))).filter
+          (fun j ↦ ¬j₀ ≤ j.val + 1)).card ≤
+          ((Finset.univ : Finset (Fin (multiShiftScheduleJ N))).filter
+            (fun j ↦ j.val < j₀)).card := Finset.card_le_card hsubset
+      _ = min (multiShiftScheduleJ N) j₀ := Fin.card_filter_val_lt
+      _ ≤ j₀ := min_le_right _ _
+  have hinactive :
+      (∑ j : Fin (multiShiftScheduleJ N) with ¬j₀ ≤ j.val + 1,
+        Real.exp (-((1 + eps) * multiShiftDeviation c A b N j.val ^ 2 /
+          (2 * multiShiftPrimeMean N)))) ≤ (j₀ : ℝ) := by
+    calc
+      (∑ j : Fin (multiShiftScheduleJ N) with ¬j₀ ≤ j.val + 1,
+          Real.exp (-((1 + eps) * multiShiftDeviation c A b N j.val ^ 2 /
+            (2 * multiShiftPrimeMean N)))) ≤
+          ∑ _j ∈ (Finset.univ : Finset (Fin (multiShiftScheduleJ N))).filter
+            (fun j ↦ ¬j₀ ≤ j.val + 1), (1 : ℝ) := by
+              apply Finset.sum_le_sum
+              intro j hj
+              apply Real.exp_le_one_iff.mpr
+              have hone : 0 ≤ 1 + eps := by linarith
+              exact neg_nonpos.mpr (div_nonneg
+                (mul_nonneg hone (sq_nonneg _)) (by positivity))
+      _ = (((Finset.univ : Finset (Fin (multiShiftScheduleJ N))).filter
+            (fun j ↦ ¬j₀ ≤ j.val + 1)).card : ℝ) := by simp
+      _ ≤ j₀ := by exact_mod_cast hinactiveCard
+  have hsplit := Finset.sum_filter_add_sum_filter_not
+    (Finset.univ : Finset (Fin (multiShiftScheduleJ N)))
+    (fun j ↦ j₀ ≤ j.val + 1)
+    (fun j ↦ Real.exp (-((1 + eps) * multiShiftDeviation c A b N j.val ^ 2 /
+      (2 * multiShiftPrimeMean N))))
+  linarith
+
+/-- The fixed lower shift required by Step 1' does not affect decay of the independent
+no-heavy product. -/
+theorem tendsto_multiShiftMixedNoHeavyProduct
+    (c A eps eta alpha : ℝ) (hc : c < 1) (hA : 0 ≤ A)
+    (heps : 0 < eps) (heta0 : 0 < eta) (heta1 : eta ≤ 1 / 100)
+    (hetaEps : 80 * eta ≤ eps) (hlargeA : 6 ≤ eta ^ 2 * A ^ 2)
+    (habsorbA : 4 * Real.log 2 ≤ eps * A ^ 2)
+    (halpha : (1 + eps) * max c 0 / 2 < alpha) (halphaHalf : alpha < 1 / 2)
+    (b : ℕ) (hb : 2 ≤ b) (j₀ : ℕ) :
+    Tendsto (multiShiftMixedNoHeavyProduct c A b j₀) atTop (nhds 0) := by
+  have hcolumn := eventually_multiShiftColumnMass_ge_deviation
+    c A eps eta hc hA b hb heps heta0 heta1 hetaEps hlargeA habsorbA
+  have hsum := tendsto_multiShiftActiveExpColumnSum
+    c A eps alpha hA heps.le halpha halphaHalf b hb j₀
+  have hexp : Tendsto (fun N : ℕ ↦ Real.exp (-
+      ∑ j : Fin (multiShiftScheduleJ N) with j₀ ≤ j.val + 1,
+        Real.exp (-((1 + eps) * multiShiftDeviation c A b N j.val ^ 2 /
+          (2 * multiShiftPrimeMean N))))) atTop (nhds 0) :=
+    Real.tendsto_exp_atBot.comp (tendsto_neg_atTop_atBot.comp hsum)
+  refine squeeze_zero' ?_ ?_ hexp
+  · exact Eventually.of_forall fun N ↦ by
+      rw [multiShiftMixedNoHeavyProduct]
+      exact Finset.prod_nonneg fun j hj ↦
+        sub_nonneg.mpr (multiShiftMixedColumnMass_le_one c A b j₀ N j)
+  · filter_upwards [hcolumn] with N hcolumnN
+    rw [multiShiftMixedNoHeavyProduct]
+    calc
+      ∏ j : Fin (multiShiftScheduleJ N),
+          (1 - multiShiftMixedColumnMass c A b j₀ N j) ≤
+          Real.exp (-∑ j : Fin (multiShiftScheduleJ N),
+            multiShiftMixedColumnMass c A b j₀ N j) :=
+        prod_one_sub_le_exp_neg_sum _
+          (multiShiftMixedColumnMass_nonneg c A b j₀ N)
+          (multiShiftMixedColumnMass_le_one c A b j₀ N)
+      _ ≤ Real.exp (-∑ j : Fin (multiShiftScheduleJ N) with j₀ ≤ j.val + 1,
+          Real.exp (-((1 + eps) * multiShiftDeviation c A b N j.val ^ 2 /
+            (2 * multiShiftPrimeMean N)))) := by
+        apply Real.exp_le_exp.mpr
+        apply neg_le_neg
+        calc
+          (∑ j : Fin (multiShiftScheduleJ N) with j₀ ≤ j.val + 1,
+              Real.exp (-((1 + eps) * multiShiftDeviation c A b N j.val ^ 2 /
+                (2 * multiShiftPrimeMean N)))) ≤
+              ∑ j : Fin (multiShiftScheduleJ N) with j₀ ≤ j.val + 1,
+                multiShiftMixedColumnMass c A b j₀ N j := by
+            apply Finset.sum_le_sum
+            intro j hj
+            have hjactive : j₀ ≤ j.val + 1 := by simpa using hj
+            simpa only [multiShiftMixedColumnMass, multiShiftMixedThreshold,
+              if_pos hjactive, multiShiftScheduledColumnMass] using hcolumnN j
+          _ ≤ ∑ j : Fin (multiShiftScheduleJ N),
+              multiShiftMixedColumnMass c A b j₀ N j := by
+            apply Finset.sum_le_sum_of_subset_of_nonneg (Finset.filter_subset _ _)
+            intro j hj hnot
+            exact multiShiftMixedColumnMass_nonneg c A b j₀ N j
+
+/-- Compatible fixed constants exist for the moderate-deviation estimate whenever `c < 1`. -/
+theorem exists_multiShiftModerateParameters (c : ℝ) (hc : c < 1) :
+    ∃ eps eta A alpha : ℝ,
+      0 < eps ∧ 0 < eta ∧ eta ≤ 1 / 100 ∧ 80 * eta ≤ eps ∧
+      0 ≤ A ∧ 6 ≤ eta ^ 2 * A ^ 2 ∧
+      4 * Real.log 2 ≤ eps * A ^ 2 ∧
+      (1 + eps) * max c 0 / 2 < alpha ∧ alpha < 1 / 2 := by
+  let m : ℝ := max c 0
+  have hm0 : 0 ≤ m := le_max_right _ _
+  have hm1 : m < 1 := max_lt hc zero_lt_one
+  let eps : ℝ := (1 - m) / 2
+  have heps : 0 < eps := by dsimp only [eps]; positivity
+  have hepsProd : (1 + eps) * m < 1 := by
+    have hpos : 0 < (1 - m) * (2 - m) := mul_pos (by linarith) (by linarith)
+    dsimp only [eps]
+    nlinarith
+  let eta : ℝ := min (1 / 200) (eps / 160)
+  have heta0 : 0 < eta := by
+    rw [lt_min_iff]
+    exact ⟨by norm_num, div_pos heps (by norm_num)⟩
+  have heta1 : eta ≤ 1 / 100 := by
+    calc eta ≤ 1 / 200 := min_le_left _ _
+      _ ≤ 1 / 100 := by norm_num
+  have hetaEps : 80 * eta ≤ eps := by
+    have hle := min_le_right (1 / 200 : ℝ) (eps / 160)
+    change eta ≤ eps / 160 at hle
+    nlinarith
+  let z : ℝ := 6 / eta ^ 2 + 4 * Real.log 2 / eps
+  have hlog2 : 0 < Real.log (2 : ℝ) := Real.log_pos (by norm_num)
+  have hz0 : 0 ≤ z := by dsimp only [z]; positivity
+  let A : ℝ := Real.sqrt z + 1
+  have hA : 0 ≤ A := by dsimp only [A]; positivity
+  have hzA : z ≤ A ^ 2 := by
+    have hsqrt := Real.sq_sqrt hz0
+    dsimp only [A]
+    nlinarith [Real.sqrt_nonneg z]
+  have hlargeA : 6 ≤ eta ^ 2 * A ^ 2 := by
+    have hpart : 6 / eta ^ 2 ≤ z := by
+      dsimp only [z]
+      have : 0 ≤ 4 * Real.log 2 / eps := div_nonneg (by positivity) heps.le
+      linarith
+    have hetaSq : 0 < eta ^ 2 := sq_pos_of_pos heta0
+    calc
+      6 = eta ^ 2 * (6 / eta ^ 2) := by field_simp
+      _ ≤ eta ^ 2 * A ^ 2 := mul_le_mul_of_nonneg_left (hpart.trans hzA) hetaSq.le
+  have habsorbA : 4 * Real.log 2 ≤ eps * A ^ 2 := by
+    have hpart : 4 * Real.log 2 / eps ≤ z := by
+      dsimp only [z]
+      have : 0 ≤ 6 / eta ^ 2 := div_nonneg (by norm_num) (sq_nonneg eta)
+      linarith
+    calc
+      4 * Real.log 2 = eps * (4 * Real.log 2 / eps) := by field_simp
+      _ ≤ eps * A ^ 2 := mul_le_mul_of_nonneg_left (hpart.trans hzA) heps.le
+  let alpha : ℝ := ((1 + eps) * m / 2 + 1 / 2) / 2
+  have halpha : (1 + eps) * max c 0 / 2 < alpha := by
+    change (1 + eps) * m / 2 < alpha
+    dsimp only [alpha]
+    linarith
+  have halphaHalf : alpha < 1 / 2 := by
+    dsimp only [alpha]
+    linarith
+  exact ⟨eps, eta, A, alpha, heps, heta0, heta1, hetaEps, hA,
+    hlargeA, habsorbA, halpha, halphaHalf⟩
+
 open Classical in
 /-- **Hypothesis (sieve, dimension `J`): the `J`-shift Kubilius model.**  This is the natural
 `J`-dimensional extension of `KubiliusTV`.  It is expected from the fundamental lemma of sieve theory
@@ -2566,6 +2816,127 @@ theorem ebRandom_ae_normal_subpower_of_multiShift (hM : MultiShiftKubiliusTV)
     (c c₀ : ℝ) (hc : c < 1) (hc₀ : 0 < c₀)
     (hdelta : ∀ m : ℕ, 2 ≤ m → c₀ * subpowerWeight c m ≤ delta m * (1 - delta m)) :
     ∀ᵐ w ∂μ, ∀ b : ℕ, 2 ≤ b → NormalNumbers.IsNormal b (ebLambert b X w) := by
-  sorry
+  apply ebRandom_ae_normal_of_shiftedVariance_diverges μ delta X hX
+    multiShiftScheduleJ eventually_multiShiftScheduleJ_le_log_log
+  intro b hb j₀ T
+  obtain ⟨C, hC, hTV⟩ := hM
+  obtain ⟨eps, eta, A, alpha, heps, heta0, heta1, hetaEps, hA,
+      hlargeA, habsorbA, halpha, halphaHalf⟩ :=
+    exists_multiShiftModerateParameters c hc
+  let v : ℕ → ℝ := fun m ↦ delta m * (1 - delta m)
+  let transferError : ℕ → ℝ := fun N ↦
+    C * (Real.exp (-(Real.log N / Real.log (multiShiftCutoffY N)) / C) +
+      Real.log N ^ multiShiftScheduleJ N / Real.sqrt N) +
+    2 * (multiShiftScheduleJ N : ℝ) * (multiShiftScheduleJ N - 1 : ℕ) *
+      (collisionCutoff N : ℝ)⁻¹
+  have hmixed := tendsto_multiShiftMixedNoHeavyProduct
+    c A eps eta alpha hc hA heps heta0 heta1 hetaEps hlargeA habsorbA
+      halpha halphaHalf b hb j₀
+  have herr : Tendsto transferError atTop (nhds 0) := by
+    simpa only [transferError, neg_div] using tendsto_multiShiftTransferError C hC
+  have hupper : Tendsto (fun N ↦
+      multiShiftMixedNoHeavyProduct c A b j₀ N + transferError N)
+      atTop (nhds 0) := by
+    simpa using hmixed.add herr
+  refine squeeze_zero' (Eventually.of_forall fun N ↦ ?_) ?_ hupper
+  · positivity
+  · have hLTop : Tendsto (fun N : ℕ ↦ Real.log (Real.log (N : ℝ))) atTop atTop :=
+      Real.tendsto_log_atTop.comp
+        (Real.tendsto_log_atTop.comp tendsto_natCast_atTop_atTop)
+    filter_upwards [eventually_multiShiftSieveGeometry,
+        eventually_multiShiftCutoffY_bounds,
+        eventually_multiShiftSieveDepth C hC,
+        eventually_multiShiftThreshold_scalar c A c₀ T hA hc₀ b hb,
+        eventually_multiShiftPrimeMean_bounds,
+        hLTop.eventually_ge_atTop 3] with N hgeom hy hdepth hscalar hmean hL
+    let P : ℕ := collisionCutoff N
+    let y : ℕ := multiShiftCutoffY N
+    let J : ℕ := multiShiftScheduleJ N
+    let threshold : Fin J → ℕ := fun j ↦ multiShiftThreshold c A b N j.val
+    let mixedThreshold : Fin J → ℕ := fun j ↦
+      if j₀ ≤ j.val + 1 then threshold j else (primesIoc P y).card + 1
+    let event : Set (Fin J → Finset ℕ) :=
+      {Q | ∀ j, (Q j).card < mixedThreshold j}
+    have hJ1 : 1 ≤ J := by simpa only [J] using hgeom.1
+    have hJP : J ≤ P := by simpa only [J, P] using hgeom.2.1
+    have hy2 : 2 ≤ y := by simpa only [y] using hgeom.2.2.1
+    have hyN : y ≤ N := by simpa only [y] using hgeom.2.2.2.1
+    have hPy : P ≤ y := by simpa only [P, y] using hy.1
+    have hP0 : P ≠ 0 := by omega
+    have hN0 : 0 < N := lt_of_lt_of_le (by omega) hyN
+    have hPlog : 1 ≤ Real.log (Real.log (P + 1)) := by
+      let L : ℝ := Real.log (Real.log N)
+      have hL3 : 3 ≤ L := by simpa only [L] using hL
+      have hfloor := natFloor_exp_log_bounds
+        (x := L ^ 2) (show 2 * Real.log 2 ≤ L ^ 2 by
+          have hlog2lt : Real.log (2 : ℝ) < 1 := Real.log_two_lt_d9.trans (by norm_num)
+          nlinarith)
+      change 2 ≤ P ∧ L ^ 2 / 2 ≤ Real.log P ∧
+        Real.log P ≤ L ^ 2 ∧
+        Real.log (L ^ 2) - Real.log 2 ≤ Real.log (Real.log P) ∧
+        Real.log (Real.log P) ≤ Real.log (L ^ 2) at hfloor
+      have hlogP3 : 3 ≤ Real.log P := by nlinarith [hfloor.2.1]
+      have hPpos : (0 : ℝ) < P := by exact_mod_cast (show 0 < P by omega)
+      have hlogMono : Real.log P ≤ Real.log (P + 1) := by
+        apply Real.log_le_log hPpos
+        exact_mod_cast (Nat.le_add_right P 1)
+      calc
+        (1 : ℝ) = Real.log (Real.exp 1) := (Real.log_exp 1).symm
+        _ ≤ Real.log (Real.log (P + 1)) := Real.log_le_log (Real.exp_pos 1)
+          (Real.exp_one_lt_three.le.trans (hlogP3.trans hlogMono))
+    have hthreshold : ∀ j : Fin J, j₀ ≤ j.val + 1 → 1 ≤ threshold j := by
+      intro j hj
+      let L : ℝ := Real.log (Real.log N)
+      have hL3 : 3 ≤ L := by simpa only [L] using hL
+      have hmean0 : 0 < multiShiftPrimeMean N := by
+        have hlower := hmean.1
+        change L / 2 ≤ multiShiftPrimeMean N at hlower
+        exact lt_of_lt_of_le (by nlinarith) hlower
+      apply Nat.one_le_ceil_iff.mpr
+      have hlogL0 : 0 < Real.log L := Real.log_pos (by linarith)
+      have hpenalty : 0 ≤ multiShiftSubpowerPenalty c N := by
+        simp only [multiShiftSubpowerPenalty]
+        positivity
+      have hshift : 0 ≤ (((2 * (j.val + 1) : ℕ) : ℝ) * Real.log b / Real.log 2) := by
+        have hlogb : 0 < Real.log (b : ℝ) := Real.log_pos (by exact_mod_cast hb)
+        have hlog2 : 0 < Real.log (2 : ℝ) := Real.log_pos (by norm_num)
+        positivity
+      positivity
+    have hdet : ∀ n ∈ Finset.Icc 1 N,
+        shiftedVarianceMass v b j₀ J P n ≤ T →
+          multiShiftPattern P y J n ∈ event := by
+      intro n hn hmass
+      have hnN : n ≤ N := (Finset.mem_Icc.mp hn).2
+      have hnM : ∀ j : Fin J, n + j.val + 1 ≤ 2 * N := by
+        intro j
+        have hjN : j.val + 1 ≤ N := by
+          have hjJ : j.val + 1 ≤ J := by omega
+          exact hjJ.trans (hJP.trans (hPy.trans hyN))
+        omega
+      have hpattern := low_shiftedVarianceMass_pattern_noHeavy
+        (P := P) (y := y) (n := n) (M := 2 * N) (b := b) (j₀ := j₀)
+        (J := J) (T := T) v
+        (fun d ↦ mul_nonneg (hX.1 d).1 (sub_nonneg.mpr (hX.1 d).2)) c c₀
+        threshold (by omega) hnM (by omega) hPlog hc₀.le hdelta hthreshold
+        (fun j hj ↦ by simpa only [threshold] using hscalar j.val) hmass
+      change ∀ j : Fin J, (multiShiftPattern P y J n j).card < mixedThreshold j
+      simpa only [mixedThreshold] using hpattern
+    have hmodel := multiShiftMass_noHeavy_le_prod_one_sub hJP hP0 hPy mixedThreshold
+    have hmodel' : multiShiftMass P y J event ≤
+        multiShiftMixedNoHeavyProduct c A b j₀ N +
+          2 * (J : ℝ) * (J - 1 : ℕ) * (P : ℝ)⁻¹ := by
+      simpa only [event, mixedThreshold, threshold, P, y, J,
+        multiShiftMixedNoHeavyProduct, multiShiftMixedColumnMass,
+        multiShiftMixedThreshold] using hmodel
+    have hsieve := hTV N y J P hJ1 hJP hy2 hyN hdepth event
+    have hdensity := low_shiftedVarianceMass_density_le_model
+      v event hN0 hdet hsieve
+    change (((Finset.Icc 1 N).filter (fun n ↦
+      shiftedVarianceMass (fun m ↦ delta m * (1 - delta m)) b j₀
+        (multiShiftScheduleJ N) (collisionCutoff N) n ≤ T)).card : ℝ) / N ≤ _
+    exact hdensity.trans (by
+      have hm := hmodel'
+      dsimp only [transferError, P, y, J] at hm ⊢
+      linarith)
 
 end NormalNumbers.ErdosBorweinMultiShift
