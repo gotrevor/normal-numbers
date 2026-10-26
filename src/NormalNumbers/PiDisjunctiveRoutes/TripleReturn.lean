@@ -190,7 +190,7 @@ contains a non-torsion (irrational) point.
 Costume audit: (a) implied by the sink (K = 𝕋), so it is not an advance by itself;
 (b) strictly weaker than the sink in general: ingredient (ii), ×q-invariance, is what is
 missing.  Degenerate corner: for a binary Liouville number such as `∑ 2^{-n!}` the
-closure is `{0}` (standard, not yet Lean-checked), so the node is not automatic.
+closure is all torsion (proved: `liouvilleTwo_irrational_and_orbitClosure_torsion`), so the node is not automatic.
 Confidence true for π: 99% (heuristic: π is believed normal). -/
 def PiOrbitClosureNonTorsion : Prop :=
   ∃ y ∈ circleOmegaLimit 2 Real.pi, ¬ IsOfFinAddOrder y

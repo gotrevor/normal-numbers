@@ -31,3 +31,13 @@ rational, e.g. 1/3, and a known-normal-ish surrogate).
   irrationality measure (does μ(π) < ∞ force K ≠ {0}? probably not: orbit can still cluster at 0).
 - Probe K=9: π n_k ≤ 2^k for all k ≤ 9 (control 1/3 ok); premise constant C=1 survives.
 - False-starts doc: `docs/pi-routes/route1.md`.
+
+## Lap 3
+- Proved sibling `liouvilleTwo_irrational_and_orbitClosure_torsion`
+  (`TripleReturnLiouville.lean`): `∑2^{-i!}` is irrational and its binary orbit closure is all
+  dyadic/torsion.  So node (i) `PiOrbitClosureNonTorsion` is a genuine condition.
+- NEXT: find an arithmetic lever for (i) on π.  Candidate: π's finite irrationality measure
+  (Salikhov μ ≤ 7.11) as a named literature Prop; test whether "finite irrationality measure ⇒
+  K has a non-torsion point" — probe against siblings with μ finite but K torsion-only
+  (likely exist: construct x with long zero-runs of length ~ log n, μ = 2 yet K ⊆ dyadics?
+  run lengths o(n) keep μ finite).  If such a sibling exists, record the obstruction.
