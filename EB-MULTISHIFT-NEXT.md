@@ -114,3 +114,22 @@ or new `sorry` was introduced. The next attack is Step 1: formalize deterministi
 heavy-prime-count ⇒ large `divisorVarianceMass`, reusing `divisorVarianceMass_ge_primeChain`,
 `card_primeChainDivisors`, `hdelta`, and the repo's Mertens estimates. Detailed baton:
 `HANDOFF-2026-10-26-eb-multishift-lap7.md`.
+
+## Lap checkpoint (2026-10-26, reflection lap 8)
+
+Step 1's deterministic bridge is now proved, with a route simplification. Every divisor in the
+selected prime chain divides `n+j`, so it is at most the global cutoff `M` (eventually `2N`). The
+proved eventual antitonicity of `subpowerWeight` therefore gives the common lower bound at `M`
+without any hypothesis on `omega(n+j)`. `divisorVarianceMass_ge_primeDivisorSet` supplies at least
+`2^(r-1)` chain divisors from any `r` selected primes, and
+`shiftedVarianceMass_gt_of_heavyColumn` turns the resulting explicit scalar inequality into the
+required `shiftedVarianceMass > T` conclusion. All are axiom-clean.
+
+This deletes the planned large-omega exceptional-set step entirely; the `B log L` threshold still
+absorbs `log u + log log P` and the negligible difference between the square-root penalties at
+`y0` and `2N`. The next attack is the scalar/schedule adapter: Mertens for `primesIoc`, eventual
+cutoff facts, and an integer heavy threshold implying the new explicit chain inequality. In the
+later probability step, split `c > 0` (moderate deviations) from `c <= 0` (a fixed-probability
+central-tail lower bound), because the existing moderate theorem's large-deviation premise does
+not apply directly when the square-root displacement vanishes. Detailed baton:
+`HANDOFF-2026-10-26-eb-multishift-lap8.md`.

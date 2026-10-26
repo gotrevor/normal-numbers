@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
 import Mathlib
+import NormalNumbers.CoefmassErdosBorweinEndpointEK
 import NormalNumbers.CoefmassErdosBorweinEndpointKubAux
 
 /-!
@@ -1820,5 +1821,59 @@ theorem categoricalShiftProduct_noHeavy_le_independent {n J : Nat} (q : Fin n �
     _ ≤ (finiteProductMass (fun i => independentShiftSubsetWeight J (q i)) R + E) + E :=
       add_le_add_left hcleared E
     _ = finiteProductMass (fun i => independentShiftSubsetWeight J (q i)) R + 2 * E := by ring
+
+/-! ### Deterministic prime-chain extraction -/
+
+/-- Any nonempty finite set of prime divisors above `P` supplies a divisor chain of exponential
+cardinality.  The pointwise lower bound only has to hold between `P` and a global upper bound `M`;
+this is the form needed for slowly varying sub-power weights. -/
+theorem divisorVarianceMass_ge_primeDivisorSet
+    (v : Nat → Real) (hv0 : ∀ d, 0 ≤ v d) {P n M : Nat} (Q : Finset Nat)
+    (hQ : Q.Nonempty) (hprime : ∀ q ∈ Q, q.Prime) (hdvd : ∀ q ∈ Q, q ∣ n)
+    (hlarge : ∀ q ∈ Q, P < q) (hn : n ≠ 0) (hnM : n ≤ M)
+    {w : Real} (hw0 : 0 ≤ w) (hweight : ∀ d, P < d → d ≤ M → w ≤ v d) :
+    (((2 ^ (Q.card - 1) : Nat) : Real) * w) ≤
+      NormalNumbers.ErdosBorweinEndpoint.divisorVarianceMass v P n := by
+  classical
+  let p := Q.max' hQ
+  have hpQ : p ∈ Q := Finset.max'_mem Q hQ
+  have hp : p.Prime := hprime p hpQ
+  have hpn : p ∣ n := hdvd p hpQ
+  have hPp : P < p := hlarge p hpQ
+  have hQsub : Q ⊆ NormalNumbers.ErdosBorweinEndpointEK.primeFactorsUpTo p n := by
+    intro q hq
+    simp only [NormalNumbers.ErdosBorweinEndpointEK.primeFactorsUpTo,
+      Finset.mem_filter, Nat.mem_primeFactors]
+    exact ⟨⟨hprime q hq, hdvd q hq, hn⟩, Finset.le_max' Q q hq⟩
+  have hcard : 2 ^ (Q.card - 1) ≤
+      (NormalNumbers.ErdosBorweinEndpointEK.primeChainDivisors p n).card := by
+    rw [NormalNumbers.ErdosBorweinEndpointEK.card_primeChainDivisors hp hpn hn]
+    exact Nat.pow_le_pow_right (by omega : 0 < 2)
+      (Nat.sub_le_sub_right (Finset.card_le_card hQsub) 1)
+  have hchainWeight : ∀ d ∈
+      NormalNumbers.ErdosBorweinEndpointEK.primeChainDivisors p n, w ≤ v d := by
+    intro d hd
+    have hb := NormalNumbers.ErdosBorweinEndpointEK.mem_primeChainDivisors_bounds
+      hp hpn hn hd
+    have hdM : d ≤ M := (Nat.le_of_dvd (Nat.pos_of_ne_zero hn) hb.2.1).trans hnM
+    exact hweight d (hPp.trans_le hb.1) hdM
+  have hsub : NormalNumbers.ErdosBorweinEndpointEK.primeChainDivisors p n ⊆
+      n.divisors.filter (fun d ↦ P < d) := by
+    intro d hd
+    have hb := NormalNumbers.ErdosBorweinEndpointEK.mem_primeChainDivisors_bounds
+      hp hpn hn hd
+    rw [Finset.mem_filter, Nat.mem_divisors]
+    exact ⟨⟨hb.2.1, hn⟩, hPp.trans_le hb.1⟩
+  calc
+    (((2 ^ (Q.card - 1) : Nat) : Real) * w) ≤
+        ((NormalNumbers.ErdosBorweinEndpointEK.primeChainDivisors p n).card : Real) * w := by
+      exact mul_le_mul_of_nonneg_right (by exact_mod_cast hcard) hw0
+    _ = ∑ d ∈ NormalNumbers.ErdosBorweinEndpointEK.primeChainDivisors p n, w := by
+      simp only [Finset.sum_const, nsmul_eq_mul]
+    _ ≤ ∑ d ∈ NormalNumbers.ErdosBorweinEndpointEK.primeChainDivisors p n, v d := by
+      exact Finset.sum_le_sum fun d hd ↦ hchainWeight d hd
+    _ ≤ ∑ d ∈ n.divisors.filter (fun d ↦ P < d), v d :=
+      Finset.sum_le_sum_of_subset_of_nonneg hsub (fun d _ _ ↦ hv0 d)
+    _ = NormalNumbers.ErdosBorweinEndpoint.divisorVarianceMass v P n := rfl
 
 end NormalNumbers.ErdosBorweinMultiShift

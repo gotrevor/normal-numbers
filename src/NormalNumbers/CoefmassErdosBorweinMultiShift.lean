@@ -29,6 +29,107 @@ noncomputable def subpowerWeight (c : ℝ) (m : ℕ) : ℝ :=
   Real.rpow (Real.log m) (-Real.log 2) *
     Real.exp (-(Real.log 2) * Real.sqrt (c * Real.log (Real.log m) * Real.log (Real.log (Real.log m))))
 
+theorem subpowerWeight_nonneg (c : ℝ) (m : ℕ) : 0 ≤ subpowerWeight c m := by
+  by_cases hm : m = 0
+  · subst m
+    have hlog2 : Real.log (2 : ℝ) ≠ 0 := ne_of_gt (Real.log_pos (by norm_num))
+    simp [subpowerWeight, Real.zero_rpow (neg_ne_zero.mpr hlog2)]
+  have hm1 : 1 ≤ m := Nat.one_le_iff_ne_zero.mpr hm
+  have hlog : 0 ≤ Real.log (m : ℝ) := Real.log_nonneg (by exact_mod_cast hm1)
+  unfold subpowerWeight
+  exact mul_nonneg (Real.rpow_nonneg hlog _) (Real.exp_pos _).le
+
+/-- Once `log log m ≥ 1`, the sub-power weight is antitone.  The split at `c = 0` is
+essential: for `c ≤ 0` the square-root factor vanishes throughout this eventual range. -/
+theorem subpowerWeight_antitone_of_log_log_one_le (c : ℝ) {m M : ℕ}
+    (hm1 : 1 < m) (hmlog : 1 ≤ Real.log (Real.log m)) (hmM : m ≤ M) :
+    subpowerWeight c M ≤ subpowerWeight c m := by
+  have hm0 : (0 : ℝ) < m := by exact_mod_cast (Nat.zero_lt_of_lt hm1)
+  have hM0 : (0 : ℝ) < M := hm0.trans_le (by exact_mod_cast hmM)
+  have hlogm : 0 < Real.log (m : ℝ) := Real.log_pos (by exact_mod_cast hm1)
+  have hlogM : 0 < Real.log (M : ℝ) := Real.log_pos (by
+    exact_mod_cast hm1.trans_le hmM)
+  have hlog : Real.log (m : ℝ) ≤ Real.log (M : ℝ) :=
+    Real.log_le_log hm0 (by exact_mod_cast hmM)
+  have hloglog : Real.log (Real.log m) ≤ Real.log (Real.log M) :=
+    Real.log_le_log hlogm hlog
+  have hloglogm : 0 < Real.log (Real.log m) := zero_lt_one.trans_le hmlog
+  have hloglogM : 0 < Real.log (Real.log M) := hloglogm.trans_le hloglog
+  have hlogloglog : Real.log (Real.log (Real.log m)) ≤
+      Real.log (Real.log (Real.log M)) :=
+    Real.log_le_log hloglogm hloglog
+  have hlogloglogm0 : 0 ≤ Real.log (Real.log (Real.log m)) :=
+    Real.log_nonneg hmlog
+  have hMlog : 1 ≤ Real.log (Real.log M) := hmlog.trans hloglog
+  have hlogloglogM0 : 0 ≤ Real.log (Real.log (Real.log M)) :=
+    Real.log_nonneg hMlog
+  have hlog2 : 0 < Real.log (2 : ℝ) := Real.log_pos (by norm_num)
+  have hendpoint :
+      Real.rpow (Real.log M) (-Real.log 2) ≤
+        Real.rpow (Real.log m) (-Real.log 2) :=
+    Real.rpow_le_rpow_of_nonpos hlogm hlog (by linarith)
+  by_cases hc : 0 ≤ c
+  · have hradicand :
+        c * Real.log (Real.log m) * Real.log (Real.log (Real.log m)) ≤
+          c * Real.log (Real.log M) * Real.log (Real.log (Real.log M)) := by
+      gcongr
+    have hsqrt := Real.sqrt_le_sqrt hradicand
+    have hpenalty :
+        Real.exp (-(Real.log 2) * Real.sqrt
+            (c * Real.log (Real.log M) * Real.log (Real.log (Real.log M)))) ≤
+          Real.exp (-(Real.log 2) * Real.sqrt
+            (c * Real.log (Real.log m) * Real.log (Real.log (Real.log m)))) := by
+      apply Real.exp_le_exp.mpr
+      exact mul_le_mul_of_nonpos_left hsqrt (by linarith)
+    unfold subpowerWeight
+    exact mul_le_mul hendpoint hpenalty (Real.exp_pos _).le
+      (Real.rpow_nonneg hlogm.le _)
+  · have hc' : c ≤ 0 := le_of_not_ge hc
+    have hradm :
+        c * Real.log (Real.log m) * Real.log (Real.log (Real.log m)) ≤ 0 := by
+      rw [mul_assoc]
+      exact mul_nonpos_of_nonpos_of_nonneg hc'
+        (mul_nonneg hloglogm.le hlogloglogm0)
+    have hradM :
+        c * Real.log (Real.log M) * Real.log (Real.log (Real.log M)) ≤ 0 := by
+      rw [mul_assoc]
+      exact mul_nonpos_of_nonpos_of_nonneg hc'
+        (mul_nonneg hloglogM.le hlogloglogM0)
+    unfold subpowerWeight
+    rw [Real.sqrt_eq_zero_of_nonpos hradM, Real.sqrt_eq_zero_of_nonpos hradm]
+    simpa using hendpoint
+
+/-- A large set of prime divisors above `P` forces large divisor-variance mass at the sub-power
+weight.  Unlike the earlier finite-cutoff walk argument, this global-cutoff form needs no bound on
+the total number of prime factors of `n`: every chain divisor is at most `n ≤ M`. -/
+theorem divisorVarianceMass_ge_primeDivisorSet_subpower
+    (v : ℕ → ℝ) (hv0 : ∀ d, 0 ≤ v d) (c c₀ : ℝ) {P n M : ℕ} (Q : Finset ℕ)
+    (hQ : Q.Nonempty) (hprime : ∀ q ∈ Q, q.Prime) (hdvd : ∀ q ∈ Q, q ∣ n)
+    (hlarge : ∀ q ∈ Q, P < q) (hn : n ≠ 0) (hnM : n ≤ M) (hP : 1 ≤ P)
+    (hPlog : 1 ≤ Real.log (Real.log (P + 1))) (hc₀ : 0 ≤ c₀)
+    (hv : ∀ d : ℕ, 2 ≤ d → c₀ * subpowerWeight c d ≤ v d) :
+    (((2 ^ (Q.card - 1) : ℕ) : ℝ) * (c₀ * subpowerWeight c M)) ≤
+      divisorVarianceMass v P n := by
+  apply divisorVarianceMass_ge_primeDivisorSet v hv0 Q hQ hprime hdvd hlarge hn hnM
+    (mul_nonneg hc₀ (subpowerWeight_nonneg c M))
+  intro d hPd hdM
+  have hP1d : P + 1 ≤ d := by omega
+  have hP1 : 1 < P + 1 := by omega
+  have hd1 : 1 < d := hP1.trans_le hP1d
+  have hlogP : 0 < Real.log ((P : ℝ) + 1) := Real.log_pos (by exact_mod_cast hP1)
+  have hlogd : 0 < Real.log (d : ℝ) := Real.log_pos (by exact_mod_cast hd1)
+  have hlog : Real.log ((P : ℝ) + 1) ≤ Real.log (d : ℝ) := by
+    apply Real.log_le_log (by positivity)
+    exact_mod_cast hP1d
+  have hloglog : Real.log (Real.log (P + 1)) ≤ Real.log (Real.log d) :=
+    Real.log_le_log hlogP hlog
+  have hdlog : 1 ≤ Real.log (Real.log d) := hPlog.trans hloglog
+  calc
+    c₀ * subpowerWeight c M ≤ c₀ * subpowerWeight c d :=
+      mul_le_mul_of_nonneg_left
+        (subpowerWeight_antitone_of_log_log_one_le c hd1 hdlog hdM) hc₀
+    _ ≤ v d := hv d (by omega)
+
 /-- The primes in `(P, y]`. -/
 def primesIoc (P y : ℕ) : Finset ℕ := (Finset.Ioc P y).filter Nat.Prime
 
@@ -36,6 +137,59 @@ def primesIoc (P y : ℕ) : Finset ℕ := (Finset.Ioc P y).filter Nat.Prime
 `n + j + 1`. -/
 def multiShiftPattern (P y J n : ℕ) : Fin J → Finset ℕ :=
   fun j => (n + j + 1).primeFactors.filter (fun p => P < p ∧ p ≤ y)
+
+/-- Concrete deterministic Step 1: one heavy multishift column makes the corresponding summand
+of `shiftedVarianceMass` exceed `T`.  The scalar hypothesis is deliberately separated from the
+prime-chain argument; later asymptotics only have to show that the displayed explicit lower bound
+beats `T b^(2j)`. -/
+theorem shiftedVarianceMass_gt_of_heavyColumn
+    (v : ℕ → ℝ) (hv0 : ∀ d, 0 ≤ v d) (c c₀ : ℝ)
+    {P y n M b j₀ J : ℕ} {T : ℝ} (j : Fin J) (hb : 1 ≤ b)
+    (hj₀ : j₀ ≤ j.val + 1) (hnM : n + j.val + 1 ≤ M) (hP : 1 ≤ P)
+    (hPlog : 1 ≤ Real.log (Real.log (P + 1))) (hc₀ : 0 ≤ c₀)
+    (hv : ∀ d : ℕ, 2 ≤ d → c₀ * subpowerWeight c d ≤ v d)
+    (hQ : 1 ≤ (multiShiftPattern P y J n j).card)
+    (hscalar : T * (b : ℝ) ^ (2 * (j.val + 1)) <
+      (((2 ^ ((multiShiftPattern P y J n j).card - 1) : ℕ) : ℝ) *
+        (c₀ * subpowerWeight c M))) :
+    T < shiftedVarianceMass v b j₀ J P n := by
+  let Q := multiShiftPattern P y J n j
+  have hQcard : 1 ≤ Q.card := by simpa only [Q] using hQ
+  have hQne : Q.Nonempty := Finset.card_pos.mp (Nat.zero_lt_one.trans_le hQcard)
+  have hprime : ∀ q ∈ Q, q.Prime := by
+    intro q hq
+    exact (Nat.mem_primeFactors.mp (Finset.mem_filter.mp hq).1).1
+  have hdvd : ∀ q ∈ Q, q ∣ n + j.val + 1 := by
+    intro q hq
+    exact (Nat.mem_primeFactors.mp (Finset.mem_filter.mp hq).1).2.1
+  have hlarge : ∀ q ∈ Q, P < q := by
+    intro q hq
+    exact (Finset.mem_filter.mp hq).2.1
+  have hn0 : n + j.val + 1 ≠ 0 := by omega
+  have hchain := divisorVarianceMass_ge_primeDivisorSet_subpower v hv0 c c₀ Q
+    hQne hprime hdvd hlarge hn0 hnM hP hPlog hc₀ hv
+  have hmass : T * (b : ℝ) ^ (2 * (j.val + 1)) <
+      divisorVarianceMass v P (n + j.val + 1) := by
+    exact hscalar.trans_le hchain
+  have hbpos : (0 : ℝ) < (b : ℝ) ^ (2 * (j.val + 1)) := by
+    positivity
+  have hterm : T < ((b : ℝ) ^ (2 * (j.val + 1)))⁻¹ *
+      divisorVarianceMass v P (n + j.val + 1) := by
+    rw [mul_comm]
+    exact (lt_mul_inv_iff₀ hbpos).2 hmass
+  have hjmem : j.val + 1 ∈ Finset.Icc j₀ J := by
+    exact Finset.mem_Icc.mpr ⟨hj₀, by omega⟩
+  have hterm_le : ((b : ℝ) ^ (2 * (j.val + 1)))⁻¹ *
+      divisorVarianceMass v P (n + j.val + 1) ≤ shiftedVarianceMass v b j₀ J P n := by
+    unfold shiftedVarianceMass
+    have hnonneg : ∀ k ∈ Finset.Icc j₀ J,
+        0 ≤ ((b : ℝ) ^ (2 * k))⁻¹ * divisorVarianceMass v P (n + k) := by
+      intro k hk
+      exact mul_nonneg (by positivity) (divisorVarianceMass_nonneg v hv0 P (n + k))
+    simpa only [Nat.add_assoc] using (Finset.single_le_sum (s := Finset.Icc j₀ J)
+      (f := fun k ↦ ((b : ℝ) ^ (2 * k))⁻¹ * divisorVarianceMass v P (n + k))
+      hnonneg hjmem)
+  exact hterm.trans_le hterm_le
 
 open Classical in
 /-- Mass of `A` under the `J`-shift Kubilius model.  Each prime `p ∈ (P, y]` independently picks the
