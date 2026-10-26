@@ -14,10 +14,19 @@
 - Probe `scripts/pi_route2_joint.py` N=1500: fresh-prime pair chi²/cell 0.96, no empty 8×8 cell,
   corr +0.0075; composite control equally uniform (chi² 1.05) ⇒ probe does not discriminate primality.
 
+- Lap 2: `bbpPrimeReservoir_succ` (PrimeReservoirStep.lean, green): R_{n+1} = 16R_n − exit_n + entry_n,
+  exit = primes in (4n,4n+4] (O(1) mass mod 1, the arithmetic source), entry = j=n pair (O(1/n)).
+  Since R+S = 16ⁿ·sₙ evolves by ×16 + kick, the antidiagonal D = R−S gets the kick −2·exit:
+  the diagonal node asks D ≈ 0 simultaneously with R+S ≈ 2t.
+
 ## This lap
 Both "First (one lap)" bridges closed, `#print axioms` = [propext, Classical.choice, Quot.sound].
 
-## Next move (lap 2+)
+## Next move (lap 3)
+State S_{n+1} = 16 S_n + exit_n + 16·kick_n − entry_n, then the node: exit_n mod 1 (one or zero
+primes in a length-4 window, p≡1,5 mod 8) is equidistributed / dense along the subsequence where
+fract(16ⁿπ) is in a given interval — and test it numerically against a non-prime control.
+## Older next move
 Find a control that FAILS (rational telescoping lock from PI-ROUTES-NEXT), so the probe
 discriminates; then attack the diagonal node via a Weyl sum along e(h(R−S)) — the
 antidiagonal character is exactly what the diagonal node needs.
