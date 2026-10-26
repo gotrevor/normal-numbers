@@ -36,3 +36,20 @@ Lap 7: probe whether ρ has extra structure (closed form? rational? relation to 
 ρ − c·π rational) — any such identity would be the only lever left.  Also consider
 state the obstruction node `PiPrimeReservoirSupport ↔ joint disjunctivity of (ρ, π−ρ)` and
 add the route-2 Maze row (reopen condition: a lever on ρ's digits not available for π).
+
+## Cutoff-six follow-up — 2026-10-26 (brief: docs/pi-routes/opus-cutoff-six-followup.md)
+- **Proved** `CutoffSix.exit_six_not_eventually_small` (ReservoirCutoffSix.lean): ∀ C>0 ∀ N ∃ n≥N,
+  C/(n+1) < ‖rationalExit 6 n‖ℤ.  Axioms: propext, Classical.choice, Quot.sound (sorry control
+  shows sorryAx).  Mechanism: primes p=120m+89 (mathlib Dirichlet, unconditional), n=20m+14,
+  full exit = 2^(20m+18)/p exactly (`rationalExit_six_eq`), A³≡1024 (`dvd_cube_sub`), 1024 not a
+  cube ⇒ p ≤ |b|³+1024 (`le_abs_cube`).  Witness m=0 matches 2945+39/89.
+- Independent adversarial review (subagent): no defects; caveat that `range n` drops primes
+  only for n ≤ 2 (irrelevant).
+- **Vanishing vs nonvanishing: open.**  Nodes `ExitSixVanishing`, `ExitSixNonvanishing`
+  (ReservoirCutoffSixVanishing.lean), `not_vanishing_of_nonvanishing`, and the sufficient
+  arithmetic node `CubicRootEscape` (2^((p+31)/6) mod p stays ε·p from 0 for infinitely many
+  p≡89 mod 120) with `nonvanishing_of_cubicRootEscape` proved.  No mechanism known for the node.
+- **Implication for π's digits: none established.**  Exits act along (1,−1) and cancel in R+S.
+- Next: exact cutoff-six R/S recurrence (generalize PrimeReservoirStep to cutoff s), Maze row
+  for the cutoff-six variant, and whether CubicRootEscape follows from any proved
+  equidistribution of 2^k mod p (it resembles open Artin-type questions).
