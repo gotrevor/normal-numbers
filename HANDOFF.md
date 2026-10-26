@@ -1,3 +1,9 @@
+# BOX STUCK (strike 1, 2026-10-26, pi route 2 cutoff-six): read HANDOFF-pi-route2.md "BLOCKER"
+
+- WHAT: the operator brief docs/pi-routes/opus-cutoff-six-followup.md is fully delivered (bcd2af3e, 3fa836a4, 8bbdc428).
+- WHY operator-gated: this session was scoped by the operator to that brief; the remaining src sorries belong to other campaigns (DIRECTION.md gate-5 directive on another branch). The brief's one open node, CubicRootEscape, is an Artin-type statement with no known proof mechanism.
+- ASK: operator chooses whether to continue route 2 (CubicRootEscape, or coupling the exit to R+S) or reassign the run.
+
 # Prime class lap 11 (2026-10-17): finite-pattern resultant loss; read HANDOFF-2026-10-17-prime-class-lap11.md
 
 - Complementary-exponent independence, the exact nonzero gap-pattern coefficient polynomial,
