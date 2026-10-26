@@ -36,3 +36,39 @@ no heavy shift).  Replace the product-decay / single-TV step by Chebyshev:
    proved (`tendsto_multiShiftCollisionError`), and `J²·err → 0` follows from
    `tendsto_multiShiftSieveExpError` / `...PowerError` with `J ↦ 2`.
 Record a dated lap checkpoint at the bottom of this file each lap.
+
+## Lap 1 checkpoint (2026-10-26)
+
+The route-decisive finite layer is now kernel-checked in
+`CoefmassErdosBorweinPairShiftAux.lean`:
+
+- `card_filter_eq_zero_div_le_secondMoment` is the exact finite Chebyshev inequality for the
+  zero-heavy-count event.
+- `sum_finiteEventCount` and `sum_finiteEventCount_sq` expand the first and second moments into
+  single and pair event counts.
+- `abs_categoricalShiftProduct_event_sub_independent_le` gives a two-sided arbitrary-event
+  categorical/independent comparison away from collisions.
+- `abs_pairBoolCountMass_sub_independent_le` specializes this to the packet's Bool-indexed pair
+  law, bounding a joint cardinality tail by the product of its two independent column masses with
+  collision error `4 * Σ_p p⁻²`.
+
+Inside the still-open headline proof, the local lemma `pairShiftMass_count_eq` now proves that the
+frozen concrete `pairShiftMass` cardinality event is exactly the abstract Bool categorical mass,
+including both prime and state reindexing.  This was the uncertain model-identification crux; it
+does not use `MultiShiftKubiliusTV`.
+
+Exact checks passed:
+
+```text
+lake build NormalNumbers.CoefmassErdosBorweinPairShiftAux
+lake env lean src/NormalNumbers/CoefmassErdosBorweinPairShift.lean
+~/personal/bin/lean-green /Users/gotrevor/src/nn-eb-endpoint
+```
+
+The full gate ended `FORMALIZE-TIER GREEN` (10971 jobs).
+
+The target still has its original single headline `sorry`; the root import barrier remains in
+place.  Next: assemble the scheduled heavy-count function, apply `PairShiftKubiliusTV` to marginals
+using companion shift `J+1` and to off-diagonal pairs in sorted order, feed the resulting moment
+bounds to finite Chebyshev, and close the limit using `tendsto_multiShiftActiveExpColumnSum`,
+`tendsto_multiShiftCollisionError`, and the pair-error analogues of the existing sieve limits.

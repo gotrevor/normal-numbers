@@ -5,6 +5,7 @@ Authors: Trevor Morris
 -/
 import Mathlib
 import NormalNumbers.CoefmassErdosBorweinMultiShift
+import NormalNumbers.CoefmassErdosBorweinPairShiftAux
 
 /-!
 # Normal above the sub-power weight for every `c < 1`, given only the pair Kubilius model
@@ -67,6 +68,68 @@ theorem ebRandom_ae_normal_subpower_of_pairShift (hP : PairShiftKubiliusTV)
     (c c₀ : ℝ) (hc : c < 1) (hc₀ : 0 < c₀)
     (hdelta : ∀ m : ℕ, 2 ≤ m → c₀ * subpowerWeight c m ≤ delta m * (1 - delta m)) :
     ∀ᵐ w ∂μ, ∀ b : ℕ, 2 ≤ b → NormalNumbers.IsNormal b (ebLambert b X w) := by
+  have pairShiftMass_count_eq (P y t₀ t₁ : ℕ) :
+      pairShiftMass P y
+          {Q | t₀ ≤ Q.1.card ∧ t₁ ≤ Q.2.card} =
+        pairBoolCountMass
+          (fun i : Fin (Fintype.card (primesIoc P y)) ↦
+            1 / (((primeIndexEquiv P y) i : ℕ) : ℝ)) t₀ t₁ := by
+    classical
+    let A : Set ((primesIoc P y) → Option Bool) :=
+      {σ | t₀ ≤ (Finset.univ.filter fun p ↦ σ p = some false).card ∧
+        t₁ ≤ (Finset.univ.filter fun p ↦ σ p = some true).card}
+    have hreindex := finiteProductMass_reindex (primeIndexEquiv P y)
+      (fun p : primesIoc P y ↦ pairBoolWeight (1 / ((p : ℕ) : ℝ))) A
+    have hcardReindex
+        (σ : Fin (Fintype.card (primesIoc P y)) → Option Bool) (b : Bool) :
+        (Finset.univ.filter fun i ↦ σ i = some b).card =
+          (Finset.univ.filter fun p : primesIoc P y ↦
+            σ ((primeIndexEquiv P y).symm p) = some b).card := by
+      apply Finset.card_bij'
+        (fun i _ ↦ (primeIndexEquiv P y) i)
+        (fun p _ ↦ (primeIndexEquiv P y).symm p)
+      · intro i hi
+        simpa using hi
+      · intro p hp
+        simpa using hp
+      · intro i hi
+        simp
+      · intro p hp
+        simp
+    have hpreimage :
+        {σ : Fin (Fintype.card (primesIoc P y)) → Option Bool |
+          t₀ ≤ (Finset.univ.filter fun i ↦ σ i = some false).card ∧
+          t₁ ≤ (Finset.univ.filter fun i ↦ σ i = some true).card} =
+        {σ | (fun p ↦ σ ((primeIndexEquiv P y).symm p)) ∈ A} := by
+      ext σ
+      simp only [Set.mem_ofPred_eq, A]
+      rw [← hcardReindex σ false, ← hcardReindex σ true]
+    rw [← hpreimage] at hreindex
+    unfold pairShiftMass pairBoolCountMass
+    rw [hreindex]
+    apply Fintype.sum_congr
+    intro σ
+    by_cases hσ : σ ∈ A
+    · rw [if_pos hσ]
+      have hcardFalse :
+          (((Finset.univ.filter (fun p : primesIoc P y ↦ σ p = some false)).map
+            (Function.Embedding.subtype _)).card) =
+            (Finset.univ.filter fun p : primesIoc P y ↦ σ p = some false).card :=
+        Finset.card_map _
+      have hcardTrue :
+          (((Finset.univ.filter (fun p : primesIoc P y ↦ σ p = some true)).map
+            (Function.Embedding.subtype _)).card) =
+            (Finset.univ.filter fun p : primesIoc P y ↦ σ p = some true).card :=
+        Finset.card_map _
+      rw [if_pos (by simpa only [A, Set.mem_ofPred_eq, hcardFalse, hcardTrue] using hσ)]
+      apply Finset.prod_congr rfl
+      intro p hp
+      cases σ p <;> simp [pairBoolWeight, div_eq_mul_inv]
+    · rw [if_neg hσ]
+      rw [if_neg]
+      intro hcounts
+      apply hσ
+      simpa only [A, Set.mem_ofPred_eq, Finset.card_map] using hcounts
   sorry
 
 end NormalNumbers.ErdosBorweinPairShift
