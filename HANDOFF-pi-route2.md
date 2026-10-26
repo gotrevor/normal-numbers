@@ -81,3 +81,12 @@ to R+S) or reassign this run.
   cube mod p, ζ is a root of x²+x+1 and nonvanishing would follow from DFI-type
   equidistribution restricted to a ray class of Z[ω] — a quadratic (proved-literature-adjacent)
   lever, unlike the cubic node.  State that as a hypothesis Prop and reduce to it.
+- **Proved** (ReservoirCutoffSixQuadratic.lean, axioms clean): `rationalExit_six_eq_one`
+  (p=120t+1 prime, n=20t: exit = 2^(20t+6)/p exactly, one term), `dvd_quadratic` (if
+  2^(20t) ≠ 1 mod p, numerator is a root of x²+64x+4096), and
+  `nonvanishing_of_quadraticRootEscape`.  So nonvanishing now has two sufficient nodes: the
+  cubic `CubeRootEscape` (Hooley-type, open) and the quadratic `QuadraticRootEscape`
+  (DFI-type, restricted to p≡1 mod 120 with 2 not a sixth power; restricted form open but
+  only a liminf).  Finite evidence (not proof): 2893/3651 such p < 2.4e6 have ‖E‖ ≥ 0.1.
+- Next: state DFI (Annals 1995) faithfully as a cited hypothesis Prop and identify exactly the
+  gap (Chebotarev restriction) between it and QuadraticRootEscape.
