@@ -25,6 +25,7 @@ import NormalNumbers.UniformBadTailObstruction
 import NormalNumbers.UniformBadTailRefute
 import NormalNumbers.PiDisjunctiveRoutes.ReservoirCutoffSixStep
 import NormalNumbers.PiDisjunctiveRoutes.ReservoirCutoffSixVanishing
+import NormalNumbers.PiDisjunctiveRoutes.ReservoirCutoffSixRoot
 import NormalNumbers.EntropyProfiles
 import NormalNumbers.CantorExactExponentStretch
 import NormalNumbers.CantorExactExponentProfile

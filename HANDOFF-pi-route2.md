@@ -68,3 +68,16 @@ other campaigns (DIRECTION.md gate-5 directive, other branch).  The one open ite
 `CubicRootEscape`, is an Artin-type equidistribution statement with no known mechanism.
 Ask: operator decides whether to continue route 2 (e.g. attack CubicRootEscape or a coupling
 to R+S) or reassign this run.
+
+## Lap 4 (2026-10-26)
+- Committed the pending rho PSLQ probe (no relation found; numerical with planted control).
+- **Proved** `CutoffSix.cubicRootEscape_iff` (ReservoirCutoffSixRoot.lean; axioms clean):
+  `CubicRootEscape ↔ CubeRootEscape`.  Since p ≡ 2 mod 3, cubing is bijective on ZMod p
+  (`cube_inj`, x = (x³)^(80m+59)), so 2^(20m+18) is THE cube root of 1024 = 8³·2.  The open
+  node is exactly a Hooley-type distribution statement for roots of x³−2 to prime moduli
+  p ≡ 89 mod 120 (quadratic analogue is DFI/Tóth; cubic-to-primes open).  This is the
+  "exact additional statement about cubic residues" the brief asked to isolate.
+- Next attack: the p ≡ 1 mod 24 class has exit r with r³ ≡ 64³, so r = 64ζ; when 2 is not a
+  cube mod p, ζ is a root of x²+x+1 and nonvanishing would follow from DFI-type
+  equidistribution restricted to a ray class of Z[ω] — a quadratic (proved-literature-adjacent)
+  lever, unlike the cubic node.  State that as a hypothesis Prop and reduce to it.
