@@ -29,4 +29,5 @@ rational, e.g. 1/3, and a known-normal-ish surrogate).
   Liouville numbers — next: prove that sibling counterexample in Lean (K = {0} for Σ 2^{-n!}),
   making (i) a non-trivial node, and look for an arithmetic lever for (i) via π's finite
   irrationality measure (does μ(π) < ∞ force K ≠ {0}? probably not: orbit can still cluster at 0).
+- Probe K=9: π n_k ≤ 2^k for all k ≤ 9 (control 1/3 ok); premise constant C=1 survives.
 - False-starts doc: `docs/pi-routes/route1.md`.
