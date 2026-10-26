@@ -29,6 +29,7 @@ import NormalNumbers.PiDisjunctiveRoutes.ReservoirCutoffSixRoot
 import NormalNumbers.PiDisjunctiveRoutes.ReservoirCutoffSixQuadratic
 import NormalNumbers.PiDisjunctiveRoutes.ReservoirCutoffSixDFI
 import NormalNumbers.PiDisjunctiveRoutes.ReservoirCutoffSixDensity
+import NormalNumbers.PiDisjunctiveRoutes.ReservoirComparisonRobustness
 import NormalNumbers.EntropyProfiles
 import NormalNumbers.CantorExactExponentStretch
 import NormalNumbers.CantorExactExponentProfile
@@ -135,6 +136,10 @@ def mazeLinks : List Link := [
    [``PiDisjunctiveRoutes.CutoffSix.EligibleChebotarevDensity,
     ``PiDisjunctiveRoutes.CutoffSix.DFIBoundaryScarcity,
     ``PiDisjunctiveRoutes.ReservoirConstDisjunctive]⟩,
+  ⟨"Stable BBP coupling from prime poles and approximately exact forcing",
+   [``PiDisjunctiveRoutes.CutoffSix.not_cutoffSix_robustBBPCouplingCriterion,
+    ``PiDisjunctiveRoutes.CutoffSix.residual_recurrence_rigid],
+   [``PiDisjunctiveRoutes.CutoffSix.RobustBBPCouplingCriterion]⟩,
   ⟨"82000 via the base-3 slope coordinate",
    [``ZeroOneBases.fourExponentials_jointSlopeIndependence],
    [``ZeroOneBases.FourExponentialsConjecture, ``ZeroOneBases.JointSlopeIndependence]⟩,
@@ -426,7 +431,7 @@ def mazeLegacy : List String := [
   "Diophantine good-denominator detour for the tail cell",
   "route B's unweighted cover of the state-dependent target"]
 
-/-- info: maze audit: 199 rows, 92 cite declarations, 107 legacy (prose only) -/
+/-- info: maze audit: 200 rows, 93 cite declarations, 107 legacy (prose only) -/
 #guard_msgs in
 #maze_audit mazeRows, mazeLinks, mazeLegacy
 

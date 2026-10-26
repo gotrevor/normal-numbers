@@ -1,5 +1,13 @@
 # HANDOFF — pi route 2 (prime reservoir) — lap 3, 2026-10-26
 
+**Latest comparison result:** `not_cutoffSix_robustBBPCouplingCriterion` refutes
+forcing disjunctivity from the unchanged reservoir, its surviving odd-prime
+poles, any finite exact BBP prefix, and any positive pointwise tolerance on
+the head and forcing.  Rational target models satisfy all of these.
+The exact recurrence plus initial value is rigid (`residual_recurrence_rigid`).
+The rational models do not preserve denominator-height restrictions.
+See `docs/pi-routes/reservoir-comparison.md` for the precise scope.
+
 **Continuation:** the restricted-DFI blocker below is bypassed for nonvanishing.
 `CutoffSix.nonvanishing_of_dfi_chebotarev` in `ReservoirCutoffSixDensity.lean`
 proves `ExitSixNonvanishing` from two explicit inputs:
