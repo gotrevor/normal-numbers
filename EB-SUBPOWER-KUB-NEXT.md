@@ -250,3 +250,49 @@ ordered-prefix event in `kubiliusLoweredCrossingMass` (with the terminal cutoff 
 Then sum those block events using `summable_kubiliusIntegratedMajorant`.  After this model theorem
 is packaged, move to the squarefull/large-prime comparison and the `KubiliusTV` transfer; only then
 copy the proved `c > 3` capped-residual and headline assembly.
+
+## Lap checkpoint — 2026-10-26, arithmetic prime cutoffs enter the Doob walk
+
+The deterministic selected-prime event interface requested by the previous checkpoint is now
+kernel-checked.
+
+- `centeredBernoulliFinsetSum` gives the centered selected-coordinate sum on an unordered finite
+  cutoff, and `centeredBernoulliPrefixSum_eq_finsetSum_take` proves that it is exactly the ordered
+  Doob walk on a duplicate-free list prefix.
+- `primesUpTo_sort_take_card` proves the route-decisive ordering fact: whenever `a ≤ y`, the primes
+  up to `a` are literally the first `#primesUpTo a` coordinates of the increasing primes-up-to-`y`
+  list.  Thus no interpolation or approximate event comparison is needed at arithmetic cutoffs.
+- `kubiliusSelectedPrimeWalk_at_cutoff` identifies the actual selected-prime walk at that time with
+  the centered sum over `primesUpTo a`.
+- `primeCutoffCrossing_subset_centeredPrefixCrossing` packages the deterministic event inclusion,
+  and `kubiliusMass_primeCutoffCrossing_le_centeredPrefixCrossing` transfers it through monotonicity
+  of the packet's `kubiliusMass`.
+- `kubiliusLoweredCrossingMass_eq_selectedPrimeWalk` rewrites the already-proved one-block model
+  quantity directly as selected-prime-walk crossing masses.
+
+The packet declarations `primesUpTo`, `kubiliusMass`, `KubiliusTV`, and the headline statement are
+unchanged.  `KubiliusTV` remains only a hypothesis; no `axiom` declaration or `native_decide` was
+added.  The scoped target still has its single frozen headline `sorry`.
+
+Verification actually run:
+
+- `lake env lean src/NormalNumbers/CoefmassErdosBorweinSubpowerKubAux.lean` — succeeds.
+- `lake env lean src/NormalNumbers/CoefmassErdosBorweinSubpowerKub.lean` — succeeds, with only the
+  pre-existing headline `sorry` warning.
+- `~/personal/bin/lean-green . --target NormalNumbers.CoefmassErdosBorweinSubpowerKub --import
+  NormalNumbers.CoefmassErdosBorweinSubpowerKub --axioms
+  NormalNumbers.ErdosBorweinSubpowerKub.centeredBernoulliPrefixSum_eq_finsetSum_take --axioms
+  NormalNumbers.ErdosBorweinSubpowerKub.primesUpTo_sort_take_card --axioms
+  NormalNumbers.ErdosBorweinSubpowerKub.primeCutoffCrossing_subset_centeredPrefixCrossing --axioms
+  NormalNumbers.ErdosBorweinSubpowerKub.kubiliusMass_primeCutoffCrossing_le_centeredPrefixCrossing
+  --axioms NormalNumbers.ErdosBorweinSubpowerKub.kubiliusLoweredCrossingMass_eq_selectedPrimeWalk`
+  — `FORMALIZE-TIER GREEN`; all five declarations report exactly `Classical.choice`, `Quot.sound`,
+  and `propext`.
+- `~/personal/bin/lean-green .` — full 10,847-job repository build, `FORMALIZE-TIER GREEN`.
+
+The remaining step-6 work is the geometric-block union/tail packaging, not the cutoff-to-prefix
+interface: instantiate arithmetic cutoffs in each log-log block, use the new mass inclusion and
+`eventually_kubiliusLoweredCrossingMass_le`, then sum the resulting block majorants with
+`summable_kubiliusIntegratedMajorant`.  Once that uniform model theorem is packaged, proceed to the
+squarefull/large-prime divisor comparison and the `KubiliusTV` transfer, then reuse the proved
+`c > 3` capped-residual and headline assembly.

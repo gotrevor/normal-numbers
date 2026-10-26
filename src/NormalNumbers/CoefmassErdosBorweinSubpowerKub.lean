@@ -31,6 +31,59 @@ def primesUpTo (y : ℕ) : Finset ℕ := (Finset.range (y + 1)).filter Nat.Prime
 theorem primesUpTo_eq_primesLE (y : ℕ) : primesUpTo y = y.primesLE := rfl
 
 open Classical in
+/-- For nested prime cutoffs, the smaller cutoff is literally the initial segment of the larger
+cutoff's increasing prime list.  This supplies the time index needed to map an arithmetic cutoff
+into the ordered Kubilius walk. -/
+theorem primesUpTo_sort_take_card {a y : ℕ} (hay : a ≤ y) :
+    (((primesUpTo y).sort (· ≤ ·)).take (primesUpTo a).card).toFinset = primesUpTo a := by
+  let A := primesUpTo a
+  let Y := primesUpTo y
+  let D := Y \ A
+  have hAY : A ⊆ Y := by
+    intro p hp
+    simp only [A, Y, primesUpTo, Finset.mem_filter, Finset.mem_range] at hp ⊢
+    exact ⟨by omega, hp.2⟩
+  have hnodup : (A.sort (· ≤ ·) ++ D.sort (· ≤ ·)).Nodup := by
+    rw [List.nodup_append]
+    refine ⟨A.sort_nodup (· ≤ ·), D.sort_nodup (· ≤ ·), ?_⟩
+    intro p hp q hq hpq
+    have hpA : p ∈ A := (Finset.mem_sort (· ≤ ·)).mp hp
+    have hqD : q ∈ D := (Finset.mem_sort (· ≤ ·)).mp hq
+    subst q
+    exact (Finset.mem_sdiff.mp hqD).2 hpA
+  have hpairwise : (A.sort (· ≤ ·) ++ D.sort (· ≤ ·)).Pairwise (· ≤ ·) := by
+    rw [List.pairwise_append]
+    refine ⟨A.pairwise_sort (· ≤ ·), D.pairwise_sort (· ≤ ·), ?_⟩
+    intro p hp q hq
+    have hpA : p ∈ A := (Finset.mem_sort (· ≤ ·)).mp hp
+    have hqD : q ∈ D := (Finset.mem_sort (· ≤ ·)).mp hq
+    have hpa : p ≤ a := by
+      have hpA' := hpA
+      simp only [A, primesUpTo, Finset.mem_filter, Finset.mem_range,
+        Nat.lt_add_one_iff] at hpA'
+      exact hpA'.1
+    have hqa : a < q := by
+      have hqY : q ∈ Y := (Finset.mem_sdiff.mp hqD).1
+      have hqprime : q.Prime := by
+        have hqY' := hqY
+        simp only [Y, primesUpTo, Finset.mem_filter, Finset.mem_range,
+          Nat.lt_add_one_iff] at hqY'
+        exact hqY'.2
+      have hqnotA : q ∉ A := (Finset.mem_sdiff.mp hqD).2
+      simp only [A, primesUpTo, Finset.mem_filter, Finset.mem_range,
+        Nat.lt_add_one_iff, hqprime, and_true] at hqnotA
+      omega
+    omega
+  have hsort : Y.sort (· ≤ ·) = A.sort (· ≤ ·) ++ D.sort (· ≤ ·) := by
+    have h := (List.toFinset_sort (· ≤ ·) hnodup).2 hpairwise
+    have hunion : A ∪ D = Y := by
+      simpa only [D] using Finset.union_sdiff_of_subset hAY
+    simpa only [List.toFinset_append, Finset.sort_toFinset, hunion] using h
+  change ((Y.sort (· ≤ ·)).take A.card).toFinset = A
+  rw [hsort, show A.card = (A.sort (· ≤ ·)).length by simp]
+  simp
+
+open Classical in
 /-- Mass of `A` under the Kubilius model: each prime `p ≤ y` is included independently with
 probability `1/p`. -/
 noncomputable def kubiliusMass (y : ℕ) (A : Set (Finset ℕ)) : ℝ :=
@@ -583,6 +636,80 @@ theorem summable_kubiliusIntegratedMajorant {c : ℝ} (hc : 1 < c) :
   (summable_kubiliusIntegratedDecay hc).mul_left _
 
 open Classical in
+/-- The selected-prime walk up to the first `k` primes at terminal cutoff `y`, written as an
+unordered finite-coordinate sum.  This is the form to which arithmetic prime cutoffs are mapped. -/
+noncomputable def kubiliusSelectedPrimeWalk (y : ℕ) (S : Finset ℕ) (k : ℕ) : ℝ :=
+  centeredBernoulliFinsetSum (fun p : ℕ ↦ (1 / p : ℝ)) S
+    (((primesUpTo y).sort (· ≤ ·)).take k).toFinset
+
+open Classical in
+/-- The finite-coordinate selected-prime walk is exactly the ordered prefix used by the maximal
+inequality. -/
+theorem kubiliusSelectedPrimeWalk_eq_centeredPrefixSum (y : ℕ) (S : Finset ℕ) (k : ℕ) :
+    kubiliusSelectedPrimeWalk y S k =
+      centeredBernoulliPrefixSum (fun p : ℕ ↦ (1 / p : ℝ)) S
+        ((primesUpTo y).sort (· ≤ ·)) k := by
+  rw [kubiliusSelectedPrimeWalk,
+    centeredBernoulliPrefixSum_eq_finsetSum_take _ _ _
+      ((primesUpTo y).sort_nodup (· ≤ ·))]
+
+open Classical in
+/-- At the time indexed by the number of primes up to `a`, the selected-prime walk at terminal
+cutoff `y` is exactly the centered sum over primes up to `a`. -/
+theorem kubiliusSelectedPrimeWalk_at_cutoff {a y : ℕ} (hay : a ≤ y) (S : Finset ℕ) :
+    kubiliusSelectedPrimeWalk y S (primesUpTo a).card =
+      centeredBernoulliFinsetSum (fun p : ℕ ↦ (1 / p : ℝ)) S (primesUpTo a) := by
+  unfold kubiliusSelectedPrimeWalk
+  rw [primesUpTo_sort_take_card hay]
+
+open Classical in
+/-- Any crossing at an arithmetic prime cutoff `a ≤ y` is a crossing of the ordered walk before
+the terminal cutoff.  This is the deterministic event inclusion needed before applying
+`kubiliusMass_mono`. -/
+theorem primeCutoffCrossing_subset_centeredPrefixCrossing (y : ℕ) (h : ℝ) :
+    {S | ∃ a ≤ y, h ≤
+        centeredBernoulliFinsetSum (fun p : ℕ ↦ (1 / p : ℝ)) S (primesUpTo a)} ⊆
+      {S | ∃ k ≤ ((primesUpTo y).sort (· ≤ ·)).length,
+        h ≤ centeredBernoulliPrefixSum (fun p : ℕ ↦ (1 / p : ℝ)) S
+          ((primesUpTo y).sort (· ≤ ·)) k} := by
+  intro S hS
+  obtain ⟨a, hay, hcross⟩ := hS
+  refine ⟨(primesUpTo a).card, ?_, ?_⟩
+  · rw [Finset.length_sort]
+    apply Finset.card_le_card
+    intro p hp
+    simp only [primesUpTo, Finset.mem_filter, Finset.mem_range] at hp ⊢
+    exact ⟨by omega, hp.2⟩
+  · rw [← kubiliusSelectedPrimeWalk_eq_centeredPrefixSum,
+      kubiliusSelectedPrimeWalk_at_cutoff hay]
+    exact hcross
+
+open Classical in
+/-- The model mass of any arithmetic-cutoff crossing is bounded by the ordered-prefix crossing
+mass controlled by the maximal inequality. -/
+theorem kubiliusMass_primeCutoffCrossing_le_centeredPrefixCrossing
+    (y : ℕ) (h : ℝ) :
+    kubiliusMass y
+        {S | ∃ a ≤ y, h ≤
+          centeredBernoulliFinsetSum (fun p : ℕ ↦ (1 / p : ℝ)) S (primesUpTo a)} ≤
+      kubiliusMass y
+        {S | ∃ k ≤ ((primesUpTo y).sort (· ≤ ·)).length,
+          h ≤ centeredBernoulliPrefixSum (fun p : ℕ ↦ (1 / p : ℝ)) S
+            ((primesUpTo y).sort (· ≤ ·)) k} :=
+  kubiliusMass_mono y (primeCutoffCrossing_subset_centeredPrefixCrossing y h)
+
+open Classical in
+/-- Crossing the selected-prime walk is definitionally the ordered-prefix event controlled by the
+finite Doob inequality. -/
+theorem exists_kubiliusSelectedPrimeWalk_ge_iff (y : ℕ) (S : Finset ℕ) (h : ℝ) :
+    (∃ k ≤ ((primesUpTo y).sort (· ≤ ·)).length,
+        h ≤ kubiliusSelectedPrimeWalk y S k) ↔
+      ∃ k ≤ ((primesUpTo y).sort (· ≤ ·)).length,
+        h ≤ centeredBernoulliPrefixSum (fun p : ℕ ↦ (1 / p : ℝ)) S
+          ((primesUpTo y).sort (· ≤ ·)) k := by
+  simp_rw [kubiliusSelectedPrimeWalk_eq_centeredPrefixSum]
+
+open Classical in
 /-- Model mass of crossings above one lowered barrier, summed over auxiliary integer
 thresholds. -/
 noncomputable def kubiliusLoweredCrossingMass
@@ -592,6 +719,23 @@ noncomputable def kubiliusLoweredCrossingMass
       kubiliusLoweredBarrier c A B u + j ≤
         centeredBernoulliPrefixSum (fun p : ℕ ↦ (1 / p : ℝ)) S
           ((primesUpTo y).sort (· ≤ ·)) k}
+
+open Classical in
+/-- The lowered crossing mass is the total mass of actual selected-prime-walk crossings.  This
+packages the deterministic event interface separately from the probabilistic estimate. -/
+theorem kubiliusLoweredCrossingMass_eq_selectedPrimeWalk
+    (y : ℕ) (c A B u : ℝ) (J : ℕ) :
+    kubiliusLoweredCrossingMass y c A B u J =
+      ∑ j ∈ Finset.range J, kubiliusMass y
+        {S | ∃ k ≤ ((primesUpTo y).sort (· ≤ ·)).length,
+          kubiliusLoweredBarrier c A B u + j ≤ kubiliusSelectedPrimeWalk y S k} := by
+  unfold kubiliusLoweredCrossingMass
+  apply Finset.sum_congr rfl
+  intro j hj
+  congr 1
+  ext S
+  exact (exists_kubiliusSelectedPrimeWalk_ge_iff y S
+    (kubiliusLoweredBarrier c A B u + j)).symm
 
 open Classical in
 /-- The lowered-barrier crossing mass on one log-log block is eventually bounded by a fixed

@@ -140,6 +140,34 @@ noncomputable def centeredBernoulliPrefixSum {α : Type*} [DecidableEq α]
     (q : α → ℝ) (S : Finset α) (l : List α) (k : ℕ) : ℝ :=
   ((l.take k).map fun p ↦ if p ∈ S then 1 - q p else -q p).sum
 
+/-- The same centered selected-coordinate sum, indexed by a finite set instead of an ordered
+prefix.  This is the deterministic interface between arithmetic prime cutoffs and the ordered
+walk used by the maximal inequality. -/
+noncomputable def centeredBernoulliFinsetSum {α : Type*} [DecidableEq α]
+    (q : α → ℝ) (S U : Finset α) : ℝ :=
+  ∑ p ∈ U, if p ∈ S then 1 - q p else -q p
+
+/-- On a duplicate-free coordinate list, the ordered walk at time `k` is exactly the centered
+sum over the finite set of the first `k` coordinates. -/
+theorem centeredBernoulliPrefixSum_eq_finsetSum_take {α : Type*} [DecidableEq α]
+    (q : α → ℝ) (S : Finset α) (l : List α) (hl : l.Nodup) (k : ℕ) :
+    centeredBernoulliPrefixSum q S l k =
+      centeredBernoulliFinsetSum q S (l.take k).toFinset := by
+  unfold centeredBernoulliPrefixSum centeredBernoulliFinsetSum
+  exact (List.sum_toFinset _ hl.take).symm
+
+/-- A crossing expressed through a finite coordinate cutoff is an ordered-prefix crossing as soon
+as that cutoff is known to be one of the list's prefixes. -/
+theorem exists_centeredBernoulliPrefixSum_ge_of_finsetSum_ge
+    {α : Type*} [DecidableEq α] (q : α → ℝ) (S : Finset α) (l : List α)
+    (hl : l.Nodup) (U : Finset α) (k : ℕ) (hk : k ≤ l.length)
+    (hU : (l.take k).toFinset = U) {h : ℝ}
+    (hcross : h ≤ centeredBernoulliFinsetSum q S U) :
+    ∃ k ≤ l.length, h ≤ centeredBernoulliPrefixSum q S l k := by
+  refine ⟨k, hk, ?_⟩
+  rw [centeredBernoulliPrefixSum_eq_finsetSum_take q S l hl k, hU]
+  exact hcross
+
 @[simp]
 theorem centeredBernoulliPrefixSum_zero {α : Type*} [DecidableEq α]
     (q : α → ℝ) (S : Finset α) (l : List α) :
