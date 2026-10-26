@@ -446,3 +446,50 @@ pointwise disjunction to bound the sum of large-block cards by (i) the now-summa
 level's ideal barrier with the block anchor, apply `kubiliusTV_sum_card_div_le`, and feed the model
 terms to `exists_kubiliusPrimeCutoffLoweredCrossingMass_geometric_sum_lt`.  The later top-cut,
 large-threshold truncation, and trivial `T ≤ dyadicExpCutoff L` cases remain after that interface.
+
+## Lap checkpoint — 2026-10-26, fixed-level TV transfer and anchored barriers
+
+The fixed-level arithmetic/TV layer of the remaining grouping interface is now kernel-checked.
+
+- `sum_comp_nat_div_four_le` proves the exact shift bookkeeping: after the square-divisor cutoff
+  consumes three quarters of the original shift, grouping by `⌊j/4⌋` costs at most four copies of
+  each integer threshold.
+- `idealBarrier_mono`, `subpowerKubiliusModelCoefficient`, and
+  `eventually_kubiliusLevelBarrier_ge_anchor_blockLogLog` compare every sufficiently late
+  arithmetic level to a geometric-block anchor.  The model coefficient is `(1+c)/2`, strictly
+  between `1` and `c`; the fixed logarithmic losses are absorbed by that coefficient gap.
+- `kubiliusArithmeticEventFinset` and `kubiliusArithmeticEventCard` pin the finite arithmetic event
+  used by `KubiliusTV`, avoiding any decidability-instance ambiguity at the cardinality boundary.
+- `exists_subpowerBlock_large_cards_div_le_square_add_kubilius` composes the square-or-walk event
+  inclusion, the summed square-divisor estimate, the four-to-one shift grouping, and
+  `KubiliusTV`.  For one arithmetic level it bounds the normalized sum of large weighted-block
+  cards by the square exception, four times the anchored prime-cutoff crossing mass, and the
+  explicit accumulated TV error.
+
+This also sharpens the remaining interface requirement: levels in one geometric block must be
+unioned before taking cardinality.  Summing the new fixed-level estimate over levels would multiply
+the maximal crossing mass by the number of levels and lose the Doob gain.  The next theorem should
+therefore take a finite level set, bound the cardinality of `∃ ℓ` large-block events by (i) the sum
+of square exceptions and (ii) one prime-cutoff crossing event, and only then sum over shifts and
+apply TV.  Connect that union theorem directly to the marginal-divisor large-card cover instead of
+using the old sum-of-level-card bound.  Once grouped by anchors
+`(kubiliusBlockRatio (subpowerKubiliusModelCoefficient c))^k`, its model terms feed directly into
+`exists_kubiliusPrimeCutoffLoweredCrossingMass_geometric_sum_lt`.
+
+The packet declarations `primesUpTo`, `kubiliusMass`, `KubiliusTV`, and the headline statement are
+unchanged.  `KubiliusTV` remains only a named hypothesis; no `axiom`, `opaque`, or `native_decide`
+was added.  The scoped target still has exactly its single frozen headline `sorry`.
+
+Verification actually run:
+
+- `lake env lean src/NormalNumbers/CoefmassErdosBorweinSubpowerKub.lean` — succeeds, with only the
+  pre-existing headline `sorry` warning.
+- `~/personal/bin/lean-green . --target NormalNumbers.CoefmassErdosBorweinSubpowerKub --import
+  NormalNumbers.CoefmassErdosBorweinSubpowerKub --axioms
+  NormalNumbers.ErdosBorweinSubpowerKub.eventually_kubiliusLevelBarrier_ge_anchor_blockLogLog
+  --axioms
+  NormalNumbers.ErdosBorweinSubpowerKub.exists_subpowerBlock_large_cards_div_le_square_add_kubilius
+  --axioms NormalNumbers.ErdosBorweinSubpowerKub.sum_comp_nat_div_four_le` —
+  `FORMALIZE-TIER GREEN`; all three declarations report exactly `Classical.choice`, `Quot.sound`,
+  and `propext`.
+- `~/personal/bin/lean-green .` — full 10,847-job repository build, `FORMALIZE-TIER GREEN`.
