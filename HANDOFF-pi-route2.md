@@ -90,3 +90,11 @@ to R+S) or reassign this run.
   only a liminf).  Finite evidence (not proof): 2893/3651 such p < 2.4e6 have ‖E‖ ≥ 0.1.
 - Next: state DFI (Annals 1995) faithfully as a cited hypothesis Prop and identify exactly the
   gap (Chebotarev restriction) between it and QuadraticRootEscape.
+- **Proved** (ReservoirCutoffSixDFI.lean, clean): `quadraticRootEscape_of_rootFar`,
+  `nonvanishing_of_restrictedRootFar`: ONE root ν with ‖ν/p‖ℤ ≥ 1/4 for infinitely many
+  p = 120t+1 (2 not a sixth power) ⇒ nonvanishing (other root is −64−ν).  Stated (unused)
+  `DFIWeak`, a weaker consequence of Duke–Friedlander–Iwaniec 1995 for x²+64x+4096.
+  Exact remaining gap: `RestrictedRootFar` = DFIWeak restricted to the Chebotarev set.
+  Next: find (ON-LINE-REQUEST) a source for DFI with ray-class/splitting restrictions
+  (e.g. Tóth 2000, or Duke–Friedlander–Iwaniec ideal-class versions) and check whether the
+  sixth-power condition on 2 is covered; if so, cite it as a hypothesis Prop.
