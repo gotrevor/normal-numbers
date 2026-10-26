@@ -11,8 +11,9 @@ import NormalNumbers.Disjunctive
 
 Combining `bbpPrimeReservoir_succ` with `bbpReservoirExit_mod_one`, the reservoir is,
 modulo 1, exactly `16ⁿ · ρₙ` where `ρₙ` is a partial sum of a prime-indexed series with
-`O(1/k)` numerators.  So the reservoir carries no arithmetic beyond the digits of the
-limit constant `ρ`.
+`O(1/k)` kicks.  This identifies the missing marginal digit-distribution input
+as disjunctivity of the limit constant `ρ`; it does not exclude exploiting the
+arithmetic of that prime-indexed series.
 -/
 
 namespace NormalNumbers.PiDisjunctiveRoutes
@@ -109,9 +110,10 @@ theorem bbpPrimeReservoir_near_orbit (n : ℕ) :
     _ ≤ 10 / ((n : ℝ) + 1) := by
         rw [div_mul_eq_mul_div]; gcongr; norm_num
 
-/-- **Route-2 obstruction.**  The route premise already forces base-16 disjunctivity of the
-prime-indexed BBP constant `ρ = reservoirConst`, itself an open problem of the same
-kind as the sink.  So the reservoir supplies no lever beyond the digits of `ρ`. -/
+/-- **Route-2 necessary condition.**  The route premise forces base-16 disjunctivity of
+the prime-indexed constant `ρ = reservoirConst`.  Together with the π transfer,
+this gives two consequences of one premise, not a reduction between the two
+disjunctivity problems or a proof that the route cannot work. -/
 @[blueprint (title := "Route 2 premise forces disjunctivity of the reservoir constant")]
 theorem reservoirConst_disjunctive_of_support (h : PiPrimeReservoirSupport) :
     IsDisjunctive 16 reservoirConst := by

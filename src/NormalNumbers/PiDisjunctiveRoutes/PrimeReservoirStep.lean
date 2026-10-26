@@ -58,9 +58,11 @@ theorem bbpResidual_succ (n : ℕ) :
   ring
 
 /-- **Exit collapse** (proved).  The only candidate
-denominator in `(4n, 4n+4]` is `p = 4n+1`; its exponent is `(p-1)/4 + 1 = n/2+1` or
-`(n+3)/2`, and `16^{(p-1)/4} = 2^{(p-1)/2} ≡ (2|p) = ±1` by Euler's criterion, with the
-sign cancelling the coefficient `4` / `-1`.  Hence the exit transfer is `64/p` mod 1:
+denominator in `(4n, 4n+4]` is `p = 4n+1`.  For `p = 8k+1` the exit numerator is
+`4·16^{k+1} = 64·2^{(p-1)/2}`; for `p = 8k+5` it is
+`-16^{k+2} = -64·2^{(p-1)/2}`.  Euler's criterion gives
+`2^{(p-1)/2} ≡ (2|p) = ±1`, with the sign cancelling the coefficient.
+Hence the exit transfer is `64/p` mod 1:
 NOT an O(1) arithmetic source.  Probe `scripts/pi_route2_exit.py`: 1125/1125 primes
 `4n+1 ≤ 20001`; control base 3: 2/1125. -/
 lemma two_pow_half_eq {p : ℕ} [hp : Fact p.Prime] (hp2 : p ≠ 2) :
