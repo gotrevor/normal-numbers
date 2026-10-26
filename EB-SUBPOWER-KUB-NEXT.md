@@ -62,3 +62,43 @@ Why the ratio matters: unit blocks (the c > 3 proof) lose a factor `u/ψ` per sc
 6 (the model maximal bound, pure probability; the main risk) → 1 → 3 → 4 → 5 → 2 → the copied assembly.
 Commit each green lemma.  If step 6 fights, JUDGE-FLAG the exact inequality in the handoff rather
 than weaken anything.
+
+## Lap checkpoint — 2026-10-26
+
+The finite-probability core of step 6 is now kernel-checked.
+
+- Commit `c0162cf3` adds `CoefmassErdosBorweinSubpowerKubAux.lean`.  It realizes the independent
+  Bernoulli model as a weighted powerset, proves exact total mass and recursive first-passage mass,
+  and proves the finite Doob/Ville exponential maximal inequality directly (without a measure-theory
+  detour).
+- Commit `c13cf6c1` identifies the recursive event with an explicit centered prefix crossing,
+  specializes the maximal inequality to `kubiliusMass`, inserts the proved Mertens upper bound, and
+  proves the cubic estimate
+  `exp θ - 1 - θ ≤ θ² / 2 + θ³` for `0 ≤ θ ≤ 1`.
+- The current checkpoint formalizes the route-decisive geometric choice
+  `r = kubiliusBlockRatio c = (1+c)/2`: Lean proves `1 < r < c`,
+  `1/2 - c/(2r) < 0`, and summability of the resulting `r`-power majorant.  Thus the exact analytic
+  exponent needed to pass from `c > 3` to every `c > 1` is no longer heuristic.
+
+The packet declarations `primesUpTo`, `kubiliusMass`, `KubiliusTV`, and the headline statement are
+unchanged from `e61852e6`; `KubiliusTV` remains only a hypothesis.  There is no new `axiom`, no
+`native_decide`, and the only `sorry` in the scoped target remains the headline proof.
+
+Verification actually run:
+
+- `lake env lean src/NormalNumbers/CoefmassErdosBorweinSubpowerKub.lean` — succeeds, with only the
+  expected headline `sorry` warning.
+- `~/personal/bin/lean-green . --target NormalNumbers.CoefmassErdosBorweinSubpowerKub --import
+  NormalNumbers.CoefmassErdosBorweinSubpowerKub --axioms
+  NormalNumbers.ErdosBorweinSubpowerKub.summable_kubiliusGeometricDecay --axioms
+  NormalNumbers.ErdosBorweinSubpowerKub.kubiliusMass_exists_centeredPrefixSum_ge_le_exp_cubic` —
+  `FORMALIZE-TIER GREEN`; both declarations report only `Classical.choice`, `Quot.sound`, and
+  `propext`.
+- `~/personal/bin/lean-green .` — full 10,847-job build, `FORMALIZE-TIER GREEN`.
+
+The remaining crux is to package these ingredients into the uniform integrated model bound from
+step 6.  The next highest-value attack is a standalone `kubiliusMass` theorem on geometric log-log
+blocks: instantiate the cubic maximal inequality with `θ = h/U`, prove `θ ≤ 1`, include the lowered
+barrier `h = √(c u log u) - 2 log₂ u - O(1)` and the top-cut shift, integrate the auxiliary threshold,
+then dominate the block terms by the summable majorant proved here.  Only after that model theorem
+is green should work move to divisor/squarefull comparison (step 1) and the `KubiliusTV` transfer.

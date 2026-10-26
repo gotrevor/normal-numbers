@@ -138,6 +138,59 @@ theorem kubiliusMass_exists_centeredPrefixSum_ge_le_exp_cubic
   apply Real.exp_le_exp.mpr
   exact sub_le_sub_right hmul (θ * h)
 
+/-! ### Geometric log-log blocks -/
+
+/-- The geometric block ratio chosen strictly between `1` and `c`. -/
+noncomputable def kubiliusBlockRatio (c : ℝ) : ℝ := (1 + c) / 2
+
+/-- Exponent left after integrating the maximal tail across one geometric block. -/
+noncomputable def kubiliusGeometricDecayExponent (c : ℝ) : ℝ :=
+  1 / 2 - c / (2 * kubiliusBlockRatio c)
+
+theorem one_lt_kubiliusBlockRatio {c : ℝ} (hc : 1 < c) :
+    1 < kubiliusBlockRatio c := by
+  unfold kubiliusBlockRatio
+  linarith
+
+theorem kubiliusBlockRatio_lt {c : ℝ} (hc : 1 < c) :
+    kubiliusBlockRatio c < c := by
+  unfold kubiliusBlockRatio
+  linarith
+
+theorem kubiliusGeometricDecayExponent_neg {c : ℝ} (hc : 1 < c) :
+    kubiliusGeometricDecayExponent c < 0 := by
+  have hr0 : 0 < 2 * kubiliusBlockRatio c := by
+    positivity [one_lt_kubiliusBlockRatio hc]
+  rw [kubiliusGeometricDecayExponent]
+  apply sub_neg.mpr
+  apply (lt_div_iff₀ hr0).2
+  nlinarith [kubiliusBlockRatio_lt hc]
+
+/-- The geometric-block majorant is summable for every `c > 1`; this is the exact place where
+choosing a ratio strictly below `c` reaches the heuristic threshold. -/
+theorem summable_kubiliusGeometricDecay {c : ℝ} (hc : 1 < c) :
+    Summable (fun k : ℕ ↦ Real.rpow (kubiliusBlockRatio c)
+      (kubiliusGeometricDecayExponent c * (k : ℝ))) := by
+  have hr : 1 < kubiliusBlockRatio c := one_lt_kubiliusBlockRatio hc
+  have he : kubiliusGeometricDecayExponent c < 0 :=
+    kubiliusGeometricDecayExponent_neg hc
+  have hqpos : 0 < Real.rpow (kubiliusBlockRatio c)
+      (kubiliusGeometricDecayExponent c) :=
+    Real.rpow_pos_of_pos (zero_lt_one.trans hr) _
+  have hqnorm : ‖Real.rpow (kubiliusBlockRatio c)
+      (kubiliusGeometricDecayExponent c)‖ < 1 := by
+    rw [Real.norm_eq_abs, abs_of_pos hqpos]
+    exact Real.rpow_lt_one_of_one_lt_of_neg hr he
+  have hsum := summable_geometric_of_norm_lt_one hqnorm
+  have hfun : (fun k : ℕ ↦ Real.rpow (kubiliusBlockRatio c)
+      (kubiliusGeometricDecayExponent c * (k : ℝ))) =
+      fun k : ℕ ↦ Real.rpow (kubiliusBlockRatio c)
+        (kubiliusGeometricDecayExponent c) ^ k := by
+    funext k
+    exact Real.rpow_mul_natCast (zero_lt_one.trans hr).le _ k
+  rw [hfun]
+  exact hsum
+
 /-- **Target: non-normal below the sub-power weight for every `c > 1`, given `KubiliusTV`.**  This
 reaches the heuristic threshold of `EBLogWindow`'s non-normal half.  The proof replaces the c > 3
 block-union step of `ebRandom_ae_not_normal_subpower` by Doob's exponential maximal inequality on
