@@ -41,3 +41,11 @@ rational, e.g. 1/3, and a known-normal-ish surrogate).
   K has a non-torsion point" — probe against siblings with μ finite but K torsion-only
   (likely exist: construct x with long zero-runs of length ~ log n, μ = 2 yet K ⊆ dyadics?
   run lengths o(n) keep μ finite).  If such a sibling exists, record the obstruction.
+
+## Lap 4
+- Node `PiSelfReturn` (π ∈ ω₂(π)), proved edge `piOrbitClosureNonTorsion_of_selfReturn`, sibling
+  refutation `not_selfReturn_liouvilleTwo`.  Graph: SelfReturn → NonTorsion(i); (i)+(ii) → sink.
+- NEXT: (ii) is the crux with no mechanism.  Try to state an obstruction in Lean: a closed
+  ×2-invariant set with a non-torsion point that is not ×3-invariant (e.g. ω₂ of a Sturmian-type
+  or uniformly-bad ξ from `UniformBad.exists_irrational_not_isDisjunctive`) — shows (i) never
+  bootstraps to (ii) without arithmetic.

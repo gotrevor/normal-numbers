@@ -78,7 +78,7 @@ theorem tripleReturn_iff_mem_circleOmegaLimit (x : ℝ) :
   have : ∀ n : ℕ, ((2 : ℝ) ^ n - 3) * x = (2 : ℝ) ^ n * x - 3 * x := fun n => by ring
   simp only [TripleReturn, this]
 
-private theorem not_isOfFinAddOrder_of_irrational' {x : ℝ} (hx : Irrational x) :
+theorem not_isOfFinAddOrder_of_irrational' {x : ℝ} (hx : Irrational x) :
     ¬ IsOfFinAddOrder (x : UnitAddCircle) := by
   rw [AddCircle.not_isOfFinAddOrder_iff_forall_rat_ne_div]
   intro q hq

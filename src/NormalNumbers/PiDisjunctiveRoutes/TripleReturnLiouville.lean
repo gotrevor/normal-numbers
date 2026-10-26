@@ -115,4 +115,25 @@ theorem liouvilleTwo_irrational_and_orbitClosure_torsion :
     rw [← mul_pow, show (2:ℝ) * (1/2) = 1 by norm_num, one_pow]
     exact AddCircle.coe_period (p := (1:ℝ))
 
+/-- Open node: π is a recurrent point of doubling, i.e. it lies in its own binary orbit
+closure (every prefix of π's binary expansion recurs, arbitrarily late).
+Costume audit: (a) implied by the sink; (b) strictly weaker in kind, since it supplies no
+`×q`-invariance; it is a target of the same shape as `TripleReturn` with multiplier `1`.
+Degenerate corner: fails for the irrational `∑ 2^{-i!}`
+(`not_selfReturn_liouvilleTwo`).  Confidence true: 99% (π believed normal). -/
+def PiSelfReturn : Prop :=
+  ((Real.pi : ℝ) : UnitAddCircle) ∈ circleOmegaLimit 2 Real.pi
+
+/-- Proved edge: self-return supplies Furstenberg ingredient (i). -/
+theorem piOrbitClosureNonTorsion_of_selfReturn (h : PiSelfReturn) :
+    PiOrbitClosureNonTorsion :=
+  ⟨_, h, not_isOfFinAddOrder_of_irrational' irrational_pi⟩
+
+/-- Proved: the binary Liouville sibling is not a recurrent point of doubling. -/
+theorem not_selfReturn_liouvilleTwo :
+    ((liouvilleNumber 2 : ℝ) : UnitAddCircle) ∉ circleOmegaLimit 2 (liouvilleNumber 2) :=
+  fun h => not_isOfFinAddOrder_of_irrational'
+    liouvilleTwo_irrational_and_orbitClosure_torsion.1
+    (liouvilleTwo_irrational_and_orbitClosure_torsion.2 _ h)
+
 end NormalNumbers.PiDisjunctiveRoutes
