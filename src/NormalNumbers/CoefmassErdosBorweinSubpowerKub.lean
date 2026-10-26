@@ -2080,6 +2080,203 @@ theorem exists_subpowerBlock_union_large_cards_div_le_square_add_kubilius
         exact_mod_cast (ne_of_gt hT))]
       ring
 
+open Classical in
+/-- The marginal-divisor cover in the form needed by the Kubilius argument: arithmetic levels may
+be grouped arbitrarily, and each group's levels are unioned before cardinality.  This avoids the
+factor equal to the number of arithmetic levels that would be introduced by the older
+`marginalDivisorMass_large_card_le_sum_block_cards` estimate. -/
+lemma sum_marginalDivisorMass_large_cards_le_grouped_block_unions
+    (c C ε : ℝ) (hC : 0 < C) (hε : 0 ≤ ε)
+    (delta : ℕ → ℝ)
+    (hdelta : ∀ m : ℕ, 2 ≤ m → delta m ≤ C * subpowerWeight c m)
+    (L T J : ℕ) (exceptional : Finset ℕ) (groups : Finset (Finset ℕ))
+    (hcover : ∀ i ∈ Finset.range T,
+      L + i ∈ exceptional ∨ ∃ s ∈ groups, L + i ∈ s) :
+    (∑ j ∈ Finset.range J,
+        (((Finset.Icc 1 T).filter (fun n ↦
+          ε * Real.rpow 2 ((j : ℝ) / 2) <
+            marginalDivisorMass delta (dyadicExpCutoff L) n)).card : ℝ)) ≤
+      (∑ j ∈ Finset.range J,
+        (((Finset.Icc 1 T).filter (fun n ↦ ∃ ℓ ∈ exceptional,
+          subpowerBlockThreshold (ε / C) ℓ j <
+            weightedDivisorBlockMass (subpowerWeight c) ℓ n)).card : ℝ)) +
+      ∑ s ∈ groups, ∑ j ∈ Finset.range J,
+        (((Finset.Icc 1 T).filter (fun n ↦ ∃ ℓ ∈ s,
+          subpowerBlockThreshold (ε / C) ℓ j <
+            weightedDivisorBlockMass (subpowerWeight c) ℓ n)).card : ℝ) := by
+  have hdom : ∀ m : ℕ, dyadicExpCutoff L < m →
+      delta m ≤ C * subpowerWeight c m := by
+    intro m hm
+    exact hdelta m ((dyadicExpCutoff_two_le L).trans (Nat.le_of_lt hm))
+  let S : Finset ℕ := Finset.Icc 1 T
+  let B : Finset ℕ → ℕ → Finset ℕ := fun s j ↦
+    S.filter (fun n ↦ ∃ ℓ ∈ s,
+      subpowerBlockThreshold (ε / C) ℓ j <
+        weightedDivisorBlockMass (subpowerWeight c) ℓ n)
+  let E : ℕ → Finset ℕ := fun j ↦
+    S.filter (fun n ↦ ∃ ℓ ∈ exceptional,
+      subpowerBlockThreshold (ε / C) ℓ j <
+        weightedDivisorBlockMass (subpowerWeight c) ℓ n)
+  have hpoint : ∀ j : ℕ,
+      ((S.filter (fun n ↦
+        ε * Real.rpow 2 ((j : ℝ) / 2) <
+          marginalDivisorMass delta (dyadicExpCutoff L) n)).card : ℝ) ≤
+        ((E j).card : ℝ) + ∑ s ∈ groups, ((B s j).card : ℝ) := by
+    intro j
+    have hthreshold : ∀ ℓ : ℕ,
+        ((ε * Real.rpow 2 ((j : ℝ) / 2)) / C) * blockAllocation ℓ =
+          subpowerBlockThreshold (ε / C) ℓ j := by
+      intro ℓ
+      unfold subpowerBlockThreshold
+      ring_nf
+    have hsub : S.filter (fun n ↦
+        ε * Real.rpow 2 ((j : ℝ) / 2) <
+          marginalDivisorMass delta (dyadicExpCutoff L) n) ⊆
+        E j ∪ groups.biUnion (fun s ↦ B s j) := by
+      intro n hn
+      have hnS := (Finset.mem_filter.mp hn).1
+      have hnI := Finset.mem_Icc.mp hnS
+      obtain ⟨i, hi, hibad⟩ := exists_weightedDivisorBlockMass_gt_of_marginal
+        delta (subpowerWeight c) C hC L n hdom hnI.1
+          (ε * Real.rpow 2 ((j : ℝ) / 2))
+          (mul_nonneg hε (Real.rpow_nonneg (by norm_num) _))
+          (Finset.mem_filter.mp hn).2
+      have hiT : i ∈ Finset.range T := by
+        rw [Finset.mem_range] at hi ⊢
+        exact hi.trans_le hnI.2
+      rcases hcover i hiT with hLi | ⟨s, hsgroups, hLis⟩
+      · apply Finset.mem_union_left
+        dsimp only [E]
+        exact Finset.mem_filter.mpr ⟨hnS, ⟨L + i, hLi, by
+          simpa only [hthreshold] using hibad⟩⟩
+      · apply Finset.mem_union_right
+        exact Finset.mem_biUnion.mpr ⟨s, hsgroups, by
+          dsimp only [B]
+          exact Finset.mem_filter.mpr ⟨hnS, ⟨L + i, hLis, by
+            simpa only [hthreshold] using hibad⟩⟩⟩
+    calc
+      ((S.filter (fun n ↦
+          ε * Real.rpow 2 ((j : ℝ) / 2) <
+            marginalDivisorMass delta (dyadicExpCutoff L) n)).card : ℝ) ≤
+          ((E j ∪ groups.biUnion (fun s ↦ B s j)).card : ℝ) := by
+        exact_mod_cast Finset.card_le_card hsub
+      _ ≤ ((E j).card : ℝ) + ∑ s ∈ groups, ((B s j).card : ℝ) := by
+        calc
+          (((E j ∪ groups.biUnion (fun s ↦ B s j)).card : ℕ) : ℝ) ≤
+              ((E j).card : ℝ) + ((groups.biUnion (fun s ↦ B s j)).card : ℝ) := by
+            exact_mod_cast Finset.card_union_le (E j) (groups.biUnion (fun s ↦ B s j))
+          _ ≤ ((E j).card : ℝ) + ∑ s ∈ groups, ((B s j).card : ℝ) := by
+            gcongr
+            exact_mod_cast Finset.card_biUnion_le
+  calc
+    (∑ j ∈ Finset.range J,
+        (((Finset.Icc 1 T).filter (fun n ↦
+          ε * Real.rpow 2 ((j : ℝ) / 2) <
+            marginalDivisorMass delta (dyadicExpCutoff L) n)).card : ℝ)) =
+        ∑ j ∈ Finset.range J,
+          ((S.filter (fun n ↦
+            ε * Real.rpow 2 ((j : ℝ) / 2) <
+              marginalDivisorMass delta (dyadicExpCutoff L) n)).card : ℝ) := by rfl
+    _ ≤ ∑ j ∈ Finset.range J,
+        (((E j).card : ℝ) + ∑ s ∈ groups, ((B s j).card : ℝ)) :=
+      Finset.sum_le_sum fun j _ ↦ hpoint j
+    _ = (∑ j ∈ Finset.range J, ((E j).card : ℝ)) +
+        ∑ s ∈ groups, ∑ j ∈ Finset.range J, ((B s j).card : ℝ) := by
+      rw [Finset.sum_add_distrib, Finset.sum_comm]
+    _ = (∑ j ∈ Finset.range J,
+        (((Finset.Icc 1 T).filter (fun n ↦ ∃ ℓ ∈ exceptional,
+          subpowerBlockThreshold (ε / C) ℓ j <
+            weightedDivisorBlockMass (subpowerWeight c) ℓ n)).card : ℝ)) +
+        ∑ s ∈ groups, ∑ j ∈ Finset.range J,
+        (((Finset.Icc 1 T).filter (fun n ↦ ∃ ℓ ∈ s,
+          subpowerBlockThreshold (ε / C) ℓ j <
+            weightedDivisorBlockMass (subpowerWeight c) ℓ n)).card : ℝ) := by rfl
+
+open Classical in
+/-- The grouped marginal cover composed with `KubiliusTV`.  All analytic choices are exposed as
+side conditions on the finite family of level groups; in particular, each group pays for one
+prime-walk crossing event and one total-variation error, rather than one of each per arithmetic
+level. -/
+theorem exists_sum_marginalDivisorMass_large_cards_div_le_grouped_kubilius
+    (hK : KubiliusTV) :
+    ∃ K : ℝ, 0 < K ∧
+      ∀ (c C ε D : ℝ) (delta : ℕ → ℝ) (L T J : ℕ)
+        (exceptional : Finset ℕ) (groups : Finset (Finset ℕ))
+        (y : Finset ℕ → ℕ) (u₀ : Finset ℕ → ℝ),
+        0 ≤ c → 0 < C → 0 < ε → 0 < T →
+        (∀ m : ℕ, 2 ≤ m → delta m ≤ C * subpowerWeight c m) →
+        (∀ i ∈ Finset.range T,
+          L + i ∈ exceptional ∨ ∃ s ∈ groups, L + i ∈ s) →
+        (∀ s ∈ groups, ∀ ℓ ∈ s,
+          6 ≤ ℓ ∧ 1 ≤ blockLogLog ℓ ∧ dyadicExpCutoff (ℓ + 1) ≤ y s ∧
+          kubiliusLoweredBarrier (subpowerKubiliusModelCoefficient c)
+              (subpowerKubiliusLossA D) (subpowerKubiliusLossB (ε / C)) (u₀ s) ≤
+            kubiliusLoweredBarrier c (subpowerKubiliusLossA D)
+              (subpowerKubiliusLossB (ε / C)) (blockLogLog ℓ)) →
+        (∀ s ∈ groups, 2 ≤ y s ∧ y s ≤ T) →
+        (∑ j ∈ Finset.range J,
+            (((Finset.Icc 1 T).filter (fun n ↦
+              ε * Real.rpow 2 ((j : ℝ) / 2) <
+                marginalDivisorMass delta (dyadicExpCutoff L) n)).card : ℝ)) / T ≤
+          (∑ j ∈ Finset.range J,
+            (((Finset.Icc 1 T).filter (fun n ↦ ∃ ℓ ∈ exceptional,
+              subpowerBlockThreshold (ε / C) ℓ j <
+                weightedDivisorBlockMass (subpowerWeight c) ℓ n)).card : ℝ)) / T +
+          ∑ s ∈ groups,
+            ((∑ ℓ ∈ s, squareDivisorMomentConstant *
+                Real.rpow (blockLogLog ℓ) (-D) * subpowerSquareShiftConstant) +
+              4 * kubiliusPrimeCutoffLoweredCrossingMass (y s)
+                (subpowerKubiliusModelCoefficient c) (subpowerKubiliusLossA D)
+                  (subpowerKubiliusLossB (ε / C)) (u₀ s) ((J + 3) / 4) +
+              J * K * (Real.rpow (Real.log T / Real.log (y s))
+                (-(Real.log T / Real.log (y s))) + Real.rpow T (-(1 / 2 : ℝ)))) := by
+  obtain ⟨K, hKpos, hunion⟩ :=
+    exists_subpowerBlock_union_large_cards_div_le_square_add_kubilius hK
+  refine ⟨K, hKpos, ?_⟩
+  intro c C ε D delta L T J exceptional groups y u₀ hc hC hε hT hdelta hcover hlevels hy
+  have hgrouped := sum_marginalDivisorMass_large_cards_le_grouped_block_unions
+    c C ε hC hε.le delta hdelta L T J exceptional groups hcover
+  calc
+    (∑ j ∈ Finset.range J,
+        (((Finset.Icc 1 T).filter (fun n ↦
+          ε * Real.rpow 2 ((j : ℝ) / 2) <
+            marginalDivisorMass delta (dyadicExpCutoff L) n)).card : ℝ)) / T ≤
+        ((∑ j ∈ Finset.range J,
+          (((Finset.Icc 1 T).filter (fun n ↦ ∃ ℓ ∈ exceptional,
+            subpowerBlockThreshold (ε / C) ℓ j <
+              weightedDivisorBlockMass (subpowerWeight c) ℓ n)).card : ℝ)) +
+          ∑ s ∈ groups, ∑ j ∈ Finset.range J,
+          (((Finset.Icc 1 T).filter (fun n ↦ ∃ ℓ ∈ s,
+            subpowerBlockThreshold (ε / C) ℓ j <
+              weightedDivisorBlockMass (subpowerWeight c) ℓ n)).card : ℝ)) / T :=
+      div_le_div_of_nonneg_right hgrouped (by positivity)
+    _ = (∑ j ∈ Finset.range J,
+          (((Finset.Icc 1 T).filter (fun n ↦ ∃ ℓ ∈ exceptional,
+            subpowerBlockThreshold (ε / C) ℓ j <
+              weightedDivisorBlockMass (subpowerWeight c) ℓ n)).card : ℝ)) / T +
+        ∑ s ∈ groups, (∑ j ∈ Finset.range J,
+          (((Finset.Icc 1 T).filter (fun n ↦ ∃ ℓ ∈ s,
+            subpowerBlockThreshold (ε / C) ℓ j <
+              weightedDivisorBlockMass (subpowerWeight c) ℓ n)).card : ℝ)) / T := by
+      rw [add_div]
+      congr 1
+      rw [Finset.sum_div]
+    _ ≤ (∑ j ∈ Finset.range J,
+          (((Finset.Icc 1 T).filter (fun n ↦ ∃ ℓ ∈ exceptional,
+            subpowerBlockThreshold (ε / C) ℓ j <
+              weightedDivisorBlockMass (subpowerWeight c) ℓ n)).card : ℝ)) / T +
+        ∑ s ∈ groups,
+        ((∑ ℓ ∈ s, squareDivisorMomentConstant *
+            Real.rpow (blockLogLog ℓ) (-D) * subpowerSquareShiftConstant) +
+          4 * kubiliusPrimeCutoffLoweredCrossingMass (y s)
+            (subpowerKubiliusModelCoefficient c) (subpowerKubiliusLossA D)
+              (subpowerKubiliusLossB (ε / C)) (u₀ s) ((J + 3) / 4) +
+          J * K * (Real.rpow (Real.log T / Real.log (y s))
+            (-(Real.log T / Real.log (y s))) + Real.rpow T (-(1 / 2 : ℝ)))) := by
+      gcongr with s hs
+      exact hunion c (ε / C) D s (y s) T J (u₀ s) hc (div_pos hε hC) hT
+        (hlevels s hs) (hy s hs).1 (hy s hs).2
+
 /-- **Target: non-normal below the sub-power weight for every `c > 1`, given `KubiliusTV`.**  This
 reaches the heuristic threshold of `EBLogWindow`'s non-normal half.  The proof replaces the c > 3
 block-union step of `ebRandom_ae_not_normal_subpower` by Doob's exponential maximal inequality on

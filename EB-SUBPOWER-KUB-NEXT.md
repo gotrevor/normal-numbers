@@ -538,3 +538,48 @@ remaining two uniformity tails: levels above the top cutoff and shifts beyond th
 This produces `exists_subpower_marginal_large_cards_le_of_kubilius`; after that, reuse the proved
 `subpower_capped_marginal_residual_small` and `c > 3` headline assembly with only that input
 replaced.
+
+## Lap checkpoint — 2026-10-26, grouped marginal cover reaches `KubiliusTV`
+
+The marginal-divisor decomposition is now connected to the union-before-cardinality transfer
+without reintroducing a factor equal to the number of arithmetic levels.
+
+- `sum_marginalDivisorMass_large_cards_le_grouped_block_unions` replaces the old
+  sum-of-level-cardinalities cover by an arbitrary finite family of level groups.  Each group's
+  large-block events are unioned before cardinality.  Levels deliberately left for the top-cut or
+  another deterministic estimate live in one explicit `exceptional` finset, so the lemma does not
+  hide or assume away the remaining tail.
+- `exists_sum_marginalDivisorMass_large_cards_div_le_grouped_kubilius` composes that grouped cover
+  with `exists_subpowerBlock_union_large_cards_div_le_square_add_kubilius`.  Its conclusion charges
+  one square-divisor sum, one prime-walk crossing mass, and one accumulated `KubiliusTV` error per
+  group; the exceptional contribution stays visible on the right-hand side.
+- This pins the remaining global bookkeeping as side conditions rather than prose: construct the
+  geometric groups and their anchors/cutoffs, bound the displayed exceptional contribution, and
+  make the displayed square, model, and TV sums uniformly small.
+
+The packet declarations `primesUpTo`, `kubiliusMass`, `KubiliusTV`, and the headline statement are
+unchanged.  `KubiliusTV` remains only a named hypothesis; no `axiom`, `opaque`, or `native_decide`
+was added.  The scoped target still has exactly its single frozen headline `sorry`.
+
+Verification actually run:
+
+- `lake env lean src/NormalNumbers/CoefmassErdosBorweinSubpowerKub.lean` — succeeds, with only the
+  pre-existing headline `sorry` warning.
+- `~/personal/bin/lean-green . --target NormalNumbers.CoefmassErdosBorweinSubpowerKub --import
+  NormalNumbers.CoefmassErdosBorweinSubpowerKub --axioms
+  NormalNumbers.ErdosBorweinSubpowerKub.sum_marginalDivisorMass_large_cards_le_grouped_block_unions
+  --axioms
+  NormalNumbers.ErdosBorweinSubpowerKub.exists_sum_marginalDivisorMass_large_cards_div_le_grouped_kubilius`
+  — `FORMALIZE-TIER GREEN`; both declarations report exactly `Classical.choice`, `Quot.sound`, and
+  `propext`.
+- `~/personal/bin/lean-green .` — full 10,847-job repository build, `FORMALIZE-TIER GREEN`.
+
+The next highest-value attack is the explicit geometric partition.  Use ratio
+`kubiliusBlockRatio (subpowerKubiliusModelCoefficient c)`, put levels above the usable prime cutoff
+in the theorem's `exceptional` finset, and prove that contribution small by the top-cut plus
+large-threshold estimates.  For the ordinary groups, choose the left `blockLogLog` endpoint as
+`u₀` and the largest arithmetic prime cutoff as `y`; then feed the model terms to
+`exists_kubiliusPrimeCutoffLoweredCrossingMass_geometric_sum_lt`, sum the square terms with a fixed
+`D > 1`, and show the finitely accumulated TV errors tend to zero uniformly.  That is the last
+substantial input before `exists_subpower_marginal_large_cards_le_of_kubilius` and the copied
+`c > 3` final assembly.
