@@ -2240,6 +2240,46 @@ theorem subpowerKubiliusLevelGroup_index_injOn
   exact subpowerKubiliusLevelGroup_eq_of_index_eq hs ht hindex
 
 open Classical in
+/-- The canonical level groups are pairwise disjoint.  This is the bookkeeping fact that lets the
+square-divisor contribution be summed over arithmetic levels rather than over geometric fibers. -/
+theorem subpowerKubiliusLevelGroups_pairwiseDisjoint
+    (c : ℝ) (L T Y : ℕ) :
+    Set.PairwiseDisjoint (subpowerKubiliusLevelGroups c L T Y : Set (Finset ℕ))
+      (fun s ↦ s) := by
+  intro s hs t ht hst
+  change Disjoint s t
+  rw [Finset.disjoint_left]
+  intro ℓ hℓs hℓt
+  apply hst
+  apply subpowerKubiliusLevelGroup_eq_of_index_eq hs ht
+  exact (subpowerKubiliusLevelGroup_index_eq hs hℓs).symm.trans
+    (subpowerKubiliusLevelGroup_index_eq ht hℓt)
+
+open Classical in
+/-- The union of the canonical fibers is exactly the set of ordinary arithmetic levels.  In
+particular this records the empty and truncated cases without an auxiliary nonemptiness
+hypothesis. -/
+theorem subpowerKubiliusLevelGroups_biUnion
+    (c : ℝ) (L T Y : ℕ) :
+    (subpowerKubiliusLevelGroups c L T Y).biUnion (fun s ↦ s) =
+      subpowerKubiliusOrdinaryLevels L T Y := by
+  ext ℓ
+  simp only [Finset.mem_biUnion]
+  constructor
+  · rintro ⟨s, hs, hℓs⟩
+    exact subpowerKubiliusLevelGroup_subset hs hℓs
+  · intro hℓ
+    let s := (subpowerKubiliusOrdinaryLevels L T Y).filter
+      (fun m ↦ subpowerKubiliusGroupingIndex c m =
+        subpowerKubiliusGroupingIndex c ℓ)
+    refine ⟨s, ?_, ?_⟩
+    · unfold subpowerKubiliusLevelGroups
+      apply Finset.mem_image.mpr
+      refine ⟨subpowerKubiliusGroupingIndex c ℓ, ?_, rfl⟩
+      exact Finset.mem_image.mpr ⟨ℓ, hℓ, rfl⟩
+    · exact Finset.mem_filter.mpr ⟨hℓ, rfl⟩
+
+open Classical in
 lemma subpowerKubiliusLevelGroup_sup_mem {c : ℝ} {L T Y : ℕ} {s : Finset ℕ}
     (hs : s ∈ subpowerKubiliusLevelGroups c L T Y) : s.sup id ∈ s := by
   have hne := subpowerKubiliusLevelGroup_nonempty hs
@@ -3003,6 +3043,130 @@ theorem exists_sum_marginalDivisorMass_large_cards_div_le_canonical_kubilius
     (zero_le_one.trans hc.le) hC hε hT hdelta hd.1 hd.2.1 hd.2.2.1
   refine ⟨?_, hd.2.2.2.1, hd.2.2.2.2⟩
   simpa only [subpowerKubiliusCanonicalGroupedBound] using hbound
+
+lemma summable_blockLogLog_neg_rpow {D : ℝ} (hD : 1 < D) :
+    Summable (fun ℓ : ℕ ↦ Real.rpow (blockLogLog ℓ) (-D)) := by
+  have hseries₀ : Summable (fun ℓ : ℕ ↦
+      1 / |(ℓ : ℝ) + 2| ^ D) :=
+    (Real.summable_one_div_nat_add_rpow 2 D).2 hD
+  have hseries : Summable (fun ℓ : ℕ ↦
+      Real.rpow ((ℓ : ℝ) + 2) (-D)) := by
+    apply hseries₀.congr
+    intro ℓ
+    change 1 / |(ℓ : ℝ) + 2| ^ D = ((ℓ : ℝ) + 2) ^ (-D)
+    rw [abs_of_pos (by positivity : (0 : ℝ) < (ℓ : ℝ) + 2)]
+    rw [Real.rpow_neg (by positivity : (0 : ℝ) ≤ (ℓ : ℝ) + 2)]
+    rw [one_div]
+  have hsum : Summable (fun ℓ : ℕ ↦ Real.rpow 4 D *
+      Real.rpow ((ℓ : ℝ) + 2) (-D)) := hseries.mul_left _
+  apply hsum.of_norm_bounded_eventually_nat
+  filter_upwards [eventually_ge_atTop 6] with ℓ hℓ
+  let u : ℝ := blockLogLog ℓ
+  let v : ℝ := (ℓ : ℝ) + 2
+  have hu₀ : 0 < u := by
+    dsimp only [u]
+    exact (by positivity : (0 : ℝ) < ((ℓ : ℝ) + 2) / 4).trans_le
+      (blockLogLog_ge_quarter_add ℓ hℓ)
+  have hv₀ : 0 < v := by
+    dsimp only [v]
+    positivity
+  have huv : v / 4 ≤ u := by
+    simpa only [u, v] using blockLogLog_ge_quarter_add ℓ hℓ
+  have hpow : Real.rpow u (-D) ≤
+      Real.rpow 4 D * Real.rpow v (-D) := by
+    calc
+      Real.rpow u (-D) ≤ Real.rpow (v / 4) (-D) :=
+        Real.rpow_le_rpow_of_nonpos (by positivity) huv (by linarith)
+      _ = Real.rpow 4 D * Real.rpow v (-D) := by
+        change (v / 4) ^ (-D) = 4 ^ D * v ^ (-D)
+        rw [Real.div_rpow hv₀.le (by norm_num : (0 : ℝ) ≤ 4)]
+        rw [Real.rpow_neg (by norm_num : (0 : ℝ) ≤ 4), div_eq_mul_inv, inv_inv]
+        ring
+  have hrpow₀ : 0 ≤ Real.rpow u (-D) := by
+    rw [Real.rpow_eq_pow]
+    exact Real.rpow_nonneg hu₀.le _
+  calc
+    |Real.rpow u (-D)| = Real.rpow u (-D) := abs_of_nonneg hrpow₀
+    _ ≤ Real.rpow 4 D * Real.rpow v (-D) := hpow
+
+open Classical in
+/-- The complete square-divisor contribution in the canonical grouped bound is uniformly small
+once the first arithmetic level is late enough.  The exponent may be any `D > 1`; later assembly
+can take `D = 2`. -/
+theorem exists_subpowerKubiliusCanonical_square_sum_lt
+    (D ζ : ℝ) (hD : 1 < D) (hζ : 0 < ζ) :
+    ∃ L₀ : ℕ, 6 ≤ L₀ ∧ ∀ (c : ℝ) (L T Y : ℕ), L₀ ≤ L →
+      (∑ s ∈ subpowerKubiliusLevelGroups c L T Y,
+        ∑ ℓ ∈ s, squareDivisorMomentConstant *
+          Real.rpow (blockLogLog ℓ) (-D) * subpowerSquareShiftConstant) < ζ := by
+  let f : ℕ → ℝ := fun ℓ ↦ squareDivisorMomentConstant *
+    Real.rpow (blockLogLog ℓ) (-D) * subpowerSquareShiftConstant
+  have hsumBase := summable_blockLogLog_neg_rpow hD
+  have hsum : Summable f := by
+    refine (hsumBase.mul_left
+      (squareDivisorMomentConstant * subpowerSquareShiftConstant)).congr ?_
+    intro ℓ
+    dsimp only [f]
+    ring
+  have hf₀ : ∀ ℓ, 6 ≤ ℓ → 0 ≤ f ℓ := by
+    intro ℓ hℓ
+    have hlog : 0 ≤ blockLogLog ℓ := by
+      exact (by positivity : (0 : ℝ) ≤ ((ℓ : ℝ) + 2) / 4).trans
+        (blockLogLog_ge_quarter_add ℓ hℓ)
+    dsimp only [f]
+    exact mul_nonneg
+      (mul_nonneg squareDivisorMomentConstant_nonneg
+        (Real.rpow_nonneg hlog _))
+      subpowerSquareShiftConstant_pos.le
+  have htailEv : ∀ᶠ L : ℕ in atTop, (∑' i : ℕ, f (i + L)) < ζ :=
+    (tendsto_sum_nat_add f).eventually_lt_const hζ
+  obtain ⟨L₀, hL₀⟩ := eventually_atTop.1
+    (htailEv.and (eventually_ge_atTop 6))
+  have hL₀data := hL₀ L₀ le_rfl
+  refine ⟨L₀, hL₀data.2, ?_⟩
+  intro c L T Y hL
+  have hdata := hL₀ L hL
+  have hoffsetInj : Set.InjOn (fun ℓ : ℕ ↦ ℓ - L)
+      (subpowerKubiliusOrdinaryLevels L T Y : Set ℕ) := by
+    intro a ha b hb hab
+    have haL := (mem_subpowerKubiliusOrdinaryLevels.mp ha).1
+    have hbL := (mem_subpowerKubiliusOrdinaryLevels.mp hb).1
+    calc
+      a = (a - L) + L := (Nat.sub_add_cancel haL).symm
+      _ = (b - L) + L := congrArg (fun n ↦ n + L) hab
+      _ = b := Nat.sub_add_cancel hbL
+  have hrewrite :
+      (∑ ℓ ∈ subpowerKubiliusOrdinaryLevels L T Y, f ℓ) =
+        ∑ i ∈ (subpowerKubiliusOrdinaryLevels L T Y).image (fun ℓ ↦ ℓ - L),
+          f (i + L) := by
+    calc
+      (∑ ℓ ∈ subpowerKubiliusOrdinaryLevels L T Y, f ℓ) =
+          ∑ ℓ ∈ subpowerKubiliusOrdinaryLevels L T Y, f ((ℓ - L) + L) := by
+        apply Finset.sum_congr rfl
+        intro ℓ hℓ
+        rw [Nat.sub_add_cancel (mem_subpowerKubiliusOrdinaryLevels.mp hℓ).1]
+      _ = ∑ i ∈ (subpowerKubiliusOrdinaryLevels L T Y).image (fun ℓ ↦ ℓ - L),
+          f (i + L) :=
+        (Finset.sum_image (f := fun i ↦ f (i + L)) hoffsetInj).symm
+  have hshift : Summable (fun i : ℕ ↦ f (i + L)) :=
+    hsum.comp_injective (fun _ _ h ↦ Nat.add_right_cancel h)
+  have hfinite :
+      (∑ i ∈ (subpowerKubiliusOrdinaryLevels L T Y).image (fun ℓ ↦ ℓ - L),
+        f (i + L)) ≤ ∑' i : ℕ, f (i + L) :=
+    hshift.sum_le_tsum _ (fun i _ ↦ hf₀ (i + L) (by omega))
+  calc
+    (∑ s ∈ subpowerKubiliusLevelGroups c L T Y,
+        ∑ ℓ ∈ s, squareDivisorMomentConstant *
+          Real.rpow (blockLogLog ℓ) (-D) * subpowerSquareShiftConstant) =
+        ∑ ℓ ∈ subpowerKubiliusOrdinaryLevels L T Y, f ℓ := by
+      change (∑ s ∈ subpowerKubiliusLevelGroups c L T Y, ∑ ℓ ∈ s, f ℓ) = _
+      rw [← Finset.sum_biUnion
+        (subpowerKubiliusLevelGroups_pairwiseDisjoint c L T Y),
+        subpowerKubiliusLevelGroups_biUnion]
+    _ = ∑ i ∈ (subpowerKubiliusOrdinaryLevels L T Y).image (fun ℓ ↦ ℓ - L),
+        f (i + L) := hrewrite
+    _ ≤ ∑' i : ℕ, f (i + L) := hfinite
+    _ < ζ := hdata.1
 
 open Classical in
 /-- The model-crossing contribution in the canonical grouped bound is uniformly small once the

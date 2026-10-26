@@ -740,3 +740,56 @@ ordinary levels, fix any `D > 1` (for example `D = 2`), and dominate
 `(blockLogLog ℓ)^{-D}` using `blockLogLog_ge_quarter_add` and a convergent p-series tail.  After
 that, choose the common cutoff `Y` to make the TV error small while leaving only a thin exceptional
 band for the one-level estimate.
+
+## Review-lap checkpoint — 2026-10-26, canonical square term discharged
+
+Fresh reconstruction from the frozen packet statement, the proved `c > 3` assembly, current
+source, and recent commits reconfirmed the route.  The old capped-residual and headline proofs are
+independent of `c` after the large-card input, and a diff from planting commit `e61852e6` still has
+zero deletions in the scoped file.  Thus the live path remains the canonical grouped bound followed
+by the copied final assembly; no statement repair or route change is warranted.
+
+The square-divisor contribution in `subpowerKubiliusCanonicalGroupedBound` is now uniformly
+controlled.
+
+- `subpowerKubiliusLevelGroups_pairwiseDisjoint` proves that distinct canonical fibers cannot share
+  an arithmetic level, and `subpowerKubiliusLevelGroups_biUnion` proves that their union is exactly
+  `subpowerKubiliusOrdinaryLevels`.  The latter includes the empty and truncated cases, so the
+  reindexing carries no hidden nonemptiness assumption.
+- `summable_blockLogLog_neg_rpow` proves convergence of
+  `∑ℓ (blockLogLog ℓ)^{-D}` for every `D > 1`, using
+  `blockLogLog ℓ ≥ (ℓ+2)/4` and the shifted real p-series.
+- `exists_subpowerKubiliusCanonical_square_sum_lt` unions the disjoint fibers before summing,
+  shifts every ordinary level by the starting level `L`, and compares the entire finite double sum
+  with the corresponding `tsum` tail.  Consequently the square contribution is `< ζ` uniformly in
+  `c`, `T`, and `Y` once `L` is late enough.  The final assembly may specialize to `D = 2`.
+
+The cumulative diff from `e61852e6` is insertion-only (`3179` inserted lines, `0` deleted lines):
+`primesUpTo`, `kubiliusMass`, `KubiliusTV`, and the headline statement remain byte-unchanged.
+`KubiliusTV` remains only a named hypothesis; no `axiom`, `opaque`, or `native_decide` was added.
+The scoped target still has exactly its single frozen headline `sorry`.
+
+Verification actually run:
+
+- `lake env lean src/NormalNumbers/CoefmassErdosBorweinSubpowerKub.lean` — succeeds, with only the
+  pre-existing headline `sorry` warning (plus publish-tier tactic guidance).
+- `~/personal/bin/lean-green . --target NormalNumbers.CoefmassErdosBorweinSubpowerKub --import
+  NormalNumbers.CoefmassErdosBorweinSubpowerKub --axioms
+  NormalNumbers.ErdosBorweinSubpowerKub.subpowerKubiliusLevelGroups_pairwiseDisjoint --axioms
+  NormalNumbers.ErdosBorweinSubpowerKub.subpowerKubiliusLevelGroups_biUnion --axioms
+  NormalNumbers.ErdosBorweinSubpowerKub.summable_blockLogLog_neg_rpow --axioms
+  NormalNumbers.ErdosBorweinSubpowerKub.exists_subpowerKubiliusCanonical_square_sum_lt` —
+  `FORMALIZE-TIER GREEN`; all four declarations report exactly `Classical.choice`, `Quot.sound`,
+  and `propext`.
+- `~/personal/bin/lean-green .` — full 10,847-job repository build, `FORMALIZE-TIER GREEN`.
+
+Two global terms remain: the accumulated `KubiliusTV` error and the exceptional top band.  The next
+highest-value attack is the common-cutoff schedule that couples them.  Choose a dyadic-exponential
+`Y ≤ T` roughly `log log log T` arithmetic levels below the largest active cutoff, prove that every
+ordinary group's ratio `log T / log(groupCutoff)` tends uniformly to infinity and that the number
+of canonical groups is only logarithmic, then sum
+`J*K*((log T/log y)^(-(log T/log y)) + T^{-1/2})` uniformly for the truncated range of shifts.
+Retain explicitly that the complementary exceptional set is only the resulting thin top band; the
+following checkpoint can apply the one-level fractional-moment estimate there without ever summing
+it over the full tail.  These two estimates are the last substantial inputs before
+`exists_subpower_marginal_large_cards_le_of_kubilius` and the copied `c > 3` final assembly.
