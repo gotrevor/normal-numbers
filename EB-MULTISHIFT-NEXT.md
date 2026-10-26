@@ -52,21 +52,29 @@ Fix `b ≥ 2`, `j₀`, `T`.  Let `L = log log N`, `J = J N`, `u = J·(log L)³`,
 Order of attack: 5 (standalone probability lemma) → 4 → 1 → 2 → 3 → assemble via Step 1′.  Commit each
 green lemma.
 
-## Lap checkpoint (2026-10-26, lap 4)
+## Lap checkpoint (2026-10-26, lap 5)
 
-Step 4's finite tensorization layer is now proved in
-`CoefmassErdosBorweinMultiShiftAux.lean`.  `finiteProductWeight_l1_le` proves the product-law
-`L¹` inequality, `abs_finiteProductMass_sub_le_half_l1` converts it to the sharp event/TV bound,
-and `categorical_cleared_l1_eq` computes the exact one-prime defect.  Consequently
-`categorical_cleared_product_comparison` gives, for arbitrary events,
+Step 4's cleared-independent bridge is now exact in
+`CoefmassErdosBorweinMultiShiftAux.lean`.  `singletonClearing` keeps a singleton shift subset and
+maps every other subset to `none`; `independentShiftSubsetWeight_singletonClearing_fiber` proves
+that its one-prime pushforward is exactly `clearedIndependentShiftWeight`.  The generic theorem
+`finiteProductMass_pushforward` lifts a coordinatewise pushforward through arbitrary finite product
+event masses, and `clearedProductMass_eq_independentClearedMass` specializes it to the multishift
+model.
+
+The collision cost is also proved locally.  `independentShiftCollisionMass_eq` computes
 
 ```text
-|P_categorical(A) - P_cleared-independent(A)|
-  ≤ Σ_i J(J-1)q_i².
+P(card S ≥ 2) = 1 - (1-q)^J - Jq(1-q)^(J-1),
 ```
 
-Here the cleared law retains independent singleton outcomes and merges every nonsingleton outcome
-into `none`.  The next attack is the remaining half of Step 4: identify this law as the pushforward
-of the fully independent `Finset (Fin J)` coordinates, bound the probability that clearing changes
-any coordinate, and expose factorization of the per-shift heavy events.  Detailed baton:
-`HANDOFF-2026-10-26-eb-multishift-lap4.md`.
+and `independentShiftCollisionMass_le` bounds it by `J(J-1)q²`.  Together with lap 4's
+`categorical_cleared_product_comparison`, all one-prime and abstract product comparison inputs are
+now in place and axiom-clean.
+
+The next Step 4 attack is global: prove the finite-product union bound for the event that some prime
+coordinate collides, transpose the independent prime-by-shift array, and apply the existing
+Bernoulli cylinder factorization to obtain `P(no shift is heavy) = ∏_j (1-p_j)`.  Then identify
+`multiShiftMass` with the categorical `finiteProductMass` after enumerating `primesIoc`, specialize
+`q_i = 1/p_i`, and absorb both comparison errors by the reciprocal-square tail.  Detailed baton:
+`HANDOFF-2026-10-26-eb-multishift-lap5.md`.

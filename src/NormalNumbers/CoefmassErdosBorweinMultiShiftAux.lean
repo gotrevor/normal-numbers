@@ -1174,4 +1174,247 @@ theorem categorical_cleared_product_comparison {n J : Nat} (q : Fin n → Real)
       intro i hi
       exact independentSingletonDefect_le (hq0 i) (hq1 i) J
 
+/-! ### The cleared law as a pushforward of fully independent shifts -/
+
+/-- Keep a singleton subset as its unique element and clear every other subset to `none`. -/
+noncomputable def singletonClearing {J : Nat} (S : Finset (Fin J)) : Option (Fin J) :=
+  if h : ∃ j, S = {j} then some (Classical.choose h) else none
+
+theorem singletonClearing_eq_some_iff {J : Nat} (S : Finset (Fin J)) (j : Fin J) :
+    singletonClearing S = some j ↔ S = {j} := by
+  classical
+  unfold singletonClearing
+  split_ifs with h
+  · have hc : S = {Classical.choose h} := Classical.choose_spec h
+    constructor
+    · intro he
+      have hj : Classical.choose h = j := Option.some.inj he
+      simpa [hj] using hc
+    · intro hS
+      have hj : Classical.choose h = j :=
+        Finset.singleton_inj.mp (hc.symm.trans hS)
+      exact congrArg some hj
+  · constructor
+    · simp
+    · intro hS
+      exact (h ⟨j, hS⟩).elim
+
+/-- The one-prime law of `J` fully independent Bernoulli-`q` shift coordinates, represented by
+the subset of shifts selected at that prime. -/
+noncomputable def independentShiftSubsetWeight (J : Nat) (q : Real)
+    (S : Finset (Fin J)) : Real :=
+  bernoulliSubsetWeight Finset.univ S (fun _ => q)
+
+theorem independentShiftSubsetWeight_singleton (J : Nat) (q : Real) (j : Fin J) :
+    independentShiftSubsetWeight J q {j} = q * (1 - q) ^ (J - 1) := by
+  classical
+  rw [independentShiftSubsetWeight, bernoulliSubsetWeight_eq]
+  · rw [Finset.prod_singleton, Finset.prod_const]
+    congr 1
+    rw [Finset.card_sdiff]
+    simp
+  · simp
+
+theorem independentShiftSubsetWeight_sum (J : Nat) (q : Real) :
+    ∑ S : Finset (Fin J), independentShiftSubsetWeight J q S = 1 := by
+  classical
+  simpa [independentShiftSubsetWeight] using
+    (sum_bernoulliSubsetWeight (Finset.univ : Finset (Fin J)) (fun _ => q))
+
+theorem singletonClearing_eq_none_iff {J : Nat} (S : Finset (Fin J)) :
+    singletonClearing S = none ↔ S.card ≠ 1 := by
+  classical
+  constructor
+  · intro hnone hcard
+    obtain ⟨j, hS⟩ := Finset.card_eq_one.mp hcard
+    have hsome := (singletonClearing_eq_some_iff S j).2 hS
+    rw [hnone] at hsome
+    simp at hsome
+  · intro hcard
+    cases hclear : singletonClearing S with
+    | none => rfl
+    | some j =>
+        have hS := (singletonClearing_eq_some_iff S j).1 hclear
+        exact (hcard (by simp [hS])).elim
+
+theorem independentShiftSubsetWeight_empty (J : Nat) (q : Real) :
+    independentShiftSubsetWeight J q ∅ = (1 - q) ^ J := by
+  classical
+  simp [independentShiftSubsetWeight, bernoulliSubsetWeight, Finset.prod_const]
+
+/-- Probability that at least two of the `J` independent shifts select one fixed prime. -/
+noncomputable def independentShiftCollisionMass (J : Nat) (q : Real) : Real :=
+  ∑ S : Finset (Fin J), if 2 ≤ S.card then independentShiftSubsetWeight J q S else 0
+
+/-- Clearing the fully independent one-prime shift subset gives exactly
+`clearedIndependentShiftWeight`. -/
+theorem independentShiftSubsetWeight_singletonClearing_fiber (J : Nat) (q : Real)
+    (o : Option (Fin J)) :
+    (∑ S : Finset (Fin J), if singletonClearing S = o then
+        independentShiftSubsetWeight J q S else 0) =
+      clearedIndependentShiftWeight J q o := by
+  classical
+  cases o with
+  | some j =>
+      rw [clearedIndependentShiftWeight]
+      simp_rw [singletonClearing_eq_some_iff]
+      simp [independentShiftSubsetWeight_singleton]
+  | none =>
+      have htotal :
+          (∑ o : Option (Fin J), ∑ S : Finset (Fin J),
+              if singletonClearing S = o then independentShiftSubsetWeight J q S else 0) = 1 := by
+        simp_rw [← Finset.sum_filter]
+        rw [Finset.sum_fiberwise]
+        simpa using independentShiftSubsetWeight_sum J q
+      rw [Fintype.sum_option] at htotal
+      have hsome :
+          (∑ j : Fin J, ∑ S : Finset (Fin J),
+              if singletonClearing S = some j then independentShiftSubsetWeight J q S else 0) =
+            (J : Real) * (q * (1 - q) ^ (J - 1)) := by
+        simp_rw [singletonClearing_eq_some_iff]
+        simp [independentShiftSubsetWeight_singleton]
+      rw [hsome] at htotal
+      rw [clearedIndependentShiftWeight]
+      linarith
+
+/-- Exact one-prime collision probability for `J` independent Bernoulli-`q` coordinates. -/
+theorem independentShiftCollisionMass_eq (J : Nat) (q : Real) :
+    independentShiftCollisionMass J q =
+      1 - (1 - q) ^ J - (J : Real) * q * (1 - q) ^ (J - 1) := by
+  classical
+  have hpartition :
+      (∑ S : Finset (Fin J), if singletonClearing S = none then
+          independentShiftSubsetWeight J q S else 0) =
+        independentShiftSubsetWeight J q ∅ + independentShiftCollisionMass J q := by
+    have hempty : independentShiftSubsetWeight J q ∅ =
+        ∑ S : Finset (Fin J), if S = ∅ then independentShiftSubsetWeight J q S else 0 := by
+      simp
+    rw [hempty]
+    rw [independentShiftCollisionMass]
+    rw [← Finset.sum_add_distrib]
+    apply Fintype.sum_congr
+    intro S
+    by_cases hS0 : S = ∅
+    · subst S
+      simp [singletonClearing_eq_none_iff]
+    · by_cases hS1 : S.card = 1
+      · obtain ⟨j, rfl⟩ := Finset.card_eq_one.mp hS1
+        have hsome : singletonClearing {j} = some j :=
+          (singletonClearing_eq_some_iff {j} j).2 rfl
+        rw [hsome]
+        simp
+      · have hS2 : 2 ≤ S.card := by
+          have hpos : 0 < S.card := Finset.card_pos.mpr (Finset.nonempty_iff_ne_empty.mpr hS0)
+          omega
+        rw [if_pos ((singletonClearing_eq_none_iff S).2 hS1), if_neg hS0, zero_add,
+          if_pos hS2]
+  have hfiber := independentShiftSubsetWeight_singletonClearing_fiber J q none
+  rw [hpartition, independentShiftSubsetWeight_empty] at hfiber
+  simp only [clearedIndependentShiftWeight] at hfiber
+  linarith
+
+/-- A collision at one prime costs at most `J(J-1)q²`. -/
+theorem independentShiftCollisionMass_le {q : Real} (hq0 : 0 ≤ q) (hq1 : q ≤ 1)
+    (J : Nat) :
+    independentShiftCollisionMass J q ≤ (J : Real) * (J - 1 : Nat) * q ^ 2 := by
+  rw [independentShiftCollisionMass_eq]
+  have hbern : 1 + (J : Real) * (-q) ≤ (1 - q) ^ J := by
+    simpa only [sub_eq_add_neg] using one_add_mul_le_pow (a := -q) (by linarith) J
+  calc
+    1 - (1 - q) ^ J - (J : Real) * q * (1 - q) ^ (J - 1) ≤
+        (J : Real) * q * (1 - (1 - q) ^ (J - 1)) := by
+      nlinarith
+    _ ≤ (J : Real) * (J - 1 : Nat) * q ^ 2 :=
+      independentSingletonDefect_le hq0 hq1 J
+
+/-- A coordinatewise pushforward identity lifts to the corresponding finite product weights. -/
+theorem finiteProductWeight_pushforward_fiber {n : Nat} {alpha beta : Type*}
+    [Fintype alpha] [Fintype beta] [DecidableEq alpha] [DecidableEq beta] (phi : alpha → beta)
+    (u : Fin n → alpha → Real) (v : Fin n → beta → Real)
+    (hfiber : ∀ i y, (∑ x, if phi x = y then u i x else 0) = v i y)
+    (tau : Fin n → beta) :
+    (∑ sigma : Fin n → alpha, if (fun i => phi (sigma i)) = tau then
+        finiteProductWeight u sigma else 0) = finiteProductWeight v tau := by
+  classical
+  rw [finiteProductWeight]
+  calc
+    (∑ sigma : Fin n → alpha, if (fun i => phi (sigma i)) = tau then
+        finiteProductWeight u sigma else 0) =
+        ∑ sigma : Fin n → alpha, ∏ i, (if phi (sigma i) = tau i then u i (sigma i) else 0) := by
+          apply Fintype.sum_congr
+          intro sigma
+          by_cases h : (fun i => phi (sigma i)) = tau
+          · simp only [h, if_true, finiteProductWeight]
+            apply Finset.prod_congr rfl
+            intro i hi
+            simp [congrFun h i]
+          · rw [if_neg h]
+            have hi : ∃ i, phi (sigma i) ≠ tau i := by
+              by_contra hn
+              apply h
+              funext i
+              by_contra hi
+              exact (hn ⟨i, hi⟩).elim
+            obtain ⟨i, hi⟩ := hi
+            exact (Finset.prod_eq_zero (Finset.mem_univ i) (by simp [hi])).symm
+    _ = ∏ i, ∑ x, (if phi x = tau i then u i x else 0) := by
+      simpa using
+        (Finset.sum_prod_piFinset (R := Real) (Finset.univ : Finset alpha)
+          (fun i x => if phi x = tau i then u i x else 0))
+    _ = ∏ i, v i (tau i) := by simp_rw [hfiber]
+
+/-- Finite product event masses commute with a coordinatewise pushforward. -/
+theorem finiteProductMass_pushforward {n : Nat} {alpha beta : Type*}
+    [Fintype alpha] [Fintype beta] [DecidableEq alpha] [DecidableEq beta] (phi : alpha → beta)
+    (u : Fin n → alpha → Real) (v : Fin n → beta → Real)
+    (hfiber : ∀ i y, (∑ x, if phi x = y then u i x else 0) = v i y)
+    (A : Set (Fin n → beta)) :
+    finiteProductMass v A =
+      finiteProductMass u {sigma | (fun i => phi (sigma i)) ∈ A} := by
+  classical
+  unfold finiteProductMass
+  simp only [Set.mem_ofPred_eq]
+  calc
+    (∑ tau, if tau ∈ A then finiteProductWeight v tau else 0) =
+        ∑ tau, if tau ∈ A then
+          (∑ sigma, if (fun i => phi (sigma i)) = tau then finiteProductWeight u sigma else 0)
+          else 0 := by
+      apply Fintype.sum_congr
+      intro tau
+      rw [finiteProductWeight_pushforward_fiber phi u v hfiber tau]
+    _ = ∑ tau, ∑ sigma ∈ (Finset.univ : Finset (Fin n → alpha)) with
+          (fun i => phi (sigma i)) = tau,
+          if (fun i => phi (sigma i)) ∈ A then finiteProductWeight u sigma else 0 := by
+      apply Fintype.sum_congr
+      intro tau
+      rw [Finset.sum_filter]
+      by_cases htau : tau ∈ A
+      · rw [if_pos htau]
+        apply Fintype.sum_congr
+        intro sigma
+        by_cases hsigma : (fun i => phi (sigma i)) = tau
+        · simp [hsigma, htau]
+        · simp [hsigma]
+      · rw [if_neg htau]
+        symm
+        apply Fintype.sum_eq_zero
+        intro sigma
+        by_cases hsigma : (fun i => phi (sigma i)) = tau
+        · simp [hsigma, htau]
+        · simp [hsigma]
+    _ = ∑ sigma, if (fun i => phi (sigma i)) ∈ A then finiteProductWeight u sigma else 0 := by
+      rw [Finset.sum_fiberwise]
+
+/-- The cleared product law is exactly the coordinatewise singleton-clearing pushforward of the
+fully independent shift-subset product law. -/
+theorem clearedProductMass_eq_independentClearedMass {n J : Nat} (q : Fin n → Real)
+    (A : Set (Fin n → Option (Fin J))) :
+    finiteProductMass (fun i => clearedIndependentShiftWeight J (q i)) A =
+      finiteProductMass (fun i => independentShiftSubsetWeight J (q i))
+        {sigma | (fun i => singletonClearing (sigma i)) ∈ A} := by
+  exact finiteProductMass_pushforward singletonClearing
+    (fun i => independentShiftSubsetWeight J (q i))
+    (fun i => clearedIndependentShiftWeight J (q i))
+    (fun i o => independentShiftSubsetWeight_singletonClearing_fiber J (q i) o) A
+
 end NormalNumbers.ErdosBorweinMultiShift
