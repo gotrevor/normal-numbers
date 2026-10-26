@@ -1,5 +1,21 @@
 # HANDOFF — pi route 2 (prime reservoir) — lap 3, 2026-10-26
 
+**Reading the historical notes below:** their statements that an uncancellable
+transfer "does not exist" and that rho disjunctivity is "at least as hard" as pi
+were stronger than the proved results.  Support implies rho disjunctivity; this
+is a necessary condition, not a comparison of the difficulty of the two open
+problems.  The shadow identities do not exclude every arithmetic coupling.
+The later comparison theorems give precisely scoped obstructions instead.
+
+**Whole-forcing continuation:** `BBPBackward.lean` records the backward identity
+sum_{k>=1} 16^k B(-k) = 0 in Q_2, with a paper logarithm argument and one explicit
+frozen `sorry` (`backward_hasSum_zero`).  The generating-function algebra and
+finite telescoping controls are proved.  An exact 256-cutoff probe supports the
+stronger open `BackwardValuation`; changing coefficient 4 to 5 breaks cancellation.
+No missing-word contradiction or digit implication is established.  See
+`docs/pi-routes/bbp-backward.md`.  The next research task is a real/2-adic bridge
+using the exact forcing, not a long formalization of logarithms without one.
+
 **Denominator follow-up:** `ReservoirDenominator.lean` now tests the actual reduced
 residual denominator D_n, requiring candidate denominators to divide it.
 `rational_comparison_actual_denominators` retains rational targets at head error

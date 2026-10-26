@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
 import NormalNumbers.Barriers
+import NormalNumbers.PiDisjunctiveRoutes.BBPBackward
 import NormalNumbers.UniformBadTailMechanism
 import NormalNumbers.UniformBadTailRefute
 import NormalNumbers.LiteratureDigitsOfPowers
@@ -185,6 +186,10 @@ def cruxLinks : List CruxLink := [
 
 /-- Open `sorry`s that are not cruxes, and why no barrier applies. -/
 def waivers : List Waiver := [
+  ⟨``PiDisjunctiveRoutes.BBPBackward.backward_hasSum_zero,
+   "frozen auxiliary 2-adic identity, with a logarithm-of-roots-of-unity paper argument; \
+    no disjunctivity implication is asserted or uses it. The missing formal step is \
+    convergent power-series algebra in Q_2(i), not a digit-distribution crux"⟩,
   ⟨``UniformBadThreshold.TailReview.hull_13_808,
    "finite exact fact (Good449 and coreWeight on the 4096 level-25 descendants of (13, 808)), \
     the witness of a REFUTATION of an off-path conjecture node (APKillFrostman449); computed \
