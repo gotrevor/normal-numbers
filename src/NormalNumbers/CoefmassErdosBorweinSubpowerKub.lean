@@ -5,6 +5,7 @@ Authors: Trevor Morris
 -/
 import Mathlib
 import NormalNumbers.CoefmassErdosBorweinSubpower
+import NormalNumbers.CoefmassErdosBorweinSubpowerKubAux
 
 /-!
 # Non-normality below the sub-power weight for every `c > 1`, given `KubiliusTV`
@@ -44,6 +45,41 @@ def KubiliusTV : Prop :=
         kubiliusMass y A| ≤
       C * (Real.rpow (Real.log N / Real.log y) (-(Real.log N / Real.log y)) +
         Real.rpow N (-(1 / 2 : ℝ)))
+
+open Classical in
+/-- The packet's Kubilius mass is the finite Bernoulli subset model used by the maximal
+inequality. -/
+theorem kubiliusMass_eq_bernoulliSubsetMass (y : ℕ) (A : Set (Finset ℕ)) :
+    kubiliusMass y A =
+      bernoulliSubsetMass (primesUpTo y) (fun p ↦ (1 / p : ℝ)) A := rfl
+
+theorem kubiliusParameter_nonneg (y p : ℕ) (_hp : p ∈ primesUpTo y) :
+    (0 : ℝ) ≤ 1 / p := by positivity
+
+theorem kubiliusParameter_le_one (y p : ℕ) (hp : p ∈ primesUpTo y) :
+    (1 / p : ℝ) ≤ 1 := by
+  have hpprime : p.Prime := (Finset.mem_filter.mp hp).2
+  have hpR : (1 : ℝ) ≤ p := by exact_mod_cast hpprime.one_le
+  exact (div_le_one (by positivity)).mpr hpR
+
+open Classical in
+/-- Doob's exponential maximal inequality in the packet's Kubilius model.  The primes are exposed
+in increasing order, and the empty prefix is included in `centeredBernoulliHit`. -/
+theorem kubiliusMass_centeredBernoulliHit_le_exp (y : ℕ) (θ h : ℝ) (hθ : 0 ≤ θ) :
+    kubiliusMass y
+        {S | centeredBernoulliHit (fun p : ℕ ↦ (1 / p : ℝ)) h 0
+          ((primesUpTo y).sort (· ≤ ·)) S} ≤
+      Real.exp ((Real.exp θ - 1 - θ) *
+        ∑ p ∈ primesUpTo y, (1 / p : ℝ) - θ * h) := by
+  rw [kubiliusMass_eq_bernoulliSubsetMass]
+  have hmax := bernoulliSubsetMass_centeredBernoulliHit_le_exp
+    ((primesUpTo y).sort (· ≤ ·)) ((primesUpTo y).sort_nodup (· ≤ ·))
+    (fun p ↦ (1 / p : ℝ))
+    (fun p hp ↦ kubiliusParameter_nonneg y p
+      ((Finset.mem_sort (· ≤ ·)).mp hp))
+    (fun p hp ↦ kubiliusParameter_le_one y p
+      ((Finset.mem_sort (· ≤ ·)).mp hp)) θ h hθ
+  simpa only [Finset.sort_toFinset] using hmax
 
 /-- **Target: non-normal below the sub-power weight for every `c > 1`, given `KubiliusTV`.**  This
 reaches the heuristic threshold of `EBLogWindow`'s non-normal half.  The proof replaces the c > 3
