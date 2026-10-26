@@ -13,6 +13,9 @@
     coefficient sign (Euler's criterion).  Probe `scripts/pi_route2_exit.py`: 1125/1125,
     base-3 control 2/1125.
 
+- PrimeReservoirOrbit.lean (lap 4): `bbpPrimeReservoir_eq_orbit`: R_n ≡ 16ⁿ·ρ_n (mod 1) exactly,
+  ρ_n = Σ_{k<n} reservoirKick k / 16^{k+1}, kick_k = −[4k+1 prime]·64/(4k+1) + entry_k = O(1/k).
+
 ## What the finding means (the lane's research question, partial answer)
 The "uncancellable O(1) arithmetic transfer" between R and S does not exist: mod 1 both
 coordinates are ×16 pseudo-orbits with O(1/n) kicks.  Hence fract R_n = fract(16ⁿ ρ) + O(1/n)
@@ -22,7 +25,7 @@ series, and S_n ≈ 16ⁿ(π − ρ).  The premise is then joint base-16 disjunc
 that it gives leverage over plain digits: low (~10%).
 
 ## Next move
-Formalize the limit: define ρ := Σ' k, (−exit_k' + entry_k)/16^{k+1} with the mod-1 exit,
-prove |fract R_n − fract(16ⁿρ)|-type bound O(1/n) (`bbpPrimeReservoir_near_orbit`), then
+Bound |reservoirKick k| ≤ C/(k+1), define ρ := lim ρ_n (summable), prove
+16ⁿ|ρ − ρ_n| ≤ C'/(n+1), then
 state the obstruction node `PiPrimeReservoirSupport ↔ joint disjunctivity of (ρ, π−ρ)` and
 add the route-2 Maze row (reopen condition: a lever on ρ's digits not available for π).
