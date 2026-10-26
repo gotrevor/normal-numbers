@@ -78,3 +78,20 @@ Bernoulli cylinder factorization to obtain `P(no shift is heavy) = ∏_j (1-p_j)
 `multiShiftMass` with the categorical `finiteProductMass` after enumerating `primesIoc`, specialize
 `q_i = 1/p_i`, and absorb both comparison errors by the reciprocal-square tail.  Detailed baton:
 `HANDOFF-2026-10-26-eb-multishift-lap5.md`.
+
+## Lap checkpoint (2026-10-26, lap 6)
+
+The global part of Step 4 is now proved in `CoefmassErdosBorweinMultiShiftAux.lean`.
+`independentShiftProductCollisionMass_le` is the finite-product collision union bound;
+`singletonClearing_column_eq` proves that clearing preserves every column away from collisions.
+`shiftArrayEquiv` transposes prime rows into a Bernoulli subset of `Fin n × Fin J`, and
+`independentShiftProduct_card_lt_eq_prod_one_sub` proves the exact formula
+`P(no shift is heavy) = ∏_j (1-p_j)`. Finally,
+`categoricalShiftProduct_noHeavy_le_independent` combines both comparison losses and bounds the
+categorical no-heavy mass by the independent one plus `2 ∑_i J(J-1)q_i²`. All are axiom-clean.
+
+The next Step 4 attack is now the concrete specialization: enumerate `primesIoc P y`, identify
+packet-verbatim `multiShiftMass` with the categorical `finiteProductMass` at `q_i=1/p_i`, translate
+column counts to the resulting prime finsets, and bound the summed reciprocal squares by
+`O(J²/P)`. Then Step 4 is ready to consume the already-proved moderate-deviation lower bound.
+Detailed baton: `HANDOFF-2026-10-26-eb-multishift-lap6.md`.
