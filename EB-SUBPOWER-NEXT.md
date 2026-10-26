@@ -11,6 +11,42 @@ Helpers go above the headline or in a new `CoefmassErdosBorweinSubpowerAux.lean`
 
 ## Status
 
+### Lap 3 checkpoint (2026-10-26): HEADLINE PROVED; scoped target is sorry-free
+
+- `ebRandom_ae_not_normal_subpower` is proved with axioms exactly `propext`,
+  `Classical.choice`, and `Quot.sound`.  The packet-verbatim `subpowerWeight` definition and
+  headline statement were not changed.  The target file contains no `sorry`, `native_decide`, or
+  new axiom.
+- Completed the variable-Chernoff normalization.  The left-end weight and Euler-product factor are
+  rewritten exactly in `subpowerBlockMomentFactor_eq_exp`; the slack choice
+  `ρ=(c-3)/(4c)` leaves polynomial decay `(log log cutoff)^(-(c+3)/4)`.  After the allocation and
+  geometric-shift losses, `summable_subpowerBlockShiftMajorant` compares to the p-series exponent
+  `(c+5)/8>1`.
+- Completed the divisor-tail cover.  `weightedDivisorTailMass_eq_block_sum` telescopes the tail,
+  `blockAllocation` distributes a global threshold, and
+  `exists_subpower_marginal_large_cards_le` gives a tail cutoff after which the sum of every finite
+  family of large-marginal-set cardinalities is uniformly `≤ ζT`.
+- Completed the marginal-only residual bridge in `CoefmassErdosBorweinSubpowerAux.lean`.  The split
+  at `J=N+K` bounds good shifts by a fixed geometric series, far shifts by the summable majorant
+  `j·2⁻ʲ`, and bad shifts by the uniform cardinality estimate.  For `N<K`, choosing `M≥3K` makes
+  the initial marginal divisor masses identically zero.  This proves the hypothesis of the already
+  established `ae_not_normal_of_capped_marginal_residual` criterion.  The `C=0` case is handled
+  separately from marginal nonnegativity; `m=2` forces `C≥0` in all cases.
+- Exact verification:
+  - `lake env lean src/NormalNumbers/CoefmassErdosBorweinSubpowerAux.lean` — succeeds.
+  - `lake env lean src/NormalNumbers/CoefmassErdosBorweinSubpower.lean` — succeeds with no `sorry`
+    warning.
+  - `~/personal/bin/lean-green . --target NormalNumbers.CoefmassErdosBorweinSubpower --import
+    NormalNumbers.CoefmassErdosBorweinSubpower --axioms
+    NormalNumbers.ErdosBorweinSubpower.ebRandom_ae_not_normal_subpower` — FORMALIZE-TIER GREEN;
+    axioms exactly `propext`, `Classical.choice`, `Quot.sound`.
+  - `~/personal/bin/lean-green .` — FORMALIZE-TIER GREEN, 10847 jobs.
+
+**Current blocker / next attack.**  None in scope: the host predicate
+`sorry-free:src/NormalNumbers/CoefmassErdosBorweinSubpower.lean` is met.  Any attempt to lower the
+elementary threshold from `c>3` toward the heuristic `c>1` is a separate project requiring the
+maximal-in-block/Kubilius input described below, not unfinished work on this target.
+
 ### Lap 2 checkpoint (2026-10-26): weighted blocks and variable Chernoff exponent proved
 
 - Added the generic arithmetic layer to `CoefmassErdosBorweinSubpowerAux.lean`:

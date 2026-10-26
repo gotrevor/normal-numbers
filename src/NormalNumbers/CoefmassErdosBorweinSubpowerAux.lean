@@ -59,6 +59,94 @@ lemma weightedDivisorBlockMass_nonneg (weight : ℕ → ℝ)
   unfold weightedDivisorBlockMass
   exact Finset.sum_nonneg fun d _ => hweight d
 
+/-- Tail of an arbitrary divisor weight above a cutoff. -/
+noncomputable def weightedDivisorTailMass (weight : ℕ → ℝ) (M n : ℕ) : ℝ :=
+  ∑ d ∈ n.divisors.filter (fun d => M < d), weight d
+
+lemma weightedDivisorTailMass_nonneg (weight : ℕ → ℝ) (hweight : ∀ d, 0 ≤ weight d)
+    (M n : ℕ) : 0 ≤ weightedDivisorTailMass weight M n := by
+  unfold weightedDivisorTailMass
+  exact Finset.sum_nonneg fun d _ => hweight d
+
+lemma marginalDivisorMass_le_const_weight (delta weight : ℕ → ℝ) (C : ℝ)
+    (hdelta : ∀ m, delta m ≤ C * weight m) (M n : ℕ) :
+    marginalDivisorMass delta M n ≤ C * weightedDivisorTailMass weight M n := by
+  unfold marginalDivisorMass weightedDivisorTailMass
+  calc
+    (∑ m ∈ n.divisors.filter (fun m => M < m), delta m) ≤
+        ∑ m ∈ n.divisors.filter (fun m => M < m), C * weight m := by
+      exact Finset.sum_le_sum fun m _ => hdelta m
+    _ = C * ∑ m ∈ n.divisors.filter (fun m => M < m), weight m := by
+      rw [Finset.mul_sum]
+
+/-- The same comparison with the domination hypothesis required only above the active cutoff. -/
+lemma marginalDivisorMass_le_const_weight_of_cutoff (delta weight : ℕ → ℝ) (C : ℝ)
+    (M n : ℕ) (hdelta : ∀ m, M < m → delta m ≤ C * weight m) :
+    marginalDivisorMass delta M n ≤ C * weightedDivisorTailMass weight M n := by
+  unfold marginalDivisorMass weightedDivisorTailMass
+  calc
+    (∑ m ∈ n.divisors.filter (fun m => M < m), delta m) ≤
+        ∑ m ∈ n.divisors.filter (fun m => M < m), C * weight m := by
+      exact Finset.sum_le_sum fun m hm => hdelta m (Finset.mem_filter.mp hm).2
+    _ = C * ∑ m ∈ n.divisors.filter (fun m => M < m), weight m := by
+      rw [Finset.mul_sum]
+
+lemma weightedDivisorTailMass_cutoff_step (weight : ℕ → ℝ) (ℓ n : ℕ) :
+    weightedDivisorTailMass weight (dyadicExpCutoff ℓ) n =
+      weightedDivisorBlockMass weight ℓ n +
+        weightedDivisorTailMass weight (dyadicExpCutoff (ℓ + 1)) n := by
+  rw [weightedDivisorTailMass, weightedDivisorBlockMass, weightedDivisorTailMass]
+  let S := n.divisors.filter (fun d => dyadicExpCutoff ℓ < d)
+  let p := fun d : ℕ => d ≤ dyadicExpCutoff (ℓ + 1)
+  calc
+    (∑ d ∈ S, weight d) =
+        (∑ d ∈ S.filter p, weight d) + ∑ d ∈ S.filter (fun d => ¬p d), weight d :=
+      (Finset.sum_filter_add_sum_filter_not S p weight).symm
+    _ = _ := by
+      apply congrArg₂ (· + ·)
+      · apply Finset.sum_congr
+        · ext d
+          simp [S, p, and_assoc]
+        · intro d hd
+          rfl
+      · apply Finset.sum_congr
+        · ext d
+          simp only [S, p, Finset.mem_filter, Nat.not_le]
+          have hcut := dyadicExpCutoff_le_succ ℓ
+          constructor
+          · rintro ⟨⟨hd, -⟩, hnext⟩
+            exact ⟨hd, hnext⟩
+          · rintro ⟨hd, hnext⟩
+            exact ⟨⟨hd, hcut.trans_lt hnext⟩, hnext⟩
+        · intro d hd
+          rfl
+
+lemma weightedDivisorTailMass_cutoff_iterate (weight : ℕ → ℝ) (L K n : ℕ) :
+    weightedDivisorTailMass weight (dyadicExpCutoff L) n =
+      (∑ i ∈ Finset.range K, weightedDivisorBlockMass weight (L + i) n) +
+        weightedDivisorTailMass weight (dyadicExpCutoff (L + K)) n := by
+  induction K with
+  | zero => simp
+  | succ K ih =>
+      rw [ih, Finset.sum_range_succ, weightedDivisorTailMass_cutoff_step]
+      simp only [Nat.add_assoc]
+      ring
+
+lemma weightedDivisorTailMass_eq_block_sum (weight : ℕ → ℝ) (L n : ℕ) (hn : 1 ≤ n) :
+    weightedDivisorTailMass weight (dyadicExpCutoff L) n =
+      ∑ i ∈ Finset.range n, weightedDivisorBlockMass weight (L + i) n := by
+  rw [weightedDivisorTailMass_cutoff_iterate weight L n n]
+  have htail : weightedDivisorTailMass weight (dyadicExpCutoff (L + n)) n = 0 := by
+    unfold weightedDivisorTailMass
+    apply Finset.sum_eq_zero
+    intro d hd
+    have hdn : d ≤ n := Nat.le_of_dvd (by omega)
+      (Nat.dvd_of_mem_divisors (Finset.mem_filter.mp hd).1)
+    have hcutd := (Finset.mem_filter.mp hd).2
+    have hcutn := index_le_dyadicExpCutoff_add L n
+    omega
+  rw [htail, add_zero]
+
 /-- A pointwise cap on the weight throughout a block converts its mass to the already-controlled
 smooth-divisor count at the right endpoint. -/
 lemma weightedDivisorBlockMass_le_smoothDivisorCount
@@ -141,6 +229,167 @@ lemma weightedDivisorBlockMass_large_card_mul_rpow_le
           (weightedDivisorBlockMass_nonneg weight hweight0 ℓ n) _)
     _ ≤ _ := weightedDivisorBlockMass_rpow_sum_le weight W s hweight0 hW hs hs1 ℓ N hweight
 
+/-- Telescoping allocation of a global tail threshold among logarithmic blocks. -/
+noncomputable def blockAllocation (ℓ : ℕ) : ℝ :=
+  1 / (((ℓ : ℝ) + 1) * ((ℓ : ℝ) + 2))
+
+lemma blockAllocation_pos (ℓ : ℕ) : 0 < blockAllocation ℓ := by
+  unfold blockAllocation
+  positivity
+
+lemma blockAllocation_eq_sub (ℓ : ℕ) :
+    blockAllocation ℓ = 1 / ((ℓ : ℝ) + 1) - 1 / ((ℓ : ℝ) + 2) := by
+  unfold blockAllocation
+  field_simp
+  ring
+
+lemma sum_range_blockAllocation (K : ℕ) :
+    ∑ ℓ ∈ Finset.range K, blockAllocation ℓ = 1 - 1 / ((K : ℝ) + 1) := by
+  induction K with
+  | zero => simp
+  | succ K ih =>
+      rw [Finset.sum_range_succ, ih, blockAllocation_eq_sub]
+      push_cast
+      ring
+
+lemma sum_range_blockAllocation_le_one (K : ℕ) :
+    ∑ ℓ ∈ Finset.range K, blockAllocation ℓ ≤ 1 := by
+  rw [sum_range_blockAllocation]
+  have h : 0 ≤ 1 / ((K : ℝ) + 1) := by positivity
+  linarith
+
+lemma sum_range_blockAllocation_add (L K : ℕ) :
+    ∑ i ∈ Finset.range K, blockAllocation (L + i) =
+      1 / ((L : ℝ) + 1) - 1 / ((L + K : ℕ) + 1 : ℕ) := by
+  induction K with
+  | zero => simp
+  | succ K ih =>
+      rw [Finset.sum_range_succ, ih, blockAllocation_eq_sub]
+      push_cast
+      ring
+
+lemma sum_range_blockAllocation_add_le_one (L K : ℕ) :
+    ∑ i ∈ Finset.range K, blockAllocation (L + i) ≤ 1 := by
+  calc
+    (∑ i ∈ Finset.range K, blockAllocation (L + i)) =
+        1 / ((L : ℝ) + 1) - 1 / ((L + K : ℕ) + 1 : ℕ) :=
+      sum_range_blockAllocation_add L K
+    _ ≤ 1 / ((L : ℝ) + 1) := by
+      exact sub_le_self _ (by positivity)
+    _ ≤ 1 := by
+      apply (div_le_one (by positivity : (0 : ℝ) < (L : ℝ) + 1)).2
+      have hL : (0 : ℝ) ≤ L := by positivity
+      linarith
+
+/-- If a weighted divisor tail exceeds `X`, one logarithmic block exceeds its telescoping share of
+`X`. -/
+lemma exists_weightedDivisorBlockMass_gt_allocation
+    (weight : ℕ → ℝ) (L n : ℕ) (hn : 1 ≤ n) (X : ℝ) (hX : 0 ≤ X)
+    (htail : X < weightedDivisorTailMass weight (dyadicExpCutoff L) n) :
+    ∃ i ∈ Finset.range n,
+      X * blockAllocation (L + i) < weightedDivisorBlockMass weight (L + i) n := by
+  classical
+  rw [weightedDivisorTailMass_eq_block_sum weight L n hn] at htail
+  by_contra h
+  push_neg at h
+  have hsum :
+      (∑ i ∈ Finset.range n, weightedDivisorBlockMass weight (L + i) n) ≤
+        ∑ i ∈ Finset.range n, X * blockAllocation (L + i) := by
+    exact Finset.sum_le_sum fun i hi => h i hi
+  have halloc := sum_range_blockAllocation_add_le_one L n
+  have hright : (∑ i ∈ Finset.range n, X * blockAllocation (L + i)) ≤ X := by
+    rw [← Finset.mul_sum]
+    simpa using mul_le_mul_of_nonneg_left halloc hX
+  linarith
+
+lemma exists_weightedDivisorBlockMass_gt_of_marginal
+    (delta weight : ℕ → ℝ) (C : ℝ) (hC : 0 < C)
+    (L n : ℕ) (hdelta : ∀ m, dyadicExpCutoff L < m → delta m ≤ C * weight m)
+    (hn : 1 ≤ n) (Y : ℝ) (hY : 0 ≤ Y)
+    (hmass : Y < marginalDivisorMass delta (dyadicExpCutoff L) n) :
+    ∃ i ∈ Finset.range n,
+      (Y / C) * blockAllocation (L + i) <
+        weightedDivisorBlockMass weight (L + i) n := by
+  have hupper := marginalDivisorMass_le_const_weight_of_cutoff delta weight C
+    (dyadicExpCutoff L) n hdelta
+  have htail : Y / C < weightedDivisorTailMass weight (dyadicExpCutoff L) n := by
+    apply (div_lt_iff₀ hC).2
+    simpa [mul_comm] using hmass.trans_le hupper
+  exact exists_weightedDivisorBlockMass_gt_allocation weight L n hn (Y / C)
+    (div_nonneg hY hC.le) htail
+
+/-- A marginal large-value set is covered by the union of its allocated block large-value sets. -/
+lemma marginalDivisorMass_large_card_le_sum_block_cards
+    (delta weight : ℕ → ℝ) (C : ℝ) (hC : 0 < C)
+    (L T : ℕ) (hdelta : ∀ m, dyadicExpCutoff L < m → delta m ≤ C * weight m)
+    (Y : ℝ) (hY : 0 ≤ Y) :
+    (((Finset.Icc 1 T).filter
+        (fun n => Y < marginalDivisorMass delta (dyadicExpCutoff L) n)).card) ≤
+      ∑ i ∈ Finset.range T,
+        ((Finset.Icc 1 T).filter (fun n =>
+          (Y / C) * blockAllocation (L + i) <
+            weightedDivisorBlockMass weight (L + i) n)).card := by
+  classical
+  let S := Finset.Icc 1 T
+  let B : ℕ → Finset ℕ := fun i => S.filter (fun n =>
+    (Y / C) * blockAllocation (L + i) < weightedDivisorBlockMass weight (L + i) n)
+  have hsub : S.filter (fun n => Y < marginalDivisorMass delta (dyadicExpCutoff L) n) ⊆
+      (Finset.range T).biUnion B := by
+    intro n hn
+    have hnS := (Finset.mem_filter.mp hn).1
+    have hnI := Finset.mem_Icc.mp hnS
+    obtain ⟨i, hi, hibad⟩ := exists_weightedDivisorBlockMass_gt_of_marginal
+      delta weight C hC L n hdelta hnI.1 Y hY (Finset.mem_filter.mp hn).2
+    have hiT : i ∈ Finset.range T := by
+      rw [Finset.mem_range] at hi ⊢
+      exact hi.trans_le hnI.2
+    exact Finset.mem_biUnion.mpr ⟨i, hiT, Finset.mem_filter.mpr ⟨hnS, hibad⟩⟩
+  calc
+    (S.filter (fun n => Y < marginalDivisorMass delta (dyadicExpCutoff L) n)).card ≤
+        ((Finset.range T).biUnion B).card := Finset.card_le_card hsub
+    _ ≤ ∑ i ∈ Finset.range T, (B i).card := Finset.card_biUnion_le
+    _ = _ := by rfl
+
+lemma blockAllocation_rpow_neg_le (ℓ : ℕ) (s δ : ℝ) (hs : 0 ≤ s)
+    (hsδ : 2 * s ≤ δ) :
+    Real.rpow (blockAllocation ℓ) (-s) ≤ Real.rpow ((ℓ : ℝ) + 2) δ := by
+  let d : ℝ := ((ℓ : ℝ) + 1) * ((ℓ : ℝ) + 2)
+  let v : ℝ := (ℓ : ℝ) + 2
+  have hd0 : 0 ≤ d := by dsimp [d]; positivity
+  have hv0 : 0 ≤ v := by dsimp [v]; positivity
+  have hv1 : 1 ≤ v := by
+    dsimp [v]
+    exact_mod_cast (show 1 ≤ ℓ + 2 by omega)
+  have hdv : d ≤ v * v := by
+    dsimp [d, v]
+    nlinarith [show (0 : ℝ) ≤ ℓ by positivity]
+  have halloc : blockAllocation ℓ = d⁻¹ := by
+    simp [blockAllocation, d, one_div]
+  have hpow : Real.rpow (blockAllocation ℓ) (-s) = Real.rpow d s := by
+    change blockAllocation ℓ ^ (-s) = d ^ s
+    rw [halloc, Real.inv_rpow hd0, Real.rpow_neg hd0, inv_inv]
+  rw [hpow]
+  calc
+    d ^ s ≤ (v * v) ^ s := Real.rpow_le_rpow hd0 hdv hs
+    _ = v ^ s * v ^ s := Real.mul_rpow hv0 hv0
+    _ = v ^ (2 * s) := by
+      rw [← Real.rpow_add (by positivity : 0 < v)]
+      congr 1
+      ring
+    _ ≤ v ^ δ := Real.rpow_le_rpow_of_exponent_le hv1 hsδ
+
+lemma rpow_neg_le_max_one_inv (A s : ℝ) (hA : 0 < A) (hs : 0 ≤ s) (hs1 : s ≤ 1) :
+    Real.rpow A (-s) ≤ max 1 A⁻¹ := by
+  change A ^ (-s) ≤ max 1 A⁻¹
+  by_cases hA1 : 1 ≤ A
+  · exact (Real.rpow_le_one_of_one_le_of_nonpos hA1 (by linarith)).trans (le_max_left _ _)
+  · have hAle : A ≤ 1 := le_of_not_ge hA1
+    calc
+      A ^ (-s) ≤ A ^ (-1 : ℝ) :=
+        Real.rpow_le_rpow_of_exponent_ge hA hAle (by linarith)
+      _ = A⁻¹ := Real.rpow_neg_one A
+      _ ≤ max 1 A⁻¹ := le_max_right _ _
+
 /-! ### The analytic Chernoff exponent -/
 
 /-- Cubic Taylor control in the exact form used for the variable block exponent. -/
@@ -170,6 +419,68 @@ lemma chernoffExponent_le
 noncomputable def blockSigma (c u : ℝ) : ℝ :=
   Real.sqrt (c * Real.log u / u)
 
+/-- The exact `log log` coordinate of the left endpoint of logarithmic block `ℓ`. -/
+noncomputable def blockLogLog (ℓ : ℕ) : ℝ :=
+  Real.log (Real.log (dyadicExpCutoff ℓ : ℝ))
+
+lemma blockLogLog_eq (ℓ : ℕ) :
+    blockLogLog ℓ = (ℓ : ℝ) * Real.log 2 + Real.log (Real.log 2) := by
+  rw [blockLogLog, log_dyadicExpCutoff]
+  rw [Real.log_mul (pow_ne_zero _ (by norm_num))
+    (ne_of_gt (Real.log_pos (by norm_num : (1 : ℝ) < 2)))]
+  rw [Real.log_pow]
+
+lemma blockLogLog_succ (ℓ : ℕ) :
+    blockLogLog (ℓ + 1) = blockLogLog ℓ + Real.log 2 := by
+  rw [blockLogLog_eq, blockLogLog_eq]
+  push_cast
+  ring
+
+lemma blockLogLog_ge_quarter_add (ℓ : ℕ) (hℓ : 6 ≤ ℓ) :
+    ((ℓ : ℝ) + 2) / 4 ≤ blockLogLog ℓ := by
+  have hlogtwo : (1 / 2 : ℝ) ≤ Real.log 2 := by
+    linarith [Real.log_two_gt_d9]
+  have hexp_log : Real.exp (-1) < Real.log 2 :=
+    Real.exp_neg_one_lt_half.trans_le hlogtwo
+  have hloglog : (-1 : ℝ) ≤ Real.log (Real.log 2) := by
+    rw [← Real.log_exp (-1)]
+    exact (Real.strictMonoOn_log.monotoneOn
+      (Set.mem_Ioi.mpr (Real.exp_pos (-1)))
+      (Set.mem_Ioi.mpr (Real.log_pos (by norm_num : (1 : ℝ) < 2))) hexp_log.le)
+  rw [blockLogLog_eq]
+  have hℓr : (6 : ℝ) ≤ ℓ := by exact_mod_cast hℓ
+  nlinarith [mul_le_mul_of_nonneg_left hlogtwo (by positivity : (0 : ℝ) ≤ ℓ)]
+
+lemma blockLogLog_le_natCast (ℓ : ℕ) : blockLogLog ℓ ≤ (ℓ : ℝ) := by
+  have hlogtwo_pos : 0 < Real.log 2 := Real.log_pos (by norm_num)
+  have hlogtwo_one : Real.log 2 ≤ 1 := by
+    linarith [Real.log_le_sub_one_of_pos (by norm_num : (0 : ℝ) < 2)]
+  have hloglog : Real.log (Real.log 2) ≤ 0 := Real.log_nonpos hlogtwo_pos.le hlogtwo_one
+  rw [blockLogLog_eq]
+  nlinarith [mul_le_mul_of_nonneg_left hlogtwo_one (by positivity : (0 : ℝ) ≤ ℓ)]
+
+lemma tendsto_blockLogLog_atTop : Tendsto blockLogLog atTop atTop := by
+  rw [show blockLogLog = fun ℓ : ℕ =>
+      (ℓ : ℝ) * Real.log 2 + Real.log (Real.log 2) by
+    funext ℓ
+    exact blockLogLog_eq ℓ]
+  exact tendsto_atTop_add_const_right atTop _
+    (tendsto_natCast_atTop_atTop.atTop_mul_const (Real.log_pos (by norm_num : (1 : ℝ) < 2)))
+
+lemma tendsto_blockSigma_atTop_zero (c : ℝ) :
+    Tendsto (blockSigma c) atTop (nhds 0) := by
+  have hratio : Tendsto (fun u : ℝ => Real.log u / u) atTop (nhds 0) :=
+    Real.isLittleO_log_id_atTop.tendsto_div_nhds_zero
+  have hmul : Tendsto (fun u : ℝ => c * Real.log u / u) atTop (nhds 0) := by
+    simpa only [mul_zero, mul_div_assoc] using tendsto_const_nhds.mul hratio
+  change Tendsto ((fun x : ℝ => Real.sqrt x) ∘
+    (fun u : ℝ => c * Real.log u / u)) atTop (nhds 0)
+  simpa only [Real.sqrt_zero] using (Real.continuous_sqrt.tendsto 0).comp hmul
+
+lemma tendsto_blockSigma_blockLogLog_zero (c : ℝ) :
+    Tendsto (fun ℓ => blockSigma c (blockLogLog ℓ)) atTop (nhds 0) :=
+  (tendsto_blockSigma_atTop_zero c).comp tendsto_blockLogLog_atTop
+
 lemma blockSigma_sq (c u : ℝ) (hc : 0 ≤ c) (hu : 1 ≤ u) :
     u * blockSigma c u ^ 2 = c * Real.log u := by
   have hu0 : 0 < u := zero_lt_one.trans_le hu
@@ -192,6 +503,56 @@ lemma blockSigma_cubic (c u : ℝ) (hc : 0 ≤ c) (hu : 1 ≤ u) :
   calc
     u * blockSigma c u ^ 3 = (u * blockSigma c u ^ 2) * blockSigma c u := by ring
     _ = c * Real.log u * blockSigma c u := by rw [blockSigma_sq c u hc hu]
+
+/-- Once `log u ≥ 1`, the reciprocal variable exponent costs at most a square-root of the block
+coordinate.  This is the single `u^(1/2)` loss responsible for the threshold `c > 3`. -/
+lemma blockSigma_inv_le_sqrt_div_sqrt (c u : ℝ) (hc : 0 < c) (hu : 1 ≤ u)
+    (hlog : 1 ≤ Real.log u) :
+    (blockSigma c u)⁻¹ ≤ Real.sqrt u / Real.sqrt c := by
+  have hu0 : 0 < u := zero_lt_one.trans_le hu
+  have hlog0 : 0 < Real.log u := zero_lt_one.trans_le hlog
+  have hσ0 : 0 < blockSigma c u := by
+    unfold blockSigma
+    exact Real.sqrt_pos.mpr (div_pos (mul_pos hc hlog0) hu0)
+  have hsqrtc0 : 0 < Real.sqrt c := Real.sqrt_pos.mpr hc
+  have hsqrtu0 : 0 < Real.sqrt u := Real.sqrt_pos.mpr hu0
+  have hsqrt_le : Real.sqrt c ≤ blockSigma c u * Real.sqrt u := by
+    rw [← sq_le_sq₀ (Real.sqrt_nonneg _) (mul_nonneg hσ0.le (Real.sqrt_nonneg _))]
+    rw [Real.sq_sqrt hc.le, mul_pow, Real.sq_sqrt hu0.le]
+    have hsq := blockSigma_sq c u hc.le hu
+    nlinarith [mul_le_mul_of_nonneg_left hlog hc.le]
+  apply (le_div_iff₀ hsqrtc0).2
+  calc
+    (blockSigma c u)⁻¹ * Real.sqrt c = Real.sqrt c / blockSigma c u := by
+      field_simp
+    _ ≤ Real.sqrt u := (div_le_iff₀ hσ0).2 (by simpa [mul_comm] using hsqrt_le)
+
+/-- The geometric shift sum with ratio `exp (-σ/2)` loses at most `4/σ` when `0 < σ ≤ 1`. -/
+lemma one_sub_exp_neg_half_inv_le (σ : ℝ) (hσ0 : 0 < σ) (hσ1 : σ ≤ 1) :
+    (1 - Real.exp (-σ / 2))⁻¹ ≤ 4 / σ := by
+  let x : ℝ := σ / 2
+  have hx0 : 0 < x := div_pos hσ0 (by norm_num)
+  have hxhalf : x ≤ 1 / 2 := by dsimp [x]; linarith
+  have hexplower : 1 / 2 ≤ Real.exp (-x) := by
+    calc
+      (1 / 2 : ℝ) ≤ 1 - x := by linarith
+      _ ≤ Real.exp (-x) := by simpa using Real.one_sub_le_exp_neg x
+  have hmul : x * Real.exp (-x) ≤ 1 - Real.exp (-x) := by
+    have h := mul_le_mul_of_nonneg_right (Real.add_one_le_exp x) (Real.exp_pos (-x)).le
+    rw [add_mul, ← Real.exp_add] at h
+    norm_num at h
+    linarith
+  have hlower : σ / 4 ≤ 1 - Real.exp (-σ / 2) := by
+    rw [show -σ / 2 = -x by dsimp [x]; ring]
+    calc
+      σ / 4 = x * (1 / 2) := by dsimp [x]; ring
+      _ ≤ x * Real.exp (-x) := mul_le_mul_of_nonneg_left hexplower hx0.le
+      _ ≤ 1 - Real.exp (-x) := hmul
+  have hquarter : 0 < σ / 4 := div_pos hσ0 (by norm_num)
+  calc
+    (1 - Real.exp (-σ / 2))⁻¹ = 1 / (1 - Real.exp (-σ / 2)) := by rw [one_div]
+    _ ≤ 1 / (σ / 4) := one_div_le_one_div_of_le hquarter hlower
+    _ = 4 / σ := by field_simp
 
 lemma blockSigma_le_one (c u : ℝ) (hu : 1 ≤ u)
     (hbudget : c * Real.log u ≤ u) : blockSigma c u ≤ 1 := by
@@ -277,10 +638,357 @@ lemma marginalShiftResidual_nonneg (b : ℕ) (delta : ℕ → ℝ)
   exact tsum_nonneg fun j => mul_nonneg (pow_nonneg (by positivity) _)
     (marginalDivisorMass_nonneg delta hdelta M _)
 
+/-! ### Deterministic good/bad residual decomposition -/
+
+/-- A summable majorant for the far shift tail, using only `delta m ≤ 1`. -/
+noncomputable def residualTailMajorant (j : ℕ) : ℝ :=
+  (j : ℝ) * (1 / 2 : ℝ) ^ j
+
+lemma summable_residualTailMajorant : Summable residualTailMajorant := by
+  unfold residualTailMajorant
+  simpa using (summable_pow_mul_geometric_of_norm_lt_one 1
+    (by norm_num : ‖(1 / 2 : ℝ)‖ < 1))
+
+lemma marginalShiftResidual_tail_le
+    (b : ℕ) (hb : 2 ≤ b) (delta : ℕ → ℝ)
+    (hdelta : ∀ m, 0 ≤ delta m ∧ delta m ≤ 1)
+    (M n J : ℕ) (hnJ : n < J) :
+    (∑' k : ℕ, (1 / (b : ℝ)) ^ (k + J + 1) *
+        marginalDivisorMass delta M (n + (k + J) + 1)) ≤
+      ∑' k : ℕ, residualTailMajorant (k + J) := by
+  have hbase : (1 / (b : ℝ)) ≤ (1 / 2 : ℝ) := by
+    exact one_div_le_one_div_of_le (by norm_num) (by exact_mod_cast hb)
+  have hleft : Summable (fun k : ℕ =>
+      (1 / (b : ℝ)) ^ (k + J + 1) *
+        marginalDivisorMass delta M (n + (k + J) + 1)) := by
+    have hs := summable_marginalShiftResidual_terms b hb delta hdelta M n
+    exact hs.comp_injective (fun _ _ h => Nat.add_right_cancel
+      (by simpa only [Nat.add_assoc] using h))
+  have hright : Summable (fun k : ℕ => residualTailMajorant (k + J)) :=
+    summable_residualTailMajorant.comp_injective
+      (fun _ _ h => Nat.add_right_cancel h)
+  apply hleft.tsum_le_tsum _ hright
+  intro k
+  let j := k + J
+  have hjJ : J ≤ j := by dsimp [j]; omega
+  have hnj : n < j := hnJ.trans_le hjJ
+  have hmass : marginalDivisorMass delta M (n + j + 1) ≤ (2 : ℝ) * j := by
+    calc
+      marginalDivisorMass delta M (n + j + 1) ≤
+          (n + j + 1).divisors.card :=
+        marginalDivisorMass_le_card_divisors delta (fun m => (hdelta m).2) M _
+      _ ≤ n + j + 1 := by exact_mod_cast Nat.card_divisors_le_self (n + j + 1)
+      _ ≤ (2 : ℝ) * j := by exact_mod_cast (show n + j + 1 ≤ 2 * j by omega)
+  have hpow : (1 / (b : ℝ)) ^ (j + 1) ≤ (1 / 2 : ℝ) ^ (j + 1) := by
+    exact pow_le_pow_left₀ (by positivity) hbase _
+  have hmass0 : 0 ≤ marginalDivisorMass delta M (n + j + 1) :=
+    marginalDivisorMass_nonneg delta (fun m => (hdelta m).1) M _
+  change (1 / (b : ℝ)) ^ (j + 1) * marginalDivisorMass delta M (n + j + 1) ≤
+    residualTailMajorant j
+  calc
+    (1 / (b : ℝ)) ^ (j + 1) * marginalDivisorMass delta M (n + j + 1) ≤
+        (1 / 2 : ℝ) ^ (j + 1) * ((2 : ℝ) * j) :=
+      mul_le_mul hpow hmass hmass0 (pow_nonneg (by norm_num) _)
+    _ = residualTailMajorant j := by
+      unfold residualTailMajorant
+      rw [pow_succ]
+      ring
+
+/-- The geometric majorant when all first `J` marginal divisor masses are below their
+`2^(j/2)` thresholds. -/
+noncomputable def residualGoodMajorant (j : ℕ) : ℝ :=
+  (1 / 2 : ℝ) * (Real.rpow 2 (-1 / 2)) ^ j
+
+lemma residualGoodMajorant_eq (j : ℕ) :
+    (1 / 2 : ℝ) ^ (j + 1) * Real.rpow 2 ((j : ℝ) / 2) =
+      residualGoodMajorant j := by
+  have hhalf : (1 / 2 : ℝ) = Real.rpow 2 (-1 : ℝ) := by
+    change (1 / 2 : ℝ) = (2 : ℝ) ^ (-1 : ℝ)
+    rw [Real.rpow_neg_one]
+    norm_num
+  have hbase : (1 / 2 : ℝ) * Real.rpow 2 (1 / 2 : ℝ) =
+      Real.rpow 2 (-1 / 2 : ℝ) := by
+    calc
+      (1 / 2 : ℝ) * Real.rpow 2 (1 / 2 : ℝ) =
+          Real.rpow 2 (-1 : ℝ) * Real.rpow 2 (1 / 2 : ℝ) := by rw [hhalf]
+      _ = Real.rpow 2 ((-1 : ℝ) + 1 / 2) := by
+        change (2 : ℝ) ^ (-1 : ℝ) * (2 : ℝ) ^ (1 / 2 : ℝ) =
+          (2 : ℝ) ^ ((-1 : ℝ) + 1 / 2)
+        rw [← Real.rpow_add (by norm_num : (0 : ℝ) < 2)]
+      _ = _ := by congr 1; ring
+  have hjpow : Real.rpow 2 ((j : ℝ) / 2) =
+      (Real.rpow 2 (1 / 2 : ℝ)) ^ j := by
+    calc
+      Real.rpow 2 ((j : ℝ) / 2) = Real.rpow 2 ((1 / 2 : ℝ) * j) := by
+        congr 1
+        ring
+      _ = _ := Real.rpow_mul_natCast (by norm_num : (0 : ℝ) ≤ 2) (1 / 2 : ℝ) j
+  unfold residualGoodMajorant
+  rw [pow_succ, hjpow]
+  calc
+    (1 / 2 : ℝ) ^ j * (1 / 2) * (Real.rpow 2 (1 / 2 : ℝ)) ^ j =
+        (1 / 2 : ℝ) * ((1 / 2 : ℝ) ^ j * (Real.rpow 2 (1 / 2 : ℝ)) ^ j) := by ring
+    _ = (1 / 2 : ℝ) * ((1 / 2 : ℝ) * Real.rpow 2 (1 / 2 : ℝ)) ^ j := by
+      rw [mul_pow]
+    _ = _ := by rw [hbase]
+
+lemma summable_residualGoodMajorant : Summable residualGoodMajorant := by
+  let r : ℝ := Real.rpow 2 (-1 / 2 : ℝ)
+  have hr0 : 0 ≤ r := Real.rpow_nonneg (by norm_num) _
+  have hr1 : r < 1 :=
+    Real.rpow_lt_one_of_one_lt_of_neg (by norm_num) (by norm_num)
+  have hs : Summable (fun j : ℕ => r ^ j) := summable_geometric_of_norm_lt_one (by
+    rw [Real.norm_eq_abs, abs_of_nonneg hr0]
+    exact hr1)
+  change Summable (fun j : ℕ => (1 / 2 : ℝ) * r ^ j)
+  exact hs.mul_left _
+
+lemma marginalShiftResidual_le_of_small
+    (b : ℕ) (hb : 2 ≤ b) (delta : ℕ → ℝ)
+    (hdelta : ∀ m, 0 ≤ delta m ∧ delta m ≤ 1)
+    (M n J : ℕ) (hnJ : n < J) (ε : ℝ) (hε : 0 ≤ ε)
+    (hsmall : ∀ j ∈ Finset.range J,
+      marginalDivisorMass delta M (n + j + 1) ≤
+        ε * Real.rpow 2 ((j : ℝ) / 2)) :
+    marginalShiftResidual b delta M n ≤
+      ε * ∑' j : ℕ, residualGoodMajorant j +
+        ∑' k : ℕ, residualTailMajorant (k + J) := by
+  let term : ℕ → ℝ := fun j =>
+    (1 / (b : ℝ)) ^ (j + 1) * marginalDivisorMass delta M (n + j + 1)
+  have hsum : Summable term := summable_marginalShiftResidual_terms b hb delta hdelta M n
+  have hbase : (1 / (b : ℝ)) ≤ (1 / 2 : ℝ) := by
+    exact one_div_le_one_div_of_le (by norm_num) (by exact_mod_cast hb)
+  have hfinite : (∑ j ∈ Finset.range J, term j) ≤
+      ε * ∑' j : ℕ, residualGoodMajorant j := by
+    calc
+      (∑ j ∈ Finset.range J, term j) ≤
+          ∑ j ∈ Finset.range J, ε * residualGoodMajorant j := by
+        apply Finset.sum_le_sum
+        intro j hj
+        have hpow : (1 / (b : ℝ)) ^ (j + 1) ≤ (1 / 2 : ℝ) ^ (j + 1) :=
+          pow_le_pow_left₀ (by positivity) hbase _
+        have hmass0 : 0 ≤ marginalDivisorMass delta M (n + j + 1) :=
+          marginalDivisorMass_nonneg delta (fun m => (hdelta m).1) M _
+        dsimp [term]
+        calc
+          (1 / (b : ℝ)) ^ (j + 1) * marginalDivisorMass delta M (n + j + 1) ≤
+              (1 / 2 : ℝ) ^ (j + 1) *
+                (ε * Real.rpow 2 ((j : ℝ) / 2)) :=
+            mul_le_mul hpow (hsmall j hj) hmass0 (pow_nonneg (by norm_num) _)
+          _ = ε * residualGoodMajorant j := by
+            rw [← residualGoodMajorant_eq j]
+            ring
+      _ = ε * ∑ j ∈ Finset.range J, residualGoodMajorant j := by
+        rw [Finset.mul_sum]
+      _ ≤ ε * ∑' j : ℕ, residualGoodMajorant j := by
+        exact mul_le_mul_of_nonneg_left
+          (summable_residualGoodMajorant.sum_le_tsum (Finset.range J)
+            (fun j _ => by
+              unfold residualGoodMajorant
+              exact mul_nonneg (by norm_num)
+                (pow_nonneg (Real.rpow_nonneg (by norm_num) _) _))) hε
+  have htail := marginalShiftResidual_tail_le b hb delta hdelta M n J hnJ
+  change (∑' j : ℕ, term j) ≤ _
+  rw [← hsum.sum_add_tsum_nat_add J]
+  exact add_le_add hfinite htail
+
+lemma min_one_marginalShiftResidual_le_bad_sum
+    (b : ℕ) (hb : 2 ≤ b) (delta : ℕ → ℝ)
+    (hdelta : ∀ m, 0 ≤ delta m ∧ delta m ≤ 1)
+    (M n J : ℕ) (hnJ : n < J) (ε : ℝ) (hε : 0 ≤ ε) :
+    min 1 (marginalShiftResidual b delta M n) ≤
+      ε * ∑' j : ℕ, residualGoodMajorant j +
+        ∑' k : ℕ, residualTailMajorant (k + J) +
+          ∑ j ∈ Finset.range J,
+            if ε * Real.rpow 2 ((j : ℝ) / 2) <
+                marginalDivisorMass delta M (n + j + 1) then (1 : ℝ) else 0 := by
+  have hgood0 : 0 ≤ ε * ∑' j : ℕ, residualGoodMajorant j := by
+    exact mul_nonneg hε (tsum_nonneg fun j => by
+      unfold residualGoodMajorant
+      exact mul_nonneg (by norm_num)
+        (pow_nonneg (Real.rpow_nonneg (by norm_num) _) _))
+  have htail0 : 0 ≤ ∑' k : ℕ, residualTailMajorant (k + J) :=
+    tsum_nonneg fun k => by unfold residualTailMajorant; positivity
+  by_cases hsmall : ∀ j ∈ Finset.range J,
+      marginalDivisorMass delta M (n + j + 1) ≤
+        ε * Real.rpow 2 ((j : ℝ) / 2)
+  · calc
+      min 1 (marginalShiftResidual b delta M n) ≤
+          marginalShiftResidual b delta M n := min_le_right _ _
+      _ ≤ ε * ∑' j : ℕ, residualGoodMajorant j +
+          ∑' k : ℕ, residualTailMajorant (k + J) :=
+        marginalShiftResidual_le_of_small b hb delta hdelta M n J hnJ ε hε hsmall
+      _ ≤ _ := le_add_of_nonneg_right (Finset.sum_nonneg fun j _ => by split <;> norm_num)
+  · push_neg at hsmall
+    obtain ⟨j, hj, hbad⟩ := hsmall
+    have hind : (1 : ℝ) ≤ ∑ j ∈ Finset.range J,
+        if ε * Real.rpow 2 ((j : ℝ) / 2) <
+            marginalDivisorMass delta M (n + j + 1) then (1 : ℝ) else 0 := by
+      calc
+        (1 : ℝ) = if ε * Real.rpow 2 ((j : ℝ) / 2) <
+            marginalDivisorMass delta M (n + j + 1) then (1 : ℝ) else 0 := by
+          rw [if_pos hbad]
+        _ ≤ ∑ k ∈ Finset.range J,
+            if ε * Real.rpow 2 ((k : ℝ) / 2) <
+                marginalDivisorMass delta M (n + k + 1) then (1 : ℝ) else 0 := by
+          exact Finset.single_le_sum
+            (f := fun k : ℕ => if ε * Real.rpow 2 ((k : ℝ) / 2) <
+              marginalDivisorMass delta M (n + k + 1) then (1 : ℝ) else 0)
+            (fun k _ => by split <;> norm_num) hj
+    calc
+      min 1 (marginalShiftResidual b delta M n) ≤ 1 := min_le_left _ _
+      _ ≤ ε * ∑' j : ℕ, residualGoodMajorant j +
+          ∑' k : ℕ, residualTailMajorant (k + J) +
+            ∑ j ∈ Finset.range J,
+              if ε * Real.rpow 2 ((j : ℝ) / 2) <
+                  marginalDivisorMass delta M (n + j + 1) then (1 : ℝ) else 0 := by
+        linarith
+
+/-- Shifting `n` by `j+1` injects each bad set into the corresponding bad set on `[1,N+J]`. -/
+lemma sum_shifted_marginal_bad_indicators_le
+    (delta : ℕ → ℝ) (M : ℕ) (ε : ℝ) (N J : ℕ) :
+    (∑ n ∈ Finset.range N, ∑ j ∈ Finset.range J,
+        if ε * Real.rpow 2 ((j : ℝ) / 2) <
+            marginalDivisorMass delta M (n + j + 1) then (1 : ℝ) else 0) ≤
+      ∑ j ∈ Finset.range J,
+        (((Finset.Icc 1 (N + J)).filter (fun k =>
+          ε * Real.rpow 2 ((j : ℝ) / 2) <
+            marginalDivisorMass delta M k)).card : ℝ) := by
+  rw [Finset.sum_comm]
+  apply Finset.sum_le_sum
+  intro j hj
+  let B := (Finset.range N).filter (fun n =>
+    ε * Real.rpow 2 ((j : ℝ) / 2) < marginalDivisorMass delta M (n + j + 1))
+  let A := (Finset.Icc 1 (N + J)).filter (fun k =>
+    ε * Real.rpow 2 ((j : ℝ) / 2) < marginalDivisorMass delta M k)
+  have hcard : B.card ≤ A.card := by
+    apply Finset.card_le_card_of_injOn (fun n => n + j + 1)
+    · intro n hn
+      have hn' : n ∈ Finset.range N ∧
+          ε * Real.rpow 2 ((j : ℝ) / 2) <
+            marginalDivisorMass delta M (n + j + 1) := by
+        simpa [B] using hn
+      have hnN := Finset.mem_range.mp hn'.1
+      have hjJ := Finset.mem_range.mp hj
+      change n + j + 1 ∈ A
+      apply Finset.mem_filter.mpr
+      exact ⟨Finset.mem_Icc.mpr ⟨by omega, by omega⟩, hn'.2⟩
+    · intro a ha d hd had
+      change a + j + 1 = d + j + 1 at had
+      omega
+  have hsum : (∑ n ∈ Finset.range N,
+      if ε * Real.rpow 2 ((j : ℝ) / 2) <
+          marginalDivisorMass delta M (n + j + 1) then (1 : ℝ) else 0) = B.card := by
+    simp [B]
+  rw [hsum]
+  exact_mod_cast hcard
+
+lemma marginalDivisorMass_eq_zero_of_le
+    (delta : ℕ → ℝ) (M n : ℕ) (hnM : n ≤ M) :
+    marginalDivisorMass delta M n = 0 := by
+  by_cases hn0 : n = 0
+  · subst n
+    simp [marginalDivisorMass]
+  unfold marginalDivisorMass
+  apply Finset.sum_eq_zero
+  intro d hd
+  have hdvd := Nat.dvd_of_mem_divisors (Finset.mem_filter.mp hd).1
+  have hdn := Nat.le_of_dvd (Nat.pos_of_ne_zero hn0) hdvd
+  have hMd := (Finset.mem_filter.mp hd).2
+  omega
+
 /-- Cesàro average of the deterministic residual, capped at one. -/
 noncomputable def cappedMarginalResidualAverage (b : ℕ) (delta : ℕ → ℝ)
     (M N : ℕ) : ℝ :=
   (∑ n ∈ Finset.range N, min 1 (marginalShiftResidual b delta M n)) / N
+
+/-- The deterministic bridge from uniform large-marginal-set counts to the capped residual
+average.  The split at `J=N+K` makes the bad-set interval at most `3N` when `K≤N`; when `N<K`,
+the hypothesis `3K≤M` kills every initial marginal divisor mass outright. -/
+lemma cappedMarginalResidualAverage_le_of_large_cards
+    (b : ℕ) (hb : 2 ≤ b) (delta : ℕ → ℝ)
+    (hdelta : ∀ m, 0 ≤ delta m ∧ delta m ≤ 1)
+    (M K : ℕ) (hMK : 3 * K ≤ M) (ε ζ τ : ℝ)
+    (hε : 0 ≤ ε) (hζ : 0 ≤ ζ)
+    (hlarge : ∀ T J : ℕ,
+      (∑ j ∈ Finset.range J,
+          (((Finset.Icc 1 T).filter (fun n =>
+            ε * Real.rpow 2 ((j : ℝ) / 2) <
+              marginalDivisorMass delta M n)).card : ℝ)) ≤ ζ * T)
+    (htail : ∀ J : ℕ, K ≤ J →
+      (∑' k : ℕ, residualTailMajorant (k + J)) ≤ τ)
+    (N : ℕ) (hN : 1 ≤ N) :
+    cappedMarginalResidualAverage b delta M N ≤
+      ε * ∑' j : ℕ, residualGoodMajorant j + τ + 3 * ζ := by
+  let J := N + K
+  let good : ℝ := ε * ∑' j : ℕ, residualGoodMajorant j
+  let bad : ℕ → ℝ := fun n => ∑ j ∈ Finset.range J,
+    if ε * Real.rpow 2 ((j : ℝ) / 2) <
+        marginalDivisorMass delta M (n + j + 1) then (1 : ℝ) else 0
+  have hJ : K ≤ J := by dsimp [J]; omega
+  have hbad : (∑ n ∈ Finset.range N, bad n) ≤ 3 * ζ * N := by
+    by_cases hKN : K ≤ N
+    · calc
+        (∑ n ∈ Finset.range N, bad n) ≤
+            ∑ j ∈ Finset.range J,
+              (((Finset.Icc 1 (N + J)).filter (fun k =>
+                ε * Real.rpow 2 ((j : ℝ) / 2) <
+                  marginalDivisorMass delta M k)).card : ℝ) := by
+          exact sum_shifted_marginal_bad_indicators_le delta M ε N J
+        _ ≤ ζ * (N + J) := by
+          simpa only [Nat.cast_add] using hlarge (N + J) J
+        _ ≤ ζ * (3 * N) := by
+          apply mul_le_mul_of_nonneg_left _ hζ
+          exact_mod_cast (show N + J ≤ 3 * N by dsimp [J]; omega)
+        _ = 3 * ζ * N := by ring
+    · have hNK : N < K := by omega
+      have hzero : (∑ n ∈ Finset.range N, bad n) = 0 := by
+        apply Finset.sum_eq_zero
+        intro n hn
+        unfold bad
+        apply Finset.sum_eq_zero
+        intro j hj
+        rw [if_neg]
+        rw [marginalDivisorMass_eq_zero_of_le delta M (n + j + 1) (by
+          have hnN := Finset.mem_range.mp hn
+          have hjJ := Finset.mem_range.mp hj
+          dsimp [J] at hjJ
+          omega)]
+        exact not_lt_of_ge (mul_nonneg hε (Real.rpow_nonneg (by norm_num) _))
+      rw [hzero]
+      positivity
+  have hpoint : ∀ n ∈ Finset.range N,
+      min 1 (marginalShiftResidual b delta M n) ≤ good + τ + bad n := by
+    intro n hn
+    have hnN := Finset.mem_range.mp hn
+    have hnJ : n < J := hnN.trans_le (by dsimp [J]; omega)
+    have hraw := min_one_marginalShiftResidual_le_bad_sum
+      b hb delta hdelta M n J hnJ ε hε
+    have ht := htail J hJ
+    dsimp [good, bad]
+    exact hraw.trans (add_le_add (add_le_add le_rfl ht) le_rfl)
+  unfold cappedMarginalResidualAverage
+  have hsum : (∑ n ∈ Finset.range N,
+      min 1 (marginalShiftResidual b delta M n)) ≤
+      N * (good + τ + 3 * ζ) := by
+    calc
+      (∑ n ∈ Finset.range N,
+          min 1 (marginalShiftResidual b delta M n)) ≤
+          ∑ n ∈ Finset.range N, (good + τ + bad n) :=
+        Finset.sum_le_sum hpoint
+      _ = N * (good + τ) + ∑ n ∈ Finset.range N, bad n := by
+        simp [Finset.sum_add_distrib]
+        ring
+      _ ≤ N * (good + τ) + 3 * ζ * N := add_le_add le_rfl hbad
+      _ = N * (good + τ + 3 * ζ) := by ring
+  have hNr : (0 : ℝ) < N := by exact_mod_cast (show 0 < N by omega)
+  apply (div_le_iff₀ hNr).2
+  calc
+    (∑ n ∈ Finset.range N, min 1 (marginalShiftResidual b delta M n)) ≤
+        N * (good + τ + 3 * ζ) := hsum
+    _ = (ε * ∑' j : ℕ, residualGoodMajorant j + τ + 3 * ζ) * N := by
+      dsimp [good]
+      ring
 
 /-- Cesàro average of the random residual, capped at one. -/
 noncomputable def cappedShiftResidualAverage {Ω : Type*} (b : ℕ)
