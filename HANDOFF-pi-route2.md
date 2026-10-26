@@ -1,36 +1,28 @@
-# HANDOFF — pi route 2 (prime reservoir), lap 1 — 2026-10-26
+# HANDOFF — pi route 2 (prime reservoir) — lap 3, 2026-10-26
 
-## Node graph
-- `PiPrimeReservoirSupport` (route premise, 70% truth, untested) —**green edge**→ `IsDisjunctive 16 π`
-  via `pi_disjunctive_of_primeReservoirSupport` (assumes `PiBBP`; axiom-clean).
-- `fresh_prime_dvd_head_den`: **proved** (p-adic norm: unique pair (p/8, p%8) carries the pole,
-  every other fraction p-integral since denominators lie in (0, 2p)).  Helper lemmas
-  `bbpCoeff`, `bbpRationalHead_eq_sum_product`, `padicNorm_bbpFrac_le`,
-  `padicNorm_le_one_of_not_dvd_den`.
+## Node graph (all green unless noted; axioms = propext, Classical.choice, Quot.sound)
+- `fresh_prime_dvd_head_den` (PrimeReservoir.lean): fresh prime poles survive (p-adic norm).
+- `PiPrimeReservoirSupport` (premise, 70%→ see below) ⇒ `IsDisjunctive 16 π`
+  (`pi_disjunctive_of_primeReservoirSupport`, with PiBBP).
+- `PiReservoirDiagonalSupport` (PrimeReservoirDiagonal.lean): premise ⇒ node ⇒ sink.
+- PrimeReservoirStep.lean:
+  - `bbpPrimeReservoir_succ`: R_{n+1} = 16R_n − exit_n + entry_n.
+  - `bbpResidual_succ`: S_{n+1} = 16S_n + exit_n + 16·kick_n − entry_n.
+  - **`bbpReservoirExit_mod_one` (key finding)**: exit_n ≡ [4n+1 prime]·64/(4n+1) (mod 1).
+    Only p = 4n+1 leaves the window, and 16^{(p-1)/4} = 2^{(p-1)/2} ≡ (2|p) cancels the
+    coefficient sign (Euler's criterion).  Probe `scripts/pi_route2_exit.py`: 1125/1125,
+    base-3 control 2/1125.
 
-- `PiReservoirDiagonalSupport` (new node, weaker in form): premise → node
-  (`reservoirDiagonalSupport_of_support`), node + PiBBP → sink
-  (`pi_disjunctive_of_reservoirDiagonalSupport`); both green, axiom-clean.
-- Probe `scripts/pi_route2_joint.py` N=1500: fresh-prime pair chi²/cell 0.96, no empty 8×8 cell,
-  corr +0.0075; composite control equally uniform (chi² 1.05) ⇒ probe does not discriminate primality.
+## What the finding means (the lane's research question, partial answer)
+The "uncancellable O(1) arithmetic transfer" between R and S does not exist: mod 1 both
+coordinates are ×16 pseudo-orbits with O(1/n) kicks.  Hence fract R_n = fract(16ⁿ ρ) + O(1/n)
+for the FIXED constant ρ = Σ_k 16^{-k}·(kick of R at step k), a prime-indexed BBP-type
+series, and S_n ≈ 16ⁿ(π − ρ).  The premise is then joint base-16 disjunctivity of the pair
+(ρ, π − ρ): at least as hard as disjunctivity of ρ itself, which is open.  Route-2 confidence
+that it gives leverage over plain digits: low (~10%).
 
-- Lap 2: `bbpPrimeReservoir_succ` (PrimeReservoirStep.lean, green): R_{n+1} = 16R_n − exit_n + entry_n,
-  exit = primes in (4n,4n+4] (O(1) mass mod 1, the arithmetic source), entry = j=n pair (O(1/n)).
-  Since R+S = 16ⁿ·sₙ evolves by ×16 + kick, the antidiagonal D = R−S gets the kick −2·exit:
-  the diagonal node asks D ≈ 0 simultaneously with R+S ≈ 2t.
-
-## This lap
-Both "First (one lap)" bridges closed, `#print axioms` = [propext, Classical.choice, Quot.sound].
-
-## Next move (lap 3)
-State S_{n+1} = 16 S_n + exit_n + 16·kick_n − entry_n, then the node: exit_n mod 1 (one or zero
-primes in a length-4 window, p≡1,5 mod 8) is equidistributed / dense along the subsequence where
-fract(16ⁿπ) is in a given interval — and test it numerically against a non-prime control.
-## Older next move
-Find a control that FAILS (rational telescoping lock from PI-ROUTES-NEXT), so the probe
-discriminates; then attack the diagonal node via a Weyl sum along e(h(R−S)) — the
-antidiagonal character is exactly what the diagonal node needs.
-## Old next move
-Research question: the probe `scripts/pi_route2_joint.py` — exact (fract R_n, fract S_n) for
-n ≤ ~3000, 2-D discrepancy + correlation, with control replacing prime denominators by a
-non-prime set.  Then name the weakest node giving joint support (costume audit + corner check).
+## Next move
+Formalize the limit: define ρ := Σ' k, (−exit_k' + entry_k)/16^{k+1} with the mod-1 exit,
+prove |fract R_n − fract(16ⁿρ)|-type bound O(1/n) (`bbpPrimeReservoir_near_orbit`), then
+state the obstruction node `PiPrimeReservoirSupport ↔ joint disjunctivity of (ρ, π−ρ)` and
+add the route-2 Maze row (reopen condition: a lever on ρ's digits not available for π).
