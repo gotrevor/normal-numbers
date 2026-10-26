@@ -726,6 +726,26 @@ noncomputable def multiShiftScheduleU (N : ℕ) : ℝ :=
 noncomputable def multiShiftCutoffY (N : ℕ) : ℕ :=
   ⌊Real.exp (Real.log N / multiShiftScheduleU N)⌋₊
 
+/-- The reciprocal-prime mean on the scheduled block. -/
+noncomputable def multiShiftPrimeMean (N : ℕ) : ℝ :=
+  ∑ p ∈ primesIoc (collisionCutoff N) (multiShiftCutoffY N), (1 / p : ℝ)
+
+/-- The exact square-root penalty occurring in `subpowerWeight c (2 * N)`.  Keeping the
+`2 * N` expression exact makes the deterministic heavy-column calculation algebraic; its
+asymptotic replacement by `sqrt (c * L * log L)` is postponed to the probability estimate. -/
+noncomputable def multiShiftSubpowerPenalty (c : ℝ) (N : ℕ) : ℝ :=
+  Real.sqrt (c * Real.log (Real.log ((2 * N : ℕ) : ℝ)) *
+    Real.log (Real.log (Real.log ((2 * N : ℕ) : ℝ))))
+
+/-- The heavy-column threshold.  Besides the exact subpower penalty it contains a fixed
+square-root baseline for the tilted-Chebyshev estimate, the exact cost of the shifted factor
+`b ^ (2 * (j + 1))`, and an `8 * log L` buffer for the cutoff and Mertens losses. -/
+noncomputable def multiShiftThreshold (c A : ℝ) (b N j : ℕ) : ℕ :=
+  ⌈multiShiftPrimeMean N + multiShiftSubpowerPenalty c N +
+      A * Real.sqrt (multiShiftPrimeMean N) +
+      (((2 * (j + 1) : ℕ) : ℝ) * Real.log b / Real.log 2) +
+      8 * Real.log (Real.log (Real.log N))⌉₊
+
 /-- The square-root schedule satisfies the upper bound required by Step 1'. -/
 theorem eventually_multiShiftScheduleJ_le_log_log :
     ∀ᶠ N : ℕ in atTop,
@@ -1050,6 +1070,276 @@ theorem eventually_multiShiftPrimeMean_bounds :
   refine ⟨?_, ?_⟩
   · nlinarith
   · nlinarith
+
+/-- The sharp lower estimate retained from Mertens.  The coarse comparison
+`multiShiftPrimeMean N ≥ L / 2` is enough for side conditions, but the final exponent needs the
+full `L - O(log L)` main term. -/
+theorem eventually_multiShiftPrimeMean_lower :
+    ∃ C : ℝ, 0 ≤ C ∧ ∀ᶠ N : ℕ in atTop,
+      let L := Real.log (Real.log N)
+      L - 6 * Real.log L - C ≤ multiShiftPrimeMean N := by
+  obtain ⟨C, hC0, hMertens⟩ := mertens_primesIoc_bound
+  refine ⟨Real.log 2 + 2 * C, by positivity, ?_⟩
+  filter_upwards [eventually_multiShiftCutoffY_bounds,
+      eventually_multiShiftLogBlock_bounds] with N hy hblock
+  let L : ℝ := Real.log (Real.log N)
+  have hM := hMertens (collisionCutoff N) (multiShiftCutoffY N)
+    hblock.1 hy.1
+  change |multiShiftPrimeMean N -
+      (Real.log (Real.log (multiShiftCutoffY N)) -
+        Real.log (Real.log (collisionCutoff N)))| ≤ 2 * C at hM
+  have hmain := hblock.2.1
+  change L - 6 * Real.log L - Real.log 2 ≤
+      Real.log (Real.log (multiShiftCutoffY N)) -
+        Real.log (Real.log (collisionCutoff N)) at hmain
+  linarith [abs_le.mp hM |>.1]
+
+/-- Replacing `N` by `2 * N` changes `log log N` by at most `log 2`, eventually. -/
+theorem eventually_log_log_two_mul_le :
+    ∀ᶠ N : ℕ in atTop,
+      Real.log (Real.log ((2 * N : ℕ) : ℝ)) ≤
+        Real.log (Real.log N) + Real.log 2 := by
+  have htTop : Tendsto (fun N : ℕ ↦ Real.log (N : ℝ)) atTop atTop :=
+    Real.tendsto_log_atTop.comp tendsto_natCast_atTop_atTop
+  filter_upwards [htTop.eventually_ge_atTop (Real.log 2)] with N hlogN
+  have hlog2 : 0 < Real.log (2 : ℝ) := Real.log_pos (by norm_num)
+  have hlogN0 : 0 < Real.log (N : ℝ) := hlog2.trans_le hlogN
+  have hNnat : 0 < N := by
+    by_contra hnot
+    have : N = 0 := Nat.eq_zero_of_not_pos hnot
+    subst N
+    norm_num at hlogN0
+  have hN0 : (0 : ℝ) < N := by
+    exact_mod_cast hNnat
+  have hlogTwoN0 : 0 < Real.log (((2 * N : ℕ) : ℝ)) := by
+    rw [Nat.cast_mul, Nat.cast_ofNat, Real.log_mul (by norm_num) hN0.ne']
+    linarith
+  have hinner : Real.log (((2 * N : ℕ) : ℝ)) ≤ 2 * Real.log N := by
+    rw [Nat.cast_mul, Nat.cast_ofNat, Real.log_mul (by norm_num) hN0.ne']
+    linarith
+  calc
+    Real.log (Real.log ((2 * N : ℕ) : ℝ)) ≤ Real.log (2 * Real.log N) :=
+      Real.log_le_log hlogTwoN0 hinner
+    _ = Real.log (Real.log N) + Real.log 2 := by
+      rw [Real.log_mul (by norm_num) hlogN0.ne']
+      ring_nf
+
+/-- After the `8 * log L` threshold buffer, the Mertens loss and the exact global-cutoff
+weight loss leave a quantity tending to infinity.  This is the analytic core of the
+deterministic heavy-column inequality. -/
+theorem tendsto_multiShiftBufferedMean :
+    Tendsto (fun N : ℕ ↦ multiShiftPrimeMean N +
+      8 * Real.log (Real.log (Real.log N)) -
+        Real.log (Real.log ((2 * N : ℕ) : ℝ))) atTop atTop := by
+  obtain ⟨C, hC0, hmean⟩ := eventually_multiShiftPrimeMean_lower
+  have hLTop : Tendsto (fun N : ℕ ↦ Real.log (Real.log (N : ℝ))) atTop atTop :=
+    Real.tendsto_log_atTop.comp
+      (Real.tendsto_log_atTop.comp tendsto_natCast_atTop_atTop)
+  have hlogLTop : Tendsto
+      (fun N : ℕ ↦ Real.log (Real.log (Real.log (N : ℝ)))) atTop atTop :=
+    Real.tendsto_log_atTop.comp hLTop
+  have hmajor : Tendsto (fun N : ℕ ↦
+      2 * Real.log (Real.log (Real.log N)) - C - Real.log 2) atTop atTop := by
+    have hmul := hlogLTop.const_mul_atTop (show (0 : ℝ) < 2 by norm_num)
+    simpa only [sub_eq_add_neg, add_assoc] using
+      tendsto_atTop_add_const_right atTop (-C - Real.log 2) hmul
+  refine Filter.tendsto_atTop_mono' atTop ?_ hmajor
+  filter_upwards [hmean, eventually_log_log_two_mul_le] with N hmeanN htwo
+  let L : ℝ := Real.log (Real.log N)
+  change L - 6 * Real.log L - C ≤ multiShiftPrimeMean N at hmeanN
+  change Real.log (Real.log ((2 * N : ℕ) : ℝ)) ≤ L + Real.log 2 at htwo
+  change 2 * Real.log L - C - Real.log 2 ≤
+    multiShiftPrimeMean N + 8 * Real.log L -
+      Real.log (Real.log ((2 * N : ℕ) : ℝ))
+  linarith
+
+/-- Uniform deterministic threshold calculation.  A column reaching `multiShiftThreshold`
+beats the scalar premise of `shiftedVarianceMass_gt_of_heavyColumn`, with the global cutoff
+`M = 2 * N`.  The proof is uniform in the shift index: the threshold contains exactly the
+logarithm of the factor `b ^ (2 * (j + 1))`. -/
+theorem eventually_multiShiftThreshold_scalar
+    (c A c₀ T : ℝ) (hA : 0 ≤ A) (hc₀ : 0 < c₀) (b : ℕ) (hb : 2 ≤ b) :
+    ∀ᶠ N : ℕ in atTop, ∀ j : ℕ,
+      T * (b : ℝ) ^ (2 * (j + 1)) <
+        (((2 ^ (multiShiftThreshold c A b N j - 1) : ℕ) : ℝ) *
+          (c₀ * subpowerWeight c (2 * N))) := by
+  have hlog2 : 0 < Real.log (2 : ℝ) := Real.log_pos (by norm_num)
+  have hbuffer := tendsto_multiShiftBufferedMean
+  have hscaled : Tendsto (fun N : ℕ ↦ Real.log 2 *
+      (multiShiftPrimeMean N + 8 * Real.log (Real.log (Real.log N)) -
+        Real.log (Real.log ((2 * N : ℕ) : ℝ)) - 1)) atTop atTop := by
+    have hmul := hbuffer.const_mul_atTop hlog2
+    have hadd := tendsto_atTop_add_const_right atTop (-Real.log 2) hmul
+    convert hadd using 1
+    ext N
+    ring
+  have hfactorTop : Tendsto (fun N : ℕ ↦ c₀ * Real.exp (Real.log 2 *
+      (multiShiftPrimeMean N + 8 * Real.log (Real.log (Real.log N)) -
+        Real.log (Real.log ((2 * N : ℕ) : ℝ)) - 1))) atTop atTop :=
+    (Real.tendsto_exp_atTop.comp hscaled).const_mul_atTop hc₀
+  have htTop : Tendsto (fun N : ℕ ↦ Real.log (N : ℝ)) atTop atTop :=
+    Real.tendsto_log_atTop.comp tendsto_natCast_atTop_atTop
+  have hLTop : Tendsto (fun N : ℕ ↦ Real.log (Real.log (N : ℝ))) atTop atTop :=
+    Real.tendsto_log_atTop.comp htTop
+  filter_upwards [hfactorTop.eventually_gt_atTop T,
+      eventually_multiShiftPrimeMean_bounds,
+      htTop.eventually_ge_atTop (Real.log 2), hLTop.eventually_ge_atTop 2] with
+      N hfactor hmean hlogN hL
+  intro j
+  let L : ℝ := Real.log (Real.log N)
+  let mean : ℝ := multiShiftPrimeMean N
+  let psi : ℝ := multiShiftSubpowerPenalty c N
+  let shift : ℝ := (((2 * (j + 1) : ℕ) : ℝ) * Real.log b / Real.log 2)
+  let threshold : ℕ := multiShiftThreshold c A b N j
+  have hL2 : 2 ≤ L := by simpa only [L] using hL
+  have hL0 : 0 < L := by linarith
+  have hlogL0 : 0 < Real.log L := Real.log_pos (by linarith)
+  have hmeanLower : L / 2 ≤ mean := by
+    simpa only [L, mean, multiShiftPrimeMean] using hmean.1
+  have hmean0 : 0 < mean := lt_of_lt_of_le (by positivity) hmeanLower
+  have hpsi0 : 0 ≤ psi := by simp only [psi, multiShiftSubpowerPenalty]; positivity
+  have hbR : (0 : ℝ) < b := by exact_mod_cast (lt_of_lt_of_le (by norm_num) hb)
+  have hlogb0 : 0 < Real.log (b : ℝ) := Real.log_pos (by exact_mod_cast hb)
+  have hshift0 : 0 ≤ shift := by dsimp only [shift]; positivity
+  have harg0 : 0 < mean + psi + A * Real.sqrt mean + shift + 8 * Real.log L := by
+    have hsqrt0 : 0 ≤ Real.sqrt mean := Real.sqrt_nonneg _
+    positivity
+  have hceil : mean + psi + A * Real.sqrt mean + shift + 8 * Real.log L ≤
+      (threshold : ℝ) := by
+    simpa only [threshold, multiShiftThreshold, mean, psi, shift, L] using
+      (Nat.le_ceil (mean + psi + A * Real.sqrt mean + shift + 8 * Real.log L))
+  have hthreshold1 : 1 ≤ threshold := by
+    exact Nat.one_le_ceil_iff.mpr harg0
+  have hcastSub : ((threshold - 1 : ℕ) : ℝ) = (threshold : ℝ) - 1 := by
+    rw [Nat.cast_sub hthreshold1]
+    norm_num
+  have hpowExponent : Real.log 2 *
+      (mean + psi + A * Real.sqrt mean + shift + 8 * Real.log L - 1) ≤
+        ((threshold - 1 : ℕ) : ℝ) * Real.log 2 := by
+    rw [hcastSub]
+    nlinarith
+  have htwoPow : (((2 ^ (threshold - 1) : ℕ) : ℝ)) =
+      Real.exp (((threshold - 1 : ℕ) : ℝ) * Real.log 2) := by
+    calc
+      (((2 ^ (threshold - 1) : ℕ) : ℝ)) = (2 : ℝ) ^ (threshold - 1) := by norm_num
+      _ = Real.exp (Real.log 2) ^ (threshold - 1) := by rw [Real.exp_log (by norm_num)]
+      _ = Real.exp (((threshold - 1 : ℕ) : ℝ) * Real.log 2) := by
+        rw [← Real.exp_nat_mul]
+  have hpowLower : Real.exp (Real.log 2 *
+      (mean + psi + A * Real.sqrt mean + shift + 8 * Real.log L - 1)) ≤
+        (((2 ^ (threshold - 1) : ℕ) : ℝ)) := by
+    rw [htwoPow]
+    exact Real.exp_le_exp.mpr hpowExponent
+  have hNnat : 0 < N := by
+    by_contra hnot
+    have : N = 0 := Nat.eq_zero_of_not_pos hnot
+    subst N
+    norm_num at hlogN
+    linarith
+  have hMone : 1 < 2 * N := by omega
+  have hlogM0 : 0 < Real.log (((2 * N : ℕ) : ℝ)) :=
+    Real.log_pos (by exact_mod_cast hMone)
+  have hrpow : Real.rpow (Real.log (((2 * N : ℕ) : ℝ))) (-Real.log 2) =
+      Real.exp (Real.log (Real.log ((2 * N : ℕ) : ℝ)) * (-Real.log 2)) := by
+    exact Real.rpow_def_of_pos hlogM0 (-Real.log 2)
+  have hweight : subpowerWeight c (2 * N) =
+      Real.exp (-(Real.log 2) *
+        (Real.log (Real.log ((2 * N : ℕ) : ℝ)) + psi)) := by
+    rw [subpowerWeight, hrpow]
+    simp only [psi, multiShiftSubpowerPenalty]
+    rw [← Real.exp_add]
+    congr 1
+    ring
+  have hbpow : (b : ℝ) ^ (2 * (j + 1)) =
+      Real.exp (((2 * (j + 1) : ℕ) : ℝ) * Real.log b) := by
+    calc
+      (b : ℝ) ^ (2 * (j + 1)) = Real.exp (Real.log b) ^ (2 * (j + 1)) := by
+        rw [Real.exp_log hbR]
+      _ = Real.exp (((2 * (j + 1) : ℕ) : ℝ) * Real.log b) := by
+        rw [← Real.exp_nat_mul]
+  have hexponent : Real.log 2 *
+        (mean + psi + A * Real.sqrt mean + shift + 8 * Real.log L - 1) +
+      (-(Real.log 2) *
+        (Real.log (Real.log ((2 * N : ℕ) : ℝ)) + psi)) =
+      (((2 * (j + 1) : ℕ) : ℝ) * Real.log b) +
+        Real.log 2 * (mean + A * Real.sqrt mean + 8 * Real.log L -
+          Real.log (Real.log ((2 * N : ℕ) : ℝ)) - 1) := by
+    dsimp only [shift]
+    field_simp [hlog2.ne']
+    ring
+  have hlower : (b : ℝ) ^ (2 * (j + 1)) *
+        (c₀ * Real.exp (Real.log 2 *
+          (mean + A * Real.sqrt mean + 8 * Real.log L -
+            Real.log (Real.log ((2 * N : ℕ) : ℝ)) - 1))) ≤
+      (((2 ^ (threshold - 1) : ℕ) : ℝ) *
+        (c₀ * subpowerWeight c (2 * N))) := by
+    calc
+      (b : ℝ) ^ (2 * (j + 1)) *
+          (c₀ * Real.exp (Real.log 2 *
+            (mean + A * Real.sqrt mean + 8 * Real.log L -
+              Real.log (Real.log ((2 * N : ℕ) : ℝ)) - 1))) =
+        Real.exp (Real.log 2 *
+            (mean + psi + A * Real.sqrt mean + shift + 8 * Real.log L - 1)) *
+          (c₀ * subpowerWeight c (2 * N)) := by
+            rw [hbpow, hweight]
+            calc
+              Real.exp (((2 * (j + 1) : ℕ) : ℝ) * Real.log b) *
+                  (c₀ * Real.exp (Real.log 2 *
+                    (mean + A * Real.sqrt mean + 8 * Real.log L -
+                      Real.log (Real.log ((2 * N : ℕ) : ℝ)) - 1))) =
+                c₀ * Real.exp
+                  ((((2 * (j + 1) : ℕ) : ℝ) * Real.log b) +
+                    Real.log 2 *
+                      (mean + A * Real.sqrt mean + 8 * Real.log L -
+                        Real.log (Real.log ((2 * N : ℕ) : ℝ)) - 1)) := by
+                    rw [Real.exp_add]
+                    ring
+              _ = c₀ * Real.exp
+                  (Real.log 2 *
+                      (mean + psi + A * Real.sqrt mean + shift + 8 * Real.log L - 1) +
+                    (-(Real.log 2) *
+                      (Real.log (Real.log ((2 * N : ℕ) : ℝ)) + psi))) := by
+                    rw [hexponent]
+              _ = Real.exp (Real.log 2 *
+                    (mean + psi + A * Real.sqrt mean + shift + 8 * Real.log L - 1)) *
+                  (c₀ * Real.exp (-(Real.log 2) *
+                    (Real.log (Real.log ((2 * N : ℕ) : ℝ)) + psi))) := by
+                    rw [Real.exp_add]
+                    ring
+      _ ≤ (((2 ^ (threshold - 1) : ℕ) : ℝ) *
+          (c₀ * subpowerWeight c (2 * N))) := by
+        exact mul_le_mul_of_nonneg_right hpowLower
+          (mul_nonneg hc₀.le (subpowerWeight_nonneg c (2 * N)))
+  have hbaseline : c₀ * Real.exp (Real.log 2 *
+      (mean + 8 * Real.log L - Real.log (Real.log ((2 * N : ℕ) : ℝ)) - 1)) ≤
+      c₀ * Real.exp (Real.log 2 *
+        (mean + A * Real.sqrt mean + 8 * Real.log L -
+          Real.log (Real.log ((2 * N : ℕ) : ℝ)) - 1)) := by
+    apply mul_le_mul_of_nonneg_left _ hc₀.le
+    apply Real.exp_le_exp.mpr
+    have hsqrt0 : 0 ≤ Real.sqrt mean := Real.sqrt_nonneg _
+    apply mul_le_mul_of_nonneg_left _ hlog2.le
+    nlinarith [mul_nonneg hA hsqrt0]
+  have hfactor' : T < c₀ * Real.exp (Real.log 2 *
+      (mean + 8 * Real.log L - Real.log (Real.log ((2 * N : ℕ) : ℝ)) - 1)) := by
+    simpa only [mean, L] using hfactor
+  have hfactorA := hfactor'.trans_le hbaseline
+  have hbpow0 : 0 < (b : ℝ) ^ (2 * (j + 1)) := by positivity
+  calc
+    T * (b : ℝ) ^ (2 * (j + 1)) <
+        (c₀ * Real.exp (Real.log 2 *
+          (mean + A * Real.sqrt mean + 8 * Real.log L -
+            Real.log (Real.log ((2 * N : ℕ) : ℝ)) - 1))) *
+          (b : ℝ) ^ (2 * (j + 1)) :=
+      mul_lt_mul_of_pos_right hfactorA hbpow0
+    _ = (b : ℝ) ^ (2 * (j + 1)) *
+        (c₀ * Real.exp (Real.log 2 *
+          (mean + A * Real.sqrt mean + 8 * Real.log L -
+            Real.log (Real.log ((2 * N : ℕ) : ℝ)) - 1))) := by ring
+    _ ≤ (((2 ^ (threshold - 1) : ℕ) : ℝ) *
+        (c₀ * subpowerWeight c (2 * N))) := hlower
+    _ = (((2 ^ (multiShiftThreshold c A b N j - 1) : ℕ) : ℝ) *
+        (c₀ * subpowerWeight c (2 * N))) := by rfl
 
 /-- All geometric side conditions for the multishift sieve, apart from its constant-dependent
 depth inequality.  Moreover `log N / log y` is trapped between `u` and `2u`. -/

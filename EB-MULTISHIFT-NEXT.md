@@ -224,3 +224,33 @@ long initial interval of shifts both the explicit scalar premise of
 `multiShiftColumnMass_ge_moderate_of_baseline`. Then use the sharp
 `eventually_multiShiftLogBlock_bounds` estimate—not merely `mean >= L/2`—to make the sum of column
 lower bounds diverge. Detailed baton: `HANDOFF-2026-10-26-eb-multishift-lap12.md`.
+
+## Lap checkpoint (2026-10-26, review lap 13)
+
+The active threshold and its deterministic scalar calculation are now proved.
+`multiShiftPrimeMean`, `multiShiftSubpowerPenalty`, and `multiShiftThreshold` define respectively
+the scheduled reciprocal-prime mean, the exact square-root penalty from
+`subpowerWeight c (2*N)`, and the ceiling threshold with an `A*sqrt(mean)` baseline, exact shift
+cost, and `8*log L` buffer. `eventually_multiShiftPrimeMean_lower` retains the sharp
+`L - 6 log L - O(1)` Mertens lower bound, while `tendsto_multiShiftBufferedMean` proves that after
+subtracting the exact `log log (2N)` weight loss the buffer tends to infinity.
+
+The uniform theorem `eventually_multiShiftThreshold_scalar` now proves, for every fixed
+`b >= 2`, `T`, `c0 > 0`, `A >= 0`, and every shift index `j`,
+
+```text
+T*b^(2*(j+1))
+  < 2^(multiShiftThreshold c A b N j - 1) * c0 * subpowerWeight c (2*N)
+```
+
+eventually in `N`. Thus the scalar premise of the deterministic prime-chain bridge is closed
+without approximating the packet weight. The review also rechecked the `j : Fin J` indexing
+against Step 1': column `j` is exactly the shift `j+1`, and all packet-verbatim statements still
+match the planting commit.
+
+The next attack is the probability schedule for this exact threshold. Choose `eps, eta, A`, prove
+the moderate-deviation side conditions uniformly on an initial interval of length
+`K(N) ~ sqrt(L/log L)`, and show the sum of the resulting column lower bounds diverges. Split the
+penalty estimate at `c <= 0` versus `0 < c < 1`, but keep the same threshold and baseline theorem;
+then apply `multiShiftMass_noHeavy_le_prod_one_sub` and the already-proved transfer-error limit.
+Detailed baton: `HANDOFF-2026-10-26-eb-multishift-lap13.md`.
