@@ -496,6 +496,39 @@ theorem multiShiftColumnMass_ge_moderate
           {S | mean + x ≤ ((S ∩ B).card : ℝ)} := by
       exact hcylinder.symm
 
+/-- A square-root-scale buffer is enough to discharge the two lower-size hypotheses in the
+moderate-deviation estimate.  This is useful also when `c ≤ 0`: adding a fixed sufficiently
+large multiple of `sqrt mean` to the heavy threshold gives a fixed positive column probability,
+so no separate central-tail theorem is needed. -/
+theorem multiShiftColumnMass_ge_moderate_of_baseline
+    {P y J : ℕ} (j : Fin J) (hP : 2 ≤ P) (hPy : P ≤ y)
+    {eps eta x A : ℝ} (heps : 0 < eps) (heta0 : 0 < eta) (heta1 : eta ≤ 1 / 100)
+    (hetaEps : 80 * eta ≤ eps)
+    (hmean : 0 < ∑ p ∈ primesIoc P y, (1 / p : ℝ)) (hx : 0 < x)
+    (hsquareMass : (P : ℝ)⁻¹ ≤ eta * ∑ p ∈ primesIoc P y, (1 / p : ℝ))
+    (hsmallTilt : (1 + 4 * eta) * x / (∑ p ∈ primesIoc P y, (1 / p : ℝ)) ≤ eta)
+    (hbaseline : A ^ 2 * (∑ p ∈ primesIoc P y, (1 / p : ℝ)) ≤ x ^ 2)
+    (hlargeA : 6 ≤ eta ^ 2 * A ^ 2)
+    (habsorbA : 4 * Real.log 2 ≤ eps * A ^ 2) :
+    Real.exp (-((1 + eps) * x ^ 2 /
+        (2 * ∑ p ∈ primesIoc P y, (1 / p : ℝ)))) ≤
+      NormalNumbers.ErdosBorweinEndpointKub.bernoulliSubsetMass
+        (Finset.univ : Finset
+          (Fin (Fintype.card (primesIoc P y)) × Fin J))
+        (fun z ↦ 1 / (((primeIndexEquiv P y) z.1 : ℕ) : ℝ))
+        {S | (∑ p ∈ primesIoc P y, (1 / p : ℝ)) + x ≤
+          ((S ∩ shiftArrayColumn (Fintype.card (primesIoc P y)) J j).card : ℝ)} := by
+  apply multiShiftColumnMass_ge_moderate j hP hPy heps heta0 heta1 hetaEps hmean hx
+    hsquareMass hsmallTilt
+  · have hprod : 0 ≤ (eta ^ 2 * A ^ 2 - 6) *
+        (∑ p ∈ primesIoc P y, (1 / p : ℝ)) :=
+      mul_nonneg (sub_nonneg.mpr hlargeA) hmean.le
+    nlinarith
+  · have hprod : 0 ≤ (eps * A ^ 2 - 4 * Real.log 2) *
+        (∑ p ∈ primesIoc P y, (1 / p : ℝ)) :=
+      mul_nonneg (sub_nonneg.mpr habsorbA) hmean.le
+    nlinarith
+
 /-- Step 4 in its concrete factored form: the no-heavy model mass is bounded by a product of
 independent one-column lower tails plus an explicit `O(J²/P)` collision error. -/
 theorem multiShiftMass_noHeavy_le_prod_one_sub {P y J : ℕ} (hJP : J ≤ P)
@@ -550,6 +583,118 @@ theorem multiShiftMass_noHeavy_le_prod_one_sub {P y J : ℕ} (hJP : J ≤ P)
           {σ | ∀ j, (Finset.univ.filter (fun i => j ∈ σ i)).card < threshold j})
     _ = _ := by
       rw [independentShiftProduct_card_lt_eq_prod_one_sub]
+
+/-- The deterministic inclusion used in Step 3.  On active columns, a threshold-sized prime set
+beats `T` by the prime-chain bound.  Inactive columns receive the impossible threshold
+`card (primesIoc P y) + 1`, allowing the factored all-column model theorem to be used unchanged. -/
+theorem low_shiftedVarianceMass_pattern_noHeavy
+    (v : ℕ → ℝ) (hv0 : ∀ d, 0 ≤ v d) (c c₀ : ℝ)
+    {P y n M b j₀ J : ℕ} {T : ℝ} (threshold : Fin J → ℕ)
+    (hb : 1 ≤ b) (hnM : ∀ j : Fin J, n + j.val + 1 ≤ M) (hP : 1 ≤ P)
+    (hPlog : 1 ≤ Real.log (Real.log (P + 1))) (hc₀ : 0 ≤ c₀)
+    (hv : ∀ d : ℕ, 2 ≤ d → c₀ * subpowerWeight c d ≤ v d)
+    (hthreshold : ∀ j : Fin J, j₀ ≤ j.val + 1 → 1 ≤ threshold j)
+    (hscalar : ∀ j : Fin J, j₀ ≤ j.val + 1 →
+      T * (b : ℝ) ^ (2 * (j.val + 1)) <
+        (((2 ^ (threshold j - 1) : ℕ) : ℝ) * (c₀ * subpowerWeight c M)))
+    (hmass : shiftedVarianceMass v b j₀ J P n ≤ T) :
+    ∀ j : Fin J, (multiShiftPattern P y J n j).card <
+      if j₀ ≤ j.val + 1 then threshold j else (primesIoc P y).card + 1 := by
+  intro j
+  split_ifs with hj
+  · by_contra hnot
+    have hcard : threshold j ≤ (multiShiftPattern P y J n j).card := by omega
+    have hQ : 1 ≤ (multiShiftPattern P y J n j).card :=
+      (hthreshold j hj).trans hcard
+    have hpowNat : 2 ^ (threshold j - 1) ≤
+        2 ^ ((multiShiftPattern P y J n j).card - 1) := by
+      exact Nat.pow_le_pow_right (by omega) (Nat.sub_le_sub_right hcard 1)
+    have hpow : ((2 ^ (threshold j - 1) : ℕ) : ℝ) ≤
+        ((2 ^ ((multiShiftPattern P y J n j).card - 1) : ℕ) : ℝ) := by
+      exact_mod_cast hpowNat
+    have hweight : 0 ≤ c₀ * subpowerWeight c M :=
+      mul_nonneg hc₀ (subpowerWeight_nonneg c M)
+    have hscalar' : T * (b : ℝ) ^ (2 * (j.val + 1)) <
+        (((2 ^ ((multiShiftPattern P y J n j).card - 1) : ℕ) : ℝ) *
+          (c₀ * subpowerWeight c M)) :=
+      (hscalar j hj).trans_le (mul_le_mul_of_nonneg_right hpow hweight)
+    have hgt := shiftedVarianceMass_gt_of_heavyColumn v hv0 c c₀ j hb hj
+      (hnM j) hP hPlog hc₀ hv hQ hscalar'
+    linarith
+  · have hsubset : multiShiftPattern P y J n j ⊆ primesIoc P y := by
+      intro p hp
+      have hp' := Finset.mem_filter.mp hp
+      exact Finset.mem_filter.mpr ⟨Finset.mem_Ioc.mpr hp'.2, (Nat.mem_primeFactors.mp hp'.1).1⟩
+    have hcard := Finset.card_le_card hsubset
+    omega
+
+open Classical in
+/-- A generic finite total-variation transfer.  Once the deterministic bad set is contained in a
+model event, the absolute TV estimate bounds its density by the model mass plus the TV error. -/
+theorem low_shiftedVarianceMass_density_le_model
+    (v : ℕ → ℝ) {P y J N b j₀ : ℕ} {T E : ℝ}
+    (A : Set (Fin J → Finset ℕ)) (hN : 0 < N)
+    (hdet : ∀ n ∈ Finset.Icc 1 N, shiftedVarianceMass v b j₀ J P n ≤ T →
+      multiShiftPattern P y J n ∈ A)
+    (hTV : |(((Finset.Icc 1 N).filter (fun n ↦ multiShiftPattern P y J n ∈ A)).card : ℝ) /
+          N - multiShiftMass P y J A| ≤ E) :
+    (((Finset.Icc 1 N).filter (fun n ↦
+        shiftedVarianceMass v b j₀ J P n ≤ T)).card : ℝ) / N ≤
+      multiShiftMass P y J A + E := by
+  classical
+  have hsubset :
+      (Finset.Icc 1 N).filter (fun n ↦ shiftedVarianceMass v b j₀ J P n ≤ T) ⊆
+        (Finset.Icc 1 N).filter (fun n ↦ multiShiftPattern P y J n ∈ A) := by
+    intro n hn
+    simp only [Finset.mem_filter] at hn ⊢
+    exact ⟨hn.1, hdet n hn.1 hn.2⟩
+  have hcard :
+      (((Finset.Icc 1 N).filter (fun n ↦
+        shiftedVarianceMass v b j₀ J P n ≤ T)).card : ℝ) ≤
+      (((Finset.Icc 1 N).filter (fun n ↦ multiShiftPattern P y J n ∈ A)).card : ℝ) := by
+    exact_mod_cast Finset.card_le_card hsubset
+  have hNreal : (0 : ℝ) < N := by exact_mod_cast hN
+  have hratio := div_le_div_of_nonneg_right hcard hNreal.le
+  have hupper :
+      (((Finset.Icc 1 N).filter (fun n ↦ multiShiftPattern P y J n ∈ A)).card : ℝ) /
+          N ≤ multiShiftMass P y J A + E := by
+    have := (le_abs_self ((((Finset.Icc 1 N).filter
+      (fun n ↦ multiShiftPattern P y J n ∈ A)).card : ℝ) / N -
+        multiShiftMass P y J A)).trans hTV
+    linarith
+  exact hratio.trans hupper
+
+/-! ### The multishift schedule -/
+
+/-- The number of shifts used in the final application of Step 1'. -/
+noncomputable def multiShiftScheduleJ (N : ℕ) : ℕ :=
+  ⌈Real.sqrt (Real.log (Real.log N))⌉₊
+
+/-- The square-root schedule satisfies the upper bound required by Step 1'. -/
+theorem eventually_multiShiftScheduleJ_le_log_log :
+    ∀ᶠ N : ℕ in atTop,
+      (multiShiftScheduleJ N : ℝ) ≤ Real.log (Real.log N) := by
+  have hLtop : Tendsto (fun N : ℕ ↦ Real.log (Real.log (N : ℝ))) atTop atTop :=
+    Real.tendsto_log_atTop.comp
+      (Real.tendsto_log_atTop.comp tendsto_natCast_atTop_atTop)
+  filter_upwards [hLtop.eventually_ge_atTop 4] with N hL
+  have hceil : (multiShiftScheduleJ N : ℝ) <
+      Real.sqrt (Real.log (Real.log N)) + 1 := by
+    exact Nat.ceil_lt_add_one (Real.sqrt_nonneg _)
+  have hsqrtSq : Real.sqrt (Real.log (Real.log N)) ^ 2 =
+      Real.log (Real.log N) := Real.sq_sqrt (by linarith)
+  nlinarith [Real.sqrt_nonneg (Real.log (Real.log N))]
+
+/-- In particular, the number of available shifts tends to infinity. -/
+theorem tendsto_multiShiftScheduleJ :
+    Tendsto (fun N : ℕ ↦ (multiShiftScheduleJ N : ℝ)) atTop atTop := by
+  have hLtop : Tendsto (fun N : ℕ ↦ Real.log (Real.log (N : ℝ))) atTop atTop :=
+    Real.tendsto_log_atTop.comp
+      (Real.tendsto_log_atTop.comp tendsto_natCast_atTop_atTop)
+  have hsqrtTop := Real.tendsto_sqrt_atTop.comp hLtop
+  refine tendsto_atTop.2 fun R ↦ ?_
+  filter_upwards [hsqrtTop.eventually_ge_atTop R] with N hR
+  exact hR.trans (Nat.le_ceil _)
 
 open Classical in
 /-- **Hypothesis (sieve, dimension `J`): the `J`-shift Kubilius model.**  This is the natural

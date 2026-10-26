@@ -156,3 +156,25 @@ of `shiftedVarianceMass_gt_of_heavyColumn` and the hypotheses of
 error to zero, and apply `hM`. The `c <= 0` branch still needs the fixed-probability central-tail
 variant rather than the moderate-deviation theorem. Detailed baton:
 `HANDOFF-2026-10-26-eb-multishift-lap9.md`.
+
+## Lap checkpoint (2026-10-26, lap 10)
+
+Step 3's finite transfer layer is now proved. `low_shiftedVarianceMass_pattern_noHeavy` shows that
+every low shifted-mass sample lies in the no-heavy pattern event: active columns use lap 8's
+prime-chain scalar bridge, while inactive columns receive the impossible threshold
+`card (primesIoc P y) + 1`. `low_shiftedVarianceMass_density_le_model` then turns any one-use
+total-variation estimate into the required density upper bound. The square-root schedule
+`multiShiftScheduleJ` is defined, tends to infinity, and eventually satisfies Step 1's condition
+`J(N) <= log log N`.
+
+The planned separate `c <= 0` central-tail theorem is unnecessary. The proved wrapper
+`multiShiftColumnMass_ge_moderate_of_baseline` shows that a fixed sufficiently large
+`A * sqrt(mean)` buffer discharges the existing moderate-deviation theorem's large-deviation and
+absorption hypotheses. Use this buffer in every threshold. For `c <= 0` it gives a fixed positive
+column probability across order `sqrt L` active shifts; for `0 < c < 1` it is lower order than
+`sqrt(c L log L)` and does not change the exponent.
+
+The next attack is the remaining scalar schedule: define the variable cutoff `y(N)`, prove its
+Mertens mean is `L - O(log L)`, and bundle the eventual deterministic, sieve, collision, and
+moderate-deviation inequalities for thresholds containing the new square-root baseline. Detailed
+baton: `HANDOFF-2026-10-26-eb-multishift-lap10.md`.
