@@ -3044,6 +3044,306 @@ theorem exists_sum_marginalDivisorMass_large_cards_div_le_canonical_kubilius
   refine ⟨?_, hd.2.2.2.1, hd.2.2.2.2⟩
   simpa only [subpowerKubiliusCanonicalGroupedBound] using hbound
 
+/-- The largest dyadic-exponential level that can occur below the averaging cutoff.  This exact
+integer surrogate for `log₂ log₂ T` is used to count the canonical geometric fibers without
+paying for all `T` nominal levels in `subpowerKubiliusLevelInterval`. -/
+def subpowerKubiliusTopLevel (T : ℕ) : ℕ :=
+  Nat.log 2 (Nat.log 2 T)
+
+/-- Number of top dyadic levels reserved for the deterministic exceptional band.  Its logarithmic
+size makes the remaining cutoff ratio polynomially large in the top level. -/
+def subpowerKubiliusTopGap (T : ℕ) : ℕ :=
+  4 * (Nat.log 2 (subpowerKubiliusTopLevel T) + 1)
+
+/-- Common prime cutoff used by all ordinary canonical groups. -/
+def subpowerKubiliusCommonCutoff (T : ℕ) : ℕ :=
+  dyadicExpCutoff (subpowerKubiliusTopLevel T - subpowerKubiliusTopGap T)
+
+lemma four_mul_succ_le_two_pow {k : ℕ} (hk : 5 ≤ k) :
+    4 * (k + 1) ≤ 2 ^ k := by
+  induction k, hk using Nat.le_induction with
+  | base => norm_num
+  | succ k hk ih =>
+      rw [pow_succ]
+      omega
+
+lemma subpowerKubiliusTopGap_le_topLevel {T : ℕ}
+    (hT : 32 ≤ subpowerKubiliusTopLevel T) :
+    subpowerKubiliusTopGap T ≤ subpowerKubiliusTopLevel T := by
+  let H := subpowerKubiliusTopLevel T
+  let k := Nat.log 2 H
+  have hH0 : H ≠ 0 := by omega
+  have hk : 5 ≤ k := by
+    dsimp only [k]
+    apply Nat.le_log_of_pow_le (by omega)
+    norm_num
+    exact hT
+  have hpow : 2 ^ k ≤ H := by
+    dsimp only [k]
+    exact Nat.pow_log_le_self 2 hH0
+  exact (four_mul_succ_le_two_pow hk).trans hpow
+
+/-- The logarithmic top gap produces a fourth-power separation of dyadic logarithmic cutoffs. -/
+lemma topLevel_pow_four_le_two_pow_topGap {T : ℕ} :
+    (subpowerKubiliusTopLevel T) ^ 4 ≤ 2 ^ subpowerKubiliusTopGap T := by
+  let H := subpowerKubiliusTopLevel T
+  let k := Nat.log 2 H
+  by_cases hH0 : H = 0
+  · simp [H, hH0]
+  · have hH : H ≤ 2 ^ (k + 1) :=
+      (Nat.lt_pow_succ_log_self (by omega) H).le
+    have hpow := Nat.pow_le_pow_left hH 4
+    calc
+      H ^ 4 ≤ (2 ^ (k + 1)) ^ 4 := hpow
+      _ = 2 ^ (4 * (k + 1)) := by rw [← pow_mul]; congr 1; omega
+      _ = 2 ^ subpowerKubiliusTopGap T := by
+        simp only [subpowerKubiliusTopGap, H, k]
+
+/-- A dyadic-exponential endpoint below `T` has level index at most the exact top level. -/
+lemma level_succ_le_subpowerKubiliusTopLevel {T ℓ : ℕ}
+    (hcut : dyadicExpCutoff (ℓ + 1) ≤ T) :
+    ℓ + 1 ≤ subpowerKubiliusTopLevel T := by
+  have hT0 : T ≠ 0 := by
+    have hcutPos : 0 < dyadicExpCutoff (ℓ + 1) := by
+      unfold dyadicExpCutoff
+      positivity
+    omega
+  have hinner : 2 ^ (ℓ + 1) ≤ Nat.log 2 T := by
+    rw [Nat.le_log_iff_pow_le (by omega) hT0]
+    simpa only [dyadicExpCutoff] using hcut
+  have hlogT0 : Nat.log 2 T ≠ 0 := by
+    have hpowPos : 0 < 2 ^ (ℓ + 1) := by positivity
+    omega
+  rw [subpowerKubiliusTopLevel, Nat.le_log_iff_pow_le (by omega) hlogT0]
+  exact hinner
+
+/-- Once the exact top level is nontrivial, its dyadic-exponential endpoint lies below `T`. -/
+lemma dyadicExpCutoff_topLevel_le {T : ℕ}
+    (hH : 1 ≤ subpowerKubiliusTopLevel T) :
+    dyadicExpCutoff (subpowerKubiliusTopLevel T) ≤ T := by
+  let A := Nat.log 2 T
+  let H := subpowerKubiliusTopLevel T
+  have hA0 : A ≠ 0 := by
+    intro hA
+    have hHzero : subpowerKubiliusTopLevel T = 0 := by
+      simp [subpowerKubiliusTopLevel, A, hA]
+    omega
+  have hT0 : T ≠ 0 := by
+    intro hT
+    subst T
+    simp [A] at hA0
+  have hinner : 2 ^ H ≤ A := by
+    dsimp only [H, subpowerKubiliusTopLevel, A]
+    exact Nat.pow_log_le_self 2 hA0
+  calc
+    dyadicExpCutoff H = 2 ^ (2 ^ H) := rfl
+    _ ≤ 2 ^ A := Nat.pow_le_pow_right (by omega) hinner
+    _ ≤ T := Nat.pow_log_le_self 2 hT0
+
+lemma subpowerKubiliusCommonCutoff_le {T : ℕ}
+    (hH : 1 ≤ subpowerKubiliusTopLevel T) :
+    subpowerKubiliusCommonCutoff T ≤ T := by
+  exact (dyadicExpCutoff_mono (Nat.sub_le _ _)).trans
+    (dyadicExpCutoff_topLevel_le hH)
+
+/-- Ordinary levels inject into the initial segment below the exact dyadic top level. -/
+lemma subpowerKubiliusOrdinaryLevels_subset_topRange
+    (L T Y : ℕ) (hYT : Y ≤ T) :
+    subpowerKubiliusOrdinaryLevels L T Y ⊆
+      Finset.range (subpowerKubiliusTopLevel T) := by
+  intro ℓ hℓ
+  rw [Finset.mem_range]
+  have hcut := (mem_subpowerKubiliusOrdinaryLevels.mp hℓ).2.2
+  have hsucc := level_succ_le_subpowerKubiliusTopLevel (hcut.trans hYT)
+  omega
+
+/-- The number of nonempty canonical fibers is at most the exact dyadic top level.  This is the
+cardinality input needed to sum the termwise `KubiliusTV` error. -/
+theorem subpowerKubiliusLevelGroups_card_le_topLevel
+    (c : ℝ) (L T Y : ℕ) (hYT : Y ≤ T) :
+    (subpowerKubiliusLevelGroups c L T Y).card ≤
+      subpowerKubiliusTopLevel T := by
+  let levels := subpowerKubiliusOrdinaryLevels L T Y
+  let keys := levels.image (subpowerKubiliusGroupingIndex c)
+  calc
+    (subpowerKubiliusLevelGroups c L T Y).card ≤ keys.card := by
+      unfold subpowerKubiliusLevelGroups
+      exact Finset.card_image_le
+    _ ≤ levels.card := Finset.card_image_le
+    _ ≤ (Finset.range (subpowerKubiliusTopLevel T)).card :=
+      Finset.card_le_card (subpowerKubiliusOrdinaryLevels_subset_topRange L T Y hYT)
+    _ = subpowerKubiliusTopLevel T := Finset.card_range _
+
+open Classical in
+/-- At the common cutoff, every canonical group's Kubilius parameter
+`log T / log(groupCutoff)` is at least the fourth power of the exact top level.  This is the
+load-bearing coupling between the small total-variation error and the logarithmically thin
+exceptional band. -/
+theorem topLevel_pow_four_le_group_log_ratio
+    (c : ℝ) (L T : ℕ)
+    (hH : 32 ≤ subpowerKubiliusTopLevel T)
+    {s : Finset ℕ}
+    (hs : s ∈ subpowerKubiliusLevelGroups c L T
+      (subpowerKubiliusCommonCutoff T)) :
+    (subpowerKubiliusTopLevel T : ℝ) ^ 4 ≤
+      Real.log T / Real.log (subpowerKubiliusGroupCutoff s) := by
+  let H := subpowerKubiliusTopLevel T
+  let g := subpowerKubiliusTopGap T
+  let y := subpowerKubiliusGroupCutoff s
+  have hgH : g ≤ H := subpowerKubiliusTopGap_le_topLevel hH
+  have htopT : dyadicExpCutoff H ≤ T :=
+    dyadicExpCutoff_topLevel_le (by omega)
+  have hycut : y ≤ dyadicExpCutoff (H - g) := by
+    simpa only [y, subpowerKubiliusCommonCutoff, H, g] using
+      subpowerKubiliusGroupCutoff_le hs
+  have hy2 : 2 ≤ y := by
+    dsimp only [y, subpowerKubiliusGroupCutoff]
+    exact dyadicExpCutoff_two_le _
+  have hlogy0 : 0 < Real.log y :=
+    Real.log_pos (by exact_mod_cast (show 1 < y by omega))
+  have hlog2 : 0 < Real.log 2 := Real.log_pos (by norm_num)
+  have hlogy : Real.log y ≤ (2 : ℝ) ^ (H - g) * Real.log 2 := by
+    calc
+      Real.log y ≤ Real.log (dyadicExpCutoff (H - g) : ℝ) :=
+        Real.log_le_log (by positivity) (by exact_mod_cast hycut)
+      _ = (2 : ℝ) ^ (H - g) * Real.log 2 := log_dyadicExpCutoff _
+  have hlogT : (2 : ℝ) ^ H * Real.log 2 ≤ Real.log T := by
+    have hcutPos : (0 : ℝ) < dyadicExpCutoff H := by
+      exact_mod_cast (show 0 < dyadicExpCutoff H by
+        unfold dyadicExpCutoff
+        positivity)
+    calc
+      (2 : ℝ) ^ H * Real.log 2 = Real.log (dyadicExpCutoff H : ℝ) :=
+        (log_dyadicExpCutoff H).symm
+      _ ≤ Real.log T :=
+        Real.log_le_log hcutPos (by exact_mod_cast htopT)
+  have hpowNat : H ^ 4 * 2 ^ (H - g) ≤ 2 ^ H := by
+    calc
+      H ^ 4 * 2 ^ (H - g) ≤ 2 ^ g * 2 ^ (H - g) :=
+        Nat.mul_le_mul_right _ topLevel_pow_four_le_two_pow_topGap
+      _ = 2 ^ (g + (H - g)) := (pow_add 2 g (H - g)).symm
+      _ = 2 ^ H := by rw [Nat.add_sub_of_le hgH]
+  have hpow : (H : ℝ) ^ 4 * (2 : ℝ) ^ (H - g) ≤ (2 : ℝ) ^ H := by
+    exact_mod_cast hpowNat
+  apply (le_div_iff₀ hlogy0).2
+  calc
+    (H : ℝ) ^ 4 * Real.log y ≤
+        (H : ℝ) ^ 4 * ((2 : ℝ) ^ (H - g) * Real.log 2) := by
+      gcongr
+    _ = ((H : ℝ) ^ 4 * (2 : ℝ) ^ (H - g)) * Real.log 2 := by ring
+    _ ≤ (2 : ℝ) ^ H * Real.log 2 := mul_le_mul_of_nonneg_right hpow hlog2.le
+    _ ≤ Real.log T := hlogT
+
+/-- For `u ≥ V ≥ 1`, the superexponential total-variation term `u⁻ᵘ` is bounded by
+`1 / V`.  The deliberately coarse reciprocal form is enough once the common cutoff makes `V`
+a high power of `log log T`. -/
+lemma rpow_neg_self_le_one_div {V u : ℝ} (hV : 1 ≤ V) (hVu : V ≤ u) :
+    Real.rpow u (-u) ≤ 1 / V := by
+  have hu : 1 ≤ u := hV.trans hVu
+  calc
+    Real.rpow u (-u) ≤ Real.rpow u (-1) :=
+      Real.rpow_le_rpow_of_exponent_le hu (by linarith)
+    _ = (Real.rpow u 1)⁻¹ := Real.rpow_neg (zero_le_one.trans hu) 1
+    _ = u⁻¹ := congrArg Inv.inv (Real.rpow_one u)
+    _ = 1 / u := by rw [one_div]
+    _ ≤ 1 / V := one_div_le_one_div_of_le (by linarith) hVu
+
+open Classical in
+/-- Uniform finite-family estimate for the accumulated `KubiliusTV` error in the canonical bound.
+It isolates the remaining cutoff construction into one transparent condition: every ordinary
+group must have `log T / log y ≥ V`. -/
+theorem subpowerKubiliusCanonical_tv_sum_le
+    (K c : ℝ) (L T Y J : ℕ) (V : ℝ)
+    (hK : 0 ≤ K) (hYT : Y ≤ T) (hV : 1 ≤ V)
+    (hratio : ∀ s ∈ subpowerKubiliusLevelGroups c L T Y,
+      V ≤ Real.log T / Real.log (subpowerKubiliusGroupCutoff s)) :
+    (∑ s ∈ subpowerKubiliusLevelGroups c L T Y,
+      J * K * (Real.rpow
+        (Real.log T / Real.log (subpowerKubiliusGroupCutoff s))
+        (-(Real.log T / Real.log (subpowerKubiliusGroupCutoff s))) +
+          Real.rpow T (-(1 / 2 : ℝ)))) ≤
+      subpowerKubiliusTopLevel T * (J * K *
+        (1 / V + Real.rpow T (-(1 / 2 : ℝ)))) := by
+  let groups := subpowerKubiliusLevelGroups c L T Y
+  let E : ℝ := J * K * (1 / V + Real.rpow T (-(1 / 2 : ℝ)))
+  have hJK : 0 ≤ (J : ℝ) * K := mul_nonneg (by positivity) hK
+  have hE : 0 ≤ E := by
+    dsimp only [E]
+    exact mul_nonneg hJK (add_nonneg (by positivity) (Real.rpow_nonneg (by positivity) _))
+  have hterm : ∀ s ∈ groups,
+      J * K * (Real.rpow
+        (Real.log T / Real.log (subpowerKubiliusGroupCutoff s))
+        (-(Real.log T / Real.log (subpowerKubiliusGroupCutoff s))) +
+          Real.rpow T (-(1 / 2 : ℝ))) ≤ E := by
+    intro s hs
+    dsimp only [groups] at hs
+    dsimp only [E]
+    gcongr
+    exact rpow_neg_self_le_one_div hV (hratio s hs)
+  calc
+    (∑ s ∈ subpowerKubiliusLevelGroups c L T Y,
+      J * K * (Real.rpow
+        (Real.log T / Real.log (subpowerKubiliusGroupCutoff s))
+        (-(Real.log T / Real.log (subpowerKubiliusGroupCutoff s))) +
+          Real.rpow T (-(1 / 2 : ℝ)))) ≤ ∑ _s ∈ groups, E := by
+      exact Finset.sum_le_sum hterm
+    _ = groups.card * E := by rw [Finset.sum_const, nsmul_eq_mul]
+    _ ≤ subpowerKubiliusTopLevel T * E := by
+      apply mul_le_mul_of_nonneg_right _ hE
+      exact_mod_cast subpowerKubiliusLevelGroups_card_le_topLevel c L T Y hYT
+    _ = subpowerKubiliusTopLevel T * (J * K *
+        (1 / V + Real.rpow T (-(1 / 2 : ℝ)))) := rfl
+
+open Classical in
+/-- Specialized accumulated `KubiliusTV` bound for the common cutoff.  With the intended threshold
+truncation `J ≤ 4H`, where `H = log₂ log₂ T`, the error is reduced to an inverse-square
+term plus `H² / √T`. -/
+theorem subpowerKubiliusCanonical_tv_sum_commonCutoff_le
+    (K c : ℝ) (L T J : ℕ) (hK : 0 ≤ K)
+    (hH : 32 ≤ subpowerKubiliusTopLevel T)
+    (hJ : J ≤ 4 * subpowerKubiliusTopLevel T) :
+    (∑ s ∈ subpowerKubiliusLevelGroups c L T
+        (subpowerKubiliusCommonCutoff T),
+      J * K * (Real.rpow
+        (Real.log T / Real.log (subpowerKubiliusGroupCutoff s))
+        (-(Real.log T / Real.log (subpowerKubiliusGroupCutoff s))) +
+          Real.rpow T (-(1 / 2 : ℝ)))) ≤
+      4 * K / (subpowerKubiliusTopLevel T : ℝ) ^ 2 +
+        4 * K * (subpowerKubiliusTopLevel T : ℝ) ^ 2 *
+          Real.rpow T (-(1 / 2 : ℝ)) := by
+  let H := subpowerKubiliusTopLevel T
+  have hHpos : (0 : ℝ) < H := by exact_mod_cast (show 0 < H by omega)
+  have hcutT : subpowerKubiliusCommonCutoff T ≤ T :=
+    subpowerKubiliusCommonCutoff_le (by omega)
+  have hV : (1 : ℝ) ≤ (H : ℝ) ^ 4 := by
+    have hHone : (1 : ℝ) ≤ H := by exact_mod_cast (show 1 ≤ H by omega)
+    exact one_le_pow₀ hHone
+  have hraw := subpowerKubiliusCanonical_tv_sum_le K c L T
+    (subpowerKubiliusCommonCutoff T) J ((H : ℝ) ^ 4) hK hcutT
+    hV
+    (fun s hs ↦ by
+      simpa only [H] using topLevel_pow_four_le_group_log_ratio c L T hH hs)
+  have hJreal : (J : ℝ) ≤ 4 * H := by exact_mod_cast hJ
+  have htail0 : 0 ≤ 1 / (H : ℝ) ^ 4 + Real.rpow T (-(1 / 2 : ℝ)) :=
+    add_nonneg (by positivity) (Real.rpow_nonneg (by positivity) _)
+  calc
+    (∑ s ∈ subpowerKubiliusLevelGroups c L T
+        (subpowerKubiliusCommonCutoff T),
+      J * K * (Real.rpow
+        (Real.log T / Real.log (subpowerKubiliusGroupCutoff s))
+        (-(Real.log T / Real.log (subpowerKubiliusGroupCutoff s))) +
+          Real.rpow T (-(1 / 2 : ℝ)))) ≤
+        H * (J * K *
+          (1 / (H : ℝ) ^ 4 + Real.rpow T (-(1 / 2 : ℝ)))) := hraw
+    _ ≤ H * ((4 * H) * K *
+          (1 / (H : ℝ) ^ 4 + Real.rpow T (-(1 / 2 : ℝ)))) := by
+      apply mul_le_mul_of_nonneg_left _ hHpos.le
+      apply mul_le_mul_of_nonneg_right _ htail0
+      exact mul_le_mul_of_nonneg_right hJreal hK
+    _ = 4 * K / (H : ℝ) ^ 2 +
+        4 * K * (H : ℝ) ^ 2 * Real.rpow T (-(1 / 2 : ℝ)) := by
+      field_simp
+
 lemma summable_blockLogLog_neg_rpow {D : ℝ} (hD : 1 < D) :
     Summable (fun ℓ : ℕ ↦ Real.rpow (blockLogLog ℓ) (-D)) := by
   have hseries₀ : Summable (fun ℓ : ℕ ↦

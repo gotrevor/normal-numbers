@@ -793,3 +793,55 @@ Retain explicitly that the complementary exceptional set is only the resulting t
 following checkpoint can apply the one-level fractional-moment estimate there without ever summing
 it over the full tail.  These two estimates are the last substantial inputs before
 `exists_subpower_marginal_large_cards_le_of_kubilius` and the copied `c > 3` final assembly.
+
+## Lap checkpoint — 2026-10-26, common-cutoff TV schedule
+
+The arithmetic schedule coupling the accumulated `KubiliusTV` error to a logarithmically thin top
+band is now kernel-checked.  Write `H = log₂ log₂ T` using exact natural logarithms, reserve
+`g = 4(log₂ H + 1)` dyadic levels, and use the common cutoff `Y = 2^(2^(H-g))`.
+
+- `subpowerKubiliusTopLevel`, `subpowerKubiliusTopGap`, and
+  `subpowerKubiliusCommonCutoff` implement this schedule without floor/ceiling approximations.
+  `subpowerKubiliusTopGap_le_topLevel` proves `g ≤ H` once `H ≥ 32`, and
+  `topLevel_pow_four_le_two_pow_topGap` proves the exact separation `H^4 ≤ 2^g`.
+- `level_succ_le_subpowerKubiliusTopLevel` and
+  `subpowerKubiliusLevelGroups_card_le_topLevel` prove that every ordinary arithmetic level lies
+  below `H` and hence that there are at most `H` nonempty canonical groups.  Thus the accumulated
+  TV error pays only the true logarithmic number of groups, not the `T` nominal levels in the
+  original cover.
+- `topLevel_pow_four_le_group_log_ratio` proves uniformly for every ordinary group that
+  `H^4 ≤ log T / log(groupCutoff)`.  The proof uses the exact dyadic logarithm identity and the
+  common terminal cutoff; no asymptotic replacement is hidden.
+- `subpowerKubiliusCanonical_tv_sum_le` packages the generic finite-family TV estimate, and
+  `subpowerKubiliusCanonical_tv_sum_commonCutoff_le` specializes it to the schedule.  For the
+  intended truncation `J ≤ 4H`, the full accumulated error is at most
+  `4K/H² + 4K H² T^{-1/2}`.  This is the precise vanishing bound needed in the global assembly.
+
+The cumulative diff from planting commit `e61852e6` remains insertion-only (`3479` inserted lines,
+`0` deleted lines): `primesUpTo`, `kubiliusMass`, `KubiliusTV`, and the headline statement remain
+unchanged.  `KubiliusTV` remains only a named hypothesis; no `axiom`, `opaque`, or `native_decide`
+was added.  The scoped target still has exactly its single frozen headline `sorry`.
+
+Verification actually run:
+
+- `lake env lean src/NormalNumbers/CoefmassErdosBorweinSubpowerKub.lean` — succeeds, with only the
+  pre-existing headline `sorry` warning (plus publish-tier tactic guidance).
+- `~/personal/bin/lean-green . --target NormalNumbers.CoefmassErdosBorweinSubpowerKub --import
+  NormalNumbers.CoefmassErdosBorweinSubpowerKub --axioms
+  NormalNumbers.ErdosBorweinSubpowerKub.subpowerKubiliusLevelGroups_card_le_topLevel --axioms
+  NormalNumbers.ErdosBorweinSubpowerKub.topLevel_pow_four_le_group_log_ratio --axioms
+  NormalNumbers.ErdosBorweinSubpowerKub.subpowerKubiliusCanonical_tv_sum_le --axioms
+  NormalNumbers.ErdosBorweinSubpowerKub.subpowerKubiliusCanonical_tv_sum_commonCutoff_le` —
+  `FORMALIZE-TIER GREEN`; all four declarations report exactly `Classical.choice`, `Quot.sound`,
+  and `propext`.
+- `~/personal/bin/lean-green .` — full 10,847-job repository build, `FORMALIZE-TIER GREEN`.
+
+The remaining global term is the exceptional top band, together with the routine limit extraction
+from the displayed TV majorant.  The next highest-value attack is to prove that every nonzero
+exceptional block lies in the last `g = O(log H)` active levels, then apply the existing one-level
+fractional-moment majorant there.  Because those levels have `blockLogLog ≍ H`, the band total is
+`O(log H * H^(1/2-c/2) / sqrt(log H))`, which tends to zero for every `c > 1`.  In the same pass,
+package `4K/H² + 4K H²/√T → 0` and the threshold truncation `J = 4H`; the remaining larger
+thresholds are handled by the divisor-count tail.  These estimates then feed the canonical grouped
+bound to produce `exists_subpower_marginal_large_cards_le_of_kubilius`, after which the proved
+`c > 3` capped-residual and headline assembly can be reused.
