@@ -1,0 +1,55 @@
+{
+  "arithmetic": "exact rational comparisons; floats are display only",
+  "known_answer_controls": "passed",
+  "records": [
+    {
+      "n": 0,
+      "radius": 1,
+      "terms": 1,
+      "character_total_perimeter_bound_passes": true,
+      "character_tail_scaled_bound_passes": true,
+      "unweighted_control_exceeds_perimeter_bound": false,
+      "total_approx": 0.0,
+      "tail_approx": 0.0,
+      "unweighted_control_approx": 0.0,
+      "perimeter_bound": "5/2"
+    },
+    {
+      "n": 1,
+      "radius": 4,
+      "terms": 16,
+      "character_total_perimeter_bound_passes": true,
+      "character_tail_scaled_bound_passes": true,
+      "unweighted_control_exceeds_perimeter_bound": false,
+      "total_approx": 0.06828726828726829,
+      "tail_approx": 0.40162060162060165,
+      "unweighted_control_approx": 4.091663891663892,
+      "perimeter_bound": "25/4"
+    },
+    {
+      "n": 2,
+      "radius": 16,
+      "terms": 256,
+      "character_total_perimeter_bound_passes": true,
+      "character_tail_scaled_bound_passes": true,
+      "unweighted_control_exceeds_perimeter_bound": true,
+      "total_approx": 1.5619374585593302,
+      "tail_approx": 1.4693411659630375,
+      "unweighted_control_approx": 101.83231048122377,
+      "perimeter_bound": "85/4"
+    },
+    {
+      "n": 3,
+      "radius": 64,
+      "terms": 4096,
+      "character_total_perimeter_bound_passes": true,
+      "character_tail_scaled_bound_passes": true,
+      "unweighted_control_exceeds_perimeter_bound": true,
+      "total_approx": 3.4908773057505895,
+      "tail_approx": 1.492197038296211,
+      "unweighted_control_approx": 1714.3455619740585,
+      "perimeter_bound": "325/4"
+    }
+  ],
+  "scope": "Finite checks only. The all-index theorem has explicit divisor and Leibniz inputs."
+}

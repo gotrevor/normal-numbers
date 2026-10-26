@@ -24,5 +24,13 @@ an intentional sorry control returned `sorryAx`.
 | Area/perimeter control alone gives digit coverage | lane brief; square-count control behaves differently | residue/8^n shadows fract(2^nπ), so the area estimate transfers a cover but supplies none | `diskPhase_sub_le`, sandwich theorems; probe `scripts/pi_route3_residue.py` (scaled error 0.002 at n=11) |
 | Small-d part of the χ₄ divisor identity is explicit and analysable | finite, explicit floors ⌊16^n/d⌋ | it is the orbit of 2^n·4L_D, L_D a rational Leibniz partial sum: periodic, no π content; π lives in the tail d > D, which is the digits of π again | `diskSmallPart_orbit` |
 
-Reopen condition: an estimate on the tail floor errors Σ_{d>D} χ₄(d){16^n/d} mod 8^n that is not a
-restatement of 2^n·π mod 1 (none known).
+**Tail-error review, 2026-10-26:** a vanishing size bound for the proposed tail
+floor errors is already available.  `DiskFloorError.tail_floorError_scaled_bound`
+proves absolute scaled error ≤14/2^n for D≤4^n, from `DiskDivisorIdentity`, the
+explicit alternating-series input `LeibnizRemainderBound`, and the existing
+perimeter estimate.  See [the derivation and scope](disk-floor-error.md).
+This supplies no digit visits: the harmonic main term retains the pi orbit.
+
+Reopen condition: an additional relation across scales or another arithmetic
+estimate that actually forces visits to residue intervals.  The mere size of
+the tail floor errors at the existing scale is not the missing input.
