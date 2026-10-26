@@ -138,6 +138,111 @@ theorem kubiliusMass_exists_centeredPrefixSum_ge_le_exp_cubic
   apply Real.exp_le_exp.mpr
   exact sub_le_sub_right hmul (θ * h)
 
+open Classical in
+/-- The cubic maximal inequality optimized at `θ = h / U`.  Here `U` is any upper bound for
+the Mertens variance at the terminal prime cutoff.  The extra parameter `x` is the auxiliary
+threshold that will subsequently be summed geometrically. -/
+theorem kubiliusMass_exists_centeredPrefixSum_ge_add_le_exp_optimized
+    (y : ℕ) (hy : 2 ≤ y) (h U x : ℝ) (hh : 0 ≤ h) (hU : 0 < U)
+    (hhU : h ≤ U) (_hx : 0 ≤ x)
+    (hvar : Real.log (Real.log (y : ℝ)) + Erdos67.PrimeEstimates.mertensBound ≤ U) :
+    kubiliusMass y
+        {S | ∃ k ≤ ((primesUpTo y).sort (· ≤ ·)).length,
+          h + x ≤ centeredBernoulliPrefixSum (fun p : ℕ ↦ (1 / p : ℝ)) S
+            ((primesUpTo y).sort (· ≤ ·)) k} ≤
+      Real.exp (-h ^ 2 / (2 * U) + h ^ 3 / U ^ 2 - h * x / U) := by
+  have hθ0 : 0 ≤ h / U := div_nonneg hh hU.le
+  have hθ1 : h / U ≤ 1 := (div_le_one hU).2 hhU
+  have hcoef : 0 ≤ (h / U) ^ 2 / 2 + (h / U) ^ 3 := by positivity
+  have hmax := kubiliusMass_exists_centeredPrefixSum_ge_le_exp_cubic
+    y hy (h / U) (h + x) hθ0 hθ1
+  refine hmax.trans ?_
+  apply Real.exp_le_exp.mpr
+  have hmul := mul_le_mul_of_nonneg_left hvar hcoef
+  calc
+    ((h / U) ^ 2 / 2 + (h / U) ^ 3) *
+          (Real.log (Real.log (y : ℝ)) + Erdos67.PrimeEstimates.mertensBound) -
+        h / U * (h + x) ≤
+      ((h / U) ^ 2 / 2 + (h / U) ^ 3) * U - h / U * (h + x) :=
+        sub_le_sub_right hmul _
+    _ = -h ^ 2 / (2 * U) + h ^ 3 / U ^ 2 - h * x / U := by
+      field_simp [ne_of_gt hU]
+      ring
+
+/-- The optimized exponential tails have an exact geometric sum. -/
+theorem hasSum_kubiliusOptimizedTail (E h U : ℝ) (hh : 0 < h) (hU : 0 < U) :
+    HasSum (fun j : ℕ ↦ Real.exp (E - h * (j : ℝ) / U))
+      (Real.exp E * (1 - Real.exp (-h / U))⁻¹) := by
+  have hratio0 : 0 ≤ Real.exp (-h / U) := (Real.exp_pos _).le
+  have hratio1 : Real.exp (-h / U) < 1 := by
+    rw [Real.exp_lt_one_iff]
+    exact div_neg_of_neg_of_pos (neg_neg_of_pos hh) hU
+  have hgeom := (hasSum_geometric_of_lt_one hratio0 hratio1).mul_left (Real.exp E)
+  have hfun : (fun j : ℕ ↦ Real.exp (E - h * (j : ℝ) / U)) =
+      fun j : ℕ ↦ Real.exp E * Real.exp (-h / U) ^ j := by
+    funext j
+    rw [← Real.exp_nat_mul, ← Real.exp_add]
+    congr 1
+    ring
+  rw [hfun]
+  exact hgeom
+
+/-- Summing the auxiliary thresholds costs at most `2U/h`, provided the optimizing parameter is
+at most `1/2`.  This is the discrete counterpart of integrating the exponential maximal tail. -/
+theorem tsum_kubiliusOptimizedTail_le (E h U : ℝ) (hh : 0 < h) (hU : 0 < U)
+    (hhU : 2 * h ≤ U) :
+    (∑' j : ℕ, Real.exp (E - h * (j : ℝ) / U)) ≤
+      Real.exp E * (2 * U / h) := by
+  rw [(hasSum_kubiliusOptimizedTail E h U hh hU).tsum_eq]
+  apply mul_le_mul_of_nonneg_left _ (Real.exp_pos _).le
+  have hσ0 : 0 < 2 * h / U := div_pos (mul_pos (by norm_num) hh) hU
+  have hσ1 : 2 * h / U ≤ 1 := (div_le_one hU).2 hhU
+  have hinv := one_sub_exp_neg_half_inv_le (2 * h / U) hσ0 hσ1
+  have hexp : -(2 * h / U) / 2 = -h / U := by ring
+  rw [hexp] at hinv
+  calc
+    (1 - Real.exp (-h / U))⁻¹ ≤ 4 / (2 * h / U) := hinv
+    _ = 2 * U / h := by
+      field_simp [ne_of_gt hh, ne_of_gt hU]
+      ring
+
+open Classical in
+/-- One geometric log-log block, already summed over every auxiliary integer threshold.  This is
+the model-side estimate used before the `KubiliusTV` transfer. -/
+theorem sum_kubiliusMass_exists_centeredPrefixSum_ge_add_le_optimized
+    (y : ℕ) (hy : 2 ≤ y) (h U : ℝ) (hh : 0 < h) (hU : 0 < U)
+    (hhU : 2 * h ≤ U)
+    (hvar : Real.log (Real.log (y : ℝ)) + Erdos67.PrimeEstimates.mertensBound ≤ U)
+    (J : ℕ) :
+    (∑ j ∈ Finset.range J, kubiliusMass y
+        {S | ∃ k ≤ ((primesUpTo y).sort (· ≤ ·)).length,
+          h + j ≤ centeredBernoulliPrefixSum (fun p : ℕ ↦ (1 / p : ℝ)) S
+            ((primesUpTo y).sort (· ≤ ·)) k}) ≤
+      Real.exp (-h ^ 2 / (2 * U) + h ^ 3 / U ^ 2) * (2 * U / h) := by
+  let E : ℝ := -h ^ 2 / (2 * U) + h ^ 3 / U ^ 2
+  have hhU' : h ≤ U := by linarith
+  have hterm : ∀ j : ℕ,
+      kubiliusMass y
+          {S | ∃ k ≤ ((primesUpTo y).sort (· ≤ ·)).length,
+            h + j ≤ centeredBernoulliPrefixSum (fun p : ℕ ↦ (1 / p : ℝ)) S
+              ((primesUpTo y).sort (· ≤ ·)) k} ≤
+        Real.exp (E - h * (j : ℝ) / U) := by
+    intro j
+    exact kubiliusMass_exists_centeredPrefixSum_ge_add_le_exp_optimized
+      y hy h U j hh.le hU hhU' (by positivity) hvar
+  have hsum := (hasSum_kubiliusOptimizedTail E h U hh hU).summable
+  calc
+    (∑ j ∈ Finset.range J, kubiliusMass y
+        {S | ∃ k ≤ ((primesUpTo y).sort (· ≤ ·)).length,
+          h + j ≤ centeredBernoulliPrefixSum (fun p : ℕ ↦ (1 / p : ℝ)) S
+            ((primesUpTo y).sort (· ≤ ·)) k}) ≤
+        ∑ j ∈ Finset.range J, Real.exp (E - h * (j : ℝ) / U) := by
+      exact Finset.sum_le_sum fun j _ ↦ hterm j
+    _ ≤ ∑' j : ℕ, Real.exp (E - h * (j : ℝ) / U) :=
+      hsum.sum_le_tsum (Finset.range J) (fun j _ ↦ (Real.exp_pos _).le)
+    _ ≤ Real.exp E * (2 * U / h) :=
+      tsum_kubiliusOptimizedTail_le E h U hh hU hhU
+
 /-! ### Geometric log-log blocks -/
 
 /-- The geometric block ratio chosen strictly between `1` and `c`. -/
@@ -165,6 +270,56 @@ theorem kubiliusGeometricDecayExponent_neg {c : ℝ} (hc : 1 < c) :
   apply sub_neg.mpr
   apply (lt_div_iff₀ hr0).2
   nlinarith [kubiliusBlockRatio_lt hc]
+
+/-- Exact exponent produced by the optimized maximal inequality at the ideal barrier
+`h = u * blockSigma c u` and variance cap `U = r*u`. -/
+theorem kubiliusOptimizedExponent_eq (c r u : ℝ) (hc : 0 ≤ c) (hr : 0 < r)
+    (hu : 1 ≤ u) :
+    -(u * blockSigma c u) ^ 2 / (2 * (r * u)) +
+        (u * blockSigma c u) ^ 3 / (r * u) ^ 2 =
+      (-c / (2 * r) + c * blockSigma c u / r ^ 2) * Real.log u := by
+  have hu0 : 0 < u := zero_lt_one.trans_le hu
+  have hsq := blockSigma_sq c u hc hu
+  have hcub := blockSigma_cubic c u hc hu
+  calc
+    -(u * blockSigma c u) ^ 2 / (2 * (r * u)) +
+          (u * blockSigma c u) ^ 3 / (r * u) ^ 2 =
+        -(u * blockSigma c u ^ 2) / (2 * r) +
+          (u * blockSigma c u ^ 3) / r ^ 2 := by
+            field_simp [ne_of_gt hr, ne_of_gt hu0]
+    _ = (-c / (2 * r) + c * blockSigma c u / r ^ 2) * Real.log u := by
+      rw [hsq, hcub]
+      ring
+
+/-- The cubic MGF correction is eventually absorbed by half of the strict gap `r < c`.
+Consequently the optimized exponent has coefficient `-(c+r)/(4r)` in front of `log u`. -/
+theorem eventually_kubiliusOptimizedExponent_le
+    {c r : ℝ} (hc : 0 < c) (hr : 0 < r) (hrc : r < c) :
+    ∀ᶠ u : ℝ in atTop, 1 ≤ u ∧
+      -(u * blockSigma c u) ^ 2 / (2 * (r * u)) +
+          (u * blockSigma c u) ^ 3 / (r * u) ^ 2 ≤
+        (-(c + r) / (4 * r)) * Real.log u := by
+  have hgap : 0 < (c - r) * r / (4 * c) := by positivity
+  have hsigma : ∀ᶠ u : ℝ in atTop,
+      blockSigma c u < (c - r) * r / (4 * c) :=
+    (tendsto_blockSigma_atTop_zero c).eventually_lt_const hgap
+  filter_upwards [eventually_ge_atTop (1 : ℝ), hsigma] with u hu hsigma
+  refine ⟨hu, ?_⟩
+  have hcorrection : c * blockSigma c u / r ^ 2 ≤ (c - r) / (4 * r) := by
+    apply le_of_lt
+    calc
+      c * blockSigma c u / r ^ 2 <
+          c * ((c - r) * r / (4 * c)) / r ^ 2 := by gcongr
+      _ = (c - r) / (4 * r) := by
+        field_simp [ne_of_gt hc, ne_of_gt hr]
+  rw [kubiliusOptimizedExponent_eq c r u hc.le hr hu]
+  apply mul_le_mul_of_nonneg_right _ (Real.log_nonneg hu)
+  calc
+    -c / (2 * r) + c * blockSigma c u / r ^ 2 ≤
+        -c / (2 * r) + (c - r) / (4 * r) := by gcongr
+    _ = -(c + r) / (4 * r) := by
+      field_simp [ne_of_gt hr]
+      ring
 
 /-- The geometric-block majorant is summable for every `c > 1`; this is the exact place where
 choosing a ratio strictly below `c` reaches the heuristic threshold. -/

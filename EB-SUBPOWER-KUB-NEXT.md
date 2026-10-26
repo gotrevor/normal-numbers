@@ -102,3 +102,50 @@ blocks: instantiate the cubic maximal inequality with `θ = h/U`, prove `θ ≤ 
 barrier `h = √(c u log u) - 2 log₂ u - O(1)` and the top-cut shift, integrate the auxiliary threshold,
 then dominate the block terms by the summable majorant proved here.  Only after that model theorem
 is green should work move to divisor/squarefull comparison (step 1) and the `KubiliusTV` transfer.
+
+## Lap checkpoint — 2026-10-26, optimized one-block bound
+
+The optimization and auxiliary-threshold integration portions of the uniform model bound are now
+kernel-checked.
+
+- `kubiliusMass_exists_centeredPrefixSum_ge_add_le_exp_optimized` instantiates the cubic maximal
+  inequality at `θ = h/U`, for any Mertens variance cap `U`, and gives the exact exponent
+  `-h²/(2U) + h³/U² - hx/U`.
+- `hasSum_kubiliusOptimizedTail` and `tsum_kubiliusOptimizedTail_le` sum the auxiliary integer
+  thresholds exactly as a geometric series and bound their total cost by `2U/h` when `2h ≤ U`.
+- `sum_kubiliusMass_exists_centeredPrefixSum_ge_add_le_optimized` packages those facts as a single
+  finite-threshold `kubiliusMass` estimate, uniformly in the number of thresholds.
+- `kubiliusOptimizedExponent_eq` specializes to the ideal barrier
+  `h = u * blockSigma c u = √(cu log u)` and `U = r*u`.  The existing exact square/cubic identities
+  reduce its exponent to `(-c/(2r) + c*blockSigma c u/r²) log u`.
+- `eventually_kubiliusOptimizedExponent_le` uses `blockSigma c u → 0` to absorb the cubic
+  correction by half the strict gap `r < c`, leaving `-(c+r)/(4r) log u`.  After the already-proved
+  reciprocal-barrier cost `U/h ≪ √u`, this leaves the negative power `(r-c)/(4r)`, exactly half
+  of `kubiliusGeometricDecayExponent`; hence the geometric-block sum remains summable for every
+  `r < c`.
+
+The packet declarations `primesUpTo`, `kubiliusMass`, `KubiliusTV`, and the headline statement are
+still unchanged from `e61852e6`.  `KubiliusTV` remains only a hypothesis; no `axiom` or
+`native_decide` was added.  The scoped target still has its single headline `sorry`.
+
+Verification actually run:
+
+- `lake env lean src/NormalNumbers/CoefmassErdosBorweinSubpowerKub.lean` — succeeds, with only the
+  pre-existing headline `sorry` warning.
+- `~/personal/bin/lean-green . --target NormalNumbers.CoefmassErdosBorweinSubpowerKub --import
+  NormalNumbers.CoefmassErdosBorweinSubpowerKub --axioms
+  NormalNumbers.ErdosBorweinSubpowerKub.sum_kubiliusMass_exists_centeredPrefixSum_ge_add_le_optimized
+  --axioms NormalNumbers.ErdosBorweinSubpowerKub.eventually_kubiliusOptimizedExponent_le --axioms
+  NormalNumbers.ErdosBorweinSubpowerKub.summable_kubiliusGeometricDecay` — `FORMALIZE-TIER GREEN`;
+  all three declarations report only `Classical.choice`, `Quot.sound`, and `propext`.
+- `~/personal/bin/lean-green .` — full repository build, `FORMALIZE-TIER GREEN`.
+
+The remaining step-6 blocker is no longer the maximal inequality, its optimization, the threshold
+sum, or the leading geometric exponent.  It is the deterministic event comparison for the actual
+lowered barrier: incorporate `2 log₂ u + O(1)` and the top-cut shift `v = ⌈log L_T⌉` into `h`, prove
+these losses are `o(√(u log u))` uniformly over a geometric block, and map a selected-prime set's
+block walk to the prefix event in
+`sum_kubiliusMass_exists_centeredPrefixSum_ge_add_le_optimized`.  The next lap should formalize that
+lowered-barrier comparison and its eventual parameter conditions (`0 < h`, `2h ≤ U`), then combine
+it with `eventually_kubiliusOptimizedExponent_le`.  Only then move to the squarefull/divisor
+comparison and `KubiliusTV` transfer.
