@@ -1937,6 +1937,370 @@ theorem eventually_kubiliusLevelBarrier_ge_anchor_blockLogLog
   tendsto_blockLogLog_atTop.eventually
     (eventually_kubiliusLevelBarrier_ge_anchor hc A B hA hB)
 
+/-! ### The finite slack-aware level partition -/
+
+/-- Canonical choice of the geometric schedule index attached to an arithmetic level.  The junk
+value `0` is used before the eventual range; `subpowerKubiliusGroupingIndex_spec` is the only
+interface used once a witness exists. -/
+noncomputable def subpowerKubiliusGroupingIndex (c : ℝ) (ℓ : ℕ) : ℕ := by
+  classical
+  exact if h : ∃ k : ℕ,
+        (subpowerKubiliusGroupingRatio c : ℝ) ^ k ≤ blockLogLog ℓ ∧
+          blockLogLog (ℓ + 1) + Erdos67.PrimeEstimates.mertensBound ≤
+            kubiliusBlockRatio (subpowerKubiliusModelCoefficient c) *
+              (subpowerKubiliusGroupingRatio c : ℝ) ^ k then
+      Classical.choose h
+    else 0
+
+theorem subpowerKubiliusGroupingIndex_spec {c : ℝ} {ℓ : ℕ}
+    (h : ∃ k : ℕ,
+      (subpowerKubiliusGroupingRatio c : ℝ) ^ k ≤ blockLogLog ℓ ∧
+        blockLogLog (ℓ + 1) + Erdos67.PrimeEstimates.mertensBound ≤
+          kubiliusBlockRatio (subpowerKubiliusModelCoefficient c) *
+            (subpowerKubiliusGroupingRatio c : ℝ) ^ k) :
+    (subpowerKubiliusGroupingRatio c : ℝ) ^
+          subpowerKubiliusGroupingIndex c ℓ ≤ blockLogLog ℓ ∧
+      blockLogLog (ℓ + 1) + Erdos67.PrimeEstimates.mertensBound ≤
+        kubiliusBlockRatio (subpowerKubiliusModelCoefficient c) *
+          (subpowerKubiliusGroupingRatio c : ℝ) ^
+            subpowerKubiliusGroupingIndex c ℓ := by
+  rw [subpowerKubiliusGroupingIndex, dif_pos h]
+  exact Classical.choose_spec h
+
+theorem eventually_subpowerKubiliusGroupingIndex_spec
+    {c : ℝ} (hc : 1 < c) :
+    ∀ᶠ ℓ : ℕ in atTop,
+      (subpowerKubiliusGroupingRatio c : ℝ) ^
+            subpowerKubiliusGroupingIndex c ℓ ≤ blockLogLog ℓ ∧
+        blockLogLog (ℓ + 1) + Erdos67.PrimeEstimates.mertensBound ≤
+          kubiliusBlockRatio (subpowerKubiliusModelCoefficient c) *
+            (subpowerKubiliusGroupingRatio c : ℝ) ^
+              subpowerKubiliusGroupingIndex c ℓ := by
+  filter_upwards [eventually_exists_subpowerKubiliusGroupingIndex hc] with ℓ hℓ
+  exact subpowerKubiliusGroupingIndex_spec hℓ
+
+/-- The canonical grouping indices tend to infinity.  This is the bridge from a late arithmetic
+level interval to the tail index supplied by the summable geometric model estimate. -/
+theorem eventually_le_subpowerKubiliusGroupingIndex
+    {c : ℝ} (hc : 1 < c) (K : ℕ) :
+    ∀ᶠ ℓ : ℕ in atTop, K ≤ subpowerKubiliusGroupingIndex c ℓ := by
+  let q : ℝ := subpowerKubiliusGroupingRatio c
+  let r : ℝ := kubiliusBlockRatio (subpowerKubiliusModelCoefficient c)
+  have hq : 1 < q := one_lt_subpowerKubiliusGroupingRatio hc
+  have hr : 0 ≤ r := by
+    dsimp only [r]
+    exact zero_le_one.trans (one_lt_kubiliusBlockRatio
+      (one_lt_subpowerKubiliusModelCoefficient hc)).le
+  have hbig := tendsto_blockLogLog_atTop.eventually_gt_atTop
+    (r * q ^ K - Erdos67.PrimeEstimates.mertensBound)
+  filter_upwards [eventually_subpowerKubiliusGroupingIndex_spec hc, hbig] with ℓ hi hlarge
+  by_contra hnot
+  have hindexK : subpowerKubiliusGroupingIndex c ℓ ≤ K := by omega
+  have hpow : q ^ subpowerKubiliusGroupingIndex c ℓ ≤ q ^ K :=
+    pow_le_pow_right₀ hq.le hindexK
+  have hrpow : r * q ^ subpowerKubiliusGroupingIndex c ℓ ≤ r * q ^ K :=
+    mul_le_mul_of_nonneg_left hpow hr
+  dsimp only [q, r] at hi hlarge hrpow
+  rw [blockLogLog_succ] at hi
+  linarith [Real.log_pos (by norm_num : (1 : ℝ) < 2)]
+
+/-- The finite interval of levels that can arise from the allocated divisor-tail cover. -/
+def subpowerKubiliusLevelInterval (L T : ℕ) : Finset ℕ :=
+  Finset.Ico L (L + T)
+
+/-- Levels whose next dyadic endpoint lies below the common usable prime cutoff `Y`. -/
+def subpowerKubiliusOrdinaryLevels (L T Y : ℕ) : Finset ℕ :=
+  (subpowerKubiliusLevelInterval L T).filter
+    (fun ℓ => dyadicExpCutoff (ℓ + 1) ≤ Y)
+
+/-- The complementary top band, to be controlled by the one-level estimate rather than by
+`KubiliusTV`. -/
+def subpowerKubiliusExceptionalLevels (L T Y : ℕ) : Finset ℕ :=
+  (subpowerKubiliusLevelInterval L T).filter
+    (fun ℓ => Y < dyadicExpCutoff (ℓ + 1))
+
+/-- Fibers of the ordinary levels under the canonical geometric grouping index. -/
+noncomputable def subpowerKubiliusLevelGroups
+    (c : ℝ) (L T Y : ℕ) : Finset (Finset ℕ) :=
+  let levels := subpowerKubiliusOrdinaryLevels L T Y
+  (levels.image (subpowerKubiliusGroupingIndex c)).image
+    (fun k => levels.filter (fun ℓ => subpowerKubiliusGroupingIndex c ℓ = k))
+
+/-- Terminal arithmetic prime cutoff of a level group.  Groups produced above are nonempty, while
+the definition remains total by using the `sup` junk value on the empty finset. -/
+def subpowerKubiliusGroupCutoff (s : Finset ℕ) : ℕ :=
+  dyadicExpCutoff (s.sup id + 1)
+
+/-- Geometric model anchor of a level group. -/
+noncomputable def subpowerKubiliusGroupAnchor (c : ℝ) (s : Finset ℕ) : ℝ :=
+  (subpowerKubiliusGroupingRatio c : ℝ) ^
+    subpowerKubiliusGroupingIndex c (s.sup id)
+
+@[simp] lemma mem_subpowerKubiliusLevelInterval {L T ℓ : ℕ} :
+    ℓ ∈ subpowerKubiliusLevelInterval L T ↔ L ≤ ℓ ∧ ℓ < L + T := by
+  simp [subpowerKubiliusLevelInterval]
+
+@[simp] lemma mem_subpowerKubiliusOrdinaryLevels {L T Y ℓ : ℕ} :
+    ℓ ∈ subpowerKubiliusOrdinaryLevels L T Y ↔
+      L ≤ ℓ ∧ ℓ < L + T ∧ dyadicExpCutoff (ℓ + 1) ≤ Y := by
+  simp [subpowerKubiliusOrdinaryLevels, and_assoc]
+
+@[simp] lemma mem_subpowerKubiliusExceptionalLevels {L T Y ℓ : ℕ} :
+    ℓ ∈ subpowerKubiliusExceptionalLevels L T Y ↔
+      L ≤ ℓ ∧ ℓ < L + T ∧ Y < dyadicExpCutoff (ℓ + 1) := by
+  simp [subpowerKubiliusExceptionalLevels, and_assoc]
+
+lemma dyadicExpCutoff_mono {a b : ℕ} (hab : a ≤ b) :
+    dyadicExpCutoff a ≤ dyadicExpCutoff b := by
+  unfold dyadicExpCutoff
+  exact Nat.pow_le_pow_right (by omega)
+    (Nat.pow_le_pow_right (by omega) hab)
+
+open Classical in
+lemma subpowerKubiliusLevelGroup_nonempty {c : ℝ} {L T Y : ℕ} {s : Finset ℕ}
+    (hs : s ∈ subpowerKubiliusLevelGroups c L T Y) : s.Nonempty := by
+  rw [subpowerKubiliusLevelGroups] at hs
+  rcases Finset.mem_image.mp hs with ⟨k, hk, rfl⟩
+  rcases Finset.mem_image.mp hk with ⟨ℓ, hℓ, rfl⟩
+  exact ⟨ℓ, Finset.mem_filter.mpr ⟨hℓ, rfl⟩⟩
+
+open Classical in
+lemma subpowerKubiliusLevelGroup_subset {c : ℝ} {L T Y : ℕ} {s : Finset ℕ}
+    (hs : s ∈ subpowerKubiliusLevelGroups c L T Y) :
+    s ⊆ subpowerKubiliusOrdinaryLevels L T Y := by
+  rw [subpowerKubiliusLevelGroups] at hs
+  rcases Finset.mem_image.mp hs with ⟨k, _hk, rfl⟩
+  intro ℓ hℓ
+  exact (Finset.mem_filter.mp hℓ).1
+
+open Classical in
+lemma subpowerKubiliusLevelGroup_index_eq {c : ℝ} {L T Y : ℕ} {s : Finset ℕ}
+    (hs : s ∈ subpowerKubiliusLevelGroups c L T Y) {ℓ : ℕ} (hℓ : ℓ ∈ s) :
+    subpowerKubiliusGroupingIndex c ℓ =
+      subpowerKubiliusGroupingIndex c (s.sup id) := by
+  rw [subpowerKubiliusLevelGroups] at hs
+  rcases Finset.mem_image.mp hs with ⟨k, _hk, rfl⟩
+  have hℓk := (Finset.mem_filter.mp hℓ).2
+  have hne :
+      (subpowerKubiliusOrdinaryLevels L T Y).filter
+          (fun m => subpowerKubiliusGroupingIndex c m = k) |>.Nonempty :=
+    ⟨ℓ, hℓ⟩
+  have hsupmem :
+      ((subpowerKubiliusOrdinaryLevels L T Y).filter
+          (fun m => subpowerKubiliusGroupingIndex c m = k)).sup id ∈
+        (subpowerKubiliusOrdinaryLevels L T Y).filter
+          (fun m => subpowerKubiliusGroupingIndex c m = k) := by
+    have hsup :
+        ((subpowerKubiliusOrdinaryLevels L T Y).filter
+            (fun m => subpowerKubiliusGroupingIndex c m = k)).sup id =
+          ((subpowerKubiliusOrdinaryLevels L T Y).filter
+            (fun m => subpowerKubiliusGroupingIndex c m = k)).max' hne := by
+      rw [Finset.max'_eq_sup', Finset.sup'_eq_sup]
+    rw [hsup]
+    exact Finset.max'_mem _ hne
+  exact hℓk.trans (Finset.mem_filter.mp hsupmem).2.symm
+
+open Classical in
+/-- A produced group is exactly the full fiber of its terminal level's grouping index. -/
+lemma mem_subpowerKubiliusLevelGroup_iff
+    {c : ℝ} {L T Y : ℕ} {s : Finset ℕ}
+    (hs : s ∈ subpowerKubiliusLevelGroups c L T Y) {ℓ : ℕ} :
+    ℓ ∈ s ↔ ℓ ∈ subpowerKubiliusOrdinaryLevels L T Y ∧
+      subpowerKubiliusGroupingIndex c ℓ =
+        subpowerKubiliusGroupingIndex c (s.sup id) := by
+  constructor
+  · intro hℓ
+    exact ⟨subpowerKubiliusLevelGroup_subset hs hℓ,
+      subpowerKubiliusLevelGroup_index_eq hs hℓ⟩
+  · rintro ⟨hord, hindex⟩
+    have hs₀ := hs
+    rw [subpowerKubiliusLevelGroups] at hs
+    rcases Finset.mem_image.mp hs with ⟨k, hk, hks⟩
+    rcases Finset.mem_image.mp hk with ⟨m, hm, hmk⟩
+    have hms : m ∈ s := by
+      rw [← hks]
+      exact Finset.mem_filter.mpr ⟨hm, hmk⟩
+    have hmsup := subpowerKubiliusLevelGroup_index_eq hs₀ hms
+    have hksup : k = subpowerKubiliusGroupingIndex c (s.sup id) :=
+      hmk.symm.trans hmsup
+    rw [← hks]
+    exact Finset.mem_filter.mpr ⟨hord, hindex.trans hksup.symm⟩
+
+open Classical in
+/-- Distinct nonempty fibers have distinct geometric schedule indices. -/
+lemma subpowerKubiliusLevelGroup_eq_of_index_eq
+    {c : ℝ} {L T Y : ℕ} {s t : Finset ℕ}
+    (hs : s ∈ subpowerKubiliusLevelGroups c L T Y)
+    (ht : t ∈ subpowerKubiliusLevelGroups c L T Y)
+    (hindex : subpowerKubiliusGroupingIndex c (s.sup id) =
+      subpowerKubiliusGroupingIndex c (t.sup id)) : s = t := by
+  ext ℓ
+  rw [mem_subpowerKubiliusLevelGroup_iff hs,
+    mem_subpowerKubiliusLevelGroup_iff ht, hindex]
+
+open Classical in
+theorem subpowerKubiliusLevelGroup_index_injOn
+    (c : ℝ) (L T Y : ℕ) :
+    Set.InjOn (fun s : Finset ℕ =>
+      subpowerKubiliusGroupingIndex c (s.sup id))
+        (subpowerKubiliusLevelGroups c L T Y : Set (Finset ℕ)) := by
+  intro s hs t ht hindex
+  exact subpowerKubiliusLevelGroup_eq_of_index_eq hs ht hindex
+
+open Classical in
+lemma subpowerKubiliusLevelGroup_sup_mem {c : ℝ} {L T Y : ℕ} {s : Finset ℕ}
+    (hs : s ∈ subpowerKubiliusLevelGroups c L T Y) : s.sup id ∈ s := by
+  have hne := subpowerKubiliusLevelGroup_nonempty hs
+  have hsup : s.sup id = s.max' hne := by
+    rw [Finset.max'_eq_sup', Finset.sup'_eq_sup]
+  rw [hsup]
+  exact Finset.max'_mem s hne
+
+open Classical in
+lemma subpowerKubiliusLevel_le_group_sup {s : Finset ℕ} {ℓ : ℕ} (hℓ : ℓ ∈ s) :
+    ℓ ≤ s.sup id := by
+  exact Finset.le_sup (f := id) hℓ
+
+open Classical in
+lemma subpowerKubiliusLevel_cutoff_le_groupCutoff
+    {s : Finset ℕ} {ℓ : ℕ} (hℓ : ℓ ∈ s) :
+    dyadicExpCutoff (ℓ + 1) ≤ subpowerKubiliusGroupCutoff s := by
+  unfold subpowerKubiliusGroupCutoff
+  exact dyadicExpCutoff_mono (Nat.add_le_add_right
+    (subpowerKubiliusLevel_le_group_sup hℓ) 1)
+
+open Classical in
+lemma subpowerKubiliusGroupCutoff_le {c : ℝ} {L T Y : ℕ} {s : Finset ℕ}
+    (hs : s ∈ subpowerKubiliusLevelGroups c L T Y) :
+    subpowerKubiliusGroupCutoff s ≤ Y := by
+  have hsupmem := subpowerKubiliusLevelGroup_sup_mem hs
+  have hord := subpowerKubiliusLevelGroup_subset hs hsupmem
+  exact (mem_subpowerKubiliusOrdinaryLevels.mp hord).2.2
+
+open Classical in
+/-- The ordinary fibers together with the explicit top band cover every level in the allocated
+finite interval. -/
+theorem subpowerKubiliusLevelGroups_cover
+    (c : ℝ) (L T Y : ℕ) {i : ℕ} (hi : i ∈ Finset.range T) :
+    L + i ∈ subpowerKubiliusExceptionalLevels L T Y ∨
+      ∃ s ∈ subpowerKubiliusLevelGroups c L T Y, L + i ∈ s := by
+  have hiT : i < T := Finset.mem_range.mp hi
+  by_cases hcut : dyadicExpCutoff (L + i + 1) ≤ Y
+  · right
+    have hord : L + i ∈ subpowerKubiliusOrdinaryLevels L T Y := by
+      apply mem_subpowerKubiliusOrdinaryLevels.mpr
+      exact ⟨by omega, by omega, hcut⟩
+    let s := (subpowerKubiliusOrdinaryLevels L T Y).filter
+      (fun ℓ => subpowerKubiliusGroupingIndex c ℓ =
+        subpowerKubiliusGroupingIndex c (L + i))
+    refine ⟨s, ?_, ?_⟩
+    · unfold subpowerKubiliusLevelGroups
+      apply Finset.mem_image.mpr
+      refine ⟨subpowerKubiliusGroupingIndex c (L + i), ?_, rfl⟩
+      exact Finset.mem_image.mpr ⟨L + i, hord, rfl⟩
+    · exact Finset.mem_filter.mpr ⟨hord, rfl⟩
+  · left
+    apply mem_subpowerKubiliusExceptionalLevels.mpr
+    exact ⟨by omega, by omega, by omega⟩
+
+open Classical in
+/-- For all sufficiently late starting levels, the canonical finite fibers satisfy every
+levelwise hypothesis of the grouped Kubilius transfer.  Each group is charged at its largest
+arithmetic cutoff, while its model walk starts at the common geometric anchor.  The final clause
+is exactly the variance-cap hypothesis required by the uniform model tail theorem. -/
+theorem exists_subpowerKubiliusLevelGroups_data
+    {c : ℝ} (hc : 1 < c) (A B : ℝ) (hA : 0 ≤ A) (hB : 0 ≤ B) (K : ℕ) :
+    ∃ L₀ : ℕ, 6 ≤ L₀ ∧ ∀ L : ℕ, L₀ ≤ L → ∀ T Y : ℕ, Y ≤ T →
+      (∀ i ∈ Finset.range T,
+        L + i ∈ subpowerKubiliusExceptionalLevels L T Y ∨
+          ∃ s ∈ subpowerKubiliusLevelGroups c L T Y, L + i ∈ s) ∧
+      (∀ s ∈ subpowerKubiliusLevelGroups c L T Y, ∀ ℓ ∈ s,
+        6 ≤ ℓ ∧ 1 ≤ blockLogLog ℓ ∧
+          dyadicExpCutoff (ℓ + 1) ≤ subpowerKubiliusGroupCutoff s ∧
+          kubiliusLoweredBarrier (subpowerKubiliusModelCoefficient c) A B
+              (subpowerKubiliusGroupAnchor c s) ≤
+            kubiliusLoweredBarrier c A B (blockLogLog ℓ)) ∧
+      (∀ s ∈ subpowerKubiliusLevelGroups c L T Y,
+        2 ≤ subpowerKubiliusGroupCutoff s ∧
+          subpowerKubiliusGroupCutoff s ≤ T) ∧
+      (∀ s ∈ subpowerKubiliusLevelGroups c L T Y,
+        Real.log (Real.log (subpowerKubiliusGroupCutoff s : ℝ)) +
+            Erdos67.PrimeEstimates.mertensBound ≤
+          kubiliusBlockRatio (subpowerKubiliusModelCoefficient c) *
+            subpowerKubiliusGroupAnchor c s) ∧
+      (∀ s ∈ subpowerKubiliusLevelGroups c L T Y,
+        K ≤ subpowerKubiliusGroupingIndex c (s.sup id)) := by
+  have hindex := eventually_subpowerKubiliusGroupingIndex_spec hc
+  have hkey := eventually_le_subpowerKubiliusGroupingIndex hc K
+  have hbarrier := eventually_kubiliusLevelBarrier_ge_anchor_blockLogLog
+    hc A B hA hB
+  have hlog : ∀ᶠ ℓ : ℕ in atTop, 1 ≤ blockLogLog ℓ :=
+    tendsto_blockLogLog_atTop.eventually_ge_atTop 1
+  have hall : ∀ᶠ ℓ : ℕ in atTop,
+      ((subpowerKubiliusGroupingRatio c : ℝ) ^
+            subpowerKubiliusGroupingIndex c ℓ ≤ blockLogLog ℓ ∧
+        blockLogLog (ℓ + 1) + Erdos67.PrimeEstimates.mertensBound ≤
+          kubiliusBlockRatio (subpowerKubiliusModelCoefficient c) *
+            (subpowerKubiliusGroupingRatio c : ℝ) ^
+              subpowerKubiliusGroupingIndex c ℓ) ∧
+      (∀ u₀ : ℝ, 1 ≤ u₀ → u₀ ≤ blockLogLog ℓ →
+        kubiliusLoweredBarrier (subpowerKubiliusModelCoefficient c) A B u₀ ≤
+          kubiliusLoweredBarrier c A B (blockLogLog ℓ)) ∧
+      1 ≤ blockLogLog ℓ ∧ 6 ≤ ℓ ∧
+        K ≤ subpowerKubiliusGroupingIndex c ℓ := by
+    filter_upwards [hindex, hbarrier, hlog, eventually_ge_atTop 6, hkey]
+      with ℓ hi hb hl h6 hk
+    exact ⟨hi, hb, hl, h6, hk⟩
+  obtain ⟨L₀, hL₀⟩ := eventually_atTop.1 hall
+  have hL₀data := hL₀ L₀ le_rfl
+  refine ⟨L₀, hL₀data.2.2.2.1, ?_⟩
+  intro L hL T Y hYT
+  have hlate : ∀ ℓ : ℕ, L ≤ ℓ →
+      ((subpowerKubiliusGroupingRatio c : ℝ) ^
+            subpowerKubiliusGroupingIndex c ℓ ≤ blockLogLog ℓ ∧
+        blockLogLog (ℓ + 1) + Erdos67.PrimeEstimates.mertensBound ≤
+          kubiliusBlockRatio (subpowerKubiliusModelCoefficient c) *
+            (subpowerKubiliusGroupingRatio c : ℝ) ^
+              subpowerKubiliusGroupingIndex c ℓ) ∧
+      (∀ u₀ : ℝ, 1 ≤ u₀ → u₀ ≤ blockLogLog ℓ →
+        kubiliusLoweredBarrier (subpowerKubiliusModelCoefficient c) A B u₀ ≤
+          kubiliusLoweredBarrier c A B (blockLogLog ℓ)) ∧
+      1 ≤ blockLogLog ℓ ∧ 6 ≤ ℓ ∧
+        K ≤ subpowerKubiliusGroupingIndex c ℓ := by
+    intro ℓ hLℓ
+    exact hL₀ ℓ (hL.trans hLℓ)
+  refine ⟨fun i hi => subpowerKubiliusLevelGroups_cover c L T Y hi, ?_, ?_, ?_, ?_⟩
+  · intro s hs ℓ hℓ
+    have hord := subpowerKubiliusLevelGroup_subset hs hℓ
+    have hLℓ := (mem_subpowerKubiliusOrdinaryLevels.mp hord).1
+    have hd := hlate ℓ hLℓ
+    have hindexEq := subpowerKubiliusLevelGroup_index_eq hs hℓ
+    have hanchorOne : 1 ≤ subpowerKubiliusGroupAnchor c s := by
+      unfold subpowerKubiliusGroupAnchor
+      exact one_le_pow₀ (one_lt_subpowerKubiliusGroupingRatio hc).le
+    have hanchorLe : subpowerKubiliusGroupAnchor c s ≤ blockLogLog ℓ := by
+      unfold subpowerKubiliusGroupAnchor
+      rw [← hindexEq]
+      exact hd.1.1
+    exact ⟨hd.2.2.2.1, hd.2.2.1,
+      subpowerKubiliusLevel_cutoff_le_groupCutoff hℓ,
+      hd.2.1 _ hanchorOne hanchorLe⟩
+  · intro s hs
+    exact ⟨dyadicExpCutoff_two_le _,
+      (subpowerKubiliusGroupCutoff_le hs).trans hYT⟩
+  · intro s hs
+    have hsupmem := subpowerKubiliusLevelGroup_sup_mem hs
+    have hord := subpowerKubiliusLevelGroup_subset hs hsupmem
+    have hLsup := (mem_subpowerKubiliusOrdinaryLevels.mp hord).1
+    have hspec := (hlate (s.sup id) hLsup).1
+    simpa only [subpowerKubiliusGroupCutoff, subpowerKubiliusGroupAnchor,
+      blockLogLog] using hspec.2
+  · intro s hs
+    have hsupmem := subpowerKubiliusLevelGroup_sup_mem hs
+    have hord := subpowerKubiliusLevelGroup_subset hs hsupmem
+    have hLsup := (mem_subpowerKubiliusOrdinaryLevels.mp hord).1
+    exact (hlate (s.sup id) hLsup).2.2.2.2
+
 open Classical in
 /-- Every event has nonnegative mass in the finite Kubilius model. -/
 lemma kubiliusMass_nonneg (y : ℕ) (E : Set (Finset ℕ)) :
@@ -2481,6 +2845,72 @@ theorem exists_sum_marginalDivisorMass_large_cards_div_le_grouped_kubilius
       gcongr with s hs
       exact hunion c (ε / C) D s (y s) T J (u₀ s) hc (div_pos hε hC) hT
         (hlevels s hs) (hy s hs).1 (hy s hs).2
+
+open Classical in
+/-- The explicit right-hand side produced by applying the grouped arithmetic transfer to the
+canonical slack-aware partition.  Keeping it named makes the remaining global estimates
+(exceptional top band, square sum, model tail, and total-variation tail) independent lemmas. -/
+noncomputable def subpowerKubiliusCanonicalGroupedBound
+    (K c C ε D : ℝ) (L T J Y : ℕ) : ℝ :=
+  (∑ j ∈ Finset.range J,
+      (((Finset.Icc 1 T).filter (fun n ↦
+        ∃ ℓ ∈ subpowerKubiliusExceptionalLevels L T Y,
+          subpowerBlockThreshold (ε / C) ℓ j <
+            weightedDivisorBlockMass (subpowerWeight c) ℓ n)).card : ℝ)) / T +
+    ∑ s ∈ subpowerKubiliusLevelGroups c L T Y,
+      ((∑ ℓ ∈ s, squareDivisorMomentConstant *
+          Real.rpow (blockLogLog ℓ) (-D) * subpowerSquareShiftConstant) +
+        4 * kubiliusPrimeCutoffLoweredCrossingMass
+          (subpowerKubiliusGroupCutoff s)
+          (subpowerKubiliusModelCoefficient c) (subpowerKubiliusLossA D)
+            (subpowerKubiliusLossB (ε / C)) (subpowerKubiliusGroupAnchor c s)
+              ((J + 3) / 4) +
+        J * K * (Real.rpow
+          (Real.log T / Real.log (subpowerKubiliusGroupCutoff s))
+          (-(Real.log T / Real.log (subpowerKubiliusGroupCutoff s))) +
+            Real.rpow T (-(1 / 2 : ℝ))))
+
+open Classical in
+/-- The canonical finite partition wired into the grouped Kubilius transfer.  In addition to the
+large-card bound, the conclusion retains the model variance caps and places every group beyond an
+arbitrary requested geometric tail index `K₀`. -/
+theorem exists_sum_marginalDivisorMass_large_cards_div_le_canonical_kubilius
+    (hK : KubiliusTV) :
+    ∃ K : ℝ, 0 < K ∧
+      ∀ (c C ε D : ℝ) (delta : ℕ → ℝ),
+        1 < c → 0 < C → 0 < ε → 0 ≤ D →
+        (∀ m : ℕ, 2 ≤ m → delta m ≤ C * subpowerWeight c m) →
+        ∀ K₀ : ℕ, ∃ L₀ : ℕ, 6 ≤ L₀ ∧
+          ∀ L : ℕ, L₀ ≤ L → ∀ T Y J : ℕ, 0 < T → Y ≤ T →
+            (∑ j ∈ Finset.range J,
+                (((Finset.Icc 1 T).filter (fun n ↦
+                  ε * Real.rpow 2 ((j : ℝ) / 2) <
+                    marginalDivisorMass delta (dyadicExpCutoff L) n)).card : ℝ)) / T ≤
+              subpowerKubiliusCanonicalGroupedBound K c C ε D L T J Y ∧
+            (∀ s ∈ subpowerKubiliusLevelGroups c L T Y,
+              Real.log (Real.log (subpowerKubiliusGroupCutoff s : ℝ)) +
+                  Erdos67.PrimeEstimates.mertensBound ≤
+                kubiliusBlockRatio (subpowerKubiliusModelCoefficient c) *
+                  subpowerKubiliusGroupAnchor c s) ∧
+            (∀ s ∈ subpowerKubiliusLevelGroups c L T Y,
+              K₀ ≤ subpowerKubiliusGroupingIndex c (s.sup id)) := by
+  obtain ⟨K, hKpos, hgrouped⟩ :=
+    exists_sum_marginalDivisorMass_large_cards_div_le_grouped_kubilius hK
+  refine ⟨K, hKpos, ?_⟩
+  intro c C ε D delta hc hC hε hD hdelta K₀
+  obtain ⟨L₀, hL₀, hdata⟩ := exists_subpowerKubiliusLevelGroups_data hc
+    (subpowerKubiliusLossA D) (subpowerKubiliusLossB (ε / C))
+    (subpowerKubiliusLossA_nonneg D hD) (subpowerKubiliusLossB_nonneg (ε / C)) K₀
+  refine ⟨L₀, hL₀, ?_⟩
+  intro L hL T Y J hT hYT
+  have hd := hdata L hL T Y hYT
+  have hbound := hgrouped c C ε D delta L T J
+    (subpowerKubiliusExceptionalLevels L T Y)
+    (subpowerKubiliusLevelGroups c L T Y)
+    subpowerKubiliusGroupCutoff (subpowerKubiliusGroupAnchor c)
+    (zero_le_one.trans hc.le) hC hε hT hdelta hd.1 hd.2.1 hd.2.2.1
+  refine ⟨?_, hd.2.2.2.1, hd.2.2.2.2⟩
+  simpa only [subpowerKubiliusCanonicalGroupedBound] using hbound
 
 /-- **Target: non-normal below the sub-power weight for every `c > 1`, given `KubiliusTV`.**  This
 reaches the heuristic threshold of `EBLogWindow`'s non-normal half.  The proof replaces the c > 3

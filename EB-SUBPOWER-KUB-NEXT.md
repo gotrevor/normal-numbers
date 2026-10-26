@@ -638,3 +638,62 @@ top-cut contribution directly, and then apply
 are the square tail, the arbitrary-ratio model tail proved here, and the finite accumulated TV
 error; controlling those yields `exists_subpower_marginal_large_cards_le_of_kubilius`, after which
 the proved `c > 3` capped-residual and headline assembly can be reused.
+
+## Reflection-lap checkpoint — 2026-10-26, canonical finite partition wired through TV
+
+The explicit finite partition requested by the preceding checkpoint is now kernel-checked and
+composed with the grouped arithmetic transfer.  Reflection also sharpened the remaining top-cut
+architecture: the Kubilius estimate should handle all levels below a common prime cutoff, while
+the old one-level fractional-moment estimate handles only the thin exceptional top band.  This
+does not require summing the old majorant over the full tail (the step that forced `c > 3`).
+
+- `subpowerKubiliusGroupingIndex` makes a canonical choice of the slack-aware geometric index.
+  `eventually_subpowerKubiliusGroupingIndex_spec` retains both the left-anchor and variance-cap
+  inequalities, and `eventually_le_subpowerKubiliusGroupingIndex` proves that these chosen indices
+  tend to infinity.  Thus late arithmetic levels really land beyond the tail index supplied by the
+  summable model theorem; this was not encoded by the preceding existential statement alone.
+- `subpowerKubiliusOrdinaryLevels` and `subpowerKubiliusExceptionalLevels` split the finite level
+  interval at an arbitrary common prime cutoff `Y`.  `subpowerKubiliusLevelGroups` partitions the
+  ordinary levels into full fibers of the canonical index.  Every produced fiber is nonempty,
+  contains its supremum, and is characterized exactly by its key; the map from groups to keys is
+  injective (`subpowerKubiliusLevelGroup_index_injOn`).
+- `subpowerKubiliusGroupCutoff` takes the next dyadic endpoint of the largest level in a group, and
+  `subpowerKubiliusGroupAnchor` records its common geometric anchor.
+  `exists_subpowerKubiliusLevelGroups_data` proves, uniformly for all sufficiently late starting
+  levels, the exact cover, barrier comparison, terminal-cutoff bound, Mertens variance cap, and an
+  arbitrary lower bound on every group key.
+- `subpowerKubiliusCanonicalGroupedBound` names the four terms still to estimate: the exceptional
+  top band, square-divisor sum, model crossing sum, and accumulated TV error.
+  `exists_sum_marginalDivisorMass_large_cards_div_le_canonical_kubilius` now applies
+  `exists_sum_marginalDivisorMass_large_cards_div_le_grouped_kubilius` to the canonical partition
+  and retains both the variance caps and late-key facts needed for the next summation step.
+
+The cumulative diff from planting commit `e61852e6` is still insertion-only: `primesUpTo`,
+`kubiliusMass`, `KubiliusTV`, and the headline statement remain byte-unchanged.  `KubiliusTV`
+remains only a named hypothesis; no `axiom`, `opaque`, or `native_decide` was added.  The scoped
+target still has exactly its single frozen headline `sorry`.
+
+Verification actually run:
+
+- `lake env lean src/NormalNumbers/CoefmassErdosBorweinSubpowerKub.lean` — succeeds, with only the
+  pre-existing headline `sorry` warning.
+- `~/personal/bin/lean-green . --target NormalNumbers.CoefmassErdosBorweinSubpowerKub --import
+  NormalNumbers.CoefmassErdosBorweinSubpowerKub --axioms
+  NormalNumbers.ErdosBorweinSubpowerKub.eventually_le_subpowerKubiliusGroupingIndex --axioms
+  NormalNumbers.ErdosBorweinSubpowerKub.subpowerKubiliusLevelGroup_index_injOn --axioms
+  NormalNumbers.ErdosBorweinSubpowerKub.exists_subpowerKubiliusLevelGroups_data --axioms
+  NormalNumbers.ErdosBorweinSubpowerKub.exists_sum_marginalDivisorMass_large_cards_div_le_canonical_kubilius`
+  — `FORMALIZE-TIER GREEN`; all four declarations report exactly `Classical.choice`, `Quot.sound`,
+  and `propext`.
+- `~/personal/bin/lean-green .` — full 10,847-job repository build, `FORMALIZE-TIER GREEN`.
+
+The next highest-value attack is to bound the four named terms in
+`subpowerKubiliusCanonicalGroupedBound`.  Choose a common dyadic cutoff a logarithmic number of
+levels below the largest active level.  Reindex the model terms injectively by the now-explicit
+group keys and apply
+`exists_kubiliusPrimeCutoffLoweredCrossingMass_geometric_sum_lt_of_ratio`; take fixed `D > 1` for
+the square sum; use the resulting large value of `log T / log Y` for the accumulated TV error.
+For the thin exceptional band, generalize the existing one-level Chernoff majorant only far enough
+to show it tends to zero for every `c > 1`, then multiply by the logarithmic band width.  These four
+estimates yield `exists_subpower_marginal_large_cards_le_of_kubilius`; the final capped-residual and
+headline proofs should then be copied from the proved `c > 3` assembly with that sole input swapped.
