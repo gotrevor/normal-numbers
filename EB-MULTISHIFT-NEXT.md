@@ -133,3 +133,26 @@ later probability step, split `c > 0` (moderate deviations) from `c <= 0` (a fix
 central-tail lower bound), because the existing moderate theorem's large-deviation premise does
 not apply directly when the square-root displacement vanishes. Detailed baton:
 `HANDOFF-2026-10-26-eb-multishift-lap8.md`.
+
+## Lap checkpoint (2026-10-26, lap 9)
+
+The positive-`c` model adapter is now concrete. `mertens_primesIoc_bound` specializes the repo's
+proved Mertens theorem to the packet-verbatim block `primesIoc P y`, with mean
+`log log y - log log P + O(1)`. Enumeration and column-sum lemmas identify that mean exactly in
+every shift column, while `sum_shiftArrayColumn_inv_sq_le` gives square-mass at most `1/P`.
+
+`multiShiftColumnMass_ge_moderate` now applies the lap-3 finite moderate-deviation theorem directly
+to one shift column and uses the Bernoulli cylinder identity to return the probability in exactly
+the full prime-by-shift universe occurring in `multiShiftMass_noHeavy_le_prod_one_sub`. Thus Steps
+4 and 5 are connected without any remaining finite-model bookkeeping; a threshold
+`ceil(mean + x_j)` is converted to its real inequality by `Nat.ceil_le`. All new theorems are
+axiom-clean. No packet-verbatim statement changed, and no `native_decide`, axiom, or new `sorry`
+was introduced.
+
+The next attack is the asymptotic schedule itself: define `J(N)`, `u(N)`, and `y0(N)`; choose the
+integer thresholds `ceil(mean + x_j)`; and prove eventually both the explicit chain scalar premise
+of `shiftedVarianceMass_gt_of_heavyColumn` and the hypotheses of
+`multiShiftColumnMass_ge_moderate`. Then sum the column lower bounds, send the product and collision
+error to zero, and apply `hM`. The `c <= 0` branch still needs the fixed-probability central-tail
+variant rather than the moderate-deviation theorem. Detailed baton:
+`HANDOFF-2026-10-26-eb-multishift-lap9.md`.

@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
 import Mathlib
+import NormalNumbers.CoefmassErdosBorweinEndpointKub
 import NormalNumbers.CoefmassErdosBorweinMultiShiftAux
 import NormalNumbers.CoefmassErdosBorweinShift
 
@@ -133,6 +134,38 @@ theorem divisorVarianceMass_ge_primeDivisorSet_subpower
 /-- The primes in `(P, y]`. -/
 def primesIoc (P y : ℕ) : Finset ℕ := (Finset.Ioc P y).filter Nat.Prime
 
+/-- The packet's prime block is the natural-cutoff block used by the existing Mertens theorem. -/
+theorem primesIoc_eq_primesUpTo_filter (P y : ℕ) :
+    primesIoc P y =
+      (NormalNumbers.ErdosBorweinEndpointKub.primesUpTo y).filter (P < ·) := by
+  ext p
+  simp [primesIoc, NormalNumbers.ErdosBorweinEndpointKub.primesUpTo_eq_filter_Iic,
+    and_comm, and_left_comm, and_assoc]
+
+/-- Mertens' second theorem, specialized to the packet's prime block `(P,y]`. -/
+theorem mertens_primesIoc_bound :
+    ∃ C : ℝ, 0 ≤ C ∧ ∀ P y : ℕ, 2 ≤ P → P ≤ y →
+      |∑ p ∈ primesIoc P y, (1 / p : ℝ) -
+          (Real.log (Real.log y) - Real.log (Real.log P))| ≤ 2 * C := by
+  obtain ⟨C, hC⟩ :=
+    NormalNumbers.ErdosBorweinEndpointKub.mertens_primeReciprocalSum_bound
+  have hC0 : 0 ≤ C :=
+    (abs_nonneg (∑ p ∈ NormalNumbers.ErdosBorweinEndpointKub.primesUpTo 2,
+      (1 / p : ℝ) - Real.log (Real.log 2))).trans (hC 2 (by norm_num))
+  refine ⟨C, hC0, ?_⟩
+  intro P y hP hPy
+  rw [primesIoc_eq_primesUpTo_filter,
+    NormalNumbers.ErdosBorweinEndpointKub.primeReciprocalSum_block_eq_sub P y hPy]
+  have hCP := hC P hP
+  have hCy := hC y (hP.trans hPy)
+  have htriangle :
+      |((∑ p ∈ NormalNumbers.ErdosBorweinEndpointKub.primesUpTo y, (1 / p : ℝ)) -
+          Real.log (Real.log y)) -
+        ((∑ p ∈ NormalNumbers.ErdosBorweinEndpointKub.primesUpTo P, (1 / p : ℝ)) -
+          Real.log (Real.log P))| ≤ C + C :=
+    (abs_sub _ _).trans (add_le_add hCy hCP)
+  convert htriangle using 1 <;> ring
+
 /-- The `J`-shift prime pattern of `n`: for each shift `j < J`, the primes in `(P, y]` that divide
 `n + j + 1`. -/
 def multiShiftPattern (P y J n : ℕ) : Fin J → Finset ℕ :=
@@ -210,6 +243,36 @@ under this choice. -/
 noncomputable def primeIndexEquiv (P y : ℕ) :
     Fin (Fintype.card (primesIoc P y)) ≃ primesIoc P y :=
   (Fintype.equivFin (primesIoc P y)).symm
+
+/-- Enumerating the packet's prime block preserves its reciprocal-prime mean. -/
+theorem sum_primeIndex_inv_eq_primesIoc (P y : ℕ) :
+    (∑ i : Fin (Fintype.card (primesIoc P y)),
+        1 / (((primeIndexEquiv P y) i : ℕ) : ℝ)) =
+      ∑ p ∈ primesIoc P y, (1 / p : ℝ) := by
+  classical
+  calc
+    (∑ i : Fin (Fintype.card (primesIoc P y)),
+        1 / (((primeIndexEquiv P y) i : ℕ) : ℝ)) =
+        ∑ p : primesIoc P y, 1 / ((p : ℕ) : ℝ) :=
+      (primeIndexEquiv P y).sum_comp
+        (fun p : primesIoc P y ↦ 1 / ((p : ℕ) : ℝ))
+    _ = ∑ p ∈ primesIoc P y, (1 / p : ℝ) := by
+      rw [← (primesIoc P y).attach_eq_univ]
+      exact Finset.sum_attach (primesIoc P y) (fun p : ℕ ↦ (1 / p : ℝ))
+
+/-- Every independent shift column has exactly the packet's reciprocal-prime mean. -/
+theorem sum_shiftArrayColumn_inv_eq_primesIoc {P y J : ℕ} (j : Fin J) :
+    (∑ z ∈ shiftArrayColumn (Fintype.card (primesIoc P y)) J j,
+        1 / (((primeIndexEquiv P y) z.1 : ℕ) : ℝ)) =
+      ∑ p ∈ primesIoc P y, (1 / p : ℝ) := by
+  calc
+    (∑ z ∈ shiftArrayColumn (Fintype.card (primesIoc P y)) J j,
+        1 / (((primeIndexEquiv P y) z.1 : ℕ) : ℝ)) =
+        ∑ i, 1 / (((primeIndexEquiv P y) i : ℕ) : ℝ) :=
+      sum_shiftArrayColumn_fst j
+        (fun i ↦ 1 / (((primeIndexEquiv P y) i : ℕ) : ℝ))
+    _ = ∑ p ∈ primesIoc P y, (1 / p : ℝ) :=
+      sum_primeIndex_inv_eq_primesIoc P y
 
 /-- Reconstruct the prime finset in every shift column from an indexed categorical configuration. -/
 noncomputable def indexedMultiShiftPattern (P y J : ℕ)
@@ -350,6 +413,88 @@ theorem sum_primeIndex_inv_sq_le {P y : ℕ} (hP0 : P ≠ 0) (hPy : P ≤ y) :
     _ ≤ (P : ℝ)⁻¹ - (y : ℝ)⁻¹ :=
       sum_Ioc_inv_sq_le_sub hP0 hPy
     _ ≤ (P : ℝ)⁻¹ := sub_le_self _ (by positivity)
+
+/-- The square-mass of one independent shift column is controlled by the reciprocal-square
+tail above the packet's lower cutoff. -/
+theorem sum_shiftArrayColumn_inv_sq_le {P y J : ℕ} (j : Fin J)
+    (hP0 : P ≠ 0) (hPy : P ≤ y) :
+    (∑ z ∈ shiftArrayColumn (Fintype.card (primesIoc P y)) J j,
+        (1 / (((primeIndexEquiv P y) z.1 : ℕ) : ℝ)) ^ 2) ≤ (P : ℝ)⁻¹ := by
+  calc
+    (∑ z ∈ shiftArrayColumn (Fintype.card (primesIoc P y)) J j,
+        (1 / (((primeIndexEquiv P y) z.1 : ℕ) : ℝ)) ^ 2) =
+        ∑ i, (1 / (((primeIndexEquiv P y) i : ℕ) : ℝ)) ^ 2 :=
+      sum_shiftArrayColumn_fst j
+        (fun i ↦ (1 / (((primeIndexEquiv P y) i : ℕ) : ℝ)) ^ 2)
+    _ ≤ (P : ℝ)⁻¹ := sum_primeIndex_inv_sq_le hP0 hPy
+
+/-- Concrete Step 5 adapter for one shift column.  The abstract moderate-deviation theorem is
+applied on the column support; the cylinder identity then restores the full prime-by-shift
+universe used by `multiShiftMass_noHeavy_le_prod_one_sub`. -/
+theorem multiShiftColumnMass_ge_moderate
+    {P y J : ℕ} (j : Fin J) (hP : 2 ≤ P) (hPy : P ≤ y)
+    {eps eta x : ℝ} (heps : 0 < eps) (heta0 : 0 < eta) (heta1 : eta ≤ 1 / 100)
+    (hetaEps : 80 * eta ≤ eps)
+    (hmean : 0 < ∑ p ∈ primesIoc P y, (1 / p : ℝ)) (hx : 0 < x)
+    (hsquareMass : (P : ℝ)⁻¹ ≤ eta * ∑ p ∈ primesIoc P y, (1 / p : ℝ))
+    (hsmallTilt : (1 + 4 * eta) * x / (∑ p ∈ primesIoc P y, (1 / p : ℝ)) ≤ eta)
+    (hlargeDeviation : 6 * (∑ p ∈ primesIoc P y, (1 / p : ℝ)) ≤ eta ^ 2 * x ^ 2)
+    (habsorb : 4 * Real.log 2 * (∑ p ∈ primesIoc P y, (1 / p : ℝ)) ≤
+      eps * x ^ 2) :
+    Real.exp (-((1 + eps) * x ^ 2 /
+        (2 * ∑ p ∈ primesIoc P y, (1 / p : ℝ)))) ≤
+      NormalNumbers.ErdosBorweinEndpointKub.bernoulliSubsetMass
+        (Finset.univ : Finset
+          (Fin (Fintype.card (primesIoc P y)) × Fin J))
+        (fun z ↦ 1 / (((primeIndexEquiv P y) z.1 : ℕ) : ℝ))
+        {S | (∑ p ∈ primesIoc P y, (1 / p : ℝ)) + x ≤
+          ((S ∩ shiftArrayColumn (Fintype.card (primesIoc P y)) J j).card : ℝ)} := by
+  classical
+  let n := Fintype.card (primesIoc P y)
+  let U : Finset (Fin n × Fin J) := Finset.univ
+  let B : Finset (Fin n × Fin J) := shiftArrayColumn n J j
+  let q : Fin n × Fin J → ℝ :=
+    fun z ↦ 1 / (((primeIndexEquiv P y) z.1 : ℕ) : ℝ)
+  let mean : ℝ := ∑ p ∈ primesIoc P y, (1 / p : ℝ)
+  have hprime : ∀ z ∈ B, Nat.Prime ((primeIndexEquiv P y) z.1 : ℕ) := by
+    intro z hz
+    exact (Finset.mem_filter.mp ((primeIndexEquiv P y) z.1).property).2
+  have hq0 : ∀ z ∈ B, 0 ≤ q z := by
+    intro z hz
+    dsimp [q]
+    positivity
+  have hq1 : ∀ z ∈ B, q z ≤ 1 := by
+    intro z hz
+    have hpR : (0 : ℝ) < (((primeIndexEquiv P y) z.1 : ℕ) : ℝ) := by
+      exact_mod_cast (hprime z hz).pos
+    dsimp [q]
+    apply (div_le_one hpR).2
+    exact_mod_cast (hprime z hz).one_le
+  have hmeanEq : ∑ z ∈ B, q z = mean := by
+    simpa only [n, B, q, mean] using
+      (sum_shiftArrayColumn_inv_eq_primesIoc (P := P) (y := y) j)
+  have hsquare : (∑ z ∈ B, (q z) ^ 2) ≤ eta * ∑ z ∈ B, q z := by
+    rw [hmeanEq]
+    calc
+      (∑ z ∈ B, (q z) ^ 2) ≤ (P : ℝ)⁻¹ := by
+        simpa only [n, B, q] using
+          (sum_shiftArrayColumn_inv_sq_le (P := P) (y := y) j (by omega) hPy)
+      _ ≤ eta * mean := by simpa only [mean] using hsquareMass
+  have hmoderate := bernoulliSubsetMass_card_ge_moderate_lower B q hq0 hq1
+    heps heta0 heta1 hetaEps (hmeanEq.symm ▸ hmean) hx hsquare
+    (hmeanEq.symm ▸ hsmallTilt) (hmeanEq.symm ▸ hlargeDeviation)
+    (hmeanEq.symm ▸ habsorb)
+  have hcylinder :=
+    NormalNumbers.ErdosBorweinEndpointKub.bernoulliSubsetMass_inter U B
+      (Finset.subset_univ B) q {S | mean + x ≤ (S.card : ℝ)}
+  calc
+    Real.exp (-((1 + eps) * x ^ 2 / (2 * mean))) ≤
+        NormalNumbers.ErdosBorweinEndpointKub.bernoulliSubsetMass B q
+          {S | mean + x ≤ (S.card : ℝ)} := by
+      simpa only [hmeanEq] using hmoderate
+    _ = NormalNumbers.ErdosBorweinEndpointKub.bernoulliSubsetMass U q
+          {S | mean + x ≤ ((S ∩ B).card : ℝ)} := by
+      exact hcylinder.symm
 
 /-- Step 4 in its concrete factored form: the no-heavy model mass is bounded by a product of
 independent one-column lower tails plus an explicit `O(J²/P)` collision error. -/

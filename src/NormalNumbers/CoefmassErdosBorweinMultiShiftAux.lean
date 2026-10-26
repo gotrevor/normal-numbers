@@ -1570,6 +1570,26 @@ def shiftColumnEmbedding {n J : Nat} (j : Fin J) : Fin n ↪ Fin n × Fin J wher
   toFun i := (i, j)
   inj' _ _ h := congrArg Prod.fst h
 
+/-- Summing a function of the prime coordinate over one shift column is the same as summing it
+over all prime coordinates. -/
+theorem sum_shiftArrayColumn_fst {n J : Nat} (j : Fin J) (f : Fin n → Real) :
+    ∑ z ∈ shiftArrayColumn n J j, f z.1 = ∑ i, f i := by
+  classical
+  have hcolumn : shiftArrayColumn n J j =
+      Finset.univ.map (shiftColumnEmbedding j) := by
+    ext z
+    rcases z with ⟨i, k⟩
+    simp only [shiftArrayColumn, Finset.mem_filter, Finset.mem_univ, true_and,
+      Finset.mem_map, shiftColumnEmbedding]
+    constructor
+    · intro h
+      subst k
+      exact ⟨i, rfl⟩
+    · rintro ⟨a, h⟩
+      exact (congrArg Prod.snd h).symm
+  rw [hcolumn, Finset.sum_map]
+  rfl
+
 /-- Intersecting the transposed array with a shift column counts exactly the prime coordinates
 selected by that shift. -/
 theorem card_shiftArrayEquiv_inter_column {n J : Nat}
