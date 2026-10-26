@@ -666,9 +666,65 @@ theorem low_shiftedVarianceMass_density_le_model
 
 /-! ### The multishift schedule -/
 
+/-- If `x` is large enough, flooring `exp x` loses at most a factor of two.  This
+variable-exponent version of the fixed-power cutoff estimate in
+`CoefmassErdosBorweinEndpointKub` is the basic adapter for the multishift cutoff. -/
+theorem natFloor_exp_log_bounds {x : ℝ} (hx : 2 * Real.log 2 ≤ x) :
+    let z := ⌊Real.exp x⌋₊
+    2 ≤ z ∧
+      x / 2 ≤ Real.log z ∧ Real.log z ≤ x ∧
+      Real.log x - Real.log 2 ≤ Real.log (Real.log z) ∧
+      Real.log (Real.log z) ≤ Real.log x := by
+  let z : ℕ := ⌊Real.exp x⌋₊
+  have hlog2 : 0 < Real.log (2 : ℝ) := Real.log_pos (by norm_num)
+  have hx0 : 0 < x := lt_of_lt_of_le (by positivity) hx
+  have hexpOne : 1 ≤ Real.exp x := Real.one_le_exp hx0.le
+  have hhalf : Real.exp x / 2 ≤ (z : ℝ) :=
+    NormalNumbers.ErdosBorweinEndpointKub.half_le_natFloor hexpOne
+  have hzTwoReal : (2 : ℝ) ≤ z := by
+    calc
+      (2 : ℝ) ≤ Real.exp x / 2 := by
+        rw [le_div_iff₀ (by norm_num : (0 : ℝ) < 2)]
+        calc
+          (2 : ℝ) * 2 = 4 := by norm_num
+          _ = Real.exp (Real.log 4) := (Real.exp_log (by norm_num)).symm
+          _ = Real.exp (2 * Real.log 2) := by
+            congr 1
+            rw [show (4 : ℝ) = 2 ^ 2 by norm_num, Real.log_pow]
+            norm_num
+          _ ≤ Real.exp x := Real.exp_le_exp.mpr hx
+      _ ≤ z := hhalf
+  have hzTwo : 2 ≤ z := by exact_mod_cast hzTwoReal
+  have hz0 : (0 : ℝ) < z := by positivity
+  have hlogLower : x / 2 ≤ Real.log z := by
+    calc
+      x / 2 ≤ x - Real.log 2 := by linarith
+      _ = Real.log (Real.exp x / 2) := by
+        rw [Real.log_div (Real.exp_ne_zero x) (by norm_num), Real.log_exp]
+      _ ≤ Real.log z := Real.log_le_log (by positivity) hhalf
+  have hfloorUpper : (z : ℝ) ≤ Real.exp x := Nat.floor_le (Real.exp_pos x).le
+  have hlogUpper : Real.log z ≤ x := by
+    simpa only [Real.log_exp] using Real.log_le_log hz0 hfloorUpper
+  have hxhalf0 : 0 < x / 2 := by positivity
+  have hlogz0 : 0 < Real.log z := hxhalf0.trans_le hlogLower
+  refine ⟨hzTwo, hlogLower, hlogUpper, ?_, ?_⟩
+  · calc
+      Real.log x - Real.log 2 = Real.log (x / 2) := by
+        rw [Real.log_div hx0.ne' (by norm_num)]
+      _ ≤ Real.log (Real.log z) := Real.log_le_log hxhalf0 hlogLower
+  · exact Real.log_le_log hlogz0 hlogUpper
+
 /-- The number of shifts used in the final application of Step 1'. -/
 noncomputable def multiShiftScheduleJ (N : ℕ) : ℕ :=
   ⌈Real.sqrt (Real.log (Real.log N))⌉₊
+
+/-- The real sieve depth `u = J (log log log N)^3`. -/
+noncomputable def multiShiftScheduleU (N : ℕ) : ℝ :=
+  (multiShiftScheduleJ N : ℝ) * (Real.log (Real.log (Real.log N))) ^ 3
+
+/-- The variable prime cutoff `y = ⌊exp(log N / u)⌋`. -/
+noncomputable def multiShiftCutoffY (N : ℕ) : ℕ :=
+  ⌊Real.exp (Real.log N / multiShiftScheduleU N)⌋₊
 
 /-- The square-root schedule satisfies the upper bound required by Step 1'. -/
 theorem eventually_multiShiftScheduleJ_le_log_log :
@@ -695,6 +751,372 @@ theorem tendsto_multiShiftScheduleJ :
   refine tendsto_atTop.2 fun R ↦ ?_
   filter_upwards [hsqrtTop.eventually_ge_atTop R] with N hR
   exact hR.trans (Nat.le_ceil _)
+
+/-- The sieve depth is positive and negligible compared with `sqrt (log N)`.  The deliberately
+coarse proof bounds it by `(log log N)^4` and uses `(log x)^8 = o(x)`. -/
+theorem eventually_multiShiftScheduleU_bounds :
+    ∀ᶠ N : ℕ in atTop,
+      0 < multiShiftScheduleU N ∧
+        multiShiftScheduleU N ≤ Real.sqrt (Real.log N) := by
+  have htTop : Tendsto (fun N : ℕ ↦ Real.log (N : ℝ)) atTop atTop :=
+    Real.tendsto_log_atTop.comp tendsto_natCast_atTop_atTop
+  have hLTop : Tendsto (fun N : ℕ ↦ Real.log (Real.log (N : ℝ))) atTop atTop :=
+    Real.tendsto_log_atTop.comp htTop
+  have hsmallReal := (Real.isLittleO_pow_log_id_atTop (n := 8)).bound one_pos
+  have hsmall := htTop.eventually hsmallReal
+  filter_upwards [eventually_multiShiftScheduleJ_le_log_log,
+      htTop.eventually_ge_atTop 2, hLTop.eventually_ge_atTop 2, hsmall] with
+      N hJL ht hL hsmall
+  let L : ℝ := Real.log (Real.log N)
+  have ht0 : 0 < Real.log (N : ℝ) := by linarith
+  have hL0 : 0 < L := by simpa only [L] using (show 0 < Real.log (Real.log N) by linarith)
+  have hlogL0 : 0 < Real.log L := Real.log_pos (by linarith)
+  have hJ1 : 1 ≤ multiShiftScheduleJ N := by
+    apply Nat.one_le_ceil_iff.mpr
+    exact Real.sqrt_pos.2 hL0
+  have hJ0 : (0 : ℝ) < multiShiftScheduleJ N := by exact_mod_cast hJ1
+  have hlogL_le : Real.log L ≤ L :=
+    (Real.log_le_sub_one_of_pos hL0).trans (by linarith)
+  have hU0 : 0 < multiShiftScheduleU N := by
+    rw [multiShiftScheduleU]
+    change 0 < (multiShiftScheduleJ N : ℝ) * (Real.log L) ^ 3
+    positivity
+  have hUle : multiShiftScheduleU N ≤ L ^ 4 := by
+    rw [multiShiftScheduleU]
+    change (multiShiftScheduleJ N : ℝ) * (Real.log L) ^ 3 ≤ L ^ 4
+    calc
+      (multiShiftScheduleJ N : ℝ) * (Real.log L) ^ 3 ≤
+          L * L ^ 3 := by gcongr
+      _ = L ^ 4 := by ring
+  have hL8 : L ^ 8 ≤ Real.log N := by
+    have hsmall' : |Real.log (Real.log N) ^ 8| ≤ |Real.log N| := by
+      simpa only [Real.norm_eq_abs, one_mul, id] using hsmall
+    rw [abs_of_nonneg (pow_nonneg hL0.le _), abs_of_pos ht0] at hsmall'
+    simpa only [L] using hsmall'
+  have hUsq : (multiShiftScheduleU N) ^ 2 ≤ Real.log N := by
+    calc
+      (multiShiftScheduleU N) ^ 2 ≤ (L ^ 4) ^ 2 :=
+        (sq_le_sq₀ hU0.le (pow_nonneg hL0.le 4)).2 hUle
+      _ = L ^ 8 := by ring
+      _ ≤ Real.log N := hL8
+  have hsqrtSq : Real.sqrt (Real.log N) ^ 2 = Real.log N :=
+    Real.sq_sqrt ht0.le
+  refine ⟨hU0, ?_⟩
+  nlinarith [Real.sqrt_nonneg (Real.log N)]
+
+/-- The variable cutoff lies between the collision cutoff and `N`, and its two logarithms are
+controlled explicitly by `x = log N / u`.  These are exactly the geometric side conditions needed
+by the sieve hypothesis and by Mertens. -/
+theorem eventually_multiShiftCutoffY_bounds :
+    ∀ᶠ N : ℕ in atTop,
+      let x := Real.log N / multiShiftScheduleU N
+      collisionCutoff N ≤ multiShiftCutoffY N ∧
+        multiShiftCutoffY N ≤ N ∧ 2 ≤ multiShiftCutoffY N ∧
+        x / 2 ≤ Real.log (multiShiftCutoffY N) ∧
+        Real.log (multiShiftCutoffY N) ≤ x ∧
+        Real.log x - Real.log 2 ≤ Real.log (Real.log (multiShiftCutoffY N)) ∧
+        Real.log (Real.log (multiShiftCutoffY N)) ≤ Real.log x := by
+  have htTop : Tendsto (fun N : ℕ ↦ Real.log (N : ℝ)) atTop atTop :=
+    Real.tendsto_log_atTop.comp tendsto_natCast_atTop_atTop
+  have hLTop : Tendsto (fun N : ℕ ↦ Real.log (Real.log (N : ℝ))) atTop atTop :=
+    Real.tendsto_log_atTop.comp htTop
+  have hcollision :=
+    NormalNumbers.ErdosBorweinEndpointKub.eventually_collisionCutoff_le_natFloor_exp_log_rpow_add
+      0 (show (0 : ℝ) < 1 / 2 by norm_num)
+  filter_upwards [eventually_multiShiftScheduleU_bounds,
+      eventually_multiShiftScheduleJ_le_log_log, htTop.eventually_ge_atTop 16,
+      hLTop.eventually_ge_atTop 3, hcollision] with N hU hJL ht hL hcollision
+  let L : ℝ := Real.log (Real.log N)
+  let U : ℝ := multiShiftScheduleU N
+  let x : ℝ := Real.log N / U
+  have ht0 : 0 < Real.log (N : ℝ) := by linarith
+  have hsqrt0 : 0 < Real.sqrt (Real.log N) := Real.sqrt_pos.2 ht0
+  have hsqrtSq : Real.sqrt (Real.log N) ^ 2 = Real.log N :=
+    Real.sq_sqrt ht0.le
+  have hL0 : 0 < L := by simpa only [L] using (show 0 < Real.log (Real.log N) by linarith)
+  have hlogL1 : 1 ≤ Real.log L := by
+    calc
+      (1 : ℝ) = Real.log (Real.exp 1) := (Real.log_exp 1).symm
+      _ ≤ Real.log 3 := Real.log_le_log (Real.exp_pos 1) Real.exp_one_lt_three.le
+      _ ≤ Real.log L := Real.log_le_log (by norm_num) (by simpa only [L] using hL)
+  have hJ1 : 1 ≤ multiShiftScheduleJ N := by
+    apply Nat.one_le_ceil_iff.mpr
+    exact Real.sqrt_pos.2 hL0
+  have hU1 : 1 ≤ U := by
+    dsimp [U]
+    rw [multiShiftScheduleU]
+    change (1 : ℝ) ≤ (multiShiftScheduleJ N : ℝ) * (Real.log L) ^ 3
+    have hJ1real : (1 : ℝ) ≤ multiShiftScheduleJ N := by exact_mod_cast hJ1
+    have hlogpow : (1 : ℝ) ≤ (Real.log L) ^ 3 := one_le_pow₀ hlogL1
+    calc
+      (1 : ℝ) = 1 * 1 := by ring
+      _ ≤ (multiShiftScheduleJ N : ℝ) * (Real.log L) ^ 3 :=
+        mul_le_mul hJ1real hlogpow zero_le_one (zero_le_one.trans hJ1real)
+  have hxLower : Real.sqrt (Real.log N) ≤ x := by
+    dsimp [x, U]
+    rw [le_div_iff₀ hU.1]
+    have hmul : Real.sqrt (Real.log N) * multiShiftScheduleU N ≤
+        Real.sqrt (Real.log N) * Real.sqrt (Real.log N) :=
+      mul_le_mul_of_nonneg_left hU.2 (Real.sqrt_nonneg _)
+    nlinarith
+  have hxUpper : x ≤ Real.log N := by
+    dsimp [x, U]
+    exact (div_le_iff₀ (lt_of_lt_of_le zero_lt_one hU1)).2
+      (by nlinarith [ht0.le])
+  have hxLarge : 2 * Real.log 2 ≤ x := by
+    have hlog2lt : Real.log (2 : ℝ) < 1 := Real.log_two_lt_d9.trans (by norm_num)
+    nlinarith [Real.sqrt_nonneg (Real.log N)]
+  have hfloor := natFloor_exp_log_bounds hxLarge
+  change 2 ≤ multiShiftCutoffY N ∧
+      x / 2 ≤ Real.log (multiShiftCutoffY N) ∧
+      Real.log (multiShiftCutoffY N) ≤ x ∧
+      Real.log x - Real.log 2 ≤ Real.log (Real.log (multiShiftCutoffY N)) ∧
+      Real.log (Real.log (multiShiftCutoffY N)) ≤ Real.log x at hfloor
+  have hfixedDynamic :
+      ⌊Real.exp (Real.rpow (Real.log N) (1 / 2 : ℝ))⌋₊ ≤ multiShiftCutoffY N := by
+    apply Nat.floor_le_floor
+    apply Real.exp_le_exp.mpr
+    calc
+      Real.rpow (Real.log N) (1 / 2 : ℝ) = Real.sqrt (Real.log N) :=
+        (Real.sqrt_eq_rpow _).symm
+      _ ≤ x := hxLower
+  have hcollisionY : collisionCutoff N ≤ multiShiftCutoffY N := by
+    have hcollision' : collisionCutoff N ≤
+        ⌊Real.exp (Real.rpow (Real.log N) (1 / 2 : ℝ))⌋₊ := by
+      simpa using hcollision
+    exact hcollision'.trans hfixedDynamic
+  have hyN : multiShiftCutoffY N ≤ N := by
+    have hNnat : 0 < N := by
+      by_contra hnot
+      have : N = 0 := Nat.eq_zero_of_not_pos hnot
+      subst N
+      norm_num at ht
+    have hyReal : (multiShiftCutoffY N : ℝ) ≤ N := by
+      calc
+        (multiShiftCutoffY N : ℝ) ≤ Real.exp x :=
+          Nat.floor_le (Real.exp_pos x).le
+        _ ≤ Real.exp (Real.log N) := Real.exp_le_exp.mpr hxUpper
+        _ = N := Real.exp_log (by exact_mod_cast hNnat)
+    exact_mod_cast hyReal
+  exact ⟨hcollisionY, hyN, hfloor⟩
+
+/-- The logarithm of the sieve depth costs at most four logarithms of `L = log log N`. -/
+theorem eventually_log_multiShiftScheduleU_le :
+    ∀ᶠ N : ℕ in atTop,
+      1 ≤ multiShiftScheduleU N ∧
+        Real.log (multiShiftScheduleU N) ≤
+          4 * Real.log (Real.log (Real.log N)) := by
+  have hLTop : Tendsto (fun N : ℕ ↦ Real.log (Real.log (N : ℝ))) atTop atTop :=
+    Real.tendsto_log_atTop.comp
+      (Real.tendsto_log_atTop.comp tendsto_natCast_atTop_atTop)
+  filter_upwards [eventually_multiShiftScheduleJ_le_log_log,
+      hLTop.eventually_ge_atTop 3] with N hJL hL
+  let L : ℝ := Real.log (Real.log N)
+  have hL0 : 0 < L := by simpa only [L] using (show 0 < Real.log (Real.log N) by linarith)
+  have hlogL1 : 1 ≤ Real.log L := by
+    calc
+      (1 : ℝ) = Real.log (Real.exp 1) := (Real.log_exp 1).symm
+      _ ≤ Real.log 3 := Real.log_le_log (Real.exp_pos 1) Real.exp_one_lt_three.le
+      _ ≤ Real.log L := Real.log_le_log (by norm_num) (by simpa only [L] using hL)
+  have hJ1 : 1 ≤ multiShiftScheduleJ N := by
+    apply Nat.one_le_ceil_iff.mpr
+    exact Real.sqrt_pos.2 hL0
+  have hU1 : 1 ≤ multiShiftScheduleU N := by
+    rw [multiShiftScheduleU]
+    change (1 : ℝ) ≤ (multiShiftScheduleJ N : ℝ) * (Real.log L) ^ 3
+    have hJ1real : (1 : ℝ) ≤ multiShiftScheduleJ N := by exact_mod_cast hJ1
+    have hlogpow : (1 : ℝ) ≤ (Real.log L) ^ 3 := one_le_pow₀ hlogL1
+    calc
+      (1 : ℝ) = 1 * 1 := by ring
+      _ ≤ (multiShiftScheduleJ N : ℝ) * (Real.log L) ^ 3 :=
+        mul_le_mul hJ1real hlogpow zero_le_one (zero_le_one.trans hJ1real)
+  have hlogL_le : Real.log L ≤ L :=
+    (Real.log_le_sub_one_of_pos hL0).trans (by linarith)
+  have hUle : multiShiftScheduleU N ≤ L ^ 4 := by
+    rw [multiShiftScheduleU]
+    change (multiShiftScheduleJ N : ℝ) * (Real.log L) ^ 3 ≤ L ^ 4
+    calc
+      (multiShiftScheduleJ N : ℝ) * (Real.log L) ^ 3 ≤ L * L ^ 3 := by gcongr
+      _ = L ^ 4 := by ring
+  refine ⟨hU1, ?_⟩
+  calc
+    Real.log (multiShiftScheduleU N) ≤ Real.log (L ^ 4) :=
+      Real.log_le_log (lt_of_lt_of_le zero_lt_one hU1) hUle
+    _ = 4 * Real.log L := by rw [Real.log_pow]; norm_num
+
+/-- Before the bounded Mertens error is inserted, the reciprocal-prime block has logarithmic
+length `L - O(log L)`. -/
+theorem eventually_multiShiftLogBlock_bounds :
+    ∀ᶠ N : ℕ in atTop,
+      let L := Real.log (Real.log N)
+      2 ≤ collisionCutoff N ∧
+        L - 6 * Real.log L - Real.log 2 ≤
+          Real.log (Real.log (multiShiftCutoffY N)) -
+            Real.log (Real.log (collisionCutoff N)) ∧
+        Real.log (Real.log (multiShiftCutoffY N)) -
+            Real.log (Real.log (collisionCutoff N)) ≤ L + Real.log 2 := by
+  have htTop : Tendsto (fun N : ℕ ↦ Real.log (N : ℝ)) atTop atTop :=
+    Real.tendsto_log_atTop.comp tendsto_natCast_atTop_atTop
+  have hLTop : Tendsto (fun N : ℕ ↦ Real.log (Real.log (N : ℝ))) atTop atTop :=
+    Real.tendsto_log_atTop.comp htTop
+  filter_upwards [eventually_multiShiftCutoffY_bounds,
+      eventually_log_multiShiftScheduleU_le, htTop.eventually_ge_atTop 2,
+      hLTop.eventually_ge_atTop 3] with N hy hU ht hL
+  let L : ℝ := Real.log (Real.log N)
+  let U : ℝ := multiShiftScheduleU N
+  let x : ℝ := Real.log N / U
+  have ht0 : 0 < Real.log (N : ℝ) := by linarith
+  have hL0 : 0 < L := by simpa only [L] using (show 0 < Real.log (Real.log N) by linarith)
+  have hlogL0 : 0 < Real.log L := Real.log_pos (by linarith)
+  have hU0 : 0 < U := lt_of_lt_of_le zero_lt_one hU.1
+  have hx0 : 0 < x := div_pos ht0 hU0
+  have hlogx : Real.log x = L - Real.log U := by
+    dsimp [x]
+    rw [Real.log_div ht0.ne' hU0.ne']
+  have hcollisionFloor := natFloor_exp_log_bounds
+    (x := L ^ 2) (show 2 * Real.log 2 ≤ L ^ 2 by
+      have hlog2lt : Real.log (2 : ℝ) < 1 := Real.log_two_lt_d9.trans (by norm_num)
+      nlinarith)
+  change 2 ≤ collisionCutoff N ∧
+      L ^ 2 / 2 ≤ Real.log (collisionCutoff N) ∧
+      Real.log (collisionCutoff N) ≤ L ^ 2 ∧
+      Real.log (L ^ 2) - Real.log 2 ≤ Real.log (Real.log (collisionCutoff N)) ∧
+      Real.log (Real.log (collisionCutoff N)) ≤ Real.log (L ^ 2) at hcollisionFloor
+  have hlogLsq : Real.log (L ^ 2) = 2 * Real.log L := by
+    rw [Real.log_pow]
+    norm_num
+  have hyLower := hy.2.2.2.2.2.1
+  have hyUpper := hy.2.2.2.2.2.2
+  change Real.log x - Real.log 2 ≤ Real.log (Real.log (multiShiftCutoffY N)) at hyLower
+  change Real.log (Real.log (multiShiftCutoffY N)) ≤ Real.log x at hyUpper
+  have hlogU : Real.log U ≤ 4 * Real.log L := by
+    simpa only [U, L] using hU.2
+  refine ⟨hcollisionFloor.1, ?_, ?_⟩
+  · rw [hlogx] at hyLower
+    rw [hlogLsq] at hcollisionFloor
+    linarith [hcollisionFloor.2.2.2.2]
+  · rw [hlogx] at hyUpper
+    rw [hlogLsq] at hcollisionFloor
+    have hlogU0 : 0 ≤ Real.log U := Real.log_nonneg hU.1
+    linarith [hcollisionFloor.2.2.2.1]
+
+/-- The reciprocal-prime mean on the variable block is comparable with `L = log log N`.
+This is the coarse estimate needed by all moderate-deviation side conditions. -/
+theorem eventually_multiShiftPrimeMean_bounds :
+    ∀ᶠ N : ℕ in atTop,
+      let L := Real.log (Real.log N)
+      L / 2 ≤ ∑ p ∈ primesIoc (collisionCutoff N) (multiShiftCutoffY N), (1 / p : ℝ) ∧
+        ∑ p ∈ primesIoc (collisionCutoff N) (multiShiftCutoffY N), (1 / p : ℝ) ≤ 2 * L := by
+  obtain ⟨C, hC0, hMertens⟩ := mertens_primesIoc_bound
+  have hLTop : Tendsto (fun N : ℕ ↦ Real.log (Real.log (N : ℝ))) atTop atTop :=
+    Real.tendsto_log_atTop.comp
+      (Real.tendsto_log_atTop.comp tendsto_natCast_atTop_atTop)
+  have hlogSmallReal := (Real.isLittleO_log_id_atTop.bound
+    (show (0 : ℝ) < 1 / 24 by norm_num))
+  have hlogSmall := hLTop.eventually hlogSmallReal
+  filter_upwards [eventually_multiShiftCutoffY_bounds,
+      eventually_multiShiftLogBlock_bounds, hlogSmall,
+      hLTop.eventually_ge_atTop (4 * (Real.log 2 + 2 * C + 1))] with
+      N hy hblock hlogSmall hLlarge
+  let L : ℝ := Real.log (Real.log N)
+  let mean : ℝ := ∑ p ∈ primesIoc (collisionCutoff N) (multiShiftCutoffY N), (1 / p : ℝ)
+  have hL0 : 0 < L := by
+    have hconst0 : 0 < 4 * (Real.log 2 + 2 * C + 1) := by positivity
+    exact hconst0.trans_le (by simpa only [L] using hLlarge)
+  have hlogL0 : 0 ≤ Real.log L := Real.log_nonneg (by
+    have hlog2pos : 0 < Real.log (2 : ℝ) := Real.log_pos (by norm_num)
+    have : 4 ≤ 4 * (Real.log 2 + 2 * C + 1) := by nlinarith
+    linarith)
+  have hlogSmall' : Real.log L ≤ (1 / 24 : ℝ) * L := by
+    have := hlogSmall
+    simpa only [L, Real.norm_eq_abs, abs_of_nonneg hlogL0, abs_of_pos hL0, id] using this
+  have hconst : Real.log 2 + 2 * C ≤ L / 4 := by
+    change 4 * (Real.log 2 + 2 * C + 1) ≤ L at hLlarge
+    nlinarith
+  have hP2 : 2 ≤ collisionCutoff N := hblock.1
+  have hPy : collisionCutoff N ≤ multiShiftCutoffY N := hy.1
+  have hM := hMertens (collisionCutoff N) (multiShiftCutoffY N) hP2 hPy
+  change |mean - (Real.log (Real.log (multiShiftCutoffY N)) -
+      Real.log (Real.log (collisionCutoff N)))| ≤ 2 * C at hM
+  have hmainLower := hblock.2.1
+  have hmainUpper := hblock.2.2
+  change L - 6 * Real.log L - Real.log 2 ≤
+      Real.log (Real.log (multiShiftCutoffY N)) -
+        Real.log (Real.log (collisionCutoff N)) at hmainLower
+  change Real.log (Real.log (multiShiftCutoffY N)) -
+      Real.log (Real.log (collisionCutoff N)) ≤ L + Real.log 2 at hmainUpper
+  have hMlo := (abs_le.mp hM).1
+  have hMhi := (abs_le.mp hM).2
+  refine ⟨?_, ?_⟩
+  · nlinarith
+  · nlinarith
+
+/-- All geometric side conditions for the multishift sieve, apart from its constant-dependent
+depth inequality.  Moreover `log N / log y` is trapped between `u` and `2u`. -/
+theorem eventually_multiShiftSieveGeometry :
+    ∀ᶠ N : ℕ in atTop,
+      1 ≤ multiShiftScheduleJ N ∧
+        multiShiftScheduleJ N ≤ collisionCutoff N ∧
+        2 ≤ multiShiftCutoffY N ∧ multiShiftCutoffY N ≤ N ∧
+        multiShiftScheduleU N ≤ Real.log N / Real.log (multiShiftCutoffY N) ∧
+        Real.log N / Real.log (multiShiftCutoffY N) ≤
+          2 * multiShiftScheduleU N := by
+  have htTop : Tendsto (fun N : ℕ ↦ Real.log (N : ℝ)) atTop atTop :=
+    Real.tendsto_log_atTop.comp tendsto_natCast_atTop_atTop
+  have hLTop : Tendsto (fun N : ℕ ↦ Real.log (Real.log (N : ℝ))) atTop atTop :=
+    Real.tendsto_log_atTop.comp htTop
+  filter_upwards [eventually_multiShiftCutoffY_bounds,
+      eventually_multiShiftScheduleJ_le_log_log, eventually_log_multiShiftScheduleU_le,
+      htTop.eventually_ge_atTop 2, hLTop.eventually_ge_atTop 3] with N hy hJL hU ht hL
+  let L : ℝ := Real.log (Real.log N)
+  let U : ℝ := multiShiftScheduleU N
+  let x : ℝ := Real.log N / U
+  have hL0 : 0 < L := by simpa only [L] using (show 0 < Real.log (Real.log N) by linarith)
+  have ht0 : 0 < Real.log (N : ℝ) := by linarith
+  have hU0 : 0 < U := lt_of_lt_of_le zero_lt_one hU.1
+  have hJ1 : 1 ≤ multiShiftScheduleJ N := by
+    apply Nat.one_le_ceil_iff.mpr
+    exact Real.sqrt_pos.2 hL0
+  have hcollisionFloor := natFloor_exp_log_bounds
+    (x := L ^ 2) (show 2 * Real.log 2 ≤ L ^ 2 by
+      have hlog2lt : Real.log (2 : ℝ) < 1 := Real.log_two_lt_d9.trans (by norm_num)
+      nlinarith)
+  change 2 ≤ collisionCutoff N ∧
+      L ^ 2 / 2 ≤ Real.log (collisionCutoff N) ∧
+      Real.log (collisionCutoff N) ≤ L ^ 2 ∧
+      Real.log (L ^ 2) - Real.log 2 ≤ Real.log (Real.log (collisionCutoff N)) ∧
+      Real.log (Real.log (collisionCutoff N)) ≤ Real.log (L ^ 2) at hcollisionFloor
+  have hLlogP : L ≤ Real.log (collisionCutoff N) := by
+    nlinarith [hcollisionFloor.2.1]
+  have hlogPP : Real.log (collisionCutoff N) ≤ (collisionCutoff N : ℝ) := by
+    have hP0 : (0 : ℝ) < collisionCutoff N := by
+      exact_mod_cast (lt_of_lt_of_le (by norm_num : 0 < 2) hcollisionFloor.1)
+    exact (Real.log_le_sub_one_of_pos hP0).trans (by linarith)
+  have hJP : multiShiftScheduleJ N ≤ collisionCutoff N := by
+    have hJPreal : (multiShiftScheduleJ N : ℝ) ≤ collisionCutoff N :=
+      hJL.trans (hLlogP.trans hlogPP)
+    exact_mod_cast hJPreal
+  have hy2 : 2 ≤ multiShiftCutoffY N := hy.2.2.1
+  have hlogy0 : 0 < Real.log (multiShiftCutoffY N) :=
+    Real.log_pos (by exact_mod_cast (show 1 < multiShiftCutoffY N by omega))
+  have hyLower := hy.2.2.2.1
+  have hyUpper := hy.2.2.2.2.1
+  change x / 2 ≤ Real.log (multiShiftCutoffY N) at hyLower
+  change Real.log (multiShiftCutoffY N) ≤ x at hyUpper
+  have hratioLower : U ≤ Real.log N / Real.log (multiShiftCutoffY N) := by
+    rw [le_div_iff₀ hlogy0]
+    have hmul := mul_le_mul_of_nonneg_right hyUpper hU0.le
+    dsimp [x] at hmul
+    rw [div_mul_cancel₀ (Real.log N) hU0.ne'] at hmul
+    nlinarith
+  have hratioUpper : Real.log N / Real.log (multiShiftCutoffY N) ≤ 2 * U := by
+    rw [div_le_iff₀ hlogy0]
+    have hmul := mul_le_mul_of_nonneg_left hyLower (show 0 ≤ 2 * U by positivity)
+    have heq : (2 * U) * (x / 2) = Real.log N := by
+      dsimp [x]
+      field_simp
+    nlinarith
+  exact ⟨hJ1, hJP, hy2, hy.2.1, hratioLower, hratioUpper⟩
 
 open Classical in
 /-- **Hypothesis (sieve, dimension `J`): the `J`-shift Kubilius model.**  This is the natural

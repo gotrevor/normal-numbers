@@ -178,3 +178,24 @@ The next attack is the remaining scalar schedule: define the variable cutoff `y(
 Mertens mean is `L - O(log L)`, and bundle the eventual deterministic, sieve, collision, and
 moderate-deviation inequalities for thresholds containing the new square-root baseline. Detailed
 baton: `HANDOFF-2026-10-26-eb-multishift-lap10.md`.
+
+## Lap checkpoint (2026-10-26, lap 11)
+
+The variable cutoff and its first full asymptotic bundle are now proved. The new definitions are
+`multiShiftScheduleU N = J(N) * (log log log N)^3` and
+`multiShiftCutoffY N = floor (exp (log N / u(N)))`. The reusable variable-exponent floor lemma
+`natFloor_exp_log_bounds` controls both logarithms after taking the natural floor.
+
+`eventually_multiShiftCutoffY_bounds` proves `collisionCutoff N <= y(N) <= N` and the sharp bounds
+`x/2 <= log y <= x`, `log x - log 2 <= log log y <= log x`, where `x = log N/u`.
+`eventually_multiShiftLogBlock_bounds` then proves the prime block has logarithmic length between
+`L - 6 log L - log 2` and `L + log 2`, and `eventually_multiShiftPrimeMean_bounds` inserts Mertens
+to obtain `L/2 <= mu <= 2L`. Finally `eventually_multiShiftSieveGeometry` packages
+`1 <= J <= collisionCutoff N`, `2 <= y <= N`, and `u <= log N/log y <= 2u`. All new declarations
+are axiom-clean, and only the packet headline's original `sorry` remains.
+
+The next attack is the constant-dependent analytic schedule: prove the remaining sieve depth
+inequality, the two TV errors and `J^2/P` tend to zero, and define the active-column thresholds.
+Then bundle the deterministic scalar inequality and the moderate-deviation hypotheses, keeping the
+sharp `L - O(log L)` information from `eventually_multiShiftLogBlock_bounds` for the final exponent.
+Detailed baton: `HANDOFF-2026-10-26-eb-multishift-lap11.md`.
