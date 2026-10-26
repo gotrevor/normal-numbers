@@ -60,3 +60,11 @@ add the route-2 Maze row (reopen condition: a lever on ρ's digits not available
 - Lap 3: Maze row "Cutoff-six prime reservoir as an arithmetic source for pi" (wall, kernel),
   linked in MazeAudit (which now imports the cutoff-six files, so they build in the default target).
   Brief's deliverables complete; open node: `CubicRootEscape` (no known mechanism).
+
+## BLOCKER (box stuck, 2026-10-26)
+Operator brief docs/pi-routes/opus-cutoff-six-followup.md is fully delivered (commits bcd2af3e,
+3fa836a4, 8bbdc428).  The session's operator scope is that brief only; other src sorries belong to
+other campaigns (DIRECTION.md gate-5 directive, other branch).  The one open item from the brief,
+`CubicRootEscape`, is an Artin-type equidistribution statement with no known mechanism.
+Ask: operator decides whether to continue route 2 (e.g. attack CubicRootEscape or a coupling
+to R+S) or reassign this run.
