@@ -30,6 +30,7 @@ series, and S_n ≈ 16ⁿ(π − ρ).  The premise is then joint base-16 disjunc
 (ρ, π − ρ): at least as hard as disjunctivity of ρ itself, which is open.  Route-2 confidence
 that it gives leverage over plain digits: low (~10%).
 
+## Status: lane closed under rule 9 (obstruction in Lean). Optional reopen probe:
 ## Next move
 Lap 7: probe whether ρ has extra structure (closed form? rational? relation to π, e.g.
 ρ − c·π rational) — any such identity would be the only lever left.  Also consider
