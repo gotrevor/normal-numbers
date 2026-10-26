@@ -296,3 +296,46 @@ interface: instantiate arithmetic cutoffs in each log-log block, use the new mas
 `summable_kubiliusIntegratedMajorant`.  Once that uniform model theorem is packaged, proceed to the
 squarefull/large-prime divisor comparison and the `KubiliusTV` transfer, then reuse the proved
 `c > 3` capped-residual and headline assembly.
+
+## Lap checkpoint — 2026-10-26, geometric prime-cutoff tail packaged
+
+The remaining geometric-block union/tail layer of step 6 is now kernel-checked, including the
+actual arithmetic prime cutoffs rather than only the ordered-prefix event.
+
+- `kubiliusPrimeCutoffLoweredCrossingMass` is the model mass of a selected-prime walk crossing at
+  some arithmetic cutoff `a ≤ y`, summed over the auxiliary integer thresholds.
+- `kubiliusPrimeCutoffLoweredCrossingMass_le` uses the proved cutoff-to-prefix inclusion termwise
+  to dominate this quantity by `kubiliusLoweredCrossingMass`.
+- `exists_kubiliusPrimeCutoffLoweredCrossingMass_geometric_sum_lt` composes the eventual uniform
+  one-block estimate with `summable_kubiliusIntegratedMajorant`.  Given any `ζ > 0`, all finite
+  families of sufficiently late geometric blocks have total crossing mass `< ζ`, uniformly in
+  each block's terminal cutoff and number of auxiliary thresholds, provided the terminal Mertens
+  variance obeys the required `r * u` cap.  Thus step 6's maximal inequality, arithmetic event
+  interface, geometric union, and tail limit are all packaged.
+
+The diff from planting commit `e61852e6` is insertion-only at the helper layer: `primesUpTo`,
+`kubiliusMass`, `KubiliusTV`, and the headline statement remain unchanged.  `KubiliusTV` remains
+only a hypothesis; no `axiom` declaration or `native_decide` was added.  The scoped target still
+has its single frozen headline `sorry`.
+
+Verification actually run:
+
+- `lake env lean src/NormalNumbers/CoefmassErdosBorweinSubpowerKub.lean` — succeeds, with only the
+  pre-existing headline `sorry` warning.
+- `~/personal/bin/lean-green . --target NormalNumbers.CoefmassErdosBorweinSubpowerKub --import
+  NormalNumbers.CoefmassErdosBorweinSubpowerKub --axioms
+  NormalNumbers.ErdosBorweinSubpowerKub.kubiliusPrimeCutoffLoweredCrossingMass_le --axioms
+  NormalNumbers.ErdosBorweinSubpowerKub.exists_kubiliusPrimeCutoffLoweredCrossingMass_geometric_sum_lt`
+  — `FORMALIZE-TIER GREEN`; both declarations report exactly `Classical.choice`, `Quot.sound`, and
+  `propext`.
+- `~/personal/bin/lean-green .` — full 10,847-job repository build, `FORMALIZE-TIER GREEN`.
+
+The model-probability step 6 is now complete at the geometric arithmetic-cutoff interface.  The
+remaining crux is the deterministic/arithmetic comparison needed for
+`exists_subpower_marginal_large_cards_le_of_kubilius`: bound the divisor block mass by the selected
+small-prime walk while controlling prime-power excess and the fewer than `v` primes above the top
+cutoff, truncate the auxiliary thresholds, and then apply `KubiliusTV` (including its summed error).
+The next highest-value attack is the squarefull/prime-power excess moment bound and the resulting
+event inclusion from a large `weightedDivisorBlockMass` to a lowered selected-prime-walk crossing.
+Once that comparison and transfer are green, copy the proved `c > 3` capped-residual and headline
+assembly verbatim except for swapping in the new large-cards lemma.

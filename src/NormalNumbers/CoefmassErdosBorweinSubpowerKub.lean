@@ -835,6 +835,99 @@ theorem eventually_kubiliusLoweredCrossingMass_le
         hrpow]
       rfl
 
+open Classical in
+/-- Model mass of crossings at actual arithmetic prime cutoffs, summed over the auxiliary
+integer thresholds. -/
+noncomputable def kubiliusPrimeCutoffLoweredCrossingMass
+    (y : ℕ) (c A B u : ℝ) (J : ℕ) : ℝ :=
+  ∑ j ∈ Finset.range J, kubiliusMass y
+    {S | ∃ a ≤ y, kubiliusLoweredBarrier c A B u + j ≤
+      centeredBernoulliFinsetSum (fun p : ℕ ↦ (1 / p : ℝ)) S (primesUpTo a)}
+
+open Classical in
+/-- Arithmetic-cutoff crossings are bounded by the ordered-prefix crossing quantity. -/
+theorem kubiliusPrimeCutoffLoweredCrossingMass_le
+    (y : ℕ) (c A B u : ℝ) (J : ℕ) :
+    kubiliusPrimeCutoffLoweredCrossingMass y c A B u J ≤
+      kubiliusLoweredCrossingMass y c A B u J := by
+  unfold kubiliusPrimeCutoffLoweredCrossingMass kubiliusLoweredCrossingMass
+  apply Finset.sum_le_sum
+  intro j hj
+  exact kubiliusMass_primeCutoffCrossing_le_centeredPrefixCrossing y
+    (kubiliusLoweredBarrier c A B u + j)
+
+open Classical in
+/-- Uniform summable tail of actual prime-cutoff crossing masses over geometric log-log blocks.
+The terminal cutoff and number of auxiliary thresholds may vary arbitrarily from block to block;
+only the Mertens variance cap is required. -/
+theorem exists_kubiliusPrimeCutoffLoweredCrossingMass_geometric_sum_lt
+    {c : ℝ} (hc : 1 < c) (A B : ℝ) (hA : 0 ≤ A) (hB : 0 ≤ B)
+    (ζ : ℝ) (hζ : 0 < ζ) :
+    ∃ K : ℕ, ∀ H : ℕ, ∀ y J : ℕ → ℕ,
+      (∀ k ∈ Finset.range H, 2 ≤ y (k + K) ∧
+        Real.log (Real.log (y (k + K) : ℝ)) + Erdos67.PrimeEstimates.mertensBound ≤
+          kubiliusBlockRatio c * (kubiliusBlockRatio c : ℝ) ^ (k + K)) →
+      (∑ k ∈ Finset.range H,
+        kubiliusPrimeCutoffLoweredCrossingMass (y (k + K)) c A B
+          ((kubiliusBlockRatio c : ℝ) ^ (k + K)) (J (k + K))) < ζ := by
+  let r : ℝ := kubiliusBlockRatio c
+  let f : ℕ → ℝ := fun k ↦ kubiliusIntegratedMajorantConstant c *
+    Real.rpow r (kubiliusIntegratedDecayExponent c * (k : ℝ))
+  have hr : 1 < r := one_lt_kubiliusBlockRatio hc
+  have hsum : Summable f := by
+    simpa [f, r] using summable_kubiliusIntegratedMajorant hc
+  have hmodel := eventually_kubiliusLoweredCrossingMass_le hc A B hA hB
+  have hrpow : Tendsto (fun k : ℕ ↦ (r : ℝ) ^ k) atTop atTop :=
+    tendsto_pow_atTop_atTop_of_one_lt hr
+  have hmodelNat : ∀ᶠ k : ℕ in atTop, ∀ y J : ℕ, 2 ≤ y →
+      Real.log (Real.log (y : ℝ)) + Erdos67.PrimeEstimates.mertensBound ≤
+        r * (r : ℝ) ^ k →
+      kubiliusLoweredCrossingMass y c A B ((r : ℝ) ^ k) J ≤ f k := by
+    filter_upwards [hrpow.eventually hmodel] with k hk
+    intro y J hy hvar
+    have h := hk y J hy hvar
+    calc
+      kubiliusLoweredCrossingMass y c A B (r ^ k) J ≤
+          kubiliusIntegratedMajorantConstant c *
+            Real.rpow (r ^ k) (kubiliusIntegratedDecayExponent c) := h
+      _ = f k := by
+        have hpow : (r : ℝ) ^ k = Real.rpow r (k : ℝ) :=
+          (Real.rpow_natCast r k).symm
+        rw [hpow]
+        simpa only [f, r] using
+          kubiliusIntegratedMajorant_geometric c k
+            (by linarith : 0 ≤ kubiliusBlockRatio c)
+  obtain ⟨K₀, hK₀⟩ := eventually_atTop.1 hmodelNat
+  have htailEv : ∀ᶠ K : ℕ in atTop, (∑' i : ℕ, f (i + K)) < ζ :=
+    (tendsto_sum_nat_add f).eventually_lt_const hζ
+  obtain ⟨K, hK⟩ := eventually_atTop.1 (htailEv.and (eventually_ge_atTop K₀))
+  have hdata := hK K le_rfl
+  refine ⟨K, ?_⟩
+  intro H y J hvar
+  have hfinite : (∑ k ∈ Finset.range H, f (k + K)) ≤ ∑' i : ℕ, f (i + K) := by
+    have hconst : 0 ≤ kubiliusIntegratedMajorantConstant c := by
+      unfold kubiliusIntegratedMajorantConstant
+      positivity [kubiliusInnerCoefficient_pos hc, one_lt_kubiliusBlockRatio hc]
+    have hf0 : ∀ i, 0 ≤ f (i + K) := by
+      intro i
+      exact mul_nonneg hconst (Real.rpow_nonneg (by linarith : 0 ≤ r) _)
+    exact (hsum.comp_injective (fun _ _ h ↦ Nat.add_right_cancel h)).sum_le_tsum
+      (Finset.range H) (fun i _ ↦ hf0 i)
+  calc
+    (∑ k ∈ Finset.range H,
+        kubiliusPrimeCutoffLoweredCrossingMass (y (k + K)) c A B
+          ((kubiliusBlockRatio c : ℝ) ^ (k + K)) (J (k + K))) ≤
+        ∑ k ∈ Finset.range H, f (k + K) := by
+      apply Finset.sum_le_sum
+      intro k hk
+      have hblock := hK₀ (k + K) (by omega)
+      have hv := hvar k hk
+      exact (kubiliusPrimeCutoffLoweredCrossingMass_le
+        (y (k + K)) c A B (kubiliusBlockRatio c ^ (k + K)) (J (k + K))).trans
+          (by simpa only [r] using hblock (y (k + K)) (J (k + K)) hv.1 hv.2)
+    _ ≤ ∑' i : ℕ, f (i + K) := hfinite
+    _ < ζ := hdata.1
+
 /-- **Target: non-normal below the sub-power weight for every `c > 1`, given `KubiliusTV`.**  This
 reaches the heuristic threshold of `EBLogWindow`'s non-normal half.  The proof replaces the c > 3
 block-union step of `ebRandom_ae_not_normal_subpower` by Doob's exponential maximal inequality on
