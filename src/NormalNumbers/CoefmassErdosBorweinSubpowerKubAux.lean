@@ -135,6 +135,53 @@ def centeredBernoulliHit {α : Type*} [DecidableEq α] (q : α → ℝ) (h : ℝ
       h ≤ z ∨ centeredBernoulliHit q h
         (z + if p ∈ S then 1 - q p else -q p) l S
 
+/-- Centered sum along the first `k` coordinates of an ordered Bernoulli family. -/
+noncomputable def centeredBernoulliPrefixSum {α : Type*} [DecidableEq α]
+    (q : α → ℝ) (S : Finset α) (l : List α) (k : ℕ) : ℝ :=
+  ((l.take k).map fun p ↦ if p ∈ S then 1 - q p else -q p).sum
+
+@[simp]
+theorem centeredBernoulliPrefixSum_zero {α : Type*} [DecidableEq α]
+    (q : α → ℝ) (S : Finset α) (l : List α) :
+    centeredBernoulliPrefixSum q S l 0 = 0 := by
+  simp [centeredBernoulliPrefixSum]
+
+@[simp]
+theorem centeredBernoulliPrefixSum_succ_cons {α : Type*} [DecidableEq α]
+    (q : α → ℝ) (S : Finset α) (p : α) (l : List α) (k : ℕ) :
+    centeredBernoulliPrefixSum q S (p :: l) (k + 1) =
+      (if p ∈ S then 1 - q p else -q p) + centeredBernoulliPrefixSum q S l k := by
+  simp [centeredBernoulliPrefixSum]
+
+/-- Extensional meaning of the recursive first-passage event. -/
+theorem centeredBernoulliHit_iff_exists_prefix {α : Type*} [DecidableEq α]
+    (q : α → ℝ) (h z : ℝ) (l : List α) (S : Finset α) :
+    centeredBernoulliHit q h z l S ↔
+      ∃ k ≤ l.length, h ≤ z + centeredBernoulliPrefixSum q S l k := by
+  induction l generalizing z with
+  | nil => simp [centeredBernoulliHit]
+  | cons p l ih =>
+      simp only [centeredBernoulliHit]
+      constructor
+      · rintro (hz | hrest)
+        · exact ⟨0, by simp, by simpa using hz⟩
+        · rw [ih] at hrest
+          obtain ⟨k, hk, hsum⟩ := hrest
+          refine ⟨k + 1, by simp only [List.length_cons]; omega, ?_⟩
+          rw [centeredBernoulliPrefixSum_succ_cons]
+          linarith
+      · rintro ⟨k, hk, hsum⟩
+        cases k with
+        | zero =>
+            left
+            simpa using hsum
+        | succ k =>
+            right
+            rw [ih]
+            refine ⟨k, by simp only [List.length_cons] at hk; omega, ?_⟩
+            rw [centeredBernoulliPrefixSum_succ_cons] at hsum
+            linarith
+
 theorem centeredBernoulliHit_insert_invariant {α : Type*} [DecidableEq α]
     (q : α → ℝ) (h z : ℝ) (l : List α) {p : α} (hp : p ∉ l) (S : Finset α) :
     centeredBernoulliHit q h z l (insert p S) ↔ centeredBernoulliHit q h z l S := by
@@ -326,6 +373,13 @@ theorem centeredBernoulliMGF_le_exp {α : Type*} (q : α → ℝ) (θ : ℝ) (p 
       rw [← Real.exp_add]
       congr 1
       ring
+
+/-- Cubic Taylor bound in the exact form used by the geometric-block argument. -/
+theorem exp_sub_one_sub_id_le_half_sq_add_cube {θ : ℝ} (hθ0 : 0 ≤ θ) (hθ1 : θ ≤ 1) :
+    Real.exp θ - 1 - θ ≤ θ ^ 2 / 2 + θ ^ 3 := by
+  have h := Real.exp_bound' hθ0 hθ1 (n := 3) (by norm_num)
+  norm_num [Finset.sum_range_succ, Nat.factorial] at h
+  nlinarith [sq_nonneg θ, mul_nonneg (sq_nonneg θ) hθ0]
 
 /-- Product form of the Bennett estimate. -/
 theorem prod_centeredBernoulliMGF_le_exp {α : Type*} [DecidableEq α]

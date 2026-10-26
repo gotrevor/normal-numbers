@@ -28,6 +28,8 @@ open NormalNumbers.ErdosBorweinRandom NormalNumbers.ErdosBorweinSubpower
 /-- The primes `≤ y`. -/
 def primesUpTo (y : ℕ) : Finset ℕ := (Finset.range (y + 1)).filter Nat.Prime
 
+theorem primesUpTo_eq_primesLE (y : ℕ) : primesUpTo y = y.primesLE := rfl
+
 open Classical in
 /-- Mass of `A` under the Kubilius model: each prime `p ≤ y` is included independently with
 probability `1/p`. -/
@@ -80,6 +82,61 @@ theorem kubiliusMass_centeredBernoulliHit_le_exp (y : ℕ) (θ h : ℝ) (hθ : 0
     (fun p hp ↦ kubiliusParameter_le_one y p
       ((Finset.mem_sort (· ≤ ·)).mp hp)) θ h hθ
   simpa only [Finset.sort_toFinset] using hmax
+
+open Classical in
+/-- Prefix-sum form of the finite Kubilius maximal inequality. -/
+theorem kubiliusMass_exists_centeredPrefixSum_ge_le_exp (y : ℕ) (θ h : ℝ) (hθ : 0 ≤ θ) :
+    kubiliusMass y
+        {S | ∃ k ≤ ((primesUpTo y).sort (· ≤ ·)).length,
+          h ≤ centeredBernoulliPrefixSum (fun p : ℕ ↦ (1 / p : ℝ)) S
+            ((primesUpTo y).sort (· ≤ ·)) k} ≤
+      Real.exp ((Real.exp θ - 1 - θ) *
+        ∑ p ∈ primesUpTo y, (1 / p : ℝ) - θ * h) := by
+  simpa only [zero_add, centeredBernoulliHit_iff_exists_prefix] using
+    kubiliusMass_centeredBernoulliHit_le_exp y θ h hθ
+
+open Classical in
+/-- Mertens specialization of the finite Kubilius maximal inequality. -/
+theorem kubiliusMass_centeredBernoulliHit_le_exp_mertens
+    (y : ℕ) (hy : 2 ≤ y) (θ h : ℝ) (hθ : 0 ≤ θ) :
+    kubiliusMass y
+        {S | centeredBernoulliHit (fun p : ℕ ↦ (1 / p : ℝ)) h 0
+          ((primesUpTo y).sort (· ≤ ·)) S} ≤
+      Real.exp ((Real.exp θ - 1 - θ) *
+        (Real.log (Real.log (y : ℝ)) + Erdos67.PrimeEstimates.mertensBound) - θ * h) := by
+  have hprime : (∑ p ∈ primesUpTo y, (1 / p : ℝ)) ≤
+      Real.log (Real.log (y : ℝ)) + Erdos67.PrimeEstimates.mertensBound := by
+    simpa only [primesUpTo_eq_primesLE] using primeReciprocalMass_le_log_log_add y hy
+  have hcoef : 0 ≤ Real.exp θ - 1 - θ := by
+    linarith [Real.add_one_le_exp θ]
+  refine (kubiliusMass_centeredBernoulliHit_le_exp y θ h hθ).trans ?_
+  apply Real.exp_le_exp.mpr
+  exact sub_le_sub_right (mul_le_mul_of_nonneg_left hprime hcoef) (θ * h)
+
+open Classical in
+/-- Cubic-MGF form used on each geometric block of log-log prime cutoffs. -/
+theorem kubiliusMass_exists_centeredPrefixSum_ge_le_exp_cubic
+    (y : ℕ) (hy : 2 ≤ y) (θ h : ℝ) (hθ0 : 0 ≤ θ) (hθ1 : θ ≤ 1) :
+    kubiliusMass y
+        {S | ∃ k ≤ ((primesUpTo y).sort (· ≤ ·)).length,
+          h ≤ centeredBernoulliPrefixSum (fun p : ℕ ↦ (1 / p : ℝ)) S
+            ((primesUpTo y).sort (· ≤ ·)) k} ≤
+      Real.exp ((θ ^ 2 / 2 + θ ^ 3) *
+        (Real.log (Real.log (y : ℝ)) + Erdos67.PrimeEstimates.mertensBound) - θ * h) := by
+  have hprime : (∑ p ∈ primesUpTo y, (1 / p : ℝ)) ≤
+      Real.log (Real.log (y : ℝ)) + Erdos67.PrimeEstimates.mertensBound := by
+    simpa only [primesUpTo_eq_primesLE] using primeReciprocalMass_le_log_log_add y hy
+  have hsum0 : 0 ≤ ∑ p ∈ primesUpTo y, (1 / p : ℝ) := by positivity
+  have hcoef := exp_sub_one_sub_id_le_half_sq_add_cube hθ0 hθ1
+  have hcubic0 : 0 ≤ θ ^ 2 / 2 + θ ^ 3 := by positivity
+  have hmul : (Real.exp θ - 1 - θ) * ∑ p ∈ primesUpTo y, (1 / p : ℝ) ≤
+      (θ ^ 2 / 2 + θ ^ 3) *
+        (Real.log (Real.log (y : ℝ)) + Erdos67.PrimeEstimates.mertensBound) :=
+    mul_le_mul hcoef hprime hsum0 hcubic0
+  have hmax := kubiliusMass_exists_centeredPrefixSum_ge_le_exp y θ h hθ0
+  refine hmax.trans ?_
+  apply Real.exp_le_exp.mpr
+  exact sub_le_sub_right hmul (θ * h)
 
 /-- **Target: non-normal below the sub-power weight for every `c > 1`, given `KubiliusTV`.**  This
 reaches the heuristic threshold of `EBLogWindow`'s non-normal half.  The proof replaces the c > 3
