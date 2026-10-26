@@ -254,3 +254,39 @@ the moderate-deviation side conditions uniformly on an initial interval of lengt
 penalty estimate at `c <= 0` versus `0 < c < 1`, but keep the same threshold and baseline theorem;
 then apply `multiShiftMass_noHeavy_le_prod_one_sub` and the already-proved transfer-error limit.
 Detailed baton: `HANDOFF-2026-10-26-eb-multishift-lap13.md`.
+
+## Lap checkpoint (2026-10-26, lap 14)
+
+The exact threshold is now connected all the way to the independent one-column probability bound.
+`multiShiftDeviation` is the threshold displacement with a final `+1` absorbing `Nat.ceil`.
+`eventually_multiShiftDeviation_smallTilt` proves uniformly for **every** scheduled column
+`j : Fin (multiShiftScheduleJ N)` that
+
+```text
+(1 + 4*eta) * deviation_j / mean <= eta.
+```
+
+Thus the shorter active prefix proposed in lap 13 is unnecessary: the full `J ~ sqrt L` shift
+schedule satisfies the moderate-deviation tilt condition.  The proof keeps the exact `2N`
+subpower penalty and bounds its radicand using `c < 1`, the sharp mean is not weakened, and the
+shift cost is controlled directly from `J = ceil(sqrt L)`.
+
+`eventually_multiShiftModerateSideConditions` packages mean/displacement positivity,
+reciprocal-square control, small tilt, and domination by the fixed `A*sqrt(mean)` baseline.
+Finally `eventually_multiShiftColumnMass_ge_deviation` applies the existing finite
+moderate-deviation theorem and transports its real-cardinality event through the ceiling to the
+exact natural threshold event used by `multiShiftMass_noHeavy_le_prod_one_sub`.  All three results
+are axiom-clean.
+
+The next attack is the exponent and sum estimate.  Choose fixed `eps, eta, A` with
+`c*(1+eps) < 1`; prove a uniform upper bound
+
+```text
+(1+eps) * deviation_j^2 / (2*mean)
+  <= alpha * log L + o(log L),   alpha < 1/2,
+```
+
+or an equivalent explicit bound, then show the sum of the full `J` column lower bounds tends to
+infinity.  This sends the product of lower-tail complements to zero.  Combine it with the already
+proved collision/TV limit and the deterministic transfer, then apply Step 1'.  Detailed baton:
+`HANDOFF-2026-10-26-eb-multishift-lap14.md`.
