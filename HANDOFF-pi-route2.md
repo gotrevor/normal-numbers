@@ -19,6 +19,9 @@
 - Lap 5: `abs_reservoirKick_le` (|kick_k| ≤ 144/(k+1)), `reservoirConst` ρ := Σ' kick_k/16^{k+1},
   `bbpPrimeReservoir_near_orbit`: ∃ z, |R_n − z − 16ⁿρ| ≤ 10/(n+1).  All green, clean.
 
+- Lap 6: **`reservoirConst_disjunctive_of_support`**: premise ⇒ IsDisjunctive 16 ρ (obstruction,
+  green).  Reopen node `ReservoirConstDisjunctive`.
+
 ## What the finding means (the lane's research question, partial answer)
 The "uncancellable O(1) arithmetic transfer" between R and S does not exist: mod 1 both
 coordinates are ×16 pseudo-orbits with O(1/n) kicks.  Hence fract R_n = fract(16ⁿ ρ) + O(1/n)
@@ -28,6 +31,7 @@ series, and S_n ≈ 16ⁿ(π − ρ).  The premise is then joint base-16 disjunc
 that it gives leverage over plain digits: low (~10%).
 
 ## Next move
-Lap 6:
+Lap 7: probe whether ρ has extra structure (closed form? rational? relation to π, e.g.
+ρ − c·π rational) — any such identity would be the only lever left.  Also consider
 state the obstruction node `PiPrimeReservoirSupport ↔ joint disjunctivity of (ρ, π−ρ)` and
 add the route-2 Maze row (reopen condition: a lever on ρ's digits not available for π).

@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
 import NormalNumbers.PiDisjunctiveRoutes.PrimeReservoirStep
+import NormalNumbers.Disjunctive
 
 /-!
 # Route 2: the reservoir is a ×16 orbit of a partial BBP-type sum
@@ -107,5 +108,40 @@ theorem bbpPrimeReservoir_near_orbit (n : ℕ) :
         norm_num
     _ ≤ 10 / ((n : ℝ) + 1) := by
         rw [div_mul_eq_mul_div]; gcongr; norm_num
+
+/-- **Route-2 obstruction.**  The route premise already forces base-16 disjunctivity of the
+prime-indexed BBP constant `ρ = reservoirConst`, itself an open problem of the same
+kind as the sink.  So the reservoir supplies no lever beyond the digits of `ρ`. -/
+@[blueprint (title := "Route 2 premise forces disjunctivity of the reservoir constant")]
+theorem reservoirConst_disjunctive_of_support (h : PiPrimeReservoirSupport) :
+    IsDisjunctive 16 reservoirConst := by
+  intro a c ha hac hc
+  set e := (c - a) / 4 with he
+  have he0 : 0 < e := by rw [he]; linarith
+  obtain ⟨N, hN⟩ := exists_nat_gt (10 / e)
+  obtain ⟨n, hNn, ⟨h1, h2⟩, -⟩ :=
+    h (a + e) (c - e) 0 1 (by linarith) (by rw [he]; linarith) (by linarith)
+      le_rfl one_pos le_rfl N
+  obtain ⟨z, hz⟩ := bbpPrimeReservoir_near_orbit n
+  have hn : (10 / e : ℝ) < n + 1 := by
+    have : (N : ℝ) ≤ n := by exact_mod_cast hNn
+    linarith
+  have herr : 10 / ((n : ℝ) + 1) < e := by
+    rw [div_lt_iff₀ (by positivity)]
+    rw [div_lt_iff₀ he0] at hn; linarith
+  rw [abs_le] at hz
+  refine ⟨n, ?_⟩
+  set r := Int.fract (bbpPrimeReservoir n)
+  have hfr : orbit 16 reservoirConst n =
+      r - (bbpPrimeReservoir n - z - 16 ^ n * reservoirConst) := by
+    rw [orbit, Int.fract_eq_iff]
+    refine ⟨by linarith [hz.2], by linarith [hz.1], ⌊bbpPrimeReservoir n⌋ - z, ?_⟩
+    simp only [r, Int.fract]; push_cast; ring
+  rw [hfr]; constructor <;> linarith [hz.1, hz.2]
+
+/-- Reopen condition for route 2 (open conjecture node): the reservoir constant is
+disjunctive in base 16.  Necessary for the premise by
+`reservoirConst_disjunctive_of_support`; not known to be easier than the sink. -/
+def ReservoirConstDisjunctive : Prop := IsDisjunctive 16 reservoirConst
 
 end NormalNumbers.PiDisjunctiveRoutes
