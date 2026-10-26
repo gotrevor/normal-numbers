@@ -928,6 +928,488 @@ theorem exists_kubiliusPrimeCutoffLoweredCrossingMass_geometric_sum_lt
     _ ≤ ∑' i : ℕ, f (i + K) := hfinite
     _ < ζ := hdata.1
 
+open Classical in
+/-- `KubiliusTV` transferred termwise to a finite family of arithmetic events.  This form records
+the accumulated total-variation error needed when the auxiliary divisor-mass thresholds are
+truncated. -/
+theorem kubiliusTV_sum_card_div_le (hK : KubiliusTV) :
+    ∃ C : ℝ, 0 < C ∧ ∀ N y J : ℕ, 2 ≤ y → y ≤ N → ∀ A : ℕ → Set (Finset ℕ),
+      (∑ j ∈ Finset.range J,
+        (((Finset.Icc 1 N).filter
+          (fun n => n.primeFactors.filter (fun p => p ≤ y) ∈ A j)).card : ℝ) / N) ≤
+        (∑ j ∈ Finset.range J, kubiliusMass y (A j)) +
+          J * C * (Real.rpow (Real.log N / Real.log y)
+            (-(Real.log N / Real.log y)) + Real.rpow N (-(1 / 2 : ℝ))) := by
+  obtain ⟨C, hC, hTV⟩ := hK
+  refine ⟨C, hC, ?_⟩
+  intro N y J hy hyN A
+  let E := Real.rpow (Real.log N / Real.log y) (-(Real.log N / Real.log y)) +
+    Real.rpow N (-(1 / 2 : ℝ))
+  calc
+    (∑ j ∈ Finset.range J,
+        (((Finset.Icc 1 N).filter
+          (fun n => n.primeFactors.filter (fun p => p ≤ y) ∈ A j)).card : ℝ) / N) ≤
+        ∑ j ∈ Finset.range J, (kubiliusMass y (A j) + C * E) := by
+      apply Finset.sum_le_sum
+      intro j hj
+      have h := (abs_le.mp (hTV N y hy hyN (A j))).2
+      dsimp only [E]
+      linarith
+    _ = (∑ j ∈ Finset.range J, kubiliusMass y (A j)) + J * C * E := by
+      rw [Finset.sum_add_distrib]
+      simp
+      ring
+
+open Classical in
+lemma centeredBernoulliFinsetSum_eq_card_inter_sub_sum {α : Type*} [DecidableEq α]
+    (q : α → ℝ) (S U : Finset α) :
+    centeredBernoulliFinsetSum q S U =
+      ((S ∩ U).card : ℝ) - ∑ p ∈ U, q p := by
+  unfold centeredBernoulliFinsetSum
+  calc
+    (∑ p ∈ U, if p ∈ S then 1 - q p else -q p) =
+        ∑ p ∈ U, ((if p ∈ S then 1 else 0) - q p) := by
+      apply Finset.sum_congr rfl
+      intro p hp
+      split_ifs <;> ring
+    _ = (∑ p ∈ U, if p ∈ S then 1 else 0) - ∑ p ∈ U, q p := by
+      rw [Finset.sum_sub_distrib]
+    _ = ((S ∩ U).card : ℝ) - ∑ p ∈ U, q p := by
+      congr 1
+      rw [← Finset.sum_filter]
+      simp only [Finset.filter_mem_eq_inter, Finset.sum_const, nsmul_eq_mul, mul_one,
+        Nat.cast_inj]
+      rw [Finset.inter_comm]
+
+/-- Largest divisor whose square divides `n`, written prime by prime. -/
+def squareDivisorRoot (n : ℕ) : ℕ :=
+  ∏ p ∈ n.primeFactors, p ^ (n.factorization p / 2)
+
+lemma squareDivisorRoot_ne_zero (n : ℕ) : squareDivisorRoot n ≠ 0 := by
+  unfold squareDivisorRoot
+  apply Finset.prod_ne_zero_iff.mpr
+  intro p hp
+  exact pow_ne_zero _ (Nat.prime_of_mem_primeFactors hp).ne_zero
+
+lemma squareDivisorRoot_factorization (n p : ℕ) :
+    (squareDivisorRoot n).factorization p = n.factorization p / 2 := by
+  let P := n.primeFactors
+  change (∏ q ∈ P, q ^ (n.factorization q / 2)).factorization p = n.factorization p / 2
+  rw [Nat.factorization_prod_apply]
+  · by_cases hp : p ∈ P
+    · calc
+        (∑ q ∈ P, (q ^ (n.factorization q / 2)).factorization p) =
+            (p ^ (n.factorization p / 2)).factorization p := by
+          apply Finset.sum_eq_single p
+          · intro q hq hqp
+            rw [(Nat.prime_of_mem_primeFactors hq).factorization_pow]
+            simp [hqp]
+          · simp [hp]
+        _ = n.factorization p / 2 := by
+          rw [(Nat.prime_of_mem_primeFactors hp).factorization_pow]
+          simp
+    · have hfac : n.factorization p = 0 := by
+        have : p ∉ n.factorization.support := by
+          simpa only [Nat.support_factorization] using hp
+        exact Finsupp.notMem_support_iff.mp this
+      rw [hfac]
+      simp only [Nat.zero_div]
+      apply Finset.sum_eq_zero
+      intro q hq
+      have hqp : q ≠ p := by
+        intro hqp
+        subst q
+        exact hp hq
+      rw [(Nat.prime_of_mem_primeFactors hq).factorization_pow]
+      simp [hqp]
+  · intro q hq
+    exact pow_ne_zero _ (Nat.prime_of_mem_primeFactors hq).ne_zero
+
+lemma sq_dvd_iff_dvd_squareDivisorRoot {n q : ℕ} (hn : n ≠ 0) :
+    q ^ 2 ∣ n ↔ q ∣ squareDivisorRoot n := by
+  by_cases hq : q = 0
+  · subst q
+    simp [hn, squareDivisorRoot_ne_zero]
+  rw [← Nat.factorization_le_iff_dvd (pow_ne_zero _ hq) hn,
+    ← Nat.factorization_le_iff_dvd hq (squareDivisorRoot_ne_zero n)]
+  simp only [Finsupp.le_def]
+  constructor
+  · intro h p
+    rw [squareDivisorRoot_factorization]
+    have hp : 2 * q.factorization p ≤ n.factorization p := by
+      simpa [Nat.factorization_pow, Finsupp.smul_apply, nsmul_eq_mul] using h p
+    omega
+  · intro h p
+    have hp : q.factorization p ≤ n.factorization p / 2 := by
+      simpa only [squareDivisorRoot_factorization] using h p
+    have hp' : 2 * q.factorization p ≤ n.factorization p := by omega
+    simpa [Nat.factorization_pow, Finsupp.smul_apply, nsmul_eq_mul] using hp'
+
+lemma squareDivisorRoot_primeFactors_subset (n : ℕ) :
+    (squareDivisorRoot n).primeFactors ⊆ n.primeFactors := by
+  intro p hp
+  have hpSupport : p ∈ (squareDivisorRoot n).factorization.support := by
+    simpa only [Nat.support_factorization] using hp
+  have hpFac : (squareDivisorRoot n).factorization p ≠ 0 :=
+    Finsupp.mem_support_iff.mp hpSupport
+  rw [squareDivisorRoot_factorization] at hpFac
+  have hnFac : n.factorization p ≠ 0 := by omega
+  have : p ∈ n.factorization.support := Finsupp.mem_support_iff.mpr hnFac
+  simpa only [Nat.support_factorization] using this
+
+/-- The number of available square-divisor choices in `n`. -/
+def squareDivisorCount (n : ℕ) : ℕ := (squareDivisorRoot n).divisors.card
+
+lemma squareDivisorCount_eq_prod (n : ℕ) :
+    squareDivisorCount n =
+      ∏ p ∈ n.primeFactors, (n.factorization p / 2 + 1) := by
+  rw [squareDivisorCount, Nat.card_divisors (squareDivisorRoot_ne_zero n)]
+  calc
+    (∏ p ∈ (squareDivisorRoot n).primeFactors,
+        ((squareDivisorRoot n).factorization p + 1)) =
+        ∏ p ∈ (squareDivisorRoot n).primeFactors,
+          (n.factorization p / 2 + 1) := by
+      apply Finset.prod_congr rfl
+      intro p hp
+      rw [squareDivisorRoot_factorization]
+    _ = ∏ p ∈ n.primeFactors, (n.factorization p / 2 + 1) := by
+      apply Finset.prod_subset (squareDivisorRoot_primeFactors_subset n)
+      intro p hp hproot
+      have hpNot : p ∉ (squareDivisorRoot n).factorization.support := by
+        simpa only [Nat.support_factorization] using hproot
+      have hpZero := Finsupp.notMem_support_iff.mp hpNot
+      rw [squareDivisorRoot_factorization] at hpZero
+      simp [hpZero]
+
+lemma smoothDivisorCount_le_two_pow_mul_squareDivisorCount (y n : ℕ) :
+    smoothDivisorCount y n ≤
+      2 ^ (n.primeFactors.filter (fun p => p ≤ y)).card * squareDivisorCount n := by
+  let S := n.primeFactors.filter (fun p => p ≤ y)
+  rw [smoothDivisorCount, squareDivisorCount_eq_prod]
+  calc
+    (∏ p ∈ S, (n.factorization p + 1)) ≤
+        ∏ p ∈ S, (2 * (n.factorization p / 2 + 1)) := by
+      gcongr with p hp
+      omega
+    _ = 2 ^ S.card * ∏ p ∈ S, (n.factorization p / 2 + 1) := by
+      rw [Finset.prod_mul_distrib]
+      simp
+    _ ≤ 2 ^ S.card * ∏ p ∈ n.primeFactors, (n.factorization p / 2 + 1) := by
+      apply Nat.mul_le_mul_left
+      exact Finset.prod_le_prod_of_subset_of_one_le (Finset.filter_subset _ _)
+        (fun _ _ ↦ Nat.zero_le _) (fun _ _ _ ↦ by omega)
+
+lemma squareDivisorRoot_divisors_eq_filter_sq_dvd {n T : ℕ}
+    (hn : n ∈ Finset.Icc 1 T) :
+    (squareDivisorRoot n).divisors =
+      (Finset.Icc 1 T).filter (fun q => q ^ 2 ∣ n) := by
+  have hnIcc : 1 ≤ n ∧ n ≤ T := Finset.mem_Icc.mp hn
+  have hn0 : n ≠ 0 := by omega
+  ext q
+  constructor
+  · intro hq
+    have hqroot : q ∣ squareDivisorRoot n := Nat.dvd_of_mem_divisors hq
+    have hsq : q ^ 2 ∣ n := (sq_dvd_iff_dvd_squareDivisorRoot hn0).2 hqroot
+    have hq0 : q ≠ 0 := by
+      intro hq0
+      subst q
+      exact squareDivisorRoot_ne_zero n (by simpa using hqroot)
+    have hq1 : 1 ≤ q := Nat.one_le_iff_ne_zero.mpr hq0
+    have hsqle : q ^ 2 ≤ n := Nat.le_of_dvd (by omega) hsq
+    have hqle : q ≤ q ^ 2 := by
+      calc
+        q = q * 1 := by omega
+        _ ≤ q * q := Nat.mul_le_mul_left q hq1
+        _ = q ^ 2 := by ring
+    rw [Finset.mem_filter, Finset.mem_Icc]
+    exact ⟨⟨hq1, hqle.trans (hsqle.trans hnIcc.2)⟩, hsq⟩
+  · intro hq
+    rw [Finset.mem_filter] at hq
+    exact Nat.mem_divisors.mpr
+      ⟨(sq_dvd_iff_dvd_squareDivisorRoot hn0).1 hq.2, squareDivisorRoot_ne_zero n⟩
+
+lemma sum_squareDivisorCount_eq_sum_div (T : ℕ) :
+    ∑ n ∈ Finset.Icc 1 T, squareDivisorCount n =
+      ∑ q ∈ Finset.Icc 1 T, T / q ^ 2 := by
+  calc
+    ∑ n ∈ Finset.Icc 1 T, squareDivisorCount n =
+        ∑ n ∈ Finset.Icc 1 T,
+          ((Finset.Icc 1 T).filter (fun q => q ^ 2 ∣ n)).card := by
+      apply Finset.sum_congr rfl
+      intro n hn
+      rw [squareDivisorCount, squareDivisorRoot_divisors_eq_filter_sq_dvd hn]
+    _ = ∑ n ∈ Finset.Icc 1 T, ∑ q ∈ Finset.Icc 1 T,
+          if q ^ 2 ∣ n then 1 else 0 := by
+      simp only [Finset.card_filter]
+    _ = ∑ q ∈ Finset.Icc 1 T, ∑ n ∈ Finset.Icc 1 T,
+          if q ^ 2 ∣ n then 1 else 0 := Finset.sum_comm
+    _ = ∑ q ∈ Finset.Icc 1 T,
+          ((Finset.Icc 1 T).filter (fun n => q ^ 2 ∣ n)).card := by
+      simp only [Finset.card_filter]
+    _ = ∑ q ∈ Finset.Icc 1 T, T / q ^ 2 := by
+      apply Finset.sum_congr rfl
+      intro q hq
+      have hIcc : Finset.Icc 1 T = Finset.Ioc 0 T := by
+        ext x
+        simp only [Finset.mem_Icc, Finset.mem_Ioc]
+        omega
+      rw [hIcc, Nat.Ioc_filter_dvd_card_eq_div]
+
+/-- The convergent reciprocal-square mass controlling square-divisor excess on average. -/
+noncomputable def squareDivisorMomentConstant : ℝ :=
+  ∑' q : ℕ, (1 : ℝ) / (q : ℝ) ^ 2
+
+lemma squareDivisorMomentConstant_nonneg : 0 ≤ squareDivisorMomentConstant := by
+  unfold squareDivisorMomentConstant
+  exact tsum_nonneg fun q => by positivity
+
+lemma sum_squareDivisorCount_le (T : ℕ) :
+    (∑ n ∈ Finset.Icc 1 T, (squareDivisorCount n : ℝ)) ≤
+      T * squareDivisorMomentConstant := by
+  have hsum : Summable (fun q : ℕ => (1 : ℝ) / (q : ℝ) ^ 2) :=
+    hasSum_zeta_two.summable
+  calc
+    (∑ n ∈ Finset.Icc 1 T, (squareDivisorCount n : ℝ)) =
+        ((∑ n ∈ Finset.Icc 1 T, squareDivisorCount n : ℕ) : ℝ) := by norm_num
+    _ = ∑ q ∈ Finset.Icc 1 T, ((T / q ^ 2 : ℕ) : ℝ) := by
+      rw [sum_squareDivisorCount_eq_sum_div]
+      norm_num
+    _ ≤ ∑ q ∈ Finset.Icc 1 T, (T : ℝ) / (q : ℝ) ^ 2 := by
+      apply Finset.sum_le_sum
+      intro q hq
+      calc
+        ((T / q ^ 2 : ℕ) : ℝ) ≤ (T : ℝ) / ((q ^ 2 : ℕ) : ℝ) :=
+          Nat.cast_div_le
+        _ = (T : ℝ) / (q : ℝ) ^ 2 := by norm_num
+    _ = (T : ℝ) * ∑ q ∈ Finset.Icc 1 T, (1 : ℝ) / (q : ℝ) ^ 2 := by
+      rw [Finset.mul_sum]
+      apply Finset.sum_congr rfl
+      intro q hq
+      ring
+    _ ≤ T * squareDivisorMomentConstant := by
+      gcongr
+      exact hsum.sum_le_tsum (Finset.Icc 1 T) (fun q hq => by positivity)
+
+lemma squareDivisorCount_large_card_mul_le (T : ℕ) (U : ℝ) :
+    (((Finset.Icc 1 T).filter (fun n => U < squareDivisorCount n)).card : ℝ) * U ≤
+      T * squareDivisorMomentConstant := by
+  let B := (Finset.Icc 1 T).filter (fun n => U < squareDivisorCount n)
+  calc
+    (B.card : ℝ) * U = ∑ _n ∈ B, U := by simp
+    _ ≤ ∑ n ∈ B, (squareDivisorCount n : ℝ) := by
+      apply Finset.sum_le_sum
+      intro n hn
+      exact (Finset.mem_filter.mp hn).2.le
+    _ ≤ ∑ n ∈ Finset.Icc 1 T, (squareDivisorCount n : ℝ) := by
+      exact Finset.sum_le_sum_of_subset_of_nonneg (Finset.filter_subset _ _)
+        (fun _ _ _ ↦ by positivity)
+    _ ≤ T * squareDivisorMomentConstant := sum_squareDivisorCount_le T
+
+lemma squareDivisorCount_large_card_le (T : ℕ) (U : ℝ) (hU : 0 < U) :
+    (((Finset.Icc 1 T).filter (fun n => U < squareDivisorCount n)).card : ℝ) ≤
+      T * squareDivisorMomentConstant / U := by
+  rw [le_div_iff₀ hU]
+  exact squareDivisorCount_large_card_mul_le T U
+
+lemma weightedDivisorBlockMass_le_two_pow_mul_squareDivisorCount
+    (weight : ℕ → ℝ) (W : ℝ) (hW : 0 ≤ W) (ℓ n : ℕ)
+    (hweight : ∀ d : ℕ, dyadicExpCutoff ℓ < d → d ≤ dyadicExpCutoff (ℓ + 1) →
+      weight d ≤ W) :
+    weightedDivisorBlockMass weight ℓ n ≤
+      ((2 : ℝ) ^ (n.primeFactors.filter
+        (fun p => p ≤ dyadicExpCutoff (ℓ + 1))).card) * squareDivisorCount n * W := by
+  calc
+    weightedDivisorBlockMass weight ℓ n ≤
+        (smoothDivisorCount (dyadicExpCutoff (ℓ + 1)) n : ℝ) * W :=
+      weightedDivisorBlockMass_le_smoothDivisorCount weight W hW ℓ n hweight
+    _ ≤ ((2 : ℝ) ^ (n.primeFactors.filter
+          (fun p => p ≤ dyadicExpCutoff (ℓ + 1))).card) * squareDivisorCount n * W := by
+      gcongr
+      exact_mod_cast smoothDivisorCount_le_two_pow_mul_squareDivisorCount
+        (dyadicExpCutoff (ℓ + 1)) n
+
+lemma subpowerWeightedDivisorBlockMass_le_two_pow_mul_squareDivisorCount
+    (c : ℝ) (hc : 0 ≤ c) (ℓ : ℕ) (hℓ : 3 ≤ ℓ) (n : ℕ) :
+    weightedDivisorBlockMass (subpowerWeight c) ℓ n ≤
+      ((2 : ℝ) ^ (n.primeFactors.filter
+        (fun p => p ≤ dyadicExpCutoff (ℓ + 1))).card) * squareDivisorCount n *
+          subpowerWeight c (dyadicExpCutoff ℓ) := by
+  exact weightedDivisorBlockMass_le_two_pow_mul_squareDivisorCount
+    (subpowerWeight c) (subpowerWeight c (dyadicExpCutoff ℓ))
+    (subpowerWeight_nonneg c _) ℓ n
+    (fun d hdlo _ ↦ subpowerWeight_block_le c hc ℓ hℓ d hdlo)
+
+lemma subpowerWeightedDivisorBlockMass_large_imp
+    (c : ℝ) (hc : 0 ≤ c) (ℓ : ℕ) (hℓ : 3 ≤ ℓ) (n : ℕ) (R U : ℝ)
+    (hmass : R < weightedDivisorBlockMass (subpowerWeight c) ℓ n) :
+    U < squareDivisorCount n ∨
+      R < ((2 : ℝ) ^ (n.primeFactors.filter
+        (fun p => p ≤ dyadicExpCutoff (ℓ + 1))).card) * U *
+          subpowerWeight c (dyadicExpCutoff ℓ) := by
+  by_cases hQ : U < squareDivisorCount n
+  · exact Or.inl hQ
+  · right
+    have hQle : (squareDivisorCount n : ℝ) ≤ U := le_of_not_gt hQ
+    refine hmass.trans_le ((subpowerWeightedDivisorBlockMass_le_two_pow_mul_squareDivisorCount
+      c hc ℓ hℓ n).trans ?_)
+    exact mul_le_mul_of_nonneg_right
+      (mul_le_mul_of_nonneg_left hQle (by positivity)) (subpowerWeight_nonneg c _)
+
+lemma log_ratio_lt_card_of_lt_two_pow_mul
+    (k : ℕ) (R U W : ℝ) (hR : 0 < R) (hU : 0 < U) (hW : 0 < W)
+    (hlt : R < (2 : ℝ) ^ k * U * W) :
+    (Real.log R - Real.log U - Real.log W) / Real.log 2 < k := by
+  have hlog := Real.log_lt_log hR hlt
+  rw [Real.log_mul (mul_ne_zero (pow_ne_zero _ (by norm_num)) (ne_of_gt hU))
+      (ne_of_gt hW),
+    Real.log_mul (pow_ne_zero _ (by norm_num)) (ne_of_gt hU), Real.log_pow] at hlog
+  rw [div_lt_iff₀ (Real.log_pos one_lt_two)]
+  linarith
+
+lemma subpowerWeight_dyadicExpCutoff_pos (c : ℝ) (ℓ : ℕ) :
+    0 < subpowerWeight c (dyadicExpCutoff ℓ) := by
+  have hlogcut : 0 < Real.log (dyadicExpCutoff ℓ : ℝ) :=
+    Real.log_pos (by exact_mod_cast (show 1 < dyadicExpCutoff ℓ by
+      exact lt_of_lt_of_le (by omega) (dyadicExpCutoff_two_le ℓ)))
+  unfold subpowerWeight
+  exact mul_pos (Real.rpow_pos_of_pos hlogcut _) (Real.exp_pos _)
+
+lemma log_subpowerWeight_dyadicExpCutoff (c : ℝ) (ℓ : ℕ) :
+    Real.log (subpowerWeight c (dyadicExpCutoff ℓ)) =
+      -(Real.log 2) * blockLogLog ℓ -
+        Real.log 2 * Real.sqrt
+          (c * blockLogLog ℓ * Real.log (blockLogLog ℓ)) := by
+  have hlogcut : 0 < Real.log (dyadicExpCutoff ℓ : ℝ) :=
+    Real.log_pos (by exact_mod_cast (show 1 < dyadicExpCutoff ℓ by
+      exact lt_of_lt_of_le (by omega) (dyadicExpCutoff_two_le ℓ)))
+  unfold subpowerWeight
+  change Real.log (((Real.log (dyadicExpCutoff ℓ : ℝ)) ^ (-Real.log 2)) *
+      Real.exp (-(Real.log 2) *
+        Real.sqrt (c * Real.log (Real.log (dyadicExpCutoff ℓ : ℝ)) *
+          Real.log (Real.log (Real.log (dyadicExpCutoff ℓ : ℝ)))))) = _
+  rw [Real.log_mul (ne_of_gt (Real.rpow_pos_of_pos hlogcut (-Real.log 2)))
+    (ne_of_gt (Real.exp_pos _))]
+  rw [Real.log_rpow hlogcut, Real.log_exp]
+  rw [show Real.log (Real.log (dyadicExpCutoff ℓ : ℝ)) = blockLogLog ℓ by rfl]
+  ring
+
+lemma sqrt_mul_eq_mul_blockSigma (c u : ℝ) (hc : 0 ≤ c) (hu : 1 ≤ u) :
+    Real.sqrt (c * u * Real.log u) = u * blockSigma c u := by
+  have hu0 : 0 < u := zero_lt_one.trans_le hu
+  have harg : 0 ≤ c * u * Real.log u :=
+    mul_nonneg (mul_nonneg hc hu0.le) (Real.log_nonneg hu)
+  have hright0 : 0 ≤ u * blockSigma c u :=
+    mul_nonneg hu0.le (Real.sqrt_nonneg _)
+  rw [← sq_eq_sq₀ (Real.sqrt_nonneg _) hright0, Real.sq_sqrt harg]
+  calc
+    c * u * Real.log u = u * (c * Real.log u) := by ring
+    _ = u * (u * blockSigma c u ^ 2) := by rw [blockSigma_sq c u hc hu]
+    _ = (u * blockSigma c u) ^ 2 := by ring
+
+lemma log_subpowerWeight_dyadicExpCutoff_eq_blockSigma
+    (c : ℝ) (hc : 0 ≤ c) (ℓ : ℕ) (hℓ : 1 ≤ blockLogLog ℓ) :
+    Real.log (subpowerWeight c (dyadicExpCutoff ℓ)) =
+      -(Real.log 2) * blockLogLog ℓ -
+        Real.log 2 * (blockLogLog ℓ * blockSigma c (blockLogLog ℓ)) := by
+  rw [log_subpowerWeight_dyadicExpCutoff,
+    sqrt_mul_eq_mul_blockSigma c (blockLogLog ℓ) hc hℓ]
+
+lemma subpowerBlock_two_pow_large_imp_primeFactor_card_gt
+    (c : ℝ) (hc : 0 ≤ c) (ℓ n : ℕ) (hℓ : 1 ≤ blockLogLog ℓ)
+    (R U : ℝ) (hR : 0 < R) (hU : 0 < U)
+    (hlt : R < ((2 : ℝ) ^ (n.primeFactors.filter
+      (fun p => p ≤ dyadicExpCutoff (ℓ + 1))).card) * U *
+        subpowerWeight c (dyadicExpCutoff ℓ)) :
+    blockLogLog ℓ * blockSigma c (blockLogLog ℓ) + blockLogLog ℓ +
+        (Real.log R - Real.log U) / Real.log 2 <
+      (n.primeFactors.filter (fun p => p ≤ dyadicExpCutoff (ℓ + 1))).card := by
+  have h := log_ratio_lt_card_of_lt_two_pow_mul
+    (n.primeFactors.filter (fun p => p ≤ dyadicExpCutoff (ℓ + 1))).card
+    R U (subpowerWeight c (dyadicExpCutoff ℓ)) hR hU
+    (subpowerWeight_dyadicExpCutoff_pos c ℓ) hlt
+  rw [log_subpowerWeight_dyadicExpCutoff_eq_blockSigma c hc ℓ hℓ] at h
+  calc
+    blockLogLog ℓ * blockSigma c (blockLogLog ℓ) + blockLogLog ℓ +
+        (Real.log R - Real.log U) / Real.log 2 =
+      (Real.log R - Real.log U -
+        (-(Real.log 2) * blockLogLog ℓ -
+          Real.log 2 * (blockLogLog ℓ * blockSigma c (blockLogLog ℓ)))) /
+            Real.log 2 := by
+      field_simp [ne_of_gt (Real.log_pos one_lt_two)]
+      ring
+    _ < (n.primeFactors.filter
+        (fun p => p ≤ dyadicExpCutoff (ℓ + 1))).card := h
+
+open Classical in
+lemma primeFactors_filter_inter_primesUpTo {n a y : ℕ} (hay : a ≤ y) :
+    n.primeFactors.filter (fun p => p ≤ y) ∩ primesUpTo a =
+      n.primeFactors.filter (fun p => p ≤ a) := by
+  ext p
+  simp only [Finset.mem_inter, Finset.mem_filter, primesUpTo, Finset.mem_range,
+    Nat.lt_add_one_iff]
+  constructor
+  · rintro ⟨⟨hpn, _⟩, hpa, _⟩
+    exact ⟨hpn, hpa⟩
+  · rintro ⟨hpn, hpa⟩
+    exact ⟨⟨hpn, hpa.trans hay⟩, hpa, Nat.prime_of_mem_primeFactors hpn⟩
+
+open Classical in
+lemma centeredBernoulliFinsetSum_primeFactors_filter_primesUpTo
+    {n a y : ℕ} (hay : a ≤ y) :
+    centeredBernoulliFinsetSum (fun p : ℕ ↦ (1 / p : ℝ))
+        (n.primeFactors.filter (fun p => p ≤ y)) (primesUpTo a) =
+      ((n.primeFactors.filter (fun p => p ≤ a)).card : ℝ) -
+        ∑ p ∈ primesUpTo a, (1 / p : ℝ) := by
+  rw [centeredBernoulliFinsetSum_eq_card_inter_sub_sum,
+    primeFactors_filter_inter_primesUpTo hay]
+
+open Classical in
+lemma subpowerBlock_two_pow_large_imp_centered_sum_gt
+    (c : ℝ) (hc : 0 ≤ c) (ℓ n y : ℕ) (hℓ : 1 ≤ blockLogLog ℓ)
+    (hy : dyadicExpCutoff (ℓ + 1) ≤ y) (R U : ℝ) (hR : 0 < R) (hU : 0 < U)
+    (hlt : R < ((2 : ℝ) ^ (n.primeFactors.filter
+      (fun p => p ≤ dyadicExpCutoff (ℓ + 1))).card) * U *
+        subpowerWeight c (dyadicExpCutoff ℓ)) :
+    blockLogLog ℓ * blockSigma c (blockLogLog ℓ) +
+        (Real.log R - Real.log U) / Real.log 2 - Real.log 2 -
+          Erdos67.PrimeEstimates.mertensBound <
+      centeredBernoulliFinsetSum (fun p : ℕ ↦ (1 / p : ℝ))
+        (n.primeFactors.filter (fun p => p ≤ y))
+          (primesUpTo (dyadicExpCutoff (ℓ + 1))) := by
+  have hcard := subpowerBlock_two_pow_large_imp_primeFactor_card_gt
+    c hc ℓ n hℓ R U hR hU hlt
+  have hmean :
+      (∑ p ∈ primesUpTo (dyadicExpCutoff (ℓ + 1)), (1 / p : ℝ)) ≤
+        blockLogLog (ℓ + 1) + Erdos67.PrimeEstimates.mertensBound := by
+    simpa only [primesUpTo_eq_primesLE, blockLogLog] using
+      (primeReciprocalMass_le_log_log_add (dyadicExpCutoff (ℓ + 1))
+        (dyadicExpCutoff_two_le (ℓ + 1)))
+  rw [centeredBernoulliFinsetSum_primeFactors_filter_primesUpTo hy]
+  rw [blockLogLog_succ] at hmean
+  linarith
+
+open Classical in
+/-- A large divisor block is covered by the square-divisor exceptional event or by an explicit
+crossing of the centered small-prime walk.  This is the arithmetic event inclusion needed before
+applying `KubiliusTV`. -/
+lemma subpowerWeightedDivisorBlockMass_large_imp_square_or_centered_sum_gt
+    (c : ℝ) (hc : 0 ≤ c) (ℓ n y : ℕ) (hℓ : 3 ≤ ℓ)
+    (hlog : 1 ≤ blockLogLog ℓ) (hy : dyadicExpCutoff (ℓ + 1) ≤ y)
+    (R U : ℝ) (hR : 0 < R) (hU : 0 < U)
+    (hmass : R < weightedDivisorBlockMass (subpowerWeight c) ℓ n) :
+    U < squareDivisorCount n ∨
+      blockLogLog ℓ * blockSigma c (blockLogLog ℓ) +
+          (Real.log R - Real.log U) / Real.log 2 - Real.log 2 -
+            Erdos67.PrimeEstimates.mertensBound <
+        centeredBernoulliFinsetSum (fun p : ℕ ↦ (1 / p : ℝ))
+          (n.primeFactors.filter (fun p => p ≤ y))
+            (primesUpTo (dyadicExpCutoff (ℓ + 1))) := by
+  rcases subpowerWeightedDivisorBlockMass_large_imp c hc ℓ hℓ n R U hmass with
+    hQ | hwalk
+  · exact Or.inl hQ
+  · exact Or.inr (subpowerBlock_two_pow_large_imp_centered_sum_gt
+      c hc ℓ n y hlog hy R U hR hU hwalk)
+
 /-- **Target: non-normal below the sub-power weight for every `c > 1`, given `KubiliusTV`.**  This
 reaches the heuristic threshold of `EBLogWindow`'s non-normal half.  The proof replaces the c > 3
 block-union step of `ebRandom_ae_not_normal_subpower` by Doob's exponential maximal inequality on

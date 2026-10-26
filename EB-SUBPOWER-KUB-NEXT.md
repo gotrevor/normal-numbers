@@ -339,3 +339,60 @@ The next highest-value attack is the squarefull/prime-power excess moment bound 
 event inclusion from a large `weightedDivisorBlockMass` to a lowered selected-prime-walk crossing.
 Once that comparison and transfer are green, copy the proved `c > 3` capped-residual and headline
 assembly verbatim except for swapping in the new large-cards lemma.
+
+## Reflection-lap checkpoint — 2026-10-26, square-divisor arithmetic event bridge
+
+The prime-power excess and its exact interface with the selected-prime walk are now kernel-checked.
+The reflection used a simpler excess factor than the paper's proposed squarefull/Cauchy--Schwarz
+route: if `e = v_p(n)`, then `e + 1 ≤ 2 (⌊e/2⌋ + 1)`.  Consequently the smooth divisor count is at
+most `2^ω` times the number of square divisors.  The latter has a uniformly bounded first moment,
+which is enough once its cutoff is allowed to depend on the geometric block and shift threshold.
+
+- `squareDivisorRoot` and `squareDivisorCount` encode the choices `0 ≤ a_p ≤ ⌊v_p(n)/2⌋`.
+  Lean proves `q^2 ∣ n ↔ q ∣ squareDivisorRoot n` and the exact Euler product for the count.
+- `smoothDivisorCount_le_two_pow_mul_squareDivisorCount` proves
+  `τ(n_y) ≤ 2^{ω(n;≤y)} Q(n)` without hiding any prime-power loss.
+- `sum_squareDivisorCount_eq_sum_div` double-counts square divisors exactly, and
+  `sum_squareDivisorCount_le` bounds their first moment by
+  `T * ∑_{q : ℕ} 1/q²`.  `squareDivisorCount_large_card_le` is the resulting uniform Markov bound.
+- `subpowerWeightedDivisorBlockMass_le_two_pow_mul_squareDivisorCount` inserts this factorization
+  into the existing weighted divisor-block estimate.
+- `log_subpowerWeight_dyadicExpCutoff_eq_blockSigma` computes the logarithm of the frozen weight
+  exactly at a dyadic-exponential cutoff.  There is no asymptotic replacement: the main penalty is
+  precisely `log 2 * u * blockSigma c u`.
+- `centeredBernoulliFinsetSum_primeFactors_filter_primesUpTo` identifies the arithmetic truncated
+  prime-factor count with the selected Kubilius coordinate sum.
+- `subpowerWeightedDivisorBlockMass_large_imp_square_or_centered_sum_gt` is the resulting
+  transfer-ready event inclusion.  A large divisor block forces either `U < Q(n)` or a centered
+  prime-walk crossing at the exact cutoff `dyadicExpCutoff (ℓ+1)`, above
+  `u*blockSigma c u + (log R-log U)/log 2 - log 2 - mertensBound`.
+- `kubiliusTV_sum_card_div_le` packages the packet hypothesis termwise over a finite threshold
+  family and records the accumulated TV error explicitly.
+
+The diff from planting commit `e61852e6` remains insertion-only around the frozen packet
+declarations: `primesUpTo`, `kubiliusMass`, `KubiliusTV`, and the headline statement are unchanged.
+`KubiliusTV` remains only a named hypothesis.  No `axiom`, `opaque`, or `native_decide` was added;
+the scoped target still has exactly its single frozen headline `sorry`.
+
+Verification actually run:
+
+- `lake env lean src/NormalNumbers/CoefmassErdosBorweinSubpowerKub.lean` — succeeds, with only the
+  pre-existing headline `sorry` warning.
+- `~/personal/bin/lean-green . --target NormalNumbers.CoefmassErdosBorweinSubpowerKub --import
+  NormalNumbers.CoefmassErdosBorweinSubpowerKub --axioms
+  NormalNumbers.ErdosBorweinSubpowerKub.sum_squareDivisorCount_le --axioms
+  NormalNumbers.ErdosBorweinSubpowerKub.kubiliusTV_sum_card_div_le --axioms
+  NormalNumbers.ErdosBorweinSubpowerKub.subpowerWeightedDivisorBlockMass_large_imp_square_or_centered_sum_gt`
+  — `FORMALIZE-TIER GREEN`; all three declarations report exactly `Classical.choice`, `Quot.sound`,
+  and `propext`.
+- `~/personal/bin/lean-green .` — full 10,847-job repository build, `FORMALIZE-TIER GREEN`.
+
+The next crux is the finite bookkeeping that turns this event inclusion into
+`exists_subpower_marginal_large_cards_le_of_kubilius`.  On each geometric log-log block, choose a
+cutoff `U = U(k,j)` large enough that the first-moment square-divisor exceptions remain summable
+over both arithmetic levels and threshold shifts, while `log U` costs only `A log u` plus a fixed
+fraction of the shift.  Then bound the block-allocation term in `log R`, group the resulting walk
+events under `kubiliusPrimeCutoffLoweredCrossingMass`, control the finite TV error with
+`kubiliusTV_sum_card_div_le`, and add the top-cut and large-threshold tails.  Once the large-cards
+lemma is green, reuse `subpower_capped_marginal_residual_small` and the proved `c > 3` headline
+assembly with only that input replaced.
