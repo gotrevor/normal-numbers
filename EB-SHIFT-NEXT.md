@@ -1,5 +1,9 @@
 # Step 1′: the shifted growing-moment criterion 🎯
 
+**COMPLETED 2026-10-26.**  The target module is sorry-free, the headline has only the standard
+Lean trust base, and the scoped `lean-green` gate passes.  See
+`HANDOFF-2026-10-26-eb-shift-lap1.md`.
+
 **Objective:** make `src/NormalNumbers/CoefmassErdosBorweinShift.lean` sorry-free.  The headline
 `ebRandom_ae_normal_of_shiftedVariance_diverges` must be axiom-clean
 (`[propext, Classical.choice, Quot.sound]`).
