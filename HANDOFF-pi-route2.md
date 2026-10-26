@@ -57,3 +57,6 @@ add the route-2 Maze row (reopen condition: a lever on ρ's digits not available
   `residualS_succ`, `reservoirS_add_residualS` (R+S = 16ⁿ·piPartial n, exit-free), `sub_succ`
   (R−S kicked by −2·exit), and `exitS_six_eq` (exit = rationalExit 6 n).  So the cutoff-six
   arithmetic acts only on the R−S direction; nothing transfers to the π sum.  Remaining: Maze row.
+- Lap 3: Maze row "Cutoff-six prime reservoir as an arithmetic source for pi" (wall, kernel),
+  linked in MazeAudit (which now imports the cutoff-six files, so they build in the default target).
+  Brief's deliverables complete; open node: `CubicRootEscape` (no known mechanism).

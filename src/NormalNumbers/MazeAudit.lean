@@ -23,6 +23,8 @@ import NormalNumbers.UniformBadEntryReview
 import NormalNumbers.UniformBadTailReview
 import NormalNumbers.UniformBadTailObstruction
 import NormalNumbers.UniformBadTailRefute
+import NormalNumbers.PiDisjunctiveRoutes.ReservoirCutoffSixStep
+import NormalNumbers.PiDisjunctiveRoutes.ReservoirCutoffSixVanishing
 import NormalNumbers.EntropyProfiles
 import NormalNumbers.CantorExactExponentStretch
 import NormalNumbers.CantorExactExponentProfile
@@ -122,6 +124,10 @@ def mazeLinks : List Link := [
   ⟨"82000 by digit-count exponents",
    [``ZeroOneBases.threeNine_infinite, ``ZeroOneBases.Literature.BurrellYuFourFive],
    [``ZeroOneBases.ZeroOneFourFive, ``ZeroOneBases.ZeroOneThreeFourInfinite]⟩,
+  ⟨"Cutoff-six prime reservoir as an arithmetic source for pi",
+   [``PiDisjunctiveRoutes.CutoffSix.exit_six_not_eventually_small,
+    ``PiDisjunctiveRoutes.CutoffSix.reservoirS_add_residualS, ``PiDisjunctiveRoutes.CutoffSix.sub_succ],
+   [``PiDisjunctiveRoutes.CutoffSix.CubicRootEscape, ``PiDisjunctiveRoutes.ReservoirConstDisjunctive]⟩,
   ⟨"82000 via the base-3 slope coordinate",
    [``ZeroOneBases.fourExponentials_jointSlopeIndependence],
    [``ZeroOneBases.FourExponentialsConjecture, ``ZeroOneBases.JointSlopeIndependence]⟩,
@@ -413,7 +419,7 @@ def mazeLegacy : List String := [
   "Diophantine good-denominator detour for the tail cell",
   "route B's unweighted cover of the state-dependent target"]
 
-/-- info: maze audit: 198 rows, 91 cite declarations, 107 legacy (prose only) -/
+/-- info: maze audit: 199 rows, 92 cite declarations, 107 legacy (prose only) -/
 #guard_msgs in
 #maze_audit mazeRows, mazeLinks, mazeLegacy
 
