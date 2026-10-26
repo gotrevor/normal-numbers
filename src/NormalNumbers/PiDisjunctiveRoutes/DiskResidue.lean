@@ -112,15 +112,9 @@ theorem diskCount_sub_area (R : ℕ) (hR : 1 ≤ R) :
   have h1R : (1 : ℝ) ≤ R := by exact_mod_cast hR
   rw [abs_le]; constructor <;> linarith
 
-/-- Frozen geometric bridge (proved; constant `C = 5`).
-Unit lattice squares sandwich the disk between disks with radius R ± √2.
-Thus |diskCount R - π R²| ≤ C R for R ≥ 1.  Set R = 4^n and divide by 8^n.
-The oversampling is intentional: the trivial perimeter estimate suffices. -/
-@[blueprint (title := "Oversampled integer disk counts shadow the binary orbit of π")]
-theorem diskPhase_shadow :
-    ∃ C : ℝ, 0 < C ∧ ∀ n : ℕ,
-      |diskPhase n - (2 : ℝ) ^ n * Real.pi| ≤ C / 2 ^ n := by
-  refine ⟨5, by norm_num, fun n => ?_⟩
+/-- Explicit form of the shadow: constant 5. -/
+theorem diskPhase_sub_le (n : ℕ) :
+    |diskPhase n - (2 : ℝ) ^ n * Real.pi| ≤ 5 / 2 ^ n := by
   have h := diskCount_sub_area (4 ^ n) (Nat.one_le_pow _ _ (by norm_num))
   have h8 : (0 : ℝ) < 8 ^ n := by positivity
   have e1 : diskPhase n - (2 : ℝ) ^ n * Real.pi =
@@ -136,6 +130,16 @@ theorem diskPhase_shadow :
     field_simp
   rw [e1, e2, abs_div, abs_of_pos h8]
   exact div_le_div_of_nonneg_right h h8.le
+
+/-- Frozen geometric bridge (proved; constant `C = 5`).
+Unit lattice squares sandwich the disk between disks with radius R ± √2.
+Thus |diskCount R - π R²| ≤ C R for R ≥ 1.  Set R = 4^n and divide by 8^n.
+The oversampling is intentional: the trivial perimeter estimate suffices. -/
+@[blueprint (title := "Oversampled integer disk counts shadow the binary orbit of π")]
+theorem diskPhase_shadow :
+    ∃ C : ℝ, 0 < C ∧ ∀ n : ℕ,
+      |diskPhase n - (2 : ℝ) ^ n * Real.pi| ≤ C / 2 ^ n := by
+  exact ⟨5, by norm_num, diskPhase_sub_le⟩
 
 /-- Quantitative covering conjecture, entirely in natural-number arithmetic.
 Every window [N,2N], once N ≥ C 4^k, hits the middle half of every k-bit
