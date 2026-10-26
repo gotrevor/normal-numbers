@@ -98,3 +98,9 @@ to R+S) or reassign this run.
   Next: find (ON-LINE-REQUEST) a source for DFI with ray-class/splitting restrictions
   (e.g. Tóth 2000, or Duke–Friedlander–Iwaniec ideal-class versions) and check whether the
   sixth-power condition on 2 is covered; if so, cite it as a hypothesis Prop.
+
+## BLOCKER (confirmed, 2026-10-26, after laps 4-6)
+Brief deliverables complete plus three reductions of nonvanishing (cubic `CubeRootEscape`,
+quadratic `QuadraticRootEscape`, minimal `RestrictedRootFar`).  The last needs DFI with a
+Chebotarev restriction; source requested in ON-LINE-REQUEST.md.  Operator ask: supply that
+source (or reassign the run).  No implication for π's digits established.
