@@ -8,12 +8,16 @@ import NormalNumbers.PiDisjunctiveRoutes.PrimeReservoir
 import NormalNumbers.PiDisjunctiveRoutes.DiskResidue
 
 /-!
-# Three experimental routes to disjunctivity of π
+# First-round routes to disjunctivity of π (retired)
+
+Read `../../MAZE.md`.  These routes are abandoned with current methods, and
+their original-route entries and reopening requirements are in `Maze.lean`.
+The second-round proposals are in `PiDisjunctiveRoutes/RoundTwo.lean`.
 
 These are research statements, not established arithmetic estimates.  The three
 new premises are `PiQuantitativeTripleReturn`, `PiPrimeReservoirSupport`, and
-`DiskResidueCover`.  The transfer arguments below are frozen with `sorry`:
-their docstrings give the mathematical argument and its evidence tier.
+`DiskResidueCover`.  The original bridges and transfers were subsequently proved;
+the arithmetic premises remain open.  See `docs/pi-routes/proof-frontier-audit.md`.
 
 The first qualitative premise is EQUIVALENT to binary disjunctivity for
 irrational inputs.  It is a change of target, not a weakening.  The other two

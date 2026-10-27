@@ -1,5 +1,10 @@
 # PI-ROUTES-NEXT — three parallel lanes on disjunctivity of π 🥧
 
+**Historical brief; these three lanes are retired.**  Read [MAZE.md](../MAZE.md)
+and the original-route Maze entries before using any instructions below.
+The claim below of an “uncancellable” source did not survive the investigation.
+Second-round proposals, not launched jobs: [round-two.md](pi-routes/round-two.md).
+
 **Sink:** `IsDisjunctive 2 Real.pi` (open; every binary block occurs in π).  Three routes are stated
 in `src/NormalNumbers/PiDisjunctiveRoutes/`, one file per route.  Three treadmills work them at once,
 one per worktree; each lap reads this file and works **its own lane only**.

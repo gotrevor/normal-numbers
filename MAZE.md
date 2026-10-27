@@ -65,6 +65,9 @@ Then add the same row name to `mazeLinks`, with actual declaration references in
 
 All three original routes are now **abandoned as intractable with current methods**, not proved impossible.  Their rows appear at the start of `Maze.register` and `MazeAudit.mazeLinks`.
 
+Later proposals are tracked separately in [round-two.md](docs/pi-routes/round-two.md)
+and `PiDisjunctiveRoutes/RoundTwo.lean`.  They do not reopen these three routes.
+
 | Original route | Formal crux and evidence | What must change to reopen |
 |---|---|---|
 | Triple return / odd orbit invariance | `PiOrbitClosureOddInvariant`; `pi_disjunctive_iff_oddInvariant`; the odd-return equivalence; the abstract doubling/tripling counterexample | A pi-specific arithmetic mechanism for odd invariance or returns.  A different odd multiplier or self-return prerequisite alone does not qualify. |

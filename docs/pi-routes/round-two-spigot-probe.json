@@ -1,0 +1,81 @@
+{
+  "bits": 4096,
+  "machine_steps": 8190,
+  "independent_machin_bits_checked": 256,
+  "rational_control": "512 alternating bits; 00 and 11 absent",
+  "note": "Finite calibration only; no invariant was synthesized.",
+  "rows": [
+    {
+      "k": 1,
+      "seen": 2,
+      "expected": 2,
+      "complete": true,
+      "latest_first_hit_step": 9,
+      "candidate_budget_C4": 16,
+      "passes_C4": true
+    },
+    {
+      "k": 2,
+      "seen": 4,
+      "expected": 4,
+      "complete": true,
+      "latest_first_hit_step": 24,
+      "candidate_budget_C4": 48,
+      "passes_C4": true
+    },
+    {
+      "k": 3,
+      "seen": 8,
+      "expected": 8,
+      "complete": true,
+      "latest_first_hit_step": 36,
+      "candidate_budget_C4": 128,
+      "passes_C4": true
+    },
+    {
+      "k": 4,
+      "seen": 16,
+      "expected": 16,
+      "complete": true,
+      "latest_first_hit_step": 101,
+      "candidate_budget_C4": 320,
+      "passes_C4": true
+    },
+    {
+      "k": 5,
+      "seen": 32,
+      "expected": 32,
+      "complete": true,
+      "latest_first_hit_step": 200,
+      "candidate_budget_C4": 768,
+      "passes_C4": true
+    },
+    {
+      "k": 6,
+      "seen": 64,
+      "expected": 64,
+      "complete": true,
+      "latest_first_hit_step": 798,
+      "candidate_budget_C4": 1792,
+      "passes_C4": true
+    },
+    {
+      "k": 7,
+      "seen": 128,
+      "expected": 128,
+      "complete": true,
+      "latest_first_hit_step": 1074,
+      "candidate_budget_C4": 4096,
+      "passes_C4": true
+    },
+    {
+      "k": 8,
+      "seen": 256,
+      "expected": 256,
+      "complete": true,
+      "latest_first_hit_step": 2695,
+      "candidate_budget_C4": 9216,
+      "passes_C4": true
+    }
+  ]
+}
