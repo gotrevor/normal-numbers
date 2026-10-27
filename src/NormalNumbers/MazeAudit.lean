@@ -3,6 +3,8 @@ Copyright (c) 2026 Trevor Morris. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
+/- Research-retirement policy: ../../MAZE.md (repository root).
+This audit checks references; it does not prove a difficulty judgment. -/
 import NormalNumbers.Maze
 import NormalNumbers.MahlerProductBlock
 import NormalNumbers.CPrimeSiteFactorization
@@ -32,6 +34,10 @@ import NormalNumbers.PiDisjunctiveRoutes.ReservoirCutoffSixDensity
 import NormalNumbers.PiDisjunctiveRoutes.ReservoirComparisonRobustness
 import NormalNumbers.PiDisjunctiveRoutes.ReservoirDenominator
 import NormalNumbers.PiDisjunctiveRoutes.BBPAdelicGrid
+import NormalNumbers.PiDisjunctiveRoutes.TripleReturnReview
+import NormalNumbers.PiDisjunctiveRoutes.TripleReturnLiouville
+import NormalNumbers.PiDisjunctiveRoutes.PrimeReservoirDiagonal
+import NormalNumbers.PiDisjunctiveRoutes.DiskFloorError
 import NormalNumbers.EntropyProfiles
 import NormalNumbers.CantorExactExponentStretch
 import NormalNumbers.CantorExactExponentProfile
@@ -57,6 +63,7 @@ outside `mazeLegacy` has a `Link` to the declarations its verdict rests on.  Nam
 
 * **New rows** need a link.  A `wall` row dated `2026-10-01` or later must also name its reopen
   condition as a `def … : Prop`.  Older walls are grandfathered for that one requirement.
+  Every `abandonedIntractable` row requires a reopening premise regardless of date.
 * **`mazeLegacy`** holds rows whose reasons are still prose only, as of 2026-10-01.  It only
   shrinks.  When a legacy row gains a link, the audit demands its deletion from this list.
   Converting a legacy row means stating its obstruction in Lean, which is real work: the Lean
@@ -70,10 +77,39 @@ open NormalNumbers.PrimeModel.SiteFactor
 
 /-- The audit's view of the register. -/
 def mazeRows : List RowInfo :=
-  register.map fun h => ⟨h.name, decide (h.verdict = Verdict.wall) && decide ("2026-10-01" ≤ h.date)⟩
+  register.map fun h => ⟨h.name,
+    decide (h.verdict = Verdict.abandonedIntractable) ||
+      (decide (h.verdict = Verdict.wall) && decide ("2026-10-01" ≤ h.date))⟩
 
 /-- Each linked row and the declarations it rests on. -/
 def mazeLinks : List Link := [
+  ⟨"Pi route 1: triple return and odd orbit invariance",
+   [``PiDisjunctiveRoutes.tripleReturn_iff_disjunctive,
+    ``PiDisjunctiveRoutes.mem_circleOmegaLimit_oddMul_iff_disjunctive,
+    ``PiDisjunctiveRoutes.circleOmegaLimit_infinite_of_irrational,
+    ``PiDisjunctiveRoutes.pi_disjunctive_iff_oddInvariant,
+    ``PiDisjunctiveRoutes.exists_closed_two_invariant_nonTorsion_not_three_invariant],
+   [``PiDisjunctiveRoutes.PiOrbitClosureOddInvariant,
+    ``PiDisjunctiveRoutes.PiQuantitativeTripleReturn]⟩,
+  ⟨"Pi route 2: prime reservoir and residual coupling",
+   [``PiDisjunctiveRoutes.bbpReservoirExit_mod_one,
+    ``PiDisjunctiveRoutes.bbpPrimeReservoir_near_orbit,
+    ``PiDisjunctiveRoutes.reservoirConst_disjunctive_of_support,
+    ``PiDisjunctiveRoutes.pi_disjunctive_of_reservoirDiagonalSupport,
+    ``PiDisjunctiveRoutes.CutoffSix.reservoirS_add_residualS,
+    ``PiDisjunctiveRoutes.CutoffSix.not_cutoffSix_robustBBPCouplingCriterion,
+    ``PiDisjunctiveRoutes.CutoffSix.denominatorCouplingCriterion_iff,
+    ``PiDisjunctiveRoutes.BBPAdelicGrid.rational_grid_comparison],
+   [``PiDisjunctiveRoutes.PiPrimeReservoirSupport,
+    ``PiDisjunctiveRoutes.PiReservoirDiagonalSupport]⟩,
+  ⟨"Pi route 3: disk residues and divisor floor sums",
+   [``PiDisjunctiveRoutes.diskPhase_shadow,
+    ``PiDisjunctiveRoutes.pi_disjunctive_of_diskResidueCover,
+    ``PiDisjunctiveRoutes.diskResidueCover_of_piOrbitWindowCover,
+    ``PiDisjunctiveRoutes.piOrbitWindowCoverWide_of_diskResidueCover,
+    ``PiDisjunctiveRoutes.diskSmallPart_orbit,
+    ``PiDisjunctiveRoutes.DiskFloorError.tail_floorError_scaled_bound],
+   [``PiDisjunctiveRoutes.DiskResidueCover]⟩,
   ⟨"Per-ancestor sup charging of the base >= 5 tail on the gate-4 weights",
    [``UniformBadThreshold.TailReview.childConcentration_18,
     ``UniformBadThreshold.TailReview.tailChargeBudget449_of_totals],
@@ -439,7 +475,24 @@ def mazeLegacy : List String := [
   "Diophantine good-denominator detour for the tail cell",
   "route B's unweighted cover of the state-dependent target"]
 
-/-- info: maze audit: 201 rows, 94 cite declarations, 107 legacy (prose only) -/
+/-- The original pi routes must remain discoverable as research decisions.
+These guards test the bookkeeping, not the truth of an intractability claim. -/
+def piRetiredRows : List RowInfo := mazeRows.filter (fun r => r.name.startsWith "Pi route ")
+
+#guard piRetiredRows.length == 3
+#guard piRetiredRows.all (·.needsReopen)
+#guard (register.filter (fun h => h.name.startsWith "Pi route ")).all
+  (fun h => h.verdict == Verdict.abandonedIntractable)
+
+/- Negative controls: retired entries cannot lose their evidence or open crux. -/
+#guard !(LeanLedger.audit piRetiredRows [] []).isEmpty
+#guard !(LeanLedger.audit piRetiredRows
+  ((mazeLinks.filter (fun l => l.row.startsWith "Pi route ")).map
+    (fun l => { l with reopen := [] })) []).isEmpty
+#guard (LeanLedger.audit piRetiredRows
+  (mazeLinks.filter (fun l => l.row.startsWith "Pi route ")) []).isEmpty
+
+/-- info: maze audit: 204 rows, 97 cite declarations, 107 legacy (prose only) -/
 #guard_msgs in
 #maze_audit mazeRows, mazeLinks, mazeLegacy
 

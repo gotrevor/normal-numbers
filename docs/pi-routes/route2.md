@@ -1,5 +1,14 @@
 # Route 2 false-starts and structural reductions
 
+**Disposition, 2026-10-26: abandoned as intractable with current methods.**
+Registered as `Pi route 2: prime reservoir and residual coupling` in `Maze.lean`,
+with checked evidence and open-premise links in `MazeAudit.lean`.
+This includes the cutoff and approximate-coupling variants already investigated.
+Reopening requires a concrete mechanism forcing visits of the sum, explaining
+which comparison hypotheses it escapes.  A new cutoff or transverse estimate
+alone does not qualify.  This is not a refutation of every possible reservoir argument.
+Policy and complete follow-up inventory: [MAZE.md](../../MAZE.md).
+
 - idea: joint-uniformity probe vs composite control / promising: primes are the uncancellable source /
   fails: composite-denominator control is equally uniform (N=1500), so the statistic cannot credit
   primality / witness: `scripts/pi_route2_joint.py` output in HANDOFF lap 1.

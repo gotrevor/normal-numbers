@@ -2,6 +2,8 @@
 Copyright (c) 2026 Trevor Morris. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
+/- Research-retirement policy: ../../MAZE.md (repository root).
+Read it before proposing new ideas, retiring a route, or reopening an entry. -/
 import NormalNumbers.CFScheduleARefuted
 import NormalNumbers.G4Base2GapObstruction
 import NormalNumbers.VandeheyRaney
@@ -50,39 +52,47 @@ import NormalNumbers.StonehamPrimeClass
 /-!
 # `Maze.lean` — the halls we have walked, encoded
 
-A machine-checked register of routes this programme has **walked and closed**, so that a
+A register of routes this programme has **walked and closed or abandoned**, so that a
 future session does not re-enter a hall someone already walked.  Trevor, 2026-09-20:
 *"I'd argue that it's worth writing down, so that future us never revisits it... a set of
 Lean formulations that encode all of the conclusions drawn."*
 
 The programme's expensive failure mode is not a wrong proof.  It is a month spent
 re-deriving a verdict that is already on disk, in a handoff file numbered 147.  Prose rots
-silently; this file does not, because **it must compile**.  Every `Tier.kernel` row below is
-an `alias` onto a theorem that lives in this build: rename or delete that theorem and this
-file stops building.  That is the whole design.
+silently; the mathematical statements behind this register are linked in `MazeAudit.lean`.
+Those links and the register must compile.  Compilation checks the cited declarations,
+not the truth of prose or the wisdom of a research decision.  The operating contract is
+[MAZE.md](../../MAZE.md).
 
 ## How to use it
 
 Two passes, in this order.
 
-1. **Match your route against `Verdict`** (§1).  Most closed halls closed for one of eight
+1. **Match your route against `Verdict`** (§1).  Match mechanisms and aliases, not just titles.
+   An `abandonedIntractable` entry is excluded from a request for new ideas unless its
+   reopening requirement is met.  A change of coordinates, cutoff, or notation is not enough.
+   Most closed halls closed for one of the following
    structural reasons, and the shape is recognisable *before* any work.  The doc-comment on
    each constructor carries its tell.
 2. **Grep `register`** (§4) for the object you are about to touch.
 
-If your route is not here, it is genuinely unwalked — say so out loud, because that is rarer
-than it feels.
+Absence from this register does not establish that a route is untried.  Check linked
+route notes, the positive statement ledger, and the relevant handoffs before proposing it.
 
-**Adding a row?**  State its obstruction in Lean first (a theorem, a `¬`, or a `sorry` statement
-with a confidence), and for a `wall` its reopen condition as a `def … : Prop`.  Then add a `Link`
+**Adding a row?**  State the mathematical findings and open crux in Lean first.  A refutation
+needs a scoped witness; abandonment for difficulty needs no invented impossibility theorem.
+Record what remains unproved and why the attempted methods do not discharge it.  For a
+`wall` or `abandonedIntractable` row, link its open crux as a `def … : Prop` and describe
+what new mechanism/evidence must change before reopening.  Then add a `Link`
 in `MazeAudit.lean`.  `#maze_audit` fails the build on a row with no link: its reasons would be
 prose only.
 
 ## The three tiers
 
-* `Tier.kernel` — the verdict is a **theorem in this build**, re-exported below by `alias`.
-* `Tier.frozen` — the statement is precise Lean but **undischarged**: a `def ... : Prop`
-  with no proof and no `sorry`.  A frozen row claims a *statement*, never a truth value.
+* `Tier.kernel` — the supporting mathematical findings are **proved in this build**.
+  For a research-decision row this does not mean Lean proves the route intractable.
+* `Tier.frozen` — a precise Lean statement is **undischarged**: an open `Prop` or an
+  admitted statement.  Inspect its type and axioms; compilation alone is not a proof.
 * `Tier.cited` — the objects are not formalized; the verdict lives in the `evidence` field
   with its file pointer.  Weakest tier; promote when the objects arrive.
 
@@ -96,24 +106,18 @@ Not a status file (`STATUS.md`), not a plan (`ROADMAP.md`), not a list of open p
 re-opens, the row stays and gains a note, because the fact that we once closed it is itself
 evidence.  (`hdom` is the live example — refuted 2026-08-24, reversed 2026-08-27.)
 
-## The orientation: why most halls close
+## The orientation: find the missing mathematical input
 
-Three external doors exist, and only three (`docs/tower-2026-08-29.md` §0a): **Diophantine**
-(separation of powers, linear forms in logs), **dynamical** (×2×3 rigidity, equidistribution)
-and **internal counting** (the digit combinatorics itself).  A fourth is always tempting and
-is always a mirror: a **mod-p / quotient coordinate** on a constant defined by its own digits
-re-imports the unknown, because the quotient *is* the digit prefix.
-
-Behind all three real doors stands one wall: nothing in current mathematics lower-bounds the
-Weyl sums of a *natural* constant.  Furstenberg's ×2×3 is its best-known name.  So the
-cheapest test of a new idea is: **which of the three doors supplies its estimate?**  If the
-honest answer is "none, it is self-contained", the idea is a `Verdict.restatement` and §1's
-first tell will show it in one step.
+Diophantine estimates, dynamics and counting are useful search categories, not an exhaustive
+classification theorem.  Ask what supplies the new estimate.  A modular coordinate change
+may merely reproduce the unknown, but that requires an argument, not a label.  Equivalence
+to the target does not prove an approach useless; it explains why a missing mechanism must
+be supplied before this programme spends another lap on it.
 -/
 
 namespace NormalNumbers.Maze
 
-/-! ## 1. The eight shapes of a dead end
+/-! ## 1. Mathematical verdicts and research decisions
 
 Each constructor's doc-comment carries its **tell** — the thing visible before the work, not
 after.  Match your route against these before grepping the register. -/
@@ -123,8 +127,8 @@ inductive Verdict where
   /-- **RESTATEMENT.** The criterion is logically equivalent to the target.
   🚨 Tell: you cannot name a proof route for your criterion that avoids the target.  Ask
   "what would I do to *prove* this hypothesis?"  If the honest answer is "bound the same
-  Weyl sum", stop.  The extra apparatus (thresholds, constants, positive parts) adds no
-  leverage; it disguises the equivalence. -/
+  Weyl sum", the equivalence alone supplies no independent input.  Reuse requires a
+  mechanism for the equivalent criterion; equivalence is not an impossibility theorem. -/
   | restatement
   /-- **VACUOUS.** True, but only in the regime where the conclusion is already known, or
   carrying no information about the object.
@@ -139,7 +143,7 @@ inductive Verdict where
   🚨 Tell: the statement quantifies over all `i` and you checked it at `i = 1`.  Probe
   endpoints first.  Laps refuting their own frozen Props is a healthy rate, not a failure. -/
   | falseAsStated
-  /-- **WALL.** The route is sound and needs an estimate nobody has.
+  /-- **WALL.** The route is sound and needs an estimate not supplied by the available evidence.
   🚨 Not a mistake — the honest frontier.  Name the missing estimate and the nearest
   literature, then park.  A wall row exists so the next session recognises the wall on sight,
   and so a new external theorem can be checked against the list cheaply. -/
@@ -147,6 +151,12 @@ inductive Verdict where
   /-- **PARKED.** Deliberately set down with a reason; not closed.
   🚨 Tell: the reason is usually "needs an unavailable input" or "low odds, high cost". -/
   | parked
+  /-- **ABANDONED AS INTRACTABLE WITH CURRENT METHODS.** A research decision, not a
+  theorem that the target is false, unprovable, or absolutely intractable.  Exclude this
+  mechanism and cosmetic variants from new-idea proposals.  Record the named open crux,
+  attempted methods, precise scope, and concrete reopening evidence.  A true reduction
+  with no route to its premise is enough to justify this decision. -/
+  | abandonedIntractable
   /-- **PRIOR-ART.** Already in the literature.
   🚨 Tell: the statement is clean and the construction is natural.  Clean + natural means
   someone got there.  Sweep before building, and sweep the *generalisation* too. -/
@@ -159,7 +169,7 @@ inductive Verdict where
 
 /-- Evidence tier of a register row.  See the module doc-comment. -/
 inductive Tier where
-  /-- The verdict is a theorem in this build, re-exported by `alias` in §2. -/
+  /-- Supporting mathematics is proved in this build; a difficulty decision is not a theorem. -/
   | kernel
   /-- A precise but undischarged statement (§3).  Claims a statement, never a truth value. -/
   | frozen
@@ -713,6 +723,21 @@ carry their evidence as a file pointer.  Sorted by area, newest campaigns first.
 /-- Every hall this programme has walked and closed.  Never delete a row: a re-opened hall
 keeps its row and gains a note (see `hdom` and the tower-separation wall, both REVERSED). -/
 def register : List Hall := [
+  ⟨"Pi route 1: triple return and odd orbit invariance",
+   "Aliases: triple return, q*pi return, odd-multiplier omega-limit invariance, Furstenberg x2/xq, self-return prerequisite. Force binary disjunctivity through an odd multiple in pi's binary omega-limit set",
+   .abandonedIntractable, .kernel,
+   "ABANDONED with current methods. Odd return/invariance is equivalent to the target. Irrationality already gives an infinite omega-limit set; proving self-return or a non-torsion point is not the missing prerequisite. Abstract doubling invariance does not supply tripling invariance. The unresolved arithmetic input is PiOrbitClosureOddInvariant, with no mechanism obtained here. This is not a refutation of pi disjunctivity or of every possible return argument. REOPEN ONLY with a specific pi-dependent mechanism establishing odd invariance/returns beyond the recorded equivalence and finite return probes; changing the odd multiplier alone does not qualify",
+   "TripleReturn.lean: tripleReturn_iff_disjunctive, mem_circleOmegaLimit_oddMul_iff_disjunctive; TripleReturnReview.lean: circleOmegaLimit_infinite_of_irrational, pi_disjunctive_iff_oddInvariant; TripleReturnLiouville.lean: exists_closed_two_invariant_nonTorsion_not_three_invariant; docs/pi-routes/route1.md", "2026-10-26"⟩,
+  ⟨"Pi route 2: prime reservoir and residual coupling",
+   "Aliases: BBP prime window, prime reservoir, rho/residual split, uncancellable prime transfer, cutoff 4n/6n, transverse arithmetic, whole-BBP denominator or 2-adic coupling. Obtain visits of the pi sum from arithmetic of its pieces",
+   .abandonedIntractable, .kernel,
+   "ABANDONED with current methods. Cutoff 4n exits collapse to 64/p; the reservoir shadows a fixed rho orbit. Support forces rho disjunctivity but does not compare its difficulty with pi. Cutoff 6n avoids that resonance, yet exits still cancel from the sum. Approximate-forcing and finite-congruence comparisons admit rational targets within their stated budgets; exact recurrence rigidity only recovers the original sequence. The missing input is joint/diagonal support or a new exact coupling that forces sum visits. No theorem rules out every reservoir mechanism. REOPEN ONLY with such a coupling, explaining which proved comparison hypothesis it escapes and why it produces visits. New cutoffs, larger probes, necessary conditions, or the admitted backward identity alone do not qualify",
+   "PrimeReservoirStep.lean: bbpReservoirExit_mod_one; PrimeReservoirOrbit.lean: bbpPrimeReservoir_near_orbit, reservoirConst_disjunctive_of_support; PrimeReservoirDiagonal.lean: PiReservoirDiagonalSupport; ReservoirComparisonRobustness.lean; ReservoirDenominator.lean; BBPAdelicGrid.lean; docs/pi-routes/route2.md; docs/pi-routes/proof-frontier-audit.md", "2026-10-26"⟩,
+  ⟨"Pi route 3: disk residues and divisor floor sums",
+   "Aliases: integer disk count, lattice-circle residues, oversampled area shadow, chiFour divisor sum, small-d Leibniz part, tail floor-error estimate. Obtain binary word visits from residues of disk counts",
+   .abandonedIntractable, .kernel,
+   "ABANDONED with current methods. The perimeter estimate gives a shadow and transfers covers; it supplies no cover. The premise is sandwiched between pi orbit covers with different margins, not refuted. Fixed-D small parts shadow rational Leibniz orbits; that does not exclude growing D. For D<=4^n the scaled tail floor size bound already follows from the existing perimeter estimate plus the explicit divisor and Leibniz inputs. The missing input is actual residue visitation, DiskResidueCover, for which no arithmetic mechanism was obtained. REOPEN ONLY with an additional relation or estimate that produces visits, stating its hypotheses and how it goes beyond the shadow/sandwich/size bounds. Sharper perimeter bounds or a renamed disk cover alone do not qualify",
+   "DiskResidue.lean: diskPhase_shadow, pi_disjunctive_of_diskResidueCover, DiskResidueCover; DiskResidueCostume.lean: diskResidueCover_of_piOrbitWindowCover, piOrbitWindowCoverWide_of_diskResidueCover, diskSmallPart_orbit; DiskFloorError.lean: tail_floorError_scaled_bound (conditional); docs/pi-routes/route3.md", "2026-10-26"⟩,
   ⟨"(BL) bias-loss criterion",
    "Prove G4 normality via a per-band feedback-below-dissipation ledger",
    .restatement, .cited,

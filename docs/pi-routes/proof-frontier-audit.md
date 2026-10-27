@@ -1,5 +1,10 @@
 # Pi disjunctivity: proof-frontier audit, 2026-10-26
 
+**Retirement update:** all three original ideas are explicitly registered as
+`Verdict.abandonedIntractable`, with linked Lean findings and open cruxes.
+[MAZE.md](../../MAZE.md) gives the screening and reopening rules.  This records
+the research decision separately from the mathematical proof status below.
+
 **The requested result has not been proved.**  The objective remains: exhibit an integer base b≥2 and prove `IsDisjunctive b Real.pi`, without an unproved mathematical premise or an admitted proof in its dependency chain.
 
 This audit checked the current local branch `research/pi-routes` at mathematical-work commit `c3a5b571`.  A source search for the pi normality/disjunctivity conclusions and a fresh Lean type/axiom audit found the following frontier.  Audit source and output are in `tmp/20261026-pi-proof-frontier/Audit.lean` and `audit.txt`.

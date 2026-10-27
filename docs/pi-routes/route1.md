@@ -1,5 +1,13 @@
 # Route 1 (triple return) — direction notes and false starts
 
+**Disposition, 2026-10-26: abandoned as intractable with current methods.**
+Registered as `Pi route 1: triple return and odd orbit invariance` in `Maze.lean`,
+with checked evidence and open-premise links in `MazeAudit.lean`.
+Exclude this mechanism and cosmetic variants from new-idea proposals.  Reopening
+requires a pi-specific mechanism for odd invariance/returns beyond the existing
+equivalence and probes.  This is a research decision, not an impossibility theorem.
+Policy and evidence inventory: [MAZE.md](../../MAZE.md).
+
 Lean home: `src/NormalNumbers/PiDisjunctiveRoutes/TripleReturn.lean`.
 
 ## Structural finding

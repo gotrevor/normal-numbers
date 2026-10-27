@@ -1,5 +1,13 @@
 # Route 3 (disk residues): answer and false starts
 
+**Disposition, 2026-10-26: abandoned as intractable with current methods.**
+Registered as `Pi route 3: disk residues and divisor floor sums` in `Maze.lean`,
+with checked evidence and open-premise links in `MazeAudit.lean`.
+Exclude equivalent area-shadow/floor-sum proposals unless a new arithmetic
+mechanism produces residue visits beyond the existing shadow and size bounds.
+This decision does not assert that every disk-arithmetic argument is impossible.
+Policy and evidence inventory: [MAZE.md](../../MAZE.md).
+
 **Answer (Lean, `DiskResidueCostume.lean`):** the route premise is sandwiched between two pure π-orbit
 window covers differing only in target margin:
 `PiOrbitWindowCover → DiskResidueCover → PiOrbitWindowCoverWide`
