@@ -18,23 +18,37 @@ jobs:
   comparator:
     runs-on: ubuntu-24.04
     env:
-      LEAN4EXPORT_TAG: v4.33.1
       LANDRUN_REV: 5e9a0d15d6009cdaf27133bf2d59d29e7018cc47
       NANODA_REV: f58f2f6d535e189a40fcb02ede8eb95f97a92d37
-      COMPARATOR_REV: 68a064109f01c08f47c8edc9f51d6a2bbffaa188
     steps:
       - uses: actions/checkout@v7
       - uses: leanprover/lean-action@v1
         with:
           build: false
 
+      - name: Read Lean verifier pins from the project
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          packages = {p["name"]: p for p in json.loads(Path("lake-manifest.json").read_text())["packages"]}
+          with open(os.environ["GITHUB_ENV"], "a") as env:
+              for variable, package in [("LEAN4EXPORT_REV", "lean4export"), ("COMPARATOR_REV", "Comparator")]:
+                  print(f"{variable}={packages[package]['rev']}", file=env)
+              print(f"VERIFIER_LEAN_TOOLCHAIN={Path('lean-toolchain').read_text().strip()}", file=env)
+          PY
+
       - name: Cache pinned verifier binaries
         id: cache-bins
         uses: actions/cache@v6
         with:
           path: ~/verifier-bin
-          key: verifier-bin-${{ runner.os }}-${{ env.LEAN4EXPORT_TAG }}-${{ env.LANDRUN_REV }}-${{ env.NANODA_REV }}-${{ env.COMPARATOR_REV }}
+          key: verifier-bin-v2-${{ runner.os }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ env.LANDRUN_REV }}-${{ env.NANODA_REV }}
 
+      # Build separately: this project and several dependencies also use the
+      # Comparator namespace for challenge modules.
       - name: Build landrun, lean4export, nanoda, and comparator
         if: steps.cache-bins.outputs.cache-hit != 'true'
         run: |
@@ -46,9 +60,9 @@ jobs:
           git clone https://github.com/ammkrn/nanoda_lib.git
           (cd nanoda_lib && git checkout "$NANODA_REV" && cargo build --release && cp target/release/nanoda_bin ~/verifier-bin/)
           git clone https://github.com/leanprover/lean4export.git
-          (cd lean4export && git checkout "$LEAN4EXPORT_TAG" && lake build && cp .lake/build/bin/lean4export ~/verifier-bin/)
+          (cd lean4export && git checkout "$LEAN4EXPORT_REV" && elan run "$VERIFIER_LEAN_TOOLCHAIN" lake build && cp .lake/build/bin/lean4export ~/verifier-bin/)
           git clone https://github.com/leanprover/comparator.git
-          (cd comparator && git checkout "$COMPARATOR_REV" && lake build comparator && cp .lake/build/bin/comparator ~/verifier-bin/)
+          (cd comparator && git checkout "$COMPARATOR_REV" && elan run "$VERIFIER_LEAN_TOOLCHAIN" lake build comparator && cp .lake/build/bin/comparator ~/verifier-bin/)
 
       - name: Build project and comparator modules
         run: |
