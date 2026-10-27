@@ -6,6 +6,7 @@ Authors: Trevor Morris
 /- Research-retirement policy: ../../MAZE.md (repository root).
 This audit checks references; it does not prove a difficulty judgment. -/
 import NormalNumbers.Maze
+import NormalNumbers.PowerLambertNonNormal
 import NormalNumbers.MahlerProductBlock
 import NormalNumbers.CPrimeSiteFactorization
 import LeanLedger.MazeLinks
@@ -40,6 +41,16 @@ import NormalNumbers.PiDisjunctiveRoutes.PrimeReservoirDiagonal
 import NormalNumbers.PiDisjunctiveRoutes.DiskFloorError
 import NormalNumbers.PiDisjunctiveRoutes.RoundTwoOscillator
 import NormalNumbers.PiDisjunctiveRoutes.RoundTwoOscillatorSharp
+import NormalNumbers.PiDisjunctiveRoutes.InventionScreen
+import NormalNumbers.PiDisjunctiveRoutes.DualRadix
+import NormalNumbers.LnTwoRoutes.Screen
+import NormalNumbers.LnTwoRoutes.PadeCost
+import NormalNumbers.SqrtTwoRoutes.Screen
+import NormalNumbers.SqrtTwoRoutes.NormScale
+import NormalNumbers.SqrtTwoRoutes.Balanced
+import NormalNumbers.SqrtTwoRoutes.WordCertificate
+import NormalNumbers.SqrtTwoRoutes.Controls
+import NormalNumbers.SqrtTwoRoutes.ExponentSelection
 import NormalNumbers.PiDisjunctiveRoutes.RoundTwoSpigot
 import NormalNumbers.PiDisjunctiveRoutes.RoundTwoRadical
 import NormalNumbers.EntropyProfiles
@@ -87,6 +98,97 @@ def mazeRows : List RowInfo :=
 
 /-- Each linked row and the declarations it rests on. -/
 def mazeLinks : List Link := [
+  ⟨"Normality upgrade for perfect-power Lambert constants",
+   [``ArithmeticDisjunctivity.not_isNormal_powerLambert,
+    ``ArithmeticDisjunctivity.powerLambert_disjunctive_not_normal,
+    ``ArithmeticDisjunctivity.GenericArithmeticNormality,
+    ``ArithmeticDisjunctivity.not_genericArithmeticNormality,
+    ``ArithmeticDisjunctivity.prefix_tailPowerDivisorCount_bound,
+    ``ArithmeticDisjunctivity.exists_rat_powerLambert_tail,
+    ``ArithmeticDisjunctivity.orbit_sum_le_of_small_coefficients,
+    ``ArithmeticDisjunctivity.not_isNormal_of_orbit_sum_bound,
+    ``ArithmeticDisjunctivity.linear_power_prefix_control,
+    ``ArithmeticDisjunctivity.square_tail_positive_control], []⟩,
+  ⟨"Sqrt2 exponent selector: full Pell residue periods",
+   [``SqrtTwoRoutes.pellOrderMarginHit_exponent_bound,
+    ``SqrtTwoRoutes.pell_order_positive_controls,
+    ``SqrtTwoRoutes.pell_order_full_cycle_misses_margin_control,
+    ``SqrtTwoRoutes.pell_order_q29_rational_hit_is_wrong_word,
+    ``SqrtTwoRoutes.pellEarlyOrderSupply_implies_disjunctive],
+   [``SqrtTwoRoutes.PellEarlyOrderMarginSupply, ``SqrtTwoRoutes.PellOrderMarginTransfer]⟩,
+  ⟨"Sqrt2 exponent selector: lifted Pell indices",
+   [``SqrtTwoRoutes.pell_index_lift_size_lower_bound,
+    ``SqrtTwoRoutes.pell_index_lift_coeffV_divisible_for_every_numerator,
+    ``SqrtTwoRoutes.pell_index_lift_coeffU_congruent_for_every_numerator,
+    ``SqrtTwoRoutes.pell_index_lift_archimedean_cost,
+    ``SqrtTwoRoutes.exponent_lift_00_control,
+    ``SqrtTwoRoutes.exponent_lift_neighbor_rejected,
+    ``SqrtTwoRoutes.lifted_zero_residue_not_near,
+    ``SqrtTwoRoutes.lifted_near_positive_control,
+    ``SqrtTwoRoutes.pellLiftedWordSupply_implies_disjunctive],
+   [``SqrtTwoRoutes.PellLiftedWordSupply]⟩,
+  ⟨"Sqrt2 screen: cheap adjacent Pell certificates",
+   [``SqrtTwoRoutes.pell_synthesis, ``SqrtTwoRoutes.pell_cost_exact,
+    ``SqrtTwoRoutes.pell_dyadic_cost_exact, ``SqrtTwoRoutes.cheap_pell_iff,
+    ``SqrtTwoRoutes.pell_windowSupply_iff, ``SqrtTwoRoutes.pell_small_control,
+    ``SqrtTwoRoutes.pell_mixed_control, ``SqrtTwoRoutes.pell_linear_combination_norm,
+    ``SqrtTwoRoutes.pell_dyadic_norm_lower, ``SqrtTwoRoutes.pell_dyadic_coefficient_growth,
+    ``SqrtTwoRoutes.pell_dyadic_bounded_norm, ``SqrtTwoRoutes.balanced_pell_coefficients,
+    ``SqrtTwoRoutes.pellWordCertificate_orbit_mem_Ioo,
+    ``SqrtTwoRoutes.pellWordCertificateSupply_implies_disjunctive,
+    ``SqrtTwoRoutes.pellWordCertificateSupply_of_disjunctive,
+    ``SqrtTwoRoutes.zero_zero_certificate_control,
+    ``SqrtTwoRoutes.one_one_certificate_control,
+    ``SqrtTwoRoutes.wrong_word_certificate_rejected],
+   [``SqrtTwoRoutes.PellWindowSupply, ``SqrtTwoRoutes.PellWordCertificateSupply]⟩,
+  ⟨"Sqrt2 screen: fixed-modulus remainder abstraction",
+   [``SqrtTwoRoutes.mock_remainder, ``SqrtTwoRoutes.remainder_update_identity,
+    ``SqrtTwoRoutes.MockPath, ``SqrtTwoRoutes.every_stream_has_mock_path,
+    ``SqrtTwoRoutes.FiniteResidueExclusion, ``SqrtTwoRoutes.not_finiteResidueExclusion],
+   [``SqrtTwoRoutes.ExactRemainderWordSupply]⟩,
+  ⟨"Sqrt2 screen: splitting-only norm sieve",
+   [``SqrtTwoRoutes.norm_root_automatic, ``SqrtTwoRoutes.NormSplittingFilter,
+    ``SqrtTwoRoutes.every_candidate_passes_splitting], []⟩,
+  ⟨"Ln2 screen: Euler acceleration and finite kick jets",
+   [``LnTwoRoutes.AcceleratedLogIdentity, ``LnTwoRoutes.FiniteJetRationalControls,
+    ``LnTwoRoutes.binary_coboundary_sum, ``LnTwoRoutes.clone_partial_sum,
+    ``LnTwoRoutes.rational_clone_not_disjunctive],
+   [``LnTwoRoutes.AcceleratedWindowSupply]⟩,
+  ⟨"Ln2 screen: dyadic synthesis of Pade forms",
+   [``LnTwoRoutes.pade_five_six_data, ``LnTwoRoutes.pade_five_six_no_dyadic,
+    ``LnTwoRoutes.no_dyadic_of_prime_certificate,
+    ``LnTwoRoutes.pade_dyadic_positive_control, ``LnTwoRoutes.PadeGridProbe,
+    ``LnTwoRoutes.PadeWideBudgetProbe, ``LnTwoRoutes.PadeErrorEnvelope,
+    ``LnTwoRoutes.PadeCost.best_witness_passes,
+    ``LnTwoRoutes.PadeCost.best_witness_budget,
+    ``LnTwoRoutes.PadeCost.weighted_dual_bound,
+    ``LnTwoRoutes.PadeCost.BoundedCostResult,
+    ``LnTwoRoutes.PadeCost.WindowCostLowerBounds],
+   [``LnTwoRoutes.PadeCheapDyadic, ``LnTwoRoutes.PadeWindowSupply]⟩,
+  ⟨"Ln2 screen: localized-normal limit transfer",
+   [``LnTwoRoutes.normal_tail_hidden, ``LnTwoRoutes.normal_tail_bound,
+    ``LnTwoRoutes.zero_not_disjunctive, ``LnTwoRoutes.LocalizedShadow],
+   [``LnTwoRoutes.LocalizedWindowSupply]⟩,
+  ⟨"Pi exploratory: quadratic-twisted dual-radix rigidity",
+   [``PiDisjunctiveRoutes.DualRadix.quadratic_norm_identity,
+    ``PiDisjunctiveRoutes.DualRadix.pell_unit_norm_identity,
+    ``PiDisjunctiveRoutes.DualRadix.pi_disjunctive_of_dualRigidity,
+    ``PiDisjunctiveRoutes.DualRadix.NormPreflight,
+    ``PiDisjunctiveRoutes.DualRadix.NormBitLengthPreflight,
+    ``PiDisjunctiveRoutes.DualRadix.ReducedNormPreflight],
+   [``PiDisjunctiveRoutes.DualRadix.QuadraticDualRadixRigidity]⟩,
+  ⟨"Pi invention screen: polynomial accuracy pays for a complete rational period",
+   [``PiDisjunctiveRoutes.InventionScreen.not_quadraticAccuracyFullPeriodTransfer,
+    ``PiDisjunctiveRoutes.InventionScreen.denominator_eleven_full_period,
+    ``PiDisjunctiveRoutes.InventionScreen.not_absoluteShadowBudget_of_lower_bound,
+    ``PiDisjunctiveRoutes.InventionScreen.shadow_scale_controls], []⟩,
+  ⟨"Pi invention screen: language recognizer becomes a finite description of its path",
+   [``PiDisjunctiveRoutes.InventionScreen.separated_avoids,
+    ``PiDisjunctiveRoutes.InventionScreen.not_countableAvoiderCatalogue], []⟩,
+  ⟨"Pi invention screen: specialize analytic-family averages without pointwise control",
+   [``PiDisjunctiveRoutes.InventionScreen.polynomial_spike_control,
+    ``PiDisjunctiveRoutes.InventionScreen.not_uniformPolynomialEndpointBound,
+    ``PiDisjunctiveRoutes.InventionScreen.gaussian_spike_control], []⟩,
   ⟨"Pi route 4: exact spigot and word-avoidance ranks",
    [``PiDisjunctiveRoutes.RoundTwo.Pilots.positiveWidthAlternatingPrefix,
     ``PiDisjunctiveRoutes.RoundTwo.Pilots.no_index_only_emit_rank,
@@ -529,7 +631,7 @@ def piRetiredRows : List RowInfo := mazeRows.filter (fun r => r.name.startsWith 
 #guard (LeanLedger.audit piRetiredRows
   (mazeLinks.filter (fun l => l.row.startsWith "Pi route ")) []).isEmpty
 
-/-- info: maze audit: 210 rows, 103 cite declarations, 107 legacy (prose only) -/
+/-- info: maze audit: 223 rows, 116 cite declarations, 107 legacy (prose only) -/
 #guard_msgs in
 #maze_audit mazeRows, mazeLinks, mazeLegacy
 

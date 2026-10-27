@@ -1,0 +1,98 @@
+{
+  "status": "finite controls pass; raw norm shrinks but cleared integer grows",
+  "samples": [
+    {
+      "n": 2,
+      "m": 3,
+      "raw_norm": "202842125747/94667451278400",
+      "raw_norm_float": 0.002142680752547966,
+      "cleared_integer_bits": 55,
+      "denominator_bits": 64,
+      "reduced_numerator_bits": 38,
+      "reduced_denominator_bits": 47,
+      "wrong_coefficient_control": 9.04764515924332
+    },
+    {
+      "n": 4,
+      "m": 5,
+      "raw_norm": "91006713534453922993850507/2480214268050925334540451840000",
+      "raw_norm_float": 3.669308523330586e-05,
+      "cleared_integer_bits": 126,
+      "denominator_bits": 141,
+      "reduced_numerator_bits": 87,
+      "reduced_denominator_bits": 101,
+      "wrong_coefficient_control": 9.047161719966738
+    },
+    {
+      "n": 8,
+      "m": 10,
+      "raw_norm": "1275637235974902275920231659498719194455242351676011026389191/3851864786661541455900060348497567192324440887517328905916519546880000",
+      "raw_norm_float": 3.3117393954020714e-10,
+      "cleared_integer_bits": 298,
+      "denominator_bits": 330,
+      "reduced_numerator_bits": 200,
+      "reduced_denominator_bits": 232,
+      "wrong_coefficient_control": 9.047137367890501
+    },
+    {
+      "n": 16,
+      "m": 20,
+      "raw_norm": "57167578399223460077682845028113985514894565516141412205889638586222807077521243713681100445233283143530473681050766583766157212112517867/1164625094006704418415540843189477266533259065220042278870548675373917293889060715668529234894700413523710315713750957619486937412931425466635031412736000000",
+      "raw_norm_float": 4.9086679218414955e-20,
+      "cleared_integer_bits": 630,
+      "denominator_bits": 694,
+      "reduced_numerator_bits": 455,
+      "reduced_denominator_bits": 519,
+      "wrong_coefficient_control": 9.047137367665245
+    },
+    {
+      "n": 32,
+      "m": 40,
+      "raw_norm": "11221208077107803958094337302405135888336892815784713571607708582096594751196964469443783979466531847836001505320030168611445208173039911482297203807097611538033793427740463632337629438670794554846856556926239835642716807304824861653792094654304171446416509270636876900747/5470829761882553410178064918317528096126197269168676461781072650271026605876734747747225666681482091003875393266453631634112071872675359715569203799235090744705443580233090817541470706410655296135461520154034490959378051926838107576306622382446094834223954475603495894105183729821754454814228113317167104000000",
+      "raw_norm_float": 2.051098017213115e-39,
+      "cleared_integer_bits": 1296,
+      "denominator_bits": 1425,
+      "reduced_numerator_bits": 901,
+      "reduced_denominator_bits": 1029,
+      "wrong_coefficient_control": 9.047137367665245
+    }
+  ],
+  "pell_unit_controls": [
+    {
+      "k": 1,
+      "cleared_norm": -1,
+      "raw_norm": "-1/4",
+      "denominator_bits": 3
+    },
+    {
+      "k": 2,
+      "cleared_norm": -1,
+      "raw_norm": "-1/49",
+      "denominator_bits": 6
+    },
+    {
+      "k": 4,
+      "cleared_norm": -1,
+      "raw_norm": "-1/9409",
+      "denominator_bits": 14
+    },
+    {
+      "k": 8,
+      "cleared_norm": -1,
+      "raw_norm": "-1/354079489",
+      "denominator_bits": 29
+    },
+    {
+      "k": 16,
+      "cleared_norm": -1,
+      "raw_norm": "-1/501489136705686529",
+      "denominator_bits": 59
+    },
+    {
+      "k": 32,
+      "cleared_norm": -1,
+      "raw_norm": "-1/1005965416935259005706408914025525249",
+      "denominator_bits": 120
+    }
+  ]
+}
