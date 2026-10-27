@@ -42,6 +42,7 @@ import NormalNumbers.PiDisjunctiveRoutes.RoundTwoOscillator
 import NormalNumbers.PiDisjunctiveRoutes.RoundTwoOscillatorSharp
 import NormalNumbers.PiDisjunctiveRoutes.InventionScreen
 import NormalNumbers.PiDisjunctiveRoutes.DualRadix
+import NormalNumbers.LnTwoRoutes.Screen
 import NormalNumbers.PiDisjunctiveRoutes.RoundTwoSpigot
 import NormalNumbers.PiDisjunctiveRoutes.RoundTwoRadical
 import NormalNumbers.EntropyProfiles
@@ -89,6 +90,21 @@ def mazeRows : List RowInfo :=
 
 /-- Each linked row and the declarations it rests on. -/
 def mazeLinks : List Link := [
+  ⟨"Ln2 screen: Euler acceleration and finite kick jets",
+   [``LnTwoRoutes.AcceleratedLogIdentity, ``LnTwoRoutes.FiniteJetRationalControls,
+    ``LnTwoRoutes.binary_coboundary_sum, ``LnTwoRoutes.clone_partial_sum,
+    ``LnTwoRoutes.rational_clone_not_disjunctive],
+   [``LnTwoRoutes.AcceleratedWindowSupply]⟩,
+  ⟨"Ln2 screen: dyadic synthesis of Pade forms",
+   [``LnTwoRoutes.pade_five_six_data, ``LnTwoRoutes.pade_five_six_no_dyadic,
+    ``LnTwoRoutes.no_dyadic_of_prime_certificate,
+    ``LnTwoRoutes.pade_dyadic_positive_control, ``LnTwoRoutes.PadeGridProbe,
+    ``LnTwoRoutes.PadeWideBudgetProbe, ``LnTwoRoutes.PadeErrorEnvelope],
+   [``LnTwoRoutes.PadeCheapDyadic, ``LnTwoRoutes.PadeWindowSupply]⟩,
+  ⟨"Ln2 screen: localized-normal limit transfer",
+   [``LnTwoRoutes.normal_tail_hidden, ``LnTwoRoutes.normal_tail_bound,
+    ``LnTwoRoutes.zero_not_disjunctive, ``LnTwoRoutes.LocalizedShadow],
+   [``LnTwoRoutes.LocalizedWindowSupply]⟩,
   ⟨"Pi exploratory: quadratic-twisted dual-radix rigidity",
    [``PiDisjunctiveRoutes.DualRadix.quadratic_norm_identity,
     ``PiDisjunctiveRoutes.DualRadix.pell_unit_norm_identity,
@@ -551,7 +567,7 @@ def piRetiredRows : List RowInfo := mazeRows.filter (fun r => r.name.startsWith 
 #guard (LeanLedger.audit piRetiredRows
   (mazeLinks.filter (fun l => l.row.startsWith "Pi route ")) []).isEmpty
 
-/-- info: maze audit: 214 rows, 107 cite declarations, 107 legacy (prose only) -/
+/-- info: maze audit: 217 rows, 110 cite declarations, 107 legacy (prose only) -/
 #guard_msgs in
 #maze_audit mazeRows, mazeLinks, mazeLegacy
 

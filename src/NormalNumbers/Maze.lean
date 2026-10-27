@@ -723,6 +723,21 @@ carry their evidence as a file pointer.  Sorted by area, newest campaigns first.
 /-- Every hall this programme has walked and closed.  Never delete a row: a re-opened hall
 keeps its row and gains a note (see `hdom` and the tower-separation wall, both REVERSED). -/
 def register : List Hall := [
+  ⟨"Ln2 screen: Euler acceleration and finite kick jets",
+   "Aliases: high-order reciprocal tails, beta-integral acceleration, smooth forcing, finite asymptotic jets. Rewrite log 2 with kicks m!/(n...(n+m)) and a rational alternating-harmonic shift",
+   .parked, .frozen,
+   "PARKED. AcceleratedLogIdentity is an unproved classical input; no word visit bound follows from acceleration alone. Rational coboundary controls match the reciprocal kick to arbitrary finite order and have rational weighted sums. Finite telescoping is proved; all-order positivity and HasSum claims remain explicit inputs. These rational controls do not refute an irrational-or-disjunctive theorem using exact rational-function structure. Missing: a word-dependent estimate retaining the rational shift and its denominator cost. REOPEN ONLY with such an estimate, not a higher acceleration order or the classical identity proof",
+   "LnTwoRoutes/Screen.lean: AcceleratedLogIdentity, FiniteJetRationalControls, binary_coboundary_sum, clone_partial_sum, rational_clone_not_disjunctive, AcceleratedWindowSupply; docs/ln-two-routes/screen.md", "2026-10-27"⟩,
+  ⟨"Ln2 screen: dyadic synthesis of Pade forms",
+   "Aliases: Legendre multiplier lattice, denominator cancellation, integer combinations of logarithmic approximants. Synthesize an exact power-of-two logarithm coefficient with integral constant term",
+   .parked, .frozen,
+   "EXPLORATORY. The n=5,6 pair has a proved modulo-five obstruction even though its logarithm coefficients are coprime. The finite exact-certificate probe rejects most short blocks; wider blocks n..2n-1 have actual dyadic witnesses for n=4,8,16,32. No universal obstruction is asserted. Returned wide witnesses have large weighted error budgets, with no optimality claim. Missing: small coefficients and word-targeted error bounds. REOPEN with cheaper certified witnesses or a coefficient-cost lower bound. Wide-block algebraic feasibility alone is insufficient; PadeCheapDyadic is a weaker close-integer-return target, not disjunctivity",
+   "LnTwoRoutes/Screen.lean: pade_five_six_data, pade_five_six_no_dyadic, pade_dyadic_positive_control, PadeGridProbe, PadeWideBudgetProbe, PadeErrorEnvelope, PadeCheapDyadic, PadeWindowSupply; scripts/ln_two_route_screen.py; docs/ln-two-routes/screen.md", "2026-10-27"⟩,
+  ⟨"Ln2 screen: localized-normal limit transfer",
+   "Aliases: smooth-index logarithms approaching log 2, growing prime cutoff, normal approximants with long shared prefixes. Transfer word visits before the approximation loses digit precision",
+   .parked, .frozen,
+   "PARKED. The elementary LocalizedShadow estimate is stated as an input. Normality of each fixed-cutoff logarithm does not bound first-visit time relative to the cutoff. Proved control: y/2^K remains normal and is at most 2^-K for normal y in [0,1], but the limiting zero is nondisjunctive. Arbitrary rates of convergence therefore do not replace the timing bound. This does not refute a localized-log-specific estimate. REOPEN ONLY with LocalizedWindowSupply or a concrete estimate supplying its coupled cutoff, visit time, and interior margin",
+   "LnTwoRoutes/Screen.lean: normal_tail_hidden, normal_tail_bound, zero_not_disjunctive, LocalizedShadow, LocalizedWindowSupply; GrowingLocalizedLog.lean; docs/ln-two-routes/screen.md", "2026-10-27"⟩,
   ⟨"Pi exploratory: quadratic-twisted dual-radix rigidity",
    "Aliases: two-base BBP compatibility, binary/ternary quadratic norm, adelic Cobham analogy. Couple a rational base-16 description of x to a rational base-9 description of sqrt(3)*x",
    .parked, .frozen,

@@ -1,0 +1,2985 @@
+{
+  "jet_controls": {
+    "orders": [
+      1,
+      10
+    ],
+    "positions": [
+      1,
+      24
+    ],
+    "finite_checks": 240
+  },
+  "pade_wronskians_checked": 165,
+  "feasible_start_indices": {
+    "2": [
+      1,
+      2
+    ],
+    "3": [
+      1,
+      2,
+      4
+    ],
+    "5": [
+      1,
+      2,
+      3,
+      4,
+      6
+    ],
+    "10": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ]
+  },
+  "short_windows": [
+    {
+      "n": 1,
+      "width": 2,
+      "coefficient_generator": "1",
+      "status": "feasible",
+      "dyadic_exponent": 0,
+      "max_coefficient_bits": 3
+    },
+    {
+      "n": 2,
+      "width": 2,
+      "coefficient_generator": "1",
+      "status": "feasible",
+      "dyadic_exponent": 0,
+      "max_coefficient_bits": 5
+    },
+    {
+      "n": 3,
+      "width": 2,
+      "coefficient_generator": "3",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "6"
+    },
+    {
+      "n": 4,
+      "width": 2,
+      "coefficient_generator": "6",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "30"
+    },
+    {
+      "n": 5,
+      "width": 2,
+      "coefficient_generator": "10",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 4,
+      "common_denominator": "30"
+    },
+    {
+      "n": 6,
+      "width": 2,
+      "coefficient_generator": "10",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 1,
+      "common_denominator": "70"
+    },
+    {
+      "n": 7,
+      "width": 2,
+      "coefficient_generator": "35",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 3,
+      "common_denominator": "140"
+    },
+    {
+      "n": 8,
+      "width": 2,
+      "coefficient_generator": "140",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 2,
+      "common_denominator": "1260"
+    },
+    {
+      "n": 9,
+      "width": 2,
+      "coefficient_generator": "252",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "1260"
+    },
+    {
+      "n": 10,
+      "width": 2,
+      "coefficient_generator": "1260",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "13860"
+    },
+    {
+      "n": 11,
+      "width": 2,
+      "coefficient_generator": "2310",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "13860"
+    },
+    {
+      "n": 12,
+      "width": 2,
+      "coefficient_generator": "4620",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "60060"
+    },
+    {
+      "n": 13,
+      "width": 2,
+      "coefficient_generator": "8580",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "60060"
+    },
+    {
+      "n": 14,
+      "width": 2,
+      "coefficient_generator": "12012",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "180180"
+    },
+    {
+      "n": 15,
+      "width": 2,
+      "coefficient_generator": "45045",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "360360"
+    },
+    {
+      "n": 16,
+      "width": 2,
+      "coefficient_generator": "360360",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "6126120"
+    },
+    {
+      "n": 17,
+      "width": 2,
+      "coefficient_generator": "680680",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 1,
+      "common_denominator": "6126120"
+    },
+    {
+      "n": 18,
+      "width": 2,
+      "coefficient_generator": "680680",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 1,
+      "common_denominator": "12932920"
+    },
+    {
+      "n": 19,
+      "width": 2,
+      "coefficient_generator": "1293292",
+      "status": "obstructed",
+      "prime": 7,
+      "slope": 3,
+      "common_denominator": "12932920"
+    },
+    {
+      "n": 20,
+      "width": 2,
+      "coefficient_generator": "369512",
+      "status": "obstructed",
+      "prime": 11,
+      "slope": 9,
+      "common_denominator": "7759752"
+    },
+    {
+      "n": 21,
+      "width": 2,
+      "coefficient_generator": "705432",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "7759752"
+    },
+    {
+      "n": 22,
+      "width": 2,
+      "coefficient_generator": "7759752",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "178474296"
+    },
+    {
+      "n": 23,
+      "width": 2,
+      "coefficient_generator": "14872858",
+      "status": "obstructed",
+      "prime": 7,
+      "slope": 0,
+      "common_denominator": "178474296"
+    },
+    {
+      "n": 24,
+      "width": 2,
+      "coefficient_generator": "59491432",
+      "status": "obstructed",
+      "prime": 7,
+      "slope": 0,
+      "common_denominator": "1487285800"
+    },
+    {
+      "n": 25,
+      "width": 2,
+      "coefficient_generator": "114406600",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 2,
+      "common_denominator": "1487285800"
+    },
+    {
+      "n": 26,
+      "width": 2,
+      "coefficient_generator": "1487285800",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 1,
+      "common_denominator": "40156716600"
+    },
+    {
+      "n": 27,
+      "width": 2,
+      "coefficient_generator": "2868336900",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "40156716600"
+    },
+    {
+      "n": 28,
+      "width": 2,
+      "coefficient_generator": "40156716600",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "1164544781400"
+    },
+    {
+      "n": 29,
+      "width": 2,
+      "coefficient_generator": "77636318760",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "1164544781400"
+    },
+    {
+      "n": 30,
+      "width": 2,
+      "coefficient_generator": "388181593800",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "12033629407800"
+    },
+    {
+      "n": 31,
+      "width": 2,
+      "coefficient_generator": "1504203675975",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "24067258815600"
+    },
+    {
+      "n": 32,
+      "width": 2,
+      "coefficient_generator": "2187932619600",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "72201776446800"
+    },
+    {
+      "n": 33,
+      "width": 2,
+      "coefficient_generator": "4247163320400",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "72201776446800"
+    },
+    {
+      "n": 34,
+      "width": 2,
+      "coefficient_generator": "2062907898480",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "72201776446800"
+    },
+    {
+      "n": 35,
+      "width": 2,
+      "coefficient_generator": "4011209802600",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "72201776446800"
+    },
+    {
+      "n": 36,
+      "width": 2,
+      "coefficient_generator": "8022419605200",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "296829525392400"
+    },
+    {
+      "n": 37,
+      "width": 2,
+      "coefficient_generator": "15622606599600",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "296829525392400"
+    },
+    {
+      "n": 38,
+      "width": 2,
+      "coefficient_generator": "22833040414800",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "890488576177200"
+    },
+    {
+      "n": 39,
+      "width": 2,
+      "coefficient_generator": "44524428808860",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "890488576177200"
+    },
+    {
+      "n": 40,
+      "width": 2,
+      "coefficient_generator": "890488576177200",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "36510031623265200"
+    },
+    {
+      "n": 41,
+      "width": 2,
+      "coefficient_generator": "1738572934441200",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "36510031623265200"
+    },
+    {
+      "n": 42,
+      "width": 2,
+      "coefficient_generator": "1738572934441200",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "74758636180971600"
+    },
+    {
+      "n": 43,
+      "width": 2,
+      "coefficient_generator": "3398119826407800",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "74758636180971600"
+    },
+    {
+      "n": 44,
+      "width": 2,
+      "coefficient_generator": "14951727236194320",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "672827725628744400"
+    },
+    {
+      "n": 45,
+      "width": 2,
+      "coefficient_generator": "29253379375162800",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "672827725628744400"
+    },
+    {
+      "n": 46,
+      "width": 2,
+      "coefficient_generator": "672827725628744400",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "31622903104550986800"
+    },
+    {
+      "n": 47,
+      "width": 2,
+      "coefficient_generator": "1317620962689624450",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "31622903104550986800"
+    },
+    {
+      "n": 48,
+      "width": 2,
+      "coefficient_generator": "10540967701516995600",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "516507417374332784400"
+    },
+    {
+      "n": 49,
+      "width": 2,
+      "coefficient_generator": "20660296694973311376",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "516507417374332784400"
+    },
+    {
+      "n": 50,
+      "width": 2,
+      "coefficient_generator": "30382789257313693200",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "1549522252122998353200"
+    },
+    {
+      "n": 51,
+      "width": 2,
+      "coefficient_generator": "59597009697038398200",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "1549522252122998353200"
+    },
+    {
+      "n": 52,
+      "width": 2,
+      "coefficient_generator": "1549522252122998353200",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "82124679362518912719600"
+    },
+    {
+      "n": 53,
+      "width": 2,
+      "coefficient_generator": "3041654791204404174800",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 3,
+      "common_denominator": "82124679362518912719600"
+    },
+    {
+      "n": 54,
+      "width": 2,
+      "coefficient_generator": "55302814385534621360",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 1,
+      "common_denominator": "3041654791204404174800"
+    },
+    {
+      "n": 55,
+      "width": 2,
+      "coefficient_generator": "108630528257300149100",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 1,
+      "common_denominator": "3041654791204404174800"
+    },
+    {
+      "n": 56,
+      "width": 2,
+      "coefficient_generator": "160087094273916009200",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 2,
+      "common_denominator": "9124964373613212524400"
+    },
+    {
+      "n": 57,
+      "width": 2,
+      "coefficient_generator": "314653943917696983600",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "9124964373613212524400"
+    },
+    {
+      "n": 58,
+      "width": 2,
+      "coefficient_generator": "9124964373613212524400",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "538372898043179538939600"
+    },
+    {
+      "n": 59,
+      "width": 2,
+      "coefficient_generator": "17945763268105984631320",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 3,
+      "common_denominator": "538372898043179538939600"
+    },
+    {
+      "n": 60,
+      "width": 2,
+      "coefficient_generator": "179457632681059846313200",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 4,
+      "common_denominator": "10946915593544650625105200"
+    },
+    {
+      "n": 61,
+      "width": 2,
+      "coefficient_generator": "353126309469182278229200",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 4,
+      "common_denominator": "10946915593544650625105200"
+    },
+    {
+      "n": 62,
+      "width": 2,
+      "coefficient_generator": "1563845084792092946443600",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 1,
+      "common_denominator": "98522240341901855625946800"
+    },
+    {
+      "n": 63,
+      "width": 2,
+      "coefficient_generator": "6157640021368865976621675",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "197044480683803711251893600"
+    },
+    {
+      "n": 64,
+      "width": 2,
+      "coefficient_generator": "3031453548981595557721440",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "197044480683803711251893600"
+    },
+    {
+      "n": 65,
+      "width": 2,
+      "coefficient_generator": "5971044869206173068239200",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "197044480683803711251893600"
+    },
+    {
+      "n": 66,
+      "width": 2,
+      "coefficient_generator": "65681493561267903750631200",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "4400660068604949551292290400"
+    },
+    {
+      "n": 67,
+      "width": 2,
+      "coefficient_generator": "129431178488380869155655600",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "4400660068604949551292290400"
+    },
+    {
+      "n": 68,
+      "width": 2,
+      "coefficient_generator": "191333046461084763099664800",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "13201980205814848653876871200"
+    },
+    {
+      "n": 69,
+      "width": 2,
+      "coefficient_generator": "377199434451852818682196320",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "13201980205814848653876871200"
+    },
+    {
+      "n": 70,
+      "width": 2,
+      "coefficient_generator": "1885997172259264093410981600",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "133905799230407750632179693600"
+    },
+    {
+      "n": 71,
+      "width": 2,
+      "coefficient_generator": "3719605534177993073116102600",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 3,
+      "common_denominator": "133905799230407750632179693600"
+    },
+    {
+      "n": 72,
+      "width": 2,
+      "coefficient_generator": "14878422136711972292464410400",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 4,
+      "common_denominator": "1086124815979973977349901959200"
+    },
+    {
+      "n": 73,
+      "width": 2,
+      "coefficient_generator": "29354724756215512901348701600",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 4,
+      "common_denominator": "1086124815979973977349901959200"
+    },
+    {
+      "n": 74,
+      "width": 2,
+      "coefficient_generator": "43444992639198959093996078368",
+      "status": "obstructed",
+      "prime": 7,
+      "slope": 0,
+      "common_denominator": "3258374447939921932049705877600"
+    },
+    {
+      "n": 75,
+      "width": 2,
+      "coefficient_generator": "85746695998418998211834365200",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "3258374447939921932049705877600"
+    },
+    {
+      "n": 76,
+      "width": 2,
+      "coefficient_generator": "296215858903629266549973261600",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "22808621135579453524347941143200"
+    },
+    {
+      "n": 77,
+      "width": 2,
+      "coefficient_generator": "584836439373832141649947208800",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 3,
+      "common_denominator": "22808621135579453524347941143200"
+    },
+    {
+      "n": 78,
+      "width": 2,
+      "coefficient_generator": "7602873711859817841449313714400",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 1,
+      "common_denominator": "600627023236925609474495783437600"
+    },
+    {
+      "n": 79,
+      "width": 2,
+      "coefficient_generator": "15015675580923140236862394585940",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 1,
+      "common_denominator": "600627023236925609474495783437600"
+    },
+    {
+      "n": 1,
+      "width": 3,
+      "coefficient_generator": "1",
+      "status": "feasible",
+      "dyadic_exponent": 0,
+      "max_coefficient_bits": 4
+    },
+    {
+      "n": 2,
+      "width": 3,
+      "coefficient_generator": "1",
+      "status": "feasible",
+      "dyadic_exponent": 0,
+      "max_coefficient_bits": 7
+    },
+    {
+      "n": 3,
+      "width": 3,
+      "coefficient_generator": "3",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "30"
+    },
+    {
+      "n": 4,
+      "width": 3,
+      "coefficient_generator": "2",
+      "status": "feasible",
+      "dyadic_exponent": 1,
+      "max_coefficient_bits": 13
+    },
+    {
+      "n": 5,
+      "width": 3,
+      "coefficient_generator": "10",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 2,
+      "common_denominator": "210"
+    },
+    {
+      "n": 6,
+      "width": 3,
+      "coefficient_generator": "5",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 3,
+      "common_denominator": "140"
+    },
+    {
+      "n": 7,
+      "width": 3,
+      "coefficient_generator": "35",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 2,
+      "common_denominator": "1260"
+    },
+    {
+      "n": 8,
+      "width": 3,
+      "coefficient_generator": "28",
+      "status": "obstructed",
+      "prime": 7,
+      "slope": 1,
+      "common_denominator": "1260"
+    },
+    {
+      "n": 9,
+      "width": 3,
+      "coefficient_generator": "252",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "13860"
+    },
+    {
+      "n": 10,
+      "width": 3,
+      "coefficient_generator": "210",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "13860"
+    },
+    {
+      "n": 11,
+      "width": 3,
+      "coefficient_generator": "2310",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "180180"
+    },
+    {
+      "n": 12,
+      "width": 3,
+      "coefficient_generator": "660",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "60060"
+    },
+    {
+      "n": 13,
+      "width": 3,
+      "coefficient_generator": "1716",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "180180"
+    },
+    {
+      "n": 14,
+      "width": 3,
+      "coefficient_generator": "3003",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "360360"
+    },
+    {
+      "n": 15,
+      "width": 3,
+      "coefficient_generator": "45045",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "6126120"
+    },
+    {
+      "n": 16,
+      "width": 3,
+      "coefficient_generator": "40040",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 1,
+      "common_denominator": "6126120"
+    },
+    {
+      "n": 17,
+      "width": 3,
+      "coefficient_generator": "680680",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 4,
+      "common_denominator": "116396280"
+    },
+    {
+      "n": 18,
+      "width": 3,
+      "coefficient_generator": "68068",
+      "status": "obstructed",
+      "prime": 7,
+      "slope": 3,
+      "common_denominator": "12932920"
+    },
+    {
+      "n": 19,
+      "width": 3,
+      "coefficient_generator": "184756",
+      "status": "obstructed",
+      "prime": 11,
+      "slope": 4,
+      "common_denominator": "38798760"
+    },
+    {
+      "n": 20,
+      "width": 3,
+      "coefficient_generator": "33592",
+      "status": "obstructed",
+      "prime": 13,
+      "slope": 11,
+      "common_denominator": "7759752"
+    },
+    {
+      "n": 21,
+      "width": 3,
+      "coefficient_generator": "705432",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "178474296"
+    },
+    {
+      "n": 22,
+      "width": 3,
+      "coefficient_generator": "646646",
+      "status": "obstructed",
+      "prime": 7,
+      "slope": 0,
+      "common_denominator": "178474296"
+    },
+    {
+      "n": 23,
+      "width": 3,
+      "coefficient_generator": "14872858",
+      "status": "obstructed",
+      "prime": 7,
+      "slope": 0,
+      "common_denominator": "4461857400"
+    },
+    {
+      "n": 24,
+      "width": 3,
+      "coefficient_generator": "4576264",
+      "status": "obstructed",
+      "prime": 7,
+      "slope": 0,
+      "common_denominator": "1487285800"
+    },
+    {
+      "n": 25,
+      "width": 3,
+      "coefficient_generator": "114406600",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 1,
+      "common_denominator": "40156716600"
+    },
+    {
+      "n": 26,
+      "width": 3,
+      "coefficient_generator": "106234700",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 1,
+      "common_denominator": "40156716600"
+    },
+    {
+      "n": 27,
+      "width": 3,
+      "coefficient_generator": "2868336900",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "1164544781400"
+    },
+    {
+      "n": 28,
+      "width": 3,
+      "coefficient_generator": "2677114440",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "1164544781400"
+    },
+    {
+      "n": 29,
+      "width": 3,
+      "coefficient_generator": "77636318760",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "36100888223400"
+    },
+    {
+      "n": 30,
+      "width": 3,
+      "coefficient_generator": "48522699225",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "24067258815600"
+    },
+    {
+      "n": 31,
+      "width": 3,
+      "coefficient_generator": "136745788725",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "72201776446800"
+    },
+    {
+      "n": 32,
+      "width": 3,
+      "coefficient_generator": "128701918800",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "72201776446800"
+    },
+    {
+      "n": 33,
+      "width": 3,
+      "coefficient_generator": "121347523440",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "72201776446800"
+    },
+    {
+      "n": 34,
+      "width": 3,
+      "coefficient_generator": "114605994360",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "72201776446800"
+    },
+    {
+      "n": 35,
+      "width": 3,
+      "coefficient_generator": "4011209802600",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "2671465728531600"
+    },
+    {
+      "n": 36,
+      "width": 3,
+      "coefficient_generator": "422232610800",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "296829525392400"
+    },
+    {
+      "n": 37,
+      "width": 3,
+      "coefficient_generator": "1201738969200",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "890488576177200"
+    },
+    {
+      "n": 38,
+      "width": 3,
+      "coefficient_generator": "1141652020740",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "890488576177200"
+    },
+    {
+      "n": 39,
+      "width": 3,
+      "coefficient_generator": "44524428808860",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "36510031623265200"
+    },
+    {
+      "n": 40,
+      "width": 3,
+      "coefficient_generator": "42404217913200",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "36510031623265200"
+    },
+    {
+      "n": 41,
+      "width": 3,
+      "coefficient_generator": "1738572934441200",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "1569931359800403600"
+    },
+    {
+      "n": 42,
+      "width": 3,
+      "coefficient_generator": "79026042474600",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "74758636180971600"
+    },
+    {
+      "n": 43,
+      "width": 3,
+      "coefficient_generator": "679623965281560",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "672827725628744400"
+    },
+    {
+      "n": 44,
+      "width": 3,
+      "coefficient_generator": "650075097225840",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "672827725628744400"
+    },
+    {
+      "n": 45,
+      "width": 3,
+      "coefficient_generator": "29253379375162800",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "31622903104550986800"
+    },
+    {
+      "n": 46,
+      "width": 3,
+      "coefficient_generator": "28034488567864350",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "31622903104550986800"
+    },
+    {
+      "n": 47,
+      "width": 3,
+      "coefficient_generator": "1317620962689624450",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "1549522252122998353200"
+    },
+    {
+      "n": 48,
+      "width": 3,
+      "coefficient_generator": "421638708060679824",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "516507417374332784400"
+    },
+    {
+      "n": 49,
+      "width": 3,
+      "coefficient_generator": "1215311570292547728",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "1549522252122998353200"
+    },
+    {
+      "n": 50,
+      "width": 3,
+      "coefficient_generator": "1168568817588988200",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "1549522252122998353200"
+    },
+    {
+      "n": 51,
+      "width": 3,
+      "coefficient_generator": "59597009697038398200",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "82124679362518912719600"
+    },
+    {
+      "n": 52,
+      "width": 3,
+      "coefficient_generator": "57389713041592531600",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 3,
+      "common_denominator": "82124679362518912719600"
+    },
+    {
+      "n": 53,
+      "width": 3,
+      "coefficient_generator": "55302814385534621360",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 3,
+      "common_denominator": "82124679362518912719600"
+    },
+    {
+      "n": 54,
+      "width": 3,
+      "coefficient_generator": "1975100513769093620",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 1,
+      "common_denominator": "3041654791204404174800"
+    },
+    {
+      "n": 55,
+      "width": 3,
+      "coefficient_generator": "5717396224068428900",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 2,
+      "common_denominator": "9124964373613212524400"
+    },
+    {
+      "n": 56,
+      "width": 3,
+      "coefficient_generator": "5520244630135034800",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 2,
+      "common_denominator": "9124964373613212524400"
+    },
+    {
+      "n": 57,
+      "width": 3,
+      "coefficient_generator": "314653943917696983600",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "538372898043179538939600"
+    },
+    {
+      "n": 58,
+      "width": 3,
+      "coefficient_generator": "304165479120440417480",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 3,
+      "common_denominator": "538372898043179538939600"
+    },
+    {
+      "n": 59,
+      "width": 3,
+      "coefficient_generator": "17945763268105984631320",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 3,
+      "common_denominator": "32840746780633951875315600"
+    },
+    {
+      "n": 60,
+      "width": 3,
+      "coefficient_generator": "5788955892937414397200",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 4,
+      "common_denominator": "10946915593544650625105200"
+    },
+    {
+      "n": 61,
+      "width": 3,
+      "coefficient_generator": "50446615638454611175600",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 1,
+      "common_denominator": "98522240341901855625946800"
+    },
+    {
+      "n": 62,
+      "width": 3,
+      "coefficient_generator": "97740317799505809152725",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 3,
+      "common_denominator": "197044480683803711251893600"
+    },
+    {
+      "n": 63,
+      "width": 3,
+      "coefficient_generator": "94732923405674861178795",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "197044480683803711251893600"
+    },
+    {
+      "n": 64,
+      "width": 3,
+      "coefficient_generator": "91862228757018047203680",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "197044480683803711251893600"
+    },
+    {
+      "n": 65,
+      "width": 3,
+      "coefficient_generator": "5971044869206173068239200",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "13201980205814848653876871200"
+    },
+    {
+      "n": 66,
+      "width": 3,
+      "coefficient_generator": "1931808634154938345606800",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "4400660068604949551292290400"
+    },
+    {
+      "n": 67,
+      "width": 3,
+      "coefficient_generator": "5627442542973081267637200",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "13201980205814848653876871200"
+    },
+    {
+      "n": 68,
+      "width": 3,
+      "coefficient_generator": "5466658470316707517133280",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "13201980205814848653876871200"
+    },
+    {
+      "n": 69,
+      "width": 3,
+      "coefficient_generator": "377199434451852818682196320",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "937340594612854254425257855200"
+    },
+    {
+      "n": 70,
+      "width": 3,
+      "coefficient_generator": "52388810340535113705860600",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 3,
+      "common_denominator": "133905799230407750632179693600"
+    },
+    {
+      "n": 71,
+      "width": 3,
+      "coefficient_generator": "3719605534177993073116102600",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 1,
+      "common_denominator": "9775123343819765796149117632800"
+    },
+    {
+      "n": 72,
+      "width": 3,
+      "coefficient_generator": "402119517208431683580119200",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 4,
+      "common_denominator": "1086124815979973977349901959200"
+    },
+    {
+      "n": 73,
+      "width": 3,
+      "coefficient_generator": "1174188990248620516053948064",
+      "status": "obstructed",
+      "prime": 7,
+      "slope": 0,
+      "common_denominator": "3258374447939921932049705877600"
+    },
+    {
+      "n": 74,
+      "width": 3,
+      "coefficient_generator": "1143289279978919976157791536",
+      "status": "obstructed",
+      "prime": 7,
+      "slope": 0,
+      "common_denominator": "3258374447939921932049705877600"
+    },
+    {
+      "n": 75,
+      "width": 3,
+      "coefficient_generator": "7795154181674454382894033200",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "22808621135579453524347941143200"
+    },
+    {
+      "n": 76,
+      "width": 3,
+      "coefficient_generator": "7595278433426391449999314400",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 3,
+      "common_denominator": "22808621135579453524347941143200"
+    },
+    {
+      "n": 77,
+      "width": 3,
+      "coefficient_generator": "584836439373832141649947208800",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 2,
+      "common_denominator": "1801881069710776828423487350312800"
+    },
+    {
+      "n": 78,
+      "width": 3,
+      "coefficient_generator": "190071842796495446036232842860",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 1,
+      "common_denominator": "600627023236925609474495783437600"
+    },
+    {
+      "n": 79,
+      "width": 3,
+      "coefficient_generator": "15015675580923140236862394585940",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 1,
+      "common_denominator": "48650788882190974367434158458445600"
+    },
+    {
+      "n": 1,
+      "width": 5,
+      "coefficient_generator": "1",
+      "status": "feasible",
+      "dyadic_exponent": 0,
+      "max_coefficient_bits": 4
+    },
+    {
+      "n": 2,
+      "width": 5,
+      "coefficient_generator": "1",
+      "status": "feasible",
+      "dyadic_exponent": 0,
+      "max_coefficient_bits": 20
+    },
+    {
+      "n": 3,
+      "width": 5,
+      "coefficient_generator": "1",
+      "status": "feasible",
+      "dyadic_exponent": 0,
+      "max_coefficient_bits": 45
+    },
+    {
+      "n": 4,
+      "width": 5,
+      "coefficient_generator": "1",
+      "status": "feasible",
+      "dyadic_exponent": 0,
+      "max_coefficient_bits": 35
+    },
+    {
+      "n": 5,
+      "width": 5,
+      "coefficient_generator": "5",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 2,
+      "common_denominator": "1260"
+    },
+    {
+      "n": 6,
+      "width": 5,
+      "coefficient_generator": "1",
+      "status": "feasible",
+      "dyadic_exponent": 0,
+      "max_coefficient_bits": 120
+    },
+    {
+      "n": 7,
+      "width": 5,
+      "coefficient_generator": "7",
+      "status": "obstructed",
+      "prime": 7,
+      "slope": 2,
+      "common_denominator": "13860"
+    },
+    {
+      "n": 8,
+      "width": 5,
+      "coefficient_generator": "14",
+      "status": "obstructed",
+      "prime": 7,
+      "slope": 2,
+      "common_denominator": "13860"
+    },
+    {
+      "n": 9,
+      "width": 5,
+      "coefficient_generator": "42",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "180180"
+    },
+    {
+      "n": 10,
+      "width": 5,
+      "coefficient_generator": "30",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "180180"
+    },
+    {
+      "n": 11,
+      "width": 5,
+      "coefficient_generator": "66",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "180180"
+    },
+    {
+      "n": 12,
+      "width": 5,
+      "coefficient_generator": "33",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "360360"
+    },
+    {
+      "n": 13,
+      "width": 5,
+      "coefficient_generator": "429",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "6126120"
+    },
+    {
+      "n": 14,
+      "width": 5,
+      "coefficient_generator": "1001",
+      "status": "obstructed",
+      "prime": 7,
+      "slope": 4,
+      "common_denominator": "6126120"
+    },
+    {
+      "n": 15,
+      "width": 5,
+      "coefficient_generator": "5005",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 4,
+      "common_denominator": "116396280"
+    },
+    {
+      "n": 16,
+      "width": 5,
+      "coefficient_generator": "4004",
+      "status": "obstructed",
+      "prime": 7,
+      "slope": 5,
+      "common_denominator": "116396280"
+    },
+    {
+      "n": 17,
+      "width": 5,
+      "coefficient_generator": "9724",
+      "status": "obstructed",
+      "prime": 11,
+      "slope": 5,
+      "common_denominator": "116396280"
+    },
+    {
+      "n": 18,
+      "width": 5,
+      "coefficient_generator": "884",
+      "status": "obstructed",
+      "prime": 13,
+      "slope": 10,
+      "common_denominator": "38798760"
+    },
+    {
+      "n": 19,
+      "width": 5,
+      "coefficient_generator": "16796",
+      "status": "obstructed",
+      "prime": 13,
+      "slope": 1,
+      "common_denominator": "892371480"
+    },
+    {
+      "n": 20,
+      "width": 5,
+      "coefficient_generator": "8398",
+      "status": "obstructed",
+      "prime": 13,
+      "slope": 5,
+      "common_denominator": "178474296"
+    },
+    {
+      "n": 21,
+      "width": 5,
+      "coefficient_generator": "58786",
+      "status": "obstructed",
+      "prime": 7,
+      "slope": 0,
+      "common_denominator": "4461857400"
+    },
+    {
+      "n": 22,
+      "width": 5,
+      "coefficient_generator": "49742",
+      "status": "obstructed",
+      "prime": 7,
+      "slope": 0,
+      "common_denominator": "4461857400"
+    },
+    {
+      "n": 23,
+      "width": 5,
+      "coefficient_generator": "1144066",
+      "status": "obstructed",
+      "prime": 7,
+      "slope": 0,
+      "common_denominator": "40156716600"
+    },
+    {
+      "n": 24,
+      "width": 5,
+      "coefficient_generator": "326876",
+      "status": "obstructed",
+      "prime": 11,
+      "slope": 1,
+      "common_denominator": "40156716600"
+    },
+    {
+      "n": 25,
+      "width": 5,
+      "coefficient_generator": "8171900",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 4,
+      "common_denominator": "1164544781400"
+    },
+    {
+      "n": 26,
+      "width": 5,
+      "coefficient_generator": "21246940",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 4,
+      "common_denominator": "1164544781400"
+    },
+    {
+      "n": 27,
+      "width": 5,
+      "coefficient_generator": "191222460",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "36100888223400"
+    },
+    {
+      "n": 28,
+      "width": 5,
+      "coefficient_generator": "334639305",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "72201776446800"
+    },
+    {
+      "n": 29,
+      "width": 5,
+      "coefficient_generator": "882230895",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "72201776446800"
+    },
+    {
+      "n": 30,
+      "width": 5,
+      "coefficient_generator": "259479675",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "72201776446800"
+    },
+    {
+      "n": 31,
+      "width": 5,
+      "coefficient_generator": "229824855",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "72201776446800"
+    },
+    {
+      "n": 32,
+      "width": 5,
+      "coefficient_generator": "612866280",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "72201776446800"
+    },
+    {
+      "n": 33,
+      "width": 5,
+      "coefficient_generator": "6741529080",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "2671465728531600"
+    },
+    {
+      "n": 34,
+      "width": 5,
+      "coefficient_generator": "6031894440",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "2671465728531600"
+    },
+    {
+      "n": 35,
+      "width": 5,
+      "coefficient_generator": "16239715800",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "2671465728531600"
+    },
+    {
+      "n": 36,
+      "width": 5,
+      "coefficient_generator": "1623971580",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "890488576177200"
+    },
+    {
+      "n": 37,
+      "width": 5,
+      "coefficient_generator": "60086948460",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "36510031623265200"
+    },
+    {
+      "n": 38,
+      "width": 5,
+      "coefficient_generator": "163093145820",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "36510031623265200"
+    },
+    {
+      "n": 39,
+      "width": 5,
+      "coefficient_generator": "2120210895660",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "1569931359800403600"
+    },
+    {
+      "n": 40,
+      "width": 5,
+      "coefficient_generator": "1927464450600",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "1569931359800403600"
+    },
+    {
+      "n": 41,
+      "width": 5,
+      "coefficient_generator": "15805208494920",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "4709794079401210800"
+    },
+    {
+      "n": 42,
+      "width": 5,
+      "coefficient_generator": "687182978040",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "672827725628744400"
+    },
+    {
+      "n": 43,
+      "width": 5,
+      "coefficient_generator": "29548868055720",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "31622903104550986800"
+    },
+    {
+      "n": 44,
+      "width": 5,
+      "coefficient_generator": "81259387153230",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "31622903104550986800"
+    },
+    {
+      "n": 45,
+      "width": 5,
+      "coefficient_generator": "1218890807298450",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "1549522252122998353200"
+    },
+    {
+      "n": 46,
+      "width": 5,
+      "coefficient_generator": "1121379542714574",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "1549522252122998353200"
+    },
+    {
+      "n": 47,
+      "width": 5,
+      "coefficient_generator": "3100284618093234",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "1549522252122998353200"
+    },
+    {
+      "n": 48,
+      "width": 5,
+      "coefficient_generator": "953933728644072",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "1549522252122998353200"
+    },
+    {
+      "n": 49,
+      "width": 5,
+      "coefficient_generator": "46742752703559528",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "82124679362518912719600"
+    },
+    {
+      "n": 50,
+      "width": 5,
+      "coefficient_generator": "129840979732109800",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 3,
+      "common_denominator": "82124679362518912719600"
+    },
+    {
+      "n": 51,
+      "width": 5,
+      "coefficient_generator": "40132666462652120",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 3,
+      "common_denominator": "82124679362518912719600"
+    },
+    {
+      "n": 52,
+      "width": 5,
+      "coefficient_generator": "37266047429605540",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 3,
+      "common_denominator": "82124679362518912719600"
+    },
+    {
+      "n": 53,
+      "width": 5,
+      "coefficient_generator": "103952658619425980",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 3,
+      "common_denominator": "82124679362518912719600"
+    },
+    {
+      "n": 54,
+      "width": 5,
+      "coefficient_generator": "3584574435152620",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 2,
+      "common_denominator": "9124964373613212524400"
+    },
+    {
+      "n": 55,
+      "width": 5,
+      "coefficient_generator": "197151593933394100",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 3,
+      "common_denominator": "538372898043179538939600"
+    },
+    {
+      "n": 56,
+      "width": 5,
+      "coefficient_generator": "552024463013503480",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 3,
+      "common_denominator": "538372898043179538939600"
+    },
+    {
+      "n": 57,
+      "width": 5,
+      "coefficient_generator": "10488464797256566120",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 3,
+      "common_denominator": "32840746780633951875315600"
+    },
+    {
+      "n": 58,
+      "width": 5,
+      "coefficient_generator": "9811789649046465080",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 3,
+      "common_denominator": "32840746780633951875315600"
+    },
+    {
+      "n": 59,
+      "width": 5,
+      "coefficient_generator": "82699369899105919960",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 1,
+      "common_denominator": "98522240341901855625946800"
+    },
+    {
+      "n": 60,
+      "width": 5,
+      "coefficient_generator": "51687106186941199975",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 3,
+      "common_denominator": "197044480683803711251893600"
+    },
+    {
+      "n": 61,
+      "width": 5,
+      "coefficient_generator": "48506361190821741515",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 3,
+      "common_denominator": "197044480683803711251893600"
+    },
+    {
+      "n": 62,
+      "width": 5,
+      "coefficient_generator": "136699745174133998815",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 3,
+      "common_denominator": "197044480683803711251893600"
+    },
+    {
+      "n": 63,
+      "width": 5,
+      "coefficient_generator": "2870694648656813975115",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "13201980205814848653876871200"
+    },
+    {
+      "n": 64,
+      "width": 5,
+      "coefficient_generator": "2701830257559354329520",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "13201980205814848653876871200"
+    },
+    {
+      "n": 65,
+      "width": 5,
+      "coefficient_generator": "7635607249624262235600",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "13201980205814848653876871200"
+    },
+    {
+      "n": 66,
+      "width": 5,
+      "coefficient_generator": "2399762278453339559760",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "13201980205814848653876871200"
+    },
+    {
+      "n": 67,
+      "width": 5,
+      "coefficient_generator": "160784072656373750503920",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "937340594612854254425257855200"
+    },
+    {
+      "n": 68,
+      "width": 5,
+      "coefficient_generator": "455554872526392293094440",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 4,
+      "common_denominator": "937340594612854254425257855200"
+    },
+    {
+      "n": 69,
+      "width": 5,
+      "coefficient_generator": "10477762068107022741172120",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 3,
+      "common_denominator": "68425863406738360573043823429600"
+    },
+    {
+      "n": 70,
+      "width": 5,
+      "coefficient_generator": "1415913792987435505563800",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 1,
+      "common_denominator": "9775123343819765796149117632800"
+    },
+    {
+      "n": 71,
+      "width": 5,
+      "coefficient_generator": "4021195172084316835801192",
+      "status": "obstructed",
+      "prime": 7,
+      "slope": 0,
+      "common_denominator": "9775123343819765796149117632800"
+    },
+    {
+      "n": 72,
+      "width": 5,
+      "coefficient_generator": "423283702324664930084336",
+      "status": "obstructed",
+      "prime": 7,
+      "slope": 0,
+      "common_denominator": "3258374447939921932049705877600"
+    },
+    {
+      "n": 73,
+      "width": 5,
+      "coefficient_generator": "2809064569972776354196048",
+      "status": "obstructed",
+      "prime": 7,
+      "slope": 6,
+      "common_denominator": "22808621135579453524347941143200"
+    },
+    {
+      "n": 74,
+      "width": 5,
+      "coefficient_generator": "7995029929922517315788752",
+      "status": "obstructed",
+      "prime": 7,
+      "slope": 6,
+      "common_denominator": "22808621135579453524347941143200"
+    },
+    {
+      "n": 75,
+      "width": 5,
+      "coefficient_generator": "199875748248062932894718800",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 2,
+      "common_denominator": "1801881069710776828423487350312800"
+    },
+    {
+      "n": 76,
+      "width": 5,
+      "coefficient_generator": "189881960835659786249982860",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 2,
+      "common_denominator": "1801881069710776828423487350312800"
+    },
+    {
+      "n": 77,
+      "width": 5,
+      "coefficient_generator": "14620910984345803541248680220",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 1,
+      "common_denominator": "48650788882190974367434158458445600"
+    },
+    {
+      "n": 78,
+      "width": 5,
+      "coefficient_generator": "4635898604792571854542264460",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 1,
+      "common_denominator": "48650788882190974367434158458445600"
+    },
+    {
+      "n": 79,
+      "width": 5,
+      "coefficient_generator": "366235989778613176508838892340",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 2,
+      "common_denominator": "4038015477221850872497035152050984800"
+    },
+    {
+      "n": 1,
+      "width": 10,
+      "coefficient_generator": "1",
+      "status": "feasible",
+      "dyadic_exponent": 0,
+      "max_coefficient_bits": 4
+    },
+    {
+      "n": 2,
+      "width": 10,
+      "coefficient_generator": "1",
+      "status": "feasible",
+      "dyadic_exponent": 0,
+      "max_coefficient_bits": 139
+    },
+    {
+      "n": 3,
+      "width": 10,
+      "coefficient_generator": "1",
+      "status": "feasible",
+      "dyadic_exponent": 0,
+      "max_coefficient_bits": 140
+    },
+    {
+      "n": 4,
+      "width": 10,
+      "coefficient_generator": "1",
+      "status": "feasible",
+      "dyadic_exponent": 0,
+      "max_coefficient_bits": 338
+    },
+    {
+      "n": 5,
+      "width": 10,
+      "coefficient_generator": "1",
+      "status": "feasible",
+      "dyadic_exponent": 0,
+      "max_coefficient_bits": 151
+    },
+    {
+      "n": 6,
+      "width": 10,
+      "coefficient_generator": "1",
+      "status": "feasible",
+      "dyadic_exponent": 0,
+      "max_coefficient_bits": 127
+    },
+    {
+      "n": 7,
+      "width": 10,
+      "coefficient_generator": "1",
+      "status": "feasible",
+      "dyadic_exponent": 0,
+      "max_coefficient_bits": 155
+    },
+    {
+      "n": 8,
+      "width": 10,
+      "coefficient_generator": "1",
+      "status": "feasible",
+      "dyadic_exponent": 0,
+      "max_coefficient_bits": 182
+    },
+    {
+      "n": 9,
+      "width": 10,
+      "coefficient_generator": "1",
+      "status": "feasible",
+      "dyadic_exponent": 0,
+      "max_coefficient_bits": 694
+    },
+    {
+      "n": 10,
+      "width": 10,
+      "coefficient_generator": "1",
+      "status": "feasible",
+      "dyadic_exponent": 0,
+      "max_coefficient_bits": 521
+    },
+    {
+      "n": 11,
+      "width": 10,
+      "coefficient_generator": "11",
+      "status": "obstructed",
+      "prime": 11,
+      "slope": 5,
+      "common_denominator": "116396280"
+    },
+    {
+      "n": 12,
+      "width": 10,
+      "coefficient_generator": "11",
+      "status": "obstructed",
+      "prime": 11,
+      "slope": 5,
+      "common_denominator": "116396280"
+    },
+    {
+      "n": 13,
+      "width": 10,
+      "coefficient_generator": "13",
+      "status": "obstructed",
+      "prime": 13,
+      "slope": 12,
+      "common_denominator": "116396280"
+    },
+    {
+      "n": 14,
+      "width": 10,
+      "coefficient_generator": "13",
+      "status": "obstructed",
+      "prime": 13,
+      "slope": 9,
+      "common_denominator": "2677114440"
+    },
+    {
+      "n": 15,
+      "width": 10,
+      "coefficient_generator": "13",
+      "status": "obstructed",
+      "prime": 13,
+      "slope": 9,
+      "common_denominator": "2677114440"
+    },
+    {
+      "n": 16,
+      "width": 10,
+      "coefficient_generator": "26",
+      "status": "obstructed",
+      "prime": 13,
+      "slope": 7,
+      "common_denominator": "13385572200"
+    },
+    {
+      "n": 17,
+      "width": 10,
+      "coefficient_generator": "34",
+      "status": "obstructed",
+      "prime": 17,
+      "slope": 8,
+      "common_denominator": "13385572200"
+    },
+    {
+      "n": 18,
+      "width": 10,
+      "coefficient_generator": "34",
+      "status": "obstructed",
+      "prime": 17,
+      "slope": 14,
+      "common_denominator": "40156716600"
+    },
+    {
+      "n": 19,
+      "width": 10,
+      "coefficient_generator": "646",
+      "status": "obstructed",
+      "prime": 17,
+      "slope": 14,
+      "common_denominator": "40156716600"
+    },
+    {
+      "n": 20,
+      "width": 10,
+      "coefficient_generator": "646",
+      "status": "obstructed",
+      "prime": 17,
+      "slope": 4,
+      "common_denominator": "1164544781400"
+    },
+    {
+      "n": 21,
+      "width": 10,
+      "coefficient_generator": "646",
+      "status": "obstructed",
+      "prime": 17,
+      "slope": 4,
+      "common_denominator": "1164544781400"
+    },
+    {
+      "n": 22,
+      "width": 10,
+      "coefficient_generator": "7106",
+      "status": "obstructed",
+      "prime": 11,
+      "slope": 7,
+      "common_denominator": "36100888223400"
+    },
+    {
+      "n": 23,
+      "width": 10,
+      "coefficient_generator": "81719",
+      "status": "obstructed",
+      "prime": 11,
+      "slope": 9,
+      "common_denominator": "72201776446800"
+    },
+    {
+      "n": 24,
+      "width": 10,
+      "coefficient_generator": "7429",
+      "status": "obstructed",
+      "prime": 17,
+      "slope": 5,
+      "common_denominator": "72201776446800"
+    },
+    {
+      "n": 25,
+      "width": 10,
+      "coefficient_generator": "2185",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 2,
+      "common_denominator": "72201776446800"
+    },
+    {
+      "n": 26,
+      "width": 10,
+      "coefficient_generator": "28405",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 2,
+      "common_denominator": "72201776446800"
+    },
+    {
+      "n": 27,
+      "width": 10,
+      "coefficient_generator": "85215",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "72201776446800"
+    },
+    {
+      "n": 28,
+      "width": 10,
+      "coefficient_generator": "85215",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "2671465728531600"
+    },
+    {
+      "n": 29,
+      "width": 10,
+      "coefficient_generator": "130065",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "2671465728531600"
+    },
+    {
+      "n": 30,
+      "width": 10,
+      "coefficient_generator": "10005",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "2671465728531600"
+    },
+    {
+      "n": 31,
+      "width": 10,
+      "coefficient_generator": "310155",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "2671465728531600"
+    },
+    {
+      "n": 32,
+      "width": 10,
+      "coefficient_generator": "1240620",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "109530094869795600"
+    },
+    {
+      "n": 33,
+      "width": 10,
+      "coefficient_generator": "13646820",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "109530094869795600"
+    },
+    {
+      "n": 34,
+      "width": 10,
+      "coefficient_generator": "231995940",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "4709794079401210800"
+    },
+    {
+      "n": 35,
+      "width": 10,
+      "coefficient_generator": "21090540",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "4709794079401210800"
+    },
+    {
+      "n": 36,
+      "width": 10,
+      "coefficient_generator": "21090540",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "4709794079401210800"
+    },
+    {
+      "n": 37,
+      "width": 10,
+      "coefficient_generator": "33928260",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "4709794079401210800"
+    },
+    {
+      "n": 38,
+      "width": 10,
+      "coefficient_generator": "644636940",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "221360321731856907600"
+    },
+    {
+      "n": 39,
+      "width": 10,
+      "coefficient_generator": "4190140110",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "221360321731856907600"
+    },
+    {
+      "n": 40,
+      "width": 10,
+      "coefficient_generator": "4190140110",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "1549522252122998353200"
+    },
+    {
+      "n": 41,
+      "width": 10,
+      "coefficient_generator": "34359148902",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "1549522252122998353200"
+    },
+    {
+      "n": 42,
+      "width": 10,
+      "coefficient_generator": "2021126406",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "1549522252122998353200"
+    },
+    {
+      "n": 43,
+      "width": 10,
+      "coefficient_generator": "6685264266",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "1549522252122998353200"
+    },
+    {
+      "n": 44,
+      "width": 10,
+      "coefficient_generator": "73537906926",
+      "status": "obstructed",
+      "prime": 3,
+      "slope": 0,
+      "common_denominator": "82124679362518912719600"
+    },
+    {
+      "n": 45,
+      "width": 10,
+      "coefficient_generator": "24512635642",
+      "status": "obstructed",
+      "prime": 11,
+      "slope": 3,
+      "common_denominator": "82124679362518912719600"
+    },
+    {
+      "n": 46,
+      "width": 10,
+      "coefficient_generator": "51253692706",
+      "status": "obstructed",
+      "prime": 19,
+      "slope": 9,
+      "common_denominator": "82124679362518912719600"
+    },
+    {
+      "n": 47,
+      "width": 10,
+      "coefficient_generator": "2408923557182",
+      "status": "obstructed",
+      "prime": 19,
+      "slope": 9,
+      "common_denominator": "82124679362518912719600"
+    },
+    {
+      "n": 48,
+      "width": 10,
+      "coefficient_generator": "253570900756",
+      "status": "obstructed",
+      "prime": 23,
+      "slope": 2,
+      "common_denominator": "82124679362518912719600"
+    },
+    {
+      "n": 49,
+      "width": 10,
+      "coefficient_generator": "61206769148",
+      "status": "obstructed",
+      "prime": 7,
+      "slope": 2,
+      "common_denominator": "82124679362518912719600"
+    },
+    {
+      "n": 50,
+      "width": 10,
+      "coefficient_generator": "306033845740",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 2,
+      "common_denominator": "4845356082388615850456400"
+    },
+    {
+      "n": 51,
+      "width": 10,
+      "coefficient_generator": "5202575377580",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 2,
+      "common_denominator": "4845356082388615850456400"
+    },
+    {
+      "n": 52,
+      "width": 10,
+      "coefficient_generator": "67633479908540",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 2,
+      "common_denominator": "295566721025705566877840400"
+    },
+    {
+      "n": 53,
+      "width": 10,
+      "coefficient_generator": "115631433392020",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 2,
+      "common_denominator": "295566721025705566877840400"
+    },
+    {
+      "n": 54,
+      "width": 10,
+      "coefficient_generator": "115631433392020",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 1,
+      "common_denominator": "98522240341901855625946800"
+    },
+    {
+      "n": 55,
+      "width": 10,
+      "coefficient_generator": "317986441828055",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 3,
+      "common_denominator": "197044480683803711251893600"
+    },
+    {
+      "n": 56,
+      "width": 10,
+      "coefficient_generator": "24460495525235",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 3,
+      "common_denominator": "197044480683803711251893600"
+    },
+    {
+      "n": 57,
+      "width": 10,
+      "coefficient_generator": "42249946816315",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 3,
+      "common_denominator": "197044480683803711251893600"
+    },
+    {
+      "n": 58,
+      "width": 10,
+      "coefficient_generator": "1225248457673135",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 4,
+      "common_denominator": "13201980205814848653876871200"
+    },
+    {
+      "n": 59,
+      "width": 10,
+      "coefficient_generator": "4252332882512645",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 4,
+      "common_denominator": "13201980205814848653876871200"
+    },
+    {
+      "n": 60,
+      "width": 10,
+      "coefficient_generator": "184884038370115",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 4,
+      "common_denominator": "13201980205814848653876871200"
+    },
+    {
+      "n": 61,
+      "width": 10,
+      "coefficient_generator": "11277926340577015",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 4,
+      "common_denominator": "13201980205814848653876871200"
+    },
+    {
+      "n": 62,
+      "width": 10,
+      "coefficient_generator": "349615716557887465",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 4,
+      "common_denominator": "937340594612854254425257855200"
+    },
+    {
+      "n": 63,
+      "width": 10,
+      "coefficient_generator": "349615716557887465",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 4,
+      "common_denominator": "937340594612854254425257855200"
+    },
+    {
+      "n": 64,
+      "width": 10,
+      "coefficient_generator": "2796925732463099720",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 3,
+      "common_denominator": "68425863406738360573043823429600"
+    },
+    {
+      "n": 65,
+      "width": 10,
+      "coefficient_generator": "982703635730278280",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 3,
+      "common_denominator": "68425863406738360573043823429600"
+    },
+    {
+      "n": 66,
+      "width": 10,
+      "coefficient_generator": "2161947998606612216",
+      "status": "obstructed",
+      "prime": 7,
+      "slope": 2,
+      "common_denominator": "68425863406738360573043823429600"
+    },
+    {
+      "n": 67,
+      "width": 10,
+      "coefficient_generator": "7623711363507527288",
+      "status": "obstructed",
+      "prime": 7,
+      "slope": 2,
+      "common_denominator": "68425863406738360573043823429600"
+    },
+    {
+      "n": 68,
+      "width": 10,
+      "coefficient_generator": "11782099379966178536",
+      "status": "obstructed",
+      "prime": 7,
+      "slope": 2,
+      "common_denominator": "68425863406738360573043823429600"
+    },
+    {
+      "n": 69,
+      "width": 10,
+      "coefficient_generator": "20845252749170931256",
+      "status": "obstructed",
+      "prime": 7,
+      "slope": 2,
+      "common_denominator": "68425863406738360573043823429600"
+    },
+    {
+      "n": 70,
+      "width": 10,
+      "coefficient_generator": "20845252749170931256",
+      "status": "obstructed",
+      "prime": 7,
+      "slope": 1,
+      "common_denominator": "5405643209132330485270462050938400"
+    },
+    {
+      "n": 71,
+      "width": 10,
+      "coefficient_generator": "740006472595568059588",
+      "status": "obstructed",
+      "prime": 7,
+      "slope": 1,
+      "common_denominator": "5405643209132330485270462050938400"
+    },
+    {
+      "n": 72,
+      "width": 10,
+      "coefficient_generator": "740006472595568059588",
+      "status": "obstructed",
+      "prime": 7,
+      "slope": 4,
+      "common_denominator": "48650788882190974367434158458445600"
+    },
+    {
+      "n": 73,
+      "width": 10,
+      "coefficient_generator": "1317572499987230935364",
+      "status": "obstructed",
+      "prime": 7,
+      "slope": 4,
+      "common_denominator": "48650788882190974367434158458445600"
+    },
+    {
+      "n": 74,
+      "width": 10,
+      "coefficient_generator": "48750182499527544608468",
+      "status": "obstructed",
+      "prime": 7,
+      "slope": 3,
+      "common_denominator": "4038015477221850872497035152050984800"
+    },
+    {
+      "n": 75,
+      "width": 10,
+      "coefficient_generator": "243750912497637723042340",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 2,
+      "common_denominator": "4038015477221850872497035152050984800"
+    },
+    {
+      "n": 76,
+      "width": 10,
+      "coefficient_generator": "272427490438536278694380",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 2,
+      "common_denominator": "4038015477221850872497035152050984800"
+    },
+    {
+      "n": 77,
+      "width": 10,
+      "coefficient_generator": "69690753367997652689260",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 2,
+      "common_denominator": "4038015477221850872497035152050984800"
+    },
+    {
+      "n": 78,
+      "width": 10,
+      "coefficient_generator": "31240682544274809826220",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 2,
+      "common_denominator": "4038015477221850872497035152050984800"
+    },
+    {
+      "n": 79,
+      "width": 10,
+      "coefficient_generator": "224364901908882725115580",
+      "status": "obstructed",
+      "prime": 5,
+      "slope": 2,
+      "common_denominator": "4038015477221850872497035152050984800"
+    }
+  ],
+  "broad_window_witnesses": [
+    {
+      "n": 4,
+      "width": 4,
+      "coefficient_generator": "2",
+      "status": "feasible",
+      "dyadic_exponent": 1,
+      "max_coefficient_bits": 27,
+      "coefficients": [
+        "12155697",
+        "-77947164",
+        "-1",
+        "2616894"
+      ],
+      "constant": "0",
+      "weighted_l1_upper_bound": "3470758124/78125",
+      "small_error_gate": "fails for this witness; no optimality claim"
+    },
+    {
+      "n": 8,
+      "width": 8,
+      "coefficient_generator": "2",
+      "status": "feasible",
+      "dyadic_exponent": 1,
+      "max_coefficient_bits": 194,
+      "coefficients": [
+        "-3868880172602425850191801856424401828215504064340263688763",
+        "23820565577698580277295222739760248987478794393974745350422",
+        "0",
+        "-750576400330248836960851080633626853066770374795938635136",
+        "0",
+        "55412474916067016431049180116771884163092972",
+        "3",
+        "0"
+      ],
+      "constant": "0",
+      "weighted_l1_upper_bound": "134984342177262248657476956033796342163617730367196612501847488/6103515625",
+      "small_error_gate": "fails for this witness; no optimality claim"
+    },
+    {
+      "n": 16,
+      "width": 16,
+      "coefficient_generator": "2",
+      "status": "feasible",
+      "dyadic_exponent": 1,
+      "max_coefficient_bits": 1206,
+      "coefficients": [
+        "-157068076103433436187690234999946113241625023712907805645108311055397986907568170249057438721693695631510420014625033692995418507060814671974964655406693110700317217492466871872721374390189023336056767997251446054776666023592853419976572445018998258031178665578128308628666584036224683681221624527590700382891699108767337148161185558449121335282708198969735102432",
+        "943157588939058964198578670576413276281574180339003089648779562959072484777682417127594653341287756740011558858791805214026742352583116673466207640279280848621508925641974290412766532383353088329610351608667550637824780408949933194196449257575348563425205213686035372179488473692931517671746223902987405164415825857075567200687892422966229692603996764258848996676",
+        "-1",
+        "-28467028101417188752616018445981017632109853834989140305381035280755061195312437746489508366544941922507351175431909172702252403907461744150486614087443073259909634954199142428129695998292762781747566412228011525878085854285380713859005435402552129453256028343076197599680040613618763182949779336430504890725251132211056873325057161615595951527389092268832569600",
+        "0",
+        "0",
+        "0",
+        "-1832315517454316303644884397175301640344278534807835871577548561685512730078588776799233400544747140703037196998487477771897464143383357824206102861442928948863388876301965046883211299924591852651071943115777995109446415799254331665726811947428068123102914610637721675071405336136383601127095525848942519812474355971155514359208052629600",
+        "0",
+        "-209747036290484442226056558234313343869222740723003757883094587375337522372358648414304868214893101540337617792228768862407614832932875689131553580596425443500472400663625158644852066091307809730553778637024150190113973974023358011360582981768253810807581702796174185189606574886257038508810615801685364900200",
+        "0",
+        "440556023342699466978844134390834640235281109068927030539425414021453592969717716252379663984019580182602962062852383382637673673868327766551712234530393069465483121278010610186802706050746239429879290109325249340316762486676416924873334459518964615128693678476850985053670685310",
+        "0",
+        "9407401376468683636069969940400290212923733640818513112931492417815705877966981987710100282413008489232673757965344025915597710722613563799710204949348822583277230708918772099961411290167865785174751872680530685963921231677361251374747090274405965",
+        "0",
+        "-210768717085614947915605670133390784361233567844094284198976041456928679872961180507892861150582293454441206832902207209540834523785704523435937566422610552667350715069239861607129496445803113810937192607055919010"
+      ],
+      "constant": "0",
+      "weighted_l1_upper_bound": "2111372864477884317245037214738892030503052696899871772568305805547714305700360798441542322118700131090939525108524439779433563669329320930470209314880754351177009015824546088539274115369229149349292980094777891974428072717922298008932564865624333526883293609125369878505252702190892290553909086070047292902509050454958709921694497782145464222558878614228119170821558955502/931322574615478515625",
+      "small_error_gate": "fails for this witness; no optimality claim"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "coefficient_generator": "2",
+      "status": "feasible",
+      "dyadic_exponent": 1,
+      "max_coefficient_bits": 4970,
+      "coefficients": [
+        "21546741663319346782738673339446184556235316987590125958970936617336059460792217912158039283873711090998350464555141308692524375800785548370325292650892332101452673249726386403870032807067711911772973256599141170718221790118345684252253709667062660097925467997553562969139427944962414451141574367721830291549396926184794167174356418858213215333670574994833422907768821670203958268241920499496896402896520457498569875761965567897594028649718388985402894965110875235738356760054670851275065216924863759943631481750558878122113174163178337284253155701098835637709381375240455127485638701603202179735923204297269215876716575599220674986212288017349337010002598467924190252833347043849341320655960955799689719552612476681327535522871529220063494112882002840242506626983510431408683777383312652412582735792173245435180566615175395131748843084715136355882822895714321666073683513594523037655762729791832885926889837043105391242845640260730947691931392794554284107722253861103037026540561802202818859835892709468316261053403063089122277871882240762137196741782369291234008305495667611204869045826580204825583760362582525188916422064462900129532702018053039210267386579719228573927061038887722387430267443932402660258421555979840970627503681603912359847023631743787018410525313429456651037203719530627925035740000612797612513315465818184091584493111748855440727811906226309815659469414919672797890030992547169255635437836278304624179606301322270357877825049198674349369205257240721807380990039220551402218",
+        "-127485653595465305910063615685145808494534670290992437069473784003750633480805752056979626741611118158747233332813279197935422703527501544783808477342481105668723866621055873869197286431679120540587953315861921775514370029993359909494852055095186570837299730430664848149143817241406748541887891560030892948024452980036918333844586062523501130123587318917198574600418220703269038034094653671049008680525955949071324149435885916643403479971123376989015383619499197511130943922274178915201606021065299842516250661674312248595297367539957427344107250623941533710886226849131870671693858985964463494781479443380726025332976571720968010866204341300741933420632727526454252086069990437765767045883211572081276842965533669090009878255752376086688623076174749440911951191250874313120169524469750121162009963028693828844888214512178491913449476463528735816703539522269505018365509650792530676089708449864252310870769354925023979348260717626122343925825376813720863848518264945601888899223250254360723438383543836878025136914571266130665024499452930742128410944557061399728240391875837451594652100609781960211190075648617102483084902513501466083863686638461678773951471441187600158021175499687148948963099953335282102037867257641493350472326677469641174430852075339759603721666908370339866555528511532353865906327431066437876983379573057965504934537760399959503543687609115180713800773052822383822752043230568526125554607758515894575771194637919123275492786941174859547635525162821299795708013913528669293151",
+        "0",
+        "0",
+        "0",
+        "113488914701690113192955454114900908777017125936461154866257539101611225740229587562715206394037848541415356871259491523435279039338145566093564505125904657864806339677178337030358698555786147881628728014208351996012607650512467328948325596653792634123728350349635876988939802480267112538674286837426694110458707104576834529637894489591686045149854796816880468026636663568385599141862389839535131662955097364330848570367598063211958859502888776416308061168564033615657540997000870273731008172051402158838020451348337590238291759698462928659726169118701463557098564830585773864423860246300690466544140111523900440223945062423014177427514135604755996732057297847690396227866550692481996579333445166270313311384810306005356142472762466160251084578745126083353163121066632096241118269812234942700807107320684840534983146190783400921348468347079495662210807332255886663114526285854060795964651816528356625358312431786739245735525512997628195518415247309872811376542237453149716123942811433056317570126116330220425317364445025835998507950597768419565392442723365388810408130315889297614873155507284044734927441419196655005393691871861040086926826244666262109692649878816888874809913399133272252310338064937397917473868289544634608148224980085640023054203555769982809243303536746317245295271780133860354140099281131326265271034065632528074474284018423422430679798969401558419291689361745110442553403125117160930885527752463279703175900992287880548084206733531926860949587208456137734660341749639331840",
+        "0",
+        "0",
+        "0",
+        "1563943318566765724224756230876154026771881383601726939170056208352153506995969427522080326035822462259130064144254587930573821024965454075106703869161051506984804690652481024897355259231847755056832706899827069602289278481474917483611800871246860245468376144553967741659736504478506772932999918047152307017518292530480579230194960962516078013393091631405391920622517378803023557932116387025211880635038679431735966990005892844836370936761926851769946660513172630890739270642238836049767782837708939478973194276297471890789280406068466509670774079208963670639889388675616090204704729956870843976812202417693307677143188785396243210773840065874334738707549957620075586543471343718287949508601217579223881391572591500465609709337089638318648821029046529990881969718270836153295204599910306422424802757674514422925522252149063755465569885918803851423952873553716754010992791678274613403808216285424861101953840916578201669819569848765422025371593052547510466802935601878232587204002094246996403221094808389436294907548982635414296023259615730835338518761567908004631460348759684275986116205062159601684189419899490179450543129208684824836596085572306538067102808847844955860610871832160831456358596765726953851858014349236455393234171660566302941992023219832902199298805037007629571791955915973499290211974028445859546765878007680202131477289046010308261471443926669127144996441180250631710188737264026570867596376779366518274128610823597325299866880",
+        "0",
+        "-25927840624949480028572058255928175146173501187031158697285612478005095121017438830121510310370772737143364565872304061625623347329522165497543372230683314091625503833420201829949776471795977566369591545161100250774311090791220839350964823938113066317560989055964195039819738212184768539592855930317045009506546592580265889521959760990459988006344390215697209441676002755971857525268129118454747408089022235351647405937208608558320355844361994340803516615849786338196550906334480103148474351318912460276993444928972720991013564461157103756679557166555803018990821518128267192112826813237629898449106247438048692347478717574207824267068738162821075220620352249504929747260775425610613680611129564845544809357251513104783145814594660813415950309082854340275332441587924238344033057884192510662192741267622595566996040199929643834406280869079260556650602125717231558283191382564746128573870927548222255567728148981776450187098514992220925895787744720515458563604967798081556352719459159004704012513738744843391949103144896858159185358562348668372523930431748282132142957835210434192763795555552889865909901348055413293714812169764068733598434114065184962828367042360143574030624550281590770184155905193917510137208723938251920662444724064645270445275323079129371828213264662182244567206612145523767553025086834801389791498650070229304470099766551242321237126361103745997052457833230149852197453132800",
+        "0",
+        "0",
+        "0",
+        "-4979828384058524767251179287628096946336141209671462522646458067026350999093972685777757280402197109667606266520395195100928507834799395162406875446470762211045306350322272280910642974712065029254974642528617531667342018724828717219756308881868411311996729734827538505502399326218543239402487195671487354095475323087787703479620363616255316248877062530689673775014939187230517678815473123123032398638022069092954673536567543442852971486889339840961031279382424981449442211101074858471992064578434158181188967789451111877368827583215907437271076672790733330512019281818035316582890068322648118757837089585494594202800514663620326890415170808199155819342056944128998692300412764947114973128684115782620721170522076061595119300169108898657942524484789240537601795844758710398396769696728939527197887547422974926852194971826874642514534020827192700797327403597715203195316035823331359705536569850896974650716239451441226086205062201629210263824490610541380905884469584622607700136100513638591264368632929683449944670590078626907610864219236479257802447128393622481269605581755176404992682099030392136290818983856130335155131491058295381301343423713058130630702802948482470543891013180716824431331422109878568617794326140928683504610035909522628864059769986668318618764385563167014938885761621500809138755167612533699687956961997848128100862978560",
+        "0",
+        "2038663011831511405418936130030639795975668529131686512263480976936513427494333389704457687057084486719272107726576457612034392534886974741882531322689004166741378115913787099036537922473550232001186742322390068935171302709632106290732114730151849491692477349118432818772257372353120736567218696183641871722615473926582587480067576292528176864913367130125221944341912123465585758636569514027667285293718323369377287207012393042750410982471313354463156490521802281266836011740326566014508317471419228211215842559687444797875424870749906811058050784935379729927440082064036084465789580533069512614985485389571635810260669882357902863695071618599196185825418066969908553347432668519051720857770355462761985191013958393239602349140747387248263163608284068981509982921145640453564304716190293290353643037941079537705064430519422635386222352143641422867722970537688315680502038387125332048269016830161842508017010336767246059865783438360946454655753766249349705506435816939833938650910099871556918588175965407789832580366376591842908079921333676881011088634435960549631611733255288199728559123533652333958905009240570477776975243075225402413401115524735266510994575889489294522710470519389906216903932376177080706051356438592955879980393992696455700888256780437989564190919577325013452500480",
+        "0",
+        "0",
+        "0",
+        "322296586910171461715432004380386921068261690898944653264343227253283349339815886483701605771071892943987213288958100490673108605695941584877776497781921019295682151442678794453360497893549565003411692873399067327434079743466063009493812981291236461081550000234792772722862946021623588289331727677967798953453027627470380825827245835957406125282886412464008696286722315145416419789863687095879793223745448959267206590720410724543947766239055418484743978880032877645033619748585754463883210254313247974795380501493349667829888230706712939187818515985380391551099193190947015241715157844412759150279806827320653705328962156034392627468933529461472167093440818292829611253268293244368407076723000565043904351319014819434971696933500129236046296867081143446202972222482427653101235986246801434911447799429123620275532263868596046532884534374682340482721940289989391454693669352194612959927380019804004490052906328444295754404772663001654042463740018952007535928559099589518334397220481621520364903888603644023317198114521540629801084725527735234573384372771840803311751498726024584307424016818110070162486207581938639151510214900024598749057215394807310791025338017294101810699015617546106217820486706014192680315313187012656960",
+        "875761499879548905221083015569642457638623512787223661094850693430885007096065553722318387275638441628794837783268478610661113495998256472975274988219889378748086198318131172039405432466358501434433601244896831008766159451643843421328098317557468321510302914878629852606188096594842106638801428658665150010926196737988963861513436029846553333968738554707324768999893857103934461394925119696283579893535853488638892619496994640512556441834917308817058567663366266101911236535289057484015974355149153831377883186051356622557007190728769",
+        "0",
+        "0",
+        "0",
+        "0",
+        "-4703374258977377834720650488274368158210271839859819261061803548800571235333493535830676225532340555758453095438927293700546726137458893488102667046507854822928778903701228606928955212134747949974468551898843329302590503139908045709938051134948396306998581026384129502541232637006281307897892489640477497705764212937885015983465246939405694426196148455694437225780092970406705736023404459044282970801116139833093374603118111527715748730293475820148687073435180880397496190370564157822429730287305039497864439614315367615408429807340904957554499033066241778419056510956261822911484715370748260061960202193543513903316265190935583357859058342762539442962370538836302645986888162045237299283562611327550049829129306417769627808766187834173292243864632606787673495352697519713402807143010700486536166751289704551313248196365601895719854770199165551425934869132889985620334758962928864675984467749359055770103992529449267035978778987687375942106514222824658557625274852172596489432094401173655911936652049204264781432954003913098662139492137769751425898153738580015484049756685904527570062232671226445436925125095144820071817277837023147880970049063475647104640",
+        "0",
+        "-27357970310963110988945985185273491875947745734430610337756315308250886188306891569429609312530669231115211228955009199911081177609952814372036922039636907127851539385633130853181697754705388728488698250292037135524160485596868828951245956420448777971763146697026825868563572230363376519154849496671655510825875954199914825351491020445015220509980710948743958150144972294953874027203135065932292892718143813484235780681156510525134575597512174830092787022277581649519343954207562969849698667982843915332459295918297720762276664204666732715612028089573162399165257992187374542703587474579386965026773215463413131471223428057737492772516494145939683618048940327569776221623374893221159524201855323888387915289981995072384579451428114566787783961700193673214962421713047887912248848542663777103453653608981308867378221617121613517205531382294876421336249013832702373920636371895445055970492444192662119196536273296946252606464990873710450736925978170214778787953932832291137535903541355964681537419425688774041982768308317445924148207162459506003704105582599907923204498760680989814666108",
+        "-4",
+        "0"
+      ],
+      "constant": "0",
+      "weighted_l1_upper_bound": "43813054169402562552678974552285543664761874537234113590080281346668380054969974222807749698654919940292290512369238519071182232846755416909232976495917518250171725383351718008899087257127529143766644925757572333040412076408535488282056453108372184714576498061715456146528080448408551348390081921054554913372191994178065790244077868737872186194203178767580447251244072834607060411223859093489406287769555111131492117007878457508236613770403206345341355147880522602970155188475902068708743275871081892322331872598395823362171956435042130701290958108722126841647098606673276726922003433032306964438385831487306925812086943398791273488170863661330826528178620822655778915711827493518328783538228449450392137551792446035390723279949439248623064460722525401922525767164497207923244952630484757588161357396118424905681297495677323640074700452891515292788063098729664813380241317614715346952150669777895933763277139089994053523120287063538514697528098376237450153029172265497348264731655612060696965599300479018510193472926000863275773639247277484863928450968595809684293626901658461883375291706236114622592225008893934886972591154254545459319061896602626025272906667333454626402299986634486308385923268965922508119881731779705544771050690869320328741752228163040739066144963146130822807953822064120825767235867336520277250482195525425575042093899884526034551085318116483529371704376514916238994645599199338658768700428049602143846006436034643842425904933616723918451919774356522013767937032135071901737004025849157576254294/21684043449710088680149056017398834228515625",
+      "small_error_gate": "fails for this witness; no optimality claim"
+    }
+  ],
+  "scope": "finite exact certificates; feasibility says nothing about small error or digit visits"
+}
