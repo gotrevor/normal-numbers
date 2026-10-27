@@ -31,6 +31,13 @@ def oscillator():
     for j in range(17):
         x = Q(j, 4)
         assert evaluate(r, x) == x * (4 - x) * (x - 2) ** 2 + Q(1, 4) > 0
+    quintic = [Q(-511, 4), Q(-8), Q(64), Q(4), Q(-8), Q(1)]
+    assert residual(quintic) == [Q(1, 4), Q(16), Q(-32), Q(24), Q(-8), Q(1)]
+    assert evaluate(quintic, 0) + evaluate(quintic, 3) == Q(-1, 2)
+    assert evaluate(quintic, 0) + evaluate(quintic, 4) == Q(-63, 2)
+    for j in range(17):
+        x = Q(j, 4)
+        assert evaluate(residual(quintic), x) == x * (x - 2) ** 4 + Q(1, 4) > 0
 
 
 def radical():

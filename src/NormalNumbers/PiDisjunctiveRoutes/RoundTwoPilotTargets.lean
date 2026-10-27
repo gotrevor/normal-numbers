@@ -52,6 +52,31 @@ def QuarticEndpointObstruction : Prop :=
     0 < 10 * ((realPoly P).eval 0 + (realPoly P).eval 3) +
       ((realPoly P).eval 0 + (realPoly P).eval 4)
 
+/-- Candidate sharp positive control: residual `x*(x-2)^4 + 1/4`. -/
+noncomputable def quinticControl : Polynomial ℚ :=
+  Polynomial.X ^ 5 - 8 * Polynomial.X ^ 4 + 4 * Polynomial.X ^ 3 +
+    64 * Polynomial.X ^ 2 - 8 * Polynomial.X - Polynomial.C (511 / 4)
+
+/-- Expected true (99%, exact coefficient calculation).  The endpoint values
+are -1/2 and -63/2.  Together with classification of [1]-avoiders in [3,4],
+this should give a degree-five certificate and make the quartic barrier sharp. -/
+def QuinticEndpointControl : Prop :=
+  PositiveOscillator quinticControl ∧
+    (realPoly quinticControl).eval 0 + (realPoly quinticControl).eval 3 < 0 ∧
+    (realPoly quinticControl).eval 0 + (realPoly quinticControl).eval 4 < 0
+
+/-- Generalization suggested by finite-dimensional positivity; open (95%).
+Normalize the residual Q=P''+P.  Compactness of the fixed-degree positive cone
+gives a positive lower bound for its sine integral, while the inverse oscillator
+operator bounds P'.  This would produce a coefficient-independent blind interval.
+No quantitative radius or Lean proof is claimed here. -/
+@[blueprint (title := "Fixed polynomial degree has a uniform blind interval around pi")]
+def FixedDegreeBlindInterval : Prop :=
+  ∀ D : ℕ, ∃ ε : ℝ, 0 < ε ∧
+    ∀ P : Polynomial ℚ, P.natDegree ≤ D → PositiveOscillator P →
+      ∀ x : ℝ, |x - Real.pi| < ε →
+        0 < (realPoly P).eval 0 + (realPoly P).eval x
+
 /-- Expected true (99%, difference of squares).  The sibling restores exactly
 the previous factor, regardless of the distinguished branch's size. -/
 @[blueprint (title := "Relative radical factors exactly compensate")]
