@@ -10,9 +10,10 @@ import Architect
 /-!
 # Proposed target: the Lambert series over squares
 
-Research proposal, 2026-10-27.  See `docs/square-lambert-proposal.md` and `MAZE.md`.
-The open statements below are not established by this file.  The proved facts
-are the divisor majorant, its tail consequence, and finite arithmetic controls.
+Original research proposal, 2026-10-27.  See `docs/square-lambert-proposal.md`
+and `MAZE.md`.  Every proposal gate below is now proved in
+`PowerLambertDisjunctivity.lean` under namespace `ArithmeticDisjunctivity`.
+The original definitions and historical descriptions are retained here.
 
 The proposed mechanism extends the multiplicative coefficient construction for
 Erdos--Borwein, not the additive prime-Lambert contraction.  The older exclusion

@@ -276,13 +276,16 @@ count is `exists_rescaled_prime_supply`.
 The exceptional set is the singleton `{P}` of the excised conductor when `P` is prime and
 `∅` when `P = 1`; `exists_prime_allocation` therefore costs at most one pool prime, which
 is why `D₀ = 1` suffices in the pool inequality. -/
-theorem exists_joint_prime_candidates_rescaled
+theorem exists_joint_prime_candidates_rescaled_with_injectivity
     {c a r : ℕ} (hc : 2 ≤ c) (ha : 2 ≤ a) (hr : 1 ≤ r) (K : ℕ) :
     ∃ (k q : ℕ) (p : ℕ → ℕ → ℕ) (R u : ℕ),
       K ≤ k ∧ r < k ∧
       2 ^ k < q ∧ q < 2 * 2 ^ k ∧ q.Prime ∧
       (∀ j t, j < k → j ≠ r → t < j + 1 →
         (p j t).Prime ∧ 2 ^ k < p j t ∧ p j t < 2 * 2 ^ k) ∧
+      (∀ j t j' t', j < k → j ≠ r → t < j + 1 →
+        j' < k → j' ≠ r → t' < j' + 1 →
+        p j t = p j' t' → j = j' ∧ t = t') ∧
       0 < R ∧ R < jointA c a k r q p ∧ 1 ≤ u ∧ u < jointB c k r q p ∧
       R + r = jointQ a q * u ∧
       jointA c a k r q p = jointQ a q * jointB c k r q p ∧
@@ -391,10 +394,48 @@ theorem exists_joint_prime_candidates_rescaled
     hk3 hB1 hBX (rescaled_pow_eq k) hcount
   have hcast : ((k ^ 3 : ℕ) : ℝ) ^ 4 = (k : ℝ) ^ 12 := by push_cast; ring
   rw [hcast] at hfinal
-  refine ⟨k, q, p, R, u, hkK, hkr, hqdata.2.1, hqdata.2.2, hqdata.1, ?_, hR0, hRA, hu1, huB,
+  refine ⟨k, q, p, R, u, hkK, hkr, hqdata.2.1, hqdata.2.2, hqdata.1, ?_, ?_, hR0, hRA, hu1, huB,
     hRr, hAQB, humod, hcopuB, hres_r, hres_j, hkill, hsurv, htail, hQle, hBle, hBU, hQU, hRL,
     le_trans hfinal (by exact_mod_cast hinj)⟩
-  intro j t hjk hjr ht
-  exact hpdata j t (mem_killedIdx.mpr ⟨hjr, hjk⟩) ht
+  · intro j t hjk hjr ht
+    exact hpdata j t (mem_killedIdx.mpr ⟨hjr, hjk⟩) ht
+  · intro j t j' t' hjk hjr ht hj'k hj'r ht' he
+    exact hpinj j t j' t' (mem_killedIdx.mpr ⟨hjr, hjk⟩) ht
+      (mem_killedIdx.mpr ⟨hj'r, hj'k⟩) ht' he
+
+/-- The original rescaled candidate API, projecting away the allocation
+injectivity data retained by `exists_joint_prime_candidates_rescaled_with_injectivity`. -/
+theorem exists_joint_prime_candidates_rescaled
+    {c a r : ℕ} (hc : 2 ≤ c) (ha : 2 ≤ a) (hr : 1 ≤ r) (K : ℕ) :
+    ∃ (k q : ℕ) (p : ℕ → ℕ → ℕ) (R u : ℕ),
+      K ≤ k ∧ r < k ∧
+      2 ^ k < q ∧ q < 2 * 2 ^ k ∧ q.Prime ∧
+      (∀ j t, j < k → j ≠ r → t < j + 1 →
+        (p j t).Prime ∧ 2 ^ k < p j t ∧ p j t < 2 * 2 ^ k) ∧
+      0 < R ∧ R < jointA c a k r q p ∧ 1 ≤ u ∧ u < jointB c k r q p ∧
+      R + r = jointQ a q * u ∧
+      jointA c a k r q p = jointQ a q * jointB c k r q p ∧
+      u ≡ 1 [MOD q] ∧ Nat.Coprime u (jointB c k r q p) ∧
+      R + r ≡ jointQ a q [MOD q ^ a] ∧
+      (∀ j, j < k → j ≠ r → R + j ≡ slotProd p j ^ (c - 1) [MOD slotProd p j ^ c]) ∧
+      (∀ m j, j < k → j ≠ r →
+        c ^ (j + 1) ∣ NormalNumbers.SwingC2.tau (R + m * jointA c a k r q p + j)) ∧
+      (∀ m, (u + m * jointB c k r q p).Prime →
+        NormalNumbers.SwingC2.tau (R + m * jointA c a k r q p + r) = 2 * a) ∧
+      (∀ j, k ≤ j → j < 2 ^ k → Nat.Coprime (R + j) (jointA c a k r q p)) ∧
+      jointQ a q ≤ (2 * 2 ^ k) ^ (a - 1) ∧
+      jointB c k r q p ≤ (2 * 2 ^ k) ^ (1 + c * killPoolSize k r) ∧
+      jointB c k r q p ≤ 2 ^ (k ^ 4) ∧ jointQ a q ≤ 2 ^ (k ^ 4) ∧ 2 ^ k < R ∧
+      ((2 ^ (4 * k ^ 12) / jointB c k r q p + 1 : ℕ) : ℝ) / (16 * (k : ℝ) ^ 12) ≤
+        (((range (2 ^ (4 * k ^ 12) / jointB c k r q p + 1)).filter
+          (fun m => (u + m * jointB c k r q p).Prime ∧
+            u + m * jointB c k r q p ≤ 2 ^ (4 * k ^ 12))).card : ℝ) := by
+  obtain ⟨k, q, p, R, u, hkK, hkr, hqlo, hqhi, hqprime, hpdata, _, hR0, hRA,
+    hu1, huB, hRu, hAQB, humod, hcopuB, hresR, hres, hkill, hsurv, hcop, hQle, hBle,
+    hBU, hQU, hRL, hcount⟩ :=
+    exists_joint_prime_candidates_rescaled_with_injectivity hc ha hr K
+  exact ⟨k, q, p, R, u, hkK, hkr, hqlo, hqhi, hqprime, hpdata, hR0, hRA, hu1, huB,
+    hRu, hAQB, humod, hcopuB, hresR, hres, hkill, hsurv, hcop, hQle, hBle, hBU, hQU,
+    hRL, hcount⟩
 
 end NormalNumbers.JointLambert

@@ -32,13 +32,24 @@ namespace NormalNumbers.JointLambert
 
 open Finset Filter
 
-theorem exists_joint_small_tail_rescaled
+theorem exists_joint_small_tail_rescaled_with_witnesses
     {c a r : ℕ} (hc : 2 ≤ c) (ha : 2 ≤ a) (hr : 1 ≤ r)
     {ε : ℝ} (hε : 0 < ε) (K N : ℕ) :
-    ∃ k n : ℕ, K ≤ k ∧ r < k ∧ 1 ≤ n ∧ N ≤ n ∧
+    ∃ (k n q : ℕ) (p : ℕ → ℕ → ℕ) (R A u m : ℕ),
+      K ≤ k ∧ r < k ∧ 1 ≤ n ∧ N ≤ n ∧
       (∀ j, j < k → j ≠ r → c ^ (j + 1) ∣ NormalNumbers.SwingC2.tau (n + j)) ∧
       NormalNumbers.SwingC2.tau (n + r) = 2 * a ∧
-      ∑' t : ℕ, (NormalNumbers.SwingC2.tau (n + k + t) : ℝ) / (2 : ℝ) ^ (k + t) < ε := by
+      (∑' t : ℕ, (NormalNumbers.SwingC2.tau (n + k + t) : ℝ) / (2 : ℝ) ^ (k + t) < ε) ∧
+      q.Prime ∧
+      (∀ j t, j < k → j ≠ r → t < j + 1 →
+        (p j t).Prime ∧ 2 ^ k < p j t ∧ p j t < 2 * 2 ^ k) ∧
+      (∀ j t j' t', j < k → j ≠ r → t < j + 1 →
+        j' < k → j' ≠ r → t' < j' + 1 →
+        p j t = p j' t' → j = j' ∧ t = t') ∧
+      R + r = jointQ a q * u ∧ A = jointA c a k r q p ∧
+      (∀ j, j < k → j ≠ r →
+        R + j ≡ slotProd p j ^ (c - 1) [MOD slotProd p j ^ c]) ∧
+      n = R + m * A ∧ (u + m * jointB c k r q p).Prime ∧ u ≡ 1 [MOD q] := by
   classical
   -- ### the archimedean scale, fixed from `ε` BEFORE the prime-selection height
   obtain ⟨m₀, hm₀⟩ :=
@@ -47,9 +58,9 @@ theorem exists_joint_small_tail_rescaled
   obtain ⟨Knear, hKnear⟩ := eventually_atTop.1 (eventually_nat_poly_le_two_pow 24 Cn)
   obtain ⟨Kfar, hKfar⟩ := eventually_atTop.1 (eventually_nat_poly_le_two_pow 12 (8 + m₀))
   set K' : ℕ := max (max K N) (max (max Knear Kfar) 16) with hK'
-  obtain ⟨k, q, p, R, u, hkK', hkr, hqlo, hqhi, hqp, hpp, hR0, hRA, hu1, huB, hRu, hAQB,
+  obtain ⟨k, q, p, R, u, hkK', hkr, hqlo, hqhi, hqp, hpp, hpinj, hR0, hRA, hu1, huB, hRu, hAQB,
     hu1q, hcopuB, hRr, hres, hkill, hsurv, hcop, hQle, hBle, hBU, hQU, hRL, hcount⟩ :=
-    exists_joint_prime_candidates_rescaled hc ha hr K'
+    exists_joint_prime_candidates_rescaled_with_injectivity hc ha hr K'
   set A := jointA c a k r q p with hA
   set B := jointB c k r q p with hB
   set Q := jointQ a q with hQ
@@ -353,8 +364,9 @@ theorem exists_joint_small_tail_rescaled
       _ = 4 * ((2 ^ (6 * k ^ 12) : ℕ) : ℝ) / 2 ^ (2 ^ k) := by ring
       _ ≤ (1 / 2 : ℝ) ^ m₀ := hfinal
   -- ### assemble
-  refine ⟨k, R + m * A, hkK, hkr, by omega, ?_, fun j hj hjr => hkill m j hj hjr,
-    hsurv m hmprime, ?_⟩
+  refine ⟨k, R + m * A, q, p, R, A, u, m, hkK, hkr, by omega, ?_,
+    fun j hj hjr => hkill m j hj hjr, hsurv m hmprime, ?_, hqp, ?_, ?_, hRu, hA, hres,
+    rfl, hmprime, hu1q⟩
   · have : k ≤ 2 ^ k := Nat.lt_two_pow_self.le
     omega
   · have hsplit := hsumf.sum_add_tsum_nat_add D
@@ -362,6 +374,23 @@ theorem exists_joint_small_tail_rescaled
         = ∑' t : ℕ, f t := rfl
     rw [hgoal, ← hsplit, ← hFf]
     linarith [hnear, hfar, hm₀]
+  · intro j t hj hjr ht
+    exact hpp j t hj hjr ht
+  · intro j t j' t' hj hjr ht hj' hj'r ht' he
+    exact hpinj j t j' t' hj hjr ht hj' hj'r ht' he
+
+/-- The legacy tail API, with the selected prime and exact CRT data hidden. -/
+theorem exists_joint_small_tail_rescaled
+    {c a r : ℕ} (hc : 2 ≤ c) (ha : 2 ≤ a) (hr : 1 ≤ r)
+    {ε : ℝ} (hε : 0 < ε) (K N : ℕ) :
+    ∃ k n : ℕ, K ≤ k ∧ r < k ∧ 1 ≤ n ∧ N ≤ n ∧
+      (∀ j, j < k → j ≠ r → c ^ (j + 1) ∣ NormalNumbers.SwingC2.tau (n + j)) ∧
+      NormalNumbers.SwingC2.tau (n + r) = 2 * a ∧
+      ∑' t : ℕ, (NormalNumbers.SwingC2.tau (n + k + t) : ℝ) / (2 : ℝ) ^ (k + t) < ε := by
+  obtain ⟨k, n, q, p, R, A, u, m, hkK, hkr, hn1, hnN, hkill, hsurv, htail, hq, hpp,
+    hpinj, hRu, hA, hres, hn, hmprime, humod⟩ :=
+    exists_joint_small_tail_rescaled_with_witnesses hc ha hr hε K N
+  exact ⟨k, n, hkK, hkr, hn1, hnN, hkill, hsurv, htail⟩
 
 /-- **The same `n` works in every base.**  Combining `exists_joint_small_tail` with the
 base majorant `base_tail_le_half_binary_tail`: there is one common offset `n` whose

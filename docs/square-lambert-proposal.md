@@ -1,5 +1,13 @@
 # A higher-probability disjunctivity target
 
+**Completed, 2026-10-27.**  The [generic arithmetic theorem](arithmetic-disjunctivity.md)
+now proves disjunctivity of `sum 1/(b^(n^r)-1)` for every integer `b>=2`, `r>=1`.
+`ArithmeticDisjunctivity.squareLambertBinaryDisjunctive` closes this proposal's
+specific target.  Every formal gate below is discharged in
+[`PowerLambertDisjunctivity.lean`](../src/NormalNumbers/PowerLambertDisjunctivity.lean).
+The remainder preserves the original recommendation, its then-open gates, and
+the forecast made before the proof work.
+
 Research recommendation, 2026-10-27.  Start with a successful arithmetic construction and extend it to a natural family whose coefficients it can control.  The proposed first target is
 
 \[

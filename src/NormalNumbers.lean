@@ -680,6 +680,8 @@ import NormalNumbers.JointLambertRescaledPrimes
 import NormalNumbers.JointLambertRescaledTail
 import NormalNumbers.JointLambertUnconditional
 import NormalNumbers.SquareLambertProposal
+import NormalNumbers.ArithmeticDisjunctivityControls
+import NormalNumbers.PowerLambertDisjunctivity
 import NormalNumbers.JointLambertGcdAverage
 import NormalNumbers.JointLambertSmallPool
 import NormalNumbers.JointLambertQuantitativeStatement

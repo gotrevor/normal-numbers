@@ -34,16 +34,20 @@ is the Lambert ladder `c_f = Σ f(n)/(bⁿ−1) = Σ (f∗1)(m) b⁻ᵐ`: the pr
   (`JointLambert.jointLambertDisjunctivity_unconditional`), with an `N^{1−ε}` occurrence
   count (`JointLambert.jointWords_quantitative`).  These modules are present
   in this checkout; the former note saying they were not merged was stale.
+- **2026-10-27: generic multiplicative coefficient disjunctivity**, under the independent
+  arithmetic conditions `ArithmeticDisjunctivity.CoefficientSystem`.  It gives
+  **`sum 1/(b^(n^r)-1)` disjunctive in base `b` for every `b>=2`, `r>=1`**, with
+  simultaneous arbitrarily late words across finitely many bases for fixed `r`.
+  Theorems: `isDisjunctive_powerLambert`, `jointPowerLambertWords`.
+  [Proof record](docs/arithmetic-disjunctivity.md).
 
 **The wall.**  Ordinary averages over all `n` of growing-depth carries: Chowla/Elliott strength
 (C1–C3, Tao–Teräväinen arXiv:2512.01739).  Freezing primes along a designed progression reaches
 disjunctivity and `N^{1−o(1)}` counts, and cannot reach positive density.  For all primes the fresh
 mass tends to `log 2`, so C′ does not apply.
 
-**Disjunctivity proposal, 2026-10-27:** the [square-indexed Lambert constant](docs/square-lambert-proposal.md).
-Its first gate is `SquareLambertProposal.SquareLambertWitnessSupply`, retaining exact prime
-valuations through the existing Erdos--Borwein tail selection at different parameters.
-The target is open; this is a recommendation, not a launched campaign.
+The [square-indexed Lambert proposal](docs/square-lambert-proposal.md) was completed
+through the generic coefficient theorem above; its witness and carry-tail gates are proved.
 
 **Frontier.**
 1. ⭐ **Quantitative C′: the normality defect is controlled by the fresh mass.**  *Update 2026-09-30: derived on paper with `c = 1` up to `log³`, see `docs/CPRIME-QUANTITATIVE-2026-09-30.md`; the text below is the original proposal.*  The Astra paper
