@@ -1,5 +1,19 @@
 # STATUS — normal-numbers 📊
 
+## Erdős–Borwein pair-shift endpoint, 27 October 2026 — HEADLINE PROVED
+
+**Scoped gate:** `CoefmassErdosBorweinPairShift.lean` is sorry-free · **Build:** 🟢 full
+formalize-tier green (10973 jobs) · **Axioms:** trust base only
+
+`ebRandom_ae_normal_subpower_of_pairShift` is proved without `MultiShiftKubiliusTV`.  It assumes only
+the frozen named hypothesis `PairShiftKubiliusTV`, transfers individual and sorted pair heavy-event
+counts to the fixed pair model, compares that model with independent columns at collision cost
+`4/P`, and closes the zero-count density by a finite second-moment bound.  The accumulated error
+`J²(sieveError + 4/P)` tends to zero and the scheduled model mean tends to infinity.  The frozen
+definitions and headline statement were not changed, and `src/NormalNumbers.lean` now imports the
+completed module.  See `EB-PAIRSHIFT-NEXT.md` lap 3 and
+`HANDOFF-2026-10-27-eb-pairshift-lap3.md`.
+
 ## Cantor repetition update, 9 October 2026 (branch `proof/cantor-repetition`, lap 13) — HEADLINE PROVED
 
 **Is the profile cut forced? No.** · **Build**: 🟢 green (10802 jobs, full default build) · lap 13

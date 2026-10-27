@@ -112,3 +112,44 @@ heavy events and use `PairShiftKubiliusTV` with `(0,j+1)` for marginals and the 
 to prove `J(N)^2` times the fixed-dimension pair TV error tends to zero (use the existing sieve
 depth estimate with `2C` for the exponential term and dominate the `log(N)^2` term by the proved
 multishift power error).
+
+## Lap 3 checkpoint (review, 2026-10-27) — target complete
+
+The scoped target is now sorry-free.  The review reconstructed the route from the frozen
+statements and checked that the pair hypothesis really suffices: use `(0,j+1)` for each marginal,
+sort every off-diagonal pair, compare the categorical pair law with two independent columns, and
+sum the resulting first- and second-moment errors.  No multishift TV hypothesis is used.
+
+The final analytic interface in `CoefmassErdosBorweinPairShiftAux.lean` proves:
+
+- the square-schedule weighted exponential and power sieve errors tend to zero;
+- `pairShiftSecondError C N = J(N)^2 (sieveError(C,N) + 4/P(N))` tends to zero;
+- the corresponding theoretical-mean Chebyshev quotient tends to zero; and
+- the concrete pair Bool mass differs from the independent two-column mass by at most `4/P`.
+
+The headline now instantiates the full route.  Its model mean tends to infinity; pair TV supplies
+the marginal and sorted off-diagonal estimates; the finite moment lemmas bound the zero-heavy-shift
+set; and `low_shiftedVarianceMass_pattern_noHeavy` supplies the deterministic inclusion needed by
+`ebRandom_ae_normal_of_shiftedVariance_diverges`.  The frozen definitions and theorem statement
+are unchanged.  `PairShiftKubiliusTV` remains an explicit theorem parameter, and the axiom audit of
+the headline is exactly `[Classical.choice, Quot.sound, propext]`.
+
+The barrier is now legitimately open: `src/NormalNumbers.lean` imports
+`NormalNumbers.CoefmassErdosBorweinPairShift`.  Audits find no `sorry`, `native_decide`, or new
+`axiom` in the pair files; the only `MultiShiftKubiliusTV` text is the prohibition in the module
+docstring.
+
+Exact checks passed:
+
+```text
+lake env lean src/NormalNumbers/CoefmassErdosBorweinPairShiftAux.lean
+lake env lean src/NormalNumbers/CoefmassErdosBorweinPairShift.lean
+~/personal/bin/lean-green /Users/gotrevor/src/nn-eb-endpoint \
+  --target NormalNumbers.CoefmassErdosBorweinPairShift \
+  --import NormalNumbers.CoefmassErdosBorweinPairShift \
+  --axioms NormalNumbers.ErdosBorweinPairShift.ebRandom_ae_normal_subpower_of_pairShift
+~/personal/bin/lean-green /Users/gotrevor/src/nn-eb-endpoint
+```
+
+Both gates ended `FORMALIZE-TIER GREEN`; the full build completed 10973 jobs.  There is no remaining
+in-scope blocker or next proof attack.  See `HANDOFF-2026-10-27-eb-pairshift-lap3.md`.

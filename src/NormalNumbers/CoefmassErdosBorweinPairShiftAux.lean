@@ -509,6 +509,199 @@ theorem tendsto_pairActiveColumnMassSum
   intro j hj
   exact hcolumn j
 
+/-! ### Scheduled pair-sieve errors -/
+
+/-- The fixed-dimensional exponential sieve error still vanishes after multiplying by the square
+of the number of scheduled shifts.  The extra decay comes from the schedule's depth inequality,
+not merely from `tendsto_multiShiftSieveExpError`. -/
+theorem tendsto_pairSieveExpError_sq (C : ℝ) (hC : 0 < C) :
+    Filter.Tendsto (fun N : ℕ ↦
+      (multiShiftScheduleJ N : ℝ) ^ 2 *
+        Real.exp (-(Real.log N / Real.log (multiShiftCutoffY N) / C)))
+      Filter.atTop (nhds 0) := by
+  have hmajor : Filter.Tendsto
+      (fun N : ℕ ↦ 1 / (multiShiftScheduleJ N : ℝ)) Filter.atTop (nhds 0) := by
+    have hraw := tendsto_multiShiftScheduleJ.inv_tendsto_atTop
+    apply hraw.congr'
+    exact Filter.Eventually.of_forall fun N ↦ by simp only [one_div, Pi.inv_apply]
+  refine squeeze_zero' (Filter.Eventually.of_forall fun N ↦ by positivity) ?_ hmajor
+  filter_upwards [eventually_multiShiftSieveDepth (2 * C) (by positivity),
+      tendsto_multiShiftScheduleJ.eventually_ge_atTop 2] with N hdepth hJ
+  let J : ℝ := multiShiftScheduleJ N
+  let R : ℝ := Real.log N / Real.log (multiShiftCutoffY N)
+  have hJ0 : 0 < J := by dsimp only [J]; linarith
+  have hlogJ0 : 0 ≤ Real.log J := Real.log_nonneg (by linarith)
+  have hlogJplus0 : 0 ≤ Real.log (J + 2) := Real.log_nonneg (by linarith)
+  have hlogMono : Real.log J ≤ Real.log (J + 2) :=
+    Real.log_le_log hJ0 (by linarith)
+  have hratio : 2 * J * Real.log (J + 2) ≤ R / C := by
+    rw [le_div_iff₀ hC]
+    calc
+      (2 * J * Real.log (J + 2)) * C =
+          (2 * C) * J * Real.log (J + 2) := by ring
+      _ ≤ R := by simpa only [J, R] using hdepth
+  have hthree : 3 * Real.log J ≤ 2 * J * Real.log (J + 2) := by
+    calc
+      3 * Real.log J ≤ 3 * Real.log (J + 2) :=
+        mul_le_mul_of_nonneg_left hlogMono (by norm_num)
+      _ ≤ 2 * J * Real.log (J + 2) :=
+        mul_le_mul_of_nonneg_right (by linarith) hlogJplus0
+  have hexp : Real.exp (-(R / C)) ≤ Real.exp (-(3 * Real.log J)) :=
+    Real.exp_le_exp.mpr (neg_le_neg (hthree.trans hratio))
+  calc
+    (multiShiftScheduleJ N : ℝ) ^ 2 *
+        Real.exp (-(Real.log N / Real.log (multiShiftCutoffY N) / C)) =
+        J ^ 2 * Real.exp (-(R / C)) := by rfl
+    _ ≤ J ^ 2 * Real.exp (-(3 * Real.log J)) :=
+      mul_le_mul_of_nonneg_left hexp (sq_nonneg J)
+    _ = 1 / J := by
+      rw [Real.exp_neg, show 3 * Real.log J = Real.log (J ^ 3) by
+        rw [Real.log_pow]
+        norm_num, Real.exp_log (pow_pos hJ0 3)]
+      field_simp
+    _ = 1 / (multiShiftScheduleJ N : ℝ) := by rfl
+
+/-- The fixed power remainder `(log N)^2 / sqrt N` vanishes after multiplication by the square of
+the number of scheduled shifts. -/
+theorem tendsto_pairSievePowerError_sq :
+    Filter.Tendsto (fun N : ℕ ↦
+      (multiShiftScheduleJ N : ℝ) ^ 2 * Real.log N ^ 2 / Real.sqrt N)
+      Filter.atTop (nhds 0) := by
+  have htTop : Filter.Tendsto (fun N : ℕ ↦ Real.log (N : ℝ))
+      Filter.atTop Filter.atTop :=
+    Real.tendsto_log_atTop.comp tendsto_natCast_atTop_atTop
+  refine squeeze_zero' (Filter.Eventually.of_forall fun N ↦ by positivity) ?_
+    tendsto_multiShiftSievePowerError
+  filter_upwards [tendsto_multiShiftScheduleJ.eventually_ge_atTop 4,
+      eventually_multiShiftScheduleJ_le_log_log,
+      htTop.eventually_ge_atTop 1] with N hJ4 hJL ht
+  let J : ℝ := multiShiftScheduleJ N
+  let t : ℝ := Real.log N
+  have ht0 : 0 < t := by dsimp only [t]; linarith
+  have hlogt : Real.log t ≤ t :=
+    (Real.log_le_sub_one_of_pos ht0).trans (by linarith)
+  have hJt : J ≤ t := by
+    change (multiShiftScheduleJ N : ℝ) ≤ Real.log N
+    exact hJL.trans (by simpa only [t] using hlogt)
+  have hJ4nat : 4 ≤ multiShiftScheduleJ N := by exact_mod_cast hJ4
+  have hnum : J ^ 2 * t ^ 2 ≤ t ^ multiShiftScheduleJ N := by
+    calc
+      J ^ 2 * t ^ 2 ≤ t ^ 2 * t ^ 2 :=
+        mul_le_mul_of_nonneg_right
+          (pow_le_pow_left₀ (by positivity) hJt 2) (sq_nonneg t)
+      _ = t ^ 4 := by ring
+      _ ≤ t ^ multiShiftScheduleJ N := pow_le_pow_right₀ ht hJ4nat
+  change J ^ 2 * t ^ 2 / Real.sqrt N ≤ t ^ multiShiftScheduleJ N / Real.sqrt N
+  exact div_le_div_of_nonneg_right hnum (Real.sqrt_nonneg _)
+
+/-- The one-pair total-variation loss from the frozen sieve hypothesis. -/
+noncomputable def pairShiftSieveError (C : ℝ) (N : ℕ) : ℝ :=
+  C * (Real.exp (-(Real.log N / Real.log (multiShiftCutoffY N) / C)) +
+    Real.log N ^ 2 / Real.sqrt N)
+
+/-- All ordered pair sieve losses vanish after summing over the scheduled square. -/
+theorem tendsto_pairShiftSieveError_sq (C : ℝ) (hC : 0 < C) :
+    Filter.Tendsto (fun N : ℕ ↦
+      (multiShiftScheduleJ N : ℝ) ^ 2 * pairShiftSieveError C N)
+      Filter.atTop (nhds 0) := by
+  have h := ((tendsto_pairSieveExpError_sq C hC).add
+    tendsto_pairSievePowerError_sq).const_mul C
+  have hzero : C * (0 + 0) = 0 := by ring
+  rw [hzero] at h
+  convert h using 1
+  ext N
+  simp only [pairShiftSieveError]
+  ring
+
+/-- The accumulated marginal sieve loss vanishes. -/
+theorem tendsto_pairShiftFirstError (C : ℝ) (hC : 0 < C) :
+    Filter.Tendsto (fun N : ℕ ↦
+      (multiShiftScheduleJ N : ℝ) * pairShiftSieveError C N)
+      Filter.atTop (nhds 0) := by
+  refine squeeze_zero' ?_ ?_ (tendsto_pairShiftSieveError_sq C hC)
+  · exact Filter.Eventually.of_forall fun N ↦ by
+      apply mul_nonneg (by positivity)
+      rw [pairShiftSieveError]
+      exact mul_nonneg hC.le (by positivity)
+  · filter_upwards [tendsto_multiShiftScheduleJ.eventually_ge_atTop 1] with N hJ
+    have herr0 : 0 ≤ pairShiftSieveError C N := by
+      apply mul_nonneg hC.le
+      positivity
+    nlinarith [mul_nonneg (sub_nonneg.mpr hJ) herr0]
+
+/-- The pair-model collision budget vanishes even with a square (rather than `J(J-1)`) of the
+scheduled shift count. -/
+theorem tendsto_pairShiftCollisionError_sq :
+    Filter.Tendsto (fun N : ℕ ↦
+      4 * (multiShiftScheduleJ N : ℝ) ^ 2 * (collisionCutoff N : ℝ)⁻¹)
+      Filter.atTop (nhds 0) := by
+  have hmajor := tendsto_multiShiftCollisionError.const_mul (4 : ℝ)
+  have hzero : (4 : ℝ) * 0 = 0 := by ring
+  rw [hzero] at hmajor
+  refine squeeze_zero' (Filter.Eventually.of_forall fun N ↦ by positivity) ?_ hmajor
+  filter_upwards [tendsto_multiShiftScheduleJ.eventually_ge_atTop 2] with N hJ
+  let J : ℝ := multiShiftScheduleJ N
+  let K : ℝ := (multiShiftScheduleJ N - 1 : ℕ)
+  have hJ0 : 0 ≤ J := by positivity
+  have hK0 : 0 ≤ K := by positivity
+  have hJK : J ≤ 2 * K := by
+    have hJnat : 1 ≤ multiShiftScheduleJ N := by
+      exact_mod_cast (show (1 : ℝ) ≤ (multiShiftScheduleJ N : ℝ) by linarith)
+    dsimp only [K]
+    rw [Nat.cast_sub hJnat]
+    dsimp only [J]
+    norm_num
+    linarith
+  have hdiff : 0 ≤
+      4 * (2 * J * K * (collisionCutoff N : ℝ)⁻¹) -
+        4 * J ^ 2 * (collisionCutoff N : ℝ)⁻¹ := by
+    rw [show 4 * (2 * J * K * (collisionCutoff N : ℝ)⁻¹) -
+        4 * J ^ 2 * (collisionCutoff N : ℝ)⁻¹ =
+      4 * J * (2 * K - J) * (collisionCutoff N : ℝ)⁻¹ by ring]
+    positivity
+  change 4 * J ^ 2 * (collisionCutoff N : ℝ)⁻¹ ≤
+    4 * (2 * J * K * (collisionCutoff N : ℝ)⁻¹)
+  linarith
+
+/-- The complete aggregate second-moment error: one sieve loss per ordered pair and the
+categorical-to-independent collision loss on the off-diagonal. -/
+noncomputable def pairShiftSecondError (C : ℝ) (N : ℕ) : ℝ :=
+  (multiShiftScheduleJ N : ℝ) ^ 2 * pairShiftSieveError C N +
+    4 * (multiShiftScheduleJ N : ℝ) ^ 2 * (collisionCutoff N : ℝ)⁻¹
+
+theorem tendsto_pairShiftSecondError (C : ℝ) (hC : 0 < C) :
+    Filter.Tendsto (pairShiftSecondError C) Filter.atTop (nhds 0) := by
+  have h := (tendsto_pairShiftSieveError_sq C hC).add
+    tendsto_pairShiftCollisionError_sq
+  have hzero : (0 : ℝ) + 0 = 0 := by ring
+  rw [hzero] at h
+  convert h using 1
+  ext N
+  simp only [pairShiftSecondError]
+
+/-- The algebraic final step in theoretical-mean Chebyshev: a diverging mean and vanishing first-
+and second-moment errors force the displayed upper bound to zero. -/
+theorem tendsto_pairChebyshevBound
+    (Q r d : ℕ → ℝ) (hQ : Filter.Tendsto Q Filter.atTop Filter.atTop)
+    (hr : Filter.Tendsto r Filter.atTop (nhds 0))
+    (hd : Filter.Tendsto d Filter.atTop (nhds 0)) :
+    Filter.Tendsto (fun N ↦ (Q N + d N + 2 * Q N * r N) / Q N ^ 2)
+      Filter.atTop (nhds 0) := by
+  have hInv : Filter.Tendsto (fun N ↦ (Q N)⁻¹) Filter.atTop (nhds 0) :=
+    hQ.inv_tendsto_atTop
+  have hlim : Filter.Tendsto
+      (fun N ↦ (Q N)⁻¹ + d N * (Q N)⁻¹ ^ 2 + 2 * r N * (Q N)⁻¹)
+      Filter.atTop (nhds 0) := by
+    have h := hInv.add (hd.mul (hInv.pow 2)) |>.add ((hr.mul hInv).const_mul 2)
+    have hzero : (0 : ℝ) + 0 * 0 ^ 2 + 2 * (0 * 0) = 0 := by ring
+    rw [hzero] at h
+    convert h using 1
+    ext N
+    ring
+  apply hlim.congr'
+  filter_upwards [hQ.eventually_gt_atTop 0] with N hQN
+  field_simp
+
 /-- Abstract coupling bound for an arbitrary categorical event.  If singleton clearing preserves
 the event away from prime collisions, its categorical mass is at most the corresponding fully
 independent mass plus twice the reciprocal-square collision budget. -/
@@ -747,5 +940,58 @@ theorem abs_pairBoolCountMass_sub_independent_le {n : ℕ} (q : Fin n → ℝ)
       apply Fintype.sum_congr
       intro i
       ring
+
+/-- Concrete reciprocal-cutoff form of the Bool pair coupling bound. -/
+theorem abs_pairBoolCountMass_sub_independent_le_inv {P y : ℕ}
+    (hP : 2 ≤ P) (hPy : P ≤ y) (t₀ t₁ : ℕ) :
+    |pairBoolCountMass
+          (fun i : Fin (Fintype.card (primesIoc P y)) ↦
+            1 / (((primeIndexEquiv P y) i : ℕ) : ℝ)) t₀ t₁ -
+        (NormalNumbers.ErdosBorweinEndpointKub.bernoulliSubsetMass
+          (Finset.univ : Finset
+            (Fin (Fintype.card (primesIoc P y)) × Fin 2))
+          (fun z ↦ 1 / (((primeIndexEquiv P y) z.1 : ℕ) : ℝ))
+          {S | t₀ ≤ (S ∩ shiftArrayColumn
+            (Fintype.card (primesIoc P y)) 2 0).card}) *
+        (NormalNumbers.ErdosBorweinEndpointKub.bernoulliSubsetMass
+          (Finset.univ : Finset
+            (Fin (Fintype.card (primesIoc P y)) × Fin 2))
+          (fun z ↦ 1 / (((primeIndexEquiv P y) z.1 : ℕ) : ℝ))
+          {S | t₁ ≤ (S ∩ shiftArrayColumn
+            (Fintype.card (primesIoc P y)) 2 1).card})| ≤
+      4 * (P : ℝ)⁻¹ := by
+  let q : Fin (Fintype.card (primesIoc P y)) → ℝ := fun i ↦
+    1 / (((primeIndexEquiv P y) i : ℕ) : ℝ)
+  have hprime : ∀ i, Nat.Prime ((primeIndexEquiv P y) i : ℕ) := by
+    intro i
+    exact (Finset.mem_filter.mp ((primeIndexEquiv P y) i).property).2
+  have hlarge : ∀ i, P < ((primeIndexEquiv P y) i : ℕ) := by
+    intro i
+    exact Finset.mem_Ioc.mp
+      (Finset.mem_filter.mp ((primeIndexEquiv P y) i).property).1 |>.1
+  have hq0 : ∀ i, 0 ≤ q i := by
+    intro i
+    dsimp only [q]
+    positivity
+  have hq1 : ∀ i, q i ≤ 1 := by
+    intro i
+    dsimp only [q]
+    have hpR : (0 : ℝ) < (((primeIndexEquiv P y) i : ℕ) : ℝ) := by
+      exact_mod_cast (hprime i).pos
+    apply (div_le_one hpR).2
+    exact_mod_cast (hprime i).one_le
+  have h2q : ∀ i, 2 * q i ≤ 1 := by
+    intro i
+    dsimp only [q]
+    rw [mul_one_div]
+    have hpR : (0 : ℝ) < (((primeIndexEquiv P y) i : ℕ) : ℝ) := by
+      exact_mod_cast (hprime i).pos
+    apply (div_le_one hpR).2
+    exact_mod_cast (show 2 ≤ ((primeIndexEquiv P y) i : ℕ) by
+      exact hP.trans (hlarge i).le)
+  have hcouple := abs_pairBoolCountMass_sub_independent_le q hq0 hq1 h2q t₀ t₁
+  change |_ - _ * _| ≤ 4 * (P : ℝ)⁻¹
+  exact hcouple.trans
+    (mul_le_mul_of_nonneg_left (sum_primeIndex_inv_sq_le (by omega) hPy) (by norm_num))
 
 end NormalNumbers.ErdosBorweinPairShift
