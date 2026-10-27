@@ -723,6 +723,21 @@ carry their evidence as a file pointer.  Sorted by area, newest campaigns first.
 /-- Every hall this programme has walked and closed.  Never delete a row: a re-opened hall
 keeps its row and gains a note (see `hdom` and the tower-separation wall, both REVERSED). -/
 def register : List Hall := [
+  ⟨"Pi invention screen: polynomial accuracy pays for a complete rational period",
+   "Aliases: Pade approximant repetend transfer, primitive-root denominator, complete multiplicative-orbit cancellation. Transfer a rational approximant's whole digit period to pi",
+   .refuted, .kernel,
+   "The unrestricted accuracy-to-horizon step is false: at denominator 11, quadratic accuracy does not certify the ten-shift horizon, although 2 has full order 10. More generally an explicit rational-approximation lower bound c/q^mu prevents the absolute-error budget once q^mu<=c*b^T. This does not prove orbit separation modulo one, and does not exclude early hits or pi-specific arithmetic of approximation numerators. REOPEN ONLY with a word-hit estimate inside the actual certified short horizon, or a justified transport mechanism beyond absolute error. Complete-period cancellation alone does not supply it",
+   "InventionScreen.lean: not_quadraticAccuracyFullPeriodTransfer, denominator_eleven_full_period, not_absoluteShadowBudget_of_lower_bound, shadow_scale_controls; docs/pi-routes/invention-screen.md", "2026-10-27"⟩,
+  ⟨"Pi invention screen: language recognizer becomes a finite description of its path",
+   "Aliases: forbidden-word automaton to automatic digits, automaton-to-Mahler equation, transition matrix for the chosen stream",
+   .refuted, .kernel,
+   "No countable catalogue exhausts even the binary streams avoiding 11. Put arbitrary bits in even positions and zero in odd positions, then diagonalize against the catalogue. A finite recognizer therefore does not by itself supply a finitely specified generator for each path. This is a stream obstruction, not a theorem about the actual pi stream or about all uses of automata. REOPEN ONLY with an independently proved pi-specific rigidity statement selecting the path; a matrix enumerating all accepted words is not such a statement",
+   "InventionScreen.lean: separated_avoids, not_countableAvoiderCatalogue; docs/pi-routes/invention-screen.md", "2026-10-27"⟩,
+  ⟨"Pi invention screen: specialize analytic-family averages without pointwise control",
+   "Aliases: parameter deformation, generic normality to pi, analytic continuation of digit statistics, average-to-special-value transfer",
+   .refuted, .kernel,
+   "No uniform endpoint-by-mass constant exists even for nonnegative polynomials: x^n has height 1 and integral 1/(n+1). Positive Gaussians on the entire real line have height 1 at zero with arbitrarily small prescribed total mass, so the point issue is not only a boundary artifact. These controls refute averaging alone, not a quantitative estimate with adequate derivative, degree, or localization control. No such estimate for a family at pi was obtained. REOPEN ONLY with that pointwise extraction mechanism and its scale budget; almost-everywhere behavior or analyticity alone is insufficient",
+   "InventionScreen.lean: polynomial_spike_control, not_uniformPolynomialEndpointBound, gaussian_spike_control; docs/pi-routes/invention-screen.md", "2026-10-27"⟩,
   ⟨"Pi route 4: exact spigot and word-avoidance ranks",
    "Aliases: hypergeometric pi spigot, arithmetic termination invariant, automaton escape rank. Force each binary word by a decreasing rank on exact integer states",
    .abandonedIntractable, .kernel,

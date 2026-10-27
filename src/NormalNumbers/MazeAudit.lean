@@ -40,6 +40,7 @@ import NormalNumbers.PiDisjunctiveRoutes.PrimeReservoirDiagonal
 import NormalNumbers.PiDisjunctiveRoutes.DiskFloorError
 import NormalNumbers.PiDisjunctiveRoutes.RoundTwoOscillator
 import NormalNumbers.PiDisjunctiveRoutes.RoundTwoOscillatorSharp
+import NormalNumbers.PiDisjunctiveRoutes.InventionScreen
 import NormalNumbers.PiDisjunctiveRoutes.RoundTwoSpigot
 import NormalNumbers.PiDisjunctiveRoutes.RoundTwoRadical
 import NormalNumbers.EntropyProfiles
@@ -87,6 +88,18 @@ def mazeRows : List RowInfo :=
 
 /-- Each linked row and the declarations it rests on. -/
 def mazeLinks : List Link := [
+  ⟨"Pi invention screen: polynomial accuracy pays for a complete rational period",
+   [``PiDisjunctiveRoutes.InventionScreen.not_quadraticAccuracyFullPeriodTransfer,
+    ``PiDisjunctiveRoutes.InventionScreen.denominator_eleven_full_period,
+    ``PiDisjunctiveRoutes.InventionScreen.not_absoluteShadowBudget_of_lower_bound,
+    ``PiDisjunctiveRoutes.InventionScreen.shadow_scale_controls], []⟩,
+  ⟨"Pi invention screen: language recognizer becomes a finite description of its path",
+   [``PiDisjunctiveRoutes.InventionScreen.separated_avoids,
+    ``PiDisjunctiveRoutes.InventionScreen.not_countableAvoiderCatalogue], []⟩,
+  ⟨"Pi invention screen: specialize analytic-family averages without pointwise control",
+   [``PiDisjunctiveRoutes.InventionScreen.polynomial_spike_control,
+    ``PiDisjunctiveRoutes.InventionScreen.not_uniformPolynomialEndpointBound,
+    ``PiDisjunctiveRoutes.InventionScreen.gaussian_spike_control], []⟩,
   ⟨"Pi route 4: exact spigot and word-avoidance ranks",
    [``PiDisjunctiveRoutes.RoundTwo.Pilots.positiveWidthAlternatingPrefix,
     ``PiDisjunctiveRoutes.RoundTwo.Pilots.no_index_only_emit_rank,
@@ -529,7 +542,7 @@ def piRetiredRows : List RowInfo := mazeRows.filter (fun r => r.name.startsWith 
 #guard (LeanLedger.audit piRetiredRows
   (mazeLinks.filter (fun l => l.row.startsWith "Pi route ")) []).isEmpty
 
-/-- info: maze audit: 210 rows, 103 cite declarations, 107 legacy (prose only) -/
+/-- info: maze audit: 213 rows, 106 cite declarations, 107 legacy (prose only) -/
 #guard_msgs in
 #maze_audit mazeRows, mazeLinks, mazeLegacy
 

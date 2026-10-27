@@ -71,6 +71,12 @@ exact refutations have separate scoped rows.  The audit guards all six retiremen
 rows and requires linked evidence and open cruxes for each.  The second round
 does not reopen the first.
 
+The subsequent [invention screen](docs/pi-routes/invention-screen.md) admitted
+zero new routes.  Its three scoped failed proof steps have separate Maze entries
+and Lean controls in `PiDisjunctiveRoutes/InventionScreen.lean`; they are not a
+third campaign or claims that all approximation, automaton, or averaging methods
+are impossible.
+
 | Original route | Formal crux and evidence | What must change to reopen |
 |---|---|---|
 | Triple return / odd orbit invariance | `PiOrbitClosureOddInvariant`; `pi_disjunctive_iff_oddInvariant`; the odd-return equivalence; the abstract doubling/tripling counterexample | A pi-specific arithmetic mechanism for odd invariance or returns.  A different odd multiplier or self-return prerequisite alone does not qualify. |
