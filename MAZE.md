@@ -2,6 +2,8 @@
 
 The Maze preserves both **mathematical findings** and **research decisions** so future sessions do not spend another campaign rediscovering the same obstruction or unresolved crux.  A route can be abandoned because we cannot make it tractable with current methods.  An impossibility theorem is not a prerequisite for recording that decision.
 
+A **route** is an investigated approach toward the goal; it need not succeed or merit continued work to count as one.  Report its outcome separately: valid reduction with an open crux, refuted mechanism, vacuous test, or operational abandonment.  Equivalence to the goal is neither a circular proof nor an obstruction by itself.  A useful reformulation may make different tools applicable; explain whether such a mechanism was found.
+
 Read this file before proposing new ideas, retiring a route, or reopening one.  `src/NormalNumbers/Maze.lean` is the register; `MazeAudit.lean` connects its entries to Lean declarations and checks their coverage.  Keep this policy linked at the top of both files and in `AGENTS.md`.  Other repositories adopting the practice should likewise link their policy from every Maze register.
 
 ## Separate the mathematical claim from the research decision
@@ -89,7 +91,8 @@ and third are parked pending their named estimates.  The Pade route's
 budget below 1/8; its parameter-uniform construction remains an open wall.
 Preserve both the finite positive witness and the finite exclusion certificates.
 
-The [sqrt(2) screen](docs/sqrt-two-routes/screen.md) admits no campaign.
+The [sqrt(2) screen](docs/sqrt-two-routes/screen.md) investigates three routes;
+none was selected for a further campaign in its present form.
 Adjacent Pell certificates attain exactly the original dyadic residual, and
 signed window supply is equivalent to disjunctivity.  A fixed-modulus remainder
 abstraction admits every bit stream; the splitting-only norm filter is automatic

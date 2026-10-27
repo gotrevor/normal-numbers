@@ -1,6 +1,8 @@
 # √2: arithmetic mechanism screen
 
-The screen admits **no new disjunctivity campaign**.  It produces three scoped findings, all stated and proved in [`Screen.lean`](../../src/NormalNumbers/SqrtTwoRoutes/Screen.lean).  The most useful is an exact explanation of why Pell certificate searches can succeed without supplying a digit-visitation mechanism.  No numerical search was needed.
+We investigated **three routes toward disjunctivity of √2**.  Their outcomes differ: the Pell route gives a valid equivalent formulation whose uniform construction remains open; the stated finite-residue model cannot restrict the bit stream; the splitting-only sieve is automatic.  The supporting findings are stated and proved in [`Screen.lean`](../../src/NormalNumbers/SqrtTwoRoutes/Screen.lean).  No numerical search was needed.
+
+None was selected for a further campaign in its present form.  That is a research decision, not a denial that these are routes toward the goal.  In particular, equivalence does not defeat the Pell route: a new way to prove its certificate-supply premise would prove disjunctivity.  The missing ingredient is that construction, not a logically stronger reduction.
 
 Decision date: 2026-10-27.  Apply [MAZE.md](../../MAZE.md) before proposing variants.  This is local mathematical work, with no literature or priority claim.  Namespace below: `NormalNumbers.SqrtTwoRoutes`.
 
