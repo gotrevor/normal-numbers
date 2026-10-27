@@ -3,6 +3,28 @@
 Read the shared pilot contract.  Prove or refute the frozen pilot targets
 `CubicBlindAtThree` and `QuarticRejectsThree` in `RoundTwoOscillator.lean`.
 
+## Operator addendum: exact quartic obstruction found before launch
+
+Also prioritize `QuarticQuadratureIdentity` and `QuarticEndpointObstruction`
+from the frozen targets file.  The parent found and independently checked an
+exact positive quadrature using `scripts/pi_oscillator_quadrature.py`:
+
+For R=P''+P and degree(P)<=4,
+
+`10*(P(0)+P(3)) + P(0)+P(4)` equals
+`(7/12)R(0)+(8/3)R(1/2)+(184/15)R(3/2)+(35/6)R(2)+(13/20)R(4)`.
+
+All coefficients are positive.  Thus no quartic positive-oscillator polynomial
+rejects both 3 and 4.  Both integers avoid [1], so the entire degree-at-most-4
+certificate family fails even for that word.  This is stronger than the cubic
+barrier, while the quartic single-point control remains useful.
+
+Prove the identity on monomials or via the five polynomial coefficients; avoid
+general quadrature machinery.  These four frozen targets are enough for a
+successful checkpoint.  A degree-5/6 search is optional and must stay within budget.
+
+## Initial tests and scope
+
 The cheap algebra that must work before any search:
 
 1. For every polynomial P of degree at most 3,

@@ -33,6 +33,25 @@ def QuarticRejectsThree : Prop :=
   PositiveOscillator quarticControl ∧
     (realPoly quarticControl).eval 0 + (realPoly quarticControl).eval 3 < 0
 
+/-- Expected true (99%, independently checked exact rational quadrature).
+All weights are positive and all nodes lie in [0,4]. -/
+def QuarticQuadratureIdentity : Prop :=
+  ∀ P : Polynomial ℚ, P.natDegree ≤ 4 →
+    let R := (realPoly P).derivative.derivative + realPoly P
+    10 * ((realPoly P).eval 0 + (realPoly P).eval 3) +
+        ((realPoly P).eval 0 + (realPoly P).eval 4) =
+      (7 / 12 : ℝ) * R.eval 0 + (8 / 3 : ℝ) * R.eval (1 / 2) +
+      (184 / 15 : ℝ) * R.eval (3 / 2) + (35 / 6 : ℝ) * R.eval 2 +
+      (13 / 20 : ℝ) * R.eval 4
+
+/-- Expected true (99%, consequence of the positive quadrature).  A quartic
+cannot reject both 3 and 4, hence cannot certify the forbidden word [1]. -/
+@[blueprint (title := "Quartic oscillator certificates cannot reject both integer endpoints")]
+def QuarticEndpointObstruction : Prop :=
+  ∀ P : Polynomial ℚ, P.natDegree ≤ 4 → PositiveOscillator P →
+    0 < 10 * ((realPoly P).eval 0 + (realPoly P).eval 3) +
+      ((realPoly P).eval 0 + (realPoly P).eval 4)
+
 /-- Expected true (99%, difference of squares).  The sibling restores exactly
 the previous factor, regardless of the distinguished branch's size. -/
 @[blueprint (title := "Relative radical factors exactly compensate")]
