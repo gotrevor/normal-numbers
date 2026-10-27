@@ -40,6 +40,13 @@ is the Lambert ladder `c_f = Σ f(n)/(bⁿ−1) = Σ (f∗1)(m) b⁻ᵐ`: the pr
   simultaneous arbitrarily late words across finitely many bases for fixed `r`.
   Theorems: `isDisjunctive_powerLambert`, `jointPowerLambertWords`.
   [Proof record](docs/arithmetic-disjunctivity.md).
+- **The perfect-power normality upgrade is refuted:** for every `r>=2`, the
+  same constant is **not normal in its defining base**
+  (`not_isNormal_powerLambert`, `powerLambert_disjunctive_not_normal`).
+  Removing a finite rational head leaves a coefficient tail with mean too small
+  for equidistribution.  The generic coefficient hypotheses therefore do not
+  imply normality (`not_genericArithmeticNormality`).  This obstruction does
+  not cover `r=1`.  [Proof and scope](docs/power-lambert-normality.md).
 
 **The wall.**  Ordinary averages over all `n` of growing-depth carries: Chowla/Elliott strength
 (C1–C3, Tao–Teräväinen arXiv:2512.01739).  Freezing primes along a designed progression reaches

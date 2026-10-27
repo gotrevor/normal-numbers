@@ -96,7 +96,12 @@ retired squarefree-indexed single-survivor route.  These controls do not claim t
 every coefficient system excluded by the sufficient hypotheses is nondisjunctive.
 
 The theorem establishes disjunctivity, with simultaneous recurrence of arbitrary
-finite words.  It gives no normality or positive frequency conclusion.  It makes
+finite words.  The normality upgrade is now **refuted**: every perfect-power
+Lambert member with `r>=2` is nonnormal in its defining base
+(`not_isNormal_powerLambert`).  `not_genericArithmeticNormality` consequently
+refutes normality under the generic coefficient hypotheses alone.  See the
+[normality boundary and proof](power-lambert-normality.md).  The argument does
+not decide normality for `r=1`, and gives no positive frequency conclusion.  It makes
 no claim about the digits of pi, log(2), or sqrt(2), and no claim of literature
 priority.  The source of the construction is the repo's Erdos--Borwein proof;
 the extension isolates its coefficient arithmetic and applies it to power-divisor

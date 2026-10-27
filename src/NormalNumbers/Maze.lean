@@ -723,6 +723,11 @@ carry their evidence as a file pointer.  Sorted by area, newest campaigns first.
 /-- Every hall this programme has walked and closed.  Never delete a row: a re-opened hall
 keeps its row and gains a note (see `hdom` and the tower-separation wall, both REVERSED). -/
 def register : List Hall := [
+  ⟨"Normality upgrade for perfect-power Lambert constants",
+   "Upgrade multiplicative coefficient disjunctivity to normality, in particular for sum 1/(b^(n^r)-1) with integer b >= 2 and r >= 2",
+   .refuted, .kernel,
+   "Every member with r >= 2 is nonnormal in its defining base. Removing the first eight rational Lambert summands leaves coefficients whose prefix sum is at most N/8. Their radix orbit has partial sum at most (N+2)/8, contradicting normal equidistribution. Rational translation preserves normality. The same constants are disjunctive, so arbitrary-word existence does not rescue the normality claim. This also refutes GenericArithmeticNormality. No reopening for these exact targets; a changed family must evade this obstruction. The argument does not cover r=1, other bases of a fixed constant, or simple normality",
+   "PowerLambertNonNormal.lean: not_isNormal_powerLambert, powerLambert_disjunctive_not_normal, GenericArithmeticNormality, not_genericArithmeticNormality, linear_power_prefix_control, square_tail_positive_control; docs/power-lambert-normality.md", "2026-10-27"⟩,
   ⟨"Sqrt2 exponent selector: full Pell residue periods",
    "Aliases: primitive-root Pell denominator, rational repetend selector, exponent chosen by modular order. Seek a word in the complete orbit of p_n*2^m mod q_n and transport it to sqrt(2)",
    .refuted, .kernel,

@@ -6,6 +6,7 @@ Authors: Trevor Morris
 /- Research-retirement policy: ../../MAZE.md (repository root).
 This audit checks references; it does not prove a difficulty judgment. -/
 import NormalNumbers.Maze
+import NormalNumbers.PowerLambertNonNormal
 import NormalNumbers.MahlerProductBlock
 import NormalNumbers.CPrimeSiteFactorization
 import LeanLedger.MazeLinks
@@ -97,6 +98,17 @@ def mazeRows : List RowInfo :=
 
 /-- Each linked row and the declarations it rests on. -/
 def mazeLinks : List Link := [
+  ⟨"Normality upgrade for perfect-power Lambert constants",
+   [``ArithmeticDisjunctivity.not_isNormal_powerLambert,
+    ``ArithmeticDisjunctivity.powerLambert_disjunctive_not_normal,
+    ``ArithmeticDisjunctivity.GenericArithmeticNormality,
+    ``ArithmeticDisjunctivity.not_genericArithmeticNormality,
+    ``ArithmeticDisjunctivity.prefix_tailPowerDivisorCount_bound,
+    ``ArithmeticDisjunctivity.exists_rat_powerLambert_tail,
+    ``ArithmeticDisjunctivity.orbit_sum_le_of_small_coefficients,
+    ``ArithmeticDisjunctivity.not_isNormal_of_orbit_sum_bound,
+    ``ArithmeticDisjunctivity.linear_power_prefix_control,
+    ``ArithmeticDisjunctivity.square_tail_positive_control], []⟩,
   ⟨"Sqrt2 exponent selector: full Pell residue periods",
    [``SqrtTwoRoutes.pellOrderMarginHit_exponent_bound,
     ``SqrtTwoRoutes.pell_order_positive_controls,
@@ -619,7 +631,7 @@ def piRetiredRows : List RowInfo := mazeRows.filter (fun r => r.name.startsWith 
 #guard (LeanLedger.audit piRetiredRows
   (mazeLinks.filter (fun l => l.row.startsWith "Pi route ")) []).isEmpty
 
-/-- info: maze audit: 222 rows, 115 cite declarations, 107 legacy (prose only) -/
+/-- info: maze audit: 223 rows, 116 cite declarations, 107 legacy (prose only) -/
 #guard_msgs in
 #maze_audit mazeRows, mazeLinks, mazeLegacy
 

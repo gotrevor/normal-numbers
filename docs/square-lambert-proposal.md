@@ -5,6 +5,9 @@ now proves disjunctivity of `sum 1/(b^(n^r)-1)` for every integer `b>=2`, `r>=1`
 `ArithmeticDisjunctivity.squareLambertBinaryDisjunctive` closes this proposal's
 specific target.  Every formal gate below is discharged in
 [`PowerLambertDisjunctivity.lean`](../src/NormalNumbers/PowerLambertDisjunctivity.lean).
+The stronger normality target is now refuted for every `r>=2` in its defining
+base: see the [normality boundary](power-lambert-normality.md) and
+`ArithmeticDisjunctivity.not_isNormal_powerLambert`.
 The remainder preserves the original recommendation, its then-open gates, and
 the forecast made before the proof work.
 
