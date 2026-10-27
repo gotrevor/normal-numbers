@@ -65,6 +65,23 @@ def QuinticEndpointControl : Prop :=
     (realPoly quinticControl).eval 0 + (realPoly quinticControl).eval 3 < 0 ∧
     (realPoly quinticControl).eval 0 + (realPoly quinticControl).eval 4 < 0
 
+def WordOscillatorCertificate (w : List ℕ) (P : Polynomial ℚ) : Prop :=
+  PositiveOscillator P ∧ ∀ x ∈ Set.Icc (3 : ℝ) 4, AvoidsWord w x →
+    (realPoly P).eval 0 + (realPoly P).eval x ≤ 0
+
+def WordOneAvoidanceClassification : Prop :=
+  ∀ x ∈ Set.Icc (3 : ℝ) 4, AvoidsWord [1] x ↔ x = 3 ∨ x = 4
+
+def QuinticWordOneCertificate : Prop :=
+  WordOscillatorCertificate [1] quinticControl
+
+/-- Expected true (99%, the positive control plus the proved quartic obstruction
+and the elementary classification of [1]-avoiders).  Still open here. -/
+@[blueprint (title := "Degree five is the sharp oscillator threshold for word one")]
+def MinimumDegreeWordOne : Prop :=
+  (∃ P : Polynomial ℚ, P.natDegree = 5 ∧ WordOscillatorCertificate [1] P) ∧
+    ∀ P : Polynomial ℚ, WordOscillatorCertificate [1] P → 5 ≤ P.natDegree
+
 /-- Generalization suggested by finite-dimensional positivity; open (95%).
 Normalize the residual Q=P''+P.  Compactness of the fixed-degree positive cone
 gives a positive lower bound for its sine integral, while the inverse oscillator

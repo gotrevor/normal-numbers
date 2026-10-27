@@ -66,4 +66,30 @@ This is the highest-risk proposal.  A full norm usually loses precisely the info
 
 My first choice is the **oscillator-certificate test** (60% confidence in this ranking), followed by spigot invariants.  Both have explicit proof objects that can reveal whether anything beyond digit computation is happening.  The radical-norm idea should receive only its compensation test before any serious commitment.
 
-All three crucial inputs remain open.  The three Lean transfers are conditional reductions, not advances on their premises.  No five-hour runs have been launched.  If a mechanism test fails, the precise failed family and reopening requirement belong in the Maze in the same turn.
+All three crucial inputs remain open.  The three Lean transfers are conditional reductions, not advances on their premises.
+
+## Bounded pilot results, 2026-10-26
+
+Three Opus/low laps supplied the following results.  The three narrowly scoped
+failed mechanisms now have checked Maze links; the broader routes are not declared
+impossible.  See [the run receipt](pilots/review.md) for validation and provenance.
+
+- **Oscillator:** `cubicBlindAtThree` and `quarticEndpointObstruction` rule out
+  degree at most four for simultaneous exclusion of 3 and 4.  The exact positive
+  quadrature is `quarticQuadratureIdentity`; `quarticRejectsThree` is its control.
+  An exact rational quintic calculation suggests a sharp positive control,
+  formally stated as `MinimumDegreeWordOne` but not yet proved.  The next bounded
+  task is [that calibration](pilots/oscillator-followup.md), not a digit search.
+- **Spigot:** `positiveWidthAlternatingPrefix` and `no_index_only_emit_rank`
+  exclude input-index-only waiting bounds uniform over positive-width states.
+  The constructed states are not claimed reachable from the pi initial state.
+  No pi-specific invariant establishing `SpigotEscapeBudget` was found.
+- **Radicals:** `branchNorm_eq` proves exact compensation through the entire
+  signed radical tree at every depth; `not_uniform_branchLoss` refutes a uniform
+  gain in the full product.  A word-sensitive estimate retaining a distinguished
+  branch is still missing.  More full-product calculations will not supply it.
+
+The next research filter is whether a higher-degree oscillator construction uses
+the word automaton independently of a known occurrence in pi.  A degree-five
+certificate for the single word `[1]` would calibrate the method, not establish
+that missing construction or prove pi disjunctive.

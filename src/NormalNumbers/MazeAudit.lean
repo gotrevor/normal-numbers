@@ -38,6 +38,9 @@ import NormalNumbers.PiDisjunctiveRoutes.TripleReturnReview
 import NormalNumbers.PiDisjunctiveRoutes.TripleReturnLiouville
 import NormalNumbers.PiDisjunctiveRoutes.PrimeReservoirDiagonal
 import NormalNumbers.PiDisjunctiveRoutes.DiskFloorError
+import NormalNumbers.PiDisjunctiveRoutes.RoundTwoOscillator
+import NormalNumbers.PiDisjunctiveRoutes.RoundTwoSpigot
+import NormalNumbers.PiDisjunctiveRoutes.RoundTwoRadical
 import NormalNumbers.EntropyProfiles
 import NormalNumbers.CantorExactExponentStretch
 import NormalNumbers.CantorExactExponentProfile
@@ -83,6 +86,22 @@ def mazeRows : List RowInfo :=
 
 /-- Each linked row and the declarations it rests on. -/
 def mazeLinks : List Link := [
+  ⟨"Second-round pi: oscillator exclusion with degree at most four",
+   [``PiDisjunctiveRoutes.RoundTwo.Pilots.not_quartic_endpoint_certificate,
+    ``PiDisjunctiveRoutes.RoundTwo.Pilots.quarticQuadratureIdentity,
+    ``PiDisjunctiveRoutes.RoundTwo.Pilots.quarticRejectsThree],
+   [``PiDisjunctiveRoutes.RoundTwo.OscillatorCertificateSupply,
+    ``PiDisjunctiveRoutes.RoundTwo.Pilots.MinimumDegreeWordOne]⟩,
+  ⟨"Second-round pi: input-index-only spigot waiting bounds",
+   [``PiDisjunctiveRoutes.RoundTwo.Pilots.positiveWidthAlternatingPrefix,
+    ``PiDisjunctiveRoutes.RoundTwo.Pilots.no_index_uniform_waiting_bound,
+    ``PiDisjunctiveRoutes.RoundTwo.Pilots.no_index_only_emit_rank],
+   [``PiDisjunctiveRoutes.RoundTwo.SpigotEscapeBudget]⟩,
+  ⟨"Second-round pi: uniform loss in full radical branch products",
+   [``PiDisjunctiveRoutes.RoundTwo.Pilots.branchNorm_eq,
+    ``PiDisjunctiveRoutes.RoundTwo.Pilots.not_uniformSiblingLoss,
+    ``PiDisjunctiveRoutes.RoundTwo.Pilots.not_uniform_branchLoss],
+   [``PiDisjunctiveRoutes.RoundTwo.AlgebraicAngleDisjunctivity]⟩,
   ⟨"Pi route 1: triple return and odd orbit invariance",
    [``PiDisjunctiveRoutes.tripleReturn_iff_disjunctive,
     ``PiDisjunctiveRoutes.mem_circleOmegaLimit_oddMul_iff_disjunctive,
@@ -492,7 +511,7 @@ def piRetiredRows : List RowInfo := mazeRows.filter (fun r => r.name.startsWith 
 #guard (LeanLedger.audit piRetiredRows
   (mazeLinks.filter (fun l => l.row.startsWith "Pi route ")) []).isEmpty
 
-/-- info: maze audit: 204 rows, 97 cite declarations, 107 legacy (prose only) -/
+/-- info: maze audit: 207 rows, 100 cite declarations, 107 legacy (prose only) -/
 #guard_msgs in
 #maze_audit mazeRows, mazeLinks, mazeLegacy
 

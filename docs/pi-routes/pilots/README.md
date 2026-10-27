@@ -4,6 +4,11 @@ The user authorized digging into the three proposals and using cheap treadmills.
 These pilots test concrete mathematical mechanisms before any extended campaign.
 Read `MAZE.md`, `docs/pi-routes/round-two.md`, and `RoundTwoPilotTargets.lean`.
 
+The first three pilots have finished; see [review.md](review.md) for results and
+the context-budget/build lesson.  The settings below describe those initial runs.
+The [oscillator follow-up](oscillator-followup.md) explicitly overrides its budget
+and assigns the final host build and commit to the parent.
+
 Each run gets one Opus/low lap, a 20,000-token legacy context budget, and a
 35-minute supervisor duration setting.  The supervisor duration is checked between
 laps, not a hard deadline for a running lap.  Independently, check the actual clock

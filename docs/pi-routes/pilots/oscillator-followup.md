@@ -14,13 +14,28 @@ matching positive endpoint control, without using computed pi digits:
 
 ## Next bounded proof task
 
+This follow-up overrides the first-pilot operational settings: one Opus/low lap,
+80,000 legacy context tokens (including inherited context), a 35-minute supervisor
+setting, and a compiling checkpoint after about 25 minutes.  The parent owns the
+final host build and normal commit hooks.  Do not start a worker commit or wait on
+a full-repository build; leave the two deliverable files for parent review.
+Write only `src/NormalNumbers/PiDisjunctiveRoutes/RoundTwoOscillatorSharp.lean`
+and `docs/pi-routes/pilots/oscillator-sharp-result.md`.  Import the existing
+`RoundTwoOscillator` module.  No changes to frozen targets, shared Maze files,
+dependencies, or other workers' files; no further agents or treadmills.
+
 1. Prove the quintic control.
 2. Classify [1]-avoiding x in [3,4] as precisely {3,4}, with the canonical binary
    expansion convention.  Use the existing digit reconstruction lemmas.
 3. Prove a word-[1] oscillator certificate exists in degree 5 and none exists in
    degree <=4.  State the actual certificate and its minimum degree, not just
    endpoint inequalities.  This is a sharp calibration result, not a new fact
-   about pi's digits.
+   about pi's digits.  The frozen targets are `QuinticEndpointControl`,
+   `WordOneAvoidanceClassification`, `QuinticWordOneCertificate`, and
+   `MinimumDegreeWordOne`.  Inspect types and `#print axioms` of delivered proofs.
+
+Do not spend this lap on the structural question below.  If the classification
+stalls, deliver the quintic algebra and a precise missing lemma.
 
 The subsequent structural question is `FixedDegreeBlindInterval`: for each fixed
 degree there is an open neighborhood of pi on which EVERY positive-oscillator

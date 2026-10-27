@@ -723,6 +723,21 @@ carry their evidence as a file pointer.  Sorted by area, newest campaigns first.
 /-- Every hall this programme has walked and closed.  Never delete a row: a re-opened hall
 keeps its row and gains a note (see `hdom` and the tower-separation wall, both REVERSED). -/
 def register : List Hall := [
+  ⟨"Second-round pi: oscillator exclusion with degree at most four",
+   "Aliases: cubic/quartic positive-oscillator certificates, low-degree sine-kernel polynomials. Reject the forbidden-word set using P''+P>0",
+   .refuted, .kernel,
+   "A positive quadrature identity forces 10*(P(0)+P(3))+P(0)+P(4)>0 for degree<=4, so such a polynomial cannot reject both 3 and 4. The cubic identity already prevents rejecting 3. A quartic rejecting 3 alone is a proved positive control. This is a degree-restricted obstruction, not a refutation of oscillator certificates at higher degree. REOPEN IF: use a higher-degree certificate together with a uniform construction for word-avoidance automata; the explicit quintic endpoint control is a separate test, not a uniform construction",
+   "RoundTwoOscillator.lean: not_quartic_endpoint_certificate, quarticQuadratureIdentity, quarticRejectsThree; RoundTwoPilotTargets.lean: MinimumDegreeWordOne; docs/pi-routes/pilots/oscillator-result.md", "2026-10-26"⟩,
+  ⟨"Second-round pi: input-index-only spigot waiting bounds",
+   "Aliases: read-free emit bound, n-ranked escape, uniform word-search budget over positive-width spigot states",
+   .refuted, .kernel,
+   "Exact positive-width states with n=0 emit arbitrarily long alternating 01 prefixes without reading a coefficient. Thus no bound depending only on n controls all non-reading runs over these states. The states are not claimed reachable from spigotInitial; SpigotEscapeBudget for pi remains open. REOPEN IF: prove additional reachable-state arithmetic that yields word visits, beyond merely restating reachability or bounding the enclosure width",
+   "RoundTwoSpigot.lean: positiveWidthAlternatingPrefix, no_index_uniform_waiting_bound, no_index_only_emit_rank; docs/pi-routes/pilots/spigot-result.md", "2026-10-26"⟩,
+  ⟨"Second-round pi: uniform loss in full radical branch products",
+   "Aliases: relative norm descent, sibling loss, nested-radical norm compensation, full Galois-branch product",
+   .refuted, .kernel,
+   "At every depth the full product of 2-minus-branch over all signed square-root branches equals 2-minus-seed exactly. Uniform multiplicative loss c<1 is impossible, including at seed zero. This does not exclude word-dependent inequalities retaining the distinguished branch and the seed's arithmetic. REOPEN IF: formulate and justify such an inequality that uses information absent from the full product; a smaller polygon error or an ordinary height bound is insufficient",
+   "RoundTwoRadical.lean: branchNorm_eq, not_uniformSiblingLoss, not_uniform_branchLoss; docs/pi-routes/pilots/radical-result.md", "2026-10-26"⟩,
   ⟨"Pi route 1: triple return and odd orbit invariance",
    "Aliases: triple return, q*pi return, odd-multiplier omega-limit invariance, Furstenberg x2/xq, self-return prerequisite. Force binary disjunctivity through an odd multiple in pi's binary omega-limit set",
    .abandonedIntractable, .kernel,
