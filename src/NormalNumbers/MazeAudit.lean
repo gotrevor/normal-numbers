@@ -49,6 +49,7 @@ import NormalNumbers.SqrtTwoRoutes.NormScale
 import NormalNumbers.SqrtTwoRoutes.Balanced
 import NormalNumbers.SqrtTwoRoutes.WordCertificate
 import NormalNumbers.SqrtTwoRoutes.Controls
+import NormalNumbers.SqrtTwoRoutes.ExponentSelection
 import NormalNumbers.PiDisjunctiveRoutes.RoundTwoSpigot
 import NormalNumbers.PiDisjunctiveRoutes.RoundTwoRadical
 import NormalNumbers.EntropyProfiles
@@ -96,6 +97,24 @@ def mazeRows : List RowInfo :=
 
 /-- Each linked row and the declarations it rests on. -/
 def mazeLinks : List Link := [
+  ⟨"Sqrt2 exponent selector: full Pell residue periods",
+   [``SqrtTwoRoutes.pellOrderMarginHit_exponent_bound,
+    ``SqrtTwoRoutes.pell_order_positive_controls,
+    ``SqrtTwoRoutes.pell_order_full_cycle_misses_margin_control,
+    ``SqrtTwoRoutes.pell_order_q29_rational_hit_is_wrong_word,
+    ``SqrtTwoRoutes.pellEarlyOrderSupply_implies_disjunctive],
+   [``SqrtTwoRoutes.PellEarlyOrderMarginSupply, ``SqrtTwoRoutes.PellOrderMarginTransfer]⟩,
+  ⟨"Sqrt2 exponent selector: lifted Pell indices",
+   [``SqrtTwoRoutes.pell_index_lift_size_lower_bound,
+    ``SqrtTwoRoutes.pell_index_lift_coeffV_divisible_for_every_numerator,
+    ``SqrtTwoRoutes.pell_index_lift_coeffU_congruent_for_every_numerator,
+    ``SqrtTwoRoutes.pell_index_lift_archimedean_cost,
+    ``SqrtTwoRoutes.exponent_lift_00_control,
+    ``SqrtTwoRoutes.exponent_lift_neighbor_rejected,
+    ``SqrtTwoRoutes.lifted_zero_residue_not_near,
+    ``SqrtTwoRoutes.lifted_near_positive_control,
+    ``SqrtTwoRoutes.pellLiftedWordSupply_implies_disjunctive],
+   [``SqrtTwoRoutes.PellLiftedWordSupply]⟩,
   ⟨"Sqrt2 screen: cheap adjacent Pell certificates",
    [``SqrtTwoRoutes.pell_synthesis, ``SqrtTwoRoutes.pell_cost_exact,
     ``SqrtTwoRoutes.pell_dyadic_cost_exact, ``SqrtTwoRoutes.cheap_pell_iff,
@@ -600,7 +619,7 @@ def piRetiredRows : List RowInfo := mazeRows.filter (fun r => r.name.startsWith 
 #guard (LeanLedger.audit piRetiredRows
   (mazeLinks.filter (fun l => l.row.startsWith "Pi route ")) []).isEmpty
 
-/-- info: maze audit: 220 rows, 113 cite declarations, 107 legacy (prose only) -/
+/-- info: maze audit: 222 rows, 115 cite declarations, 107 legacy (prose only) -/
 #guard_msgs in
 #maze_audit mazeRows, mazeLinks, mazeLegacy
 

@@ -578,6 +578,7 @@ import NormalNumbers.SqrtTwoRoutes.NormScale
 import NormalNumbers.SqrtTwoRoutes.Balanced
 import NormalNumbers.SqrtTwoRoutes.WordCertificate
 import NormalNumbers.SqrtTwoRoutes.Controls
+import NormalNumbers.SqrtTwoRoutes.ExponentSelection
 import NormalNumbers.PiDisjunctiveRoutes.RoundTwoSpigot
 import NormalNumbers.PiDisjunctiveRoutes.RoundTwoRadical
 import NormalNumbers.StonehamSixFailure

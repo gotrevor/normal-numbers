@@ -98,6 +98,10 @@ Adjacent Pell certificates attain exactly the original dyadic residual, and
 signed window supply is equivalent to disjunctivity.  The continuation proves
 matching square-root coefficient scales and an integer-only word-certificate
 formulation with transfers in both directions; the uniform supply remains open.
+The subsequent [exponent-selection lap](docs/sqrt-two-routes/exponent-selection.md)
+found a Pell-specific wrong-word control for full-period transport and proved
+that the tested index-lift divisibility holds for every numerator.  Neither
+tested selector supplies the word-dependent construction.
 A fixed-modulus remainder
 abstraction admits every bit stream; the splitting-only norm filter is automatic
 for every candidate numerator.  The three scoped rows record the limits and
