@@ -43,6 +43,7 @@ import NormalNumbers.PiDisjunctiveRoutes.RoundTwoOscillatorSharp
 import NormalNumbers.PiDisjunctiveRoutes.InventionScreen
 import NormalNumbers.PiDisjunctiveRoutes.DualRadix
 import NormalNumbers.LnTwoRoutes.Screen
+import NormalNumbers.LnTwoRoutes.PadeCost
 import NormalNumbers.PiDisjunctiveRoutes.RoundTwoSpigot
 import NormalNumbers.PiDisjunctiveRoutes.RoundTwoRadical
 import NormalNumbers.EntropyProfiles
@@ -99,7 +100,12 @@ def mazeLinks : List Link := [
    [``LnTwoRoutes.pade_five_six_data, ``LnTwoRoutes.pade_five_six_no_dyadic,
     ``LnTwoRoutes.no_dyadic_of_prime_certificate,
     ``LnTwoRoutes.pade_dyadic_positive_control, ``LnTwoRoutes.PadeGridProbe,
-    ``LnTwoRoutes.PadeWideBudgetProbe, ``LnTwoRoutes.PadeErrorEnvelope],
+    ``LnTwoRoutes.PadeWideBudgetProbe, ``LnTwoRoutes.PadeErrorEnvelope,
+    ``LnTwoRoutes.PadeCost.best_witness_passes,
+    ``LnTwoRoutes.PadeCost.best_witness_budget,
+    ``LnTwoRoutes.PadeCost.weighted_dual_bound,
+    ``LnTwoRoutes.PadeCost.BoundedCostResult,
+    ``LnTwoRoutes.PadeCost.WindowCostLowerBounds],
    [``LnTwoRoutes.PadeCheapDyadic, ``LnTwoRoutes.PadeWindowSupply]⟩,
   ⟨"Ln2 screen: localized-normal limit transfer",
    [``LnTwoRoutes.normal_tail_hidden, ``LnTwoRoutes.normal_tail_bound,

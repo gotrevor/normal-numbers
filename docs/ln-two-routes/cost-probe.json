@@ -1,0 +1,1817 @@
+{
+  "gate": "weighted L1 budget < 1/4",
+  "log_bracket_terms": 512,
+  "log_lower": "348533959529495924493870404859361303343945405827936409319102863449221737426880454795440564265370593907812611334811977812939036676571599337305431842661718198479994771977352404210140122471144316204071996621159187123001335027589716005592138627433460102180379634814089467444644660911551944429504420070849230392486556699647962725070623016208622357165887230991725901062072446145409803/502828214994598440211508131726058440486031888555955650604278804053204705588009114882082059482962097452209389473881043220798994212704509483120445435525095835390744350614580694102183904490006492238489121993633930423754802915936831256843992395895512003374761389582223538348002786853109421575536218022329505839065596811698011722723152819234252513869286354133622548048382118592512000",
+  "log_upper": "348533959529495924493870404859361303343945405827936409319102863449221737426880454795440564265370593907812611334811977812939036676571599337305431842661718198553099336435264842630752934172847406428194047882222871824208524411556923802964896246184155476088047369930230877746290583805324446911559165202410755717222730082954894662009132820167824164569902908988051983308140075769153803/502828214994598440211508131726058440486031888555955650604278804053204705588009114882082059482962097452209389473881043220798994212704509483120445435525095835390744350614580694102183904490006492238489121993633930423754802915936831256843992395895512003374761389582223538348002786853109421575536218022329505839065596811698011722723152819234252513869286354133622548048382118592512000",
+  "controls": {
+    "positive": {
+      "status": "gate passed",
+      "coefficients": [
+        1,
+        1
+      ],
+      "constant": "11",
+      "budget": "6/25",
+      "budget_float": 0.24,
+      "elapsed_seconds": 0.00028970884159207344
+    },
+    "negative": {
+      "status": "algebraically impossible"
+    },
+    "positive_dual_bound": "113737582439/500000000000"
+  },
+  "summary": [
+    {
+      "n": 4,
+      "width": 4,
+      "exponents": [
+        0,
+        16
+      ],
+      "minimum_dual_bound": "76441276139/250000000000",
+      "minimum_dual_bound_float": 0.305765104556568,
+      "minimum_dual_exponent": 15,
+      "optimized_exponents": []
+    },
+    {
+      "n": 8,
+      "width": 8,
+      "exponents": [
+        0,
+        32
+      ],
+      "minimum_dual_bound": "522496479/8000000000",
+      "minimum_dual_bound_float": 0.06531205987594048,
+      "minimum_dual_exponent": 21,
+      "optimized_exponents": [
+        21,
+        22
+      ]
+    },
+    {
+      "n": 16,
+      "width": 16,
+      "exponents": [
+        0,
+        64
+      ],
+      "minimum_dual_bound": "153955650043/500000000000",
+      "minimum_dual_bound_float": 0.30791130008652473,
+      "minimum_dual_exponent": 21,
+      "optimized_exponents": []
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "exponents": [
+        0,
+        128
+      ],
+      "minimum_dual_bound": "2415114743399/1000000000000",
+      "minimum_dual_bound_float": 2.415114743399413,
+      "minimum_dual_exponent": 93,
+      "optimized_exponents": []
+    }
+  ],
+  "cases": [
+    {
+      "n": 4,
+      "width": 4,
+      "m": 0,
+      "dual_lower_bound": "2004266114117/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 4,
+      "width": 4,
+      "m": 1,
+      "dual_lower_bound": "630788320179/250000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 4,
+      "width": 4,
+      "m": 2,
+      "dual_lower_bound": "742689473759/500000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 4,
+      "width": 4,
+      "m": 3,
+      "dual_lower_bound": "742689473759/250000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 4,
+      "width": 4,
+      "m": 4,
+      "dual_lower_bound": "590169718877/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 4,
+      "width": 4,
+      "m": 5,
+      "dual_lower_bound": "590169718877/500000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 4,
+      "width": 4,
+      "m": 6,
+      "dual_lower_bound": "590169718877/250000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 4,
+      "width": 4,
+      "m": 7,
+      "dual_lower_bound": "1810327757933/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 4,
+      "width": 4,
+      "m": 8,
+      "dual_lower_bound": "727757498271/250000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 4,
+      "width": 4,
+      "m": 9,
+      "dual_lower_bound": "354812761391/500000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 4,
+      "width": 4,
+      "m": 10,
+      "dual_lower_bound": "283850209113/200000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 4,
+      "width": 4,
+      "m": 11,
+      "dual_lower_bound": "2838502091131/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 4,
+      "width": 4,
+      "m": 12,
+      "dual_lower_bound": "26708791459/31250000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 4,
+      "width": 4,
+      "m": 13,
+      "dual_lower_bound": "26708791459/15625000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 4,
+      "width": 4,
+      "m": 14,
+      "dual_lower_bound": "3112960202197/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 4,
+      "width": 4,
+      "m": 15,
+      "dual_lower_bound": "76441276139/250000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 4,
+      "width": 4,
+      "m": 16,
+      "dual_lower_bound": "611530209113/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 8,
+      "width": 8,
+      "m": 0,
+      "dual_lower_bound": "3135865637/625000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 8,
+      "width": 8,
+      "m": 1,
+      "dual_lower_bound": "3158171308351/500000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 8,
+      "width": 8,
+      "m": 2,
+      "dual_lower_bound": "1859213710849/500000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 8,
+      "width": 8,
+      "m": 3,
+      "dual_lower_bound": "1859213710849/250000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 8,
+      "width": 8,
+      "m": 4,
+      "dual_lower_bound": "1477402968309/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 8,
+      "width": 8,
+      "m": 5,
+      "dual_lower_bound": "2954805936619/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 8,
+      "width": 8,
+      "m": 6,
+      "dual_lower_bound": "5909611873239/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 8,
+      "width": 8,
+      "m": 7,
+      "dual_lower_bound": "4531888908623/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 8,
+      "width": 8,
+      "m": 8,
+      "dual_lower_bound": "227729213683/31250000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 8,
+      "width": 8,
+      "m": 9,
+      "dual_lower_bound": "1776442979389/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 8,
+      "width": 8,
+      "m": 10,
+      "dual_lower_bound": "3552885958779/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 8,
+      "width": 8,
+      "m": 11,
+      "dual_lower_bound": "7105771917559/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 8,
+      "width": 8,
+      "m": 12,
+      "dual_lower_bound": "133723051249/62500000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 8,
+      "width": 8,
+      "m": 13,
+      "dual_lower_bound": "133723051249/31250000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 8,
+      "width": 8,
+      "m": 14,
+      "dual_lower_bound": "1558567475033/200000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 8,
+      "width": 8,
+      "m": 15,
+      "dual_lower_bound": "191359476193/250000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 8,
+      "width": 8,
+      "m": 16,
+      "dual_lower_bound": "191359476193/125000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 8,
+      "width": 8,
+      "m": 17,
+      "dual_lower_bound": "3061751619089/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 8,
+      "width": 8,
+      "m": 18,
+      "dual_lower_bound": "6123503238179/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 8,
+      "width": 8,
+      "m": 19,
+      "dual_lower_bound": "513013272343/125000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 8,
+      "width": 8,
+      "m": 20,
+      "dual_lower_bound": "8142900297613/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 8,
+      "width": 8,
+      "m": 21,
+      "dual_lower_bound": "522496479/8000000000",
+      "status": "gate passed",
+      "coefficients": [
+        -9037,
+        -86624,
+        0,
+        -214899,
+        -1231047,
+        -4837440,
+        -1,
+        159938
+      ],
+      "constant": "1453635",
+      "budget": "2468804318/30517578125",
+      "budget_float": 0.080897779892224,
+      "elapsed_seconds": 0.040371415903791785
+    },
+    {
+      "n": 8,
+      "width": 8,
+      "m": 22,
+      "dual_lower_bound": "130624119751/1000000000000",
+      "status": "gate passed",
+      "coefficients": [
+        -18062,
+        -173281,
+        -2,
+        -430313,
+        -2464987,
+        -9693945,
+        9,
+        320493
+      ],
+      "constant": "2907270",
+      "budget": "4938353788/30517578125",
+      "budget_float": 0.161819976925184,
+      "elapsed_seconds": 0.040408290922641754
+    },
+    {
+      "n": 8,
+      "width": 8,
+      "m": 23,
+      "dual_lower_bound": "261248239503/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 8,
+      "width": 8,
+      "m": 24,
+      "dual_lower_bound": "522496479007/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 8,
+      "width": 8,
+      "m": 25,
+      "dual_lower_bound": "208998591603/200000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 8,
+      "width": 8,
+      "m": 26,
+      "dual_lower_bound": "208998591603/100000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 8,
+      "width": 8,
+      "m": 27,
+      "dual_lower_bound": "208998591603/50000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 8,
+      "width": 8,
+      "m": 28,
+      "dual_lower_bound": "3995584495491/500000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 8,
+      "width": 8,
+      "m": 29,
+      "dual_lower_bound": "368774673137/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 8,
+      "width": 8,
+      "m": 30,
+      "dual_lower_bound": "29501973851/40000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 8,
+      "width": 8,
+      "m": 31,
+      "dual_lower_bound": "1475098692551/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 8,
+      "width": 8,
+      "m": 32,
+      "dual_lower_bound": "1475098692551/500000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 16,
+      "width": 16,
+      "m": 0,
+      "dual_lower_bound": "2956784603087/125000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 16,
+      "width": 16,
+      "m": 1,
+      "dual_lower_bound": "14889082281243/500000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 16,
+      "width": 16,
+      "m": 2,
+      "dual_lower_bound": "3506077817381/200000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 16,
+      "width": 16,
+      "m": 3,
+      "dual_lower_bound": "3506077817381/100000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 16,
+      "width": 16,
+      "m": 4,
+      "dual_lower_bound": "6965161864257/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 16,
+      "width": 16,
+      "m": 5,
+      "dual_lower_bound": "2786064745703/200000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 16,
+      "width": 16,
+      "m": 6,
+      "dual_lower_bound": "2786064745703/100000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 16,
+      "width": 16,
+      "m": 7,
+      "dual_lower_bound": "21365423297817/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 16,
+      "width": 16,
+      "m": 8,
+      "dual_lower_bound": "34355871616243/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 16,
+      "width": 16,
+      "m": 9,
+      "dual_lower_bound": "8374974979391/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 16,
+      "width": 16,
+      "m": 10,
+      "dual_lower_bound": "8374974979391/500000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 16,
+      "width": 16,
+      "m": 11,
+      "dual_lower_bound": "8374974979391/250000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 16,
+      "width": 16,
+      "m": 12,
+      "dual_lower_bound": "10086918376749/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 16,
+      "width": 16,
+      "m": 13,
+      "dual_lower_bound": "20173836753499/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 16,
+      "width": 16,
+      "m": 14,
+      "dual_lower_bound": "459238058811/12500000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 16,
+      "width": 16,
+      "m": 15,
+      "dual_lower_bound": "3608628802117/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 16,
+      "width": 16,
+      "m": 16,
+      "dual_lower_bound": "1443451520847/200000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 16,
+      "width": 16,
+      "m": 17,
+      "dual_lower_bound": "14434515208471/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 16,
+      "width": 16,
+      "m": 18,
+      "dual_lower_bound": "28869030416943/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 16,
+      "width": 16,
+      "m": 19,
+      "dual_lower_bound": "19348657377991/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 16,
+      "width": 16,
+      "m": 20,
+      "dual_lower_bound": "4798675431987/125000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 16,
+      "width": 16,
+      "m": 21,
+      "dual_lower_bound": "153955650043/500000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 16,
+      "width": 16,
+      "m": 22,
+      "dual_lower_bound": "615822600173/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 16,
+      "width": 16,
+      "m": 23,
+      "dual_lower_bound": "615822600173/500000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 16,
+      "width": 16,
+      "m": 24,
+      "dual_lower_bound": "615822600173/250000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 16,
+      "width": 16,
+      "m": 25,
+      "dual_lower_bound": "615822600173/125000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 16,
+      "width": 16,
+      "m": 26,
+      "dual_lower_bound": "615822600173/62500000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 16,
+      "width": 16,
+      "m": 27,
+      "dual_lower_bound": "19706323205537/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 16,
+      "width": 16,
+      "m": 28,
+      "dual_lower_bound": "37674071800803/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 16,
+      "width": 16,
+      "m": 29,
+      "dual_lower_bound": "1738574610271/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 16,
+      "width": 16,
+      "m": 30,
+      "dual_lower_bound": "1738574610271/500000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 16,
+      "width": 16,
+      "m": 31,
+      "dual_lower_bound": "1390859688217/200000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 16,
+      "width": 16,
+      "m": 32,
+      "dual_lower_bound": "1390859688217/100000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 16,
+      "width": 16,
+      "m": 33,
+      "dual_lower_bound": "27817193764341/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 16,
+      "width": 16,
+      "m": 34,
+      "dual_lower_bound": "5363082670799/250000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 16,
+      "width": 16,
+      "m": 35,
+      "dual_lower_bound": "17091028422743/500000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 16,
+      "width": 16,
+      "m": 36,
+      "dual_lower_bound": "1744520904181/200000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 16,
+      "width": 16,
+      "m": 37,
+      "dual_lower_bound": "1744520904181/100000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 16,
+      "width": 16,
+      "m": 38,
+      "dual_lower_bound": "1744520904181/50000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 16,
+      "width": 16,
+      "m": 39,
+      "dual_lower_bound": "3652941022319/500000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 16,
+      "width": 16,
+      "m": 40,
+      "dual_lower_bound": "14611764089277/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 16,
+      "width": 16,
+      "m": 41,
+      "dual_lower_bound": "5844705635711/200000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 16,
+      "width": 16,
+      "m": 42,
+      "dual_lower_bound": "1164978865923/62500000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 16,
+      "width": 16,
+      "m": 43,
+      "dual_lower_bound": "37279323709537/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 16,
+      "width": 16,
+      "m": 44,
+      "dual_lower_bound": "632017698201/250000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 16,
+      "width": 16,
+      "m": 45,
+      "dual_lower_bound": "5056141585609/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 16,
+      "width": 16,
+      "m": 46,
+      "dual_lower_bound": "5056141585609/500000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 16,
+      "width": 16,
+      "m": 47,
+      "dual_lower_bound": "5056141585609/250000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 16,
+      "width": 16,
+      "m": 48,
+      "dual_lower_bound": "18318792763503/500000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 16,
+      "width": 16,
+      "m": 49,
+      "dual_lower_bound": "762309431573/200000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 16,
+      "width": 16,
+      "m": 50,
+      "dual_lower_bound": "762309431573/100000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 16,
+      "width": 16,
+      "m": 51,
+      "dual_lower_bound": "15246188631461/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 16,
+      "width": 16,
+      "m": 52,
+      "dual_lower_bound": "15246188631461/500000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 16,
+      "width": 16,
+      "m": 53,
+      "dual_lower_bound": "16101963686033/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 16,
+      "width": 16,
+      "m": 54,
+      "dual_lower_bound": "32203927372067/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 16,
+      "width": 16,
+      "m": 55,
+      "dual_lower_bound": "396214483367/31250000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 16,
+      "width": 16,
+      "m": 56,
+      "dual_lower_bound": "25357726935489/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 16,
+      "width": 16,
+      "m": 57,
+      "dual_lower_bound": "26371264340899/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 16,
+      "width": 16,
+      "m": 58,
+      "dual_lower_bound": "152151184563/6250000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 16,
+      "width": 16,
+      "m": 59,
+      "dual_lower_bound": "28398339151717/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 16,
+      "width": 16,
+      "m": 60,
+      "dual_lower_bound": "5072509977111/250000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 16,
+      "width": 16,
+      "m": 61,
+      "dual_lower_bound": "3650663839499/100000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 16,
+      "width": 16,
+      "m": 62,
+      "dual_lower_bound": "2036720710949/500000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 16,
+      "width": 16,
+      "m": 63,
+      "dual_lower_bound": "8146882843797/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 16,
+      "width": 16,
+      "m": 64,
+      "dual_lower_bound": "3258753137519/200000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 0,
+      "dual_lower_bound": "384328225578743/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 1,
+      "dual_lower_bound": "241913739999519/500000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 2,
+      "dual_lower_bound": "284828971158447/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 3,
+      "dual_lower_bound": "284828971158447/500000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 4,
+      "dual_lower_bound": "7073002907671/62500000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 5,
+      "dual_lower_bound": "7073002907671/31250000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 6,
+      "dual_lower_bound": "7073002907671/15625000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 7,
+      "dual_lower_bound": "86784889743659/250000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 8,
+      "dual_lower_bound": "139551203301813/250000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 9,
+      "dual_lower_bound": "136074304742019/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 10,
+      "dual_lower_bound": "136074304742019/500000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 11,
+      "dual_lower_bound": "544297218968077/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 12,
+      "dual_lower_bound": "16388949322037/100000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 13,
+      "dual_lower_bound": "327778986440741/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 14,
+      "dual_lower_bound": "298462979137521/500000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 15,
+      "dual_lower_bound": "58632014606439/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 16,
+      "dual_lower_bound": "117264029212879/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 17,
+      "dual_lower_bound": "117264029212879/500000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 18,
+      "dual_lower_bound": "117264029212879/250000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 19,
+      "dual_lower_bound": "314371697453491/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 20,
+      "dual_lower_bound": "311870268124771/500000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 21,
+      "dual_lower_bound": "5002858657439/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 22,
+      "dual_lower_bound": "5002858657439/500000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 23,
+      "dual_lower_bound": "20011434629757/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 24,
+      "dual_lower_bound": "20011434629757/500000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 25,
+      "dual_lower_bound": "80045738519029/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 26,
+      "dual_lower_bound": "160091477038059/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 27,
+      "dual_lower_bound": "160091477038059/500000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 28,
+      "dual_lower_bound": "612118023004287/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 29,
+      "dual_lower_bound": "564957702959/20000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 30,
+      "dual_lower_bound": "564957702959/10000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 31,
+      "dual_lower_bound": "112991540591801/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 32,
+      "dual_lower_bound": "225983081183603/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 33,
+      "dual_lower_bound": "225983081183603/500000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 34,
+      "dual_lower_bound": "348551606422111/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 35,
+      "dual_lower_bound": "555380718312301/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 36,
+      "dual_lower_bound": "141722494531921/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 37,
+      "dual_lower_bound": "283444989063843/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 38,
+      "dual_lower_bound": "283444989063843/500000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 39,
+      "dual_lower_bound": "3709499215661/31250000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 40,
+      "dual_lower_bound": "3709499215661/15625000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 41,
+      "dual_lower_bound": "3709499215661/7812500000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 42,
+      "dual_lower_bound": "302852131947307/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 43,
+      "dual_lower_bound": "121140852778923/200000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 44,
+      "dual_lower_bound": "41075403367293/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 45,
+      "dual_lower_bound": "41075403367293/500000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 46,
+      "dual_lower_bound": "41075403367293/250000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 47,
+      "dual_lower_bound": "41075403367293/125000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 48,
+      "dual_lower_bound": "119055495455967/200000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 49,
+      "dual_lower_bound": "61928976596853/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 50,
+      "dual_lower_bound": "61928976596853/500000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 51,
+      "dual_lower_bound": "61928976596853/250000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 52,
+      "dual_lower_bound": "61928976596853/125000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 53,
+      "dual_lower_bound": "418592488971/1600000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 54,
+      "dual_lower_bound": "418592488971/800000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 55,
+      "dual_lower_bound": "3218792323891/15625000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 56,
+      "dual_lower_bound": "3218792323891/7812500000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 57,
+      "dual_lower_bound": "428473096240427/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 58,
+      "dual_lower_bound": "395537738675669/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 59,
+      "dual_lower_bound": "92281690761037/200000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 60,
+      "dual_lower_bound": "164833511773077/500000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 61,
+      "dual_lower_bound": "118629976812843/200000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 62,
+      "dual_lower_bound": "33092081514047/500000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 63,
+      "dual_lower_bound": "33092081514047/250000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 64,
+      "dual_lower_bound": "264736652112377/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 65,
+      "dual_lower_bound": "105894660844951/200000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 66,
+      "dual_lower_bound": "193537322707013/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 67,
+      "dual_lower_bound": "387074645414027/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 68,
+      "dual_lower_bound": "47833464032847/100000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 69,
+      "dual_lower_bound": "295814650499583/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 70,
+      "dual_lower_bound": "295814650499583/500000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 71,
+      "dual_lower_bound": "4326583072387/62500000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 72,
+      "dual_lower_bound": "4326583072387/31250000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 73,
+      "dual_lower_bound": "4326583072387/15625000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 74,
+      "dual_lower_bound": "553802633265537/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 75,
+      "dual_lower_bound": "2897573292509/20000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 76,
+      "dual_lower_bound": "2897573292509/10000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 77,
+      "dual_lower_bound": "579514658501801/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 78,
+      "dual_lower_bound": "46727307076461/500000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 79,
+      "dual_lower_bound": "46727307076461/250000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 80,
+      "dual_lower_bound": "373818456611689/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 81,
+      "dual_lower_bound": "252423508966573/500000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 82,
+      "dual_lower_bound": "30348736911279/125000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 83,
+      "dual_lower_bound": "97115958116093/200000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 84,
+      "dual_lower_bound": "281324349995593/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 85,
+      "dual_lower_bound": "281324349995593/500000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 86,
+      "dual_lower_bound": "127186531174151/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 87,
+      "dual_lower_bound": "254373062348303/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 88,
+      "dual_lower_bound": "508746124696607/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 89,
+      "dual_lower_bound": "23499168176331/100000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 90,
+      "dual_lower_bound": "469983363526621/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 91,
+      "dual_lower_bound": "312517204103281/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 92,
+      "dual_lower_bound": "312517204103281/500000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 93,
+      "dual_lower_bound": "2415114743399/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 94,
+      "dual_lower_bound": "2415114743399/500000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 95,
+      "dual_lower_bound": "9660458973597/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 96,
+      "dual_lower_bound": "3864183589439/200000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 97,
+      "dual_lower_bound": "3864183589439/100000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 98,
+      "dual_lower_bound": "77283671788781/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 99,
+      "dual_lower_bound": "77283671788781/500000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 100,
+      "dual_lower_bound": "77283671788781/250000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 101,
+      "dual_lower_bound": "618269374310249/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 102,
+      "dual_lower_bound": "637807301441/40000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 103,
+      "dual_lower_bound": "637807301441/20000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 104,
+      "dual_lower_bound": "63780730144101/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 105,
+      "dual_lower_bound": "127561460288203/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 106,
+      "dual_lower_bound": "255122920576407/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 107,
+      "dual_lower_bound": "255122920576407/500000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 108,
+      "dual_lower_bound": "46398449770179/200000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 109,
+      "dual_lower_bound": "463984497701791/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 110,
+      "dual_lower_bound": "324514935752941/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 111,
+      "dual_lower_bound": "603454059650641/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 112,
+      "dual_lower_bound": "22787905927621/500000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 113,
+      "dual_lower_bound": "18230324742097/200000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 114,
+      "dual_lower_bound": "182303247420971/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 115,
+      "dual_lower_bound": "182303247420971/500000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 116,
+      "dual_lower_bound": "817610846051/1562500000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 117,
+      "dual_lower_bound": "51485512052811/250000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 118,
+      "dual_lower_bound": "51485512052811/125000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 119,
+      "dual_lower_bound": "428715738311547/1000000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 120,
+      "dual_lower_bound": "39505245453343/100000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 121,
+      "dual_lower_bound": "7224672220151/15625000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 122,
+      "dual_lower_bound": "81931471744299/250000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 123,
+      "dual_lower_bound": "149258039300533/250000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 124,
+      "dual_lower_bound": "2920980837613/50000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 125,
+      "dual_lower_bound": "2920980837613/25000000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 126,
+      "dual_lower_bound": "2920980837613/12500000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 127,
+      "dual_lower_bound": "2920980837613/6250000000",
+      "status": "excluded by exact dual bound"
+    },
+    {
+      "n": 32,
+      "width": 32,
+      "m": 128,
+      "dual_lower_bound": "79442515780091/250000000000",
+      "status": "excluded by exact dual bound"
+    }
+  ],
+  "bound_storage": "rational lower bounds rounded down to multiples of 10^-12",
+  "scope": "exact finite lower bounds and witnesses; no all-n or all-exponent claim",
+  "independent_verifier": "binomial formulas pass; mutated witness rejected"
+}

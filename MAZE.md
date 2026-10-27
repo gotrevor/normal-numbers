@@ -83,10 +83,11 @@ campaign: the direct norm probe did not beat denominator cost, and a word-depend
 construction is still missing.
 
 The [ln(2) screen](docs/ln-two-routes/screen.md) records Euler acceleration,
-dyadic synthesis of Pade forms, and localized-normal limit transfer.  All three
-are parked pending their named estimates.  The Pade screen distinguishes proved
-small-pair obstructions, finite short-window certificates, and feasible wider
-windows whose coefficient cost is unresolved.
+dyadic synthesis of Pade forms, and localized-normal limit transfer.  The first
+and third are parked pending their named estimates.  The Pade route's
+[bounded cost test](docs/ln-two-routes/cost-test.md) passed with an explicit
+budget below 1/8; its parameter-uniform construction remains an open wall.
+Preserve both the finite positive witness and the finite exclusion certificates.
 
 | Original route | Formal crux and evidence | What must change to reopen |
 |---|---|---|

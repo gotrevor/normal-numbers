@@ -67,6 +67,10 @@ acceleration or a proof of the classical identity alone does not qualify.
 
 ## 2. Padé synthesis: make the logarithm coefficient exactly dyadic
 
+**Bounded follow-up completed:** [cost-test.md](cost-test.md) records an exact
+optimized witness with budget below 1/8 and finite dual exclusions.  The large
+Bezout witnesses described below are the initial screen, not the final cost result.
+
 Let A_n,B_n be the rational recurrence `padePair`, initialized by (1,0),(3,2):
 
 \[
@@ -128,11 +132,11 @@ the synthesis idea.  However the returned Bezout witnesses all fail the crude
 error-budget gate: sum |u_j|5^(-n-j)>1 (`PadeWideBudgetProbe`).  These witnesses were not optimized;
 their failure says nothing about the minimum possible cost.
 
-**Disposition: exploratory, bounded follow-up only.**  The concrete next test
-is coefficient cost after widening the block.  `PadeCheapDyadic` asks for
+**Disposition: the bounded cost gate passed; the uniform question remains open.**
+The follow-up proves one cheap coefficient witness.  `PadeCheapDyadic` asks for
 arbitrarily small such budgets.  With the error envelope it would give close
 integer returns, a weaker target than all words.  A discriminating follow-up
-must either find substantially cheaper witnesses or prove a lower bound.
+did find substantially cheaper witnesses and finite lower bounds.
 More first occurrences of digit words, or additional wide-block feasibility
 alone, would not advance this crux.  No long proof campaign was launched.
 
@@ -166,7 +170,7 @@ arbitrarily large shared prefix, or soft diagonalization is insufficient.
 ## What this pass earns
 
 There is no proof of ln(2) disjunctivity, and none of the missing visit estimates
-has been proved.  The most concrete new test is the Padé coefficient-cost
-problem: exact arithmetic rejects short blocks and permits wider ones, so the
-next experiment has a specific obstruction to overcome and a numerical gate.
+has been proved.  The Padé coefficient-cost problem now has a finite passing
+witness and finite exclusion certificates in [cost-test.md](cost-test.md).
+No parameter-uniform construction has been found.
 The other two avenues are parked with explicit controls and reopening conditions.
