@@ -41,6 +41,7 @@ import NormalNumbers.PiDisjunctiveRoutes.DiskFloorError
 import NormalNumbers.PiDisjunctiveRoutes.RoundTwoOscillator
 import NormalNumbers.PiDisjunctiveRoutes.RoundTwoOscillatorSharp
 import NormalNumbers.PiDisjunctiveRoutes.InventionScreen
+import NormalNumbers.PiDisjunctiveRoutes.DualRadix
 import NormalNumbers.PiDisjunctiveRoutes.RoundTwoSpigot
 import NormalNumbers.PiDisjunctiveRoutes.RoundTwoRadical
 import NormalNumbers.EntropyProfiles
@@ -88,6 +89,14 @@ def mazeRows : List RowInfo :=
 
 /-- Each linked row and the declarations it rests on. -/
 def mazeLinks : List Link := [
+  ⟨"Pi exploratory: quadratic-twisted dual-radix rigidity",
+   [``PiDisjunctiveRoutes.DualRadix.quadratic_norm_identity,
+    ``PiDisjunctiveRoutes.DualRadix.pell_unit_norm_identity,
+    ``PiDisjunctiveRoutes.DualRadix.pi_disjunctive_of_dualRigidity,
+    ``PiDisjunctiveRoutes.DualRadix.NormPreflight,
+    ``PiDisjunctiveRoutes.DualRadix.NormBitLengthPreflight,
+    ``PiDisjunctiveRoutes.DualRadix.ReducedNormPreflight],
+   [``PiDisjunctiveRoutes.DualRadix.QuadraticDualRadixRigidity]⟩,
   ⟨"Pi invention screen: polynomial accuracy pays for a complete rational period",
    [``PiDisjunctiveRoutes.InventionScreen.not_quadraticAccuracyFullPeriodTransfer,
     ``PiDisjunctiveRoutes.InventionScreen.denominator_eleven_full_period,
@@ -542,7 +551,7 @@ def piRetiredRows : List RowInfo := mazeRows.filter (fun r => r.name.startsWith 
 #guard (LeanLedger.audit piRetiredRows
   (mazeLinks.filter (fun l => l.row.startsWith "Pi route ")) []).isEmpty
 
-/-- info: maze audit: 213 rows, 106 cite declarations, 107 legacy (prose only) -/
+/-- info: maze audit: 214 rows, 107 cite declarations, 107 legacy (prose only) -/
 #guard_msgs in
 #maze_audit mazeRows, mazeLinks, mazeLegacy
 

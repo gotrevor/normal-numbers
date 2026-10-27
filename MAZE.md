@@ -77,6 +77,11 @@ and Lean controls in `PiDisjunctiveRoutes/InventionScreen.lean`; they are not a
 third campaign or claims that all approximation, automaton, or averaging methods
 are impossible.
 
+A later [creative pass](docs/pi-routes/dual-radix.md) produced an exploratory
+quadratic-twisted dual-radix conjecture.  Its Maze row is **parked**, not an admitted
+campaign: the direct norm probe did not beat denominator cost, and a word-dependent
+construction is still missing.
+
 | Original route | Formal crux and evidence | What must change to reopen |
 |---|---|---|
 | Triple return / odd orbit invariance | `PiOrbitClosureOddInvariant`; `pi_disjunctive_iff_oddInvariant`; the odd-return equivalence; the abstract doubling/tripling counterexample | A pi-specific arithmetic mechanism for odd invariance or returns.  A different odd multiplier or self-return prerequisite alone does not qualify. |

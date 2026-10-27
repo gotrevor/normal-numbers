@@ -723,6 +723,11 @@ carry their evidence as a file pointer.  Sorted by area, newest campaigns first.
 /-- Every hall this programme has walked and closed.  Never delete a row: a re-opened hall
 keeps its row and gains a note (see `hdom` and the tower-separation wall, both REVERSED). -/
 def register : List Hall := [
+  ⟨"Pi exploratory: quadratic-twisted dual-radix rigidity",
+   "Aliases: two-base BBP compatibility, binary/ternary quadratic norm, adelic Cobham analogy. Couple a rational base-16 description of x to a rational base-9 description of sqrt(3)*x",
+   .parked, .frozen,
+   "EXPLORATORY, not an admitted campaign. The pi instance has a classical paired-arctangent ternary identity, formally stated but not discharged in this module. QuadraticDualRadixRigidity is a new proposed input, not a theorem. The unweighted exact-rational norm preflight shrinks before denominator clearing but leaves large integers at all five tested scales; this is finite evidence, not an asymptotic refutation. No word-dependent auxiliary construction was found. The ternary word restriction is on B_m/sqrt(3), not on B_m. REOPEN ONLY with an explicit construction using both word constraints to beat the norm's denominator cost. A dense two-parameter orbit, automaticity inferred from word avoidance, additional norm precision, or completing the classical series bridge does not qualify",
+   "DualRadix.lean: QuadraticDualRadixRigidity, PiDualData, PiTernaryIdentity, quadratic_norm_identity, pell_unit_norm_identity, NormPreflight, NormBitLengthPreflight, ReducedNormPreflight; scripts/pi_dual_radix_probe.py; docs/pi-routes/dual-radix.md. Fully reduced numerators remain large; Pell controls return unit norms", "2026-10-27"⟩,
   ⟨"Pi invention screen: polynomial accuracy pays for a complete rational period",
    "Aliases: Pade approximant repetend transfer, primitive-root denominator, complete multiplicative-orbit cancellation. Transfer a rational approximant's whole digit period to pi",
    .refuted, .kernel,
