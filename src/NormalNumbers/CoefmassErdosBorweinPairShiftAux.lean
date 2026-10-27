@@ -15,6 +15,7 @@ headline remain in `CoefmassErdosBorweinPairShift`.
 namespace NormalNumbers.ErdosBorweinPairShift
 
 open scoped BigOperators
+open NormalNumbers.ErdosBorweinEndpoint
 open NormalNumbers.ErdosBorweinMultiShift
 
 /-- Finite Chebyshev in the exact form needed for a zero-count event.  The sample mean is supplied
@@ -64,6 +65,148 @@ theorem card_filter_eq_zero_div_le_secondMoment
       ((∑ x ∈ S, (f x) ^ 2) - (S.card : ℝ) * m ^ 2) / (S.card : ℝ) by
     rw [sub_div, mul_div_cancel_left₀ _ (ne_of_gt hcard)] ]
   exact (div_le_div_iff_of_pos_right hcard).2 (hcentered ▸ hzero)
+
+/-- Finite second moment centered at an arbitrary positive comparison value.  Unlike
+`card_filter_eq_zero_div_le_secondMoment`, this does not require the comparison value to be the
+empirical mean.  This is the convenient form when a sieve supplies termwise approximations to a
+model mean. -/
+theorem card_filter_eq_zero_div_le_centeredSecondMoment
+    {α : Type*} [DecidableEq α] (S : Finset α) (f : α → ℝ) (Q : ℝ)
+    (hS : S.Nonempty) (hQ : 0 < Q) :
+    ((((S.filter fun x ↦ f x = 0).card : ℕ) : ℝ) / (S.card : ℝ)) ≤
+      ((∑ x ∈ S, (f x - Q) ^ 2) / (S.card : ℝ)) / Q ^ 2 := by
+  classical
+  have hcardNat : 0 < S.card := Finset.card_pos.mpr hS
+  have hcard : (0 : ℝ) < S.card := by exact_mod_cast hcardNat
+  have hzero : (((S.filter fun x ↦ f x = 0).card : ℕ) : ℝ) * Q ^ 2 ≤
+      ∑ x ∈ S, (f x - Q) ^ 2 := by
+    calc
+      (((S.filter fun x ↦ f x = 0).card : ℕ) : ℝ) * Q ^ 2 =
+          ∑ _x ∈ (S.filter fun x ↦ f x = 0), Q ^ 2 := by simp
+      _ = ∑ x ∈ (S.filter fun x ↦ f x = 0), (f x - Q) ^ 2 := by
+        apply Finset.sum_congr rfl
+        intro x hx
+        have hfx : f x = 0 := (Finset.mem_filter.mp hx).2
+        rw [hfx]
+        ring
+      _ ≤ ∑ x ∈ S, (f x - Q) ^ 2 := by
+        apply Finset.sum_le_sum_of_subset_of_nonneg (Finset.filter_subset _ _)
+        intro x hxS hxnot
+        positivity
+  have hQsq : 0 < Q ^ 2 := sq_pos_of_pos hQ
+  rw [le_div_iff₀ hQsq]
+  rw [div_mul_eq_mul_div]
+  exact (div_le_div_iff_of_pos_right hcard).2 hzero
+
+/-- A theoretical-mean version of finite Chebyshev.  If the empirical first moment is at least
+`Q - r` and the empirical second moment is at most `Q² + Q + d`, the zero set has the displayed
+upper bound.  Pairwise sieve errors will be collected into `r` and `d` by the caller. -/
+theorem card_filter_eq_zero_div_le_of_moments
+    {α : Type*} [DecidableEq α] (S : Finset α) (f : α → ℝ)
+    (Q r d : ℝ) (hS : S.Nonempty) (hQ : 0 < Q) (hr : 0 ≤ r)
+    (hfirst : Q - r ≤ (∑ x ∈ S, f x) / (S.card : ℝ))
+    (hsecond : (∑ x ∈ S, (f x) ^ 2) / (S.card : ℝ) ≤ Q ^ 2 + Q + d) :
+    ((((S.filter fun x ↦ f x = 0).card : ℕ) : ℝ) / (S.card : ℝ)) ≤
+      (Q + d + 2 * Q * r) / Q ^ 2 := by
+  classical
+  have hcardNat : 0 < S.card := Finset.card_pos.mpr hS
+  have hcard : (0 : ℝ) < S.card := by exact_mod_cast hcardNat
+  have hcentered :
+      (∑ x ∈ S, (f x - Q) ^ 2) / (S.card : ℝ) =
+        (∑ x ∈ S, (f x) ^ 2) / (S.card : ℝ) -
+          2 * Q * ((∑ x ∈ S, f x) / (S.card : ℝ)) + Q ^ 2 := by
+    simp_rw [sub_sq]
+    rw [Finset.sum_add_distrib, Finset.sum_sub_distrib]
+    simp only [Finset.sum_const, nsmul_eq_mul]
+    have hcross : (∑ x ∈ S, 2 * f x * Q) = 2 * Q * (∑ x ∈ S, f x) := by
+      rw [Finset.mul_sum]
+      apply Finset.sum_congr rfl
+      intro x hx
+      ring
+    rw [hcross]
+    field_simp
+  have hcenteredUpper :
+      (∑ x ∈ S, (f x - Q) ^ 2) / (S.card : ℝ) ≤ Q + d + 2 * Q * r := by
+    rw [hcentered]
+    have hQ0 : 0 ≤ Q := hQ.le
+    nlinarith
+  exact (card_filter_eq_zero_div_le_centeredSecondMoment S f Q hS hQ).trans
+    (div_le_div_of_nonneg_right hcenteredUpper (sq_nonneg Q))
+
+/-- Sum diagonal and off-diagonal pair bounds without losing the sharp single copy of the first
+moment.  This is the algebraic adapter between pairwise sieve estimates and
+`card_filter_eq_zero_div_le_of_moments`. -/
+theorem sum_pair_le_sq_add
+    {ι : Type*} [DecidableEq ι] (I : Finset ι) (q : ι → ℝ) (p : ι → ι → ℝ)
+    (e d : ℝ) (hq0 : ∀ i ∈ I, 0 ≤ q i) (hd : ∀ i ∈ I, p i i ≤ q i + e)
+    (hoff : ∀ i ∈ I, ∀ j ∈ I, i ≠ j → p i j ≤ q i * q j + d) :
+    (∑ i ∈ I, ∑ j ∈ I, p i j) ≤
+      (∑ i ∈ I, q i) ^ 2 + (∑ i ∈ I, q i) +
+        (I.card : ℝ) * e + (I.card : ℝ) * (I.card - 1 : ℕ) * d := by
+  classical
+  have hsplit : (∑ i ∈ I, ∑ j ∈ I, p i j) =
+      (∑ i ∈ I, p i i) + ∑ i ∈ I, ∑ j ∈ I.erase i, p i j := by
+    rw [← Finset.sum_add_distrib]
+    apply Finset.sum_congr rfl
+    intro i hi
+    rw [add_comm, Finset.sum_erase_add _ _ hi]
+  have hdiag : (∑ i ∈ I, p i i) ≤ ∑ i ∈ I, (q i + e) := by
+    apply Finset.sum_le_sum
+    intro i hi
+    exact hd i hi
+  have hoffsum : (∑ i ∈ I, ∑ j ∈ I.erase i, p i j) ≤
+      ∑ i ∈ I, ∑ j ∈ I.erase i, (q i * q j + d) := by
+    apply Finset.sum_le_sum
+    intro i hi
+    apply Finset.sum_le_sum
+    intro j hj
+    exact hoff i hi j (Finset.mem_erase.mp hj).2 (Finset.mem_erase.mp hj).1.symm
+  have hoffprod : (∑ i ∈ I, ∑ j ∈ I.erase i, q i * q j) ≤
+      ∑ i ∈ I, ∑ j ∈ I, q i * q j := by
+    apply Finset.sum_le_sum
+    intro i hi
+    exact Finset.sum_le_sum_of_subset_of_nonneg (Finset.erase_subset _ _)
+      (fun j hj hnot ↦ mul_nonneg (hq0 i hi) (hq0 j hj))
+  rw [hsplit]
+  calc
+    (∑ i ∈ I, p i i) + ∑ i ∈ I, ∑ j ∈ I.erase i, p i j ≤
+        (∑ i ∈ I, (q i + e)) +
+          ∑ i ∈ I, ∑ j ∈ I.erase i, (q i * q j + d) :=
+      add_le_add hdiag hoffsum
+    _ = (∑ i ∈ I, q i) + (I.card : ℝ) * e +
+          (∑ i ∈ I, ∑ j ∈ I.erase i, q i * q j) +
+          (I.card : ℝ) * (I.card - 1 : ℕ) * d := by
+      simp only [Finset.sum_add_distrib, Finset.sum_const, nsmul_eq_mul]
+      have herr : (∑ i ∈ I, ((I.erase i).card : ℝ) * d) =
+          (I.card : ℝ) * (I.card - 1 : ℕ) * d := by
+        calc
+          (∑ i ∈ I, ((I.erase i).card : ℝ) * d) =
+              ∑ _i ∈ I, (((I.card - 1 : ℕ) : ℝ) * d) := by
+            apply Finset.sum_congr rfl
+            intro i hi
+            rw [Finset.card_erase_of_mem hi]
+          _ = (I.card : ℝ) * (I.card - 1 : ℕ) * d := by simp; ring
+      rw [herr]
+      ring
+    _ ≤ (∑ i ∈ I, q i) + (I.card : ℝ) * e +
+          (∑ i ∈ I, ∑ j ∈ I, q i * q j) +
+          (I.card : ℝ) * (I.card - 1 : ℕ) * d := by
+      linarith
+    _ = (∑ i ∈ I, q i) ^ 2 + (∑ i ∈ I, q i) +
+          (I.card : ℝ) * e + (I.card : ℝ) * (I.card - 1 : ℕ) * d := by
+      have hprod : (∑ i ∈ I, ∑ j ∈ I, q i * q j) =
+          (∑ i ∈ I, q i) ^ 2 := by
+        calc
+          (∑ i ∈ I, ∑ j ∈ I, q i * q j) =
+              ∑ i ∈ I, q i * (∑ j ∈ I, q j) := by
+            apply Finset.sum_congr rfl
+            intro i hi
+            rw [Finset.mul_sum]
+          _ = (∑ i ∈ I, q i) ^ 2 := by
+            rw [← Finset.sum_mul]
+            ring
+      rw [hprod]
+      ring
 
 open Classical in
 /-- The real-valued number of events from `I` which occur at a sample point. -/
@@ -151,6 +294,220 @@ theorem finiteProductMass_relabel {n : ℕ} {β γ : Type*} [Fintype β] [Fintyp
         simp
       simp [hne]
     _ = w i (e.symm y) := by simp
+
+/-- Bernoulli subset mass is invariant under relabeling its finite coordinate space. -/
+theorem bernoulliSubsetMass_relabel {α β : Type*} [DecidableEq α] [DecidableEq β]
+    (e : α ≃ β) (U : Finset α) (q : α → ℝ) (A : Set (Finset β)) :
+    NormalNumbers.ErdosBorweinEndpointKub.bernoulliSubsetMass
+        (U.map e.toEmbedding) (fun y ↦ q (e.symm y)) A =
+      NormalNumbers.ErdosBorweinEndpointKub.bernoulliSubsetMass
+        U q {S | e.finsetCongr S ∈ A} := by
+  classical
+  unfold NormalNumbers.ErdosBorweinEndpointKub.bernoulliSubsetMass
+  symm
+  apply Finset.sum_equiv e.finsetCongr
+  · intro S
+    simp [Equiv.finsetCongr_apply]
+  · intro S hS
+    simp only [Set.mem_ofPred_eq]
+    by_cases hA : e.finsetCongr S ∈ A
+    · rw [if_pos hA, if_pos hA]
+      unfold NormalNumbers.ErdosBorweinEndpointKub.bernoulliSubsetWeight
+      apply Finset.prod_equiv e
+      · intro x
+        simp [Equiv.finsetCongr_apply]
+      · intro x hx
+        simp
+    · rw [if_neg hA, if_neg hA]
+
+/-- The two columns in the independent Bool-indexed pair model have the same cardinality-tail
+mass. -/
+theorem pairIndependentColumnMass_zero_eq_one {n : ℕ} (q : Fin n → ℝ) (t : ℕ) :
+    NormalNumbers.ErdosBorweinEndpointKub.bernoulliSubsetMass
+        (Finset.univ : Finset (Fin n × Fin 2)) (fun z ↦ q z.1)
+        {S | t ≤ (S ∩ shiftArrayColumn n 2 0).card} =
+      NormalNumbers.ErdosBorweinEndpointKub.bernoulliSubsetMass
+        (Finset.univ : Finset (Fin n × Fin 2)) (fun z ↦ q z.1)
+        {S | t ≤ (S ∩ shiftArrayColumn n 2 1).card} := by
+  classical
+  let swap : Equiv.Perm (Fin n × Fin 2) :=
+    Equiv.prodCongr (Equiv.refl (Fin n)) (Equiv.swap 0 1)
+  have h := bernoulliSubsetMass_relabel swap
+    (Finset.univ : Finset (Fin n × Fin 2)) (fun z ↦ q z.1)
+    {S | t ≤ (S ∩ shiftArrayColumn n 2 1).card}
+  have hcard (S : Finset (Fin n × Fin 2)) :
+      (Finset.map swap.toEmbedding S ∩ shiftArrayColumn n 2 1).card =
+        (S ∩ shiftArrayColumn n 2 0).card := by
+    rw [← Finset.card_map (s := S ∩ shiftArrayColumn n 2 0) swap.toEmbedding]
+    congr 1
+    ext z
+    rcases z with ⟨i, k⟩
+    fin_cases k <;> simp [swap, shiftArrayColumn]
+  have h' :
+      NormalNumbers.ErdosBorweinEndpointKub.bernoulliSubsetMass
+          (Finset.univ : Finset (Fin n × Fin 2)) (fun z ↦ q z.1)
+          {S | t ≤ (S ∩ shiftArrayColumn n 2 1).card} =
+        NormalNumbers.ErdosBorweinEndpointKub.bernoulliSubsetMass Finset.univ
+          (fun z ↦ q z.1)
+          {S | t ≤ (Finset.map swap.toEmbedding S ∩ shiftArrayColumn n 2 1).card} := by
+    simpa [swap, Equiv.finsetCongr_apply] using h
+  calc
+    _ = NormalNumbers.ErdosBorweinEndpointKub.bernoulliSubsetMass Finset.univ
+          (fun z ↦ q z.1)
+          {S | t ≤ (Finset.map swap.toEmbedding S ∩ shiftArrayColumn n 2 1).card} := by
+      congr 1
+      ext S
+      simp only [Set.mem_ofPred_eq]
+      rw [hcard]
+    _ = _ := h'.symm
+
+/-- The independent heavy-event probability for one scheduled threshold in the fixed pair
+model. -/
+noncomputable def pairScheduledColumnMass
+    (c A : ℝ) (b N : ℕ) (j : Fin (multiShiftScheduleJ N)) : ℝ :=
+  NormalNumbers.ErdosBorweinEndpointKub.bernoulliSubsetMass
+    (Finset.univ : Finset
+      (Fin (Fintype.card (primesIoc (collisionCutoff N) (multiShiftCutoffY N))) × Fin 2))
+    (fun z ↦ 1 / (((primeIndexEquiv (collisionCutoff N)
+      (multiShiftCutoffY N)) z.1 : ℕ) : ℝ))
+    {S | multiShiftThreshold c A b N j.val ≤
+      (S ∩ shiftArrayColumn
+        (Fintype.card (primesIoc (collisionCutoff N) (multiShiftCutoffY N))) 2 1).card}
+
+theorem pairScheduledColumnMass_nonneg (c A : ℝ) (b N : ℕ)
+    (j : Fin (multiShiftScheduleJ N)) : 0 ≤ pairScheduledColumnMass c A b N j := by
+  classical
+  rw [pairScheduledColumnMass]
+  apply NormalNumbers.ErdosBorweinEndpointKub.bernoulliSubsetMass_nonneg
+  · intro z hz
+    positivity
+  · intro z hz
+    have hp : Nat.Prime ((primeIndexEquiv (collisionCutoff N)
+        (multiShiftCutoffY N)) z.1 : ℕ) :=
+      (Finset.mem_filter.mp ((primeIndexEquiv (collisionCutoff N)
+        (multiShiftCutoffY N)) z.1).property).2
+    exact (div_le_one (by exact_mod_cast hp.pos)).2 (by exact_mod_cast hp.one_le)
+
+theorem pairScheduledColumnMass_le_one (c A : ℝ) (b N : ℕ)
+    (j : Fin (multiShiftScheduleJ N)) : pairScheduledColumnMass c A b N j ≤ 1 := by
+  classical
+  rw [pairScheduledColumnMass]
+  apply NormalNumbers.ErdosBorweinEndpointKub.bernoulliSubsetMass_le_one
+  · intro z hz
+    positivity
+  · intro z hz
+    have hp : Nat.Prime ((primeIndexEquiv (collisionCutoff N)
+        (multiShiftCutoffY N)) z.1 : ℕ) :=
+      (Finset.mem_filter.mp ((primeIndexEquiv (collisionCutoff N)
+        (multiShiftCutoffY N)) z.1).property).2
+    exact (div_le_one (by exact_mod_cast hp.pos)).2 (by exact_mod_cast hp.one_le)
+
+/-- The scheduled moderate-deviation lower bound in one column of the fixed two-column
+independent model.  This is the pair-model analogue of
+`eventually_multiShiftColumnMass_ge_deviation`; the threshold still ranges over the full scheduled
+set of shifts, but the probability space has only the two coordinates needed by the pair sieve. -/
+theorem eventually_pairColumnMass_ge_deviation
+    (c A eps eta : ℝ) (hc : c < 1) (hA : 0 ≤ A) (b : ℕ) (hb : 2 ≤ b)
+    (heps : 0 < eps) (heta0 : 0 < eta) (heta1 : eta ≤ 1 / 100)
+    (hetaEps : 80 * eta ≤ eps) (hlargeA : 6 ≤ eta ^ 2 * A ^ 2)
+    (habsorbA : 4 * Real.log 2 ≤ eps * A ^ 2) :
+    ∀ᶠ N : ℕ in Filter.atTop, ∀ j : Fin (multiShiftScheduleJ N),
+      Real.exp (-((1 + eps) * multiShiftDeviation c A b N j.val ^ 2 /
+          (2 * multiShiftPrimeMean N))) ≤ pairScheduledColumnMass c A b N j := by
+  classical
+  have hLTop : Filter.Tendsto (fun N : ℕ ↦ Real.log (Real.log (N : ℝ)))
+      Filter.atTop Filter.atTop :=
+    Real.tendsto_log_atTop.comp
+      (Real.tendsto_log_atTop.comp tendsto_natCast_atTop_atTop)
+  filter_upwards [eventually_multiShiftModerateSideConditions c A hc hA b hb eta heta0,
+      eventually_multiShiftCutoffY_bounds, eventually_multiShiftLogBlock_bounds,
+      hLTop.eventually_ge_atTop 2] with N hsides hcut hblock hL
+  intro j
+  let P : ℕ := collisionCutoff N
+  let y : ℕ := multiShiftCutoffY N
+  let mean : ℝ := multiShiftPrimeMean N
+  let x : ℝ := multiShiftDeviation c A b N j.val
+  have hside := hsides j
+  change 0 < mean ∧ 0 < x ∧ (P : ℝ)⁻¹ ≤ eta * mean ∧
+    (1 + 4 * eta) * x / mean ≤ eta ∧ A ^ 2 * mean ≤ x ^ 2 at hside
+  have hP2 : 2 ≤ P := by simpa only [P] using hblock.1
+  have hPy : P ≤ y := by simpa only [P, y] using hcut.1
+  have hmoderate := multiShiftColumnMass_ge_moderate_of_baseline
+    (P := P) (y := y) (J := 2) (1 : Fin 2) hP2 hPy
+    heps heta0 heta1 hetaEps hside.1 hside.2.1 hside.2.2.1 hside.2.2.2.1
+    hside.2.2.2.2 hlargeA habsorbA
+  calc
+    Real.exp (-((1 + eps) * multiShiftDeviation c A b N j.val ^ 2 /
+        (2 * multiShiftPrimeMean N))) ≤
+      NormalNumbers.ErdosBorweinEndpointKub.bernoulliSubsetMass
+        (Finset.univ : Finset (Fin (Fintype.card (primesIoc P y)) × Fin 2))
+        (fun z ↦ 1 / (((primeIndexEquiv P y) z.1 : ℕ) : ℝ))
+        {S | mean + x ≤
+          ((S ∩ shiftArrayColumn (Fintype.card (primesIoc P y)) 2 1).card : ℝ)} := by
+      simpa only [P, y, mean, x, multiShiftPrimeMean] using hmoderate
+    _ ≤ NormalNumbers.ErdosBorweinEndpointKub.bernoulliSubsetMass
+        (Finset.univ : Finset (Fin (Fintype.card (primesIoc P y)) × Fin 2))
+        (fun z ↦ 1 / (((primeIndexEquiv P y) z.1 : ℕ) : ℝ))
+        {S | multiShiftThreshold c A b N j.val ≤
+          (S ∩ shiftArrayColumn (Fintype.card (primesIoc P y)) 2 1).card} := by
+      apply NormalNumbers.ErdosBorweinEndpointKub.bernoulliSubsetMass_mono
+      · intro S hS
+        have hL0 : 0 < Real.log (Real.log (N : ℝ)) := by linarith
+        have hlogL0 : 0 ≤ Real.log (Real.log (Real.log (N : ℝ))) :=
+          Real.log_nonneg (by linarith)
+        have hshift0 : 0 ≤
+            (((2 * (j.val + 1) : ℕ) : ℝ) * Real.log b / Real.log 2) := by
+          have : 0 < Real.log (b : ℝ) := Real.log_pos (by exact_mod_cast hb)
+          positivity
+        have harg0 : 0 ≤ multiShiftPrimeMean N + multiShiftSubpowerPenalty c N +
+            A * Real.sqrt (multiShiftPrimeMean N) +
+            (((2 * (j.val + 1) : ℕ) : ℝ) * Real.log b / Real.log 2) +
+            8 * Real.log (Real.log (Real.log N)) := by
+          have hpenalty0 : 0 ≤ multiShiftSubpowerPenalty c N := by
+            simp only [multiShiftSubpowerPenalty]
+            positivity
+          have hbaseline0 : 0 ≤ A * Real.sqrt (multiShiftPrimeMean N) :=
+            mul_nonneg hA (Real.sqrt_nonneg _)
+          have hmeanN : 0 < multiShiftPrimeMean N := by simpa only [mean] using hside.1
+          nlinarith
+        have hceil := Nat.ceil_lt_add_one harg0
+        have hthreshold : (multiShiftThreshold c A b N j.val : ℝ) < mean + x := by
+          dsimp only [mean, x, multiShiftDeviation]
+          rw [multiShiftThreshold]
+          exact hceil.trans_eq (by ring)
+        change multiShiftThreshold c A b N j.val ≤
+          (S ∩ shiftArrayColumn (Fintype.card (primesIoc P y)) 2 1).card
+        have hreal : (multiShiftThreshold c A b N j.val : ℝ) ≤
+            ((S ∩ shiftArrayColumn (Fintype.card (primesIoc P y)) 2 1).card : ℝ) :=
+          hthreshold.le.trans hS
+        exact_mod_cast hreal
+      · intro z hz
+        positivity
+      · intro z hz
+        have hp : Nat.Prime ((primeIndexEquiv P y) z.1 : ℕ) :=
+          (Finset.mem_filter.mp ((primeIndexEquiv P y) z.1).property).2
+        exact (div_le_one (by exact_mod_cast hp.pos)).2 (by exact_mod_cast hp.one_le)
+    _ = pairScheduledColumnMass c A b N j := by rfl
+
+/-- The sum of the active fixed-pair column masses diverges. -/
+theorem tendsto_pairActiveColumnMassSum
+    (c A eps eta alpha : ℝ) (hc : c < 1) (hA : 0 ≤ A)
+    (heps : 0 < eps) (heta0 : 0 < eta) (heta1 : eta ≤ 1 / 100)
+    (hetaEps : 80 * eta ≤ eps) (hlargeA : 6 ≤ eta ^ 2 * A ^ 2)
+    (habsorbA : 4 * Real.log 2 ≤ eps * A ^ 2)
+    (halpha : (1 + eps) * max c 0 / 2 < alpha) (halphaHalf : alpha < 1 / 2)
+    (b : ℕ) (hb : 2 ≤ b) (j₀ : ℕ) :
+    Filter.Tendsto (fun N : ℕ ↦
+      ∑ j : Fin (multiShiftScheduleJ N) with j₀ ≤ j.val + 1,
+        pairScheduledColumnMass c A b N j) Filter.atTop Filter.atTop := by
+  have hlower := tendsto_multiShiftActiveExpColumnSum
+    c A eps alpha hA heps.le halpha halphaHalf b hb j₀
+  refine Filter.tendsto_atTop_mono' Filter.atTop ?_ hlower
+  filter_upwards [eventually_pairColumnMass_ge_deviation
+      c A eps eta hc hA b hb heps heta0 heta1 hetaEps hlargeA habsorbA] with N hcolumn
+  apply Finset.sum_le_sum
+  intro j hj
+  exact hcolumn j
 
 /-- Abstract coupling bound for an arbitrary categorical event.  If singleton clearing preserves
 the event away from prime collisions, its categorical mass is at most the corresponding fully

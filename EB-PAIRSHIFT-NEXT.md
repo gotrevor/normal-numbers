@@ -72,3 +72,43 @@ place.  Next: assemble the scheduled heavy-count function, apply `PairShiftKubil
 using companion shift `J+1` and to off-diagonal pairs in sorted order, feed the resulting moment
 bounds to finite Chebyshev, and close the limit using `tendsto_multiShiftActiveExpColumnSum`,
 `tendsto_multiShiftCollisionError`, and the pair-error analogues of the existing sieve limits.
+
+## Lap 2 checkpoint (2026-10-27)
+
+The remaining finite/model interface is now substantially narrower and kernel-checked in
+`CoefmassErdosBorweinPairShiftAux.lean`:
+
+- `card_filter_eq_zero_div_le_centeredSecondMoment` and
+  `card_filter_eq_zero_div_le_of_moments` center Chebyshev at the theoretical model mean.  The
+  caller now needs only aggregate empirical first- and second-moment bounds; there is no fragile
+  division by the empirical mean.
+- `sum_pair_le_sq_add` performs the exact diagonal/off-diagonal summation.  Diagonal terms cost one
+  copy of the first moment, while off-diagonal errors cost exactly `|I|(|I|-1)`.
+- `bernoulliSubsetMass_relabel` proves finite Bernoulli laws invariant under coordinate
+  equivalences, and `pairIndependentColumnMass_zero_eq_one` specializes it to the two pair
+  columns.  Thus sorting a pair of shifts does not change either scheduled marginal.
+- `pairScheduledColumnMass` is the exact independent two-column tail used by the pair coupling.
+  It is in `[0,1]`; `eventually_pairColumnMass_ge_deviation` gives the existing sharp scheduled
+  moderate-deviation lower bound in this fixed pair space; and
+  `tendsto_pairActiveColumnMassSum` proves the active theoretical mean tends to infinity.
+
+Exact narrow checks passed:
+
+```text
+lake env lean src/NormalNumbers/CoefmassErdosBorweinPairShiftAux.lean
+lake env lean src/NormalNumbers/CoefmassErdosBorweinPairShift.lean
+~/personal/bin/lean-green /Users/gotrevor/src/nn-eb-endpoint
+```
+
+The full gate ended `FORMALIZE-TIER GREEN` (10971 jobs).
+
+The target still has its original single headline `sorry`, and its frozen statement section was
+not edited.  PairShift remains outside the root import.  Next: in the headline, define the active
+heavy events and use `PairShiftKubiliusTV` with `(0,j+1)` for marginals and the sorted
+`(i+1,j+1)` for off-diagonal pairs.  Rewrite the model terms with `pairShiftMass_count_eq`,
+`abs_pairBoolCountMass_sub_independent_le`, and
+`pairIndependentColumnMass_zero_eq_one`; then feed the termwise estimates through
+`sum_pair_le_sq_add` and `card_filter_eq_zero_div_le_of_moments`.  The remaining analytic leaf is
+to prove `J(N)^2` times the fixed-dimension pair TV error tends to zero (use the existing sieve
+depth estimate with `2C` for the exponential term and dominate the `log(N)^2` term by the proved
+multishift power error).
