@@ -61,18 +61,24 @@ date: verified decision date
 
 Then add the same row name to `mazeLinks`, with actual declaration references in `decls` and open `Prop` references in `reopen`.  Do not add it to `mazeLegacy`.
 
-## The three pi ideas: current disposition
+## The six pi ideas: current disposition
 
 All three original routes are now **abandoned as intractable with current methods**, not proved impossible.  Their rows appear at the start of `Maze.register` and `MazeAudit.mazeLinks`.
 
-Later proposals are tracked separately in [round-two.md](docs/pi-routes/round-two.md)
-and `PiDisjunctiveRoutes/RoundTwo.lean`.  They do not reopen these three routes.
+The three later proposals in [round-two.md](docs/pi-routes/round-two.md) are also
+now abandoned with current methods, as `Pi route 4` through `Pi route 6`.  Their
+exact refutations have separate scoped rows.  The audit guards all six retirement
+rows and requires linked evidence and open cruxes for each.  The second round
+does not reopen the first.
 
 | Original route | Formal crux and evidence | What must change to reopen |
 |---|---|---|
 | Triple return / odd orbit invariance | `PiOrbitClosureOddInvariant`; `pi_disjunctive_iff_oddInvariant`; the odd-return equivalence; the abstract doubling/tripling counterexample | A pi-specific arithmetic mechanism for odd invariance or returns.  A different odd multiplier or self-return prerequisite alone does not qualify. |
 | Prime reservoir / residual coupling | `PiPrimeReservoirSupport`, `PiReservoirDiagonalSupport`; exit collapse; rho orbit shadow; sum cancellation; scoped rational comparison theorems | A coupling that actually forces visits of the sum, with an explanation of which comparison hypothesis it escapes.  A new cutoff or transverse nonvanishing alone does not qualify. |
 | Disk residues / divisor floor sums | `DiskResidueCover`; shadow and cover sandwich; `diskSmallPart_orbit`; conditional tail-floor estimate | An additional arithmetic relation or estimate producing residue visits.  Improved shadow accuracy alone does not qualify. |
+| Exact spigot / arithmetic word-avoidance ranks | `SpigotEscapeBudget`, `SpigotSound`; `positiveWidthAlternatingPrefix`; `no_index_only_emit_rank` | An invariant proved for pi-reachable states that excludes the alternating controls and forces word visits.  Width bookkeeping or a larger trajectory table alone does not qualify. |
+| Oscillator polynomial certificates | `OscillatorCertificateSupply`; `not_quartic_endpoint_certificate`; sharp positive control `minimumDegreeWordOne` | A uniform construction exploiting word structure without first locating the word in pi.  The single-word degree-five calibration alone does not qualify. |
+| Distinguished radical branch / relative norms | `AlgebraicAngleDisjunctivity`; `branchNorm_eq`; `not_uniform_branchLoss` | A word-dependent estimate retaining information absent from the full product, with a mechanism producing visits.  Further telescoping or a sharper polygon approximation alone does not qualify. |
 
 ### Finding inventory and evidence limits
 

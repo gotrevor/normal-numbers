@@ -105,6 +105,31 @@ def SiteFactorization : Prop :=
         ≤ C * (1 + Real.log |(h : ℝ)|) ^ m
             * (Real.exp (-(u : ℝ) / 2) + 1 / ((Nat.totient q : ℝ) * Real.sqrt u)) + ε
 
+/-- The scheduled fresh-mass scale `ρ = δ log 2`, `δ = 1/φ(q)`. -/
+noncomputable def schedRho (q : ℕ) : ℝ := Real.log 2 / (Nat.totient q : ℝ)
+
+/-- The Erdős–Turán schedule `u = H = ⌈ρ⁻²⌉`. -/
+noncomputable def schedU (q : ℕ) : ℕ := ⌈(schedRho q)⁻¹ ^ 2⌉₊
+
+/-- **Site factorization on the Erdős–Turán schedule (frozen 2026-10-11, coefmass route).**  Only
+`u = ⌈ρ⁻²⌉` and frequencies `1 ≤ |h| ≤ u`, the range `CPrimeResidueQuad`'s chain consumes, with
+error `C(ρ² + e^{−u/8})` and `C` absolute.  This is a SEPARATE statement: the all-`(h, u)`
+`SiteFactorization` above is unchanged (referee Astra 2026-10-11: do not weaken a frozen Prop
+under its old name).  The `e^{−u/8}` comes from the square root in the clipped-TV transfer of the
+Riesz-truncated centered expansion, whose fourth-moment constant `B_h` satisfies
+`log B_h ≤ C(1 + log u) log(2 + log u) = o(u)` uniformly in `|h| ≤ u`.  Paper:
+`docs/notes/coefmass-bv-ledger-2026-10-11.md`, `docs/notes/coefmass-2026-10-10.md`.
+No producer is stated yet.  The ledger's main-term step (E4) failed referee (Astra
+`20261011T131444Z`): wrong conditional normalization, and the TV state lacks the target-site
+label above `y_k`.  A faithful tilted-mean input waits on that repair. -/
+def SiteFactorizationScheduled : Prop :=
+  ∃ C : ℝ, 0 < C ∧ ∃ q₁ : ℕ, ∀ q a : ℕ, 3 ≤ q → q₁ ≤ q → Nat.Coprime a q →
+    ∀ h : ℤ, h ≠ 0 → h.natAbs ≤ schedU q → ∀ ε > 0, ∀ᶠ N : ℕ in atTop,
+      ‖freshOneSite (residueClass q a) (winJ N) (cutU (schedU q) N (winJ N)) h N
+        - windowMeanLeG (residueClass q a) (winJ N) (cutU (schedU q) N (winJ N)) h N
+          * siteG (1 / (Nat.totient q : ℝ)) h (winJ N) (schedU q)‖
+        ≤ C * (schedRho q ^ 2 + Real.exp (-(schedU q : ℝ) / 8)) + ε
+
 /-- The weighted fresh mass `∑_k |z_k − 1| · δ log(u²·2^{k+1})`, the expansion parameter. -/
 noncomputable def freshBudget (δ : ℝ) (h : ℤ) (J u : ℕ) : ℝ :=
   ∑ k : Fin J, ‖zPhase h J k - 1‖ * (δ * Real.log ((u : ℝ) ^ 2 * 2 ^ (k.val + 1)))
@@ -366,5 +391,12 @@ need a deep-site truncation lemma under `winJ`: its `y_J < 2J`.  Cutting at `J�
 upper bound, …). -/
 theorem cprimeResidueQuad_of (hSF : SiteFactorization) (hPair : PairSecondOrder) :
     CPrimeResidueQuad := sorry
+
+/-- Believed, ~70% given the premises: the `cprimeResidueQuad_of` chain (doc §Chain) only ever
+evaluates `SiteFactorization` at `u = ⌈ρ⁻²⌉` and `|h| ≤ H = ⌈ρ⁻²⌉`.  There the scheduled error
+`C(ρ² + e^{−u/8})` is at most the `Cρ² polylog` the chain allots, and Erdős–Turán's `∑_{h≤H} 1/h`
+adds one `log(1/ρ)`.  Shares that chain's build gaps and its deep-site truncation lemma. -/
+theorem cprimeResidueQuad_of_scheduled (hSF : SiteFactorizationScheduled)
+    (hPair : PairSecondOrder) : CPrimeResidueQuad := sorry
 
 end NormalNumbers.PrimeModel.SiteFactor

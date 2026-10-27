@@ -1,6 +1,6 @@
 # Three second-round candidates for pi disjunctivity
 
-These are proposals for short mechanism tests, not three established proof routes or authorization to launch long jobs.  The statements and conditional transfers are in [`RoundTwo.lean`](../../src/NormalNumbers/PiDisjunctiveRoutes/RoundTwo.lean).  Read [MAZE.md](../../MAZE.md) before acting on them.  The first three routes remain retired.
+These proposals have now been tested and **abandoned as intractable with current methods**.  The original briefs below preserve their mechanisms and stopping criteria.  The statements and conditional transfers are in [`RoundTwo.lean`](../../src/NormalNumbers/PiDisjunctiveRoutes/RoundTwo.lean).  Read [MAZE.md](../../MAZE.md) before acting on them.  All six pi routes have explicit retirement rows; this is a research decision, not a theorem that every variant is impossible.
 
 The local screening covered the original-route and follow-up Maze entries, the pi-route notes, and searches of the statement corpus for these mechanisms.  No literature-priority claim is made.  No web search was used.
 
@@ -64,7 +64,7 @@ This is the highest-risk proposal.  A full norm usually loses precisely the info
 
 ## Order and evidence
 
-My first choice is the **oscillator-certificate test** (60% confidence in this ranking), followed by spigot invariants.  Both have explicit proof objects that can reveal whether anything beyond digit computation is happening.  The radical-norm idea should receive only its compensation test before any serious commitment.
+The initial ranking favored the oscillator-certificate test, followed by spigot invariants.  Both had explicit proof objects to test; the radical route received its compensation test.  This ranking is historical, not an instruction to relaunch the retired routes.
 
 All three crucial inputs remain open.  The three Lean transfers are conditional reductions, not advances on their premises.
 
@@ -77,9 +77,9 @@ impossible.  See [the run receipt](pilots/review.md) for validation and provenan
 - **Oscillator:** `cubicBlindAtThree` and `quarticEndpointObstruction` rule out
   degree at most four for simultaneous exclusion of 3 and 4.  The exact positive
   quadrature is `quarticQuadratureIdentity`; `quarticRejectsThree` is its control.
-  An exact rational quintic calculation suggests a sharp positive control,
-  formally stated as `MinimumDegreeWordOne` but not yet proved.  The next bounded
-  task is [that calibration](pilots/oscillator-followup.md), not a digit search.
+  `minimumDegreeWordOne` now proves that degree five is exactly sufficient for
+  the word `[1]`; see [the sharp calibration result](pilots/oscillator-sharp-result.md).
+  No construction for arbitrary words was obtained.
 - **Spigot:** `positiveWidthAlternatingPrefix` and `no_index_only_emit_rank`
   exclude input-index-only waiting bounds uniform over positive-width states.
   The constructed states are not claimed reachable from the pi initial state.
@@ -89,7 +89,18 @@ impossible.  See [the run receipt](pilots/review.md) for validation and provenan
   gain in the full product.  A word-sensitive estimate retaining a distinguished
   branch is still missing.  More full-product calculations will not supply it.
 
-The next research filter is whether a higher-degree oscillator construction uses
-the word automaton independently of a known occurrence in pi.  A degree-five
-certificate for the single word `[1]` would calibrate the method, not establish
-that missing construction or prove pi disjunctive.
+## Retirement and reopening
+
+The three original second-round mechanisms have `abandonedIntractable` rows
+named `Pi route 4`, `Pi route 5`, and `Pi route 6`, in addition to the three scoped
+refutation rows.  The formal open cruxes remain `SpigotEscapeBudget`,
+`OscillatorCertificateSupply`, and `AlgebraicAngleDisjunctivity`; their proved
+conditional transfers do not establish them.
+
+Reopening requires, respectively: a pi-specific arithmetic invariant excluding
+the alternating controls and forcing word visits; a uniform oscillator construction
+using word structure without known pi occurrences; or a word-sensitive inequality
+retaining information lost by the full radical norm.  None was found.  More digit
+coverage, higher-degree searches without a construction, or further full-product
+telescoping do not qualify.  The degree-five calibration is preserved as a useful
+result and does not by itself reopen the oscillator route.

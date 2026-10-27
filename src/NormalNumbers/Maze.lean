@@ -723,6 +723,21 @@ carry their evidence as a file pointer.  Sorted by area, newest campaigns first.
 /-- Every hall this programme has walked and closed.  Never delete a row: a re-opened hall
 keeps its row and gains a note (see `hdom` and the tower-separation wall, both REVERSED). -/
 def register : List Hall := [
+  ⟨"Pi route 4: exact spigot and word-avoidance ranks",
+   "Aliases: hypergeometric pi spigot, arithmetic termination invariant, automaton escape rank. Force each binary word by a decreasing rank on exact integer states",
+   .abandonedIntractable, .kernel,
+   "ABANDONED with current methods. Positive-width states can emit arbitrarily long alternating prefixes at fixed input index, refuting uniform index-only waiting bounds. They are not claimed reachable from the pi initial state. No additional invariant exploiting the actual pi coefficients was obtained; SpigotEscapeBudget and SpigotSound remain open. Exact recurrence, width bookkeeping, and finite trajectory tables do not supply the missing word-visitation mechanism. This is a research decision, not a refutation of every possible arithmetic rank. REOPEN ONLY with a concrete invariant verified on pi-reachable states that excludes the alternating controls and forces arbitrary word visits; restating reachability or enlarging a digit probe does not qualify",
+   "RoundTwoSpigot.lean: positiveWidthAlternatingPrefix, no_index_uniform_waiting_bound, no_index_only_emit_rank; RoundTwo.lean: SpigotEscapeBudget, SpigotSound, pi_disjunctive_of_spigotEscape; docs/pi-routes/round-two.md", "2026-10-26"⟩,
+  ⟨"Pi route 5: oscillator certificates for forbidden-word sets",
+   "Aliases: sine-kernel positivity, P''+P certificates, word-automaton polynomial separation. Use sin(pi)=0 to exclude pi from each forbidden-word set",
+   .abandonedIntractable, .kernel,
+   "ABANDONED with current methods. Degree<=4 cannot reject both integer endpoints; degree five is exactly sufficient for the single word [1]. This sharp calibration supplies no construction for arbitrary words. OscillatorCertificateSupply remains open and no automaton-based construction independent of known pi digit occurrences was obtained. FixedDegreeBlindInterval is an open structural question, not a proved obstruction. Higher degrees are not refuted. REOPEN ONLY with a specific uniform construction using word structure, demonstrated beyond the singleton calibration and without first locating the word in pi. A higher-degree search or proving the elementary analytic bridge alone does not qualify",
+   "RoundTwoOscillator.lean: not_quartic_endpoint_certificate, quarticQuadratureIdentity; RoundTwoOscillatorSharp.lean: minimumDegreeWordOne; RoundTwo.lean: OscillatorCertificateSupply, pi_disjunctive_of_oscillatorCertificates; docs/pi-routes/round-two.md", "2026-10-26"⟩,
+  ⟨"Pi route 6: distinguished radical branch and relative norms",
+   "Aliases: polygon radical tower, relative Galois norms, distinguished-embedding deficit. Convert forbidden words into uncompensated loss along a radical branch",
+   .abandonedIntractable, .kernel,
+   "ABANDONED with current methods. The product over all signed radical branches equals 2-minus-seed at every depth, so the tested full-product loss is exactly compensated. No word-dependent inequality retaining distinguished-branch information was obtained. AlgebraicAngleDisjunctivity remains an open stronger target, not an estimate proved by the norm identity. Branch-sensitive inequalities are not refuted in general. REOPEN ONLY with an explicit word-dependent estimate using information absent from the full product and a mechanism connecting it to visits. Further norm telescoping, ordinary height bounds, or sharper polygon approximation alone do not qualify",
+   "RoundTwoRadical.lean: branchNorm_eq, not_uniform_branchLoss; RoundTwo.lean: AlgebraicAngleDisjunctivity, pi_disjunctive_of_algebraicAngles; docs/pi-routes/round-two.md", "2026-10-26"⟩,
   ⟨"Second-round pi: oscillator exclusion with degree at most four",
    "Aliases: cubic/quartic positive-oscillator certificates, low-degree sine-kernel polynomials. Reject the forbidden-word set using P''+P>0",
    .refuted, .kernel,

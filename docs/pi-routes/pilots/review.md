@@ -19,7 +19,9 @@ added `not_quartic_endpoint_certificate`, frozen quintic/word-one targets, share
 imports, and the Maze links.  The spigot note's “center” was corrected to “affine
 offset”; an unsupported suggested width formula was removed.  The oscillator
 worker branch was separately preserved at `c9dc968e` with normal commit hooks.
-Worker worktrees are retained; nothing is pushed or deleted.
+Worker worktrees are retained.  This initial integration was committed at
+`621ef0c7`; the subsequent trunk landing also includes the sharp follow-up and
+the broader research-retirement decisions.
 
 ## Operational lesson
 
@@ -49,9 +51,17 @@ Host targeted build passed, including the Maze audit (207 rows, 100 linked,
 and `Quot.sound`.  This validates the stated scoped results, not their open
 pi-specific premises.
 
-## Next checkpoint
+## Sharp follow-up and round closure
 
-`oscillator-followup.md` freezes a sharp degree-five calibration.  It must not turn
-into a large proof of `FixedDegreeBlindInterval` or a sweep of computed pi digits.
-The actual research frontier remains `OscillatorCertificateSupply`: construct
-certificates for arbitrary words without assuming their occurrences in pi.
+Run `nn-pi-oscillator-sharp-20261026-232845-782000` used one Opus/low lap and an
+80k legacy context budget.  It delivered `RoundTwoOscillatorSharp.lean` and its
+result note without a worker commit, as requested.  The supervisor reported exit
+143; the parent reviewed the delivered source rather than treating that code as
+proof success.  `minimumDegreeWordOne` proves degree five is necessary and
+sufficient for the word `[1]`.  `FixedDegreeBlindInterval` remains open.
+
+All three broad second-round routes are now recorded as abandoned with current
+methods in the Maze, with their exact failed subfamilies kept separately.  No
+construction for `OscillatorCertificateSupply`, invariant for `SpigotEscapeBudget`,
+or word-sensitive radical estimate was found.  The exact reopening requirements
+are in `MAZE.md` and `round-two.md`.  No additional campaign is scheduled.

@@ -104,8 +104,8 @@ theorem zeroWidth_twoCycle (r : ℤ) (hr : 0 < r) :
   simp only [spigotStep, if_pos h0, if_neg h1, if_pos h2]
   simp [emit]; ring
 
-/-- The precise rank family this excludes: any rank `ρ(s)` that is bounded by a
-function of `s.n` alone and strictly drops at each emit step. -/
+/-- No waiting bound depending only on the input index holds uniformly over
+all positive-width states.  The statement quantifies waiting bounds directly. -/
 theorem no_index_only_emit_rank :
     ¬ ∃ f : ℕ → ℕ, ∀ s : SpigotState, 0 < s.p → 0 < s.q →
       ∀ t, (iterateSpigot t s).n = s.n → t ≤ f s.n := by

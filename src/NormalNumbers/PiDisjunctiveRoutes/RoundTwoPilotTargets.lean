@@ -9,7 +9,8 @@ import NormalNumbers.PiDisjunctiveRoutes.RoundTwo
 # Frozen targets for the bounded second-round mechanism pilots
 
 Read `../../../MAZE.md` and `docs/pi-routes/pilots/README.md`.
-These are open propositions until the corresponding pilot supplies proofs.
+The pilot outcomes (including refutations) are proved in the corresponding modules;
+`FixedDegreeBlindInterval` remains open.  See `docs/pi-routes/pilots/review.md`.
 They test specific certificate families, not the truth of pi disjunctivity.
 -/
 
@@ -75,8 +76,8 @@ def WordOneAvoidanceClassification : Prop :=
 def QuinticWordOneCertificate : Prop :=
   WordOscillatorCertificate [1] quinticControl
 
-/-- Expected true (99%, the positive control plus the proved quartic obstruction
-and the elementary classification of [1]-avoiders).  Still open here. -/
+/-- Proved as `minimumDegreeWordOne` in `RoundTwoOscillatorSharp`, using the
+positive control, quartic obstruction, and classification of [1]-avoiders. -/
 @[blueprint (title := "Degree five is the sharp oscillator threshold for word one")]
 def MinimumDegreeWordOne : Prop :=
   (∃ P : Polynomial ℚ, P.natDegree = 5 ∧ WordOscillatorCertificate [1] P) ∧

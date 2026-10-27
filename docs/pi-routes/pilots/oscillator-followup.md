@@ -1,5 +1,11 @@
 # Prepared follow-up: sharp degree threshold and the fixed-degree barrier
 
+Completed: `minimumDegreeWordOne` in the `RoundTwoOscillatorSharp.lean` module
+proves the sharp threshold.  See `oscillator-sharp-result.md`.
+This brief is historical; the broader route is retired under `Pi route 5` in the
+Maze.  Do not relaunch this calibration or the structural question below as a new
+pi-disjunctivity route without meeting that row's reopening requirement.
+
 The first pilot proves the exact quartic obstruction.  The parent has found the
 matching positive endpoint control, without using computed pi digits:
 

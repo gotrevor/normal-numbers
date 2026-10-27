@@ -39,6 +39,7 @@ import NormalNumbers.PiDisjunctiveRoutes.TripleReturnLiouville
 import NormalNumbers.PiDisjunctiveRoutes.PrimeReservoirDiagonal
 import NormalNumbers.PiDisjunctiveRoutes.DiskFloorError
 import NormalNumbers.PiDisjunctiveRoutes.RoundTwoOscillator
+import NormalNumbers.PiDisjunctiveRoutes.RoundTwoOscillatorSharp
 import NormalNumbers.PiDisjunctiveRoutes.RoundTwoSpigot
 import NormalNumbers.PiDisjunctiveRoutes.RoundTwoRadical
 import NormalNumbers.EntropyProfiles
@@ -86,6 +87,23 @@ def mazeRows : List RowInfo :=
 
 /-- Each linked row and the declarations it rests on. -/
 def mazeLinks : List Link := [
+  ⟨"Pi route 4: exact spigot and word-avoidance ranks",
+   [``PiDisjunctiveRoutes.RoundTwo.Pilots.positiveWidthAlternatingPrefix,
+    ``PiDisjunctiveRoutes.RoundTwo.Pilots.no_index_only_emit_rank,
+    ``PiDisjunctiveRoutes.RoundTwo.pi_disjunctive_of_spigotEscape],
+   [``PiDisjunctiveRoutes.RoundTwo.SpigotEscapeBudget,
+    ``PiDisjunctiveRoutes.RoundTwo.SpigotSound]⟩,
+  ⟨"Pi route 5: oscillator certificates for forbidden-word sets",
+   [``PiDisjunctiveRoutes.RoundTwo.Pilots.not_quartic_endpoint_certificate,
+    ``PiDisjunctiveRoutes.RoundTwo.Pilots.minimumDegreeWordOne,
+    ``PiDisjunctiveRoutes.RoundTwo.pi_disjunctive_of_oscillatorCertificates],
+   [``PiDisjunctiveRoutes.RoundTwo.OscillatorCertificateSupply,
+    ``PiDisjunctiveRoutes.RoundTwo.Pilots.FixedDegreeBlindInterval]⟩,
+  ⟨"Pi route 6: distinguished radical branch and relative norms",
+   [``PiDisjunctiveRoutes.RoundTwo.Pilots.branchNorm_eq,
+    ``PiDisjunctiveRoutes.RoundTwo.Pilots.not_uniform_branchLoss,
+    ``PiDisjunctiveRoutes.RoundTwo.pi_disjunctive_of_algebraicAngles],
+   [``PiDisjunctiveRoutes.RoundTwo.AlgebraicAngleDisjunctivity]⟩,
   ⟨"Second-round pi: oscillator exclusion with degree at most four",
    [``PiDisjunctiveRoutes.RoundTwo.Pilots.not_quartic_endpoint_certificate,
     ``PiDisjunctiveRoutes.RoundTwo.Pilots.quarticQuadratureIdentity,
@@ -494,11 +512,11 @@ def mazeLegacy : List String := [
   "Diophantine good-denominator detour for the tail cell",
   "route B's unweighted cover of the state-dependent target"]
 
-/-- The original pi routes must remain discoverable as research decisions.
+/-- Both rounds of pi routes must remain discoverable as research decisions.
 These guards test the bookkeeping, not the truth of an intractability claim. -/
 def piRetiredRows : List RowInfo := mazeRows.filter (fun r => r.name.startsWith "Pi route ")
 
-#guard piRetiredRows.length == 3
+#guard piRetiredRows.length == 6
 #guard piRetiredRows.all (·.needsReopen)
 #guard (register.filter (fun h => h.name.startsWith "Pi route ")).all
   (fun h => h.verdict == Verdict.abandonedIntractable)
@@ -511,7 +529,7 @@ def piRetiredRows : List RowInfo := mazeRows.filter (fun r => r.name.startsWith 
 #guard (LeanLedger.audit piRetiredRows
   (mazeLinks.filter (fun l => l.row.startsWith "Pi route ")) []).isEmpty
 
-/-- info: maze audit: 207 rows, 100 cite declarations, 107 legacy (prose only) -/
+/-- info: maze audit: 210 rows, 103 cite declarations, 107 legacy (prose only) -/
 #guard_msgs in
 #maze_audit mazeRows, mazeLinks, mazeLegacy
 
