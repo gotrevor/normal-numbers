@@ -574,6 +574,10 @@ import NormalNumbers.PiDisjunctiveRoutes.DualRadix
 import NormalNumbers.LnTwoRoutes.Screen
 import NormalNumbers.LnTwoRoutes.PadeCost
 import NormalNumbers.SqrtTwoRoutes.Screen
+import NormalNumbers.SqrtTwoRoutes.NormScale
+import NormalNumbers.SqrtTwoRoutes.Balanced
+import NormalNumbers.SqrtTwoRoutes.WordCertificate
+import NormalNumbers.SqrtTwoRoutes.Controls
 import NormalNumbers.PiDisjunctiveRoutes.RoundTwoSpigot
 import NormalNumbers.PiDisjunctiveRoutes.RoundTwoRadical
 import NormalNumbers.StonehamSixFailure

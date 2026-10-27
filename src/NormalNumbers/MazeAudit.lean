@@ -45,6 +45,10 @@ import NormalNumbers.PiDisjunctiveRoutes.DualRadix
 import NormalNumbers.LnTwoRoutes.Screen
 import NormalNumbers.LnTwoRoutes.PadeCost
 import NormalNumbers.SqrtTwoRoutes.Screen
+import NormalNumbers.SqrtTwoRoutes.NormScale
+import NormalNumbers.SqrtTwoRoutes.Balanced
+import NormalNumbers.SqrtTwoRoutes.WordCertificate
+import NormalNumbers.SqrtTwoRoutes.Controls
 import NormalNumbers.PiDisjunctiveRoutes.RoundTwoSpigot
 import NormalNumbers.PiDisjunctiveRoutes.RoundTwoRadical
 import NormalNumbers.EntropyProfiles
@@ -96,7 +100,16 @@ def mazeLinks : List Link := [
    [``SqrtTwoRoutes.pell_synthesis, ``SqrtTwoRoutes.pell_cost_exact,
     ``SqrtTwoRoutes.pell_dyadic_cost_exact, ``SqrtTwoRoutes.cheap_pell_iff,
     ``SqrtTwoRoutes.pell_windowSupply_iff, ``SqrtTwoRoutes.pell_small_control,
-    ``SqrtTwoRoutes.pell_mixed_control], [``SqrtTwoRoutes.PellWindowSupply]⟩,
+    ``SqrtTwoRoutes.pell_mixed_control, ``SqrtTwoRoutes.pell_linear_combination_norm,
+    ``SqrtTwoRoutes.pell_dyadic_norm_lower, ``SqrtTwoRoutes.pell_dyadic_coefficient_growth,
+    ``SqrtTwoRoutes.pell_dyadic_bounded_norm, ``SqrtTwoRoutes.balanced_pell_coefficients,
+    ``SqrtTwoRoutes.pellWordCertificate_orbit_mem_Ioo,
+    ``SqrtTwoRoutes.pellWordCertificateSupply_implies_disjunctive,
+    ``SqrtTwoRoutes.pellWordCertificateSupply_of_disjunctive,
+    ``SqrtTwoRoutes.zero_zero_certificate_control,
+    ``SqrtTwoRoutes.one_one_certificate_control,
+    ``SqrtTwoRoutes.wrong_word_certificate_rejected],
+   [``SqrtTwoRoutes.PellWindowSupply, ``SqrtTwoRoutes.PellWordCertificateSupply]⟩,
   ⟨"Sqrt2 screen: fixed-modulus remainder abstraction",
    [``SqrtTwoRoutes.mock_remainder, ``SqrtTwoRoutes.remainder_update_identity,
     ``SqrtTwoRoutes.MockPath, ``SqrtTwoRoutes.every_stream_has_mock_path,

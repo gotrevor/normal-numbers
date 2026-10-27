@@ -4,6 +4,8 @@ We investigated **three routes toward disjunctivity of √2**.  Their outcomes d
 
 None was selected for a further campaign in its present form.  That is a research decision, not a denial that these are routes toward the goal.  In particular, equivalence does not defeat the Pell route: a new way to prove its certificate-supply premise would prove disjunctivity.  The missing ingredient is that construction, not a logically stronger reduction.
 
+**Continuation:** the Pell route has since been reopened at that construction, with proved coefficient-scale bounds and an integer-only word-certificate target.  See [construction.md](construction.md).  The initial scoped findings below remain valid; the present disposition of the Pell route is an open construction problem, recorded as `.wall` in the Maze.
+
 Decision date: 2026-10-27.  Apply [MAZE.md](../../MAZE.md) before proposing variants.  This is local mathematical work, with no literature or priority claim.  Namespace below: `NormalNumbers.SqrtTwoRoutes`.
 
 ## 1. Adjacent Pell synthesis: an exact reformulation

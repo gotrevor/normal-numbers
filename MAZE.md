@@ -92,9 +92,13 @@ budget below 1/8; its parameter-uniform construction remains an open wall.
 Preserve both the finite positive witness and the finite exclusion certificates.
 
 The [sqrt(2) screen](docs/sqrt-two-routes/screen.md) investigates three routes;
-none was selected for a further campaign in its present form.
+the [Pell continuation](docs/sqrt-two-routes/construction.md) is now reopened
+at the uniform coefficient-construction problem.
 Adjacent Pell certificates attain exactly the original dyadic residual, and
-signed window supply is equivalent to disjunctivity.  A fixed-modulus remainder
+signed window supply is equivalent to disjunctivity.  The continuation proves
+matching square-root coefficient scales and an integer-only word-certificate
+formulation with transfers in both directions; the uniform supply remains open.
+A fixed-modulus remainder
 abstraction admits every bit stream; the splitting-only norm filter is automatic
 for every candidate numerator.  The three scoped rows record the limits and
 reopening requirements; they do not refute all Pell, carry, or sieve methods.
