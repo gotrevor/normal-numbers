@@ -723,6 +723,21 @@ carry their evidence as a file pointer.  Sorted by area, newest campaigns first.
 /-- Every hall this programme has walked and closed.  Never delete a row: a re-opened hall
 keeps its row and gains a note (see `hdom` and the tower-separation wall, both REVERSED). -/
 def register : List Hall := [
+  ⟨"Sqrt2 screen: cheap adjacent Pell certificates",
+   "Aliases: quadratic-unit synthesis, dyadic Pell linear forms, continued-fraction certificate budgets. Use adjacent Pell solutions as an integer basis and minimize the absolute error budget",
+   .abandonedIntractable, .kernel,
+   "ABANDONED with current methods: bare feasibility and budget optimization have no independent visit-producing mechanism. Every integer target is feasible at every adjacent pair. For denominator 2^m, the pair at m+1,m+2 attains cost exactly |P-2^m*sqrt(2)|; cheap certificates are equivalent to the original dyadic approximation, and signed window supply is equivalent to disjunctivity. This is a scoped reformulation, not an impossibility theorem for Pell methods. REOPEN ONLY with a uniform word-targeted coefficient construction or estimate using information beyond these identities, without first locating the desired orbit visit. Additional finite certificates alone do not qualify",
+   "SqrtTwoRoutes/Screen.lean: pell_synthesis, pell_cost_exact, pell_dyadic_cost_exact, cheap_pell_iff, pell_windowSupply_iff, pell_small_control, pell_mixed_control, PellWindowSupply; docs/sqrt-two-routes/screen.md", "2026-10-27"⟩,
+  ⟨"Sqrt2 screen: fixed-modulus remainder abstraction",
+   "Aliases: finite residue carry filter, square-root digit state graph. Retain norm congruences and remainder updates modulo fixed M, exact prefix updates, positivity bounds, and next-bit thresholds",
+   .refuted, .kernel,
+   "The stated abstraction admits EVERY infinite bit stream once the starting prefix is at least M, for any prescribed initial norm residue. Explicit mock remainders satisfy both bit thresholds and the mod-M recurrence; not_finiteResidueExclusion refutes any language exclusion by these constraints alone. Mock paths are not asserted to start with the actual remainder or satisfy the exact integer recurrence. This sharpens the existing carry-state wall, not a reopening of Axiom C/T. REOPEN ONLY with an invariant of exact reachable states, or additional growing-resolution information, that rejects the mock paths and forces words",
+   "SqrtTwoRoutes/Screen.lean: mock_remainder, remainder_update_identity, MockPath, every_stream_has_mock_path, FiniteResidueExclusion, not_finiteResidueExclusion, ExactRemainderWordSupply; docs/sqrt-two-routes/screen.md", "2026-10-27"⟩,
+  ⟨"Sqrt2 screen: splitting-only norm sieve",
+   "Aliases: prime splitting of square-root residuals, quadratic-residue prefix filter. Sieve candidate dyadic numerators by the existence of sqrt(2) modulo primes dividing 2Q^2-P^2",
+   .vacuous, .kernel,
+   "The filter is automatic for every numerator when the denominator is invertible: modulo a residual divisor, P/Q itself is a square root of 2. No digit-word restriction has been used. This does not refute factor-size, multiplicity, or correlation estimates. REOPEN ONLY with an additional word-dependent constraint that is not already forced by the norm identity for every candidate numerator",
+   "SqrtTwoRoutes/Screen.lean: norm_root_automatic, NormSplittingFilter, every_candidate_passes_splitting; docs/sqrt-two-routes/screen.md", "2026-10-27"⟩,
   ⟨"Ln2 screen: Euler acceleration and finite kick jets",
    "Aliases: high-order reciprocal tails, beta-integral acceleration, smooth forcing, finite asymptotic jets. Rewrite log 2 with kicks m!/(n...(n+m)) and a rational alternating-harmonic shift",
    .parked, .frozen,

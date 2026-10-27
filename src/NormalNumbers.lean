@@ -573,6 +573,7 @@ import NormalNumbers.PiDisjunctiveRoutes.InventionScreen
 import NormalNumbers.PiDisjunctiveRoutes.DualRadix
 import NormalNumbers.LnTwoRoutes.Screen
 import NormalNumbers.LnTwoRoutes.PadeCost
+import NormalNumbers.SqrtTwoRoutes.Screen
 import NormalNumbers.PiDisjunctiveRoutes.RoundTwoSpigot
 import NormalNumbers.PiDisjunctiveRoutes.RoundTwoRadical
 import NormalNumbers.StonehamSixFailure

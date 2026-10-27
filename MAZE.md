@@ -89,6 +89,13 @@ and third are parked pending their named estimates.  The Pade route's
 budget below 1/8; its parameter-uniform construction remains an open wall.
 Preserve both the finite positive witness and the finite exclusion certificates.
 
+The [sqrt(2) screen](docs/sqrt-two-routes/screen.md) admits no campaign.
+Adjacent Pell certificates attain exactly the original dyadic residual, and
+signed window supply is equivalent to disjunctivity.  A fixed-modulus remainder
+abstraction admits every bit stream; the splitting-only norm filter is automatic
+for every candidate numerator.  The three scoped rows record the limits and
+reopening requirements; they do not refute all Pell, carry, or sieve methods.
+
 | Original route | Formal crux and evidence | What must change to reopen |
 |---|---|---|
 | Triple return / odd orbit invariance | `PiOrbitClosureOddInvariant`; `pi_disjunctive_iff_oddInvariant`; the odd-return equivalence; the abstract doubling/tripling counterexample | A pi-specific arithmetic mechanism for odd invariance or returns.  A different odd multiplier or self-return prerequisite alone does not qualify. |

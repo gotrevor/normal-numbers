@@ -44,6 +44,7 @@ import NormalNumbers.PiDisjunctiveRoutes.InventionScreen
 import NormalNumbers.PiDisjunctiveRoutes.DualRadix
 import NormalNumbers.LnTwoRoutes.Screen
 import NormalNumbers.LnTwoRoutes.PadeCost
+import NormalNumbers.SqrtTwoRoutes.Screen
 import NormalNumbers.PiDisjunctiveRoutes.RoundTwoSpigot
 import NormalNumbers.PiDisjunctiveRoutes.RoundTwoRadical
 import NormalNumbers.EntropyProfiles
@@ -91,6 +92,19 @@ def mazeRows : List RowInfo :=
 
 /-- Each linked row and the declarations it rests on. -/
 def mazeLinks : List Link := [
+  ⟨"Sqrt2 screen: cheap adjacent Pell certificates",
+   [``SqrtTwoRoutes.pell_synthesis, ``SqrtTwoRoutes.pell_cost_exact,
+    ``SqrtTwoRoutes.pell_dyadic_cost_exact, ``SqrtTwoRoutes.cheap_pell_iff,
+    ``SqrtTwoRoutes.pell_windowSupply_iff, ``SqrtTwoRoutes.pell_small_control,
+    ``SqrtTwoRoutes.pell_mixed_control], [``SqrtTwoRoutes.PellWindowSupply]⟩,
+  ⟨"Sqrt2 screen: fixed-modulus remainder abstraction",
+   [``SqrtTwoRoutes.mock_remainder, ``SqrtTwoRoutes.remainder_update_identity,
+    ``SqrtTwoRoutes.MockPath, ``SqrtTwoRoutes.every_stream_has_mock_path,
+    ``SqrtTwoRoutes.FiniteResidueExclusion, ``SqrtTwoRoutes.not_finiteResidueExclusion],
+   [``SqrtTwoRoutes.ExactRemainderWordSupply]⟩,
+  ⟨"Sqrt2 screen: splitting-only norm sieve",
+   [``SqrtTwoRoutes.norm_root_automatic, ``SqrtTwoRoutes.NormSplittingFilter,
+    ``SqrtTwoRoutes.every_candidate_passes_splitting], []⟩,
   ⟨"Ln2 screen: Euler acceleration and finite kick jets",
    [``LnTwoRoutes.AcceleratedLogIdentity, ``LnTwoRoutes.FiniteJetRationalControls,
     ``LnTwoRoutes.binary_coboundary_sum, ``LnTwoRoutes.clone_partial_sum,
@@ -573,7 +587,7 @@ def piRetiredRows : List RowInfo := mazeRows.filter (fun r => r.name.startsWith 
 #guard (LeanLedger.audit piRetiredRows
   (mazeLinks.filter (fun l => l.row.startsWith "Pi route ")) []).isEmpty
 
-/-- info: maze audit: 217 rows, 110 cite declarations, 107 legacy (prose only) -/
+/-- info: maze audit: 220 rows, 113 cite declarations, 107 legacy (prose only) -/
 #guard_msgs in
 #maze_audit mazeRows, mazeLinks, mazeLegacy
 
