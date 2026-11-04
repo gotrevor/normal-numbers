@@ -53,3 +53,13 @@ The data claims nothing beyond this.
 * Possible continuation (not in scope): a closed form or explicit rational values of
   `lim_D G_D(w)`.  For example, the digit-`1` frequency should be the density of squarefree
   `m` with no carry in, about `6/π²` minus the carry share.  This is open and not stated.
+
+## Final checkpoint (2026-11-04, treadmill stop)
+
+* Branch `wip/power-lambert-frequencies`; proof commit `dd43c33c` on top of kickoff `0a775c11` /
+  `5cb3fa16`.  Working tree clean apart from this section.  `box done --green` was run, and the
+  host re-verifies the build.
+* Scoped gate met.  The remaining `sorry`s in `src/` are outside this scope and designated-open.
+* Exact next step (optional, new scope): state the digit-`1` frequency of
+  `Σ 1/(10^{n²} − 1)` as a `def … : Prop` node, either closed-form or in terms of the
+  squarefree density and the carry share, then try to prove it.
