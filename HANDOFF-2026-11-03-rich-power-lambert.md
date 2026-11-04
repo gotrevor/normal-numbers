@@ -49,3 +49,11 @@ Files: `PowerLambertRichCount.lean` (arithmetic), `PowerLambertRichOrbit.lean` (
 target the kickoff allows once the headline lands.  The same decomposition (periodic part exact,
 non-periodic part `O(1/D)` in mean) is the natural route: frequencies of the `Q_D`-periodic model
 converge as `D → ∞`, and the averaged bound here controls the difference in `B¹`.
+
+## Checkpoint (2026-11-04, final)
+
+* Branch `wip/rich-power-lambert`; proof commit `66b041d3` (on top of kickoff `53878220`).
+* Scoped gate `sorry-free:src/NormalNumbers/PowerLambertRich.lean`: met; `box done --green` run.
+* Not pushed (host pushes).  Exact next step, if anyone continues: freeze a `sorry` theorem
+  `powerLambertFrequenciesExist (b r) (hb) (hr) : PowerLambertFrequenciesExist b r` in
+  `PowerLambertFrequencies.lean` and attack it via the `Q_D`-periodic model (see "Next" above).
