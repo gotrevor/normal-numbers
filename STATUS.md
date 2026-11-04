@@ -1,3 +1,11 @@
+# Explicit sparse prime Lambert constant, 4 November 2026 (branch `wip/explicit-cprime`, COMPLETE)
+
+`ExplicitSparseNormal.isNormal_explicitSparseLambert`: for the explicit decidable prime set
+`explicitSparseSet` (binary length in the first `1/k` log-fraction of its dyadic block), the
+Lambert constant `Σ 1/(4^p − 1)` is normal in base 4, axioms `[propext, Classical.choice,
+Quot.sound]`.  Only Mertens' first theorem with `O(1)` error is used.  See
+`HANDOFF-2026-11-03-explicit-sparse-normal.md`.
+
 # Prime-class joint normality, 17 October 2026 (branch `proof/prime-class`, lap 12 COMPLETE)
 
 Theorem T-B′ is complete.  `StonehamPrimeClass.lean` is sorry-free, and all six kickoff

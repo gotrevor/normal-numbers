@@ -1,3 +1,9 @@
+# Explicit sparse normal (2026-11-04, COMPLETE)
+
+* `ExplicitSparseNormal.isNormal_explicitSparseLambert` proved, axioms `[propext,
+  Classical.choice, Quot.sound]`; no Literature Prop.  Mertens I with `O(1)` error sufficed
+  (`ExplicitSparseNormalAux.blockMass_le/_ge`).  See `HANDOFF-2026-11-03-explicit-sparse-normal.md`.
+
 # Prime class lap 12 (2026-10-17, COMPLETE) -- T-B′ and L2 closed
 
 * `StonehamPrimeClass.lean` is sorry-free.  All six kickoff declarations audit to exactly

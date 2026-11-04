@@ -6,6 +6,7 @@ Authors: Trevor Morris
 import Architect
 import NormalNumbers.PrimeModelFamilyGraded
 import NormalNumbers.PrimeModelKMT
+import NormalNumbers.ExplicitSparseNormalAux
 
 /-!
 # An explicit sparse prime set whose Lambert constant is normal in base 4
@@ -41,12 +42,14 @@ Both are elementary once the Mertens asymptotic is in hand.  Note the schedule's
 
 ## Status
 
-Frozen: `isNormal_explicitSparseLambert` (the headline, proved from the two lemmas below).
-`divergentRecip_explicitSparseSet` and `sqrtFreshMassZero_explicitSparseSet` are the two leaves
-(sorry, confidence 95% each).  Do not restate them.  If the repo lacks a usable Mertens-with-error
-statement and PNT+ cannot supply it within a lap, plant `Literature.MertensSecond` as a named
-hypothesis `Prop` with the exact cited statement (Tenenbaum, *Introduction to analytic and
-probabilistic number theory*, Thm I.1.10) and prove the leaves from it; say so in the handoff.
+Proved, axioms `[propext, Classical.choice, Quot.sound]` (2026-11-04).  The leaves come from
+`ExplicitSparseNormalAux`: Mertens' **first** theorem with `O(1)` error (`mertens_lower`,
+`mertens_upper`) already suffices, because block `k` is the window `(2^{2^k}, 2^{T_k}]`
+(`Aux.mem_block_iff`, `T_k = ⌈2^k(k+1)/k⌉`) of log-width `≍ 2^k/k → ∞`, so the `O(1)` error is
+negligible: `1/(2(k+1)) ≤ blockMass k ≤ 18/k` (`Aux.blockMass_ge`, `Aux.blockMass_le`).  The
+fresh window `(√N, N]` meets only blocks `m − 1, m` with `m = ⌊log₂ ⌊log₂ N⌋⌋`
+(`Aux.scale_window`), giving fresh mass `≤ 36/(m − 1)` (`Aux.recipSumIoc_sqrt_le`).  No
+Mertens-second, PNT or primes-in-progressions input is used.
 -/
 
 namespace NormalNumbers.PrimeModel.Explicit
@@ -74,12 +77,12 @@ example : ¬ explicitSparseSet 2053 := by decide +kernel
 
 /-- **Leaf 1 (frozen).**  Divergent reciprocal mass: block `k` carries mass `≍ 1/k`. -/
 theorem divergentRecip_explicitSparseSet : DivergentRecip explicitSparseSet := by
-  sorry
+  exact Aux.divergentRecip_of_iff explicitSparseSet fun _ => Iff.rfl
 
 /-- **Leaf 2 (frozen).**  Vanishing `√N`-fresh mass: the window `(√N, N]` meets `P` in a set of
 log-log width `O(1/log log N)`. -/
 theorem sqrtFreshMassZero_explicitSparseSet : SqrtFreshMassZero explicitSparseSet := by
-  sorry
+  exact Aux.sqrtFreshMassZero_of_iff explicitSparseSet fun _ => Iff.rfl
 
 /-- **Headline (frozen, 2026-11-03).**  The explicit prime Lambert constant
 `Σ_{p prime, p ∈ P} 1/(4^p − 1)` is normal in base 4, unconditionally via Theorem C′. -/

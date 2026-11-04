@@ -1,3 +1,8 @@
+# Explicit sparse normal (2026-11-04): COMPLETE; read HANDOFF-2026-11-03-explicit-sparse-normal.md
+
+- `isNormal_explicitSparseLambert` (explicit decidable prime set, `Σ 1/(4^p−1)` normal in base 4)
+  proved unconditionally from Mertens' first theorem; root imports the file; full build green.
+
 # Prime class lap 11 (2026-10-17): finite-pattern resultant loss; read HANDOFF-2026-10-17-prime-class-lap11.md
 
 - Complementary-exponent independence, the exact nonzero gap-pattern coefficient polynomial,

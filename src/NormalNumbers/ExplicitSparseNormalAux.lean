@@ -56,7 +56,8 @@ theorem prime_ne_two_pow {p m : ℕ} (hp : p.Prime) (hm : 2 ≤ m) : p ≠ 2 ^ m
 /-- The explicit condition, restated (definitionally `explicitSparseSet`). -/
 def sparseCond (p : ℕ) : Prop :=
   1 ≤ Nat.log 2 (Nat.log 2 p) ∧
-    Nat.log 2 p * Nat.log 2 (Nat.log 2 p) < 2 ^ Nat.log 2 (Nat.log 2 p) * (Nat.log 2 (Nat.log 2 p) + 1)
+    Nat.log 2 p * Nat.log 2 (Nat.log 2 p) <
+      2 ^ Nat.log 2 (Nat.log 2 p) * (Nat.log 2 (Nat.log 2 p) + 1)
 
 /-- **Exact interval form.**  For `k ≥ 1` and `p` prime: `p ∈ P` with scale `k` iff
 `2^{2^k} < p ≤ 2^{T_k}`. -/

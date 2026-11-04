@@ -976,6 +976,8 @@ import NormalNumbers.ConjugateEntropy
 import NormalNumbers.IndependenceRelative
 import NormalNumbers.FamilyDerandomizeVar
 import NormalNumbers.ExplicitPQ
+import NormalNumbers.ExplicitSparseNormalAux
+import NormalNumbers.ExplicitSparseNormal
 import NormalNumbers.BadNormal
 import NormalNumbers.ReciprocalNormal
 import NormalNumbers.LevinSparse
