@@ -692,6 +692,7 @@ import NormalNumbers.PowerLambertNearZero
 import NormalNumbers.PowerLambertPeriodicApprox
 import NormalNumbers.PowerLambertFrequencies
 import NormalNumbers.PowerLambertFrequenciesExist
+import NormalNumbers.PowerLambertFrequencyLaw
 import NormalNumbers.JointLambertGcdAverage
 import NormalNumbers.JointLambertSmallPool
 import NormalNumbers.JointLambertQuantitativeStatement

@@ -1,3 +1,11 @@
+# Power Lambert frequency law (2026-11-04, COMPLETE) -- the frequencies are computable
+
+* `powerLambertFreq_eq_lim`: each word frequency is `lim_D` of the `(D!)^r`-periodic model
+  frequency; `powerLambert_frequency_law`: rich ∧ all frequencies exist ∧ not normal.  Axioms
+  `[propext, Classical.choice, Quot.sound]`.
+* Route: `eventually_abs_wordFreq_sub_periodicModelFreq_le` (the approximation, uniform over
+  `D ≥ D₀`), then `le_of_tendsto`.  See `HANDOFF-2026-11-04-power-lambert-frequency-law.md`.
+
 # Power Lambert frequencies (2026-11-04, COMPLETE) -- every word frequency exists
 
 * `powerLambert_nearZero_density` and `powerLambertFrequenciesExist` proved; axioms
