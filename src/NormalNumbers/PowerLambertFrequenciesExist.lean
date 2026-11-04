@@ -5,6 +5,7 @@ Authors: Trevor Morris
 -/
 import NormalNumbers.PowerLambertFrequencies
 import NormalNumbers.PowerLambertRich
+import NormalNumbers.PowerLambertNearZero
 
 /-!
 # Every word frequency of a perfect-power Lambert constant exists
@@ -38,8 +39,8 @@ theorem powerLambert_nearZero_density (b r : ℕ) (hb : 2 ≤ b) (hr : 2 ≤ r) 
     ∀ ε : ℝ, 0 < ε → ∃ L : ℕ, ∀ᶠ N : ℕ in atTop,
       (((range N).filter fun n =>
         orbit b (powerLambert b r) n < 1 / (b : ℝ) ^ L ∨
-          1 - 1 / (b : ℝ) ^ L ≤ orbit b (powerLambert b r) n).card : ℝ) ≤ ε * N := by
-  sorry
+          1 - 1 / (b : ℝ) ^ L ≤ orbit b (powerLambert b r) n).card : ℝ) ≤ ε * N :=
+  powerLambert_nearZero_density_aux b r hb hr
 
 /-- **Headline (frozen, 2026-11-04).**  For `b, r ≥ 2`, every base-`b` word has a limiting
 frequency in the expansion of `Σ_{n≥1} 1/(b^{n^r} − 1)`: the first explicit arithmetic constant
