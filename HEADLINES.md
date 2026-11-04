@@ -30,14 +30,31 @@ is the Lambert ladder `c_f = Σ f(n)/(bⁿ−1) = Σ (f∗1)(m) b⁻ᵐ`: the pr
 - **C′**: `Σ_{p∈P} 1/(4ᵖ−1)` is normal in base 4 whenever `Σ_{p∈P} 1/p = ∞` and the fresh mass
   `r_P(N) = Σ_{√N<p≤N, p∈P} 1/p → 0` (`isNormal_subsetLambert_of_sqrtFreshMassZero`).
 - G₄ read along its schedule positions is normal (`isNormal_fullRealW`).
-- `E_b`, finitely many bases at once: prescribed words at a common position, unconditional, with
-  an `N^{1−ε}` occurrence count.  This lives on `proof/joint-lambert-unconditional` in the
-  sibling checkout `normal-numbers-lambert` and is **not yet merged here**.
+- `E_b`, finitely many bases at once: prescribed words at a common position, unconditional
+  (`JointLambert.jointLambertDisjunctivity_unconditional`), with an `N^{1−ε}` occurrence
+  count (`JointLambert.jointWords_quantitative`).  These modules are present
+  in this checkout; the former note saying they were not merged was stale.
+- **2026-10-27: generic multiplicative coefficient disjunctivity**, under the independent
+  arithmetic conditions `ArithmeticDisjunctivity.CoefficientSystem`.  It gives
+  **`sum 1/(b^(n^r)-1)` disjunctive in base `b` for every `b>=2`, `r>=1`**, with
+  simultaneous arbitrarily late words across finitely many bases for fixed `r`.
+  Theorems: `isDisjunctive_powerLambert`, `jointPowerLambertWords`.
+  [Proof record](docs/arithmetic-disjunctivity.md).
+- **The perfect-power normality upgrade is refuted:** for every `r>=2`, the
+  same constant is **not normal in its defining base**
+  (`not_isNormal_powerLambert`, `powerLambert_disjunctive_not_normal`).
+  Removing a finite rational head leaves a coefficient tail with mean too small
+  for equidistribution.  The generic coefficient hypotheses therefore do not
+  imply normality (`not_genericArithmeticNormality`).  This obstruction does
+  not cover `r=1`.  [Proof and scope](docs/power-lambert-normality.md).
 
 **The wall.**  Ordinary averages over all `n` of growing-depth carries: Chowla/Elliott strength
 (C1–C3, Tao–Teräväinen arXiv:2512.01739).  Freezing primes along a designed progression reaches
 disjunctivity and `N^{1−o(1)}` counts, and cannot reach positive density.  For all primes the fresh
 mass tends to `log 2`, so C′ does not apply.
+
+The [square-indexed Lambert proposal](docs/square-lambert-proposal.md) was completed
+through the generic coefficient theorem above; its witness and carry-tail gates are proved.
 
 **Frontier.**
 1. ⭐ **Quantitative C′: the normality defect is controlled by the fresh mass.**  *Update 2026-09-30: derived on paper with `c = 1` up to `log³`, see `docs/CPRIME-QUANTITATIVE-2026-09-30.md`; the text below is the original proposal.*  The Astra paper

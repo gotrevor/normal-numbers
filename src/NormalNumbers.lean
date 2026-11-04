@@ -569,6 +569,16 @@ import NormalNumbers.PiDisjunctiveRoutes.RoundTwo
 import NormalNumbers.PiDisjunctiveRoutes.RoundTwoPilotTargets
 import NormalNumbers.PiDisjunctiveRoutes.RoundTwoOscillator
 import NormalNumbers.PiDisjunctiveRoutes.RoundTwoOscillatorSharp
+import NormalNumbers.PiDisjunctiveRoutes.InventionScreen
+import NormalNumbers.PiDisjunctiveRoutes.DualRadix
+import NormalNumbers.LnTwoRoutes.Screen
+import NormalNumbers.LnTwoRoutes.PadeCost
+import NormalNumbers.SqrtTwoRoutes.Screen
+import NormalNumbers.SqrtTwoRoutes.NormScale
+import NormalNumbers.SqrtTwoRoutes.Balanced
+import NormalNumbers.SqrtTwoRoutes.WordCertificate
+import NormalNumbers.SqrtTwoRoutes.Controls
+import NormalNumbers.SqrtTwoRoutes.ExponentSelection
 import NormalNumbers.PiDisjunctiveRoutes.RoundTwoSpigot
 import NormalNumbers.PiDisjunctiveRoutes.RoundTwoRadical
 import NormalNumbers.StonehamSixFailure
@@ -669,6 +679,10 @@ import NormalNumbers.JointLambertAGPRange
 import NormalNumbers.JointLambertRescaledPrimes
 import NormalNumbers.JointLambertRescaledTail
 import NormalNumbers.JointLambertUnconditional
+import NormalNumbers.SquareLambertProposal
+import NormalNumbers.ArithmeticDisjunctivityControls
+import NormalNumbers.PowerLambertDisjunctivity
+import NormalNumbers.PowerLambertNonNormal
 import NormalNumbers.JointLambertGcdAverage
 import NormalNumbers.JointLambertSmallPool
 import NormalNumbers.JointLambertQuantitativeStatement
