@@ -1,3 +1,13 @@
+# Power Lambert frequencies (2026-11-04, COMPLETE) -- every word frequency exists
+
+* `powerLambert_nearZero_density` and `powerLambertFrequenciesExist` proved; axioms
+  `[propext, Classical.choice, Quot.sound]`.  With `not_isNormal_powerLambert`: a complete,
+  non-uniform word-frequency law for `Σ 1/(b^{n^r} − 1)`, `b, r ≥ 2`.
+* Route: carry chain + window rigidity + Markov (near zero); periodic model `Q = (D!)^r`, the
+  orbit/model mismatch is pushed by the shift `n ↦ n + ℓ` into the near-zero event.
+* Next (optional): Lean identification of the limit as `lim_D G_D(w)`.  See
+  `HANDOFF-2026-11-04-power-lambert-frequencies.md`.
+
 # Rich power Lambert (2026-11-04, COMPLETE) -- perfect-power Lambert constants are rich
 
 * `isRich_powerLambert` proved; `powerLambert_rich_not_normal` is unconditional (rich AND

@@ -88,7 +88,8 @@ theorem two_mul_le_of_run (b r : ℕ) (hb : 2 ≤ b) (hr : 2 ≤ r) (n L : ℕ)
     push_neg at hL
     have hgi : ∀ i ∈ range L, g i * 2 ^ i = (g i - 1) * 2 ^ i + 2 ^ i := by
       intro i hi
-      obtain ⟨t, ht⟩ : ∃ t, g i = t + 1 := ⟨g i - 1, by have := hgpos i (Finset.mem_range.mp hi); omega⟩
+      obtain ⟨t, ht⟩ : ∃ t, g i = t + 1 :=
+        ⟨g i - 1, by have := hgpos i (Finset.mem_range.mp hi); omega⟩
       rw [ht, Nat.add_sub_cancel]
       ring
     have hsplitW : (∑ i ∈ range L, g i * 2 ^ i) + 1 =

@@ -62,7 +62,8 @@ theorem abs_card_filter_div_sub_le (p : ℕ → Prop) [DecidablePred p] {Q : ℕ
   have hNr : (0 : ℝ) < N := by exact_mod_cast hN
   rw [hdecomp]
   push_cast
-  have key : ((N / Q : ℕ) * (c : ℝ) + e) / N - c / Q = ((Q : ℝ) * e - (N % Q : ℕ) * c) / (Q * N) := by
+  have key : ((N / Q : ℕ) * (c : ℝ) + e) / N - c / Q =
+      ((Q : ℝ) * e - (N % Q : ℕ) * c) / (Q * N) := by
     field_simp
     rw [hNdec]
     ring

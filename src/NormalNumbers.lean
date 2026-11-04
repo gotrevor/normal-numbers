@@ -686,6 +686,12 @@ import NormalNumbers.PowerLambertNonNormal
 import NormalNumbers.PowerLambertRichCount
 import NormalNumbers.PowerLambertRichOrbit
 import NormalNumbers.PowerLambertRich
+import NormalNumbers.PowerLambertRuns
+import NormalNumbers.PowerLambertWindow
+import NormalNumbers.PowerLambertNearZero
+import NormalNumbers.PowerLambertPeriodicApprox
+import NormalNumbers.PowerLambertFrequencies
+import NormalNumbers.PowerLambertFrequenciesExist
 import NormalNumbers.JointLambertGcdAverage
 import NormalNumbers.JointLambertSmallPool
 import NormalNumbers.JointLambertQuantitativeStatement
