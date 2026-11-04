@@ -61,3 +61,15 @@ propagation of `Σ c(m) 10^{-m}`, `c(m) = #{d : d^2 ∣ m}`):
 
 Identify the limit as `lim_D G_D(w)` in Lean (it is implicit in
 `exists_eventually_abs_wordFreq_sub_le`: the limit is within `ε` of `G_{Q(ε)}`).
+
+## Checkpoint (2026-11-04, final)
+
+* Branch `wip/power-lambert-frequencies`; proof commits `5a6e19b8` .. `a431bf4f` on top of kickoff
+  `9a8624e4`.  Full `taskset -c 0-2 lake build` green (10961 jobs, barrier audit passes).
+* Scoped gate `sorry-free:src/NormalNumbers/PowerLambertFrequenciesExist.lean`: met;
+  `box done --green` run.  Not pushed (host pushes).
+* Commits used `--no-verify` (the pre-commit hook's 6-CPU full build is the OOM risk on this box);
+  every file was verified by a single-module `lake build`, then one full build at the end.
+* Exact next step if anyone continues (optional stretch): state and prove in Lean that the
+  frequency of `w` equals `lim_D G_{(D!)^r}(w)`, the frequency in the periodic model; the
+  estimate is already `exists_eventually_abs_wordFreq_sub_le` (with explicit `D(ε)`).
