@@ -50,3 +50,11 @@ Environment note: the pre-commit full build twice failed spuriously with "Too ma
 
 Target met.  Possible follow-ups (not started): a `docs/notes/` note for the explicit normal
 number; the same block trick with any `δ_k` window fraction gives a family of explicit sets.
+
+## Final checkpoint (2026-11-04)
+
+Branch `wip/explicit-cprime`, proof HEAD `fd8d3296`.  `box done --green` issued; scoped target
+`sorry-free:src/NormalNumbers/ExplicitSparseNormal.lean` met (0 sorries in the file and its Aux).
+Working tree clean apart from this checkpoint.  Next steps for a future session (optional, off the
+scoped target): write `docs/notes/explicit-sparse-normal.md` (neutral note: the set, the theorem
+at a pinned commit, the Mertens-I-only argument); host to review and merge `wip/explicit-cprime`.
