@@ -17,7 +17,7 @@ packages the three properties of the constant: rich, every word frequency exists
 
 namespace NormalNumbers.ArithmeticDisjunctivity
 
-open Filter Topology Finset
+open Filter Topology Finset NormalNumbers.CastingOut
 
 open Classical in
 /-- The limiting frequency of the word `w` in the base-`b` expansion of `powerLambert b r`
