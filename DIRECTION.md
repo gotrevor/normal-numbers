@@ -5,6 +5,13 @@
 **This is the directive for branch `proof/uniformbad-threshold`.**  The `proof/cantor-bad-normal` section below
 belongs to that branch (its route is parked at the middle-digit obstruction); do not work it here.
 
+- **PARKED (Ren for Trevor, host, 2026-11-03): gate 6 / fallback (a) is parked at c⋆ ≤ 124/25.**  The causal
+  panel read UNRESOLVED (LOOSE 16/40, GENUINE 3/40, controls 40/40), so the pre-registered reading in step (5) below
+  applies.  Recorded as "current product+exception representation/search misses the cost gate; convergence
+  unresolved" - not a refutation, not a barrier at 9/2; no Maze row.  Reopen only on Trevor's explicit funding, in
+  the order given in `ON-LINE-FINDINGS-2026-11-03-gate6-causal-panel-park.md` (sliver bins need an unreachability
+  proof; split-rule fix; cost slice with WORLDS+RSPLIT on the same IDs).  A lap on this branch does NOT search,
+  redesign the checker, or run another panel; `box stuck` if nothing else is directed.
 - **Operator gate 6 CAUSAL PANEL (Ren for Trevor, 2026-10-12 ~09:20Z) - ONE bounded diagnostic lap, no search.**
   Trevor funded this over parking (Astra recommended PARK, mail `20261012T090735Z-codex-8b3d4904-*.md`, section 3
   is the design: read it first).  Question: after one update, are the newly failing pairs GENUINE (the frozen
