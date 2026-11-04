@@ -6,6 +6,7 @@ Authors: Trevor Morris
 import NormalNumbers.PowerLambertFrequencies
 import NormalNumbers.PowerLambertRich
 import NormalNumbers.PowerLambertNearZero
+import NormalNumbers.PowerLambertPeriodicApprox
 
 /-!
 # Every word frequency of a perfect-power Lambert constant exists
@@ -47,7 +48,7 @@ frequency in the expansion of `Σ_{n≥1} 1/(b^{n^r} − 1)`: the first explicit
 with a complete (non-uniform: `not_isNormal_powerLambert`) word-frequency law. -/
 @[blueprint (title := "Perfect-power Lambert constants have a word-frequency law")]
 theorem powerLambertFrequenciesExist (b r : ℕ) (hb : 2 ≤ b) (hr : 2 ≤ r) :
-    PowerLambertFrequenciesExist b r := by
-  sorry
+    PowerLambertFrequenciesExist b r :=
+  powerLambertFrequenciesExist_aux b r hb hr
 
 end NormalNumbers.ArithmeticDisjunctivity
