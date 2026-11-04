@@ -683,6 +683,9 @@ import NormalNumbers.SquareLambertProposal
 import NormalNumbers.ArithmeticDisjunctivityControls
 import NormalNumbers.PowerLambertDisjunctivity
 import NormalNumbers.PowerLambertNonNormal
+import NormalNumbers.PowerLambertRichCount
+import NormalNumbers.PowerLambertRichOrbit
+import NormalNumbers.PowerLambertRich
 import NormalNumbers.JointLambertGcdAverage
 import NormalNumbers.JointLambertSmallPool
 import NormalNumbers.JointLambertQuantitativeStatement

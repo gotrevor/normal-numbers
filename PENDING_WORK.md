@@ -1,3 +1,11 @@
+# Rich power Lambert (2026-11-04, COMPLETE) -- perfect-power Lambert constants are rich
+
+* `isRich_powerLambert` proved; `powerLambert_rich_not_normal` is unconditional (rich AND
+  nonnormal).  Axioms `[propext, Classical.choice, Quot.sound]`.
+* Route: exact `Q`-periodic split of the power-divisor count with `Q = (D!)^r`, and the
+  progression count `#{k<K : M ∣ m₀+kQ} ≤ K m₀/M + 1` (gcd divides `m₀`); no p-adic step.
+* Next (optional): `PowerLambertFrequenciesExist`.  See `HANDOFF-2026-11-03-rich-power-lambert.md`.
+
 # Prime class lap 12 (2026-10-17, COMPLETE) -- T-B′ and L2 closed
 
 * `StonehamPrimeClass.lean` is sorry-free.  All six kickoff declarations audit to exactly
