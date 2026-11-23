@@ -13,11 +13,7 @@ namespace NormalNumbers.Adder
 
 open NormalNumbers
 
-theorem h25_runs_c18 : runsCover h25P 73976979397946625 h25runsC18 78140372559549300 = true := by decide +kernel
-
-
-
-theorem h25_runs_c19 : runsCover h25P 78140372559549300 h25runsC19 82355014513842525 = true := by decide +kernel
+theorem h25_runs_c9 : runsCover h25P 37046943853019100 h25runsC9 41258802628318275 = true := by decide +kernel
 
 
 end NormalNumbers.Adder

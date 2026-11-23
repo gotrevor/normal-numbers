@@ -17,6 +17,19 @@ import NormalNumbers.HittingSetBase2Len5Runs10
 import NormalNumbers.HittingSetBase2Len5Runs11
 import NormalNumbers.HittingSetBase2Len5Runs12
 import NormalNumbers.HittingSetBase2Len5Runs13
+import NormalNumbers.HittingSetBase2Len5Runs14
+import NormalNumbers.HittingSetBase2Len5Runs15
+import NormalNumbers.HittingSetBase2Len5Runs16
+import NormalNumbers.HittingSetBase2Len5Runs17
+import NormalNumbers.HittingSetBase2Len5Runs18
+import NormalNumbers.HittingSetBase2Len5Runs19
+import NormalNumbers.HittingSetBase2Len5Runs20
+import NormalNumbers.HittingSetBase2Len5Runs21
+import NormalNumbers.HittingSetBase2Len5Runs22
+import NormalNumbers.HittingSetBase2Len5Runs23
+import NormalNumbers.HittingSetBase2Len5Runs24
+import NormalNumbers.HittingSetBase2Len5Runs25
+import NormalNumbers.HittingSetBase2Len5Runs26
 
 /-! The run-compressed reachability of the `h25` family, assembled from `HittingSetBase2Len5Runs*.lean`. -/
 

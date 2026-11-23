@@ -17,8 +17,4 @@ open NormalNumbers
 theorem h25_runs_c0 : runsCover h25P 0 h25runsC0 4070375147188350 = true := by decide +kernel
 
 
-
-theorem h25_runs_c1 : runsCover h25P 4070375147188350 h25runsC1 8286816388175325 = true := by decide +kernel
-
-
 end NormalNumbers.Adder

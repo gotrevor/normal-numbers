@@ -145,8 +145,8 @@ each published minimal set (every proper subset fails).
 
 | row | upper bound | set | how |
 |---|---|---|---|
-| `S(2,5)` | **≤ 20** | `{1,3,…,37,41}` (the odd prefix to `41` minus `39`) | the odd prefix `{1,3,…,2n−1}` first hits at `n = 21`, then one greedy removal |
-| `S(3,3)` | **≤ 28** | `{2,8,10,13,14,17,20,22,25,26,31,32,34,37,38,40,41,43,44,46,47,49,50,52,53,55,58,59}` | randomised greedy from the pool `3∤m ≤ 60` |
+| `S(2,5)` | **≤ 20** | `{1,3,…,37,41}` (the odd prefix to `41` minus `39`) | the odd prefix `{1,3,…,2n−1}` first hits at `n = 21`, then one greedy removal; minimal by inclusion in all 12 random deletion orders |
+| `S(3,3)` | **≤ 26** | `{1,5,7,8,10,11,13,16,17,19,23,25,26,28,29,31,35,37,41,43,47,49,50,52,53,56}` | randomised greedy from the pool `3∤m ≤ 60`; minimal by inclusion in all 10 random deletion orders (the earlier `≤ 28` set was not) |
 | `S(8,1)` | **≤ 11** | `{2,4,7,11,13,14,17,20,22,28,38}` | randomised greedy from `8∤m ≤ 40`; **theorem** |
 
 Every one of these is an upper bound only; they are certainly not known to be
